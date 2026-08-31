@@ -250,16 +250,17 @@ export function DancerReportControl({
   }
 
   return (
-    <div className="profile-header-report">
+    <div className="profile-footer-report">
       <button
         aria-label={reportSubmitted ? "Profile reported" : "Report profile"}
         aria-pressed={reportSubmitted}
-        className="profile-header-report-toggle"
+        className="profile-footer-report-toggle"
         disabled={reportSaving || reportSubmitted}
         onClick={openReport}
         type="button"
       >
         <ReportFlagIcon />
+        <span>{reportSubmitted ? "Reported" : "Report profile"}</span>
       </button>
       {reportSubmitted ? (
         <span className="profile-report-confirmation" role="status">Report submitted for review.</span>

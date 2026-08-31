@@ -35,7 +35,7 @@ test("the homepage full dancer profile reserves dismissal for its X control", ()
   );
 });
 
-test("standalone dancers keep report and dismissal utilities together while legacy venues enter the in-app profile", () => {
+test("standalone dancers separate subtle reporting from dismissal while legacy venues enter the in-app profile", () => {
   assert.doesNotMatch(
     dancerPage,
     /FloatingProfileHomeLink/,
@@ -46,7 +46,7 @@ test("standalone dancers keep report and dismissal utilities together while lega
   );
   assert.match(
     dancerPage,
-    /@media \(max-width: 600px\)[\s\S]*?body\.dancr-button-system \.public-profile-shell \.profile-titlebar \{[\s\S]*?grid-template-columns: minmax\(108px, \.92fr\) minmax\(0, 1\.08fr\) 80px !important;[\s\S]*?gap: 5px !important;[\s\S]*?min-height: 64px !important;/,
+    /@media \(max-width: 600px\)[\s\S]*?body\.dancr-button-system \.public-profile-shell \.profile-titlebar \{[\s\S]*?grid-template-columns: minmax\(108px, \.92fr\) minmax\(0, 1\.08fr\) 44px !important;[\s\S]*?gap: 5px !important;[\s\S]*?min-height: 64px !important;/,
   );
   assert.match(
     venuePage,

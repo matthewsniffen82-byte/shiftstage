@@ -132,7 +132,7 @@ test("profile actions have a clear hierarchy and preserve every real action", ()
     liveApp,
     /class="action-btn secondary profile-share-action profile-action-icon-control"[\s\S]*?data-profile-share-menu=/,
   );
-  assert.match(liveApp, /class="profile-header-report-toggle" id="reportBtn"[^>]*>[\s\S]*?M5 21V4[\s\S]*?<\/button>/);
+  assert.match(liveApp, /class="profile-footer-report-action" id="reportBtn"[^>]*>[\s\S]*?M5 21V4[\s\S]*?<span>Report profile<\/span>[\s\S]*?<\/button>/);
   assert.doesNotMatch(liveApp, /class="profile-modal-report-link"/);
   assert.doesNotMatch(liveApp, /profileReportButton\.textContent\s*=\s*"Report"/);
   assert.doesNotMatch(liveApp, /id="profileActionOverflowToggle"|id="profileActionOverflowMenu"/);
@@ -174,7 +174,7 @@ test("profile actions have a clear hierarchy and preserve every real action", ()
   assert.match(liveApp, /const statusClass = isWorkingTonight\(profile, city\) \? "is-working-now" : "is-upcoming";/);
   assert.match(liveApp, /function dancerProfileDirectionsMarkup\(profile, options = \{\}\)[\s\S]*?if \(options\.preview \|\| !profile\?\.scheduled\) return "";/);
   assert.match(liveApp, /\.modal-actions\.is-no-live-shift \{[\s\S]*?grid-template-columns: repeat\(3, minmax\(0, 1fr\)\) !important;/);
-  assert.match(liveApp, /\.profile-modal-header-controls \{[\s\S]*?position: absolute !important;[\s\S]*?grid-template-columns: 32px 36px/);
+  assert.match(liveApp, /\.profile-modal-header-controls \{[\s\S]*?position: absolute !important;[\s\S]*?width: 36px;[\s\S]*?grid-template-columns: 36px/);
 });
 
 test("profile socials stay secondary, responsive, and absent when no links exist", () => {
@@ -328,7 +328,7 @@ test("mobile full profiles keep identity, analytics, and close control on one co
   );
   assert.match(
     compactMobileProfile,
-    /#profileBackdrop #profileModal \.profile-modal-header-controls \{[\s\S]*?position: absolute !important;[\s\S]*?top: max\(5px,[\s\S]*?right: 5px !important;[\s\S]*?grid-template-columns: 32px 36px !important;/,
+    /#profileBackdrop #profileModal \.profile-modal-header-controls \{[\s\S]*?position: absolute !important;[\s\S]*?top: max\(5px,[\s\S]*?right: 5px !important;[\s\S]*?width: 36px !important;[\s\S]*?grid-template-columns: 36px !important;/,
   );
   assert.match(
     compactMobileProfile,
@@ -499,8 +499,9 @@ test("profile overlay mobile geometry is shared by Android and iPhone", () => {
   );
   assert.match(
     liveApp,
-    /--profile-bottom-nav-clearance: max\(132px, calc\(108px \+ env\(safe-area-inset-bottom, 0px\)\)\);[\s\S]*?#profileBackdrop \.profile-modal-media \{[\s\S]*?margin: 12px 0 var\(--profile-bottom-nav-clearance\) !important;[\s\S]*?padding-bottom: 0 !important;/,
+    /--profile-bottom-nav-clearance: max\(132px, calc\(108px \+ env\(safe-area-inset-bottom, 0px\)\)\);[\s\S]*?#profileBackdrop \.profile-modal-media \{[\s\S]*?margin: 12px 0 0 !important;[\s\S]*?padding-bottom: 0 !important;/,
   );
+  assert.match(liveApp, /\.profile-footer-report-action \{[\s\S]*?margin: 9px auto var\(--profile-bottom-nav-clearance, 18px\);/);
   assert.doesNotMatch(profilePolishBlock, /\.is-android|\.is-ios|SamsungBrowser|iPhone/);
 });
 

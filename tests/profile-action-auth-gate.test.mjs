@@ -94,8 +94,9 @@ test("the live dancer profile close control exits shared links and remains touch
   );
   assert.match(
     homeSource,
-    /--profile-bottom-nav-clearance: max\(132px, calc\(108px \+ env\(safe-area-inset-bottom, 0px\)\)\);[\s\S]*?scroll-padding-bottom: var\(--profile-bottom-nav-clearance\) !important;[\s\S]*?#profileBackdrop \.profile-modal-media \{[\s\S]*?margin: 12px 0 var\(--profile-bottom-nav-clearance\) !important;[\s\S]*?padding-bottom: 0 !important;/,
+    /--profile-bottom-nav-clearance: max\(132px, calc\(108px \+ env\(safe-area-inset-bottom, 0px\)\)\);[\s\S]*?scroll-padding-bottom: var\(--profile-bottom-nav-clearance\) !important;[\s\S]*?#profileBackdrop \.profile-modal-media \{[\s\S]*?margin: 12px 0 0 !important;[\s\S]*?padding-bottom: 0 !important;/,
   );
+  assert.match(homeSource, /\.profile-footer-report-action \{[\s\S]*?margin: 9px auto var\(--profile-bottom-nav-clearance, 18px\);/);
   assert.doesNotMatch(homeSource, /--profile-report-clearance: calc\(80px/);
   assert.match(homeSource, /modalCloseButton\.addEventListener\("click"[\s\S]*?closeProfileModal\(\)/);
   assert.match(
@@ -283,7 +284,7 @@ test("the live mobile profile separates profile actions from venue travel action
   assert.match(homeSource, /function profileActionButtonMarkup\(icon, label\)/);
   assert.doesNotMatch(liveActionMarkup, /Sign in required|No sign-in needed|No shift posted|profile-action-requirement/);
   assert.doesNotMatch(liveActionMarkup, /"account"|"public"|"no-shift"/);
-  assert.match(homeSource, /class="profile-header-report-toggle" id="reportBtn"/);
+  assert.match(homeSource, /class="profile-footer-report-action" id="reportBtn"/);
   assert.doesNotMatch(homeSource, /class="profile-modal-report-link"/);
   assert.doesNotMatch(homeSource, /id="profileActionOverflowToggle"|id="profileActionOverflowMenu"/);
   assert.doesNotMatch(homeSource, /data-profile-more-menu|data-profile-more-actions|data-profile-schedule-action/);

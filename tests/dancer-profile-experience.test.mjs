@@ -52,7 +52,7 @@ test("the public dancer profile keeps a compact identity that scrolls with the w
   assert.match(navigationActions, /className="public-profile-close"/);
   assert.match(profilePage, /\.profile-titlebar \{ position: relative; z-index: 10;/);
   assert.doesNotMatch(profilePage, /\.profile-titlebar \{ position: sticky;/);
-  assert.match(profilePage, /\.profile-titlebar \{[\s\S]*?min-height: 64px;[\s\S]*?grid-template-columns: minmax\(120px, \.95fr\) minmax\(150px, 1\.05fr\) 80px;[\s\S]*?gap: 6px;/);
+  assert.match(profilePage, /\.profile-titlebar \{[\s\S]*?min-height: 64px;[\s\S]*?grid-template-columns: minmax\(120px, \.95fr\) minmax\(150px, 1\.05fr\) 44px;[\s\S]*?gap: 6px;/);
   assert.match(profilePage, /\.profile-titlebar-avatar \{ width: 48px; height: 48px;/);
   assert.match(
     profilePage,
@@ -194,8 +194,8 @@ test("profile actions keep customer and safety controls visible while Tonight ow
   assert.doesNotMatch(profileActions, /rideControl|directionsControl|Working Now only|Venue required/);
   assert.match(profilePage, /profile-tonight-travel-actions[\s\S]*?<DancerDirectionsButton[\s\S]*?<UberRideButton/);
   assert.doesNotMatch(profileActions, /profile-action-schedule|>Schedule</);
-  assert.match(profileActions, /className="profile-header-report"/);
-  assert.match(profileActions, /className="profile-header-report-toggle"/);
+  assert.match(profileActions, /className="profile-footer-report"/);
+  assert.match(profileActions, /className="profile-footer-report-toggle"/);
   assert.doesNotMatch(profileActions, /profile-header-overflow/);
   assert.match(profileActions, /Report profile/);
   assert.match(profileActions, /onClick=\{openReport\}/);

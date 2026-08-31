@@ -36795,30 +36795,33 @@
           line-height: 1.2;
           white-space: nowrap;
         }
-        #profileBackdrop .profile-header-report-toggle {
-          width: 32px;
-          min-width: 32px;
-          height: 32px;
-          min-height: 32px;
-          display: inline-grid;
-          place-items: center;
-          padding: 0;
-          border: 1px solid transparent;
-          border-radius: 50%;
-          color: rgba(189,180,200,.58);
+        #profileBackdrop .profile-footer-report-action {
+          min-height: 36px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: 5px;
+          margin: 9px auto var(--profile-bottom-nav-clearance, 18px);
+          padding: 7px 10px;
+          border: 0;
+          border-radius: 999px;
+          color: rgba(189,180,200,.46);
           background: transparent;
           box-shadow: none;
           font: inherit;
+          font-size: 9px;
+          font-weight: 750;
+          line-height: 1;
           cursor: pointer;
         }
-        #profileBackdrop .profile-header-report-toggle svg { width: 13px; height: 13px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
-        #profileBackdrop .profile-header-report-toggle:hover,
-        #profileBackdrop .profile-header-report-toggle:focus-visible {
-          border-color: rgba(180,169,196,.16);
-          color: #d7cfdf;
-          background: rgba(255,255,255,.04);
+        #profileBackdrop .profile-footer-report-action svg { width: 11px; height: 11px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+        #profileBackdrop .profile-footer-report-action:hover,
+        #profileBackdrop .profile-footer-report-action:focus-visible {
+          color: rgba(225,219,232,.82);
+          background: rgba(255,255,255,.035);
           outline: none;
         }
+        #profileBackdrop .profile-footer-report-action:disabled { cursor: default; opacity: .58; }
         #profileBackdrop .profile-modal-verified {
           width: 19px;
           height: 19px;
@@ -39165,7 +39168,7 @@
 
         #profileBackdrop .profile-modal-media {
           gap: 3px !important;
-          margin: 12px 0 var(--profile-bottom-nav-clearance) !important;
+          margin: 12px 0 0 !important;
           padding-bottom: 0 !important;
         }
 
@@ -40563,9 +40566,9 @@
           position: absolute !important;
           top: max(5px, calc(env(safe-area-inset-top, 0px) + 3px)) !important;
           right: 5px !important;
-          width: 72px;
+          width: 36px;
           display: grid;
-          grid-template-columns: 32px 36px;
+          grid-template-columns: 36px;
           align-items: center;
           gap: 4px;
           z-index: 4;
@@ -40644,9 +40647,7 @@
             font-size: clamp(17px, 4.8vw, 21px) !important;
           }
 
-          #profileBackdrop #profileModal .profile-modal-header-controls {
-            grid-template-columns: 32px 36px;
-          }
+          #profileBackdrop #profileModal .profile-modal-header-controls { width: 36px; grid-template-columns: 36px; }
 
           #profileBackdrop #profileModal #modalClose {
             width: 36px !important;
@@ -40663,7 +40664,7 @@
             grid-template-columns: minmax(0, 1fr) !important;
             gap: 0 !important;
             min-height: 64px !important;
-            padding-right: 78px !important;
+            padding-right: 42px !important;
           }
 
           #profileBackdrop #profileModal .profile-modal-person {
@@ -40687,9 +40688,7 @@
             font-size: 7px !important;
           }
 
-          #profileBackdrop #profileModal .profile-modal-header-controls {
-            grid-template-columns: 32px 36px;
-          }
+          #profileBackdrop #profileModal .profile-modal-header-controls { width: 36px; grid-template-columns: 36px; }
 
           #profileBackdrop #profileModal #modalClose {
             width: 36px !important;
@@ -42256,7 +42255,6 @@
             </div>
           </div>
           <div class="profile-modal-header-controls">
-            <button class="profile-header-report-toggle" id="reportBtn" type="button" aria-label="Report profile"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 21V4"></path><path d="M5 5h11l-1.8 3L16 11H5"></path></svg></button>
             <button class="close-btn" id="modalClose" type="button" aria-label="Close profile">
               <svg class="icon" viewBox="0 0 24 24"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
             </button>
@@ -42299,6 +42297,7 @@
           <div class="gallery" id="modalGallery" data-media-tab="photo" role="tabpanel" aria-labelledby="modalMediaPhotoTab"></div>
           <p class="profile-modal-media-empty" id="modalMediaEmpty" hidden>No approved media yet.</p>
         </section>
+        <button class="profile-footer-report-action" id="reportBtn" type="button" aria-label="Report profile"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 21V4"></path><path d="M5 5h11l-1.8 3L16 11H5"></path></svg><span>Report profile</span></button>
       </section>
       <div class="profile-photo-viewer" id="profilePhotoViewer" role="dialog" aria-modal="true" aria-label="Profile photo" hidden>
         <div class="profile-photo-viewer-shell">
