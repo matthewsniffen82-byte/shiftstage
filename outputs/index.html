@@ -32076,7 +32076,7 @@
   </style>
   <link href="/dancr-brand-tokens.v1.css?v=13" rel="stylesheet">
   <link href="/dancr-button-system.v1.css" rel="stylesheet">
-  <link href="/dancr-aesthetic.v1.css?v=239" rel="stylesheet">
+  <link href="/dancr-aesthetic.v1.css?v=240" rel="stylesheet">
 </head>
 <body class="dancr-button-system">
   <div class="app">
@@ -61074,10 +61074,9 @@
         overflow.focus({ preventScroll: true });
       });
       const fullscreen = createHomeTvFeedFullscreenButton(slide, video);
-      actions.append(sound, profile);
-      actions.appendChild(like);
+      actions.append(sound, profile, follow, like);
       if (deal) actions.appendChild(deal);
-      actions.append(share, follow, fullscreen);
+      actions.append(share, fullscreen);
       actions.append(overflow, reportMenu);
       return actions;
     }

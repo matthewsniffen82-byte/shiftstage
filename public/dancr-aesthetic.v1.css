@@ -11590,6 +11590,82 @@ body.dancr-button-system :is(
   }
 }
 
+/* MyDancr TV uses one stable action hierarchy in card and full view. Every
+ * utility keeps the same circular translucent-glass geometry; Club Deal is
+ * the sole rounded-square exception so its conversion role stays distinct.
+ * This final layer also prevents the shared feed-card action styles from
+ * stretching Follow into a rectangle. */
+body.dancr-button-system #results.home-tv-feed
+  .home-tv-feed-action:not(.home-tv-feed-deal-action) {
+  box-sizing: border-box !important;
+  width: var(--home-tv-action-control-size, 46px) !important;
+  min-width: var(--home-tv-action-control-size, 46px) !important;
+  max-width: var(--home-tv-action-control-size, 46px) !important;
+  height: var(--home-tv-action-control-size, 46px) !important;
+  min-height: var(--home-tv-action-control-size, 46px) !important;
+  max-height: var(--home-tv-action-control-size, 46px) !important;
+  display: grid !important;
+  place-items: center !important;
+  gap: 0 !important;
+  padding: 0 !important;
+  border: 1px solid rgba(255, 255, 255, 0.28) !important;
+  border-radius: 50% !important;
+  color: var(--dancr-color-text-primary) !important;
+  background-color: rgba(18, 18, 28, 0.38) !important;
+  background-image: linear-gradient(
+    155deg,
+    rgba(255, 255, 255, 0.17),
+    rgba(255, 255, 255, 0.035)
+  ) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.2),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.04),
+    0 8px 22px rgba(0, 0, 0, 0.3) !important;
+  -webkit-appearance: none !important;
+  appearance: none !important;
+  -webkit-backdrop-filter: blur(16px) saturate(1.18) !important;
+  backdrop-filter: blur(16px) saturate(1.18) !important;
+}
+
+body.dancr-button-system #results.home-tv-feed .home-tv-feed-like-action {
+  grid-template-rows: 19px 9px !important;
+  align-content: center !important;
+  padding: 3px 0 2px !important;
+}
+
+body.dancr-button-system #results.home-tv-feed
+  .home-tv-feed-action:not(.home-tv-feed-deal-action):is(:hover, :focus-visible) {
+  border-color: rgba(255, 255, 255, 0.42) !important;
+  background-color: rgba(28, 28, 40, 0.48) !important;
+  background-image: linear-gradient(
+    155deg,
+    rgba(255, 255, 255, 0.2),
+    rgba(255, 255, 255, 0.05)
+  ) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.24),
+    0 0 0 2px rgba(126, 234, 255, 0.12),
+    0 10px 24px rgba(0, 0, 0, 0.34) !important;
+}
+
+body.dancr-button-system #results.home-tv-feed
+  .home-tv-feed-follow-action:is(.is-active, [aria-pressed="true"]) {
+  border-color: var(--dancr-color-brand-primary-strong) !important;
+  color: var(--dancr-color-brand-core) !important;
+  background-color: rgba(18, 18, 28, 0.42) !important;
+  background-image:
+    linear-gradient(var(--dancr-color-brand-primary-soft), var(--dancr-color-brand-primary-soft)),
+    linear-gradient(155deg, rgba(255, 255, 255, 0.17), rgba(255, 255, 255, 0.035)) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.2),
+    inset 0 0 0 1px var(--dancr-color-brand-primary-medium),
+    0 0 10px var(--dancr-color-brand-glow-soft) !important;
+}
+
+body.dancr-button-system #results.home-tv-feed .home-tv-feed-deal-action {
+  border-radius: 14px !important;
+}
+
 /* Dismiss controls are navigation utilities, not branded actions. Keep every
  * X neutral at rest, on touch focus, and during keyboard focus so opening a
  * modal never paints a violet ring or glow around its close control. */

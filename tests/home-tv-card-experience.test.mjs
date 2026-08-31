@@ -105,7 +105,7 @@ test("TV cards expose one compact priority rail and a standalone seek bar", () =
   )?.[0] || "";
 
   assert.match(actionsFactory, /const sound = createHomeTvFeedSoundButton\(slide\)[\s\S]*?"home-tv-feed-profile-action"[\s\S]*?actionIconMarkup\("profile"\)[\s\S]*?slide\.querySelector\("\.home-tv-feed-dancer"\)\?\.click\(\)[\s\S]*?"Share"[\s\S]*?follow\.dataset\.feedAction = "follow"/);
-  assert.match(actionsFactory, /const fullscreen = createHomeTvFeedFullscreenButton\(slide, video\)[\s\S]*?actions\.append\(sound, profile\)[\s\S]*?actions\.appendChild\(like\)[\s\S]*?if \(deal\) actions\.appendChild\(deal\)[\s\S]*?actions\.append\(share, follow, fullscreen\)[\s\S]*?actions\.append\(overflow, reportMenu\)/);
+  assert.match(actionsFactory, /const fullscreen = createHomeTvFeedFullscreenButton\(slide, video\)[\s\S]*?actions\.append\(sound, profile, follow, like\)[\s\S]*?if \(deal\) actions\.appendChild\(deal\)[\s\S]*?actions\.append\(share, fullscreen\)[\s\S]*?actions\.append\(overflow, reportMenu\)/);
   assert.doesNotMatch(actionsFactory, /actionIconMarkup\("star"\)|"Applaud"/);
   assert.match(actionsFactory, /"home-tv-feed-overflow-action"[\s\S]*?"More video options"[\s\S]*?actionIconMarkup\("more"\)/);
   assert.doesNotMatch(actionsFactory, /actionIconMarkup\("report"\)/);
@@ -536,7 +536,35 @@ test("idle TV utility controls use frosted-clear glass while selected follows ke
     aestheticSource,
     /\.home-tv-feed-fullscreen\[aria-pressed="true"\] \{[\s\S]*?border-color: var\(--dancr-color-white-medium\) !important;[\s\S]*?background-color: var\(--dancr-color-black-medium\) !important;[\s\S]*?background-image: none !important;[\s\S]*?0 5px 16px var\(--dancr-color-black-medium\)/,
   );
-  assert.match(homeSource, /dancr-aesthetic\.v1\.css\?v=239/);
+  assert.match(homeSource, /dancr-aesthetic\.v1\.css\?v=240/);
+});
+
+test("TV action rail keeps every control visible with one consistent shape hierarchy", () => {
+  const railConsistency = aestheticSource.match(
+    /\/\* MyDancr TV uses one stable action hierarchy[\s\S]*$/,
+  )?.[0] || "";
+  const actionsFactory = homeSource.match(
+    /function createHomeTvFeedActions\(item, slide, video\) \{[\s\S]*?(?=\n    function createHomeTvFeedSoundButton)/,
+  )?.[0] || "";
+
+  assert.match(
+    railConsistency,
+    /\.home-tv-feed-action:not\(\.home-tv-feed-deal-action\)[\s\S]*?width: var\(--home-tv-action-control-size, 46px\) !important;[\s\S]*?height: var\(--home-tv-action-control-size, 46px\) !important;[\s\S]*?border-radius: 50% !important;/,
+  );
+  assert.match(railConsistency, /background-color: rgba\(18, 18, 28, 0\.38\) !important;/);
+  assert.match(railConsistency, /backdrop-filter: blur\(16px\) saturate\(1\.18\) !important;/);
+  assert.match(
+    railConsistency,
+    /\.home-tv-feed-deal-action \{[\s\S]*?border-radius: 14px !important;/,
+  );
+  assert.match(
+    actionsFactory,
+    /actions\.append\(sound, profile, follow, like\);[\s\S]*?if \(deal\) actions\.appendChild\(deal\);[\s\S]*?actions\.append\(share, fullscreen\);[\s\S]*?actions\.append\(overflow, reportMenu\);/,
+  );
+  assert.doesNotMatch(
+    railConsistency,
+    /home-tv-feed-(?:profile|follow|like|share|fullscreen|overflow)[^{}]*\{[^{}]*display:\s*none/,
+  );
 });
 
 test("production TV cards use the neutral-first brand palette without changing media or navigation", () => {
