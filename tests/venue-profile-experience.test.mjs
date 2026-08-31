@@ -204,30 +204,34 @@ test("venue profile hierarchy stays compact and carries the restrained venue bra
   const refinement = aesthetic.match(/Production venue-detail refinement keeps one neutral frame[\s\S]*$/)?.[0] || "";
 
   assert.ok(refinement, "the final production venue-detail refinement must exist");
-  assert.match(refinement, /\.venue-main-photo \{[\s\S]*?position: relative !important;[\s\S]*?min-height: clamp\(96px, 22vw, 116px\) !important;[\s\S]*?height: clamp\(96px, 22vw, 116px\) !important;/);
-  assert.match(refinement, /\.venue-detail-logo-shell \{[\s\S]*?width: calc\(100% - clamp\(82px, 22vw, 112px\)\) !important;[\s\S]*?height: calc\(100% - 8px\) !important;[\s\S]*?max-height: 108px !important;[\s\S]*?border: 0 !important;[\s\S]*?background: transparent !important;/);
+  assert.match(refinement, /\.venue-main-photo \{[\s\S]*?position: relative !important;[\s\S]*?min-height: clamp\(88px, 20vw, 104px\) !important;[\s\S]*?height: clamp\(88px, 20vw, 104px\) !important;/);
+  assert.match(refinement, /\.venue-detail-logo-shell \{[\s\S]*?width: calc\(100% - clamp\(82px, 22vw, 112px\)\) !important;[\s\S]*?height: calc\(100% - 6px\) !important;[\s\S]*?max-height: 96px !important;[\s\S]*?border: 0 !important;[\s\S]*?background: transparent !important;/);
   assert.match(refinement, /\.venue-detail-logo \{[\s\S]*?position: absolute !important;[\s\S]*?inset: 0 !important;[\s\S]*?width: 100% !important;[\s\S]*?height: 100% !important;[\s\S]*?max-width: 100% !important;[\s\S]*?max-height: 100% !important;[\s\S]*?object-fit: contain !important;[\s\S]*?object-position: center center !important;/);
-  assert.match(refinement, /\.venue-hero-brand-row \{[\s\S]*?display: grid;[\s\S]*?grid-template-columns: 36px minmax\(0, 1fr\) 36px;[\s\S]*?align-items: start;[\s\S]*?gap: 8px;[\s\S]*?padding: 8px 10px 0;/);
+  assert.match(refinement, /\.venue-hero-brand-row \{[\s\S]*?display: grid;[\s\S]*?grid-template-columns: 36px minmax\(0, 1fr\) 36px;[\s\S]*?align-items: start;[\s\S]*?gap: 8px;[\s\S]*?padding: 6px 10px 0;/);
   assert.match(refinement, /\.venue-hero-brand-row \.venue-detail-logo-shell \{[\s\S]*?width: 100% !important;/);
   assert.match(refinement, /@media \(max-width: 650px\) \{[\s\S]*?\.venue-hero-brand-row \.venue-detail-logo-shell \{[\s\S]*?width: 100% !important;/);
   assert.match(refinement, /\.venue-hero-body \{[\s\S]*?display: grid !important;[\s\S]*?gap: 6px !important;[\s\S]*?padding: 8px 12px 10px !important;/);
   assert.match(refinement, /#venueDetailName \{[\s\S]*?color: var\(--dancr-color-brand-core\) !important;/);
   assert.match(refinement, /\.venue-identity-meta \{[\s\S]*?display: flex;[\s\S]*?flex-wrap: wrap;/);
   assert.match(refinement, /\.venue-identity-location \{[\s\S]*?display: inline-flex;[\s\S]*?gap: 5px;/);
-  assert.match(refinement, /\.venue-status-grid \{[\s\S]*?position: relative;[\s\S]*?grid-template-columns: repeat\(3, minmax\(0, 1fr\)\);[\s\S]*?gap: 0;[\s\S]*?border: 1px solid transparent;[\s\S]*?background: var\(--dancr-color-surface-subtle\);[\s\S]*?isolation: isolate;/);
+  assert.match(refinement, /\.venue-status-grid \{[\s\S]*?position: relative;[\s\S]*?grid-template-columns: repeat\(3, minmax\(0, 1fr\)\);[\s\S]*?gap: 0;[\s\S]*?border: 0;[\s\S]*?background: var\(--dancr-color-surface-subtle\);[\s\S]*?isolation: isolate;/);
+  assert.doesNotMatch(refinement, /\.venue-status-grid::after/);
   assert.match(refinement, /:is\(\.venue-operating-summary, \.venue-quick-stat\) \{[\s\S]*?min-height: 70px !important;[\s\S]*?grid-template-rows: 12px 21px 12px;[\s\S]*?gap: 4px !important;[\s\S]*?padding: 9px 8px !important;/);
   assert.match(refinement, /\.venue-quick-stat \{[\s\S]*?min-height: 70px !important;[\s\S]*?padding: 9px 8px !important;[\s\S]*?-webkit-appearance: none;[\s\S]*?-webkit-tap-highlight-color: transparent;/);
   assert.match(refinement, /@media \(hover: hover\) and \(pointer: fine\) \{[\s\S]*?button\.venue-quick-stat:hover \{[\s\S]*?var\(--dancr-color-white-soft\)/);
   assert.match(refinement, /\.venue-quick-stat strong \{[\s\S]*?grid-row: 2 \/ 4;[\s\S]*?align-self: center;/);
   assert.match(refinement, /\.venue-quick-stat\.is-working strong \{[\s\S]*?var\(--dancr-color-success\)/);
-  assert.doesNotMatch(refinement, /\.venue-quick-stat\.is-working:not\(\.is-empty\)\s*\{/);
+  assert.match(refinement, /\.venue-quick-stat\.is-working:not\(\.is-empty\) \{[\s\S]*?var\(--dancr-color-success\) 7%/);
   assert.match(refinement, /\.venue-quick-stat\.is-upcoming strong \{[\s\S]*?var\(--dancr-color-info\)/);
+  assert.match(refinement, /\.venue-quick-stat\.is-upcoming:not\(\.is-empty\) \{[\s\S]*?var\(--dancr-color-info\) 7%/);
+  assert.match(refinement, /Hours remain neutral context[\s\S]*?\.venue-operating-summary \.venue-operating-status \{[\s\S]*?var\(--dancr-color-text-primary\)/);
   assert.match(refinement, /The club profile only previews an available deal[\s\S]*?\.venue-offer-card\.venue-deal-preview \{[\s\S]*?padding: 8px 10px !important;[\s\S]*?\.venue-deal-preview \.venue-offer-grid \{[\s\S]*?grid-template-columns: minmax\(0, 1fr\) auto !important;[\s\S]*?\.venue-deal-preview-copy \{[\s\S]*?gap: 2px;/);
   assert.match(refinement, /\.venue-detail-club-deal-cta \{[\s\S]*?min-height: 44px;[\s\S]*?background: var\(--dancr-color-success\);/);
   assert.match(
     refinement,
-    /\.venue-offer-card\.venue-deal-preview \{[\s\S]*?border: 1px solid var\(--dancr-color-success-strong\) !important;[\s\S]*?radial-gradient\(circle at 94% 0%, var\(--dancr-color-success-soft\), transparent 13rem\)[\s\S]*?var\(--dancr-color-success\) 8%[\s\S]*?0 0 18px var\(--dancr-color-success-soft\)[\s\S]*?inset 0 0 0 1px var\(--dancr-color-success-medium\)/,
+    /\.venue-offer-card\.venue-deal-preview \{[\s\S]*?var\(--dancr-color-success\) 28%[\s\S]*?radial-gradient\(circle at 94% 0%, var\(--dancr-color-success-soft\), transparent 13rem\)[\s\S]*?var\(--dancr-color-success\) 5%[\s\S]*?0 10px 26px var\(--dancr-color-black-soft\)[\s\S]*?inset 0 1px 0 var\(--dancr-color-white-soft\)/,
   );
+  assert.doesNotMatch(refinement.match(/\.venue-offer-card\.venue-deal-preview \{[\s\S]*?\n\}/)?.[0] || "", /0 0 18px|inset 0 0 0 1px/);
   assert.match(
     refinement,
     /\.venue-offer-card\.venue-deal-preview::before \{[\s\S]*?top: 12px;[\s\S]*?bottom: 12px;[\s\S]*?left: 0;[\s\S]*?width: 2px;[\s\S]*?background: var\(--dancr-color-success\);/,

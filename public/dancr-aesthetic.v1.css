@@ -6522,8 +6522,8 @@ body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-her
 body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-main-photo {
   position: relative !important;
   isolation: isolate;
-  min-height: clamp(96px, 22vw, 116px) !important;
-  height: clamp(96px, 22vw, 116px) !important;
+  min-height: clamp(88px, 20vw, 104px) !important;
+  height: clamp(88px, 20vw, 104px) !important;
   border: 0 !important;
   border-radius: 0 !important;
   box-shadow: none !important;
@@ -6538,7 +6538,7 @@ body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-her
   grid-template-columns: 36px minmax(0, 1fr) 36px;
   align-items: start;
   gap: 8px;
-  padding: 8px 10px 0;
+  padding: 6px 10px 0;
 }
 
 body.dancr-button-system #results.venue-profile-overlay .venue-detail
@@ -6556,9 +6556,9 @@ body.dancr-button-system #results.venue-profile-overlay .venue-detail
 body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-detail-logo-shell {
   box-sizing: border-box;
   width: calc(100% - clamp(82px, 22vw, 112px)) !important;
-  height: calc(100% - 8px) !important;
+  height: calc(100% - 6px) !important;
   max-width: 420px !important;
-  max-height: 108px !important;
+  max-height: 96px !important;
   overflow: visible !important;
   border: 0 !important;
   border-radius: 0 !important;
@@ -6706,21 +6706,11 @@ body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-sta
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 0;
   overflow: hidden;
-  border: 1px solid transparent;
+  border: 0;
   border-radius: 14px;
   background: var(--dancr-color-surface-subtle);
   box-shadow: none;
   isolation: isolate;
-}
-
-body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-status-grid::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: 2;
-  border: 1px solid var(--dancr-color-border-subtle);
-  border-radius: inherit;
-  pointer-events: none;
 }
 
 body.dancr-button-system #results.venue-profile-overlay .venue-detail
@@ -6744,7 +6734,11 @@ body.dancr-button-system #results.venue-profile-overlay .venue-detail
 
 body.dancr-button-system #results.venue-profile-overlay .venue-detail
   .venue-status-grid > * + * {
-  border-left: 1px solid var(--dancr-color-border-subtle) !important;
+  border-left: 1px solid color-mix(
+    in srgb,
+    var(--dancr-color-border-subtle) 72%,
+    transparent
+  ) !important;
 }
 
 body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-operating-summary {
@@ -6799,6 +6793,19 @@ body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-sta
   line-height: 1.15;
 }
 
+/* Hours remain neutral context. Working Now and Upcoming use their semantic
+ * colors without adding another bordered container around the status rail. */
+body.dancr-button-system #results.venue-profile-overlay .venue-detail
+  .venue-operating-summary :is(.venue-status-kicker, .venue-status-pill) {
+  color: var(--dancr-color-text-muted) !important;
+}
+
+body.dancr-button-system #results.venue-profile-overlay .venue-detail
+  .venue-operating-summary .venue-operating-status {
+  color: var(--dancr-color-text-primary) !important;
+  text-shadow: none !important;
+}
+
 body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-quick-stat {
   min-height: 70px !important;
   padding: 9px 8px !important;
@@ -6844,12 +6851,45 @@ body.dancr-button-system #results.venue-profile-overlay .venue-detail
 
 body.dancr-button-system #results.venue-profile-overlay .venue-detail
   .venue-quick-stat.is-working:not(.is-empty) span {
-  color: color-mix(in srgb, var(--dancr-color-success) 58%, var(--dancr-color-text-muted)) !important;
+  color: color-mix(in srgb, var(--dancr-color-success) 68%, var(--dancr-color-text-muted)) !important;
+}
+
+body.dancr-button-system #results.venue-profile-overlay .venue-detail
+  .venue-quick-stat.is-working:not(.is-empty) {
+  background: linear-gradient(
+    180deg,
+    transparent,
+    color-mix(in srgb, var(--dancr-color-success) 7%, var(--dancr-color-surface-subtle))
+  ) !important;
 }
 
 body.dancr-button-system #results.venue-profile-overlay .venue-detail
   .venue-quick-stat.is-upcoming strong {
   color: var(--dancr-color-info) !important;
+}
+
+body.dancr-button-system #results.venue-profile-overlay .venue-detail
+  .venue-quick-stat.is-upcoming:not(.is-empty) span {
+  color: color-mix(in srgb, var(--dancr-color-info) 68%, var(--dancr-color-text-muted)) !important;
+}
+
+body.dancr-button-system #results.venue-profile-overlay .venue-detail
+  .venue-quick-stat.is-upcoming:not(.is-empty) {
+  background: linear-gradient(
+    180deg,
+    transparent,
+    color-mix(in srgb, var(--dancr-color-info) 7%, var(--dancr-color-surface-subtle))
+  ) !important;
+}
+
+body.dancr-button-system #results.venue-profile-overlay .venue-detail
+  button.venue-quick-stat.is-working:focus-visible {
+  outline-color: var(--dancr-color-success);
+}
+
+body.dancr-button-system #results.venue-profile-overlay .venue-detail
+  button.venue-quick-stat.is-upcoming:focus-visible {
+  outline-color: var(--dancr-color-info);
 }
 
 body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-info .info-tile {
@@ -7272,19 +7312,21 @@ body.dancr-button-system #results.venue-profile-overlay .venue-detail
   min-width: 0 !important;
   overflow: hidden !important;
   padding: 8px 10px !important;
-  border: 1px solid var(--dancr-color-success-strong) !important;
+  border: 1px solid color-mix(
+    in srgb,
+    var(--dancr-color-success) 28%,
+    var(--dancr-color-border-subtle)
+  ) !important;
   border-radius: 15px !important;
   background:
     radial-gradient(circle at 94% 0%, var(--dancr-color-success-soft), transparent 13rem),
     color-mix(
       in srgb,
-      var(--dancr-color-success) 8%,
+      var(--dancr-color-success) 5%,
       var(--dancr-color-surface-subtle)
     ) !important;
   box-shadow:
-    0 12px 32px var(--dancr-color-black-soft),
-    0 0 18px var(--dancr-color-success-soft),
-    inset 0 0 0 1px var(--dancr-color-success-medium),
+    0 10px 26px var(--dancr-color-black-soft),
     inset 0 1px 0 var(--dancr-color-white-soft) !important;
 }
 
