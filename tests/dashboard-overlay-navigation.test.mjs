@@ -83,7 +83,7 @@ test("customer, dancer, venue, and admin access screens cannot expose public dis
   assert.match(homeSource, /<form class="auth-form" id="venueLoginForm"/);
   assert.match(homeSource, /<section class="page-panel" id="dancerSignupPage"/);
   assert.match(homeSource, /<section class="page-panel" id="adminDashboard"/);
-  assert.match(homeSource, /<form class="auth-form admin-login-form" id="adminLoginForm">/);
+  assert.match(homeSource, /<form class="auth-card auth-form admin-login-form" id="adminLoginForm">/);
   const accountCreationLayer = homeSource.match(
     /#dancerSignupPage\.page-panel\.show,\s*#stripeCheckoutPage\.page-panel\.show \{\s*z-index: (\d+) !important;\s*isolation: isolate;\s*\}/,
   );

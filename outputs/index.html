@@ -28809,6 +28809,86 @@
       }
     }
 
+    #adminDashboard .admin-login-form {
+      width: min(100%, 520px) !important;
+      max-width: 520px !important;
+      display: grid !important;
+      gap: 14px !important;
+      margin: 0 auto !important;
+      padding: 18px !important;
+      overflow: visible !important;
+      border: 1px solid rgba(255,255,255,.11) !important;
+      border-radius: 16px !important;
+      background: #0b0b10 !important;
+      box-shadow: 0 28px 80px rgba(0,0,0,.38) !important;
+    }
+
+    #adminDashboard .admin-login-form .admin-auth-tabs {
+      width: 100%;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 6px;
+      padding: 5px;
+      border: 1px solid rgba(255,255,255,.1);
+      border-radius: 16px;
+      background: rgba(255,255,255,.045);
+    }
+
+    #adminDashboard .admin-login-form .auth-tab {
+      width: 100%;
+      min-height: 46px;
+      border: 0;
+      border-radius: 12px;
+      color: #d8cfeb;
+      background: transparent;
+    }
+
+    #adminDashboard .admin-login-form .auth-tab.active {
+      color: #fff;
+      background: linear-gradient(135deg, rgba(124,58,237,.72), rgba(76,29,149,.76));
+      box-shadow: inset 0 0 0 1px rgba(196,167,255,.1), 0 8px 22px rgba(76,29,149,.2);
+    }
+
+    #adminDashboard .admin-login-form .field {
+      width: 100%;
+    }
+
+    #adminDashboard .admin-login-form .field > input,
+    #adminDashboard .admin-login-form .password-wrap > input {
+      min-height: 48px !important;
+      border-radius: 12px !important;
+      background: #15141b !important;
+    }
+
+    #adminDashboard .admin-login-form .forgot-password-link {
+      width: 100% !important;
+      min-height: 44px !important;
+      justify-self: stretch !important;
+      padding: 0 12px !important;
+      border: 1px solid rgba(248,250,252,.12) !important;
+      border-radius: 12px !important;
+      color: rgba(255,255,255,.88) !important;
+      background: rgba(24,24,29,.94) !important;
+      text-align: center;
+    }
+
+    #adminDashboard .admin-login-form .admin-login {
+      width: 100% !important;
+      min-height: 48px !important;
+      border: 1px solid rgba(166,126,255,.54) !important;
+      border-radius: 12px !important;
+      color: #fff !important;
+      background: linear-gradient(135deg,#7c3aed,#4c1d95) !important;
+      box-shadow: 0 12px 28px rgba(76,29,149,.26), 0 0 20px rgba(124,58,237,.14) !important;
+    }
+
+    @media (max-width: 680px) {
+      #adminDashboard .admin-login-form {
+        gap: 13px !important;
+        padding: 16px !important;
+      }
+    }
+
     #adminDashboard .admin-login-form .password-wrap {
       position: relative !important;
       display: block !important;
@@ -41745,8 +41825,8 @@
             </button>
           </div>
         </div>
-        <form class="auth-form admin-login-form" id="adminLoginForm">
-          <div class="tabs" aria-label="Admin auth mode">
+        <form class="auth-card auth-form admin-login-form" id="adminLoginForm">
+          <div class="auth-tabs admin-auth-tabs" aria-label="Admin auth mode">
             <button class="auth-tab active" id="adminLoginModeBtn" type="button" data-admin-auth-mode="login">Sign in</button>
             <button class="auth-tab" id="adminSignupModeBtn" type="button" data-admin-auth-mode="signup">Create</button>
           </div>
@@ -41768,7 +41848,7 @@
             <input id="adminCode" type="password" autocomplete="one-time-code">
           </div>
           <button class="forgot-password-link" id="adminForgotPasswordBtn" type="button">Forgot password?</button>
-          <button class="admin-login" id="adminLoginBtn" type="submit">Admin login</button>
+          <button class="admin-login" id="adminLoginBtn" type="submit">Sign in</button>
           <button class="admin-login" id="adminCreateBtn" type="submit" hidden>Create admin account</button>
           <div class="rule-note" id="adminLiveStatus">Sign in or create an admin account to continue.</div>
         </form>
@@ -62946,7 +63026,7 @@
       } finally {
         button.disabled = false;
         if (adminAuthMode === "signup") button.textContent = "Create admin account";
-        else button.textContent = "Admin login";
+        else button.textContent = "Sign in";
       }
     });
 

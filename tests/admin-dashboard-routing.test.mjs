@@ -48,6 +48,20 @@ test("admin uses the same routed dashboard chrome and structured loading hierarc
   assert.doesNotMatch(adminClient, /className="top-nav"/);
 });
 
+test("admin authentication follows the same responsive form hierarchy as other sign-in pages", () => {
+  assert.match(adminClient, /\.sign-in \{ max-width: 520px; display: grid; gap: 14px; padding: 18px;/);
+  assert.match(adminClient, /\.sign-in \.forgot-password \{ width: 100%; min-height: 44px; justify-self: stretch;/);
+  assert.match(adminClient, /\.sign-in > button\[type="submit"\] \{ width: 100%; min-height: 48px;[\s\S]*?linear-gradient\(135deg,#7c3aed,#4c1d95\)/);
+  assert.match(adminClient, /@media \(max-width: 680px\)[\s\S]*?\.sign-in \{ gap: 13px; padding: 16px; \}/);
+
+  assert.match(liveApp, /<form class="auth-card auth-form admin-login-form" id="adminLoginForm">/);
+  assert.match(liveApp, /class="auth-tabs admin-auth-tabs" aria-label="Admin auth mode"/);
+  assert.match(liveApp, /id="adminLoginBtn" type="submit">Sign in<\/button>/);
+  assert.match(liveApp, /#adminDashboard \.admin-login-form \{[\s\S]*?display: grid !important;[\s\S]*?gap: 14px !important;[\s\S]*?padding: 18px !important;/);
+  assert.match(liveApp, /#adminDashboard \.admin-login-form \.forgot-password-link \{[\s\S]*?width: 100% !important;[\s\S]*?min-height: 44px !important;/);
+  assert.match(liveApp, /else button\.textContent = "Sign in";/);
+});
+
 test("Login / Join visibly links to separate platform admin access", () => {
   assert.match(
     homeRoute,

@@ -5123,7 +5123,7 @@ function AdminStyles() {
       .admin-action-toast > span { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 999px; color: #07140d; background: #32ffa4; font-weight: 950; }
       .admin-action-toast strong { overflow-wrap: anywhere; }
       .admin-action-toast button { width: 34px; min-height: 34px; padding: 0; border-radius: 999px; color: #eafff4; background: rgba(255,255,255,.08); font-size: 22px; line-height: 1; }
-      .sign-in { max-width: 430px; }
+      .sign-in { max-width: 430px; display: grid; gap: 14px; padding: 18px; box-shadow: 0 28px 80px rgba(0,0,0,.38); }
       .segmented { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: 5px; border-radius: 8px; background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.1); }
       .segmented button { min-height: 42px; border: 0; border-radius: 8px; color: #fff; background: transparent; font-weight: 900; cursor: pointer; }
       .segmented button.active { background: linear-gradient(135deg, rgba(139,92,246,.62), rgba(34,199,255,.22)); }
@@ -5137,7 +5137,8 @@ function AdminStyles() {
       button { min-height: 42px; border: 0; border-radius: 8px; color: #090911; background: #f7f2ff; font-weight: 900; cursor: pointer; white-space: normal; line-height: 1.15; }
       .password-control button { width: 30px; min-width: 30px; max-width: 30px; height: 30px; min-height: 30px; padding: 0; }
       button:disabled { opacity: .62; cursor: wait; }
-      .forgot-password { justify-self: end; min-height: auto; padding: 0; border: 0; background: transparent; color: #94e5ff; font-size: 13px; font-weight: 900; cursor: pointer; }
+      .forgot-password { width: 100%; min-height: 44px; justify-self: stretch; padding: 0 12px; border: 1px solid rgba(248,250,252,.12); border-radius: 12px; background: rgba(24,24,29,.94); color: rgba(255,255,255,.88); font-size: 13px; font-weight: 900; line-height: 1.15; text-align: center; cursor: pointer; }
+      .forgot-password:hover, .forgot-password:focus-visible { border-color: rgba(139,92,246,.72); color: #fff; outline: 2px solid rgba(166,126,255,.42); outline-offset: 2px; }
       .metric { min-height: 54px; display: grid; align-content: center; gap: 4px; border-top: 1px solid rgba(255,255,255,.08); }
       .metric:first-child { border-top: 0; }
       .metric span, .empty { color: #b9accd; font-size: 13px; font-weight: 850; }
@@ -5685,9 +5686,14 @@ function AdminStyles() {
       .admin-panel { border-color: var(--mydancr-dashboard-border); border-radius: var(--mydancr-dashboard-radius); background: var(--mydancr-dashboard-panel); box-shadow: none; }
       .support-admin-panel { grid-column: auto; }
       .admin-warning { margin-bottom: var(--mydancr-dashboard-gap); border-radius: 14px; }
-      .sign-in { max-width: 520px; border-color: var(--mydancr-dashboard-border); border-radius: var(--mydancr-dashboard-radius); background: var(--mydancr-dashboard-panel); }
+      .sign-in { max-width: 520px; display: grid; gap: 14px; padding: 18px; border-color: var(--mydancr-dashboard-border); border-radius: var(--mydancr-dashboard-radius); background: var(--mydancr-dashboard-panel); box-shadow: 0 28px 80px rgba(0,0,0,.38); }
+      .sign-in .segmented { width: 100%; gap: 6px; padding: 5px; border-radius: 16px; background: rgba(255,255,255,.045); }
+      .sign-in .segmented button { min-height: 46px; border-radius: 12px; }
+      .sign-in .segmented button.active { background: linear-gradient(135deg, rgba(124,58,237,.72), rgba(76,29,149,.76)); box-shadow: inset 0 0 0 1px rgba(196,167,255,.1), 0 8px 22px rgba(76,29,149,.2); }
       .sign-in input { min-height: 48px; border-radius: 12px; background: #15141b; }
-      .sign-in > button[type="submit"] { min-height: 48px; border-radius: 12px; }
+      .sign-in .forgot-password { width: 100%; min-height: 44px; justify-self: stretch; border: 1px solid rgba(248,250,252,.12); border-radius: 12px; color: rgba(255,255,255,.88); background: rgba(24,24,29,.94); }
+      .sign-in > button[type="submit"] { width: 100%; min-height: 48px; border: 1px solid rgba(166,126,255,.54); border-radius: 12px; color: #fff; background: linear-gradient(135deg,#7c3aed,#4c1d95); box-shadow: 0 12px 28px rgba(76,29,149,.26), 0 0 20px rgba(124,58,237,.14); }
+      .sign-in > button[type="submit"]:hover, .sign-in > button[type="submit"]:focus-visible { border-color: rgba(196,167,255,.78); outline: 2px solid rgba(166,126,255,.38); outline-offset: 2px; }
 
       @media (prefers-reduced-motion: reduce) {
         .admin-dashboard-loading-pill, .admin-dashboard-loading-copy span, .admin-dashboard-loading-actions span, .admin-dashboard-loading-metrics span, .admin-workspace-loading span:not(.dashboard-sr-only) { animation: none; }
@@ -5709,6 +5715,7 @@ function AdminStyles() {
         .admin-workspace-nav button { min-height: 44px; padding: 0 6px; font-size: 12px; }
         .admin-workspace-loading > div { grid-template-columns: 1fr; }
         .admin-panel, .approval-row, .submission-detail { padding: 12px; }
+        .sign-in { gap: 13px; padding: 16px; }
       }
     `}</style>
   );
