@@ -16,7 +16,7 @@ const lateMobileHeader = homeSource.match(
 )?.[0] || "";
 
 const mobileAuthClearance = homeSource.match(
-  /\/\* The utility header is hidden while account surfaces are open,[\s\S]*?@media \(max-width: 720px\) \{[\s\S]*?#authPage\.show \{[\s\S]*?top: var\(--dancr-auth-viewport-top, 0px\);[\s\S]*?height: var\(--dancr-auth-viewport-height, 100dvh\);[\s\S]*?#authPage > \.page-inner \{[\s\S]*?padding-top: max\(10px, env\(safe-area-inset-top, 0px\)\);[\s\S]*?padding-bottom: calc\(112px \+ env\(safe-area-inset-bottom\)\);[\s\S]*?#authPage \.auth-choice-card \{[\s\S]*?overflow: visible !important;[\s\S]*?#authPage > \.page-inner::after \{[\s\S]*?height: calc\(112px \+ env\(safe-area-inset-bottom\)\);[\s\S]*?\}\s*\}/,
+  /\/\* The utility header is hidden while account surfaces are open,[\s\S]*?@media \(max-width: 720px\) \{[\s\S]*?#authPage\.show \{[\s\S]*?top: var\(--dancr-auth-viewport-top, 0px\);[\s\S]*?height: var\(--dancr-auth-viewport-height, 100dvh\);[\s\S]*?#authPage > \.page-inner \{[\s\S]*?padding-top: max\(10px, env\(safe-area-inset-top, 0px\)\);[\s\S]*?padding-bottom: max\(20px, env\(safe-area-inset-bottom\)\);[\s\S]*?#authPage \.auth-choice-card \{[\s\S]*?overflow: visible !important;[\s\S]*?#authPage > \.page-inner::after \{[\s\S]*?content: none;[\s\S]*?height: 0;[\s\S]*?\}\s*\}/,
 )?.[0] || "";
 
 test("mobile utility header is rounded, compact, and aligned with the page", () => {
@@ -160,15 +160,16 @@ test("the mobile login sheet tracks the keyboard-reduced visual viewport", () =>
   assert.doesNotMatch(mobileAuthClearance, /\.page-panel\.show/);
 });
 
-test("the mobile login sheet scrolls every sign-in and signup action above the floating navigation", () => {
+test("every mobile sign-in and account-creation card scrolls without floating controls", () => {
   assert.match(
     mobileAuthClearance,
-    /#authPage > \.page-inner \{[\s\S]*?min-height: 100%;[\s\S]*?padding-bottom: calc\(112px \+ env\(safe-area-inset-bottom\)\);/,
+    /#authPage > \.page-inner \{[\s\S]*?min-height: 100%;[\s\S]*?padding-bottom: max\(20px, env\(safe-area-inset-bottom\)\);/,
   );
   assert.match(mobileAuthClearance, /#authPage \.auth-choice-card \{\s*overflow: visible !important;\s*\}/);
-  assert.match(mobileAuthClearance, /#authPage \.auth-entry-tabs \{[\s\S]*?position: sticky;[\s\S]*?z-index: 4;/);
-  assert.match(mobileAuthClearance, /#authPage #authForm:not\(\[hidden\]\) #authSubmit \{[\s\S]*?position: sticky;[\s\S]*?bottom: max\(10px, env\(safe-area-inset-bottom, 0px\)\);/);
-  assert.match(mobileAuthClearance, /#authPage > \.page-inner::after \{[\s\S]*?content: "";[\s\S]*?display: block;[\s\S]*?height: calc\(112px \+ env\(safe-area-inset-bottom\)\);/);
+  assert.match(mobileAuthClearance, /#authPage \.auth-entry-tabs \{[\s\S]*?position: static;[\s\S]*?top: auto;[\s\S]*?z-index: auto;/);
+  assert.match(mobileAuthClearance, /#authPage #authForm:not\(\[hidden\]\) #authSubmit \{[\s\S]*?position: static;[\s\S]*?bottom: auto;[\s\S]*?z-index: auto;/);
+  assert.match(mobileAuthClearance, /#authPage > \.page-inner::after \{[\s\S]*?content: none;[\s\S]*?display: none;[\s\S]*?height: 0;/);
+  assert.doesNotMatch(mobileAuthClearance, /#authPage[^\{]*\{[^}]*position: sticky;/);
   assert.match(homeSource, /id="authSubmit" type="submit">Sign in<\/button>/);
   assert.match(homeSource, /id="authCreateTab"[^>]*>Create account<\/button>/);
   assert.doesNotMatch(homeSource, /id="customerJoinNowBtn"/);

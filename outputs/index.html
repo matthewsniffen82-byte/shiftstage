@@ -39953,7 +39953,7 @@
           #authPage > .page-inner {
             min-height: 100%;
             padding-top: max(10px, env(safe-area-inset-top, 0px));
-            padding-bottom: calc(112px + env(safe-area-inset-bottom));
+            padding-bottom: max(20px, env(safe-area-inset-bottom));
           }
 
           #authPage .auth-choice-card {
@@ -39961,21 +39961,21 @@
           }
 
           #authPage .auth-entry-tabs {
-            position: sticky;
-            top: max(66px, calc(56px + env(safe-area-inset-top, 0px)));
-            z-index: 4;
+            position: static;
+            top: auto;
+            z-index: auto;
           }
 
           #authPage #authForm:not([hidden]) #authSubmit {
-            position: sticky;
-            bottom: max(10px, env(safe-area-inset-bottom, 0px));
-            z-index: 4;
+            position: static;
+            bottom: auto;
+            z-index: auto;
           }
 
           #authPage > .page-inner::after {
-            content: "";
-            display: block;
-            height: calc(112px + env(safe-area-inset-bottom));
+            content: none;
+            display: none;
+            height: 0;
           }
         }
 
