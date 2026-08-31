@@ -36,6 +36,7 @@ test("the canonical in-app venue page is dedicated to the selected club and its 
   assert.match(venueDetail, /class="venue-secondary-actions"[\s\S]*?class="action-btn secondary follow-venue-btn[\s\S]*?data-venue-follow="\$\{venueValue\}"[\s\S]*?class="action-btn secondary venue-detail-share"[\s\S]*?data-share-venue="\$\{venueValue\}"/);
   assert.match(venueDetail, /venueDirectionsMarkup\(\{ venue, className: "venue-address-directions", city \}\)/);
   assert.match(venueDetail, /class="venue-identity-meta"[\s\S]*?class="venue-identity-location"><span class="meta">[\s\S]*?details\.city[\s\S]*?details\.state[\s\S]*?venue-identity-distance[\s\S]*?details\.distanceLabel/);
+  assert.match(venueDetail, /<h2 id="venueDetailName" class="venue-detail-accessible-name">\$\{details\.name\}<\/h2>[\s\S]*?class="venue-identity-meta"/);
   assert.match(venueDetail, /details\.address \? `<div class="venue-address-line"><span>[\s\S]*?escapeHtml\(details\.address\)[\s\S]*?: ""/);
   assert.equal((venueDetail.match(/actionIconMarkup\("pin"\)/g) || []).length, 0);
   assert.equal((venueDetail.match(/venueDirectionsMarkup\(/g) || []).length, 1);
@@ -211,7 +212,9 @@ test("venue profile hierarchy stays compact and carries the restrained venue bra
   assert.match(refinement, /\.venue-hero-brand-row \.venue-detail-logo-shell \{[\s\S]*?width: 100% !important;/);
   assert.match(refinement, /@media \(max-width: 650px\) \{[\s\S]*?\.venue-hero-brand-row \.venue-detail-logo-shell \{[\s\S]*?width: 100% !important;/);
   assert.match(refinement, /\.venue-hero-body \{[\s\S]*?display: grid !important;[\s\S]*?gap: 6px !important;[\s\S]*?padding: 8px 12px 10px !important;/);
-  assert.match(refinement, /#venueDetailName \{[\s\S]*?color: var\(--dancr-color-brand-core\) !important;/);
+  assert.match(refinement, /#venueDetailName\.venue-detail-accessible-name \{[\s\S]*?position: absolute !important;[\s\S]*?width: 1px !important;[\s\S]*?height: 1px !important;[\s\S]*?clip-path: inset\(50%\) !important;[\s\S]*?white-space: nowrap !important;/);
+  const accessibleVenueNameRule = refinement.match(/#venueDetailName\.venue-detail-accessible-name \{[\s\S]*?\n\}/)?.[0] || "";
+  assert.doesNotMatch(accessibleVenueNameRule, /display:\s*none|visibility:\s*hidden/);
   assert.match(refinement, /\.venue-identity-meta \{[\s\S]*?display: flex;[\s\S]*?flex-wrap: wrap;/);
   assert.match(refinement, /\.venue-identity-location \{[\s\S]*?display: inline-flex;[\s\S]*?gap: 5px;/);
   assert.match(refinement, /\.venue-status-grid \{[\s\S]*?position: relative;[\s\S]*?grid-template-columns: repeat\(3, minmax\(0, 1fr\)\);[\s\S]*?gap: 0;[\s\S]*?border: 0;[\s\S]*?background: var\(--dancr-color-surface-subtle\);[\s\S]*?isolation: isolate;/);
