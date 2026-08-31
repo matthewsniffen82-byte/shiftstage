@@ -50,8 +50,6 @@ test("I’m Going and followed profile sections use live customer records and pr
   assert.match(dashboard, /"\/api\/customer\/follows"/);
   assert.match(dashboard, /"\/api\/customer\/venue-follows"/);
   assert.match(dashboard, /"\/api\/customer\/directions"/);
-  assert.match(dashboard, /navigator\.geolocation\.getCurrentPosition/);
-  assert.match(dashboard, /const haversine = Math\.sin/);
   assert.match(dashboard, /srcSet=\{image\.imageSrcSet \|\| undefined\}/);
   assert.match(dashboard, /customerDancerHref\(dancer\)/);
   assert.match(dashboard, /customerVenueHref\(venue\)/);
@@ -62,13 +60,18 @@ test("I’m Going and followed profile sections use live customer records and pr
   assert.match(dashboard, /id="customer-followed-dancers"[\s\S]*?id="customer-followed-clubs"[\s\S]*?id="customer-saved-deals"[\s\S]*?id="customer-going"/);
 });
 
-test("followed dancers are grouped by city in a responsive profile grid", () => {
+test("followed dancers and clubs are grouped by city without location-based distance UI", () => {
   assert.match(dashboard, /function customerFollowedDancerCity[\s\S]*?dancer\?\.city \|\| dancer\?\.nextShift\?\.venue\.city[\s\S]*?City not listed/);
   assert.match(dashboard, /function groupFollowedDancersByCity[\s\S]*?customerDashboardCollator\.compare\(left\.city, right\.city\)/);
   assert.match(dashboard, /group\.follows\.slice\(\)\.sort[\s\S]*?left\.dancer\?\.stageName[\s\S]*?right\.dancer\?\.stageName/);
+  assert.match(dashboard, /function customerFollowedVenueCity[\s\S]*?item\.venue\?\.city[\s\S]*?City not listed/);
+  assert.match(dashboard, /function groupFollowedVenuesByCity[\s\S]*?left\.venue\?\.name[\s\S]*?right\.venue\?\.name[\s\S]*?customerDashboardCollator\.compare\(left\.city, right\.city\)/);
   assert.match(dashboard, /customer-followed-city-list[\s\S]*?customer-followed-city-heading[\s\S]*?customer-saved-card-grid customer-followed-dancer-grid/);
+  assert.match(dashboard, /followedVenueCityGroups\.map[\s\S]*?customer-followed-city-heading[\s\S]*?group\.follows\.length === 1 \? "club" : "clubs"/);
   assert.match(dashboard, /\.customer-followed-dancer-grid \{ grid-template-columns: repeat\(2, minmax\(0, 1fr\)\)/);
   assert.match(dashboard, /\.customer-followed-dancer-grid \.customer-saved-card-image \{ height: auto; aspect-ratio: 4 \/ 5; \}/);
+  assert.match(dashboard, /\.customer-saved-head \{ align-items: center; flex-direction: row; \}/);
+  assert.doesNotMatch(dashboard, /navigator\.geolocation\.getCurrentPosition|customerVenueDistance|Refresh distance|Show distance|Distances updated from your current location/);
 });
 
 test("fictional club direction controls navigate to the shared MyDancr destination", () => {

@@ -334,7 +334,7 @@ test("shared dashboard JSON requests are role-aware and preserve refreshed sessi
 test("shared dashboard panels use the refresh-aware request boundary", () => {
   const notificationPanel = dashboard.match(/function NotificationPanel[\s\S]*?function SupportInboxPanel/)?.[0] || "";
   const supportPanel = dashboard.match(/function SupportInboxPanel[\s\S]*?function AccountControlsPanel/)?.[0] || "";
-  const customerActions = dashboard.match(/async function runCustomerAction[\s\S]*?function requestLocation/)?.[0] || "";
+  const customerActions = dashboard.match(/async function runCustomerAction[\s\S]*?function CustomerNightPanel/)?.[0] || "";
   assert.match(notificationPanel, /requestDashboardJson\("\/api\/notifications"/);
   assert.doesNotMatch(notificationPanel, /authorization: `Bearer/);
   assert.match(supportPanel, /requestDashboardJson\("\/api\/support"/);
@@ -476,7 +476,7 @@ test("account security actions prevent duplicate and post-sign-out work", () => 
   assert.match(controls, /onClick=\{signOut\} disabled=\{isWorking\}/);
 });
 
-test("customer saved actions and location callbacks ignore stale work", () => {
+test("customer saved actions ignore stale work without starting location requests", () => {
   const customerPanel = dashboard.match(/function CustomerPanel[\s\S]*?function CustomerNightPanel/)?.[0] || "";
   assert.match(customerPanel, /const mountedRef = useRef\(false\);/);
   assert.match(customerPanel, /const actionSequenceRef = useRef\(0\);/);
@@ -486,9 +486,7 @@ test("customer saved actions and location callbacks ignore stale work", () => {
   assert.equal((customerPanel.match(/signal: controller\.signal/g) || []).length, 2);
   assert.equal((customerPanel.match(/if \(!isCurrentCustomerAction\(requestId, controller\)\) return;/g) || []).length, 2);
   assert.match(customerPanel, /mountedRef\.current = false;[\s\S]*?actionSequenceRef\.current \+= 1;[\s\S]*?actionAbortRef\.current\?\.abort\(\)/);
-  assert.match(customerPanel, /const locationSequenceRef = useRef\(0\);/);
-  assert.match(customerPanel, /const locationInFlightRef = useRef\(false\);/);
-  assert.equal((customerPanel.match(/if \(!mountedRef\.current \|\| requestId !== locationSequenceRef\.current\) return;/g) || []).length, 2);
+  assert.doesNotMatch(customerPanel, /locationSequenceRef|locationInFlightRef|navigator\.geolocation/);
 });
 
 test("venue publication review prevents duplicate and stale decisions", () => {
