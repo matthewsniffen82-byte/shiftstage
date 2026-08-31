@@ -302,6 +302,7 @@ export default async function DancerPublicPage({ params }: PageProps) {
         </section>
 
         <DancerPhotoCarousel
+          dancerId={profile.id}
           photos={gallery.map((photo) => ({
             id: photo.id,
             imageUrl: photo.imageUrl,
@@ -429,8 +430,8 @@ function PublicProfileStyles() {
       .profile-header-metrics dt { max-width: 100%; overflow: hidden; color: #8f849c; font-size: clamp(8px, 1.9vw, 10px); font-weight: 850; line-height: 1.15; text-align: center; text-overflow: ellipsis; white-space: nowrap; }
       .profile-titlebar-controls { width: 44px; display: grid; grid-template-columns: 44px; align-self: start; justify-self: end; }
       .profile-header-report { min-width: 0; display: inline-flex; align-items: center; }
-      .profile-header-report-toggle { min-height: 20px; display: inline-flex; align-items: center; padding: 0 2px; border: 0; border-radius: 0; color: #81798b; background: transparent; box-shadow: none; font-size: 8px; font-weight: 800; line-height: 1; text-decoration: underline; text-decoration-color: transparent; text-underline-offset: 2px; cursor: pointer; }
-      .profile-header-report-toggle:hover, .profile-header-report-toggle:focus-visible { color: #c9c1d2; outline: none; text-decoration-color: currentColor; }
+      .profile-header-report-toggle { min-height: 28px; display: inline-flex; align-items: center; padding: 0 9px; border: 1px solid rgba(180,169,196,.2); border-radius: 999px; color: #bdb4c8; background: rgba(255,255,255,.035); box-shadow: none; font-size: 10px; font-weight: 850; line-height: 1; cursor: pointer; }
+      .profile-header-report-toggle:hover, .profile-header-report-toggle:focus-visible { border-color: rgba(196,167,255,.42); color: #fff; background: rgba(124,58,237,.1); outline: none; }
       .profile-header-report-toggle:disabled { cursor: default; opacity: .7; }
       .public-profile-close { position: static; width: 44px; min-height: 44px; display: inline-grid; place-items: center; padding: 0; border: 1px solid rgba(180,169,196,.2); border-radius: 50%; color: #fff; background: rgba(24,24,30,.82); box-shadow: inset 0 1px 0 rgba(255,255,255,.04), 0 10px 24px rgba(0,0,0,.28); font-size: 26px; line-height: 1; cursor: pointer; }
       .public-profile-close:hover, .public-profile-close:focus-visible { border-color: #7eeaff; outline: none; box-shadow: 0 0 0 3px rgba(126,234,255,.13), 0 0 22px rgba(34,199,255,.18); }
@@ -646,9 +647,9 @@ function PublicProfileStyles() {
       .profile-media-viewer-copy { min-width: 0; display: grid; gap: 3px; }
       .profile-media-viewer-copy span { color: #aaa0b8; font-size: 12px; }
       .profile-media-viewer-actions { min-width: 92px; display: grid; justify-items: end; gap: 8px; }
-      .profile-media-viewer-share { min-height: 40px; display: inline-flex; align-items: center; justify-content: center; gap: 7px; padding: 0 15px; border: 1px solid rgba(255,255,255,.2); border-radius: 999px; color: #fff; background: rgba(255,255,255,.08); font-size: 12px; font-weight: 900; cursor: pointer; backdrop-filter: blur(10px); }
+      .profile-media-viewer-share, .profile-media-viewer-report { min-height: 40px; display: inline-flex; align-items: center; justify-content: center; gap: 7px; padding: 0 15px; border: 1px solid rgba(255,255,255,.2); border-radius: 999px; color: #fff; background: rgba(255,255,255,.08); font-size: 12px; font-weight: 900; cursor: pointer; backdrop-filter: blur(10px); }
       .profile-media-viewer-like { min-height: 40px; display: inline-flex; align-items: center; justify-content: center; gap: 7px; padding: 0 15px; border: 1px solid rgba(255,255,255,.2); border-radius: 999px; color: #fff; background: rgba(255,255,255,.08); font-size: 12px; font-weight: 900; cursor: pointer; backdrop-filter: blur(10px); }
-      .profile-media-viewer-share svg, .profile-media-viewer-like svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.9; }
+      .profile-media-viewer-share svg, .profile-media-viewer-report svg, .profile-media-viewer-like svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.9; }
       .profile-media-viewer-like.is-liked { color: #fff; }
       .profile-media-viewer-like.is-liked svg { color: #ff304f; fill: currentColor; }
       .profile-media-viewer-like:disabled { opacity: .64; cursor: wait; }
@@ -666,9 +667,9 @@ function PublicProfileStyles() {
       .profile-media-viewer.is-photo .profile-media-viewer-footer { background: transparent; }
       .profile-media-viewer .profile-media-viewer-copy { position: absolute; right: 82px; bottom: max(22px, calc(env(safe-area-inset-bottom) + 14px)); left: max(18px, env(safe-area-inset-left)); gap: 4px; text-shadow: 0 2px 8px rgba(0,0,0,.9); }
       .profile-media-viewer .profile-media-viewer-actions { position: absolute; right: max(12px, env(safe-area-inset-right)); bottom: max(22px, calc(env(safe-area-inset-bottom) + 14px)); min-width: 0; pointer-events: auto; }
-      .profile-media-viewer .profile-media-viewer-share { width: 52px; min-width: 52px; max-width: 52px; height: 52px; min-height: 52px; max-height: 52px; display: grid; place-items: center; gap: 0; padding: 6px 0 4px; border-radius: 50% !important; font-size: 9px; line-height: 1; }
+      .profile-media-viewer .profile-media-viewer-share, .profile-media-viewer .profile-media-viewer-report { width: 52px; min-width: 52px; max-width: 52px; height: 52px; min-height: 52px; max-height: 52px; display: grid; place-items: center; gap: 0; padding: 6px 0 4px; border-radius: 50% !important; font-size: 9px; line-height: 1; }
       .profile-media-viewer .profile-media-viewer-like { width: 52px; min-width: 52px; max-width: 52px; height: 52px; min-height: 52px; max-height: 52px; display: grid; place-items: center; gap: 0; padding: 6px 0 4px; border-radius: 50% !important; font-size: 9px; line-height: 1; }
-      .profile-media-viewer .profile-media-viewer-share svg, .profile-media-viewer .profile-media-viewer-like svg { width: 21px; height: 21px; }
+      .profile-media-viewer .profile-media-viewer-share svg, .profile-media-viewer .profile-media-viewer-report svg, .profile-media-viewer .profile-media-viewer-like svg { width: 21px; height: 21px; }
       .profile-media-viewer .profile-media-viewer-share-status { position: absolute; right: 56px; bottom: 4px; width: max-content; max-width: 180px; text-shadow: 0 1px 5px #000; }
       .profile-media-viewer-preload { position: absolute; width: 1px; height: 1px; overflow: hidden; opacity: 0; pointer-events: none; }
       .profile-media-viewer-preload img, .profile-media-viewer-preload video { width: 1px; height: 1px; }

@@ -29,7 +29,7 @@ test("full dancer profiles share the exact TV video being viewed", () => {
   assert.match(publicPhotoCarousel, /className="profile-media-viewer-share-status"/);
   assert.match(
     publicProfilePage,
-    /\.profile-media-viewer-share \{[^}]*min-height: 40px;[^}]*border-radius: 999px;/,
+    /\.profile-media-viewer-share, \.profile-media-viewer-report \{[^}]*min-height: 40px;[^}]*border-radius: 999px;/,
   );
 });
 

@@ -288,7 +288,8 @@ test("the live mobile profile separates profile actions from venue travel action
   assert.match(homeSource, /function profileActionButtonMarkup\(icon, label\)/);
   assert.doesNotMatch(liveActionMarkup, /Sign in required|No sign-in needed|No shift posted|profile-action-requirement/);
   assert.doesNotMatch(liveActionMarkup, /"account"|"public"|"no-shift"/);
-  assert.doesNotMatch(homeSource, /class="profile-modal-report-link"|id="reportBtn"/);
+  assert.match(homeSource, /class="profile-header-report-toggle" id="reportBtn"/);
+  assert.doesNotMatch(homeSource, /class="profile-modal-report-link"/);
   assert.doesNotMatch(homeSource, /id="profileActionOverflowToggle"|id="profileActionOverflowMenu"/);
   assert.doesNotMatch(homeSource, /data-profile-more-menu|data-profile-more-actions|data-profile-schedule-action/);
   assert.match(
@@ -319,8 +320,9 @@ test("profile reports accept signed-out visitors and preserve optional signed-in
     "    });",
   );
 
-  assert.match(reportHandler, /await postOptionalAuthJson\("\/api\/reports"/);
+  assert.match(reportHandler, /openContentReportDialog\(\{/);
   assert.doesNotMatch(reportHandler, /postAuthenticatedJson\("\/api\/reports"/);
+  assert.match(homeSource, /async function submitContentReportDialog[\s\S]*?postOptionalAuthJson\("\/api\/reports"/);
   assert.match(actionsSource, /if \(token\) headers\.authorization = `Bearer \$\{token\}`/);
   assert.doesNotMatch(reportsRouteSource, /Sign in to submit a report/);
   assert.doesNotMatch(reportsRouteSource, /targetType !== "contact_message" && !reporterId/);

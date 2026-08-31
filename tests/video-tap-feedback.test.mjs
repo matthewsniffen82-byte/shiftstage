@@ -53,6 +53,6 @@ test("public profile video feedback and share control remain native and circular
   assert.doesNotMatch(publicProfileViewer, /<ShareIcon \/>\s*Share/);
   assert.match(
     publicProfileStyles,
-    /\.profile-media-viewer \.profile-media-viewer-share \{[^}]*width: 52px;[^}]*height: 52px;[^}]*border-radius: 50% !important;/,
+    /\.profile-media-viewer \.profile-media-viewer-share, \.profile-media-viewer \.profile-media-viewer-report \{[^}]*width: 52px;[^}]*height: 52px;[^}]*border-radius: 50% !important;/,
   );
 });

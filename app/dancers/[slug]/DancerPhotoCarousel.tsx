@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  type FormEvent,
   type ReactNode,
   type SyntheticEvent,
   useCallback,
@@ -12,6 +13,7 @@ import {
 } from "react";
 import { flushSync } from "react-dom";
 import { MediaLikeButton } from "@/app/components/MediaLikeButton";
+import { readBrowserAccessToken } from "@/src/lib/dancr/browser-session";
 import { recordPublicEngagementShare } from "@/src/lib/dancr/engagement-client";
 import { useVideoSoundPreference } from "@/src/lib/dancr/use-video-sound-preference";
 import { useAdaptiveVideoWarmup } from "@/src/lib/dancr/use-adaptive-video-warmup";
@@ -19,6 +21,7 @@ import { useAnonymousMediaLikes } from "@/src/lib/dancr/use-anonymous-media-like
 import { DANCER_PROFILE_MEDIA_PAGE_SIZE } from "@/src/lib/dancr/media-limits";
 
 type DancerPhotoCarouselProps = {
+  dancerId?: string;
   photos: Array<{
     id: string;
     imageUrl: string;
@@ -62,8 +65,27 @@ type ProfileMedia = PhotoMedia | VideoMedia;
 type MediaTab = ProfileMedia["kind"];
 type MediaViewer = { kind: MediaTab; index: number };
 type PlaybackFeedback = { index: number; paused: boolean; key: number };
+type MediaReportTarget = {
+  key: string;
+  targetId: string;
+  targetLabel: string;
+  targetType: "dancer_profile" | "profile_photo" | "tv_video";
+  title: string;
+};
+
+const MEDIA_REPORT_REASONS = [
+  "Misleading or inaccurate content",
+  "Impersonation",
+  "Harassment or unsafe content",
+  "Underage concern",
+  "Spam or prohibited promotion",
+  "Other safety concern",
+] as const;
+
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 export function DancerPhotoCarousel({
+  dancerId,
   photos,
   videos = [],
   stageName,
@@ -105,6 +127,12 @@ export function DancerPhotoCarousel({
   const allowVideoWarmup = useAdaptiveVideoWarmup();
   const [loadedViewerVideoIndex, setLoadedViewerVideoIndex] = useState(-1);
   const [shareStatus, setShareStatus] = useState("");
+  const [reportTarget, setReportTarget] = useState<MediaReportTarget | null>(null);
+  const [reportReason, setReportReason] = useState("");
+  const [reportDetails, setReportDetails] = useState("");
+  const [reportError, setReportError] = useState("");
+  const [reportSaving, setReportSaving] = useState(false);
+  const [reportedTargets, setReportedTargets] = useState<string[]>([]);
   const [playbackFeedback, setPlaybackFeedback] = useState<PlaybackFeedback | null>(null);
   const deepLinkHandled = useRef(false);
   const closeButton = useRef<HTMLButtonElement | null>(null);
@@ -119,6 +147,7 @@ export function DancerPhotoCarousel({
   const playbackTapTimer = useRef(0);
   const playbackFeedbackTimer = useRef(0);
   const playbackFeedbackKey = useRef(0);
+  const reportAbortRef = useRef<AbortController | null>(null);
   const lazyLoadSentinel = useRef<HTMLDivElement | null>(null);
   const tabGroupId = useId();
   const activeItems: ProfileMedia[] =
@@ -276,6 +305,7 @@ export function DancerPhotoCarousel({
   useEffect(() => () => {
     window.clearTimeout(playbackTapTimer.current);
     window.clearTimeout(playbackFeedbackTimer.current);
+    reportAbortRef.current?.abort();
   }, []);
 
   useEffect(() => {
@@ -306,6 +336,11 @@ export function DancerPhotoCarousel({
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         event.preventDefault();
+        if (reportTarget && !reportSaving) {
+          setReportTarget(null);
+          setReportError("");
+          return;
+        }
         exitViewerFullscreen();
         window.cancelAnimationFrame(viewerOpeningFrame.current);
         viewerOpeningFrame.current = 0;
@@ -329,7 +364,7 @@ export function DancerPhotoCarousel({
     };
     document.addEventListener("keydown", onKeyDown);
     return () => document.removeEventListener("keydown", onKeyDown);
-  }, [currentViewerScrollIndex, photoMedia.length, scrollViewerToIndex, videoMedia.length, viewerKind]);
+  }, [currentViewerScrollIndex, photoMedia.length, reportSaving, reportTarget, scrollViewerToIndex, videoMedia.length, viewerKind]);
 
   function openViewer(
     kind: MediaTab,
@@ -340,6 +375,7 @@ export function DancerPhotoCarousel({
     pendingViewerIndex.current = index;
     viewerOpeningIndex.current = index;
     setShareStatus("");
+    setReportTarget(null);
     flushSync(() => setViewer({ kind, index }));
     window.requestAnimationFrame(() => scrollViewerToIndex(index, { instant: true }));
     void requestViewerFullscreen(index);
@@ -352,6 +388,8 @@ export function DancerPhotoCarousel({
     viewerOpeningIndex.current = null;
     setViewer(null);
     setShareStatus("");
+    setReportTarget(null);
+    setReportError("");
     setPlaybackFeedback(null);
     playbackTapIndex.current = null;
     window.clearTimeout(playbackTapTimer.current);
@@ -479,6 +517,90 @@ export function DancerPhotoCarousel({
     } catch (error) {
       if (error instanceof DOMException && error.name === "AbortError") return;
       setShareStatus(isVideo ? "Unable to share this video." : "Unable to share this photo.");
+    }
+  }
+
+  function activeMediaReportTarget(): MediaReportTarget | null {
+    if (!activeViewerItem || !dancerId) return null;
+    if (activeViewerItem.kind === "video" && UUID_PATTERN.test(activeViewerItem.id)) {
+      return {
+        key: `tv_video:${activeViewerItem.id}`,
+        targetId: activeViewerItem.id,
+        targetLabel: `${stageName} profile video ${viewerIndex + 1}`,
+        targetType: "tv_video",
+        title: `Report ${stageName} video`,
+      };
+    }
+    if (UUID_PATTERN.test(activeViewerItem.id)) {
+      return {
+        key: `profile_photo:${activeViewerItem.id}`,
+        targetId: activeViewerItem.id,
+        targetLabel: `${stageName} profile photo ${viewerIndex + 1}`,
+        targetType: "profile_photo",
+        title: `Report ${stageName} photo`,
+      };
+    }
+    return {
+      key: `dancer_profile:${dancerId}:${activeViewerItem.kind}`,
+      targetId: dancerId,
+      targetLabel: `${stageName} profile ${activeViewerItem.kind}`,
+      targetType: "dancer_profile",
+      title: `Report ${stageName} ${activeViewerItem.kind}`,
+    };
+  }
+
+  function openMediaReport() {
+    const target = activeMediaReportTarget();
+    if (!target || reportSaving || reportedTargets.includes(target.key)) return;
+    setReportReason("");
+    setReportDetails("");
+    setReportError("");
+    setReportTarget(target);
+  }
+
+  async function submitMediaReport(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!reportTarget || reportSaving) return;
+    if (!reportReason) {
+      setReportError("Choose a reason for the report.");
+      return;
+    }
+    const controller = new AbortController();
+    reportAbortRef.current?.abort();
+    reportAbortRef.current = controller;
+    setReportSaving(true);
+    setReportError("");
+    try {
+      const headers: Record<string, string> = { "content-type": "application/json" };
+      const accessToken = readBrowserAccessToken("customer");
+      if (accessToken) headers.authorization = `Bearer ${accessToken}`;
+      const response = await fetch("/api/reports", {
+        method: "POST",
+        headers,
+        credentials: "same-origin",
+        body: JSON.stringify({
+          targetType: reportTarget.targetType,
+          targetId: reportTarget.targetId,
+          targetLabel: reportTarget.targetLabel,
+          reason: reportReason,
+          details: reportDetails.trim() || null,
+        }),
+        signal: controller.signal,
+      });
+      const data = await response.json().catch(() => ({}));
+      if (controller.signal.aborted) return;
+      if (!response.ok || !data.ok || !data.report) {
+        throw new Error(data.error || "Unable to submit report.");
+      }
+      setReportedTargets((current) => current.includes(reportTarget.key) ? current : [...current, reportTarget.key]);
+      setShareStatus("Report submitted for review.");
+      setReportTarget(null);
+    } catch (error) {
+      if (controller.signal.aborted) return;
+      setReportError(error instanceof Error ? error.message : "Unable to submit report.");
+    } finally {
+      if (reportAbortRef.current === controller) reportAbortRef.current = null;
+      if (!controller.signal.aborted) setReportSaving(false);
     }
   }
 
@@ -795,11 +917,86 @@ export function DancerPhotoCarousel({
               >
                 <ShareIcon />
               </button>
+              {(() => {
+                const target = activeMediaReportTarget();
+                return target ? (
+                  <button
+                    aria-label={reportedTargets.includes(target.key) ? "Media reported" : `Report this profile ${activeViewerItem.kind}`}
+                    className="profile-media-viewer-report"
+                    disabled={reportSaving || reportedTargets.includes(target.key)}
+                    onClick={openMediaReport}
+                    type="button"
+                  >
+                    <ReportIcon />
+                  </button>
+                ) : null;
+              })()}
               <span aria-live="polite" className="profile-media-viewer-share-status">
                 {shareStatus}
               </span>
             </div>
           </div>
+          {reportTarget ? (
+            <div
+              className="profile-report-gate profile-media-report-gate"
+              onMouseDown={(event) => {
+                if (event.target === event.currentTarget && !reportSaving) setReportTarget(null);
+              }}
+            >
+              <section
+                aria-describedby="profile-media-report-message"
+                aria-labelledby="profile-media-report-title"
+                aria-modal="true"
+                className="profile-report-dialog"
+                role="dialog"
+              >
+                <button
+                  aria-label="Close report form"
+                  className="profile-report-close"
+                  disabled={reportSaving}
+                  onClick={() => setReportTarget(null)}
+                  type="button"
+                >
+                  ×
+                </button>
+                <span>Safety report</span>
+                <h2 id="profile-media-report-title">{reportTarget.title}</h2>
+                <p id="profile-media-report-message">
+                  Tell the moderation team what is wrong. Reports can be submitted without signing in.
+                </p>
+                <form onSubmit={submitMediaReport}>
+                  <label>
+                    Reason
+                    <select
+                      autoFocus
+                      onChange={(event) => setReportReason(event.target.value)}
+                      required
+                      value={reportReason}
+                    >
+                      <option value="">Choose a reason</option>
+                      {MEDIA_REPORT_REASONS.map((reason) => (
+                        <option key={reason} value={reason}>{reason}</option>
+                      ))}
+                    </select>
+                  </label>
+                  <label>
+                    Details <small>Optional</small>
+                    <textarea
+                      maxLength={1200}
+                      onChange={(event) => setReportDetails(event.target.value)}
+                      placeholder="Add information that will help the moderation team review this media."
+                      rows={4}
+                      value={reportDetails}
+                    />
+                  </label>
+                  {reportError ? <p className="profile-report-error" role="alert">{reportError}</p> : null}
+                  <button disabled={reportSaving} type="submit">
+                    {reportSaving ? "Submitting report…" : "Submit report"}
+                  </button>
+                </form>
+              </section>
+            </div>
+          ) : null}
         </div>
       ) : null}
     </section>
@@ -837,6 +1034,15 @@ function ShareIcon() {
       <circle cx="6" cy="12" r="3" />
       <circle cx="18" cy="19" r="3" />
       <path d="m8.6 10.5 6.8-4M8.6 13.5l6.8 4" />
+    </svg>
+  );
+}
+
+function ReportIcon() {
+  return (
+    <svg aria-hidden="true" viewBox="0 0 24 24">
+      <path d="M5 21V4" />
+      <path d="M5 5h11l-1.8 3L16 11H5" />
     </svg>
   );
 }

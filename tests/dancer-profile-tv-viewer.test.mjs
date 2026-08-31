@@ -142,7 +142,7 @@ test("dancer profile viewers reuse translucent TV glass with anonymous media lik
     liveApp,
     /\.profile-tv-viewer-actions button \{[^}]*background-color: rgba\(5,5,10,\.5\);[^}]*backdrop-filter: blur\(14px\) saturate\(1\.12\);/,
   );
-  assert.equal((liveViewerActions.match(/<button/g) || []).length, 3);
+  assert.equal((liveViewerActions.match(/<button/g) || []).length, 4);
   assert.doesNotMatch(liveViewerActions, /data-toggle-profile-tv-playback/);
   assert.match(liveViewerActions, /data-toggle-profile-tv-sound/);
   assert.match(liveViewerActions, /data-like-profile-tv/);

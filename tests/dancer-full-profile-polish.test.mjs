@@ -135,7 +135,8 @@ test("profile actions have a clear hierarchy and preserve every real action", ()
     liveApp,
     /class="action-btn secondary profile-share-action profile-action-icon-control"[\s\S]*?data-profile-share-menu=/,
   );
-  assert.doesNotMatch(liveApp, /class="profile-modal-report-link"|id="reportBtn"/);
+  assert.match(liveApp, /class="profile-header-report-toggle" id="reportBtn"[^>]*>Report profile<\/button>/);
+  assert.doesNotMatch(liveApp, /class="profile-modal-report-link"/);
   assert.doesNotMatch(liveApp, /profileReportButton\.textContent\s*=\s*"Report"/);
   assert.doesNotMatch(liveApp, /id="profileActionOverflowToggle"|id="profileActionOverflowMenu"/);
   assert.doesNotMatch(liveActionsMarkup, /profile-schedule-action|profile-action-overflow|>Schedule<|>More</);

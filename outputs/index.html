@@ -29050,6 +29050,22 @@
       text-underline-offset: 3px;
     }
 
+    .content-report-popover { z-index: 2000; }
+    .content-report-sheet { width: min(440px, 100%); gap: 12px; padding: 20px; border-color: rgba(196,167,255,.38); border-radius: 16px; background: linear-gradient(145deg, #0b0b13, #060609); box-shadow: 0 28px 90px rgba(0,0,0,.72), 0 0 34px rgba(124,58,237,.12); }
+    .content-report-sheet > span { color: #c4a7ff; font-size: 10px; font-weight: 950; letter-spacing: .14em; text-transform: uppercase; }
+    .content-report-sheet h3,
+    .content-report-sheet p { margin: 0; }
+    .content-report-sheet p { color: #cfc5de; line-height: 1.4; }
+    .content-report-form { display: grid; gap: 13px; }
+    .content-report-form label { display: grid; gap: 7px; color: #e9e2f4; font-size: 13px; font-weight: 900; }
+    .content-report-form select,
+    .content-report-form textarea { width: 100%; padding: 11px; border: 1px solid rgba(139,92,246,.35); border-radius: 11px; color: #fff; background: rgba(255,255,255,.055); font: inherit; }
+    .content-report-form option { color: #111; }
+    .content-report-form-actions { display: grid; grid-template-columns: minmax(0, .8fr) minmax(0, 1.2fr); gap: 8px; }
+    .content-report-form-actions button { min-height: 46px; border-radius: 999px; }
+    .content-report-form-actions button[type="submit"] { border-color: rgba(196,167,255,.52); color: #fff; background: linear-gradient(135deg,#7c3aed,#4c1d95); }
+    .content-report-status { min-height: 16px; margin: 0; color: #ffb4c8; font-size: 11px; font-weight: 800; }
+
     .admin-preview-body {
       display: grid;
       gap: 10px;
@@ -29630,6 +29646,7 @@
     }
 
     .profile-photo-viewer-share,
+    .profile-photo-viewer-report,
     .profile-photo-viewer-like {
       width: 52px !important;
       min-width: 52px !important;
@@ -29666,6 +29683,7 @@
     }
 
     .profile-photo-viewer-share .icon,
+    .profile-photo-viewer-report .action-icon,
     .profile-photo-viewer-like .icon {
       width: 21px !important;
       height: 21px !important;
@@ -32215,7 +32233,7 @@
   </style>
   <link href="/dancr-brand-tokens.v1.css?v=13" rel="stylesheet">
   <link href="/dancr-button-system.v1.css" rel="stylesheet">
-  <link href="/dancr-aesthetic.v1.css?v=242" rel="stylesheet">
+  <link href="/dancr-aesthetic.v1.css?v=243" rel="stylesheet">
 </head>
 <body class="dancr-button-system">
   <div class="app">
@@ -34463,7 +34481,7 @@
         .profile-tv-viewer-actions button:focus-visible { border-color: rgba(255,255,255,.4); background-color: rgba(18,18,26,.62); box-shadow: inset 0 1px 0 rgba(255,255,255,.2), 0 0 0 2px rgba(126,234,255,.16), 0 12px 28px rgba(0,0,0,.36); }
         .profile-tv-viewer-actions .profile-tv-viewer-state-control { width: 52px; min-width: 52px; max-width: 52px; padding: 0; justify-self: center; }
         .profile-tv-viewer-state-control .profile-modal-media-control-icon { width: 20px; height: 20px; }
-        .profile-tv-viewer-share svg, .profile-tv-viewer-like svg { width: 21px; height: 21px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+        .profile-tv-viewer-share svg, .profile-tv-viewer-report svg, .profile-tv-viewer-like svg { width: 21px; height: 21px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
         .profile-tv-viewer-like { gap: 0; padding: 5px 0 3px !important; line-height: 1; }
         .profile-tv-playback-feedback { position: absolute; z-index: 4; top: 50%; left: 50%; width: 64px; height: 64px; display: grid; place-items: center; border: 1px solid rgba(255,255,255,.28); border-radius: 50%; color: #fff; background: rgba(0,0,0,.58); box-shadow: 0 10px 30px rgba(0,0,0,.42); opacity: 0; pointer-events: none; transform: translate(-50%, -50%) scale(.86); transition: opacity .18s ease, transform .18s ease; -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
         .profile-tv-playback-feedback.show { opacity: 1; transform: translate(-50%, -50%) scale(1); }
@@ -36797,6 +36815,27 @@
           font-weight: 850;
           line-height: 1.2;
           white-space: nowrap;
+        }
+        #profileBackdrop .profile-header-report-toggle {
+          min-height: 28px;
+          display: inline-flex;
+          align-items: center;
+          padding: 0 9px;
+          border: 1px solid rgba(180,169,196,.22);
+          border-radius: 999px;
+          color: #bdb4c8;
+          background: rgba(255,255,255,.035);
+          font: inherit;
+          font-size: 10px;
+          font-weight: 850;
+          cursor: pointer;
+        }
+        #profileBackdrop .profile-header-report-toggle:hover,
+        #profileBackdrop .profile-header-report-toggle:focus-visible {
+          border-color: rgba(196,167,255,.42);
+          color: #fff;
+          background: rgba(124,58,237,.1);
+          outline: none;
         }
         #profileBackdrop .profile-modal-verified {
           width: 19px;
@@ -42227,6 +42266,7 @@
                 <div class="profile-modal-context">
                   <svg class="profile-modal-city-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s7-6.1 7-12A7 7 0 1 0 5 9c0 5.9 7 12 7 12Z"></path><circle cx="12" cy="9" r="2.4"></circle></svg>
                   <span class="pill" id="modalCity">Las Vegas</span>
+                  <button class="profile-header-report-toggle" id="reportBtn" type="button" aria-label="Report profile">Report profile</button>
                 </div>
               </div>
               <div class="profile-modal-header-metrics" id="modalProfileMetrics"></div>
@@ -42296,6 +42336,9 @@
               <button class="profile-photo-viewer-share" id="profilePhotoViewerShare" type="button" aria-label="Share this profile photo">
                 <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><path d="m8.6 10.5 6.8-4M8.6 13.5l6.8 4"></path></svg>
               </button>
+              <button class="profile-photo-viewer-report" id="profilePhotoViewerReport" type="button" aria-label="Report this profile photo">
+                <span class="action-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 21V4"></path><path d="M5 5h11l-1.8 3L16 11H5"></path></svg></span>
+              </button>
             </div>
             <p class="profile-photo-viewer-status" id="profilePhotoViewerStatus" aria-live="polite"></p>
           </div>
@@ -42315,6 +42358,38 @@
           <a id="accountRequiredCreateLink" href="/account?role=customer&amp;mode=signup">Create free account</a>
           <a class="secondary-link" id="accountRequiredSignInLink" href="/account?role=customer">Already have an account? Sign in</a>
         </div>
+      </section>
+    </div>
+
+    <div class="admin-preview-popover content-report-popover" id="contentReportPopover" role="dialog" aria-modal="true" aria-labelledby="contentReportTitle" aria-describedby="contentReportMessage" hidden>
+      <section class="admin-preview-sheet content-report-sheet">
+        <button class="close-btn admin-preview-close" id="contentReportClose" type="button" aria-label="Close report form">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
+        </button>
+        <span>Safety report</span>
+        <h3 id="contentReportTitle">Report content</h3>
+        <p id="contentReportMessage">Tell the moderation team what is wrong. Reports can be submitted without signing in.</p>
+        <form class="content-report-form" id="contentReportForm">
+          <label for="contentReportReason">Reason
+            <select id="contentReportReason" required>
+              <option value="">Choose a reason</option>
+              <option>Misleading or inaccurate content</option>
+              <option>Impersonation</option>
+              <option>Harassment or unsafe content</option>
+              <option>Underage concern</option>
+              <option>Spam or prohibited promotion</option>
+              <option>Other safety concern</option>
+            </select>
+          </label>
+          <label for="contentReportDetails">Details <small>Optional</small>
+            <textarea id="contentReportDetails" maxlength="1200" rows="4" placeholder="Add information that will help the moderation team review this content."></textarea>
+          </label>
+          <p class="content-report-status" id="contentReportStatus" aria-live="polite"></p>
+          <div class="content-report-form-actions">
+            <button class="action-btn secondary" id="contentReportCancel" type="button">Cancel</button>
+            <button class="action-btn" id="contentReportSubmit" type="submit">Submit report</button>
+          </div>
+        </form>
       </section>
     </div>
 
@@ -42462,6 +42537,7 @@
     const profilePhotoViewerClose = document.getElementById("profilePhotoViewerClose");
     const profilePhotoViewerLike = document.getElementById("profilePhotoViewerLike");
     const profilePhotoViewerShare = document.getElementById("profilePhotoViewerShare");
+    const profilePhotoViewerReport = document.getElementById("profilePhotoViewerReport");
     const profilePhotoViewerPrevious = document.getElementById("profilePhotoViewerPrevious");
     const profilePhotoViewerNext = document.getElementById("profilePhotoViewerNext");
     const profilePhotoViewerStatus = document.getElementById("profilePhotoViewerStatus");
@@ -42537,6 +42613,17 @@
     const accountRequiredMessage = document.getElementById("accountRequiredMessage");
     const accountRequiredCreateLink = document.getElementById("accountRequiredCreateLink");
     const accountRequiredSignInLink = document.getElementById("accountRequiredSignInLink");
+    const contentReportPopover = document.getElementById("contentReportPopover");
+    const contentReportClose = document.getElementById("contentReportClose");
+    const contentReportCancel = document.getElementById("contentReportCancel");
+    const contentReportForm = document.getElementById("contentReportForm");
+    const contentReportTitle = document.getElementById("contentReportTitle");
+    const contentReportReason = document.getElementById("contentReportReason");
+    const contentReportDetails = document.getElementById("contentReportDetails");
+    const contentReportStatus = document.getElementById("contentReportStatus");
+    const contentReportSubmit = document.getElementById("contentReportSubmit");
+    const reportedContentTargets = new Set();
+    let activeContentReport = null;
     const dashboardBtn = document.getElementById("dashboardBtn");
     const accountBtn = document.getElementById("accountBtn");
     const accountTooltip = document.getElementById("accountTooltip");
@@ -43037,6 +43124,115 @@
       if (authSession?.accessToken && isCustomerSession()) return true;
       openAccountRequiredPrompt(actionButton);
       return false;
+    }
+
+    function contentReportKey(targetType, targetId) {
+      return `${String(targetType || "").trim()}:${String(targetId || "").trim()}`;
+    }
+
+    function isReportableContentId(value) {
+      return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(String(value || "").trim());
+    }
+
+    function prepareContentReportButton(button, targetType, targetId, label = "Report content") {
+      if (!button) return;
+      const normalizedType = String(targetType || "").trim();
+      const normalizedId = String(targetId || "").trim();
+      const reported = reportedContentTargets.has(contentReportKey(normalizedType, normalizedId));
+      button.dataset.reportTargetType = normalizedType;
+      button.dataset.reportTargetId = normalizedId;
+      button.disabled = !normalizedType || !isReportableContentId(normalizedId) || reported;
+      button.setAttribute("aria-label", reported ? "Content reported" : label);
+      button.setAttribute("aria-pressed", String(reported));
+    }
+
+    function openContentReportDialog({ button, status, targetType, targetId, targetLabel, title }) {
+      if (!contentReportPopover || !targetType || !targetId) {
+        if (status) status.textContent = "This content cannot be reported right now.";
+        else showToast("This content cannot be reported right now");
+        return;
+      }
+      const reportKey = contentReportKey(targetType, targetId);
+      if (reportedContentTargets.has(reportKey)) {
+        if (status) status.textContent = "You already reported this content.";
+        else showToast("You already reported this content");
+        return;
+      }
+      activeContentReport = {
+        button: button || null,
+        status: status || null,
+        targetType: String(targetType),
+        targetId: String(targetId),
+        targetLabel: String(targetLabel || "Reported content"),
+        reportKey
+      };
+      contentReportTitle.textContent = String(title || "Report content");
+      contentReportReason.value = "";
+      contentReportDetails.value = "";
+      contentReportStatus.textContent = "";
+      contentReportSubmit.disabled = false;
+      contentReportSubmit.textContent = "Submit report";
+      const fullscreenHost = document.fullscreenElement || document.webkitFullscreenElement;
+      (fullscreenHost || document.body).appendChild(contentReportPopover);
+      contentReportPopover.hidden = false;
+      syncOverlayScrollLock();
+      setTimeout(() => contentReportReason?.focus({ preventScroll: true }), 40);
+    }
+
+    function closeContentReportDialog({ restoreFocus = true } = {}) {
+      if (!contentReportPopover) return;
+      const returnTarget = activeContentReport?.button || null;
+      contentReportPopover.hidden = true;
+      activeContentReport = null;
+      contentReportStatus.textContent = "";
+      document.body.appendChild(contentReportPopover);
+      syncOverlayScrollLock();
+      if (restoreFocus && returnTarget?.isConnected) {
+        setTimeout(() => returnTarget.focus({ preventScroll: true }), 40);
+      }
+    }
+
+    async function submitContentReportDialog(event) {
+      event.preventDefault();
+      const report = activeContentReport;
+      if (!report) return;
+      const reason = String(contentReportReason.value || "").trim();
+      if (!reason) {
+        contentReportStatus.textContent = "Choose a reason before submitting.";
+        contentReportReason.focus();
+        return;
+      }
+      contentReportSubmit.disabled = true;
+      contentReportSubmit.textContent = "Submitting…";
+      contentReportStatus.textContent = "";
+      try {
+        const data = await postOptionalAuthJson("/api/reports", {
+          targetType: report.targetType,
+          targetId: report.targetId,
+          targetLabel: report.targetLabel,
+          reason,
+          details: String(contentReportDetails.value || "").trim()
+        });
+        if (!data?.report) throw new Error("The report could not be confirmed.");
+        reportedContentTargets.add(report.reportKey);
+        prepareContentReportButton(
+          report.button,
+          report.targetType,
+          report.targetId,
+          report.button?.dataset.reportDefaultLabel || "Report content"
+        );
+        if (report.button?.id === "reportBtn") report.button.textContent = "Reported";
+        if (report.status) report.status.textContent = "Report submitted for review.";
+        if (report.targetType === "dancer_profile") {
+          recordLiveEvent("profile_action", { dancerName: report.targetLabel, source: "report_submitted" });
+        }
+        showToast("Report submitted for review");
+        closeContentReportDialog({ restoreFocus: false });
+      } catch (error) {
+        contentReportStatus.textContent = error.message || "Could not submit report.";
+        contentReportSubmit.disabled = false;
+        contentReportSubmit.textContent = "Submit report";
+      }
     }
 
     if ("serviceWorker" in navigator && window.location.protocol === "https:") {
@@ -52471,6 +52667,22 @@
         String(activeItem?.id || ""),
         activeItem?.likeCount
       );
+      const profileId = String(modalGallery.dataset.profileMediaProfile || "");
+      const photoId = String(activeItem?.id || "");
+      const reportTargetType = isReportableContentId(photoId) ? "profile_photo" : "dancer_profile";
+      const reportTargetId = reportTargetType === "profile_photo" ? photoId : profileId;
+      if (profilePhotoViewerReport) {
+        profilePhotoViewerReport.dataset.reportTargetLabel = reportTargetType === "profile_photo"
+          ? `${profileName} profile photo ${activePhotoIndex + 1}`
+          : profileName;
+        profilePhotoViewerReport.dataset.reportDefaultLabel = "Report this profile photo";
+      }
+      prepareContentReportButton(
+        profilePhotoViewerReport,
+        reportTargetType,
+        reportTargetId,
+        "Report this profile photo"
+      );
       syncProfilePhotoViewerWindow(activePhotoIndex);
 
       while (Number(modalGallery.profileVisiblePhotoCount || 0) <= activePhotoIndex && profileMediaHasMore("photo")) {
@@ -53317,6 +53529,22 @@
       savedScrollY = window.scrollY;
 
       modalName.textContent = profile.name;
+      modalGallery.dataset.profileMediaProfile = String(profile.id || "");
+      const profileReportButton = document.getElementById("reportBtn");
+      if (profileReportButton) {
+        profileReportButton.dataset.profile = profile.name;
+        profileReportButton.dataset.reportTargetLabel = profile.name;
+        profileReportButton.dataset.reportDefaultLabel = "Report profile";
+        prepareContentReportButton(
+          profileReportButton,
+          "dancer_profile",
+          String(profile.id || ""),
+          `Report ${profile.name} profile`
+        );
+        profileReportButton.textContent = profileReportButton.disabled && reportedContentTargets.has(
+          contentReportKey("dancer_profile", String(profile.id || ""))
+        ) ? "Reported" : "Report profile";
+      }
       modalStatus.textContent = isPending ? "Pending" : "";
       modalStatus.className = isPending ? "badge pending" : "badge modal-status-hidden";
       modalCity.textContent = city;
@@ -53465,6 +53693,7 @@
                 <button class="profile-tv-viewer-like" type="button" data-like-profile-tv aria-label="Like this profile video" aria-pressed="false">${actionIconMarkup("heart")}<span data-media-like-count>0</span></button>
                 <button class="profile-tv-viewer-state-control" type="button" data-toggle-profile-tv-sound aria-label="Turn TV video sound off">${modalVideoSoundIcon(false)}</button>
                 <button class="profile-tv-viewer-share" type="button" data-share-profile-tv aria-label="Share this profile video">${actionIconMarkup("share")}</button>
+                <button class="profile-tv-viewer-report" type="button" data-report-profile-tv aria-label="Report this profile video">${actionIconMarkup("report")}</button>
               </div>
               <p class="profile-tv-viewer-status" id="profileTvViewerStatus" aria-live="polite"></p>
             </div>
@@ -53489,6 +53718,18 @@
         if (target.closest("[data-like-profile-tv]")) {
           const videoId = overlay.dataset.videoId || "";
           if (videoId) void togglePublicMediaLike("video", videoId, document.getElementById("profileTvViewerStatus"));
+          return;
+        }
+        if (target.closest("[data-report-profile-tv]")) {
+          const reportButton = target.closest("[data-report-profile-tv]");
+          openContentReportDialog({
+            button: reportButton,
+            status: document.getElementById("profileTvViewerStatus"),
+            targetType: reportButton.dataset.reportTargetType,
+            targetId: reportButton.dataset.reportTargetId,
+            targetLabel: reportButton.dataset.reportTargetLabel,
+            title: `Report ${overlay.dataset.profileName || "dancer"} video`
+          });
           return;
         }
         if (target.closest("[data-previous-profile-tv]")) {
@@ -53666,6 +53907,17 @@
         "video",
         String(item.id || ""),
         item.likeCount
+      );
+      const reportButton = overlay.querySelector("[data-report-profile-tv]");
+      if (reportButton) {
+        reportButton.dataset.reportTargetLabel = `${overlay.dataset.profileName || "Dancer"} profile video ${nextIndex + 1}`;
+        reportButton.dataset.reportDefaultLabel = "Report this profile video";
+      }
+      prepareContentReportButton(
+        reportButton,
+        "tv_video",
+        String(item.id || ""),
+        "Report this profile video"
       );
       const viewerVideos = [...overlay.querySelectorAll(".profile-tv-viewer-video")];
       syncProfileTvVideoLoading(overlay, nextIndex);
@@ -62763,28 +63015,14 @@
       }
       if (actionButton.id === "reportBtn") {
         if (actionButton.disabled) return;
-        const city = citySelect.value;
         const profileName = actionButton.dataset.profile;
-        const profile = findProfile(profileName);
-        actionButton.disabled = true;
-        actionButton.setAttribute("aria-label", "Submitting profile report");
-        try {
-          const data = await postOptionalAuthJson("/api/reports", {
-            targetType: "dancer_profile",
-            targetId: profile?.id || null,
-            targetLabel: profileName,
-            reason: "Profile report",
-            details: `Reported from ${city} profile modal.`
-          });
-          if (!data?.report) throw new Error("The report could not be confirmed.");
-          actionButton.setAttribute("aria-label", "Profile reported");
-          recordLiveEvent("profile_action", { dancerName: profileName, source: "report_submitted" });
-          showToast("Report submitted for review");
-        } catch (error) {
-          actionButton.disabled = false;
-          actionButton.setAttribute("aria-label", "Report profile");
-          showToast(error.message || "Could not submit report");
-        }
+        openContentReportDialog({
+          button: actionButton,
+          targetType: actionButton.dataset.reportTargetType,
+          targetId: actionButton.dataset.reportTargetId,
+          targetLabel: profileName,
+          title: `Report ${profileName} profile`
+        });
       }
     });
 
@@ -62812,6 +63050,21 @@
       void shareProfilePhoto();
     });
     profilePhotoViewerShare?.addEventListener("pointerdown", (event) => {
+      event.stopPropagation();
+    }, { passive: true });
+    profilePhotoViewerReport?.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      openContentReportDialog({
+        button: profilePhotoViewerReport,
+        status: profilePhotoViewerStatus,
+        targetType: profilePhotoViewerReport.dataset.reportTargetType,
+        targetId: profilePhotoViewerReport.dataset.reportTargetId,
+        targetLabel: profilePhotoViewerReport.dataset.reportTargetLabel,
+        title: `Report ${modalName.textContent.trim() || "dancer"} photo`
+      });
+    });
+    profilePhotoViewerReport?.addEventListener("pointerdown", (event) => {
       event.stopPropagation();
     }, { passive: true });
     profilePhotoViewerLike?.addEventListener("click", (event) => {
@@ -62899,6 +63152,12 @@
       closeProfileModal();
       openAuthRole("customer");
     });
+    contentReportClose?.addEventListener("click", () => closeContentReportDialog());
+    contentReportCancel?.addEventListener("click", () => closeContentReportDialog());
+    contentReportPopover?.addEventListener("click", (event) => {
+      if (event.target === contentReportPopover) closeContentReportDialog();
+    });
+    contentReportForm?.addEventListener("submit", submitContentReportDialog);
 
     document.querySelectorAll("[data-legal-page]").forEach((button) => {
       button.addEventListener("click", () => {
@@ -64638,6 +64897,11 @@
 
     document.addEventListener("keydown", (event) => {
       const openTvViewer = document.getElementById("profileTvViewer");
+      if (event.key === "Escape" && contentReportPopover && !contentReportPopover.hidden) {
+        event.preventDefault();
+        closeContentReportDialog();
+        return;
+      }
       if (openTvViewer && !openTvViewer.hidden && event.key === "ArrowUp") {
         event.preventDefault();
         showRelativeProfileTvVideo(-1);

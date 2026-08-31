@@ -18,6 +18,7 @@ test("profile photo overlay controls use circular translucent glass", () => {
     ".profile-photo-viewer-next",
     ".profile-photo-viewer-like",
     ".profile-photo-viewer-share",
+    ".profile-photo-viewer-report",
   ]) {
     assert.match(profileMediaGlass, new RegExp(selector.replaceAll(".", "\\.")));
   }

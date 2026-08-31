@@ -11,7 +11,7 @@ import { getBearerToken } from "@/src/lib/supabase/request";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const TARGET_TYPES = new Set(["dancer_profile", "venue", "shift", "tv_video", "contact_message"]);
+const TARGET_TYPES = new Set(["dancer_profile", "profile_photo", "venue", "shift", "tv_video", "contact_message"]);
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const MAX_TARGET_LABEL_LENGTH = 160;
 const MAX_REASON_LENGTH = 120;
@@ -156,6 +156,24 @@ async function resolveReportTarget(
   if (targetType === "venue") {
     const venue = await requireReportableVenue(client, targetId);
     return { id: venue.id, label: venue.name };
+  }
+
+  if (targetType === "profile_photo") {
+    const { data, error } = await client
+      .from("dancer_photos")
+      .select("id, dancer_id, sort_order")
+      .eq("id", targetId)
+      .eq("review_status", "approved")
+      .maybeSingle();
+    if (error) throw error;
+    if (!data?.id || !data?.dancer_id) throw unavailable();
+    const dancer = await requireReportableDancer(client, String(data.dancer_id));
+    const sortOrder = Number(data.sort_order);
+    const photoNumber = Number.isFinite(sortOrder) && sortOrder >= 0 ? Math.floor(sortOrder) + 1 : 1;
+    return {
+      id: String(data.id),
+      label: reportLabel(`${dancer.stageName} profile photo ${photoNumber}`, "Profile photo"),
+    };
   }
 
   if (targetType === "shift") {
