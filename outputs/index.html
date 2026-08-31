@@ -29119,6 +29119,64 @@
       text-transform: uppercase;
     }
 
+    .admin-report-context {
+      display: grid;
+      gap: 7px;
+      padding: 12px;
+      border: 1px solid rgba(255,180,84,.34);
+      border-radius: 8px;
+      background: rgba(255,180,84,.08);
+    }
+
+    .admin-report-context > small {
+      color: #ffd19a;
+      font-size: 10px;
+      font-weight: 950;
+      letter-spacing: .11em;
+      text-transform: uppercase;
+    }
+
+    .admin-report-context > strong {
+      color: #fff;
+      font-size: 16px;
+    }
+
+    .admin-report-context dl {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+      margin: 0;
+    }
+
+    .admin-report-context dl > div {
+      display: grid;
+      gap: 3px;
+      min-width: 0;
+      padding: 8px;
+      border-radius: 7px;
+      background: rgba(0,0,0,.18);
+    }
+
+    .admin-report-context dt {
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 900;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+    }
+
+    .admin-report-context dd {
+      margin: 0;
+      color: #fff;
+      font-size: 12px;
+      line-height: 1.45;
+      overflow-wrap: anywhere;
+    }
+
+    @media (max-width: 560px) {
+      .admin-report-context dl { grid-template-columns: 1fr; }
+    }
+
     .admin-full-grid {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -57740,7 +57798,23 @@
       `;
     }
 
-    async function openAdminFullProfile(profile, button) {
+    function adminReportedProfileContextMarkup(report) {
+      if (!report) return "";
+      return `
+        <section class="admin-report-context">
+          <small>Reported target</small>
+          <strong>${displayText(report.targetLabel || report.targetType || "Reported profile")}</strong>
+          <dl>
+            <div><dt>Why it was reported</dt><dd>${displayText(report.reason || "Reason pending")}</dd></div>
+            <div><dt>Reporter details</dt><dd>${displayText(report.details || "No additional details were supplied.")}</dd></div>
+            <div><dt>Reported</dt><dd>${displayText(formatBillingDate(report.createdAt))}</dd></div>
+            <div><dt>Target record</dt><dd>${displayText(`${report.targetType || "profile"} · ${report.targetId || "No record ID"}`)}</dd></div>
+          </dl>
+        </section>
+      `;
+    }
+
+    async function openAdminFullProfile(profile, button, reportContext = null) {
       if (!profile?.id || !isAdminSession()) {
         showToast("Admin login required");
         return;
@@ -57757,7 +57831,7 @@
         const data = await getAuthenticatedJson(`/api/admin/dancers/${encodeURIComponent(profile.id)}`);
         const detail = data.profile;
         adminPreviewTitle.textContent = `${detail.stageName || profile.name || "Dancer"} · full profile`;
-        adminPreviewBody.innerHTML = adminFullProfileMarkup(detail);
+        adminPreviewBody.innerHTML = `${adminReportedProfileContextMarkup(reportContext)}${adminFullProfileMarkup(detail)}`;
       } catch (error) {
         closeAdminPreview();
         showToast(error.message || "Could not load dancer profile");
@@ -58046,12 +58120,15 @@
     function adminReportRow(report) {
       const reason = report.reason || "Content report";
       const target = report.targetLabel || "Reported target";
-      const details = report.details ? `<div class="meta">${displayText(report.details).replace(/\n/g, "<br>")}</div>` : "";
+      const details = report.details ? `<div class="meta"><strong>Reporter details</strong><br>${displayText(report.details).replace(/\n/g, "<br>")}</div>` : "";
       const canRemoveTarget = report.targetType !== "contact_message";
+      const profileTarget = report.profileTarget || {};
+      const canViewDancerProfile = profileTarget.kind === "dancer" && profileTarget.id;
       return `
         <article class="admin-item" data-report="${displayText(report.id)}" data-live-report="true" data-report-target="${displayText(target)}">
-          <div class="row"><div><h3>${displayText(reason)}</h3><div class="meta">${displayText(target)}</div>${details}</div><span class="badge pending">Open</span></div>
+          <div class="row"><div><h3>${displayText(target)}</h3><div class="meta"><strong>Why it was reported</strong><br>${displayText(reason)}</div>${details}</div><span class="badge pending">Open</span></div>
           <div class="admin-actions">
+            ${canViewDancerProfile ? '<button class="action-btn secondary" data-admin-action="view-reported-profile">View reported profile</button>' : ""}
             <button class="action-btn secondary" data-admin-action="resolve-report">Resolve report</button>
             ${canRemoveTarget ? '<button class="action-btn danger" data-admin-action="remove-reported">Remove target</button>' : ""}
           </div>
@@ -58627,12 +58704,18 @@
     function runAdminAction(action, host, button) {
       const profileMatch = adminProfileFromNode(host);
       const venueMatch = adminVenueFromNode(host);
+      const reportId = host?.dataset.report;
+      const report = liveAdminReports.find((item) => item.id === reportId);
       if (action === "recalculate-rankings") {
         recalculateLiveRankings(button);
         return;
       }
       if (action === "view-dancer-profile" && profileMatch) {
         openAdminFullProfile(profileMatch.profile, button);
+        return;
+      }
+      if (action === "view-reported-profile" && report?.profileTarget?.kind === "dancer" && report.profileTarget.id) {
+        openAdminFullProfile({ id: report.profileTarget.id, name: report.profileTarget.label }, button, report);
         return;
       }
       if (action === "delete-dancer-profile" && profileMatch) {
@@ -58707,8 +58790,6 @@
         saveLiveAdminVenueRemoval(venueMatch.venue);
         return;
       }
-      const reportId = host?.dataset.report;
-      const report = liveAdminReports.find((item) => item.id === reportId);
       if (action === "resolve-report" && report) {
         saveLiveAdminReportAction(reportId, "resolved");
         return;

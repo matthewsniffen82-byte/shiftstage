@@ -878,7 +878,8 @@ export async function getAdminSubscriptions(client: DancrClient, status?: string
 }
 
 export async function getContentReports(client: DancrClient, status = "open") {
-  let query = (client as any)
+  const db = client as any;
+  let query = db
     .from("content_reports")
     .select("id, reporter_id, target_type, target_id, target_label, reason, details, status, reviewed_by, reviewed_at, created_at")
     .order("created_at", { ascending: false });
@@ -888,7 +889,82 @@ export async function getContentReports(client: DancrClient, status = "open") {
   const { data, error } = await query;
   if (error) throw error;
 
-  return (data || []).map((report: any) => ({
+  const reports = data || [];
+  const uniqueIds = (values: unknown[]) => [...new Set(values.filter((value): value is string => typeof value === "string" && Boolean(value)))];
+  const videoIds = uniqueIds(reports.filter((report: any) => report.target_type === "tv_video").map((report: any) => report.target_id));
+  const shiftIds = uniqueIds(reports.filter((report: any) => report.target_type === "shift").map((report: any) => report.target_id));
+  const directDancerIds = uniqueIds(reports.filter((report: any) => report.target_type === "dancer_profile").map((report: any) => report.target_id));
+  const directVenueIds = uniqueIds(reports.filter((report: any) => report.target_type === "venue").map((report: any) => report.target_id));
+
+  const [videoResult, shiftResult] = await Promise.all([
+    videoIds.length
+      ? db.from("mydancr_tv_videos").select("id, dancer_id").in("id", videoIds)
+      : Promise.resolve({ data: [], error: null }),
+    shiftIds.length
+      ? db.from("shifts").select("id, dancer_id, venue_id").in("id", shiftIds)
+      : Promise.resolve({ data: [], error: null }),
+  ]);
+  if (videoResult.error) throw videoResult.error;
+  if (shiftResult.error) throw shiftResult.error;
+
+  const videosById = new Map<string, any>((videoResult.data || []).map((row: any) => [String(row.id), row]));
+  const shiftsById = new Map<string, any>((shiftResult.data || []).map((row: any) => [String(row.id), row]));
+  const relatedDancerIds = uniqueIds([
+    ...directDancerIds,
+    ...(videoResult.data || []).map((row: any) => row.dancer_id),
+    ...(shiftResult.data || []).map((row: any) => row.dancer_id),
+  ]);
+  const relatedVenueIds = uniqueIds([
+    ...directVenueIds,
+    ...(shiftResult.data || []).map((row: any) => row.venue_id),
+  ]);
+
+  const [dancerResult, venueResult] = await Promise.all([
+    relatedDancerIds.length
+      ? db.from("dancer_profiles").select("id, stage_name, slug").in("id", relatedDancerIds)
+      : Promise.resolve({ data: [], error: null }),
+    relatedVenueIds.length
+      ? db.from("venues").select("id, name, slug").in("id", relatedVenueIds)
+      : Promise.resolve({ data: [], error: null }),
+  ]);
+  if (dancerResult.error) throw dancerResult.error;
+  if (venueResult.error) throw venueResult.error;
+
+  const dancersById = new Map<string, any>((dancerResult.data || []).map((row: any) => [String(row.id), row]));
+  const venuesById = new Map<string, any>((venueResult.data || []).map((row: any) => [String(row.id), row]));
+
+  function profileTargetForReport(report: any) {
+    const targetId = report.target_id ? String(report.target_id) : "";
+    const video = report.target_type === "tv_video" ? videosById.get(targetId) : null;
+    const shift = report.target_type === "shift" ? shiftsById.get(targetId) : null;
+    const dancerId = report.target_type === "dancer_profile"
+      ? targetId
+      : video?.dancer_id || shift?.dancer_id || "";
+    if (dancerId) {
+      const dancer = dancersById.get(String(dancerId));
+      return {
+        kind: "dancer",
+        id: String(dancerId),
+        label: dancer?.stage_name || report.target_label || "Dancer",
+        slug: dancer?.slug || null,
+      };
+    }
+
+    const venueId = report.target_type === "venue" ? targetId : shift?.venue_id || "";
+    if (venueId) {
+      const venue = venuesById.get(String(venueId));
+      return {
+        kind: "venue",
+        id: String(venueId),
+        label: venue?.name || report.target_label || "Venue",
+        slug: venue?.slug || null,
+      };
+    }
+
+    return null;
+  }
+
+  return reports.map((report: any) => ({
     id: report.id,
     reporterId: report.reporter_id,
     targetType: report.target_type,
@@ -900,6 +976,7 @@ export async function getContentReports(client: DancrClient, status = "open") {
     reviewedBy: report.reviewed_by,
     reviewedAt: report.reviewed_at,
     createdAt: report.created_at,
+    profileTarget: profileTargetForReport(report),
   }));
 }
 

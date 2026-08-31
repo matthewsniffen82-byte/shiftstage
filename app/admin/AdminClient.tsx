@@ -2862,10 +2862,15 @@ function ReportManager({
 }) {
   const [statusById, setStatusById] = useState<Record<string, string>>({});
   const [busyReportId, setBusyReportId] = useState("");
+  const [profileLoadingId, setProfileLoadingId] = useState("");
+  const [previewReport, setPreviewReport] = useState<Record<string, unknown> | null>(null);
+  const [previewProfile, setPreviewProfile] = useState<Record<string, unknown> | null>(null);
+  const [previewStatus, setPreviewStatus] = useState("");
   const mountedRef = useRef(false);
   const actionSequenceRef = useRef(0);
   const actionAbortRef = useRef<AbortController | null>(null);
   const actionInFlightRef = useRef(false);
+  const profileAbortRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
     mountedRef.current = true;
@@ -2873,6 +2878,7 @@ function ReportManager({
       mountedRef.current = false;
       actionSequenceRef.current += 1;
       actionAbortRef.current?.abort();
+      profileAbortRef.current?.abort();
       actionInFlightRef.current = false;
     };
   }, []);
@@ -2926,16 +2932,66 @@ function ReportManager({
     }
   }
 
+  function closeReportedProfile() {
+    profileAbortRef.current?.abort();
+    profileAbortRef.current = null;
+    setProfileLoadingId("");
+    setPreviewReport(null);
+    setPreviewProfile(null);
+    setPreviewStatus("");
+  }
+
+  async function openReportedProfile(report: Record<string, unknown>) {
+    const profileTarget = asRecordObject(report.profileTarget);
+    const profileId = asText(profileTarget.id);
+    const reportId = asText(report.id);
+    if (asText(profileTarget.kind) !== "dancer" || !profileId || !reportId) return;
+
+    profileAbortRef.current?.abort();
+    const controller = new AbortController();
+    profileAbortRef.current = controller;
+    setProfileLoadingId(reportId);
+    setPreviewReport(report);
+    setPreviewProfile(null);
+    setPreviewStatus("Loading the reported profile...");
+    try {
+      const profile = await requestAdminDancerProfile(profileId, controller.signal);
+      if (!mountedRef.current || controller.signal.aborted || profileAbortRef.current !== controller) return;
+      setPreviewProfile(profile);
+      setPreviewStatus("");
+    } catch (error) {
+      if (!mountedRef.current || controller.signal.aborted || profileAbortRef.current !== controller) return;
+      setPreviewStatus(error instanceof Error ? error.message : "Unable to load the reported profile.");
+    } finally {
+      if (profileAbortRef.current === controller) profileAbortRef.current = null;
+      if (mountedRef.current && !controller.signal.aborted) setProfileLoadingId("");
+    }
+  }
+
   return (
+    <>
     <div className="report-list">
       {reports.slice(0, 6).map((report) => {
         const reportId = String(report.id || "");
+        const profileTarget = asRecordObject(report.profileTarget);
+        const profileKind = asText(profileTarget.kind);
+        const profileSlug = asText(profileTarget.slug);
         return (
           <div className="report-row" key={reportId}>
             <strong>{String(report.targetLabel || report.targetType || "Reported item")}</strong>
-            <span>{String(report.reason || "Reason pending")}</span>
-            {report.details ? <p>{String(report.details)}</p> : null}
-            <div>
+            <span className="report-reason"><b>Why it was reported</b>{String(report.reason || "Reason pending")}</span>
+            {report.details ? <p><b>Reporter details</b>{String(report.details)}</p> : null}
+            <div className="report-actions">
+              {profileKind === "dancer" && asText(profileTarget.id) ? (
+                <button type="button" className="secondary-action" onClick={() => openReportedProfile(report)} disabled={profileLoadingId === reportId}>
+                  {profileLoadingId === reportId ? "Opening profile..." : "View reported profile"}
+                </button>
+              ) : null}
+              {profileKind === "venue" && profileSlug ? (
+                <Link className="secondary-action report-profile-link" href={`/venues/${encodeURIComponent(profileSlug)}`} target="_blank">
+                  View reported club profile
+                </Link>
+              ) : null}
               <button type="button" onClick={() => updateReport(reportId, "resolved")} disabled={Boolean(busyReportId)}>
                 {busyReportId === reportId ? "Saving..." : "Resolve"}
               </button>
@@ -2948,6 +3004,36 @@ function ReportManager({
         );
       })}
     </div>
+    {previewReport ? (
+      <div className="admin-preview-overlay" role="dialog" aria-modal="true" aria-label="Reported dancer profile" onClick={closeReportedProfile}>
+        <div className="admin-preview-modal admin-profile-modal reported-profile-modal" onClick={(event) => event.stopPropagation()}>
+          <button className="admin-preview-close" type="button" onClick={closeReportedProfile} aria-label="Close reported profile">×</button>
+          <h3>{previewProfile ? `${asText(previewProfile.stageName || previewProfile.stage_name) || "Dancer"} — reported profile` : "Reported profile"}</h3>
+          <section className="reported-profile-context" aria-label="Report context">
+            <small>Reported target</small>
+            <strong>{asText(previewReport.targetLabel || previewReport.targetType) || "Reported profile"}</strong>
+            <dl>
+              <div><dt>Why it was reported</dt><dd>{asText(previewReport.reason) || "Reason pending"}</dd></div>
+              <div><dt>Reporter details</dt><dd>{asText(previewReport.details) || "No additional details were supplied."}</dd></div>
+              <div><dt>Reported</dt><dd>{formatDate(previewReport.createdAt)}</dd></div>
+              <div><dt>Target record</dt><dd>{labelize(asText(previewReport.targetType))} · {asText(previewReport.targetId) || "No record ID"}</dd></div>
+            </dl>
+          </section>
+          {previewStatus ? <p role={previewStatus.startsWith("Unable") ? "alert" : "status"}>{previewStatus}</p> : null}
+          {previewProfile ? (
+            <AdminDancerFullProfile
+              profile={previewProfile}
+              activeTab="all"
+              actionBusy
+              deletingContentKey=""
+              onDeletePhoto={() => undefined}
+              onDeleteSocial={() => undefined}
+            />
+          ) : null}
+        </div>
+      </div>
+    ) : null}
+    </>
   );
 }
 
@@ -5385,9 +5471,19 @@ function AdminStyles() {
       .report-list { display: grid; gap: 12px; }
       .report-row { display: grid; gap: 8px; padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,.08); background: rgba(255,255,255,.04); }
       .report-row span { color: #b9accd; }
-      .report-row p { color: #94e5ff; font-size: 14px; }
-      .report-row div { display: flex; gap: 8px; flex-wrap: wrap; }
+      .report-row .report-reason, .report-row p { display: grid; gap: 3px; margin: 0; color: #d8cfeb; font-size: 14px; line-height: 1.45; }
+      .report-row :is(.report-reason, p) b { color: #94e5ff; font-size: 10px; letter-spacing: .09em; text-transform: uppercase; }
+      .report-row .report-actions { display: flex; gap: 8px; flex-wrap: wrap; }
       .report-row button { color: #090911; background: #f7f2ff; padding: 0 12px; }
+      .report-row .report-profile-link { display: inline-flex; align-items: center; justify-content: center; min-height: 36px; padding: 0 12px; border: 1px solid rgba(148,229,255,.32); border-radius: 8px; color: #f7f2ff; background: rgba(148,229,255,.08); font-size: 12px; font-weight: 900; text-decoration: none; }
+      .reported-profile-modal { display: grid; gap: 14px; }
+      .reported-profile-context { display: grid; gap: 5px; padding: 14px; border: 1px solid rgba(255,180,84,.34); border-radius: 10px; background: rgba(255,180,84,.08); }
+      .reported-profile-context > small { color: #ffd19a; font-size: 10px; font-weight: 950; letter-spacing: .11em; text-transform: uppercase; }
+      .reported-profile-context > strong { color: #fff; font-size: 17px; }
+      .reported-profile-context dl { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 8px; margin: 7px 0 0; }
+      .reported-profile-context dl > div { display: grid; gap: 3px; min-width: 0; padding: 9px; border-radius: 8px; background: rgba(0,0,0,.18); }
+      .reported-profile-context dt { color: #b9accd; font-size: 10px; font-weight: 900; letter-spacing: .06em; text-transform: uppercase; }
+      .reported-profile-context dd { margin: 0; color: #fff; font-size: 13px; line-height: 1.45; overflow-wrap: anywhere; }
       .dmca-admin, .dmca-case-list, .dmca-case-detail, .dmca-agent-settings form { display: grid; gap: 10px; }
       .dmca-admin-summary { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
       .dmca-admin-summary a { color: #94e5ff; font-size: 12px; font-weight: 850; }
@@ -5583,8 +5679,8 @@ function AdminStyles() {
         .top-nav, .admin-warning { align-items: flex-start; flex-direction: column; margin-bottom: 28px; }
         .nav-links { justify-content: flex-start; }
         .approval-summary { display: grid; grid-template-columns: 1fr; }
-        .approval-actions, .report-row div, .content-review-actions, .venue-access-actions { display: grid; grid-template-columns: 1fr; }
-        .approval-row button, .report-row button, .venue-manager button, .venue-request-actions button, .venue-request-issued button, .deal-activity-row button { width: 100%; }
+        .approval-actions, .report-row .report-actions, .content-review-actions, .venue-access-actions, .reported-profile-context dl { display: grid; grid-template-columns: 1fr; }
+        .approval-row button, .report-row button, .report-row .report-profile-link, .venue-manager button, .venue-request-actions button, .venue-request-issued button, .deal-activity-row button { width: 100%; }
         .venue-request-details dl > div { grid-template-columns: 1fr; gap: 2px; }
         .venue-request-actions { grid-template-columns: 1fr; }
         .deal-settlement-action { grid-template-columns: 1fr; }
