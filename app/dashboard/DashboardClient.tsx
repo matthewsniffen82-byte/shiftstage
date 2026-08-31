@@ -7907,6 +7907,11 @@ function DashboardStyles() {
       .dashboard-close:hover { border-color: rgba(126,234,255,.42); background: rgba(38,34,48,.92); }
       .dashboard-close:active { transform: scale(.96); }
       .dashboard-close:focus-visible, .customer-dashboard-tabs a:focus-visible { outline: 2px solid #7eeaff; outline-offset: 3px; }
+      .dashboard-shell-customer .dashboard-head-row { grid-template-columns: minmax(0, 1fr) 36px; }
+      .dashboard-shell-customer .dashboard-close { width: 36px !important; min-width: 36px !important; max-width: 36px !important; height: 36px !important; min-height: 36px !important; max-height: 36px !important; flex: 0 0 36px; padding: 0; border: 1px solid rgba(226,232,240,.22) !important; border-radius: 50% !important; color: rgba(255,255,255,.92) !important; background: linear-gradient(145deg,rgba(49,47,59,.96),rgba(19,19,25,.94)) !important; box-shadow: inset 0 1px 0 rgba(255,255,255,.08),0 8px 18px rgba(0,0,0,.36) !important; -webkit-backdrop-filter: blur(12px) saturate(1.2); backdrop-filter: blur(12px) saturate(1.2); line-height: 0; }
+      .dashboard-shell-customer .dashboard-close svg { width: 15px !important; height: 15px !important; stroke-width: 1.85; }
+      .dashboard-shell-customer .dashboard-close:hover { border-color: rgba(226,232,240,.34) !important; background: linear-gradient(145deg,rgba(58,56,68,.96),rgba(23,23,30,.94)) !important; }
+      .dashboard-shell-customer .dashboard-close:focus-visible { border-color: rgba(226,232,240,.34) !important; outline: 2px solid rgba(255,255,255,.72); outline-offset: 2px; }
       .primary-link { min-height: 38px; display: inline-flex; align-items: center; justify-content: center; padding: 0 14px; border-radius: 999px; color: #fff; text-decoration: none; border: 1px solid rgba(255,255,255,.12); background: rgba(255,255,255,.05); font-weight: 850; }
       button.primary-link { width: fit-content; cursor: pointer; font: inherit; }
       button.primary-link:disabled { cursor: wait; opacity: .68; }

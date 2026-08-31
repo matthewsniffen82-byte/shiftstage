@@ -160,3 +160,9 @@ test("customer dashboard remains touch-friendly and responsive without owning th
   assert.match(dashboard, /@media \(max-width: 520px\)[\s\S]*?\.dashboard-head-row \{ gap: 10px; \}/);
   assert.doesNotMatch(dashboard, /GlobalMobileBottomNav|home-mobile-bottom-nav/);
 });
+
+test("customer dashboard close control matches the compact dancer-profile close style", () => {
+  assert.match(dashboard, /\.dashboard-shell-customer \.dashboard-head-row \{ grid-template-columns: minmax\(0, 1fr\) 36px; \}/);
+  assert.match(dashboard, /\.dashboard-shell-customer \.dashboard-close \{[^}]*width: 36px !important;[^}]*height: 36px !important;[^}]*border: 1px solid rgba\(226,232,240,\.22\) !important;[^}]*linear-gradient\(145deg,rgba\(49,47,59,\.96\),rgba\(19,19,25,\.94\)\) !important;/);
+  assert.match(dashboard, /\.dashboard-shell-customer \.dashboard-close svg \{ width: 15px !important; height: 15px !important; stroke-width: 1\.85; \}/);
+});
