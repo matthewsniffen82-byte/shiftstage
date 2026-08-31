@@ -67,7 +67,7 @@ test("followed dancers and clubs are grouped by city without location-based dist
   assert.match(dashboard, /function groupFollowedVenuesByCity[\s\S]*?left\.venue\?\.name[\s\S]*?right\.venue\?\.name[\s\S]*?customerDashboardCollator\.compare\(left\.city, right\.city\)/);
   assert.match(dashboard, /customer-followed-city-list[\s\S]*?customer-followed-city-heading[\s\S]*?customer-saved-card-grid customer-followed-dancer-grid/);
   assert.match(dashboard, /followedVenueCityGroups\.map[\s\S]*?customer-followed-city-heading[\s\S]*?group\.follows\.length === 1 \? "club" : "clubs"/);
-  assert.match(dashboard, /\.customer-followed-dancer-grid \{ grid-template-columns: repeat\(2, minmax\(0, 1fr\)\)/);
+  assert.match(dashboard, /\.customer-followed-dancer-grid \{ grid-template-columns: repeat\(3, minmax\(0, 1fr\)\)/);
   assert.match(dashboard, /\.customer-followed-dancer-tile \{[^}]*aspect-ratio: 1 \/ 1\.68;[^}]*border: 1px solid rgba\(192,132,255,\.34\)/);
   assert.match(dashboard, /\.customer-followed-dancer-tile > \.customer-saved-card-image \{[^}]*position: absolute;[^}]*height: 100%;[^}]*object-fit: cover;/);
   assert.match(dashboard, /\.customer-saved-head \{ align-items: center; flex-direction: row; \}/);
@@ -81,7 +81,7 @@ test("followed dancer tiles match homepage-style discovery cards without dashboa
   assert.ok(cardStart >= 0 && cardEnd > cardStart);
   assert.match(card, /<Link[\s\S]*?className="customer-followed-dancer-tile"[\s\S]*?href=\{customerDancerHref\(dancer\)\}/);
   assert.match(card, /customer-followed-dancer-status is-\$\{statusTone\}[\s\S]*?customer-followed-dancer-time/);
-  assert.match(card, /sizes="\(max-width: 620px\) 44vw, \(max-width: 1100px\) 30vw, 300px"/);
+  assert.match(card, /sizes="\(max-width: 620px\) 29vw, \(max-width: 1100px\) 30vw, 300px"/);
   assert.doesNotMatch(card, /customer-card-actions|Directions|Alerts on|Alerts off|Unfollow/);
   assert.match(dashboard, /description="Dancers you follow, sorted by city\. Tap a card to open the profile\."/);
 });
