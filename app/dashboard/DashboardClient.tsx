@@ -1489,21 +1489,6 @@ function CustomerPanel({
     }
   }
 
-  function updateDancerFollow(dancerId: string, following: boolean, notificationsEnabled: boolean) {
-    return runCustomerAction(
-      `dancer-${dancerId}`,
-      "/api/customer/follows",
-      { dancerId, following, notificationsEnabled },
-      (current) => ({
-        ...current,
-        follows: following
-          ? (current.follows || []).map((item) => item.dancerId === dancerId ? { ...item, notificationsEnabled } : item)
-          : (current.follows || []).filter((item) => item.dancerId !== dancerId),
-      }),
-      following ? (notificationsEnabled ? "Dancer alerts turned on." : "Dancer alerts turned off.") : "Dancer unfollowed.",
-    );
-  }
-
   function updateVenueFollow(venueId: string, following: boolean, notificationsEnabled: boolean) {
     return runCustomerAction(
       `venue-${venueId}`,
@@ -1577,15 +1562,12 @@ function CustomerPanel({
       {actionStatus ? <p className="customer-action-status" role="status">{actionStatus}</p> : null}
       <DashboardSection
         defaultOpen
-        description="Dancers you follow, with profile, alert, and next-shift controls."
+        description="Dancers you follow, sorted by city. Tap a card to open the profile."
         id="customer-followed-dancers"
         title="Followed Dancers"
       >
         <CustomerFollowedDancersPanel
           isLoading={isLoading}
-          onDancerFollowChange={updateDancerFollow}
-          onDirections={openDirections}
-          pendingAction={pendingAction}
           saved={saved}
         />
       </DashboardSection>
@@ -1696,15 +1678,9 @@ function CustomerNightPanel({
 
 function CustomerFollowedDancersPanel({
   isLoading,
-  onDancerFollowChange,
-  onDirections,
-  pendingAction,
   saved,
 }: {
   isLoading: boolean;
-  onDancerFollowChange: (dancerId: string, following: boolean, notificationsEnabled: boolean) => void;
-  onDirections: (venue: SavedVenueSummary, dancerId?: string | null) => void;
-  pendingAction: string;
   saved?: LoadState["saved"];
 }) {
   const followedDancers = saved?.follows || [];
@@ -1732,13 +1708,9 @@ function CustomerFollowedDancersPanel({
                 const dancerId = String(item.dancerId || dancer?.id || "");
                 if (!dancer?.slug || !dancer.stageName || !dancerId) return null;
                 return (
-                  <SavedDancerCard
+                  <FollowedDancerGridCard
                     dancer={dancer}
                     key={dancerId}
-                    onDirections={onDirections}
-                    onFollowChange={(following, notificationsEnabled) => void onDancerFollowChange(dancerId, following, notificationsEnabled)}
-                    pending={Boolean(pendingAction)}
-                    notificationsEnabled={Boolean(item.notificationsEnabled)}
                   />
                 );
               })}
@@ -1810,48 +1782,32 @@ function CustomerFollowedClubsPanel({
   );
 }
 
-function SavedDancerCard({
-  dancer,
-  notificationsEnabled = false,
-  onDirections,
-  onFollowChange,
-  pending,
-}: {
-  dancer: SavedDancerSummary;
-  notificationsEnabled?: boolean;
-  onDirections: (venue: SavedVenueSummary, dancerId?: string | null) => void;
-  onFollowChange?: (following: boolean, notificationsEnabled: boolean) => void;
-  pending: boolean;
-}) {
+function FollowedDancerGridCard({ dancer }: { dancer: SavedDancerSummary }) {
   const shift = dancer.nextShift;
+  const shiftLabel = shift ? customerShiftLabel(shift) : "";
+  const isWorkingNow = shiftLabel === "Working now";
+  const statusLabel = isWorkingNow ? "Working now" : shift ? "Upcoming" : "No schedule";
+  const statusTone = isWorkingNow ? "working" : shift ? "upcoming" : "quiet";
+  const dancerName = String(dancer.stageName || "Dancer");
+
   return (
-    <article className="customer-saved-card">
-      <SavedCardImage image={dancer} name={String(dancer.stageName || "Dancer")} />
-      <div className="customer-saved-card-copy">
-        <span>{shift ? customerShiftLabel(shift) : "No upcoming shift"}</span>
-        <Link href={customerDancerHref(dancer)}><strong>{dancer.stageName}</strong></Link>
-        <small>{shift?.venue.name || dancer.city || "City unavailable"}</small>
-        <div className="customer-card-actions">
-          <Link href={customerDancerHref(dancer)}>Profile</Link>
-          {shift?.venue.id ? (
-            <CustomerDirectionsButton
-              dancerId={dancer.id}
-              onDirections={onDirections}
-              pending={pending}
-              venue={shift.venue}
-            />
-          ) : null}
-          {onFollowChange ? (
-            <>
-              <button type="button" disabled={pending} onClick={() => onFollowChange(true, !notificationsEnabled)}>
-                {notificationsEnabled ? "Alerts on" : "Alerts off"}
-              </button>
-              <button className="customer-text-action" type="button" disabled={pending} onClick={() => onFollowChange(false, false)}>Unfollow</button>
-            </>
-          ) : null}
-        </div>
-      </div>
-    </article>
+    <Link
+      aria-label={`Open ${dancerName} profile`}
+      className="customer-followed-dancer-tile"
+      href={customerDancerHref(dancer)}
+    >
+      <SavedCardImage
+        image={dancer}
+        name={dancerName}
+        sizes="(max-width: 620px) 44vw, (max-width: 1100px) 30vw, 300px"
+      />
+      <span className="customer-followed-dancer-copy">
+        <span className={`customer-followed-dancer-status is-${statusTone}`}>{statusLabel}</span>
+        <strong>{dancerName}</strong>
+        {shift?.venue.name ? <small>{shift.venue.name}</small> : null}
+        {shift && !isWorkingNow ? <small className="customer-followed-dancer-time">{shiftLabel}</small> : null}
+      </span>
+    </Link>
   );
 }
 
@@ -1911,7 +1867,15 @@ function CustomerDirectionsButton({
   );
 }
 
-function SavedCardImage({ image, name }: { image: SavedImageSummary; name: string }) {
+function SavedCardImage({
+  image,
+  name,
+  sizes = "(max-width: 860px) calc(100vw - 72px), (max-width: 1200px) 30vw, 340px",
+}: {
+  image: SavedImageSummary;
+  name: string;
+  sizes?: string;
+}) {
   if (image.imageUrl) {
     return (
       <img
@@ -1920,7 +1884,7 @@ function SavedCardImage({ image, name }: { image: SavedImageSummary; name: strin
         loading="lazy"
         src={image.imageUrl}
         srcSet={image.imageSrcSet || undefined}
-        sizes="(max-width: 860px) calc(100vw - 72px), (max-width: 1200px) 30vw, 340px"
+        sizes={sizes}
         width={image.imageWidth || undefined}
         height={image.imageHeight || undefined}
         alt=""
@@ -8414,7 +8378,19 @@ function DashboardStyles() {
       .customer-followed-city-heading h3 { margin: 0; color: #fff; font-size: 18px; }
       .customer-followed-city-heading span { color: #aaf2ff; font-size: 11px; font-weight: 900; }
       .customer-saved-card-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
-      .customer-followed-dancer-grid .customer-saved-card-image { height: auto; aspect-ratio: 4 / 5; }
+      .customer-followed-dancer-tile { position: relative; min-width: 0; aspect-ratio: 1 / 1.68; overflow: hidden; border: 1px solid rgba(192,132,255,.34); border-radius: 14px; color: #fff; background: #07070a; box-shadow: 0 16px 34px rgba(0,0,0,.48), 0 0 14px rgba(155,92,255,.1); text-decoration: none; }
+      .customer-followed-dancer-tile::after { content: ""; position: absolute; inset: 28% 0 0; z-index: 1; background: linear-gradient(180deg, transparent, rgba(10,6,17,.58) 34%, rgba(5,5,8,.98) 100%); pointer-events: none; }
+      .customer-followed-dancer-tile:hover, .customer-followed-dancer-tile:focus-visible { border-color: rgba(192,132,255,.7); box-shadow: 0 20px 42px rgba(0,0,0,.56), 0 0 24px rgba(155,92,255,.24); }
+      .customer-followed-dancer-tile:focus-visible { outline: 2px solid #7eeaff; outline-offset: 3px; }
+      .customer-followed-dancer-tile > .customer-saved-card-image { position: absolute; inset: 0; width: 100%; height: 100%; aspect-ratio: auto; border-radius: 0; object-fit: cover; }
+      .customer-followed-dancer-copy { position: absolute; inset: auto 0 0; z-index: 2; min-width: 0; display: grid; gap: 4px; padding: 44px 11px 12px; }
+      .customer-followed-dancer-copy > strong, .customer-followed-dancer-copy > small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .customer-followed-dancer-copy > strong { font-size: 18px; line-height: 1.05; }
+      .customer-followed-dancer-copy > small { color: #d1c8df; font-size: 11px; }
+      .customer-followed-dancer-copy > .customer-followed-dancer-time { color: #a9a0b8; font-size: 10px; }
+      .customer-followed-dancer-status { width: fit-content; color: #a9a0b8; font-size: 9px; font-weight: 950; letter-spacing: .1em; text-transform: uppercase; }
+      .customer-followed-dancer-status.is-working { color: #6ee7a6; text-shadow: 0 0 10px rgba(34,197,94,.34); }
+      .customer-followed-dancer-status.is-upcoming { color: #7eeaff; text-shadow: 0 0 10px rgba(53,216,255,.28); }
       .customer-saved-card { min-width: 0; overflow: hidden; border: 1px solid rgba(126,234,255,.16); border-radius: 12px; background: rgba(5,5,9,.7); }
       .customer-saved-card-image { width: 100%; height: 148px; display: grid; place-items: center; object-fit: cover; background: linear-gradient(145deg, #201338, #091927); color: #fff; font-size: 24px; font-weight: 950; }
       .customer-saved-card-copy { min-width: 0; display: grid; gap: 6px; padding: 12px; }
@@ -9260,7 +9236,7 @@ function DashboardStyles() {
         .earnings-history-tabs button { padding: 5px 8px; }
       }
       @media (max-width: 860px) { .dashboard-grid, .venue-dashboard-overview-grid, .venue-dashboard-account-grid, .setup-panel form, .upload-panel form, .verification-panel form, .shift-panel form, .shift-checkin-card, .dashboard-shift, .billing-grid, .customer-settings-panel form, .notification-head, .socials-panel form, .share-grid, .impact-grid, .deal-metrics, .customer-saved-grid, .customer-settings-grid, .venue-deal-panel form, .venue-deal-metrics, .venue-deal-qr-generator, .venue-deal-qr-generator.has-qr, .venue-verification-controls, .dancer-verification-qr, .venue-verification-preview, .venue-verification-scanner { grid-template-columns: 1fr; } .setup-panel, .upload-panel, .verification-panel, .shift-panel, .billing-panel, .customer-settings-panel, .account-controls-panel, .notification-panel, .socials-panel, .share-panel, .impact-panel, .support-panel, .deal-panel, .saved-deal-panel, .customer-saved-panel, .locked-analytics-panel, .visibility-panel, .venue-working-panel, .venue-deal-panel, .venue-verification-panel, .customer-settings-panel .city-field, .setup-panel label:nth-of-type(4), .venue-dashboard-account-grid > .support-panel, .venue-dashboard-account-grid > .account-controls-panel { grid-column: auto; grid-row: auto; } .venue-deal-qr-preview { width: min(100%, 320px); justify-self: center; } .commission-tier-table > div { grid-template-columns: 1fr; gap: 4px; } }
-      @media (max-width: 620px) { .dashboard-shell { padding-left: 12px; padding-right: 12px; } .venue-command-links { grid-template-columns: 1fr; } .venue-dashboard-section > summary { min-height: 96px; grid-template-columns: minmax(0, 1fr) auto; padding: 15px; } .venue-dashboard-section-badge { grid-column: 1; grid-row: 2; } .venue-dashboard-section-toggle { grid-column: 2; grid-row: 1 / span 2; } .venue-dashboard-section-body { padding: 10px; } .venue-deal-step-grid, .venue-deal-review, .venue-deal-share-options, .venue-verification-actions, .venue-verification-manual > div, .customer-nfc-guide { grid-template-columns: 1fr; } .venue-deal-readonly-heading { flex-direction: column; } .venue-contract-deal-list, .venue-contract-deal-list dl, .venue-deal-request-center, .venue-deal-request-center > form { grid-template-columns: 1fr; } .venue-deal-request-center > button, .venue-deal-request-center form button { width: 100%; } .venue-deal-request-history article { grid-template-columns: 1fr; } .customer-welcome-card { grid-template-columns: 34px minmax(0, 1fr) auto; gap: 10px; padding: 14px; } .customer-welcome-lock { width: 34px; height: 34px; } .customer-welcome-copy ul { grid-template-columns: 1fr; } .customer-welcome-actions { display: grid; grid-template-columns: 1fr; } .customer-welcome-actions a { width: 100%; } .customer-welcome-card > button { width: 34px; height: 34px; } .customer-dashboard-primary-links { grid-template-columns: repeat(2, minmax(0, 1fr)); } .customer-dashboard-primary-links a { min-height: 64px; padding: 10px; font-size: 12px; } .customer-dashboard-utility-links { justify-content: stretch; } .customer-dashboard-utility-links a { flex: 1 1 0; } .customer-saved-card-grid { grid-template-columns: 1fr; } .customer-followed-dancer-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; } .customer-followed-dancer-grid .customer-saved-card-copy { gap: 5px; padding: 10px 9px; } .customer-followed-dancer-grid .customer-saved-card-copy > a strong { font-size: 16px; } .customer-followed-dancer-grid .customer-card-actions { display: grid !important; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px !important; } .customer-followed-dancer-grid .customer-card-actions a, .customer-followed-dancer-grid .customer-card-actions button { min-width: 0; padding: 0 5px; font-size: 11px; } .customer-night-card { grid-template-columns: 96px minmax(0, 1fr); } .customer-night-card > .customer-saved-card-image { width: 96px; min-height: 154px; } .customer-night-copy { padding: 13px; } .customer-night-copy h3 { font-size: 20px; } .customer-section-heading.split { align-items: flex-start; flex-direction: column; } .customer-saved-head { align-items: center; flex-direction: row; } .customer-section-heading.split > strong, .notification-title-row > strong { min-width: 36px; width: 36px; height: 36px; font-size: 14px; } .customer-card-actions a, .customer-card-actions button, .customer-empty-state a { min-height: 42px; } .saved-deal-bookmark { grid-template-columns: 1fr; } .saved-deal-bookmark > .customer-card-actions { justify-content: flex-start; } .customer-settings-section { padding: 12px; } .deal-metrics .metric { border-left: 0; border-top: 1px solid var(--mydancr-dashboard-border); } .deal-metrics .metric:first-child { border-top: 0; } }
+      @media (max-width: 620px) { .dashboard-shell { padding-left: 12px; padding-right: 12px; } .venue-command-links { grid-template-columns: 1fr; } .venue-dashboard-section > summary { min-height: 96px; grid-template-columns: minmax(0, 1fr) auto; padding: 15px; } .venue-dashboard-section-badge { grid-column: 1; grid-row: 2; } .venue-dashboard-section-toggle { grid-column: 2; grid-row: 1 / span 2; } .venue-dashboard-section-body { padding: 10px; } .venue-deal-step-grid, .venue-deal-review, .venue-deal-share-options, .venue-verification-actions, .venue-verification-manual > div, .customer-nfc-guide { grid-template-columns: 1fr; } .venue-deal-readonly-heading { flex-direction: column; } .venue-contract-deal-list, .venue-contract-deal-list dl, .venue-deal-request-center, .venue-deal-request-center > form { grid-template-columns: 1fr; } .venue-deal-request-center > button, .venue-deal-request-center form button { width: 100%; } .venue-deal-request-history article { grid-template-columns: 1fr; } .customer-welcome-card { grid-template-columns: 34px minmax(0, 1fr) auto; gap: 10px; padding: 14px; } .customer-welcome-lock { width: 34px; height: 34px; } .customer-welcome-copy ul { grid-template-columns: 1fr; } .customer-welcome-actions { display: grid; grid-template-columns: 1fr; } .customer-welcome-actions a { width: 100%; } .customer-welcome-card > button { width: 34px; height: 34px; } .customer-dashboard-primary-links { grid-template-columns: repeat(2, minmax(0, 1fr)); } .customer-dashboard-primary-links a { min-height: 64px; padding: 10px; font-size: 12px; } .customer-dashboard-utility-links { justify-content: stretch; } .customer-dashboard-utility-links a { flex: 1 1 0; } .customer-saved-card-grid { grid-template-columns: 1fr; } .customer-followed-dancer-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; } .customer-followed-dancer-copy { padding: 38px 9px 10px; } .customer-followed-dancer-copy > strong { font-size: 16px; } .customer-night-card { grid-template-columns: 96px minmax(0, 1fr); } .customer-night-card > .customer-saved-card-image { width: 96px; min-height: 154px; } .customer-night-copy { padding: 13px; } .customer-night-copy h3 { font-size: 20px; } .customer-section-heading.split { align-items: flex-start; flex-direction: column; } .customer-saved-head { align-items: center; flex-direction: row; } .customer-section-heading.split > strong, .notification-title-row > strong { min-width: 36px; width: 36px; height: 36px; font-size: 14px; } .customer-card-actions a, .customer-card-actions button, .customer-empty-state a { min-height: 42px; } .saved-deal-bookmark { grid-template-columns: 1fr; } .saved-deal-bookmark > .customer-card-actions { justify-content: flex-start; } .customer-settings-section { padding: 12px; } .deal-metrics .metric { border-left: 0; border-top: 1px solid var(--mydancr-dashboard-border); } .deal-metrics .metric:first-child { border-top: 0; } }
       @media (max-width: 620px) { .dancer-nats-signup-callout { grid-template-columns: 1fr; gap: 13px; padding: 15px; } .dancer-nats-signup-actions { display: grid; grid-template-columns: 1fr; justify-content: stretch; } .dancer-nats-signup-actions > a, .dancer-nats-signup-actions > button, .dancer-nats-signup-actions > b { width: 100%; min-height: 46px; } }
       @media (max-width: 520px) { .dashboard-head { padding: 10px 12px 14px; border-radius: 16px; } .dashboard-head-row { gap: 10px; } .dashboard-head h1, h1 { font-size: clamp(21px, 6vw, 26px); } .dashboard-close { flex-basis: 42px; } .notification-title-row { align-items: flex-start; } }
       @media (max-width: 520px) { .notification-toolbar { width: 100%; justify-content: flex-start; } .notification-mark-read-button { margin-left: auto; } .support-panel .support-send-button { width: 100%; } .account-action-row { gap: 10px; } .account-action-button { min-width: 78px; padding-inline: 10px; } }

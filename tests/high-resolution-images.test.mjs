@@ -251,5 +251,6 @@ test("profile surfaces use responsive sources and concise plural upload guidance
   assert.match(liveShell, /nativeResponsivePhotoAttrs\(logoImageUrl, venue\?\.logoImageSrcSet\)/);
   assert.match(liveShell, /original camera images/);
   assert.match(liveShell, /image\/heic,image\/heif/);
-  assert.match(dashboard, /className="customer-saved-card-image"[\s\S]*?loading="lazy"[\s\S]*?sizes="\(max-width: 860px\)/);
+  assert.match(dashboard, /sizes = "\(max-width: 860px\) calc\(100vw - 72px\), \(max-width: 1200px\) 30vw, 340px"/);
+  assert.match(dashboard, /className="customer-saved-card-image"[\s\S]*?loading="lazy"[\s\S]*?sizes=\{sizes\}/);
 });
