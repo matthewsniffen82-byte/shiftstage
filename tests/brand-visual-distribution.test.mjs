@@ -58,7 +58,7 @@ test("brand and semantic color stay assigned to interaction and real state", () 
   );
   assert.match(
     aesthetic,
-    /\.customer-dashboard-tabs a:is\(:hover, :focus-visible\)[\s\S]*?var\(--dancr-color-brand-primary\) 14%/,
+    /\.customer-dashboard-nav a:is\(:hover, :focus-visible\)[\s\S]*?var\(--dancr-color-brand-primary\) 14%/,
   );
   assert.match(aesthetic, /\.photo-review-card\.is-pending[\s\S]*?var\(--dancr-color-featured\)/);
   assert.match(aesthetic, /\.photo-review-card\.is-approved[\s\S]*?var\(--dancr-color-success\)/);

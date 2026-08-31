@@ -16,16 +16,17 @@ const [dashboard, customerService, favoritesRoute, venueFollowsRoute, directions
   readFile(new URL("../supabase/migrations/202608300009_customer_saved_club_deals.sql", import.meta.url), "utf8"),
 ]);
 
-test("customer dashboard leads with tonight, saved, deals, and alerts before account settings", () => {
+test("customer dashboard leads with four clear activity areas before alerts and account", () => {
   assert.match(
     dashboard,
-    /<CustomerDashboardTabs \/>[\s\S]*?<CustomerPanel[\s\S]*?id="customer-alerts"[\s\S]*?<NotificationPanel saved=\{state\.saved\} customerMode panelId="customer-alerts-panel" \/>[\s\S]*?id="customer-settings"/,
+    /<CustomerDashboardNav saved=\{state\.saved\} \/>[\s\S]*?<CustomerPanel[\s\S]*?id="customer-alerts"[\s\S]*?<NotificationPanel saved=\{state\.saved\} customerMode panelId="customer-alerts-panel" \/>[\s\S]*?id="customer-account"/,
   );
   assert.match(
     dashboard,
-    /href="#customer-tonight"[\s\S]*?>Tonight[\s\S]*?href="#customer-saved"[\s\S]*?>Saved[\s\S]*?href="#customer-offers"[\s\S]*?>Club Deals[\s\S]*?href="#customer-alerts"[\s\S]*?>Alerts[\s\S]*?href="#customer-settings"[\s\S]*?>Settings/,
+    /customer-followed-dancers", label: "Followed Dancers"[\s\S]*?customer-followed-clubs", label: "Followed Clubs"[\s\S]*?customer-saved-deals", label: "Saved Club Deals"[\s\S]*?customer-going", label: "I’m Going"[\s\S]*?href="#customer-alerts"[\s\S]*?>Alerts[\s\S]*?href="#customer-account"[\s\S]*?>Account/,
   );
   assert.match(dashboard, /role === "customer" \? "Guest dashboard"/);
+  assert.doesNotMatch(dashboard, /eyebrow="(?:Guest workspace|Your activity)"/);
   assert.match(dashboard, /const dashboardHeading = isLoading[\s\S]*?role === "dancer" \? profileDisplayName \|\| title : resolvedDisplayName \|\| title[\s\S]*?: displayName/);
   assert.doesNotMatch(dashboard, /Welcome back, \$\{displayName\}/);
   assert.match(dashboard, /<DashboardCloseButton[\s\S]*?label=\{`Close \$\{role\} dashboard and return to MyDancr`\}/);
@@ -40,14 +41,13 @@ test("dancer dashboard header prefers the saved stage name and never the email-d
   assert.doesNotMatch(dashboard, /role === "dancer"[\s\S]{0,120}\? accountDisplayName/);
 });
 
-test("Your Night and Saved cards use live customer records and production actions", () => {
+test("I’m Going and followed profile sections use live customer records and production actions", () => {
   assert.match(dashboard, /signals=\{saved\?\.goingSignals \|\| \[\]\}/);
   assert.match(dashboard, /item\.shift\?\.status === "posted"/);
   assert.match(dashboard, /customerShiftLabel\(shift\)/);
   assert.match(dashboard, />\s*Cancel Going\s*</);
   assert.match(dashboard, /"\/api\/customer\/going"/);
   assert.match(dashboard, /"\/api\/customer\/follows"/);
-  assert.match(dashboard, /"\/api\/customer\/favorites"/);
   assert.match(dashboard, /"\/api\/customer\/venue-follows"/);
   assert.match(dashboard, /"\/api\/customer\/directions"/);
   assert.match(dashboard, /navigator\.geolocation\.getCurrentPosition/);
@@ -56,7 +56,10 @@ test("Your Night and Saved cards use live customer records and production action
   assert.match(dashboard, /customerDancerHref\(dancer\)/);
   assert.match(dashboard, /customerVenueHref\(venue\)/);
   assert.match(dashboard, /No plans yet[\s\S]*?Find dancers/);
-  assert.match(dashboard, /No followed dancers yet[\s\S]*?No favorite dancers yet[\s\S]*?No followed clubs yet/);
+  assert.match(dashboard, /function CustomerNightPanel[\s\S]*?<div className="customer-night-panel"[\s\S]*?<div className="customer-night-list">/);
+  assert.doesNotMatch(dashboard, /Plans you confirmed|Dancer shifts you chose|info-panel customer-night-panel/);
+  assert.match(dashboard, /No followed dancers yet[\s\S]*?No followed clubs yet/);
+  assert.match(dashboard, /id="customer-followed-dancers"[\s\S]*?id="customer-followed-clubs"[\s\S]*?id="customer-saved-deals"[\s\S]*?id="customer-going"/);
 });
 
 test("fictional club direction controls navigate to the shared MyDancr destination", () => {
@@ -139,7 +142,7 @@ test("Club Deals can be privately bookmarked without reserving or redeeming them
 test("customer dashboard keeps saved deals separate from cashier redemption activity", () => {
   assert.match(dashboard, /<h2>Saved Club Deals<\/h2>/);
   assert.match(dashboard, /Saved deals are private bookmarks\. Saving does not reserve, select, or redeem an offer\./);
-  assert.match(dashboard, /<h2>Use &amp; history<\/h2>/);
+  assert.match(dashboard, /<details className="customer-deal-activity">[\s\S]*?Club Deal use &amp; history/);
   assert.match(dashboard, />View deal<\/Link>/);
   assert.match(dashboard, />\s*Remove\s*<\/button>/);
   assert.match(dashboard, /"\/api\/customer\/deal-saves"/);
@@ -158,7 +161,7 @@ test("customer action endpoints reject malformed identifiers and oversized attri
 });
 
 test("customer dashboard remains touch-friendly and responsive without owning the global bottom navigation", () => {
-  assert.match(dashboard, /@media \(max-width: 620px\)[\s\S]*?\.customer-dashboard-tabs[\s\S]*?overflow-x: auto/);
+  assert.match(dashboard, /@media \(max-width: 620px\)[\s\S]*?\.customer-dashboard-primary-links \{ grid-template-columns: repeat\(2/);
   assert.match(dashboard, /\.customer-card-actions a, \.customer-card-actions button, \.customer-empty-state a \{ min-height: 42px;/);
   assert.match(dashboard, /@media \(max-width: 520px\)[\s\S]*?\.dashboard-head-row \{ gap: 10px; \}/);
   assert.doesNotMatch(dashboard, /GlobalMobileBottomNav|home-mobile-bottom-nav/);

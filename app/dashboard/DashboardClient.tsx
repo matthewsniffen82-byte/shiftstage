@@ -406,7 +406,7 @@ export default function DashboardClient({
   useEffect(() => {
     if (isLoading || state.error) return;
     const initialSectionId = role === "customer" && initialSection
-      ? initialSection === "offers" ? "customer-offers" : "customer-saved"
+      ? initialSection === "offers" ? "customer-saved-deals" : "customer-followed-dancers"
       : "";
     const hashSectionId = decodeURIComponent(window.location.hash.replace(/^#/, ""));
     const sectionId = initialSectionId || hashSectionId;
@@ -498,11 +498,10 @@ export default function DashboardClient({
                 accountKey={String(state.account?.id || state.account?.email || "guest")}
                 show={showCustomerWelcome}
               />
-              <CustomerDashboardTabs />
+              <CustomerDashboardNav saved={state.saved} />
               <CustomerPanel saved={state.saved} onSavedChange={updateSaved} isLoading={isLoading} />
               <DashboardSection
                 description="Schedule changes, saved-profile updates, Club Deal activity, and support replies."
-                eyebrow="Guest workspace"
                 id="customer-alerts"
                 title="Alerts"
               >
@@ -510,9 +509,8 @@ export default function DashboardClient({
               </DashboardSection>
               <DashboardSection
                 description="Preferences, support messages, password controls, and account status."
-                eyebrow="Guest workspace"
-                id="customer-settings"
-                title="Account & settings"
+                id="customer-account"
+                title="Account"
               >
                 <div className="venue-dashboard-inner-grid customer-settings-grid">
                   <InfoPanel title="Account">
@@ -657,14 +655,32 @@ function CustomerWelcomeCard({ accountKey, show }: { accountKey: string; show: b
   );
 }
 
-function CustomerDashboardTabs() {
+function CustomerDashboardNav({ saved }: { saved?: CustomerSavedState | null }) {
+  const now = useCustomerMinuteClock();
+  const goingCount = (saved?.goingSignals || []).filter((item) => (
+    item.shift?.status === "posted" && new Date(item.shift.endsAt).getTime() > now
+  )).length;
+  const links = [
+    { id: "customer-followed-dancers", label: "Followed Dancers", count: saved?.follows?.length || 0 },
+    { id: "customer-followed-clubs", label: "Followed Clubs", count: saved?.venueFollows?.length || 0 },
+    { id: "customer-saved-deals", label: "Saved Club Deals", count: saved?.dealSaves?.length || 0 },
+    { id: "customer-going", label: "I’m Going", count: goingCount },
+  ];
+
   return (
-    <nav className="customer-dashboard-tabs" aria-label="Guest dashboard sections">
-      <a href="#customer-tonight" onClick={(event) => openDashboardSection(event, "customer-tonight")}>Tonight</a>
-      <a href="#customer-saved" onClick={(event) => openDashboardSection(event, "customer-saved")}>Saved</a>
-      <a href="#customer-offers" onClick={(event) => openDashboardSection(event, "customer-offers")}>Club Deals</a>
-      <a href="#customer-alerts" onClick={(event) => openDashboardSection(event, "customer-alerts")}>Alerts</a>
-      <a href="#customer-settings" onClick={(event) => openDashboardSection(event, "customer-settings")}>Settings</a>
+    <nav className="customer-dashboard-nav" aria-label="Guest dashboard sections">
+      <div className="customer-dashboard-primary-links">
+        {links.map((link) => (
+          <a href={`#${link.id}`} key={link.id} onClick={(event) => openDashboardSection(event, link.id)}>
+            <span>{link.label}</span>
+            <strong>{link.count}</strong>
+          </a>
+        ))}
+      </div>
+      <div className="customer-dashboard-utility-links" aria-label="Guest dashboard utilities">
+        <a href="#customer-alerts" onClick={(event) => openDashboardSection(event, "customer-alerts")}>Alerts</a>
+        <a href="#customer-account" onClick={(event) => openDashboardSection(event, "customer-account")}>Account</a>
+      </div>
     </nav>
   );
 }
@@ -1426,19 +1442,6 @@ function CustomerPanel({
     );
   }
 
-  function removeFavorite(dancerId: string) {
-    return runCustomerAction(
-      `favorite-${dancerId}`,
-      "/api/customer/favorites",
-      { dancerId, favorite: false },
-      (current) => ({
-        ...current,
-        favorites: (current.favorites || []).filter((item) => item.dancerId !== dancerId),
-      }),
-      "Favorite removed.",
-    );
-  }
-
   function updateVenueFollow(venueId: string, following: boolean, notificationsEnabled: boolean) {
     return runCustomerAction(
       `venue-${venueId}`,
@@ -1463,7 +1466,7 @@ function CustomerPanel({
         ...current,
         goingSignals: (current.goingSignals || []).filter((item) => item.shiftId !== shiftId),
       }),
-      "Removed from Your Night.",
+      "Removed from I’m Going.",
     );
   }
 
@@ -1540,33 +1543,33 @@ function CustomerPanel({
       {actionStatus ? <p className="customer-action-status" role="status">{actionStatus}</p> : null}
       <DashboardSection
         defaultOpen
-        description="The shifts you marked Going, with the dancer, venue, and directions together."
-        eyebrow="Guest workspace"
-        id="customer-tonight"
-        title="Your Night"
+        description="Dancers you follow, with profile, alert, and next-shift controls."
+        id="customer-followed-dancers"
+        title="Followed Dancers"
       >
-        <CustomerNightPanel
-          isLoading={isLoading}
-          onCancelGoing={cancelGoing}
-          onDirections={openDirections}
-          pendingAction={pendingAction}
-          signals={saved?.goingSignals || []}
-        />
-      </DashboardSection>
-      <DashboardSection
-        description="Followed dancers, favorites, and clubs with live distance and alert controls."
-        eyebrow="Guest workspace"
-        id="customer-saved"
-        title="Saved"
-      >
-        <CustomerSavedPanel
+        <CustomerFollowedDancersPanel
           isLoading={isLoading}
           isLocating={isLocating}
           location={location}
           locationStatus={locationStatus}
           onDancerFollowChange={updateDancerFollow}
           onDirections={openDirections}
-          onFavoriteRemove={removeFavorite}
+          onRequestLocation={requestLocation}
+          pendingAction={pendingAction}
+          saved={saved}
+        />
+      </DashboardSection>
+      <DashboardSection
+        description="Clubs you follow, with directions and alert controls."
+        id="customer-followed-clubs"
+        title="Followed Clubs"
+      >
+        <CustomerFollowedClubsPanel
+          isLoading={isLoading}
+          isLocating={isLocating}
+          location={location}
+          locationStatus={locationStatus}
+          onDirections={openDirections}
           onRequestLocation={requestLocation}
           onVenueFollowChange={updateVenueFollow}
           pendingAction={pendingAction}
@@ -1574,10 +1577,9 @@ function CustomerPanel({
         />
       </DashboardSection>
       <DashboardSection
-        description="Privately saved offers, active cashier selections, and your Club Deal history."
-        eyebrow="Guest workspace"
-        id="customer-offers"
-        title="Club Deals"
+        description="Offers you bookmarked privately for later."
+        id="customer-saved-deals"
+        title="Saved Club Deals"
       >
         <CustomerDealPassPanel
           deals={saved?.dealRedemptions || []}
@@ -1585,6 +1587,19 @@ function CustomerPanel({
           onRemoveSavedDeal={removeSavedDeal}
           pendingAction={pendingAction}
           savedDeals={saved?.dealSaves || []}
+        />
+      </DashboardSection>
+      <DashboardSection
+        description="Dancer shifts where you tapped I’m Going."
+        id="customer-going"
+        title="I’m Going"
+      >
+        <CustomerNightPanel
+          isLoading={isLoading}
+          onCancelGoing={cancelGoing}
+          onDirections={openDirections}
+          pendingAction={pendingAction}
+          signals={saved?.goingSignals || []}
         />
       </DashboardSection>
     </>
@@ -1610,14 +1625,7 @@ function CustomerNightPanel({
     .sort((left, right) => new Date(left.shift?.startsAt || 0).getTime() - new Date(right.shift?.startsAt || 0).getTime());
 
   return (
-    <article className="info-panel customer-night-panel" tabIndex={-1}>
-      <div className="customer-section-heading split">
-        <div>
-          <span>Plans you confirmed</span>
-          <h2>Your Night</h2>
-        </div>
-        <strong>{plans.length}</strong>
-      </div>
+    <div className="customer-night-panel" tabIndex={-1}>
       <div className="customer-night-list">
         {plans.map((item) => {
           const shift = item.shift!;
@@ -1656,20 +1664,18 @@ function CustomerNightPanel({
         ) : null}
         {isLoading ? <div className="customer-loading-state">Loading your plans…</div> : null}
       </div>
-    </article>
+    </div>
   );
 }
 
-function CustomerSavedPanel({
+function CustomerFollowedDancersPanel({
   isLoading,
   isLocating,
   location,
   locationStatus,
   onDancerFollowChange,
   onDirections,
-  onFavoriteRemove,
   onRequestLocation,
-  onVenueFollowChange,
   pendingAction,
   saved,
 }: {
@@ -1679,33 +1685,28 @@ function CustomerSavedPanel({
   locationStatus: string;
   onDancerFollowChange: (dancerId: string, following: boolean, notificationsEnabled: boolean) => void;
   onDirections: (venue: SavedVenueSummary, dancerId?: string | null) => void;
-  onFavoriteRemove: (dancerId: string) => void;
   onRequestLocation: () => void;
-  onVenueFollowChange: (venueId: string, following: boolean, notificationsEnabled: boolean) => void;
   pendingAction: string;
   saved?: LoadState["saved"];
 }) {
   const followedDancers = saved?.follows || [];
-  const favoriteDancers = saved?.favorites || [];
-  const followedVenues = saved?.venueFollows || [];
 
   return (
-    <article
-      className="info-panel customer-saved-panel"
-      tabIndex={-1}
-    >
+    <article className="info-panel customer-saved-panel" tabIndex={-1}>
       <div className="customer-saved-head">
         <div>
-          <span>People and clubs you chose</span>
-          <h2>Saved</h2>
+          <span>Your people</span>
+          <h2>Followed Dancers</h2>
         </div>
+        <strong className="customer-section-count">{followedDancers.length}</strong>
+      </div>
+      {locationStatus ? <p className="customer-location-status" role="status">{locationStatus}</p> : null}
+      <div className="customer-panel-toolbar">
         <button type="button" onClick={onRequestLocation} disabled={isLocating}>
           {isLocating ? "Finding you…" : location ? "Refresh distance" : "Show distance"}
         </button>
       </div>
-      {locationStatus ? <p className="customer-location-status" role="status">{locationStatus}</p> : null}
-      <div className="customer-saved-grid">
-        <SavedLinkGroup title="Following">
+      <div className="customer-saved-card-grid">
           {followedDancers.map((item, index) => {
             const dancer = item.dancer;
             const dancerId = String(item.dancerId || dancer?.id || "");
@@ -1719,32 +1720,55 @@ function CustomerSavedPanel({
                 onFollowChange={(following, notificationsEnabled) => void onDancerFollowChange(dancerId, following, notificationsEnabled)}
                 pending={Boolean(pendingAction)}
                 notificationsEnabled={Boolean(item.notificationsEnabled)}
-                variant="following"
               />
             );
           })}
           {!followedDancers.length && !isLoading ? <CustomerSavedEmpty label="No followed dancers yet" href={homeDiscoveryHref("dancers")} cta="Browse dancers" /> : null}
-        </SavedLinkGroup>
-        <SavedLinkGroup title="Favorites">
-          {favoriteDancers.map((item, index) => {
-            const dancer = item.dancer;
-            const dancerId = String(item.dancerId || dancer?.id || "");
-            if (!dancer?.slug || !dancer.stageName || !dancerId) return null;
-            return (
-              <SavedDancerCard
-                dancer={dancer}
-                distance={customerVenueDistance(location, dancer.nextShift?.venue)}
-                key={`${dancer.slug}-${index}`}
-                onDirections={onDirections}
-                onFavoriteRemove={() => void onFavoriteRemove(dancerId)}
-                pending={Boolean(pendingAction)}
-                variant="favorite"
-              />
-            );
-          })}
-          {!favoriteDancers.length && !isLoading ? <CustomerSavedEmpty label="No favorite dancers yet" href={homeDiscoveryHref("dancers")} cta="Find favorites" /> : null}
-        </SavedLinkGroup>
-        <SavedLinkGroup title="Clubs">
+      </div>
+      {isLoading ? <div className="customer-loading-state">Loading followed dancers…</div> : null}
+    </article>
+  );
+}
+
+function CustomerFollowedClubsPanel({
+  isLoading,
+  isLocating,
+  location,
+  locationStatus,
+  onDirections,
+  onRequestLocation,
+  onVenueFollowChange,
+  pendingAction,
+  saved,
+}: {
+  isLoading: boolean;
+  isLocating: boolean;
+  location: { latitude: number; longitude: number } | null;
+  locationStatus: string;
+  onDirections: (venue: SavedVenueSummary, dancerId?: string | null) => void;
+  onRequestLocation: () => void;
+  onVenueFollowChange: (venueId: string, following: boolean, notificationsEnabled: boolean) => void;
+  pendingAction: string;
+  saved?: LoadState["saved"];
+}) {
+  const followedVenues = saved?.venueFollows || [];
+
+  return (
+    <article className="info-panel customer-saved-panel" tabIndex={-1}>
+      <div className="customer-saved-head">
+        <div>
+          <span>Your clubs</span>
+          <h2>Followed Clubs</h2>
+        </div>
+        <strong className="customer-section-count">{followedVenues.length}</strong>
+      </div>
+      {locationStatus ? <p className="customer-location-status" role="status">{locationStatus}</p> : null}
+      <div className="customer-panel-toolbar">
+        <button type="button" onClick={onRequestLocation} disabled={isLocating}>
+          {isLocating ? "Finding you…" : location ? "Refresh distance" : "Show distance"}
+        </button>
+      </div>
+      <div className="customer-saved-card-grid">
           {followedVenues.map((item, index) => {
             const venue = item.venue;
             const venueId = String(item.venueId || venue?.id || "");
@@ -1762,19 +1786,9 @@ function CustomerSavedPanel({
             );
           })}
           {!followedVenues.length && !isLoading ? <CustomerSavedEmpty label="No followed clubs yet" href={homeDiscoveryHref("venues")} cta="Browse clubs" /> : null}
-        </SavedLinkGroup>
       </div>
-      {isLoading ? <div className="customer-loading-state">Loading your saved profiles…</div> : null}
+      {isLoading ? <div className="customer-loading-state">Loading followed clubs…</div> : null}
     </article>
-  );
-}
-
-function SavedLinkGroup({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <section className="customer-saved-group">
-      <h3>{title}</h3>
-      <div>{children}</div>
-    </section>
   );
 }
 
@@ -1783,19 +1797,15 @@ function SavedDancerCard({
   distance,
   notificationsEnabled = false,
   onDirections,
-  onFavoriteRemove,
   onFollowChange,
   pending,
-  variant,
 }: {
   dancer: SavedDancerSummary;
   distance: string;
   notificationsEnabled?: boolean;
   onDirections: (venue: SavedVenueSummary, dancerId?: string | null) => void;
-  onFavoriteRemove?: () => void;
   onFollowChange?: (following: boolean, notificationsEnabled: boolean) => void;
   pending: boolean;
-  variant: "following" | "favorite";
 }) {
   const shift = dancer.nextShift;
   return (
@@ -1818,16 +1828,13 @@ function SavedDancerCard({
               venue={shift.venue}
             />
           ) : null}
-          {variant === "following" && onFollowChange ? (
+          {onFollowChange ? (
             <>
               <button type="button" disabled={pending} onClick={() => onFollowChange(true, !notificationsEnabled)}>
                 {notificationsEnabled ? "Alerts on" : "Alerts off"}
               </button>
               <button className="customer-text-action" type="button" disabled={pending} onClick={() => onFollowChange(false, false)}>Unfollow</button>
             </>
-          ) : null}
-          {variant === "favorite" && onFavoriteRemove ? (
-            <button className="customer-text-action" type="button" disabled={pending} onClick={onFavoriteRemove}>Remove favorite</button>
           ) : null}
         </div>
       </div>
@@ -1981,59 +1988,61 @@ function CustomerDealPassPanel({
           </div>
         ) : null}
       </div>
-      <div className="saved-deal-head saved-deal-redemption-head">
-        <div>
-          <span>Cashier activity</span>
-          <h2>Use &amp; history</h2>
-        </div>
-        <strong>{activeDeals.length}</strong>
-      </div>
-      <section className="customer-nfc-guide" aria-label="How cashier tap redemption works">
-        <div><b>1</b><span><strong>Choose the exact deal</strong><small>Open an offer from a venue or a Working Now dancer before reaching the cashier.</small></span></div>
-        <div><b>2</b><span><strong>Tap at the cashier</strong><small>Keep the deal open and tap the official MyDancr cashier sticker with this signed-in phone.</small></span></div>
-        <div><b>3</b><span><strong>Wait for confirmation</strong><small>The on-screen confirmation records the redemption and the correct dancer attribution.</small></span></div>
-      </section>
-      <div className="saved-deal-list">
-        {activeDeals.map((item) => (
-          <Link
-            className="saved-deal-item"
-            href={`/deals/pass/${encodeURIComponent(item.redemptionToken)}`}
-            key={item.id}
-          >
-            <span>
-              <strong>{item.deal?.title || "Club Deal"}</strong>
-              <small>{item.venue?.name || "Venue"} · {dealExpiryLabel(item.expiresAt, now)}</small>
-            </span>
-            <em>Open details</em>
-          </Link>
-        ))}
-        {!activeDeals.length ? (
-          <div className="customer-empty-state">
-            <strong>No active Club Deals</strong>
-            <p>Choose a Club Deal first, then tap the club&apos;s official cashier sticker. There is no QR code to scan.</p>
-            <Link href={homeDiscoveryHref("venues")}>Browse clubs</Link>
-          </div>
-        ) : null}
-        {pastDeals.length ? (
-          <details className="past-deal-history">
-            <summary>Past deals <span>{pastDeals.length}</span></summary>
-            <div>
-              {pastDeals.map((item) => {
-                const expired = new Date(item.expiresAt).getTime() <= now;
-                return (
-                  <Link className="saved-deal-item unavailable" href={`/deals/pass/${encodeURIComponent(item.redemptionToken)}`} key={item.id}>
-                    <span>
-                      <strong>{item.deal?.title || "Club Deal"}</strong>
-                      <small>{item.venue?.name || "Venue"} · {dealPassStatus(item.status, expired)}</small>
-                    </span>
-                    <em>View</em>
-                  </Link>
-                );
-              })}
+      {deals.length ? (
+        <details className="customer-deal-activity">
+          <summary>
+            <span>Club Deal use &amp; history</span>
+            <strong>{activeDeals.length} active</strong>
+          </summary>
+          <div>
+            <section className="customer-nfc-guide" aria-label="How cashier tap redemption works">
+              <div><b>1</b><span><strong>Choose the exact deal</strong><small>Open an offer from a venue or a Working Now dancer before reaching the cashier.</small></span></div>
+              <div><b>2</b><span><strong>Tap at the cashier</strong><small>Keep the deal open and tap the official MyDancr cashier sticker with this signed-in phone.</small></span></div>
+              <div><b>3</b><span><strong>Wait for confirmation</strong><small>The on-screen confirmation records the redemption and the correct dancer attribution.</small></span></div>
+            </section>
+            <div className="saved-deal-list">
+              {activeDeals.map((item) => (
+                <Link
+                  className="saved-deal-item"
+                  href={`/deals/pass/${encodeURIComponent(item.redemptionToken)}`}
+                  key={item.id}
+                >
+                  <span>
+                    <strong>{item.deal?.title || "Club Deal"}</strong>
+                    <small>{item.venue?.name || "Venue"} · {dealExpiryLabel(item.expiresAt, now)}</small>
+                  </span>
+                  <em>Open details</em>
+                </Link>
+              ))}
+              {!activeDeals.length ? (
+                <div className="customer-empty-state compact">
+                  <strong>No active Club Deals</strong>
+                  <p>Choose a Club Deal first, then tap the club&apos;s official cashier sticker. There is no QR code to scan.</p>
+                </div>
+              ) : null}
+              {pastDeals.length ? (
+                <details className="past-deal-history">
+                  <summary>Past deals <span>{pastDeals.length}</span></summary>
+                  <div>
+                    {pastDeals.map((item) => {
+                      const expired = new Date(item.expiresAt).getTime() <= now;
+                      return (
+                        <Link className="saved-deal-item unavailable" href={`/deals/pass/${encodeURIComponent(item.redemptionToken)}`} key={item.id}>
+                          <span>
+                            <strong>{item.deal?.title || "Club Deal"}</strong>
+                            <small>{item.venue?.name || "Venue"} · {dealPassStatus(item.status, expired)}</small>
+                          </span>
+                          <em>View</em>
+                        </Link>
+                      );
+                    })}
+                  </div>
+                </details>
+              ) : null}
             </div>
-          </details>
-        ) : null}
-      </div>
+          </div>
+        </details>
+      ) : null}
     </article>
   );
 }
@@ -7906,7 +7915,7 @@ function DashboardStyles() {
       .dashboard-close svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; }
       .dashboard-close:hover { border-color: rgba(126,234,255,.42); background: rgba(38,34,48,.92); }
       .dashboard-close:active { transform: scale(.96); }
-      .dashboard-close:focus-visible, .customer-dashboard-tabs a:focus-visible { outline: 2px solid #7eeaff; outline-offset: 3px; }
+      .dashboard-close:focus-visible, .customer-dashboard-nav a:focus-visible { outline: 2px solid #7eeaff; outline-offset: 3px; }
       .dashboard-shell-customer .dashboard-head-row { grid-template-columns: minmax(0, 1fr) 36px; }
       .dashboard-shell-customer .dashboard-close { width: 36px !important; min-width: 36px !important; max-width: 36px !important; height: 36px !important; min-height: 36px !important; max-height: 36px !important; flex: 0 0 36px; padding: 0; border: 1px solid rgba(226,232,240,.22) !important; border-radius: 50% !important; color: rgba(255,255,255,.92) !important; background: linear-gradient(145deg,rgba(49,47,59,.96),rgba(19,19,25,.94)) !important; box-shadow: inset 0 1px 0 rgba(255,255,255,.08),0 8px 18px rgba(0,0,0,.36) !important; -webkit-backdrop-filter: blur(12px) saturate(1.2); backdrop-filter: blur(12px) saturate(1.2); line-height: 0; }
       .dashboard-shell-customer .dashboard-close svg { width: 15px !important; height: 15px !important; stroke-width: 1.85; }
@@ -8102,9 +8111,15 @@ function DashboardStyles() {
       .venue-dashboard-account-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .venue-dashboard-section-body > .info-panel, .venue-dashboard-inner-grid > .info-panel { grid-column: auto; border-color: transparent; background: var(--mydancr-dashboard-panel-raised); box-shadow: none; }
       .venue-dashboard-account-grid > .support-panel, .venue-dashboard-account-grid > .account-controls-panel { grid-column: 1 / -1; }
-      .customer-dashboard-tabs { position: sticky; z-index: 20; top: max(8px, env(safe-area-inset-top)); grid-column: 1 / -1; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px; padding: 5px; border: 1px solid rgba(255,255,255,.1); border-radius: 16px; background: rgba(7,7,11,.92); box-shadow: 0 16px 38px rgba(0,0,0,.4); backdrop-filter: blur(16px); }
-      .customer-dashboard-tabs a { min-width: 0; min-height: 42px; display: grid; place-items: center; padding: 0 8px; border-radius: 11px; color: #d8cfeb; font-size: 13px; font-weight: 900; text-align: center; text-decoration: none; }
-      .customer-dashboard-tabs a:hover { color: #fff; background: rgba(126,234,255,.08); }
+      .customer-dashboard-nav { grid-column: 1 / -1; display: grid; gap: 8px; padding: 8px; border: 1px solid rgba(255,255,255,.1); border-radius: 18px; background: rgba(7,7,11,.88); box-shadow: 0 16px 38px rgba(0,0,0,.28); backdrop-filter: blur(16px); }
+      .customer-dashboard-primary-links { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 7px; }
+      .customer-dashboard-primary-links a { min-width: 0; min-height: 68px; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 8px; padding: 11px 12px; border: 1px solid rgba(126,234,255,.14); border-radius: 13px; color: #f8f7fb; background: rgba(255,255,255,.04); font-size: 13px; font-weight: 900; text-decoration: none; }
+      .customer-dashboard-primary-links a:hover { border-color: rgba(126,234,255,.34); background: rgba(126,234,255,.08); }
+      .customer-dashboard-primary-links a > span { min-width: 0; line-height: 1.2; }
+      .customer-dashboard-primary-links a > strong { min-width: 28px; height: 28px; display: grid; place-items: center; border-radius: 50%; color: #071014; background: #7eeaff; font-size: 12px; }
+      .customer-dashboard-utility-links { display: flex; justify-content: flex-end; gap: 6px; padding-top: 1px; }
+      .customer-dashboard-utility-links a { min-height: 38px; display: inline-flex; align-items: center; justify-content: center; padding: 0 14px; border-radius: 999px; color: #cfc5de; font-size: 12px; font-weight: 900; text-decoration: none; }
+      .customer-dashboard-utility-links a:hover { color: #fff; background: rgba(255,255,255,.06); }
       .customer-action-status { grid-column: 1 / -1; max-width: none; padding: 11px 14px; border: 1px solid rgba(126,234,255,.28); border-radius: 10px; color: #aaf2ff; background: rgba(11,87,110,.16); font-size: 14px; }
       .info-panel { border: 1px solid var(--mydancr-dashboard-border); background: var(--mydancr-dashboard-panel); border-radius: var(--mydancr-dashboard-radius); padding: 16px; display: grid; gap: 14px; box-shadow: none; }
       .info-panel h2 { font-size: clamp(20px, 3vw, 24px); line-height: 1.08; }
@@ -8400,13 +8415,12 @@ function DashboardStyles() {
       .customer-night-copy p { color: #cfc5de; font-size: 14px; }
       .customer-saved-head { display: flex !important; align-items: center; justify-content: space-between; gap: 12px !important; }
       .customer-saved-head > div { display: grid; gap: 4px; }
-      .customer-saved-head > button { min-height: 42px; padding: 0 13px; border: 1px solid rgba(126,234,255,.26); border-radius: 999px; color: #fff; background: rgba(126,234,255,.08); font: inherit; font-size: 12px; font-weight: 900; cursor: pointer; }
-      .customer-saved-head > button:disabled { opacity: .6; cursor: wait; }
+      .customer-section-count { min-width: 42px; height: 42px; display: grid; place-items: center; border-radius: 50%; color: #061015; background: #7eeaff; font-size: 17px; }
+      .customer-panel-toolbar { display: flex; justify-content: flex-end; }
+      .customer-panel-toolbar > button { min-height: 42px; padding: 0 13px; border: 1px solid rgba(126,234,255,.26); border-radius: 999px; color: #fff; background: rgba(126,234,255,.08); font: inherit; font-size: 12px; font-weight: 900; cursor: pointer; }
+      .customer-panel-toolbar > button:disabled { opacity: .6; cursor: wait; }
       .customer-location-status { max-width: none; color: #aaf2ff; font-size: 13px; }
-      .customer-saved-grid { display: grid !important; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px !important; }
-      .customer-saved-group { min-width: 0; display: grid; align-content: start; gap: 10px; padding: 12px; border: 1px solid rgba(255,255,255,.08); border-radius: 10px; background: rgba(255,255,255,.035); }
-      .customer-saved-group h3 { margin: 0; color: #fff; font-size: 15px; }
-      .customer-saved-group > div { display: grid; gap: 8px; }
+      .customer-saved-card-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
       .customer-saved-card { min-width: 0; overflow: hidden; border: 1px solid rgba(126,234,255,.16); border-radius: 12px; background: rgba(5,5,9,.7); }
       .customer-saved-card-image { width: 100%; height: 148px; display: grid; place-items: center; object-fit: cover; background: linear-gradient(145deg, #201338, #091927); color: #fff; font-size: 24px; font-weight: 950; }
       .customer-saved-card-copy { min-width: 0; display: grid; gap: 6px; padding: 12px; }
@@ -8430,9 +8444,14 @@ function DashboardStyles() {
       .saved-deal-head h2 { margin: 0; }
       .saved-deal-head > strong { min-width: 42px; height: 42px; display: grid; place-items: center; border-radius: 50%; color: #061015; background: #7eeaff; font-size: 17px; }
       .saved-deal-privacy-note { max-width: none; margin: 10px 0 0; color: #b9accd; font-size: 13px; line-height: 1.45; }
-      .saved-deal-redemption-head { margin-top: 22px; padding-top: 18px; border-top: 1px solid rgba(255,255,255,.09); }
       .saved-deal-bookmark { align-items: start; }
       .saved-deal-bookmark > .customer-card-actions { justify-content: flex-end; margin-top: 0; }
+      .customer-deal-activity { margin-top: 18px; border-top: 1px solid rgba(255,255,255,.09); padding-top: 8px; }
+      .customer-deal-activity > summary { min-height: 48px; display: flex; align-items: center; justify-content: space-between; gap: 12px; color: #d8cfeb; font-size: 14px; font-weight: 900; cursor: pointer; list-style: none; }
+      .customer-deal-activity > summary::-webkit-details-marker { display: none; }
+      .customer-deal-activity > summary::after { content: "+"; width: 30px; height: 30px; display: grid; place-items: center; flex: 0 0 auto; border-radius: 50%; color: #fff; background: rgba(255,255,255,.08); font-size: 20px; }
+      .customer-deal-activity[open] > summary::after { content: "−"; }
+      .customer-deal-activity > summary > strong { margin-left: auto; color: #7eeaff; font-size: 12px; }
       .customer-nfc-guide { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 9px; margin-top: 14px; }
       .customer-nfc-guide > div { min-width: 0; display: flex; gap: 10px; padding: 12px; border: 1px solid rgba(126,234,255,.2); border-radius: 12px; background: linear-gradient(145deg, rgba(109,40,217,.12), rgba(34,199,255,.05)); }
       .customer-nfc-guide > div > b { width: 28px; height: 28px; display: grid; place-items: center; flex: 0 0 auto; border-radius: 50%; color: #061015; background: #7eeaff; font-size: 12px; }
@@ -9247,7 +9266,7 @@ function DashboardStyles() {
         .earnings-history-tabs button { padding: 5px 8px; }
       }
       @media (max-width: 860px) { .dashboard-grid, .venue-dashboard-overview-grid, .venue-dashboard-account-grid, .setup-panel form, .upload-panel form, .verification-panel form, .shift-panel form, .shift-checkin-card, .dashboard-shift, .billing-grid, .customer-settings-panel form, .notification-head, .socials-panel form, .share-grid, .impact-grid, .deal-metrics, .customer-saved-grid, .customer-settings-grid, .venue-deal-panel form, .venue-deal-metrics, .venue-deal-qr-generator, .venue-deal-qr-generator.has-qr, .venue-verification-controls, .dancer-verification-qr, .venue-verification-preview, .venue-verification-scanner { grid-template-columns: 1fr; } .setup-panel, .upload-panel, .verification-panel, .shift-panel, .billing-panel, .customer-settings-panel, .account-controls-panel, .notification-panel, .socials-panel, .share-panel, .impact-panel, .support-panel, .deal-panel, .saved-deal-panel, .customer-saved-panel, .locked-analytics-panel, .visibility-panel, .venue-working-panel, .venue-deal-panel, .venue-verification-panel, .customer-settings-panel .city-field, .setup-panel label:nth-of-type(4), .venue-dashboard-account-grid > .support-panel, .venue-dashboard-account-grid > .account-controls-panel { grid-column: auto; grid-row: auto; } .venue-deal-qr-preview { width: min(100%, 320px); justify-self: center; } .commission-tier-table > div { grid-template-columns: 1fr; gap: 4px; } }
-      @media (max-width: 620px) { .dashboard-shell { padding-left: 12px; padding-right: 12px; } .venue-command-links { grid-template-columns: 1fr; } .venue-dashboard-section > summary { min-height: 96px; grid-template-columns: minmax(0, 1fr) auto; padding: 15px; } .venue-dashboard-section-badge { grid-column: 1; grid-row: 2; } .venue-dashboard-section-toggle { grid-column: 2; grid-row: 1 / span 2; } .venue-dashboard-section-body { padding: 10px; } .venue-deal-step-grid, .venue-deal-review, .venue-deal-share-options, .venue-verification-actions, .venue-verification-manual > div, .customer-nfc-guide { grid-template-columns: 1fr; } .venue-deal-readonly-heading { flex-direction: column; } .venue-contract-deal-list, .venue-contract-deal-list dl, .venue-deal-request-center, .venue-deal-request-center > form { grid-template-columns: 1fr; } .venue-deal-request-center > button, .venue-deal-request-center form button { width: 100%; } .venue-deal-request-history article { grid-template-columns: 1fr; } .customer-welcome-card { grid-template-columns: 34px minmax(0, 1fr) auto; gap: 10px; padding: 14px; } .customer-welcome-lock { width: 34px; height: 34px; } .customer-welcome-copy ul { grid-template-columns: 1fr; } .customer-welcome-actions { display: grid; grid-template-columns: 1fr; } .customer-welcome-actions a { width: 100%; } .customer-welcome-card > button { width: 34px; height: 34px; } .customer-dashboard-tabs { grid-template-columns: repeat(5, minmax(78px, 1fr)); overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none; } .customer-dashboard-tabs::-webkit-scrollbar { display: none; } .customer-dashboard-tabs a { padding: 0 6px; font-size: 12px; } .customer-night-card { grid-template-columns: 96px minmax(0, 1fr); } .customer-night-card > .customer-saved-card-image { width: 96px; min-height: 154px; } .customer-night-copy { padding: 13px; } .customer-night-copy h3 { font-size: 20px; } .customer-saved-head, .customer-section-heading.split { align-items: flex-start; flex-direction: column; } .customer-section-heading.split > strong, .notification-title-row > strong { min-width: 36px; width: 36px; height: 36px; font-size: 14px; } .customer-card-actions a, .customer-card-actions button, .customer-empty-state a { min-height: 42px; } .saved-deal-bookmark { grid-template-columns: 1fr; } .saved-deal-bookmark > .customer-card-actions { justify-content: flex-start; } .customer-settings-section { padding: 12px; } .deal-metrics .metric { border-left: 0; border-top: 1px solid var(--mydancr-dashboard-border); } .deal-metrics .metric:first-child { border-top: 0; } }
+      @media (max-width: 620px) { .dashboard-shell { padding-left: 12px; padding-right: 12px; } .venue-command-links { grid-template-columns: 1fr; } .venue-dashboard-section > summary { min-height: 96px; grid-template-columns: minmax(0, 1fr) auto; padding: 15px; } .venue-dashboard-section-badge { grid-column: 1; grid-row: 2; } .venue-dashboard-section-toggle { grid-column: 2; grid-row: 1 / span 2; } .venue-dashboard-section-body { padding: 10px; } .venue-deal-step-grid, .venue-deal-review, .venue-deal-share-options, .venue-verification-actions, .venue-verification-manual > div, .customer-nfc-guide { grid-template-columns: 1fr; } .venue-deal-readonly-heading { flex-direction: column; } .venue-contract-deal-list, .venue-contract-deal-list dl, .venue-deal-request-center, .venue-deal-request-center > form { grid-template-columns: 1fr; } .venue-deal-request-center > button, .venue-deal-request-center form button { width: 100%; } .venue-deal-request-history article { grid-template-columns: 1fr; } .customer-welcome-card { grid-template-columns: 34px minmax(0, 1fr) auto; gap: 10px; padding: 14px; } .customer-welcome-lock { width: 34px; height: 34px; } .customer-welcome-copy ul { grid-template-columns: 1fr; } .customer-welcome-actions { display: grid; grid-template-columns: 1fr; } .customer-welcome-actions a { width: 100%; } .customer-welcome-card > button { width: 34px; height: 34px; } .customer-dashboard-primary-links { grid-template-columns: repeat(2, minmax(0, 1fr)); } .customer-dashboard-primary-links a { min-height: 64px; padding: 10px; font-size: 12px; } .customer-dashboard-utility-links { justify-content: stretch; } .customer-dashboard-utility-links a { flex: 1 1 0; } .customer-saved-card-grid { grid-template-columns: 1fr; } .customer-night-card { grid-template-columns: 96px minmax(0, 1fr); } .customer-night-card > .customer-saved-card-image { width: 96px; min-height: 154px; } .customer-night-copy { padding: 13px; } .customer-night-copy h3 { font-size: 20px; } .customer-saved-head, .customer-section-heading.split { align-items: flex-start; flex-direction: column; } .customer-section-heading.split > strong, .notification-title-row > strong { min-width: 36px; width: 36px; height: 36px; font-size: 14px; } .customer-card-actions a, .customer-card-actions button, .customer-empty-state a { min-height: 42px; } .saved-deal-bookmark { grid-template-columns: 1fr; } .saved-deal-bookmark > .customer-card-actions { justify-content: flex-start; } .customer-settings-section { padding: 12px; } .deal-metrics .metric { border-left: 0; border-top: 1px solid var(--mydancr-dashboard-border); } .deal-metrics .metric:first-child { border-top: 0; } }
       @media (max-width: 620px) { .dancer-nats-signup-callout { grid-template-columns: 1fr; gap: 13px; padding: 15px; } .dancer-nats-signup-actions { display: grid; grid-template-columns: 1fr; justify-content: stretch; } .dancer-nats-signup-actions > a, .dancer-nats-signup-actions > button, .dancer-nats-signup-actions > b { width: 100%; min-height: 46px; } }
       @media (max-width: 520px) { .dashboard-head { padding: 10px 12px 14px; border-radius: 16px; } .dashboard-head-row { gap: 10px; } .dashboard-head h1, h1 { font-size: clamp(21px, 6vw, 26px); } .dashboard-close { flex-basis: 42px; } .notification-title-row { align-items: flex-start; } }
       @media (max-width: 520px) { .notification-toolbar { width: 100%; justify-content: flex-start; } .notification-mark-read-button { margin-left: auto; } .support-panel .support-send-button { width: 100%; } .account-action-row { gap: 10px; } .account-action-button { min-width: 78px; padding-inline: 10px; } }

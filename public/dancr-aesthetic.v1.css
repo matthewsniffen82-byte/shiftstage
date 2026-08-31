@@ -771,9 +771,8 @@ body.dancr-button-system .page-panel :is(
  * near-black or charcoal without decorative violet/cyan washes. */
 .dashboard-shell :is(
   .customer-top-nav .brand,
-  .customer-dashboard-tabs,
+  .customer-dashboard-nav,
   .customer-night-card,
-  .customer-saved-group,
   .customer-saved-card,
   .customer-empty-state,
   .customer-settings-section,
@@ -789,12 +788,12 @@ body.dancr-button-system .page-panel :is(
   filter: none !important;
 }
 
-.dashboard-shell .customer-dashboard-tabs a {
+.dashboard-shell .customer-dashboard-nav a {
   color: var(--dancr-color-text-secondary) !important;
   background: transparent !important;
 }
 
-.dashboard-shell .customer-dashboard-tabs a:is(:hover, :focus-visible) {
+.dashboard-shell .customer-dashboard-nav a:is(:hover, :focus-visible) {
   color: var(--dancr-color-text-primary) !important;
   background: color-mix(
     in srgb,
