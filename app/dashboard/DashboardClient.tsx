@@ -114,6 +114,24 @@ type CustomerSavedState = {
     venue?: SavedVenueSummary | null;
   }>;
   goingSignals?: CustomerGoingSignal[];
+  dealSaves?: Array<{
+    dealId: string;
+    sourceType: string;
+    dancerId?: string | null;
+    savedAt: string;
+    venue: SavedVenueSummary;
+    deal: {
+      id: string;
+      title: string;
+      description?: string;
+      terms?: string | null;
+      isActive: boolean;
+      validDays?: string[] | null;
+      validStartTime?: string | null;
+      validEndTime?: string | null;
+      offerType?: string;
+    };
+  }>;
   dealRedemptions?: Array<{
     id: string;
     redemptionToken: string;
@@ -156,9 +174,11 @@ type LoadState = {
 export default function DashboardClient({
   role,
   initialSection,
+  showCustomerWelcome = false,
 }: {
   role: DashboardRole;
   initialSection?: CustomerDashboardSection;
+  showCustomerWelcome?: boolean;
 }) {
   const [state, setState] = useState<LoadState>({});
   const [isLoading, setIsLoading] = useState(true);
@@ -474,6 +494,10 @@ export default function DashboardClient({
           {state.agentAccess?.active ? <AgentDashboardShortcut /> : null}
           {role === "customer" ? (
             <>
+              <CustomerWelcomeCard
+                accountKey={String(state.account?.id || state.account?.email || "guest")}
+                show={showCustomerWelcome}
+              />
               <CustomerDashboardTabs />
               <CustomerPanel saved={state.saved} onSavedChange={updateSaved} isLoading={isLoading} />
               <DashboardSection
@@ -577,6 +601,62 @@ function AgentDashboardShortcut() {
     <b>Open agent dashboard →</b>
   </Link>;
 }
+
+function CustomerWelcomeCard({ accountKey, show }: { accountKey: string; show: boolean }) {
+  const [visible, setVisible] = useState(show);
+  const storageKey = `mydancr:customer-welcome-dismissed:${accountKey}`;
+
+  useEffect(() => {
+    if (!show) {
+      setVisible(false);
+      return;
+    }
+    try {
+      setVisible(window.localStorage.getItem(storageKey) !== "1");
+    } catch {
+      setVisible(true);
+    }
+  }, [show, storageKey]);
+
+  function dismissWelcome() {
+    setVisible(false);
+    try {
+      window.localStorage.setItem(storageKey, "1");
+    } catch {
+      // Dismissing still works for this visit if storage is unavailable.
+    }
+    const url = new URL(window.location.href);
+    url.searchParams.delete("confirmed");
+    window.history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`);
+  }
+
+  if (!visible) return null;
+
+  return (
+    <section className="customer-welcome-card" aria-labelledby="customer-welcome-title">
+      <div className="customer-welcome-lock" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><rect x="5" y="10" width="14" height="10" rx="2" /><path d="M8 10V7a4 4 0 0 1 8 0v3" /></svg>
+      </div>
+      <div className="customer-welcome-copy">
+        <span className="eyebrow">Private guest account</span>
+        <h2 id="customer-welcome-title">Your private MyDancr account is ready</h2>
+        <p>Build your night without putting your account or activity on a public profile.</p>
+        <ul>
+          <li>Follow dancers and clubs</li>
+          <li>Save favorite profiles and Club Deals</li>
+          <li>Get Working Now and schedule alerts</li>
+          <li>Use I&apos;m Going to keep upcoming shifts together</li>
+        </ul>
+        <div className="customer-welcome-actions">
+          <Link href={homeDiscoveryHref("dancers")} onClick={dismissWelcome}>Explore dancers</Link>
+          <Link href={homeDiscoveryHref("venues")} onClick={dismissWelcome}>View Club Deals</Link>
+        </div>
+      </div>
+      <button type="button" onClick={dismissWelcome} aria-label="Dismiss guest account welcome">×</button>
+    </section>
+  );
+}
+
 function CustomerDashboardTabs() {
   return (
     <nav className="customer-dashboard-tabs" aria-label="Guest dashboard sections">
@@ -1387,6 +1467,19 @@ function CustomerPanel({
     );
   }
 
+  function removeSavedDeal(dealId: string) {
+    return runCustomerAction(
+      `deal-${dealId}`,
+      "/api/customer/deal-saves",
+      { dealId, saved: false },
+      (current) => ({
+        ...current,
+        dealSaves: (current.dealSaves || []).filter((item) => item.dealId !== dealId),
+      }),
+      "Club Deal removed from your saved list.",
+    );
+  }
+
   async function openDirections(venue: SavedVenueSummary, dancerId?: string | null) {
     const venueId = String(venue.id || "");
     if (!venueId) {
@@ -1481,12 +1574,18 @@ function CustomerPanel({
         />
       </DashboardSection>
       <DashboardSection
-        description="Active cashier passes and the complete history of your Club Deal activity."
+        description="Privately saved offers, active cashier selections, and your Club Deal history."
         eyebrow="Guest workspace"
         id="customer-offers"
         title="Club Deals"
       >
-        <CustomerDealPassPanel deals={saved?.dealRedemptions || []} />
+        <CustomerDealPassPanel
+          deals={saved?.dealRedemptions || []}
+          onDirections={openDirections}
+          onRemoveSavedDeal={removeSavedDeal}
+          pendingAction={pendingAction}
+          savedDeals={saved?.dealSaves || []}
+        />
       </DashboardSection>
     </>
   );
@@ -1824,8 +1923,16 @@ function CustomerSavedEmpty({ cta, href, label }: { cta: string; href: string; l
 
 function CustomerDealPassPanel({
   deals,
+  onDirections,
+  onRemoveSavedDeal,
+  pendingAction,
+  savedDeals,
 }: {
   deals: NonNullable<NonNullable<LoadState["saved"]>["dealRedemptions"]>;
+  onDirections: (venue: SavedVenueSummary) => void;
+  onRemoveSavedDeal: (dealId: string) => void;
+  pendingAction: string;
+  savedDeals: NonNullable<NonNullable<LoadState["saved"]>["dealSaves"]>;
 }) {
   const now = useCustomerMinuteClock();
   const activeDeals = deals
@@ -1839,8 +1946,45 @@ function CustomerDealPassPanel({
     <article className="info-panel saved-deal-panel" tabIndex={-1}>
       <div className="saved-deal-head">
         <div>
-          <span>Club Deal history</span>
-          <h2>Club Deals</h2>
+          <span>Saved for later</span>
+          <h2>Saved Club Deals</h2>
+        </div>
+        <strong>{savedDeals.length}</strong>
+      </div>
+      <p className="saved-deal-privacy-note">Saved deals are private bookmarks. Saving does not reserve, select, or redeem an offer.</p>
+      <div className="saved-deal-list saved-deal-bookmarks">
+        {savedDeals.map((item) => (
+          <article className={`saved-deal-item saved-deal-bookmark${item.deal.isActive ? "" : " unavailable"}`} key={item.dealId}>
+            <span>
+              <strong>{item.deal.title || "Club Deal"}</strong>
+              <small>{item.venue.name || "Club"} · {savedClubDealAvailability(item.deal)}</small>
+            </span>
+            <div className="customer-card-actions">
+              {item.venue.slug ? <Link href={customerVenueHref(item.venue)}>View deal</Link> : null}
+              <CustomerDirectionsButton onDirections={onDirections} pending={Boolean(pendingAction)} venue={item.venue} />
+              <button
+                className="customer-text-action"
+                type="button"
+                disabled={Boolean(pendingAction)}
+                onClick={() => void onRemoveSavedDeal(item.dealId)}
+              >
+                Remove
+              </button>
+            </div>
+          </article>
+        ))}
+        {!savedDeals.length ? (
+          <div className="customer-empty-state">
+            <strong>No saved Club Deals yet</strong>
+            <p>Save an offer from a club or dancer profile and it will appear here without redeeming it.</p>
+            <Link href={homeDiscoveryHref("venues")}>Browse Club Deals</Link>
+          </div>
+        ) : null}
+      </div>
+      <div className="saved-deal-head saved-deal-redemption-head">
+        <div>
+          <span>Cashier activity</span>
+          <h2>Use &amp; history</h2>
         </div>
         <strong>{activeDeals.length}</strong>
       </div>
@@ -1892,6 +2036,33 @@ function CustomerDealPassPanel({
       </div>
     </article>
   );
+}
+
+function savedClubDealAvailability(deal: {
+  isActive: boolean;
+  validDays?: string[] | null;
+  validStartTime?: string | null;
+  validEndTime?: string | null;
+}) {
+  if (!deal.isActive) return "No longer available";
+  const days = (deal.validDays || []).map((day) => String(day).slice(0, 3)).filter(Boolean).join(", ");
+  const start = formatSavedDealTime(deal.validStartTime);
+  const end = formatSavedDealTime(deal.validEndTime);
+  if (days && start && end) return `${days} · ${start}–${end}`;
+  if (days) return `Valid ${days}`;
+  if (start && end) return `${start}–${end}`;
+  return "Active Club Deal";
+}
+
+function formatSavedDealTime(value?: string | null) {
+  if (!value) return "";
+  const [hourValue, minuteValue] = value.split(":");
+  const hour = Number(hourValue);
+  const minute = Number(minuteValue || 0);
+  if (!Number.isFinite(hour) || !Number.isFinite(minute)) return "";
+  const suffix = hour >= 12 ? "PM" : "AM";
+  const displayHour = hour % 12 || 12;
+  return `${displayHour}${minute ? `:${String(minute).padStart(2, "0")}` : ""} ${suffix}`;
 }
 
 function dealPassStatus(status: string, expired: boolean) {
@@ -7772,6 +7943,21 @@ function DashboardStyles() {
       .agent-dashboard-shortcut strong { font-size: 18px; }
       .agent-dashboard-shortcut b { color: #d9d2e9; font-size: 13px; white-space: nowrap; }
       .agent-dashboard-shortcut:focus-visible { outline: 2px solid #7eeaff; outline-offset: 3px; }
+      .customer-welcome-card { position: relative; grid-column: 1 / -1; display: grid; grid-template-columns: 42px minmax(0, 1fr) auto; align-items: start; gap: 14px; padding: 18px; border: 1px solid rgba(167,139,250,.3); border-radius: 16px; background: linear-gradient(135deg, rgba(76,29,149,.2), rgba(255,255,255,.035)); box-shadow: inset 3px 0 0 rgba(139,92,246,.72); }
+      .customer-welcome-lock { width: 42px; height: 42px; display: grid; place-items: center; border: 1px solid rgba(255,255,255,.13); border-radius: 50%; color: #ddd6fe; background: rgba(255,255,255,.055); }
+      .customer-welcome-lock svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+      .customer-welcome-copy { min-width: 0; display: grid; gap: 8px; }
+      .customer-welcome-copy h2, .customer-welcome-copy p { margin: 0; }
+      .customer-welcome-copy h2 { color: #fff; font-size: clamp(21px, 4vw, 28px); }
+      .customer-welcome-copy p { max-width: 680px; color: #c8c1d2; font-size: 14px; line-height: 1.5; }
+      .customer-welcome-copy ul { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px 18px; margin: 4px 0; padding: 0; list-style: none; }
+      .customer-welcome-copy li { position: relative; padding-left: 18px; color: #eeeaf5; font-size: 13px; font-weight: 800; line-height: 1.4; }
+      .customer-welcome-copy li::before { content: "✓"; position: absolute; left: 0; color: #a78bfa; font-weight: 950; }
+      .customer-welcome-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 3px; }
+      .customer-welcome-actions a { min-height: 42px; display: inline-flex; align-items: center; justify-content: center; padding: 0 14px; border: 1px solid rgba(167,139,250,.48); border-radius: 10px; color: #fff; background: #6d28d9; font-size: 13px; font-weight: 900; text-decoration: none; }
+      .customer-welcome-actions a + a { border-color: rgba(255,255,255,.13); background: rgba(255,255,255,.06); }
+      .customer-welcome-card > button { width: 38px; height: 38px; display: grid; place-items: center; padding: 0; border: 1px solid rgba(255,255,255,.12); border-radius: 50%; color: #d7d1df; background: rgba(255,255,255,.045); font: inherit; font-size: 24px; line-height: 1; cursor: pointer; }
+      .customer-welcome-card a:focus-visible, .customer-welcome-card > button:focus-visible { outline: 2px solid #a78bfa; outline-offset: 3px; }
       .venue-dashboard-grid { grid-template-columns: 1fr; }
       .dashboard-sr-only { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
       .venue-dashboard-loading { display: grid; gap: var(--mydancr-dashboard-gap); }
@@ -8238,6 +8424,10 @@ function DashboardStyles() {
       .saved-deal-head span { color: #7eeaff; font-size: 10px; font-weight: 950; letter-spacing: .14em; text-transform: uppercase; }
       .saved-deal-head h2 { margin: 0; }
       .saved-deal-head > strong { min-width: 42px; height: 42px; display: grid; place-items: center; border-radius: 50%; color: #061015; background: #7eeaff; font-size: 17px; }
+      .saved-deal-privacy-note { max-width: none; margin: 10px 0 0; color: #b9accd; font-size: 13px; line-height: 1.45; }
+      .saved-deal-redemption-head { margin-top: 22px; padding-top: 18px; border-top: 1px solid rgba(255,255,255,.09); }
+      .saved-deal-bookmark { align-items: start; }
+      .saved-deal-bookmark > .customer-card-actions { justify-content: flex-end; margin-top: 0; }
       .customer-nfc-guide { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 9px; margin-top: 14px; }
       .customer-nfc-guide > div { min-width: 0; display: flex; gap: 10px; padding: 12px; border: 1px solid rgba(126,234,255,.2); border-radius: 12px; background: linear-gradient(145deg, rgba(109,40,217,.12), rgba(34,199,255,.05)); }
       .customer-nfc-guide > div > b { width: 28px; height: 28px; display: grid; place-items: center; flex: 0 0 auto; border-radius: 50%; color: #061015; background: #7eeaff; font-size: 12px; }
@@ -9052,7 +9242,7 @@ function DashboardStyles() {
         .earnings-history-tabs button { padding: 5px 8px; }
       }
       @media (max-width: 860px) { .dashboard-grid, .venue-dashboard-overview-grid, .venue-dashboard-account-grid, .setup-panel form, .upload-panel form, .verification-panel form, .shift-panel form, .shift-checkin-card, .dashboard-shift, .billing-grid, .customer-settings-panel form, .notification-head, .socials-panel form, .share-grid, .impact-grid, .deal-metrics, .customer-saved-grid, .customer-settings-grid, .venue-deal-panel form, .venue-deal-metrics, .venue-deal-qr-generator, .venue-deal-qr-generator.has-qr, .venue-verification-controls, .dancer-verification-qr, .venue-verification-preview, .venue-verification-scanner { grid-template-columns: 1fr; } .setup-panel, .upload-panel, .verification-panel, .shift-panel, .billing-panel, .customer-settings-panel, .account-controls-panel, .notification-panel, .socials-panel, .share-panel, .impact-panel, .support-panel, .deal-panel, .saved-deal-panel, .customer-saved-panel, .locked-analytics-panel, .visibility-panel, .venue-working-panel, .venue-deal-panel, .venue-verification-panel, .customer-settings-panel .city-field, .setup-panel label:nth-of-type(4), .venue-dashboard-account-grid > .support-panel, .venue-dashboard-account-grid > .account-controls-panel { grid-column: auto; grid-row: auto; } .venue-deal-qr-preview { width: min(100%, 320px); justify-self: center; } .commission-tier-table > div { grid-template-columns: 1fr; gap: 4px; } }
-      @media (max-width: 620px) { .dashboard-shell { padding-left: 12px; padding-right: 12px; } .venue-command-links { grid-template-columns: 1fr; } .venue-dashboard-section > summary { min-height: 96px; grid-template-columns: minmax(0, 1fr) auto; padding: 15px; } .venue-dashboard-section-badge { grid-column: 1; grid-row: 2; } .venue-dashboard-section-toggle { grid-column: 2; grid-row: 1 / span 2; } .venue-dashboard-section-body { padding: 10px; } .venue-deal-step-grid, .venue-deal-review, .venue-deal-share-options, .venue-verification-actions, .venue-verification-manual > div, .customer-nfc-guide { grid-template-columns: 1fr; } .venue-deal-readonly-heading { flex-direction: column; } .venue-contract-deal-list, .venue-contract-deal-list dl, .venue-deal-request-center, .venue-deal-request-center > form { grid-template-columns: 1fr; } .venue-deal-request-center > button, .venue-deal-request-center form button { width: 100%; } .venue-deal-request-history article { grid-template-columns: 1fr; } .customer-dashboard-tabs { grid-template-columns: repeat(5, minmax(78px, 1fr)); overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none; } .customer-dashboard-tabs::-webkit-scrollbar { display: none; } .customer-dashboard-tabs a { padding: 0 6px; font-size: 12px; } .customer-night-card { grid-template-columns: 96px minmax(0, 1fr); } .customer-night-card > .customer-saved-card-image { width: 96px; min-height: 154px; } .customer-night-copy { padding: 13px; } .customer-night-copy h3 { font-size: 20px; } .customer-saved-head, .customer-section-heading.split { align-items: flex-start; flex-direction: column; } .customer-section-heading.split > strong, .notification-title-row > strong { min-width: 36px; width: 36px; height: 36px; font-size: 14px; } .customer-card-actions a, .customer-card-actions button, .customer-empty-state a { min-height: 42px; } .customer-settings-section { padding: 12px; } .deal-metrics .metric { border-left: 0; border-top: 1px solid var(--mydancr-dashboard-border); } .deal-metrics .metric:first-child { border-top: 0; } }
+      @media (max-width: 620px) { .dashboard-shell { padding-left: 12px; padding-right: 12px; } .venue-command-links { grid-template-columns: 1fr; } .venue-dashboard-section > summary { min-height: 96px; grid-template-columns: minmax(0, 1fr) auto; padding: 15px; } .venue-dashboard-section-badge { grid-column: 1; grid-row: 2; } .venue-dashboard-section-toggle { grid-column: 2; grid-row: 1 / span 2; } .venue-dashboard-section-body { padding: 10px; } .venue-deal-step-grid, .venue-deal-review, .venue-deal-share-options, .venue-verification-actions, .venue-verification-manual > div, .customer-nfc-guide { grid-template-columns: 1fr; } .venue-deal-readonly-heading { flex-direction: column; } .venue-contract-deal-list, .venue-contract-deal-list dl, .venue-deal-request-center, .venue-deal-request-center > form { grid-template-columns: 1fr; } .venue-deal-request-center > button, .venue-deal-request-center form button { width: 100%; } .venue-deal-request-history article { grid-template-columns: 1fr; } .customer-welcome-card { grid-template-columns: 34px minmax(0, 1fr) auto; gap: 10px; padding: 14px; } .customer-welcome-lock { width: 34px; height: 34px; } .customer-welcome-copy ul { grid-template-columns: 1fr; } .customer-welcome-actions { display: grid; grid-template-columns: 1fr; } .customer-welcome-actions a { width: 100%; } .customer-welcome-card > button { width: 34px; height: 34px; } .customer-dashboard-tabs { grid-template-columns: repeat(5, minmax(78px, 1fr)); overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none; } .customer-dashboard-tabs::-webkit-scrollbar { display: none; } .customer-dashboard-tabs a { padding: 0 6px; font-size: 12px; } .customer-night-card { grid-template-columns: 96px minmax(0, 1fr); } .customer-night-card > .customer-saved-card-image { width: 96px; min-height: 154px; } .customer-night-copy { padding: 13px; } .customer-night-copy h3 { font-size: 20px; } .customer-saved-head, .customer-section-heading.split { align-items: flex-start; flex-direction: column; } .customer-section-heading.split > strong, .notification-title-row > strong { min-width: 36px; width: 36px; height: 36px; font-size: 14px; } .customer-card-actions a, .customer-card-actions button, .customer-empty-state a { min-height: 42px; } .saved-deal-bookmark { grid-template-columns: 1fr; } .saved-deal-bookmark > .customer-card-actions { justify-content: flex-start; } .customer-settings-section { padding: 12px; } .deal-metrics .metric { border-left: 0; border-top: 1px solid var(--mydancr-dashboard-border); } .deal-metrics .metric:first-child { border-top: 0; } }
       @media (max-width: 620px) { .dancer-nats-signup-callout { grid-template-columns: 1fr; gap: 13px; padding: 15px; } .dancer-nats-signup-actions { display: grid; grid-template-columns: 1fr; justify-content: stretch; } .dancer-nats-signup-actions > a, .dancer-nats-signup-actions > button, .dancer-nats-signup-actions > b { width: 100%; min-height: 46px; } }
       @media (max-width: 520px) { .dashboard-head { padding: 10px 12px 14px; border-radius: 16px; } .dashboard-head-row { gap: 10px; } .dashboard-head h1, h1 { font-size: clamp(21px, 6vw, 26px); } .dashboard-close { flex-basis: 42px; } .notification-title-row { align-items: flex-start; } }
       @media (max-width: 520px) { .notification-toolbar { width: 100%; justify-content: flex-start; } .notification-mark-read-button { margin-left: auto; } .support-panel .support-send-button { width: 100%; } .account-action-row { gap: 10px; } .account-action-button { min-width: 78px; padding-inline: 10px; } }

@@ -30,6 +30,20 @@ export async function requirePublicVenue(client: DancrClient, venueId: string) {
   return String(data.id);
 }
 
+export async function requirePublicClubDeal(client: DancrClient, dealId: string) {
+  const { data, error } = await (client as any)
+    .from("club_deals")
+    .select("id, venue_id")
+    .eq("id", dealId)
+    .eq("is_active", true)
+    .maybeSingle();
+  if (error) throw error;
+  if (!data) throw unavailable("Club Deal is unavailable.");
+
+  await requirePublicVenue(client, String(data.venue_id));
+  return { dealId: String(data.id), venueId: String(data.venue_id) };
+}
+
 export async function requirePublicShiftForDancer(
   client: DancrClient,
   dancerId: string,

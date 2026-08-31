@@ -47,6 +47,16 @@ test("the live app consumes the session saved by the server callback", () => {
   assert.match(liveAppSource, /showToast\("Email confirmed\. Complete your 3-step dancer profile setup\."\)/);
 });
 
+test("confirmed guest accounts open their private customer dashboard", () => {
+  const liveAppPath =
+    callbackSource.match(/function liveAppCallbackPath[\s\S]*?function callbackHtml/)?.[0] || "";
+
+  assert.match(liveAppPath, /role === "customer" && !isPasswordReset[\s\S]*?return "\/dashboard\/customer\?confirmed=1"/);
+  assert.match(liveAppSource, /saveAuthResume\("customer", "\/dashboard\/customer\?confirmed=1"\)/);
+  assert.match(liveAppSource, /window\.location\.assign\("\/dashboard\/customer\?confirmed=1"\)/);
+  assert.match(liveAppSource, /Your private guest dashboard is ready/);
+});
+
 test("a confirmed session survives account synchronization errors", () => {
   const callbackSessionReader =
     callbackSource.match(/async function readCallbackSession[\s\S]*?async function confirmSupabaseCallback/)?.[0] || "";

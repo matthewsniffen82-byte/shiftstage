@@ -43907,8 +43907,8 @@
           }
           closeDashboard();
           closeAuthPage();
-          showToast("Email confirmed. You're signed in.");
-          window.scrollTo({ top: 0, behavior: "auto" });
+          showToast("Email confirmed. Your private guest dashboard is ready.");
+          window.location.assign("/dashboard/customer?confirmed=1");
           return;
         }
         if (dashboardRole === "dancer") {
@@ -45247,6 +45247,7 @@
     function applyLiveCustomerSaved(saved) {
       if (authSession?.accessToken) clearCustomerSavedCollections();
       applyLiveProfileActions(saved);
+      mergeLiveCustomerSavedDeals(saved?.dealSaves);
       mergeLiveCustomerDealPasses(saved?.dealRedemptions);
       (saved?.favorites || []).forEach((item) => {
         const match = findProfileBySavedDancer(item);
@@ -48553,7 +48554,8 @@
 
     function saveSavedDealPasses() {
       try {
-        localStorage.setItem("dancrSavedDealPassesV2", JSON.stringify(savedDealPasses));
+        const deviceOnlyPasses = savedDealPasses.filter((pass) => !pass.serverSaved);
+        localStorage.setItem("dancrSavedDealPassesV2", JSON.stringify(deviceOnlyPasses));
         return true;
       } catch {
         return false;
@@ -48614,6 +48616,35 @@
         // The panel still opens if browser storage is unavailable.
       }
       syncCustomerDealQuickCta();
+    }
+
+    function mergeLiveCustomerSavedDeals(dealSaves) {
+      if (!Array.isArray(dealSaves)) return;
+      const accountDeals = dealSaves
+        .filter((item) => item?.deal?.id && item?.venue?.id)
+        .map((item) => ({
+          id: `nfc:${item.venue.id}:${item.deal.id}`,
+          venueId: String(item.venue.id),
+          venueSlug: String(item.venue.slug || ""),
+          venueName: String(item.venue.name || "Venue"),
+          dealId: String(item.deal.id),
+          title: String(item.deal.title || "Club Deal"),
+          description: String(item.deal.description || ""),
+          terms: String(item.deal.terms || ""),
+          offerType: String(item.deal.offerType || "admission"),
+          sourceType: String(item.sourceType || "club_page"),
+          dancerId: item.dancerId ? String(item.dancerId) : "",
+          savedAt: item.savedAt || new Date().toISOString(),
+          url: venueExperienceHref(item.venue),
+          nfcIntent: true,
+          serverSaved: true
+        }));
+      const accountIds = new Set(accountDeals.map((pass) => pass.id));
+      const deviceOnlyDeals = savedDealPasses.filter((pass) => !pass.serverSaved && !accountIds.has(String(pass.id)));
+      savedDealPasses = [...accountDeals, ...deviceOnlyDeals]
+        .sort((left, right) => savedDealTimestamp(right) - savedDealTimestamp(left))
+        .slice(0, 20);
+      saveSavedDealPasses();
     }
 
     function mergeLiveCustomerDealPasses(redemptions) {
@@ -48858,22 +48889,43 @@
       `;
     }
 
-    function saveCustomerDealPass(pass, message = "Club Deal ready for the cashier tap") {
+    async function persistCustomerDealSave(pass, saved) {
+      if (!isCustomerSession() || !pass?.dealId) return false;
+      await postAuthenticatedJson("/api/customer/deal-saves", {
+        dealId: pass.dealId,
+        saved,
+        sourceType: pass.sourceType === "dancer_profile" ? "dancer_profile" : "club_page",
+        dancerId: pass.sourceType === "dancer_profile" ? pass.dancerId || null : null
+      });
+      return true;
+    }
+
+    async function saveCustomerDealPass(pass) {
       if (!pass?.id) return false;
       const existingSavedPass = savedDealPasses.find((item) => item.id === pass.id);
       const wasAlreadySaved = Boolean(existingSavedPass);
+      const savedToAccount = await persistCustomerDealSave(pass, true);
       const previousPasses = savedDealPasses;
-      const savedPass = { ...existingSavedPass, ...pass, savedAt: existingSavedPass?.savedAt || new Date().toISOString() };
+      const savedPass = {
+        ...existingSavedPass,
+        ...pass,
+        savedAt: existingSavedPass?.savedAt || new Date().toISOString(),
+        serverSaved: savedToAccount || existingSavedPass?.serverSaved === true
+      };
       savedDealPasses = [savedPass, ...savedDealPasses.filter((item) => item.id !== pass.id)].slice(0, 20);
       const persisted = saveSavedDealPasses();
-      if (!persisted) savedDealPasses = previousPasses;
-      if (persisted && !wasAlreadySaved) recordRevenueDealLifecycle(pass, "saved");
+      if (!persisted && !savedToAccount) savedDealPasses = previousPasses;
+      if ((persisted || savedToAccount) && !wasAlreadySaved) recordRevenueDealLifecycle(pass, "saved");
       if (customerDashboard.classList.contains("show")) renderDashboard();
       renderCustomerQuickActions();
-      showToast(persisted
-        ? wasAlreadySaved ? "Deal is already saved on this device." : message
-        : "Browser storage blocked saving this deal. Allow site storage and try again.");
-      return persisted;
+      showToast(savedToAccount
+        ? "Saved privately to your account. This does not reserve or redeem the deal."
+        : persisted
+          ? wasAlreadySaved
+            ? "Deal is already saved on this device."
+            : "Saved on this device. Sign in to keep it across devices. This does not redeem the deal."
+          : "Browser storage blocked saving this deal. Allow site storage and try again.");
+      return persisted || savedToAccount;
     }
 
     function recordRevenueDealLifecycle(pass, eventType) {
@@ -48887,22 +48939,25 @@
       ).catch(() => null);
     }
 
-    function saveDealPassForLater(pass) {
-      return saveCustomerDealPass(pass, "Deal saved on this device.");
+    async function saveDealPassForLater(pass) {
+      return saveCustomerDealPass(pass);
     }
 
-    function removeSavedDealPass(pass) {
+    async function removeSavedDealPass(pass) {
       if (!pass?.id) return false;
+      const removedFromAccount = await persistCustomerDealSave(pass, false);
       const previousPasses = savedDealPasses;
       savedDealPasses = savedDealPasses.filter((item) => item.id !== pass.id);
       const persisted = saveSavedDealPasses();
-      if (!persisted) savedDealPasses = previousPasses;
+      if (!persisted && !removedFromAccount) savedDealPasses = previousPasses;
       if (customerDashboard.classList.contains("show")) renderDashboard();
       renderCustomerQuickActions();
-      showToast(persisted
+      showToast(removedFromAccount
+        ? "Removed from your private saved deals."
+        : persisted
         ? "Removed from saved deals."
         : "Browser storage blocked removing this deal. Allow site storage and try again.");
-      return persisted;
+      return persisted || removedFromAccount;
     }
 
     const pendingNfcDealIntentTtlMs = 12 * 60 * 60 * 1000;
@@ -49100,24 +49155,34 @@
           });
         }
       });
-      bindDealPassAction(saveButton, (button) => {
+      bindDealPassAction(saveButton, async (button) => {
         const pass = currentPass();
         if (!pass) {
           showToast("Club Deal unavailable");
           return;
         }
-        const isSaved = savedDealPasses.some((item) => item.id === pass.id);
-        if (isSaved) {
-          const removed = removeSavedDealPass(pass);
-          button.textContent = removed ? "Save" : "Try removing again";
-          button.setAttribute("aria-pressed", removed ? "false" : "true");
-          button.classList.toggle("is-saved", !removed);
-          return;
+        button.disabled = true;
+        try {
+          const isSaved = savedDealPasses.some((item) => item.id === pass.id);
+          if (isSaved) {
+            button.textContent = "Removing…";
+            const removed = await removeSavedDealPass(pass);
+            button.textContent = removed ? "Save" : "Try removing again";
+            button.setAttribute("aria-pressed", removed ? "false" : "true");
+            button.classList.toggle("is-saved", !removed);
+            return;
+          }
+          button.textContent = "Saving…";
+          const persisted = await saveDealPassForLater(pass);
+          button.textContent = persisted ? "Saved ✓ · Remove" : "Try saving again";
+          button.setAttribute("aria-pressed", persisted ? "true" : "false");
+          button.classList.toggle("is-saved", persisted);
+        } catch (error) {
+          button.textContent = "Try saving again";
+          showToast(error?.message || "Could not update this saved deal.");
+        } finally {
+          button.disabled = false;
         }
-        const persisted = saveDealPassForLater(pass);
-        button.textContent = persisted ? "Saved ✓ · Remove" : "Try saving again";
-        button.setAttribute("aria-pressed", persisted ? "true" : "false");
-        button.classList.toggle("is-saved", persisted);
       });
       bindDealPassAction(shareButton, () => {
         const pass = currentPass();
@@ -54805,6 +54870,8 @@
       pendingSetupPhotoPreviewUrls = [];
       clearPendingApprovedProfileVideoSelection();
       clearCustomerSavedCollections();
+      savedDealPasses = loadSavedDealPasses();
+      renderCustomerQuickActions();
       closeDashboard();
       closeDancerDashboard();
       closeVenueDashboard();
@@ -63620,7 +63687,7 @@
           password: document.getElementById("customerPassword").value,
           city: citySelect.value
         };
-        if (authMode === "signup") payload.emailRedirectTo = saveAuthResume("customer", "/");
+        if (authMode === "signup") payload.emailRedirectTo = saveAuthResume("customer", "/dashboard/customer?confirmed=1");
         const result = await requestAuth(payload);
         if (authMode === "signup") {
           await endAuthSession();

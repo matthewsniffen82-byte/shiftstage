@@ -92,6 +92,10 @@ function liveAppCallbackPath(url: URL, role: CallbackRole) {
     url.searchParams.get("reset_target") === "account_password" ||
     url.searchParams.get("type") === "recovery";
 
+  if (role === "customer" && !isPasswordReset) {
+    return "/dashboard/customer?confirmed=1";
+  }
+
   params.set(isPasswordReset ? "dancr_reset" : "dancr_confirm", "1");
   params.set("role", role);
   params.set("dancr_role", role);

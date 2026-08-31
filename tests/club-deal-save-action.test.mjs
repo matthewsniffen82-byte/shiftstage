@@ -11,8 +11,10 @@ test("Club Deals save without requiring customer authentication", () => {
   )?.[0] || "";
 
   assert.match(saveFlow, /saveSavedDealPasses\(\)/);
-  assert.match(saveFlow, /showToast\(persisted/);
-  assert.doesNotMatch(saveFlow, /requireAuth|currentUser|signedIn|sign in/i);
+  assert.match(saveFlow, /showToast\(savedToAccount/);
+  assert.match(saveFlow, /return persisted \|\| savedToAccount/);
+  assert.match(liveSource, /function persistCustomerDealSave[\s\S]*?if \(!isCustomerSession\(\) \|\| !pass\?\.dealId\) return false/);
+  assert.match(liveSource, /Saved on this device\. Sign in to keep it across devices/);
 });
 
 test("preview, cashier-tap selection, and saving are separate intentional actions", () => {
@@ -30,7 +32,7 @@ test("preview, cashier-tap selection, and saving are separate intentional action
   assert.match(liveSource, /function selectDealPassForNfc[\s\S]*?localStorage\.setItem\("mydancrPendingNfcDealV2"/);
   assert.match(liveSource, /button\.textContent = persisted \? "Saved ✓ · Remove" : "Try saving again"/);
   assert.match(liveSource, /button\.classList\.toggle\("is-saved", persisted\)/);
-  assert.match(liveSource, /if \(persisted && !wasAlreadySaved\) recordRevenueDealLifecycle\(pass, "saved"\)/);
+  assert.match(liveSource, /if \(\(persisted \|\| savedToAccount\) && !wasAlreadySaved\) recordRevenueDealLifecycle\(pass, "saved"\)/);
 });
 
 test("opening or sharing a Club Deal never silently selects or saves it", () => {
@@ -79,4 +81,10 @@ test("blocked browser storage returns a visible fallback instead of breaking the
     liveSource,
     /Browser storage blocked saving this deal\. Allow site storage and try again\./,
   );
+});
+
+test("signed-in private deal bookmarks are not left in shared device storage after logout", () => {
+  assert.match(liveSource, /const deviceOnlyPasses = savedDealPasses\.filter\(\(pass\) => !pass\.serverSaved\)/);
+  assert.match(liveSource, /function logoutAccount[\s\S]*?savedDealPasses = loadSavedDealPasses\(\)/);
+  assert.match(dealCardSource, /const next = hasCustomerAccount[\s\S]*?saved\.filter\(\(item\) => item\.id !== id\)/);
 });

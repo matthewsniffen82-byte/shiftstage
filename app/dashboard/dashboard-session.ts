@@ -9,6 +9,7 @@ import {
 import { safeErrorMetadata } from "../../src/lib/security/safe-error-metadata.ts";
 
 export type DashboardSessionAccount = {
+  id?: string | null;
   displayName?: string | null;
   email?: string | null;
   role?: string;
@@ -33,13 +34,15 @@ export function storedSessionAccount(session: StoredDashboardSession | null): Da
   const account = session?.account;
   if (!account || typeof account !== "object") return null;
 
+  const id = typeof account.id === "string" ? account.id : null;
   const displayName = typeof account.displayName === "string" ? account.displayName.trim() : "";
   const email = typeof account.email === "string" ? account.email : null;
   const role = typeof account.role === "string" ? account.role : undefined;
   const accountState = typeof account.accountState === "string" ? account.accountState : undefined;
-  if (!displayName && !email && !role && !accountState) return null;
+  if (!id && !displayName && !email && !role && !accountState) return null;
 
   return {
+    id,
     displayName: displayName || null,
     email,
     role,

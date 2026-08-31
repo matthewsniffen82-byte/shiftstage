@@ -3,6 +3,11 @@
 import { useEffect, useId, useRef, useState } from "react";
 import type { ClubDeal, DealSourceType } from "@/src/lib/dancr/types";
 import { customerFacingDealDescription, customerFacingDealTerms } from "@/src/lib/dancr/deal-copy";
+import {
+  hasSignedInCustomerDealAccount,
+  loadCustomerDealSavedState,
+  setCustomerDealSavedInAccount,
+} from "@/src/lib/dancr/customer-deal-saves-client";
 import NfcIcon from "@/app/components/NfcIcon";
 
 const DEAL_INTENT_KEY = "mydancrPendingNfcDealV2";
@@ -48,6 +53,7 @@ export function ClubDealCard({
   const [intentState, setIntentState] = useState<"preview" | "ready" | "expired" | "error">("preview");
   const [intentExpiresAt, setIntentExpiresAt] = useState(0);
   const [savedOnDevice, setSavedOnDevice] = useState(false);
+  const [savePending, setSavePending] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [termsExpanded, setTermsExpanded] = useState(false);
   const termsId = useId();
@@ -74,6 +80,18 @@ export function ClubDealCard({
       ? "Your previous selection expired. Select this deal again before tapping at the cashier."
       : "");
   }, [activeDeal.id, dancerId, sourceType, venueId, venueName]);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    void loadCustomerDealSavedState(activeDeal.id, controller.signal)
+      .then((saved) => {
+        if (!controller.signal.aborted && typeof saved === "boolean") setSavedOnDevice(saved);
+      })
+      .catch(() => {
+        // Keep the device copy usable if private account state cannot load.
+      });
+    return () => controller.abort();
+  }, [activeDeal.id]);
 
   useEffect(() => {
     setTermsExpanded(false);
@@ -158,44 +176,97 @@ export function ClubDealCard({
     }
   }
 
-  function saveForLater() {
+  async function saveForLater() {
+    if (savePending) return;
+    setSavePending(true);
+    const hasCustomerAccount = hasSignedInCustomerDealAccount();
     try {
-      const saved = readSavedDeals();
-      const id = savedDealId(venueId, activeDeal.id);
-      const next = [{
-        id,
-        venueId,
-        venueName: venueName || "Club",
-        dealId: activeDeal.id,
-        title: activeDeal.dealTitle,
-        description: displayDescription,
-        terms: displayTerms,
-        offerType: activeDeal.offerType,
-        sourceType,
-        dancerId: sourceType === "dancer_profile" ? dancerId || null : null,
-        savedAt: new Date().toISOString(),
-        nfcIntent: true,
-        url: window.location.href,
-      }, ...saved.filter((item) => item.id !== id)].slice(0, 20);
-      window.localStorage.setItem(SAVED_DEALS_KEY, JSON.stringify(next));
+      if (hasCustomerAccount) {
+        await setCustomerDealSavedInAccount({
+          dealId: activeDeal.id,
+          saved: true,
+          sourceType,
+          dancerId: sourceType === "dancer_profile" ? dancerId || null : null,
+        });
+      }
+      let savedOnThisDevice = false;
+      try {
+        const saved = readSavedDeals();
+        const id = savedDealId(venueId, activeDeal.id);
+        const deviceDeal = {
+          id,
+          venueId,
+          venueName: venueName || "Club",
+          dealId: activeDeal.id,
+          title: activeDeal.dealTitle,
+          description: displayDescription,
+          terms: displayTerms,
+          offerType: activeDeal.offerType,
+          sourceType,
+          dancerId: sourceType === "dancer_profile" ? dancerId || null : null,
+          savedAt: new Date().toISOString(),
+          nfcIntent: true,
+          url: window.location.href,
+        };
+        const next = hasCustomerAccount
+          ? saved.filter((item) => item.id !== id)
+          : [deviceDeal, ...saved.filter((item) => item.id !== id)].slice(0, 20);
+        window.localStorage.setItem(SAVED_DEALS_KEY, JSON.stringify(next));
+        savedOnThisDevice = true;
+      } catch {
+        // The private account remains the source of truth when device storage is blocked.
+      }
+      if (!hasCustomerAccount && !savedOnThisDevice) {
+        setSavedOnDevice(false);
+        setStatus("Browser storage blocked saving this deal. Allow site storage and try again.");
+        return;
+      }
       setSavedOnDevice(true);
-      setStatus("Saved for later on this device. This does not select or redeem the deal.");
-    } catch {
-      setSavedOnDevice(false);
-      setStatus("Browser storage blocked saving this deal. Allow site storage and try again.");
+      setStatus(hasCustomerAccount
+        ? "Saved privately to your account. This does not reserve or redeem the deal."
+        : "Saved on this device. Sign in to keep it across devices. This does not redeem the deal.");
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : "Unable to save this Club Deal.");
+    } finally {
+      setSavePending(false);
     }
   }
 
-  function removeSavedDeal() {
+  async function removeSavedDeal() {
+    if (savePending) return;
+    setSavePending(true);
+    const hasCustomerAccount = hasSignedInCustomerDealAccount();
     try {
-      const id = savedDealId(venueId, activeDeal.id);
-      const next = readSavedDeals().filter((item) => item.id !== id);
-      window.localStorage.setItem(SAVED_DEALS_KEY, JSON.stringify(next));
+      if (hasCustomerAccount) {
+        await setCustomerDealSavedInAccount({
+          dealId: activeDeal.id,
+          saved: false,
+          sourceType,
+          dancerId: sourceType === "dancer_profile" ? dancerId || null : null,
+        });
+      }
+      let removedFromDevice = false;
+      try {
+        const id = savedDealId(venueId, activeDeal.id);
+        const next = readSavedDeals().filter((item) => item.id !== id);
+        window.localStorage.setItem(SAVED_DEALS_KEY, JSON.stringify(next));
+        removedFromDevice = true;
+      } catch {
+        // The private account remains the source of truth when device storage is blocked.
+      }
+      if (!hasCustomerAccount && !removedFromDevice) {
+        setSavedOnDevice(true);
+        setStatus("Browser storage blocked removing this deal. Allow site storage and try again.");
+        return;
+      }
       setSavedOnDevice(false);
-      setStatus("Removed from saved deals. You can still use it at the cashier.");
-    } catch {
-      setSavedOnDevice(true);
-      setStatus("Browser storage blocked removing this deal. Allow site storage and try again.");
+      setStatus(hasCustomerAccount
+        ? "Removed from your private saved deals. You can still use it at the cashier."
+        : "Removed from saved deals. You can still use it at the cashier.");
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : "Unable to remove this saved Club Deal.");
+    } finally {
+      setSavePending(false);
     }
   }
 
@@ -331,9 +402,10 @@ export function ClubDealCard({
           type="button"
           className={savedOnDevice ? "saved" : ""}
           aria-pressed={savedOnDevice}
-          onClick={savedOnDevice ? removeSavedDeal : saveForLater}
+          disabled={savePending}
+          onClick={() => void (savedOnDevice ? removeSavedDeal() : saveForLater())}
         >
-          {savedOnDevice ? "Saved ✓ · Remove" : "Save"}
+          {savePending ? "Updating…" : savedOnDevice ? "Saved ✓ · Remove" : "Save"}
         </button>
         <button type="button" onClick={() => void shareDeal()}>Share</button>
       </div>

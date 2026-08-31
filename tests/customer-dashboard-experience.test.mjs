@@ -2,12 +2,18 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-const [dashboard, customerService, favoritesRoute, venueFollowsRoute, directionsRoute] = await Promise.all([
+const [dashboard, customerService, favoritesRoute, venueFollowsRoute, directionsRoute, customerPage, savedRoute, dealSavesRoute, dealSaveClient, clubDealCard, dealSaveMigration] = await Promise.all([
   readFile(new URL("../app/dashboard/DashboardClient.tsx", import.meta.url), "utf8"),
   readFile(new URL("../src/lib/dancr/customer.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/api/customer/favorites/route.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/api/customer/venue-follows/route.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/api/customer/directions/route.ts", import.meta.url), "utf8"),
+  readFile(new URL("../app/dashboard/customer/page.tsx", import.meta.url), "utf8"),
+  readFile(new URL("../app/api/customer/saved/route.ts", import.meta.url), "utf8"),
+  readFile(new URL("../app/api/customer/deal-saves/route.ts", import.meta.url), "utf8"),
+  readFile(new URL("../src/lib/dancr/customer-deal-saves-client.ts", import.meta.url), "utf8"),
+  readFile(new URL("../app/components/ClubDealCard.tsx", import.meta.url), "utf8"),
+  readFile(new URL("../supabase/migrations/202608300009_customer_saved_club_deals.sql", import.meta.url), "utf8"),
 ]);
 
 test("customer dashboard leads with tonight, saved, deals, and alerts before account settings", () => {
@@ -84,6 +90,58 @@ test("Club Deal wallet and alerts expose real status, expiry, history, and direc
   assert.match(dashboard, /How cashier tap redemption works/);
   assert.match(dashboard, /Choose the exact deal[\s\S]*?Tap at the cashier[\s\S]*?Wait for confirmation/);
   assert.match(dashboard, /There is no QR code to scan/);
+});
+
+test("new guest confirmation explains private account benefits once", () => {
+  assert.match(customerPage, /showCustomerWelcome=\{params\.confirmed === "1"\}/);
+  assert.match(dashboard, /mydancr:customer-welcome-dismissed:/);
+  assert.match(dashboard, /Your private MyDancr account is ready/);
+  assert.match(dashboard, /account or activity on a public profile/);
+  assert.match(dashboard, /Follow dancers and clubs/);
+  assert.match(dashboard, /Save favorite profiles and Club Deals/);
+  assert.match(dashboard, /Get Working Now and schedule alerts/);
+  assert.match(dashboard, /Use I&amp;apos;m Going|Use I\&apos;m Going/);
+  assert.match(dashboard, /Explore dancers/);
+  assert.match(dashboard, /View Club Deals/);
+  assert.match(dashboard, /url\.searchParams\.delete\("confirmed"\)/);
+});
+
+test("Club Deals can be privately bookmarked without reserving or redeeming them", () => {
+  assert.match(dealSaveMigration, /create table if not exists public\.customer_deal_saves/);
+  assert.match(dealSaveMigration, /primary key \(customer_id, club_deal_id\)/);
+  assert.match(dealSaveMigration, /enable row level security/);
+  assert.match(dealSaveMigration, /customer_id = auth\.uid\(\)/);
+  assert.match(dealSaveMigration, /Saving never reserves, selects, or redeems an offer/);
+  assert.doesNotMatch(dealSaveMigration, /redemption_token|redeemed_at/);
+
+  assert.match(dealSavesRoute, /createRequestSupabaseContext\(request\)/);
+  assert.match(dealSavesRoute, /requireActiveCustomer/);
+  assert.match(dealSavesRoute, /readBoundedJsonObject/);
+  assert.match(dealSavesRoute, /enforcePublicRequestRateLimit/);
+  assert.match(dealSavesRoute, /requirePublicClubDeal/);
+  assert.match(dealSavesRoute, /saveCustomerClubDeal/);
+  assert.match(dealSavesRoute, /removeCustomerClubDeal/);
+  assert.match(savedRoute, /getCustomerSavedClubDeals/);
+  assert.match(savedRoute, /dealSaves/);
+  assert.match(customerService, /\.from\("customer_deal_saves"\)/);
+
+  assert.match(dealSaveClient, /readBrowserAuthSession/);
+  assert.match(dealSaveClient, /persistRefreshedBrowserAuthSession/);
+  assert.match(clubDealCard, /setCustomerDealSavedInAccount/);
+  assert.match(clubDealCard, /hasCustomerAccount[\s\S]*?saved\.filter\(\(item\) => item\.id !== id\)/);
+  assert.match(clubDealCard, /Saved privately to your account\. This does not reserve or redeem the deal\./);
+  assert.match(clubDealCard, /Saved on this device\. Sign in to keep it across devices\. This does not redeem the deal\./);
+});
+
+test("customer dashboard keeps saved deals separate from cashier redemption activity", () => {
+  assert.match(dashboard, /<h2>Saved Club Deals<\/h2>/);
+  assert.match(dashboard, /Saved deals are private bookmarks\. Saving does not reserve, select, or redeem an offer\./);
+  assert.match(dashboard, /<h2>Use &amp; history<\/h2>/);
+  assert.match(dashboard, />View deal<\/Link>/);
+  assert.match(dashboard, />\s*Remove\s*<\/button>/);
+  assert.match(dashboard, /"\/api\/customer\/deal-saves"/);
+  assert.match(dashboard, /CustomerDirectionsButton/);
+  assert.match(dashboard, /No saved Club Deals yet/);
 });
 
 test("customer action endpoints reject malformed identifiers and oversized attribution input", () => {

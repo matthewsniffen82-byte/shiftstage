@@ -173,7 +173,8 @@ test("Club Deal checkout explains the complete NFC tap flow without requiring an
   assert.match(dealCard, /You can close MyDancr now\./);
   assert.match(dealCard, /Only this venue’s registered cashier sticker can complete redemption\./);
   assert.match(dealCard, /const dialogContent = intentState === "ready" \?/);
-  assert.match(dealCard, /Saved for later on this device\. This does not select or redeem the deal\./);
+  assert.match(dealCard, /Saved privately to your account\. This does not reserve or redeem the deal\./);
+  assert.match(dealCard, /Saved on this device\. Sign in to keep it across devices\. This does not redeem the deal\./);
 });
 
 test("Club Deal checkout keeps the Android violet on iOS and confirms readiness in green", () => {

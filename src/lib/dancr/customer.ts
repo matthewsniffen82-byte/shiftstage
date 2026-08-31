@@ -39,6 +39,68 @@ export async function getCustomerSavedItems(client: DancrClient, customerId: str
   };
 }
 
+export async function getCustomerSavedClubDeals(client: DancrClient, customerId: string) {
+  const { data, error } = await (client as any)
+    .from("customer_deal_saves")
+    .select(
+      "club_deal_id, source_type, dancer_id, created_at, club_deals(id, venue_id, deal_title, deal_description, deal_terms, is_active, valid_days, valid_start_time, valid_end_time, offer_type, venues(id, slug, name, city, state, address, latitude, longitude, is_active, cover_image_storage_path))",
+    )
+    .eq("customer_id", customerId)
+    .order("created_at", { ascending: false })
+    .limit(20);
+
+  if (error) throw error;
+
+  return (data || []).map((row: any) => {
+    const deal = single(row.club_deals);
+    const venue = toVenueSummary(client, deal?.venues);
+    if (!deal || !venue) return null;
+
+    return {
+      dealId: String(row.club_deal_id),
+      sourceType: row.source_type === "dancer_profile" ? "dancer_profile" : "club_page",
+      dancerId: row.dancer_id ? String(row.dancer_id) : null,
+      savedAt: String(row.created_at),
+      deal: {
+        id: String(deal.id),
+        title: String(deal.deal_title || "Club Deal"),
+        description: String(deal.deal_description || ""),
+        terms: deal.deal_terms ? String(deal.deal_terms) : null,
+        isActive: deal.is_active === true,
+        validDays: Array.isArray(deal.valid_days) ? deal.valid_days.map(String) : null,
+        validStartTime: deal.valid_start_time ? String(deal.valid_start_time) : null,
+        validEndTime: deal.valid_end_time ? String(deal.valid_end_time) : null,
+        offerType: deal.offer_type === "other" ? "other" : "admission",
+      },
+      venue,
+    };
+  }).filter(Boolean);
+}
+
+export async function saveCustomerClubDeal(
+  client: DancrClient,
+  customerId: string,
+  input: { dealId: string; sourceType: "club_page" | "dancer_profile"; dancerId?: string | null },
+) {
+  const { error } = await (client as any).from("customer_deal_saves").insert({
+    customer_id: customerId,
+    club_deal_id: input.dealId,
+    source_type: input.sourceType,
+    dancer_id: input.sourceType === "dancer_profile" ? input.dancerId || null : null,
+  });
+
+  if (error && error.code !== "23505") throw error;
+}
+
+export async function removeCustomerClubDeal(client: DancrClient, customerId: string, dealId: string) {
+  const { error } = await (client as any).from("customer_deal_saves").delete().match({
+    customer_id: customerId,
+    club_deal_id: dealId,
+  });
+
+  if (error) throw error;
+}
+
 export async function followDancer(client: DancrClient, customerId: string, dancerId: string) {
   const { error } = await client.from("follows").upsert({
     customer_id: customerId,
