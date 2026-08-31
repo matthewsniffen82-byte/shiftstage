@@ -32305,10 +32305,13 @@
               <svg class="venue-picker-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="m7 9 5 5 5-5"></path></svg>
             </button>
           </div>
-          <button class="location-btn" id="locationBtn" type="button">
-            <svg class="icon" viewBox="0 0 24 24"><path d="M12 2v4"></path><path d="M12 18v4"></path><path d="M2 12h4"></path><path d="M18 12h4"></path><circle cx="12" cy="12" r="4"></circle></svg>
-            <span class="location-btn-label">Use my location</span>
-          </button>
+          <div class="home-filter-actions">
+            <button class="location-btn" id="locationBtn" type="button">
+              <svg class="icon" viewBox="0 0 24 24"><path d="M12 2v4"></path><path d="M12 18v4"></path><path d="M2 12h4"></path><path d="M18 12h4"></path><circle cx="12" cy="12" r="4"></circle></svg>
+              <span class="location-btn-label">Use current location</span>
+            </button>
+            <button class="home-filter-reset" id="homeFilterReset" type="button" hidden>Reset</button>
+          </div>
         </div>
         <div class="city-picker-inline" id="citySelectPanel" hidden>
           <div class="venue-picker-options city-picker-options" id="citySelectOptions" role="listbox" aria-labelledby="citySelectLabel"></div>
@@ -42329,6 +42332,7 @@
     let venuePickerRestoreFocus = null;
     const homeFilterToggle = document.getElementById("homeFilterToggle");
     const homeAdvancedFilters = document.getElementById("homeAdvancedFilters");
+    const homeFilterReset = document.getElementById("homeFilterReset");
     const results = document.getElementById("results");
     const discoveryTabs = document.getElementById("discoveryTabs");
     const discoveryTabsHomeParent = discoveryTabs?.parentNode || null;
@@ -58833,6 +58837,7 @@
         count.textContent = String(activeFilterCount);
         count.hidden = activeFilterCount === 0;
       }
+      if (homeFilterReset) homeFilterReset.hidden = activeFilterCount === 0;
       homeFilterToggle.classList.toggle("has-active-filters", activeFilterCount > 0);
       homeFilterToggle.setAttribute(
         "aria-label",
@@ -65012,6 +65017,20 @@
       homeAdvancedFilters?.classList.toggle("is-open", !expanded);
     });
 
+    homeFilterReset?.addEventListener("click", () => {
+      if (distanceSelect) distanceSelect.value = "25 mi";
+      if (venueSelect) venueSelect.value = "all";
+      syncVenuePickerSelection("all");
+      homeDiscoveryFeedOpen = false;
+      deactivateHomeDiscoveryFeed();
+      tonightExpanded = false;
+      dancersExpanded = false;
+      selectedVenueName = null;
+      populateVenueSelect();
+      render();
+      showToast("Filters reset");
+    });
+
     homeAdvancedFilters?.addEventListener("keydown", (event) => {
       if (event.key !== "Escape" || homeFilterToggle?.getAttribute("aria-expanded") !== "true") return;
       homeFilterToggle.setAttribute("aria-expanded", "false");
@@ -65161,7 +65180,7 @@
     document.getElementById("locationBtn").addEventListener("click", async () => {
       const button = document.getElementById("locationBtn");
       const label = button?.querySelector(".location-btn-label");
-      const originalText = "Use my location";
+      const originalText = "Use current location";
       if (button) {
         button.disabled = true;
         button.setAttribute("aria-busy", "true");

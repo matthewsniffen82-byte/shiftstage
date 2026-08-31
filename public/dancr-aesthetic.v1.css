@@ -1091,16 +1091,28 @@ body > .app main.stack > .home-discovery-controls .home-filter-toggle-count {
   min-width: 20px;
   height: 20px;
   padding-inline: 5px;
-  border: 1px solid var(--dancr-color-info-soft);
+  border: 1px solid var(--dancr-color-brand-primary-medium);
   border-radius: 999px;
-  color: var(--dancr-color-info);
-  background: color-mix(in srgb, var(--dancr-color-info) 13%, transparent);
+  color: var(--dancr-color-brand-core);
+  background: color-mix(in srgb, var(--dancr-color-brand-primary) 13%, transparent);
   font-size: 10px;
   font-weight: 950;
   line-height: 1;
 }
 
 body > .app main.stack > .home-discovery-controls .home-filter-toggle-count[hidden] {
+  display: none !important;
+}
+
+body > .app main.stack > .home-discovery-controls .home-filter-actions {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 8px;
+}
+
+body > .app main.stack > .home-discovery-controls .home-filter-reset[hidden] {
   display: none !important;
 }
 
@@ -8340,6 +8352,97 @@ body.dancer-directory-active.dancr-button-system > .app main.stack > .home-disco
   :is(.city-picker-trigger-icon, .city-picker-chevron, .home-filter-toggle-icon) {
   display: block;
   align-self: center;
+}
+
+/* Expanded filters stay compact so discovery content remains the visual
+ * priority. Violet indicates filter state; cyan remains exclusive to
+ * Upcoming. The active control uses one border instead of a second glow. */
+body.dancr-button-system > .app main.stack > .home-discovery-controls
+  .home-filter-toggle:is(.is-open, .has-active-filters, :focus, :focus-visible) {
+  border-color: var(--dancr-color-brand-primary-strong) !important;
+  outline: 0 !important;
+  background: color-mix(
+    in srgb,
+    var(--dancr-color-brand-primary) 10%,
+    var(--dancr-color-surface-raised)
+  ) !important;
+  box-shadow: none !important;
+}
+
+body.dancr-button-system > .app main.stack > .home-discovery-controls
+  .home-filter-toggle:is(.is-open, .has-active-filters) .home-filter-toggle-icon {
+  color: var(--dancr-color-brand-core) !important;
+}
+
+@media (max-width: 720px) {
+  body.dancr-button-system > .app main.stack > .home-discovery-controls
+    .home-advanced-filters.is-open {
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 8px !important;
+    padding: 10px !important;
+    border: 1px solid var(--dancr-color-border-subtle) !important;
+    border-radius: 14px !important;
+    background: var(--dancr-color-surface-translucent) !important;
+    box-shadow: none !important;
+  }
+
+  body.dancr-button-system > .app main.stack > .home-discovery-controls
+    .home-advanced-filters .field {
+    gap: 4px !important;
+  }
+
+  body.dancr-button-system > .app main.stack > .home-discovery-controls
+    .home-advanced-filters :is(#distanceSelect, #venueSelect, .venue-picker-trigger) {
+    box-sizing: border-box !important;
+    height: 52px !important;
+    min-height: 52px !important;
+    max-height: 52px !important;
+    padding-block: 0 !important;
+    border-radius: 13px !important;
+  }
+
+  body.dancr-button-system > .app main.stack > .home-discovery-controls
+    .home-filter-actions {
+    gap: 7px;
+  }
+
+  body.dancr-button-system > .app main.stack > .home-discovery-controls
+    #locationBtn.location-btn,
+  body.dancr-button-system > .app main.stack > .home-discovery-controls
+    .home-filter-reset {
+    box-sizing: border-box !important;
+    height: 44px !important;
+    min-height: 44px !important;
+    max-height: 44px !important;
+    border-radius: 13px !important;
+    box-shadow: none !important;
+  }
+
+  body.dancr-button-system > .app main.stack > .home-discovery-controls
+    #locationBtn.location-btn {
+    padding-inline: 12px !important;
+    border-color: var(--dancr-color-border-subtle) !important;
+    color: var(--dancr-color-text-primary) !important;
+    background: var(--dancr-color-surface-raised) !important;
+    font-size: 14px !important;
+  }
+
+  body.dancr-button-system > .app main.stack > .home-discovery-controls
+    #locationBtn.location-btn .icon {
+    color: var(--dancr-color-info) !important;
+  }
+
+  body.dancr-button-system > .app main.stack > .home-discovery-controls
+    .home-filter-reset {
+    width: auto !important;
+    min-width: 66px !important;
+    padding-inline: 11px !important;
+    border-color: var(--dancr-color-border-subtle) !important;
+    color: var(--dancr-color-text-secondary) !important;
+    background: transparent !important;
+    font-size: 12px !important;
+    font-weight: 850 !important;
+  }
 }
 
 body.dancer-directory-active > .app main.stack > .home-live-summary {

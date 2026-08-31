@@ -103,3 +103,15 @@ test("city and Filters labels share one visual center without resizing their con
     /:is\(\.city-picker-trigger-icon, \.city-picker-chevron, \.home-filter-toggle-icon\) \{[\s\S]*?display: block;[\s\S]*?align-self: center;/,
   );
 });
+
+test("expanded discovery filters stay compact and expose truthful reset state", () => {
+  assert.match(liveShell, /class="home-filter-actions"[\s\S]*?id="locationBtn"[\s\S]*?>Use current location<[\s\S]*?id="homeFilterReset"[^>]*hidden>Reset<\/button>/);
+  assert.match(liveShell, /const homeFilterReset = document\.getElementById\("homeFilterReset"\)/);
+  assert.match(liveShell, /if \(homeFilterReset\) homeFilterReset\.hidden = activeFilterCount === 0/);
+  assert.match(liveShell, /homeFilterReset\?\.addEventListener\("click"[\s\S]*?distanceSelect\.value = "25 mi"[\s\S]*?venueSelect\.value = "all"[\s\S]*?syncVenuePickerSelection\("all"\)[\s\S]*?render\(\)[\s\S]*?showToast\("Filters reset"\)/);
+  assert.match(aesthetic, /Expanded filters stay compact[\s\S]*?\.home-filter-toggle:is\(\.is-open, \.has-active-filters, :focus, :focus-visible\) \{[\s\S]*?border-color: var\(--dancr-color-brand-primary-strong\) !important;[\s\S]*?outline: 0 !important;[\s\S]*?box-shadow: none !important;/);
+  assert.match(aesthetic, /\.home-advanced-filters\.is-open \{[\s\S]*?gap: 8px !important;[\s\S]*?padding: 10px !important;[\s\S]*?box-shadow: none !important;/);
+  assert.match(aesthetic, /\.home-advanced-filters :is\(#distanceSelect, #venueSelect, \.venue-picker-trigger\) \{[\s\S]*?height: 52px !important;[\s\S]*?max-height: 52px !important;/);
+  assert.match(aesthetic, /#locationBtn\.location-btn,[\s\S]*?\.home-filter-reset \{[\s\S]*?height: 44px !important;[\s\S]*?max-height: 44px !important;/);
+  assert.match(aesthetic, /#locationBtn\.location-btn \.icon \{[\s\S]*?color: var\(--dancr-color-info\) !important;/);
+});

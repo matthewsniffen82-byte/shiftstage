@@ -864,7 +864,7 @@ test("the city selector is compact, neutral, and reports only real active filter
   );
   assert.match(
     aesthetic,
-    /\.home-filter-toggle-count \{[\s\S]*?color: var\(--dancr-color-info\)[\s\S]*?background: color-mix\(in srgb, var\(--dancr-color-info\) 13%, transparent\)/,
+    /\.home-filter-toggle-count \{[\s\S]*?color: var\(--dancr-color-brand-core\)[\s\S]*?background: color-mix\(in srgb, var\(--dancr-color-brand-primary\) 13%, transparent\)/,
   );
 });
 
