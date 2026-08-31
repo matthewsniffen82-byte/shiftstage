@@ -31,6 +31,20 @@ test("the public auth surface has one sign-in and three concise signup paths", (
   assert.match(liveApp, /if \(!loggedIn\) \{[\s\S]*?openAuthRole\("customer"\)/);
 });
 
+test("guest signup clearly explains private visibility and email confirmation", () => {
+  const signupNoteRule = liveApp.match(/\.auth-signup-note \{[^}]*\}/)?.[0] || "";
+
+  assert.match(
+    liveApp,
+    /id="customerSignupNote" hidden>[\s\S]*?class="auth-signup-note-lock" aria-hidden="true"[\s\S]*?Your guest account and activity aren’t shown publicly\. We’ll email you a confirmation link\./
+  );
+  assert.match(signupNoteRule, /grid-template-columns: auto minmax\(0, 1fr\);/);
+  assert.match(signupNoteRule, /border-color: rgba\(255, 255, 255, \.12\) !important;/);
+  assert.match(signupNoteRule, /background: rgba\(255, 255, 255, \.035\) !important;/);
+  assert.match(liveApp, /\.auth-signup-note\[hidden\] \{\s*display: none !important;\s*\}/);
+  assert.doesNotMatch(liveApp, /Private by default\. Check your email to confirm after creating it\./);
+});
+
 test("the auth mode toggle stays visually secondary to the submit action", () => {
   assert.match(liveApp, /#authPage \.auth-entry-tab\.active \{[\s\S]*?border-color: rgba\(139, 92, 246, \.56\) !important;/);
   assert.match(liveApp, /#authPage \.auth-entry-tab\.active \{[\s\S]*?background: linear-gradient\(135deg, rgba\(96, 52, 178, \.28\), rgba\(55, 32, 103, \.22\)\) !important;/);
