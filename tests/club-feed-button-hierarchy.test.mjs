@@ -56,12 +56,13 @@ test("mobile venue controls use a compact premium glass hierarchy without a back
   assert.match(rideIconRule, /color: rgba\(226, 232, 240, 0\.84\) !important;/);
   assert.doesNotMatch(rideActionRule, /139, 92, 246|31, 24, 45|brand-primary/);
   assert.doesNotMatch(rideIconRule, /#b89cff|brand-primary/);
-  assert.match(hierarchy, /\.venue-card-secondary-actions \{[\s\S]*?height: 56px !important;[\s\S]*?repeat\(3, minmax\(0, 1fr\)\) minmax\(58px, 0\.72fr\)/);
-  assert.match(hierarchy, /\.venue-card-secondary-actions > \.venue-card-secondary-action[\s\S]*?border-radius: 14px !important;[\s\S]*?linear-gradient\(180deg,/);
+  assert.match(hierarchy, /\.venue-card-secondary-actions \{[\s\S]*?height: 56px !important;[\s\S]*?grid-template-columns: repeat\(4, minmax\(0, 1fr\)\) !important;/);
+  assert.match(hierarchy, /\.venue-card-secondary-actions > \.venue-card-secondary-action[\s\S]*?border: 1px solid rgba\(226, 232, 240, 0\.2\) !important;[\s\S]*?border-radius: 14px !important;[\s\S]*?rgba\(7, 9, 14, 0\.82\)/);
   assert.match(hierarchy, /\.venue-card-deals-action\.is-available \{[\s\S]*?rgba\(7, 31, 20, 0\.68\)/);
   assert.match(hierarchy, /\.venue-card-deals-action\.is-unavailable \{[\s\S]*?rgba\(203, 213, 225, 0\.56\)/);
-  assert.match(hierarchy, /\.venue-card-secondary-actions > :is\([\s\S]*?\.venue-card-share-action,[\s\S]*?\.venue-card-favorite-action[\s\S]*?opacity: 1 !important;[\s\S]*?filter: none !important;/);
-  assert.match(hierarchy, /@media \(max-width: 360px\)[\s\S]*?minmax\(54px, 0\.68fr\)/);
+  assert.match(hierarchy, /\.venue-card-secondary-actions > :is\([\s\S]*?\.venue-card-share-action,[\s\S]*?\.venue-card-favorite-action[\s\S]*?rgba\(7, 9, 14, 0\.82\)[\s\S]*?opacity: 1 !important;[\s\S]*?filter: none !important;/);
+  assert.match(hierarchy, /\.venue-card-secondary-actions > :is\([\s\S]*?\.venue-card-page-action,[\s\S]*?\.venue-card-share-action,[\s\S]*?\.venue-card-favorite-action[\s\S]*?:is\(\.action-icon, \.action-icon > svg\)[\s\S]*?rgba\(241, 245, 249, 0\.9\)[\s\S]*?opacity: 1 !important;/);
+  assert.match(hierarchy, /@media \(max-width: 360px\)[\s\S]*?grid-template-columns: repeat\(4, minmax\(0, 1fr\)\) !important;/);
 });
 
 test("mobile venue identity keeps the lineup beside the location and hours", () => {
