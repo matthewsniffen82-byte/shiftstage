@@ -29056,17 +29056,22 @@
     .content-report-sheet h3,
     .content-report-sheet p { margin: 0; }
     .content-report-sheet p { color: #cfc5de; line-height: 1.4; }
-    .content-report-popover.is-quick-reason { background: transparent; backdrop-filter: none; }
-    .content-report-popover.is-quick-reason .content-report-sheet { width: min(242px, calc(100vw - 90px)); gap: 5px; padding: 10px; border-color: rgba(255,255,255,.14); border-radius: 15px; background: rgba(8,8,12,.94); box-shadow: 0 16px 38px rgba(0,0,0,.5); backdrop-filter: blur(18px) saturate(1.08); -webkit-backdrop-filter: blur(18px) saturate(1.08); }
-    .content-report-popover.is-quick-reason .content-report-close { display: none; }
+    .content-report-header { display: flex; align-items: center; gap: 12px; }
+    .content-report-header h3 { min-width: 0; flex: 1; }
+    .content-report-popover.is-quick-reason { padding: 17px; background: rgba(0,0,0,.2); backdrop-filter: none; }
+    .content-report-popover.is-quick-reason .content-report-sheet { width: min(400px, 100%); gap: 0; padding: 16px; overflow: visible; border-color: rgba(255,255,255,.14); border-radius: 21px; background: rgba(7,7,10,.96); box-shadow: 0 20px 54px rgba(0,0,0,.62); backdrop-filter: blur(18px) saturate(1.08); -webkit-backdrop-filter: blur(18px) saturate(1.08); }
+    .content-report-popover.is-quick-reason .content-report-header { min-height: 54px; align-items: center; padding: 0 0 10px 8px; }
+    .content-report-popover.is-quick-reason .content-report-close { position: static; width: 52px; min-width: 52px; height: 52px; display: grid; place-items: center; align-self: flex-start; margin: 0; padding: 0; border: 1px solid rgba(255,255,255,.13); border-radius: 50%; color: #aaa4af; background: rgba(30,31,38,.96); box-shadow: inset 0 1px 0 rgba(255,255,255,.05), 0 8px 24px rgba(0,0,0,.35); }
+    .content-report-popover.is-quick-reason .content-report-close:is(:hover, :focus-visible) { border-color: rgba(196,167,255,.5); color: #fff; outline: none; box-shadow: 0 0 0 3px rgba(124,58,237,.14), 0 8px 24px rgba(0,0,0,.35); }
+    .content-report-popover.is-quick-reason .content-report-close .icon { width: 24px; height: 24px; }
     .content-report-popover.is-quick-reason .content-report-sheet > span { display: none; }
-    .content-report-popover.is-quick-reason .content-report-sheet h3 { padding: 3px 5px 6px; color: rgba(255,255,255,.72); font-size: 10px; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; }
+    .content-report-popover.is-quick-reason .content-report-sheet h3 { margin: 0; padding: 0; color: rgba(255,255,255,.78); font-size: 12px; font-weight: 950; letter-spacing: .08em; line-height: 1.15; text-transform: uppercase; }
     .content-report-popover.is-quick-reason .content-report-form label,
     .content-report-popover.is-quick-reason .content-report-form-actions { display: none; }
-    .content-report-quick-options { display: grid; gap: 5px; }
+    .content-report-quick-options { display: grid; gap: 8px; }
     .content-report-quick-options[hidden] { display: none; }
-    .content-report-quick-option { min-height: 38px; padding: 0 10px; border: 1px solid rgba(255,255,255,.08); border-radius: 9px; color: #ded7e8; background: rgba(255,255,255,.035); font: inherit; font-size: 11px; font-weight: 800; text-align: left; cursor: pointer; }
-    .content-report-quick-option:is(:hover, :focus-visible) { border-color: rgba(255,92,128,.48); color: #fff; background: rgba(255,92,128,.12); outline: none; }
+    .content-report-quick-option { min-height: 62px; padding: 0 16px; border: 1px solid rgba(255,255,255,.075); border-radius: 12px; color: #eee9f3; background: rgba(255,255,255,.012); font: inherit; font-size: 13px; font-weight: 850; text-align: left; cursor: pointer; }
+    .content-report-quick-option:is(:hover, :focus-visible) { border-color: rgba(255,92,128,.48); color: #fff; background: rgba(255,92,128,.1); outline: none; }
     .content-report-quick-option:disabled { cursor: wait; opacity: .68; }
     .content-report-form { display: grid; gap: 13px; }
     .content-report-form label { display: grid; gap: 7px; color: #e9e2f4; font-size: 13px; font-weight: 900; }
@@ -32799,7 +32804,6 @@
         .home-tv-feed-copy a,
         .home-tv-feed-sound,
         .home-tv-feed-action,
-        .home-tv-feed-report-option,
         .home-feed-return-home {
           pointer-events: auto;
         }
@@ -32871,7 +32875,6 @@
         .home-tv-feed-dancer:focus-visible,
         .home-tv-feed-venue:focus-visible,
         .home-tv-feed-action:focus-visible,
-        .home-tv-feed-report-option:focus-visible,
         .home-tv-feed-sound:focus-visible,
         .home-tv-feed-fullscreen:focus-visible {
           outline: 2px solid #7eeaff;
@@ -33222,42 +33225,6 @@
           color: rgba(248,250,252,.82) !important;
           background: transparent !important;
           box-shadow: none !important;
-        }
-        .home-tv-feed-report-menu {
-          position: absolute;
-          right: 48px;
-          bottom: 0;
-          width: min(242px, calc(100vw - 90px));
-          display: grid;
-          gap: 5px;
-          padding: 10px;
-          border: 1px solid rgba(255,255,255,.14);
-          border-radius: 15px;
-          background: rgba(8,8,12,.92);
-          box-shadow: 0 16px 38px rgba(0,0,0,.5);
-          backdrop-filter: blur(18px) saturate(1.08);
-          -webkit-backdrop-filter: blur(18px) saturate(1.08);
-        }
-        .home-tv-feed-report-menu[hidden] {
-          display: none;
-        }
-        .home-tv-feed-report-menu strong {
-          padding: 3px 5px 6px;
-          color: rgba(255,255,255,.72);
-          font-size: 10px;
-          letter-spacing: .08em;
-          text-transform: uppercase;
-        }
-        .home-tv-feed-report-option {
-          min-height: 38px;
-          padding: 0 10px;
-          border: 1px solid rgba(255,255,255,.08);
-          border-radius: 9px;
-          color: #ded7e8;
-          background: rgba(255,255,255,.035);
-          font-size: 11px;
-          font-weight: 800;
-          text-align: left;
         }
         .home-tv-feed-progress {
           position: absolute;
@@ -42380,11 +42347,13 @@
 
     <div class="admin-preview-popover content-report-popover" id="contentReportPopover" role="dialog" aria-modal="true" aria-labelledby="contentReportTitle" aria-describedby="contentReportMessage" hidden>
       <section class="admin-preview-sheet content-report-sheet">
-        <button class="close-btn admin-preview-close" id="contentReportClose" type="button" aria-label="Close report form">
-          <svg class="icon" viewBox="0 0 24 24"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
-        </button>
+        <header class="content-report-header">
+          <h3 id="contentReportTitle">Report content</h3>
+          <button class="close-btn admin-preview-close content-report-close" id="contentReportClose" type="button" aria-label="Close report form">
+            <svg class="icon" viewBox="0 0 24 24"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
+          </button>
+        </header>
         <span>Safety report</span>
-        <h3 id="contentReportTitle">Report content</h3>
         <p id="contentReportMessage">Tell the moderation team what is wrong. Reports can be submitted without signing in.</p>
         <div class="content-report-quick-options" id="contentReportQuickOptions" role="menu" hidden>
           <button class="content-report-quick-option" type="button" role="menuitem" data-content-report-reason="Sexual or unsafe content">Sexual or unsafe content</button>
@@ -43263,6 +43232,9 @@
         if (report.status) report.status.textContent = "Report submitted for review.";
         if (report.targetType === "dancer_profile") {
           recordLiveEvent("profile_action", { dancerName: report.targetLabel, source: "report_submitted" });
+        }
+        if (report.targetType === "tv_video") {
+          void trackHomeTvFeedEvent(report.targetId, "report");
         }
         showToast("Report submitted for review");
         closeContentReportDialog({ restoreFocus: false });
@@ -60774,42 +60746,6 @@
       }
     }
 
-    async function reportHomeTvFeedVideo(item, reason, slide, button) {
-      const videoId = String(item?.id || "");
-      const dancerName = String(item?.dancer?.stageName || "MyDancr TV").trim() || "MyDancr TV";
-      if (!videoId || !reason) return;
-      button.disabled = true;
-      try {
-        const headers = { "Content-Type": "application/json", Accept: "application/json" };
-        if (authSession?.accessToken) headers.Authorization = `Bearer ${authSession.accessToken}`;
-        const response = await fetch("/api/reports", {
-          method: "POST",
-          headers,
-          body: JSON.stringify({
-            targetType: "tv_video",
-            targetId: videoId,
-            targetLabel: `${dancerName} MyDancr TV video`,
-            reason,
-            details: "Reported from the homepage MyDancr TV feed."
-          })
-        });
-        const payload = await response.json();
-        if (!response.ok || !payload.ok) throw new Error(payload.error || "Unable to submit report.");
-        void trackHomeTvFeedEvent(videoId, "report");
-        showHomeTvFeedFeedback(slide, "Report submitted");
-        const reportMenu = button.closest(".home-tv-feed-report-menu");
-        reportMenu.hidden = true;
-        closeHomeTvFeedReportMenus();
-      } catch (error) {
-        showHomeTvFeedFeedback(
-          slide,
-          error instanceof Error && error.message ? error.message : "Report unavailable"
-        );
-      } finally {
-        button.disabled = false;
-      }
-    }
-
     function canWarmAdjacentVideo() {
       const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
       if (!connection) return true;
@@ -61503,13 +61439,10 @@
       };
     }
 
-    function closeHomeTvFeedReportMenus(exceptMenu = null) {
-      results.querySelectorAll(".home-tv-feed-report-menu").forEach((menu) => {
-        if (menu === exceptMenu) return;
-        menu.hidden = true;
-        const slide = menu.closest(".home-tv-feed-slide");
-        slide?.querySelector("[data-home-tv-report]")?.setAttribute("aria-expanded", "false");
-      });
+    function closeHomeTvFeedReportMenus() {
+      if (activeContentReport?.button?.dataset?.homeTvReport === "true") {
+        closeContentReportDialog({ restoreFocus: false });
+      }
     }
 
     function createHomeTvFeedActions(item, slide, video) {
@@ -61608,52 +61541,30 @@
         actionIconMarkup("report")
       );
       overflow.dataset.homeTvReport = "true";
-      overflow.setAttribute("aria-expanded", "false");
-
-      const reportMenu = document.createElement("div");
-      reportMenu.className = "home-tv-feed-report-menu";
-      reportMenu.id = `homeTvReport${String(item.id).replaceAll("-", "")}`;
-      reportMenu.hidden = true;
-      reportMenu.setAttribute("role", "menu");
-      reportMenu.setAttribute("aria-label", "Report video");
-      overflow.setAttribute("aria-controls", reportMenu.id);
-      const reportTitle = document.createElement("strong");
-      reportTitle.textContent = "Report video";
-      reportMenu.appendChild(reportTitle);
-      [
-        "Sexual or unsafe content",
-        "Harassment or abuse",
-        "Spam or misleading content",
-        "Other safety concern"
-      ].forEach((reason) => {
-        const option = document.createElement("button");
-        option.className = "home-tv-feed-report-option";
-        option.type = "button";
-        option.setAttribute("role", "menuitem");
-        option.textContent = reason;
-        option.addEventListener("click", () => void reportHomeTvFeedVideo(item, reason, slide, option));
-        reportMenu.appendChild(option);
-      });
+      overflow.dataset.reportDefaultLabel = "Report video";
+      prepareContentReportButton(
+        overflow,
+        "tv_video",
+        videoId,
+        "Report video"
+      );
 
       overflow.addEventListener("click", () => {
-        const open = reportMenu.hidden;
-        closeHomeTvFeedReportMenus(open ? reportMenu : null);
-        reportMenu.hidden = !open;
-        overflow.setAttribute("aria-expanded", String(open));
-        if (open) reportMenu.querySelector("button")?.focus({ preventScroll: true });
-      });
-
-      actions.addEventListener("keydown", (event) => {
-        if (event.key !== "Escape" || reportMenu.hidden) return;
-        event.preventDefault();
-        closeHomeTvFeedReportMenus();
-        overflow.focus({ preventScroll: true });
+        if (overflow.disabled) return;
+        openContentReportDialog({
+          button: overflow,
+          targetType: "tv_video",
+          targetId: videoId,
+          targetLabel: `${dancerName} MyDancr TV video`,
+          title: "Report video",
+          quickReasons: true
+        });
       });
       const fullscreen = createHomeTvFeedFullscreenButton(slide, video);
       actions.append(sound, profile, follow, like);
       if (deal) actions.appendChild(deal);
       actions.append(share, fullscreen);
-      actions.append(overflow, reportMenu);
+      actions.appendChild(overflow);
       return actions;
     }
 
@@ -63133,7 +63044,8 @@
           targetType: actionButton.dataset.reportTargetType,
           targetId: actionButton.dataset.reportTargetId,
           targetLabel: profileName,
-          title: `Report ${profileName} profile`
+          title: "Report profile",
+          quickReasons: true
         });
       }
     });

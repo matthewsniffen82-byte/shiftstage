@@ -270,8 +270,8 @@ test("public profiles keep Going visible and enable it for current or upcoming p
   assert.match(actionsSource, /aria-label=\{actionShift \? \(isGoing \? "Remove this shift from your plans" : "Add this shift to your plans"\)/);
   assert.match(actionsSource, /DancerProfileActionPreviewIcon type=\{isGoing \? "check" : "clock"\}/);
   assert.match(actionsSource, /disabled=\{actionShift \? !savedLoaded \|\| goingSaving : true\}/);
-  assert.match(actionsSource, /onSubmit=\{submitReportForm\}/);
-  assert.match(actionsSource, /role="dialog"\s+aria-modal="true"/);
+  assert.match(actionsSource, /<PublicReportReasonDialog/);
+  assert.match(actionsSource, /onReason=\{\(reason\) => void submitReport\(reason\)\}/);
   assert.match(actionsSource, /aria-label="Close account prompt"/);
   assert.match(actionsSource, /href="\/account\?role=customer&mode=signup"/);
   assert.match(actionsSource, /href="\/account\?role=customer"/);

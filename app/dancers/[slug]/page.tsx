@@ -744,14 +744,19 @@ function PublicProfileStyles() {
       .profile-report-dialog label { color: #e9e2f4; font-size: 13px; font-weight: 900; }
       .profile-report-dialog select, .profile-report-dialog textarea { width: 100%; padding: 11px; border: 1px solid rgba(139,92,246,.35); border-radius: 11px; color: #fff; background: rgba(255,255,255,.055); }
       .profile-report-dialog option { color: #111; }
-      .profile-report-error { color: #ffb4c8; }
-      .profile-media-report-gate { background: transparent; backdrop-filter: none; }
-      .profile-media-report-dialog { width: min(242px, calc(100vw - 90px)); gap: 5px; padding: 10px; border-color: rgba(255,255,255,.14); border-radius: 15px; background: rgba(8,8,12,.94); box-shadow: 0 16px 38px rgba(0,0,0,.5); backdrop-filter: blur(18px) saturate(1.08); }
-      .profile-media-report-dialog h2 { margin: 0; padding: 3px 5px 6px; color: rgba(255,255,255,.72); font-size: 10px; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; }
-      .profile-media-report-options { display: grid; gap: 5px; }
-      .profile-media-report-options button { min-height: 38px; padding: 0 10px; border: 1px solid rgba(255,255,255,.08); border-radius: 9px; color: #ded7e8; background: rgba(255,255,255,.035); font: inherit; font-size: 11px; font-weight: 800; text-align: left; cursor: pointer; }
-      .profile-media-report-options button:hover, .profile-media-report-options button:focus-visible { border-color: rgba(255,92,128,.48); color: #fff; background: rgba(255,92,128,.12); outline: none; }
-      .profile-media-report-options button:disabled { cursor: wait; opacity: .68; }
+      .profile-report-error { margin: 10px 2px 0; color: #ffb4c8; font-size: 11px; font-weight: 800; }
+      .public-report-reason-gate { padding: 17px; background: rgba(0,0,0,.2); backdrop-filter: none; }
+      .public-report-reason-dialog { width: min(400px, 100%); gap: 0; padding: 16px; overflow: visible; border: 1px solid rgba(255,255,255,.14); border-radius: 21px; background: rgba(7,7,10,.96); box-shadow: 0 20px 54px rgba(0,0,0,.62); backdrop-filter: blur(18px) saturate(1.08); }
+      .public-report-reason-header { min-height: 54px; display: flex; align-items: center; gap: 12px; padding: 0 0 10px 8px; }
+      .public-report-reason-dialog .public-report-reason-header h2 { min-width: 0; flex: 1; margin: 0; padding: 0 !important; color: rgba(255,255,255,.78); font-size: 12px; font-weight: 950; letter-spacing: .08em; line-height: 1.15; text-transform: uppercase; }
+      .public-report-reason-close { position: static; width: 52px; min-width: 52px; height: 52px; display: grid; place-items: center; align-self: flex-start; margin: 0; padding: 0; border: 1px solid rgba(255,255,255,.13); border-radius: 50%; color: #aaa4af; background: rgba(30,31,38,.96); box-shadow: inset 0 1px 0 rgba(255,255,255,.05), 0 8px 24px rgba(0,0,0,.35); cursor: pointer; }
+      .public-report-reason-close svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
+      .public-report-reason-close:hover, .public-report-reason-close:focus-visible { border-color: rgba(196,167,255,.5); color: #fff; outline: none; box-shadow: 0 0 0 3px rgba(124,58,237,.14), 0 8px 24px rgba(0,0,0,.35); }
+      .public-report-reason-close:disabled { cursor: wait; opacity: .68; }
+      .public-report-reason-options { display: grid; gap: 8px; }
+      .public-report-reason-options button { min-height: 62px; padding: 0 16px; border: 1px solid rgba(255,255,255,.075); border-radius: 12px; color: #eee9f3; background: rgba(255,255,255,.012); font: inherit; font-size: 13px; font-weight: 850; text-align: left; cursor: pointer; }
+      .public-report-reason-options button:hover, .public-report-reason-options button:focus-visible { border-color: rgba(255,92,128,.48); color: #fff; background: rgba(255,92,128,.1); outline: none; }
+      .public-report-reason-options button:disabled { cursor: wait; opacity: .68; }
       @media (max-width: 600px) {
         .public-profile-shell { padding: 0 12px max(132px, calc(108px + env(safe-area-inset-bottom))); }
         body.dancr-button-system .public-profile-shell .profile-titlebar { grid-template-columns: minmax(108px, .92fr) minmax(0, 1.08fr) 80px !important; gap: 5px !important; min-height: 64px !important; padding: max(6px, env(safe-area-inset-top)) 0 6px !important; }

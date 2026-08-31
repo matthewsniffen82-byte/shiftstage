@@ -200,11 +200,11 @@ test("profile actions keep customer and safety controls visible while Tonight ow
   assert.doesNotMatch(profileActions, /profile-header-overflow/);
   assert.match(profileActions, /Report profile/);
   assert.match(profileActions, /onClick=\{openReport\}/);
-  assert.match(profileActions, /className="profile-report-dialog"/);
-  assert.match(profileActions, /<select[\s\S]*required[\s\S]*value=\{reportReason\}/);
-  assert.match(profileActions, /<textarea[\s\S]*maxLength=\{1200\}/);
-  assert.match(profileActions, /onSubmit=\{submitReportForm\}/);
-  assert.match(profileActions, /details: reportDetails\.trim\(\) \|\| null/);
+  assert.match(profileActions, /<PublicReportReasonDialog/);
+  assert.match(profileActions, /onReason=\{\(reason\) => void submitReport\(reason\)\}/);
+  assert.match(profileActions, /title="Report profile"/);
+  assert.doesNotMatch(profileActions, /<select|<textarea|submitReportForm|reportDetails/);
+  assert.match(profileActions, /details: null/);
   assert.match(profileActions, /const reportAbortRef = useRef<AbortController \| null>\(null\);/);
   assert.match(profileActions, /const reportInFlightRef = useRef\(false\);/);
   assert.match(profileActions, /if \(reportInFlightRef\.current \|\| reportSubmitted\) return;/);

@@ -112,7 +112,7 @@ test("selected actions, dynamic stats, and all existing action handlers remain i
   assert.match(profileActions, /aria-pressed=\{actionShift \? isGoing : undefined\}/);
   assert.match(profileActions, /export function DancerReportControl/);
   assert.match(profileActions, /onClick=\{openReport\}/);
-  assert.match(profileActions, /onSubmit=\{submitReportForm\}/);
+  assert.match(profileActions, /onReason=\{\(reason\) => void submitReport\(reason\)\}/);
   assert.match(profileActions, /shareControl/);
   assert.match(liveApp, /followerCount === 1 \? "Follower" : "Followers"/);
   assert.match(liveApp, /tonightInterestCount\(profile\)\.toLocaleString\(\)/);

@@ -12,6 +12,7 @@ import {
 } from "react";
 import { flushSync } from "react-dom";
 import { MediaLikeButton } from "@/app/components/MediaLikeButton";
+import { PublicReportReasonDialog, type PublicReportReason } from "@/app/components/PublicReportReasonDialog";
 import { readBrowserAccessToken } from "@/src/lib/dancr/browser-session";
 import { recordPublicEngagementShare } from "@/src/lib/dancr/engagement-client";
 import { useVideoSoundPreference } from "@/src/lib/dancr/use-video-sound-preference";
@@ -71,13 +72,6 @@ type MediaReportTarget = {
   targetType: "dancer_profile" | "profile_photo" | "tv_video";
   title: string;
 };
-
-const MEDIA_REPORT_REASONS = [
-  "Sexual or unsafe content",
-  "Harassment or abuse",
-  "Spam or misleading content",
-  "Other safety concern",
-] as const;
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -551,7 +545,7 @@ export function DancerPhotoCarousel({
     setReportTarget(target);
   }
 
-  async function submitMediaReport(reason: (typeof MEDIA_REPORT_REASONS)[number]) {
+  async function submitMediaReport(reason: PublicReportReason) {
     if (!reportTarget || reportSaving) return;
     const controller = new AbortController();
     reportAbortRef.current?.abort();
@@ -925,36 +919,14 @@ export function DancerPhotoCarousel({
             </div>
           </div>
           {reportTarget ? (
-            <div
-              className="profile-report-gate profile-media-report-gate"
-              onMouseDown={(event) => {
-                if (event.target === event.currentTarget && !reportSaving) setReportTarget(null);
-              }}
-            >
-              <section
-                aria-labelledby="profile-media-report-title"
-                aria-modal="true"
-                className="profile-report-dialog profile-media-report-dialog"
-                role="dialog"
-              >
-                <h2 id="profile-media-report-title">{reportTarget.title}</h2>
-                <div className="profile-media-report-options" role="menu">
-                  {MEDIA_REPORT_REASONS.map((reason, index) => (
-                    <button
-                      autoFocus={index === 0}
-                      disabled={reportSaving}
-                      key={reason}
-                      onClick={() => void submitMediaReport(reason)}
-                      role="menuitem"
-                      type="button"
-                    >
-                      {reason}
-                    </button>
-                  ))}
-                </div>
-                {reportError ? <p className="profile-report-error" role="alert">{reportError}</p> : null}
-              </section>
-            </div>
+            <PublicReportReasonDialog
+              error={reportError}
+              onClose={() => setReportTarget(null)}
+              onReason={(reason) => void submitMediaReport(reason)}
+              saving={reportSaving}
+              title={reportTarget.title}
+              titleId="profile-media-report-title"
+            />
           ) : null}
         </div>
       ) : null}

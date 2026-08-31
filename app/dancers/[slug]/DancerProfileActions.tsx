@@ -8,11 +8,11 @@ import {
   useMemo,
   useRef,
   useState,
-  type FormEvent,
   type PropsWithChildren,
   type ReactNode,
 } from "react";
 import Link from "next/link";
+import { PublicReportReasonDialog, type PublicReportReason } from "@/app/components/PublicReportReasonDialog";
 import { readBrowserAccessToken } from "@/src/lib/dancr/browser-session";
 
 type ShiftAction = {
@@ -28,15 +28,6 @@ type SavedState = {
 };
 
 type AccountAction = "follow" | "notify";
-
-const REPORT_REASONS = [
-  "Misleading or inaccurate profile",
-  "Impersonation",
-  "Harassment or unsafe content",
-  "Underage concern",
-  "Spam or prohibited promotion",
-  "Other safety concern",
-] as const;
 
 type DancerFollowState = {
   followerCount: number;
@@ -181,8 +172,6 @@ export function DancerReportControl({
   const [reportSaving, setReportSaving] = useState(false);
   const [reportSubmitted, setReportSubmitted] = useState(false);
   const [reportDialogOpen, setReportDialogOpen] = useState(false);
-  const [reportReason, setReportReason] = useState("");
-  const [reportDetails, setReportDetails] = useState("");
   const [reportError, setReportError] = useState("");
   const mountedRef = useRef(false);
   const reportAbortRef = useRef<AbortController | null>(null);
@@ -217,13 +206,8 @@ export function DancerReportControl({
     setReportDialogOpen(true);
   }
 
-  async function submitReportForm(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  async function submitReport(reason: PublicReportReason) {
     if (reportInFlightRef.current || reportSubmitted) return;
-    if (!reportReason) {
-      setReportError("Choose a reason for the report.");
-      return;
-    }
     const controller = new AbortController();
     reportAbortRef.current?.abort();
     reportAbortRef.current = controller;
@@ -242,8 +226,8 @@ export function DancerReportControl({
           targetType: "dancer_profile",
           targetId: dancerId,
           targetLabel: profileName,
-          reason: reportReason,
-          details: reportDetails.trim() || null,
+          reason,
+          details: null,
         }),
         signal: controller.signal,
       });
@@ -285,69 +269,14 @@ export function DancerReportControl({
         <span className="profile-report-confirmation" role="status">Report submitted for review.</span>
       ) : null}
       {reportDialogOpen ? (
-        <div
-          className="profile-report-gate"
-          onMouseDown={(event) => {
-            if (event.target === event.currentTarget && !reportSaving) {
-              setReportDialogOpen(false);
-            }
-          }}
-        >
-          <section
-            aria-describedby="profile-report-message"
-            aria-labelledby="profile-report-title"
-            aria-modal="true"
-            className="profile-report-dialog"
-            role="dialog"
-          >
-            <button
-              aria-label="Close report form"
-              className="profile-report-close"
-              disabled={reportSaving}
-              onClick={() => setReportDialogOpen(false)}
-              type="button"
-            >
-              ×
-            </button>
-            <span>Safety report</span>
-            <h2 id="profile-report-title">Report {profileName}</h2>
-            <p id="profile-report-message">
-              Tell the moderation team what is wrong. Reports can be submitted without signing in.
-            </p>
-            <form onSubmit={submitReportForm}>
-              <label>
-                Reason
-                <select
-                  autoFocus
-                  onChange={(event) => setReportReason(event.target.value)}
-                  required
-                  value={reportReason}
-                >
-                  <option value="">Choose a reason</option>
-                  {REPORT_REASONS.map((reason) => (
-                    <option key={reason} value={reason}>
-                      {reason}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label>
-                Details <small>Optional</small>
-                <textarea
-                  maxLength={1200}
-                  onChange={(event) => setReportDetails(event.target.value)}
-                  placeholder="Add information that will help the moderation team review this profile."
-                  rows={4}
-                  value={reportDetails}
-                />
-              </label>
-              {reportError ? <p className="profile-report-error" role="alert">{reportError}</p> : null}
-              <button disabled={reportSaving} type="submit">
-                {reportSaving ? "Submitting report…" : "Submit report"}
-              </button>
-            </form>
-          </section>
-        </div>
+        <PublicReportReasonDialog
+          error={reportError}
+          onClose={() => setReportDialogOpen(false)}
+          onReason={(reason) => void submitReport(reason)}
+          saving={reportSaving}
+          title="Report profile"
+          titleId="profile-report-title"
+        />
       ) : null}
     </div>
   );
