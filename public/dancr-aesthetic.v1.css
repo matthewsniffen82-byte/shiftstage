@@ -10039,14 +10039,23 @@ body.dancr-button-system > .app main.stack > section.stack
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.07), 0 14px 30px rgba(0, 0, 0, 0.4) !important;
   }
 
+  /* The club identity stage carries a restrained violet signature on every
+   * mobile engine. It is intentionally limited to the header so live and deal
+   * green, plus upcoming cyan, retain their separate product meanings. */
   body.dancr-button-system > .app main.stack > section.stack
     > #results.home-venue-discovery-feed > .home-venue-discovery-slide
     .home-venue-discovery-art {
     height: 112px !important;
     min-height: 112px !important;
     overflow: hidden !important;
-    border-bottom: 1px solid rgba(226, 232, 240, 0.09) !important;
-    background: radial-gradient(circle at 50% 48%, rgba(139, 92, 246, 0.11), transparent 43%), linear-gradient(145deg, #111319, #07080b 68%, #0d0f14) !important;
+    border-bottom: 1px solid var(--dancr-color-brand-primary-medium) !important;
+    background:
+      radial-gradient(circle at 50% 46%, var(--dancr-color-beam-violet-soft), transparent 42%),
+      radial-gradient(circle at 14% 108%, var(--dancr-color-brand-glow-soft), transparent 56%),
+      linear-gradient(145deg, #151020 0%, #090a0f 64%, #100c18 100%) !important;
+    box-shadow:
+      inset 0 -1px 0 rgba(196, 181, 253, 0.12),
+      inset 0 -18px 30px rgba(76, 29, 149, 0.07) !important;
   }
 
   body.dancr-button-system > .app main.stack > section.stack
@@ -10073,8 +10082,12 @@ body.dancr-button-system > .app main.stack > section.stack
     object-fit: contain !important;
     object-position: center center !important;
     transform: none !important;
-    filter: drop-shadow(0 8px 18px rgba(0, 0, 0, 0.46)) !important;
-    -webkit-filter: drop-shadow(0 8px 18px rgba(0, 0, 0, 0.46)) !important;
+    filter:
+      drop-shadow(0 0 14px var(--dancr-color-brand-primary-medium))
+      drop-shadow(0 8px 18px rgba(0, 0, 0, 0.5)) !important;
+    -webkit-filter:
+      drop-shadow(0 0 14px var(--dancr-color-brand-primary-medium))
+      drop-shadow(0 8px 18px rgba(0, 0, 0, 0.5)) !important;
   }
 
   body.dancr-button-system > .app main.stack > section.stack

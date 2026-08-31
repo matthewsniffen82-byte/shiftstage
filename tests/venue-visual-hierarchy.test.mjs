@@ -95,3 +95,17 @@ test("venue hierarchy emphasizes identity and active deals without touching navi
   assert.doesNotMatch(refinements, /\.venue-identity-copy::before/);
   assert.doesNotMatch(refinements, /home-bottom|home-nav-|global-mobile-bottom-nav|discoveryTabs/);
 });
+
+test("mobile venue cards give the club identity header a restrained violet signature", () => {
+  const mobileCards = aesthetic.match(
+    /Clubs card presentation repair[\s\S]*?(?=\/\* Clubs feed action hierarchy\.)/,
+  )?.[0] || "";
+
+  assert.ok(mobileCards, "the mobile venue-card presentation layer must exist");
+  assert.match(mobileCards, /club identity stage carries a restrained violet signature/);
+  assert.match(mobileCards, /border-bottom: 1px solid var\(--dancr-color-brand-primary-medium\)/);
+  assert.match(mobileCards, /var\(--dancr-color-beam-violet-soft\)/);
+  assert.match(mobileCards, /linear-gradient\(145deg, #151020 0%, #090a0f 64%, #100c18 100%\)/);
+  assert.match(mobileCards, /drop-shadow\(0 0 14px var\(--dancr-color-brand-primary-medium\)\)/);
+  assert.doesNotMatch(mobileCards, /border: [^;]*var\(--dancr-color-brand-primary/);
+});
