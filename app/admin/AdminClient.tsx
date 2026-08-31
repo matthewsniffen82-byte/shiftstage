@@ -5690,7 +5690,7 @@ function AdminStyles() {
       .sign-in .segmented { width: 100%; gap: 6px; padding: 5px; border-radius: 16px; background: rgba(255,255,255,.045); }
       .sign-in .segmented button { min-height: 46px; border-radius: 12px; }
       .sign-in .segmented button.active { background: linear-gradient(135deg, rgba(124,58,237,.72), rgba(76,29,149,.76)); box-shadow: inset 0 0 0 1px rgba(196,167,255,.1), 0 8px 22px rgba(76,29,149,.2); }
-      .sign-in input { min-height: 48px; border-radius: 12px; background: #15141b; }
+      .sign-in input { min-height: 48px; border-radius: 12px; background: #15141b; font-size: 16px; }
       .sign-in .forgot-password { width: 100%; min-height: 44px; justify-self: stretch; border: 1px solid rgba(248,250,252,.12); border-radius: 12px; color: rgba(255,255,255,.88); background: rgba(24,24,29,.94); }
       .sign-in > button[type="submit"] { width: 100%; min-height: 48px; border: 1px solid rgba(166,126,255,.54); border-radius: 12px; color: #fff; background: linear-gradient(135deg,#7c3aed,#4c1d95); box-shadow: 0 12px 28px rgba(76,29,149,.26), 0 0 20px rgba(124,58,237,.14); }
       .sign-in > button[type="submit"]:hover, .sign-in > button[type="submit"]:focus-visible { border-color: rgba(196,167,255,.78); outline: 2px solid rgba(166,126,255,.38); outline-offset: 2px; }

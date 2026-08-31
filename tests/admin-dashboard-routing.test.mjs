@@ -62,6 +62,18 @@ test("admin authentication follows the same responsive form hierarchy as other s
   assert.match(liveApp, /else button\.textContent = "Sign in";/);
 });
 
+test("admin login inputs prevent iPhone focus zoom without disabling user zoom", () => {
+  assert.match(
+    adminClient,
+    /\.sign-in input \{ min-height: 48px; border-radius: 12px; background: #15141b; font-size: 16px; \}/,
+  );
+  assert.match(
+    liveApp,
+    /#adminDashboard \.admin-login-form \.field > input,[\s\S]*?#adminDashboard \.admin-login-form \.password-wrap > input \{[\s\S]*?font-size: 16px !important;/,
+  );
+  assert.doesNotMatch(`${adminClient}\n${liveApp}`, /maximum-scale\s*=\s*1|user-scalable\s*=\s*no/);
+});
+
 test("Login / Join visibly links to separate platform admin access", () => {
   assert.match(
     homeRoute,
