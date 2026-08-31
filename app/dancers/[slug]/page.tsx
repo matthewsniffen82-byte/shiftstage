@@ -149,7 +149,6 @@ export default async function DancerPublicPage({ params }: PageProps) {
               </div>
               <div className="profile-titlebar-context">
                 <span className="profile-titlebar-city">{profile.city}</span>
-                <DancerReportControl dancerId={profile.id} profileName={profile.stageName} />
               </div>
             </div>
           </div>
@@ -167,6 +166,7 @@ export default async function DancerPublicPage({ params }: PageProps) {
             </div>
           </dl>
           <div className="profile-titlebar-controls">
+            <DancerReportControl dancerId={profile.id} profileName={profile.stageName} />
             <ProfileCloseButton
               fallbackHref={`/?city=${encodeURIComponent(profile.city)}&view=dancers`}
             />
@@ -409,7 +409,7 @@ function PublicProfileStyles() {
       html:has(.public-profile-shell)::-webkit-scrollbar-track, body:has(.public-profile-shell)::-webkit-scrollbar-track { border: 0; background: transparent; }
       html:has(.public-profile-shell)::-webkit-scrollbar-thumb, body:has(.public-profile-shell)::-webkit-scrollbar-thumb { border: 0; border-radius: 999px; background: rgba(255,255,255,.28); box-shadow: none; }
       html:has(.public-profile-shell)::-webkit-scrollbar-thumb:hover, html:has(.public-profile-shell)::-webkit-scrollbar-thumb:active, body:has(.public-profile-shell)::-webkit-scrollbar-thumb:hover, body:has(.public-profile-shell)::-webkit-scrollbar-thumb:active { background: rgba(255,255,255,.42); box-shadow: none; }
-      .profile-titlebar { position: relative; z-index: 10; max-width: 760px; min-height: 64px; display: grid; grid-template-columns: minmax(120px, .95fr) minmax(150px, 1.05fr) 44px; align-items: center; gap: 6px; margin: 0 auto; padding: max(6px, env(safe-area-inset-top)) 0 6px; border-bottom: 0; background: radial-gradient(circle at 14% 0%, rgba(126,234,255,.055), transparent 11rem), linear-gradient(180deg, rgba(5,5,8,.98), rgba(5,5,8,.92)); box-shadow: 0 8px 24px rgba(0,0,0,.2); backdrop-filter: blur(22px); }
+      .profile-titlebar { position: relative; z-index: 10; max-width: 760px; min-height: 64px; display: grid; grid-template-columns: minmax(120px, .95fr) minmax(150px, 1.05fr) 80px; align-items: center; gap: 6px; margin: 0 auto; padding: max(6px, env(safe-area-inset-top)) 0 6px; border-bottom: 0; background: radial-gradient(circle at 14% 0%, rgba(126,234,255,.055), transparent 11rem), linear-gradient(180deg, rgba(5,5,8,.98), rgba(5,5,8,.92)); box-shadow: 0 8px 24px rgba(0,0,0,.2); backdrop-filter: blur(22px); }
       .profile-titlebar-person { min-width: 0; display: grid; grid-template-columns: 48px minmax(0, 1fr); align-items: center; gap: 9px; }
       .profile-titlebar-avatar { width: 48px; height: 48px; position: relative; display: grid; place-items: center; overflow: hidden; border: 1px solid rgba(126,234,255,.42); border-radius: 50%; color: #fff; background: linear-gradient(145deg, rgba(124,58,237,.72), rgba(34,199,255,.35)); box-shadow: 0 10px 26px rgba(0,0,0,.36), 0 0 18px rgba(124,58,237,.15); font-size: 13px; font-weight: 950; }
       .profile-titlebar-avatar.has-photo { filter: none; opacity: 1; mix-blend-mode: normal; }
@@ -428,11 +428,11 @@ function PublicProfileStyles() {
       .profile-header-metrics > div { min-width: 0; min-height: 42px; display: grid; grid-template-rows: 22px 14px; align-content: center; gap: 1px; justify-items: center; padding: 2px 1px; }
       .profile-header-metrics dd { max-width: 100%; margin: 0; overflow: hidden; color: #eee9f5; font-size: clamp(16px, 3.4vw, 21px); font-variant-numeric: tabular-nums; font-weight: 900; line-height: 1.05; text-overflow: ellipsis; white-space: nowrap; }
       .profile-header-metrics dt { max-width: 100%; overflow: hidden; color: #8f849c; font-size: clamp(8px, 1.9vw, 10px); font-weight: 850; line-height: 1.15; text-align: center; text-overflow: ellipsis; white-space: nowrap; }
-      .profile-titlebar-controls { width: 44px; display: grid; grid-template-columns: 44px; align-self: start; justify-self: end; }
-      .profile-header-report { min-width: 0; display: inline-flex; align-items: center; }
-      .profile-header-report-toggle { width: 28px; min-width: 28px; height: 28px; min-height: 28px; display: inline-grid; place-items: center; padding: 0; border: 1px solid rgba(180,169,196,.2); border-radius: 50%; color: #bdb4c8; background: rgba(255,255,255,.035); box-shadow: none; line-height: 1; cursor: pointer; }
-      .profile-header-report-toggle svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
-      .profile-header-report-toggle:hover, .profile-header-report-toggle:focus-visible { border-color: rgba(196,167,255,.42); color: #fff; background: rgba(124,58,237,.1); outline: none; }
+      .profile-titlebar-controls { width: 80px; display: grid; grid-template-columns: 32px 44px; align-items: center; gap: 4px; align-self: start; justify-self: end; }
+      .profile-header-report { width: 32px; min-width: 0; display: inline-flex; align-items: center; justify-content: center; }
+      .profile-header-report-toggle { width: 32px; min-width: 32px; height: 32px; min-height: 32px; display: inline-grid; place-items: center; padding: 0; border: 1px solid transparent; border-radius: 50%; color: rgba(189,180,200,.58); background: transparent; box-shadow: none; line-height: 1; cursor: pointer; }
+      .profile-header-report-toggle svg { width: 13px; height: 13px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+      .profile-header-report-toggle:hover, .profile-header-report-toggle:focus-visible { border-color: rgba(180,169,196,.16); color: #d7cfdf; background: rgba(255,255,255,.04); outline: none; }
       .profile-header-report-toggle:disabled { cursor: default; opacity: .7; }
       .public-profile-close { position: static; width: 44px; min-height: 44px; display: inline-grid; place-items: center; padding: 0; border: 1px solid rgba(180,169,196,.2); border-radius: 50%; color: #fff; background: rgba(24,24,30,.82); box-shadow: inset 0 1px 0 rgba(255,255,255,.04), 0 10px 24px rgba(0,0,0,.28); font-size: 26px; line-height: 1; cursor: pointer; }
       .public-profile-close:hover, .public-profile-close:focus-visible { border-color: #7eeaff; outline: none; box-shadow: 0 0 0 3px rgba(126,234,255,.13), 0 0 22px rgba(34,199,255,.18); }
@@ -754,7 +754,7 @@ function PublicProfileStyles() {
       .profile-media-report-options button:disabled { cursor: wait; opacity: .68; }
       @media (max-width: 600px) {
         .public-profile-shell { padding: 0 12px max(132px, calc(108px + env(safe-area-inset-bottom))); }
-        body.dancr-button-system .public-profile-shell .profile-titlebar { grid-template-columns: minmax(108px, .92fr) minmax(0, 1.08fr) 44px !important; gap: 5px !important; min-height: 64px !important; padding: max(6px, env(safe-area-inset-top)) 0 6px !important; }
+        body.dancr-button-system .public-profile-shell .profile-titlebar { grid-template-columns: minmax(108px, .92fr) minmax(0, 1.08fr) 80px !important; gap: 5px !important; min-height: 64px !important; padding: max(6px, env(safe-area-inset-top)) 0 6px !important; }
         .profile-titlebar-person { grid-template-columns: 46px minmax(0, 1fr); gap: 7px; }
         .profile-titlebar-avatar { width: 46px; height: 46px; }
         .profile-titlebar h1 { font-size: clamp(17px, 5vw, 22px); }
@@ -762,7 +762,7 @@ function PublicProfileStyles() {
         body.dancr-button-system .public-profile-shell .profile-titlebar-identity > div:first-child,
         body.dancr-button-system .public-profile-shell .profile-titlebar-context { max-width: 100%; min-width: 0; }
         body.dancr-button-system .public-profile-shell .profile-header-metrics > div { min-height: 42px; display: grid !important; grid-template-rows: 22px 14px !important; align-content: center !important; justify-items: center !important; gap: 1px !important; padding: 2px 1px !important; }
-        .profile-titlebar-controls { grid-template-columns: 44px; }
+        .profile-titlebar-controls { grid-template-columns: 32px 44px; }
         .public-profile-close { width: 44px; min-height: 44px; }
         .live-actions { grid-template-columns: repeat(4, minmax(0, 1fr)); }
         .profile-action-share-slot .profile-share > span { position: absolute; width: 1px; height: 1px; overflow: hidden; }
@@ -778,7 +778,7 @@ function PublicProfileStyles() {
         .shift-list { grid-template-columns: 1fr; }
       }
       @media (max-width: 340px) {
-        body.dancr-button-system .public-profile-shell .profile-titlebar { grid-template-columns: minmax(104px, .9fr) minmax(0, 1.1fr) 44px !important; gap: 5px !important; min-height: 62px !important; }
+        body.dancr-button-system .public-profile-shell .profile-titlebar { grid-template-columns: minmax(104px, .9fr) minmax(0, 1.1fr) 80px !important; gap: 5px !important; min-height: 62px !important; }
         .profile-titlebar-person { grid-template-columns: 42px minmax(0, 1fr); gap: 6px; }
         .profile-titlebar-avatar { width: 42px; height: 42px; }
         .profile-titlebar-identity > div:first-child { display: grid !important; grid-template-columns: minmax(0, 1fr) 18px; gap: 3px !important; }
@@ -795,15 +795,15 @@ function PublicProfileStyles() {
         body.dancr-button-system .public-profile-shell .profile-titlebar { grid-template-columns: 80px minmax(0, 1fr) !important; grid-template-rows: 46px 42px !important; align-items: stretch !important; column-gap: 0 !important; row-gap: 4px !important; min-height: 102px !important; padding: max(7px, env(safe-area-inset-top)) 0 7px !important; }
         body.dancr-button-system .public-profile-shell .profile-titlebar-person { display: contents !important; }
         body.dancr-button-system .public-profile-shell .profile-titlebar-avatar { grid-column: 1 !important; grid-row: 1 / 3 !important; width: 72px !important; height: 72px !important; align-self: start !important; justify-self: center !important; }
-        body.dancr-button-system .public-profile-shell .profile-titlebar-identity { grid-column: 2 !important; grid-row: 1 !important; align-content: start !important; padding-right: 48px !important; overflow: visible !important; }
+        body.dancr-button-system .public-profile-shell .profile-titlebar-identity { grid-column: 2 !important; grid-row: 1 !important; align-content: start !important; padding-right: 84px !important; overflow: visible !important; }
         body.dancr-button-system .public-profile-shell .profile-header-metrics { grid-column: 2 !important; grid-row: 2 !important; width: 100% !important; align-self: stretch !important; }
-        body.dancr-button-system .public-profile-shell .profile-titlebar-controls { position: absolute !important; top: max(3px, env(safe-area-inset-top)) !important; right: 0 !important; width: 44px !important; }
+        body.dancr-button-system .public-profile-shell .profile-titlebar-controls { position: absolute !important; top: max(3px, env(safe-area-inset-top)) !important; right: 0 !important; width: 80px !important; }
         body.dancr-button-system .public-profile-shell .live-actions { grid-template-columns: 80px repeat(3, minmax(0, 1fr)) !important; }
       }
       @media (max-width: 340px) {
         body.dancr-button-system .public-profile-shell .profile-titlebar { grid-template-columns: 70px minmax(0, 1fr) !important; grid-template-rows: 44px 40px !important; min-height: 96px !important; column-gap: 0 !important; }
         body.dancr-button-system .public-profile-shell .profile-titlebar-avatar { width: 64px !important; height: 64px !important; }
-        body.dancr-button-system .public-profile-shell .profile-titlebar-identity { padding-right: 44px !important; }
+        body.dancr-button-system .public-profile-shell .profile-titlebar-identity { padding-right: 80px !important; }
         body.dancr-button-system .public-profile-shell .live-actions { grid-template-columns: 70px repeat(3, minmax(0, 1fr)) !important; }
       }
     `}</style>

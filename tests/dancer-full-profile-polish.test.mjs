@@ -176,7 +176,7 @@ test("profile actions have a clear hierarchy and preserve every real action", ()
   assert.match(liveApp, /const statusClass = isWorkingTonight\(profile, city\) \? "is-working-now" : "is-upcoming";/);
   assert.match(liveApp, /function dancerProfileDirectionsMarkup\(profile, options = \{\}\)[\s\S]*?if \(options\.preview \|\| !profile\?\.scheduled\) return "";/);
   assert.match(liveApp, /\.modal-actions\.is-no-live-shift \{[\s\S]*?grid-template-columns: repeat\(4, minmax\(0, 1fr\)\) !important;/);
-  assert.match(liveApp, /\.profile-modal-header-controls \{[\s\S]*?position: absolute !important;[\s\S]*?grid-template-columns: 36px/);
+  assert.match(liveApp, /\.profile-modal-header-controls \{[\s\S]*?position: absolute !important;[\s\S]*?grid-template-columns: 32px 36px/);
 });
 
 test("profile socials stay secondary, responsive, and absent when no links exist", () => {
@@ -330,7 +330,7 @@ test("mobile full profiles keep identity, analytics, and close control on one co
   );
   assert.match(
     compactMobileProfile,
-    /#profileBackdrop #profileModal \.profile-modal-header-controls \{[\s\S]*?position: absolute !important;[\s\S]*?top: max\(5px,[\s\S]*?right: 5px !important;[\s\S]*?grid-template-columns: 36px !important;/,
+    /#profileBackdrop #profileModal \.profile-modal-header-controls \{[\s\S]*?position: absolute !important;[\s\S]*?top: max\(5px,[\s\S]*?right: 5px !important;[\s\S]*?grid-template-columns: 32px 36px !important;/,
   );
   assert.match(
     compactMobileProfile,
@@ -354,7 +354,7 @@ test("mobile full profiles keep identity, analytics, and close control on one co
   );
   assert.match(
     prominentMobileHeader,
-    /\.profile-modal-header-metrics \{[\s\S]*?width: 100% !important;[\s\S]*?margin-left: 0 !important;[\s\S]*?transform: none !important;[\s\S]*?\.profile-modal-header-metrics \.profile-activity-metrics \{[\s\S]*?grid-template-columns: repeat\(3, minmax\(0, 1fr\)\) !important;[\s\S]*?column-gap: 0 !important;[\s\S]*?justify-content: stretch !important;[\s\S]*?\.profile-modal-header-metrics \.profile-activity-metrics dt \{[\s\S]*?overflow: visible !important;[\s\S]*?text-overflow: clip !important;[\s\S]*?\.profile-modal-name-row \{[\s\S]*?width: 100% !important;[\s\S]*?padding: 0 42px 0 0 !important;[\s\S]*?display: flex !important;[\s\S]*?\.profile-modal-name-row::before \{[\s\S]*?content: none !important;[\s\S]*?\.profile-modal-name-anchor \{[\s\S]*?position: static !important;[\s\S]*?display: inline-flex !important;/,
+    /\.profile-modal-header-metrics \{[\s\S]*?width: 100% !important;[\s\S]*?margin-left: 0 !important;[\s\S]*?transform: none !important;[\s\S]*?\.profile-modal-header-metrics \.profile-activity-metrics \{[\s\S]*?grid-template-columns: repeat\(3, minmax\(0, 1fr\)\) !important;[\s\S]*?column-gap: 0 !important;[\s\S]*?justify-content: stretch !important;[\s\S]*?\.profile-modal-header-metrics \.profile-activity-metrics dt \{[\s\S]*?overflow: visible !important;[\s\S]*?text-overflow: clip !important;[\s\S]*?\.profile-modal-name-row \{[\s\S]*?width: 100% !important;[\s\S]*?padding: 0 78px 0 0 !important;[\s\S]*?display: flex !important;[\s\S]*?\.profile-modal-name-row::before \{[\s\S]*?content: none !important;[\s\S]*?\.profile-modal-name-anchor \{[\s\S]*?position: static !important;[\s\S]*?display: inline-flex !important;/,
   );
   assert.match(
     prominentMobileHeader,

@@ -4298,9 +4298,11 @@ body.dancr-button-system #profileBackdrop .profile-activity-metrics dt {
     position: absolute !important;
     top: max(5px, calc(env(safe-area-inset-top, 0px) + 3px)) !important;
     right: 5px !important;
-    width: 36px !important;
+    width: 72px !important;
     display: grid !important;
-    grid-template-columns: 36px !important;
+    grid-template-columns: 32px 36px !important;
+    align-items: center !important;
+    gap: 4px !important;
     z-index: 4 !important;
   }
 
@@ -11191,8 +11193,10 @@ body.dancr-button-system > .app main.stack > section.stack
     position: absolute !important;
     top: max(5px, calc(env(safe-area-inset-top, 0px) + 3px)) !important;
     right: 5px !important;
-    width: 36px !important;
-    grid-template-columns: 36px !important;
+    width: 72px !important;
+    grid-template-columns: 32px 36px !important;
+    align-items: center !important;
+    gap: 4px !important;
   }
 
   body.dancr-button-system #profileBackdrop #profileModal #modalClose {
@@ -11257,8 +11261,8 @@ body.dancr-button-system > .app main.stack > section.stack
   }
 
   body.dancr-button-system #profileBackdrop #profileModal .profile-modal-header-controls {
-    width: 36px !important;
-    grid-template-columns: 36px !important;
+    width: 72px !important;
+    grid-template-columns: 32px 36px !important;
   }
 
   body.dancr-button-system #profileBackdrop #profileModal #modalClose {
@@ -11617,7 +11621,7 @@ body.dancr-button-system :is(
     max-width: none !important;
     min-width: 0 !important;
     margin: 0 !important;
-    padding: 0 42px 0 0 !important;
+    padding: 0 78px 0 0 !important;
     transform: none !important;
     display: flex !important;
     gap: 5px !important;
@@ -11657,7 +11661,7 @@ body.dancr-button-system :is(
     display: flex !important;
     align-items: center !important;
     gap: 5px !important;
-    padding-right: 42px !important;
+    padding-right: 78px !important;
     overflow: hidden !important;
   }
 

@@ -40,8 +40,39 @@ test("live profiles expose reports without adding a fifth primary action", () =>
     liveShell.indexOf("async function refreshProfileGoingState"),
   );
   assert.match(liveShell, /class="profile-header-report-toggle" id="reportBtn"[^>]*>[\s\S]*?M5 21V4[\s\S]*?<\/button>/);
+  assert.match(
+    liveShell,
+    /class="profile-modal-context">[\s\S]*?id="modalCity"[\s\S]*?<\/div>[\s\S]*?class="profile-modal-header-controls">[\s\S]*?id="reportBtn"[\s\S]*?id="modalClose"/,
+  );
+  assert.doesNotMatch(
+    liveShell.match(/class="profile-modal-context">[\s\S]*?<\/div>/)?.[0] || "",
+    /id="reportBtn"/,
+  );
+  assert.match(
+    liveShell,
+    /\.profile-header-report-toggle \{[\s\S]*?border: 1px solid transparent;[\s\S]*?background: transparent;[\s\S]*?\.profile-header-report-toggle svg \{ width: 13px;/,
+  );
   assert.doesNotMatch(actionMarkup, /id="reportBtn"|Report profile/);
   assert.match(liveShell, /prepareContentReportButton\([\s\S]*?"dancer_profile"/);
+});
+
+test("standalone profiles keep reporting beside close instead of beside the city", () => {
+  assert.match(
+    profilePage,
+    /className="profile-titlebar-context">[\s\S]*?profile-titlebar-city[\s\S]*?<\/div>[\s\S]*?className="profile-titlebar-controls">[\s\S]*?<DancerReportControl[\s\S]*?<ProfileCloseButton/,
+  );
+  assert.doesNotMatch(
+    profilePage.match(/className="profile-titlebar-context">[\s\S]*?<\/div>/)?.[0] || "",
+    /DancerReportControl/,
+  );
+  assert.match(
+    profilePage,
+    /\.profile-titlebar-controls \{[^}]*grid-template-columns: 32px 44px;[^}]*gap: 4px;/,
+  );
+  assert.match(
+    profilePage,
+    /\.profile-header-report-toggle \{[^}]*border: 1px solid transparent;[^}]*background: transparent;/,
+  );
 });
 
 test("live photo and video viewers reuse the scroll-video quick reason card", () => {

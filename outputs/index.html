@@ -36746,7 +36746,7 @@
           gap: 10px;
           min-height: 64px;
           margin-inline: -14px;
-          padding: max(8px, calc(env(safe-area-inset-top, 0px) + 6px)) 62px 8px 14px;
+          padding: max(8px, calc(env(safe-area-inset-top, 0px) + 6px)) 84px 8px 14px;
           border-bottom: 0;
           background:
             radial-gradient(circle at 16% 0%, rgba(126,234,255,.055), transparent 11rem),
@@ -36829,26 +36829,27 @@
           white-space: nowrap;
         }
         #profileBackdrop .profile-header-report-toggle {
-          width: 28px;
-          min-width: 28px;
-          height: 28px;
-          min-height: 28px;
+          width: 32px;
+          min-width: 32px;
+          height: 32px;
+          min-height: 32px;
           display: inline-grid;
           place-items: center;
           padding: 0;
-          border: 1px solid rgba(180,169,196,.22);
+          border: 1px solid transparent;
           border-radius: 50%;
-          color: #bdb4c8;
-          background: rgba(255,255,255,.035);
+          color: rgba(189,180,200,.58);
+          background: transparent;
+          box-shadow: none;
           font: inherit;
           cursor: pointer;
         }
-        #profileBackdrop .profile-header-report-toggle svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+        #profileBackdrop .profile-header-report-toggle svg { width: 13px; height: 13px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
         #profileBackdrop .profile-header-report-toggle:hover,
         #profileBackdrop .profile-header-report-toggle:focus-visible {
-          border-color: rgba(196,167,255,.42);
-          color: #fff;
-          background: rgba(124,58,237,.1);
+          border-color: rgba(180,169,196,.16);
+          color: #d7cfdf;
+          background: rgba(255,255,255,.04);
           outline: none;
         }
         #profileBackdrop .profile-modal-verified {
@@ -40595,9 +40596,11 @@
           position: absolute !important;
           top: max(5px, calc(env(safe-area-inset-top, 0px) + 3px)) !important;
           right: 5px !important;
-          width: 36px;
+          width: 72px;
           display: grid;
-          grid-template-columns: 36px;
+          grid-template-columns: 32px 36px;
+          align-items: center;
+          gap: 4px;
           z-index: 4;
         }
 
@@ -40657,7 +40660,7 @@
             gap: 0 !important;
             min-height: 66px !important;
             margin-inline: -12px !important;
-            padding: max(7px, calc(env(safe-area-inset-top, 0px) + 4px)) 46px 7px 10px !important;
+            padding: max(7px, calc(env(safe-area-inset-top, 0px) + 4px)) 82px 7px 10px !important;
           }
 
           #profileBackdrop #profileModal .profile-modal-person {
@@ -40675,7 +40678,7 @@
           }
 
           #profileBackdrop #profileModal .profile-modal-header-controls {
-            grid-template-columns: 36px;
+            grid-template-columns: 32px 36px;
           }
 
           #profileBackdrop #profileModal #modalClose {
@@ -40693,7 +40696,7 @@
             grid-template-columns: minmax(0, 1fr) !important;
             gap: 0 !important;
             min-height: 64px !important;
-            padding-right: 42px !important;
+            padding-right: 78px !important;
           }
 
           #profileBackdrop #profileModal .profile-modal-person {
@@ -40718,7 +40721,7 @@
           }
 
           #profileBackdrop #profileModal .profile-modal-header-controls {
-            grid-template-columns: 36px;
+            grid-template-columns: 32px 36px;
           }
 
           #profileBackdrop #profileModal #modalClose {
@@ -42280,7 +42283,6 @@
                 <div class="profile-modal-context">
                   <svg class="profile-modal-city-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s7-6.1 7-12A7 7 0 1 0 5 9c0 5.9 7 12 7 12Z"></path><circle cx="12" cy="9" r="2.4"></circle></svg>
                   <span class="pill" id="modalCity">Las Vegas</span>
-                  <button class="profile-header-report-toggle" id="reportBtn" type="button" aria-label="Report profile"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 21V4"></path><path d="M5 5h11l-1.8 3L16 11H5"></path></svg></button>
                 </div>
               </div>
               <div class="profile-modal-header-metrics" id="modalProfileMetrics"></div>
@@ -42288,6 +42290,7 @@
             </div>
           </div>
           <div class="profile-modal-header-controls">
+            <button class="profile-header-report-toggle" id="reportBtn" type="button" aria-label="Report profile"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 21V4"></path><path d="M5 5h11l-1.8 3L16 11H5"></path></svg></button>
             <button class="close-btn" id="modalClose" type="button" aria-label="Close profile">
               <svg class="icon" viewBox="0 0 24 24"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
             </button>

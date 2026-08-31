@@ -52,7 +52,7 @@ test("the public dancer profile keeps a compact identity that scrolls with the w
   assert.match(navigationActions, /className="public-profile-close"/);
   assert.match(profilePage, /\.profile-titlebar \{ position: relative; z-index: 10;/);
   assert.doesNotMatch(profilePage, /\.profile-titlebar \{ position: sticky;/);
-  assert.match(profilePage, /\.profile-titlebar \{[\s\S]*?min-height: 64px;[\s\S]*?grid-template-columns: minmax\(120px, \.95fr\) minmax\(150px, 1\.05fr\) 44px;[\s\S]*?gap: 6px;/);
+  assert.match(profilePage, /\.profile-titlebar \{[\s\S]*?min-height: 64px;[\s\S]*?grid-template-columns: minmax\(120px, \.95fr\) minmax\(150px, 1\.05fr\) 80px;[\s\S]*?gap: 6px;/);
   assert.match(profilePage, /\.profile-titlebar-avatar \{ width: 48px; height: 48px;/);
   assert.match(
     profilePage,
