@@ -27,7 +27,7 @@ type SavedState = {
   goingShiftIds: string[];
 };
 
-type AccountAction = "follow" | "notify";
+type AccountAction = "follow";
 
 type DancerFollowState = {
   followerCount: number;
@@ -109,14 +109,13 @@ export function DancerGoingCount() {
 function DancerProfileActionPreviewIcon({
   type,
 }: {
-  type: "bell" | "check" | "clock" | "personPlus" | "share";
+  type: "check" | "clock" | "personPlus" | "share";
 }) {
   return (
     <span aria-hidden="true" className="profile-action-icon-frame" data-profile-action-icon={type}>
       <svg className={`profile-action-preview-icon profile-action-preview-icon-${type}`} viewBox="0 0 24 24">
         {type === "personPlus" ? <><circle cx="8.5" cy="7.5" r="3.5" /><path d="M3 20a5.5 5.5 0 0 1 11 0M18 8.5v6M15 11.5h6" /></> : null}
         {type === "check" ? <path d="m5 12 4 4L19 6" /> : null}
-        {type === "bell" ? <><path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 7h18s-3 0-3-7Z" /><path d="M10 20a2 2 0 0 0 4 0" /></> : null}
         {type === "clock" ? <><circle cx="12" cy="12" r="8.5" /><path d="M12 7.5v5l3.2 2" /></> : null}
         {type === "share" ? <><circle cx="18" cy="5" r="3" /><circle cx="6" cy="12" r="3" /><circle cx="18" cy="19" r="3" /><path d="m8.6 10.7 6.8-4.4M8.6 13.3l6.8 4.4" /></> : null}
       </svg>
@@ -138,9 +137,6 @@ export function DancerProfileActionsPreview({ onShare }: { onShare?: () => void 
     <div className="live-actions is-no-live-shift dancer-profile-preview-actions" aria-label="Guest actions">
       <button className="profile-action-secondary profile-action-icon-control profile-action-preview-static" disabled type="button">
         <span className="profile-action-main"><DancerProfileActionPreviewIcon type="personPlus" /><span>Follow</span></span>
-      </button>
-      <button className="profile-action-secondary profile-action-icon-control profile-action-preview-static" disabled type="button">
-        <span className="profile-action-main"><DancerProfileActionPreviewIcon type="bell" /><span>Notify</span></span>
       </button>
       <button aria-disabled="true" className="profile-action-secondary profile-action-going profile-action-icon-control profile-action-unavailable profile-action-preview-static" disabled type="button">
         <span className="profile-action-main"><DancerProfileActionPreviewIcon type="clock" /><span>I’m Going</span></span>
@@ -416,7 +412,7 @@ export function DancerProfileActions({
     return false;
   }
 
-  async function updateFollow(notificationsEnabled = saved.notificationsEnabled) {
+  async function updateFollow() {
     if (!mountedRef.current || !savedLoaded || followInFlightRef.current) return;
     const controller = new AbortController();
     followAbortRef.current?.abort();
@@ -430,7 +426,7 @@ export function DancerProfileActions({
       const data = await postAction("/api/customer/follows", {
         dancerId,
         following: requestedFollowing,
-        notificationsEnabled: requestedFollowing && notificationsEnabled,
+        notificationsEnabled: requestedFollowing,
       }, "follow", controller.signal);
       if (!mountedRef.current || controller.signal.aborted) return;
       const following = typeof data.following === "boolean" ? data.following : requestedFollowing;
@@ -443,41 +439,6 @@ export function DancerProfileActions({
         following,
         notificationsEnabled: savedNotificationsEnabled,
       }));
-      setFollowerCount(confirmedFollowerCount);
-      setNotificationCount(confirmedNotificationCount);
-    } catch {
-      // postAction displays the production API error beside the controls.
-    } finally {
-      if (followAbortRef.current === controller) {
-        followAbortRef.current = null;
-        followInFlightRef.current = false;
-        if (mountedRef.current) setFollowSaving(false);
-      }
-    }
-  }
-
-  async function updateNotifications() {
-    if (!mountedRef.current || !savedLoaded || followInFlightRef.current) return;
-    const controller = new AbortController();
-    followAbortRef.current?.abort();
-    followAbortRef.current = controller;
-    followInFlightRef.current = true;
-    const requestedNotificationsEnabled = !saved.notificationsEnabled;
-    setFollowSaving(true);
-
-    try {
-      const data = await postAction("/api/customer/follows", {
-        dancerId,
-        following: true,
-        notificationsEnabled: requestedNotificationsEnabled,
-      }, "notify", controller.signal);
-      if (!mountedRef.current || controller.signal.aborted) return;
-      const following = typeof data.following === "boolean" ? data.following : true;
-      const notificationsEnabled = following && data.notificationsEnabled === true;
-      const confirmedFollowerCount = readConfirmedFollowerCount(data);
-      const confirmedNotificationCount = readConfirmedNotificationCount(data);
-
-      setSaved((current) => ({ ...current, following, notificationsEnabled }));
       setFollowerCount(confirmedFollowerCount);
       setNotificationCount(confirmedNotificationCount);
     } catch {
@@ -578,27 +539,13 @@ export function DancerProfileActions({
           className={`profile-action-secondary profile-action-icon-control${saved.following ? " is-selected" : ""}`}
           type="button"
           onClick={() => {
-            if (requireCustomerAccount("follow")) updateFollow(false);
+            if (requireCustomerAccount("follow")) updateFollow();
           }}
           disabled={!savedLoaded || followSaving}
         >
           <span className="profile-action-main">
-            <DancerProfileActionPreviewIcon type="personPlus" />
+            <DancerProfileActionPreviewIcon type={saved.following ? "check" : "personPlus"} />
             <span>{saved.following ? "Following" : "Follow"}</span>
-          </span>
-        </button>
-        <button
-          aria-pressed={saved.notificationsEnabled}
-          className={`profile-action-secondary profile-action-icon-control${saved.notificationsEnabled ? " is-selected" : ""}`}
-          disabled={!savedLoaded || followSaving}
-          onClick={() => {
-            if (requireCustomerAccount("notify")) updateNotifications();
-          }}
-          type="button"
-        >
-          <span className="profile-action-main">
-            <DancerProfileActionPreviewIcon type="bell" />
-            <span>{saved.notificationsEnabled ? "Alerts On" : "Notify"}</span>
           </span>
         </button>
         <button
@@ -647,7 +594,7 @@ export function DancerProfileActions({
             </button>
             <span>FREE GUEST ACCOUNT</span>
             <h2 id="profile-account-gate-title">Follow your favorites</h2>
-            <p id="profile-account-gate-message">{accountActionMessage(accountRequiredAction)}</p>
+            <p id="profile-account-gate-message">{accountActionMessage()}</p>
             <div>
               <Link href="/account?role=customer&mode=signup">Create free account</Link>
               <Link className="secondary" href="/account?role=customer">Already have an account? Sign in</Link>
@@ -693,7 +640,6 @@ function readConfirmedNotificationCount(data: { notificationCount?: unknown }) {
   return count;
 }
 
-function accountActionMessage(action: AccountAction) {
-  if (action === "notify") return "Create a free account to follow dancers and get updates.";
+function accountActionMessage() {
   return "Create a free account to follow dancers, save profiles, and get updates.";
 }

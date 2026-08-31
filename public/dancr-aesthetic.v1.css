@@ -4910,7 +4910,7 @@ body.dancr-button-system .public-profile-shell .profile-social-section::after {
 
 /* Guest actions read as one unboxed row. Their recognizable icons receive the
  * same circular glass as profile media controls. Going is the sole filled CTA;
- * selected Follow and Notify glyphs turn violet. */
+ * selected Follow uses a quieter violet glass confirmation. */
 body.dancr-button-system #profileBackdrop #profileModal .modal-actions .action-btn.profile-action-icon-control,
 body.dancr-button-system .public-profile-shell .live-actions > button.profile-action-secondary.profile-action-icon-control:not([aria-pressed="true"]),
 body.dancr-button-system .public-profile-shell .live-actions > button.profile-action-going.profile-action-icon-control:not([aria-pressed="true"]),
@@ -4925,7 +4925,7 @@ body.dancr-button-system .public-profile-shell .profile-action-share-slot .profi
   filter: none !important;
 }
 
-/* Full-profile engagement uses one unboxed four-column action row. Social
+/* Full-profile engagement uses one unboxed three-column action row. Social
  * destinations are the quiet first utility row inside the existing media
  * region; their 44px hit areas contain a 38px visible circle. */
 body.dancr-button-system #profileBackdrop #profileModal .modal-actions,
@@ -4933,7 +4933,7 @@ body.dancr-button-system .public-profile-shell .live-actions {
   width: min(100%, 760px) !important;
   max-width: 100% !important;
   box-sizing: border-box !important;
-  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
   justify-content: stretch !important;
   justify-self: stretch !important;
   align-self: stretch !important;
@@ -5068,14 +5068,26 @@ body.dancr-button-system .public-profile-shell .profile-action-going.profile-act
   background-color: var(--dancr-color-brand-primary) !important;
 }
 
-body.dancr-button-system #profileBackdrop #profileModal .modal-actions :is(
-    #followBtn.is-following,
-    #notifyBtn.is-following
-  ) .action-icon > svg,
+body.dancr-button-system #profileBackdrop #profileModal .modal-actions #followBtn.is-following .action-icon,
+body.dancr-button-system .public-profile-shell .live-actions .profile-action-icon-control.is-selected .profile-action-icon-frame {
+  border-color: rgba(196, 167, 255, 0.74) !important;
+  background-color: rgba(124, 58, 237, 0.24) !important;
+  background-image: linear-gradient(
+    155deg,
+    rgba(255, 255, 255, 0.2),
+    rgba(124, 58, 237, 0.08)
+  ) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.22),
+    0 0 0 1px rgba(167, 139, 250, 0.16),
+    0 0 18px rgba(124, 58, 237, 0.22) !important;
+}
+
+body.dancr-button-system #profileBackdrop #profileModal .modal-actions #followBtn.is-following .action-icon > svg,
 body.dancr-button-system .public-profile-shell .live-actions :is(
     .profile-action-icon-control.is-selected
   ) .profile-action-preview-icon {
-  color: var(--dancr-color-avatar-ring-violet) !important;
+  color: #d8c9ff !important;
   filter: none !important;
 }
 
@@ -11550,7 +11562,7 @@ body.dancr-button-system :is(
   }
 
   body.dancr-button-system #profileBackdrop #profileModal .modal-actions {
-    grid-template-columns: 80px repeat(3, minmax(0, 1fr)) !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
     column-gap: 0 !important;
     padding: 4px 0 0 !important;
   }
@@ -11689,7 +11701,7 @@ body.dancr-button-system :is(
   }
 
   body.dancr-button-system #profileBackdrop #profileModal .modal-actions {
-    grid-template-columns: 70px repeat(3, minmax(0, 1fr)) !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
   }
 }
 

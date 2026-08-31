@@ -23,7 +23,7 @@ test("the public follower count is shared with the live follow controls", () => 
 
 test("successful follow and unfollow responses update the visible follower count immediately", () => {
   const followHandler =
-    actionsSource.match(/async function updateFollow[\s\S]*?\r?\n  }\r?\n\r?\n  async function updateNotifications/)?.[0] || "";
+    actionsSource.match(/async function updateFollow[\s\S]*?\r?\n  }\r?\n\r?\n  async function updateGoing/)?.[0] || "";
 
   assert.match(followHandler, /const data = await postAction\("\/api\/customer\/follows"/);
   assert.match(followHandler, /const following = typeof data\.following === "boolean" \? data\.following : requestedFollowing/);

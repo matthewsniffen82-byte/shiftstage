@@ -96,7 +96,7 @@ test("full dancer profiles use a compact identity and honest public activity hea
   );
   assert.match(
     profilePage,
-    /The close control occupies only the identity band[\s\S]*?\.profile-titlebar \{[\s\S]*?grid-template-columns: 80px minmax\(0, 1fr\) !important;[\s\S]*?grid-template-rows: 46px 42px !important;[\s\S]*?column-gap: 0 !important;[\s\S]*?\.profile-titlebar-person \{ display: contents !important; \}[\s\S]*?\.profile-titlebar-avatar \{[\s\S]*?grid-row: 1 \/ 3 !important;[\s\S]*?width: 72px !important;[\s\S]*?align-self: start !important;[\s\S]*?justify-self: center !important;[\s\S]*?\.profile-header-metrics \{[\s\S]*?grid-column: 2 !important;[\s\S]*?grid-row: 2 !important;[\s\S]*?\.live-actions \{ grid-template-columns: 80px repeat\(3, minmax\(0, 1fr\)\) !important;/,
+    /The close control occupies only the identity band[\s\S]*?\.profile-titlebar \{[\s\S]*?grid-template-columns: 80px minmax\(0, 1fr\) !important;[\s\S]*?grid-template-rows: 46px 42px !important;[\s\S]*?column-gap: 0 !important;[\s\S]*?\.profile-titlebar-person \{ display: contents !important; \}[\s\S]*?\.profile-titlebar-avatar \{[\s\S]*?grid-row: 1 \/ 3 !important;[\s\S]*?width: 72px !important;[\s\S]*?align-self: start !important;[\s\S]*?justify-self: center !important;[\s\S]*?\.profile-header-metrics \{[\s\S]*?grid-column: 2 !important;[\s\S]*?grid-row: 2 !important;[\s\S]*?\.live-actions \{ grid-template-columns: repeat\(3, minmax\(0, 1fr\)\) !important;/,
   );
   assert.match(
     aesthetic,
@@ -105,15 +105,18 @@ test("full dancer profiles use a compact identity and honest public activity hea
 });
 
 test("profile actions keep profile controls separate from Tonight travel actions", () => {
+  const liveActionsMarkup = liveApp.match(
+    /function liveProfileModalActionsMarkup\(profile, status\) \{[\s\S]*?async function refreshProfileGoingState/,
+  )?.[0] || "";
   assert.match(profileActions, /\{saved\.following \? "Following" : "Follow"\}/);
-  assert.match(profileActions, /\{saved\.notificationsEnabled \? "Alerts On" : "Notify"\}/);
+  assert.match(profileActions, /notificationsEnabled: requestedFollowing/);
   assert.match(profileActions, /"I’m Going"/);
   assert.doesNotMatch(profileActions, /rideControl|directionsControl/);
   assert.match(profileActions, /profile-action-share-slot/);
-  assert.match(profileActions, /DancerProfileActionsPreview[\s\S]*?Follow[\s\S]*?Notify[\s\S]*?I’m Going[\s\S]*?Share[\s\S]*?Report profile/);
+  assert.match(profileActions, /DancerProfileActionsPreview[\s\S]*?Follow[\s\S]*?I’m Going[\s\S]*?Share[\s\S]*?Report profile/);
+  assert.doesNotMatch(profileActions, /<span>Notify<\/span>|"Alerts On"/);
   assert.doesNotMatch(profileActions.match(/function DancerProfileActionsPreview[\s\S]*?export function DancerNotificationCount/)?.[0] || "", />Ride<|>Directions</);
   assert.match(profileActions, /profile-action-icon-control[\s\S]*?DancerProfileActionPreviewIcon type="personPlus"[\s\S]*?<span>Follow<\/span>/);
-  assert.match(profileActions, /profile-action-icon-control[\s\S]*?DancerProfileActionPreviewIcon type="bell"[\s\S]*?<span>Notify<\/span>/);
   assert.match(profileActions, /profile-action-going profile-action-icon-control/);
   assert.match(profileActions, /className="profile-action-icon-frame" data-profile-action-icon=\{type\}/);
   assert.match(profilePage, /body\.dancr-button-system \.public-profile-shell \.live-actions > button\.profile-action-icon-control,[\s\S]*?profile-action-share-slot \.profile-share > button\.profile-action-icon-control \{[\s\S]*?border: 0;[\s\S]*?background: transparent;[\s\S]*?box-shadow: none;/);
@@ -127,19 +130,18 @@ test("profile actions keep profile controls separate from Tonight travel actions
   assert.match(liveApp, /\.action-icon-clock > svg \{[\s\S]*?--profile-icon-offset-x: -\.5px;/);
   assert.match(profilePage, /data-profile-action-icon="personPlus"[\s\S]*?width: 28px;[\s\S]*?data-profile-action-icon="bell"[\s\S]*?width: 26px;/);
   assert.match(profilePage, /button:not\(\.profile-action-icon-control\):not\(\.profile-report-action\)[\s\S]*?grid-template-rows: 18px 9px;/);
-  assert.match(profilePage, /\.live-actions \{[\s\S]*?grid-template-columns: repeat\(4, minmax\(0, 1fr\)\);[\s\S]*?column-gap: 0;[\s\S]*?row-gap: 2px;[\s\S]*?margin: 0 auto 12px;[\s\S]*?padding: 4px 0 0;[\s\S]*?border: 0;[\s\S]*?background: transparent;/);
+  assert.match(profilePage, /\.live-actions \{[\s\S]*?grid-template-columns: repeat\(3, minmax\(0, 1fr\)\);[\s\S]*?column-gap: 0;[\s\S]*?row-gap: 2px;[\s\S]*?margin: 0 auto 12px;[\s\S]*?padding: 4px 0 0;[\s\S]*?border: 0;[\s\S]*?background: transparent;/);
   assert.match(liveApp, /#profileBackdrop \.modal-actions \.profile-action-icon-control \.action-icon \{[\s\S]*?width: 24px !important;[\s\S]*?height: 24px !important;[\s\S]*?border: 0 !important;[\s\S]*?background: transparent !important;/);
   assert.match(liveApp, /action-icon action-icon-\$\{resolvedType\}/);
   assert.match(liveApp, /data-action-icon="\$\{resolvedType\}"[\s\S]*?aria-hidden="true"/);
   assert.match(liveApp, /action-btn follow-primary profile-action-icon-control/);
-  assert.match(liveApp, /action-btn secondary profile-action-icon-control/);
+  assert.match(liveApp, /action-btn secondary profile-share-action profile-action-icon-control/);
   assert.match(liveApp, /going-btn profile-action-icon-control/);
   assert.doesNotMatch(profileActions, />Schedule<|>More</);
-  assert.match(profileActions, /DancerProfileActionPreviewIcon[\s\S]*?type: "bell" \| "check" \| "clock" \| "personPlus" \| "share"/);
+  assert.match(profileActions, /DancerProfileActionPreviewIcon[\s\S]*?type: "check" \| "clock" \| "personPlus" \| "share"/);
   assert.match(profileActions, /type === "personPlus"[\s\S]*?<circle cx="8\.5" cy="7\.5" r="3\.5" \/>[\s\S]*?M18 8\.5v6M15 11\.5h6/);
   assert.match(profileActions, /DancerProfileActionPreviewIcon type="personPlus" \/>[\s\S]*?<span>Follow<\/span>/);
-  assert.match(profileActions, /DancerProfileActionPreviewIcon type="personPlus" \/>/);
-  assert.match(profileActions, /DancerProfileActionPreviewIcon type="bell" \/>[\s\S]*?saved\.notificationsEnabled \? "Alerts On" : "Notify"/);
+  assert.match(profileActions, /DancerProfileActionPreviewIcon type=\{saved\.following \? "check" : "personPlus"\} \/>/);
   assert.doesNotMatch(profileActions, /DancerProfileActionPreviewIcon type="heart"/);
   assert.match(profileDirections, /dancerIds: \[dancerId\]/);
   assert.match(profileDirections, /source: "dancer_profile"/);
@@ -151,8 +153,8 @@ test("profile actions keep profile controls separate from Tonight travel actions
   assert.match(profileActions, /readConfirmedNotificationCount/);
   assert.match(liveApp, /profileActionButtonMarkup\("share", "Share"\)/);
   assert.match(liveApp, /personPlus: '<svg[\s\S]*?M18 8\.5v6M15 11\.5h6/);
-  assert.match(liveApp, /id="followBtn"[\s\S]*?aria-pressed="\$\{isFollowed\}"[\s\S]*?profileActionButtonMarkup\("personPlus", isFollowed \? "Following" : "Follow"\)/);
-  assert.match(liveApp, /id="notifyBtn"[\s\S]*?aria-pressed="\$\{isNotified\}"[\s\S]*?profileActionButtonMarkup\("bell", isNotified \? "Alerts On" : "Notify"\)/);
+  assert.match(liveActionsMarkup, /id="followBtn"[\s\S]*?aria-pressed="\$\{isFollowed\}"[\s\S]*?profileActionButtonMarkup\(isFollowed \? "check" : "personPlus", isFollowed \? "Following" : "Follow"\)/);
+  assert.doesNotMatch(liveActionsMarkup, /id="notifyBtn"|"Alerts On"|"Notify"/);
   assert.match(liveApp, /data-profile-share-menu="\$\{profile\.name\}"/);
   assert.doesNotMatch(liveApp, /data-show-profile-share-qr/);
   assert.match(liveApp, /Club Deals redeem only when you tap your phone at the club cashier/);
@@ -326,7 +328,7 @@ test("live dancer essentials stay compact above media and clear the mobile dock"
   );
   assert.match(
     liveApp,
-    /Keep profile-level actions separate from the venue travel controls[\s\S]*?#profileBackdrop \.modal-actions \{[\s\S]*?grid-template-columns: repeat\(4, minmax\(0, 1fr\)\) !important;[\s\S]*?\.modal-actions\.is-no-live-shift \{[\s\S]*?grid-template-columns: repeat\(4, minmax\(0, 1fr\)\) !important;/,
+    /Keep profile-level actions separate from the venue travel controls[\s\S]*?#profileBackdrop \.modal-actions \{[\s\S]*?grid-template-columns: repeat\(3, minmax\(0, 1fr\)\) !important;[\s\S]*?\.modal-actions\.is-no-live-shift \{[\s\S]*?grid-template-columns: repeat\(3, minmax\(0, 1fr\)\) !important;/,
   );
   assert.match(
     liveApp,

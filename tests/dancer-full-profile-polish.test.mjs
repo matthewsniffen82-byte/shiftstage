@@ -119,17 +119,14 @@ test("profile actions have a clear hierarchy and preserve every real action", ()
     /function liveProfileModalActionsMarkup\(profile, status\) \{[\s\S]*?\n    \}/,
   )?.[0] || "";
   const followIndex = liveActionsMarkup.indexOf('id="followBtn"');
-  const notifyIndex = liveActionsMarkup.indexOf('id="notifyBtn"');
   const goingIndex = liveActionsMarkup.indexOf('${goingButton}');
   const shareIndex = liveActionsMarkup.indexOf('class="action-btn secondary profile-share-action profile-action-icon-control"');
-  assert.ok(followIndex > -1 && notifyIndex > followIndex);
-  assert.ok(goingIndex > notifyIndex && shareIndex > goingIndex);
+  assert.ok(followIndex > -1 && goingIndex > followIndex && shareIndex > goingIndex);
   assert.doesNotMatch(liveActionsMarkup, /profile-report-action|Report profile/);
   assert.match(
     liveApp,
     /class="action-btn follow-primary[\s\S]*?id="followBtn"/,
   );
-  assert.match(liveApp, /id="notifyBtn"/);
   assert.match(liveApp, /id="goingBtn"/);
   assert.match(
     liveApp,
@@ -140,7 +137,8 @@ test("profile actions have a clear hierarchy and preserve every real action", ()
   assert.doesNotMatch(liveApp, /profileReportButton\.textContent\s*=\s*"Report"/);
   assert.doesNotMatch(liveApp, /id="profileActionOverflowToggle"|id="profileActionOverflowMenu"/);
   assert.doesNotMatch(liveActionsMarkup, /profile-schedule-action|profile-action-overflow|>Schedule<|>More</);
-  assert.match(liveActionsMarkup, /id="notifyBtn"[\s\S]*?\$\{goingButton\}[\s\S]*?profile-share-action/);
+  assert.doesNotMatch(liveActionsMarkup, /id="notifyBtn"|"Alerts On"|"Notify"/);
+  assert.match(liveActionsMarkup, /id="followBtn"[\s\S]*?\$\{goingButton\}[\s\S]*?profile-share-action/);
   assert.doesNotMatch(liveActionsMarkup, /rideAction|directionsAction|dancerProfileUberRideMarkup|dancerProfileDirectionsMarkup/);
   assert.doesNotMatch(
     liveActionsMarkup.match(/<button class="action-btn secondary profile-share-action profile-action-icon-control"[^>]*>/)?.[0] || "",
@@ -148,11 +146,11 @@ test("profile actions have a clear hierarchy and preserve every real action", ()
   );
   assert.match(
     liveApp,
-    /\(actionButton\.id === "followBtn" \|\| actionButton\.id === "notifyBtn"\)[\s\S]*?!requireCustomerAccountForProfileAction\(actionButton\)/,
+    /actionButton\.id === "followBtn" &&[\s\S]*?!requireCustomerAccountForProfileAction\(actionButton\)/,
   );
   assert.match(
     liveApp,
-    /Keep profile-level actions separate from the venue travel controls[\s\S]*?#profileBackdrop \.modal-actions \{[\s\S]*?grid-template-columns: repeat\(4, minmax\(0, 1fr\)\) !important;/,
+    /Keep profile-level actions separate from the venue travel controls[\s\S]*?#profileBackdrop \.modal-actions \{[\s\S]*?grid-template-columns: repeat\(3, minmax\(0, 1fr\)\) !important;/,
   );
   assert.match(
     liveApp,
@@ -175,13 +173,13 @@ test("profile actions have a clear hierarchy and preserve every real action", ()
   assert.match(liveApp, /function dancerProfileUberRideMarkup\(profile, options = \{\}\)[\s\S]*?if \(options\.preview \|\| !profile\?\.scheduled\) return "";/);
   assert.match(liveApp, /const statusClass = isWorkingTonight\(profile, city\) \? "is-working-now" : "is-upcoming";/);
   assert.match(liveApp, /function dancerProfileDirectionsMarkup\(profile, options = \{\}\)[\s\S]*?if \(options\.preview \|\| !profile\?\.scheduled\) return "";/);
-  assert.match(liveApp, /\.modal-actions\.is-no-live-shift \{[\s\S]*?grid-template-columns: repeat\(4, minmax\(0, 1fr\)\) !important;/);
+  assert.match(liveApp, /\.modal-actions\.is-no-live-shift \{[\s\S]*?grid-template-columns: repeat\(3, minmax\(0, 1fr\)\) !important;/);
   assert.match(liveApp, /\.profile-modal-header-controls \{[\s\S]*?position: absolute !important;[\s\S]*?grid-template-columns: 32px 36px/);
 });
 
 test("profile socials stay secondary, responsive, and absent when no links exist", () => {
   const compactProfileBlock = aesthetic.match(
-    /Full-profile engagement uses one unboxed four-column action row[\s\S]*?Production TV-card branding/,
+    /Full-profile engagement uses one unboxed three-column action row[\s\S]*?Production TV-card branding/,
   )?.[0] || "";
 
   assert.match(
@@ -263,11 +261,11 @@ test("profile actions use neutral glass while available Going is the sole filled
   );
   assert.match(
     guestActionsBlock,
-    /#profileBackdrop #profileModal \.modal-actions,[\s\S]*?\.public-profile-shell \.live-actions \{[\s\S]*?width: min\(100%, 760px\) !important;[\s\S]*?grid-template-columns: repeat\(4, minmax\(0, 1fr\)\) !important;[\s\S]*?justify-content: stretch !important;[\s\S]*?justify-self: stretch !important;[\s\S]*?column-gap: 0 !important;[\s\S]*?margin: 0 auto 12px !important;[\s\S]*?padding: 4px 0 0 !important;/,
+    /#profileBackdrop #profileModal \.modal-actions,[\s\S]*?\.public-profile-shell \.live-actions \{[\s\S]*?width: min\(100%, 760px\) !important;[\s\S]*?grid-template-columns: repeat\(3, minmax\(0, 1fr\)\) !important;[\s\S]*?justify-content: stretch !important;[\s\S]*?justify-self: stretch !important;[\s\S]*?column-gap: 0 !important;[\s\S]*?margin: 0 auto 12px !important;[\s\S]*?padding: 4px 0 0 !important;/,
   );
   assert.match(
     aesthetic,
-    /Give the mobile dancer identity a stronger portrait hierarchy[\s\S]*?#profileBackdrop #profileModal \.profile-modal-summary \.modal-identity-stack \{[\s\S]*?height: 88px !important;[\s\S]*?grid-template-rows: 40px 42px !important;[\s\S]*?align-content: start !important;[\s\S]*?gap: 6px !important;[\s\S]*?#profileBackdrop #profileModal \.modal-actions \{[\s\S]*?grid-template-columns: 80px repeat\(3, minmax\(0, 1fr\)\) !important;[\s\S]*?column-gap: 0 !important;[\s\S]*?padding: 4px 0 0 !important;/,
+    /Give the mobile dancer identity a stronger portrait hierarchy[\s\S]*?#profileBackdrop #profileModal \.profile-modal-summary \.modal-identity-stack \{[\s\S]*?height: 88px !important;[\s\S]*?grid-template-rows: 40px 42px !important;[\s\S]*?align-content: start !important;[\s\S]*?gap: 6px !important;[\s\S]*?#profileBackdrop #profileModal \.modal-actions \{[\s\S]*?grid-template-columns: repeat\(3, minmax\(0, 1fr\)\) !important;[\s\S]*?column-gap: 0 !important;[\s\S]*?padding: 4px 0 0 !important;/,
   );
   assert.doesNotMatch(
     aesthetic,
@@ -275,7 +273,7 @@ test("profile actions use neutral glass while available Going is the sole filled
   );
   assert.match(
     aesthetic,
-    /Full-profile engagement uses one unboxed four-column action row[\s\S]*?\.public-profile-shell \.live-actions \{[\s\S]*?border: 0 !important;[\s\S]*?border-radius: 0 !important;[\s\S]*?background: transparent !important;[\s\S]*?box-shadow: none !important;/,
+    /Full-profile engagement uses one unboxed three-column action row[\s\S]*?\.public-profile-shell \.live-actions \{[\s\S]*?border: 0 !important;[\s\S]*?border-radius: 0 !important;[\s\S]*?background: transparent !important;[\s\S]*?box-shadow: none !important;/,
   );
   assert.match(
     guestActionsBlock,
@@ -287,7 +285,7 @@ test("profile actions use neutral glass while available Going is the sole filled
   );
   assert.match(
     guestActionsBlock,
-    /#followBtn\.is-following,[\s\S]*?#notifyBtn\.is-following[\s\S]*?\.action-icon > svg,[\s\S]*?\.profile-action-icon-control\.is-selected[\s\S]*?\.profile-action-preview-icon \{[\s\S]*?color: var\(--dancr-color-avatar-ring-violet\) !important;[\s\S]*?filter: none !important;/,
+    /#followBtn\.is-following \.action-icon,[\s\S]*?\.profile-action-icon-control\.is-selected \.profile-action-icon-frame \{[\s\S]*?border-color: rgba\(196, 167, 255, 0\.74\) !important;[\s\S]*?background-color: rgba\(124, 58, 237, 0\.24\) !important;[\s\S]*?0 0 18px rgba\(124, 58, 237, 0\.22\) !important;[\s\S]*?#followBtn\.is-following \.action-icon > svg,[\s\S]*?\.profile-action-preview-icon \{[\s\S]*?color: #d8c9ff !important;[\s\S]*?filter: none !important;/,
   );
   assert.match(
     guestActionsBlock,
@@ -497,7 +495,7 @@ test("profile overlay mobile geometry is shared by Android and iPhone", () => {
   );
   assert.match(
     liveApp,
-    /@media \(max-width: 520px\) \{[\s\S]*?#profileBackdrop \.modal-actions \{\s*grid-template-columns: repeat\(4, minmax\(0, 1fr\)\) !important;/,
+    /@media \(max-width: 520px\) \{[\s\S]*?#profileBackdrop \.modal-actions \{\s*grid-template-columns: repeat\(3, minmax\(0, 1fr\)\) !important;/,
   );
   assert.match(
     liveApp,

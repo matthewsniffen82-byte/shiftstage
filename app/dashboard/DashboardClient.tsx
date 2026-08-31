@@ -3658,7 +3658,7 @@ function DancerProfilePreview({
                     <div className="profile-section-heading">
                       <div><span className="eyebrow">Tonight</span><h2 id="dancer-profile-builder-schedule-heading">No shift posted</h2></div>
                     </div>
-                    <p>This dancer has not posted an upcoming shift yet. Follow or turn on notifications to see the next update.</p>
+                    <p>This dancer has not posted an upcoming shift yet. Follow to get the next update.</p>
                   </div>
                   <div className="profile-tonight-deal" aria-label="Club Deal status">
                     <VenueQrUnavailable availability="not-available-now" venueName={previewCity} />
@@ -8993,7 +8993,7 @@ function DashboardStyles() {
       .dancer-profile-preview-overlay .venue-qr-placeholder-copy { display:grid; gap:2px; text-align:center; }
       .dancer-profile-preview-overlay .venue-qr-placeholder-copy strong { color:rgba(203,196,214,.7); font-size:12px; font-weight:950; line-height:1.08; }
       .dancer-profile-preview-overlay .venue-qr-placeholder-copy small { color:rgba(203,196,214,.64); font-size:9px; font-weight:850; line-height:1.12; }
-      .dancer-profile-preview-overlay .live-actions { position:relative; display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); column-gap:4px; row-gap:0; padding:3px 0 0; }
+      .dancer-profile-preview-overlay .live-actions { position:relative; display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); column-gap:4px; row-gap:0; padding:3px 0 0; }
       .dancer-profile-preview-overlay .live-actions > button, .dancer-profile-preview-overlay .profile-action-share-slot .profile-share button { width:100%; min-height:48px; display:inline-flex; align-items:center; justify-content:center; padding:7px 10px; border:1px solid rgba(148,229,255,.24); border-radius:12px; color:#fff; background:rgba(148,229,255,.075); cursor:pointer; font-size:12px; font-weight:900; text-align:center; }
       .dancer-profile-preview-overlay .live-actions > button:disabled { opacity:.66; cursor:default; }
       .dancer-profile-preview-overlay .live-actions .profile-action-going { flex-direction:column; gap:2px; }

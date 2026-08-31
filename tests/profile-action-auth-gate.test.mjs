@@ -26,11 +26,12 @@ test("account-only live modal actions check for a customer profile while Going a
     'const modalCloseButton = document.getElementById("modalClose")',
   );
 
-  assert.match(handler, /#followBtn, #notifyBtn, #goingBtn, #reportBtn/);
+  assert.match(handler, /#followBtn, #goingBtn, #reportBtn/);
   assert.match(
     handler,
-    /\(actionButton\.id === "followBtn" \|\| actionButton\.id === "notifyBtn"\) &&\s+!requireCustomerAccountForProfileAction\(actionButton\)/,
+    /actionButton\.id === "followBtn" &&\s+!requireCustomerAccountForProfileAction\(actionButton\)/,
   );
+  assert.doesNotMatch(handler, /#notifyBtn|actionButton\.id === "notifyBtn"/);
   assert.ok(
     handler.indexOf("requireCustomerAccountForProfileAction(actionButton)") <
       handler.indexOf('if (actionButton.id === "followBtn")'),
@@ -203,10 +204,8 @@ test("guest account prompts use a compact benefit-led hierarchy without duplicat
     homeSource,
     /dataset\?\.accountAction === "venue-follow"[\s\S]*?Create a free account to save clubs, follow favorites, and get updates\./,
   );
-  assert.match(
-    actionsSource,
-    /action === "notify"[\s\S]*?Create a free account to follow dancers and get updates\./,
-  );
+  assert.match(actionsSource, /type AccountAction = "follow";/);
+  assert.doesNotMatch(actionsSource, /action === "notify"|requireCustomerAccount\("notify"\)/);
   assert.match(
     homeSource,
     /\.account-required-sheet \{[\s\S]*?gap: 10px;[\s\S]*?padding: 18px;/,
@@ -256,12 +255,8 @@ test("public profiles keep Going visible and enable it for current or upcoming p
   assert.match(actionsSource, /shifts\.find\(\(shift\) => shift\.isActive\) \|\| shifts\[0\] \|\| null/);
   assert.match(actionsSource, /<button[\s\S]*?profile-action-going[\s\S]*?\{isGoing \? "Going" : "I’m Going"\}/);
   assert.doesNotMatch(actionsSource, /<small className="profile-action-requirement">No shift posted<\/small>/);
-  for (const action of ["follow", "notify"]) {
-    assert.match(
-      actionsSource,
-      new RegExp(`requireCustomerAccount\\("${action}"\\)`),
-    );
-  }
+  assert.match(actionsSource, /requireCustomerAccount\("follow"\)/);
+  assert.doesNotMatch(actionsSource, /requireCustomerAccount\("notify"\)/);
   assert.doesNotMatch(actionsSource, /requireCustomerAccount\("report"\)/);
   assert.doesNotMatch(actionsSource, /requireCustomerAccount\("going"\)/);
   assert.match(actionsSource, /actionShift && updateGoing\(actionShift\.id\)/);

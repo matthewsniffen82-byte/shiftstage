@@ -187,11 +187,10 @@ test("profile actions keep customer and safety controls visible while Tonight ow
   assert.doesNotMatch(profileActions, /Sign in required/);
   assert.match(profileActions, /aria-pressed=\{actionShift \? isGoing : undefined\}/);
   const followButtonIndex = profileActions.indexOf('if (requireCustomerAccount("follow"))');
-  const notifyIndex = profileActions.indexOf('if (requireCustomerAccount("notify"))');
   const goingIndex = profileActions.indexOf('className={`${actionShift ? "profile-action-available" : "profile-action-secondary"} profile-action-going');
   const shareIndex = profileActions.indexOf('{shareControl ?');
-  assert.ok(followButtonIndex > -1 && notifyIndex > followButtonIndex);
-  assert.ok(goingIndex > notifyIndex && shareIndex > goingIndex);
+  assert.ok(followButtonIndex > -1 && goingIndex > followButtonIndex && shareIndex > goingIndex);
+  assert.doesNotMatch(profileActions, /requireCustomerAccount\("notify"\)|<span>Notify<\/span>|"Alerts On"/);
   assert.doesNotMatch(profileActions, /rideControl|directionsControl|Working Now only|Venue required/);
   assert.match(profilePage, /profile-tonight-travel-actions[\s\S]*?<DancerDirectionsButton[\s\S]*?<UberRideButton/);
   assert.doesNotMatch(profileActions, /profile-action-schedule|>Schedule</);
@@ -223,7 +222,7 @@ test("profile actions keep customer and safety controls visible while Tonight ow
   assert.doesNotMatch(profileActions, /<small className="profile-action-requirement">No shift posted<\/small>/);
   assert.match(profilePage, /className="profile-shift-card profile-schedule-empty is-empty" aria-label="Schedule status"[\s\S]*?className="profile-empty-state">No shift posted<[\s\S]*?className="profile-empty-copy">[\s\S]*?Follow \{profile\.stageName\} for updates/);
   assert.doesNotMatch(profilePage, /profile-tonight-travel-actions is-no-schedule/);
-  assert.match(profilePage, /\.live-actions\.is-no-live-shift \{ grid-template-columns: repeat\(4, minmax\(0, 1fr\)\); \}/);
+  assert.match(profilePage, /\.live-actions\.is-no-live-shift \{ grid-template-columns: repeat\(3, minmax\(0, 1fr\)\); \}/);
 });
 
 test("reports are bounded, validated, attributable when possible, and logged", () => {

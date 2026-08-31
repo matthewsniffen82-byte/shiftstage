@@ -451,10 +451,11 @@ test("approved dancers edit their full guest view from inside Profile & media", 
   assert.match(dashboard, /import \{ DancerProfileActionsPreview \} from "@\/app\/dancers\/\[slug\]\/DancerProfileActions"/);
   assert.match(dashboard, /className="profile-tonight-card dancer-profile-builder-tonight"/);
   assert.match(dashboard, /className="profile-shift-card profile-schedule-section is-empty"/);
-  assert.match(dashboard, /This dancer has not posted an upcoming shift yet\. Follow or turn on notifications to see the next update\./);
+  assert.match(dashboard, /This dancer has not posted an upcoming shift yet\. Follow to get the next update\./);
   assert.match(dashboard, /<VenueQrUnavailable availability="not-available-now" venueName=\{previewCity\} \/>/);
   assert.match(dashboard, /className="profile-tonight-deal" aria-label="Club Deal status"/);
   assert.match(dashboard, /<DancerProfileActionsPreview onShare=/);
+  assert.match(dashboard, /\.dancer-profile-preview-overlay \.live-actions \{[^}]*grid-template-columns:repeat\(3,minmax\(0,1fr\)\)/);
   assert.match(dashboard, /className="profile-overview"/);
   assert.match(dashboard, /className="profile-metrics"/);
   assert.doesNotMatch(dashboard, /dancer-profile-builder-(requirements|static-card|deal|guest-actions|metrics)/);

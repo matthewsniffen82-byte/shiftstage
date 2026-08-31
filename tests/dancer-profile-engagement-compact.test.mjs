@@ -12,7 +12,7 @@ const [liveApp, aesthetic, profilePage, profileActions, socialLinks, profileMedi
 ]);
 
 const compactLayout = aesthetic.match(
-  /\/\* Full-profile engagement uses one unboxed four-column action row\.[\s\S]*?(?=\/\* Production TV-card branding)/,
+  /\/\* Full-profile engagement uses one unboxed three-column action row\.[\s\S]*?(?=\/\* Production TV-card branding)/,
 )?.[0] || "";
 
 const socialFunctionSource = liveApp.match(
@@ -75,7 +75,7 @@ test("one through the maximum supported social count renders only real links in 
   assert.match(compactLayout, /\.profile-media-socials \.social-list a svg \{[\s\S]*?width: 19px !important;[\s\S]*?height: 19px !important;/);
 });
 
-test("all schedule states share the same compact header, four actions, status, and unified media order", () => {
+test("all schedule states share the same compact header, three actions, status, and unified media order", () => {
   const liveGrid = liveApp.match(
     /function profileModalGridMarkup\(profile, options = \{\}\) \{[\s\S]*?(?=\n    function profileActionButtonMarkup)/,
   )?.[0] || "";
@@ -93,7 +93,8 @@ test("all schedule states share the same compact header, four actions, status, a
   assert.match(liveApp, /modalMediaSocials\.innerHTML = liveSocialMarkup;[\s\S]*?modalMediaSocials\.hidden = !liveSocialMarkup;/);
   assert.doesNotMatch(liveGrid, /profileActivityMetricsMarkup/);
   assert.match(liveApp, /modalProfileMetrics\.innerHTML = profileActivityMetricsMarkup\(profile, city\)/);
-  assert.match(liveActions, /Follow[\s\S]*?Notify[\s\S]*?\$\{goingButton\}[\s\S]*?Share/);
+  assert.match(liveActions, /Follow[\s\S]*?\$\{goingButton\}[\s\S]*?Share/);
+  assert.doesNotMatch(liveActions, /id="notifyBtn"|"Alerts On"|"Notify"/);
   assert.doesNotMatch(liveActions, /Report profile|profile-report-action/);
   assert.match(liveApp, /class="profile-header-report-toggle" id="reportBtn"[^>]*>[\s\S]*?M5 21V4[\s\S]*?<\/button>/);
   assert.doesNotMatch(liveApp, /class="profile-modal-report-link"/);
@@ -102,13 +103,13 @@ test("all schedule states share the same compact header, four actions, status, a
   assert.match(profileActions, /hasLiveActions \? " has-live-shift" : hasScheduledActions \? " has-upcoming-shift" : " is-no-live-shift"/);
   assert.match(
     compactLayout,
-    /\.modal-actions,[\s\S]*?\.live-actions \{[\s\S]*?width: min\(100%, 760px\) !important;[\s\S]*?grid-template-columns: repeat\(4, minmax\(0, 1fr\)\) !important;[\s\S]*?justify-content: stretch !important;[\s\S]*?column-gap: 0 !important;[\s\S]*?margin: 0 auto 12px !important;/,
+    /\.modal-actions,[\s\S]*?\.live-actions \{[\s\S]*?width: min\(100%, 760px\) !important;[\s\S]*?grid-template-columns: repeat\(3, minmax\(0, 1fr\)\) !important;[\s\S]*?justify-content: stretch !important;[\s\S]*?column-gap: 0 !important;[\s\S]*?margin: 0 auto 12px !important;/,
   );
 });
 
 test("selected actions, dynamic stats, and all existing action handlers remain intact", () => {
   assert.match(profileActions, /aria-pressed=\{saved\.following\}/);
-  assert.match(profileActions, /aria-pressed=\{saved\.notificationsEnabled\}/);
+  assert.match(profileActions, /notificationsEnabled: requestedFollowing/);
   assert.match(profileActions, /aria-pressed=\{actionShift \? isGoing : undefined\}/);
   assert.match(profileActions, /export function DancerReportControl/);
   assert.match(profileActions, /onClick=\{openReport\}/);

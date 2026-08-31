@@ -464,8 +464,8 @@ function PublicProfileStyles() {
       .social-list a.social-link-x { color: #f4f4f6; }
       .social-list a .logo-cutout { fill: #0d0a17; stroke: none; }
       @media (prefers-reduced-motion: reduce) { .social-list a { transition: none; } }
-      .live-actions { position: relative; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); column-gap: 0; row-gap: 2px; margin: 0 auto 12px; padding: 4px 0 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; }
-      .live-actions.is-no-live-shift { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+      .live-actions { position: relative; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); column-gap: 0; row-gap: 2px; margin: 0 auto 12px; padding: 4px 0 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; }
+      .live-actions.is-no-live-shift { grid-template-columns: repeat(3, minmax(0, 1fr)); }
       .live-actions > button, .profile-action-share-slot .profile-share button { width: 100%; min-height: 44px; display: inline-flex; align-items: center; justify-content: center; padding: 6px 8px; border: 1px solid rgba(148,229,255,.2); border-radius: 11px; color: #fff; background: rgba(148,229,255,.055); cursor: pointer; font-size: 11px; font-weight: 900; text-align: center; }
       .live-actions > button:disabled { opacity: .66; cursor: wait; }
       .live-actions > button.profile-action-unavailable:disabled { opacity: .7; cursor: default; }
@@ -769,7 +769,7 @@ function PublicProfileStyles() {
         body.dancr-button-system .public-profile-shell .profile-header-metrics > div { min-height: 42px; display: grid !important; grid-template-rows: 22px 14px !important; align-content: center !important; justify-items: center !important; gap: 1px !important; padding: 2px 1px !important; }
         .profile-titlebar-controls { grid-template-columns: 32px 44px; }
         .public-profile-close { width: 44px; min-height: 44px; }
-        .live-actions { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+        .live-actions { grid-template-columns: repeat(3, minmax(0, 1fr)); }
         .profile-action-share-slot .profile-share > span { position: absolute; width: 1px; height: 1px; overflow: hidden; }
         .profile-working-card { padding: 5px; }
         .club-deal-card { grid-template-columns: minmax(0, 1fr) 128px; gap: 14px; padding: 14px; }
@@ -803,13 +803,13 @@ function PublicProfileStyles() {
         body.dancr-button-system .public-profile-shell .profile-titlebar-identity { grid-column: 2 !important; grid-row: 1 !important; align-content: start !important; padding-right: 84px !important; overflow: visible !important; }
         body.dancr-button-system .public-profile-shell .profile-header-metrics { grid-column: 2 !important; grid-row: 2 !important; width: 100% !important; align-self: stretch !important; }
         body.dancr-button-system .public-profile-shell .profile-titlebar-controls { position: absolute !important; top: max(3px, env(safe-area-inset-top)) !important; right: 0 !important; width: 80px !important; }
-        body.dancr-button-system .public-profile-shell .live-actions { grid-template-columns: 80px repeat(3, minmax(0, 1fr)) !important; }
+        body.dancr-button-system .public-profile-shell .live-actions { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
       }
       @media (max-width: 340px) {
         body.dancr-button-system .public-profile-shell .profile-titlebar { grid-template-columns: 70px minmax(0, 1fr) !important; grid-template-rows: 44px 40px !important; min-height: 96px !important; column-gap: 0 !important; }
         body.dancr-button-system .public-profile-shell .profile-titlebar-avatar { width: 64px !important; height: 64px !important; }
         body.dancr-button-system .public-profile-shell .profile-titlebar-identity { padding-right: 80px !important; }
-        body.dancr-button-system .public-profile-shell .live-actions { grid-template-columns: 70px repeat(3, minmax(0, 1fr)) !important; }
+        body.dancr-button-system .public-profile-shell .live-actions { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
       }
     `}</style>
   );

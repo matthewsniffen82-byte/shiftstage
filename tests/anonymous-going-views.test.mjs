@@ -66,7 +66,7 @@ test("both production dancer profile surfaces keep Going visible and enable it f
   assert.match(dancerPage, /<DancerGoingCount \/>/);
   assert.match(
     liveApp,
-    /\(actionButton\.id === "followBtn" \|\| actionButton\.id === "notifyBtn"\) &&\s+!requireCustomerAccountForProfileAction\(actionButton\)/,
+    /actionButton\.id === "followBtn" &&\s+!requireCustomerAccountForProfileAction\(actionButton\)/,
   );
   assert.match(liveApp, /const canMarkGoing = Boolean\(profile\?\.scheduled && profile\.shiftId\)/);
   assert.match(liveApp, /data-shift-state="unavailable"[\s\S]*?profileActionButtonMarkup\("clock", goingCopy\.idle\)/);

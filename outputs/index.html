@@ -32250,7 +32250,7 @@
   </style>
   <link href="/dancr-brand-tokens.v1.css?v=13" rel="stylesheet">
   <link href="/dancr-button-system.v1.css" rel="stylesheet">
-  <link href="/dancr-aesthetic.v1.css?v=244" rel="stylesheet">
+  <link href="/dancr-aesthetic.v1.css?v=245" rel="stylesheet">
 </head>
 <body class="dancr-button-system">
   <div class="app">
@@ -37711,7 +37711,7 @@
         #profileBackdrop .modal-actions {
           position: relative !important;
           display: grid !important;
-          grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+          grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
           gap: 8px !important;
           margin: 0 !important;
           padding: 0 0 max(12px, env(safe-area-inset-bottom, 0px)) !important;
@@ -39532,14 +39532,14 @@
         /* Keep profile-level actions separate from the venue travel controls
            that now live inside Tonight beside the relevant shift. */
         #profileBackdrop .modal-actions {
-          grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+          grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
           column-gap: 4px !important;
           row-gap: 0 !important;
           padding-block: 2px 0 !important;
         }
 
         #profileBackdrop .modal-actions.is-no-live-shift {
-          grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+          grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
         }
 
         #profileBackdrop .modal-actions .action-btn,
@@ -39903,11 +39903,11 @@
 
         @media (max-width: 520px) {
           #profileBackdrop .modal-actions {
-            grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+            grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
           }
 
           #profileBackdrop .modal-actions.is-no-live-shift {
-            grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+            grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
           }
         }
 
@@ -40751,8 +40751,7 @@
           }
         }
 
-        /* Center analytics in the three visual gaps between the four compact
-           guest actions without changing any action or metric behavior. */
+        /* Keep the three guest actions centered beneath the profile summary. */
         @media (max-width: 759px) {
           #profileBackdrop #profileModal .modal-actions {
             width: auto !important;
@@ -53424,7 +53423,6 @@
     function liveProfileModalActionsMarkup(profile, status) {
       const city = selectedCity();
       const isFollowed = isFollowingProfile(city, profile.name);
-      const isNotified = isNotificationOn(city, profile.name);
       const isGoingTonight = !!goingTonightSavedByProfile[profile.name];
       const isWorkingNow = isWorkingTonight(profile, city);
       const canMarkGoing = Boolean(profile?.scheduled && profile.shiftId);
@@ -53434,8 +53432,7 @@
         : `<button class="action-btn going-btn profile-action-icon-control secondary is-unavailable" id="goingBtn" type="button" data-profile="${profile.name}" data-shift-state="unavailable" aria-disabled="true" disabled>${profileActionButtonMarkup("clock", goingCopy.idle)}</button>`;
       return `
         <div class="modal-actions ${isWorkingNow ? "is-working-now" : profile?.scheduled ? "is-upcoming-shift" : "is-no-live-shift"}" aria-label="Guest actions">
-          <button class="action-btn follow-primary profile-action-icon-control ${isFollowed ? "is-following" : ""}" id="followBtn" data-profile="${profile.name}" aria-pressed="${isFollowed}">${profileActionButtonMarkup("personPlus", isFollowed ? "Following" : "Follow")}</button>
-          <button class="action-btn secondary profile-action-icon-control ${isNotified ? "is-following" : ""}" id="notifyBtn" data-profile="${profile.name}" aria-pressed="${isNotified}">${profileActionButtonMarkup("bell", isNotified ? "Alerts On" : "Notify")}</button>
+          <button class="action-btn follow-primary profile-action-icon-control ${isFollowed ? "is-following" : ""}" id="followBtn" data-profile="${profile.name}" aria-pressed="${isFollowed}">${profileActionButtonMarkup(isFollowed ? "check" : "personPlus", isFollowed ? "Following" : "Follow")}</button>
           ${goingButton}
           <button class="action-btn secondary profile-share-action profile-action-icon-control" type="button" data-profile-share-menu="${profile.name}" data-share-city="${city}" aria-haspopup="dialog" aria-label="Share ${profile.name} profile">${profileActionButtonMarkup("share", "Share")}</button>
         </div>
@@ -62791,19 +62788,9 @@
 
       const followButton = document.getElementById("followBtn");
       if (followButton) {
-        followButton.innerHTML = profileActionButtonMarkup("personPlus", following ? "Following" : "Follow");
+        followButton.innerHTML = profileActionButtonMarkup(following ? "check" : "personPlus", following ? "Following" : "Follow");
         followButton.classList.toggle("is-following", following);
         followButton.setAttribute("aria-pressed", String(following));
-      }
-
-      const notifyButton = document.getElementById("notifyBtn");
-      if (notifyButton) {
-        notifyButton.innerHTML = profileActionButtonMarkup(
-          "bell",
-          notificationsEnabled ? "Alerts On" : "Notify"
-        );
-        notifyButton.classList.toggle("is-following", notificationsEnabled);
-        notifyButton.setAttribute("aria-pressed", String(notificationsEnabled));
       }
 
       const followerCountEl = document.getElementById("modalFollowerCount");
@@ -62842,7 +62829,6 @@
         return;
       }
 
-      const notifyButton = document.getElementById("notifyBtn");
       const snapshot = profileFollowSnapshot(profile, city);
       const requestedFollowing = !snapshot.following;
       const optimisticState = optimisticProfileFollowState(
@@ -62852,7 +62838,6 @@
         requestedFollowing
       );
       actionButton.disabled = true;
-      if (notifyButton) notifyButton.disabled = true;
       applyProfileFollowState(profile, city, optimisticState);
       try {
         const data = await postAuthenticatedJson("/api/customer/follows", {
@@ -62876,7 +62861,6 @@
         showToast(error.message || "Could not save follow");
       } finally {
         actionButton.disabled = false;
-        if (notifyButton) notifyButton.disabled = false;
       }
     }
 
@@ -63018,18 +63002,14 @@
         openVenueFromName(venueLink.dataset.openVenue, { showFocusRing: event.detail === 0 });
         return;
       }
-      const actionButton = event.target.closest("#followBtn, #notifyBtn, #goingBtn, #reportBtn");
+      const actionButton = event.target.closest("#followBtn, #goingBtn, #reportBtn");
       if (!actionButton) return;
       if (
-        (actionButton.id === "followBtn" || actionButton.id === "notifyBtn") &&
+        actionButton.id === "followBtn" &&
         !requireCustomerAccountForProfileAction(actionButton)
       ) return;
       if (actionButton.id === "followBtn") {
         await saveProfileFollow(actionButton);
-        return;
-      }
-      if (actionButton.id === "notifyBtn") {
-        await saveProfileNotifications(actionButton);
         return;
       }
       if (actionButton.id === "goingBtn") {
