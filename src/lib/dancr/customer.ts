@@ -24,7 +24,11 @@ function warnCustomerDealSavesUnavailable(operation: "load" | "save" | "remove",
   });
 }
 
-export async function getCustomerSavedItems(client: DancrClient, customerId: string) {
+export async function getCustomerSavedItems(
+  client: DancrClient,
+  customerId: string,
+  publicMediaClient: DancrClient = client,
+) {
   const [follows, favorites, venueFollows, goingSignals] = await Promise.all([
     getFollowedDancers(client, customerId),
     getFavoriteDancers(client, customerId),
@@ -35,12 +39,28 @@ export async function getCustomerSavedItems(client: DancrClient, customerId: str
   const dancerIds = Array.from(new Set([
     ...follows.map((item: any) => item.dancer?.id),
     ...favorites.map((item: any) => item.dancer?.id),
+    ...goingSignals.map((item: any) => item.shift?.dancer?.id),
   ].filter(Boolean)));
-  const schedules = await getSavedDancerSchedules(client, dancerIds);
+  const [schedules, publicImages] = await Promise.all([
+    getSavedDancerSchedules(client, dancerIds),
+    getSavedDancerImages(publicMediaClient, dancerIds),
+  ]);
+  const attachPublicImage = (dancer: any) => dancer
+    ? { ...dancer, ...(publicImages.get(String(dancer.id)) || {}) }
+    : null;
   const attachSchedule = (item: any) => ({
     ...item,
     dancer: item.dancer
-      ? { ...item.dancer, nextShift: schedules.get(item.dancer.id) || null }
+      ? {
+          ...attachPublicImage(item.dancer),
+          nextShift: schedules.get(item.dancer.id) || null,
+        }
+      : null,
+  });
+  const attachGoingImage = (item: any) => ({
+    ...item,
+    shift: item.shift
+      ? { ...item.shift, dancer: attachPublicImage(item.shift.dancer) }
       : null,
   });
 
@@ -48,7 +68,7 @@ export async function getCustomerSavedItems(client: DancrClient, customerId: str
     follows: follows.map(attachSchedule),
     favorites: favorites.map(attachSchedule),
     venueFollows,
-    goingSignals,
+    goingSignals: goingSignals.map(attachGoingImage),
   };
 }
 
@@ -271,7 +291,7 @@ export async function recordDirectionRequest(
 async function getFollowedDancers(client: DancrClient, customerId: string) {
   const current = await client
     .from("follows")
-    .select("dancer_id, notifications_enabled, created_at, dancer_profiles(id, slug, stage_name, city, status, verification_status, venue_approved_at, is_public, dancer_photos(storage_path, is_primary, review_status, sort_order))")
+    .select("dancer_id, notifications_enabled, created_at, dancer_profiles(id, slug, stage_name, city, status, verification_status, venue_approved_at, is_public, avatar_storage_path, dancer_photos(storage_path, is_primary, review_status, sort_order))")
     .eq("customer_id", customerId)
     .order("created_at", { ascending: false });
 
@@ -281,7 +301,7 @@ async function getFollowedDancers(client: DancrClient, customerId: string) {
     console.warn("CUSTOMER_SAVED_VISIBILITY_COLUMN_MISSING", { relation: "follows", code: error.code });
     const legacy = await client
       .from("follows")
-      .select("dancer_id, notifications_enabled, created_at, dancer_profiles(id, slug, stage_name, city, status, dancer_photos(storage_path, is_primary, review_status, sort_order))")
+      .select("dancer_id, notifications_enabled, created_at, dancer_profiles(id, slug, stage_name, city, status, avatar_storage_path, dancer_photos(storage_path, is_primary, review_status, sort_order))")
       .eq("customer_id", customerId)
       .order("created_at", { ascending: false });
     data = legacy.data as any[] | null;
@@ -301,7 +321,7 @@ async function getFollowedDancers(client: DancrClient, customerId: string) {
 async function getFavoriteDancers(client: DancrClient, customerId: string) {
   const current = await client
     .from("favorites")
-    .select("dancer_id, created_at, dancer_profiles(id, slug, stage_name, city, status, verification_status, venue_approved_at, is_public, dancer_photos(storage_path, is_primary, review_status, sort_order))")
+    .select("dancer_id, created_at, dancer_profiles(id, slug, stage_name, city, status, verification_status, venue_approved_at, is_public, avatar_storage_path, dancer_photos(storage_path, is_primary, review_status, sort_order))")
     .eq("customer_id", customerId)
     .order("created_at", { ascending: false });
 
@@ -311,7 +331,7 @@ async function getFavoriteDancers(client: DancrClient, customerId: string) {
     console.warn("CUSTOMER_SAVED_VISIBILITY_COLUMN_MISSING", { relation: "favorites", code: error.code });
     const legacy = await client
       .from("favorites")
-      .select("dancer_id, created_at, dancer_profiles(id, slug, stage_name, city, status, dancer_photos(storage_path, is_primary, review_status, sort_order))")
+      .select("dancer_id, created_at, dancer_profiles(id, slug, stage_name, city, status, avatar_storage_path, dancer_photos(storage_path, is_primary, review_status, sort_order))")
       .eq("customer_id", customerId)
       .order("created_at", { ascending: false });
     data = legacy.data as any[] | null;
@@ -348,7 +368,7 @@ async function getGoingShifts(client: DancrClient, customerId: string) {
   const current = await client
     .from("going_signals")
     .select(
-      "shift_id, created_at, shifts(id, starts_at, ends_at, timezone, status, dancer_profiles(id, slug, stage_name, city, status, verification_status, venue_approved_at, is_public, dancer_photos(storage_path, is_primary, review_status, sort_order)), venues(id, slug, name, city, state, address, latitude, longitude, is_active, cover_image_storage_path))",
+      "shift_id, created_at, shifts(id, starts_at, ends_at, timezone, status, dancer_profiles(id, slug, stage_name, city, status, verification_status, venue_approved_at, is_public, avatar_storage_path, dancer_photos(storage_path, is_primary, review_status, sort_order)), venues(id, slug, name, city, state, address, latitude, longitude, is_active, cover_image_storage_path))",
     )
     .eq("customer_id", customerId)
     .order("created_at", { ascending: false });
@@ -360,7 +380,7 @@ async function getGoingShifts(client: DancrClient, customerId: string) {
     const legacy = await client
       .from("going_signals")
       .select(
-        "shift_id, created_at, shifts(id, starts_at, ends_at, timezone, status, dancer_profiles(id, slug, stage_name, city, status, dancer_photos(storage_path, is_primary, review_status, sort_order)), venues(id, slug, name, city, state, address, latitude, longitude, is_active, cover_image_storage_path))",
+        "shift_id, created_at, shifts(id, starts_at, ends_at, timezone, status, dancer_profiles(id, slug, stage_name, city, status, avatar_storage_path, dancer_photos(storage_path, is_primary, review_status, sort_order)), venues(id, slug, name, city, state, address, latitude, longitude, is_active, cover_image_storage_path))",
       )
       .eq("customer_id", customerId)
       .order("created_at", { ascending: false });
@@ -389,6 +409,36 @@ async function getGoingShifts(client: DancrClient, customerId: string) {
         : null,
     };
   }).filter((item: any) => item.shift?.dancer && item.shift?.venue);
+}
+
+async function getSavedDancerImages(client: DancrClient, dancerIds: string[]) {
+  const images = new Map<string, ReturnType<typeof savedDancerImageSummary>>();
+  if (!dancerIds.length) return images;
+
+  const current = await client
+    .from("dancer_profiles")
+    .select("id, status, verification_status, venue_approved_at, disabled_at, is_public, avatar_storage_path, dancer_photos(storage_path, is_primary, review_status, sort_order)")
+    .in("id", dancerIds);
+
+  let data: any[] | null = current.data as any[] | null;
+  let error: any = current.error;
+  if (isMissingIsPublicColumnError(error)) {
+    console.warn("CUSTOMER_SAVED_VISIBILITY_COLUMN_MISSING", { relation: "saved_dancer_images", code: error.code });
+    const legacy = await client
+      .from("dancer_profiles")
+      .select("id, status, verification_status, venue_approved_at, disabled_at, avatar_storage_path, dancer_photos(storage_path, is_primary, review_status, sort_order)")
+      .in("id", dancerIds);
+    data = legacy.data as any[] | null;
+    error = legacy.error;
+  }
+
+  if (error) throw error;
+
+  for (const dancer of data || []) {
+    if (!isApprovedPublicDancerRow(dancer)) continue;
+    images.set(String(dancer.id), savedDancerImageSummary(client, dancer));
+  }
+  return images;
 }
 
 async function getSavedDancerSchedules(client: DancrClient, dancerIds: string[]) {
@@ -430,13 +480,7 @@ async function getSavedDancerSchedules(client: DancrClient, dancerIds: string[])
 function toDancerSummary(client: DancrClient, value: any) {
   const dancer = single(value);
   if (!isApprovedPublicDancerRow(dancer)) return null;
-  const primaryPhoto = (dancer.dancer_photos || [])
-    .filter((photo: any) => photo.review_status === "approved")
-    .sort((left: any, right: any) => {
-      if (Boolean(left.is_primary) !== Boolean(right.is_primary)) return left.is_primary ? -1 : 1;
-      return Number(left.sort_order || 0) - Number(right.sort_order || 0);
-    })[0];
-  const image = responsivePublicImage(client, "dancer-photos", primaryPhoto?.storage_path);
+  const image = savedDancerImageSummary(client, dancer);
 
   return {
     id: dancer.id,
@@ -444,6 +488,22 @@ function toDancerSummary(client: DancrClient, value: any) {
     stageName: dancer.stage_name,
     city: dancer.city,
     status: dancer.status,
+    ...image,
+  };
+}
+
+function savedDancerImageSummary(client: DancrClient, dancer: any) {
+  const primaryPhoto = (dancer.dancer_photos || [])
+    .filter((photo: any) => photo.review_status === "approved")
+    .sort((left: any, right: any) => {
+      if (Boolean(left.is_primary) !== Boolean(right.is_primary)) return left.is_primary ? -1 : 1;
+      return Number(left.sort_order || 0) - Number(right.sort_order || 0);
+    })[0];
+  const primaryImage = responsivePublicImage(client, "dancer-photos", primaryPhoto?.storage_path);
+  const avatarImage = responsivePublicImage(client, "dancer-photos", dancer.avatar_storage_path);
+  const image = primaryImage || avatarImage;
+
+  return {
     imageFocalX: image?.imageFocalX ?? 50,
     imageFocalY: image?.imageFocalY ?? 50,
     imageUrl: image?.imageUrl || null,

@@ -13,7 +13,7 @@ export async function GET(request: Request) {
     const { client, user, session } = await createRequestSupabaseContext(request);
     const admin = createAdminSupabaseClient();
     const [savedItems, dealRedemptions, dealSaves] = await Promise.all([
-      getCustomerSavedItems(client, user.id),
+      getCustomerSavedItems(client, user.id, admin),
       getCustomerDealRedemptions(admin, user.id),
       getCustomerSavedClubDeals(admin, user.id),
     ]);

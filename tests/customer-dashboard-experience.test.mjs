@@ -109,10 +109,17 @@ test("fictional club direction controls navigate to the shared MyDancr destinati
 
 test("saved customer data includes approved responsive imagery and the next real posted shift", () => {
   assert.match(customerService, /getSavedDancerSchedules\(client, dancerIds\)/);
+  assert.match(customerService, /getSavedDancerImages\(publicMediaClient, dancerIds\)/);
+  assert.match(savedRoute, /getCustomerSavedItems\(client, user\.id, admin\)/);
   assert.match(customerService, /\.from\("shifts"\)[\s\S]*?\.eq\("status", "posted"\)[\s\S]*?\.gt\("ends_at", new Date\(\)\.toISOString\(\)\)/);
-  assert.match(customerService, /dancer_photos\(storage_path, is_primary, review_status, sort_order\)/);
+  assert.match(customerService, /avatar_storage_path, dancer_photos\(storage_path, is_primary, review_status, sort_order\)/);
+  assert.match(customerService, /function getSavedDancerImages[\s\S]*?\.from\("dancer_profiles"\)[\s\S]*?\.in\("id", dancerIds\)/);
+  assert.match(customerService, /if \(!isApprovedPublicDancerRow\(dancer\)\) continue/);
   assert.match(customerService, /photo\.review_status === "approved"/);
-  assert.match(customerService, /responsivePublicImage\(client, "dancer-photos"/);
+  assert.match(customerService, /const primaryImage = responsivePublicImage\(client, "dancer-photos", primaryPhoto\?\.storage_path\)/);
+  assert.match(customerService, /const avatarImage = responsivePublicImage\(client, "dancer-photos", dancer\.avatar_storage_path\)/);
+  assert.match(customerService, /const image = primaryImage \|\| avatarImage/);
+  assert.match(customerService, /goingSignals: goingSignals\.map\(attachGoingImage\)/);
   assert.match(customerService, /responsivePublicImage\(client, "venue-cover-images"/);
   assert.match(customerService, /nextShift: schedules\.get\(item\.dancer\.id\) \|\| null/);
   assert.doesNotMatch(customerService, /sample|placeholder|mock/i);

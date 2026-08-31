@@ -47,8 +47,9 @@ test("saved customer queries support the deployed schema until is_public migrati
   assert.match(customerServiceSource, /relation: "going_signals"/);
   assert.match(
     customerServiceSource,
-    /dancer_profiles\(id, slug, stage_name, city, status, dancer_photos\(storage_path, is_primary, review_status, sort_order\)\)/,
+    /dancer_profiles\(id, slug, stage_name, city, status, avatar_storage_path, dancer_photos\(storage_path, is_primary, review_status, sort_order\)\)/,
   );
+  assert.match(customerServiceSource, /relation: "saved_dancer_images"/);
 });
 
 test("missing private Club Deal storage cannot fail existing saved customer items", () => {
