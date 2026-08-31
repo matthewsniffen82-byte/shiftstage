@@ -4925,15 +4925,19 @@ body.dancr-button-system .public-profile-shell .profile-action-share-slot .profi
   filter: none !important;
 }
 
-/* Full-profile engagement uses one unboxed three-column action row. Social
- * destinations are the quiet first utility row inside the existing media
- * region; their 44px hit areas contain a 38px visible circle. */
+/* Full-profile engagement uses one unboxed three-column action row. Every
+ * action owns one complete third of the row. Social destinations remain the
+ * quiet first utility row inside the existing media region; their 44px hit
+ * areas contain a 38px visible circle. */
 body.dancr-button-system #profileBackdrop #profileModal .modal-actions,
 body.dancr-button-system .public-profile-shell .live-actions {
   width: min(100%, 760px) !important;
   max-width: 100% !important;
   box-sizing: border-box !important;
+  display: grid !important;
   grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  align-items: stretch !important;
+  justify-items: stretch !important;
   justify-content: stretch !important;
   justify-self: stretch !important;
   align-self: stretch !important;
@@ -4950,7 +4954,13 @@ body.dancr-button-system .public-profile-shell .live-actions {
 body.dancr-button-system #profileBackdrop #profileModal .modal-actions .action-btn.profile-action-icon-control,
 body.dancr-button-system .public-profile-shell .live-actions > button.profile-action-icon-control,
 body.dancr-button-system .public-profile-shell .profile-action-share-slot .profile-share > button.profile-action-icon-control {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: none !important;
   min-height: 72px !important;
+  box-sizing: border-box !important;
+  align-self: stretch !important;
+  justify-self: stretch !important;
   justify-content: center !important;
   gap: 0 !important;
   padding: 3px 2px !important;
@@ -4961,7 +4971,33 @@ body.dancr-button-system .public-profile-shell .profile-action-share-slot .profi
 }
 
 body.dancr-button-system .public-profile-shell .profile-action-share-slot .profile-share {
+  width: 100% !important;
+  min-width: 0 !important;
   min-height: 72px !important;
+}
+
+/* A fixed icon row and a shared label row keep all three circles and labels on
+ * identical baselines. */
+body.dancr-button-system #profileBackdrop #profileModal .modal-actions > .profile-action-icon-control .profile-action-main,
+body.dancr-button-system .public-profile-shell .live-actions .profile-action-icon-control .profile-action-main {
+  width: 100% !important;
+  min-width: 0 !important;
+  display: grid !important;
+  grid-template-rows: 46px minmax(14px, auto) !important;
+  align-content: center !important;
+  align-items: center !important;
+  justify-items: center !important;
+  row-gap: 4px !important;
+  column-gap: 0 !important;
+  text-align: center !important;
+}
+
+body.dancr-button-system .public-profile-shell .profile-action-share-slot,
+body.dancr-button-system .public-profile-shell .profile-action-share-slot > .profile-share {
+  width: 100% !important;
+  min-width: 0 !important;
+  align-self: stretch !important;
+  justify-self: stretch !important;
 }
 
 body.dancr-button-system #profileBackdrop #profileModal .modal-actions .profile-action-icon-control .action-icon,

@@ -131,6 +131,18 @@ test("profile actions keep profile controls separate from Tonight travel actions
   assert.match(profilePage, /data-profile-action-icon="personPlus"[\s\S]*?width: 28px;[\s\S]*?data-profile-action-icon="bell"[\s\S]*?width: 26px;/);
   assert.match(profilePage, /button:not\(\.profile-action-icon-control\):not\(\.profile-report-action\)[\s\S]*?grid-template-rows: 18px 9px;/);
   assert.match(profilePage, /\.live-actions \{[\s\S]*?grid-template-columns: repeat\(3, minmax\(0, 1fr\)\);[\s\S]*?column-gap: 0;[\s\S]*?row-gap: 2px;[\s\S]*?margin: 0 auto 12px;[\s\S]*?padding: 4px 0 0;[\s\S]*?border: 0;[\s\S]*?background: transparent;/);
+  assert.match(
+    aesthetic,
+    /Full-profile engagement uses one unboxed three-column action row\. Every[\s\S]*?action owns one complete third of the row\.[\s\S]*?grid-template-columns: repeat\(3, minmax\(0, 1fr\)\) !important;[\s\S]*?align-items: stretch !important;[\s\S]*?justify-items: stretch !important;[\s\S]*?column-gap: 0 !important;/,
+  );
+  assert.match(
+    aesthetic,
+    /\.modal-actions \.action-btn\.profile-action-icon-control,[\s\S]*?\.profile-action-share-slot \.profile-share > button\.profile-action-icon-control \{[\s\S]*?width: 100% !important;[\s\S]*?min-width: 0 !important;[\s\S]*?min-height: 72px !important;[\s\S]*?align-self: stretch !important;[\s\S]*?justify-self: stretch !important;/,
+  );
+  assert.match(
+    aesthetic,
+    /\.modal-actions > \.profile-action-icon-control \.profile-action-main,[\s\S]*?\.live-actions \.profile-action-icon-control \.profile-action-main \{[\s\S]*?grid-template-rows: 46px minmax\(14px, auto\) !important;[\s\S]*?justify-items: center !important;[\s\S]*?row-gap: 4px !important;[\s\S]*?text-align: center !important;/,
+  );
   assert.match(liveApp, /#profileBackdrop \.modal-actions \.profile-action-icon-control \.action-icon \{[\s\S]*?width: 24px !important;[\s\S]*?height: 24px !important;[\s\S]*?border: 0 !important;[\s\S]*?background: transparent !important;/);
   assert.match(liveApp, /action-icon action-icon-\$\{resolvedType\}/);
   assert.match(liveApp, /data-action-icon="\$\{resolvedType\}"[\s\S]*?aria-hidden="true"/);
@@ -175,6 +187,32 @@ test("profile actions keep profile controls separate from Tonight travel actions
   assert.match(liveApp, /notificationCount: confirmedNotificationCount\(/);
   assert.doesNotMatch(liveApp, /id="modalNotificationCount"/);
   assert.match(liveApp, /countEl\.textContent = realCount\.toLocaleString\(\)/);
+});
+
+test("profile action centers stay mathematically balanced across supported phone widths", () => {
+  const viewportWidths = [320, 360, 375, 390, 412, 430];
+
+  for (const viewportWidth of viewportWidths) {
+    const contentWidth = viewportWidth - 24;
+    const columnWidth = contentWidth / 3;
+    const centers = [0.5, 1.5, 2.5].map(
+      (columnIndex) => columnIndex * columnWidth,
+    );
+    const isWithinSubpixelTolerance = (actual, expected) =>
+      Math.abs(actual - expected) < Number.EPSILON * contentWidth;
+
+    assert.ok(columnWidth >= 44, `${viewportWidth}px keeps a mobile touch target`);
+    assert.ok(isWithinSubpixelTolerance(centers[0] / contentWidth, 1 / 6));
+    assert.ok(isWithinSubpixelTolerance(centers[1] / contentWidth, 1 / 2));
+    assert.ok(isWithinSubpixelTolerance(centers[2] / contentWidth, 5 / 6));
+    assert.ok(
+      isWithinSubpixelTolerance(
+        centers[2] - centers[1],
+        centers[1] - centers[0],
+      ),
+    );
+    assert.ok(isWithinSubpixelTolerance(columnWidth * 3, contentWidth));
+  }
 });
 
 test("only Working Now activates dancer deal attribution while Upcoming links to the venue page", () => {
