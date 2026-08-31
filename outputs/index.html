@@ -32360,7 +32360,7 @@
             </select>
             <button class="venue-picker-trigger" id="venueSelectButton" type="button" aria-haspopup="dialog" aria-controls="venueSelectDialog" aria-expanded="false" aria-labelledby="venueSelectLabel venueSelectButtonText" hidden>
               <span class="venue-picker-trigger-value" id="venueSelectButtonText">All clubs</span>
-              <span class="venue-picker-trigger-live" id="venueSelectButtonLive" hidden>NOW</span>
+              <span class="venue-picker-trigger-live" id="venueSelectButtonLive" hidden>0 NOW</span>
               <svg class="venue-picker-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="m7 9 5 5 5-5"></path></svg>
             </button>
           </div>
@@ -47708,7 +47708,7 @@
       const safeValue = escapeOptionValue(value);
       const safeLabel = escapeOptionValue(label);
       const liveLabel = workingNowCount ? `${workingNowCount} ${workingNowCount === 1 ? "dancer" : "dancers"} working now` : "";
-      return `<button class="venue-picker-option" type="button" role="option" data-venue-picker-value="${safeValue}" aria-selected="${selected}" aria-label="${safeLabel}${liveLabel ? `, ${liveLabel}` : ""}"><span class="venue-picker-radio" aria-hidden="true"></span><span class="venue-picker-option-name">${safeLabel}</span>${workingNowCount ? '<span class="venue-picker-now" aria-hidden="true">NOW</span>' : ""}</button>`;
+      return `<button class="venue-picker-option" type="button" role="option" data-venue-picker-value="${safeValue}" aria-selected="${selected}" aria-label="${safeLabel}${liveLabel ? `, ${liveLabel}` : ""}"><span class="venue-picker-radio" aria-hidden="true"></span><span class="venue-picker-option-name">${safeLabel}</span>${workingNowCount ? `<span class="venue-picker-now" aria-hidden="true">${workingNowCount} NOW</span>` : ""}</button>`;
     }
 
     function syncVenuePickerSelection(value = venueSelect?.value || "all") {
@@ -47720,7 +47720,10 @@
       const venue = value === "all" ? null : resolveVenueByName(value, city);
       const workingNowCount = venueWorkingNowCount(venue, city);
       if (venueSelectButtonText) venueSelectButtonText.textContent = venue?.name || "All clubs";
-      if (venueSelectButtonLive) venueSelectButtonLive.hidden = !workingNowCount;
+      if (venueSelectButtonLive) {
+        venueSelectButtonLive.textContent = `${workingNowCount} NOW`;
+        venueSelectButtonLive.hidden = !workingNowCount;
+      }
       if (venueSelectButton) venueSelectButton.setAttribute("aria-label", venue ? `${venue.name}${workingNowCount ? `, ${workingNowCount} ${workingNowCount === 1 ? "dancer" : "dancers"} working now` : ""}` : "All clubs");
     }
 
@@ -47733,7 +47736,7 @@
       const venueOptions = venues.map((venue) => ({ venue, workingNowCount: venueWorkingNowCount(venue, city) }));
       venueSelect.innerHTML = [
         `<option value="all">All clubs</option>`,
-        ...venueOptions.map(({ venue, workingNowCount }) => `<option value="${escapeOptionValue(venue.name)}" data-working-now="${Boolean(workingNowCount)}">${escapeOptionValue(venue.name)}${workingNowCount ? " · NOW" : ""}</option>`)
+        ...venueOptions.map(({ venue, workingNowCount }) => `<option value="${escapeOptionValue(venue.name)}" data-working-now="${Boolean(workingNowCount)}">${escapeOptionValue(venue.name)}${workingNowCount ? ` · ${workingNowCount} NOW` : ""}</option>`)
       ].join("");
       venueSelect.value = venues.some((venue) => venue.name === previous) ? previous : "all";
       if (venueSelectOptions) {

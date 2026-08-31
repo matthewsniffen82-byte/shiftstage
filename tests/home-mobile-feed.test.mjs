@@ -1121,10 +1121,10 @@ test("mobile discovery headings share a compact hierarchy across Android and iPh
   );
 });
 
-test("venue search identifies active venues with an emerald NOW badge", () => {
+test("venue search shows each active club's working-now count", () => {
   assert.match(
     homeSource,
-    /id="venueSelect"[\s\S]*?id="venueSelectButton"[\s\S]*?id="venueSelectButtonLive"[^>]*>NOW<[\s\S]*?id="venueSelectDialog"[\s\S]*?id="venueSelectOptions"/,
+    /id="venueSelect"[\s\S]*?id="venueSelectButton"[\s\S]*?id="venueSelectButtonLive"[^>]*>0 NOW<[\s\S]*?id="venueSelectDialog"[\s\S]*?id="venueSelectOptions"/,
   );
   assert.match(
     homeSource,
@@ -1132,7 +1132,11 @@ test("venue search identifies active venues with an emerald NOW badge", () => {
   );
   assert.match(
     homeSource,
-    /data-working-now="\$\{Boolean\(workingNowCount\)\}"[\s\S]*?workingNowCount \? " · NOW"[\s\S]*?venuePickerOptionMarkup\([\s\S]*?workingNowCount/,
+    /data-working-now="\$\{Boolean\(workingNowCount\)\}"[\s\S]*?` · \$\{workingNowCount\} NOW`[\s\S]*?venuePickerOptionMarkup\([\s\S]*?workingNowCount/,
+  );
+  assert.match(
+    homeSource,
+    /class="venue-picker-now" aria-hidden="true">\$\{workingNowCount\} NOW<[\s\S]*?venueSelectButtonLive\.textContent = `\$\{workingNowCount\} NOW`/,
   );
   assert.match(
     homeSource,
