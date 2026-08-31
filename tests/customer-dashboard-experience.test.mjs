@@ -70,8 +70,22 @@ test("followed dancers and clubs are grouped by city without location-based dist
   assert.match(dashboard, /\.customer-followed-dancer-grid \{ grid-template-columns: repeat\(3, minmax\(0, 1fr\)\)/);
   assert.match(dashboard, /\.customer-followed-dancer-tile \{[^}]*aspect-ratio: 1 \/ 1\.68;[^}]*border: 1px solid rgba\(192,132,255,\.34\)/);
   assert.match(dashboard, /\.customer-followed-dancer-tile > \.customer-saved-card-image \{[^}]*position: absolute;[^}]*height: 100%;[^}]*object-fit: cover;/);
-  assert.match(dashboard, /\.customer-saved-head \{ align-items: center; flex-direction: row; \}/);
   assert.doesNotMatch(dashboard, /navigator\.geolocation\.getCurrentPosition|customerVenueDistance|Refresh distance|Show distance|Distances updated from your current location/);
+});
+
+test("customer dashboard uses compact electric-violet hierarchy without duplicate saved-section headers", () => {
+  assert.match(dashboard, /badge=\{String\(saved\?\.follows\?\.length \|\| 0\)\}[\s\S]*?id="customer-followed-dancers"/);
+  assert.match(dashboard, /badge=\{String\(saved\?\.venueFollows\?\.length \|\| 0\)\}[\s\S]*?id="customer-followed-clubs"/);
+  assert.doesNotMatch(dashboard, /<span>Your people<\/span>|<span>Your clubs<\/span>|className="customer-section-count"/);
+  assert.match(dashboard, /function CustomerFollowedDancersPanel[\s\S]*?<div className="customer-saved-panel"/);
+  assert.match(dashboard, /function CustomerFollowedClubsPanel[\s\S]*?<div className="customer-saved-panel"/);
+  assert.match(dashboard, /\.dashboard-shell-customer \{ --mydancr-customer-accent: #a970ff;/);
+  assert.match(dashboard, /\.customer-dashboard-primary-links a > strong \{[^}]*height: 24px;[^}]*border-radius: 999px;[^}]*background: rgba\(124,58,237,\.72\)/);
+  assert.match(dashboard, /\.customer-followed-dancer-status\.is-working \{ color: #6ee7a6;/);
+  assert.match(dashboard, /\.customer-followed-dancer-status\.is-upcoming \{ color: var\(--mydancr-customer-accent\)/);
+  assert.match(dashboard, /\.dashboard-shell-customer \.venue-dashboard-section-badge \{[^}]*min-width: 28px;[^}]*background: rgba\(124,58,237,\.3\)/);
+  assert.match(dashboard, /\.customer-saved-card \.customer-card-actions \{ display: grid !important; grid-template-columns: repeat\(2, minmax\(0, 1fr\)\); \}/);
+  assert.match(dashboard, /@media \(max-width: 620px\) \{[\s\S]*?\.dashboard-shell-customer \.venue-dashboard-section > summary \{ min-height: 78px; grid-template-columns: minmax\(0,1fr\) auto auto;/);
 });
 
 test("followed dancer tiles match homepage-style discovery cards without dashboard action clutter", () => {

@@ -1561,6 +1561,7 @@ function CustomerPanel({
     <>
       {actionStatus ? <p className="customer-action-status" role="status">{actionStatus}</p> : null}
       <DashboardSection
+        badge={String(saved?.follows?.length || 0)}
         defaultOpen
         description="Dancers you follow, sorted by city. Tap a card to open the profile."
         id="customer-followed-dancers"
@@ -1572,6 +1573,7 @@ function CustomerPanel({
         />
       </DashboardSection>
       <DashboardSection
+        badge={String(saved?.venueFollows?.length || 0)}
         description="Clubs you follow, with directions and alert controls."
         id="customer-followed-clubs"
         title="Followed Clubs"
@@ -1687,14 +1689,7 @@ function CustomerFollowedDancersPanel({
   const followedDancerCityGroups = groupFollowedDancersByCity(followedDancers);
 
   return (
-    <article className="info-panel customer-saved-panel" tabIndex={-1}>
-      <div className="customer-saved-head">
-        <div>
-          <span>Your people</span>
-          <h2>Followed Dancers</h2>
-        </div>
-        <strong className="customer-section-count">{followedDancers.length}</strong>
-      </div>
+    <div className="customer-saved-panel" tabIndex={-1}>
       <div className="customer-followed-city-list">
         {followedDancerCityGroups.map((group) => (
           <section className="customer-followed-city-group" key={group.city}>
@@ -1720,7 +1715,7 @@ function CustomerFollowedDancersPanel({
         {!followedDancers.length && !isLoading ? <CustomerSavedEmpty label="No followed dancers yet" href={homeDiscoveryHref("dancers")} cta="Browse dancers" /> : null}
       </div>
       {isLoading ? <div className="customer-loading-state">Loading followed dancers…</div> : null}
-    </article>
+    </div>
   );
 }
 
@@ -1741,14 +1736,7 @@ function CustomerFollowedClubsPanel({
   const followedVenueCityGroups = groupFollowedVenuesByCity(followedVenues);
 
   return (
-    <article className="info-panel customer-saved-panel" tabIndex={-1}>
-      <div className="customer-saved-head">
-        <div>
-          <span>Your clubs</span>
-          <h2>Followed Clubs</h2>
-        </div>
-        <strong className="customer-section-count">{followedVenues.length}</strong>
-      </div>
+    <div className="customer-saved-panel" tabIndex={-1}>
       <div className="customer-followed-city-list">
         {followedVenueCityGroups.map((group) => (
           <section className="customer-followed-city-group" key={group.city}>
@@ -1778,7 +1766,7 @@ function CustomerFollowedClubsPanel({
         {!followedVenues.length && !isLoading ? <CustomerSavedEmpty label="No followed clubs yet" href={homeDiscoveryHref("venues")} cta="Browse clubs" /> : null}
       </div>
       {isLoading ? <div className="customer-loading-state">Loading followed clubs…</div> : null}
-    </article>
+    </div>
   );
 }
 
@@ -7871,7 +7859,9 @@ function DashboardStyles() {
       .dashboard-close svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; }
       .dashboard-close:hover { border-color: rgba(126,234,255,.42); background: rgba(38,34,48,.92); }
       .dashboard-close:active { transform: scale(.96); }
-      .dashboard-close:focus-visible, .customer-dashboard-nav a:focus-visible { outline: 2px solid #7eeaff; outline-offset: 3px; }
+      .dashboard-close:focus-visible { outline: 2px solid #7eeaff; outline-offset: 3px; }
+      .dashboard-shell-customer { --mydancr-customer-accent: #a970ff; --mydancr-customer-accent-soft: rgba(139,92,246,.12); --mydancr-customer-accent-border: rgba(167,139,250,.3); }
+      .customer-dashboard-nav a:focus-visible { outline: 2px solid var(--mydancr-customer-accent); outline-offset: 3px; }
       .dashboard-shell-customer .dashboard-head-row { grid-template-columns: minmax(0, 1fr) 36px; }
       .dashboard-shell-customer .dashboard-close { width: 36px !important; min-width: 36px !important; max-width: 36px !important; height: 36px !important; min-height: 36px !important; max-height: 36px !important; flex: 0 0 36px; padding: 0; border: 1px solid rgba(226,232,240,.22) !important; border-radius: 50% !important; color: rgba(255,255,255,.92) !important; background: linear-gradient(145deg,rgba(49,47,59,.96),rgba(19,19,25,.94)) !important; box-shadow: inset 0 1px 0 rgba(255,255,255,.08),0 8px 18px rgba(0,0,0,.36) !important; -webkit-backdrop-filter: blur(12px) saturate(1.2); backdrop-filter: blur(12px) saturate(1.2); line-height: 0; }
       .dashboard-shell-customer .dashboard-close svg { width: 15px !important; height: 15px !important; stroke-width: 1.85; }
@@ -8067,16 +8057,16 @@ function DashboardStyles() {
       .venue-dashboard-account-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .venue-dashboard-section-body > .info-panel, .venue-dashboard-inner-grid > .info-panel { grid-column: auto; border-color: transparent; background: var(--mydancr-dashboard-panel-raised); box-shadow: none; }
       .venue-dashboard-account-grid > .support-panel, .venue-dashboard-account-grid > .account-controls-panel { grid-column: 1 / -1; }
-      .customer-dashboard-nav { grid-column: 1 / -1; display: grid; gap: 8px; padding: 8px; border: 1px solid rgba(255,255,255,.1); border-radius: 18px; background: rgba(7,7,11,.88); box-shadow: 0 16px 38px rgba(0,0,0,.28); backdrop-filter: blur(16px); }
+      .customer-dashboard-nav { grid-column: 1 / -1; display: grid; gap: 7px; padding: 7px; border: 1px solid var(--mydancr-customer-accent-border); border-radius: 18px; background: radial-gradient(circle at 50% 0, rgba(139,92,246,.1), transparent 72%), rgba(7,7,11,.9); box-shadow: 0 16px 38px rgba(0,0,0,.28), 0 0 22px rgba(124,58,237,.08); backdrop-filter: blur(16px); }
       .customer-dashboard-primary-links { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 7px; }
-      .customer-dashboard-primary-links a { min-width: 0; min-height: 68px; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 8px; padding: 11px 12px; border: 1px solid rgba(126,234,255,.14); border-radius: 13px; color: #f8f7fb; background: rgba(255,255,255,.04); font-size: 13px; font-weight: 900; text-decoration: none; }
-      .customer-dashboard-primary-links a:hover { border-color: rgba(126,234,255,.34); background: rgba(126,234,255,.08); }
+      .customer-dashboard-primary-links a { min-width: 0; min-height: 68px; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 8px; padding: 11px 12px; border: 1px solid rgba(167,139,250,.2); border-radius: 13px; color: #f8f7fb; background: rgba(255,255,255,.035); font-size: 13px; font-weight: 900; text-decoration: none; }
+      .customer-dashboard-primary-links a:hover { border-color: rgba(167,139,250,.48); background: rgba(139,92,246,.12); }
       .customer-dashboard-primary-links a > span { min-width: 0; line-height: 1.2; }
-      .customer-dashboard-primary-links a > strong { min-width: 28px; height: 28px; display: grid; place-items: center; border-radius: 50%; color: #071014; background: #7eeaff; font-size: 12px; }
+      .customer-dashboard-primary-links a > strong { min-width: 28px; height: 24px; display: grid; place-items: center; padding: 0 7px; border: 1px solid rgba(196,181,253,.42); border-radius: 999px; color: #fff; background: rgba(124,58,237,.72); box-shadow: 0 0 14px rgba(139,92,246,.22); font-size: 11px; }
       .customer-dashboard-utility-links { display: flex; justify-content: flex-end; gap: 6px; padding-top: 1px; }
       .customer-dashboard-utility-links a { min-height: 38px; display: inline-flex; align-items: center; justify-content: center; padding: 0 14px; border-radius: 999px; color: #cfc5de; font-size: 12px; font-weight: 900; text-decoration: none; }
       .customer-dashboard-utility-links a:hover { color: #fff; background: rgba(255,255,255,.06); }
-      .customer-action-status { grid-column: 1 / -1; max-width: none; padding: 11px 14px; border: 1px solid rgba(126,234,255,.28); border-radius: 10px; color: #aaf2ff; background: rgba(11,87,110,.16); font-size: 14px; }
+      .customer-action-status { grid-column: 1 / -1; max-width: none; padding: 11px 14px; border: 1px solid var(--mydancr-customer-accent-border); border-radius: 10px; color: #ddd1ff; background: var(--mydancr-customer-accent-soft); font-size: 14px; }
       .info-panel { border: 1px solid var(--mydancr-dashboard-border); background: var(--mydancr-dashboard-panel); border-radius: var(--mydancr-dashboard-radius); padding: 16px; display: grid; gap: 14px; box-shadow: none; }
       .info-panel h2 { font-size: clamp(20px, 3vw, 24px); line-height: 1.08; }
       .info-panel > p { color: var(--mydancr-dashboard-muted); font-size: 14px; line-height: 1.45; }
@@ -8355,33 +8345,31 @@ function DashboardStyles() {
       .support-message p, .support-panel p { color: #cfc5de; font-size: 14px; line-height: 1.45; }
       .customer-settings-panel form { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; align-items: end; }
       .customer-night-panel, .customer-saved-panel, .saved-deal-panel, .customer-dashboard-grid > .notification-panel, .customer-settings-section { grid-column: 1 / -1; scroll-margin-top: 82px; }
-      .customer-night-panel:focus, .customer-saved-panel:focus, .saved-deal-panel:focus, .customer-dashboard-grid > .notification-panel:focus, .customer-settings-section:focus { outline: 2px solid rgba(126,234,255,.72); outline-offset: 4px; }
+      .customer-saved-panel { display: grid; gap: 16px; }
+      .customer-night-panel:focus, .customer-saved-panel:focus, .saved-deal-panel:focus, .customer-dashboard-grid > .notification-panel:focus, .customer-settings-section:focus { outline: 2px solid var(--mydancr-customer-accent); outline-offset: 4px; }
       .customer-section-heading { display: grid; gap: 4px; }
-      .customer-section-heading > span, .customer-section-heading > div > span, .customer-saved-head span, .notification-title-row > div > span { color: #7eeaff; font-size: 10px; font-weight: 950; letter-spacing: .14em; text-transform: uppercase; }
-      .customer-section-heading h2, .customer-saved-head h2, .notification-title-row h2 { margin: 0; }
+      .customer-section-heading > span, .customer-section-heading > div > span, .notification-title-row > div > span { color: var(--mydancr-customer-accent); font-size: 10px; font-weight: 950; letter-spacing: .14em; text-transform: uppercase; }
+      .customer-section-heading h2, .notification-title-row h2 { margin: 0; }
       .customer-section-heading.split { display: flex; align-items: center; justify-content: space-between; gap: 14px; }
       .customer-section-heading.split > div { display: grid; gap: 4px; }
-      .customer-section-heading.split > strong, .notification-title-row > strong { min-width: 42px; height: 42px; display: grid; place-items: center; border-radius: 50%; color: #061015; background: #7eeaff; font-size: 17px; }
+      .customer-section-heading.split > strong, .notification-title-row > strong { min-width: 28px; height: 26px; display: grid; place-items: center; padding: 0 8px; border: 1px solid rgba(196,181,253,.36); border-radius: 999px; color: #eee8ff; background: rgba(124,58,237,.28); font-size: 11px; }
       .customer-night-list { display: grid; gap: 12px !important; }
-      .customer-night-card { min-width: 0; display: grid; grid-template-columns: 132px minmax(0, 1fr); overflow: hidden; border: 1px solid rgba(126,234,255,.18); border-radius: 14px; background: linear-gradient(135deg, rgba(109,40,217,.14), rgba(34,199,255,.05)); }
+      .customer-night-card { min-width: 0; display: grid; grid-template-columns: 132px minmax(0, 1fr); overflow: hidden; border: 1px solid rgba(167,139,250,.24); border-radius: 14px; background: linear-gradient(135deg, rgba(109,40,217,.16), rgba(255,255,255,.025)); }
       .customer-night-card > .customer-saved-card-image { width: 132px; height: 100%; min-height: 172px; border-radius: 0; }
       .customer-night-copy { min-width: 0; display: grid; align-content: center; gap: 7px; padding: 16px; }
-      .customer-night-copy > span, .customer-saved-card-copy > span { color: #8deeff; font-size: 11px; font-weight: 950; letter-spacing: .08em; text-transform: uppercase; }
+      .customer-night-copy > span, .customer-saved-card-copy > span { color: var(--mydancr-customer-accent); font-size: 11px; font-weight: 950; letter-spacing: .08em; text-transform: uppercase; }
       .customer-night-copy h3 { margin: 0; color: #fff; font-size: 24px; }
       .customer-night-copy p { color: #cfc5de; font-size: 14px; }
-      .customer-saved-head { display: flex !important; align-items: center; justify-content: space-between; gap: 12px !important; }
-      .customer-saved-head > div { display: grid; gap: 4px; }
-      .customer-section-count { min-width: 42px; height: 42px; display: grid; place-items: center; border-radius: 50%; color: #061015; background: #7eeaff; font-size: 17px; }
-      .customer-followed-city-list { display: grid; gap: 20px; }
+      .customer-followed-city-list { display: grid; gap: 16px; }
       .customer-followed-city-group { min-width: 0; display: grid; gap: 10px; }
-      .customer-followed-city-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-bottom: 7px; border-bottom: 1px solid rgba(126,234,255,.16); }
+      .customer-followed-city-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-bottom: 7px; border-bottom: 1px solid rgba(167,139,250,.22); }
       .customer-followed-city-heading h3 { margin: 0; color: #fff; font-size: 18px; }
-      .customer-followed-city-heading span { color: #aaf2ff; font-size: 11px; font-weight: 900; }
+      .customer-followed-city-heading span { color: #cdbdff; font-size: 11px; font-weight: 900; }
       .customer-saved-card-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
       .customer-followed-dancer-tile { position: relative; min-width: 0; aspect-ratio: 1 / 1.68; overflow: hidden; border: 1px solid rgba(192,132,255,.34); border-radius: 14px; color: #fff; background: #07070a; box-shadow: 0 16px 34px rgba(0,0,0,.48), 0 0 14px rgba(155,92,255,.1); text-decoration: none; }
       .customer-followed-dancer-tile::after { content: ""; position: absolute; inset: 28% 0 0; z-index: 1; background: linear-gradient(180deg, transparent, rgba(10,6,17,.58) 34%, rgba(5,5,8,.98) 100%); pointer-events: none; }
       .customer-followed-dancer-tile:hover, .customer-followed-dancer-tile:focus-visible { border-color: rgba(192,132,255,.7); box-shadow: 0 20px 42px rgba(0,0,0,.56), 0 0 24px rgba(155,92,255,.24); }
-      .customer-followed-dancer-tile:focus-visible { outline: 2px solid #7eeaff; outline-offset: 3px; }
+      .customer-followed-dancer-tile:focus-visible { outline: 2px solid var(--mydancr-customer-accent); outline-offset: 3px; }
       .customer-followed-dancer-tile > .customer-saved-card-image { position: absolute; inset: 0; width: 100%; height: 100%; aspect-ratio: auto; border-radius: 0; object-fit: cover; }
       .customer-followed-dancer-copy { position: absolute; inset: auto 0 0; z-index: 2; min-width: 0; display: grid; gap: 4px; padding: 44px 11px 12px; }
       .customer-followed-dancer-copy > strong, .customer-followed-dancer-copy > small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -8390,9 +8378,9 @@ function DashboardStyles() {
       .customer-followed-dancer-copy > .customer-followed-dancer-time { color: #a9a0b8; font-size: 10px; }
       .customer-followed-dancer-status { width: fit-content; color: #a9a0b8; font-size: 9px; font-weight: 950; letter-spacing: .1em; text-transform: uppercase; }
       .customer-followed-dancer-status.is-working { color: #6ee7a6; text-shadow: 0 0 10px rgba(34,197,94,.34); }
-      .customer-followed-dancer-status.is-upcoming { color: #7eeaff; text-shadow: 0 0 10px rgba(53,216,255,.28); }
-      .customer-saved-card { min-width: 0; overflow: hidden; border: 1px solid rgba(126,234,255,.16); border-radius: 12px; background: rgba(5,5,9,.7); }
-      .customer-saved-card-image { width: 100%; height: 148px; display: grid; place-items: center; object-fit: cover; background: linear-gradient(145deg, #201338, #091927); color: #fff; font-size: 24px; font-weight: 950; }
+      .customer-followed-dancer-status.is-upcoming { color: var(--mydancr-customer-accent); text-shadow: 0 0 10px rgba(139,92,246,.3); }
+      .customer-saved-card { min-width: 0; overflow: hidden; border: 1px solid rgba(167,139,250,.2); border-radius: 12px; background: rgba(7,6,12,.78); }
+      .customer-saved-card-image { width: 100%; height: 148px; display: grid; place-items: center; object-fit: cover; background: linear-gradient(145deg, #24143f, #09080f); color: #fff; font-size: 24px; font-weight: 950; }
       .customer-saved-card-copy { min-width: 0; display: grid; gap: 6px; padding: 12px; }
       .customer-saved-card-copy > a { min-width: 0; color: #fff; text-decoration: none; }
       .customer-saved-card-copy > a strong { display: block; overflow: hidden; font-size: 17px; text-overflow: ellipsis; white-space: nowrap; }
@@ -8402,17 +8390,19 @@ function DashboardStyles() {
       .customer-card-actions button:disabled { opacity: .55; cursor: wait; }
       .customer-card-actions button[aria-disabled="true"] { opacity: 1; cursor: default; }
       .customer-card-actions .customer-text-action { color: #cfc5de; background: transparent; }
-      .customer-empty-state { min-height: 138px; display: grid; place-items: start; align-content: center; gap: 9px; padding: 16px; border: 1px dashed rgba(126,234,255,.24); border-radius: 12px; background: rgba(126,234,255,.035); }
+      .customer-saved-card .customer-card-actions { display: grid !important; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .customer-saved-card .customer-card-actions > * { min-width: 0; width: 100%; padding-inline: 7px; }
+      .customer-empty-state { min-height: 124px; display: grid; place-items: start; align-content: center; gap: 9px; padding: 16px; border: 1px dashed rgba(167,139,250,.3); border-radius: 12px; background: rgba(139,92,246,.05); }
       .customer-empty-state.compact { min-height: 106px; padding: 12px; }
       .customer-empty-state strong { color: #fff; }
       .customer-empty-state p { color: #b9accd; font-size: 13px; line-height: 1.45; }
-      .customer-empty-state a { min-height: 38px; display: inline-flex; align-items: center; padding: 0 12px; border-radius: 9px; color: #071014; background: #7eeaff; font-size: 12px; font-weight: 950; text-decoration: none; }
+      .customer-empty-state a { min-height: 38px; display: inline-flex; align-items: center; padding: 0 12px; border-radius: 9px; color: #fff; background: #6d28d9; font-size: 12px; font-weight: 950; text-decoration: none; }
       .customer-loading-state { min-height: 112px; display: grid; place-items: center; color: #b9accd; }
       .saved-deal-head { display: flex; align-items: center; justify-content: space-between; gap: 14px; }
       .saved-deal-head > div { display: grid; gap: 4px; }
-      .saved-deal-head span { color: #7eeaff; font-size: 10px; font-weight: 950; letter-spacing: .14em; text-transform: uppercase; }
+      .saved-deal-head span { color: var(--mydancr-customer-accent); font-size: 10px; font-weight: 950; letter-spacing: .14em; text-transform: uppercase; }
       .saved-deal-head h2 { margin: 0; }
-      .saved-deal-head > strong { min-width: 42px; height: 42px; display: grid; place-items: center; border-radius: 50%; color: #061015; background: #7eeaff; font-size: 17px; }
+      .saved-deal-head > strong { min-width: 28px; height: 26px; display: grid; place-items: center; padding: 0 8px; border: 1px solid rgba(196,181,253,.36); border-radius: 999px; color: #eee8ff; background: rgba(124,58,237,.28); font-size: 11px; }
       .saved-deal-privacy-note { max-width: none; margin: 10px 0 0; color: #b9accd; font-size: 13px; line-height: 1.45; }
       .saved-deal-bookmark { align-items: start; }
       .saved-deal-bookmark > .customer-card-actions { justify-content: flex-end; margin-top: 0; }
@@ -8421,19 +8411,19 @@ function DashboardStyles() {
       .customer-deal-activity > summary::-webkit-details-marker { display: none; }
       .customer-deal-activity > summary::after { content: "+"; width: 30px; height: 30px; display: grid; place-items: center; flex: 0 0 auto; border-radius: 50%; color: #fff; background: rgba(255,255,255,.08); font-size: 20px; }
       .customer-deal-activity[open] > summary::after { content: "−"; }
-      .customer-deal-activity > summary > strong { margin-left: auto; color: #7eeaff; font-size: 12px; }
+      .customer-deal-activity > summary > strong { margin-left: auto; color: var(--mydancr-customer-accent); font-size: 12px; }
       .customer-nfc-guide { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 9px; margin-top: 14px; }
-      .customer-nfc-guide > div { min-width: 0; display: flex; gap: 10px; padding: 12px; border: 1px solid rgba(126,234,255,.2); border-radius: 12px; background: linear-gradient(145deg, rgba(109,40,217,.12), rgba(34,199,255,.05)); }
-      .customer-nfc-guide > div > b { width: 28px; height: 28px; display: grid; place-items: center; flex: 0 0 auto; border-radius: 50%; color: #061015; background: #7eeaff; font-size: 12px; }
+      .customer-nfc-guide > div { min-width: 0; display: flex; gap: 10px; padding: 12px; border: 1px solid rgba(167,139,250,.22); border-radius: 12px; background: linear-gradient(145deg, rgba(109,40,217,.14), rgba(255,255,255,.025)); }
+      .customer-nfc-guide > div > b { width: 28px; height: 28px; display: grid; place-items: center; flex: 0 0 auto; border-radius: 50%; color: #fff; background: #6d28d9; font-size: 12px; }
       .customer-nfc-guide span { min-width: 0; display: grid; gap: 4px; }
       .customer-nfc-guide small { color: #b9accd; font-size: 11px; line-height: 1.4; }
       .saved-deal-list { display: grid; gap: 9px; margin-top: 14px; }
       .saved-deal-list > p { margin: 0; color: #b9accd; font-size: 14px; line-height: 1.45; }
-      .saved-deal-item { min-height: 62px; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 10px 12px; border: 1px solid rgba(126,234,255,.3); border-radius: 10px; color: #fff; background: linear-gradient(135deg, rgba(109,40,217,.2), rgba(34,199,255,.08)); text-decoration: none; }
+      .saved-deal-item { min-height: 62px; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 10px 12px; border: 1px solid rgba(167,139,250,.3); border-radius: 10px; color: #fff; background: linear-gradient(135deg, rgba(109,40,217,.22), rgba(255,255,255,.035)); text-decoration: none; }
       .saved-deal-item > span { min-width: 0; display: grid; gap: 4px; }
       .saved-deal-item > span > strong { overflow: hidden; font-size: 15px; text-overflow: ellipsis; white-space: nowrap; }
       .saved-deal-item small { color: #b9accd; font-size: 12px; }
-      .saved-deal-item em { color: #7eeaff; font-size: 12px; font-style: normal; font-weight: 950; }
+      .saved-deal-item em { color: var(--mydancr-customer-accent); font-size: 12px; font-style: normal; font-weight: 950; }
       .saved-deal-item.unavailable { opacity: .62; border-color: rgba(255,255,255,.1); background: rgba(255,255,255,.035); }
       .past-deal-history { margin-top: 4px; border-top: 1px solid rgba(255,255,255,.08); padding-top: 10px; }
       .past-deal-history summary { min-height: 40px; display: flex; align-items: center; justify-content: space-between; gap: 10px; color: #d8cfeb; font-weight: 900; cursor: pointer; list-style: none; }
@@ -9187,6 +9177,23 @@ function DashboardStyles() {
       .dashboard-shell-dancer #dancer-performance .venue-dashboard-section-badge { border-color: rgba(245,158,11,.42); color: #fde68a; background: rgba(245,158,11,.12); box-shadow: 0 0 16px rgba(245,158,11,.08); }
       .dashboard-shell .venue-dashboard-section-body > .info-panel,
       .dashboard-shell .venue-dashboard-inner-grid > .info-panel { border-color: transparent; background: var(--mydancr-dashboard-panel-raised); }
+      .dashboard-shell-customer .venue-dashboard-section { border-color: rgba(167,139,250,.18); background: linear-gradient(145deg,rgba(17,11,29,.78),rgba(7,7,11,.98) 74%); }
+      .dashboard-shell-customer .venue-dashboard-section > summary { min-height: 68px; padding: 14px 16px; }
+      .dashboard-shell-customer .venue-dashboard-section[open] > summary { border-color: rgba(167,139,250,.16); background: rgba(139,92,246,.055); }
+      .dashboard-shell-customer .venue-dashboard-section-body { gap: 14px; padding: 14px; }
+      .dashboard-shell-customer #customer-followed-dancers .venue-dashboard-section-body,
+      .dashboard-shell-customer #customer-followed-clubs .venue-dashboard-section-body { padding: 12px 14px 15px; }
+      .dashboard-shell-customer .venue-dashboard-section-badge { min-width: 28px; min-height: 26px; box-sizing: border-box; display: grid; place-items: center; padding: 0 8px; border-color: rgba(196,181,253,.38); color: #f3efff; background: rgba(124,58,237,.3); font-size: 11px; }
+      .dashboard-shell-customer .venue-dashboard-section-toggle { border-color: rgba(167,139,250,.38); background: rgba(124,58,237,.17); }
+      .dashboard-shell-customer .venue-dashboard-section-body > .info-panel,
+      .dashboard-shell-customer .venue-dashboard-inner-grid > .info-panel { border-color: rgba(167,139,250,.1); background: rgba(255,255,255,.025); }
+      .dashboard-shell-customer .notification-unread-pill { border-color: rgba(167,139,250,.34); color: #e9e1ff; background: rgba(124,58,237,.2); }
+      .dashboard-shell-customer .notification-row { border-color: rgba(167,139,250,.12); }
+      .dashboard-shell-customer .notification-row:hover { border-color: rgba(167,139,250,.3); background: rgba(139,92,246,.07); }
+      .dashboard-shell-customer .notification-row .notification-row-meta,
+      .dashboard-shell-customer .notification-row em,
+      .dashboard-shell-customer .notification-panel > p { color: #c9bbf3; }
+      .dashboard-shell-customer .support-message.from-admin { border-color: rgba(167,139,250,.28); background: rgba(124,58,237,.1); }
       .dashboard-shell-venue .venue-working-list span { color: #76f0c8; }
       .dashboard-shell-venue .venue-deal-panel,
       .dashboard-shell-venue .venue-verification-panel { border-color: var(--mydancr-dashboard-border); background: var(--mydancr-dashboard-panel-raised); }
@@ -9237,6 +9244,16 @@ function DashboardStyles() {
       }
       @media (max-width: 860px) { .dashboard-grid, .venue-dashboard-overview-grid, .venue-dashboard-account-grid, .setup-panel form, .upload-panel form, .verification-panel form, .shift-panel form, .shift-checkin-card, .dashboard-shift, .billing-grid, .customer-settings-panel form, .notification-head, .socials-panel form, .share-grid, .impact-grid, .deal-metrics, .customer-saved-grid, .customer-settings-grid, .venue-deal-panel form, .venue-deal-metrics, .venue-deal-qr-generator, .venue-deal-qr-generator.has-qr, .venue-verification-controls, .dancer-verification-qr, .venue-verification-preview, .venue-verification-scanner { grid-template-columns: 1fr; } .setup-panel, .upload-panel, .verification-panel, .shift-panel, .billing-panel, .customer-settings-panel, .account-controls-panel, .notification-panel, .socials-panel, .share-panel, .impact-panel, .support-panel, .deal-panel, .saved-deal-panel, .customer-saved-panel, .locked-analytics-panel, .visibility-panel, .venue-working-panel, .venue-deal-panel, .venue-verification-panel, .customer-settings-panel .city-field, .setup-panel label:nth-of-type(4), .venue-dashboard-account-grid > .support-panel, .venue-dashboard-account-grid > .account-controls-panel { grid-column: auto; grid-row: auto; } .venue-deal-qr-preview { width: min(100%, 320px); justify-self: center; } .commission-tier-table > div { grid-template-columns: 1fr; gap: 4px; } }
       @media (max-width: 620px) { .dashboard-shell { padding-left: 12px; padding-right: 12px; } .venue-command-links { grid-template-columns: 1fr; } .venue-dashboard-section > summary { min-height: 96px; grid-template-columns: minmax(0, 1fr) auto; padding: 15px; } .venue-dashboard-section-badge { grid-column: 1; grid-row: 2; } .venue-dashboard-section-toggle { grid-column: 2; grid-row: 1 / span 2; } .venue-dashboard-section-body { padding: 10px; } .venue-deal-step-grid, .venue-deal-review, .venue-deal-share-options, .venue-verification-actions, .venue-verification-manual > div, .customer-nfc-guide { grid-template-columns: 1fr; } .venue-deal-readonly-heading { flex-direction: column; } .venue-contract-deal-list, .venue-contract-deal-list dl, .venue-deal-request-center, .venue-deal-request-center > form { grid-template-columns: 1fr; } .venue-deal-request-center > button, .venue-deal-request-center form button { width: 100%; } .venue-deal-request-history article { grid-template-columns: 1fr; } .customer-welcome-card { grid-template-columns: 34px minmax(0, 1fr) auto; gap: 10px; padding: 14px; } .customer-welcome-lock { width: 34px; height: 34px; } .customer-welcome-copy ul { grid-template-columns: 1fr; } .customer-welcome-actions { display: grid; grid-template-columns: 1fr; } .customer-welcome-actions a { width: 100%; } .customer-welcome-card > button { width: 34px; height: 34px; } .customer-dashboard-primary-links { grid-template-columns: repeat(2, minmax(0, 1fr)); } .customer-dashboard-primary-links a { min-height: 64px; padding: 10px; font-size: 12px; } .customer-dashboard-utility-links { justify-content: stretch; } .customer-dashboard-utility-links a { flex: 1 1 0; } .customer-saved-card-grid { grid-template-columns: 1fr; } .customer-followed-dancer-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; } .customer-followed-dancer-tile { border-radius: 10px; } .customer-followed-dancer-copy { gap: 3px; padding: 32px 7px 8px; } .customer-followed-dancer-copy > strong { font-size: 14px; } .customer-followed-dancer-copy > small { font-size: 9px; } .customer-followed-dancer-copy > .customer-followed-dancer-time { font-size: 8px; } .customer-followed-dancer-status { font-size: 8px; letter-spacing: .07em; } .customer-night-card { grid-template-columns: 96px minmax(0, 1fr); } .customer-night-card > .customer-saved-card-image { width: 96px; min-height: 154px; } .customer-night-copy { padding: 13px; } .customer-night-copy h3 { font-size: 20px; } .customer-section-heading.split { align-items: flex-start; flex-direction: column; } .customer-saved-head { align-items: center; flex-direction: row; } .customer-section-heading.split > strong, .notification-title-row > strong { min-width: 36px; width: 36px; height: 36px; font-size: 14px; } .customer-card-actions a, .customer-card-actions button, .customer-empty-state a { min-height: 42px; } .saved-deal-bookmark { grid-template-columns: 1fr; } .saved-deal-bookmark > .customer-card-actions { justify-content: flex-start; } .customer-settings-section { padding: 12px; } .deal-metrics .metric { border-left: 0; border-top: 1px solid var(--mydancr-dashboard-border); } .deal-metrics .metric:first-child { border-top: 0; } }
+      @media (max-width: 620px) {
+        .dashboard-shell-customer .venue-dashboard-section > summary { min-height: 78px; grid-template-columns: minmax(0,1fr) auto auto; gap: 8px; padding: 12px 13px; }
+        .dashboard-shell-customer .venue-dashboard-section-badge { grid-column: 2; grid-row: 1; align-self: center; }
+        .dashboard-shell-customer .venue-dashboard-section-toggle { grid-column: 3; grid-row: 1; }
+        .dashboard-shell-customer .venue-dashboard-section-body { padding: 11px; }
+        .dashboard-shell-customer #customer-followed-dancers .venue-dashboard-section-body,
+        .dashboard-shell-customer #customer-followed-clubs .venue-dashboard-section-body { padding: 10px 11px 13px; }
+        .dashboard-shell-customer .customer-section-heading.split > strong,
+        .dashboard-shell-customer .notification-title-row > strong { min-width: 28px; width: auto; height: 26px; font-size: 11px; }
+      }
       @media (max-width: 620px) { .dancer-nats-signup-callout { grid-template-columns: 1fr; gap: 13px; padding: 15px; } .dancer-nats-signup-actions { display: grid; grid-template-columns: 1fr; justify-content: stretch; } .dancer-nats-signup-actions > a, .dancer-nats-signup-actions > button, .dancer-nats-signup-actions > b { width: 100%; min-height: 46px; } }
       @media (max-width: 520px) { .dashboard-head { padding: 10px 12px 14px; border-radius: 16px; } .dashboard-head-row { gap: 10px; } .dashboard-head h1, h1 { font-size: clamp(21px, 6vw, 26px); } .dashboard-close { flex-basis: 42px; } .notification-title-row { align-items: flex-start; } }
       @media (max-width: 520px) { .notification-toolbar { width: 100%; justify-content: flex-start; } .notification-mark-read-button { margin-left: auto; } .support-panel .support-send-button { width: 100%; } .account-action-row { gap: 10px; } .account-action-button { min-width: 78px; padding-inline: 10px; } }
