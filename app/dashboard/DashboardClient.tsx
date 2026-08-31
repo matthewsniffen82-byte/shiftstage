@@ -145,6 +145,44 @@ type CustomerSavedState = {
   }>;
 };
 
+type CustomerDancerFollow = NonNullable<CustomerSavedState["follows"]>[number];
+
+const customerDashboardCollator = new Intl.Collator("en", {
+  numeric: true,
+  sensitivity: "base",
+});
+
+function customerFollowedDancerCity(item: CustomerDancerFollow) {
+  const dancer = item.dancer;
+  return String(dancer?.city || dancer?.nextShift?.venue.city || "").trim() || "City not listed";
+}
+
+function groupFollowedDancersByCity(items: CustomerDancerFollow[]) {
+  const grouped = new Map<string, { city: string; follows: CustomerDancerFollow[] }>();
+
+  for (const item of items) {
+    const city = customerFollowedDancerCity(item);
+    const key = city.toLocaleLowerCase("en-US");
+    const group = grouped.get(key) || { city, follows: [] };
+    group.follows.push(item);
+    grouped.set(key, group);
+  }
+
+  return Array.from(grouped.values())
+    .map((group) => ({
+      ...group,
+      follows: group.follows.slice().sort((left, right) => customerDashboardCollator.compare(
+        String(left.dancer?.stageName || ""),
+        String(right.dancer?.stageName || ""),
+      )),
+    }))
+    .sort((left, right) => {
+      if (left.city === "City not listed") return 1;
+      if (right.city === "City not listed") return -1;
+      return customerDashboardCollator.compare(left.city, right.city);
+    });
+}
+
 type LoadState = {
   account?: DashboardSessionAccount | null;
   profile?: Record<string, unknown> | null;
@@ -1690,6 +1728,7 @@ function CustomerFollowedDancersPanel({
   saved?: LoadState["saved"];
 }) {
   const followedDancers = saved?.follows || [];
+  const followedDancerCityGroups = groupFollowedDancersByCity(followedDancers);
 
   return (
     <article className="info-panel customer-saved-panel" tabIndex={-1}>
@@ -1706,24 +1745,34 @@ function CustomerFollowedDancersPanel({
           {isLocating ? "Finding you…" : location ? "Refresh distance" : "Show distance"}
         </button>
       </div>
-      <div className="customer-saved-card-grid">
-          {followedDancers.map((item, index) => {
-            const dancer = item.dancer;
-            const dancerId = String(item.dancerId || dancer?.id || "");
-            if (!dancer?.slug || !dancer.stageName || !dancerId) return null;
-            return (
-              <SavedDancerCard
-                dancer={dancer}
-                distance={customerVenueDistance(location, dancer.nextShift?.venue)}
-                key={`${dancer.slug}-${index}`}
-                onDirections={onDirections}
-                onFollowChange={(following, notificationsEnabled) => void onDancerFollowChange(dancerId, following, notificationsEnabled)}
-                pending={Boolean(pendingAction)}
-                notificationsEnabled={Boolean(item.notificationsEnabled)}
-              />
-            );
-          })}
-          {!followedDancers.length && !isLoading ? <CustomerSavedEmpty label="No followed dancers yet" href={homeDiscoveryHref("dancers")} cta="Browse dancers" /> : null}
+      <div className="customer-followed-city-list">
+        {followedDancerCityGroups.map((group) => (
+          <section className="customer-followed-city-group" key={group.city}>
+            <div className="customer-followed-city-heading">
+              <h3>{group.city}</h3>
+              <span>{group.follows.length} {group.follows.length === 1 ? "dancer" : "dancers"}</span>
+            </div>
+            <div className="customer-saved-card-grid customer-followed-dancer-grid">
+              {group.follows.map((item) => {
+                const dancer = item.dancer;
+                const dancerId = String(item.dancerId || dancer?.id || "");
+                if (!dancer?.slug || !dancer.stageName || !dancerId) return null;
+                return (
+                  <SavedDancerCard
+                    dancer={dancer}
+                    distance={customerVenueDistance(location, dancer.nextShift?.venue)}
+                    key={dancerId}
+                    onDirections={onDirections}
+                    onFollowChange={(following, notificationsEnabled) => void onDancerFollowChange(dancerId, following, notificationsEnabled)}
+                    pending={Boolean(pendingAction)}
+                    notificationsEnabled={Boolean(item.notificationsEnabled)}
+                  />
+                );
+              })}
+            </div>
+          </section>
+        ))}
+        {!followedDancers.length && !isLoading ? <CustomerSavedEmpty label="No followed dancers yet" href={homeDiscoveryHref("dancers")} cta="Browse dancers" /> : null}
       </div>
       {isLoading ? <div className="customer-loading-state">Loading followed dancers…</div> : null}
     </article>
@@ -8420,7 +8469,13 @@ function DashboardStyles() {
       .customer-panel-toolbar > button { min-height: 42px; padding: 0 13px; border: 1px solid rgba(126,234,255,.26); border-radius: 999px; color: #fff; background: rgba(126,234,255,.08); font: inherit; font-size: 12px; font-weight: 900; cursor: pointer; }
       .customer-panel-toolbar > button:disabled { opacity: .6; cursor: wait; }
       .customer-location-status { max-width: none; color: #aaf2ff; font-size: 13px; }
+      .customer-followed-city-list { display: grid; gap: 20px; }
+      .customer-followed-city-group { min-width: 0; display: grid; gap: 10px; }
+      .customer-followed-city-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-bottom: 7px; border-bottom: 1px solid rgba(126,234,255,.16); }
+      .customer-followed-city-heading h3 { margin: 0; color: #fff; font-size: 18px; }
+      .customer-followed-city-heading span { color: #aaf2ff; font-size: 11px; font-weight: 900; }
       .customer-saved-card-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+      .customer-followed-dancer-grid .customer-saved-card-image { height: auto; aspect-ratio: 4 / 5; }
       .customer-saved-card { min-width: 0; overflow: hidden; border: 1px solid rgba(126,234,255,.16); border-radius: 12px; background: rgba(5,5,9,.7); }
       .customer-saved-card-image { width: 100%; height: 148px; display: grid; place-items: center; object-fit: cover; background: linear-gradient(145deg, #201338, #091927); color: #fff; font-size: 24px; font-weight: 950; }
       .customer-saved-card-copy { min-width: 0; display: grid; gap: 6px; padding: 12px; }
@@ -9266,7 +9321,7 @@ function DashboardStyles() {
         .earnings-history-tabs button { padding: 5px 8px; }
       }
       @media (max-width: 860px) { .dashboard-grid, .venue-dashboard-overview-grid, .venue-dashboard-account-grid, .setup-panel form, .upload-panel form, .verification-panel form, .shift-panel form, .shift-checkin-card, .dashboard-shift, .billing-grid, .customer-settings-panel form, .notification-head, .socials-panel form, .share-grid, .impact-grid, .deal-metrics, .customer-saved-grid, .customer-settings-grid, .venue-deal-panel form, .venue-deal-metrics, .venue-deal-qr-generator, .venue-deal-qr-generator.has-qr, .venue-verification-controls, .dancer-verification-qr, .venue-verification-preview, .venue-verification-scanner { grid-template-columns: 1fr; } .setup-panel, .upload-panel, .verification-panel, .shift-panel, .billing-panel, .customer-settings-panel, .account-controls-panel, .notification-panel, .socials-panel, .share-panel, .impact-panel, .support-panel, .deal-panel, .saved-deal-panel, .customer-saved-panel, .locked-analytics-panel, .visibility-panel, .venue-working-panel, .venue-deal-panel, .venue-verification-panel, .customer-settings-panel .city-field, .setup-panel label:nth-of-type(4), .venue-dashboard-account-grid > .support-panel, .venue-dashboard-account-grid > .account-controls-panel { grid-column: auto; grid-row: auto; } .venue-deal-qr-preview { width: min(100%, 320px); justify-self: center; } .commission-tier-table > div { grid-template-columns: 1fr; gap: 4px; } }
-      @media (max-width: 620px) { .dashboard-shell { padding-left: 12px; padding-right: 12px; } .venue-command-links { grid-template-columns: 1fr; } .venue-dashboard-section > summary { min-height: 96px; grid-template-columns: minmax(0, 1fr) auto; padding: 15px; } .venue-dashboard-section-badge { grid-column: 1; grid-row: 2; } .venue-dashboard-section-toggle { grid-column: 2; grid-row: 1 / span 2; } .venue-dashboard-section-body { padding: 10px; } .venue-deal-step-grid, .venue-deal-review, .venue-deal-share-options, .venue-verification-actions, .venue-verification-manual > div, .customer-nfc-guide { grid-template-columns: 1fr; } .venue-deal-readonly-heading { flex-direction: column; } .venue-contract-deal-list, .venue-contract-deal-list dl, .venue-deal-request-center, .venue-deal-request-center > form { grid-template-columns: 1fr; } .venue-deal-request-center > button, .venue-deal-request-center form button { width: 100%; } .venue-deal-request-history article { grid-template-columns: 1fr; } .customer-welcome-card { grid-template-columns: 34px minmax(0, 1fr) auto; gap: 10px; padding: 14px; } .customer-welcome-lock { width: 34px; height: 34px; } .customer-welcome-copy ul { grid-template-columns: 1fr; } .customer-welcome-actions { display: grid; grid-template-columns: 1fr; } .customer-welcome-actions a { width: 100%; } .customer-welcome-card > button { width: 34px; height: 34px; } .customer-dashboard-primary-links { grid-template-columns: repeat(2, minmax(0, 1fr)); } .customer-dashboard-primary-links a { min-height: 64px; padding: 10px; font-size: 12px; } .customer-dashboard-utility-links { justify-content: stretch; } .customer-dashboard-utility-links a { flex: 1 1 0; } .customer-saved-card-grid { grid-template-columns: 1fr; } .customer-night-card { grid-template-columns: 96px minmax(0, 1fr); } .customer-night-card > .customer-saved-card-image { width: 96px; min-height: 154px; } .customer-night-copy { padding: 13px; } .customer-night-copy h3 { font-size: 20px; } .customer-saved-head, .customer-section-heading.split { align-items: flex-start; flex-direction: column; } .customer-section-heading.split > strong, .notification-title-row > strong { min-width: 36px; width: 36px; height: 36px; font-size: 14px; } .customer-card-actions a, .customer-card-actions button, .customer-empty-state a { min-height: 42px; } .saved-deal-bookmark { grid-template-columns: 1fr; } .saved-deal-bookmark > .customer-card-actions { justify-content: flex-start; } .customer-settings-section { padding: 12px; } .deal-metrics .metric { border-left: 0; border-top: 1px solid var(--mydancr-dashboard-border); } .deal-metrics .metric:first-child { border-top: 0; } }
+      @media (max-width: 620px) { .dashboard-shell { padding-left: 12px; padding-right: 12px; } .venue-command-links { grid-template-columns: 1fr; } .venue-dashboard-section > summary { min-height: 96px; grid-template-columns: minmax(0, 1fr) auto; padding: 15px; } .venue-dashboard-section-badge { grid-column: 1; grid-row: 2; } .venue-dashboard-section-toggle { grid-column: 2; grid-row: 1 / span 2; } .venue-dashboard-section-body { padding: 10px; } .venue-deal-step-grid, .venue-deal-review, .venue-deal-share-options, .venue-verification-actions, .venue-verification-manual > div, .customer-nfc-guide { grid-template-columns: 1fr; } .venue-deal-readonly-heading { flex-direction: column; } .venue-contract-deal-list, .venue-contract-deal-list dl, .venue-deal-request-center, .venue-deal-request-center > form { grid-template-columns: 1fr; } .venue-deal-request-center > button, .venue-deal-request-center form button { width: 100%; } .venue-deal-request-history article { grid-template-columns: 1fr; } .customer-welcome-card { grid-template-columns: 34px minmax(0, 1fr) auto; gap: 10px; padding: 14px; } .customer-welcome-lock { width: 34px; height: 34px; } .customer-welcome-copy ul { grid-template-columns: 1fr; } .customer-welcome-actions { display: grid; grid-template-columns: 1fr; } .customer-welcome-actions a { width: 100%; } .customer-welcome-card > button { width: 34px; height: 34px; } .customer-dashboard-primary-links { grid-template-columns: repeat(2, minmax(0, 1fr)); } .customer-dashboard-primary-links a { min-height: 64px; padding: 10px; font-size: 12px; } .customer-dashboard-utility-links { justify-content: stretch; } .customer-dashboard-utility-links a { flex: 1 1 0; } .customer-saved-card-grid { grid-template-columns: 1fr; } .customer-followed-dancer-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; } .customer-followed-dancer-grid .customer-saved-card-copy { gap: 5px; padding: 10px 9px; } .customer-followed-dancer-grid .customer-saved-card-copy > a strong { font-size: 16px; } .customer-followed-dancer-grid .customer-card-actions { display: grid !important; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px !important; } .customer-followed-dancer-grid .customer-card-actions a, .customer-followed-dancer-grid .customer-card-actions button { min-width: 0; padding: 0 5px; font-size: 11px; } .customer-night-card { grid-template-columns: 96px minmax(0, 1fr); } .customer-night-card > .customer-saved-card-image { width: 96px; min-height: 154px; } .customer-night-copy { padding: 13px; } .customer-night-copy h3 { font-size: 20px; } .customer-saved-head, .customer-section-heading.split { align-items: flex-start; flex-direction: column; } .customer-section-heading.split > strong, .notification-title-row > strong { min-width: 36px; width: 36px; height: 36px; font-size: 14px; } .customer-card-actions a, .customer-card-actions button, .customer-empty-state a { min-height: 42px; } .saved-deal-bookmark { grid-template-columns: 1fr; } .saved-deal-bookmark > .customer-card-actions { justify-content: flex-start; } .customer-settings-section { padding: 12px; } .deal-metrics .metric { border-left: 0; border-top: 1px solid var(--mydancr-dashboard-border); } .deal-metrics .metric:first-child { border-top: 0; } }
       @media (max-width: 620px) { .dancer-nats-signup-callout { grid-template-columns: 1fr; gap: 13px; padding: 15px; } .dancer-nats-signup-actions { display: grid; grid-template-columns: 1fr; justify-content: stretch; } .dancer-nats-signup-actions > a, .dancer-nats-signup-actions > button, .dancer-nats-signup-actions > b { width: 100%; min-height: 46px; } }
       @media (max-width: 520px) { .dashboard-head { padding: 10px 12px 14px; border-radius: 16px; } .dashboard-head-row { gap: 10px; } .dashboard-head h1, h1 { font-size: clamp(21px, 6vw, 26px); } .dashboard-close { flex-basis: 42px; } .notification-title-row { align-items: flex-start; } }
       @media (max-width: 520px) { .notification-toolbar { width: 100%; justify-content: flex-start; } .notification-mark-read-button { margin-left: auto; } .support-panel .support-send-button { width: 100%; } .account-action-row { gap: 10px; } .account-action-button { min-width: 78px; padding-inline: 10px; } }

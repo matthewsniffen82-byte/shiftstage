@@ -62,6 +62,15 @@ test("I’m Going and followed profile sections use live customer records and pr
   assert.match(dashboard, /id="customer-followed-dancers"[\s\S]*?id="customer-followed-clubs"[\s\S]*?id="customer-saved-deals"[\s\S]*?id="customer-going"/);
 });
 
+test("followed dancers are grouped by city in a responsive profile grid", () => {
+  assert.match(dashboard, /function customerFollowedDancerCity[\s\S]*?dancer\?\.city \|\| dancer\?\.nextShift\?\.venue\.city[\s\S]*?City not listed/);
+  assert.match(dashboard, /function groupFollowedDancersByCity[\s\S]*?customerDashboardCollator\.compare\(left\.city, right\.city\)/);
+  assert.match(dashboard, /group\.follows\.slice\(\)\.sort[\s\S]*?left\.dancer\?\.stageName[\s\S]*?right\.dancer\?\.stageName/);
+  assert.match(dashboard, /customer-followed-city-list[\s\S]*?customer-followed-city-heading[\s\S]*?customer-saved-card-grid customer-followed-dancer-grid/);
+  assert.match(dashboard, /\.customer-followed-dancer-grid \{ grid-template-columns: repeat\(2, minmax\(0, 1fr\)\)/);
+  assert.match(dashboard, /\.customer-followed-dancer-grid \.customer-saved-card-image \{ height: auto; aspect-ratio: 4 \/ 5; \}/);
+});
+
 test("fictional club direction controls navigate to the shared MyDancr destination", () => {
   assert.match(dashboard, /import \{ fictionalVenueTravelAddress \}/);
   assert.doesNotMatch(dashboard, /isFictionalVenueTravelPreviewOnly|previewOnly/);
