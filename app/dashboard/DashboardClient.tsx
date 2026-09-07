@@ -1332,7 +1332,7 @@ function AccountControlsPanel({
     ? "Pause or permanently close this venue account."
     : isVenueAccount
       ? "Manage your personal venue-team login."
-      : "Manage this session and your account access.";
+      : "Manage access to your account.";
 
   useEffect(() => {
     setState(accountState);
@@ -1452,31 +1452,41 @@ function AccountControlsPanel({
   return (
     <article className="info-panel account-controls-panel">
       <div className="account-controls-heading">
+        <span className="account-security-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 3 4.5 6v5.2c0 4.5 3.2 7.8 7.5 9.8 4.3-2 7.5-5.3 7.5-9.8V6L12 3Z" /><path d="m8.5 12 2.3 2.3 4.7-4.6" /></svg></span>
         <h2>{accountHeading}</h2>
         <p>{accountDescription}</p>
       </div>
       <div className="account-actions">
         <div className="account-action-row">
-          <span><strong>Sign out</strong><small>End this session on this device.</small></span>
+          <span className="account-action-details">
+            <span className="account-action-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M10 4H5v16h5m4-12 4 4-4 4m-5-4h11" /></svg></span>
+            <span><strong>Sign out</strong><small>End your session on this device.</small></span>
+          </span>
           <button className="account-action-button" type="button" onClick={signOut} disabled={isWorking}>Sign out</button>
         </div>
         <div className="account-action-row">
-          <span>
+          <span className="account-action-details">
+            <span className="account-action-icon is-pause" aria-hidden="true"><svg viewBox="0 0 24 24">{state === "disabled" ? <path d="m9 5 10 7-10 7V5Z" /> : <path d="M8 5v14M16 5v14" />}</svg></span>
+            <span>
             <strong>{state === "disabled" ? ownsVenueWorkspace ? "Reactivate venue account" : "Reactivate account" : ownsVenueWorkspace ? "Disable venue account" : "Disable account"}</strong>
             <small>{state === "disabled"
               ? ownsVenueWorkspace ? "Restore the venue and team access to the state they had before the pause." : "Restore access to your account."
-              : ownsVenueWorkspace ? "Immediately make the venue private and pause access for the entire venue team without deleting saved data." : "Pause your access without deleting the shared venue or your saved account data."}</small>
+              : ownsVenueWorkspace ? "Immediately make the venue private and pause access for the entire venue team without deleting saved data." : isVenueAccount ? "Pause your login without deleting the shared venue." : "Pause access and keep your saved data."}</small>
+            </span>
           </span>
           <button className="account-action-button" type="button" onClick={() => updateAccount(state === "disabled" ? "active" : "disabled")} disabled={isWorking}>
             {state === "disabled" ? "Reactivate" : "Disable"}
           </button>
         </div>
         <div className="account-action-row account-danger-row">
-          <span>
+          <span className="account-action-details">
+            <span className="account-action-icon is-delete" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 10v7m4-7v7" /></svg></span>
+            <span>
             <strong>{ownsVenueWorkspace ? "Delete venue account" : isVenueAccount ? "Delete my team account" : "Delete account"}</strong>
             <small>{ownsVenueWorkspace
               ? `Permanently remove this login and archive ${venueName || "the venue"}. MyDancr retains records required for accounting, security, and legal compliance.`
               : isVenueAccount ? "Permanently remove your login and team membership without deleting the shared venue." : "Permanently delete this account."}</small>
+            </span>
           </span>
           <button
             className="account-action-button danger-button"
@@ -8524,22 +8534,38 @@ function DashboardStyles() {
       .account-summary-list dd { min-width: 0; margin: 0; color: #f8f7fb; font-size: 15px; font-weight: 850; overflow-wrap: anywhere; }
       .account-controls-heading, .support-panel-heading { display: grid !important; gap: 5px !important; }
       .account-controls-heading p, .support-panel-heading p { margin: 0; color: #a9a1b3; font-size: 13px; line-height: 1.45; }
-      .account-actions { display: grid !important; gap: 0 !important; }
-      .account-action-row { min-width: 0; display: grid; grid-template-columns: minmax(0,1fr) auto; align-items: center; gap: 14px; padding: 13px 0; border-top: 1px solid rgba(255,255,255,.08); }
-      .account-action-row > span { min-width: 0; display: grid; gap: 3px; }
-      .account-action-row strong { color: #f8f7fb; font-size: 14px; }
-      .account-action-row small { color: #9f96ac; font-size: 12px; line-height: 1.4; }
+      .account-controls-panel { min-width: 0; grid-template-columns: minmax(0, 1fr); padding: 20px !important; border-radius: 22px !important; }
+      .account-controls-panel .account-controls-heading { grid-template-columns: 36px minmax(0, 1fr); align-items: center; column-gap: 10px !important; row-gap: 10px !important; }
+      .account-controls-heading h2 { font-size: 21px; line-height: 1.2; letter-spacing: -.025em; }
+      .account-controls-heading > p { grid-column: 1 / -1; }
+      .account-security-icon, .account-action-icon { box-sizing: border-box; width: 36px; height: 36px; display: grid !important; place-items: center; border: 1px solid rgba(176,137,240,.17); border-radius: 11px; color: #b89bdd; background: rgba(151,101,222,.065); }
+      .account-security-icon > svg, .account-action-icon > svg { width: 19px; height: 19px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+      .account-actions { min-width: 0; display: grid !important; grid-template-columns: minmax(0, 1fr); gap: 0 !important; }
+      .account-action-row { min-width: 0; display: grid; grid-template-columns: minmax(0,1fr) auto; align-items: center; gap: 18px; padding: 18px 0; border-top: 1px solid rgba(255,255,255,.07); }
+      .account-action-row > .account-action-details { min-width: 0; display: grid; grid-template-columns: 36px minmax(0, 1fr); align-items: start; gap: 12px; }
+      .account-action-details > span:last-child { min-width: 0; display: grid; gap: 5px; }
+      .account-action-icon.is-pause { color: #c2b4d3; border-color: rgba(194,180,211,.16); background: rgba(194,180,211,.045); }
+      .account-action-icon.is-delete { color: #ed9baa; border-color: rgba(237,155,170,.16); background: rgba(185,68,94,.07); }
+      .account-action-row strong { color: #f4f0f8; font-size: 15px; line-height: 1.3; }
+      .account-action-row small { color: #a7a0b2; font-size: 12px; line-height: 1.5; }
       .account-action-button { min-width: 88px; min-height: 40px; border: 1px solid rgba(255,255,255,.13); border-radius: 10px; color: #f8f7fb; background: rgba(255,255,255,.055); font: inherit; font-size: 12px; font-weight: 900; cursor: pointer; padding: 0 13px; }
       .account-action-button:hover { border-color: rgba(196,181,253,.4); background: rgba(124,58,237,.12); }
       .account-action-button:disabled { opacity: .55; cursor: wait; }
-      .account-danger-row { margin-top: 4px; padding: 12px; border: 1px solid rgba(248,113,113,.2); border-radius: 12px; background: rgba(127,29,29,.08); }
+      .account-danger-row { margin-top: 2px; padding-bottom: 0; border-top-color: rgba(237,155,170,.16); }
       .account-actions .danger-button { color: #fecaca; background: rgba(127,29,29,.22); border-color: rgba(248,113,113,.28); }
-      .account-delete-confirmation { display: grid !important; gap: 10px !important; margin-top: 10px; padding: 13px; border: 1px solid rgba(248,113,113,.24); border-radius: 12px; background: rgba(69,10,10,.2); }
+      body.dancr-button-system .account-controls-panel .account-action-button { box-sizing: border-box !important; width: auto !important; min-width: 104px !important; min-height: 44px !important; margin: 0 !important; padding: 10px 16px !important; border: 1px solid rgba(255,255,255,.15) !important; border-radius: 11px !important; color: #e5dfed !important; background: rgba(255,255,255,.035) !important; box-shadow: none !important; font-size: 12px !important; line-height: 1.3 !important; }
+      body.dancr-button-system .account-controls-panel .account-action-button:hover:not(:disabled) { border-color: rgba(185,151,236,.45) !important; background: rgba(151,101,222,.09) !important; }
+      body.dancr-button-system .account-controls-panel .account-action-button.danger-button { color: #f4a7b5 !important; border-color: rgba(237,155,170,.3) !important; background: rgba(185,68,94,.07) !important; }
+      body.dancr-button-system .account-controls-panel .account-action-button.danger-button:hover:not(:disabled) { border-color: #ed9baa !important; background: rgba(185,68,94,.14) !important; }
+      .account-controls-panel .account-action-button:focus-visible { outline: 2px solid #bb92f3; outline-offset: 3px; }
+      .account-delete-confirmation { box-sizing: border-box; min-width: 0; display: grid !important; grid-template-columns: minmax(0, 1fr); gap: 10px !important; margin-top: 10px; padding: 13px; border: 1px solid rgba(248,113,113,.24); border-radius: 12px; background: rgba(69,10,10,.2); }
       .account-delete-confirmation label { color: #e7dce9; font-size: 12px; line-height: 1.45; }
+      body.dancr-button-system .account-controls-panel .account-delete-confirmation label { font-size: 12px !important; font-weight: 500 !important; letter-spacing: normal !important; line-height: 1.5 !important; text-transform: none !important; }
       .account-delete-confirmation label strong { color: #fecaca; letter-spacing: .08em; }
-      .account-delete-confirmation input { min-height: 42px; box-sizing: border-box; padding: 0 12px; border: 1px solid rgba(248,113,113,.3); border-radius: 9px; color: #fff; background: rgba(5,5,7,.72); font: inherit; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; }
+      .account-delete-confirmation input { min-width: 0; width: 100%; max-width: 100%; min-height: 44px; box-sizing: border-box; padding: 0 12px; border: 1px solid rgba(248,113,113,.3); border-radius: 9px; color: #fff; background: rgba(5,5,7,.72); font: inherit; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; }
       .account-delete-confirmation input:focus-visible { outline: 2px solid #ef4444; outline-offset: 2px; }
       .account-delete-confirmation > div { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 8px; }
+      @media (max-width: 520px) { .account-controls-panel { padding: 16px !important; } .account-controls-heading h2 { font-size: 20px; } .account-controls-panel .account-action-row { grid-template-columns: minmax(0, 1fr); gap: 12px; padding-block: 16px; } .account-controls-panel .account-action-row:last-of-type { padding-bottom: 0; } body.dancr-button-system .account-controls-panel .account-action-row > .account-action-button { justify-self: start; margin-left: 48px !important; min-width: 116px !important; } .account-delete-confirmation > div { display: grid; grid-template-columns: minmax(0, 1fr); } body.dancr-button-system .account-controls-panel .account-delete-confirmation .account-action-button { width: 100% !important; } }
       .account-actions p { margin: 10px 0 0; color: #94e5ff; font-size: 14px; }
       .notification-title-row { display: flex !important; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px !important; }
       .notification-title-row > div { display: grid; gap: 4px; }
