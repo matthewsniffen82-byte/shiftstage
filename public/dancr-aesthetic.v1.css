@@ -12004,7 +12004,8 @@ body.dancr-button-system .public-profile-shell .profile-media-socials .social-li
   height: 17px !important;
 }
 
-/* Paint the selection above the tab surface as solid white, rather than an inset shadow. */
+/* An SVG image preserves the white selection line when mobile website dark mode
+ * recolors CSS backgrounds and borders at paint time. */
 body.dancr-button-system #profileBackdrop #profileModal .profile-modal-media-tabs button.active::after,
 body.dancr-button-system .public-profile-shell .profile-media-tabs button.active::after {
   content: "" !important;
@@ -12013,7 +12014,7 @@ body.dancr-button-system .public-profile-shell .profile-media-tabs button.active
   height: 2px !important;
   border: 0 !important;
   border-radius: 0 !important;
-  background: #fff !important;
+  background: transparent url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='2' height='2'%3E%3Cpath fill='%23fff' d='M0 0h2v2H0z'/%3E%3C/svg%3E") center / 100% 100% no-repeat !important;
   box-shadow: none !important;
   opacity: 1 !important;
   filter: none !important;
