@@ -100,8 +100,8 @@ export function currentDashboardAuthHeaders(expectedRole?: string): Record<strin
   return dashboardAuthHeaders(session);
 }
 
-export function persistRefreshedDashboardSession(session: unknown) {
-  persistRefreshedBrowserAuthSession(session);
+export function persistRefreshedDashboardSession(session: unknown, expected?: StoredDashboardSession | null) {
+  persistRefreshedBrowserAuthSession(session, expected);
 }
 
 export function dashboardLoadErrorMessage(error: unknown) {

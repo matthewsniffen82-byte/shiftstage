@@ -84,7 +84,7 @@ test("the browser auth boundary safely reads sessions and enforces optional acco
     assert.equal(persistRefreshedBrowserAuthSession({
       accessToken: "rotated-access",
       expiresAt: 200,
-    }), true);
+    }, readBrowserAuthSession()), true);
     assert.deepEqual(readBrowserAuthSession(), {
       accessToken: "rotated-access",
       refreshToken: "venue-refresh",
@@ -234,7 +234,7 @@ test("standalone NFC, redemption, invitation, and DMCA clients use the same sess
   }
 
   assert.match(nfcSource, /readBrowserAuthSession\(\)/);
-  assert.match(nfcSource, /persistRefreshedBrowserAuthSession\(data\.session\)/);
+  assert.match(nfcSource, /persistRefreshedBrowserAuthSession\(data\.session, auth\)/);
   assert.doesNotMatch(nfcSource, /function readAuthSession\(|function persistRefreshedSession\(/);
   assert.match(nfcSource, /const TAP_SESSION_KEY = "mydancrNfcTapSessionV1"/);
   assert.match(nfcSource, /const DEAL_INTENT_KEY = "mydancrPendingNfcDealV2"/);

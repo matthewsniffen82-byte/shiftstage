@@ -79,7 +79,10 @@ function formFixture({ succeeds = true, storedSession = session, search = "", ge
       useEffect: (effect) => effects.push(effect),
     },
     "react/jsx-runtime": require("react/jsx-runtime"),
-    "@/src/lib/dancr/browser-session": { readBrowserAuthSession: () => storedSession, persistRefreshedBrowserAuthSession() {} },
+    "@/src/lib/dancr/browser-session": {
+      readBrowserAuthSession: () => storedSession, persistRefreshedBrowserAuthSession() {},
+      isCurrentBrowserSession: expected => storedSession?.accessToken === expected?.accessToken && storedSession?.refreshToken === expected?.refreshToken,
+    },
   }, {
     AbortController, setTimeout: hang ? (fn) => setTimeout(fn, 0) : setTimeout, clearTimeout,
     window: { location: { search } },
@@ -98,7 +101,7 @@ function formFixture({ succeeds = true, storedSession = session, search = "", ge
     for (const child of [node.props?.children].flat(Infinity)) { const match = find(child, type); if (match) return match; }
     return null;
   };
-  return { states, effects, calls, render, find };
+  return { states, effects, calls, render, find, setSession: next => { storedSession = next; } };
 }
 async function readyForm(options) {
   const fixture = formFixture(options);
@@ -187,5 +190,14 @@ test("hanging reset-session fetch is aborted and exits loading", async () => {
   await new Promise((resolve) => setTimeout(resolve, 10));
   assert.equal(fixture.calls[0].signal.aborted, true);
   assert.equal(fixture.states[0], "unavailable");
+  assert.equal(fixture.calls.length, 1);
+});
+
+test("switching accounts after opening recovery cannot change the new account password", async () => {
+  const fixture = await readyForm();
+  fixture.setSession({ accessToken: "other-access", refreshToken: "other-refresh", account: { role: "customer" } });
+  fixture.states[1] = fixture.states[2] = "new-password";
+  await fixture.find(fixture.render(), "form").props.onSubmit({ preventDefault() {} });
+  assert.equal(fixture.states[0], "expired");
   assert.equal(fixture.calls.length, 1);
 });

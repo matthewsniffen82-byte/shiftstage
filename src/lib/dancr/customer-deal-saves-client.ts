@@ -59,7 +59,7 @@ async function requestCustomerDealSaveJson(path: string, options: RequestInit) {
     if (!response.ok || data?.ok !== true) {
       throw new Error(data?.error || "Unable to update this saved Club Deal.");
     }
-    if (data.session) persistRefreshedBrowserAuthSession(data.session);
+    if (data.session) persistRefreshedBrowserAuthSession(data.session, session);
     return data;
   } finally {
     window.clearTimeout(timeoutId);

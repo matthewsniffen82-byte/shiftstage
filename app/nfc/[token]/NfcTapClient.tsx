@@ -160,7 +160,7 @@ export function NfcTapClient({ token }: { token: string }) {
         return;
       }
       if (!response.ok || !data.ok) throw new Error(data.error || "Unable to complete this phone tap.");
-      persistRefreshedBrowserAuthSession(data.session);
+      persistRefreshedBrowserAuthSession(data.session, auth);
       if (state.tag.type === "cashier") clearPendingDealIntent();
       let completedDancerTap = state.tag.type === "dressing_room"
         && data.affiliation?.enrollmentStatus === "completed";

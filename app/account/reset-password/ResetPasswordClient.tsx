@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, type FormEvent } from "react";
 import {
   readBrowserAuthSession,
   persistRefreshedBrowserAuthSession,
+  isCurrentBrowserSession,
 } from "@/src/lib/dancr/browser-session";
 
 export default function ResetPasswordClient() {
@@ -16,6 +17,7 @@ export default function ResetPasswordClient() {
   const [attempt, setAttempt] = useState(0);
   const inFlight = useRef(false);
   const saveController = useRef<AbortController | null>(null);
+  const verifiedAccount = useRef("");
 
   useEffect(() => {
     const controller = new AbortController();
@@ -38,7 +40,13 @@ export default function ResetPasswordClient() {
       if (controller.signal.aborted) throw new Error("Session check timed out.");
       if (response.status === 401 || response.status === 403) { setPhase("expired"); return; }
       if (!response.ok || !data?.ok) throw new Error("Unable to verify this reset session.");
-      persistRefreshedBrowserAuthSession(data.session);
+      const current = readBrowserAuthSession();
+      if (!isCurrentBrowserSession(session) && (!session.account?.id || current?.account?.id !== session.account.id)) {
+        setPhase("expired"); return;
+      }
+      persistRefreshedBrowserAuthSession(data.session, session);
+      const verified = readBrowserAuthSession();
+      verifiedAccount.current = String(verified?.account?.id || verified?.accessToken || "");
       const role = data.account?.role;
       setDestination(role === "admin" ? "/admin" : ["dancer", "customer", "venue"].includes(role) ? `/dashboard/${role}` : "/account");
       setPhase("ready");
@@ -59,7 +67,9 @@ export default function ResetPasswordClient() {
     if (inFlight.current || phase !== "ready") return;
     if (password.length < 8) { setError("Use at least 8 characters."); return; }
     if (password !== confirmPassword) { setError("The passwords do not match."); return; }
-    if (!readBrowserAuthSession()?.accessToken) { setPhase("expired"); return; }
+    const session = readBrowserAuthSession();
+    if (!session?.accessToken) { setPhase("expired"); return; }
+    if (String(session.account?.id || session.accessToken) !== verifiedAccount.current) { setPhase("expired"); return; }
     inFlight.current = true;
     setSaving(true);
     setError("");
@@ -77,10 +87,12 @@ export default function ResetPasswordClient() {
       });
       const data = await response.json().catch(() => null);
       if (saveController.current !== controller) return;
+      const current = readBrowserAuthSession();
+      if (String(current?.account?.id || current?.accessToken || "") !== verifiedAccount.current) { setPhase("expired"); return; }
       if (controller.signal.aborted) throw new Error("Password update timed out.");
       if (response.status === 401 || response.status === 403) { setPhase("expired"); return; }
       if (!response.ok || !data?.ok) throw new Error(data?.error || "Unable to update your password. Please try again.");
-      persistRefreshedBrowserAuthSession(data.session);
+      persistRefreshedBrowserAuthSession(data.session, session);
       setPassword("");
       setConfirmPassword("");
       setPhase("complete");

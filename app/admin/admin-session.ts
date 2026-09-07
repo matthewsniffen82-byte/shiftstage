@@ -59,9 +59,9 @@ export function adminAuthHeaders(): Record<string, string> | null {
   };
 }
 
-export function persistRefreshedAdminSession(session: unknown) {
+export function persistRefreshedAdminSession(session: unknown, expected?: StoredAdminSession | null) {
   if (!readAdminSession()) return;
-  persistRefreshedBrowserAuthSession(session);
+  persistRefreshedBrowserAuthSession(session, expected);
 }
 
 export class AdminDataRequestError extends Error {
@@ -99,7 +99,10 @@ export async function requestAdminJson(
   if (!response.ok || !data?.ok) {
     throw new AdminDataRequestError(data?.error || fallbackMessage, response.status);
   }
-  persistRefreshedAdminSession(data.session);
+  persistRefreshedAdminSession(data.session, {
+    accessToken: authHeaders.authorization.slice(7),
+    refreshToken: authHeaders["x-dancr-refresh-token"],
+  });
   return data;
 }
 

@@ -50,7 +50,7 @@ test("admin session persistence and authenticated JSON errors have one typed bou
   assert.match(adminSession, /export const ADMIN_SESSION_KEY = BROWSER_AUTH_SESSION_KEY/);
   assert.match(adminSession, /from "\.\.\/\.\.\/src\/lib\/dancr\/browser-session\.ts"/);
   assert.match(adminSession, /persistBrowserAuthSession\(\{/);
-  assert.match(adminSession, /persistRefreshedBrowserAuthSession\(session\)/);
+  assert.match(adminSession, /persistRefreshedBrowserAuthSession\(session, expected\)/);
   assert.doesNotMatch(adminSession, /window\.localStorage\.(?:getItem|setItem|removeItem)\(/);
   assert.match(adminSession, /export function persistAdminSession/);
   assert.match(adminSession, /export async function requestAdminJson/);
@@ -177,7 +177,7 @@ test("the admin session boundary stores only the canonical session and rejects n
       accessToken: "rotated-admin-access",
       refreshToken: "rotated-admin-refresh",
       expiresAt: 67890,
-    });
+    }, { accessToken: "admin-access", refreshToken: "admin-refresh" });
     assert.equal(readAdminAccessToken(), "rotated-admin-access");
     assert.deepEqual(JSON.parse(stored.get(ADMIN_SESSION_KEY)), {
       accessToken: "rotated-admin-access",

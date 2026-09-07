@@ -1,9 +1,15 @@
 import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
+import { validatePublicSupabaseConfig } from "./src/lib/supabase/public-config.mjs";
 import {
   createActiveEditProfileScript,
   createRootContentSecurityPolicy,
 } from "./src/lib/security/root-content-security-policy.mjs";
+
+// Reject accidental private keys before Next can embed public variables in assets.
+validatePublicSupabaseConfig(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY, {
+  allowMissing: process.env.VERCEL_ENV !== "production",
+});
 
 /** @type {import('next').NextConfig} */
 const contentSecurityPolicy = [

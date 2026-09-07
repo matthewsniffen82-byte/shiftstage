@@ -12,6 +12,7 @@ export function createAdminSupabaseClient() {
     auth: {
       persistSession: false,
       autoRefreshToken: false,
+      detectSessionInUrl: false,
     },
   });
 }

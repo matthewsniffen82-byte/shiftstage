@@ -1,3 +1,5 @@
+import { validatePublicSupabaseConfig } from "./supabase/public-config.mjs";
+
 export type DancrPublicEnv = {
   siteUrl: string;
   supabaseUrl: string;
@@ -12,6 +14,7 @@ export function getPublicEnv(): DancrPublicEnv {
   if (!supabaseUrl || !supabaseAnonKey) {
     throw new Error("Missing Supabase public environment variables.");
   }
+  validatePublicSupabaseConfig(supabaseUrl, supabaseAnonKey);
 
   return { siteUrl, supabaseUrl, supabaseAnonKey };
 }

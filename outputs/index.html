@@ -43445,36 +43445,21 @@
     }
 
     async function hydrateConfirmedSessionAccount(role, state) {
+      const initiatingSession = synchronizeAuthSession();
+      if (!initiatingSession?.accessToken) return;
       try {
         const data = await getAuthenticatedJson("/api/account");
-        if (data?.account) {
-          const accountEmail = normalizeAccountEmail(data.account.email) || normalizeAccountEmail(state?.email) || sessionEmailForRole(role);
-          const account =
-            role && data.account.role !== role
-              ? {
-                  ...data.account,
-                  role,
-                  displayName: state?.name || state?.stageName || state?.email || data.account.displayName || null,
-                  accountState: data.account.accountState || "active",
-                  email: accountEmail || null
-                }
-              : { ...data.account, email: accountEmail || data.account.email || null };
-          saveAuthSession({ ...authSession, account });
-        }
+        const current = synchronizeAuthSession();
+        const sameAccount = initiatingSession.account?.id
+          ? current?.account?.id === initiatingSession.account.id
+          : current?.accessToken === initiatingSession.accessToken;
+        if (!current?.accessToken || !sameAccount || !data?.account) return;
+        // Account roles come from the verified server response, never URL hints.
+        saveAuthSession({ ...current, account: data.account });
       } catch (error) {
-        const fallbackEmail = normalizeAccountEmail(state?.email) || sessionEmailForRole(role);
-        saveAuthSession({
-          ...authSession,
-          account: {
-            role,
-            displayName: state?.name || state?.stageName || state?.email || null,
-            accountState: "active",
-            email: fallbackEmail || null
-          }
-        });
+        // Preserve the existing session during a temporary account lookup failure.
       }
     }
-
     const authResumeStorageKey = "dancrAuthResumeV1";
     const accountTooltipStorageKey = "dancrAccountTooltipDismissedV1";
     let accountTooltipTimer = 0;

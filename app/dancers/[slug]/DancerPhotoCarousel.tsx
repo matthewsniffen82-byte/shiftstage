@@ -13,7 +13,7 @@ import {
 import { flushSync, preload } from "react-dom";
 import { MediaLikeButton } from "@/app/components/MediaLikeButton";
 import { PublicReportReasonDialog, type PublicReportReason } from "@/app/components/PublicReportReasonDialog";
-import { persistRefreshedBrowserAuthSession, readBrowserAccessToken } from "@/src/lib/dancr/browser-session";
+import { persistRefreshedBrowserAuthSession, readBrowserAccessToken, readBrowserAuthSession } from "@/src/lib/dancr/browser-session";
 import { recordPublicEngagementShare } from "@/src/lib/dancr/engagement-client";
 import { useVideoSoundPreference } from "@/src/lib/dancr/use-video-sound-preference";
 import { useAdaptiveVideoWarmup } from "@/src/lib/dancr/use-adaptive-video-warmup";
@@ -419,6 +419,8 @@ export function DancerPhotoCarousel({
   async function deleteMedia(item: ProfileMedia) {
     if (!canDeleteMedia || ownerToken !== readBrowserAccessToken("dancer") || deleteInFlight.current || !UUID_PATTERN.test(item.id)) return;
     if (!window.confirm(`Delete this ${item.kind}? This cannot be undone.`)) return;
+    const session = readBrowserAuthSession();
+    if (!session?.accessToken || session.accessToken !== ownerToken) return;
     deleteInFlight.current = true;
     setDeleteBusy(true);
     setDeleteStatus("");
@@ -427,13 +429,16 @@ export function DancerPhotoCarousel({
         ? "/api/dancer/photos"
         : `/api/dancer/tv/videos/${encodeURIComponent(item.id)}`, {
         method: "DELETE",
-        headers: { Authorization: `Bearer ${readBrowserAccessToken("dancer")}`, "Content-Type": "application/json" },
+        headers: {
+          Authorization: `Bearer ${session.accessToken}`, "Content-Type": "application/json",
+          ...(session.refreshToken ? { "x-dancr-refresh-token": session.refreshToken } : {}),
+        },
         ...(item.kind === "photo" ? { body: JSON.stringify({ photoId: item.id }) } : {}),
       });
       const data = await response.json();
       if (!response.ok || !data.ok) throw new Error(data.error || `Unable to delete this ${item.kind}.`);
       if (data.session) {
-        persistRefreshedBrowserAuthSession(data.session);
+        persistRefreshedBrowserAuthSession(data.session, session);
         setOwnerToken(readBrowserAccessToken("dancer"));
       }
       if (viewer) closeViewer();

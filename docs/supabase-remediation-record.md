@@ -6,6 +6,8 @@ Delivered as `8d38fbd56d33555739ce4b3711bf32539c74ed5c` to `origin/main`. Local 
 
 ## Stage 2 — authentication hardening
 
+Delivered as `5e4cc16c202cc0f7725882dd6412a531fdf58c1b`; local HEAD matched `origin/main` after push and Vercel reported **success** for that exact commit.
+
 Changes:
 
 - Login and signup preserve passwords exactly, matching password update semantics (H4).
@@ -19,6 +21,16 @@ Changes:
 Behavioral regression coverage includes exact password characters, authentication provider statuses, successful password change with failed revocation/email, failure before mutation, recovery vs signup routing, invalid/missing recovery parameters, malformed/failed confirmation, temporary outages, unavailable browser storage, session-check timeout, mismatched passwords, explicit submission, and terminal auth failures. Existing session/auth suites cover authenticated request verification and refresh rejection, protected-route authorization, and duplicate/stale actions.
 
 Validation passed: all 1,543 tests, TypeScript, zero-warning lint, and the production build. Browser checks against the built app confirmed missing recovery links show the expired-link state and invalid customer confirmation shows an explicit error. Logged-out account, dancer dashboard, and admin approval API requests returned 401/AUTH_REQUIRED. The temporary local server and browser tab were stopped after verification. Tests use isolated mocked provider boundaries; they do not reset production passwords, send emails to users, or establish real cross-device inbox delivery. The operational test matrix below remains necessary before declaring complete production readiness.
+
+## Stage 3 — client and session architecture
+
+Refresh responses now require the initiating access/refresh token pair to still match browser storage. Late admin, dashboard, NFC, saved-deal, media, and recovery responses cannot restore logout, replace another account, or roll back newer credentials. Recovery submission is bound to the account verified by the form. Legacy confirmation hydration preserves verified server roles and existing sessions during lookup failures instead of inventing a role from a URL hint.
+
+The signed-upload browser client is a singleton with SDK persistence, auto-refresh, and URL detection disabled. It no longer creates a second auth storage lifecycle. Server clients remain request-scoped with explicit user verification; the server factory is marked server-only. The existing custom bearer-token architecture is retained, rather than partially introducing incompatible SSR cookies. The scoped NFC cookie is unchanged. A redundant post-setSession getUser verification remains deliberately in place; no shared user-token cache was introduced.
+
+Public configuration validates HTTPS/local development URLs and anon/publishable key types without printing values. The build rejects privileged public keys before bundling; legacy anon JWTs and modern publishable keys are supported. Existing production values require no change.
+
+Validation: all 1,546 tests, TypeScript, zero-warning lint, and the production build passed. Generated browser assets contained no configured service-role/OpenAI keys. Regression coverage checks logout, out-of-order refresh, same-role account switching, changed recovery account, and invalid/private public configuration. No database/configuration or account mutations were performed in this stage.
 
 ## Staging/manual verification still required
 

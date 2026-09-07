@@ -124,7 +124,7 @@ test("dashboard session persistence and optional panel failures have one typed b
   assert.match(dashboardSession, /persistBrowserAuthSession\(\{ \.\.\.current, \.\.\.data\.session \}\)/);
   assert.match(dashboardSession, /return persistBrowserAuthSession\(session\)/);
   assert.match(dashboardSession, /return clearBrowserAuthSession\(\)/);
-  assert.match(dashboardSession, /persistRefreshedBrowserAuthSession\(session\)/);
+  assert.match(dashboardSession, /persistRefreshedBrowserAuthSession\(session, expected\)/);
   assert.doesNotMatch(dashboardSession, /window\.localStorage\.(?:getItem|setItem|removeItem)\(/);
   assert.match(dashboardSession, /function dashboardAuthHeaders\(session: StoredDashboardSession \| null\)/);
   assert.match(dashboardSession, /function persistResponseSession/);
@@ -232,7 +232,7 @@ test("venue dashboard subpanels use the shared session boundary and preserve tok
       accessToken: "rotated-venue-access",
       refreshToken: "rotated-venue-refresh",
       expiresAt: 67890,
-    });
+    }, { accessToken: "replacement-venue-access", refreshToken: "replacement-venue-refresh" });
     assert.deepEqual(JSON.parse(stored.get(DASHBOARD_SESSION_KEY)), {
       accessToken: "rotated-venue-access",
       refreshToken: "rotated-venue-refresh",

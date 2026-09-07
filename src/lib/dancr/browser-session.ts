@@ -58,12 +58,21 @@ export function persistBrowserAuthSession(session: unknown) {
   }
 }
 
-export function persistRefreshedBrowserAuthSession(session: unknown) {
+export type BrowserSessionRequest = { accessToken?: string; refreshToken?: string };
+
+export function isCurrentBrowserSession(expected?: BrowserSessionRequest | null) {
+  const current = readBrowserAuthSession();
+  return Boolean(expected?.accessToken && current?.accessToken === expected.accessToken
+    && (current.refreshToken || "") === (expected.refreshToken || ""));
+}
+
+export function persistRefreshedBrowserAuthSession(session: unknown, expected?: BrowserSessionRequest | null) {
   if (!session || typeof session !== "object" || Array.isArray(session)) return false;
 
   const next = session as BrowserAuthSession;
   if (typeof next.accessToken !== "string" || !next.accessToken) return false;
-  const current = readBrowserAuthSession() || {};
+  if (!isCurrentBrowserSession(expected)) return false;
+  const current = readBrowserAuthSession()!;
 
   return persistBrowserAuthSession({
     ...current,
