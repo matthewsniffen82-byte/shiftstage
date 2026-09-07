@@ -356,14 +356,16 @@ export function ClubDealCard({
         <h2>Ready for your cashier tap</h2>
         <p>{activeDeal.dealTitle} · {venueName || "Club"}</p>
       </header>
-      <div className="club-deal-ready-instructions">
-        <div className="club-deal-nfc-symbol" aria-label="Tap cashier sticker"><NfcIcon /></div>
-        <div>
-          <p>Unlock your phone and hold it near the MyDancr sticker at the cashier.</p>
-          <small>You can close MyDancr now.</small>
+      <div className="club-deal-ready-content">
+        <div className="club-deal-ready-instructions">
+          <div className="club-deal-nfc-symbol" aria-hidden="true"><NfcIcon /></div>
+          <p>When you reach the cashier, unlock your phone and hold it near the MyDancr sticker.</p>
+        </div>
+        <div className="club-deal-ready-footer">
+          <p className="club-deal-ready-close-note">You can close MyDancr now.</p>
+          {intentExpiresAt ? <p className="club-deal-ready-until">Ready until {formatNfcExpiry(intentExpiresAt)}</p> : null}
         </div>
       </div>
-      {intentExpiresAt ? <p className="club-deal-ready-until">Ready until {formatNfcExpiry(intentExpiresAt)}</p> : null}
     </>
   ) : (
     <>
@@ -688,12 +690,14 @@ function ClubDealInteractionStyles() {
       .club-deal-terms[hidden] { display:none; }
       .club-deal-terms p { margin:0; }
       .club-deal-terms p + p { margin-top:8px; }
-      .club-deal-ready-instructions { display:grid; grid-template-columns:48px minmax(0,1fr); align-items:center; gap:14px; padding:10px 0; }
-      .club-deal-ready-instructions p { margin:0; color:#e5deef; font-size:14px; font-weight:500; line-height:1.5; }
-      .club-deal-ready-instructions small { display:block; margin-top:8px; color:#a9a1b8; font-size:12px; font-weight:400; line-height:1.5; }
-      .club-deal-ready-until { margin:auto 0 0; padding-top:12px; border-top:1px solid rgba(211,198,237,.1); color:#aaa2b8; font-size:12px; font-weight:400; line-height:1.4; text-align:left; }
-      .club-deal-nfc-symbol { width:48px; height:48px; display:grid; place-items:center; box-sizing:border-box; border:1px solid rgba(183,155,225,.24); border-radius:16px; color:#c6afe8; background:linear-gradient(145deg,rgba(143,107,199,.13),rgba(143,107,199,.035)); }
-      .club-deal-nfc-symbol svg { width:27px; height:27px; display:block; place-self:center; }
+      .club-deal-ready-content { flex:1 0 auto; display:flex; flex-direction:column; gap:12px; }
+      .club-deal-ready-instructions { flex:1 0 auto; display:grid; grid-template-columns:64px minmax(0,1fr); align-items:center; gap:14px; padding:14px; border:1px solid rgba(183,155,225,.16); border-radius:18px; background:linear-gradient(130deg,rgba(143,107,199,.1),rgba(143,107,199,.025)); }
+      .club-deal-ready-instructions p { margin:0; color:#e5deef; font-size:14px; font-weight:500; line-height:1.45; }
+      .club-deal-ready-footer { display:grid; gap:4px; }
+      .club-deal-ready-close-note { margin:0; color:#c5bbd5; font-size:12px; font-weight:450; line-height:1.5; }
+      .club-deal-ready-until { margin:0; color:#aaa2b8; font-size:12px; font-weight:400; line-height:1.4; text-align:left; }
+      .club-deal-nfc-symbol { width:64px; height:64px; display:grid; place-items:center; box-sizing:border-box; border:1px solid rgba(183,155,225,.28); border-radius:20px; color:#d6bdfb; background:radial-gradient(circle at 35% 25%,rgba(172,126,240,.2),rgba(143,107,199,.035)); box-shadow:inset 0 1px 0 rgba(255,255,255,.045); }
+      .club-deal-nfc-symbol svg { width:36px; height:36px; display:block; place-self:center; }
       .club-deal-primary-dock { position:static; z-index:1702; width:100%; display:grid; gap:10px; box-sizing:border-box; margin-top:auto; padding:0; border:0; background:transparent; }
       .club-deal-dialog .club-deal-checkout-action { min-height:48px !important; padding:0 16px; border:1px solid rgba(188,154,249,.3) !important; border-radius:13px !important; color:#fff !important; background:linear-gradient(120deg,#7743cf,#6330bd) !important; box-shadow:inset 0 1px 0 rgba(255,255,255,.12),0 6px 18px rgba(68,28,130,.18) !important; -webkit-appearance:none; appearance:none; font:inherit; font-size:14px; font-weight:600 !important; letter-spacing:.01em; cursor:pointer; transition:filter 160ms ease,transform 160ms ease; }
       @media (hover:hover) and (pointer:fine) {
@@ -729,6 +733,11 @@ function ClubDealInteractionStyles() {
       }
       @media (max-width: 330px) {
         .club-deal-dialog { width:100%; }
+      }
+      @media (max-width: 360px) {
+        .club-deal-ready-instructions { grid-template-columns:48px minmax(0,1fr); gap:12px; padding:12px; }
+        .club-deal-nfc-symbol { width:48px; height:48px; border-radius:16px; }
+        .club-deal-nfc-symbol svg { width:28px; height:28px; }
       }
     `}</style>
   );
