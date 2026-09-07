@@ -343,7 +343,7 @@ export function ClubDealCard({
           data-club-deal-state={intentState === "ready" ? "ready" : "checkout"}
           onClick={(event) => openDealDialog(event.currentTarget)}
         >
-          {intentState === "ready" ? "Tap to enter" : actionLabel}
+          {intentState === "ready" ? "Ready for your cashier tap" : actionLabel}
         </button>
       </div>
     </>
@@ -353,13 +353,14 @@ export function ClubDealCard({
   const dialogContent = intentState === "ready" ? (
     <>
       <header className="club-deal-ready-header" role="status" tabIndex={-1}>
-        <h2>Tap to enter</h2>
+        <h2>Ready for your cashier tap</h2>
         <p>{activeDeal.dealTitle} · {venueName || "Club"}</p>
       </header>
       <div className="club-deal-ready-instructions">
         <div className="club-deal-nfc-symbol" aria-label="Tap cashier sticker"><NfcIcon /></div>
         <div>
-          <p>Unlock your phone and tap the MyDancr sticker at the cashier.</p>
+          <p>Unlock your phone and hold it near the MyDancr sticker at the cashier.</p>
+          <small>You can close MyDancr now.</small>
         </div>
       </div>
       {intentExpiresAt ? <p className="club-deal-ready-until">Ready until {formatNfcExpiry(intentExpiresAt)}</p> : null}
@@ -371,6 +372,7 @@ export function ClubDealCard({
         <p>Valid at {venueName || "this club"}</p>
       </header>
       {validityLabel ? <p className="club-deal-validity">{validityLabel}</p> : null}
+      <p className="club-deal-preview-instruction">Tap &ldquo;{intentState === "error" ? "Try again" : useLabel}&rdquo;, then go to the cashier.</p>
       {displayDescription || displayTerms ? (
         <div className="club-deal-details">
           <button
@@ -674,6 +676,7 @@ function ClubDealInteractionStyles() {
       .club-deal-dialog-header p,.club-deal-ready-header p { max-width:100%; margin:0; color:rgba(248,248,252,.76); font-size:12px; font-weight:800; line-height:1.3; overflow-wrap:anywhere; }
       .club-deal-details { display:grid; justify-items:start; gap:5px; }
       .club-deal-validity { margin:0; color:rgba(255,255,255,.7); font-size:10px; font-weight:800; line-height:1.3; }
+      .club-deal-preview-instruction { margin:0; color:#e0dbea; font-size:15px; line-height:1.5; }
       .club-deal-terms-toggle { width:fit-content; min-width:0; min-height:44px; padding:0; border:0 !important; border-radius:0 !important; color:#ccc4e4 !important; background:transparent !important; box-shadow:none !important; -webkit-appearance:none; appearance:none; font:inherit; font-size:13px; text-decoration:underline; text-underline-offset:4px; cursor:pointer; }
       .club-deal-terms-toggle:focus-visible { outline:2px solid #c4b5fd; outline-offset:3px; }
       .club-deal-terms { width:100%; margin:0; padding:10px 11px; box-sizing:border-box; border:1px solid rgba(255,255,255,.08); border-radius:10px; color:rgba(255,255,255,.76); background:rgba(0,0,0,.22); font-size:12px; line-height:1.42; overflow-wrap:anywhere; }
@@ -682,6 +685,7 @@ function ClubDealInteractionStyles() {
       .club-deal-terms p + p { margin-top:8px; }
       .club-deal-ready-instructions { display:grid; grid-template-columns:52px minmax(0,1fr); align-items:center; gap:14px; padding:12px 0; }
       .club-deal-ready-instructions p { margin:0; color:#f4f1fa; font-size:15px; line-height:1.5; }
+      .club-deal-ready-instructions small { display:block; margin-top:8px; color:rgba(255,255,255,.7); font-size:13px; line-height:1.5; }
       .club-deal-ready-until { margin:0; font-size:12px; line-height:1.4; text-align:left; }
       .club-deal-nfc-symbol { width:56px; height:56px; display:grid; place-items:center; align-self:center; padding:5px; box-sizing:border-box; border:1px solid rgba(255,255,255,.14); border-radius:14px; color:#f8fdff; background:radial-gradient(circle at 45% 35%,rgba(133,76,255,.18),transparent 56%),rgba(9,9,13,.92); box-shadow:0 10px 22px rgba(0,0,0,.3); }
       .club-deal-nfc-symbol svg { width:42px; height:42px; display:block; place-self:center; padding:8px; box-sizing:border-box; border:1px solid rgba(126,234,255,.72); border-radius:50%; color:#f8fdff; background:radial-gradient(circle at 50% 44%,rgba(53,216,255,.14),transparent 66%),rgba(7,10,15,.88); box-shadow:0 0 0 1px rgba(255,255,255,.035),0 0 14px rgba(53,216,255,.3),inset 0 1px 0 rgba(255,255,255,.14); filter:drop-shadow(0 0 5px rgba(126,234,255,.3)); }

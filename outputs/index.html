@@ -26654,6 +26654,7 @@
     #dealPassOverlay .deal-pass-ready-content { display: grid; gap: 12px; }
     #dealPassOverlay .deal-pass-offer { display: grid; gap: 4px; margin: 0; padding: 0; border: 0; background: none; }
     #dealPassOverlay .deal-pass-meta { margin: 0; color: rgba(255,255,255,.7); font-size: .75rem; }
+    #dealPassOverlay .deal-pass-preview-instruction { margin: 0; color: #e0dbea; font-size: .95rem; line-height: 1.5; }
     #dealPassOverlay .deal-pass-terms-toggle {
       width: fit-content;
       min-width: 0;
@@ -26682,6 +26683,7 @@
     #dealPassOverlay .deal-pass-ready-instructions .club-deal-qr-symbol { width: 55%; height: 55%; }
     #dealPassOverlay .deal-pass-ready-instructions svg { display: block; width: 100%; height: 100%; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
     #dealPassOverlay .deal-pass-ready-instructions p { margin: 0; color: #f4f1fa; font-size: .95rem; line-height: 1.5; }
+    #dealPassOverlay .deal-pass-ready-instructions small { display: block; margin-top: 8px; color: rgba(255,255,255,.7); font-size: .8rem; line-height: 1.5; }
     #dealPassOverlay .deal-pass-ready-until { margin: 0; color: rgba(255,255,255,.6); font-size: .72rem; text-align: left; }
     #dealPassOverlay .deal-pass-primary-dock { position: static; margin: 0; padding: 0; border: 0; background: transparent; }
     #dealPassOverlay .deal-pass-primary-dock .deal-pass-action.primary { min-height: 50px !important; }
@@ -49013,6 +49015,7 @@
             <p class="deal-pass-copy" id="dealPassCopy">Club offer</p>
             <div class="deal-pass-available-content" data-deal-pass-available>
               <p class="deal-pass-meta" id="dealPassExpiry" hidden></p>
+              <p class="deal-pass-preview-instruction" id="dealPassPreviewInstruction"></p>
               <div class="deal-pass-offer" id="dealPassOffer">
                 <button class="deal-pass-terms-toggle" type="button" data-toggle-deal-pass-terms aria-expanded="false" aria-controls="dealPassTerms" hidden>Terms</button>
                 <div class="deal-pass-terms" id="dealPassTerms" hidden>
@@ -49030,7 +49033,10 @@
             <div class="deal-pass-ready-content" data-deal-pass-ready role="status" hidden>
               <div class="deal-pass-ready-instructions">
                 <div class="deal-pass-nfc-symbol" aria-hidden="true">${clubDealQrSymbolMarkup("deal-pass-ready-nfc-icon")}</div>
-                <p>Unlock your phone and tap the MyDancr sticker at the cashier.</p>
+                <div>
+                  <p>Unlock your phone and hold it near the MyDancr sticker at the cashier.</p>
+                  <small>You can close MyDancr now.</small>
+                </div>
               </div>
               <p class="deal-pass-ready-until" id="dealPassReadyUntil"></p>
             </div>
@@ -49229,7 +49235,7 @@
       availableContent.hidden = state === "ready";
       readyContent.hidden = state !== "ready";
       primaryDock.hidden = state === "ready";
-      titleElement.textContent = state === "ready" ? "Tap to enter" : pass.title;
+      titleElement.textContent = state === "ready" ? "Ready for your cashier tap" : pass.title;
       document.getElementById("dealPassCopy").textContent = state === "ready"
         ? `${pass.title} · ${pass.venueName || "Club"}`
         : dealPassPresentation(pass).copy;
@@ -49241,7 +49247,7 @@
         const readyUntil = formatNfcIntentExpiry(intent.expiresAt);
         status.textContent = "";
         status.hidden = true;
-        selectButton.textContent = "Tap to enter";
+        selectButton.textContent = "Ready for your cashier tap";
         selectButton.disabled = true;
         selectButton.setAttribute("aria-pressed", "true");
         selectButton.classList.add("is-ready");
@@ -49253,6 +49259,7 @@
           : "Unable to prepare this deal. Try again.");
         selectButton.textContent = state === "error" ? "Try again"
           : String(pass.title).toLowerCase() === "free admission" ? "Use free admission" : "Use this deal";
+        document.getElementById("dealPassPreviewInstruction").textContent = `Tap “${selectButton.textContent}”, then go to the cashier.`;
         selectButton.disabled = false;
         selectButton.setAttribute("aria-pressed", "false");
         selectButton.classList.remove("is-ready");

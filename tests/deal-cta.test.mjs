@@ -95,7 +95,7 @@ test("customers explicitly select an exact offer and dancer token until the phys
 
 test("Club Deal checkout uses a short cashier instruction across both public experiences", () => {
   for (const source of [dealCard, liveApp]) {
-    assert.match(source, /Unlock your phone and tap the MyDancr sticker at the cashier/);
+    assert.match(source, /Unlock your phone and hold it near the MyDancr sticker at the cashier/);
     assert.match(source, /Use free admission/);
     assert.doesNotMatch(source, /<strong>Tap &ldquo;Use this deal&rdquo;<\/strong>/);
     assert.doesNotMatch(source, /Only this venue’s registered cashier sticker can complete redemption/);
@@ -108,8 +108,8 @@ test("Club Deal checkout uses a short cashier instruction across both public exp
 
 test("selected Club Deals show a pending tap without a misleading success button", () => {
   for (const source of [dealCard, liveApp]) {
-    assert.match(source, /Tap to enter/);
-    assert.match(source, /Unlock your phone and tap the MyDancr sticker at the cashier/);
+    assert.match(source, /Ready for your cashier tap/);
+    assert.match(source, /Unlock your phone and hold it near the MyDancr sticker at the cashier/);
     assert.doesNotMatch(source, /Ready at Cashier ✓/);
   }
   const readyMarkup = dealCard.match(/const dialogContent = intentState === "ready" \?([\s\S]*?)\) : \(/)?.[1] || "";
@@ -151,8 +151,8 @@ test("multiple live non-alcohol offers stay selectable without external liquor b
 
 test("the canonical live shell uses cashier NFC instead of generating customer QR images", () => {
   assert.match(liveApp, /mydancrPendingNfcDealV2/);
-  assert.match(liveApp, /Tap to enter/);
-  assert.match(liveApp, /Unlock your phone and tap the MyDancr sticker at the cashier/);
+  assert.match(liveApp, /Ready for your cashier tap/);
+  assert.match(liveApp, /Unlock your phone and hold it near the MyDancr sticker at the cashier/);
   assert.doesNotMatch(liveApp, /fetch\("\/api\/deals\/redemptions",\s*\{\s*method:\s*"POST"/);
   assert.doesNotMatch(liveApp, /<img src="\$\{pass\.qrImageUrl\}"/);
 });

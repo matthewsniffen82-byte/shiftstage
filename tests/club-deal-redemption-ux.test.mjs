@@ -48,7 +48,7 @@ test("optional deal fields collapse and complete terms remain keyboard accessibl
 
 test("preview and pending cashier taps are distinct from successful redemption", () => {
   for (const source of [dealCard, liveOverlay]) {
-    assert.match(source, /Tap to enter/);
+    assert.match(source, /Ready for your cashier tap/);
     assert.doesNotMatch(source, /Ready at Cashier ✓/);
     assert.match(source, /Use free admission/);
     assert.match(source, /Use this deal/);
