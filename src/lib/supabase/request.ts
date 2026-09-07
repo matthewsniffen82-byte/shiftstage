@@ -1,6 +1,7 @@
 import { createClient, type SupabaseClient, type User } from "@supabase/supabase-js";
 import { getPublicEnv } from "../env.ts";
 import { PublicApiError } from "../api-error-policy.ts";
+import { boundedSupabaseFetch } from "./bounded-fetch.ts";
 
 const MAX_ACCESS_TOKEN_LENGTH = 8_192;
 const MAX_REFRESH_TOKEN_LENGTH = 4_096;
@@ -44,6 +45,7 @@ export async function createRequestSupabaseContext(request: Request): Promise<Re
 
   if (refreshToken) {
     const client = createClient(env.supabaseUrl, env.supabaseAnonKey, {
+      global: { fetch: boundedSupabaseFetch },
       auth: authOptions,
     });
 
@@ -70,6 +72,7 @@ export async function createRequestSupabaseContext(request: Request): Promise<Re
 
   const client = createClient(env.supabaseUrl, env.supabaseAnonKey, {
     global: {
+      fetch: boundedSupabaseFetch,
       headers: {
         Authorization: `Bearer ${token}`,
       },

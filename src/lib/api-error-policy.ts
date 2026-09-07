@@ -30,9 +30,15 @@ export function resolveApiError(error: unknown, fallback: string, status = 500) 
   const message = error instanceof Error ? error.message : fallback;
   const typed = error instanceof PublicApiError ? error : null;
   const known = KNOWN_PUBLIC_ERRORS.get(message);
-  const responseStatus = typed?.status || known?.status || status;
-  const publicMessage = typed || known ? message : fallback;
-  const code = typed?.code || known?.code;
+  const details = error && typeof error === "object" ? error as { code?: string; status?: number; name?: string } : null;
+  const databaseCode = typeof details?.code === "string" ? details.code : "";
+  const unavailable = databaseCode === "SUPABASE_UNAVAILABLE" || databaseCode === "57014"
+    || databaseCode === "53300" || databaseCode === "57P01" || databaseCode.startsWith("08")
+    || details?.status === 408 || Number(details?.status) >= 500 || details?.name === "AuthRetryableFetchError";
+  const responseStatus = typed?.status || known?.status || (unavailable ? 503 : status);
+  const publicMessage = typed || known ? message : unavailable
+    ? "The service couldn't confirm this request. Check the current state before trying again." : fallback;
+  const code = typed?.code || known?.code || (unavailable ? "UNAVAILABLE" : undefined);
 
   return {
     status: responseStatus,

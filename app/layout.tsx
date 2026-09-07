@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
+import Script from "next/script";
 import { GlobalMobileBottomNav } from "./components/GlobalMobileBottomNav";
 import { MyDancrPreviewBanner } from "./components/MyDancrPreviewBanner";
 import "../public/dancr-brand-tokens.v1.css";
@@ -70,6 +71,7 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <Script src="/mydancr-api-transport.js?v=1" strategy="beforeInteractive" />
       <body className="dancr-button-system" suppressHydrationWarning>
         <script
           dangerouslySetInnerHTML={{ __html: androidDeviceClassScript }}

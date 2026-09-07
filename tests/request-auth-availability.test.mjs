@@ -4,6 +4,7 @@ import test from "node:test";
 import vm from "node:vm";
 import ts from "typescript";
 import { PublicApiError, resolveApiError } from "../src/lib/api-error-policy.ts";
+import { boundedSupabaseFetch } from "../src/lib/supabase/bounded-fetch.ts";
 
 const source = readFileSync(new URL("../src/lib/supabase/request.ts", import.meta.url), "utf8");
 const code = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText;
@@ -27,6 +28,7 @@ function fixture(failureAt, error) {
     if (name === "@supabase/supabase-js") return { createClient: () => client };
     if (name === "../env.ts") return { getPublicEnv: () => ({ supabaseUrl: "https://example.test", supabaseAnonKey: "public-test-key" }) };
     if (name === "../api-error-policy.ts") return { PublicApiError };
+    if (name === "./bounded-fetch.ts") return { boundedSupabaseFetch };
     throw new Error(`Unexpected import ${name}`);
   } });
   return { createContext: exports.createRequestSupabaseContext, calls };

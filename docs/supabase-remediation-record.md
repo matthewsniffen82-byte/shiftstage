@@ -46,13 +46,33 @@ Final combined validation passed: all 1,556 tests, TypeScript, zero-warning lint
 
 ## Stage 5 — query reliability
 
+Delivered as `4dfe904914b8c5d2e9afab6b1ef643a005f29010`, matching `origin/main`, with exact-commit Vercel success. Both SQL migrations were applied afterward and recorded atomically in migration history. All nine post-application catalog/read checks passed; live discovery and venue APIs returned 200. Final combined validation including the concurrent customer-notification release passed 1,585 tests, TypeScript, lint and build.
+
 Account provisioning now preserves existing roles, names and city, handles concurrent bootstrap safely, and commits related rows atomically. Publication changes lock and recheck current account/profile state. Support messages, thread state and in-app notifications commit together; optional request IDs deduplicate uncertain submissions and admin replies. External notification failure no longer reports a committed message as failed. Older databases retain a compatibility path only for a confirmed missing function; uncertain write failures never trigger a second write path.
 
 Ranking counts no longer assume composite-key tables contain an `id`. Batches of at most 200 dancers replace eight network requests per dancer, with bounded pagination and fail-closed incomplete metrics. Two indexes match predicates missing from the live catalog. The private monthly view preserves existing metric meanings while avoiding multiplicative joins. Saved rankings remain successful when secondary notifications or logging fail, with visible warnings.
 
 Validation passed: 1,563 tests, TypeScript, zero-warning lint and production build. Reviewed SQL fingerprints matched both migration files. Live PostgreSQL rollback assertions verified preservation of existing customer metadata, rejection of role changes and unauthorized publication, authorized private publication, ranking reads, support/admin reply deduplication, mismatched-request rejection, sender-role protection, durable in-app notifications and restricted function grants. All synthetic messages/notifications and publication changes rolled back. Notification/support tables have no external-delivery triggers. No production emails were sent by these tests.
 
-Deploy the route release before applying `202609070003_atomic_accounts_publication_and_metrics.sql` and `202609070004_atomic_support_messages.sql`; record both versions and reviewed statements atomically in migration history. Vercel does not run SQL migrations. Deployment/application confirmation follows in the next stage record.
+The route release preceded `202609070003_atomic_accounts_publication_and_metrics.sql` and `202609070004_atomic_support_messages.sql`. Both versions and reviewed statements are recorded in migration history. Vercel does not run SQL migrations.
+
+## Stage 6 — outages and consistent session transport
+
+All four Supabase factories use bounded transport: 15 seconds for Auth/database requests and 120 seconds for storage, including response-body consumption. Transport makes one attempt. Auth infrastructure failures become an application UNAVAILABLE response without activating the installed SDK's refresh retry loop. Temporary SQL connection/capacity/statement errors receive sanitized service-unavailable messages. Existing browser credentials are not cleared by provider outages.
+
+API middleware refreshes only credentials within 120 seconds of expiry, forwards the new tokens to the route, and returns rotation in private response headers even if the route later fails or omits a session body. Decoded JWT fields schedule refresh only; the provider must return the same user, and protected routes still verify identity and authorization. No service key enters this path. Cacheable public routes are excluded. Credential responses are private/no-store at browser and CDN layers.
+
+The shared browser transport loads before both the legacy shell and Next client pages. It persists returned tokens only if the initiating access/refresh pair still matches storage, preserves account metadata, and cannot restore logout or replace another login. API waits terminate after 45 seconds; media/storage receives 180 seconds. Existing shorter cancellation budgets still apply. Both headers and body reads are bounded. External unrelated requests retain native behavior. No application request is automatically replayed; uncertain writes tell the user to check whether they completed.
+
+The Supabase health route checks both Auth and database with private caching and sanitized output. `node --env-file=.env.local scripts/check-supabase-readiness.mjs` performs only reads and verifies required schema/functions and anonymous permission denials. All 20 live checks passed. This is an executable release check, not a substitute for the RLS catalog and staging fixture matrix.
+
+Failure regression coverage includes stalled headers/body, cancellation before a write, one SDK refresh attempt on infrastructure failure, Auth versus database health, expired/malformed/valid token scheduling, mismatched refresh identity, middleware request/response headers, endpoint errors without session JSON, logout/account-switch races, blocked storage and private SQL errors. The built app showed the missing-link recovery error and a working return to sign-in. Logged-out/invalid-token protected requests returned 401 without leaking internal middleware headers. Auth/database health returned 200. Both browser entry points included the transport asset. The built static asset scan found no configured service-role/OpenAI secrets.
+
+No additional Supabase settings or database migrations are required for Stage 6. Final validation passed: all 1,598 tests, TypeScript, zero-warning lint and production build. The temporary audit server was stopped. Exact-commit deployment verification follows publication; manual items below remain explicitly unverified. See `supabase-production-follow-up.md` for finding disposition and concrete dashboard/staging actions.
+
+## Stage 7 scope boundary
+
+The supplied request ended at the heading `STAGE 7 — PASSWORD RESET`, without further instructions. Password-reset hardening and regression work specified in Stage 2 is complete; Stage 6 also covers its provider transport. No additional Stage 7 requirements or real inbox tests are assumed complete. No production user's password was changed as a test.
 
 ## Staging/manual verification still required
 
