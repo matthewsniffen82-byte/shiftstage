@@ -32210,14 +32210,18 @@
           <span class="home-filter-toggle-count" id="homeFilterCount" hidden>0</span>
         </button>
         <div class="home-advanced-filters" id="homeAdvancedFilters">
-          <div class="field">
-            <label for="distanceSelect">Distance</label>
+          <div class="field distance-picker-field" id="distancePickerField">
+            <label id="distanceSelectLabel" for="distanceSelect">Distance</label>
             <select id="distanceSelect">
               <option>5 mi</option>
               <option>10 mi</option>
               <option selected>25 mi</option>
               <option>50 mi</option>
             </select>
+            <button class="venue-picker-trigger distance-picker-trigger" id="distanceSelectButton" type="button" aria-haspopup="dialog" aria-controls="distanceSelectDialog" aria-expanded="false" aria-labelledby="distanceSelectLabel distanceSelectButtonText" hidden>
+              <span class="venue-picker-trigger-value" id="distanceSelectButtonText">25 mi</span>
+              <svg class="venue-picker-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="m7 9 5 5 5-5"></path></svg>
+            </button>
           </div>
           <div class="field venue-picker-field" id="venuePickerField">
             <label id="venueSelectLabel" for="venueSelect">Club</label>
@@ -32241,6 +32245,23 @@
         <div class="city-picker-inline" id="citySelectPanel" hidden>
           <div class="venue-picker-options city-picker-options" id="citySelectOptions" role="listbox" aria-labelledby="citySelectLabel"></div>
         </div>
+        <dialog id="distanceSelectDialog" aria-labelledby="distanceSelectDialogTitle" aria-describedby="distanceSelectOrigin">
+          <form class="distance-picker-panel" id="distanceSelectForm">
+            <div class="distance-picker-header">
+              <h2 id="distanceSelectDialogTitle">Search radius</h2>
+              <button id="distanceSelectClose" type="button" aria-label="Close distance picker"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"></path></svg></button>
+            </div>
+            <p id="distanceSelectOrigin">From the center of Las Vegas</p>
+            <fieldset class="distance-picker-options">
+              <legend>Distance in miles</legend>
+              <label><input type="radio" name="discoveryDistance" value="5 mi"><span>5 mi</span></label>
+              <label><input type="radio" name="discoveryDistance" value="10 mi"><span>10 mi</span></label>
+              <label><input type="radio" name="discoveryDistance" value="25 mi" checked><span>25 mi</span></label>
+              <label><input type="radio" name="discoveryDistance" value="50 mi"><span>50 mi</span></label>
+            </fieldset>
+            <button id="distanceSelectApply" type="submit">Apply distance</button>
+          </form>
+        </dialog>
         <dialog class="venue-picker-dialog" id="venueSelectDialog" aria-labelledby="venueSelectDialogTitle">
           <div class="venue-picker-panel">
             <div class="venue-picker-header">
@@ -32315,6 +32336,28 @@
         .home-discovery-controls .location-btn { width: 100% !important; min-width: 0 !important; max-width: 100% !important; min-height: 46px !important; font-size: clamp(14px, 1.8vw, 17px) !important; }
         .venue-picker-field { position: relative; }
         .venue-picker-trigger[hidden] { display: none !important; }
+        .distance-picker-field.is-enhanced #distanceSelect { display: none !important; }
+        #distanceSelectButton { grid-template-columns: minmax(0, 1fr) auto; }
+        #distanceSelectDialog { box-sizing: border-box; width: min(440px, calc(100vw - 24px)); max-width: none; max-height: calc(100dvh - 24px); inset: auto 0 max(12px, env(safe-area-inset-bottom, 0px)); margin: 0 auto; padding: 0; overflow: auto; overscroll-behavior: contain; border: 1px solid #3d3d46; border-radius: 24px; color: #fafafa; background: #151519; box-shadow: 0 20px 70px rgba(0,0,0,.5); }
+        #distanceSelectDialog::backdrop { background: rgba(0,0,0,.65); }
+        #distanceSelectDialog .distance-picker-panel { display: grid; gap: 16px; margin: 0; padding: 18px; }
+        #distanceSelectDialog .distance-picker-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+        #distanceSelectDialog h2 { margin: 0; color: #fafafa; font-size: 22px; font-weight: 750; line-height: 1.2; letter-spacing: -.025em; text-transform: none; }
+        #distanceSelectClose { flex: 0 0 44px; width: 44px; height: 44px; min-height: 44px; display: grid; place-items: center; padding: 0; border: 1px solid #44444e; border-radius: 50% !important; color: #fafafa; background: #232329; box-shadow: none; cursor: pointer; }
+        #distanceSelectClose svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.8; }
+        #distanceSelectOrigin { margin: -8px 0 0; color: #c6c6cf; font-size: 14px; line-height: 1.45; }
+        #distanceSelectDialog .distance-picker-options { min-width: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin: 0; padding: 0; border: 0; }
+        #distanceSelectDialog legend { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+        #distanceSelectDialog .distance-picker-options label { position: relative; display: block; margin: 0; cursor: pointer; }
+        #distanceSelectDialog .distance-picker-options input { position: absolute; width: 1px; height: 1px; margin: 0; opacity: 0; }
+        #distanceSelectDialog .distance-picker-options span { box-sizing: border-box; min-height: 64px; display: grid; place-items: center; border: 1px solid #50505b; border-radius: 14px; color: #f1f1f5; background: #24242a; font-size: 17px; font-weight: 650; line-height: 1; letter-spacing: 0; text-transform: none; }
+        #distanceSelectDialog .distance-picker-options input:checked + span { border-color: #fafafa; color: #151519; background: #fafafa; font-weight: 800; }
+        #distanceSelectDialog .distance-picker-options input:focus-visible + span,
+        #distanceSelectDialog button:focus-visible { outline: 2px solid #fafafa; outline-offset: 3px; }
+        #distanceSelectApply { width: 100%; min-height: 48px; padding: 12px 16px; border: 1px solid #fafafa !important; border-radius: 14px; color: #151519 !important; background: #fafafa !important; box-shadow: none; font: inherit; font-weight: 750; line-height: 1.25; text-transform: none; cursor: pointer; }
+        @media (min-width: 721px) {
+          #distanceSelectDialog { inset: 0; height: fit-content; margin: auto; }
+        }
         .venue-picker-field.is-enhanced #venueSelect { position: absolute !important; width: 1px !important; height: 1px !important; min-height: 1px !important; padding: 0 !important; overflow: hidden !important; clip-path: inset(50%) !important; opacity: 0 !important; pointer-events: none !important; }
         #venueSelect option[data-working-now="true"] { color: #10b981; font-weight: 900; }
         .venue-picker-trigger { width: 100%; min-width: 0; min-height: 46px; display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: 9px; padding: 0 13px; border: 1px solid #334155; border-radius: 12px; color: #f8fafc; background: #050507; font: inherit; font-size: clamp(14px, 1.8vw, 17px); font-weight: 850; text-align: left; cursor: pointer; }
@@ -42402,6 +42445,14 @@
     const citySelectPanel = document.getElementById("citySelectPanel");
     const citySelectOptions = document.getElementById("citySelectOptions");
     const distanceSelect = document.getElementById("distanceSelect");
+    const distancePickerField = document.getElementById("distancePickerField");
+    const distanceSelectLabel = document.getElementById("distanceSelectLabel");
+    const distanceSelectButton = document.getElementById("distanceSelectButton");
+    const distanceSelectButtonText = document.getElementById("distanceSelectButtonText");
+    const distanceSelectDialog = document.getElementById("distanceSelectDialog");
+    const distanceSelectOrigin = document.getElementById("distanceSelectOrigin");
+    const distanceSelectForm = document.getElementById("distanceSelectForm");
+    const distanceSelectClose = document.getElementById("distanceSelectClose");
     const venueSelect = document.getElementById("venueSelect");
     const venuePickerField = document.getElementById("venuePickerField");
     const venueSelectLabel = document.getElementById("venueSelectLabel");
@@ -59443,6 +59494,7 @@
     }
 
     function syncHomeFilterToggleState() {
+      syncDistancePickerDisplay();
       if (!homeFilterToggle) return;
       const activeFilterCount = Number(distanceSelect?.value !== "25 mi") + Number(selectedVenueFilter() !== "all");
       const count = document.getElementById("homeFilterCount");
@@ -65651,6 +65703,66 @@
       ) return;
       event.preventDefault();
       clearHomeTvVenueFilter();
+    });
+
+    function syncDistancePickerDisplay() {
+      if (distanceSelectButtonText) distanceSelectButtonText.textContent = distanceSelect?.value || "25 mi";
+    }
+
+    function syncDistancePickerSelection() {
+      distanceSelectDialog?.querySelectorAll('input[name="discoveryDistance"]').forEach((input) => {
+        input.checked = input.value === distanceSelect?.value;
+      });
+      syncDistancePickerDisplay();
+    }
+
+    function openDistancePicker() {
+      if (!distanceSelectDialog || distanceSelectDialog.open || typeof distanceSelectDialog.showModal !== "function") return;
+      syncDistancePickerSelection();
+      if (distanceSelectOrigin) {
+        distanceSelectOrigin.textContent = userLocation
+          ? "From your current location"
+          : `From the center of ${selectedCity()}`;
+      }
+      distanceSelectDialog.showModal();
+      distanceSelectButton?.setAttribute("aria-expanded", "true");
+      distanceSelectDialog.querySelector('input[name="discoveryDistance"]:checked')?.focus({ preventScroll: true });
+    }
+
+    function closeDistancePicker() {
+      if (distanceSelectDialog?.open) distanceSelectDialog.close();
+    }
+
+    function applyDistancePickerSelection(event) {
+      event.preventDefault();
+      const value = distanceSelectDialog?.querySelector('input[name="discoveryDistance"]:checked')?.value;
+      if (!distanceSelect || ![...distanceSelect.options].some((option) => option.value === value)) return;
+      const changed = distanceSelect.value !== value;
+      distanceSelect.value = value;
+      syncDistancePickerDisplay();
+      closeDistancePicker();
+      if (changed) distanceSelect.dispatchEvent(new Event("change", { bubbles: true }));
+    }
+
+    if (distancePickerField && distanceSelect && distanceSelectButton && typeof distanceSelectDialog?.showModal === "function") {
+      distancePickerField.classList.add("is-enhanced");
+      distanceSelect.hidden = true;
+      distanceSelectButton.hidden = false;
+      distanceSelectLabel?.setAttribute("for", "distanceSelectButton");
+      syncDistancePickerDisplay();
+    }
+    distanceSelectButton?.addEventListener("click", openDistancePicker);
+    distanceSelectClose?.addEventListener("click", closeDistancePicker);
+    distanceSelectForm?.addEventListener("submit", applyDistancePickerSelection);
+    distanceSelectDialog?.addEventListener("close", () => {
+      syncDistancePickerSelection();
+      distanceSelectButton?.setAttribute("aria-expanded", "false");
+      distanceSelectButton?.focus({ preventScroll: true });
+    });
+    distanceSelectDialog?.addEventListener("click", (event) => {
+      if (event.target !== distanceSelectDialog) return;
+      const bounds = distanceSelectDialog.getBoundingClientRect();
+      if (event.clientX < bounds.left || event.clientX > bounds.right || event.clientY < bounds.top || event.clientY > bounds.bottom) closeDistancePicker();
     });
 
     function openVenuePicker() {
