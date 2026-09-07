@@ -239,7 +239,7 @@ test("full dancer profiles use refreshed credentials for successive follows and 
   context.dancerId = "dancer-2";
   context.setSaved = (state) => { context.restored = state; };
   context.setSavedLoaded = () => {};
-  const load = between(profile, '    fetch("/api/customer/saved", {', "    return () => controller.abort();");
+  const load = between(profile, '    const savedRequestHeaders =', "    return () => controller.abort();");
   await vm.runInContext(ts.transpileModule(load, { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText, context);
   assert.equal(context.restored.following, true);
   assert.equal(context.restored.notificationsEnabled, true);

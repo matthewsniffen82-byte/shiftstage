@@ -44203,17 +44203,22 @@
       return headers;
     }
 
-    function applyResponseSession(data) {
+    function applyResponseSession(data, requestHeaders) {
       if (!data?.session?.accessToken) return;
+      const current = synchronizeAuthSession();
+      // An older request must not undo a refresh, a new login, or a logout.
+      if (!current?.accessToken || !requestHeaders
+        || requestHeaders.Authorization !== `Bearer ${current.accessToken}`
+        || (requestHeaders["X-Dancr-Refresh-Token"] || "") !== (current.refreshToken || "")) return;
       saveAuthSession({
-        ...authSession,
+        ...current,
         ...data.session,
         account: data.account
           ? {
               ...data.account,
               email: normalizeAccountEmail(data.account.email) || sessionEmailForRole(data.account.role) || authSession?.account?.email || null
             }
-          : authSession?.account || null
+          : current.account || null
       });
     }
 
@@ -44267,7 +44272,7 @@
       }, options.timeoutMs, options.timeoutMessage);
       const data = await response.json().catch(() => ({}));
       if (!response.ok || data.ok === false) throw apiRequestError(data);
-      applyResponseSession(data);
+      applyResponseSession(data, headers);
       return data;
     }
 
@@ -44285,7 +44290,7 @@
       });
       const data = await response.json().catch(() => ({}));
       if (!response.ok || data.ok === false) throw new Error(data.error || "Request failed");
-      applyResponseSession(data);
+      applyResponseSession(data, headers);
       return data;
     }
 
@@ -44299,7 +44304,7 @@
       }, options.timeoutMs);
       const data = await response.json().catch(() => ({}));
       if (!response.ok || data.ok === false) throw apiRequestError(data);
-      applyResponseSession(data);
+      applyResponseSession(data, headers);
       return data;
     }
 
@@ -44325,7 +44330,7 @@
       });
       const data = await response.json().catch(() => ({}));
       if (!response.ok || data.ok === false) throw new Error(normalizeRequestError(data.message || data.error, "Request failed"));
-      applyResponseSession(data);
+      applyResponseSession(data, headers);
       return data;
     }
 
@@ -44348,7 +44353,7 @@
       }, options.timeoutMs, options.timeoutMessage);
       const data = await response.json().catch(() => ({}));
       if (!response.ok || data.ok === false) throw new Error(data.error || "Request failed");
-      applyResponseSession(data);
+      applyResponseSession(data, headers);
       return data;
     }
 
@@ -44363,7 +44368,7 @@
       }, 15000, "Venue verification took too long to load. Check your connection and try again.");
       const data = await response.json().catch(() => ({}));
       if (!response.ok || data.ok === false) throw new Error(data.error || "Request failed");
-      applyResponseSession(data);
+      applyResponseSession(data, headers);
       return data;
     }
 
@@ -48842,7 +48847,7 @@
         });
         const data = await response.json().catch(() => null);
         if (!response.ok || data?.ok !== true) throw apiRequestError(data, "Unable to save this deal.");
-        applyResponseSession(data);
+        applyResponseSession(data, headers);
         return data.persisted === true && data.saved === saved;
       } catch (error) {
         console.warn("Private Club Deal save unavailable; using device storage", error);
@@ -50690,7 +50695,7 @@
         if (!response.ok || data.ok === false) {
           throw new Error(normalizeRequestError(data.error || data.message, "Unable to load profile videos."));
         }
-        applyResponseSession(data);
+        applyResponseSession(data, headers);
         approvedProfileVideoWorkspace = data;
         approvedProfileVideoStatus = "";
         approvedProfileVideoStatusTone = "";
@@ -50773,7 +50778,7 @@
         if (!prepareResponse.ok || prepared.ok === false || !prepared.upload?.uploadUrl) {
           throw new Error(normalizeRequestError(prepared.error || prepared.message, "Unable to prepare the secure video upload."));
         }
-        applyResponseSession(prepared);
+        applyResponseSession(prepared, headers);
         preparedVideoId = prepared.upload.videoId;
         approvedProfileVideoStatus = "Uploading securely...";
         renderApprovedProfileVideoManager();
@@ -50803,7 +50808,7 @@
         if (!submitResponse.ok || submitted.ok === false) {
           throw new Error(normalizeRequestError(submitted.error || submitted.message, "Unable to submit the video for review."));
         }
-        applyResponseSession(submitted);
+        applyResponseSession(submitted, headers);
         const completionMessage = submitted.message || "Your video completed automated safety review.";
         const completionTone = submitted.video?.status === "rejected" ? "error" : "success";
         if (fileInput) fileInput.value = "";
@@ -50836,7 +50841,7 @@
       if (!response.ok || data.ok === false) {
         throw new Error(normalizeRequestError(data.error || data.message, "Unable to remove the video."));
       }
-      applyResponseSession(data);
+      applyResponseSession(data, headers);
       await loadApprovedProfileVideos({ force: true });
       approvedProfileVideoStatus = data.message || "Video removed.";
       approvedProfileVideoStatusTone = "success";
@@ -53107,14 +53112,15 @@
       profileMediaDeleteBusy = true;
       syncProfileMediaDeleteControls();
       try {
+        const headers = { ...authenticatedRequestHeaders(), "Content-Type": "application/json" };
         const response = await fetch(kind === "photo" ? "/api/dancer/photos" : `/api/dancer/tv/videos/${encodeURIComponent(item.id)}`, {
           method: "DELETE",
-          headers: { ...authenticatedRequestHeaders(), "Content-Type": "application/json" },
+          headers,
           ...(kind === "photo" ? { body: JSON.stringify({ photoId: item.id }) } : {})
         });
         const data = await response.json().catch(() => ({}));
         if (!response.ok || !data.ok) throw new Error(data.error || `Unable to delete this ${kind}.`);
-        applyResponseSession(data);
+        applyResponseSession(data, headers);
         deletedProfileMedia.add(`${kind}:${item.id}`);
         if (profileMediaOwner?.id === profileId && isDancerSession()) profileMediaOwner.token = authSession?.accessToken;
         profileNavigationPrefetchCache.clear();
@@ -56064,7 +56070,7 @@
       if (!response.ok || data.ok === false) {
         throw new Error(normalizeRequestError(data.message || data.error, "Photo upload failed"));
       }
-      applyResponseSession(data);
+      applyResponseSession(data, headers);
       return data;
     }
 
@@ -57022,7 +57028,7 @@
       if (!response.ok || data.ok === false) {
         throw new Error(normalizeRequestError(data.message || data.error, "Avatar upload failed"));
       }
-      applyResponseSession(data);
+      applyResponseSession(data, headers);
       return data;
     }
 

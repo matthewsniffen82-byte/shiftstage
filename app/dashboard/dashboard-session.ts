@@ -55,9 +55,16 @@ export function storedSessionIsFresh(session: StoredDashboardSession | null) {
   return Number.isFinite(expiresAt) && expiresAt > Math.floor(Date.now() / 1000) + 120;
 }
 
-export function persistResponseSession(data: { session?: StoredDashboardSession } | null | undefined) {
+export function persistResponseSession(
+  data: { session?: StoredDashboardSession } | null | undefined,
+  requestHeaders?: Record<string, string> | null,
+) {
   if (!data?.session?.accessToken) return;
-  const current = readSession() || {};
+  const current = readSession();
+  if (!current?.accessToken) return;
+  // Do not restore credentials from a request that predates a shared-session change.
+  if (requestHeaders && (requestHeaders.authorization !== `Bearer ${current.accessToken}`
+    || (requestHeaders["x-dancr-refresh-token"] || "") !== (current.refreshToken || ""))) return;
   persistBrowserAuthSession({ ...current, ...data.session });
 }
 
@@ -161,7 +168,7 @@ export async function requestDashboardJson(
     if (!accepted) {
       throw new DashboardDataRequestError(data?.error || data?.message || fallbackMessage, response.status);
     }
-    if (!controller?.signal.aborted && !requestInit.signal?.aborted) persistResponseSession(data);
+    if (!controller?.signal.aborted && !requestInit.signal?.aborted) persistResponseSession(data, authHeaders);
     return data;
   };
   try {

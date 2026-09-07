@@ -370,8 +370,9 @@ export function DancerProfileActions({
       return () => controller.abort();
     }
 
+    const savedRequestHeaders = currentDashboardAuthHeaders("customer") || {};
     fetch("/api/customer/saved", {
-      headers: currentDashboardAuthHeaders("customer") || {},
+      headers: savedRequestHeaders,
       cache: "no-store",
       signal: controller.signal,
     })
@@ -379,7 +380,7 @@ export function DancerProfileActions({
       .then((data) => {
         if (controller.signal.aborted) return;
         if (!data.ok) throw new Error(data.error || "Unable to load saved profile actions.");
-        persistResponseSession(data);
+        persistResponseSession(data, savedRequestHeaders);
         const follows = data.saved?.follows || [];
         const goingSignals = data.saved?.goingSignals || [];
         const follow = follows.find((item: any) => item.dancerId === dancerId);
@@ -519,9 +520,10 @@ export function DancerProfileActions({
     signal: AbortSignal,
   ) {
     setStatus("");
+    const requestHeaders = currentDashboardAuthHeaders("customer");
     const response = await fetch(path, {
       method: "POST",
-      headers: { ...currentDashboardAuthHeaders("customer"), "content-type": "application/json" },
+      headers: { ...requestHeaders, "content-type": "application/json" },
       body: JSON.stringify(body),
       signal,
     });
@@ -536,7 +538,7 @@ export function DancerProfileActions({
       setStatus(message);
       throw new Error(message);
     }
-    persistResponseSession(data);
+    persistResponseSession(data, requestHeaders);
     setStatus("Saved.");
     return data;
   }

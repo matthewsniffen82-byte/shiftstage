@@ -329,7 +329,7 @@ test("shared dashboard JSON requests are role-aware and preserve refreshed sessi
   assert.match(dashboardSession, /class DashboardDataRequestError extends Error/);
   assert.match(dashboardSession, /const authHeaders = currentDashboardAuthHeaders\(expectedRole\)/);
   assert.match(dashboardSession, /headers: \{ \.\.\.requestHeaders, \.\.\.authHeaders \}/);
-  assert.match(dashboardSession, /persistResponseSession\(data\)/);
+  assert.match(dashboardSession, /persistResponseSession\(data, authHeaders\)/);
 });
 
 test("shared dashboard panels use the refresh-aware request boundary", () => {
