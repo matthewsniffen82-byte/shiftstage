@@ -120,6 +120,11 @@ export async function POST(request: Request) {
           role,
           ...safeErrorMetadata(error),
         });
+        throw new PublicApiError(
+          "UNAVAILABLE",
+          "Password reset is temporarily unavailable. Please try again shortly.",
+          503,
+        );
       }
 
       return authJson({
