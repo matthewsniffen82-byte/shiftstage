@@ -32,7 +32,7 @@ function renderCustomerDashboard(initialState = {}, deviceSavedDeals = []) {
 
 test('customer dashboard renders its real sections before any authenticated request completes', () => {
   const html = renderCustomerDashboard();
-  for (const section of ['Followed Dancers', 'Followed Clubs', 'Saved Club Deals', 'Alerts', 'Account']) assert.ok(html.includes(section), section);
+  for (const section of ['Followed Dancers', 'Favorite Clubs', 'Saved Club Deals', 'Alerts', 'Account']) assert.ok(html.includes(section), section);
   assert.match(html, /Loading followed dancers/);
   assert.match(html, /Loading your saved deals/);
   assert.doesNotMatch(html, /venue-dashboard-loading-pill|No followed dancers yet|No saved club deals/);
@@ -40,7 +40,7 @@ test('customer dashboard renders its real sections before any authenticated requ
 
 test('an account timeout keeps the customer dashboard and retry available without suggesting sign-in', () => {
   const html = renderCustomerDashboard({ account: { displayName: 'Customer QA' }, accountError: "We couldn't refresh your account right now. Please try again." });
-  for (const text of ['Customer dashboard', 'Customer QA', 'Followed Dancers', 'Followed Clubs', 'Saved Club Deals', 'Try again']) assert.ok(html.includes(text), text);
+  for (const text of ['Customer dashboard', 'Customer QA', 'Followed Dancers', 'Favorite Clubs', 'Saved Club Deals', 'Try again']) assert.ok(html.includes(text), text);
   assert.doesNotMatch(html, /Guest dashboard|href="\/account\?role=customer"/);
 });
 

@@ -69,7 +69,7 @@ test("legacy customer dashboard uses loading placeholders until saved data settl
   );
   assert.match(
     liveShell,
-    /const dashboardLoading = liveCustomerDashboardState === "loading";[\s\S]*?Loading your saved dancers, clubs, and private alerts…[\s\S]*?Loading followed dancers working now…[\s\S]*?Loading followed clubs…/,
+    /const dashboardLoading = liveCustomerDashboardState === "loading";[\s\S]*?Loading your saved dancers, clubs, and private alerts…[\s\S]*?Loading followed dancers working now…[\s\S]*?Loading favorite clubs…/,
   );
   assert.match(
     liveShell,

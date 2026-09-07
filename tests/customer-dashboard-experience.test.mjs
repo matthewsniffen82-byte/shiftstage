@@ -23,7 +23,7 @@ test("customer dashboard leads with four clear activity areas before alerts and 
   );
   assert.match(
     dashboard,
-    /customer-followed-dancers", label: "Followed Dancers"[\s\S]*?customer-followed-clubs", label: "Followed Clubs"[\s\S]*?customer-saved-deals", label: "Saved Club Deals"[\s\S]*?customer-going", label: "I’m Going"[\s\S]*?href="#customer-alerts"[\s\S]*?>Alerts[\s\S]*?href="#customer-account"[\s\S]*?>Account/,
+    /customer-followed-dancers", label: "Followed Dancers"[\s\S]*?customer-followed-clubs", label: "Favorite Clubs"[\s\S]*?customer-saved-deals", label: "Saved Club Deals"[\s\S]*?customer-going", label: "I’m Going"[\s\S]*?href="#customer-alerts"[\s\S]*?>Alerts[\s\S]*?href="#customer-account"[\s\S]*?>Account/,
   );
   assert.match(dashboard, /role === "customer" \? "Customer dashboard"/);
   assert.doesNotMatch(dashboard, /eyebrow="(?:Guest workspace|Your activity)"/);
@@ -55,7 +55,7 @@ test("I’m Going and followed profile sections use live customer records and pr
   assert.match(dashboard, /No plans yet[\s\S]*?Find dancers/);
   assert.match(dashboard, /function CustomerNightPanel[\s\S]*?<div className="customer-night-panel"[\s\S]*?<div className="customer-night-list">/);
   assert.doesNotMatch(dashboard, /Plans you confirmed|Dancer shifts you chose|info-panel customer-night-panel/);
-  assert.match(dashboard, /No followed dancers yet[\s\S]*?No followed clubs yet/);
+  assert.match(dashboard, /No followed dancers yet[\s\S]*?No favorite clubs yet/);
   assert.match(dashboard, /id="customer-followed-dancers"[\s\S]*?id="customer-followed-clubs"[\s\S]*?id="customer-saved-deals"[\s\S]*?id="customer-going"/);
 });
 
@@ -103,7 +103,7 @@ test("followed dancer tiles keep the profile link separate from their unfollow b
 });
 
 test("fictional club direction controls navigate to the shared MyDancr destination", () => {
-  assert.match(dashboard, /import \{ fictionalVenueTravelAddress \}/);
+  assert.match(dashboard, /import \{ fictionalVenueTravelAddress, verifiedVenueLogoUrl \}/);
   assert.doesNotMatch(dashboard, /isFictionalVenueTravelPreviewOnly|previewOnly/);
   assert.match(dashboard, /function CustomerDirectionsButton[\s\S]*?disabled=\{pending\}[\s\S]*?onClick=\{\(\) => void onDirections\(venue, dancerId\)\}/);
   assert.match(dashboard, /function customerDirectionsHref[\s\S]*?const fictionalAddress = fictionalVenueTravelAddress\(venue\)[\s\S]*?const query = fictionalAddress \|\|/);

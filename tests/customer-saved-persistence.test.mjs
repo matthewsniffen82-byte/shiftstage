@@ -68,7 +68,7 @@ test("a venue save survives a saved-items refresh replacing the list during the 
   pending.resolve({ ok: true });
   await save;
   assert.deepEqual(Array.from(context.followedVenuesByCity["Test City"]), ["Another Club", "Test Club"]);
-  assert.match(notices[0], /saved to Followed Clubs in your dashboard/);
+  assert.match(notices[0], /saved to Favorite Clubs in your dashboard/);
   assert.equal(button.disabled, false);
   assert.equal(button.attributes["aria-busy"], undefined);
 });

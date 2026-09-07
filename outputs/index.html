@@ -41922,7 +41922,7 @@
           </button>
           <button class="stat" type="button" data-dashboard-jump="venues">
             <strong id="dashVenueCount">0</strong>
-            <span>Followed clubs</span>
+            <span>Favorite clubs</span>
           </button>
           <button class="stat" type="button" data-dashboard-jump="notifications">
             <strong id="dashNotificationsCount">0</strong>
@@ -41942,7 +41942,7 @@
         <div class="list card-grid" id="dashFollowedList"></div>
         <button class="view-all" id="dashFollowedViewAll" hidden>View All Followed</button>
         <div class="section-title-row" data-dashboard-section="venues">
-          <h3 class="section-title" id="dashVenuesTitle">Followed clubs</h3>
+          <h3 class="section-title" id="dashVenuesTitle">Favorite clubs</h3>
           <span class="section-context" id="dashVenuesContext">Las Vegas</span>
         </div>
         <div class="customer-venue-list" id="dashVenueList"></div>
@@ -58872,7 +58872,7 @@
       document.getElementById("dashNotificationsCount").textContent = dashboardLoading ? "…" : dashboardError ? "—" : String(notificationsOn + venues.length);
       document.getElementById("dashTonightTitle").textContent = `Followed dancers working now`;
       document.getElementById("dashFollowedTitle").textContent = `All followed dancers in ${city}`;
-      document.getElementById("dashVenuesTitle").textContent = `Followed clubs in ${city}`;
+      document.getElementById("dashVenuesTitle").textContent = `Favorite clubs in ${city}`;
       document.getElementById("dashTonightContext").textContent = dashboardLoading ? "Loading…" : dashboardError ? "Unavailable" : `${city} · ${workingTonight.length} ${workingTonight.length === 1 ? "profile" : "profiles"}`;
       document.getElementById("dashFollowedContext").textContent = dashboardLoading ? "Loading…" : dashboardError ? "Unavailable" : `${city} · ${followed.length} saved`;
       document.getElementById("dashVenuesContext").textContent = dashboardLoading ? "Loading…" : dashboardError ? "Unavailable" : `${venues.length} saved`;
@@ -58892,10 +58892,10 @@
         ? visibleFollowed.map((profile, index) => profileCard(profile, index + 2)).join("")
         : `<div class="locked">No followed dancers in ${city} yet.</div>`;
       dashVenueList.innerHTML = dashboardLoading || dashboardError
-        ? dashboardListMessage("Loading followed clubs…", `No followed clubs in ${city} yet.`)
+        ? dashboardListMessage("Loading favorite clubs…", `No favorite clubs in ${city} yet.`)
         : visibleVenues.length
         ? visibleVenues.map((venue) => venueCard(venue)).join("")
-        : `<div class="locked">No followed clubs in ${city} yet.</div>`;
+        : `<div class="locked">No favorite clubs in ${city} yet.</div>`;
       dashSavedDealsList.innerHTML = savedDealPasses.length
         ? savedDealPasses.map((pass) => savedDealPassMarkup(pass)).join("")
         : `<div class="locked">No saved Club Deals yet. Save a Club Deal to find it here later.</div>`;
@@ -62295,7 +62295,7 @@
           followedVenuesByCity[city] = savedVenues.filter((name) => name !== venueName);
           if (following) followedVenuesByCity[city].push(venueName);
           customerSavedStateVersion += 1;
-          showToast(following ? `${venueName} saved to Followed Clubs in your dashboard. Club alerts on.` : "Club removed from your dashboard.");
+          showToast(following ? `${venueName} saved to Favorite Clubs in your dashboard. Club alerts on.` : "Club removed from your dashboard.");
           render();
           if (customerDashboard.classList.contains("show")) renderDashboard();
         } catch (error) {

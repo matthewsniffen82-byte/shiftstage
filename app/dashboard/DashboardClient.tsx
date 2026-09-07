@@ -11,7 +11,7 @@ import { homeDiscoveryHref } from "@/src/lib/dancr/navigation";
 import { MAX_DANCER_PROFILE_PHOTOS } from "@/src/lib/dancr/media-limits";
 import { effectiveDancerProfileStatus } from "@/src/lib/dancr/profile-approval";
 import { isCurrentLocationVerification } from "@/src/lib/dancr/geofence";
-import { fictionalVenueTravelAddress } from "@/src/lib/dancr/venue-branding";
+import { fictionalVenueTravelAddress, verifiedVenueLogoUrl } from "@/src/lib/dancr/venue-branding";
 import { safeErrorMetadata } from "@/src/lib/security/safe-error-metadata";
 import type { SocialPlatform } from "@/src/lib/dancr/types";
 import { CLUB_DEAL_OFFER_PRESETS } from "@/src/lib/dancr/club-deal-presets";
@@ -80,6 +80,11 @@ type SavedVenueSummary = SavedImageSummary & {
   address?: string | null;
   latitude?: number | null;
   longitude?: number | null;
+  logoImageUrl?: string | null;
+  logoImageSrcSet?: string | null;
+  logoImageWidth?: number | null;
+  logoImageHeight?: number | null;
+  activity?: { workingNowCount: number; upcomingDancerCount: number } | null;
 };
 
 type SavedShiftSummary = {
@@ -844,7 +849,7 @@ function CustomerDashboardNav({ saved }: { saved?: CustomerSavedState | null }) 
   )).length;
   const links = [
     { id: "customer-followed-dancers", label: "Followed Dancers", count: saved?.follows?.length || 0 },
-    { id: "customer-followed-clubs", label: "Followed Clubs", count: saved?.venueFollows?.length || 0 },
+    { id: "customer-followed-clubs", label: "Favorite Clubs", count: saved?.venueFollows?.length || 0 },
     { id: "customer-saved-deals", label: "Saved Club Deals", count: saved?.dealSaves?.length || 0 },
     { id: "customer-going", label: "I’m Going", count: goingCount },
   ];
@@ -1615,7 +1620,7 @@ function CustomerPanel({
           ? (current.venueFollows || []).map((item) => item.venueId === venueId ? { ...item, notificationsEnabled: true } : item)
           : (current.venueFollows || []).filter((item) => item.venueId !== venueId),
       }),
-      following ? "Club followed." : "Club unfollowed.",
+      following ? "Club added to favorites." : "Club removed from favorites.",
     );
   }
 
@@ -1733,9 +1738,9 @@ function CustomerPanel({
       </DashboardSection>
       <DashboardSection
         badge={String(saved?.venueFollows?.length || 0)}
-        description="Your favorite clubs, saved from club cards, with directions and alert controls."
+        description="Your saved clubs, with dancer activity and quick directions."
         id="customer-followed-clubs"
-        title="Followed Clubs"
+        title="Favorite Clubs"
       >
         <CustomerFollowedClubsPanel
           isLoading={isLoading}
@@ -1912,7 +1917,7 @@ function CustomerFollowedClubsPanel({
               <h3>{group.city}</h3>
               <span>{group.follows.length} {group.follows.length === 1 ? "club" : "clubs"}</span>
             </div>
-            <div className="customer-saved-card-grid">
+            <div className="customer-saved-card-grid customer-favorite-club-grid">
               {group.follows.map((item, index) => {
                 const venue = item.venue;
                 const venueId = String(item.venueId || venue?.id || "");
@@ -1923,6 +1928,7 @@ function CustomerFollowedClubsPanel({
                     onDirections={onDirections}
                     onUnfollow={() => void onVenueFollowChange(venueId, false)}
                     pending={Boolean(pendingAction)}
+                    removing={pendingAction === `venue-${venueId}`}
                     venue={venue}
                   />
                 );
@@ -1930,9 +1936,9 @@ function CustomerFollowedClubsPanel({
             </div>
           </section>
         ))}
-        {!followedVenues.length && !isLoading ? <CustomerSavedEmpty label="No followed clubs yet" href={homeDiscoveryHref("venues")} cta="Browse clubs" /> : null}
+        {!followedVenues.length && !isLoading ? <CustomerSavedEmpty label="No favorite clubs yet" href={homeDiscoveryHref("venues")} cta="Browse clubs" /> : null}
       </div>
-      {isLoading ? <div className="customer-loading-state">Loading followed clubs…</div> : null}
+      {isLoading ? <div className="customer-loading-state">Loading favorite clubs…</div> : null}
     </div>
   );
 }
@@ -1992,28 +1998,63 @@ function SavedVenueCard({
   onDirections,
   onUnfollow,
   pending,
+  removing,
   venue,
 }: {
   onDirections: (venue: SavedVenueSummary) => void;
   onUnfollow: () => void;
   pending: boolean;
+  removing: boolean;
   venue: SavedVenueSummary;
 }) {
   return (
-    <article className="customer-saved-card">
-      <SavedCardImage image={venue} name={String(venue.name || "Club")} />
-      <div className="customer-saved-card-copy">
-        <span>Followed club</span>
+    <article className="customer-saved-card customer-favorite-club-card">
+      <div className="customer-favorite-club-brand">
+        <Link className="customer-favorite-club-logo" href={customerVenueHref(venue)} aria-label={`Open ${venue.name || "club"} page`}>
+          <SavedVenueLogo venue={venue} />
+        </Link>
+        <button
+          className="customer-club-favorite"
+          type="button"
+          aria-label={`Remove ${venue.name || "club"} from favorites`}
+          title="Remove from favorites"
+          aria-pressed="true"
+          aria-busy={removing || undefined}
+          disabled={pending}
+          onClick={onUnfollow}
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8Z" /></svg>
+        </button>
+      </div>
+      <div className="customer-saved-card-copy customer-favorite-club-copy">
         <Link href={customerVenueHref(venue)}><strong>{venue.name}</strong></Link>
         <small>{[venue.city, venue.state].filter(Boolean).join(", ") || "Location unavailable"}</small>
-        <div className="customer-card-actions">
-          <Link href={customerVenueHref(venue)}>Profile</Link>
+        <div className="customer-club-activity" aria-label={`Dancers at ${venue.name || "this club"}`}>
+          <Link className={`customer-club-activity-stat is-now${venue.activity?.workingNowCount ? " has-dancers" : ""}`} href={`${customerVenueHref(venue)}#venue-working-now`}>
+            <i aria-hidden="true" /><strong>{venue.activity?.workingNowCount ?? "—"}</strong><span>Now</span>
+          </Link>
+          <Link className="customer-club-activity-stat is-upcoming" href={`${customerVenueHref(venue)}#venue-upcoming-shifts`}>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="16" rx="3" /><path d="M8 3v4m8-4v4M4 11h16" /></svg>
+            <strong>{venue.activity?.upcomingDancerCount ?? "—"}</strong><span>Upcoming</span>
+          </Link>
+        </div>
+        {!venue.activity ? <small className="customer-club-activity-unavailable">Dancer counts unavailable. Open the club page for updates.</small> : null}
+        <div className="customer-card-actions customer-favorite-club-actions">
+          <Link href={customerVenueHref(venue)}>Club page <span aria-hidden="true">↗</span></Link>
           <CustomerDirectionsButton onDirections={onDirections} pending={pending} venue={venue} />
-          <button className="customer-text-action" type="button" disabled={pending} onClick={onUnfollow}>Unfollow</button>
         </div>
       </div>
     </article>
   );
+}
+
+function SavedVenueLogo({ venue }: { venue: SavedVenueSummary }) {
+  const logoUrl = venue.logoImageUrl || verifiedVenueLogoUrl(venue.slug);
+  const [failedUrl, setFailedUrl] = useState("");
+  if (!logoUrl || failedUrl === logoUrl) {
+    return <svg className="customer-club-logo-fallback" viewBox="0 0 64 64" aria-hidden="true"><path d="M12 54V22L32 10l20 12v32M8 54h48M23 54V40h18v14M23 25h18M23 32h18" /></svg>;
+  }
+  return <img src={logoUrl} srcSet={venue.logoImageSrcSet || undefined} sizes="(max-width: 700px) 70vw, 320px" width={venue.logoImageWidth || undefined} height={venue.logoImageHeight || undefined} alt={`${venue.name || "Club"} logo`} loading="lazy" decoding="async" onError={() => setFailedUrl(logoUrl)} />;
 }
 
 function CustomerDirectionsButton({
@@ -8578,6 +8619,39 @@ function DashboardStyles() {
       .customer-card-actions .customer-text-action { color: #cfc5de; background: transparent; }
       .customer-saved-card .customer-card-actions { display: grid !important; grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .customer-saved-card .customer-card-actions > * { min-width: 0; width: 100%; padding-inline: 7px; }
+      .customer-saved-card-grid.customer-favorite-club-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+      .customer-favorite-club-card { border: 1px solid rgba(185,149,255,.25); border-radius: 22px; background: linear-gradient(155deg, #141019, #09090e 72%); box-shadow: 0 16px 38px rgba(0,0,0,.32), inset 0 1px 0 rgba(255,255,255,.04); }
+      .customer-favorite-club-brand { position: relative; height: 148px; border-bottom: 1px solid rgba(172,122,255,.16); background: radial-gradient(ellipse at 50% 100%, rgba(101,48,180,.12), transparent 70%), #050507; }
+      .customer-favorite-club-logo { height: 100%; display: grid; place-items: center; padding: 20px 56px 20px 22px; }
+      .customer-favorite-club-logo > img { display: block; width: 100%; height: 100%; max-height: 108px; object-fit: contain; }
+      .customer-club-logo-fallback { width: 64px; height: 64px; fill: none; stroke: #b7accb; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+      .customer-club-favorite { position: absolute; top: 12px; right: 12px; width: 44px; height: 44px; min-height: 44px; display: grid; place-items: center; padding: 10px; border: 1px solid rgba(251,113,133,.24); border-radius: 50%; color: #fb7185; background: rgba(27,15,24,.9); cursor: pointer; }
+      .customer-club-favorite > svg { width: 21px; height: 21px; fill: currentColor; stroke: currentColor; stroke-width: 1.4; }
+      .customer-club-favorite:disabled { opacity: .55; cursor: wait; }
+      .customer-club-favorite:hover:not(:disabled) { background: #351724; border-color: #fb7185; }
+      body.dancr-button-system .dashboard-shell-customer .customer-club-favorite { box-sizing: border-box !important; width: 44px !important; min-width: 44px !important; height: 44px !important; min-height: 44px !important; padding: 10px !important; border: 1px solid rgba(239,68,68,.28) !important; border-radius: 50% !important; color: #ef4444 !important; background: rgba(27,15,24,.9) !important; box-shadow: none !important; }
+      body.dancr-button-system .dashboard-shell-customer .customer-club-favorite svg { width: 21px !important; height: 21px !important; color: inherit !important; }
+      body.dancr-button-system .dashboard-shell-customer .customer-club-favorite svg path { fill: currentColor !important; stroke: currentColor !important; }
+      .customer-club-favorite:focus-visible, .customer-club-activity-stat:focus-visible, .customer-favorite-club-logo:focus-visible { outline: 2px solid var(--mydancr-customer-accent); outline-offset: -3px; }
+      .customer-favorite-club-copy { padding: 18px; gap: 7px; }
+      .customer-favorite-club-copy > a strong { font-size: 23px; font-weight: 900; letter-spacing: -.025em; white-space: normal; line-height: 1.15; }
+      .customer-favorite-club-copy > small { color: #aaa4b8; font-size: 12px; }
+      .customer-club-activity { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 10px 0 5px; }
+      .customer-club-activity-stat { min-width: 0; min-height: 50px; display: flex; align-items: center; justify-content: center; gap: 7px; padding: 8px 5px; border: 1px solid rgba(255,255,255,.08); border-radius: 12px; color: #c0b9ce; background: rgba(255,255,255,.025); text-decoration: none; }
+      .customer-club-activity-stat strong { color: #fff; font-size: 20px; line-height: 1; }
+      .customer-club-activity-stat span { font-size: 11px; font-weight: 800; }
+      .customer-club-activity-stat > i { width: 6px; height: 6px; flex: 0 0 6px; border-radius: 50%; background: currentColor; }
+      .customer-club-activity-stat > svg { width: 15px; height: 15px; flex: 0 0 15px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; }
+      .customer-club-activity-stat.is-now.has-dancers { color: #72e2a6; border-color: rgba(65,211,136,.23); background: rgba(30,119,70,.1); }
+      .customer-club-activity-stat.is-now.has-dancers > i { box-shadow: 0 0 9px rgba(65,211,136,.6); }
+      .customer-club-activity-stat.is-upcoming { color: #c7a6fa; border-color: rgba(179,125,255,.16); }
+      .customer-favorite-club-copy > .customer-club-activity-unavailable { white-space: normal; font-size: 11px; line-height: 1.5; }
+      .customer-favorite-club-card .customer-favorite-club-actions { gap: 8px !important; }
+      .customer-favorite-club-card .customer-favorite-club-actions > * { min-height: 46px; border-radius: 12px; font-size: 12px; }
+      .customer-favorite-club-actions > a { gap: 8px; color: #f0e7ff; border-color: rgba(178,125,255,.3); background: linear-gradient(130deg, rgba(132,67,211,.2), rgba(106,55,171,.09)); }
+      body.dancr-button-system .customer-favorite-club-card .customer-favorite-club-actions > :is(a, button) { box-sizing: border-box !important; width: 100% !important; min-width: 0 !important; min-height: 46px !important; margin: 0 !important; padding: 0 10px !important; border: 1px solid rgba(255,255,255,.12) !important; border-radius: 12px !important; color: #e4e0ed !important; background: rgba(255,255,255,.04) !important; box-shadow: none !important; font-size: 12px !important; }
+      body.dancr-button-system .customer-favorite-club-card .customer-favorite-club-actions > a { border-color: rgba(178,125,255,.3) !important; color: #f0e7ff !important; background: linear-gradient(130deg, rgba(132,67,211,.2), rgba(106,55,171,.09)) !important; }
+      @media (max-width: 700px) { .customer-saved-card-grid.customer-favorite-club-grid { grid-template-columns: minmax(0, 1fr); gap: 14px; } .customer-favorite-club-brand { height: 132px; } .customer-favorite-club-logo { padding: 16px 54px 16px 18px; } .customer-favorite-club-copy { padding: 16px; } }
       .customer-empty-state { min-height: 124px; display: grid; place-items: start; align-content: center; gap: 9px; padding: 16px; border: 1px dashed rgba(167,139,250,.3); border-radius: 12px; background: rgba(139,92,246,.05); }
       .customer-empty-state.compact { min-height: 106px; padding: 12px; }
       .customer-empty-state strong { color: #fff; }

@@ -2,6 +2,8 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { isApprovedPublicDancerRow } from "./public";
 import { responsivePublicImage } from "./responsive-image";
 import { isActiveNfcPresence } from "./shift-presence";
+import { verifiedVenueLogoUrl } from "./venue-branding";
+import { getSavedVenueActivity } from "./customer-venue-activity";
 
 type DancrClient = SupabaseClient;
 
@@ -41,9 +43,10 @@ export async function getCustomerSavedItems(
     ...favorites.map((item: any) => item.dancer?.id),
     ...goingSignals.map((item: any) => item.shift?.dancer?.id),
   ].filter(Boolean)));
-  const [schedules, publicImages] = await Promise.all([
+  const [schedules, publicImages, venueActivity] = await Promise.all([
     getSavedDancerSchedules(client, dancerIds),
     getSavedDancerImages(publicMediaClient, dancerIds),
+    getSavedVenueActivity(publicMediaClient, venueFollows.map((item: any) => String(item.venueId))),
   ]);
   const attachPublicImage = (dancer: any) => dancer
     ? { ...dancer, ...(publicImages.get(String(dancer.id)) || {}) }
@@ -67,7 +70,10 @@ export async function getCustomerSavedItems(
   return {
     follows: follows.map(attachSchedule),
     favorites: favorites.map(attachSchedule),
-    venueFollows,
+    venueFollows: venueFollows.map((item: any) => ({
+      ...item,
+      venue: { ...item.venue, activity: venueActivity.get(String(item.venueId)) || null },
+    })),
     goingSignals: goingSignals.map(attachGoingImage),
   };
 }
@@ -350,7 +356,7 @@ async function getFavoriteDancers(client: DancrClient, customerId: string) {
 async function getFollowedVenues(client: DancrClient, customerId: string) {
   const { data, error } = await client
     .from("venue_follows")
-    .select("venue_id, notifications_enabled, created_at, venues(id, slug, name, city, state, address, latitude, longitude, is_active, cover_image_storage_path)")
+    .select("venue_id, notifications_enabled, created_at, venues(id, slug, name, city, state, address, latitude, longitude, is_active, cover_image_storage_path, logo_storage_path)")
     .eq("customer_id", customerId)
     .order("created_at", { ascending: false });
 
@@ -517,6 +523,7 @@ function toVenueSummary(client: DancrClient, value: any) {
   const venue = single(value);
   if (!venue || venue.is_active === false) return null;
   const image = responsivePublicImage(client, "venue-cover-images", venue.cover_image_storage_path);
+  const logo = responsivePublicImage(client, "venue-logo-images", venue.logo_storage_path);
 
   return {
     id: venue.id,
@@ -531,6 +538,10 @@ function toVenueSummary(client: DancrClient, value: any) {
     imageSrcSet: image?.imageSrcSet || null,
     imageWidth: image?.imageWidth || null,
     imageHeight: image?.imageHeight || null,
+    logoImageUrl: logo?.imageUrl || verifiedVenueLogoUrl(venue.slug),
+    logoImageSrcSet: logo?.imageSrcSet || null,
+    logoImageWidth: logo?.imageWidth || null,
+    logoImageHeight: logo?.imageHeight || null,
   };
 }
 
