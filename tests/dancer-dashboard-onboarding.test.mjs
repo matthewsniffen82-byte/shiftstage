@@ -28,7 +28,7 @@ test("the setup command center exposes the real three-step NFC production flow",
   assert.doesNotMatch(dashboard, /Preview & continue/);
   assert.match(dashboard, /Dressing-room tap/);
   assert.match(dashboard, /Continue to club verification/);
-  assert.match(dashboard, /Review and submit your completed profile to open club verification\./);
+  assert.match(onboardingCommand, /status \|\| \(!profileReady && !submitted \? setupDetail : ""\)/);
   assert.doesNotMatch(dashboard, /Submit profile for review|Submit completed profile|final approval/);
   assert.match(dashboard, /submitForReview: true/);
   assert.match(dashboard, /dancer-onboarding-nfc/);
@@ -74,8 +74,8 @@ test("initial onboarding nests every production workspace directly under its ste
   assert.match(dashboard, /className="dancer-onboarding-step-panel"/);
   assert.match(dashboard, /step\.id === "dancer-profile-media" \? \(/);
   assert.match(dashboard, /id="dancer-onboarding-profile-review"/);
-  assert.match(dashboard, /<h3>Review and submit profile<\/h3>/);
-  assert.match(dashboard, /buttonLabel="Review full profile"/);
+  assert.match(dashboard, /<h3>Preview your profile<\/h3>/);
+  assert.match(dashboard, /buttonLabel="Preview profile"/);
   assert.doesNotMatch(dashboard, /<article className="dancer-onboarding-preview" aria-label="Guest profile preview">/);
   assert.doesNotMatch(dashboard, /className="dancer-onboarding-preview-card"/);
   assert.doesNotMatch(dashboard, /step\.id === "dancer-onboarding-preview"/);
@@ -168,9 +168,9 @@ test("step one guides dancers through required work in the live profile layout",
   assert.match(dashboard, /`Profile essentials: \$\{completedRequirements\}\/\$\{builderRequirements\.length\} complete`/);
   assert.match(dashboard, /videos: videoContent/);
   assert.match(dashboard, /socials: socialContent/);
-  assert.match(dashboard, /Build your profile/);
+  assert.match(dashboard, /Profile details/);
   assert.doesNotMatch(dashboard, /required items ready|Choose from your device or open your camera\. At least one approved photo is required\./);
-  assert.match(dashboard, /buttonLabel=\{profileReady \? "Review profile setup" : "Open profile setup"\}/);
+  assert.match(dashboard, /buttonLabel=\{profileReady \? "Edit profile" : "Set up profile"\}/);
   assert.match(dashboard, /saveLabel="Save & continue"/);
   assert.match(dashboard, /if \(!continueAfterSave \|\| !profileReady\) return;[\s\S]*?continueToReview\(\)/);
   assert.match(dashboard, /continueToReview: continueToProfileReview/);
