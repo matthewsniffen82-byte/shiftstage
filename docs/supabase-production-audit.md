@@ -132,6 +132,8 @@ Email signup and email confirmation are enabled in production. Anonymous sign-in
 
 The Email provider also has secure email change and leaked-password protection enabled, OTP expiry 3600 seconds, and OTP length eight digits. Password-change reauthentication and current-password requirements are disabled. Enabling either would require a compatible reauthentication UI and recovery-flow verification first; do not toggle them blindly during hardening.
 
+Subsequent owner-approved change on September 7, 2026: common/leaked-password rejection was disabled so MyDancr uses the four requested password-format rules. The preceding paragraph records the original audit snapshot; see [the current password policy](password-policy.md) for the current setting. Other email and session protections were preserved.
+
 ## LOW
 
 ### L1 — Configuration shape checks are incomplete

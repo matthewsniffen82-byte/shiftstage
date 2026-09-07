@@ -85,7 +85,7 @@ Use a designated staging project and disposable customer/dancer/venue accounts. 
 | Recovery email | Latest email reaches inbox; exact destination accepted by allowlist; email-scanner behavior checked |
 | Recovery on another browser/device | Supported implicit/token-hash flow opens the new-password form; no dependence on the initiating browser's local state |
 | Expired/used/malformed email link | Safe error/sign-in path; no successful confirmation claim |
-| Password update then login | New exact password works, old password fails; verify whitespace and leaked-password rejection |
+| Password update then login | New exact password works, old password fails; verify whitespace and the four rules in [the current password policy](password-policy.md). Common/leaked-password rejection is disabled by owner instruction. |
 | Multiple reset requests | Provider/app limits respected; latest usable link explained; no automatic request loop |
 | Session persistence and expiry | Refresh/reopen/navigation retains valid identity; expired/invalid credentials require sign-in |
 | Refresh outage | Existing session preserved with retry message; restored provider allows recovery |

@@ -13,9 +13,9 @@ The shared validator in `src/lib/dancr/password-policy.ts` enforces these rules 
 
 ## Supabase configuration
 
-Project: Dancr (`hfmzwadzabmgxkjzmqun`). Under Authentication → Sign In / Providers → Email, the minimum password length must be 6. Keep the existing leaked-password protection enabled. A password that meets the four format rules can still be rejected if Supabase identifies it as a known leaked password.
+Project: Dancr (`hfmzwadzabmgxkjzmqun`). Under Authentication → Sign In / Providers → Email, the minimum password length is 6 and **Prevent use of leaked passwords** is **off** (`PASSWORD_HIBP_ENABLED = false`). Only the four password-format rules above apply through MyDancr. Do not re-enable common/leaked-password rejection without a new owner instruction.
 
-On September 7, 2026, the minimum was saved as 6 and visually verified after reloading the Email settings. Leaked-password protection remained enabled; the other email and session protections were unchanged.
+On September 7, 2026, the owner explicitly confirmed removal of the extra common/leaked-password check after a password meeting the four listed rules was rejected. The switch was disabled and saved, then verified off after reloading Supabase and reopening the Email settings. The previously configured six-character minimum, email confirmation, secure email change, and session settings were preserved.
 
 Supabase's built-in composition dropdown has no uppercase + number + symbol option without also requiring lowercase. Keep its existing default of no additional required characters; MyDancr's server routes enforce the requested composition rules. Do not select the lowercase-required preset and silently add a fifth requirement. Direct calls to Supabase Auth are subject to its own configured policy, not MyDancr's route validation.
 
