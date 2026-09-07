@@ -22,6 +22,7 @@ import { DANCER_PROFILE_VIDEOS_CHANGED_EVENT } from "./dancer-profile-media-sync
 import VenueNfcTagPanel from "./VenueNfcTagPanel";
 import VenueTeamPanel from "./VenueTeamPanel";
 import VenueTvPanel from "./VenueTvPanel";
+import { loadCustomerDashboard } from "./customer-dashboard-loader";
 import {
   DASHBOARD_SESSION_KEY as SESSION_KEY,
   clearDashboardSession,
@@ -238,6 +239,7 @@ type LoadState = {
   publication?: Record<string, unknown> | null;
   refreshedAt?: string | null;
   error?: string;
+  savedError?: string;
 };
 
 export default function DashboardClient({
@@ -251,6 +253,7 @@ export default function DashboardClient({
 }) {
   const [state, setState] = useState<LoadState>({});
   const [isLoading, setIsLoading] = useState(true);
+  const [customerSavedLoading, setCustomerSavedLoading] = useState(true);
   const [loadAttempt, setLoadAttempt] = useState(0);
   const [analyticsPeriod, setAnalyticsPeriod] = useState<"tonight" | "7d" | "30d">("30d");
   const [isVenueRefreshing, setIsVenueRefreshing] = useState(false);
@@ -261,6 +264,7 @@ export default function DashboardClient({
   const retryDashboard = useCallback(() => {
     setState((current) => ({ account: current.account }));
     setIsLoading(true);
+    setCustomerSavedLoading(true);
     setLoadAttempt((current) => current + 1);
   }, []);
 
@@ -288,6 +292,31 @@ export default function DashboardClient({
         setState((current) => ({ ...current, account: cachedAccount }));
       }
 
+      if (role === "customer") {
+        try {
+          await loadCustomerDashboard(controller.signal, (panel, data) => {
+            if (cancelled) return;
+            if (panel === "account") {
+              setState((current) => ({ ...current, account: data }));
+              setIsLoading(false);
+            } else if (panel === "saved" || panel === "savedError") {
+              setState((current) => ({ ...current, [panel]: data }));
+              setCustomerSavedLoading(false);
+            } else {
+              const key = panel === "support" ? "supportThreads" : panel;
+              setState((current) => ({ ...current, [key]: data }));
+            }
+          });
+        } catch (error) {
+          if (!cancelled) {
+            controller.abort();
+            setState((current) => ({ ...current, error: dashboardLoadErrorMessage(error) }));
+            setIsLoading(false);
+          }
+        }
+        return;
+      }
+
       const loadDashboardPanels = async () => {
         if (role === "dancer") {
           // This request finalizes a saved eligible NFC enrollment. Load the
@@ -305,15 +334,8 @@ export default function DashboardClient({
         }
 
         return Promise.all([
-          requestOptionalPanel(role === "venue" ? "/api/venue/profile" : "/api/customer/profile", { profile: null }),
-          role === "customer"
-            ? requestDashboardJson("/api/customer/saved", {
-                cache: "no-store",
-                signal: controller.signal,
-                timeoutMs: 15000,
-                fallbackMessage: "Unable to load your saved activity. Please try again.",
-              })
-            : requestOptionalPanel("/api/venue/dashboard?period=30d", {}),
+          requestOptionalPanel("/api/venue/profile", { profile: null }),
+          requestOptionalPanel("/api/venue/dashboard?period=30d", {}),
           requestOptionalPanel("/api/support", { threads: [] }),
           null,
           null,
@@ -330,7 +352,6 @@ export default function DashboardClient({
             requestAccountJson({
               cache: "no-store",
               fallbackMessage: "Unable to load account.",
-              timeoutMs: role === "customer" ? 15000 : undefined,
               signal: controller.signal,
             }),
             loadDashboardPanels(),
@@ -343,7 +364,6 @@ export default function DashboardClient({
           account = await requestAccountJson({
             cache: "no-store",
             fallbackMessage: "Unable to load account.",
-            timeoutMs: role === "customer" ? 15000 : undefined,
             signal: controller.signal,
           });
           [panels, agentAccess] = await Promise.all([
@@ -588,9 +608,9 @@ export default function DashboardClient({
         ) : null}
       </section>
 
-      {isLoading && !state.error ? (
+      {isLoading && !state.error && role !== "customer" ? (
         <DashboardLoadingState role={role} />
-      ) : !isLoading && !state.error ? (
+      ) : !state.error && (role === "customer" || !isLoading) ? (
         <section className={`dashboard-grid ${role}-dashboard-grid`}>
           {state.agentAccess?.active ? <AgentDashboardShortcut /> : null}
           {role === "customer" ? (
@@ -600,28 +620,35 @@ export default function DashboardClient({
                 show={showCustomerWelcome}
               />
               <CustomerDashboardNav saved={state.saved} />
-              <CustomerPanel saved={state.saved} onSavedChange={updateSaved} isLoading={isLoading} />
+              {state.savedError ? (
+                <InfoPanel title="Saved activity">
+                  <p role="alert">{state.savedError}</p>
+                  <button className="primary-link" type="button" onClick={retryDashboard}>Try again</button>
+                </InfoPanel>
+              ) : <CustomerPanel saved={state.saved} onSavedChange={updateSaved} isLoading={customerSavedLoading} />}
               <DashboardSection
                 description="Schedule changes, saved-profile updates, Club Deal activity, and support replies."
                 id="customer-alerts"
                 title="Alerts"
               >
-                <NotificationPanel saved={state.saved} customerMode panelId="customer-alerts-panel" />
+                {isLoading ? <p role="status">Loading your alerts…</p> : <NotificationPanel saved={state.saved} customerMode panelId="customer-alerts-panel" />}
               </DashboardSection>
               <DashboardSection
                 description="Preferences, support messages, password controls, and account status."
                 id="customer-account"
                 title="Account"
               >
-                <div className="venue-dashboard-inner-grid customer-settings-grid">
+                {isLoading ? <p role="status">Loading your account…</p> : <div className="venue-dashboard-inner-grid customer-settings-grid">
                   <InfoPanel title="Account">
                     <Metric label="Email" value={String(state.account?.email || "Private")} />
                     <Metric label="Status" value={String(state.account?.accountState || "active")} />
                   </InfoPanel>
-                  <CustomerPreferencesPanel profile={state.profile} onProfileChange={updateProfile} />
+                  {state.profile ? <CustomerPreferencesPanel profile={state.profile} onProfileChange={updateProfile} /> : (
+                    <p role="status">{state.profile === null ? "Preferences are unavailable right now." : "Loading your preferences…"}</p>
+                  )}
                   <SupportInboxPanel initialThreads={state.supportThreads || []} panelId="customer-support" />
                   <AccountControlsPanel accountState={String(state.account?.accountState || "active")} />
-                </div>
+                </div>}
               </DashboardSection>
             </>
           ) : null}
@@ -1623,13 +1650,13 @@ function CustomerPanel({
         id="customer-saved-deals"
         title="Saved Club Deals"
       >
-        <CustomerDealPassPanel
+        {isLoading ? <p className="customer-loading-state">Loading your saved deals…</p> : <CustomerDealPassPanel
           deals={saved?.dealRedemptions || []}
           onDirections={openDirections}
           onRemoveSavedDeal={removeSavedDeal}
           pendingAction={pendingAction}
           savedDeals={saved?.dealSaves || []}
-        />
+        />}
       </DashboardSection>
       <DashboardSection
         description="Dancer shifts where you tapped I’m Going."
