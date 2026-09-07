@@ -1,3 +1,4 @@
+import { isAllMyDancrCities } from "./markets";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createDancerDealAttributionToken } from "./deal-attribution";
 import { getActiveClubDealListsForVenues } from "./deals";
@@ -379,7 +380,7 @@ function publicTvRowsQuery(
 }
 
 function normalizeTvCity(value: string | undefined) {
-  return String(value || "").trim().slice(0, 80);
+  return isAllMyDancrCities(value) ? "" : String(value || "").trim().slice(0, 80);
 }
 
 function tvCitiesMatch(left: string, right: string) {

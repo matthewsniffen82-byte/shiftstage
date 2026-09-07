@@ -1,3 +1,4 @@
+import { isAllMyDancrCities } from "./markets";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { DancerCard, DancerProfile, ShiftSummary, SocialPlatform, VenueSummary } from "./types";
 import { isPublicDancerProfileEligible } from "./profile-approval";
@@ -58,9 +59,13 @@ export async function getLiveDancerDiscovery(
   };
 }
 
+function filterPublicDancerCity(query: any, city: string) {
+  return isAllMyDancrCities(city) ? query : query.ilike("city", city);
+}
+
 async function getApprovedDancerRowsByCity(client: DancrClient, city: string): Promise<any[]> {
   const cityName = city.trim();
-  const current = await applyPublicApprovalFilters(client
+  const current = await applyPublicApprovalFilters(filterPublicDancerCity(client
     .from("dancer_profiles")
     .select(
       `
@@ -81,18 +86,17 @@ async function getApprovedDancerRowsByCity(client: DancrClient, city: string): P
         social_links(id, platform, handle, url, is_active),
         shifts(id, shift_date, shift_source, starts_at, ends_at, timezone, status, location_status, checked_in_at, checked_out_at, location_verification_expires_at, venue_id, venues(id, name, slug, timezone, is_active))
       `,
-    )
-    .ilike("city", cityName))
+    ), cityName))
     .eq("is_public", true)
     .order("stage_name", { ascending: true })
     .order("starts_at", { referencedTable: "shifts", ascending: true })
-    .limit(PUBLIC_DANCER_DIRECTORY_LIMIT);
+    .limit(isAllMyDancrCities(cityName) ? PUBLIC_DANCER_DIRECTORY_LIMIT * 4 : PUBLIC_DANCER_DIRECTORY_LIMIT);
 
   let data: any[] | null = current.data as any[] | null;
   let error: any = current.error;
   if (isMissingIsPublicColumnError(error)) {
     console.warn("PUBLIC_DANCERS_VISIBILITY_COLUMN_MISSING", { city: cityName, code: error.code });
-    const legacy = await applyPublicApprovalFilters(client
+    const legacy = await applyPublicApprovalFilters(filterPublicDancerCity(client
       .from("dancer_profiles")
       .select(
         `
@@ -112,11 +116,10 @@ async function getApprovedDancerRowsByCity(client: DancrClient, city: string): P
           social_links(id, platform, handle, url, is_active),
           shifts(id, shift_date, shift_source, starts_at, ends_at, timezone, status, location_status, checked_in_at, checked_out_at, location_verification_expires_at, venue_id, venues(id, name, slug, timezone, is_active))
         `,
-      )
-      .ilike("city", cityName))
+      ), cityName))
       .order("stage_name", { ascending: true })
       .order("starts_at", { referencedTable: "shifts", ascending: true })
-      .limit(PUBLIC_DANCER_DIRECTORY_LIMIT);
+      .limit(isAllMyDancrCities(cityName) ? PUBLIC_DANCER_DIRECTORY_LIMIT * 4 : PUBLIC_DANCER_DIRECTORY_LIMIT);
     data = legacy.data as any[] | null;
     error = legacy.error;
   }

@@ -1,5 +1,5 @@
 import { permanentRedirect } from "next/navigation";
-import { resolveMyDancrCity } from "@/src/lib/dancr/markets";
+import { resolveMyDancrDiscoveryCity } from "@/src/lib/dancr/markets";
 import { homeTvHref } from "@/src/lib/dancr/navigation";
 
 export const runtime = "nodejs";
@@ -15,7 +15,7 @@ type PageProps = {
 
 export default async function MyDancrTvPage({ searchParams }: PageProps) {
   const params = await searchParams;
-  const city = resolveMyDancrCity(params.city);
+  const city = resolveMyDancrDiscoveryCity(params.city);
   permanentRedirect(homeTvHref(city, {
     videoId: cleanUuid(params.video),
     venueId: cleanUuid(params.venue),

@@ -28,7 +28,7 @@ function homeFixture() {
     setAttribute(key, value) { this.attributes[key] = value; },
     removeAttribute(key) { delete this.attributes[key]; },
   };
-  const context = vm.createContext({
+  const context = createDiscoveryContext({
     customerSavedStateVersion: 0,
     followedVenuesByCity: { "Test City": [] },
     markets: { "Test City": { venues: [{ id: "club-id", name: "Test Club" }] } },
@@ -106,7 +106,7 @@ for (const following of [true, false]) {
       classList: { toggle: (name, enabled) => enabled ? classes.add(name) : classes.delete(name) },
       setAttribute(name, value) { this.attributes[name] = value; },
     };
-    const context = vm.createContext({
+    const context = createDiscoveryContext({
       markets: { [city]: { dancers, venues: [] } },
       followedByCity: { [city]: following ? [] : ["Beta"] },
       followedDancerIds: new Set(following ? [] : ["Beta"]),
@@ -184,7 +184,7 @@ for (const following of [true, false]) {
       then: (resolve) => Promise.resolve({ count: 3, error: null }).then(resolve),
     };
     const exports = {};
-    const context = vm.createContext({ exports, require(name) {
+    const context = createDiscoveryContext({ exports, require(name) {
       if (name === "next/server") return { NextResponse: { json: Response.json } };
       if (name.endsWith("/request")) return { createRequestSupabaseContext: async () => ({ client: {}, user: { id: "guest" }, session }) };
       if (name.endsWith("/admin")) return { createAdminSupabaseClient: () => ({ from: () => query }) };
@@ -218,7 +218,7 @@ test("full dancer profiles use refreshed credentials for successive follows and 
   t.after(() => { globalThis.window = originalWindow; });
   let generation = 0;
   const follows = [];
-  const context = vm.createContext({
+  const context = createDiscoveryContext({
     token: "stale-render-token", mountedRef: { current: true },
     currentDashboardAuthHeaders, persistResponseSession,
     setStatus() {}, setToken() {}, setAccountRequiredAction() {},
@@ -248,3 +248,11 @@ test("full dancer profiles use refreshed credentials for successive follows and 
   assert.equal(generation, 4);
   assert.equal(JSON.parse(stored).refreshToken, "refresh-4");
 });
+
+function createDiscoveryContext(values) {
+  const context = vm.createContext({ ALL_CITIES: "All cities", allCitiesMarket: { dancers: [], venues: [] }, ...values });
+  const start = home.indexOf("    function discoveryMarket(");
+  const end = home.indexOf("    const citySelect =", start);
+  vm.runInContext(home.slice(start, end), context);
+  return context;
+}

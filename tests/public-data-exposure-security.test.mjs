@@ -30,7 +30,7 @@ test("public venue lists expose location and branding without contact or retired
     assert.match(source, /cover_image_storage_path, logo_storage_path/);
     assert.doesNotMatch(source, /\bphone\b|\bwebsite\b|qr_code_storage_path|qr_code_label|qrCodeUrl|qrCodeLabel/);
     assert.match(source, /const MAX_PUBLIC_VENUES = 200/);
-    assert.match(source, /\.limit\(MAX_PUBLIC_VENUES\)/);
+    assert.match(source, /\.limit\((?:isAllMyDancrCities\(city\) \? MAX_PUBLIC_VENUES \* 4 : )?MAX_PUBLIC_VENUES\)/);
   }
 });
 
@@ -47,7 +47,7 @@ test("public dancer and venue mappers omit ownership, precise proximity, and QR 
 
   assert.match(publicService, /const PUBLIC_DANCER_DIRECTORY_LIMIT = 200/);
   assert.ok(
-    (publicService.match(/\.limit\(PUBLIC_DANCER_DIRECTORY_LIMIT\)/g) || []).length >= 4,
+    (publicService.match(/\.limit\((?:isAllMyDancrCities\(cityName\) \? PUBLIC_DANCER_DIRECTORY_LIMIT \* 4 : )?PUBLIC_DANCER_DIRECTORY_LIMIT\)/g) || []).length >= 4,
     "both current and legacy directory queries must be capped",
   );
   assert.match(publicService, /const PUBLIC_PROFILE_MEDIA_LIMIT = 50/);

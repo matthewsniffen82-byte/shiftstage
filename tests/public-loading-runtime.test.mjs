@@ -11,7 +11,7 @@ const profileSource = functionSource("    function requestProfileTvPayload(", " 
 const feedSource = functionSource("    async function loadHomeTvFeed(", "    function resolveVenueByName(");
 
 function context(overrides = {}) {
-  return vm.createContext({
+  return createDiscoveryContext({
     AbortController, URLSearchParams, console,
     LIVE_JSON_REQUEST_TIMEOUT_MS: 15,
     PUBLIC_DISCOVERY_REQUEST_RETRIES: 1,
@@ -120,3 +120,11 @@ test("a failed TV request exits loading and cannot replace a newer city's videos
   assert.equal(ctx.homeTvFeedStatus, "error");
   assert.equal(renders, 2);
 });
+
+function createDiscoveryContext(values) {
+  const context = vm.createContext({ ALL_CITIES: "All cities", allCitiesMarket: { dancers: [], venues: [] }, ...values });
+  const start = source.indexOf("    function discoveryMarket(");
+  const end = source.indexOf("    const citySelect =", start);
+  vm.runInContext(source.slice(start, end), context);
+  return context;
+}

@@ -40,7 +40,7 @@ test("the homepage TV tab applies and clears an exact selected-club filter", () 
   );
   assert.match(homeSource, /function clearHomeTvVenueFilter\(\)[\s\S]*?venueSelect\.value = "all"[\s\S]*?dispatchEvent\(new Event\("change"/);
   assert.match(homeSource, /tabCount\.classList\.contains\("is-tv-venue-filter"\)[\s\S]*?clearHomeTvVenueFilter\(\)/);
-  assert.match(homeSource, /venueFilter \? `\$\{homeTvFeedVideos\.length\} videos` : `\$\{homeTvFeedVideos\.length\} citywide`/);
+  assert.match(homeSource, /venueFilter \|\| city === ALL_CITIES \? `\$\{homeTvFeedVideos\.length\} videos` : `\$\{homeTvFeedVideos\.length\} citywide`/);
 });
 
 test("homepage and legacy TV links carry the exact club filter into the canonical TV tab", () => {
@@ -69,7 +69,7 @@ test("the all-venues city feed stays unrestricted by club affiliation or schedul
   assert.match(tvSource, /const venueScope = venueId[\s\S]*?getPublicTvVenueScope[\s\S]*?: null;/);
   assert.match(tvSource, /dancerIds: options\.dancerId \? undefined : venueDancerIds/);
   assert.match(homeSource, /venueName === "all"\) return null/);
-  assert.match(homeSource, /venueFilter \? `MyDancr TV at \$\{venueFilter\.name\}` : `MyDancr TV in \$\{city\}`/);
+  assert.match(homeSource, /venueFilter \? `MyDancr TV at \$\{venueFilter\.name\}` : `MyDancr TV \$\{discoveryLocationPhrase\(city\)\}`/);
 });
 
 test("the public TV API validates a venue preference separately from its hard venue filter", () => {

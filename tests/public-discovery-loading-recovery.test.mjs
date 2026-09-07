@@ -17,10 +17,10 @@ test("public discovery cannot remain in a permanent loading state", () => {
 });
 
 test("a transient discovery failure retries without erasing already rendered public content", () => {
-  assert.match(homeSource, /const hasCurrentResults = Boolean\(markets\[city\]\?\.dancers\?\.length \|\| markets\[city\]\?\.venues\?\.length\)/);
+  assert.match(homeSource, /const hasCurrentResults = Boolean\(discoveryMarket\(city\)\?\.dancers\?\.length \|\| discoveryMarket\(city\)\?\.venues\?\.length\)/);
   assert.match(homeSource, /liveMarketState\[city\] = hasCurrentResults \? "ready" : "error"/);
-  assert.doesNotMatch(homeSource, /markets\[city\]\.dancers = \[\]/);
-  assert.doesNotMatch(homeSource, /markets\[city\]\.stats\.dancers = 0/);
+  assert.doesNotMatch(homeSource, /discoveryMarket\(city\)\.dancers = \[\]/);
+  assert.doesNotMatch(homeSource, /discoveryMarket\(city\)\.stats\.dancers = 0/);
   assert.match(homeSource, /unavailableDiscovery[\s\S]*?\? "Unavailable"/);
   assert.match(homeSource, /unavailable[\s\S]*?\? "Live results unavailable"/);
 });

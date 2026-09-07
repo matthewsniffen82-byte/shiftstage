@@ -78,7 +78,7 @@ function extract(start, end) {
 }
 function homeFixture() {
   const city = "Las Vegas";
-  const context = vm.createContext({
+  const context = createDiscoveryContext({
     followedDancerIds: new Set(), followedByCity: { [city]: [] },
     markets: { [city]: { dancers: [], venues: [] } },
     clearLiveProfileActionCollections() { context.followedDancerIds.clear(); context.followedByCity[city] = []; },
@@ -122,3 +122,11 @@ test("saved IDs cannot follow a different dancer with the same display name", ()
   context.applyLiveProfileActions({ follows: [{ dancerId: "original", dancer: { id: "original", stageName: "Same Name", city } }] });
   assert.equal(context.isFollowingProfile(city, "Same Name"), false);
 });
+
+function createDiscoveryContext(values) {
+  const context = vm.createContext({ ALL_CITIES: "All cities", allCitiesMarket: { dancers: [], venues: [] }, ...values });
+  const start = home.indexOf("    function discoveryMarket(");
+  const end = home.indexOf("    const citySelect =", start);
+  vm.runInContext(home.slice(start, end), context);
+  return context;
+}

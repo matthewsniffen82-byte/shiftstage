@@ -11,7 +11,7 @@ function between(start, end) {
  assert.ok(a>=0 && b>a); return home.slice(a,b);
 }
 function headersFixture(stored, blocked=false) {
- const context=vm.createContext({authSession:{accessToken:'old-access',refreshToken:'old-refresh'},localStorage:{getItem(){if(blocked)throw new Error('blocked');return stored ? JSON.stringify(stored) : null;}}});
+ const context=createDiscoveryContext({authSession:{accessToken:'old-access',refreshToken:'old-refresh'},localStorage:{getItem(){if(blocked)throw new Error('blocked');return stored ? JSON.stringify(stored) : null;}}});
  vm.runInContext(between('    function synchronizeAuthSession()', '    function applyResponseSession('),context);
  return context;
 }
@@ -33,7 +33,7 @@ for(const following of [true,false])test(`venue ${following?'follow':'unfollow'}
  const writes=[]; const session={accessToken:'renewed-access',refreshToken:'renewed-refresh'};
  const user={id:'signed-in-guest'}; const venueId='11111111-1111-4111-8111-111111111111';
  const exports={};
- const context=vm.createContext({exports,require(name){
+ const context=createDiscoveryContext({exports,require(name){
   if(name==='next/server')return {NextResponse:{json:Response.json}};
   if(name.endsWith('/request'))return {createRequestSupabaseContext:async()=>({user,session,client:{from:(table)=>({upsert:async(row)=>{writes.push({table,row});return {error:null};}})}})};
   if(name.endsWith('/admin'))return {createAdminSupabaseClient:()=>({})};
@@ -53,7 +53,7 @@ for(const following of [true,false])test(`venue ${following?'follow':'unfollow'}
 
 for(const succeeds of [true,false])test(`venue save ${succeeds?'refreshes credentials before saving':'does not claim success for an expired sign-in'}`,async()=>{
  const calls=[],notices=[],saved=[];const button={dataset:{venueFollow:'Test Club'},disabled:false,setAttribute(){},removeAttribute(){}};
- const context=vm.createContext({
+ const context=createDiscoveryContext({
   event:{target:{closest:()=>button},preventDefault(){},stopPropagation(){}},
   requireCustomerAccountForProfileAction:()=>true,citySelect:{value:'Test City'},markets:{'Test City':{venues:[{name:'Test Club',id:'club-id'}]}},followedVenuesByCity:{'Test City':saved},
   getAuthenticatedJson:async()=>{calls.push('refresh');if(!succeeds)throw new Error('Sign in required.');},
@@ -68,3 +68,11 @@ for(const succeeds of [true,false])test(`venue save ${succeeds?'refreshes creden
  assert.equal(context.followedVenuesByCity['Test City'].length,succeeds?1:0);
  if(!succeeds){assert.equal(button.disabled,false);assert.match(notices[0],/expired/);}
 });
+
+function createDiscoveryContext(values) {
+  const context = vm.createContext({ ALL_CITIES: "All cities", allCitiesMarket: { dancers: [], venues: [] }, ...values });
+  const start = home.indexOf("    function discoveryMarket(");
+  const end = home.indexOf("    const citySelect =", start);
+  vm.runInContext(home.slice(start, end), context);
+  return context;
+}

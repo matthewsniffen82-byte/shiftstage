@@ -13,3 +13,13 @@ export function resolveMyDancrCity(value: string | null | undefined) {
     ) || MYDANCR_AVAILABLE_CITIES[0]
   );
 }
+
+export const MYDANCR_ALL_CITIES = "All cities";
+
+export function isAllMyDancrCities(value: string | null | undefined) {
+  return String(value || "").trim().toLowerCase() === MYDANCR_ALL_CITIES.toLowerCase();
+}
+
+export function resolveMyDancrDiscoveryCity(value: string | null | undefined) {
+  return isAllMyDancrCities(value) ? MYDANCR_ALL_CITIES : resolveMyDancrCity(value);
+}

@@ -9,7 +9,7 @@ test("MyDancr TV keeps the homepage-selected city without another city control",
   assert.doesNotMatch(client, /id="tv-city"/);
   assert.doesNotMatch(client, /className="tv-city"/);
   assert.doesNotMatch(client, /cityOptions/);
-  assert.match(page, /resolveMyDancrCity\(params\.city\)/);
+  assert.match(page, /resolveMyDancrDiscoveryCity\(params\.city\)/);
   assert.match(client, /const city = initialCity/);
 });
 

@@ -1,5 +1,7 @@
 "use client";
 
+import { isAllMyDancrCities } from "@/src/lib/dancr/markets";
+
 import Link from "next/link";
 import {
   useCallback,
@@ -225,7 +227,7 @@ export default function TvFeedClient({
       if (!response.ok || !data.ok) throw new Error(data.error || "Unable to load MyDancr TV.");
       const cityVideos = Array.isArray(data.videos)
         ? data.videos.filter(
-            (video: MyDancrTvVideo) => tvCitiesMatch(video.dancer.city, nextCity),
+            (video: MyDancrTvVideo) => isAllMyDancrCities(nextCity) || tvCitiesMatch(video.dancer.city, nextCity),
           )
         : [];
       setVideos(cityVideos);

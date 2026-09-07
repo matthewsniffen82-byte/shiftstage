@@ -202,12 +202,12 @@ test("public feed is real, navigable, measurable, and preserves existing discove
     /const initialDiscoveryRequest = loadLiveDiscovery\(citySelect\.value, \{\s*force: consumePublicDiscoveryRefreshRequest\(\)\s*\}\)/,
   );
   assert.match(liveApp, /initialDiscoveryRequest\.finally\(\(\) => openSharedProfileFromUrl\(\)\)/);
-  assert.match(liveApp, /const approvedProfiles = markets\[city\]\.dancers\.filter\(isApprovedPublicProfile\);[\s\S]*?approvedProfiles\.find\(\(item\) => item\.slug === profileSlug\)[\s\S]*?\|\| approvedProfiles\.find\(\(item\) => slugify\(item\.name\) === profileSlug\)/);
+  assert.match(liveApp, /const approvedProfiles = discoveryMarket\(city\)\.dancers\.filter\(isApprovedPublicProfile\);[\s\S]*?approvedProfiles\.find\(\(item\) => item\.slug === profileSlug\)[\s\S]*?\|\| approvedProfiles\.find\(\(item\) => slugify\(item\.name\) === profileSlug\)/);
   assert.match(liveApp, /const venueSlug = params\.get\("venue"\);[\s\S]*?activeTab = venueSlug \? "venues" : "dancers";[\s\S]*?resolveVenueByName\(venueSlug, city\)[\s\S]*?openVenueFromName\(venue\.slug \|\| venue\.name\)/);
   assert.doesNotMatch(liveApp, /class="verified-mark" aria-label="Verified">✓<\/span>/);
   assert.doesNotMatch(liveApp, /verifiedCheckMarkup/);
   assert.doesNotMatch(liveApp, /home-tv-feed-verified/);
-  assert.match(liveApp, /const initialProfileCity = initialProfileParams\.get\("city"\);[\s\S]*?if \(initialProfileCity && markets\[initialProfileCity\]\)[\s\S]*?citySelect\.value = initialProfileCity/);
+  assert.match(liveApp, /const initialProfileCity = initialProfileParams\.get\("city"\);[\s\S]*?if \(initialProfileCity && discoveryMarket\(initialProfileCity\)\)[\s\S]*?citySelect\.value = initialProfileCity/);
   assert.match(feedClient, /aria-label="Close MyDancr TV and return to homepage"/);
   assert.match(globalNavigation, /label: "Dancers"[\s\S]*?label: "TV"[\s\S]*?label: "Clubs"/);
   assert.match(globalNavigation, /\.global-mobile-bottom-nav \{[\s\S]*?grid-template-columns: repeat\(3, minmax\(0, 1fr\)\)/);
@@ -436,7 +436,7 @@ test("approved videos appear on full dancer and venue profiles", () => {
   );
   assert.doesNotMatch(liveApp, /Upcoming interest/);
   assert.doesNotMatch(liveApp, /caption\.textContent = item\.caption \|\| "Watch video"/);
-  assert.match(tvPage, /const city = resolveMyDancrCity\(params\.city\)[\s\S]*?permanentRedirect\(homeTvHref\(city, \{/);
+  assert.match(tvPage, /const city = resolveMyDancrDiscoveryCity\(params\.city\)[\s\S]*?permanentRedirect\(homeTvHref\(city, \{/);
   assert.match(tvPage, /videoId: cleanUuid\(params\.video\)/);
   assert.match(tvPage, /venueId: cleanUuid\(params\.venue\)/);
   assert.doesNotMatch(tvPage, /TvFeedClient|getPublicMyDancrTvFeed|getPublicMyDancrTvVenue/);

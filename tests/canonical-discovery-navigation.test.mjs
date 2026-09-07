@@ -102,7 +102,7 @@ test("all shared navigation targets canonical homepage views directly", () => {
 
 test("standalone TV routes redirect into the canonical homepage TV destination", () => {
   assert.match(tvPageRoute, /import \{ permanentRedirect \} from "next\/navigation"/);
-  assert.match(tvPageRoute, /const city = resolveMyDancrCity\(params\.city\)[\s\S]*?permanentRedirect\(homeTvHref\(city, \{/);
+  assert.match(tvPageRoute, /const city = resolveMyDancrDiscoveryCity\(params\.city\)[\s\S]*?permanentRedirect\(homeTvHref\(city, \{/);
   assert.match(tvPageRoute, /videoId: cleanUuid\(params\.video\)/);
   assert.match(tvPageRoute, /venueId: cleanUuid\(params\.venue\)/);
   assert.doesNotMatch(tvPageRoute, /TvFeedClient|<main|<nav|<header|<section/);

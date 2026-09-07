@@ -32139,6 +32139,17 @@
       filter: none !important;
     }
   </style>
+  <style>
+/* Keep the city readable in the combined dancer directory. */
+.home-dancer-grid-copy .home-dancer-grid-city {
+  display: block;
+  color: #fff;
+  font-size: clamp(10px, 2.8vw, 14px);
+  font-weight: 600;
+  line-height: 1.3;
+  text-shadow: 0 1px 3px #000;
+}
+  </style>
   <link href="/dancr-brand-tokens.v1.css?v=13" rel="stylesheet">
   <link href="/dancr-button-system.v1.css" rel="stylesheet">
   <link href="/dancr-aesthetic.v1.css?v=264" rel="stylesheet">
@@ -32229,6 +32240,7 @@
               <circle cx="12" cy="10" r="2.5"></circle>
             </svg>
             <select id="citySelect">
+              <option>All cities</option>
               <option>Las Vegas</option>
               <option>Miami</option>
               <option>Atlanta</option>
@@ -42529,7 +42541,24 @@
       }
     };
 
+    const ALL_CITIES = "All cities";
+    const allCitiesMarket = { stats: { dancers: 0, shifts: 0, venues: 0 }, dancers: [], venues: [] };
+    let lastSpecificDiscoveryCity = "Las Vegas";
+    try {
+      const savedCity = window.sessionStorage.getItem("mydancrLastDiscoveryCity");
+      if (savedCity && markets[savedCity]) lastSpecificDiscoveryCity = savedCity;
+    } catch {}
+
+    function discoveryMarket(city) {
+      return city === ALL_CITIES ? allCitiesMarket : markets[city];
+    }
+
+    function profileDiscoveryCity(profile, city = selectedCity()) {
+      return city === ALL_CITIES ? profile?.city || lastSpecificDiscoveryCity : city;
+    }
+
     const citySelect = document.getElementById("citySelect");
+    citySelect.value = lastSpecificDiscoveryCity;
     const cityPickerField = document.getElementById("cityPickerField");
     const citySelectLabel = document.getElementById("citySelectLabel");
     const citySelectButton = document.getElementById("citySelectButton");
@@ -45049,7 +45078,7 @@
 
     function profileCardDistanceLabel(profile) {
       const city = profile?.city || selectedCity();
-      const profileVenue = profile?.venue ? markets[city]?.venues.find((venue) => venue.name === profile.venue) : null;
+      const profileVenue = profile?.venue ? discoveryMarket(city)?.venues.find((venue) => venue.name === profile.venue) : null;
       const venueMiles = profileVenue ? venueDistanceMiles(profileVenue, city) : null;
       if (Number.isFinite(venueMiles)) return formatDistanceMiles(venueMiles);
       const rawDistance = String(profile?.distance || "").trim();
@@ -45077,6 +45106,7 @@
         id: item.id,
         slug: item.slug,
         name: item.stageName,
+        city: String(item.city || "").trim(),
         venueSlug: item.venueSlug || "",
         venueId: item.venueId || "",
         venueQrCodeUrl: item.venueQrCodeUrl || "",
@@ -45179,7 +45209,7 @@
     function applyLiveApprovalQueue(queue) {
       (queue || []).forEach((item, index) => {
         const city = item.city || citySelect.value;
-        const market = markets[city];
+        const market = discoveryMarket(city);
         if (!market) return;
         const photos = Array.isArray(item.photos) ? item.photos : [];
         const socialLinks = normalizeSubmittedSocials(item);
@@ -45260,7 +45290,7 @@
     function applyLiveAdminVenues(venues) {
       (venues || []).forEach((item) => {
         const city = item.city || citySelect.value;
-        const market = markets[city];
+        const market = discoveryMarket(city);
         if (!market) return;
         const existing = market.venues.find((venue) => venue.id === item.id || venue.slug === item.slug || venue.name === item.name);
         const venueData = mapLiveAdminVenue(item, city, existing);
@@ -45297,7 +45327,7 @@
         return null;
       }
       const city = dancer?.city;
-      const market = city ? markets[city] : null;
+      const market = city ? discoveryMarket(city) : null;
       if (!market) return null;
       const profile = market.dancers.find((item) => (
         item.id === dancer.id ||
@@ -45310,7 +45340,7 @@
     function findProfileBySavedShift(savedGoing) {
       const shift = savedGoing?.shift;
       const city = shift?.dancer?.city || shift?.venue?.city;
-      const market = city ? markets[city] : null;
+      const market = city ? discoveryMarket(city) : null;
       if (!market) return null;
       const profile = market.dancers.find((item) => (
         item.shiftId === savedGoing.shiftId ||
@@ -45324,7 +45354,7 @@
     function findVenueBySavedVenue(savedVenue) {
       const venue = savedVenue?.venue || savedVenue;
       const city = venue?.city;
-      const market = city ? markets[city] : null;
+      const market = city ? discoveryMarket(city) : null;
       if (!market) return null;
       const match = market.venues.find((item) => (
         item.id === venue.id ||
@@ -45391,7 +45421,7 @@
       const data = await getAuthenticatedJson("/api/customer/profile");
       liveCustomerProfile = data.profile || null;
       const city = liveCustomerProfile?.city;
-      if (city && markets[city] && citySelect.value !== city) {
+      if (city && discoveryMarket(city) && citySelect.value !== city && citySelect.value !== ALL_CITIES) {
         citySelect.value = city;
         await loadLiveDiscovery(city);
       }
@@ -46234,7 +46264,7 @@
     }
 
     function realDancerDashboardMetrics(profile, city = selectedCity()) {
-      const venue = profile?.venue || markets[city]?.venues?.[0]?.name || "Local venues";
+      const venue = profile?.venue || discoveryMarket(city)?.venues?.[0]?.name || "Local venues";
       const metrics = {
         ranked: { ...(profile || {}), trendRank: null, trendScore: 0, trendSignals: {} },
         signals: {},
@@ -46746,8 +46776,16 @@
     }
 
     function applyLiveMarket(city, dancers, tonightDancers, venues) {
-      const market = markets[city];
+      const market = discoveryMarket(city);
       if (!market) return false;
+      if (city === ALL_CITIES) {
+        const cityNames = new Set([...Object.keys(markets), ...(dancers || []).map((item) => item.city), ...(venues || []).map((item) => item.city)]);
+        cityNames.forEach((name) => {
+          if (!name || name === ALL_CITIES) return;
+          markets[name] ||= { stats: { dancers: 0, shifts: 0, venues: 0 }, dancers: [], venues: [] };
+          applyLiveMarket(name, (dancers || []).filter((item) => item.city === name), (tonightDancers || []).filter((item) => item.city === name), (venues || []).filter((item) => item.city === name));
+        });
+      }
       const privatePreviewVenues = venuePreviewRequested()
         ? market.venues.filter((venue) => venue?.isDashboardPreview === true)
         : [];
@@ -46912,7 +46950,7 @@
       const force = Boolean(options.force);
       const cacheBust = force && options.cacheBust !== false;
       const background = Boolean(options.background && liveMarketState[city] === "ready");
-      if (!markets[city] || liveMarketState[city] === "loading" || liveMarketRefreshes.has(city) || (!force && liveMarketState[city] === "ready")) return;
+      if (!discoveryMarket(city) || liveMarketState[city] === "loading" || liveMarketRefreshes.has(city) || (!force && liveMarketState[city] === "ready")) return;
       if (background) liveMarketRefreshes.add(city);
       else liveMarketState[city] = "loading";
       const params = new URLSearchParams({ city });
@@ -46923,13 +46961,13 @@
           timeoutMs: LIVE_JSON_REQUEST_TIMEOUT_MS,
           retries: PUBLIC_DISCOVERY_REQUEST_RETRIES
         });
-        const applied = applyLiveMarket(
+        applyLiveMarket(
           city,
           discovery.dancers || [],
           discovery.tonightDancers || [],
           discovery.venues || []
         );
-        liveMarketState[city] = applied ? "ready" : "fallback";
+        liveMarketState[city] = "ready";
         if (citySelect.value === city) {
           render();
           if (customerDashboard.classList.contains("show")) renderDashboard();
@@ -46944,7 +46982,7 @@
           console.warn("Live discovery refresh failed; keeping the current public results", error);
           return;
         }
-        const hasCurrentResults = Boolean(markets[city]?.dancers?.length || markets[city]?.venues?.length);
+        const hasCurrentResults = Boolean(discoveryMarket(city)?.dancers?.length || discoveryMarket(city)?.venues?.length);
         liveMarketState[city] = hasCurrentResults ? "ready" : "error";
         console.warn(
           hasCurrentResults
@@ -47035,12 +47073,12 @@
     }
 
     function isFollowingProfile(city, profileName) {
-      const profile = markets[city]?.dancers.find((item) => item.name === profileName || item.id === profileName);
+      const profile = discoveryMarket(city)?.dancers.find((item) => item.name === profileName || item.id === profileName);
       return profile?.id ? followedDancerIds.has(profile.id) : (followedByCity[city] || []).includes(profileName);
     }
 
     function setProfileFollowed(city, profileName, following) {
-      const profile = markets[city]?.dancers.find((item) => item.name === profileName || item.id === profileName);
+      const profile = discoveryMarket(city)?.dancers.find((item) => item.name === profileName || item.id === profileName);
       if (profile?.id) {
         if (following) followedDancerIds.add(profile.id);
         else followedDancerIds.delete(profile.id);
@@ -47575,7 +47613,7 @@
 
     function activeDancerProfile(city = activeDancerCity()) {
       const dancerName = activeDancerName();
-      return markets[city]?.dancers.find((profile) => profile.name === dancerName) || null;
+      return discoveryMarket(city)?.dancers.find((profile) => profile.name === dancerName) || null;
     }
 
     function postedShiftStoreKey(city = activeDancerCity(), name = activeDancerName()) {
@@ -47716,7 +47754,7 @@
 
     function ensureActiveDancerProfile(status = dancerSetup.approval ? "Verified" : "Pending") {
       const city = activeDancerCity();
-      const market = markets[city];
+      const market = discoveryMarket(city);
       if (!market) return null;
       const name = cleanDisplayValue(activeDancerName());
       const socials = savedDancerSocials();
@@ -47771,7 +47809,7 @@
       const weeklyInstagram = Math.round(instagramClicks * 0.3);
       const goingTonightClicks = firstRealMetric(profile, ["goingSignals30Days", "goingTonightClicks", "goingCount"]);
       const weeklyGoing = Math.round(goingTonightClicks * 0.28);
-      const venue = profile.venue || markets[city]?.venues[0]?.name || "Local venues";
+      const venue = profile.venue || discoveryMarket(city)?.venues[0]?.name || "Local venues";
       const venueRank = 0;
       const notificationOpens = firstRealMetric(profile, ["notificationsOpened30Days", "notificationOpens"]);
       const favoritesAdded = firstRealMetric(profile, ["favoritesAdded30Days", "favoritesAdded"]);
@@ -47924,10 +47962,11 @@
     }
 
     function selectedCity() {
-      return citySelect?.value && markets[citySelect.value] ? citySelect.value : "Las Vegas";
+      return citySelect?.value && discoveryMarket(citySelect.value) ? citySelect.value : "Las Vegas";
     }
 
     function discoveryLocationPhrase(city = selectedCity()) {
+      if (city === ALL_CITIES) return "across all cities";
       return userLocationOutsideMarkets ? "near you" : `in ${city}`;
     }
 
@@ -48040,7 +48079,7 @@
     function selectedHomeTvVenueFilter(city = selectedCity()) {
       const requestedVenueId = new URLSearchParams(window.location.search).get("tv_venue")?.trim() || "";
       if (requestedVenueId) {
-        const requestedVenue = markets[city]?.venues?.find((venue) => String(venue.id || "") === requestedVenueId);
+        const requestedVenue = discoveryMarket(city)?.venues?.find((venue) => String(venue.id || "") === requestedVenueId);
         if (requestedVenue?.id) {
           return { id: String(requestedVenue.id), name: String(requestedVenue.name || "Venue") };
         }
@@ -48069,7 +48108,7 @@
     }
 
     function venueWorkingNowCount(venue, city = selectedCity()) {
-      if (!venue?.name || !markets[city]) return 0;
+      if (!venue?.name || !discoveryMarket(city)) return 0;
       return venueDancers(city, venue.name).filter((profile) => isWorkingTonight(profile, city)).length;
     }
 
@@ -48097,9 +48136,9 @@
     }
 
     function populateVenueSelect(city = selectedCity()) {
-      if (!venueSelect || !markets[city]) return;
+      if (!venueSelect || !discoveryMarket(city)) return;
       const previous = venueSelect.value || "all";
-      const venues = markets[city].venues
+      const venues = discoveryMarket(city).venues
         .filter((venue) => !venue.hidden && venueWithinSelectedRadius(venue))
         .sort((a, b) => compareVenueDistance(a, b, city));
       const venueOptions = venues.map((venue) => ({ venue, workingNowCount: venueWorkingNowCount(venue, city) }));
@@ -48157,6 +48196,7 @@
     }
 
     function activeShiftWindow(profile, now = new Date(), city = selectedCity()) {
+      city = profileDiscoveryCity(profile, city);
       if (!profile.scheduled || !profile.time) return null;
       const cityNow = cityWallClock(now, city);
       const yesterday = new Date(cityNow);
@@ -48177,6 +48217,7 @@
     }
 
     function upcomingShiftWindow(profile, now = new Date(), city = selectedCity()) {
+      city = profileDiscoveryCity(profile, city);
       if (!profile.scheduled || !profile.time) return null;
       const today = localDateValue(now, city);
       return shiftWindowForDate(profile, profile.shiftDate || (profile.tonight ? today : ""));
@@ -48191,6 +48232,7 @@
     }
 
     function shiftStatus(profile, city = selectedCity()) {
+      city = profileDiscoveryCity(profile, city);
       const now = new Date();
       const activeWindow = activeShiftWindow(profile, now, city);
       if (activeWindow) return { state: "active", label: `${tonightInterestCount(profile).toLocaleString()} going` };
@@ -48239,6 +48281,7 @@
     }
 
     function tonightShiftWindow(profile, now = new Date(), city = selectedCity()) {
+      city = profileDiscoveryCity(profile, city);
       if (!profile.scheduled || !profile.time) return null;
       const activeWindow = activeShiftWindow(profile, now, city);
       if (activeWindow) return activeWindow;
@@ -48358,11 +48401,13 @@
     }
 
     function upcomingDateForProfile(profile, city = selectedCity()) {
+      city = profileDiscoveryCity(profile, city);
       if (profile.shiftDate) return dateValueToWallDate(profile.shiftDate);
       return dateFromUpcomingLabel(profile.shiftLabel, city);
     }
 
     function compactUpcomingDateLabel(profile, city = selectedCity()) {
+      city = profileDiscoveryCity(profile, city);
       if (profile?.shiftStartsAt) {
         const start = new Date(profile.shiftStartsAt);
         if (!Number.isNaN(start.getTime())) {
@@ -48376,6 +48421,7 @@
     }
 
     function upcomingSortValue(profile, city = selectedCity()) {
+      city = profileDiscoveryCity(profile, city);
       if (!profile.scheduled) return Number.MAX_SAFE_INTEGER;
       if (isWorkingTonight(profile, city)) return shiftStartMinutes(profile.time);
       const date = upcomingDateForProfile(profile, city);
@@ -48386,12 +48432,27 @@
     }
 
     function dailyRotationScore(profile, city = selectedCity()) {
+      city = profileDiscoveryCity(profile, city);
       const seed = `${city}|${localDateValue(new Date(), city)}|${profile.name}`;
       let hash = 0;
       for (let index = 0; index < seed.length; index += 1) {
         hash = ((hash << 5) - hash + seed.charCodeAt(index)) | 0;
       }
       return Math.abs(hash);
+    }
+
+    function interleaveDancerCities(profiles) {
+      const groups = new Map();
+      profiles.forEach((profile) => {
+        const city = profile.city || "";
+        if (!groups.has(city)) groups.set(city, []);
+        groups.get(city).push(profile);
+      });
+      const mixed = [];
+      for (let index = 0; mixed.length < profiles.length; index += 1) {
+        groups.forEach((group) => { if (group[index]) mixed.push(group[index]); });
+      }
+      return mixed;
     }
 
     function dancerDirectoryGroups(profiles, city = selectedCity()) {
@@ -48416,6 +48477,7 @@
           !isWorkingTonight(profile, city)
         ))
         .sort((a, b) => dailyRotationScore(a, city) - dailyRotationScore(b, city));
+      if (city === ALL_CITIES) return { workingNow: interleaveDancerCities(workingNow), upcoming: interleaveDancerCities(upcoming), noSchedule: interleaveDancerCities(noSchedule) };
       return { workingNow, upcoming, noSchedule };
     }
 
@@ -48432,6 +48494,7 @@
     }
 
     function upcomingCardLabel(profile, city = selectedCity()) {
+      city = profileDiscoveryCity(profile, city);
       const label = profile.shiftLabel || "Upcoming";
       const date = dateFromUpcomingLabel(label, city);
       if (!date) return "Date pending";
@@ -48439,6 +48502,7 @@
     }
 
     function upcomingFullLabel(profile, city = selectedCity()) {
+      city = profileDiscoveryCity(profile, city);
       const label = profile.shiftLabel || "Upcoming";
       const date = dateFromUpcomingLabel(label, city);
       if (!date) return "Date pending";
@@ -48500,7 +48564,7 @@
 
     function followedProfiles(city) {
       const names = followedByCity[city] || [];
-      return markets[city].dancers
+      return discoveryMarket(city).dancers
         .filter((profile) => names.includes(profile.name) && isApprovedPublicProfile(profile))
         .map((profile) => withTrendingRank(profile, city));
     }
@@ -48508,7 +48572,7 @@
     function followedVenues(city) {
       if (!isCustomerSession()) return [];
       const names = followedVenuesByCity[city] || [];
-      return markets[city].venues.filter((venue) => names.includes(venue.name) && !venue.hidden);
+      return discoveryMarket(city).venues.filter((venue) => names.includes(venue.name) && !venue.hidden);
     }
 
     function isFollowingVenue(city, venueName) {
@@ -48520,7 +48584,7 @@
 
     function activeDancerCity() {
       const city = document.getElementById("dancerCity").value.trim();
-      return markets[city] ? city : citySelect.value;
+      return discoveryMarket(city) ? city : citySelect.value;
     }
 
     function activeDancerName() {
@@ -51489,7 +51553,7 @@
       cityField.innerHTML = Object.keys(markets).map((name) => `<option${name === city ? " selected" : ""}>${name}</option>`).join("");
       const controlCityField = document.getElementById("approvedControlCity");
       if (controlCityField) controlCityField.innerHTML = cityField.innerHTML;
-      const venues = markets[city]?.venues || [];
+      const venues = discoveryMarket(city)?.venues || [];
       const venueName = profile?.venue || venues[0]?.name || "";
       venueField.innerHTML = venues.map((venue) => `<option${venue.name === venueName ? " selected" : ""}>${venue.name}</option>`).join("");
       const controlVenueField = document.getElementById("approvedControlVenue");
@@ -51947,7 +52011,7 @@
         return;
       }
       const city = activeDancerCity();
-      const market = markets[city];
+      const market = discoveryMarket(city);
       const venueId = document.getElementById("shiftClub").value;
       const approvedVenue = approvedDancerShiftVenues().find((venue) => venue.id === venueId);
       if (!approvedVenue) {
@@ -52342,7 +52406,7 @@
     }
 
     function venueDancers(city, venueName) {
-      return markets[city].dancers
+      return discoveryMarket(city).dancers
         .filter((profile) => isApprovedPublicProfile(profile) && profile.venue === venueName)
         .map((profile) => withTrendingRank(profile, city));
     }
@@ -52488,7 +52552,7 @@
       const includePending = Boolean(options.includePending);
       const normalizedReference = String(reference || "").trim();
       if (!normalizedReference) return null;
-      const availableProfiles = markets[citySelect.value].dancers.filter((item) => (
+      const availableProfiles = discoveryMarket(citySelect.value).dancers.filter((item) => (
         includePending || isApprovedPublicProfile(item)
       ));
       const profile = availableProfiles.find((item) => (
@@ -53731,7 +53795,7 @@
         : `<button class="action-btn going-btn profile-action-icon-control secondary is-unavailable" id="goingBtn" type="button" data-profile="${profile.name}" data-shift-state="unavailable" aria-disabled="true" disabled>${profileActionButtonMarkup("clock", goingCopy.idle)}</button>`;
       return `
         <div class="modal-actions ${isWorkingNow ? "is-working-now" : profile?.scheduled ? "is-upcoming-shift" : "is-no-live-shift"}" aria-label="Guest actions">
-          <button class="action-btn follow-primary profile-action-icon-control ${isFollowed ? "is-following" : ""}" id="followBtn" data-profile="${profile.name}" aria-pressed="${isFollowed}">${profileActionButtonMarkup(isFollowed ? "check" : "personPlus", isFollowed ? "Following" : "Follow")}</button>
+          <button class="action-btn follow-primary profile-action-icon-control ${isFollowed ? "is-following" : ""}" id="followBtn" data-profile="${escapeOptionValue(profile.id || profile.name)}" aria-pressed="${isFollowed}">${profileActionButtonMarkup(isFollowed ? "check" : "personPlus", isFollowed ? "Following" : "Follow")}</button>
           ${goingButton}
           <button class="action-btn secondary profile-share-action profile-action-icon-control" type="button" data-profile-share-menu="${profile.name}" data-share-city="${city}" aria-haspopup="dialog" aria-label="Share ${profile.name} profile">${profileActionButtonMarkup("share", "Share")}</button>
         </div>
@@ -53863,14 +53927,15 @@
     }
 
     function openProfileModal(profileReference, options = {}) {
-      const city = citySelect.value;
+      let city = citySelect.value;
       const isPrivatePreview = Boolean(options.preview);
       const profile = findProfile(profileReference, { includePending: isPrivatePreview });
       if (!profile) return;
+      city = profileDiscoveryCity(profile, city);
       profileModalReturnContext = captureProfileReturnContext(options.returnTo || "");
       profileModalReturnTarget = profileModalReturnContext?.surface || "";
       const profileName = profile.name;
-      const baseProfile = markets[city].dancers.find((item) => (
+      const baseProfile = discoveryMarket(city).dancers.find((item) => (
         !item.hidden && (
           (profile.id && item.id === profile.id) ||
           (profile.slug && item.slug === profile.slug)
@@ -53881,18 +53946,18 @@
         if (baseProfile.scheduled) recordUniqueTrendEvent("scheduleViews", city, profileName);
       }
       if (!isPrivatePreview) {
-        recordLiveEvent("profile_view", { dancerName: profileName, source: "profile_modal" });
+        recordLiveEvent("profile_view", { dancerName: profileName, city, source: "profile_modal" });
         if (baseProfile?.scheduled) {
-          recordLiveEvent("schedule_view", { dancerName: profileName, source: "profile_modal" });
+          recordLiveEvent("schedule_view", { dancerName: profileName, city, source: "profile_modal" });
         }
       }
-      const exactProfileIndex = markets[city].dancers.findIndex((item) => (
+      const exactProfileIndex = discoveryMarket(city).dancers.findIndex((item) => (
         (profile.id && item.id === profile.id) ||
         (profile.slug && item.slug === profile.slug)
       ));
       const profileIndex = exactProfileIndex >= 0
         ? exactProfileIndex
-        : markets[city].dancers.findIndex((item) => item.name === profile.name);
+        : discoveryMarket(city).dancers.findIndex((item) => item.name === profile.name);
       const isPending = profile.status === "Pending";
       const profileWithTrend = !isPending ? withTrendingRank(profile, city) : profile;
       const modalTrendRank = profileWithTrend.trendRank;
@@ -54475,7 +54540,7 @@
     function publicProfileForNavigation(reference, city = citySelect.value) {
       const normalizedReference = String(reference || "").trim();
       if (!normalizedReference) return null;
-      const profiles = markets[city]?.dancers?.filter(isApprovedPublicProfile) || [];
+      const profiles = discoveryMarket(city)?.dancers?.filter(isApprovedPublicProfile) || [];
       return profiles.find((item) => (
         String(item.id || "") === normalizedReference ||
         String(item.slug || "") === normalizedReference
@@ -59107,7 +59172,7 @@
       const city = node?.dataset.adminCity;
       const name = node?.dataset.adminProfile;
       if (!city || !name) return null;
-      const profile = markets[city].dancers.find((item) => item.name === name);
+      const profile = discoveryMarket(city).dancers.find((item) => item.name === name);
       return profile ? { city, profile } : null;
     }
 
@@ -59115,7 +59180,7 @@
       const city = node?.dataset.adminCity;
       const name = node?.dataset.adminVenue;
       if (!city || !name) return null;
-      const venue = markets[city].venues.find((item) => item.name === name);
+      const venue = discoveryMarket(city).venues.find((item) => item.name === name);
       return venue ? { city, venue } : null;
     }
 
@@ -59490,7 +59555,7 @@
     }
 
     function workingNowItems(city) {
-      const market = markets[city];
+      const market = discoveryMarket(city);
       return market.dancers
         .filter((profile) => isApprovedPublicProfile(profile) && isWorkingTonight(profile, city) && profileMatchesVenueFilter(profile))
         .sort((a, b) => shiftStartMinutes(a.time) - shiftStartMinutes(b.time))
@@ -59529,7 +59594,7 @@
     }
 
     function getItems(city, tab) {
-      const market = markets[city];
+      const market = discoveryMarket(city);
       if (["tonight", "dancers", "venues"].includes(tab) && liveMarketState[city] !== "ready") {
         return [];
       }
@@ -59577,7 +59642,7 @@
 
     function updateHomeLiveSummary(city) {
       const summary = document.getElementById("homeLiveSummary");
-      if (!summary || !markets[city]) return;
+      if (!summary || !discoveryMarket(city)) return;
 
       const venueName = selectedVenueFilter();
       const workingNowCount = getItems(city, "tonight").length;
@@ -59586,7 +59651,7 @@
       const loading = liveDiscoveryIsLoading(city);
       const unavailable = liveMarketState[city] === "error";
       const workingSummary = document.getElementById("homeLiveWorking");
-      document.getElementById("homeLiveRadius").textContent = `${radiusLabel} radius · ${venueLabel}`;
+      document.getElementById("homeLiveRadius").textContent = city === ALL_CITIES ? `All cities · ${venueLabel}` : `${radiusLabel} radius · ${venueLabel}`;
       workingSummary.textContent = unavailable
         ? "Live results unavailable"
         : loading
@@ -59778,6 +59843,7 @@
     }
 
     function homeDancerGridScheduleLabel(profile, city = selectedCity()) {
+      city = profileDiscoveryCity(profile, city);
       if (isWorkingTonight(profile, city)) return "Working now";
       if (!profile?.scheduled) return "No upcoming shift posted";
 
@@ -59978,6 +60044,10 @@
     }
 
     function homeDancerGridCard(profile, city, compactDirectory = false, imageIndex = 0) {
+      const cityMarkup = city === ALL_CITIES && profile.city
+        ? `<span class="home-dancer-grid-city">${escapeHtml(profile.city)}</span>`
+        : "";
+      city = profileDiscoveryCity(profile, city);
       const safeName = escapeHtml(profile.name);
       const profileValue = escapeOptionValue(profile.name);
       const profileReference = escapeOptionValue(profileReferenceValue(profile));
@@ -60016,6 +60086,7 @@
             ${photoMarkup}
             <span class="home-dancer-grid-copy">
               <h3 class="home-dancer-grid-name">${safeName}</h3>
+              ${cityMarkup}
               ${venueMarkup}
               <span class="home-dancer-grid-status ${status.className}">${escapeHtml(scheduleLabel)}</span>
             </span>
@@ -60262,7 +60333,7 @@
         `;
       }
       const safeCity = escapeHtml(city);
-      const publicClubs = (markets[city]?.venues || []).filter((venue) => !venue?.hidden);
+      const publicClubs = (discoveryMarket(city)?.venues || []).filter((venue) => !venue?.hidden);
       const hasPublicClubs = publicClubs.length > 0;
       const selectedClub = selectedVenueFilter();
       const nextRadius = nextHomeDiscoveryRadiusOption();
@@ -60305,7 +60376,7 @@
         tab: activeTab,
         venueFilter: selectedVenueFilter(),
         items,
-        venueDancers: activeTab === "venues" ? markets[city]?.dancers || [] : [],
+        venueDancers: activeTab === "venues" ? discoveryMarket(city)?.dancers || [] : [],
         followedProfiles: followedByCity[city] || [],
         followedVenues: followedVenuesByCity[city] || [],
         notifications: notifiedByCity[city] || [],
@@ -60504,6 +60575,7 @@
     }
 
     function render() {
+      syncDiscoveryCityScope();
       const city = citySelect.value;
       document.body.classList.toggle("dancer-directory-active", activeTab === "dancers");
       syncCityPickerSelection(city);
@@ -60561,7 +60633,7 @@
         const cityTitle = document.createElement("span");
         cityTitle.className = "tab-title-city";
         cityTitle.textContent = city;
-        tabTitle.replaceChildren(document.createTextNode("Dancers in "), cityTitle);
+        tabTitle.replaceChildren(document.createTextNode(city === ALL_CITIES ? "Dancers across " : "Dancers in "), cityTitle);
       } else {
         tabTitle.textContent = selectedVenue ? `${selectedVenue.name}` : titles[activeTab];
       }
@@ -61617,7 +61689,7 @@
           event.preventDefault();
           return;
         }
-        const profile = markets[dancerCity]?.dancers.find((profileItem) => (
+        const profile = discoveryMarket(selectedCity())?.dancers.find((profileItem) => (
           profileItem.slug === dancerSlug && isApprovedPublicProfile(profileItem)
         ));
         if (!profile) return;
@@ -61801,7 +61873,7 @@
       follow.className = `home-tv-feed-action home-tv-feed-follow-action feed-card-action ${isFollowed ? "is-active" : ""}`;
       follow.type = "button";
       follow.dataset.feedAction = "follow";
-      follow.dataset.profile = dancerName;
+      follow.dataset.profile = String(item?.dancer?.id || dancerName);
       follow.dataset.homeTvVideoId = videoId;
       follow.dataset.iconOnlyAction = "true";
       follow.setAttribute("aria-label", followLabel);
@@ -62061,7 +62133,7 @@
       const venueFilter = selectedHomeTvVenueFilter(city);
       const venueId = venueFilter?.id || "";
       const selectedVideoId = selectedHomeTvVideoId();
-      tabTitle.textContent = venueFilter ? `MyDancr TV at ${venueFilter.name}` : `MyDancr TV in ${city}`;
+      tabTitle.textContent = venueFilter ? `MyDancr TV at ${venueFilter.name}` : `MyDancr TV ${discoveryLocationPhrase(city)}`;
       if (
         homeTvFeedCity !== city ||
         homeTvFeedVenueId !== venueId ||
@@ -62093,14 +62165,14 @@
         setHomeTvFeedCount("0 videos", venueFilter);
         renderHomeTvFeedMessage(venueFilter
           ? `No approved MyDancr TV videos are available from dancers affiliated with, working now at, or scheduled at ${venueFilter.name}.`
-          : `No approved MyDancr TV videos are available in ${city} yet.`);
+          : `No approved MyDancr TV videos are available ${discoveryLocationPhrase(city)} yet.`);
         settleHomeTvFeedLanding({ complete: true });
         return;
       }
 
-      const feedScope = venueFilter ? `at ${venueFilter.name}` : `in ${city}`;
+      const feedScope = venueFilter ? `at ${venueFilter.name}` : discoveryLocationPhrase(city);
       setHomeTvFeedCount(
-        venueFilter ? `${homeTvFeedVideos.length} videos` : `${homeTvFeedVideos.length} citywide`,
+        venueFilter || city === ALL_CITIES ? `${homeTvFeedVideos.length} videos` : `${homeTvFeedVideos.length} citywide`,
         venueFilter,
       );
       results.setAttribute(
@@ -62168,10 +62240,10 @@
     }
 
     function resolveVenueByName(venueName, city = citySelect.value) {
-      if (!venueName || !markets[city]) return null;
+      if (!venueName || !discoveryMarket(city)) return null;
       const normalizedName = String(venueName).trim().toLowerCase();
       const normalizedSlug = slugify(venueName);
-      return markets[city].venues.find((venue) => (
+      return discoveryMarket(city).venues.find((venue) => (
         venue.name === venueName ||
         venue.name.toLowerCase() === normalizedName ||
         venue.slug === normalizedSlug ||
@@ -62437,8 +62509,8 @@
         const city = citySelect.value;
         const venueName = directionsLink.dataset.venue;
         const attributedDancerId = directionsLink.dataset.dancerId || "";
-        const venueRecord = markets[city].venues.find((venue) => venue.name === venueName);
-        const venueProfiles = markets[city].dancers
+        const venueRecord = discoveryMarket(city).venues.find((venue) => venue.name === venueName);
+        const venueProfiles = discoveryMarket(city).dancers
           .filter((profile) => isApprovedPublicProfile(profile) && profile.venue === venueName);
         const attributedProfiles = attributedDancerId
           ? venueProfiles.filter((profile) => profile.id === attributedDancerId)
@@ -62464,7 +62536,7 @@
         if (!requireCustomerAccountForProfileAction(followVenueButton)) return;
         const city = citySelect.value;
         const venueName = followVenueButton.dataset.venueFollow;
-        const venueRecord = markets[city].venues.find((venue) => venue.name === venueName);
+        const venueRecord = discoveryMarket(city).venues.find((venue) => venue.name === venueName);
         if (!venueRecord?.id) {
           showToast("This club follow is unavailable.");
           return;
@@ -63058,7 +63130,7 @@
 
     function syncHomeFeedActionButtons(profile, city) {
       document.querySelectorAll(".feed-card-action[data-profile]").forEach((button) => {
-        if (button.dataset.profile !== profile.name) return;
+        if (button.dataset.profile !== profile.name && button.dataset.profile !== profile.id) return;
         const action = button.dataset.feedAction;
         if (action === "follow") {
           const active = isFollowingProfile(city, profile.name);
@@ -63139,13 +63211,14 @@
     async function saveProfileFollow(actionButton) {
       if (actionButton.disabled) return;
       const profileName = actionButton.dataset.profile;
-      const city = citySelect.value;
+      let city = citySelect.value;
       const profile = findProfile(profileName);
       if (!profile?.id) {
         showToast("This dancer profile is not available to follow.");
         return;
       }
 
+      city = profile.city || city;
       const snapshot = profileFollowSnapshot(profile, city);
       const requestedFollowing = !snapshot.following;
       actionButton.disabled = true;
@@ -63165,7 +63238,8 @@
           trackHomeTvFeedEvent(actionButton.dataset.homeTvVideoId, "follow");
         }
         recordLiveEvent("profile_action", {
-          dancerName: profileName,
+          dancerName: profile.name,
+          city,
           source: following ? "follow_added" : "follow_removed"
         });
         showToast(following ? "Following profile. Notifications on." : "Unfollowed profile");
@@ -65621,16 +65695,31 @@
     function cityPickerOptionMarkup(city) {
       const safeCity = escapeHtml(city);
       const selected = !userLocationOutsideMarkets && city === citySelect?.value;
-      const stats = cityDiscoveryStatsByName.get(city);
+      const stats = city === ALL_CITIES && cityDiscoveryStatsByName.size
+        ? [...cityDiscoveryStatsByName.values()].reduce((total, item) => ({ dancers: total.dancers + item.dancers, venues: total.venues + item.venues }), { dancers: 0, venues: 0 })
+        : cityDiscoveryStatsByName.get(city);
       const statsLabel = stats
         ? `${stats.dancers.toLocaleString()} ${stats.dancers === 1 ? "dancer" : "dancers"} · ${stats.venues.toLocaleString()} ${stats.venues === 1 ? "club" : "clubs"}`
         : "";
       return `<button class="venue-picker-option city-picker-option" type="button" role="option" data-city-picker-value="${safeCity}" aria-selected="${selected}"><span class="venue-picker-radio" aria-hidden="true"></span><span class="venue-picker-option-name">${safeCity}</span>${statsLabel ? `<span class="city-picker-stats">${escapeHtml(statsLabel)}</span>` : ""}</button>`;
     }
 
+    function syncDiscoveryCityScope() {
+      const allowsAllCities = activeTab === "dancers" || activeTab === "tv";
+      const allOption = [...citySelect.options].find((option) => option.value === ALL_CITIES);
+      if (allOption) { allOption.hidden = !allowsAllCities; allOption.disabled = !allowsAllCities; }
+      if (!allowsAllCities && citySelect.value === ALL_CITIES) {
+        citySelect.value = lastSpecificDiscoveryCity;
+        if (venueSelect) venueSelect.value = "all";
+        syncHomeDestinationLocation(activeTab);
+        void loadLiveDiscovery(citySelect.value);
+      }
+    }
+
     function renderCityPickerOptions() {
       if (!citySelectOptions || !citySelect) return;
       citySelectOptions.innerHTML = [...citySelect.options]
+        .filter((option) => !option.hidden && !option.disabled)
         .map((option) => cityPickerOptionMarkup(option.value))
         .join("");
     }
@@ -65639,6 +65728,10 @@
       if (!citySelect) return;
       const availableCities = [...citySelect.options].map((option) => option.value);
       if (availableCities.includes(city)) citySelect.value = city;
+      if (city !== ALL_CITIES && markets[city]) {
+        lastSpecificDiscoveryCity = city;
+        try { window.sessionStorage.setItem("mydancrLastDiscoveryCity", city); } catch {}
+      }
       if (citySelectButtonText) citySelectButtonText.textContent = userLocationOutsideMarkets ? "Near me" : citySelect.value;
       renderCityPickerOptions();
     }
@@ -65763,11 +65856,16 @@
       dashboardVenuesExpanded = false;
       selectedVenueName = null;
       if (venueSelect) venueSelect.value = "all";
+      syncHomeDestinationLocation(activeTab);
+      const url = new URL(window.location.href);
+      url.searchParams.delete("tv_venue");
+      url.searchParams.delete("tv_video");
+      window.history.replaceState({}, "", `${url.pathname}${url.search}${url.hash}`);
       render();
       loadLiveDiscovery(citySelect.value);
       if (customerDashboard.classList.contains("show")) renderDashboard();
       if (adminDashboard.classList.contains("show")) renderAdminDashboard();
-      saveLiveCustomerProfile({ city: citySelect.value });
+      if (citySelect.value !== ALL_CITIES) saveLiveCustomerProfile({ city: citySelect.value });
       showToast(`${citySelect.value} loaded`);
     });
 
@@ -66022,8 +66120,8 @@
 
     function renderPopularClubs(city) {
       const strip = document.getElementById("popularClubStrip");
-      if (!strip || !markets[city]) return;
-      const venues = markets[city].venues.filter((venue) => !venue.hidden && venueWithinSelectedRadius(venue)).slice(0, 5);
+      if (!strip || !discoveryMarket(city)) return;
+      const venues = discoveryMarket(city).venues.filter((venue) => !venue.hidden && venueWithinSelectedRadius(venue)).slice(0, 5);
       strip.innerHTML = venues.map((venue, index) => `
         <button class="club-mini club-mini-${index + 1}" type="button" data-popular-venue="${venue.name}">
           <span class="club-neon">${venue.name}</span>
@@ -66085,7 +66183,7 @@
         }
         return;
       }
-      if (!city || (!profileSlug && !venueSlug) || !markets[city]) return;
+      if (!city || (!profileSlug && !venueSlug) || !discoveryMarket(city)) return;
       citySelect.value = city;
       activeTab = venueSlug ? "venues" : "dancers";
       document.querySelectorAll(".tab").forEach((item) => item.classList.toggle("active", item.dataset.tab === activeTab));
@@ -66100,7 +66198,7 @@
         }
         return;
       }
-      const approvedProfiles = markets[city].dancers.filter(isApprovedPublicProfile);
+      const approvedProfiles = discoveryMarket(city).dancers.filter(isApprovedPublicProfile);
       const profile = approvedProfiles.find((item) => item.slug === profileSlug)
         || approvedProfiles.find((item) => slugify(item.name) === profileSlug);
       if (profile) {
@@ -66240,7 +66338,7 @@
     updateAccountHeader();
     const initialProfileParams = new URLSearchParams(window.location.search);
     const initialProfileCity = initialProfileParams.get("city");
-    if (initialProfileCity && markets[initialProfileCity]) {
+    if (initialProfileCity && discoveryMarket(initialProfileCity)) {
       citySelect.value = initialProfileCity;
     }
     const initialHomeDestinationRequested = homeDestinationWasRequested();

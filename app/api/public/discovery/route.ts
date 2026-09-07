@@ -1,3 +1,4 @@
+import { isAllMyDancrCities } from "@/src/lib/dancr/markets";
 import { NextResponse } from "next/server";
 import { createDancerDealAttributionToken } from "@/src/lib/dancr/deal-attribution";
 import { getActiveClubDealListsForVenues } from "@/src/lib/dancr/deals";
@@ -34,15 +35,16 @@ export async function GET(request: Request) {
     const client = createAdminSupabaseClient();
     const discoveryPromise = getLiveDancerDiscovery(client, city);
     const venueDataPromise = (async () => {
-      const venueResult = await client
+      let venueQuery = client
         .from("venues")
         .select(
           "id, slug, name, city, state, address, latitude, longitude, opens_at, closes_at, cover_image_storage_path, logo_storage_path",
         )
         .eq("is_active", true)
-        .eq("city", city)
         .order("name", { ascending: true })
-        .limit(MAX_PUBLIC_VENUES);
+        .limit(isAllMyDancrCities(city) ? MAX_PUBLIC_VENUES * 4 : MAX_PUBLIC_VENUES);
+      if (!isAllMyDancrCities(city)) venueQuery = venueQuery.eq("city", city);
+      const venueResult = await venueQuery;
       if (venueResult.error) throw venueResult.error;
       const venueRows = venueResult.data || [];
       const venueIds = venueRows.map((venue) => venue.id);

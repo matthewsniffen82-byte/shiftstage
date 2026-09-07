@@ -64,7 +64,7 @@ test("the Home TV button renders a larger mobile snap-scroll feed without leavin
   );
   assert.match(
     homeSource,
-    /const openDancerProfile = \(event\) => \{[\s\S]*?markets\[dancerCity\]\?\.dancers\.find[\s\S]*?profileItem\.slug === dancerSlug && isApprovedPublicProfile\(profileItem\)[\s\S]*?event\.preventDefault\(\);[\s\S]*?openProfileModal\(profileReferenceValue\(profile\)\)[\s\S]*?dancer\.addEventListener\("click", openDancerProfile\)/,
+    /const openDancerProfile = \(event\) => \{[\s\S]*?discoveryMarket\(selectedCity\(\)\)\?\.dancers\.find[\s\S]*?profileItem\.slug === dancerSlug && isApprovedPublicProfile\(profileItem\)[\s\S]*?event\.preventDefault\(\);[\s\S]*?openProfileModal\(profileReferenceValue\(profile\)\)[\s\S]*?dancer\.addEventListener\("click", openDancerProfile\)/,
   );
   assert.match(homeSource, /venue\.href = venueExperienceHref\([\s\S]*?\{ slug: venueSlug, name: venueName \}[\s\S]*?item\?\.dancer\?\.city \|\| citySelect\.value/);
   assert.match(homeSource, /"Working Now"[\s\S]*?dateLabel \? `Upcoming · \$\{dateLabel\}` : "Upcoming"/);
@@ -1061,7 +1061,7 @@ test("mobile dancer headings keep the selected city on one clean line", () => {
   );
   assert.match(
     homeSource,
-    /cityTitle\.className = "tab-title-city";[\s\S]*?cityTitle\.textContent = city;[\s\S]*?tabTitle\.replaceChildren\(document\.createTextNode\("Dancers in "\), cityTitle\);/,
+    /cityTitle\.className = "tab-title-city";[\s\S]*?cityTitle\.textContent = city;[\s\S]*?tabTitle\.replaceChildren\(document\.createTextNode\(city === ALL_CITIES \? "Dancers across " : "Dancers in "\), cityTitle\);/,
   );
   assert.match(
     homeSource,
@@ -1081,7 +1081,7 @@ test("the consolidated discovery titles use one typography system and consistent
   );
   assert.match(
     homeSource,
-    /tabTitle\.textContent = venueFilter \? `MyDancr TV at \$\{venueFilter\.name\}` : `MyDancr TV in \$\{city\}`;/,
+    /tabTitle\.textContent = venueFilter \? `MyDancr TV at \$\{venueFilter\.name\}` : `MyDancr TV \$\{discoveryLocationPhrase\(city\)\}`;/,
   );
   assert.match(
     homeSource,
