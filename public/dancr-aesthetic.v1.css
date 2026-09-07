@@ -11810,6 +11810,22 @@ body.dancr-button-system #results.home-tv-feed .home-tv-feed-deal-action {
   border-radius: 14px !important;
 }
 
+/* Venue logo headers: flat near-black charcoal; violet belongs to the divider. */
+html body.dancr-button-system > .app main.stack > section.stack
+  > #results.home-venue-discovery-feed > .home-venue-discovery-slide
+  .home-venue-discovery-art.is-venue-logo-artwork:not(.has-custom-photo) {
+  background: #101010 !important;
+  border-bottom: 1px solid var(--dancr-color-brand-primary-medium) !important;
+  box-shadow: inset 0 -1px 0 rgba(167, 139, 250, 0.18) !important;
+}
+
+html body.dancr-button-system > .app main.stack > section.stack
+  > #results.home-venue-discovery-feed > .home-venue-discovery-slide
+  .home-venue-discovery-art.is-venue-logo-artwork .home-venue-discovery-logo {
+  filter: none !important;
+  -webkit-filter: none !important;
+}
+
 /* Dismiss controls are navigation utilities, not branded actions. Keep every
  * X neutral at rest, on touch focus, and during keyboard focus so opening a
  * modal never paints a violet ring or glow around its close control. */
