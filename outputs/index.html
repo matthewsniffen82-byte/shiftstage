@@ -62977,9 +62977,6 @@
       const requestedFollowing = !snapshot.following;
       actionButton.disabled = true;
       actionButton.setAttribute("aria-busy", "true");
-      if (actionButton.id === "followBtn") {
-        actionButton.innerHTML = profileActionButtonMarkup("clock", "Saving…");
-      }
       customerSavedStateVersion += 1;
       // Saved follows may still be loading, so this may already be followed.
       // Only the successful write can confirm a change to the public count.

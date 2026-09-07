@@ -14,7 +14,7 @@ function fixture({ following = false, count = 2 } = {}) {
   const response = new Promise((yes, no) => { resolve = yes; reject = no; });
   const profile = { id: "dancer-id", name: "Dancer", followerCount: count, notificationCount: count };
   const attributes = new Map();
-  const button = { id: "followBtn", dataset: { profile: "Dancer" }, disabled: false, innerHTML: "Follow",
+  const button = { id: "followBtn", dataset: { profile: "Dancer" }, disabled: false, innerHTML: following ? "Following" : "Follow",
     setAttribute: (key, value) => attributes.set(key, value), removeAttribute: key => attributes.delete(key),
     classList: { toggle() {} },
   };
@@ -67,7 +67,7 @@ for (const following of [false, true]) {
     const before = f.metric.textContent;
     const pending = f.context.saveProfileFollow(f.button);
     assert.equal(f.metric.textContent, before);
-    assert.equal(f.button.innerHTML, "Saving…");
+    assert.equal(f.button.innerHTML, following ? "Following" : "Follow");
     f.resolve({ following: !following, notificationsEnabled: !following, followerCount: following ? 1 : 2, notificationCount: following ? 1 : 2 });
     await pending;
     assert.equal(f.metric.textContent, following ? "1" : "2");

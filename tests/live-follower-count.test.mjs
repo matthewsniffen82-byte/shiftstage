@@ -63,7 +63,7 @@ test("the signed-in live profile changes follow metrics only after database conf
   assert.doesNotMatch(followHandler, /optimisticState/);
   assert.match(followHandler, /applyConfirmedProfileFollow\(profile, city, data\)/);
   assert.doesNotMatch(followHandler, /applyProfileFollowState\(profile, city, snapshot\)/);
-  assert.match(followHandler, /profileActionButtonMarkup\("clock", "Saving…"\)/);
+  assert.doesNotMatch(followHandler, /Saving/);
   assert.match(followHandler, /actionButton\.disabled = true/);
   assert.match(followHandler, /finally \{[\s\S]*?actionButton\.disabled = false/);
   assert.match(confirmedState, /followerCount: confirmedFollowerCount\(/);
