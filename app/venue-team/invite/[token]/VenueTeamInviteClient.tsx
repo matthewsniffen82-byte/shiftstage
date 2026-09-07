@@ -135,7 +135,10 @@ export default function VenueTeamInviteClient({ token }: { token: string }) {
             <small>Invitation expires {new Date(invitation.expiresAt).toLocaleString()}.</small>
           </>
         ) : (
-          <h1>{status || "Opening invitation…"}</h1>
+          <>
+            <h1>Team invitation</h1>
+            <p role="status">{status || "Opening invitation…"}</p>
+          </>
         )}
         {invitation && status ? <p className="venue-team-status" role="status">{status}</p> : null}
       </section>

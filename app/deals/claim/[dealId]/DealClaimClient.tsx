@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import NfcIcon from "@/app/components/NfcIcon";
 import { useEffect, useState } from "react";
 import type { ClubDeal } from "@/src/lib/dancr/types";
 import { homeDiscoveryHref } from "@/src/lib/dancr/navigation";
@@ -39,7 +40,7 @@ export default function DealClaimClient({ deal }: { campaignToken: string; deal:
         .deal-claim-card a { min-height: 48px; display: inline-flex; align-items: center; justify-content: center; padding: 0 20px; border: 1px solid #334155; border-radius: 999px; color: #f8fafc; background: transparent; font: inherit; font-weight: 900; text-decoration: none; }
       `}</style>
       <section className="deal-claim-card" aria-live="polite">
-        <div className="nfc-mark" aria-hidden="true">)))</div>
+        <div className="nfc-mark" aria-hidden="true"><NfcIcon /></div>
         <span>MyDancr cashier tap</span>
         <h1>{deal.dealTitle}</h1>
         <p>{status}</p>

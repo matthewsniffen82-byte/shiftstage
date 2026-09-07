@@ -1,0 +1,269 @@
+/* Shared presentation for standalone confirmations and link/action results.
+   Also loaded directly by /auth/callback, which bypasses the React layout.
+   Scope overrides to these surfaces; preserve their existing state and layout. */
+body.dancr-status-page,
+body :is(.reset-page, .venue-team-invite-shell, .nfc-page, .redeem-shell, .deal-pass-page, .deal-claim-page) {
+  box-sizing: border-box;
+  color: #f5f5f7;
+  background: radial-gradient(ellipse at 50% 25%, rgba(255, 255, 255, .035), transparent 65%), #0b0b0f !important;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+body.dancr-status-page,
+body .reset-page {
+  min-height: 100svh;
+  margin: 0;
+  display: grid;
+  place-items: center;
+  padding: max(28px, env(safe-area-inset-top)) max(20px, env(safe-area-inset-right)) max(28px, env(safe-area-inset-bottom)) max(20px, env(safe-area-inset-left));
+}
+
+body :is(
+  .dancr-status-card,
+  .reset-page .reset-card,
+  .venue-team-invite-shell .venue-team-invite-card,
+  .nfc-page .nfc-card,
+  .redeem-shell .scanner-card,
+  .deal-pass-page .deal-pass-card,
+  .deal-claim-page .deal-claim-card,
+  .dashboard-shell .dancer-activation-confirmation
+) {
+  box-sizing: border-box;
+  min-width: 0;
+  max-width: 100%;
+  border: 1px solid rgba(255, 255, 255, .13) !important;
+  border-radius: 24px !important;
+  background: linear-gradient(155deg, #1b1b22, #15151b) !important;
+  box-shadow: 0 20px 56px rgba(0, 0, 0, .3), inset 0 1px 0 rgba(255, 255, 255, .035) !important;
+  text-shadow: none !important;
+  overflow-wrap: anywhere;
+}
+
+body :is(.dancr-status-card, .reset-page .reset-card) {
+  width: min(100%, 440px);
+  display: grid;
+  gap: 18px;
+  padding: 32px clamp(22px, 6vw, 36px);
+  text-align: center;
+}
+
+body :is(.dancr-status-card, .reset-card, .venue-team-invite-card, .nfc-card, .scanner-card, .deal-pass-page .deal-pass-card, .deal-claim-card) > h1 {
+  margin: 0;
+  color: #f5f5f7;
+  font-size: clamp(28px, 6.8vw, 34px);
+  font-weight: 650;
+  line-height: 1.15;
+  letter-spacing: -.035em;
+  text-wrap: balance;
+}
+
+body :is(.dancr-status-card, .reset-card, .venue-team-invite-card, .nfc-card, .scanner-card, .deal-pass-page .deal-pass-card, .deal-claim-card) > p:not(.eyebrow, .reset-brand, .nfc-status, .nfc-error, .venue-team-status),
+body .reset-card form > p:not(.reset-error) {
+  margin: 0;
+  color: #bdbdc9;
+  font-size: 15px;
+  font-weight: 400;
+  line-height: 1.65;
+}
+
+body :is(.dancr-status-card .eyebrow, .reset-card .reset-brand, .venue-team-invite-card .venue-team-kicker, .nfc-card .eyebrow, .deal-pass-card .eyebrow, .deal-claim-card > span, .dancer-activation-copy .eyebrow) {
+  margin: 0;
+  color: #a9a9b8 !important;
+  font-size: 10px;
+  font-weight: 650;
+  line-height: 1.5;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  text-shadow: none;
+}
+
+body :is(.dancr-status-mark, .nfc-card .nfc-symbol, .deal-claim-card .nfc-mark, .deal-pass-card .nfc-retired, .dancer-activation-confirmation .dancer-activation-check) {
+  box-sizing: border-box;
+  display: grid;
+  place-items: center;
+  justify-self: center;
+  width: 56px;
+  height: 56px;
+  border: 1px solid rgba(255, 255, 255, .12);
+  border-radius: 18px;
+  color: #d5d5df;
+  background: rgba(255, 255, 255, .035);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .035);
+}
+
+body .dancr-status-mark.is-success,
+body .dancer-activation-confirmation .dancer-activation-check {
+  color: #7eddb3;
+}
+
+body .dancr-status-mark svg {
+  width: 26px;
+  height: 26px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+body :is(.nfc-card .nfc-symbol, .deal-claim-card .nfc-mark, .deal-pass-card .nfc-retired) svg {
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+body :is(.deal-claim-card .nfc-mark, .deal-pass-card .nfc-retired) {
+  transform: none;
+}
+
+/* Primary actions use one restrained brand color across all result screens. */
+body :is(
+  .dancr-status-card > a,
+  .reset-card button,
+  .reset-card > a,
+  .venue-team-invite-card .venue-team-primary,
+  .nfc-card .nfc-primary,
+  .scanner-card > button,
+  .deal-pass-card .deal-pass-continue,
+  .deal-claim-card > a,
+  .dancer-activation-actions a:first-child
+) {
+  box-sizing: border-box !important;
+  width: 100%;
+  min-height: 48px !important;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 4px;
+  padding: 13px 16px;
+  border: 1px solid rgba(197, 177, 255, .25) !important;
+  border-radius: 13px !important;
+  color: #fff !important;
+  background: #6538c7 !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .08) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  font-family: inherit !important;
+  font-size: 15px;
+  font-weight: 600 !important;
+  line-height: 1.4;
+  letter-spacing: 0 !important;
+  text-align: center;
+  text-decoration: none;
+  text-shadow: none !important;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+body :is(.dancr-status-card, .reset-card, .venue-team-invite-card, .nfc-card, .scanner-card, .deal-pass-card, .deal-claim-card) :is(a, button, input):focus-visible {
+  outline: 2px solid #c4b5fd !important;
+  outline-offset: 4px !important;
+}
+
+body :is(.dancr-status-card, .reset-card, .venue-team-invite-card, .nfc-card, .scanner-card, .deal-pass-card, .deal-claim-card) button:disabled {
+  opacity: .55;
+  cursor: default;
+}
+
+body :is(.dancr-status-card, .reset-card) > a:hover,
+body :is(.reset-card, .venue-team-invite-card, .nfc-card, .scanner-card) button:not(:disabled):hover {
+  filter: brightness(1.08);
+}
+
+/* Form labels stay left aligned while confirmation copy remains centered. */
+body .reset-card form {
+  text-align: left;
+}
+
+body .reset-card label {
+  color: #d5d5df;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+body .reset-card input {
+  border-color: rgba(255, 255, 255, .18);
+  background: #101015;
+  font-size: 16px;
+}
+
+body :is(.nfc-card .nfc-secondary, .scanner-card .venue-sign-in) {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 12px 16px;
+  border: 1px solid rgba(255, 255, 255, .14) !important;
+  border-radius: 13px !important;
+  color: #dedee7 !important;
+  background: rgba(255, 255, 255, .04) !important;
+  box-shadow: none !important;
+  font-size: 14px;
+  font-weight: 600 !important;
+  text-align: center;
+}
+
+body .scanner-card .status-pill {
+  color: #bdbdc9;
+  font-weight: 600;
+}
+
+body .scanner-card .status-pill.success {
+  color: #7eddb3 !important;
+  border-color: rgba(126, 221, 179, .24) !important;
+  background: transparent !important;
+}
+
+body .scanner-card dd {
+  font-weight: 600;
+}
+
+body .venue-team-invite-card .venue-team-brand {
+  text-shadow: none;
+}
+
+body .venue-team-invite-card .venue-team-mode button.active {
+  background: #6538c7 !important;
+  box-shadow: none !important;
+}
+
+body .dancer-activation-confirmation .dancer-activation-check {
+  width: 42px;
+  height: 42px;
+  border-radius: 14px;
+  font-weight: 600;
+}
+
+body .dancer-activation-actions a:first-child {
+  width: auto;
+  margin-top: 0;
+  font-size: 13px;
+}
+
+body .dancer-activation-copy h2 {
+  font-weight: 650;
+}
+
+@media (max-width: 480px) {
+  body .dancer-activation-confirmation .dancer-activation-copy {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+  body .dancer-activation-confirmation .dancer-activation-check {
+    grid-column: 1;
+    grid-row: 1;
+  }
+  body .dancer-activation-confirmation > button {
+    grid-column: 3;
+    grid-row: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body :is(.dancr-status-card, .reset-card, .venue-team-invite-card, .nfc-card, .scanner-card, .deal-pass-card, .deal-claim-card) :is(a, button) {
+    transition: none !important;
+    transform: none !important;
+  }
+}

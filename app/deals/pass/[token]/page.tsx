@@ -1,4 +1,5 @@
 import Link from "next/link";
+import NfcIcon from "@/app/components/NfcIcon";
 import { notFound } from "next/navigation";
 import { getRedemptionForScanner } from "@/src/lib/dancr/deals";
 import { customerFacingDealTerms } from "@/src/lib/dancr/deal-copy";
@@ -36,11 +37,11 @@ export default async function ClubDealPassPage({ params }: PageProps) {
         <h1>{redemption.deal.dealTitle}</h1>
         <p>{redemption.venue.name}</p>
         <>
-          <div className="nfc-retired" aria-hidden="true">)))</div>
+          <div className="nfc-retired" aria-hidden="true"><NfcIcon /></div>
           <strong>{legacyPassMessage(redemption.status, isExpired)}</strong>
           <small>MyDancr Club Deals now redeem through the club&apos;s physical cashier sticker. Choose a current offer in MyDancr before tapping.</small>
           {dealTerms ? <small>{dealTerms}</small> : null}
-          <Link className="primary-action" href={homeDiscoveryHref("venues")}>Find a current Club Deal</Link>
+          <Link className="deal-pass-continue" href={homeDiscoveryHref("venues")}>Find a current Club Deal</Link>
         </>
       </section>
     </main>
@@ -69,7 +70,7 @@ function DealPassStyles() {
       .nfc-retired { width: 132px; aspect-ratio: 1; display: grid; place-items: center; border: 1px solid rgba(126,234,255,.35); border-radius: 50%; color: #fff; background: radial-gradient(circle, rgba(109,40,217,.55), rgba(9,7,17,.95)); box-shadow: 0 0 36px rgba(126,234,255,.16); font-size: 30px; font-weight: 950; letter-spacing: -8px; transform: rotate(-18deg); }
       strong { font-size: 18px; }
       small { max-width: 42ch; color: #b9accd; font-size: 13px; line-height: 1.45; }
-      .primary-action { min-height: 48px; display: inline-flex; align-items: center; justify-content: center; padding: 0 18px; border-radius: 999px; color: #fff; background: linear-gradient(135deg, #6d28d9, #0b94c9); font-weight: 950; text-decoration: none; }
+      .deal-pass-continue { min-height: 48px; display: inline-flex; align-items: center; justify-content: center; padding: 0 18px; border-radius: 999px; color: #fff; background: #6538c7; font-weight: 600; text-decoration: none; }
     `}</style>
   );
 }

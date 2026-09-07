@@ -132,7 +132,7 @@ function callbackHtml(
 <html lang="en">
   <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="referrer" content="no-referrer">
     <title>${showDancerConfirmation ? "Email confirmed | MyDancr" : "Opening Dancr"}</title>
     <style>
@@ -149,28 +149,33 @@ function callbackHtml(
       a:focus-visible { outline: 3px solid #91e7f5; outline-offset: 3px; }
       [hidden] { display: none !important; }
     </style>
+    <link rel="stylesheet" href="/dancr-status-pages.v1.css?v=1">
   </head>
-  <body>
-    <main id="dancerConfirmation" hidden>
+  <body class="dancr-status-page">
+    <main id="dancerConfirmation" class="dancr-status-card" hidden>
       <p class="eyebrow">Dancer account</p>
+      <span class="dancr-status-mark is-success" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m6 12 4 4 8-8" /></svg></span>
       <h1>Email confirmed</h1>
       <p>Your email is verified. Complete the required dancer profile steps before your profile can go live.</p>
-      <a id="dancerConfirmationContinue" href="${escapeHtml(redirectPath)}">Click here to complete dancer profile</a>
+      <a id="dancerConfirmationContinue" href="${escapeHtml(redirectPath)}">Complete your profile</a>
     </main>
-    <main id="confirmationError" hidden>
+    <main id="confirmationError" class="dancr-status-card" hidden>
       <p class="eyebrow">MyDancr</p>
+      <span class="dancr-status-mark" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8" /><path d="M12 8v4m0 4h.01" /></svg></span>
       <h1>Confirmation link unavailable</h1>
       <p>This link is invalid, already used, or has expired. Try signing in if you already confirmed your email, or request a new email.</p>
       <a href="/account?mode=login">Continue to sign in</a>
     </main>
-    <main id="openingDancr">
+    <main id="openingDancr" class="dancr-status-card">
       <p class="eyebrow">MyDancr</p>
+      <span class="dancr-status-mark" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 12h.01M12 12h.01M19 12h.01" stroke-width="3" /></svg></span>
       <h1>Opening Dancr</h1>
       <p>Your live account is being connected.</p>
       <a href="${escapeHtml(redirectPath)}">Continue</a>
     </main>
-    <main id="temporaryError" hidden>
+    <main id="temporaryError" class="dancr-status-card" hidden>
       <p class="eyebrow">MyDancr</p>
+      <span class="dancr-status-mark" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 11a9 9 0 0 1 16 0M8 14a5 5 0 0 1 8 0M12 18h.01M4 4l16 16" /></svg></span>
       <h1>Unable to connect</h1>
       <p id="temporaryErrorMessage">We couldn't verify this link right now. Check your connection and try opening the email link again. If the link was already used, sign in or request a new email.</p>
       <a href="/account?mode=login">Go to sign in</a>

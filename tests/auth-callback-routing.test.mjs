@@ -28,7 +28,7 @@ test("confirmed dancer accounts pause on a dedicated confirmation page before pr
   assert.match(liveAppPath, /return `\/\?\$\{params\.toString\(\)\}`/);
   assert.match(callbackSource, /const showDancerConfirmation = role === "dancer" && !isPasswordResetCallback\(request\)/);
   assert.match(callbackPage, /<h1>Email confirmed<\/h1>/);
-  assert.match(callbackPage, />Click here to complete dancer profile<\/a>/);
+  assert.match(callbackPage, />Complete your profile<\/a>/);
   assert.match(callbackPage, /if \(shouldPauseForDancer\)[\s\S]*?continueLink\.href = destination/);
   assert.match(callbackPage, /window\.location\.replace\(destination\)/);
 
