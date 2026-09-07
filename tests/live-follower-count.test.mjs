@@ -49,7 +49,7 @@ test("the follow API returns authoritative database follower and notification co
   assert.match(followRouteSource, /following: true, notificationsEnabled, \.\.\.counts/);
 });
 
-test("the signed-in live profile updates its visible follow metrics immediately and reconciles to the database", () => {
+test("the signed-in live profile changes follow metrics only after database confirmation", () => {
   const followHandler =
     mobileSource.match(/async function saveProfileFollow[\s\S]*?\r?\n    }\r?\n\r?\n    async function saveProfileNotifications/)?.[0] || "";
   const confirmedState =
@@ -60,9 +60,10 @@ test("the signed-in live profile updates its visible follow metrics immediately 
   assert.match(mobileSource, /id="modalProfileViews" aria-live="polite"/);
   assert.match(mobileSource, /async function loadLiveCustomerSaved\(\) \{\s+if \(!isCustomerSession\(\)\) return/);
   assert.match(followHandler, /const data = await postAuthenticatedJson\("\/api\/customer\/follows"/);
-  assert.match(followHandler, /applyProfileFollowState\(profile, city, optimisticState\)/);
+  assert.doesNotMatch(followHandler, /optimisticState/);
   assert.match(followHandler, /applyConfirmedProfileFollow\(profile, city, data\)/);
-  assert.match(followHandler, /catch \(error\) \{\s+applyProfileFollowState\(profile, city, snapshot\)/);
+  assert.doesNotMatch(followHandler, /applyProfileFollowState\(profile, city, snapshot\)/);
+  assert.match(followHandler, /profileActionButtonMarkup\("clock", "Saving…"\)/);
   assert.match(followHandler, /actionButton\.disabled = true/);
   assert.match(followHandler, /finally \{[\s\S]*?actionButton\.disabled = false/);
   assert.match(confirmedState, /followerCount: confirmedFollowerCount\(/);

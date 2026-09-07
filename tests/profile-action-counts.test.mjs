@@ -31,7 +31,7 @@ test("only customer sessions load persisted customer profile action state", () =
   assert.match(homeSource, /function applyLiveProfileActions\(saved\)[\s\S]*saved\?\.follows[\s\S]*saved\?\.goingSignals/);
 });
 
-test("Follow and Notify update visible counts immediately, confirm exact database counts, and roll back on failure", () => {
+test("Follow and Notify keep counts steady while saving and display confirmed database counts", () => {
   const followHandler = sourceBetween(
     "async function saveProfileFollow",
     "async function saveProfileNotifications",
@@ -43,20 +43,20 @@ test("Follow and Notify update visible counts immediately, confirm exact databas
 
   assert.match(homeSource, /id="modalFollowerCount" aria-live="polite"/);
   assert.match(homeSource, /id="modalProfileViews" aria-live="polite"/);
-  assert.match(homeSource, /function optimisticProfileFollowState\(/);
+  assert.doesNotMatch(homeSource, /function optimisticProfileFollowState\(/);
   assert.match(homeSource, /function applyConfirmedProfileFollow[\s\S]*confirmedFollowerCount[\s\S]*confirmedNotificationCount/);
   assert.ok(
-    followHandler.indexOf("applyProfileFollowState(profile, city, optimisticState)") <
+    followHandler.indexOf("applyConfirmedProfileFollow(profile, city, data)") >
       followHandler.indexOf('await postAuthenticatedJson("/api/customer/follows"'),
-    "Follow must render its optimistic count before waiting for the API",
+    "Follow must wait for the saved aggregate before updating the count",
   );
-  assert.match(followHandler, /catch \(error\) \{\s+applyProfileFollowState\(profile, city, snapshot\)/);
+  assert.doesNotMatch(followHandler, /applyProfileFollowState\(profile, city, snapshot\)/);
   assert.ok(
-    notifyHandler.indexOf("applyProfileFollowState(profile, city, optimisticState)") <
+    notifyHandler.indexOf("applyConfirmedProfileFollow(profile, city, data)") >
       notifyHandler.indexOf('await postAuthenticatedJson("/api/customer/follows"'),
-    "Notify must render its optimistic count before waiting for the API",
+    "Notify must wait for the saved aggregate before updating the count",
   );
-  assert.match(notifyHandler, /catch \(error\) \{\s+applyProfileFollowState\(profile, city, snapshot\)/);
+  assert.doesNotMatch(notifyHandler, /applyProfileFollowState\(profile, city, snapshot\)/);
 });
 
 test("follow API returns authoritative follower and notification subscriber counts", () => {

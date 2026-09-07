@@ -140,7 +140,6 @@ test("a delayed saved-items response cannot erase multiple dancer follows", asyn
   context.getAuthenticatedJson = () => pending.promise;
   context.findProfile = (name) => ({ id: name, name });
   context.profileFollowSnapshot = (dancer) => ({ following: context.followedDancers.includes(dancer.id) });
-  context.optimisticProfileFollowState = (_profile, _city, following) => ({ following });
   context.applyProfileFollowState = (dancer, _city, state) => {
     context.followedDancers = context.followedDancers.filter((id) => id !== dancer.id);
     if (state.following) context.followedDancers.push(dancer.id);
@@ -148,10 +147,12 @@ test("a delayed saved-items response cannot erase multiple dancer follows", asyn
   };
   context.applyConfirmedProfileFollow = context.applyProfileFollowState;
   context.recordLiveEvent = () => {};
+  context.syncOpenProfileFollowButton = () => {};
+  context.syncHomeFeedActionButtons = () => {};
   vm.runInContext(between(home, "    async function saveProfileFollow(", "    async function saveProfileNotifications("), context);
   const loading = context.loadLiveCustomerSaved();
   for (const name of ["dancer-1", "dancer-2", "dancer-3"]) {
-    await context.saveProfileFollow({ disabled: false, dataset: { profile: name } });
+    await context.saveProfileFollow({ disabled: false, dataset: { profile: name }, setAttribute() {}, removeAttribute() {} });
   }
   pending.resolve({ ok: true, saved: { follows: [] } });
   assert.equal(await loading, false);
