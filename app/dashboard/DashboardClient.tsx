@@ -25,6 +25,7 @@ import VenueNfcTagPanel from "./VenueNfcTagPanel";
 import VenueTeamPanel from "./VenueTeamPanel";
 import VenueTvPanel from "./VenueTvPanel";
 import { loadCustomerDashboard } from "./customer-dashboard-loader";
+import CustomerAccountPanel from "./CustomerAccountPanel";
 import {
   DEVICE_SAVED_DEALS_KEY,
   DEVICE_SAVED_DEALS_CHANGED_EVENT,
@@ -582,6 +583,13 @@ export default function DashboardClient({
     setState((current) => ({ ...current, profile }));
   }, []);
 
+  const updateAccountDetails = useCallback((account: DashboardSessionAccount) => {
+    const session = readSession();
+    if (!account.id || account.id !== session?.account?.id) return;
+    persistDashboardSession({ ...session, account: { ...session.account, ...account } });
+    setState((current) => ({ ...current, account: { ...current.account, ...account } }));
+  }, []);
+
   useEffect(() => {
     const controller = new AbortController();
     const refreshDeletedMedia = (event: Event) => {
@@ -698,15 +706,12 @@ export default function DashboardClient({
                 )}
               </DashboardSection>
               <DashboardSection
-                description="Support messages, password controls, and account status."
+                description="Email, password, support messages, and account status."
                 id="customer-account"
                 title="Account"
               >
                 {isLoading ? <p role="status">Loading your account…</p> : <div className="venue-dashboard-inner-grid customer-settings-grid">
-                  <InfoPanel title="Account">
-                    <Metric label="Email" value={String(state.account?.email || "Private")} />
-                    <Metric label="Status" value={String(state.account?.accountState || "active")} />
-                  </InfoPanel>
+                  <CustomerAccountPanel account={state.account || {}} onAccountChange={updateAccountDetails} />
                   <SupportInboxPanel initialThreads={state.supportThreads || []} panelId="customer-support" />
                   <AccountControlsPanel accountState={String(state.account?.accountState || "active")} />
                 </div>}
