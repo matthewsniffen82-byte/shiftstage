@@ -156,7 +156,7 @@ test("stats and media tabs are compact without changing dynamic media behavior",
     /\.profile-modal-media-tabs button,[\s\S]*?\.profile-media-tabs button \{[\s\S]*?min-height: 52px !important;[\s\S]*?background: transparent !important;[\s\S]*?box-shadow: none !important;/,
   );
   assert.match(compactLayout, /\.profile-media-tab-icon \{[\s\S]*?width: 20px !important;[\s\S]*?height: 20px !important;/);
-  assert.match(compactLayout, /button\.active,[\s\S]*?box-shadow: inset 0 -2px var\(--dancr-color-brand-primary\) !important;/);
+  assert.match(compactLayout, /button\.active,[\s\S]*?background: transparent !important;[\s\S]*?box-shadow: inset 0 -2px #f5f5f5 !important;/);
   assert.match(
     compactLayout,
     /\.profile-modal-media,[\s\S]*?\.profile-media-section \{[\s\S]*?position: relative !important;[\s\S]*?isolation: isolate !important;[\s\S]*?padding-bottom: 0 !important;[\s\S]*?overflow: clip !important;[\s\S]*?border-radius: 18px !important;[\s\S]*?background: var\(--dancr-color-surface-translucent\) !important;/,

@@ -45,7 +45,7 @@ test("home card photography keeps final geometry and never exposes an empty rect
   );
   assert.match(
     liveShell,
-    /<img class="home-dancer-grid-photo has-custom-photo"[^>]*width="360" height="640"[^>]*data-image-state="loading"[^>]*onload="this\.dataset\.imageState='ready'"[^>]*onerror="this\.dataset\.imageState='error'"/,
+    /<img class="home-dancer-grid-photo has-custom-photo"[^>]*width="360" height="640"[^>]*data-image-state="loading"/,
   );
   assert.match(
     liveShell,
@@ -86,7 +86,7 @@ test("profile photo grids and viewers reveal decoded images over stable placehol
 test("live modal and dashboard previews use the same stable photo treatment", () => {
   assert.match(
     liveShell,
-    /function profilePhotoThumbMarkup[\s\S]*?width="360" height="504"[^>]*data-image-state="loading"[^>]*onload="this\.dataset\.imageState='ready'"/,
+    /function profilePhotoThumbMarkup[\s\S]*?width="360" height="504"[^>]*data-image-state="loading"/,
   );
   assert.match(
     liveShell,

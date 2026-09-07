@@ -612,7 +612,7 @@ test("profile identity and media controls form a compact balanced top section", 
 test("available inactive media tabs remain distinct from disabled media tabs", () => {
   assert.match(
     aesthetic,
-    /\.profile-modal-media-tabs button:not\(\.active\):not\(:disabled\),[\s\S]*?\.profile-media-tabs button:not\(\.active\):not\(:disabled\),[\s\S]*?\.profile-media-tab-label, \.profile-media-tab-count[\s\S]*?color: var\(--dancr-color-text-secondary\) !important;/,
+    /\.profile-modal-media-tabs button:not\(\.active\):not\(:disabled\),[\s\S]*?\.profile-media-tabs button:not\(\.active\):not\(:disabled\),[\s\S]*?\.profile-media-tab-label, \.profile-media-tab-count[\s\S]*?color: #8e8e93 !important;/,
   );
   assert.match(publicProfilePage, /\.profile-media-tabs button:disabled \{ opacity: \.42; cursor: default; \}/);
   assert.match(liveApp, /#profileBackdrop \.profile-modal-media-tabs button:disabled \{[\s\S]*?opacity: \.4;/);

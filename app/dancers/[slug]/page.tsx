@@ -610,7 +610,7 @@ function PublicProfileStyles() {
       .profile-media-tab-play { fill: currentColor; stroke: none; }
       .profile-media-tab-label { min-width: 0; overflow: hidden; font-size: 12px; font-weight: 900; text-overflow: ellipsis; white-space: nowrap; }
       .profile-media-tab-count { min-width: 20px; height: 20px; display: inline-flex; align-items: center; justify-content: center; padding: 0 5px; border: 1px solid rgba(255,255,255,.12); border-radius: 999px; color: #cfc7d8; background: rgba(255,255,255,.035); font-size: 9px; font-weight: 950; line-height: 1; }
-      body.dancr-button-system .public-profile-shell .profile-media-tabs button.active { color: #fff !important; background: rgba(139,92,246,.055) !important; box-shadow: inset 0 -2px #8b5cf6 !important; text-shadow: none; }
+      body.dancr-button-system .public-profile-shell .profile-media-tabs button.active { color: #f5f5f5 !important; background: transparent !important; box-shadow: inset 0 -2px #f5f5f5 !important; text-shadow: none; }
       .profile-media-tabs button:disabled { opacity: .42; cursor: default; }
       .profile-media-grid { min-height: 108px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 3px; }
       .profile-media-grid-item { position: relative; width: 100%; min-width: 0; aspect-ratio: 9 / 16; display: block; padding: 0; overflow: hidden; border: 1px solid rgba(255,255,255,.08); border-radius: 3px; color: #fff; background: #0b0b10; box-shadow: none; cursor: pointer; }

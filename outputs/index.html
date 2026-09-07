@@ -32316,7 +32316,7 @@
   </style>
   <link href="/dancr-brand-tokens.v1.css?v=13" rel="stylesheet">
   <link href="/dancr-button-system.v1.css" rel="stylesheet">
-  <link href="/dancr-aesthetic.v1.css?v=247" rel="stylesheet">
+  <link href="/dancr-aesthetic.v1.css?v=248" rel="stylesheet">
 </head>
 <body class="dancr-button-system">
   <div class="app">
@@ -39281,8 +39281,8 @@
 
         body.dancr-button-system #profileBackdrop .profile-modal-media-tabs button.active {
           color: #fff !important;
-          background: rgba(124,58,237,.08) !important;
-          box-shadow: inset 0 -2px 0 #8b5cf6 !important;
+          background: transparent !important;
+          box-shadow: inset 0 -2px 0 #f5f5f5 !important;
         }
 
         #profileBackdrop .gallery {
@@ -42503,19 +42503,119 @@
     }
     window.__dancrApplyDeviceClasses?.();
 
+    const STABLE_IMAGE_TIMEOUT_MS = 8000;
+    const STABLE_IMAGE_MAX_RETRIES = 2;
+    const stableImageRequests = new WeakMap();
+    const stableImageVisibility = typeof IntersectionObserver === "function"
+      ? new IntersectionObserver((entries) => {
+          entries.forEach(({ target, isIntersecting }) => {
+            if (isIntersecting) watchStableImage(target);
+          });
+        }, { rootMargin: "300px" })
+      : null;
+
+    function stableImageRequest(image) {
+      let state = stableImageRequests.get(image);
+      if (!state) {
+        state = { attempts: 0, timer: null };
+        stableImageRequests.set(image, state);
+      }
+      return state;
+    }
+
+    function clearStableImageTimer(image) {
+      const state = stableImageRequests.get(image);
+      if (state?.timer !== null && state?.timer !== undefined) window.clearTimeout(state.timer);
+      if (state) state.timer = null;
+    }
+
+    function stableImageRetryUrl(image, attempt) {
+      const source = image.currentSrc || image.getAttribute("src");
+      if (!source) return "";
+      const url = new URL(source, window.location.href);
+      // Retry the same approved, stored image without the resize service. Never
+      // rewrite signed/private media URLs or guess a different storage object.
+      if (url.protocol === "https:" && url.hostname.endsWith(".supabase.co")) {
+        const resizePrefix = "/storage/v1/render/image/public/";
+        if (url.pathname.startsWith(resizePrefix)) {
+          url.pathname = url.pathname.replace(resizePrefix, "/storage/v1/object/public/");
+          url.search = "";
+        }
+        if (url.pathname.startsWith("/storage/v1/object/public/")) {
+          url.searchParams.set("image_retry", String(attempt));
+        }
+      }
+      return url.href;
+    }
+
+    function retryStableImage(image) {
+      const state = stableImageRequest(image);
+      if (!image.isConnected || state.attempts >= STABLE_IMAGE_MAX_RETRIES) return false;
+      let retryUrl;
+      try { retryUrl = stableImageRetryUrl(image, state.attempts + 1); } catch { return false; }
+      if (!retryUrl) return false;
+      state.attempts += 1;
+      image.dataset.imageState = "loading";
+      image.removeAttribute("srcset");
+      image.loading = "eager";
+      image.fetchPriority = "auto";
+      image.src = retryUrl;
+      armStableImageTimeout(image);
+      return true;
+    }
+
     function settleStableImage(image, failed = false) {
       if (!(image instanceof HTMLImageElement) || !image.hasAttribute("data-image-state")) return;
-      image.dataset.imageState = !failed && image.naturalWidth > 0 ? "ready" : "error";
+      clearStableImageTimer(image);
+      if (!failed && image.naturalWidth > 0) {
+        image.dataset.imageState = "ready";
+        stableImageVisibility?.unobserve(image);
+        if (image.matches(".home-venue-discovery-logo, .venue-card-logo, .venue-detail-logo")) fitVenueLogoImage(image);
+      } else if (!retryStableImage(image)) {
+        image.dataset.imageState = "error";
+        stableImageVisibility?.unobserve(image);
+      }
+    }
+
+    function armStableImageTimeout(image) {
+      clearStableImageTimer(image);
+      const state = stableImageRequest(image);
+      state.timer = window.setTimeout(() => {
+        state.timer = null;
+        if (!image.isConnected) return;
+        settleStableImage(image, !image.complete || image.naturalWidth === 0);
+      }, STABLE_IMAGE_TIMEOUT_MS);
+    }
+
+    function watchStableImage(image) {
+      if (!image.isConnected || image.dataset.imageState !== "loading" || stableImageRequest(image).timer !== null) return;
+      if (image.complete) settleStableImage(image);
+      else {
+        // Visible cards must not remain deferred by a mobile browser's lazy loader.
+        image.loading = "eager";
+        armStableImageTimeout(image);
+      }
     }
 
     function settleCompletedStableImages(root = document) {
-      root.querySelectorAll?.('img[data-image-state="loading"]').forEach((image) => {
+      const images = [...(root.querySelectorAll?.('img[data-image-state="loading"]') || [])];
+      if (root instanceof HTMLImageElement && root.dataset.imageState === "loading") images.push(root);
+      images.forEach((image) => {
+        if (stableImageRequest(image).timer !== null) return;
         if (image.complete) settleStableImage(image);
+        else if (image.loading !== "lazy" || !stableImageVisibility) watchStableImage(image);
+        else stableImageVisibility.observe(image);
       });
     }
 
     document.addEventListener("load", (event) => settleStableImage(event.target), true);
     document.addEventListener("error", (event) => settleStableImage(event.target, true), true);
+    // Rendered/cached images can complete before their DOM insertion. Reconcile
+    // each inserted subtree instead of relying solely on a later load event.
+    const stableImageInsertions = new MutationObserver((records) => {
+      records.forEach((record) => record.addedNodes.forEach((node) => settleCompletedStableImages(node)));
+    });
+    stableImageInsertions.observe(document.body, { childList: true, subtree: true });
     settleCompletedStableImages();
     window.addEventListener("load", () => settleCompletedStableImages(), { once: true });
 
@@ -52122,7 +52222,7 @@
       const dimensions = imageWidth && imageHeight
         ? ` width="${imageWidth}" height="${imageHeight}"`
         : "";
-      return `<span class="${className}-shell" aria-hidden="true"><img class="${className}" crossorigin="anonymous" ${sourceAttrs} sizes="(max-width: 720px) 82vw, 620px"${dimensions} alt="" loading="lazy" decoding="async" data-image-state="loading" onload="fitVenueLogoImage(this);this.dataset.imageState='ready'" onerror="this.dataset.imageState='error'"></span>`;
+      return `<span class="${className}-shell" aria-hidden="true"><img class="${className}" crossorigin="anonymous" ${sourceAttrs} sizes="(max-width: 720px) 82vw, 620px"${dimensions} alt="" loading="lazy" decoding="async" data-image-state="loading"></span>`;
     }
 
     function venueLineupMarkup(venue, city, options = {}) {
@@ -52146,7 +52246,7 @@
           ? `<img class="venue-lineup-avatar-photo" ${nativePhotoAttrs} sizes="32px" width="64" height="64" style="object-position: ${avatarPhotoPosition(
               profile.avatarPhotoFocalX ?? profile.mainPhotoFocalX,
               profile.avatarPhotoFocalY ?? profile.mainPhotoFocalY
-            )}" alt="" aria-hidden="true" loading="${options.eager ? "eager" : "lazy"}" decoding="async" draggable="false" data-image-state="loading" onload="this.dataset.imageState='ready'" onerror="this.dataset.imageState='error'">`
+            )}" alt="" aria-hidden="true" loading="${options.eager ? "eager" : "lazy"}" decoding="async" draggable="false" data-image-state="loading">`
           : escapeHtml(String(profile.name || "").trim().charAt(0).toUpperCase());
         return `<span class="${classPrefix}-lineup-avatar" data-dancer-avatar data-working-now="true" role="img" aria-label="${escapeHtml(profile.name)}, working now"><span data-dancer-avatar-border aria-hidden="true">${avatarPhoto}</span><span data-working-now-indicator aria-hidden="true">NOW</span></span>`;
       }).join("");
@@ -53134,7 +53234,7 @@
     function profilePhotoThumbMarkup(item, total, galleryIndex = item.index) {
       const photoAttrs = nativeResponsivePhotoAttrs(item.photoUrl, item.photoSrcSet);
       const photoMarkup = photoAttrs
-        ? `<img class="portrait ${item.photoClass} has-custom-photo" ${photoAttrs} sizes="(max-width: 720px) calc((100vw - 6px) / 3), 250px" width="360" height="504" alt="" aria-hidden="true" loading="lazy" decoding="async" draggable="false" data-image-state="loading" onload="this.dataset.imageState='ready'" onerror="this.dataset.imageState='error'">`
+        ? `<img class="portrait ${item.photoClass} has-custom-photo" ${photoAttrs} sizes="(max-width: 720px) calc((100vw - 6px) / 3), 250px" width="360" height="504" alt="" aria-hidden="true" loading="lazy" decoding="async" draggable="false" data-image-state="loading">`
         : `<span class="portrait ${item.photoClass}"></span>`;
       return `
         <button class="thumb ${galleryIndex === 0 ? "active" : ""}" type="button" data-profile-photo-index="${galleryIndex}" data-photo="${item.photoClass}" data-photo-url="${displayText(item.photoUrl)}" aria-label="Open gallery photo ${galleryIndex + 1} of ${total} full screen" aria-pressed="${galleryIndex === 0 ? "true" : "false"}">
@@ -53166,7 +53266,7 @@
       const scheduleLabel = profileTvScheduleLabel(item);
       const posterUrl = profileVideoPosterUrl(item);
       const previewMarkup = posterUrl
-        ? `<img class="portrait profile-media-thumb-poster-image" src="${escapeHtml(posterUrl)}" alt="" aria-hidden="true" loading="lazy" decoding="async" draggable="false" data-image-state="loading" onload="this.dataset.imageState='ready'" onerror="this.dataset.imageState='error'">`
+        ? `<img class="portrait profile-media-thumb-poster-image" src="${escapeHtml(posterUrl)}" alt="" aria-hidden="true" loading="lazy" decoding="async" draggable="false" data-image-state="loading">`
         : '<span class="profile-media-thumb-poster" aria-hidden="true"></span>';
       return `
         <button class="thumb profile-media-thumb is-video" type="button" data-profile-tv-index="${index}" aria-pressed="false" aria-label="Open ${escapeHtml(profileName)} profile video ${index + 1} of ${total} full screen, ${escapeHtml(scheduleLabel)}">
@@ -59765,7 +59865,7 @@
       const imageFetchPriority = imageIndex < 3 ? "high" : imageIndex >= 6 ? "low" : "auto";
       const photoMarkup = photoUrl
         ? compactDirectory && nativePhotoAttrs
-          ? `<img class="home-dancer-grid-photo has-custom-photo" ${nativePhotoAttrs} sizes="(max-width: 720px) calc((100vw - 20px) / 3), (max-width: 1280px) calc((100vw - 64px) / 3), 390px" width="360" height="640" loading="${imageLoading}" fetchpriority="${imageFetchPriority}" decoding="async" draggable="false" alt="" aria-hidden="true" data-image-state="loading" onload="this.dataset.imageState='ready'" onerror="this.dataset.imageState='error'">`
+          ? `<img class="home-dancer-grid-photo has-custom-photo" ${nativePhotoAttrs} sizes="(max-width: 720px) calc((100vw - 20px) / 3), (max-width: 1280px) calc((100vw - 64px) / 3), 390px" width="360" height="640" loading="${imageLoading}" fetchpriority="${imageFetchPriority}" decoding="async" draggable="false" alt="" aria-hidden="true" data-image-state="loading">`
           : `<div class="home-dancer-grid-photo${photoAttrs.className}"${photoAttrs.style}></div>`
         : `<div class="home-dancer-grid-photo" aria-hidden="true">${escapeHtml(String(profile.name).trim().charAt(0))}</div>`;
       const venueName = String(profile.venue || "").trim();
