@@ -1,0 +1,17 @@
+/* Owner media controls are siblings of the grid's open buttons. */
+.profile-media-grid-cell { position: relative; min-width: 0; }
+.profile-media-grid-cell > .profile-media-grid-item { width: 100%; height: 100%; }
+#profileBackdrop .gallery[data-media-tab="photo"] .profile-media-grid-cell[data-profile-media-kind="video"],
+#profileBackdrop .gallery[data-media-tab="video"] .profile-media-grid-cell[data-profile-media-kind="photo"] { display: none !important; }
+button.profile-media-delete,
+button.profile-media-viewer-delete {
+  display: grid !important; place-items: center; flex-shrink: 0;
+  width: 44px !important; min-width: 44px !important; height: 44px !important; min-height: 44px !important;
+  padding: 10px !important; border: 1px solid rgba(255,255,255,.3) !important; border-radius: 50% !important;
+  color: #fff !important; background: rgba(8,8,14,.78) !important; cursor: pointer;
+}
+button.profile-media-delete { position: absolute !important; z-index: 4; top: 4px; right: 4px; }
+button.profile-media-delete svg, button.profile-media-viewer-delete svg { width: 22px; height: 22px; pointer-events: none; }
+button.profile-media-delete:focus-visible, button.profile-media-viewer-delete:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+button.profile-media-delete:disabled, button.profile-media-viewer-delete:disabled { opacity: .55; cursor: wait; }
+.profile-media-delete-status:empty { display: none; }

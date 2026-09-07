@@ -507,6 +507,22 @@ export default function DashboardClient({
     setState((current) => ({ ...current, profile }));
   }, []);
 
+  useEffect(() => {
+    const controller = new AbortController();
+    const refreshDeletedMedia = (event: Event) => {
+      const detail = (event as CustomEvent).detail;
+      if (role !== "dancer" || detail?.dancerId !== state.profile?.id) return;
+      void requestOptionalDashboardJson("/api/dancer/profile", { profile: null }, { signal: controller.signal })
+        .then((data) => { if (!controller.signal.aborted) updateProfile(data.profile); })
+        .catch(() => {});
+    };
+    window.addEventListener("dancr:profile-media-deleted", refreshDeletedMedia);
+    return () => {
+      controller.abort();
+      window.removeEventListener("dancr:profile-media-deleted", refreshDeletedMedia);
+    };
+  }, [role, state.profile?.id, updateProfile]);
+
   const updateSaved = useCallback((update: (saved: CustomerSavedState) => CustomerSavedState) => {
     setState((current) => ({ ...current, saved: update(current.saved || {}) }));
   }, []);
@@ -3590,7 +3606,7 @@ function DancerProfilePreview({
               </section>
             ) : (
               <>
-                <DancerPhotoCarousel photos={photos} stageName={previewName} videos={videos} />
+                <DancerPhotoCarousel dancerId={typeof profile?.id === "string" ? profile.id : undefined} photos={photos} stageName={previewName} videos={videos} />
                 {isEditor ? (
                   <div className="dancer-profile-builder-media-actions" aria-label="Edit profile media">
                     <button onClick={() => openEditorSection("photos")} type="button"><span aria-hidden="true">+</span>{photos.length ? "Edit photos" : "Add photos"}</button>
