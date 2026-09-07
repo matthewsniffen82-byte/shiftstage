@@ -42013,7 +42013,8 @@
       </div>
     </section>
 
-    <section class="page-panel" id="customerDashboard" aria-hidden="true">
+    <!-- Retired customer UI: keep legacy data bindings inert; all entry points use /dashboard/customer. -->
+    <section class="page-panel" id="customerDashboard" aria-hidden="true" hidden inert style="display: none !important;">
       <div class="page-inner">
         <div class="page-head">
           <div>
@@ -53800,12 +53801,12 @@
     }
 
     function restoreProfileReturnContext(context) {
+      if (context?.surface === "customer-dashboard") return openUnifiedDashboard("customer");
       const panel = profileReturnSurfaceElement(context?.surface);
       if (!panel) return false;
       if (context.location) {
         window.history.replaceState({}, document.title, context.location);
       }
-      if (context.surface === "customer-dashboard") activeDashboardType = "customer";
       if (context.surface === "dancer-dashboard") activeDashboardType = "dancer";
       if (context.surface === "venue-dashboard") activeDashboardType = "venue";
       panel.classList.add("show");
@@ -55281,22 +55282,7 @@
         openVenueDashboard();
         return;
       }
-      if (!isCustomerLoggedIn) {
-        openAuthRole("customer");
-        return;
-      }
-      liveCustomerDashboardState = "loading";
-      prepareRealCustomerDashboardState();
-      renderDashboard();
-      renderAccountControls();
-      customerDashboard.classList.add("show");
-      customerDashboard.setAttribute("aria-hidden", "false");
-      syncOverlayScrollLock();
-      loadLiveAccountState();
-      loadLiveCustomerDashboardData();
-      loadLiveNotifications();
-      loadLiveSupportThreads();
-      renderSupportInbox("customer");
+      return openUnifiedDashboard("customer");
     }
 
     function closeDashboard() {
@@ -55836,6 +55822,7 @@
         openPublicContactForm();
         return;
       }
+      if (role === "customer") return openUnifiedDashboard("customer", "customer-support");
       closeAuthPage();
       closeDancerSignupPage();
       closeDashboard();

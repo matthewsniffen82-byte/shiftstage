@@ -572,6 +572,11 @@ export default function DashboardClient({
     const frame = window.requestAnimationFrame(() => {
       const section = document.getElementById(sectionId);
       if (section instanceof HTMLDetailsElement) section.open = true;
+      let parent = section?.parentElement;
+      while (parent) {
+        if (parent instanceof HTMLDetailsElement) parent.open = true;
+        parent = parent.parentElement;
+      }
       section?.scrollIntoView({ behavior: "smooth", block: "start" });
       section?.focus({ preventScroll: true });
     });
@@ -1257,7 +1262,7 @@ function SupportInboxPanel({
   }
 
   return (
-    <article className="info-panel support-panel" id={panelId}>
+    <article className="info-panel support-panel" id={panelId} tabIndex={panelId ? -1 : undefined}>
       <div className="support-panel-heading">
         <h2>Help &amp; support</h2>
         <p>Send a private message to the MyDancr team.</p>
