@@ -6009,7 +6009,6 @@ function DancerAvatarPanel({
         {file && !isSaving ? <button type="button" onClick={() => void uploadAvatar(file)}>Retry avatar upload</button> : null}
         {avatarUrl ? <button type="button" disabled={isSaving} onClick={() => void removeAvatar()}>Remove avatar</button> : null}
       </div>
-      <p className="dancer-avatar-guidance">AI checks that only you appear, then centers the photo automatically.</p>
       {status || pendingAvatar ? <p role="status" aria-live="polite">{status || "We are checking this photo. Your current approved photo stays visible."}</p> : null}
     </article>
   );
@@ -9661,8 +9660,7 @@ function DashboardStyles() {
       .dancer-profile-editor-modal-actions > button:disabled { cursor:wait; opacity:.58; }
       body.dancr-button-system .dancer-profile-editor-modal-actions > button { min-height:48px !important; border-color:rgba(196,181,253,.5) !important; border-radius:13px !important; color:#fff !important; background:#7c3aed !important; box-shadow:0 0 18px rgba(124,58,237,.18) !important; }
 
-      .dancer-profile-editor-intro,
-      .dancer-avatar-guidance { margin:0; color:#c5bdce !important; font-size:13px !important; line-height:1.4; }
+      .dancer-profile-editor-intro { margin:0; color:#c5bdce !important; font-size:13px !important; line-height:1.4; }
       .dancer-profile-identity-editor .dancer-profile-identity-form { display:grid; grid-template-columns:1fr; gap:12px; }
       .dancer-profile-identity-editor .dancer-profile-identity-form > label { display:grid; gap:7px; color:#d9d4e1; font-size:12px; font-weight:900; line-height:1.2; }
       .dancer-profile-identity-editor .dancer-profile-identity-form input,
@@ -9680,7 +9678,6 @@ function DashboardStyles() {
       .dancer-avatar-state.is-approved { border-color:rgba(52,211,153,.4); color:#86efc0; background:#0e251d; }
       .dancer-avatar-state.is-checking { border-color:rgba(34,199,255,.4); color:#9aefff; background:#0b2027; }
       .dancer-profile-builder-panel.dancer-profile-editor-modal .dancer-avatar-upload-controls { display:grid; grid-template-columns:1fr; gap:10px; }
-      .dancer-profile-builder-panel.dancer-profile-editor-modal .dancer-avatar-guidance { text-align:center; }
       .dancer-profile-builder-panel.dancer-profile-editor-modal .dancer-avatar-panel > p[role="status"] { margin:0; color:#b9eff8; font-size:11px; line-height:1.4; text-align:center; }
       .dancer-profile-builder-panel.dancer-profile-editor-modal .dancer-avatar-panel button { width:100%; min-height:42px; }
 

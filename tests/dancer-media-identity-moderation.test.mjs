@@ -123,7 +123,6 @@ test("photo uploads count people and compare against the approved avatar", () =>
   assert.match(imageModeration, /multiple_people_detected/);
   assert.match(imageModeration, /The person in this photo must match your approved avatar/);
   assert.match(dashboard, /Use a clear solo face photo of yourself/);
-  assert.match(dashboard, /AI checks that only you appear/);
   assert.match(dashboard, /Add at least 1 solo picture of yourself/);
 });
 
