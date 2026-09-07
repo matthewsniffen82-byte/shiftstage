@@ -46744,6 +46744,7 @@
           const response = await Promise.race([
             fetch(url, {
               headers: { Accept: "application/json" },
+              cache: "default",
               signal: controller ? controller.signal : undefined
             }),
             timeoutRequest
@@ -46753,7 +46754,8 @@
             requestError.status = response.status;
             throw requestError;
           }
-          return await response.json();
+          // The deadline includes the body: headers can arrive before a stalled download.
+          return await Promise.race([response.json(), timeoutRequest]);
         } catch (error) {
           const status = Number(error?.status || 0);
           const retryable = !status || status === 429 || status >= 500;
@@ -46876,12 +46878,14 @@
           discovery.venues || []
         );
         liveMarketState[city] = applied ? "ready" : "fallback";
-        if (isCustomerSession()) await loadLiveCustomerSaved();
         if (citySelect.value === city) {
           render();
           if (customerDashboard.classList.contains("show")) renderDashboard();
           if (adminDashboard.classList.contains("show")) renderAdminDashboard();
         }
+        // Public results must not wait for a private account request. Background
+        // refreshes also must not refetch saved state and render every card twice.
+        if (isCustomerSession() && !background) void loadLiveCustomerSaved();
       } catch (error) {
         if (background) {
           liveMarketState[city] = "ready";
@@ -54266,11 +54270,10 @@
         dancer: profile.id,
         limit: String(MAX_DANCER_PROFILE_VIDEOS)
       });
-      const promise = fetch(`/api/public/tv?${params.toString()}`, { cache: "default" })
-        .then(async (response) => {
-          const payload = await response.json();
-          return response.ok && payload?.ok ? payload : null;
-        })
+      const promise = fetchJson(`/api/public/tv?${params.toString()}`, {
+        retries: PUBLIC_DISCOVERY_REQUEST_RETRIES
+      })
+        .then((payload) => payload?.ok ? payload : null)
         .catch(() => null);
       profileNavigationPrefetchCache.set(key, {
         expiresAt: now + PROFILE_NAVIGATION_PREFETCH_TTL_MS,
@@ -54307,7 +54310,13 @@
       if (!profile?.id || !/^[0-9a-f-]{36}$/i.test(profile.id)) return;
       const requestProfileId = profile.id;
       const requestCity = citySelect.value;
+      const requestToken = {};
+      modalGallery.profileTvLoadRequest = requestToken;
       modalGallery.dataset.profileMediaProfile = requestProfileId;
+      modalGallery.parentElement.querySelector("[data-profile-tv-retry]")?.remove();
+      modalMediaTvTab.setAttribute("aria-busy", "true");
+      modalMediaTvTab.setAttribute("aria-label", "Loading profile videos");
+      modalMediaTvCount.textContent = "…";
       modalGallery.querySelectorAll("[data-profile-tv-index]").forEach((thumb) => thumb.remove());
       modalGallery.profileTvVideos = [];
       modalGallery.profileVisibleVideoCount = 0;
@@ -54316,9 +54325,9 @@
         const payload = await requestProfileTvPayload(profile, requestCity);
         if (
           modalGallery.dataset.profileMediaProfile !== requestProfileId ||
-          !payload?.ok ||
-          !payload.videos?.length
+          modalGallery.profileTvLoadRequest !== requestToken
         ) return;
+        if (!payload?.ok || !Array.isArray(payload.videos)) throw new Error("Unable to load profile videos.");
         const videos = payload.videos.slice(0, MAX_DANCER_PROFILE_VIDEOS);
         modalGallery.profileTvVideos = videos;
         modalGallery.profileVisibleVideoCount = 0;
@@ -54327,7 +54336,19 @@
         syncProfileMediaTabCounts(photoCount, videos.length);
         window.requestAnimationFrame(observeProfileMediaSentinel);
       } catch {
-        // The live profile remains fully usable if optional profile videos cannot load.
+        if (modalGallery.dataset.profileMediaProfile !== requestProfileId || modalGallery.profileTvLoadRequest !== requestToken) return;
+        syncProfileMediaTabCounts(modalGallery.profilePhotoItems?.length || 0, 0);
+        const retry = document.createElement("button");
+        retry.type = "button";
+        retry.className = "action-btn secondary";
+        retry.dataset.profileTvRetry = "";
+        retry.textContent = "Videos couldn't load. Retry";
+        retry.addEventListener("click", () => { void loadProfileMyDancrTv(profile); }, { once: true });
+        modalGallery.before(retry);
+      } finally {
+        if (modalGallery.dataset.profileMediaProfile === requestProfileId && modalGallery.profileTvLoadRequest === requestToken) {
+          modalMediaTvTab.removeAttribute("aria-busy");
+        }
       }
     }
 
@@ -61889,9 +61910,10 @@
         const params = new URLSearchParams({ city, limit: "24" });
         if (venueId) params.set("venue", venueId);
         if (selectedVideoId) params.set("video", selectedVideoId);
-        const response = await fetch(`/api/public/tv?${params.toString()}`, { cache: "default" });
-        const payload = await response.json();
-        if (!response.ok || !payload.ok) throw new Error(payload.error || "Unable to load MyDancr TV.");
+        const payload = await fetchJson(`/api/public/tv?${params.toString()}`, {
+          retries: PUBLIC_DISCOVERY_REQUEST_RETRIES
+        });
+        if (!payload.ok) throw new Error(payload.error || "Unable to load MyDancr TV.");
         if (
           requestId !== homeTvFeedRequest ||
           homeTvFeedCity !== city ||

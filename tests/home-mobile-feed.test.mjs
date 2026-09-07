@@ -56,7 +56,7 @@ test("the Home TV button renders a larger mobile snap-scroll feed without leavin
   assert.doesNotMatch(homeSource, /home-tv-feed-locked|home-destination-immersive|requestHomeDestinationFullscreen|focusAndLockHomeTvFeed/);
   assert.match(
     homeSource,
-    /const params = new URLSearchParams\(\{ city, limit: "24" \}\);[^]*?if \(venueId\) params\.set\("venue", venueId\);[^]*?fetch\(`\/api\/public\/tv\?\$\{params\.toString\(\)\}`[^]*?payload\.videos\.filter\(\(item\) => \([^]*?item\?\.id[^]*?item\?\.videoUrl[^]*?item\?\.dancer\?\.stageName[^]*?!venueId \|\| item\?\.venue\?\.id === venueId/,
+    /const params = new URLSearchParams\(\{ city, limit: "24" \}\);[^]*?if \(venueId\) params\.set\("venue", venueId\);[^]*?fetchJson\(`\/api\/public\/tv\?\$\{params\.toString\(\)\}`[^]*?payload\.videos\.filter\(\(item\) => \([^]*?item\?\.id[^]*?item\?\.videoUrl[^]*?item\?\.dancer\?\.stageName[^]*?!venueId \|\| item\?\.venue\?\.id === venueId/,
   );
   assert.match(
     homeSource,

@@ -59,7 +59,10 @@ test("all reusable public JSON success responses opt into the shared short cache
 test("public TV clients reuse cached payloads without sending account credentials", () => {
   assert.match(source.tvClient, /const token = nextFilter === "following"[\s\S]*?readBrowserAccessToken\("customer"\)[\s\S]*?: ""/);
   assert.match(source.tvClient, /cache: nextFilter === "following" \? "no-store" : "default"/);
-  assert.match(source.liveShell, /fetch\(`\/api\/public\/tv\?\$\{params\.toString\(\)\}`, \{ cache: "default" \}\)/);
+  assert.match(source.liveShell, /fetchJson\(`\/api\/public\/tv\?\$\{params\.toString\(\)\}`, \{\s*retries: PUBLIC_DISCOVERY_REQUEST_RETRIES/);
+  const publicFetch = source.liveShell.slice(source.liveShell.indexOf("async function fetchJson("), source.liveShell.indexOf("function dancerSignupCityOptionsMarkup("));
+  assert.match(publicFetch, /headers: \{ Accept: "application\/json" \},\s*cache: "default"/);
+  assert.doesNotMatch(publicFetch, /authorization|authenticatedRequestHeaders/i);
   assert.match(source.liveShell, /fetch\(`\/api\/public\/tv\/count\?\$\{countParams\.toString\(\)\}`, \{ cache: "default" \}\)/);
 });
 

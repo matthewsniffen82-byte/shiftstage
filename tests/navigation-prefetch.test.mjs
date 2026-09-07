@@ -18,7 +18,7 @@ test("profile navigation prefetch is connection-aware, bounded, and data-only", 
   assert.match(liveShell, /const profileNavigationPrefetchCache = new Map\(\)/);
   assert.match(prefetch, /if \(cached\?\.expiresAt > now\) return cached\.promise/);
   assert.match(prefetch, /while \(profileNavigationPrefetchCache\.size >= PROFILE_NAVIGATION_PREFETCH_LIMIT\)/);
-  assert.match(prefetch, /fetch\(`\/api\/public\/tv\?\$\{params\.toString\(\)\}`/);
+  assert.match(prefetch, /fetchJson\(`\/api\/public\/tv\?\$\{params\.toString\(\)\}`/);
   assert.match(prefetch, /if \(!canWarmAdjacentVideo\(\)\) return/);
   assert.doesNotMatch(prefetch, /createElement\(["'](?:img|video)["']\)|\.src\s*=|preload=/);
 });

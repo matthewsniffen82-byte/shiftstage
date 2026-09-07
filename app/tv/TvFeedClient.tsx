@@ -196,6 +196,11 @@ export default function TvFeedClient({
     feedRequestIdRef.current = requestId;
     feedAbortRef.current?.abort();
     feedAbortRef.current = controller;
+    let timedOut = false;
+    const timeoutId = window.setTimeout(() => {
+      timedOut = true;
+      controller.abort();
+    }, 12000);
     setIsLoading(true);
     setStatus("");
     try {
@@ -241,10 +246,13 @@ export default function TvFeedClient({
       window.history.replaceState({}, "", `${url.pathname}?${url.searchParams.toString()}`);
       return true;
     } catch (error) {
-      if (!mountedRef.current || controller.signal.aborted || requestId !== feedRequestIdRef.current) return false;
-      setStatus(error instanceof Error ? error.message : "Unable to load MyDancr TV.");
+      if (!mountedRef.current || (controller.signal.aborted && !timedOut) || requestId !== feedRequestIdRef.current) return false;
+      setStatus(timedOut
+        ? "Videos took too long to load. Check your connection and try again."
+        : error instanceof Error ? error.message : "Unable to load MyDancr TV.");
       return false;
     } finally {
+      window.clearTimeout(timeoutId);
       if (feedAbortRef.current === controller) {
         feedAbortRef.current = null;
         if (mountedRef.current) setIsLoading(false);

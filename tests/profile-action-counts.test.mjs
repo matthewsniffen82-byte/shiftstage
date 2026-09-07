@@ -25,7 +25,7 @@ test("only customer sessions load persisted customer profile action state", () =
   );
 
   assert.match(homeSource, /async function loadLiveProfileActionState\(\) \{\s+if \(!isCustomerSession\(\)\) return/);
-  assert.match(discoveryLoader, /if \(isCustomerSession\(\)\) await loadLiveCustomerSaved\(\)/);
+  assert.match(discoveryLoader, /if \(isCustomerSession\(\) && !background\) void loadLiveCustomerSaved\(\)/);
   assert.doesNotMatch(discoveryLoader, /authSession\?\.accessToken\) await loadLiveProfileActionState\(\)/);
   assert.doesNotMatch(confirmedSession, /dashboardRole === "dancer"\) loadLiveProfileActionState\(\)/);
   assert.match(homeSource, /function applyLiveProfileActions\(saved\)[\s\S]*saved\?\.follows[\s\S]*saved\?\.goingSignals/);

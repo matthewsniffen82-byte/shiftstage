@@ -16,7 +16,7 @@ test("home refresh only requests saved customer data for a customer session", ()
   assert.match(savedLoader, /if \(!isCustomerSession\(\)\) return/);
   assert.match(savedLoader, /Customer saved state unavailable; keeping the current page state/);
   assert.doesNotMatch(savedLoader, /showToast/);
-  assert.match(homeSource, /if \(isCustomerSession\(\)\) await loadLiveCustomerSaved\(\)/);
+  assert.match(homeSource, /if \(isCustomerSession\(\) && !background\) void loadLiveCustomerSaved\(\)/);
   assert.doesNotMatch(homeSource, /if \(authSession\?\.accessToken\) await loadLiveCustomerSaved\(\)/);
   assert.match(
     homeSource,
