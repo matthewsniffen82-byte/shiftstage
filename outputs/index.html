@@ -45835,6 +45835,7 @@
       renderAdminSupportInbox();
     }
 
+    let pendingSupportAttempt = null;
     async function sendSupportMessage(role, subject, body, threadId = "") {
       const status = document.getElementById(`${role}SupportStatus`);
       if (!body.trim()) {
@@ -45847,7 +45848,12 @@
       }
       try {
         if (status) status.textContent = "Sending your message to the admin team...";
-        const data = await postAuthenticatedJson("/api/support", { subject, message: body, threadId });
+        const key = JSON.stringify([authSession?.account?.id || authSession?.accessToken, subject, body, threadId]);
+        if (pendingSupportAttempt?.key !== key) {
+          pendingSupportAttempt = { key, id: globalThis.crypto?.randomUUID?.() };
+        }
+        const data = await postAuthenticatedJson("/api/support", { subject, message: body, threadId, requestId: pendingSupportAttempt.id });
+        pendingSupportAttempt = null;
         if (data?.thread) {
           liveSupportThreads = [data.thread, ...liveSupportThreads.filter((thread) => thread.id !== data.thread.id)];
         }
@@ -45860,6 +45866,7 @@
       }
     }
 
+    let pendingAdminSupportAttempt = null;
     async function sendAdminSupportReply(threadId, body) {
       if (!body.trim()) {
         showToast("Enter a reply first");
@@ -45870,7 +45877,10 @@
         return;
       }
       try {
-        const data = await postAuthenticatedJson("/api/admin/support", { threadId, message: body });
+        const key = JSON.stringify([authSession?.account?.id || authSession?.accessToken, threadId, body]);
+        if (pendingAdminSupportAttempt?.key !== key) pendingAdminSupportAttempt = { key, id: globalThis.crypto?.randomUUID?.() };
+        const data = await postAuthenticatedJson("/api/admin/support", { threadId, message: body, requestId: pendingAdminSupportAttempt.id });
+        pendingAdminSupportAttempt = null;
         if (data?.thread) liveAdminSupportThreads = [data.thread, ...liveAdminSupportThreads.filter((thread) => thread.id !== data.thread.id)];
         renderAdminSupportInbox();
         showToast("Reply sent");
@@ -59171,9 +59181,10 @@
       try {
         const data = await postAuthenticatedJson("/api/admin/rankings/recalculate", { city });
         liveMarketState[city] = null;
-        await loadLiveDiscovery(city);
+        let refreshWarning = "";
+        try { await loadLiveDiscovery(city); } catch { refreshWarning = " Refresh the page to see the saved rankings."; }
         const count = data.rankings?.length || 0;
-        if (status) status.textContent = `Updated ${count} ${city} ranking${count === 1 ? "" : "s"}.`;
+        if (status) status.textContent = `Updated ${count} ${city} ranking${count === 1 ? "" : "s"}. ${Array.isArray(data.warnings) ? data.warnings.join(" ") : ""}${refreshWarning}`.trim();
         showToast("Rankings recalculated");
       } catch (error) {
         if (status) status.textContent = error.message || "Could not recalculate rankings";

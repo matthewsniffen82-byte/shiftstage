@@ -20,9 +20,9 @@ export async function POST(request: Request) {
       tooLargeMessage: "Ranking recalculation request is too large.",
     });
     const city = typeof body?.city === "string" && body.city.trim() ? body.city.trim() : "Las Vegas";
-    const rankings = await recalculateCityRankings(createAdminSupabaseClient(), user.id, city);
+    const { rankings, warnings } = await recalculateCityRankings(createAdminSupabaseClient(), user.id, city);
 
-    return NextResponse.json({ ok: true, city, rankings, session: session || null });
+    return NextResponse.json({ ok: true, city, rankings, warnings, session: session || null });
   } catch (error) {
     return apiError(error, "Unable to recalculate rankings.");
   }

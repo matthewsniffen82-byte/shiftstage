@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { initialDancerApprovalValues } from "./profile-approval";
 import type { UserRole } from "./types";
+import { isMissingSupabaseFunction } from "../supabase/missing-function";
 
 type DancrClient = SupabaseClient;
 
@@ -18,19 +19,33 @@ export async function provisionAppAccount(
   input: ProvisionAppAccountInput,
 ) {
   const displayName = input.role === "dancer" ? "Dancer" : input.displayName;
+  const provisioned = await client.rpc("provision_app_account_safely", {
+    p_user_id: input.userId, p_role: input.role, p_email: input.email,
+    p_display_name: displayName, p_city: input.city,
+  });
+  if (!provisioned.error) {
+    if (provisioned.data !== true) throw new Error("Account setup could not be confirmed. Please sign in again.");
+    return;
+  }
+  if (!isMissingSupabaseFunction(provisioned.error, "provision_app_account_safely")) throw provisioned.error;
+
+  // Compatibility only while an older database is awaiting the additive migration.
   const { error: accountError } = await client.from("app_users").upsert({
     id: input.userId,
     role: input.role,
     display_name: displayName,
     email: input.email,
-  });
+  }, { onConflict: "id", ignoreDuplicates: true });
   if (accountError) throw accountError;
+  const account = await client.from("app_users").select("role").eq("id", input.userId).single();
+  if (account.error) throw account.error;
+  if (account.data.role !== input.role) throw new Error("This account already uses a different account type. Sign in with that account.");
 
   if (input.role === "customer") {
     const { error } = await client.from("customer_profiles").upsert({
       user_id: input.userId,
       city: input.city,
-    });
+    }, { onConflict: "user_id", ignoreDuplicates: true });
     if (error) throw error;
     return;
   }
@@ -63,12 +78,17 @@ export async function provisionAppAccount(
   const slug = await uniqueDancerSlug(client, input.userId);
   const { error } = await client.from("dancer_profiles").insert({
     user_id: input.userId,
-    real_name: null,
+    real_name: "Verification pending",
     stage_name: "",
     slug,
     city: input.city,
     ...initialDancerApprovalValues(),
   });
+  if (error?.code === "23505") {
+    const raced = await client.from("dancer_profiles").select("id").eq("user_id", input.userId).maybeSingle();
+    if (raced.error) throw raced.error;
+    if (raced.data) return;
+  }
   if (error) throw error;
 }
 
@@ -77,7 +97,7 @@ async function uniqueDancerSlug(client: DancrClient, userId: string) {
   let candidate = baseSlug;
   let suffix = 1;
 
-  while (true) {
+  while (suffix <= 8) {
     const { data, error } = await client
       .from("dancer_profiles")
       .select("user_id")
@@ -89,4 +109,5 @@ async function uniqueDancerSlug(client: DancrClient, userId: string) {
     suffix += 1;
     candidate = `${baseSlug}-${suffix}`;
   }
+  return `dancer-${userId}`;
 }

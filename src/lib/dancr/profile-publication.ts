@@ -1,4 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { PublicApiError } from "../api-error-policy";
+import { isMissingSupabaseFunction } from "../supabase/missing-function";
 
 export type DancerPublicationTransition =
   | "submit_for_venue_review"
@@ -54,9 +56,18 @@ export async function transitionDancerPublication(
   options: TransitionOptions = {},
 ): Promise<DancerPublicationState> {
   const db = client as any;
+  const atomic = await db.rpc("transition_dancer_publication_safely", {
+    p_dancer_id: dancerId, p_transition: transition, p_actor_user_id: options.actorUserId || null,
+  });
+  if (!atomic.error) return publicationState(atomic.data);
+  if (!isMissingSupabaseFunction(atomic.error, "transition_dancer_publication_safely")) {
+    if (atomic.error.code === "42501") throw new PublicApiError("FORBIDDEN", "This profile change requires an active, authorized account.", 403);
+    if (atomic.error.code === "22023") throw new PublicApiError("CONFLICT", "This profile change is not available in its current state. Refresh and try again.", 409);
+    throw atomic.error;
+  }
   const { data: profile, error: profileError } = await db
     .from("dancer_profiles")
-    .select("id, user_id, stage_name, city, status, verification_status, photo_review_status, avatar_storage_path, approved_at, is_public, disabled_at, venue_approved_at, venue_approved_by_user_id, venue_approved_venue_id")
+    .select("id, user_id, stage_name, city, status, verification_status, photo_review_status, avatar_storage_path, approved_at, is_public, disabled_at, venue_approved_at, venue_approved_by_user_id, venue_approved_venue_id, updated_at")
     .eq("id", dancerId)
     .maybeSingle();
   if (profileError) throw profileError;
@@ -150,12 +161,13 @@ export async function transitionDancerPublication(
 
   const { data: updated, error: updateError } = await db
     .from("dancer_profiles")
-    .update(update)
+    .update({ ...update, updated_at: new Date().toISOString() })
     .eq("id", dancerId)
+    .eq("updated_at", profile.updated_at)
     .select("id, user_id, status, verification_status, approved_at, is_public, disabled_at, venue_approved_at, venue_approved_by_user_id, venue_approved_venue_id")
     .maybeSingle();
   if (updateError) throw updateError;
-  if (!updated) throw new Error("DANCER_PUBLICATION_TRANSITION_NOT_APPLIED");
+  if (!updated) throw new PublicApiError("CONFLICT", "The profile changed while saving. Refresh and try again.", 409);
 
   return publicationState(updated);
 }

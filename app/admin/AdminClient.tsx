@@ -22,6 +22,7 @@ import {
   persistAdminSession,
   revokeAdminSession,
   requestAdminJson,
+  readAdminSession,
 } from "./admin-session";
 
 type AdminState = {
@@ -2518,7 +2519,7 @@ function RankingManager() {
       if (!isCurrentRankingAction(request)) return;
       const nextRankings = Array.isArray(data.rankings) ? data.rankings : [];
       setRankings(nextRankings);
-      setStatus(`${nextRankings.length} rankings recalculated.`);
+      setStatus(`${nextRankings.length} rankings recalculated. ${Array.isArray(data.warnings) ? data.warnings.join(" ") : ""}`.trim());
     } catch (error) {
       if (!isCurrentRankingAction(request)) return;
       setStatus(error instanceof Error ? error.message : "Unable to recalculate rankings. Check your connection and try again.");
@@ -2737,6 +2738,7 @@ function AdminSupportInbox({
 }) {
   const [replyByThread, setReplyByThread] = useState<Record<string, string>>({});
   const [statusByThread, setStatusByThread] = useState<Record<string, string>>({});
+  const pendingReplyAttempt = useRef<{ key: string; id?: string } | null>(null);
   const [busyThreadId, setBusyThreadId] = useState("");
   const mountedRef = useRef(false);
   const actionSequenceRef = useRef(0);
@@ -2786,14 +2788,18 @@ function AdminSupportInbox({
     setBusyThreadId(threadId);
     setStatusByThread((current) => ({ ...current, [threadId]: "Sending reply..." }));
     try {
+      const session = readAdminSession();
+      const key = JSON.stringify([session?.account?.id || session?.accessToken, threadId, message]);
+      if (pendingReplyAttempt.current?.key !== key) pendingReplyAttempt.current = { key, id: globalThis.crypto?.randomUUID?.() };
       const data = await requestAdminJson("/api/admin/support", {
         method: "POST",
         signal: request.controller.signal,
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ threadId, message }),
+        body: JSON.stringify({ threadId, message, requestId: pendingReplyAttempt.current?.id }),
         fallbackMessage: "Unable to send reply.",
       });
       if (!isCurrentSupportAction(request)) return;
+      pendingReplyAttempt.current = null;
       onThreadsChange([data.thread, ...threads.filter((thread) => String(thread.id) !== threadId)]);
       setReplyByThread((current) => ({ ...current, [threadId]: "" }));
       setStatusByThread((current) => ({ ...current, [threadId]: "Reply sent." }));

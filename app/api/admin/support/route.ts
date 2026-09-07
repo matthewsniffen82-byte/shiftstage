@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { apiError } from "@/src/lib/api";
+import { apiError, PublicApiError } from "@/src/lib/api";
 import { readBoundedJsonObject } from "@/src/lib/bounded-json-body";
 import { requireAdmin } from "@/src/lib/dancr/admin";
 import { listAdminSupportThreads, replyToSupportThread } from "@/src/lib/dancr/support";
@@ -32,11 +32,15 @@ export async function POST(request: Request) {
     });
     const threadId = typeof body.threadId === "string" ? body.threadId.trim() : "";
     if (!threadId) return NextResponse.json({ ok: false, error: "Missing support thread." }, { status: 400 });
+    if (body.requestId !== undefined && (typeof body.requestId !== "string" || !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(body.requestId))) {
+      throw new PublicApiError("INVALID_REQUEST", "Invalid reply request. Refresh and try again.", 400);
+    }
 
     const thread = await replyToSupportThread(createAdminSupabaseClient(), {
       adminId: user.id,
       threadId,
       body: typeof body.message === "string" ? body.message : "",
+      requestId: typeof body.requestId === "string" ? body.requestId : null,
     });
 
     return NextResponse.json({ ok: true, thread, session: session || null });

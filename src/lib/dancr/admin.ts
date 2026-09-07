@@ -13,6 +13,7 @@ import { getVenueReferralFeeState } from "./referral-fees";
 import { getVenueById, getVenuePublicationState } from "./venue";
 import { getStripe } from "../stripe";
 import { safeErrorMetadata } from "../security/safe-error-metadata";
+import { getRankingMetricBatch, type TrendingMetricCounts } from "./ranking-metrics";
 
 type DancrClient = SupabaseClient;
 
@@ -90,17 +91,6 @@ export type AdminMonitoringStatus = {
   checkedAt: string;
   database: Array<{ name: string; ok: boolean; count: number | null; error?: string }>;
   integrations: Array<{ name: string; ok: boolean; required: string[] }>;
-};
-
-type TrendingMetricCounts = {
-  profileViews: number;
-  scheduleViews: number;
-  followers: number;
-  favorites: number;
-  directionRequests: number;
-  goingSignals: number;
-  notificationOpens: number;
-  socialClicks: number;
 };
 
 export async function requireAdmin(client: DancrClient, userId: string) {
@@ -1070,17 +1060,20 @@ export async function recalculateCityRankings(client: DancrClient, adminId: stri
   const since = new Date();
   since.setDate(since.getDate() - 30);
 
-  const { data: dancers, error } = await (client as any)
-    .from("dancer_profiles")
-    .select("id, user_id, stage_name, city, trending_scores(rank, highest_rank, best_rank_this_week)")
-    .eq("status", "approved")
-    .eq("city", city);
-
-  if (error) throw error;
-
-  const scored = await Promise.all(
-    (dancers || []).map(async (dancer: any) => {
-      const metrics = await getTrendingMetricCounts(client, dancer.id, since);
+  const dancers: any[] = [];
+  for (let offset = 0; ; offset += 500) {
+    const page = await (client as any).from("dancer_profiles")
+      .select("id, user_id, stage_name, city, trending_scores(rank, highest_rank, best_rank_this_week)")
+      .eq("status", "approved").eq("city", city).order("id").range(offset, offset + 499);
+    if (page.error) throw page.error;
+    dancers.push(...(page.data || []));
+    if ((page.data || []).length < 500) break;
+    if (dancers.length >= 10_000) throw new Error("This city requires a scheduled ranking calculation. No rankings were changed.");
+  }
+  const metricBatch = await getRankingMetricBatch(client, dancers.map(dancer => dancer.id), since,
+    id => getTrendingMetricCounts(client, id, since));
+  const scored = dancers.map((dancer: any) => {
+      const metrics = metricBatch.get(dancer.id)!;
       const previous = Array.isArray(dancer.trending_scores) ? dancer.trending_scores[0] : dancer.trending_scores;
 
       return {
@@ -1091,8 +1084,7 @@ export async function recalculateCityRankings(client: DancrClient, adminId: stri
         previousBestRankThisWeek: previous?.best_rank_this_week || null,
         score: calculateTrendingScore(metrics),
       };
-    }),
-  );
+    });
 
   scored.sort((a, b) => b.score - a.score || a.dancer.stage_name.localeCompare(b.dancer.stage_name));
 
@@ -1133,6 +1125,8 @@ export async function recalculateCityRankings(client: DancrClient, adminId: stri
   const biggestMover = getBiggestMoverMilestone(scored, city);
   if (biggestMover) milestoneRows.push(biggestMover);
 
+  const warnings: string[] = [];
+  try {
   if (milestoneRows.length) {
     const { error: eventError } = await (client as any).from("ranking_events").insert(
       milestoneRows.map((event: any) => ({
@@ -1168,7 +1162,12 @@ export async function recalculateCityRankings(client: DancrClient, adminId: stri
     if (notificationError) throw notificationError;
     await deliverNotificationRows(client, notificationRows);
   }
+  } catch (error) {
+    warnings.push("Rankings were saved, but milestone notifications could not be completed.");
+    console.error("RANKING_NOTIFICATIONS_INCOMPLETE", safeErrorMetadata(error));
+  }
 
+  try {
   await logAdminAction(client, {
     adminId,
     targetType: "city",
@@ -1176,8 +1175,12 @@ export async function recalculateCityRankings(client: DancrClient, adminId: stri
     action: "recalculate_rankings",
     notes: `${city}: ${rankingRows.length} dancers`,
   });
+  } catch (error) {
+    warnings.push("Rankings were saved, but the activity log is temporarily unavailable.");
+    console.error("RANKING_AUDIT_INCOMPLETE", safeErrorMetadata(error));
+  }
 
-  return rankingRows;
+  return { rankings: rankingRows, warnings };
 }
 
 export async function reviewDancerProfile(client: DancrClient, input: ReviewDancerInput) {
@@ -1508,7 +1511,7 @@ async function countRows(
 ) {
   const { count, error } = await (client as any)
     .from(table)
-    .select("id", { count: "exact", head: true })
+    .select("*", { count: "exact", head: true })
     .eq(idColumn, idValue)
     .gte(dateColumn, since.toISOString());
 

@@ -1142,6 +1142,7 @@ function SupportInboxPanel({
   const [isSending, setIsSending] = useState(false);
   const [busyThreadId, setBusyThreadId] = useState("");
   const [sendConfirmation, setSendConfirmation] = useState(false);
+  const pendingSupportAttempt = useRef<{ key: string; id?: string } | null>(null);
   const mountedRef = useRef(false);
   const actionSequenceRef = useRef(0);
   const actionAbortRef = useRef<AbortController | null>(null);
@@ -1188,13 +1189,19 @@ function SupportInboxPanel({
   }
 
   async function sendMessage(payload: { message: string; subject?: string; threadId?: string }, signal: AbortSignal) {
+    const session = readSession();
+    const key = JSON.stringify([session?.account?.id || session?.accessToken, payload]);
+    if (pendingSupportAttempt.current?.key !== key) {
+      pendingSupportAttempt.current = { key, id: globalThis.crypto?.randomUUID?.() };
+    }
     const data = await requestDashboardJson("/api/support", {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify(payload),
+      body: JSON.stringify({ ...payload, requestId: pendingSupportAttempt.current?.id }),
       fallbackMessage: "Unable to send message.",
       signal,
     });
+    if (!signal.aborted) pendingSupportAttempt.current = null;
     return data.thread;
   }
 

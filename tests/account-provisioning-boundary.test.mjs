@@ -22,13 +22,13 @@ test("signup and email confirmation share one account provisioning boundary", ()
   assert.match(provisioning, /\.from\("dancer_profiles"\)\.insert/);
 });
 
-test("new dancer accounts start with explicit blank identity fields and private draft state", () => {
+test("new dancer accounts use a private schema-compatible placeholder and blank stage identity", () => {
   const dancerInsert = provisioning.match(
     /\.from\("dancer_profiles"\)\.insert\(\{[\s\S]*?\n  \}\);/,
   )?.[0] || "";
 
   assert.match(provisioning, /input\.role === "dancer" \? "Dancer" : input\.displayName/);
-  assert.match(dancerInsert, /real_name: null/);
+  assert.match(dancerInsert, /real_name: "Verification pending"/);
   assert.match(dancerInsert, /stage_name: ""/);
   assert.match(dancerInsert, /city: input\.city/);
   assert.match(dancerInsert, /initialDancerApprovalValues\(\)/);

@@ -1,6 +1,8 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { deliverNotificationRows } from "./notification-delivery";
 import type { UserRole } from "./types";
+import { isMissingSupabaseFunction } from "../supabase/missing-function";
+import { PublicApiError } from "../api-error-policy";
 
 type DancrClient = SupabaseClient;
 
@@ -82,9 +84,9 @@ export async function createOwnSupportMessage(client: DancrClient, input: {
   subject?: string | null;
   body: string;
   threadId?: string | null;
+  requestId?: string | null;
 }, adminClient: DancrClient) {
   const body = requiredMessage(input.body);
-  await enforceSupportMessageRateLimit(client, input.userId);
   const now = new Date().toISOString();
   let threadId = input.threadId?.trim() || "";
 
@@ -99,7 +101,24 @@ export async function createOwnSupportMessage(client: DancrClient, input: {
 
     if (threadError) throw threadError;
     if (!thread) throw new Error("Support thread not found.");
-  } else {
+  }
+  const atomic = await adminClient.rpc("create_support_message_safely", {
+    p_user_id: input.userId, p_role: input.role, p_thread_id: threadId || null,
+    p_subject: input.subject?.trim() || "Message to admin", p_body: body, p_message_id: input.requestId || null,
+  });
+  if (!atomic.error) {
+    if (!atomic.data?.thread?.id) throw new Error("The message result could not be confirmed. Refresh the inbox before trying again.");
+    await deliverAtomicSupportNotifications(adminClient, atomic.data);
+    return mapSupportThread(atomic.data.thread);
+  }
+  if (!isMissingSupabaseFunction(atomic.error, "create_support_message_safely")) {
+    if (atomic.error.code === "42501") throw new PublicApiError("FORBIDDEN", "This account cannot send to that support thread.", 403);
+    if (atomic.error.code === "22023") throw new PublicApiError("INVALID_REQUEST", "Check the message and subject before sending.", 400);
+    if (atomic.error.code === "P0001") throw new PublicApiError("CONFLICT", "Too many support messages. Wait one minute and try again.", 429);
+    throw atomic.error;
+  }
+  await enforceSupportMessageRateLimit(client, input.userId);
+  if (!threadId) {
     const subject = input.subject?.trim() || "Message to admin";
     if (subject.length > 160) throw new Error("Keep the subject under 160 characters.");
     const { data: thread, error: createError } = await (adminClient as any)
@@ -171,8 +190,19 @@ export async function replyToSupportThread(client: DancrClient, input: {
   adminId: string;
   threadId: string;
   body: string;
+  requestId?: string | null;
 }) {
   const body = requiredMessage(input.body);
+  const atomic = await client.rpc("create_support_message_safely", {
+    p_user_id: input.adminId, p_role: "admin", p_thread_id: input.threadId,
+    p_subject: "Admin reply", p_body: body, p_message_id: input.requestId || null,
+  });
+  if (!atomic.error) {
+    if (!atomic.data?.thread?.id) throw new Error("The reply result could not be confirmed. Refresh the inbox before trying again.");
+    await deliverAtomicSupportNotifications(client, atomic.data);
+    return mapSupportThread(atomic.data.thread);
+  }
+  if (!isMissingSupabaseFunction(atomic.error, "create_support_message_safely")) throw atomic.error;
   const now = new Date().toISOString();
   const { data: thread, error: threadError } = await (client as any)
     .from("support_threads")
@@ -304,6 +334,12 @@ async function notifyActiveAdmins(client: DancrClient, input: {
   const { error: notificationError } = await (client as any).from("notifications").insert(rows);
   if (notificationError) throw notificationError;
   await deliverNotificationRows(client, rows);
+}
+
+async function deliverAtomicSupportNotifications(client: DancrClient, result: any) {
+  if (result.duplicate || !Array.isArray(result.notifications) || !result.notifications.length) return;
+  try { await deliverNotificationRows(client, result.notifications); }
+  catch (error) { console.error("SUPPORT_NOTIFICATION_DELIVERY_FAILED", { errorCode: databaseErrorCode(error) }); }
 }
 
 function databaseErrorCode(error: unknown) {

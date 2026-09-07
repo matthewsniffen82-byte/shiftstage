@@ -36,11 +36,23 @@ Validation: all 1,546 tests, TypeScript, zero-warning lint, and the production b
 
 ## Stage 4 — database and RLS hardening
 
+Delivered as `6d5a3bacc5da46929fffc8951c9bb9f4a672dfc5`; HEAD matched `origin/main` after push and Vercel reported **success** for that exact commit. Both targeted SQL migrations were subsequently applied, verified, and recorded in Supabase migration history. Live Auth/public API health and permission-denial checks passed.
+
 The route release supports legal-name column privacy, server-controlled shift writes with an atomic active-shift guard, and server-attributed support writes after owner verification. Targeted migrations close C1/C2 and H1/H2/H9/H10/H11, restore the missing recovery/saved-deal schema (H3), and mirror future verified Auth email changes (M4). Existing accounts, historical rows, financial protections, and public image URLs remain intact.
 
 Both migrations passed live-schema dry runs ending in ROLLBACK. Tests confirmed public/owner profile access, private-field exclusion, restricted direct mutations, private RPC/table grants, and recovery limits. No active venue-team fixture was available; representative two-venue testing remains explicit. SQL-token fingerprints matched the reviewed repository files before application. See `supabase-database-remediation.md` for release order and remaining operational items.
 
 Final combined validation passed: all 1,556 tests, TypeScript, zero-warning lint, and production build. Concurrent profile styling and favorite-club improvements were preserved. Database application follows successful deployment of this route release; it is not performed by Vercel automatically.
+
+## Stage 5 — query reliability
+
+Account provisioning now preserves existing roles, names and city, handles concurrent bootstrap safely, and commits related rows atomically. Publication changes lock and recheck current account/profile state. Support messages, thread state and in-app notifications commit together; optional request IDs deduplicate uncertain submissions and admin replies. External notification failure no longer reports a committed message as failed. Older databases retain a compatibility path only for a confirmed missing function; uncertain write failures never trigger a second write path.
+
+Ranking counts no longer assume composite-key tables contain an `id`. Batches of at most 200 dancers replace eight network requests per dancer, with bounded pagination and fail-closed incomplete metrics. Two indexes match predicates missing from the live catalog. The private monthly view preserves existing metric meanings while avoiding multiplicative joins. Saved rankings remain successful when secondary notifications or logging fail, with visible warnings.
+
+Validation passed: 1,563 tests, TypeScript, zero-warning lint and production build. Reviewed SQL fingerprints matched both migration files. Live PostgreSQL rollback assertions verified preservation of existing customer metadata, rejection of role changes and unauthorized publication, authorized private publication, ranking reads, support/admin reply deduplication, mismatched-request rejection, sender-role protection, durable in-app notifications and restricted function grants. All synthetic messages/notifications and publication changes rolled back. Notification/support tables have no external-delivery triggers. No production emails were sent by these tests.
+
+Deploy the route release before applying `202609070003_atomic_accounts_publication_and_metrics.sql` and `202609070004_atomic_support_messages.sql`; record both versions and reviewed statements atomically in migration history. Vercel does not run SQL migrations. Deployment/application confirmation follows in the next stage record.
 
 ## Staging/manual verification still required
 

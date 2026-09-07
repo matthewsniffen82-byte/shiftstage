@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { apiError } from "@/src/lib/api";
+import { apiError, PublicApiError } from "@/src/lib/api";
 import { readBoundedJsonObject } from "@/src/lib/bounded-json-body";
 import {
   createOwnSupportMessage,
@@ -41,6 +41,9 @@ export async function POST(request: Request) {
       invalidMessage: "Invalid support message request.",
       tooLargeMessage: "Support message request is too large.",
     });
+    if (body.requestId !== undefined && (typeof body.requestId !== "string" || !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(body.requestId))) {
+      throw new PublicApiError("INVALID_REQUEST", "Invalid message request. Refresh and try again.", 400);
+    }
     const thread = await createOwnSupportMessage(
       client,
       {
@@ -49,6 +52,7 @@ export async function POST(request: Request) {
         subject: typeof body.subject === "string" ? body.subject : "",
         body: typeof body.message === "string" ? body.message : "",
         threadId: typeof body.threadId === "string" ? body.threadId : "",
+        requestId: typeof body.requestId === "string" ? body.requestId : null,
       },
       createAdminSupabaseClient(),
     );

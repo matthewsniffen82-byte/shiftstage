@@ -9,7 +9,9 @@
 
 Both files use bounded lock and statement timeouts. A lock timeout must be investigated and retried during a quieter window, not bypassed with a long blocking migration. Each transaction is atomic. Do not re-open the insecure grants as a rollback shortcut; resolve a failing server query using verified ownership and the correct server client.
 
-Database application is **pending until the post-deployment verification record confirms it**. Vercel does not apply these SQL files automatically.
+Both migrations were applied after Vercel reported success for `6d5a3bacc5da46929fffc8951c9bb9f4a672dfc5`. Versions `202609070001` and `202609070002`, names, and reviewed SQL statements were recorded atomically with their respective changes in Supabase migration history. Vercel does not apply these SQL files automatically.
+
+Post-commit verification confirmed both RLS flags, the email trigger, removal of the permissive legacy profile policy, and all three correctly correlated venue policies. Anonymous REST checks returned 200 for public profile fields and the invoker view, excluded private profiles, and returned permission-denied errors for legal names, private analytics, and saved deals. Auth health and the live discovery/venue endpoints returned 200. No production account or data rows were deleted/backfilled; synthetic limiter rows existed only inside a rolled-back test.
 
 ## Validation evidence
 

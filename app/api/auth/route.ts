@@ -213,7 +213,7 @@ export async function POST(request: Request) {
         : submittedStageName || "Dancer";
     const metadata =
       role === "customer"
-        ? { role, display_name: displayName }
+        ? { role, display_name: displayName, city }
         : {
             role,
             display_name: displayName,
