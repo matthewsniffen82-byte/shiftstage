@@ -7,39 +7,52 @@ import {
 } from "@/src/lib/dancr/browser-session";
 
 export default function ResetPasswordClient() {
-  const [phase, setPhase] = useState<"loading" | "ready" | "expired" | "complete">("loading");
+  const [phase, setPhase] = useState<"loading" | "ready" | "expired" | "unavailable" | "complete">("loading");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
   const [destination, setDestination] = useState("/account");
+  const [attempt, setAttempt] = useState(0);
   const inFlight = useRef(false);
+  const saveController = useRef<AbortController | null>(null);
 
   useEffect(() => {
     const controller = new AbortController();
+    let disposed = false;
     const session = readBrowserAuthSession();
     if (new URLSearchParams(window.location.search).get("error") || !session?.accessToken) {
       setPhase("expired");
       return;
     }
+    setPhase("loading");
+    const timeout = globalThis.setTimeout(() => controller.abort(), 15_000);
     void fetch("/api/account", {
       headers: sessionHeaders(),
       cache: "no-store",
       credentials: "same-origin",
       signal: controller.signal,
     }).then(async (response) => {
-      const data = await response.json();
-      if (controller.signal.aborted) return;
-      if (!response.ok || !data.ok) throw new Error("Unable to verify this reset session.");
+      const data = await response.json().catch(() => null);
+      if (disposed) return;
+      if (controller.signal.aborted) throw new Error("Session check timed out.");
+      if (response.status === 401 || response.status === 403) { setPhase("expired"); return; }
+      if (!response.ok || !data?.ok) throw new Error("Unable to verify this reset session.");
       persistRefreshedBrowserAuthSession(data.session);
       const role = data.account?.role;
       setDestination(role === "admin" ? "/admin" : ["dancer", "customer", "venue"].includes(role) ? `/dashboard/${role}` : "/account");
       setPhase("ready");
     }).catch(() => {
-      if (!controller.signal.aborted) setPhase("expired");
-    });
-    return () => controller.abort();
-  }, []);
+      if (!disposed) setPhase("unavailable");
+    }).finally(() => globalThis.clearTimeout(timeout));
+    return () => {
+      disposed = true;
+      globalThis.clearTimeout(timeout);
+      controller.abort();
+      saveController.current?.abort();
+      saveController.current = null;
+    };
+  }, [attempt]);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -50,6 +63,9 @@ export default function ResetPasswordClient() {
     inFlight.current = true;
     setSaving(true);
     setError("");
+    const controller = new AbortController();
+    saveController.current = controller;
+    const timeout = globalThis.setTimeout(() => controller.abort(), 15_000);
     try {
       const response = await fetch("/api/account", {
         method: "PATCH",
@@ -57,18 +73,29 @@ export default function ResetPasswordClient() {
         credentials: "same-origin",
         cache: "no-store",
         body: JSON.stringify({ password }),
+        signal: controller.signal,
       });
-      const data = await response.json();
-      if (!response.ok || !data.ok) throw new Error(data.error || "Unable to update your password. Please try again.");
+      const data = await response.json().catch(() => null);
+      if (saveController.current !== controller) return;
+      if (controller.signal.aborted) throw new Error("Password update timed out.");
+      if (response.status === 401 || response.status === 403) { setPhase("expired"); return; }
+      if (!response.ok || !data?.ok) throw new Error(data?.error || "Unable to update your password. Please try again.");
       persistRefreshedBrowserAuthSession(data.session);
       setPassword("");
       setConfirmPassword("");
       setPhase("complete");
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : "Unable to update your password. Please try again.");
+      if (saveController.current !== controller) return;
+      setError(controller.signal.aborted
+        ? "We couldn't confirm the result. Try signing in with your new password before requesting another reset."
+        : reason instanceof Error ? reason.message : "Unable to update your password. Please try again.");
     } finally {
-      inFlight.current = false;
-      setSaving(false);
+      globalThis.clearTimeout(timeout);
+      if (saveController.current === controller) {
+        saveController.current = null;
+        inFlight.current = false;
+        setSaving(false);
+      }
     }
   }
 
@@ -78,6 +105,10 @@ export default function ResetPasswordClient() {
         <p className="reset-brand">MyDancr</p>
         <h1>{phase === "complete" ? "Password updated" : "Reset your password"}</h1>
         {phase === "loading" ? <p role="status">Checking your reset link…</p> : null}
+        {phase === "unavailable" ? <>
+          <p role="alert">We couldn&apos;t check your reset session right now. Please check your connection and try again.</p>
+          <button type="button" onClick={() => setAttempt(attempt + 1)}>Try again</button>
+        </> : null}
         {phase === "expired" ? <>
           <p role="alert">This reset link is unavailable or has expired. Request a new email using Forgot password.</p>
           <a href="/account?mode=login">Request a new reset link</a>

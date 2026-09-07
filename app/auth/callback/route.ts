@@ -23,12 +23,20 @@ type CallbackSession = {
 } | null;
 
 export async function GET(request: Request) {
-  const callbackSession = await readCallbackSession(request);
+  let callbackSession: Awaited<ReturnType<typeof readCallbackSession>> = null;
+  let unavailable = false;
+  try {
+    callbackSession = await readCallbackSession(request);
+  } catch (error) {
+    unavailable = true;
+    console.warn("AUTH_CALLBACK_TEMPORARILY_UNAVAILABLE", safeErrorMetadata(error));
+  }
   const redirectPath = callbackRedirectPath(request, callbackSession);
   const role = callbackRole(request, callbackSession);
   const showDancerConfirmation = role === "dancer" && !isPasswordResetCallback(request);
 
-  return new Response(callbackHtml(callbackSession, redirectPath, showDancerConfirmation, isPasswordResetCallback(request)), {
+  return new Response(callbackHtml(callbackSession, redirectPath, showDancerConfirmation, isPasswordResetCallback(request), unavailable), {
+    status: unavailable ? 503 : 200,
     headers: {
       "content-type": "text/html; charset=utf-8",
       "cache-control": "no-store, max-age=0",
@@ -114,6 +122,7 @@ function callbackHtml(
   redirectPath: string,
   showDancerConfirmation: boolean,
   passwordReset: boolean,
+  unavailable: boolean,
 ) {
   const sessionJson = JSON.stringify(callbackSession || null).replace(/</g, "\\u003c");
   const redirectJson = JSON.stringify(redirectPath).replace(/</g, "\\u003c");
@@ -149,16 +158,22 @@ function callbackHtml(
       <a id="dancerConfirmationContinue" href="${escapeHtml(redirectPath)}">Click here to complete dancer profile</a>
     </main>
     <main id="confirmationError" hidden>
-      <p class="eyebrow">Dancer account</p>
+      <p class="eyebrow">MyDancr</p>
       <h1>Confirmation link unavailable</h1>
-      <p>This link is invalid or has expired. Sign in to continue your dancer profile or request a new confirmation email.</p>
-      <a href="/account?role=dancer">Continue to dancer sign in</a>
+      <p>This link is invalid, already used, or has expired. Try signing in if you already confirmed your email, or request a new email.</p>
+      <a href="/account?mode=login">Continue to sign in</a>
     </main>
     <main id="openingDancr">
       <p class="eyebrow">MyDancr</p>
       <h1>Opening Dancr</h1>
       <p>Your live account is being connected.</p>
       <a href="${escapeHtml(redirectPath)}">Continue</a>
+    </main>
+    <main id="temporaryError" hidden>
+      <p class="eyebrow">MyDancr</p>
+      <h1>Unable to connect</h1>
+      <p id="temporaryErrorMessage">We couldn't verify this link right now. Check your connection and try opening the email link again. If the link was already used, sign in or request a new email.</p>
+      <a href="/account?mode=login">Go to sign in</a>
     </main>
     <script>
       const serverSession = ${sessionJson};
@@ -168,31 +183,47 @@ function callbackHtml(
       const fragmentParams = new URLSearchParams(window.location.hash ? window.location.hash.slice(1) : "");
       const isPasswordReset = ${JSON.stringify(passwordReset)} || fragmentParams.get("type") === "recovery";
       const redirectUrl = new URL(redirectTo, window.location.origin);
+      const serverUnavailable = ${JSON.stringify(unavailable)};
+
+      function showTemporaryError(message) {
+        document.getElementById("openingDancr").hidden = true;
+        document.getElementById("temporaryError").hidden = false;
+        if (message) document.getElementById("temporaryErrorMessage").textContent = message;
+      }
 
       async function validateFragmentSession() {
         const accessToken = fragmentParams.get("access_token") || "";
         const refreshToken = fragmentParams.get("refresh_token") || "";
         if (!accessToken || !refreshToken) return null;
 
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 15000);
+        try {
         const response = await fetch("/api/auth", {
           method: "PUT",
           headers: { "content-type": "application/json", accept: "application/json" },
           cache: "no-store",
           credentials: "same-origin",
-          body: JSON.stringify({ accessToken, refreshToken })
+          body: JSON.stringify({ accessToken, refreshToken }),
+          signal: controller.signal
         });
         const data = await response.json().catch(() => null);
+        if (controller.signal.aborted || response.status >= 500 || response.status === 429 || !data) throw new Error("Temporarily unavailable");
         return response.ok && data?.ok && data.session?.accessToken ? data : null;
+        } finally { clearTimeout(timeout); }
       }
 
       async function completeCallback() {
         if (window.location.hash || window.location.search) {
           window.history.replaceState({}, document.title, window.location.pathname);
         }
+        if (serverUnavailable) { showTemporaryError(); return; }
 
         let session = serverSession && serverSession.accessToken ? serverSession : null;
         if (!session && fragmentParams.get("access_token")) {
-          const confirmation = await validateFragmentSession().catch(() => null);
+          let confirmation;
+          try { confirmation = await validateFragmentSession(); }
+          catch (error) { showTemporaryError(); return; }
           session = confirmation?.session
             ? { ...confirmation.session, account: confirmation.account || null }
             : null;
@@ -201,13 +232,25 @@ function callbackHtml(
         if (session?.accessToken) {
           try {
             localStorage.setItem(sessionStorageKey, JSON.stringify(session));
-          } catch (error) {}
+          } catch (error) {
+            showTemporaryError("This browser couldn't save your sign-in. Allow site storage, then sign in again or request a new email link.");
+            return;
+          }
+        }
+
+        if (!session?.accessToken && !isPasswordReset) {
+          document.getElementById("openingDancr").hidden = true;
+          document.getElementById("confirmationError").hidden = false;
+          return;
         }
 
         const authoritativeRole = ["customer", "dancer", "venue"].includes(session?.account?.role)
           ? session.account.role
           : "";
         if (authoritativeRole) {
+          if (!isPasswordReset && redirectUrl.pathname.startsWith("/dashboard/") && redirectUrl.pathname.split("/")[2] !== authoritativeRole) {
+            redirectUrl.pathname = "/dashboard/" + authoritativeRole;
+          }
           if (redirectUrl.pathname === "/account") {
             redirectUrl.pathname = "/";
             redirectUrl.searchParams.set("dancr_confirm", "1");
@@ -301,6 +344,7 @@ async function confirmSupabaseCallback(url: URL): Promise<{ session: CallbackSes
   const client = createServerSupabaseClient();
   if (code) {
     const { data, error } = await client.auth.exchangeCodeForSession(code);
+    if (isTemporaryCallbackError(error)) throw error;
     if (error || !data.session || !data.user) return null;
     return { session: data.session, user: data.user };
   }
@@ -309,9 +353,14 @@ async function confirmSupabaseCallback(url: URL): Promise<{ session: CallbackSes
     token_hash: tokenHash!,
     type: readOtpType(url.searchParams.get("type")),
   });
+  if (isTemporaryCallbackError(error)) throw error;
   if (error || !data.user) return null;
 
   return { session: data.session, user: data.user };
+}
+
+function isTemporaryCallbackError(error: { status?: number; name?: string } | null) {
+  return Boolean(error && (error.status === 0 || error.status === 408 || error.status === 429 || Number(error.status) >= 500 || error.name === "AuthRetryableFetchError"));
 }
 
 function publicCallbackProvisioningRole(role: CallbackRole | null) {

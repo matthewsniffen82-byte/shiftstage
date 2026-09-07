@@ -134,7 +134,7 @@ export async function POST(request: Request) {
     }
 
     await enforceAuthAttemptRateLimit(request, mode, role, email);
-    const password = readRequired(body.password, "Password is required.", 1_024);
+    const password = readPassword(body.password);
 
     if (mode === "login") {
       const { data, error } = await client.auth.signInWithPassword({ email, password });
@@ -270,6 +270,12 @@ export async function POST(request: Request) {
         role: requestedRole,
         ...safeErrorMetadata(error),
       });
+      if (error.status === 0 || error.status === 408 || Number(error.status) >= 500 || error.name === "AuthRetryableFetchError") {
+        return authJson({ ok: false, code: "UNAVAILABLE", error: "Sign-in is temporarily unavailable. Please try again shortly." }, { status: 503 });
+      }
+      if (requestedMode === "login" && error.code === "email_not_confirmed") {
+        return authJson({ ok: false, error: "Check your email to confirm this account before signing in." }, { status: 400 });
+      }
       const message = requestedMode === "login"
         ? "Email or password is incorrect."
         : "Unable to create this account. Check the information or sign in if you already have an account.";
@@ -466,6 +472,12 @@ function readRequired(value: unknown, message: string, maxLength = 2_048) {
   return text;
 }
 
+function readPassword(value: unknown) {
+  if (typeof value !== "string" || !value.length) throw invalid("Password is required.");
+  if (value.length > 1_024) throw invalid("Password is too long.");
+  return value;
+}
+
 function readOptional(value: unknown, maxLength = 2_048) {
   const text = typeof value === "string" ? value.trim() : "";
   if (text.length > maxLength) throw invalid("Authentication field is too long.");
@@ -521,7 +533,8 @@ function allowedAuthRedirectOrigins(configuredOrigin: string) {
 
 function authRateLimitMessage(error: unknown) {
   const message = error instanceof Error ? error.message : typeof error === "string" ? error : "";
-  if (!/rate limit/i.test(message)) return "";
+  const limited = Boolean(error && typeof error === "object" && "status" in error && error.status === 429);
+  if (!limited && !/rate limit/i.test(message)) return "";
 
   return "Too many confirmation emails were sent. Please wait a few minutes, then try again, or use the newest confirmation email already in your inbox.";
 }

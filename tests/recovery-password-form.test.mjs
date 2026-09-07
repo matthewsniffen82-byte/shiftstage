@@ -19,7 +19,7 @@ function compile(source, dependencies, extra = {}) {
 }
 const session = { accessToken: "test-access", refreshToken: "test-refresh", account: { role: "dancer" } };
 
-async function callbackFixture(query, hash, valid = true) {
+async function callbackFixture(query, hash, valid = true, options = {}) {
   const dependencies = Object.fromEntries([...callbackSource.matchAll(/from "([^"]+)"/g)].map((match) => [match[1], {}]));
   dependencies["@/src/lib/dancr/safe-return-path"] = { safeLocalReturnPath: (path) => path?.startsWith("/") && !path.startsWith("//") ? path : "" };
   dependencies["@/src/lib/dancr/browser-session"] = { BROWSER_AUTH_SESSION_KEY: "session" };
@@ -30,10 +30,13 @@ async function callbackFixture(query, hash, valid = true) {
   const navigations = [], writes = [], elements = {};
   const document = { title: "callback", getElementById: (id) => elements[id] ||= { hidden: true } };
   await vm.runInNewContext(script.replace("void completeCallback();", "completeCallback();"), {
-    URL, URLSearchParams, document,
+    URL, URLSearchParams, document, AbortController, setTimeout, clearTimeout,
     window: { location: { hash, search: query, pathname: "/auth/callback", origin: "https://mydancr.com", replace: (path) => navigations.push(path) }, history: { replaceState() {} } },
-    localStorage: { setItem: (key, value) => writes.push({ key, value }), removeItem: (key) => writes.push({ removed: key }) },
-    fetch: async () => ({ ok: valid, json: async () => valid ? { ok: true, session, account: session.account } : { ok: false } }),
+    localStorage: { setItem: (key, value) => { if (options.storageBlocked) throw new Error("Blocked"); writes.push({ key, value }); }, removeItem: (key) => writes.push({ removed: key }) },
+    fetch: async () => {
+      if (options.networkFailure) throw new Error("Network failed");
+      return { status: options.status || (valid ? 200 : 401), ok: valid, json: async () => valid ? { ok: true, session, account: session.account } : { ok: false } };
+    },
   });
   return { navigations, writes, elements };
 }
@@ -64,7 +67,7 @@ test("ordinary dancer confirmation retains its confirmation screen", async () =>
 });
 
 const formSource = readFileSync(new URL("../app/account/reset-password/ResetPasswordClient.tsx", import.meta.url), "utf8");
-function formFixture({ succeeds = true, storedSession = session, search = "" } = {}) {
+function formFixture({ succeeds = true, storedSession = session, search = "", getStatus = 200, networkFailure = false, hang = false } = {}) {
   const states = [], effects = [], calls = [];
   let index = 0;
   const refs = [];
@@ -78,11 +81,14 @@ function formFixture({ succeeds = true, storedSession = session, search = "" } =
     "react/jsx-runtime": require("react/jsx-runtime"),
     "@/src/lib/dancr/browser-session": { readBrowserAuthSession: () => storedSession, persistRefreshedBrowserAuthSession() {} },
   }, {
-    AbortController,
+    AbortController, setTimeout: hang ? (fn) => setTimeout(fn, 0) : setTimeout, clearTimeout,
     window: { location: { search } },
     fetch: async (_url, options) => {
       calls.push(options);
-      return { ok: options.method !== "PATCH" || succeeds, json: async () => ({ ok: options.method !== "PATCH" || succeeds, account: { role: "dancer" }, error: "Update rejected" }) };
+      if (networkFailure) throw new Error("Network unavailable");
+      if (hang) return new Promise((_resolve, reject) => options.signal.addEventListener("abort", () => reject(new Error("Aborted")), { once: true }));
+      const status = options.method === "PATCH" ? (succeeds ? 200 : 400) : getStatus;
+      return { status, ok: status === 200, json: async () => ({ ok: status === 200, account: { role: "dancer" }, error: "Update rejected" }) };
     },
   }).default;
   const render = () => { index = 0; refIndex = 0; return component(); };
@@ -127,4 +133,59 @@ test("expired reset links do not use an already signed-in account", async () => 
   const fixture = await readyForm({ search: "?error=expired" });
   assert.equal(fixture.states[0], "expired");
   assert.equal(fixture.calls.length, 0);
+});
+
+test("fragment confirmation uses the verified account role instead of an email redirect hint", async () => {
+  const result = await callbackFixture("?role=customer", recoveryHash.replace("recovery", "email_change"));
+  assert.match(result.navigations[0], /^\/dashboard\/dancer\?/);
+});
+
+for (const role of ["customer", "dancer", "venue"]) test(`invalid ${role} confirmation cannot claim success or open a dashboard`, async () => {
+  const result = await callbackFixture(`?role=${role}`, "#access_token=invalid&refresh_token=invalid&type=signup", false);
+  assert.deepEqual(result.navigations, []);
+  assert.equal(result.elements.confirmationError.hidden, false);
+});
+
+for (const status of [429, 500, 503]) test(`callback outage ${status} preserves existing sessions and shows a recovery message`, async () => {
+  const result = await callbackFixture("?type=recovery", recoveryHash, false, { status });
+  assert.deepEqual(result.navigations, []);
+  assert.deepEqual(result.writes, []);
+  assert.equal(result.elements.temporaryError.hidden, false);
+});
+
+test("callback network failure does not invalidate an existing session", async () => {
+  const result = await callbackFixture("?type=recovery", recoveryHash, false, { networkFailure: true });
+  assert.equal(result.elements.temporaryError.hidden, false);
+  assert.deepEqual(result.writes, []);
+});
+
+test("callback storage failure stops navigation and explains how to recover", async () => {
+  const result = await callbackFixture("?type=recovery", recoveryHash, true, { storageBlocked: true });
+  assert.deepEqual(result.navigations, []);
+  assert.match(result.elements.temporaryErrorMessage.textContent, /Allow site storage/);
+});
+
+for (const getStatus of [429, 500, 503]) test(`reset form distinguishes temporary ${getStatus} failure from expiration`, async () => {
+  const fixture = await readyForm({ getStatus });
+  assert.equal(fixture.states[0], "unavailable");
+  assert.ok(fixture.find(fixture.render(), "button"));
+  assert.equal(fixture.calls.length, 1);
+});
+
+for (const getStatus of [401, 403]) test(`reset form treats ${getStatus} as an invalid session`, async () => {
+  assert.equal((await readyForm({ getStatus })).states[0], "expired");
+});
+
+test("reset session network failure offers retry without a password mutation", async () => {
+  const fixture = await readyForm({ networkFailure: true });
+  assert.equal(fixture.states[0], "unavailable");
+  assert.equal(fixture.calls.length, 1);
+});
+
+test("hanging reset-session fetch is aborted and exits loading", async () => {
+  const fixture = await readyForm({ hang: true });
+  await new Promise((resolve) => setTimeout(resolve, 10));
+  assert.equal(fixture.calls[0].signal.aborted, true);
+  assert.equal(fixture.states[0], "unavailable");
+  assert.equal(fixture.calls.length, 1);
 });

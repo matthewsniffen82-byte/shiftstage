@@ -52,6 +52,7 @@ export async function PATCH(request: Request) {
 
       if (error) {
         console.warn("ACCOUNT_EMAIL_UPDATE_REJECTED", safeErrorMetadata(error));
+        if (isTemporaryCredentialError(error)) return credentialUnavailableResponse();
         return NextResponse.json({ ok: false, error: "Unable to update email. Check the address and try again." }, { status: 400 });
       }
 
@@ -72,14 +73,22 @@ export async function PATCH(request: Request) {
         return NextResponse.json({ ok: false, error: "Password is too long." }, { status: 400 });
       }
 
+      // Resolve required response context before committing the credential change.
+      const account = await getAccountByUserId(client, user.id);
       const { error } = await client.auth.updateUser({ password });
 
       if (error) {
         console.warn("ACCOUNT_PASSWORD_UPDATE_REJECTED", safeErrorMetadata(error));
+        if (isTemporaryCredentialError(error)) return credentialUnavailableResponse();
         return NextResponse.json({ ok: false, error: "Unable to update password. Check the password and try again." }, { status: 400 });
       }
 
-      const { error: signOutError } = await client.auth.signOut({ scope: "others" });
+      let signOutError: unknown = null;
+      try {
+        ({ error: signOutError } = await client.auth.signOut({ scope: "others" }));
+      } catch (error) {
+        signOutError = error;
+      }
       if (signOutError) {
         console.warn(JSON.stringify({
           event: "account.password_other_sessions_revoke_failed",
@@ -94,12 +103,14 @@ export async function PATCH(request: Request) {
           text: [
             "Your MyDancr password was changed successfully.",
             "",
-            "Other active MyDancr sessions were signed out for your security.",
+            signOutError
+              ? "We could not confirm that your other sessions were signed out. Contact support if you need help securing another device."
+              : "Other active MyDancr sessions were signed out for your security.",
             "If you did not make this change, reset your password immediately from the MyDancr sign-in page and contact support@mydancr.com.",
             "",
             "MyDancr will never ask you to send your password or reset code by email.",
           ].join("\n"),
-        });
+        }).catch(() => ({ delivered: false }));
         if (!delivery.delivered) {
           console.warn(JSON.stringify({
             event: "account.password_change_alert_delivery_failed",
@@ -107,8 +118,13 @@ export async function PATCH(request: Request) {
         }
       }
 
-      const account = await getAccountByUserId(client, user.id);
-      return NextResponse.json({ ok: true, account, session, message: "Password updated. Other sessions were signed out." });
+      return NextResponse.json({
+        ok: true, account, session,
+        otherSessionsRevoked: !signOutError,
+        message: signOutError
+          ? "Password updated. We could not confirm that other sessions were signed out."
+          : "Password updated. Other sessions were signed out.",
+      });
     }
 
     if (body.accountState !== "active" && body.accountState !== "disabled") {
@@ -150,4 +166,12 @@ export async function DELETE(request: Request) {
   } catch (error) {
     return apiError(error, "Unable to delete account.");
   }
+}
+
+function isTemporaryCredentialError(error: { status?: number; name?: string }) {
+  return error.status === 0 || error.status === 408 || error.status === 429 || Number(error.status) >= 500 || error.name === "AuthRetryableFetchError";
+}
+
+function credentialUnavailableResponse() {
+  return NextResponse.json({ ok: false, code: "UNAVAILABLE", error: "We couldn't confirm the account update. Please check your connection. For a password change, try signing in with the new password before requesting another reset." }, { status: 503 });
 }
