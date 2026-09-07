@@ -48557,6 +48557,7 @@
 
     function mergeLiveCustomerSavedDeals(dealSaves) {
       if (!Array.isArray(dealSaves)) return;
+      syncDeviceSavedDealPasses();
       const accountDeals = dealSaves
         .filter((item) => item?.deal?.id && item?.venue?.id)
         .map((item) => ({
@@ -48618,6 +48619,22 @@
         ? `-${slugify(pass.dancerName)}`
         : "";
       return `mydancr-${venue}${source}-qr.${extension}`;
+    }
+
+    function syncDeviceSavedDealPasses() {
+      try {
+        const deviceDeals = JSON.parse(localStorage.getItem("dancrSavedDealPassesV2") || "[]");
+        if (!Array.isArray(deviceDeals)) return;
+        const accountDeals = savedDealPasses.filter((pass) => pass.serverSaved);
+        const accountIds = new Set(accountDeals.map((pass) => pass.id));
+        const localDeals = deviceDeals.filter((pass) => pass && typeof pass.id === "string" && !pass.serverSaved && !accountIds.has(pass.id));
+        // Read without writing: another dashboard tab may just have removed a
+        // device save. Do not restore it from this page's older in-memory list.
+        savedDealPasses = [...accountDeals, ...localDeals]
+          .sort((left, right) => savedDealTimestamp(right) - savedDealTimestamp(left));
+      } catch {
+        // Keep the current list when browser storage is temporarily unavailable.
+      }
     }
 
     function venueExperienceHref(venue, city = selectedCity()) {
@@ -66056,6 +66073,17 @@
       if (document.visibilityState === "visible") void refreshVisibleHomeDiscovery({ bypassCache: true });
     });
     window.addEventListener("focus", () => { void refreshVisibleHomeDiscovery({ bypassCache: true }); });
+    window.addEventListener("storage", (event) => {
+      if (event.key !== "dancrSavedDealPassesV2" && event.key !== null) return;
+      syncDeviceSavedDealPasses();
+      renderCustomerQuickActions();
+    });
+    window.addEventListener("pageshow", (event) => {
+      if (!event.persisted) return;
+      syncDeviceSavedDealPasses();
+      renderCustomerQuickActions();
+      if (isCustomerSession()) void loadLiveCustomerSaved();
+    });
     if (isCustomerSession()) loadLiveCustomerDashboardData();
     if (isDancerSession()) {
       loadLiveDancerAnalytics();

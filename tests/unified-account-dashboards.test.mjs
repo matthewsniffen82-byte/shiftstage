@@ -484,8 +484,8 @@ test("customer saved actions ignore stale work without starting location request
   assert.match(customerPanel, /const actionAbortRef = useRef<AbortController \| null>\(null\);/);
   assert.match(customerPanel, /const actionInFlightRef = useRef\(false\);/);
   assert.match(customerPanel, /if \(!mountedRef\.current \|\| actionInFlightRef\.current\) return null;/);
-  assert.equal((customerPanel.match(/signal: controller\.signal/g) || []).length, 2);
-  assert.equal((customerPanel.match(/if \(!isCurrentCustomerAction\(requestId, controller\)\) return;/g) || []).length, 2);
+  assert.equal((customerPanel.match(/signal: controller\.signal/g) || []).length, 3);
+  assert.equal((customerPanel.match(/if \(!isCurrentCustomerAction\(requestId, controller\)\) return;/g) || []).length, 3);
   assert.match(customerPanel, /mountedRef\.current = false;[\s\S]*?actionSequenceRef\.current \+= 1;[\s\S]*?actionAbortRef\.current\?\.abort\(\)/);
   assert.doesNotMatch(customerPanel, /locationSequenceRef|locationInFlightRef|navigator\.geolocation/);
 });

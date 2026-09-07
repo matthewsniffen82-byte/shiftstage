@@ -8,16 +8,21 @@ import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { loadCustomerDashboard } from '../app/dashboard/customer-dashboard-loader.ts';
 import { DASHBOARD_SESSION_KEY } from '../app/dashboard/dashboard-session.ts';
+import * as deviceDeals from '../src/lib/dancr/customer-device-deals.ts';
 
 const require = createRequire(import.meta.url);
 
-function renderCustomerDashboard(initialState = {}) {
+function renderCustomerDashboard(initialState = {}, deviceSavedDeals = []) {
   const source = readFileSync(new URL('../app/dashboard/DashboardClient.tsx', import.meta.url), 'utf8');
   const code = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX, target: ts.ScriptTarget.ES2022 } }).outputText;
   const exports = {};
   let stateIndex = 0;
   vm.runInNewContext(code, { exports, require: (name) => {
-    if (name === 'react') return { ...React, useState: (value) => React.useState(stateIndex++ === 0 ? initialState : value) };
+    if (name === 'react') return { ...React, useState: (value) => {
+      const index = stateIndex++;
+      return React.useState(index === 0 ? initialState : index === 3 ? deviceSavedDeals : value);
+    } };
+    if (name.endsWith('/customer-device-deals')) return deviceDeals;
     if (name === 'react/jsx-runtime') return require(name);
     if (name === 'next/link') return { default: ({ children, href }) => React.createElement('a', { href }, children) };
     return new Proxy(() => null, { get: (_target, key) => key === '__esModule' ? false : () => null });
@@ -44,6 +49,29 @@ test('an expired session still offers sign-in and hides protected dashboard sect
   assert.match(html, /href="\/account\?role=customer"/);
   assert.doesNotMatch(html, /Followed Dancers|Saved Club Deals/);
 });
+
+const localBookmarks = deviceDeals.readDeviceSavedClubDeals({ getItem: () => JSON.stringify([
+  { id: 'nfc:club:one', venueId: 'club', dealId: 'one', venueName: 'Silver Circuit', title: 'Half-off admission' },
+  { id: 'nfc:club:two', venueId: 'club', dealId: 'two', venueName: 'Neon Ember', title: 'Skip the line' },
+]) });
+
+for (const [label, state] of [
+  ['empty account', { saved: { dealSaves: [] } }],
+  ['account still loading', {}],
+  ['saved activity unavailable', { savedError: 'Saved activity is temporarily unavailable.' }],
+]) {
+  test(`device bookmarks render in the dashboard with an ${label}`, () => {
+    const html = renderCustomerDashboard(state, localBookmarks);
+    assert.match(html, /Half-off admission/);
+    assert.match(html, /Skip the line/);
+    assert.equal((html.match(/Saved on this device/g) || []).length, 2);
+    assert.match(html, /saved-deal-head[\s\S]*?<strong>2<\/strong>/);
+    assert.match(html, /href="\/\?city=Las%20Vegas&amp;venue=silver-circuit"/);
+    assert.doesNotMatch(html, /No saved Club Deals yet|No longer available/);
+    if (!state.saved && !state.savedError) assert.match(html, /Loading followed dancers/);
+    if (state.savedError) assert.match(html, /Account saves could not be loaded/);
+  });
+}
 
 function setup(t) {
   const previousWindow = globalThis.window;

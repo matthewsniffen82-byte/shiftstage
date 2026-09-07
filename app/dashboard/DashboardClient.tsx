@@ -24,6 +24,14 @@ import VenueTeamPanel from "./VenueTeamPanel";
 import VenueTvPanel from "./VenueTvPanel";
 import { loadCustomerDashboard } from "./customer-dashboard-loader";
 import {
+  DEVICE_SAVED_DEALS_KEY,
+  DEVICE_SAVED_DEALS_CHANGED_EVENT,
+  mergeCustomerSavedClubDeals,
+  readDeviceSavedClubDeals,
+  removeDeviceSavedClubDeal,
+  type DeviceSavedClubDeal,
+} from "@/src/lib/dancr/customer-device-deals";
+import {
   DASHBOARD_SESSION_KEY as SESSION_KEY,
   clearDashboardSession,
   DashboardDataRequestError,
@@ -118,6 +126,7 @@ type CustomerSavedState = {
   goingSignals?: CustomerGoingSignal[];
   dealSaves?: Array<{
     dealId: string;
+    deviceOnly?: boolean;
     sourceType: string;
     dancerId?: string | null;
     savedAt: string;
@@ -257,12 +266,43 @@ export default function DashboardClient({
   const [state, setState] = useState<LoadState>({});
   const [isLoading, setIsLoading] = useState(true);
   const [customerSavedLoading, setCustomerSavedLoading] = useState(true);
+  const [deviceSavedDeals, setDeviceSavedDeals] = useState<DeviceSavedClubDeal[]>([]);
   const [loadAttempt, setLoadAttempt] = useState(0);
   const [analyticsPeriod, setAnalyticsPeriod] = useState<"tonight" | "7d" | "30d">("30d");
   const [isVenueRefreshing, setIsVenueRefreshing] = useState(false);
   const [venueRefreshStatus, setVenueRefreshStatus] = useState("");
   const venueRefreshAbortRef = useRef<AbortController | null>(null);
   const venueRefreshRequestRef = useRef(0);
+
+  useEffect(() => {
+    if (role !== "customer") return;
+    const refreshDeviceDeals = () => {
+      try {
+        setDeviceSavedDeals(readDeviceSavedClubDeals(window.localStorage));
+      } catch {
+        // Account saves remain available when the browser blocks device storage.
+      }
+    };
+    const onStorage = (event: StorageEvent) => {
+      if (event.key === DEVICE_SAVED_DEALS_KEY || event.key === null) refreshDeviceDeals();
+    };
+    refreshDeviceDeals();
+    window.addEventListener("storage", onStorage);
+    window.addEventListener("pageshow", refreshDeviceDeals);
+    window.addEventListener("focus", refreshDeviceDeals);
+    window.addEventListener(DEVICE_SAVED_DEALS_CHANGED_EVENT, refreshDeviceDeals);
+    return () => {
+      window.removeEventListener("storage", onStorage);
+      window.removeEventListener("pageshow", refreshDeviceDeals);
+      window.removeEventListener("focus", refreshDeviceDeals);
+      window.removeEventListener(DEVICE_SAVED_DEALS_CHANGED_EVENT, refreshDeviceDeals);
+    };
+  }, [role]);
+
+  const customerSaved = useMemo<CustomerSavedState>(() => ({
+    ...state.saved,
+    dealSaves: mergeCustomerSavedClubDeals(state.saved?.dealSaves || [], deviceSavedDeals),
+  }), [state.saved, deviceSavedDeals]);
 
   const retryDashboard = useCallback(() => {
     setState((current) => role === "customer"
@@ -627,14 +667,19 @@ export default function DashboardClient({
                 accountKey={String(state.account?.id || state.account?.email || "guest")}
                 show={showCustomerWelcome}
               />
-              <CustomerDashboardNav saved={state.saved} />
+              <CustomerDashboardNav saved={customerSaved} />
               {state.savedError ? (
                 <InfoPanel title="Saved activity">
                   <p role="alert">{state.savedError}</p>
                   <button className="primary-link" type="button" onClick={retryDashboard}>Try again</button>
                 </InfoPanel>
               ) : null}
-              {!state.savedError || state.saved ? <CustomerPanel saved={state.saved} onSavedChange={updateSaved} isLoading={customerSavedLoading && !state.saved} /> : null}
+              <CustomerPanel
+                saved={customerSaved}
+                onSavedChange={updateSaved}
+                isLoading={customerSavedLoading && !state.saved}
+                accountSavedUnavailable={Boolean(state.savedError && !state.saved)}
+              />
               <DashboardSection
                 description="Schedule changes, saved-profile updates, Club Deal activity, and support replies."
                 id="customer-alerts"
@@ -1480,10 +1525,12 @@ function AccountControlsPanel({
 
 function CustomerPanel({
   isLoading,
+  accountSavedUnavailable,
   onSavedChange,
   saved,
 }: {
   isLoading: boolean;
+  accountSavedUnavailable: boolean;
   onSavedChange: (update: (saved: CustomerSavedState) => CustomerSavedState) => void;
   saved?: LoadState["saved"];
 }) {
@@ -1585,17 +1632,45 @@ function CustomerPanel({
     );
   }
 
-  function removeSavedDeal(dealId: string) {
-    return runCustomerAction(
-      `deal-${dealId}`,
-      "/api/customer/deal-saves",
-      { dealId, saved: false },
-      (current) => ({
-        ...current,
-        dealSaves: (current.dealSaves || []).filter((item) => item.dealId !== dealId),
-      }),
-      "Club Deal removed from your saved list.",
-    );
+  async function removeSavedDeal(dealId: string) {
+    const bookmark = saved?.dealSaves?.find((item) => item.dealId === dealId);
+    if (!bookmark) return;
+    const action = beginCustomerAction(`deal-${dealId}`);
+    if (!action) return;
+    const { requestId, controller } = action;
+    try {
+      if (!bookmark.deviceOnly) {
+        const result = await requestDashboardJson("/api/customer/deal-saves", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ dealId, saved: false }),
+          expectedRole: "customer",
+          fallbackMessage: "Unable to remove this saved Club Deal. Please try again.",
+          signal: controller.signal,
+        });
+        if (!isCurrentCustomerAction(requestId, controller)) return;
+        if (result.persisted !== true || result.saved !== false) {
+          throw new Error("Unable to remove this saved Club Deal from your account. Please try again.");
+        }
+        onSavedChange((current) => ({
+          ...current,
+          dealSaves: (current.dealSaves || []).filter((item) => item.dealId !== dealId),
+        }));
+      }
+      try {
+        removeDeviceSavedClubDeal(window.localStorage, dealId);
+      } catch {
+        throw new Error(bookmark.deviceOnly
+          ? "Browser storage blocked removing this deal. Allow site storage and try again."
+          : "Removed from your account, but the device copy could not be removed. Allow site storage and try again.");
+      }
+      window.dispatchEvent(new Event(DEVICE_SAVED_DEALS_CHANGED_EVENT));
+      setActionStatus("Club Deal removed from your saved list.");
+    } catch (error) {
+      if (isCurrentCustomerAction(requestId, controller)) setActionStatus(error instanceof Error ? error.message : "Unable to remove this saved Club Deal.");
+    } finally {
+      finishCustomerAction(requestId);
+    }
   }
 
   async function openDirections(venue: SavedVenueSummary, dancerId?: string | null) {
@@ -1628,6 +1703,7 @@ function CustomerPanel({
   return (
     <>
       {actionStatus ? <p className="customer-action-status" role="status">{actionStatus}</p> : null}
+      {!accountSavedUnavailable ? <>
       <DashboardSection
         badge={String(saved?.follows?.length || 0)}
         defaultOpen
@@ -1654,20 +1730,22 @@ function CustomerPanel({
           saved={saved}
         />
       </DashboardSection>
+      </> : null}
       <DashboardSection
         description="Offers you bookmarked privately for later."
         id="customer-saved-deals"
         title="Saved Club Deals"
       >
-        {isLoading ? <p className="customer-loading-state">Loading your saved deals…</p> : <CustomerDealPassPanel
+        {isLoading && !saved?.dealSaves?.length ? <p className="customer-loading-state">Loading your saved deals…</p> : <CustomerDealPassPanel
           deals={saved?.dealRedemptions || []}
           onDirections={openDirections}
           onRemoveSavedDeal={removeSavedDeal}
           pendingAction={pendingAction}
           savedDeals={saved?.dealSaves || []}
+          accountSavedUnavailable={accountSavedUnavailable}
         />}
       </DashboardSection>
-      <DashboardSection
+      {!accountSavedUnavailable ? <DashboardSection
         description="Dancer shifts where you tapped I’m Going."
         id="customer-going"
         title="I’m Going"
@@ -1679,7 +1757,7 @@ function CustomerPanel({
           pendingAction={pendingAction}
           signals={saved?.goingSignals || []}
         />
-      </DashboardSection>
+      </DashboardSection> : null}
     </>
   );
 }
@@ -1954,12 +2032,14 @@ function CustomerSavedEmpty({ cta, href, label }: { cta: string; href: string; l
 }
 
 function CustomerDealPassPanel({
+  accountSavedUnavailable,
   deals,
   onDirections,
   onRemoveSavedDeal,
   pendingAction,
   savedDeals,
 }: {
+  accountSavedUnavailable: boolean;
   deals: NonNullable<NonNullable<LoadState["saved"]>["dealRedemptions"]>;
   onDirections: (venue: SavedVenueSummary) => void;
   onRemoveSavedDeal: (dealId: string) => void;
@@ -1986,10 +2066,10 @@ function CustomerDealPassPanel({
       <p className="saved-deal-privacy-note">Saved deals are private bookmarks. Saving does not reserve, select, or redeem an offer.</p>
       <div className="saved-deal-list saved-deal-bookmarks">
         {savedDeals.map((item) => (
-          <article className={`saved-deal-item saved-deal-bookmark${item.deal.isActive ? "" : " unavailable"}`} key={item.dealId}>
+          <article className={`saved-deal-item saved-deal-bookmark${item.deviceOnly || item.deal.isActive ? "" : " unavailable"}`} key={item.dealId}>
             <span>
               <strong>{item.deal.title || "Club Deal"}</strong>
-              <small>{item.venue.name || "Club"} · {savedClubDealAvailability(item.deal)}</small>
+              <small>{item.venue.name || "Club"} · {item.deviceOnly ? "Saved on this device" : savedClubDealAvailability(item.deal)}</small>
             </span>
             <div className="customer-card-actions">
               {item.venue.slug ? <Link href={customerVenueHref(item.venue)}>View deal</Link> : null}
@@ -2005,7 +2085,8 @@ function CustomerDealPassPanel({
             </div>
           </article>
         ))}
-        {!savedDeals.length ? (
+        {accountSavedUnavailable ? <p role="status">Account saves could not be loaded. Any deals saved on this device are shown here. Try loading your saved activity again above.</p> : null}
+        {!savedDeals.length && !accountSavedUnavailable ? (
           <div className="customer-empty-state">
             <strong>No saved Club Deals yet</strong>
             <p>Save an offer from a club or dancer profile and it will appear here without redeeming it.</p>

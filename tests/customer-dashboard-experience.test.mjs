@@ -19,7 +19,7 @@ const [dashboard, customerService, favoritesRoute, venueFollowsRoute, directions
 test("customer dashboard leads with four clear activity areas before alerts and account", () => {
   assert.match(
     dashboard,
-    /<CustomerDashboardNav saved=\{state\.saved\} \/>[\s\S]*?<CustomerPanel[\s\S]*?id="customer-alerts"[\s\S]*?<NotificationPanel saved=\{state\.saved\} customerMode panelId="customer-alerts-panel" \/>[\s\S]*?id="customer-account"/,
+    /<CustomerDashboardNav saved=\{customerSaved\} \/>[\s\S]*?<CustomerPanel[\s\S]*?id="customer-alerts"[\s\S]*?<NotificationPanel saved=\{state\.saved\} customerMode panelId="customer-alerts-panel" \/>[\s\S]*?id="customer-account"/,
   );
   assert.match(
     dashboard,
