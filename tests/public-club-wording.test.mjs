@@ -35,7 +35,7 @@ test("customer profile and Club Deal actions use club language", () => {
   assert.match(dancerProfile, /className="profile-working-destination"[\s\S]*?activeShift\.venueName/);
   assert.match(liveShell, /home-venue-discovery-profile-action[\s\S]*?aria-label="Open \$\{safeName\}'s full club profile"[\s\S]*?actionButtonLabel\("clubProfile", "Club Page"\)/);
   assert.match(liveShell, /Following club" : "Follow club"/);
-  assert.match(liveShell, /Club alerts on/);
+  assert.doesNotMatch(liveShell, /saved to Favorite Clubs in your dashboard\. Club alerts on\./);
   assert.match(clubDeal, /Use this deal/);
   assert.match(clubDeal, /When you reach the cashier, unlock your phone and hold it near the MyDancr sticker/);
   assert.match(nfcTap, /Verified club tap/);

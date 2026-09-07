@@ -62298,7 +62298,6 @@
         const originalMarkup = followVenueButton.innerHTML;
         followVenueButton.disabled = true;
         followVenueButton.setAttribute("aria-busy", "true");
-        followVenueButton.innerHTML = actionButtonLabel("heart", willFollow ? "Saving…" : "Removing…");
         customerSavedStateVersion += 1;
         try {
           // Refresh an expired access token before committing the follow.
@@ -62318,7 +62317,6 @@
           followedVenuesByCity[city] = savedVenues.filter((name) => name !== venueName);
           if (following) followedVenuesByCity[city].push(venueName);
           customerSavedStateVersion += 1;
-          showToast(following ? `${venueName} saved to Favorite Clubs in your dashboard. Club alerts on.` : "Club removed from your dashboard.");
           render();
           if (customerDashboard.classList.contains("show")) renderDashboard();
         } catch (error) {

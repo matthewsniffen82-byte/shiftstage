@@ -62,13 +62,13 @@ test("a venue save survives a saved-items refresh replacing the list during the 
   const pending = deferred();
   context.getAuthenticatedJson = () => pending.promise;
   const save = context.saveVenue();
-  assert.equal(button.innerHTML, "Saving…");
+  assert.equal(button.innerHTML, "Favorite");
   assert.equal(button.attributes["aria-busy"], "true");
   context.followedVenuesByCity["Test City"] = ["Another Club"];
   pending.resolve({ ok: true });
   await save;
   assert.deepEqual(Array.from(context.followedVenuesByCity["Test City"]), ["Another Club", "Test Club"]);
-  assert.match(notices[0], /saved to Favorite Clubs in your dashboard/);
+  assert.deepEqual(notices, []);
   assert.equal(button.disabled, false);
   assert.equal(button.attributes["aria-busy"], undefined);
 });
