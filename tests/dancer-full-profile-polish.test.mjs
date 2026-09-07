@@ -281,7 +281,11 @@ test("profile actions use neutral glass while available Going is the sole filled
   );
   assert.match(
     guestActionsBlock,
-    /modal-actions \.profile-action-icon-control \.action-icon,[\s\S]*?profile-action-icon-control \.profile-action-icon-frame \{[\s\S]*?width: 46px !important;[\s\S]*?height: 46px !important;[\s\S]*?border: 1px solid rgba\(255, 255, 255, 0\.28\) !important;[\s\S]*?border-radius: 50% !important;[\s\S]*?background-color: rgba\(18, 18, 28, 0\.38\) !important;[\s\S]*?blur\(16px\) saturate\(1\.18\) !important;/,
+    /modal-actions \.profile-action-icon-control \.action-icon,[\s\S]*?profile-action-icon-control \.profile-action-icon-frame \{[\s\S]*?width: 41px !important;[\s\S]*?height: 41px !important;[\s\S]*?border: 1px solid rgba\(255, 255, 255, 0\.28\) !important;[\s\S]*?border-radius: 50% !important;[\s\S]*?background-color: rgba\(18, 18, 28, 0\.38\) !important;[\s\S]*?blur\(16px\) saturate\(1\.18\) !important;/,
+  );
+  assert.match(
+    guestActionsBlock,
+    /profile-action-icon-control \.action-icon > svg,[\s\S]*?profile-action-preview-icon \{[\s\S]*?width: 22px !important;[\s\S]*?height: 22px !important;[\s\S]*?data-action-icon="personPlus"[\s\S]*?width: 24px !important;[\s\S]*?height: 24px !important;/,
   );
   assert.match(
     guestActionsBlock,
@@ -293,7 +297,7 @@ test("profile actions use neutral glass while available Going is the sole filled
   );
   assert.match(
     guestActionsBlock,
-    /going-btn\.is-available-action \.action-icon,[\s\S]*?profile-action-going\.profile-action-available \.profile-action-icon-frame \{[\s\S]*?border-color: rgba\(255, 255, 255, 0\.28\) !important;[\s\S]*?color: var\(--dancr-color-brand-core\) !important;[\s\S]*?background-color: var\(--dancr-color-brand-primary\) !important;[\s\S]*?0 8px 22px rgba\(0, 0, 0, 0\.3\) !important;/,
+    /going-btn\.is-available-action \.action-icon,[\s\S]*?profile-action-going\.profile-action-available \.profile-action-icon-frame \{[\s\S]*?width: 41px !important;[\s\S]*?height: 41px !important;[\s\S]*?border-color: rgba\(255, 255, 255, 0\.28\) !important;[\s\S]*?color: var\(--dancr-color-brand-core\) !important;[\s\S]*?background-color: var\(--dancr-color-brand-primary\) !important;[\s\S]*?0 8px 22px rgba\(0, 0, 0, 0\.3\) !important;/,
   );
   assert.match(
     guestActionsBlock,

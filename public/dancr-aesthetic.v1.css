@@ -4927,8 +4927,8 @@ body.dancr-button-system .public-profile-shell .profile-action-share-slot .profi
 
 /* Full-profile engagement uses one unboxed three-column action row. Every
  * action owns one complete third of the row. Social destinations remain the
- * quiet first utility row inside the existing media region; their 44px hit
- * areas contain a 38px visible circle. */
+ * quiet first utility row inside the existing media region. The full-width
+ * column hit areas stay generous while the visible circles remain compact. */
 body.dancr-button-system #profileBackdrop #profileModal .modal-actions,
 body.dancr-button-system .public-profile-shell .live-actions {
   width: min(100%, 760px) !important;
@@ -4983,11 +4983,11 @@ body.dancr-button-system .public-profile-shell .live-actions .profile-action-ico
   width: 100% !important;
   min-width: 0 !important;
   display: grid !important;
-  grid-template-rows: 46px minmax(14px, auto) !important;
+  grid-template-rows: 41px minmax(14px, auto) !important;
   align-content: center !important;
   align-items: center !important;
   justify-items: center !important;
-  row-gap: 4px !important;
+  row-gap: 3px !important;
   column-gap: 0 !important;
   text-align: center !important;
 }
@@ -5002,13 +5002,13 @@ body.dancr-button-system .public-profile-shell .profile-action-share-slot > .pro
 
 body.dancr-button-system #profileBackdrop #profileModal .modal-actions .profile-action-icon-control .action-icon,
 body.dancr-button-system .public-profile-shell .profile-action-icon-control .profile-action-icon-frame {
-  width: 46px !important;
-  min-width: 46px !important;
-  max-width: 46px !important;
-  height: 46px !important;
-  min-height: 46px !important;
-  max-height: 46px !important;
-  flex-basis: 46px !important;
+  width: 41px !important;
+  min-width: 41px !important;
+  max-width: 41px !important;
+  height: 41px !important;
+  min-height: 41px !important;
+  max-height: 41px !important;
+  flex-basis: 41px !important;
   box-sizing: border-box !important;
   display: inline-grid !important;
   place-items: center !important;
@@ -5035,29 +5035,29 @@ body.dancr-button-system .public-profile-shell .profile-action-icon-control .pro
 
 body.dancr-button-system #profileBackdrop #profileModal .modal-actions .profile-action-icon-control .action-icon > svg,
 body.dancr-button-system .public-profile-shell .profile-action-icon-control .profile-action-preview-icon {
-  width: 24px !important;
-  height: 24px !important;
+  width: 22px !important;
+  height: 22px !important;
   color: var(--dancr-color-text-secondary) !important;
   filter: none !important;
 }
 
 body.dancr-button-system #profileBackdrop #profileModal .modal-actions .profile-action-icon-control .action-icon[data-action-icon="personPlus"] > svg,
 body.dancr-button-system .public-profile-shell .profile-action-icon-frame[data-profile-action-icon="personPlus"] .profile-action-preview-icon {
-  width: 26px !important;
-  height: 26px !important;
-}
-
-body.dancr-button-system #profileBackdrop #profileModal .modal-actions .profile-action-icon-control .action-icon[data-action-icon="bell"] > svg,
-body.dancr-button-system .public-profile-shell .profile-action-icon-frame[data-profile-action-icon="bell"] .profile-action-preview-icon {
   width: 24px !important;
   height: 24px !important;
 }
 
+body.dancr-button-system #profileBackdrop #profileModal .modal-actions .profile-action-icon-control .action-icon[data-action-icon="bell"] > svg,
+body.dancr-button-system .public-profile-shell .profile-action-icon-frame[data-profile-action-icon="bell"] .profile-action-preview-icon {
+  width: 22px !important;
+  height: 22px !important;
+}
+
 body.dancr-button-system #profileBackdrop #profileModal .modal-actions .going-btn.is-available-action .action-icon,
 body.dancr-button-system .public-profile-shell .profile-action-going.profile-action-available .profile-action-icon-frame {
-  width: 46px !important;
-  height: 46px !important;
-  flex-basis: 46px !important;
+  width: 41px !important;
+  height: 41px !important;
+  flex-basis: 41px !important;
   border-color: rgba(255, 255, 255, 0.28) !important;
   color: var(--dancr-color-brand-core) !important;
   background-color: var(--dancr-color-brand-primary) !important;

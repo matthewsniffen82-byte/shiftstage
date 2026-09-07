@@ -143,7 +143,7 @@ test("profile actions keep profile controls separate from Tonight travel actions
   );
   assert.match(
     aesthetic,
-    /\.modal-actions > \.profile-action-icon-control \.profile-action-main,[\s\S]*?\.live-actions \.profile-action-icon-control \.profile-action-main \{[\s\S]*?grid-template-rows: 46px minmax\(14px, auto\) !important;[\s\S]*?justify-items: center !important;[\s\S]*?row-gap: 4px !important;[\s\S]*?text-align: center !important;/,
+    /\.modal-actions > \.profile-action-icon-control \.profile-action-main,[\s\S]*?\.live-actions \.profile-action-icon-control \.profile-action-main \{[\s\S]*?grid-template-rows: 41px minmax\(14px, auto\) !important;[\s\S]*?justify-items: center !important;[\s\S]*?row-gap: 3px !important;[\s\S]*?text-align: center !important;/,
   );
   assert.match(liveApp, /#profileBackdrop \.modal-actions \.profile-action-icon-control \.action-icon \{[\s\S]*?width: 24px !important;[\s\S]*?height: 24px !important;[\s\S]*?border: 0 !important;[\s\S]*?background: transparent !important;/);
   assert.match(liveApp, /action-icon action-icon-\$\{resolvedType\}/);
