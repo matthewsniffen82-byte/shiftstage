@@ -48806,17 +48806,32 @@
 
     async function persistCustomerDealSave(pass, saved) {
       if (!isCustomerSession() || !pass?.dealId) return false;
+      const headers = authenticatedRequestHeaders("application/json");
+      if (!headers) return false;
+      const controller = new AbortController();
+      const timeoutId = window.setTimeout(() => controller.abort(), 8_000);
       try {
-        const data = await postAuthenticatedJson("/api/customer/deal-saves", {
-          dealId: pass.dealId,
-          saved,
-          sourceType: pass.sourceType === "dancer_profile" ? "dancer_profile" : "club_page",
-          dancerId: pass.sourceType === "dancer_profile" ? pass.dancerId || null : null
+        const response = await fetch("/api/customer/deal-saves", {
+          method: "POST",
+          headers,
+          credentials: "same-origin",
+          signal: controller.signal,
+          body: JSON.stringify({
+            dealId: pass.dealId,
+            saved,
+            sourceType: pass.sourceType === "dancer_profile" ? "dancer_profile" : "club_page",
+            dancerId: pass.sourceType === "dancer_profile" ? pass.dancerId || null : null
+          })
         });
-        return data?.persisted !== false;
+        const data = await response.json().catch(() => null);
+        if (!response.ok || data?.ok !== true) throw apiRequestError(data, "Unable to save this deal.");
+        applyResponseSession(data);
+        return data.persisted === true && data.saved === saved;
       } catch (error) {
         console.warn("Private Club Deal save unavailable; using device storage", error);
         return false;
+      } finally {
+        window.clearTimeout(timeoutId);
       }
     }
 
@@ -48843,7 +48858,9 @@
         : persisted
           ? wasAlreadySaved
             ? "Deal is already saved on this device."
-            : "Saved on this device. Sign in to keep it across devices. This does not redeem the deal."
+            : isCustomerSession()
+              ? "Saved on this device. Account sync is unavailable right now."
+              : "Saved on this device. Sign in to keep it across devices. This does not redeem the deal."
           : "Browser storage blocked saving this deal. Allow site storage and try again.");
       return persisted || savedToAccount;
     }
@@ -49015,6 +49032,7 @@
       const closeButton = overlay.querySelector("[data-close-deal-pass]");
       const selectButton = overlay.querySelector("[data-select-deal-pass]");
       const saveButton = overlay.querySelector("[data-save-deal-pass]");
+      saveButton.setAttribute("aria-live", "polite");
       const shareButton = overlay.querySelector("[data-share-deal-pass]");
       const termsButton = overlay.querySelector("[data-toggle-deal-pass-terms]");
       const closeFromButton = (event) => {
@@ -49068,26 +49086,43 @@
           return;
         }
         button.disabled = true;
+        button.setAttribute("aria-busy", "true");
+        const feedback = document.getElementById("dealPassHow");
+        feedback.hidden = true;
         try {
           const isSaved = savedDealPasses.some((item) => item.id === pass.id);
           if (isSaved) {
             button.textContent = "Removing…";
             const removed = await removeSavedDealPass(pass);
+            if (currentPass()?.id !== pass.id) return;
             button.textContent = removed ? "Save" : "Try removing again";
             button.setAttribute("aria-pressed", removed ? "false" : "true");
             button.classList.toggle("is-saved", !removed);
+            button.title = removed ? "Save this deal" : "Remove saved deal";
             return;
           }
           button.textContent = "Saving…";
           const persisted = await saveDealPassForLater(pass);
-          button.textContent = persisted ? "Saved ✓ · Remove" : "Try saving again";
+          if (currentPass()?.id !== pass.id) return;
+          button.textContent = persisted ? "Saved ✓" : "Try saving again";
           button.setAttribute("aria-pressed", persisted ? "true" : "false");
           button.classList.toggle("is-saved", persisted);
+          button.title = persisted ? "Remove saved deal" : "Save this deal";
+          feedback.textContent = persisted
+            ? savedDealPasses.some((item) => item.id === pass.id && item.serverSaved)
+              ? "Saved to your account."
+              : "Saved on this device."
+            : "Couldn’t save this deal. Please try again.";
+          feedback.hidden = false;
         } catch (error) {
+          if (currentPass()?.id !== pass.id) return;
           button.textContent = "Try saving again";
           showToast(error?.message || "Could not update this saved deal.");
         } finally {
-          button.disabled = false;
+          if (currentPass()?.id === pass.id) {
+            button.disabled = false;
+            button.setAttribute("aria-busy", "false");
+          }
         }
       });
       bindDealPassAction(shareButton, () => {
@@ -49212,7 +49247,9 @@
         expiry.textContent = dealPassAvailabilityLabel(pass);
       }
       const isSaved = savedDealPasses.some((savedPass) => savedPass.id === pass.id);
-      saveButton.textContent = isSaved ? "Saved ✓ · Remove" : "Save";
+      saveButton.textContent = isSaved ? "Saved ✓" : "Save";
+      saveButton.title = isSaved ? "Remove saved deal" : "Save this deal";
+      saveButton.setAttribute("aria-busy", "false");
       saveButton.setAttribute("aria-pressed", isSaved ? "true" : "false");
       saveButton.classList.toggle("is-saved", isSaved);
       saveButton.disabled = false;

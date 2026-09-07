@@ -177,7 +177,7 @@ test("Club Deals can be privately bookmarked without reserving or redeeming them
 
   assert.match(dealSaveClient, /readBrowserAuthSession/);
   assert.match(dealSaveClient, /persistRefreshedBrowserAuthSession/);
-  assert.match(dealSaveClient, /data\.persisted !== false/);
+  assert.match(dealSaveClient, /data\.persisted === true/);
   assert.match(clubDealCard, /setCustomerDealSavedInAccount/);
   assert.match(clubDealCard, /savedToAccount[\s\S]*?saved\.filter\(\(item\) => item\.id !== id\)/);
   assert.match(clubDealCard, /Saved privately to your account\. This does not reserve or redeem the deal\./);

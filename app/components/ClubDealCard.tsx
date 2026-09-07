@@ -54,6 +54,7 @@ export function ClubDealCard({
   const [intentExpiresAt, setIntentExpiresAt] = useState(0);
   const [savedOnDevice, setSavedOnDevice] = useState(false);
   const [savePending, setSavePending] = useState(false);
+  const saveStateVersion = useRef(0);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [termsExpanded, setTermsExpanded] = useState(false);
   const termsId = useId();
@@ -84,15 +85,18 @@ export function ClubDealCard({
 
   useEffect(() => {
     const controller = new AbortController();
+    const version = saveStateVersion.current;
     void loadCustomerDealSavedState(activeDeal.id, controller.signal)
       .then((saved) => {
-        if (!controller.signal.aborted && typeof saved === "boolean") setSavedOnDevice(saved);
+        if (!controller.signal.aborted && version === saveStateVersion.current && typeof saved === "boolean") {
+          setSavedOnDevice(saved || isDealSavedOnDevice(venueId, activeDeal.id));
+        }
       })
       .catch(() => {
         // Keep the device copy usable if private account state cannot load.
       });
     return () => controller.abort();
-  }, [activeDeal.id]);
+  }, [activeDeal.id, venueId]);
 
   useEffect(() => {
     setTermsExpanded(false);
@@ -185,6 +189,7 @@ export function ClubDealCard({
 
   async function saveForLater() {
     if (savePending) return;
+    saveStateVersion.current += 1;
     setSavePending(true);
     const hasCustomerAccount = hasSignedInCustomerDealAccount();
     try {
@@ -236,7 +241,9 @@ export function ClubDealCard({
       setSavedOnDevice(true);
       setStatus(savedToAccount
         ? "Saved privately to your account. This does not reserve or redeem the deal."
-        : "Saved on this device. Sign in to keep it across devices. This does not redeem the deal.");
+        : hasCustomerAccount
+          ? "Saved on this device. Account sync is unavailable right now."
+          : "Saved on this device. Sign in to keep it across devices. This does not redeem the deal.");
     } catch (error) {
       setStatus(error instanceof Error ? error.message : "Unable to save this Club Deal.");
     } finally {
@@ -246,6 +253,7 @@ export function ClubDealCard({
 
   async function removeSavedDeal() {
     if (savePending) return;
+    saveStateVersion.current += 1;
     setSavePending(true);
     const hasCustomerAccount = hasSignedInCustomerDealAccount();
     try {
@@ -386,10 +394,13 @@ export function ClubDealCard({
           type="button"
           className={savedOnDevice ? "saved" : ""}
           aria-pressed={savedOnDevice}
+          aria-busy={savePending}
+          aria-live="polite"
+          title={savedOnDevice ? "Remove saved deal" : "Save this deal"}
           disabled={savePending}
           onClick={() => void (savedOnDevice ? removeSavedDeal() : saveForLater())}
         >
-          {savePending ? "Updating…" : savedOnDevice ? "Saved ✓ · Remove" : "Save"}
+          {savePending ? (savedOnDevice ? "Removing…" : "Saving…") : savedOnDevice ? "Saved ✓" : "Save"}
         </button>
         <button type="button" onClick={() => void shareDeal()}>Share</button>
       </div>
