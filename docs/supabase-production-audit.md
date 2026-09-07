@@ -179,6 +179,10 @@ Every stage must pass the full automated suite, TypeScript, lint and production 
 
 ## Stage delivery record
 
+### Operational continuation finding
+
+- **MEDIUM M12 — conflicting DMARC records.** Two distinct `_dmarc.mydancr.com` TXT records publish conflicting enforcement/alignment settings. Independent DNS queries confirmed both. DMARC policy discovery discards multiple records at one target. Consolidate to one explicitly chosen policy in the domain DNS manager after checking a real test message's authentication. No DNS changes or email sends were performed. See `supabase-operational-verification.md` for the exact records and backup/constraint evidence.
+
 ### Stage 4 catalog follow-up findings (before remediation)
 
 - **CRITICAL C2 — legal-name column exposed by table-wide SELECT grants.** Live `dancer_profiles` grants allow anon/authenticated callers to select `real_name` on publicly visible rows. App serializers omit it, but direct REST callers bypass those serializers. Revoke table-wide SELECT and explicitly grant the non-legal-name columns; route owner-only private profile reads through the verified server boundary. Preserve the column and all values.

@@ -1,5 +1,7 @@
 # Supabase production follow-up
 
+Continuation evidence: see `supabase-operational-verification.md` for confirmed daily backups, disabled PITR, the duplicate DMARC finding and current constraint exception counts.
+
 The code and targeted SQL repairs are separate from operational certification. The audit did not redesign MyDancr, delete production records, replay historical migrations, change existing passwords, or revoke all working sessions. See `supabase-production-audit.md` for original findings and `supabase-remediation-record.md` for stage evidence.
 
 ## Finding disposition
