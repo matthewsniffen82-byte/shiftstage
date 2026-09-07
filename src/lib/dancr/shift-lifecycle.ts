@@ -73,6 +73,7 @@ export async function updateOwnedDancerShift(
     .eq("id", shiftId)
     .eq("dancer_id", dancerId)
     .neq("shift_source", "demo_locked")
+    .or("checked_in_at.is.null,checked_out_at.not.is.null")
     .select("id")
     .maybeSingle();
   if (error) throw error;

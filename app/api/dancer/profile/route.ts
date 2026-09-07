@@ -145,7 +145,7 @@ function isMissingIsPublicColumnError(error: any) {
 }
 
 async function loadProfileForSave(db: any, userId: string) {
-  const columns = "id, real_name, stage_name, city, identity_saved_at, status, approved_at, disabled_at, verification_status, photo_review_status";
+  const columns = "id, stage_name, city, identity_saved_at, status, approved_at, disabled_at, verification_status, photo_review_status";
   const current = await db
     .from("dancer_profiles")
     .select(`${columns}, is_public`)
@@ -208,7 +208,7 @@ export async function GET(request: Request) {
 
   try {
     const { client, user } = await createRequestSupabaseContext(request);
-    const { data, error } = await loadDancerProfile(client, user.id);
+    const { data, error } = await loadDancerProfile(createAdminSupabaseClient(), user.id);
 
     if (error) throw error;
     if (!data) {
@@ -494,7 +494,7 @@ export async function PATCH(request: Request) {
     });
     const adminDb = db;
     const submittedPhotoUrls = readProfilePhotoUrls(body);
-    const { data: editorProfileBeforeSave, error: editorProfileBeforeSaveError } = await loadDancerProfile(client, user.id);
+    const { data: editorProfileBeforeSave, error: editorProfileBeforeSaveError } = await loadDancerProfile(createAdminSupabaseClient(), user.id);
     if (editorProfileBeforeSaveError) throw editorProfileBeforeSaveError;
     const editorProfileWithPhotosBeforeSave = editorProfileBeforeSave
       ? withPhotoUrls(client, editorProfileBeforeSave)
@@ -648,7 +648,7 @@ export async function PATCH(request: Request) {
       throw protectedError;
     }
 
-    const { data: refreshedProfile, error: refreshedProfileError } = await loadDancerProfile(client, user.id);
+    const { data: refreshedProfile, error: refreshedProfileError } = await loadDancerProfile(createAdminSupabaseClient(), user.id);
     if (refreshedProfileError) throw refreshedProfileError;
 
     const refreshedProfileWithPhotos = refreshedProfile

@@ -102,7 +102,7 @@ export async function createOwnSupportMessage(client: DancrClient, input: {
   } else {
     const subject = input.subject?.trim() || "Message to admin";
     if (subject.length > 160) throw new Error("Keep the subject under 160 characters.");
-    const { data: thread, error: createError } = await (client as any)
+    const { data: thread, error: createError } = await (adminClient as any)
       .from("support_threads")
       .insert({
         user_id: input.userId,
@@ -118,7 +118,7 @@ export async function createOwnSupportMessage(client: DancrClient, input: {
     threadId = thread.id;
   }
 
-  const { error: messageError } = await (client as any)
+  const { error: messageError } = await (adminClient as any)
     .from("support_messages")
     .insert({
       thread_id: threadId,
@@ -130,7 +130,7 @@ export async function createOwnSupportMessage(client: DancrClient, input: {
 
   if (messageError) throw messageError;
 
-  const { error: updateError } = await (client as any)
+  const { error: updateError } = await (adminClient as any)
     .from("support_threads")
     .update({ status: "open", last_message_at: now, updated_at: now })
     .eq("id", threadId)

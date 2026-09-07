@@ -73,7 +73,7 @@ export async function POST(request: Request) {
     }
     const window = getScheduleDateWindow(shiftDate, timezone);
 
-    const data = await createScheduledDancerShift(client as any, {
+    const data = await createScheduledDancerShift(createAdminSupabaseClient() as any, {
       dancerId: dancer.id,
       venueId,
       shiftDate,
@@ -94,7 +94,7 @@ export async function POST(request: Request) {
         venueSlug: venue.slug,
       },
     );
-    await recordDancerShiftBroadcast(client as any, dancer.id, data.id, broadcastRecipients);
+    await recordDancerShiftBroadcast(createAdminSupabaseClient() as any, dancer.id, data.id, broadcastRecipients);
 
     return NextResponse.json({ ok: true, shiftId: data.id, broadcastRecipients });
   } catch (error) {
@@ -168,7 +168,7 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ ok: false, error: "No editable shift fields were provided." }, { status: 400 });
     }
 
-    await updateOwnedDancerShift(client as any, dancer.id, shiftId, update);
+    await updateOwnedDancerShift(createAdminSupabaseClient() as any, dancer.id, shiftId, update);
 
     return NextResponse.json({ ok: true });
   } catch (error) {

@@ -24,6 +24,8 @@ Validation passed: all 1,543 tests, TypeScript, zero-warning lint, and the produ
 
 ## Stage 3 — client and session architecture
 
+Delivered as `62a99aab5af9601c4acea2a0e2ebdf9eda3a917a`; HEAD matched `origin/main` after push and Vercel reported **success** for the exact commit.
+
 Refresh responses now require the initiating access/refresh token pair to still match browser storage. Late admin, dashboard, NFC, saved-deal, media, and recovery responses cannot restore logout, replace another account, or roll back newer credentials. Recovery submission is bound to the account verified by the form. Legacy confirmation hydration preserves verified server roles and existing sessions during lookup failures instead of inventing a role from a URL hint.
 
 The signed-upload browser client is a singleton with SDK persistence, auto-refresh, and URL detection disabled. It no longer creates a second auth storage lifecycle. Server clients remain request-scoped with explicit user verification; the server factory is marked server-only. The existing custom bearer-token architecture is retained, rather than partially introducing incompatible SSR cookies. The scoped NFC cookie is unchanged. A redundant post-setSession getUser verification remains deliberately in place; no shared user-token cache was introduced.
@@ -31,6 +33,14 @@ The signed-upload browser client is a singleton with SDK persistence, auto-refre
 Public configuration validates HTTPS/local development URLs and anon/publishable key types without printing values. The build rejects privileged public keys before bundling; legacy anon JWTs and modern publishable keys are supported. Existing production values require no change.
 
 Validation: all 1,546 tests, TypeScript, zero-warning lint, and the production build passed. Generated browser assets contained no configured service-role/OpenAI keys. Regression coverage checks logout, out-of-order refresh, same-role account switching, changed recovery account, and invalid/private public configuration. No database/configuration or account mutations were performed in this stage.
+
+## Stage 4 — database and RLS hardening
+
+The route release supports legal-name column privacy, server-controlled shift writes with an atomic active-shift guard, and server-attributed support writes after owner verification. Targeted migrations close C1/C2 and H1/H2/H9/H10/H11, restore the missing recovery/saved-deal schema (H3), and mirror future verified Auth email changes (M4). Existing accounts, historical rows, financial protections, and public image URLs remain intact.
+
+Both migrations passed live-schema dry runs ending in ROLLBACK. Tests confirmed public/owner profile access, private-field exclusion, restricted direct mutations, private RPC/table grants, and recovery limits. No active venue-team fixture was available; representative two-venue testing remains explicit. SQL-token fingerprints matched the reviewed repository files before application. See `supabase-database-remediation.md` for release order and remaining operational items.
+
+Final combined validation passed: all 1,556 tests, TypeScript, zero-warning lint, and production build. Concurrent profile styling and favorite-club improvements were preserved. Database application follows successful deployment of this route release; it is not performed by Vercel automatically.
 
 ## Staging/manual verification still required
 

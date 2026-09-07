@@ -30,6 +30,7 @@ test("the shift lifecycle fixes creation state and scopes every edit to its danc
   assert.match(updateWriter, /DANCER_SHIFT_UPDATE_FIELDS/);
   assert.match(updateWriter, /\.eq\("id", shiftId\)[\s\S]*?\.eq\("dancer_id", dancerId\)/);
   assert.match(updateWriter, /\.neq\("shift_source", "demo_locked"\)/);
+  assert.match(updateWriter, /\.or\("checked_in_at.is.null,checked_out_at.not.is.null"\)/);
   assert.match(updateWriter, /Dancer shift update was not applied/);
 });
 
