@@ -11829,7 +11829,7 @@ html body.dancr-button-system > .app main.stack > section.stack
 
   html body.dancr-button-system > .app main.stack > section.stack
     > #results.home-venue-discovery-feed > .home-venue-discovery-slide
-    .venue-card-secondary-actions > :is(.venue-card-share-action, .venue-card-favorite-action):not(.is-active):not([aria-pressed="true"]):not(:disabled):not([aria-disabled="true"]) {
+    .venue-card-secondary-actions > .venue-card-secondary-action:is(.venue-card-share-action, .venue-card-favorite-action):not(.is-active):not([aria-pressed="true"]):not(:disabled):not([aria-disabled="true"]) {
     color: #f1f5f9 !important;
     border-color: rgba(226, 232, 240, 0.28) !important;
     background: #25252b !important;
