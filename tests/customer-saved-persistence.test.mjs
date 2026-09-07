@@ -109,11 +109,12 @@ for (const following of [true, false]) {
     const context = vm.createContext({
       markets: { [city]: { dancers, venues: [] } },
       followedByCity: { [city]: following ? [] : ["Beta"] },
+      followedDancerIds: new Set(following ? [] : ["Beta"]),
       goingTonightSavedByProfile: {}, goingTonightByProfile: {},
       selectedCity: () => city,
       document: { getElementById: (id) => id === "followBtn" ? button : null },
       profileActionButtonMarkup: (icon, label) => `${icon}:${label}`,
-      clearLiveProfileActionCollections() { context.followedByCity[city] = []; },
+      clearLiveProfileActionCollections() { context.followedByCity[city] = []; context.followedDancerIds.clear(); },
       enableProfileNotifications() {}, disableProfileNotifications() {},
     });
     vm.runInContext(between(home, "    function isFollowingProfile(", "    function isFavoritedProfile("), context);

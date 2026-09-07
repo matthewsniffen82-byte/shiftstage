@@ -1902,7 +1902,15 @@ function CustomerFollowedDancersPanel({
               {group.follows.map((item) => {
                 const dancer = item.dancer;
                 const dancerId = String(item.dancerId || dancer?.id || "");
-                if (!dancer?.slug || !dancer.stageName || !dancerId) return null;
+                if (!dancerId) return null;
+                if (!dancer?.slug || !dancer.stageName) return (
+                  <article className="customer-unavailable-follow" key={dancerId}>
+                    <div><strong>Unavailable dancer</strong><p>Your follow is saved. This profile is currently unavailable.</p></div>
+                    <button type="button" disabled={Boolean(pendingAction)} onClick={() => void onUnfollowDancer(dancerId)}>
+                      {pendingAction === `dancer-${dancerId}` ? "Unfollowing…" : "Unfollow"}
+                    </button>
+                  </article>
+                );
                 return (
                   <FollowedDancerGridCard
                     dancer={dancer}
@@ -8780,6 +8788,10 @@ function DashboardStyles() {
       .customer-settings-grid > .info-panel { grid-column: auto; border-color: transparent; background: var(--mydancr-dashboard-panel-raised); }
       .customer-settings-grid > .customer-settings-panel, .customer-settings-grid > .support-panel, .customer-settings-grid > .account-controls-panel { grid-column: 1 / -1; }
       .customer-settings-panel .city-field { grid-column: span 2; }
+      .customer-unavailable-follow { grid-column: 1 / -1; display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 16px; border: 1px solid #ffffff15; border-radius: 14px; background: #ffffff05; }
+      .customer-unavailable-follow strong { font-size: 14px; }
+      .customer-unavailable-follow p { margin: 5px 0 0; color: #aaa3b8; font-size: 12px; line-height: 1.45; }
+      .customer-unavailable-follow button { flex: 0 0 auto; min-height: 44px; padding: 10px 14px; font-size: 12px; }
       .customer-alert-preferences-heading { display: flex; align-items: center; justify-content: space-between; gap: 14px; }
       .customer-alert-preferences-heading > div { display: grid; gap: 4px; }
       .customer-alert-preferences-heading > div > span { color: #c084fc; font-size: 10px; font-weight: 950; letter-spacing: .14em; text-transform: uppercase; }

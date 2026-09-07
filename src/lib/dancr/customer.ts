@@ -39,7 +39,7 @@ export async function getCustomerSavedItems(
   ]);
 
   const dancerIds = Array.from(new Set([
-    ...follows.map((item: any) => item.dancer?.id),
+    ...follows.map((item: any) => item.dancerId),
     ...favorites.map((item: any) => item.dancer?.id),
     ...goingSignals.map((item: any) => item.shift?.dancer?.id),
   ].filter(Boolean)));
@@ -51,15 +51,16 @@ export async function getCustomerSavedItems(
   const attachPublicImage = (dancer: any) => dancer
     ? { ...dancer, ...(publicImages.get(String(dancer.id)) || {}) }
     : null;
-  const attachSchedule = (item: any) => ({
-    ...item,
-    dancer: item.dancer
-      ? {
-          ...attachPublicImage(item.dancer),
-          nextShift: schedules.get(item.dancer.id) || null,
-        }
-      : null,
-  });
+  const attachSchedule = (item: any) => {
+    // The customer's follow is authoritative even when the embedded profile
+    // is omitted by a different database visibility policy. Resolve only the
+    // same approved public projection used by discovery; never drop the follow.
+    const dancer = publicImages.get(String(item.dancerId)) || item.dancer;
+    return {
+      ...item,
+      dancer: dancer ? { ...attachPublicImage(dancer), nextShift: schedules.get(dancer.id) || null } : null,
+    };
+  };
   const attachGoingImage = (item: any) => ({
     ...item,
     shift: item.shift
@@ -321,7 +322,7 @@ async function getFollowedDancers(client: DancrClient, customerId: string) {
     notificationsEnabled: row.notifications_enabled,
     createdAt: row.created_at,
     dancer: toDancerSummary(client, row.dancer_profiles),
-  })).filter((item: any) => item.dancer);
+  }));
 }
 
 async function getFavoriteDancers(client: DancrClient, customerId: string) {
@@ -418,13 +419,17 @@ async function getGoingShifts(client: DancrClient, customerId: string) {
 }
 
 async function getSavedDancerImages(client: DancrClient, dancerIds: string[]) {
-  const images = new Map<string, ReturnType<typeof savedDancerImageSummary>>();
+  const images = new Map<string, NonNullable<ReturnType<typeof toDancerSummary>>>();
   if (!dancerIds.length) return images;
 
   const current = await client
     .from("dancer_profiles")
-    .select("id, status, verification_status, venue_approved_at, disabled_at, is_public, avatar_storage_path, dancer_photos(storage_path, is_primary, review_status, sort_order)")
-    .in("id", dancerIds);
+    .select("id, slug, stage_name, city, status, verification_status, venue_approved_at, disabled_at, is_public, avatar_storage_path, dancer_photos(storage_path, is_primary, review_status, sort_order)")
+    .in("id", dancerIds)
+    .eq("status", "approved")
+    .eq("verification_status", "approved")
+    .eq("is_public", true)
+    .is("disabled_at", null);
 
   let data: any[] | null = current.data as any[] | null;
   let error: any = current.error;
@@ -432,8 +437,11 @@ async function getSavedDancerImages(client: DancrClient, dancerIds: string[]) {
     console.warn("CUSTOMER_SAVED_VISIBILITY_COLUMN_MISSING", { relation: "saved_dancer_images", code: error.code });
     const legacy = await client
       .from("dancer_profiles")
-      .select("id, status, verification_status, venue_approved_at, disabled_at, avatar_storage_path, dancer_photos(storage_path, is_primary, review_status, sort_order)")
-      .in("id", dancerIds);
+      .select("id, slug, stage_name, city, status, verification_status, venue_approved_at, disabled_at, avatar_storage_path, dancer_photos(storage_path, is_primary, review_status, sort_order)")
+      .in("id", dancerIds)
+      .eq("status", "approved")
+      .eq("verification_status", "approved")
+      .is("disabled_at", null);
     data = legacy.data as any[] | null;
     error = legacy.error;
   }
@@ -442,7 +450,8 @@ async function getSavedDancerImages(client: DancrClient, dancerIds: string[]) {
 
   for (const dancer of data || []) {
     if (!isApprovedPublicDancerRow(dancer)) continue;
-    images.set(String(dancer.id), savedDancerImageSummary(client, dancer));
+    const summary = toDancerSummary(client, dancer);
+    if (summary) images.set(String(dancer.id), summary);
   }
   return images;
 }

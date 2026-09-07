@@ -42773,6 +42773,7 @@
       "New York": []
     };
     const favoritedByCity = {};
+    const followedDancerIds = new Set();
     const notifiedByCity = Object.fromEntries(
       Object.entries(followedByCity).map(([city, names]) => [city, [...names]])
     );
@@ -42782,6 +42783,7 @@
     let customerSavedStateVersion = 0;
 
     function clearCustomerSavedCollections() {
+      followedDancerIds.clear();
       Object.keys(markets).forEach((city) => {
         followedByCity[city] = [];
         favoritedByCity[city] = [];
@@ -42794,6 +42796,7 @@
     }
 
     function clearLiveProfileActionCollections() {
+      followedDancerIds.clear();
       Object.keys(markets).forEach((city) => {
         followedByCity[city] = [];
         notifiedByCity[city] = [];
@@ -45113,6 +45116,14 @@
 
     function findProfileBySavedDancer(savedDancer) {
       const dancer = savedDancer?.dancer || savedDancer;
+      const dancerId = savedDancer?.dancerId || dancer?.id;
+      if (dancerId) {
+        for (const [city, market] of Object.entries(markets)) {
+          const profile = market.dancers.find((item) => item.id === dancerId);
+          if (profile) return { city, profile };
+        }
+        return null;
+      }
       const city = dancer?.city;
       const market = city ? markets[city] : null;
       if (!market) return null;
@@ -45154,6 +45165,8 @@
     function applyLiveProfileActions(saved) {
       clearLiveProfileActionCollections();
       (saved?.follows || []).forEach((item) => {
+        const dancerId = item.dancerId || item.dancer?.id;
+        if (dancerId) followedDancerIds.add(dancerId);
         const match = findProfileBySavedDancer(item);
         if (!match) return;
         setProfileFollowed(match.city, match.profile.name, true);
@@ -46578,7 +46591,7 @@
         shifts: market.dancers.filter((profile) => profile.scheduled).length,
         venues: market.venues.filter((venue) => !venue.hidden).length
       };
-      followedByCity[city] = followedByCity[city] || [];
+      followedByCity[city] = market.dancers.filter((profile) => followedDancerIds.has(profile.id)).map((profile) => profile.name);
       followedVenuesByCity[city] = followedVenuesByCity[city] || [];
       return liveDancers.length || liveVenues.length;
     }
@@ -46847,10 +46860,16 @@
     }
 
     function isFollowingProfile(city, profileName) {
-      return (followedByCity[city] || []).includes(profileName);
+      const profile = markets[city]?.dancers.find((item) => item.name === profileName || item.id === profileName);
+      return profile?.id ? followedDancerIds.has(profile.id) : (followedByCity[city] || []).includes(profileName);
     }
 
     function setProfileFollowed(city, profileName, following) {
+      const profile = markets[city]?.dancers.find((item) => item.name === profileName || item.id === profileName);
+      if (profile?.id) {
+        if (following) followedDancerIds.add(profile.id);
+        else followedDancerIds.delete(profile.id);
+      }
       const followed = followedByCity[city] || (followedByCity[city] = []);
       const index = followed.indexOf(profileName);
       if (following && index < 0) followed.push(profileName);

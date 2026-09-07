@@ -50,6 +50,14 @@ test('an expired session still offers sign-in and hides protected dashboard sect
   assert.doesNotMatch(html, /Followed Dancers|Saved Club Deals/);
 });
 
+test('a followed profile becoming unavailable retains its saved follow and removal control', () => {
+  const html = renderCustomerDashboard({ saved: { follows: [{ dancerId: 'temporarily-unavailable', dancer: null }] } });
+  assert.match(html, /Unavailable dancer/);
+  assert.match(html, /Your follow is saved/);
+  assert.match(html, />Unfollow<\/button>/);
+  assert.doesNotMatch(html, /No followed dancers yet/);
+});
+
 const localBookmarks = deviceDeals.readDeviceSavedClubDeals({ getItem: () => JSON.stringify([
   { id: 'nfc:club:one', venueId: 'club', dealId: 'one', venueName: 'Silver Circuit', title: 'Half-off admission' },
   { id: 'nfc:club:two', venueId: 'club', dealId: 'two', venueName: 'Neon Ember', title: 'Skip the line' },

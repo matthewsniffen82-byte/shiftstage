@@ -123,7 +123,7 @@ test("saved customer data includes approved responsive imagery and the next real
   assert.match(customerService, /const image = primaryImage \|\| avatarImage/);
   assert.match(customerService, /goingSignals: goingSignals\.map\(attachGoingImage\)/);
   assert.match(customerService, /responsivePublicImage\(client, "venue-cover-images"/);
-  assert.match(customerService, /nextShift: schedules\.get\(item\.dancer\.id\) \|\| null/);
+  assert.match(customerService, /nextShift: schedules\.get\(dancer\.id\) \|\| null/);
   assert.doesNotMatch(customerService, /sample|placeholder|mock/i);
 });
 
