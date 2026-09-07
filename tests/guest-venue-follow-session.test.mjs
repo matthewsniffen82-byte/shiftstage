@@ -52,18 +52,19 @@ for(const following of [true,false])test(`venue ${following?'follow':'unfollow'}
 });
 
 for(const succeeds of [true,false])test(`venue save ${succeeds?'refreshes credentials before saving':'does not claim success for an expired sign-in'}`,async()=>{
- const calls=[],notices=[],saved=[];const button={dataset:{venueFollow:'Test Club'},disabled:false};
+ const calls=[],notices=[],saved=[];const button={dataset:{venueFollow:'Test Club'},disabled:false,setAttribute(){},removeAttribute(){}};
  const context=vm.createContext({
   event:{target:{closest:()=>button},preventDefault(){},stopPropagation(){}},
   requireCustomerAccountForProfileAction:()=>true,citySelect:{value:'Test City'},markets:{'Test City':{venues:[{name:'Test Club',id:'club-id'}]}},followedVenuesByCity:{'Test City':saved},
   getAuthenticatedJson:async()=>{calls.push('refresh');if(!succeeds)throw new Error('Sign in required.');},
-  postAuthenticatedJson:async()=>{calls.push('follow');return {ok:true};},
+  postAuthenticatedJson:async()=>{calls.push('follow');return {ok:true,following:true};},
+  customerSavedStateVersion:0,actionButtonLabel:(_icon,label)=>label,
   render(){},customerDashboard:{classList:{contains:()=>false}},renderDashboard(){},
   showToast:(text)=>notices.push(text),openAuthRole:()=>calls.push('sign-in'),setCustomerAuthStatus:(text)=>notices.push(text),
  });
  vm.runInContext('async function save(){'+between('      const followVenueButton = event.target.closest("[data-venue-follow]");','      const venueJump = event.target.closest("[data-venue-jump]");')+'}',context);
  await context.save();
  assert.deepEqual(calls,succeeds?['refresh','follow']:['refresh','sign-in']);
- assert.equal(saved.length,succeeds?1:0);
+ assert.equal(context.followedVenuesByCity['Test City'].length,succeeds?1:0);
  if(!succeeds){assert.equal(button.disabled,false);assert.match(notices[0],/expired/);}
 });

@@ -15,6 +15,7 @@ import { createPortal } from "react-dom";
 import Link from "next/link";
 import { PublicReportReasonDialog, type PublicReportReason } from "@/app/components/PublicReportReasonDialog";
 import { readBrowserAccessToken } from "@/src/lib/dancr/browser-session";
+import { currentDashboardAuthHeaders, persistResponseSession } from "@/app/dashboard/dashboard-session";
 
 type ShiftAction = {
   id: string;
@@ -370,13 +371,15 @@ export function DancerProfileActions({
     }
 
     fetch("/api/customer/saved", {
-      headers: { authorization: `Bearer ${accessToken}` },
+      headers: currentDashboardAuthHeaders("customer") || {},
+      cache: "no-store",
       signal: controller.signal,
     })
       .then((response) => response.json())
       .then((data) => {
         if (controller.signal.aborted) return;
         if (!data.ok) throw new Error(data.error || "Unable to load saved profile actions.");
+        persistResponseSession(data);
         const follows = data.saved?.follows || [];
         const goingSignals = data.saved?.goingSignals || [];
         const follow = follows.find((item: any) => item.dancerId === dancerId);
@@ -518,7 +521,7 @@ export function DancerProfileActions({
     setStatus("");
     const response = await fetch(path, {
       method: "POST",
-      headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
+      headers: { ...currentDashboardAuthHeaders("customer"), "content-type": "application/json" },
       body: JSON.stringify(body),
       signal,
     });
@@ -533,6 +536,7 @@ export function DancerProfileActions({
       setStatus(message);
       throw new Error(message);
     }
+    persistResponseSession(data);
     setStatus("Saved.");
     return data;
   }

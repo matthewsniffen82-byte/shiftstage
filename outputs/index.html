@@ -42765,6 +42765,7 @@
     const followedVenuesByCity = Object.fromEntries(
       Object.keys(markets).map((city) => [city, []])
     );
+    let customerSavedStateVersion = 0;
 
     function clearCustomerSavedCollections() {
       Object.keys(markets).forEach((city) => {
@@ -42790,6 +42791,7 @@
 
     function prepareRealCustomerDashboardState() {
       if (!isCustomerSession()) return;
+      customerSavedStateVersion += 1;
       clearCustomerSavedCollections();
     }
 
@@ -44249,7 +44251,7 @@
         method: "POST",
         headers,
         body: JSON.stringify(payload)
-      }, options.timeoutMs);
+      }, options.timeoutMs, options.timeoutMessage);
       const data = await response.json().catch(() => ({}));
       if (!response.ok || data.ok === false) throw apiRequestError(data);
       applyResponseSession(data);
@@ -44324,12 +44326,13 @@
       return String(error);
     }
 
-    async function getAuthenticatedJson(url) {
+    async function getAuthenticatedJson(url, options = {}) {
       const headers = authenticatedRequestHeaders();
       if (!headers) throw new Error("Sign in required");
-      const response = await fetch(url, {
-        headers
-      });
+      const response = await fetchWithTimeout(url, {
+        headers,
+        cache: "no-store"
+      }, options.timeoutMs, options.timeoutMessage);
       const data = await response.json().catch(() => ({}));
       if (!response.ok || data.ok === false) throw new Error(data.error || "Request failed");
       applyResponseSession(data);
@@ -45174,8 +45177,10 @@
 
     async function loadLiveProfileActionState() {
       if (!isCustomerSession()) return;
+      const savedStateVersion = customerSavedStateVersion;
       try {
         const data = await getAuthenticatedJson("/api/customer/saved");
+        if (!isCustomerSession() || savedStateVersion !== customerSavedStateVersion) return;
         applyLiveProfileActions(data.saved || {});
         render();
       } catch (error) {
@@ -45199,8 +45204,11 @@
 
     async function loadLiveCustomerSaved() {
       if (!isCustomerSession()) return false;
+      const savedStateVersion = customerSavedStateVersion;
       try {
         const data = await getAuthenticatedJson("/api/customer/saved");
+        // An older read must not replace a follow or favorite saved while it was in flight.
+        if (!isCustomerSession() || savedStateVersion !== customerSavedStateVersion) return false;
         applyLiveCustomerSaved(data.saved || {});
         render();
         if (customerDashboard.classList.contains("show")) renderDashboard();
@@ -62227,6 +62235,7 @@
       if (followVenueButton) {
         event.preventDefault();
         event.stopPropagation();
+        if (followVenueButton.disabled) return;
         if (!requireCustomerAccountForProfileAction(followVenueButton)) return;
         const city = citySelect.value;
         const venueName = followVenueButton.dataset.venueFollow;
@@ -62235,26 +62244,31 @@
           showToast("This club follow is unavailable.");
           return;
         }
-        const savedVenues = followedVenuesByCity[city] || (followedVenuesByCity[city] = []);
-        const index = savedVenues.indexOf(venueName);
-        const willFollow = index < 0;
+        const willFollow = !(followedVenuesByCity[city] || []).includes(venueName);
+        const originalMarkup = followVenueButton.innerHTML;
         followVenueButton.disabled = true;
+        followVenueButton.setAttribute("aria-busy", "true");
+        followVenueButton.innerHTML = actionButtonLabel("heart", willFollow ? "Saving…" : "Removing…");
+        customerSavedStateVersion += 1;
         try {
           // Refresh an expired access token before committing the follow.
-          await getAuthenticatedJson("/api/account");
+          await getAuthenticatedJson("/api/account", {
+            timeoutMs: 15000,
+            timeoutMessage: "Your sign-in could not be checked. Please try saving this club again."
+          });
           const result = await postAuthenticatedJson("/api/customer/venue-follows", {
             venueId: venueRecord.id,
             following: willFollow,
             notificationsEnabled: willFollow
-          });
+          }, { timeoutMs: 15000, timeoutMessage: "Saving this club took too long. Please try again." });
           if (!result?.ok) throw new Error("Sign in required.");
-          if (index >= 0) {
-            savedVenues.splice(index, 1);
-            showToast("Unfollowed club");
-          } else {
-            savedVenues.push(venueName);
-            showToast(`${venueName} saved. Club alerts on.`);
-          }
+          // A saved-items refresh may have replaced the array during the request.
+          const savedVenues = followedVenuesByCity[city] || (followedVenuesByCity[city] = []);
+          const following = result.following === true;
+          followedVenuesByCity[city] = savedVenues.filter((name) => name !== venueName);
+          if (following) followedVenuesByCity[city].push(venueName);
+          customerSavedStateVersion += 1;
+          showToast(following ? `${venueName} saved to Followed Clubs in your dashboard. Club alerts on.` : "Club removed from your dashboard.");
           render();
           if (customerDashboard.classList.contains("show")) renderDashboard();
         } catch (error) {
@@ -62265,6 +62279,11 @@
             return;
           }
           showToast(error.message || "Could not save venue follow");
+        } finally {
+          customerSavedStateVersion += 1;
+          followVenueButton.disabled = false;
+          followVenueButton.removeAttribute("aria-busy");
+          followVenueButton.innerHTML = originalMarkup;
         }
         return;
       }
@@ -62924,6 +62943,7 @@
         requestedFollowing
       );
       actionButton.disabled = true;
+      customerSavedStateVersion += 1;
       applyProfileFollowState(profile, city, optimisticState);
       try {
         const data = await postAuthenticatedJson("/api/customer/follows", {
@@ -62946,6 +62966,7 @@
         applyProfileFollowState(profile, city, snapshot);
         showToast(error.message || "Could not save follow");
       } finally {
+        customerSavedStateVersion += 1;
         actionButton.disabled = false;
       }
     }
@@ -62971,6 +62992,7 @@
       );
       actionButton.disabled = true;
       if (followButton) followButton.disabled = true;
+      customerSavedStateVersion += 1;
       applyProfileFollowState(profile, city, optimisticState);
       try {
         const data = await postAuthenticatedJson("/api/customer/follows", {
@@ -62990,6 +63012,7 @@
         applyProfileFollowState(profile, city, snapshot);
         showToast(error.message || "Could not save notifications");
       } finally {
+        customerSavedStateVersion += 1;
         actionButton.disabled = false;
         if (followButton) followButton.disabled = false;
       }

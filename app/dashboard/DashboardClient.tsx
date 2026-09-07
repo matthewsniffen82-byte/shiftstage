@@ -1633,7 +1633,7 @@ function CustomerPanel({
       </DashboardSection>
       <DashboardSection
         badge={String(saved?.venueFollows?.length || 0)}
-        description="Clubs you follow, with directions and alert controls."
+        description="Your favorite clubs, saved from club cards, with directions and alert controls."
         id="customer-followed-clubs"
         title="Followed Clubs"
       >
