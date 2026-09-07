@@ -1619,6 +1619,19 @@ function CustomerPanel({
     );
   }
 
+  function unfollowDancer(dancerId: string) {
+    return runCustomerAction(
+      `dancer-${dancerId}`,
+      "/api/customer/follows",
+      { dancerId, following: false, notificationsEnabled: false },
+      (current) => ({
+        ...current,
+        follows: (current.follows || []).filter((item) => String(item.dancerId || item.dancer?.id || "") !== dancerId),
+      }),
+      "Dancer unfollowed.",
+    );
+  }
+
   function cancelGoing(shiftId: string) {
     return runCustomerAction(
       `going-${shiftId}`,
@@ -1713,6 +1726,8 @@ function CustomerPanel({
       >
         <CustomerFollowedDancersPanel
           isLoading={isLoading}
+          onUnfollowDancer={unfollowDancer}
+          pendingAction={pendingAction}
           saved={saved}
         />
       </DashboardSection>
@@ -1826,9 +1841,13 @@ function CustomerNightPanel({
 
 function CustomerFollowedDancersPanel({
   isLoading,
+  onUnfollowDancer,
+  pendingAction,
   saved,
 }: {
   isLoading: boolean;
+  onUnfollowDancer: (dancerId: string) => void;
+  pendingAction: string;
   saved?: LoadState["saved"];
 }) {
   const followedDancers = saved?.follows || [];
@@ -1852,6 +1871,9 @@ function CustomerFollowedDancersPanel({
                   <FollowedDancerGridCard
                     dancer={dancer}
                     key={dancerId}
+                    onUnfollow={() => void onUnfollowDancer(dancerId)}
+                    pending={Boolean(pendingAction)}
+                    unfollowing={pendingAction === `dancer-${dancerId}`}
                   />
                 );
               })}
@@ -1915,7 +1937,17 @@ function CustomerFollowedClubsPanel({
   );
 }
 
-function FollowedDancerGridCard({ dancer }: { dancer: SavedDancerSummary }) {
+function FollowedDancerGridCard({
+  dancer,
+  onUnfollow,
+  pending,
+  unfollowing,
+}: {
+  dancer: SavedDancerSummary;
+  onUnfollow: () => void;
+  pending: boolean;
+  unfollowing: boolean;
+}) {
   const shift = dancer.nextShift;
   const shiftLabel = shift ? customerShiftLabel(shift) : "";
   const isWorkingNow = shiftLabel === "Working now";
@@ -1924,6 +1956,7 @@ function FollowedDancerGridCard({ dancer }: { dancer: SavedDancerSummary }) {
   const dancerName = String(dancer.stageName || "Dancer");
 
   return (
+    <article className="customer-followed-dancer-card">
     <Link
       aria-label={`Open ${dancerName} profile`}
       className="customer-followed-dancer-tile"
@@ -1941,6 +1974,17 @@ function FollowedDancerGridCard({ dancer }: { dancer: SavedDancerSummary }) {
         {shift && !isWorkingNow ? <small className="customer-followed-dancer-time">{shiftLabel}</small> : null}
       </span>
     </Link>
+    <button
+      className="customer-dancer-unfollow"
+      type="button"
+      aria-label={`Unfollow ${dancerName}`}
+      aria-busy={unfollowing || undefined}
+      disabled={pending}
+      onClick={onUnfollow}
+    >
+      {unfollowing ? "Unfollowing…" : "Unfollow"}
+    </button>
+    </article>
   );
 }
 
@@ -8503,6 +8547,11 @@ function DashboardStyles() {
       .customer-followed-city-heading h3 { margin: 0; color: #fff; font-size: 18px; }
       .customer-followed-city-heading span { color: #cdbdff; font-size: 11px; font-weight: 900; }
       .customer-saved-card-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+      .customer-followed-dancer-card { min-width: 0; display: grid; align-content: start; gap: 6px; }
+      .customer-dancer-unfollow { width: 100%; min-height: 44px; padding: 8px 4px; border: 1px solid rgba(255,255,255,.2); border-radius: 9px; color: #d7d5df; background: #17171d; font: inherit; font-size: 11px; font-weight: 800; cursor: pointer; }
+      .customer-dancer-unfollow:hover:not(:disabled) { color: #fff; background: #24242c; }
+      .customer-dancer-unfollow:focus-visible { outline: 2px solid var(--mydancr-customer-accent); outline-offset: 2px; }
+      .customer-dancer-unfollow:disabled { opacity: .6; cursor: wait; }
       .customer-followed-dancer-tile { position: relative; min-width: 0; aspect-ratio: 1 / 1.68; overflow: hidden; border: 1px solid rgba(192,132,255,.34); border-radius: 14px; color: #fff; background: #07070a; box-shadow: 0 16px 34px rgba(0,0,0,.48), 0 0 14px rgba(155,92,255,.1); text-decoration: none; }
       .customer-followed-dancer-tile::after { content: ""; position: absolute; inset: 28% 0 0; z-index: 1; background: linear-gradient(180deg, transparent, rgba(10,6,17,.58) 34%, rgba(5,5,8,.98) 100%); pointer-events: none; }
       .customer-followed-dancer-tile:hover, .customer-followed-dancer-tile:focus-visible { border-color: rgba(192,132,255,.7); box-shadow: 0 20px 42px rgba(0,0,0,.56), 0 0 24px rgba(155,92,255,.24); }

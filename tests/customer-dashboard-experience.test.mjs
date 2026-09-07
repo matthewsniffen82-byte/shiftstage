@@ -88,7 +88,7 @@ test("customer dashboard uses compact electric-violet hierarchy without duplicat
   assert.match(dashboard, /@media \(max-width: 620px\) \{[\s\S]*?\.dashboard-shell-customer \.venue-dashboard-section > summary \{ min-height: 78px; grid-template-columns: minmax\(0,1fr\) auto auto;/);
 });
 
-test("followed dancer tiles match homepage-style discovery cards without dashboard action clutter", () => {
+test("followed dancer tiles keep the profile link separate from their unfollow button", () => {
   const cardStart = dashboard.indexOf("function FollowedDancerGridCard");
   const cardEnd = dashboard.indexOf("function SavedVenueCard", cardStart);
   const card = dashboard.slice(cardStart, cardEnd);
@@ -96,7 +96,9 @@ test("followed dancer tiles match homepage-style discovery cards without dashboa
   assert.match(card, /<Link[\s\S]*?className="customer-followed-dancer-tile"[\s\S]*?href=\{customerDancerHref\(dancer\)\}/);
   assert.match(card, /customer-followed-dancer-status is-\$\{statusTone\}[\s\S]*?customer-followed-dancer-time/);
   assert.match(card, /sizes="\(max-width: 620px\) 29vw, \(max-width: 1100px\) 30vw, 300px"/);
-  assert.doesNotMatch(card, /customer-card-actions|Directions|Alerts on|Alerts off|Unfollow/);
+  assert.doesNotMatch(card, /customer-card-actions|Directions|Alerts on|Alerts off/);
+  assert.match(card, /<\/Link>\s*<button[\s\S]*?className="customer-dancer-unfollow"[\s\S]*?aria-label=\{`Unfollow \$\{dancerName\}`\}[\s\S]*?disabled=\{pending\}[\s\S]*?onClick=\{onUnfollow\}/);
+  assert.match(card, /unfollowing \? "Unfollowing…" : "Unfollow"/);
   assert.match(dashboard, /description="Dancers you follow, sorted by city\. Tap a card to open the profile\."/);
 });
 
