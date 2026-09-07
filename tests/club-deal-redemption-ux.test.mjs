@@ -91,14 +91,17 @@ test("mobile redemption presentation is compact, touch-safe, and overflow-safe",
   assert.match(liveApp, /overflow-x: hidden/);
 });
 
-test("terms stay readable and secondary actions are behind an accessible options menu", () => {
+test("terms stay readable and Save and Share remain directly visible in the preview", () => {
   for (const source of [dealCard, liveApp]) {
     assert.match(source, /terms-toggle[\s\S]*?min-height:\s*44px/);
     assert.match(source, /terms-toggle[\s\S]*?text-decoration:\s*underline/);
-    assert.match(source, /<summary aria-label="More options">/);
+    assert.doesNotMatch(source, /<summary aria-label="More options">/);
   }
   assert.doesNotMatch(dealCard, /club-deal-redemption-steps/);
   assert.doesNotMatch(liveOverlay, /class="deal-pass-steps"/);
   assert.match(liveOverlay, /primaryDock\.hidden = state === "ready"/);
-  assert.match(liveOverlay, /querySelector\("\.deal-pass-more summary"\)\.addEventListener\("click", \(event\) => \{\s*event\.stopPropagation\(\)/);
+  assert.match(liveOverlay, /<div class="deal-pass-actions">\s*<button[^>]*data-save-deal-pass[^>]*>Save<\/button>\s*<button[^>]*data-share-deal-pass>Share<\/button>/);
+  assert.match(dealCard, /<div className="club-deal-share-actions">/);
+  assert.doesNotMatch(dealCard, /club-deal-more/);
+  assert.doesNotMatch(liveOverlay, /deal-pass-more/);
 });

@@ -381,21 +381,18 @@ export function ClubDealCard({
         </div>
       ) : null}
       {status ? <em className={`deal-nfc-status ${intentState}`} role="status" aria-live="polite">{status}</em> : null}
-      <details className="club-deal-more">
-        <summary aria-label="More options">···</summary>
-        <div className="club-deal-share-actions">
-          <button
-            type="button"
-            className={savedOnDevice ? "saved" : ""}
-            aria-pressed={savedOnDevice}
-            disabled={savePending}
-            onClick={() => void (savedOnDevice ? removeSavedDeal() : saveForLater())}
-          >
-            {savePending ? "Updating…" : savedOnDevice ? "Saved ✓ · Remove" : "Save"}
-          </button>
-          <button type="button" onClick={() => void shareDeal()}>Share</button>
-        </div>
-      </details>
+      <div className="club-deal-share-actions">
+        <button
+          type="button"
+          className={savedOnDevice ? "saved" : ""}
+          aria-pressed={savedOnDevice}
+          disabled={savePending}
+          onClick={() => void (savedOnDevice ? removeSavedDeal() : saveForLater())}
+        >
+          {savePending ? "Updating…" : savedOnDevice ? "Saved ✓ · Remove" : "Save"}
+        </button>
+        <button type="button" onClick={() => void shareDeal()}>Share</button>
+      </div>
       <div className="club-deal-primary-dock">
         <button
           className="club-deal-checkout-action"
@@ -660,7 +657,7 @@ function ClubDealInteractionStyles() {
       .club-deal-dialog { position: relative; width: min(400px, 100%); min-height:0; max-height: calc(100dvh - 32px - env(safe-area-inset-top) - env(safe-area-inset-bottom)); display: flex; flex-direction: column; gap: 14px; overflow-x:hidden; overflow-y: auto; overscroll-behavior:contain; box-sizing: border-box; padding: 24px; border: 1px solid rgba(255,255,255,.14); border-radius: 22px; color: #f7f2ff; background: linear-gradient(145deg,rgba(17,18,22,.96),rgba(5,6,8,.985)); box-shadow: 0 28px 80px rgba(0,0,0,.62), inset 0 1px 0 rgba(255,255,255,.06); }
       .club-deal-dialog>* { flex:0 0 auto; }
       .club-deal-dialog-close { position: absolute; z-index: 2; top: 10px; right: 10px; width: 44px; height: 44px; display: grid; place-items: center; padding: 0; border: 1px solid rgba(255,255,255,.14); border-radius: 50%; color: rgba(255,255,255,.82); background: rgba(26,27,32,.84); font: inherit; font-size: 23px; cursor: pointer; }
-      .club-deal-dialog-header,.club-deal-ready-header { min-width:0; display:grid; justify-items:start; gap:8px; padding-right:76px; text-align:left; }
+      .club-deal-dialog-header,.club-deal-ready-header { min-width:0; display:grid; justify-items:start; gap:8px; padding-right:44px; text-align:left; }
       .club-deal-dialog-header .eyebrow { color:#35d8ff; font-size:10px; font-weight:950; letter-spacing:.16em; text-transform:uppercase; }
       .club-deal-dialog-header h2,.club-deal-ready-header h2 { max-width:100%; margin:0; color:#fff; font-size:clamp(22px,6vw,29px); line-height:1.08; overflow-wrap:anywhere; text-wrap:balance; }
       .club-deal-dialog-header p,.club-deal-ready-header p { max-width:100%; margin:0; color:rgba(248,248,252,.76); font-size:12px; font-weight:800; line-height:1.3; overflow-wrap:anywhere; }
@@ -672,13 +669,6 @@ function ClubDealInteractionStyles() {
       .club-deal-terms[hidden] { display:none; }
       .club-deal-terms p { margin:0; }
       .club-deal-terms p + p { margin-top:8px; }
-      .club-deal-more { position:absolute; top:10px; right:52px; z-index:3; }
-      .club-deal-more summary { width:44px; height:44px; display:grid; place-items:center; list-style:none; color:#ccc4e4; font-size:24px; cursor:pointer; }
-      .club-deal-more summary::-webkit-details-marker { display:none; }
-      .club-deal-more summary:focus-visible { outline:2px solid #c4b5fd; outline-offset:3px; }
-      .club-deal-more:not([open]) .club-deal-share-actions { display:none; }
-      .club-deal-more .club-deal-share-actions { position:absolute; top:44px; right:0; width:160px; display:grid; grid-template-columns:1fr; gap:4px; padding:8px; border:1px solid rgba(255,255,255,.16); border-radius:12px; background:#18181d; box-shadow:0 12px 30px rgba(0,0,0,.4); }
-      .club-deal-more .club-deal-share-actions button { min-height:44px; }
       .club-deal-ready-instructions { display:grid; grid-template-columns:52px minmax(0,1fr); align-items:center; gap:14px; padding:12px 0; }
       .club-deal-ready-instructions p { margin:0; color:#f4f1fa; font-size:15px; line-height:1.5; }
       .club-deal-ready-until { margin:0; font-size:12px; line-height:1.4; text-align:left; }
@@ -698,7 +688,7 @@ function ClubDealInteractionStyles() {
       .club-deal-dialog .deal-nfc-status.error,.club-deal-dialog .deal-nfc-status.expired { border-color:rgba(255,157,174,.28); color:#ffd5dd; background:rgba(255,99,132,.07); }
       .club-deal-ready-until { color:rgba(255,255,255,.62); }
       .club-deal-share-actions { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
-      .club-deal-share-actions button { min-height:36px; border:1px solid rgba(255,255,255,.12); border-radius:11px; color:rgba(255,255,255,.82); background:rgba(255,255,255,.035); font:inherit; font-size:11px; font-weight:900; cursor:pointer; }
+      .club-deal-share-actions button { min-height:44px; border:1px solid rgba(255,255,255,.12); border-radius:11px; color:rgba(255,255,255,.82); background:rgba(255,255,255,.035); font:inherit; font-size:11px; font-weight:900; cursor:pointer; }
       .club-deal-share-actions button.saved { color:#d9f9ff; border-color:rgba(126,234,255,.26); background:rgba(53,216,255,.07); }
       .club-deal-share-actions button:disabled { cursor:default; opacity:.82; }
       .club-deal-offer-picker { display: grid; gap: 10px; }
@@ -718,7 +708,7 @@ function ClubDealInteractionStyles() {
         .club-deal-nfc-symbol { width:52px; height:52px; }
         .club-deal-nfc-symbol svg { width:38px; height:38px; padding:7px; }
         .club-deal-share-actions { gap:6px; }
-        .club-deal-share-actions button { min-height:34px; font-size:10px; }
+        .club-deal-share-actions button { min-height:44px; font-size:12px; }
         .club-deal-dialog .club-deal-checkout-action { min-height:46px !important; }
         .club-deal-sticky { position: fixed; z-index: 95; left: 10px; right: 10px; bottom: calc(10px + env(safe-area-inset-bottom)); min-height: 58px; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 8px 10px 8px 16px; border: 1px solid var(--dancr-color-success-medium); border-radius: 16px; color: #fff; background: var(--dancr-color-surface-translucent); box-shadow: 0 18px 50px rgba(0,0,0,.68); font: inherit; text-align: left; cursor: pointer; }
         .club-deal-sticky span { min-width: 0; overflow: hidden; font-size: 12px; font-weight: 850; text-overflow: ellipsis; white-space: nowrap; }

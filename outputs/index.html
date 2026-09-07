@@ -26635,7 +26635,7 @@
     #dealPassOverlay [hidden] { display: none !important; }
     #dealPassOverlay .deal-pass-title {
       margin: 0;
-      padding: 0 76px 0 0;
+      padding: 0 44px 0 0;
       font-size: clamp(1.5rem, 6vw, 1.8rem);
       line-height: 1.15;
       text-align: left;
@@ -26672,17 +26672,11 @@
       text-underline-offset: 4px;
       cursor: pointer;
     }
-    #dealPassOverlay .deal-pass-terms-toggle:focus-visible,
-    #dealPassOverlay .deal-pass-more summary:focus-visible { outline: 2px solid #c4b5fd; outline-offset: 3px; }
+    #dealPassOverlay .deal-pass-terms-toggle:focus-visible { outline: 2px solid #c4b5fd; outline-offset: 3px; }
     #dealPassOverlay .deal-pass-terms { padding: 12px; border: 1px solid rgba(255,255,255,.1); border-radius: 12px; background: rgba(255,255,255,.03); }
     #dealPassOverlay .deal-pass-terms p { margin: 0; color: rgba(255,255,255,.76); font-size: .8rem; font-weight: 400; line-height: 1.5; overflow-wrap: anywhere; }
     #dealPassOverlay .deal-pass-terms p + p { margin-top: 8px; }
-    #dealPassOverlay .deal-pass-more { position: absolute; top: 10px; right: 52px; z-index: 3; }
-    #dealPassOverlay .deal-pass-more summary { width: 44px; height: 44px; display: grid; place-items: center; list-style: none; color: #ccc4e4; font-size: 24px; cursor: pointer; }
-    #dealPassOverlay .deal-pass-more summary::-webkit-details-marker { display: none; }
-    #dealPassOverlay .deal-pass-more:not([open]) .deal-pass-actions { display: none; }
-    #dealPassOverlay .deal-pass-more .deal-pass-actions { position: absolute; top: 44px; right: 0; display: grid; grid-template-columns: 1fr; width: 160px; gap: 4px; margin: 0; padding: 8px; border: 1px solid rgba(255,255,255,.16); border-radius: 12px; background: #18181d; box-shadow: 0 12px 30px rgba(0,0,0,.4); }
-    #dealPassOverlay .deal-pass-more .deal-pass-action { min-height: 44px; }
+    #dealPassOverlay .deal-pass-actions .deal-pass-action { min-height: 44px; font-size: .8rem; }
     #dealPassOverlay .deal-pass-ready-instructions { display: grid; grid-template-columns: 52px minmax(0,1fr); align-items: center; gap: 14px; padding: 12px 0; border: 0; background: transparent; }
     #dealPassOverlay .deal-pass-ready-instructions .deal-pass-nfc-symbol { width: 52px; height: 52px; display: grid; place-items: center; border: 1px solid rgba(196,181,253,.35); border-radius: 50%; color: #eee9ff; background: rgba(124,58,237,.08); }
     #dealPassOverlay .deal-pass-ready-instructions .club-deal-qr-symbol { width: 55%; height: 55%; }
@@ -49082,13 +49076,10 @@
                 </div>
               </div>
               <p class="deal-pass-how" id="dealPassHow" role="status" aria-live="polite" hidden></p>
-              <details class="deal-pass-more">
-                <summary aria-label="More options">···</summary>
-                <div class="deal-pass-actions">
-                  <button class="deal-pass-action" type="button" data-save-deal-pass aria-pressed="false">Save</button>
-                  <button class="deal-pass-action" type="button" data-share-deal-pass>Share</button>
-                </div>
-              </details>
+              <div class="deal-pass-actions">
+                <button class="deal-pass-action" type="button" data-save-deal-pass aria-pressed="false">Save</button>
+                <button class="deal-pass-action" type="button" data-share-deal-pass>Share</button>
+              </div>
             </div>
             <div class="deal-pass-ready-content" data-deal-pass-ready role="status" hidden>
               <div class="deal-pass-ready-instructions">
@@ -49109,9 +49100,6 @@
       const saveButton = overlay.querySelector("[data-save-deal-pass]");
       const shareButton = overlay.querySelector("[data-share-deal-pass]");
       const termsButton = overlay.querySelector("[data-toggle-deal-pass-terms]");
-      overlay.querySelector(".deal-pass-more summary").addEventListener("click", (event) => {
-        event.stopPropagation();
-      });
       const closeFromButton = (event) => {
         event.preventDefault();
         event.stopPropagation();
@@ -49338,7 +49326,6 @@
       const attributionElement = document.getElementById("dealPassAttribution");
       attributionElement.textContent = presentation.attribution;
       attributionElement.hidden = !presentation.attribution;
-      overlay.querySelector(".deal-pass-more").open = false;
       termsElement.textContent = terms;
       const validity = dealPassAvailabilityLabel(pass);
       const expiryElement = document.getElementById("dealPassExpiry");
