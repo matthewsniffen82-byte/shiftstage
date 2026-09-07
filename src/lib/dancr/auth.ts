@@ -313,22 +313,25 @@ export async function updateCustomerProfile(
 ): Promise<CustomerProfile> {
   const update: Record<string, string | Record<string, Json>> = {};
   if (typeof input.city === "string") update.city = input.city;
-  if (input.notificationSettings) update.notification_settings = input.notificationSettings;
-
-  const { data, error } = await client
-    .from("customer_profiles")
-    .update(update)
-    .eq("user_id", userId)
-    .select("user_id, city, notification_settings")
-    .single();
-
-  if (error) throw error;
-
-  return {
-    userId: data.user_id,
-    city: data.city,
-    notificationSettings: data.notification_settings,
-  };
+  for (let attempt = 0; attempt < 3; attempt++) {
+    let previous: Record<string, Json> | null = null;
+    if (input.notificationSettings) {
+      const { data, error } = await client.from("customer_profiles").select("notification_settings").eq("user_id", userId).single();
+      if (error) throw error;
+      previous = data.notification_settings;
+      update.notification_settings = { ...(previous || {}), ...input.notificationSettings };
+    }
+    let query = client.from("customer_profiles").update(update).eq("user_id", userId);
+    if (input.notificationSettings) {
+      // Compare and retry so older pages and simultaneous device edits cannot
+      // erase another preference while updating one switch.
+      query = previous === null ? query.is("notification_settings", null) : query.eq("notification_settings", JSON.stringify(previous));
+    }
+    const { data, error } = await query.select("user_id, city, notification_settings").maybeSingle();
+    if (error) throw error;
+    if (data) return { userId: data.user_id, city: data.city, notificationSettings: data.notification_settings };
+  }
+  throw new Error("Your preferences changed on another device. Please try again.");
 }
 
 export async function getDancerAccountProfile(client: DancrClient, userId: string): Promise<DancerAccountProfile | null> {

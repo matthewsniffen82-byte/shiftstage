@@ -4,6 +4,8 @@ import { readBoundedJsonObject } from "@/src/lib/bounded-json-body";
 import { getCustomerProfile, updateCustomerProfile } from "@/src/lib/dancr/auth";
 import type { Json } from "@/src/lib/dancr/types";
 import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
+import { parseCustomerNotificationPatch } from "@/src/lib/dancr/customer-notification-preferences";
+import { customerNotificationDelivery } from "@/src/lib/dancr/customer-notification-delivery";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -18,7 +20,7 @@ export async function GET(request: Request) {
       return NextResponse.json({ ok: false, error: "Guest profile not found." }, { status: 404 });
     }
 
-    return NextResponse.json({ ok: true, profile, session });
+    return NextResponse.json({ ok: true, profile: { ...profile, notificationDelivery: customerNotificationDelivery(user.id, user.email) }, session });
   } catch (error) {
     return apiError(error, "Unable to load guest profile.");
   }
@@ -46,14 +48,18 @@ export async function PATCH(request: Request) {
     }
 
     if (body?.notificationSettings !== undefined) {
-      if (!isPlainObject(body.notificationSettings)) {
-        return NextResponse.json({ ok: false, error: "Notification settings must be an object." }, { status: 400 });
+      try {
+        update.notificationSettings = parseCustomerNotificationPatch(body.notificationSettings);
+      } catch (error) {
+        return NextResponse.json({ ok: false, error: (error as Error).message }, { status: 400 });
       }
-      const followAlertsEnabled = (body.notificationSettings as Record<string, unknown>).followAlertsEnabled;
-      if (typeof followAlertsEnabled !== "boolean") {
-        return NextResponse.json({ ok: false, error: "Choose whether follow alerts are on or off." }, { status: 400 });
+      const delivery = customerNotificationDelivery(user.id, user.email);
+      if (update.notificationSettings.emailEnabled === true && !delivery.emailAvailable) {
+        return NextResponse.json({ ok: false, error: "Email alerts are not available yet." }, { status: 503 });
       }
-      update.notificationSettings = { followAlertsEnabled };
+      if (update.notificationSettings.pushEnabled === true && !delivery.pushAvailable) {
+        return NextResponse.json({ ok: false, error: "Push notifications are not available yet." }, { status: 503 });
+      }
     }
 
     if (!Object.keys(update).length) {
@@ -61,12 +67,8 @@ export async function PATCH(request: Request) {
     }
 
     const profile = await updateCustomerProfile(client, user.id, update);
-    return NextResponse.json({ ok: true, profile, session });
+    return NextResponse.json({ ok: true, profile: { ...profile, notificationDelivery: customerNotificationDelivery(user.id, user.email) }, session });
   } catch (error) {
     return apiError(error, "Unable to update guest profile.");
   }
-}
-
-function isPlainObject(value: unknown) {
-  return Boolean(value) && typeof value === "object" && !Array.isArray(value);
 }

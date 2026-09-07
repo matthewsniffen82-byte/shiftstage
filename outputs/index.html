@@ -41953,8 +41953,8 @@
         </div>
         <div class="saved-deal-list" id="dashSavedDealsList"></div>
         <div class="auth-card customer-notification-card" data-dashboard-section="notifications">
-          <h3 class="section-title">Notifications</h3>
-          <p class="customer-card-copy">One switch controls the useful updates from dancers and clubs you follow.</p>
+          <h3 class="section-title">Alerts</h3>
+          <p class="customer-card-copy">Choose your updates and email or push delivery in Alerts.</p>
           <div class="toggle-list" id="notificationSettings"></div>
           <div class="section-title-row">
             <h3 class="section-title">Notification center</h3>
@@ -42808,13 +42808,6 @@
       clearCustomerSavedCollections();
     }
 
-    const followNotificationSummaries = [
-      ["Working Now", "A dancer you follow starts working at any club."],
-      ["Upcoming shifts", "A dancer you follow posts an upcoming shift."],
-      ["New Club Deals", "A club you follow publishes a new deal."],
-      ["New dancers", "A dancer joins a club you follow."]
-    ];
-
     const adminUsers = [];
 
     Object.values(markets).forEach((market) => {
@@ -43352,6 +43345,10 @@
     }
 
     function saveAuthSession(session) {
+      try {
+        const pushAccount = localStorage.getItem("mydancr:push-account");
+        if (pushAccount && pushAccount !== session?.account?.id) void clearCustomerPushDevice();
+      } catch (error) {}
       authSession = session;
       const role = session?.account?.role || session?.role;
       const email =
@@ -43385,6 +43382,17 @@
       } catch (error) {
         return false;
       }
+    }
+
+    async function clearCustomerPushDevice() {
+      try {
+        localStorage.removeItem("mydancr:push-account");
+        if (!("serviceWorker" in navigator)) return;
+        const registration = await navigator.serviceWorker.getRegistration("/push/onesignal/");
+        if (!registration?.scope.endsWith("/push/onesignal/")) return;
+        const subscription = await registration?.pushManager.getSubscription();
+        if (!localStorage.getItem("mydancr:push-account")) await subscription?.unsubscribe();
+      } catch (error) {}
     }
 
     function savePendingAuthConfirmation(state) {
@@ -45237,11 +45245,6 @@
       if (!(await loadLiveCustomerSaved())) loaded = false;
       liveCustomerDashboardState = loaded ? "ready" : "error";
       if (customerDashboard.classList.contains("show")) renderDashboard();
-    }
-
-    function customerNotificationSettingsPayload() {
-      const toggle = notificationSettings.querySelector('[data-notification-key="followAlertsEnabled"]');
-      return { followAlertsEnabled: Boolean(toggle?.classList.contains("on")) };
     }
 
     function saveLiveCustomerProfile(update) {
@@ -57987,18 +57990,7 @@
     }
 
     function renderNotificationSettings() {
-      const enabled = liveCustomerProfile?.notificationSettings?.followAlertsEnabled !== false;
-      notificationSettings.innerHTML = `
-        <div class="toggle-row">
-          <span class="follow-alert-master-copy"><strong>Follow alerts</strong><small>Dancers and clubs you choose only</small></span>
-          <button class="switch ${enabled ? "on" : ""}" aria-checked="${enabled}" aria-label="Follow notifications" data-notification-key="followAlertsEnabled" role="switch"></button>
-        </div>
-        <div class="customer-follow-alert-summary">
-          ${followNotificationSummaries.map(([title, description]) => `
-            <div><i aria-hidden="true">✓</i><span><strong>${title}</strong><small>${description}</small></span></div>
-          `).join("")}
-        </div>
-      `;
+      notificationSettings.innerHTML = '<a class="action-btn secondary" href="/dashboard/customer#customer-alerts">Manage notification preferences</a>';
     }
 
     function allProfiles() {
@@ -64141,15 +64133,6 @@
       document.querySelectorAll(".tab").forEach((item) => item.classList.toggle("active", item.dataset.tab === "dancers"));
       render();
       tabTitle?.scrollIntoView({ behavior: "smooth", block: "start" });
-    });
-
-    notificationSettings.addEventListener("click", (event) => {
-      const toggle = event.target.closest(".switch");
-      if (!toggle) return;
-      toggle.classList.toggle("on");
-      toggle.setAttribute("aria-checked", String(toggle.classList.contains("on")));
-      saveLiveCustomerProfile({ notificationSettings: customerNotificationSettingsPayload() });
-      renderCustomerQuickActions();
     });
 
     customerDashboard.addEventListener("click", (event) => {

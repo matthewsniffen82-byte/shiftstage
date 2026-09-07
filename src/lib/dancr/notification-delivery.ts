@@ -3,6 +3,8 @@ import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { publicAppUrl } from "./public-app-url";
 import type { Json, NotificationType } from "./types";
+import { customerNotificationSettings, customerFollowAlertEnabled, followAlertKey } from "./customer-notification-preferences";
+import { customerPushExternalId } from "./customer-notification-delivery";
 
 type DancrClient = SupabaseClient;
 const DELIVERY_PROVIDER_TIMEOUT_MS = 10_000;
@@ -18,14 +20,38 @@ export type NotificationDeliveryRow = {
 type Recipient = {
   id: string;
   email: string | null;
+  role?: string;
 };
 
 export async function deliverNotificationRows(client: DancrClient, rows: NotificationDeliveryRow[], options: { email?: boolean; push?: boolean } = {}) {
   if (!rows.length) return { push: 0, email: 0 };
 
   const recipients = await getRecipients(client, rows.map((row) => row.recipient_id));
-  const push = options.push === false ? 0 : await deliverPushNotifications(rows);
-  const email = options.email === false ? 0 : await deliverEmailNotifications(rows, recipients);
+  const recipientById = new Map(recipients.map(recipient => [recipient.id, recipient]));
+  const customerIds = recipients.filter(recipient => recipient.role === "customer").map(recipient => recipient.id);
+  const settingsById = new Map<string, unknown>();
+  if (customerIds.length) {
+    const { data, error } = await client.from("customer_profiles").select("user_id, notification_settings").in("user_id", customerIds);
+    if (error) {
+      console.warn("NOTIFICATION_PREFERENCES_UNAVAILABLE");
+      // Missing preferences default to no external delivery for customers.
+    }
+    if (!error) for (const profile of data || []) settingsById.set(profile.user_id, profile.notification_settings);
+  }
+  const allowed = (row: NotificationDeliveryRow, channel: "emailEnabled" | "pushEnabled") => {
+    const recipient = recipientById.get(row.recipient_id);
+    if (!recipient) return false;
+    if (recipient.role !== "customer") return true;
+    const settings = settingsById.get(recipient.id);
+    const key = followAlertKey((row.payload as Record<string, unknown> | null)?.kind);
+    return customerNotificationSettings(settings)[channel] && (!key || customerFollowAlertEnabled(settings, key));
+  };
+  const pushRows = rows.filter(row => allowed(row, "pushEnabled")).map(row => ({
+    ...row,
+    recipient_id: recipientById.get(row.recipient_id)?.role === "customer" ? customerPushExternalId(row.recipient_id) : row.recipient_id,
+  }));
+  const push = options.push === false ? 0 : await deliverPushNotifications(pushRows);
+  const email = options.email === false ? 0 : await deliverEmailNotifications(rows.filter(row => allowed(row, "emailEnabled")), recipients);
 
   return { push, email };
 }
@@ -74,7 +100,7 @@ async function getRecipients(client: DancrClient, recipientIds: string[]): Promi
 
   const { data, error } = await (client as any)
     .from("app_users")
-    .select("id, email")
+    .select("id, email, role")
     .in("id", ids)
     .eq("account_state", "active");
 
@@ -102,6 +128,7 @@ async function deliverPushNotifications(rows: NotificationDeliveryRow[]) {
         headings: { en: row.title },
         contents: { en: row.body },
         data: row.payload || {},
+        ...(notificationActionUrl(row) ? { url: notificationActionUrl(row) } : {}),
       }),
     });
 
@@ -184,6 +211,7 @@ function notificationActionUrl(row: NotificationDeliveryRow) {
   const payload = (row.payload || {}) as Record<string, unknown>;
   const baseUrl = publicAppUrl();
   if (!baseUrl) return "";
+  if (followAlertKey(payload.kind)) return `${baseUrl}/dashboard/customer#customer-alerts`;
 
   if (row.notification_type === "dmca_status" && payload.caseId) {
     return `${baseUrl}/dmca/counter/${encodeURIComponent(String(payload.caseId))}`;

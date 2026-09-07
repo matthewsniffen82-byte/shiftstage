@@ -13,34 +13,34 @@ const [dashboard, liveShell, profileRoute, broadcasts, shiftRoute, nfcRoute, dan
   readFile(new URL("../src/lib/dancr/venue-deal-actions.ts", import.meta.url), "utf8"),
 ]);
 
-test("guest notification settings use one auto-saving follow-alert switch", () => {
-  const panel = dashboard.match(/function CustomerPreferencesPanel[\s\S]*?function readSetting/)?.[0] || "";
+test("customer alert preferences use independent auto-saving switches under Alerts", () => {
+  const panel = dashboard.match(/function CustomerPreferencesPanel[\s\S]*?type DancerIdentityDraft/)?.[0] || "";
   assert.match(panel, /role="switch"/);
-  assert.match(panel, /aria-checked=\{followAlertsEnabled\}/);
-  assert.match(panel, /saveFollowAlerts\(!followAlertsEnabled\)/);
-  assert.match(panel, /notificationSettings: \{ followAlertsEnabled: nextEnabled \}/);
+  assert.match(panel, /aria-checked=\{checked\}/);
+  assert.match(panel, /savePreference\(alert.key, !settings\[alert.key\]\)/);
+  assert.match(panel, /notificationSettings: \{ \[key\]: nextEnabled \}/);
   assert.doesNotMatch(panel, /City|Save preferences|type="checkbox"|CUSTOMER_NOTIFICATION_OPTIONS/);
-
-  for (const label of ["Working Now", "Upcoming shifts", "New Club Deals", "New dancers"]) {
-    assert.match(panel, new RegExp(label));
-    assert.match(liveShell, new RegExp(label));
-  }
+  assert.match(panel, /Email notifications/);
+  assert.match(panel, /Push notifications/);
+  const alerts = dashboard.slice(dashboard.indexOf('id="customer-alerts"'), dashboard.indexOf('id="customer-account"'));
+  assert.match(alerts, /<CustomerPreferencesPanel/);
   for (const removed of ["Followed dancers only", "Followed clubs only", "Any dancer in city", "Venue schedules", "Club changes", "Cancelled shifts"]) {
     assert.doesNotMatch(panel, new RegExp(removed));
     assert.doesNotMatch(liveShell, new RegExp(removed));
   }
-  assert.match(liveShell, /data-notification-key="followAlertsEnabled" role="switch"/);
-  assert.match(liveShell, /saveLiveCustomerProfile\(\{ notificationSettings: customerNotificationSettingsPayload\(\) \}\)/);
+  assert.match(liveShell, /href="\/dashboard\/customer#customer-alerts">Manage notification preferences/);
+  assert.doesNotMatch(liveShell, /One switch controls/);
 });
 
-test("the customer profile endpoint accepts only the canonical master setting", () => {
-  assert.match(profileRoute, /typeof followAlertsEnabled !== "boolean"/);
-  assert.match(profileRoute, /update\.notificationSettings = \{ followAlertsEnabled \}/);
+test("the customer profile endpoint validates a partial preference patch and channel availability", () => {
+  assert.match(profileRoute, /parseCustomerNotificationPatch\(body.notificationSettings\)/);
+  assert.match(profileRoute, /!delivery.emailAvailable/);
+  assert.match(profileRoute, /!delivery.pushAvailable/);
   assert.doesNotMatch(profileRoute, /update\.notificationSettings = body\.notificationSettings/);
 });
 
 test("follow alerts are globally gated, active-customer-only, and idempotent", () => {
-  assert.match(broadcasts, /followAlertsEnabled !== false/);
+  assert.match(broadcasts, /customerFollowAlertEnabled\(settingsById.get\(customerId\), alertKey\)/);
   assert.match(broadcasts, /\.eq\("role", "customer"\)[\s\S]*?\.eq\("account_state", "active"\)/);
   assert.match(broadcasts, /\.from\(source\)[\s\S]*?\.eq\(targetColumn, targetId\)/);
   assert.doesNotMatch(broadcasts, /\.eq\("notifications_enabled", true\)/);

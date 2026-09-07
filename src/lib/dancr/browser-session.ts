@@ -51,6 +51,8 @@ export function persistBrowserAuthSession(session: unknown) {
   if (typeof next.accessToken !== "string" || !next.accessToken) return false;
 
   try {
+    const previousPushAccount = window.localStorage.getItem("mydancr:push-account");
+    if (previousPushAccount && previousPushAccount !== next.account?.id) void clearCustomerPushDevice();
     window.localStorage.setItem(BROWSER_AUTH_SESSION_KEY, JSON.stringify(next));
     return true;
   } catch {
@@ -90,11 +92,23 @@ export function clearBrowserAuthSession() {
   if (typeof window === "undefined") return false;
 
   try {
+    void clearCustomerPushDevice();
     window.localStorage.removeItem(BROWSER_AUTH_SESSION_KEY);
     return true;
   } catch {
     return false;
   }
+}
+
+async function clearCustomerPushDevice() {
+  try {
+    window.localStorage.removeItem("mydancr:push-account");
+    if (!("serviceWorker" in window.navigator)) return;
+    const registration = await window.navigator.serviceWorker.getRegistration("/push/onesignal/");
+    if (!registration?.scope.endsWith("/push/onesignal/")) return;
+    const subscription = await registration?.pushManager.getSubscription();
+    if (!window.localStorage.getItem("mydancr:push-account")) await subscription?.unsubscribe();
+  } catch { /* Best-effort native cleanup also works when the push SDK is not loaded. */ }
 }
 
 export async function revokeBrowserAuthSession() {

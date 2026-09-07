@@ -36,7 +36,7 @@ test("customer refresh responses persist any rotated authentication session", ()
   assert.match(savedRouteSource, /const \{ client, user, session \} = await createRequestSupabaseContext\(request\)/);
   assert.match(savedRouteSource, /NextResponse\.json\(\{ ok: true, saved, session \}\)/);
   assert.match(profileRouteSource, /const \{ client, user, session \} = await createRequestSupabaseContext\(request\)/);
-  assert.match(profileRouteSource, /NextResponse\.json\(\{ ok: true, profile, session \}\)/);
+  assert.match(profileRouteSource, /NextResponse\.json\(\{ ok: true, profile: \{ \.\.\.profile, notificationDelivery: customerNotificationDelivery\(user.id, user.email\) \}, session \}\)/);
 });
 
 test("saved customer queries support the deployed schema until is_public migration is applied", () => {

@@ -1082,7 +1082,7 @@ test("customer preference saves use the refresh-aware customer boundary", async 
     globalThis.window = previousWindow;
   }
 
-  const preferencesPanel = dashboard.match(/function CustomerPreferencesPanel[\s\S]*?function readSetting/)?.[0] || "";
+  const preferencesPanel = dashboard.match(/function CustomerPreferencesPanel[\s\S]*?type DancerIdentityDraft/)?.[0] || "";
   assert.match(dashboardSession, /function requestCustomerProfileJson/);
   assert.match(preferencesPanel, /requestCustomerProfileJson/);
   assert.doesNotMatch(preferencesPanel, /fetch\("\/api\/customer\/profile"/);
@@ -1094,7 +1094,7 @@ test("customer preference saves use the refresh-aware customer boundary", async 
   assert.match(preferencesPanel, /if \(!mountedRef\.current \|\| actionInFlightRef\.current\) return null;/);
   assert.match(preferencesPanel, /signal: controller\.signal/);
   assert.match(preferencesPanel, /if \(!isCurrentPreferencesAction\(requestId, controller\)\) return;/);
-  assert.match(preferencesPanel, /\.followAlertsEnabled === nextEnabled/);
+  assert.match(preferencesPanel, /\[key\] === nextEnabled/);
   assert.match(preferencesPanel, /Your notification setting was not confirmed\. Please try again\./);
   assert.match(preferencesPanel, /disabled=\{isSaving\}/);
   assert.match(preferencesPanel, /mountedRef\.current = false;[\s\S]*?actionSequenceRef\.current \+= 1;[\s\S]*?actionAbortRef\.current\?\.abort\(\);[\s\S]*?actionInFlightRef\.current = false;/);

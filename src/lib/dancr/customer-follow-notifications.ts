@@ -3,6 +3,8 @@ import "server-only";
 import { createHash } from "node:crypto";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { deliverNotificationRows, type NotificationDeliveryRow } from "./notification-delivery";
+import { customerFollowAlertEnabled, type CustomerAlertKey } from "./customer-notification-preferences";
+export { customerFollowAlertsEnabled } from "./customer-notification-preferences";
 
 type DancrClient = SupabaseClient;
 type FollowSource = "follows" | "venue_follows";
@@ -21,7 +23,7 @@ export async function broadcastFollowedDancerUpcomingShift(
   client: DancrClient,
   input: FollowNotificationInput & { shiftDate: string },
 ) {
-  const recipientIds = await followedCustomerIds(client, "follows", "dancer_id", input.dancerId || "");
+  const recipientIds = await followedCustomerIds(client, "follows", "dancer_id", input.dancerId || "", "upcomingShifts");
   return persistAndDeliver(client, recipientIds, input, {
     notificationType: "shift_posted",
     title: `${input.stageName} posted an upcoming shift`,
@@ -35,7 +37,7 @@ export async function broadcastFollowedDancerWorkingNow(
   client: DancrClient,
   input: FollowNotificationInput,
 ) {
-  const recipientIds = await followedCustomerIds(client, "follows", "dancer_id", input.dancerId || "");
+  const recipientIds = await followedCustomerIds(client, "follows", "dancer_id", input.dancerId || "", "workingNow");
   return persistAndDeliver(client, recipientIds, input, {
     notificationType: "shift_updated",
     title: `${input.stageName} is Working Now`,
@@ -48,7 +50,7 @@ export async function broadcastFollowedClubDealPublished(
   client: DancrClient,
   input: FollowNotificationInput & { dealTitle: string },
 ) {
-  const recipientIds = await followedCustomerIds(client, "venue_follows", "venue_id", input.venueId);
+  const recipientIds = await followedCustomerIds(client, "venue_follows", "venue_id", input.venueId, "clubDeals");
   return persistAndDeliver(client, recipientIds, input, {
     notificationType: "engagement",
     title: `New Club Deal at ${input.venueName}`,
@@ -61,7 +63,7 @@ export async function broadcastFollowedClubRosterAddition(
   client: DancrClient,
   input: FollowNotificationInput,
 ) {
-  const recipientIds = await followedCustomerIds(client, "venue_follows", "venue_id", input.venueId);
+  const recipientIds = await followedCustomerIds(client, "venue_follows", "venue_id", input.venueId, "newDancers");
   return persistAndDeliver(client, recipientIds, input, {
     notificationType: "engagement",
     title: `${input.stageName} joined ${input.venueName}`,
@@ -70,16 +72,12 @@ export async function broadcastFollowedClubRosterAddition(
   });
 }
 
-export function customerFollowAlertsEnabled(settings: unknown) {
-  if (!settings || typeof settings !== "object" || Array.isArray(settings)) return true;
-  return (settings as Record<string, unknown>).followAlertsEnabled !== false;
-}
-
 async function followedCustomerIds(
   client: DancrClient,
   source: FollowSource,
   targetColumn: "dancer_id" | "venue_id",
   targetId: string,
+  alertKey: CustomerAlertKey,
 ): Promise<string[]> {
   if (!targetId) return [];
   const { data: follows, error: followsError } = await (client as any)
@@ -113,7 +111,7 @@ async function followedCustomerIds(
     [profile.user_id, profile.notification_settings]
   )));
   return candidateIds.filter((customerId) => (
-    activeIds.has(customerId) && customerFollowAlertsEnabled(settingsById.get(customerId))
+    activeIds.has(customerId) && customerFollowAlertEnabled(settingsById.get(customerId), alertKey)
   ));
 }
 
