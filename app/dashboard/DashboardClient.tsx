@@ -2102,7 +2102,7 @@ function SavedVenueLogo({ venue }: { venue: SavedVenueSummary }) {
   if (!logoUrl || failedUrl === logoUrl) {
     return <svg className="customer-club-logo-fallback" viewBox="0 0 64 64" aria-hidden="true"><path d="M12 54V22L32 10l20 12v32M8 54h48M23 54V40h18v14M23 25h18M23 32h18" /></svg>;
   }
-  return <img src={logoUrl} srcSet={venue.logoImageSrcSet || undefined} sizes="92px" width={venue.logoImageWidth || undefined} height={venue.logoImageHeight || undefined} alt={`${venue.name || "Club"} logo`} loading="lazy" decoding="async" onError={() => setFailedUrl(logoUrl)} />;
+  return <img src={logoUrl} srcSet={venue.logoImageSrcSet || undefined} sizes="(max-width: 380px) 104px, 124px" width={venue.logoImageWidth || undefined} height={venue.logoImageHeight || undefined} alt={`${venue.name || "Club"} logo`} loading="lazy" decoding="async" onError={() => setFailedUrl(logoUrl)} />;
 }
 
 function CustomerDirectionsButton({
@@ -8729,10 +8729,10 @@ function DashboardStyles() {
       .customer-saved-card .customer-card-actions > * { min-width: 0; width: 100%; padding-inline: 7px; }
       .customer-saved-card-grid.customer-favorite-club-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
       .customer-favorite-club-card { border: 1px solid rgba(185,149,255,.22); border-radius: 16px; background: linear-gradient(155deg, #141019, #09090e 72%); box-shadow: 0 8px 22px rgba(0,0,0,.24), inset 0 1px 0 rgba(255,255,255,.04); }
-      .customer-favorite-club-header { display: grid; grid-template-columns: 92px minmax(0, 1fr) 36px; align-items: center; gap: 10px; padding: 12px 12px 0; }
-      .customer-favorite-club-brand { min-width: 0; height: 58px; overflow: hidden; border: 1px solid rgba(172,122,255,.12); border-radius: 10px; background: #050507; }
-      .customer-favorite-club-logo { height: 100%; display: grid; place-items: center; padding: 6px; }
-      .customer-favorite-club-logo > img { display: block; width: 100%; height: 100%; max-height: 46px; object-fit: contain; }
+      .customer-favorite-club-header { display: grid; grid-template-columns: 124px minmax(0, 1fr) 36px; align-items: center; gap: 10px; padding: 12px 12px 0; }
+      .customer-favorite-club-brand { min-width: 0; height: 68px; overflow: hidden; border: 1px solid rgba(172,122,255,.12); border-radius: 10px; background: #050507; }
+      .customer-favorite-club-logo { height: 100%; display: grid; place-items: center; padding: 0; }
+      .customer-favorite-club-logo > img { display: block; width: 100%; height: 100%; max-height: 66px; object-fit: contain; }
       .customer-favorite-club-identity { min-width: 0; display: grid; gap: 4px; }
       .customer-favorite-club-identity > a { color: #fff; text-decoration: none; }
       .customer-favorite-club-identity strong { display: block; font-size: 17px; font-weight: 900; letter-spacing: -.02em; line-height: 1.2; overflow-wrap: anywhere; }
@@ -8763,7 +8763,7 @@ function DashboardStyles() {
       body.dancr-button-system .customer-favorite-club-card .customer-favorite-club-actions > :is(a, button) { box-sizing: border-box !important; flex: 0 0 auto !important; width: auto !important; min-width: 0 !important; min-height: 34px !important; margin: 0 !important; padding: 0 12px !important; border: 1px solid rgba(255,255,255,.12) !important; border-radius: 8px !important; color: #e4e0ed !important; background: rgba(255,255,255,.04) !important; box-shadow: none !important; font-size: 11px !important; }
       body.dancr-button-system .customer-favorite-club-card .customer-favorite-club-actions > a { border-color: rgba(178,125,255,.3) !important; color: #f0e7ff !important; background: linear-gradient(130deg, rgba(132,67,211,.2), rgba(106,55,171,.09)) !important; }
       @media (max-width: 700px) { .customer-saved-card-grid.customer-favorite-club-grid { grid-template-columns: minmax(0, 1fr); gap: 10px; } }
-      @media (max-width: 380px) { .customer-favorite-club-header { grid-template-columns: 72px minmax(0, 1fr) 36px; gap: 8px; } .customer-favorite-club-identity strong { font-size: 16px; } }
+      @media (max-width: 380px) { .customer-favorite-club-header { grid-template-columns: 104px minmax(0, 1fr) 36px; gap: 8px; } .customer-favorite-club-identity strong { font-size: 16px; } }
       .customer-empty-state { min-height: 124px; display: grid; place-items: start; align-content: center; gap: 9px; padding: 16px; border: 1px dashed rgba(167,139,250,.3); border-radius: 12px; background: rgba(139,92,246,.05); }
       .customer-empty-state.compact { min-height: 106px; padding: 12px; }
       .customer-empty-state strong { color: #fff; }
