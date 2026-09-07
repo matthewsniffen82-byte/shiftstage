@@ -195,7 +195,6 @@ test("profile setup editors use the compact shared modal shell without changing 
   assert.match(dashboard, /\.dancer-profile-builder-panel\.dancer-profile-editor-modal\[data-section="photos"\] \.photo-review-list \{ grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
   assert.doesNotMatch(dashboard, /dancer-profile-builder-media-empty/);
   assert.match(dashboard, /\.dancer-profile-preview-overlay \.profile-media-grid \{[^}]*grid-template-columns: repeat\(3,minmax\(0,1fr\)\);/);
-  assert.match(dashboard, /\.dancer-profile-builder-empty-slots button \{ width:100%; min-width:0; aspect-ratio:4 \/ 5;/);
 
   assert.match(dashboard, /\.dancer-profile-builder-panel\.dancer-profile-editor-modal,[\s\S]*?width:100%; max-height:min\(88dvh,720px,calc\(100dvh - var\(--mydancr-preview-banner-offset,0px\) - 16px\)\);/);
   assert.match(dashboard, /\.dancer-profile-editor-modal-actions \{[^}]*grid-template-columns:minmax\(0,1fr\) minmax\(132px,190px\)/);
@@ -251,8 +250,7 @@ test("step one uses accessible live-profile add targets that preserve the active
   assert.match(dashboard, /<small>Avatar<\/small>/);
   assert.match(dashboard, /"Stage name"/);
   assert.match(dashboard, /"Add city"/);
-  assert.match(dashboard, /aria-label="Add profile photos"/);
-  assert.match(dashboard, /aria-label="Add profile videos"/);
+  assert.match(dashboard, /<DancerProfileMediaUploads[\s\S]*?onOpen=\{openEditorSection\}/);
   assert.match(dashboard, /aria-label="Add social links"/);
   assert.match(dashboard, /onClick=\{\(\) => openEditorSection\("identity"\)\}/);
   assert.match(dashboard, /onClick=\{\(\) => openEditorSection\("avatar"\)\}/);
@@ -276,21 +274,14 @@ test("step one uses accessible live-profile add targets that preserve the active
   assert.match(dashboard, /"complete" \| "checking" \| "missing" \| "replace" \| "unsaved"/);
 });
 
-test("onboarding profile builder shows five picture and video slots plus working add-more targets", () => {
-  assert.match(dashboard, /const isOnboardingEditor = isEditor && Boolean\(builderRequirements\?\.length\) && !isApproved/);
-  assert.match(dashboard, /aria-label="Five picture slots and add more"/);
-  assert.match(dashboard, /const DANCER_ONBOARDING_MEDIA_PREVIEW_SLOTS = 5/);
-  assert.match(dashboard, /Array\.from\(\{ length: DANCER_ONBOARDING_MEDIA_PREVIEW_SLOTS \}/);
-  assert.match(dashboard, /aria-label=\{photo \? `Edit picture \$\{index \+ 1\}` : `Add picture \$\{index \+ 1\}`\}/);
-  assert.match(dashboard, /<strong>Add more<\/strong><small>Manage pictures<\/small>/);
-  assert.match(dashboard, /Add 1 picture now\. You can add more later\./);
-  assert.match(dashboard, /aria-label="Five video slots and add more"/);
-  assert.match(dashboard, /Array\.from\(\{ length: DANCER_ONBOARDING_MEDIA_PREVIEW_SLOTS \}/);
-  assert.match(dashboard, /aria-label=\{video \? `Edit video \$\{index \+ 1\}` : `Add video \$\{index \+ 1\}`\}/);
-  assert.match(dashboard, /<strong>Add more<\/strong><small>Manage videos<\/small>/);
-  assert.match(dashboard, /Optional\. You can add videos now or later\./);
+test("onboarding and empty profile editors use the compact uploader with the existing media managers", () => {
+  assert.match(dashboard, /isEditor && \(isOnboardingEditor \|\| \(!photos\.length && !videos\.length\)\)/);
+  assert.match(dashboard, /<DancerProfileMediaUploads[\s\S]*?photos=\{profilePhotoItems\}[\s\S]*?videos=\{uploadedVideos\.map/);
+  assert.match(dashboard, /onOpen=\{openEditorSection\}/);
+  assert.match(dashboard, /const videos = uploadedVideos\.filter\(\(video\) => video\.status === "approved" && video\.videoUrl\)/);
+  assert.match(dashboard, /status === "hidden" \|\| status === "removed" \|\| status === "expired"/);
+  assert.doesNotMatch(dashboard, /Five picture slots|Five video slots|DANCER_ONBOARDING_MEDIA_PREVIEW_SLOTS|dancer-profile-builder-empty-slots/);
   assert.match(dashboard, /isEditor && !isOnboardingEditor/);
-  assert.match(dashboard, /\.dancer-profile-builder-slot-grid \{[^}]*grid-template-columns:repeat\(3,minmax\(0,1fr\)\)/);
 });
 
 test("approved dancer dashboard sections arrive collapsed with a clear tool hierarchy", () => {
@@ -421,7 +412,7 @@ test("the full profile preview renders approved media and restores the dashboard
   assert.match(dashboard, /const photos = approvedPhotos\.map/);
   assert.match(dashboard, /requestDancerTvVideosJson\(\{[\s\S]*?cache: "no-store"/);
   assert.doesNotMatch(dashboard, /readJson\("\/api\/dancer\/tv\/videos"/);
-  assert.match(dashboard, /String\(video\?\.status \|\| ""\)\.toLowerCase\(\) !== "approved"/);
+  assert.match(dashboard, /uploadedVideos\.filter\(\(video\) => video\.status === "approved" && video\.videoUrl\)/);
   assert.match(dashboard, /videos=\{videos\}/);
   assert.match(dashboard, /const socialLinks = dancerPreviewSocialLinks\(profile\)/);
   assert.match(dashboard, /<SocialLinks[\s\S]*heading="Socials"[\s\S]*links=\{socialLinks\}[\s\S]*showConnectLabel=\{false\}[\s\S]*trackClicks=\{false\}/);

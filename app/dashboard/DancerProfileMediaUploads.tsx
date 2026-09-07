@@ -1,0 +1,115 @@
+"use client";
+
+type UploadItem = {
+  id: string;
+  imageUrl?: string | null;
+  status: string;
+};
+
+export function profileUploadStatus(status: string) {
+  switch (status) {
+    case "approved": return "Ready for profile";
+    case "uploading": return "Upload incomplete";
+    case "pending":
+    case "moderating":
+    case "submitted":
+    case "review": return "Checking · Not public yet";
+    case "rejected": return "Not posted · Replace";
+    case "failed": return "Upload failed · Try again";
+    default: return "Check upload status";
+  }
+}
+
+export default function DancerProfileMediaUploads({
+  photos,
+  videos,
+  isApproved,
+  isPublic,
+  isVideoLoading,
+  videoError,
+  onOpen,
+}: {
+  photos: UploadItem[];
+  videos: UploadItem[];
+  isApproved: boolean;
+  isPublic: boolean;
+  isVideoLoading: boolean;
+  videoError: string;
+  onOpen: (section: "photos" | "videos") => void;
+}) {
+  return (
+    <section className="dancer-profile-media-uploads" aria-label="Add profile photos and videos">
+      {(["photos", "videos"] as const).map((section) => {
+        const isPhoto = section === "photos";
+        const label = isPhoto ? "Photo" : "Video";
+        const items = isPhoto ? photos : videos;
+        return (
+          <div className="profile-upload-group" key={section}>
+            <header>
+              <strong>{isPhoto ? "Photos" : "Videos"}</strong>
+              <small>{isPhoto ? "At least 1 solo photo" : "Optional"}</small>
+              <span>{!isPhoto && isVideoLoading ? "Loading…" : !isPhoto && videoError ? "Unavailable" : `${items.length} added`}</span>
+            </header>
+            <button className="profile-upload-entry" data-profile-editor-trigger={section} onClick={() => onOpen(section)} type="button">
+              <svg aria-hidden="true" viewBox="0 0 24 24">
+                {isPhoto ? <><rect x="3" y="4" width="18" height="16" rx="3" /><circle cx="8" cy="9" r="1.5" /><path d="m5 17 4-4 3 3 3-4 4 5" /></> : <><rect x="3" y="6" width="12" height="12" rx="2" /><path d="m15 10 6-3v10l-6-3" /></>}
+              </svg>
+              <span><strong>Add {label.toLowerCase()}</strong><small>Camera or phone files</small></span>
+              <b aria-hidden="true">+</b>
+            </button>
+            {items.length ? (
+              <ul className="profile-upload-items" aria-label={`Uploaded ${section}`}>
+                {items.map((item, index) => (
+                  <li key={item.id}>
+                    <button aria-label={`Manage ${label.toLowerCase()} ${index + 1}: ${profileUploadStatus(item.status)}`} onClick={() => onOpen(section)} type="button">
+                      <span className="profile-upload-thumbnail">
+                        {item.imageUrl ? <img alt="" loading="lazy" src={item.imageUrl} /> : <span aria-hidden="true">{isPhoto ? "▧" : "▶"}</span>}
+                        {!isPhoto && item.imageUrl ? <i aria-hidden="true">▶</i> : null}
+                      </span>
+                      <strong>{label} {index + 1}</strong>
+                      <small className={item.status === "approved" ? "is-ready" : ""}>{profileUploadStatus(item.status)}</small>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            ) : null}
+            {!isPhoto && videoError ? <p role="status">{videoError} <button className="profile-upload-retry" onClick={() => onOpen("videos")} type="button">Open video manager to retry</button></p> : null}
+          </div>
+        );
+      })}
+      <p className="profile-upload-visibility" role="status" aria-live="polite">
+        {isApproved
+          ? isPublic ? "Approved uploads appear on your profile." : "Uploads stay saved. Turn off incognito to show approved media on your profile."
+          : "Uploaded photos and videos will appear on your profile after review and completion of your profile setup."}
+      </p>
+      <style>{`
+        .dancer-profile-media-uploads { width:min(100%,760px); min-width:0; display:grid; gap:16px; margin:12px auto 0; }
+        .profile-upload-group { min-width:0; display:grid; gap:9px; }
+        .profile-upload-group > header { display:flex; align-items:baseline; flex-wrap:wrap; gap:6px 10px; }
+        .profile-upload-group > header strong { color:#fff; font-size:18px; line-height:1.3; }
+        .profile-upload-group > header small { color:#bdb7c9; font-size:12px; }
+        .profile-upload-group > header > span { margin-left:auto; color:#c9c3d2; font-size:12px; }
+        .dancer-profile-media-uploads .profile-upload-entry { width:100%; min-width:0; min-height:78px; display:flex; align-items:center; gap:14px; padding:14px 16px; border:1px solid #645778; border-radius:16px; color:#fff; background:linear-gradient(120deg,#221333,#100d18); text-align:left; font:inherit; cursor:pointer; }
+        .profile-upload-entry > svg { width:28px; height:28px; flex:0 0 28px; fill:none; stroke:#d5baff; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
+        .profile-upload-entry > span { min-width:0; display:grid; gap:4px; }
+        .profile-upload-entry strong { color:#fff; font-size:16px; line-height:1.2; }
+        .profile-upload-entry small { color:#c9c3d2; font-size:12px; line-height:1.3; }
+        .profile-upload-entry > b { margin-left:auto; color:#e4d5ff; font-size:26px; line-height:1; }
+        .profile-upload-items { min-width:0; display:flex; gap:10px; overflow-x:auto; margin:0; padding:2px 0 8px; list-style:none; }
+        .profile-upload-items > li { flex:0 0 112px; min-width:0; }
+        .dancer-profile-media-uploads .profile-upload-items button { width:100%; min-height:44px; display:grid; gap:4px; padding:0; border:0; border-radius:8px; background:transparent; color:#fff; text-align:left; font:inherit; cursor:pointer; }
+        .profile-upload-thumbnail { position:relative; width:100%; height:84px; display:grid; place-items:center; overflow:hidden; border:1px solid #40384b; border-radius:8px; background:#15101d; color:#c9c3d2; }
+        .profile-upload-thumbnail img { width:100%; height:100%; display:block; object-fit:cover; }
+        .profile-upload-thumbnail i { position:absolute; inset:auto 5px 5px auto; padding:3px 6px; border-radius:6px; background:#000b; color:#fff; font-size:12px; font-style:normal; }
+        .profile-upload-items strong { font-size:12px; line-height:1.3; }
+        .profile-upload-items small { color:#d4c3e9; font-size:11px; line-height:1.35; }
+        .profile-upload-items small.is-ready { color:#8ce4b2; }
+        .dancer-profile-media-uploads .profile-upload-visibility, .profile-upload-group > p { margin:0; color:#c9c3d2; font-size:12px; line-height:1.5; }
+        .dancer-profile-media-uploads .profile-upload-retry { min-height:44px; padding:6px 0; border:0; background:transparent; color:#fff; font:inherit; text-decoration:underline; cursor:pointer; }
+        .dancer-profile-media-uploads button:focus-visible { outline:2px solid #fff; outline-offset:3px; }
+        body.dancr-button-system .dancer-profile-media-uploads .profile-upload-entry { min-height:78px !important; padding:14px 16px !important; border-radius:16px !important; background:linear-gradient(120deg,#221333,#100d18) !important; box-shadow:none !important; }
+        body.dancr-button-system .dancer-profile-media-uploads .profile-upload-items button { padding:0 !important; border:0 !important; border-radius:8px !important; background:transparent !important; box-shadow:none !important; }
+      `}</style>
+    </section>
+  );
+}

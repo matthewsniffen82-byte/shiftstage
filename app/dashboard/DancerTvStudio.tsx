@@ -612,6 +612,13 @@ export default function DancerTvStudio({ embedded = false }: { embedded?: boolea
               ) : <div className="tv-video-unavailable">Video unavailable</div>}
               <div>
                 <span className={`tv-video-status status-${video.status}`}>{statusLabel(video.status)}</span>
+                {video.status === "approved" ? (
+                  <p>{!workspace.profileEligible
+                    ? "Uploaded. Will appear on your profile after setup and approval."
+                    : workspace.profileVisible
+                      ? "Uploaded. Added to your profile."
+                      : "Uploaded and saved. Hidden while incognito is on."}</p>
+                ) : null}
                 {video.moderationDecision ? (
                   <small className="tv-moderation-summary">
                     Automated review: {video.moderationDecision === "review" ? "sent to a person" : video.moderationDecision}

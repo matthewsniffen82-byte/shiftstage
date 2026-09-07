@@ -73,7 +73,7 @@ test("live shell defers home and full-profile video sources beyond the active wi
 test("saved dashboard videos reuse generated posters without initializing preview players", () => {
   assert.match(tvService, /moderation_details, dancer_profiles/);
   assert.match(tvService, /function mapManagedVideo[\s\S]*?normalizedVideoPosterStoragePath\(video\)[\s\S]*?posterUrl:/);
-  assert.match(dashboard, /poster=\{video\.posterUrl \|\| undefined\}[\s\S]*?preload="none"/);
+  assert.match(dashboard, /imageUrl: video\.posterUrl, status: video\.status/);
   assert.doesNotMatch(dashboard, /primeVideoPreviewFrame/);
   assert.match(dancerStudio, /poster=\{video\.posterUrl \|\| undefined\}[\s\S]*?preload="none"[\s\S]*?src=\{video\.videoUrl\}/);
 });

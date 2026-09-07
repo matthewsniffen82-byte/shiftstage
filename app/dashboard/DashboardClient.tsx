@@ -19,6 +19,7 @@ import type { SocialPlatform } from "@/src/lib/dancr/types";
 import { CLUB_DEAL_OFFER_PRESETS } from "@/src/lib/dancr/club-deal-presets";
 import DancerNfcPanel from "./DancerNfcPanel";
 import DancerTvStudio from "./DancerTvStudio";
+import DancerProfileMediaUploads from "./DancerProfileMediaUploads";
 import DancerShiftManager from "./DancerShiftManager";
 import { DANCER_PROFILE_VIDEOS_CHANGED_EVENT } from "./dancer-profile-media-sync";
 import VenueNfcTagPanel from "./VenueNfcTagPanel";
@@ -3378,6 +3379,7 @@ type DancerIdentityDraft = { stageName: string; city: string };
 
 type DancerPreviewVideo = {
   id: string;
+  status: string;
   videoUrl: string;
   posterUrl?: string | null;
   durationSeconds: number;
@@ -3466,7 +3468,8 @@ function DancerProfilePreview({
   const [editorStatus, setEditorStatus] = useState("");
   const [isMediaLoading, setIsMediaLoading] = useState(false);
   const [mediaError, setMediaError] = useState("");
-  const [videos, setVideos] = useState<DancerPreviewVideo[]>([]);
+  const [uploadedVideos, setUploadedVideos] = useState<DancerPreviewVideo[]>([]);
+  const videos = uploadedVideos.filter((video) => video.status === "approved" && video.videoUrl);
   const closeRef = useRef<HTMLButtonElement>(null);
   const overlayRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
@@ -3620,7 +3623,7 @@ function DancerProfilePreview({
     if (!isOpen) return;
     if (!readSession()?.accessToken) {
       setIsMediaLoading(false);
-      setVideos([]);
+      setUploadedVideos([]);
       setMediaError("Sign in again to load your saved profile videos.");
       return;
     }
@@ -3644,13 +3647,15 @@ function DancerProfilePreview({
         });
         if (cancelled || controller.signal.aborted || requestId !== requestSequence) return;
         const savedVideos = Array.isArray(data?.videos) ? data.videos : [];
-        setVideos(savedVideos.flatMap((video: Record<string, unknown>) => {
+        setUploadedVideos(savedVideos.flatMap((video: Record<string, unknown>) => {
           const id = String(video?.id || "").trim();
           const videoUrl = String(video?.videoUrl || "").trim();
           const posterUrl = String(video?.posterUrl || "").trim();
-          if (String(video?.status || "").toLowerCase() !== "approved" || !id || !videoUrl) return [];
+          const status = String(video?.status || "").toLowerCase();
+          if (!id || status === "hidden" || status === "removed" || status === "expired") return [];
           return [{
             id,
+            status,
             videoUrl,
             posterUrl: posterUrl || null,
             durationSeconds: Math.max(0, Number(video?.durationSeconds || 0)),
@@ -3677,7 +3682,7 @@ function DancerProfilePreview({
       void loadVideos();
     };
 
-    setVideos([]);
+    setUploadedVideos([]);
     void loadVideos(true);
     window.addEventListener(DANCER_PROFILE_VIDEOS_CHANGED_EVENT, refreshAfterVideoChange);
 
@@ -3817,90 +3822,16 @@ function DancerProfilePreview({
                 <svg aria-hidden="true" viewBox="0 0 20 20"><path d="M5.5 5.5l9 9M14.5 5.5l-9 9" /></svg>
               </button>
             </header>
-            {isOnboardingEditor ? (
-              <section className="dancer-profile-builder-media-slots" aria-label="Add profile pictures and videos">
-                <div className="dancer-profile-builder-slot-group">
-                  <header>
-                    <span><strong>Pictures</strong><small>Add 1 picture now. You can add more later.</small></span>
-                    <b>{profilePhotoItems.length} added</b>
-                  </header>
-                  <div className="dancer-profile-builder-slot-grid" aria-label="Five picture slots and add more">
-                    {Array.from({ length: DANCER_ONBOARDING_MEDIA_PREVIEW_SLOTS }, (_, index) => {
-                      const photo = profilePhotoItems[index];
-                      return (
-                        <button
-                          aria-label={photo ? `Edit picture ${index + 1}` : `Add picture ${index + 1}`}
-                          className={`dancer-profile-builder-slot${photo ? " has-media" : " is-empty"}`}
-                          key={`picture-slot-${index}`}
-                          onClick={() => openEditorSection("photos")}
-                          type="button"
-                        >
-                          {photo?.imageUrl ? <img alt="" src={photo.imageUrl} /> : <span aria-hidden="true">+</span>}
-                          <small>{photo ? photo.status === "pending" ? "Checking" : photo.status === "rejected" ? "Replace" : `Picture ${index + 1}` : `Picture ${index + 1}`}</small>
-                        </button>
-                      );
-                    })}
-                    <button className="dancer-profile-builder-slot is-more" data-profile-editor-trigger="photos" onClick={() => openEditorSection("photos")} type="button">
-                      <span aria-hidden="true">+</span><strong>Add more</strong><small>Manage pictures</small>
-                    </button>
-                  </div>
-                </div>
-                <div className="dancer-profile-builder-slot-group">
-                  <header>
-                    <span><strong>Videos</strong><small>Optional. You can add videos now or later.</small></span>
-                    <b>{videos.length} added</b>
-                  </header>
-                  <div className="dancer-profile-builder-slot-grid" aria-label="Five video slots and add more">
-                    {Array.from({ length: DANCER_ONBOARDING_MEDIA_PREVIEW_SLOTS }, (_, index) => {
-                      const video = videos[index];
-                      return (
-                        <button
-                          aria-label={video ? `Edit video ${index + 1}` : `Add video ${index + 1}`}
-                          className={`dancer-profile-builder-slot is-video${video ? " has-media" : " is-empty"}`}
-                          key={`video-slot-${index}`}
-                          onClick={() => openEditorSection("videos")}
-                          type="button"
-                        >
-                          {video ? (
-                            <video
-                              aria-hidden="true"
-                              muted
-                              playsInline
-                              poster={video.posterUrl || undefined}
-                              preload="none"
-                            />
-                          ) : <span aria-hidden="true">+</span>}
-                          {video ? <i aria-hidden="true">▶</i> : null}
-                          <small>{video ? `Video ${index + 1}` : `Video ${index + 1}`}</small>
-                        </button>
-                      );
-                    })}
-                    <button className="dancer-profile-builder-slot is-more" data-profile-editor-trigger="videos" onClick={() => openEditorSection("videos")} type="button">
-                      <span aria-hidden="true">+</span><strong>Add more</strong><small>Manage videos</small>
-                    </button>
-                  </div>
-                </div>
-              </section>
-            ) : isEditor && !photos.length && !videos.length ? (
-              <section className="profile-media-section dancer-profile-builder-empty-media" aria-label="Add profile media">
-                <div className="profile-media-tabs" role="group" aria-label="Add photos or videos">
-                  <button aria-label="Add profile photos" className="active" onClick={() => openEditorSection("photos")} type="button">
-                    <svg aria-hidden="true" className="profile-media-tab-icon" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="3" /><circle cx="8.5" cy="9" r="1.5" /><path d="m5 17 4.5-4.5 3.2 3.2 2.2-2.2L19 17" /></svg>
-                    <span className="profile-media-tab-label">Photos</span>
-                    <span className="profile-media-tab-count" aria-hidden="true">+</span>
-                  </button>
-                  <button aria-label="Add profile videos" onClick={() => openEditorSection("videos")} type="button">
-                    <svg aria-hidden="true" className="profile-media-tab-icon" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="3" /><path className="profile-media-tab-play" d="m10 9 5 3-5 3Z" /></svg>
-                    <span className="profile-media-tab-label">Videos</span>
-                    <span className="profile-media-tab-count" aria-hidden="true">+</span>
-                  </button>
-                </div>
-                <div className="profile-media-grid dancer-profile-builder-empty-slots" aria-label="Empty photo grid preview">
-                  {Array.from({ length: 6 }, (_, index) => (
-                    <button aria-label={`Add photo ${index + 1}`} key={index} onClick={() => openEditorSection("photos")} type="button">+</button>
-                  ))}
-                </div>
-              </section>
+            {isEditor && (isOnboardingEditor || (!photos.length && !videos.length)) ? (
+              <DancerProfileMediaUploads
+                photos={profilePhotoItems}
+                videos={uploadedVideos.map((video) => ({ id: video.id, imageUrl: video.posterUrl, status: video.status }))}
+                isApproved={isApproved}
+                isPublic={isPublic}
+                isVideoLoading={isMediaLoading}
+                videoError={mediaError}
+                onOpen={openEditorSection}
+              />
             ) : (
               <>
                 <DancerPhotoCarousel dancerId={typeof profile?.id === "string" ? profile.id : undefined} photos={photos} stageName={previewName} videos={videos} />
@@ -6963,7 +6894,6 @@ type DancerPhotoItem = {
   sortOrder?: number;
 };
 
-const DANCER_ONBOARDING_MEDIA_PREVIEW_SLOTS = 5;
 const DANCER_PHOTOS_KEEP_OPEN_EVENT = "mydancr:dancer-photos-keep-open";
 
 type DancerPhotoQueueItem = {
@@ -9448,32 +9378,7 @@ function DashboardStyles() {
       .dancer-profile-builder-city span { font-size:10px; font-weight:950; }
       body.dancr-button-system .dancer-profile-builder-identity { min-height:0 !important; padding:0 !important; border:0 !important; border-radius:0 !important; background:transparent !important; box-shadow:none !important; }
       body.dancr-button-system .dancer-profile-builder-city { min-height:22px !important; padding:0 8px !important; border-radius:999px !important; background:rgba(255,255,255,.035) !important; box-shadow:none !important; }
-      .dancer-profile-builder-empty-slots button { width:100%; min-width:0; aspect-ratio:4 / 5; display:grid; place-items:center; padding:0; border:1px dashed rgba(126,234,255,.27); border-radius:11px; color:#d8f8ff; background:rgba(126,234,255,.045); font:inherit; font-size:24px; cursor:pointer; }
-      body.dancr-button-system .dancer-profile-builder-empty-slots button { min-height:0 !important; padding:0 !important; border-radius:11px !important; background:rgba(126,234,255,.045) !important; box-shadow:none !important; }
 
-      .dancer-profile-builder-media-slots { width:min(100%,760px); max-width:100%; display:grid; gap:16px; margin:10px auto 0; }
-      .dancer-profile-builder-slot-group { min-width:0; display:grid; gap:9px; }
-      .dancer-profile-builder-slot-group > header { display:flex; align-items:end; justify-content:space-between; gap:12px; padding:0 2px; }
-      .dancer-profile-builder-slot-group > header > span { min-width:0; display:grid; gap:2px; }
-      .dancer-profile-builder-slot-group > header strong { color:#fff; font-size:17px; line-height:1.15; }
-      .dancer-profile-builder-slot-group > header small { color:#a9a1b5; font-size:10px; font-weight:760; line-height:1.25; }
-      .dancer-profile-builder-slot-group > header b { flex:0 0 auto; color:#c9c3d2; font-size:11px; line-height:1; }
-      .dancer-profile-builder-slot-grid { min-width:0; display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:4px; }
-      .dancer-profile-builder-slot { position:relative; isolation:isolate; min-width:0; min-height:0; aspect-ratio:4 / 5; display:grid; place-items:center; overflow:hidden; padding:0; border:1px solid rgba(255,255,255,.1); border-radius:8px; color:#e9e5ee; background:#0b0a0f; box-shadow:none; cursor:pointer; }
-      .dancer-profile-builder-slot::after { position:absolute; z-index:1; inset:auto 0 0; height:42%; content:""; pointer-events:none; background:linear-gradient(180deg,transparent,rgba(0,0,0,.82)); }
-      .dancer-profile-builder-slot > img, .dancer-profile-builder-slot > video { position:absolute; z-index:0; inset:0; width:100%; height:100%; display:block; object-fit:cover; background:#08080b; }
-      .dancer-profile-builder-slot > span { position:relative; z-index:2; width:31px; height:31px; display:grid; place-items:center; border:1px solid rgba(255,255,255,.18); border-radius:50%; color:#fff; background:rgba(255,255,255,.07); font-size:22px; line-height:1; }
-      .dancer-profile-builder-slot > i { position:relative; z-index:2; width:34px; height:34px; display:grid; place-items:center; border:1px solid rgba(255,255,255,.22); border-radius:50%; color:#fff; background:rgba(0,0,0,.52); font-size:13px; font-style:normal; }
-      .dancer-profile-builder-slot > small { position:absolute; z-index:2; right:6px; bottom:6px; left:6px; overflow:hidden; color:#fff; font-size:9px; font-weight:900; line-height:1.1; text-align:left; text-overflow:ellipsis; white-space:nowrap; }
-      .dancer-profile-builder-slot.is-empty { border-style:dashed; border-color:rgba(255,255,255,.18); background:rgba(255,255,255,.035); }
-      .dancer-profile-builder-slot.is-more { align-content:center; gap:5px; padding:10px; border-style:solid; border-color:rgba(139,92,246,.32); background:linear-gradient(145deg,rgba(124,58,237,.14),rgba(255,255,255,.035)); }
-      .dancer-profile-builder-slot.is-more::after { display:none; }
-      .dancer-profile-builder-slot.is-more > strong { position:relative; z-index:2; color:#fff; font-size:11px; line-height:1.1; }
-      .dancer-profile-builder-slot.is-more > small { position:relative; inset:auto; color:#aaa2b5; font-size:8px; text-align:center; white-space:normal; }
-      .dancer-profile-builder-slot:hover, .dancer-profile-builder-slot:focus-visible { z-index:2; border-color:rgba(255,255,255,.42); outline:none; }
-      body.dancr-button-system .dancer-profile-builder-slot { min-height:0 !important; padding:0 !important; border-radius:8px !important; background:#0b0a0f !important; box-shadow:none !important; }
-      body.dancr-button-system .dancer-profile-builder-slot.is-empty { background:rgba(255,255,255,.035) !important; }
-      body.dancr-button-system .dancer-profile-builder-slot.is-more { padding:10px !important; background:linear-gradient(145deg,rgba(124,58,237,.14),rgba(255,255,255,.035)) !important; }
       .dancer-profile-builder-media-actions { width:min(100%,760px); max-width:100%; display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:9px; margin:10px auto 0; }
       .dancer-profile-builder-media-actions button { min-height:46px; display:flex; align-items:center; justify-content:center; gap:8px; border:1px solid rgba(126,234,255,.24); border-radius:12px; color:#effcff; background:linear-gradient(145deg,rgba(124,58,237,.14),rgba(34,199,255,.06)); font:inherit; font-size:12px; font-weight:900; cursor:pointer; }
       .dancer-profile-builder-media-actions button span { width:21px; height:21px; display:grid; place-items:center; border-radius:50%; background:rgba(126,234,255,.12); }

@@ -2,9 +2,10 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-const [dashboard, dancrTypes] = await Promise.all([
+const [dashboard, dancrTypes, mediaUploads] = await Promise.all([
   readFile(new URL("../app/dashboard/DashboardClient.tsx", import.meta.url), "utf8"),
   readFile(new URL("../src/lib/dancr/types.ts", import.meta.url), "utf8"),
+  readFile(new URL("../app/dashboard/DancerProfileMediaUploads.tsx", import.meta.url), "utf8"),
 ]);
 
 const modal = dashboard.match(/function SocialLinkModal\([\s\S]*?(?=\nconst SOCIAL_PLATFORMS:)/)?.[0] || "";
@@ -82,6 +83,6 @@ test("the three profile requirements remain unchanged and are labeled clearly", 
   assert.match(dashboard, /label: "Avatar", section: "avatar"/);
   assert.match(dashboard, /label: "Profile photo", section: "photos"/);
   assert.match(dashboard, /Profile essentials: \$\{completedRequirements\}\/\$\{builderRequirements\.length\} complete/);
-  assert.match(dashboard, /Optional\. You can add videos now or later\./);
+  assert.match(mediaUploads, /isPhoto \? "At least 1 solo photo" : "Optional"/);
   assert.match(dashboard, /Optional\. Add whichever profiles you want, or skip this for now\./);
 });
