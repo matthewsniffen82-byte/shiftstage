@@ -35,12 +35,12 @@ Supabase explicitly states that database backups exclude Storage API objects. No
 
 | Existing check | Rows inspected | Violations | Action |
 | --- | ---: | ---: | --- |
-| `mydancr_tv_duration_check` | 30 | 0 | Validate the existing 1–30 second check with bounded lock/statement timeouts |
+| `mydancr_tv_duration_check` | 30 | 0 | Validated in production with bounded lock/statement timeouts |
 | `club_deals_liquor_free_check` | 39 | 1 | Preserve the inactive historical exception; do not force validation |
 
 The Club Deal exception is inactive: the count of active violating rows is zero. Its original migration deliberately preserves inactive historical offers. New/updated rows remain protected by the existing unvalidated check; no policy is weakened and no historical row is deleted or rewritten.
 
-`202609070005_validate_existing_tv_duration.sql` validates the existing TV check only. PostgreSQL rechecks current rows and aborts if a violation or timeout occurs. Record its application status explicitly after the tested commit has deployed; Vercel does not apply SQL automatically.
+`202609070005_validate_existing_tv_duration.sql` was applied after Vercel reported success for `9cdfd62d7375d996e14becee0d32989b5a8cf69f`. Version `202609070005`, its name and reviewed SQL were recorded atomically in migration history. The post-commit catalog confirmed the TV check is validated, the historical Club Deal check is preserved, and no violating Club Deal is active. All 20 read-only production readiness checks passed afterward. Vercel does not apply SQL automatically.
 
 The migration passed a live rollback-only test; its SQL token fingerprint matched the repository file. The complete 1,598-test suite, TypeScript checks, zero-warning lint and production build passed before publication. No data-population build hook ran.
 
