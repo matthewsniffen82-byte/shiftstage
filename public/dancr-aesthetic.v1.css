@@ -11983,7 +11983,7 @@ body.dancr-button-system #profileBackdrop #profileModal .profile-modal-city-icon
 body.dancr-button-system #profileBackdrop #profileModal .profile-modal-media-tabs button.active,
 body.dancr-button-system .public-profile-shell .profile-media-tabs button.active {
   color: #fff !important;
-  box-shadow: inset 0 -2px 0 #fff !important;
+  box-shadow: none !important;
 }
 
 body.dancr-button-system #profileBackdrop #profileModal .profile-modal-media-tabs button.active :is(.profile-media-tab-icon, .profile-media-tab-label, .profile-media-tab-count),
@@ -12002,4 +12002,22 @@ body.dancr-button-system #profileBackdrop #profileModal .profile-media-socials .
 body.dancr-button-system .public-profile-shell .profile-media-socials .social-list .social-link-x svg {
   width: 17px !important;
   height: 17px !important;
+}
+
+/* Paint the selection above the tab surface as solid white, rather than an inset shadow. */
+body.dancr-button-system #profileBackdrop #profileModal .profile-modal-media-tabs button.active::after,
+body.dancr-button-system .public-profile-shell .profile-media-tabs button.active::after {
+  content: "" !important;
+  position: absolute !important;
+  inset: auto 0 0 !important;
+  height: 2px !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: #fff !important;
+  box-shadow: none !important;
+  opacity: 1 !important;
+  filter: none !important;
+  transform: none !important;
+  z-index: 2 !important;
+  pointer-events: none !important;
 }
