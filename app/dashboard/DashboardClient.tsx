@@ -1766,7 +1766,7 @@ function CustomerPanel({
         />}
       </DashboardSection>
       {!accountSavedUnavailable ? <DashboardSection
-        description="Dancer shifts where you tapped I’m Going."
+        description="Your plans, with shift details and directions."
         id="customer-going"
         title="I’m Going"
       >
@@ -1809,24 +1809,35 @@ function CustomerNightPanel({
           const venue = shift.venue;
           return (
             <article className="customer-night-card" key={item.shiftId}>
-              <SavedCardImage image={dancer} name={String(dancer.stageName || "Dancer")} />
-              <div className="customer-night-copy">
-                <span>{customerShiftLabel(shift)}</span>
-                <h3>{dancer.stageName || "Dancer"}</h3>
-                <p>{venue.name || "Venue"} · {[venue.city, venue.state].filter(Boolean).join(", ")}</p>
-                <div className="customer-card-actions">
-                  {dancer.slug ? <Link href={customerDancerHref(dancer)}>Profile</Link> : null}
-                  {venue.slug ? <Link href={customerVenueHref(venue)}>Venue</Link> : null}
+              <div className="customer-night-identity">
+                <div className="customer-night-portrait">
+                  <SavedCardImage image={dancer} name={String(dancer.stageName || "Dancer")} sizes="112px" />
+                </div>
+                <div className="customer-night-copy">
+                  <h3>{dancer.stageName || "Dancer"}</h3>
+                  <p className="customer-night-venue">{venue.name || "Club"}</p>
+                  <p className="customer-night-location">{[venue.city, venue.state].filter(Boolean).join(", ") || "Location unavailable"}</p>
+                  <div className="customer-night-date">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="16" rx="3" /><path d="M8 3v4m8-4v4M4 11h16" /></svg>
+                    <span>{customerShiftLabel(shift)}</span>
+                  </div>
+                </div>
+              </div>
+              <div className="customer-night-controls">
+                <div className="customer-card-actions customer-night-actions">
+                  {dancer.slug ? <Link href={customerDancerHref(dancer)}>Dancer profile</Link> : null}
+                  {venue.slug ? <Link href={customerVenueHref(venue)}>Club page</Link> : null}
                   <CustomerDirectionsButton
                     dancerId={dancer.id}
                     onDirections={onDirections}
                     pending={Boolean(pendingAction)}
                     venue={venue}
                   />
-                  <button className="customer-text-action" type="button" disabled={Boolean(pendingAction)} onClick={() => void onCancelGoing(item.shiftId)}>
-                    Cancel Going
-                  </button>
                 </div>
+                <button className="customer-night-cancel" type="button" disabled={Boolean(pendingAction)} aria-busy={pendingAction === `going-${item.shiftId}` || undefined} onClick={() => void onCancelGoing(item.shiftId)}>
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 7 10 10M17 7 7 17" /></svg>
+                  {pendingAction === `going-${item.shiftId}` ? "Cancelling…" : "Cancel Going"}
+                </button>
               </div>
             </article>
           );
@@ -8575,13 +8586,31 @@ function DashboardStyles() {
       .customer-section-heading.split { display: flex; align-items: center; justify-content: space-between; gap: 14px; }
       .customer-section-heading.split > div { display: grid; gap: 4px; }
       .customer-section-heading.split > strong, .notification-title-row > strong { min-width: 28px; height: 26px; display: grid; place-items: center; padding: 0 8px; border: 1px solid rgba(196,181,253,.36); border-radius: 999px; color: #eee8ff; background: rgba(124,58,237,.28); font-size: 11px; }
-      .customer-night-list { display: grid; gap: 12px !important; }
-      .customer-night-card { min-width: 0; display: grid; grid-template-columns: 132px minmax(0, 1fr); overflow: hidden; border: 1px solid rgba(167,139,250,.24); border-radius: 14px; background: linear-gradient(135deg, rgba(109,40,217,.16), rgba(255,255,255,.025)); }
-      .customer-night-card > .customer-saved-card-image { width: 132px; height: 100%; min-height: 172px; border-radius: 0; }
-      .customer-night-copy { min-width: 0; display: grid; align-content: center; gap: 7px; padding: 16px; }
-      .customer-night-copy > span, .customer-saved-card-copy > span { color: var(--mydancr-customer-accent); font-size: 11px; font-weight: 950; letter-spacing: .08em; text-transform: uppercase; }
-      .customer-night-copy h3 { margin: 0; color: #fff; font-size: 24px; }
-      .customer-night-copy p { color: #cfc5de; font-size: 14px; }
+      .customer-night-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px !important; }
+      .customer-night-list > .customer-empty-state, .customer-night-list > .customer-loading-state { grid-column: 1 / -1; }
+      .customer-night-card { min-width: 0; display: grid; grid-template-columns: minmax(0, 1fr); align-content: start; overflow: hidden; border: 1px solid rgba(185,149,255,.25); border-radius: 22px; background: #101016; }
+      .customer-night-identity { min-width: 0; display: grid; grid-template-columns: 104px minmax(0, 1fr); gap: 18px; padding: 18px 18px 16px; }
+      .customer-night-portrait { height: 136px; overflow: hidden; border: 1px solid rgba(255,255,255,.12); border-radius: 14px; background: #0a090f; }
+      .customer-night-portrait > .customer-saved-card-image { width: 100%; height: 100%; object-fit: cover; object-position: center 25%; }
+      .customer-night-copy { min-width: 0; display: grid; align-content: center; gap: 5px; padding: 0; }
+      .customer-saved-card-copy > span { color: var(--mydancr-customer-accent); font-size: 11px; font-weight: 950; letter-spacing: .08em; text-transform: uppercase; }
+      .customer-night-copy h3 { margin: 0 0 3px; color: #fff; font-size: 25px; font-weight: 900; line-height: 1.12; letter-spacing: -.025em; overflow-wrap: anywhere; }
+      .customer-night-copy p { margin: 0; line-height: 1.4; overflow-wrap: anywhere; }
+      .customer-night-copy .customer-night-venue { color: #e4ddec; font-size: 14px; font-weight: 700; }
+      .customer-night-copy .customer-night-location { color: #a29aaa; font-size: 12px; }
+      .customer-night-date { min-width: 0; display: flex; align-items: flex-start; gap: 7px; margin-top: 8px; color: #c5a3f8; font-size: 12px; font-weight: 700; line-height: 1.5; }
+      .customer-night-date > svg { width: 15px; height: 15px; flex: 0 0 15px; margin-top: 1px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; }
+      .customer-night-controls { padding: 0 18px 5px; }
+      body.dancr-button-system .dashboard-shell-customer .customer-night-actions { display: grid !important; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 8px !important; }
+      body.dancr-button-system .dashboard-shell-customer .customer-night-actions > :is(a, button) { box-sizing: border-box !important; display: flex !important; align-items: center !important; justify-content: center !important; width: 100% !important; min-width: 0 !important; min-height: 46px !important; margin: 0 !important; padding: 8px 5px !important; border: 1px solid rgba(255,255,255,.12) !important; border-radius: 12px !important; color: #ddd7e6 !important; background: rgba(255,255,255,.035) !important; box-shadow: none !important; font-size: 12px !important; line-height: 1.3 !important; text-align: center; text-decoration: none; }
+      body.dancr-button-system .dashboard-shell-customer .customer-night-actions > button { color: #eee2ff !important; border-color: rgba(178,125,255,.32) !important; background: linear-gradient(130deg, rgba(132,67,211,.22), rgba(106,55,171,.1)) !important; }
+      body.dancr-button-system .dashboard-shell-customer .customer-night-cancel { box-sizing: border-box !important; display: flex !important; align-items: center !important; justify-content: center !important; gap: 6px !important; width: 100% !important; min-width: 0 !important; min-height: 44px !important; margin: 3px 0 0 !important; padding: 8px !important; border: 0 !important; border-radius: 10px !important; color: #aaa1b6 !important; background: transparent !important; box-shadow: none !important; font-size: 11px !important; }
+      body.dancr-button-system .dashboard-shell-customer .customer-night-cancel > svg { width: 13px !important; height: 13px !important; fill: none !important; stroke: currentColor !important; stroke-width: 1.7; }
+      body.dancr-button-system .dashboard-shell-customer .customer-night-cancel:hover:not(:disabled) { color: #f1c0cd !important; background: rgba(251,113,133,.05) !important; }
+      .customer-night-controls :is(a, button):focus-visible { outline: 2px solid var(--mydancr-customer-accent); outline-offset: 2px; }
+      .customer-night-controls button:disabled { opacity: .55; cursor: wait; }
+      @media (max-width: 900px) { .customer-night-list { grid-template-columns: minmax(0, 1fr); } }
+      @media (max-width: 620px) { .customer-night-card .customer-night-identity { grid-template-columns: 88px minmax(0, 1fr); gap: 14px; padding: 15px; } .customer-night-portrait { height: 120px; } .customer-night-card .customer-night-copy { padding: 0; } .customer-night-card .customer-night-copy h3 { font-size: 24px; } .customer-night-controls { padding-inline: 15px; } }
       .customer-followed-city-list { display: grid; gap: 16px; }
       .customer-followed-city-group { min-width: 0; display: grid; gap: 10px; }
       .customer-followed-city-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-bottom: 7px; border-bottom: 1px solid rgba(167,139,250,.22); }
@@ -9519,7 +9548,7 @@ function DashboardStyles() {
         .earnings-history-tabs button { padding: 5px 8px; }
       }
       @media (max-width: 860px) { .dashboard-grid, .venue-dashboard-overview-grid, .venue-dashboard-account-grid, .setup-panel form, .upload-panel form, .verification-panel form, .shift-panel form, .shift-checkin-card, .dashboard-shift, .billing-grid, .customer-settings-panel form, .notification-head, .socials-panel form, .share-grid, .impact-grid, .deal-metrics, .customer-saved-grid, .customer-settings-grid, .venue-deal-panel form, .venue-deal-metrics, .venue-deal-qr-generator, .venue-deal-qr-generator.has-qr, .venue-verification-controls, .dancer-verification-qr, .venue-verification-preview, .venue-verification-scanner { grid-template-columns: 1fr; } .setup-panel, .upload-panel, .verification-panel, .shift-panel, .billing-panel, .customer-settings-panel, .account-controls-panel, .notification-panel, .socials-panel, .share-panel, .impact-panel, .support-panel, .deal-panel, .saved-deal-panel, .customer-saved-panel, .locked-analytics-panel, .visibility-panel, .venue-working-panel, .venue-deal-panel, .venue-verification-panel, .customer-settings-panel .city-field, .setup-panel label:nth-of-type(4), .venue-dashboard-account-grid > .support-panel, .venue-dashboard-account-grid > .account-controls-panel { grid-column: auto; grid-row: auto; } .venue-deal-qr-preview { width: min(100%, 320px); justify-self: center; } .commission-tier-table > div { grid-template-columns: 1fr; gap: 4px; } }
-      @media (max-width: 620px) { .dashboard-shell { padding-left: 12px; padding-right: 12px; } .venue-command-links { grid-template-columns: 1fr; } .venue-dashboard-section > summary { min-height: 96px; grid-template-columns: minmax(0, 1fr) auto; padding: 15px; } .venue-dashboard-section-badge { grid-column: 1; grid-row: 2; } .venue-dashboard-section-toggle { grid-column: 2; grid-row: 1 / span 2; } .venue-dashboard-section-body { padding: 10px; } .venue-deal-step-grid, .venue-deal-review, .venue-deal-share-options, .venue-verification-actions, .venue-verification-manual > div, .customer-nfc-guide { grid-template-columns: 1fr; } .venue-deal-readonly-heading { flex-direction: column; } .venue-contract-deal-list, .venue-contract-deal-list dl, .venue-deal-request-center, .venue-deal-request-center > form { grid-template-columns: 1fr; } .venue-deal-request-center > button, .venue-deal-request-center form button { width: 100%; } .venue-deal-request-history article { grid-template-columns: 1fr; } .customer-welcome-card { grid-template-columns: 34px minmax(0, 1fr) auto; gap: 10px; padding: 14px; } .customer-welcome-lock { width: 34px; height: 34px; } .customer-welcome-copy ul { grid-template-columns: 1fr; } .customer-welcome-actions { display: grid; grid-template-columns: 1fr; } .customer-welcome-actions a { width: 100%; } .customer-welcome-card > button { width: 34px; height: 34px; } .customer-dashboard-primary-links { grid-template-columns: repeat(2, minmax(0, 1fr)); } .customer-dashboard-primary-links a { min-height: 64px; padding: 10px; font-size: 12px; } .customer-dashboard-utility-links { justify-content: stretch; } .customer-dashboard-utility-links a { flex: 1 1 0; } .customer-saved-card-grid { grid-template-columns: 1fr; } .customer-followed-dancer-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; } .customer-followed-dancer-tile { border-radius: 10px; } .customer-followed-dancer-copy { gap: 3px; padding: 32px 7px 8px; } .customer-followed-dancer-copy > strong { font-size: 14px; } .customer-followed-dancer-copy > small { font-size: 9px; } .customer-followed-dancer-copy > .customer-followed-dancer-time { font-size: 8px; } .customer-followed-dancer-status { font-size: 8px; letter-spacing: .07em; } .customer-night-card { grid-template-columns: 96px minmax(0, 1fr); } .customer-night-card > .customer-saved-card-image { width: 96px; min-height: 154px; } .customer-night-copy { padding: 13px; } .customer-night-copy h3 { font-size: 20px; } .customer-section-heading.split { align-items: flex-start; flex-direction: column; } .customer-saved-head { align-items: center; flex-direction: row; } .customer-section-heading.split > strong, .notification-title-row > strong { min-width: 36px; width: 36px; height: 36px; font-size: 14px; } .customer-card-actions a, .customer-card-actions button, .customer-empty-state a { min-height: 42px; } .saved-deal-bookmark { grid-template-columns: 1fr; } .saved-deal-bookmark > .customer-card-actions { justify-content: flex-start; } .customer-settings-section { padding: 12px; } .deal-metrics .metric { border-left: 0; border-top: 1px solid var(--mydancr-dashboard-border); } .deal-metrics .metric:first-child { border-top: 0; } }
+      @media (max-width: 620px) { .dashboard-shell { padding-left: 12px; padding-right: 12px; } .venue-command-links { grid-template-columns: 1fr; } .venue-dashboard-section > summary { min-height: 96px; grid-template-columns: minmax(0, 1fr) auto; padding: 15px; } .venue-dashboard-section-badge { grid-column: 1; grid-row: 2; } .venue-dashboard-section-toggle { grid-column: 2; grid-row: 1 / span 2; } .venue-dashboard-section-body { padding: 10px; } .venue-deal-step-grid, .venue-deal-review, .venue-deal-share-options, .venue-verification-actions, .venue-verification-manual > div, .customer-nfc-guide { grid-template-columns: 1fr; } .venue-deal-readonly-heading { flex-direction: column; } .venue-contract-deal-list, .venue-contract-deal-list dl, .venue-deal-request-center, .venue-deal-request-center > form { grid-template-columns: 1fr; } .venue-deal-request-center > button, .venue-deal-request-center form button { width: 100%; } .venue-deal-request-history article { grid-template-columns: 1fr; } .customer-welcome-card { grid-template-columns: 34px minmax(0, 1fr) auto; gap: 10px; padding: 14px; } .customer-welcome-lock { width: 34px; height: 34px; } .customer-welcome-copy ul { grid-template-columns: 1fr; } .customer-welcome-actions { display: grid; grid-template-columns: 1fr; } .customer-welcome-actions a { width: 100%; } .customer-welcome-card > button { width: 34px; height: 34px; } .customer-dashboard-primary-links { grid-template-columns: repeat(2, minmax(0, 1fr)); } .customer-dashboard-primary-links a { min-height: 64px; padding: 10px; font-size: 12px; } .customer-dashboard-utility-links { justify-content: stretch; } .customer-dashboard-utility-links a { flex: 1 1 0; } .customer-saved-card-grid { grid-template-columns: 1fr; } .customer-followed-dancer-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; } .customer-followed-dancer-tile { border-radius: 10px; } .customer-followed-dancer-copy { gap: 3px; padding: 32px 7px 8px; } .customer-followed-dancer-copy > strong { font-size: 14px; } .customer-followed-dancer-copy > small { font-size: 9px; } .customer-followed-dancer-copy > .customer-followed-dancer-time { font-size: 8px; } .customer-followed-dancer-status { font-size: 8px; letter-spacing: .07em; } .customer-section-heading.split { align-items: flex-start; flex-direction: column; } .customer-saved-head { align-items: center; flex-direction: row; } .customer-section-heading.split > strong, .notification-title-row > strong { min-width: 36px; width: 36px; height: 36px; font-size: 14px; } .customer-card-actions a, .customer-card-actions button, .customer-empty-state a { min-height: 42px; } .saved-deal-bookmark { grid-template-columns: 1fr; } .saved-deal-bookmark > .customer-card-actions { justify-content: flex-start; } .customer-settings-section { padding: 12px; } .deal-metrics .metric { border-left: 0; border-top: 1px solid var(--mydancr-dashboard-border); } .deal-metrics .metric:first-child { border-top: 0; } }
       @media (max-width: 620px) {
         .customer-alert-summary { grid-template-columns: 1fr; }
         .dashboard-shell-customer .venue-dashboard-section > summary { min-height: 78px; grid-template-columns: minmax(0,1fr) auto auto; gap: 8px; padding: 12px 13px; }

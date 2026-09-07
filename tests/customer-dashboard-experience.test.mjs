@@ -45,7 +45,7 @@ test("I’m Going and followed profile sections use live customer records and pr
   assert.match(dashboard, /signals=\{saved\?\.goingSignals \|\| \[\]\}/);
   assert.match(dashboard, /item\.shift\?\.status === "posted"/);
   assert.match(dashboard, /customerShiftLabel\(shift\)/);
-  assert.match(dashboard, />\s*Cancel Going\s*</);
+  assert.match(dashboard, /"Cancelling…" : "Cancel Going"/);
   assert.match(dashboard, /"\/api\/customer\/going"/);
   assert.match(dashboard, /"\/api\/customer\/venue-follows"/);
   assert.match(dashboard, /"\/api\/customer\/directions"/);
