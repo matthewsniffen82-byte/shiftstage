@@ -78,6 +78,7 @@ export default function DancerProfileMediaUploads({
         );
       })}
       <p className="profile-upload-visibility" role="status" aria-live="polite">
+        You can add more photos and videos later.{" "}
         {isApproved
           ? isPublic ? "Approved uploads appear on your profile." : "Uploads stay saved. Turn off incognito to show approved media on your profile."
           : "Uploaded photos and videos will appear on your profile after review and completion of your profile setup."}
