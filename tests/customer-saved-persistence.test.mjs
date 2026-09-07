@@ -95,6 +95,43 @@ test("a fresh page restores multiple dancers and favorite venues from the saved 
   assert.deepEqual(Array.from(context.followedVenuesByCity["Test City"]), ["Test Club"]);
 });
 
+for (const following of [true, false]) {
+  test(`late saved-state hydration updates an already-open dancer profile to ${following ? "Following" : "Follow"}`, () => {
+    const city = "Test City";
+    const dancers = ["Alpha", "Beta", "Gamma"].map((name) => ({ id: name, slug: name.toLowerCase(), name, followerCount: 12 }));
+    const classes = new Set();
+    const button = {
+      dataset: { profile: "Beta" }, innerHTML: following ? "Follow" : "Following",
+      attributes: { "aria-pressed": String(!following) },
+      classList: { toggle: (name, enabled) => enabled ? classes.add(name) : classes.delete(name) },
+      setAttribute(name, value) { this.attributes[name] = value; },
+    };
+    const context = vm.createContext({
+      markets: { [city]: { dancers, venues: [] } },
+      followedByCity: { [city]: following ? [] : ["Beta"] },
+      goingTonightSavedByProfile: {}, goingTonightByProfile: {},
+      selectedCity: () => city,
+      document: { getElementById: (id) => id === "followBtn" ? button : null },
+      profileActionButtonMarkup: (icon, label) => `${icon}:${label}`,
+      clearLiveProfileActionCollections() { context.followedByCity[city] = []; },
+      enableProfileNotifications() {}, disableProfileNotifications() {},
+    });
+    vm.runInContext(between(home, "    function isFollowingProfile(", "    function isFavoritedProfile("), context);
+    vm.runInContext(between(home, "    function findProfileBySavedDancer(", "    function applyLiveCustomerSaved("), context);
+    vm.runInContext(between(home, "    function syncHomeFeedActionButtons(", "    function applyProfileFollowState("), context);
+    // The profile has already rendered before the account's saved response arrives.
+    context.applyLiveProfileActions({ follows: dancers.filter((dancer) => following || dancer.name !== "Beta").map((dancer) => ({
+      dancer: { id: dancer.id, slug: dancer.slug, stageName: dancer.name, city }, notificationsEnabled: true,
+    })) });
+    assert.equal(button.attributes["aria-pressed"], String(following));
+    assert.equal(classes.has("is-following"), following);
+    assert.equal(button.innerHTML, following ? "check:Following" : "personPlus:Follow");
+    assert.equal(dancers[1].followerCount, 12, "Loading preferences must not alter public follower counts.");
+    context.document.getElementById = () => null;
+    assert.doesNotThrow(() => context.applyLiveProfileActions({ follows: [] }), "Loading saved follows also works without an open profile.");
+  });
+}
+
 test("a delayed saved-items response cannot erase multiple dancer follows", async () => {
   const { context } = homeFixture();
   const pending = deferred();

@@ -45159,6 +45159,7 @@
         goingTonightSavedByProfile[match.profile.name] = true;
         goingTonightByProfile[match.profile.name] = tonightInterestCount(match.profile);
       });
+      syncOpenProfileFollowButton();
     }
 
     function applyLiveCustomerSaved(saved) {
@@ -62887,6 +62888,15 @@
       });
     }
 
+    function syncOpenProfileFollowButton() {
+      const followButton = document.getElementById("followBtn");
+      if (!followButton) return;
+      const following = isFollowingProfile(selectedCity(), followButton.dataset.profile);
+      followButton.innerHTML = profileActionButtonMarkup(following ? "check" : "personPlus", following ? "Following" : "Follow");
+      followButton.classList.toggle("is-following", following);
+      followButton.setAttribute("aria-pressed", String(following));
+    }
+
     function applyProfileFollowState(profile, city, state) {
       const following = state?.following === true;
       const notificationsEnabled = following && state?.notificationsEnabled === true;
@@ -62896,12 +62906,7 @@
       if (notificationsEnabled) enableProfileNotifications(city, profile.name);
       else disableProfileNotifications(city, profile.name);
 
-      const followButton = document.getElementById("followBtn");
-      if (followButton) {
-        followButton.innerHTML = profileActionButtonMarkup(following ? "check" : "personPlus", following ? "Following" : "Follow");
-        followButton.classList.toggle("is-following", following);
-        followButton.setAttribute("aria-pressed", String(following));
-      }
+      syncOpenProfileFollowButton();
 
       const followerCountEl = document.getElementById("modalFollowerCount");
       const followerCount = followerNumber(profile, city);
