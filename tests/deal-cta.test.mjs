@@ -93,67 +93,54 @@ test("customers explicitly select an exact offer and dancer token until the phys
   assert.doesNotMatch(dealCard, /QRCode\.toDataURL|import QRCode/);
 });
 
-test("Club Deal checkout uses one concise automatic cashier-tap flow across both public experiences", () => {
+test("Club Deal checkout uses a short cashier instruction across both public experiences", () => {
   for (const source of [dealCard, liveApp]) {
-    assert.match(source, /<strong>Tap &ldquo;Use this deal&rdquo;<\/strong>/);
-    assert.match(source, /Go to cashier/);
-    assert.match(source, /Unlock your phone &amp; tap the MyDancr cashier sticker/);
-    assert.match(source, /<strong>Done<\/strong>/);
-    assert.match(source, /After selecting, you can close MyDancr\./);
-    assert.match(source, /Only this venue’s registered cashier sticker can complete redemption\./);
-    assert.match(source, /aria-label="Tap cashier sticker"/);
-    assert.doesNotMatch(source, /Available now · Not selected/);
+    assert.match(source, /Unlock your phone and tap the MyDancr sticker at the cashier/);
+    assert.match(source, /Use free admission/);
+    assert.doesNotMatch(source, /<strong>Tap &ldquo;Use this deal&rdquo;<\/strong>/);
+    assert.doesNotMatch(source, /Only this venue’s registered cashier sticker can complete redemption/);
   }
-  assert.match(liveApp, /status\.hidden = state === "preview"/);
   assert.match(dealCopy, /Cashier NFC confirmation is required/);
   assert.match(dealCard, /customerFacingDealTerms\(activeDeal\.dealTerms\)/);
   assert.match(liveApp, /customerFacingDealTerms\(pass\.terms\)/);
   assert.doesNotMatch(demoDeals, /terms: .*Cashier NFC confirmation is required/);
 });
 
-test("selected Club Deals replace preparation controls with a shorter Ready at Cashier state", () => {
+test("selected Club Deals show a pending tap without a misleading success button", () => {
   for (const source of [dealCard, liveApp]) {
-    assert.match(source, /Ready at Cashier ✓/);
-    assert.match(source, /Unlock your phone and tap the MyDancr cashier sticker\./);
-    assert.match(source, /You can close MyDancr now\./);
-    assert.match(source, /Only this venue’s registered cashier sticker can complete redemption\./);
+    assert.match(source, /Tap to enter/);
+    assert.match(source, /Unlock your phone and tap the MyDancr sticker at the cashier/);
+    assert.doesNotMatch(source, /Ready at Cashier ✓/);
   }
-  assert.match(dealCard, /const dialogContent = intentState === "ready" \?/);
-  assert.match(dealCard, /className="club-deal-ready-instructions"/);
-  assert.match(dealCard, /className="club-deal-dialog"[\s\S]*?data-deal-state=\{intentState\}/);
+  const readyMarkup = dealCard.match(/const dialogContent = intentState === "ready" \?([\s\S]*?)\) : \(/)?.[1] || "";
+  assert.match(readyMarkup, /club-deal-ready-instructions/);
+  assert.doesNotMatch(readyMarkup, /<button|club-deal-primary-dock/);
   assert.match(liveApp, /availableContent\.hidden = state === "ready"/);
   assert.match(liveApp, /readyContent\.hidden = state !== "ready"/);
-  assert.match(liveApp, /selectButton\.textContent = "Ready at Cashier ✓"/);
-  assert.doesNotMatch(liveApp, /--deal-pass-stable-height/);
-  assert.doesNotMatch(dealCard, /--club-deal-stable-height/);
+  assert.match(liveApp, /primaryDock\.hidden = state === "ready"/);
 });
 
 test("mobile Club Deal checkout fits the complete cashier flow into the phone viewport", () => {
   assert.match(liveApp, /width: min\(380px, calc\(100vw - 16px\)\)/);
   assert.match(liveApp, /max-height: calc\(100dvh - 16px - env\(safe-area-inset-top\) - env\(safe-area-inset-bottom\)\)/);
-  assert.match(liveApp, /@media \(max-width: 330px\) \{[\s\S]*?#dealPassOverlay \.deal-pass-steps \{\s*grid-template-columns: 1fr;/);
   assert.match(liveApp, /overflow-x: hidden;/);
   assert.match(dealCard, /\.club-deal-dialog \{ position: relative; width: min\(400px, 100%\);[\s\S]*?overflow-x:hidden;/);
-  assert.match(dealCard, /@media \(max-width: 330px\) \{[\s\S]*?\.club-deal-redemption-steps \{ grid-template-columns:1fr; \}/);
 });
 
 test("Club Deal optional data collapses and complete terms expand accessibly", () => {
-  assert.match(dealCard, /displayDescription \? <p className="club-deal-benefit">\{displayDescription\}<\/p> : null/);
-  assert.match(dealCard, /validityLabel \|\| displayTerms \? \(/);
+  assert.match(dealCard, /displayDescription \? <p>\{displayDescription\}<\/p> : null/);
+  assert.match(dealCard, /displayDescription \|\| displayTerms \? \(/);
   assert.match(dealCard, /aria-expanded=\{termsExpanded\}/);
-  assert.match(dealCard, /hidden=\{!termsExpanded\}>\{displayTerms\}/);
-  assert.match(liveApp, /offerElement\.hidden = !description && !terms && !validity/);
-  assert.match(liveApp, /termsButton\.hidden = !terms/);
+  assert.match(dealCard, /id=\{termsId\} hidden=\{!termsExpanded\}/);
+  assert.match(liveApp, /offerElement\.hidden = termsButton\.hidden/);
+  assert.match(liveApp, /termsButton\.hidden = !description && !terms && !presentation\.attribution/);
   assert.match(liveApp, /button\.setAttribute\("aria-expanded", String\(!expanded\)\)/);
   assert.match(liveApp, /terms\.hidden = expanded/);
 });
 
-test("cashier NFC mark is explicitly centered and visually emphasized", () => {
-  assert.match(liveApp, /\.deal-pass-frame \{[\s\S]*?grid-template-columns: minmax\(0, 1fr\);[\s\S]*?grid-auto-rows: max-content;/);
-  assert.match(liveApp, /\.deal-pass-frame \.deal-pass-nfc-symbol \.club-deal-qr-symbol \{[\s\S]*?display: grid;[\s\S]*?place-items: center;[\s\S]*?filter: drop-shadow/);
-  assert.match(liveApp, /\.deal-pass-frame \.deal-pass-nfc-symbol \.club-deal-qr-symbol svg \{[\s\S]*?display: block;[\s\S]*?width: 100%;[\s\S]*?height: 100%;/);
-  assert.match(liveApp, /border: 1px solid rgba\(126, 234, 255, \.72\);[\s\S]*?0 0 16px rgba\(53, 216, 255, \.34\)/);
-  assert.match(dealCard, /\.club-deal-nfc-symbol svg \{[\s\S]*?display:block;[\s\S]*?place-self:center;[\s\S]*?rgba\(126,234,255,\.72\)/);
+test("pending cashier instructions retain a centered NFC mark", () => {
+  assert.match(liveApp, /deal-pass-ready-instructions \.deal-pass-nfc-symbol \{[^}]*display: grid;[^}]*place-items: center/);
+  assert.match(dealCard, /\.club-deal-nfc-symbol svg \{[\s\S]*?display:block;[\s\S]*?place-self:center/);
 });
 
 test("multiple live non-alcohol offers stay selectable without external liquor booking handoffs", () => {
@@ -164,8 +151,8 @@ test("multiple live non-alcohol offers stay selectable without external liquor b
 
 test("the canonical live shell uses cashier NFC instead of generating customer QR images", () => {
   assert.match(liveApp, /mydancrPendingNfcDealV2/);
-  assert.match(liveApp, /Use at the cashier/);
-  assert.match(liveApp, /tap the venue’s registered MyDancr cashier sticker/i);
+  assert.match(liveApp, /Tap to enter/);
+  assert.match(liveApp, /Unlock your phone and tap the MyDancr sticker at the cashier/);
   assert.doesNotMatch(liveApp, /fetch\("\/api\/deals\/redemptions",\s*\{\s*method:\s*"POST"/);
   assert.doesNotMatch(liveApp, /<img src="\$\{pass\.qrImageUrl\}"/);
 });

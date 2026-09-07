@@ -163,26 +163,21 @@ test("cashier NFC preserves the selected Club Deal and current-shift attribution
   assert.match(retiredDealQr, /status: 410/);
 });
 
-test("Club Deal checkout explains the complete NFC tap flow without requiring an open browser", () => {
-  assert.match(dealCard, /Use this deal/);
-  assert.match(dealCard, /Tap &ldquo;Use this deal&rdquo;/);
-  assert.match(dealCard, /Go to cashier/);
-  assert.match(dealCard, /Unlock your phone &amp; tap the MyDancr cashier sticker/);
-  assert.match(dealCard, /<strong>Done<\/strong>/);
-  assert.match(dealCard, /After selecting, you can close MyDancr\./);
-  assert.match(dealCard, /You can close MyDancr now\./);
-  assert.match(dealCard, /Only this venue’s registered cashier sticker can complete redemption\./);
+test("Club Deal activation persists the pending tap and keeps instructions concise", () => {
+  assert.match(dealCard, /Use free admission/);
+  assert.match(dealCard, /Unlock your phone and tap the MyDancr sticker at the cashier/);
+  assert.match(dealCard, /window\.localStorage\.setItem\(DEAL_INTENT_KEY/);
   assert.match(dealCard, /const dialogContent = intentState === "ready" \?/);
   assert.match(dealCard, /Saved privately to your account\. This does not reserve or redeem the deal\./);
   assert.match(dealCard, /Saved on this device\. Sign in to keep it across devices\. This does not redeem the deal\./);
 });
 
-test("Club Deal checkout keeps the Android violet on iOS and confirms readiness in green", () => {
+test("Club Deal checkout keeps the violet action on iOS and avoids green success styling before redemption", () => {
   assert.match(dealCard, /className=\{`club-deal-checkout-action\$\{intentState === "ready" \? " is-ready" : ""\}`\}/);
   assert.match(dealCard, /\.club-deal-dialog \.club-deal-checkout-action \{[^}]*min-height:50px !important;[^}]*background:linear-gradient\(135deg,#5b21b6 0%,#7c3aed 52%,#8b5cf6 100%\) !important;[^}]*0 0 24px rgba\(124,58,237,\.38\)/);
   assert.match(dealCard, /@media \(hover:hover\) and \(pointer:fine\) \{\s*\.club-deal-dialog \.club-deal-checkout-action:hover:not\(:disabled\)/);
   assert.match(dealCard, /@supports \(-webkit-touch-callout:none\) \{\s*\.club-deal-dialog \.club-deal-checkout-action:not\(\.is-ready\) \{[^}]*background:#32009c !important;[^}]*filter:none !important;/);
-  assert.match(dealCard, /\.club-deal-dialog \.club-deal-checkout-action\.is-ready:disabled \{[^}]*opacity:1 !important;[^}]*background:linear-gradient\(135deg,#087443 0%,#0f9f5b 58%,#16a34a 100%\) !important;[^}]*0 0 24px rgba\(34,197,94,\.34\)/);
+  assert.doesNotMatch(dealCard, /Ready at Cashier ✓|#087443/);
   assert.match(dealCard, /\.club-deal-primary-dock \{ position:static;[^}]*width:100%;[^}]*margin-top:0;/);
 });
 

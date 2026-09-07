@@ -19,7 +19,7 @@ test("Club Deals save without requiring customer authentication", () => {
 
 test("preview, cashier-tap selection, and saving are separate intentional actions", () => {
   assert.match(liveSource, /data-select-deal-pass aria-pressed="false">Use this deal<\/button>/);
-  assert.match(liveSource, /Only this venue’s registered cashier sticker can complete redemption\./);
+  assert.match(liveSource, /<details class="deal-pass-more">[\s\S]*?data-save-deal-pass/);
   assert.match(liveSource, /data-save-deal-pass aria-pressed="false">Save<\/button>/);
   assert.match(
     liveSource,

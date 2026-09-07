@@ -831,9 +831,9 @@ test("Working Now dancer grid cards expose a functional cashier-tap Club Deal ac
   );
   assert.match(homeSource, /mydancrPendingNfcDealV2/);
   assert.match(homeSource, /data-select-deal-pass aria-pressed="false">Use this deal/);
-  assert.match(homeSource, /selectButton\.textContent = "Ready at Cashier ✓"/);
-  assert.match(homeSource, /Unlock your phone and tap the MyDancr cashier sticker\./);
-  assert.match(homeSource, /You can close MyDancr now\./);
+  assert.match(homeSource, /primaryDock\.hidden = state === "ready"/);
+  assert.match(homeSource, /Unlock your phone and tap the MyDancr sticker at the cashier\./);
+  assert.match(homeSource, /titleElement\.textContent = state === "ready" \? "Tap to enter" : pass\.title/);
   assert.match(homeSource, /\.deal-pass-primary-dock \{[^}]*position: static;[^}]*width: 100%;[^}]*margin-top: 10px;[^}]*transform: none;/);
   assert.doesNotMatch(homeSource, /Preview only—select this deal before tapping the cashier NFC sticker/);
   assert.match(

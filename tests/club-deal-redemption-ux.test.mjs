@@ -14,9 +14,9 @@ const liveOverlay = liveApp.match(
 
 test("cashier redemption UI renders existing deal data without offer-specific hardcoding", () => {
   assert.match(dealCard, /<h2>\{activeDeal\.dealTitle\}<\/h2>/);
-  assert.match(dealCard, /\[venueName \|\| "Club", dealTypeLabel\(activeDeal\.offerType\)\]/);
-  assert.match(dealCard, /displayDescription \? <p className="club-deal-benefit">\{displayDescription\}<\/p> : null/);
-  assert.match(dealCard, /hidden=\{!termsExpanded\}>\{displayTerms\}<\/p>/);
+  assert.match(dealCard, /Valid at \{venueName \|\| "this club"\}/);
+  assert.match(dealCard, /displayDescription \? <p>\{displayDescription\}<\/p> : null/);
+  assert.match(dealCard, /displayTerms \? <p>\{displayTerms\}<\/p> : null/);
   assert.match(dealCard, /const validityLabel = dealAvailabilityLabel\(activeDeal\)/);
 
   assert.match(liveOverlay, /document\.getElementById\("dealPassTitle"\)\.textContent = pass\.title/);
@@ -32,24 +32,25 @@ test("cashier redemption UI renders existing deal data without offer-specific ha
 
 test("optional deal fields collapse and complete terms remain keyboard accessible", () => {
   assert.match(dealCard, /\{displayDescription \? .* : null\}/);
-  assert.match(dealCard, /\{validityLabel \|\| displayTerms \? \(/);
+  assert.match(dealCard, /\{displayDescription \|\| displayTerms \? \(/);
   assert.match(dealCard, /aria-expanded=\{termsExpanded\}/);
   assert.match(dealCard, /aria-controls=\{termsId\}/);
   assert.match(dealCard, /hidden=\{!termsExpanded\}/);
 
   assert.match(liveOverlay, /descriptionElement\.hidden = !description/);
-  assert.match(liveOverlay, /termsButton\.hidden = !terms/);
+  assert.match(liveOverlay, /termsButton\.hidden = !description && !terms && !presentation\.attribution/);
   assert.match(liveOverlay, /expiryElement\.hidden = !validity/);
-  assert.match(liveOverlay, /offerElement\.hidden = !description && !terms && !validity/);
+  assert.match(liveOverlay, /offerElement\.hidden = termsButton\.hidden/);
   assert.match(liveOverlay, /button\.setAttribute\("aria-expanded", String\(!expanded\)\)/);
   assert.match(liveOverlay, /terms\.hidden = expanded/);
   assert.doesNotMatch(liveOverlay, />N\/A<|Not available/);
 });
 
-test("available and Ready at Cashier are distinct customer states", () => {
+test("preview and pending cashier taps are distinct from successful redemption", () => {
   for (const source of [dealCard, liveOverlay]) {
-    assert.match(source, /Available now/);
-    assert.match(source, /Ready at Cashier ✓/);
+    assert.match(source, /Tap to enter/);
+    assert.doesNotMatch(source, /Ready at Cashier ✓/);
+    assert.match(source, /Use free admission/);
     assert.match(source, /Use this deal/);
     assert.doesNotMatch(source, /Available now · Not selected/);
   }
@@ -84,24 +85,20 @@ test("mobile redemption presentation is compact, touch-safe, and overflow-safe",
   assert.match(dealCard, /max-height: calc\(100dvh - 32px - env\(safe-area-inset-top\) - env\(safe-area-inset-bottom\)\)/);
   assert.match(dealCard, /overflow-x:hidden/);
   assert.match(dealCard, /@media \(max-width: 760px\)[\s\S]*?width:min\(380px,100%\)/);
-  assert.match(dealCard, /@media \(max-width: 330px\)[\s\S]*?grid-template-columns:1fr/);
 
   assert.match(liveApp, /width: min\(380px, calc\(100vw - 16px\)\)/);
   assert.match(liveApp, /max-height: calc\(100dvh - 16px - env\(safe-area-inset-top\) - env\(safe-area-inset-bottom\)\)/);
   assert.match(liveApp, /overflow-x: hidden/);
-  assert.match(liveApp, /@media \(max-width: 330px\)[\s\S]*?grid-template-columns: 1fr/);
 });
 
-test("terms disclosure and cashier steps stay readable on mobile", () => {
+test("terms stay readable and secondary actions are behind an accessible options menu", () => {
   for (const source of [dealCard, liveApp]) {
-    assert.match(source, /terms-toggle[\s\S]*?min-height:\s*40px/);
-    assert.match(source, /terms-toggle[\s\S]*?border-radius:\s*999px/);
-    assert.match(source, /terms-toggle[\s\S]*?-webkit-appearance:\s*none/);
+    assert.match(source, /terms-toggle[\s\S]*?min-height:\s*44px/);
+    assert.match(source, /terms-toggle[\s\S]*?text-decoration:\s*underline/);
+    assert.match(source, /<summary aria-label="More options">/);
   }
-
-  assert.match(dealCard, /club-deal-redemption-steps>div[^}]*min-height:44px/);
-  assert.match(liveApp, /#dealPassOverlay \.deal-pass-step \{[^}]*min-height: 44px/);
-  assert.match(dealCard, /club-deal-redemption-steps>div[\s\S]*?font-size:11\.5px/);
-  assert.match(liveApp, /#dealPassOverlay \.deal-pass-step[\s\S]*?font-size: \.72rem/);
-  assert.doesNotMatch(dealCard, /club-deal-redemption-steps>div[^}]*font-size:8px/);
+  assert.doesNotMatch(dealCard, /club-deal-redemption-steps/);
+  assert.doesNotMatch(liveOverlay, /class="deal-pass-steps"/);
+  assert.match(liveOverlay, /primaryDock\.hidden = state === "ready"/);
+  assert.match(liveOverlay, /querySelector\("\.deal-pass-more summary"\)\.addEventListener\("click", \(event\) => \{\s*event\.stopPropagation\(\)/);
 });

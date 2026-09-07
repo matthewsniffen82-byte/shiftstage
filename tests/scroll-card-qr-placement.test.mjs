@@ -23,7 +23,7 @@ test("TV keeps the live Club Deal tap action inside its established card actions
 
 test("the NFC symbol replaces generated QR imagery without changing action behavior or navigation", () => {
   assert.match(liveApp, /function clubDealQrSymbolMarkup/);
-  assert.match(liveApp, /aria-label="Tap cashier sticker"/);
+  assert.match(liveApp, /deal-pass-ready-nfc-icon/);
   assert.match(liveApp, /Shared scrolling-card QR rail shell/);
   assert.doesNotMatch(liveApp, /<img src="\$\{pass\.qrImageUrl\}"/);
 });
