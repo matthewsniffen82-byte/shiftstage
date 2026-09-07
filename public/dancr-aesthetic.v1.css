@@ -5047,12 +5047,15 @@ body.dancr-button-system .public-profile-shell .profile-action-icon-frame[data-p
   height: 24px !important;
 }
 
-/* Share's taller, right-weighted artwork needs optical sizing within the same circle. */
+/* Share's taller, right-weighted artwork needs optical sizing and a small
+ * downward offset. Keep that position steady instead of inheriting hover lift. */
 body.dancr-button-system #profileBackdrop #profileModal .modal-actions .profile-action-icon-control .action-icon[data-action-icon="share"] > svg,
 body.dancr-button-system .public-profile-shell .profile-action-icon-control .profile-action-icon-frame[data-profile-action-icon="share"] .profile-action-preview-icon {
   width: 19px !important;
   height: 19px !important;
   --profile-icon-offset-x: -.5px;
+  --profile-icon-offset-y: 1px;
+  transform: translate(var(--profile-icon-offset-x), var(--profile-icon-offset-y)) !important;
 }
 
 body.dancr-button-system #profileBackdrop #profileModal .modal-actions .profile-action-icon-control .action-icon[data-action-icon="bell"] > svg,
