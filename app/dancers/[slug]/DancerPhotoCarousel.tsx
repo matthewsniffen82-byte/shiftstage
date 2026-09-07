@@ -10,7 +10,7 @@ import {
   useRef,
   useState,
 } from "react";
-import { flushSync } from "react-dom";
+import { flushSync, preload } from "react-dom";
 import { MediaLikeButton } from "@/app/components/MediaLikeButton";
 import { PublicReportReasonDialog, type PublicReportReason } from "@/app/components/PublicReportReasonDialog";
 import { readBrowserAccessToken } from "@/src/lib/dancr/browser-session";
@@ -105,6 +105,10 @@ export function DancerPhotoCarousel({
     ...photoMedia.map((item) => ({ mediaType: "photo" as const, mediaId: item.id, likeCount: item.likeCount })),
     ...videoMedia.map((item) => ({ mediaType: "video" as const, mediaId: item.id, likeCount: item.likeCount })),
   ], [photoMedia, videoMedia]);
+  // Warm only the first two rows, including while the Photos tab is selected.
+  videoMedia.slice(0, 6).forEach((video) => {
+    if (video.posterUrl) preload(video.posterUrl, { as: "image", fetchPriority: "low" });
+  });
   const { stateFor: mediaLikeStateFor, toggle: toggleMediaLike } = useAnonymousMediaLikes(mediaLikeSeeds);
   const [activeTab, setActiveTab] = useState<MediaTab>(
     photoMedia.length || !videoMedia.length ? "photo" : "video",
@@ -712,7 +716,7 @@ export function DancerPhotoCarousel({
                     data-image-state="loading"
                     decoding="async"
                     draggable={false}
-                    loading="lazy"
+                    loading={index < 6 ? "eager" : "lazy"}
                     onError={markImageUnavailable}
                     onLoad={markImageReady}
                     ref={settleImageElement}

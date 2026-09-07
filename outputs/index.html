@@ -53266,7 +53266,7 @@
       const scheduleLabel = profileTvScheduleLabel(item);
       const posterUrl = profileVideoPosterUrl(item);
       const previewMarkup = posterUrl
-        ? `<img class="portrait profile-media-thumb-poster-image" src="${escapeHtml(posterUrl)}" alt="" aria-hidden="true" loading="lazy" decoding="async" draggable="false" data-image-state="loading">`
+        ? `<img class="portrait profile-media-thumb-poster-image" src="${escapeHtml(posterUrl)}" alt="" aria-hidden="true" loading="${index < 6 ? "eager" : "lazy"}" fetchpriority="low" decoding="async" draggable="false" data-image-state="loading">`
         : '<span class="profile-media-thumb-poster" aria-hidden="true"></span>';
       return `
         <button class="thumb profile-media-thumb is-video" type="button" data-profile-tv-index="${index}" aria-pressed="false" aria-label="Open ${escapeHtml(profileName)} profile video ${index + 1} of ${total} full screen, ${escapeHtml(scheduleLabel)}">
