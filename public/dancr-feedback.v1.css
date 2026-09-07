@@ -1,4 +1,4 @@
-/* Shared transient feedback: discovery, profile/club actions, TV, QR and admin.
+/* Shared feedback: discovery, profile/club actions, TV, QR and admin.
  * Keep placement, dismissal and message semantics with their existing owners.
  */
 body.dancr-button-system :is(
@@ -108,4 +108,124 @@ body.dancr-button-system :is(
   body.dancr-button-system :is(#toast, .home-card-qr-notice, .home-tv-feed-feedback) {
     transition: none !important;
   }
+}
+
+/* Persistent guidance stays in the form or section that owns it. Explicit
+ * selectors keep operational badges, chat messages and alerts out of this skin.
+ * The legacy customer selector also overrides its old colored left-border rule.
+ */
+body.dancr-button-system :is(
+  .rule-note,
+  #customerDashboard .rule-note,
+  .dancer-signup-note,
+  .session-notice,
+  .recovery-security,
+  .login-recovery-security,
+  .venue-team-permission-note,
+  .nfc-supply-note,
+  .nfc-test-status,
+  .nfc-card:not([data-phase="error"]) .nfc-status,
+  .customer-action-status,
+  .photo-upload-status,
+  .shift-checkin-card .shift-checkin-status,
+  .venue-contract-preview-note,
+  .venue-deal-rule-note,
+  .venue-deal-live-edit-note,
+  .venue-deal-request-feedback,
+  .venue-deal-feedback,
+  .dancer-payout-setup-notice,
+  .dancer-onboarding-complete-note,
+  .dancer-nats-signup-callout,
+  .tv-schedule-context-note,
+  .tv-studio-status,
+  .tv-studio-lock,
+  .tv-studio-limit,
+  .venue-tv-status,
+  .admin-tv-status,
+  .admin-info-note,
+  .pilot-method-note,
+  .dancer-roster-status,
+  .review-feedback,
+  .dmca-admin-status,
+  .dmca-status,
+  .counter-status,
+  .agent-notice,
+  .sales-message,
+  .earnings-notice
+):not(.error, .is-error, [role="alert"]) {
+  box-sizing: border-box;
+  min-width: 0;
+  max-width: 100%;
+  padding: 12px 14px !important;
+  border: 1px solid rgba(255, 255, 255, .12) !important;
+  border-radius: 14px !important;
+  color: #d5d5dd !important;
+  background: #1b1b21 !important;
+  box-shadow: none !important;
+  text-shadow: none !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  line-height: 1.55 !important;
+  letter-spacing: 0 !important;
+  overflow-wrap: anywhere;
+}
+
+/* Structured notices share the same reading weight as a simple one-line note. */
+body.dancr-button-system :is(
+  .rule-note,
+  .dancer-signup-note,
+  .dancer-payout-setup-notice,
+  .dancer-onboarding-complete-note,
+  .dancer-nats-signup-callout,
+  .nfc-supply-note,
+  .venue-team-permission-note,
+  .tv-schedule-context-note,
+  .tv-studio-lock,
+  .tv-studio-limit,
+  .venue-deal-request-feedback
+):not(.error, .is-error, [role="alert"]) :is(p, small, strong, h2, .auth-signup-note-copy) {
+  color: #d5d5dd !important;
+  text-shadow: none !important;
+  line-height: 1.55 !important;
+}
+
+body.dancr-button-system :is(
+  .dancer-signup-note,
+  .dancer-payout-setup-notice,
+  .dancer-onboarding-complete-note,
+  .dancer-nats-signup-callout,
+  .nfc-supply-note,
+  .tv-schedule-context-note,
+  .tv-studio-lock,
+  .tv-studio-limit
+) > :is(span, p, small) {
+  color: #d5d5dd !important;
+  font-weight: 500 !important;
+}
+
+body.dancr-button-system :is(
+  .rule-note,
+  .dancer-signup-note,
+  .dancer-payout-setup-notice,
+  .dancer-onboarding-complete-note,
+  .dancer-nats-signup-callout,
+  .nfc-supply-note,
+  .tv-schedule-context-note
+) :is(strong, h2) {
+  font-weight: 600 !important;
+}
+
+body.dancr-button-system .rule-note .auth-signup-note-lock {
+  border-color: rgba(255, 255, 255, .14) !important;
+  color: #c4c4cf !important;
+  background: rgba(255, 255, 255, .045) !important;
+  box-shadow: none !important;
+}
+
+/* Success is a small, existing checkmark rather than a green-filled card. */
+body.dancr-button-system .review-feedback.success > span[aria-hidden="true"],
+body.dancr-button-system .venue-deal-request-feedback.is-success > span {
+  color: #6ee7b7 !important;
+  background: transparent !important;
+  box-shadow: none !important;
 }
