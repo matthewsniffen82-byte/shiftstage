@@ -4547,8 +4547,9 @@ body.dancr-button-system #profileBackdrop #profileModal .profile-tonight-card,
 body.dancr-button-system .public-profile-shell .profile-tonight-card {
   display: grid !important;
   grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-  gap: 4px !important;
-  padding: 6px !important;
+  column-gap: 4px !important;
+  row-gap: 2px !important;
+  padding: 4px 6px !important;
 }
 
 body.dancr-button-system #profileBackdrop #profileModal .profile-tonight-card.has-club-deal,
@@ -4580,7 +4581,7 @@ body.dancr-button-system .public-profile-shell .profile-tonight-card > .profile-
   grid-column: 1 / -1 !important;
   grid-row: 1 !important;
   width: 100% !important;
-  min-height: 40px !important;
+  min-height: 36px !important;
   margin: 0 !important;
   padding: 0 4px !important;
   border: 0 !important;
@@ -4590,7 +4591,7 @@ body.dancr-button-system .public-profile-shell .profile-tonight-card > .profile-
 
 body.dancr-button-system #profileBackdrop #profileModal .profile-tonight-card > .schedule-empty,
 body.dancr-button-system .public-profile-shell .profile-tonight-card > .profile-schedule-empty {
-  min-height: 48px !important;
+  min-height: 44px !important;
   grid-template-columns: max-content minmax(0, 1fr) !important;
   gap: 8px !important;
 }
@@ -4699,7 +4700,7 @@ body.dancr-button-system .public-profile-shell :is(.club-deal-profile-copy, .pro
   grid-column: 1 / -1 !important;
   grid-row: 2 !important;
   min-width: 0 !important;
-  min-height: 22px !important;
+  min-height: 20px !important;
   display: flex !important;
   align-items: baseline !important;
   gap: 7px !important;

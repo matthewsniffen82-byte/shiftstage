@@ -105,6 +105,28 @@ test("full dancer profiles use a compact identity and honest public activity hea
   );
 });
 
+test("schedule cards tighten vertical space without shrinking the action buttons", () => {
+  const rules = [];
+  postcss.parse(aesthetic).walkRules((rule) => rules.push(rule));
+  const value = (rule, property) => rule?.nodes.find((node) => node.prop === property)?.value;
+  const sharedRule = (ending) => rules.find((rule) =>
+    rule.selector.startsWith("body.dancr-button-system #profileBackdrop #profileModal ")
+    && rule.selector.endsWith(ending),
+  );
+  const card = sharedRule("body.dancr-button-system .public-profile-shell .profile-tonight-card");
+  assert.equal(value(card, "column-gap"), "4px");
+  assert.equal(value(card, "row-gap"), "2px");
+  assert.equal(value(card, "padding"), "4px 6px");
+  assert.equal(value(sharedRule(".profile-tonight-card > .profile-shift-card"), "min-height"), "36px");
+  assert.equal(value(sharedRule(".profile-tonight-card > .profile-schedule-empty"), "min-height"), "44px");
+  assert.equal(value(sharedRule(".public-profile-shell :is(.club-deal-profile-copy, .profile-deal-availability-line)"), "min-height"), "20px");
+  for (const ending of [".public-profile-shell .club-deal-profile-action", ".public-profile-shell .profile-tonight-travel-actions > :is(a, button)"]) {
+    const buttons = sharedRule(ending);
+    assert.equal(value(buttons, "height"), "44px");
+    assert.equal(value(buttons, "min-height"), "44px");
+  }
+});
+
 test("profile action columns stay level and Share artwork stays centered", () => {
   const rules = [];
   postcss.parse(aesthetic).walkRules((rule) => rules.push(rule));
@@ -549,7 +571,7 @@ test("No Schedule mirrors the compact shift hierarchy with a neutral state", () 
     profilePage,
     /\.profile-tonight-card::before \{[\s\S]*?border: 2px solid rgba\(255,255,255,\.13\);[\s\S]*?\.profile-tonight-card\.is-no-schedule \{[\s\S]*?\.profile-empty-state \{[\s\S]*?letter-spacing: \.075em;/,
   );
-  assert.match(aesthetic, /profile-tonight-card > \.schedule-empty,[\s\S]*?profile-schedule-empty \{[\s\S]*?min-height: 48px !important;/);
+  assert.match(aesthetic, /profile-tonight-card > \.schedule-empty,[\s\S]*?profile-schedule-empty \{[\s\S]*?min-height: 44px !important;/);
   assert.match(liveApp, /if \(!profile\?\.scheduled\) return "";/);
   assert.doesNotMatch(profilePage, /profile-tonight-travel-actions is-no-schedule|Directions unavailable until a shift is posted|Ride unavailable until a shift is posted/);
 });
