@@ -276,6 +276,13 @@ export async function POST(request: Request) {
       if (requestedMode === "login" && error.code === "email_not_confirmed") {
         return authJson({ ok: false, error: "Check your email to confirm this account before signing in." }, { status: 400 });
       }
+      if (requestedMode === "signup" && error.code === "weak_password") {
+        return authJson({
+          ok: false,
+          code: "WEAK_PASSWORD",
+          error: "Choose a stronger, unique password with a mix of letters, numbers, and symbols. Avoid common passwords or predictable number patterns.",
+        }, { status: 400 });
+      }
       const message = requestedMode === "login"
         ? "Email or password is incorrect."
         : "Unable to create this account. Check the information or sign in if you already have an account.";
