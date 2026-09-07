@@ -11949,3 +11949,44 @@ body.dancr-button-system [data-venue-follow][aria-pressed="true"] .action-icon-h
   fill: #ef4444 !important;
   stroke: #ef4444 !important;
 }
+
+/* Compact profile actions and readable secondary profile information. */
+body.dancr-button-system #profileBackdrop #profileModal .modal-actions,
+body.dancr-button-system .public-profile-shell .live-actions {
+  margin-block: 0 4px !important;
+  padding-block: 0 !important;
+}
+
+body.dancr-button-system #profileBackdrop #profileModal .modal-actions .action-btn.profile-action-icon-control,
+body.dancr-button-system .public-profile-shell .live-actions > button.profile-action-icon-control,
+body.dancr-button-system .public-profile-shell .profile-action-share-slot .profile-share,
+body.dancr-button-system .public-profile-shell .profile-action-share-slot .profile-share > button.profile-action-icon-control {
+  min-height: 64px !important;
+}
+
+body.dancr-button-system #profileBackdrop #profileModal #modalCity,
+body.dancr-button-system #profileBackdrop #profileModal .profile-modal-header-metrics .profile-activity-metrics dt,
+body.dancr-button-system .public-profile-shell .profile-titlebar-city,
+body.dancr-button-system .public-profile-shell .profile-metrics dt,
+body.dancr-button-system #profileBackdrop #profileModal .profile-modal-media-tabs button:not(.active):not(:disabled),
+body.dancr-button-system #profileBackdrop #profileModal .profile-modal-media-tabs button:not(.active):not(:disabled) :is(.profile-media-tab-label, .profile-media-tab-count),
+body.dancr-button-system .public-profile-shell .profile-media-tabs button:not(.active):not(:disabled),
+body.dancr-button-system .public-profile-shell .profile-media-tabs button:not(.active):not(:disabled) :is(.profile-media-tab-label, .profile-media-tab-count) {
+  color: #b8bbc4 !important;
+}
+
+body.dancr-button-system #profileBackdrop #profileModal .profile-modal-city-icon {
+  stroke: #b8bbc4 !important;
+}
+
+/* The selected media tab and its underline share the same bright white. */
+body.dancr-button-system #profileBackdrop #profileModal .profile-modal-media-tabs button.active,
+body.dancr-button-system .public-profile-shell .profile-media-tabs button.active {
+  color: #fff !important;
+  box-shadow: inset 0 -2px 0 #fff !important;
+}
+
+body.dancr-button-system #profileBackdrop #profileModal .profile-modal-media-tabs button.active :is(.profile-media-tab-icon, .profile-media-tab-label, .profile-media-tab-count),
+body.dancr-button-system .public-profile-shell .profile-media-tabs button.active :is(.profile-media-tab-icon, .profile-media-tab-label, .profile-media-tab-count) {
+  color: #fff !important;
+}
