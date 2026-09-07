@@ -279,6 +279,8 @@ export default function DashboardClient({
   const [analyticsPeriod, setAnalyticsPeriod] = useState<"tonight" | "7d" | "30d">("30d");
   const [isVenueRefreshing, setIsVenueRefreshing] = useState(false);
   const [venueRefreshStatus, setVenueRefreshStatus] = useState("");
+  const [customerAlertCount, setCustomerAlertCount] = useState(0);
+  const [customerSupportCount, setCustomerSupportCount] = useState(0);
   const venueRefreshAbortRef = useRef<AbortController | null>(null);
   const venueRefreshRequestRef = useRef(0);
 
@@ -701,23 +703,26 @@ export default function DashboardClient({
                 accountSavedUnavailable={Boolean(state.savedError && !state.saved)}
               />
               <DashboardSection
+                count={customerAlertCount}
                 description="Your updates, notification preferences, and delivery options."
                 id="customer-alerts"
                 title="Alerts"
               >
-                {isLoading ? <p role="status">Loading your alerts…</p> : <NotificationPanel saved={state.saved} customerMode panelId="customer-alerts-panel" />}
+                {isLoading ? <p role="status">Loading your alerts…</p> : <NotificationPanel saved={state.saved} customerMode panelId="customer-alerts-panel" onCountChange={setCustomerAlertCount} />}
                 {state.profile ? <CustomerPreferencesPanel profile={state.profile} onProfileChange={updateProfile} /> : (
                   <p role="status">{state.profile === null ? "Notification preferences are unavailable right now." : "Loading your notification preferences…"}</p>
                 )}
               </DashboardSection>
               <DashboardSection
+                count={customerSupportCount}
+                badgeLabel={`${customerSupportCount} support ${customerSupportCount === 1 ? "conversation" : "conversations"}`}
                 description="Email, password, support messages, and account status."
                 id="customer-account"
                 title="Account"
               >
                 {isLoading ? <p role="status">Loading your account…</p> : <div className="venue-dashboard-inner-grid customer-settings-grid">
                   <CustomerAccountPanel account={state.account || {}} onAccountChange={updateAccountDetails} />
-                  <SupportInboxPanel initialThreads={state.supportThreads || []} panelId="customer-support" />
+                  <SupportInboxPanel initialThreads={state.supportThreads || []} panelId="customer-support" onCountChange={setCustomerSupportCount} />
                   <AccountControlsPanel accountState={String(state.account?.accountState || "active")} />
                 </div>}
               </DashboardSection>
@@ -932,13 +937,16 @@ function NotificationPanel({
   customerMode = false,
   panelId,
   refreshKey = 0,
+  onCountChange,
 }: {
   saved?: LoadState["saved"];
   customerMode?: boolean;
   panelId?: string;
   refreshKey?: number;
+  onCountChange?: (count: number) => void;
 } = {}) {
   const [notifications, setNotifications] = useState<Array<Record<string, unknown>>>([]);
+  useEffect(() => { onCountChange?.(notifications.length); }, [notifications.length, onCountChange]);
   const [status, setStatus] = useState("");
   const mountedRef = useRef(false);
   const loadSequenceRef = useRef(0);
@@ -1140,11 +1148,14 @@ function NotificationPanel({
 function SupportInboxPanel({
   initialThreads,
   panelId,
+  onCountChange,
 }: {
   initialThreads: Array<Record<string, unknown>>;
   panelId?: string;
+  onCountChange?: (count: number) => void;
 }) {
   const [threads, setThreads] = useState(initialThreads);
+  useEffect(() => { onCountChange?.(threads.length); }, [threads.length, onCountChange]);
   const [subject, setSubject] = useState("");
   const [message, setMessage] = useState("");
   const [replyByThread, setReplyByThread] = useState<Record<string, string>>({});
@@ -1569,6 +1580,10 @@ function CustomerPanel({
   onSavedChange: (update: (saved: CustomerSavedState) => CustomerSavedState) => void;
   saved?: LoadState["saved"];
 }) {
+  const now = useCustomerMinuteClock();
+  const goingCount = (saved?.goingSignals || []).filter((item) => (
+    item.shift?.status === "posted" && new Date(item.shift.endsAt).getTime() > now
+  )).length;
   const [pendingAction, setPendingAction] = useState("");
   const [actionStatus, setActionStatus] = useState("");
   const mountedRef = useRef(false);
@@ -1753,7 +1768,7 @@ function CustomerPanel({
       {actionStatus ? <p className="customer-action-status" role="status">{actionStatus}</p> : null}
       {!accountSavedUnavailable ? <>
       <DashboardSection
-        badge={String(saved?.follows?.length || 0)}
+        count={saved?.follows?.length}
         defaultOpen
         description="Dancers you follow, sorted by city. Tap a card to open the profile."
         id="customer-followed-dancers"
@@ -1767,7 +1782,7 @@ function CustomerPanel({
         />
       </DashboardSection>
       <DashboardSection
-        badge={String(saved?.venueFollows?.length || 0)}
+        count={saved?.venueFollows?.length}
         description="Your saved clubs, with dancer activity and quick directions."
         id="customer-followed-clubs"
         title="Favorite Clubs"
@@ -1782,6 +1797,7 @@ function CustomerPanel({
       </DashboardSection>
       </> : null}
       <DashboardSection
+        count={saved?.dealSaves?.length}
         description="Offers you bookmarked privately for later."
         id="customer-saved-deals"
         title="Saved Club Deals"
@@ -1796,6 +1812,7 @@ function CustomerPanel({
         />}
       </DashboardSection>
       {!accountSavedUnavailable ? <DashboardSection
+        count={goingCount}
         description="Your plans, with shift details and directions."
         id="customer-going"
         title="I’m Going"
@@ -2451,7 +2468,9 @@ function formatNotificationTimestamp(value: unknown) {
 
 function DashboardSection({
   badge,
+  badgeLabel,
   children,
+  count,
   defaultOpen = false,
   description,
   emphasis = "standard",
@@ -2462,7 +2481,9 @@ function DashboardSection({
   toggleAffordance = "add",
 }: {
   badge?: string;
+  badgeLabel?: string;
   children: ReactNode;
+  count?: number;
   defaultOpen?: boolean;
   description: string;
   emphasis?: "standard" | "summary" | "primary" | "secondary" | "utility";
@@ -2472,6 +2493,7 @@ function DashboardSection({
   title: string;
   toggleAffordance?: "add" | "chevron";
 }) {
+  const displayedBadge = count === undefined ? badge : count > 0 ? String(count) : undefined;
   return (
     <details className={`dashboard-section venue-dashboard-section dashboard-section-${emphasis}`} hidden={hidden} id={id} onToggle={alignOpenedDashboardSection} open={defaultOpen} tabIndex={-1}>
       <summary>
@@ -2480,7 +2502,7 @@ function DashboardSection({
           <strong>{title}</strong>
           <span>{description}</span>
         </span>
-        {badge ? <span className="venue-dashboard-section-badge">{badge}</span> : null}
+        {displayedBadge ? <span className="venue-dashboard-section-badge" aria-label={badgeLabel} title={badgeLabel}>{displayedBadge}</span> : null}
         <span className={`venue-dashboard-section-toggle is-${toggleAffordance}`} aria-hidden="true">
           {toggleAffordance === "chevron" ? (
             <svg viewBox="0 0 24 24">

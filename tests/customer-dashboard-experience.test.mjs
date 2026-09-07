@@ -19,7 +19,7 @@ const [dashboard, customerService, favoritesRoute, venueFollowsRoute, directions
 test("customer dashboard leads with four clear activity areas before alerts and account", () => {
   assert.match(
     dashboard,
-    /<CustomerDashboardNav saved=\{customerSaved\} \/>[\s\S]*?<CustomerPanel[\s\S]*?id="customer-alerts"[\s\S]*?<NotificationPanel saved=\{state\.saved\} customerMode panelId="customer-alerts-panel" \/>[\s\S]*?id="customer-account"/,
+    /<CustomerDashboardNav saved=\{customerSaved\} \/>[\s\S]*?<CustomerPanel[\s\S]*?id="customer-alerts"[\s\S]*?<NotificationPanel saved=\{state\.saved\} customerMode panelId="customer-alerts-panel" onCountChange=\{setCustomerAlertCount\} \/>[\s\S]*?id="customer-account"/,
   );
   assert.match(
     dashboard,
@@ -30,7 +30,7 @@ test("customer dashboard leads with four clear activity areas before alerts and 
   assert.match(dashboard, /const dashboardHeading = isLoading[\s\S]*?role === "dancer" \? profileDisplayName \|\| title : resolvedDisplayName \|\| title[\s\S]*?: displayName/);
   assert.doesNotMatch(dashboard, /Welcome back, \$\{displayName\}/);
   assert.match(dashboard, /<DashboardCloseButton[\s\S]*?label=\{`Close \$\{role\} dashboard and return to MyDancr`\}/);
-  assert.match(dashboard, /<SupportInboxPanel initialThreads=\{state\.supportThreads \|\| \[\]\} panelId="customer-support" \/>/);
+  assert.match(dashboard, /<SupportInboxPanel initialThreads=\{state\.supportThreads \|\| \[\]\} panelId="customer-support" onCountChange=\{setCustomerSupportCount\} \/>/);
 });
 
 test("dancer dashboard header prefers the saved stage name and never the email-derived account name", () => {
@@ -74,8 +74,8 @@ test("followed dancers and clubs are grouped by city without location-based dist
 });
 
 test("customer dashboard uses compact electric-violet hierarchy without duplicate saved-section headers", () => {
-  assert.match(dashboard, /badge=\{String\(saved\?\.follows\?\.length \|\| 0\)\}[\s\S]*?id="customer-followed-dancers"/);
-  assert.match(dashboard, /badge=\{String\(saved\?\.venueFollows\?\.length \|\| 0\)\}[\s\S]*?id="customer-followed-clubs"/);
+  assert.match(dashboard, /count=\{saved\?\.follows\?\.length\}[\s\S]*?id="customer-followed-dancers"/);
+  assert.match(dashboard, /count=\{saved\?\.venueFollows\?\.length\}[\s\S]*?id="customer-followed-clubs"/);
   assert.doesNotMatch(dashboard, /<span>Your people<\/span>|<span>Your clubs<\/span>|className="customer-section-count"/);
   assert.match(dashboard, /function CustomerFollowedDancersPanel[\s\S]*?<div className="customer-saved-panel"/);
   assert.match(dashboard, /function CustomerFollowedClubsPanel[\s\S]*?<div className="customer-saved-panel"/);
