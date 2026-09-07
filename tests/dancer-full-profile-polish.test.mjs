@@ -247,7 +247,7 @@ test("profile socials stay secondary, responsive, and absent when no links exist
   assert.doesNotMatch(publicProfilePage, /className="profile-overview"/);
 });
 
-test("profile actions keep neutral glass with brighter selected outlines and checkmarks", () => {
+test("profile actions keep matching neutral circles with brighter selected checkmarks", () => {
   const guestActionsBlock = aesthetic.match(
     /\/\* Guest actions read as one unboxed row[\s\S]*?(?=\/\* Production TV-card branding)/,
   )?.[0] || "";
@@ -281,19 +281,19 @@ test("profile actions keep neutral glass with brighter selected outlines and che
   );
   assert.match(
     guestActionsBlock,
-    /modal-actions \.profile-action-icon-control \.action-icon,[\s\S]*?profile-action-icon-control \.profile-action-icon-frame \{[\s\S]*?width: 41px !important;[\s\S]*?height: 41px !important;[\s\S]*?border: 1px solid rgba\(255, 255, 255, 0\.28\) !important;[\s\S]*?border-radius: 50% !important;[\s\S]*?background-color: rgba\(18, 18, 28, 0\.38\) !important;[\s\S]*?blur\(16px\) saturate\(1\.18\) !important;/,
+    /modal-actions \.profile-action-icon-control \.action-icon,[\s\S]*?profile-action-icon-control \.profile-action-icon-frame \{[\s\S]*?width: 41px !important;[\s\S]*?height: 41px !important;[\s\S]*?border: 1px solid rgba\(255, 255, 255, 0\.46\) !important;[\s\S]*?border-radius: 50% !important;[\s\S]*?background-color: rgba\(18, 18, 28, 0\.38\) !important;[\s\S]*?blur\(16px\) saturate\(1\.18\) !important;/,
   );
   assert.match(
     guestActionsBlock,
     /profile-action-icon-control \.action-icon > svg,[\s\S]*?profile-action-preview-icon \{[\s\S]*?width: 22px !important;[\s\S]*?height: 22px !important;[\s\S]*?data-action-icon="personPlus"[\s\S]*?width: 24px !important;[\s\S]*?height: 24px !important;/,
   );
-  assert.match(
+  assert.doesNotMatch(
     guestActionsBlock,
-    /#followBtn\.is-following \.action-icon,[\s\S]*?#goingBtn\.is-going \.action-icon,[\s\S]*?\.profile-action-icon-control:is\(\.is-selected, \.is-going\) \.profile-action-icon-frame \{\s*border-color: rgba\(255, 255, 255, 0\.46\) !important;\s*\}/,
+    /#followBtn\.is-following \.action-icon,|#goingBtn\.is-going \.action-icon,|0 0 0 2px/,
   );
   assert.match(
     guestActionsBlock,
-    /profile-action-icon-control:is\(:hover, :focus-visible\):not\(:disabled\) \.action-icon,[\s\S]*?border-color: rgba\(255, 255, 255, 0\.42\) !important;[\s\S]*?0 0 0 2px rgba\(255, 255, 255, 0\.1\)/,
+    /profile-action-icon-control:is\(:hover, :focus-visible\):not\(:disabled\) \.action-icon,[\s\S]*?border-color: rgba\(255, 255, 255, 0\.46\) !important;[\s\S]*?0 8px 22px rgba\(0, 0, 0, 0\.3\) !important;/,
   );
   assert.match(
     guestActionsBlock,

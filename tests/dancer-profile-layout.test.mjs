@@ -135,6 +135,18 @@ test("profile action columns stay level and Share artwork stays centered", () =>
   assert.equal(declaration(share, "transform")?.value, "none");
   assert.equal(declaration(share, "transform")?.important, true);
   assert.equal(declaration(share, "width")?.value, declaration(share, "height")?.value);
+  const circles = rules.find((rule) =>
+    rule.selector.includes(".modal-actions .profile-action-icon-control .action-icon,")
+    && rule.selector.endsWith(".public-profile-shell .profile-action-icon-control .profile-action-icon-frame")
+    && declaration(rule, "width")?.value === "41px",
+  );
+  assert.ok(circles, "all three circles must share fixed outer dimensions and ring styling");
+  for (const property of ["width", "min-width", "max-width", "height", "min-height", "max-height"]) {
+    assert.equal(declaration(circles, property)?.value, "41px", property);
+    assert.equal(declaration(circles, property)?.important, true, property);
+  }
+  assert.equal(declaration(circles, "box-sizing")?.value, "border-box");
+  assert.equal(declaration(circles, "border")?.value, "1px solid rgba(255, 255, 255, 0.46)");
 });
 
 test("profile actions keep profile controls separate from Tonight travel actions", () => {
