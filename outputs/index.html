@@ -43012,6 +43012,7 @@
     }
 
     function requireCustomerAccountForProfileAction(actionButton) {
+      synchronizeAuthSession();
       if (authSession?.accessToken && isCustomerSession()) return true;
       openAccountRequiredPrompt(actionButton);
       return false;
@@ -44179,7 +44180,18 @@
       return text;
     }
 
-    function authenticatedRequestHeaders(contentType, session = authSession) {
+    function synchronizeAuthSession() {
+      try {
+        const raw = localStorage.getItem("dancrAuthSessionV1");
+        const stored = raw ? JSON.parse(raw) : null;
+        authSession = stored?.accessToken ? stored : null;
+      } catch (error) {
+        // Keep the current session when browser storage is unavailable.
+      }
+      return authSession;
+    }
+
+    function authenticatedRequestHeaders(contentType, session = synchronizeAuthSession()) {
       const token = session?.accessToken;
       if (!token) return null;
       const headers = {
@@ -62240,11 +62252,14 @@
         const willFollow = index < 0;
         followVenueButton.disabled = true;
         try {
-          await postAuthenticatedJson("/api/customer/venue-follows", {
+          // Refresh an expired access token before committing the follow.
+          await getAuthenticatedJson("/api/account");
+          const result = await postAuthenticatedJson("/api/customer/venue-follows", {
             venueId: venueRecord.id,
             following: willFollow,
             notificationsEnabled: willFollow
           });
+          if (!result?.ok) throw new Error("Sign in required.");
           if (index >= 0) {
             savedVenues.splice(index, 1);
             showToast("Unfollowed club");
@@ -62256,6 +62271,11 @@
           if (customerDashboard.classList.contains("show")) renderDashboard();
         } catch (error) {
           followVenueButton.disabled = false;
+          if (/sign in required|sign-in expired/i.test(error.message || "")) {
+            openAuthRole("customer");
+            setCustomerAuthStatus("Your sign-in expired. Sign in again to save this club.");
+            return;
+          }
           showToast(error.message || "Could not save venue follow");
         }
         return;

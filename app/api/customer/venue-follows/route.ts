@@ -18,7 +18,7 @@ const MAX_CUSTOMER_ACTION_BODY_BYTES = 4_096;
 
 export async function POST(request: Request) {
   try {
-    const { client, user } = await createRequestSupabaseContext(request);
+    const { client, user, session } = await createRequestSupabaseContext(request);
     const admin = createAdminSupabaseClient();
     await enforcePublicRequestRateLimit(admin, {
       namespace: "customer_venue_follow",
@@ -43,7 +43,7 @@ export async function POST(request: Request) {
 
     if (!following) {
       await unfollowVenue(client, user.id, venueId);
-      return NextResponse.json({ ok: true, following: false, notificationsEnabled: false });
+      return NextResponse.json({ ok: true, following: false, notificationsEnabled: false, session });
     }
 
     await requirePublicVenue(admin, venueId);
@@ -55,7 +55,7 @@ export async function POST(request: Request) {
 
     if (error) throw error;
 
-    return NextResponse.json({ ok: true, following: true, notificationsEnabled });
+    return NextResponse.json({ ok: true, following: true, notificationsEnabled, session });
   } catch (error) {
     if (error instanceof PublicRequestRateLimitError) {
       return NextResponse.json(

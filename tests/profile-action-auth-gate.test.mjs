@@ -245,7 +245,7 @@ test("venue follows stay empty until a real customer session and remain account-
 
   assert.match(
     venueFollowsRouteSource,
-    /const \{ client, user \} = await createRequestSupabaseContext\(request\);/,
+    /const \{ client, user, session \} = await createRequestSupabaseContext\(request\);/,
   );
   assert.match(venueFollowsRouteSource, /customer_id: user\.id/);
 });
