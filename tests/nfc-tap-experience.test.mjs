@@ -168,8 +168,8 @@ test("Club Deal activation persists the pending tap and keeps instructions conci
   assert.match(dealCard, /When you reach the cashier, unlock your phone and hold it near the MyDancr sticker/);
   assert.match(dealCard, /window\.localStorage\.setItem\(DEAL_INTENT_KEY/);
   assert.match(dealCard, /const dialogContent = intentState === "ready" \?/);
-  assert.match(dealCard, /Saved privately to your account\. This does not reserve or redeem the deal\./);
-  assert.match(dealCard, /Saved on this device\. Sign in to keep it across devices\. This does not redeem the deal\./);
+  assert.match(dealCard, /Saved to your account\./);
+  assert.match(dealCard, /Saved on this device\./);
 });
 
 test("Club Deal checkout uses the compact violet action and avoids success styling before redemption", () => {

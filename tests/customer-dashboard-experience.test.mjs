@@ -180,8 +180,8 @@ test("Club Deals can be privately bookmarked without reserving or redeeming them
   assert.match(dealSaveClient, /data\.persisted === true/);
   assert.match(clubDealCard, /setCustomerDealSavedInAccount/);
   assert.match(clubDealCard, /savedToAccount[\s\S]*?saved\.filter\(\(item\) => item\.id !== id\)/);
-  assert.match(clubDealCard, /Saved privately to your account\. This does not reserve or redeem the deal\./);
-  assert.match(clubDealCard, /Saved on this device\. Sign in to keep it across devices\. This does not redeem the deal\./);
+  assert.match(clubDealCard, /Saved to your account\./);
+  assert.match(clubDealCard, /Saved on this device\./);
 });
 
 test("customer dashboard keeps saved deals separate from cashier redemption activity", () => {

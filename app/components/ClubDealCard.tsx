@@ -240,10 +240,8 @@ export function ClubDealCard({
       }
       setSavedOnDevice(true);
       setStatus(savedToAccount
-        ? "Saved privately to your account. This does not reserve or redeem the deal."
-        : hasCustomerAccount
-          ? "Saved on this device. Account sync is unavailable right now."
-          : "Saved on this device. Sign in to keep it across devices. This does not redeem the deal.");
+        ? "Saved to your account."
+        : "Saved on this device.");
     } catch (error) {
       setStatus(error instanceof Error ? error.message : "Unable to save this Club Deal.");
     } finally {
@@ -375,25 +373,28 @@ export function ClubDealCard({
       </header>
       <div className="club-deal-preview-content">
         {validityLabel ? <p className="club-deal-validity">{validityLabel}</p> : null}
-        <p className="club-deal-preview-instruction">Tap &ldquo;{intentState === "error" ? "Try again" : useLabel}&rdquo;, then go to the cashier.</p>
-        {displayDescription || displayTerms ? (
-          <div className="club-deal-details">
-            <button
-              type="button"
-              className="club-deal-terms-toggle"
-              aria-expanded={termsExpanded}
-              aria-controls={termsId}
-              onClick={() => setTermsExpanded((expanded) => !expanded)}
-            >
-              {termsExpanded ? "Hide terms" : "Terms"}
-            </button>
-            <div className="club-deal-terms" id={termsId} hidden={!termsExpanded}>
-              {displayDescription ? <p>{displayDescription}</p> : null}
-              {displayTerms ? <p>{displayTerms}</p> : null}
+        <div className="club-deal-preview-panel">
+          <div className="club-deal-nfc-symbol" aria-hidden="true"><NfcIcon /></div>
+          <p className="club-deal-preview-instruction">Tap &ldquo;{intentState === "error" ? "Try again" : useLabel}&rdquo;, then go to the cashier.</p>
+          {status ? <em className={`deal-nfc-status ${intentState}`} role="status" aria-live="polite">{status}</em> : null}
+          {displayDescription || displayTerms ? (
+            <div className="club-deal-details">
+              <button
+                type="button"
+                className="club-deal-terms-toggle"
+                aria-expanded={termsExpanded}
+                aria-controls={termsId}
+                onClick={() => setTermsExpanded((expanded) => !expanded)}
+              >
+                {termsExpanded ? "Hide terms" : "Terms"}
+              </button>
+              <div className="club-deal-terms" id={termsId} hidden={!termsExpanded}>
+                {displayDescription ? <p>{displayDescription}</p> : null}
+                {displayTerms ? <p>{displayTerms}</p> : null}
+              </div>
             </div>
-          </div>
-        ) : null}
-        {status ? <em className={`deal-nfc-status ${intentState}`} role="status" aria-live="polite">{status}</em> : null}
+          ) : null}
+        </div>
       </div>
       <div className="club-deal-primary-dock">
         <div className="club-deal-share-actions">
@@ -680,12 +681,16 @@ function ClubDealInteractionStyles() {
       .club-deal-dialog-header,.club-deal-ready-header { min-width:0; display:grid; justify-items:start; gap:6px; text-align:left; }
       .club-deal-dialog-header h2,.club-deal-ready-header h2 { max-width:100%; margin:0; padding-right:34px; color:#f7f4fc; font-family:var(--font-ui); font-size:clamp(23px,6vw,26px); font-weight:650; letter-spacing:-.035em; line-height:1.16; overflow-wrap:anywhere; text-wrap:balance; }
       .club-deal-dialog-header p,.club-deal-ready-header p { max-width:100%; margin:0; color:#a9a3b6; font-size:13px; font-weight:450; line-height:1.4; overflow-wrap:anywhere; }
-      .club-deal-preview-content { flex:1 1 auto; min-height:0; overflow-y:auto; align-content:start; display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:start; gap:10px 12px; }
-      .club-deal-preview-content>.club-deal-validity,.club-deal-preview-content>.deal-nfc-status,.club-deal-preview-content>.club-deal-share-actions { grid-column:1 / -1; }
+      .club-deal-preview-content { flex:1 1 auto; min-height:0; overflow-y:auto; display:flex; flex-direction:column; gap:10px; }
+      .club-deal-preview-content>* { flex:0 0 auto; }
+      .club-deal-preview-panel { flex:1 0 auto; display:grid; grid-template-columns:40px minmax(0,1fr) auto; align-items:center; gap:10px; padding:8px 10px; border:1px solid rgba(183,155,225,.16); border-radius:18px; background:linear-gradient(130deg,rgba(143,107,199,.1),rgba(143,107,199,.025)); }
       .club-deal-details { display:contents; }
       .club-deal-validity { margin:0; color:#aaa3b9; font-size:12px; font-weight:450; line-height:1.4; }
-      .club-deal-preview-instruction { margin:0; padding:2px 0; color:#d2cbdf; font-size:14px; font-weight:450; line-height:1.5; }
-      .club-deal-terms-toggle { grid-column:2; width:fit-content; min-width:44px; min-height:44px; margin-top:-8px; padding:0; border:0 !important; border-radius:0 !important; color:#b9acd2 !important; background:transparent !important; box-shadow:none !important; -webkit-appearance:none; appearance:none; font:inherit; font-size:12px; font-weight:500; text-decoration:underline; text-decoration-color:rgba(185,172,210,.35); text-underline-offset:4px; cursor:pointer; }
+      .club-deal-preview-instruction { margin:0; color:#e5deef; font-size:14px; font-weight:500; line-height:1.45; }
+      .club-deal-preview-panel:has(.deal-nfc-status) .club-deal-preview-instruction { display:none; }
+      .club-deal-dialog .club-deal-preview-panel .deal-nfc-status { grid-column:2; grid-row:1; margin:0; padding:0; border:0; color:#e5deef; background:none; font-size:14px; font-weight:500; line-height:1.45; }
+      .club-deal-dialog .club-deal-preview-panel .deal-nfc-status.error,.club-deal-dialog .club-deal-preview-panel .deal-nfc-status.expired { color:#ffd5dd; }
+      .club-deal-terms-toggle { grid-column:3; width:fit-content; min-width:44px; min-height:44px; margin:0; padding:0; border:0 !important; border-radius:0 !important; color:#c5b5df !important; background:transparent !important; box-shadow:none !important; -webkit-appearance:none; appearance:none; font:inherit; font-size:12px; font-weight:500; text-decoration:underline; text-decoration-color:rgba(185,172,210,.35); text-underline-offset:4px; cursor:pointer; }
       .club-deal-terms { grid-column:1 / -1; width:100%; margin:0; padding:12px; box-sizing:border-box; border:1px solid rgba(255,255,255,.08); border-radius:12px; color:#c7c0d3; background:rgba(255,255,255,.025); font-size:13px; font-weight:400; line-height:1.5; overflow-wrap:anywhere; }
       .club-deal-terms[hidden] { display:none; }
       .club-deal-terms p { margin:0; }
@@ -698,6 +703,8 @@ function ClubDealInteractionStyles() {
       .club-deal-ready-until { margin:0; color:#aaa2b8; font-size:12px; font-weight:400; line-height:1.4; text-align:left; }
       .club-deal-nfc-symbol { width:64px; height:64px; display:grid; place-items:center; box-sizing:border-box; border:1px solid rgba(183,155,225,.28); border-radius:20px; color:#d6bdfb; background:radial-gradient(circle at 35% 25%,rgba(172,126,240,.2),rgba(143,107,199,.035)); box-shadow:inset 0 1px 0 rgba(255,255,255,.045); }
       .club-deal-nfc-symbol svg { width:36px; height:36px; display:block; place-self:center; }
+      .club-deal-preview-panel .club-deal-nfc-symbol { width:40px; height:40px; border-radius:14px; }
+      .club-deal-preview-panel .club-deal-nfc-symbol svg { width:24px; height:24px; }
       .club-deal-primary-dock { position:static; z-index:1702; width:100%; display:grid; gap:10px; box-sizing:border-box; margin-top:auto; padding:0; border:0; background:transparent; }
       .club-deal-dialog .club-deal-checkout-action { min-height:48px !important; padding:0 16px; border:1px solid rgba(188,154,249,.3) !important; border-radius:13px !important; color:#fff !important; background:linear-gradient(120deg,#7743cf,#6330bd) !important; box-shadow:inset 0 1px 0 rgba(255,255,255,.12),0 6px 18px rgba(68,28,130,.18) !important; -webkit-appearance:none; appearance:none; font:inherit; font-size:14px; font-weight:600 !important; letter-spacing:.01em; cursor:pointer; transition:filter 160ms ease,transform 160ms ease; }
       @media (hover:hover) and (pointer:fine) {

@@ -26645,24 +26645,32 @@
     #dealPassOverlay [hidden] { display: none !important; }
     #dealPassOverlay .deal-pass-title { margin: 0; padding: 0 34px 0 0; color: #f7f4fc; font-family: var(--font-ui); font-size: clamp(23px,6vw,26px); font-weight: 650; letter-spacing: -.035em; line-height: 1.16; text-align: left; text-wrap: balance; overflow-wrap: anywhere; }
     #dealPassOverlay .deal-pass-copy { max-width: 100%; margin: -6px 0 0; color: #a9a3b6; font-size: 13px; font-weight: 450; line-height: 1.4; text-align: left; overflow-wrap: anywhere; }
-    #dealPassOverlay .deal-pass-available-content { flex: 1 1 auto; min-height: 0; overflow-y: auto; align-content: start; display: grid; grid-template-columns: minmax(0,1fr) auto; align-items: start; gap: 10px 12px; }
+    #dealPassOverlay .deal-pass-available-content { flex: 1 1 auto; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
+    #dealPassOverlay .deal-pass-available-content > * { flex: 0 0 auto; }
+    #dealPassOverlay .deal-pass-preview-panel { flex: 1 0 auto; display: grid; grid-template-columns: 40px minmax(0,1fr) auto; align-items: center; gap: 10px; padding: 8px 10px; border: 1px solid rgba(183,155,225,.16); border-radius: 18px; background: linear-gradient(130deg,rgba(143,107,199,.1),rgba(143,107,199,.025)); }
     #dealPassOverlay .deal-pass-ready-content { flex: 1 0 auto; display: flex; flex-direction: column; gap: 12px; }
     #dealPassOverlay .deal-pass-offer { display: contents; }
     #dealPassOverlay .deal-pass-meta { grid-column: 1 / -1; margin: 0; color: #aaa3b9; font-size: 12px; font-weight: 450; }
-    #dealPassOverlay .deal-pass-preview-instruction { margin: 0; padding: 2px 0; color: #d2cbdf; font-size: 14px; font-weight: 450; line-height: 1.5; }
-    #dealPassOverlay .deal-pass-terms-toggle { grid-column: 2; width: fit-content; min-width: 44px; min-height: 44px; margin-top: -8px; padding: 0; border: 0 !important; border-radius: 0 !important; color: #b9acd2 !important; background: transparent !important; box-shadow: none !important; -webkit-appearance: none; appearance: none; font: inherit; font-size: 12px; font-weight: 500; text-decoration: underline; text-decoration-color: rgba(185,172,210,.35); text-underline-offset: 4px; cursor: pointer; }
+    #dealPassOverlay .deal-pass-preview-instruction { margin: 0; color: #e5deef; font-size: 14px; font-weight: 500; line-height: 1.45; }
+    #dealPassOverlay .deal-pass-terms-toggle { grid-column: 3; width: fit-content; min-width: 44px; min-height: 44px; margin: 0; padding: 0; border: 0 !important; border-radius: 0 !important; color: #c5b5df !important; background: transparent !important; box-shadow: none !important; -webkit-appearance: none; appearance: none; font: inherit; font-size: 12px; font-weight: 500; text-decoration: underline; text-decoration-color: rgba(185,172,210,.35); text-underline-offset: 4px; cursor: pointer; }
     #dealPassOverlay button:focus-visible { outline: 2px solid #c4b5fd !important; outline-offset: 3px !important; }
     #dealPassOverlay .deal-pass-terms { grid-column: 1 / -1; padding: 12px; border: 1px solid rgba(255,255,255,.08); border-radius: 12px; background: rgba(255,255,255,.025); }
     #dealPassOverlay .deal-pass-terms p { margin: 0; color: #c7c0d3; font-size: 13px; font-weight: 400; line-height: 1.5; overflow-wrap: anywhere; }
     #dealPassOverlay .deal-pass-terms p + p { margin-top: 8px; }
-    #dealPassOverlay .deal-pass-how { grid-column: 1 / -1; margin: 0; padding: 8px 10px; font-size: 12px; font-weight: 450; text-align: left; }
+    #dealPassOverlay .deal-pass-preview-panel:has(.deal-pass-how:not([hidden])) .deal-pass-preview-instruction { display: none; }
+    #dealPassOverlay .deal-pass-how { grid-column: 2; grid-row: 1; margin: 0; padding: 0; border: 0; color: #e5deef; background: none; font-size: 14px; font-weight: 500; line-height: 1.45; text-align: left; }
+    #dealPassOverlay .deal-pass-how.is-error,#dealPassOverlay .deal-pass-how.is-expired { color: #ffd5dd; }
     #dealPassOverlay .deal-pass-actions { grid-column: 1 / -1; gap: 10px; }
     #dealPassOverlay .deal-pass-actions .deal-pass-action { min-height: 44px !important; padding: 0 12px; border: 1px solid rgba(211,198,237,.14) !important; border-radius: 12px !important; color: #dcd5e8 !important; background: rgba(255,255,255,.025) !important; box-shadow: inset 0 1px 0 rgba(255,255,255,.025) !important; font-size: 13px !important; font-weight: 550 !important; }
     #dealPassOverlay .deal-pass-actions .deal-pass-action.is-saved { color: #ddd0fa !important; border-color: rgba(172,138,226,.28) !important; background: rgba(129,85,192,.12) !important; }
     #dealPassOverlay .deal-pass-ready-instructions { flex: 1 0 auto; display: grid; grid-template-columns: 64px minmax(0,1fr); align-items: center; gap: 14px; padding: 14px; border: 1px solid rgba(183,155,225,.16); border-radius: 18px; background: linear-gradient(130deg,rgba(143,107,199,.1),rgba(143,107,199,.025)); }
+    #dealPassOverlay .deal-pass-preview-panel .deal-pass-nfc-symbol,
     #dealPassOverlay .deal-pass-ready-instructions .deal-pass-nfc-symbol { width: 64px; height: 64px; display: grid; place-items: center; box-sizing: border-box; border: 1px solid rgba(183,155,225,.28); border-radius: 20px; color: #d6bdfb; background: radial-gradient(circle at 35% 25%,rgba(172,126,240,.2),rgba(143,107,199,.035)); box-shadow: inset 0 1px 0 rgba(255,255,255,.045); }
+    #dealPassOverlay .deal-pass-preview-panel .club-deal-qr-symbol,
     #dealPassOverlay .deal-pass-ready-instructions .club-deal-qr-symbol { width: 55%; height: 55%; }
+    #dealPassOverlay .deal-pass-preview-panel svg,
     #dealPassOverlay .deal-pass-ready-instructions svg { display: block; width: 100%; height: 100%; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+    #dealPassOverlay .deal-pass-preview-panel .deal-pass-nfc-symbol { width: 40px; height: 40px; border-radius: 14px; }
     #dealPassOverlay .deal-pass-ready-instructions p { margin: 0; color: #e5deef; font-size: 14px; font-weight: 500; line-height: 1.45; }
     #dealPassOverlay .deal-pass-ready-footer { display: grid; gap: 4px; }
     #dealPassOverlay .deal-pass-ready-close-note { margin: 0; color: #c5bbd5; font-size: 12px; font-weight: 450; line-height: 1.5; }
@@ -49010,16 +49018,19 @@
             <p class="deal-pass-copy" id="dealPassCopy">Club offer</p>
             <div class="deal-pass-available-content" data-deal-pass-available>
               <p class="deal-pass-meta" id="dealPassExpiry" hidden></p>
-              <p class="deal-pass-preview-instruction" id="dealPassPreviewInstruction"></p>
-              <div class="deal-pass-offer" id="dealPassOffer">
-                <button class="deal-pass-terms-toggle" type="button" data-toggle-deal-pass-terms aria-expanded="false" aria-controls="dealPassTerms" hidden>Terms</button>
-                <div class="deal-pass-terms" id="dealPassTerms" hidden>
-                  <p class="deal-pass-description" id="dealPassDescription"></p>
-                  <p id="dealPassTermsCopy"></p>
-                  <p id="dealPassAttribution" hidden></p>
+              <div class="deal-pass-preview-panel">
+                <div class="deal-pass-nfc-symbol" aria-hidden="true">${clubDealQrSymbolMarkup("deal-pass-preview-nfc-icon")}</div>
+                <p class="deal-pass-preview-instruction" id="dealPassPreviewInstruction"></p>
+                <p class="deal-pass-how" id="dealPassHow" role="status" aria-live="polite" hidden></p>
+                <div class="deal-pass-offer" id="dealPassOffer">
+                  <button class="deal-pass-terms-toggle" type="button" data-toggle-deal-pass-terms aria-expanded="false" aria-controls="dealPassTerms" hidden>Terms</button>
+                  <div class="deal-pass-terms" id="dealPassTerms" hidden>
+                    <p class="deal-pass-description" id="dealPassDescription"></p>
+                    <p id="dealPassTermsCopy"></p>
+                    <p id="dealPassAttribution" hidden></p>
+                  </div>
                 </div>
               </div>
-              <p class="deal-pass-how" id="dealPassHow" role="status" aria-live="polite" hidden></p>
             </div>
             <div class="deal-pass-ready-content" data-deal-pass-ready role="status" hidden>
               <div class="deal-pass-ready-instructions">
