@@ -28,7 +28,7 @@ export async function GET(request: Request) {
   const role = callbackRole(request, callbackSession);
   const showDancerConfirmation = role === "dancer" && !isPasswordResetCallback(request);
 
-  return new Response(callbackHtml(callbackSession, redirectPath, showDancerConfirmation), {
+  return new Response(callbackHtml(callbackSession, redirectPath, showDancerConfirmation, isPasswordResetCallback(request)), {
     headers: {
       "content-type": "text/html; charset=utf-8",
       "cache-control": "no-store, max-age=0",
@@ -41,6 +41,7 @@ export async function GET(request: Request) {
 
 function callbackRedirectPath(request: Request, callbackSession: Awaited<ReturnType<typeof readCallbackSession>>) {
   const url = new URL(request.url);
+  if (isPasswordResetCallback(request)) return "/account/reset-password";
   const explicitReturnTo = safeLocalReturnPath(url.searchParams.get("return_to"));
   const accountRole = callbackSession?.account?.role;
   const role = callbackRole(request, callbackSession);
@@ -112,6 +113,7 @@ function callbackHtml(
   callbackSession: Awaited<ReturnType<typeof readCallbackSession>>,
   redirectPath: string,
   showDancerConfirmation: boolean,
+  passwordReset: boolean,
 ) {
   const sessionJson = JSON.stringify(callbackSession || null).replace(/</g, "\\u003c");
   const redirectJson = JSON.stringify(redirectPath).replace(/</g, "\\u003c");
@@ -164,6 +166,7 @@ function callbackHtml(
       const redirectTo = ${redirectJson};
       const showDancerConfirmation = ${dancerConfirmationJson};
       const fragmentParams = new URLSearchParams(window.location.hash ? window.location.hash.slice(1) : "");
+      const isPasswordReset = ${JSON.stringify(passwordReset)} || fragmentParams.get("type") === "recovery";
       const redirectUrl = new URL(redirectTo, window.location.origin);
 
       async function validateFragmentSession() {
@@ -212,8 +215,16 @@ function callbackHtml(
           redirectUrl.searchParams.set("role", authoritativeRole);
           redirectUrl.searchParams.set("dancr_role", authoritativeRole);
         }
+        if (isPasswordReset) {
+          redirectUrl.pathname = "/account/reset-password";
+          redirectUrl.search = "";
+          if (!session?.accessToken) {
+            try { localStorage.removeItem(sessionStorageKey); } catch (error) {}
+            redirectUrl.searchParams.set("error", "expired");
+          }
+        }
         const destination = redirectUrl.pathname + redirectUrl.search;
-        const shouldPauseForDancer = showDancerConfirmation && (!session || authoritativeRole === "dancer");
+        const shouldPauseForDancer = !isPasswordReset && showDancerConfirmation && (!session || authoritativeRole === "dancer");
 
         if (shouldPauseForDancer) {
           document.getElementById("openingDancr").hidden = true;
