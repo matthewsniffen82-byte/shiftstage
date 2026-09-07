@@ -11957,3 +11957,9 @@ body.dancr-button-system :is(
     0 0 0 2px rgba(126, 234, 255, 0.12),
     0 12px 28px rgba(0, 0, 0, 0.36) !important;
 }
+
+/* A filled red heart indicates a confirmed venue favorite. */
+body.dancr-button-system [data-venue-follow][aria-pressed="true"] .action-icon-heart svg path {
+  fill: #ef4444 !important;
+  stroke: #ef4444 !important;
+}

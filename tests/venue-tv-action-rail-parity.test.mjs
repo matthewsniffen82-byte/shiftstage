@@ -15,7 +15,7 @@ test("venue-card secondary actions use compact labels and retain accessible name
   assert.match(clubProfileIcon, /M5 20V9l7-4 7 4v11/);
   assert.doesNotMatch(clubProfileIcon, /<circle|\.01/);
   assert.match(venueSlide, /home-dancer-grid-share[\s\S]*?aria-label="Share \$\{safeName\}'s club profile"[\s\S]*?actionButtonLabel\("share", "Share"\)/);
-  assert.match(venueSlide, /data-venue-follow[\s\S]*?aria-label="\$\{followsVenue \? `Unfollow \$\{safeName\}` : `Follow \$\{safeName\}`\}"[\s\S]*?actionButtonLabel\(followsVenue \? "check" : "heart", followsVenue \? "Saved" : "Favorite"\)/);
+  assert.match(venueSlide, /data-venue-follow[\s\S]*?aria-label="\$\{followsVenue \? `Unfollow \$\{safeName\}` : `Follow \$\{safeName\}`\}"[\s\S]*?actionButtonLabel\("heart", followsVenue \? "Saved" : "Favorite"\)/);
   assert.doesNotMatch(venueSlide, /actionIconMarkup\("clubProfile"\)|actionIconMarkup\("share"\)/);
 });
 

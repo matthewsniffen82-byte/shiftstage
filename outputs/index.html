@@ -32053,7 +32053,7 @@
   </style>
   <link href="/dancr-brand-tokens.v1.css?v=13" rel="stylesheet">
   <link href="/dancr-button-system.v1.css" rel="stylesheet">
-  <link href="/dancr-aesthetic.v1.css?v=250" rel="stylesheet">
+  <link href="/dancr-aesthetic.v1.css?v=251" rel="stylesheet">
   <link href="/profile-media-owner-controls.css?v=1" rel="stylesheet">
 </head>
 <body class="dancr-button-system">
@@ -52102,7 +52102,7 @@
               </div>
             </div>
           </a>
-          <button class="venue-card-follow ${followsVenue ? "is-active" : ""}" type="button" data-venue-follow="${venueValue}" data-account-action="venue-follow" aria-label="${followsVenue ? `Unfollow ${safeName}` : `Follow ${safeName}`}" aria-pressed="${followsVenue}">${actionIconMarkup(followsVenue ? "check" : "heart")}</button>
+          <button class="venue-card-follow ${followsVenue ? "is-active" : ""}" type="button" data-venue-follow="${venueValue}" data-account-action="venue-follow" aria-label="${followsVenue ? `Unfollow ${safeName}` : `Follow ${safeName}`}" aria-pressed="${followsVenue}">${actionIconMarkup("heart")}</button>
           <div class="venue-card-actions${rideMarkup ? " with-uber-ride" : ""}" aria-label="${safeName} quick actions">
             ${venueCardQrMarkup(venue)}
             ${directionsMarkup}
@@ -52238,7 +52238,7 @@
                 </div>
                 <div class="venue-secondary-actions" aria-label="Venue profile actions">
                   <button class="action-btn secondary follow-venue-btn ${followsVenue ? "is-following" : ""}" type="button" data-venue-follow="${venueValue}" data-account-action="venue-follow" aria-pressed="${followsVenue}">
-                    ${actionButtonLabel(followsVenue ? "check" : "heart", followsVenue ? "Following club" : "Follow club")}
+                    ${actionButtonLabel("heart", followsVenue ? "Following club" : "Follow club")}
                   </button>
                   <button class="action-btn secondary venue-detail-share" type="button" data-share-venue="${venueValue}" data-share-city="${escapeOptionValue(city)}" aria-label="Share ${escapeHtml(details.name)} club profile">
                     ${actionButtonLabel("share", "Share club")}
@@ -59700,7 +59700,7 @@
             <button class="feed-card-action home-venue-discovery-profile-action venue-card-secondary-action venue-card-page-action" type="button" data-open-venue-profile="${venueValue}" aria-label="Open ${safeName}'s full club profile" title="View club">${actionButtonLabel("clubProfile", "Club Page")}</button>
             ${railQrMarkup}
             <button class="feed-card-action home-dancer-grid-share venue-card-secondary-action venue-card-share-action" type="button" data-share-venue="${venueValue}" data-share-city="${escapeOptionValue(city)}" aria-label="Share ${safeName}'s club profile" title="Share">${actionButtonLabel("share", "Share")}</button>
-            <button class="feed-card-action venue-card-secondary-action venue-card-favorite-action ${followsVenue ? "is-active" : ""}" type="button" data-venue-follow="${venueValue}" data-account-action="venue-follow" aria-label="${followsVenue ? `Unfollow ${safeName}` : `Follow ${safeName}`}" title="${followsVenue ? "Following" : "Favorite"}" aria-pressed="${followsVenue}">${actionButtonLabel(followsVenue ? "check" : "heart", followsVenue ? "Saved" : "Favorite")}</button>
+            <button class="feed-card-action venue-card-secondary-action venue-card-favorite-action ${followsVenue ? "is-active" : ""}" type="button" data-venue-follow="${venueValue}" data-account-action="venue-follow" aria-label="${followsVenue ? `Unfollow ${safeName}` : `Follow ${safeName}`}" title="${followsVenue ? "Saved" : "Favorite"}" aria-pressed="${followsVenue}">${actionButtonLabel("heart", followsVenue ? "Saved" : "Favorite")}</button>
           </div>
         </article>
       `;
