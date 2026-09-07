@@ -2,6 +2,7 @@
 
 import { CSSProperties, FormEvent, KeyboardEvent as ReactKeyboardEvent, MouseEvent as ReactMouseEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
+import { PasswordRequirements } from "@/app/components/PasswordRequirements";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   persistBrowserAuthSession,
@@ -604,7 +605,7 @@ export default function AccountClient() {
               <input
                 type={showPassword ? "text" : "password"}
                 autoComplete={mode === "signup" ? "new-password" : "current-password"}
-                minLength={6}
+                minLength={mode === "signup" ? 6 : undefined}
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
                 required
@@ -622,6 +623,7 @@ export default function AccountClient() {
               </button>
             </span>
           </label>
+          {mode === "signup" ? <PasswordRequirements /> : null}
           {mode === "signup" && role === "customer" ? (
             <label>
               Confirm password

@@ -8,6 +8,8 @@ import ts from 'typescript';
 const require = createRequire(import.meta.url);
 const source = readFileSync(new URL('../app/dashboard/CustomerAccountPanel.tsx', import.meta.url), 'utf8');
 const code = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX } }).outputText;
+const passwordPolicy = {};
+vm.runInNewContext(ts.transpileModule(readFileSync(new URL('../src/lib/dancr/password-policy.ts', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText, { exports: passwordPolicy });
 function fixture() {
   const slots = [], cleanups = [], requests = [], updates = [];
   const account = { id: 'customer-one', role: 'customer', email: 'original@example.com', accountState: 'active' };
@@ -22,6 +24,8 @@ function fixture() {
     exports, AbortController, Error,
     FormData: class { constructor(fields) { this.fields = fields; } get(key) { return this.fields[key] ?? null; } },
     require(name) {
+      if (name === '@/src/lib/dancr/password-policy') return passwordPolicy;
+      if (name === '@/app/components/PasswordRequirements') return { PasswordRequirements: () => null };
       if (name === 'react') return hooks;
       if (name === 'react/jsx-runtime') return require(name);
       if (name === './dashboard-session') return { readSession: () => session, requestAccountJson: async request => { requests.push(request); return respond(request); } };
@@ -66,13 +70,13 @@ test('password changes require matching values and never submit confirmation or 
   const f = fixture();
   f.open('password');
   await f.submit({ password: 'short', confirmPassword: 'short' });
-  await f.submit({ password: 'new-secure-password', confirmPassword: 'mismatch' });
+  await f.submit({ password: 'New1!secure-password', confirmPassword: 'mismatch' });
   assert.equal(f.requests.length, 0);
   assert.match(f.feedback(), /don’t match/);
-  await f.submit({ password: 'new-secure-password', confirmPassword: 'new-secure-password', email: 'ignored@example.com' });
-  assert.deepEqual(JSON.parse(f.requests[0].body), { password: 'new-secure-password' });
+  await f.submit({ password: 'New1!secure-password', confirmPassword: 'New1!secure-password', email: 'ignored@example.com' });
+  assert.deepEqual(JSON.parse(f.requests[0].body), { password: 'New1!secure-password' });
   assert.equal(f.form(), null);
-  assert.ok(!JSON.stringify(f.updates).includes('new-secure-password'));
+  assert.ok(!JSON.stringify(f.updates).includes('New1!secure-password'));
 });
 
 test('a pending change prevents duplicate requests and waits for server confirmation', async () => {
@@ -115,7 +119,7 @@ for (const action of ['switchAccount', 'unmount']) test(`a late credential respo
   let resolve;
   f.respondWith(() => new Promise(done => { resolve = done; }));
   f.open('password');
-  const pending = f.submit({ password: 'new-secure-password', confirmPassword: 'new-secure-password' });
+  const pending = f.submit({ password: 'New1!secure-password', confirmPassword: 'New1!secure-password' });
   f[action]();
   resolve({ account: f.account, message: 'Password updated.' });
   await pending;

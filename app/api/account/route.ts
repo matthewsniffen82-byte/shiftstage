@@ -8,6 +8,7 @@ import type { AccountState } from "@/src/lib/dancr/types";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
 import { safeErrorMetadata } from "@/src/lib/security/safe-error-metadata";
+import { passwordValidationMessage } from "@/src/lib/dancr/password-policy";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -66,12 +67,8 @@ export async function PATCH(request: Request) {
     }
 
     if (password) {
-      if (password.length < 8) {
-        return NextResponse.json({ ok: false, error: "Password must be at least 8 characters." }, { status: 400 });
-      }
-      if (password.length > 1_024) {
-        return NextResponse.json({ ok: false, error: "Password is too long." }, { status: 400 });
-      }
+      const passwordError = passwordValidationMessage(password);
+      if (passwordError) return NextResponse.json({ ok: false, error: passwordError }, { status: 400 });
 
       // Resolve required response context before committing the credential change.
       const account = await getAccountByUserId(client, user.id);

@@ -8124,7 +8124,6 @@ function DashboardSignInRecovery({
         <input
           autoComplete="current-password"
           disabled={isSubmitting}
-          minLength={8}
           onChange={(event) => setPassword(event.target.value)}
           required
           type="password"

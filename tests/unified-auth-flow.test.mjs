@@ -75,7 +75,7 @@ test("confirmation cooldowns begin only after a successful email send", () => {
 test("dancer and venue signups explain their real approval requirements", () => {
   assert.match(liveApp, /class="dancer-signup-progress"[\s\S]*?aria-valuemax="3"[\s\S]*?Step 1 of 3[\s\S]*?Account login/);
   assert.match(liveApp, /Dancer signup: create account, then confirm email and complete profile verification/);
-  assert.match(liveApp, /id="dancerPassword"[^>]*autocomplete="new-password"[^>]*minlength="8"/);
+  assert.match(liveApp, /id="dancerPassword"[^>]*autocomplete="new-password"[^>]*minlength="6"/);
   assert.match(liveApp, /Free account\. Your profile becomes public after setup and verification\./);
   assert.doesNotMatch(liveApp, /Your account is free\. Your public profile goes live only after/);
   assert.match(liveApp, /id="venueSignupCode"[^>]*minlength="30"[^>]*maxlength="30"/);

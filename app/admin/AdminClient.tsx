@@ -2,6 +2,7 @@
 
 import { FormEvent, MouseEvent, useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { PasswordRequirements } from "@/app/components/PasswordRequirements";
 import { DashboardCloseButton } from "@/app/components/DashboardCloseButton";
 import { homeDiscoveryHref } from "@/src/lib/dancr/navigation";
 import { safeSocialProfileUrl } from "@/src/lib/dancr/social-profile-url";
@@ -615,7 +616,7 @@ export default function AdminClient() {
                 disabled={authBusy}
                 onChange={(event) => setPassword(event.target.value)}
                 autoComplete={mode === "signup" ? "new-password" : "current-password"}
-                minLength={6}
+                minLength={mode === "signup" ? 6 : undefined}
                 required
               />
               <button
@@ -632,6 +633,7 @@ export default function AdminClient() {
               </button>
             </span>
           </label>
+          {mode === "signup" ? <PasswordRequirements /> : null}
           {mode === "signup" ? (
             <label>
               Admin code

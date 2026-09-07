@@ -40886,12 +40886,18 @@
             <div class="field">
               <label for="customerPassword">Password</label>
               <div class="password-wrap">
-                <input id="customerPassword" type="password" autocomplete="current-password" minlength="8" placeholder="At least 8 characters" required>
+                <input id="customerPassword" type="password" autocomplete="current-password" placeholder="Enter password" required>
                 <button class="password-toggle" type="button" data-password-toggle="customerPassword" aria-label="Show password" aria-pressed="false">
                   <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"></path><circle cx="12" cy="12" r="3"></circle></svg>
                 </button>
               </div>
             </div>
+            <ul class="field-note" id="customerPasswordRequirements" aria-label="Password requirements" style="margin:0;padding-left:20px;line-height:1.6" hidden>
+              <li>At least 6 characters</li>
+              <li>At least 1 capital letter</li>
+              <li>At least 1 number</li>
+              <li>At least 1 special character (for example, ! @ # $)</li>
+            </ul>
             <div class="auth-help-row">
               <button class="forgot-password-link" id="customerForgotPasswordBtn" type="button" aria-haspopup="dialog" aria-expanded="false">Forgot password?</button>
               <button class="forgot-password-link" id="customerForgotLoginBtn" type="button" aria-haspopup="dialog" aria-expanded="false">Forgot email?</button>
@@ -40899,7 +40905,7 @@
             <div class="field" id="customerConfirmPasswordField" hidden>
               <label for="customerConfirmPassword">Confirm password</label>
               <div class="password-wrap">
-                <input id="customerConfirmPassword" type="password" autocomplete="new-password" minlength="8" placeholder="Re-enter password">
+                <input id="customerConfirmPassword" type="password" autocomplete="new-password" minlength="6" placeholder="Re-enter password">
                 <button class="password-toggle" type="button" data-password-toggle="customerConfirmPassword" aria-label="Show confirm password" aria-pressed="false">
                   <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"></path><circle cx="12" cy="12" r="3"></circle></svg>
                 </button>
@@ -40957,13 +40963,19 @@
               <div class="field">
                 <label for="venueLoginPassword">Password</label>
                 <div class="password-wrap">
-                  <input id="venueLoginPassword" type="password" autocomplete="current-password" minlength="8" required>
+                  <input id="venueLoginPassword" type="password" autocomplete="current-password" required>
                   <button class="password-toggle" type="button" data-password-toggle="venueLoginPassword" aria-label="Show password" aria-pressed="false">
                     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"></path><circle cx="12" cy="12" r="3"></circle></svg>
                   </button>
                 </div>
               </div>
             </div>
+            <ul class="field-note" id="venuePasswordRequirements" aria-label="Password requirements" style="margin:0;padding-left:20px;line-height:1.6" hidden>
+              <li>At least 6 characters</li>
+              <li>At least 1 capital letter</li>
+              <li>At least 1 number</li>
+              <li>At least 1 special character (for example, ! @ # $)</li>
+            </ul>
             <button class="ghost auth-join-now venue-join-now" id="venueJoinNowBtn" type="submit" hidden>Create venue account</button>
             <button class="auth-back-to-types" id="venueBackToTypes" type="button">← Back to account types</button>
             <div class="rule-note auth-status" id="venueAuthStatus" role="status" aria-live="polite" aria-atomic="true" hidden></div>
@@ -41147,12 +41159,17 @@
             <div class="field">
               <label for="dancerPassword">Password</label>
               <div class="password-wrap">
-                <input id="dancerPassword" type="password" value="" autocomplete="new-password" minlength="8" placeholder="At least 8 characters" required>
+                <input id="dancerPassword" type="password" value="" autocomplete="new-password" minlength="6" placeholder="At least 6 characters" aria-describedby="dancerPasswordRequirements" required>
                 <button class="password-toggle" type="button" data-password-toggle="dancerPassword" aria-label="Show password" aria-pressed="false">
                   <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"></path><circle cx="12" cy="12" r="3"></circle></svg>
                 </button>
               </div>
-              <div class="field-note">Use 8 or more characters. Avoid common or easy-to-guess passwords.</div>
+              <ul class="field-note" id="dancerPasswordRequirements" aria-label="Password requirements" style="margin:0;padding-left:20px;line-height:1.6">
+                <li>At least 6 characters</li>
+                <li>At least 1 capital letter</li>
+                <li>At least 1 number</li>
+                <li>At least 1 special character (for example, ! @ # $)</li>
+              </ul>
             </div>
             <div class="rule-note">Free account. Your profile becomes public after setup and verification.</div>
             <button class="action-btn" type="submit">Create dancer account</button>
@@ -41719,11 +41736,17 @@
                 <div class="account-center-section">
                   <label for="dancerAccountPassword">New password</label>
                   <div class="password-wrap">
-                    <input id="dancerAccountPassword" type="password" autocomplete="new-password" placeholder="Minimum 8 characters" />
+                    <input id="dancerAccountPassword" type="password" autocomplete="new-password" minlength="6" placeholder="At least 6 characters" />
                     <button class="password-toggle" type="button" data-password-toggle="dancerAccountPassword" aria-label="Show password" aria-pressed="false">
                       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"></path><circle cx="12" cy="12" r="3"></circle></svg>
                     </button>
                   </div>
+                  <ul class="field-note" aria-label="Password requirements" style="margin:0;padding-left:20px;line-height:1.6">
+                    <li>At least 6 characters</li>
+                    <li>At least 1 capital letter</li>
+                    <li>At least 1 number</li>
+                    <li>At least 1 special character (for example, ! @ # $)</li>
+                  </ul>
                   <label for="dancerAccountPasswordConfirm">Confirm password</label>
                   <div class="password-wrap">
                     <input id="dancerAccountPasswordConfirm" type="password" autocomplete="new-password" placeholder="Re-enter password" />
@@ -42125,11 +42148,17 @@
               <div class="account-center-section">
                 <label for="customerAccountPassword">New password</label>
                 <div class="password-wrap">
-                  <input id="customerAccountPassword" type="password" autocomplete="new-password" placeholder="Minimum 8 characters" />
+                  <input id="customerAccountPassword" type="password" autocomplete="new-password" minlength="6" placeholder="At least 6 characters" />
                   <button class="password-toggle" type="button" data-password-toggle="customerAccountPassword" aria-label="Show password" aria-pressed="false">
                     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"></path><circle cx="12" cy="12" r="3"></circle></svg>
                   </button>
                 </div>
+                <ul class="field-note" aria-label="Password requirements" style="margin:0;padding-left:20px;line-height:1.6">
+                  <li>At least 6 characters</li>
+                  <li>At least 1 capital letter</li>
+                  <li>At least 1 number</li>
+                  <li>At least 1 special character (for example, ! @ # $)</li>
+                </ul>
                 <label for="customerAccountPasswordConfirm">Confirm password</label>
                 <div class="password-wrap">
                   <input id="customerAccountPasswordConfirm" type="password" autocomplete="new-password" placeholder="Re-enter password" />
@@ -44827,6 +44856,14 @@
       updateAccountEmail("customer", button);
     }
 
+    function passwordValidationMessage(password) {
+      if (password.length > 1024) return "Password is too long.";
+      if (password.length < 6 || !/[A-Z]/.test(password) || !/[0-9]/.test(password) || !/[\p{P}\p{S}]/u.test(password)) {
+        return "Use at least 6 characters, including 1 capital letter, 1 number, and 1 special character.";
+      }
+      return "";
+    }
+
     async function updateAccountPassword(role, button) {
       const passwordInput = document.getElementById(`${role}AccountPassword`);
       const confirmInput = document.getElementById(`${role}AccountPasswordConfirm`);
@@ -44836,8 +44873,9 @@
         setAccountCenterStatus(role, "Sign in required.", true);
         return;
       }
-      if (password.length < 8) {
-        setAccountCenterStatus(role, "Password must be at least 8 characters.", true);
+      const passwordError = passwordValidationMessage(password);
+      if (passwordError) {
+        setAccountCenterStatus(role, passwordError, true);
         passwordInput?.focus();
         return;
       }
@@ -54832,7 +54870,12 @@
       if (accountFields) accountFields.hidden = !signupReady;
       if (accountStepHeading) accountStepHeading.hidden = !signupReady;
       if (signupSubmit) signupSubmit.hidden = !signupReady;
-      if (passwordInput) passwordInput.autocomplete = "new-password";
+      if (passwordInput) {
+        passwordInput.autocomplete = "new-password";
+        passwordInput.setAttribute("minlength", "6");
+      }
+      const passwordRequirements = document.getElementById("venuePasswordRequirements");
+      if (passwordRequirements) passwordRequirements.hidden = !signupReady;
       setVenueAuthStatus("");
 
       if (options.focus !== false) {
@@ -55185,7 +55228,13 @@
         ? "Enter your email and a secure password. We’ll send one confirmation link."
         : "MyDancr opens the right dashboard automatically.";
       const passwordInput = document.getElementById("customerPassword");
-      if (passwordInput) passwordInput.autocomplete = isSignup ? "new-password" : "current-password";
+      if (passwordInput) {
+        passwordInput.autocomplete = isSignup ? "new-password" : "current-password";
+        if (isSignup) passwordInput.setAttribute("minlength", "6");
+        else passwordInput.removeAttribute("minlength");
+      }
+      const passwordRequirements = document.getElementById("customerPasswordRequirements");
+      if (passwordRequirements) passwordRequirements.hidden = !isSignup;
       const confirmField = document.getElementById("customerConfirmPasswordField");
       const confirmInput = document.getElementById("customerConfirmPassword");
       if (confirmField) confirmField.hidden = !isSignup;

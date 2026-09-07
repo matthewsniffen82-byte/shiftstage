@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState, type FormEvent } from "react";
+import { passwordValidationMessage } from "@/src/lib/dancr/password-policy";
+import { PasswordRequirements } from "@/app/components/PasswordRequirements";
 import { readSession, requestAccountJson, type DashboardSessionAccount } from "./dashboard-session";
 
 type Credential = "email" | "password";
@@ -59,8 +61,9 @@ export default function CustomerAccountPanel({ account, onAccountChange }: {
       setFeedback({ error: true, message: "Enter a different email address." });
       return;
     }
-    if (credential === "password" && (value.length < 8 || value.length > 1024)) {
-      setFeedback({ error: true, message: "Use a password between 8 and 1,024 characters." });
+    const passwordError = credential === "password" ? passwordValidationMessage(value) : "";
+    if (passwordError) {
+      setFeedback({ error: true, message: passwordError });
       return;
     }
     if (credential === "password" && value !== fields.get("confirmPassword")) {
@@ -151,9 +154,10 @@ function CredentialForm({ credential, busy, onSubmit, onCancel }: {
   useEffect(() => { input.current?.focus({ preventScroll: true }); }, []);
   return <form id="customer-credential-form" className="customer-credential-form" aria-label={`Change ${credential}`} aria-busy={busy} onSubmit={onSubmit}>
     <h3>Change {credential}</h3>
-    <p>{credential === "email" ? "We’ll email confirmation instructions. Keep using your current email until the change is confirmed." : "Use at least 8 characters. Changing your password signs out your other sessions."}</p>
-    <label>{credential === "email" ? "New email address" : "New password"}<input ref={input} name={credential} type={credential === "email" ? "email" : "password"} autoComplete={credential === "email" ? "email" : "new-password"} autoCapitalize="none" spellCheck={false} required minLength={credential === "password" ? 8 : undefined} maxLength={credential === "email" ? 254 : 1024} disabled={busy} /></label>
-    {credential === "password" ? <label>Confirm new password<input name="confirmPassword" type="password" autoComplete="new-password" required minLength={8} maxLength={1024} disabled={busy} /></label> : null}
+    <p>{credential === "email" ? "We’ll email confirmation instructions. Keep using your current email until the change is confirmed." : "Changing your password signs out your other sessions."}</p>
+    <label>{credential === "email" ? "New email address" : "New password"}<input ref={input} name={credential} type={credential === "email" ? "email" : "password"} autoComplete={credential === "email" ? "email" : "new-password"} autoCapitalize="none" spellCheck={false} required minLength={credential === "password" ? 6 : undefined} maxLength={credential === "email" ? 254 : 1024} disabled={busy} /></label>
+    {credential === "password" ? <PasswordRequirements /> : null}
+    {credential === "password" ? <label>Confirm new password<input name="confirmPassword" type="password" autoComplete="new-password" required minLength={6} maxLength={1024} disabled={busy} /></label> : null}
     <div className="customer-credential-form-actions">
       <button className="primary-link" type="submit" disabled={busy}>{busy ? "Please wait…" : credential === "email" ? "Confirm email change" : "Update password"}</button>
       <button type="button" disabled={busy} onClick={onCancel}>Cancel</button>

@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState, type FormEvent } from "react";
+import { passwordValidationMessage } from "@/src/lib/dancr/password-policy";
+import { PasswordRequirements } from "@/app/components/PasswordRequirements";
 import {
   readBrowserAuthSession,
   persistRefreshedBrowserAuthSession,
@@ -65,7 +67,8 @@ export default function ResetPasswordClient() {
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (inFlight.current || phase !== "ready") return;
-    if (password.length < 8) { setError("Use at least 8 characters."); return; }
+    const passwordError = passwordValidationMessage(password);
+    if (passwordError) { setError(passwordError); return; }
     if (password !== confirmPassword) { setError("The passwords do not match."); return; }
     const session = readBrowserAuthSession();
     if (!session?.accessToken) { setPhase("expired"); return; }
@@ -127,9 +130,9 @@ export default function ResetPasswordClient() {
         </> : null}
         {phase === "ready" ? <form onSubmit={submit}>
           <p>Choose a new password to finish resetting your account.</p>
-          <label>New password<input type="password" autoComplete="new-password" minLength={8} maxLength={1024} required value={password} onChange={(event) => setPassword(event.target.value)} disabled={saving} /></label>
-          <small>Use at least 8 characters.</small>
-          <label>Confirm new password<input type="password" autoComplete="new-password" minLength={8} maxLength={1024} required value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} disabled={saving} /></label>
+          <label>New password<input type="password" autoComplete="new-password" minLength={6} maxLength={1024} required value={password} onChange={(event) => setPassword(event.target.value)} disabled={saving} /></label>
+          <PasswordRequirements />
+          <label>Confirm new password<input type="password" autoComplete="new-password" minLength={6} maxLength={1024} required value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} disabled={saving} /></label>
           {error ? <p className="reset-error" role="alert">{error}</p> : null}
           <button type="submit" disabled={saving}>{saving ? "Updating password…" : "Update password"}</button>
         </form> : null}

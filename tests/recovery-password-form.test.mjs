@@ -67,12 +67,15 @@ test("ordinary dancer confirmation retains its confirmation screen", async () =>
 });
 
 const formSource = readFileSync(new URL("../app/account/reset-password/ResetPasswordClient.tsx", import.meta.url), "utf8");
+const passwordPolicy = compile(readFileSync(new URL("../src/lib/dancr/password-policy.ts", import.meta.url), "utf8"), {});
 function formFixture({ succeeds = true, storedSession = session, search = "", getStatus = 200, networkFailure = false, hang = false } = {}) {
   const states = [], effects = [], calls = [];
   let index = 0;
   const refs = [];
   let refIndex = 0;
   const component = compile(formSource, {
+    "@/src/lib/dancr/password-policy": passwordPolicy,
+    "@/app/components/PasswordRequirements": { PasswordRequirements: () => null },
     react: {
       useState: (initial) => { const slot = index++; if (!(slot in states)) states[slot] = initial; return [states[slot], (value) => { states[slot] = value; }]; },
       useRef: (initial) => refs[refIndex++] ||= { current: initial },
@@ -118,14 +121,14 @@ test("reset page verifies its session and waits for explicit password submission
 });
 test("mismatched passwords cannot be submitted", async () => {
   const fixture = await readyForm();
-  fixture.states[1] = "new-password"; fixture.states[2] = "different-password";
+  fixture.states[1] = "New1!password"; fixture.states[2] = "different-password";
   await fixture.find(fixture.render(), "form").props.onSubmit({ preventDefault() {} });
   assert.equal(fixture.calls.length, 1);
   assert.match(fixture.states[3], /do not match/);
 });
 for (const succeeds of [true, false]) test(`password form ${succeeds ? "shows success only after saving" : "stays open when saving fails"}`, async () => {
   const fixture = await readyForm({ succeeds });
-  fixture.states[1] = fixture.states[2] = "new-test-password";
+  fixture.states[1] = fixture.states[2] = "New1!test-password";
   await fixture.find(fixture.render(), "form").props.onSubmit({ preventDefault() {} });
   assert.equal(fixture.calls[1].method, "PATCH");
   assert.equal(fixture.calls[1].headers.authorization, "Bearer test-access");
@@ -196,7 +199,7 @@ test("hanging reset-session fetch is aborted and exits loading", async () => {
 test("switching accounts after opening recovery cannot change the new account password", async () => {
   const fixture = await readyForm();
   fixture.setSession({ accessToken: "other-access", refreshToken: "other-refresh", account: { role: "customer" } });
-  fixture.states[1] = fixture.states[2] = "new-password";
+  fixture.states[1] = fixture.states[2] = "New1!password";
   await fixture.find(fixture.render(), "form").props.onSubmit({ preventDefault() {} });
   assert.equal(fixture.states[0], "expired");
   assert.equal(fixture.calls.length, 1);

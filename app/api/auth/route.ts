@@ -27,6 +27,7 @@ import {
 } from "@/src/lib/supabase/request";
 import { createServerSupabaseClient } from "@/src/lib/supabase/server";
 import { safeErrorMetadata } from "@/src/lib/security/safe-error-metadata";
+import { passwordValidationMessage } from "@/src/lib/dancr/password-policy";
 import { getOptionalServerEnv } from "@/src/lib/server-env";
 import { nfcBrowserAccountConflict, readNfcBrowserAccountToken } from "@/src/lib/dancr/nfc-browser-account";
 
@@ -156,9 +157,8 @@ export async function POST(request: Request) {
       return authJson(await authResponse(data.user.id, expectedRole, data.session, false));
     }
 
-    if (password.length < 8) {
-      throw invalid("Password must be at least 8 characters.");
-    }
+    const passwordError = passwordValidationMessage(password);
+    if (passwordError) throw invalid(passwordError);
 
     if (role === "admin") {
       validateAdminSignupCode(body.adminCode);
