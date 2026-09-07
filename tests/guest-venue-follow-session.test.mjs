@@ -74,5 +74,8 @@ function createDiscoveryContext(values) {
   const start = home.indexOf("    function discoveryMarket(");
   const end = home.indexOf("    const citySelect =", start);
   vm.runInContext(home.slice(start, end), context);
+  const resolver = home.match(/    function resolveVenueByName\([\s\S]*?\n    }/)[0];
+  context.slugify = value => String(value).toLowerCase().replaceAll(' ', '-');
+  vm.runInContext(resolver, context);
   return context;
 }

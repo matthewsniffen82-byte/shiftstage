@@ -43445,7 +43445,7 @@
       if (!destinationAddress) {
         return `<button class="${className} is-travel-unavailable" type="button" data-travel-unavailable="directions" disabled aria-disabled="true" aria-label="Directions unavailable for ${safeName}">${actionButtonLabel("pin", escapeHtml(label))}</button>`;
       }
-      return `<a class="${className}" href="https://maps.google.com/?q=${encodeURIComponent(destinationAddress)}" target="_blank" rel="noreferrer" data-venue="${venueValue}"${dancerValue ? ` data-dancer-id="${dancerValue}"` : ""} aria-label="Get directions to ${safeName}">${actionButtonLabel("pin", escapeHtml(label))}</a>`;
+      return `<a class="${className}" href="https://maps.google.com/?q=${encodeURIComponent(destinationAddress)}" target="_blank" rel="noreferrer" data-venue="${venueValue}" data-venue-id="${escapeOptionValue(venue?.id || "")}"${dancerValue ? ` data-dancer-id="${dancerValue}"` : ""} aria-label="Get directions to ${safeName}">${actionButtonLabel("pin", escapeHtml(label))}</a>`;
     }
 
     function rideActionLabel(source, venueName) {
@@ -43454,6 +43454,7 @@
     }
 
     function uberRideLinkMarkup({ venue, source, className = "", dancerId = "", city = selectedCity(), displayLabel = "" }) {
+      city = venue?.city || city;
       const destination = publicVenueUberDestination(venue, city);
       const label = rideActionLabel(source, venue?.name);
       const visibleLabel = String(displayLabel || label).trim() || label;
@@ -46399,7 +46400,9 @@
     }
 
     function mapLiveVenue(item, city, venueShiftCounts) {
+      city = String(item.city || city).trim();
       return {
+        city,
         id: item.id,
         slug: item.slug,
         name: item.name,
@@ -46704,7 +46707,8 @@
       const uniqueVenues = new Map();
       venues.forEach((venue) => {
         const nameKey = String(venue?.name || "").trim().toLowerCase();
-        const key = nameKey || String(venue?.id || venue?.slug || "");
+        const identity = nameKey || String(venue?.id || venue?.slug || "");
+        const key = identity ? `${String(venue?.city || "").trim().toLowerCase()}:${identity}` : "";
         if (!key) return;
         const current = uniqueVenues.get(key);
         if (!current) {
@@ -48068,6 +48072,7 @@
     }
 
     function venueWithinSelectedRadius(venue) {
+      if (selectedCity() === ALL_CITIES) return true;
       const miles = venueDistanceMiles(venue);
       return miles === null || miles <= selectedRadiusMiles();
     }
@@ -48099,15 +48104,20 @@
 
     function profileMatchesVenueFilter(profile) {
       const venueName = selectedVenueFilter();
-      return venueName === "all" || profile?.venue === venueName;
+      if (venueName === "all") return true;
+      const venue = resolveVenueByName(venueName);
+      return venue?.id && profile?.venueId
+        ? profile.venueId === venue.id
+        : profile?.venue === (venue?.name || venueName) && (!venue?.city || !profile?.city || venue.city === profile.city);
     }
 
     function venueMatchesCurrentFilter(venue) {
       const venueName = selectedVenueFilter();
-      return !venue?.hidden && venueWithinSelectedRadius(venue) && (venueName === "all" || venue.name === venueName);
+      return !venue?.hidden && venueWithinSelectedRadius(venue) && (venueName === "all" || venue.id === venueName || venue.name === venueName);
     }
 
     function venueWorkingNowCount(venue, city = selectedCity()) {
+      city = venue?.city || city;
       if (!venue?.name || !discoveryMarket(city)) return 0;
       return venueDancers(city, venue.name).filter((profile) => isWorkingTonight(profile, city)).length;
     }
@@ -48141,16 +48151,21 @@
       const venues = discoveryMarket(city).venues
         .filter((venue) => !venue.hidden && venueWithinSelectedRadius(venue))
         .sort((a, b) => compareVenueDistance(a, b, city));
-      const venueOptions = venues.map((venue) => ({ venue, workingNowCount: venueWorkingNowCount(venue, city) }));
+      const venueOptions = venues.map((venue) => ({
+        venue,
+        value: city === ALL_CITIES ? venue.id || venue.name : venue.name,
+        label: city === ALL_CITIES && venue.city ? `${venue.name} · ${venue.city}` : venue.name,
+        workingNowCount: venueWorkingNowCount(venue, city)
+      }));
       venueSelect.innerHTML = [
         `<option value="all">All clubs</option>`,
-        ...venueOptions.map(({ venue, workingNowCount }) => `<option value="${escapeOptionValue(venue.name)}" data-working-now="${Boolean(workingNowCount)}">${escapeOptionValue(venue.name)}${workingNowCount ? ` · ${workingNowCount} NOW` : ""}</option>`)
+        ...venueOptions.map(({ value, label, workingNowCount }) => `<option value="${escapeOptionValue(value)}" data-working-now="${Boolean(workingNowCount)}">${escapeOptionValue(label)}${workingNowCount ? ` · ${workingNowCount} NOW` : ""}</option>`)
       ].join("");
-      venueSelect.value = venues.some((venue) => venue.name === previous) ? previous : "all";
+      venueSelect.value = venueOptions.some((option) => option.value === previous) ? previous : "all";
       if (venueSelectOptions) {
         venueSelectOptions.innerHTML = [
           venuePickerOptionMarkup("all", "All clubs", 0, venueSelect.value === "all"),
-          ...venueOptions.map(({ venue, workingNowCount }) => venuePickerOptionMarkup(venue.name, venue.name, workingNowCount, venueSelect.value === venue.name))
+          ...venueOptions.map(({ value, label, workingNowCount }) => venuePickerOptionMarkup(value, label, workingNowCount, venueSelect.value === value))
         ].join("");
       }
       syncVenuePickerSelection(venueSelect.value);
@@ -48571,8 +48586,9 @@
 
     function followedVenues(city) {
       if (!isCustomerSession()) return [];
-      const names = followedVenuesByCity[city] || [];
-      return discoveryMarket(city).venues.filter((venue) => names.includes(venue.name) && !venue.hidden);
+      return discoveryMarket(city).venues.filter((venue) =>
+        (followedVenuesByCity[venue.city || city] || []).includes(venue.name) && !venue.hidden
+      );
     }
 
     function isFollowingVenue(city, venueName) {
@@ -48896,7 +48912,7 @@
 
     function venueExperienceHref(venue, city = selectedCity()) {
       const venueSlug = String(venue?.slug || slugify(venue?.name || "")).trim();
-      const venueCity = String(city || selectedCity()).trim() || "Las Vegas";
+      const venueCity = String(venue?.city || city || selectedCity()).trim() || "Las Vegas";
       if (!venueSlug) return `/?city=${encodeURIComponent(venueCity)}`;
       const query = new URLSearchParams({
         city: venueCity,
@@ -52126,10 +52142,11 @@
     }
 
     function venueDetails(venue, city) {
-      const state = venue.state || stateByCity[city] || "";
+      const venueCity = venue.city || city;
+      const state = venue.state || stateByCity[venueCity] || "";
       return {
         ...venue,
-        city,
+        city: venueCity,
         state,
         distanceLabel: venueDistanceLabel(venue, city),
         address: venue.address || "",
@@ -52354,11 +52371,11 @@
     }
 
     function venueCard(venue) {
-      const city = citySelect.value;
+      const city = venue.city || citySelect.value;
       const details = venueDetails(venue, city);
       const initials = venueInitials(venue.name);
       const safeName = escapeHtml(venue.name);
-      const venueValue = escapeOptionValue(venue.name);
+      const venueValue = escapeOptionValue(venue.id || venue.name);
       const venueHref = venueExperienceHref(venue, city);
       const logoMarkup = venueLogoMarkup(venue, "venue-card-logo");
       const workingNow = venueDancers(city, venue.name)
@@ -52420,7 +52437,7 @@
     }
 
     function venueDetailPage(venue) {
-      const city = citySelect.value;
+      const city = venue.city || citySelect.value;
       const details = venueDetails(venue, city);
       const operatingStatus = venueOperatingStatus(details.hours, city);
       const operatingSummaryLabel = operatingStatus.state === "unknown"
@@ -52439,7 +52456,7 @@
         .filter((profile) => !isWorkingTonight(profile, city) && !profile.scheduled)
         .sort((a, b) => dailyRotationScore(a, city) - dailyRotationScore(b, city));
       const followsVenue = isFollowingVenue(city, venue.name);
-      const venueValue = escapeOptionValue(venue.name);
+      const venueValue = escapeOptionValue(venue.id || venue.name);
       const rideMarkup = uberRideLinkMarkup({
         venue,
         source: "venue_page",
@@ -59563,6 +59580,7 @@
     }
 
     function venueSchedulePriority(venue, city) {
+      city = venue?.city || city;
       const profiles = venueDancers(city, venue.name);
       if (profiles.some((profile) => isWorkingTonight(profile, city))) return 0;
       if (profiles.some((profile) => profile.scheduled)) return 1;
@@ -59570,6 +59588,7 @@
     }
 
     function venueDiscoveryIsActiveNow(venue, city) {
+      city = venue?.city || city;
       const hasWorkingDancer = venueDancers(city, venue.name)
         .some((profile) => isWorkingTonight(profile, city));
       if (hasWorkingDancer) return true;
@@ -59647,7 +59666,7 @@
       const venueName = selectedVenueFilter();
       const workingNowCount = getItems(city, "tonight").length;
       const radiusLabel = distanceSelect?.value || "25 mi";
-      const venueLabel = venueName === "all" ? "All clubs" : venueName;
+      const venueLabel = venueName === "all" ? "All clubs" : resolveVenueByName(venueName, city)?.name || venueName;
       const loading = liveDiscoveryIsLoading(city);
       const unavailable = liveMarketState[city] === "error";
       const workingSummary = document.getElementById("homeLiveWorking");
@@ -59934,10 +59953,11 @@
     }
 
     function homeVenueDiscoveryFeedSlide(venue, index, total, city) {
+      city = venue.city || city;
       const details = venueDetails(venue, city);
       const operatingStatus = venueOperatingStatus(details.hours, city);
       const safeName = escapeHtml(venue.name);
-      const venueValue = escapeOptionValue(venue.name);
+      const venueValue = escapeOptionValue(venue.id || venue.name);
       const initials = venueInitials(venue.name);
       const logoMarkup = venueLogoMarkup(venue, "home-venue-discovery-logo");
       const localProfiles = venueDancers(city, venue.name);
@@ -60003,7 +60023,7 @@
       const isLive = isWorkingTonight(profile, city);
       const canMarkGoing = Boolean(isLive && profile.shiftId);
       const venueName = String(profile.venue || "").trim();
-      const venueValue = escapeOptionValue(venueName);
+      const venueValue = escapeOptionValue(profile.venueId || venueName);
       const venue = resolveVenueByName(venueName, city);
       const profileActionVisual = actionIconMarkup("profile");
       const venueActionMarkup = venue
@@ -60217,7 +60237,7 @@
       const profileReference = escapeOptionValue(profileReferenceValue(profile));
       const venueName = String(profile.venue || "").trim();
       const safeVenueName = escapeHtml(venueName);
-      const venueValue = escapeOptionValue(venueName);
+      const venueValue = escapeOptionValue(profile.venueId || venueName);
       const profileHref = profile.slug ? `/dancers/${encodeURIComponent(profile.slug)}` : `#profile-${slugify(profile.name)}`;
       const profilePhotoUrl = publicProfilePhotoUrl(profile);
       const portraitPhotoAttrs = customPhotoAttrs(
@@ -60606,8 +60626,9 @@
       const items = allItems;
       const venueFilter = selectedVenueFilter();
       const locationPhrase = discoveryLocationPhrase(city);
+      const venueFilterLabel = resolveVenueByName(venueFilter, city)?.name || venueFilter;
       const titles = {
-        dancers: venueFilter === "all" ? `Dancers ${locationPhrase}` : `Dancers at ${venueFilter}`,
+        dancers: venueFilter === "all" ? `Dancers ${locationPhrase}` : `Dancers at ${venueFilterLabel}`,
         venues: `Clubs ${locationPhrase}`
       };
       const selectedVenue = activeTab === "venues" && selectedVenueName
@@ -60693,7 +60714,7 @@
         return;
       }
       if (activeTab === "dancers" && !items.length) {
-        const scope = venueFilter === "all" ? `in ${city}` : `at ${venueFilter}`;
+        const scope = venueFilter === "all" ? `in ${city}` : `at ${venueFilterLabel}`;
         results.innerHTML = `
           <section class="home-discovery-empty" aria-labelledby="homeDancersEmptyTitle">
             <strong id="homeDancersEmptyTitle">No approved dancer profiles ${scope}.</strong>
@@ -62241,6 +62262,8 @@
 
     function resolveVenueByName(venueName, city = citySelect.value) {
       if (!venueName || !discoveryMarket(city)) return null;
+      const exactVenue = discoveryMarket(city).venues.find((venue) => venue.id === venueName || venue.slug === venueName);
+      if (exactVenue) return exactVenue;
       const normalizedName = String(venueName).trim().toLowerCase();
       const normalizedSlug = slugify(venueName);
       return discoveryMarket(city).venues.find((venue) => (
@@ -62265,7 +62288,7 @@
       if (venueProfileReturnContext) suspendProfileReturnSurface(venueProfileReturnContext);
       homeDiscoveryFeedOpen = false;
       deactivateHomeDiscoveryFeed();
-      selectedVenueName = venue.name;
+      selectedVenueName = venue.id || venue.name;
       activeTab = "venues";
       document.querySelectorAll(".tab").forEach((item) => {
         const isActive = item.dataset.tab === "venues";
@@ -62506,10 +62529,10 @@
       }
       const directionsLink = event.target.closest(".venue-directions-btn");
       if (directionsLink) {
-        const city = citySelect.value;
-        const venueName = directionsLink.dataset.venue;
+        const venueRecord = resolveVenueByName(directionsLink.dataset.venueId || directionsLink.dataset.venue);
+        const city = venueRecord?.city || citySelect.value;
+        const venueName = venueRecord?.name || directionsLink.dataset.venue;
         const attributedDancerId = directionsLink.dataset.dancerId || "";
-        const venueRecord = discoveryMarket(city).venues.find((venue) => venue.name === venueName);
         const venueProfiles = discoveryMarket(city).dancers
           .filter((profile) => isApprovedPublicProfile(profile) && profile.venue === venueName);
         const attributedProfiles = attributedDancerId
@@ -62534,9 +62557,10 @@
         event.stopPropagation();
         if (followVenueButton.disabled) return;
         if (!requireCustomerAccountForProfileAction(followVenueButton)) return;
-        const city = citySelect.value;
-        const venueName = followVenueButton.dataset.venueFollow;
-        const venueRecord = discoveryMarket(city).venues.find((venue) => venue.name === venueName);
+        const venueReference = followVenueButton.dataset.venueFollow;
+        const venueRecord = resolveVenueByName(venueReference);
+        const city = venueRecord?.city || citySelect.value;
+        const venueName = venueRecord?.name || venueReference;
         if (!venueRecord?.id) {
           showToast("This club follow is unavailable.");
           return;
@@ -65705,7 +65729,7 @@
     }
 
     function syncDiscoveryCityScope() {
-      const allowsAllCities = activeTab === "dancers" || activeTab === "tv";
+      const allowsAllCities = activeTab === "dancers" || activeTab === "tv" || activeTab === "venues";
       const allOption = [...citySelect.options].find((option) => option.value === ALL_CITIES);
       if (allOption) { allOption.hidden = !allowsAllCities; allOption.disabled = !allowsAllCities; }
       if (!allowsAllCities && citySelect.value === ALL_CITIES) {
@@ -66014,7 +66038,7 @@
       selectedVenueName = null;
       render();
       const venueName = selectedVenueFilter();
-      showToast(venueName === "all" ? "Showing all clubs" : `Showing ${venueName}`);
+      showToast(venueName === "all" ? "Showing all clubs" : `Showing ${resolveVenueByName(venueName)?.name || venueName}`);
     });
 
     if (venuePickerField && venueSelectButton && venueSelectDialog && typeof venueSelectDialog.showModal === "function") {

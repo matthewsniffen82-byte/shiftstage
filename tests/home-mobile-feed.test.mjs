@@ -1077,7 +1077,7 @@ test("the consolidated discovery titles use one typography system and consistent
   );
   assert.match(
     homeSource,
-    /const locationPhrase = discoveryLocationPhrase\(city\);[\s\S]*?dancers: venueFilter === "all" \? `Dancers \$\{locationPhrase\}` : `Dancers at \$\{venueFilter\}`,[\s\S]*?venues: `Clubs \$\{locationPhrase\}`/,
+    /const locationPhrase = discoveryLocationPhrase\(city\);[\s\S]*?dancers: venueFilter === "all" \? `Dancers \$\{locationPhrase\}` : `Dancers at \$\{venueFilterLabel\}`,[\s\S]*?venues: `Clubs \$\{locationPhrase\}`/,
   );
   assert.match(
     homeSource,

@@ -45,7 +45,7 @@ test("venue navigation remains immediately available from the existing discovery
   )?.[0] || "";
 
   assert.match(venueOpen, /const venue = resolveVenueByName\(venueName\)/);
-  assert.match(venueOpen, /selectedVenueName = venue\.name/);
+  assert.match(venueOpen, /selectedVenueName = venue\.id \|\| venue\.name/);
   assert.match(venueOpen, /render\(\)/);
   assert.doesNotMatch(venueOpen, /fetch\(/);
 });

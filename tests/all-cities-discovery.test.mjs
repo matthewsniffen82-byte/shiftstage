@@ -120,7 +120,7 @@ test('combined cards use the dancer city at a date boundary and retain profile i
   assert.equal(ctx.citySelect.value, 'All cities');
 });
 
-test('All cities remains available for grid and TV, and Clubs returns to a real city', () => {
+test('All cities remains selected across dancer grid, TV, and Clubs', () => {
   const allOption = { value: 'All cities', hidden: false, disabled: false };
   const visited = [];
   const ctx = context({ activeTab: 'tv', lastSpecificDiscoveryCity: 'Miami',
@@ -133,8 +133,101 @@ test('All cities remains available for grid and TV, and Clubs returns to a real 
   assert.equal(ctx.citySelect.value, 'All cities');
   assert.equal(allOption.hidden, false);
   ctx.activeTab = 'venues'; ctx.syncDiscoveryCityScope();
-  assert.equal(ctx.citySelect.value, 'Miami');
-  assert.equal(allOption.disabled, true);
-  assert.equal(ctx.venueSelect.value, 'all');
-  assert.deepEqual(visited, ['venues', 'Miami']);
+  assert.equal(ctx.citySelect.value, 'All cities');
+  assert.equal(allOption.disabled, false);
+  ctx.activeTab = 'dancers'; ctx.syncDiscoveryCityScope();
+  assert.equal(ctx.citySelect.value, 'All cities');
+  assert.equal(ctx.venueSelect.value, 'club');
+  assert.deepEqual(visited, []);
+});
+
+
+test('combined venues retain city labels, separate matching names, and ignore the local radius', () => {
+  const ctx = context({ stateByCity: { Miami: 'FL', 'Las Vegas': 'NV' },
+    liveVenueCoordinate: value => value ?? null,
+    venueDistanceMiles: () => 2000, selectedRadiusMiles: () => 25,
+    venueDistanceLabel: () => '',
+    publicVenueRecordScore: () => 0, mergePublicVenueRecords: a => a,
+  });
+  vm.runInContext(['mapLiveVenue', 'dedupePublicVenues', 'venueDetails', 'venueWithinSelectedRadius'].map(fn).join('\n'), ctx);
+  const miami = ctx.mapLiveVenue({ id: 'miami', name: 'The Club', city: 'Miami' }, 'All cities', {});
+  const vegas = ctx.mapLiveVenue({ id: 'vegas', name: 'The Club', city: 'Las Vegas' }, 'All cities', {});
+  const venues = ctx.dedupePublicVenues([miami, vegas, miami]);
+  assert.equal(venues.length, 2);
+  assert.equal(ctx.venueDetails(miami, 'All cities').city, 'Miami');
+  assert.equal(ctx.venueDetails(miami, 'All cities').state, 'FL');
+  assert.equal(ctx.venueWithinSelectedRadius(miami), true);
+  ctx.selectedCity = () => 'Miami';
+  assert.equal(ctx.venueWithinSelectedRadius(miami), false);
+});
+
+test('combined club filters and profile references distinguish same-named venues', () => {
+  const miami = { id: 'miami', slug: 'club-miami', name: 'The Club', city: 'Miami' };
+  const vegas = { id: 'vegas', slug: 'club-vegas', name: 'The Club', city: 'Las Vegas' };
+  const ctx = context({ allCitiesMarket: { venues: [vegas, miami] },
+    slugify: value => value.toLowerCase().replaceAll(' ', '-'),
+    venueSelect: { value: 'miami' }, venueWithinSelectedRadius: () => true,
+  });
+  vm.runInContext(['discoveryMarket', 'resolveVenueByName', 'selectedVenueFilter', 'profileMatchesVenueFilter', 'venueMatchesCurrentFilter'].map(fn).join('\n'), ctx);
+  assert.equal(ctx.resolveVenueByName('miami'), miami);
+  assert.equal(ctx.resolveVenueByName('club-vegas'), vegas);
+  assert.equal(ctx.venueMatchesCurrentFilter(miami), true);
+  assert.equal(ctx.venueMatchesCurrentFilter(vegas), false);
+  assert.equal(ctx.profileMatchesVenueFilter({ venueId: 'miami', venue: 'The Club', city: 'Miami' }), true);
+  assert.equal(ctx.profileMatchesVenueFilter({ venueId: 'vegas', venue: 'The Club', city: 'Las Vegas' }), false);
+  ctx.venueSelect.value = 'all';
+  assert.equal(ctx.venueMatchesCurrentFilter(vegas), true);
+  assert.equal(ctx.citySelect.value, 'All cities');
+});
+
+test('combined club ranking uses each venue city for hours and lineup', () => {
+  const seen = [];
+  const ctx = context({ venueDancers: city => { seen.push(city); return []; },
+    isWorkingTonight: () => false,
+    venueOperatingStatus: (_hours, city) => ({ state: city === 'Miami' ? 'open' : 'closed' }),
+  });
+  vm.runInContext(fn('venueDiscoveryIsActiveNow') + fn('venueSchedulePriority'), ctx);
+  assert.equal(ctx.venueDiscoveryIsActiveNow({ name: 'The Club', city: 'Miami' }, 'All cities'), true);
+  assert.equal(ctx.venueDiscoveryIsActiveNow({ name: 'The Club', city: 'Las Vegas' }, 'All cities'), false);
+  assert.equal(ctx.venueSchedulePriority({ name: 'The Club', city: 'Miami' }, 'All cities'), 2);
+  assert.deepEqual(seen, ['Miami', 'Las Vegas', 'Miami']);
+});
+
+
+test('public venue API combines active cities and preserves a single-city query', async () => {
+  const client = queryFixture([
+    { id: 'vegas', name: 'The Club', city: 'Las Vegas', is_active: true },
+    { id: 'miami', name: 'The Club', city: 'Miami', is_active: true },
+    { id: 'inactive', city: 'Atlanta', is_active: false },
+  ]);
+  const exports = {};
+  vm.runInNewContext(ts.transpileModule(readFileSync('app/api/public/venues/route.ts', 'utf8'), {
+    compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
+  }).outputText, { exports, URL, require: name => {
+    if (name === 'next/server') return { NextResponse: { json: Response.json } };
+    if (name.endsWith('/markets')) return markets;
+    if (name.endsWith('/admin')) return { createAdminSupabaseClient: () => client };
+    if (name.endsWith('/public')) return { formatVenueHours: () => '' };
+    if (name.endsWith('/responsive-image')) return { responsivePublicImage: () => null };
+    if (name.endsWith('/venue-branding')) return { verifiedVenueLogoUrl: () => null };
+    if (name.endsWith('/api')) return { apiError: error => { throw error; } };
+    return {};
+  } });
+  const get = async city => (await exports.GET(new Request('https://example.test/api/public/venues?city=' + encodeURIComponent(city)))).json();
+  assert.deepEqual((await get('All cities')).venues.map(v => v.id), ['vegas', 'miami']);
+  assert.deepEqual((await get('Miami')).venues.map(v => v.id), ['miami']);
+  assert.deepEqual((await get('New York')).venues, []);
+});
+
+
+test('saved venues from different cities remain visible in the combined dashboard', () => {
+  const miami = { id: 'miami', name: 'The Club', city: 'Miami' };
+  const vegas = { id: 'vegas', name: 'The Club', city: 'Las Vegas' };
+  const ctx = context({ allCitiesMarket: { venues: [vegas, miami] },
+    followedVenuesByCity: { Miami: ['The Club'] }, isCustomerSession: () => true,
+  });
+  vm.runInContext(fn('discoveryMarket') + fn('followedVenues'), ctx);
+  assert.deepEqual(Array.from(ctx.followedVenues('All cities'), v => v.id), ['miami']);
+  ctx.isCustomerSession = () => false;
+  assert.equal(ctx.followedVenues('All cities').length, 0);
 });

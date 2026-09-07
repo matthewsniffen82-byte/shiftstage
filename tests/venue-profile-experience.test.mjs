@@ -32,7 +32,7 @@ test("the canonical in-app venue page is dedicated to the selected club and its 
   assert.match(venueDetail, /recordVenuePageEvent\(\{ venueId: venue\.id, eventType: "page_view", source: "venue_page" \}\)/);
   assert.match(venueDetail, /venueOfferMarkup\(venue\)/);
   assert.doesNotMatch(venueDetail, /\/api\/public\/maps\/embed\?address=|<iframe/i);
-  assert.match(venueDetail, /const venueValue = escapeOptionValue\(venue\.name\)/);
+  assert.match(venueDetail, /const venueValue = escapeOptionValue\(venue\.id \|\| venue\.name\)/);
   assert.match(venueDetail, /class="venue-secondary-actions"[\s\S]*?class="action-btn secondary follow-venue-btn[\s\S]*?data-venue-follow="\$\{venueValue\}"[\s\S]*?class="action-btn secondary venue-detail-share"[\s\S]*?data-share-venue="\$\{venueValue\}"/);
   assert.match(venueDetail, /venueDirectionsMarkup\(\{ venue, className: "venue-address-directions", city \}\)/);
   assert.match(venueDetail, /class="venue-identity-meta"[\s\S]*?class="venue-identity-location"><span class="meta">[\s\S]*?details\.city[\s\S]*?details\.state[\s\S]*?venue-identity-distance[\s\S]*?details\.distanceLabel/);
@@ -361,7 +361,7 @@ test("venue entry points use the canonical in-app venue profile", () => {
   );
   assert.match(
     liveApp,
-    /function venueCard\(venue\)[\s\S]*?const city = citySelect\.value[\s\S]*?const venueHref = venueExperienceHref\(venue, city\)/,
+    /function venueCard\(venue\)[\s\S]*?const city = venue\.city \|\| citySelect\.value[\s\S]*?const venueHref = venueExperienceHref\(venue, city\)/,
   );
   assert.match(
     liveApp,

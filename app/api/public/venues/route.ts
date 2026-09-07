@@ -1,3 +1,4 @@
+import { isAllMyDancrCities } from "@/src/lib/dancr/markets";
 import { NextResponse } from "next/server";
 import { apiError } from "@/src/lib/api";
 import { formatVenueHours } from "@/src/lib/dancr/public";
@@ -18,13 +19,14 @@ export async function GET(request: Request) {
       return NextResponse.json({ ok: false, error: "Choose a valid city." }, { status: 400 });
     }
     const client = createAdminSupabaseClient();
-    const { data, error } = await client
+    let venueQuery = client
       .from("venues")
       .select("id, slug, name, city, state, address, latitude, longitude, opens_at, closes_at, cover_image_storage_path, logo_storage_path")
       .eq("is_active", true)
-      .eq("city", city)
       .order("name", { ascending: true })
-      .limit(MAX_PUBLIC_VENUES);
+      .limit(isAllMyDancrCities(city) ? MAX_PUBLIC_VENUES * 4 : MAX_PUBLIC_VENUES);
+    if (!isAllMyDancrCities(city)) venueQuery = venueQuery.eq("city", city);
+    const { data, error } = await venueQuery;
 
     if (error) throw error;
 
