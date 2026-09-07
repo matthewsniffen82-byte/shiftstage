@@ -93,7 +93,7 @@ export default function DancerProfileMediaUploads({
         .profile-upload-entry > svg { width:28px; height:28px; flex:0 0 28px; fill:none; stroke:#d5baff; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
         .profile-upload-entry > span { min-width:0; display:grid; gap:4px; }
         .profile-upload-entry strong { color:#fff; font-size:16px; line-height:1.2; }
-        .profile-upload-entry small { color:#c9c3d2; font-size:12px; line-height:1.3; }
+        .profile-upload-entry small { color:#d4cedd !important; -webkit-text-fill-color:currentColor !important; font-size:12px; line-height:1.3; }
         .profile-upload-entry > b { margin-left:auto; color:#e4d5ff; font-size:26px; line-height:1; }
         .profile-upload-items { min-width:0; display:flex; gap:10px; overflow-x:auto; margin:0; padding:2px 0 8px; list-style:none; }
         .profile-upload-items > li { flex:0 0 112px; min-width:0; }

@@ -28,6 +28,11 @@ test("onboarding cards are compact while the fixed navigation retains safe scrol
   assert.match(dashboard, /\.dashboard-shell-dancer \{ padding-bottom: max\(128px, calc\(env\(safe-area-inset-bottom\) \+ 104px\)\); \}/);
 });
 
+test("mobile checklist columns cannot leak into nested profile editor buttons", () => {
+  assert.doesNotMatch(dashboard, /\.dancer-onboarding-steps button\s*\{/);
+  assert.match(dashboard, /\.dancer-onboarding-steps > li > button \{ min-height: 82px;/);
+});
+
 test("Help & Account is a separate utility accordion with a stateful chevron", () => {
   const accountSection = dashboard.match(/<DashboardSection[\s\S]*?id="dancer-account"[\s\S]*?<\/DashboardSection>/)?.[0] || "";
   assert.match(accountSection, /emphasis="utility"/);
