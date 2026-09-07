@@ -8723,7 +8723,7 @@ function DashboardStyles() {
       .customer-saved-card .customer-card-actions > * { min-width: 0; width: 100%; padding-inline: 7px; }
       .customer-saved-card-grid.customer-favorite-club-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
       .customer-favorite-club-card { border: 1px solid rgba(185,149,255,.22); border-radius: 16px; background: linear-gradient(155deg, #141019, #09090e 72%); box-shadow: 0 8px 22px rgba(0,0,0,.24), inset 0 1px 0 rgba(255,255,255,.04); }
-      .customer-favorite-club-header { display: grid; grid-template-columns: 92px minmax(0, 1fr) 44px; align-items: center; gap: 10px; padding: 12px 12px 0; }
+      .customer-favorite-club-header { display: grid; grid-template-columns: 92px minmax(0, 1fr) 36px; align-items: center; gap: 10px; padding: 12px 12px 0; }
       .customer-favorite-club-brand { min-width: 0; height: 58px; overflow: hidden; border: 1px solid rgba(172,122,255,.12); border-radius: 10px; background: #050507; }
       .customer-favorite-club-logo { height: 100%; display: grid; place-items: center; padding: 6px; }
       .customer-favorite-club-logo > img { display: block; width: 100%; height: 100%; max-height: 46px; object-fit: contain; }
@@ -8732,32 +8732,32 @@ function DashboardStyles() {
       .customer-favorite-club-identity strong { display: block; font-size: 17px; font-weight: 900; letter-spacing: -.02em; line-height: 1.2; overflow-wrap: anywhere; }
       .customer-favorite-club-identity > small { color: #aaa4b8; font-size: 11px; line-height: 1.35; }
       .customer-club-logo-fallback { width: 34px; height: 34px; fill: none; stroke: #b7accb; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-      .customer-club-favorite { width: 44px; height: 44px; min-height: 44px; display: grid; place-items: center; padding: 10px; border: 1px solid rgba(251,113,133,.24); border-radius: 50%; color: #fb7185; background: rgba(27,15,24,.9); cursor: pointer; }
-      .customer-club-favorite > svg { width: 21px; height: 21px; fill: currentColor; stroke: currentColor; stroke-width: 1.4; }
+      .customer-club-favorite { width: 36px; height: 36px; min-height: 36px; display: grid; place-items: center; padding: 8px; border: 1px solid rgba(251,113,133,.24); border-radius: 50%; color: #fb7185; background: rgba(27,15,24,.9); cursor: pointer; }
+      .customer-club-favorite > svg { width: 18px; height: 18px; fill: currentColor; stroke: currentColor; stroke-width: 1.4; }
       .customer-club-favorite:disabled { opacity: .55; cursor: wait; }
       .customer-club-favorite:hover:not(:disabled) { background: #351724; border-color: #fb7185; }
-      body.dancr-button-system .dashboard-shell-customer .customer-club-favorite { box-sizing: border-box !important; width: 44px !important; min-width: 44px !important; height: 44px !important; min-height: 44px !important; padding: 10px !important; border: 1px solid rgba(239,68,68,.28) !important; border-radius: 50% !important; color: #ef4444 !important; background: rgba(27,15,24,.9) !important; box-shadow: none !important; }
-      body.dancr-button-system .dashboard-shell-customer .customer-club-favorite svg { width: 21px !important; height: 21px !important; color: inherit !important; }
+      body.dancr-button-system .dashboard-shell-customer .customer-club-favorite { box-sizing: border-box !important; width: 36px !important; min-width: 36px !important; height: 36px !important; min-height: 36px !important; padding: 8px !important; border: 1px solid rgba(239,68,68,.28) !important; border-radius: 50% !important; color: #ef4444 !important; background: rgba(27,15,24,.9) !important; box-shadow: none !important; }
+      body.dancr-button-system .dashboard-shell-customer .customer-club-favorite svg { width: 18px !important; height: 18px !important; color: inherit !important; }
       body.dancr-button-system .dashboard-shell-customer .customer-club-favorite svg path { fill: currentColor !important; stroke: currentColor !important; }
       .customer-club-favorite:focus-visible, .customer-club-activity-stat:focus-visible, .customer-favorite-club-logo:focus-visible { outline: 2px solid var(--mydancr-customer-accent); outline-offset: -3px; }
       .customer-favorite-club-copy { padding: 10px 12px 12px; gap: 8px; }
-      .customer-club-activity { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 0; }
-      .customer-club-activity-stat { box-sizing: border-box; min-width: 0; min-height: 44px; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 6px 5px; border: 1px solid rgba(255,255,255,.07); border-radius: 10px; color: #c0b9ce; background: rgba(255,255,255,.025); text-decoration: none; }
-      .customer-club-activity-stat strong { color: #fff; font-size: 17px; line-height: 1; }
+      .customer-club-activity { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; }
+      .customer-club-activity-stat { box-sizing: border-box; min-width: 0; min-height: 32px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 5px 10px; border: 1px solid rgba(255,255,255,.07); border-radius: 8px; color: #c0b9ce; background: rgba(255,255,255,.025); text-decoration: none; }
+      .customer-club-activity-stat strong { color: inherit; font-size: 14px; line-height: 1; }
       .customer-club-activity-stat span { font-size: 11px; font-weight: 800; }
       .customer-club-activity-stat > i { width: 6px; height: 6px; flex: 0 0 6px; border-radius: 50%; background: currentColor; }
-      .customer-club-activity-stat > svg { width: 15px; height: 15px; flex: 0 0 15px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; }
-      .customer-club-activity-stat.is-now.has-dancers { color: #72e2a6; border-color: rgba(65,211,136,.23); background: rgba(30,119,70,.1); }
+      .customer-club-activity-stat > svg { width: 13px; height: 13px; flex: 0 0 13px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; }
+      .customer-club-activity-stat.is-now { color: var(--dancr-color-live, #4dec9d); border-color: var(--dancr-color-live-medium, rgba(77,236,157,.36)); background: var(--dancr-color-live-soft, rgba(77,236,157,.1)); }
       .customer-club-activity-stat.is-now.has-dancers > i { box-shadow: 0 0 9px rgba(65,211,136,.6); }
-      .customer-club-activity-stat.is-upcoming { color: #c7a6fa; border-color: rgba(179,125,255,.16); }
+      .customer-club-activity-stat.is-upcoming { color: var(--dancr-color-info, #22d3ee); border-color: var(--dancr-color-info-medium, rgba(34,211,238,.34)); background: var(--dancr-color-info-soft, rgba(34,211,238,.1)); }
       .customer-favorite-club-copy > .customer-club-activity-unavailable { white-space: normal; font-size: 11px; line-height: 1.5; }
-      .customer-favorite-club-card .customer-favorite-club-actions { gap: 8px !important; margin-top: 0; }
-      .customer-favorite-club-card .customer-favorite-club-actions > * { min-height: 44px; border-radius: 10px; font-size: 12px; }
+      .customer-favorite-club-card .customer-favorite-club-actions { display: flex !important; flex-wrap: wrap; justify-content: flex-start; gap: 8px !important; margin-top: 0; }
+      .customer-favorite-club-card .customer-favorite-club-actions > * { min-height: 34px; border-radius: 8px; font-size: 11px; }
       .customer-favorite-club-actions > a { gap: 8px; color: #f0e7ff; border-color: rgba(178,125,255,.3); background: linear-gradient(130deg, rgba(132,67,211,.2), rgba(106,55,171,.09)); }
-      body.dancr-button-system .customer-favorite-club-card .customer-favorite-club-actions > :is(a, button) { box-sizing: border-box !important; width: 100% !important; min-width: 0 !important; min-height: 44px !important; margin: 0 !important; padding: 0 10px !important; border: 1px solid rgba(255,255,255,.12) !important; border-radius: 10px !important; color: #e4e0ed !important; background: rgba(255,255,255,.04) !important; box-shadow: none !important; font-size: 12px !important; }
+      body.dancr-button-system .customer-favorite-club-card .customer-favorite-club-actions > :is(a, button) { box-sizing: border-box !important; flex: 0 0 auto !important; width: auto !important; min-width: 0 !important; min-height: 34px !important; margin: 0 !important; padding: 0 12px !important; border: 1px solid rgba(255,255,255,.12) !important; border-radius: 8px !important; color: #e4e0ed !important; background: rgba(255,255,255,.04) !important; box-shadow: none !important; font-size: 11px !important; }
       body.dancr-button-system .customer-favorite-club-card .customer-favorite-club-actions > a { border-color: rgba(178,125,255,.3) !important; color: #f0e7ff !important; background: linear-gradient(130deg, rgba(132,67,211,.2), rgba(106,55,171,.09)) !important; }
       @media (max-width: 700px) { .customer-saved-card-grid.customer-favorite-club-grid { grid-template-columns: minmax(0, 1fr); gap: 10px; } }
-      @media (max-width: 380px) { .customer-favorite-club-header { grid-template-columns: 72px minmax(0, 1fr) 44px; gap: 8px; } .customer-favorite-club-identity strong { font-size: 16px; } }
+      @media (max-width: 380px) { .customer-favorite-club-header { grid-template-columns: 72px minmax(0, 1fr) 36px; gap: 8px; } .customer-favorite-club-identity strong { font-size: 16px; } }
       .customer-empty-state { min-height: 124px; display: grid; place-items: start; align-content: center; gap: 9px; padding: 16px; border: 1px dashed rgba(167,139,250,.3); border-radius: 12px; background: rgba(139,92,246,.05); }
       .customer-empty-state.compact { min-height: 106px; padding: 12px; }
       .customer-empty-state strong { color: #fff; }
