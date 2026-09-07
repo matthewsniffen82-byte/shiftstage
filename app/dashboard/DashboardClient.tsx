@@ -3760,7 +3760,8 @@ function DancerProfilePreview({
       </button>
       {isOpen ? (
         <div
-          aria-labelledby="dancer-profile-preview-heading"
+          aria-label={isEditor ? "Edit dancer profile" : undefined}
+          aria-labelledby={isEditor ? undefined : "dancer-profile-preview-heading"}
           aria-modal="true"
           className={`dancer-profile-preview-overlay${isEditor ? " is-editor" : ""}`}
           ref={overlayRef}
@@ -3769,27 +3770,22 @@ function DancerProfilePreview({
           <div className="public-profile-shell dancer-profile-preview-shell">
             <header className="profile-titlebar">
               {isEditor ? (
-                <span className="dancer-profile-builder-avatar-control">
-                  <button
-                    aria-label={headerImage ? "Edit avatar" : "Add avatar"}
-                    className={`profile-titlebar-avatar dancer-profile-builder-avatar${headerImage ? " has-photo" : " is-empty"}`}
-                    data-profile-editor-trigger="avatar"
-                    onClick={() => openEditorSection("avatar")}
-                    type="button"
-                  >
+                <button
+                  aria-label={headerImage ? "Edit avatar" : "Add avatar"}
+                  className="dancer-profile-builder-avatar-control"
+                  data-profile-editor-trigger="avatar"
+                  onClick={() => openEditorSection("avatar")}
+                  type="button"
+                >
+                  <span className={`profile-titlebar-avatar dancer-profile-builder-avatar${headerImage ? " has-photo" : " is-empty"}`}>
                     {headerImage ? <img alt="" src={headerImage} /> : (
-                      <svg aria-hidden="true" className="dancer-profile-builder-avatar-add" viewBox="0 0 24 24">
-                        <path d="M12 6v12M6 12h12" />
+                      <svg aria-hidden="true" className="dancer-profile-builder-avatar-camera" viewBox="0 0 24 24">
+                        <path d="M4 7h4l2-3h4l2 3h4v13H4z" /><circle cx="12" cy="13" r="3.5" />
                       </svg>
                     )}
-                    <i aria-hidden="true">
-                      {headerImage ? "✎" : (
-                        <svg viewBox="0 0 16 16"><path d="M8 4v8M4 8h8" /></svg>
-                      )}
-                    </i>
-                  </button>
-                  <small>Avatar</small>
-                </span>
+                  </span>
+                  <small>{headerImage ? "Change avatar" : "Add avatar"}</small>
+                </button>
               ) : (
                 <span className={`profile-titlebar-avatar${headerImage ? " has-photo" : ""}`}>
                   {headerImage ? <img alt="" src={headerImage} /> : previewName.slice(0, 1).toUpperCase()}
@@ -3798,16 +3794,17 @@ function DancerProfilePreview({
               <div className="profile-titlebar-identity">
                 <div>
                   {isEditor ? (
-                    <button className="dancer-profile-builder-identity" data-profile-editor-trigger="identity" onClick={() => openEditorSection("identity")} type="button">
-                      <span className="dancer-profile-builder-name" id="dancer-profile-preview-heading">{name?.trim() || persistedName || "Stage name"}</span>
-                      <span aria-hidden="true">{name?.trim() || persistedName ? "✎" : "+"}</span>
+                    <button aria-label={name?.trim() || persistedName ? `Edit stage name: ${name?.trim() || persistedName}` : "Add stage name"} className="dancer-profile-builder-identity" data-profile-editor-trigger="identity" onClick={() => openEditorSection("identity")} type="button">
+                      <span className="dancer-profile-builder-field-copy"><small>Stage name</small><span className="dancer-profile-builder-name" id="dancer-profile-preview-heading">{name?.trim() || persistedName || "Tap to add"}</span></span>
+                      <svg aria-hidden="true" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6" /></svg>
                     </button>
                   ) : <h1 id="dancer-profile-preview-heading">{previewName}</h1>}
                 </div>
                 <div className="profile-titlebar-context">
                   {isEditor ? (
-                    <button className="profile-titlebar-city dancer-profile-builder-city" data-profile-editor-trigger="identity" onClick={() => openEditorSection("identity")} type="button">
-                      {city?.trim() || persistedCity || "Add city"}<span aria-hidden="true">{city?.trim() || persistedCity ? "✎" : "+"}</span>
+                    <button aria-label={city?.trim() || persistedCity ? `Edit city: ${city?.trim() || persistedCity}` : "Add city"} className="dancer-profile-builder-city" data-profile-editor-trigger="identity" onClick={() => openEditorSection("identity")} type="button">
+                      <span className="dancer-profile-builder-field-copy"><small>City</small><span>{city?.trim() || persistedCity || "Choose city"}</span></span>
+                      <svg aria-hidden="true" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6" /></svg>
                     </button>
                   ) : <span className="profile-titlebar-city">{previewCity}</span>}
                 </div>
@@ -9363,21 +9360,23 @@ function DashboardStyles() {
       .dancer-profile-preview-overlay .dancer-profile-preview-status > p { color: #cfc5de; font-size: 13px; line-height: 1.45; }
       .dancer-profile-preview-overlay.is-editor { z-index:1510; }
       .dancer-profile-preview-overlay.is-editor .dancer-profile-preview-shell { padding-bottom: max(156px,calc(env(safe-area-inset-bottom) + 136px)); }
-      .dancer-profile-builder-avatar-control { width:48px; display:grid; flex:0 0 48px; justify-items:center; gap:3px; }
-      .dancer-profile-builder-avatar-control > small { color:#a9a1b5; font-size:8px; font-weight:850; letter-spacing:.04em; line-height:1; }
-      .dancer-profile-builder-avatar { width:42px; min-width:42px; max-width:42px; height:42px; min-height:42px; max-height:42px; aspect-ratio:1; appearance:none; padding:0; line-height:0; cursor:pointer; }
-      .dancer-profile-builder-avatar.is-empty { overflow:visible !important; border-style:solid !important; color:#c9f7ff !important; background:linear-gradient(145deg,rgba(124,58,237,.34),rgba(34,199,255,.13)) !important; }
-      .dancer-profile-builder-avatar-add { width:22px; height:22px; display:block; fill:none; stroke:currentColor; stroke-width:2.25; stroke-linecap:round; }
-      .dancer-profile-builder-avatar > i { position:absolute; z-index:3; right:-4px; bottom:-4px; width:18px; min-width:18px; max-width:18px; height:18px; min-height:18px; max-height:18px; display:grid; place-items:center; padding:0; border:1px solid rgba(126,234,255,.52); border-radius:50%; color:#fff; background:#5b20c8; box-shadow:0 4px 12px rgba(0,0,0,.48); font-size:10px; font-style:normal; font-weight:950; line-height:1; }
-      .dancer-profile-builder-avatar > i svg { width:12px; height:12px; display:block; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; }
-      body.dancr-button-system .dancer-profile-builder-avatar { width:42px !important; min-width:42px !important; max-width:42px !important; height:42px !important; min-height:42px !important; max-height:42px !important; padding:0 !important; border-radius:50% !important; box-shadow:0 10px 26px rgba(0,0,0,.36),0 0 0 2px rgba(126,234,255,.08),0 0 18px rgba(124,58,237,.15) !important; }
-      .dancer-profile-builder-identity { min-width:0; display:inline-flex; align-items:center; gap:7px; padding:0; border:0; color:#fff; background:transparent; font:inherit; text-align:left; cursor:pointer; }
-      .dancer-profile-builder-name { max-width:min(52vw,440px); overflow:hidden; font-size:clamp(20px,4vw,26px); font-weight:950; line-height:1.05; letter-spacing:-.025em; text-overflow:ellipsis; white-space:nowrap; }
-      .dancer-profile-builder-identity > span:last-child { width:18px; height:18px; display:grid; flex:0 0 18px; place-items:center; border:1px solid rgba(126,234,255,.25); border-radius:50%; color:#bff7ff; background:rgba(34,199,255,.09); font-size:10px; font-weight:950; }
-      .dancer-profile-builder-city { gap:5px; border-color:rgba(126,234,255,.3) !important; color:#d8f8ff !important; cursor:pointer; }
-      .dancer-profile-builder-city span { font-size:10px; font-weight:950; }
-      body.dancr-button-system .dancer-profile-builder-identity { min-height:0 !important; padding:0 !important; border:0 !important; border-radius:0 !important; background:transparent !important; box-shadow:none !important; }
-      body.dancr-button-system .dancer-profile-builder-city { min-height:22px !important; padding:0 8px !important; border-radius:999px !important; background:rgba(255,255,255,.035) !important; box-shadow:none !important; }
+      body.dancr-button-system .dancer-profile-preview-overlay.is-editor .profile-titlebar { display:grid !important; grid-template-columns:72px minmax(0,1fr); align-items:center; gap:12px !important; padding:12px 52px 12px 0 !important; }
+      body.dancr-button-system .dancer-profile-preview-overlay.is-editor .profile-titlebar-identity { display:grid !important; gap:8px !important; overflow:visible !important; }
+      .dancer-profile-builder-avatar-control { width:72px; display:grid; justify-items:center; align-content:center; gap:7px; padding:0; border:0; color:#fff; background:transparent; font:inherit; cursor:pointer; }
+      .dancer-profile-builder-avatar-control > small { color:#d4ccdf; font-size:11px; font-weight:750; line-height:1.3; text-align:center; }
+      .dancer-profile-builder-avatar { width:64px; min-width:64px; max-width:64px; height:64px; min-height:64px; max-height:64px; aspect-ratio:1; padding:0; line-height:0; }
+      .dancer-profile-builder-avatar.is-empty { border:1px solid #645778 !important; color:#d5baff !important; background:linear-gradient(145deg,#221333,#100d18) !important; }
+      .dancer-profile-builder-avatar-camera { width:26px; height:26px; display:block; fill:none; stroke:currentColor; stroke-width:1.7; stroke-linecap:round; stroke-linejoin:round; }
+      body.dancr-button-system .dancer-profile-preview-overlay.is-editor .dancer-profile-builder-avatar-camera, body.dancr-button-system .dancer-profile-preview-overlay.is-editor .dancer-profile-builder-avatar-camera * { color:#d5baff !important; stroke:#d5baff !important; fill:none !important; }
+      body.dancr-button-system .dancer-profile-builder-avatar-control { min-height:88px !important; padding:0 !important; border:0 !important; border-radius:12px !important; background:transparent !important; box-shadow:none !important; }
+      body.dancr-button-system .dancer-profile-preview-overlay .dancer-profile-builder-avatar { width:64px !important; height:64px !important; flex-basis:64px !important; border-radius:50% !important; box-shadow:none !important; }
+      .dancer-profile-builder-identity, .dancer-profile-builder-city { width:100%; min-width:0; min-height:56px; display:flex; align-items:center; justify-content:space-between; gap:8px; padding:9px 11px; border:1px solid #40384b; border-radius:12px; color:#fff; background:#131019; font:inherit; text-align:left; cursor:pointer; }
+      .dancer-profile-builder-field-copy { min-width:0; display:grid; gap:4px; }
+      .dancer-profile-builder-field-copy > small { color:#c9c3d2; font-size:11px; font-weight:650; line-height:1.2; }
+      .dancer-profile-builder-field-copy > span { min-width:0; overflow:hidden; color:#fff; font-size:15px; font-weight:800; line-height:1.25; text-overflow:ellipsis; white-space:nowrap; }
+      .dancer-profile-builder-identity > svg, .dancer-profile-builder-city > svg { width:16px; height:16px; flex:0 0 16px; fill:none; stroke:#c9c3d2; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
+      body.dancr-button-system .dancer-profile-builder-identity, body.dancr-button-system .dancer-profile-builder-city { min-height:56px !important; padding:9px 11px !important; border:1px solid #40384b !important; border-radius:12px !important; background:#131019 !important; box-shadow:none !important; }
+      .dancer-profile-builder-avatar-control:focus-visible, .dancer-profile-builder-identity:focus-visible, .dancer-profile-builder-city:focus-visible { outline:2px solid #d5baff; outline-offset:3px; }
 
       .dancer-profile-builder-media-actions { width:min(100%,760px); max-width:100%; display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:9px; margin:10px auto 0; }
       .dancer-profile-builder-media-actions button { min-height:46px; display:flex; align-items:center; justify-content:center; gap:8px; border:1px solid rgba(126,234,255,.24); border-radius:12px; color:#effcff; background:linear-gradient(145deg,rgba(124,58,237,.14),rgba(34,199,255,.06)); font:inherit; font-size:12px; font-weight:900; cursor:pointer; }

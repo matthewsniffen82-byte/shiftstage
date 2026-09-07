@@ -241,13 +241,15 @@ test("approved dancers who skipped payout setup get a plain-language call to act
 test("step one uses accessible live-profile add targets that preserve the active editor", () => {
   assert.match(dashboard, /const \[activeEditorSection, setActiveEditorSection\] = useState<DancerProfileEditorSectionId \| null>\(null\)/);
   assert.match(dashboard, /aria-label=\{headerImage \? "Edit avatar" : "Add avatar"\}/);
-  assert.match(dashboard, /className="dancer-profile-builder-avatar-add" viewBox="0 0 24 24"/);
-  assert.match(dashboard, /<svg viewBox="0 0 16 16"><path d="M8 4v8M4 8h8" \/><\/svg>/);
+  assert.match(dashboard, /className="dancer-profile-builder-avatar-camera" viewBox="0 0 24 24"/);
+  assert.match(dashboard, /headerImage \? "Change avatar" : "Add avatar"/);
   assert.match(dashboard, /aria-label="Close profile preview"[\s\S]*?viewBox="0 0 20 20"[\s\S]*?d="M5\.5 5\.5l9 9M14\.5 5\.5l-9 9"/);
-  assert.match(dashboard, /\.dancer-profile-builder-avatar \{ width:42px; min-width:42px; max-width:42px; height:42px; min-height:42px; max-height:42px; aspect-ratio:1;/);
-  assert.match(dashboard, /\.dancer-profile-builder-avatar\.is-empty \{[^}]*border-style:solid !important;/);
+  assert.match(dashboard, /\.dancer-profile-builder-avatar \{ width:64px; min-width:64px; max-width:64px; height:64px; min-height:64px; max-height:64px; aspect-ratio:1;/);
+  assert.match(dashboard, /\.dancer-profile-builder-avatar\.is-empty \{[^}]*border:1px solid #645778 !important;/);
   assert.match(dashboard, /\.dancer-profile-preview-overlay \.public-profile-close \{[^}]*width: 40px; min-width: 40px; max-width: 40px; height: 40px; min-height: 40px; max-height: 40px;/);
-  assert.match(dashboard, /<small>Avatar<\/small>/);
+  assert.match(dashboard, /dancer-profile-builder-field-copy"><small>Stage name<\/small>/);
+  assert.match(dashboard, /dancer-profile-builder-field-copy"><small>City<\/small>/);
+  assert.match(dashboard, /\.dancer-profile-builder-identity, \.dancer-profile-builder-city \{[^}]*min-height:56px/);
   assert.match(dashboard, /"Stage name"/);
   assert.match(dashboard, /"Add city"/);
   assert.match(dashboard, /<DancerProfileMediaUploads[\s\S]*?onOpen=\{openEditorSection\}/);
