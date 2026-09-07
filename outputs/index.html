@@ -42778,6 +42778,8 @@
     let liveCustomerProfile = null;
     let liveNotifications = [];
     let liveNotificationsState = authSession?.accessToken ? "loading" : "idle";
+    let liveNotificationsRequestVersion = 0;
+    let liveNotificationClearPending = null;
     let liveSupportThreads = [];
     let liveSupportThreadsState = authSession?.accessToken ? "loading" : "idle";
     let liveAdminSupportThreads = [];
@@ -45353,9 +45355,10 @@
       }
     }
 
-    function markNotificationsClearedNow() {
+    function markNotificationsClearedNow(clearedAt = Date.now(), storageKey = notificationClearStorageKey()) {
       try {
-        localStorage.setItem(notificationClearStorageKey(), String(Date.now()));
+        const previous = Number(localStorage.getItem(storageKey)) || 0;
+        localStorage.setItem(storageKey, String(Math.max(previous, clearedAt)));
       } catch {
         // Local persistence is only used to suppress regenerated browser-only notices.
       }
@@ -45438,6 +45441,11 @@
 
     function renderNotificationCenters() {
       liveNotifications = visibleLiveNotifications();
+      const clearing = liveNotificationClearPending?.accountKey === notificationClearStorageKey();
+      document.querySelectorAll('[data-notification-action="clear-all"]').forEach((button) => {
+        button.disabled = clearing || !liveNotifications.length;
+        button.setAttribute("aria-busy", String(clearing));
+      });
       const markup = notificationCenterMarkup();
       if (customerNotificationList) customerNotificationList.innerHTML = markup;
       if (dancerNotificationList) dancerNotificationList.innerHTML = markup;
@@ -45564,31 +45572,13 @@
 
     function customerQuickNotificationItems() {
       const notifications = visibleLiveNotifications();
-      if (notifications.length) {
-        return notifications.slice(0, 5).map((notification, index) => ({
-          id: notification.id,
-          index,
-          unread: !notification.readAt,
-          title: notification.title || "Dancr notification",
-          detail: `${notification.body || "You have a new update."}${formatBillingDate(notification.sentAt || notification.createdAt) ? ` · ${formatBillingDate(notification.sentAt || notification.createdAt)}` : ""}`
-        }));
-      }
-      if (isDancerSession()) return [];
-
-      const city = selectedCity();
-      const followed = followedProfiles(city);
-      const venues = followedVenues(city);
-      const working = followed.filter((profile) => isWorkingTonight(profile, city) && isNotificationOn(city, profile.name));
-      return [
-        ...working.slice(0, 3).map((profile) => ({
-          title: `${profile.name} is working now`,
-          detail: `${profile.venue} · ${displayPublicShiftTime(profile.time, profile)}`
-        })),
-        ...venues.slice(0, 2).map((venue) => ({
-          title: `${venue.name} is saved`,
-          detail: "Club alerts and saved deals will appear here."
-        }))
-      ];
+      return notifications.slice(0, 5).map((notification, index) => ({
+        id: notification.id,
+        index,
+        unread: !notification.readAt,
+        title: notification.title || "Dancr notification",
+        detail: `${notification.body || "You have a new update."}${formatBillingDate(notification.sentAt || notification.createdAt) ? ` · ${formatBillingDate(notification.sentAt || notification.createdAt)}` : ""}`
+      }));
     }
 
     function renderCustomerQuickNotifications() {
@@ -45620,7 +45610,7 @@
               <span>${displayText(item.detail)}</span>
             </button>
           `).join("")
-        : `<div class="customer-quick-empty">${isDancerSession()
+        : `<div class="customer-quick-empty" role="status">${isDancerSession()
           ? "No new alerts yet. Dancer account updates will appear here."
           : isVenueSession()
             ? "No new alerts yet. Venue account and dancer affiliation updates will appear here."
@@ -45700,13 +45690,18 @@
 
     async function loadLiveNotifications() {
       if (!authSession?.accessToken) return;
+      const accountKey = notificationClearStorageKey();
+      if (liveNotificationClearPending?.accountKey === accountKey) return;
+      const requestVersion = ++liveNotificationsRequestVersion;
       liveNotificationsState = "loading";
       renderNotificationCenters();
       try {
         const data = await getAuthenticatedJson("/api/notifications");
+        if (requestVersion !== liveNotificationsRequestVersion || accountKey !== notificationClearStorageKey()) return;
         liveNotifications = (data.notifications || []).filter(isVisibleAfterNotificationClear);
         liveNotificationsState = "ready";
       } catch (error) {
+        if (requestVersion !== liveNotificationsRequestVersion || accountKey !== notificationClearStorageKey()) return;
         liveNotificationsState = "error";
         showToast(error.message || "Could not load notifications");
       }
@@ -45738,25 +45733,35 @@
     }
 
     async function clearAllLiveNotifications() {
-      const previousNotifications = liveNotifications.slice();
-      liveNotifications = [];
-      renderNotificationCenters();
-      showToast("Notifications cleared");
       if (!authSession?.accessToken) return;
+      const accountKey = notificationClearStorageKey();
+      if (liveNotificationClearPending?.accountKey === accountKey) return;
+      const requestVersion = ++liveNotificationsRequestVersion;
+      const clearedAt = Date.now();
+      const previousNotifications = liveNotifications.slice();
+      liveNotificationClearPending = { accountKey, requestVersion };
+      liveNotifications = [];
+      liveNotificationsState = "ready";
+      renderNotificationCenters();
       try {
-        await fetch("/api/notifications", {
+        await fetchWithTimeout("/api/notifications", {
           method: "DELETE",
           headers: authenticatedRequestHeaders("application/json") || {}
-        }).then(async (response) => {
+        }, 15000, "Could not clear notifications. Check your connection and try again.").then(async (response) => {
           const data = await response.json().catch(() => ({}));
           if (!response.ok || data.ok === false) throw new Error(data.error || "Could not clear notifications");
           return data;
         });
-        markNotificationsClearedNow();
+        if (requestVersion !== liveNotificationsRequestVersion || accountKey !== notificationClearStorageKey()) return;
+        markNotificationsClearedNow(clearedAt, accountKey);
+        showToast("Notifications cleared");
       } catch (error) {
+        if (requestVersion !== liveNotificationsRequestVersion || accountKey !== notificationClearStorageKey()) return;
         liveNotifications = previousNotifications;
-        renderNotificationCenters();
         showToast(error.message || "Could not clear notifications");
+      } finally {
+        if (liveNotificationClearPending?.requestVersion === requestVersion) liveNotificationClearPending = null;
+        if (requestVersion === liveNotificationsRequestVersion && accountKey === notificationClearStorageKey()) renderNotificationCenters();
       }
     }
 
@@ -55086,6 +55091,8 @@
       liveDancerReviews = [];
       liveCustomerProfile = null;
       liveVenueDashboard = null;
+      liveNotificationsRequestVersion += 1;
+      liveNotificationClearPending = null;
       liveNotifications = [];
       releaseSetupPhotoPreviews();
       pendingSetupPhotoFiles = [];
