@@ -240,8 +240,10 @@ export function ClubDealCard({
       }
       setSavedOnDevice(true);
       setStatus(savedToAccount
-        ? "Saved to your account."
-        : "Saved on this device.");
+        ? "Saved to your account. Find it in Saved Club Deals beside the bell on Home."
+        : hasCustomerAccount
+          ? "Saved on this device. Find it in Saved Club Deals beside the bell on Home."
+          : "Saved on this device. Sign in as a customer to open Saved Club Deals on Home.");
     } catch (error) {
       setStatus(error instanceof Error ? error.message : "Unable to save this Club Deal.");
     } finally {

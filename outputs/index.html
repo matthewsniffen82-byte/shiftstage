@@ -48876,12 +48876,12 @@
       if (customerDashboard.classList.contains("show")) renderDashboard();
       renderCustomerQuickActions();
       showToast(savedToAccount
-        ? "Saved privately to your account. This does not reserve or redeem the deal."
+        ? "Saved privately to your account. Find it in Saved Club Deals beside the bell on Home."
         : persisted
           ? wasAlreadySaved
             ? "Deal is already saved on this device."
             : isCustomerSession()
-              ? "Saved on this device. Account sync is unavailable right now."
+              ? "Saved on this device. Find it in Saved Club Deals beside the bell on Home."
               : "Saved on this device. Sign in to keep it across devices. This does not redeem the deal."
           : "Browser storage blocked saving this deal. Allow site storage and try again.");
       return persisted || savedToAccount;
@@ -49139,8 +49139,10 @@
           button.title = persisted ? "Remove saved deal" : "Save this deal";
           feedback.textContent = persisted
             ? savedDealPasses.some((item) => item.id === pass.id && item.serverSaved)
-              ? "Saved to your account."
-              : "Saved on this device."
+              ? "Saved to your account. Find it in Saved Club Deals beside the bell on Home."
+              : isCustomerSession()
+                ? "Saved on this device. Find it in Saved Club Deals beside the bell on Home."
+                : "Saved on this device. Sign in as a customer to open Saved Club Deals on Home."
             : "Couldn’t save this deal. Please try again.";
           feedback.hidden = false;
         } catch (error) {
