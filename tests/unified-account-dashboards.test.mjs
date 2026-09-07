@@ -111,7 +111,8 @@ test("fresh confirmation sessions load the dashboard account and panels in paral
   );
   assert.match(startupLoader, /const controller = new AbortController\(\);/);
   assert.match(startupLoader, /function requestOptionalPanel<T>[\s\S]*?signal: controller\.signal/);
-  assert.equal((startupLoader.match(/signal: controller\.signal/g) || []).length, 3);
+  assert.equal((startupLoader.match(/signal: controller\.signal/g) || []).length, 4);
+  assert.match(startupLoader, /requestDashboardJson\("\/api\/customer\/saved",[\s\S]*?timeoutMs: 15000/);
   assert.match(startupLoader, /return \(\) => \{\s*cancelled = true;\s*controller\.abort\(\);/);
   assert.doesNotMatch(startupLoader, /initialAuthHeaders|refreshedHeaders|readJson\(|readOptionalJson\(/);
 });

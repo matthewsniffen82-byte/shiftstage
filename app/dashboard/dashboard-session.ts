@@ -106,6 +106,7 @@ export function dashboardLoadErrorMessage(error: unknown) {
 }
 
 export type DashboardJsonRequestOptions = Omit<RequestInit, "headers"> & {
+  timeoutMs?: number;
   expectedRole?: string;
   fallbackMessage?: string;
   headers?: Record<string, string>;
@@ -131,22 +132,44 @@ export async function requestDashboardJson(
     expectedRole,
     fallbackMessage = "Unable to update dashboard.",
     headers: requestHeaders,
+    timeoutMs,
     ...requestInit
   } = options;
   const authHeaders = currentDashboardAuthHeaders(expectedRole);
   if (!authHeaders) throw new DashboardDataRequestError("Sign in required.", 401);
 
-  const response = await fetch(path, {
-    ...requestInit,
-    headers: { ...requestHeaders, ...authHeaders },
-  });
-  const data = await response.json().catch(() => null);
-  const accepted = (response.ok && data?.ok) || Boolean(acceptResponse?.(response, data));
-  if (!accepted) {
-    throw new DashboardDataRequestError(data?.error || data?.message || fallbackMessage, response.status);
+  const controller = timeoutMs ? new AbortController() : null;
+  const cancel = () => controller?.abort(requestInit.signal?.reason);
+  if (requestInit.signal?.aborted) cancel();
+  else requestInit.signal?.addEventListener("abort", cancel, { once: true });
+  let timeout: ReturnType<typeof setTimeout> | undefined;
+  const deadline = timeoutMs ? new Promise<never>((_, reject) => {
+    timeout = setTimeout(() => {
+      reject(new DashboardDataRequestError("Loading took too long. Please try again.", 408));
+      controller?.abort();
+    }, timeoutMs);
+  }) : null;
+
+  const request = async () => {
+    const response = await fetch(path, {
+      ...requestInit,
+      ...(controller ? { signal: controller.signal } : {}),
+      headers: { ...requestHeaders, ...authHeaders },
+    });
+    const data = await response.json().catch(() => null);
+    const accepted = (response.ok && data?.ok) || Boolean(acceptResponse?.(response, data));
+    if (!accepted) {
+      throw new DashboardDataRequestError(data?.error || data?.message || fallbackMessage, response.status);
+    }
+    if (!controller?.signal.aborted && !requestInit.signal?.aborted) persistResponseSession(data);
+    return data;
+  };
+  try {
+    return await (deadline ? Promise.race([request(), deadline]) : request());
+  } finally {
+    clearTimeout(timeout);
+    requestInit.signal?.removeEventListener("abort", cancel);
   }
-  persistResponseSession(data);
-  return data;
 }
 
 export async function requestOptionalDashboardJson<T>(

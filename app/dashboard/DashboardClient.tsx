@@ -269,7 +269,10 @@ export default function DashboardClient({
     const controller = new AbortController();
 
     function requestOptionalPanel<T>(path: string, fallback: T) {
-      return requestOptionalDashboardJson(path, fallback, { signal: controller.signal });
+      return requestOptionalDashboardJson(path, fallback, {
+        signal: controller.signal,
+        timeoutMs: role === "customer" ? 8000 : undefined,
+      });
     }
 
     async function load() {
@@ -303,7 +306,14 @@ export default function DashboardClient({
 
         return Promise.all([
           requestOptionalPanel(role === "venue" ? "/api/venue/profile" : "/api/customer/profile", { profile: null }),
-          requestOptionalPanel(role === "venue" ? "/api/venue/dashboard?period=30d" : "/api/customer/saved", {}),
+          role === "customer"
+            ? requestDashboardJson("/api/customer/saved", {
+                cache: "no-store",
+                signal: controller.signal,
+                timeoutMs: 15000,
+                fallbackMessage: "Unable to load your saved activity. Please try again.",
+              })
+            : requestOptionalPanel("/api/venue/dashboard?period=30d", {}),
           requestOptionalPanel("/api/support", { threads: [] }),
           null,
           null,
@@ -320,6 +330,7 @@ export default function DashboardClient({
             requestAccountJson({
               cache: "no-store",
               fallbackMessage: "Unable to load account.",
+              timeoutMs: role === "customer" ? 15000 : undefined,
               signal: controller.signal,
             }),
             loadDashboardPanels(),
@@ -332,6 +343,7 @@ export default function DashboardClient({
           account = await requestAccountJson({
             cache: "no-store",
             fallbackMessage: "Unable to load account.",
+            timeoutMs: role === "customer" ? 15000 : undefined,
             signal: controller.signal,
           });
           [panels, agentAccess] = await Promise.all([
@@ -373,7 +385,8 @@ export default function DashboardClient({
         }
       } catch (error) {
         if (!cancelled) {
-          setState({ error: dashboardLoadErrorMessage(error) });
+          controller.abort();
+          setState((current) => ({ account: current.account, error: dashboardLoadErrorMessage(error) }));
           setIsLoading(false);
         }
       }
@@ -547,12 +560,15 @@ export default function DashboardClient({
         {state.error && (role === "venue" || role === "dancer") ? (
           <DashboardSignInRecovery role={role} onSignedIn={retryDashboard} />
         ) : state.error ? (
-          <Link
-            className="primary-link"
-            href={`/account?role=${role}`}
-          >
-            Sign in
-          </Link>
+          <div className="action-row">
+            <button className="primary-link" type="button" onClick={retryDashboard}>Try again</button>
+            <Link
+              className="primary-link"
+              href={`/account?role=${role}`}
+            >
+              Sign in
+            </Link>
+          </div>
         ) : null}
       </section>
 
