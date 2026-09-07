@@ -172,13 +172,13 @@ test("Club Deal activation persists the pending tap and keeps instructions conci
   assert.match(dealCard, /Saved on this device\. Sign in to keep it across devices\. This does not redeem the deal\./);
 });
 
-test("Club Deal checkout keeps the violet action on iOS and avoids green success styling before redemption", () => {
+test("Club Deal checkout uses the compact violet action and avoids success styling before redemption", () => {
   assert.match(dealCard, /className=\{`club-deal-checkout-action\$\{intentState === "ready" \? " is-ready" : ""\}`\}/);
-  assert.match(dealCard, /\.club-deal-dialog \.club-deal-checkout-action \{[^}]*min-height:50px !important;[^}]*background:linear-gradient\(135deg,#5b21b6 0%,#7c3aed 52%,#8b5cf6 100%\) !important;[^}]*0 0 24px rgba\(124,58,237,\.38\)/);
+  assert.match(dealCard, /\.club-deal-dialog \.club-deal-checkout-action \{[^}]*min-height:48px !important;[^}]*background:linear-gradient\(120deg,#7743cf,#6330bd\) !important;/);
   assert.match(dealCard, /@media \(hover:hover\) and \(pointer:fine\) \{\s*\.club-deal-dialog \.club-deal-checkout-action:hover:not\(:disabled\)/);
-  assert.match(dealCard, /@supports \(-webkit-touch-callout:none\) \{\s*\.club-deal-dialog \.club-deal-checkout-action:not\(\.is-ready\) \{[^}]*background:#32009c !important;[^}]*filter:none !important;/);
+  assert.match(dealCard, /\.club-deal-dialog \.club-deal-checkout-action \{[^}]*-webkit-appearance:none; appearance:none;/);
   assert.doesNotMatch(dealCard, /Ready at Cashier ✓|#087443/);
-  assert.match(dealCard, /\.club-deal-primary-dock \{ position:static;[^}]*width:100%;[^}]*margin-top:0;/);
+  assert.match(dealCard, /\.club-deal-primary-dock \{ position:static;[^}]*width:100%;[^}]*margin-top:auto;/);
 });
 
 test("NFC activity remains auditable without exposing reusable tokens", () => {
