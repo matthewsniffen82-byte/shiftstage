@@ -126,7 +126,7 @@ test("profile and media workspace uses production avatar face centering and mode
   assert.match(dashboard, /requestDancerAvatarJson/);
   assert.doesNotMatch(dashboard, /fetch\("\/api\/dancer\/avatar"/);
   assert.match(dashboard, /Checking your avatar/);
-  assert.match(dashboard, /pendingAvatar \? "Checking"/);
+  assert.match(dashboard, /avatarUploadPresentation\(\{ upload: uploadFeedback, avatarUrl, pendingReview: pendingAvatar, latestReview: latestAvatarReview \}\)/);
   assert.match(avatarRoute, /moderateAndStoreDancerPhoto/);
   assert.match(avatarRoute, /PROFILE_AVATAR_CONTEXT/);
   assert.match(avatarRoute, /isAvatarFaceRequiredError/);

@@ -216,9 +216,10 @@ export async function GET(request: Request) {
     }
 
     const profileWithPhotos = withoutDancerBio(withPhotoUrls(client, data));
-    const [pendingPhotoReviews, pendingAvatarReview] = await Promise.all([
+    const [pendingPhotoReviews, pendingAvatarReview, latestAvatarReview] = await Promise.all([
       loadPendingPhotoReviews(user.id, profileWithPhotos.dancer_photos),
       loadPendingAvatarReview(user.id),
+      loadLatestAvatarReview(user.id),
     ]);
 
     return withProfileSaveVersion(NextResponse.json({
@@ -227,6 +228,7 @@ export async function GET(request: Request) {
         ...profileWithPhotos,
         pending_photo_reviews: pendingPhotoReviews,
         pending_avatar_review: pendingAvatarReview,
+        avatar_review: latestAvatarReview,
       },
     }));
   } catch (error) {
@@ -289,6 +291,19 @@ async function loadPendingPhotoReviews(userId: string, occupiedPhotos: any[] = [
     const { data: signed, error: signedError } = await admin.storage.from(bucket).createSignedUrl(storagePath, 60 * 60);
     return { ...review, ...slotFields, previewUrl: signedError ? "" : String(signed?.signedUrl || "") };
   }));
+}
+
+async function loadLatestAvatarReview(userId: string) {
+  const { data, error } = await createAdminSupabaseClient()
+    .from("image_moderation_records")
+    .select("id, decision, status, created_at")
+    .eq("user_id", userId)
+    .eq("upload_context", PROFILE_AVATAR_CONTEXT)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (error) throw error;
+  return data;
 }
 
 async function loadPendingAvatarReview(userId: string) {

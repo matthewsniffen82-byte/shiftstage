@@ -217,6 +217,7 @@ export function requestDancerProfileJson(options: DashboardJsonRequestOptions = 
 export function requestDancerAvatarJson(options: DashboardJsonRequestOptions = {}) {
   return requestDashboardJson("/api/dancer/avatar", {
     ...options,
+    acceptResponse: options.acceptResponse || isRejectedDancerPhotoModerationResponse,
     expectedRole: "dancer",
     fallbackMessage: options.fallbackMessage || "Unable to update dancer avatar.",
   });

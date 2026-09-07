@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type MouseEvent, type ReactNode, type SyntheticEvent } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type FormEvent, type MouseEvent, type ReactNode, type SyntheticEvent } from "react";
 import Link from "next/link";
 import { DashboardCloseButton } from "@/app/components/DashboardCloseButton";
 import { VenueQrUnavailable } from "@/app/components/VenueQrCode";
@@ -20,6 +20,7 @@ import { CLUB_DEAL_OFFER_PRESETS } from "@/src/lib/dancr/club-deal-presets";
 import DancerNfcPanel from "./DancerNfcPanel";
 import DancerTvStudio from "./DancerTvStudio";
 import DancerProfileMediaUploads from "./DancerProfileMediaUploads";
+import { AVATAR_REJECTED_MESSAGE, avatarUploadPresentation, type AvatarUploadFeedback } from "./avatar-upload-state";
 import DancerShiftManager from "./DancerShiftManager";
 import { DANCER_PROFILE_VIDEOS_CHANGED_EVENT } from "./dancer-profile-media-sync";
 import VenueNfcTagPanel from "./VenueNfcTagPanel";
@@ -3412,7 +3413,7 @@ type DancerProfileBuilderRequirement = {
 
 const DANCER_PROFILE_EDITOR_SECTION_LABELS: Record<DancerProfileEditorSectionId, string> = {
   identity: "Stage name & city",
-  avatar: "Add profile photo",
+  avatar: "Upload avatar",
   photos: "Photos",
   videos: "Videos",
   socials: "Socials",
@@ -3431,6 +3432,8 @@ async function saveDancerProfileEditor() {
   }
   return true;
 }
+
+const AvatarUploadBusyContext = createContext<(busy: boolean) => void>(() => {});
 
 function DancerProfilePreview({
   builderRequirements,
@@ -3469,6 +3472,12 @@ function DancerProfilePreview({
   const [isMediaLoading, setIsMediaLoading] = useState(false);
   const [mediaError, setMediaError] = useState("");
   const [uploadedVideos, setUploadedVideos] = useState<DancerPreviewVideo[]>([]);
+  const [isAvatarUploading, setIsAvatarUploading] = useState(false);
+  const avatarUploadingRef = useRef(false);
+  const reportAvatarBusy = useCallback((busy: boolean) => {
+    avatarUploadingRef.current = busy;
+    setIsAvatarUploading(busy);
+  }, []);
   const videos = uploadedVideos.filter((video) => video.status === "approved" && video.videoUrl);
   const closeRef = useRef<HTMLButtonElement>(null);
   const overlayRef = useRef<HTMLDivElement>(null);
@@ -3492,6 +3501,7 @@ function DancerProfilePreview({
   const completedRequirements = builderRequirements?.filter((requirement) => requirement.complete).length || 0;
   const requirementsComplete = !builderRequirements?.length || completedRequirements === builderRequirements.length;
   const closeActiveEditor = useCallback(() => {
+    if (avatarUploadingRef.current) return;
     const platform = activeSocialPlatform;
     const section = activeEditorSectionRef.current;
     setActiveEditorSection(null);
@@ -3520,6 +3530,7 @@ function DancerProfilePreview({
   activeEditorSectionRef.current = activeEditorSection;
 
   const closePreview = useCallback(() => {
+    if (avatarUploadingRef.current) return;
     setActiveEditorSection(null);
     setActiveSocialPlatform(null);
     setIsOpen(false);
@@ -3731,7 +3742,7 @@ function DancerProfilePreview({
   }
 
   async function finishActiveEditor() {
-    if (!activeEditorSection || isSectionSaving) return;
+    if (!activeEditorSection || isSectionSaving || isAvatarUploading) return;
     if (activeEditorSection !== "identity") {
       closeActiveEditor();
       return;
@@ -3920,14 +3931,14 @@ function DancerProfilePreview({
                 >
                   <header>
                     <h2 id="dancer-profile-builder-panel-heading">{activeEditorLabel}</h2>
-                    <button aria-label={`Close ${activeEditorLabel} editor`} disabled={isSectionSaving} onClick={closeActiveEditor} type="button"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18" /></svg></button>
+                    <button aria-label={`Close ${activeEditorLabel} editor`} disabled={isSectionSaving || isAvatarUploading} onClick={closeActiveEditor} type="button"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18" /></svg></button>
                   </header>
-                  <div className="dancer-profile-editor-modal-body">{activeEditorContent}</div>
+                  <div className="dancer-profile-editor-modal-body"><AvatarUploadBusyContext.Provider value={reportAvatarBusy}>{activeEditorContent}</AvatarUploadBusyContext.Provider></div>
                   {(["identity", "avatar", "photos", "videos"] as DancerProfileEditorSectionId[]).includes(activeEditorSection) ? (
                     <footer className="dancer-profile-editor-modal-actions">
                       {sectionStatus ? <p role="status" aria-live="polite">{sectionStatus}</p> : <span />}
-                      <button disabled={isSectionSaving} onClick={() => void finishActiveEditor()} type="button">
-                        {isSectionSaving ? "Saving..." : activeEditorSection === "identity" ? "Save" : "Done"}
+                      <button disabled={isSectionSaving || isAvatarUploading} onClick={() => void finishActiveEditor()} type="button">
+                        {isAvatarUploading ? "Please wait..." : isSectionSaving ? "Saving..." : activeEditorSection === "identity" ? "Save" : "Done"}
                       </button>
                     </footer>
                   ) : null}
@@ -4640,9 +4651,10 @@ function DancerPanel({
     stageName: persistedDancerStageName(profile),
     city: String(profile?.city || ""),
   }));
+  const hasPendingAvatar = Boolean(profile?.pending_avatar_review);
 
   useEffect(() => {
-    if (isApproved || effectiveStatus !== "pending_review") return;
+    if (!hasPendingAvatar && (isApproved || effectiveStatus !== "pending_review")) return;
     let cancelled = false;
     let refreshInFlight = false;
     const controller = new AbortController();
@@ -4676,7 +4688,7 @@ function DancerPanel({
       window.clearInterval(interval);
       document.removeEventListener("visibilitychange", refreshProfile);
     };
-  }, [effectiveStatus, isApproved, onProfileChange]);
+  }, [effectiveStatus, hasPendingAvatar, isApproved, onProfileChange]);
 
   const refreshDancerProfile = useCallback(async () => {
     const session = readSession();
@@ -5799,6 +5811,8 @@ function DancerAvatarPanel({
   const [status, setStatus] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadFeedback, setUploadFeedback] = useState<AvatarUploadFeedback | null>(null);
+  const reportAvatarBusy = useContext(AvatarUploadBusyContext);
   const mountedRef = useRef(false);
   const actionSequenceRef = useRef(0);
   const actionAbortRef = useRef<AbortController | null>(null);
@@ -5806,6 +5820,17 @@ function DancerAvatarPanel({
   const uploadIdentityRef = useRef<{ signature: string; key: string } | null>(null);
   const avatarUrl = String(profile?.avatarPhotoUrl || "");
   const pendingAvatar = profile?.pending_avatar_review as Record<string, unknown> | undefined;
+  const latestAvatarReview = profile?.avatar_review as Record<string, unknown> | undefined;
+  const pendingPreviewRef = useRef({ id: "", url: "" });
+  const pendingId = String(pendingAvatar?.id || "");
+  if (pendingPreviewRef.current.id !== pendingId) {
+    pendingPreviewRef.current = { id: pendingId, url: String(pendingAvatar?.previewUrl || "") };
+  }
+
+  useEffect(() => {
+    reportAvatarBusy(isSaving);
+    return () => reportAvatarBusy(false);
+  }, [isSaving, reportAvatarBusy]);
 
   useEffect(() => {
     mountedRef.current = true;
@@ -5825,12 +5850,13 @@ function DancerAvatarPanel({
 
   function selectAvatar(nextFile: File | null) {
     if (actionInFlightRef.current) return;
-    if (previewUrl) URL.revokeObjectURL(previewUrl);
-    uploadIdentityRef.current = nextFile ? createAvatarUploadIdentity(nextFile) : null;
+    if (!nextFile) return;
+    uploadIdentityRef.current = createAvatarUploadIdentity(nextFile);
     setFile(nextFile);
-    setPreviewUrl(nextFile ? URL.createObjectURL(nextFile) : "");
-    setStatus(nextFile ? "Avatar selected. Upload started automatically." : "");
-    if (nextFile) void uploadAvatar(nextFile);
+    setPreviewUrl(URL.createObjectURL(nextFile));
+    setUploadFeedback(null);
+    setStatus("");
+    void uploadAvatar(nextFile);
   }
 
   async function refreshProfile(signal: AbortSignal) {
@@ -5866,9 +5892,17 @@ function DancerAvatarPanel({
 
   async function uploadAvatar(nextFile: File) {
     const session = readSession();
-    if (!session?.accessToken) return setStatus("Sign in required.");
-    if (!nextFile.type.startsWith("image/")) return setStatus("Choose a JPEG, PNG, WebP, HEIC, or HEIF image.");
-    if (nextFile.size > 25 * 1024 * 1024) return setStatus("Avatar photos must be 25 MB or smaller.");
+    if (!session?.accessToken) {
+      setUploadFeedback({ state: "failed", message: "Sign in again before uploading your avatar." });
+      return;
+    }
+    if (!nextFile.type.startsWith("image/") || nextFile.size > 25 * 1024 * 1024) {
+      setFile(null);
+      setUploadFeedback({ state: "failed", message: nextFile.size > 25 * 1024 * 1024
+        ? "Avatar photos must be 25 MB or smaller. Choose another photo."
+        : "Choose a JPEG, PNG, WebP, HEIC, or HEIF image." });
+      return;
+    }
     const formData = new FormData();
     const signature = avatarFileSignature(nextFile);
     const uploadIdentity = uploadIdentityRef.current?.signature === signature
@@ -5883,7 +5917,8 @@ function DancerAvatarPanel({
     const { requestId, controller } = action;
     setIsSaving(true);
     setUploadProgress(25);
-    setStatus("Checking your avatar...");
+    setStatus("");
+    setUploadFeedback({ state: "checking", message: "Checking your avatar..." });
     try {
       const data = await requestDancerAvatarJson({
         method: "POST",
@@ -5894,22 +5929,37 @@ function DancerAvatarPanel({
       });
       if (!isCurrentAvatarAction(requestId, controller)) return;
       setUploadProgress(85);
-      const refreshedProfile = await refreshProfile(controller.signal);
-      if (!isCurrentAvatarAction(requestId, controller)) return;
-      onProfileChange?.(refreshedProfile);
+      // The server has received this file. A failed read must never offer to upload it again.
+      const decision = String(data.decision || "pending").toLowerCase();
+      const feedback: AvatarUploadFeedback = {
+        state: decision === "approved" ? "approved" : decision === "rejected" ? "rejected" : "pending",
+        reviewId: String(data.moderationRecordId || ""),
+        message: decision === "approved" ? "Avatar approved and saved."
+          : decision === "rejected" ? AVATAR_REJECTED_MESSAGE
+          : "Your avatar is waiting for approval. You don’t need to upload it again.",
+      };
+      setUploadFeedback(feedback);
       setFile(null);
       uploadIdentityRef.current = null;
-      setPreviewUrl((current) => {
-        if (current) URL.revokeObjectURL(current);
-        return "";
-      });
-      const decision = String(data.decision || "pending").toLowerCase();
-      setStatus(decision === "approved"
-        ? "Avatar approved and saved."
-        : "Avatar uploaded. We are checking it now; your current approved avatar stays visible.");
+      try {
+        const refreshedProfile = await refreshProfile(controller.signal);
+        if (!isCurrentAvatarAction(requestId, controller)) return;
+        onProfileChange?.(refreshedProfile);
+      } catch {
+        if (!isCurrentAvatarAction(requestId, controller)) return;
+        setUploadFeedback({ ...feedback, message: decision === "rejected" ? AVATAR_REJECTED_MESSAGE
+          : `${feedback.message} Your profile could not refresh. Reload the dashboard to see its latest status.` });
+      }
     } catch (error) {
       if (isCurrentAvatarAction(requestId, controller)) {
-        setStatus(error instanceof Error ? error.message : "Unable to upload avatar.");
+        const rejected = error instanceof DashboardDataRequestError && error.status === 422;
+        if (rejected) {
+          setFile(null);
+          uploadIdentityRef.current = null;
+        }
+        setUploadFeedback({ state: rejected ? "rejected" : "failed", message: rejected
+          ? AVATAR_REJECTED_MESSAGE
+          : error instanceof Error ? error.message : "Unable to upload avatar. Try again." });
       }
     } finally {
       if (finishAvatarAction(requestId)) {
@@ -5948,6 +5998,9 @@ function DancerAvatarPanel({
       const refreshedProfile = await refreshProfile(controller.signal);
       if (!isCurrentAvatarAction(requestId, controller)) return;
       onProfileChange?.(refreshedProfile);
+      setUploadFeedback(null);
+      setFile(null);
+      setPreviewUrl("");
       setStatus("Avatar removed.");
     } catch (error) {
       if (isCurrentAvatarAction(requestId, controller)) {
@@ -5958,16 +6011,27 @@ function DancerAvatarPanel({
     }
   }
 
-  const visibleAvatar = previewUrl || avatarUrl;
-  const moderationLabel = pendingAvatar ? "Checking" : avatarUrl ? "Approved" : "Required";
+  const visibleAvatar = previewUrl || pendingPreviewRef.current.url || avatarUrl;
+  const presentation = avatarUploadPresentation({ upload: uploadFeedback, avatarUrl, pendingReview: pendingAvatar, latestReview: latestAvatarReview });
+  const statusMessage = status || presentation.message;
   return (
-    <article className="info-panel dancer-avatar-panel">
-      <p className="dancer-profile-editor-intro">Required · Use a clear solo face photo of yourself.</p>
-      <div className="dancer-avatar-editor" aria-label="Profile photo preview">
+    <article className="info-panel dancer-avatar-panel" aria-busy={isSaving} data-avatar-state={presentation.state || "required"}>
+      <p className="dancer-profile-editor-intro">Use a clear solo face photo of yourself.</p>
+      <div className="dancer-avatar-editor" aria-label="Avatar preview">
         <span className="dancer-avatar-preview">
           {visibleAvatar ? <img src={visibleAvatar} alt="Selected dancer avatar preview" /> : <b aria-hidden="true">+</b>}
+          {previewUrl && presentation.state === "approved" && latestAvatarReview?.id === uploadFeedback?.reviewId && avatarUrl ? (
+            <img
+              alt=""
+              aria-hidden="true"
+              data-avatar-approved-preview
+              src={avatarUrl}
+              style={{ display: "none" }}
+              onLoad={() => setPreviewUrl((current) => current === previewUrl ? "" : current)}
+            />
+          ) : null}
         </span>
-        <strong className={`dancer-avatar-state is-${moderationLabel.toLowerCase()}`}>{moderationLabel}</strong>
+        <strong className={`dancer-avatar-state is-${presentation.state || "required"}`}>{presentation.label}</strong>
       </div>
       <div className="dancer-avatar-upload-controls">
         <div className="photo-source-grid dancer-avatar-source-grid">
@@ -6006,10 +6070,10 @@ function DancerAvatarPanel({
           </label>
         </div>
         {isSaving ? <progress aria-label="Avatar upload progress" max="100" value={uploadProgress} /> : null}
-        {file && !isSaving ? <button type="button" onClick={() => void uploadAvatar(file)}>Retry avatar upload</button> : null}
+        {file && !isSaving && presentation.canRetry ? <button type="button" onClick={() => void uploadAvatar(file)}>Retry avatar upload</button> : null}
         {avatarUrl ? <button type="button" disabled={isSaving} onClick={() => void removeAvatar()}>Remove avatar</button> : null}
       </div>
-      {status || pendingAvatar ? <p role="status" aria-live="polite">{status || "We are checking this photo. Your current approved photo stays visible."}</p> : null}
+      <p role="status" aria-live="polite">{statusMessage}</p>
     </article>
   );
 }
@@ -9126,6 +9190,7 @@ function DashboardStyles() {
       .dancer-onboarding-steps .is-open > button { border-radius: 14px 14px 0 0; }
       .dancer-onboarding-step-panel { display: grid; gap: 14px; padding: 14px; border-top: 1px solid rgba(255,255,255,.09); background: #09090d; animation: dancer-onboarding-panel-in .18s ease-out; }
       .dancer-onboarding-step-panel[hidden] { display: none; }
+      .dancer-onboarding-step-panel:has(.dancer-profile-preview-overlay) { animation:none; }
       .dancer-onboarding-step-panel .dancer-onboarding-profile-workspace { margin: 0; }
       .dancer-step-one-workspace { min-width: 0; display: grid; gap: 12px; }
       .dancer-step-one-summary { min-width: 0; display: grid; grid-template-columns: minmax(0,1fr) auto; align-items: start; gap: 12px; padding: 14px; border: 1px solid rgba(126,234,255,.17); border-radius: 14px; background: linear-gradient(145deg,rgba(17,17,24,.96),rgba(7,7,11,.98)); }
@@ -9671,14 +9736,18 @@ function DashboardStyles() {
       .dancer-profile-identity-editor .dancer-form-save-state { min-height:0; margin:0; }
 
       .dancer-profile-builder-panel.dancer-profile-editor-modal .dancer-avatar-panel { justify-items:center; }
+      .dancer-profile-builder-panel.dancer-profile-editor-modal[data-section="avatar"] { height:min(540px,82dvh,calc(100dvh - var(--mydancr-preview-banner-offset,0px) - 24px)); }
+      .dancer-profile-builder-panel.dancer-profile-editor-modal[data-section="avatar"] .dancer-profile-editor-modal-body { overflow-anchor:none; }
       .dancer-profile-builder-panel.dancer-profile-editor-modal .dancer-avatar-panel > * { width:100%; }
       .dancer-profile-builder-panel.dancer-profile-editor-modal .dancer-avatar-editor { position:relative; width:112px; display:grid; grid-template-columns:1fr; justify-items:center; gap:0; margin:2px auto; }
       .dancer-profile-builder-panel.dancer-profile-editor-modal .dancer-avatar-preview { width:108px; height:108px; font-size:36px; }
       .dancer-avatar-state { position:absolute; right:-7px; bottom:2px; width:auto !important; padding:5px 7px; border:1px solid rgba(255,255,255,.18); border-radius:999px; color:#f8fafc; background:#18171f; box-shadow:0 4px 14px rgba(0,0,0,.52); font-size:9px; font-weight:950; letter-spacing:.08em; line-height:1; text-transform:uppercase; }
       .dancer-avatar-state.is-approved { border-color:rgba(52,211,153,.4); color:#86efc0; background:#0e251d; }
-      .dancer-avatar-state.is-checking { border-color:rgba(34,199,255,.4); color:#9aefff; background:#0b2027; }
+      .dancer-avatar-state.is-checking, .dancer-avatar-state.is-pending { border-color:rgba(34,199,255,.4); color:#9aefff; background:#0b2027; }
+      .dancer-avatar-state.is-rejected, .dancer-avatar-state.is-failed { border-color:rgba(251,113,133,.4); color:#fda4af; background:#30151d; }
       .dancer-profile-builder-panel.dancer-profile-editor-modal .dancer-avatar-upload-controls { display:grid; grid-template-columns:1fr; gap:10px; }
       .dancer-profile-builder-panel.dancer-profile-editor-modal .dancer-avatar-panel > p[role="status"] { margin:0; color:#b9eff8; font-size:11px; line-height:1.4; text-align:center; }
+      .dancer-profile-builder-panel.dancer-profile-editor-modal .dancer-avatar-panel[data-avatar-state="rejected"] > p[role="status"] { color:#fda4af; }
       .dancer-profile-builder-panel.dancer-profile-editor-modal .dancer-avatar-panel button { width:100%; min-height:42px; }
 
       .dancer-profile-builder-panel.dancer-profile-editor-modal .photo-source-grid,
