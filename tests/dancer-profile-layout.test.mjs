@@ -118,7 +118,12 @@ test("schedule cards tighten vertical space without shrinking the action buttons
   assert.equal(value(card, "row-gap"), "2px");
   assert.equal(value(card, "padding"), "4px 6px");
   assert.equal(value(sharedRule(".profile-tonight-card > .profile-shift-card"), "min-height"), "36px");
-  assert.equal(value(sharedRule(".profile-tonight-card > .profile-schedule-empty"), "min-height"), "44px");
+  const emptyRow = sharedRule(".profile-tonight-card > .profile-schedule-empty");
+  assert.equal(value(emptyRow, "min-height"), "28px");
+  assert.equal(value(emptyRow, "display"), "grid");
+  assert.equal(value(emptyRow, "align-content"), "center");
+  assert.equal(value(emptyRow, "align-items"), "center");
+  assert.equal(value(emptyRow, "grid-template-columns"), "max-content minmax(0, 1fr)");
   assert.equal(value(sharedRule(".public-profile-shell :is(.club-deal-profile-copy, .profile-deal-availability-line)"), "min-height"), "20px");
   for (const ending of [".public-profile-shell .club-deal-profile-action", ".public-profile-shell .profile-tonight-travel-actions > :is(a, button)"]) {
     const buttons = sharedRule(ending);
@@ -554,7 +559,7 @@ test("Upcoming Shift mirrors the compact current-shift row with cyan status cues
   );
 });
 
-test("No Schedule mirrors the compact shift hierarchy with a neutral state", () => {
+test("No Schedule uses a compact neutral status strip with unchanged wording", () => {
   assert.match(
     aesthetic,
     /profile-tonight-card\.is-no-schedule[\s\S]*?grid-template-columns: minmax\(0, 1fr\) !important;/,
@@ -571,7 +576,8 @@ test("No Schedule mirrors the compact shift hierarchy with a neutral state", () 
     profilePage,
     /\.profile-tonight-card::before \{[\s\S]*?border: 2px solid rgba\(255,255,255,\.13\);[\s\S]*?\.profile-tonight-card\.is-no-schedule \{[\s\S]*?\.profile-empty-state \{[\s\S]*?letter-spacing: \.075em;/,
   );
-  assert.match(aesthetic, /profile-tonight-card > \.schedule-empty,[\s\S]*?profile-schedule-empty \{[\s\S]*?min-height: 44px !important;/);
+  assert.match(aesthetic, /profile-tonight-card > \.schedule-empty,[\s\S]*?profile-schedule-empty \{[\s\S]*?min-height: 28px !important;/);
+  assert.match(profilePage, /<em>Follow \{profile\.stageName\} for updates<\/em>/);
   assert.match(liveApp, /if \(!profile\?\.scheduled\) return "";/);
   assert.doesNotMatch(profilePage, /profile-tonight-travel-actions is-no-schedule|Directions unavailable until a shift is posted|Ride unavailable until a shift is posted/);
 });

@@ -45,7 +45,7 @@ test("empty schedules use the compact neutral hierarchy while upcoming schedules
     aesthetic,
     /profile-tonight-card\.is-no-schedule::before,[\s\S]*?border-color: rgba\(180, 169, 196, \.38\) !important;[\s\S]*?inset 0 0 0 1px rgba\(255, 255, 255, \.025\) !important;/,
   );
-  assert.match(aesthetic, /profile-tonight-card > \.schedule-empty,[\s\S]*?profile-schedule-empty \{[\s\S]*?min-height: 44px !important;/);
+  assert.match(aesthetic, /profile-tonight-card > \.schedule-empty,[\s\S]*?profile-schedule-empty \{[\s\S]*?min-height: 28px !important;/);
   assert.match(aesthetic, /profile-tonight-card\.is-no-schedule \.schedule-empty::before,[\s\S]*?content: none !important;/);
   assert.match(
     aesthetic,

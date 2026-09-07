@@ -4591,8 +4591,11 @@ body.dancr-button-system .public-profile-shell .profile-tonight-card > .profile-
 
 body.dancr-button-system #profileBackdrop #profileModal .profile-tonight-card > .schedule-empty,
 body.dancr-button-system .public-profile-shell .profile-tonight-card > .profile-schedule-empty {
-  min-height: 44px !important;
+  min-height: 28px !important;
+  display: grid !important;
   grid-template-columns: max-content minmax(0, 1fr) !important;
+  align-content: center !important;
+  align-items: center !important;
   gap: 8px !important;
 }
 
