@@ -10578,10 +10578,10 @@ body.dancr-button-system > .app main.stack > section.stack
     > .home-venue-discovery-slide {
     --venue-primary-height: 44px;
     --venue-secondary-height: 46px;
-    height: clamp(300px, 80vw, 324px) !important;
-    min-height: 300px !important;
-    max-height: 324px !important;
-    grid-template-rows: 96px minmax(100px, 1fr) 48px 56px !important;
+    height: clamp(278px, calc(80vw - 24px), 300px) !important;
+    min-height: 278px !important;
+    max-height: 300px !important;
+    grid-template-rows: 96px minmax(76px, 1fr) 48px 56px !important;
     border-color: rgba(203, 213, 225, 0.2) !important;
     box-shadow:
       inset 0 1px 0 rgba(255, 255, 255, 0.07),
@@ -10998,8 +10998,8 @@ body.dancr-button-system > .app main.stack > section.stack
   body.dancr-button-system > .app main.stack > section.stack
     > #results.home-discovery-feed.home-venue-discovery-feed
     > .home-venue-discovery-slide {
-    height: 300px !important;
-    grid-template-rows: 94px minmax(94px, 1fr) 56px 56px !important;
+    height: 278px !important;
+    grid-template-rows: 94px minmax(70px, 1fr) 56px 56px !important;
   }
 
   body.dancr-button-system > .app main.stack > section.stack
@@ -11816,6 +11816,24 @@ html body.dancr-button-system > .app main.stack > section.stack
   .home-venue-discovery-art.is-venue-logo-artwork .home-venue-discovery-logo {
   filter: none !important;
   -webkit-filter: none !important;
+}
+
+/* Keep available Share and Favorite controls clearly readable on mobile. */
+@media (max-width: 720px) {
+  html body.dancr-button-system > .app main.stack > section.stack
+    > #results.home-venue-discovery-feed > .home-venue-discovery-slide
+    .venue-card-secondary-actions > :is(.venue-card-share-action, .venue-card-favorite-action)
+    :is(.action-icon, .action-icon > svg) {
+    color: #f1f5f9 !important;
+  }
+
+  html body.dancr-button-system > .app main.stack > section.stack
+    > #results.home-venue-discovery-feed > .home-venue-discovery-slide
+    .venue-card-secondary-actions > :is(.venue-card-share-action, .venue-card-favorite-action):not(.is-active):not([aria-pressed="true"]):not(:disabled):not([aria-disabled="true"]) {
+    color: #f1f5f9 !important;
+    border-color: rgba(226, 232, 240, 0.28) !important;
+    background: #25252b !important;
+  }
 }
 
 /* Dismiss controls are navigation utilities, not branded actions. Keep every

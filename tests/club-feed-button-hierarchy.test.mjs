@@ -39,7 +39,7 @@ test("mobile venue controls use a compact premium glass hierarchy without a back
 
   assert.match(hierarchy, /--venue-primary-height: 44px;/);
   assert.match(hierarchy, /--venue-secondary-height: 46px;/);
-  assert.match(hierarchy, /height: clamp\(300px, 80vw, 324px\) !important;/);
+  assert.match(hierarchy, /height: clamp\(278px, calc\(80vw - 24px\), 300px\) !important;/);
   assert.match(hierarchy, /\.venue-card-primary-actions \{[\s\S]*?height: 48px !important;[\s\S]*?gap: 10px !important;[\s\S]*?background: transparent !important;[\s\S]*?box-shadow: none !important;/);
   assert.match(hierarchy, /\.venue-card-primary-actions > \.venue-card-primary-action \{[\s\S]*?border-radius: 16px !important;[\s\S]*?linear-gradient\(180deg,[\s\S]*?font-size: 14\.5px !important;/);
   assert.match(hierarchy, /\.venue-card-primary-actions > \.venue-card-directions-action \{[\s\S]*?border-color: rgba\(148, 163, 184, 0\.18\) !important;[\s\S]*?rgba\(24, 27, 35, 0\.66\)/);
@@ -68,7 +68,7 @@ test("mobile venue controls use a compact premium glass hierarchy without a back
 test("mobile venue identity keeps the lineup beside the location and hours", () => {
   const hierarchy = aesthetic.slice(aesthetic.indexOf("/* Clubs feed action hierarchy."));
 
-  assert.match(hierarchy, /grid-template-rows: 96px minmax\(100px, 1fr\) 48px 56px !important;/);
+  assert.match(hierarchy, /grid-template-rows: 96px minmax\(76px, 1fr\) 48px 56px !important;/);
   assert.match(hierarchy, /\.home-venue-discovery-logo \{[\s\S]*?height: 90px !important;/);
   assert.match(hierarchy, /\.home-discovery-feed-copy \{[\s\S]*?grid-template-columns: minmax\(0, 1fr\) auto !important;/);
   assert.match(hierarchy, /\.home-venue-discovery-location \{[\s\S]*?grid-column: 1 !important;[\s\S]*?grid-row: 1 !important;/);
