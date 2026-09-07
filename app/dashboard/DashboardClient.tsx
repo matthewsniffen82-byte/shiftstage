@@ -8352,10 +8352,16 @@ function DashboardStyles() {
       .customer-dashboard-primary-links a { min-width: 0; min-height: 68px; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 8px; padding: 11px 12px; border: 1px solid rgba(167,139,250,.2); border-radius: 13px; color: #f8f7fb; background: rgba(255,255,255,.035); font-size: 13px; font-weight: 900; text-decoration: none; }
       .customer-dashboard-primary-links a:hover { border-color: rgba(167,139,250,.48); background: rgba(139,92,246,.12); }
       .customer-dashboard-primary-links a > span { min-width: 0; line-height: 1.2; }
-      .customer-dashboard-primary-links a > strong { min-width: 28px; height: 24px; display: grid; place-items: center; padding: 0 7px; border: 1px solid rgba(196,181,253,.42); border-radius: 999px; color: #fff; background: rgba(124,58,237,.72); box-shadow: 0 0 14px rgba(139,92,246,.22); font-size: 11px; }
+      .customer-dashboard-primary-links a > strong { min-width: 28px; height: 24px; display: grid; place-items: center; padding: 0 7px; border: 1px solid rgba(196,181,253,.65); border-radius: 999px; color: #fff; background: #6d28d9; box-shadow: 0 0 14px rgba(139,92,246,.22); font-size: 11px; }
       .customer-dashboard-utility-links { display: flex; justify-content: flex-end; gap: 6px; padding-top: 1px; }
       .customer-dashboard-utility-links a { min-height: 38px; display: inline-flex; align-items: center; justify-content: center; padding: 0 14px; border-radius: 999px; color: #cfc5de; font-size: 12px; font-weight: 900; text-decoration: none; }
       .customer-dashboard-utility-links a:hover { color: #fff; background: rgba(255,255,255,.06); }
+      /* Keep customer shortcuts readable above the shared dashboard surface overrides. */
+      body.dancr-button-system .dashboard-shell-customer .customer-dashboard-nav { border-color: rgba(167,139,250,.38) !important; background: #100e17 !important; }
+      body.dancr-button-system .dashboard-shell-customer .customer-dashboard-nav a { color: #f8f7fb !important; }
+      body.dancr-button-system .dashboard-shell-customer .customer-dashboard-primary-links a { border-color: rgba(167,139,250,.36); background: #191620 !important; }
+      body.dancr-button-system .dashboard-shell-customer .customer-dashboard-utility-links a { border: 1px solid rgba(167,139,250,.22); background: #191620 !important; }
+      body.dancr-button-system .dashboard-shell-customer .customer-dashboard-nav a:is(:hover, :focus-visible) { border-color: rgba(196,181,253,.7); background: #2b203d !important; }
       .customer-action-status { grid-column: 1 / -1; max-width: none; padding: 11px 14px; border: 1px solid var(--mydancr-customer-accent-border); border-radius: 10px; color: #ddd1ff; background: var(--mydancr-customer-accent-soft); font-size: 14px; }
       .info-panel { border: 1px solid var(--mydancr-dashboard-border); background: var(--mydancr-dashboard-panel); border-radius: var(--mydancr-dashboard-radius); padding: 16px; display: grid; gap: 14px; box-shadow: none; }
       .info-panel h2 { font-size: clamp(20px, 3vw, 24px); line-height: 1.08; }

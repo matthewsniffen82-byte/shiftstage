@@ -80,7 +80,7 @@ test("customer dashboard uses compact electric-violet hierarchy without duplicat
   assert.match(dashboard, /function CustomerFollowedDancersPanel[\s\S]*?<div className="customer-saved-panel"/);
   assert.match(dashboard, /function CustomerFollowedClubsPanel[\s\S]*?<div className="customer-saved-panel"/);
   assert.match(dashboard, /\.dashboard-shell-customer \{ --mydancr-customer-accent: #a970ff;/);
-  assert.match(dashboard, /\.customer-dashboard-primary-links a > strong \{[^}]*height: 24px;[^}]*border-radius: 999px;[^}]*background: rgba\(124,58,237,\.72\)/);
+  assert.match(dashboard, /\.customer-dashboard-primary-links a > strong \{[^}]*height: 24px;[^}]*border-radius: 999px;[^}]*background: #6d28d9/);
   assert.match(dashboard, /\.customer-followed-dancer-status\.is-working \{ color: #6ee7a6;/);
   assert.match(dashboard, /\.customer-followed-dancer-status\.is-upcoming \{ color: var\(--mydancr-customer-accent\)/);
   assert.match(dashboard, /\.dashboard-shell-customer \.venue-dashboard-section-badge \{[^}]*min-width: 28px;[^}]*background: rgba\(124,58,237,\.3\)/);
