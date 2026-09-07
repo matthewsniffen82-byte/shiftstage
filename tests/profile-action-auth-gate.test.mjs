@@ -94,9 +94,9 @@ test("the live dancer profile close control exits shared links and remains touch
   );
   assert.match(
     homeSource,
-    /--profile-bottom-nav-clearance: max\(132px, calc\(108px \+ env\(safe-area-inset-bottom, 0px\)\)\);[\s\S]*?scroll-padding-bottom: var\(--profile-bottom-nav-clearance\) !important;[\s\S]*?#profileBackdrop \.profile-modal-media \{[\s\S]*?margin: 12px 0 0 !important;[\s\S]*?padding-bottom: 0 !important;/,
+    /--profile-bottom-nav-clearance: max\(148px, calc\(124px \+ env\(safe-area-inset-bottom, 0px\)\)\);[\s\S]*?scroll-padding-bottom: var\(--profile-bottom-nav-clearance\) !important;[\s\S]*?#profileBackdrop \.profile-modal-media \{[\s\S]*?margin: 12px 0 0 !important;[\s\S]*?padding-bottom: 0 !important;/,
   );
-  assert.match(homeSource, /\.profile-header-overflow-menu #reportBtn \{[\s\S]*?min-height: 44px;/);
+  assert.match(homeSource, /\.profile-header-report-action \{[^}]*min-height: 44px;/);
   assert.doesNotMatch(homeSource, /--profile-report-clearance: calc\(80px/);
   assert.match(homeSource, /modalCloseButton\.addEventListener\("click"[\s\S]*?closeProfileModal\(\)/);
   assert.match(
@@ -284,9 +284,9 @@ test("the live mobile profile separates profile actions from venue travel action
   assert.match(homeSource, /function profileActionButtonMarkup\(icon, label\)/);
   assert.doesNotMatch(liveActionMarkup, /Sign in required|No sign-in needed|No shift posted|profile-action-requirement/);
   assert.doesNotMatch(liveActionMarkup, /"account"|"public"|"no-shift"/);
-  assert.match(homeSource, /class="profile-header-report-action" id="reportBtn"[^>]*role="menuitem"/);
+  assert.match(homeSource, /class="profile-header-report-action" id="reportBtn"[^>]*aria-haspopup="dialog"/);
   assert.doesNotMatch(homeSource, /class="profile-modal-report-link"/);
-  assert.match(homeSource, /id="profileHeaderOverflowToggle"[\s\S]*?id="profileHeaderOverflowMenu"/);
+  assert.match(homeSource, /class="profile-modal-header-controls">[\s\S]*?id="reportBtn"[\s\S]*?id="modalClose"/);
   assert.doesNotMatch(homeSource, /data-profile-more-menu|data-profile-more-actions|data-profile-schedule-action/);
   assert.match(
     homeSource,

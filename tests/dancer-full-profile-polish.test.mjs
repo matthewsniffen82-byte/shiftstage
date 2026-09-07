@@ -132,10 +132,10 @@ test("profile actions have a clear hierarchy and preserve every real action", ()
     liveApp,
     /class="action-btn secondary profile-share-action profile-action-icon-control"[\s\S]*?data-profile-share-menu=/,
   );
-  assert.match(liveApp, /class="profile-header-report-action" id="reportBtn"[^>]*role="menuitem"[^>]*>[\s\S]*?M5 21V4[\s\S]*?<span>Report profile<\/span>[\s\S]*?<\/button>/);
+  assert.match(liveApp, /class="profile-header-report-action" id="reportBtn"[^>]*aria-label="Report profile"[^>]*><svg[^>]*>[\s\S]*?M5 21V4[\s\S]*?<\/svg><\/button>/);
   assert.doesNotMatch(liveApp, /class="profile-modal-report-link"/);
   assert.doesNotMatch(liveApp, /profileReportButton\.textContent\s*=\s*"Report"/);
-  assert.match(liveApp, /id="profileHeaderOverflowToggle"[\s\S]*?id="profileHeaderOverflowMenu"/);
+  assert.match(liveApp, /class="profile-modal-header-controls">[\s\S]*?id="reportBtn"[\s\S]*?id="modalClose"/);
   assert.doesNotMatch(liveActionsMarkup, /profile-schedule-action|profile-action-overflow|>Schedule<|>More</);
   assert.doesNotMatch(liveActionsMarkup, /id="notifyBtn"|"Alerts On"|"Notify"/);
   assert.match(liveActionsMarkup, /id="followBtn"[\s\S]*?\$\{goingButton\}[\s\S]*?profile-share-action/);
@@ -499,9 +499,9 @@ test("profile overlay mobile geometry is shared by Android and iPhone", () => {
   );
   assert.match(
     liveApp,
-    /--profile-bottom-nav-clearance: max\(132px, calc\(108px \+ env\(safe-area-inset-bottom, 0px\)\)\);[\s\S]*?#profileBackdrop \.profile-modal-media \{[\s\S]*?margin: 12px 0 0 !important;[\s\S]*?padding-bottom: 0 !important;/,
+    /--profile-bottom-nav-clearance: max\(148px, calc\(124px \+ env\(safe-area-inset-bottom, 0px\)\)\);[\s\S]*?#profileBackdrop \.profile-modal-media \{[\s\S]*?margin: 12px 0 0 !important;[\s\S]*?padding-bottom: 0 !important;/,
   );
-  assert.match(liveApp, /\.profile-header-overflow-menu #reportBtn \{[\s\S]*?min-height: 44px;/);
+  assert.match(liveApp, /\.profile-header-report-action \{[^}]*min-height: 44px;/);
   assert.doesNotMatch(profilePolishBlock, /\.is-android|\.is-ios|SamsungBrowser|iPhone/);
 });
 

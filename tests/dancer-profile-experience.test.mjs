@@ -194,9 +194,9 @@ test("profile actions keep customer and safety controls visible while Tonight ow
   assert.doesNotMatch(profileActions, /rideControl|directionsControl|Working Now only|Venue required/);
   assert.match(profilePage, /profile-tonight-travel-actions[\s\S]*?<DancerDirectionsButton[\s\S]*?<UberRideButton/);
   assert.doesNotMatch(profileActions, /profile-action-schedule|>Schedule</);
-  assert.match(profileActions, /className="profile-header-overflow"/);
-  assert.match(profileActions, /className="profile-header-overflow-toggle"/);
-  assert.match(profileActions, /role="menuitem"/);
+  assert.match(profileActions, /className="profile-header-report-action"/);
+  assert.match(profileActions, /className="profile-header-report-action"/);
+  assert.match(profileActions, /aria-haspopup="dialog"/);
   assert.match(profileActions, /Report profile/);
   assert.match(profileActions, /onClick=\{openReport\}/);
   assert.match(profileActions, /<PublicReportReasonDialog/);

@@ -380,16 +380,16 @@ test("live dancer essentials stay compact above media and clear the mobile dock"
   );
   assert.match(
     liveApp,
-    /--profile-bottom-nav-clearance: max\(132px, calc\(108px \+ env\(safe-area-inset-bottom, 0px\)\)\);[\s\S]*?#profileBackdrop \.profile-modal-media \{[\s\S]*?margin: 12px 0 0 !important;[\s\S]*?padding-bottom: 0 !important;/,
+    /--profile-bottom-nav-clearance: max\(148px, calc\(124px \+ env\(safe-area-inset-bottom, 0px\)\)\);[\s\S]*?#profileBackdrop \.profile-modal-media \{[\s\S]*?margin: 12px 0 0 !important;[\s\S]*?padding-bottom: 0 !important;/,
   );
   assert.match(
     aesthetic,
     /#profileBackdrop #profileModal \.profile-modal-media \{[\s\S]*?margin: 12px 0 0 !important;[\s\S]*?padding-bottom: 0 !important;/,
   );
-  assert.match(liveApp, /\.profile-header-overflow-menu #reportBtn \{[\s\S]*?min-height: 44px;/);
+  assert.match(liveApp, /\.profile-header-report-action \{[^}]*min-height: 44px;/);
   assert.match(
     profilePage,
-    /\.public-profile-shell \{ padding: 0 12px max\(132px, calc\(108px \+ env\(safe-area-inset-bottom\)\)\); \}/,
+    /\.public-profile-shell \{ padding: 0 12px max\(148px, calc\(124px \+ env\(safe-area-inset-bottom\)\)\); \}/,
   );
   assert.match(profilePage, /\.profile-media-section \{[^}]*margin-top: 12px;/);
   assert.match(
