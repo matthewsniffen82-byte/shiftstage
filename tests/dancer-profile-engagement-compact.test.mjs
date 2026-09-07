@@ -71,7 +71,7 @@ test("one through the maximum supported social count renders only real links in 
   assert.match(socialLinks, /\{links\.map\(\(link\) =>/);
   assert.match(compactLayout, /\.profile-media-socials \.social-list \{[\s\S]*?width: fit-content !important;[\s\S]*?flex-wrap: nowrap !important;[\s\S]*?justify-content: center !important;[\s\S]*?gap: clamp\(4px, 1\.8vw, 8px\) !important;/);
   assert.match(compactLayout, /\.profile-media-socials \.social-list a \{[\s\S]*?width: 44px !important;[\s\S]*?height: 44px !important;/);
-  assert.match(compactLayout, /\.profile-media-socials \.social-list a::before \{[\s\S]*?inset: 3px !important;[\s\S]*?border: 1px solid rgba\(226, 232, 240, \.11\) !important;/);
+  assert.match(compactLayout, /\.profile-media-socials \.social-list a::before \{[\s\S]*?inset: 3px !important;[\s\S]*?border: 1px solid rgba\(226, 232, 240, \.22\) !important;/);
   assert.match(compactLayout, /\.profile-media-socials \.social-list a svg \{[\s\S]*?width: 19px !important;[\s\S]*?height: 19px !important;/);
 });
 
@@ -149,11 +149,11 @@ test("stats and media tabs are compact without changing dynamic media behavior",
   );
   assert.match(
     compactLayout,
-    /\.profile-modal-media-tabs,[\s\S]*?\.profile-media-tabs \{[\s\S]*?min-height: 52px !important;/,
+    /\.profile-modal-media-tabs,[\s\S]*?\.profile-media-tabs \{[\s\S]*?min-height: 46px !important;/,
   );
   assert.match(
     compactLayout,
-    /\.profile-modal-media-tabs button,[\s\S]*?\.profile-media-tabs button \{[\s\S]*?min-height: 52px !important;[\s\S]*?background: transparent !important;[\s\S]*?box-shadow: none !important;/,
+    /\.profile-modal-media-tabs button,[\s\S]*?\.profile-media-tabs button \{[\s\S]*?min-height: 46px !important;[\s\S]*?background: transparent !important;[\s\S]*?box-shadow: none !important;/,
   );
   assert.match(compactLayout, /\.profile-media-tab-icon \{[\s\S]*?width: 20px !important;[\s\S]*?height: 20px !important;/);
   assert.match(compactLayout, /button\.active,[\s\S]*?background: transparent !important;[\s\S]*?box-shadow: inset 0 -2px #f5f5f5 !important;/);
