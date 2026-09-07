@@ -4959,15 +4959,22 @@ body.dancr-button-system .public-profile-shell .profile-action-share-slot .profi
   max-width: none !important;
   min-height: 72px !important;
   box-sizing: border-box !important;
+  display: grid !important;
+  grid-template: minmax(0, 1fr) / minmax(0, 1fr) !important;
+  place-items: center !important;
+  align-content: center !important;
   align-self: stretch !important;
   justify-self: stretch !important;
   justify-content: center !important;
   gap: 0 !important;
+  margin: 0 !important;
   padding: 3px 2px !important;
   border: 0 !important;
   border-radius: 0 !important;
   background: transparent !important;
   box-shadow: none !important;
+  /* Touch browsers can retain :hover after a tap. Never lift one column. */
+  transform: none !important;
 }
 
 body.dancr-button-system .public-profile-shell .profile-action-share-slot .profile-share {
@@ -4982,6 +4989,7 @@ body.dancr-button-system #profileBackdrop #profileModal .modal-actions > .profil
 body.dancr-button-system .public-profile-shell .live-actions .profile-action-icon-control .profile-action-main {
   width: 100% !important;
   min-width: 0 !important;
+  grid-area: 1 / 1 !important;
   display: grid !important;
   grid-template-rows: 41px minmax(14px, auto) !important;
   align-content: center !important;
@@ -5012,7 +5020,9 @@ body.dancr-button-system .public-profile-shell .profile-action-icon-control .pro
   box-sizing: border-box !important;
   display: inline-grid !important;
   place-items: center !important;
+  margin: 0 !important;
   padding: 0 !important;
+  transform: none !important;
   border: 1px solid rgba(255, 255, 255, 0.28) !important;
   border-radius: 50% !important;
   color: var(--dancr-color-text-secondary) !important;
@@ -5037,6 +5047,10 @@ body.dancr-button-system #profileBackdrop #profileModal .modal-actions .profile-
 body.dancr-button-system .public-profile-shell .profile-action-icon-control .profile-action-preview-icon {
   width: 22px !important;
   height: 22px !important;
+  display: block !important;
+  margin: 0 !important;
+  place-self: center !important;
+  transform: translate(var(--profile-icon-offset-x, 0px), var(--profile-icon-offset-y, 0px)) !important;
   color: var(--dancr-color-text-secondary) !important;
   filter: none !important;
 }
@@ -5047,15 +5061,15 @@ body.dancr-button-system .public-profile-shell .profile-action-icon-frame[data-p
   height: 24px !important;
 }
 
-/* Share's taller, right-weighted artwork needs optical sizing and a small
- * downward offset. Keep that position steady instead of inheriting hover lift. */
+/* Share's artwork is centered at (12, 12) in its 24px viewBox. Keep its smaller
+ * size, but center it geometrically without offsets or inherited hover lift. */
 body.dancr-button-system #profileBackdrop #profileModal .modal-actions .profile-action-icon-control .action-icon[data-action-icon="share"] > svg,
 body.dancr-button-system .public-profile-shell .profile-action-icon-control .profile-action-icon-frame[data-profile-action-icon="share"] .profile-action-preview-icon {
   width: 19px !important;
   height: 19px !important;
-  --profile-icon-offset-x: -.5px;
-  --profile-icon-offset-y: 1px;
-  transform: translate(var(--profile-icon-offset-x), var(--profile-icon-offset-y)) !important;
+  --profile-icon-offset-x: 0px;
+  --profile-icon-offset-y: 0px;
+  transform: none !important;
 }
 
 body.dancr-button-system #profileBackdrop #profileModal .modal-actions .profile-action-icon-control .action-icon[data-action-icon="bell"] > svg,

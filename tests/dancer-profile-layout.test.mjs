@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
+import postcss from "postcss";
 
 const [
   liveApp,
@@ -102,6 +103,38 @@ test("full dancer profiles use a compact identity and honest public activity hea
     aesthetic,
     /\.profile-modal-header-metrics \.profile-activity-metrics dd \{[\s\S]*?grid-row: 1 !important;[\s\S]*?\.profile-modal-header-metrics \.profile-activity-metrics dt \{[\s\S]*?grid-row: 2 !important;/,
   );
+});
+
+test("profile action columns stay level and Share artwork stays centered", () => {
+  const rules = [];
+  postcss.parse(aesthetic).walkRules((rule) => rules.push(rule));
+  const declaration = (rule, property) => rule.nodes.find((node) => node.prop === property);
+  const controls = rules.find((rule) =>
+    rule.selector.includes("#profileBackdrop #profileModal .modal-actions .action-btn.profile-action-icon-control,")
+    && rule.selector.includes(".profile-action-share-slot .profile-share > button.profile-action-icon-control")
+    && declaration(rule, "min-height")?.value === "72px",
+  );
+  assert.ok(controls, "the overlay and standalone profile must share one action geometry rule");
+  for (const [property, value] of Object.entries({
+    display: "grid",
+    "grid-template": "minmax(0, 1fr) / minmax(0, 1fr)",
+    "place-items": "center",
+    margin: "0",
+    transform: "none",
+  })) {
+    assert.equal(declaration(controls, property)?.value, value, property);
+    assert.equal(declaration(controls, property)?.important, true, `${property} must override legacy button styles`);
+  }
+  const share = rules.find((rule) =>
+    rule.selector.includes('.action-icon[data-action-icon="share"] > svg')
+    && rule.selector.includes('.profile-action-icon-frame[data-profile-action-icon="share"] .profile-action-preview-icon'),
+  );
+  assert.ok(share, "both Share variants must use the same centering rule");
+  assert.equal(declaration(share, "--profile-icon-offset-x")?.value, "0px");
+  assert.equal(declaration(share, "--profile-icon-offset-y")?.value, "0px");
+  assert.equal(declaration(share, "transform")?.value, "none");
+  assert.equal(declaration(share, "transform")?.important, true);
+  assert.equal(declaration(share, "width")?.value, declaration(share, "height")?.value);
 });
 
 test("profile actions keep profile controls separate from Tonight travel actions", () => {
