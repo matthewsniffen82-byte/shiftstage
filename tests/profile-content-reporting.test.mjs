@@ -36,48 +36,46 @@ test("standalone profile photos and videos expose a circular report action", () 
   );
 });
 
-test("live profiles keep reporting as a subdued footer safety action", () => {
+test("live profiles keep reporting in a subdued header overflow menu", () => {
   const actionMarkup = liveShell.slice(
     liveShell.indexOf("function liveProfileModalActionsMarkup"),
     liveShell.indexOf("async function refreshProfileGoingState"),
   );
-  assert.match(liveShell, /class="profile-footer-report-action" id="reportBtn"[^>]*>[\s\S]*?M5 21V4[\s\S]*?<span>Report profile<\/span>[\s\S]*?<\/button>/);
+  assert.match(liveShell, /class="profile-header-overflow-toggle" id="profileHeaderOverflowToggle"[^>]*aria-haspopup="menu"[^>]*aria-expanded="false"/);
+  assert.match(liveShell, /class="profile-header-report-action" id="reportBtn"[^>]*role="menuitem"[^>]*>[\s\S]*?M5 21V4[\s\S]*?<span>Report profile<\/span>[\s\S]*?<\/button>/);
   assert.match(
     liveShell,
-    /class="profile-modal-header-controls">[\s\S]*?id="modalClose"[\s\S]*?<\/div>[\s\S]*?class="profile-modal-media"[\s\S]*?<\/section>\s*<button class="profile-footer-report-action" id="reportBtn"/,
+    /class="profile-modal-header-controls">[\s\S]*?id="profileHeaderOverflowToggle"[\s\S]*?id="reportBtn"[\s\S]*?id="modalClose"/,
   );
-  assert.doesNotMatch(
-    liveShell.match(/class="profile-modal-context">[\s\S]*?<\/div>/)?.[0] || "",
-    /id="reportBtn"/,
-  );
+  assert.doesNotMatch(liveShell, /profile-footer-report-action/);
   assert.match(
     liveShell,
-    /\.profile-footer-report-action \{[\s\S]*?min-height: 36px;[\s\S]*?border: 0;[\s\S]*?color: rgba\(189,180,200,\.46\);[\s\S]*?background: transparent;[\s\S]*?font-size: 9px;[\s\S]*?\.profile-footer-report-action svg \{ width: 11px;/,
+    /\.profile-header-overflow-toggle \{[\s\S]*?width: 44px;[\s\S]*?height: 44px;[\s\S]*?\.profile-header-overflow-icon \{[\s\S]*?width: 36px;[\s\S]*?height: 36px;/,
   );
+  assert.match(liveShell, /\.profile-header-overflow-menu #reportBtn \{[\s\S]*?min-height: 44px;/);
   assert.doesNotMatch(actionMarkup, /id="reportBtn"|Report profile/);
   assert.match(liveShell, /prepareContentReportButton\([\s\S]*?"dancer_profile"/);
 });
 
-test("standalone profiles move reporting below media and reserve the header for close", () => {
+test("standalone profiles place reporting beside close in a full-size overflow menu", () => {
   assert.match(
     profilePage,
-    /className="profile-titlebar-controls">\s*<ProfileCloseButton/,
+    /className="profile-titlebar-controls">\s*<DancerReportControl dancerId=\{profile\.id\} profileName=\{profile\.stageName\} \/>\s*<ProfileCloseButton/,
   );
   assert.doesNotMatch(
     profilePage.match(/className="profile-titlebar-context">[\s\S]*?<\/div>/)?.[0] || "",
     /DancerReportControl/,
   );
+  assert.doesNotMatch(profilePage, /<DancerPhotoCarousel[\s\S]*?\/>\s*<DancerReportControl/);
+  assert.match(profileActions, /aria-haspopup="menu"[\s\S]*?className="profile-header-overflow-toggle"/);
+  assert.match(profileActions, /className="profile-header-overflow-menu"[\s\S]*?role="menu"[\s\S]*?role="menuitem"/);
   assert.match(
     profilePage,
-    /<DancerPhotoCarousel[\s\S]*?\/>\s*<DancerReportControl dancerId=\{profile\.id\} profileName=\{profile\.stageName\} \/>/,
+    /\.profile-titlebar-controls \{[^}]*width: 94px;[^}]*grid-template-columns: repeat\(2, 44px\);/,
   );
   assert.match(
     profilePage,
-    /\.profile-titlebar-controls \{[^}]*width: 44px;[^}]*grid-template-columns: 44px;/,
-  );
-  assert.match(
-    profilePage,
-    /\.profile-footer-report-toggle \{[^}]*border: 0;[^}]*color: rgba\(189,180,200,\.46\);[^}]*background: transparent;/,
+    /\.profile-header-overflow-menu button \{[^}]*min-height: 44px;[^}]*color: #d4ccd9;[^}]*background: transparent;/,
   );
 });
 

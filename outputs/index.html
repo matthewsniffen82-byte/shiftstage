@@ -32071,7 +32071,7 @@
   </style>
   <link href="/dancr-brand-tokens.v1.css?v=13" rel="stylesheet">
   <link href="/dancr-button-system.v1.css" rel="stylesheet">
-  <link href="/dancr-aesthetic.v1.css?v=248" rel="stylesheet">
+  <link href="/dancr-aesthetic.v1.css?v=249" rel="stylesheet">
 </head>
 <body class="dancr-button-system">
   <div class="app">
@@ -36616,33 +36616,94 @@
           line-height: 1.2;
           white-space: nowrap;
         }
-        #profileBackdrop .profile-footer-report-action {
-          min-height: 36px;
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          gap: 5px;
-          margin: 9px auto var(--profile-bottom-nav-clearance, 18px);
-          padding: 7px 10px;
+        #profileBackdrop .profile-header-overflow {
+          position: relative;
+          z-index: 20;
+          width: 44px;
+          min-width: 44px;
+          height: 44px;
+        }
+        #profileBackdrop .profile-header-overflow-toggle {
+          width: 44px;
+          min-width: 44px;
+          height: 44px;
+          min-height: 44px;
+          display: grid;
+          place-items: center;
+          padding: 0;
           border: 0;
-          border-radius: 999px;
-          color: rgba(189,180,200,.46);
+          border-radius: 50%;
+          color: rgba(214,205,224,.7);
           background: transparent;
           box-shadow: none;
           font: inherit;
-          font-size: 9px;
-          font-weight: 750;
-          line-height: 1;
+          cursor: pointer;
+          -webkit-tap-highlight-color: transparent;
+        }
+        #profileBackdrop .profile-header-overflow-icon {
+          width: 36px;
+          height: 36px;
+          display: grid;
+          place-items: center;
+          border: 1px solid rgba(226,232,240,.16);
+          border-radius: 50%;
+          background: linear-gradient(145deg, rgba(49,47,59,.72), rgba(19,19,25,.7));
+          box-shadow: inset 0 1px 0 rgba(255,255,255,.05), 0 8px 18px rgba(0,0,0,.24);
+        }
+        #profileBackdrop .profile-header-overflow-icon svg {
+          width: 18px;
+          height: 18px;
+          display: block;
+          fill: currentColor;
+          stroke: none;
+        }
+        #profileBackdrop .profile-header-overflow-toggle:hover .profile-header-overflow-icon,
+        #profileBackdrop .profile-header-overflow-toggle:focus-visible .profile-header-overflow-icon,
+        #profileBackdrop .profile-header-overflow-toggle[aria-expanded="true"] .profile-header-overflow-icon {
+          border-color: rgba(196,167,255,.34);
+          color: #f0ebf5;
+          background: rgba(35,32,43,.94);
+        }
+        #profileBackdrop .profile-header-overflow-toggle:focus-visible { outline: 2px solid rgba(214,205,224,.72); outline-offset: 0; }
+        #profileBackdrop .profile-header-overflow-menu {
+          position: absolute;
+          z-index: 80;
+          top: calc(100% + 6px);
+          right: 0;
+          width: min(196px, calc(100vw - 24px));
+          display: grid;
+          padding: 7px;
+          border: 1px solid rgba(255,255,255,.13);
+          border-radius: 13px;
+          background: rgba(10,9,14,.98);
+          box-shadow: 0 18px 48px rgba(0,0,0,.58);
+        }
+        #profileBackdrop .profile-header-overflow-menu[hidden] { display: none !important; }
+        #profileBackdrop .profile-header-overflow-menu #reportBtn {
+          width: 100%;
+          min-height: 44px;
+          display: flex;
+          align-items: center;
+          gap: 9px;
+          padding: 0 12px;
+          border: 0;
+          border-radius: 9px;
+          color: #d4ccd9;
+          background: transparent;
+          font: inherit;
+          font-size: 12px;
+          font-weight: 800;
+          text-align: left;
           cursor: pointer;
         }
-        #profileBackdrop .profile-footer-report-action svg { width: 11px; height: 11px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
-        #profileBackdrop .profile-footer-report-action:hover,
-        #profileBackdrop .profile-footer-report-action:focus-visible {
-          color: rgba(225,219,232,.82);
-          background: rgba(255,255,255,.035);
+        #profileBackdrop .profile-header-overflow-menu #reportBtn:hover,
+        #profileBackdrop .profile-header-overflow-menu #reportBtn:focus-visible {
+          color: #fff;
+          background: rgba(255,255,255,.07);
           outline: none;
         }
-        #profileBackdrop .profile-footer-report-action:disabled { cursor: default; opacity: .58; }
+        #profileBackdrop .profile-header-overflow-menu #reportBtn:disabled { cursor: default; opacity: .58; }
+        #profileBackdrop .profile-header-overflow-menu #reportBtn svg { width: 17px; height: 17px; flex: 0 0 17px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
         #profileBackdrop .profile-modal-verified {
           width: 19px;
           height: 19px;
@@ -40251,7 +40312,7 @@
           gap: 0 !important;
           min-height: 66px !important;
           margin-inline: -14px !important;
-          padding: max(7px, calc(env(safe-area-inset-top, 0px) + 4px)) 48px 7px 10px !important;
+          padding: max(7px, calc(env(safe-area-inset-top, 0px) + 4px)) 104px 7px 10px !important;
         }
 
         #profileBackdrop #profileModal .profile-modal-person {
@@ -40387,9 +40448,9 @@
           position: absolute !important;
           top: max(5px, calc(env(safe-area-inset-top, 0px) + 3px)) !important;
           right: 5px !important;
-          width: 36px;
+          width: 92px;
           display: grid;
-          grid-template-columns: 36px;
+          grid-template-columns: repeat(2, 44px);
           align-items: center;
           gap: 4px;
           z-index: 4;
@@ -40451,7 +40512,7 @@
             gap: 0 !important;
             min-height: 66px !important;
             margin-inline: -12px !important;
-            padding: max(7px, calc(env(safe-area-inset-top, 0px) + 4px)) 82px 7px 10px !important;
+            padding: max(7px, calc(env(safe-area-inset-top, 0px) + 4px)) 102px 7px 10px !important;
           }
 
           #profileBackdrop #profileModal .profile-modal-person {
@@ -40468,7 +40529,7 @@
             font-size: clamp(17px, 4.8vw, 21px) !important;
           }
 
-          #profileBackdrop #profileModal .profile-modal-header-controls { width: 36px; grid-template-columns: 36px; }
+          #profileBackdrop #profileModal .profile-modal-header-controls { width: 92px; grid-template-columns: repeat(2, 44px); }
 
           #profileBackdrop #profileModal #modalClose {
             width: 36px !important;
@@ -40485,7 +40546,7 @@
             grid-template-columns: minmax(0, 1fr) !important;
             gap: 0 !important;
             min-height: 64px !important;
-            padding-right: 42px !important;
+            padding-right: 102px !important;
           }
 
           #profileBackdrop #profileModal .profile-modal-person {
@@ -40509,7 +40570,7 @@
             font-size: 7px !important;
           }
 
-          #profileBackdrop #profileModal .profile-modal-header-controls { width: 36px; grid-template-columns: 36px; }
+          #profileBackdrop #profileModal .profile-modal-header-controls { width: 92px; grid-template-columns: repeat(2, 44px); }
 
           #profileBackdrop #profileModal #modalClose {
             width: 36px !important;
@@ -42076,6 +42137,16 @@
             </div>
           </div>
           <div class="profile-modal-header-controls">
+            <div class="profile-header-overflow" id="profileHeaderOverflow">
+              <button class="profile-header-overflow-toggle" id="profileHeaderOverflowToggle" type="button" aria-label="More profile actions" title="More profile actions" aria-haspopup="menu" aria-expanded="false" aria-controls="profileHeaderOverflowMenu">
+                <span class="profile-header-overflow-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24"><circle cx="12" cy="5" r="1.7"></circle><circle cx="12" cy="12" r="1.7"></circle><circle cx="12" cy="19" r="1.7"></circle></svg>
+                </span>
+              </button>
+              <div class="profile-header-overflow-menu" id="profileHeaderOverflowMenu" role="menu" hidden>
+                <button class="profile-header-report-action" id="reportBtn" type="button" role="menuitem" aria-label="Report profile"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 21V4"></path><path d="M5 5h11l-1.8 3L16 11H5"></path></svg><span>Report profile</span></button>
+              </div>
+            </div>
             <button class="close-btn" id="modalClose" type="button" aria-label="Close profile">
               <svg class="icon" viewBox="0 0 24 24"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
             </button>
@@ -42118,7 +42189,6 @@
           <div class="gallery" id="modalGallery" data-media-tab="photo" role="tabpanel" aria-labelledby="modalMediaPhotoTab"></div>
           <p class="profile-modal-media-empty" id="modalMediaEmpty" hidden>No approved media yet.</p>
         </section>
-        <button class="profile-footer-report-action" id="reportBtn" type="button" aria-label="Report profile"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 21V4"></path><path d="M5 5h11l-1.8 3L16 11H5"></path></svg><span>Report profile</span></button>
       </section>
       <div class="profile-photo-viewer" id="profilePhotoViewer" role="dialog" aria-modal="true" aria-label="Profile photo" hidden>
         <div class="profile-photo-viewer-shell">
@@ -43052,7 +43122,14 @@
       button.dataset.reportTargetId = normalizedId;
       button.disabled = !normalizedType || !isReportableContentId(normalizedId) || reported;
       button.setAttribute("aria-label", reported ? "Content reported" : label);
-      button.setAttribute("aria-pressed", String(reported));
+      if (button.id === "reportBtn") {
+        button.removeAttribute("aria-pressed");
+        button.classList.toggle("is-reported", reported);
+        const buttonLabel = button.querySelector("span");
+        if (buttonLabel) buttonLabel.textContent = reported ? "Reported" : "Report profile";
+      } else {
+        button.setAttribute("aria-pressed", String(reported));
+      }
     }
 
     function openContentReportDialog({ button, status, targetType, targetId, targetLabel, title, quickReasons = false }) {
@@ -43143,7 +43220,6 @@
           report.targetId,
           report.button?.dataset.reportDefaultLabel || "Report content"
         );
-        if (report.button?.id === "reportBtn") report.button.classList.add("is-reported");
         if (report.status) report.status.textContent = "Report submitted for review.";
         if (report.targetType === "dancer_profile") {
           recordLiveEvent("profile_action", { dancerName: report.targetLabel, source: "report_submitted" });
@@ -53518,6 +53594,7 @@
       const basePhotoUrl = visiblePhotoUrls[0] || (isPrivatePreview ? customPhotoUrl(profile, 0) : "");
       const avatarPhotoUrl = publicAvatarPhotoUrl(profile) || basePhotoUrl;
       savedScrollY = window.scrollY;
+      closeProfileHeaderOverflow();
 
       modalName.textContent = profile.name;
       modalGallery.dataset.profileMediaProfile = String(profile.id || "");
@@ -53532,9 +53609,6 @@
           String(profile.id || ""),
           `Report ${profile.name} profile`
         );
-        profileReportButton.classList.toggle("is-reported", profileReportButton.disabled && reportedContentTargets.has(
-          contentReportKey("dancer_profile", String(profile.id || ""))
-        ));
       }
       modalStatus.textContent = isPending ? "Pending" : "";
       modalStatus.className = isPending ? "badge pending" : "badge modal-status-hidden";
@@ -54234,6 +54308,16 @@
       );
     }
 
+    function closeProfileHeaderOverflow({ restoreFocus = false } = {}) {
+      const toggle = document.getElementById("profileHeaderOverflowToggle");
+      const menu = document.getElementById("profileHeaderOverflowMenu");
+      if (!toggle || !menu) return;
+      const wasOpen = !menu.hidden;
+      menu.hidden = true;
+      toggle.setAttribute("aria-expanded", "false");
+      if (restoreFocus && wasOpen) toggle.focus({ preventScroll: true });
+    }
+
     function closeProfileModal() {
       profileMediaObserver?.disconnect();
       profileMediaObserver = null;
@@ -54246,6 +54330,7 @@
         closeProfilePhotoViewer,
         () => closeDealPassOverlay(false),
         closeProfileShareChoice,
+        closeProfileHeaderOverflow,
         closeQrPopovers
       ].forEach((closeOverlay) => {
         try {
@@ -62955,6 +63040,7 @@
       }
       if (actionButton.id === "reportBtn") {
         if (actionButton.disabled) return;
+        closeProfileHeaderOverflow();
         const profileName = actionButton.dataset.profile;
         openContentReportDialog({
           button: actionButton,
@@ -62963,6 +63049,25 @@
           targetLabel: profileName,
           title: "Report profile",
           quickReasons: true
+        });
+      }
+    });
+
+    const profileHeaderOverflowToggle = document.getElementById("profileHeaderOverflowToggle");
+    const profileHeaderOverflowMenu = document.getElementById("profileHeaderOverflowMenu");
+    profileHeaderOverflowToggle?.addEventListener("pointerdown", (event) => {
+      event.stopPropagation();
+    }, { passive: true });
+    profileHeaderOverflowToggle?.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      if (!profileHeaderOverflowMenu) return;
+      const opening = profileHeaderOverflowMenu.hidden;
+      profileHeaderOverflowMenu.hidden = !opening;
+      profileHeaderOverflowToggle.setAttribute("aria-expanded", String(opening));
+      if (opening) {
+        requestAnimationFrame(() => {
+          profileHeaderOverflowMenu.querySelector('[role="menuitem"]:not(:disabled)')?.focus({ preventScroll: true });
         });
       }
     });
@@ -63040,6 +63145,7 @@
 
     profileBackdrop.addEventListener("click", (event) => {
       if (event.target.closest?.("#profilePhotoViewer")) return;
+      if (!event.target.closest?.("#profileHeaderOverflow")) closeProfileHeaderOverflow();
       if (!event.target.closest("[data-share-popover], [data-toggle-share]")) closeSharePopovers();
       const venueLink = event.target.closest(".profile-modal-summary [data-open-venue]");
       if (venueLink) {
@@ -64847,6 +64953,11 @@
 
     document.addEventListener("keydown", (event) => {
       const openTvViewer = document.getElementById("profileTvViewer");
+      if (event.key === "Escape" && profileHeaderOverflowMenu && !profileHeaderOverflowMenu.hidden) {
+        event.preventDefault();
+        closeProfileHeaderOverflow({ restoreFocus: true });
+        return;
+      }
       if (event.key === "Escape" && contentReportPopover && !contentReportPopover.hidden) {
         event.preventDefault();
         closeContentReportDialog();

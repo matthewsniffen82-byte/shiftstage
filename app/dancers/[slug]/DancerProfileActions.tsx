@@ -11,6 +11,7 @@ import {
   type PropsWithChildren,
   type ReactNode,
 } from "react";
+import { createPortal } from "react-dom";
 import Link from "next/link";
 import { PublicReportReasonDialog, type PublicReportReason } from "@/app/components/PublicReportReasonDialog";
 import { readBrowserAccessToken } from "@/src/lib/dancr/browser-session";
@@ -148,7 +149,6 @@ export function DancerProfileActionsPreview({ onShare }: { onShare?: () => void 
           </button>
         </span>
       </div>
-      <button aria-label="Report profile" className="profile-report-action profile-action-preview-static" disabled type="button"><ReportFlagIcon /></button>
     </div>
   );
 }
@@ -168,7 +168,11 @@ export function DancerReportControl({
   const [reportSaving, setReportSaving] = useState(false);
   const [reportSubmitted, setReportSubmitted] = useState(false);
   const [reportDialogOpen, setReportDialogOpen] = useState(false);
+  const [reportMenuOpen, setReportMenuOpen] = useState(false);
   const [reportError, setReportError] = useState("");
+  const reportControlRef = useRef<HTMLDivElement | null>(null);
+  const reportMenuItemRef = useRef<HTMLButtonElement | null>(null);
+  const reportToggleRef = useRef<HTMLButtonElement | null>(null);
   const mountedRef = useRef(false);
   const reportAbortRef = useRef<AbortController | null>(null);
   const reportInFlightRef = useRef(false);
@@ -181,6 +185,34 @@ export function DancerReportControl({
       reportInFlightRef.current = false;
     };
   }, []);
+
+  useEffect(() => {
+    if (!reportMenuOpen) return;
+    const closeOnPointerDown = (event: PointerEvent) => {
+      if (
+        event.target instanceof Node &&
+        !reportControlRef.current?.contains(event.target)
+      ) {
+        setReportMenuOpen(false);
+      }
+    };
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      event.preventDefault();
+      setReportMenuOpen(false);
+      reportToggleRef.current?.focus({ preventScroll: true });
+    };
+    const focusFrame = window.requestAnimationFrame(() => {
+      reportMenuItemRef.current?.focus({ preventScroll: true });
+    });
+    document.addEventListener("pointerdown", closeOnPointerDown);
+    document.addEventListener("keydown", closeOnEscape);
+    return () => {
+      window.cancelAnimationFrame(focusFrame);
+      document.removeEventListener("pointerdown", closeOnPointerDown);
+      document.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [reportMenuOpen]);
 
   useEffect(() => {
     if (!reportDialogOpen) return;
@@ -198,6 +230,7 @@ export function DancerReportControl({
 
   function openReport() {
     if (reportSaving || reportSubmitted) return;
+    setReportMenuOpen(false);
     setReportError("");
     setReportDialogOpen(true);
   }
@@ -250,32 +283,64 @@ export function DancerReportControl({
   }
 
   return (
-    <div className="profile-footer-report">
-      <button
-        aria-label={reportSubmitted ? "Profile reported" : "Report profile"}
-        aria-pressed={reportSubmitted}
-        className="profile-footer-report-toggle"
-        disabled={reportSaving || reportSubmitted}
-        onClick={openReport}
-        type="button"
-      >
-        <ReportFlagIcon />
-        <span>{reportSubmitted ? "Reported" : "Report profile"}</span>
-      </button>
+    <>
+      <div className="profile-header-overflow" ref={reportControlRef}>
+        <button
+          aria-controls="profile-header-overflow-menu"
+          aria-expanded={reportMenuOpen}
+          aria-haspopup="menu"
+          aria-label="More profile actions"
+          className="profile-header-overflow-toggle"
+          onClick={() => setReportMenuOpen((open) => !open)}
+          ref={reportToggleRef}
+          title="More profile actions"
+          type="button"
+        >
+          <span aria-hidden="true" className="profile-header-overflow-icon">
+            <svg viewBox="0 0 24 24">
+              <circle cx="12" cy="5" r="1.5" />
+              <circle cx="12" cy="12" r="1.5" />
+              <circle cx="12" cy="19" r="1.5" />
+            </svg>
+          </span>
+        </button>
+        {reportMenuOpen ? (
+          <div
+            className="profile-header-overflow-menu"
+            id="profile-header-overflow-menu"
+            role="menu"
+          >
+            <button
+              aria-label={reportSubmitted ? "Profile reported" : "Report profile"}
+              disabled={reportSaving || reportSubmitted}
+              onClick={openReport}
+              ref={reportMenuItemRef}
+              role="menuitem"
+              type="button"
+            >
+              <ReportFlagIcon />
+              <span>{reportSubmitted ? "Reported" : "Report profile"}</span>
+            </button>
+          </div>
+        ) : null}
+      </div>
       {reportSubmitted ? (
         <span className="profile-report-confirmation" role="status">Report submitted for review.</span>
       ) : null}
-      {reportDialogOpen ? (
-        <PublicReportReasonDialog
-          error={reportError}
-          onClose={() => setReportDialogOpen(false)}
-          onReason={(reason) => void submitReport(reason)}
-          saving={reportSaving}
-          title="Report profile"
-          titleId="profile-report-title"
-        />
-      ) : null}
-    </div>
+      {reportDialogOpen && typeof document !== "undefined"
+        ? createPortal(
+            <PublicReportReasonDialog
+              error={reportError}
+              onClose={() => setReportDialogOpen(false)}
+              onReason={(reason) => void submitReport(reason)}
+              saving={reportSaving}
+              title="Report profile"
+              titleId="profile-report-title"
+            />,
+            document.body,
+          )
+        : null}
+    </>
   );
 }
 

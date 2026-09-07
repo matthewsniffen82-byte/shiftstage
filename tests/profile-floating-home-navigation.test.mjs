@@ -46,7 +46,7 @@ test("standalone dancers separate subtle reporting from dismissal while legacy v
   );
   assert.match(
     dancerPage,
-    /@media \(max-width: 600px\)[\s\S]*?body\.dancr-button-system \.public-profile-shell \.profile-titlebar \{[\s\S]*?grid-template-columns: minmax\(108px, \.92fr\) minmax\(0, 1\.08fr\) 44px !important;[\s\S]*?gap: 5px !important;[\s\S]*?min-height: 64px !important;/,
+    /@media \(max-width: 600px\)[\s\S]*?body\.dancr-button-system \.public-profile-shell \.profile-titlebar \{[\s\S]*?grid-template-columns: minmax\(108px, \.92fr\) minmax\(0, 1\.08fr\) 94px !important;[\s\S]*?gap: 5px !important;[\s\S]*?min-height: 64px !important;/,
   );
   assert.match(
     venuePage,

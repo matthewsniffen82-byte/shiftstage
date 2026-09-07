@@ -96,9 +96,9 @@ test("all schedule states share the same compact header, three actions, status, 
   assert.match(liveActions, /Follow[\s\S]*?\$\{goingButton\}[\s\S]*?Share/);
   assert.doesNotMatch(liveActions, /id="notifyBtn"|"Alerts On"|"Notify"/);
   assert.doesNotMatch(liveActions, /Report profile|profile-report-action/);
-  assert.match(liveApp, /class="profile-footer-report-action" id="reportBtn"[^>]*>[\s\S]*?M5 21V4[\s\S]*?<span>Report profile<\/span>[\s\S]*?<\/button>/);
+  assert.match(liveApp, /class="profile-header-report-action" id="reportBtn"[^>]*role="menuitem"[^>]*>[\s\S]*?M5 21V4[\s\S]*?<span>Report profile<\/span>[\s\S]*?<\/button>/);
   assert.doesNotMatch(liveApp, /class="profile-modal-report-link"/);
-  assert.doesNotMatch(liveApp, /id="profileActionOverflowToggle"|id="profileActionOverflowMenu"/);
+  assert.match(liveApp, /id="profileHeaderOverflowToggle"[\s\S]*?id="profileHeaderOverflowMenu"/);
   assert.match(liveActions, /isWorkingNow \? "is-working-now" : profile\?\.scheduled \? "is-upcoming-shift" : "is-no-live-shift"/);
   assert.match(profileActions, /hasLiveActions \? " has-live-shift" : hasScheduledActions \? " has-upcoming-shift" : " is-no-live-shift"/);
   assert.match(
@@ -118,8 +118,8 @@ test("selected actions, dynamic stats, and all existing action handlers remain i
   assert.match(liveApp, /followerCount === 1 \? "Follower" : "Followers"/);
   assert.match(liveApp, /tonightInterestCount\(profile\)\.toLocaleString\(\)/);
   assert.match(liveApp, /profileViewsToday\(profile, city\)\.toLocaleString\(\)/);
-  assert.match(profileActions, /className="profile-footer-report-toggle"/);
-  assert.doesNotMatch(profileActions, /profile-header-overflow|role="menuitem"/);
+  assert.match(profileActions, /className="profile-header-overflow-toggle"/);
+  assert.match(profileActions, /className="profile-header-overflow-menu"[\s\S]*?role="menuitem"/);
   assert.match(profileActions, /targetType: "dancer_profile"/);
 });
 

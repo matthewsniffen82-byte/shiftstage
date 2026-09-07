@@ -113,7 +113,9 @@ test("profile actions keep profile controls separate from Tonight travel actions
   assert.match(profileActions, /"I’m Going"/);
   assert.doesNotMatch(profileActions, /rideControl|directionsControl/);
   assert.match(profileActions, /profile-action-share-slot/);
-  assert.match(profileActions, /DancerProfileActionsPreview[\s\S]*?Follow[\s\S]*?I’m Going[\s\S]*?Share[\s\S]*?Report profile/);
+  const previewActions = profileActions.match(/function DancerProfileActionsPreview[\s\S]*?export function DancerNotificationCount/)?.[0] || "";
+  assert.match(previewActions, /Follow[\s\S]*?I’m Going[\s\S]*?Share/);
+  assert.doesNotMatch(previewActions, /Report profile|profile-header-overflow/);
   assert.doesNotMatch(profileActions, /<span>Notify<\/span>|"Alerts On"/);
   assert.doesNotMatch(profileActions.match(/function DancerProfileActionsPreview[\s\S]*?export function DancerNotificationCount/)?.[0] || "", />Ride<|>Directions</);
   assert.match(profileActions, /profile-action-icon-control[\s\S]*?DancerProfileActionPreviewIcon type="personPlus"[\s\S]*?<span>Follow<\/span>/);
@@ -384,7 +386,7 @@ test("live dancer essentials stay compact above media and clear the mobile dock"
     aesthetic,
     /#profileBackdrop #profileModal \.profile-modal-media \{[\s\S]*?margin: 12px 0 0 !important;[\s\S]*?padding-bottom: 0 !important;/,
   );
-  assert.match(liveApp, /\.profile-footer-report-action \{[\s\S]*?margin: 9px auto var\(--profile-bottom-nav-clearance, 18px\);/);
+  assert.match(liveApp, /\.profile-header-overflow-menu #reportBtn \{[\s\S]*?min-height: 44px;/);
   assert.match(
     profilePage,
     /\.public-profile-shell \{ padding: 0 12px max\(132px, calc\(108px \+ env\(safe-area-inset-bottom\)\)\); \}/,
