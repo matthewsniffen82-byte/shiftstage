@@ -17,6 +17,7 @@ type TagState = {
   tag: { id: string; type: "dressing_room" | "cashier"; label: string };
   venue: { id: string; name: string; slug: string; city: string; state: string };
   deals: ClubDeal[];
+  browserAccountLinked?: boolean;
 };
 
 type PendingDealIntent = {
@@ -34,6 +35,7 @@ type TapPhase = "reading" | "ready" | "redeeming" | "redeemed" | "error";
 export function NfcTapClient({ token }: { token: string }) {
   const [state, setState] = useState<TagState | null>(null);
   const [error, setError] = useState("");
+  const [browserAccountConflict, setBrowserAccountConflict] = useState(false);
   const [status, setStatus] = useState("Reading club tag…");
   const [phase, setPhase] = useState<TapPhase>("reading");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -76,6 +78,7 @@ export function NfcTapClient({ token }: { token: string }) {
     setIsSubmitting(false);
     setComplete(false);
     setDancerActivationComplete(false);
+    setBrowserAccountConflict(false);
     setSelectedDealId("");
   }, [token]);
 
@@ -149,6 +152,13 @@ export function NfcTapClient({ token }: { token: string }) {
       });
       const data = await response.json();
       if (!mountedRef.current || controller.signal.aborted) return;
+      if (data.code === "NFC_BROWSER_ACCOUNT_CONFLICT") {
+        setBrowserAccountConflict(true);
+        setError(data.error);
+        setStatus("Sign in to your original dancer account to continue approval or check-in.");
+        setPhase("error");
+        return;
+      }
       if (!response.ok || !data.ok) throw new Error(data.error || "Unable to complete this phone tap.");
       persistRefreshedBrowserAuthSession(data.session);
       if (state.tag.type === "cashier") clearPendingDealIntent();
@@ -260,14 +270,14 @@ export function NfcTapClient({ token }: { token: string }) {
         {error ? <p className="nfc-error" role="alert">{error}</p> : null}
 
         {!complete && state ? (
-          dancerNeedsSignIn ? (
+          dancerNeedsSignIn || browserAccountConflict ? (
             <>
               <Link className="nfc-primary" href={`/account?role=dancer&mode=login&venue_nfc=${encodeURIComponent(token)}&return_to=${encodeURIComponent(`/nfc/${token}`)}`}>
-                Sign in to use venue tap
+                {state.browserAccountLinked || browserAccountConflict ? "Sign in to your original account" : "Sign in to use venue tap"}
               </Link>
-              <Link className="nfc-secondary" href={`/account?role=dancer&mode=signup&venue_nfc=${encodeURIComponent(token)}&return_to=${encodeURIComponent(`/nfc/${token}`)}`}>
+              {!state.browserAccountLinked && !browserAccountConflict ? <Link className="nfc-secondary" href={`/account?role=dancer&mode=signup&venue_nfc=${encodeURIComponent(token)}&return_to=${encodeURIComponent(`/nfc/${token}`)}`}>
                 Create dancer account
-              </Link>
+              </Link> : null}
             </>
           ) : state.tag.type === "cashier" && phase !== "error" ? null : (
             <button className="nfc-primary" type="button" onClick={submitTap} disabled={isSubmitting}>

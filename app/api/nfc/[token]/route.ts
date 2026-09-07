@@ -24,6 +24,13 @@ import {
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
 import { safeErrorMetadata } from "@/src/lib/security/safe-error-metadata";
+import {
+  createNfcBrowserAccountToken,
+  nfcBrowserAccountConflict,
+  nfcBrowserAccountMatches,
+  readNfcBrowserAccountToken,
+  rememberNfcBrowserAccount,
+} from "@/src/lib/dancr/nfc-browser-account";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -55,6 +62,7 @@ export async function GET(request: Request, context: RouteContext) {
       tag: { id: tag.id, type: tag.type, label: tag.label },
       venue: tag.venue,
       deals,
+      browserAccountLinked: tag.type === "dressing_room" && Boolean(readNfcBrowserAccountToken(request)),
     });
   } catch (error) {
     const limited = nfcRateLimitResponse(error);
@@ -99,6 +107,12 @@ export async function POST(request: Request, context: RouteContext) {
       if (account?.role !== "dancer" || account?.account_state !== "active") {
         return NextResponse.json({ ok: false, error: "Sign in with an active dancer account to use this tag." }, { status: 403 });
       }
+      const browserAccountToken = readNfcBrowserAccountToken(request);
+      if (browserAccountToken && !nfcBrowserAccountMatches(browserAccountToken, user.id)) {
+        return nfcBrowserAccountConflict();
+      }
+      // Prepare before mutations, but save only after a successful dancer tap.
+      const rememberedAccountToken = browserAccountToken || createNfcBrowserAccountToken(user.id);
       const affiliation = await registerDancerFromNfc(admin, {
         tagId: tag.id,
         dancerUserId: user.id,
@@ -138,7 +152,7 @@ export async function POST(request: Request, context: RouteContext) {
         nextTapAllowedAt: affiliation?.nextTapAllowedAt || null,
         tapApplied: affiliation?.tapApplied === true,
       });
-      return noStore({
+      return rememberNfcBrowserAccount(noStore({
         ok: true,
         action: "dancer_check_in",
         affiliation,
@@ -152,7 +166,7 @@ export async function POST(request: Request, context: RouteContext) {
            : affiliation?.shiftCheckedIn
              ? `You are Working Now at ${tag.venue.name} for six hours. A six-hour cooldown follows, and retaps cannot extend it.`
              : `Verified at ${tag.venue.name}. Your venue affiliation and profile are active.`,
-      });
+      }), rememberedAccountToken);
     }
 
     const dealId = typeof body.dealId === "string" ? body.dealId.trim() : "";

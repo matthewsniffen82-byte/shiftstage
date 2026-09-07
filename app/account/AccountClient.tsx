@@ -308,6 +308,11 @@ export default function AccountClient() {
       });
       const data = await response.json();
       if (!mountedRef.current || controller.signal.aborted) return;
+      if (data.code === "NFC_BROWSER_ACCOUNT_CONFLICT") {
+        setMode("login");
+        setStatus(data.error);
+        return;
+      }
       if (!response.ok || !data.ok) throw new Error(friendlyAuthErrorMessage(data.error, "Unable to sign in."));
 
       if (mode === "signup") {

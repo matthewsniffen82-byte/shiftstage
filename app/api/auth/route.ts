@@ -28,6 +28,7 @@ import {
 import { createServerSupabaseClient } from "@/src/lib/supabase/server";
 import { safeErrorMetadata } from "@/src/lib/security/safe-error-metadata";
 import { getOptionalServerEnv } from "@/src/lib/server-env";
+import { nfcBrowserAccountConflict, readNfcBrowserAccountToken } from "@/src/lib/dancr/nfc-browser-account";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -94,6 +95,9 @@ export async function POST(request: Request) {
     const role = readRole(body.role);
     requestedMode = mode;
     requestedRole = role;
+    if (mode === "signup" && role === "dancer" && readNfcBrowserAccountToken(request)) {
+      return nfcBrowserAccountConflict();
+    }
     const credential = readAuthCredential(body, role);
     const email = credential.email;
     const client = createServerSupabaseClient();
