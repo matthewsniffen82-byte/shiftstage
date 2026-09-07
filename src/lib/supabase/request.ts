@@ -1,5 +1,6 @@
 import { createClient, type SupabaseClient, type User } from "@supabase/supabase-js";
 import { getPublicEnv } from "../env.ts";
+import { PublicApiError } from "../api-error-policy.ts";
 
 const MAX_ACCESS_TOKEN_LENGTH = 8_192;
 const MAX_REFRESH_TOKEN_LENGTH = 4_096;
@@ -51,10 +52,10 @@ export async function createRequestSupabaseContext(request: Request): Promise<Re
       refresh_token: refreshToken,
     });
 
-    if (sessionError || !sessionData.session) throw new Error("Sign in required.");
+    if (sessionError || !sessionData.session) throw requestAuthenticationError(sessionError);
 
     const { data, error } = await client.auth.getUser(sessionData.session.access_token);
-    if (error || !data.user) throw new Error("Sign in required.");
+    if (error || !data.user) throw requestAuthenticationError(error);
 
     return {
       client,
@@ -77,9 +78,16 @@ export async function createRequestSupabaseContext(request: Request): Promise<Re
   });
 
   const { data, error } = await client.auth.getUser(token);
-  if (error || !data.user) throw new Error("Sign in required.");
+  if (error || !data.user) throw requestAuthenticationError(error);
 
   return { client, user: data.user };
+}
+
+function requestAuthenticationError(error: { status?: number; name?: string } | null) {
+  if (error && (error.status === 0 || error.status === 408 || error.status === 429 || Number(error.status) >= 500 || error.name === "AuthRetryableFetchError")) {
+    return new PublicApiError("UNAVAILABLE", "We couldn't verify your session right now. Please try again.", 503);
+  }
+  return new Error("Sign in required.");
 }
 
 function readBoundedAuthToken(value: string | null, maxLength: number) {

@@ -25,7 +25,7 @@ test("customer dashboard leads with four clear activity areas before alerts and 
     dashboard,
     /customer-followed-dancers", label: "Followed Dancers"[\s\S]*?customer-followed-clubs", label: "Followed Clubs"[\s\S]*?customer-saved-deals", label: "Saved Club Deals"[\s\S]*?customer-going", label: "I’m Going"[\s\S]*?href="#customer-alerts"[\s\S]*?>Alerts[\s\S]*?href="#customer-account"[\s\S]*?>Account/,
   );
-  assert.match(dashboard, /role === "customer" \? "Guest dashboard"/);
+  assert.match(dashboard, /role === "customer" \? "Customer dashboard"/);
   assert.doesNotMatch(dashboard, /eyebrow="(?:Guest workspace|Your activity)"/);
   assert.match(dashboard, /const dashboardHeading = isLoading[\s\S]*?role === "dancer" \? profileDisplayName \|\| title : resolvedDisplayName \|\| title[\s\S]*?: displayName/);
   assert.doesNotMatch(dashboard, /Welcome back, \$\{displayName\}/);

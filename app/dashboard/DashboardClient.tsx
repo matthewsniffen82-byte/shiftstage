@@ -26,6 +26,7 @@ import { loadCustomerDashboard } from "./customer-dashboard-loader";
 import {
   DASHBOARD_SESSION_KEY as SESSION_KEY,
   clearDashboardSession,
+  DashboardDataRequestError,
   dashboardLoadErrorMessage,
   persistDashboardSession,
   readSession,
@@ -239,6 +240,8 @@ type LoadState = {
   publication?: Record<string, unknown> | null;
   refreshedAt?: string | null;
   error?: string;
+  signInRequired?: boolean;
+  accountError?: string;
   savedError?: string;
 };
 
@@ -262,11 +265,13 @@ export default function DashboardClient({
   const venueRefreshRequestRef = useRef(0);
 
   const retryDashboard = useCallback(() => {
-    setState((current) => ({ account: current.account }));
+    setState((current) => role === "customer"
+      ? { ...current, error: undefined, signInRequired: false, accountError: undefined, savedError: undefined }
+      : { account: current.account });
     setIsLoading(true);
     setCustomerSavedLoading(true);
     setLoadAttempt((current) => current + 1);
-  }, []);
+  }, [role]);
 
   useEffect(() => {
     let cancelled = false;
@@ -282,7 +287,7 @@ export default function DashboardClient({
     async function load() {
       const session = readSession();
       if (!session?.accessToken) {
-        setState({ error: "Sign in to open this dashboard." });
+        setState({ error: "Sign in to open this dashboard.", signInRequired: true });
         setIsLoading(false);
         return;
       }
@@ -297,10 +302,13 @@ export default function DashboardClient({
           await loadCustomerDashboard(controller.signal, (panel, data) => {
             if (cancelled) return;
             if (panel === "account") {
-              setState((current) => ({ ...current, account: data }));
+              setState((current) => ({ ...current, account: data, accountError: undefined }));
+              setIsLoading(false);
+            } else if (panel === "accountError") {
+              setState((current) => ({ ...current, accountError: data }));
               setIsLoading(false);
             } else if (panel === "saved" || panel === "savedError") {
-              setState((current) => ({ ...current, [panel]: data }));
+              setState((current) => ({ ...current, ...(panel === "saved" ? { savedError: undefined } : {}), [panel]: data }));
               setCustomerSavedLoading(false);
             } else {
               const key = panel === "support" ? "supportThreads" : panel;
@@ -310,7 +318,7 @@ export default function DashboardClient({
         } catch (error) {
           if (!cancelled) {
             controller.abort();
-            setState((current) => ({ ...current, error: dashboardLoadErrorMessage(error) }));
+            setState((current) => ({ ...current, error: dashboardLoadErrorMessage(error), signInRequired: error instanceof DashboardDataRequestError && error.status === 401 }));
             setIsLoading(false);
           }
         }
@@ -550,7 +558,7 @@ export default function DashboardClient({
   const title = useMemo(() => {
     if (role === "dancer") return "Complete your profile";
     if (role === "venue") return "Venue dashboard";
-    return "Guest dashboard";
+    return "Customer dashboard";
   }, [role]);
 
   const accountDisplayName = String(state.account?.displayName || "").trim();
@@ -563,11 +571,11 @@ export default function DashboardClient({
     role === "venue" ? "venues" : role === "dancer" ? "dancers" : "tonight",
   );
   const dashboardEyebrow =
-    role === "customer" ? "Guest dashboard" : role === "venue" ? "Venue dashboard" : "Dancer dashboard";
+    role === "customer" ? "Customer dashboard" : role === "venue" ? "Venue dashboard" : "Dancer dashboard";
   const dashboardHeading = isLoading
     ? (role === "dancer" ? profileDisplayName || title : resolvedDisplayName || title)
     : displayName;
-  const dashboardDescription = state.error || "";
+  const dashboardDescription = state.error || state.accountError || "";
   const dancerProfileStatus = role === "dancer"
     ? effectiveDancerProfileStatus(state.profile, state.account?.accountState)
     : "";
@@ -595,15 +603,15 @@ export default function DashboardClient({
         </div>
         {state.error && (role === "venue" || role === "dancer") ? (
           <DashboardSignInRecovery role={role} onSignedIn={retryDashboard} />
-        ) : state.error ? (
+        ) : state.error || state.accountError ? (
           <div className="action-row">
             <button className="primary-link" type="button" onClick={retryDashboard}>Try again</button>
-            <Link
+            {state.signInRequired ? <Link
               className="primary-link"
               href={`/account?role=${role}`}
             >
               Sign in
-            </Link>
+            </Link> : null}
           </div>
         ) : null}
       </section>
@@ -625,7 +633,8 @@ export default function DashboardClient({
                   <p role="alert">{state.savedError}</p>
                   <button className="primary-link" type="button" onClick={retryDashboard}>Try again</button>
                 </InfoPanel>
-              ) : <CustomerPanel saved={state.saved} onSavedChange={updateSaved} isLoading={customerSavedLoading} />}
+              ) : null}
+              {!state.savedError || state.saved ? <CustomerPanel saved={state.saved} onSavedChange={updateSaved} isLoading={customerSavedLoading && !state.saved} /> : null}
               <DashboardSection
                 description="Schedule changes, saved-profile updates, Club Deal activity, and support replies."
                 id="customer-alerts"
@@ -796,7 +805,7 @@ function CustomerDashboardNav({ saved }: { saved?: CustomerSavedState | null }) 
   ];
 
   return (
-    <nav className="customer-dashboard-nav" aria-label="Guest dashboard sections">
+    <nav className="customer-dashboard-nav" aria-label="Customer dashboard sections">
       <div className="customer-dashboard-primary-links">
         {links.map((link) => (
           <a href={`#${link.id}`} key={link.id} onClick={(event) => openDashboardSection(event, link.id)}>
@@ -805,7 +814,7 @@ function CustomerDashboardNav({ saved }: { saved?: CustomerSavedState | null }) 
           </a>
         ))}
       </div>
-      <div className="customer-dashboard-utility-links" aria-label="Guest dashboard utilities">
+      <div className="customer-dashboard-utility-links" aria-label="Customer dashboard utilities">
         <a href="#customer-alerts" onClick={(event) => openDashboardSection(event, "customer-alerts")}>Alerts</a>
         <a href="#customer-account" onClick={(event) => openDashboardSection(event, "customer-account")}>Account</a>
       </div>

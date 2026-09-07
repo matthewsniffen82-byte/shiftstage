@@ -11,20 +11,38 @@ import { DASHBOARD_SESSION_KEY } from '../app/dashboard/dashboard-session.ts';
 
 const require = createRequire(import.meta.url);
 
-test('guest dashboard renders its real sections before any authenticated request completes', () => {
+function renderCustomerDashboard(initialState = {}) {
   const source = readFileSync(new URL('../app/dashboard/DashboardClient.tsx', import.meta.url), 'utf8');
   const code = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX, target: ts.ScriptTarget.ES2022 } }).outputText;
   const exports = {};
+  let stateIndex = 0;
   vm.runInNewContext(code, { exports, require: (name) => {
-    if (name === 'react' || name === 'react/jsx-runtime') return require(name);
+    if (name === 'react') return { ...React, useState: (value) => React.useState(stateIndex++ === 0 ? initialState : value) };
+    if (name === 'react/jsx-runtime') return require(name);
     if (name === 'next/link') return { default: ({ children, href }) => React.createElement('a', { href }, children) };
     return new Proxy(() => null, { get: (_target, key) => key === '__esModule' ? false : () => null });
   } });
-  const html = renderToStaticMarkup(React.createElement(exports.default, { role: 'customer' })).replace(/<style>[\s\S]*?<\/style>/g, '');
+  return renderToStaticMarkup(React.createElement(exports.default, { role: 'customer' })).replace(/<style>[\s\S]*?<\/style>/g, '');
+}
+
+test('customer dashboard renders its real sections before any authenticated request completes', () => {
+  const html = renderCustomerDashboard();
   for (const section of ['Followed Dancers', 'Followed Clubs', 'Saved Club Deals', 'Alerts', 'Account']) assert.ok(html.includes(section), section);
   assert.match(html, /Loading followed dancers/);
   assert.match(html, /Loading your saved deals/);
   assert.doesNotMatch(html, /venue-dashboard-loading-pill|No followed dancers yet|No saved club deals/);
+});
+
+test('an account timeout keeps the customer dashboard and retry available without suggesting sign-in', () => {
+  const html = renderCustomerDashboard({ account: { displayName: 'Customer QA' }, accountError: "We couldn't refresh your account right now. Please try again." });
+  for (const text of ['Customer dashboard', 'Customer QA', 'Followed Dancers', 'Followed Clubs', 'Saved Club Deals', 'Try again']) assert.ok(html.includes(text), text);
+  assert.doesNotMatch(html, /Guest dashboard|href="\/account\?role=customer"/);
+});
+
+test('an expired session still offers sign-in and hides protected dashboard sections', () => {
+  const html = renderCustomerDashboard({ error: 'Your sign-in expired. Sign in again to continue.', signInRequired: true });
+  assert.match(html, /href="\/account\?role=customer"/);
+  assert.doesNotMatch(html, /Followed Dancers|Saved Club Deals/);
 });
 
 function setup(t) {
@@ -71,6 +89,57 @@ test('saved activity failure leaves account available and reports an explicit pa
   assert.ok(updates.some(update => update.panel === 'account'));
   assert.ok(updates.some(update => update.panel === 'savedError' && /temporarily unavailable/.test(update.data)));
   assert.ok(!updates.some(update => update.panel === 'saved'));
+});
+
+for (const failure of ['timeout', 'unavailable', 'network']) {
+  test(`an account ${failure} preserves the session and still loads independently authenticated saved activity`, async (t) => {
+    setup(t);
+    t.mock.timers.enable({ apis: ['setTimeout'] });
+    const updates = [];
+    const sessionBefore = window.localStorage.getItem(DASHBOARD_SESSION_KEY);
+    globalThis.fetch = async (path, { signal }) => {
+      if (path === '/api/account') {
+        if (failure === 'network') throw new TypeError('Failed to fetch');
+        if (failure === 'unavailable') return new Response(JSON.stringify({ ok: false }), { status: 503 });
+        return new Promise((_resolve, reject) => signal.addEventListener('abort', () => reject(signal.reason), { once: true }));
+      }
+      return response(path === '/api/customer/saved' ? { saved: { follows: [{ dancerId: 'still-followed' }] } } : {});
+    };
+    const loading = loadCustomerDashboard(new AbortController().signal, (panel, data) => updates.push({ panel, data }));
+    if (failure === 'timeout') t.mock.timers.tick(15000);
+    await loading;
+    assert.ok(updates.some(update => update.panel === 'accountError'));
+    assert.deepEqual(updates.find(update => update.panel === 'saved').data.follows, [{ dancerId: 'still-followed' }]);
+    assert.equal(window.localStorage.getItem(DASHBOARD_SESSION_KEY), sessionBefore);
+  });
+}
+
+for (const status of [401, 403, 404]) {
+  test(`an account ${status} stops loading private customer panels`, async (t) => {
+    setup(t);
+    const paths = [], updates = [];
+    globalThis.fetch = async (path) => {
+      paths.push(path);
+      return new Response(JSON.stringify({ ok: false, error: 'Account unavailable.' }), { status });
+    };
+    await assert.rejects(loadCustomerDashboard(new AbortController().signal, (panel) => updates.push(panel)), error => error.status === status);
+    assert.deepEqual(paths, ['/api/account']);
+    assert.deepEqual(updates, []);
+  });
+}
+
+test('closing the dashboard during account loading does not publish a failure or request more panels', async (t) => {
+  setup(t);
+  const controller = new AbortController(), updates = [], paths = [];
+  globalThis.fetch = async (path, { signal }) => {
+    paths.push(path);
+    return new Promise((_resolve, reject) => signal.addEventListener('abort', () => reject(signal.reason), { once: true }));
+  };
+  const loading = loadCustomerDashboard(controller.signal, (panel) => updates.push(panel));
+  controller.abort();
+  await assert.rejects(loading, { name: 'AbortError' });
+  assert.deepEqual(updates, []);
+  assert.deepEqual(paths, ['/api/account']);
 });
 
 

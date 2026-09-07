@@ -1,11 +1,12 @@
 import {
   dashboardLoadErrorMessage,
+  DashboardDataRequestError,
   requestAccountJson,
   requestDashboardJson,
   requestOptionalDashboardJson,
 } from "./dashboard-session.ts";
 
-type CustomerPanel = "account" | "saved" | "savedError" | "profile" | "support" | "agentAccess";
+type CustomerPanel = "account" | "accountError" | "saved" | "savedError" | "profile" | "support" | "agentAccess";
 
 // Publish each result as it arrives. Support and referral access must never
 // hold the guest's account and followed profiles behind a full-page skeleton.
@@ -17,9 +18,16 @@ export async function loadCustomerDashboard(
     if (!signal.aborted) publish(panel, data);
   };
   // Refresh credentials once before starting the independent panel requests.
-  const account = await requestAccountJson({ cache: "no-store", signal, timeoutMs: 15000 });
-  if (signal.aborted) return;
-  update("account", account.account);
+  try {
+    const account = await requestAccountJson({ cache: "no-store", signal, timeoutMs: 15000 });
+    if (signal.aborted) return;
+    update("account", account.account);
+  } catch (error) {
+    if (signal.aborted || (error instanceof DashboardDataRequestError && [401, 403, 404].includes(error.status))) throw error;
+    // A slow account lookup does not invalidate the stored session. Each panel
+    // still verifies its credentials on the server before returning private data.
+    update("accountError", "We couldn't refresh your account right now. Please try again.");
+  }
 
   const optional = async (path: string, panel: CustomerPanel, key: string) => {
     const data = await requestOptionalDashboardJson(path, {}, { signal, timeoutMs: 8000 });
