@@ -3,8 +3,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type FormEvent, type MouseEvent, type ReactNode, type SyntheticEvent } from "react";
 import Link from "next/link";
 import { DashboardCloseButton } from "@/app/components/DashboardCloseButton";
-import { VenueQrUnavailable } from "@/app/components/VenueQrCode";
-import { DancerProfileActionsPreview } from "@/app/dancers/[slug]/DancerProfileActions";
 import { DancerPhotoCarousel } from "@/app/dancers/[slug]/DancerPhotoCarousel";
 import { SocialLinks, SocialPlatformIcon } from "@/app/dancers/[slug]/SocialLinks";
 import { homeDiscoveryHref } from "@/src/lib/dancr/navigation";
@@ -3407,7 +3405,7 @@ type DancerProfileEditorSaveRequest = {
   tasks: Array<() => Promise<boolean>>;
 };
 
-type DancerProfileEditorSectionId = "identity" | "avatar" | "photos" | "videos" | "socials" | "share";
+type DancerProfileEditorSectionId = "identity" | "avatar" | "photos" | "videos" | "socials";
 
 type DancerProfileSocialEditor = (
   platform: SocialPlatform,
@@ -3431,7 +3429,6 @@ const DANCER_PROFILE_EDITOR_SECTION_LABELS: Record<DancerProfileEditorSectionId,
   photos: "Photos",
   videos: "Videos",
   socials: "Socials",
-  share: "Share profile",
 };
 
 async function saveDancerProfileEditor() {
@@ -3463,7 +3460,6 @@ function DancerProfilePreview({
   onProfileChange,
   profile,
   saveLabel = "Save profile",
-  showDashboardMedia = false,
 }: {
   builderRequirements?: DancerProfileBuilderRequirement[];
   buttonClassName: string;
@@ -3478,7 +3474,6 @@ function DancerProfilePreview({
   onProfileChange?: (profile: Record<string, unknown>) => void;
   profile?: LoadState["profile"];
   saveLabel?: string;
-  showDashboardMedia?: boolean;
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const [activeEditorSection, setActiveEditorSection] = useState<DancerProfileEditorSectionId | null>(null);
@@ -3524,7 +3519,6 @@ function DancerProfilePreview({
   };
   const socialLinks = dancerPreviewSocialLinks(profile);
   const isEditor = Boolean(editorSections);
-  const isOnboardingEditor = isEditor && Boolean(builderRequirements?.length) && !isApproved;
   const headerImage = isEditor ? avatarUrl : previewImage;
   const completedRequirements = builderRequirements?.filter((requirement) => requirement.complete).length || 0;
   const requirementsComplete = !builderRequirements?.length || completedRequirements === builderRequirements.length;
@@ -3663,7 +3657,7 @@ function DancerProfilePreview({
   }, [closeActiveEditor, closePreview, isOpen]);
 
   useEffect(() => {
-    if (!isOpen && !showDashboardMedia) return;
+    if (!isOpen) return;
     if (!readSession()?.accessToken) {
       setIsMediaLoading(false);
       setUploadedVideos([]);
@@ -3739,7 +3733,7 @@ function DancerProfilePreview({
       window.clearTimeout(refreshTimer);
       window.removeEventListener(DANCER_PROFILE_VIDEOS_CHANGED_EVENT, refreshAfterVideoChange);
     };
-  }, [isOpen, showDashboardMedia, profile?.id]);
+  }, [isOpen, profile?.id]);
 
   useEffect(() => {
     if (!isOpen || !editorSections?.photos) return;
@@ -3826,9 +3820,6 @@ function DancerProfilePreview({
       <button className={buttonClassName} disabled={isPhotoDeleting} onClick={openPreview} ref={triggerRef} type="button">
         {buttonLabel}
       </button>
-      {showDashboardMedia && isEditor && !isOpen ? (
-        <div className="dancer-dashboard-media-manager">{mediaUploads}</div>
-      ) : null}
       {isOpen ? (
         <div
           aria-label={isEditor ? "Edit dancer profile" : undefined}
@@ -3881,7 +3872,7 @@ function DancerProfilePreview({
                 </div>
               </div>
               <button
-                aria-label="Close profile preview"
+                aria-label={isEditor ? "Close profile editor" : "Close profile preview"}
                 className="public-profile-close"
                 disabled={isPhotoDeleting}
                 onClick={closePreview}
@@ -3894,22 +3885,6 @@ function DancerProfilePreview({
             {isEditor ? mediaUploads : (
               <DancerPhotoCarousel dancerId={typeof profile?.id === "string" ? profile.id : undefined} photos={photos} stageName={previewName} videos={videos} />
             )}
-            {isEditor && !isOnboardingEditor ? (
-              <>
-                <section className="profile-tonight-card dancer-profile-builder-tonight" aria-label="Tonight">
-                  <div className="profile-shift-card profile-schedule-section is-empty" aria-labelledby="dancer-profile-builder-schedule-heading">
-                    <div className="profile-section-heading">
-                      <div><span className="eyebrow">Tonight</span><h2 id="dancer-profile-builder-schedule-heading">No shift posted</h2></div>
-                    </div>
-                    <p>This dancer has not posted an upcoming shift yet. Follow to get the next update.</p>
-                  </div>
-                  <div className="profile-tonight-deal" aria-label="Club Deal status">
-                    <VenueQrUnavailable availability="not-available-now" venueName={previewCity} />
-                  </div>
-                </section>
-                <DancerProfileActionsPreview onShare={editorSections?.share ? () => openEditorSection("share") : undefined} />
-              </>
-            ) : null}
             {isEditor ? (
               <section className="profile-social-section dancer-profile-builder-socials" aria-labelledby="dancer-profile-builder-social-heading">
                 <div className="social-links-control">
@@ -3943,13 +3918,7 @@ function DancerProfilePreview({
                 <SocialLinks dancerId={String(profile?.id || "private-preview")} heading="Socials" links={socialLinks} showConnectLabel={false} trackClicks={false} />
               </section>
             ) : null}
-            {isEditor && !isOnboardingEditor ? (
-              <section className="profile-overview" aria-label={`${previewName} profile summary`}>
-                <dl className="profile-metrics" aria-label="Profile activity">
-                  <div><dd>0</dd><dt>Followers</dt></div><div><dd>0</dd><dt>Going</dt></div><div><dd>0</dd><dt>Views today</dt></div>
-                </dl>
-              </section>
-            ) : !isEditor ? (
+            {!isEditor ? (
               <section className="profile-schedule-section dancer-profile-preview-status" aria-labelledby="dancer-profile-preview-status-heading">
                 <div className="profile-section-heading"><div><span className="eyebrow">{isApproved ? "Guest view" : "Private preview"}</span><h2 id="dancer-profile-preview-status-heading">{isApproved ? "Public profile preview" : "Guest profile preview"}</h2></div><span>{approvedPhotos.length} photos · {videos.length} videos</span></div>
                 <p>{isMediaLoading ? "Loading your approved profile videos. " : mediaError ? `${mediaError} ` : "Approved photos and videos appear in the media switcher above. "}{socialLinks.length ? `${socialLinks.length} saved social ${socialLinks.length === 1 ? "link is" : "links are"} included in this preview. ` : "Saved social links will appear here. "}{isApproved ? isPublic ? "This is how your approved profile appears to guests." : "Your approved profile is currently hidden from guests while you are incognito." : "Your profile stays private until every setup step is complete."}</p>
@@ -4786,21 +4755,17 @@ function DancerPanel({
     photos: photoContent,
     videos: videoContent,
     socials: socialContent,
-    share: <DancerSharePanel profile={profile} />,
   };
   const profileMediaWorkspace = (
     <div className="venue-dashboard-inner-grid dancer-onboarding-profile-workspace">
-      <article className="dancer-profile-media-preview" aria-labelledby="dancer-profile-media-preview-heading">
-        <span className="dancer-profile-media-preview-icon" aria-hidden="true">
-          <svg viewBox="0 0 24 24"><path d="M2.8 12s3.2-5.5 9.2-5.5 9.2 5.5 9.2 5.5-3.2 5.5-9.2 5.5S2.8 12 2.8 12Z" /><circle cx="12" cy="12" r="2.6" /></svg>
-        </span>
-        <span className="dancer-profile-media-preview-copy">
-          <strong id="dancer-profile-media-preview-heading">Edit profile</strong>
+      <article className="dancer-profile-editor-launch-card" aria-labelledby="dancer-profile-media-preview-heading">
+        <span>
+          <strong id="dancer-profile-media-preview-heading">Profile details</strong>
+          <small>Avatar, stage name, city, photos, videos and socials.</small>
         </span>
         <DancerProfilePreview
-          buttonClassName="dancer-profile-media-preview-button"
-          buttonLabel="Edit full profile"
-          showDashboardMedia
+          buttonClassName="dancer-profile-editor-launch-button"
+          buttonLabel="Edit profile"
           city={draftIdentity.city}
           editorSections={profileEditorSections}
           isApproved
@@ -4816,6 +4781,10 @@ function DancerPanel({
           saveLabel="Save & return to dashboard"
         />
       </article>
+      <details className="dancer-profile-share-tools">
+        <summary>Share profile</summary>
+        <DancerSharePanel profile={profile} />
+      </details>
     </div>
   );
   const profileMediaSection = (
@@ -9142,7 +9111,6 @@ function DashboardStyles() {
       .dancer-payout-setup-notice strong { color:#fff; font-size:16px; }
       .dancer-payout-setup-notice small { color:var(--mydancr-dashboard-muted); font-size:11px; line-height:1.4; }
       .dancer-payout-setup-notice a,.dancer-payout-setup-notice > b { flex:0 0 auto; padding:10px 12px; border:1px solid rgba(76,223,166,.35); border-radius:11px; color:#70efbd; background:rgba(25,140,101,.12); font-size:11px; font-weight:900; text-decoration:none; }
-      .dancer-dashboard-media-manager { grid-column: 1 / -1; width: 100%; min-width: 0; }
       .dancer-profile-media-preview { grid-column: 1 / -1; min-width: 0; display: grid; grid-template-columns: 46px minmax(0,1fr) auto; align-items: center; gap: 13px; padding: 14px 15px; border: 1px solid rgba(126,234,255,.24); border-radius: 18px; background: radial-gradient(circle at 0 50%,rgba(34,199,255,.09),transparent 18rem),linear-gradient(135deg,rgba(21,13,39,.96),rgba(8,9,14,.98)); box-shadow: inset 3px 0 0 rgba(139,92,246,.82),0 16px 36px rgba(0,0,0,.25); }
       .dancer-profile-media-preview-icon { width: 44px; height: 44px; display: grid; place-items: center; border: 1px solid rgba(126,234,255,.28); border-radius: 50%; color: #8fe9fa; background: linear-gradient(145deg,rgba(124,58,237,.28),rgba(34,199,255,.1)); }
       .dancer-profile-media-preview-icon svg { width: 23px; height: 23px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }

@@ -12,7 +12,7 @@ function elements(node) {
   if (Array.isArray(node)) return node.flatMap(elements);
   return [node, ...elements(node.props?.children)];
 }
-function fixture({ open = false, editor = true, inline = true, approved = true, pendingRequest } = {}) {
+function fixture({ open = false, editor = true, approved = true, pendingRequest } = {}) {
   const states = [], refs = [], effects = [], requests = [], changes = [], listeners = new Map();
   let stateIndex = 0, refIndex = 0;
   const videos = [{ id: "v1", status: "approved", videoUrl: "/v1.mp4", posterUrl: "/v1.jpg", isPinned: false }];
@@ -44,34 +44,39 @@ function fixture({ open = false, editor = true, inline = true, approved = true, 
   });
   for (const match of source.matchAll(/<([A-Z]\w*)\b/g)) context[match[1]] ||= match[1];
   vm.runInContext(code, context);
-  const props = { profile, buttonClassName: "edit-profile", buttonLabel: "Edit full profile", isApproved: approved, isPublic: true, showDashboardMedia: inline, editorSections: editor ? { photos: "photo-manager", videos: "video-manager" } : undefined, onProfileChange: next => changes.push(next) };
+  const props = { profile, buttonClassName: "edit-profile", buttonLabel: "Edit profile", isApproved: approved, isPublic: true, editorSections: editor ? { photos: "photo-manager", videos: "video-manager" } : undefined, onProfileChange: next => changes.push(next) };
   const render = () => { stateIndex = 0; refIndex = 0; effects.length = 0; return context.DancerProfilePreview(props); };
   return { render, states, effects, requests, changes, listeners, profile };
 }
 
-test("active dashboard immediately shows the onboarding media manager with existing photos and videos", () => {
+test("the dashboard shows only the editor launch until Edit profile is clicked", () => {
   const ui = fixture();
   const nodes = elements(ui.render());
-  assert.equal(nodes.filter(node => node.props?.className === "dancer-dashboard-media-manager").length, 1);
-  const uploads = nodes.find(node => node.type === "DancerProfileMediaUploads");
+  assert.equal(nodes.filter(node => node.type === "button").length, 1);
+  assert.ok(!nodes.some(node => node.type === "DancerProfileMediaUploads"));
+  const loadVideos = ui.effects.find(fn => fn.toString().includes("requestDancerTvVideosJson"));
+  assert.equal(loadVideos(), undefined);
+  assert.equal(ui.requests.length, 0);
+  nodes.find(node => node.type === "button").props.onClick();
+  const opened = elements(ui.render());
+  assert.equal(opened.filter(node => node.props?.role === "dialog").length, 1);
+  const uploads = opened.find(node => node.type === "DancerProfileMediaUploads");
   assert.equal(uploads.props.photos.length, 2);
   assert.equal(uploads.props.videos.length, 1);
   assert.equal(uploads.props.photos[1].status, "pending");
-  assert.equal(uploads.props.isApproved, true);
   assert.equal(typeof uploads.props.onMediaPinned, "function");
-  assert.ok(!nodes.some(node => node.type === "DancerPhotoCarousel"));
 });
 
-test("dashboard media opens the matching upload editor, and busy deletion prevents switching", () => {
+test("profile media opens the matching upload editor, and busy deletion prevents switching", () => {
   for (const section of ["photos", "videos"]) {
-    const ui = fixture();
+    const ui = fixture({ open: true });
     const nodes = elements(ui.render());
     const uploads = nodes.find(node => node.type === "DancerProfileMediaUploads");
     uploads.props.onOpen(section);
     assert.equal(ui.states[0], true);
     assert.equal(ui.states[1], section);
   }
-  const ui = fixture();
+  const ui = fixture({ open: true });
   const uploads = elements(ui.render()).find(node => node.type === "DancerProfileMediaUploads");
   uploads.props.onDeleteBusyChange(true);
   const edit = elements(ui.render()).find(node => node.props?.className === "edit-profile");
@@ -83,14 +88,19 @@ test("active and onboarding editors use management previews but the guest previe
     const nodes = elements(fixture({ open: true, approved }).render());
     assert.equal(nodes.filter(node => node.type === "DancerProfileMediaUploads").length, 1);
     assert.ok(!nodes.some(node => node.props?.className === "dancer-dashboard-media-manager"));
+    assert.ok(!nodes.some(node => node.type === "DancerProfileActionsPreview" || node.type === "VenueQrUnavailable"));
+    assert.ok(!nodes.some(node => /profile-tonight|profile-overview|profile-metrics/.test(node.props?.className || "")));
+    assert.ok(nodes.some(node => node.props?.["data-profile-editor-trigger"] === "avatar"));
+    assert.ok(nodes.some(node => node.props?.["data-profile-editor-trigger"] === "identity"));
+    assert.ok(nodes.some(node => node.props?.className?.includes("dancer-profile-builder-socials")));
   }
-  const nodes = elements(fixture({ open: true, editor: false, inline: false }).render());
+  const nodes = elements(fixture({ open: true, editor: false }).render());
   assert.ok(nodes.some(node => node.type === "DancerPhotoCarousel"));
   assert.ok(!nodes.some(node => node.type === "DancerProfileMediaUploads"));
 });
 
 test("successful media updates change only the selected dashboard item and do not close the section", () => {
-  const ui = fixture();
+  const ui = fixture({ open: true });
   const uploads = elements(ui.render()).find(node => node.type === "DancerProfileMediaUploads");
   uploads.props.onMediaPinned("photo", "p1", true);
   assert.equal(ui.changes[0].dancer_photos[0].is_pinned, true);
@@ -101,13 +111,13 @@ test("successful media updates change only the selected dashboard item and do no
   assert.deepEqual(ui.changes.at(-1).dancer_photos.map(p => p.id), ["p2"]);
   uploads.props.onVideoDeleted("v1");
   assert.equal(ui.states[9].length, 0);
-  assert.equal(ui.states[0], false);
+  assert.equal(ui.states[0], true);
   assert.ok(elements(ui.render()).some(node => node.type === "DancerProfileMediaUploads"));
 });
 
-test("inline dashboard videos load without opening the full editor and clean up stale work", async () => {
+test("profile editor videos load on demand and clean up stale work when closed", async () => {
   let release;
-  const ui = fixture({ pendingRequest: new Promise(resolve => { release = resolve; }) });
+  const ui = fixture({ open: true, pendingRequest: new Promise(resolve => { release = resolve; }) });
   ui.render();
   const effect = ui.effects.find(fn => fn.toString().includes("requestDancerTvVideosJson"));
   const cleanup = effect();
