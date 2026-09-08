@@ -4046,9 +4046,9 @@ function DancerOnboardingCommand({
   const steps = useMemo(() => [
     {
       id: "dancer-profile-media",
-      label: "Create & review profile",
+      label: "Create profile",
       complete: submitted,
-      detail: submitted ? "Your completed profile is ready for club verification." : profileReady ? "Review your full profile, then submit it for club verification." : setupDetail,
+      detail: submitted ? "Your completed profile is ready for club verification." : profileReady ? "Your profile is ready. Continue to club verification." : setupDetail,
       locked: false,
     },
     {
@@ -4071,7 +4071,7 @@ function DancerOnboardingCommand({
       id: "dancer-onboarding-nfc",
       label: "Dressing-room tap",
       complete: isVenueApproved,
-      detail: isVenueApproved ? "An official MyDancr dressing-room tap authorized your venue." : submitted ? "At the club, tap its official dressing-room sticker." : "Create, review, and submit your profile to unlock club verification.",
+      detail: isVenueApproved ? "An official MyDancr dressing-room tap authorized your venue." : submitted ? "At the club, tap its official dressing-room sticker." : "Complete and submit your profile to unlock club verification.",
       locked: !submitted && !isVenueApproved,
     },
   ], [isVenueApproved, natsAccountStatus, payoutSkipped, payoutStepComplete, profileReady, setupDetail, submitted]);
@@ -4140,7 +4140,8 @@ function DancerOnboardingCommand({
     window.localStorage.setItem(storageKey, "dancer-profile-media");
     window.requestAnimationFrame(() => {
       document.getElementById("dancer-onboarding-profile-review")?.scrollIntoView({ behavior: "smooth", block: "start" });
-      document.querySelector<HTMLButtonElement>("#dancer-onboarding-profile-review .dancer-onboarding-preview-open")?.focus({ preventScroll: true });
+      const nextAction = document.getElementById("dancer-onboarding-profile-review-button") || document.getElementById("dancer-onboarding-profile-review");
+      nextAction?.focus({ preventScroll: true });
     });
   }
 
@@ -4361,16 +4362,7 @@ function DancerOnboardingCommand({
                       continueToReview: continueToProfileReview,
                       profileReady,
                     })}
-                    <div className="dancer-onboarding-preview-workspace dancer-onboarding-profile-review" id="dancer-onboarding-profile-review">
-                      <div className="dancer-onboarding-review-action">
-                        <h3>Preview your profile</h3>
-                        <p>See how your profile will look to guests.</p>
-                        <DancerProfilePreview
-                          buttonClassName="dancer-onboarding-preview-open"
-                          buttonLabel="Preview profile"
-                          profile={profile}
-                        />
-                      </div>
+                    <div className="dancer-onboarding-preview-workspace dancer-onboarding-profile-review" id="dancer-onboarding-profile-review" tabIndex={-1}>
                       {submitted ? (
                         <div className="dancer-onboarding-complete-note" role="status">
                           <strong>✓ Step 1 complete</strong>
@@ -9258,13 +9250,9 @@ function DashboardStyles() {
       .dancer-step-one-footer.is-ready { border-color: rgba(76,223,166,.3); background: rgba(25,140,101,.07); }
       .dancer-onboarding-preview-workspace { display: grid; gap: 12px; }
       .dancer-onboarding-profile-review { margin-top: 0; padding-top: 16px; border-top: 1px solid rgba(255,255,255,.09); scroll-margin-top: calc(var(--mydancr-preview-banner-offset, 0px) + 14px); }
-      .dancer-onboarding-review-action { display: grid; gap: 9px; }
-      .dancer-onboarding-review-action h3 { margin: 0; color: #fff; font-size: 17px; line-height: 1.2; }
-      .dancer-onboarding-review-action p { margin: 0; color: #c4bfcc; font-size: 12px; line-height: 1.45; }
       .dancer-onboarding-profile-review > .dancer-onboarding-announcement { min-height:0; margin:0; color:#c4bfcc; font-size:12px; font-weight:500; line-height:1.45; }
       .dancer-onboarding-profile-review > .dancer-onboarding-announcement:empty { display:none; }
-      body.dancr-button-system .dancer-profile-editor-launch-card .dancer-profile-editor-launch-button,
-      body.dancr-button-system .dancer-onboarding-profile-review .dancer-onboarding-preview-open { min-height:48px !important; padding:10px 14px; border-radius:12px !important; border-color:rgba(196,181,253,.3) !important; color:#fff !important; background:#19161f !important; box-shadow:none !important; font-size:14px; line-height:1.25; }
+      body.dancr-button-system .dancer-profile-editor-launch-card .dancer-profile-editor-launch-button { min-height:48px !important; padding:10px 14px; border-radius:12px !important; border-color:rgba(196,181,253,.3) !important; color:#fff !important; background:#19161f !important; box-shadow:none !important; font-size:14px; line-height:1.25; }
       body.dancr-button-system .dancer-profile-editor-launch-card[data-ready="false"] .dancer-profile-editor-launch-button,
       body.dancr-button-system .dancer-onboarding-profile-review > .dancer-onboarding-primary:not(:disabled) { border-color:#9b68f6 !important; color:#fff !important; background:#7c3aed !important; box-shadow:none !important; }
       body.dancr-button-system .dancer-onboarding-profile-review > .dancer-onboarding-primary { min-height:48px !important; padding:10px 14px; border-radius:12px !important; font-size:14px; line-height:1.25; }
