@@ -18,7 +18,7 @@ vm.runInContext([
   functionSource("profileTvViewerScrollTarget"),
 ].join("\n"), context);
 
-test("both profile entry points share TV video sizing and natural-photo card styles", () => {
+test("both profile entry points share TV video sizing and screen-filling photo card styles", () => {
   assert.match(live, /href="\/profile-media-card-feed\.css\?v=\d+"/);
   assert.match(layout, /import "\.\.\/public\/profile-media-card-feed\.css"/);
   assert.match(live, /class="profile-photo-viewer profile-media-card-feed"/);
@@ -85,9 +85,9 @@ test("instant opening bypasses smooth CSS scrolling in every profile viewer", ()
   assert.match(carousel, /options\.instant[^]*?\? "instant"\s*: "smooth"/);
 });
 
-test("photo card height follows the source ratio without changing video card height", () => {
-  assert.match(css, /\[data-profile-photo-card\] \{[^}]*height: auto !important;[^}]*min-height: 0 !important;[^}]*max-height: none !important;[^}]*aspect-ratio: var\(--profile-photo-card-ratio, 9 \/ 16\)/);
-  assert.match(css, /\[data-profile-photo-card\] > :is\(img, \.profile-photo-viewer-slide-image\) \{[^}]*width: 100% !important;[^}]*height: auto !important/);
+test("photo cards fill the available width and height without changing video sizing", () => {
+  assert.match(css, /\[data-profile-photo-card\] \{[^}]*width: 100% !important;[^}]*height: var\(--profile-photo-card-height-limit\) !important;[^}]*min-height: 0 !important;[^}]*max-height: var\(--profile-photo-card-height-limit\) !important;[^}]*aspect-ratio: auto/);
+  assert.match(css, /\[data-profile-photo-card\] > :is\(img, \.profile-photo-viewer-slide-image\) \{[^}]*width: 100% !important;[^}]*height: 100% !important/);
   assert.match(live, /slide\.dataset\.profilePhotoCard = "true"/);
   assert.match(carousel, /data-profile-photo-card=\{item\.kind === "photo" \? "true" : undefined\}/);
   assert.match(live, /sizeProfilePhotoCard\(image\.parentElement, probe\.naturalWidth, probe\.naturalHeight\)/);
@@ -98,10 +98,10 @@ test("photo card height follows the source ratio without changing video card hei
   }
 });
 
-test("complete photo cards scale down and center within the usable mobile screen", () => {
+test("photo cards are capped below the header and keep controls over the image", () => {
+  assert.match(css, /--profile-photo-card-height-limit: max\(1px, calc\(100vh - var\(--profile-media-card-header\) - 24px - env\(safe-area-inset-bottom, 0px\)\)\)/);
   assert.match(css, /--profile-photo-card-height-limit: max\(1px, calc\(100svh - var\(--profile-media-card-header\) - 24px - env\(safe-area-inset-bottom, 0px\)\)\)/);
-  assert.match(css, /\[data-profile-photo-card\] \{[^}]*width: min\(100%, calc\(\(var\(--profile-photo-card-height-limit\) - var\(--profile-photo-card-control-space, 0px\)\) \* var\(--profile-photo-card-ratio, 9 \/ 16\)\)\) !important;[^}]*margin-inline: auto !important/);
-  assert.match(css, /\[data-photo-shape="panorama"\] \{[^}]*--profile-photo-card-control-space: 70px/);
+  assert.doesNotMatch(css, /--profile-photo-card-ratio|--profile-photo-card-control-space|data-photo-shape/);
   assert.match(css, /height: var\(--profile-media-card-height\) !important/);
 });
 
@@ -128,10 +128,10 @@ test("one in-flow header scrolls away, with no header padding repeated on later 
   assert.match(functionSource("mountProfileMediaCardHeader"), /host\.prepend\(header\)/);
 });
 
-test("profile cards keep complete photos visible while videos use TV edge-to-edge fill", () => {
-  assert.match(css, /\.profile-photo-viewer-slide-image \{[^}]*background-size: contain !important;[^}]*background-repeat: no-repeat !important/);
+test("profile photos and videos use edge-to-edge fill with centered cropping", () => {
+  assert.match(css, /\.profile-photo-viewer-slide-image \{[^}]*background-size: cover !important;[^}]*background-position: center !important;[^}]*background-repeat: no-repeat !important/);
   assert.match(css, /> :is\(img, video\) \{[^}]*object-fit: cover !important;[^}]*object-position: center !important/);
-  assert.match(css, /\.profile-media-viewer-slide > img \{[^}]*object-fit: contain !important/);
+  assert.doesNotMatch(css, /(?:object-fit|background-size): contain/);
   assert.match(css, /background: #000 !important/);
 });
 

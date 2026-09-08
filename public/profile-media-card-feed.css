@@ -1,4 +1,4 @@
-/* Videos use TV proportions; photo cards follow each complete source image. */
+/* Videos use TV proportions; photos fill a viewport-bounded card. */
 .profile-media-card-feed {
   --profile-media-card-height: clamp(560px, calc(100vh - 140px), 760px);
   --profile-media-card-height: clamp(560px, calc(100svh - 140px), 760px);
@@ -89,10 +89,10 @@
   max-height: 46px !important;
 }
 
-/* Show complete photos; videos retain the regular TV edge-to-edge fill. */
+/* Photos and videos fill their cards without added side bars. */
 .profile-media-card-feed .profile-photo-viewer-slide-image {
   background-color: #000 !important;
-  background-size: contain !important;
+  background-size: cover !important;
   background-position: center !important;
   background-repeat: no-repeat !important;
 }
@@ -101,29 +101,24 @@
   object-position: center !important;
   background: #000 !important;
 }
-.profile-media-card-feed .profile-media-viewer-slide > img {
-  object-fit: contain !important;
-}
-
-/* Scale the complete photo and its card together to fit below the header.
+/* Use all available card width and the usable height below the header.
  * Stable viewport units leave room for mobile browser chrome without jumps. */
 .profile-media-card-feed [data-profile-photo-card] {
   display: block !important;
-  width: min(100%, calc((var(--profile-photo-card-height-limit) - var(--profile-photo-card-control-space, 0px)) * var(--profile-photo-card-ratio, 9 / 16))) !important;
-  margin-inline: auto !important;
-  height: auto !important;
+  width: 100% !important;
+  height: var(--profile-photo-card-height-limit) !important;
   min-height: 0 !important;
-  max-height: none !important;
-  aspect-ratio: var(--profile-photo-card-ratio, 9 / 16);
+  max-height: var(--profile-photo-card-height-limit) !important;
+  aspect-ratio: auto;
 }
 .profile-media-card-feed [data-profile-photo-card] > :is(img, .profile-photo-viewer-slide-image) {
   position: relative !important;
   display: block !important;
   width: 100% !important;
-  height: auto !important;
+  height: 100% !important;
   min-height: 0 !important;
-  max-height: none !important;
-  aspect-ratio: var(--profile-photo-card-ratio, 9 / 16);
+  max-height: 100% !important;
+  aspect-ratio: auto;
 }
 .profile-media-card-feed video::-webkit-media-controls-fullscreen-button {
   display: none !important;
@@ -276,28 +271,4 @@ body.dancr-button-system :is(#profilePhotoViewer, #profileTvViewer, .profile-med
     --profile-media-card-height: clamp(520px, calc(100svh - 112px), 920px);
     --profile-media-card-gap: 12px;
   }
-}
-
-/* Short landscape photos use one control row so the arrows and actions do
- * not collide. Extremely wide panoramas reserve a small control strip. */
-.profile-media-card-feed [data-photo-shape="panorama"] {
-  --profile-photo-card-control-space: 70px;
-  aspect-ratio: auto;
-  padding-bottom: 70px;
-}
-.profile-media-card-feed :is([data-photo-shape="landscape"], [data-photo-shape="panorama"]) :is(.profile-photo-viewer-actions, .profile-media-viewer-actions) {
-  width: 150px !important;
-  min-width: 150px !important;
-  max-width: 150px !important;
-  grid-template-columns: repeat(3, 46px) !important;
-  bottom: 12px !important;
-}
-.profile-media-card-feed :is([data-photo-shape="landscape"], [data-photo-shape="panorama"]) :is(.profile-photo-viewer-previous, .profile-media-viewer-previous, .profile-photo-viewer-next, .profile-media-viewer-next) {
-  top: auto !important;
-  bottom: 12px !important;
-  right: auto !important;
-  left: 9px !important;
-}
-.profile-media-card-feed :is([data-photo-shape="landscape"], [data-photo-shape="panorama"]) :is(.profile-photo-viewer-next, .profile-media-viewer-next) {
-  left: 61px !important;
 }
