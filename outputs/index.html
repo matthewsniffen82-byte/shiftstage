@@ -40984,7 +40984,7 @@
                 </div>
                 <div class="field">
                   <label for="venueRequestContactPhone">Business phone</label>
-                  <input id="venueRequestContactPhone" name="contactPhone" type="tel" inputmode="tel" autocomplete="tel" minlength="7" maxlength="40" required>
+                  <input id="venueRequestContactPhone" name="contactPhone" type="tel" inputmode="tel" autocomplete="tel" placeholder="702-555-0123" minlength="7" maxlength="40" required>
                 </div>
                 <div class="field wide">
                   <label for="venueRequestMessage">Anything the review team should know <span aria-hidden="true">·</span> optional</label>
@@ -64037,6 +64037,43 @@
       event.preventDefault();
       await submitVenueSignup(document.getElementById("venueJoinNowBtn"));
     });
+
+    function formatBusinessPhoneNumber(value) {
+      // Keep international numbers and extensions intact.
+      if (/[^\d\s()+.\-]/.test(value) || (value.trim().startsWith("+") && !value.trim().startsWith("+1"))) return value;
+      const digits = value.replace(/\D/g, "");
+      const hasCountryCode = value.trim().startsWith("+1") || (digits.length === 11 && digits.startsWith("1"));
+      const national = hasCountryCode ? digits.slice(1) : digits;
+      if (national.length > 10) return value;
+      const groups = [national.slice(0, 3), national.slice(3, 6), national.slice(6)].filter(Boolean);
+      const prefix = hasCountryCode ? (value.trim().startsWith("+") ? "+1" : "1") : "";
+      return [prefix, ...groups].filter(Boolean).join("-");
+    }
+
+    function formatBusinessPhoneInput(event) {
+      if (event.isComposing) return;
+      const input = event.currentTarget;
+      const previous = input.value;
+      const formatted = formatBusinessPhoneNumber(previous);
+      if (formatted === previous) return;
+      const start = input.selectionStart;
+      const end = input.selectionEnd;
+      const direction = input.selectionDirection || "none";
+      function positionAfterDigits(position) {
+        const count = previous.slice(0, position).replace(/\D/g, "").length;
+        if (!count) return Math.min(position, formatted.startsWith("+") ? 1 : 0);
+        let seen = 0;
+        for (let index = 0; index < formatted.length; index += 1) {
+          if (/\d/.test(formatted[index]) && ++seen === count) return index + 1;
+        }
+        return formatted.length;
+      }
+      input.value = formatted;
+      if (start !== null && end !== null) input.setSelectionRange(positionAfterDigits(start), positionAfterDigits(end), direction);
+    }
+
+    document.getElementById("venueRequestContactPhone").addEventListener("input", formatBusinessPhoneInput);
+    document.getElementById("venueRequestContactPhone").addEventListener("change", formatBusinessPhoneInput);
 
     document.getElementById("venueRequestForm").addEventListener("submit", async (event) => {
       event.preventDefault();
