@@ -66,7 +66,7 @@ test("live profile grid photos open an accessible full-screen collection", () =>
   assert.match(liveApp, /id="profilePhotoViewerPrevious"[^>]*aria-label="Previous dancer photo"/);
   assert.match(liveApp, /id="profilePhotoViewerNext"[^>]*aria-label="Next dancer photo"/);
   assert.doesNotMatch(liveApp, /profilePhotoScheduleLabel|Swipe up or down · Photo/);
-  assert.match(liveApp, /\.profile-photo-viewer-slide-image \{[^}]*background-size: contain !important;/);
+  assert.match(liveApp, /\.profile-photo-viewer-slide-image \{[^}]*background-size: cover !important;/);
   assert.match(liveApp, /\.profile-photo-viewer-footer \{[\s\S]*?background: transparent;/);
   assert.match(
     liveApp,
@@ -182,9 +182,9 @@ test("the profile presents approved photos and dancer-only videos as separate th
   );
   assert.match(
     publicProfilePage,
-    /\.profile-media-viewer-slide > img, \.profile-media-viewer-slide > video \{[^}]*object-fit: contain/,
+    /\.profile-media-viewer-slide > img, \.profile-media-viewer-slide > video \{[^}]*object-fit: cover/,
   );
-  assert.match(publicProfilePage, /\.profile-media-viewer\.is-photo \.profile-media-viewer-slide > img \{ object-fit: contain; \}/);
+  assert.match(publicProfilePage, /\.profile-media-viewer\.is-photo \.profile-media-viewer-slide > img \{ object-fit: cover; \}/);
   assert.match(publicProfilePage, /\.profile-media-viewer\.is-photo \.profile-media-viewer-footer \{ background: transparent; \}/);
   assert.match(publicProfilePage, /<dt>Views today<\/dt>/);
   assert.match(liveApp, /<dt>Views today<\/dt>/);
@@ -214,8 +214,8 @@ test("full-profile photo and video grids use stable tall portrait tiles", () => 
   assert.doesNotMatch(publicPhotoCarousel, /selectedItem|profile-media-feature/);
   assert.match(publicProfilePage, /\.profile-media-grid-item \{[^}]*aspect-ratio: 9 \/ 16;/);
   assert.match(publicProfilePage, /\.profile-media-grid-item img, \.profile-media-grid-item video \{[^}]*object-fit: cover;/);
-  assert.match(publicProfilePage, /\.profile-media-viewer-slide > img, \.profile-media-viewer-slide > video \{[^}]*object-fit: contain;/);
-  assert.match(publicProfilePage, /\.profile-media-viewer\.is-photo \.profile-media-viewer-slide > img \{ object-fit: contain; \}/);
+  assert.match(publicProfilePage, /\.profile-media-viewer-slide > img, \.profile-media-viewer-slide > video \{[^}]*object-fit: cover;/);
+  assert.match(publicProfilePage, /\.profile-media-viewer\.is-photo \.profile-media-viewer-slide > img \{ object-fit: cover; \}/);
 });
 
 

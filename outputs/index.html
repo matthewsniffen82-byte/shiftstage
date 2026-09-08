@@ -29410,13 +29410,13 @@
       background-color: #050507;
       background-position: center center !important;
       background-repeat: no-repeat !important;
-      background-size: contain !important;
+      background-size: cover !important;
     }
 
     .profile-photo-viewer-close {
       position: absolute !important;
-      right: max(12px, env(safe-area-inset-right)) !important;
-      top: max(12px, env(safe-area-inset-top)) !important;
+      right: calc(16px + env(safe-area-inset-right, 0px)) !important;
+      top: calc(16px + env(safe-area-inset-top, 0px)) !important;
       z-index: 82 !important;
     }
 
@@ -32617,10 +32617,10 @@
           user-select: none;
           -webkit-user-select: none;
         }
-        /* Expanded media keeps the whole frame visible when Safari's browser
-           bars leave a shorter viewport than native Android fullscreen. */
+        /* Expanded media fills the available viewport edge-to-edge on both
+           native fullscreen and Safari's in-page fullscreen fallback. */
         #results.home-tv-feed:is(:fullscreen, :-webkit-full-screen, .is-fullscreen-feed) .home-tv-feed-video {
-          object-fit: contain;
+          object-fit: cover;
         }
         .home-tv-feed-slide.is-media-loading:not(.has-media-poster) .home-tv-feed-video,
         .home-tv-feed-slide.is-media-unavailable .home-tv-feed-video {
@@ -33002,8 +33002,8 @@
         .home-tv-feed-full-view-close {
           position: absolute;
           z-index: 12;
-          top: max(12px, calc(env(safe-area-inset-top, 0px) + 8px));
-          right: max(12px, calc(env(safe-area-inset-right, 0px) + 8px));
+          top: calc(16px + env(safe-area-inset-top, 0px));
+          right: calc(16px + env(safe-area-inset-right, 0px));
           display: none;
           border-color: rgba(255,255,255,.24);
           background-color: rgba(5,5,10,.5);
@@ -34283,8 +34283,8 @@
         .profile-tv-viewer-stage { position: relative; width: 100%; height: 100%; min-height: 0; overflow-x: hidden; overflow-y: auto; overscroll-behavior-y: contain; scroll-behavior: smooth; scroll-snap-type: y mandatory; scrollbar-width: none; touch-action: pan-y; }
         .profile-tv-viewer-stage::-webkit-scrollbar { display: none; }
         .profile-tv-viewer-slide { position: relative; width: 100%; height: 100%; min-height: 100%; max-height: 100%; overflow: hidden; background: #000; scroll-snap-align: start; scroll-snap-stop: always; }
-        .profile-tv-viewer-video { width: 100%; height: 100%; min-height: 0; display: block; object-fit: contain; background: #000; touch-action: manipulation; user-select: none; -webkit-user-select: none; }
-        .profile-tv-viewer-close { position: absolute; z-index: 3; top: max(12px, calc(env(safe-area-inset-top, 0px) + 8px)); right: max(12px, calc(env(safe-area-inset-right, 0px) + 8px)); width: 44px; height: 44px; display: grid; place-items: center; padding: 0; border: 1px solid rgba(255,255,255,.24); border-radius: 50%; color: #fff; background-color: rgba(5,5,10,.5); background-image: linear-gradient(155deg, rgba(255,255,255,.13), rgba(255,255,255,.035)); box-shadow: inset 0 1px 0 rgba(255,255,255,.16), inset 0 -1px 0 rgba(255,255,255,.035), 0 10px 26px rgba(0,0,0,.32); line-height: 1; cursor: pointer; -webkit-backdrop-filter: blur(14px) saturate(1.12); backdrop-filter: blur(14px) saturate(1.12); }
+        .profile-tv-viewer-video { width: 100%; height: 100%; min-height: 0; display: block; object-fit: cover; background: #000; touch-action: manipulation; user-select: none; -webkit-user-select: none; }
+        .profile-tv-viewer-close { position: absolute; z-index: 3; top: calc(16px + env(safe-area-inset-top, 0px)); right: calc(16px + env(safe-area-inset-right, 0px)); width: 44px; height: 44px; display: grid; place-items: center; padding: 0; border: 1px solid rgba(255,255,255,.24); border-radius: 50%; color: #fff; background-color: rgba(5,5,10,.5); background-image: linear-gradient(155deg, rgba(255,255,255,.13), rgba(255,255,255,.035)); box-shadow: inset 0 1px 0 rgba(255,255,255,.16), inset 0 -1px 0 rgba(255,255,255,.035), 0 10px 26px rgba(0,0,0,.32); line-height: 1; cursor: pointer; -webkit-backdrop-filter: blur(14px) saturate(1.12); backdrop-filter: blur(14px) saturate(1.12); }
         .profile-tv-viewer-close .action-icon,
         .profile-tv-viewer-close svg { width: 20px !important; height: 20px !important; display: block; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
         .profile-tv-viewer-previous,
