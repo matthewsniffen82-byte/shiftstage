@@ -6569,6 +6569,15 @@ body.dancr-button-system #results.venue-profile-overlay .venue-detail
   width: 100%;
 }
 
+/* The logo stage shares the card surface, including its exposed top/bottom
+ * inset on iPhone. Approved cover photos retain their own background. */
+body.dancr-button-system #results.venue-profile-overlay .venue-detail
+  .venue-hero-brand-row .venue-main-photo.is-venue-artwork,
+body.dancr-button-system #results.venue-profile-overlay .venue-detail
+  .venue-hero-brand-row .venue-main-photo.is-venue-artwork > .venue-art {
+  background: transparent !important;
+}
+
 body.dancr-button-system #results.venue-profile-overlay .venue-detail
   .venue-hero-brand-row .venue-detail-close {
   grid-column: 3;
@@ -6594,6 +6603,7 @@ body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-det
 body.dancr-button-system #results.venue-profile-overlay .venue-detail
   .venue-hero-brand-row .venue-detail-logo-shell {
   width: 100% !important;
+  background: transparent !important;
 }
 
 /* Compact venue heroes keep their existing centered logo geometry. */
