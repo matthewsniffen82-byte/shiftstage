@@ -338,8 +338,8 @@ test("step one shows clear save, photo-count, and automatic-check states", () =>
   assert.doesNotMatch(dashboard, /\$\{photos\.length\} of \$\{MAX_DANCER_PROFILE_PHOTOS\}/);
   assert.doesNotMatch(dashboard, /\{remainingPhotoSlots\} \{remainingPhotoSlots === 1 \? "spot" : "spots"\} open/);
   assert.match(dashboard, /pendingPhotos\.length \? `\$\{pendingPhotos\.length\} checking`/);
-  assert.match(dashboard, /We are checking this photo\. This page updates automatically/);
-  assert.match(dashboard, /This photo cannot be used\. Choose another photo/);
+  assert.doesNotMatch(dashboard, /We are checking this photo\. This page updates automatically/);
+  assert.match(dashboard, /if \(status === "rejected"\) return "Choose another photo\."/);
 });
 
 test("one approved profile photo completes the requirement without hiding extra moderation states", () => {

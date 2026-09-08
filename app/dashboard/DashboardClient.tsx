@@ -3488,7 +3488,7 @@ function DancerProfilePreview({
   const persistedName = persistedDancerStageName(profile);
   const persistedCity = String(profile?.city || "").trim();
   const avatarUrl = String(profile?.avatarPhotoUrl || "").trim();
-  const profilePhotoItems = dancerPhotoItemsFromProfile(profile);
+  const profilePhotoItems = relabelPhotoItems(dancerPhotoItemsFromProfile(profile));
   const approvedPhotos = profilePhotoItems.filter((photo) => photo.status === "approved");
   const previewImage = avatarUrl || approvedPhotos[0]?.imageUrl || "";
   const previewName = name?.trim() || persistedName || "Your stage name";
@@ -4652,9 +4652,10 @@ function DancerPanel({
     city: String(profile?.city || ""),
   }));
   const hasPendingAvatar = Boolean(profile?.pending_avatar_review);
+  const hasPendingPhotos = dancerPhotoItemsFromProfile(profile).some((photo) => photo.status === "pending");
 
   useEffect(() => {
-    if (!hasPendingAvatar && (isApproved || effectiveStatus !== "pending_review")) return;
+    if (!hasPendingAvatar && !hasPendingPhotos && (isApproved || effectiveStatus !== "pending_review")) return;
     let cancelled = false;
     let refreshInFlight = false;
     const controller = new AbortController();
@@ -4688,7 +4689,7 @@ function DancerPanel({
       window.clearInterval(interval);
       document.removeEventListener("visibilitychange", refreshProfile);
     };
-  }, [effectiveStatus, hasPendingAvatar, isApproved, onProfileChange]);
+  }, [effectiveStatus, hasPendingAvatar, hasPendingPhotos, isApproved, onProfileChange]);
 
   const refreshDancerProfile = useCallback(async () => {
     const session = readSession();
@@ -7142,6 +7143,7 @@ function DancerPhotoPanel({
     setStatus(`Preparing ${batch.length} ${batch.length === 1 ? "photo" : "photos"}...`);
     const failedItems: DancerPhotoQueueItem[] = [];
     const rejectedItemIds = new Set<string>();
+    const acceptedItemIds = new Set<string>();
     let workingPhotos = [...photos];
     let acceptedCount = 0;
     let rejectedCount = 0;
@@ -7186,7 +7188,7 @@ function DancerPhotoPanel({
             imageUrl: approved ? String(data.photo?.imageUrl || item.previewUrl) : item.previewUrl,
             label: Boolean(data.photo?.isPrimary || data.photo?.is_primary || makePrimary) ? "Main Photo" : "Photo",
             status: uploadStatus,
-            note: data.message ? `${photoStatusLabel(uploadStatus)}: ${data.message}` : photoStatusNote(uploadStatus),
+            note: photoStatusNote(uploadStatus),
             storagePath: String(data.photo?.storage_path || ""),
             isPrimary: Boolean(data.photo?.isPrimary || data.photo?.is_primary || makePrimary),
             sortOrder: Number(data.photo?.sortOrder ?? data.photo?.sort_order ?? uploadSortOrder),
@@ -7198,6 +7200,7 @@ function DancerPhotoPanel({
             URL.revokeObjectURL(item.previewUrl);
           } else {
             acceptedCount += 1;
+            acceptedItemIds.add(item.id);
             workingPhotos = relabelPhotoItems(mergePhotoItems(workingPhotos, [uploadedPhoto]));
             setPhotos(workingPhotos);
             if (approved && data.photo?.imageUrl) {
@@ -7224,7 +7227,8 @@ function DancerPhotoPanel({
         if (!isCurrentPhotoAction(requestId, controller)) return;
         if (refreshData.profile) {
           const refreshedPhotos = preserveConfirmedPhotoPreviews(dancerPhotoItemsFromProfile(refreshData.profile), workingPhotos);
-          workingPhotos = relabelPhotoItems(mergePhotoItems(refreshedPhotos, workingPhotos.filter((photo) => photo.status === "pending")));
+          // Fresh server results must replace older local "checking" entries for the same slot.
+          workingPhotos = relabelPhotoItems(mergePhotoItems(workingPhotos.filter((photo) => photo.status === "pending"), refreshedPhotos));
           setPhotos(workingPhotos);
           onProfileChange?.(refreshData.profile);
         }
@@ -7239,8 +7243,8 @@ function DancerPhotoPanel({
       if (galleryPhotoInputRef.current) galleryPhotoInputRef.current.value = "";
       if (cameraPhotoInputRef.current) cameraPhotoInputRef.current.value = "";
       const summary = [
-        acceptedCount ? `${acceptedCount} sent through moderation` : "",
-        rejectedCount ? `${rejectedCount} rejected` : "",
+        acceptedCount ? `${acceptedCount} uploaded` : "",
+        rejectedCount ? `${rejectedCount} not approved` : "",
         failedItems.length ? `${failedItems.length} ready to retry` : "",
       ].filter(Boolean).join(". ");
       setStatus(summary || "No photos were uploaded.");
@@ -7250,7 +7254,7 @@ function DancerPhotoPanel({
         const failedById = new Map(failedItems.map((item) => [item.id, item]));
         const batchIds = new Set(batch.map((item) => item.id));
         setQueuedPhotos((current) => current.flatMap((item) => {
-          if (rejectedItemIds.has(item.id)) return [];
+          if (rejectedItemIds.has(item.id) || acceptedItemIds.has(item.id)) return [];
           if (!batchIds.has(item.id)) return [item];
           return [failedById.get(item.id) || { ...item, stage: "failed", progress: 0, error: message }];
         }));
@@ -7459,9 +7463,9 @@ function DancerPhotoPanel({
               <div className="photo-preview" style={{ backgroundImage: `url(${item.previewUrl})` }} />
               <span>
                 <strong>{item.makePrimary ? "Main Photo" : `Selected photo ${index + 1}`}</strong>
-                <small>{item.stage === "uploading" ? "Uploading securely" : item.stage === "checking" ? "Running automatic review" : item.error ? "Upload failed" : "Waiting to upload"}</small>
+                <small>{item.stage === "uploading" ? "Uploading" : item.stage === "checking" ? "Checking" : item.error ? "Upload failed" : "Waiting to upload"}</small>
                 {item.stage !== "failed" ? <progress aria-label={`Photo ${index + 1} upload progress`} max="100" value={item.progress} /> : null}
-                <em>{item.error || (item.source === "camera" ? "Taken with your phone camera." : "Selected from your phone.")}</em>
+                {item.error ? <em>{item.error}</em> : null}
                 <span className="photo-queue-actions">
                   {item.error ? <button className="photo-retry-button" disabled={photoActionBusy} onClick={() => void uploadPhotoBatch([{ ...item, stage: "queued", progress: 0, error: undefined }])} type="button">Retry</button> : null}
                   <button className="photo-delete-button" disabled={photoActionBusy} onClick={() => removeQueuedPhoto(item.id)} type="button">Remove</button>
@@ -7477,6 +7481,7 @@ function DancerPhotoPanel({
           <span>{photos.length} {photos.length === 1 ? "photo" : "photos"}</span>
         </div>
       ) : null}
+      {photos.length ? <p className="photo-main-guidance">Your main photo appears first on your profile. Your avatar is separate.</p> : null}
       <div className="photo-review-list">
         {photos.map((photo, photoIndex) => {
           const isApprovedGalleryPhoto = photo.status === "approved" && !photo.isPrimary;
@@ -7488,7 +7493,7 @@ function DancerPhotoPanel({
               <span>
                 <strong>{photo.label}</strong>
                 <small>{photoStatusLabel(photo.status)}</small>
-                <em>{photo.note}</em>
+                {photo.note ? <em>{photo.note}</em> : null}
                 <span className="photo-card-actions">
                   {isApprovedGalleryPhoto ? <button className="photo-main-action primary-action" disabled={photoActionBusy} type="button" onClick={() => makePhotoPrimary(photo.id)}>Make main</button> : null}
                   {canMoveEarlier ? <button aria-label={`Move ${photo.label} earlier`} className="photo-order-action" disabled={photoActionBusy} title="Move earlier" type="button" onClick={() => moveGalleryPhoto(photo.id, -1)}>↑</button> : null}
@@ -7544,7 +7549,7 @@ function dancerPhotoItemsFromProfile(
       imageUrl: String(review.previewUrl || review.preview_url || ""),
       label: isPrimary ? "Main Photo" : "Photo",
       status: "pending",
-      note: "We are checking this photo. This page updates automatically.",
+      note: photoStatusNote("pending"),
       storagePath: String(review.temporary_storage_path || review.storagePath || ""),
       isPrimary,
       sortOrder: Number(review.sort_order ?? review.sortOrder ?? (isPrimary ? 0 : 0)),
@@ -7603,7 +7608,7 @@ function mergePhotoItems(...groups: DancerPhotoItem[][]) {
 
 function relabelPhotoItems(items: DancerPhotoItem[]) {
   return orderPhotoItemsForDisplay(mergePhotoItems(items)).map((photo, index) => {
-    if (index === 0) return { ...photo, label: "Main Photo" };
+    if (photo.isPrimary) return { ...photo, label: "Main photo" };
     return { ...photo, label: `Photo ${index + 1}` };
   });
 }
@@ -7625,14 +7630,13 @@ function normalizePhotoStatus(value: unknown): DancerPhotoItem["status"] {
 
 function photoStatusLabel(status: DancerPhotoItem["status"]) {
   if (status === "approved") return "Approved";
-  if (status === "rejected") return "Choose another";
+  if (status === "rejected") return "Not approved";
   return "Checking";
 }
 
 function photoStatusNote(status: DancerPhotoItem["status"]) {
-  if (status === "approved") return "Ready for your profile.";
-  if (status === "rejected") return "This photo cannot be used. Choose another photo.";
-  return "We are checking this photo. This page updates automatically.";
+  if (status === "rejected") return "Choose another photo.";
+  return "";
 }
 
 function photoUploadStatusMessage(status: DancerPhotoItem["status"], message?: unknown) {
@@ -8554,6 +8558,7 @@ function DashboardStyles() {
       .photo-review-card strong { color: #fff; }
       .photo-review-card small { color: #94e5ff; font-size: 12px; font-weight: 950; text-transform: uppercase; letter-spacing: .08em; }
       .photo-review-card em { color: #cfc5de; font-size: 13px; font-style: normal; line-height: 1.35; }
+      .photo-main-guidance { margin:0; color:#c9c3d2; font-size:12px; line-height:1.4; }
       .photo-review-card progress { width: 100%; height: 7px; accent-color: #7eeaff; }
       .photo-queue-actions, .photo-card-actions { display: flex !important; flex-wrap: wrap; gap: 7px !important; }
       .photo-card-actions { align-items: center; margin-top: 5px; }
@@ -9779,7 +9784,7 @@ function DashboardStyles() {
       .dancer-media-manager-title span { color:#aaa2b5; font-size:11px; font-weight:800; }
       .dancer-profile-builder-panel.dancer-profile-editor-modal[data-section="photos"] .photo-review-list { grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
       .dancer-profile-builder-panel.dancer-profile-editor-modal[data-section="photos"] .photo-review-list .photo-review-card { min-height:0; gap:8px; padding:8px; border-radius:12px; }
-      .dancer-profile-builder-panel.dancer-profile-editor-modal[data-section="photos"] .photo-review-list .photo-preview { width:100%; aspect-ratio:4 / 5; }
+      .dancer-profile-builder-panel.dancer-profile-editor-modal[data-section="photos"] .photo-review-list .photo-preview { width:100%; aspect-ratio:3 / 4; }
       .dancer-profile-builder-panel.dancer-profile-editor-modal[data-section="photos"] .photo-review-card em { font-size:10px; }
       .dancer-profile-builder-panel.dancer-profile-editor-modal[data-section="photos"] .photo-card-actions { gap:5px !important; }
 

@@ -4,17 +4,18 @@ type UploadItem = {
   id: string;
   imageUrl?: string | null;
   status: string;
+  isPrimary?: boolean;
 };
 
 export function profileUploadStatus(status: string) {
   switch (status) {
-    case "approved": return "Ready for profile";
+    case "approved": return "Approved";
     case "uploading": return "Upload incomplete";
     case "pending":
     case "moderating":
     case "submitted":
-    case "review": return "Checking · Not public yet";
-    case "rejected": return "Not posted · Replace";
+    case "review": return "Checking";
+    case "rejected": return "Not approved";
     case "failed": return "Upload failed · Try again";
     default: return "Check upload status";
   }
@@ -61,12 +62,12 @@ export default function DancerProfileMediaUploads({
               <ul className="profile-upload-items" aria-label={`Uploaded ${section}`}>
                 {items.map((item, index) => (
                   <li key={item.id}>
-                    <button aria-label={`Manage ${label.toLowerCase()} ${index + 1}: ${profileUploadStatus(item.status)}`} onClick={() => onOpen(section)} type="button">
+                    <button aria-label={`Manage ${isPhoto && item.isPrimary ? "main photo" : `${label.toLowerCase()} ${index + 1}`}: ${profileUploadStatus(item.status)}`} onClick={() => onOpen(section)} type="button">
                       <span className="profile-upload-thumbnail">
                         {item.imageUrl ? <img alt="" loading="lazy" src={item.imageUrl} /> : <span aria-hidden="true">{isPhoto ? "▧" : "▶"}</span>}
                         {!isPhoto && item.imageUrl ? <i aria-hidden="true">▶</i> : null}
                       </span>
-                      <strong>{label} {index + 1}</strong>
+                      <strong>{isPhoto && item.isPrimary ? "Main photo" : `${label} ${index + 1}`}</strong>
                       <small className={item.status === "approved" ? "is-ready" : ""}>{profileUploadStatus(item.status)}</small>
                     </button>
                   </li>
@@ -99,7 +100,7 @@ export default function DancerProfileMediaUploads({
         .profile-upload-items { min-width:0; display:flex; gap:10px; overflow-x:auto; margin:0; padding:2px 0 8px; list-style:none; }
         .profile-upload-items > li { flex:0 0 112px; min-width:0; }
         .dancer-profile-media-uploads .profile-upload-items button { width:100%; min-height:44px; display:grid; gap:4px; padding:0; border:0; border-radius:8px; background:transparent; color:#fff; text-align:left; font:inherit; cursor:pointer; }
-        .profile-upload-thumbnail { position:relative; width:100%; height:84px; display:grid; place-items:center; overflow:hidden; border:1px solid #40384b; border-radius:8px; background:#15101d; color:#c9c3d2; }
+        .profile-upload-thumbnail { position:relative; width:100%; height:auto; aspect-ratio:3 / 4; display:grid; place-items:center; overflow:hidden; border:1px solid #40384b; border-radius:8px; background:#15101d; color:#c9c3d2; }
         .profile-upload-thumbnail img { width:100%; height:100%; display:block; object-fit:cover; }
         .profile-upload-thumbnail i { position:absolute; inset:auto 5px 5px auto; padding:3px 6px; border-radius:6px; background:#000b; color:#fff; font-size:12px; font-style:normal; }
         .profile-upload-items strong { font-size:12px; line-height:1.3; }

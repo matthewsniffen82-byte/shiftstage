@@ -49,9 +49,9 @@ test("uploaded previews retain pending and rejected items without presenting the
   assert.equal((html.match(/<li>/g) || []).length, 4);
   assert.match(html, /3 added/);
   assert.match(html, /1 added/);
-  assert.match(html, /Ready for profile/);
-  assert.match(html, /Checking · Not public yet/);
-  assert.match(html, /Not posted · Replace/);
+  assert.match(html, /Approved/);
+  assert.match(html, /Checking/);
+  assert.match(html, /Not approved/);
   assert.doesNotMatch(html, /Added to your profile/);
 });
 
@@ -59,7 +59,7 @@ test("upload progress, failure, and unknown statuses never imply publication", (
   assert.equal(exports.profileUploadStatus("uploading"), "Upload incomplete");
   assert.equal(exports.profileUploadStatus("failed"), "Upload failed · Try again");
   assert.equal(exports.profileUploadStatus("unknown"), "Check upload status");
-  assert.equal(exports.profileUploadStatus("submitted"), "Checking · Not public yet");
+  assert.equal(exports.profileUploadStatus("submitted"), "Checking");
 });
 
 test("saved media visibility copy respects profile approval and incognito", () => {
@@ -67,6 +67,14 @@ test("saved media visibility copy respects profile approval and incognito", () =
   const hidden = render({ isApproved: true, isPublic: false });
   assert.match(hidden, /Uploads stay saved. Turn off incognito/);
   assert.doesNotMatch(hidden, /Approved uploads appear on your profile/);
+});
+
+test("only the selected main gallery photo is identified in the preview strip", () => {
+  const html = render({ photos: [{ id: "main", status: "approved", isPrimary: true }, { id: "other", status: "approved" }] });
+  assert.match(html, /Manage main photo: Approved/);
+  assert.match(html, /<strong>Main photo<\/strong>/);
+  assert.match(html, /<strong>Photo 2<\/strong>/);
+  assert.doesNotMatch(render({ photos: [{ id: "first", status: "approved" }] }), /Main photo/);
 });
 
 test("loading and a failed video request are distinguishable from an empty video library", () => {
@@ -86,7 +94,7 @@ test("loading and a failed video request are distinguishable from an empty video
 test("large saved libraries remain accessible and thumbnails do not start video downloads", () => {
   const html = render({ videos: Array.from({ length: 50 }, (_, index) => ({ id: `v-${index}`, imageUrl: `/poster-${index}.jpg`, status: "approved" })) });
   assert.equal((html.match(/<li>/g) || []).length, 50);
-  assert.match(html, /Manage video 50: Ready for profile/);
+  assert.match(html, /Manage video 50: Approved/);
   assert.match(html, /loading="lazy"/);
   assert.doesNotMatch(html, /<video/);
 });
