@@ -6711,7 +6711,10 @@ function DancerSharePanel({ profile }: { profile?: LoadState["profile"] }) {
             <button type="button" onClick={copyLink}>
               {status === "Profile link copied." ? "Copied" : "Copy link"}
             </button>
-            <Link href={`/dancers/${slug}`}>Open profile</Link>
+            <Link className="share-open-profile-button secondary-action" href={`/dancers/${slug}`}>
+              Open profile
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6" /></svg>
+            </Link>
           </div>
           {status ? <p className="share-status" role="status" aria-live="polite">{status}</p> : null}
         </div>
@@ -8489,7 +8492,8 @@ function DashboardStyles() {
       .share-actions { display: grid !important; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px !important; }
       .share-panel .share-actions button, .share-actions a { min-height: 46px; display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box; padding: 0 13px; border-radius: 8px; font: inherit; font-size: 13px; font-weight: 900; text-decoration: none; }
       .share-panel .share-actions button { border: 1px solid rgba(124,58,237,.5); color: #fff; background: rgba(82,35,214,.56); }
-      .share-actions a { border: 1px solid rgba(255,255,255,.12); color: #fff; background: rgba(255,255,255,.06); }
+      .share-actions .share-open-profile-button { gap: 8px; border: 1px solid var(--dancr-color-border); color: var(--dancr-color-text-primary); background: var(--dancr-color-surface-raised); }
+      .share-open-profile-button svg { width: 16px; height: 16px; flex: 0 0 auto; }
       .share-status { margin: 0; color: #78ffc0 !important; font-size: 12px !important; }
       .socials-panel form { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; align-items: end; }
       .upload-panel form, .verification-panel form { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 12px; align-items: end; }
