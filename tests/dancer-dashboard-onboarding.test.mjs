@@ -254,12 +254,11 @@ test("step one uses accessible live-profile add targets that preserve the active
   assert.match(dashboard, /\.dancer-profile-builder-identity, \.dancer-profile-builder-city \{[^}]*min-height:56px/);
   assert.match(dashboard, /"Stage name"/);
   assert.match(dashboard, /"Add city"/);
-  assert.match(dashboard, /<DancerProfileMediaUploads[\s\S]*?onOpen=\{openEditorSection\}/);
+  assert.match(dashboard, /<DancerProfileMediaUploads[\s\S]*?onOpen=\{\(section\) => \{[\s\S]*?openEditorSection\(section\);/);
   assert.match(dashboard, /aria-label="Add social links"/);
   assert.match(dashboard, /onClick=\{\(\) => openEditorSection\("identity"\)\}/);
   assert.match(dashboard, /onClick=\{\(\) => openEditorSection\("avatar"\)\}/);
-  assert.match(dashboard, /onClick=\{\(\) => openEditorSection\("photos"\)\}/);
-  assert.match(dashboard, /onClick=\{\(\) => openEditorSection\("videos"\)\}/);
+  assert.match(dashboard, /photos: photoContent,[\s\S]*?videos: videoContent/);
   assert.match(dashboard, /onClick=\{\(\) => openSocialEditor\(platform\.key\)\}/);
   assert.match(dashboard, /SOCIAL_PLATFORMS\.map\(\(platform\) =>/);
   assert.match(dashboard, /className="social-links-control"[\s\S]*?<h2 id="dancer-profile-builder-social-heading">Social Links<\/h2>/);
@@ -278,10 +277,10 @@ test("step one uses accessible live-profile add targets that preserve the active
   assert.match(dashboard, /"complete" \| "checking" \| "missing" \| "replace" \| "unsaved"/);
 });
 
-test("onboarding and empty profile editors use the compact uploader with the existing media managers", () => {
-  assert.match(dashboard, /isEditor && \(isOnboardingEditor \|\| \(!photos\.length && !videos\.length\)\)/);
+test("onboarding and active profile editors share the compact uploader with the existing media managers", () => {
+  assert.match(dashboard, /isEditor \? mediaUploads/);
   assert.match(dashboard, /<DancerProfileMediaUploads[\s\S]*?photos=\{profilePhotoItems\}[\s\S]*?videos=\{uploadedVideos\.map/);
-  assert.match(dashboard, /onOpen=\{openEditorSection\}/);
+  assert.match(dashboard, /onOpen=\{\(section\) => \{[\s\S]*?if \(!isOpen\) openPreview\(\);[\s\S]*?openEditorSection\(section\);/);
   assert.match(dashboard, /const videos = uploadedVideos\.filter\(\(video\) => video\.status === "approved" && video\.videoUrl\)/);
   assert.match(dashboard, /status === "hidden" \|\| status === "removed" \|\| status === "expired"/);
   assert.doesNotMatch(dashboard, /Five picture slots|Five video slots|DANCER_ONBOARDING_MEDIA_PREVIEW_SLOTS|dancer-profile-builder-empty-slots/);

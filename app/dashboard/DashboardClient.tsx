@@ -3456,6 +3456,7 @@ function DancerProfilePreview({
   onProfileChange,
   profile,
   saveLabel = "Save profile",
+  showDashboardMedia = false,
 }: {
   builderRequirements?: DancerProfileBuilderRequirement[];
   buttonClassName: string;
@@ -3470,6 +3471,7 @@ function DancerProfilePreview({
   onProfileChange?: (profile: Record<string, unknown>) => void;
   profile?: LoadState["profile"];
   saveLabel?: string;
+  showDashboardMedia?: boolean;
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const [activeEditorSection, setActiveEditorSection] = useState<DancerProfileEditorSectionId | null>(null);
@@ -3601,7 +3603,10 @@ function DancerProfilePreview({
     body.style.right = "0";
     body.style.width = "100%";
     body.style.overflow = "hidden";
-    const frame = window.requestAnimationFrame(() => closeRef.current?.focus());
+    const frame = window.requestAnimationFrame(() => {
+      if (activeEditorSectionRef.current) document.getElementById("dancer-profile-builder-panel")?.focus();
+      else closeRef.current?.focus();
+    });
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         if (activeEditorSectionRef.current === "socials") {
@@ -3651,7 +3656,7 @@ function DancerProfilePreview({
   }, [closeActiveEditor, closePreview, isOpen]);
 
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen && !showDashboardMedia) return;
     if (!readSession()?.accessToken) {
       setIsMediaLoading(false);
       setUploadedVideos([]);
@@ -3727,7 +3732,7 @@ function DancerProfilePreview({
       window.clearTimeout(refreshTimer);
       window.removeEventListener(DANCER_PROFILE_VIDEOS_CHANGED_EVENT, refreshAfterVideoChange);
     };
-  }, [isOpen]);
+  }, [isOpen, showDashboardMedia, profile?.id]);
 
   useEffect(() => {
     if (!isOpen || !editorSections?.photos) return;
@@ -3786,11 +3791,37 @@ function DancerProfilePreview({
     }
   }
 
+  const mediaUploads = (
+    <DancerProfileMediaUploads
+      photos={profilePhotoItems}
+      videos={uploadedVideos.map((video) => ({ id: video.id, imageUrl: video.posterUrl, status: video.status, videoUrl: video.videoUrl, isPinned: video.isPinned }))}
+      onMediaPinned={handleMediaPinned}
+      isApproved={isApproved}
+      isPublic={isPublic}
+      isVideoLoading={isMediaLoading}
+      videoError={mediaError}
+      onOpen={(section) => {
+        if (!isOpen) openPreview();
+        openEditorSection(section);
+      }}
+      onDeleteBusyChange={reportPhotoDeleteBusy}
+      onVideoDeleted={(videoId) => setUploadedVideos((current) => current.filter((video) => video.id !== videoId))}
+      onPhotoDeleted={(photoId, refreshedProfile) => onProfileChange?.(refreshedProfile || {
+        ...profile,
+        dancer_photos: (Array.isArray(profile?.dancer_photos) ? profile.dancer_photos : []).filter((photo: any) => photo.id !== photoId),
+        pending_photo_reviews: (Array.isArray(profile?.pending_photo_reviews) ? profile.pending_photo_reviews : []).filter((photo: any) => photo.id !== photoId),
+      })}
+    />
+  );
+
   return (
     <>
-      <button className={buttonClassName} onClick={openPreview} ref={triggerRef} type="button">
+      <button className={buttonClassName} disabled={isPhotoDeleting} onClick={openPreview} ref={triggerRef} type="button">
         {buttonLabel}
       </button>
+      {showDashboardMedia && isEditor && !isOpen ? (
+        <div className="dancer-dashboard-media-manager">{mediaUploads}</div>
+      ) : null}
       {isOpen ? (
         <div
           aria-label={isEditor ? "Edit dancer profile" : undefined}
@@ -3853,34 +3884,8 @@ function DancerProfilePreview({
                 <svg aria-hidden="true" viewBox="0 0 20 20"><path d="M5.5 5.5l9 9M14.5 5.5l-9 9" /></svg>
               </button>
             </header>
-            {isEditor && (isOnboardingEditor || (!photos.length && !videos.length)) ? (
-              <DancerProfileMediaUploads
-                photos={profilePhotoItems}
-                videos={uploadedVideos.map((video) => ({ id: video.id, imageUrl: video.posterUrl, status: video.status, videoUrl: video.videoUrl, isPinned: video.isPinned }))}
-                onMediaPinned={handleMediaPinned}
-                isApproved={isApproved}
-                isPublic={isPublic}
-                isVideoLoading={isMediaLoading}
-                videoError={mediaError}
-                onOpen={openEditorSection}
-                onDeleteBusyChange={reportPhotoDeleteBusy}
-                onVideoDeleted={(videoId) => setUploadedVideos((current) => current.filter((video) => video.id !== videoId))}
-                onPhotoDeleted={(photoId, refreshedProfile) => onProfileChange?.(refreshedProfile || {
-                  ...profile,
-                  dancer_photos: (Array.isArray(profile?.dancer_photos) ? profile.dancer_photos : []).filter((photo: any) => photo.id !== photoId),
-                  pending_photo_reviews: (Array.isArray(profile?.pending_photo_reviews) ? profile.pending_photo_reviews : []).filter((photo: any) => photo.id !== photoId),
-                })}
-              />
-            ) : (
-              <>
-                <DancerPhotoCarousel dancerId={typeof profile?.id === "string" ? profile.id : undefined} photos={photos} stageName={previewName} videos={videos} onMediaPinned={handleMediaPinned} />
-                {isEditor ? (
-                  <div className="dancer-profile-builder-media-actions" aria-label="Edit profile media">
-                    <button onClick={() => openEditorSection("photos")} type="button"><span aria-hidden="true">+</span>{photos.length ? "Edit photos" : "Add photos"}</button>
-                    <button onClick={() => openEditorSection("videos")} type="button"><span aria-hidden="true">+</span>{videos.length ? "Edit videos" : "Add videos"}</button>
-                  </div>
-                ) : null}
-              </>
+            {isEditor ? mediaUploads : (
+              <DancerPhotoCarousel dancerId={typeof profile?.id === "string" ? profile.id : undefined} photos={photos} stageName={previewName} videos={videos} />
             )}
             {isEditor && !isOnboardingEditor ? (
               <>
@@ -4788,6 +4793,7 @@ function DancerPanel({
         <DancerProfilePreview
           buttonClassName="dancer-profile-media-preview-button"
           buttonLabel="Edit full profile"
+          showDashboardMedia
           city={draftIdentity.city}
           editorSections={profileEditorSections}
           isApproved
@@ -9121,6 +9127,7 @@ function DashboardStyles() {
       .dancer-payout-setup-notice strong { color:#fff; font-size:16px; }
       .dancer-payout-setup-notice small { color:var(--mydancr-dashboard-muted); font-size:11px; line-height:1.4; }
       .dancer-payout-setup-notice a,.dancer-payout-setup-notice > b { flex:0 0 auto; padding:10px 12px; border:1px solid rgba(76,223,166,.35); border-radius:11px; color:#70efbd; background:rgba(25,140,101,.12); font-size:11px; font-weight:900; text-decoration:none; }
+      .dancer-dashboard-media-manager { grid-column: 1 / -1; width: 100%; min-width: 0; }
       .dancer-profile-media-preview { grid-column: 1 / -1; min-width: 0; display: grid; grid-template-columns: 46px minmax(0,1fr) auto; align-items: center; gap: 13px; padding: 14px 15px; border: 1px solid rgba(126,234,255,.24); border-radius: 18px; background: radial-gradient(circle at 0 50%,rgba(34,199,255,.09),transparent 18rem),linear-gradient(135deg,rgba(21,13,39,.96),rgba(8,9,14,.98)); box-shadow: inset 3px 0 0 rgba(139,92,246,.82),0 16px 36px rgba(0,0,0,.25); }
       .dancer-profile-media-preview-icon { width: 44px; height: 44px; display: grid; place-items: center; border: 1px solid rgba(126,234,255,.28); border-radius: 50%; color: #8fe9fa; background: linear-gradient(145deg,rgba(124,58,237,.28),rgba(34,199,255,.1)); }
       .dancer-profile-media-preview-icon svg { width: 23px; height: 23px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }

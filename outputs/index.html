@@ -52932,7 +52932,6 @@
         "Report this profile photo"
       );
       syncProfilePhotoViewerWindow(activePhotoIndex);
-      syncProfileMediaDeleteControls();
 
       while (Number(modalGallery.profileVisiblePhotoCount || 0) <= activePhotoIndex && profileMediaHasMore("photo")) {
         appendNextProfileMediaBatch("photo", { skipObserve: true });
@@ -53235,247 +53234,9 @@
           photoUrl,
           photoSrcSet: profilePhotoSrcSet(profile, photoUrl)
         };
-      }).filter((item) => !deletedProfileMedia.has(`photo:${item.id}`));
-    }
-
-    const deletedProfileMedia = new Set();
-    let profileMediaOwner = null;
-    let profileMediaDeleteBusy = false;
-
-    function ownsOpenProfileMedia() {
-      return Boolean(isDancerSession() && profileMediaOwner?.token === authSession?.accessToken &&
-        profileMediaOwner?.id === modalGallery.dataset.profileMediaProfile);
-    }
-
-    async function verifyProfileMediaOwner(profileId) {
-      profileMediaOwner = null;
-      syncProfileMediaDeleteControls();
-      if (!isDancerSession()) return;
-      const token = authSession?.accessToken;
-      try {
-        const data = await getAuthenticatedJson("/api/dancer/profile");
-        if (data.ok && data.profile?.id === profileId && authSession?.accessToken === token &&
-          modalGallery.dataset.profileMediaProfile === profileId) {
-          profileMediaOwner = { id: profileId, token };
-          const savedPhotos = new Map((data.profile.dancer_photos || []).map(photo => [String(photo.id), photo]));
-          (modalGallery.profilePhotoItems || []).forEach(item => {
-            const saved = savedPhotos.get(item.id);
-            if (saved) Object.assign(item, { isPinned: saved.is_pinned === true || saved.isPinned === true,
-              isPrimary: saved.is_primary === true || saved.isPrimary === true, sortOrder: Number(saved.sort_order ?? saved.sortOrder ?? item.index ?? 0) });
-          });
-          syncProfileMediaDeleteControls();
-        }
-      } catch { /* Public viewing remains available if the owner session expires. */ }
-    }
-
-    function profileMediaDeleteButton(kind, item, grid = false) {
-      if (!ownsOpenProfileMedia() || !isReportableContentId(String(item?.id || ""))) return null;
-      const button = document.createElement("button");
-      button.type = "button";
-      button.className = grid ? "profile-media-delete" : "profile-media-viewer-delete";
-      button.dataset.deleteProfileMedia = "true";
-      button.setAttribute("aria-label", `Delete this ${kind}`);
-      button.disabled = profileMediaDeleteBusy;
-      button.innerHTML = '<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M10 10v7M14 10v7"/></svg>';
-      button.addEventListener("click", (event) => {
-        event.preventDefault();
-        event.stopPropagation();
-        void deleteOpenProfileMedia(kind, item);
-      });
-      return button;
-    }
-
-    function syncProfileMediaDeleteControls() {
-      [modalGallery, profilePhotoViewer, document.getElementById("profileTvViewer")].forEach((root) => {
-        root?.querySelectorAll("[data-delete-profile-media], [data-profile-media-menu]").forEach((button) => button.remove());
-      });
-      if (!ownsOpenProfileMedia()) return;
-      modalGallery.querySelectorAll(".thumb").forEach((thumb) => {
-        const kind = thumb.hasAttribute("data-profile-tv-index") ? "video" : "photo";
-        const items = kind === "video" ? modalGallery.profileTvVideos : modalGallery.profilePhotoItems;
-        const index = Number(kind === "video" ? thumb.dataset.profileTvIndex : thumb.dataset.profilePhotoIndex);
-        const button = profileMediaDeleteButton(kind, items?.[index], true);
-        if (!button) return;
-        let cell = thumb.closest(".profile-media-grid-cell");
-        if (!cell) {
-          cell = document.createElement("div");
-          cell.className = "profile-media-grid-cell";
-          cell.dataset.profileMediaKind = kind;
-          thumb.before(cell);
-          cell.appendChild(thumb);
-        }
-        cell.appendChild(button);
-        const menu = profileMediaPinMenu(kind, items?.[index], true);
-        if (menu) cell.appendChild(menu);
-      });
-      const photo = modalGallery.profilePhotoItems?.[Number(profilePhotoViewer?.dataset.profilePhotoIndex || 0)];
-      const photoButton = profileMediaDeleteButton("photo", photo);
-      if (photoButton) profilePhotoViewer?.querySelector(".profile-photo-viewer-actions")?.appendChild(photoButton);
-      const photoMenu = profileMediaPinMenu("photo", photo);
-      if (photoMenu) profilePhotoViewer?.querySelector(".profile-photo-viewer-actions")?.appendChild(photoMenu);
-      const tv = document.getElementById("profileTvViewer");
-      const video = tv?.profileTvVideos?.[Number(tv.dataset.videoIndex || 0)];
-      // The TV viewer can also open outside this profile; require matching membership.
-      if (video && modalGallery.profileTvVideos?.some((item) => item.id === video.id)) {
-        const videoButton = profileMediaDeleteButton("video", video);
-        if (videoButton) tv.querySelector(".profile-tv-viewer-actions")?.appendChild(videoButton);
-        const videoMenu = profileMediaPinMenu("video", video);
-        if (videoMenu) tv.querySelector(".profile-tv-viewer-actions")?.appendChild(videoMenu);
-      }
-    }
-
-    function profileMediaPinMenu(kind, item, grid = false) {
-      if (!ownsOpenProfileMedia() || !isReportableContentId(String(item?.id || ""))) return null;
-      const menu = document.createElement("details");
-      menu.className = `dancer-media-menu is-${grid ? "left" : "inline"}`;
-      menu.dataset.profileMediaMenu = "true";
-      const summary = document.createElement("summary");
-      summary.setAttribute("aria-label", `Options for this ${kind}`);
-      summary.setAttribute("aria-disabled", String(profileMediaDeleteBusy));
-      summary.innerHTML = '<span aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg></span>';
-      summary.addEventListener("click", event => { if (profileMediaDeleteBusy) event.preventDefault(); });
-      const popover = document.createElement("div");
-      popover.className = "dancer-media-menu-popover";
-      const action = document.createElement("button");
-      action.type = "button";
-      action.textContent = item.isPinned ? "Unpin" : "Pin";
-      action.disabled = profileMediaDeleteBusy;
-      action.setAttribute("aria-label", `${item.isPinned ? "Unpin" : "Pin"} this ${kind}`);
-      action.addEventListener("click", () => { menu.open = false; summary.focus(); void pinOpenProfileMedia(kind, item); });
-      menu.addEventListener("click", event => event.stopPropagation());
-      menu.addEventListener("toggle", () => {
-        if (menu.open) document.querySelectorAll("details.dancer-media-menu[open]").forEach(other => { if (other !== menu) other.open = false; });
-      });
-      menu.addEventListener("keydown", event => {
-        if (event.key === "Escape" && menu.open) { event.preventDefault(); event.stopPropagation(); menu.open = false; summary.focus(); }
-      });
-      popover.appendChild(action); menu.append(summary, popover);
-      return menu;
-    }
-
-    function orderOpenProfileMedia(items, kind) {
-      return [...items].sort((left, right) => {
-        if (Boolean(left.isPinned) !== Boolean(right.isPinned)) return left.isPinned ? -1 : 1;
-        if (kind === "photo") {
-          if (Boolean(left.isPrimary) !== Boolean(right.isPrimary)) return left.isPrimary ? -1 : 1;
-          return Number(left.sortOrder ?? left.index ?? 0) - Number(right.sortOrder ?? right.index ?? 0);
-        }
-        return String(right.publishedAt || "").localeCompare(String(left.publishedAt || ""));
       });
     }
 
-    function refreshPinnedProfileMedia(kind) {
-      const photoId = modalGallery.profilePhotoItems?.[Number(profilePhotoViewer?.dataset.profilePhotoIndex || 0)]?.id;
-      const tv = document.getElementById("profileTvViewer");
-      const videoId = tv?.profileTvVideos?.[Number(tv.dataset.videoIndex || 0)]?.id;
-      const photoCount = Number(modalGallery.profileVisiblePhotoCount || 0);
-      const videoCount = Number(modalGallery.profileVisibleVideoCount || 0);
-      modalGallery.profilePhotoItems = orderOpenProfileMedia(modalGallery.profilePhotoItems || [], "photo");
-      modalGallery.profileTvVideos = orderOpenProfileMedia(modalGallery.profileTvVideos || [], "video");
-      modalGallery.profileVisiblePhotoCount = 0;
-      modalGallery.profileVisibleVideoCount = 0;
-      modalGallery.innerHTML = "";
-      // Preserve already loaded items while updating the order and thumbnail indexes.
-      do { appendNextProfileMediaBatch("photo", { skipObserve: true }); } while (modalGallery.profileVisiblePhotoCount < Math.min(photoCount, modalGallery.profilePhotoItems.length));
-      do { appendNextProfileMediaBatch("video", { skipObserve: true }); } while (modalGallery.profileVisibleVideoCount < Math.min(videoCount, modalGallery.profileTvVideos.length));
-      setProfileMediaTab(kind);
-      if (profilePhotoViewer && !profilePhotoViewer.hidden && photoId) {
-        renderProfilePhotoViewerSlides();
-        scrollProfilePhotoViewerTo(modalGallery.profilePhotoItems.findIndex(item => item.id === photoId), { instant: true });
-      }
-      if (tv && !tv.hidden && modalGallery.profileTvVideos.some(item => item.id === videoId)) {
-        tv.profileTvVideos = modalGallery.profileTvVideos;
-        renderProfileTvViewerSlides(tv, tv.profileTvVideos, tv.dataset.profileName || "Dancer");
-        renderProfileTvViewerItem(tv.profileTvVideos.findIndex(item => item.id === videoId), { instant: true });
-      }
-    }
-
-    async function pinOpenProfileMedia(kind, item) {
-      if (!ownsOpenProfileMedia() || profileMediaDeleteBusy || !isReportableContentId(String(item?.id || ""))) return;
-      const items = kind === "photo" ? modalGallery.profilePhotoItems : modalGallery.profileTvVideos;
-      if (!items?.some(media => media.id === item.id)) return;
-      const profileId = modalGallery.dataset.profileMediaProfile;
-      const token = authSession?.accessToken;
-      const pinned = !item.isPinned;
-      const controller = new AbortController();
-      const timeout = window.setTimeout(() => controller.abort(), 15000);
-      profileMediaDeleteBusy = true;
-      syncProfileMediaDeleteControls();
-      try {
-        const headers = { ...authenticatedRequestHeaders(), "Content-Type": "application/json" };
-        const response = await fetch("/api/dancer/media/pin", {
-          method: "PATCH", headers, signal: controller.signal,
-          body: JSON.stringify({ mediaType: kind, mediaId: item.id, pinned })
-        });
-        const data = await response.json().catch(() => ({}));
-        if (!response.ok || !data.ok || data.media?.id !== item.id || data.media.isPinned !== pinned) throw new Error(data.error || "Unable to save the pin. Try again.");
-        if (controller.signal.aborted || authSession?.accessToken !== token) return;
-        applyResponseSession(data, headers);
-        if (profileMediaOwner?.id === profileId) profileMediaOwner.token = authSession?.accessToken;
-        profileNavigationPrefetchCache.clear();
-        if (modalGallery.dataset.profileMediaProfile !== profileId || !ownsOpenProfileMedia()) return;
-        const current = (kind === "photo" ? modalGallery.profilePhotoItems : modalGallery.profileTvVideos)?.find(media => media.id === item.id);
-        if (!current) return;
-        current.isPinned = pinned;
-        refreshPinnedProfileMedia(kind);
-        showToast(`${kind === "photo" ? "Photo" : "Video"} ${pinned ? "pinned" : "unpinned"}`);
-      } catch (error) {
-        if (modalGallery.dataset.profileMediaProfile === profileId && authSession?.accessToken === token) showToast(controller.signal.aborted ? "Unable to save the pin. Try again." : error.message || "Unable to save the pin. Try again.");
-      } finally {
-        window.clearTimeout(timeout);
-        profileMediaDeleteBusy = false;
-        syncProfileMediaDeleteControls();
-      }
-    }
-
-    async function deleteOpenProfileMedia(kind, item) {
-      if (!ownsOpenProfileMedia() || profileMediaDeleteBusy) return;
-      if (!window.confirm(`Delete this ${kind}? This cannot be undone.`)) return;
-      const profileId = modalGallery.dataset.profileMediaProfile;
-      profileMediaDeleteBusy = true;
-      syncProfileMediaDeleteControls();
-      try {
-        const headers = { ...authenticatedRequestHeaders(), "Content-Type": "application/json" };
-        const response = await fetch(kind === "photo" ? "/api/dancer/photos" : `/api/dancer/tv/videos/${encodeURIComponent(item.id)}`, {
-          method: "DELETE",
-          headers,
-          ...(kind === "photo" ? { body: JSON.stringify({ photoId: item.id }) } : {})
-        });
-        const data = await response.json().catch(() => ({}));
-        if (!response.ok || !data.ok) throw new Error(data.error || `Unable to delete this ${kind}.`);
-        applyResponseSession(data, headers);
-        deletedProfileMedia.add(`${kind}:${item.id}`);
-        if (profileMediaOwner?.id === profileId && isDancerSession()) profileMediaOwner.token = authSession?.accessToken;
-        profileNavigationPrefetchCache.clear();
-        if (modalGallery.dataset.profileMediaProfile === profileId) {
-          closeProfilePhotoViewer();
-          closeProfileTvViewer();
-          modalGallery.profilePhotoItems = (modalGallery.profilePhotoItems || []).filter((photo) => !deletedProfileMedia.has(`photo:${photo.id}`));
-          modalGallery.profileTvVideos = (modalGallery.profileTvVideos || []).filter((video) => !deletedProfileMedia.has(`video:${video.id}`));
-          modalGallery.profileVisiblePhotoCount = 0;
-          modalGallery.profileVisibleVideoCount = 0;
-          modalGallery.innerHTML = "";
-          appendNextProfileMediaBatch("photo", { skipObserve: true });
-          appendNextProfileMediaBatch("video", { skipObserve: true });
-          syncProfileMediaTabCounts(modalGallery.profilePhotoItems.length, modalGallery.profileTvVideos.length);
-          setProfileMediaTab(kind);
-          (kind === "photo" ? modalMediaPhotoTab : modalMediaTvTab).focus();
-        }
-        showToast(`${kind === "photo" ? "Photo" : "Video"} deleted`);
-        void hydrateDancerApprovalProgress();
-      } catch (error) {
-        const message = error.message || "Unable to delete this item. Try again.";
-        if (modalGallery.dataset.profileMediaProfile === profileId) {
-          if (profilePhotoViewerStatus) profilePhotoViewerStatus.textContent = message;
-          const videoStatus = document.getElementById("profileTvViewerStatus");
-          if (videoStatus) videoStatus.textContent = message;
-        }
-        showToast(message);
-      } finally {
-        profileMediaDeleteBusy = false;
-        syncProfileMediaDeleteControls();
-      }
-    }
 
     function profilePhotoThumbMarkup(item, total, galleryIndex = item.index) {
       const photoAttrs = nativeResponsivePhotoAttrs(item.photoUrl, item.photoSrcSet);
@@ -53573,7 +53334,6 @@
         }
       }
       if (appended) {
-        syncProfileMediaDeleteControls();
         profileMediaLastAppendScrollTop = Math.max(0, Number(profileModal?.scrollTop || 0));
       }
       sentinel.hidden = !profileMediaHasMore(tab);
@@ -53620,7 +53380,6 @@
       appendNextProfileMediaBatch("photo", { skipObserve: true });
       profileMediaLastAppendScrollTop = 0;
       profileMediaSentinel();
-      void verifyProfileMediaOwner(String(profile.id || ""));
     }
 
     function shiftNotesMarkup(profile) {
@@ -54386,7 +54145,6 @@
       const scheduleLabel = profileTvScheduleLabel(item);
       overlay.dataset.videoId = String(item.id || "");
       overlay.dataset.videoIndex = String(nextIndex);
-      syncProfileMediaDeleteControls();
       if (currentIndex !== nextIndex) delete overlay.dataset.loadedVideoIndex;
       document.getElementById("profileTvViewerSchedule").textContent = `${scheduleLabel} · Scroll up or down · Video ${nextIndex + 1} of ${videos.length}`;
       document.getElementById("profileTvViewerStatus").textContent = "";
@@ -54675,7 +54433,7 @@
           modalGallery.profileTvLoadRequest !== requestToken
         ) return;
         if (!payload?.ok || !Array.isArray(payload.videos)) throw new Error("Unable to load profile videos.");
-        const videos = payload.videos.filter((video) => !deletedProfileMedia.has(`video:${video.id}`)).slice(0, MAX_DANCER_PROFILE_VIDEOS);
+        const videos = payload.videos.slice(0, MAX_DANCER_PROFILE_VIDEOS);
         modalGallery.profileTvVideos = videos;
         modalGallery.profileVisibleVideoCount = 0;
         appendNextProfileMediaBatch("video", { skipObserve: true });

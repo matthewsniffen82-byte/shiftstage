@@ -159,7 +159,7 @@ test("profile grid thumbnails stay passive while the full viewer has no thumbnai
       /async function loadProfileMyDancrTv\(profile\)[\s\S]*?\n    function formatProfileTvShift/,
     )?.[0] || "";
 
-  assert.match(loader, /const videos = payload\.videos\.filter\([\s\S]*?deletedProfileMedia\.has[\s\S]*?\.slice\(0, MAX_DANCER_PROFILE_VIDEOS\)/);
+  assert.match(loader, /const videos = payload\.videos\.slice\(0, MAX_DANCER_PROFILE_VIDEOS\)/);
   assert.match(loader, /modalGallery\.profileTvVideos = videos/);
   assert.match(loader, /modalGallery\.dataset\.profileMediaProfile !== requestProfileId/);
   assert.match(loader, /appendNextProfileMediaBatch\("video"/);
