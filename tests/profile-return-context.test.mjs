@@ -15,7 +15,7 @@ test("dancer profile overlays restore the exact dashboard surface that opened th
   const restore =
     liveApp.match(/function restoreProfileReturnContext[\s\S]*?\n    }/)?.[0] || "";
   const openProfile =
-    liveApp.match(/function openProfileModal[\s\S]*?\n    let profileTvViewerOwnsFullscreen/)?.[0] || "";
+    liveApp.match(/function openProfileModal[\s\S]*?\n    let profileTvViewerMuted/)?.[0] || "";
   const closeProfile =
     liveApp.match(/function closeProfileModal[\s\S]*?\n    function syncOverlayScrollLock/)?.[0] || "";
 

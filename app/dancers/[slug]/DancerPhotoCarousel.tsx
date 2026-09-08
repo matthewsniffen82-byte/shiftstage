@@ -136,7 +136,6 @@ export function DancerPhotoCarousel({
     photoMedia.length || !videoMedia.length ? "photo" : "video",
   );
   const [viewer, setViewer] = useState<MediaViewer | null>(null);
-  const [viewerExpanded, setViewerExpanded] = useState(false);
   const [viewerControlsHost, setViewerControlsHost] = useState<HTMLElement | null>(null);
   const [visibleCounts, setVisibleCounts] = useState<Record<MediaTab, number>>({
     photo: DANCER_PROFILE_MEDIA_PAGE_SIZE,
@@ -153,9 +152,7 @@ export function DancerPhotoCarousel({
   const [playbackFeedback, setPlaybackFeedback] = useState<PlaybackFeedback | null>(null);
   const deepLinkHandled = useRef(false);
   const closeButton = useRef<HTMLButtonElement | null>(null);
-  const viewerRoot = useRef<HTMLDivElement | null>(null);
   const viewerFeed = useRef<HTMLDivElement | null>(null);
-  const viewerOwnsFullscreen = useRef(false);
   const viewerTrigger = useRef<HTMLButtonElement | null>(null);
   const pendingViewerIndex = useRef(0);
   const viewerOpeningIndex = useRef<number | null>(null);
@@ -197,7 +194,7 @@ export function DancerPhotoCarousel({
       behavior: options.instant || window.matchMedia("(prefers-reduced-motion: reduce)").matches
         ? "instant"
         : "smooth",
-      top: Math.max(0, (slide?.offsetTop ?? 0) - (parseFloat(getComputedStyle(feed).scrollPaddingTop) || 0)),
+      top: index === 0 ? 0 : Math.max(0, slide?.offsetTop ?? 0),
     });
     return true;
   }, []);
@@ -287,31 +284,6 @@ export function DancerPhotoCarousel({
   }, [activeItems.length, activeTab, hasMoreItems, visibleItemCount]);
 
   useEffect(() => {
-    const onFullscreenChange = () => {
-      if (viewerHasFullscreen(viewerRoot.current)) {
-        viewerOwnsFullscreen.current = true;
-        const requestedIndex = viewerOpeningIndex.current ?? pendingViewerIndex.current;
-        window.requestAnimationFrame(() => {
-          scrollViewerToIndex(requestedIndex, { instant: true });
-        });
-      } else {
-        if (viewerOwnsFullscreen.current) {
-          viewerOpeningIndex.current = pendingViewerIndex.current;
-          setViewerExpanded(false);
-          settleViewerAtIndex(pendingViewerIndex.current);
-        }
-        viewerOwnsFullscreen.current = false;
-      }
-    };
-    document.addEventListener("fullscreenchange", onFullscreenChange);
-    document.addEventListener("webkitfullscreenchange", onFullscreenChange);
-    return () => {
-      document.removeEventListener("fullscreenchange", onFullscreenChange);
-      document.removeEventListener("webkitfullscreenchange", onFullscreenChange);
-    };
-  }, [scrollViewerToIndex, settleViewerAtIndex]);
-
-  useEffect(() => {
     if (!viewerKind) return;
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
@@ -364,7 +336,6 @@ export function DancerPhotoCarousel({
           setReportError("");
           return;
         }
-        exitViewerFullscreen();
         window.cancelAnimationFrame(viewerOpeningFrame.current);
         viewerOpeningFrame.current = 0;
         viewerOpeningIndex.current = null;
@@ -399,15 +370,12 @@ export function DancerPhotoCarousel({
     viewerOpeningIndex.current = index;
     setShareStatus("");
     setReportTarget(null);
-    setViewerExpanded(false);
     flushSync(() => setViewer({ kind, index }));
     window.requestAnimationFrame(() => scrollViewerToIndex(index, { instant: true }));
     settleViewerAtIndex(index);
   }
 
   function closeViewer() {
-    exitViewerFullscreen();
-    setViewerExpanded(false);
     window.cancelAnimationFrame(viewerOpeningFrame.current);
     viewerOpeningFrame.current = 0;
     viewerOpeningIndex.current = null;
@@ -437,71 +405,10 @@ export function DancerPhotoCarousel({
     showPlaybackFeedback(index, paused);
   }
 
-  function toggleViewerExpanded() {
-    const expanded = !viewerExpanded;
-    viewerOpeningIndex.current = viewerIndex;
-    flushSync(() => setViewerExpanded(expanded));
-    if (expanded) void requestViewerFullscreen(viewerIndex);
-    else {
-      exitViewerFullscreen();
-      settleViewerAtIndex(viewerIndex);
-    }
-  }
-
-  async function requestViewerFullscreen(requestedIndex: number) {
-    const element = viewerRoot.current as FullscreenViewerElement | null;
-    if (!element) {
-      settleViewerAtIndex(requestedIndex);
-      return;
-    }
-    const activeFullscreenElement = fullscreenElement();
-    if (activeFullscreenElement) {
-      viewerOwnsFullscreen.current = viewerHasFullscreen(element, activeFullscreenElement);
-      settleViewerAtIndex(requestedIndex);
-      return;
-    }
-    const root = document.documentElement as FullscreenViewerElement;
-    const targets = root === element ? [root] : [root, element];
-    try {
-      for (const target of targets) {
-        const requests: Array<() => Promise<void> | void> = [];
-        if (typeof target.requestFullscreen === "function") {
-          requests.push(() => target.requestFullscreen({ navigationUI: "hide" }));
-          requests.push(() => target.requestFullscreen());
-        }
-        if (typeof target.webkitRequestFullscreen === "function") {
-          requests.push(() => target.webkitRequestFullscreen?.());
-        }
-        for (const request of requests) {
-          try {
-            await request();
-          } catch {
-            continue;
-          }
-          viewerOwnsFullscreen.current = viewerHasFullscreen(element);
-          if (viewerOwnsFullscreen.current) return;
-        }
-      }
-      viewerOwnsFullscreen.current = false;
-    } finally {
-      settleViewerAtIndex(requestedIndex);
-    }
-  }
-
-  function exitViewerFullscreen() {
-    const documentWithWebkit = document as FullscreenViewerDocument;
-    const exit = document.exitFullscreen || documentWithWebkit.webkitExitFullscreen;
-    if (!viewerOwnsFullscreen.current || !fullscreenElement() || !exit) {
-      viewerOwnsFullscreen.current = false;
-      return;
-    }
-    viewerOwnsFullscreen.current = false;
-    try {
-      const result = exit.call(document);
-      if (result && typeof result.catch === "function") void result.catch(() => undefined);
-    } catch {
-      // The fixed overlay remains available when device fullscreen has already exited.
-    }
+  function toggleViewerPlayback(video: HTMLVideoElement) {
+    playbackTapIndex.current = viewerIndex;
+    if (video.paused) void video.play().catch(() => undefined);
+    else video.pause();
   }
 
   function viewerShareUrl(item: ProfileMedia) {
@@ -798,29 +705,30 @@ export function DancerPhotoCarousel({
         <div
           aria-label={`${stageName} ${viewer.kind} viewer`}
           aria-modal="true"
-          className={`profile-media-viewer profile-media-card-feed is-${viewer.kind}${viewerExpanded ? " is-profile-card-expanded" : ""}`}
+          className={`profile-media-viewer profile-media-card-feed is-${viewer.kind}`}
           data-profile-media-heading={`${stageName} · ${viewer.kind === "photo" ? "Photos" : "Videos"}`}
-          ref={viewerRoot}
           role="dialog"
         >
-          <div className="profile-media-card-heading">
-            {stageName} · {viewer.kind === "photo" ? "Photos" : "Videos"}
-          </div>
-          <button
-            aria-label="Close profile media"
-            className="profile-media-viewer-close"
-            onClick={closeViewer}
-            ref={closeButton}
-            type="button"
-          >
-            ×
-          </button>
           <div
             className="profile-media-viewer-stage"
-            data-profile-media-snap-feed
+            data-profile-media-scroll-feed
             onScroll={handleViewerScroll}
             ref={viewerFeed}
           >
+            <div className="profile-media-card-header">
+              <div className="profile-media-card-heading">
+                {stageName} · {viewer.kind === "photo" ? "Photos" : "Videos"}
+              </div>
+              <button
+                aria-label="Close profile media"
+                className="profile-media-viewer-close"
+                onClick={closeViewer}
+                ref={closeButton}
+                type="button"
+              >
+                ×
+              </button>
+            </div>
             {viewerItems.map((item, index) => (
               <section
                 aria-label={`${stageName} ${item.kind} ${index + 1} of ${viewerItems.length}`}
@@ -848,11 +756,17 @@ export function DancerPhotoCarousel({
                 ) : (
                   <video
                     aria-label={`${stageName} video ${index + 1} of ${viewerItems.length}`}
-                    controls
+                    controls={false}
                     controlsList="nofullscreen noremoteplayback nodownload"
                     disablePictureInPicture
                     loop
                     muted={inlineMuted}
+                    onClick={(event) => toggleViewerPlayback(event.currentTarget)}
+                    onKeyDown={(event) => {
+                      if (event.key !== "Enter" && event.key !== " ") return;
+                      event.preventDefault();
+                      toggleViewerPlayback(event.currentTarget);
+                    }}
                     onPause={() => handleViewerPlaybackChange(index, true)}
                     onPlay={() => handleViewerPlaybackChange(index, false)}
                     onLoadedData={() => {
@@ -871,6 +785,8 @@ export function DancerPhotoCarousel({
                       }
                     }}
                     playsInline
+                    role="button"
+                    tabIndex={index === viewerIndex ? 0 : -1}
                     poster={Math.abs(index - viewerIndex) <= 2 ? item.posterUrl || undefined : undefined}
                     preload={index === viewerIndex
                       ? "auto"
@@ -926,6 +842,20 @@ export function DancerPhotoCarousel({
                   </div>
                 ) : null}
                 <div className="profile-media-viewer-actions">
+                  {viewer.kind === "video" ? (
+                    <button
+                      aria-label={inlineMuted ? "Turn sound on" : "Mute video"}
+                      aria-pressed={!inlineMuted}
+                      className="profile-media-viewer-sound"
+                      onClick={() => setInlineMuted((muted) => !muted)}
+                      type="button"
+                    >
+                      <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M4 10v4h4l5 4V6L8 10H4Z" />
+                        {inlineMuted ? <path d="m17 9 4 6m0-6-4 6" /> : <path d="M16 9.5a4 4 0 0 1 0 5M18.5 7a7.5 7.5 0 0 1 0 10" />}
+                      </svg>
+                    </button>
+                  ) : null}
                   {(() => {
                     const like = mediaLikeStateFor(activeViewerItem.kind, activeViewerItem.id);
                     return (
@@ -966,15 +896,6 @@ export function DancerPhotoCarousel({
                       </button>
                     ) : null;
                   })()}
-                  <button
-                    aria-label={viewerExpanded ? "Return to scrolling cards" : "Expand this media"}
-                    aria-pressed={viewerExpanded}
-                    className="profile-media-card-expand"
-                    onClick={toggleViewerExpanded}
-                    type="button"
-                  >
-                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3H3v5M16 3h5v5M21 16v5h-5M3 21v-5h5" /></svg>
-                  </button>
                   <span aria-live="polite" className="profile-media-viewer-share-status">
                     {shareStatus}
                   </span>
@@ -996,30 +917,6 @@ export function DancerPhotoCarousel({
         </div>
       ) : null}
     </section>
-  );
-}
-
-type FullscreenViewerDocument = Document & {
-  webkitExitFullscreen?: () => Promise<void> | void;
-  webkitFullscreenElement?: Element | null;
-};
-
-type FullscreenViewerElement = HTMLElement & {
-  webkitRequestFullscreen?: () => Promise<void> | void;
-};
-
-function fullscreenElement() {
-  return document.fullscreenElement ||
-    (document as FullscreenViewerDocument).webkitFullscreenElement ||
-    null;
-}
-
-function viewerHasFullscreen(
-  viewer: Element | null,
-  activeFullscreenElement = fullscreenElement(),
-) {
-  return Boolean(viewer && activeFullscreenElement) && (
-    activeFullscreenElement === viewer || activeFullscreenElement === document.documentElement
   );
 }
 

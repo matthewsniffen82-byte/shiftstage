@@ -94,7 +94,7 @@ test("live modal and dashboard previews use the same stable photo treatment", ()
   );
   assert.match(
     liveShell,
-    /image\.style\.backgroundImage = `url\('\$\{safeUrl\}'\), radial-gradient[\s\S]*?linear-gradient/,
+    /image\.style\.backgroundImage = `url\('\$\{safeUrl\}'\)`/,
   );
   assert.match(
     dashboard,

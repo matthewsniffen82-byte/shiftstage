@@ -425,7 +425,7 @@ test("approved videos appear on full dancer and venue profiles", () => {
   assert.match(liveApp, /stage\.addEventListener\("scroll"[\s\S]*?profileTvViewerScrollTarget\([\s\S]*?renderProfileTvViewerItem\(target\.index, \{ scroll: false \}\)/);
   assert.match(liveApp, /function renderProfileTvViewerItem\(index, options = \{\}\)[\s\S]*?profileTvVideos[\s\S]*?scrollProfileTvViewerTo\(nextIndex, options\)/);
   assert.doesNotMatch(liveApp, /profile-tv-viewer-gallery|profileTvViewerGallery/);
-  assert.match(liveApp, /requestProfileTvViewerFullscreen\(overlay\)[\s\S]*?requestFullscreen\(\{ navigationUI: "hide" \}\)/);
+  assert.doesNotMatch(liveApp, /requestProfileTvViewerFullscreen/);
   assert.match(liveApp, /async function shareProfileTvVideo\(\)[\s\S]*?`\/tv\/\$\{encodeURIComponent\(videoId\)\}`[\s\S]*?navigator\.share[\s\S]*?copyText\(url, "Video link copied"\)/);
   assert.doesNotMatch(liveApp, /all\.href = `\/tv\?|link\.href = `\/tv\/\$\{encodeURIComponent\(item\.id\)\}`/);
   assert.doesNotMatch(liveApp, /id="homeTvTeaserLink"/);

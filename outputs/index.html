@@ -32077,7 +32077,7 @@
   <link href="/dancr-aesthetic.v1.css?v=270" rel="stylesheet">
   <link href="/dancr-feedback.v1.css?v=2" rel="stylesheet">
   <link href="/profile-media-owner-controls.css?v=3" rel="stylesheet">
-  <link href="/profile-media-card-feed.css?v=1" rel="stylesheet">
+  <link href="/profile-media-card-feed.css?v=2" rel="stylesheet">
 </head>
 <body class="dancr-button-system">
   <div class="app">
@@ -42223,8 +42223,8 @@
               </button>
               <input id="modalVideoProgress" type="range" min="0" max="0.1" step="0.1" value="0" aria-label="TV video progress" aria-valuetext="0:00 of 0:00">
               <output id="modalVideoTime" for="modalVideoProgress">0:00 / 0:00</output>
-              <button class="profile-modal-media-expand" id="modalMediaExpand" type="button" aria-label="Open selected profile video full screen" title="View video full screen" hidden>
-                <svg class="profile-modal-media-control-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3H3v5"></path><path d="M16 3h5v5"></path><path d="M8 21H3v-5"></path><path d="M16 21h5v-5"></path></svg>
+              <button class="profile-modal-media-expand" id="modalMediaExpand" type="button" aria-label="Open selected profile video in scrolling cards" title="View video cards" hidden>
+                <svg class="profile-modal-media-control-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"></path><path d="m13 6 6 6-6 6"></path></svg>
               </button>
             </div>
           </div>
@@ -42592,7 +42592,6 @@
     const profilePhotoViewerStatus = document.getElementById("profilePhotoViewerStatus");
     if (profilePhotoViewer) document.body.appendChild(profilePhotoViewer);
     let profilePhotoViewerReturnTarget = null;
-    let profilePhotoViewerOwnsFullscreen = false;
     let profilePhotoViewerScrollFrame = 0;
     const modalName = document.getElementById("modalName");
     const modalStatus = document.getElementById("modalStatus");
@@ -52938,114 +52937,21 @@
       });
     }
 
-    function prepareProfileMediaCardExpand(overlay, onToggle) {
-      let heading = overlay.querySelector(".profile-media-card-heading");
-      if (!heading) {
-        heading = document.createElement("div");
+    function mountProfileMediaCardHeader(overlay, scroller = null) {
+      const host = scroller || overlay.querySelector(".profile-photo-viewer-shell, .profile-tv-viewer-shell");
+      if (!host) return;
+      let header = overlay.querySelector(".profile-media-card-header");
+      if (!header) {
+        header = document.createElement("div");
+        header.className = "profile-media-card-header";
+        const heading = document.createElement("div");
         heading.className = "profile-media-card-heading";
-        overlay.prepend(heading);
+        header.appendChild(heading);
+        const close = overlay.querySelector(".profile-photo-viewer-close, .profile-tv-viewer-close");
+        if (close) header.appendChild(close);
       }
-      heading.textContent = overlay.dataset.profileMediaHeading || "Profile media";
-      let button = overlay.querySelector("[data-expand-profile-card]");
-      if (!button) {
-        button = document.createElement("button");
-        button.type = "button";
-        button.className = "profile-media-card-expand";
-        button.dataset.expandProfileCard = "true";
-        button.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3H3v5M16 3h5v5M21 16v5h-5M3 21v-5h5"></path></svg>';
-        button.addEventListener("click", (event) => {
-          event.preventDefault();
-          event.stopPropagation();
-          onToggle();
-        });
-        overlay.querySelector(".profile-photo-viewer-actions, .profile-tv-viewer-actions")?.appendChild(button);
-      }
-      const expanded = overlay.classList.contains("is-profile-card-expanded");
-      button.setAttribute("aria-label", expanded ? "Return to scrolling cards" : "Expand this media");
-      button.setAttribute("aria-pressed", String(expanded));
-    }
-
-    function toggleProfilePhotoCardExpanded() {
-      if (profilePhotoViewer.hidden) return;
-      const index = Number(profilePhotoViewer.dataset.profilePhotoIndex || 0);
-      const expanded = profilePhotoViewer.classList.toggle("is-profile-card-expanded");
-      prepareProfileMediaCardExpand(profilePhotoViewer, toggleProfilePhotoCardExpanded);
-      if (expanded) void requestProfilePhotoViewerFullscreen(profilePhotoViewer, index);
-      else exitProfilePhotoViewerFullscreen();
-      window.requestAnimationFrame(() => scrollProfilePhotoViewerTo(index, { instant: true }));
-    }
-
-    function toggleProfileTvCardExpanded() {
-      const overlay = document.getElementById("profileTvViewer");
-      if (!overlay || overlay.hidden) return;
-      const index = Number(overlay.dataset.videoIndex || 0);
-      overlay.dataset.openingVideoIndex = String(index);
-      const expanded = overlay.classList.toggle("is-profile-card-expanded");
-      prepareProfileMediaCardExpand(overlay, toggleProfileTvCardExpanded);
-      if (expanded) void requestProfileTvViewerFullscreen(overlay);
-      else exitProfileTvViewerFullscreen();
-      settleProfileTvViewerOpening(overlay, index);
-    }
-
-    function profilePhotoFullscreenElement() {
-      return document.fullscreenElement || document.webkitFullscreenElement || null;
-    }
-
-    function profilePhotoViewerHasFullscreen(overlay, fullscreenElement = profilePhotoFullscreenElement()) {
-      return Boolean(fullscreenElement) && (
-        fullscreenElement === overlay || fullscreenElement === document.documentElement
-      );
-    }
-
-    async function requestProfilePhotoViewerFullscreen(overlay, requestedIndex) {
-      if (!overlay) return false;
-      const activeFullscreenElement = profilePhotoFullscreenElement();
-      if (activeFullscreenElement) {
-        profilePhotoViewerOwnsFullscreen = profilePhotoViewerHasFullscreen(overlay, activeFullscreenElement);
-        return profilePhotoViewerOwnsFullscreen;
-      }
-      const root = document.documentElement;
-      const targets = root === overlay ? [root] : [root, overlay];
-      for (const target of targets) {
-        const requests = [];
-        if (typeof target.requestFullscreen === "function") {
-          requests.push(() => target.requestFullscreen({ navigationUI: "hide" }));
-          requests.push(() => target.requestFullscreen());
-        }
-        if (typeof target.webkitRequestFullscreen === "function") {
-          requests.push(() => target.webkitRequestFullscreen());
-        }
-        for (const request of requests) {
-          try {
-            await request();
-          } catch {
-            continue;
-          }
-          profilePhotoViewerOwnsFullscreen = profilePhotoViewerHasFullscreen(overlay);
-          if (profilePhotoViewerOwnsFullscreen) {
-            window.requestAnimationFrame(() => scrollProfilePhotoViewerTo(requestedIndex, { instant: true }));
-            return true;
-          }
-        }
-      }
-      profilePhotoViewerOwnsFullscreen = false;
-      return false;
-    }
-
-    function exitProfilePhotoViewerFullscreen() {
-      const fullscreenElement = profilePhotoFullscreenElement();
-      const exit = document.exitFullscreen || document.webkitExitFullscreen;
-      if (!profilePhotoViewerOwnsFullscreen || !fullscreenElement || typeof exit !== "function") {
-        profilePhotoViewerOwnsFullscreen = false;
-        return;
-      }
-      profilePhotoViewerOwnsFullscreen = false;
-      try {
-        const result = exit.call(document);
-        if (result && typeof result.catch === "function") result.catch(() => {});
-      } catch {
-        // The fixed immersive overlay remains available if device fullscreen exits first.
-      }
+      header.querySelector(".profile-media-card-heading").textContent = overlay.dataset.profileMediaHeading || "Profile media";
+      host.prepend(header);
     }
 
     function syncProfilePhotoViewerImage() {
@@ -53060,6 +52966,7 @@
       const items = Array.isArray(modalGallery.profilePhotoItems) ? modalGallery.profilePhotoItems : [];
       const profileName = modalName.textContent.trim() || "Dancer";
       mountProfileMediaCardControls(profilePhotoViewer);
+      mountProfileMediaCardHeader(profilePhotoViewer);
       profilePhotoViewerImage.innerHTML = "";
       items.forEach((item, index) => {
         const slide = document.createElement("section");
@@ -53074,6 +52981,7 @@
         slide.appendChild(image);
         profilePhotoViewerImage.appendChild(slide);
       });
+      mountProfileMediaCardHeader(profilePhotoViewer, profilePhotoViewerImage);
       return items.length;
     }
 
@@ -53086,7 +52994,7 @@
         }
         const safeUrl = safeCssUrl(image.dataset.profilePhotoUrl);
         if (safeUrl) {
-          image.style.backgroundImage = `url('${safeUrl}'), radial-gradient(circle at 50% 32%, rgba(126,234,255,.1), transparent 26%), linear-gradient(145deg, rgba(109,40,217,.18), #020204 68%)`;
+          image.style.backgroundImage = `url('${safeUrl}')`;
         }
       });
     }
@@ -53147,7 +53055,7 @@
       );
       profilePhotoViewerImage.scrollTo({
         behavior: options.instant || window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth",
-        top: Math.max(0, (activeSlide?.offsetTop ?? 0) - profileMediaCardScrollInset(profilePhotoViewerImage))
+        top: activePhotoIndex === 0 ? 0 : Math.max(0, activeSlide?.offsetTop ?? 0)
       });
       return true;
     }
@@ -53165,9 +53073,7 @@
         : Number(modalImage?.dataset.activePhotoIndex || 0));
       profilePhotoViewer.style.zIndex = "1600";
       profilePhotoViewer.hidden = false;
-      profilePhotoViewer.classList.remove("is-profile-card-expanded");
       profilePhotoViewer.dataset.profileMediaHeading = `${modalName.textContent.trim() || "Dancer"} · Photos`;
-      prepareProfileMediaCardExpand(profilePhotoViewer, toggleProfilePhotoCardExpanded);
       renderProfilePhotoViewerSlides();
       void loadPublicMediaLikes(items.map((item) => ({
         mediaType: "photo",
@@ -53187,12 +53093,12 @@
 
     function closeProfilePhotoViewer() {
       if (!profilePhotoViewer) return;
-      exitProfilePhotoViewerFullscreen();
       profilePhotoViewer.hidden = true;
       profilePhotoViewer.style.removeProperty("z-index");
       window.cancelAnimationFrame(profilePhotoViewerScrollFrame);
       profilePhotoViewerScrollFrame = 0;
       mountProfileMediaCardControls(profilePhotoViewer);
+      mountProfileMediaCardHeader(profilePhotoViewer);
       profilePhotoViewerImage.innerHTML = "";
       document.body.classList.remove("profile-photo-viewer-open");
       syncOverlayScrollLock();
@@ -53444,7 +53350,7 @@
         ? `<img class="portrait ${item.photoClass} has-custom-photo" ${photoAttrs} sizes="(max-width: 720px) calc((100vw - 6px) / 3), 250px" width="360" height="504" alt="" aria-hidden="true" loading="lazy" decoding="async" draggable="false" data-image-state="loading">`
         : `<span class="portrait ${item.photoClass}"></span>`;
       return `
-        <button class="thumb ${galleryIndex === 0 ? "active" : ""}" type="button" data-profile-photo-index="${galleryIndex}" data-photo="${item.photoClass}" data-photo-url="${displayText(item.photoUrl)}" aria-label="Open gallery photo ${galleryIndex + 1} of ${total} full screen" aria-pressed="${galleryIndex === 0 ? "true" : "false"}">
+        <button class="thumb ${galleryIndex === 0 ? "active" : ""}" type="button" data-profile-photo-index="${galleryIndex}" data-photo="${item.photoClass}" data-photo-url="${displayText(item.photoUrl)}" aria-label="Open gallery photo ${galleryIndex + 1} of ${total} in scrolling cards" aria-pressed="${galleryIndex === 0 ? "true" : "false"}">
           ${photoMarkup}
         </button>
       `;
@@ -53476,7 +53382,7 @@
         ? `<img class="portrait profile-media-thumb-poster-image" src="${escapeHtml(posterUrl)}" alt="" aria-hidden="true" loading="${index < 6 ? "eager" : "lazy"}" fetchpriority="low" decoding="async" draggable="false" data-image-state="loading">`
         : '<span class="profile-media-thumb-poster" aria-hidden="true"></span>';
       return `
-        <button class="thumb profile-media-thumb is-video" type="button" data-profile-tv-index="${index}" aria-pressed="false" aria-label="Open ${escapeHtml(profileName)} profile video ${index + 1} of ${total} full screen, ${escapeHtml(scheduleLabel)}">
+        <button class="thumb profile-media-thumb is-video" type="button" data-profile-tv-index="${index}" aria-pressed="false" aria-label="Open ${escapeHtml(profileName)} profile video ${index + 1} of ${total} in scrolling cards, ${escapeHtml(scheduleLabel)}">
           ${previewMarkup}
           <span class="profile-media-thumb-play" aria-hidden="true"></span>
         </button>
@@ -54065,47 +53971,8 @@
       }
     }
 
-    let profileTvViewerOwnsFullscreen = false;
     let profileTvViewerMuted = false;
     let profileTvPlaybackFeedbackTimer = 0;
-
-    function profileTvFullscreenElement() {
-      return document.fullscreenElement || document.webkitFullscreenElement || null;
-    }
-
-    async function requestProfileTvViewerFullscreen(overlay) {
-      if (!overlay || profileTvFullscreenElement()) return false;
-      const request = typeof overlay.requestFullscreen === "function"
-        ? () => overlay.requestFullscreen({ navigationUI: "hide" })
-        : typeof overlay.webkitRequestFullscreen === "function"
-          ? () => overlay.webkitRequestFullscreen()
-          : null;
-      if (!request) return false;
-      try {
-        await request();
-        profileTvViewerOwnsFullscreen = profileTvFullscreenElement() === overlay;
-        return profileTvViewerOwnsFullscreen;
-      } catch {
-        profileTvViewerOwnsFullscreen = false;
-        return false;
-      }
-    }
-
-    function exitProfileTvViewerFullscreen() {
-      const fullscreenElement = profileTvFullscreenElement();
-      const exit = document.exitFullscreen || document.webkitExitFullscreen;
-      if (!profileTvViewerOwnsFullscreen || !fullscreenElement || typeof exit !== "function") {
-        profileTvViewerOwnsFullscreen = false;
-        return;
-      }
-      profileTvViewerOwnsFullscreen = false;
-      try {
-        const result = exit.call(document);
-        if (result && typeof result.catch === "function") result.catch(() => {});
-      } catch {
-        // The fixed immersive overlay remains available if device fullscreen exits first.
-      }
-    }
 
     function profileTvViewerScrollTarget(openingIndexValue, scrollTop, clientHeight, offsets = [], inset = 0) {
       const openingIndex = Number(openingIndexValue);
@@ -54216,26 +54083,6 @@
       });
       stage.addEventListener("dblclick", (event) => event.preventDefault());
       stage.addEventListener("volumechange", syncProfileTvSoundControl, true);
-      ["fullscreenchange", "webkitfullscreenchange"].forEach((eventName) => {
-        document.addEventListener(eventName, () => {
-          if (profileTvFullscreenElement() !== overlay) {
-            if (profileTvViewerOwnsFullscreen) {
-              const index = Number(overlay.dataset.videoIndex || 0);
-              overlay.dataset.openingVideoIndex = String(index);
-              overlay.classList.remove("is-profile-card-expanded");
-              prepareProfileMediaCardExpand(overlay, toggleProfileTvCardExpanded);
-              settleProfileTvViewerOpening(overlay, index);
-            }
-            profileTvViewerOwnsFullscreen = false;
-            return;
-          }
-          const openingIndex = Number(overlay.dataset.openingVideoIndex);
-          const activeIndex = overlay.dataset.openingVideoIndex !== undefined && Number.isInteger(openingIndex)
-            ? openingIndex
-            : Math.max(0, Number(overlay.dataset.videoIndex || 0));
-          window.requestAnimationFrame(() => scrollProfileTvViewerTo(activeIndex, { instant: true }));
-        });
-      });
       return overlay;
     }
 
@@ -54256,6 +54103,7 @@
       const stage = document.getElementById("profileTvViewerStage");
       if (!stage) return;
       mountProfileMediaCardControls(overlay);
+      mountProfileMediaCardHeader(overlay);
       stage.innerHTML = "";
       videos.forEach((item, index) => {
         const slide = document.createElement("section");
@@ -54284,6 +54132,7 @@
         slide.appendChild(video);
         stage.appendChild(slide);
       });
+      mountProfileMediaCardHeader(overlay, stage);
     }
 
     function syncProfileTvVideoLoading(overlay, activeIndex) {
@@ -54319,7 +54168,7 @@
       const activeSlide = stage.querySelector(`[data-profile-tv-viewer-index="${index}"]`);
       stage.scrollTo({
         behavior: options.instant || window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth",
-        top: Math.max(0, (activeSlide?.offsetTop ?? 0) - profileMediaCardScrollInset(stage))
+        top: index === 0 ? 0 : Math.max(0, activeSlide?.offsetTop ?? 0)
       });
       return true;
     }
@@ -54430,9 +54279,7 @@
       delete overlay.dataset.loadedVideoIndex;
       overlay.dataset.openingVideoIndex = String(initialIndex);
       overlay.dataset.profileName = String(profileName || "Dancer");
-      overlay.classList.remove("is-profile-card-expanded");
       overlay.dataset.profileMediaHeading = `${profileName || "Dancer"} · Videos`;
-      prepareProfileMediaCardExpand(overlay, toggleProfileTvCardExpanded);
       overlay.setAttribute("aria-label", `${profileName || "Dancer"} MyDancr TV video`);
       document.getElementById("profileTvViewerName").textContent = profileName || "MyDancr TV";
       renderProfileTvViewerSlides(overlay, overlay.profileTvVideos, profileName || "Dancer");
@@ -54458,7 +54305,6 @@
       const stage = document.getElementById("profileTvViewerStage");
       stage?.querySelectorAll("video").forEach(releaseDeferredVideoSource);
       clearProfileTvPlaybackFeedback();
-      exitProfileTvViewerFullscreen();
       overlay.classList.remove("show");
       overlay.hidden = true;
       overlay.setAttribute("aria-hidden", "true");
@@ -54469,6 +54315,7 @@
       delete overlay.dataset.openingVideoIndex;
       delete overlay.dataset.loadedVideoIndex;
       mountProfileMediaCardControls(overlay);
+      mountProfileMediaCardHeader(overlay);
       if (stage) stage.innerHTML = "";
       document.body.classList.remove("profile-tv-viewer-open");
       syncOverlayScrollLock();
@@ -63133,19 +62980,6 @@
       event.preventDefault();
       event.stopPropagation();
       moveModalPhoto(1, { syncViewer: true });
-    });
-    ["fullscreenchange", "webkitfullscreenchange"].forEach((eventName) => {
-      document.addEventListener(eventName, () => {
-        if (!profilePhotoViewerHasFullscreen(profilePhotoViewer)) {
-          if (profilePhotoViewerOwnsFullscreen) {
-            const index = Number(profilePhotoViewer.dataset.profilePhotoIndex || 0);
-            profilePhotoViewer.classList.remove("is-profile-card-expanded");
-            prepareProfileMediaCardExpand(profilePhotoViewer, toggleProfilePhotoCardExpanded);
-            window.requestAnimationFrame(() => scrollProfilePhotoViewerTo(index, { instant: true }));
-          }
-          profilePhotoViewerOwnsFullscreen = false;
-        }
-      });
     });
 
     function confirmedFollowerCount(data, errorMessage) {

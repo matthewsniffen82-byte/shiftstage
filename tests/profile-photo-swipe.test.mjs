@@ -27,7 +27,7 @@ test("the live profile keeps the grid horizontal and makes full photos verticall
   assert.doesNotMatch(liveApp, /profilePhotoSwipeBlockClickUntil/);
 });
 
-test("live profile grid photos open an accessible card collection with optional fullscreen", () => {
+test("live profile grid photos open an accessible card collection without fullscreen", () => {
   assert.match(
     liveApp,
     /id="modalImage" role="group" tabindex="0" aria-label="Profile photos and videos\. Swipe left or right to change media\."/,
@@ -68,18 +68,13 @@ test("live profile grid photos open an accessible card collection with optional 
   assert.doesNotMatch(liveApp, /profilePhotoScheduleLabel|Swipe up or down · Photo/);
   assert.match(liveApp, /\.profile-photo-viewer-slide-image \{[^}]*background-size: cover !important;/);
   assert.match(liveApp, /\.profile-photo-viewer-footer \{[\s\S]*?background: transparent;/);
+  assert.doesNotMatch(liveApp, /requestProfilePhotoViewerFullscreen/);
   assert.match(
     liveApp,
-    /async function requestProfilePhotoViewerFullscreen\(overlay, requestedIndex\)[\s\S]*?const targets = root === overlay \? \[root\] : \[root, overlay\][\s\S]*?target\.requestFullscreen\(\{ navigationUI: "hide" \}\)[\s\S]*?target\.requestFullscreen\(\)[\s\S]*?target\.webkitRequestFullscreen\(\)/,
-  );
-  assert.match(
-    liveApp,
-    /function openPhotoViewerFromElement\(element, requestedIndex = null\)[\s\S]*?profilePhotoViewer\.hidden = false;[\s\S]*?prepareProfileMediaCardExpand\(profilePhotoViewer, toggleProfilePhotoCardExpanded\);[\s\S]*?renderProfilePhotoViewerSlides\(\)/,
+    /function openPhotoViewerFromElement\(element, requestedIndex = null\)[\s\S]*?profilePhotoViewer\.hidden = false;[\s\S]*?renderProfilePhotoViewerSlides\(\)/,
   );
   assert.doesNotMatch(liveApp, /profilePhotoViewerImage\?\.addEventListener\("click",[^{]*\{[^}]*requestProfilePhotoViewerFullscreen/);
-  assert.match(liveApp, /if \(expanded\) void requestProfilePhotoViewerFullscreen\(profilePhotoViewer, index\)/);
-  assert.match(liveApp, /profilePhotoViewerHasFullscreen\(overlay[\s\S]*?document\.documentElement/);
-  assert.match(liveApp, /function exitProfilePhotoViewerFullscreen\(\)[\s\S]*?document\.exitFullscreen[\s\S]*?document\.webkitExitFullscreen/);
+  assert.doesNotMatch(liveApp, /profilePhotoViewerHasFullscreen|exitProfilePhotoViewerFullscreen/);
 });
 
 test("a tapped profile photo or video is the first card shown", () => {
@@ -102,20 +97,16 @@ test("a tapped profile photo or video is the first card shown", () => {
     liveApp,
     /function openPhotoViewerFromElement\(element, requestedIndex = null\)[\s\S]*?requestedIndex !== null && Number\.isInteger\(parsedRequestedIndex\)[\s\S]*?parsedRequestedIndex/,
   );
-  assert.match(liveApp, /top: Math\.max\(0, \(activeSlide\?\.offsetTop \?\? 0\) - profileMediaCardScrollInset\(stage\)\)/);
-  assert.match(liveApp, /top: Math\.max\(0, \(activeSlide\?\.offsetTop \?\? 0\) - profileMediaCardScrollInset\(profilePhotoViewerImage\)\)/);
+  assert.match(liveApp, /top: index === 0 \? 0 : Math\.max\(0, activeSlide\?\.offsetTop \?\? 0\)/);
+  assert.match(liveApp, /top: activePhotoIndex === 0 \? 0 : Math\.max\(0, activeSlide\?\.offsetTop \?\? 0\)/);
   assert.match(
     publicPhotoCarousel,
     /flushSync\(\(\) => setViewer\(\{ kind, index \}\)\);[\s\S]*?scrollViewerToIndex\(index, \{ instant: true \}\)[\s\S]*?settleViewerAtIndex\(index\)/,
   );
-  assert.match(
-    publicPhotoCarousel,
-    /await request\(\);[\s\S]*?finally \{[\s\S]*?settleViewerAtIndex\(requestedIndex\)/,
-  );
-  assert.match(publicPhotoCarousel, /top: Math\.max\(0, \(slide\?\.offsetTop \?\? 0\) - \(parseFloat\(getComputedStyle\(feed\)\.scrollPaddingTop\) \|\| 0\)\)/);
+  assert.match(publicPhotoCarousel, /top: index === 0 \? 0 : Math\.max\(0, slide\?\.offsetTop \?\? 0\)/);
 });
 
-test("fullscreen layout cannot reset a clicked profile video to the first slide", () => {
+test("opening the card feed cannot reset a clicked profile video to the first item", () => {
   const resolverSource = liveApp.match(
     /function profileTvViewerScrollTarget\(openingIndexValue, scrollTop, clientHeight, offsets = \[\], inset = 0\) \{[\s\S]*?\n    \}/,
   )?.[0] || "";
@@ -217,7 +208,7 @@ test("full-profile photo and video grids use stable tall portrait tiles", () => 
 });
 
 
-test("the standalone profile uses vertical profile-scoped full-screen media paging", () => {
+test("the standalone profile uses a vertical profile-scoped media card feed", () => {
   assert.match(
     publicProfilePage,
     /import \{ DancerPhotoCarousel \} from "\.\/DancerPhotoCarousel"/,
@@ -228,7 +219,7 @@ test("the standalone profile uses vertical profile-scoped full-screen media pagi
   );
   assert.match(
     publicPhotoCarousel,
-    /data-profile-media-snap-feed[\s\S]*?onScroll=\{handleViewerScroll\}[\s\S]*?ref=\{viewerFeed\}/,
+    /data-profile-media-scroll-feed[\s\S]*?onScroll=\{handleViewerScroll\}[\s\S]*?ref=\{viewerFeed\}/,
   );
   assert.match(
     publicPhotoCarousel,
@@ -255,12 +246,7 @@ test("the standalone profile uses vertical profile-scoped full-screen media pagi
     /@media \(max-width: 600px\)[\s\S]*?\.profile-media-viewer-previous, \.profile-media-viewer-next/,
   );
   assert.match(publicPhotoCarousel, /flushSync\(\(\) => setViewer\(\{ kind, index \}\)\);[\s\S]*?settleViewerAtIndex\(index\)/);
-  assert.match(
-    publicPhotoCarousel,
-    /const targets = root === element \? \[root\] : \[root, element\][\s\S]*?target\.requestFullscreen\(\{ navigationUI: "hide" \}\)[\s\S]*?target\.requestFullscreen\(\)[\s\S]*?target\.webkitRequestFullscreen/,
-  );
-  assert.match(publicPhotoCarousel, /function viewerHasFullscreen\([\s\S]*?document\.documentElement/);
-  assert.match(publicProfilePage, /\.profile-media-viewer:fullscreen/);
+  assert.doesNotMatch(publicPhotoCarousel, /requestFullscreen|webkitRequestFullscreen|viewerHasFullscreen/);
   assert.match(publicPhotoCarousel, /viewer\.kind === "video"[\s\S]*?\{viewerStatus\} · Scroll up or down · Video/);
   assert.doesNotMatch(publicPhotoCarousel, /viewer\.kind === "photo" \? \(\s*<div className="profile-media-viewer-copy"/);
 });

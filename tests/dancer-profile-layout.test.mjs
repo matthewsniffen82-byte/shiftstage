@@ -613,7 +613,7 @@ test("the in-profile TV tab is dancer-only, opens scroll cards, and does not alt
   assert.match(profileMedia, /className="profile-media-tab-label">Photos<\/span>/);
   assert.match(profileMedia, /className="profile-media-tab-label">Videos<\/span>/);
   assert.match(profileMedia, /profile-media-viewer profile-media-card-feed is-\$\{viewer\.kind\}/);
-  assert.match(profileMedia, /data-profile-media-snap-feed[\s\S]*?onScroll=\{handleViewerScroll\}/);
+  assert.match(profileMedia, /data-profile-media-scroll-feed[\s\S]*?onScroll=\{handleViewerScroll\}/);
   assert.match(profileMedia, /className="profile-media-viewer-slide"[\s\S]*?data-profile-media-viewer-index=\{index\}/);
 
   assert.match(liveApp, /data-profile-media-tab="photo"/);

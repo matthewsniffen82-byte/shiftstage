@@ -33,24 +33,27 @@ test("both profile entry points load the same TV-sized card feed styles", () => 
   }
   assert.match(css, /--profile-media-card-gap: 16px/);
   assert.match(css, /--profile-media-card-gap: 12px/);
-  assert.match(css, /scroll-snap-type: y proximity !important/);
+  assert.match(css, /scroll-snap-type: none !important/);
+  assert.match(css, /scroll-snap-align: none !important/);
   assert.match(css, /scroll-snap-stop: normal !important/);
   assert.match(css, /border-radius: 18px !important/);
   assert.match(css, /overflow-x: hidden !important/);
-  assert.match(css, /:not\(\.is-profile-card-expanded\)/);
+  assert.doesNotMatch(css, /is-profile-card-expanded/);
 });
 
-test("opening profile media never automatically requests native fullscreen", () => {
+test("profile media has no expand controls or native fullscreen requests", () => {
   for (const name of ["openPhotoViewerFromElement", "openProfileTvViewer"]) {
     assert.doesNotMatch(functionSource(name), /request.*Fullscreen/);
-    assert.match(functionSource(name), /prepareProfileMediaCardExpand/);
+    assert.match(functionSource(name), /renderProfile(?:Photo|Tv)ViewerSlides/);
   }
   const open = carousel.split("  function openViewer(")[1].split("  function closeViewer(")[0];
   assert.doesNotMatch(open, /requestViewerFullscreen/);
   assert.match(open, /settleViewerAtIndex\(index\)/);
-  assert.match(carousel, /onClick=\{toggleViewerExpanded\}/);
-  assert.match(live, /if \(expanded\) void requestProfilePhotoViewerFullscreen/);
-  assert.match(live, /if \(expanded\) void requestProfileTvViewerFullscreen/);
+  assert.doesNotMatch(carousel, /requestFullscreen|webkitRequestFullscreen|viewerExpanded|profile-media-card-expand/);
+  assert.doesNotMatch(live, /requestProfile(?:Photo|Tv)ViewerFullscreen|profile-media-card-expand|prepareProfileMediaCardExpand/);
+  assert.match(carousel, /controls=\{false\}/);
+  assert.match(carousel, /toggleViewerPlayback\(event\.currentTarget\)/);
+  assert.match(carousel, /aria-label=\{inlineMuted \? "Turn sound on" : "Mute video"\}/);
 });
 
 test("card offsets keep the correct selection through gaps and thirty-item galleries", () => {
@@ -77,9 +80,28 @@ test("card offsets keep the correct selection through gaps and thirty-item galle
 test("instant opening bypasses smooth CSS scrolling in every profile viewer", () => {
   for (const name of ["scrollProfilePhotoViewerTo", "scrollProfileTvViewerTo"]) {
     assert.match(functionSource(name), /options\.instant[^]*?\? "instant" : "smooth"/);
-    assert.match(functionSource(name), /offsetTop[^]*?- profileMediaCardScrollInset/);
+    assert.match(functionSource(name), /top: (?:activePhotoIndex|index) === 0 \? 0 : Math\.max\(0, activeSlide\?\.offsetTop \?\? 0\)/);
   }
   assert.match(carousel, /options\.instant[^]*?\? "instant"\s*: "smooth"/);
+});
+
+test("one in-flow header scrolls away, with no header padding repeated on later cards", () => {
+  assert.match(css, /\.profile-media-card-header \{[^}]*position: relative;[^}]*height: var\(--profile-media-card-header\)/);
+  assert.doesNotMatch(css, /position: (?:fixed|sticky)/);
+  assert.match(css, /padding: 0 5px 24px !important/);
+  assert.match(css, /scroll-padding: 0 !important/);
+  assert.match(carousel, /data-profile-media-scroll-feed[^]*?<div className="profile-media-card-header">[^]*?viewerItems\.map/);
+  for (const name of ["renderProfilePhotoViewerSlides", "renderProfileTvViewerSlides"]) {
+    assert.match(functionSource(name), /mountProfileMediaCardHeader[^]*?innerHTML = ""[^]*?mountProfileMediaCardHeader/);
+  }
+  assert.match(functionSource("mountProfileMediaCardHeader"), /host\.prepend\(header\)/);
+});
+
+test("profile photos and videos contain the entire source frame without cropping", () => {
+  assert.match(css, /\.profile-photo-viewer-slide-image \{[^}]*background-size: contain !important;[^}]*background-repeat: no-repeat !important/);
+  assert.match(css, /> :is\(img, video\) \{[^}]*object-fit: contain !important;[^}]*object-position: center !important/);
+  assert.doesNotMatch(css, /(?:background-size|object-fit): cover/);
+  assert.match(css, /background: #000 !important/);
 });
 
 test("live controls are preserved before clearing slides and follow the active card", () => {

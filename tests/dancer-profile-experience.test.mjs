@@ -285,7 +285,7 @@ test("profile videos stay passive and duration-free in the grid, then open the c
   assert.match(liveApp, /\.profile-modal \.profile-media-thumb-play::after \{[^}]*?border-left: 9px solid #fff;/);
   assert.doesNotMatch(profileCarousel, /profile-media-duration|formatDuration/);
   assert.doesNotMatch(liveApp, /<span class="profile-media-thumb-duration"/);
-  assert.match(liveApp, /function profileVideoThumbMarkup\(item, index, total, profileName\)[\s\S]*?aria-label="Open \$\{escapeHtml\(profileName\)\} profile video \$\{index \+ 1\} of \$\{total\} full screen, \$\{escapeHtml\(scheduleLabel\)\}"/);
+  assert.match(liveApp, /function profileVideoThumbMarkup\(item, index, total, profileName\)[\s\S]*?aria-label="Open \$\{escapeHtml\(profileName\)\} profile video \$\{index \+ 1\} of \$\{total\} in scrolling cards, \$\{escapeHtml\(scheduleLabel\)\}"/);
   assert.match(profileCarousel, /openViewer\(item\.kind, index, event\.currentTarget\)/);
   assert.match(profileCarousel, /\{viewerItems\.map\(\(item, index\) => \([\s\S]*?controls[\s\S]*?controlsList="nofullscreen noremoteplayback nodownload"/);
   assert.match(profileCarousel, /index === viewerIndex[\s\S]*?void video\.play\(\)[\s\S]*?video\.pause\(\)/);

@@ -52,12 +52,7 @@ test("live profile viewer mirrors MyDancr TV with vertical profile-only video pa
   assert.doesNotMatch(liveApp, /data-toggle-profile-tv-playback/);
   assert.match(liveApp, /stage\.addEventListener\("scroll"[\s\S]*?profileTvViewerScrollTarget\([\s\S]*?renderProfileTvViewerItem\(target\.index, \{ scroll: false \}\)/);
   assert.match(liveApp, /function renderProfileTvViewerSlides[\s\S]*?profile-tv-viewer-slide[\s\S]*?stage\.appendChild\(slide\)/);
-  assert.match(
-    liveApp,
-    /async function requestProfileTvViewerFullscreen\(overlay\)[\s\S]*?overlay\.requestFullscreen\(\{ navigationUI: "hide" \}\)[\s\S]*?overlay\.webkitRequestFullscreen\(\)/,
-  );
-  assert.match(liveApp, /void requestProfileTvViewerFullscreen\(overlay\)[\s\S]*?renderProfileTvViewerItem/);
-  assert.match(liveApp, /function exitProfileTvViewerFullscreen\(\)[\s\S]*?document\.exitFullscreen[\s\S]*?document\.webkitExitFullscreen/);
+  assert.doesNotMatch(liveApp, /requestProfileTvViewerFullscreen|exitProfileTvViewerFullscreen/);
 });
 
 test("live profile sound and navigation controls are wired as top-level viewer actions", () => {
