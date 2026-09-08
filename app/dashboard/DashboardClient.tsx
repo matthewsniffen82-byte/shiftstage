@@ -27,6 +27,8 @@ import { DancerDashboardAvatar, DancerDashboardIcon } from "./DancerDashboardIde
 import "./dancer-dashboard.css";
 import { CustomerDashboardAvatar, CustomerDashboardIcon, type CustomerDashboardSectionId } from "./CustomerDashboardIdentity";
 import "./customer-dashboard.css";
+import "./venue-dashboard.css";
+import { VenueDashboardAvatar, VenueDashboardIcon } from "./VenueDashboardIdentity";
 import VenueNfcTagPanel from "./VenueNfcTagPanel";
 import VenueTeamPanel from "./VenueTeamPanel";
 import VenueTvPanel from "./VenueTvPanel";
@@ -665,6 +667,7 @@ export default function DashboardClient({
         <div className="dashboard-head-row">
           {role === "dancer" ? <DancerDashboardAvatar avatarUrl={String(state.profile?.avatarPhotoUrl || "")} name={profileDisplayName} /> : null}
           {role === "customer" ? <CustomerDashboardAvatar name={dashboardHeading} /> : null}
+          {role === "venue" ? <VenueDashboardAvatar name={String(state.profile?.name || "Venue")} /> : null}
           <div className="dashboard-head-copy">
             <span className="eyebrow">{dashboardEyebrow}</span>
             <div className="dashboard-head-title-row">
@@ -2816,6 +2819,7 @@ function VenuePanel({
             role="tab"
             type="button"
           >
+            <span className="venue-workspace-tab-icon"><VenueDashboardIcon section={workspace} /></span>
             <strong>{label}</strong>
             <small>{contents}</small>
             <span className="venue-workspace-tab-status">{status}</span>
@@ -2981,6 +2985,8 @@ function VenuePanel({
         eyebrow="Current offers"
         hidden={activeWorkspace !== "tonight"}
         id="venue-club-deals"
+        icon={<VenueDashboardIcon section="deals" />}
+        toggleAffordance="chevron"
         title="Current Club Deals"
       >
         <VenueDealReadOnlyPanel
@@ -3003,6 +3009,8 @@ function VenuePanel({
         eyebrow="Floor status"
         hidden={activeWorkspace !== "tonight"}
         id="venue-working-now"
+        icon={<VenueDashboardIcon section="roster" />}
+        toggleAffordance="chevron"
         title="Working now"
       >
         <article className="info-panel venue-working-panel">
@@ -3027,6 +3035,8 @@ function VenuePanel({
         eyebrow="Floor access"
         hidden={activeWorkspace !== "tonight"}
         id="venue-dancer-roster"
+        icon={<VenueDashboardIcon section="stickers" />}
+        toggleAffordance="chevron"
         title="Check-in & redemption stickers"
         badge={`${nfcAuthorizedDancerCount} authorized`}
       >
@@ -3054,6 +3064,8 @@ function VenuePanel({
         eyebrow="Live performance"
         hidden={activeWorkspace !== "business"}
         id="venue-overview"
+        icon={<VenueDashboardIcon section="analytics" />}
+        toggleAffordance="chevron"
         title="Analytics & performance"
       >
         <div className="venue-analytics-period" role="group" aria-label="Analytics period">
@@ -3090,6 +3102,8 @@ function VenuePanel({
         eyebrow="Video"
         hidden={activeWorkspace !== "venue"}
         id="venue-tv"
+        icon={<VenueDashboardIcon section="tv" />}
+        toggleAffordance="chevron"
         title="MyDancr TV"
       >
         <VenueTvPanel />
@@ -3101,6 +3115,8 @@ function VenuePanel({
           eyebrow="Security"
           hidden={activeWorkspace !== "business"}
           id="venue-team"
+          icon={<VenueDashboardIcon section="team" />}
+          toggleAffordance="chevron"
           title="Team & activity"
         >
           <VenueTeamPanel initialAccess={venueAccess as { role: "owner" | "manager" | "staff"; permissions: string[] } | null} />
@@ -3112,6 +3128,8 @@ function VenuePanel({
         eyebrow="Venue workspace"
         hidden={activeWorkspace !== "business"}
         id="venue-account"
+        icon={<VenueDashboardIcon section="account" />}
+        toggleAffordance="chevron"
         title="Account & support"
       >
         <div className="venue-dashboard-inner-grid venue-dashboard-account-grid">
