@@ -25,6 +25,8 @@ import { requestDancerMediaPin } from "./dashboard-session";
 import { AVATAR_REJECTED_MESSAGE, avatarUploadPresentation, type AvatarUploadFeedback } from "./avatar-upload-state";
 import DancerShiftManager from "./DancerShiftManager";
 import { DANCER_PROFILE_VIDEOS_CHANGED_EVENT } from "./dancer-profile-media-sync";
+import { DancerDashboardAvatar, DancerDashboardIcon } from "./DancerDashboardIdentity";
+import "./dancer-dashboard.css";
 import VenueNfcTagPanel from "./VenueNfcTagPanel";
 import VenueTeamPanel from "./VenueTeamPanel";
 import VenueTvPanel from "./VenueTvPanel";
@@ -654,6 +656,7 @@ export default function DashboardClient({
       <DashboardStyles />
       <section className={`dashboard-head dashboard-head-${role}`} aria-busy={isLoading || undefined}>
         <div className="dashboard-head-row">
+          {role === "dancer" ? <DancerDashboardAvatar avatarUrl={String(state.profile?.avatarPhotoUrl || "")} name={dashboardHeading} /> : null}
           <div className="dashboard-head-copy">
             <span className="eyebrow">{dashboardEyebrow}</span>
             <div className="dashboard-head-title-row">
@@ -751,6 +754,7 @@ export default function DashboardClient({
                 description="Notifications, support, security, and account controls."
                 emphasis="utility"
                 id="dancer-account"
+                icon={<DancerDashboardIcon section="account" />}
                 title={effectiveDancerProfileStatus(state.profile, state.account?.accountState) === "approved" ? "Account & support" : "Help & Account"}
                 toggleAffordance="chevron"
               >
@@ -2481,6 +2485,7 @@ function DashboardSection({
   eyebrow,
   hidden = false,
   id,
+  icon,
   title,
   toggleAffordance = "add",
 }: {
@@ -2494,13 +2499,15 @@ function DashboardSection({
   eyebrow?: string;
   hidden?: boolean;
   id: string;
+  icon?: ReactNode;
   title: string;
   toggleAffordance?: "add" | "chevron";
 }) {
   const displayedBadge = count === undefined ? badge : count > 0 ? String(count) : undefined;
   return (
-    <details className={`dashboard-section venue-dashboard-section dashboard-section-${emphasis}`} hidden={hidden} id={id} onToggle={alignOpenedDashboardSection} open={defaultOpen} tabIndex={-1}>
+    <details className={`dashboard-section venue-dashboard-section dashboard-section-${emphasis}`} data-section-icon={icon ? true : undefined} hidden={hidden} id={id} onToggle={alignOpenedDashboardSection} open={defaultOpen} tabIndex={-1}>
       <summary>
+        {icon ? <span className="dancer-dashboard-section-icon" aria-hidden="true">{icon}</span> : null}
         <span className="venue-dashboard-section-copy">
           {eyebrow ? <span className="eyebrow">{eyebrow}</span> : null}
           <strong>{title}</strong>
@@ -4816,6 +4823,8 @@ function DancerPanel({
       description="Edit your identity, media, socials, and share your profile."
       emphasis="primary"
       id="dancer-profile-media"
+      icon={<DancerDashboardIcon section="profile" />}
+      toggleAffordance="chevron"
       title="Profile & media"
     >
       {profileMediaWorkspace}
@@ -4859,6 +4868,8 @@ function DancerPanel({
           description="Approval, venue access, and public visibility."
           emphasis="summary"
           id="dancer-overview"
+          icon={<DancerDashboardIcon section="status" />}
+          toggleAffordance="chevron"
           title="Profile status"
         >
           <div className="venue-dashboard-inner-grid dancer-overview-grid">
@@ -4884,6 +4895,8 @@ function DancerPanel({
           description="Post and manage shifts shown on your profile."
           emphasis="primary"
           id="dancer-schedule"
+          icon={<DancerDashboardIcon section="schedule" />}
+          toggleAffordance="chevron"
           title="Schedule"
         >
           <DancerShiftManager />
@@ -4895,6 +4908,8 @@ function DancerPanel({
           description="See your reach, rewards, payouts, and weekly progress."
           emphasis="secondary"
           id="dancer-performance"
+          icon={<DancerDashboardIcon section="performance" />}
+          toggleAffordance="chevron"
           title="Performance & rewards"
         >
           <div className="dancer-performance-workspace">
