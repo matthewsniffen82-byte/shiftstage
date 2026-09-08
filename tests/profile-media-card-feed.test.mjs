@@ -97,11 +97,31 @@ test("one in-flow header scrolls away, with no header padding repeated on later 
   assert.match(functionSource("mountProfileMediaCardHeader"), /host\.prepend\(header\)/);
 });
 
-test("profile photos and videos contain the entire source frame without cropping", () => {
+test("profile cards keep complete photos visible while videos use TV edge-to-edge fill", () => {
   assert.match(css, /\.profile-photo-viewer-slide-image \{[^}]*background-size: contain !important;[^}]*background-repeat: no-repeat !important/);
-  assert.match(css, /> :is\(img, video\) \{[^}]*object-fit: contain !important;[^}]*object-position: center !important/);
-  assert.doesNotMatch(css, /(?:background-size|object-fit): cover/);
+  assert.match(css, /> :is\(img, video\) \{[^}]*object-fit: cover !important;[^}]*object-position: center !important/);
+  assert.match(css, /\.profile-media-viewer-slide > img \{[^}]*object-fit: contain !important/);
   assert.match(css, /background: #000 !important/);
+});
+
+test("all profile media controls use the regular TV translucent glass material", () => {
+  const aesthetic = fs.readFileSync("public/dancr-aesthetic.v1.css", "utf8");
+  for (const material of [
+    "border: 1px solid rgba(255, 255, 255, 0.28) !important",
+    "background-color: rgba(18, 18, 28, 0.38) !important",
+    "0 8px 22px rgba(0, 0, 0, 0.3) !important",
+    "-webkit-backdrop-filter: blur(16px) saturate(1.18) !important",
+    "backdrop-filter: blur(16px) saturate(1.18) !important",
+    "background-color: rgba(28, 28, 40, 0.48) !important",
+  ]) {
+    assert.ok(css.includes(material), material);
+    assert.ok(aesthetic.includes(material), "match existing TV: " + material);
+  }
+  for (const prefix of ["profile-photo", "profile-tv", "profile-media"]) {
+    assert.ok(css.includes(`.${prefix}-viewer-actions > button`));
+    assert.ok(css.includes(`.${prefix}-viewer-previous`));
+    assert.ok(css.includes(`.${prefix}-viewer-next`));
+  }
 });
 
 test("live controls are preserved before clearing slides and follow the active card", () => {

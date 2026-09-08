@@ -1,4 +1,4 @@
-/* Profile media uses the regular TV card proportions. Media fits completely and the feed never snaps. */
+/* Profile media uses the regular TV card proportions without snapping. */
 .profile-media-card-feed {
   --profile-media-card-height: clamp(560px, calc(100vh - 140px), 760px);
   --profile-media-card-height: clamp(560px, calc(100svh - 140px), 760px);
@@ -87,7 +87,7 @@
   max-height: 46px !important;
 }
 
-/* Keep the complete source frame visible; black space is preferable to cropping. */
+/* Show complete photos; videos retain the regular TV edge-to-edge fill. */
 .profile-media-card-feed .profile-photo-viewer-slide-image {
   background-color: #000 !important;
   background-size: contain !important;
@@ -95,9 +95,12 @@
   background-repeat: no-repeat !important;
 }
 .profile-media-card-feed :is(.profile-tv-viewer-slide, .profile-media-viewer-slide) > :is(img, video) {
-  object-fit: contain !important;
+  object-fit: cover !important;
   object-position: center !important;
   background: #000 !important;
+}
+.profile-media-card-feed .profile-media-viewer-slide > img {
+  object-fit: contain !important;
 }
 .profile-media-card-feed video::-webkit-media-controls-fullscreen-button {
   display: none !important;
@@ -118,6 +121,60 @@
   stroke-width: 2;
   stroke-linecap: round;
   stroke-linejoin: round;
+}
+
+/* Match the regular TV action material in every profile entry point. The
+ * existing overlay/control IDs keep this layer above global utility styles. */
+body.dancr-button-system :is(#profilePhotoViewer, #profileTvViewer, .profile-media-viewer).profile-media-card-feed :is(
+  #profilePhotoViewerClose,
+  .profile-photo-viewer-previous,
+  .profile-photo-viewer-next,
+  .profile-photo-viewer-actions > button,
+  .profile-tv-viewer-close,
+  .profile-tv-viewer-previous,
+  .profile-tv-viewer-next,
+  .profile-tv-viewer-actions > button,
+  .profile-media-viewer-close,
+  .profile-media-viewer-previous,
+  .profile-media-viewer-next,
+  .profile-media-viewer-actions > button
+) {
+  border: 1px solid rgba(255, 255, 255, 0.28) !important;
+  border-radius: 50% !important;
+  color: var(--dancr-color-text-primary) !important;
+  background-color: rgba(18, 18, 28, 0.38) !important;
+  background-image: linear-gradient(155deg, rgba(255, 255, 255, 0.17), rgba(255, 255, 255, 0.035)) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.2),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.04),
+    0 8px 22px rgba(0, 0, 0, 0.3) !important;
+  -webkit-appearance: none !important;
+  appearance: none !important;
+  -webkit-backdrop-filter: blur(16px) saturate(1.18) !important;
+  backdrop-filter: blur(16px) saturate(1.18) !important;
+}
+
+body.dancr-button-system :is(#profilePhotoViewer, #profileTvViewer, .profile-media-viewer).profile-media-card-feed :is(
+  #profilePhotoViewerClose,
+  .profile-photo-viewer-previous,
+  .profile-photo-viewer-next,
+  .profile-photo-viewer-actions > button,
+  .profile-tv-viewer-close,
+  .profile-tv-viewer-previous,
+  .profile-tv-viewer-next,
+  .profile-tv-viewer-actions > button,
+  .profile-media-viewer-close,
+  .profile-media-viewer-previous,
+  .profile-media-viewer-next,
+  .profile-media-viewer-actions > button
+):is(:hover, :focus-visible) {
+  border-color: rgba(255, 255, 255, 0.42) !important;
+  background-color: rgba(28, 28, 40, 0.48) !important;
+  background-image: linear-gradient(155deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.05)) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.24),
+    0 0 0 2px rgba(126, 234, 255, 0.12),
+    0 10px 24px rgba(0, 0, 0, 0.34) !important;
 }
 
 /* The existing controls stay attached to the active card, not the viewport. */
