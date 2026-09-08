@@ -1,10 +1,12 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
+import { requestDancerPhotosJson, requestDancerProfileJson } from "./dashboard-session";
+
 type UploadItem = {
   id: string;
   imageUrl?: string | null;
   status: string;
-  isPrimary?: boolean;
 };
 
 export function profileUploadStatus(status: string) {
@@ -29,6 +31,8 @@ export default function DancerProfileMediaUploads({
   isVideoLoading,
   videoError,
   onOpen,
+  onPhotoDeleted,
+  onDeleteBusyChange,
 }: {
   photos: UploadItem[];
   videos: UploadItem[];
@@ -37,13 +41,72 @@ export default function DancerProfileMediaUploads({
   isVideoLoading: boolean;
   videoError: string;
   onOpen: (section: "photos" | "videos") => void;
+  onPhotoDeleted: (photoId: string, profile?: Record<string, unknown>) => void;
+  onDeleteBusyChange?: (busy: boolean) => void;
 }) {
+  const [deletingPhotoId, setDeletingPhotoId] = useState("");
+  const [deletedPhotoIds, setDeletedPhotoIds] = useState<Set<string>>(() => new Set());
+  const [photoStatus, setPhotoStatus] = useState("");
+  const deleteRequestRef = useRef<AbortController | null>(null);
+
+  useEffect(() => () => {
+    deleteRequestRef.current?.abort();
+    deleteRequestRef.current = null;
+    onDeleteBusyChange?.(false);
+  }, [onDeleteBusyChange]);
+
+  async function deletePreviewPhoto(photoId: string) {
+    if (deleteRequestRef.current || deletedPhotoIds.has(photoId)) return;
+    if (!window.confirm("Delete this photo from your profile?")) return;
+    const controller = new AbortController();
+    deleteRequestRef.current = controller;
+    onDeleteBusyChange?.(true);
+    const isCurrent = () => deleteRequestRef.current === controller && !controller.signal.aborted;
+    setDeletingPhotoId(photoId);
+    setPhotoStatus("");
+    let deleted = false;
+    try {
+      await requestDancerPhotosJson({
+        method: "DELETE",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ photoId }),
+        fallbackMessage: "Unable to delete photo. Try again.",
+        signal: controller.signal,
+      });
+      if (!isCurrent()) return;
+      deleted = true;
+      setDeletedPhotoIds((current) => new Set(current).add(photoId));
+      onPhotoDeleted(photoId);
+      setPhotoStatus("Photo deleted.");
+      const data = await requestDancerProfileJson({
+        cache: "no-store",
+        fallbackMessage: "Unable to refresh your photos.",
+        signal: controller.signal,
+      });
+      if (!isCurrent()) return;
+      if (!data.profile) throw new Error("Unable to refresh your photos.");
+      const rows = [...(data.profile.dancer_photos || []), ...(data.profile.pending_photo_reviews || [])];
+      if (rows.some((photo: { id?: string }) => photo.id === photoId)) throw new Error("Unable to verify the refreshed photos.");
+      onPhotoDeleted(photoId, data.profile);
+    } catch (error) {
+      if (isCurrent()) setPhotoStatus(deleted
+        ? "Photo deleted. Reload your profile to refresh the remaining photos."
+        : error instanceof Error ? error.message : "Unable to delete photo. Try again.");
+    } finally {
+      if (isCurrent()) {
+        deleteRequestRef.current = null;
+        onDeleteBusyChange?.(false);
+        setDeletingPhotoId("");
+      }
+    }
+  }
+
   return (
     <section className="dancer-profile-media-uploads" aria-label="Add profile photos and videos">
       {(["photos", "videos"] as const).map((section) => {
         const isPhoto = section === "photos";
         const label = isPhoto ? "Photo" : "Video";
-        const items = isPhoto ? photos : videos;
+        const items = isPhoto ? photos.filter((photo) => !deletedPhotoIds.has(photo.id)) : videos;
         return (
           <div className="profile-upload-group" key={section}>
             <header>
@@ -51,7 +114,7 @@ export default function DancerProfileMediaUploads({
               <small>{isPhoto ? "At least 1 solo photo" : "Optional"}</small>
               <span>{!isPhoto && isVideoLoading ? "Loading…" : !isPhoto && videoError ? "Unavailable" : `${items.length} added`}</span>
             </header>
-            <button className="profile-upload-entry" data-profile-editor-trigger={section} onClick={() => onOpen(section)} type="button">
+            <button className="profile-upload-entry" data-profile-editor-trigger={section} disabled={isPhoto && Boolean(deletingPhotoId)} onClick={() => onOpen(section)} type="button">
               <svg aria-hidden="true" viewBox="0 0 24 24">
                 {isPhoto ? <><rect x="3" y="4" width="18" height="16" rx="3" /><circle cx="8" cy="9" r="1.5" /><path d="m5 17 4-4 3 3 3-4 4 5" /></> : <><rect x="3" y="6" width="12" height="12" rx="2" /><path d="m15 10 6-3v10l-6-3" /></>}
               </svg>
@@ -62,18 +125,26 @@ export default function DancerProfileMediaUploads({
               <ul className="profile-upload-items" aria-label={`Uploaded ${section}`}>
                 {items.map((item, index) => (
                   <li key={item.id}>
-                    <button aria-label={`Manage ${isPhoto && item.isPrimary ? "main photo" : `${label.toLowerCase()} ${index + 1}`}: ${profileUploadStatus(item.status)}`} onClick={() => onOpen(section)} type="button">
+                    <button aria-label={`Manage ${label.toLowerCase()} ${index + 1}: ${profileUploadStatus(item.status)}`} disabled={isPhoto && Boolean(deletingPhotoId)} onClick={() => onOpen(section)} type="button">
                       <span className="profile-upload-thumbnail">
                         {item.imageUrl ? <img alt="" loading="lazy" src={item.imageUrl} /> : <span aria-hidden="true">{isPhoto ? "▧" : "▶"}</span>}
                         {!isPhoto && item.imageUrl ? <i aria-hidden="true">▶</i> : null}
                       </span>
-                      <strong>{isPhoto && item.isPrimary ? "Main photo" : `${label} ${index + 1}`}</strong>
+                      <strong>{label} {index + 1}</strong>
                       <small className={item.status === "approved" ? "is-ready" : ""}>{profileUploadStatus(item.status)}</small>
                     </button>
+                    {isPhoto ? <button
+                      aria-label={`Delete photo ${index + 1}`}
+                      className="profile-upload-delete"
+                      disabled={Boolean(deletingPhotoId)}
+                      onClick={() => void deletePreviewPhoto(item.id)}
+                      type="button"
+                    >{deletingPhotoId === item.id ? "Deleting…" : "Delete"}</button> : null}
                   </li>
                 ))}
               </ul>
             ) : null}
+            {isPhoto && photoStatus ? <p role="status" aria-live="polite">{photoStatus}</p> : null}
             {!isPhoto && videoError ? <p role="status">{videoError} <button className="profile-upload-retry" onClick={() => onOpen("videos")} type="button">Open video manager to retry</button></p> : null}
           </div>
         );
@@ -111,6 +182,9 @@ export default function DancerProfileMediaUploads({
         .dancer-profile-media-uploads button:focus-visible { outline:2px solid #fff; outline-offset:3px; }
         body.dancr-button-system .dancer-profile-media-uploads .profile-upload-entry { min-height:78px !important; padding:14px 16px !important; border-radius:16px !important; background:linear-gradient(120deg,#221333,#100d18) !important; box-shadow:none !important; }
         body.dancr-button-system .dancer-profile-media-uploads .profile-upload-items button { padding:0 !important; border:0 !important; border-radius:8px !important; background:transparent !important; box-shadow:none !important; }
+        .dancer-profile-media-uploads .profile-upload-items .profile-upload-delete,
+        body.dancr-button-system .dancer-profile-media-uploads .profile-upload-items .profile-upload-delete { display:flex; justify-content:center; align-items:center; min-height:44px; margin-top:6px; padding:6px 8px !important; border:1px solid #69414d !important; background:#24151c !important; color:#ffc3d1 !important; font-size:12px; font-weight:800; }
+        .dancer-profile-media-uploads button:disabled { opacity:.55; cursor:wait; }
       `}</style>
     </section>
   );

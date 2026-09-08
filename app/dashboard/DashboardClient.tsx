@@ -3446,6 +3446,7 @@ function DancerProfilePreview({
   city,
   onClose,
   onEditorSave,
+  onProfileChange,
   profile,
   saveLabel = "Save profile",
 }: {
@@ -3459,6 +3460,7 @@ function DancerProfilePreview({
   city?: string;
   onClose?: () => void;
   onEditorSave?: () => Promise<boolean>;
+  onProfileChange?: (profile: Record<string, unknown>) => void;
   profile?: LoadState["profile"];
   saveLabel?: string;
 }) {
@@ -3473,6 +3475,12 @@ function DancerProfilePreview({
   const [mediaError, setMediaError] = useState("");
   const [uploadedVideos, setUploadedVideos] = useState<DancerPreviewVideo[]>([]);
   const [isAvatarUploading, setIsAvatarUploading] = useState(false);
+  const [isPhotoDeleting, setIsPhotoDeleting] = useState(false);
+  const photoDeletingRef = useRef(false);
+  const reportPhotoDeleteBusy = useCallback((busy: boolean) => {
+    photoDeletingRef.current = busy;
+    setIsPhotoDeleting(busy);
+  }, []);
   const avatarUploadingRef = useRef(false);
   const reportAvatarBusy = useCallback((busy: boolean) => {
     avatarUploadingRef.current = busy;
@@ -3530,7 +3538,7 @@ function DancerProfilePreview({
   activeEditorSectionRef.current = activeEditorSection;
 
   const closePreview = useCallback(() => {
-    if (avatarUploadingRef.current) return;
+    if (avatarUploadingRef.current || photoDeletingRef.current) return;
     setActiveEditorSection(null);
     setActiveSocialPlatform(null);
     setIsOpen(false);
@@ -3538,6 +3546,7 @@ function DancerProfilePreview({
   }, []);
 
   function openEditorSection(section: Exclude<DancerProfileEditorSectionId, "socials">) {
+    if (photoDeletingRef.current) return;
     if (!editorSections?.[section]) return;
     setSectionStatus("");
     setActiveSocialPlatform(null);
@@ -3723,7 +3732,7 @@ function DancerProfilePreview({
   }
 
   async function saveEditor() {
-    if (!onEditorSave || isEditorSaving) return;
+    if (!onEditorSave || isEditorSaving || photoDeletingRef.current) return;
     setIsEditorSaving(true);
     setEditorStatus("Saving your profile...");
     try {
@@ -3823,6 +3832,7 @@ function DancerProfilePreview({
               <button
                 aria-label="Close profile preview"
                 className="public-profile-close"
+                disabled={isPhotoDeleting}
                 onClick={closePreview}
                 ref={closeRef}
                 type="button"
@@ -3839,6 +3849,12 @@ function DancerProfilePreview({
                 isVideoLoading={isMediaLoading}
                 videoError={mediaError}
                 onOpen={openEditorSection}
+                onDeleteBusyChange={reportPhotoDeleteBusy}
+                onPhotoDeleted={(photoId, refreshedProfile) => onProfileChange?.(refreshedProfile || {
+                  ...profile,
+                  dancer_photos: (Array.isArray(profile?.dancer_photos) ? profile.dancer_photos : []).filter((photo: any) => photo.id !== photoId),
+                  pending_photo_reviews: (Array.isArray(profile?.pending_photo_reviews) ? profile.pending_photo_reviews : []).filter((photo: any) => photo.id !== photoId),
+                })}
               />
             ) : (
               <>
@@ -3948,8 +3964,8 @@ function DancerProfilePreview({
             {isEditor && onEditorSave ? (
               <footer className="dancer-profile-editor-footer">
                 <p role="status" aria-live="polite">{editorStatus || (builderRequirements?.length ? `Profile essentials: ${completedRequirements}/${builderRequirements.length} complete` : "Save changes when finished")}</p>
-                <button disabled={isEditorSaving || !requirementsComplete} onClick={() => void saveEditor()} type="button">
-                  {isEditorSaving ? "Saving..." : saveLabel}
+                <button disabled={isEditorSaving || isPhotoDeleting || !requirementsComplete} onClick={() => void saveEditor()} type="button">
+                  {isPhotoDeleting ? "Deleting photo..." : isEditorSaving ? "Saving..." : saveLabel}
                 </button>
               </footer>
             ) : null}
@@ -4472,6 +4488,7 @@ function DancerOnboardingProfileMediaWorkspace({
   draftIdentity,
   identityContent,
   photoContent,
+  onProfileChange,
   profile,
   profileReady,
   socialContent,
@@ -4482,6 +4499,7 @@ function DancerOnboardingProfileMediaWorkspace({
   draftIdentity: DancerIdentityDraft;
   identityContent: ReactNode;
   photoContent: ReactNode;
+  onProfileChange?: (profile: Record<string, unknown>) => void;
   profile?: LoadState["profile"];
   profileReady: boolean;
   socialContent: DancerProfileSocialEditor;
@@ -4568,6 +4586,7 @@ function DancerOnboardingProfileMediaWorkspace({
         editorSections={editorSections}
         name={draftIdentity.stageName}
         onEditorSave={saveAndContinue}
+        onProfileChange={onProfileChange}
         profile={profile}
         saveLabel="Save & continue"
       />
@@ -4767,6 +4786,7 @@ function DancerPanel({
             if (section) section.open = false;
           }}
           onEditorSave={saveDancerProfileEditor}
+          onProfileChange={onProfileChange}
           profile={profile}
           saveLabel="Save & return to dashboard"
         />
@@ -4806,6 +4826,7 @@ function DancerPanel({
               draftIdentity={draftIdentity}
               identityContent={identityContent}
               photoContent={photoContent}
+              onProfileChange={onProfileChange}
               profile={profile}
               profileReady={profileReady}
               socialContent={socialContent}
@@ -6962,7 +6983,6 @@ type DancerPhotoQueueItem = {
   file: File;
   previewUrl: string;
   source: "gallery" | "camera";
-  makePrimary: boolean;
   stage: "queued" | "uploading" | "checking" | "failed";
   progress: number;
   uploadSortOrder?: number;
@@ -6984,7 +7004,6 @@ function DancerPhotoPanel({
   onProfileChange?: (profile: Record<string, unknown>) => void;
   profile?: LoadState["profile"];
 }) {
-  const [isPrimary, setIsPrimary] = useState(false);
   const [photos, setPhotos] = useState<DancerPhotoItem[]>(() =>
     relabelPhotoItems(dancerPhotoItemsFromProfile(profile, deletedPhotoIds)),
   );
@@ -7034,15 +7053,14 @@ function DancerPhotoPanel({
   function queuePhotos(files: File[], source: DancerPhotoQueueItem["source"]) {
     if (actionInFlightRef.current) return;
     window.dispatchEvent(new Event(DANCER_PHOTOS_KEEP_OPEN_EVENT));
-    const replacingPrimary = isPrimary && photos.some((photo) => photo.isPrimary) ? 1 : 0;
-    const availableProfileSlots = Math.max(0, MAX_DANCER_PROFILE_PHOTOS - photos.length + replacingPrimary - queuedPhotos.length);
+    const availableProfileSlots = Math.max(0, MAX_DANCER_PROFILE_PHOTOS - photos.length - queuedPhotos.length);
     const selectedFiles = files.slice(0, availableProfileSlots);
     if (!selectedFiles.length) {
       setStatus("Your profile picture library is full. Delete or replace a picture first.");
       return;
     }
 
-    const additions = selectedFiles.map((nextFile, index) => {
+    const additions = selectedFiles.map((nextFile) => {
       const previewUrl = URL.createObjectURL(nextFile);
       queuedPreviewUrlsRef.current.add(previewUrl);
       const validType = nextFile.type.startsWith("image/");
@@ -7052,7 +7070,6 @@ function DancerPhotoPanel({
         file: nextFile,
         previewUrl,
         source,
-        makePrimary: isPrimary && index === 0,
         stage: validType && validSize ? "queued" : "failed",
         progress: 0,
         error: !validType ? "Choose a JPEG, PNG, WebP, HEIC, or HEIF image." : !validSize ? "Photos must be 25 MB or smaller." : undefined,
@@ -7060,7 +7077,6 @@ function DancerPhotoPanel({
     });
     const omitted = files.length - selectedFiles.length;
     setQueuedPhotos((current) => [...current, ...additions]);
-    setIsPrimary(false);
     setStatus(`${additions.length} ${additions.length === 1 ? "photo" : "photos"} selected. Upload started automatically${omitted ? `. ${omitted} exceeded the available profile slots.` : "."}`);
     const uploadable = additions.filter((item) => !item.error);
     if (uploadable.length) void uploadPhotoBatch(uploadable);
@@ -7132,7 +7148,7 @@ function DancerPhotoPanel({
     const session = readSession();
     if (!session?.accessToken) return setStatus("Sign in required.");
     if (!batch.length) return setStatus("Choose profile photos or take a new photo first.");
-    if (!batch.some((item) => item.makePrimary) && photos.length + batch.length > MAX_DANCER_PROFILE_PHOTOS) {
+    if (photos.length + batch.length > MAX_DANCER_PROFILE_PHOTOS) {
       return setStatus("Your profile picture library is full. Delete or replace a picture before adding more.");
     }
     const action = beginPhotoAction();
@@ -7153,22 +7169,21 @@ function DancerPhotoPanel({
       for (let index = 0; index < batch.length; index += 1) {
         if (!isCurrentPhotoAction(requestId, controller)) return;
         const item = batch[index];
-        const makePrimary = item.makePrimary;
         let uploadSortOrder = item.uploadSortOrder;
         setUploadingQueueItemId(item.id);
         updateQueuedPhoto(item.id, { stage: "uploading", progress: 25, error: undefined });
         setStatus(`Checking photo ${index + 1} of ${batch.length}...`);
         try {
-          if (!makePrimary && workingPhotos.length >= MAX_DANCER_PROFILE_PHOTOS) {
+          if (workingPhotos.length >= MAX_DANCER_PROFILE_PHOTOS) {
             throw new Error("No profile photo slot is available for this photo.");
           }
-          uploadSortOrder = uploadSortOrder ?? (makePrimary ? 0 : nextGalleryPhotoSortOrder(workingPhotos));
-          const uploadKey = `${item.id}:${makePrimary ? "primary" : "gallery"}`;
+          uploadSortOrder = uploadSortOrder ?? nextGalleryPhotoSortOrder(workingPhotos);
+          const uploadKey = `${item.id}:gallery`;
           updateQueuedPhoto(item.id, { uploadSortOrder });
           const formData = new FormData();
           formData.set("file", item.file);
-          formData.set("isPrimary", String(makePrimary));
-          formData.set("replaceExisting", String(makePrimary));
+          formData.set("isPrimary", "false");
+          formData.set("replaceExisting", "false");
           formData.set("sortOrder", String(uploadSortOrder));
           formData.set("idempotencyKey", uploadKey);
 
@@ -7186,11 +7201,11 @@ function DancerPhotoPanel({
           const uploadedPhoto: DancerPhotoItem = {
             id: String(data.photo?.id || data.moderationRecordId || `${item.file.name}:${item.file.lastModified}`),
             imageUrl: approved ? String(data.photo?.imageUrl || item.previewUrl) : item.previewUrl,
-            label: Boolean(data.photo?.isPrimary || data.photo?.is_primary || makePrimary) ? "Main Photo" : "Photo",
+            label: "Photo",
             status: uploadStatus,
             note: photoStatusNote(uploadStatus),
             storagePath: String(data.photo?.storage_path || ""),
-            isPrimary: Boolean(data.photo?.isPrimary || data.photo?.is_primary || makePrimary),
+            isPrimary: Boolean(data.photo?.isPrimary || data.photo?.is_primary),
             sortOrder: Number(data.photo?.sortOrder ?? data.photo?.sort_order ?? uploadSortOrder),
           };
           if (uploadStatus === "rejected") {
@@ -7271,7 +7286,7 @@ function DancerPhotoPanel({
 
   async function savePhotoArrangement(nextOrder: DancerPhotoItem[]) {
     if (nextOrder.some((photo) => photo.status !== "approved" || !photo.imageUrl)) {
-      setStatus("Wait for every photo to finish checking before changing the main photo or order.");
+      setStatus("Wait for every photo to finish checking before changing the order.");
       return;
     }
     const session = readSession();
@@ -7315,16 +7330,10 @@ function DancerPhotoPanel({
     }
   }
 
-  function makePhotoPrimary(photoId: string) {
-    const selected = photos.find((photo) => photo.id === photoId);
-    if (!selected || selected.isPrimary) return;
-    void savePhotoArrangement([selected, ...photos.filter((photo) => photo.id !== photoId)]);
-  }
-
   function moveGalleryPhoto(photoId: string, direction: -1 | 1) {
     const index = photos.findIndex((photo) => photo.id === photoId);
     const nextIndex = index + direction;
-    if (index <= 0 || nextIndex <= 0 || nextIndex >= photos.length) return;
+    if (index < 0 || nextIndex < 0 || nextIndex >= photos.length) return;
     const nextOrder = [...photos];
     [nextOrder[index], nextOrder[nextIndex]] = [nextOrder[nextIndex], nextOrder[index]];
     void savePhotoArrangement(nextOrder);
@@ -7388,7 +7397,6 @@ function DancerPhotoPanel({
     }
   }
 
-  const hasMainPhoto = photos.some((photo) => photo.isPrimary);
   const photoActionBusy = isUploading || isArranging || deletingPhotoIds.size > 0;
 
   return (
@@ -7397,15 +7405,6 @@ function DancerPhotoPanel({
         <div className="photo-upload-heading">
           <span><strong>Add at least 1 solo picture of yourself. You can add more later.</strong></span>
         </div>
-        {hasMainPhoto ? (
-          <label className="photo-primary-choice">
-            <input checked={isPrimary} disabled={photoActionBusy} type="checkbox" onChange={(event) => setIsPrimary(event.target.checked)} />
-            <span>
-              <strong>Replace my main photo</strong>
-              <small>The next photo you choose will become your main photo.</small>
-            </span>
-          </label>
-        ) : null}
         <div className="photo-source-grid">
           <label className={`photo-source-action${photoActionBusy ? " is-disabled" : ""}`}>
             <input
@@ -7462,7 +7461,7 @@ function DancerPhotoPanel({
             <div className={`photo-review-card is-pending ${uploadingQueueItemId === item.id ? "is-uploading" : ""}`.trim()} key={item.id}>
               <div className="photo-preview" style={{ backgroundImage: `url(${item.previewUrl})` }} />
               <span>
-                <strong>{item.makePrimary ? "Main Photo" : `Selected photo ${index + 1}`}</strong>
+                <strong>{`Selected photo ${index + 1}`}</strong>
                 <small>{item.stage === "uploading" ? "Uploading" : item.stage === "checking" ? "Checking" : item.error ? "Upload failed" : "Waiting to upload"}</small>
                 {item.stage !== "failed" ? <progress aria-label={`Photo ${index + 1} upload progress`} max="100" value={item.progress} /> : null}
                 {item.error ? <em>{item.error}</em> : null}
@@ -7481,11 +7480,10 @@ function DancerPhotoPanel({
           <span>{photos.length} {photos.length === 1 ? "photo" : "photos"}</span>
         </div>
       ) : null}
-      {photos.length ? <p className="photo-main-guidance">Your main photo appears first on your profile. Your avatar is separate.</p> : null}
       <div className="photo-review-list">
         {photos.map((photo, photoIndex) => {
-          const isApprovedGalleryPhoto = photo.status === "approved" && !photo.isPrimary;
-          const canMoveEarlier = isApprovedGalleryPhoto && photoIndex > 1;
+          const isApprovedGalleryPhoto = photo.status === "approved";
+          const canMoveEarlier = isApprovedGalleryPhoto && photoIndex > 0;
           const canMoveLater = isApprovedGalleryPhoto && photoIndex < photos.length - 1;
           return (
             <div className={`photo-review-card is-${photo.status}`} key={photo.id}>
@@ -7495,7 +7493,6 @@ function DancerPhotoPanel({
                 <small>{photoStatusLabel(photo.status)}</small>
                 {photo.note ? <em>{photo.note}</em> : null}
                 <span className="photo-card-actions">
-                  {isApprovedGalleryPhoto ? <button className="photo-main-action primary-action" disabled={photoActionBusy} type="button" onClick={() => makePhotoPrimary(photo.id)}>Make main</button> : null}
                   {canMoveEarlier ? <button aria-label={`Move ${photo.label} earlier`} className="photo-order-action" disabled={photoActionBusy} title="Move earlier" type="button" onClick={() => moveGalleryPhoto(photo.id, -1)}>↑</button> : null}
                   {canMoveLater ? <button aria-label={`Move ${photo.label} later`} className="photo-order-action" disabled={photoActionBusy} title="Move later" type="button" onClick={() => moveGalleryPhoto(photo.id, 1)}>↓</button> : null}
                   <button
@@ -7531,7 +7528,7 @@ function dancerPhotoItemsFromProfile(
     return [{
       id,
       imageUrl: String(photo.imageUrl || photo.image_url || ""),
-      label: isPrimary ? "Main Photo" : "Photo",
+      label: "Photo",
       status: reviewStatus,
       note: photoStatusNote(reviewStatus),
       storagePath: String(photo.storage_path || photo.storagePath || ""),
@@ -7547,7 +7544,7 @@ function dancerPhotoItemsFromProfile(
     return [{
       id,
       imageUrl: String(review.previewUrl || review.preview_url || ""),
-      label: isPrimary ? "Main Photo" : "Photo",
+      label: "Photo",
       status: "pending",
       note: photoStatusNote("pending"),
       storagePath: String(review.temporary_storage_path || review.storagePath || ""),
@@ -7608,7 +7605,6 @@ function mergePhotoItems(...groups: DancerPhotoItem[][]) {
 
 function relabelPhotoItems(items: DancerPhotoItem[]) {
   return orderPhotoItemsForDisplay(mergePhotoItems(items)).map((photo, index) => {
-    if (photo.isPrimary) return { ...photo, label: "Main photo" };
     return { ...photo, label: `Photo ${index + 1}` };
   });
 }
@@ -8558,7 +8554,6 @@ function DashboardStyles() {
       .photo-review-card strong { color: #fff; }
       .photo-review-card small { color: #94e5ff; font-size: 12px; font-weight: 950; text-transform: uppercase; letter-spacing: .08em; }
       .photo-review-card em { color: #cfc5de; font-size: 13px; font-style: normal; line-height: 1.35; }
-      .photo-main-guidance { margin:0; color:#c9c3d2; font-size:12px; line-height:1.4; }
       .photo-review-card progress { width: 100%; height: 7px; accent-color: #7eeaff; }
       .photo-queue-actions, .photo-card-actions { display: flex !important; flex-wrap: wrap; gap: 7px !important; }
       .photo-card-actions { align-items: center; margin-top: 5px; }

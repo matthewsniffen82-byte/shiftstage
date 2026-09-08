@@ -72,8 +72,8 @@ test("photo uploads, arrangement, and deletion reject duplicate and stale work",
   assert.match(photoEditor, /if \(!mountedRef\.current \|\| actionInFlightRef\.current\) return null;/);
   assert.match(photoEditor, /function queuePhotos[\s\S]*?if \(actionInFlightRef\.current\) return;/);
   assert.match(photoEditor, /async function deletePhoto\(photo: DancerPhotoItem\) \{\s*if \(actionInFlightRef\.current\) return;/);
-  assert.match(photoEditor, /const uploadKey = `\$\{item\.id\}:\$\{makePrimary \? "primary" : "gallery"\}`/);
-  assert.match(photoEditor, /uploadSortOrder = uploadSortOrder \?\? \(makePrimary \? 0 : nextGalleryPhotoSortOrder\(workingPhotos\)\)/);
+  assert.match(photoEditor, /const uploadKey = `\$\{item\.id\}:gallery`/);
+  assert.match(photoEditor, /uploadSortOrder = uploadSortOrder \?\? nextGalleryPhotoSortOrder\(workingPhotos\)/);
   assert.doesNotMatch(photoEditor, /Date\.now\(\)/);
   assert.match(photoEditor, /persistQueuedPhotoDeletions\(controller\.signal\)/);
   assert.match(photoEditor, /if \(signal\.aborted \|\| !mountedRef\.current\) return;/);

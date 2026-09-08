@@ -11,10 +11,16 @@ const source = readFileSync(new URL("../app/dashboard/DancerProfileMediaUploads.
 const code = ts.transpileModule(source, {
   compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX, target: ts.ScriptTarget.ES2022 },
 }).outputText;
-const exports = {};
-vm.runInNewContext(code, { exports, require: createRequire(import.meta.url) });
+const requireTest = createRequire(import.meta.url);
+const staticHooks = { ...React, useState: initial => [typeof initial === "function" ? initial() : initial, () => {}], useRef: initial => ({ current: initial }), useEffect() {} };
+function loadUploads({ hooks = staticHooks, api = {}, confirm = () => false } = {}) {
+  const exports = {};
+  vm.runInNewContext(code, { exports, AbortController, Error, window: { confirm }, require: name => name === "react" ? hooks : name === "./dashboard-session" ? api : requireTest(name) });
+  return exports;
+}
+const exports = loadUploads();
 const Uploads = exports.default;
-const defaultProps = { photos: [], videos: [], isApproved: false, isPublic: false, isVideoLoading: false, videoError: "", onOpen() {} };
+const defaultProps = { photos: [], videos: [], isApproved: false, isPublic: false, isVideoLoading: false, videoError: "", onOpen() {}, onPhotoDeleted() {} };
 const render = (props = {}) => renderToStaticMarkup(React.createElement(Uploads, { ...defaultProps, ...props })).replace(/<style>[\s\S]*?<\/style>/g, "");
 
 function buttons(node) {
@@ -35,7 +41,7 @@ test("an empty profile offers exactly one photo control and one video control wi
 test("both upload controls and existing thumbnails open the corresponding production manager", () => {
   const opened = [];
   const tree = Uploads({ ...defaultProps, photos: [{ id: "p", status: "approved" }], videos: [{ id: "v", status: "submitted" }], onOpen: (section) => opened.push(section) });
-  const controls = buttons(tree);
+  const controls = buttons(tree).filter(button => button.props.className !== "profile-upload-delete");
   assert.equal(controls.length, 4);
   for (const control of controls) control.props.onClick();
   assert.deepEqual(opened, ["photos", "photos", "videos", "videos"]);
@@ -69,12 +75,118 @@ test("saved media visibility copy respects profile approval and incognito", () =
   assert.doesNotMatch(hidden, /Approved uploads appear on your profile/);
 });
 
-test("only the selected main gallery photo is identified in the preview strip", () => {
+test("all saved gallery photos use ordinary photo labels including legacy primary photos", () => {
   const html = render({ photos: [{ id: "main", status: "approved", isPrimary: true }, { id: "other", status: "approved" }] });
-  assert.match(html, /Manage main photo: Approved/);
-  assert.match(html, /<strong>Main photo<\/strong>/);
+  assert.match(html, /Manage photo 1: Approved/);
+  assert.match(html, /<strong>Photo 1<\/strong>/);
   assert.match(html, /<strong>Photo 2<\/strong>/);
   assert.doesNotMatch(render({ photos: [{ id: "first", status: "approved" }] }), /Main photo/);
+  assert.doesNotMatch(html, /Main photo|Make main/);
+});
+
+test("each preview picture has a separate accessible Delete button", () => {
+  const tree = Uploads({ ...defaultProps, photos: [{ id: "p", status: "approved" }, { id: "pending", status: "pending" }], videos: [{ id: "v", status: "approved" }] });
+  const deletes = buttons(tree).filter(button => button.props.className === "profile-upload-delete");
+  assert.deepEqual(deletes.map(button => button.props["aria-label"]), ["Delete photo 1", "Delete photo 2"]);
+  for (const button of buttons(tree)) assert.equal(buttons(button).length, 1, "delete and preview buttons must never be nested");
+});
+
+function deletionHarness({ confirm = () => true, remove = async () => ({ ok: true }), refresh = async () => ({ profile: { avatarPhotoUrl: "/avatar.jpg", dancer_photos: [], pending_photo_reviews: [] } }) } = {}) {
+  const slots = [], effects = [], requests = [], changes = [], busy = [];
+  let cursor = 0, dirty = true, tree;
+  const hooks = { ...React,
+    useState(initial) {
+      const index = cursor++;
+      if (!(index in slots)) slots[index] = typeof initial === "function" ? initial() : initial;
+      return [slots[index], value => { slots[index] = typeof value === "function" ? value(slots[index]) : value; dirty = true; }];
+    },
+    useRef(initial) { const index = cursor++; return slots[index] ||= { current: initial }; },
+    useEffect(effect) { const index = cursor++; if (!(index in slots)) { slots[index] = true; effects.push(effect); } },
+  };
+  const Module = loadUploads({ hooks, confirm, api: {
+    requestDancerPhotosJson: options => { requests.push(options); return remove(options); },
+    requestDancerProfileJson: options => { requests.push(options); return refresh(options); },
+  } }).default;
+  const cleanups = [];
+  function renderState() {
+    if (!dirty) return;
+    dirty = false; cursor = 0;
+    tree = Module({ ...defaultProps, photos: [{ id: "photo-id", imageUrl: "/photo.jpg", status: "pending" }], onPhotoDeleted: (...args) => changes.push(args), onDeleteBusyChange: value => busy.push(value) });
+    effects.splice(0).forEach(effect => cleanups.push(effect()));
+  }
+  renderState();
+  return {
+    requests, changes, busy,
+    get controls() { return buttons(tree); },
+    get deleteButton() { return buttons(tree).find(button => button.props.className === "profile-upload-delete"); },
+    get html() { return renderToStaticMarkup(tree).replace(/<style>[\s\S]*?<\/style>/g, ""); },
+    async settle() { await new Promise(resolve => setImmediate(resolve)); renderState(); },
+    unmount() { cleanups.forEach(cleanup => cleanup?.()); },
+  };
+}
+
+test("preview deletion confirms once, blocks duplicate clicks, and updates counts without deleting the avatar", async () => {
+  let release, confirmations = 0;
+  const ui = deletionHarness({ confirm: () => { confirmations++; return true; }, remove: () => new Promise(resolve => { release = resolve; }) });
+  const button = ui.deleteButton;
+  button.props.onClick(); button.props.onClick(); await ui.settle();
+  assert.equal(confirmations, 1);
+  assert.equal(ui.requests.length, 1);
+  assert.deepEqual(ui.busy, [true]);
+  assert.deepEqual(JSON.parse(ui.requests[0].body), { photoId: "photo-id" });
+  assert.equal(ui.requests[0].method, "DELETE");
+  assert.equal(ui.deleteButton.props.disabled, true);
+  assert.match(ui.html, /Deleting…/);
+  release({ ok: true }); await ui.settle();
+  assert.equal(ui.deleteButton, undefined);
+  assert.match(ui.html, /0 added/);
+  assert.match(ui.html, /Photo deleted\./);
+  assert.equal(ui.changes.length, 2);
+  assert.equal(ui.changes[1][1].avatarPhotoUrl, "/avatar.jpg");
+  assert.deepEqual(ui.busy, [true, false]);
+});
+
+test("the profile editor keeps closing and saving unavailable while a preview deletion is in flight", () => {
+  const dashboard = readFileSync(new URL("../app/dashboard/DashboardClient.tsx", import.meta.url), "utf8");
+  assert.match(dashboard, /if \(avatarUploadingRef.current \|\| photoDeletingRef.current\) return/);
+  assert.match(dashboard, /if \(!onEditorSave \|\| isEditorSaving \|\| photoDeletingRef.current\) return/);
+  assert.match(dashboard, /onDeleteBusyChange=\{reportPhotoDeleteBusy\}/);
+  assert.match(dashboard, /disabled=\{isEditorSaving \|\| isPhotoDeleting \|\| !requirementsComplete\}/);
+});
+
+test("canceling preview deletion makes no request", async () => {
+  const ui = deletionHarness({ confirm: () => false });
+  ui.deleteButton.props.onClick(); await ui.settle();
+  assert.equal(ui.requests.length, 0);
+  assert.ok(ui.deleteButton);
+});
+
+test("failed preview deletion keeps the picture and exposes a usable error", async () => {
+  const ui = deletionHarness({ remove: async () => { throw new Error("Connection lost. Try again."); } });
+  ui.deleteButton.props.onClick(); await ui.settle();
+  assert.equal(ui.changes.length, 0);
+  assert.equal(ui.deleteButton.props.disabled, false);
+  assert.match(ui.html, /1 added/);
+  assert.match(ui.html, /Connection lost\. Try again\./);
+});
+
+test("a failed refresh never restores a confirmed deleted preview or sends another delete", async () => {
+  const ui = deletionHarness({ refresh: async () => { throw new Error("Offline"); } });
+  ui.deleteButton.props.onClick(); await ui.settle();
+  assert.equal(ui.deleteButton, undefined);
+  assert.equal(ui.changes.length, 1);
+  assert.match(ui.html, /Photo deleted\. Reload your profile/);
+  assert.equal(ui.requests.filter(request => request.method === "DELETE").length, 1);
+});
+
+test("closing a preview aborts its request and ignores late results", async () => {
+  let release;
+  const ui = deletionHarness({ remove: () => new Promise(resolve => { release = resolve; }) });
+  ui.deleteButton.props.onClick(); ui.unmount();
+  release({ ok: true }); await ui.settle();
+  assert.equal(ui.requests[0].signal.aborted, true);
+  assert.equal(ui.requests.length, 1);
+  assert.equal(ui.changes.length, 0);
 });
 
 test("loading and a failed video request are distinguishable from an empty video library", () => {

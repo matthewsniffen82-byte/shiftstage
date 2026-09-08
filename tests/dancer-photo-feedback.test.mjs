@@ -105,24 +105,32 @@ test("a failed upload remains available for a deliberate retry", async () => {
   assert.equal(ui.reads.length, 0);
 });
 
-test("an avatar and the first gallery photo do not falsely imply that a main photo was selected", () => {
+test("an avatar stays separate and gallery photos have no main-photo action", () => {
   const ui = photoHarness({ profile: { avatarPhotoUrl: "/avatar.jpg", dancer_photos: [approved()] } });
   assert.deepEqual(ui.labels, ["Photo 1"]);
   assert.equal(ui.cards.length, 1);
-  assert.ok(ui.buttons.find(button => button.props.children === "Make main"));
+  assert.equal(ui.buttons.some(button => button.props.children === "Make main"), false);
 });
 
-test("choosing a main photo saves the order without changing the avatar and updates its label", async () => {
+test("all gallery photos can be reordered without changing the avatar or showing a main label", async () => {
   const ui = photoHarness({
-    profile: { avatarPhotoUrl: "/avatar.jpg", dancer_photos: [approved()] },
-    read: async () => ({ profile: { avatarPhotoUrl: "/avatar.jpg", dancer_photos: [approved("saved", 0, true)] } }),
+    profile: { avatarPhotoUrl: "/avatar.jpg", dancer_photos: [approved("first", 0, true), approved("second", 1)] },
+    read: async () => ({ profile: { avatarPhotoUrl: "/avatar.jpg", dancer_photos: [approved("second", 0, true), approved("first", 1)] } }),
   });
-  ui.buttons.find(button => button.props.children === "Make main").props.onClick();
+  ui.buttons.find(button => button.props["aria-label"] === "Move Photo 2 earlier").props.onClick();
   await ui.settle();
-  assert.deepEqual(JSON.parse(ui.reads[0].body), { mainPhotoUrl: "/saved.jpg", galleryPhotoUrls: [] });
-  assert.deepEqual(ui.labels, ["Main photo"]);
+  assert.deepEqual(JSON.parse(ui.reads[0].body), { mainPhotoUrl: "/second.jpg", galleryPhotoUrls: ["/first.jpg"] });
+  assert.deepEqual(ui.labels, ["Photo 1", "Photo 2"]);
   assert.equal(ui.buttons.some(button => button.props.children === "Make main"), false);
   assert.equal(ui.profiles[0].avatarPhotoUrl, "/avatar.jpg");
+});
+
+test("new pictures always append to the gallery without replacing a legacy primary photo", async () => {
+  const ui = photoHarness({ profile: { dancer_photos: [approved("first", 0, true)] } });
+  ui.select(); await ui.settle();
+  assert.equal(ui.posts[0].body.get("isPrimary"), "false");
+  assert.equal(ui.posts[0].body.get("replaceExisting"), "false");
+  assert.equal(ui.posts[0].body.get("sortOrder"), "1");
 });
 
 const refreshSource = source.slice(source.indexOf("  const hasPendingAvatar ="), source.indexOf("  const refreshDancerProfile ="));

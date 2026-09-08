@@ -201,7 +201,7 @@ test("profile setup editors use the compact shared modal shell without changing 
   assert.match(dashboard, /activeEditorSection === "identity" \? "Save" : "Done"/);
   assert.match(dashboard, /\.dancer-profile-preview-overlay\.is-editor \.dancer-profile-editor-footer \{ bottom:max\(8px,env\(safe-area-inset-bottom\)\); width:calc\(100% - 16px\);/);
   assert.doesNotMatch(dashboard, /editorTitle/);
-  assert.match(dashboard, /disabled=\{isEditorSaving \|\| !requirementsComplete\}/);
+  assert.match(dashboard, /disabled=\{isEditorSaving \|\| isPhotoDeleting \|\| !requirementsComplete\}/);
   assert.match(dashboard, /<DancerSetupPanel[\s\S]*?unifiedSave/);
   assert.match(dashboard, /<SocialLinkModal[\s\S]*?platform=\{platform\}[\s\S]*?profile=\{profile\}[\s\S]*?unifiedSave/);
   assert.match(dashboard, /\{unifiedSave \? null : \([\s\S]*?Save profile/);
@@ -383,9 +383,8 @@ test("photo and video uploaders auto-upload multiple phone files with independen
   assert.match(dashboard, /void uploadPhotoBatch\(uploadable\)/);
   assert.match(dashboard, /stage: "failed", progress: 0/);
   assert.match(dashboard, /savePhotoArrangement/);
-  assert.match(dashboard, />Make main<\/button>/);
-  assert.match(dashboard, /className="photo-main-action primary-action"/);
-  assert.match(dashboard, /const canMoveEarlier = isApprovedGalleryPhoto && photoIndex > 1/);
+  assert.doesNotMatch(dashboard, />Make main<\/button>|Replace my main photo|label: "Main [Pp]hoto"/);
+  assert.match(dashboard, /const canMoveEarlier = isApprovedGalleryPhoto && photoIndex > 0/);
   assert.match(dashboard, /const canMoveLater = isApprovedGalleryPhoto && photoIndex < photos\.length - 1/);
   assert.match(dashboard, /className="photo-order-action"[\s\S]*?title="Move earlier"/);
   assert.match(dashboard, /className="photo-card-remove-action"/);
