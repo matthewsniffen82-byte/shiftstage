@@ -65,6 +65,10 @@ test("expanded close circles stay inset from the top and right safe-area edges",
   ]) {
     const rule = source.match(new RegExp(`\\.${selector} \\{[^}]*\\}`))?.[0] || "";
     assert.match(rule, /top: calc\(16px \+ env\(safe-area-inset-top, 0px\)\)/);
-    assert.match(rule, /right: calc\(16px \+ env\(safe-area-inset-right, 0px\)\)/);
+    if (selector === "home-tv-feed-full-view-close") {
+      assert.match(rule, /right: var\(--home-tv-action-inset-right\);/);
+    } else {
+      assert.match(rule, /right: calc\(16px \+ env\(safe-area-inset-right, 0px\)\)/);
+    }
   }
 });

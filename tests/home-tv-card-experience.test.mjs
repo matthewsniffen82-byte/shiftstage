@@ -113,7 +113,7 @@ test("TV cards expose one compact priority rail and a standalone seek bar", () =
   assert.doesNotMatch(renderFactory, /createHomeTvFeedSoundButton\(slide\)|createHomeTvFeedFullscreenButton\(slide, video\)/);
   assert.doesNotMatch(renderFactory, /shade|home-tv-feed-shade|linear-gradient/);
   assert.match(homeSource, /\.home-tv-feed-slide \{[\s\S]*?--home-tv-action-control-size: 46px;/);
-  assert.match(homeSource, /\.home-tv-feed-actions \{[\s\S]*?right: 10px;[\s\S]*?bottom: 76px;[\s\S]*?width: var\(--home-tv-action-control-size\);[\s\S]*?display: grid;[\s\S]*?justify-items: center;[\s\S]*?gap: 6px;/);
+  assert.match(homeSource, /\.home-tv-feed-actions \{[\s\S]*?right: var\(--home-tv-action-inset-right\);[\s\S]*?bottom: 76px;[\s\S]*?width: var\(--home-tv-action-control-size\);[\s\S]*?display: grid;[\s\S]*?justify-items: center;[\s\S]*?gap: 6px;/);
   assert.match(homeSource, /\.home-tv-feed-fullscreen \{ position: relative; \}/);
   assert.doesNotMatch(homeSource, /function createHomeTvFeedVideoControls|className = "home-tv-feed-video-controls"/);
   assert.match(homeSource, /#results\.home-tv-feed > \.home-tv-feed-loading,[\s\S]*?#results\.home-tv-feed > \.home-tv-feed-slide \{[\s\S]*?border: 0 !important;[\s\S]*?background: #000 !important;/);
@@ -529,7 +529,7 @@ test("idle TV utility controls use frosted-clear glass while selected follows ke
     aestheticSource,
     /\.home-tv-feed-fullscreen\[aria-pressed="true"\] \{[\s\S]*?border-color: var\(--dancr-color-white-medium\) !important;[\s\S]*?background-color: var\(--dancr-color-black-medium\) !important;[\s\S]*?background-image: none !important;[\s\S]*?0 5px 16px var\(--dancr-color-black-medium\)/,
   );
-  assert.match(homeSource, /dancr-aesthetic\.v1\.css\?v=269/);
+  assert.match(homeSource, /dancr-aesthetic\.v1\.css\?v=270/);
 });
 
 test("TV action rail keeps every rail control visible without exposing the full-view close button", () => {
@@ -542,11 +542,11 @@ test("TV action rail keeps every rail control visible without exposing the full-
 
   assert.match(
     railConsistency,
-    /\.home-tv-feed-action:not\(\.home-tv-feed-deal-action\):not\(\.home-tv-feed-full-view-close\)[\s\S]*?width: var\(--home-tv-action-control-size, 46px\) !important;[\s\S]*?height: var\(--home-tv-action-control-size, 46px\) !important;[\s\S]*?border-radius: 50% !important;/,
+    /\.home-tv-feed-action:not\(\.home-tv-feed-deal-action\):not\(\.home-tv-feed-full-view-close\),[^{}]*\.home-tv-feed-action\.home-tv-feed-full-view-close:not\(\.home-tv-feed-deal-action\) \{[^}]*width: var\(--home-tv-action-control-size, 46px\) !important;[^}]*height: var\(--home-tv-action-control-size, 46px\) !important;[^}]*border-radius: 50% !important;/,
   );
   assert.match(
     railConsistency,
-    /full-view close control is intentionally excluded[\s\S]*?\.home-tv-feed-action:not\(\.home-tv-feed-deal-action\):not\(\.home-tv-feed-full-view-close\)/,
+    /\.home-tv-feed-action:not\(\.home-tv-feed-deal-action\):not\(\.home-tv-feed-full-view-close\) \{\s*display: grid !important;\s*\}/,
   );
   assert.match(railConsistency, /background-color: rgba\(18, 18, 28, 0\.38\) !important;/);
   assert.match(railConsistency, /backdrop-filter: blur\(16px\) saturate\(1\.18\) !important;/);
@@ -562,6 +562,22 @@ test("TV action rail keeps every rail control visible without exposing the full-
     railConsistency,
     /home-tv-feed-(?:profile|follow|like|share|fullscreen|overflow)[^{}]*\{[^{}]*display:\s*none/,
   );
+});
+
+test("TV close control shares rail glass and alignment without becoming visible on scroll cards", () => {
+  const sharedGlass = aestheticSource.match(/\.home-tv-feed-action\.home-tv-feed-full-view-close:not\(\.home-tv-feed-deal-action\) \{[^}]*\}/)?.[0] || "";
+  assert.match(sharedGlass, /background-color: rgba\(18, 18, 28, 0\.38\) !important;/);
+  assert.match(sharedGlass, /-webkit-backdrop-filter: blur\(16px\) saturate\(1\.18\) !important;/);
+  assert.match(sharedGlass, /-webkit-appearance: none !important;/);
+  assert.doesNotMatch(sharedGlass, /display:/);
+  assert.match(homeSource, /--home-tv-action-inset-right: calc\(10px \+ env\(safe-area-inset-right, 0px\)\);/);
+  assert.match(homeSource, /--home-tv-action-inset-right: calc\(9px \+ env\(safe-area-inset-right, 0px\)\);/);
+  for (const selector of ["home-tv-feed-actions", "home-tv-feed-full-view-close"]) {
+    const rule = homeSource.match(new RegExp(`\\.${selector} \\{[^}]*\\}`))?.[0] || "";
+    assert.match(rule, /right: var\(--home-tv-action-inset-right\);/);
+  }
+  assert.match(homeSource, /\.home-tv-feed-full-view-close \{[^}]*top: calc\(16px \+ env\(safe-area-inset-top, 0px\)\);[^}]*display: none;/);
+  assert.match(homeSource, /\.home-tv-feed-full-view-close\[hidden\] \{\s*display: none !important;/);
 });
 
 test("production TV cards use the neutral-first brand palette without changing media or navigation", () => {

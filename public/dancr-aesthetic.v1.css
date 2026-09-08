@@ -11758,10 +11758,12 @@ body.dancr-button-system :is(
 /* MyDancr TV uses one stable action hierarchy in card and full view. Every
  * rail utility keeps the same circular translucent-glass geometry; Club Deal
  * is the sole rounded-square exception so its conversion role stays distinct.
- * The full-view close control is intentionally excluded so it remains hidden
- * on scroll cards and appears only while the feed is expanded. */
+ * The full-view close control shares this appearance, but its visibility
+ * remains controlled by the fullscreen state and hidden attribute. */
 body.dancr-button-system #results.home-tv-feed
-  .home-tv-feed-action:not(.home-tv-feed-deal-action):not(.home-tv-feed-full-view-close) {
+  .home-tv-feed-action:not(.home-tv-feed-deal-action):not(.home-tv-feed-full-view-close),
+body.dancr-button-system #results.home-tv-feed
+  .home-tv-feed-action.home-tv-feed-full-view-close:not(.home-tv-feed-deal-action) {
   box-sizing: border-box !important;
   width: var(--home-tv-action-control-size, 46px) !important;
   min-width: var(--home-tv-action-control-size, 46px) !important;
@@ -11769,7 +11771,6 @@ body.dancr-button-system #results.home-tv-feed
   height: var(--home-tv-action-control-size, 46px) !important;
   min-height: var(--home-tv-action-control-size, 46px) !important;
   max-height: var(--home-tv-action-control-size, 46px) !important;
-  display: grid !important;
   place-items: center !important;
   gap: 0 !important;
   padding: 0 !important;
@@ -11792,6 +11793,11 @@ body.dancr-button-system #results.home-tv-feed
   backdrop-filter: blur(16px) saturate(1.18) !important;
 }
 
+body.dancr-button-system #results.home-tv-feed
+  .home-tv-feed-action:not(.home-tv-feed-deal-action):not(.home-tv-feed-full-view-close) {
+  display: grid !important;
+}
+
 body.dancr-button-system #results.home-tv-feed .home-tv-feed-like-action {
   grid-template-rows: 19px 9px !important;
   align-content: center !important;
@@ -11799,7 +11805,9 @@ body.dancr-button-system #results.home-tv-feed .home-tv-feed-like-action {
 }
 
 body.dancr-button-system #results.home-tv-feed
-  .home-tv-feed-action:not(.home-tv-feed-deal-action):not(.home-tv-feed-full-view-close):is(:hover, :focus-visible) {
+  .home-tv-feed-action:not(.home-tv-feed-deal-action):not(.home-tv-feed-full-view-close):is(:hover, :focus-visible),
+body.dancr-button-system #results.home-tv-feed
+  .home-tv-feed-action.home-tv-feed-full-view-close:not(.home-tv-feed-deal-action):is(:hover, :focus-visible) {
   border-color: rgba(255, 255, 255, 0.42) !important;
   background-color: rgba(28, 28, 40, 0.48) !important;
   background-image: linear-gradient(

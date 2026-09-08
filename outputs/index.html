@@ -32074,7 +32074,7 @@
   </style>
   <link href="/dancr-brand-tokens.v1.css?v=13" rel="stylesheet">
   <link href="/dancr-button-system.v1.css" rel="stylesheet">
-  <link href="/dancr-aesthetic.v1.css?v=269" rel="stylesheet">
+  <link href="/dancr-aesthetic.v1.css?v=270" rel="stylesheet">
   <link href="/dancr-feedback.v1.css?v=2" rel="stylesheet">
   <link href="/profile-media-owner-controls.css?v=3" rel="stylesheet">
 </head>
@@ -32524,6 +32524,7 @@
         }
         .home-tv-feed-slide {
           --home-tv-action-control-size: 46px;
+          --home-tv-action-inset-right: calc(10px + env(safe-area-inset-right, 0px));
           position: relative;
           box-sizing: border-box;
           width: 100%;
@@ -32913,7 +32914,7 @@
         .home-tv-feed-actions {
           position: absolute;
           z-index: 7;
-          right: 10px;
+          right: var(--home-tv-action-inset-right);
           bottom: 76px;
           width: var(--home-tv-action-control-size);
           display: grid;
@@ -33003,7 +33004,7 @@
           position: absolute;
           z-index: 12;
           top: calc(16px + env(safe-area-inset-top, 0px));
-          right: calc(16px + env(safe-area-inset-right, 0px));
+          right: var(--home-tv-action-inset-right);
           display: none;
           border-color: rgba(255,255,255,.24);
           background-color: rgba(5,5,10,.5);
@@ -34910,8 +34911,10 @@
           .home-tv-feed-media-position {
             top: calc(106px + env(safe-area-inset-top));
           }
+          .home-tv-feed-slide {
+            --home-tv-action-inset-right: calc(9px + env(safe-area-inset-right, 0px));
+          }
           .home-tv-feed-actions {
-            right: 9px;
             bottom: 76px;
           }
           .home-tv-feed-progress {
