@@ -32,9 +32,22 @@ W-9 forms, SSNs/TINs, identity documents, bank details, and payout credentials s
 
 ## Commission policy
 
+- Club Deals remain visible and redeemable on dancer profiles without NATS enrollment. Profile/shift attribution is retained for analytics.
+- Dancer eligibility begins at the database-recorded, administrator-verified NATS activation time, not link submission or deal selection. Missing, requested, or disabled accounts earn no new Club Deal commissions.
+- At the cashier redemption, MyDancr permanently snapshots eligibility and the active enrollment time. Only eligible redemptions count toward the dancer's monthly 30/40/50 tier. Later enrollment never creates back pay.
+- An unenrolled dancer's share stays with MyDancr. Existing sales-agent allocations are independent and unchanged.
+- Redemptions before enrollment create no dancer earning or NATS export. Valid commissions already earned during enrollment remain valid if settlement is delayed or the account is later disabled/re-enrolled; exports still require a currently active account.
 - Dancer: 30% for monthly redemptions 1–9, 40% for 10–24, and 50% for 25+.
 - Direct venue-signing agent: 15%.
 - Sponsor levels 1–3: 3%, 2.5%, and 2%.
 - One active Founding Agent can receive levels 4–5: 1.5% and 1%.
 - No pay-to-join or recruitment event creates commission.
 - The maximum combined dancer and agent allocation is 74.5%, leaving MyDancr at least 25.5%.
+
+## Prospective-enrollment migration
+
+`202609080001_prospective_nats_dancer_commissions.sql` replaces the cashier accounting function and dancer NATS export eligibility checks. It serializes enrollment changes with redemption, gives the database control of activation timestamps, and keeps the snapshot immutable. It does not gate Club Deal display or change profiles, schedules, photos, videos, or club fees.
+
+The one-time correction reverses only unpaid, unexported pre-enrollment Club Deal earnings, cancels their exports, and moves their dancer allocation to MyDancr with an audit event. The original earning amount and history remain. The migration stops for reconciliation if it finds paid, reserved, or dispatched pre-enrollment money; it never deletes ledger records or silently claws back payments. Apply only this reviewed migration after rollback verification; do not replay historical migrations.
+
+Applied to production project `hfmzwadzabmgxkjzmqun` and registered atomically as `202609080001 / prospective_nats_dancer_commissions`. Live verification found one unpaid pre-enrollment earning corrected, its export canceled, no waiting dancer exports, and unchanged profile/photo/video/shift counts. No payments were dispatched. The SQL rollback fixture exercised missing/requested/active/disabled/re-enrolled accounts, all 30/40/50 tiers, immutable eligibility, duplicate export claiming, and browser-role denial; no test redemptions persisted.

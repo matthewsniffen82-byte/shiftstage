@@ -212,7 +212,7 @@ test("profile setup editors use the compact shared modal shell without changing 
 
 test("optional payout onboarding uses plain language and names the provider only in setup", () => {
   assert.match(dashboard, /<span className="eyebrow">Optional<\/span>[\s\S]*?<h3>Commission payouts<\/h3>/);
-  assert.match(dashboard, /Connect a payout account to receive your verified Club Deal commissions\. Payouts are managed through NATS\./);
+  assert.match(dashboard, /Club Deals stay on your profile\. Commissions start only after your NATS enrollment is verified\. Earlier redemptions do not earn commissions or back pay\./);
   assert.match(dashboard, /Payout account login ID <span>from NATS<\/span>/);
   assert.doesNotMatch(dashboard, /Connect your NATS account|NATS account linked|Create or open NATS account/);
   assert.doesNotMatch(dashboard, /Recommended · never required for activation/);
@@ -226,8 +226,8 @@ test("approved dancers who skipped payout setup get a plain-language call to act
   const callout = dashboard.match(/function DancerNatsSignupCallout\([\s\S]*?(?=\nfunction DancerPanel)/)?.[0] || "";
   assert.match(setupState, /\["requested", "active"\]\.includes\(accountStatus\)/);
   assert.doesNotMatch(callout, /platform\.selected !== true \|\|/);
-  assert.match(callout, /Get paid your commissions/);
-  assert.match(callout, /Sign up for a commission payout account to receive the Club Deal commissions you earn/);
+  assert.match(callout, /Start earning commissions/);
+  assert.match(callout, /Enroll and get verified to earn commissions on future Club Deal redemptions/);
   assert.match(callout, /portalUrl \|\| supportRequestUrl/);
   assert.match(callout, /mailto:support@mydancr\.com\?subject=Commission%20payout%20account%20setup/);
   assert.match(callout, /Sign up for commission payouts/);

@@ -254,7 +254,7 @@ test("optional payout setup is offered before NFC without blocking activation", 
 
   assert.match(setupOrderSource, /"profile", "payout", "approval"/);
   assert.match(setupGate, /requiredStep !== "payout"/);
-  assert.match(payoutMarkup, /Connect a payout account to receive your verified Club Deal commissions/i);
+  assert.match(payoutMarkup, /Commissions start only after your NATS enrollment is verified/i);
   assert.match(payoutMarkup, /Payouts are managed through NATS/i);
   assert.doesNotMatch(payoutMarkup, /Connect NATS|NATS linked|Open NATS/i);
   assert.doesNotMatch(payoutMarkup, /never blocks|payout stays on hold|not active yet|safely paused|tax details/i);
