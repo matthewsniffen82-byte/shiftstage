@@ -5,6 +5,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { homeDiscoveryHref } from "@/src/lib/dancr/navigation";
 import { MAX_DANCER_PROFILE_VIDEOS } from "@/src/lib/dancr/media-limits";
 import { createBrowserSupabaseClient } from "@/src/lib/supabase/client";
+import DancerVideoPreviews from "./DancerVideoPreviews";
 import {
   readDashboardAccessToken,
   requestDancerTvVideoJson,
@@ -338,7 +339,7 @@ export default function DancerTvStudio({ embedded = false }: { embedded?: boolea
 
           if (!data.upload.alreadySubmitted) {
             updateQueuedVideo(item.id, { stage: "checking", progress: 85 });
-            setStatus(`Running safety review for video ${index + 1} of ${batch.length}...`);
+            setStatus(`Checking video ${index + 1} of ${batch.length}...`);
             await requestDancerTvVideoJson(preparedVideoId, {
               method: "PATCH",
               headers: { "content-type": "application/json" },
@@ -377,7 +378,7 @@ export default function DancerTvStudio({ embedded = false }: { embedded?: boolea
         announceDancerProfileVideosChanged();
       }
       setStatus([
-        submittedCount ? `${submittedCount} ${submittedCount === 1 ? "video" : "videos"} uploaded and sent through automatic review` : "",
+        submittedCount ? `${submittedCount} ${submittedCount === 1 ? "video" : "videos"} uploaded` : "",
         failedItems.length ? `${failedItems.length} ready to retry` : "",
       ].filter(Boolean).join(". ") || "No videos were uploaded.");
     } finally {
@@ -412,7 +413,7 @@ export default function DancerTvStudio({ embedded = false }: { embedded?: boolea
         }
         : current);
       announceDancerProfileVideosChanged();
-      setStatus(data.message || "Video removed from MyDancr TV.");
+      setStatus(embedded ? "Video deleted." : data.message || "Video removed from MyDancr TV.");
     } catch (error) {
       if (isCurrentVideoAction(requestId, controller)) {
         setStatus(error instanceof Error ? error.message : "Unable to remove video.");
@@ -598,7 +599,7 @@ export default function DancerTvStudio({ embedded = false }: { embedded?: boolea
           <h3>My videos</h3>
           <span>{isLoading ? "…" : `${currentVideoCount} ${currentVideoCount === 1 ? "video" : "videos"}`}</span>
         </div>
-        <div className="tv-managed-grid">
+        {embedded ? <DancerVideoPreviews videos={workspace?.videos || []} removingId={removingId} disabled={videoActionBusy} onRemove={(videoId) => void removeVideo(videoId)} /> : <div className="tv-managed-grid">
           {workspace?.videos.map((video) => (
             <article className="tv-managed-video" key={video.id}>
               {video.videoUrl ? (
@@ -641,7 +642,7 @@ export default function DancerTvStudio({ embedded = false }: { embedded?: boolea
               </div>
             </article>
           ))}
-        </div>
+        </div>}
       </section> : null}
     </>
   );

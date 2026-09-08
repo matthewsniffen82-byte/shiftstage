@@ -3850,6 +3850,7 @@ function DancerProfilePreview({
                 videoError={mediaError}
                 onOpen={openEditorSection}
                 onDeleteBusyChange={reportPhotoDeleteBusy}
+                onVideoDeleted={(videoId) => setUploadedVideos((current) => current.filter((video) => video.id !== videoId))}
                 onPhotoDeleted={(photoId, refreshedProfile) => onProfileChange?.(refreshedProfile || {
                   ...profile,
                   dancer_photos: (Array.isArray(profile?.dancer_photos) ? profile.dancer_photos : []).filter((photo: any) => photo.id !== photoId),

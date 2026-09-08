@@ -84,7 +84,7 @@ test("dancer uploads are direct, validated, persistent, and submitted for automa
   assert.match(restoredThirtySecondMigration, /status = 'approved'[\s\S]*?duration_seconds between 1 and 30/);
   assert.match(tvSource, /status: "submitted"/);
   assert.match(dancerStudio, /uploadToSignedUrl\(data\.upload\.path, data\.upload\.token, item\.file/);
-  assert.match(dancerStudio, /uploaded and sent through automatic review/);
+  assert.match(dancerStudio, /submittedCount \? `\$\{submittedCount\} \$\{submittedCount === 1 \? "video" : "videos"\} uploaded`/);
   assert.match(dancerStudio, /void uploadVideoBatch\(uploadable\)/);
   assert.match(dancerStudio, /Confirm both permissions before choosing videos/);
   assert.match(dancerStudio, /Under review/);

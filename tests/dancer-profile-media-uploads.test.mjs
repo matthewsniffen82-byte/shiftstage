@@ -13,14 +13,14 @@ const code = ts.transpileModule(source, {
 }).outputText;
 const requireTest = createRequire(import.meta.url);
 const staticHooks = { ...React, useState: initial => [typeof initial === "function" ? initial() : initial, () => {}], useRef: initial => ({ current: initial }), useEffect() {} };
-function loadUploads({ hooks = staticHooks, api = {}, confirm = () => false } = {}) {
+function loadUploads({ hooks = staticHooks, api = {}, confirm = () => false, announce = () => {} } = {}) {
   const exports = {};
-  vm.runInNewContext(code, { exports, AbortController, Error, window: { confirm }, require: name => name === "react" ? hooks : name === "./dashboard-session" ? api : requireTest(name) });
+  vm.runInNewContext(code, { exports, AbortController, Error, window: { confirm }, require: name => name === "react" ? hooks : name === "./dashboard-session" ? api : name === "./dancer-profile-media-sync" ? { announceDancerProfileVideosChanged: announce } : requireTest(name) });
   return exports;
 }
 const exports = loadUploads();
 const Uploads = exports.default;
-const defaultProps = { photos: [], videos: [], isApproved: false, isPublic: false, isVideoLoading: false, videoError: "", onOpen() {}, onPhotoDeleted() {} };
+const defaultProps = { photos: [], videos: [], isApproved: false, isPublic: false, isVideoLoading: false, videoError: "", onOpen() {}, onPhotoDeleted() {}, onVideoDeleted() {} };
 const render = (props = {}) => renderToStaticMarkup(React.createElement(Uploads, { ...defaultProps, ...props })).replace(/<style>[\s\S]*?<\/style>/g, "");
 
 function buttons(node) {
@@ -84,15 +84,15 @@ test("all saved gallery photos use ordinary photo labels including legacy primar
   assert.doesNotMatch(html, /Main photo|Make main/);
 });
 
-test("each preview picture has a separate accessible Delete button", () => {
+test("each photo and video preview has a separate accessible Delete button", () => {
   const tree = Uploads({ ...defaultProps, photos: [{ id: "p", status: "approved" }, { id: "pending", status: "pending" }], videos: [{ id: "v", status: "approved" }] });
   const deletes = buttons(tree).filter(button => button.props.className === "profile-upload-delete");
-  assert.deepEqual(deletes.map(button => button.props["aria-label"]), ["Delete photo 1", "Delete photo 2"]);
+  assert.deepEqual(deletes.map(button => button.props["aria-label"]), ["Delete photo 1", "Delete photo 2", "Delete video 1"]);
   for (const button of buttons(tree)) assert.equal(buttons(button).length, 1, "delete and preview buttons must never be nested");
 });
 
-function deletionHarness({ confirm = () => true, remove = async () => ({ ok: true }), refresh = async () => ({ profile: { avatarPhotoUrl: "/avatar.jpg", dancer_photos: [], pending_photo_reviews: [] } }) } = {}) {
-  const slots = [], effects = [], requests = [], changes = [], busy = [];
+function deletionHarness({ section = "photos", confirm = () => true, remove = async () => ({ ok: true }), refresh = async () => ({ profile: { avatarPhotoUrl: "/avatar.jpg", dancer_photos: [], pending_photo_reviews: [] } }) } = {}) {
+  const slots = [], effects = [], requests = [], changes = [], busy = [], announcements = [];
   let cursor = 0, dirty = true, tree;
   const hooks = { ...React,
     useState(initial) {
@@ -103,20 +103,21 @@ function deletionHarness({ confirm = () => true, remove = async () => ({ ok: tru
     useRef(initial) { const index = cursor++; return slots[index] ||= { current: initial }; },
     useEffect(effect) { const index = cursor++; if (!(index in slots)) { slots[index] = true; effects.push(effect); } },
   };
-  const Module = loadUploads({ hooks, confirm, api: {
+  const Module = loadUploads({ hooks, confirm, announce: () => announcements.push(true), api: {
     requestDancerPhotosJson: options => { requests.push(options); return remove(options); },
     requestDancerProfileJson: options => { requests.push(options); return refresh(options); },
+    requestDancerTvVideoJson: (videoId, options) => { requests.push({ ...options, videoId }); return remove(options); },
   } }).default;
   const cleanups = [];
   function renderState() {
     if (!dirty) return;
     dirty = false; cursor = 0;
-    tree = Module({ ...defaultProps, photos: [{ id: "photo-id", imageUrl: "/photo.jpg", status: "pending" }], onPhotoDeleted: (...args) => changes.push(args), onDeleteBusyChange: value => busy.push(value) });
+    tree = Module({ ...defaultProps, [section]: [{ id: section === "photos" ? "photo-id" : "video-id", imageUrl: "/preview.jpg", status: "pending" }], onPhotoDeleted: (...args) => changes.push(args), onVideoDeleted: (...args) => changes.push(args), onDeleteBusyChange: value => busy.push(value) });
     effects.splice(0).forEach(effect => cleanups.push(effect()));
   }
   renderState();
   return {
-    requests, changes, busy,
+    requests, changes, busy, announcements,
     get controls() { return buttons(tree); },
     get deleteButton() { return buttons(tree).find(button => button.props.className === "profile-upload-delete"); },
     get html() { return renderToStaticMarkup(tree).replace(/<style>[\s\S]*?<\/style>/g, ""); },
@@ -187,6 +188,48 @@ test("closing a preview aborts its request and ignores late results", async () =
   assert.equal(ui.requests[0].signal.aborted, true);
   assert.equal(ui.requests.length, 1);
   assert.equal(ui.changes.length, 0);
+});
+
+test("video preview deletion confirms once, blocks duplicate clicks, and refreshes the saved library", async () => {
+  let release, confirmations = 0;
+  const ui = deletionHarness({ section: "videos", confirm: () => { confirmations++; return true; }, remove: () => new Promise(resolve => { release = resolve; }) });
+  const button = ui.deleteButton;
+  button.props.onClick(); button.props.onClick(); await ui.settle();
+  assert.equal(confirmations, 1);
+  assert.equal(ui.requests.length, 1);
+  assert.equal(ui.requests[0].videoId, "video-id");
+  assert.equal(ui.requests[0].method, "DELETE");
+  assert.match(ui.html, /aria-label="Deleting video 1" aria-busy="true"/);
+  assert.ok(ui.controls.every(control => control.props.disabled));
+  release({ ok: true }); await ui.settle();
+  assert.equal(ui.deleteButton, undefined);
+  assert.deepEqual(ui.changes, [["video-id"]]);
+  assert.deepEqual(ui.busy, [true, false]);
+  assert.deepEqual(ui.announcements, [true]);
+  assert.match(ui.html, /Video deleted\./);
+});
+
+test("cancelled or failed video deletion keeps the preview without claiming success", async () => {
+  const cancelled = deletionHarness({ section: "videos", confirm: () => false });
+  cancelled.deleteButton.props.onClick(); await cancelled.settle();
+  assert.equal(cancelled.requests.length, 0);
+  const failed = deletionHarness({ section: "videos", remove: async () => { throw new Error("Connection lost. Try again."); } });
+  failed.deleteButton.props.onClick(); await failed.settle();
+  assert.ok(failed.deleteButton);
+  assert.equal(failed.deleteButton.props.disabled, false);
+  assert.equal(failed.changes.length, 0);
+  assert.equal(failed.announcements.length, 0);
+  assert.match(failed.html, /Connection lost\. Try again\./);
+});
+
+test("closing during video deletion aborts and ignores late responses", async () => {
+  let release;
+  const ui = deletionHarness({ section: "videos", remove: () => new Promise(resolve => { release = resolve; }) });
+  ui.deleteButton.props.onClick(); ui.unmount();
+  release({ ok: true }); await ui.settle();
+  assert.equal(ui.requests[0].signal.aborted, true);
+  assert.equal(ui.changes.length, 0);
+  assert.equal(ui.announcements.length, 0);
 });
 
 test("loading and a failed video request are distinguishable from an empty video library", () => {
