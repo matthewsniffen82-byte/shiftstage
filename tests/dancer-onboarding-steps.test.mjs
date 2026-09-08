@@ -165,7 +165,8 @@ test("Step 1 media reuses Edit Profile uploads and keeps selected previews throu
   assert.match(liveAppSource, /category: "selected"/);
   assert.match(liveAppSource, /Ready to upload/);
   assert.match(setupSubmit, /pendingSetupPhotoFiles\.length/);
-  assert.match(setupSubmit, /await uploadApprovedDancerPhoto\(file, nextSetupPhotoUploadTarget\(profile\)\)/);
+  assert.match(setupSubmit, /const cropped = await cropApprovedProfilePhoto\(file\)/);
+  assert.match(setupSubmit, /await uploadApprovedDancerPhoto\(cropped, nextSetupPhotoUploadTarget\(profile\)\)/);
   assert.doesNotMatch(setupSubmit, /uploadSetupPhotoFile\(file, index === 0/);
   assert.match(liveAppSource, /let pendingApprovedProfileVideoFile = null/);
   assert.match(liveAppSource, /rememberPendingApprovedProfileVideo\(file\)/);

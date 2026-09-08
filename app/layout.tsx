@@ -10,6 +10,7 @@ import "../public/dancr-feedback.v1.css";
 import "../public/dancr-status-pages.v1.css";
 import "../public/profile-media-owner-controls.css";
 import "../public/profile-media-card-feed.css";
+import "../public/profile-photo-crop.css";
 import "../public/third-party-social-link-warning.css";
 
 const androidDeviceClassScript = `
@@ -75,6 +76,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
       <Script src="/mydancr-api-transport.js?v=1" strategy="beforeInteractive" />
+      <Script src="/profile-photo-crop.js?v=1" strategy="beforeInteractive" />
       <body className="dancr-button-system" suppressHydrationWarning>
         <script
           dangerouslySetInnerHTML={{ __html: androidDeviceClassScript }}

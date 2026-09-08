@@ -1,11 +1,9 @@
-/* Videos use TV proportions; photos fill a viewport-bounded card. */
+/* Photos and videos share the regular MyDancr TV card size and spacing. */
 .profile-media-card-feed {
   --profile-media-card-height: clamp(560px, calc(100vh - 140px), 760px);
   --profile-media-card-height: clamp(560px, calc(100svh - 140px), 760px);
   --profile-media-card-gap: 16px;
   --profile-media-card-header: calc(72px + env(safe-area-inset-top, 0px));
-  --profile-photo-card-height-limit: max(1px, calc(100vh - 24px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)));
-  --profile-photo-card-height-limit: max(1px, calc(100svh - 24px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)));
 }
 
 /* Match the photo viewer layer so the video header is not covered by page chrome. */
@@ -101,14 +99,13 @@
   object-position: center !important;
   background: #000 !important;
 }
-/* Use nearly a full screen per photo; the single header scrolls away.
- * Stable viewport units leave room for mobile browser chrome without jumps. */
+/* Uploaded photos are framed for these cards before they enter moderation. */
 .profile-media-card-feed [data-profile-photo-card] {
   display: block !important;
   width: 100% !important;
-  height: var(--profile-photo-card-height-limit) !important;
-  min-height: 0 !important;
-  max-height: var(--profile-photo-card-height-limit) !important;
+  height: var(--profile-media-card-height) !important;
+  min-height: var(--profile-media-card-height) !important;
+  max-height: var(--profile-media-card-height) !important;
   aspect-ratio: auto;
 }
 .profile-media-card-feed [data-profile-photo-card] > :is(img, .profile-photo-viewer-slide-image) {

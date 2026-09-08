@@ -8,6 +8,7 @@ const routePaths = [
   "../app/api/venue/cover-image/route.ts",
   "../app/api/venue/logo-image/route.ts",
   "../app/api/admin/venues/media/route.ts",
+  "../app/api/dancer/photos/preview/route.ts",
 ];
 const sources = await Promise.all(routePaths.map((path) => readFile(new URL(path, import.meta.url), "utf8")));
 

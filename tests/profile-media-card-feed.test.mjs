@@ -86,7 +86,7 @@ test("instant opening bypasses smooth CSS scrolling in every profile viewer", ()
 });
 
 test("photo cards fill the available width and height without changing video sizing", () => {
-  assert.match(css, /\[data-profile-photo-card\] \{[^}]*width: 100% !important;[^}]*height: var\(--profile-photo-card-height-limit\) !important;[^}]*min-height: 0 !important;[^}]*max-height: var\(--profile-photo-card-height-limit\) !important;[^}]*aspect-ratio: auto/);
+  assert.match(css, /\[data-profile-photo-card\] \{[^}]*width: 100% !important;[^}]*height: var\(--profile-media-card-height\) !important;[^}]*min-height: var\(--profile-media-card-height\) !important;[^}]*max-height: var\(--profile-media-card-height\) !important;[^}]*aspect-ratio: auto/);
   assert.match(css, /\[data-profile-photo-card\] > :is\(img, \.profile-photo-viewer-slide-image\) \{[^}]*width: 100% !important;[^}]*height: 100% !important/);
   assert.match(live, /slide\.dataset\.profilePhotoCard = "true"/);
   assert.match(carousel, /data-profile-photo-card=\{item\.kind === "photo" \? "true" : undefined\}/);
@@ -98,11 +98,8 @@ test("photo cards fill the available width and height without changing video siz
   }
 });
 
-test("taller photo cards use the screen height without reserving the scrolling header", () => {
-  for (const unit of ["vh", "svh"]) {
-    assert.ok(css.includes(`--profile-photo-card-height-limit: max(1px, calc(100${unit} - 24px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)))`));
-  }
-  assert.doesNotMatch(css, /--profile-photo-card-height-limit:[^;]*--profile-media-card-header/);
+test("photo cards use the same height and spacing as regular TV cards", () => {
+  assert.doesNotMatch(css, /--profile-photo-card-height-limit/);
   assert.doesNotMatch(css, /--profile-photo-card-ratio|--profile-photo-card-control-space|data-photo-shape/);
   assert.match(css, /height: var\(--profile-media-card-height\) !important/);
 });

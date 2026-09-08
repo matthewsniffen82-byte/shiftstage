@@ -22,6 +22,7 @@ import DancerProfileMediaUploads from "./DancerProfileMediaUploads";
 import { mediaReviewLabel } from "@/src/lib/dancr/media-review-label";
 import DancerMediaPinButton from "./DancerMediaPinButton";
 import { requestDancerMediaPin } from "./dashboard-session";
+import { cropProfilePhoto } from "./profile-photo-crop";
 import { AVATAR_REJECTED_MESSAGE, avatarUploadPresentation, type AvatarUploadFeedback } from "./avatar-upload-state";
 import DancerShiftManager from "./DancerShiftManager";
 import { DANCER_PROFILE_VIDEOS_CHANGED_EVENT } from "./dancer-profile-media-sync";
@@ -7068,7 +7069,7 @@ type DancerPhotoQueueItem = {
   file: File;
   previewUrl: string;
   source: "gallery" | "camera";
-  stage: "queued" | "uploading" | "checking" | "failed";
+  stage: "queued" | "cropping" | "uploading" | "checking" | "failed";
   progress: number;
   uploadSortOrder?: number;
   error?: string;
@@ -7164,7 +7165,7 @@ function DancerPhotoPanel({
     });
     const omitted = files.length - selectedFiles.length;
     setQueuedPhotos((current) => [...current, ...additions]);
-    setStatus(`${additions.length} ${additions.length === 1 ? "photo" : "photos"} selected. Upload started automatically${omitted ? `. ${omitted} exceeded the available profile slots.` : "."}`);
+    setStatus(`${additions.length} ${additions.length === 1 ? "photo" : "photos"} selected. Crop each photo before it uploads${omitted ? `. ${omitted} exceeded the available profile slots.` : "."}`);
     const uploadable = additions.filter((item) => !item.error);
     if (uploadable.length) void uploadPhotoBatch(uploadable);
   }
@@ -7250,20 +7251,40 @@ function DancerPhotoPanel({
     let workingPhotos = [...photos];
     let acceptedCount = 0;
     let rejectedCount = 0;
+    let deletionsPersisted = false;
     try {
-      await persistQueuedPhotoDeletions(controller.signal);
-      if (!isCurrentPhotoAction(requestId, controller)) return;
       for (let index = 0; index < batch.length; index += 1) {
         if (!isCurrentPhotoAction(requestId, controller)) return;
-        const item = batch[index];
+        let item = batch[index];
         let uploadSortOrder = item.uploadSortOrder;
         setUploadingQueueItemId(item.id);
-        updateQueuedPhoto(item.id, { stage: "uploading", progress: 25, error: undefined });
-        setStatus(`Checking photo ${index + 1} of ${batch.length}...`);
+        updateQueuedPhoto(item.id, { stage: "cropping", progress: 5, error: undefined });
+        setStatus(`Crop photo ${index + 1} of ${batch.length} to fit the card.`);
         try {
           if (workingPhotos.length >= MAX_DANCER_PROFILE_PHOTOS) {
             throw new Error("No profile photo slot is available for this photo.");
           }
+          const cropped = await cropProfilePhoto(item.file, controller.signal);
+          if (!isCurrentPhotoAction(requestId, controller)) return;
+          if (!cropped) {
+            failedItems.push(...batch.slice(index).map((remaining) => ({ ...remaining, stage: "failed" as const, progress: 0, error: "Crop canceled. Retry when you are ready to frame this photo." })));
+            break;
+          }
+          if (cropped !== item.file) {
+            const previewUrl = URL.createObjectURL(cropped);
+            queuedPreviewUrlsRef.current.add(previewUrl);
+            queuedPreviewUrlsRef.current.delete(item.previewUrl);
+            URL.revokeObjectURL(item.previewUrl);
+            item = { ...item, file: cropped, previewUrl };
+            updateQueuedPhoto(item.id, { file: cropped, previewUrl });
+          }
+          if (!deletionsPersisted) {
+            await persistQueuedPhotoDeletions(controller.signal);
+            if (!isCurrentPhotoAction(requestId, controller)) return;
+            deletionsPersisted = true;
+          }
+          updateQueuedPhoto(item.id, { stage: "uploading", progress: 25 });
+          setStatus(`Checking photo ${index + 1} of ${batch.length}...`);
           uploadSortOrder = uploadSortOrder ?? nextGalleryPhotoSortOrder(workingPhotos);
           const uploadKey = `${item.id}:gallery`;
           updateQueuedPhoto(item.id, { uploadSortOrder });
@@ -7520,7 +7541,7 @@ function DancerPhotoPanel({
               <div className="photo-preview" style={{ backgroundImage: `url(${item.previewUrl})` }} />
               <span>
                 <strong>{`Selected photo ${index + 1}`}</strong>
-                <small>{item.stage === "uploading" ? "Uploading" : item.stage === "checking" ? "Checking" : item.error ? "Upload failed" : "Waiting to upload"}</small>
+                <small>{item.stage === "cropping" ? "Framing photo" : item.stage === "uploading" ? "Uploading" : item.stage === "checking" ? "Checking" : item.error?.startsWith("Crop canceled") ? "Crop canceled" : item.error ? "Upload failed" : "Waiting to upload"}</small>
                 {item.stage !== "failed" ? <progress aria-label={`Photo ${index + 1} upload progress`} max="100" value={item.progress} /> : null}
                 {item.error ? <em>{item.error}</em> : null}
                 <span className="photo-queue-actions">

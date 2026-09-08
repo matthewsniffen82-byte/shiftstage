@@ -3,6 +3,7 @@
 <html lang="en">
 <head>
   <script src="/mydancr-api-transport.js?v=1"></script>
+  <script src="/profile-photo-crop.js?v=1"></script>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
   <meta name="color-scheme" content="only dark">
@@ -32077,7 +32078,8 @@
   <link href="/dancr-aesthetic.v1.css?v=270" rel="stylesheet">
   <link href="/dancr-feedback.v1.css?v=2" rel="stylesheet">
   <link href="/profile-media-owner-controls.css?v=3" rel="stylesheet">
-  <link href="/profile-media-card-feed.css?v=7" rel="stylesheet">
+  <link href="/profile-media-card-feed.css?v=8" rel="stylesheet">
+  <link href="/profile-photo-crop.css?v=1" rel="stylesheet">
 </head>
 <body class="dancr-button-system">
   <div class="app">
@@ -56232,8 +56234,28 @@
       return data;
     }
 
+    async function cropApprovedProfilePhoto(file) {
+      if (!window.DancrPhotoCrop) throw new Error("The photo editor is still loading. Please try again.");
+      const cropped = await window.DancrPhotoCrop.crop(file, {
+        prepare: async (original, signal) => {
+          const headers = authenticatedRequestHeaders();
+          if (!headers) throw new Error("Sign in required");
+          const body = new FormData();
+          body.set("file", original);
+          const response = await fetch("/api/dancer/photos/preview", { method: "POST", headers, body, signal });
+          const data = await response.json().catch(() => ({}));
+          if (!response.ok || data.ok === false) throw new Error(normalizeRequestError(data.error, "Unable to prepare this photo for cropping."));
+          applyResponseSession(data, headers);
+          return data.imageDataUrl;
+        }
+      });
+      if (!cropped) throw new DOMException("Photo crop canceled. No photo was uploaded.", "AbortError");
+      return cropped;
+    }
+
     async function uploadApprovedDancerPhoto(file, target) {
       if (!isDancerSession()) throw new Error("Sign in as a dancer to upload live photos.");
+      file = await cropApprovedProfilePhoto(file);
       let profile = activeDancerProfile() || ensureActiveDancerProfile("Verified");
       profile = await persistQueuedApprovedPhotoDeletionsBeforeUpload(profile);
       const submittedIndex = String(target || "").startsWith("submitted:") ? Number(String(target).split(":")[1]) : -1;
@@ -56894,20 +56916,29 @@
         result.classList.toggle("is-error", state === "error");
         result.setAttribute("aria-busy", state === "moderating" ? "true" : "false");
       };
-      setSetupPhotoStatus(setupProgressSteps[setupProgressIndex], "moderating");
-      const setupProgressTimer = window.setInterval(() => {
-        setupProgressIndex = Math.min(setupProgressIndex + 1, setupProgressSteps.length - 1);
-        setSetupPhotoStatus(setupProgressSteps[setupProgressIndex], "moderating");
-      }, 1400);
+      let setupProgressTimer = 0;
       try {
         const uploadAttempts = [];
         for (const file of photoFiles) {
           try {
+            window.clearInterval(setupProgressTimer);
+            setSetupPhotoStatus("Frame your photo, then choose Use photo to upload.");
+            const cropped = await cropApprovedProfilePhoto(file);
+            setupProgressIndex = 0;
+            setSetupPhotoStatus(setupProgressSteps[setupProgressIndex], "moderating");
+            setupProgressTimer = window.setInterval(() => {
+              setupProgressIndex = Math.min(setupProgressIndex + 1, setupProgressSteps.length - 1);
+              setSetupPhotoStatus(setupProgressSteps[setupProgressIndex], "moderating");
+            }, 1400);
             const profile = activeDancerProfile() || ensureActiveDancerProfile("Pending");
-            const upload = await uploadApprovedDancerPhoto(file, nextSetupPhotoUploadTarget(profile));
+            const upload = await uploadApprovedDancerPhoto(cropped, nextSetupPhotoUploadTarget(profile));
             uploadAttempts.push({ status: "fulfilled", value: upload });
           } catch (reason) {
             uploadAttempts.push({ status: "rejected", reason });
+            if (reason?.name === "AbortError") {
+              while (uploadAttempts.length < photoFiles.length) uploadAttempts.push({ status: "rejected", reason });
+              break;
+            }
           }
         }
         const uploaded = uploadAttempts
@@ -64659,11 +64690,13 @@
       const input = event.target;
       const file = input.files?.[0];
       if (!file) return;
-      const progressTimer = startApprovedPhotoModerationProgress(file.name || "photo");
-      showToast("Checking your photo...");
+      let progressTimer = 0;
+      setApprovedPhotoUploadStatus("Frame your photo, then choose Use photo to upload.");
       input.disabled = true;
       try {
-        let uploadResult = await uploadApprovedDancerPhoto(file, pendingApprovedPhotoTarget);
+        const cropped = await cropApprovedProfilePhoto(file);
+        progressTimer = startApprovedPhotoModerationProgress(cropped.name || "photo");
+        let uploadResult = await uploadApprovedDancerPhoto(cropped, pendingApprovedPhotoTarget);
         const decision = normalizedReviewStatus(uploadResult?.decision);
         if (decision === "approved") {
           uploadResult = await hydrateConfirmedApprovedDancerPhoto(uploadResult);

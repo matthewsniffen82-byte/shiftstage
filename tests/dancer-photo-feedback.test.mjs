@@ -16,13 +16,14 @@ const approved = (id = "saved", sort = 1, primary = false) => ({ id, imageUrl: `
 const pending = (id = "review", sort = 1) => ({ id, previewUrl: `/${id}.jpg`, sort_order: sort });
 
 // Exercise the real upload handlers, state updates, and profile mapping without uploading user data.
-function photoHarness({ uploadOnly = false, profile = {}, pin = async (_kind, id, pinned) => ({ id, isPinned: pinned }), post = async () => ({ decision: "review", moderationRecordId: "review", photo: { id: "review", sortOrder: 1 } }), read = async () => ({ profile: { dancer_photos: [approved()] } }) } = {}) {
-  const slots = [], posts = [], reads = [], profiles = [], pins = [];
+function photoHarness({ uploadOnly = false, profile = {}, crop = async file => file, pin = async (_kind, id, pinned) => ({ id, isPinned: pinned }), post = async () => ({ decision: "review", moderationRecordId: "review", photo: { id: "review", sortOrder: 1 } }), read = async () => ({ profile: { dancer_photos: [approved()] } }) } = {}) {
+  const slots = [], posts = [], reads = [], profiles = [], pins = [], crops = [];
   let cursor = 0, effects = [], dirty = true, tree;
   const exports = {};
   runInNewContext(code, {
     exports, ...mediaReview, MAX_DANCER_PROFILE_PHOTOS: 30, DancerMediaPinButton: "MediaPinButton",
     requestDancerMediaPin: (...args) => { pins.push(args); return pin(...args); },
+    cropProfilePhoto: (...args) => { crops.push(args); return crop(...args); },
     require: () => ({ jsx: (type, props) => ({ type, props }), jsxs: (type, props) => ({ type, props }) }),
     useState(initial) {
       const index = cursor++;
@@ -57,21 +58,41 @@ function photoHarness({ uploadOnly = false, profile = {}, pin = async (_kind, id
   }
   render();
   return {
-    posts, reads, profiles, pins, mapProfile: exports.dancerPhotoItemsFromProfile,
+    posts, reads, profiles, pins, crops, mapProfile: exports.dancerPhotoItemsFromProfile,
     get pinButtons() { return nodes().filter(node => node.type === "MediaPinButton"); },
     get cards() { return nodes().filter(node => /^(photo-review-card|photo-saved-preview)/.test(node.props?.className || "")); },
     get labels() { return this.cards.map(card => nodes(card).find(node => node.type === "strong").props.children); },
     get statuses() { return this.cards.map(card => nodes(card).find(node => node.type === "small").props.children); },
     get notes() { return nodes().filter(node => node.type === "em").map(node => node.props.children); },
     get buttons() { return nodes().filter(node => node.type === "button"); },
-    select() {
-      nodes().find(node => node.props?.["aria-label"] === "Choose profile photos from your library").props.onChange({ target: { files: [new File(["fixture"], "solo.jpg", { type: "image/jpeg" })], value: "" } });
+    select(files = [new File(["fixture"], "solo.jpg", { type: "image/jpeg" })]) {
+      nodes().find(node => node.props?.["aria-label"] === "Choose profile photos from your library").props.onChange({ target: { files, value: "" } });
       render();
     },
     updateProfile(next) { profile = next; dirty = true; render(); },
     async settle() { await new Promise(resolve => setImmediate(resolve)); render(); },
   };
 }
+
+test("canceling the crop stops the batch without uploading or discarding selected photos", async () => {
+  const ui = photoHarness({ crop: async () => null });
+  ui.select([new File(["first"], "first.jpg", { type: "image/jpeg" }), new File(["second"], "second.jpg", { type: "image/jpeg" })]);
+  await ui.settle();
+  assert.equal(ui.crops.length, 1);
+  assert.equal(ui.posts.length, 0);
+  assert.equal(ui.reads.length, 0);
+  assert.equal(ui.cards.length, 2);
+  assert.equal(ui.buttons.filter(button => button.props.children === "Retry").length, 2);
+});
+
+test("the confirmed crop bytes are uploaded, not the unframed original", async () => {
+  const cropped = new File(["confirmed-crop"], "solo-card.jpg", { type: "image/jpeg" });
+  const ui = photoHarness({ crop: async () => cropped });
+  ui.select(); await ui.settle();
+  assert.equal(ui.crops.length, 1);
+  assert.equal(await ui.posts[0].body.get("file").text(), "confirmed-crop");
+  assert.equal(ui.posts[0].body.get("file").name, "solo-card.jpg");
+});
 
 test("fresh approval replaces a locally checking photo even when the review and saved photo have different IDs", async () => {
   const ui = photoHarness();

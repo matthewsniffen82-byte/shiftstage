@@ -164,14 +164,15 @@ test("saved profiles keep every active photo moderation state in the editor", ()
 });
 
 test("combined Step 1 can be submitted with one approved photo while extra photos remain in review", () => {
-  const uploadHelper = mobileAppSource.match(/async function uploadSetupPhotoFile[\s\S]*?\r?\n    }\r?\n\r?\n    async function uploadApprovedDancerPhoto/)?.[0] || "";
+  const uploadHelper = mobileAppSource.match(/async function uploadSetupPhotoFile[\s\S]*?\r?\n    }\r?\n\r?\n    async function cropApprovedProfilePhoto/)?.[0] || "";
   const setupSubmit = mobileAppSource.match(/async function submitSetupPhotos[\s\S]*?\r?\n    }\r?\n\r?\n    async function submitDancerProfileForReview/)?.[0] || "";
   const profileHydration = mobileAppSource.match(/function applyDancerApprovalProfile[\s\S]*?\r?\n    }\r?\n\r?\n    function setDancerSetupField/)?.[0] || "";
 
   assert.match(uploadHelper, /normalizedReviewStatus\(data\?\.decision\) === "rejected"/);
   assert.match(uploadHelper, /return data/);
   assert.match(setupSubmit, /for \(const file of photoFiles\)/);
-  assert.match(setupSubmit, /await uploadApprovedDancerPhoto\(file, nextSetupPhotoUploadTarget\(profile\)\)/);
+  assert.match(setupSubmit, /const cropped = await cropApprovedProfilePhoto\(file\)/);
+  assert.match(setupSubmit, /await uploadApprovedDancerPhoto\(cropped, nextSetupPhotoUploadTarget\(profile\)\)/);
   assert.match(setupSubmit, /dancerSetupPhotoModerationCategory\(item\) === "approved"/);
   assert.match(setupSubmit, /dancerSetupPhotoModerationCategory\(item\) === "review"/);
   assert.match(setupSubmit, /dancerSetupPhotoModerationCategory\(item\) === "rejected"/);
