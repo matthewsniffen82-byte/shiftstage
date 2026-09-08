@@ -161,7 +161,8 @@ export default function DancerNfcPanel({
           <span className="dancer-nfc-compact-action">Manage</span>
         </summary>
         <div className="dancer-nfc-compact-body">
-          <p>Log into your MyDancr account, then tap the club&apos;s MyDancr dressing-room sticker to connect and show Working Now there. Once connected, you can post upcoming dates there.</p>
+          <p>Log into your MyDancr account, then unlock your phone and tap the club&apos;s MyDancr dressing-room sticker to connect and show Working Now there. Once connected, you can post upcoming dates there.</p>
+          <p>No specific MyDancr page needs to be open. Open the NFC link if your phone prompts you. If that browser asks you to sign in, use your dancer account.</p>
           {affiliationRoster}
           {checkInDetails}
           <button className="dancer-nfc-refresh" type="button" disabled={Boolean(pendingId)} onClick={refresh}>
@@ -191,6 +192,8 @@ export default function DancerNfcPanel({
         ) : (
           <p className="dancer-nfc-intro">Finish your profile and log into your MyDancr account. Then unlock your phone and tap the club&apos;s MyDancr dressing-room sticker.</p>
         )}
+
+        <p className="dancer-nfc-intro">No specific MyDancr page needs to be open. Open the NFC link if your phone prompts you. If that browser asks you to sign in, use your dancer account.</p>
 
         <ol className="dancer-nfc-guide">
           {!authorized ? <li><strong>Activate once</strong><span>Your first tap activates your completed profile and checks you in at that club.</span></li> : null}

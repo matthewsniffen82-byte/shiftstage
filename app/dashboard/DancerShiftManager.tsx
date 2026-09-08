@@ -240,7 +240,7 @@ export default function DancerShiftManager() {
             ) : null}
             {tapReady ? (
               <small className="shift-checkin-status is-loading" role="status">
-                Ready to tap: hold your phone near the dressing-room sticker. The secure venue page starts one six-hour Working Now session followed by a six-hour cooldown.
+                Ready to tap: unlock your phone and hold it near the dressing-room sticker. No specific MyDancr page needs to be open. Open the NFC link if prompted, then sign in to your dancer account in that browser if asked. The secure venue page starts one six-hour Working Now session followed by a six-hour cooldown.
               </small>
             ) : null}
           </>

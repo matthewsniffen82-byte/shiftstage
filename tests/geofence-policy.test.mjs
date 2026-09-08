@@ -93,7 +93,7 @@ test("database activation is atomic, affiliation-gated, non-extendable, and glob
 });
 
 test("dancer controls explain the physical tap and never request phone coordinates", () => {
-  assert.match(shiftManager, /Ready to tap: hold your phone near the dressing-room sticker/);
+  assert.match(shiftManager, /Ready to tap: unlock your phone and hold it near the dressing-room sticker/);
   assert.match(shiftManager, /Retaps cannot extend this six-hour session/);
   assert.match(shiftManager, /six-hour cooldown/);
   assert.match(shiftManager, /Upcoming date/);

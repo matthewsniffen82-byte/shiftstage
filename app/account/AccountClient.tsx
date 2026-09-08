@@ -487,7 +487,7 @@ export default function AccountClient() {
               <h1>Connect to {nfcVenueName}.</h1>
               <p>
                 {mode === "login"
-                  ? "Sign in to your dancer account. MyDancr will return to this sticker and confirm the venue connection automatically."
+                  ? "Sign in to your dancer account in this browser, even if you are already signed in in another browser. MyDancr will return to this sticker and confirm the venue connection automatically."
                   : "Create your dancer login, confirm your email, and complete the required profile steps. MyDancr keeps this venue connection saved while you finish."}
               </p>
               <div className={`nfc-venue-context ${nfcContextStatus}`} role="status" aria-live="polite">
@@ -501,6 +501,7 @@ export default function AccountClient() {
                       : "Secure MyDancr tap"}</small>
                 </span>
               </div>
+              <p>For future taps, no specific MyDancr page needs to be open. Unlock your phone, tap the dressing-room sticker, and open the NFC link if prompted. Use the browser that opens for your dancer sign-in.</p>
               <ol className="nfc-account-steps" aria-label="Venue connection steps">
                 <li><span>1</span><strong>Use a dancer account</strong></li>
                 <li><span>2</span><strong>Finish required setup if new</strong></li>
