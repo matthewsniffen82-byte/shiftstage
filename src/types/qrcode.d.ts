@@ -11,6 +11,7 @@ declare module "qrcode" {
 
   const QRCode: {
     toDataURL(text: string, options?: QRCodeOptions): Promise<string>;
+    toBuffer(text: string, options?: QRCodeOptions): Promise<Buffer>;
   };
 
   export default QRCode;

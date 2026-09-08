@@ -21269,6 +21269,7 @@
     }
 
     .profile-qr-frame {
+      color-scheme: light;
       width: min(258px, 74vw);
       aspect-ratio: 1;
       margin: 0 auto 18px;
@@ -21287,6 +21288,9 @@
       height: 100%;
       border-radius: 12px;
     }
+
+    .profile-qr-load-status { margin: 0 0 12px; color: #bcb7c7; font-size: 13px; text-align: center; }
+    [data-retry-profile-qr] { margin: 0 auto 12px; }
 
     .profile-qr-actions {
       display: grid;
@@ -48650,7 +48654,10 @@
       return `${window.location.origin}${window.location.pathname}`;
     }
 
-    function profileShareUrl(profileName, city = selectedCity()) {
+    function profileShareUrl(profileName, city = selectedCity(), assignedSlug = "") {
+      const profile = discoveryMarket(city)?.dancers?.find((item) => item.name === profileName && isApprovedPublicProfile(item));
+      const slug = assignedSlug || profile?.slug;
+      if (slug && /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)) return new URL(`/dancers/${slug}`, window.location.origin).toString();
       const url = new URL(publicProfileBaseUrl());
       url.searchParams.set("city", city);
       url.searchParams.set("profile", slugify(profileName));
@@ -48666,7 +48673,7 @@
     }
 
     function qrCodeUrl(value) {
-      return `https://api.qrserver.com/v1/create-qr-code/?size=220x220&margin=10&color=050507&bgcolor=FFFFFF&data=${encodeURIComponent(value)}`;
+      return `/api/public/share-qr?url=${encodeURIComponent(value)}`;
     }
 
     function loadSavedDealPasses() {
@@ -62412,8 +62419,8 @@
       openProfileModal(card.dataset.profileReference || card.dataset.profile);
     });
 
-    async function runShareAction(profileName, city) {
-      const url = profileShareUrl(profileName, city);
+    async function runShareAction(profileName, city, assignedSlug = "") {
+      const url = profileShareUrl(profileName, city, assignedSlug);
       const text = profileShareText(profileName, city);
       if (navigator.share) {
         try {
@@ -62454,8 +62461,10 @@
             <h3 class="profile-qr-title" id="profileQrTitle">Open dancer account profile</h3>
             <p class="profile-qr-subtitle" id="profileQrSubtitle">Scan to open this dancer profile. This is not a Club Deal.</p>
             <div class="profile-qr-frame">
-              <img class="profile-qr-overlay-image" id="profileQrImage" alt="QR code for dancer profile" loading="lazy" decoding="async">
+              <img class="profile-qr-overlay-image" id="profileQrImage" alt="QR code for dancer profile" width="360" height="360" decoding="async">
             </div>
+            <p class="profile-qr-load-status" id="profileQrLoadStatus" role="status" aria-live="polite" hidden></p>
+            <button class="profile-qr-action" type="button" data-retry-profile-qr hidden>Retry QR code</button>
             <div class="profile-qr-actions">
               <button class="profile-qr-action" type="button" data-copy-qr-profile>Copy link</button>
               <a class="profile-qr-action primary" id="profileQrOpen" href="#" target="_blank" rel="noreferrer">Open profile</a>
@@ -62467,6 +62476,10 @@
       overlay.addEventListener("click", (event) => {
         if (event.target === overlay || event.target.closest("[data-close-qr-overlay]")) {
           closeQrPopovers();
+          return;
+        }
+        if (event.target.closest("[data-retry-profile-qr]")) {
+          loadProfileQrImage(overlay);
           return;
         }
         if (event.target.closest("[data-copy-qr-profile]")) {
@@ -62503,14 +62516,15 @@
         }
         const profileName = overlay.dataset.profileName || "";
         const city = overlay.dataset.shareCity || selectedCity();
+        const assignedSlug = overlay.dataset.profileSlug || "";
         if (event.target.closest("[data-share-profile-choice]")) {
           closeProfileShareChoice({ restoreFocus: false });
           recordLiveEvent("profile_action", { dancerName: profileName, source: "share_opened" });
-          runShareAction(profileName, city);
+          runShareAction(profileName, city, assignedSlug);
           return;
         }
         if (event.target.closest("[data-copy-profile-choice]")) {
-          void copyText(profileShareUrl(profileName, city), "Profile link copied").then((copied) => {
+          void copyText(profileShareUrl(profileName, city, assignedSlug), "Profile link copied").then((copied) => {
             if (copied) void recordProfileEngagementShare(profileName, city);
           });
           return;
@@ -62518,17 +62532,18 @@
         if (event.target.closest("[data-show-profile-qr-choice]")) {
           const shareTrigger = overlay.profileShareTrigger;
           closeProfileShareChoice({ restoreFocus: false });
-          openQrOverlay(profileName, city, shareTrigger);
+          openQrOverlay(profileName, city, shareTrigger, assignedSlug);
           recordLiveEvent("profile_action", { dancerName: profileName, source: "profile_share_qr_opened" });
         }
       });
       return overlay;
     }
 
-    function openProfileShareChoice(profileName, city, triggerButton) {
+    function openProfileShareChoice(profileName, city, triggerButton, assignedSlug = "") {
       const overlay = profileShareChoiceOverlay();
       const safeProfileName = String(profileName || "Dancer").trim() || "Dancer";
       overlay.dataset.profileName = safeProfileName;
+      overlay.dataset.profileSlug = assignedSlug;
       overlay.dataset.shareCity = city || selectedCity();
       overlay.profileShareTrigger = triggerButton || null;
       triggerButton?.setAttribute("aria-expanded", "true");
@@ -62553,6 +62568,7 @@
       overlay.setAttribute("aria-hidden", "true");
       overlay.hidden = true;
       delete overlay.dataset.profileName;
+      delete overlay.dataset.profileSlug;
       delete overlay.dataset.shareCity;
       returnTarget?.setAttribute("aria-expanded", "false");
       overlay.profileShareTrigger = null;
@@ -62588,6 +62604,23 @@
       }
     }
 
+    function loadProfileQrImage(overlay) {
+      const image = overlay.querySelector("#profileQrImage");
+      const status = overlay.querySelector("#profileQrLoadStatus");
+      const retry = overlay.querySelector("[data-retry-profile-qr]");
+      image.style.visibility = "hidden";
+      status.hidden = false;
+      status.textContent = "Loading QR code…";
+      retry.hidden = true;
+      image.onload = () => { image.style.visibility = "visible"; status.hidden = true; };
+      image.onerror = () => {
+        image.style.visibility = "hidden";
+        status.textContent = "QR code unavailable. Try again or copy your link.";
+        retry.hidden = false;
+      };
+      image.src = qrCodeUrl(overlay.dataset.qrUrl);
+    }
+
     function openShareQrOverlay({
       url,
       kicker,
@@ -62608,7 +62641,7 @@
       overlay.dataset.qrUrl = url;
       overlay.dataset.qrKind = kind;
       overlay.profileQrTrigger = triggerButton || null;
-      image.src = qrCodeUrl(url);
+      loadProfileQrImage(overlay);
       image.alt = imageAlt;
       kickerNode.textContent = kicker;
       titleNode.textContent = title;
@@ -62627,9 +62660,9 @@
       overlay.querySelector("[data-close-qr-overlay]")?.focus({ preventScroll: true });
     }
 
-    function openQrOverlay(profileName, city, triggerButton) {
+    function openQrOverlay(profileName, city, triggerButton, assignedSlug = "") {
       openShareQrOverlay({
-        url: profileShareUrl(profileName, city),
+        url: profileShareUrl(profileName, city, assignedSlug),
         kicker: "Profile-sharing QR",
         title: `${profileName} profile QR`,
         subtitle: `Scan to open ${profileName}'s MyDancr profile and follow them. This is not a Club Deal and cannot be redeemed at a venue.`,
@@ -62644,7 +62677,7 @@
       if (!isApprovedPublicProfile(profile) || profile?.disabled_at || profile?.disabledAt) return null;
       const profileName = cleanDisplayValue(profile?.stage_name || profile?.stageName || "");
       const city = cleanDisplayValue(profile?.city || profile?.cityName || "");
-      return profileName && city ? { profileName, city } : null;
+      return profileName && city ? { profileName, city, slug: String(profile.slug || "") } : null;
     }
 
     async function openOwnDancerProfileShare(triggerButton) {
@@ -62659,7 +62692,7 @@
           return;
         }
         triggerButton.dataset.shareCity = target.city;
-        openProfileShareChoice(target.profileName, target.city, triggerButton);
+        openProfileShareChoice(target.profileName, target.city, triggerButton, target.slug);
         recordLiveEvent("profile_action", {
           dancerName: target.profileName,
           source: "profile_share_nav_opened"
@@ -66018,6 +66051,13 @@
           openProfileModal(profileReferenceValue(profile));
           openSharedProfileMedia(params);
         }, 120);
+      } else if (/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(profileSlug)) {
+        // Previously assigned links resolve through the same public approval checks.
+        const target = new URL(`/dancers/${profileSlug}`, window.location.origin);
+        for (const key of ["media", "mediaIndex"]) {
+          if (params.has(key)) target.searchParams.set(key, params.get(key));
+        }
+        window.location.replace(target.toString());
       }
     }
 

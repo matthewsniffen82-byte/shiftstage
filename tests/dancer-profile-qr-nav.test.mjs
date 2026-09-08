@@ -33,7 +33,7 @@ test("the dancer header share action uses the current approved public profile", 
     liveApp.match(/function shareableDancerProfile\(profile\) \{[\s\S]*?\n    \}/)?.[0] || "";
 
   assert.match(opener, /getAuthenticatedJson\("\/api\/dancer\/profile"\)/);
-  assert.match(opener, /openProfileShareChoice\(target\.profileName, target\.city, triggerButton\)/);
+  assert.match(opener, /openProfileShareChoice\(target\.profileName, target\.city, triggerButton, target\.slug\)/);
   assert.match(opener, /source: "profile_share_nav_opened"/);
   assert.match(shareableProfile, /isApprovedPublicProfile\(profile\)/);
   assert.match(shareableProfile, /profile\?\.disabled_at \|\| profile\?\.disabledAt/);
@@ -47,7 +47,7 @@ test("the dancer header opens sharing choices with QR retained as an option", ()
   assert.match(liveApp, /data-share-profile-choice>[\s\S]*?Share profile/);
   assert.match(liveApp, /data-copy-profile-choice>Copy profile link/);
   assert.match(liveApp, /data-show-profile-qr-choice>Show QR code/);
-  assert.match(liveApp, /data-show-profile-qr-choice[\s\S]*?openQrOverlay\(profileName, city, shareTrigger\)/);
+  assert.match(liveApp, /data-show-profile-qr-choice[\s\S]*?openQrOverlay\(profileName, city, shareTrigger, assignedSlug\)/);
   assert.match(liveApp, /class="profile-qr-overlay" id="profileQrOverlay" aria-hidden="true" hidden/);
   assert.match(liveApp, /class="profile-qr-sheet" role="dialog" aria-modal="true"/);
   assert.match(liveApp, /data-copy-qr-profile>Copy link/);

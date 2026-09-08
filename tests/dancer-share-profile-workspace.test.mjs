@@ -6,7 +6,7 @@ const dashboard = readFileSync(new URL("../app/dashboard/DashboardClient.tsx", i
 
 test("the final dancer workspace focuses on sharing instead of redundant billing cards", () => {
   const workspace = dashboard.match(/const profileMediaWorkspace = \([\s\S]*?\n  \);/)?.[0] || "";
-  assert.match(workspace, /<details className="dancer-profile-share-tools">[\s\S]*<summary>Share profile<\/summary>[\s\S]*<DancerSharePanel profile=\{profile\} \/>/);
+  assert.match(workspace, /<details className="dancer-profile-share-tools">[\s\S]*<summary>[\s\S]*Share profile<\/span><\/summary>[\s\S]*<DancerSharePanel profile=\{profile\} \/>/);
   assert.doesNotMatch(dashboard, /id="dancer-sharing-billing"|title="Share profile"/);
   assert.doesNotMatch(dashboard, /function DancerBillingPanel/);
   assert.doesNotMatch(dashboard, /<Metric label="Subscription" value="FREE"/);
@@ -18,5 +18,5 @@ test("sharing uses one compact link row with equal copy and open actions", () =>
   assert.match(dashboard, /Profile link copied\./);
   assert.match(dashboard, /role="status" aria-live="polite"/);
   assert.match(dashboard, /\.share-actions \{ display: grid !important; grid-template-columns: repeat\(2, minmax\(0, 1fr\)\)/);
-  assert.match(dashboard, /Free · \$0\/month/);
+  assert.doesNotMatch(dashboard, /Free · \$0\/month|share-free-badge/);
 });

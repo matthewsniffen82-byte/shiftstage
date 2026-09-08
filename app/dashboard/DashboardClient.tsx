@@ -4829,7 +4829,7 @@ function DancerPanel({
         />
       </article>
       <details className="dancer-profile-share-tools">
-        <summary>Share profile</summary>
+        <summary><span className="dancer-share-button-label"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3" /><circle cx="6" cy="12" r="3" /><circle cx="18" cy="19" r="3" /><path d="m8.6 10.5 6.8-4M8.6 13.5l6.8 4" /></svg>Share profile</span></summary>
         <DancerSharePanel profile={profile} />
       </details>
     </div>
@@ -6698,14 +6698,13 @@ function DancerSharePanel({ profile }: { profile?: LoadState["profile"] }) {
         <div>
           <h2 id="dancer-share-heading">Your public profile</h2>
         </div>
-        <strong className="share-free-badge">Free · $0/month</strong>
       </div>
       {slug ? (
         <div className="share-grid">
           <div className="share-link-row">
             <span>
-              <small>Your profile link</small>
-              <strong>/dancers/{slug}</strong>
+              <small>Your MyDancr link</small>
+              <strong>mydancr.com/dancers/{slug}</strong>
             </span>
           </div>
           <div className="share-actions">
@@ -8480,7 +8479,6 @@ function DashboardStyles() {
       .locked-preview-list span { padding: 10px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,.08); background: rgba(255,255,255,.035); color: rgba(247,242,255,.72); font-size: 13px; font-weight: 850; }
       .share-panel-head { display: flex !important; align-items: center; justify-content: space-between; gap: 14px; }
       .share-panel-head > div { display: grid; gap: 5px; }
-      .share-free-badge { width: fit-content; padding: 6px 9px; border: 1px solid rgba(50,255,164,.22); border-radius: 999px; color: #78ffc0; background: rgba(50,255,164,.06); font-size: 11px; white-space: nowrap; }
       .share-grid { display: grid; gap: 10px; }
       .share-link-row { min-width: 0; padding: 12px 13px; border: 1px solid var(--mydancr-dashboard-border); border-radius: 10px; background: var(--mydancr-dashboard-panel-raised); }
       .share-link-row > span { min-width: 0; display: grid; gap: 4px; }

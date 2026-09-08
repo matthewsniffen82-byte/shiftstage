@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
 import { ClubDealCard } from "@/app/components/ClubDealCard";
 import { UberRideButton } from "@/app/components/UberRideButton";
 import { createDancerDealAttributionToken } from "@/src/lib/dancr/deal-attribution";
@@ -32,13 +32,23 @@ export const dynamic = "force-dynamic";
 
 type PageProps = {
   params: Promise<{ slug: string }>;
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
 };
 
-export default async function DancerPublicPage({ params }: PageProps) {
+export default async function DancerPublicPage({ params, searchParams }: PageProps) {
   const { slug } = await params;
   const client = createAdminSupabaseClient();
   const profile = await getDancerProfile(client, slug);
   if (!profile) notFound();
+  if (profile.slug !== slug) {
+    const sharedMedia = await searchParams;
+    const query = new URLSearchParams();
+    for (const key of ["media", "mediaIndex"]) {
+      const value = sharedMedia?.[key];
+      if (typeof value === "string") query.set(key, value);
+    }
+    permanentRedirect(`/dancers/${profile.slug}${query.size ? `?${query}` : ""}`);
+  }
 
   const heroPhoto =
     profile.primaryPhotoUrl || profile.photos[0]?.imageUrl || "";

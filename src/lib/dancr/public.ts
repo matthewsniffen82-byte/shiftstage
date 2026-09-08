@@ -1,3 +1,4 @@
+import { resolveDancerProfileAlias } from "./profile-link-alias";
 import { isAllMyDancrCities } from "./markets";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { DancerCard, DancerProfile, ShiftSummary, SocialPlatform, VenueSummary } from "./types";
@@ -214,7 +215,7 @@ export async function getTonightShifts(client: DancrClient, city: string, now = 
   return cards.filter((card) => card.shiftId && card.locationStatus !== "self_reported");
 }
 
-export async function getDancerProfile(client: DancrClient, slug: string): Promise<DancerProfile | null> {
+export async function getDancerProfile(client: DancrClient, slug: string, resolveAlias = true): Promise<DancerProfile | null> {
   const current = await applyPublicApprovalFilters(client
     .from("dancer_profiles")
     .select(
@@ -273,7 +274,10 @@ export async function getDancerProfile(client: DancrClient, slug: string): Promi
   }
 
   if (error) throw error;
-  if (!data) return null;
+  if (!data) {
+    const canonical = resolveAlias ? await resolveDancerProfileAlias(client, slug) : null;
+    return canonical ? getDancerProfile(client, canonical, false) : null;
+  }
 
   const row: any = data;
   if (!isApprovedPublicDancerRow(row)) return null;

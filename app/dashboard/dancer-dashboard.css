@@ -46,8 +46,12 @@ body .dashboard-shell.dashboard-shell-dancer .venue-dashboard-section[data-secti
 body .dashboard-shell.dashboard-shell-dancer .venue-dashboard-section[data-section-icon][open] > summary { border-bottom: 1px solid var(--dancer-workspace-line); background: #b794e604; }
 body .dashboard-shell.dashboard-shell-dancer .venue-dashboard-section[data-section-icon] > summary:focus-visible { outline: 2px solid #c5a4f5; outline-offset: -3px; }
 body .dashboard-shell.dashboard-shell-dancer .venue-dashboard-section[data-section-icon] > .venue-dashboard-section-body { padding: 18px; background: #09090d; }
-.dancer-profile-share-tools { grid-column: 1 / -1; min-width: 0; border-top: 1px solid #ffffff12; }
-.dancer-profile-share-tools > summary { min-height: 44px; display: flex; align-items: center; justify-content: space-between; padding: 12px 0; color: #c4bfcc; font-size: 13px; cursor: pointer; list-style: none; }
+.dancer-profile-share-tools { grid-column: 1 / -1; min-width: 0; }
+.dancer-profile-share-tools > summary { min-height: 48px; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 16px; border: 1px solid #ffffff26; border-radius: 14px; background: linear-gradient(135deg, #292330, #1b1822); color: #f7f4fc; font-size: 14px; font-weight: 650; cursor: pointer; list-style: none; box-shadow: inset 0 1px 0 #ffffff08; }
+.dancer-profile-share-tools > summary:hover { border-color: #b999df80; background: #302738; }
+.dancer-share-button-label { display: inline-flex; align-items: center; gap: 10px; }
+.dancer-share-button-label svg { width: 18px; height: 18px; color: #d1b8ed; flex: 0 0 auto; }
+.dancer-profile-share-tools[open] > .share-panel { margin-top: 12px; }
 .dancer-profile-share-tools > summary::-webkit-details-marker { display: none; }
 .dancer-profile-share-tools > summary::after { content: ""; width: 6px; height: 6px; margin-right: 5px; border-right: 1.5px solid currentColor; border-bottom: 1.5px solid currentColor; transform: rotate(45deg); }
 .dancer-profile-share-tools[open] > summary::after { transform: rotate(225deg); }
