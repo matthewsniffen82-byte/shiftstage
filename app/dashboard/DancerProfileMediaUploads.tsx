@@ -192,7 +192,7 @@ export default function DancerProfileMediaUploads({
         body.dancr-button-system .dancer-profile-media-uploads .profile-upload-items button { padding:0 !important; border:0 !important; border-radius:8px !important; background:transparent !important; box-shadow:none !important; }
         .dancer-profile-media-uploads .profile-upload-items .profile-upload-delete,
         body.dancr-button-system .dancer-profile-media-uploads .profile-upload-items .profile-upload-delete { position:absolute; right:2px; bottom:2px; z-index:1; display:grid; place-items:center; width:44px !important; height:44px !important; min-height:44px; margin:0; padding:0 !important; border:0 !important; background:transparent !important; backdrop-filter:none !important; -webkit-backdrop-filter:none !important; color:#fff !important; }
-        .profile-upload-delete-icon { width:30px; height:30px; display:grid; place-items:center; border:1px solid rgba(255,255,255,.4); border-radius:50%; background:rgba(0,0,0,.78); box-shadow:0 1px 5px rgba(0,0,0,.35); }
+        .profile-upload-delete-icon { width:30px; height:30px; display:grid; place-items:center; justify-self:end; border:1px solid rgba(255,255,255,.4); border-radius:50%; background:rgba(0,0,0,.78); box-shadow:0 1px 5px rgba(0,0,0,.35); }
         .profile-upload-delete-icon svg { width:17px; height:17px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
         .dancer-profile-media-uploads button:disabled { opacity:.55; cursor:wait; }
       `}</style>
