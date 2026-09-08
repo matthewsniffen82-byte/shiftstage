@@ -129,7 +129,7 @@ export default function DancerNfcPanel({
         <section key={affiliation.id || affiliation.venue?.id}>
           <span>
             <strong>{affiliation.venue?.name || "Venue"}</strong>
-            <small>Tap approved{affiliation.approvedAt ? ` · ${formatDate(affiliation.approvedAt)}` : ""}</small>
+            {affiliation.venue?.city ? <small>{affiliation.venue.city}</small> : null}
           </span>
           <button type="button" disabled={Boolean(pendingId)} onClick={() => removeAffiliation(affiliation)}>Remove</button>
         </section>
@@ -141,6 +141,7 @@ export default function DancerNfcPanel({
     <details className="dancer-nfc-details">
       <summary>How check-ins work</summary>
       <div>
+        <p>Unlock your phone and tap the dressing-room sticker. No specific MyDancr page needs to be open. Open the link that appears if prompted, then sign in to your dancer account in that browser if asked.</p>
         <p>Each check-in starts one six-hour Working Now session, followed by a six-hour cooldown before you can check in at any club again. Tapping again does not extend the session.</p>
         <p>Upcoming dates do not check you in. Only an active MyDancr dressing-room sticker can connect you to a club.</p>
         {!isPublic && !authorized ? <p>Finish profile setup and get your avatar and at least one profile photo approved before activation.</p> : null}
@@ -161,8 +162,7 @@ export default function DancerNfcPanel({
           <span className="dancer-nfc-compact-action">Manage</span>
         </summary>
         <div className="dancer-nfc-compact-body">
-          <p>Log into your MyDancr account, then unlock your phone and tap the club&apos;s MyDancr dressing-room sticker to connect and show Working Now there. Once connected, you can post upcoming dates there.</p>
-          <p>No specific MyDancr page needs to be open. Open the link that appears if your phone prompts you. If that browser asks you to sign in, use your dancer account.</p>
+          <p>Sign in to your dancer account, then tap a club&apos;s dressing-room sticker to connect and show Working Now there. You can then post upcoming dates at that club.</p>
           {affiliationRoster}
           {checkInDetails}
           <button className="dancer-nfc-refresh" type="button" disabled={Boolean(pendingId)} onClick={refresh}>
@@ -193,11 +193,9 @@ export default function DancerNfcPanel({
           <p className="dancer-nfc-intro">Finish your profile and log into your MyDancr account. Then unlock your phone and tap the club&apos;s MyDancr dressing-room sticker.</p>
         )}
 
-        <p className="dancer-nfc-intro">No specific MyDancr page needs to be open. Open the link that appears if your phone prompts you. If that browser asks you to sign in, use your dancer account.</p>
-
         <ol className="dancer-nfc-guide">
           {!authorized ? <li><strong>Activate once</strong><span>Your first tap activates your completed profile and checks you in at that club.</span></li> : null}
-          <li><strong>Check in at any club</strong><span>Log into your MyDancr account, then tap that club&apos;s dressing-room sticker to connect and show Working Now there.</span></li>
+          <li><strong>Check in at any club</strong><span>Tap that club&apos;s dressing-room sticker to connect and show Working Now there.</span></li>
           <li><strong>Post upcoming dates</strong><span>Once connected to a club, you can post upcoming dates there.</span></li>
         </ol>
         {affiliationRoster}
@@ -210,10 +208,6 @@ export default function DancerNfcPanel({
       <style>{DANCER_NFC_STYLE}</style>
     </article>
   );
-}
-
-function formatDate(value: string) {
-  return new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric" }).format(new Date(value));
 }
 
 const DANCER_NFC_STYLE = [

@@ -767,7 +767,7 @@ export default function DashboardClient({
                 weeklyReport={state.weeklyReport}
               />
               <DashboardSection
-                description="Notifications, support, security, and account controls."
+                description="Messages, notifications, and account settings."
                 emphasis="utility"
                 id="dancer-account"
                 icon={<DancerDashboardIcon section="account" />}
@@ -4325,7 +4325,7 @@ function DancerOnboardingCommand({
         <span>
           <span className="eyebrow">Setup checklist</span>
           <h2 id="dancer-onboarding-heading">Profile setup</h2>
-          <p>Complete your profile, then verify at the club.</p>
+          <p>Create your profile, then activate it with your first club tap.</p>
         </span>
         <div className="dancer-onboarding-progress">
           <div className="dancer-onboarding-progress-track" role="progressbar" aria-label="Profile setup progress" aria-valuemin={0} aria-valuemax={steps.length} aria-valuenow={steps.filter((step) => step.complete).length}>
@@ -4833,7 +4833,7 @@ function DancerPanel({
   );
   const profileMediaSection = (
     <DashboardSection
-      description="Edit your identity, media, socials, and share your profile."
+      description="Edit your profile or share it."
       emphasis="primary"
       id="dancer-profile-media"
       icon={<DancerDashboardIcon section="profile" />}
@@ -4878,7 +4878,7 @@ function DancerPanel({
       ) : null}
       {isApproved ? (
         <DashboardSection
-          description="Approval, venue access, and public visibility."
+          description="Visibility and connected clubs."
           emphasis="summary"
           id="dancer-overview"
           icon={<DancerDashboardIcon section="status" />}
@@ -4886,26 +4886,20 @@ function DancerPanel({
           title="Profile status"
         >
           <div className="venue-dashboard-inner-grid dancer-overview-grid">
-            <div className="dancer-status-metrics" aria-label="Current profile status">
-              <Metric label="Stage name" value={persistedDancerStageName(profile) || "Draft"} />
-              <Metric label="Status" value="Approved" />
-              <Metric label="Dressing-room tap" value={isVenueApproved ? "Authorized" : "Tap required"} />
-              <Metric label="Photo review" value={photoStatusLabel(normalizePhotoStatus(profile?.photo_review_status))} />
-            </div>
+            <DancerVisibilityPanel profile={profile} onProfileChange={onProfileChange} />
             <DancerNfcPanel
               compactAuthorized
               initialAffiliations={affiliations}
               initialNfcState={nfc || null}
               onAuthorizationChange={refreshDancerProfile}
             />
-            <DancerVisibilityPanel profile={profile} onProfileChange={onProfileChange} />
           </div>
         </DashboardSection>
       ) : null}
       {isApproved ? profileMediaSection : null}
       {isApproved ? (
         <DashboardSection
-          description="Post and manage shifts shown on your profile."
+          description="Working Now and upcoming dates."
           emphasis="primary"
           id="dancer-schedule"
           icon={<DancerDashboardIcon section="schedule" />}
@@ -4917,8 +4911,8 @@ function DancerPanel({
       ) : null}
       {isApproved ? (
         <DashboardSection
-          badge={needsCommissionPayoutSetup ? "Payout setup needed" : undefined}
-          description="See your reach, rewards, payouts, and weekly progress."
+          badge={needsCommissionPayoutSetup ? "Optional payout setup" : undefined}
+          description="Views, commissions, and payouts."
           emphasis="secondary"
           id="dancer-performance"
           icon={<DancerDashboardIcon section="performance" />}
@@ -5167,8 +5161,8 @@ function DancerPerformanceSummary({
     <section className="dancer-performance-summary" aria-label="Performance and rewards summary">
       <Metric label="Current rank" value={String(analytics?.currentRank || "Unranked")} />
       <Metric label="30-day views" value={String(analytics?.profileViews30Days || 0)} />
-      <Metric label="Successful Club Deals" value={String(deals?.successfulRedemptionsThisMonth || 0)} />
-      <Metric label="Available rewards" value={formatCents(Number(balances.availableCents || 0))} />
+      <Metric label="Club Deals this month" value={String(deals?.successfulRedemptionsThisMonth || 0)} />
+      <Metric label="Available balance" value={formatCents(Number(balances.availableCents || 0))} />
     </section>
   );
 }
@@ -8370,10 +8364,6 @@ function DashboardStyles() {
       .dashboard-shell-dancer .dashboard-section-utility .venue-dashboard-section-copy > span:last-child { color: rgba(218,218,226,.72); font-size: 12px; }
       .dashboard-shell-dancer .dashboard-section-summary .venue-dashboard-section-toggle,
       .dashboard-shell-dancer .dashboard-section-utility .venue-dashboard-section-toggle { width: 28px; height: 28px; }
-      .dancer-status-metrics { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 8px; }
-      .dashboard-shell-dancer .dancer-status-metrics .metric { min-width: 0; min-height: 68px; padding: 10px 12px; border: 1px solid rgba(255,255,255,.1) !important; border-radius: 12px !important; background: rgba(255,255,255,.035) !important; }
-      .dashboard-shell-dancer .dancer-status-metrics .metric span { color: rgba(218,218,226,.68); font-size: 11px; }
-      .dashboard-shell-dancer .dancer-status-metrics .metric strong { font-size: clamp(15px,2.4vw,18px); }
       .venue-dashboard-inner-grid { display: grid; gap: var(--mydancr-dashboard-gap); }
       .venue-dashboard-overview-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
       .venue-dashboard-account-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -9690,7 +9680,7 @@ function DashboardStyles() {
       @media (max-width: 520px) { .dashboard-head { padding: 10px 12px 14px; border-radius: 16px; } .dashboard-head-row { gap: 10px; } .dashboard-head h1, h1 { font-size: clamp(21px, 6vw, 26px); } .dashboard-close { flex-basis: 42px; } .notification-title-row { align-items: flex-start; } }
       @media (max-width: 520px) { .notification-toolbar { width: 100%; justify-content: flex-start; } .notification-mark-read-button { margin-left: auto; } .support-panel .support-send-button { width: 100%; } .account-action-row { gap: 10px; } .account-action-button { min-width: 78px; padding-inline: 10px; } }
       @media (max-width: 860px) { .dancer-avatar-upload-controls { grid-template-columns: 1fr; } .dancer-avatar-panel { grid-column: auto; } }
-      @media (max-width: 620px) { .dashboard-shell-dancer { padding-bottom: max(40px, calc(env(safe-area-inset-bottom) + 24px)); } .dashboard-shell-dancer .dashboard-head { padding: 17px; border-radius: 20px; } .dashboard-shell-dancer .dashboard-head-title-row { align-items:flex-start; flex-direction:column; gap:7px; } .dashboard-shell-dancer .dashboard-section-summary > summary { min-height: 62px; padding: 12px 14px; } .dashboard-shell-dancer .dashboard-section-primary > summary { min-height: 74px; padding: 14px; } .dashboard-shell-dancer .dashboard-section-secondary > summary { min-height: 68px; padding: 13px 14px; } .dashboard-shell-dancer .dashboard-section-utility > summary { min-height: 60px; padding: 11px 14px; } .dancer-status-metrics { grid-template-columns: repeat(2,minmax(0,1fr)); } .dashboard-shell-dancer .dancer-status-metrics .metric { min-height: 64px; padding: 9px 10px; } .dancer-activation-confirmation { grid-template-columns: 44px minmax(0,1fr) 38px; gap: 10px; padding: 14px; } .dancer-activation-check { width: 42px; height: 42px; font-size: 21px; } .dancer-activation-confirmation > button { width: 38px; height: 38px; } .dancer-activation-actions { display:grid; grid-template-columns:1fr; } .dancer-profile-media-preview { grid-template-columns: 42px minmax(0,1fr); gap: 9px 11px; padding: 13px; } .dancer-profile-media-preview-icon { width: 40px; height: 40px; } .dancer-profile-media-preview-button { grid-column: 1 / -1; width: 100%; min-height: 46px; } .dancer-onboarding-command { padding: 14px; border-radius: 18px; } .dancer-onboarding-command-head { flex-direction: column; gap: 11px; } .dancer-onboarding-steps > li > button { min-height: 82px; grid-template-columns: 34px minmax(0,1fr) 28px; gap: 5px 10px; } .dancer-onboarding-step-state { grid-column: 2; width: fit-content; min-width: 0; padding: 4px 7px; } .dancer-onboarding-step-toggle { grid-column: 3; grid-row: 1 / span 2; } .dancer-onboarding-step-panel { padding: 10px; } .dancer-onboarding-primary { position: static; } .dancer-avatar-panel button, .dancer-avatar-panel input, .setup-panel button, .setup-panel input, .setup-panel select, .socials-panel button, .socials-panel input, .upload-panel button, .upload-panel input { min-height: 48px; } .dancer-onboarding-preview-card { grid-template-columns: 58px minmax(0,1fr); } .dancer-onboarding-preview-card > b { grid-column: 2; } .dancer-profile-preview-shell { padding-inline: max(12px,env(safe-area-inset-left)) max(12px,env(safe-area-inset-right)); } .dancer-profile-preview-overlay .profile-titlebar { min-height: 64px; } .dancer-profile-preview-overlay .profile-titlebar-avatar { width: 48px; height: 48px; flex-basis: 48px; } .dancer-profile-preview-overlay .profile-media-feature { aspect-ratio: 4 / 5; border-radius: 17px; } .dancer-profile-preview-overlay .profile-schedule-section { padding: 15px; } .dancer-profile-preview-overlay .profile-section-heading { gap: 10px; } }
+      @media (max-width: 620px) { .dashboard-shell-dancer { padding-bottom: max(40px, calc(env(safe-area-inset-bottom) + 24px)); } .dashboard-shell-dancer .dashboard-head { padding: 17px; border-radius: 20px; } .dashboard-shell-dancer .dashboard-head-title-row { align-items:flex-start; flex-direction:column; gap:7px; } .dashboard-shell-dancer .dashboard-section-summary > summary { min-height: 62px; padding: 12px 14px; } .dashboard-shell-dancer .dashboard-section-primary > summary { min-height: 74px; padding: 14px; } .dashboard-shell-dancer .dashboard-section-secondary > summary { min-height: 68px; padding: 13px 14px; } .dashboard-shell-dancer .dashboard-section-utility > summary { min-height: 60px; padding: 11px 14px; } .dancer-activation-confirmation { grid-template-columns: 44px minmax(0,1fr) 38px; gap: 10px; padding: 14px; } .dancer-activation-check { width: 42px; height: 42px; font-size: 21px; } .dancer-activation-confirmation > button { width: 38px; height: 38px; } .dancer-activation-actions { display:grid; grid-template-columns:1fr; } .dancer-profile-media-preview { grid-template-columns: 42px minmax(0,1fr); gap: 9px 11px; padding: 13px; } .dancer-profile-media-preview-icon { width: 40px; height: 40px; } .dancer-profile-media-preview-button { grid-column: 1 / -1; width: 100%; min-height: 46px; } .dancer-onboarding-command { padding: 14px; border-radius: 18px; } .dancer-onboarding-command-head { flex-direction: column; gap: 11px; } .dancer-onboarding-steps > li > button { min-height: 82px; grid-template-columns: 34px minmax(0,1fr) 28px; gap: 5px 10px; } .dancer-onboarding-step-state { grid-column: 2; width: fit-content; min-width: 0; padding: 4px 7px; } .dancer-onboarding-step-toggle { grid-column: 3; grid-row: 1 / span 2; } .dancer-onboarding-step-panel { padding: 10px; } .dancer-onboarding-primary { position: static; } .dancer-avatar-panel button, .dancer-avatar-panel input, .setup-panel button, .setup-panel input, .setup-panel select, .socials-panel button, .socials-panel input, .upload-panel button, .upload-panel input { min-height: 48px; } .dancer-onboarding-preview-card { grid-template-columns: 58px minmax(0,1fr); } .dancer-onboarding-preview-card > b { grid-column: 2; } .dancer-profile-preview-shell { padding-inline: max(12px,env(safe-area-inset-left)) max(12px,env(safe-area-inset-right)); } .dancer-profile-preview-overlay .profile-titlebar { min-height: 64px; } .dancer-profile-preview-overlay .profile-titlebar-avatar { width: 48px; height: 48px; flex-basis: 48px; } .dancer-profile-preview-overlay .profile-media-feature { aspect-ratio: 4 / 5; border-radius: 17px; } .dancer-profile-preview-overlay .profile-schedule-section { padding: 15px; } .dancer-profile-preview-overlay .profile-section-heading { gap: 10px; } }
       @media (max-width: 620px) { .dashboard-shell-dancer { padding-bottom: max(128px, calc(env(safe-area-inset-bottom) + 104px)); } .dancer-onboarding-steps > li > button { min-height: 60px; grid-template-columns: 30px minmax(0,1fr) auto; gap: 8px; padding: 9px 10px; } .dancer-onboarding-step-control { grid-column: 3; grid-row: 1; } }
       @media (max-width: 620px) { .dancer-profile-preview-overlay .profile-media-tabs { width:100%; } .dancer-profile-preview-overlay .profile-media-tabs button { padding-inline:9px; } .dancer-profile-preview-overlay .profile-media-grid { gap:4px; } .dancer-profile-preview-overlay .profile-media-viewer-previous, .dancer-profile-preview-overlay .profile-media-viewer-next { width:40px; height:50px; font-size:30px; } }
       @media (max-width: 620px) { .dancer-profile-editor-launch-card { grid-template-columns:1fr; padding:0; } .dancer-profile-editor-launch-button { width:100%; min-width:0; } .dancer-profile-editor-tools { margin-top:18px; padding:12px; border-radius:17px; } .dancer-profile-editor-footer { grid-template-columns:1fr; gap:8px; } .dancer-profile-editor-footer button { width:100%; min-width:0; } .dancer-profile-preview-overlay .live-actions { grid-template-columns:repeat(3,minmax(0,1fr)); } .dancer-profile-preview-overlay.is-editor .dancer-profile-preview-shell { padding-bottom:max(244px,calc(env(safe-area-inset-bottom) + 224px)); } .dancer-profile-builder-panel { bottom:calc(88px + env(safe-area-inset-bottom)); width:calc(100% - 16px); max-height:min(66dvh,620px,calc(100dvh - var(--mydancr-preview-banner-offset,0px) - 104px - env(safe-area-inset-bottom))); padding-bottom:10px; border-bottom:1px solid rgba(126,234,255,.28); border-radius:20px; } .dancer-profile-preview-overlay.is-editor .dancer-profile-editor-footer { bottom:max(8px,env(safe-area-inset-bottom)); width:calc(100% - 16px); border-bottom:1px solid rgba(126,234,255,.2); border-radius:18px; } }

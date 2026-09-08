@@ -24,7 +24,6 @@ export default function DancerShiftManager() {
   const [venueId, setVenueId] = useState("");
   const [shiftDate, setShiftDate] = useState("");
   const [status, setStatus] = useState("");
-  const [tapReady, setTapReady] = useState(false);
   const [saving, setSaving] = useState(false);
   const [endConfirmationOpen, setEndConfirmationOpen] = useState(false);
   const [workingNowStatus, setWorkingNowStatus] = useState("");
@@ -180,15 +179,14 @@ export default function DancerShiftManager() {
   }
 
   return (
-    <article className="info-panel shift-panel">
-      <h2>Shift Manager</h2>
+    <article className="info-panel shift-panel" aria-label="Schedule management">
       <section className={`shift-checkin-card${activeShift ? " ready" : ""}`} aria-live="polite">
         {activeShift ? (
           <>
             <span>
               <strong>Working Now at {venueName(activeShift)}</strong>
               <small>
-                Active until {formatTime(activeShift.location_verification_expires_at)}. Retaps cannot extend this six-hour session.
+                Active until {formatTime(activeShift.location_verification_expires_at)}.
               </small>
               {isNfcPresenceNearExpiry(activeShift) ? (
                 <small className="shift-checkin-status is-error">
@@ -209,7 +207,7 @@ export default function DancerShiftManager() {
             )}
             {demoManagedActiveShift ? (
               <small className="shift-checkin-status" role="status">
-                This fictional Demo Mode assignment is kept active automatically and cannot be ended from the dancer dashboard.
+                This demo session stays active automatically.
               </small>
             ) : null}
             {endConfirmationOpen ? (
@@ -229,19 +227,11 @@ export default function DancerShiftManager() {
           <>
             <span>
               <strong>Not working now</strong>
-              <small>A posted upcoming date does not make you live. Tap the venue&apos;s dressing-room sticker when you arrive.</small>
+              <small>Sign in to your dancer account, then tap the club&apos;s dressing-room sticker to show Working Now.</small>
             </span>
-            <button type="button" className="check-in-confirmation" disabled={Boolean(cooldownShift)} onClick={() => setTapReady(true)}>
-              Tap at dressing room to go Working Now
-            </button>
             {cooldownShift ? (
               <small className="shift-checkin-status" role="status">
                 Cooldown active. Another tap can start Working Now after {formatTime(nfcNextTapAllowedAt(cooldownShift)?.toISOString())}.
-              </small>
-            ) : null}
-            {tapReady ? (
-              <small className="shift-checkin-status is-loading" role="status">
-                Ready to tap: unlock your phone and hold it near the dressing-room sticker. No specific MyDancr page needs to be open. Open the link that appears if prompted, then sign in to your dancer account in that browser if asked. The secure venue page starts one six-hour Working Now session followed by a six-hour cooldown.
               </small>
             ) : null}
           </>
@@ -253,21 +243,28 @@ export default function DancerShiftManager() {
         ) : null}
       </section>
 
+      <details className="dancer-schedule-help">
+        <summary>How check-ins work</summary>
+        <p>Unlock your phone and hold it near the dressing-room sticker. No specific MyDancr page needs to be open. Open the link that appears if prompted, then sign in to your dancer account in that browser if asked.</p>
+        <p>Each check-in starts a six-hour Working Now session, followed by a six-hour cooldown at all clubs. Retaps cannot extend this six-hour session.</p>
+        <p>No shift time or phone location is collected.</p>
+      </details>
+
       <form onSubmit={postDate}>
+        <h3>Post an upcoming date</h3>
         <DancerVenuePicker venues={venues} value={venueId} onChange={setVenueId} disabled={saving} />
         <label>
           Upcoming date
           <input className="dancer-schedule-control" type="date" min={todayDate()} value={shiftDate} onChange={(event) => setShiftDate(event.target.value)} required />
         </label>
         <button type="submit" disabled={saving || !venues.length}>{saving ? "Posting..." : "Post upcoming date"}</button>
-        <p>Schedules show only the venue and date. No shift time or phone location is collected.</p>
-        {!venues.length ? <p>Tap a venue&apos;s dressing-room sticker once to approve that club.</p> : null}
+        <p>Posting a date does not check you in.</p>
+        {!venues.length ? <p>Tap a club&apos;s dressing-room sticker to add it to your approved venues.</p> : null}
         {status ? <p role="status">{status}</p> : null}
       </form>
 
       <div className="shift-list-head">
         <strong>Upcoming dates</strong>
-        <small>These tell guests where you plan to be. Tap the dressing-room sticker when you arrive to appear in Now.</small>
       </div>
       <div className="shift-list">
         {postedDates.map((shift) => (

@@ -59,5 +59,5 @@ test("dancers cannot edit, end, or delete centrally managed demo assignments", (
   assert.match(checkInRoute, /demo_assignment_locked/);
   assert.match(shiftManager, /const demoManagedActiveShift = activeShift\?\.shift_source === "demo_locked"/);
   assert.match(shiftManager, /demoManagedActiveShift \? \([\s\S]*?Demo managed/);
-  assert.match(shiftManager, /This fictional Demo Mode assignment is kept active automatically and cannot be ended from the dancer dashboard/);
+  assert.match(shiftManager, /This demo session stays active automatically\./);
 });

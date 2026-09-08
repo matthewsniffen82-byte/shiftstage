@@ -53,6 +53,15 @@ body .dashboard-shell.dashboard-shell-dancer .venue-dashboard-section[data-secti
 .dancer-profile-share-tools[open] > summary::after { transform: rotate(225deg); }
 .dancer-profile-share-tools > summary:focus-visible { outline: 2px solid #c5a4f5; outline-offset: -2px; }
 
+.dashboard-shell-dancer .dancer-schedule-help { margin: 0 0 20px; border-bottom: 1px solid var(--dancer-workspace-line); }
+.dashboard-shell-dancer .dancer-schedule-help > summary { min-height: 44px; display: flex; align-items: center; gap: 12px; color: #c4bfcc; font-size: 13px; cursor: pointer; list-style: none; }
+.dashboard-shell-dancer .dancer-schedule-help > summary::-webkit-details-marker { display: none; }
+.dashboard-shell-dancer .dancer-schedule-help > summary::after { content: "+"; margin-left: auto; font-size: 18px; }
+.dashboard-shell-dancer .dancer-schedule-help[open] > summary::after { content: "−"; }
+.dashboard-shell-dancer .dancer-schedule-help > summary:focus-visible { outline: 2px solid #c5a4f5; outline-offset: -2px; }
+.dashboard-shell-dancer .dancer-schedule-help p { margin: 0 0 12px; color: #aaa4b6; font-size: 13px; line-height: 1.5; }
+.dashboard-shell-dancer .shift-panel form > h3 { margin: 0 0 4px; font-size: 16px; line-height: 1.3; }
+
 @media (max-width: 620px) {
   body .dashboard-shell.dashboard-shell-dancer { padding-bottom: max(104px, calc(env(safe-area-inset-bottom) + 96px)); }
   body .dashboard-shell.dashboard-shell-dancer .dashboard-head { padding: 20px 16px; border-radius: 20px; margin-bottom: 16px; }

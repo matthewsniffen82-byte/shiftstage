@@ -234,7 +234,7 @@ test("approved dancers who skipped payout setup get a plain-language call to act
   assert.match(callout, /I already have an account/);
   assert.doesNotMatch(callout, />Get NATS<|>I already have NATS<|Get NATS to receive payouts/);
   assert.match(callout, /openDancerPayoutLinking/);
-  assert.match(dashboard, /badge=\{needsCommissionPayoutSetup \? "Payout setup needed" : undefined\}[\s\S]*?id="dancer-performance"[\s\S]*?<DancerNatsSignupCallout finance=\{finance\} \/>/);
+  assert.match(dashboard, /badge=\{needsCommissionPayoutSetup \? "Optional payout setup" : undefined\}[\s\S]*?id="dancer-performance"[\s\S]*?<DancerNatsSignupCallout finance=\{finance\} \/>/);
   assert.match(dashboard, /id="dancer-payout-detail"/);
   assert.match(dashboard, /\.dancer-nats-signup-callout \{ grid-column: 1 \/ -1;[\s\S]*?\.dancer-nats-signup-actions > a, \.dancer-nats-signup-actions > button/);
   assert.match(dashboard, /#dancer-performance \.venue-dashboard-section-badge \{[^}]*color: #fde68a/);
@@ -252,7 +252,7 @@ test("step one uses accessible live-profile add targets that preserve the active
   assert.match(dashboard, /dancer-profile-builder-field-copy"><small>Stage name<\/small>/);
   assert.match(dashboard, /dancer-profile-builder-field-copy"><small>City<\/small>/);
   assert.match(dashboard, /\.dancer-profile-builder-identity, \.dancer-profile-builder-city \{[^}]*min-height:56px/);
-  assert.match(dashboard, /"Stage name"/);
+  assert.match(dashboard, /"Add stage name"/);
   assert.match(dashboard, /"Add city"/);
   assert.match(dashboard, /<DancerProfileMediaUploads[\s\S]*?onOpen=\{\(section\) => \{[\s\S]*?openEditorSection\(section\);/);
   assert.match(dashboard, /aria-label="Add social links"/);
@@ -289,10 +289,10 @@ test("onboarding and active profile editors share the compact uploader with the 
 
 test("approved dancer dashboard sections arrive collapsed with a clear tool hierarchy", () => {
   assert.doesNotMatch(dashboard, /\{isApproved \? \(\s*<DashboardSection\s+defaultOpen[\s\S]{0,500}?id="dancer-overview"/);
-  assert.match(dashboard, /description="Approval, venue access, and public visibility\."\s+emphasis="summary"\s+id="dancer-overview"/);
-  assert.match(dashboard, /description="Edit your identity, media, socials, and share your profile\."\s+emphasis="primary"\s+id="dancer-profile-media"/);
-  assert.match(dashboard, /description="Post and manage shifts shown on your profile\."\s+emphasis="primary"\s+id="dancer-schedule"/);
-  assert.match(dashboard, /description="See your reach, rewards, payouts, and weekly progress\."\s+emphasis="secondary"\s+id="dancer-performance"/);
+  assert.match(dashboard, /description="Visibility and connected clubs\."\s+emphasis="summary"\s+id="dancer-overview"/);
+  assert.match(dashboard, /description="Edit your profile or share it\."\s+emphasis="primary"\s+id="dancer-profile-media"/);
+  assert.match(dashboard, /description="Working Now and upcoming dates\."\s+emphasis="primary"\s+id="dancer-schedule"/);
+  assert.match(dashboard, /description="Views, commissions, and payouts\."\s+emphasis="secondary"\s+id="dancer-performance"/);
   assert.doesNotMatch(dashboard, /id="dancer-sharing-billing"|title="Share profile"/);
   assert.doesNotMatch(dashboard, /eyebrow="Dancer workspace"/);
   assert.match(dashboard, /\.dashboard-shell\.dashboard-shell-dancer \.venue-dashboard-section\.dashboard-section-primary \{[^}]*box-shadow: inset 3px 0 0/);
@@ -304,10 +304,10 @@ test("expanded profile status stays visible and uses compact non-repeating contr
   assert.match(dashboard, /onToggle=\{alignOpenedDashboardSection\}/);
   assert.match(dashboard, /scroll-margin-top: calc\(var\(--mydancr-preview-banner-offset, 0px\) \+ 12px\)/);
   assert.match(dashboard, /section\.scrollIntoView\(\{ behavior: reduceMotion \? "auto" : "smooth", block: "start" \}\)/);
-  assert.match(dashboard, /className="dancer-status-metrics" aria-label="Current profile status"/);
+  const overview = dashboard.match(/id="dancer-overview"[\s\S]*?<\/DashboardSection>/)?.[0] || "";
+  assert.doesNotMatch(overview, /<Metric/);
+  assert.match(overview, /<DancerVisibilityPanel/);
   assert.doesNotMatch(dashboard, /<InfoPanel title="Profile">/);
-  assert.match(dashboard, /\.dancer-status-metrics \{ display: grid; grid-template-columns: repeat\(4,minmax\(0,1fr\)\)/);
-  assert.match(dashboard, /\.dancer-status-metrics \{ grid-template-columns: repeat\(2,minmax\(0,1fr\)\)/);
   assert.match(dashboard, /<DancerNfcPanel\s+compactAuthorized/);
 });
 

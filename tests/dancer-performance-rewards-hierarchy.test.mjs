@@ -5,7 +5,7 @@ import test from "node:test";
 const dashboard = readFileSync(new URL("../app/dashboard/DashboardClient.tsx", import.meta.url), "utf8");
 
 test("performance and rewards starts with four decision-ready metrics", () => {
-  for (const label of ["Current rank", "30-day views", "Successful Club Deals", "Available rewards"]) {
+  for (const label of ["Current rank", "30-day views", "Club Deals this month", "Available balance"]) {
     assert.match(dashboard, new RegExp(`label="${label}"`));
   }
   assert.match(dashboard, /className="dancer-performance-summary"/);
