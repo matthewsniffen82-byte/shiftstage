@@ -55849,18 +55849,6 @@
       return "";
     }
 
-    function focusSupportPanel(role) {
-      const panel = document.querySelector(`[data-support-panel="${role}"]`);
-      const messageInput = document.getElementById(`${role}SupportMessage`);
-      const status = document.getElementById(`${role}SupportStatus`);
-      if (status) {
-        const accountLabel = authSession?.account?.email || authSession?.account?.displayName || `${role} account`;
-        status.textContent = `Signed in as ${accountLabel}. Messages here go directly to the Dancr admin team.`;
-      }
-      panel?.scrollIntoView({ behavior: "smooth", block: "start" });
-      setTimeout(() => messageInput?.focus({ preventScroll: true }), 260);
-    }
-
     function openContactAdmin() {
       const role = activeSupportRole();
       if (!role) {
@@ -55868,15 +55856,7 @@
         return;
       }
       if (role === "customer") return openUnifiedDashboard("customer", "customer-support");
-      closeAuthPage();
-      closeDancerSignupPage();
-      closeDashboard();
-      closeDancerDashboard();
-      closeVenueDashboard();
-      if (role === "dancer") openDancerDashboard();
-      else openDashboard();
-      setTimeout(() => focusSupportPanel(role), 220);
-      showToast("Admin Support opened");
+      return openUnifiedDashboard("dancer", "dancer-support");
     }
 
     async function submitPublicContactForm(event) {

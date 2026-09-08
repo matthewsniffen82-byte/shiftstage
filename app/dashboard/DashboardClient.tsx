@@ -761,7 +761,7 @@ export default function DashboardClient({
                     role={String(state.account?.role || role)}
                   />
                   <NotificationPanel />
-                  <SupportInboxPanel initialThreads={state.supportThreads || []} />
+                  <SupportInboxPanel initialThreads={state.supportThreads || []} panelId="dancer-support" />
                   <AccountControlsPanel accountState={String(state.account?.accountState || "active")} />
                 </div>
               </DashboardSection>
@@ -2524,6 +2524,9 @@ function alignOpenedDashboardSection(event: SyntheticEvent<HTMLDetailsElement>) 
   if (event.target !== event.currentTarget || !event.currentTarget.open) return;
   const section = event.currentTarget;
   window.requestAnimationFrame(() => {
+    // Keep a deep-linked panel in view when its collapsed parent opens.
+    const focused = document.activeElement;
+    if (focused && focused !== section && focused !== section.querySelector(":scope > summary") && section.contains(focused)) return;
     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     section.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "start" });
   });

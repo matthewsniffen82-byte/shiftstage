@@ -51,7 +51,8 @@ test("live support interfaces use the production API and the venue dashboard exp
   assert.match(liveAppSource, /submitButton\.classList\.toggle\("is-sent", sent\)/);
   assert.match(liveAppSource, /submitButton\.textContent = sent \? "\\u2713 Sent to admin" : defaultSubmitLabel/);
   assert.match(liveAppSource, /if \(status\) status\.textContent = "Message sent to admin\.";[\s\S]*?return true;/);
-  assert.match(dashboardSource, /role === "venue"[\s\S]*?<SupportInboxPanel initialThreads=\{state\.supportThreads \|\| \[\]\} \/>/);
+  const venueAccount = dashboardSource.slice(dashboardSource.indexOf('id="venue-account"', dashboardSource.indexOf("function VenuePanel(")));
+  assert.match(venueAccount, /<SupportInboxPanel initialThreads=\{supportThreads\} \/>/);
   assert.match(dashboardSource, /const \[sendConfirmation, setSendConfirmation\] = useState\(false\)/);
   assert.match(dashboardSource, /setStatus\("Message sent to admin\."\);[\s\S]*?setSendConfirmation\(true\)/);
   assert.match(dashboardSource, /sendConfirmation \? "✓ Message sent" : "Send message"/);
