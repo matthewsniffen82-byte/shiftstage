@@ -57441,7 +57441,7 @@
         : "";
       const form = selected && !["requested", "active"].includes(accountStatus)
         ? `<div class="dancer-payout-fields">
-            <div class="field"><label for="setupNatsLoginId">Payout account login ID <span>from NATS</span></label><input id="setupNatsLoginId" inputmode="numeric" pattern="[1-9][0-9]*" required></div>
+            <div class="field"><label for="setupNatsLoginId">Payout account login ID <span>from your payout portal</span></label><input id="setupNatsLoginId" inputmode="numeric" pattern="[1-9][0-9]*" required></div>
             <div class="field"><label for="setupNatsUsername">Payout account username <span>optional</span></label><input id="setupNatsUsername" maxlength="80" autocapitalize="none"></div>
           </div>
           <button class="action-btn" type="button" data-dancer-payout-submit ${configured ? "" : "disabled"}>Submit payout account</button>`
@@ -57450,7 +57450,7 @@
         <section class="setup-profile-editor-section">
           <div class="setup-profile-editor-head">
             <strong>Commission payouts</strong>
-            <p>Club Deals stay on your profile. Commissions start only after your NATS enrollment is verified. Earlier redemptions do not earn commissions or back pay. Payouts are managed through NATS.</p>
+            <p>Club Deals stay on your profile. Commissions start only after your payout account is verified. Earlier redemptions do not earn commissions or back pay. Manage payments and tax forms in your payout portal.</p>
           </div>
           ${accountState}${link}${form}
           <div class="dancer-payout-setup-actions">
@@ -57475,8 +57475,8 @@
       const requested = accountStatus === "requested";
       const portalUrl = String(platform.affiliatePortalUrl || "");
       notice.innerHTML = `
-        <div><span class="eyebrow">Dancer commissions</span><strong>${requested ? "Payout verification pending" : "Complete payout setup"}</strong><p>Club Deals stay on your profile. Commissions start after verified NATS enrollment; earlier redemptions do not earn back pay.</p></div>
-        ${!requested ? `<div class="dancer-payout-fields"><div class="field"><label for="noticeNatsLoginId">Payout account login ID <span>from NATS</span></label><input id="noticeNatsLoginId" inputmode="numeric" pattern="[1-9][0-9]*" required></div><div class="field"><label for="noticeNatsUsername">Payout account username <span>optional</span></label><input id="noticeNatsUsername" maxlength="80" autocapitalize="none"></div></div>` : ""}
+        <div><span class="eyebrow">Dancer commissions</span><strong>${requested ? "Payout verification pending" : "Complete payout setup"}</strong><p>Club Deals stay on your profile. Commissions start after your payout account is verified; earlier redemptions do not earn back pay.</p></div>
+        ${!requested ? `<div class="dancer-payout-fields"><div class="field"><label for="noticeNatsLoginId">Payout account login ID <span>from your payout portal</span></label><input id="noticeNatsLoginId" inputmode="numeric" pattern="[1-9][0-9]*" required></div><div class="field"><label for="noticeNatsUsername">Payout account username <span>optional</span></label><input id="noticeNatsUsername" maxlength="80" autocapitalize="none"></div></div>` : ""}
         <div class="dancer-payout-setup-actions">
           ${portalUrl ? `<a class="action-btn secondary" href="${escapeHtml(portalUrl)}" target="_blank" rel="noreferrer">${requested ? "Open payout account" : "Set up payouts"}</a>` : ""}
           ${!requested ? `<button class="action-btn" type="button" data-dancer-payout-submit ${platform.configured === true ? "" : "disabled"}>Submit payout account</button>` : ""}
@@ -57891,7 +57891,7 @@
           "Direction requests",
           "Average views by club"
         ]);
-        document.getElementById("dancerCommissionSummary").textContent = "Club Deals stay visible. Dancer commissions start with redemptions after verified NATS enrollment; earlier redemptions do not earn back pay.";
+        document.getElementById("dancerCommissionSummary").textContent = "Club Deals stay visible. Dancer commissions start with redemptions after your payout account is verified; earlier redemptions do not earn back pay.";
         document.getElementById("dancerCommissionMetrics").innerHTML = lockedMetricCards([
           "Earned commissions",
           "Pending commissions",

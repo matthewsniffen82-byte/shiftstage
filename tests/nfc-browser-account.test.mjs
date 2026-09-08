@@ -27,6 +27,7 @@ function load(path, dependencies, extra = {}) {
 
 const policy = load("src/lib/api-error-policy.ts", {
   "./dancr/phone-tap-copy.ts": load("src/lib/dancr/phone-tap-copy.ts", {}),
+  "./dancr/payout-copy.ts": load("src/lib/dancr/payout-copy.ts", {}),
 });
 const marker = load("src/lib/dancr/nfc-browser-account.ts", {
   "server-only": {},

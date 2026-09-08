@@ -7,6 +7,7 @@ import { DashboardCloseButton } from "@/app/components/DashboardCloseButton";
 import { homeDiscoveryHref } from "@/src/lib/dancr/navigation";
 import { safeSocialProfileUrl } from "@/src/lib/dancr/social-profile-url";
 import { phoneTapCopy } from "@/src/lib/dancr/phone-tap-copy";
+import { payoutCopy } from "@/src/lib/dancr/payout-copy";
 import {
   CLUB_DEAL_OFFER_PRESETS,
   defaultClubDealOfferPreset,
@@ -1178,16 +1179,16 @@ function FinanceManager({
 
   async function manageNats(action: "verify_nats_affiliate" | "disable_nats_affiliate" | "retry_nats_export" | "reconcile_nats_export", targetId: string, resolution?: "confirmed_exported" | "confirmed_not_exported") {
     const promptLabel = action === "verify_nats_affiliate"
-      ? "Confirm you matched this login ID to the correct dancer in NATS. Enter an audit note:"
+      ? "Confirm you matched this login ID to the correct dancer in the payout portal. Enter an audit note:"
       : action === "reconcile_nats_export"
-        ? "Confirm you checked the affiliate's manual invoices in NATS. Enter an audit note:"
+        ? "Confirm you checked the dancer's commission invoices in the payout portal. Enter an audit note:"
         : "Enter the required audit reason:";
     const reason = window.prompt(promptLabel)?.trim();
     if (!reason) return;
     const request = beginFinanceAction();
     if (!request) return;
     setIsRunning(true);
-    setStatus("Updating the NATS commission ledger...");
+    setStatus("Updating commission records...");
     try {
       const data = await requestAdminJson("/api/admin/finance", {
         method: "POST",
@@ -1199,15 +1200,15 @@ function FinanceManager({
           ...(resolution ? { resolution } : {}),
           reason,
         }),
-        fallbackMessage: "Unable to update the NATS commission ledger.",
+        fallbackMessage: "Unable to update commission records.",
       });
       if (!isCurrentFinanceAction(request)) return;
-      const message = applyFinanceMutationResponse(data, onFinanceChange, "NATS commission ledger updated.");
+      const message = applyFinanceMutationResponse(data, onFinanceChange, "Commission records updated.");
       setStatus(message);
       onActionConfirmed(message);
     } catch (error) {
       if (!isCurrentFinanceAction(request)) return;
-      setStatus(error instanceof Error ? error.message : "Unable to update the NATS commission ledger.");
+      setStatus(error instanceof Error ? error.message : "Unable to update commission records.");
     } finally {
       finishFinanceAction(request);
     }
@@ -1229,21 +1230,21 @@ function FinanceManager({
           <Metric label="MyDancr net revenue" value={formatAdminCents(Number(metrics.myDancrNetRevenueCents || 0))} />
           <Metric label="Open invoices" value={String(metrics.openInvoiceCount || 0)} />
           <Metric label="Failed payouts" value={String(metrics.failedPayoutCount || 0)} />
-          <Metric label="NATS accounts to verify" value={String(metrics.natsPendingAccountCount || 0)} />
-          <Metric label="NATS exports queued" value={String(metrics.natsPendingExportCount || 0)} />
-          <Metric label="NATS reconciliation" value={String(metrics.natsReconciliationCount || 0)} />
-          <Metric label="Exported to NATS" value={formatAdminCents(Number(metrics.natsExportedCents || 0))} />
+          <Metric label="Payout accounts to verify" value={String(metrics.natsPendingAccountCount || 0)} />
+          <Metric label="Commission records queued" value={String(metrics.natsPendingExportCount || 0)} />
+          <Metric label="Commission records to review" value={String(metrics.natsReconciliationCount || 0)} />
+          <Metric label="Sent to payout provider" value={formatAdminCents(Number(metrics.natsExportedCents || 0))} />
         </div>
         <div className="admin-action-row">
           <button disabled={isRunning} type="button" onClick={() => runAction("run_automation")}>Run full reconciliation</button>
-          <button disabled={isRunning} type="button" onClick={() => runAction(natsSelected ? "run_automation" : "process_payouts")}>{natsSelected ? "Sync NATS commissions" : "Process payable dancers"}</button>
+          <button disabled={isRunning} type="button" onClick={() => runAction(natsSelected ? "run_automation" : "process_payouts")}>{natsSelected ? "Sync commission records" : "Process payable dancers"}</button>
         </div>
         {status ? <p role="status">{status}</p> : null}
       </Panel>
 
-      {natsSelected ? <Panel title="NATS affiliate settlement" badge={nats.configured === true ? "API ready" : "Credentials required"}>
-        <p>MyDancr remains authoritative for phone tap verification and exact commission amounts. Verify every dancer login against the licensed NATS admin before activation.</p>
-        {nats.affiliatePortalUrl ? <p><a href={asText(nats.affiliatePortalUrl)} target="_blank" rel="noreferrer">Open NATS affiliate portal</a></p> : null}
+      {natsSelected ? <Panel title="Commission payouts" badge={nats.configured === true ? "API ready" : "Credentials required"}>
+        <p>MyDancr remains authoritative for phone tap verification and exact commission amounts. Verify each dancer&apos;s login ID in the payout provider&apos;s admin portal before activating the account.</p>
+        {nats.affiliatePortalUrl ? <p><a href={asText(nats.affiliatePortalUrl)} target="_blank" rel="noreferrer">Open payout portal</a></p> : null}
         <div className="admin-list">
           {natsAccounts.map((account) => <article key={asText(account.dancer_id)}>
             <strong>{asText(readFirst(account.dancer_profiles)?.stage_name) || "Dancer"} · login ID {String(account.login_id || "")}</strong>
@@ -1255,24 +1256,24 @@ function FinanceManager({
               {account.status !== "disabled" ? <button disabled={isRunning} type="button" onClick={() => manageNats("disable_nats_affiliate", asText(account.dancer_id))}>Disable link</button> : null}
             </div>
           </article>)}
-          {!natsAccounts.length ? <p className="empty">No dancers have requested a NATS account link.</p> : null}
+          {!natsAccounts.length ? <p className="empty">No dancers have submitted a payout account for verification.</p> : null}
         </div>
 
-        <h3>NATS commission exports</h3>
+        <h3>Commission records sent for payout</h3>
         <div className="admin-list">
           {natsExports.slice(0, 100).map((item) => <article key={asText(item.id)}>
             <strong>{asText(readFirst(item.dancer_profiles)?.stage_name) || "Dancer"} · {formatAdminCents(Number(item.amount_cents || 0))}</strong>
             <p>{asText(item.status).replaceAll("_", " ")} · attempt {String(item.attempt_count || 0)} · {formatDate(item.created_at)}</p>
-            {item.last_error ? <p role="alert">{asText(item.last_error)}</p> : null}
+            {item.last_error ? <p role="alert">{payoutCopy(asText(item.last_error))}</p> : null}
             <div className="admin-action-row">
               {item.status === "failed" ? <button disabled={isRunning || nats.configured !== true} type="button" onClick={() => manageNats("retry_nats_export", asText(item.id))}>Retry definite rejection</button> : null}
               {item.status === "reconciliation_required" ? <>
-                <button disabled={isRunning} type="button" onClick={() => manageNats("reconcile_nats_export", asText(item.id), "confirmed_exported")}>Confirmed in NATS</button>
+                <button disabled={isRunning} type="button" onClick={() => manageNats("reconcile_nats_export", asText(item.id), "confirmed_exported")}>Confirmed in payout portal</button>
                 <button disabled={isRunning || nats.configured !== true} type="button" onClick={() => manageNats("reconcile_nats_export", asText(item.id), "confirmed_not_exported")}>Confirmed not exported</button>
               </> : null}
             </div>
           </article>)}
-          {!natsExports.length ? <p className="empty">No NATS commission exports have been queued.</p> : null}
+          {!natsExports.length ? <p className="empty">No commission records are waiting to be sent for payout.</p> : null}
         </div>
       </Panel> : null}
 
@@ -4654,7 +4655,7 @@ function DancerDirectory({
         <RosterSelect label="Profile state" value={statusFilter} onChange={setStatusFilter} options={[["all", "All profiles"], ["needs_action", "Needs action"], ["draft", "Draft"], ["pending_review", "Pending"], ["approved", "Live"], ["rejected", "Rejected"], ["disabled", "Disabled / archived"]]} />
         <RosterSelect label="Schedule" value={scheduleFilter} onChange={setScheduleFilter} options={[["all", "Any schedule"], ["working_now", "Working now"], ["upcoming", "Upcoming"], ["no_schedule", "No schedule"]]} />
         <RosterSelect label="Moderation" value={moderationFilter} onChange={setModerationFilter} options={[["all", "Any moderation"], ["pending", "Pending review"], ["clear", "No pending review"]]} />
-        <RosterSelect label="Commission" value={commissionFilter} onChange={setCommissionFilter} options={[["all", "Any commission state"], ["active", "NATS active"], ["not_active", "NATS not active"]]} />
+        <RosterSelect label="Commission" value={commissionFilter} onChange={setCommissionFilter} options={[["all", "Any commission state"], ["active", "Payout account active"], ["not_active", "Payout account not active"]]} />
         <RosterSelect label="Source" value={sourceFilter} onChange={setSourceFilter} options={[["all", "Demo and standard"], ["demo", "Demo assignments"], ["standard", "Standard profiles"]]} />
         <RosterSelect label="City" value={cityFilter} onChange={setCityFilter} options={[["", "All cities"], ...(roster?.filters.cities || []).map((city) => [city, city] as [string, string])]} />
         <RosterSelect label="Club" value={venueFilter} onChange={setVenueFilter} options={[["", "All clubs"], ...(roster?.filters.venues || []).map((venue) => [venue.id, `${venue.name} · ${venue.city}`] as [string, string])]} />
@@ -4910,7 +4911,7 @@ function AdminDancerFullProfile({
       </> : null}
 
       {activeTab === "all" || activeTab === "commissions" ? <>
-        <section className="submission-section"><h3>NATS payout eligibility</h3><div className="submission-grid"><SubmissionValue label="Link status" value={natsAccount.status || "Not linked"} /><SubmissionValue label="Username" value={natsAccount.username || "Not supplied"} /><SubmissionValue label="Activated" value={formatDate(natsAccount.activated_at || natsAccount.activatedAt)} /><SubmissionValue label="Last error" value={natsAccount.last_error || natsAccount.lastError || "None"} /></div></section>
+        <section className="submission-section"><h3>Payout eligibility</h3><div className="submission-grid"><SubmissionValue label="Link status" value={natsAccount.status || "Not linked"} /><SubmissionValue label="Username" value={natsAccount.username || "Not supplied"} /><SubmissionValue label="Activated" value={formatDate(natsAccount.activated_at || natsAccount.activatedAt)} /><SubmissionValue label="Last error" value={payoutCopy(asText(natsAccount.last_error || natsAccount.lastError || "None"))} /></div></section>
         <section className="submission-section"><h3>Commission activity ({commissions.length})</h3>{commissions.length ? <div className="submission-files">{commissions.map((item, index) => <div className="submission-link" key={asText(item.id) || index}><strong>{formatMoneyFromCents(item.amount_cents || item.amountCents)} · {labelize(asText(item.status))}</strong><small>{formatDate(item.paid_at || item.paidAt || item.payable_at || item.payableAt || item.created_at || item.createdAt)}</small></div>)}</div> : <p className="submission-empty">No attributed commission activity.</p>}</section>
       </> : null}
 
@@ -5172,7 +5173,7 @@ async function copyAdminText(value: string) {
 }
 
 function labelize(value: string) {
-  return phoneTapCopy(value.replace(/([A-Z])/g, " $1").replace(/_/g, " ").replace(/^./, (char) => char.toUpperCase()));
+  return payoutCopy(phoneTapCopy(value.replace(/([A-Z])/g, " $1").replace(/_/g, " ").replace(/^./, (char) => char.toUpperCase())));
 }
 
 function formatValue(value: unknown) {

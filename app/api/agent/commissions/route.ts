@@ -61,12 +61,12 @@ export async function POST(request: Request) {
       return NextResponse.json({ ok: false, error: "Unsupported sales agent action." }, { status: 400 });
     }
     if (!getNatsRuntimeConfig().selected) {
-      return NextResponse.json({ ok: false, error: "NATS commission settlement is not currently selected." }, { status: 409 });
+      return NextResponse.json({ ok: false, error: "Payout account setup is not currently available." }, { status: 409 });
     }
     const loginId = Number(body.loginId);
     const username = typeof body.username === "string" ? body.username.trim() : "";
     if (!Number.isSafeInteger(loginId) || loginId < 1 || username.length > 80) {
-      return NextResponse.json({ ok: false, error: "Enter a valid NATS affiliate login ID and optional username." }, { status: 400 });
+      return NextResponse.json({ ok: false, error: "Enter a valid payout account login ID and optional username." }, { status: 400 });
     }
     const admin = createAdminSupabaseClient();
     await requestNatsAgentAffiliateLink(admin, user.id, { loginId, username: username || null });
@@ -76,6 +76,6 @@ export async function POST(request: Request) {
       session: authContext.session || null,
     });
   } catch (error) {
-    return apiError(error, "Unable to link the NATS agent account.");
+    return apiError(error, "Unable to connect your payout account.");
   }
 }

@@ -60,5 +60,5 @@ function reason(value: unknown) { const result = required(value, "An audit note 
 function status(value: unknown): "active" | "suspended" | "terminated" { return value === "suspended" || value === "terminated" ? value : "active"; }
 function resolution(value: unknown): "confirmed_exported" | "confirmed_not_exported" {
   if (value === "confirmed_exported" || value === "confirmed_not_exported") return value;
-  throw new Error("A valid NATS reconciliation outcome is required.");
+  throw new Error("Choose a valid commission review outcome.");
 }

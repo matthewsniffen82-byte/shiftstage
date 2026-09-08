@@ -6,6 +6,7 @@ import { DashboardCloseButton } from "@/app/components/DashboardCloseButton";
 import { DancerPhotoCarousel } from "@/app/dancers/[slug]/DancerPhotoCarousel";
 import { SocialLinks, SocialPlatformIcon } from "@/app/dancers/[slug]/SocialLinks";
 import { homeDiscoveryHref } from "@/src/lib/dancr/navigation";
+import { payoutCopy } from "@/src/lib/dancr/payout-copy";
 import { MAX_DANCER_PROFILE_PHOTOS } from "@/src/lib/dancr/media-limits";
 import { effectiveDancerProfileStatus } from "@/src/lib/dancr/profile-approval";
 import { isCurrentLocationVerification } from "@/src/lib/dancr/geofence";
@@ -4427,13 +4428,13 @@ function DancerOnboardingCommand({
                     <article className="dancer-onboarding-payout-card">
                       <span className="eyebrow">Optional</span>
                       <h3>Commission payouts</h3>
-                      <p>Club Deals stay on your profile. Commissions start only after your NATS enrollment is verified. Earlier redemptions do not earn commissions or back pay.</p>
+                      <p>Club Deals stay on your profile. Commissions start only after your payout account is verified. Earlier redemptions do not earn commissions or back pay.</p>
                       {natsAccountStatus === "active" ? <strong className="dancer-onboarding-payout-state is-active">✓ Payout account connected</strong> : null}
                       {natsAccountStatus === "requested" ? <strong className="dancer-onboarding-payout-state">Verification pending</strong> : null}
                       {natsPortalUrl ? <a className="dancer-onboarding-preview-open" href={natsPortalUrl} rel="noreferrer" target="_blank">Create or open payout account</a> : null}
                       {natsSelected && !payoutSubmitted ? (
                         <form className="account-form dancer-onboarding-payout-form" onSubmit={requestOnboardingNatsLink}>
-                          <label>Payout account login ID <span>from NATS</span><input required inputMode="numeric" pattern="[1-9][0-9]*" value={natsLoginId} onChange={(event) => setNatsLoginId(event.target.value)} /></label>
+                          <label>Payout account login ID <span>from your payout portal</span><input required inputMode="numeric" pattern="[1-9][0-9]*" value={natsLoginId} onChange={(event) => setNatsLoginId(event.target.value)} /></label>
                           <label>Payout account username <span>optional</span><input autoCapitalize="none" maxLength={80} value={natsUsername} onChange={(event) => setNatsUsername(event.target.value)} /></label>
                           <button disabled={isPayoutWorking || !natsConfigured} type="submit">{isPayoutWorking ? "Submitting..." : "Submit payout account"}</button>
                         </form>
@@ -5234,7 +5235,7 @@ function DancerDealPanel({ deals }: { deals?: LoadState["deals"] }) {
       </details>
       <details className="dancer-performance-explainer">
         <summary>How Club Deal rewards work</summary>
-        <p>Your dancer credit follows a verified check-in to the guest&apos;s cashier tap. Club Deals remain visible without NATS enrollment. Only redemptions after verified NATS enrollment earn dancer commissions; earlier redemptions are not saved for back pay.</p>
+        <p>Your dancer credit follows a verified check-in to the guest&apos;s cashier tap. Club Deals remain visible before payout setup is complete. Only redemptions after your payout account is verified earn dancer commissions; earlier redemptions are not saved for back pay.</p>
       </details>
     </article>
   );
@@ -5409,12 +5410,12 @@ function DancerPayoutPanel({ finance }: { finance?: LoadState["finance"] }) {
         <>
           {natsPortalUrl ? <div className="earnings-actions"><a className="button-link" href={natsPortalUrl} target="_blank" rel="noreferrer">{natsActive ? "Open payout account" : "Create or open payout account"}</a></div> : null}
           {!natsActive ? <form className="account-form" onSubmit={requestNatsLink}>
-            <label>Payout account login ID <span>from NATS</span><input required inputMode="numeric" pattern="[1-9][0-9]*" value={natsLoginId} onChange={(event) => setNatsLoginId(event.target.value)} /></label>
+            <label>Payout account login ID <span>from your payout portal</span><input required inputMode="numeric" pattern="[1-9][0-9]*" value={natsLoginId} onChange={(event) => setNatsLoginId(event.target.value)} /></label>
             <label>Payout account username <span>optional</span><input autoCapitalize="none" maxLength={80} value={natsUsername} onChange={(event) => setNatsUsername(event.target.value)} /></label>
             <button disabled={isWorking || !natsConfigured} type="submit">Submit payout account for verification</button>
           </form> : null}
-          {!natsConfigured ? <p className="earnings-notice">Payout setup is temporarily unavailable. Club Deal commissions require verified NATS enrollment at the time of redemption. Earlier redemptions do not earn back pay.</p> : null}
-          {natsAffiliateAccount?.last_error ? <p role="alert">{String(natsAffiliateAccount.last_error)}</p> : null}
+          {!natsConfigured ? <p className="earnings-notice">Payout setup is temporarily unavailable. Club Deal commissions require a verified payout account at the time of redemption. Earlier redemptions do not earn back pay.</p> : null}
+          {natsAffiliateAccount?.last_error ? <p role="alert">{payoutCopy(String(natsAffiliateAccount.last_error))}</p> : null}
         </>
       ) : (
         <>
@@ -5433,8 +5434,8 @@ function DancerPayoutPanel({ finance }: { finance?: LoadState["finance"] }) {
         <summary>How payouts work</summary>
         <div className="dancer-performance-explainer-copy">
           <p>{natsSelected
-            ? "Club Deal commissions start when your NATS enrollment is verified. MyDancr calculates your tiered commission on eligible redemptions from that point forward. Earlier redemptions are not held for back pay. Payouts are managed through NATS."
-            : "Club Deals stay visible on your profile, but dancer commissions require verified NATS enrollment at redemption. Earlier redemptions do not earn commissions or back pay."}</p>
+            ? "Club Deal commissions start when your payout account is verified. MyDancr calculates your tiered commission on eligible redemptions from that point forward. Earlier redemptions are not held for back pay. Manage payments and tax forms in your payout portal."
+            : "Club Deals stay visible on your profile, but dancer commissions require a verified payout account at redemption. Earlier redemptions do not earn commissions or back pay."}</p>
           <p>{natsSelected
             ? "No guest personal information is included."
             : "The approved payout provider securely handles identity, account details, and money movement. MyDancr stores only the provider account reference and payout status."}</p>
@@ -5472,7 +5473,7 @@ function DancerPayoutPanel({ finance }: { finance?: LoadState["finance"] }) {
               <span>Commission {formatFinanceDate(item.created_at)}</span>
               <b>{formatCents(Number(item.amount_cents || 0))}</b>
               <span>{String(item.status || "pending").replaceAll("_", " ")}</span>
-              {item.last_error ? <span role="alert">{String(item.last_error)}</span> : null}
+              {item.last_error ? <span role="alert">{payoutCopy(String(item.last_error))}</span> : null}
             </div>)}
           </div> : <p>No payout transfers yet.</p>
         ) : payouts.length ? (

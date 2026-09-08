@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 import vm from "node:vm";
+import { payoutCopy } from "../src/lib/dancr/payout-copy.ts";
 import { phoneTapCopy } from "../src/lib/dancr/phone-tap-copy.ts";
 import { customerFacingDealDescription, customerFacingDealTerms } from "../src/lib/dancr/deal-copy.ts";
 import { PublicApiError, resolveApiError } from "../src/lib/api-error-policy.ts";
@@ -38,7 +39,7 @@ test("admin activity presents old event identifiers as plain-language labels", a
   const admin = await readFile(new URL("../app/admin/AdminClient.tsx", import.meta.url), "utf8");
   const labelSource = admin.match(/function labelize\(value: string\) \{[\s\S]*?\n\}/)?.[0];
   assert.ok(labelSource);
-  const labelize = vm.runInNewContext(`${labelSource.replace("value: string", "value")}labelize`, { phoneTapCopy });
+  const labelize = vm.runInNewContext(`${labelSource.replace("value: string", "value")}labelize`, { phoneTapCopy, payoutCopy });
   assert.equal(labelize("provision_admin_nfc_tag"), "Provision admin tap sticker");
   assert.equal(labelize("nfc_sticker"), "Tap sticker");
   assert.equal(labelize("account_approved"), "Account approved");

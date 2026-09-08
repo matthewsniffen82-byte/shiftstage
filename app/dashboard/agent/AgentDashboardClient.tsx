@@ -68,21 +68,21 @@ export default function AgentDashboardClient() {
     const controller = new AbortController();
     dashboardRequestAbortRef.current = controller;
     setWorking(true);
-    setStatus("Submitting the NATS affiliate link for verification…");
+    setStatus("Submitting your payout account for verification…");
     try {
       const data = await requestAgentCommissionsJson({
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ action: "request_nats_link", loginId, username }),
         signal: controller.signal,
-        fallbackMessage: "Unable to link the NATS account.",
+        fallbackMessage: "Unable to connect your payout account.",
       });
       if (!mountedRef.current || requestId !== dashboardRequestSequenceRef.current) return;
       setDashboard(data.dashboard);
-      setStatus("NATS account submitted for administrator verification.");
+      setStatus("Payout account submitted for verification.");
     } catch (error) {
       if (!mountedRef.current || requestId !== dashboardRequestSequenceRef.current || (error instanceof DOMException && error.name === "AbortError")) return;
-      setStatus(error instanceof Error ? error.message : "Unable to link the NATS account.");
+      setStatus(error instanceof Error ? error.message : "Unable to connect your payout account.");
     } finally {
       if (requestId === dashboardRequestSequenceRef.current) {
         dashboardRequestAbortRef.current = null;
@@ -258,18 +258,18 @@ export default function AgentDashboardClient() {
 
           {nats.selected ? (
             <section className="agent-card agent-payout-card">
-              <span className="agent-eyebrow">NATS settlement</span>
-              <h2>{natsAccount?.status === "active" ? "Affiliate account active" : natsAccount?.status === "requested" ? "Verification pending" : "Connect your payout account"}</h2>
-              <p>NATS holds payout and tax-document workflows. MyDancr stores only the verified affiliate mapping and commission audit trail.</p>
-              {nats.affiliatePortalUrl ? <a className="agent-secondary" href={nats.affiliatePortalUrl} target="_blank" rel="noreferrer">Open NATS affiliate portal</a> : null}
+              <span className="agent-eyebrow">Commission payouts</span>
+              <h2>{natsAccount?.status === "active" ? "Payout account connected" : natsAccount?.status === "requested" ? "Verification pending" : "Connect your payout account"}</h2>
+              <p>Manage payments and tax forms in your payout portal. MyDancr stores only your verified account connection and commission history.</p>
+              {nats.affiliatePortalUrl ? <a className="agent-secondary" href={nats.affiliatePortalUrl} target="_blank" rel="noreferrer">Open payout portal</a> : null}
               {!natsAccount || natsAccount.status === "disabled" ? (
                 <form onSubmit={requestNats}>
-                  <label>NATS affiliate login ID<input required inputMode="numeric" pattern="[1-9][0-9]*" value={loginId} onChange={(event) => setLoginId(event.target.value)} /></label>
-                  <label>NATS username <small>optional</small><input maxLength={80} autoCapitalize="none" value={username} onChange={(event) => setUsername(event.target.value)} /></label>
+                  <label>Payout account login ID <small>from your payout portal</small><input required inputMode="numeric" pattern="[1-9][0-9]*" value={loginId} onChange={(event) => setLoginId(event.target.value)} /></label>
+                  <label>Payout account username <small>optional</small><input maxLength={80} autoCapitalize="none" value={username} onChange={(event) => setUsername(event.target.value)} /></label>
                   <button className="agent-primary" disabled={working || !nats.configured}>Submit for verification</button>
                 </form>
               ) : null}
-              {!nats.configured ? <p className="agent-notice">NATS exports remain safely paused until licensed API credentials are installed.</p> : null}
+              {!nats.configured ? <p className="agent-notice">Payout setup is temporarily unavailable. Please try again later.</p> : null}
             </section>
           ) : null}
 

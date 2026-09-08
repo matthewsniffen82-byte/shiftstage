@@ -86,7 +86,7 @@ test("sales-agent allocations and public deal visibility stay independent of dan
 test("dancer setup explains prospective earnings and makes no pre-enrollment accrual promise", () => {
   for (const source of [dashboard, liveApp]) {
     assert.match(source, /Club Deals stay on your profile/);
-    assert.match(source, /Commissions start only after your NATS enrollment is verified/);
+    assert.match(source, /Commissions start only after your payout account is verified/);
     assert.match(source, /Earlier redemptions do not earn commissions or back pay/);
     assert.doesNotMatch(source, /Commissions keep accruing while MyDancr verifies|Commissions accrue automatically|Your verified commissions will continue to accrue/);
   }

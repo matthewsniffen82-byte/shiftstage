@@ -212,8 +212,8 @@ test("profile setup editors use the compact shared modal shell without changing 
 
 test("optional payout onboarding uses plain language and names the provider only in setup", () => {
   assert.match(dashboard, /<span className="eyebrow">Optional<\/span>[\s\S]*?<h3>Commission payouts<\/h3>/);
-  assert.match(dashboard, /Club Deals stay on your profile\. Commissions start only after your NATS enrollment is verified\. Earlier redemptions do not earn commissions or back pay\./);
-  assert.match(dashboard, /Payout account login ID <span>from NATS<\/span>/);
+  assert.match(dashboard, /Club Deals stay on your profile\. Commissions start only after your payout account is verified\. Earlier redemptions do not earn commissions or back pay\./);
+  assert.match(dashboard, /Payout account login ID <span>from your payout portal<\/span>/);
   assert.doesNotMatch(dashboard, /Connect your NATS account|NATS account linked|Create or open NATS account/);
   assert.doesNotMatch(dashboard, /Recommended · never required for activation/);
   assert.doesNotMatch(dashboard, /This choice never blocks your dressing-room NFC tap/);

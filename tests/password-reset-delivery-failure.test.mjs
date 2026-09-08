@@ -25,6 +25,7 @@ function compile(source, dependencies) {
 }
 const policy = compile(policySource, {
   "./dancr/phone-tap-copy.ts": compile(readFileSync(new URL("../src/lib/dancr/phone-tap-copy.ts", import.meta.url), "utf8"), {}),
+  "./dancr/payout-copy.ts": compile(readFileSync(new URL("../src/lib/dancr/payout-copy.ts", import.meta.url), "utf8"), {}),
 });
 
 function resetFixture(providerError) {

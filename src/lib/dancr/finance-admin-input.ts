@@ -117,7 +117,7 @@ export function parseAdminFinanceCommand(input: unknown): ValidationResult<Admin
   if (action === "reconcile_nats_export") {
     const parsed = parseNatsExportInput(body);
     if (!parsed.ok) return invalid(parsed.error);
-    const resolution = oneOf(body.resolution, ["confirmed_exported", "confirmed_not_exported"] as const, "NATS reconciliation resolution is invalid.");
+    const resolution = oneOf(body.resolution, ["confirmed_exported", "confirmed_not_exported"] as const, "Choose a valid commission review outcome.");
     return resolution.ok ? valid({ action, ...parsed.value, resolution: resolution.value }) : invalid(resolution.error);
   }
   return unsupportedAction(action);
@@ -204,7 +204,7 @@ export function parseNatsAffiliateInput(body: Record<string, unknown>): Validati
 }
 
 export function parseNatsExportInput(body: Record<string, unknown>): ValidationResult<NatsExportInput> {
-  const exportId = requiredUuid(body.exportId, "NATS export is required.", "NATS export is invalid.");
+  const exportId = requiredUuid(body.exportId, "Select a commission record.", "Select a valid commission record.");
   if (!exportId.ok) return exportId;
   const reason = auditReason(body.reason);
   return reason.ok ? valid({ exportId: exportId.value, reason: reason.value }) : invalid(reason.error);
