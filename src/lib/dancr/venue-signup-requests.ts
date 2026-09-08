@@ -5,6 +5,7 @@ import {
   createVenueSignupCredential,
   hashVenueClaimRequestIp,
 } from "./venue-claims";
+import { createRequestManager, removeUnsubmittedRequestManager, venueRequestCredentials } from "./venue-request-account";
 import { safeErrorMetadata } from "../security/safe-error-metadata";
 
 type DancrClient = SupabaseClient;
@@ -23,6 +24,8 @@ const REQUEST_COLUMNS = `
   contact_name,
   contact_title,
   contact_email,
+  requester_user_id,
+  login_email,
   contact_phone,
   message,
   status,
@@ -44,6 +47,9 @@ const REQUEST_COLUMNS = `
 export class VenueSignupRequestUserError extends Error {}
 
 export type VenueSignupRequestInput = {
+  loginEmail?: unknown;
+  password?: unknown;
+  confirmPassword?: unknown;
   venueName?: unknown;
   streetAddress?: unknown;
   city?: unknown;
@@ -65,6 +71,12 @@ export async function createVenueSignupRequest(
   requestIp: string,
 ) {
   const normalized = normalizeVenueSignupRequest(input);
+  let credentials;
+  try {
+    credentials = venueRequestCredentials(input);
+  } catch (error) {
+    throw new VenueSignupRequestUserError(error instanceof Error ? error.message : "Enter your manager login details.");
+  }
   const referringAgentId = await resolveReferringAgent(client, input.agentReferralCode);
   const requestIpHash = hashVenueClaimRequestIp(requestIp);
   const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
@@ -94,38 +106,60 @@ export async function createVenueSignupRequest(
     throw new VenueSignupRequestUserError("This venue request is already waiting for review.");
   }
 
-  const { data, error } = await db
-    .from("venue_signup_requests")
-    .insert({
-      venue_name: normalized.venueName,
-      street_address: normalized.streetAddress,
-      city: normalized.city,
-      state: normalized.state,
-      postal_code: normalized.postalCode,
-      website: normalized.website,
-      contact_name: normalized.contactName,
-      contact_title: normalized.contactTitle,
-      contact_email: normalized.contactEmail,
-      contact_phone: normalized.contactPhone,
-      message: normalized.message,
-      request_ip_hash: requestIpHash,
-      referring_agent_id: referringAgentId,
-    })
-    .select(REQUEST_COLUMNS)
-    .single();
+  let requesterUserId: string;
+  try {
+    requesterUserId = await createRequestManager(client, { ...credentials, displayName: normalized.venueName, city: normalized.city });
+  } catch (error) {
+    throw new VenueSignupRequestUserError(error instanceof Error ? error.message : "Unable to create manager login.");
+  }
+  let submitted = false;
+  try {
+    const { data, error } = await db
+      .from("venue_signup_requests")
+      .insert({
+        requester_user_id: requesterUserId,
+        login_email: credentials.email,
+        venue_name: normalized.venueName,
+        street_address: normalized.streetAddress,
+        city: normalized.city,
+        state: normalized.state,
+        postal_code: normalized.postalCode,
+        website: normalized.website,
+        contact_name: normalized.contactName,
+        contact_title: normalized.contactTitle,
+        contact_email: normalized.contactEmail,
+        contact_phone: normalized.contactPhone,
+        message: normalized.message,
+        request_ip_hash: requestIpHash,
+        referring_agent_id: referringAgentId,
+      })
+      .select(REQUEST_COLUMNS)
+      .single();
 
-  if (error) {
-    if (error.code === "23505") {
-      throw new VenueSignupRequestUserError("This venue request is already waiting for review.");
+    if (error) {
+      if (error.code === "23505") {
+        throw new VenueSignupRequestUserError("This venue request is already waiting for review.");
+      }
+      throw error;
+    }
+
+    submitted = true;
+    console.info("VENUE_SIGNUP_REQUEST_SUBMITTED", {
+      requestId: data.id,
+      city: data.city,
+    });
+    return mapVenueSignupRequest(data);
+  } catch (error) {
+    if (!submitted) {
+      // An insert can commit even if its response is interrupted. Preserve a
+      // saved request and its login before deciding that cleanup is safe.
+      const saved = await db.from("venue_signup_requests").select(REQUEST_COLUMNS)
+        .eq("requester_user_id", requesterUserId).maybeSingle();
+      if (saved.data) return mapVenueSignupRequest(saved.data);
+      if (!saved.error) await removeUnsubmittedRequestManager(client, requesterUserId);
     }
     throw error;
   }
-
-  console.info("VENUE_SIGNUP_REQUEST_SUBMITTED", {
-    requestId: data.id,
-    city: data.city,
-  });
-  return mapVenueSignupRequest(data);
 }
 
 export async function getAdminVenueSignupRequests(client: DancrClient, status = "pending") {
@@ -198,12 +232,14 @@ export async function reviewVenueSignupRequest(
   let emailDelivery: { delivered: boolean; reason?: string } | null = null;
 
   if (credential && venue) {
-    emailDelivery = await deliverVenueAccessCode({
+    emailDelivery = await (request.loginEmail && request.requesterUserId
+      ? deliverVenueAccountApproval(request, venue)
+      : deliverVenueAccessCode({
       request,
       venue,
       code: credential.code,
       expiresAt: claimCode?.expiresAt || expiresAt || "",
-    }).catch((deliveryError) => {
+    })).catch((deliveryError) => {
       console.warn("VENUE_SIGNUP_REQUEST_EMAIL_FAILED", {
         requestId,
         ...safeErrorMetadata(deliveryError),
@@ -223,8 +259,9 @@ export async function reviewVenueSignupRequest(
   return {
     request,
     venue,
-    claimCode,
-    accessCode: credential?.code || null,
+    claimCode: request.loginEmail ? null : claimCode,
+    accessCode: request.loginEmail ? null : credential?.code || null,
+    managerAccountReady: Boolean(request.loginEmail && request.requesterUserId && venue),
     emailDelivery,
   };
 }
@@ -270,6 +307,16 @@ function normalizeWebsite(value: unknown) {
   } catch {
     throw new VenueSignupRequestUserError("Enter a valid venue website address.");
   }
+}
+
+async function deliverVenueAccountApproval(request: ReturnType<typeof mapVenueSignupRequest>, venue: NonNullable<ReturnType<typeof mapApprovedVenue>>) {
+  const dashboardUrl = new URL("/dashboard/venue", publicAppUrl()).toString();
+  return sendTransactionalEmail({
+    to: request.loginEmail!,
+    subject: `Your MyDancr dashboard for ${venue.name} is ready`,
+    text: `Hi ${request.contactName},\n\nYour request for ${venue.name} was approved. Your existing manager login is ready.\n\nOpen your dashboard: ${dashboardUrl}\n\nIf you are signed out, use the email and password you created when submitting your request. You do not need an access code or a new password.\n\nMyDancr will prepare your private venue page for your review.`,
+    html: `<p>Hi ${escapeHtml(request.contactName)},</p><p>Your request for <strong>${escapeHtml(venue.name)}</strong> was approved.</p><p><a href="${escapeHtml(dashboardUrl)}">Open your venue dashboard</a></p><p>If you are signed out, use the email and password you created with your request. You do not need an access code or a new password.</p><p>MyDancr will prepare your private venue page for your review.</p>`,
+  });
 }
 
 async function deliverVenueAccessCode(input: {
@@ -328,6 +375,8 @@ function mapVenueSignupRequest(row: any) {
     contactName: String(row.contact_name || ""),
     contactTitle: String(row.contact_title || ""),
     contactEmail: String(row.contact_email || ""),
+    loginEmail: row.login_email ? String(row.login_email) : null,
+    requesterUserId: row.requester_user_id ? String(row.requester_user_id) : null,
     contactPhone: String(row.contact_phone || ""),
     message: row.message ? String(row.message) : null,
     status: String(row.status || "pending"),

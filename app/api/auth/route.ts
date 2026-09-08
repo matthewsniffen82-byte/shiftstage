@@ -6,6 +6,7 @@ import { readBoundedJsonObject } from "@/src/lib/bounded-json-body";
 import { provisionAppAccount } from "@/src/lib/dancr/account-provisioning";
 import { getAccountByUserId } from "@/src/lib/dancr/auth";
 import { getVenueForAccount } from "@/src/lib/dancr/venue";
+import { getVenueRequestForManager } from "@/src/lib/dancr/venue-request-account";
 import {
   redeemVenueSignupCode,
   resolveVenueSignupCode,
@@ -323,7 +324,7 @@ async function authResponse(
   }
   if (account.role === "venue" && account.accountState === "active") {
     const venue = await getVenueForAccount(admin, userId);
-    if (!venue) {
+    if (!venue && !await getVenueRequestForManager(admin, userId)) {
       throw conflict("No venue is connected to this account. Use your venue access code during sign up.");
     }
   }

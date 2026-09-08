@@ -3185,7 +3185,7 @@ function VenueSignupRequestQueue({
         const normalizedVenue = {
           ...data.venue,
           is_active: data.venue.isActive !== false,
-          owner_user_id: null,
+          owner_user_id: data.managerAccountReady ? asText(data.request?.requesterUserId) : null,
         };
         onVenuesChange(
           venues.some((venue) => asText(venue.id) === venueId)
@@ -3202,12 +3202,13 @@ function VenueSignupRequestQueue({
             )),
           ]);
         }
-        setIssuedAccess({
+        if (data.accessCode) setIssuedAccess({
           requestId,
           venueName: asText(data.venue.name) || asText(request.venueName),
           code: asText(data.accessCode),
           emailDelivered: data.emailDelivery?.delivered === true,
         });
+        else setIssuedAccess(null);
       }
       onActionConfirmed(data.message || (decision === "approved" ? "Venue request approved." : "Venue request rejected."));
     } catch (error) {
@@ -3272,6 +3273,7 @@ function VenueSignupRequestQueue({
                   <div><dt>Public address</dt><dd>{[asText(request.streetAddress), asText(request.city), asText(request.state), asText(request.postalCode)].filter(Boolean).join(", ")}</dd></div>
                   <div><dt>Contact</dt><dd>{asText(request.contactName)} · {asText(request.contactTitle)}</dd></div>
                   <div><dt>Business email</dt><dd><a href={`mailto:${asText(request.contactEmail)}`}>{asText(request.contactEmail)}</a></dd></div>
+                  {request.loginEmail ? <div><dt>Manager login</dt><dd>{asText(request.loginEmail)} · Login already created</dd></div> : null}
                   <div><dt>Business phone</dt><dd><a href={`tel:${asText(request.contactPhone)}`}>{asText(request.contactPhone)}</a></dd></div>
                   {request.website ? <div><dt>Website</dt><dd><a href={asText(request.website)} target="_blank" rel="noopener noreferrer">Open website</a></dd></div> : null}
                   {request.message ? <div><dt>Request note</dt><dd>{asText(request.message)}</dd></div> : null}

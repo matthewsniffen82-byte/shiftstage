@@ -70,7 +70,7 @@ test("the live venue request form submits the verified business contact for revi
   assert.match(liveApp, /submit\.textContent = "✓ Request received"/);
   assert.match(liveApp, /authPage\.classList\.add\("venue-request-succeeded"\)/);
   assert.match(liveApp, /authPage\.classList\.remove\("venue-request-succeeded"\)/);
-  assert.match(liveApp, /After approval, we’ll email the private access code to the business contact\. Use it here to create the club manager account\./);
+  assert.match(liveApp, /Your manager login and club request are saved\./);
   assert.match(liveApp, /body\.dancr-button-system #authPage \.venue-request-submit\.is-submitted:disabled[\s\S]*?opacity: 1 !important;[\s\S]*?background: #10b981 !important;/);
   assert.match(liveApp, /function openVenueRequest\(\)/);
   assert.match(liveApp, /url\.searchParams\.get\("venueRequest"\) === "1"/);
@@ -93,7 +93,7 @@ test("club listing is available only through venue account creation", () => {
   assert.doesNotMatch(liveApp, /href="\/clubs\/join"/);
   assert.doesNotMatch(liveApp, /clubListDirectoryCta|club-list-directory-cta|club-join-footer/);
   assert.match(liveApp, /<strong>Request to list your club<\/strong>/);
-  assert.match(liveApp, /After approval, MyDancr sends a private code so you can build and publish your club page/);
+  assert.match(liveApp, /After approval, open your dashboard with the same account/);
   assert.match(liveApp, /id="venueRequestBackBtn"[^>]*>Have an access code\? Continue</);
   assert.match(liveApp, /id="venueSignupBtn"[\s\S]*?<strong>Club<\/strong>/);
   assert.match(liveApp, /getElementById\("venueSignupBtn"\)\.addEventListener\("click", openVenueRequest\)/);

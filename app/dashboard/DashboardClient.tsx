@@ -245,6 +245,7 @@ function groupFollowedVenuesByCity(items: CustomerVenueFollow[]) {
 }
 
 type LoadState = {
+  venueRequest?: { id: string; venueName: string; status: string } | null;
   account?: DashboardSessionAccount | null;
   profile?: Record<string, unknown> | null;
   saved?: CustomerSavedState | null;
@@ -414,6 +415,21 @@ export default function DashboardClient({
       };
 
       try {
+        const requestStatus = await requestDashboardJson("/api/venue/signup-requests", {
+          method: "GET", expectedRole: "venue", signal: controller.signal, timeoutMs: 12000,
+          fallbackMessage: "Unable to check your club request.",
+        });
+        if (cancelled) return;
+        if (requestStatus.request && requestStatus.request.status !== "approved") {
+          const [accountData, support] = await Promise.all([
+            requestAccountJson({ signal: controller.signal }),
+            requestOptionalPanel("/api/support", { threads: [] }),
+          ]);
+          if (cancelled) return;
+          setState({ account: accountData.account, venueRequest: requestStatus.request, supportThreads: support.threads || [] });
+          setIsLoading(false);
+          return;
+        }
         let account;
         let panels;
         let agentAccess;
@@ -662,6 +678,25 @@ export default function DashboardClient({
     return <main className="dashboard-shell dashboard-shell-dancer" aria-busy="true">
       <DashboardStyles />
       <span className="dashboard-sr-only" role="status">Loading dancer dashboard</span>
+    </main>;
+  }
+
+  if (role === "venue" && state.venueRequest && !isLoading) {
+    return <main className="dashboard-shell dashboard-shell-venue">
+      <DashboardStyles />
+      <section className="dashboard-head">
+        <div className="dashboard-head-row">
+          <VenueDashboardAvatar name={state.venueRequest.venueName} />
+          <div className="dashboard-head-copy"><span className="eyebrow">Club request</span><h1>{state.venueRequest.venueName}</h1></div>
+          <DashboardCloseButton fallbackHref={dashboardCloseHref} label="Close club request" />
+        </div>
+      </section>
+      <article className="info-panel">
+        <h2>{state.venueRequest.status === "rejected" ? "Request not approved" : "Waiting for approval"}</h2>
+        <p>{state.venueRequest.status === "rejected" ? "Your club request was reviewed and was not approved. Contact support if you need help with the decision." : "Your manager login is saved. We’ll email you when your club is approved. Your dashboard will unlock with this same account—no new password or access code needed."}</p>
+        <div className="action-row"><button type="button" onClick={retryDashboard}>Check approval status</button><a href="#venue-request-support">Contact support</a></div>
+      </article>
+      <SupportInboxPanel initialThreads={state.supportThreads || []} panelId="venue-request-support" />
     </main>;
   }
 

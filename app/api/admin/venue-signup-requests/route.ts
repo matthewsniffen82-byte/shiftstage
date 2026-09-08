@@ -63,7 +63,9 @@ export async function POST(request: Request) {
       ok: true,
       ...result,
       message: decision === "approved"
-        ? emailDelivered
+        ? result.managerAccountReady
+          ? emailDelivered ? "Venue approved. The existing manager login is ready and the dashboard link was emailed." : "Venue approved. The existing manager login is ready; email delivery was unavailable. The manager can sign in directly."
+          : emailDelivered
           ? "Venue approved. The private access code was emailed to the business contact."
           : "Venue approved, but email delivery was unavailable. Copy the private access code now."
         : "Venue request rejected.",

@@ -40926,10 +40926,10 @@
           <form class="auth-form venue-request-form" id="venueRequestForm" data-auth-view="venue-request" novalidate hidden>
             <div class="venue-auth-mode-copy">
               <strong>Request to list your club</strong>
-              <span>Submit your club details. After approval, MyDancr sends a private code so you can build and publish your club page.</span>
+              <span>Submit your club details and create your manager login. After approval, open your dashboard with the same account.</span>
             </div>
             <div class="venue-request-intro">
-              <strong>Approval comes before account setup.</strong>
+              <strong>Create your login now. Club access follows approval.</strong>
               <span>Your club stays private until an approved manager finishes the page and chooses to publish it.</span>
             </div>
             <section class="venue-request-section" aria-labelledby="venueRequestVenueHeading">
@@ -40991,6 +40991,42 @@
                   <textarea id="venueRequestMessage" name="message" maxlength="1500"></textarea>
                 </div>
               </div>
+            </section>
+            <section class="venue-request-section" aria-labelledby="venueRequestLoginHeading">
+              <div class="venue-request-section-head">
+                <span>Manager login</span>
+                <strong id="venueRequestLoginHeading">Create your account once</strong>
+              </div>
+              <p>Your business email is for club verification. Your manager login is how you access the dashboard after approval.</p>
+              <label class="venue-request-consent">
+                <input id="venueRequestUseBusinessEmail" type="checkbox" checked>
+                <span>Use business email for my manager login</span>
+              </label>
+              <div class="venue-request-grid">
+                <div class="field wide">
+                  <label for="venueRequestLoginEmail">Manager login email</label>
+                  <input id="venueRequestLoginEmail" name="loginEmail" type="email" autocomplete="username" maxlength="254" readonly required>
+                </div>
+                <div class="field">
+                  <label for="venueRequestPassword">Password</label>
+                  <div class="password-wrap">
+                    <input id="venueRequestPassword" name="password" type="password" autocomplete="new-password" minlength="6" maxlength="1024" aria-describedby="venueRequestPasswordHelp" required>
+                    <button class="password-toggle" type="button" data-password-toggle="venueRequestPassword" aria-label="Show password" aria-pressed="false">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                </button>
+                  </div>
+                </div>
+                <div class="field">
+                  <label for="venueRequestConfirmPassword">Confirm password</label>
+                  <div class="password-wrap">
+                    <input id="venueRequestConfirmPassword" name="confirmPassword" type="password" autocomplete="new-password" minlength="6" maxlength="1024" required>
+                    <button class="password-toggle" type="button" data-password-toggle="venueRequestConfirmPassword" aria-label="Show confirm password" aria-pressed="false">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                </button>
+                  </div>
+                </div>
+              </div>
+              <p id="venueRequestPasswordHelp">Use at least 6 characters, including an uppercase letter, a number, and a special character.</p>
             </section>
             <label class="venue-request-honeypot" aria-hidden="true">
               Company fax
@@ -64124,9 +64160,30 @@
     document.getElementById("venueRequestContactPhone").addEventListener("input", formatBusinessPhoneInput);
     document.getElementById("venueRequestContactPhone").addEventListener("change", formatBusinessPhoneInput);
 
+    function syncVenueRequestLoginEmail() {
+      const login = document.getElementById("venueRequestLoginEmail");
+      const sameEmail = document.getElementById("venueRequestUseBusinessEmail").checked;
+      login.readOnly = sameEmail;
+      if (sameEmail) login.value = document.getElementById("venueRequestContactEmail").value;
+    }
+
+    document.getElementById("venueRequestUseBusinessEmail").addEventListener("change", syncVenueRequestLoginEmail);
+    document.getElementById("venueRequestContactEmail").addEventListener("input", syncVenueRequestLoginEmail);
+    ["venueRequestPassword", "venueRequestConfirmPassword"].forEach((id) => {
+      document.getElementById(id).addEventListener("input", () => {
+        document.getElementById("venueRequestPassword").setCustomValidity("");
+        document.getElementById("venueRequestConfirmPassword").setCustomValidity("");
+      });
+    });
+
     document.getElementById("venueRequestForm").addEventListener("submit", async (event) => {
       event.preventDefault();
       const form = event.currentTarget;
+      syncVenueRequestLoginEmail();
+      const password = document.getElementById("venueRequestPassword");
+      const confirmation = document.getElementById("venueRequestConfirmPassword");
+      password.setCustomValidity(passwordValidationMessage(password.value));
+      confirmation.setCustomValidity(password.value === confirmation.value ? "" : "The passwords do not match.");
       if (!form.reportValidity()) return;
 
       const submit = document.getElementById("venueRequestSubmit");
@@ -64143,6 +64200,9 @@
           headers: { "Content-Type": "application/json" },
           credentials: "same-origin",
           body: JSON.stringify({
+            loginEmail: document.getElementById("venueRequestLoginEmail").value.trim(),
+            password: password.value,
+            confirmPassword: confirmation.value,
             venueName: document.getElementById("venueRequestName").value.trim(),
             streetAddress: document.getElementById("venueRequestAddress").value.trim(),
             city: document.getElementById("venueRequestCity").value.trim(),
@@ -64165,14 +64225,20 @@
         }
 
         form.reset();
+        syncVenueRequestLoginEmail();
         pendingVenueAgentReferralCode = "";
         authPage.classList.add("venue-request-succeeded");
         submit.classList.add("is-submitted");
         submit.textContent = "✓ Request received";
         setVenueRequestStatus(
-          "After approval, we’ll email the private access code to the business contact. Use it here to create the club manager account."
+          "Your manager login and club request are saved. We’ll email you after approval. Sign in with this same email and password to open your dashboard."
         );
         showToast("Club request received");
+        if (payload.session?.accessToken && payload.account?.role === "venue") {
+          await endAuthSession();
+          saveAuthSession({ ...payload.session, account: payload.account });
+          openUnifiedDashboard("venue");
+        }
       } catch (error) {
         submit.disabled = false;
         submit.textContent = defaultLabel;
