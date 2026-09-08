@@ -41598,7 +41598,7 @@
           <span class="eyebrow" id="dancerVenueVerificationEyebrow">Venue affiliation</span>
           <h3 id="dancerVenueVerificationTitle">Manage where you work</h3>
           <p id="dancerVenueVerificationDescription">At the club, tap its official MyDancr dressing-room sticker to approve venue access and check in a current posted shift.</p>
-          <p>Unlock your phone before tapping. No specific MyDancr page needs to be open. Open the link that appears if prompted, then sign in to your dancer account in the browser that opens if asked.</p>
+          <p>Log in to your MyDancr dancer account first. No particular page needs to be open. Unlock your phone and tap the club's dressing-room sticker. Open the link if prompted, and log in there if asked.</p>
           <div class="venue-affiliation-controls">
             <label for="dancerVenueVerificationVenue">
               Venue
@@ -50213,7 +50213,7 @@
         ? "This Working Now session has ended."
         : checkedIn
           ? `Dressing-room tap verified at ${profile.venue || "the venue"}. Active until ${new Date(profile.locationVerificationExpiresAt).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}. Retaps cannot extend this session; a six-hour cooldown follows.`
-          : "Unlock your phone and tap the venue's dressing-room sticker. No specific MyDancr page needs to be open. Open the link that appears if prompted, then sign in to your dancer account in that browser if asked. The secure tap starts one six-hour Working Now session followed by a six-hour cooldown.";
+          : "Log in to your MyDancr dancer account first. No particular page needs to be open. Unlock your phone and tap the club's dressing-room sticker. Open the link if prompted, and log in there if asked. Working Now lasts 6 hours, followed by a 6-hour cooldown at all clubs.";
 
       panel.hidden = false;
       panel.innerHTML = `
@@ -50300,7 +50300,7 @@
           throw new Error("Sign in to your dancer account before using Working Now.");
         }
         if (action === "nfc-ready") {
-          setCheckInStatus("Ready to tap. Hold this unlocked phone near the official dressing-room sticker. No specific MyDancr page needs to be open. Open the link that appears if prompted, then sign in to your dancer account in that browser if asked. The physical tap starts one six-hour Working Now session followed by a six-hour cooldown.", "success");
+          setCheckInStatus("Log in to your MyDancr dancer account first. No particular page needs to be open. Unlock your phone and tap the club's dressing-room sticker. Open the link if prompted, and log in there if asked. Working Now lasts 6 hours, followed by a 6-hour cooldown at all clubs.", "success");
           if (!options.silent) showToast("Ready for dressing-room tap");
           return;
         }
@@ -58061,7 +58061,7 @@
         </section>
       `;
       const approvalBody = `
-        <div class="info-tile"><strong>Approve venue access</strong><div class="meta">At the club, unlock your phone and tap its official MyDancr dressing-room sticker. No specific MyDancr page needs to be open. Open the link that appears if prompted, then sign in to your dancer account in the browser that opens if asked.</div></div>
+        <div class="info-tile"><strong>Approve venue access</strong><div class="meta">Log in to your MyDancr dancer account first. No particular page needs to be open. Unlock your phone and tap the club's MyDancr dressing-room sticker. Open the link if prompted, and log in there if asked.</div></div>
         <div class="rule-note">This Step 3 tap approves the submitted profile and authorizes the venue. Payout setup is optional and never blocks this tap, check-in, or Working Now.</div>
       `;
       document.getElementById("setupChecklist").innerHTML = [

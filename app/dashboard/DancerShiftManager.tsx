@@ -227,7 +227,7 @@ export default function DancerShiftManager() {
           <>
             <span>
               <strong>Not working now</strong>
-              <small>Sign in to your dancer account, then tap the club&apos;s dressing-room sticker to show Working Now.</small>
+              <small>Log in to your MyDancr dancer account, then tap the club&apos;s dressing-room sticker to show Working Now.</small>
             </span>
             {cooldownShift ? (
               <small className="shift-checkin-status" role="status">
@@ -245,9 +245,10 @@ export default function DancerShiftManager() {
 
       <details className="dancer-schedule-help">
         <summary>How check-ins work</summary>
-        <p>Unlock your phone and hold it near the dressing-room sticker. No specific MyDancr page needs to be open. Open the link that appears if prompted, then sign in to your dancer account in that browser if asked.</p>
-        <p>Each check-in starts a six-hour Working Now session, followed by a six-hour cooldown at all clubs. Retaps cannot extend this six-hour session.</p>
-        <p>No shift time or phone location is collected.</p>
+        <p>Log in to your MyDancr dancer account first. No particular page needs to be open.</p>
+        <p>Unlock your phone and tap the club&apos;s dressing-room sticker. Open the link if prompted, and log in there if asked.</p>
+        <p>Working Now lasts 6 hours, followed by a 6-hour cooldown at all clubs. Tapping again does not extend it.</p>
+        <p>No phone location is collected.</p>
       </details>
 
       <form onSubmit={postDate}>

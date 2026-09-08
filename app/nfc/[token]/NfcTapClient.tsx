@@ -248,8 +248,9 @@ export function NfcTapClient({ token }: { token: string }) {
         {state?.tag.type === "dressing_room" && !complete ? (
           <div className="nfc-action-copy">
             <strong>Dressing-room Working Now</strong>
-            <p>For each visit, unlock your phone and tap the dressing-room sticker. No specific MyDancr page needs to be open. Open the link that appears if prompted, and use the browser that opens for your dancer sign-in.</p>
-            <p>Sign in and confirm this physical venue tap. An eligible profile appears in Working Now for six hours, followed by a six-hour cooldown. Retaps do not extend the session, and no phone location is collected.</p>
+            <p>Log in to your MyDancr dancer account first. No particular page needs to be open.</p>
+            <p>Unlock your phone and tap the club&apos;s dressing-room sticker. Open the link if prompted, and log in there if asked.</p>
+            <p>Once your profile is activated, each check-in shows you Working Now for 6 hours, followed by a 6-hour cooldown at all clubs. Tapping again does not extend it. No phone location is collected.</p>
           </div>
         ) : null}
 

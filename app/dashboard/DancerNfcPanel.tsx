@@ -141,8 +141,9 @@ export default function DancerNfcPanel({
     <details className="dancer-nfc-details">
       <summary>How check-ins work</summary>
       <div>
-        <p>Unlock your phone and tap the dressing-room sticker. No specific MyDancr page needs to be open. Open the link that appears if prompted, then sign in to your dancer account in that browser if asked.</p>
-        <p>Each check-in starts one six-hour Working Now session, followed by a six-hour cooldown before you can check in at any club again. Tapping again does not extend the session.</p>
+        <p>Log in to your MyDancr dancer account first. No particular page needs to be open.</p>
+        <p>Unlock your phone and tap the club&apos;s dressing-room sticker. Open the link if prompted, and log in there if asked.</p>
+        <p>Working Now lasts 6 hours, followed by a 6-hour cooldown at all clubs. Tapping again does not extend it.</p>
         <p>Upcoming dates do not check you in. Only an active MyDancr dressing-room sticker can connect you to a club.</p>
         {!isPublic && !authorized ? <p>Finish profile setup and get your avatar and at least one profile photo approved before activation.</p> : null}
       </div>
@@ -162,7 +163,7 @@ export default function DancerNfcPanel({
           <span className="dancer-nfc-compact-action">Manage</span>
         </summary>
         <div className="dancer-nfc-compact-body">
-          <p>Sign in to your dancer account, then tap a club&apos;s dressing-room sticker to connect and show Working Now there. You can then post upcoming dates at that club.</p>
+          <p>Log in to your MyDancr dancer account, then tap a club&apos;s dressing-room sticker to connect and show Working Now there. You can then post upcoming dates at that club.</p>
           {affiliationRoster}
           {checkInDetails}
           <button className="dancer-nfc-refresh" type="button" disabled={Boolean(pendingId)} onClick={refresh}>
@@ -186,11 +187,11 @@ export default function DancerNfcPanel({
           </div>
         </div>
         {authorized ? (
-          <p className="dancer-nfc-intro">You&apos;re activated. Make sure you&apos;re logged into your MyDancr account before each dressing-room tap.</p>
+          <p className="dancer-nfc-intro">You&apos;re activated. Log in to your MyDancr dancer account before each tap. No particular page needs to be open.</p>
         ) : pendingEnrollment ? (
           <p className="dancer-nfc-intro">Your tap at {enrollment?.venue?.name || "the club"} is saved. Finish your profile and required photo approvals to activate.</p>
         ) : (
-          <p className="dancer-nfc-intro">Finish your profile and log into your MyDancr account. Then unlock your phone and tap the club&apos;s MyDancr dressing-room sticker.</p>
+          <p className="dancer-nfc-intro">Finish your profile and log in to your MyDancr dancer account. Then unlock your phone and tap the club&apos;s MyDancr dressing-room sticker. No particular page needs to be open.</p>
         )}
 
         <ol className="dancer-nfc-guide">
