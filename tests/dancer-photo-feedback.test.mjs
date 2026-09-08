@@ -15,7 +15,7 @@ const approved = (id = "saved", sort = 1, primary = false) => ({ id, imageUrl: `
 const pending = (id = "review", sort = 1) => ({ id, previewUrl: `/${id}.jpg`, sort_order: sort });
 
 // Exercise the real upload handlers, state updates, and profile mapping without uploading user data.
-function photoHarness({ profile = {}, pin = async (_kind, id, pinned) => ({ id, isPinned: pinned }), post = async () => ({ decision: "review", moderationRecordId: "review", photo: { id: "review", sortOrder: 1 } }), read = async () => ({ profile: { dancer_photos: [approved()] } }) } = {}) {
+function photoHarness({ uploadOnly = false, profile = {}, pin = async (_kind, id, pinned) => ({ id, isPinned: pinned }), post = async () => ({ decision: "review", moderationRecordId: "review", photo: { id: "review", sortOrder: 1 } }), read = async () => ({ profile: { dancer_photos: [approved()] } }) } = {}) {
   const slots = [], posts = [], reads = [], profiles = [], pins = [];
   let cursor = 0, effects = [], dirty = true, tree;
   const exports = {};
@@ -45,7 +45,7 @@ function photoHarness({ profile = {}, pin = async (_kind, id, pinned) => ({ id, 
   function render() {
     for (let count = 0; dirty && count < 20; count++) {
       dirty = false; cursor = 0; effects = [];
-      tree = exports.DancerPhotoPanel({ profile, deletedPhotoIds: empty, deletedPhotoStoragePaths: empty, onProfileChange: next => profiles.push(next) });
+      tree = exports.DancerPhotoPanel({ uploadOnly, profile, deletedPhotoIds: empty, deletedPhotoStoragePaths: empty, onProfileChange: next => profiles.push(next) });
       effects.forEach(effect => effect());
     }
     assert.equal(dirty, false, "photo updates must settle without looping");
@@ -80,6 +80,23 @@ test("fresh approval replaces a locally checking photo even when the review and 
   assert.deepEqual(ui.notes, []);
   assert.equal(ui.posts.length, 1);
   assert.equal(ui.buttons.some(button => button.props.children === "Retry"), false);
+});
+
+test("the Add photo box uploads and refreshes the editor without repeating saved photos", async () => {
+  const ui = photoHarness({ uploadOnly: true, profile: { dancer_photos: [approved("existing")] } });
+  assert.equal(ui.cards.length, 0);
+  assert.equal(ui.pinButtons.length, 0);
+  ui.select(); await ui.settle();
+  assert.equal(ui.posts.length, 1);
+  assert.equal(ui.profiles.length, 1);
+  assert.equal(ui.cards.length, 0, "accepted uploads belong in the profile editor gallery");
+});
+
+test("the Add photo box retains failed upload feedback and retry", async () => {
+  const ui = photoHarness({ uploadOnly: true, post: async () => { throw new Error("Connection lost."); } });
+  ui.select(); await ui.settle();
+  assert.deepEqual(ui.statuses, ["Upload failed"]);
+  assert.ok(ui.buttons.some(button => button.props.children === "Retry"));
 });
 
 test("a real pending replacement stays checking until the server approves it", async () => {

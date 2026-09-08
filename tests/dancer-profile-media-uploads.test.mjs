@@ -14,6 +14,10 @@ const code = ts.transpileModule(source, {
 const requireTest = createRequire(import.meta.url);
 const thumbnail = {};
 const pinButton = {};
+const viewer = {};
+vm.runInNewContext(ts.transpileModule(readFileSync(new URL("../app/dashboard/DancerMediaViewer.tsx", import.meta.url), "utf8"), {
+  compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX, target: ts.ScriptTarget.ES2022 },
+}).outputText, { exports: viewer, require: requireTest });
 vm.runInNewContext(ts.transpileModule(readFileSync(new URL("../app/dashboard/DancerMediaPinButton.tsx", import.meta.url), "utf8"), {
   compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX, target: ts.ScriptTarget.ES2022 },
 }).outputText, { exports: pinButton, require: requireTest });
@@ -23,7 +27,7 @@ vm.runInNewContext(ts.transpileModule(readFileSync(new URL("../app/dashboard/Dan
 const staticHooks = { ...React, useState: initial => [typeof initial === "function" ? initial() : initial, () => {}], useRef: initial => ({ current: initial }), useEffect() {} };
 function loadUploads({ hooks = staticHooks, api = {}, confirm = () => false, announce = () => {} } = {}) {
   const exports = {};
-  vm.runInNewContext(code, { exports, AbortController, Error, window: { confirm }, require: name => name === "react" ? hooks : name === "./dashboard-session" ? api : name === "./DancerVideoThumbnail" ? thumbnail : name === "./DancerMediaPinButton" ? pinButton : name === "./dancer-profile-media-sync" ? { announceDancerProfileVideosChanged: announce } : requireTest(name) });
+  vm.runInNewContext(code, { exports, AbortController, Error, window: { confirm }, require: name => name === "react" ? hooks : name === "./dashboard-session" ? api : name === "./DancerVideoThumbnail" ? thumbnail : name === "./DancerMediaPinButton" ? pinButton : name === "./DancerMediaViewer" ? viewer : name === "./dancer-profile-media-sync" ? { announceDancerProfileVideosChanged: announce } : requireTest(name) });
   return exports;
 }
 const exports = loadUploads();
@@ -46,13 +50,27 @@ test("an empty profile offers exactly one photo control and one video control wi
   assert.match(html, /after review and completion of your profile setup/);
 });
 
-test("both upload controls and existing thumbnails open the corresponding production manager", () => {
+test("Add buttons open upload controls while thumbnails preview only the selected media", () => {
   const opened = [];
-  const tree = Uploads({ ...defaultProps, photos: [{ id: "p", status: "approved" }], videos: [{ id: "v", status: "submitted" }], onOpen: (section) => opened.push(section) });
-  const controls = buttons(tree).filter(button => button.props.className !== "profile-upload-delete");
+  const states = [];
+  let cursor = 0;
+  const Module = loadUploads({ hooks: { ...staticHooks, useState(initial) { const i = cursor++; if (!(i in states)) states[i] = typeof initial === "function" ? initial() : initial; return [states[i], value => { states[i] = value; }]; } } }).default;
+  const props = { ...defaultProps, photos: [{ id: "p", imageUrl: "/p.jpg", status: "approved" }], videos: [{ id: "v", videoUrl: "/v.mp4", status: "submitted" }], onOpen: (section) => opened.push(section) };
+  const draw = () => { cursor = 0; return Module(props); };
+  const controls = buttons(draw()).filter(button => button.props.className !== "profile-upload-delete");
   assert.equal(controls.length, 4);
-  for (const control of controls) control.props.onClick();
-  assert.deepEqual(opened, ["photos", "photos", "videos", "videos"]);
+  controls[0].props.onClick(); controls[2].props.onClick();
+  assert.deepEqual(opened, ["photos", "videos"]);
+  for (const [buttonIndex, media] of [[1, "photo"], [3, "video"]]) {
+    controls[buttonIndex].props.onClick();
+    const preview = React.Children.toArray(draw().props.children).find(child => child?.type === viewer.default);
+    assert.equal(preview.props.kind, media);
+    assert.equal(preview.props.label, media === "photo" ? "Photo 1" : "Video 1");
+    assert.equal(preview.props[media === "photo" ? "imageUrl" : "videoUrl"], media === "photo" ? "/p.jpg" : "/v.mp4");
+    preview.props.onClose();
+    assert.ok(!React.Children.toArray(draw().props.children).some(child => child?.type === viewer.default));
+  }
+  assert.deepEqual(opened, ["photos", "videos"], "viewing media must never reopen an upload box");
 });
 
 test("uploaded previews retain pending and rejected items without presenting them as posted", () => {
@@ -100,7 +118,7 @@ test("saved media visibility copy respects profile approval and incognito", () =
 
 test("all saved gallery photos use ordinary photo labels including legacy primary photos", () => {
   const html = render({ photos: [{ id: "main", status: "approved", isPrimary: true }, { id: "other", status: "approved" }] });
-  assert.match(html, /Manage photo 1: Approved/);
+  assert.match(html, /View photo 1: Approved/);
   assert.match(html, /<strong>Photo 1<\/strong>/);
   assert.match(html, /<strong>Photo 2<\/strong>/);
   assert.doesNotMatch(render({ photos: [{ id: "first", status: "approved" }] }), /Main photo/);
@@ -260,19 +278,22 @@ test("loading and a failed video request are distinguishable from an empty video
   assert.match(loading, /Loading…/);
   assert.equal((loading.match(/0 added/g) || []).length, 1);
   const opened = [];
+  let retries = 0;
   const props = { ...defaultProps, videoError: "Unable to load your videos.", onOpen: (section) => opened.push(section) };
   const html = render(props);
   assert.match(html, /Unavailable/);
   assert.match(html, /Unable to load your videos/);
   assert.equal((html.match(/0 added/g) || []).length, 1);
-  buttons(Uploads(props)).at(-1).props.onClick();
-  assert.deepEqual(opened, ["videos"]);
+  const Module = loadUploads({ announce: () => { retries++; } }).default;
+  buttons(Module(props)).at(-1).props.onClick();
+  assert.equal(retries, 1);
+  assert.deepEqual(opened, []);
 });
 
 test("large saved libraries remain accessible and thumbnails do not start video downloads", () => {
   const html = render({ videos: Array.from({ length: 50 }, (_, index) => ({ id: `v-${index}`, imageUrl: `/poster-${index}.jpg`, status: "approved" })) });
   assert.equal((html.match(/<li>/g) || []).length, 50);
-  assert.match(html, /Manage video 50: Approved/);
+  assert.match(html, /Play video 50: Approved/);
   assert.match(html, /loading="lazy"/);
   assert.doesNotMatch(html, /<video/);
 });

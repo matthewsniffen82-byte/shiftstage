@@ -21,7 +21,7 @@ const [
 test("secondary account panels do not claim data is empty while requests are loading", () => {
   assert.match(
     dancerTvStudio,
-    /\{isLoading \|\| currentVideoCount \? <section className="tv-video-manager">/,
+    /\{!uploadOnly && \(isLoading \|\| currentVideoCount\) \? <section className="tv-video-manager">/,
   );
   assert.doesNotMatch(dancerTvStudio, /No videos submitted yet\./);
   assert.match(

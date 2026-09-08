@@ -3428,8 +3428,8 @@ type DancerProfileBuilderRequirement = {
 const DANCER_PROFILE_EDITOR_SECTION_LABELS: Record<DancerProfileEditorSectionId, string> = {
   identity: "Stage name & city",
   avatar: "Upload avatar",
-  photos: "Photos",
-  videos: "Videos",
+  photos: "Add photos",
+  videos: "Add videos",
   socials: "Socials",
 };
 
@@ -3611,6 +3611,7 @@ function DancerProfilePreview({
       else closeRef.current?.focus();
     });
     const onKeyDown = (event: KeyboardEvent) => {
+      if (overlayRef.current?.querySelector("dialog.dancer-media-viewer[open]")) return;
       if (event.key === "Escape") {
         if (activeEditorSectionRef.current === "socials") {
           document.querySelector<HTMLButtonElement>("[data-social-modal-close]")?.click();
@@ -4742,6 +4743,7 @@ function DancerPanel({
   );
   const photoContent = (
     <DancerPhotoPanel
+      uploadOnly
       deletedPhotoIds={deletedPhotoIds}
       deletedPhotoStoragePaths={deletedPhotoStoragePaths}
       onDeletedPhotoIdsChange={setDeletedPhotoIds}
@@ -4750,7 +4752,7 @@ function DancerPanel({
       onProfileChange={onProfileChange}
     />
   );
-  const videoContent = <DancerTvStudio embedded />;
+  const videoContent = <DancerTvStudio embedded uploadOnly />;
   const profileEditorSections: DancerProfileEditorSections = {
     identity: identityContent,
     avatar: avatarContent,
@@ -6995,6 +6997,7 @@ type DancerPhotoQueueItem = {
 };
 
 function DancerPhotoPanel({
+  uploadOnly = false,
   deletedPhotoIds = [],
   deletedPhotoStoragePaths = [],
   onDeletedPhotoIdsChange,
@@ -7002,6 +7005,7 @@ function DancerPhotoPanel({
   onProfileChange,
   profile,
 }: {
+  uploadOnly?: boolean;
   deletedPhotoIds?: string[];
   deletedPhotoStoragePaths?: string[];
   onDeletedPhotoIdsChange?: (deletedPhotoIds: string[]) => void;
@@ -7450,13 +7454,13 @@ function DancerPhotoPanel({
           ))}
         </div>
       ) : null}
-      {photos.length ? (
+      {!uploadOnly && photos.length ? (
         <div className="dancer-media-manager-title">
           <strong>Your photos</strong>
           <span>{photos.length} {photos.length === 1 ? "photo" : "photos"}</span>
         </div>
       ) : null}
-      <div className="photo-review-list compact-photo-previews" aria-label="Uploaded photos">
+      {!uploadOnly ? <div className="photo-review-list compact-photo-previews" aria-label="Uploaded photos">
         {photos.map((photo) => {
           return (
             <div className={`photo-saved-preview is-${photo.status}`} key={photo.id}>
@@ -7479,7 +7483,7 @@ function DancerPhotoPanel({
             </div>
           );
         })}
-      </div>
+      </div> : null}
     </article>
   );
 }

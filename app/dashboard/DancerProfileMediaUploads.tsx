@@ -5,6 +5,7 @@ import { requestDancerPhotosJson, requestDancerProfileJson, requestDancerTvVideo
 import { announceDancerProfileVideosChanged } from "./dancer-profile-media-sync";
 import DancerVideoThumbnail from "./DancerVideoThumbnail";
 import DancerMediaPinButton from "./DancerMediaPinButton";
+import DancerMediaViewer from "./DancerMediaViewer";
 
 type UploadItem = {
   id: string;
@@ -60,6 +61,8 @@ export default function DancerProfileMediaUploads({
   const [deletedVideoIds, setDeletedVideoIds] = useState<Set<string>>(() => new Set());
   const [videoStatus, setVideoStatus] = useState("");
   const [pinningId, setPinningId] = useState("");
+  const [activePreview, setActivePreview] = useState<{ kind: "photo" | "video"; id: string; label: string } | null>(null);
+  const previewItem = activePreview && (activePreview.kind === "photo" ? photos : videos).find((item) => item.id === activePreview.id);
   const deleteRequestRef = useRef<AbortController | null>(null);
   const isDeleting = Boolean(deletingPhotoId || deletingVideoId || pinningId);
 
@@ -198,7 +201,7 @@ export default function DancerProfileMediaUploads({
                 {items.map((item, index) => (
                   <li key={item.id}>
                     <div className="profile-upload-preview">
-                      <button aria-label={`Manage ${label.toLowerCase()} ${index + 1}: ${profileUploadStatus(item.status)}`} disabled={isDeleting} onClick={() => onOpen(section)} type="button">
+                      <button aria-label={`${isPhoto ? "View" : "Play"} ${label.toLowerCase()} ${index + 1}: ${profileUploadStatus(item.status)}`} disabled={isDeleting} onClick={() => setActivePreview({ kind: isPhoto ? "photo" : "video", id: item.id, label: `${label} ${index + 1}` })} type="button">
                         <span className="profile-upload-thumbnail">
                           {isPhoto
                             ? item.imageUrl ? <img alt="" loading="lazy" src={item.imageUrl} /> : <span aria-hidden="true">▧</span>
@@ -228,7 +231,7 @@ export default function DancerProfileMediaUploads({
             ) : null}
             {isPhoto && photoStatus ? <p role="status" aria-live="polite">{photoStatus}</p> : null}
             {!isPhoto && videoStatus ? <p role="status" aria-live="polite">{videoStatus}</p> : null}
-            {!isPhoto && videoError ? <p role="status">{videoError} <button className="profile-upload-retry" onClick={() => onOpen("videos")} type="button">Open video manager to retry</button></p> : null}
+            {!isPhoto && videoError ? <p role="status">{videoError} <button className="profile-upload-retry" onClick={() => announceDancerProfileVideosChanged()} type="button">Retry</button></p> : null}
           </div>
         );
       })}
@@ -237,6 +240,7 @@ export default function DancerProfileMediaUploads({
           ? isPublic ? "Approved uploads appear on your profile." : "Uploads stay saved. Turn off incognito to show approved media on your profile."
           : "Uploaded photos and videos will appear on your profile after review and completion of your profile setup."}
       </p>
+      {activePreview && previewItem ? <DancerMediaViewer key={`${activePreview.kind}:${activePreview.id}`} kind={activePreview.kind} label={activePreview.label} imageUrl={previewItem.imageUrl} videoUrl={previewItem.videoUrl} onClose={() => setActivePreview(null)} /> : null}
       <style>{`
         .dancer-profile-media-uploads { width:min(100%,760px); min-width:0; display:grid; gap:16px; margin:12px auto 0; }
         .profile-upload-group { min-width:0; display:grid; gap:9px; }

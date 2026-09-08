@@ -77,6 +77,11 @@ test("the dashboard video manager shows compact previews while the separate TV s
   assert.match(embedded, /video-preview-list/);
   assert.match(embedded, /Delete video 1/);
   assert.doesNotMatch(embedded, /tv-managed-video|<video|Automated review|frames checked|Moderation passed|Engaged views|after setup and approval/);
+  const uploadOnly = renderToStaticMarkup(React.createElement(Studio, { embedded: true, uploadOnly: true })).replace(/<style>[\s\S]*?<\/style>/g, "");
+  assert.match(uploadOnly, /Choose profile videos from your library/);
+  assert.match(uploadOnly, /Record a new profile video/);
+  assert.match(uploadOnly, /Confirm permissions/);
+  assert.doesNotMatch(uploadOnly, /My videos|video-preview-list|tv-video-manager|Delete video|<video|Engaged views/);
   const standalone = renderToStaticMarkup(React.createElement(Studio)).replace(/<style>[\s\S]*?<\/style>/g, "");
   assert.match(standalone, /Engaged views/);
   assert.match(standalone, /<video/);

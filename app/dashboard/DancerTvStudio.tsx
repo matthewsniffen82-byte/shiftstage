@@ -58,7 +58,7 @@ type QueuedVideo = {
   error?: string;
 };
 
-export default function DancerTvStudio({ embedded = false }: { embedded?: boolean }) {
+export default function DancerTvStudio({ embedded = false, uploadOnly = false }: { embedded?: boolean; uploadOnly?: boolean }) {
   const [workspace, setWorkspace] = useState<Workspace | null>(null);
   const [queuedVideos, setQueuedVideos] = useState<QueuedVideo[]>([]);
   const [uploadingQueueItemId, setUploadingQueueItemId] = useState("");
@@ -500,7 +500,7 @@ export default function DancerTvStudio({ embedded = false }: { embedded?: boolea
       {workspace && atVideoLimit ? (
         <div className="tv-studio-limit" role="status">
           <strong>Your profile video library is full</strong>
-          <p>Remove a video below before uploading another.</p>
+          <p>{uploadOnly ? "Close this box and delete a video from your profile editor before adding another." : "Remove a video below before uploading another."}</p>
         </div>
       ) : null}
 
@@ -619,7 +619,7 @@ export default function DancerTvStudio({ embedded = false }: { embedded?: boolea
 
       {status ? <div className="tv-studio-status" role="status" aria-live="polite">{status}</div> : null}
 
-      {isLoading || currentVideoCount ? <section className="tv-video-manager">
+      {!uploadOnly && (isLoading || currentVideoCount) ? <section className="tv-video-manager">
         <div className="tv-manager-title">
           <h3>My videos</h3>
           <span>{isLoading ? "…" : `${currentVideoCount} ${currentVideoCount === 1 ? "video" : "videos"}`}</span>
