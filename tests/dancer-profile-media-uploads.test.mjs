@@ -6,6 +6,7 @@ import vm from "node:vm";
 import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import ts from "typescript";
+import { mediaReview } from "./helpers/media-review-label.mjs";
 
 const source = readFileSync(new URL("../app/dashboard/DancerProfileMediaUploads.tsx", import.meta.url), "utf8");
 const code = ts.transpileModule(source, {
@@ -27,7 +28,7 @@ vm.runInNewContext(ts.transpileModule(readFileSync(new URL("../app/dashboard/Dan
 const staticHooks = { ...React, useState: initial => [typeof initial === "function" ? initial() : initial, () => {}], useRef: initial => ({ current: initial }), useEffect() {} };
 function loadUploads({ hooks = staticHooks, api = {}, confirm = () => false, announce = () => {} } = {}) {
   const exports = {};
-  vm.runInNewContext(code, { exports, AbortController, Error, window: { confirm }, require: name => name === "react" ? hooks : name === "./dashboard-session" ? api : name === "./DancerVideoThumbnail" ? thumbnail : name === "./DancerMediaPinButton" ? pinButton : name === "./DancerMediaViewer" ? viewer : name === "./dancer-profile-media-sync" ? { announceDancerProfileVideosChanged: announce } : requireTest(name) });
+  vm.runInNewContext(code, { exports, AbortController, Error, window: { confirm }, require: name => name === "@/src/lib/dancr/media-review-label" ? mediaReview : name === "react" ? hooks : name === "./dashboard-session" ? api : name === "./DancerVideoThumbnail" ? thumbnail : name === "./DancerMediaPinButton" ? pinButton : name === "./DancerMediaViewer" ? viewer : name === "./dancer-profile-media-sync" ? { announceDancerProfileVideosChanged: announce } : requireTest(name) });
   return exports;
 }
 const exports = loadUploads();
@@ -89,9 +90,22 @@ test("uploaded previews retain pending and rejected items without presenting the
 
 test("upload progress, failure, and unknown statuses never imply publication", () => {
   assert.equal(exports.profileUploadStatus("uploading"), "Upload incomplete");
-  assert.equal(exports.profileUploadStatus("failed"), "Upload failed · Try again");
+  assert.equal(exports.profileUploadStatus("failed"), "Upload failed");
   assert.equal(exports.profileUploadStatus("unknown"), "Check upload status");
-  assert.equal(exports.profileUploadStatus("submitted"), "Checking");
+  assert.equal(exports.profileUploadStatus("submitted"), "Awaiting review");
+});
+
+test("an approved dancer sees the actual review state of each photo", () => {
+  const html = render({ isApproved: true, isPublic: true, photos: [
+    { id: "approved", status: "approved", moderationStatus: "pending_review" },
+    { id: "waiting", status: "pending", moderationStatus: "pending_review" },
+    { id: "active", status: "pending", moderationStatus: "moderating" },
+    { id: "delayed", status: "pending", moderationStatus: "moderation_error" },
+  ] });
+  assert.match(html, /View photo 1: Approved/);
+  assert.match(html, /View photo 2: Awaiting review/);
+  assert.match(html, /View photo 3: Checking/);
+  assert.match(html, /View photo 4: Review delayed/);
 });
 
 test("every photo and video has three-dot options with an approval-aware pin action inside", () => {

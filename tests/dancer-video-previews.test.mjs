@@ -6,6 +6,7 @@ import vm from "node:vm";
 import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import ts from "typescript";
+import { mediaReview } from "./helpers/media-review-label.mjs";
 
 const requireTest = createRequire(import.meta.url);
 function compile(file, resolver) {
@@ -17,7 +18,7 @@ function compile(file, resolver) {
 }
 const thumbnail = compile("DancerVideoThumbnail.tsx", name => name === "./dancer-profile-media-sync" ? {} : requireTest(name));
 const pinButton = compile("DancerMediaPinButton.tsx", requireTest);
-const previews = compile("DancerVideoPreviews.tsx", name => name === "./DancerVideoThumbnail" ? thumbnail : name === "./DancerMediaPinButton" ? pinButton : requireTest(name));
+const previews = compile("DancerVideoPreviews.tsx", name => name === "@/src/lib/dancr/media-review-label" ? mediaReview : name === "./DancerVideoThumbnail" ? thumbnail : name === "./DancerMediaPinButton" ? pinButton : requireTest(name));
 const videos = ["approved", "rejected", "moderating"].map((status, index) => ({
   id: `video-${index}`, videoUrl: `/video-${index}.mp4`, posterUrl: `/poster-${index}.jpg`, status,
   moderationDecision: "approved", moderationFrameCount: 9, reviewNotes: "Automatically approved by safety review.", metrics: { engaged_view: 10 },
@@ -43,10 +44,11 @@ test("every video shows three-dot options with Pin or Unpin inside", () => {
 test("video review labels are concise and pending uploads never imply approval or rejection", () => {
   assert.equal(previews.videoPreviewStatus("approved"), "Approved");
   assert.equal(previews.videoPreviewStatus("rejected"), "Not approved");
-  for (const status of ["moderating", "submitted", "review", "pending"]) assert.equal(previews.videoPreviewStatus(status), "Checking");
+  for (const status of ["moderating", "pending"]) assert.equal(previews.videoPreviewStatus(status), "Checking");
+  for (const status of ["submitted", "review"]) assert.equal(previews.videoPreviewStatus(status), "Awaiting review");
   assert.equal(previews.videoPreviewStatus("uploading"), "Upload incomplete");
   assert.equal(previews.videoPreviewStatus("failed"), "Upload failed");
-  assert.equal(previews.videoPreviewStatus("unknown"), "Unavailable");
+  assert.equal(previews.videoPreviewStatus("unknown"), "Check upload status");
 });
 
 test("saved video previews use lazy posters without downloading full videos or showing review explanations", () => {
@@ -65,6 +67,7 @@ test("saved video previews use lazy posters without downloading full videos or s
 test("the dashboard video manager shows compact previews while the separate TV studio retains its metrics", () => {
   const hooks = { ...React, useCallback: fn => fn, useEffect() {}, useRef: initial => ({ current: initial }), useState: initial => [initial === null ? { videos, profileEligible: false, maxVideos: 50 } : initial === true ? false : initial, () => {}] };
   const Studio = compile("DancerTvStudio.tsx", name => {
+    if (name === "@/src/lib/dancr/media-review-label") return mediaReview;
     if (name === "react") return hooks;
     if (name === "./DancerVideoPreviews") return { default: previews.default };
     if (name === "./DancerMediaPinButton") return pinButton;

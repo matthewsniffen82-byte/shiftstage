@@ -6,6 +6,7 @@ import { announceDancerProfileVideosChanged } from "./dancer-profile-media-sync"
 import DancerVideoThumbnail from "./DancerVideoThumbnail";
 import DancerMediaPinButton from "./DancerMediaPinButton";
 import DancerMediaViewer from "./DancerMediaViewer";
+import { mediaReviewLabel } from "@/src/lib/dancr/media-review-label";
 
 type UploadItem = {
   id: string;
@@ -13,20 +14,11 @@ type UploadItem = {
   imageUrl?: string | null;
   videoUrl?: string | null;
   status: string;
+  moderationStatus?: string;
 };
 
-export function profileUploadStatus(status: string) {
-  switch (status) {
-    case "approved": return "Approved";
-    case "uploading": return "Upload incomplete";
-    case "pending":
-    case "moderating":
-    case "submitted":
-    case "review": return "Checking";
-    case "rejected": return "Not approved";
-    case "failed": return "Upload failed · Try again";
-    default: return "Check upload status";
-  }
+export function profileUploadStatus(status: string, moderationStatus?: string) {
+  return mediaReviewLabel(status, moderationStatus);
 }
 
 export default function DancerProfileMediaUploads({
@@ -201,7 +193,7 @@ export default function DancerProfileMediaUploads({
                 {items.map((item, index) => (
                   <li key={item.id}>
                     <div className="profile-upload-preview">
-                      <button aria-label={`${isPhoto ? "View" : "Play"} ${label.toLowerCase()} ${index + 1}: ${profileUploadStatus(item.status)}`} disabled={isDeleting} onClick={() => setActivePreview({ kind: isPhoto ? "photo" : "video", id: item.id, label: `${label} ${index + 1}` })} type="button">
+                      <button aria-label={`${isPhoto ? "View" : "Play"} ${label.toLowerCase()} ${index + 1}: ${profileUploadStatus(item.status, item.moderationStatus)}`} disabled={isDeleting} onClick={() => setActivePreview({ kind: isPhoto ? "photo" : "video", id: item.id, label: `${label} ${index + 1}` })} type="button">
                         <span className="profile-upload-thumbnail">
                           {isPhoto
                             ? item.imageUrl ? <img alt="" loading="lazy" src={item.imageUrl} /> : <span aria-hidden="true">▧</span>
@@ -224,7 +216,7 @@ export default function DancerProfileMediaUploads({
                       </button>
                     </div>
                     <strong>{label} {index + 1}</strong>
-                    <small className={item.status === "approved" ? "is-ready" : ""}>{profileUploadStatus(item.status)}</small>
+                    <small className={item.status === "approved" ? "is-ready" : ""}>{profileUploadStatus(item.status, item.moderationStatus)}</small>
                   </li>
                 ))}
               </ul>

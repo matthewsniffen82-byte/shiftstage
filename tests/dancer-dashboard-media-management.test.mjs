@@ -12,9 +12,10 @@ function elements(node) {
   if (Array.isArray(node)) return node.flatMap(elements);
   return [node, ...elements(node.props?.children)];
 }
-function fixture({ open = false, editor = true, approved = true, pendingRequest } = {}) {
+function fixture({ open = false, editor = true, approved = true, pendingRequest, videoResults } = {}) {
   const states = [], refs = [], effects = [], requests = [], changes = [], listeners = new Map();
   let stateIndex = 0, refIndex = 0;
+  const timers = new Map();
   const videos = [{ id: "v1", status: "approved", videoUrl: "/v1.mp4", posterUrl: "/v1.jpg", isPinned: false }];
   const profile = { id: "dancer-a", stageName: "Luna", city: "Las Vegas", dancer_photos: [{ id: "p1", status: "approved", imageUrl: "/p1.jpg" }, { id: "p2", status: "pending" }] };
   const context = vm.createContext({
@@ -36,8 +37,8 @@ function fixture({ open = false, editor = true, approved = true, pendingRequest 
     DANCER_PROFILE_VIDEOS_CHANGED_EVENT: "videos-changed",
     DANCER_PHOTOS_KEEP_OPEN_EVENT: "photos-open",
     readSession: () => ({ accessToken: "owner" }),
-    requestDancerTvVideosJson: options => { requests.push(options); return pendingRequest ? pendingRequest : Promise.resolve({ videos }); },
-    window: { scrollY: 120, clearTimeout() {}, setTimeout() {}, requestAnimationFrame: () => 1, addEventListener: (event, fn) => listeners.set(event, fn), removeEventListener: event => listeners.delete(event) },
+    requestDancerTvVideosJson: options => { requests.push(options); return pendingRequest ? pendingRequest : Promise.resolve({ videos: videoResults?.shift() || videos }); },
+    window: { scrollY: 120, clearTimeout(id) { timers.delete(id); }, setTimeout(fn, delay) { timers.set(1, { fn, delay }); return 1; }, requestAnimationFrame: () => 1, addEventListener: (event, fn) => listeners.set(event, fn), removeEventListener: event => listeners.delete(event) },
     document: { querySelector: () => null },
     AvatarUploadBusyContext: { Provider: "AvatarUploadBusyContext" },
     SOCIAL_PLATFORMS: [],
@@ -46,7 +47,7 @@ function fixture({ open = false, editor = true, approved = true, pendingRequest 
   vm.runInContext(code, context);
   const props = { profile, buttonClassName: "edit-profile", buttonLabel: "Edit profile", isApproved: approved, isPublic: true, editorSections: editor ? { photos: "photo-manager", videos: "video-manager" } : undefined, onProfileChange: next => changes.push(next) };
   const render = () => { stateIndex = 0; refIndex = 0; effects.length = 0; return context.DancerProfilePreview(props); };
-  return { render, states, effects, requests, changes, listeners, profile };
+  return { render, states, effects, requests, changes, listeners, profile, timers };
 }
 
 test("the dashboard shows only the editor launch until Edit profile is clicked", () => {
@@ -130,4 +131,25 @@ test("profile editor videos load on demand and clean up stale work when closed",
   release({ videos: [{ id: "late", status: "approved", videoUrl: "/late.mp4" }] });
   await new Promise(resolve => setImmediate(resolve));
   assert.equal(ui.states[9].length, 0);
+});
+
+test("a submitted video refreshes to its approved preview without reopening the editor", async () => {
+  for (const [status, delay] of [["submitted", 8000], ["moderating", 1800]]) {
+    const ui = fixture({ open: true, videoResults: [
+      [{ id: "video", status, videoUrl: "/video.mp4" }],
+      [{ id: "video", status: "approved", videoUrl: "/video.mp4", posterUrl: "/poster.jpg" }],
+    ] });
+    ui.render();
+    const cleanup = ui.effects.find(fn => fn.toString().includes("requestDancerTvVideosJson"))();
+    await new Promise(resolve => setImmediate(resolve));
+    assert.equal(ui.states[9][0].status, status);
+    assert.equal(ui.timers.get(1).delay, delay);
+    ui.timers.get(1).fn();
+    await new Promise(resolve => setImmediate(resolve));
+    assert.equal(ui.states[9][0].status, "approved");
+    assert.equal(ui.states[9][0].posterUrl, "/poster.jpg");
+    assert.equal(ui.timers.size, 0, "settled approvals stop polling");
+    assert.equal(ui.states[0], true);
+    cleanup();
+  }
 });

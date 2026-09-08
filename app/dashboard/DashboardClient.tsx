@@ -19,6 +19,7 @@ import { CLUB_DEAL_OFFER_PRESETS } from "@/src/lib/dancr/club-deal-presets";
 import DancerNfcPanel from "./DancerNfcPanel";
 import DancerTvStudio from "./DancerTvStudio";
 import DancerProfileMediaUploads from "./DancerProfileMediaUploads";
+import { mediaReviewLabel } from "@/src/lib/dancr/media-review-label";
 import DancerMediaPinButton from "./DancerMediaPinButton";
 import { requestDancerMediaPin } from "./dashboard-session";
 import { AVATAR_REJECTED_MESSAGE, avatarUploadPresentation, type AvatarUploadFeedback } from "./avatar-upload-state";
@@ -3748,9 +3749,10 @@ function DancerProfilePreview({
           const status = String(video?.status || "").toLowerCase();
           return status === "uploading" || status === "moderating";
         });
+        const hasReviewVideo = savedVideos.some((video: Record<string, unknown>) => video.status === "submitted");
         window.clearTimeout(refreshTimer);
-        if (hasProcessingVideo) {
-          refreshTimer = window.setTimeout(() => void loadVideos(), 1_800);
+        if (hasProcessingVideo || hasReviewVideo) {
+          refreshTimer = window.setTimeout(() => void loadVideos(), hasProcessingVideo ? 1_800 : 8_000);
         }
       } catch (error) {
         if (cancelled || controller.signal.aborted || requestId !== requestSequence) return;
@@ -7012,6 +7014,7 @@ type DancerPhotoItem = {
   imageUrl: string;
   label: string;
   status: "approved" | "pending" | "rejected";
+  moderationStatus?: string;
   note: string;
   storagePath?: string;
   isPrimary?: boolean;
@@ -7514,7 +7517,7 @@ function DancerPhotoPanel({
                 </button>
               </div>
               <strong>{photo.label}</strong>
-              <small>{photoStatusLabel(photo.status)}</small>
+              <small>{photoStatusLabel(photo.status, photo.moderationStatus)}</small>
             </div>
           );
         })}
@@ -7557,6 +7560,7 @@ function dancerPhotoItemsFromProfile(
       imageUrl: String(review.previewUrl || review.preview_url || ""),
       label: "Photo",
       status: "pending",
+      moderationStatus: String(review.status || ""),
       note: photoStatusNote("pending"),
       storagePath: String(review.temporary_storage_path || review.storagePath || ""),
       isPrimary,
@@ -7635,10 +7639,8 @@ function normalizePhotoStatus(value: unknown): DancerPhotoItem["status"] {
   return "pending";
 }
 
-function photoStatusLabel(status: DancerPhotoItem["status"]) {
-  if (status === "approved") return "Approved";
-  if (status === "rejected") return "Not approved";
-  return "Checking";
+function photoStatusLabel(status: DancerPhotoItem["status"], moderationStatus?: string) {
+  return mediaReviewLabel(status, moderationStatus);
 }
 
 function photoStatusNote(status: DancerPhotoItem["status"]) {

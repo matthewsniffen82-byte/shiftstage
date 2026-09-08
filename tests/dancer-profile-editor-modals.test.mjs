@@ -126,7 +126,7 @@ test("approved videos refresh into the builder and video cards render a visible 
   assert.match(dancerStudio, /async function removeVideo[\s\S]*?beginVideoAction\(\)[\s\S]*?method: "DELETE"[\s\S]*?isCurrentVideoAction\(requestId, controller\)[\s\S]*?setWorkspace/);
   assert.match(dashboard, /addEventListener\(DANCER_PROFILE_VIDEOS_CHANGED_EVENT, refreshAfterVideoChange\)/);
   assert.match(dashboard, /status === "uploading" \|\| status === "moderating"/);
-  assert.match(dashboard, /window\.setTimeout\(\(\) => void loadVideos\(\), 1_800\)/);
+  assert.match(dashboard, /window\.setTimeout\(\(\) => void loadVideos\(\), hasProcessingVideo \? 1_800 : 8_000\)/);
   assert.match(dashboard, /let requestController: AbortController \| null = null;[\s\S]*?requestController\?\.abort\(\);[\s\S]*?signal: controller\.signal/);
   assert.match(dashboard, /controller\.signal\.aborted \|\| requestId !== requestSequence/);
   assert.match(dashboard, /requestController\?\.abort\(\);[\s\S]*?requestController = null;[\s\S]*?removeEventListener\(DANCER_PROFILE_VIDEOS_CHANGED_EVENT, refreshAfterVideoChange\)/);

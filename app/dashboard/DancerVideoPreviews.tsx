@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import DancerVideoThumbnail from "./DancerVideoThumbnail";
 import DancerMediaPinButton from "./DancerMediaPinButton";
+import { mediaReviewLabel } from "@/src/lib/dancr/media-review-label";
 
 type PreviewVideo = {
   id: string;
@@ -13,12 +14,7 @@ type PreviewVideo = {
 };
 
 export function videoPreviewStatus(status: string) {
-  if (status === "approved") return "Approved";
-  if (status === "rejected") return "Not approved";
-  if (["pending", "moderating", "submitted", "review"].includes(status)) return "Checking";
-  if (status === "uploading") return "Upload incomplete";
-  if (status === "failed") return "Upload failed";
-  return "Unavailable";
+  return mediaReviewLabel(status);
 }
 
 export default function DancerVideoPreviews({ videos, removingId, disabled, onRemove, pinningId, onPin }: {

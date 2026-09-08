@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { homeDiscoveryHref } from "@/src/lib/dancr/navigation";
 import { MAX_DANCER_PROFILE_VIDEOS } from "@/src/lib/dancr/media-limits";
+import { mediaReviewLabel } from "@/src/lib/dancr/media-review-label";
 import { createBrowserSupabaseClient } from "@/src/lib/supabase/client";
 import DancerVideoPreviews from "./DancerVideoPreviews";
 import DancerMediaPinButton from "./DancerMediaPinButton";
@@ -87,6 +88,7 @@ export default function DancerTvStudio({ embedded = false, uploadOnly = false }:
   const hasProcessingVideos = workspace?.videos.some((video) => (
     video.status === "uploading" || video.status === "moderating"
   )) || false;
+  const hasReviewVideos = workspace?.videos.some((video) => video.status === "submitted") || false;
 
   const loadWorkspace = useCallback(async ({ silent = false }: { silent?: boolean } = {}) => {
     if (!mountedRef.current || actionInFlightRef.current) return false;
@@ -145,7 +147,7 @@ export default function DancerTvStudio({ embedded = false, uploadOnly = false }:
   }, [loadWorkspace]);
 
   useEffect(() => {
-    if (!hasProcessingVideos) return;
+    if (!hasProcessingVideos && !hasReviewVideos) return;
     let cancelled = false;
     let refreshInFlight = false;
     const refresh = () => {
@@ -159,14 +161,14 @@ export default function DancerTvStudio({ embedded = false, uploadOnly = false }:
           refreshInFlight = false;
         });
     };
-    const interval = window.setInterval(refresh, 1_800);
+    const interval = window.setInterval(refresh, hasProcessingVideos ? 1_800 : 8_000);
     document.addEventListener("visibilitychange", refresh);
     return () => {
       cancelled = true;
       window.clearInterval(interval);
       document.removeEventListener("visibilitychange", refresh);
     };
-  }, [hasProcessingVideos, loadWorkspace]);
+  }, [hasProcessingVideos, hasReviewVideos, loadWorkspace]);
 
   function beginVideoAction() {
     if (!mountedRef.current || actionInFlightRef.current) return null;
@@ -712,15 +714,7 @@ async function readVideoMetadata(file: File) {
 }
 
 function statusLabel(status: string) {
-  return ({
-    uploading: "Upload incomplete",
-    moderating: "Safety check",
-    submitted: "Under review",
-    approved: "Moderation passed",
-    rejected: "Not approved",
-    hidden: "Removed",
-    expired: "Expired",
-  } as Record<string, string>)[status] || status;
+  return mediaReviewLabel(status);
 }
 
 function DancerTvStudioStyles() {

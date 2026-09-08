@@ -240,7 +240,7 @@ async function loadPendingPhotoReviews(userId: string, occupiedPhotos: any[] = [
   const admin = createAdminSupabaseClient() as any;
   const { data, error } = await admin
     .from("image_moderation_records")
-    .select("id, decision, status, upload_context, temporary_storage_path, created_at")
+    .select("id, image_id, final_storage_path, decision, status, upload_context, temporary_storage_path, created_at")
     .eq("user_id", userId)
     .eq("decision", "review")
     .neq("upload_context", PROFILE_AVATAR_CONTEXT)
@@ -252,6 +252,12 @@ async function loadPendingPhotoReviews(userId: string, occupiedPhotos: any[] = [
   const occupiedSlots = new Set(occupiedPhotos.map((photo: any) => profilePhotoSlotKey(photo)));
   const pendingSlots = new Set<string>();
   const slottedReviews = (data || []).flatMap((review: any) => {
+    // A linked, saved approval wins over a stale review of that exact upload.
+    // Sharing a position alone is insufficient: a new replacement still needs review.
+    if (occupiedPhotos.some((photo: any) => photo.review_status === "approved" && (
+      (review.image_id && review.image_id === photo.id)
+      || (review.final_storage_path && review.final_storage_path === photo.storage_path)
+    ))) return [];
     let slot = profilePhotoSlotFromUploadContext(review.upload_context);
     if (!slot.isPrimary && slot.sortOrder === null) {
       let fallbackSortOrder = 0;

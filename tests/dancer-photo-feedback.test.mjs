@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import { runInNewContext } from "node:vm";
 import test from "node:test";
 import ts from "typescript";
+import { mediaReview } from "./helpers/media-review-label.mjs";
 
 const source = readFileSync(new URL("../app/dashboard/DashboardClient.tsx", import.meta.url), "utf8");
 const photoSource = source.slice(source.indexOf("type DancerPhotoItem ="), source.indexOf("\nfunction InfoPanel("));
@@ -20,7 +21,7 @@ function photoHarness({ uploadOnly = false, profile = {}, pin = async (_kind, id
   let cursor = 0, effects = [], dirty = true, tree;
   const exports = {};
   runInNewContext(code, {
-    exports, MAX_DANCER_PROFILE_PHOTOS: 30, DancerMediaPinButton: "MediaPinButton",
+    exports, ...mediaReview, MAX_DANCER_PROFILE_PHOTOS: 30, DancerMediaPinButton: "MediaPinButton",
     requestDancerMediaPin: (...args) => { pins.push(args); return pin(...args); },
     require: () => ({ jsx: (type, props) => ({ type, props }), jsxs: (type, props) => ({ type, props }) }),
     useState(initial) {
@@ -106,6 +107,19 @@ test("a real pending replacement stays checking until the server approves it", a
   assert.deepEqual(ui.notes, []);
   ui.updateProfile({ dancer_photos: [approved("replacement")] });
   assert.deepEqual(ui.statuses, ["Approved"]);
+});
+
+test("completed checks awaiting review are distinct from active checks and become approved after refresh", () => {
+  const ui = photoHarness({ profile: {
+    status: "approved",
+    dancer_photos: [approved("first", 1)],
+    pending_photo_reviews: [{ ...pending("waiting", 2), status: "pending_review" }, { ...pending("checking", 3), status: "moderating" }],
+  } });
+  assert.deepEqual(ui.statuses, ["Approved", "Awaiting review", "Checking"]);
+  assert.equal(ui.pinButtons[1].props.available, false);
+  ui.updateProfile({ dancer_photos: [approved("first", 1), approved("reviewed", 2)], pending_photo_reviews: [{ ...pending("checking", 3), status: "moderating" }] });
+  assert.deepEqual(ui.statuses, ["Approved", "Approved", "Checking"]);
+  assert.equal(ui.pinButtons[1].props.available, true);
 });
 
 test("an accepted upload is never offered for retry after its profile refresh fails", async () => {

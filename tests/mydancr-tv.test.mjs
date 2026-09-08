@@ -87,7 +87,7 @@ test("dancer uploads are direct, validated, persistent, and submitted for automa
   assert.match(dancerStudio, /submittedCount \? `\$\{submittedCount\} \$\{submittedCount === 1 \? "video" : "videos"\} uploaded`/);
   assert.match(dancerStudio, /void uploadVideoBatch\(uploadable\)/);
   assert.match(dancerStudio, /Confirm both permissions before choosing videos/);
-  assert.match(dancerStudio, /Under review/);
+  assert.match(dancerStudio, /return mediaReviewLabel\(status\)/);
   assert.match(dancerStudio, /Incognito is on/);
   assert.doesNotMatch(dancerStudio, /sample video|placeholder video|mock/i);
 });
