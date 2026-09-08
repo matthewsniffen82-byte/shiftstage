@@ -2,13 +2,14 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-const [homeSource, actionsSource, profilePageSource, reportsRouteSource, profileNavigationSource, venueFollowsRouteSource] = await Promise.all([
+const [homeSource, actionsSource, profilePageSource, reportsRouteSource, profileNavigationSource, venueFollowsRouteSource, aesthetic] = await Promise.all([
   readFile(new URL("../outputs/index.html", import.meta.url), "utf8"),
   readFile(new URL("../app/dancers/[slug]/DancerProfileActions.tsx", import.meta.url), "utf8"),
   readFile(new URL("../app/dancers/[slug]/page.tsx", import.meta.url), "utf8"),
   readFile(new URL("../app/api/reports/route.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/dancers/[slug]/ProfileNavigationActions.tsx", import.meta.url), "utf8"),
   readFile(new URL("../app/api/customer/venue-follows/route.ts", import.meta.url), "utf8"),
+  readFile(new URL("../public/dancr-aesthetic.v1.css", import.meta.url), "utf8"),
 ]);
 
 function sourceBetween(source, start, end) {
@@ -188,7 +189,10 @@ test("guest account prompts use a compact benefit-led hierarchy without duplicat
     assert.match(source, /Free guest account/i);
     assert.match(source, /Follow your favorites/);
     assert.match(source, /Create free account/);
-    assert.match(source, /Already have an account\? Sign in/);
+    assert.match(source, /Already have an account\? <span>Sign in<\/span>/);
+    assert.match(source, /guest-account-prompt/);
+    assert.match(source, /guest-account-message/);
+    assert.match(source, /guest-account-actions/);
     assert.doesNotMatch(source, /Create an account to continue/);
     assert.doesNotMatch(source, /Create a free guest account/);
   }
@@ -208,16 +212,16 @@ test("guest account prompts use a compact benefit-led hierarchy without duplicat
   assert.match(actionsSource, /type AccountAction = "follow";/);
   assert.doesNotMatch(actionsSource, /action === "notify"|requireCustomerAccount\("notify"\)/);
   assert.match(
-    homeSource,
-    /\.account-required-sheet \{[\s\S]*?gap: 10px;[\s\S]*?padding: 18px;/,
+    aesthetic,
+    /\.guest-account-prompt \{[\s\S]*?width: min\(420px, 100%\);[\s\S]*?max-height: calc\(100dvh - 32px\);[\s\S]*?overflow-y: auto;[\s\S]*?border-radius: 24px !important;/,
   );
   assert.match(
-    homeSource,
-    /\.account-required-actions a\.secondary-link \{[\s\S]*?min-height: 44px;[\s\S]*?border-color: transparent;[\s\S]*?background: transparent;/,
+    aesthetic,
+    /\.guest-account-actions \.guest-account-signin \{[\s\S]*?min-height: 44px;[\s\S]*?border-color: transparent !important;[\s\S]*?background: transparent !important;/,
   );
   assert.match(
-    profilePageSource,
-    /\.profile-account-gate-dialog \{ gap: 10px; padding: 19px; \}/,
+    aesthetic,
+    /\.guest-account-prompt :is\(a, button\):focus-visible \{[\s\S]*?outline: 2px solid var\(--dancr-color-text-secondary\) !important;/,
   );
 });
 

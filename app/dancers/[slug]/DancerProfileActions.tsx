@@ -589,27 +589,27 @@ export function DancerProfileActions({
           }}
         >
           <section
-            className="profile-account-gate-dialog"
+            className="profile-account-gate-dialog guest-account-prompt"
             role="dialog"
             aria-modal="true"
             aria-labelledby="profile-account-gate-title"
             aria-describedby="profile-account-gate-message"
           >
             <button
-              className="profile-account-gate-close"
+              className="profile-account-gate-close guest-account-close"
               type="button"
               aria-label="Close account prompt"
               autoFocus
               onClick={() => setAccountRequiredAction(null)}
             >
-              ×
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12" /></svg>
             </button>
-            <span>FREE GUEST ACCOUNT</span>
+            <span className="guest-account-eyebrow">FREE GUEST ACCOUNT</span>
             <h2 id="profile-account-gate-title">Follow your favorites</h2>
-            <p id="profile-account-gate-message">{accountActionMessage()}</p>
-            <div>
-              <Link href="/account?role=customer&mode=signup">Create free account</Link>
-              <Link className="secondary" href="/account?role=customer">Already have an account? Sign in</Link>
+            <p className="guest-account-message" id="profile-account-gate-message">{accountActionMessage()}</p>
+            <div className="guest-account-actions">
+              <Link className="guest-account-primary" href="/account?role=customer&mode=signup">Create free account</Link>
+              <Link className="guest-account-signin" href="/account?role=customer">Already have an account? <span>Sign in</span></Link>
             </div>
           </section>
         </div>
