@@ -1,7 +1,20 @@
-export const DEVICE_SAVED_DEALS_KEY = "dancrSavedDealPassesV2";
+export const DEVICE_SAVED_DEALS_KEY = "dancrSavedDealPassesV3";
 export const DEVICE_SAVED_DEALS_CHANGED_EVENT = "dancr:saved-deals-changed";
 
 type DeviceStorage = Pick<Storage, "getItem" | "setItem">;
+
+export function deviceSavedDealsStorageKey(storage: Pick<Storage, "getItem">): string | null {
+  try {
+    const session = JSON.parse(storage.getItem("dancrAuthSessionV1") || "null");
+    const accountId = text(session?.account?.id) || text(session?.user?.id);
+    if (accountId) return `${DEVICE_SAVED_DEALS_KEY}:account:${encodeURIComponent(accountId)}`;
+    // Never attach anonymous or legacy V2 bookmarks to an unidentified account.
+    if (session?.accessToken) return null;
+    return `${DEVICE_SAVED_DEALS_KEY}:anonymous`;
+  } catch {
+    return null;
+  }
+}
 
 function text(value: unknown) {
   return typeof value === "string" ? value.trim() : "";
@@ -49,7 +62,9 @@ export type DeviceSavedClubDeal = NonNullable<ReturnType<typeof deviceBookmark>>
 
 export function readDeviceSavedClubDeals(storage: Pick<Storage, "getItem">): DeviceSavedClubDeal[] {
   try {
-    const items: unknown = JSON.parse(storage.getItem(DEVICE_SAVED_DEALS_KEY) || "[]");
+    const key = deviceSavedDealsStorageKey(storage);
+    if (!key) return [];
+    const items: unknown = JSON.parse(storage.getItem(key) || "[]");
     if (!Array.isArray(items)) return [];
     return items.map(deviceBookmark).filter((item): item is DeviceSavedClubDeal => item !== null);
   } catch {
@@ -72,8 +87,10 @@ export function mergeCustomerSavedClubDeals<T extends { dealId: string; savedAt:
 
 export function removeDeviceSavedClubDeal(storage: DeviceStorage, dealId: string) {
   // A blocked or unreadable store must not be reported as a successful removal.
-  const items: unknown = JSON.parse(storage.getItem(DEVICE_SAVED_DEALS_KEY) || "[]");
+  const key = deviceSavedDealsStorageKey(storage);
+  if (!key) throw new Error("Your saved deals could not be read. Please try again.");
+  const items: unknown = JSON.parse(storage.getItem(key) || "[]");
   if (!Array.isArray(items)) throw new Error("Your saved deals could not be read. Please try again.");
   const remaining = items.filter((item) => deviceBookmark(item)?.dealId !== dealId);
-  if (remaining.length !== items.length) storage.setItem(DEVICE_SAVED_DEALS_KEY, JSON.stringify(remaining));
+  if (remaining.length !== items.length) storage.setItem(key, JSON.stringify(remaining));
 }

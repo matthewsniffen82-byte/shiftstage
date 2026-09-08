@@ -9,9 +9,9 @@ import {
   setCustomerDealSavedInAccount,
 } from "@/src/lib/dancr/customer-deal-saves-client";
 import NfcIcon from "@/app/components/NfcIcon";
+import { deviceSavedDealsStorageKey, DEVICE_SAVED_DEALS_CHANGED_EVENT } from "@/src/lib/dancr/customer-device-deals";
 
 const DEAL_INTENT_KEY = "mydancrPendingNfcDealV2";
-const SAVED_DEALS_KEY = "dancrSavedDealPassesV2";
 const DEAL_INTENT_TTL_MS = 12 * 60 * 60 * 1000;
 
 type ClubDealCardProps = {
@@ -84,18 +84,34 @@ export function ClubDealCard({
   }, [activeDeal.id, dancerId, sourceType, venueId, venueName]);
 
   useEffect(() => {
-    const controller = new AbortController();
-    const version = saveStateVersion.current;
-    void loadCustomerDealSavedState(activeDeal.id, controller.signal)
-      .then((saved) => {
-        if (!controller.signal.aborted && version === saveStateVersion.current && typeof saved === "boolean") {
-          setSavedOnDevice(saved || isDealSavedOnDevice(venueId, activeDeal.id));
-        }
-      })
-      .catch(() => {
-        // Keep the device copy usable if private account state cannot load.
-      });
-    return () => controller.abort();
+    let controller: AbortController;
+    const refresh = () => {
+      controller?.abort();
+      controller = new AbortController();
+      const signal = controller.signal;
+      const version = ++saveStateVersion.current;
+      const storageKey = currentSavedDealsStorageKey();
+      setSavedOnDevice(isDealSavedOnDevice(venueId, activeDeal.id));
+      void loadCustomerDealSavedState(activeDeal.id, signal)
+        .then((saved) => {
+          if (!signal.aborted && version === saveStateVersion.current && storageKey === currentSavedDealsStorageKey() && typeof saved === "boolean") {
+            setSavedOnDevice(saved || isDealSavedOnDevice(venueId, activeDeal.id));
+          }
+        })
+        .catch(() => {
+          // Keep the device copy usable if private account state cannot load.
+        });
+    };
+    refresh();
+    window.addEventListener("storage", refresh);
+    window.addEventListener("focus", refresh);
+    window.addEventListener(DEVICE_SAVED_DEALS_CHANGED_EVENT, refresh);
+    return () => {
+      controller.abort();
+      window.removeEventListener("storage", refresh);
+      window.removeEventListener("focus", refresh);
+      window.removeEventListener(DEVICE_SAVED_DEALS_CHANGED_EVENT, refresh);
+    };
   }, [activeDeal.id, venueId]);
 
   useEffect(() => {
@@ -192,6 +208,7 @@ export function ClubDealCard({
     saveStateVersion.current += 1;
     setSavePending(true);
     const hasCustomerAccount = hasSignedInCustomerDealAccount();
+    const storageKey = currentSavedDealsStorageKey();
     try {
       let savedToAccount = false;
       if (hasCustomerAccount) {
@@ -206,8 +223,10 @@ export function ClubDealCard({
           // Keep saving available on this device when private account storage is temporarily unavailable.
         }
       }
+      if (storageKey !== currentSavedDealsStorageKey()) return;
       let savedOnThisDevice = false;
       try {
+        if (!storageKey) throw new Error("Account storage unavailable");
         const saved = readSavedDeals();
         const id = savedDealId(venueId, activeDeal.id);
         const deviceDeal = {
@@ -228,7 +247,7 @@ export function ClubDealCard({
         const next = savedToAccount
           ? saved.filter((item) => item.id !== id)
           : [deviceDeal, ...saved.filter((item) => item.id !== id)].slice(0, 20);
-        window.localStorage.setItem(SAVED_DEALS_KEY, JSON.stringify(next));
+        window.localStorage.setItem(storageKey, JSON.stringify(next));
         savedOnThisDevice = true;
       } catch {
         // The private account remains the source of truth when device storage is blocked.
@@ -243,7 +262,7 @@ export function ClubDealCard({
         ? "Saved to your account. Find it in Saved Club Deals beside the bell on Home."
         : hasCustomerAccount
           ? "Saved on this device. Find it in Saved Club Deals beside the bell on Home."
-          : "Saved on this device. Sign in as a customer to open Saved Club Deals on Home.");
+          : "Saved in this browser. Sign in before saving deals to your account.");
     } catch (error) {
       setStatus(error instanceof Error ? error.message : "Unable to save this Club Deal.");
     } finally {
@@ -256,6 +275,7 @@ export function ClubDealCard({
     saveStateVersion.current += 1;
     setSavePending(true);
     const hasCustomerAccount = hasSignedInCustomerDealAccount();
+    const storageKey = currentSavedDealsStorageKey();
     try {
       let removedFromAccount = false;
       if (hasCustomerAccount) {
@@ -270,11 +290,13 @@ export function ClubDealCard({
           // Keep removal available on this device when private account storage is temporarily unavailable.
         }
       }
+      if (storageKey !== currentSavedDealsStorageKey()) return;
       let removedFromDevice = false;
       try {
+        if (!storageKey) throw new Error("Account storage unavailable");
         const id = savedDealId(venueId, activeDeal.id);
         const next = readSavedDeals().filter((item) => item.id !== id);
-        window.localStorage.setItem(SAVED_DEALS_KEY, JSON.stringify(next));
+        window.localStorage.setItem(storageKey, JSON.stringify(next));
         removedFromDevice = true;
       } catch {
         // The private account remains the source of truth when device storage is blocked.
@@ -591,9 +613,19 @@ function savedDealId(venueId: string, dealId: string) {
   return `nfc:${venueId}:${dealId}`;
 }
 
+function currentSavedDealsStorageKey() {
+  try {
+    return deviceSavedDealsStorageKey(window.localStorage);
+  } catch {
+    return null;
+  }
+}
+
 function readSavedDeals(): SavedDealEntry[] {
   try {
-    const value: unknown = JSON.parse(window.localStorage.getItem(SAVED_DEALS_KEY) || "[]");
+    const storageKey = currentSavedDealsStorageKey();
+    if (!storageKey) return [];
+    const value: unknown = JSON.parse(window.localStorage.getItem(storageKey) || "[]");
     if (!Array.isArray(value)) return [];
     return value.filter((item): item is SavedDealEntry => Boolean(
       item && typeof item === "object" && typeof (item as { id?: unknown }).id === "string",

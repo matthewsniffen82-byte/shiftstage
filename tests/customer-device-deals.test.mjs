@@ -4,6 +4,7 @@ import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
 import {
   DEVICE_SAVED_DEALS_KEY,
+  deviceSavedDealsStorageKey,
   readDeviceSavedClubDeals,
   mergeCustomerSavedClubDeals,
   removeDeviceSavedClubDeal,
@@ -16,14 +17,17 @@ const deviceDeal = (id, extra = {}) => ({
   url: '/?city=Las%20Vegas&venue=silver-circuit', ...extra,
 });
 function storageFor(items) {
-  let raw = JSON.stringify(items);
+  const values = new Map([
+    ['dancrAuthSessionV1', JSON.stringify({ accessToken: 'test', account: { id: 'customer-a', role: 'customer' } })],
+    [`${DEVICE_SAVED_DEALS_KEY}:account:customer-a`, JSON.stringify(items)],
+  ]);
   return {
-    getItem(key) { assert.equal(key, DEVICE_SAVED_DEALS_KEY); return raw; },
-    setItem(key, value) { assert.equal(key, DEVICE_SAVED_DEALS_KEY); raw = value; },
+    getItem(key) { return values.get(key) ?? null; },
+    setItem(key, value) { values.set(key, value); },
   };
 }
 
-test('existing Home device saves populate an empty account list with usable venue details', () => {
+test('the current account’s Home device saves populate its list with usable venue details', () => {
   const storage = storageFor([deviceDeal('one'), deviceDeal('two', { title: 'Skip the line', venueName: 'Neon Ember', url: '', savedAt: 1788800000000 })]);
   const merged = mergeCustomerSavedClubDeals([], readDeviceSavedClubDeals(storage));
   assert.equal(merged.length, 2);
@@ -56,7 +60,7 @@ test('device removal survives a new read and preserves other saves and redemptio
   const storage = storageFor([deviceDeal('one'), deviceDeal('one'), deviceDeal('two'), redemption]);
   removeDeviceSavedClubDeal(storage, 'one');
   assert.deepEqual(readDeviceSavedClubDeals(storage).map(item => item.dealId), ['two']);
-  assert.deepEqual(JSON.parse(storage.getItem(DEVICE_SAVED_DEALS_KEY)).at(-1), redemption);
+  assert.deepEqual(JSON.parse(storage.getItem(deviceSavedDealsStorageKey(storage))).at(-1), redemption);
 });
 
 test('blocked removal reports failure and leaves the saved deal available', () => {
@@ -78,11 +82,11 @@ test('Home resynchronizes device additions and removals without rewriting storag
   const end = source.indexOf('\n    function ', start + 5);
   assert.ok(start > 0 && end > start);
   const storage = storageFor([deviceDeal('new')]);
-  const context = vm.createContext({ localStorage: storage, savedDealTimestamp: item => Date.parse(item.savedAt) || 0 });
-  vm.runInContext(`let savedDealPasses = ${JSON.stringify([deviceDeal('old'), deviceDeal('account', { serverSaved: true })])};\n${source.slice(start, end)}`, context);
-  const before = storage.getItem(DEVICE_SAVED_DEALS_KEY);
+  const context = vm.createContext({ localStorage: storage, savedDealsStorageKey: () => deviceSavedDealsStorageKey(storage), savedDealTimestamp: item => Date.parse(item.savedAt) || 0 });
+  vm.runInContext(`let savedDealPassesStorageKey = savedDealsStorageKey(); let savedDealPasses = ${JSON.stringify([deviceDeal('old'), deviceDeal('account', { serverSaved: true })])};\n${source.slice(start, end)}`, context);
+  const before = storage.getItem(deviceSavedDealsStorageKey(storage));
   context.syncDeviceSavedDealPasses();
   const ids = JSON.parse(vm.runInContext('JSON.stringify(savedDealPasses.map(item => item.dealId))', context));
   assert.deepEqual(new Set(ids), new Set(['account', 'new']));
-  assert.equal(storage.getItem(DEVICE_SAVED_DEALS_KEY), before);
+  assert.equal(storage.getItem(deviceSavedDealsStorageKey(storage)), before);
 });

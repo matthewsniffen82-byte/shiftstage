@@ -42808,6 +42808,7 @@
     let dashboardTonightExpanded = false;
     let dashboardFollowedExpanded = false;
     let dashboardVenuesExpanded = false;
+    let savedDealPassesStorageKey = savedDealsStorageKey();
     let savedDealPasses = loadSavedDealPasses();
     let activeProfileClubDealPassCache = null;
     const goingTonightByProfile = {};
@@ -45366,10 +45367,11 @@
     async function loadLiveCustomerSaved() {
       if (!isCustomerSession()) return false;
       const savedStateVersion = customerSavedStateVersion;
+      const storageKey = savedDealsStorageKey();
       try {
         const data = await getAuthenticatedJson("/api/customer/saved");
         // An older read must not replace a follow or favorite saved while it was in flight.
-        if (!isCustomerSession() || savedStateVersion !== customerSavedStateVersion) return false;
+        if (!isCustomerSession() || savedStateVersion !== customerSavedStateVersion || storageKey !== savedDealsStorageKey()) return false;
         applyLiveCustomerSaved(data.saved || {});
         render();
         if (customerDashboard.classList.contains("show")) renderDashboard();
@@ -45698,6 +45700,7 @@
     }
 
     function renderCustomerQuickActions() {
+      syncDeviceSavedDealPasses();
       if (!customerQuickActions) return;
       const showNotifications = isCustomerSession() || isDancerSession() || isVenueSession();
       const showProfileShare = isDancerSession();
@@ -48688,9 +48691,26 @@
       return `/api/public/share-qr?url=${encodeURIComponent(value)}`;
     }
 
+    function savedDealsStorageKey() {
+      try {
+        const session = JSON.parse(localStorage.getItem("dancrAuthSessionV1") || "null");
+        const id = typeof session?.account?.id === "string" ? session.account.id.trim() : "";
+        const userId = typeof session?.user?.id === "string" ? session.user.id.trim() : "";
+        const accountId = id || userId;
+        if (accountId) return `dancrSavedDealPassesV3:account:${encodeURIComponent(accountId)}`;
+        if (session?.accessToken) return null;
+        return "dancrSavedDealPassesV3:anonymous";
+      } catch {
+        return null;
+      }
+    }
+
     function loadSavedDealPasses() {
       try {
-        const saved = JSON.parse(localStorage.getItem("dancrSavedDealPassesV2") || "[]");
+        const key = savedDealsStorageKey();
+        if (!key) return [];
+        // The legacy V2 list has no owner, so it must not enter any account.
+        const saved = JSON.parse(localStorage.getItem(key) || "[]");
         return Array.isArray(saved) ? saved : [];
       } catch {
         return [];
@@ -48699,8 +48719,10 @@
 
     function saveSavedDealPasses() {
       try {
+        const key = savedDealsStorageKey();
+        if (!key || key !== savedDealPassesStorageKey) return false;
         const deviceOnlyPasses = savedDealPasses.filter((pass) => !pass.serverSaved);
-        localStorage.setItem("dancrSavedDealPassesV2", JSON.stringify(deviceOnlyPasses));
+        localStorage.setItem(key, JSON.stringify(deviceOnlyPasses));
         return true;
       } catch {
         return false;
@@ -48831,7 +48853,12 @@
 
     function syncDeviceSavedDealPasses() {
       try {
-        const deviceDeals = JSON.parse(localStorage.getItem("dancrSavedDealPassesV2") || "[]");
+        const key = savedDealsStorageKey();
+        if (key !== savedDealPassesStorageKey) {
+          savedDealPasses = [];
+          savedDealPassesStorageKey = key;
+        }
+        const deviceDeals = key ? JSON.parse(localStorage.getItem(key) || "[]") : [];
         if (!Array.isArray(deviceDeals)) return;
         const accountDeals = savedDealPasses.filter((pass) => pass.serverSaved);
         const accountIds = new Set(accountDeals.map((pass) => pass.id));
@@ -49084,9 +49111,16 @@
 
     async function saveCustomerDealPass(pass) {
       if (!pass?.id) return false;
+      syncDeviceSavedDealPasses();
+      const storageKey = savedDealsStorageKey();
       const existingSavedPass = savedDealPasses.find((item) => item.id === pass.id);
       const wasAlreadySaved = Boolean(existingSavedPass);
       const savedToAccount = await persistCustomerDealSave(pass, true);
+      if (storageKey !== savedDealsStorageKey()) {
+        syncDeviceSavedDealPasses();
+        renderCustomerQuickActions();
+        return false;
+      }
       const previousPasses = savedDealPasses;
       const savedPass = {
         ...existingSavedPass,
@@ -49107,7 +49141,7 @@
             ? "Deal is already saved on this device."
             : isCustomerSession()
               ? "Saved on this device. Find it in Saved Club Deals beside the bell on Home."
-              : "Saved on this device. Sign in to keep it across devices. This does not redeem the deal."
+              : "Saved in this browser. Sign in before saving deals to your account."
           : "Browser storage blocked saving this deal. Allow site storage and try again.");
       return persisted || savedToAccount;
     }
@@ -49129,7 +49163,14 @@
 
     async function removeSavedDealPass(pass) {
       if (!pass?.id) return false;
+      syncDeviceSavedDealPasses();
+      const storageKey = savedDealsStorageKey();
       const removedFromAccount = await persistCustomerDealSave(pass, false);
+      if (storageKey !== savedDealsStorageKey()) {
+        syncDeviceSavedDealPasses();
+        renderCustomerQuickActions();
+        return false;
+      }
       const previousPasses = savedDealPasses;
       savedDealPasses = savedDealPasses.filter((item) => item.id !== pass.id);
       const persisted = saveSavedDealPasses();
@@ -66284,7 +66325,8 @@
     });
     window.addEventListener("focus", () => { void refreshVisibleHomeDiscovery({ bypassCache: true }); });
     window.addEventListener("storage", (event) => {
-      if (event.key !== "dancrSavedDealPassesV2" && event.key !== null) return;
+      if (!event.key?.startsWith("dancrSavedDealPassesV3:") && event.key !== "dancrAuthSessionV1" && event.key !== null) return;
+      if (event.key === "dancrAuthSessionV1" || event.key === null) synchronizeAuthSession();
       syncDeviceSavedDealPasses();
       renderCustomerQuickActions();
     });

@@ -47,8 +47,10 @@ test("the standalone dashboard uses the refresh-aware account boundary before cl
   assert.doesNotMatch(dashboardClient, /fetch\("\/api\/account"/);
   assert.match(
     dashboardClient,
-    /event\.key === SESSION_KEY && !event\.newValue[\s\S]*?leaveDeletedSessionDashboard\(\);\s*window\.addEventListener\("pageshow", leaveDeletedSessionDashboard\)/,
+    /event\.key === SESSION_KEY \|\| event\.key === null[\s\S]*?leaveDeletedSessionDashboard\(\);\s*window\.addEventListener\("pageshow", leaveDeletedSessionDashboard\)/,
   );
+  assert.match(dashboardClient, /if \(!currentSession\?\.accessToken\) window\.location\.replace\("\/"\)/);
+  assert.match(dashboardClient, /else if \(currentSession\.account\?\.id !== initialAccountId\) window\.location\.reload\(\)/);
 });
 
 test("successful account deletion invalidates cached public venue discovery", () => {

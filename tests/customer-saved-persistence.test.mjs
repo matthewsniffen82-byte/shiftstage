@@ -36,6 +36,7 @@ function homeFixture() {
     event: { target: { closest: () => button }, preventDefault() {}, stopPropagation() {} },
     requireCustomerAccountForProfileAction: () => true,
     isCustomerSession: () => true,
+    savedDealsStorageKey: () => "dancrSavedDealPassesV3:account:test-customer",
     actionButtonLabel: (_icon, label) => label,
     getAuthenticatedJson: async () => ({}),
     postAuthenticatedJson: async (_path, body) => {

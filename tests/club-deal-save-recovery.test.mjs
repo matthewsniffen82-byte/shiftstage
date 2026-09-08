@@ -18,6 +18,7 @@ function liveFunction(name, nextName) {
 function harness(client, { mode = "success", storageBlocked = false, payload } = {}) {
   const timers = new Map();
   const storage = new Map();
+  storage.set("dancrAuthSessionV1", JSON.stringify({ accessToken: "test-session", account: { id: "customer-a", role: "customer" } }));
   const notices = [];
   let requestSignal;
   let timerId = 0;
@@ -48,6 +49,7 @@ function harness(client, { mode = "success", storageBlocked = false, payload } =
       };
     },
     localStorage: {
+      getItem: key => storage.get(key) ?? null,
       setItem(key, value) {
         if (storageBlocked) throw new Error("storage blocked");
         storage.set(key, value);
@@ -62,11 +64,14 @@ function harness(client, { mode = "success", storageBlocked = false, payload } =
     renderCustomerQuickActions() {},
     showToast: (message) => notices.push(message),
     recordRevenueDealLifecycle() {},
+    savedDealTimestamp: item => Date.parse(item.savedAt) || 0,
   });
   let save, load;
   if (client === "live") {
     vm.runInContext([
-      "let savedDealPasses = [];",
+      "let savedDealPasses = []; let savedDealPassesStorageKey = savedDealsStorageKey();",
+      liveFunction("function savedDealsStorageKey()", "function loadSavedDealPasses()"),
+      liveFunction("function syncDeviceSavedDealPasses()", "function venueExperienceHref("),
       liveFunction("function saveSavedDealPasses()", "function savedDealsSeenStorageKey()"),
       liveFunction("async function persistCustomerDealSave(", "async function saveCustomerDealPass("),
       liveFunction("async function saveCustomerDealPass(", "function recordRevenueDealLifecycle("),
@@ -96,6 +101,7 @@ function harness(client, { mode = "success", storageBlocked = false, payload } =
     savedPasses: () => vm.runInContext("savedDealPasses", context),
     signal: () => requestSignal,
     expire: () => { for (const callback of [...timers.values()]) callback(); },
+    switchAccount: id => storage.set("dancrAuthSessionV1", JSON.stringify({ accessToken: "other-session", account: { id, role: "customer" } })),
   };
 }
 
@@ -130,7 +136,7 @@ test("a stalled account save falls back to a real device bookmark", async () => 
   const saving = state.savePass();
   state.expire();
   assert.equal(await saving, true);
-  assert.equal(JSON.parse(state.storage.get("dancrSavedDealPassesV2"))[0].id, pass.id);
+  assert.equal(JSON.parse(state.storage.get("dancrSavedDealPassesV3:account:customer-a"))[0].id, pass.id);
   assert.equal(state.savedPasses()[0].serverSaved, false);
   assert.match(state.notices.at(-1), /Saved on this device/);
 });
@@ -148,7 +154,7 @@ test("a successful private account save does not leave a device bookmark", async
   const state = harness("live");
   assert.equal(await state.savePass(), true);
   assert.equal(state.savedPasses()[0].serverSaved, true);
-  assert.equal(state.storage.get("dancrSavedDealPassesV2"), "[]");
+  assert.equal(state.storage.get("dancrSavedDealPassesV3:account:customer-a"), "[]");
   assert.match(state.notices.at(-1), /Saved privately to your account/);
 });
 
@@ -165,4 +171,15 @@ test("unmounting the card still cancels a pending account lookup", async () => {
   await assert.rejects(loading, /aborted/);
   assert.equal(state.signal().aborted, true);
   assert.equal(state.timers.size, 0);
+});
+
+test("an account switch during a stalled save never creates a bookmark in the new account", async () => {
+  const state = harness("live", { mode: "headers-stall" });
+  const saving = state.savePass();
+  state.switchAccount("new-customer");
+  state.expire();
+  assert.equal(await saving, false);
+  assert.equal(state.savedPasses().length, 0);
+  assert.equal(state.storage.has("dancrSavedDealPassesV3:account:new-customer"), false);
+  assert.equal(state.notices.length, 0);
 });

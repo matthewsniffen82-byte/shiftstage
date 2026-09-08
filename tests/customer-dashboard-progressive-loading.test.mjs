@@ -58,7 +58,8 @@ test('a followed profile becoming unavailable retains its saved follow and remov
   assert.doesNotMatch(html, /No followed dancers yet/);
 });
 
-const localBookmarks = deviceDeals.readDeviceSavedClubDeals({ getItem: () => JSON.stringify([
+const localBookmarks = deviceDeals.readDeviceSavedClubDeals({ getItem: key => key === 'dancrAuthSessionV1'
+  ? JSON.stringify({ accessToken: 'test', account: { id: 'customer-a', role: 'customer' } }) : JSON.stringify([
   { id: 'nfc:club:one', venueId: 'club', dealId: 'one', venueName: 'Silver Circuit', title: 'Half-off admission' },
   { id: 'nfc:club:two', venueId: 'club', dealId: 'two', venueName: 'Neon Ember', title: 'Skip the line' },
 ]) });

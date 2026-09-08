@@ -14,7 +14,7 @@ test("Club Deals save without requiring customer authentication", () => {
   assert.match(saveFlow, /showToast\(savedToAccount/);
   assert.match(saveFlow, /return persisted \|\| savedToAccount/);
   assert.match(liveSource, /function persistCustomerDealSave[\s\S]*?if \(!isCustomerSession\(\) \|\| !pass\?\.dealId\) return false/);
-  assert.match(liveSource, /Saved on this device\. Sign in to keep it across devices/);
+  assert.match(liveSource, /Saved in this browser\. Sign in before saving deals to your account/);
 });
 
 test("preview, cashier-tap selection, and saving are separate intentional actions", () => {

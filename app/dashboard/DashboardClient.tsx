@@ -305,7 +305,7 @@ export default function DashboardClient({
       }
     };
     const onStorage = (event: StorageEvent) => {
-      if (event.key === DEVICE_SAVED_DEALS_KEY || event.key === null) refreshDeviceDeals();
+      if (event.key?.startsWith(`${DEVICE_SAVED_DEALS_KEY}:`) || event.key === SESSION_KEY || event.key === null) refreshDeviceDeals();
     };
     refreshDeviceDeals();
     window.addEventListener("storage", onStorage);
@@ -318,7 +318,7 @@ export default function DashboardClient({
       window.removeEventListener("focus", refreshDeviceDeals);
       window.removeEventListener(DEVICE_SAVED_DEALS_CHANGED_EVENT, refreshDeviceDeals);
     };
-  }, [role]);
+  }, [role, state.account?.id]);
 
   const customerSaved = useMemo<CustomerSavedState>(() => ({
     ...state.saved,
@@ -487,11 +487,14 @@ export default function DashboardClient({
   }, [loadAttempt, role]);
 
   useEffect(() => {
+    const initialAccountId = readSession()?.account?.id;
     const leaveDeletedSessionDashboard = () => {
-      if (!readSession()?.accessToken) window.location.replace("/");
+      const currentSession = readSession();
+      if (!currentSession?.accessToken) window.location.replace("/");
+      else if (currentSession.account?.id !== initialAccountId) window.location.reload();
     };
     const handleSessionStorage = (event: StorageEvent) => {
-      if (event.key === SESSION_KEY && !event.newValue) leaveDeletedSessionDashboard();
+      if (event.key === SESSION_KEY || event.key === null) leaveDeletedSessionDashboard();
     };
     leaveDeletedSessionDashboard();
     window.addEventListener("pageshow", leaveDeletedSessionDashboard);
