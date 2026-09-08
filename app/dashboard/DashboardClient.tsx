@@ -25,6 +25,8 @@ import DancerShiftManager from "./DancerShiftManager";
 import { DANCER_PROFILE_VIDEOS_CHANGED_EVENT } from "./dancer-profile-media-sync";
 import { DancerDashboardAvatar, DancerDashboardIcon } from "./DancerDashboardIdentity";
 import "./dancer-dashboard.css";
+import { CustomerDashboardAvatar, CustomerDashboardIcon, type CustomerDashboardSectionId } from "./CustomerDashboardIdentity";
+import "./customer-dashboard.css";
 import VenueNfcTagPanel from "./VenueNfcTagPanel";
 import VenueTeamPanel from "./VenueTeamPanel";
 import VenueTvPanel from "./VenueTvPanel";
@@ -662,6 +664,7 @@ export default function DashboardClient({
       <section className={`dashboard-head dashboard-head-${role}`} aria-busy={isLoading || undefined}>
         <div className="dashboard-head-row">
           {role === "dancer" ? <DancerDashboardAvatar avatarUrl={String(state.profile?.avatarPhotoUrl || "")} name={profileDisplayName} /> : null}
+          {role === "customer" ? <CustomerDashboardAvatar name={dashboardHeading} /> : null}
           <div className="dashboard-head-copy">
             <span className="eyebrow">{dashboardEyebrow}</span>
             <div className="dashboard-head-title-row">
@@ -669,6 +672,7 @@ export default function DashboardClient({
               {dancerProfileIsLive ? <span className="dashboard-live-status"><i aria-hidden="true" /> Public</span> : null}
             </div>
             {dashboardDescription ? <p>{dashboardDescription}</p> : null}
+            {role === "customer" && !dashboardDescription ? <p className="customer-dashboard-intro">Your favorites, plans, and updates.</p> : null}
           </div>
           <DashboardCloseButton
             fallbackHref={dashboardCloseHref}
@@ -718,6 +722,8 @@ export default function DashboardClient({
                 count={customerAlertCount}
                 description="Your updates, notification preferences, and delivery options."
                 id="customer-alerts"
+                icon={<CustomerDashboardIcon section="customer-alerts" />}
+                toggleAffordance="chevron"
                 title="Alerts"
               >
                 {isLoading ? <p role="status">Loading your alerts…</p> : <NotificationPanel saved={state.saved} customerMode panelId="customer-alerts-panel" onCountChange={setCustomerAlertCount} />}
@@ -730,6 +736,8 @@ export default function DashboardClient({
                 badgeLabel={`${customerSupportCount} support ${customerSupportCount === 1 ? "conversation" : "conversations"}`}
                 description="Email, password, support messages, and account status."
                 id="customer-account"
+                icon={<CustomerDashboardIcon section="customer-account" />}
+                toggleAffordance="chevron"
                 title="Account"
               >
                 {isLoading ? <p role="status">Loading your account…</p> : <div className="venue-dashboard-inner-grid customer-settings-grid">
@@ -877,7 +885,7 @@ function CustomerDashboardNav({ saved }: { saved?: CustomerSavedState | null }) 
   const goingCount = (saved?.goingSignals || []).filter((item) => (
     item.shift?.status === "posted" && new Date(item.shift.endsAt).getTime() > now
   )).length;
-  const links = [
+  const links: Array<{ id: CustomerDashboardSectionId; label: string; count: number }> = [
     { id: "customer-followed-dancers", label: "Followed Dancers", count: saved?.follows?.length || 0 },
     { id: "customer-followed-clubs", label: "Favorite Clubs", count: saved?.venueFollows?.length || 0 },
     { id: "customer-saved-deals", label: "Saved Club Deals", count: saved?.dealSaves?.length || 0 },
@@ -889,14 +897,15 @@ function CustomerDashboardNav({ saved }: { saved?: CustomerSavedState | null }) 
       <div className="customer-dashboard-primary-links">
         {links.map((link) => (
           <a href={`#${link.id}`} key={link.id} onClick={(event) => openDashboardSection(event, link.id)}>
+            <span className="customer-shortcut-icon"><CustomerDashboardIcon section={link.id} /></span>
             <span>{link.label}</span>
             <strong>{link.count}</strong>
           </a>
         ))}
       </div>
       <div className="customer-dashboard-utility-links" aria-label="Customer dashboard utilities">
-        <a href="#customer-alerts" onClick={(event) => openDashboardSection(event, "customer-alerts")}>Alerts</a>
-        <a href="#customer-account" onClick={(event) => openDashboardSection(event, "customer-account")}>Account</a>
+        <a href="#customer-alerts" onClick={(event) => openDashboardSection(event, "customer-alerts")}><CustomerDashboardIcon section="customer-alerts" />Alerts</a>
+        <a href="#customer-account" onClick={(event) => openDashboardSection(event, "customer-account")}><CustomerDashboardIcon section="customer-account" />Account</a>
       </div>
     </nav>
   );
@@ -1785,6 +1794,8 @@ function CustomerPanel({
         defaultOpen
         description="Dancers you follow, sorted by city. Tap a card to open the profile."
         id="customer-followed-dancers"
+        icon={<CustomerDashboardIcon section="customer-followed-dancers" />}
+        toggleAffordance="chevron"
         title="Followed Dancers"
       >
         <CustomerFollowedDancersPanel
@@ -1798,6 +1809,8 @@ function CustomerPanel({
         count={saved?.venueFollows?.length}
         description="Your saved clubs, with dancer activity and quick directions."
         id="customer-followed-clubs"
+        icon={<CustomerDashboardIcon section="customer-followed-clubs" />}
+        toggleAffordance="chevron"
         title="Favorite Clubs"
       >
         <CustomerFollowedClubsPanel
@@ -1813,6 +1826,8 @@ function CustomerPanel({
         count={saved?.dealSaves?.length}
         description="Offers you bookmarked privately for later."
         id="customer-saved-deals"
+        icon={<CustomerDashboardIcon section="customer-saved-deals" />}
+        toggleAffordance="chevron"
         title="Saved Club Deals"
       >
         {isLoading && !saved?.dealSaves?.length ? <p className="customer-loading-state">Loading your saved deals…</p> : <CustomerDealPassPanel
@@ -1828,6 +1843,8 @@ function CustomerPanel({
         count={goingCount}
         description="Your plans, with shift details and directions."
         id="customer-going"
+        icon={<CustomerDashboardIcon section="customer-going" />}
+        toggleAffordance="chevron"
         title="I’m Going"
       >
         <CustomerNightPanel
