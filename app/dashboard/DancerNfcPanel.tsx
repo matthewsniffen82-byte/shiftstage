@@ -161,7 +161,7 @@ export default function DancerNfcPanel({
           <span className="dancer-nfc-compact-action">Manage</span>
         </summary>
         <div className="dancer-nfc-compact-body">
-          <p>Tap any club&apos;s MyDancr dressing-room sticker to connect to that club and check in as Working Now. Once connected, you can post upcoming dates there.</p>
+          <p>Log into your MyDancr account, then tap the club&apos;s MyDancr dressing-room sticker to connect and show Working Now there. Once connected, you can post upcoming dates there.</p>
           {affiliationRoster}
           {checkInDetails}
           <button className="dancer-nfc-refresh" type="button" disabled={Boolean(pendingId)} onClick={refresh}>
@@ -185,16 +185,16 @@ export default function DancerNfcPanel({
           </div>
         </div>
         {authorized ? (
-          <p className="dancer-nfc-intro">You&apos;re activated. Tap the club&apos;s MyDancr dressing-room sticker each time you check in.</p>
+          <p className="dancer-nfc-intro">You&apos;re activated. Make sure you&apos;re logged into your MyDancr account before each dressing-room tap.</p>
         ) : pendingEnrollment ? (
           <p className="dancer-nfc-intro">Your tap at {enrollment?.venue?.name || "the club"} is saved. Finish your profile and required photo approvals to activate.</p>
         ) : (
-          <p className="dancer-nfc-intro">Finish your profile, then unlock your signed-in phone and tap the MyDancr dressing-room sticker at the club.</p>
+          <p className="dancer-nfc-intro">Finish your profile and log into your MyDancr account. Then unlock your phone and tap the club&apos;s MyDancr dressing-room sticker.</p>
         )}
 
         <ol className="dancer-nfc-guide">
           {!authorized ? <li><strong>Activate once</strong><span>Your first tap activates your completed profile and checks you in at that club.</span></li> : null}
-          <li><strong>Check in at any club</strong><span>Tap that club&apos;s MyDancr dressing-room sticker to connect to the club and show Working Now there.</span></li>
+          <li><strong>Check in at any club</strong><span>Log into your MyDancr account, then tap that club&apos;s dressing-room sticker to connect and show Working Now there.</span></li>
           <li><strong>Post upcoming dates</strong><span>Once connected to a club, you can post upcoming dates there.</span></li>
         </ol>
         {affiliationRoster}
