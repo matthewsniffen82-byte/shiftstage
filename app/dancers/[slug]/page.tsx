@@ -647,9 +647,9 @@ function PublicProfileStyles() {
       .profile-media-viewer-close { position: fixed; z-index: 3; top: max(12px, env(safe-area-inset-top)); right: max(12px, env(safe-area-inset-right)); width: 50px; height: 50px; display: grid; place-items: center; padding: 0; border: 1px solid rgba(126,234,255,.42); border-radius: 50%; color: #fff; background: rgba(10,10,14,.78); font-size: 30px; cursor: pointer; backdrop-filter: blur(12px); }
       .profile-media-viewer-stage { position: relative; width: 100%; height: 100%; min-height: 0; display: block; overflow-x: hidden; overflow-y: auto; overscroll-behavior-y: contain; scroll-snap-type: y mandatory; scroll-behavior: smooth; scrollbar-width: none; touch-action: pan-y; }
       .profile-media-viewer-stage::-webkit-scrollbar { display: none; }
-      .profile-media-viewer-slide { position: relative; width: 100%; height: 100%; min-height: 100%; max-height: 100%; display: grid; place-items: center; overflow: hidden; background: #000; scroll-snap-align: start; scroll-snap-stop: always; }
+      .profile-media-viewer-slide { position: relative; width: 100%; height: 100%; min-height: 100%; max-height: 100%; display: grid; grid-template: minmax(0, 1fr) / minmax(0, 1fr); place-items: center; overflow: hidden; background: #000; scroll-snap-align: start; scroll-snap-stop: always; }
       .profile-media-viewer-slide::before { position: absolute; z-index: 0; inset: 0; content: ""; background: radial-gradient(circle at 50% 32%, rgba(126,234,255,.1), transparent 26%), linear-gradient(145deg, rgba(109,40,217,.18), #020204 68%); }
-      .profile-media-viewer-slide > img, .profile-media-viewer-slide > video { position: relative; z-index: 1; width: 100%; height: 100%; max-height: 100%; display: block; object-fit: contain; background: transparent; user-select: none; }
+      .profile-media-viewer-slide > img, .profile-media-viewer-slide > video { position: relative; z-index: 1; width: 100%; height: 100%; min-width: 0; min-height: 0; max-height: 100%; display: block; object-fit: contain; background: transparent; user-select: none; }
       .profile-media-playback-feedback { position: absolute; z-index: 3; top: 50%; left: 50%; width: 64px; height: 64px; display: grid; place-items: center; border: 1px solid rgba(255,255,255,.28); border-radius: 50%; color: #fff; background: rgba(0,0,0,.58); box-shadow: 0 10px 30px rgba(0,0,0,.42); pointer-events: none; transform: translate(-50%, -50%); animation: profile-media-playback-feedback 850ms ease both; -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
       .profile-media-playback-feedback svg { width: 29px; height: 29px; fill: currentColor; stroke: none; }
       .profile-media-viewer-slide > img { filter: brightness(1.14) contrast(1.03); opacity: 0; mix-blend-mode: normal; }
@@ -674,8 +674,8 @@ function PublicProfileStyles() {
       .profile-media-viewer-hint { color: #aaa0b8; font-size: 11px; font-weight: 800; }
       .profile-media-viewer { display: block; }
       .profile-media-viewer .profile-media-viewer-stage { width: 100%; height: 100%; }
-      .profile-media-viewer.is-photo .profile-media-viewer-slide > img { object-fit: cover; }
-      .profile-media-viewer.is-video .profile-media-viewer-slide > video { object-fit: cover; }
+      .profile-media-viewer.is-photo .profile-media-viewer-slide > img { object-fit: contain; }
+      .profile-media-viewer.is-video .profile-media-viewer-slide > video { object-fit: contain; }
       .profile-media-viewer .profile-media-viewer-previous,
       .profile-media-viewer .profile-media-viewer-next { position: fixed; z-index: 2; left: auto; right: max(12px, env(safe-area-inset-right)); width: 48px; height: 48px; border-color: rgba(255,255,255,.2); background: rgba(8,8,12,.68); font-size: 22px; transform: none; }
       .profile-media-viewer .profile-media-viewer-previous { top: 34%; }

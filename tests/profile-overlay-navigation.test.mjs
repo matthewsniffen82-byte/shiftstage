@@ -41,6 +41,6 @@ test("mobile navigation cannot cover the fixed profile photo viewer", () => {
   );
   assert.match(
     homeSource,
-    /\.profile-photo-viewer \{[\s\S]*?inset: 0;[\s\S]*?position: fixed;[\s\S]*?\.profile-photo-viewer-image \{[\s\S]*?height: 100dvh;[\s\S]*?width: 100vw;/,
+    /\.profile-photo-viewer \{[\s\S]*?inset: 0;[\s\S]*?height: 100dvh;[\s\S]*?position: fixed;[\s\S]*?\.profile-photo-viewer-image \{[\s\S]*?height: 100%;[\s\S]*?width: 100%;/,
   );
 });

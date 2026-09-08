@@ -570,7 +570,7 @@ function TvVideoStripStyles() {
       .tv-strip-schedule.is-upcoming { border-color: rgba(126,234,255,.32); color: #9fefff; background: rgba(34,199,255,.16); }
       .tv-strip-meta { overflow: hidden; color: #d5cedf; font-size: 9px; font-weight: 800; text-overflow: ellipsis; white-space: nowrap; }
       .tv-strip-open { width: fit-content; color: #fff; font-size: 10px; font-weight: 900; letter-spacing: .04em; text-transform: uppercase; }
-      .tv-video-viewer { position: fixed; z-index: 1000; inset: 0; display: grid; place-items: center; padding: 0; overscroll-behavior: none; touch-action: none; background: rgba(0,0,0,.96); backdrop-filter: blur(18px); }
+      .tv-video-viewer { position: fixed; z-index: 1000; inset: 0; width: 100%; height: 100vh; height: 100dvh; min-height: 0; display: grid; place-items: center; padding: 0; overscroll-behavior: none; touch-action: none; background: rgba(0,0,0,.96); backdrop-filter: blur(18px); }
       .tv-video-viewer-shell { position: relative; width: 100%; max-width: none; height: 100%; min-height: 0; display: grid; grid-template-rows: minmax(0, 1fr) auto; overflow: hidden; border: 0; border-radius: 0; background: #000; box-shadow: none; overscroll-behavior: none; touch-action: none; }
       .tv-video-viewer-stage { position: relative; min-height: 0; overflow: hidden; background: radial-gradient(circle at 50% 28%,rgba(126,234,255,.1),transparent 30%),linear-gradient(145deg,rgba(109,40,217,.2),#020204 72%); overscroll-behavior: none; touch-action: none; }
       .tv-video-viewer-stage > video { width: 100%; height: 100%; min-height: 0; display: block; object-fit: contain; background: transparent; touch-action: none; user-select: none; -webkit-user-select: none; }
