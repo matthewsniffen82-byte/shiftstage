@@ -17,6 +17,8 @@ import AdminNfcInventoryPanel from "./AdminNfcInventoryPanel";
 import AdminPilotAnalytics from "./AdminPilotAnalytics";
 import AdminSalesAgentPanel from "./AdminSalesAgentPanel";
 import AdminTvPanel from "./AdminTvPanel";
+import { AdminDashboardIcon } from "./AdminDashboardIcon";
+import "./admin-dashboard.css";
 import {
   clearAdminSession,
   isAdminAuthenticationError,
@@ -571,6 +573,7 @@ export default function AdminClient() {
       ) : null}
       <section className="dashboard-head admin-dashboard-head" aria-busy={isLoading || undefined}>
         <div className="dashboard-head-row">
+          <span className="admin-dashboard-identity" aria-hidden="true"><AdminDashboardIcon section="shield" /></span>
           <div className="dashboard-head-copy">
             <span className="eyebrow">Platform operations</span>
             <h1>Admin dashboard</h1>
@@ -678,6 +681,7 @@ export default function AdminClient() {
                 aria-current={workspace === item.id ? "page" : undefined}
                 onClick={() => openWorkspace(item.id)}
               >
+                <AdminDashboardIcon section={item.id} />
                 {item.label}
                 {item.id === "approvals" && state.operations?.attention.total
                   ? <span>{state.operations.attention.total}</span>
@@ -5021,10 +5025,10 @@ function Panel({
   return (
     <details className={title === "Support Inbox" ? "admin-panel support-admin-panel" : "admin-panel"} open={defaultOpen || undefined}>
       <summary className="admin-panel-head">
-        <h2>{title}</h2>
+        <span className="admin-panel-title"><span className="admin-panel-icon"><AdminDashboardIcon section="panel" /></span><h2>{title}</h2></span>
         <span className="admin-panel-summary-side">
           {badge ? <span className="admin-panel-badge">{badge}</span> : null}
-          <span className="admin-panel-chevron" aria-hidden="true">⌄</span>
+          <span className="admin-panel-chevron" aria-hidden="true"><AdminDashboardIcon section="chevron" /></span>
         </span>
       </summary>
       <div className="admin-panel-body">{children}</div>

@@ -1,0 +1,97 @@
+/* Admin workspace shares the compact lavender materials of dancer and customer dashboards. */
+body .admin-shell.dashboard-shell-admin {
+  --admin-workspace-text: #f3f0f7;
+  --admin-workspace-muted: #aaa4b6;
+  --admin-workspace-line: rgba(211, 196, 238, .14);
+  --mydancr-dashboard-gap: 12px;
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+  background: radial-gradient(ellipse at 15% 0, #21192e66, transparent 45rem), #09090d;
+}
+body .dashboard-shell-admin .admin-dashboard-head { gap: 14px; margin-bottom: 16px; padding: 22px; border: 1px solid var(--admin-workspace-line); border-radius: 22px; background: linear-gradient(125deg, #21192e, #111016 62%); box-shadow: inset 0 1px 0 #ffffff08, 0 12px 32px #0003; }
+body .dashboard-shell-admin .dashboard-head-row { grid-template-columns: 56px minmax(0, 1fr) 44px; align-items: center; gap: 16px; }
+body .dashboard-shell-admin .admin-dashboard-identity { display: grid; place-items: center; width: 56px; height: 56px; border: 1px solid #cdb9ea45; border-radius: 50%; color: #e3d7f3; background: linear-gradient(150deg, #403050, #241d31); box-shadow: 0 0 0 4px #c7a6ff08; }
+body .dashboard-shell-admin .admin-dashboard-identity svg { width: 27px; height: 27px; }
+body .dashboard-shell-admin .dashboard-head-copy { gap: 6px; }
+body .dashboard-shell-admin .eyebrow { color: #b4a6c8; font-size: 10px; font-weight: 600; letter-spacing: .14em; }
+body .dashboard-shell-admin .dashboard-head h1 { margin: 0; color: var(--admin-workspace-text); font-family: inherit; font-size: clamp(23px, 4vw, 32px); font-weight: 650; line-height: 1.15; letter-spacing: -.04em; }
+body .dashboard-shell-admin .dashboard-head p { margin: 0; color: #b8b0c4; font-size: 12px; font-weight: 400; line-height: 1.5; }
+body .dashboard-shell-admin .dashboard-close { width: 44px; height: 44px; min-height: 44px; border-color: #ffffff20; color: #d3ccdf; background: #ffffff07; box-shadow: none; }
+body .dashboard-shell-admin .dashboard-close svg { width: 18px; height: 18px; }
+body .dashboard-shell-admin .admin-dashboard-session { padding-top: 12px; border-top: 1px solid var(--admin-workspace-line); }
+body .dashboard-shell-admin .admin-dashboard-session > span { font-size: 11px; font-weight: 500; color: #b8b0c4; }
+body .dashboard-shell-admin .admin-dashboard-session .admin-logout { min-height: 40px; border-color: #ffffff16; border-radius: 10px; color: #c8c0d4; background: #ffffff03; box-shadow: none; font-size: 12px; font-weight: 550; }
+body .dashboard-shell-admin .admin-workspace-nav { gap: 8px; padding: 10px; border: 1px solid var(--admin-workspace-line); border-radius: 20px; background: #111016f5; box-shadow: inset 0 1px 0 #ffffff06, 0 8px 24px #0003; }
+body .dashboard-shell-admin .admin-workspace-nav button { display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 48px; padding: 10px 8px; border: 1px solid transparent; border-radius: 12px; color: #b8aec8; font-size: 12px; font-weight: 550; }
+body .dashboard-shell-admin .admin-workspace-nav button > svg { flex: 0 0 19px; width: 19px; height: 19px; color: #c5b4df; }
+body .dashboard-shell-admin .admin-workspace-nav button.active { border: 1px solid #c5a4f547; color: #f0eaf7; background: linear-gradient(135deg, #30253f, #211b2b); box-shadow: inset 0 1px 0 #ffffff06; }
+body .dashboard-shell-admin .admin-workspace-nav button > span { border: 1px solid #c4a3f333; border-radius: 7px; color: #e5d5fc; background: #392a4d; font-size: 10px; font-weight: 600; }
+body .dashboard-shell-admin :is(.operations-status-line h2, .workspace-lead h2, .admin-workspace-heading h2) { font-family: inherit; font-size: clamp(20px, 3vw, 26px); font-weight: 600; line-height: 1.3; letter-spacing: -.03em; }
+body .dashboard-shell-admin :is(.workspace-lead p, .admin-workspace-heading p, .empty) { color: var(--admin-workspace-muted); font-size: 12px; font-weight: 400; line-height: 1.5; }
+body .dashboard-shell-admin .attention-grid button { min-height: 88px; gap: 5px; border: 1px solid #cfb8ed24; border-radius: 12px; background: linear-gradient(135deg, #241d2e, #1a1721); box-shadow: inset 0 1px 0 #ffffff06; }
+body .dashboard-shell-admin .attention-grid span { color: #b8b0c4; font-size: 11px; font-weight: 500; }
+body .dashboard-shell-admin .attention-grid strong { color: #f0eaf7; font-size: 24px; font-weight: 600; letter-spacing: -.04em; }
+body .dashboard-shell-admin .attention-grid small { color: #aaa4b6; font-size: 9px; font-weight: 500; }
+body .dashboard-shell-admin details.admin-panel { padding: 0; border: 1px solid var(--admin-workspace-line); border-radius: 18px; background: linear-gradient(115deg, #16131c, #100f15); box-shadow: inset 0 1px 0 #ffffff04; overflow: hidden; }
+body .dashboard-shell-admin .admin-panel-head { min-height: 78px; gap: 12px; padding: 17px 18px; }
+body .dashboard-shell-admin .admin-panel-title { display: flex; align-items: center; gap: 12px; }
+body .dashboard-shell-admin .admin-panel-icon { flex: 0 0 38px; display: grid; place-items: center; width: 38px; height: 38px; border: 1px solid #c5a4f51f; border-radius: 12px; color: #c5b4df; background: #b794e60e; }
+body .dashboard-shell-admin .admin-panel-icon svg { width: 20px; height: 20px; }
+body .dashboard-shell-admin .admin-panel h2 { margin: 0; color: var(--admin-workspace-text); font-family: inherit; font-size: 17px; font-weight: 600; line-height: 1.3; letter-spacing: -.025em; text-transform: none; }
+body .dashboard-shell-admin .admin-panel-badge { padding: 5px 7px; border: 1px solid #c4a3f333; border-radius: 8px; color: #e5d5fc; background: #b28ae318; font-size: 10px; font-weight: 600; letter-spacing: 0; text-transform: none; }
+body .dashboard-shell-admin .admin-panel-chevron { display: grid; place-items: center; width: 18px; height: 20px; border: 0; color: #b4a4c9; background: transparent; }
+body .dashboard-shell-admin .admin-panel-chevron svg { width: 17px; height: 17px; }
+body .dashboard-shell-admin details.admin-panel[open] { border-color: #b899e04d; }
+body .dashboard-shell-admin details.admin-panel[open] > summary { border-bottom: 1px solid var(--admin-workspace-line); }
+body .dashboard-shell-admin .admin-panel-body { margin: 0; padding: 18px; background: #09090d; }
+body .dashboard-shell-admin :is(.metric span, .operations-list small) { color: #b1a9bf; font-size: 12px; font-weight: 400; line-height: 1.5; }
+body .dashboard-shell-admin .metric strong { color: #f0eaf7; font-size: 20px; font-weight: 600; letter-spacing: -.025em; }
+body .dashboard-shell-admin :is(.operations-list > div, .dancer-directory-row, .submission-value, .submission-detail) { border-color: #cfb8ed24; border-radius: 12px; background: #141119; box-shadow: none; }
+body .dashboard-shell-admin :is(.operations-list strong, .submission-value strong, .dancer-roster-identity strong) { font-weight: 550; }
+body .dashboard-shell-admin :is(.secondary-action, .quick-links a) { border-color: #c5a4f535; border-radius: 10px; color: #e1d9eb; background: #282131; box-shadow: inset 0 1px 0 #ffffff06; font-weight: 550; }
+body .dashboard-shell-admin :is(input:not([type=checkbox]):not([type=radio]), textarea, select) { border-color: #c5a4f538; background: #0d0b12; }
+body .dashboard-shell-admin :is(a, button, summary, input, textarea, select):focus-visible { outline: 2px solid #c5a4f5; outline-offset: 3px; }
+body .dashboard-shell-admin .admin-panel-head:focus-visible { outline-offset: -3px; }
+body .dashboard-shell-admin :is(.admin-workspace-nav button, .attention-grid button):hover { border-color: #c5a4f570; background: #30253f; }
+body .dashboard-shell-admin :is(.health-pill, .dancer-roster-badge) { font-weight: 600; }
+@media (max-width: 680px) {
+  body .dashboard-shell-admin .admin-dashboard-head { padding: 18px 14px; border-radius: 20px; }
+  body .dashboard-shell-admin .dashboard-head-row { grid-template-columns: 46px minmax(0, 1fr) 44px; gap: 11px; }
+  body .dashboard-shell-admin .admin-dashboard-identity { width: 46px; height: 46px; }
+  body .dashboard-shell-admin .dashboard-head h1 { font-size: clamp(20px, 5.5vw, 26px); }
+  body .dashboard-shell-admin .dashboard-head .eyebrow { font-size: 9px; letter-spacing: .1em; }
+  body .dashboard-shell-admin .dashboard-head p { font-size: 11px; }
+  body .dashboard-shell-admin .admin-dashboard-session { flex-direction: row; align-items: center; gap: 8px; }
+  body .dashboard-shell-admin .admin-dashboard-session .admin-logout { width: auto; }
+  body .dashboard-shell-admin .admin-workspace-nav { gap: 6px; padding: 8px; }
+  body .dashboard-shell-admin .admin-workspace-nav button { gap: 6px; font-size: 11px; }
+  body .dashboard-shell-admin .admin-panel-head { min-height: 74px; padding: 14px 12px; gap: 8px; }
+  body .dashboard-shell-admin .admin-panel-title { gap: 9px; }
+  body .dashboard-shell-admin .admin-panel-icon { flex-basis: 32px; width: 32px; height: 32px; border-radius: 10px; }
+  body .dashboard-shell-admin .admin-panel h2 { font-size: 15px; overflow-wrap: anywhere; }
+  body .dashboard-shell-admin .admin-panel-summary-side { flex-shrink: 0; gap: 6px; }
+  body .dashboard-shell-admin .admin-panel-badge { max-width: 90px; white-space: normal; text-align: center; font-size: 9px; }
+  body .dashboard-shell-admin .admin-panel-body { padding: 14px 12px; }
+  body .dashboard-shell-admin :is(input:not([type=checkbox]):not([type=radio]), textarea, select) { font-size: 16px; }
+}
+/* The global button system uses important declarations; keep admin controls in this workspace palette. */
+body.dancr-button-system .dashboard-shell-admin :is(.admin-workspace-nav button, .attention-grid button, .admin-logout, .secondary-action, .quick-links a) { font-family: inherit !important; font-weight: 550 !important; letter-spacing: 0 !important; border-radius: 12px !important; box-shadow: inset 0 1px 0 #ffffff06 !important; }
+body.dancr-button-system .dashboard-shell-admin .admin-workspace-nav button { border: 1px solid transparent !important; color: #b8aec8 !important; background: transparent !important; }
+body.dancr-button-system .dashboard-shell-admin .admin-workspace-nav button.active { border-color: #c5a4f547 !important; color: #f0eaf7 !important; background: linear-gradient(135deg, #30253f, #211b2b) !important; }
+body.dancr-button-system .dashboard-shell-admin .attention-grid button { border-color: #cfb8ed24 !important; background: linear-gradient(135deg, #241d2e, #1a1721) !important; }
+body.dancr-button-system .dashboard-shell-admin :is(.secondary-action, .quick-links a) { border-color: #c5a4f535 !important; color: #e1d9eb !important; background: #282131 !important; }
+body.dancr-button-system .dashboard-shell-admin .admin-logout { border-color: #ffffff16 !important; color: #c8c0d4 !important; background: #ffffff03 !important; }
+body.dancr-button-system .dashboard-shell-admin :is(.admin-workspace-nav button, .attention-grid button):hover { border-color: #c5a4f570 !important; background: #30253f !important; }
+body.dancr-button-system .dashboard-shell-admin .dashboard-close { width: 44px !important; min-width: 44px !important; height: 44px !important; min-height: 44px !important; padding: 0 !important; border: 1px solid #ffffff20 !important; border-radius: 50% !important; color: #d3ccdf !important; background: #ffffff07 !important; box-shadow: none !important; }
+body.dancr-button-system .dashboard-shell-admin :is(a, button, summary, input, textarea, select):focus-visible { outline: 2px solid #c5a4f5 !important; outline-offset: 3px; }
+body .admin-shell.dashboard-shell-admin details.admin-panel { padding: 0 !important; border-color: var(--admin-workspace-line) !important; background: linear-gradient(115deg, #16131c, #100f15) !important; box-shadow: inset 0 1px 0 #ffffff04 !important; }
+body .admin-shell.dashboard-shell-admin details.admin-panel[open] { border-color: #b899e04d !important; }
+body .admin-shell.dashboard-shell-admin .admin-panel-head h2 { font-size: 17px !important; font-weight: 600 !important; }
+body .admin-shell.dashboard-shell-admin .admin-panel-head h2::before { content: none; }
+body .admin-shell.dashboard-shell-admin .admin-panel-badge { border: 1px solid #c4a3f333 !important; color: #e5d5fc !important; background: #b28ae318 !important; }
+@media (max-width: 680px) {
+  body .admin-shell.dashboard-shell-admin .admin-panel-head h2 { font-size: 15px !important; }
+}
+@media (max-width: 380px) {
+  body .dashboard-shell-admin .admin-workspace-nav button { flex-direction: column; gap: 5px; min-height: 64px; padding: 8px 4px; }
+  body .dashboard-shell-admin .admin-workspace-nav button > span { top: 4px; right: 5px; }
+}
