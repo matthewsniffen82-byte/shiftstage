@@ -32152,7 +32152,7 @@
   </style>
   <link href="/dancr-brand-tokens.v1.css?v=13" rel="stylesheet">
   <link href="/dancr-button-system.v1.css" rel="stylesheet">
-  <link href="/dancr-aesthetic.v1.css?v=264" rel="stylesheet">
+  <link href="/dancr-aesthetic.v1.css?v=265" rel="stylesheet">
   <link href="/dancr-feedback.v1.css?v=2" rel="stylesheet">
   <link href="/profile-media-owner-controls.css?v=1" rel="stylesheet">
 </head>
@@ -49839,7 +49839,7 @@
               </div>
               <div class="venue-detail-club-deal-actions">
                 <button class="venue-detail-club-deal-cta" type="button" data-club-deal-state="available" data-club-deal-cta="${encodeDealPass(config)}" aria-label="${hasMultipleActiveDeals ? `Open ${activeDealCount} Club Deals` : `Open Club Deal: ${escapeHtml(venue.activeDeal.dealTitle)}`}">
-                  <strong>${hasMultipleActiveDeals ? "Club Deals" : "Club Deal"}</strong>
+                  <strong>${hasMultipleActiveDeals ? "View deals" : "View deal"}</strong>
                   <span aria-hidden="true">›</span>
                 </button>
               </div>
@@ -49958,7 +49958,7 @@
       button.setAttribute("aria-live", "polite");
       button.innerHTML = actionButtonLabel(
         isConfirmed ? "check" : "share",
-        isSharing ? "Sharing..." : isConfirmed ? "Shared" : "Share club"
+        isSharing ? "Sharing..." : isConfirmed ? "Shared" : "Share"
       );
       const resetTimer = Number(button.dataset.shareResetTimer || 0);
       if (resetTimer) window.clearTimeout(resetTimer);
@@ -52473,7 +52473,7 @@
       const activitySections = [
         `
           <section class="venue-activity-section is-working" aria-labelledby="venue-working-now">
-            <h3 class="section-title" id="venue-working-now" aria-label="${tonight.length} ${tonight.length === 1 ? "dancer" : "dancers"} working now at ${escapeHtml(details.name)}"><span>Working now at ${escapeHtml(details.name)}</span><span class="venue-activity-count" aria-hidden="true">${tonight.length}</span></h3>
+            <h3 class="section-title" id="venue-working-now" aria-label="${tonight.length} ${tonight.length === 1 ? "dancer" : "dancers"} working now at ${escapeHtml(details.name)}"><span>Working now · ${tonight.length}</span></h3>
             ${tonight.length
               ? venueDancerGridMarkup(tonight, city, `Working now at ${details.name}`)
               : `<div class="venue-activity-empty is-compact"><span class="venue-activity-empty-icon">${actionIconMarkup("clock")}</span><span><strong>No dancers working now</strong><small>Follow this club for updates.</small></span></div>`}
@@ -52481,7 +52481,7 @@
         `,
         `
           <section class="venue-activity-section is-upcoming" aria-labelledby="venue-upcoming-shifts">
-            <h3 class="section-title" id="venue-upcoming-shifts" aria-label="${upcoming.length} upcoming ${upcoming.length === 1 ? "shift" : "shifts"} at ${escapeHtml(details.name)}"><span>Upcoming at ${escapeHtml(details.name)}</span><span class="venue-activity-count" aria-hidden="true">${upcoming.length}</span></h3>
+            <h3 class="section-title" id="venue-upcoming-shifts" aria-label="${upcoming.length} upcoming ${upcoming.length === 1 ? "shift" : "shifts"} at ${escapeHtml(details.name)}"><span>Upcoming · ${upcoming.length}</span></h3>
             ${upcoming.length
               ? venueDancerGridMarkup(upcoming, city, `Upcoming at ${details.name}`)
               : `<div class="venue-activity-empty is-compact"><span class="venue-activity-empty-icon">${actionIconMarkup("calendar")}</span><span><strong>No upcoming schedules</strong><small>No upcoming dancer dates are posted for this club.</small></span></div>`}
@@ -52548,10 +52548,10 @@
                 </div>
                 <div class="venue-secondary-actions" aria-label="Venue profile actions">
                   <button class="action-btn secondary follow-venue-btn ${followsVenue ? "is-following" : ""}" type="button" data-venue-follow="${venueValue}" data-account-action="venue-follow" aria-pressed="${followsVenue}">
-                    ${actionButtonLabel("heart", followsVenue ? "Following club" : "Follow club")}
+                    ${actionButtonLabel("heart", followsVenue ? "Following" : "Follow")}
                   </button>
                   <button class="action-btn secondary venue-detail-share" type="button" data-share-venue="${venueValue}" data-share-city="${escapeOptionValue(city)}" aria-label="Share ${escapeHtml(details.name)} club profile">
-                    ${actionButtonLabel("share", "Share club")}
+                    ${actionButtonLabel("share", "Share")}
                   </button>
                 </div>
               </div>
