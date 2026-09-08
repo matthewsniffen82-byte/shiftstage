@@ -4058,7 +4058,7 @@ function DancerOnboardingCommand({
       id: "dancer-profile-media",
       label: "Create profile",
       complete: submitted,
-      detail: submitted ? "Your completed profile is ready for club verification." : profileReady ? "Your profile is ready. Continue to club verification." : setupDetail,
+      detail: submitted ? "Profile submitted for club verification." : profileReady ? "Ready to submit for club verification." : setupDetail,
       locked: false,
     },
     {
@@ -4073,7 +4073,7 @@ function DancerOnboardingCommand({
             ? "Set up later from Earnings."
             : submitted
               ? "Connect your payout account now or set it up later."
-              : "Submit your profile before starting optional payout setup.",
+              : "Available after you submit your profile.",
       locked: !submitted,
       optional: true,
     },
@@ -4081,7 +4081,7 @@ function DancerOnboardingCommand({
       id: "dancer-onboarding-nfc",
       label: "Dressing-room tap",
       complete: isVenueApproved,
-      detail: isVenueApproved ? "An official MyDancr dressing-room tap authorized your venue." : submitted ? "At the club, tap its official dressing-room sticker." : "Complete and submit your profile to unlock club verification.",
+      detail: isVenueApproved ? "Your venue is verified." : submitted ? "At the club, tap its official dressing-room sticker." : "Unlocks after profile submission.",
       locked: !submitted && !isVenueApproved,
     },
   ], [isVenueApproved, natsAccountStatus, payoutSkipped, payoutStepComplete, profileReady, setupDetail, submitted]);
@@ -4297,9 +4297,14 @@ function DancerOnboardingCommand({
         <span>
           <span className="eyebrow">Setup checklist</span>
           <h2 id="dancer-onboarding-heading">Profile setup</h2>
-          <p>Complete your profile, choose whether to set up payouts now, then authorize your first venue at the club.</p>
+          <p>Complete your profile, then verify at the club.</p>
         </span>
-        <b>{steps.filter((step) => step.complete).length} of {steps.length} complete</b>
+        <div className="dancer-onboarding-progress">
+          <div className="dancer-onboarding-progress-track" role="progressbar" aria-label="Profile setup progress" aria-valuemin={0} aria-valuemax={steps.length} aria-valuenow={steps.filter((step) => step.complete).length}>
+            {steps.map((step) => <span className={step.complete ? "is-complete" : ""} key={step.id} />)}
+          </div>
+          <b>{steps.filter((step) => step.complete).length} of {steps.length} complete</b>
+        </div>
       </div>
       <ol className="dancer-onboarding-steps" aria-label="Dancer profile approval progress">
         {steps.map((step, index) => {
@@ -9127,26 +9132,33 @@ function DashboardStyles() {
       .dancer-profile-editor-launch-card > span > strong { color:#fff; font-size:18px; line-height:1.15; }
       .dancer-profile-editor-launch-card > span > small { max-width:56ch; color:#c4bfcc; font-size:12px; line-height:1.45; }
       .dancer-profile-editor-launch-button { min-width:170px; min-height:46px; padding:0 16px; border:1px solid rgba(126,234,255,.42); border-radius:999px; color:#fff; background:linear-gradient(135deg,#6d28d9,#0b94c9); box-shadow:0 10px 24px rgba(61,27,143,.28); font:inherit; font-size:12px; font-weight:950; cursor:pointer; }
-      .dancer-onboarding-command-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; }
+      .dancer-onboarding-command-head { display: grid; gap: 14px; }
       .dancer-onboarding-command-head > span { display: grid; gap: 7px; }
+      .dancer-onboarding-command-head .eyebrow { color: #bda5ed; font-size: 10px; letter-spacing: .14em; }
       .dancer-onboarding-command-head h2 { color: #f8f7fb; font-size: clamp(25px,4vw,34px); letter-spacing: -.025em; }
-      .dancer-onboarding-command-head p { color: var(--mydancr-dashboard-muted); font-size: 14px; line-height: 1.45; }
-      .dancer-onboarding-command-head > b { flex: 0 0 auto; padding: 8px 11px; border: 1px solid rgba(255,255,255,.13); border-radius: 999px; color: #dad7e1; background: rgba(255,255,255,.045); font-size: 11px; }
-      .dancer-onboarding-steps { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+      .dancer-onboarding-command-head p { margin: 0; color: #c4bfce; font-size: 14px; line-height: 1.45; }
+      .dancer-onboarding-progress { display: flex; align-items: center; gap: 12px; }
+      .dancer-onboarding-progress-track { flex: 1; display: flex; gap: 5px; }
+      .dancer-onboarding-progress-track > span { flex: 1; height: 4px; border-radius: 999px; background: #35303e; }
+      .dancer-onboarding-progress-track > .is-complete { background: #70efbd; }
+      .dancer-onboarding-progress > b { color: #d7d0e2; font-size: 11px; font-weight: 650; white-space: nowrap; }
+      .dancer-onboarding-steps { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
       .dancer-onboarding-steps > li { min-width: 0; overflow: clip; border: 1px solid rgba(255,255,255,.09); border-radius: 15px; background: #0d0d12; scroll-margin-top: 18px; }
       .dancer-onboarding-steps > li > button { width: 100%; min-height: 58px; display: grid; grid-template-columns: 30px minmax(0,1fr) auto; gap: 8px; align-items: center; padding: 9px 10px; border: 0; border-radius: 14px; color: #f8f7fb; background: #0d0d12; font: inherit; text-align: left; cursor: pointer; }
       .dancer-onboarding-step-marker { width: 28px; height: 28px; display: grid; place-items: center; border: 1px solid rgba(255,255,255,.17); border-radius: 50%; color: #d7d5dd; background: rgba(255,255,255,.045); font-size: 11px; font-weight: 950; }
       .dancer-onboarding-step-copy { min-width: 0; display: grid; gap: 3px; }
       .dancer-onboarding-step-title { min-width: 0; display: flex; align-items: center; flex-wrap: wrap; gap: 5px; }
-      .dancer-onboarding-step-copy strong { font-size: 15px; }
-      .dancer-onboarding-step-copy small { color: var(--mydancr-dashboard-muted); font-size: 11px; line-height: 1.35; }
-      .dancer-onboarding-step-title em { padding: 2px 5px; border: 1px solid rgba(126,234,255,.2); border-radius: 999px; color: #bfefff; background: rgba(21,126,155,.08); font-size: 8px; font-style: normal; font-weight: 950; letter-spacing: .04em; text-transform: uppercase; white-space: nowrap; }
+      .dancer-onboarding-step-copy strong { color: #f8f7fb; font-size: 15px; font-weight: 750; line-height: 1.3; }
+      .dancer-onboarding-step-copy small { color: #c4bfce; font-size: 12px; font-weight: 450; line-height: 1.4; }
+      .dancer-onboarding-step-title em { padding: 2px 6px; border: 1px solid #494251; border-radius: 999px; color: #cfc6dd; background: #211c2b; font-size: 8px; font-style: normal; font-weight: 650; letter-spacing: .04em; text-transform: uppercase; white-space: nowrap; }
       .dancer-onboarding-step-control { min-height: 36px; display: inline-flex; align-items: center; justify-content: center; gap: 4px; padding: 0 8px; border: 1px solid rgba(139,92,246,.38); border-radius: 999px; color: #f7f1ff; background: rgba(109,40,217,.18); font-size: 10px; font-weight: 950; white-space: nowrap; }
       .dancer-onboarding-step-control-chevron, .dancer-onboarding-step-control-icon { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
       .dancer-onboarding-step-control-chevron { transition: transform .18s ease; }
       .dancer-onboarding-step-control-chevron.is-open { transform: rotate(90deg); }
       .dancer-onboarding-step-control.is-locked { width: 36px; padding: 0; border-color: transparent; color: #8e8996; background: transparent; }
       .dancer-onboarding-step-control.is-complete { border-color: rgba(76,223,166,.3); color: #70efbd; background: rgba(25,140,101,.1); }
+      .dancer-onboarding-steps .is-current .dancer-onboarding-step-control.is-action { border-color: #9864ed; background: #6d28d9; color: #fff; }
+      .dancer-onboarding-steps .is-current .dancer-onboarding-step-marker { border-color: #9864ed; background: #6d28d9; color: #fff; }
       .dancer-onboarding-step-check { font-size: 12px; line-height: 1; }
       .dancer-onboarding-steps .is-current > button { background: rgba(97,45,188,.12); box-shadow: inset 3px 0 0 #8b5cf6; }
       .dancer-onboarding-steps .is-current { border-color: rgba(139,92,246,.56); }
@@ -9154,9 +9166,13 @@ function DashboardStyles() {
       .dancer-onboarding-steps .is-complete > button { background: rgba(25,140,101,.07); }
       .dancer-onboarding-steps .is-complete .dancer-onboarding-step-marker { border-color: rgba(76,223,166,.42); color: #70efbd; background: rgba(25,140,101,.13); }
       .dancer-onboarding-steps .is-locked > button { cursor: not-allowed; }
-      .dancer-onboarding-steps .is-locked > button:disabled { opacity: 1; }
+      .dancer-onboarding-steps .is-locked > button:disabled { opacity: 1 !important; filter: none !important; }
       .dancer-onboarding-steps .is-locked .dancer-onboarding-step-copy strong { color: #d5d2da; }
-      .dancer-onboarding-steps .is-locked .dancer-onboarding-step-copy small { color: #918d98; }
+      .dancer-onboarding-steps .is-locked .dancer-onboarding-step-copy small { color: #b5afbf; }
+      body.dancr-button-system .dancer-onboarding-steps > li > button { padding: 13px 12px; border: 0 !important; border-radius: 14px !important; background: #141119 !important; box-shadow: none !important; -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
+      body.dancr-button-system .dancer-onboarding-steps > .is-current > button { background: linear-gradient(110deg,#26173c,#18111f) !important; }
+      body.dancr-button-system .dancer-onboarding-steps > .is-complete > button { background: #101d19 !important; }
+      body.dancr-button-system .dancer-onboarding-steps > .is-open > button { border-radius: 14px 14px 0 0 !important; }
       .dancer-onboarding-steps .is-deferred { border-color: rgba(126,234,255,.14); }
       .dancer-onboarding-steps .is-open > button { border-radius: 14px 14px 0 0; }
       .dancer-onboarding-step-panel { display: grid; gap: 14px; padding: 14px; border-top: 1px solid rgba(255,255,255,.09); background: #09090d; animation: dancer-onboarding-panel-in .18s ease-out; }
