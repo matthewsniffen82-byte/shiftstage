@@ -23,7 +23,7 @@ import { requestDancerMediaPin } from "./dashboard-session";
 import { AVATAR_REJECTED_MESSAGE, avatarUploadPresentation, type AvatarUploadFeedback } from "./avatar-upload-state";
 import DancerShiftManager from "./DancerShiftManager";
 import { DANCER_PROFILE_VIDEOS_CHANGED_EVENT } from "./dancer-profile-media-sync";
-import { DancerDashboardAvatar, DancerDashboardIcon } from "./DancerDashboardIdentity";
+import { DancerDashboardAvatar, DancerDashboardIcon, DancerDashboardLoading } from "./DancerDashboardIdentity";
 import "./dancer-dashboard.css";
 import VenueNfcTagPanel from "./VenueNfcTagPanel";
 import VenueTeamPanel from "./VenueTeamPanel";
@@ -622,7 +622,7 @@ export default function DashboardClient({
   }, []);
 
   const title = useMemo(() => {
-    if (role === "dancer") return "Complete your profile";
+    if (role === "dancer") return "Dancer dashboard";
     if (role === "venue") return "Venue dashboard";
     return "Customer dashboard";
   }, [role]);
@@ -639,13 +639,14 @@ export default function DashboardClient({
   const dashboardEyebrow =
     role === "customer" ? "Customer dashboard" : role === "venue" ? "Venue dashboard" : "Dancer dashboard";
   const dashboardHeading = isLoading
-    ? (role === "dancer" ? profileDisplayName || title : resolvedDisplayName || title)
-    : displayName;
+    ? (role === "dancer" ? profileDisplayName || "Loading your dashboard…" : resolvedDisplayName || title)
+    : role === "dancer" && state.error ? profileDisplayName || title : displayName;
   const dashboardDescription = state.error || state.accountError || "";
   const dancerProfileStatus = role === "dancer"
     ? effectiveDancerProfileStatus(state.profile, state.account?.accountState)
     : "";
-  const dancerProfileIsLive = dancerProfileStatus === "approved"
+  const dancerProfileIsLive = !isLoading && !state.error && Boolean(state.profile)
+    && dancerProfileStatus === "approved"
     && state.profile?.is_public !== false
     && state.profile?.isPublic !== false;
 
@@ -654,7 +655,7 @@ export default function DashboardClient({
       <DashboardStyles />
       <section className={`dashboard-head dashboard-head-${role}`} aria-busy={isLoading || undefined}>
         <div className="dashboard-head-row">
-          {role === "dancer" ? <DancerDashboardAvatar avatarUrl={String(state.profile?.avatarPhotoUrl || "")} name={dashboardHeading} /> : null}
+          {role === "dancer" ? <DancerDashboardAvatar avatarUrl={String(state.profile?.avatarPhotoUrl || "")} name={profileDisplayName} /> : null}
           <div className="dashboard-head-copy">
             <span className="eyebrow">{dashboardEyebrow}</span>
             <div className="dashboard-head-title-row">
@@ -2538,6 +2539,7 @@ function alignOpenedDashboardSection(event: SyntheticEvent<HTMLDetailsElement>) 
 }
 
 function DashboardLoadingState({ role }: { role: DashboardRole }) {
+  if (role === "dancer") return <DancerDashboardLoading />;
   return (
     <section className="venue-dashboard-loading" aria-busy="true" aria-label={`Loading ${role} dashboard`}>
       <span className="dashboard-sr-only">Loading {role} dashboard</span>
