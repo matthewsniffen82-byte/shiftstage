@@ -1,26 +1,49 @@
 "use client";
 
-export default function DancerMediaPinButton({ label, pinned = false, busy = false, disabled, onClick }: {
+import { useEffect, useRef, useState } from "react";
+
+export default function DancerMediaPinButton({ label, pinned = false, busy = false, disabled, onClick, placement = "right" }: {
   label: string;
   pinned?: boolean;
   busy?: boolean;
   disabled?: boolean;
   onClick: () => void;
+  placement?: "right" | "left" | "inline";
 }) {
-  return <>
-    <button className="dancer-media-pin" aria-label={`${pinned ? "Unpin" : "Pin"} ${label}`}
-      aria-pressed={pinned} aria-busy={busy} title={pinned ? "Unpin" : "Pin to top"}
-      disabled={disabled || busy} onClick={onClick} type="button">
-      <span aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m15 3 6 6-3 1-4 4v4l-2 2-3-5-5-3 2-2h4l4-4 1-3Z" /><path d="m9 15-6 6" /></svg></span>
-    </button>
-    <style>{`
-      button.dancer-media-pin, body.dancr-button-system button.dancer-media-pin { position:absolute; top:2px; right:2px; bottom:auto; z-index:2; display:grid; place-items:center; width:44px !important; height:44px !important; min-height:44px !important; min-width:44px; margin:0 !important; padding:0 !important; border:0 !important; background:transparent !important; box-shadow:none !important; backdrop-filter:none !important; -webkit-backdrop-filter:none !important; color:#fff !important; cursor:pointer; }
-      button.dancer-media-pin > span { width:30px; height:30px; display:grid; place-items:center; justify-self:end; border:1px solid rgba(255,255,255,.5); border-radius:50%; background:rgba(0,0,0,.78); box-shadow:0 1px 5px rgba(0,0,0,.35); }
-      button.dancer-media-pin[aria-pressed="true"] > span { background:#6d28d9; border-color:#d3bbff; }
-      button.dancer-media-pin svg { width:17px; height:17px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
-      button.dancer-media-pin[aria-pressed="true"] svg { fill:rgba(255,255,255,.25); }
-      button.dancer-media-pin:disabled { opacity:.55; cursor:wait; }
-      button.dancer-media-pin:focus-visible { outline:2px solid #fff; outline-offset:-2px; }
-    `}</style>
-  </>;
+  const root = useRef<HTMLDetailsElement>(null);
+  const [open, setOpen] = useState(false);
+  useEffect(() => {
+    if (!open) return;
+    const outside = (event: PointerEvent) => {
+      if (root.current && !root.current.contains(event.target as Node)) root.current.open = false;
+    };
+    document.addEventListener("pointerdown", outside);
+    return () => document.removeEventListener("pointerdown", outside);
+  }, [open]);
+  return <details className={`dancer-media-menu is-${placement}`} ref={root} data-pinned={pinned}
+    onClick={event => event.stopPropagation()}
+    onToggle={event => {
+      setOpen(event.currentTarget.open);
+      if (event.currentTarget.open) document.querySelectorAll<HTMLDetailsElement>("details.dancer-media-menu[open]").forEach(menu => {
+        if (menu !== event.currentTarget) menu.open = false;
+      });
+    }}
+    onKeyDown={event => {
+      if (event.key === "Escape" && root.current?.open) {
+        event.preventDefault(); event.stopPropagation(); root.current.open = false;
+        root.current.querySelector("summary")?.focus();
+      }
+    }}>
+    <summary aria-label={`Options for ${label}`} aria-disabled={disabled || busy} aria-busy={busy}
+      onClick={event => { if (disabled || busy) event.preventDefault(); }}>
+      <span aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg></span>
+    </summary>
+    <div className="dancer-media-menu-popover">
+      <button type="button" aria-label={`${pinned ? "Unpin" : "Pin"} ${label}`} disabled={disabled || busy} onClick={() => {
+        if (disabled || busy) return;
+        if (root.current) { root.current.open = false; root.current.querySelector("summary")?.focus(); }
+        onClick();
+      }}>{pinned ? "Unpin" : "Pin"}</button>
+    </div>
+  </details>;
 }

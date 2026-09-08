@@ -86,6 +86,7 @@ export default function DancerVideoPreviews({ videos, removingId, disabled, onRe
         <div>
           <button aria-label="Close video preview" onClick={() => setActiveId("")} type="button">Close</button>
           {activeVideo ? <video key={activeVideo.id} autoPlay controls playsInline poster={activeVideo.posterUrl || undefined} src={activeVideo.videoUrl} onError={() => setPlaybackError(true)} /> : null}
+          {activeVideo?.status === "approved" && onPin ? <DancerMediaPinButton key={activeVideo.id} label="this video" pinned={activeVideo.isPinned} disabled={disabled} placement="inline" onClick={() => onPin(activeVideo)} /> : null}
           {playbackError ? <p role="status">Unable to play video. Close and try again.</p> : null}
         </div>
       </dialog>

@@ -2,6 +2,8 @@
 
 Owners can pin or unpin approved gallery photos and profile videos. Multiple items can be pinned. Pinned photos precede the existing photo-slot order; pinned videos precede the normal video order. Pins never change the avatar, moderation status, visibility, or ordering in the shared TV feed.
 
+Use the three-dot options menu to choose **Pin** or **Unpin** in dashboard previews, media managers, and both live-profile implementations (including their full-screen viewers). Trash controls remain separate. Public-profile menus require a server-verified owner session; a pin only changes local ordering after the server confirms it. Pin and delete actions share a busy guard. Live-profile pin requests time out after 15 seconds without automatic retries, and failed requests preserve the existing media and order.
+
 `PATCH /api/dancer/media/pin` requires the authenticated dancer and accepts an explicit `mediaType`, `mediaId`, and boolean `pinned`. The server scopes the update to the dancer derived from the authenticated user and approved media. Videos must have `profile_and_feed` distribution. Retrying the same desired state is idempotent. Browser roles retain no direct update privileges on the media tables.
 
 ## Database rollout

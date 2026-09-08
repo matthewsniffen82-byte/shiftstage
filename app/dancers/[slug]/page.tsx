@@ -310,6 +310,9 @@ export default async function DancerPublicPage({ params }: PageProps) {
             imageWidth: photo.imageWidth,
             imageHeight: photo.imageHeight,
             likeCount: photo.likeCount || 0,
+            isPinned: "isPinned" in photo && photo.isPinned === true,
+            isPrimary: photo.isPrimary,
+            sortOrder: photo.sortOrder,
           }))}
           videos={tvVideos.map((video) => ({
             id: video.id,
@@ -317,6 +320,8 @@ export default async function DancerPublicPage({ params }: PageProps) {
             posterUrl: video.posterUrl || null,
             durationSeconds: video.durationSeconds,
             likeCount: video.likeCount,
+            isPinned: video.isPinned,
+            publishedAt: video.publishedAt,
           }))}
           socialContent={profile.socialLinks.length ? (
             <SocialLinks dancerId={profile.id} links={profile.socialLinks} showHeading={false} />

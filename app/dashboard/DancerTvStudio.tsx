@@ -6,6 +6,7 @@ import { homeDiscoveryHref } from "@/src/lib/dancr/navigation";
 import { MAX_DANCER_PROFILE_VIDEOS } from "@/src/lib/dancr/media-limits";
 import { createBrowserSupabaseClient } from "@/src/lib/supabase/client";
 import DancerVideoPreviews from "./DancerVideoPreviews";
+import DancerMediaPinButton from "./DancerMediaPinButton";
 import {
   readDashboardAccessToken,
   requestDancerMediaPin,
@@ -625,6 +626,7 @@ export default function DancerTvStudio({ embedded = false }: { embedded?: boolea
         {embedded ? <DancerVideoPreviews videos={workspace?.videos || []} removingId={removingId} disabled={videoActionBusy} onRemove={(videoId) => void removeVideo(videoId)} pinningId={pinningId} onPin={(video) => void pinVideo(video)} /> : <div className="tv-managed-grid">
           {workspace?.videos.map((video) => (
             <article className="tv-managed-video" key={video.id}>
+              {video.status === "approved" ? <DancerMediaPinButton label="this video" pinned={video.isPinned} busy={pinningId === video.id} disabled={videoActionBusy} onClick={() => void pinVideo(video)} /> : null}
               {video.videoUrl ? (
                 <video
                   controls

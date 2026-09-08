@@ -19,6 +19,7 @@ import { useVideoSoundPreference } from "@/src/lib/dancr/use-video-sound-prefere
 import { useAdaptiveVideoWarmup } from "@/src/lib/dancr/use-adaptive-video-warmup";
 import { useAnonymousMediaLikes } from "@/src/lib/dancr/use-anonymous-media-likes";
 import { DANCER_PROFILE_MEDIA_PAGE_SIZE } from "@/src/lib/dancr/media-limits";
+import DancerMediaPinButton from "@/app/dashboard/DancerMediaPinButton";
 
 type DancerPhotoCarouselProps = {
   dancerId?: string;
@@ -29,6 +30,9 @@ type DancerPhotoCarouselProps = {
     imageWidth?: number | null;
     imageHeight?: number | null;
     likeCount?: number;
+    isPinned?: boolean;
+    isPrimary?: boolean;
+    sortOrder?: number;
   }>;
   videos?: Array<{
     id: string;
@@ -36,10 +40,13 @@ type DancerPhotoCarouselProps = {
     posterUrl?: string | null;
     durationSeconds: number;
     likeCount?: number;
+    isPinned?: boolean;
+    publishedAt?: string;
   }>;
   stageName: string;
   socialContent?: ReactNode;
   viewerStatus?: string;
+  onMediaPinned?: (kind: "photo" | "video", id: string, pinned: boolean) => void;
 };
 
 type PhotoMedia = {
@@ -50,6 +57,9 @@ type PhotoMedia = {
   imageWidth?: number | null;
   imageHeight?: number | null;
   likeCount?: number;
+  isPinned?: boolean;
+  isPrimary?: boolean;
+  sortOrder?: number;
 };
 
 type VideoMedia = {
@@ -59,6 +69,8 @@ type VideoMedia = {
   posterUrl: string | null;
   durationSeconds: number;
   likeCount?: number;
+  isPinned?: boolean;
+  publishedAt?: string;
 };
 
 type ProfileMedia = PhotoMedia | VideoMedia;
@@ -75,6 +87,18 @@ type MediaReportTarget = {
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
+function orderPinnedMedia<T extends ProfileMedia>(items: T[]): T[] {
+  return [...items].sort((left, right) => {
+    if (Boolean(left.isPinned) !== Boolean(right.isPinned)) return left.isPinned ? -1 : 1;
+    if (left.kind === "photo" && right.kind === "photo") {
+      if (Boolean(left.isPrimary) !== Boolean(right.isPrimary)) return left.isPrimary ? -1 : 1;
+      return Number(left.sortOrder || 0) - Number(right.sortOrder || 0);
+    }
+    if (left.kind === "video" && right.kind === "video") return String(right.publishedAt || "").localeCompare(String(left.publishedAt || ""));
+    return 0;
+  });
+}
+
 export function DancerPhotoCarousel({
   dancerId,
   photos,
@@ -82,6 +106,7 @@ export function DancerPhotoCarousel({
   stageName,
   socialContent,
   viewerStatus = "No shift posted",
+  onMediaPinned,
 }: DancerPhotoCarouselProps) {
   const [deletedMedia, setDeletedMedia] = useState<string[]>([]);
   const [ownerToken, setOwnerToken] = useState("");
@@ -89,6 +114,12 @@ export function DancerPhotoCarousel({
   const [deleteBusy, setDeleteBusy] = useState(false);
   const [deleteStatus, setDeleteStatus] = useState("");
   const deleteInFlight = useRef(false);
+  const [pinOverrides, setPinOverrides] = useState<Record<string, boolean>>({});
+  const pinRequest = useRef<AbortController | null>(null);
+  useEffect(() => {
+    setPinOverrides({}); setDeleteBusy(false); deleteInFlight.current = false;
+    return () => { pinRequest.current?.abort(); pinRequest.current = null; };
+  }, [dancerId]);
   useEffect(() => {
     const controller = new AbortController();
     const token = readBrowserAccessToken("dancer");
@@ -110,21 +141,22 @@ export function DancerPhotoCarousel({
   const canDeleteMedia = Boolean(ownerDancerId === dancerId && ownerToken && ownerToken === readBrowserAccessToken("dancer"));
   const photoMedia = useMemo<PhotoMedia[]>(
     () =>
-      photos
+      orderPinnedMedia(photos
         .filter((photo) => photo.imageUrl && !deletedMedia.includes(`photo:${photo.id}`))
-        .map((photo) => ({ ...photo, kind: "photo" })),
-    [photos, deletedMedia],
+        .map((photo) => ({ ...photo, kind: "photo" as const, isPinned: pinOverrides[`photo:${photo.id}`] ?? photo.isPinned }))),
+    [photos, deletedMedia, pinOverrides],
   );
   const videoMedia = useMemo<VideoMedia[]>(
     () =>
-      videos
+      orderPinnedMedia(videos
         .filter((video) => video.videoUrl && !deletedMedia.includes(`video:${video.id}`))
         .map((video) => ({
           ...video,
-          kind: "video",
+          kind: "video" as const,
+          isPinned: pinOverrides[`video:${video.id}`] ?? video.isPinned,
           posterUrl: video.posterUrl || null,
-        })),
-    [videos, deletedMedia],
+        }))),
+    [videos, deletedMedia, pinOverrides],
   );
   const mediaLikeSeeds = useMemo(() => [
     ...photoMedia.map((item) => ({ mediaType: "photo" as const, mediaId: item.id, likeCount: item.likeCount })),
@@ -182,6 +214,8 @@ export function DancerPhotoCarousel({
     ? Math.min(Math.max(viewer.index, 0), Math.max(0, viewerItems.length - 1))
     : 0;
   const activeViewerItem = viewerItems[viewerIndex];
+  const currentViewer = useRef({ viewer, items: viewerItems, activeItem: activeViewerItem });
+  currentViewer.current = { viewer, items: viewerItems, activeItem: activeViewerItem };
   const viewerKind = viewer?.kind;
   const activeTabId = `${tabGroupId}-${activeTab}-tab`;
   const panelId = `${tabGroupId}-panel`;
@@ -451,6 +485,49 @@ export function DancerPhotoCarousel({
     } finally {
       deleteInFlight.current = false;
       setDeleteBusy(false);
+    }
+  }
+
+  async function pinMedia(item: ProfileMedia) {
+    if (!canDeleteMedia || deleteInFlight.current || !UUID_PATTERN.test(item.id)) return;
+    const session = readBrowserAuthSession();
+    if (!session?.accessToken || session.accessToken !== ownerToken) return;
+    const controller = new AbortController();
+    pinRequest.current = controller;
+    const timeout = window.setTimeout(() => controller.abort(), 15_000);
+    const pinned = !item.isPinned;
+    deleteInFlight.current = true;
+    setDeleteBusy(true);
+    setDeleteStatus("");
+    try {
+      const response = await fetch("/api/dancer/media/pin", {
+        method: "PATCH", signal: controller.signal,
+        headers: { Authorization: `Bearer ${session.accessToken}`, "Content-Type": "application/json",
+          ...(session.refreshToken ? { "x-dancr-refresh-token": session.refreshToken } : {}) },
+        body: JSON.stringify({ mediaType: item.kind, mediaId: item.id, pinned }),
+      });
+      const data = await response.json();
+      if (!response.ok || !data.ok || data.media?.id !== item.id || data.media.isPinned !== pinned) throw new Error(data.error || "Unable to save the pin. Try again.");
+      if (controller.signal.aborted || pinRequest.current !== controller || readBrowserAccessToken("dancer") !== session.accessToken) return;
+      if (data.session) persistRefreshedBrowserAuthSession(data.session, session);
+      setOwnerToken(readBrowserAccessToken("dancer"));
+      setPinOverrides(current => ({ ...current, [`${item.kind}:${item.id}`]: pinned }));
+      onMediaPinned?.(item.kind, item.id, pinned);
+      const latest = currentViewer.current;
+      if (latest.viewer?.kind === item.kind && latest.activeItem) {
+        const ordered = orderPinnedMedia(latest.items.map(media => media.id === item.id ? { ...media, isPinned: pinned } : media));
+        const index = ordered.findIndex(media => media.id === latest.activeItem.id);
+        pendingViewerIndex.current = index;
+        viewerOpeningIndex.current = index;
+        setViewer({ kind: latest.viewer.kind, index });
+        settleViewerAtIndex(index);
+      }
+      setDeleteStatus(`${item.kind === "photo" ? "Photo" : "Video"} ${pinned ? "pinned" : "unpinned"}.`);
+    } catch (error) {
+      if (pinRequest.current === controller && readBrowserAccessToken("dancer") === session.accessToken) setDeleteStatus(controller.signal.aborted ? "Unable to save the pin. Try again." : error instanceof Error ? error.message : "Unable to save the pin. Try again.");
+    } finally {
+      window.clearTimeout(timeout);
+      if (pinRequest.current === controller) { pinRequest.current = null; deleteInFlight.current = false; setDeleteBusy(false); }
     }
   }
 
@@ -794,6 +871,9 @@ export function DancerPhotoCarousel({
               )}
             </button>
             {canDeleteMedia && UUID_PATTERN.test(item.id) ? (
+              <DancerMediaPinButton label={`${item.kind} ${index + 1}`} pinned={item.isPinned} disabled={deleteBusy} placement="left" onClick={() => void pinMedia(item)} />
+            ) : null}
+            {canDeleteMedia && UUID_PATTERN.test(item.id) ? (
               <button className="profile-media-delete" type="button" aria-label={`Delete ${item.kind} ${index + 1}`} disabled={deleteBusy} onClick={() => void deleteMedia(item)}><DeleteIcon /></button>
             ) : null}
           </div>
@@ -946,6 +1026,9 @@ export function DancerPhotoCarousel({
               </div>
             ) : null}
             <div className="profile-media-viewer-actions">
+              {canDeleteMedia && UUID_PATTERN.test(activeViewerItem.id) ? (
+                <DancerMediaPinButton label={`this ${activeViewerItem.kind}`} pinned={activeViewerItem.isPinned} disabled={deleteBusy} placement="inline" onClick={() => void pinMedia(activeViewerItem)} />
+              ) : null}
               {canDeleteMedia && UUID_PATTERN.test(activeViewerItem.id) ? (
                 <button className="profile-media-viewer-delete" type="button" aria-label={`Delete this ${activeViewerItem.kind}`} disabled={deleteBusy} onClick={() => void deleteMedia(activeViewerItem)}><DeleteIcon /></button>
               ) : null}

@@ -27,7 +27,8 @@ const render = (overrides = {}) => renderToStaticMarkup(React.createElement(prev
 
 test("video pins are available only for approved media and reflect saved state", () => {
   const html = render({ onPin() {}, videos: videos.map((video) => ({ ...video, isPinned: true })) });
-  assert.match(html, /aria-label="Unpin video 1" aria-pressed="true"/);
+  assert.match(html, /aria-label="Options for video 1"/);
+  assert.match(html, /aria-label="Unpin video 1"/);
   assert.doesNotMatch(html, /aria-label="(?:Unpin|Pin) video [23]"/);
   assert.match(html, /Delete video 1/);
 });
@@ -59,6 +60,7 @@ test("the dashboard video manager shows compact previews while the separate TV s
   const Studio = compile("DancerTvStudio.tsx", name => {
     if (name === "react") return hooks;
     if (name === "./DancerVideoPreviews") return { default: previews.default };
+    if (name === "./DancerMediaPinButton") return pinButton;
     if (name === "next/link") return { default: ({ children, href }) => React.createElement("a", { href }, children) };
     if (name === "@/src/lib/dancr/navigation") return { homeDiscoveryHref: () => "/tv" };
     if (name === "@/src/lib/dancr/media-limits") return { MAX_DANCER_PROFILE_VIDEOS: 50 };

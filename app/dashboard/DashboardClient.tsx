@@ -3493,7 +3493,7 @@ function DancerProfilePreview({
     avatarUploadingRef.current = busy;
     setIsAvatarUploading(busy);
   }, []);
-  const videos = uploadedVideos.filter((video) => video.status === "approved" && video.videoUrl);
+  const videos = uploadedVideos.filter((video) => video.status === "approved" && video.videoUrl).map(video => ({ ...video, publishedAt: video.createdAt }));
   const closeRef = useRef<HTMLButtonElement>(null);
   const overlayRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
@@ -3508,7 +3508,11 @@ function DancerProfilePreview({
   const previewImage = avatarUrl || approvedPhotos[0]?.imageUrl || "";
   const previewName = name?.trim() || persistedName || "Your stage name";
   const previewCity = city?.trim() || persistedCity || "Choose your city";
-  const photos = approvedPhotos.map((photo) => ({ id: photo.id, imageUrl: photo.imageUrl }));
+  const photos = approvedPhotos.map((photo) => ({ id: photo.id, imageUrl: photo.imageUrl, isPinned: photo.isPinned, isPrimary: photo.isPrimary, sortOrder: photo.sortOrder }));
+  const handleMediaPinned = (mediaType: "photo" | "video", mediaId: string, isPinned: boolean) => {
+    if (mediaType === "video") setUploadedVideos((current) => current.map((video) => video.id === mediaId ? { ...video, isPinned } : video).sort((a, b) => Number(Boolean(b.isPinned)) - Number(Boolean(a.isPinned)) || String(b.createdAt || "").localeCompare(String(a.createdAt || ""))));
+    else onProfileChange?.({ ...profile, dancer_photos: (Array.isArray(profile?.dancer_photos) ? profile.dancer_photos : []).map((photo: any) => photo.id === mediaId ? { ...photo, is_pinned: isPinned } : photo) });
+  };
   const socialLinks = dancerPreviewSocialLinks(profile);
   const isEditor = Boolean(editorSections);
   const isOnboardingEditor = isEditor && Boolean(builderRequirements?.length) && !isApproved;
@@ -3853,10 +3857,7 @@ function DancerProfilePreview({
               <DancerProfileMediaUploads
                 photos={profilePhotoItems}
                 videos={uploadedVideos.map((video) => ({ id: video.id, imageUrl: video.posterUrl, status: video.status, videoUrl: video.videoUrl, isPinned: video.isPinned }))}
-                onMediaPinned={(mediaType, mediaId, isPinned) => {
-                  if (mediaType === "video") setUploadedVideos((current) => current.map((video) => video.id === mediaId ? { ...video, isPinned } : video).sort((a, b) => Number(Boolean(b.isPinned)) - Number(Boolean(a.isPinned)) || String(b.createdAt || "").localeCompare(String(a.createdAt || ""))));
-                  else onProfileChange?.({ ...profile, dancer_photos: (Array.isArray(profile?.dancer_photos) ? profile.dancer_photos : []).map((photo: any) => photo.id === mediaId ? { ...photo, is_pinned: isPinned } : photo) });
-                }}
+                onMediaPinned={handleMediaPinned}
                 isApproved={isApproved}
                 isPublic={isPublic}
                 isVideoLoading={isMediaLoading}
@@ -3872,7 +3873,7 @@ function DancerProfilePreview({
               />
             ) : (
               <>
-                <DancerPhotoCarousel dancerId={typeof profile?.id === "string" ? profile.id : undefined} photos={photos} stageName={previewName} videos={videos} />
+                <DancerPhotoCarousel dancerId={typeof profile?.id === "string" ? profile.id : undefined} photos={photos} stageName={previewName} videos={videos} onMediaPinned={handleMediaPinned} />
                 {isEditor ? (
                   <div className="dancer-profile-builder-media-actions" aria-label="Edit profile media">
                     <button onClick={() => openEditorSection("photos")} type="button"><span aria-hidden="true">+</span>{photos.length ? "Edit photos" : "Add photos"}</button>
