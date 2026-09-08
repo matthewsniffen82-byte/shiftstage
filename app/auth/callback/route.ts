@@ -60,7 +60,7 @@ function callbackRedirectPath(request: Request, callbackSession: Awaited<ReturnT
   if (explicitReturnTo) return explicitReturnTo;
   if (accountRole === "admin") return "/admin";
   if (role) return liveAppCallbackPath(url, role);
-  return "/account";
+  return "/?auth=login";
 }
 
 function callbackRole(request: Request, callbackSession: Awaited<ReturnType<typeof readCallbackSession>>) {
@@ -88,7 +88,7 @@ function isLiveAppDestination(value: string) {
 
   try {
     const pathname = new URL(value, "https://mydancr.com").pathname;
-    return pathname === "/" || pathname.startsWith("/dashboard/customer") || pathname.startsWith("/dashboard/dancer") || pathname.startsWith("/dashboard/venue");
+    return pathname === "/" || pathname === "/account" || pathname === "/outputs/index.html" || pathname.startsWith("/dashboard/customer") || pathname.startsWith("/dashboard/dancer") || pathname.startsWith("/dashboard/venue");
   } catch {
     return false;
   }
@@ -164,7 +164,7 @@ function callbackHtml(
       <span class="dancr-status-mark" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8" /><path d="M12 8v4m0 4h.01" /></svg></span>
       <h1>Confirmation link unavailable</h1>
       <p>This link is invalid, already used, or has expired. Try signing in if you already confirmed your email, or request a new email.</p>
-      <a href="/account?mode=login">Continue to sign in</a>
+      <a href="/?auth=login">Continue to sign in</a>
     </main>
     <main id="openingDancr" class="dancr-status-card">
       <p class="eyebrow">MyDancr</p>
@@ -178,7 +178,7 @@ function callbackHtml(
       <span class="dancr-status-mark" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 11a9 9 0 0 1 16 0M8 14a5 5 0 0 1 8 0M12 18h.01M4 4l16 16" /></svg></span>
       <h1>Unable to connect</h1>
       <p id="temporaryErrorMessage">We couldn't verify this link right now. Check your connection and try opening the email link again. If the link was already used, sign in or request a new email.</p>
-      <a href="/account?mode=login">Go to sign in</a>
+      <a href="/?auth=login">Go to sign in</a>
     </main>
     <script>
       const serverSession = ${sessionJson};
@@ -199,6 +199,10 @@ function callbackHtml(
       async function validateFragmentSession() {
         const accessToken = fragmentParams.get("access_token") || "";
         const refreshToken = fragmentParams.get("refresh_token") || "";
+        return validateSessionTokens(accessToken, refreshToken);
+      }
+
+      async function validateSessionTokens(accessToken, refreshToken) {
         if (!accessToken || !refreshToken) return null;
 
         const controller = new AbortController();
@@ -218,21 +222,49 @@ function callbackHtml(
         } finally { clearTimeout(timeout); }
       }
 
+      async function validateExistingBrowserSession() {
+        let raw;
+        let stored;
+        try {
+          raw = localStorage.getItem(sessionStorageKey);
+          stored = JSON.parse(raw || "null");
+        } catch { return null; }
+        if (!stored?.accessToken || !stored?.refreshToken) return null;
+        const data = await validateSessionTokens(stored.accessToken, stored.refreshToken);
+        // A reply from this tab must not overwrite a newer sign-in or logout.
+        if (localStorage.getItem(sessionStorageKey) !== raw) return { changed: true };
+        return data?.session?.accessToken && data.account?.role
+          ? { ...data.session, account: data.account }
+          : null;
+      }
+
       async function completeCallback() {
         if (window.location.hash || window.location.search) {
           window.history.replaceState({}, document.title, window.location.pathname);
         }
-        if (serverUnavailable) { showTemporaryError(); return; }
-
+        let temporarilyUnavailable = serverUnavailable;
+        let resumedExistingSession = false;
         let session = serverSession && serverSession.accessToken ? serverSession : null;
         if (!session && fragmentParams.get("access_token")) {
           let confirmation;
           try { confirmation = await validateFragmentSession(); }
-          catch (error) { showTemporaryError(); return; }
+          catch (error) { temporarilyUnavailable = true; }
           session = confirmation?.session
             ? { ...confirmation.session, account: confirmation.account || null }
             : null;
         }
+
+        if (!session?.accessToken && !isPasswordReset) {
+          try {
+            const existing = await validateExistingBrowserSession();
+            if (existing?.changed) { window.location.replace("/?auth=login"); return; }
+            if (existing?.accessToken) {
+              session = existing;
+              resumedExistingSession = true;
+            }
+          } catch { temporarilyUnavailable = true; }
+        }
+        if (!session?.accessToken && temporarilyUnavailable) { showTemporaryError(); return; }
 
         if (session?.accessToken) {
           try {
@@ -246,6 +278,14 @@ function callbackHtml(
         if (!session?.accessToken && !isPasswordReset) {
           document.getElementById("openingDancr").hidden = true;
           document.getElementById("confirmationError").hidden = false;
+          return;
+        }
+
+        if (resumedExistingSession) {
+          const role = session.account.role;
+          const destination = role === "admin" ? "/admin"
+            : ["customer", "dancer", "venue"].includes(role) ? "/dashboard/" + role : "/?auth=login";
+          window.location.replace(destination);
           return;
         }
 

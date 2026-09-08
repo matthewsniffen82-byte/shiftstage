@@ -42732,6 +42732,7 @@
     let verifiedVenueSignupCode = "";
     let verifiedVenueSignupPreview = null;
     let pendingVenueAuthReturnTo = "";
+    let pendingAccountAuthReturnTo = "";
     let pendingVenueAgentReferralCode = "";
     let adminAuthMode = "login";
     let adminApprovedDancerSearch = "";
@@ -55015,6 +55016,7 @@
     function closeAuthPage() {
       blurFocusedAuthField();
       pendingVenueAuthReturnTo = "";
+      pendingAccountAuthReturnTo = "";
       pendingVenueAgentReferralCode = "";
       clearAuthFields("all");
       closeRecoveryPopover(passwordRecoveryCard, false);
@@ -63933,6 +63935,12 @@
         }
         if (!result.session?.accessToken) throw new Error("Sign in did not start a session. Confirm your email, then try again.");
         const signedInRole = result.account?.role;
+        if (["customer", "dancer", "venue"].includes(signedInRole) && pendingAccountAuthReturnTo) {
+          const destination = pendingAccountAuthReturnTo;
+          pendingAccountAuthReturnTo = "";
+          window.location.assign(destination);
+          return;
+        }
         if (signedInRole === "dancer") {
           setCustomerAuthStatus("Signed in. Opening your dancer dashboard…");
           await startRealDancerSession("Dancer dashboard opened", payload.email);
@@ -66214,6 +66222,24 @@
       }
     }
 
+    function handleAccountAccessDeepLink() {
+      const url = new URL(window.location.href);
+      const mode = url.searchParams.get("auth");
+      if (mode !== "login" && mode !== "signup") return false;
+      const role = url.searchParams.get("role") === "dancer" ? "dancer" : "customer";
+      const returnTo = safeLocalReturnPath(url.searchParams.get("return_to"));
+      for (const key of ["auth", "role", "return_to"]) url.searchParams.delete(key);
+      window.history.replaceState({}, document.title, url.pathname + url.search + url.hash);
+      openAuthRole(role);
+      if (mode === "signup") {
+        if (role === "dancer") openDancerSignupPage();
+        else openCustomerSignup();
+      }
+      // Prevent old account/callback links from creating a sign-in redirect loop.
+      pendingAccountAuthReturnTo = returnTo && !/^\/(?:account|auth)(?:[/?#]|$)/.test(returnTo) ? returnTo : "";
+      return true;
+    }
+
     function handleVenueAccessDeepLink() {
       const url = new URL(window.location.href);
       const legacySignup = url.searchParams.get("venueSignup") === "1";
@@ -66347,7 +66373,7 @@
     if (isCustomerSession() || isDancerSession()) loadLiveSupportThreads();
     if (isAdminSession()) loadLiveAdminSupportThreads();
     const restoredAuthResume = restoreAuthConfirmationResume();
-    if (!restoredAuthResume && !handleVenueDancerVerificationDeepLink() && !handleAdminDashboardDeepLink() && !handleVenueDashboardDeepLink() && !handleDancerDashboardDeepLink() && !handleVenueAccessDeepLink()) {
+    if (!restoredAuthResume && !handleVenueDancerVerificationDeepLink() && !handleAdminDashboardDeepLink() && !handleVenueDashboardDeepLink() && !handleDancerDashboardDeepLink() && !handleVenueAccessDeepLink() && !handleAccountAccessDeepLink()) {
       if (initialVenuePreviewRequest) void initialVenuePreviewRequest;
       else void initialDiscoveryRequest.finally(() => openSharedProfileFromUrl());
     }
