@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
+import DancerVenuePicker from "./DancerVenuePicker";
 import {
   isActiveNfcPresence,
   isNfcPresenceNearExpiry,
@@ -253,13 +254,7 @@ export default function DancerShiftManager() {
       </section>
 
       <form onSubmit={postDate}>
-        <label>
-          Approved venue
-          <select className="dancer-schedule-control" value={venueId} onChange={(event) => setVenueId(event.target.value)} disabled={!venues.length || saving} required>
-            <option value="">{venues.length ? "Choose approved venue" : "No approved venue affiliations"}</option>
-            {venues.map((venue) => <option key={venue.id} value={venue.id}>{venue.name}</option>)}
-          </select>
-        </label>
+        <DancerVenuePicker venues={venues} value={venueId} onChange={setVenueId} disabled={saving} />
         <label>
           Upcoming date
           <input className="dancer-schedule-control" type="date" min={todayDate()} value={shiftDate} onChange={(event) => setShiftDate(event.target.value)} required />
@@ -279,12 +274,7 @@ export default function DancerShiftManager() {
           <div className="dashboard-shift" key={String(shift.id)}>
             {editingId === String(shift.id) ? (
               <>
-                <label>
-                  Approved venue
-                  <select className="dancer-schedule-control" value={editVenueId} onChange={(event) => setEditVenueId(event.target.value)} required>
-                    {venues.map((venue) => <option key={venue.id} value={venue.id}>{venue.name}</option>)}
-                  </select>
-                </label>
+                <DancerVenuePicker venues={venues} value={editVenueId} onChange={setEditVenueId} disabled={saving} />
                 <label>
                   Upcoming date
                   <input className="dancer-schedule-control" type="date" min={todayDate()} value={editDate} onChange={(event) => setEditDate(event.target.value)} required />

@@ -198,8 +198,9 @@ test("dancer schedule venue and date controls share one compact field height", (
   assert.match(liveShell, /class="dancer-schedule-control" id="shiftDate" type="date"/);
   assert.equal(
     dancerShiftManager.match(/className="dancer-schedule-control"/g)?.length,
-    4,
+    2,
   );
+  assert.equal(dancerShiftManager.match(/<DancerVenuePicker venues=\{venues\}/g)?.length, 2);
 });
 
 test("brand emphasis is crisp on stateful and keyboard-focused UI", () => {
