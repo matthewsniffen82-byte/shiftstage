@@ -25,17 +25,18 @@ const videos = ["approved", "rejected", "moderating"].map((status, index) => ({
 const props = { videos, removingId: "", disabled: false, onRemove() {} };
 const render = (overrides = {}) => renderToStaticMarkup(React.createElement(previews.default, { ...props, ...overrides })).replace(/<style>[\s\S]*?<\/style>/g, "");
 
-test("every video shows a pin icon, enabled after approval and reflecting saved state", () => {
+test("every video shows three-dot options with Pin or Unpin inside", () => {
   const html = render({ onPin() {}, videos: videos.map((video, index) => ({ ...video, isPinned: index === 0 })) });
-  const pins = html.match(/<button[^>]*class="dancer-media-pin[^>]*>/g);
+  const pins = html.match(/<button[^>]*aria-label="(?:Unpin|Pin) [^>]*>/g);
   assert.equal(pins.length, 3);
-  assert.match(pins[0], /aria-label="Unpin video 1" aria-pressed="true"/);
+  assert.equal((html.match(/<summary aria-label="Options for video/g) || []).length, 3);
+  assert.match(pins[0], /aria-label="Unpin video 1"/);
   assert.doesNotMatch(pins[0], /disabled/);
   for (const [index, pin] of pins.slice(1).entries()) {
     assert.match(pin, new RegExp(`aria-label="Pin video ${index + 2}"`));
     assert.match(pin, /disabled=""/);
   }
-  assert.doesNotMatch(html, /Options for|<details/);
+  assert.doesNotMatch(html, /<details[^>]* open=""|class="dancer-media-pin /);
   assert.match(html, /Delete video 1/);
 });
 

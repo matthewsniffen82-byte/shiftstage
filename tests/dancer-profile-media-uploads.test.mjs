@@ -94,19 +94,20 @@ test("upload progress, failure, and unknown statuses never imply publication", (
   assert.equal(exports.profileUploadStatus("submitted"), "Checking");
 });
 
-test("every photo and video in the shared editor has a pin icon with approval-aware availability", () => {
+test("every photo and video has three-dot options with an approval-aware pin action inside", () => {
   const items = ["approved", "pending", "rejected"].map((status, index) => ({ id: String(index), status, isPinned: index === 0 }));
   const html = render({ photos: items, videos: items, onMediaPinned() {} });
-  const pins = html.match(/<button[^>]*class="dancer-media-pin[^>]*>/g);
+  const pins = html.match(/<button[^>]*aria-label="(?:Unpin|Pin) [^>]*>/g);
   assert.equal(pins.length, 6);
+  assert.equal((html.match(/<summary aria-label="Options for/g) || []).length, 6);
+  assert.equal((html.match(/<details class="dancer-media-menu/g) || []).length, 6);
   for (const [index, pin] of pins.entries()) {
     const approved = index % 3 === 0;
     assert.match(pin, new RegExp(`aria-label="${approved ? "Unpin" : "Pin"} ${index < 3 ? "photo" : "video"} ${index % 3 + 1}"`));
-    assert.match(pin, new RegExp(`aria-pressed="${approved}"`));
     if (approved) assert.doesNotMatch(pin, /disabled/);
     else assert.match(pin, /disabled=""/);
   }
-  assert.doesNotMatch(html, /Options for|<details/);
+  assert.doesNotMatch(html, /<details[^>]* open=""|class="dancer-media-pin /);
 });
 
 test("saved media visibility copy respects profile approval and incognito", () => {
