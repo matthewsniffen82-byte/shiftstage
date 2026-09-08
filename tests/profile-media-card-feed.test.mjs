@@ -98,9 +98,11 @@ test("photo cards fill the available width and height without changing video siz
   }
 });
 
-test("photo cards are capped below the header and keep controls over the image", () => {
-  assert.match(css, /--profile-photo-card-height-limit: max\(1px, calc\(100vh - var\(--profile-media-card-header\) - 24px - env\(safe-area-inset-bottom, 0px\)\)\)/);
-  assert.match(css, /--profile-photo-card-height-limit: max\(1px, calc\(100svh - var\(--profile-media-card-header\) - 24px - env\(safe-area-inset-bottom, 0px\)\)\)/);
+test("taller photo cards use the screen height without reserving the scrolling header", () => {
+  for (const unit of ["vh", "svh"]) {
+    assert.ok(css.includes(`--profile-photo-card-height-limit: max(1px, calc(100${unit} - 24px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)))`));
+  }
+  assert.doesNotMatch(css, /--profile-photo-card-height-limit:[^;]*--profile-media-card-header/);
   assert.doesNotMatch(css, /--profile-photo-card-ratio|--profile-photo-card-control-space|data-photo-shape/);
   assert.match(css, /height: var\(--profile-media-card-height\) !important/);
 });
