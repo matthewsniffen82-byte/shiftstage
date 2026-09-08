@@ -21,6 +21,7 @@ import AdminSalesAgentPanel from "./AdminSalesAgentPanel";
 import AdminTvPanel from "./AdminTvPanel";
 import { AdminDashboardIcon } from "./AdminDashboardIcon";
 import "./admin-dashboard.css";
+import { adminWorkspaceCounts, adminCountLabel } from "./admin-workspace-counts";
 import {
   clearAdminSession,
   isAdminAuthenticationError,
@@ -87,6 +88,8 @@ function adminSectionsForWorkspace(workspace: AdminWorkspace): AdminDataSection[
   }
   if (workspace === "approvals") {
     return [
+      { label: "Venue signup requests", path: "/api/admin/venue-signup-requests", apply: (data) => ({ venueSignupRequests: data.requests || [] }) },
+      { label: "Venues", path: "/api/admin/venues", apply: (data) => ({ venues: data.venues || [], venueClaimCodes: data.claimCodes || [] }) },
       {
         label: "Dancer approvals",
         path: "/api/admin/approvals",
@@ -555,6 +558,41 @@ export default function AdminClient() {
   const needsSignIn = state.authRequired === true;
   const dashboardWarnings = state.warnings || [];
   const pendingDancerApprovalCount = state.queue?.length || 0;
+  const workspaceCounts = adminWorkspaceCounts(state.operations);
+  const pendingClubCount = state.operations?.warnings.some(warning => warning.section === "Club signup requests")
+    ? null : state.operations?.attention.clubRequests;
+  function updateClubRequests(venueSignupRequests: Array<Record<string, unknown>>) {
+    setState(current => {
+      const removed = (current.venueSignupRequests || []).filter(item => item.status === "pending").length
+        - venueSignupRequests.filter(item => item.status === "pending").length;
+      return { ...current, venueSignupRequests, operations: current.operations ? {
+        ...current.operations, attention: { ...current.operations.attention,
+          clubRequests: Math.max(0, current.operations.attention.clubRequests - removed),
+          total: Math.max(0, current.operations.attention.total - removed),
+        },
+      } : current.operations };
+    });
+  }
+  const clubRequestPanel = <Panel title="Pending club requests" badge={
+    (state.warnings || []).some(warning => warning.startsWith("Venue signup requests:"))
+      ? "Unavailable" : `${adminCountLabel(pendingClubCount)} awaiting approval`
+  } defaultOpen>
+    {(state.warnings || []).some(warning => warning.startsWith("Venue signup requests:"))
+      ? <p role="status">Club requests could not be loaded. Refresh the dashboard to try again.</p>
+      : <VenueSignupRequestQueue
+      requests={state.venueSignupRequests || []}
+      venues={state.venues || []}
+      onRequestsChange={updateClubRequests}
+      onVenuesChange={(venues) => setState(current => ({ ...current, venues,
+        operations: current.operations ? { ...current.operations, counts: { ...current.operations.counts,
+          clubs: current.operations.counts.clubs == null ? null : current.operations.counts.clubs + venues.length - (current.venues || []).length,
+        } } : current.operations,
+      }))}
+      onClaimCodesChange={(venueClaimCodes) => setState(current => ({ ...current, venueClaimCodes }))}
+      claimCodes={state.venueClaimCodes || []}
+      onActionConfirmed={confirmAdminAction}
+    />}
+  </Panel>;
   const dashboardDescription = isLoading
     ? "Loading live operations..."
     : needsSignIn
@@ -685,9 +723,11 @@ export default function AdminClient() {
               >
                 <AdminDashboardIcon section={item.id} />
                 {item.label}
-                {item.id === "approvals" && state.operations?.attention.total
-                  ? <span>{state.operations.attention.total}</span>
-                  : null}
+                <span className="admin-workspace-count" aria-label={`${adminCountLabel(workspaceCounts[item.id].value)} ${workspaceCounts[item.id].label}`}>
+                  {adminCountLabel(workspaceCounts[item.id].value)}
+                </span>
+                <small className="admin-workspace-count-label">{workspaceCounts[item.id].label}</small>
+                {item.id === "clubs" ? <small className="admin-club-pending">{adminCountLabel(pendingClubCount)} pending approval</small> : null}
               </button>
             ))}
           </nav>
@@ -711,9 +751,10 @@ export default function AdminClient() {
               <WorkspaceHeader
                 eyebrow="Review queues"
                 title="Approvals"
-                description="Review profiles, media, safety reports, and TV submissions from one focused queue. Open a record only when you are ready to act."
+                description="Review club requests, profiles, media, safety reports, and TV submissions from one focused queue. Open a record only when you are ready to act."
               />
               <section className="admin-grid">
+                {clubRequestPanel}
                 <Panel
                   title="Dancer approvals"
                   badge={`${pendingDancerApprovalCount} needed`}
@@ -772,7 +813,7 @@ export default function AdminClient() {
                     onActionConfirmed={confirmAdminAction}
                   />
                 </Panel>
-                <Panel title="MyDancr TV moderation">
+                <Panel title="MyDancr TV moderation" badge={`${adminCountLabel(state.operations?.attention.videos)} to review`}>
                   <AdminTvPanel />
                 </Panel>
               </section>
@@ -788,7 +829,7 @@ export default function AdminClient() {
               />
               <AccountOverview operations={state.operations || null} />
               <section className="admin-grid">
-                <Panel title="Dancer management" badge={`${state.dancerTotal || 0} profiles`} defaultOpen>
+                <Panel title="Dancer management" badge={`${adminCountLabel(state.operations?.counts?.dancers)} profiles`} defaultOpen>
                   <DancerDirectory
                     onActionConfirmed={confirmAdminAction}
                     onProfileUpdated={(profile) => {
@@ -825,16 +866,8 @@ export default function AdminClient() {
                 description="Manage club accounts, signup requests, dancer affiliations, published deals, and MyDancr tap sticker inventory."
               />
               <section className="admin-grid">
-                <Panel title="Club accounts" badge={`${state.venues?.length || 0} managed`} defaultOpen>
-                  <VenueSignupRequestQueue
-                    requests={state.venueSignupRequests || []}
-                    venues={state.venues || []}
-                    onRequestsChange={(venueSignupRequests) => setState((current) => ({ ...current, venueSignupRequests }))}
-                    onVenuesChange={(venues) => setState((current) => ({ ...current, venues }))}
-                    onClaimCodesChange={(venueClaimCodes) => setState((current) => ({ ...current, venueClaimCodes }))}
-                    claimCodes={state.venueClaimCodes || []}
-                    onActionConfirmed={confirmAdminAction}
-                  />
+                {clubRequestPanel}
+                <Panel title="Club accounts" badge={`${adminCountLabel(state.operations?.counts?.clubs)} managed`} defaultOpen>
                   <VenueManager
                     venues={state.venues || []}
                     claimCodes={state.venueClaimCodes || []}
@@ -842,7 +875,7 @@ export default function AdminClient() {
                     onClaimCodesChange={(venueClaimCodes) => setState((current) => ({ ...current, venueClaimCodes }))}
                   />
                 </Panel>
-                <Panel title="Tap sticker inventory">
+                <Panel title="Tap sticker inventory" badge={`${adminCountLabel(state.operations?.counts?.tapStickers)} stickers`}>
                   <AdminNfcInventoryPanel />
                 </Panel>
               </section>
@@ -901,16 +934,16 @@ export default function AdminClient() {
                     onThreadsChange={(supportThreads) => setState((current) => ({ ...current, supportThreads }))}
                   />
                 </Panel>
-                <Panel title="Copyright / DMCA">
+                <Panel title="Copyright / DMCA" badge={`${adminCountLabel(state.operations?.attention.dmca)} open`}>
                   <AdminDmcaPanel />
                 </Panel>
-                <Panel title="Monitoring">
+                <Panel title="Monitoring" badge={`${Object.keys(state.monitoring || {}).length} checks`}>
                   {Object.entries(state.monitoring || {}).slice(0, 6).map(([key, value]) => (
                     <Metric key={key} label={labelize(key)} value={formatValue(value)} />
                   ))}
                   {!state.monitoring ? <Metric label="Status" value="Ready" /> : null}
                 </Panel>
-                <Panel title="Rankings">
+                <Panel title="Rankings" badge={`${adminCountLabel(state.operations?.analytics.activeDancers)} approved dancers`}>
                   <RankingManager />
                 </Panel>
               </section>
@@ -1938,6 +1971,7 @@ function OperationsOverview({
     ["DMCA", attention.dmca],
     ["Support", attention.support],
     ["Venues", attention.venues],
+    ["Club requests", attention.clubRequests],
   ] as const;
 
   return (
@@ -1954,7 +1988,7 @@ function OperationsOverview({
 
       <div className="attention-grid">
         {attentionItems.map(([label, value]) => (
-          <button key={label} type="button" onClick={() => onOpenWorkspace(label === "Support" ? "more" : label === "Venues" ? "clubs" : "approvals")}>
+          <button key={label} type="button" onClick={() => onOpenWorkspace(label === "Support" ? "more" : label === "Venues" || label === "Club requests" ? "clubs" : "approvals")}>
             <span>{label}</span>
             <strong>{value}</strong>
             <small>{value === 1 ? "item" : "items"}</small>
@@ -2011,7 +2045,7 @@ function OperationsOverview({
           <button className="panel-link-button" type="button" onClick={() => onOpenWorkspace("money")}>Open money workspace</button>
         </Panel>
 
-        <Panel title="Growth & engagement">
+        <Panel title="Growth & engagement" badge={`${operations.analytics.totalAccounts} accounts`}>
           <div className="operations-metric-grid">
             <Metric label="Total accounts" value={operations.analytics.totalAccounts.toLocaleString()} />
             <Metric label="Approved dancers" value={operations.analytics.activeDancers.toLocaleString()} />
@@ -2046,7 +2080,7 @@ function SystemHealthSummary({
   const databaseErrors = database.filter((item) => Boolean(item.error));
   const issues = warnings.length + disconnected.length + databaseErrors.length;
   return (
-    <Panel title="Platform health" badge={issues ? `${issues} issues` : "Healthy"}>
+    <Panel title="Platform health" badge={`${issues} issues`}>
       <div className="health-row">
         <span className={issues ? "health-dot warning" : "health-dot healthy"} aria-hidden="true" />
         <div>

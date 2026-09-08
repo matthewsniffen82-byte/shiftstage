@@ -95,3 +95,13 @@ body .admin-shell.dashboard-shell-admin .admin-panel-badge { border: 1px solid #
   body .dashboard-shell-admin .admin-workspace-nav button { flex-direction: column; gap: 5px; min-height: 64px; padding: 8px 4px; }
   body .dashboard-shell-admin .admin-workspace-nav button > span { top: 4px; right: 5px; }
 }
+body .dashboard-shell-admin .admin-workspace-nav button { display: grid; grid-template-columns: 20px minmax(0, 1fr) auto; gap: 5px 8px; align-content: center; text-align: left; min-height: 78px; }
+body .dashboard-shell-admin .admin-workspace-nav button > svg { grid-column: 1; grid-row: 1; }
+body .dashboard-shell-admin .admin-workspace-nav button > .admin-workspace-count { position: static; grid-column: 3; grid-row: 1; min-width: 25px; padding: 3px 6px; text-align: center; line-height: 1.3; }
+body .dashboard-shell-admin .admin-workspace-count-label { grid-column: 2 / -1; color: #b8aec8; font-size: 10px; font-weight: 400; }
+body .dashboard-shell-admin .admin-club-pending { grid-column: 1 / -1; color: #e5d5fc; font-size: 10px; font-weight: 550; }
+body .dashboard-shell-admin .attention-grid { grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); }
+@media (max-width: 680px) {
+  body .dashboard-shell-admin .admin-workspace-nav { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  body .dashboard-shell-admin .admin-workspace-nav button { padding: 10px 8px; font-size: 12px; }
+}

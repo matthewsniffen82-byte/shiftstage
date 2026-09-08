@@ -34,9 +34,11 @@ export type AdminOperationsCenter = {
     dmca: number;
     support: number;
     venues: number;
+    clubRequests: number;
     overdue: number;
     total: number;
   };
+  counts: { clubs: number | null; dancers: number | null; tapStickers: number | null; openInvoices: number | null };
   live: {
     checkedInDancers: Array<Record<string, unknown>>;
     activeVenueCount: number;
@@ -135,6 +137,11 @@ export async function getAdminOperationsCenter(client: DancrClient): Promise<Adm
       .select("id, role, display_name, email, account_state, created_at, updated_at, dancer_profiles(id, stage_name, slug, city, status)")
       .order("created_at", { ascending: false })
       .limit(60)),
+    safeCount("Club signup requests", () => db.from("venue_signup_requests").select("id", { count: "exact", head: true }).eq("status", "pending")),
+    safeCount("All clubs", () => db.from("venues").select("id", { count: "exact", head: true })),
+    safeCount("All dancers", () => db.from("dancer_profiles").select("id", { count: "exact", head: true })),
+    safeCount("Tap sticker inventory", () => db.from("nfc_tags").select("id", { count: "exact", head: true })),
+    safeCount("Open club invoices", () => db.from("club_invoices").select("id", { count: "exact", head: true }).in("status", ["open", "overdue"])),
   ]);
 
   const [
@@ -142,7 +149,7 @@ export async function getAdminOperationsCenter(client: DancrClient): Promise<Adm
     overdueProfiles, overdueSupport, overdueReports, overdueVideos,
     checkedInDancers, activeVenueCount, qrGeneratedToday, qrRedeemedToday, suspiciousQrToday,
     missedCheckIns, revenueRows, commissionRows, totalAccounts, activeDancers, newAccounts7d, profileViews7d,
-    profileViews30d, directionRequests7d, newFollows7d, publishedVideos30d, activity, accounts,
+    profileViews30d, directionRequests7d, newFollows7d, publishedVideos30d, activity, accounts, clubRequests, allClubs, allDancers, tapStickers, openInvoices,
   ] = results;
 
   const revenue = summarizeRevenue(revenueRows.rows || [], commissionRows.rows || []);
@@ -156,6 +163,7 @@ export async function getAdminOperationsCenter(client: DancrClient): Promise<Adm
     dmca: count(dmca),
     support: count(support),
     venues: count(venues),
+    clubRequests: count(clubRequests),
   };
   const warnings = results.flatMap((result) => result.warning ? [result.warning] : []);
 
@@ -165,6 +173,12 @@ export async function getAdminOperationsCenter(client: DancrClient): Promise<Adm
       ...attentionCounts,
       overdue,
       total: Object.values(attentionCounts).reduce((sum, value) => sum + value, 0),
+    },
+    counts: {
+      clubs: allClubs.warning ? null : count(allClubs),
+      dancers: allDancers.warning ? null : count(allDancers),
+      tapStickers: tapStickers.warning ? null : count(tapStickers),
+      openInvoices: openInvoices.warning ? null : count(openInvoices),
     },
     live: {
       checkedInDancers: (checkedInDancers.rows || []).filter((shift) =>
