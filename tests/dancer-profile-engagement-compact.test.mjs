@@ -142,6 +142,28 @@ test("iPhone profiles keep outer hit areas unboxed while icons retain neutral gl
   );
 });
 
+test("profile action columns never render legacy rectangular gloss overlays", () => {
+  const overlayReset = aesthetic.match(
+    /\/\* Keep legacy button gloss[\s\S]*?\n\}/,
+  )?.[0] || "";
+  const actionScopes = [
+    "body.dancr-button-system #profileBackdrop #profileModal .modal-actions .action-btn.profile-action-icon-control",
+    "body.dancr-button-system .public-profile-shell .live-actions > button.profile-action-icon-control",
+    "body.dancr-button-system .public-profile-shell .profile-action-share-slot .profile-share > button.profile-action-icon-control",
+  ];
+
+  for (const scope of actionScopes) {
+    for (const pseudo of ["::before", "::after"]) {
+      assert.ok(overlayReset.includes(`${scope}${pseudo}`), `Missing overlay reset: ${scope}${pseudo}`);
+    }
+  }
+  assert.match(overlayReset, /content: none !important;/);
+  assert.match(overlayReset, /display: none !important;/);
+  assert.doesNotMatch(overlayReset, /\.action-icon::|\.profile-action-icon-frame::/);
+  assert.ok(liveApp.includes(".profile-modal .modal-actions .action-btn:not(.profile-action-icon-control):before {"));
+  assert.ok(!liveApp.includes(".profile-modal .modal-actions .action-btn:before {"));
+});
+
 test("stats and media tabs are compact without changing dynamic media behavior", () => {
   assert.match(
     compactLayout,

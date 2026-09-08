@@ -4916,8 +4916,8 @@ body.dancr-button-system .public-profile-shell .profile-social-section::after {
  * same circular glass as profile media controls. Every state keeps the same
  * visible ring; selected actions use their label and brighter checkmark. */
 body.dancr-button-system #profileBackdrop #profileModal .modal-actions .action-btn.profile-action-icon-control,
-body.dancr-button-system .public-profile-shell .live-actions > button.profile-action-secondary.profile-action-icon-control:not([aria-pressed="true"]),
-body.dancr-button-system .public-profile-shell .live-actions > button.profile-action-going.profile-action-icon-control:not([aria-pressed="true"]),
+body.dancr-button-system .public-profile-shell .live-actions > button.profile-action-secondary.profile-action-icon-control,
+body.dancr-button-system .public-profile-shell .live-actions > button.profile-action-going.profile-action-icon-control,
 body.dancr-button-system .public-profile-shell .live-actions > button.profile-action-icon-control,
 body.dancr-button-system .public-profile-shell .profile-action-share-slot .profile-share > button.profile-action-icon-control {
   border-color: transparent !important;
@@ -4927,6 +4927,18 @@ body.dancr-button-system .public-profile-shell .profile-action-share-slot .profi
   background-image: none !important;
   box-shadow: none !important;
   filter: none !important;
+}
+
+/* Keep legacy button gloss off the full-column tap areas in every state.
+ * Only the inner icon circles should have a visible surface. */
+body.dancr-button-system #profileBackdrop #profileModal .modal-actions .action-btn.profile-action-icon-control::before,
+body.dancr-button-system #profileBackdrop #profileModal .modal-actions .action-btn.profile-action-icon-control::after,
+body.dancr-button-system .public-profile-shell .live-actions > button.profile-action-icon-control::before,
+body.dancr-button-system .public-profile-shell .live-actions > button.profile-action-icon-control::after,
+body.dancr-button-system .public-profile-shell .profile-action-share-slot .profile-share > button.profile-action-icon-control::before,
+body.dancr-button-system .public-profile-shell .profile-action-share-slot .profile-share > button.profile-action-icon-control::after {
+  content: none !important;
+  display: none !important;
 }
 
 /* Full-profile engagement uses one unboxed three-column action row. Every

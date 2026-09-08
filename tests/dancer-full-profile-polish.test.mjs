@@ -257,7 +257,7 @@ test("profile actions keep matching neutral circles with brighter selected check
   );
   assert.match(
     guestActionsBlock,
-    /live-actions > button\.profile-action-secondary\.profile-action-icon-control:not\(\[aria-pressed="true"\]\),[\s\S]*?live-actions > button\.profile-action-going\.profile-action-icon-control:not\(\[aria-pressed="true"\]\)/,
+    /live-actions > button\.profile-action-secondary\.profile-action-icon-control,[\s\S]*?live-actions > button\.profile-action-going\.profile-action-icon-control,/,
   );
   assert.match(
     guestActionsBlock,
