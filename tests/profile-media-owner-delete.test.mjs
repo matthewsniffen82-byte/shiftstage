@@ -18,11 +18,11 @@ test("signed-in full-profile grids and viewers have no owner media management co
   assert.match(shell, /function profilePhotoThumbMarkup/);
 });
 
-test("dashboard previews retain confirmed deletion and approved-only pin options", () => {
+test("dashboard previews retain confirmed deletion and visible pins enabled after approval", () => {
   assert.match(uploads, /window\.confirm\("Delete this photo from your profile\?"\)/);
   assert.match(uploads, /window\.confirm\("Delete this video from your profile\?"\)/);
   assert.match(uploads, /className="profile-upload-delete"/);
-  assert.match(uploads, /onMediaPinned && item\.status === "approved" \? <DancerMediaPinButton/);
+  assert.match(uploads, /onMediaPinned \? <DancerMediaPinButton available=\{item\.status === "approved"\}/);
   assert.match(dancer, /\.eq\("id", photoId\)[\s\S]*?\.eq\("dancer_id", profile\.id\)/);
   assert.match(tv, /function hideOwnMyDancrTvVideo[\s\S]*?\.eq\("id", videoId\)[\s\S]*?\.eq\("submitted_by", userId\)/);
 });

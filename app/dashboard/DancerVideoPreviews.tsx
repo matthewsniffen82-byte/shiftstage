@@ -58,7 +58,7 @@ export default function DancerVideoPreviews({ videos, removingId, disabled, onRe
                 <DancerVideoThumbnail posterUrl={video.posterUrl} videoUrl={video.videoUrl} />
                 <span className="video-preview-play" aria-hidden="true">▶</span>
               </button>
-              {onPin && video.status === "approved" ? <DancerMediaPinButton label={`video ${index + 1}`} pinned={video.isPinned} busy={pinningId === video.id} disabled={disabled} onClick={() => onPin(video)} /> : null}
+              {onPin ? <DancerMediaPinButton available={video.status === "approved"} label={`video ${index + 1}`} pinned={video.isPinned} busy={pinningId === video.id} disabled={disabled} onClick={() => onPin(video)} /> : null}
               <button
                 className="video-preview-delete"
                 aria-label={`${removingId === video.id ? "Deleting" : "Delete"} video ${index + 1}`}
@@ -86,7 +86,7 @@ export default function DancerVideoPreviews({ videos, removingId, disabled, onRe
         <div>
           <button aria-label="Close video preview" onClick={() => setActiveId("")} type="button">Close</button>
           {activeVideo ? <video key={activeVideo.id} autoPlay controls playsInline poster={activeVideo.posterUrl || undefined} src={activeVideo.videoUrl} onError={() => setPlaybackError(true)} /> : null}
-          {activeVideo?.status === "approved" && onPin ? <DancerMediaPinButton key={activeVideo.id} label="this video" pinned={activeVideo.isPinned} disabled={disabled} placement="inline" onClick={() => onPin(activeVideo)} /> : null}
+          {activeVideo && onPin ? <DancerMediaPinButton available={activeVideo.status === "approved"} key={activeVideo.id} label="this video" pinned={activeVideo.isPinned} disabled={disabled} placement="inline" onClick={() => onPin(activeVideo)} /> : null}
           {playbackError ? <p role="status">Unable to play video. Close and try again.</p> : null}
         </div>
       </dialog>

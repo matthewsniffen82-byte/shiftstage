@@ -7462,7 +7462,7 @@ function DancerPhotoPanel({
             <div className={`photo-saved-preview is-${photo.status}`} key={photo.id}>
               <div className="photo-saved-frame">
                 {photo.imageUrl ? <img alt={photo.label} loading="lazy" src={photo.imageUrl} /> : <span aria-hidden="true">▧</span>}
-                {photo.status === "approved" ? <DancerMediaPinButton label={photo.label.toLowerCase()} pinned={photo.isPinned} busy={pinningPhotoId === photo.id} disabled={photoActionBusy} onClick={() => void pinPhoto(photo)} /> : null}
+                <DancerMediaPinButton label={photo.label.toLowerCase()} available={photo.status === "approved"} pinned={photo.isPinned} busy={pinningPhotoId === photo.id} disabled={photoActionBusy} onClick={() => void pinPhoto(photo)} />
                 <button
                   aria-label={`${deletingPhotoIds.has(photo.id) ? "Deleting" : "Delete"} ${photo.label.toLowerCase()}`}
                   aria-busy={deletingPhotoIds.has(photo.id)}

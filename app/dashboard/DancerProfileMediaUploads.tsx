@@ -206,7 +206,7 @@ export default function DancerProfileMediaUploads({
                           {!isPhoto ? <i aria-hidden="true">▶</i> : null}
                         </span>
                       </button>
-                      {onMediaPinned && item.status === "approved" ? <DancerMediaPinButton label={`${label.toLowerCase()} ${index + 1}`} pinned={item.isPinned} busy={pinningId === item.id} disabled={isDeleting} onClick={() => void pinPreview(isPhoto ? "photo" : "video", item)} /> : null}
+                      {onMediaPinned ? <DancerMediaPinButton available={item.status === "approved"} label={`${label.toLowerCase()} ${index + 1}`} pinned={item.isPinned} busy={pinningId === item.id} disabled={isDeleting} onClick={() => void pinPreview(isPhoto ? "photo" : "video", item)} /> : null}
                       <button
                         aria-label={`${(isPhoto ? deletingPhotoId : deletingVideoId) === item.id ? "Deleting" : "Delete"} ${label.toLowerCase()} ${index + 1}`}
                         aria-busy={(isPhoto ? deletingPhotoId : deletingVideoId) === item.id}
@@ -260,7 +260,8 @@ export default function DancerProfileMediaUploads({
         .profile-upload-items strong { font-size:12px; line-height:1.3; }
         .profile-upload-items small { color:#d4c3e9; font-size:11px; line-height:1.35; }
         .profile-upload-items small.is-ready { color:#8ce4b2; }
-        .dancer-profile-media-uploads .profile-upload-visibility, .profile-upload-group > p { margin:0; color:#c9c3d2; font-size:12px; line-height:1.5; }
+        .profile-upload-group > p { margin:0; color:#c9c3d2; font-size:12px; line-height:1.5; }
+        .dancer-profile-media-uploads .profile-upload-visibility { box-sizing:border-box; width:100%; margin:4px 0 16px; padding:14px 12px 0; border-top:1px solid #d5baff20; color:#c9c3d2; font-size:12px; line-height:1.5; text-align:center; text-wrap:pretty; }
         .dancer-profile-media-uploads .profile-upload-retry { min-height:44px; padding:6px 0; border:0; background:transparent; color:#fff; font:inherit; text-decoration:underline; cursor:pointer; }
         .dancer-profile-media-uploads button:focus-visible { outline:2px solid #fff; outline-offset:3px; }
         body.dancr-button-system .dancer-profile-media-uploads .profile-upload-entry { min-height:78px !important; padding:14px 16px !important; border-radius:16px !important; background:linear-gradient(120deg,#221333,#100d18) !important; box-shadow:none !important; }

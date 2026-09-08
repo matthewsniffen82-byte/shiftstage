@@ -15,63 +15,48 @@ const v2 = "44444444-4444-4444-8444-444444444444";
 const photos = () => [{ id:p1, kind:"photo", sortOrder:0, isPrimary:true }, { id:p2, kind:"photo", sortOrder:1 }];
 const videos = () => [{ id:v1, kind:"video", publishedAt:"2026-09-07" }, { id:v2, kind:"video", publishedAt:"2026-09-01" }];
 
-function menuFixture(props = {}, open = false) {
+function pinFixture(props = {}) {
   const calls = [];
-  const listeners = new Map();
-  const element = { open, contains:target => target === element, querySelector:() => ({ focus:() => calls.push("focus") }) };
-  const other = { open:true };
-  const effects = [];
   const exports = {};
   vm.runInNewContext(compile(read("app/dashboard/DancerMediaPinButton.tsx")), {
-    exports, document:{ querySelectorAll:() => [element, other], addEventListener:(name, fn) => listeners.set(name, fn), removeEventListener:name => listeners.delete(name) },
-    require:name => name === "react" ? { useRef:() => ({current:element}), useState:() => [open, () => {}], useEffect:fn => effects.push(fn) } : { jsx:(type, props) => ({type, props}), jsxs:(type, props) => ({type, props}) },
+    exports,
+    require:() => ({ jsx:(type, props) => ({type, props}), jsxs:(type, props) => ({type, props}) }),
   });
   const tree = exports.default({ label:"photo 2", onClick:() => calls.push("pin"), ...props });
-  return { tree, summary:tree.props.children[0], action:tree.props.children[1].props.children, element, other, effects, calls, listeners };
+  return { tree, calls };
 }
 
-test("three-dot disclosure opens without pinning; its action reflects saved state and closes it", () => {
+test("the pin icon is a direct accessible toggle that reflects saved state", () => {
   for (const pinned of [false, true]) {
-    const m = menuFixture({pinned});
-    assert.equal(m.tree.type, "details");
-    assert.equal(m.summary.props["aria-label"], "Options for photo 2");
-    assert.equal(m.action.props.children, pinned ? "Unpin" : "Pin");
-    m.summary.props.onClick({preventDefault:() => assert.fail("enabled options must open")});
-    m.element.open = true;
-    m.tree.props.onToggle({currentTarget:m.element});
-    assert.equal(m.other.open, false);
+    const m = pinFixture({pinned});
+    assert.equal(m.tree.type, "button");
+    assert.equal(m.tree.props.type, "button");
+    assert.equal(m.tree.props["aria-label"], `${pinned ? "Unpin" : "Pin"} photo 2`);
+    assert.equal(m.tree.props["aria-pressed"], pinned);
+    assert.equal(m.tree.props["data-pinned"], pinned);
+    assert.equal(m.tree.props.children.props.children.type, "svg");
     assert.deepEqual(m.calls, []);
-    m.action.props.onClick();
-    assert.equal(m.element.open, false);
-    assert.deepEqual(m.calls, ["focus", "pin"]);
+    m.tree.props.onClick({stopPropagation() {}});
+    assert.deepEqual(m.calls, ["pin"]);
   }
 });
 
-test("options do not trigger media playback, close with Escape/outside press, and clean up listeners", () => {
-  const m = menuFixture({}, true);
+test("pin clicks and keyboard activation do not trigger media playback", () => {
+  const m = pinFixture();
   let stopped = 0;
   m.tree.props.onClick({stopPropagation:() => stopped++});
-  m.tree.props.onKeyDown({key:"Escape", preventDefault() {}, stopPropagation:() => stopped++});
+  m.tree.props.onKeyDown({key:"Enter", stopPropagation:() => stopped++});
   assert.equal(stopped, 2);
-  assert.equal(m.element.open, false);
-  const cleanup = m.effects[0]();
-  m.element.open = true;
-  m.listeners.get("pointerdown")({target:m.element});
-  assert.equal(m.element.open, true);
-  m.listeners.get("pointerdown")({target:{}});
-  assert.equal(m.element.open, false);
-  cleanup();
-  assert.equal(m.listeners.size, 0);
+  assert.deepEqual(m.calls, ["pin"]);
 });
 
-test("disabled or busy menus cannot submit another pin", () => {
-  for (const props of [{disabled:true}, {busy:true}]) {
-    const m = menuFixture(props);
-    let prevented = false;
-    m.summary.props.onClick({preventDefault:() => { prevented = true; }});
-    m.action.props.onClick();
-    assert.equal(prevented, true);
-    assert.equal(m.action.props.disabled, true);
+test("disabled, busy, and unapproved media keep their icons without submitting a pin", () => {
+  for (const props of [{disabled:true}, {busy:true}, {available:false}]) {
+    const m = pinFixture(props);
+    m.tree.props.onClick({stopPropagation() {}});
+    assert.equal(m.tree.props.disabled, true);
+    assert.equal(m.tree.props["aria-busy"], !!props.busy);
+    if (props.available === false) assert.match(m.tree.props.title, /available after approval/);
     assert.deepEqual(m.calls, []);
   }
 });

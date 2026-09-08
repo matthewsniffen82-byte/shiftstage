@@ -76,6 +76,21 @@ test("upload progress, failure, and unknown statuses never imply publication", (
   assert.equal(exports.profileUploadStatus("submitted"), "Checking");
 });
 
+test("every photo and video in the shared editor has a pin icon with approval-aware availability", () => {
+  const items = ["approved", "pending", "rejected"].map((status, index) => ({ id: String(index), status, isPinned: index === 0 }));
+  const html = render({ photos: items, videos: items, onMediaPinned() {} });
+  const pins = html.match(/<button[^>]*class="dancer-media-pin[^>]*>/g);
+  assert.equal(pins.length, 6);
+  for (const [index, pin] of pins.entries()) {
+    const approved = index % 3 === 0;
+    assert.match(pin, new RegExp(`aria-label="${approved ? "Unpin" : "Pin"} ${index < 3 ? "photo" : "video"} ${index % 3 + 1}"`));
+    assert.match(pin, new RegExp(`aria-pressed="${approved}"`));
+    if (approved) assert.doesNotMatch(pin, /disabled/);
+    else assert.match(pin, /disabled=""/);
+  }
+  assert.doesNotMatch(html, /Options for|<details/);
+});
+
 test("saved media visibility copy respects profile approval and incognito", () => {
   assert.match(render({ isApproved: true, isPublic: true }), /Approved uploads appear on your profile/);
   const hidden = render({ isApproved: true, isPublic: false });

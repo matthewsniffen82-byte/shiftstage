@@ -429,6 +429,7 @@ export default function DancerTvStudio({ embedded = false }: { embedded?: boolea
   }
 
   async function pinVideo(video: ManagedVideo) {
+    if (video.status !== "approved") return;
     const action = beginVideoAction();
     if (!action) return;
     const { requestId, controller } = action;
@@ -626,7 +627,7 @@ export default function DancerTvStudio({ embedded = false }: { embedded?: boolea
         {embedded ? <DancerVideoPreviews videos={workspace?.videos || []} removingId={removingId} disabled={videoActionBusy} onRemove={(videoId) => void removeVideo(videoId)} pinningId={pinningId} onPin={(video) => void pinVideo(video)} /> : <div className="tv-managed-grid">
           {workspace?.videos.map((video) => (
             <article className="tv-managed-video" key={video.id}>
-              {video.status === "approved" ? <DancerMediaPinButton label="this video" pinned={video.isPinned} busy={pinningId === video.id} disabled={videoActionBusy} onClick={() => void pinVideo(video)} /> : null}
+              <DancerMediaPinButton available={video.status === "approved"} label="this video" pinned={video.isPinned} busy={pinningId === video.id} disabled={videoActionBusy} onClick={() => void pinVideo(video)} />
               {video.videoUrl ? (
                 <video
                   controls
