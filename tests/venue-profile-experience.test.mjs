@@ -136,7 +136,7 @@ test("venue profiles reserve customer Club Deal language for active offers", () 
   );
   assert.equal((venueOffer.match(/data-club-deal-cta=/g) || []).length, 1);
   assert.match(venueOffer, /activeDealCount[\s\S]*?hasMultipleActiveDeals[\s\S]*?\$\{activeDealCount\} Club Deals[\s\S]*?Open \$\{activeDealCount\} Club Deals[\s\S]*?hasMultipleActiveDeals \? "View deals" : "View deal"/);
-  assert.match(venueOffer, /customerFacingDealDescription\(venue\.activeDeal\.dealDescription\)/);
+  assert.doesNotMatch(venueOffer, /<p>|customerFacingDealDescription\(venue\.activeDeal\.dealDescription\)/);
   assert.match(venueOffer, /return "";/);
   assert.doesNotMatch(venueOffer, /Half-off admission|Skip the line|Tap at cashier/);
   assert.doesNotMatch(venueOffer, /venue-club-deal-unavailable|No active Club Deal|Check back later/);
@@ -144,19 +144,21 @@ test("venue profiles reserve customer Club Deal language for active offers", () 
   assert.doesNotMatch(venueOffer, /data-venue-profile-qr|Show venue QR|Venue QR/);
 });
 
-test("venue deal previews collapse without an active deal and adapt to one or multiple offers", () => {
+test("venue deal previews use compact titles and preserve complete offers for View deal", () => {
   const venueOfferSource = liveApp.match(
     /function venueOfferMarkup\(venue\) \{[\s\S]*?(?=\n    function profileDealTileMarkup)/,
   )?.[0] || "";
+  let encodedConfig;
   const venueOfferMarkup = new Function(
     "encodeDealPass",
     "escapeHtml",
-    "customerFacingDealDescription",
     `${venueOfferSource}; return venueOfferMarkup;`,
   )(
-    () => "encoded-deal",
+    (config) => {
+      encodedConfig = config;
+      return "encoded-deal";
+    },
     (value) => String(value).replaceAll("&", "&amp;").replaceAll('"', "&quot;").replaceAll("<", "&lt;").replaceAll(">", "&gt;"),
-    (value) => String(value || "").trim(),
   );
 
   assert.equal(venueOfferMarkup({ id: "venue-1", activeDeal: null }), "");
@@ -170,7 +172,10 @@ test("venue deal previews collapse without an active deal and adapt to one or mu
     activeDeals: [{ id: "deal-1", dealTitle: longTitle, dealDescription: longDescription }],
   });
   assert.match(singleOffer, new RegExp(longTitle));
-  assert.match(singleOffer, new RegExp(longDescription));
+  assert.doesNotMatch(singleOffer, new RegExp(longDescription));
+  assert.equal(encodedConfig.deal.dealDescription, longDescription);
+  assert.equal(encodedConfig.deals[0].dealDescription, longDescription);
+  assert.equal(encodedConfig.sourceType, "club_page");
   assert.match(singleOffer, /data-club-deal-cta="encoded-deal"/);
   assert.match(singleOffer, />View deal</);
   assert.doesNotMatch(singleOffer, /clubDealQrSymbolMarkup|venue-detail-club-deal-symbol|<svg/i);
@@ -186,6 +191,8 @@ test("venue deal previews collapse without an active deal and adapt to one or mu
   });
   assert.match(multipleOffers, /2 Club Deals/);
   assert.match(multipleOffers, />View deals</);
+  assert.doesNotMatch(multipleOffers, /<p>/);
+  assert.deepEqual(encodedConfig.deals.map((deal) => deal.dealDescription), ["First offer", "Second offer"]);
 });
 
 test("venue profiles separate compact deal discovery from NFC redemption", () => {

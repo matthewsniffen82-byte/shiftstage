@@ -49835,7 +49835,6 @@
                   <span class="venue-detail-club-deal-status">Active tonight</span>
                 </div>
                 <h3>${hasMultipleActiveDeals ? `${activeDealCount} Club Deals` : escapeHtml(venue.activeDeal.dealTitle)}</h3>
-                <p>${hasMultipleActiveDeals ? `${activeDealCount} active offers are available tonight.` : escapeHtml(customerFacingDealDescription(venue.activeDeal.dealDescription) || "Club offer available.")}</p>
               </div>
               <div class="venue-detail-club-deal-actions">
                 <button class="venue-detail-club-deal-cta" type="button" data-club-deal-state="available" data-club-deal-cta="${encodeDealPass(config)}" aria-label="${hasMultipleActiveDeals ? `Open ${activeDealCount} Club Deals` : `Open Club Deal: ${escapeHtml(venue.activeDeal.dealTitle)}`}">
