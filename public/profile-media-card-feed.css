@@ -4,6 +4,8 @@
   --profile-media-card-height: clamp(560px, calc(100svh - 140px), 760px);
   --profile-media-card-gap: 16px;
   --profile-media-card-header: calc(72px + env(safe-area-inset-top, 0px));
+  --profile-photo-card-height-limit: max(1px, calc(100vh - var(--profile-media-card-header) - 24px - env(safe-area-inset-bottom, 0px)));
+  --profile-photo-card-height-limit: max(1px, calc(100svh - var(--profile-media-card-header) - 24px - env(safe-area-inset-bottom, 0px)));
 }
 
 /* Match the photo viewer layer so the video header is not covered by page chrome. */
@@ -103,10 +105,12 @@
   object-fit: contain !important;
 }
 
-/* A photo determines its card height, instead of being letterboxed inside a
- * fixed video frame. Keep the measured ratio when distant media is unloaded. */
+/* Scale the complete photo and its card together to fit below the header.
+ * Stable viewport units leave room for mobile browser chrome without jumps. */
 .profile-media-card-feed [data-profile-photo-card] {
   display: block !important;
+  width: min(100%, calc((var(--profile-photo-card-height-limit) - var(--profile-photo-card-control-space, 0px)) * var(--profile-photo-card-ratio, 9 / 16))) !important;
+  margin-inline: auto !important;
   height: auto !important;
   min-height: 0 !important;
   max-height: none !important;
@@ -277,6 +281,7 @@ body.dancr-button-system :is(#profilePhotoViewer, #profileTvViewer, .profile-med
 /* Short landscape photos use one control row so the arrows and actions do
  * not collide. Extremely wide panoramas reserve a small control strip. */
 .profile-media-card-feed [data-photo-shape="panorama"] {
+  --profile-photo-card-control-space: 70px;
   aspect-ratio: auto;
   padding-bottom: 70px;
 }

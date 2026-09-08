@@ -98,6 +98,13 @@ test("photo card height follows the source ratio without changing video card hei
   }
 });
 
+test("complete photo cards scale down and center within the usable mobile screen", () => {
+  assert.match(css, /--profile-photo-card-height-limit: max\(1px, calc\(100svh - var\(--profile-media-card-header\) - 24px - env\(safe-area-inset-bottom, 0px\)\)\)/);
+  assert.match(css, /\[data-profile-photo-card\] \{[^}]*width: min\(100%, calc\(\(var\(--profile-photo-card-height-limit\) - var\(--profile-photo-card-control-space, 0px\)\) \* var\(--profile-photo-card-ratio, 9 \/ 16\)\)\) !important;[^}]*margin-inline: auto !important/);
+  assert.match(css, /\[data-photo-shape="panorama"\] \{[^}]*--profile-photo-card-control-space: 70px/);
+  assert.match(css, /height: var\(--profile-media-card-height\) !important/);
+});
+
 test("mixed-height photo feeds select the visible card and can reach a short final photo", () => {
   vm.runInContext(functionSource("profilePhotoCardScrollIndex"), context);
   const offsets = [72, 1284, 1688, 1900];
