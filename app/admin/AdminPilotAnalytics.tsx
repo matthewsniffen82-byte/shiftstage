@@ -191,7 +191,7 @@ export default function AdminPilotAnalytics({
         <div>
           <span className="eyebrow">Proof of arrival</span>
           <h2>Venue pilot analytics</h2>
-          <p>Measure how discovery turns into verified door traffic using successful cashier NFC taps—not clicks or estimates.</p>
+          <p>Measure how discovery turns into verified door traffic using successful cashier phone taps—not clicks or estimates.</p>
         </div>
         <button type="button" className="pilot-export" onClick={downloadCsv} disabled={!analytics}>Download CSV</button>
       </header>
@@ -245,7 +245,7 @@ export default function AdminPilotAnalytics({
               primary
               label="Verified arrivals"
               value={analytics.totals.verifiedArrivals.toLocaleString()}
-              detail="Unique guest/session cashier NFC taps per service night"
+              detail="Unique guest/session cashier phone taps per service night"
             />
             <PilotKpi
               label="Attributable door share"
@@ -277,7 +277,7 @@ export default function AdminPilotAnalytics({
               <header><span className="eyebrow">Guest journey</span><h3>Discovery to the door</h3></header>
               <PilotFunnelRow label="Unique venue visitors" value={analytics.totals.venueVisitors} maximum={Math.max(analytics.totals.venueVisitors, analytics.totals.dealSelections, analytics.totals.verifiedArrivals, 1)} />
               <PilotFunnelRow label="Unique nightly deal selections" value={analytics.totals.dealSelections} maximum={Math.max(analytics.totals.venueVisitors, analytics.totals.dealSelections, analytics.totals.verifiedArrivals, 1)} />
-              <PilotFunnelRow label="Verified cashier NFC arrivals" value={analytics.totals.verifiedArrivals} maximum={Math.max(analytics.totals.venueVisitors, analytics.totals.dealSelections, analytics.totals.verifiedArrivals, 1)} verified />
+              <PilotFunnelRow label="Verified cashier tap arrivals" value={analytics.totals.verifiedArrivals} maximum={Math.max(analytics.totals.venueVisitors, analytics.totals.dealSelections, analytics.totals.verifiedArrivals, 1)} verified />
               <div className="pilot-intent-row">
                 <span><strong>{analytics.totals.directionRequests}</strong> directions</span>
                 <span><strong>{analytics.totals.dealSaves}</strong> saves</span>
@@ -293,7 +293,7 @@ export default function AdminPilotAnalytics({
                     <span><strong>{source.label}</strong><small>{source.arrivals} verified arrivals</small></span>
                     <em>{source.sharePercent}%</em>
                   </div>
-                )) : <p className="pilot-muted">Source attribution appears after the first verified cashier NFC arrival.</p>}
+                )) : <p className="pilot-muted">Source attribution appears after the first verified cashier tap arrival.</p>}
               </div>
               <div className="pilot-deals">
                 <strong>Deals producing arrivals</strong>
@@ -330,7 +330,7 @@ export default function AdminPilotAnalytics({
 
           <div className="pilot-layout pilot-bottom-layout">
             <form className="pilot-card pilot-report-form" onSubmit={saveNightReport}>
-              <header><span className="eyebrow">Venue-provided total</span><h3>Record a service night</h3><p>Enter the venue&apos;s full door count. MyDancr matches only verified NFC arrivals from the same service night.</p></header>
+              <header><span className="eyebrow">Venue-provided total</span><h3>Record a service night</h3><p>Enter the venue&apos;s full door count. MyDancr matches only verified tap arrivals from the same service night.</p></header>
               <div className="pilot-form-grid">
                 <label><span>Service date</span><input type="date" value={reportDate} disabled={isSaving} onChange={(event) => setReportDate(event.target.value)} min={startDate} max={endDate} required /></label>
                 <label><span>Total people through door</span><input type="number" inputMode="numeric" min="0" max="1000000" step="1" value={doorCount} disabled={isSaving} onChange={(event) => setDoorCount(event.target.value)} placeholder="Enter venue total" required /></label>
@@ -343,7 +343,7 @@ export default function AdminPilotAnalytics({
             <article className="pilot-card pilot-methodology">
               <header><span className="eyebrow">Measurement rules</span><h3>What counts as proof</h3></header>
               <ol>
-                <li><strong>Verified arrival:</strong> the first successful cashier NFC redemption for a guest or anonymous session on a service night.</li>
+                <li><strong>Verified arrival:</strong> the first successful cashier tap redemption for a guest or anonymous session on a service night.</li>
                 <li><strong>Attribution:</strong> the deal selection preserves whether discovery came through a dancer/TV experience or the club experience.</li>
                 <li><strong>Deduplication:</strong> repeat taps by the same guest/session on the same service night count once.</li>
                 <li><strong>Exclusions:</strong> suspicious and voided redemptions do not count. Review test or staff activity in Deal Activity and mark it suspicious.</li>

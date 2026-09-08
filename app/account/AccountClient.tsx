@@ -501,7 +501,7 @@ export default function AccountClient() {
                       : "Secure MyDancr tap"}</small>
                 </span>
               </div>
-              <p>For future taps, no specific MyDancr page needs to be open. Unlock your phone, tap the dressing-room sticker, and open the NFC link if prompted. Use the browser that opens for your dancer sign-in.</p>
+              <p>For future taps, no specific MyDancr page needs to be open. Unlock your phone, tap the dressing-room sticker, and open the link that appears if prompted. Use the browser that opens for your dancer sign-in.</p>
               <ol className="nfc-account-steps" aria-label="Venue connection steps">
                 <li><span>1</span><strong>Use a dancer account</strong></li>
                 <li><span>2</span><strong>Finish required setup if new</strong></li>

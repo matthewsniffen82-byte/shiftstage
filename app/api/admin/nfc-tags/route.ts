@@ -41,7 +41,7 @@ export async function GET(request: Request) {
       session: authContext.session || null,
     });
   } catch (error) {
-    return apiError(error, "Unable to load MyDancr NFC inventory.");
+    return apiError(error, "Unable to load MyDancr tap sticker inventory.");
   }
 }
 
@@ -71,7 +71,7 @@ export async function POST(request: Request) {
       message: "Sticker assigned. Program this one-time URL, test the physical sticker, then lock it read-only.",
     }, 201);
   } catch (error) {
-    return apiError(error, "Unable to provision NFC sticker.", 400);
+    return apiError(error, "Unable to provision tap sticker.", 400);
   }
 }
 
@@ -121,15 +121,15 @@ export async function PATCH(request: Request) {
       message: tag.status === "active" ? "Sticker enabled." : "Sticker disabled.",
     });
   } catch (error) {
-    return apiError(error, "Unable to update NFC sticker.", 400);
+    return apiError(error, "Unable to update tap sticker.", 400);
   }
 }
 
 async function readBody(request: Request): Promise<Record<string, unknown>> {
   return readBoundedJsonObject(request, {
     maxBytes: MAX_NFC_ADMIN_BODY_BYTES,
-    invalidMessage: "Invalid NFC inventory request.",
-    tooLargeMessage: "NFC inventory request is too large.",
+    invalidMessage: "Invalid tap sticker inventory request.",
+    tooLargeMessage: "Tap sticker inventory request is too large.",
   });
 }
 

@@ -25,7 +25,9 @@ function load(path, dependencies, extra = {}) {
   return exports;
 }
 
-const policy = load("src/lib/api-error-policy.ts", {});
+const policy = load("src/lib/api-error-policy.ts", {
+  "./dancr/phone-tap-copy.ts": load("src/lib/dancr/phone-tap-copy.ts", {}),
+});
 const marker = load("src/lib/dancr/nfc-browser-account.ts", {
   "server-only": {},
   "@/src/lib/server-env": { getServerEnv: () => "test-only-signing-key" },

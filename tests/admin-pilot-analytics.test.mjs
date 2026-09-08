@@ -42,7 +42,7 @@ test("pilot dashboard explains and exports proof-of-arrival metrics", () => {
     "Record a service night",
     "Download CSV",
   ]) assert.match(client, new RegExp(copy));
-  assert.match(client, /successful cashier NFC taps/);
+  assert.match(client, /successful cashier phone taps/);
   assert.match(client, /suspicious and voided redemptions do not count/i);
   assert.doesNotMatch(client, /mock|fake|sample data/i);
 });

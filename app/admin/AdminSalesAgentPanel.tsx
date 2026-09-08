@@ -78,7 +78,7 @@ export default function AdminSalesAgentPanel({ onActionConfirmed }: { onActionCo
   }
 
   return <section className="sales-workspace"><header><span>Venue sales</span><h2>Sales agents and NATS settlement</h2>
-    <p>Only verified cashier NFC revenue generates agent earnings. Clubs owe MyDancr; dancers and agents are the only payees.</p></header>
+    <p>Only verified cashier tap revenue generates agent earnings. Clubs owe MyDancr; dancers and agents are the only payees.</p></header>
     <div className="sales-metrics"><Metric label="Active agents" value={program?.metrics?.activeAgents || 0} /><Metric label="Attributed clubs" value={program?.metrics?.attributedVenues || 0} />
       <Metric label="Waiting on clubs" value={money(program?.metrics?.pendingVenuePaymentCents)} /><Metric label="Ready for NATS" value={money(program?.metrics?.payableCents)} />
       <Metric label="Paid" value={money(program?.metrics?.paidCents)} /></div>

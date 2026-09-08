@@ -22,7 +22,9 @@ function compile(source, overrides = {}) {
   });
   return exports;
 }
-const policy = compile(readFileSync(new URL("../src/lib/api-error-policy.ts", import.meta.url), "utf8"));
+const policy = compile(readFileSync(new URL("../src/lib/api-error-policy.ts", import.meta.url), "utf8"), {
+  "./dancr/phone-tap-copy.ts": compile(readFileSync(new URL("../src/lib/dancr/phone-tap-copy.ts", import.meta.url), "utf8")),
+});
 const passwordPolicy = compile(readFileSync(new URL("../src/lib/dancr/password-policy.ts", import.meta.url), "utf8"));
 const api = { PublicApiError: policy.PublicApiError, apiError(error, fallback) {
   const result = policy.resolveApiError(error, fallback);

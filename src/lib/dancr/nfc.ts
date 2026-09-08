@@ -1,6 +1,7 @@
 import crypto from "node:crypto";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { requireVenueAccess } from "./venue-access";
+import { phoneTapCopy } from "./phone-tap-copy";
 
 type DancrClient = SupabaseClient;
 
@@ -356,7 +357,7 @@ function toTagSummary(row: any): NfcTagSummary {
     id: String(row.id),
     venueId: String(row.venue_id),
     type: row.tag_type as NfcTagType,
-    label: String(row.label),
+    label: phoneTapCopy(String(row.label)),
     status: row.status as NfcTagStatus,
     lastTappedAt: row.last_tapped_at ? String(row.last_tapped_at) : null,
     tapCount: Number(row.tap_count || 0),

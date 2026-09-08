@@ -23,7 +23,9 @@ function compile(source, dependencies) {
   });
   return exports;
 }
-const policy = compile(policySource, {});
+const policy = compile(policySource, {
+  "./dancr/phone-tap-copy.ts": compile(readFileSync(new URL("../src/lib/dancr/phone-tap-copy.ts", import.meta.url), "utf8"), {}),
+});
 
 function resetFixture(providerError) {
   const calls = [];

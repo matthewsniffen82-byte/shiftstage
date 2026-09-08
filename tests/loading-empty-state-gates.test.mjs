@@ -39,7 +39,7 @@ test("secondary account panels do not claim data is empty while requests are loa
   );
   assert.match(
     adminNfcPanel,
-    /const \[isLoading, setIsLoading\] = useState\(true\);[\s\S]*?\{!isLoading && !tags\.length \? <p>No NFC stickers have been assigned\.<\/p>/,
+    /const \[isLoading, setIsLoading\] = useState\(true\);[\s\S]*?\{!isLoading && !tags\.length \? <p>No tap stickers have been assigned\.<\/p>/,
   );
 });
 

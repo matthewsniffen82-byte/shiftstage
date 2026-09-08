@@ -30,7 +30,7 @@ export default function AdminNfcInventoryPanel() {
   const [venueId, setVenueId] = useState("");
   const [type, setType] = useState<AdminNfcTag["type"]>("dressing_room");
   const [label, setLabel] = useState("Dressing room");
-  const [status, setStatus] = useState("Loading MyDancr NFC inventory…");
+  const [status, setStatus] = useState("Loading MyDancr tap sticker inventory…");
   const [isLoading, setIsLoading] = useState(true);
   const [programmingUrl, setProgrammingUrl] = useState("");
   const [isSaving, setIsSaving] = useState(false);
@@ -52,7 +52,7 @@ export default function AdminNfcInventoryPanel() {
       const data = await requestAdminJson("/api/admin/nfc-tags", {
         cache: "no-store",
         signal: controller.signal,
-        fallbackMessage: "Unable to load NFC inventory.",
+        fallbackMessage: "Unable to load tap sticker inventory.",
       });
       if (!mountedRef.current || controller.signal.aborted || requestId !== loadSequenceRef.current) return;
       setVenues(data.venues || []);
@@ -61,7 +61,7 @@ export default function AdminNfcInventoryPanel() {
       if (clearStatus) setStatus("");
     } catch (error) {
       if (!mountedRef.current || controller.signal.aborted || requestId !== loadSequenceRef.current) return;
-      setStatus(error instanceof Error ? error.message : "Unable to load NFC inventory.");
+      setStatus(error instanceof Error ? error.message : "Unable to load tap sticker inventory.");
     } finally {
       if (loadAbortRef.current === controller) loadAbortRef.current = null;
       if (mountedRef.current && requestId === loadSequenceRef.current) setIsLoading(false);
@@ -102,7 +102,7 @@ export default function AdminNfcInventoryPanel() {
         signal: controller.signal,
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ venueId, type, label }),
-        fallbackMessage: "Unable to assign NFC sticker.",
+        fallbackMessage: "Unable to assign tap sticker.",
       });
       if (!mountedRef.current || controller.signal.aborted || requestId !== actionSequenceRef.current) return;
       setProgrammingUrl(data.programmingUrl || "");
@@ -110,7 +110,7 @@ export default function AdminNfcInventoryPanel() {
       await load({ clearStatus: false });
     } catch (error) {
       if (!mountedRef.current || controller.signal.aborted || requestId !== actionSequenceRef.current) return;
-      setStatus(error instanceof Error ? error.message : "Unable to assign NFC sticker.");
+      setStatus(error instanceof Error ? error.message : "Unable to assign tap sticker.");
     } finally {
       if (actionAbortRef.current === controller) actionAbortRef.current = null;
       if (requestId === actionSequenceRef.current) actionInFlightRef.current = false;
@@ -137,7 +137,7 @@ export default function AdminNfcInventoryPanel() {
         signal: controller.signal,
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ tagId: tag.id, action }),
-        fallbackMessage: "Unable to update NFC sticker.",
+        fallbackMessage: "Unable to update tap sticker.",
       });
       if (!mountedRef.current || controller.signal.aborted || requestId !== actionSequenceRef.current) return;
       setProgrammingUrl(data.programmingUrl || "");
@@ -145,7 +145,7 @@ export default function AdminNfcInventoryPanel() {
       await load({ clearStatus: false });
     } catch (error) {
       if (!mountedRef.current || controller.signal.aborted || requestId !== actionSequenceRef.current) return;
-      setStatus(error instanceof Error ? error.message : "Unable to update NFC sticker.");
+      setStatus(error instanceof Error ? error.message : "Unable to update tap sticker.");
     } finally {
       if (actionAbortRef.current === controller) actionAbortRef.current = null;
       if (requestId === actionSequenceRef.current) actionInFlightRef.current = false;
@@ -195,7 +195,7 @@ export default function AdminNfcInventoryPanel() {
         <button type="submit" disabled={isSaving || !venueId}>{isSaving ? "Working…" : "Assign sticker"}</button>
       </form>
       {programmingUrl ? (
-        <section className="admin-nfc-programming" aria-label="One-time NFC programming URL">
+        <section className="admin-nfc-programming" aria-label="One-time sticker setup link">
           <strong>Shown once — program the physical sticker now</strong>
           <code>{programmingUrl}</code>
           <button type="button" onClick={copyProgrammingUrl}>Copy programming URL</button>
@@ -218,7 +218,7 @@ export default function AdminNfcInventoryPanel() {
             ) : null}
           </section>
         ))}
-        {!isLoading && !tags.length ? <p>No NFC stickers have been assigned.</p> : null}
+        {!isLoading && !tags.length ? <p>No tap stickers have been assigned.</p> : null}
       </div>
       {status ? <p role="status" className="admin-nfc-status">{status}</p> : null}
       <style>{`

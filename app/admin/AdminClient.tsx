@@ -6,6 +6,7 @@ import { PasswordRequirements } from "@/app/components/PasswordRequirements";
 import { DashboardCloseButton } from "@/app/components/DashboardCloseButton";
 import { homeDiscoveryHref } from "@/src/lib/dancr/navigation";
 import { safeSocialProfileUrl } from "@/src/lib/dancr/social-profile-url";
+import { phoneTapCopy } from "@/src/lib/dancr/phone-tap-copy";
 import {
   CLUB_DEAL_OFFER_PRESETS,
   defaultClubDealOfferPreset,
@@ -820,7 +821,7 @@ export default function AdminClient() {
               <WorkspaceHeader
                 eyebrow="Venue operations"
                 title="Clubs"
-                description="Manage club accounts, signup requests, dancer affiliations, published deals, and MyDancr-programmed NFC inventory."
+                description="Manage club accounts, signup requests, dancer affiliations, published deals, and MyDancr tap sticker inventory."
               />
               <section className="admin-grid">
                 <Panel title="Club accounts" badge={`${state.venues?.length || 0} managed`} defaultOpen>
@@ -840,7 +841,7 @@ export default function AdminClient() {
                     onClaimCodesChange={(venueClaimCodes) => setState((current) => ({ ...current, venueClaimCodes }))}
                   />
                 </Panel>
-                <Panel title="NFC sticker inventory">
+                <Panel title="Tap sticker inventory">
                   <AdminNfcInventoryPanel />
                 </Panel>
               </section>
@@ -1241,7 +1242,7 @@ function FinanceManager({
       </Panel>
 
       {natsSelected ? <Panel title="NATS affiliate settlement" badge={nats.configured === true ? "API ready" : "Credentials required"}>
-        <p>MyDancr remains authoritative for NFC validation and exact commission amounts. Verify every dancer login against the licensed NATS admin before activation.</p>
+        <p>MyDancr remains authoritative for phone tap verification and exact commission amounts. Verify every dancer login against the licensed NATS admin before activation.</p>
         {nats.affiliatePortalUrl ? <p><a href={asText(nats.affiliatePortalUrl)} target="_blank" rel="noreferrer">Open NATS affiliate portal</a></p> : null}
         <div className="admin-list">
           {natsAccounts.map((account) => <article key={asText(account.dancer_id)}>
@@ -1825,7 +1826,7 @@ function ReferralFeeManager({
       <Panel title="Referral fee agreements" badge={`${pendingRequests.length} requests`}>
         <span className="eyebrow">MyDancr controlled</span>
         <h2 id="referral-fee-manager-heading">Venue referral terms</h2>
-        <p>Only MyDancr admins can record the fee charged for each verified individual NFC redemption. Venue managers receive a complete read-only view of the signed amount and history.</p>
+        <p>Only MyDancr admins can record the fee charged for each verified individual phone tap redemption. Venue managers receive a complete read-only view of the signed amount and history.</p>
         <form id="admin-referral-fee-form" className="referral-fee-form" onSubmit={saveAgreement}>
           <label>
             Venue
@@ -5171,7 +5172,7 @@ async function copyAdminText(value: string) {
 }
 
 function labelize(value: string) {
-  return value.replace(/([A-Z])/g, " $1").replace(/_/g, " ").replace(/^./, (char) => char.toUpperCase());
+  return phoneTapCopy(value.replace(/([A-Z])/g, " $1").replace(/_/g, " ").replace(/^./, (char) => char.toUpperCase()));
 }
 
 function formatValue(value: unknown) {

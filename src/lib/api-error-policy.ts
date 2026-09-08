@@ -1,3 +1,5 @@
+import { phoneTapCopy } from "./dancr/phone-tap-copy.ts";
+
 export type PublicApiErrorCode =
   | "AUTH_REQUIRED"
   | "FORBIDDEN"
@@ -42,7 +44,7 @@ export function resolveApiError(error: unknown, fallback: string, status = 500) 
 
   return {
     status: responseStatus,
-    body: { ok: false as const, error: publicMessage, ...(code ? { code } : {}) },
+    body: { ok: false as const, error: phoneTapCopy(publicMessage), ...(code ? { code } : {}) },
     internalMessage: message,
     shouldLog: publicMessage !== message || responseStatus >= 500,
   };
