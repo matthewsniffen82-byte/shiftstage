@@ -136,7 +136,7 @@ test("preview deletion confirms once, blocks duplicate clicks, and updates count
   assert.deepEqual(JSON.parse(ui.requests[0].body), { photoId: "photo-id" });
   assert.equal(ui.requests[0].method, "DELETE");
   assert.equal(ui.deleteButton.props.disabled, true);
-  assert.match(ui.html, /Deleting…/);
+  assert.match(ui.html, /aria-label="Deleting photo 1" aria-busy="true"/);
   release({ ok: true }); await ui.settle();
   assert.equal(ui.deleteButton, undefined);
   assert.match(ui.html, /0 added/);

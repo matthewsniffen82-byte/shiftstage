@@ -125,21 +125,28 @@ export default function DancerProfileMediaUploads({
               <ul className="profile-upload-items" aria-label={`Uploaded ${section}`}>
                 {items.map((item, index) => (
                   <li key={item.id}>
-                    <button aria-label={`Manage ${label.toLowerCase()} ${index + 1}: ${profileUploadStatus(item.status)}`} disabled={isPhoto && Boolean(deletingPhotoId)} onClick={() => onOpen(section)} type="button">
-                      <span className="profile-upload-thumbnail">
-                        {item.imageUrl ? <img alt="" loading="lazy" src={item.imageUrl} /> : <span aria-hidden="true">{isPhoto ? "▧" : "▶"}</span>}
-                        {!isPhoto && item.imageUrl ? <i aria-hidden="true">▶</i> : null}
-                      </span>
-                      <strong>{label} {index + 1}</strong>
-                      <small className={item.status === "approved" ? "is-ready" : ""}>{profileUploadStatus(item.status)}</small>
-                    </button>
-                    {isPhoto ? <button
-                      aria-label={`Delete photo ${index + 1}`}
-                      className="profile-upload-delete"
-                      disabled={Boolean(deletingPhotoId)}
-                      onClick={() => void deletePreviewPhoto(item.id)}
-                      type="button"
-                    >{deletingPhotoId === item.id ? "Deleting…" : "Delete"}</button> : null}
+                    <div className="profile-upload-preview">
+                      <button aria-label={`Manage ${label.toLowerCase()} ${index + 1}: ${profileUploadStatus(item.status)}`} disabled={isPhoto && Boolean(deletingPhotoId)} onClick={() => onOpen(section)} type="button">
+                        <span className="profile-upload-thumbnail">
+                          {item.imageUrl ? <img alt="" loading="lazy" src={item.imageUrl} /> : <span aria-hidden="true">{isPhoto ? "▧" : "▶"}</span>}
+                          {!isPhoto && item.imageUrl ? <i aria-hidden="true">▶</i> : null}
+                        </span>
+                      </button>
+                      {isPhoto ? <button
+                        aria-label={`${deletingPhotoId === item.id ? "Deleting" : "Delete"} photo ${index + 1}`}
+                        aria-busy={deletingPhotoId === item.id}
+                        className="profile-upload-delete"
+                        disabled={Boolean(deletingPhotoId)}
+                        onClick={() => void deletePreviewPhoto(item.id)}
+                        type="button"
+                      >
+                        <span className="profile-upload-delete-icon" aria-hidden="true">
+                          <svg viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 10v7M14 10v7" /></svg>
+                        </span>
+                      </button> : null}
+                    </div>
+                    <strong>{label} {index + 1}</strong>
+                    <small className={item.status === "approved" ? "is-ready" : ""}>{profileUploadStatus(item.status)}</small>
                   </li>
                 ))}
               </ul>
@@ -169,7 +176,8 @@ export default function DancerProfileMediaUploads({
         .profile-upload-entry small { color:#d4cedd !important; -webkit-text-fill-color:currentColor !important; font-size:12px; line-height:1.3; }
         .profile-upload-entry > b { margin-left:auto; color:#e4d5ff; font-size:26px; line-height:1; }
         .profile-upload-items { min-width:0; display:flex; gap:10px; overflow-x:auto; margin:0; padding:2px 0 8px; list-style:none; }
-        .profile-upload-items > li { flex:0 0 112px; min-width:0; }
+        .profile-upload-items > li { flex:0 0 112px; min-width:0; display:grid; align-content:start; gap:4px; }
+        .profile-upload-preview { position:relative; min-width:0; }
         .dancer-profile-media-uploads .profile-upload-items button { width:100%; min-height:44px; display:grid; gap:4px; padding:0; border:0; border-radius:8px; background:transparent; color:#fff; text-align:left; font:inherit; cursor:pointer; }
         .profile-upload-thumbnail { position:relative; width:100%; height:auto; aspect-ratio:3 / 4; display:grid; place-items:center; overflow:hidden; border:1px solid #40384b; border-radius:8px; background:#15101d; color:#c9c3d2; }
         .profile-upload-thumbnail img { width:100%; height:100%; display:block; object-fit:cover; }
@@ -183,7 +191,9 @@ export default function DancerProfileMediaUploads({
         body.dancr-button-system .dancer-profile-media-uploads .profile-upload-entry { min-height:78px !important; padding:14px 16px !important; border-radius:16px !important; background:linear-gradient(120deg,#221333,#100d18) !important; box-shadow:none !important; }
         body.dancr-button-system .dancer-profile-media-uploads .profile-upload-items button { padding:0 !important; border:0 !important; border-radius:8px !important; background:transparent !important; box-shadow:none !important; }
         .dancer-profile-media-uploads .profile-upload-items .profile-upload-delete,
-        body.dancr-button-system .dancer-profile-media-uploads .profile-upload-items .profile-upload-delete { display:flex; justify-content:center; align-items:center; min-height:44px; margin-top:6px; padding:6px 8px !important; border:1px solid #69414d !important; background:#24151c !important; color:#ffc3d1 !important; font-size:12px; font-weight:800; }
+        body.dancr-button-system .dancer-profile-media-uploads .profile-upload-items .profile-upload-delete { position:absolute; right:2px; bottom:2px; z-index:1; display:grid; place-items:center; width:44px !important; height:44px !important; min-height:44px; margin:0; padding:0 !important; border:0 !important; background:transparent !important; backdrop-filter:none !important; -webkit-backdrop-filter:none !important; color:#fff !important; }
+        .profile-upload-delete-icon { width:30px; height:30px; display:grid; place-items:center; border:1px solid rgba(255,255,255,.4); border-radius:50%; background:rgba(0,0,0,.78); box-shadow:0 1px 5px rgba(0,0,0,.35); }
+        .profile-upload-delete-icon svg { width:17px; height:17px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
         .dancer-profile-media-uploads button:disabled { opacity:.55; cursor:wait; }
       `}</style>
     </section>
