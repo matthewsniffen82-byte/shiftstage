@@ -58,7 +58,7 @@ test("dancer and venue dashboards show the official tap-sticker workflow", () =>
   assert.doesNotMatch(dashboard, /DancerVenueVerificationPanel|VenueDancerVerificationPanel/);
   assert.doesNotMatch(dashboard, /clearVenueVerificationQuery|parseVenueVerificationToken|formatVerificationExpiry|formatVerificationDate/);
   assert.doesNotMatch(dashboard, /requestDancerVenueVerificationJson|requestVenueDancerVerificationsJson/);
-  assert.match(dancerPanel, /approved dressing-room tap added this venue/);
+  assert.match(dancerPanel, /Your first tap activates your completed profile and checks you in at that club/);
   assert.match(dancerPanel, /six-hour Working Now session/);
   assert.match(dancerPanel, /six-hour cooldown/);
   assert.match(venuePanel, /no separate manager approval is needed/);

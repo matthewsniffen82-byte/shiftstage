@@ -137,6 +137,17 @@ export default function DancerNfcPanel({
     </div>
   ) : null;
 
+  const checkInDetails = (
+    <details className="dancer-nfc-details">
+      <summary>How check-ins work</summary>
+      <div>
+        <p>Each check-in starts one six-hour Working Now session, followed by a six-hour cooldown before you can check in at any club again. Tapping again does not extend the session.</p>
+        <p>Upcoming dates do not check you in. Only an active MyDancr dressing-room sticker can connect you to a club.</p>
+        {!isPublic && !authorized ? <p>Finish profile setup and get your avatar and at least one profile photo approved before activation.</p> : null}
+      </div>
+    </details>
+  );
+
   if (compactAuthorized && authorized) {
     const venueCount = activeAffiliations.length;
     return (
@@ -150,12 +161,9 @@ export default function DancerNfcPanel({
           <span className="dancer-nfc-compact-action">Manage</span>
         </summary>
         <div className="dancer-nfc-compact-body">
-          <p>Tap an authorized club&apos;s official dressing-room sticker each time you arrive to appear in Working Now for six hours.</p>
+          <p>Tap any club&apos;s MyDancr dressing-room sticker to connect to that club and check in as Working Now. Once connected, you can post upcoming dates there.</p>
           {affiliationRoster}
-          <div className="dancer-nfc-notes">
-            <span>Retaps never extend a Working Now session, and no phone location is collected.</span>
-            <span>A six-hour cooldown follows each session.</span>
-          </div>
+          {checkInDetails}
           <button className="dancer-nfc-refresh" type="button" disabled={Boolean(pendingId)} onClick={refresh}>
             {pendingId === "refresh" ? "Refreshing…" : "Refresh access"}
           </button>
@@ -168,34 +176,33 @@ export default function DancerNfcPanel({
 
   return (
     <article className={`info-panel dancer-nfc-panel ${authorized ? "is-authorized" : ""}`} id="dancer-venue-verification">
-      <div className="dancer-nfc-icon"><NfcIcon /></div>
       <div className="dancer-nfc-content">
-        <span className="eyebrow">Dressing-room tap</span>
         <div className="dancer-nfc-heading">
-          <h2>{authorized ? "Profile and venue approved" : pendingEnrollment ? "Tap saved" : "Tap to approve your profile"}</h2>
-          <b>{authorized ? "APPROVED" : pendingEnrollment ? "FINISH SETUP" : "TAP REQUIRED"}</b>
+          <div className="dancer-nfc-icon"><NfcIcon /></div>
+          <div>
+            <span className="eyebrow">Dressing-room tap</span>
+            <h2>{authorized ? "Profile activated" : pendingEnrollment ? "Tap saved — finish setup" : "Your first tap activates your profile"}</h2>
+          </div>
         </div>
         {authorized ? (
-          <p>Your approved dressing-room tap added this venue. Each time you arrive, tap that venue&apos;s official tag to appear in Working Now for six hours.</p>
+          <p className="dancer-nfc-intro">You&apos;re activated. Tap the club&apos;s MyDancr dressing-room sticker each time you check in.</p>
         ) : pendingEnrollment ? (
-          <p>Your tap at {enrollment?.venue?.name || "the club"} is saved. Complete profile setup and media review; MyDancr will activate the venue automatically when the profile is ready.</p>
+          <p className="dancer-nfc-intro">Your tap at {enrollment?.venue?.name || "the club"} is saved. Finish your profile and required photo approvals to activate.</p>
         ) : (
-          <p>At the club, unlock your signed-in phone and tap its official MyDancr dressing-room sticker. When setup is complete, the first eligible tap approves your profile, connects that venue, and starts one six-hour Working Now session.</p>
+          <p className="dancer-nfc-intro">Finish your profile, then unlock your signed-in phone and tap the MyDancr dressing-room sticker at the club.</p>
         )}
 
+        <ol className="dancer-nfc-guide">
+          {!authorized ? <li><strong>Activate once</strong><span>Your first tap activates your completed profile and checks you in at that club.</span></li> : null}
+          <li><strong>Check in at any club</strong><span>Tap that club&apos;s MyDancr dressing-room sticker to connect to the club and show Working Now there.</span></li>
+          <li><strong>Post upcoming dates</strong><span>Once connected to a club, you can post upcoming dates there.</span></li>
+        </ol>
         {affiliationRoster}
-
-        <div className="dancer-nfc-notes">
-          <span>Each eligible tap starts one six-hour Working Now session; retaps never extend it and no phone location is collected.</span>
-          <span>A six-hour cooldown follows. No venue tag can start another session until that cooldown ends.</span>
-          <span>Upcoming venue dates are optional and never make you Working Now by themselves.</span>
-          <span>Media safety moderation remains separate{isPublic ? "; your profile is live." : " and must finish before the profile is public."}</span>
-        </div>
+        {checkInDetails}
         <button className="dancer-nfc-refresh" type="button" disabled={Boolean(pendingId)} onClick={refresh}>
-          {pendingId === "refresh" ? "Refreshing…" : "Refresh access"}
+          {pendingId === "refresh" ? "Checking…" : "Check activation status"}
         </button>
         {status ? <p className="dancer-nfc-status" role="status">{status}</p> : null}
-        <small>Only an active MyDancr-supplied dressing-room sticker can authorize this action.</small>
       </div>
       <style>{DANCER_NFC_STYLE}</style>
     </article>
@@ -207,16 +214,17 @@ function formatDate(value: string) {
 }
 
 const DANCER_NFC_STYLE = [
-  ".dancer-nfc-panel{display:grid;grid-template-columns:auto minmax(0,1fr);gap:16px;align-items:start;border-color:rgba(126,87,255,.34);background:radial-gradient(circle at 0 0,rgba(116,60,255,.14),transparent 22rem),rgba(12,12,18,.88)}",
+  ".dancer-nfc-panel{display:block;border-color:rgba(126,87,255,.34);background:radial-gradient(circle at 0 0,rgba(116,60,255,.14),transparent 22rem),rgba(12,12,18,.88)}",
   ".dancer-nfc-panel.is-authorized{border-color:rgba(73,255,170,.34);background:radial-gradient(circle at 0 0,rgba(25,190,116,.14),transparent 22rem),rgba(9,15,14,.9)}",
-  ".dancer-nfc-icon{width:64px;height:64px;display:grid;place-items:center;border-radius:50%;color:#fff;background:linear-gradient(145deg,#4314b8,#842cff);box-shadow:0 0 28px rgba(125,59,255,.42)}",
+  ".dancer-nfc-icon{width:44px;height:44px;flex:0 0 44px;display:grid;place-items:center;border-radius:12px;color:#fff;background:rgba(116,60,255,.2)}",
   ".is-authorized .dancer-nfc-icon{background:linear-gradient(145deg,#087a52,#22cb83);box-shadow:0 0 28px rgba(41,223,145,.3)}",
-  ".dancer-nfc-icon svg{width:38px;height:38px;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}",
-  ".dancer-nfc-content{min-width:0}.dancer-nfc-heading{display:flex;align-items:center;justify-content:space-between;gap:12px}.dancer-nfc-heading h2,.dancer-nfc-panel p{margin:4px 0}",
-  ".dancer-nfc-heading b{padding:6px 9px;border:1px solid rgba(142,102,255,.36);border-radius:999px;color:#c8b9ff;font-size:9px;letter-spacing:.1em;white-space:nowrap}.is-authorized .dancer-nfc-heading b{border-color:rgba(69,255,165,.36);color:#70ffc1}",
+  ".dancer-nfc-icon svg{width:28px;height:28px;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}",
+  ".dancer-nfc-content{min-width:0}.dancer-nfc-heading{display:flex;align-items:center;gap:12px}.dashboard-shell .dancer-nfc-heading h2{margin:3px 0 0;font-size:21px;line-height:1.2}.dashboard-shell .dancer-nfc-heading .eyebrow{font-size:10px;letter-spacing:.12em;color:#bca7da}.dashboard-shell .dancer-nfc-panel p.dancer-nfc-intro{margin:16px 0;font-size:14px;line-height:1.5;color:#d0c8db}",
+  ".dashboard-shell .dancer-nfc-guide{display:grid;gap:15px;margin:18px 0;padding:0;list-style:none;counter-reset:tap-step}.dashboard-shell .dancer-nfc-guide>li{position:relative;display:grid;gap:3px;padding:0 0 0 34px;border:0;background:none;box-shadow:none;counter-increment:tap-step}.dancer-nfc-guide>li:before{content:counter(tap-step);position:absolute;left:0;top:0;width:23px;height:23px;display:grid;place-items:center;border:1px solid #7e57ff66;border-radius:50%;color:#d4c2ff;font-size:11px;font-weight:700}.dancer-nfc-guide strong{font-size:14px;line-height:1.4;color:#fff}.dancer-nfc-guide span{font-size:13px;line-height:1.5;color:#c4b9d2}",
+  ".dashboard-shell details.dancer-nfc-details{margin:16px 0;padding:0;border:0;border-top:1px solid #ffffff14;border-radius:0;background:none;box-shadow:none}.dancer-nfc-details>summary{display:flex;align-items:center;gap:8px;min-height:44px;padding:8px 0;color:#c9b6e7;font-size:12px;font-weight:600;cursor:pointer;list-style:none}.dancer-nfc-details>summary::-webkit-details-marker{display:none}.dancer-nfc-details>summary:after{content:'+';margin-left:auto;font-size:18px}.dancer-nfc-details[open]>summary:after{content:'−'}.dancer-nfc-details>summary:focus-visible{outline:2px solid #c9b6e7;outline-offset:2px}.dashboard-shell .dancer-nfc-details p{margin:0 0 10px;font-size:12px;line-height:1.5;color:#b9accd}",
   ".dancer-nfc-panel p,.dancer-nfc-panel small,.dancer-nfc-notes{color:#b9accd;line-height:1.45}.dancer-nfc-roster{display:grid;gap:7px;margin:14px 0}.dancer-nfc-roster section{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 12px;border:1px solid rgba(69,255,165,.18);border-radius:11px;background:rgba(34,201,129,.06)}",
   ".dancer-nfc-roster span{display:grid;gap:2px}.dancer-nfc-roster small{font-size:11px}.dancer-nfc-roster button,.dancer-nfc-refresh{min-height:38px;padding:0 12px;border:1px solid rgba(255,255,255,.15);border-radius:9px;color:#fff;background:rgba(255,255,255,.06);font:inherit;font-weight:800;cursor:pointer}",
-  ".dancer-nfc-notes{display:grid;gap:6px;margin:12px 0;font-size:12px}.dancer-nfc-notes span{padding-left:15px;position:relative}.dancer-nfc-notes span:before{content:'✓';position:absolute;left:0;color:#5fffb5}.dancer-nfc-status{font-size:12px}.dancer-nfc-refresh{margin:0 0 10px}.dancer-nfc-panel small{display:block}",
+  ".dancer-nfc-status{font-size:12px}.dancer-nfc-refresh{margin:0 0 10px}.dancer-nfc-panel small{display:block}.dashboard-shell .dancer-nfc-panel .dancer-nfc-refresh{width:100%;min-height:44px;margin:0;font-size:13px}",
   ".dashboard-shell .dancer-nfc-panel-compact{padding:0!important}.dancer-nfc-panel-compact>summary{box-sizing:border-box;min-height:68px;display:grid;grid-template-columns:42px minmax(0,1fr) auto;align-items:center;gap:11px;padding:10px 12px;cursor:pointer;list-style:none}.dancer-nfc-panel-compact>summary::-webkit-details-marker{display:none}.dancer-nfc-panel-compact>summary:focus-visible{outline:2px solid #8b5cf6;outline-offset:-3px}.dancer-nfc-compact-icon{width:40px;height:40px;display:grid;place-items:center;border-radius:12px;color:#70ffc1;background:rgba(34,201,129,.11)}.dancer-nfc-compact-icon svg{width:24px;height:24px;stroke:currentColor;stroke-width:1.7}.dancer-nfc-compact-copy{min-width:0;display:grid;gap:3px}.dancer-nfc-compact-copy strong{color:#fff;font-size:16px}.dancer-nfc-compact-copy small{color:#b9accd;font-size:11px}.dancer-nfc-compact-action{padding:6px 9px;border:1px solid rgba(69,255,165,.24);border-radius:999px;color:#70ffc1;font-size:10px;font-weight:900}.dancer-nfc-panel-compact[open] .dancer-nfc-compact-action{color:#fff}.dancer-nfc-compact-body{display:grid;gap:10px;padding:0 12px 12px;border-top:1px solid rgba(255,255,255,.08)}.dancer-nfc-compact-body>p{margin:12px 0 0;color:#b9accd;line-height:1.45}",
-  "@media(max-width:620px){.dancer-nfc-panel{grid-template-columns:1fr}.dancer-nfc-icon{width:54px;height:54px}.dancer-nfc-icon svg{width:32px;height:32px}.dancer-nfc-heading{align-items:flex-start;flex-direction:column}.dancer-nfc-roster section{align-items:flex-start}}",
+  "@media(max-width:620px){.dancer-nfc-roster section{align-items:flex-start}}",
 ].join("");
