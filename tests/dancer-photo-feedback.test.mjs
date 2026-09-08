@@ -15,12 +15,13 @@ const approved = (id = "saved", sort = 1, primary = false) => ({ id, imageUrl: `
 const pending = (id = "review", sort = 1) => ({ id, previewUrl: `/${id}.jpg`, sort_order: sort });
 
 // Exercise the real upload handlers, state updates, and profile mapping without uploading user data.
-function photoHarness({ profile = {}, post = async () => ({ decision: "review", moderationRecordId: "review", photo: { id: "review", sortOrder: 1 } }), read = async () => ({ profile: { dancer_photos: [approved()] } }) } = {}) {
-  const slots = [], posts = [], reads = [], profiles = [];
+function photoHarness({ profile = {}, pin = async (_kind, id, pinned) => ({ id, isPinned: pinned }), post = async () => ({ decision: "review", moderationRecordId: "review", photo: { id: "review", sortOrder: 1 } }), read = async () => ({ profile: { dancer_photos: [approved()] } }) } = {}) {
+  const slots = [], posts = [], reads = [], profiles = [], pins = [];
   let cursor = 0, effects = [], dirty = true, tree;
   const exports = {};
   runInNewContext(code, {
-    exports, MAX_DANCER_PROFILE_PHOTOS: 30,
+    exports, MAX_DANCER_PROFILE_PHOTOS: 30, DancerMediaPinButton: "MediaPinButton",
+    requestDancerMediaPin: (...args) => { pins.push(args); return pin(...args); },
     require: () => ({ jsx: (type, props) => ({ type, props }), jsxs: (type, props) => ({ type, props }) }),
     useState(initial) {
       const index = cursor++;
@@ -55,7 +56,8 @@ function photoHarness({ profile = {}, post = async () => ({ decision: "review", 
   }
   render();
   return {
-    posts, reads, profiles, mapProfile: exports.dancerPhotoItemsFromProfile,
+    posts, reads, profiles, pins, mapProfile: exports.dancerPhotoItemsFromProfile,
+    get pinButtons() { return nodes().filter(node => node.type === "MediaPinButton"); },
     get cards() { return nodes().filter(node => /^(photo-review-card|photo-saved-preview)/.test(node.props?.className || "")); },
     get labels() { return this.cards.map(card => nodes(card).find(node => node.type === "strong").props.children); },
     get statuses() { return this.cards.map(card => nodes(card).find(node => node.type === "small").props.children); },
@@ -112,20 +114,37 @@ test("an avatar stays separate and gallery photos have no main-photo action", ()
   assert.equal(ui.buttons.some(button => button.props.children === "Make main"), false);
 });
 
-test("all gallery photos can be reordered without changing the avatar or showing a main label", async () => {
+test("pinning a photo keeps it first across refreshes without changing the avatar or legacy slots", async () => {
+  let savedPin = false;
+  const first = approved("first", 0, true), second = { ...approved("second", 1), is_pinned: true };
   const ui = photoHarness({
-    profile: { avatarPhotoUrl: "/avatar.jpg", dancer_photos: [approved("first", 0, true), approved("second", 1)] },
-    read: async () => ({ profile: { avatarPhotoUrl: "/avatar.jpg", dancer_photos: [approved("second", 0, true), approved("first", 1)] } }),
+    profile: { avatarPhotoUrl: "/avatar.jpg", dancer_photos: [first, { ...second, is_pinned: false }] },
+    pin: async (_kind, id, pinned) => { savedPin = pinned; return { id, isPinned: pinned }; },
+    read: async () => ({ profile: { avatarPhotoUrl: "/avatar.jpg", dancer_photos: [first, { ...second, is_pinned: savedPin }] } }),
   });
   assert.equal(ui.buttons.some(button => button.props.className === "photo-order-action"), false);
-  ui.buttons.find(button => button.props["aria-label"] === "Reorder photos").props.onClick();
+  const button = ui.pinButtons[1];
+  button.props.onClick(); button.props.onClick();
   await ui.settle();
-  ui.buttons.find(button => button.props["aria-label"] === "Move Photo 2 earlier").props.onClick();
-  await ui.settle();
-  assert.deepEqual(JSON.parse(ui.reads[0].body), { mainPhotoUrl: "/second.jpg", galleryPhotoUrls: ["/first.jpg"] });
+  assert.equal(ui.pins.length, 1);
+  assert.deepEqual(ui.pins[0].slice(0, 3), ["photo", "second", true]);
+  assert.equal(ui.pinButtons[0].props.pinned, true);
   assert.deepEqual(ui.labels, ["Photo 1", "Photo 2"]);
-  assert.equal(ui.buttons.some(button => button.props.children === "Make main"), false);
   assert.equal(ui.profiles[0].avatarPhotoUrl, "/avatar.jpg");
+  assert.equal(ui.profiles[0].dancer_photos[0].is_primary, true);
+  ui.updateProfile(ui.profiles[0]);
+  assert.equal(ui.pinButtons[0].props.pinned, true);
+  ui.pinButtons[0].props.onClick(); await ui.settle();
+  assert.deepEqual(ui.pins[1].slice(0, 3), ["photo", "second", false]);
+  assert.equal(ui.pinButtons[0].props.pinned, false);
+});
+
+test("failed pin requests leave the photo order intact and release the controls", async () => {
+  const ui = photoHarness({ profile: { dancer_photos: [approved("first", 0, true), approved("second", 1)] }, pin: async () => { throw new Error("Connection lost."); } });
+  ui.pinButtons[1].props.onClick(); await ui.settle();
+  assert.equal(ui.pinButtons[1].props.pinned, false);
+  assert.equal(ui.pinButtons[1].props.disabled, false);
+  assert.equal(ui.reads.length, 0);
 });
 
 test("compact photo previews delete through the existing action without altering the avatar", async () => {

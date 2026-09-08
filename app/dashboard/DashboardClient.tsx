@@ -20,6 +20,8 @@ import { CLUB_DEAL_OFFER_PRESETS } from "@/src/lib/dancr/club-deal-presets";
 import DancerNfcPanel from "./DancerNfcPanel";
 import DancerTvStudio from "./DancerTvStudio";
 import DancerProfileMediaUploads from "./DancerProfileMediaUploads";
+import DancerMediaPinButton from "./DancerMediaPinButton";
+import { requestDancerMediaPin } from "./dashboard-session";
 import { AVATAR_REJECTED_MESSAGE, avatarUploadPresentation, type AvatarUploadFeedback } from "./avatar-upload-state";
 import DancerShiftManager from "./DancerShiftManager";
 import { DANCER_PROFILE_VIDEOS_CHANGED_EVENT } from "./dancer-profile-media-sync";
@@ -3380,6 +3382,8 @@ type DancerIdentityDraft = { stageName: string; city: string };
 
 type DancerPreviewVideo = {
   id: string;
+  isPinned?: boolean;
+  createdAt?: string;
   status: string;
   videoUrl: string;
   posterUrl?: string | null;
@@ -3678,6 +3682,8 @@ function DancerProfilePreview({
             status,
             videoUrl,
             posterUrl: posterUrl || null,
+            isPinned: video.isPinned === true,
+            createdAt: String(video.createdAt || ""),
             durationSeconds: Math.max(0, Number(video?.durationSeconds || 0)),
           }];
         }));
@@ -3843,7 +3849,11 @@ function DancerProfilePreview({
             {isEditor && (isOnboardingEditor || (!photos.length && !videos.length)) ? (
               <DancerProfileMediaUploads
                 photos={profilePhotoItems}
-                videos={uploadedVideos.map((video) => ({ id: video.id, imageUrl: video.posterUrl, status: video.status, videoUrl: video.videoUrl }))}
+                videos={uploadedVideos.map((video) => ({ id: video.id, imageUrl: video.posterUrl, status: video.status, videoUrl: video.videoUrl, isPinned: video.isPinned }))}
+                onMediaPinned={(mediaType, mediaId, isPinned) => {
+                  if (mediaType === "video") setUploadedVideos((current) => current.map((video) => video.id === mediaId ? { ...video, isPinned } : video).sort((a, b) => Number(Boolean(b.isPinned)) - Number(Boolean(a.isPinned)) || String(b.createdAt || "").localeCompare(String(a.createdAt || ""))));
+                  else onProfileChange?.({ ...profile, dancer_photos: (Array.isArray(profile?.dancer_photos) ? profile.dancer_photos : []).map((photo: any) => photo.id === mediaId ? { ...photo, is_pinned: isPinned } : photo) });
+                }}
                 isApproved={isApproved}
                 isPublic={isPublic}
                 isVideoLoading={isMediaLoading}
@@ -6960,6 +6970,7 @@ function toSocialUrl(platform: string, value: string) {
 
 type DancerPhotoItem = {
   id: string;
+  isPinned?: boolean;
   imageUrl: string;
   label: string;
   status: "approved" | "pending" | "rejected";
@@ -7004,8 +7015,7 @@ function DancerPhotoPanel({
   const [uploadingQueueItemId, setUploadingQueueItemId] = useState("");
   const [status, setStatus] = useState("");
   const [isUploading, setIsUploading] = useState(false);
-  const [isArranging, setIsArranging] = useState(false);
-  const [showPhotoOrder, setShowPhotoOrder] = useState(false);
+  const [pinningPhotoId, setPinningPhotoId] = useState("");
   const [deletingPhotoIds, setDeletingPhotoIds] = useState<Set<string>>(() => new Set());
   const deletedPhotoIdsRef = useRef<string[]>(deletedPhotoIds);
   const deletedPhotoStoragePathsRef = useRef<string[]>(deletedPhotoStoragePaths);
@@ -7278,59 +7288,30 @@ function DancerPhotoPanel({
     }
   }
 
-  async function savePhotoArrangement(nextOrder: DancerPhotoItem[]) {
-    if (nextOrder.some((photo) => photo.status !== "approved" || !photo.imageUrl)) {
-      setStatus("Wait for every photo to finish checking before changing the order.");
-      return;
-    }
-    const session = readSession();
-    if (!session?.accessToken) return setStatus("Sign in required.");
+  async function pinPhoto(photo: DancerPhotoItem) {
+    if (photo.status !== "approved") return;
     const action = beginPhotoAction();
     if (!action) return;
     const { requestId, controller } = action;
-    const previousPhotos = photos;
-    const arranged = relabelPhotoItems(nextOrder.map((photo, index) => ({
-      ...photo,
-      isPrimary: index === 0,
-      sortOrder: index,
-    })));
-    setPhotos(arranged);
-    setIsArranging(true);
-    setStatus("Saving photo order...");
+    setPinningPhotoId(photo.id);
+    setStatus("");
+    let saved = false;
     try {
-      const data = await requestDancerProfileJson({
-        method: "PATCH",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({
-          mainPhotoUrl: arranged[0]?.imageUrl || "",
-          galleryPhotoUrls: arranged.slice(1).map((photo) => photo.imageUrl),
-        }),
-        fallbackMessage: "Unable to save photo order.",
-        signal: controller.signal,
-      });
+      const result = await requestDancerMediaPin("photo", photo.id, !photo.isPinned, controller.signal);
       if (!isCurrentPhotoAction(requestId, controller)) return;
-      if (!data.profile) throw new Error("Unable to save photo order.");
-      const refreshedPhotos = relabelPhotoItems(dancerPhotoItemsFromProfile(data.profile));
-      setPhotos(refreshedPhotos);
+      saved = true;
+      setPhotos((current) => relabelPhotoItems(current.map((item) => item.id === photo.id ? { ...item, isPinned: result.isPinned } : item)));
+      const data = await requestDancerProfileJson({ cache: "no-store", signal: controller.signal, fallbackMessage: "Unable to refresh photos." });
+      if (!isCurrentPhotoAction(requestId, controller)) return;
+      if (!data.profile) throw new Error("Unable to refresh photos.");
+      setPhotos(relabelPhotoItems(dancerPhotoItemsFromProfile(data.profile)));
       onProfileChange?.(data.profile);
-      setStatus("Photo order saved.");
+      setStatus(result.isPinned ? "Photo pinned." : "Photo unpinned.");
     } catch (error) {
-      if (isCurrentPhotoAction(requestId, controller)) {
-        setPhotos(previousPhotos);
-        setStatus(error instanceof Error ? error.message : "Unable to save photo order.");
-      }
+      if (isCurrentPhotoAction(requestId, controller)) setStatus(saved ? "Pin saved. Refresh to update your photos." : error instanceof Error ? error.message : "Unable to save the pin. Try again.");
     } finally {
-      if (finishPhotoAction(requestId)) setIsArranging(false);
+      if (finishPhotoAction(requestId)) setPinningPhotoId("");
     }
-  }
-
-  function moveGalleryPhoto(photoId: string, direction: -1 | 1) {
-    const index = photos.findIndex((photo) => photo.id === photoId);
-    const nextIndex = index + direction;
-    if (index < 0 || nextIndex < 0 || nextIndex >= photos.length) return;
-    const nextOrder = [...photos];
-    [nextOrder[index], nextOrder[nextIndex]] = [nextOrder[nextIndex], nextOrder[index]];
-    void savePhotoArrangement(nextOrder);
   }
 
   async function deletePhoto(photo: DancerPhotoItem) {
@@ -7391,7 +7372,7 @@ function DancerPhotoPanel({
     }
   }
 
-  const photoActionBusy = isUploading || isArranging || deletingPhotoIds.size > 0;
+  const photoActionBusy = isUploading || Boolean(pinningPhotoId) || deletingPhotoIds.size > 0;
 
   return (
     <article aria-label="Profile photo manager" className="info-panel upload-panel">
@@ -7471,19 +7452,16 @@ function DancerPhotoPanel({
       {photos.length ? (
         <div className="dancer-media-manager-title">
           <strong>Your photos</strong>
-          {photos.length > 1 ? <button className="photo-reorder-toggle" aria-label="Reorder photos" aria-pressed={showPhotoOrder} disabled={photoActionBusy || photos.some((photo) => photo.status !== "approved")} onClick={() => setShowPhotoOrder((current) => !current)} type="button">{showPhotoOrder ? "Done reordering" : "Reorder"}</button> : null}
           <span>{photos.length} {photos.length === 1 ? "photo" : "photos"}</span>
         </div>
       ) : null}
       <div className="photo-review-list compact-photo-previews" aria-label="Uploaded photos">
-        {photos.map((photo, photoIndex) => {
-          const isApprovedGalleryPhoto = photo.status === "approved";
-          const canMoveEarlier = isApprovedGalleryPhoto && photoIndex > 0;
-          const canMoveLater = isApprovedGalleryPhoto && photoIndex < photos.length - 1;
+        {photos.map((photo) => {
           return (
             <div className={`photo-saved-preview is-${photo.status}`} key={photo.id}>
               <div className="photo-saved-frame">
                 {photo.imageUrl ? <img alt={photo.label} loading="lazy" src={photo.imageUrl} /> : <span aria-hidden="true">▧</span>}
+                {photo.status === "approved" ? <DancerMediaPinButton label={photo.label.toLowerCase()} pinned={photo.isPinned} busy={pinningPhotoId === photo.id} disabled={photoActionBusy} onClick={() => void pinPhoto(photo)} /> : null}
                 <button
                   aria-label={`${deletingPhotoIds.has(photo.id) ? "Deleting" : "Delete"} ${photo.label.toLowerCase()}`}
                   aria-busy={deletingPhotoIds.has(photo.id)}
@@ -7497,10 +7475,6 @@ function DancerPhotoPanel({
               </div>
               <strong>{photo.label}</strong>
               <small>{photoStatusLabel(photo.status)}</small>
-              {showPhotoOrder ? <span className="photo-card-actions">
-                  {canMoveEarlier ? <button aria-label={`Move ${photo.label} earlier`} className="photo-order-action" disabled={photoActionBusy} title="Move earlier" type="button" onClick={() => moveGalleryPhoto(photo.id, -1)}>↑</button> : null}
-                  {canMoveLater ? <button aria-label={`Move ${photo.label} later`} className="photo-order-action" disabled={photoActionBusy} title="Move later" type="button" onClick={() => moveGalleryPhoto(photo.id, 1)}>↓</button> : null}
-                </span> : null}
             </div>
           );
         })}
@@ -7530,6 +7504,7 @@ function dancerPhotoItemsFromProfile(
       storagePath: String(photo.storage_path || photo.storagePath || ""),
       isPrimary,
       sortOrder: Number(photo.sort_order ?? photo.sortOrder ?? 0),
+      isPinned: photo.is_pinned === true || photo.isPinned === true,
     }];
   });
 
@@ -7610,7 +7585,7 @@ function orderPhotoItemsForDisplay(items: DancerPhotoItem[]) {
   const gallery = items
     .filter((photo) => photo !== primary)
     .sort((left, right) => Number(left.sortOrder || 0) - Number(right.sortOrder || 0));
-  return primary ? [primary, ...gallery] : gallery;
+  return (primary ? [primary, ...gallery] : gallery).sort((a, b) => Number(Boolean(b.isPinned)) - Number(Boolean(a.isPinned)));
 }
 
 function normalizePhotoStatus(value: unknown): DancerPhotoItem["status"] {
@@ -9781,7 +9756,6 @@ function DashboardStyles() {
       .photo-saved-frame .photo-card-remove-action svg { width:17px; height:17px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
       .photo-saved-frame .photo-card-remove-action:disabled { opacity:.55; cursor:wait; }
       .photo-saved-frame .photo-card-remove-action:focus-visible { outline:2px solid #fff; outline-offset:-2px; }
-      .dancer-media-manager-title .photo-reorder-toggle { margin-left:auto; min-height:44px; padding:0 10px; color:#fff; font-size:11px; }
       .dancer-profile-builder-panel.dancer-profile-editor-modal[data-section="photos"] .photo-card-actions { gap:5px !important; }
 
       .dancer-profile-builder-panel.dancer-profile-editor-modal[data-section="videos"] .tv-studio-embedded { overflow:visible; padding:0; }

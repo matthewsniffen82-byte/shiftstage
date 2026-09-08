@@ -71,7 +71,7 @@ export const MYDANCR_TV_EVENT_SOURCES = new Set([
 const IDENTITY_PROFILE_FIELDS = ", venue_approved_at";
 const MODERATION_IDENTITY_PROFILE_FIELDS = `${IDENTITY_PROFILE_FIELDS}, avatar_storage_path`;
 const PUBLIC_TV_SELECT =
-  `id, storage_path, duration_seconds, width, height, published_at, expires_at, like_count, distribution_scope, moderation_details, dancer_profiles!inner(id, slug, stage_name, city, status, verification_status${IDENTITY_PROFILE_FIELDS}, photo_review_status, approved_at, disabled_at, is_public)`;
+  `id, storage_path, duration_seconds, width, height, published_at, expires_at, like_count, distribution_scope, is_pinned, moderation_details, dancer_profiles!inner(id, slug, stage_name, city, status, verification_status${IDENTITY_PROFILE_FIELDS}, photo_review_status, approved_at, disabled_at, is_public)`;
 const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -90,6 +90,7 @@ type FeedOptions = {
 
 export type MyDancrTvVideo = {
   id: string;
+  isPinned?: boolean;
   likeCount: number;
   videoUrl: string;
   posterUrl?: string | null;
@@ -314,7 +315,12 @@ export async function getPublicMyDancrTvFeed(
     preferredVenueId,
     selectedVideoId,
   );
-  const deduped = venuePrioritized.slice(
+  const profileOrdered = options.dancerId ? [...venuePrioritized].sort((a, b) => {
+    if (a.id === selectedVideoId) return -1;
+    if (b.id === selectedVideoId) return 1;
+    return Number(Boolean(b.isPinned)) - Number(Boolean(a.isPinned)) || b.publishedAt.localeCompare(a.publishedAt) || a.id.localeCompare(b.id);
+  }) : venuePrioritized;
+  const deduped = profileOrdered.slice(
     0,
     Math.min(MYDANCR_TV_PROFILE_VIDEO_LIMIT, Math.max(1, options.limit || 12)),
   );
@@ -365,18 +371,18 @@ function publicTvRowsQuery(
     .lte("duration_seconds", MYDANCR_TV_MAX_DURATION_SECONDS)
     .lte("published_at", options.nowIso)
     .or(`expires_at.is.null,expires_at.gt.${options.nowIso}`)
-    .order("published_at", { ascending: false })
     .limit(options.limit);
 
   if (options.city) query = query.ilike("dancer_profiles.city", options.city);
   if (options.dancerId) {
     query = query
       .eq("dancer_id", options.dancerId)
-      .eq("distribution_scope", "profile_and_feed");
+      .eq("distribution_scope", "profile_and_feed")
+      .order("is_pinned", { ascending: false });
   } else if (options.dancerIds?.length) {
     query = query.in("dancer_id", options.dancerIds);
   }
-  return query;
+  return query.order("published_at", { ascending: false });
 }
 
 function normalizeTvCity(value: string | undefined) {
@@ -400,6 +406,7 @@ function normalizeFeedRow(row: any, _now: number): NormalizedFeedRow | null {
 
   return {
     id: row.id,
+    isPinned: row.is_pinned === true,
     likeCount: safePublicCount(row.like_count),
     storagePath: row.storage_path,
     posterStoragePath: normalizedVideoPosterStoragePath(row),
@@ -695,10 +702,11 @@ export async function getDancerMyDancrTvWorkspace(admin: AdminClient, userId: st
 
   const { data: videos, error: videoError } = await admin
     .from("mydancr_tv_videos")
-    .select("id, caption, storage_path, storage_mime, file_size_bytes, duration_seconds, width, height, status, distribution_scope, review_notes, moderation_decision, moderation_reason_codes, moderation_provider_flagged, moderation_frame_count, moderation_model, moderation_details, moderation_started_at, moderation_completed_at, submitted_at, reviewed_at, published_at, expires_at, created_at")
+    .select("id, caption, storage_path, storage_mime, file_size_bytes, duration_seconds, width, height, status, distribution_scope, review_notes, moderation_decision, moderation_reason_codes, moderation_provider_flagged, moderation_frame_count, moderation_model, moderation_details, moderation_started_at, moderation_completed_at, submitted_at, reviewed_at, published_at, expires_at, created_at, is_pinned")
     .eq("dancer_id", dancer.id)
     .eq("distribution_scope", "profile_and_feed")
     .in("status", [...MYDANCR_TV_PROFILE_SLOT_STATUSES])
+    .order("is_pinned", { ascending: false })
     .order("created_at", { ascending: false });
   if (videoError) throw videoError;
 
@@ -1772,6 +1780,7 @@ function mapManagedVideo(
   const posterStoragePath = normalizedVideoPosterStoragePath(video);
   return {
     id: video.id,
+    isPinned: video.is_pinned === true,
     caption: video.caption,
     videoUrl,
     posterUrl: posterStoragePath

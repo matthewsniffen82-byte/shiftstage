@@ -13,13 +13,17 @@ const code = ts.transpileModule(source, {
 }).outputText;
 const requireTest = createRequire(import.meta.url);
 const thumbnail = {};
+const pinButton = {};
+vm.runInNewContext(ts.transpileModule(readFileSync(new URL("../app/dashboard/DancerMediaPinButton.tsx", import.meta.url), "utf8"), {
+  compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX, target: ts.ScriptTarget.ES2022 },
+}).outputText, { exports: pinButton, require: requireTest });
 vm.runInNewContext(ts.transpileModule(readFileSync(new URL("../app/dashboard/DancerVideoThumbnail.tsx", import.meta.url), "utf8"), {
   compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX, target: ts.ScriptTarget.ES2022 },
 }).outputText, { exports: thumbnail, require: name => name === "./dancer-profile-media-sync" ? {} : requireTest(name) });
 const staticHooks = { ...React, useState: initial => [typeof initial === "function" ? initial() : initial, () => {}], useRef: initial => ({ current: initial }), useEffect() {} };
 function loadUploads({ hooks = staticHooks, api = {}, confirm = () => false, announce = () => {} } = {}) {
   const exports = {};
-  vm.runInNewContext(code, { exports, AbortController, Error, window: { confirm }, require: name => name === "react" ? hooks : name === "./dashboard-session" ? api : name === "./DancerVideoThumbnail" ? thumbnail : name === "./dancer-profile-media-sync" ? { announceDancerProfileVideosChanged: announce } : requireTest(name) });
+  vm.runInNewContext(code, { exports, AbortController, Error, window: { confirm }, require: name => name === "react" ? hooks : name === "./dashboard-session" ? api : name === "./DancerVideoThumbnail" ? thumbnail : name === "./DancerMediaPinButton" ? pinButton : name === "./dancer-profile-media-sync" ? { announceDancerProfileVideosChanged: announce } : requireTest(name) });
   return exports;
 }
 const exports = loadUploads();

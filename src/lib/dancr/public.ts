@@ -82,7 +82,7 @@ async function getApprovedDancerRowsByCity(client: DancrClient, city: string): P
         avatar_storage_path,
         is_public,
         trending_scores(rank),
-        dancer_photos(id, storage_path, is_primary, review_status, sort_order, like_count),
+        dancer_photos(id, storage_path, is_primary, review_status, sort_order, like_count, is_pinned),
         social_links(id, platform, handle, url, is_active),
         shifts(id, shift_date, shift_source, starts_at, ends_at, timezone, status, location_status, checked_in_at, checked_out_at, location_verification_expires_at, venue_id, venues(id, name, slug, timezone, is_active))
       `,
@@ -112,7 +112,7 @@ async function getApprovedDancerRowsByCity(client: DancrClient, city: string): P
           photo_review_status,
           avatar_storage_path,
           trending_scores(rank),
-          dancer_photos(id, storage_path, is_primary, review_status, sort_order, like_count),
+          dancer_photos(id, storage_path, is_primary, review_status, sort_order, like_count, is_pinned),
           social_links(id, platform, handle, url, is_active),
           shifts(id, shift_date, shift_source, starts_at, ends_at, timezone, status, location_status, checked_in_at, checked_out_at, location_verification_expires_at, venue_id, venues(id, name, slug, timezone, is_active))
         `,
@@ -155,7 +155,7 @@ export async function getTonightShifts(client: DancrClient, city: string, now = 
         avatar_storage_path,
         is_public,
         trending_scores(rank),
-        dancer_photos(id, storage_path, is_primary, review_status, sort_order, like_count),
+        dancer_photos(id, storage_path, is_primary, review_status, sort_order, like_count, is_pinned),
         social_links(id, platform, handle, url, is_active),
         shifts!inner(id, shift_date, shift_source, starts_at, ends_at, timezone, status, location_status, checked_in_at, checked_out_at, location_verification_expires_at, venue_id, venues(id, name, slug, timezone, is_active))
       `,
@@ -190,7 +190,7 @@ export async function getTonightShifts(client: DancrClient, city: string, now = 
           photo_review_status,
           avatar_storage_path,
           trending_scores(rank),
-          dancer_photos(id, storage_path, is_primary, review_status, sort_order, like_count),
+          dancer_photos(id, storage_path, is_primary, review_status, sort_order, like_count, is_pinned),
           social_links(id, platform, handle, url, is_active),
           shifts!inner(id, shift_date, shift_source, starts_at, ends_at, timezone, status, location_status, checked_in_at, checked_out_at, location_verification_expires_at, venue_id, venues(id, name, slug, timezone, is_active))
         `,
@@ -318,6 +318,7 @@ export async function getDancerProfile(client: DancrClient, slug: string): Promi
         imageWidth: image?.imageWidth || null,
         imageHeight: image?.imageHeight || null,
         isPrimary: photo.is_primary,
+        isPinned: photo.is_pinned === true,
         sortOrder: photo.sort_order,
       };
     }),
@@ -333,9 +334,10 @@ export async function getDancerProfile(client: DancrClient, slug: string): Promi
 async function getApprovedDancerPhotos(client: DancrClient, dancerId: string) {
   const { data, error } = await client
     .from("dancer_photos")
-    .select("id, storage_path, is_primary, sort_order, review_status, created_at, like_count")
+    .select("id, storage_path, is_primary, sort_order, review_status, created_at, like_count, is_pinned")
     .eq("dancer_id", dancerId)
     .eq("review_status", "approved")
+    .order("is_pinned", { ascending: false })
     .order("is_primary", { ascending: false })
     .order("sort_order", { ascending: true })
     .order("created_at", { ascending: false })
@@ -610,6 +612,7 @@ export async function getPublicVenuePopularity(
 function approvedDancerPhotoSources(client: DancrClient, row: any) {
   const photos = (row.dancer_photos || []).filter((photo: any) => photo.review_status === "approved");
   const ordered = [...photos].sort((left: any, right: any) => {
+    if (Boolean(left.is_pinned) !== Boolean(right.is_pinned)) return left.is_pinned ? -1 : 1;
     if (left.is_primary !== right.is_primary) return left.is_primary ? -1 : 1;
     return Number(left.sort_order || 0) - Number(right.sort_order || 0);
   });

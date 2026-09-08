@@ -1,12 +1,14 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { requestDancerPhotosJson, requestDancerProfileJson, requestDancerTvVideoJson } from "./dashboard-session";
+import { requestDancerPhotosJson, requestDancerProfileJson, requestDancerTvVideoJson, requestDancerMediaPin } from "./dashboard-session";
 import { announceDancerProfileVideosChanged } from "./dancer-profile-media-sync";
 import DancerVideoThumbnail from "./DancerVideoThumbnail";
+import DancerMediaPinButton from "./DancerMediaPinButton";
 
 type UploadItem = {
   id: string;
+  isPinned?: boolean;
   imageUrl?: string | null;
   videoUrl?: string | null;
   status: string;
@@ -37,6 +39,7 @@ export default function DancerProfileMediaUploads({
   onPhotoDeleted,
   onVideoDeleted,
   onDeleteBusyChange,
+  onMediaPinned,
 }: {
   photos: UploadItem[];
   videos: UploadItem[];
@@ -48,6 +51,7 @@ export default function DancerProfileMediaUploads({
   onPhotoDeleted: (photoId: string, profile?: Record<string, unknown>) => void;
   onVideoDeleted: (videoId: string) => void;
   onDeleteBusyChange?: (busy: boolean) => void;
+  onMediaPinned?: (mediaType: "photo" | "video", mediaId: string, pinned: boolean) => void;
 }) {
   const [deletingPhotoId, setDeletingPhotoId] = useState("");
   const [deletedPhotoIds, setDeletedPhotoIds] = useState<Set<string>>(() => new Set());
@@ -55,8 +59,9 @@ export default function DancerProfileMediaUploads({
   const [deletingVideoId, setDeletingVideoId] = useState("");
   const [deletedVideoIds, setDeletedVideoIds] = useState<Set<string>>(() => new Set());
   const [videoStatus, setVideoStatus] = useState("");
+  const [pinningId, setPinningId] = useState("");
   const deleteRequestRef = useRef<AbortController | null>(null);
-  const isDeleting = Boolean(deletingPhotoId || deletingVideoId);
+  const isDeleting = Boolean(deletingPhotoId || deletingVideoId || pinningId);
 
   useEffect(() => () => {
     deleteRequestRef.current?.abort();
@@ -141,6 +146,32 @@ export default function DancerProfileMediaUploads({
     }
   }
 
+  async function pinPreview(mediaType: "photo" | "video", item: UploadItem) {
+    if (deleteRequestRef.current || item.status !== "approved") return;
+    const controller = new AbortController();
+    deleteRequestRef.current = controller;
+    onDeleteBusyChange?.(true);
+    const isCurrent = () => deleteRequestRef.current === controller && !controller.signal.aborted;
+    setPinningId(item.id);
+    const setMessage = mediaType === "photo" ? setPhotoStatus : setVideoStatus;
+    setMessage("");
+    try {
+      const saved = await requestDancerMediaPin(mediaType, item.id, !item.isPinned, controller.signal);
+      if (!isCurrent()) return;
+      onMediaPinned?.(mediaType, item.id, saved.isPinned);
+      if (mediaType === "video") announceDancerProfileVideosChanged();
+      setMessage(`${mediaType === "photo" ? "Photo" : "Video"} ${saved.isPinned ? "pinned" : "unpinned"}.`);
+    } catch (error) {
+      if (isCurrent()) setMessage(error instanceof Error ? error.message : "Unable to save the pin. Try again.");
+    } finally {
+      if (isCurrent()) {
+        deleteRequestRef.current = null;
+        onDeleteBusyChange?.(false);
+        setPinningId("");
+      }
+    }
+  }
+
   return (
     <section className="dancer-profile-media-uploads" aria-label="Add profile photos and videos">
       {(["photos", "videos"] as const).map((section) => {
@@ -174,6 +205,7 @@ export default function DancerProfileMediaUploads({
                           {!isPhoto ? <i aria-hidden="true">▶</i> : null}
                         </span>
                       </button>
+                      {onMediaPinned && item.status === "approved" ? <DancerMediaPinButton label={`${label.toLowerCase()} ${index + 1}`} pinned={item.isPinned} busy={pinningId === item.id} disabled={isDeleting} onClick={() => void pinPreview(isPhoto ? "photo" : "video", item)} /> : null}
                       <button
                         aria-label={`${(isPhoto ? deletingPhotoId : deletingVideoId) === item.id ? "Deleting" : "Delete"} ${label.toLowerCase()} ${index + 1}`}
                         aria-busy={(isPhoto ? deletingPhotoId : deletingVideoId) === item.id}

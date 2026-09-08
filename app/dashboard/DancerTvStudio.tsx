@@ -8,6 +8,7 @@ import { createBrowserSupabaseClient } from "@/src/lib/supabase/client";
 import DancerVideoPreviews from "./DancerVideoPreviews";
 import {
   readDashboardAccessToken,
+  requestDancerMediaPin,
   requestDancerTvVideoJson,
   requestDancerTvVideosJson,
 } from "./dashboard-session";
@@ -31,6 +32,8 @@ type Workspace = {
 
 type ManagedVideo = {
   id: string;
+  isPinned?: boolean;
+  createdAt?: string;
   videoUrl: string;
   posterUrl?: string | null;
   status: string;
@@ -64,6 +67,7 @@ export default function DancerTvStudio({ embedded = false }: { embedded?: boolea
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [removingId, setRemovingId] = useState("");
+  const [pinningId, setPinningId] = useState("");
   const libraryInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const consentInputRef = useRef<HTMLInputElement>(null);
@@ -423,7 +427,26 @@ export default function DancerTvStudio({ embedded = false }: { embedded?: boolea
     }
   }
 
-  const videoActionBusy = isSubmitting || Boolean(removingId);
+  async function pinVideo(video: ManagedVideo) {
+    const action = beginVideoAction();
+    if (!action) return;
+    const { requestId, controller } = action;
+    setPinningId(video.id);
+    setStatus("");
+    try {
+      const saved = await requestDancerMediaPin("video", video.id, !video.isPinned, controller.signal);
+      if (!isCurrentVideoAction(requestId, controller)) return;
+      setWorkspace((current) => current ? { ...current, videos: current.videos.map((item) => item.id === saved.id ? { ...item, isPinned: saved.isPinned } : item).sort((a, b) => Number(Boolean(b.isPinned)) - Number(Boolean(a.isPinned)) || String(b.createdAt || "").localeCompare(String(a.createdAt || ""))) } : current);
+      announceDancerProfileVideosChanged();
+      setStatus(saved.isPinned ? "Video pinned." : "Video unpinned.");
+    } catch (error) {
+      if (isCurrentVideoAction(requestId, controller)) setStatus(error instanceof Error ? error.message : "Unable to save the pin. Try again.");
+    } finally {
+      if (finishVideoAction(requestId)) setPinningId("");
+    }
+  }
+
+  const videoActionBusy = isSubmitting || Boolean(removingId) || Boolean(pinningId);
 
   const content = (
     <>
@@ -599,7 +622,7 @@ export default function DancerTvStudio({ embedded = false }: { embedded?: boolea
           <h3>My videos</h3>
           <span>{isLoading ? "…" : `${currentVideoCount} ${currentVideoCount === 1 ? "video" : "videos"}`}</span>
         </div>
-        {embedded ? <DancerVideoPreviews videos={workspace?.videos || []} removingId={removingId} disabled={videoActionBusy} onRemove={(videoId) => void removeVideo(videoId)} /> : <div className="tv-managed-grid">
+        {embedded ? <DancerVideoPreviews videos={workspace?.videos || []} removingId={removingId} disabled={videoActionBusy} onRemove={(videoId) => void removeVideo(videoId)} pinningId={pinningId} onPin={(video) => void pinVideo(video)} /> : <div className="tv-managed-grid">
           {workspace?.videos.map((video) => (
             <article className="tv-managed-video" key={video.id}>
               {video.videoUrl ? (

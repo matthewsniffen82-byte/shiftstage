@@ -2,9 +2,11 @@
 
 import { useEffect, useRef, useState } from "react";
 import DancerVideoThumbnail from "./DancerVideoThumbnail";
+import DancerMediaPinButton from "./DancerMediaPinButton";
 
 type PreviewVideo = {
   id: string;
+  isPinned?: boolean;
   videoUrl: string;
   posterUrl?: string | null;
   status: string;
@@ -19,11 +21,13 @@ export function videoPreviewStatus(status: string) {
   return "Unavailable";
 }
 
-export default function DancerVideoPreviews({ videos, removingId, disabled, onRemove }: {
+export default function DancerVideoPreviews({ videos, removingId, disabled, onRemove, pinningId, onPin }: {
   videos: PreviewVideo[];
   removingId: string;
   disabled: boolean;
   onRemove: (videoId: string) => void;
+  pinningId?: string;
+  onPin?: (video: PreviewVideo) => void;
 }) {
   const [activeId, setActiveId] = useState("");
   const [playbackError, setPlaybackError] = useState(false);
@@ -54,6 +58,7 @@ export default function DancerVideoPreviews({ videos, removingId, disabled, onRe
                 <DancerVideoThumbnail posterUrl={video.posterUrl} videoUrl={video.videoUrl} />
                 <span className="video-preview-play" aria-hidden="true">▶</span>
               </button>
+              {onPin && video.status === "approved" ? <DancerMediaPinButton label={`video ${index + 1}`} pinned={video.isPinned} busy={pinningId === video.id} disabled={disabled} onClick={() => onPin(video)} /> : null}
               <button
                 className="video-preview-delete"
                 aria-label={`${removingId === video.id ? "Deleting" : "Delete"} video ${index + 1}`}

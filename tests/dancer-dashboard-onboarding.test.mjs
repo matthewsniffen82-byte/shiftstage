@@ -384,11 +384,10 @@ test("photo and video uploaders auto-upload multiple phone files with independen
   assert.match(dashboard, /const selectedFiles = files\.slice\(0, availableProfileSlots\)/);
   assert.match(dashboard, /void uploadPhotoBatch\(uploadable\)/);
   assert.match(dashboard, /stage: "failed", progress: 0/);
-  assert.match(dashboard, /savePhotoArrangement/);
+  assert.match(dashboard, /async function pinPhoto/);
   assert.doesNotMatch(dashboard, />Make main<\/button>|Replace my main photo|label: "Main [Pp]hoto"/);
-  assert.match(dashboard, /const canMoveEarlier = isApprovedGalleryPhoto && photoIndex > 0/);
-  assert.match(dashboard, /const canMoveLater = isApprovedGalleryPhoto && photoIndex < photos\.length - 1/);
-  assert.match(dashboard, /className="photo-order-action"[\s\S]*?title="Move earlier"/);
+  assert.doesNotMatch(dashboard, /savePhotoArrangement|moveGalleryPhoto|Reorder photos|className="photo-order-action"/);
+  assert.match(dashboard, /<DancerMediaPinButton label=\{photo\.label\.toLowerCase\(\)\}/);
   assert.match(dashboard, /className="photo-card-remove-action"/);
   assert.doesNotMatch(dashboard, /disabled=\{isArranging \|\| photos\.findIndex/);
   assert.match(dashboard, /for \(let index = 0; index < batch\.length; index \+= 1\)/);

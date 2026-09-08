@@ -16,13 +16,21 @@ function compile(file, resolver) {
   return exports;
 }
 const thumbnail = compile("DancerVideoThumbnail.tsx", name => name === "./dancer-profile-media-sync" ? {} : requireTest(name));
-const previews = compile("DancerVideoPreviews.tsx", name => name === "./DancerVideoThumbnail" ? thumbnail : requireTest(name));
+const pinButton = compile("DancerMediaPinButton.tsx", requireTest);
+const previews = compile("DancerVideoPreviews.tsx", name => name === "./DancerVideoThumbnail" ? thumbnail : name === "./DancerMediaPinButton" ? pinButton : requireTest(name));
 const videos = ["approved", "rejected", "moderating"].map((status, index) => ({
   id: `video-${index}`, videoUrl: `/video-${index}.mp4`, posterUrl: `/poster-${index}.jpg`, status,
   moderationDecision: "approved", moderationFrameCount: 9, reviewNotes: "Automatically approved by safety review.", metrics: { engaged_view: 10 },
 }));
 const props = { videos, removingId: "", disabled: false, onRemove() {} };
 const render = (overrides = {}) => renderToStaticMarkup(React.createElement(previews.default, { ...props, ...overrides })).replace(/<style>[\s\S]*?<\/style>/g, "");
+
+test("video pins are available only for approved media and reflect saved state", () => {
+  const html = render({ onPin() {}, videos: videos.map((video) => ({ ...video, isPinned: true })) });
+  assert.match(html, /aria-label="Unpin video 1" aria-pressed="true"/);
+  assert.doesNotMatch(html, /aria-label="(?:Unpin|Pin) video [23]"/);
+  assert.match(html, /Delete video 1/);
+});
 
 test("video review labels are concise and pending uploads never imply approval or rejection", () => {
   assert.equal(previews.videoPreviewStatus("approved"), "Approved");

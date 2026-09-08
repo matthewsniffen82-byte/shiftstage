@@ -326,6 +326,18 @@ export function requestVenueTeamJson(options: DashboardJsonRequestOptions = {}) 
   });
 }
 
+export async function requestDancerMediaPin(mediaType: "photo" | "video", mediaId: string, pinned: boolean, signal?: AbortSignal) {
+  const data = await requestDashboardJson("/api/dancer/media/pin", {
+    method: "PATCH", headers: { "content-type": "application/json" },
+    body: JSON.stringify({ mediaType, mediaId, pinned }), signal,
+    expectedRole: "dancer", fallbackMessage: "Unable to save the pin. Try again.",
+  });
+  if (data?.media?.id !== mediaId || data.media.isPinned !== pinned) {
+    throw new Error("Unable to confirm the pin. Refresh and try again.");
+  }
+  return data.media as { id: string; isPinned: boolean };
+}
+
 export function requestDancerPhotosJson(options: DashboardJsonRequestOptions = {}) {
   return requestDashboardJson("/api/dancer/photos", {
     ...options,

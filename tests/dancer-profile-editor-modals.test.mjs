@@ -57,7 +57,7 @@ test("avatar upload and removal reject duplicate and stale work", () => {
 test("photo editor shows actual media only and does not advertise capacity", () => {
   assert.match(photoEditor, /Add at least 1 solo picture of yourself\. You can add more later\./);
   assert.match(photoEditor, /Your photos/);
-  assert.match(photoEditor, /photos\.map\(\(photo, photoIndex\)/);
+  assert.match(photoEditor, /photos\.map\(\(photo\)/);
   assert.doesNotMatch(photoEditor, /<h2>Photos<\/h2>|No profile photos uploaded yet|0\/50|\/\{MAX_DANCER_PROFILE_PHOTOS\}|up to 50|maximum 50/i);
   assert.match(photoEditor, /MAX_DANCER_PROFILE_PHOTOS - photos\.length/);
   assert.match(photoEditor, /photos\.length \+ batch\.length > MAX_DANCER_PROFILE_PHOTOS/);

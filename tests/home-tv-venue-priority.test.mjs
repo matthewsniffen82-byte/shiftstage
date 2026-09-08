@@ -101,7 +101,7 @@ test("selected-venue videos lead a bounded block before the rest of the city fee
   );
   assert.match(
     tvSource,
-    /const venuePrioritized = prioritizeMyDancrTvVenue\([\s\S]*?const deduped = venuePrioritized\.slice\(/,
+    /const venuePrioritized = prioritizeMyDancrTvVenue\([\s\S]*?const profileOrdered = options\.dancerId \?[\s\S]*?: venuePrioritized;[\s\S]*?const deduped = profileOrdered\.slice\(/,
   );
 
   const preferredVenue = "venue-a";
