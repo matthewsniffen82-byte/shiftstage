@@ -185,6 +185,7 @@ export default function DancerProfileMediaUploads({
               <small>{isPhoto ? "At least 1 solo photo" : "Optional"}</small>
               <span>{!isPhoto && isVideoLoading ? "Loading…" : !isPhoto && videoError ? "Unavailable" : `${items.length} added`}</span>
             </header>
+            <p>{isPhoto ? "You can add more photos later." : "You can add videos now or later."}</p>
             <button className="profile-upload-entry" data-profile-editor-trigger={section} disabled={isDeleting} onClick={() => onOpen(section)} type="button">
               <svg aria-hidden="true" viewBox="0 0 24 24">
                 {isPhoto ? <><rect x="3" y="4" width="18" height="16" rx="3" /><circle cx="8" cy="9" r="1.5" /><path d="m5 17 4-4 3 3 3-4 4 5" /></> : <><rect x="3" y="6" width="12" height="12" rx="2" /><path d="m15 10 6-3v10l-6-3" /></>}
@@ -232,7 +233,6 @@ export default function DancerProfileMediaUploads({
         );
       })}
       <p className="profile-upload-visibility" role="status" aria-live="polite">
-        You can add more photos and videos later.{" "}
         {isApproved
           ? isPublic ? "Approved uploads appear on your profile." : "Uploads stay saved. Turn off incognito to show approved media on your profile."
           : "Uploaded photos and videos will appear on your profile after review and completion of your profile setup."}
