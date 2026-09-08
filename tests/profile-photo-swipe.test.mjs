@@ -23,11 +23,11 @@ test("the live profile keeps the grid horizontal and makes full photos verticall
     /\.profile-photo-viewer-image \{[\s\S]*?overflow-y: auto;[\s\S]*?scroll-snap-type: y mandatory;[\s\S]*?touch-action: pan-y;/,
   );
   assert.match(liveApp, /\.profile-photo-viewer-slide \{[\s\S]*?scroll-snap-align: start;[\s\S]*?scroll-snap-stop: always;/);
-  assert.match(liveApp, /Math\.round\(profilePhotoViewerImage\.scrollTop \/ profilePhotoViewerImage\.clientHeight\)/);
+  assert.match(liveApp, /profileMediaCardScrollIndex\([\s\S]*?profilePhotoViewerImage\.scrollTop,[\s\S]*?slide\.offsetTop/);
   assert.doesNotMatch(liveApp, /profilePhotoSwipeBlockClickUntil/);
 });
 
-test("live profile grid photos open an accessible full-screen collection", () => {
+test("live profile grid photos open an accessible card collection with optional fullscreen", () => {
   assert.match(
     liveApp,
     /id="modalImage" role="group" tabindex="0" aria-label="Profile photos and videos\. Swipe left or right to change media\."/,
@@ -74,17 +74,15 @@ test("live profile grid photos open an accessible full-screen collection", () =>
   );
   assert.match(
     liveApp,
-    /function openPhotoViewerFromElement\(element, requestedIndex = null\)[\s\S]*?profilePhotoViewer\.hidden = false;[\s\S]*?void requestProfilePhotoViewerFullscreen\(profilePhotoViewer, initialIndex\);[\s\S]*?renderProfilePhotoViewerSlides\(\)/,
+    /function openPhotoViewerFromElement\(element, requestedIndex = null\)[\s\S]*?profilePhotoViewer\.hidden = false;[\s\S]*?prepareProfileMediaCardExpand\(profilePhotoViewer, toggleProfilePhotoCardExpanded\);[\s\S]*?renderProfilePhotoViewerSlides\(\)/,
   );
-  assert.match(
-    liveApp,
-    /profilePhotoViewerImage\?\.addEventListener\("click",[\s\S]*?profilePhotoFullscreenElement\(\)[\s\S]*?requestProfilePhotoViewerFullscreen\(profilePhotoViewer, activePhotoIndex\)/,
-  );
+  assert.doesNotMatch(liveApp, /profilePhotoViewerImage\?\.addEventListener\("click",[^{]*\{[^}]*requestProfilePhotoViewerFullscreen/);
+  assert.match(liveApp, /if \(expanded\) void requestProfilePhotoViewerFullscreen\(profilePhotoViewer, index\)/);
   assert.match(liveApp, /profilePhotoViewerHasFullscreen\(overlay[\s\S]*?document\.documentElement/);
   assert.match(liveApp, /function exitProfilePhotoViewerFullscreen\(\)[\s\S]*?document\.exitFullscreen[\s\S]*?document\.webkitExitFullscreen/);
 });
 
-test("a tapped profile photo or video is the first full-screen item shown", () => {
+test("a tapped profile photo or video is the first card shown", () => {
   const galleryClickHandler = liveApp.match(
     /modalGallery\.addEventListener\("click"[\s\S]*?(?=\n    \[modalMediaPhotoTab, modalMediaTvTab\])/,
   )?.[0] || "";
@@ -104,22 +102,22 @@ test("a tapped profile photo or video is the first full-screen item shown", () =
     liveApp,
     /function openPhotoViewerFromElement\(element, requestedIndex = null\)[\s\S]*?requestedIndex !== null && Number\.isInteger\(parsedRequestedIndex\)[\s\S]*?parsedRequestedIndex/,
   );
-  assert.match(liveApp, /top: activeSlide\?\.offsetTop \?\? index \* stage\.clientHeight/);
-  assert.match(liveApp, /top: activeSlide\?\.offsetTop \?\? activePhotoIndex \* profilePhotoViewerImage\.clientHeight/);
+  assert.match(liveApp, /top: Math\.max\(0, \(activeSlide\?\.offsetTop \?\? 0\) - profileMediaCardScrollInset\(stage\)\)/);
+  assert.match(liveApp, /top: Math\.max\(0, \(activeSlide\?\.offsetTop \?\? 0\) - profileMediaCardScrollInset\(profilePhotoViewerImage\)\)/);
   assert.match(
     publicPhotoCarousel,
-    /flushSync\(\(\) => setViewer\(\{ kind, index \}\)\);[\s\S]*?scrollViewerToIndex\(index, \{ instant: true \}\)[\s\S]*?requestViewerFullscreen\(index\)/,
+    /flushSync\(\(\) => setViewer\(\{ kind, index \}\)\);[\s\S]*?scrollViewerToIndex\(index, \{ instant: true \}\)[\s\S]*?settleViewerAtIndex\(index\)/,
   );
   assert.match(
     publicPhotoCarousel,
     /await request\(\);[\s\S]*?finally \{[\s\S]*?settleViewerAtIndex\(requestedIndex\)/,
   );
-  assert.match(publicPhotoCarousel, /top: slide\?\.offsetTop \?\? index \* feed\.clientHeight/);
+  assert.match(publicPhotoCarousel, /top: Math\.max\(0, \(slide\?\.offsetTop \?\? 0\) - \(parseFloat\(getComputedStyle\(feed\)\.scrollPaddingTop\) \|\| 0\)\)/);
 });
 
 test("fullscreen layout cannot reset a clicked profile video to the first slide", () => {
   const resolverSource = liveApp.match(
-    /function profileTvViewerScrollTarget\(openingIndexValue, scrollTop, clientHeight\) \{[\s\S]*?\n    \}/,
+    /function profileTvViewerScrollTarget\(openingIndexValue, scrollTop, clientHeight, offsets = \[\], inset = 0\) \{[\s\S]*?\n    \}/,
   )?.[0] || "";
   assert.ok(resolverSource, "the profile video opening-index resolver must exist");
   const resolveScrollTarget = Function(
@@ -129,7 +127,7 @@ test("fullscreen layout cannot reset a clicked profile video to the first slide"
   assert.deepEqual(resolveScrollTarget(undefined, 1600, 800), { index: 2, locked: false });
   assert.match(
     liveApp,
-    /overlay\.dataset\.openingVideoIndex = String\(initialIndex\)[\s\S]*?requestProfileTvViewerFullscreen\(overlay\)\.then\(\(\) => \{[\s\S]*?settleProfileTvViewerOpening\(overlay, initialIndex\)/,
+    /overlay\.dataset\.openingVideoIndex = String\(initialIndex\)[\s\S]*?settleProfileTvViewerOpening\(overlay, initialIndex\)/,
   );
   assert.match(
     liveApp,
@@ -137,7 +135,7 @@ test("fullscreen layout cannot reset a clicked profile video to the first slide"
   );
   assert.match(
     publicPhotoCarousel,
-    /viewerOpeningIndex\.current = index;[\s\S]*?requestViewerFullscreen\(index\)/,
+    /viewerOpeningIndex\.current = index;[\s\S]*?settleViewerAtIndex\(index\)/,
   );
   assert.match(
     publicPhotoCarousel,
@@ -256,7 +254,7 @@ test("the standalone profile uses vertical profile-scoped full-screen media pagi
     publicProfilePage,
     /@media \(max-width: 600px\)[\s\S]*?\.profile-media-viewer-previous, \.profile-media-viewer-next/,
   );
-  assert.match(publicPhotoCarousel, /flushSync\(\(\) => setViewer\(\{ kind, index \}\)\);[\s\S]*?requestViewerFullscreen\(index\)/);
+  assert.match(publicPhotoCarousel, /flushSync\(\(\) => setViewer\(\{ kind, index \}\)\);[\s\S]*?settleViewerAtIndex\(index\)/);
   assert.match(
     publicPhotoCarousel,
     /const targets = root === element \? \[root\] : \[root, element\][\s\S]*?target\.requestFullscreen\(\{ navigationUI: "hide" \}\)[\s\S]*?target\.requestFullscreen\(\)[\s\S]*?target\.webkitRequestFullscreen/,
@@ -264,5 +262,5 @@ test("the standalone profile uses vertical profile-scoped full-screen media pagi
   assert.match(publicPhotoCarousel, /function viewerHasFullscreen\([\s\S]*?document\.documentElement/);
   assert.match(publicProfilePage, /\.profile-media-viewer:fullscreen/);
   assert.match(publicPhotoCarousel, /viewer\.kind === "video"[\s\S]*?\{viewerStatus\} · Scroll up or down · Video/);
-  assert.doesNotMatch(publicPhotoCarousel, /viewer\.kind === "photo"[\s\S]*?profile-media-viewer-copy/);
+  assert.doesNotMatch(publicPhotoCarousel, /viewer\.kind === "photo" \? \(\s*<div className="profile-media-viewer-copy"/);
 });

@@ -68,7 +68,7 @@ test("the public dancer profile keeps a compact identity that scrolls with the w
   assert.match(profilePage, /\.public-profile-close \{ position: static;[^}]*font-size: 26px;/);
   assert.match(profilePage, /\.profile-header-metrics \{[\s\S]*?grid-template-columns: repeat\(3, minmax\(0, 1fr\)\)/);
   assert.match(profilePage, /\.profile-titlebar \{[\s\S]*?border-bottom: 0;/);
-  assert.doesNotMatch(profileCarousel, /profile-media-heading|Photos &amp; TV|approved<\/span>/);
+  assert.doesNotMatch(profileCarousel, /className="profile-media-heading"|Photos &amp; TV|approved<\/span>/);
   assert.match(profileCarousel, /className="profile-media-section"[\s\S]*?className="profile-media-tabs"/);
   assert.match(profilePage, /\.profile-media-tabs \{[\s\S]*?position: sticky;[\s\S]*?grid-template-columns: repeat\(2, minmax\(0, 1fr\)\);[\s\S]*?gap: 0;[\s\S]*?border-radius: 0;/);
   assert.match(profilePage, /body\.dancr-button-system \.public-profile-shell \.profile-media-tabs button \{[\s\S]*?min-height: 52px;[\s\S]*?border-radius: 0 !important;/);

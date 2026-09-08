@@ -597,7 +597,7 @@ test("NFC actions use one recognizable phone-and-tap symbol", () => {
   );
 });
 
-test("the in-profile TV tab is dancer-only, opens full screen, and does not alter global navigation", () => {
+test("the in-profile TV tab is dancer-only, opens scroll cards, and does not alter global navigation", () => {
   assert.match(
     profilePage,
     /getPublicMyDancrTvFeed\(client, \{[\s\S]*?dancerId: profile\.id/,
@@ -612,7 +612,7 @@ test("the in-profile TV tab is dancer-only, opens full screen, and does not alte
   assert.match(profileMedia, /\{videoMedia\.length\}/);
   assert.match(profileMedia, /className="profile-media-tab-label">Photos<\/span>/);
   assert.match(profileMedia, /className="profile-media-tab-label">Videos<\/span>/);
-  assert.match(profileMedia, /className=\{`profile-media-viewer is-\$\{viewer\.kind\}`\}/);
+  assert.match(profileMedia, /profile-media-viewer profile-media-card-feed is-\$\{viewer\.kind\}/);
   assert.match(profileMedia, /data-profile-media-snap-feed[\s\S]*?onScroll=\{handleViewerScroll\}/);
   assert.match(profileMedia, /className="profile-media-viewer-slide"[\s\S]*?data-profile-media-viewer-index=\{index\}/);
 

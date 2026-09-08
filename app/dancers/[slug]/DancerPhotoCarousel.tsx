@@ -10,7 +10,7 @@ import {
   useRef,
   useState,
 } from "react";
-import { flushSync, preload } from "react-dom";
+import { createPortal, flushSync, preload } from "react-dom";
 import { MediaLikeButton } from "@/app/components/MediaLikeButton";
 import { PublicReportReasonDialog, type PublicReportReason } from "@/app/components/PublicReportReasonDialog";
 import { readBrowserAccessToken } from "@/src/lib/dancr/browser-session";
@@ -136,6 +136,8 @@ export function DancerPhotoCarousel({
     photoMedia.length || !videoMedia.length ? "photo" : "video",
   );
   const [viewer, setViewer] = useState<MediaViewer | null>(null);
+  const [viewerExpanded, setViewerExpanded] = useState(false);
+  const [viewerControlsHost, setViewerControlsHost] = useState<HTMLElement | null>(null);
   const [visibleCounts, setVisibleCounts] = useState<Record<MediaTab, number>>({
     photo: DANCER_PROFILE_MEDIA_PAGE_SIZE,
     video: DANCER_PROFILE_MEDIA_PAGE_SIZE,
@@ -193,9 +195,9 @@ export function DancerPhotoCarousel({
     );
     feed.scrollTo({
       behavior: options.instant || window.matchMedia("(prefers-reduced-motion: reduce)").matches
-        ? "auto"
+        ? "instant"
         : "smooth",
-      top: slide?.offsetTop ?? index * feed.clientHeight,
+      top: Math.max(0, (slide?.offsetTop ?? 0) - (parseFloat(getComputedStyle(feed).scrollPaddingTop) || 0)),
     });
     return true;
   }, []);
@@ -223,9 +225,10 @@ export function DancerPhotoCarousel({
     if (!feed) return 0;
     const slides = [...feed.querySelectorAll<HTMLElement>("[data-profile-media-viewer-index]")];
     if (!slides.length) return 0;
+    const scrollTop = feed.scrollTop + (parseFloat(getComputedStyle(feed).scrollPaddingTop) || 0);
     return slides.reduce((closestIndex, slide, index) => (
-      Math.abs(slide.offsetTop - feed.scrollTop) <
-      Math.abs(slides[closestIndex].offsetTop - feed.scrollTop)
+      Math.abs(slide.offsetTop - scrollTop) <
+      Math.abs(slides[closestIndex].offsetTop - scrollTop)
         ? index
         : closestIndex
     ), 0);
@@ -292,6 +295,11 @@ export function DancerPhotoCarousel({
           scrollViewerToIndex(requestedIndex, { instant: true });
         });
       } else {
+        if (viewerOwnsFullscreen.current) {
+          viewerOpeningIndex.current = pendingViewerIndex.current;
+          setViewerExpanded(false);
+          settleViewerAtIndex(pendingViewerIndex.current);
+        }
         viewerOwnsFullscreen.current = false;
       }
     };
@@ -301,7 +309,7 @@ export function DancerPhotoCarousel({
       document.removeEventListener("fullscreenchange", onFullscreenChange);
       document.removeEventListener("webkitfullscreenchange", onFullscreenChange);
     };
-  }, [scrollViewerToIndex]);
+  }, [scrollViewerToIndex, settleViewerAtIndex]);
 
   useEffect(() => {
     if (!viewerKind) return;
@@ -391,13 +399,15 @@ export function DancerPhotoCarousel({
     viewerOpeningIndex.current = index;
     setShareStatus("");
     setReportTarget(null);
+    setViewerExpanded(false);
     flushSync(() => setViewer({ kind, index }));
     window.requestAnimationFrame(() => scrollViewerToIndex(index, { instant: true }));
-    void requestViewerFullscreen(index);
+    settleViewerAtIndex(index);
   }
 
   function closeViewer() {
     exitViewerFullscreen();
+    setViewerExpanded(false);
     window.cancelAnimationFrame(viewerOpeningFrame.current);
     viewerOpeningFrame.current = 0;
     viewerOpeningIndex.current = null;
@@ -425,6 +435,17 @@ export function DancerPhotoCarousel({
     playbackTapIndex.current = null;
     window.clearTimeout(playbackTapTimer.current);
     showPlaybackFeedback(index, paused);
+  }
+
+  function toggleViewerExpanded() {
+    const expanded = !viewerExpanded;
+    viewerOpeningIndex.current = viewerIndex;
+    flushSync(() => setViewerExpanded(expanded));
+    if (expanded) void requestViewerFullscreen(viewerIndex);
+    else {
+      exitViewerFullscreen();
+      settleViewerAtIndex(viewerIndex);
+    }
   }
 
   async function requestViewerFullscreen(requestedIndex: number) {
@@ -777,12 +798,16 @@ export function DancerPhotoCarousel({
         <div
           aria-label={`${stageName} ${viewer.kind} viewer`}
           aria-modal="true"
-          className={`profile-media-viewer is-${viewer.kind}`}
+          className={`profile-media-viewer profile-media-card-feed is-${viewer.kind}${viewerExpanded ? " is-profile-card-expanded" : ""}`}
+          data-profile-media-heading={`${stageName} · ${viewer.kind === "photo" ? "Photos" : "Videos"}`}
           ref={viewerRoot}
           role="dialog"
         >
+          <div className="profile-media-card-heading">
+            {stageName} · {viewer.kind === "photo" ? "Photos" : "Videos"}
+          </div>
           <button
-            aria-label="Close full-screen profile media"
+            aria-label="Close profile media"
             className="profile-media-viewer-close"
             onClick={closeViewer}
             ref={closeButton}
@@ -801,6 +826,7 @@ export function DancerPhotoCarousel({
                 aria-label={`${stageName} ${item.kind} ${index + 1} of ${viewerItems.length}`}
                 className="profile-media-viewer-slide"
                 data-profile-media-viewer-index={index}
+                ref={index === viewerIndex ? setViewerControlsHost : undefined}
                 key={`${item.kind}-viewer-${item.id}-${index}`}
               >
                 {item.kind === "photo" ? (
@@ -811,9 +837,6 @@ export function DancerPhotoCarousel({
                     draggable={false}
                     height={item.imageHeight || undefined}
                     loading={Math.abs(index - viewerIndex) <= 1 ? "eager" : "lazy"}
-                    onClick={() => {
-                      if (!fullscreenElement()) void requestViewerFullscreen(viewerIndex);
-                    }}
                     onError={markImageUnavailable}
                     onLoad={markImageReady}
                     ref={settleImageElement}
@@ -872,80 +895,94 @@ export function DancerPhotoCarousel({
                 ) : null}
               </section>
             ))}
-            <button
-              aria-label={`Previous ${viewer.kind}`}
-              className="profile-media-viewer-previous"
-              disabled={viewerIndex <= 0}
-              onClick={() => showRelativeViewerItem(-1)}
-              type="button"
-            >
-              ↑
-            </button>
-            <button
-              aria-label={`Next ${viewer.kind}`}
-              className="profile-media-viewer-next"
-              disabled={viewerIndex >= viewerItems.length - 1}
-              onClick={() => showRelativeViewerItem(1)}
-              type="button"
-            >
-              ↓
-            </button>
           </div>
-          <div className="profile-media-viewer-footer">
-            {viewer.kind === "video" ? (
-              <div className="profile-media-viewer-copy">
-                <strong>{stageName}</strong>
-                <span>
-                  {viewerStatus} · Scroll up or down · Video {viewerIndex + 1} of {viewerItems.length}
-                </span>
-              </div>
-            ) : null}
-            <div className="profile-media-viewer-actions">
-              {(() => {
-                const like = mediaLikeStateFor(activeViewerItem.kind, activeViewerItem.id);
-                return (
-                  <MediaLikeButton
-                    className="profile-media-viewer-like"
-                    liked={like.liked}
-                    likeCount={like.likeCount}
-                    mediaType={activeViewerItem.kind}
-                    pending={like.pending}
-                    onToggle={() => {
-                      setShareStatus("");
-                      void toggleMediaLike(activeViewerItem.kind, activeViewerItem.id).catch(() => {
-                        setShareStatus("Unable to update this like.");
-                      });
-                    }}
-                  />
-                );
-              })()}
+          {viewerControlsHost ? createPortal(
+            <>
               <button
-                aria-label={activeViewerItem.kind === "video" ? "Share this TV video" : "Share this profile photo"}
-                className="profile-media-viewer-share"
-                onClick={shareViewerItem}
+                aria-label={`Previous ${viewer.kind}`}
+                className="profile-media-viewer-previous"
+                disabled={viewerIndex <= 0}
+                onClick={() => showRelativeViewerItem(-1)}
                 type="button"
               >
-                <ShareIcon />
+                ↑
               </button>
-              {(() => {
-                const target = activeMediaReportTarget();
-                return target ? (
+              <button
+                aria-label={`Next ${viewer.kind}`}
+                className="profile-media-viewer-next"
+                disabled={viewerIndex >= viewerItems.length - 1}
+                onClick={() => showRelativeViewerItem(1)}
+                type="button"
+              >
+                ↓
+              </button>
+              <div className="profile-media-viewer-footer">
+                {viewer.kind === "video" ? (
+                  <div className="profile-media-viewer-copy">
+                    <strong>{stageName}</strong>
+                    <span>
+                      {viewerStatus} · Scroll up or down · Video {viewerIndex + 1} of {viewerItems.length}
+                    </span>
+                  </div>
+                ) : null}
+                <div className="profile-media-viewer-actions">
+                  {(() => {
+                    const like = mediaLikeStateFor(activeViewerItem.kind, activeViewerItem.id);
+                    return (
+                      <MediaLikeButton
+                        className="profile-media-viewer-like"
+                        liked={like.liked}
+                        likeCount={like.likeCount}
+                        mediaType={activeViewerItem.kind}
+                        pending={like.pending}
+                        onToggle={() => {
+                          setShareStatus("");
+                          void toggleMediaLike(activeViewerItem.kind, activeViewerItem.id).catch(() => {
+                            setShareStatus("Unable to update this like.");
+                          });
+                        }}
+                      />
+                    );
+                  })()}
                   <button
-                    aria-label={reportedTargets.includes(target.key) ? "Media reported" : `Report this profile ${activeViewerItem.kind}`}
-                    className="profile-media-viewer-report"
-                    disabled={reportSaving || reportedTargets.includes(target.key)}
-                    onClick={openMediaReport}
+                    aria-label={activeViewerItem.kind === "video" ? "Share this TV video" : "Share this profile photo"}
+                    className="profile-media-viewer-share"
+                    onClick={shareViewerItem}
                     type="button"
                   >
-                    <ReportIcon />
+                    <ShareIcon />
                   </button>
-                ) : null;
-              })()}
-              <span aria-live="polite" className="profile-media-viewer-share-status">
-                {shareStatus}
-              </span>
-            </div>
-          </div>
+                  {(() => {
+                    const target = activeMediaReportTarget();
+                    return target ? (
+                      <button
+                        aria-label={reportedTargets.includes(target.key) ? "Media reported" : `Report this profile ${activeViewerItem.kind}`}
+                        className="profile-media-viewer-report"
+                        disabled={reportSaving || reportedTargets.includes(target.key)}
+                        onClick={openMediaReport}
+                        type="button"
+                      >
+                        <ReportIcon />
+                      </button>
+                    ) : null;
+                  })()}
+                  <button
+                    aria-label={viewerExpanded ? "Return to scrolling cards" : "Expand this media"}
+                    aria-pressed={viewerExpanded}
+                    className="profile-media-card-expand"
+                    onClick={toggleViewerExpanded}
+                    type="button"
+                  >
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3H3v5M16 3h5v5M21 16v5h-5M3 21v-5h5" /></svg>
+                  </button>
+                  <span aria-live="polite" className="profile-media-viewer-share-status">
+                    {shareStatus}
+                  </span>
+                </div>
+              </div>
+            </>,
+            viewerControlsHost,
+          ) : null}
           {reportTarget ? (
             <PublicReportReasonDialog
               error={reportError}

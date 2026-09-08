@@ -9,6 +9,7 @@ import "../public/dancr-aesthetic.v1.css";
 import "../public/dancr-feedback.v1.css";
 import "../public/dancr-status-pages.v1.css";
 import "../public/profile-media-owner-controls.css";
+import "../public/profile-media-card-feed.css";
 import "../public/third-party-social-link-warning.css";
 
 const androidDeviceClassScript = `
