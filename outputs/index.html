@@ -32077,7 +32077,7 @@
   <link href="/dancr-aesthetic.v1.css?v=270" rel="stylesheet">
   <link href="/dancr-feedback.v1.css?v=2" rel="stylesheet">
   <link href="/profile-media-owner-controls.css?v=3" rel="stylesheet">
-  <link href="/profile-media-card-feed.css?v=3" rel="stylesheet">
+  <link href="/profile-media-card-feed.css?v=4" rel="stylesheet">
 </head>
 <body class="dancr-button-system">
   <div class="app">
@@ -52920,6 +52920,25 @@
         Math.abs(offset - target) < Math.abs(offsets[closest] - target) ? index : closest, 0);
     }
 
+    function profilePhotoCardScrollIndex(scrollTop, offsets, viewportHeight, scrollHeight) {
+      if (!offsets.length) return 0;
+      if (scrollTop > 0 && scrollTop + viewportHeight >= scrollHeight - 1) return offsets.length - 1;
+      return offsets.reduce((active, offset, index) => offset <= scrollTop + 1 ? index : active, 0);
+    }
+
+    function sizeProfilePhotoCard(slide, width, height) {
+      if (!slide || !Number.isFinite(width) || !Number.isFinite(height) || width <= 0 || height <= 0) return;
+      const ratio = `${width} / ${height}`;
+      if (slide.style.getPropertyValue("--profile-photo-card-ratio") === ratio) return;
+      const feed = profilePhotoViewerImage;
+      const anchor = [...feed.querySelectorAll("[data-profile-photo-card]")].reverse()
+        .find((card) => card.offsetTop <= feed.scrollTop + 1);
+      const before = anchor?.offsetTop || 0;
+      slide.style.setProperty("--profile-photo-card-ratio", ratio);
+      slide.dataset.photoShape = width > height * 3 ? "panorama" : width > height ? "landscape" : "portrait";
+      if (anchor && anchor.offsetTop !== before) feed.scrollTo({ top: feed.scrollTop + anchor.offsetTop - before, behavior: "instant" });
+    }
+
     function profileMediaCardControls(overlay) {
       if (!overlay.profileMediaCardControls) {
         overlay.profileMediaCardControls = [...overlay.querySelectorAll(
@@ -52971,6 +52990,7 @@
       items.forEach((item, index) => {
         const slide = document.createElement("section");
         slide.className = "profile-photo-viewer-slide";
+        slide.dataset.profilePhotoCard = "true";
         slide.dataset.profilePhotoViewerIndex = String(index);
         slide.setAttribute("aria-label", `${profileName} photo ${index + 1} of ${items.length}`);
         const image = document.createElement("div");
@@ -52980,6 +53000,8 @@
         image.setAttribute("aria-label", `${profileName} photo ${index + 1} of ${items.length}`);
         slide.appendChild(image);
         profilePhotoViewerImage.appendChild(slide);
+        const thumb = modalGallery.querySelector(`[data-profile-photo-index="${index}"] img`);
+        if (thumb?.naturalWidth && thumb?.naturalHeight) sizeProfilePhotoCard(slide, thumb.naturalWidth, thumb.naturalHeight);
       });
       mountProfileMediaCardHeader(profilePhotoViewer, profilePhotoViewerImage);
       return items.length;
@@ -52995,6 +53017,19 @@
         const safeUrl = safeCssUrl(image.dataset.profilePhotoUrl);
         if (safeUrl) {
           image.style.backgroundImage = `url('${safeUrl}')`;
+          if (!image.profilePhotoSizeProbe && !image.dataset.profilePhotoSized) {
+            const probe = new Image();
+            image.profilePhotoSizeProbe = probe;
+            probe.onload = () => {
+              if (image.isConnected) {
+                sizeProfilePhotoCard(image.parentElement, probe.naturalWidth, probe.naturalHeight);
+                image.dataset.profilePhotoSized = "true";
+              }
+              image.profilePhotoSizeProbe = null;
+              probe.onload = null;
+            };
+            probe.src = safeUrl;
+          }
         }
       });
     }
@@ -62909,10 +62944,11 @@
       profilePhotoViewerScrollFrame = window.requestAnimationFrame(() => {
         profilePhotoViewerScrollFrame = 0;
         if (profilePhotoViewer.hidden || profilePhotoViewerImage.clientHeight <= 0) return;
-        const activePhotoIndex = profileMediaCardScrollIndex(
+        const activePhotoIndex = profilePhotoCardScrollIndex(
           profilePhotoViewerImage.scrollTop,
           [...profilePhotoViewerImage.querySelectorAll("[data-profile-photo-viewer-index]")].map((slide) => slide.offsetTop),
-          profileMediaCardScrollInset(profilePhotoViewerImage)
+          profilePhotoViewerImage.clientHeight,
+          profilePhotoViewerImage.scrollHeight
         );
         syncProfilePhotoViewerPosition(activePhotoIndex);
       });

@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  type CSSProperties,
   type ReactNode,
   type SyntheticEvent,
   useCallback,
@@ -223,13 +224,16 @@ export function DancerPhotoCarousel({
     const slides = [...feed.querySelectorAll<HTMLElement>("[data-profile-media-viewer-index]")];
     if (!slides.length) return 0;
     const scrollTop = feed.scrollTop + (parseFloat(getComputedStyle(feed).scrollPaddingTop) || 0);
+    if (viewerKind === "photo") {
+      return profilePhotoCardScrollIndex(scrollTop, slides.map((slide) => slide.offsetTop), feed.clientHeight, feed.scrollHeight);
+    }
     return slides.reduce((closestIndex, slide, index) => (
       Math.abs(slide.offsetTop - scrollTop) <
       Math.abs(slides[closestIndex].offsetTop - scrollTop)
         ? index
         : closestIndex
     ), 0);
-  }, []);
+  }, [viewerKind]);
 
   useEffect(() => {
     if (deepLinkHandled.current) return;
@@ -734,6 +738,10 @@ export function DancerPhotoCarousel({
                 aria-label={`${stageName} ${item.kind} ${index + 1} of ${viewerItems.length}`}
                 className="profile-media-viewer-slide"
                 data-profile-media-viewer-index={index}
+                data-profile-photo-card={item.kind === "photo" ? "true" : undefined}
+                style={item.kind === "photo" && item.imageWidth && item.imageHeight ? {
+                  "--profile-photo-card-ratio": `${item.imageWidth} / ${item.imageHeight}`,
+                } as CSSProperties : undefined}
                 ref={index === viewerIndex ? setViewerControlsHost : undefined}
                 key={`${item.kind}-viewer-${item.id}-${index}`}
               >
@@ -950,6 +958,7 @@ function PlaybackFeedbackIcon({ paused }: { paused: boolean }) {
 
 function markImageReady(event: SyntheticEvent<HTMLImageElement>) {
   event.currentTarget.dataset.imageState = "ready";
+  sizeProfilePhotoCard(event.currentTarget);
 }
 
 function markImageUnavailable(event: SyntheticEvent<HTMLImageElement>) {
@@ -959,6 +968,29 @@ function markImageUnavailable(event: SyntheticEvent<HTMLImageElement>) {
 function settleImageElement(image: HTMLImageElement | null) {
   if (!image?.complete) return;
   image.dataset.imageState = image.naturalWidth > 0 ? "ready" : "error";
+  sizeProfilePhotoCard(image);
+}
+
+function profilePhotoCardScrollIndex(scrollTop: number, offsets: number[], viewportHeight: number, scrollHeight: number) {
+  if (!offsets.length) return 0;
+  if (scrollTop > 0 && scrollTop + viewportHeight >= scrollHeight - 1) return offsets.length - 1;
+  return offsets.reduce((active, offset, index) => offset <= scrollTop + 1 ? index : active, 0);
+}
+
+function sizeProfilePhotoCard(image: HTMLImageElement) {
+  const slide = image.closest<HTMLElement>("[data-profile-photo-card]");
+  const feed = slide?.closest<HTMLElement>(".profile-media-viewer-stage");
+  const width = image.naturalWidth;
+  const height = image.naturalHeight;
+  if (!slide || !feed || !width || !height) return;
+  const ratio = `${width} / ${height}`;
+  const anchor = [...feed.querySelectorAll<HTMLElement>("[data-profile-photo-card]")].reverse()
+    .find((card) => card.offsetTop <= feed.scrollTop + 1);
+  const before = anchor?.offsetTop || 0;
+  slide.dataset.photoShape = width > height * 3 ? "panorama" : width > height ? "landscape" : "portrait";
+  if (slide.style.getPropertyValue("--profile-photo-card-ratio") === ratio) return;
+  slide.style.setProperty("--profile-photo-card-ratio", ratio);
+  if (anchor && anchor.offsetTop !== before) feed.scrollTo({ top: feed.scrollTop + anchor.offsetTop - before, behavior: "instant" });
 }
 
 function clearMediaDeepLink() {

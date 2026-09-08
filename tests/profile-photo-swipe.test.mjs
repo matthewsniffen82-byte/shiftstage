@@ -23,7 +23,7 @@ test("the live profile keeps the grid horizontal and makes full photos verticall
     /\.profile-photo-viewer-image \{[\s\S]*?overflow-y: auto;[\s\S]*?scroll-snap-type: y mandatory;[\s\S]*?touch-action: pan-y;/,
   );
   assert.match(liveApp, /\.profile-photo-viewer-slide \{[\s\S]*?scroll-snap-align: start;[\s\S]*?scroll-snap-stop: always;/);
-  assert.match(liveApp, /profileMediaCardScrollIndex\([\s\S]*?profilePhotoViewerImage\.scrollTop,[\s\S]*?slide\.offsetTop/);
+  assert.match(liveApp, /profilePhotoCardScrollIndex\([\s\S]*?profilePhotoViewerImage\.scrollTop,[\s\S]*?slide\.offsetTop/);
   assert.doesNotMatch(liveApp, /profilePhotoSwipeBlockClickUntil/);
 });
 

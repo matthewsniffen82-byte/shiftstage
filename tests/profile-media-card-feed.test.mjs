@@ -18,7 +18,7 @@ vm.runInContext([
   functionSource("profileTvViewerScrollTarget"),
 ].join("\n"), context);
 
-test("both profile entry points load the same TV-sized card feed styles", () => {
+test("both profile entry points share TV video sizing and natural-photo card styles", () => {
   assert.match(live, /href="\/profile-media-card-feed\.css\?v=\d+"/);
   assert.match(layout, /import "\.\.\/public\/profile-media-card-feed\.css"/);
   assert.match(live, /class="profile-photo-viewer profile-media-card-feed"/);
@@ -83,6 +83,30 @@ test("instant opening bypasses smooth CSS scrolling in every profile viewer", ()
     assert.match(functionSource(name), /top: (?:activePhotoIndex|index) === 0 \? 0 : Math\.max\(0, activeSlide\?\.offsetTop \?\? 0\)/);
   }
   assert.match(carousel, /options\.instant[^]*?\? "instant"\s*: "smooth"/);
+});
+
+test("photo card height follows the source ratio without changing video card height", () => {
+  assert.match(css, /\[data-profile-photo-card\] \{[^}]*height: auto !important;[^}]*min-height: 0 !important;[^}]*max-height: none !important;[^}]*aspect-ratio: var\(--profile-photo-card-ratio, 9 \/ 16\)/);
+  assert.match(css, /\[data-profile-photo-card\] > :is\(img, \.profile-photo-viewer-slide-image\) \{[^}]*width: 100% !important;[^}]*height: auto !important/);
+  assert.match(live, /slide\.dataset\.profilePhotoCard = "true"/);
+  assert.match(carousel, /data-profile-photo-card=\{item\.kind === "photo" \? "true" : undefined\}/);
+  assert.match(live, /sizeProfilePhotoCard\(image\.parentElement, probe\.naturalWidth, probe\.naturalHeight\)/);
+  assert.match(carousel, /sizeProfilePhotoCard\(event\.currentTarget\)/);
+  assert.match(carousel, /sizeProfilePhotoCard\(image\)/);
+  for (const source of [live, carousel]) {
+    assert.match(source, /feed\.scrollTop \+ anchor\.offsetTop - before, behavior: "instant"/);
+  }
+});
+
+test("mixed-height photo feeds select the visible card and can reach a short final photo", () => {
+  vm.runInContext(functionSource("profilePhotoCardScrollIndex"), context);
+  const offsets = [72, 1284, 1688, 1900];
+  assert.equal(context.profilePhotoCardScrollIndex(0, offsets, 700, 2130), 0);
+  assert.equal(context.profilePhotoCardScrollIndex(1000, offsets, 700, 2130), 0);
+  assert.equal(context.profilePhotoCardScrollIndex(1284, offsets, 700, 2130), 1);
+  assert.equal(context.profilePhotoCardScrollIndex(1430, offsets, 700, 2130), 3);
+  assert.equal(context.profilePhotoCardScrollIndex(0, [], 700, 700), 0);
+  assert.match(carousel, /viewerKind === "photo"[^]*?profilePhotoCardScrollIndex\(scrollTop, slides\.map/);
 });
 
 test("one in-flow header scrolls away, with no header padding repeated on later cards", () => {
