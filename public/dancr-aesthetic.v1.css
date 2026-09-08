@@ -3253,7 +3253,7 @@ body.dancr-button-system > .app main.stack > section.stack > #results.home-dance
 
 body.dancr-button-system > .app main.stack > section.stack > #results.home-dancer-grid > .home-dancer-grid-heading.is-open > strong,
 body.dancr-button-system > .app main.stack > section.stack > #results.home-dancer-grid > .home-dancer-grid-heading.is-open > span {
-  color: var(--dancr-color-text-muted) !important;
+  color: var(--dancr-color-text-secondary) !important;
 }
 
 body.dancr-button-system > .app main.stack > section.stack > #results.home-dancer-grid > .home-dancer-grid-card {
@@ -8618,8 +8618,7 @@ body.dancer-directory-active > .app main.stack > section.stack
   display: none !important;
 }
 
-/* All presents three status groups, so its first Working Now heading remains
- * visible and follows the same hierarchy as Upcoming and No Schedule. */
+/* All presents three status groups with the same readable heading hierarchy. */
 body.dancer-directory-active > .app main.stack > section.stack
   > #results.home-dancer-grid:not(.home-dancer-filtered-view)
   > .dancer-directory-filters + .home-dancer-grid-heading {
@@ -8628,23 +8627,30 @@ body.dancer-directory-active > .app main.stack > section.stack
 
 body.dancer-directory-active > .app main.stack > section.stack
   > #results.home-dancer-grid:not(.home-dancer-filtered-view) > .home-dancer-grid-heading {
-  min-height: 22px;
-  gap: 5px;
-  margin: 2px 0 0 !important;
-  padding: 2px 1px 1px !important;
+  min-height: 24px;
+  gap: 8px;
+  /* Including the grid's 2px gap and 1px divider: 24px above, 12px below. */
+  margin: 10px 0 10px !important;
+  padding: 11px 0 0 !important;
+  border-top: 1px solid var(--dancr-color-border-subtle);
 }
 
 body.dancer-directory-active > .app main.stack > section.stack
   > #results.home-dancer-grid:not(.home-dancer-filtered-view) > .home-dancer-grid-heading > strong {
-  font-size: clamp(13px, 3.6vw, 15px) !important;
+  font-size: 16px !important;
+  font-weight: 650;
+  line-height: 24px;
 }
 
 body.dancer-directory-active > .app main.stack > section.stack
   > #results.home-dancer-grid:not(.home-dancer-filtered-view) > .home-dancer-grid-heading > span {
-  min-width: 20px;
-  height: 20px;
-  padding-inline: 5px;
-  font-size: 9px;
+  box-sizing: border-box;
+  min-width: 24px;
+  height: 24px;
+  padding-inline: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
 }
 
 @media (max-width: 360px) {
