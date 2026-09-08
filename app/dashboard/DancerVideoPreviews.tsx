@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import DancerVideoThumbnail from "./DancerVideoThumbnail";
 
 type PreviewVideo = {
   id: string;
@@ -50,7 +51,7 @@ export default function DancerVideoPreviews({ videos, removingId, disabled, onRe
                 onClick={() => { setPlaybackError(false); setActiveId(video.id); }}
                 type="button"
               >
-                {video.posterUrl ? <img alt="" loading="lazy" src={video.posterUrl} /> : null}
+                <DancerVideoThumbnail posterUrl={video.posterUrl} videoUrl={video.videoUrl} />
                 <span className="video-preview-play" aria-hidden="true">▶</span>
               </button>
               <button

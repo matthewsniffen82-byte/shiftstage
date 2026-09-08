@@ -3,10 +3,12 @@
 import { useEffect, useRef, useState } from "react";
 import { requestDancerPhotosJson, requestDancerProfileJson, requestDancerTvVideoJson } from "./dashboard-session";
 import { announceDancerProfileVideosChanged } from "./dancer-profile-media-sync";
+import DancerVideoThumbnail from "./DancerVideoThumbnail";
 
 type UploadItem = {
   id: string;
   imageUrl?: string | null;
+  videoUrl?: string | null;
   status: string;
 };
 
@@ -166,8 +168,10 @@ export default function DancerProfileMediaUploads({
                     <div className="profile-upload-preview">
                       <button aria-label={`Manage ${label.toLowerCase()} ${index + 1}: ${profileUploadStatus(item.status)}`} disabled={isDeleting} onClick={() => onOpen(section)} type="button">
                         <span className="profile-upload-thumbnail">
-                          {item.imageUrl ? <img alt="" loading="lazy" src={item.imageUrl} /> : <span aria-hidden="true">{isPhoto ? "▧" : "▶"}</span>}
-                          {!isPhoto && item.imageUrl ? <i aria-hidden="true">▶</i> : null}
+                          {isPhoto
+                            ? item.imageUrl ? <img alt="" loading="lazy" src={item.imageUrl} /> : <span aria-hidden="true">▧</span>
+                            : <DancerVideoThumbnail posterUrl={item.imageUrl} videoUrl={item.videoUrl} />}
+                          {!isPhoto ? <i aria-hidden="true">▶</i> : null}
                         </span>
                       </button>
                       <button

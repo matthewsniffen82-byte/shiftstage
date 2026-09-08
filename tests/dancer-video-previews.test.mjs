@@ -15,7 +15,8 @@ function compile(file, resolver) {
   vm.runInNewContext(code, { exports, require: resolver });
   return exports;
 }
-const previews = compile("DancerVideoPreviews.tsx", requireTest);
+const thumbnail = compile("DancerVideoThumbnail.tsx", name => name === "./dancer-profile-media-sync" ? {} : requireTest(name));
+const previews = compile("DancerVideoPreviews.tsx", name => name === "./DancerVideoThumbnail" ? thumbnail : requireTest(name));
 const videos = ["approved", "rejected", "moderating"].map((status, index) => ({
   id: `video-${index}`, videoUrl: `/video-${index}.mp4`, posterUrl: `/poster-${index}.jpg`, status,
   moderationDecision: "approved", moderationFrameCount: 9, reviewNotes: "Automatically approved by safety review.", metrics: { engaged_view: 10 },

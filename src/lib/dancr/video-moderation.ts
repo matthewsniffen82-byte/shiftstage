@@ -9,6 +9,7 @@ import path from "node:path";
 import ffmpegPath from "ffmpeg-static";
 import OpenAI from "openai";
 import { getServerEnv } from "../server-env";
+import { runVideoReviewChecks } from "./video-review-checks";
 import {
   DANCR_IMAGE_MODERATION_MODEL,
   evaluateDancrImageModeration,
@@ -113,13 +114,15 @@ export async function moderateStoredMyDancrTvVideo(
     const frames = await extractVideoFrames(videoPath, workspace, videoDurationSeconds);
     const audioPath = await extractOptionalAudio(videoPath, workspace);
     const transcript = audioPath ? await transcribeAudio(openai, audioPath) : "";
-    const frameResults = await moderateFrames(openai, frames);
-    const textResult = await moderateText(openai, buildModerationText(input.caption, transcript));
-    const policyDecision = await classifyVideoPolicy(openai, frames, input.caption, transcript);
-    const identityAnalysis = await analyzeDancerMediaIdentity({
-      targetImages: frames,
-      mediaType: "video",
-      referenceImage: identityReference,
+    const { frameResults, textResult, policyDecision, identityAnalysis } = await runVideoReviewChecks({
+      frames: () => moderateFrames(openai, frames),
+      text: () => moderateText(openai, buildModerationText(input.caption, transcript)),
+      policy: () => classifyVideoPolicy(openai, frames, input.caption, transcript),
+      identity: () => analyzeDancerMediaIdentity({
+        targetImages: frames,
+        mediaType: "video",
+        referenceImage: identityReference,
+      }),
     });
     const identityEvaluation = evaluateDancerMediaIdentity(identityAnalysis, {
       referenceRequired: true,

@@ -3843,7 +3843,7 @@ function DancerProfilePreview({
             {isEditor && (isOnboardingEditor || (!photos.length && !videos.length)) ? (
               <DancerProfileMediaUploads
                 photos={profilePhotoItems}
-                videos={uploadedVideos.map((video) => ({ id: video.id, imageUrl: video.posterUrl, status: video.status }))}
+                videos={uploadedVideos.map((video) => ({ id: video.id, imageUrl: video.posterUrl, status: video.status, videoUrl: video.videoUrl }))}
                 isApproved={isApproved}
                 isPublic={isPublic}
                 isVideoLoading={isMediaLoading}
