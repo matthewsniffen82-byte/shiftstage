@@ -23,12 +23,13 @@ import { requestDancerMediaPin } from "./dashboard-session";
 import { AVATAR_REJECTED_MESSAGE, avatarUploadPresentation, type AvatarUploadFeedback } from "./avatar-upload-state";
 import DancerShiftManager from "./DancerShiftManager";
 import { DANCER_PROFILE_VIDEOS_CHANGED_EVENT } from "./dancer-profile-media-sync";
-import { DancerDashboardAvatar, DancerDashboardIcon, DancerDashboardLoading } from "./DancerDashboardIdentity";
+import { DancerDashboardAvatar, DancerDashboardIcon } from "./DancerDashboardIdentity";
 import "./dancer-dashboard.css";
 import VenueNfcTagPanel from "./VenueNfcTagPanel";
 import VenueTeamPanel from "./VenueTeamPanel";
 import VenueTvPanel from "./VenueTvPanel";
 import { loadCustomerDashboard } from "./customer-dashboard-loader";
+import { loadDancerDashboard } from "./dancer-dashboard-loader";
 import CustomerAccountPanel from "./CustomerAccountPanel";
 import {
   DEVICE_SAVED_DEALS_KEY,
@@ -379,29 +380,30 @@ export default function DashboardClient({
         return;
       }
 
-      const loadDashboardPanels = async () => {
-        if (role === "dancer") {
-          // This request finalizes a saved eligible NFC enrollment. Load the
-          // profile afterward so onboarding never renders from a pre-activation
-          // profile snapshot while the NFC state is already complete.
-          const secondary = await requestOptionalPanel("/api/dancer/dashboard", {});
-          const [profile, support, reviews, weeklyReport, rankingEvents] = await Promise.all([
-            requestOptionalPanel("/api/dancer/profile", { profile: null }),
-            requestOptionalPanel("/api/support", { threads: [] }),
-            requestOptionalPanel("/api/dancer/reviews", { reviews: [] }),
-            requestOptionalPanel("/api/dancer/weekly-report", { report: null }),
-            requestOptionalPanel("/api/dancer/ranking-events", { events: [] }),
-          ]);
-          return [profile, secondary, support, reviews, weeklyReport, rankingEvents];
+      if (role === "dancer") {
+        try {
+          await loadDancerDashboard(controller.signal, (panel, data) => {
+            if (cancelled) return;
+            setState((current) => panel === "ready"
+              ? { ...current, ...data }
+              : { ...current, [panel]: data });
+            if (panel === "ready") setIsLoading(false);
+          });
+        } catch (error) {
+          if (!cancelled) {
+            controller.abort();
+            setState((current) => ({ account: current.account, error: dashboardLoadErrorMessage(error) }));
+            setIsLoading(false);
+          }
         }
+        return;
+      }
 
+      const loadDashboardPanels = async () => {
         return Promise.all([
           requestOptionalPanel("/api/venue/profile", { profile: null }),
           requestOptionalPanel("/api/venue/dashboard?period=30d", {}),
           requestOptionalPanel("/api/support", { threads: [] }),
-          null,
-          null,
-          null,
         ]);
       };
 
@@ -436,7 +438,7 @@ export default function DashboardClient({
             ),
           ]);
         }
-        const [profile, secondary, support, reviews, weeklyReport, rankingEvents] = panels;
+        const [profile, secondary, support] = panels;
 
         if (!cancelled) {
           setState({
@@ -445,10 +447,7 @@ export default function DashboardClient({
             saved: secondary.saved || null,
             analytics: secondary.analytics || null,
             deals: secondary.deals || null,
-            reviews: reviews?.reviews || [],
             supportThreads: support.threads || [],
-            weeklyReport: weeklyReport?.report || null,
-            rankingEvents: rankingEvents?.events || [],
             workingNow: secondary.workingNow || [],
             deal: secondary.deal || null,
             venueDeals: Array.isArray(secondary.deals) ? secondary.deals : [],
@@ -639,7 +638,7 @@ export default function DashboardClient({
   const dashboardEyebrow =
     role === "customer" ? "Customer dashboard" : role === "venue" ? "Venue dashboard" : "Dancer dashboard";
   const dashboardHeading = isLoading
-    ? (role === "dancer" ? profileDisplayName || "Loading your dashboard…" : resolvedDisplayName || title)
+    ? resolvedDisplayName || title
     : role === "dancer" && state.error ? profileDisplayName || title : displayName;
   const dashboardDescription = state.error || state.accountError || "";
   const dancerProfileStatus = role === "dancer"
@@ -649,6 +648,13 @@ export default function DashboardClient({
     && dancerProfileStatus === "approved"
     && state.profile?.is_public !== false
     && state.profile?.isPublic !== false;
+
+  if (role === "dancer" && isLoading && !state.error) {
+    return <main className="dashboard-shell dashboard-shell-dancer" aria-busy="true">
+      <DashboardStyles />
+      <span className="dashboard-sr-only" role="status">Loading dancer dashboard</span>
+    </main>;
+  }
 
   return (
     <main className={`dashboard-shell dashboard-shell-${role}`}>
@@ -2539,7 +2545,6 @@ function alignOpenedDashboardSection(event: SyntheticEvent<HTMLDetailsElement>) 
 }
 
 function DashboardLoadingState({ role }: { role: DashboardRole }) {
-  if (role === "dancer") return <DancerDashboardLoading />;
   return (
     <section className="venue-dashboard-loading" aria-busy="true" aria-label={`Loading ${role} dashboard`}>
       <span className="dashboard-sr-only">Loading {role} dashboard</span>

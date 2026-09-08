@@ -27,7 +27,7 @@ test("customer dashboard leads with four clear activity areas before alerts and 
   );
   assert.match(dashboard, /role === "customer" \? "Customer dashboard"/);
   assert.doesNotMatch(dashboard, /eyebrow="(?:Guest workspace|Your activity)"/);
-  assert.match(dashboard, /const dashboardHeading = isLoading[\s\S]*?role === "dancer" \? profileDisplayName \|\| "Loading your dashboard…" : resolvedDisplayName \|\| title[\s\S]*?: displayName/);
+  assert.match(dashboard, /const dashboardHeading = isLoading\s*\? resolvedDisplayName \|\| title[\s\S]*?: displayName/);
   assert.doesNotMatch(dashboard, /Welcome back, \$\{displayName\}/);
   assert.match(dashboard, /<DashboardCloseButton[\s\S]*?label=\{`Close \$\{role\} dashboard and return to MyDancr`\}/);
   assert.match(dashboard, /<SupportInboxPanel initialThreads=\{state\.supportThreads \|\| \[\]\} panelId="customer-support" onCountChange=\{setCustomerSupportCount\} \/>/);

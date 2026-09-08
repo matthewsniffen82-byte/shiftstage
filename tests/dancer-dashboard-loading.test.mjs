@@ -23,16 +23,16 @@ const headerEnd = source.indexOf("\n      {isLoading &&", headerStart);
 const header = compile('export function Header({state, isLoading, role = "dancer"}) {' + source.slice(start, end) + ' return (' + source.slice(headerStart, headerEnd).trim() + ');}', {
   useMemo: fn => fn(), dashboardName: profile => profile?.stage_name || "", homeDiscoveryHref: () => "/", effectiveDancerProfileStatus,
   DancerDashboardAvatar: identity.DancerDashboardAvatar, DashboardCloseButton: () => React.createElement("button", null, "Close"),
+  DashboardStyles: () => null,
   DashboardSignInRecovery: () => React.createElement("button", null, "Sign in"), retryDashboard: () => {},
 });
 const renderHeader = (state, isLoading) => renderToStaticMarkup(React.createElement(header.Header, { state, isLoading }));
 
-test("initial and cached-account loading states do not suggest incomplete or public profiles", () => {
+test("initial and cached-account loading states show no placeholder dashboard", () => {
   for (const state of [{}, { account: { displayName: "Account Name", accountState: "approved" } }]) {
     const html = renderHeader(state, true);
-    assert.match(html, /Loading your dashboard…/);
-    assert.match(html, /dancer-dashboard-avatar-placeholder/);
-    assert.doesNotMatch(html, /Complete your profile|>CY<|>LY<|Account Name|dashboard-live-status/);
+    assert.match(html, /class="dashboard-sr-only" role="status"/);
+    assert.doesNotMatch(html, /dashboard-head|dancer-dashboard-avatar|Complete your profile|Account Name|dashboard-live-status|Loading your dashboard…/);
   }
 });
 
@@ -51,11 +51,14 @@ test("missing identity is an onboarding prompt only after a successful load", ()
   assert.doesNotMatch(failed, /Complete your profile|>CY<|dashboard-live-status/);
 });
 
-test("dancer loading placeholders match compact cards and expose one loading announcement", () => {
-  const html = renderToStaticMarkup(React.createElement(identity.DancerDashboardLoading));
-  assert.equal((html.match(/class="dancer-dashboard-loading-row"/g) || []).length, 5);
-  assert.equal((html.match(/aria-hidden="true"/g) || []).length, 5);
-  assert.match(html, /role="status"/);
-  assert.match(html, /min-height:88px/);
-  assert.doesNotMatch(html, /venue-dashboard-loading-command|Complete your profile/);
+test("the complete initial dancer page contains only an accessible loading announcement", () => {
+  const exports = {};
+  vm.runInNewContext(ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX, target: ts.ScriptTarget.ES2022 } }).outputText, { exports, require: name => {
+    if (name === "react" || name === "react/jsx-runtime") return require(name);
+    return new Proxy(() => null, { get: (_target, key) => key === "__esModule" ? false : () => null });
+  } });
+  const html = renderToStaticMarkup(React.createElement(exports.default, { role: "dancer" })).replace(/<style>[\s\S]*?<\/style>/g, "");
+  assert.match(html, /aria-busy="true"/);
+  assert.equal((html.match(/role="status"/g) || []).length, 1);
+  assert.doesNotMatch(html, /dashboard-head|loading-row|loading-command|loading-metrics|dashboard-grid|Complete your profile|Loading your dashboard…/);
 });

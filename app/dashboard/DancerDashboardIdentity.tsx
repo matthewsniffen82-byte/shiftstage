@@ -24,13 +24,3 @@ export function DancerDashboardAvatar({ avatarUrl, name }: { avatarUrl: string; 
     )}
   </span>;
 }
-
-export function DancerDashboardLoading() {
-  return <section className="dancer-dashboard-loading" style={{ display: "grid", gap: 10 }} aria-busy="true" aria-label="Loading dancer dashboard" role="status">
-    <span className="dashboard-sr-only">Loading your dashboard…</span>
-    {Array.from({ length: 5 }, (_, index) => <div className="dancer-dashboard-loading-row" style={{ boxSizing: "border-box", minHeight: 88, display: "grid", gridTemplateColumns: "40px minmax(0, 1fr)", alignItems: "center", gap: 13, padding: "17px 18px", border: "1px solid #d3c4ee1f", borderRadius: 18, background: "#121017" }} key={index} aria-hidden="true">
-      <span className="dancer-dashboard-loading-icon" style={{ width: 40, height: 40, borderRadius: 12, background: "#c5b4df12" }} />
-      <span className="dancer-dashboard-loading-lines" style={{ display: "grid", gap: 10 }}><i style={{ width: "58%", height: 14, borderRadius: 5, background: "#c5b4df1c" }} /><i style={{ width: "86%", height: 10, borderRadius: 5, background: "#c5b4df0f" }} /></span>
-    </div>)}
-  </section>;
-}
