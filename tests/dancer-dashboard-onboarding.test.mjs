@@ -192,7 +192,7 @@ test("profile setup editors use the compact shared modal shell without changing 
   assert.match(dashboard, /\.dancer-profile-builder-panel\.dancer-profile-editor-modal \.photo-source-copy,[\s\S]*?display:grid;/);
   assert.match(dashboard, /\.dancer-profile-builder-panel\.dancer-profile-editor-modal\[data-section="photos"\] \.dancer-photo-upload-form \{[^}]*grid-template-columns:1fr;/);
   assert.match(dashboard, /\.dancer-profile-builder-panel\.dancer-profile-editor-modal\[data-section="photos"\] \.photo-upload-heading \{ display:block; \}/);
-  assert.match(dashboard, /\.dancer-profile-builder-panel\.dancer-profile-editor-modal\[data-section="photos"\] \.photo-review-list \{ grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
+  assert.match(dashboard, /\.photo-review-list\.compact-photo-previews \{[^}]*display:flex;[^}]*overflow-x:auto;/);
   assert.doesNotMatch(dashboard, /dancer-profile-builder-media-empty/);
   assert.match(dashboard, /\.dancer-profile-preview-overlay \.profile-media-grid \{[^}]*grid-template-columns: repeat\(3,minmax\(0,1fr\)\);/);
 

@@ -7013,6 +7013,7 @@ function DancerPhotoPanel({
   const [status, setStatus] = useState("");
   const [isUploading, setIsUploading] = useState(false);
   const [isArranging, setIsArranging] = useState(false);
+  const [showPhotoOrder, setShowPhotoOrder] = useState(false);
   const [deletingPhotoIds, setDeletingPhotoIds] = useState<Set<string>>(() => new Set());
   const deletedPhotoIdsRef = useRef<string[]>(deletedPhotoIds);
   const deletedPhotoStoragePathsRef = useRef<string[]>(deletedPhotoStoragePaths);
@@ -7478,34 +7479,36 @@ function DancerPhotoPanel({
       {photos.length ? (
         <div className="dancer-media-manager-title">
           <strong>Your photos</strong>
+          {photos.length > 1 ? <button className="photo-reorder-toggle" aria-label="Reorder photos" aria-pressed={showPhotoOrder} disabled={photoActionBusy || photos.some((photo) => photo.status !== "approved")} onClick={() => setShowPhotoOrder((current) => !current)} type="button">{showPhotoOrder ? "Done reordering" : "Reorder"}</button> : null}
           <span>{photos.length} {photos.length === 1 ? "photo" : "photos"}</span>
         </div>
       ) : null}
-      <div className="photo-review-list">
+      <div className="photo-review-list compact-photo-previews" aria-label="Uploaded photos">
         {photos.map((photo, photoIndex) => {
           const isApprovedGalleryPhoto = photo.status === "approved";
           const canMoveEarlier = isApprovedGalleryPhoto && photoIndex > 0;
           const canMoveLater = isApprovedGalleryPhoto && photoIndex < photos.length - 1;
           return (
-            <div className={`photo-review-card is-${photo.status}`} key={photo.id}>
-              {photo.imageUrl ? <div className="photo-preview" style={{ backgroundImage: `url(${photo.imageUrl})` }} /> : <div className="photo-preview empty">Review</div>}
-              <span>
-                <strong>{photo.label}</strong>
-                <small>{photoStatusLabel(photo.status)}</small>
-                {photo.note ? <em>{photo.note}</em> : null}
-                <span className="photo-card-actions">
+            <div className={`photo-saved-preview is-${photo.status}`} key={photo.id}>
+              <div className="photo-saved-frame">
+                {photo.imageUrl ? <img alt={photo.label} loading="lazy" src={photo.imageUrl} /> : <span aria-hidden="true">▧</span>}
+                <button
+                  aria-label={`${deletingPhotoIds.has(photo.id) ? "Deleting" : "Delete"} ${photo.label.toLowerCase()}`}
+                  aria-busy={deletingPhotoIds.has(photo.id)}
+                  className="photo-card-remove-action"
+                  type="button"
+                  disabled={photoActionBusy}
+                  onClick={() => deletePhoto(photo)}
+                >
+                  <span aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 10v7M14 10v7" /></svg></span>
+                </button>
+              </div>
+              <strong>{photo.label}</strong>
+              <small>{photoStatusLabel(photo.status)}</small>
+              {showPhotoOrder ? <span className="photo-card-actions">
                   {canMoveEarlier ? <button aria-label={`Move ${photo.label} earlier`} className="photo-order-action" disabled={photoActionBusy} title="Move earlier" type="button" onClick={() => moveGalleryPhoto(photo.id, -1)}>↑</button> : null}
                   {canMoveLater ? <button aria-label={`Move ${photo.label} later`} className="photo-order-action" disabled={photoActionBusy} title="Move later" type="button" onClick={() => moveGalleryPhoto(photo.id, 1)}>↓</button> : null}
-                  <button
-                    className="photo-card-remove-action"
-                    type="button"
-                    disabled={photoActionBusy}
-                    onClick={() => deletePhoto(photo)}
-                  >
-                    {deletingPhotoIds.has(photo.id) ? "Deleting..." : "Delete"}
-                  </button>
-                </span>
-              </span>
+                </span> : null}
             </div>
           );
         })}
@@ -9775,13 +9778,22 @@ function DashboardStyles() {
       .dancer-profile-builder-panel.dancer-profile-editor-modal[data-section="photos"] .photo-upload-heading strong { color:#c5bdce; font-size:13px; font-weight:750; line-height:1.4; }
       .dancer-profile-builder-panel.dancer-profile-editor-modal[data-section="photos"] .photo-primary-choice,
       .dancer-profile-builder-panel.dancer-profile-editor-modal[data-section="photos"] .photo-upload-status { grid-column:auto; }
-      .dancer-media-manager-title { display:flex; align-items:center; justify-content:space-between; gap:10px; padding-top:3px; border-top:1px solid rgba(255,255,255,.08); }
+      .upload-panel > .dancer-media-manager-title { display:flex; align-items:center; justify-content:space-between; gap:10px; padding-top:3px; border-top:1px solid rgba(255,255,255,.08); }
       .dancer-media-manager-title strong { color:#fff; font-size:15px; }
       .dancer-media-manager-title span { color:#aaa2b5; font-size:11px; font-weight:800; }
-      .dancer-profile-builder-panel.dancer-profile-editor-modal[data-section="photos"] .photo-review-list { grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
-      .dancer-profile-builder-panel.dancer-profile-editor-modal[data-section="photos"] .photo-review-list .photo-review-card { min-height:0; gap:8px; padding:8px; border-radius:12px; }
-      .dancer-profile-builder-panel.dancer-profile-editor-modal[data-section="photos"] .photo-review-list .photo-preview { width:100%; aspect-ratio:3 / 4; }
-      .dancer-profile-builder-panel.dancer-profile-editor-modal[data-section="photos"] .photo-review-card em { font-size:10px; }
+      .photo-review-list.compact-photo-previews { min-width:0; display:flex; gap:10px; overflow-x:auto; margin:0; padding:2px 0 8px; }
+      .compact-photo-previews .photo-saved-preview { flex:0 0 112px; min-width:0; display:grid; align-content:start; gap:4px; }
+      .photo-saved-frame { position:relative; width:112px; aspect-ratio:3 / 4; display:grid; place-items:center; overflow:hidden; border:1px solid #40384b; border-radius:8px; background:#15101d; color:#c9c3d2; }
+      .photo-saved-frame > img { width:100%; height:100%; display:block; object-fit:cover; }
+      .photo-saved-preview > strong { color:#fff; font-size:12px; line-height:1.3; }
+      .photo-saved-preview > small { color:#d4c3e9; font-size:11px; line-height:1.35; text-transform:none; letter-spacing:normal; }
+      .photo-saved-preview.is-approved > small { color:#8ce4b2; }
+      .photo-saved-frame .photo-card-remove-action, body.dancr-button-system .photo-saved-frame .photo-card-remove-action { position:absolute; right:1px; bottom:1px; z-index:1; display:grid; place-items:center; width:44px !important; height:44px !important; min-height:44px; margin:0; padding:0 !important; border:0 !important; background:transparent !important; box-shadow:none !important; backdrop-filter:none !important; -webkit-backdrop-filter:none !important; color:#fff !important; cursor:pointer; }
+      .photo-saved-frame .photo-card-remove-action > span { width:30px; height:30px; display:grid; place-items:center; justify-self:end; border:1px solid rgba(255,255,255,.4); border-radius:50%; background:rgba(0,0,0,.78); box-shadow:0 1px 5px rgba(0,0,0,.35); }
+      .photo-saved-frame .photo-card-remove-action svg { width:17px; height:17px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
+      .photo-saved-frame .photo-card-remove-action:disabled { opacity:.55; cursor:wait; }
+      .photo-saved-frame .photo-card-remove-action:focus-visible { outline:2px solid #fff; outline-offset:-2px; }
+      .dancer-media-manager-title .photo-reorder-toggle { margin-left:auto; min-height:44px; padding:0 10px; color:#fff; font-size:11px; }
       .dancer-profile-builder-panel.dancer-profile-editor-modal[data-section="photos"] .photo-card-actions { gap:5px !important; }
 
       .dancer-profile-builder-panel.dancer-profile-editor-modal[data-section="videos"] .tv-studio-embedded { overflow:visible; padding:0; }
@@ -9806,7 +9818,6 @@ function DashboardStyles() {
         .dancer-profile-builder-panel.dancer-profile-editor-modal > .dancer-profile-editor-modal-body { padding:12px; }
         .dancer-profile-editor-modal-actions { grid-template-columns:1fr; gap:7px; padding:10px 12px max(10px,env(safe-area-inset-bottom)); }
         .dancer-profile-editor-modal-actions > span:empty { display:none; }
-        .dancer-profile-builder-panel.dancer-profile-editor-modal[data-section="photos"] .photo-review-list { grid-template-columns:repeat(2,minmax(0,1fr)); }
       }
     `}</style>
   );

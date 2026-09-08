@@ -56,7 +56,7 @@ function photoHarness({ profile = {}, post = async () => ({ decision: "review", 
   render();
   return {
     posts, reads, profiles, mapProfile: exports.dancerPhotoItemsFromProfile,
-    get cards() { return nodes().filter(node => node.props?.className?.startsWith("photo-review-card")); },
+    get cards() { return nodes().filter(node => /^(photo-review-card|photo-saved-preview)/.test(node.props?.className || "")); },
     get labels() { return this.cards.map(card => nodes(card).find(node => node.type === "strong").props.children); },
     get statuses() { return this.cards.map(card => nodes(card).find(node => node.type === "small").props.children); },
     get notes() { return nodes().filter(node => node.type === "em").map(node => node.props.children); },
@@ -74,7 +74,7 @@ test("fresh approval replaces a locally checking photo even when the review and 
   const ui = photoHarness();
   ui.select(); await ui.settle();
   assert.deepEqual(ui.statuses, ["Approved"]);
-  assert.equal(ui.cards[0].props.className, "photo-review-card is-approved");
+  assert.equal(ui.cards[0].props.className, "photo-saved-preview is-approved");
   assert.deepEqual(ui.notes, []);
   assert.equal(ui.posts.length, 1);
   assert.equal(ui.buttons.some(button => button.props.children === "Retry"), false);
@@ -117,11 +117,29 @@ test("all gallery photos can be reordered without changing the avatar or showing
     profile: { avatarPhotoUrl: "/avatar.jpg", dancer_photos: [approved("first", 0, true), approved("second", 1)] },
     read: async () => ({ profile: { avatarPhotoUrl: "/avatar.jpg", dancer_photos: [approved("second", 0, true), approved("first", 1)] } }),
   });
+  assert.equal(ui.buttons.some(button => button.props.className === "photo-order-action"), false);
+  ui.buttons.find(button => button.props["aria-label"] === "Reorder photos").props.onClick();
+  await ui.settle();
   ui.buttons.find(button => button.props["aria-label"] === "Move Photo 2 earlier").props.onClick();
   await ui.settle();
   assert.deepEqual(JSON.parse(ui.reads[0].body), { mainPhotoUrl: "/second.jpg", galleryPhotoUrls: ["/first.jpg"] });
   assert.deepEqual(ui.labels, ["Photo 1", "Photo 2"]);
   assert.equal(ui.buttons.some(button => button.props.children === "Make main"), false);
+  assert.equal(ui.profiles[0].avatarPhotoUrl, "/avatar.jpg");
+});
+
+test("compact photo previews delete through the existing action without altering the avatar", async () => {
+  const ui = photoHarness({
+    profile: { avatarPhotoUrl: "/avatar.jpg", dancer_photos: [approved("delete-me")] },
+    read: async () => ({ profile: { avatarPhotoUrl: "/avatar.jpg", dancer_photos: [] } }),
+  });
+  const trash = ui.buttons.find(button => button.props["aria-label"] === "Delete photo 1");
+  assert.ok(trash);
+  trash.props.onClick(); trash.props.onClick(); await ui.settle();
+  assert.equal(ui.posts.length, 1);
+  assert.equal(ui.posts[0].method, "DELETE");
+  assert.deepEqual(JSON.parse(ui.posts[0].body), { photoId: "delete-me" });
+  assert.equal(ui.cards.length, 0);
   assert.equal(ui.profiles[0].avatarPhotoUrl, "/avatar.jpg");
 });
 
