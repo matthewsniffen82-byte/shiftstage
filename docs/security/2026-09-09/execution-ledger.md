@@ -37,8 +37,8 @@ Step 1 delivered as `50d4eb543dbfc93dbed6f0663c51aa2332542cb4`, pushed to origin
 | 14 | API authorization / exposure | Delivered and healthy: a72f13b523fb4ef323c87eb33daa6cdb07c42ffe |
 | 15 | Security headers | Delivered and healthy: a777507f28d3c02d67c0bfc8f2f9e4c751259f19 |
 | 16 | CORS | Delivered and healthy: 94f95e9d4333fe1d3622bb40c280c7da557e1643 |
-| 17 | Cookies / sessions | Validated; exact-commit production delivery pending |
-| 18 | Redirects / URLs | Not started |
+| 17 | Cookies / sessions | Delivered and healthy: 65be771a1e38707f923440bfe4de9a164406ae30 |
+| 18 | Redirects / URLs | Validated; exact-commit production delivery pending |
 | 19 | Database functions / grants | Not started |
 | 20 | Webhooks | Not started |
 | 21 | Errors / disclosure | Not started |
@@ -217,3 +217,13 @@ The cookie/session audit and four confirmed finding groups are documented in `st
 The final candidate based on `5652eb3c7529e34751929e792406287cfaa7d86a` passed all 3,181 tests, zero failures/skips, after the normal pretest generators with four test workers. Lint, standalone TypeScript and the full production build passed. The history check retained all 134 frozen SQL files, and postbuild reported LAYOUT_REVIEW_POPULATION_SKIPPED. Independently delivered atomic media publication and review cleanup, travel-button and close-button styling updates were reviewed and preserved; they are not claimed as Step 17 fixes.
 
 At 2026-09-09 22:48 UTC, six native browser checks passed on the final local production build with no JavaScript errors. They verified that opening admin preserves a customer session, same-admin token refresh preserves the view, cross-tab account switching/logout removes the old admin workspace, and the dedicated NFC account form rejects a delayed sign-in response after another account signs in. All browser API calls used isolated synthetic fixtures; no production account or NFC tag was used. The final browser run used DOM readiness plus hydrated component assertions with a sixty-second local loading allowance, after an earlier thirty-second navigation timeout. Commit, push, exact-commit Vercel success and live verification must complete before Step 18.
+
+## Step 17 delivery
+
+Step 17 was pushed as `65be771a1e38707f923440bfe4de9a164406ae30`. [Exact Vercel deployment](https://vercel.com/ai-movie-jobs/shiftstage/8CxBDDGNw2ZfbGpA5PkGaumYsTW9) succeeded. At 22:53:42 UTC, four deployed session-function checks passed; at 22:53:50 UTC, all 15 header checks passed; at 22:53:55 UTC, all 17 deployment checks and 30 Supabase readiness checks passed. The first live script verifier looked for inline application functions; it was corrected to fetch the existing versioned first-party script, with no application correction required. Local HEAD matched origin/main with a clean worktree before Step 18.
+
+## Step 18 implementation
+
+The redirect audit reproduced a MEDIUM normalization bypass affecting local return paths and a LOW overly broad email callback contract. Both validators now reject unsafe normalized destinations while preserving ordinary local and trusted callback navigation. Fifty-one new runtime regressions were added; the focused suite passed all 132 tests after reproducing 28 pre-fix failures. See `step-18-redirects-and-urls.md` for evidence and scope. The independently deployed pending-gallery identity release `686743648d7a46bcbb41c9b46993db2cca20f115` was reviewed and preserved. Full release validation, commit/push, exact Vercel success and live verification must complete before Step 19.
+
+Final validation on that integrated base passed all 3,246 tests, zero failures/skips, lint, standalone TypeScript and production build. The history guard retained 134 frozen SQL files and postbuild skipped layout-review population. At 23:09:10 UTC, eight native browser checks passed with no JavaScript errors: six retained session checks and two completed NFC logins with crafted normalized return paths, both landing on the local dancer dashboard. Browser API responses were synthetic and remote requests blocked. Only the redirect validators, generated shell version, regression tests and audit documents are included in this step. Exact-commit deployment and read-only live verification follow.

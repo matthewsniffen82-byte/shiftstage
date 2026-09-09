@@ -59,6 +59,17 @@ async function callbackFixture({ role = 'customer', stored = savedSession('custo
   return { html, calls, navigation, scrubbed, node, store, completion: context.completion, status: response.status };
 }
 
+for (const input of ['/a/..//outside.example/path', '/a/%2e%2e//outside.example/path', '/.//outside.example/path']) {
+  test(`callback HTML never exposes an external continuation after normalization: ${input}`, async () => {
+    const f = await callbackFixture({ stored: null, query: '?return_to=' + encodeURIComponent(input) });
+    await f.completion;
+    const links = [...f.html.matchAll(/href="([^"]+)"/g)].map(match => match[1]);
+    assert.ok(links.length);
+    for (const link of links) assert.equal(new URL(link, 'https://mydancr.com').origin, 'https://mydancr.com');
+    assert.equal(f.calls.length, 0);
+  });
+}
+
 for (const role of ['customer', 'dancer', 'venue', 'admin']) test(`reused confirmation opens the existing ${role} account’s current dashboard using its verified role`, async () => {
   const f = await callbackFixture({ role, stored: savedSession(role) });
   await f.completion;

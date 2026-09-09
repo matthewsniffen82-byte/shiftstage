@@ -523,7 +523,7 @@ function safeEmailRedirectTo(value: unknown) {
     const requested = new URL(text);
     const site = new URL(fallback);
     if (!allowedAuthRedirectOrigins(site.origin).has(requested.origin)) return fallback;
-    if (!requested.pathname.startsWith("/auth/callback")) return fallback;
+    if (requested.pathname !== "/auth/callback" || requested.username || requested.password || requested.hash) return fallback;
     return requested.toString();
   } catch {
     return fallback;

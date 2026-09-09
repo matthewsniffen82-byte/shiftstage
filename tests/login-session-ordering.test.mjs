@@ -4,6 +4,7 @@ import test from "node:test";
 import vm from "node:vm";
 import ts from "typescript";
 import * as sessions from "../src/lib/dancr/browser-session.ts";
+import { safeLocalReturnPath } from "../src/lib/dancr/safe-return-path.ts";
 
 const key = sessions.BROWSER_AUTH_SESSION_KEY;
 const prior = { accessToken: "prior-access", refreshToken: "prior-refresh", account: { id: "prior", role: "customer" } };
@@ -38,7 +39,7 @@ function handlerSource(path, name) {
   return compiled;
 }
 
-function fixture(definition, initial = prior, mode = "login") {
+function fixture(definition, initial = prior, mode = "login", returnTo = "") {
   const [kind, path, name, role] = definition;
   const previousWindow = globalThis.window, previousFetch = globalThis.fetch;
   const stored = new Map(initial ? [[key, JSON.stringify(initial)]] : []), requests = [], statuses = [], navigations = [];
@@ -51,7 +52,7 @@ function fixture(definition, initial = prior, mode = "login") {
   const context = {
     ...sessions, window, localStorage, fetch, AbortController, mode, role,
     email: "synthetic@example.test", username: "synthetic-admin", password: "synthetic-password", confirmPassword: "synthetic-password", adminCode: "", city: "Las Vegas", token: "synthetic-invitation",
-    invitation: { email: "synthetic@example.test" }, destination: "/dashboard/customer", searchParams: { get: () => null }, safeLocalReturnPath: () => "",
+    invitation: { email: "synthetic@example.test" }, destination: `/dashboard/${role}`, searchParams: { get: key => key === "return_to" ? returnTo : null }, safeLocalReturnPath,
     router: { push: path => navigations.push(path) }, onSignedIn: () => navigations.push("dashboard"),
     mountedRef, authInFlightRef: { current: false }, authAbortRef: { current: null }, signInInFlightRef: { current: false }, signInSequenceRef: { current: 0 }, signInAbortRef: { current: null }, submitInFlightRef: { current: false }, submitAbortRef: { current: null }, browserAccountRef: { current: "" },
     beginAuthAction: () => ({ controller }), isCurrentAuthAction: () => mountedRef.current && !controller.signal.aborted, finishAuthAction() {},
@@ -82,6 +83,17 @@ function fixture(definition, initial = prior, mode = "login") {
     },
     async close() { for (const request of requests) request.resolve(new Response('{"ok":true}')); await pending; globalThis.window = previousWindow; globalThis.fetch = previousFetch; },
   };
+}
+
+for (const returnTo of ["/a/..//outside.example/path", "/a/%2e%2e//outside.example/path", "/.//outside.example/path", "/a/../%5coutside.example/path", "/nfc/synthetic"]) {
+  test(`account: completed NFC sign-in safely resolves its return destination: ${returnTo}`, async () => {
+    const f = fixture(["account", "app/account/AccountClient.tsx", "submit", "dancer"], null, "login", returnTo);
+    try {
+      await f.respond(); await f.pending;
+      assert.equal(JSON.parse(f.stored.get(key)).account.role, "dancer");
+      assert.deepEqual(f.navigations, [returnTo === "/nfc/synthetic" ? returnTo : "/dashboard/dancer"]);
+    } finally { await f.close(); }
+  });
 }
 
 for (const definition of definitions) {

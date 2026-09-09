@@ -18,6 +18,9 @@ export function safeLocalReturnPath(value: unknown) {
     const base = new URL(LOCAL_RETURN_BASE);
     const destination = new URL(requested, base);
     if (destination.origin !== base.origin) return "";
+    // Dot-segment normalization can turn /a/..//host into //host. The returned
+    // path is parsed again by navigation, so validate its normalized prefix too.
+    if (destination.pathname.startsWith("//") || ENCODED_AUTHORITY_SEPARATOR.test(destination.pathname)) return "";
     return `${destination.pathname}${destination.search}${destination.hash}`;
   } catch {
     return "";
