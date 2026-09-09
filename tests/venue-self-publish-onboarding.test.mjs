@@ -112,10 +112,10 @@ test("only MyDancr can prepare and send a page before venue-controlled publicati
 test("admins can prepare all page fields and official venue images", () => {
   assert.match(adminClient, /saveVenuePage/);
   assert.match(adminClient, /uploadVenueImage/);
-  assert.match(adminClient, /Send page for venue approval/);
+  assert.match(adminClient, /Send for approval/);
   assert.match(adminClient, /Preview full customer page/);
   assert.match(adminClient, /same venue-page renderer the manager will review and customers will see after approval/);
-  assert.ok(adminClient.indexOf("Preview full customer page") < adminClient.indexOf("Send page for venue approval"));
+  assert.ok(adminClient.indexOf("Preview full customer page") < adminClient.indexOf("Send for approval"));
   assert.match(adminClient, /venue_preview: "1"/);
   assert.match(adminClient, /preview_source: "admin"/);
   assert.match(adminClient, /venue_id: asText\(venue\.id\)/);
@@ -124,8 +124,8 @@ test("admins can prepare all page fields and official venue images", () => {
   assert.match(adminMediaRoute, /uploadVenueCoverImageByAdmin/);
   assert.match(venueService, /MyDancr manages venue page images/);
   const publicationRequirements = venueService.match(/export function getVenuePublicationState[\s\S]*?(?=export async function reviewVenuePageForAccount)/)?.[0] || "";
-  assert.match(adminClient, /name="latitude"[\s\S]*?required/);
-  assert.match(adminClient, /name="longitude"[\s\S]*?required/);
+  assert.doesNotMatch(adminClient.match(/<input name="latitude"[^>]*>/)?.[0] || "", /\brequired\b/);
+  assert.doesNotMatch(adminClient.match(/<input name="longitude"[^>]*>/)?.[0] || "", /\brequired\b/);
   assert.match(adminService, /requiredCoordinate\(input\.latitude, "latitude", -90, 90\)/);
   assert.match(adminService, /requiredCoordinate\(input\.longitude, "longitude", -180, 180\)/);
   assert.match(publicationRequirements, /key: "coordinates"[\s\S]*?Verified map coordinates/);

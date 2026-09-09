@@ -1724,15 +1724,15 @@ function venueInputToRow(input: AdminVenueInput, creating: boolean) {
 
   if (typeof input.name === "string") {
     row.name = requiredText(input.name, "Venue name is required.");
-    if (!input.slug) row.slug = slugify(input.name);
+    if (creating && !input.slug) row.slug = slugify(input.name);
   }
 
   if (typeof input.slug === "string") row.slug = requiredText(input.slug, "Venue slug is required.");
   if (typeof input.city === "string") row.city = requiredText(input.city, "Venue city is required.");
   if ("state" in input) row.state = optionalText(input.state);
   if ("address" in input) row.address = optionalText(input.address);
-  if ("latitude" in input) row.latitude = requiredCoordinate(input.latitude, "latitude", -90, 90);
-  if ("longitude" in input) row.longitude = requiredCoordinate(input.longitude, "longitude", -180, 180);
+  if ("latitude" in input) row.latitude = creating ? requiredCoordinate(input.latitude, "latitude", -90, 90) : optionalCoordinate(input.latitude, "latitude", -90, 90);
+  if ("longitude" in input) row.longitude = creating ? requiredCoordinate(input.longitude, "longitude", -180, 180) : optionalCoordinate(input.longitude, "longitude", -180, 180);
   if ("phone" in input) row.phone = optionalText(input.phone);
   if ("website" in input) row.website = optionalWebsite(input.website);
   if ("timezone" in input) row.timezone = optionalText(input.timezone) || "America/Los_Angeles";
@@ -1747,6 +1747,11 @@ function venueInputToRow(input: AdminVenueInput, creating: boolean) {
   }
 
   return row;
+}
+
+function optionalCoordinate(value: number | string | null | undefined, label: string, minimum: number, maximum: number) {
+  if (value === null || value === undefined || String(value).trim() === "") return null;
+  return requiredCoordinate(value, label, minimum, maximum);
 }
 
 function requiredCoordinate(value: number | string | null | undefined, label: string, minimum: number, maximum: number) {

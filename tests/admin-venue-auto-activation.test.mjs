@@ -13,7 +13,7 @@ test("administrators build the venue page but cannot bypass venue-controlled pub
   assert.match(adminRoute, /New venues must submit the venue request form/);
   assert.match(adminRoute, /transitionAdminManagedVenuePage/);
   assert.match(adminClient, /Approve a submitted request to create its private workspace/);
-  assert.match(adminClient, /Send page for venue approval/);
+  assert.match(adminClient, /Send for approval/);
   assert.doesNotMatch(adminClient, /Publish approved page/);
   assert.doesNotMatch(adminClient, /Venue created and active/);
   assert.match(signupMigration, /insert into public\.venues[\s\S]*?false,[\s\S]*?null/);
