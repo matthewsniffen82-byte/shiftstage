@@ -535,6 +535,10 @@
     {
       "file": "20260909183820_prevent_duplicate_scheduled_dates.sql",
       "sha256": "1bfb735c395dd0e853246d866f1295a693fef866be6a696eaa99b1b20daa2ea8"
+    },
+    {
+      "file": "20260909203842_add_atomic_gallery_publication.sql",
+      "sha256": "819e7b9651aacb26fa480416b1ec67c23f331feddfceb53e64b7584065e63301"
     }
   ]
 }

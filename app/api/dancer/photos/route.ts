@@ -46,6 +46,7 @@ export async function POST(request: Request) {
       sortOrder: parseOptionalInteger(formData.get("sortOrder")),
       altText: parseOptionalText(formData.get("altText")),
       replaceExisting: formData.get("replaceExisting") === "true",
+      replacementPhotoId: parseOptionalText(formData.get("replacementPhotoId")),
       uploadContext: formData.get("isPrimary") === "true" ? "profile_main" : "profile_gallery",
       idempotencyKey: request.headers.get("idempotency-key") || parseOptionalText(formData.get("idempotencyKey")),
       ipAddress: request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "",

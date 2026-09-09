@@ -50715,6 +50715,22 @@
       );
     }
 
+    function selectedPhotoReplacement(profile, target) {
+      const text = String(target || "");
+      const selected = text.startsWith("submitted:")
+        ? profile?.submittedPhotos?.[Number(text.split(":")[1])]
+        : approvedVisualPhotoItems(profile).find((photo) => photo.target === text);
+      const stored = (profile?.dancer_photos || []).find((photo) => String(photo.id) === String(selected?.id || ""));
+      if (!stored) {
+        throw new Error("Refresh your profile and select the photo again. Remove a pending upload before replacing it.");
+      }
+      return {
+        id: String(stored.id),
+        isPrimary: Boolean(stored.is_primary || stored.isPrimary),
+        sortOrder: Number(stored.sort_order ?? stored.sortOrder ?? 0)
+      };
+    }
+
     function availableApprovedGallerySortOrders(profile) {
       const used = new Set(
         editableDancerPhotoRows(profile)
@@ -56357,6 +56373,7 @@
       formData.append("sortOrder", String(sortOrder));
       formData.append("idempotencyKey", `${file.name}:${file.size}:${file.lastModified}:${isPrimary}:${sortOrder}:${Date.now()}:${Math.random().toString(36).slice(2)}`);
       if (options.replaceExisting) formData.append("replaceExisting", "true");
+      if (options.replacementPhotoId) formData.append("replacementPhotoId", options.replacementPhotoId);
       const session = synchronizeAuthSession();
       const photoAccountId = approvedProfilePhotoAccountIds.get(file);
       if (photoAccountId && session?.account?.id !== photoAccountId) {
@@ -56427,6 +56444,10 @@
 
     async function uploadApprovedDancerPhoto(file, target) {
       if (!isDancerSession()) throw new Error("Sign in as a dancer to upload live photos.");
+      const selectionProfile = activeDancerProfile();
+      const replacement = isReplacingApprovedPhotoTarget(selectionProfile, target)
+        ? selectedPhotoReplacement(selectionProfile, target)
+        : null;
       file = await cropApprovedProfilePhoto(file);
       let profile = activeDancerProfile() || ensureActiveDancerProfile("Verified");
       profile = await persistQueuedApprovedPhotoDeletionsBeforeUpload(profile);
@@ -56437,10 +56458,10 @@
         : -1;
       const replacingSubmitted = Number.isInteger(submittedIndex) && submittedIndex >= 0;
       const existingSubmitted = replacingSubmitted ? profile?.submittedPhotos?.[submittedIndex] : null;
-      const isPrimary = target === "main" || Boolean(existingSubmitted?.isPrimary || existingSubmitted?.is_primary);
-      const replacingExistingPhoto = isReplacingApprovedPhotoTarget(profile, target);
+      const isPrimary = replacement ? replacement.isPrimary : target === "main" || Boolean(existingSubmitted?.isPrimary || existingSubmitted?.is_primary);
+      const replacingExistingPhoto = Boolean(replacement);
       assertDancerProfilePhotoLimit(profile, { replacing: replacingExistingPhoto });
-      const sortOrder = replacingSubmitted
+      const sortOrder = replacement ? replacement.sortOrder : replacingSubmitted
         ? Number(existingSubmitted?.sortOrder ?? existingSubmitted?.sort_order ?? (isPrimary ? 0 : submittedIndex + 1))
         : target === "main"
           ? 0
@@ -56449,7 +56470,7 @@
             : Number.isInteger(requestedAddSortOrder) && requestedAddSortOrder > 0
               ? requestedAddSortOrder
               : nextAvailableApprovedGallerySortOrder(profile);
-      const data = await uploadSetupPhotoFile(file, isPrimary, sortOrder, { replaceExisting: replacingExistingPhoto });
+      const data = await uploadSetupPhotoFile(file, isPrimary, sortOrder, { replaceExisting: replacingExistingPhoto, replacementPhotoId: replacement?.id });
       const uploadDecision = normalizedReviewStatus(data?.decision);
       if (!["approved", "review", "moderation_retry", "moderation_error", "rejected"].includes(uploadDecision)) {
         throw new Error("Dancr could not confirm the photo upload status. Please try again.");

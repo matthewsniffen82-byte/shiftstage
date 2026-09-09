@@ -13,6 +13,7 @@ import {
 import { ACTIVE_IMAGE_MODERATION_STATUSES } from "./image-moderation-status";
 import { validateAndPrepareDancrImage, type ValidatedDancrImage } from "./image-validation";
 import { MAX_DANCER_PROFILE_PHOTOS } from "./media-limits";
+import { resolvePhotoPublicationIntent } from "./photo-publication-intent";
 import {
   analyzeDancerMediaIdentity,
   combineDancerMediaModeration,
@@ -56,6 +57,7 @@ type ModeratedPhotoInput = {
   uploadContext?: string;
   idempotencyKey?: string | null;
   replaceExisting?: boolean;
+  replacementPhotoId?: string | null;
   ipAddress?: string;
 };
 
@@ -86,19 +88,6 @@ export async function moderateAndStoreDancerPhoto(client: DancrClient, admin: Da
   enforceUploadRateLimit(input.userId, input.ipAddress);
   const profile = await getOwnDancerProfile(client, input.userId);
   const isAvatar = isProfileAvatarUploadContext(input.uploadContext);
-  if (!isAvatar && !input.replaceExisting) await assertDancerPhotoLimit(admin, profile.id, input.userId);
-  const resolvedSortOrder = isAvatar
-    ? 0
-    : input.isPrimary
-    ? 0
-    : await resolveDancerPhotoSortOrder(
-        admin,
-        profile.id,
-        input.userId,
-        input.sortOrder,
-        Boolean(input.replaceExisting),
-      );
-
   const image = await validateAndPrepareDancrImage(input.file);
   let idempotencyKey = safeIdempotencyKey(input.idempotencyKey || `${image.sha256}:${randomUUID()}`);
   const existing = await findExistingModerationRecord(admin, input.userId, idempotencyKey);
@@ -106,6 +95,21 @@ export async function moderateAndStoreDancerPhoto(client: DancrClient, admin: Da
   if (existing?.status === "error") {
     idempotencyKey = safeIdempotencyKey(`${input.idempotencyKey || image.sha256}:retry:${Date.now()}`);
   }
+  const publicationIntent = isAvatar
+    ? { mode: "legacy" as const, replacementPhotoId: null, sortOrder: 0 }
+    : await resolvePhotoPublicationIntent(admin, profile.id, input);
+  if (!isAvatar && !input.replaceExisting) await assertDancerPhotoLimit(admin, profile.id, input.userId);
+  const resolvedSortOrder = isAvatar
+    ? 0
+    : input.isPrimary
+    ? 0
+    : publicationIntent.sortOrder ?? await resolveDancerPhotoSortOrder(
+        admin,
+        profile.id,
+        input.userId,
+        input.sortOrder,
+        Boolean(input.replaceExisting),
+      );
   const identityReference = profile.avatar_storage_path
     ? await loadApprovedDancerIdentityReference(admin, profile.avatar_storage_path)
     : null;
@@ -143,6 +147,8 @@ export async function moderateAndStoreDancerPhoto(client: DancrClient, admin: Da
     temporaryStoragePath: tempPath,
     uploadContext,
     idempotencyKey,
+    photoPublicationMode: publicationIntent.mode,
+    replacementPhotoId: publicationIntent.replacementPhotoId,
   });
 
   let evaluation: DancrImageModerationEvaluation;
@@ -1098,7 +1104,7 @@ function getDancerPhotoUrl(client: DancrClient, storagePath: string) {
   );
 }
 
-async function createModerationRecord(client: DancrClient, input: { userId: string; temporaryStoragePath: string; uploadContext: string; idempotencyKey: string }) {
+async function createModerationRecord(client: DancrClient, input: { userId: string; temporaryStoragePath: string; uploadContext: string; idempotencyKey: string; photoPublicationMode: "legacy" | "add" | "replace"; replacementPhotoId: string | null }) {
   const { data, error } = await client
     .from("image_moderation_records")
     .insert({
@@ -1114,6 +1120,8 @@ async function createModerationRecord(client: DancrClient, input: { userId: stri
       category_flags: {},
       category_scores: {},
       idempotency_key: input.idempotencyKey,
+      photo_publication_mode: input.photoPublicationMode,
+      replacement_photo_id: input.replacementPhotoId,
       attempt_count: 1,
     })
     .select("id")
