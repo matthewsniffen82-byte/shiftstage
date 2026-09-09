@@ -115,7 +115,7 @@ test("venue owners navigate one simplified state-aware workspace without losing 
   assert.match(dashboard, /function initialVenueWorkspace[\s\S]*?return isPublished \? "tonight" : "venue";/);
   assert.match(dashboard, /function venueWorkspaceForSection[\s\S]*?"venue-working-now"[\s\S]*?"venue-tv"[\s\S]*?"venue-overview"/);
   assert.match(venuePanel, /hidden=\{activeWorkspace !== "tonight"\}[\s\S]*?title="Working now"/);
-  assert.match(venuePanel, /hidden=\{activeWorkspace !== "venue"\}[\s\S]*?title="MyDancr TV"/);
+  assert.match(venuePanel, /<VenueTvPanel\s+city=\{venueCity\}\s+hidden=\{activeWorkspace !== "venue"\}\s+venueId=/);
   assert.match(venuePanel, /hidden=\{activeWorkspace !== "business"\}[\s\S]*?title="Analytics & performance"/);
   assert.match(venuePanel, /title="Account & support"/);
   assert.doesNotMatch(venuePanel, /venue-dashboard-shortcuts/);

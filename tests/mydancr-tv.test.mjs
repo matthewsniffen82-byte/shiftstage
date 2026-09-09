@@ -365,10 +365,11 @@ test("administrator moderation persists decisions and venue TV is schedule-deriv
   assert.match(venueApi, /getVenueMyDancrTvVideos/);
   assert.doesNotMatch(venueApi, /PATCH|updateVenueMyDancrTvVideo/);
   assert.doesNotMatch(venuePanel, /Confirm tag|Reject tag|Feature on venue page/);
-  assert.match(venuePanel, /verified current shifts and posted upcoming shifts/);
-  assert.match(venuePanel, /Engaged views/);
-  assert.match(venuePanel, /Venue visits/);
-  assert.match(venuePanel, /Open live/);
+  assert.match(venuePanel, /homeTvHref\(city, \{ venueId \}\)/);
+  assert.match(venuePanel, /View venue TV/);
+  assert.match(venuePanel, /videos\.length === 1 \? "video" : "videos"/);
+  assert.match(venuePanel, /!isLoading && !status && !videos\.length \? <p>No videos yet\.<\/p>/);
+  assert.doesNotMatch(venuePanel, /<video|venue-tv-list|Engaged views|verified current shifts and posted upcoming shifts/);
 });
 
 test("video publishing never asks for a venue tag and public venue context comes from schedules", () => {

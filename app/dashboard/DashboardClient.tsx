@@ -3169,17 +3169,11 @@ function VenuePanel({
         </div>
       </DashboardSection>
 
-      <DashboardSection
-        description="Review engagement for approved videos automatically connected by verified current shifts and posted upcoming shifts."
-        eyebrow="Video"
+      <VenueTvPanel
+        city={venueCity}
         hidden={activeWorkspace !== "venue"}
-        id="venue-tv"
-        icon={<VenueDashboardIcon section="tv" />}
-        toggleAffordance="chevron"
-        title="MyDancr TV"
-      >
-        <VenueTvPanel />
-      </DashboardSection>
+        venueId={String(profile?.id || "")}
+      />
 
       {canViewTeam ? (
         <DashboardSection
