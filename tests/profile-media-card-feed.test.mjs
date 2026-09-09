@@ -209,17 +209,18 @@ test("all profile media controls use the regular TV translucent glass material",
   }
 });
 
-test("live controls are preserved before clearing slides and follow the active card", () => {
+test("video controls are preserved while photo controls stay attached to their own cards", () => {
   for (const name of ["renderProfilePhotoViewerSlides", "renderProfileTvViewerSlides"]) {
     assert.match(functionSource(name), /mountProfileMediaCardControls[^]*?innerHTML = ""/);
   }
   for (const name of ["closeProfilePhotoViewer", "closeProfileTvViewer"]) {
     assert.match(functionSource(name), /mountProfileMediaCardControls[^]*?innerHTML = ""/);
   }
-  assert.match(functionSource("syncProfilePhotoViewerPosition"), /mountProfileMediaCardControls/);
+  assert.doesNotMatch(functionSource("syncProfilePhotoViewerPosition"), /mountProfileMediaCardControls/);
+  assert.match(functionSource("renderProfilePhotoViewerSlides"), /mountProfilePhotoCardControls\(slide, item, index, items\.length, profileName\)/);
   assert.match(functionSource("renderProfileTvViewerItem"), /mountProfileMediaCardControls/);
-  assert.match(carousel, /ref=\{index === viewerIndex \? setViewerControlsHost : undefined\}/);
-  assert.match(carousel, /viewerControlsHost \? createPortal\(/);
+  assert.match(carousel, /\{renderViewerControls\(item, index\)\}\s*<\/section>/);
+  assert.doesNotMatch(carousel, /viewerControlsHost|createPortal/);
   assert.match(css, /position: absolute !important;[^]*?pointer-events: none/);
 });
 

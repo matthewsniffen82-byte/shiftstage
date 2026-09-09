@@ -11,7 +11,7 @@ import {
   useRef,
   useState,
 } from "react";
-import { createPortal, flushSync, preload } from "react-dom";
+import { flushSync, preload } from "react-dom";
 import { MediaLikeButton } from "@/app/components/MediaLikeButton";
 import { PublicReportReasonDialog, type PublicReportReason } from "@/app/components/PublicReportReasonDialog";
 import { readBrowserAccessToken } from "@/src/lib/dancr/browser-session";
@@ -137,7 +137,6 @@ export function DancerPhotoCarousel({
     photoMedia.length || !videoMedia.length ? "photo" : "video",
   );
   const [viewer, setViewer] = useState<MediaViewer | null>(null);
-  const [viewerControlsHost, setViewerControlsHost] = useState<HTMLElement | null>(null);
   const [visibleCounts, setVisibleCounts] = useState<Record<MediaTab, number>>({
     photo: DANCER_PROFILE_MEDIA_PAGE_SIZE,
     video: DANCER_PROFILE_MEDIA_PAGE_SIZE,
@@ -146,6 +145,7 @@ export function DancerPhotoCarousel({
   const allowVideoWarmup = useAdaptiveVideoWarmup();
   const [loadedViewerVideoIndex, setLoadedViewerVideoIndex] = useState(-1);
   const [shareStatus, setShareStatus] = useState("");
+  const [shareStatusIndex, setShareStatusIndex] = useState(0);
   const [reportTarget, setReportTarget] = useState<MediaReportTarget | null>(null);
   const [reportError, setReportError] = useState("");
   const [reportSaving, setReportSaving] = useState(false);
@@ -311,6 +311,7 @@ export function DancerPhotoCarousel({
     if (!viewerKind) return;
     const feed = viewerFeed.current;
     if (!feed) return;
+    let cancelled = false;
     const videos = [...feed.querySelectorAll<HTMLVideoElement>("video")];
     videos.forEach((video, index) => {
       video.muted = inlineMuted;
@@ -321,13 +322,31 @@ export function DancerPhotoCarousel({
         ) {
           setLoadedViewerVideoIndex(viewerIndex);
         }
-        void video.play().catch(() => undefined);
+        void video.play().catch(async (error) => {
+          if (cancelled || error?.name === "AbortError" || !video.isConnected) return;
+          if (!video.muted) {
+            video.muted = true;
+            setInlineMuted(true);
+            try { await video.play(); return; }
+            catch (retryError) {
+              if (cancelled || (retryError instanceof DOMException && retryError.name === "AbortError")) return;
+            }
+          }
+          if (!cancelled) {
+            setShareStatusIndex(index);
+            setShareStatus("Tap the video to start it.");
+          }
+        });
       } else {
         video.pause();
-        if (!video.hasAttribute("src")) video.load();
+        if (!video.hasAttribute("src")) {
+          delete video.dataset.frameReady;
+          video.load();
+        }
       }
     });
-  }, [allowVideoWarmup, inlineMuted, loadedViewerVideoIndex, viewerIndex, viewerKind]);
+    return () => { cancelled = true; };
+  }, [allowVideoWarmup, inlineMuted, loadedViewerVideoIndex, setInlineMuted, viewerIndex, viewerKind]);
 
   useEffect(() => {
     if (!viewerKind) return;
@@ -415,13 +434,13 @@ export function DancerPhotoCarousel({
     else video.pause();
   }
 
-  function viewerShareUrl(item: ProfileMedia) {
+  function viewerShareUrl(item: ProfileMedia, index = viewerIndex) {
     if (item.kind === "video") {
       return new URL(`/tv/${encodeURIComponent(item.id)}`, window.location.origin).toString();
     }
     const url = new URL(window.location.href);
     url.searchParams.set("media", "photo");
-    url.searchParams.set("mediaIndex", String(viewerIndex));
+    url.searchParams.set("mediaIndex", String(index));
     return url.toString();
   }
 
@@ -442,10 +461,11 @@ export function DancerPhotoCarousel({
     if (!copied) throw new Error("Unable to copy media link");
   }
 
-  async function shareViewerItem() {
-    if (!activeViewerItem) return;
-    const url = viewerShareUrl(activeViewerItem);
-    const isVideo = activeViewerItem.kind === "video";
+  async function shareViewerItem(item = activeViewerItem, index = viewerIndex) {
+    if (!item) return;
+    const url = viewerShareUrl(item, index);
+    const isVideo = item.kind === "video";
+    setShareStatusIndex(index);
     setShareStatus("");
     try {
       if (navigator.share) {
@@ -454,12 +474,12 @@ export function DancerPhotoCarousel({
           text: `${isVideo ? "Watch" : "View"} ${stageName} on ${isVideo ? "MyDancr TV" : "MyDancr"}.`,
           url,
         });
-        void recordPublicEngagementShare(activeViewerItem.kind, activeViewerItem.id);
+        void recordPublicEngagementShare(item.kind, item.id);
         setShareStatus(isVideo ? "Video shared." : "Photo shared.");
         return;
       }
       await copyViewerShareUrl(url);
-      void recordPublicEngagementShare(activeViewerItem.kind, activeViewerItem.id);
+      void recordPublicEngagementShare(item.kind, item.id);
       setShareStatus(isVideo ? "Video link copied." : "Photo link copied.");
     } catch (error) {
       if (error instanceof DOMException && error.name === "AbortError") return;
@@ -467,38 +487,39 @@ export function DancerPhotoCarousel({
     }
   }
 
-  function activeMediaReportTarget(): MediaReportTarget | null {
-    if (!activeViewerItem || !dancerId) return null;
-    if (activeViewerItem.kind === "video" && UUID_PATTERN.test(activeViewerItem.id)) {
+  function activeMediaReportTarget(item = activeViewerItem, index = viewerIndex): MediaReportTarget | null {
+    if (!item || !dancerId) return null;
+    if (item.kind === "video" && UUID_PATTERN.test(item.id)) {
       return {
-        key: `tv_video:${activeViewerItem.id}`,
-        targetId: activeViewerItem.id,
-        targetLabel: `${stageName} profile video ${viewerIndex + 1}`,
+        key: `tv_video:${item.id}`,
+        targetId: item.id,
+        targetLabel: `${stageName} profile video ${index + 1}`,
         targetType: "tv_video",
         title: "Report video",
       };
     }
-    if (UUID_PATTERN.test(activeViewerItem.id)) {
+    if (UUID_PATTERN.test(item.id)) {
       return {
-        key: `profile_photo:${activeViewerItem.id}`,
-        targetId: activeViewerItem.id,
-        targetLabel: `${stageName} profile photo ${viewerIndex + 1}`,
+        key: `profile_photo:${item.id}`,
+        targetId: item.id,
+        targetLabel: `${stageName} profile photo ${index + 1}`,
         targetType: "profile_photo",
         title: "Report photo",
       };
     }
     return {
-      key: `dancer_profile:${dancerId}:${activeViewerItem.kind}`,
+      key: `dancer_profile:${dancerId}:${item.kind}`,
       targetId: dancerId,
-      targetLabel: `${stageName} profile ${activeViewerItem.kind}`,
+      targetLabel: `${stageName} profile ${item.kind}`,
       targetType: "dancer_profile",
-      title: `Report ${activeViewerItem.kind}`,
+      title: `Report ${item.kind}`,
     };
   }
 
-  function openMediaReport() {
-    const target = activeMediaReportTarget();
+  function openMediaReport(item = activeViewerItem, index = viewerIndex) {
+    const target = activeMediaReportTarget(item, index);
     if (!target || reportSaving || reportedTargets.includes(target.key)) return;
+    setShareStatusIndex(index);
     setReportError("");
     setReportTarget(target);
   }
@@ -544,12 +565,12 @@ export function DancerPhotoCarousel({
     }
   }
 
-  function showRelativeViewerItem(direction: -1 | 1) {
+  function showRelativeViewerItem(direction: -1 | 1, fromIndex = viewerIndex) {
     const nextIndex = Math.min(
-      Math.max(viewerIndex + direction, 0),
+      Math.max(fromIndex + direction, 0),
       Math.max(0, viewerItems.length - 1),
     );
-    if (nextIndex === viewerIndex) return;
+    if (nextIndex === fromIndex) return;
     setShareStatus("");
     scrollViewerToIndex(nextIndex);
   }
@@ -569,6 +590,101 @@ export function DancerPhotoCarousel({
       return { ...current, index: nextIndex };
     });
     setShareStatus("");
+  }
+
+  function renderViewerControls(item: ProfileMedia, index: number) {
+    return (
+      <>
+        <button
+          aria-label={`Previous ${item.kind}`}
+          className="profile-media-viewer-previous"
+          disabled={index <= 0}
+          onClick={() => showRelativeViewerItem(-1, index)}
+          type="button"
+        >
+          ↑
+        </button>
+        <button
+          aria-label={`Next ${item.kind}`}
+          className="profile-media-viewer-next"
+          disabled={index >= viewerItems.length - 1}
+          onClick={() => showRelativeViewerItem(1, index)}
+          type="button"
+        >
+          ↓
+        </button>
+        <div className="profile-media-viewer-footer">
+          {item.kind === "video" ? (
+            <div className="profile-media-viewer-copy">
+              <strong>{stageName}</strong>
+              <span>
+                {viewerStatus} · Scroll up or down · Video {index + 1} of {viewerItems.length}
+              </span>
+            </div>
+          ) : null}
+          <div className="profile-media-viewer-actions">
+            {item.kind === "video" ? (
+              <button
+                aria-label={inlineMuted ? "Turn sound on" : "Mute video"}
+                aria-pressed={!inlineMuted}
+                className="profile-media-viewer-sound"
+                onClick={() => setInlineMuted((muted) => !muted)}
+                type="button"
+              >
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M4 10v4h4l5 4V6L8 10H4Z" />
+                  {inlineMuted ? <path d="m17 9 4 6m0-6-4 6" /> : <path d="M16 9.5a4 4 0 0 1 0 5M18.5 7a7.5 7.5 0 0 1 0 10" />}
+                </svg>
+              </button>
+            ) : null}
+            {(() => {
+              const like = mediaLikeStateFor(item.kind, item.id);
+              return (
+                <MediaLikeButton
+                  className="profile-media-viewer-like"
+                  liked={like.liked}
+                  likeCount={like.likeCount}
+                  mediaType={item.kind}
+                  pending={like.pending}
+                  onToggle={() => {
+                    setShareStatusIndex(index);
+                    setShareStatus("");
+                    void toggleMediaLike(item.kind, item.id).catch(() => {
+                      setShareStatus("Unable to update this like.");
+                    });
+                  }}
+                />
+              );
+            })()}
+            <button
+              aria-label={item.kind === "video" ? "Share this TV video" : "Share this profile photo"}
+              className="profile-media-viewer-share"
+              onClick={() => void shareViewerItem(item, index)}
+              type="button"
+            >
+              <ShareIcon />
+            </button>
+            {(() => {
+              const target = activeMediaReportTarget(item, index);
+              return target ? (
+                <button
+                  aria-label={reportedTargets.includes(target.key) ? "Media reported" : `Report this profile ${item.kind}`}
+                  className="profile-media-viewer-report"
+                  disabled={reportSaving || reportedTargets.includes(target.key)}
+                  onClick={() => openMediaReport(item, index)}
+                  type="button"
+                >
+                  <ReportIcon />
+                </button>
+              ) : null;
+            })()}
+            <span aria-live="polite" className="profile-media-viewer-share-status">
+              {shareStatusIndex === index ? shareStatus : ""}
+            </span>
+          </div>
+        </div>
+      </>
+    );
   }
 
   return (
@@ -736,13 +852,13 @@ export function DancerPhotoCarousel({
             {viewerItems.map((item, index) => (
               <section
                 aria-label={`${stageName} ${item.kind} ${index + 1} of ${viewerItems.length}`}
+                aria-current={index === viewerIndex ? "true" : undefined}
                 className="profile-media-viewer-slide"
                 data-profile-media-viewer-index={index}
                 data-profile-photo-card={item.kind === "photo" ? "true" : undefined}
                 style={item.kind === "photo" && item.imageWidth && item.imageHeight ? {
                   "--profile-photo-card-ratio": `${item.imageWidth} / ${item.imageHeight}`,
                 } as CSSProperties : undefined}
-                ref={index === viewerIndex ? setViewerControlsHost : undefined}
                 key={`${item.kind}-viewer-${item.id}-${index}`}
               >
                 {item.kind === "photo" ? (
@@ -764,6 +880,7 @@ export function DancerPhotoCarousel({
                     width={item.imageWidth || undefined}
                   />
                 ) : (
+                  <>
                   <video
                     aria-label={`${stageName} video ${index + 1} of ${viewerItems.length}`}
                     controls={false}
@@ -779,9 +896,11 @@ export function DancerPhotoCarousel({
                     }}
                     onPause={() => handleViewerPlaybackChange(index, true)}
                     onPlay={() => handleViewerPlaybackChange(index, false)}
-                    onLoadedData={() => {
+                    onLoadedData={(event) => {
+                      event.currentTarget.dataset.frameReady = "true";
                       if (index === viewerIndex) setLoadedViewerVideoIndex(index);
                     }}
+                    onEmptied={(event) => { delete event.currentTarget.dataset.frameReady; }}
                     onPointerDown={() => {
                       playbackTapIndex.current = index;
                       window.clearTimeout(playbackTapTimer.current);
@@ -809,6 +928,19 @@ export function DancerPhotoCarousel({
                       index === viewerIndex + 1
                     ) ? item.videoUrl : undefined}
                   />
+                  {item.posterUrl ? (
+                    <img
+                      alt=""
+                      aria-hidden="true"
+                      className="profile-media-video-poster"
+                      decoding="async"
+                      draggable={false}
+                      loading="eager"
+                      onError={markImageUnavailable}
+                      src={Math.abs(index - viewerIndex) <= 2 ? item.posterUrl : undefined}
+                    />
+                  ) : null}
+                  </>
                 )}
                 {item.kind === "video" && playbackFeedback?.index === index ? (
                   <span
@@ -819,101 +951,10 @@ export function DancerPhotoCarousel({
                     <PlaybackFeedbackIcon paused={playbackFeedback.paused} />
                   </span>
                 ) : null}
+                {renderViewerControls(item, index)}
               </section>
             ))}
           </div>
-          {viewerControlsHost ? createPortal(
-            <>
-              <button
-                aria-label={`Previous ${viewer.kind}`}
-                className="profile-media-viewer-previous"
-                disabled={viewerIndex <= 0}
-                onClick={() => showRelativeViewerItem(-1)}
-                type="button"
-              >
-                ↑
-              </button>
-              <button
-                aria-label={`Next ${viewer.kind}`}
-                className="profile-media-viewer-next"
-                disabled={viewerIndex >= viewerItems.length - 1}
-                onClick={() => showRelativeViewerItem(1)}
-                type="button"
-              >
-                ↓
-              </button>
-              <div className="profile-media-viewer-footer">
-                {viewer.kind === "video" ? (
-                  <div className="profile-media-viewer-copy">
-                    <strong>{stageName}</strong>
-                    <span>
-                      {viewerStatus} · Scroll up or down · Video {viewerIndex + 1} of {viewerItems.length}
-                    </span>
-                  </div>
-                ) : null}
-                <div className="profile-media-viewer-actions">
-                  {viewer.kind === "video" ? (
-                    <button
-                      aria-label={inlineMuted ? "Turn sound on" : "Mute video"}
-                      aria-pressed={!inlineMuted}
-                      className="profile-media-viewer-sound"
-                      onClick={() => setInlineMuted((muted) => !muted)}
-                      type="button"
-                    >
-                      <svg viewBox="0 0 24 24" aria-hidden="true">
-                        <path d="M4 10v4h4l5 4V6L8 10H4Z" />
-                        {inlineMuted ? <path d="m17 9 4 6m0-6-4 6" /> : <path d="M16 9.5a4 4 0 0 1 0 5M18.5 7a7.5 7.5 0 0 1 0 10" />}
-                      </svg>
-                    </button>
-                  ) : null}
-                  {(() => {
-                    const like = mediaLikeStateFor(activeViewerItem.kind, activeViewerItem.id);
-                    return (
-                      <MediaLikeButton
-                        className="profile-media-viewer-like"
-                        liked={like.liked}
-                        likeCount={like.likeCount}
-                        mediaType={activeViewerItem.kind}
-                        pending={like.pending}
-                        onToggle={() => {
-                          setShareStatus("");
-                          void toggleMediaLike(activeViewerItem.kind, activeViewerItem.id).catch(() => {
-                            setShareStatus("Unable to update this like.");
-                          });
-                        }}
-                      />
-                    );
-                  })()}
-                  <button
-                    aria-label={activeViewerItem.kind === "video" ? "Share this TV video" : "Share this profile photo"}
-                    className="profile-media-viewer-share"
-                    onClick={shareViewerItem}
-                    type="button"
-                  >
-                    <ShareIcon />
-                  </button>
-                  {(() => {
-                    const target = activeMediaReportTarget();
-                    return target ? (
-                      <button
-                        aria-label={reportedTargets.includes(target.key) ? "Media reported" : `Report this profile ${activeViewerItem.kind}`}
-                        className="profile-media-viewer-report"
-                        disabled={reportSaving || reportedTargets.includes(target.key)}
-                        onClick={openMediaReport}
-                        type="button"
-                      >
-                        <ReportIcon />
-                      </button>
-                    ) : null;
-                  })()}
-                  <span aria-live="polite" className="profile-media-viewer-share-status">
-                    {shareStatus}
-                  </span>
-                </div>
-              </div>
-            </>,
-            viewerControlsHost,
-          ) : null}
           {reportTarget ? (
             <PublicReportReasonDialog
               error={reportError}

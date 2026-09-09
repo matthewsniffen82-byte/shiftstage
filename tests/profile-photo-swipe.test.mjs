@@ -247,6 +247,6 @@ test("the standalone profile uses a vertical profile-scoped media card feed", ()
   );
   assert.match(publicPhotoCarousel, /flushSync\(\(\) => setViewer\(\{ kind, index \}\)\);[\s\S]*?settleViewerAtIndex\(index\)/);
   assert.doesNotMatch(publicPhotoCarousel, /requestFullscreen|webkitRequestFullscreen|viewerHasFullscreen/);
-  assert.match(publicPhotoCarousel, /viewer\.kind === "video"[\s\S]*?\{viewerStatus\} · Scroll up or down · Video/);
+  assert.match(publicPhotoCarousel, /item\.kind === "video"[\s\S]*?\{viewerStatus\} · Scroll up or down · Video/);
   assert.doesNotMatch(publicPhotoCarousel, /viewer\.kind === "photo" \? \(\s*<div className="profile-media-viewer-copy"/);
 });

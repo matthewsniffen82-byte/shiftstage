@@ -39,7 +39,7 @@ test("routed profile grids remain poster-only and the viewer loads a bounded for
   assert.match(profileCarousel, /const \[loadedViewerVideoIndex, setLoadedViewerVideoIndex\] = useState\(-1\)/);
   assert.match(profileCarousel, /index === viewerIndex[\s\S]*?\? "auto"[\s\S]*?index === viewerIndex \+ 1[\s\S]*?\? "metadata"[\s\S]*?: "none"/);
   assert.match(profileCarousel, /src=\{index === viewerIndex \|\| \([\s\S]*?loadedViewerVideoIndex === viewerIndex[\s\S]*?index === viewerIndex \+ 1[\s\S]*?\? item\.videoUrl : undefined\}/);
-  assert.match(profileCarousel, /if \(!video\.hasAttribute\("src"\)\) video\.load\(\)/);
+  assert.match(profileCarousel, /if \(!video\.hasAttribute\("src"\)\) \{\s*delete video\.dataset\.frameReady;\s*video\.load\(\)/);
 });
 
 test("routed TV feed starts with one source and warms only the immediate next item", () => {

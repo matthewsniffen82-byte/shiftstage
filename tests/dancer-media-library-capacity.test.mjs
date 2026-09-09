@@ -53,7 +53,7 @@ test("public media grids lazy-render in batches of twelve without a load button"
 test("fifty-photo viewers keep only the active media window network-active", () => {
   const reactViewer = carousel.slice(
     carousel.indexOf("{viewerItems.map"),
-    carousel.indexOf('<div className="profile-media-viewer-footer">'),
+    carousel.indexOf("{reportTarget ? (", carousel.indexOf("{viewerItems.map")),
   );
   assert.match(reactViewer, /src=\{Math\.abs\(index - viewerIndex\) <= 2 \? item\.imageUrl : undefined\}/);
   assert.match(reactViewer, /srcSet=\{Math\.abs\(index - viewerIndex\) <= 2 \? item\.imageSrcSet \|\| undefined : undefined\}/);

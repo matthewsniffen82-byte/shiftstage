@@ -56,7 +56,7 @@ test("every live report button reuses one four-reason report card", () => {
   assert.match(liveShell, /class="profile-photo-viewer-report" id="profilePhotoViewerReport"/);
   assert.match(liveShell, /class="profile-tv-viewer-report"[^>]*data-report-profile-tv/);
   assert.match(liveShell, /id="contentReportQuickOptions"[\s\S]*?Sexual or unsafe content[\s\S]*?Harassment or abuse[\s\S]*?Spam or misleading content[\s\S]*?Other safety concern/);
-  assert.equal((liveShell.match(/quickReasons: true/g) || []).length, 4);
+  assert.equal((liveShell.match(/quickReasons: true/g) || []).length, 5);
   assert.match(liveShell, /contentReportQuickOptions\?\.addEventListener\("click"[\s\S]*?contentReportForm\?\.requestSubmit\(\)/);
   assert.match(liveShell, /async function submitContentReportDialog[\s\S]*?postOptionalAuthJson\("\/api\/reports"/);
   assert.match(liveShell, /reportTargetType = isReportableContentId\(photoId\) \? "profile_photo" : "dancer_profile"/);

@@ -12,15 +12,15 @@ const publicProfilePage = fs.readFileSync("app/dancers/[slug]/page.tsx", "utf8")
 test("full dancer profiles share the exact TV video being viewed", () => {
   assert.match(
     publicPhotoCarousel,
-    /function viewerShareUrl\(item: ProfileMedia\)[\s\S]*?`\/tv\/\$\{encodeURIComponent\(item\.id\)\}`[\s\S]*?url\.searchParams\.set\("media", "photo"\)/,
+    /function viewerShareUrl\(item: ProfileMedia, index = viewerIndex\)[\s\S]*?`\/tv\/\$\{encodeURIComponent\(item\.id\)\}`[\s\S]*?url\.searchParams\.set\("media", "photo"\)/,
   );
   assert.match(
     publicPhotoCarousel,
-    /async function shareViewerItem\(\)[\s\S]*?navigator\.share\([\s\S]*?await copyViewerShareUrl\(url\)/,
+    /async function shareViewerItem\(item = activeViewerItem, index = viewerIndex\)[\s\S]*?navigator\.share\([\s\S]*?await copyViewerShareUrl\(url\)/,
   );
   assert.match(
     publicPhotoCarousel,
-    /aria-label=\{activeViewerItem\.kind === "video" \? "Share this TV video" : "Share this profile photo"\}[\s\S]*?className="profile-media-viewer-share"[\s\S]*?onClick=\{shareViewerItem\}/,
+    /aria-label=\{item\.kind === "video" \? "Share this TV video" : "Share this profile photo"\}[\s\S]*?className="profile-media-viewer-share"[\s\S]*?onClick=\{\(\) => void shareViewerItem\(item, index\)\}/,
   );
   assert.match(
     publicPhotoCarousel,
@@ -46,7 +46,7 @@ test("shared profile-photo links open the exact photo in the full-screen collect
   assert.match(liveApp, /id="profilePhotoViewerShare"[^>]*aria-label="Share this profile photo"/);
   assert.match(
     liveApp,
-    /async function shareProfilePhoto\(\)[\s\S]*?profilePhotoShareUrl\(profileName, citySelect\.value \|\| selectedCity\(\), activePhotoIndex\)[\s\S]*?navigator\.share\([\s\S]*?copyText\(url, "Photo link copied"\)/,
+    /async function shareProfilePhoto\(requestedIndex = null, statusTarget = profilePhotoViewerStatus\)[\s\S]*?profilePhotoShareUrl\(profileName, citySelect\.value \|\| selectedCity\(\), activePhotoIndex\)[\s\S]*?navigator\.share\([\s\S]*?copyText\(url, "Photo link copied"\)/,
   );
   assert.match(
     liveApp,

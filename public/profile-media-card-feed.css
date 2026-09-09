@@ -125,6 +125,34 @@
 .profile-media-card-feed video::-webkit-media-controls-fullscreen-button {
   display: none !important;
 }
+
+/* Keep photo actions in their own cards; the original nodes are templates only. */
+#profilePhotoViewer.profile-media-card-feed [data-profile-photo-control-template] {
+  display: none !important;
+}
+
+/* A real image stays visible even when iOS does not paint a deferred video's
+ * native poster. Only hide it after this video has a decoded frame. */
+.profile-media-card-feed .profile-media-video-poster {
+  position: absolute !important;
+  z-index: 2 !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  opacity: 1 !important;
+  filter: none !important;
+  transition: none !important;
+  pointer-events: none;
+}
+
+.profile-media-card-feed video[data-frame-ready="true"] + .profile-media-video-poster {
+  visibility: hidden;
+}
+
+.profile-media-card-feed .profile-media-video-poster:not([src]) {
+  display: none !important;
+}
 .profile-media-card-feed .profile-media-viewer-sound {
   display: grid;
   place-items: center;
@@ -197,7 +225,7 @@ body.dancr-button-system :is(#profilePhotoViewer, #profileTvViewer, .profile-med
     0 10px 24px rgba(0, 0, 0, 0.34) !important;
 }
 
-/* The existing controls stay attached to the active card, not the viewport. */
+/* Controls stay attached to their cards, not the viewport. */
 .profile-media-card-feed :is(.profile-photo-viewer-slide, .profile-tv-viewer-slide, .profile-media-viewer-slide) {
   position: relative;
 }
@@ -227,7 +255,7 @@ body.dancr-button-system :is(#profilePhotoViewer, #profileTvViewer, .profile-med
   pointer-events: auto;
 }
 
-.profile-media-card-feed :is(#profilePhotoViewerStatus, #profileTvViewerStatus, .profile-media-viewer-share-status) {
+.profile-media-card-feed :is(.profile-photo-viewer-status, #profileTvViewerStatus, .profile-media-viewer-share-status) {
   position: absolute !important;
   right: 56px !important;
   bottom: 4px !important;

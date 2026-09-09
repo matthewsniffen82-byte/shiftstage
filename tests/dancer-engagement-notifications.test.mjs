@@ -49,7 +49,7 @@ test("successful profile, photo, and video shares reach the dancer notification 
   assert.match(shareRoute, /namespace: "public_engagement_share"/);
   assert.match(shareRoute, /subjectLimit: 30/);
   assert.match(shareRoute, /dedupeSubject: `\$\{visitorHash\}:\$\{day\}`/);
-  assert.match(profileCarousel, /recordPublicEngagementShare\(activeViewerItem\.kind, activeViewerItem\.id\)/);
+  assert.match(profileCarousel, /recordPublicEngagementShare\(item\.kind, item\.id\)/);
   assert.match(profileShare, /recordPublicEngagementShare\("profile", dancerId\)/);
   assert.match(tvStrip, /recordPublicEngagementShare\("video", video\.id\)/);
   assert.match(liveApp, /recordPublicEngagementShare\("photo", String\(activeItem\?\.id \|\| ""\)\)/);
