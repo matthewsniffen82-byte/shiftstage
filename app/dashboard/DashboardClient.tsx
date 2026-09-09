@@ -443,51 +443,42 @@ export default function DashboardClient({
       };
 
       try {
-        const requestStatus = await requestDashboardJson("/api/venue/signup-requests", {
+        const accountRequest = requestAccountJson({
+          cache: "no-store", fallbackMessage: "Unable to load account.", signal: controller.signal,
+        });
+        // Refresh expiring credentials once before starting concurrent reads.
+        if (!storedSessionIsFresh(session)) await accountRequest;
+        if (cancelled) return;
+        const requestStatusResult = requestDashboardJson("/api/venue/signup-requests", {
           method: "GET", expectedRole: "venue", signal: controller.signal, timeoutMs: 12000,
           fallbackMessage: "Unable to check your club request.",
-        });
+        }).then(data => ({ ok: true as const, data }), error => ({ ok: false as const, error }));
+        const account = await accountRequest;
         if (cancelled) return;
+        // Paused accounts can manage their login even though venue APIs reject
+        // them. Do not let those failures or slow support hide recovery controls.
+        if (account.account?.role === "venue" && account.account.accountState === "disabled") {
+          setState({ account: account.account });
+          setIsLoading(false);
+          const support = await requestOptionalPanel("/api/support", { threads: [] });
+          if (!cancelled) setState((current) => ({ ...current, supportThreads: support.threads || [] }));
+          return;
+        }
+        const requestResult = await requestStatusResult;
+        if (!requestResult.ok) throw requestResult.error;
+        if (cancelled) return;
+        const requestStatus = requestResult.data;
         if (requestStatus.request && requestStatus.request.status !== "approved") {
-          const [accountData, support] = await Promise.all([
-            requestAccountJson({ signal: controller.signal }),
-            requestOptionalPanel("/api/support", { threads: [] }),
-          ]);
+          const support = await requestOptionalPanel("/api/support", { threads: [] });
           if (cancelled) return;
-          setState({ account: accountData.account, venueRequest: requestStatus.request, supportThreads: support.threads || [] });
+          setState({ account: account.account, venueRequest: requestStatus.request, supportThreads: support.threads || [] });
           setIsLoading(false);
           return;
         }
-        let account;
-        let panels;
-        let agentAccess;
-        if (storedSessionIsFresh(session)) {
-          [account, panels, agentAccess] = await Promise.all([
-            requestAccountJson({
-              cache: "no-store",
-              fallbackMessage: "Unable to load account.",
-              signal: controller.signal,
-            }),
-            loadDashboardPanels(),
-            requestOptionalPanel(
-              "/api/agent/commissions?access=1",
-              { access: { active: false } },
-            ),
-          ]);
-        } else {
-          account = await requestAccountJson({
-            cache: "no-store",
-            fallbackMessage: "Unable to load account.",
-            signal: controller.signal,
-          });
-          [panels, agentAccess] = await Promise.all([
-            loadDashboardPanels(),
-            requestOptionalPanel(
-              "/api/agent/commissions?access=1",
-              { access: { active: false } },
-            ),
-          ]);
-        }
+        const [panels, agentAccess] = await Promise.all([
+          loadDashboardPanels(),
+          requestOptionalPanel("/api/agent/commissions?access=1", { access: { active: false } }),
+        ]);
         const [profile, secondary, support] = panels;
 
         if (!cancelled) {
@@ -605,7 +596,7 @@ export default function DashboardClient({
   }, [analyticsPeriod, role]);
 
   useEffect(() => {
-    if (role !== "venue" || isLoading || state.error || state.venueRequest) return;
+    if (role !== "venue" || isLoading || state.error || state.venueRequest || state.account?.accountState === "disabled") return;
     void refreshVenueDashboard(false);
     const refreshWhenVisible = () => { if (document.visibilityState === "visible") void refreshVenueDashboard(false); };
     const timer = window.setInterval(refreshWhenVisible, 45_000);
@@ -617,7 +608,7 @@ export default function DashboardClient({
       venueRefreshAbortRef.current = null;
       venueRefreshRequestRef.current += 1;
     };
-  }, [analyticsPeriod, isLoading, refreshVenueDashboard, role, state.error, state.venueRequest]);
+  }, [analyticsPeriod, isLoading, refreshVenueDashboard, role, state.error, state.venueRequest, state.account?.accountState]);
 
   useEffect(() => {
     if (isLoading || state.error) return;
@@ -693,6 +684,7 @@ export default function DashboardClient({
   const dashboardEyebrow =
     role === "customer" ? "Customer dashboard" : role === "venue" ? "Venue dashboard" : "Dancer dashboard";
   const dancerAccountPaused = role === "dancer" && state.account?.accountState === "disabled";
+  const venueAccountPaused = role === "venue" && state.account?.accountState === "disabled";
   const dashboardHeading = isLoading
     ? resolvedDisplayName || title
     : role === "dancer" && (state.error || dancerAccountPaused) ? profileDisplayName || title : displayName;
@@ -772,7 +764,7 @@ export default function DashboardClient({
         <DashboardLoadingState role={role} />
       ) : !state.error && (role === "customer" || !isLoading) ? (
         <section className={`dashboard-grid ${role}-dashboard-grid`}>
-          {!dancerAccountPaused && state.agentAccess?.active ? <AgentDashboardShortcut /> : null}
+          {!dancerAccountPaused && !venueAccountPaused && state.agentAccess?.active ? <AgentDashboardShortcut /> : null}
           {role === "customer" ? (
             <>
               <CustomerWelcomeCard
@@ -865,7 +857,18 @@ export default function DashboardClient({
           ) : null}
           {role === "venue" ? (
             <>
-              <VenuePanel
+              {venueAccountPaused ? <>
+                <InfoPanel title="Account paused">
+                  <p>Your venue tools are unavailable while your account is paused. Manage your account or contact support below.</p>
+                </InfoPanel>
+                <DashboardSection defaultOpen id="venue-account" title="Account & support" description="Account status, recovery, and help from MyDancr." icon={<VenueDashboardIcon section="account" />} toggleAffordance="chevron">
+                  <div className="venue-dashboard-inner-grid venue-dashboard-account-grid">
+                    <AccountSummaryPanel accountState={String(state.account?.accountState)} email={String(state.account?.email || "Private")} role="venue" />
+                    <AccountControlsPanel accountRole="venue" accountState={String(state.account?.accountState)} />
+                    {state.supportThreads ? <SupportInboxPanel initialThreads={state.supportThreads} panelId="venue-support" /> : <p role="status">Loading support…</p>}
+                  </div>
+                </DashboardSection>
+              </> : <VenuePanel
                   account={state.account || null}
                   analytics={state.analytics}
                   deal={state.deal}
@@ -899,7 +902,7 @@ export default function DashboardClient({
                   onProfileChange={updateProfile}
                    onPublicationChange={(publication) => setState((current) => ({ ...current, publication }))}
                    onDealRequestsChange={(dealRequests) => setState((current) => ({ ...current, dealRequests }))}
-                />
+                />}
             </>
           ) : null}
         </section>
@@ -1468,11 +1471,12 @@ function AccountControlsPanel({
   const actionInFlightRef = useRef(false);
   const isVenueAccount = accountRole === "venue";
   const isVenueOwner = isVenueAccount && venueAccessRole === "owner";
-  const ownsVenueWorkspace = isVenueOwner || (isVenueAccount && state === "disabled" && !venueAccessRole);
+  const ownsVenueWorkspace = isVenueOwner;
+  const isVenueTeamMember = isVenueAccount && (venueAccessRole === "manager" || venueAccessRole === "staff");
   const accountHeading = ownsVenueWorkspace ? "Venue account & security" : "Account & security";
   const accountDescription = ownsVenueWorkspace
     ? "Pause or permanently close this venue account."
-    : isVenueAccount
+    : isVenueTeamMember
       ? "Manage your personal venue-team login."
       : "Manage access to your account.";
 
@@ -1532,7 +1536,9 @@ function AccountControlsPanel({
         ? ownsVenueWorkspace ? "Venue account disabled. The venue is now private and team access is paused." : "Account disabled."
         : ownsVenueWorkspace ? "Venue account reactivated." : "Account reactivated.");
       if (isVenueAccount) {
-        window.location.replace(nextState === "disabled" ? "/dashboard/venue#venue-account" : "/dashboard/venue");
+        // A fragment-only navigation leaves the previous account's tools mounted.
+        window.history.replaceState(window.history.state, "", nextState === "disabled" ? "/dashboard/venue#venue-account" : "/dashboard/venue");
+        window.location.reload();
       } else if (accountRole === "dancer") {
         // A fragment-only navigation leaves the previous account's tools mounted.
         window.history.replaceState(window.history.state, "", nextState === "disabled" ? "/dashboard/dancer#dancer-account" : "/dashboard/dancer");
@@ -1629,10 +1635,11 @@ function AccountControlsPanel({
           <span className="account-action-details">
             <span className="account-action-icon is-delete" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 10v7m4-7v7" /></svg></span>
             <span>
-            <strong>{ownsVenueWorkspace ? "Delete venue account" : isVenueAccount ? "Delete my team account" : "Delete account"}</strong>
+            <strong>{ownsVenueWorkspace ? "Delete venue account" : isVenueTeamMember ? "Delete my team account" : "Delete account"}</strong>
             <small>{ownsVenueWorkspace
               ? `Permanently remove this login and archive ${venueName || "the venue"}. MyDancr retains records required for accounting, security, and legal compliance.`
-              : isVenueAccount ? "Permanently remove your login and team membership without deleting the shared venue." : "Permanently delete this account."}</small>
+              : isVenueTeamMember ? "Permanently remove your login and team membership without deleting the shared venue."
+              : isVenueAccount ? "Permanently remove this login. If you own a venue, it will be archived and team access will end." : "Permanently delete this account."}</small>
             </span>
           </span>
           <button

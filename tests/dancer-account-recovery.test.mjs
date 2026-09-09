@@ -10,12 +10,12 @@ const end = source.indexOf("  async function deleteAccount(", start);
 assert.ok(start > 0 && end > start);
 const actions = ts.transpileModule(source.slice(start, end), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText;
 
-function fixture() {
+function fixture(accountRole = "dancer", ownsVenueWorkspace = false) {
   const requests = [], reloads = [];
-  let url = new URL("https://www.mydancr.com/dashboard/dancer#dancer-account");
+  let url = new URL(`https://www.mydancr.com/dashboard/${accountRole}#${accountRole}-account`);
   const context = vm.createContext({
     AbortController, Error,
-    accountRole: "dancer", isVenueAccount: false, ownsVenueWorkspace: false,
+    accountRole, isVenueAccount: accountRole === "venue", ownsVenueWorkspace,
     mountedRef: { current: true }, actionSequenceRef: { current: 0 },
     actionAbortRef: { current: null }, actionInFlightRef: { current: false },
     setIsWorking: value => { context.working = value; },
@@ -39,8 +39,9 @@ function fixture() {
   return { context, requests, reloads };
 }
 
-for (const state of ["disabled", "active"]) test(`a persisted dancer ${state} transition reloads the account even when only its fragment changes`, async () => {
-  const { context, requests, reloads } = fixture();
+for (const [role, owner] of [["dancer", false], ["venue", true], ["venue", false]]) {
+for (const state of ["disabled", "active"]) test(`a persisted ${role} ${owner ? "owner" : "personal"} ${state} transition reloads the account even when only its fragment changes`, async () => {
+  const { context, requests, reloads } = fixture(role, owner);
   const action = context.updateAccount(state);
   await context.updateAccount(state);
   assert.equal(requests.length, 1);
@@ -49,12 +50,12 @@ for (const state of ["disabled", "active"]) test(`a persisted dancer ${state} tr
   assert.deepEqual(JSON.parse(requests[0].options.body), { accountState: state });
   requests[0].resolve({ account: { accountState: state } });
   await action;
-  assert.deepEqual(reloads, [state === "disabled" ? "/dashboard/dancer#dancer-account" : "/dashboard/dancer"]);
+  assert.deepEqual(reloads, [state === "disabled" ? `/dashboard/${role}#${role}-account` : `/dashboard/${role}`]);
   assert.equal(context.working, false);
 });
 
-test("a denied reactivation stays on the paused page and permits retry", async () => {
-  const { context, requests, reloads } = fixture();
+test(`a denied ${role} ${owner ? "owner" : "personal"} reactivation stays on the paused page and permits retry`, async () => {
+  const { context, requests, reloads } = fixture(role, owner);
   const action = context.updateAccount("active");
   requests[0].reject(new Error("Contact support to restore access."));
   await action;
@@ -65,8 +66,8 @@ test("a denied reactivation stays on the paused page and permits retry", async (
   assert.equal(context.actionInFlightRef.current, false);
 });
 
-test("an abandoned account update cannot reload a different page", async () => {
-  const { context, requests, reloads } = fixture();
+test(`an abandoned ${role} ${owner ? "owner" : "personal"} update cannot reload a different page`, async () => {
+  const { context, requests, reloads } = fixture(role, owner);
   const action = context.updateAccount("active");
   context.mountedRef.current = false;
   context.actionAbortRef.current.abort();
@@ -75,3 +76,4 @@ test("an abandoned account update cannot reload a different page", async () => {
   assert.deepEqual(reloads, []);
   assert.equal(context.accountState, undefined);
 });
+}

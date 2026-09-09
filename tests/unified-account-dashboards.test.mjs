@@ -96,22 +96,13 @@ test("normal account navigation cannot reopen a legacy dashboard variant", () =>
   assert.match(liveShell, /const opened = openUnifiedDashboard\("venue"\);/);
 });
 
-test("fresh confirmation sessions load the dashboard account and panels in parallel", () => {
+test("dashboard startup uses the shared session boundary and aborts abandoned requests", () => {
   const startupLoader = dashboard.slice(0, dashboard.indexOf("const refreshVenueDashboard"));
   assert.match(dashboard, /from "\.\/dashboard-session"/);
   assert.match(dashboardSession, /function storedSessionIsFresh\(session: StoredDashboardSession \| null\)/);
   assert.match(dashboardSession, /expiresAt > Math\.floor\(Date\.now\(\) \/ 1000\) \+ 120/);
-  assert.match(
-    dashboard,
-    /if \(storedSessionIsFresh\(session\)\) \{[\s\S]*?\[account, panels, agentAccess\] = await Promise\.all\(\[[\s\S]*?requestAccountJson\([\s\S]*?loadDashboardPanels\(\)/,
-  );
-  assert.match(
-    dashboard,
-    /else \{[\s\S]*?account = await requestAccountJson\([\s\S]*?\[panels, agentAccess\] = await Promise\.all\(\[[\s\S]*?loadDashboardPanels\(\)/,
-  );
   assert.match(startupLoader, /const controller = new AbortController\(\);/);
   assert.match(startupLoader, /function requestOptionalPanel<T>[\s\S]*?signal: controller\.signal/);
-  assert.equal((startupLoader.match(/signal: controller\.signal/g) || []).length, 5);
   assert.match(startupLoader, /await loadCustomerDashboard\(controller.signal/);
   assert.match(startupLoader, /return \(\) => \{\s*cancelled = true;\s*controller\.abort\(\);/);
   assert.doesNotMatch(startupLoader, /initialAuthHeaders|refreshedHeaders|readJson\(|readOptionalJson\(/);
@@ -1523,7 +1514,7 @@ test("venue live refresh uses the current role-aware session and preserves the l
   assert.doesNotMatch(venueRefresh, /dashboardAuthHeaders|readOptionalJson/);
   assert.match(venueRefresh, /try \{[\s\S]*?await requestVenueDashboardJson[\s\S]*?setState[\s\S]*?\} catch \(error\)/);
 
-  const venueRefreshEffect = dashboard.match(/useEffect\(\(\) => \{\s*if \(role !== "venue" \|\| isLoading \|\| state\.error \|\| state\.venueRequest\)[\s\S]*?\}, \[analyticsPeriod, isLoading, refreshVenueDashboard, role, state\.error, state\.venueRequest\]\);/)?.[0] || "";
+  const venueRefreshEffect = dashboard.match(/useEffect\(\(\) => \{\s*if \(role !== "venue" \|\| isLoading \|\| state\.error \|\| state\.venueRequest[^\n]*\n[\s\S]*?\}, \[analyticsPeriod, isLoading, refreshVenueDashboard, role, state\.error, state\.venueRequest[^\n]*\);/)?.[0] || "";
   assert.match(venueRefreshEffect, /venueRefreshAbortRef\.current\?\.abort\(\);/);
   assert.match(venueRefreshEffect, /venueRefreshRequestRef\.current \+= 1;/);
 });
