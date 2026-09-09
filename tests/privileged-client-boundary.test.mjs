@@ -10,6 +10,7 @@ const privilegedModules = [
   "src/lib/stripe.ts",
   "src/lib/dancr/account-recovery.ts",
   "src/lib/dancr/admin.ts",
+  "src/lib/dancr/auth.ts",
   "src/lib/dancr/avatar-face.ts",
   "src/lib/dancr/cron-auth.ts",
   "src/lib/dancr/deal-attribution.ts",

@@ -51,7 +51,7 @@ function fixture({ role = "customer", state = "active", metadata = {}, forgedMet
   vm.runInNewContext(compiled, { exports, Date, Error, require: name => {
     if (name === "../api-error-policy") return { PublicApiError };
     if (name === "./profile-publication") return { transitionDancerPublication: async () => {} };
-    if (name === "./profile-approval") return {};
+    if (name === "server-only") return {};
     throw new Error(name);
   } });
   return { row, appMetadata, writes, venue, run: state => exports.setAccountState(client, "owner", state, client) };
