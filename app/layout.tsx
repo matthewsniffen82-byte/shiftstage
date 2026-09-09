@@ -4,6 +4,7 @@ import Script from "next/script";
 import { GlobalMobileBottomNav } from "./components/GlobalMobileBottomNav";
 import { MyDancrPreviewBanner } from "./components/MyDancrPreviewBanner";
 import { versionedStaticAssetUrl } from "../src/lib/dancr/static-asset-cache.mjs";
+import { androidDeviceClassScript } from "../src/lib/security/android-device-script.mjs";
 import "../public/dancr-brand-tokens.v1.css";
 import "../public/dancr-button-system.v1.css";
 import "../public/dancr-aesthetic.v1.css";
@@ -14,30 +15,6 @@ import "../public/profile-media-card-feed.css";
 import "../public/profile-photo-crop.css";
 import "../public/profile-actions-compact.css";
 import "../public/third-party-social-link-warning.css";
-
-const androidDeviceClassScript = `
-(() => {
-  const userAgent = navigator.userAgent || "";
-  const platform = navigator.userAgentData && navigator.userAgentData.platform
-    ? navigator.userAgentData.platform
-    : "";
-  const isAndroid = /Android/i.test(userAgent)
-    || /Linux.*Mobile/i.test(userAgent)
-    || /Android/i.test(platform);
-  const isSamsungBrowser = /SamsungBrowser/i.test(userAgent);
-
-  if (!isAndroid && !isSamsungBrowser) return;
-
-  const applyDeviceClasses = (element) => {
-    if (!element) return;
-    if (isAndroid) element.classList.add("is-android", "android-rendering");
-    if (isSamsungBrowser) element.classList.add("is-samsung-browser", "samsung-rendering");
-  };
-
-  applyDeviceClasses(document.documentElement);
-  applyDeviceClasses(document.body);
-})();
-`;
 
 export const metadata: Metadata = {
   title: "mydancr",

@@ -3,6 +3,7 @@ import { getAccountByUserId } from "@/src/lib/dancr/auth";
 import { BROWSER_AUTH_SESSION_KEY } from "@/src/lib/dancr/browser-session";
 import { safeLocalReturnPath } from "@/src/lib/dancr/safe-return-path";
 import { safeErrorMetadata } from "@/src/lib/security/safe-error-metadata";
+import { createRootContentSecurityPolicy } from "@/src/lib/security/root-content-security-policy.mjs";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { createServerSupabaseClient } from "@/src/lib/supabase/server";
 
@@ -35,7 +36,8 @@ export async function GET(request: Request) {
   const role = callbackRole(request, callbackSession);
   const showDancerConfirmation = role === "dancer" && !isPasswordResetCallback(request);
 
-  return new Response(callbackHtml(callbackSession, redirectPath, showDancerConfirmation, isPasswordResetCallback(request), unavailable), {
+  const html = callbackHtml(callbackSession, redirectPath, showDancerConfirmation, isPasswordResetCallback(request), unavailable);
+  return new Response(html, {
     status: unavailable ? 503 : 200,
     headers: {
       "content-type": "text/html; charset=utf-8",
@@ -43,6 +45,7 @@ export async function GET(request: Request) {
       expires: "0",
       pragma: "no-cache",
       "referrer-policy": "no-referrer",
+      "content-security-policy": createRootContentSecurityPolicy(html),
     },
   });
 }

@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
+import { androidDeviceClassScript } from "../src/lib/security/android-device-script.mjs";
 
 const [aesthetic, tokens, liveShell, publicProfile, tvFeed, rootLayout] = await Promise.all([
   readFile(new URL("../public/dancr-aesthetic.v1.css", import.meta.url), "utf8"),
@@ -68,8 +69,8 @@ test("every production circular avatar contains the new border wrapper", () => {
 
 test("routed pages still classify Android without placing device styles on the wrapper", () => {
   assert.match(rootLayout, /id="dancr-android-device-classes"/);
-  assert.match(rootLayout, /\/Android\/i\.test\(userAgent\)/);
-  assert.match(rootLayout, /element\.classList\.add\("is-android", "android-rendering"\)/);
+  assert.match(androidDeviceClassScript, /\/Android\/i\.test\(userAgent\)/);
+  assert.match(androidDeviceClassScript, /element\.classList\.add\("is-android", "android-rendering"\)/);
   assert.doesNotMatch(wrapperRules, /is-android|android-rendering|is-samsung-browser|samsung-rendering/);
 });
 

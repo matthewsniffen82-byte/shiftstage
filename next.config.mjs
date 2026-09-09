@@ -3,6 +3,7 @@ import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { validatePublicSupabaseConfig } from "./src/lib/supabase/public-config.mjs";
 import { validatePublicEnvironment } from "./src/lib/security/public-environment.mjs";
+import { contentSecurityPolicy } from "./src/lib/security/document-content-security-policy.mjs";
 import {
   createActiveEditProfileScript,
   createRootContentSecurityPolicy,
@@ -14,26 +15,6 @@ validatePublicSupabaseConfig(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.N
   allowMissing: process.env.VERCEL_ENV !== "production",
   allowLocal: process.env.VERCEL_ENV !== "production",
 });
-
-/** @type {import('next').NextConfig} */
-const contentSecurityPolicy = [
-  "default-src 'self'",
-  "base-uri 'self'",
-  "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.onesignal.com https://onesignal.com",
-  "font-src 'self' data: https://fonts.gstatic.com",
-  "form-action 'self'",
-  "frame-ancestors 'none'",
-  "frame-src 'self' https://www.google.com https://onesignal.com",
-  "img-src 'self' data: blob: https:",
-  "manifest-src 'self'",
-  "media-src 'self' blob: https:",
-  "object-src 'none'",
-  "script-src 'self' 'unsafe-inline' https://cdn.onesignal.com",
-  "script-src-attr 'none'",
-  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-  "worker-src 'self' blob:",
-  "upgrade-insecure-requests",
-].join("; ");
 
 const securityHeaders = [
   {
@@ -68,6 +49,7 @@ const rootContentSecurityPolicy = createRootContentSecurityPolicy(
   [createActiveEditProfileScript(liveShellSha256)],
 );
 
+/** @type {import('next').NextConfig} */
 const nextConfig = {
   poweredByHeader: false,
   async headers() {

@@ -5,6 +5,7 @@ import vm from 'node:vm';
 import ts from 'typescript';
 import { accountEntryHref } from '../src/lib/dancr/account-entry.ts';
 import { safeLocalReturnPath } from '../src/lib/dancr/safe-return-path.ts';
+import { createRootContentSecurityPolicy } from '../src/lib/security/root-content-security-policy.mjs';
 
 const callbackSource = readFileSync(new URL('../app/auth/callback/route.ts', import.meta.url), 'utf8');
 const homeSource = readFileSync(new URL('../outputs/index.html', import.meta.url), 'utf8');
@@ -14,6 +15,7 @@ const savedSession = role => ({ accessToken: 'existing-access', refreshToken: 'e
 function callbackRoute({ providerError = null, freshRole = null } = {}) {
   const exports = {};
   const dependencies = {
+    '@/src/lib/security/root-content-security-policy.mjs': { createRootContentSecurityPolicy },
     '@/src/lib/dancr/browser-session': { BROWSER_AUTH_SESSION_KEY: sessionKey },
     '@/src/lib/dancr/safe-return-path': { safeLocalReturnPath },
     '@/src/lib/security/safe-error-metadata': { safeErrorMetadata: () => ({}) },

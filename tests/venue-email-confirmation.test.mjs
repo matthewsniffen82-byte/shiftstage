@@ -4,6 +4,7 @@ import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import vm from 'node:vm';
 import ts from 'typescript';
+import { createRootContentSecurityPolicy } from '../src/lib/security/root-content-security-policy.mjs';
 const require = createRequire(import.meta.url);
 const read = p => readFileSync(new URL('../'+p,import.meta.url),'utf8');
 function compile(source,deps={}){const exports={};vm.runInNewContext(ts.transpileModule(source,{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText,{exports,URL,URLSearchParams,Error,Request,Response,console:{warn(){},error(){}},require:n=>n==='next/server'?require(n):deps[n]||{}});return exports;}
@@ -36,6 +37,7 @@ test('resend scopes delivery to the unconfirmed request and does not reveal whet
 test('resend rate limits are enforced before any confirmation is sent',async()=>{const f=resendFixture({limited:true});const r=await f.send();assert.equal(r.status,429);assert.equal(r.headers.get('Retry-After'),'3600');assert.equal(f.sends,0);});
 test('verified venue callbacks open the venue dashboard without creating another login',async()=>{
  const callback=compile(read('app/auth/callback/route.ts'),{
+  '@/src/lib/security/root-content-security-policy.mjs':{createRootContentSecurityPolicy},
   '@/src/lib/supabase/server':{createServerSupabaseClient:()=>({auth:{verifyOtp:async()=>({data:{user:{id:'manager',email:'manager@example.com'},session:{access_token:'verified-token',refresh_token:'refresh'}}})}})},
   '@/src/lib/supabase/admin':{createAdminSupabaseClient:()=>({})},'@/src/lib/dancr/auth':{getAccountByUserId:async()=>({id:'manager',role:'venue'})},
   '@/src/lib/dancr/safe-return-path':{safeLocalReturnPath:()=>''},'@/src/lib/dancr/browser-session':{BROWSER_AUTH_SESSION_KEY:'dancrAuthSessionV1'},

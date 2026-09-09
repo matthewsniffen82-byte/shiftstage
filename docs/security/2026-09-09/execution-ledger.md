@@ -34,8 +34,8 @@ Step 1 delivered as `50d4eb543dbfc93dbed6f0663c51aa2332542cb4`, pushed to origin
 | 11 | Rate limits | Delivered and healthy: a89818f8c7294f311575adb70c29eb11e9476b19 |
 | 12 | Bot resistance | Delivered and healthy: 68a04ea1c502eaef5a7aab78068399b052c453bf |
 | 13 | File upload handling | Delivered and healthy: 189c4b1afb43c4ace8a075dab0aca5422f3a83cf |
-| 14 | API authorization / exposure | Implemented; final release validation and deployment verification pending |
-| 15 | Security headers | Not started |
+| 14 | API authorization / exposure | Delivered and healthy: a72f13b523fb4ef323c87eb33daa6cdb07c42ffe |
+| 15 | Security headers | Validated; commit/push and exact deployment verification pending |
 | 16 | CORS | Not started |
 | 17 | Cookies / sessions | Not started |
 | 18 | Redirects / URLs | Not started |
@@ -182,3 +182,13 @@ Step 13 was pushed as `189c4b1afb43c4ace8a075dab0aca5422f3a83cf`. [Exact Vercel 
 The API review identified a MEDIUM disclosure of private financial properties in cashier NFC confirmations. An explicit customer response preserves the internal transaction and visible success behavior. Eight new runtime tests pass, with three pre-fix failures demonstrating the issue. See `step-14-api-boundaries.md` for the 116-route/187-handler review and testing limits. The independently published mobile viewer fix was reviewed and incorporated. Full release checks and exact-commit deployment verification are required before Step 15.
 
 Final validation passed all 2,931 tests, lint, TypeScript and production build. The migration gate verified 132 frozen files and postbuild skipped demo population. Only the response builder, eight runtime regressions and two audit documents are included in this step's commit. Exact-commit publication and healthy deployment verification follow next.
+
+## Step 14 delivery
+
+Step 14 was pushed as `a72f13b523fb4ef323c87eb33daa6cdb07c42ffe`. [Exact Vercel deployment](https://vercel.com/ai-movie-jobs/shiftstage/bpmup6xXiZqqdkVqAxfukAEQ3QRv) succeeded. At 15:59:55 UTC, safe NFC/scanner/retired-confirmation probes returned 400/404/410 without financial writes. At 16:00:01 UTC, health, protected-route denials, callback regression and all 30 readiness checks passed. Local HEAD matched origin/main with a clean worktree before Step 15.
+
+## Step 15 implementation
+
+Sensitive document pages now use fresh script nonces and private caching; the authentication callback uses exact script hashes. Existing strong root/API policies, resource sources and application authorization remain. Twenty-four new tests cover the policy boundaries. See `step-15-browser-headers.md` for the header inventory, conservative public-page scope and verification limits. The independent admin deal-removal release and later profile-action UI/accessibility changes were reviewed and incorporated, retaining their authorization and action behavior. Local production verification caught an incompatible broad-prefix policy on static 404 pages before publication; explicit dynamic-page coverage and a page-inventory regression guard correct it. Complete validation, native browser execution, commit/push and exact deployment health verification are required before Step 16.
+
+Final validation passed all 2,965 tests, lint, TypeScript and production build. The migration gate retained 132 frozen files and postbuild skipped demo population. At 18:13:36 UTC, the native Edge check against the local production build passed all eleven private-page variants, retained root policy/cache behavior, and the corrected static 404. Admin controls hydrated, Android classes were preserved, nonce-authorized scripts executed, a synthetic untrusted inline script was blocked, and password-reset/callback navigation worked without unexpected CSP violations or JavaScript errors. Browser API calls were intercepted and external requests blocked. No database change is part of this step. Commit/push and exact deployed verification follow.

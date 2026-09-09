@@ -1,10 +1,24 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { refreshExpiringRequestSession, SESSION_RESPONSE_HEADERS } from "./src/lib/supabase/session-transport";
 import { resolveApiError } from "./src/lib/api-error-policy";
+import { createPrivateDocumentPolicy, isPrivateDocumentPath } from "./src/lib/security/document-content-security-policy.mjs";
 
 export async function middleware(request: NextRequest) {
   // Public cacheable routes never receive credential response headers.
   const path = request.nextUrl.pathname;
+  if (isPrivateDocumentPath(path)) {
+    const { nonce, policy } = await createPrivateDocumentPolicy();
+    const headers = new Headers(request.headers);
+    headers.set("content-security-policy", policy);
+    headers.set("x-nonce", nonce);
+    const response = NextResponse.next({ request: { headers } });
+    response.headers.set("content-security-policy", policy);
+    response.headers.set("cache-control", "private, no-store, max-age=0");
+    response.headers.set("cdn-cache-control", "no-store");
+    response.headers.set("vercel-cdn-cache-control", "no-store");
+    return response;
+  }
+  if (!path.startsWith("/api/")) return NextResponse.next();
   if (path.startsWith("/api/public/") && path !== "/api/public/media-likes") return NextResponse.next();
   if (!request.headers.has("authorization")) return NextResponse.next();
   try {
@@ -30,4 +44,4 @@ export async function middleware(request: NextRequest) {
   }
 }
 
-export const config = { matcher: "/api/:path*" };
+export const config = { matcher: ["/api/:path*", "/admin/:path*", "/dashboard/:path*", "/account/:path*"] };

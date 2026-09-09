@@ -4,6 +4,7 @@ import { createRequire } from "node:module";
 import test from "node:test";
 import vm from "node:vm";
 import ts from "typescript";
+import { createRootContentSecurityPolicy } from "../src/lib/security/root-content-security-policy.mjs";
 
 const require = createRequire(import.meta.url);
 const callbackSource = readFileSync(new URL("../app/auth/callback/route.ts", import.meta.url), "utf8");
@@ -21,6 +22,7 @@ const session = { accessToken: "test-access", refreshToken: "test-refresh", acco
 
 async function callbackFixture(query, hash, valid = true, options = {}) {
   const dependencies = Object.fromEntries([...callbackSource.matchAll(/from "([^"]+)"/g)].map((match) => [match[1], {}]));
+  dependencies["@/src/lib/security/root-content-security-policy.mjs"] = { createRootContentSecurityPolicy };
   dependencies["@/src/lib/dancr/safe-return-path"] = { safeLocalReturnPath: (path) => path?.startsWith("/") && !path.startsWith("//") ? path : "" };
   dependencies["@/src/lib/dancr/browser-session"] = { BROWSER_AUTH_SESSION_KEY: "session" };
   const callback = compile(callbackSource, dependencies);

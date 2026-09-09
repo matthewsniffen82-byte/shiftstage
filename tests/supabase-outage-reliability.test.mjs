@@ -8,6 +8,7 @@ import { createClient } from "@supabase/supabase-js";
 import { createBoundedSupabaseFetch } from "../src/lib/supabase/bounded-fetch.ts";
 import { refreshExpiringRequestSession } from "../src/lib/supabase/session-transport.ts";
 import { resolveApiError } from "../src/lib/api-error-policy.ts";
+import * as documentPolicy from "../src/lib/security/document-content-security-policy.mjs";
 
 test("Supabase headers and stalled response bodies have a deadline and writes run once", async () => {
   for (const stalledBody of [false, true]) {
@@ -80,6 +81,7 @@ test("middleware transports rotation upstream and downstream with private cachin
     compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
   }).outputText, { exports, Headers, require(name) {
     if (name === "next/server") return { NextResponse };
+    if (name.includes("document-content-security-policy")) return documentPolicy;
     if (name.includes("api-error-policy")) return { resolveApiError };
     return { SESSION_RESPONSE_HEADERS: { access: "x-dancr-session-access", refresh: "x-dancr-session-refresh", expires: "x-dancr-session-expires" },
       refreshExpiringRequestSession: async () => { calls++; if (failure) throw failure; return { accessToken: "fresh", refreshToken: "fresh-refresh", expiresAt: 2000000000 }; } };
