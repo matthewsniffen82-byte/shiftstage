@@ -35,7 +35,7 @@ test("crop preview measures the existing TV card CSS instead of inventing anothe
   assert.match(script, /height:var\(--profile-media-card-height\);width:calc\(100% - 10px\)/);
   assert.match(script, /return rect\.width \/ rect\.height/);
   assert.match(live, /profile-photo-crop\.js\?v=1/);
-  assert.match(fs.readFileSync("app/layout.tsx", "utf8"), /profile-photo-crop\.js\?v=1/);
+  assert.match(fs.readFileSync("app/layout.tsx", "utf8"), /versionedStaticAssetUrl\("\/profile-photo-crop\.js"\)/);
 });
 
 test("crop is confirmed before the dashboard sends the actual moderated photo", () => {

@@ -10,6 +10,8 @@ import {
 } from "../src/lib/dancr/public-cache-policy.ts";
 
 const files = {
+  staticAssetCache: "../src/lib/dancr/static-asset-cache.mjs",
+  staticAssetPaths: "../src/lib/dancr/static-asset-paths.mjs",
   cities: "../app/api/public/cities/route.ts",
   dancer: "../app/api/public/dancers/[slug]/route.ts",
   dancers: "../app/api/public/dancers/route.ts",
@@ -68,9 +70,9 @@ test("public TV clients reuse cached payloads without sending account credential
 
 test("the shell and versioned static assets can be reused by browser back navigation", () => {
   assert.match(source.rootRoute, /public, max-age=30, s-maxage=60, stale-while-revalidate=300/);
-  assert.match(source.nextConfig, /public, max-age=31536000, immutable/);
-  assert.match(source.nextConfig, /"\/outputs\/dancr-hero\.webp"/);
-  assert.match(source.nextConfig, /"\/venue-logos\/:path\*"/);
+  assert.match(source.staticAssetCache, /public, max-age=31536000, immutable/);
+  assert.match(source.staticAssetPaths, /"\/outputs\/dancr-hero\.webp"/);
+  assert.match(source.staticAssetCache, /"\/venue-logos\/:path\*"/);
   assert.match(source.serviceWorker, /const isPublicNavigation = event\.request\.mode === "navigate"/);
   assert.match(source.serviceWorker, /requestUrl\.pathname === "\/"/);
   assert.match(source.serviceWorker, /event\.request\.mode === "navigate" && !isPublicNavigation \? "no-store" : "default"/);

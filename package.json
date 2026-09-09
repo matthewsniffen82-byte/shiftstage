@@ -27,11 +27,12 @@
   },
   "scripts": {
     "generate:live-shell-version": "node scripts/generate-live-shell-version.mjs",
+    "generate:static-asset-versions": "node scripts/generate-static-asset-versions.mjs",
     "generate:fictional-venue-logos": "node scripts/generate-fictional-venue-logos.mjs",
     "generate:venue-logo-variants": "node scripts/generate-dark-card-venue-logos.mjs",
-    "predev": "npm run generate:live-shell-version",
+    "predev": "npm run generate:live-shell-version && npm run generate:static-asset-versions",
     "dev": "next dev",
-    "prebuild": "npm run db:check-migrations && npm run generate:live-shell-version",
+    "prebuild": "npm run db:check-migrations && npm run generate:live-shell-version && npm run generate:static-asset-versions",
     "build": "next build",
     "postbuild": "node scripts/manage-layout-review-postbuild.mjs",
     "lint": "eslint . --max-warnings=0",
@@ -45,7 +46,7 @@
     "media:backfill-watermarks": "node scripts/backfill-public-media-watermarks.mjs",
     "media:backfill-video-posters": "node scripts/backfill-video-posters.mjs",
     "media:import-platform-tv": "node scripts/import-platform-tv-videos.mjs",
-    "pretypecheck": "npm run generate:live-shell-version",
+    "pretypecheck": "npm run generate:live-shell-version && npm run generate:static-asset-versions",
     "typecheck": "node --test tests/*.test.mjs && tsc --noEmit --incremental false",
     "start": "next start",
     "db:check-migrations": "node scripts/check-supabase-migrations.mjs"

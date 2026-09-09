@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import Script from "next/script";
 import { GlobalMobileBottomNav } from "./components/GlobalMobileBottomNav";
 import { MyDancrPreviewBanner } from "./components/MyDancrPreviewBanner";
+import { versionedStaticAssetUrl } from "../src/lib/dancr/static-asset-cache.mjs";
 import "../public/dancr-brand-tokens.v1.css";
 import "../public/dancr-button-system.v1.css";
 import "../public/dancr-aesthetic.v1.css";
@@ -43,8 +44,8 @@ export const metadata: Metadata = {
   applicationName: "mydancr",
   manifest: "/manifest.webmanifest",
   icons: {
-    icon: "/mydancr-icon.svg",
-    apple: "/mydancr-icon.svg",
+    icon: versionedStaticAssetUrl("/mydancr-icon.svg"),
+    apple: versionedStaticAssetUrl("/mydancr-icon.svg"),
   },
   metadataBase: new URL("https://www.mydancr.com"),
   openGraph: {
@@ -75,8 +76,8 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <Script src="/mydancr-api-transport.js?v=1" strategy="beforeInteractive" />
-      <Script src="/profile-photo-crop.js?v=1" strategy="beforeInteractive" />
+      <Script src={versionedStaticAssetUrl("/mydancr-api-transport.js")} strategy="beforeInteractive" />
+      <Script src={versionedStaticAssetUrl("/profile-photo-crop.js")} strategy="beforeInteractive" />
       <body className="dancr-button-system" suppressHydrationWarning>
         <script
           dangerouslySetInnerHTML={{ __html: androidDeviceClassScript }}
@@ -85,7 +86,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <MyDancrPreviewBanner />
         {children}
         <GlobalMobileBottomNav />
-        <script defer id="mydancr-third-party-social-link-warning" src="/third-party-social-link-warning.js?v=1" />
+        <script defer id="mydancr-third-party-social-link-warning" src={versionedStaticAssetUrl("/third-party-social-link-warning.js")} />
       </body>
     </html>
   );

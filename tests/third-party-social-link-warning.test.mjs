@@ -12,7 +12,7 @@ const [guard, styles, layout, liveRoute, socialLinks] = await Promise.all([
 
 test("the third-party warning is loaded by routed pages and the live homepage shell", () => {
   assert.match(layout, /import "\.\.\/public\/third-party-social-link-warning\.css"/);
-  assert.match(layout, /third-party-social-link-warning\.js\?v=1/);
+  assert.match(layout, /versionedStaticAssetUrl\("\/third-party-social-link-warning\.js"\)/);
   assert.match(liveRoute, /third-party-social-link-warning\.css\?v=3/);
   assert.match(liveRoute, /third-party-social-link-warning\.js\?v=1/);
 });

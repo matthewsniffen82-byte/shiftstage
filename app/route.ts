@@ -9,6 +9,7 @@ import {
   createRootContentSecurityPolicy,
 } from "../src/lib/security/root-content-security-policy.mjs";
 import { externalizeLiveShellAppScript } from "../src/lib/dancr/live-shell-script.mjs";
+import { versionStaticAssetReferences } from "../src/lib/dancr/static-asset-cache.mjs";
 
 export const runtime = "nodejs";
 // The live shell is a checked-in production artifact. Rendering this route at
@@ -53,9 +54,10 @@ export async function GET() {
     '<section class="recovery-popover" id="passwordRecoveryCard"',
     `${ADMIN_AUTH_ENTRY_HTML}<section class="recovery-popover" id="passwordRecoveryCard"`,
   );
-  const contentSecurityPolicy = createRootContentSecurityPolicy(withAdminAuthEntry);
+  const withVersionedAssets = versionStaticAssetReferences(withAdminAuthEntry);
+  const contentSecurityPolicy = createRootContentSecurityPolicy(withVersionedAssets);
 
-  return new Response(withAdminAuthEntry, {
+  return new Response(withVersionedAssets, {
     headers: {
       "content-type": "text/html; charset=utf-8",
       "cache-control": "public, max-age=30, s-maxage=60, stale-while-revalidate=300",

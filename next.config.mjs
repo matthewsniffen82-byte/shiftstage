@@ -1,3 +1,4 @@
+import { staticAssetCacheHeaders } from "./src/lib/dancr/static-asset-cache.mjs";
 import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { validatePublicSupabaseConfig } from "./src/lib/supabase/public-config.mjs";
@@ -57,31 +58,6 @@ const apiContentSecurityPolicy = [
   "frame-ancestors 'none'",
 ].join("; ");
 
-const immutableStaticAssetCacheControl = "public, max-age=31536000, immutable";
-const immutableStaticAssetSources = [
-  "/dancr-aesthetic.v1.css",
-  "/dancr-brand-tokens.v1.css",
-  "/dancr-button-system.v1.css",
-  "/mobile-social-strip.css",
-  "/mydancr-icon.svg",
-  "/outputs/dancr-hero.png",
-  "/outputs/dancr-hero.webp",
-  "/outputs/dancr-hero-480-10b0c648e5b6.webp",
-  "/outputs/dancr-hero-800-5d40507eaa79.webp",
-  "/outputs/dancr-hero-1280-70c171eee35b.webp",
-  "/outputs/mydancr-logo-current.png",
-  "/outputs/mydancr-logo.png",
-  "/profile-video-progress-line.js",
-  "/profile-video-scroll-controls.css",
-  "/third-party-social-link-warning.css",
-  "/third-party-social-link-warning.js",
-  "/trending-flame-clean.png",
-  "/trending-flame.png",
-  "/venue-logos/:path*",
-  "/video-autoplay-recovery.js",
-  "/video-sound-preference.js",
-];
-
 const liveShellHtml = readFileSync(new URL("./outputs/index.html", import.meta.url), "utf8");
 const liveShellSha256 = createHash("sha256")
   .update(liveShellHtml.replace(/\r\n?/g, "\n"))
@@ -110,10 +86,7 @@ const nextConfig = {
         source: "/",
         headers: [{ key: "Content-Security-Policy", value: rootContentSecurityPolicy }],
       },
-      ...immutableStaticAssetSources.map((source) => ({
-        source,
-        headers: [{ key: "Cache-Control", value: immutableStaticAssetCacheControl }],
-      })),
+      ...staticAssetCacheHeaders(),
     ];
   },
   outputFileTracingRoot: process.cwd(),

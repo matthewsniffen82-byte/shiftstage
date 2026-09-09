@@ -57,7 +57,7 @@ test("the cached production home shell allowlists exact inline scripts without u
   assert.ok(!policy.includes(sha256Source("console.log('injected');")));
   assert.doesNotMatch(policy.match(/script-src [^;]+/)?.[0] || "", /unsafe-inline/);
   assert.match(policy, /script-src-attr 'none'/);
-  assert.match(rootRoute, /createRootContentSecurityPolicy\(withAdminAuthEntry\)/);
+  assert.match(rootRoute, /createRootContentSecurityPolicy\(withVersionedAssets\)/);
   assert.match(rootRoute, /"content-security-policy": contentSecurityPolicy/);
   assert.match(nextConfig, /source: "\/"[\s\S]*?Content-Security-Policy[\s\S]*?rootContentSecurityPolicy/);
 });
