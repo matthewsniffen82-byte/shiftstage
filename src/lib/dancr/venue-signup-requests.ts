@@ -8,6 +8,7 @@ import {
 } from "./venue-claims";
 import { createRequestManager, removeUnsubmittedRequestManager, venueRequestCredentials } from "./venue-request-account";
 import { safeErrorMetadata } from "../security/safe-error-metadata";
+import { enforcePublicRequestRateLimit } from "./public-request-rate-limit";
 
 type DancrClient = SupabaseClient;
 
@@ -70,6 +71,7 @@ export async function createVenueSignupRequest(
   client: DancrClient,
   input: VenueSignupRequestInput,
   requestIp: string,
+  request: Request,
 ) {
   const normalized = normalizeVenueSignupRequest(input);
   let credentials;
@@ -106,6 +108,17 @@ export async function createVenueSignupRequest(
   if (duplicate) {
     throw new VenueSignupRequestUserError("This venue request is already waiting for review.");
   }
+
+  // Reserve after validation and duplicate checks, before creating a login.
+  // Both keys identify this IP; the existing hourly email budget stays separate.
+  await enforcePublicRequestRateLimit(client, {
+    namespace: "venue_signup_daily",
+    request,
+    subject: requestIp,
+    windowSeconds: 86_400,
+    ipLimit: MAX_REQUESTS_PER_IP_PER_DAY,
+    subjectLimit: MAX_REQUESTS_PER_IP_PER_DAY,
+  });
 
   let requesterUserId: string;
   try {

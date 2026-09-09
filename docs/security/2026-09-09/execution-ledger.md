@@ -31,8 +31,8 @@ Step 1 delivered as `50d4eb543dbfc93dbed6f0663c51aa2332542cb4`, pushed to origin
 | 8 | Input validation | Delivered and healthy: 70cfac08932c4373a780f3714588d564da9c4cb4 |
 | 9 | XSS / HTML injection | Delivered and healthy: 96745f706e42030be530664bc704234ca298a10a |
 | 10 | CSRF / state changes | Delivered and healthy: 15b6fbffece8d2ed437346d0567afb266b554756 |
-| 11 | Rate limits | Implemented; final release validation and deployment verification pending |
-| 12 | Bot resistance | Not started |
+| 11 | Rate limits | Delivered and healthy: a89818f8c7294f311575adb70c29eb11e9476b19 |
+| 12 | Bot resistance | Implemented; final release validation and deployment verification pending |
 | 13 | File upload handling | Not started |
 | 14 | API authorization / exposure | Not started |
 | 15 | Security headers | Not started |
@@ -152,5 +152,13 @@ Step 10 was pushed as `15b6fbffece8d2ed437346d0567afb266b554756`. [Exact Vercel 
 ## Step 11 implementation
 
 Three MEDIUM rate-limit gaps were corrected: untrusted address-header precedence, role-dependent email attempt budgets and non-atomic venue access-preview admission. Existing limits and stronger rolling checks remain. Fifty new request/PostgreSQL regression tests exercise these boundaries; see `step-11-rate-limits.md` for coverage and limitations. No database or provider configuration is changed. Final release checks and exact-commit deployment verification are required before Step 12.
+
+## Step 11 delivery
+
+Step 11 was pushed as `a89818f8c7294f311575adb70c29eb11e9476b19`. [Exact Vercel deployment](https://vercel.com/ai-movie-jobs/shiftstage/DyySH5BS7TL2hXvMK4mALzTGKyxD) succeeded. All 2,856 tests, lint, TypeScript and production build passed. At 14:35:27 UTC, four empty-input production probes returned 400 without creating submissions or emails. At 14:35:33 UTC, health, protected-route denials, callback regression and all 30 readiness checks passed. Local HEAD matched origin/main with a clean worktree before Step 12.
+
+## Step 12 implementation
+
+Two MEDIUM automated-burst gaps were corrected in venue signup and copyright notices. Atomic reservations run after validation and existing rolling checks, before login creation, persistence or mail. Support's stronger existing atomic flow was verified and retained. Fourteen new runtime tests and all 2,873 application tests pass after integrating the independent moderation SDK loading update. See `step-12-bot-resistance.md` for findings and safe-test limits. Final release checks and exact-commit deployment verification are required before Step 13.
 
 After incorporating the independent stylesheet-preload release `bd70d9fa57e3a2acab72709ac8679a09c7f1159a`, final validation passed 2,806 tests, lint, TypeScript and production build. The migration gate verified 132 frozen files and postbuild skipped demo population. Only the three route hooks, shared guard, regression test and two audit documents belong to this step. Push, exact-commit deployment and health verification follow next.

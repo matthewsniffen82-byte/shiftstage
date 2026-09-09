@@ -49,6 +49,7 @@ function requestFixture({ insertError = null, duplicate = false, committed = fal
   const calls = [], removed = [], rows = [];
   const helpers = managerModule();
   const service = compile(read('src/lib/dancr/venue-signup-requests.ts'), {
+    './public-request-rate-limit': { enforcePublicRequestRateLimit: async () => {} },
     './venue-request-account': { ...helpers, createRequestManager: async (_c, value) => { calls.push(value); return 'new-manager'; }, removeUnsubmittedRequestManager: async (_c, id) => { removed.push(id); } },
     './venue-claims': { hashVenueClaimRequestIp: () => 'a'.repeat(64) },
   });
@@ -61,7 +62,7 @@ function requestFixture({ insertError = null, duplicate = false, committed = fal
       single: async () => ({ data: { id: 'request', ...inserted }, error: insertError }),
     }; return q;
   } };
-  return { calls, removed, rows, submit: () => service.createVenueSignupRequest(client, input, '127.0.0.1') };
+  return { calls, removed, rows, submit: () => service.createVenueSignupRequest(client, input, '127.0.0.1', new Request('https://www.mydancr.com/api/venue/signup-requests')) };
 }
 test('saved requests bind the manager without storing password fields', async () => {
   const f = requestFixture(); const result = await f.submit();

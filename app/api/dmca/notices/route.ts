@@ -9,6 +9,7 @@ import {
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { safeErrorMetadata } from "@/src/lib/security/safe-error-metadata";
 import { requestClientAddress } from "@/src/lib/security/request-client-address";
+import { PublicRequestRateLimitError } from "@/src/lib/dancr/public-request-rate-limit";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -35,6 +36,7 @@ export async function POST(request: Request) {
       createAdminSupabaseClient(),
       body,
       requestIp(request),
+      request,
     );
     return NextResponse.json(
       {
@@ -47,6 +49,12 @@ export async function POST(request: Request) {
   } catch (error) {
     if (error instanceof PublicApiError) {
       return apiError(error, "Unable to submit copyright notice.");
+    }
+    if (error instanceof PublicRequestRateLimitError) {
+      return NextResponse.json(
+        { ok: false, error: "Too many copyright notices were submitted. Try again later or email the copyright contact." },
+        { status: 429, headers: { "retry-after": String(error.retryAfterSeconds) } },
+      );
     }
     const message = error instanceof DmcaUserError ? error.message : "";
     if (!message) console.error("Unable to submit copyright notice", safeErrorMetadata(error));

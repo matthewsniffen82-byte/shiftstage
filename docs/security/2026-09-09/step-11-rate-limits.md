@@ -26,7 +26,7 @@ These paths and the shared public limiter now use one server-only helper. It pri
 | Notifications | 240/IP and 120/account/minute for mutations |
 | NFC / deal actions | Separate open/action/generation budgets, signed tokens, authorization and business redemption controls |
 | Copyright notices | Five submitted notices/IP/hour and three/email/day; corrected IP attribution |
-| Support | Existing 12-message/account/minute count and server authorization; burst safety is tracked below |
+| Support | Existing atomic 12-message/account/minute service and server authorization; separate count only in the missing-function fallback (confirmed in Step 12) |
 | Admin actions | Central database role/active-account checks, sensitive-action authorization and audit trail; no blanket low IP cap added that could obstruct moderation |
 
 Application counters use keyed hashes rather than storing raw submitted identifiers or addresses. Existing 429 responses, Retry-After headers and sanitized rate-limit events remain. Supabase's provider-side limits are additional controls: direct provider authentication is not governed by the application's route counters. No new service, CAPTCHA, dependency or infrastructure cost is introduced.
@@ -43,6 +43,6 @@ The PostgreSQL fixture uses an empty disposable database and the reviewed counte
 
 - IP limits cannot prevent distributed botnets and may group legitimate users behind a shared network. Existing subject/account controls remain essential.
 - The existing missing-function compatibility fallback is non-atomic; production has the atomic RPC and readiness verifies its presence. Deployments missing it must restore that prerequisite, not treat the fallback as equivalent burst protection.
-- Venue daily submissions, copyright notices and support retain additional count-then-write checks. Their precise concurrent spam behavior receives the immediately following bot-resistance review; the corrected IP boundary already applies to venue and copyright paths.
+- Venue daily submissions and copyright notices retain additional count-then-write checks. Their precise concurrent spam behavior receives the immediately following bot-resistance review; the corrected IP boundary already applies to both. Step 12 confirmed that support's separate count is only a fallback behind its stronger atomic service.
 - Public discovery/search pagination, bulk enumeration and resource-heavy profile updates receive their scheduled Steps 28–29 reviews. A universal per-IP cap on cached page loads or all admin actions is not added without evidence that it preserves legitimate traffic.
 - Provider-level distributed credential stuffing and CAPTCHA configuration remain deployment/provider considerations. No unsupported claim is made that application counters cover direct Supabase requests.

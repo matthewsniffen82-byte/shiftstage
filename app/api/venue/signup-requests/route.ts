@@ -52,6 +52,7 @@ export async function POST(request: Request) {
       admin,
       body,
       requestIp(request),
+      request,
     );
 
     // Keep the saved request even if email delivery is temporarily unavailable.

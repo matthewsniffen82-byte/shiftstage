@@ -5,6 +5,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { sendTransactionalEmail } from "./notification-delivery";
 import { publicAppUrl } from "./public-app-url";
 import { safeErrorMetadata } from "../security/safe-error-metadata";
+import { enforcePublicRequestRateLimit } from "./public-request-rate-limit";
 
 type DancrClient = SupabaseClient;
 
@@ -75,6 +76,7 @@ export async function createDmcaNotice(
   client: DancrClient,
   input: DmcaNoticeInput,
   requestIp: string,
+  request: Request,
 ) {
   if (text(input.website, 200)) throw new DmcaUserError("Unable to submit copyright notice.");
 
@@ -119,6 +121,18 @@ export async function createDmcaNotice(
   if ((ipRate.count || 0) >= 5 || (emailRate.count || 0) >= 3) {
     throw new DmcaUserError("Too many copyright notices were submitted. Try again later or email the copyright contact.");
   }
+
+  // Keep the rolling checks and reserve burst capacity before writes or email.
+  await enforcePublicRequestRateLimit(client, {
+    namespace: "dmca_notice_hour",
+    request, subject: claimantEmail,
+    windowSeconds: 3600, ipLimit: 5, subjectLimit: 3,
+  });
+  await enforcePublicRequestRateLimit(client, {
+    namespace: "dmca_notice_day",
+    request, subject: claimantEmail,
+    windowSeconds: 86_400, ipLimit: 120, subjectLimit: 3,
+  });
 
   const target = await resolveDmcaTarget(client, infringingUrl);
   const { data, error } = await (client as any)
