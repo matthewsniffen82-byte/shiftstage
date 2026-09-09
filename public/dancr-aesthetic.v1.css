@@ -5346,6 +5346,11 @@ body.dancr-button-system .public-profile-shell .profile-media-section {
   margin-top: 12px !important;
 }
 
+/* A viewport viewer must escape the media card's stacking layer to receive touch. */
+body.dancr-button-system .public-profile-shell .profile-media-section[data-profile-media-open="true"] {
+  isolation: auto !important;
+}
+
 body.dancr-button-system #profileBackdrop #profileModal .profile-modal-media::after,
 body.dancr-button-system .public-profile-shell .profile-media-section::after {
   content: "" !important;

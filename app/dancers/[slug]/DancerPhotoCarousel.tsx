@@ -764,6 +764,7 @@ export function DancerPhotoCarousel({
       aria-label={`${stageName} approved profile media`}
       className="profile-media-section"
       data-dancer-media-tabs
+      data-profile-media-open={Boolean(viewer && activeViewerItem)}
     >
       {socialContent ? (
         <div className="profile-media-socials" aria-label="External profiles">

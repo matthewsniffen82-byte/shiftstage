@@ -46,9 +46,7 @@ try {
   await visibility("hidden");
   await visibility("visible");
   assert.ok((await capture("manual-pause-preserved")).every(video => video.paused));
-  // The existing demo banner overlaps the pointer close target on mobile.
-  // Exercise the supported keyboard close path; report the pointer issue separately.
-  await page.keyboard.press("Escape");
+  await page.locator(".profile-media-viewer-close").tap();
   await page.locator(".profile-media-viewer").waitFor({ state: "detached" });
   assert.equal((await capture("closed")).length, 0);
   assert.deepEqual(errors, []);

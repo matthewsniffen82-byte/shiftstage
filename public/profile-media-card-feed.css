@@ -16,6 +16,13 @@
   z-index: 1600;
 }
 
+/* Keep the demo notice visible without covering the public viewer's close control. */
+.public-profile-shell .profile-media-viewer.profile-media-card-feed:not(:is(:fullscreen, :-webkit-full-screen)) {
+  top: var(--mydancr-preview-banner-offset, 0px) !important;
+  height: calc(100vh - var(--mydancr-preview-banner-offset, 0px)) !important;
+  height: calc(100dvh - var(--mydancr-preview-banner-offset, 0px)) !important;
+}
+
 .profile-media-card-feed .profile-media-card-header {
   position: relative;
   box-sizing: border-box;
