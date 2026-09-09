@@ -119,8 +119,8 @@ body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-she
 body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell, .dancer-profile-preview-overlay) :is(.modal-actions, .live-actions).profile-actions-compact :is(#followBtn, #goingBtn, .profile-action-icon-control) {
   appearance: none !important;
   -webkit-appearance: none !important;
-  --profile-action-border: #353535;
-  --profile-action-background: #191919;
+  --profile-action-border: #525252;
+  --profile-action-background: #242424;
   border: 0 !important;
   border-radius: 8px !important;
   color: #FFFFFF !important;
@@ -175,16 +175,16 @@ body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-she
 }
 
 @media (hover: hover) {
-  body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell, .dancer-profile-preview-overlay) :is(.modal-actions, .live-actions).profile-actions-compact :is(#followBtn, #goingBtn, .profile-action-icon-control):hover:not(:disabled) {
-    --profile-action-background: #242424;
-    --profile-action-border: #525252;
+  body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell, .dancer-profile-preview-overlay) :is(.modal-actions, .live-actions).profile-actions-compact :is(#followBtn, #goingBtn, .profile-action-icon-control):hover:where(:not(:disabled)) {
+    --profile-action-background: #303030;
+    --profile-action-border: #666666;
   }
 }
 
 /* Existing aria-pressed states are the single source of selected styling. */
 body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell, .dancer-profile-preview-overlay) :is(.modal-actions, .live-actions).profile-actions-compact :is(#followBtn, #goingBtn, .profile-action-icon-control)[aria-pressed="true"] {
-  --profile-action-border: #737373;
-  --profile-action-background: #303030;
+  --profile-action-border: #818181;
+  --profile-action-background: #383838;
 }
 
 body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell, .dancer-profile-preview-overlay) :is(.modal-actions, .live-actions).profile-actions-compact :is(#followBtn, #goingBtn, .profile-action-icon-control)[aria-pressed="true"] :is(.action-icon, .profile-action-icon-frame) > svg {
@@ -192,8 +192,8 @@ body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-she
 }
 
 body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell, .dancer-profile-preview-overlay) :is(.modal-actions, .live-actions).profile-actions-compact :is(#followBtn, #goingBtn, .profile-action-icon-control):active:not(:disabled) {
-  --profile-action-background: #3B3B3B;
-  --profile-action-border: #8A8A8A;
+  --profile-action-background: #444444;
+  --profile-action-border: #929292;
 }
 
 body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell, .dancer-profile-preview-overlay) :is(.modal-actions, .live-actions).profile-actions-compact :is(#followBtn, #goingBtn, .profile-action-icon-control):disabled {
