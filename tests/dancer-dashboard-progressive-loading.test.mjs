@@ -6,10 +6,10 @@ import { DASHBOARD_SESSION_KEY } from "../app/dashboard/dashboard-session.ts";
 const response = (data) => new Response(JSON.stringify({ ok: true, ...data }));
 const deferred = () => { let resolve; const promise = new Promise(done => { resolve = done; }); return { promise, resolve }; };
 const settle = () => new Promise(resolve => setImmediate(resolve));
-function setup(t, fresh = true) {
+function setup(t, fresh = true, account) {
   const previousWindow = globalThis.window;
   globalThis.window = { localStorage: {
-    getItem: key => key === DASHBOARD_SESSION_KEY ? JSON.stringify({ accessToken: "test-token", refreshToken: "test-refresh", expiresAt: fresh ? Date.now() / 1000 + 3600 : 0 }) : null,
+    getItem: key => key === DASHBOARD_SESSION_KEY ? JSON.stringify({ account, accessToken: "test-token", refreshToken: "test-refresh", expiresAt: fresh ? Date.now() / 1000 + 3600 : 0 }) : null,
     setItem() {},
   } };
   t.after(() => { globalThis.window = previousWindow; });
@@ -115,4 +115,74 @@ test("background failures cannot block a valid dashboard", async t => {
     : new Response(JSON.stringify({ ok: false }), { status: 503 });
   await loadDancerDashboard(new AbortController().signal, panel => updates.push(panel));
   assert.ok(updates.includes("ready"));
+});
+
+const pausedAccount = { id: "dancer-owner", role: "dancer", accountState: "disabled" };
+const dancerDenied = () => Response.json({ ok: false, error: "Active dancer account required." }, { status: 403 });
+
+test("a verified paused dancer can reload account controls despite denied dancer tools", async t => {
+  setup(t, true, { ...pausedAccount, accountState: "active" });
+  const updates = [];
+  globalThis.fetch = async path => path === "/api/account"
+    ? response({ account: pausedAccount })
+    : path.startsWith("/api/dancer/") ? dancerDenied() : response({ threads: [{ id: "support-1" }] });
+  await loadDancerDashboard(new AbortController().signal, (panel, data) => updates.push({ panel, data }));
+  const ready = updates.find(update => update.panel === "ready").data;
+  assert.equal(ready.account.accountState, "disabled");
+  assert.equal(ready.profile, null);
+  assert.equal(ready.nfc, null);
+  assert.equal(ready.finance, null);
+  assert.deepEqual(ready.affiliations, []);
+  assert.equal(updates.find(update => update.panel === "supportThreads").data[0].id, "support-1");
+});
+
+for (const result of ["denied", "stale-success"]) test(`paused controls do not wait for a slow ${result} dancer response`, async t => {
+  setup(t);
+  const gate = deferred(), updates = [];
+  globalThis.fetch = async path => {
+    if (path === "/api/account") return response({ account: pausedAccount });
+    if (path === "/api/dancer/dashboard") {
+      await gate.promise;
+      return result === "denied" ? dancerDenied() : response({ finance: { connected: true } });
+    }
+    return response({ profile: { status: "approved" } });
+  };
+  const loading = loadDancerDashboard(new AbortController().signal, (panel, data) => updates.push({ panel, data }));
+  // Observe a rejection as well, so a deliberately failing baseline cannot leave
+  // an unhandled promise when the held private response is released in cleanup.
+  const settled = loading.catch(error => error);
+  try {
+    await settle();
+    const ready = updates.find(update => update.panel === "ready");
+    assert.ok(ready, "account controls should open while the private response is held");
+    assert.equal(ready.data.profile, null);
+  } finally {
+    gate.resolve();
+    await settled;
+    await settle();
+  }
+  assert.equal(updates.filter(update => update.panel === "ready").length, 1);
+  assert.equal(updates.find(update => update.panel === "ready").data.profile, null);
+});
+
+test("a cached pause cannot bypass a failed account verification", async t => {
+  setup(t, true, pausedAccount);
+  const updates = [];
+  globalThis.fetch = async path => path === "/api/account"
+    ? Response.json({ ok: false, error: "Account verification unavailable." }, { status: 503 })
+    : dancerDenied();
+  await assert.rejects(loadDancerDashboard(new AbortController().signal, panel => updates.push(panel)));
+  assert.ok(!updates.includes("ready"));
+});
+
+for (const account of [
+  { ...pausedAccount, role: "customer" },
+  { ...pausedAccount, accountState: "deleted" },
+  { ...pausedAccount, accountState: "active" },
+]) test(`a ${account.accountState} ${account.role} does not bypass denied dancer tools`, async t => {
+  setup(t, true, pausedAccount);
+  const updates = [];
+  globalThis.fetch = async path => path === "/api/account" ? response({ account }) : dancerDenied();
+  await assert.rejects(loadDancerDashboard(new AbortController().signal, panel => updates.push(panel)), /Active dancer account required/);
+  assert.ok(!updates.includes("ready"));
 });

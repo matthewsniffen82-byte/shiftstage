@@ -62,3 +62,28 @@ test("the complete initial dancer page contains only an accessible loading annou
   assert.equal((html.match(/role="status"/g) || []).length, 1);
   assert.doesNotMatch(html, /dashboard-head|loading-row|loading-command|loading-metrics|dashboard-grid|Complete your profile|Loading your dashboard…/);
 });
+
+test("the paused page exposes account controls without onboarding or active dancer tools", () => {
+  const exports = {};
+  let stateIndex = 0;
+  vm.runInNewContext(ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX, target: ts.ScriptTarget.ES2022 } }).outputText, { exports, require: name => {
+    if (name === "react") return { ...React, useState(initial) {
+      const index = stateIndex++;
+      return React.useState(index === 0 ? {
+        account: { role: "dancer", accountState: "disabled", email: "fixture@example.test" },
+        profile: null, agentAccess: { active: true },
+      } : index === 1 ? false : initial);
+    } };
+    if (name === "react/jsx-runtime") return require(name);
+    if (name === "next/dynamic") return { default: () => () => null };
+    return new Proxy(() => null, { get: (_target, key) => key === "__esModule" ? false : () => null });
+  } });
+  const html = renderToStaticMarkup(React.createElement(exports.default, { role: "dancer" })).replace(/<style>[\s\S]*?<\/style>/g, "");
+  assert.match(html, /<h1>Dancer dashboard<\/h1>/);
+  assert.match(html, /Account paused/);
+  assert.match(html, /id="dancer-account"[^>]*open=""/);
+  assert.match(html, /Reactivate account/);
+  assert.match(html, />Reactivate<\/button>/);
+  assert.match(html, /fixture@example.test/);
+  assert.doesNotMatch(html, /Complete your profile|dancer-schedule|dancer-profile-media|agent-dashboard-shortcut|dashboard-live-status/);
+});

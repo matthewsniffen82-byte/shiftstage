@@ -45,9 +45,24 @@ export async function loadDancerDashboard(
     update(panel, data[key] ?? null);
   };
 
+  // Keep active-account loading concurrent. A paused account's settings must
+  // not depend on an active-only request succeeding (or reaching its deadline).
+  const profileRequest = loadProfile().then(
+    profile => ({ ok: true as const, profile }),
+    error => ({ ok: false as const, error }),
+  );
   await Promise.all([
-    Promise.all([accountRequest, loadProfile()]).then(([account, profile]) => {
-      if (profile) update("ready", { account: account.account, ...profile });
+    accountRequest.then(async ({ account }) => {
+      if (account?.role === "dancer" && account.accountState === "disabled") {
+        update("ready", {
+          account, profile: null, analytics: null, deals: null, finance: null,
+          affiliations: [], nfc: null, agentAccess: null,
+        });
+        return;
+      }
+      const result = await profileRequest;
+      if (!result.ok) throw result.error;
+      if (result.profile) update("ready", { account, ...result.profile });
     }),
     // These results can arrive independently of the dashboard's identity,
     // activation and payout state. They must not delay opening its controls.

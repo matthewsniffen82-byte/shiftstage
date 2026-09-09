@@ -692,9 +692,10 @@ export default function DashboardClient({
   );
   const dashboardEyebrow =
     role === "customer" ? "Customer dashboard" : role === "venue" ? "Venue dashboard" : "Dancer dashboard";
+  const dancerAccountPaused = role === "dancer" && state.account?.accountState === "disabled";
   const dashboardHeading = isLoading
     ? resolvedDisplayName || title
-    : role === "dancer" && state.error ? profileDisplayName || title : displayName;
+    : role === "dancer" && (state.error || dancerAccountPaused) ? profileDisplayName || title : displayName;
   const dashboardDescription = state.error || state.accountError || "";
   const dancerProfileStatus = role === "dancer"
     ? effectiveDancerProfileStatus(state.profile, state.account?.accountState)
@@ -771,7 +772,7 @@ export default function DashboardClient({
         <DashboardLoadingState role={role} />
       ) : !state.error && (role === "customer" || !isLoading) ? (
         <section className={`dashboard-grid ${role}-dashboard-grid`}>
-          {state.agentAccess?.active ? <AgentDashboardShortcut /> : null}
+          {!dancerAccountPaused && state.agentAccess?.active ? <AgentDashboardShortcut /> : null}
           {role === "customer" ? (
             <>
               <CustomerWelcomeCard
@@ -823,7 +824,11 @@ export default function DashboardClient({
           ) : null}
           {role === "dancer" ? (
             <>
-              <DancerPanel
+              {dancerAccountPaused ? (
+                <InfoPanel title="Account paused">
+                  <p>Your dancer tools are unavailable while your account is paused. Manage your account or contact support below.</p>
+                </InfoPanel>
+              ) : <DancerPanel
                 accountState={state.account?.accountState}
                 analytics={state.analytics}
                 deals={state.deals}
@@ -835,9 +840,10 @@ export default function DashboardClient({
                 rankingEvents={state.rankingEvents}
                 reviews={state.reviews}
                 weeklyReport={state.weeklyReport}
-              />
+              />}
               <DashboardSection
                 description="Messages, notifications, and account settings."
+                defaultOpen={dancerAccountPaused}
                 emphasis="utility"
                 id="dancer-account"
                 icon={<DancerDashboardIcon section="account" />}
@@ -852,7 +858,7 @@ export default function DashboardClient({
                   />
                   <NotificationPanel />
                   <SupportInboxPanel initialThreads={state.supportThreads || []} panelId="dancer-support" />
-                  <AccountControlsPanel accountState={String(state.account?.accountState || "active")} />
+                  <AccountControlsPanel accountRole="dancer" accountState={String(state.account?.accountState || "active")} />
                 </div>
               </DashboardSection>
             </>
@@ -1527,6 +1533,10 @@ function AccountControlsPanel({
         : ownsVenueWorkspace ? "Venue account reactivated." : "Account reactivated.");
       if (isVenueAccount) {
         window.location.replace(nextState === "disabled" ? "/dashboard/venue#venue-account" : "/dashboard/venue");
+      } else if (accountRole === "dancer") {
+        // A fragment-only navigation leaves the previous account's tools mounted.
+        window.history.replaceState(window.history.state, "", nextState === "disabled" ? "/dashboard/dancer#dancer-account" : "/dashboard/dancer");
+        window.location.reload();
       }
     } catch (error) {
       if (isCurrentAccountAction(requestId, controller)) setStatus(error instanceof Error ? error.message : "Unable to update account.");
