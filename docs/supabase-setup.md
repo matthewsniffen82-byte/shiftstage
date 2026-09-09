@@ -1,50 +1,24 @@
 # Supabase setup
 
-Use this to configure the live Dancr app and database.
+MyDancr already has a production Supabase project. Do not create a replacement production database or run an old partial schema setup against it. See the [current architecture audit](supabase-reliability/README.md) and [migration safety procedure](supabase-reliability/migration-safety.md).
 
-## 1. Create the project
+## 1. Select the correct environment
 
-Create a new Supabase project for Dancr production. Save:
+Use the existing configured project for production read-only checks. Schema replay and destructive failure tests require an explicitly designated disposable Supabase project. No project should be assumed disposable merely because it is available in the account. For the selected environment, use its own:
 
 - Project URL
 - Public anon key
 - Service role key
 
-Add them to `.env.local` locally and Vercel environment variables.
+Keep credentials in that environment's secret configuration. The service-role key belongs only in trusted server processes. Never copy production service-role access into frontend code or use it for test-data setup in an unverified project.
 
 ## 2. Run the database schema
 
-Open Supabase SQL Editor and run the migrations in order:
-
-`supabase/migrations/202606250001_initial_schema.sql`
-
-Then:
-
-`supabase/migrations/202606250002_auth_bootstrap.sql`
-
-That creates the core Dancr tables for customers, dancers, venues, shifts, follows, going signals, notifications, analytics, approvals, and rankings.
+Run `npm run db:check-migrations` before preparing a database change. Historical version collisions and ledger gaps mean the current directory is not yet certified for clean replay. Follow the reconciliation procedure linked above; do not run only the initial schema/auth files or blindly push all apparently missing versions. Every schema change needs a reviewed migration, a disposable-environment test, and a recovery path.
 
 ## 3. Run the storage setup
 
-Run:
-
-`supabase/migrations/202606250003_storage_policies.sql`
-
-Then run:
-
-`supabase/migrations/202606260001_content_reports.sql`
-
-That creates:
-
-- `dancer-photos`
-- `verification-documents`
-- `content_reports`
-
-`dancer-photos` stores profile and gallery photos. Uploaded files stay in review in the database until an admin approves them.
-
-`verification-documents` stores private ID and selfie verification files. Only the dancer owner and admins can read or manage those files.
-
-`content_reports` stores trust and safety reports for admin review.
+The live project has ten storage buckets with existing ownership and moderation policies. Preserve those policies. The architecture audit records current public/private status, limits and MIME types. Identity-document collection has been retired; the legacy `verification-documents` bucket is private and must not be treated as an instruction to collect new identity files. Database backups do not include storage object bytes.
 
 ## 4. Configure auth
 
@@ -55,9 +29,8 @@ Set the production site URL to:
 Add redirect URLs for:
 
 - `https://www.mydancr.com/auth/callback`
-- `https://mydancr.com/auth/callback`
-- `https://shiftstage.vercel.app/auth/callback`
-- `http://localhost:3000/auth/callback`
+
+The fresh production audit found only that canonical callback in the additional redirect allowlist. Keep development and preview callbacks in their own test environment; do not widen production redirects as a setup shortcut.
 
 ### Auth email sender
 
@@ -80,7 +53,7 @@ If signup says the email rate limit was exceeded, wait for the Supabase rate win
 
 ## 5. Add Vercel environment variables
 
-Add every value from `.env.example` to Vercel.
+Use `.env.example` as a reference for required and optional integrations. Configure each deployment environment with its own intended Supabase target; do not blindly copy all production values to development or previews.
 
 The first required values are:
 
@@ -99,17 +72,9 @@ Use this production email value:
 
 `EMAIL_FROM=Mydancr <no-reply@mydancr.com>`
 
-## 6. First live features to connect
+## 6. Verify the existing integration
 
-Build in this order:
-
-1. Customer and dancer auth.
-2. Approved dancer public profile pages.
-3. Follow, notify, and going signals.
-4. Dancer shift posting and profile editing.
-5. Admin approval queue.
-6. Analytics dashboard.
-7. Stripe dancer subscriptions after approval.
+Run `node scripts/check-supabase-readiness.mjs` with the selected environment's server credentials supplied securely. It performs read-only connectivity, schema-presence and access checks. Run the full test suite, TypeScript check, lint and production build before release. Real signup/password-reset email tests require designated disposable accounts. Check Vercel success for the exact pushed SHA and both deployed health endpoints. Application deployment does not apply SQL migrations.
 
 ## Auth behavior
 
@@ -121,8 +86,8 @@ Customer signup creates:
 Dancer signup creates:
 
 - `app_users` with role `dancer`
-- `dancer_profiles` with `real_name` for verification
+- `dancer_profiles` with private account fields; legacy identity fields are not a request to collect identity documents
 - `stage_name` for the public profile cards
 - `draft` profile status until setup and approval are complete
 
-The database trigger in `202606250002_auth_bootstrap.sql` also creates these records automatically from Supabase Auth metadata, so account creation still works when email confirmation is enabled.
+The current Auth trigger and `provision_app_account_safely` support account initialization with email confirmation enabled. Later migrations supersede the original bootstrap logic. Use the current function definitions and provisioning/recovery tests when diagnosing account setup; do not replay the original bootstrap migration to repair one account.

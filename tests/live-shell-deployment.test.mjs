@@ -35,7 +35,7 @@ test("development, type checking, and production builds refresh the live shell h
   assert.equal(scripts["generate:live-shell-version"], "node scripts/generate-live-shell-version.mjs");
   assert.equal(scripts.predev, "npm run generate:live-shell-version");
   assert.equal(scripts.pretypecheck, "npm run generate:live-shell-version");
-  assert.equal(scripts.prebuild, "npm run generate:live-shell-version");
+  assert.equal(scripts.prebuild, "npm run db:check-migrations && npm run generate:live-shell-version");
   assert.match(generatorSource, /createHash\("sha256"\)/);
   assert.match(generatorSource, /liveShell\.replace\(\/\\r\\n\?\/g, "\\n"\)/);
   assert.match(generatorSource, /"outputs", "index\.html"/);

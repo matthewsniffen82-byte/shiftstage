@@ -31,7 +31,7 @@
     "generate:venue-logo-variants": "node scripts/generate-dark-card-venue-logos.mjs",
     "predev": "npm run generate:live-shell-version",
     "dev": "next dev",
-    "prebuild": "npm run generate:live-shell-version",
+    "prebuild": "npm run db:check-migrations && npm run generate:live-shell-version",
     "build": "next build",
     "postbuild": "node scripts/manage-layout-review-postbuild.mjs",
     "lint": "eslint . --max-warnings=0",
@@ -47,7 +47,8 @@
     "media:import-platform-tv": "node scripts/import-platform-tv-videos.mjs",
     "pretypecheck": "npm run generate:live-shell-version",
     "typecheck": "node --test tests/*.test.mjs && tsc --noEmit --incremental false",
-    "start": "next start"
+    "start": "next start",
+    "db:check-migrations": "node scripts/check-supabase-migrations.mjs"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.3",

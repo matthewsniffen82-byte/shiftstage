@@ -1,0 +1,520 @@
+{
+  "format": 1,
+  "auditedSourceCommit": "6ef753e2a654d52a8621eed508d30072311b4a40",
+  "capturedAt": "2026-09-09T09:08:49.346467+00:00",
+  "purpose": "Immutable historical files, including documented legacy version collisions. This is not a replay-ready migration ledger.",
+  "files": [
+    {
+      "file": "202606250001_initial_schema.sql",
+      "sha256": "59263b5cff267e3cd329165c539dcecbdea7f14ffddb8d36978d1d11e787fcd5"
+    },
+    {
+      "file": "202606250002_auth_bootstrap.sql",
+      "sha256": "2826503936519dc932bb4bbb6f3211a8db8e42e71e674b7947cd3e3c4d5c68d3"
+    },
+    {
+      "file": "202606250003_storage_policies.sql",
+      "sha256": "5f1b28997376af305c345c8939986e6bfbdede644f9c1dff4ca26dd66ea04f84"
+    },
+    {
+      "file": "202606260001_content_reports.sql",
+      "sha256": "f36895aead2e6b2462b16582db9d116b4c5185608201009cfd29a17eb06bb8c8"
+    },
+    {
+      "file": "202606260002_api_role_grants.sql",
+      "sha256": "5c1cb9fb97bdfee017d8f8329dd5bcd50b7fddfab9d79483f105e2b07b3a817c"
+    },
+    {
+      "file": "202606280001_add_venue_user_role.sql",
+      "sha256": "cef2cdf8ace4f5625aa18a90bd6622e936e5d3311c3f248463919df4f8facc4b"
+    },
+    {
+      "file": "202606280001_shift_location_checkins.sql",
+      "sha256": "85effb050c6ad14de52c28df925c77378cee79d73429f8d088921b88fb9691d7"
+    },
+    {
+      "file": "202606280002_club_deal_qr_attribution.sql",
+      "sha256": "1cc9a1619e718f90329e56375339282a7f8678ad7d5e93095da8e8e619cbcfa4"
+    },
+    {
+      "file": "202606300001_shift_verification_controls.sql",
+      "sha256": "80c8be97ce8f36ed98ab78106f82c6031b16c48bc07af826e25501cca69fb867"
+    },
+    {
+      "file": "202607050001_support_inbox.sql",
+      "sha256": "e37f4b02b666a84f79a5610f4c186c8c608b2a26b8ad0fd815713bb310259a28"
+    },
+    {
+      "file": "202607100001_image_moderation.sql",
+      "sha256": "0dd7731bb666da07b6db2b2553b551b1236d87eca9291e60ae336894cab4cc2a"
+    },
+    {
+      "file": "202607110001_seed_las_vegas_venues.sql",
+      "sha256": "8d782a4dfb90e5a6f016b7c7fe2776109978309fa2a8ef9ddcfecfbefb515e49"
+    },
+    {
+      "file": "202607110002_expand_las_vegas_adult_venues.sql",
+      "sha256": "24635592475856d84adce2937391b0096d339a83c310e61adde11a592c012ff7"
+    },
+    {
+      "file": "202607120001_image_moderation_retry_statuses.sql",
+      "sha256": "e11facc0da969ddb3af55dc84b2f774624af27e661939ac79e18b45ca4746229"
+    },
+    {
+      "file": "202607150001_dancer_profile_visibility.sql",
+      "sha256": "1236b4fad1fc36246cb2893401dd3a59cf278b20fa7c6bb29740667580156c06"
+    },
+    {
+      "file": "202607220001_incognito_visibility_hardening.sql",
+      "sha256": "860079d0a657ce283ef0441773f6857053eb212bb433758607138c8f5b0abfc1"
+    },
+    {
+      "file": "202607260001_ai_support_chat.sql",
+      "sha256": "ce87c8bbc86b2790c40d0e6f2e972524dea1eebbe167af50d45cda5172b1fb47"
+    },
+    {
+      "file": "202607260002_venue_accounts_qr_analytics.sql",
+      "sha256": "0fc3f6699eb9a2a6ba3b6194cd70bf65613d73e38a0e5a6aa46b0a4d971d9766"
+    },
+    {
+      "file": "202607260003_anonymous_going_signals.sql",
+      "sha256": "87ce52932155c2e79db1eeab6ad22b8dc52d26d7cb574a0fea74255945666441"
+    },
+    {
+      "file": "202607270001_mydancr_tv.sql",
+      "sha256": "3491303e1ad9c55ce490a61388b3ed20028f06e891290c039c9aaa63ad2f5b33"
+    },
+    {
+      "file": "202607270002_mydancr_tv_ten_second_limit.sql",
+      "sha256": "7aaf9a2f7dc4abea23f9fc0fa81c8040a00b1021f9e882ec051e9e3d4f8f01fa"
+    },
+    {
+      "file": "202607280001_mydancr_tv_ai_moderation.sql",
+      "sha256": "b8f19500ad5ac9e17a123710c1202396774906ed6b760d4ffa0a3744d6673d92"
+    },
+    {
+      "file": "202607280002_dmca_compliance.sql",
+      "sha256": "9b990c6c883e560bc45ccf2f887d9841f881256200321cc46ad46830b00d3d80"
+    },
+    {
+      "file": "202607280003_verifymycontent_identity_tokenization.sql",
+      "sha256": "000df8578511c56aed764cba18dbefb03a3d831586132da0501ba4388f2408c6"
+    },
+    {
+      "file": "202607300001_venue_cover_images.sql",
+      "sha256": "61d68ee1328f7cd946ba51fd177840b8ecfdf80f186a69bc1394f81405a3a414"
+    },
+    {
+      "file": "202607300002_qr_revenue_lifecycle.sql",
+      "sha256": "608bbbc9606f1aa042e9bec3f8e20b91ee3bbddc6de3314ee7ba9735a8146f6b"
+    },
+    {
+      "file": "202607300003_mydancr_tv_applause_events.sql",
+      "sha256": "2de01b9c6510b34efb8278914cc3d0321911415659bf408ec71c5e8b80ab5c5e"
+    },
+    {
+      "file": "202607310001_mydancr_tv_profile_video_limit.sql",
+      "sha256": "d4853f0229f9d35c6a4a6492c215a3073aa6b7c3496a8623eddc0a9a3219b741"
+    },
+    {
+      "file": "202608020001_dancer_profile_avatar.sql",
+      "sha256": "c02a4285208972429217cb2aa0e642ca5cfaa10cec6fd92d5915a4759b6c91c3"
+    },
+    {
+      "file": "202608020002_production_geofence_checkins.sql",
+      "sha256": "f8e0b4a02a1edcf1aa0fb35fce478fa1175351c127de833fcd12f5f9a3f6757f"
+    },
+    {
+      "file": "202608020003_lock_shift_verification_fields.sql",
+      "sha256": "a0d96aa0be3b3ee00c010d816adb6f55f49a798c110e9daec13cc86da1902b27"
+    },
+    {
+      "file": "202608030001_venue_ownership_claims.sql",
+      "sha256": "5a3ffbcb528f883e9fd5d754e9eb1f3b5223b37189592a55a6dbb4737fe5792d"
+    },
+    {
+      "file": "202608030002_venue_claim_codes.sql",
+      "sha256": "94a5e4d6204b9a9a69d2629be2d39c7a295eade3880f0cde356ce9c44f63a932"
+    },
+    {
+      "file": "202608030003_venue_signup_code_redemption.sql",
+      "sha256": "92c2101628612e0fbc10f2560aad9e07ccdeb5755a0380c609bfa7e24e279b4d"
+    },
+    {
+      "file": "202608040001_public_media_watermarks.sql",
+      "sha256": "2df1fa8ef009962a9826871c5af050ac388d58f5cdc32c1098bb41e8a1f7e46d"
+    },
+    {
+      "file": "202608040001_qr_finance_operations.sql",
+      "sha256": "4c6c6285abb384eee6045493aae55b280af6ebbd3ed59734652e630e78d0302b"
+    },
+    {
+      "file": "202608050001_dancer_venue_affiliations.sql",
+      "sha256": "499a7543388affa9b996d71576a807b9ae6af86fc8f178e3289fc8178851bd75"
+    },
+    {
+      "file": "202608070001_account_recovery_events.sql",
+      "sha256": "c02c8d32cc3ab303b75095d37d8f98ab89dc3465dc7c6984122caf0c55821200"
+    },
+    {
+      "file": "202608080001_multi_offer_club_deals.sql",
+      "sha256": "265fb95b377068934fb7bd0d79177a08c0513a76d3e168bd92c89ec40e14b4b6"
+    },
+    {
+      "file": "202608080001_mydancr_tv_thirty_second_feed_distribution.sql",
+      "sha256": "b335fe5a3426a7391f17b99a6ce5edabd4faae32f86bde24d79871597060464c"
+    },
+    {
+      "file": "202608080001_separate_venue_receivables_and_dancer_payouts.sql",
+      "sha256": "9e6db2c1e8799a98f7087eaca0227ed8a898f3ef60659663ae7d63f5d10dd217"
+    },
+    {
+      "file": "202608080002_venue_gated_dancer_profiles.sql",
+      "sha256": "77930bb5a15d64a78a71c5e79c2906ec03211344cc503a63ac146f4c69bd9b9d"
+    },
+    {
+      "file": "202608080003_remove_verifymycontent_integration.sql",
+      "sha256": "3d6dd7cf3984316f0121ff6f68b997508715124a53996f213b009cba0ce1c618"
+    },
+    {
+      "file": "202608090001_restore_public_dancer_media.sql",
+      "sha256": "be4f1c07dc0590eee8305f0bbf55d3b51d597222313f19c5dc8c6a37a0a111b6"
+    },
+    {
+      "file": "202608090002_require_shift_venue_affiliation.sql",
+      "sha256": "0ad2487a866a4bca23ba12bac654760d1182815e1de482a68806b0b2901ced2e"
+    },
+    {
+      "file": "202608090003_nfc_tap_experience.sql",
+      "sha256": "a02dec77b24c98389a4a383d30b4b14f35dde35430f6308763deedddd2d6dad2"
+    },
+    {
+      "file": "202608090004_nfc_profile_authorization.sql",
+      "sha256": "9558bd385da414904aca8b3f47a5b81de90183bcbd46f22c21e96f6e9c1de70f"
+    },
+    {
+      "file": "202608090005_admin_nfc_provisioning.sql",
+      "sha256": "eb21c6b5c3508de79144bfaa5f0db7534fff8178dd4332986c03b84b23229565"
+    },
+    {
+      "file": "202608100001_venue_team_operations.sql",
+      "sha256": "cf3ce2a651ba43333f23732f6636f14f06181e9c5c3d7d2413d6e158ea62c7dc"
+    },
+    {
+      "file": "202608100002_remove_dancer_profile_bio.sql",
+      "sha256": "b96b1226568fe70675be3339e34253afbf5233910f229500f6c32997ad8d9999"
+    },
+    {
+      "file": "202608100003_require_manager_approval_for_nfc_checkin.sql",
+      "sha256": "8fa0aded759aba0df4f17942b0c3c95e1a16e91500a7bd0e6f3ce5726566ab21"
+    },
+    {
+      "file": "202608110001_restore_first_tap_nfc_affiliation.sql",
+      "sha256": "514a3c87ed126442a7364ce9d24a15b364a54464189e91fe72aa22afed0fdac5"
+    },
+    {
+      "file": "202608110002_dressing_room_nfc_checkins.sql",
+      "sha256": "ac7a3a406ff9c8dc4a55e06e829b50c6586af46a88d6afb5b54bc3dd0b4c0218"
+    },
+    {
+      "file": "202608110003_fictional_las_vegas_venue_identities.sql",
+      "sha256": "9fb738edf8995dc8c799239730a14c02f71530b635bc33bf02672de7f0169818"
+    },
+    {
+      "file": "202608110004_fictional_las_vegas_venue_addresses.sql",
+      "sha256": "919c79205a3709578ec11c1127802c13038dd39c0cb548d5a7907e0e89cc6bfb"
+    },
+    {
+      "file": "202608110005_nfc_shift_lifecycle.sql",
+      "sha256": "cd20c3d195cbf64206c5edcc2795e8be85ba0cd8022fa3feb7dd15078fb928d4"
+    },
+    {
+      "file": "202608120001_demo_locked_working_now.sql",
+      "sha256": "812fa73b67bb49fc87defc18867aa0a5cfaa6cfb917050c638c815eb4394436c"
+    },
+    {
+      "file": "202608140001_require_dancer_submission_before_nfc.sql",
+      "sha256": "1593efa43d412252be187348f3aaf9c18ec3122e4d5acbb2b97dc2b8321f6617"
+    },
+    {
+      "file": "202608140002_dancer_profile_live_notification.sql",
+      "sha256": "13f471a2ae2e3c1b2865abbd4ffb2f56e36b6e71e6da5dc988753a2ffbfe1d83"
+    },
+    {
+      "file": "202608140003_restore_mydancr_tv_ten_second_limit.sql",
+      "sha256": "b9aa9ac1f41955cee678d7bcf45716e71626939db82c7aa3b81c6305d7a912a4"
+    },
+    {
+      "file": "202608140004_restore_mydancr_tv_thirty_second_limit.sql",
+      "sha256": "b1c2a750045758103cca2b1281c3d306a5970c71f88a88f0830d991f5ee236aa"
+    },
+    {
+      "file": "202608150001_enable_selected_demo_venue_travel.sql",
+      "sha256": "5fac9cc0db0a57ecf6ca88fdc1b2121e8272348ce35b2858d3098362d5f6b99c"
+    },
+    {
+      "file": "202608150002_allow_account_login_deletion.sql",
+      "sha256": "19b93db2093ad122c2257efcf08f867bd484dfc395707521c83ba62029834612"
+    },
+    {
+      "file": "202608150003_preserve_deleted_account_audit_history.sql",
+      "sha256": "b692cc71f93d7d9325d9ace3841aa8dc8bbf43466edd8c7113e841177cb2afb3"
+    },
+    {
+      "file": "202608150004_allow_phone_camera_quicktime_videos.sql",
+      "sha256": "fb3b89a2671bcc25a6745dcb799c5a69d777e8301ee54c38691cf732147c5733"
+    },
+    {
+      "file": "202608150005_require_explicit_dancer_identity.sql",
+      "sha256": "55159309fdb894c57da1f9464d9676cc2965e443885b7c49e461ae3a80b1b1c5"
+    },
+    {
+      "file": "202608150006_align_nfc_activation_with_onboarding.sql",
+      "sha256": "10d14ba72ee3b73a1c04ec83baa1d3899e9ce07f7c75de321107d57c00b5cc9b"
+    },
+    {
+      "file": "202608150007_admin_controlled_referral_fees.sql",
+      "sha256": "5cfe3ef7b650a1f4692b98025d395db8f5c5dce13e13a4e619ef9d55b2dc8cf6"
+    },
+    {
+      "file": "202608160001_deactivate_uncontracted_referral_deals.sql",
+      "sha256": "2808977fb54d9b9f55a2701b5dffd4ff02a2e10160bdaef0bb7e4eebb1188ad7"
+    },
+    {
+      "file": "202608160002_atomic_referral_fee_rejections.sql",
+      "sha256": "81f82ddd706f97514db8028e015789b9b24877569c7f63028447e69a34f3b1c4"
+    },
+    {
+      "file": "202608160003_venue_pilot_night_reports.sql",
+      "sha256": "2a2f620df71b2207029234b9b9636c6963054c778157d21f210bc86c4abe8974"
+    },
+    {
+      "file": "202608160004_prohibit_liquor_club_deals.sql",
+      "sha256": "4f7e187422d2732505b1b649daf521de34480f4c43089ca4011bdd05352d8aad"
+    },
+    {
+      "file": "202608170001_standardize_active_club_deals.sql",
+      "sha256": "d498e3058d7a8f92a8591c590eab56f8d0c6a9e693a4f320c6555d07ceff37c4"
+    },
+    {
+      "file": "202608170002_sales_agent_commissions.sql",
+      "sha256": "c579f7f93cefe0b2c0e1f106251168c241a352f8e7fed9d0e1afdf8079a7ea82"
+    },
+    {
+      "file": "202608170003_remove_sales_agent_commissions.sql",
+      "sha256": "7cc7e2b884b6be7796977bb18d5c630449ce93f1bc922bcaec61da99861f1d2e"
+    },
+    {
+      "file": "202608170004_dancer_earnings_payout_system.sql",
+      "sha256": "8c7df2392673ea7cdb2a0e57243474355737ebdb0025c7e36a122c8ea39f732c"
+    },
+    {
+      "file": "202608180001_bitsafe_payout_provider.sql",
+      "sha256": "ce2677f2c872a200b3c4076aa4db8cc85ad6ba57ded5dd4872b09beaaf07d55d"
+    },
+    {
+      "file": "202608180001_fix_dancer_profile_commission_at_fifty_percent.sql",
+      "sha256": "612aa38c8d1fd9f9268a3bb7bd8fb1ae2616a7bb98d82f73086b2874ff65a26d"
+    },
+    {
+      "file": "202608180002_set_dancer_profile_commission_scale.sql",
+      "sha256": "00f9a6cbfeabad81ec28cdc4de4194f7286899bb77992eb72f3afd31b8980487"
+    },
+    {
+      "file": "202608180003_bitsafe_payout_provider.sql",
+      "sha256": "ce2677f2c872a200b3c4076aa4db8cc85ad6ba57ded5dd4872b09beaaf07d55d"
+    },
+    {
+      "file": "202608180004_yoti_age_verification.sql",
+      "sha256": "8da4dfffdce374b7b12438f61cabdacf468ec091db3b4e073a5dbbcd55d46eaa"
+    },
+    {
+      "file": "202608180005_standardize_all_venue_addresses.sql",
+      "sha256": "531897603eb573a12fadcc265f07ae61891fd2c5d818d3d39205f8e9c2dccbb4"
+    },
+    {
+      "file": "202608190001_phase_zero_atomic_nfc_redemption.sql",
+      "sha256": "79528f2f9bb3b0493dc79fcdbb7de0ffbbb570bdf7f4c2d164b788995d4fb18a"
+    },
+    {
+      "file": "202608200001_nats_commission_ledger.sql",
+      "sha256": "0c0f55daeae0d985113760e5e71680950e282ad238ffe0a4fee3a3995fbdc71e"
+    },
+    {
+      "file": "202608200002_decommission_bitsafe_payout_provider.sql",
+      "sha256": "f61f4e0acb9e3910580aeaeae9ffc251741c821ac7b786caea6bccdfa7760a0b"
+    },
+    {
+      "file": "202608200003_remove_yoti_age_verification.sql",
+      "sha256": "3a593f85a52a372bf6867f83802d572e3b6a8aaf4b46966402c33a2282d01291"
+    },
+    {
+      "file": "202608220001_venue_signup_requests.sql",
+      "sha256": "5bf9aae55630e3008f726b0de1f5631267cc9e93a4db8103149f9f72296679e2"
+    },
+    {
+      "file": "202608220002_venue_self_publish_onboarding.sql",
+      "sha256": "4ad33f396c31a05d017ac6096d5f02a52b16f86a913cce340a343cf194d6e73a"
+    },
+    {
+      "file": "202608220003_agent_commission_nats_settlement.sql",
+      "sha256": "21aa13e29a4032e2e188d83d51bf0bb7f3f2788072faa96f6658f31366b808f8"
+    },
+    {
+      "file": "202608220004_agent_referral_onboarding.sql",
+      "sha256": "3636a03f4c75becbd381ac145567e00a3660d2812d127a7892d8ce2c6f0a7211"
+    },
+    {
+      "file": "202608230001_venue_club_deal_requests.sql",
+      "sha256": "33de93c9cdf43b940fa4c81159d84c350158bc8bd19d72e06570a767fd69a353"
+    },
+    {
+      "file": "202608240001_admin_managed_venue_page_review.sql",
+      "sha256": "eb1037b074c86a171d41333b206ff8889c490d8ad23e1598bef245859b144f59"
+    },
+    {
+      "file": "202608240002_venue_approval_publishes_page.sql",
+      "sha256": "5fb5c3867073110f17ae11539f590f0321e7ffe277c9480ca66e83beb91f335a"
+    },
+    {
+      "file": "202608240003_private_venue_roster_management.sql",
+      "sha256": "af2ab343d38f0e3a2a16296dd9d2e7d310090bba7253c74819d4c3a2bc227cd3"
+    },
+    {
+      "file": "202608240004_free_admission_club_deals.sql",
+      "sha256": "2437bf76547f857eb7d89eabaf513869af71b47ce3fc7dfab9c7ea10138d017d"
+    },
+    {
+      "file": "202608240005_allow_verified_venue_addresses.sql",
+      "sha256": "a7c78af000889ade34d673751e1ce50127ebaf613969730a74736c185d56e4b8"
+    },
+    {
+      "file": "202608240006_require_published_venue_coordinates.sql",
+      "sha256": "d8661290f22458a08140adb8e3e5e87591080f7a2951d5394c82dd3a8bf52e35"
+    },
+    {
+      "file": "202608240007_venue_card_live_notification.sql",
+      "sha256": "a8d8594879aec65f5609429b50cdcc204a15a40c0e0efc7a52dc6da72243d872"
+    },
+    {
+      "file": "202608250001_dancer_media_library_capacity.sql",
+      "sha256": "742373bc54931f16a12f26c516c8446c241dd169a5927e645232c83fe7c90d84"
+    },
+    {
+      "file": "202608280001_secure_public_schema_defaults.sql",
+      "sha256": "c6010941b81aeaf0b6075c509fb6e9c48f875cff8681fb511c6c179e180d9a0a"
+    },
+    {
+      "file": "202608280002_lock_account_role_mutations.sql",
+      "sha256": "351e6f29dfa34cf208634183c63e7f7c3f7e58d301fa51fc39eb8013a6a6eba1"
+    },
+    {
+      "file": "202608280003_lock_dancer_content_mutations.sql",
+      "sha256": "0c846990ccc0b4709b15ce4606f6f5236263a550d3bfc8e243b6c0eff7ca49fa"
+    },
+    {
+      "file": "202608280004_lock_tv_content_mutations.sql",
+      "sha256": "f5ba4c7eb0fb85f4d0c65c02165fa9072fda4ceae8b3151b3ced71328be878a2"
+    },
+    {
+      "file": "202608280005_lock_server_managed_media_storage.sql",
+      "sha256": "89341b229b4bdfec8a741e551863d5ce6c8624131899a45d87cc565b8eae66d6"
+    },
+    {
+      "file": "202608280006_lock_security_definer_trigger_execution.sql",
+      "sha256": "7bd8934569005273445a564480d64f4b3f7630c40ddace8f0818f2ddfdfe3390"
+    },
+    {
+      "file": "202608290001_lock_auth_signup_role_claims.sql",
+      "sha256": "fe33d3b3cac2d9d9817f9d648f9314b79dcd36ac132110ee3a812053b5845dd4"
+    },
+    {
+      "file": "202608300001_harden_direct_browser_rls.sql",
+      "sha256": "e1cf8f1e1a9f41e4dab01215a8bc87967a9c7c936e54ffee7cfad5c67d20b749"
+    },
+    {
+      "file": "202608300002_serialize_financial_redemptions.sql",
+      "sha256": "d1d5d6a87156d37047fc3b9e2843e1a2a5a38747933206711f7d599fb5ae3a91"
+    },
+    {
+      "file": "202608300003_atomic_request_rate_limits.sql",
+      "sha256": "53a166c1649166a986b30345651520302d789735ed6397ae8b694e99c9ef99fb"
+    },
+    {
+      "file": "202608300004_harden_database_function_execution.sql",
+      "sha256": "f6ebbaebb618f00cffd703f83a3647d47ce529a8420be9f50cc544c49685638e"
+    },
+    {
+      "file": "202608300005_bound_public_metric_aggregation.sql",
+      "sha256": "638eea510289b874272e24aa204408c385d9a6b6daef351e14bf2d0a39bc9fb7"
+    },
+    {
+      "file": "202608300006_minimize_authenticated_dml_grants.sql",
+      "sha256": "7173a516ebffe035f9071e9d3dc32e69e1dec255ac6f2e462d01ff23c401059d"
+    },
+    {
+      "file": "202608300007_anonymous_media_likes.sql",
+      "sha256": "d151994bf8d30a3ab0de2e232b98eec3fcbea9efffcdace6f1ee8b883d4f4ff9"
+    },
+    {
+      "file": "202608300008_dancer_engagement_notifications.sql",
+      "sha256": "63ecfcf24f112d58e7072d80fb7609a57fda03176ec51bd95a3aa913db7e8eff"
+    },
+    {
+      "file": "202608300009_customer_saved_club_deals.sql",
+      "sha256": "ce59771d8f84191dbbe5e317851f9e9b1b2eade76901fb7eafecad1d178dda26"
+    },
+    {
+      "file": "202609070001_supabase_access_boundaries.sql",
+      "sha256": "d53542d19f6d603f65a55c8266fa26f8231898115400d43e45b692ca055ba101"
+    },
+    {
+      "file": "202609070002_restore_recovery_and_saved_deal_schema.sql",
+      "sha256": "63d4a107659feae86981ee87422ed6c4422dd662875c017a489a3a1277f38b55"
+    },
+    {
+      "file": "202609070003_atomic_accounts_publication_and_metrics.sql",
+      "sha256": "2fc6066b734504fedb23f1dfff4180630eed45c6ec40e43b3a143cc9cf508e63"
+    },
+    {
+      "file": "202609070004_atomic_support_messages.sql",
+      "sha256": "518729cd13cc329563a610099691b5970f95a8c10f8a2c1fb5418d95763605df"
+    },
+    {
+      "file": "202609070005_validate_existing_tv_duration.sql",
+      "sha256": "249a4feaa5e3650c0188a5fb60a7a6df93fe9956716adf173a4df5a2ff3b2f61"
+    },
+    {
+      "file": "202609070006_dancer_media_pins.sql",
+      "sha256": "68caae4242ff2ed8bee0130b82996322dfcd2282a3df7f448d0d70f1e672e252"
+    },
+    {
+      "file": "202609080001_prospective_nats_dancer_commissions.sql",
+      "sha256": "e99129cd422198a4cf03fef540742334cddd73dc7ec3c3b9f37026250ae2bad0"
+    },
+    {
+      "file": "202609080002_dancer_profile_links.sql",
+      "sha256": "502a8351b0cdad96b17c628486f8487cccfaa82fe001e97445f975a95cb95405"
+    },
+    {
+      "file": "202609080003_venue_request_manager_accounts.sql",
+      "sha256": "883eb9d412aa0ac9c4c7a38e6db920049ba0ebaab6da528625e5c677e0706f2b"
+    },
+    {
+      "file": "202609080004_venue_email_confirmation.sql",
+      "sha256": "d566f9895638f1fa246d2823a580cd41d53a215a86d7c366ea19c9595756de39"
+    },
+    {
+      "file": "202609090001_allow_address_only_venue_publication.sql",
+      "sha256": "d17586dd8a711682ddb4177f8f7abb8f8573dde8759e62caf54f96d8d8ce0da2"
+    },
+    {
+      "file": "202609090002_venue_deal_visibility_and_removal.sql",
+      "sha256": "062784508117a5cc7749f9f02fb7e116b2daca6db29ad278a22e1d9649016dd2"
+    },
+    {
+      "file": "202609090003_archive_removed_venue_deals.sql",
+      "sha256": "6b369a4d4f25580f591c4b25ebdf1e264f553a611fb98a9fd8f62b5b8a3a44a0"
+    }
+  ]
+}
