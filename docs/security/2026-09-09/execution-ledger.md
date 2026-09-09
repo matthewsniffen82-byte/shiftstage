@@ -26,8 +26,8 @@ Step 1 delivered as `50d4eb543dbfc93dbed6f0663c51aa2332542cb4`, pushed to origin
 | 3 | Supabase RLS | Delivered and healthy: 0829c12ed79f6525105a5b313ab374709670a4ad and 9b74c805bc87cae8891269e6d03c005d7e8842ab |
 | 4 | Storage permissions | Delivered and healthy: b3b46b5d7485dc3bad5ef179a996f26730113d21 |
 | 5 | Authentication / recovery | Delivered and healthy: 7bc16ed2204df7a07678001c522544cec2425a10 |
-| 6 | Role authorization | Fix deployed and cleanup verified: 5db6de15bbd5e5d9746f2c21a901286ecd980c92; migration-freeze delivery follow-up pending |
-| 7 | Admin access / auditing | Not started |
+| 6 | Role authorization | Delivered and healthy: 5db6de15bbd5e5d9746f2c21a901286ecd980c92 and 39614027ff633836641227d30cb8256cd238859e |
+| 7 | Admin access / auditing | Inspected and focused tests passed; full validation and deployment pending |
 | 8 | Input validation | Not started |
 | 9 | XSS / HTML injection | Not started |
 | 10 | CSRF / state changes | Not started |
@@ -99,3 +99,11 @@ After that verification, migration `20260909120820` ran in its bounded transacti
 Normalized SQL SHA-256: `5ba86612d91b10e9d117e49518b6bfef4a0d5d6cf1185854703febffcaf4f6e2`. This same-step follow-up freezes the verified file as the 130th history-baseline entry; it replays no SQL. The independently published Supabase query-performance commit was integrated without changing its ownership-scoped queries. Full release checks and exact-commit deployment verification are required for this follow-up before Step 7 begins.
 
 The follow-up passed all 2,307 automated tests, lint, TypeScript and the production build. The migration gate verified 130 frozen files, and postbuild skipped demo population. Its exact-commit deployment result is recorded after publication.
+
+Step 6's follow-up was pushed as `39614027ff633836641227d30cb8256cd238859e`. [Exact Vercel deployment](https://vercel.com/ai-movie-jobs/shiftstage/Bq4ovGw5LMBuCbF2g2BQwYjJruQf) succeeded. At 12:34 UTC, all production health, anonymous authorization, callback and 30 Supabase readiness checks passed. Local HEAD matched origin/main and the worktree was clean before Step 7 began.
+
+## Step 7 validation
+
+The administrative review and three confirmed findings are documented in `step-07-admin.md`. The focused admin/audit suite passed 360 checks; the final suspension suite passed seven runtime tests, including the actual account self-service flow against synthetic PostgreSQL data. Pre-fix tests reproduced audit tampering and profile-suspension bypass, and 14 admin denial responses were incorrectly classified as 500. No production data was changed during these tests. Full release checks and exact-commit application/database deployment verification are pending.
+
+After integrating the independent request-cancellation performance release, all 2,676 automated tests passed. Lint, TypeScript and the production build passed. The migration guard retained 130 frozen files and recognized the two new migrations; postbuild skipped demo population. The exact deployment transaction passed an isolated PostgreSQL dry run with the current live function body and synthetic records, including record preservation, browser audit-write denial, private suspension state and retained server capabilities. Exact-commit publication and production migration application remain pending.

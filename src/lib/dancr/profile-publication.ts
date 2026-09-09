@@ -67,7 +67,7 @@ export async function transitionDancerPublication(
   }
   const { data: profile, error: profileError } = await db
     .from("dancer_profiles")
-    .select("id, user_id, stage_name, city, status, verification_status, photo_review_status, avatar_storage_path, approved_at, is_public, disabled_at, venue_approved_at, venue_approved_by_user_id, venue_approved_venue_id, updated_at")
+    .select("id, user_id, stage_name, city, status, verification_status, photo_review_status, avatar_storage_path, approved_at, is_public, disabled_at, admin_disabled_at, venue_approved_at, venue_approved_by_user_id, venue_approved_venue_id, updated_at")
     .eq("id", dancerId)
     .maybeSingle();
   if (profileError) throw profileError;
@@ -97,7 +97,7 @@ export async function transitionDancerPublication(
   let update: Record<string, string | boolean | null>;
 
   if (transition === "submit_for_venue_review") {
-    if (!actorIsOwner || profile.disabled_at || profile.status === "disabled") {
+    if (!actorIsOwner || profile.disabled_at || profile.admin_disabled_at || profile.status === "disabled") {
       throw new Error("Only the active dancer can submit this profile.");
     }
     update = { status: "pending_review", verification_status: "pending", approved_at: null, is_public: false };
@@ -122,6 +122,7 @@ export async function transitionDancerPublication(
         || !profile.approved_at
         || !profile.venue_approved_at
         || profile.disabled_at
+        || profile.admin_disabled_at
       )
     ) {
       throw new Error("Profile approval is required before reactivation.");
@@ -136,6 +137,7 @@ export async function transitionDancerPublication(
       disabled_at: new Date().toISOString(),
       is_public: false,
     };
+    if (actorIsAdmin) update.admin_disabled_at = new Date().toISOString();
   } else if (transition === "reactivate") {
     if (!actorIsOwner && !actorIsAdmin) {
       throw new Error("Only the dancer or an active admin can reactivate this profile.");
@@ -143,6 +145,7 @@ export async function transitionDancerPublication(
     if (account.account_state !== "active") {
       throw new Error("The dancer account must be active before reactivation.");
     }
+    if (profile.admin_disabled_at && !actorIsAdmin) return publicationState(profile);
 
     const status =
       profile.verification_status === "rejected" || profile.status === "rejected"
@@ -153,6 +156,7 @@ export async function transitionDancerPublication(
     update = {
       status,
       disabled_at: null,
+      admin_disabled_at: null,
       is_public: status === "approved",
     };
   } else {

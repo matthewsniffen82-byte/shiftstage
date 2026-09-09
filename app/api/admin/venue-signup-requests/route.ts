@@ -78,7 +78,7 @@ export async function POST(request: Request) {
     const userMessage = error instanceof VenueSignupRequestUserError ? error.message : "";
     if (!userMessage) console.error("VENUE_SIGNUP_REQUEST_REVIEW_FAILED", safeErrorMetadata(error));
     return apiError(
-      new Error(userMessage || "Unable to review the venue signup request."),
+      error,
       "Unable to review the venue signup request.",
       userMessage ? 400 : 500,
     );

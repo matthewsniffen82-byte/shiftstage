@@ -60,7 +60,7 @@ export async function POST(request: Request) {
     const userMessage = error instanceof VenueClaimUserError ? error.message : "";
     if (!userMessage) console.error("VENUE_CLAIM_CODE_ADMIN_FAILED", safeErrorMetadata(error));
     return apiError(
-      new Error(userMessage || "Unable to manage venue access code."),
+      error,
       "Unable to manage venue access code.",
       userMessage ? 400 : 500,
     );
