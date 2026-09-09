@@ -2,6 +2,7 @@ import { createHash, randomBytes } from "node:crypto";
 import { NextResponse } from "next/server";
 import { apiError } from "@/src/lib/api";
 import { readBoundedJsonObject } from "@/src/lib/bounded-json-body";
+import { requireSameOriginJsonMutation } from "@/src/lib/security/browser-mutation";
 import {
   cancelAnonymousGoing,
   cancelGoing,
@@ -62,6 +63,7 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
+    requireSameOriginJsonMutation(request);
     const body = await readBoundedJsonObject(request, {
       maxBytes: MAX_GOING_BODY_BYTES,
       invalidMessage: "Invalid going request.",

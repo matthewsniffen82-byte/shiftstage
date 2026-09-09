@@ -29,8 +29,8 @@ Step 1 delivered as `50d4eb543dbfc93dbed6f0663c51aa2332542cb4`, pushed to origin
 | 6 | Role authorization | Delivered and healthy: 5db6de15bbd5e5d9746f2c21a901286ecd980c92 and 39614027ff633836641227d30cb8256cd238859e |
 | 7 | Admin access / auditing | Delivered and healthy: d22462c5bd27675def76675af3f64e5e9a307fd8 and 61d926e9a1db7d1033e8d2f9fdd5fb3255d0ca5f |
 | 8 | Input validation | Delivered and healthy: 70cfac08932c4373a780f3714588d564da9c4cb4 |
-| 9 | XSS / HTML injection | Implemented; final release validation and deployment verification pending |
-| 10 | CSRF / state changes | Not started |
+| 9 | XSS / HTML injection | Delivered and healthy: 96745f706e42030be530664bc704234ca298a10a |
+| 10 | CSRF / state changes | Implemented; final release validation and deployment verification pending |
 | 11 | Rate limits | Not started |
 | 12 | Bot resistance | Not started |
 | 13 | File upload handling | Not started |
@@ -138,3 +138,11 @@ Step 8 was pushed as `70cfac08932c4373a780f3714588d564da9c4cb4`. [Exact Vercel d
 The XSS review corrected one MEDIUM raw HTML/attribute interpolation issue and two LOW CSS-attribute/URL-rendering gaps, with existing CSP and server validation retained. Forty-three new runtime tests cover the actual rendering functions. See `step-09-output-encoding.md` for evidence and limits. No production records or database configuration changed. Complete validation and exact-commit deployment verification are required before Step 10.
 
 Final combined validation passed all 2,767 tests, lint, TypeScript and production build after incorporating the independent static-CSS release `ac451c674a64af33753cf2d1c178b1bea285ca94`. Stale generated types for its removed CSS route were regenerated/cleared locally before TypeScript passed. The migration gate verified 132 frozen files; postbuild skipped demo population. Only this step's source, generated home-shell hash, regression tests and audit notes are included in its commit. Publication and verification follow next.
+
+Step 9 was pushed as `96745f706e42030be530664bc704234ca298a10a`. [Exact Vercel deployment](https://vercel.com/ai-movie-jobs/shiftstage/6kFhLg3YJ9NJLrrMCmH27Dh4eFPC) succeeded. At 13:49:47 UTC, the live shell matched `3d62964bca78c14423fba7b1e172640bfe058af1ddf64befc526fbba3e9a4f38`; deployed encoding, unsafe-URL rejection, CSP and stylesheet checks passed. At 13:49:51 UTC, health, protected-route denials, callback regression and all 30 readiness checks passed. Local HEAD matched origin/main with a clean worktree before Step 10.
+
+## Step 10 implementation
+
+The CSRF review found one LOW origin/content-type gap affecting three visitor-cookie POST endpoints. A shared guard rejects browser-origin mismatches and non-JSON forms before body/database work. Bearer-authenticated account and admin paths, worker authorization, webhooks and auth callbacks retain their existing boundaries. Thirty-eight new tests and the complete 2,805-test suite pass. See `step-10-csrf.md` for the review, machine-GET exception and testing limits. Final release checks and exact-commit deployment verification remain required before Step 11.
+
+After incorporating the independent stylesheet-preload release `bd70d9fa57e3a2acab72709ac8679a09c7f1159a`, final validation passed 2,806 tests, lint, TypeScript and production build. The migration gate verified 132 frozen files and postbuild skipped demo population. Only the three route hooks, shared guard, regression test and two audit documents belong to this step. Push, exact-commit deployment and health verification follow next.

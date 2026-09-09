@@ -2,6 +2,7 @@ import { createHash, randomBytes } from "node:crypto";
 import { NextResponse } from "next/server";
 import { apiError } from "@/src/lib/api";
 import { readBoundedJsonObject } from "@/src/lib/bounded-json-body";
+import { requireSameOriginJsonMutation } from "@/src/lib/security/browser-mutation";
 import {
   createDancerEngagementNotification,
   type EngagementTargetType,
@@ -24,6 +25,7 @@ const MAX_SHARE_BODY_BYTES = 4_096;
 
 export async function POST(request: Request) {
   try {
+    requireSameOriginJsonMutation(request);
     const body = await readBoundedJsonObject(request, {
       maxBytes: MAX_SHARE_BODY_BYTES,
       invalidMessage: "Invalid engagement share request.",
