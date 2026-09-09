@@ -33,8 +33,8 @@ Step 1 delivered as `50d4eb543dbfc93dbed6f0663c51aa2332542cb4`, pushed to origin
 | 10 | CSRF / state changes | Delivered and healthy: 15b6fbffece8d2ed437346d0567afb266b554756 |
 | 11 | Rate limits | Delivered and healthy: a89818f8c7294f311575adb70c29eb11e9476b19 |
 | 12 | Bot resistance | Delivered and healthy: 68a04ea1c502eaef5a7aab78068399b052c453bf |
-| 13 | File upload handling | Implemented; final release validation and deployment verification pending |
-| 14 | API authorization / exposure | Not started |
+| 13 | File upload handling | Delivered and healthy: 189c4b1afb43c4ace8a075dab0aca5422f3a83cf |
+| 14 | API authorization / exposure | Implemented; final release validation and deployment verification pending |
 | 15 | Security headers | Not started |
 | 16 | CORS | Not started |
 | 17 | Cookies / sessions | Not started |
@@ -172,3 +172,13 @@ Step 12 was pushed as `68a04ea1c502eaef5a7aab78068399b052c453bf`. [Exact Vercel 
 The MEDIUM native-decoder validation-order gap is corrected with an early container/MIME gate and restricted local video inputs. Existing image normalization, ownership, bucket permissions and moderation remain. Thirty-seven new boundary/native tests and the existing watermark regression pass. See step-13-upload-decoding.md for findings and test limits. The independent browser resource cleanup and environment configuration releases were reviewed and incorporated. Final combined release checks and exact-commit deployment verification are required before Step 14.
 
 Combined validation passed all 2,923 tests, lint, TypeScript and the production build. The migration guard retained 132 frozen files and postbuild skipped demo population. Only this step's media-boundary code, tests and audit notes are included in its release. Push, exact-commit Vercel success and production health verification follow next.
+
+## Step 13 delivery
+
+Step 13 was pushed as `189c4b1afb43c4ace8a075dab0aca5422f3a83cf`. [Exact Vercel deployment](https://vercel.com/ai-movie-jobs/shiftstage/AQ6RjdXT2PLvJpLXn9HqMD5ZGbWj) succeeded. At 15:34:34 UTC, four anonymous upload POST probes returned 401 before media work. At 15:34:38 UTC, health, protected-route denials, callback regression and all 30 readiness checks passed. No production uploads or database changes occurred. Local HEAD matched origin/main with a clean worktree before Step 14.
+
+## Step 14 implementation
+
+The API review identified a MEDIUM disclosure of private financial properties in cashier NFC confirmations. An explicit customer response preserves the internal transaction and visible success behavior. Eight new runtime tests pass, with three pre-fix failures demonstrating the issue. See `step-14-api-boundaries.md` for the 116-route/187-handler review and testing limits. The independently published mobile viewer fix was reviewed and incorporated. Full release checks and exact-commit deployment verification are required before Step 15.
+
+Final validation passed all 2,931 tests, lint, TypeScript and production build. The migration gate verified 132 frozen files and postbuild skipped demo population. Only the response builder, eight runtime regressions and two audit documents are included in this step's commit. Exact-commit publication and healthy deployment verification follow next.

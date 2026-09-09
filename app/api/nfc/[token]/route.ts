@@ -194,7 +194,12 @@ export async function POST(request: Request, context: RouteContext) {
       ok: true,
       action: "deal_redemption",
       deal: redemption.deal,
-      confirmation: redemption.confirmation,
+      // The privileged transaction also returns private finance and payout fields.
+      confirmation: {
+        status: redemption.confirmation?.status === "redeemed" ? "redeemed" : null,
+        dealTitle: redemption.deal.dealTitle,
+        venueName: tag.venue.name,
+      },
       message: `${redemption.deal.dealTitle} redeemed at ${tag.venue.name}.`,
     });
   } catch (error) {
