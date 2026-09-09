@@ -108,3 +108,46 @@ body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-she
 body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell, .dancer-profile-preview-overlay) :is(.modal-actions, .live-actions).profile-actions-compact .profile-action-status {
   flex: 0 0 100% !important;
 }
+
+/* Neutral materials are intentionally quieter than the green deal card.
+ * IDs in :is() only raise specificity against old per-button/platform rules. */
+body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell, .dancer-profile-preview-overlay) :is(.modal-actions, .live-actions).profile-actions-compact :is(#followBtn, #goingBtn, .profile-action-icon-control) {
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  border: 1px solid #30303A !important;
+  border-radius: 11px !important;
+  color: #FFFFFF !important;
+  background: #1B1B22 !important;
+  box-shadow: none !important;
+  filter: none !important;
+  text-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell, .dancer-profile-preview-overlay) :is(.modal-actions, .live-actions).profile-actions-compact :is(#followBtn, #goingBtn, .profile-action-icon-control)::before,
+body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell, .dancer-profile-preview-overlay) :is(.modal-actions, .live-actions).profile-actions-compact :is(#followBtn, #goingBtn, .profile-action-icon-control)::after {
+  content: none !important;
+  display: none !important;
+}
+
+body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell, .dancer-profile-preview-overlay) :is(.modal-actions, .live-actions).profile-actions-compact :is(#followBtn, #goingBtn, .profile-action-icon-control) :is(.profile-action-main, .action-icon, .profile-action-icon-frame, svg, .profile-action-main > span) {
+  color: inherit !important;
+  background: none !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  filter: none !important;
+  text-shadow: none !important;
+}
+
+body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell, .dancer-profile-preview-overlay) :is(.modal-actions, .live-actions).profile-actions-compact :is(#followBtn, #goingBtn, .profile-action-icon-control):focus-visible {
+  outline: 2px solid #FFFFFF !important;
+  outline-offset: 2px !important;
+}
+
+@media (hover: hover) {
+  body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell, .dancer-profile-preview-overlay) :is(.modal-actions, .live-actions).profile-actions-compact :is(#followBtn, #goingBtn, .profile-action-icon-control):hover:not(:disabled) {
+    background: #25252D !important;
+  }
+}

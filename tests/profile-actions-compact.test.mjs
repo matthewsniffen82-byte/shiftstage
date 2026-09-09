@@ -8,6 +8,16 @@ const css = read("public/profile-actions-compact.css");
 const live = read("outputs/index.html");
 const actions = read("app/dancers/[slug]/DancerProfileActions.tsx");
 
+test("profile actions use restrained charcoal materials without green, gradients, or glow", () => {
+  assert.match(css, /border: 1px solid #30303A !important/);
+  assert.match(css, /border-radius: 11px !important/);
+  assert.match(css, /color: #FFFFFF !important/);
+  assert.match(css, /background: #1B1B22 !important/);
+  assert.match(css, /appearance: none !important/);
+  assert.match(css, /outline: 2px solid #FFFFFF !important/);
+  assert.doesNotMatch(css, /linear-gradient|radial-gradient|drop-shadow|#4dec9d|#22c55e/i);
+});
+
 test("compact action layout is shared by live, routed, and dashboard-preview profiles", () => {
   assert.match(live, /class="modal-actions profile-actions-compact /);
   assert.match(actions, /live-actions profile-actions-compact is-no-live-shift dancer-profile-preview-actions/);
