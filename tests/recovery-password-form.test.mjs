@@ -32,7 +32,7 @@ async function callbackFixture(query, hash, valid = true, options = {}) {
   await vm.runInNewContext(script.replace("void completeCallback();", "completeCallback();"), {
     URL, URLSearchParams, document, AbortController, setTimeout, clearTimeout,
     window: { location: { hash, search: query, pathname: "/auth/callback", origin: "https://mydancr.com", replace: (path) => navigations.push(path) }, history: { replaceState() {} } },
-    localStorage: { setItem: (key, value) => { if (options.storageBlocked) throw new Error("Blocked"); writes.push({ key, value }); }, removeItem: (key) => writes.push({ removed: key }) },
+    localStorage: { getItem: () => { if (options.storageReadBlocked) throw new Error("Blocked"); return null; }, setItem: (key, value) => { if (options.storageBlocked) throw new Error("Blocked"); writes.push({ key, value }); }, removeItem: (key) => writes.push({ removed: key }) },
     fetch: async () => {
       if (options.networkFailure) throw new Error("Network failed");
       return { status: options.status || (valid ? 200 : 401), ok: valid, json: async () => valid ? { ok: true, session, account: session.account } : { ok: false } };
@@ -55,7 +55,7 @@ test("recovery takes precedence over dashboard return paths and signup flags", a
 test("invalid recovery cannot reuse an unrelated stored session or enter the dashboard", async () => {
   const result = await callbackFixture("?dancr_reset=1&role=dancer", recoveryHash, false);
   assert.deepEqual(result.navigations, ["/account/reset-password?error=expired"]);
-  assert.deepEqual(result.writes, [{ removed: "session" }]);
+  assert.deepEqual(result.writes, []);
 });
 test("recovery with no tokens opens the expired-link state", async () => {
   assert.deepEqual((await callbackFixture("?type=recovery", "")).navigations, ["/account/reset-password?error=expired"]);
@@ -168,6 +168,13 @@ test("callback network failure does not invalidate an existing session", async (
 test("callback storage failure stops navigation and explains how to recover", async () => {
   const result = await callbackFixture("?type=recovery", recoveryHash, true, { storageBlocked: true });
   assert.deepEqual(result.navigations, []);
+  assert.match(result.elements.temporaryErrorMessage.textContent, /Allow site storage/);
+});
+
+test("callback cannot save a session when the current sign-in cannot be read", async () => {
+  const result = await callbackFixture("?type=recovery", recoveryHash, true, { storageReadBlocked: true });
+  assert.deepEqual(result.navigations, []);
+  assert.deepEqual(result.writes, []);
   assert.match(result.elements.temporaryErrorMessage.textContent, /Allow site storage/);
 });
 

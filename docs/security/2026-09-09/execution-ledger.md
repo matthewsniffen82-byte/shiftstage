@@ -24,8 +24,8 @@ Step 1 delivered as `50d4eb543dbfc93dbed6f0663c51aa2332542cb4`, pushed to origin
 | 1 | Complete audit / threat model | Delivered and healthy: 50d4eb543dbfc93dbed6f0663c51aa2332542cb4 |
 | 2 | Secrets and environment | Delivered and healthy: f7dc39d362a2b4c2f70ed401d134593ea3d9c640 |
 | 3 | Supabase RLS | Delivered and healthy: 0829c12ed79f6525105a5b313ab374709670a4ad and 9b74c805bc87cae8891269e6d03c005d7e8842ab |
-| 4 | Storage permissions | 34 focused / 2,098 full tests, 30 live readiness checks, lint, TypeScript and production build passed; deployment pending |
-| 5 | Authentication / recovery | Not started |
+| 4 | Storage permissions | Delivered and healthy: b3b46b5d7485dc3bad5ef179a996f26730113d21 |
+| 5 | Authentication / recovery | 192 focused / 2,118 full tests, lint, TypeScript and production build passed; deployment pending |
 | 6 | Role authorization | Not started |
 | 7 | Admin access / auditing | Not started |
 | 8 | Input validation | Not started |
@@ -75,3 +75,11 @@ The normalized SQL SHA-256 is `eebe3fff9cd1428358246c9bd8ad1bed1894356f8cc58df3e
 The follow-up was integrated with the independently published image-performance release and passed all 2,069 tests, lint, TypeScript and the production build. The migration gate verified 129 frozen files; postbuild skipped demo population. Its Vercel status and health are recorded after deployment.
 
 Step 3's delivery-record follow-up was pushed as `9b74c805bc87cae8891269e6d03c005d7e8842ab`. [Exact Vercel deployment](https://vercel.com/ai-movie-jobs/shiftstage/7V2qdEZjnnpXU2KjKTQMBkE8q3cv) succeeded. At 11:21 UTC, root and both health routes returned 200; anonymous account/admin requests returned 401. Local HEAD matched origin/main and the worktree was clean before Step 4.
+
+## Step 4 delivery
+
+Delivered as `b3b46b5d7485dc3bad5ef179a996f26730113d21`, pushed to origin/main with matching clean local HEAD. [Exact Vercel deployment](https://vercel.com/ai-movie-jobs/shiftstage/9K2NfVkYmqhwTVkR2JsuCCFTrZBg) succeeded. At 2026-09-09 11:38 UTC, root and both health routes returned 200; anonymous account/admin requests returned 401. All 30 live readiness checks passed after deployment. Full validation passed 2,098 tests, lint, TypeScript and production build. Storage configuration and data remained unchanged.
+
+## Step 5 validation
+
+The callback audit and two confirmed findings are recorded in `step-05-authentication.md`. Sixteen runtime regressions were added; the pre-fix reproduction failed 15 assertions, while the fixed focused suite passed all 192 tests. After incorporating the separately published video-performance commit, the complete suite passed all 2,118 tests. Lint, TypeScript and production build passed, including the 129-file migration-history guard. Postbuild skipped demo population. No production accounts or credentials were changed. Exact-commit deployment and safe callback verification must succeed before Step 6.

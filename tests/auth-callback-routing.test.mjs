@@ -79,7 +79,7 @@ test("implicit Supabase email-confirmation tokens are server-validated and scrub
   assert.match(callbackPage, /body: JSON\.stringify\(\{ accessToken, refreshToken \}\)/);
   assert.match(callbackSource, /import \{ BROWSER_AUTH_SESSION_KEY \} from "@\/src\/lib\/dancr\/browser-session"/);
   assert.match(callbackPage, /const sessionStorageKey = \$\{sessionKeyJson\}/);
-  assert.match(callbackPage, /try \{\s*localStorage\.setItem\(sessionStorageKey, JSON\.stringify\(session\)\)/);
+  assert.match(callbackPage, /try \{[\s\S]*?localStorage\.setItem\(sessionStorageKey, JSON\.stringify\(session\)\)/);
   assert.match(callbackPage, /window\.history\.replaceState\(\{\}, document\.title, window\.location\.pathname\)/);
   assert.match(callbackPage, /const destination = redirectUrl\.pathname \+ redirectUrl\.search/);
   assert.match(callbackPage, /redirectUrl\.searchParams\.set\("role", authoritativeRole\)/);

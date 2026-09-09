@@ -121,6 +121,51 @@ test('an old password reset link does not reuse a normal session as recovery aut
   await f.completion;
   assert.equal(f.calls.length, 0);
   assert.deepEqual(f.navigation, ['/account/reset-password?error=expired']);
+  assert.equal(f.store.get(sessionKey), JSON.stringify(savedSession('customer')), 'an invalid link must not sign out an unrelated account');
+});
+
+for (const type of ['signup', 'recovery', 'email_change']) {
+  for (const change of ['logout', 'different-account', 'refreshed-session']) {
+    test(`a delayed ${type} callback cannot overwrite ${change}`, async () => {
+      let finish;
+      const f = await callbackFixture({
+        query: `?role=customer#access_token=callback-access&refresh_token=callback-refresh&type=${type}`,
+        fetcher: () => new Promise(resolve => { finish = resolve; }),
+      });
+      const newer = change === 'logout' ? null : JSON.stringify({
+        accessToken: 'newer-access', refreshToken: 'newer-refresh',
+        account: { id: change === 'different-account' ? 'different-user' : 'existing-user', role: 'customer' },
+      });
+      if (newer === null) f.store.delete(sessionKey);
+      else f.store.set(sessionKey, newer);
+      finish(Response.json({ ok: true, session: { accessToken: 'obsolete-access', refreshToken: 'obsolete-refresh' }, account: { id: 'callback-user', role: 'customer' } }));
+      await f.completion;
+      assert.equal(f.store.get(sessionKey) ?? null, newer);
+      assert.deepEqual(f.navigation, ['/?auth=login']);
+      assert.equal(f.node('dancerConfirmation').hidden, true);
+    });
+  }
+}
+
+for (const query of [
+  '?type=recovery', '?dancr_reset=1', '?reset_target=account_password',
+  '?type=recovery&error_code=otp_expired',
+  '?type=recovery#access_token=invalid&refresh_token=invalid',
+]) test(`invalid recovery preserves the current account: ${query}`, async () => {
+  const f = await callbackFixture({ query, fetcher: async () => Response.json({ ok: false }, { status: 401 }) });
+  await f.completion;
+  assert.equal(f.store.get(sessionKey), JSON.stringify(savedSession('customer')));
+  assert.deepEqual(f.navigation, ['/account/reset-password?error=expired']);
+});
+
+test('a valid recovery link can still deliberately replace the previously signed-in account', async () => {
+  const f = await callbackFixture({
+    query: '?type=recovery#access_token=recovery-access&refresh_token=recovery-refresh',
+    fetcher: async () => Response.json({ ok: true, session: { accessToken: 'verified-recovery', refreshToken: 'verified-refresh' }, account: { id: 'recovery-user', role: 'dancer' } }),
+  });
+  await f.completion;
+  assert.equal(JSON.parse(f.store.get(sessionKey)).account.id, 'recovery-user');
+  assert.deepEqual(f.navigation, ['/account/reset-password']);
 });
 
 test('fresh customer confirmation with an old account return URL goes to the current dashboard', async () => {

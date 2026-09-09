@@ -245,6 +245,13 @@ function callbackHtml(
         if (window.location.hash || window.location.search) {
           window.history.replaceState({}, document.title, window.location.pathname);
         }
+        let startingBrowserSession;
+        try {
+          startingBrowserSession = localStorage.getItem(sessionStorageKey);
+        } catch {
+          showTemporaryError("This browser couldn't read your sign-in. Allow site storage, then open the email link again.");
+          return;
+        }
         let temporarilyUnavailable = serverUnavailable;
         let resumedExistingSession = false;
         let session = serverSession && serverSession.accessToken ? serverSession : null;
@@ -271,6 +278,11 @@ function callbackHtml(
 
         if (session?.accessToken) {
           try {
+            // A delayed email callback must respect a newer sign-in, refresh or logout.
+            if (localStorage.getItem(sessionStorageKey) !== startingBrowserSession) {
+              window.location.replace("/?auth=login");
+              return;
+            }
             localStorage.setItem(sessionStorageKey, JSON.stringify(session));
           } catch (error) {
             showTemporaryError("This browser couldn't save your sign-in. Allow site storage, then sign in again or request a new email link.");
@@ -310,7 +322,7 @@ function callbackHtml(
           redirectUrl.pathname = "/account/reset-password";
           redirectUrl.search = "";
           if (!session?.accessToken) {
-            try { localStorage.removeItem(sessionStorageKey); } catch (error) {}
+            // The reset page rejects this link without clearing an unrelated account.
             redirectUrl.searchParams.set("error", "expired");
           }
         }
