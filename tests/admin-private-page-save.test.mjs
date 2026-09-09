@@ -61,6 +61,15 @@ test('admins can change a published venue city without changing its approval or 
  assert.equal(f.row().city,'New York');
 });
 
+test('published page edits save all public fields while keeping the live status and existing URL',async()=>{
+ const f=fixture('Miami',true);
+ const result=await f.save({name:'Harbor After Dark',address:'456 Ocean Drive',city:'Miami',state:'FL',latitude:'25.7617',longitude:'-80.1918',phone:'305-555-0199',website:'harbor.example.com',timezone:'America/New_York',opensAt:'19:30',closesAt:'03:30'});
+ const expected={name:'Harbor After Dark',address:'456 Ocean Drive',city:'Miami',state:'FL',latitude:25.7617,longitude:-80.1918,phone:'305-555-0199',website:'https://harbor.example.com/',timezone:'America/New_York',opens_at:'19:30',closes_at:'03:30'};
+ assert.deepEqual({...f.row()},expected);
+ assert.equal(result.slug,'harbor-club-existing');
+ for(const key of ['is_active','published_at','page_review_status','page_reviewed_at','page_reviewed_by_user_id']) assert.equal(f.row()[key],undefined);
+});
+
 test('an existing unavailable city cannot bypass selection through approval or publishing',async()=>{
  for(const action of ['send_for_review','publish']) {
    const f=fixture('Portland');
