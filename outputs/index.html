@@ -51090,10 +51090,11 @@
       if (!Number.isSafeInteger(file.size) || file.size < 1 || file.size > 75 * 1024 * 1024) {
         throw new Error("Video files must be 75 MB or smaller.");
       }
+      const video = document.createElement("video");
       const previewUrl = URL.createObjectURL(file);
+      let metadataTimer = 0;
       try {
         const metadata = await new Promise((resolve, reject) => {
-          const video = document.createElement("video");
           video.preload = "metadata";
           video.onloadedmetadata = () => resolve({
             duration: video.duration,
@@ -51101,6 +51102,7 @@
             height: video.videoHeight
           });
           video.onerror = () => reject(new Error("This video could not be read. Try a different MP4 or WebM file."));
+          metadataTimer = window.setTimeout(() => reject(new Error("This video took too long to read. Try again or choose a different file.")), 20_000);
           video.src = previewUrl;
         });
       if (!Number.isFinite(metadata.duration) || metadata.duration < 1 || metadata.duration > 30) {
@@ -51111,6 +51113,12 @@
         }
         return metadata;
       } finally {
+        window.clearTimeout(metadataTimer);
+        video.onloadedmetadata = null;
+        video.onerror = null;
+        video.pause();
+        video.removeAttribute("src");
+        video.load();
         URL.revokeObjectURL(previewUrl);
       }
     }

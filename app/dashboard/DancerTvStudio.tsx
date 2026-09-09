@@ -684,10 +684,11 @@ async function readVideoMetadata(file: File) {
   if (!["video/mp4", "video/webm", "video/quicktime"].includes(file.type)) throw new Error("Upload an MP4, WebM, or MOV video.");
   if (file.size > 75 * 1024 * 1024) throw new Error("Video files must be 75 MB or smaller.");
 
+  const element = document.createElement("video");
   const url = URL.createObjectURL(file);
+  let metadataTimer = 0;
   try {
     const metadata = await new Promise<{ duration: number; width: number; height: number }>((resolve, reject) => {
-      const element = document.createElement("video");
       element.preload = "metadata";
       element.onloadedmetadata = () => resolve({
         duration: element.duration,
@@ -695,6 +696,7 @@ async function readVideoMetadata(file: File) {
         height: element.videoHeight,
       });
       element.onerror = () => reject(new Error("This video could not be read. Try a different MP4, WebM, or MOV file."));
+      metadataTimer = window.setTimeout(() => reject(new Error("This video took too long to read. Try again or choose a different file.")), 20_000);
       element.src = url;
     });
     if (
@@ -709,6 +711,12 @@ async function readVideoMetadata(file: File) {
     }
     return metadata;
   } finally {
+    window.clearTimeout(metadataTimer);
+    element.onloadedmetadata = null;
+    element.onerror = null;
+    element.pause();
+    element.removeAttribute("src");
+    element.load();
     URL.revokeObjectURL(url);
   }
 }

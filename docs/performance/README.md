@@ -34,8 +34,8 @@ For a customer rendering-only sample, set `PERF_CUSTOMER_FIXTURE=1` and use `/da
 | 7 | API/network requests | Pushed `d2383163`; [Vercel success](https://vercel.com/ai-movie-jobs/shiftstage/5cpXqrqABfv9vA47Z5XB3aX22CTz); obsolete requests cancel on navigation; normal profile/video journeys and live API/health checks passed |
 | 8 | Safe resource caching | Pushed `3f14c633`; [Vercel success](https://vercel.com/ai-movie-jobs/shiftstage/3CRniT2G4FpxrMYKKQ2WtwaVat42); version headers, warm cache reuse, three roles and public playback verified |
 | 9 | CSS, fonts, rendering | Final `25f63e91` pushed; [Vercel success](https://vercel.com/ai-movie-jobs/shiftstage/iXGjRceT8PYVjEs7WvPnHideYssz); lossless inline CSS compaction, home/venue paint and transfer improved; external-delivery experiments rejected after cold-load checks |
-| 10 | Third-party overhead | Lazy server moderation SDK loading; validation and deployment verification in progress |
-| 11 | Memory/resource lifecycle | Pending |
+| 10 | Third-party overhead | Pushed `9cfa154e`; [Vercel success](https://vercel.com/ai-movie-jobs/shiftstage/59YtDi7wtQyLFaLrMrW3q6JvR1qH); initial public TV server code reduced 16.8%, 2,859 tests and live API/media/role checks passed |
+| 11 | Memory/resource lifecycle | Bounded local video metadata readers and repeated browsing audit; validation in progress |
 | 12 | Mobile matrix | Pending |
 | 13 | Perceived loading | Pending |
 | 14 | Final vitals comparison | Pending |
