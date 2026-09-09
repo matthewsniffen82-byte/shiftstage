@@ -15,7 +15,7 @@ function fixture(city = 'Miami', isActive = false) {
   }};
   vm.runInNewContext(ts.transpileModule(source,{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText,{
     exports,console,URL,require:name=>({
-      './venue': {getVenueById:async()=>({id:'venue-1',isActive,city})},
+      './venue': {getVenueById:async()=>({id:'venue-1',isActive,city,address:'123 Harbor St',state:'FL'})},
       './markets': markets,
       '../api-error-policy': {PublicApiError},
     }[name] || {}),
@@ -52,13 +52,22 @@ test('unlisted, blank, and malformed cities cannot be saved or silently replaced
  }
 });
 
-test('admins can change a published venue city without changing its approval or public details',async()=>{
+test('changing a published venue city clears stale coordinates while preserving approval',async()=>{
  const f=fixture('Miami',true);
  await f.save({city:'New York'});
- assert.deepEqual(Object.keys(f.row()),['city']);
+ assert.deepEqual({...f.row()},{city:'New York',latitude:null,longitude:null});
  assert.equal(f.row().city,'New York');
  await assert.rejects(f.save({city:'Portland'}),/Select an available city/);
  assert.equal(f.row().city,'New York');
+});
+
+test('an updated address clears stale coordinates and an unchanged address preserves existing metadata',async()=>{
+ const f=fixture('Miami',true);
+ await f.save({address:'456 Ocean Drive'});
+ assert.deepEqual({...f.row()},{address:'456 Ocean Drive',latitude:null,longitude:null});
+ await f.save({address:'123 Harbor St',city:'Miami',state:'FL'});
+ assert.equal(f.row().latitude,undefined);
+ assert.equal(f.row().longitude,undefined);
 });
 
 test('published page edits save all public fields while keeping the live status and existing URL',async()=>{

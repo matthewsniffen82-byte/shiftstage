@@ -47996,7 +47996,8 @@
     function venueDistanceMiles(venue, city = selectedCity()) {
       const coordinateDistance = distanceMilesBetween(activeDistanceOrigin(city), venue);
       if (coordinateDistance !== null) return coordinateDistance;
-      const numericDistance = Number(venue?.distanceMiles);
+      const numericDistance = venue?.distanceMiles == null || String(venue.distanceMiles).trim() === ""
+        ? NaN : Number(venue.distanceMiles);
       if (Number.isFinite(numericDistance)) return numericDistance;
       return parseMiles(venue?.distance);
     }

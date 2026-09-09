@@ -426,7 +426,6 @@ export function getVenuePublicationState(
 ): VenuePublicationState {
   const requirements = [
     { key: "details", label: "Venue name, public address, city, and state", complete: Boolean(profile.name && profile.address && profile.city && profile.state) },
-    { key: "coordinates", label: "Verified map coordinates", complete: profile.latitude !== null && profile.longitude !== null },
     { key: "contact", label: "Public phone number", complete: Boolean(profile.phone) },
     { key: "hours", label: "Opening and closing hours", complete: Boolean(profile.opensAt && profile.closesAt) },
     { key: "logo", label: "Venue logo", complete: Boolean(profile.logoImageUrl) },

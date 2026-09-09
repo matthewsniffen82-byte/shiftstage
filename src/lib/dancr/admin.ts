@@ -669,6 +669,12 @@ export async function updateAdminVenue(
   if (!Object.keys(row).length) throw new Error("No venue updates provided.");
 
   const current = await getVenueById(client, venueId);
+  const addressChanged = ["address", "city", "state"].some((key) => key in row
+    && row[key] !== current[key as "address" | "city" | "state"]);
+  if (addressChanged && !("latitude" in input) && !("longitude" in input)) {
+    row.latitude = null;
+    row.longitude = null;
+  }
   if (!current.isActive) {
     row.page_review_status = "admin_draft";
     row.page_review_sent_at = null;
@@ -1734,8 +1740,8 @@ function venueInputToRow(input: AdminVenueInput, creating: boolean) {
   if ("city" in input) row.city = requireAvailableVenueCity(input.city);
   if ("state" in input) row.state = optionalText(input.state);
   if ("address" in input) row.address = optionalText(input.address);
-  if ("latitude" in input) row.latitude = creating ? requiredCoordinate(input.latitude, "latitude", -90, 90) : optionalCoordinate(input.latitude, "latitude", -90, 90);
-  if ("longitude" in input) row.longitude = creating ? requiredCoordinate(input.longitude, "longitude", -180, 180) : optionalCoordinate(input.longitude, "longitude", -180, 180);
+  if ("latitude" in input) row.latitude = optionalCoordinate(input.latitude, "latitude", -90, 90);
+  if ("longitude" in input) row.longitude = optionalCoordinate(input.longitude, "longitude", -180, 180);
   if ("phone" in input) row.phone = optionalText(input.phone);
   if ("website" in input) row.website = optionalWebsite(input.website);
   if ("timezone" in input) row.timezone = optionalText(input.timezone) || "America/Los_Angeles";

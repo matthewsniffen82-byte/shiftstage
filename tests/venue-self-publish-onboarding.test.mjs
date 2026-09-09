@@ -21,7 +21,7 @@ const [
   signupService,
   notificationDelivery,
   documentation,
-  coordinateMigration,
+  addressOnlyMigration,
   adminVenuePreviewRoute,
   liveShell,
   dancrTypes,
@@ -44,7 +44,7 @@ const [
   readFile(new URL("../src/lib/dancr/venue-signup-requests.ts", import.meta.url), "utf8"),
   readFile(new URL("../src/lib/dancr/notification-delivery.ts", import.meta.url), "utf8"),
   readFile(new URL("../docs/venue-onboarding.md", import.meta.url), "utf8"),
-  readFile(new URL("../supabase/migrations/202608240006_require_published_venue_coordinates.sql", import.meta.url), "utf8"),
+  readFile(new URL("../supabase/migrations/202609090001_allow_address_only_venue_publication.sql", import.meta.url), "utf8"),
   readFile(new URL("../app/api/admin/venues/preview/route.ts", import.meta.url), "utf8"),
   readFile(new URL("../outputs/index.html", import.meta.url), "utf8"),
   readFile(new URL("../src/lib/dancr/types.ts", import.meta.url), "utf8"),
@@ -126,9 +126,9 @@ test("admins can prepare all page fields and official venue images", () => {
   const publicationRequirements = venueService.match(/export function getVenuePublicationState[\s\S]*?(?=export async function reviewVenuePageForAccount)/)?.[0] || "";
   assert.doesNotMatch(adminClient.match(/<input name="latitude"[^>]*>/)?.[0] || "", /\brequired\b/);
   assert.doesNotMatch(adminClient.match(/<input name="longitude"[^>]*>/)?.[0] || "", /\brequired\b/);
-  assert.match(adminService, /requiredCoordinate\(input\.latitude, "latitude", -90, 90\)/);
-  assert.match(adminService, /requiredCoordinate\(input\.longitude, "longitude", -180, 180\)/);
-  assert.match(publicationRequirements, /key: "coordinates"[\s\S]*?Verified map coordinates/);
+  assert.match(adminService, /optionalCoordinate\(input\.latitude, "latitude", -90, 90\)/);
+  assert.match(adminService, /optionalCoordinate\(input\.longitude, "longitude", -180, 180\)/);
+  assert.doesNotMatch(publicationRequirements, /key: "coordinates"/);
   assert.match(publicationRequirements, /key: "logo"/);
   assert.doesNotMatch(publicationRequirements, /key: "cover"/);
 });
@@ -144,13 +144,10 @@ test("Admin and venue previews share the canonical customer venue renderer", () 
   assert.match(liveShell, /preview_source"\) === "admin" \? "\/admin" : "\/dashboard\/venue"/);
 });
 
-test("published venues require verified coordinates at the database boundary", () => {
-  assert.match(coordinateMigration, /where slug = 'scores-las-vegas'/);
-  assert.match(coordinateMigration, /latitude = 36\.135360/);
-  assert.match(coordinateMigration, /longitude = -115\.174890/);
-  assert.match(coordinateMigration, /venues_published_coordinates_required/);
-  assert.match(coordinateMigration, /is_active is not true[\s\S]*?latitude is not null[\s\S]*?longitude is not null/);
-  assert.match(coordinateMigration, /validate constraint venues_published_coordinates_required/);
+test("published venues accept an address without mandatory coordinates", () => {
+  assert.match(addressOnlyMigration, /drop constraint if exists venues_published_coordinates_required/);
+  assert.doesNotMatch(addressOnlyMigration, /add constraint/);
+  assert.match(addressOnlyMigration, /and latitude = 5[\s\S]*?and longitude = 100/);
 });
 
 test("the venue dashboard presents a read-only review and approval experience", () => {
