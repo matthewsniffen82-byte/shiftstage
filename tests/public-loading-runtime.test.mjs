@@ -99,7 +99,7 @@ test("a failed TV request exits loading and cannot replace a newer city's videos
   let renders = 0;
   let rejectOld;
   const ctx = context({
-    homeTvFeedRequest: 0, homeTvFeedCity: "Vegas", homeTvFeedVenueId: "", homeTvFeedSelectedVideoId: "",
+    homeTvFeedAbort: null, homeTvFeedRequest: 0, homeTvFeedCity: "Vegas", homeTvFeedVenueId: "", homeTvFeedSelectedVideoId: "",
     homeTvFeedStatus: "loading", homeTvFeedVideos: [], activeTab: "tv", citySelect: { value: "Vegas" },
     renderHomeTvFeed: () => { renders += 1; },
     fetchJson: () => new Promise((_resolve, reject) => { rejectOld = reject; }),

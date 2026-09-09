@@ -44,7 +44,7 @@ test("TV cards and full profiles allow destination swipes while galleries keep t
   assert.doesNotMatch(swipeBlocker, /home-tv-feed-slide/);
   assert.match(
     homeSource,
-    /function activateHomeDestination\(nextTab, options = \{\}\) \{[\s\S]*?profileBackdrop\.classList\.contains\("show"\)\) closeProfileModal\(\);[\s\S]*?deactivateHomeTvFeed\(\)/,
+    /function activateHomeDestination\(nextTab, options = \{\}\) \{[\s\S]*?profileBackdrop\.classList\.contains\("show"\)\) closeProfileModal\(\);[\s\S]*?deactivateHomeTvFeed\(nextTab !== "tv"\)/,
   );
   assert.doesNotMatch(
     homeSource,

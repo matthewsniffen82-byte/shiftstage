@@ -1,0 +1,20 @@
+import { mkdir, writeFile } from "node:fs/promises";
+import { publicVideoLoaders } from "../../tests/helpers/public-video-loaders.mjs";
+const output = process.env.PERF_OUTPUT || ".qa/stale-video-requests";
+await mkdir(output, { recursive: true });
+const { context, requests } = publicVideoLoaders();
+const first = context.loadHomeTvFeed("Vegas", "", "");
+context.homeTvFeedCity = "Miami";
+context.citySelect.value = "Miami";
+const second = context.loadHomeTvFeed("Miami", "", "");
+await new Promise(resolve => setImmediate(resolve));
+const pendingAfterScopeChange = requests.filter(request => !request.signal.aborted).length;
+context.activeTab = "dancers";
+context.deactivateHomeTvFeed();
+const pendingAfterLeaving = requests.filter(request => !request.signal.aborted).length;
+requests.forEach(request => request.resolve([]));
+await Promise.allSettled([first, second]);
+const result = { syntheticStalledNetwork: true, requestsStarted: requests.length, pendingAfterScopeChange, pendingAfterLeaving,
+  abortedRequests: requests.filter(request => request.signal.aborted).length, resultingStatus: context.homeTvFeedStatus };
+await writeFile(`${output}/results.json`, JSON.stringify(result, null, 2));
+console.log(JSON.stringify(result));

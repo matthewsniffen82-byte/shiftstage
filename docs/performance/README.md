@@ -30,8 +30,8 @@ For a customer rendering-only sample, set `PERF_CUSTOMER_FIXTURE=1` and use `/da
 | 3 | Responsive image delivery | Pushed `8e12a9e9`; [Vercel success](https://vercel.com/ai-movie-jobs/shiftstage/GFZQwYjUHRop42BJjdauGBxwjemc); image selection, live health and nine mobile samples verified |
 | 4 | Mobile video loading and playback | Pushed `78067bf7`; [Vercel success](https://vercel.com/ai-movie-jobs/shiftstage/FaJDnCj1UZyRCGFvBhPxgUE5PQoP); live resource/profile journeys, health and nine mobile samples verified; verification-only follow-up records the corrected profile fixture and results |
 | 5 | Feed rendering and scrolling | Pushed `b9ca4140`; [Vercel success](https://vercel.com/ai-movie-jobs/shiftstage/F6aMciXAAQtpJrGN4XwJvEqdU3ye); live filter work reduced 44%, counts/focus/scroll and three role journeys passed |
-| 6 | Supabase and database access | Scoped private-video signing batches and independent analytics; deployment verification follows complete checks |
-| 7 | API/network requests | Pending |
+| 6 | Supabase and database access | Pushed `d62c04e5`; [Vercel success](https://vercel.com/ai-movie-jobs/shiftstage/81P2nPTKPvYNjcobK4E51ngrjAta); private signing requests reduced 98–99% in loader fixtures; live API/media/role and access-boundary checks passed |
+| 7 | API/network requests | Cancel obsolete TV requests; preserve useful profile prefetches; deployment verification follows complete checks |
 | 8 | Safe resource caching | Pending |
 | 9 | CSS, fonts, rendering | Pending |
 | 10 | Third-party overhead | Pending |

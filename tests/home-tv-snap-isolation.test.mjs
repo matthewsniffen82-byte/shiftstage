@@ -33,7 +33,7 @@ test("MyDancr TV uses one page scroller with stable mobile proximity snapping", 
     /#results\.home-tv-feed \{[\s\S]*?width: calc\(100% \+ 14px\) !important;[\s\S]*?height: auto !important;[\s\S]*?margin: 0 -7px calc\(112px \+ env\(safe-area-inset-bottom, 0px\)\) !important;[\s\S]*?grid-auto-rows: auto;[\s\S]*?overflow: visible !important;[\s\S]*?scroll-snap-type: none;[\s\S]*?#results\.home-tv-feed > \.home-tv-feed-loading,[\s\S]*?#results\.home-tv-feed > \.home-tv-feed-slide \{[\s\S]*?height: var\(--dancr-scroll-card-height\) !important;[\s\S]*?scroll-snap-align: start;[\s\S]*?scroll-snap-stop: normal;/,
   );
   assert.match(homeSource, /function syncHomeTvPageSnapState\(\) \{[\s\S]*?activeTab === "tv" && homeTvFeedUsesSnapViewport\(\)[\s\S]*?classList\.toggle\("home-tv-page-snap", shouldSnap\)/);
-  assert.match(homeSource, /function deactivateHomeTvFeed\(\) \{[\s\S]*?classList\.remove\("home-tv-page-snap"\)/);
+  assert.match(homeSource, /function deactivateHomeTvFeed\(cancelPendingRequest = true\) \{[\s\S]*?classList\.remove\("home-tv-page-snap"\)/);
   assert.match(homeSource, /new IntersectionObserver[\s\S]*?root: null,[\s\S]*?rootMargin: "-72px 0px -88px"/);
   assert.match(homeSource, /function showRelativeHomeTvFeedSlide[\s\S]*?nextSlide\.scrollIntoView\(\{ block: "start", behavior: "smooth" \}\)/);
   assert.doesNotMatch(homeSource, /results\.scrollTo\(\{ top: nextSlide\.offsetTop/);

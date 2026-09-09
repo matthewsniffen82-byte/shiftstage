@@ -42710,6 +42710,7 @@
     let homeTvLaunchRequest = 0;
     let homeTvLaunchScope = "";
     let homeTvFeedRequest = 0;
+    let homeTvFeedAbort = null;
     let homeTvFeedCity = "";
     let homeTvFeedVenueId = "";
     let homeTvFeedSelectedVideoId = "";
@@ -46794,10 +46795,26 @@
         ? Number(options.timeoutMs)
         : LIVE_JSON_REQUEST_TIMEOUT_MS;
       const retries = Math.max(0, Number(options.retries) || 0);
+      const signal = options.signal;
+      const abortError = new Error("The live request was canceled.");
+      abortError.name = "AbortError";
 
       for (let attempt = 0; attempt <= retries; attempt += 1) {
+        if (signal?.aborted) throw abortError;
         const controller = typeof AbortController === "function" ? new AbortController() : null;
         let timeoutId = null;
+        let retryTimeoutId = null;
+        let removeAbortListener = () => {};
+        const abortRequest = new Promise((resolve, reject) => {
+          if (!signal) return;
+          const onAbort = () => {
+            controller?.abort();
+            reject(abortError);
+          };
+          signal.addEventListener("abort", onAbort, { once: true });
+          removeAbortListener = () => signal.removeEventListener("abort", onAbort);
+          if (signal.aborted) onAbort();
+        });
         const timeoutError = new Error("The live request timed out.");
         timeoutError.name = "TimeoutError";
         const timeoutRequest = new Promise((resolve, reject) => {
@@ -46814,7 +46831,8 @@
               cache: "default",
               signal: controller ? controller.signal : undefined
             }),
-            timeoutRequest
+            timeoutRequest,
+            abortRequest
           ]);
           if (!response.ok) {
             const requestError = new Error(`Request failed: ${response.status}`);
@@ -46822,14 +46840,20 @@
             throw requestError;
           }
           // The deadline includes the body: headers can arrive before a stalled download.
-          return await Promise.race([response.json(), timeoutRequest]);
+          return await Promise.race([response.json(), timeoutRequest, abortRequest]);
         } catch (error) {
+          if (signal?.aborted) throw abortError;
           const status = Number(error?.status || 0);
           const retryable = !status || status === 429 || status >= 500;
           if (attempt >= retries || !retryable) throw error;
-          await new Promise((resolve) => window.setTimeout(resolve, 250 * (attempt + 1)));
+          await Promise.race([
+            new Promise((resolve) => { retryTimeoutId = window.setTimeout(resolve, 250 * (attempt + 1)); }),
+            abortRequest
+          ]);
         } finally {
           if (timeoutId !== null) window.clearTimeout(timeoutId);
+          if (retryTimeoutId !== null) window.clearTimeout(retryTimeoutId);
+          removeAbortListener();
         }
       }
 
@@ -61513,7 +61537,14 @@
       activateHomeTvFeedVideo(String(initialSlide?.dataset.videoId || ""));
     }
 
-    function deactivateHomeTvFeed() {
+    function deactivateHomeTvFeed(cancelPendingRequest = true) {
+      if (cancelPendingRequest && homeTvFeedAbort) {
+        homeTvFeedRequest += 1;
+        homeTvFeedAbort.abort();
+        homeTvFeedAbort = null;
+        homeTvFeedCity = "";
+        homeTvFeedStatus = "idle";
+      }
       const fullscreenElement = homeTvFeedFullscreenElement();
       if (fullscreenElement === results) {
         const exit = document.exitFullscreen || document.webkitExitFullscreen;
@@ -62351,13 +62382,17 @@
     }
 
     async function loadHomeTvFeed(city, venueId = "", selectedVideoId = selectedHomeTvVideoId()) {
+      homeTvFeedAbort?.abort();
+      const controller = typeof AbortController === "function" ? new AbortController() : null;
+      homeTvFeedAbort = controller;
       const requestId = ++homeTvFeedRequest;
       try {
         const params = new URLSearchParams({ city, limit: "24" });
         if (venueId) params.set("venue", venueId);
         if (selectedVideoId) params.set("video", selectedVideoId);
         const payload = await fetchJson(`/api/public/tv?${params.toString()}`, {
-          retries: PUBLIC_DISCOVERY_REQUEST_RETRIES
+          retries: PUBLIC_DISCOVERY_REQUEST_RETRIES,
+          signal: controller?.signal
         });
         if (!payload.ok) throw new Error(payload.error || "Unable to load MyDancr TV.");
         if (
@@ -62384,6 +62419,8 @@
         ) return;
         homeTvFeedVideos = [];
         homeTvFeedStatus = "error";
+      } finally {
+        if (homeTvFeedAbort === controller) homeTvFeedAbort = null;
       }
       if (activeTab === "tv" && citySelect.value === city) renderHomeTvFeed(city);
     }
@@ -65684,7 +65721,7 @@
             : dancerDirectoryFilter;
       }
       if (profileBackdrop.classList.contains("show")) closeProfileModal();
-      deactivateHomeTvFeed();
+      deactivateHomeTvFeed(nextTab !== "tv");
       deactivateHomeDiscoveryFeed();
       if (nextTab === "venues" && activeTab === "venues" && selectedVenueName) {
         selectedVenueName = null;

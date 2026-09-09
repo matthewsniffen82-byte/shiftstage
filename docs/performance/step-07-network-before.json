@@ -1,0 +1,27 @@
+{
+  "base": "https://www.mydancr.com",
+  "requests": [
+    {
+      "phase": "initial",
+      "scope": "profile",
+      "profileKey": 1,
+      "limit": "50",
+      "status": 200,
+      "bytes": 85,
+      "videos": 0,
+      "ok": true
+    },
+    {
+      "phase": "filter-all",
+      "scope": "profile",
+      "profileKey": 2,
+      "limit": "50",
+      "status": 200,
+      "bytes": 6129,
+      "videos": 3,
+      "ok": true
+    }
+  ],
+  "errors": [],
+  "privateDataRead": false
+}

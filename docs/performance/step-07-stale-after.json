@@ -1,0 +1,8 @@
+{
+  "syntheticStalledNetwork": true,
+  "requestsStarted": 2,
+  "pendingAfterScopeChange": 1,
+  "pendingAfterLeaving": 0,
+  "abortedRequests": 2,
+  "resultingStatus": "idle"
+}
