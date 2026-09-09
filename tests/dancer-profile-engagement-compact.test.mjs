@@ -49,7 +49,7 @@ test("zero-social profiles reserve no social DOM or layout space", () => {
   assert.doesNotMatch(socialFunctionSource, /No profiles posted|social placeholder|empty social/i);
   assert.match(
     compactLayout,
-    /\.profile-media-socials \{[\s\S]*?min-height: 0 !important;[\s\S]*?margin: 0 !important;[\s\S]*?padding: 10px 0 0 !important;/,
+    /\.profile-media-socials \{[\s\S]*?min-height: 0 !important;[\s\S]*?margin: 0 !important;[\s\S]*?padding: 10px 0 !important;/,
   );
 });
 
@@ -69,10 +69,10 @@ test("one through the maximum supported social count renders only real links in 
   }
 
   assert.match(socialLinks, /\{links\.map\(\(link\) =>/);
-  assert.match(compactLayout, /\.profile-media-socials \.social-list \{[\s\S]*?width: fit-content !important;[\s\S]*?flex-wrap: nowrap !important;[\s\S]*?justify-content: center !important;[\s\S]*?gap: clamp\(4px, 1\.8vw, 8px\) !important;/);
+  assert.match(compactLayout, /\.profile-media-socials \.social-list \{[\s\S]*?width: fit-content !important;[\s\S]*?flex-wrap: nowrap !important;[\s\S]*?justify-content: center !important;[\s\S]*?gap: 0 !important;/);
   assert.match(compactLayout, /\.profile-media-socials \.social-list a \{[\s\S]*?width: 44px !important;[\s\S]*?height: 44px !important;/);
-  assert.match(compactLayout, /\.profile-media-socials \.social-list a::before \{[\s\S]*?inset: 3px !important;[\s\S]*?border: 1px solid rgba\(226, 232, 240, \.22\) !important;/);
-  assert.match(compactLayout, /\.profile-media-socials \.social-list a svg \{[\s\S]*?width: 19px !important;[\s\S]*?height: 19px !important;/);
+  assert.match(compactLayout, /\.profile-media-socials \.social-list a::before \{[\s\S]*?inset: 6px !important;[\s\S]*?border: 1px solid rgba\(226, 232, 240, \.22\) !important;/);
+  assert.match(compactLayout, /\.profile-media-socials \.social-list a svg \{[\s\S]*?width: 17px !important;[\s\S]*?height: 17px !important;/);
 });
 
 test("all schedule states share the same compact header, three actions, status, and unified media order", () => {

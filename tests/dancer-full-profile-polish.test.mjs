@@ -184,7 +184,7 @@ test("profile socials stay secondary, responsive, and absent when no links exist
 
   assert.match(
     compactProfileBlock,
-    /#profileBackdrop #profileModal \.profile-media-socials,[\s\S]*?\.public-profile-shell \.profile-media-socials \{[\s\S]*?place-items: center !important;[\s\S]*?margin: 0 !important;[\s\S]*?padding: 10px 0 0 !important;[\s\S]*?border: 0 !important;[\s\S]*?background: transparent !important;[\s\S]*?box-shadow: none !important;/,
+    /#profileBackdrop #profileModal \.profile-media-socials,[\s\S]*?\.public-profile-shell \.profile-media-socials \{[\s\S]*?place-items: center !important;[\s\S]*?margin: 0 !important;[\s\S]*?padding: 10px 0 !important;[\s\S]*?border: 0 !important;[\s\S]*?background: transparent !important;[\s\S]*?box-shadow: none !important;/,
   );
   assert.match(
     compactProfileBlock,
@@ -192,15 +192,15 @@ test("profile socials stay secondary, responsive, and absent when no links exist
   );
   assert.match(
     compactProfileBlock,
-    /#profileBackdrop #profileModal \.profile-media-socials \.social-link svg,[\s\S]*?\.public-profile-shell \.profile-media-socials \.social-list a svg \{[\s\S]*?width: 19px !important;[\s\S]*?height: 19px !important;/,
+    /#profileBackdrop #profileModal \.profile-media-socials \.social-link svg,[\s\S]*?\.public-profile-shell \.profile-media-socials \.social-list a svg \{[\s\S]*?width: 17px !important;[\s\S]*?height: 17px !important;/,
   );
   assert.match(
     compactProfileBlock,
-    /\.profile-media-socials \.social-list \{[\s\S]*?width: fit-content !important;[\s\S]*?flex-wrap: nowrap !important;[\s\S]*?justify-content: center !important;[\s\S]*?justify-self: center !important;[\s\S]*?gap: clamp\(4px, 1\.8vw, 8px\) !important;[\s\S]*?margin-inline: auto !important;[\s\S]*?overflow: visible !important;/,
+    /\.profile-media-socials \.social-list \{[\s\S]*?width: fit-content !important;[\s\S]*?flex-wrap: nowrap !important;[\s\S]*?justify-content: center !important;[\s\S]*?justify-self: center !important;[\s\S]*?gap: 0 !important;[\s\S]*?margin-inline: auto !important;[\s\S]*?overflow: visible !important;/,
   );
   assert.match(
     compactProfileBlock,
-    /\.profile-media-socials \.social-list a::before \{[\s\S]*?inset: 3px !important;[\s\S]*?border: 1px solid rgba\(226, 232, 240, \.22\) !important;[\s\S]*?background: rgba\(9, 9, 13, \.86\) !important;[\s\S]*?box-shadow: none !important;/,
+    /\.profile-media-socials \.social-list a::before \{[\s\S]*?inset: 6px !important;[\s\S]*?border: 1px solid rgba\(226, 232, 240, \.22\) !important;[\s\S]*?background: rgba\(9, 9, 13, \.86\) !important;[\s\S]*?box-shadow: none !important;/,
   );
   assert.match(
     compactProfileBlock,
@@ -277,7 +277,7 @@ test("profile actions keep matching neutral circles with brighter selected check
   );
   assert.match(
     guestActionsBlock,
-    /\.profile-media-socials \.social-list \{[\s\S]*?width: fit-content !important;[\s\S]*?justify-content: center !important;[\s\S]*?justify-self: center !important;[\s\S]*?gap: clamp\(4px, 1\.8vw, 8px\) !important;[\s\S]*?margin-inline: auto !important;/,
+    /\.profile-media-socials \.social-list \{[\s\S]*?width: fit-content !important;[\s\S]*?justify-content: center !important;[\s\S]*?justify-self: center !important;[\s\S]*?gap: 0 !important;[\s\S]*?margin-inline: auto !important;/,
   );
   assert.match(
     guestActionsBlock,
