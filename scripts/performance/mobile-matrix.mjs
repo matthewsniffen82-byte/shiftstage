@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { createRequire } from "node:module";
 import { mkdir, writeFile } from "node:fs/promises";
+import { isWebkitNavigationCancellation } from "./browser-diagnostics.mjs";
 const { chromium, webkit, devices } = createRequire(import.meta.url)(process.env.PERF_PLAYWRIGHT_MODULE || "playwright");
 const base = process.env.PERF_BASE_URL || "https://www.mydancr.com";
 const output = process.env.PERF_OUTPUT || ".qa/mobile-matrix";
@@ -98,9 +99,7 @@ for (const config of cases.filter(config => !process.env.PERF_MATRIX_CASES || pr
     // The desktop WebKit port reports canceled old-document fetches as page errors.
     // Retain each diagnostic and accept only a matching canceled request/phase;
     // actual window errors, unhandled rejections and other diagnostics still fail.
-    row.cancelledNavigationDiagnostics = row.errorDetails.filter(error => config.engine === "webkit"
-      && /\/api\/public\/tv\?.* due to access control checks\.$/.test(error.message)
-      && row.failedRequests.some(request => request.path === "/api/public/tv" && request.failure === "Load request cancelled" && request.lastCompletedPhase === error.lastCompletedPhase));
+    row.cancelledNavigationDiagnostics = row.errorDetails.filter(error => isWebkitNavigationCancellation(error, row.failedRequests, config.engine));
     assert.deepEqual(row.runtimeErrors, []);
     assert.deepEqual(row.errorDetails.filter(error => !row.cancelledNavigationDiagnostics.includes(error)), []);
   } catch (error) { row.errors.push(error.message); }

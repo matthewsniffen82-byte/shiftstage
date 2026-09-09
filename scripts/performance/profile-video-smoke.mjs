@@ -49,6 +49,9 @@ try {
   await page.locator(".profile-media-viewer-close").tap();
   await page.locator(".profile-media-viewer").waitFor({ state: "detached" });
   assert.equal((await capture("closed")).length, 0);
+  const releasedPlayer = await page.evaluate(() => ({ connected: window.__originalPlayer.isConnected, paused: window.__originalPlayer.paused, source: window.__originalPlayer.hasAttribute("src") }));
+  assert.deepEqual(releasedPlayer, { connected: false, paused: true, source: false }, "The original detached player must release playback and its source");
+  states.push({ label: "detached-player-released", ...releasedPlayer });
   assert.deepEqual(errors, []);
 } finally {
   await writeFile(`${output}/results.json`, JSON.stringify({ base, slug, simulatedVisibility: true, states, errors }, null, 2));

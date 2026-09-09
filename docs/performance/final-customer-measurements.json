@@ -1,0 +1,66 @@
+{
+  "generatedAt": "2026-09-09T18:30:47.149Z",
+  "environment": "Chromium mobile lab; cold cache; synthetic throttling; API writes suppressed; not physical iPhone/Android or field Core Web Vitals",
+  "metricCaveats": "INP column is a sampled interaction proxy, not field INP. Video waiting includes initial buffering. Heap growth over a five-second scroll is not proof of a leak. Redirected routes report final-document paint timings and whole-journey request bytes. Null means not measured, never zero.",
+  "pages": [
+    {
+      "name": "cellular /dashboard/customer [synthetic customer data]",
+      "samples": 3,
+      "hostCpuBusyPercent": 100,
+      "lcpMs": 3124,
+      "fcpMs": 1980,
+      "ttfbMs": 142.5,
+      "cls": 0.009,
+      "interactionProxyMs": null,
+      "initialJsTransferBytes": 250011,
+      "initialTransferBytes": 566374,
+      "initialRequests": 27,
+      "domNodes": 405,
+      "longestTaskMs": 669,
+      "scrollFramesOver50msPercent": 0.357,
+      "heapBefore": 4021412,
+      "heapAfter": 4065252,
+      "videoFirstLoadToPlayMs": null,
+      "videoPlayFromNavigationMs": null,
+      "videoWaitingEvents": 0,
+      "droppedFrames": 0,
+      "errors": [],
+      "criticalFailures": [],
+      "api": [
+        {
+          "url": "https://www.mydancr.com/api/account",
+          "medianMs": 50.62,
+          "samples": 3
+        },
+        {
+          "url": "https://www.mydancr.com/api/customer/saved",
+          "medianMs": 71.344,
+          "samples": 3
+        },
+        {
+          "url": "https://www.mydancr.com/api/customer/profile",
+          "medianMs": 55.93,
+          "samples": 3
+        },
+        {
+          "url": "https://www.mydancr.com/api/support",
+          "medianMs": 54.851,
+          "samples": 3
+        },
+        {
+          "url": "https://www.mydancr.com/api/agent/commissions",
+          "medianMs": 53.46,
+          "samples": 3
+        },
+        {
+          "url": "https://www.mydancr.com/api/notifications",
+          "medianMs": 45.502,
+          "samples": 3
+        }
+      ],
+      "shellVersions": [
+        "9aa44e1bfe21701e62d475ad33a9ba932983606a35f0cb06cf44dcc37ec91132"
+      ]
+    }
+  ]
+}

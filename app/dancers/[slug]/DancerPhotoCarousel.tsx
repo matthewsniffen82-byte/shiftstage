@@ -19,6 +19,7 @@ import { recordPublicEngagementShare } from "@/src/lib/dancr/engagement-client";
 import { useVideoSoundPreference } from "@/src/lib/dancr/use-video-sound-preference";
 import { useAdaptiveVideoWarmup } from "@/src/lib/dancr/use-adaptive-video-warmup";
 import { videoBufferMode } from "@/src/lib/dancr/video-buffer-policy";
+import { videoResourceRef } from "@/src/lib/dancr/video-resource-ref";
 import { useAnonymousMediaLikes } from "@/src/lib/dancr/use-anonymous-media-likes";
 import { DANCER_PROFILE_MEDIA_PAGE_SIZE } from "@/src/lib/dancr/media-limits";
 
@@ -956,6 +957,7 @@ export function DancerPhotoCarousel({
                 ) : (
                   <>
                   <video
+                    ref={videoResourceRef}
                     aria-label={`${stageName} video ${index + 1} of ${viewerItems.length}`}
                     controls={false}
                     controlsList="nofullscreen noremoteplayback nodownload"

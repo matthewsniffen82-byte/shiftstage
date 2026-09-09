@@ -38,7 +38,7 @@ For a customer rendering-only sample, set `PERF_CUSTOMER_FIXTURE=1` and use `/da
 | 11 | Memory/resource lifecycle | Pushed `3b589b18`; [Vercel success](https://vercel.com/ai-movie-jobs/shiftstage/2ipeQZWLZK95eADtL5Soax3F3yvz); 2,879 tests/checks, bounded metadata resources and six live browsing cycles verified |
 | 12 | Mobile matrix | Pushed `a57946ce`; [Vercel success](https://vercel.com/ai-movie-jobs/shiftstage/22iLfeGj1YKJ5ELXJExrmtBD4v2m); 2,923 tests/checks, six deployed mobile configurations, profile touch-close/lifecycle and three roles passed |
 | 13 | Perceived loading | Pushed `18750534`; [Vercel success](https://vercel.com/ai-movie-jobs/shiftstage/8dTxLtRxTJjaFiNBa51XRxwAdtCZ); 2,937 tests/checks, two loading/retry scenarios and three roles passed |
-| 14 | Final vitals comparison | 28 repeat measurements plus API, video and memory verification recorded in `step-14-final-vitals.md` / `final-measurements.json`; release validation in progress |
-| 15 | Regression and production validation | Pending |
+| 14 | Final vitals comparison | Pushed `1878d946`; [Vercel success](https://vercel.com/ai-movie-jobs/shiftstage/D78WBPJ7FsEfn3haw4RFLPvgYmqH); 2,965 tests/checks, 31 samples, live health, three roles and CSS equivalence verified |
+| 15 | Regression and production validation | Final regression caught and corrects retained video sources after viewer detach; complete checks and deployed verification recorded in the final report/delivery manifest |
 
 The final report will list each pushed commit and verified deployment, measurements, intentional exclusions, and remaining infrastructure recommendations. Detailed execution artifacts are retained outside tracked application files in the delivery archive.
