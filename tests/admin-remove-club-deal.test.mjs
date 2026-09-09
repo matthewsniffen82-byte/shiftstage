@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs';
 import test from 'node:test';
 import vm from 'node:vm';
 import ts from 'typescript';
+import { PublicApiError } from '../src/lib/api-error-policy.ts';
 
 function load(path, dependencies = {}) {
   const exports = {};
@@ -15,6 +16,7 @@ function load(path, dependencies = {}) {
 const ids = { venue: '11111111-1111-4111-8111-111111111111', deal: '22222222-2222-4222-8222-222222222222', other: '33333333-3333-4333-8333-333333333333' };
 const preset = { title: 'Half-off admission', description: 'Half-price general admission.', terms: 'One per guest.' };
 const service = load('src/lib/dancr/venue-deal-actions.ts', {
+  '../api-error-policy': { PublicApiError },
   './deals': load('src/lib/dancr/deals.ts'),
   './club-deal-presets': { clubDealOfferPresetForTitle: () => preset },
   './deal-policy': { assertLiquorFreeClubDeal() {} },
@@ -66,11 +68,11 @@ test('failed removal keeps the live deal available and allows retry', async () =
   await service.removeAdminVenueDeal(db, ids.venue, ids.deal);
   assert.equal(db.rows[0].is_active, false);
 });
-test('a removed deal cannot be removed twice or republished by a stale editor', async () => {
+test('a completed removal can be retried without another write or stale republication', async () => {
   const db = database();
   await service.removeAdminVenueDeal(db, ids.venue, ids.deal);
   const removedAt = db.rows[0].removed_at;
-  await assert.rejects(service.removeAdminVenueDeal(db, ids.venue, ids.deal), /already removed/);
+  assert.equal((await service.removeAdminVenueDeal(db, ids.venue, ids.deal)).id, ids.deal);
   await assert.rejects(service.upsertAdminVenueDeal(db, { venueId: ids.venue, dealId: ids.deal, dealTitle: preset.title, dealDescription: preset.description, isActive: true, offerType: 'admission' }), /not found/);
   assert.equal(db.rows[0].removed_at, removedAt);
   assert.equal(db.rows[0].is_active, false);

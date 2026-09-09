@@ -1,0 +1,822 @@
+{
+  "source_base": "9d1b3c3e999ab985114563e19487a29faa89797b",
+  "project_ref": "hfmzwadzabmgxkjzmqun",
+  "catalog_captured_at": "2026-09-09T16:27:46.476096+00:00",
+  "production_writes": false,
+  "application_tables": 79,
+  "foreign_key_checks": [
+    {
+      "check_name": "admin_actions.admin_actions_admin_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "agent_commission_events.agent_commission_events_deal_revenue_event_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "agent_commission_events.agent_commission_events_qr_redemption_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "agent_commission_events.agent_commission_events_recipient_agent_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "agent_commission_events.agent_commission_events_signing_agent_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "agent_commission_events.agent_commission_events_venue_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "agent_commission_events.agent_commission_events_venue_sales_attribution_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "app_users.app_users_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "approval_reviews.approval_reviews_dancer_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "approval_reviews.approval_reviews_reviewer_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "club_deals.club_deals_venue_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "club_finance_accounts.club_finance_accounts_venue_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "club_invoice_items.club_invoice_items_invoice_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "club_invoice_items.club_invoice_items_revenue_event_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "club_invoice_reminders.club_invoice_reminders_invoice_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "club_invoices.club_invoices_venue_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "commission_events.commission_events_club_deal_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "commission_events.commission_events_dancer_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "commission_events.commission_events_payout_batch_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "commission_events.commission_events_qr_redemption_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "commission_events.commission_events_venue_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "content_reports.content_reports_reporter_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "content_reports.content_reports_reviewed_by_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "customer_deal_saves.customer_deal_saves_club_deal_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "customer_deal_saves.customer_deal_saves_customer_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "customer_deal_saves.customer_deal_saves_dancer_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "customer_profiles.customer_profiles_user_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "dancer_earning_status_history.dancer_earning_status_history_actor_user_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "dancer_earning_status_history.dancer_earning_status_history_earning_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "dancer_nfc_enrollments.dancer_nfc_enrollments_dancer_user_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "dancer_nfc_enrollments.dancer_nfc_enrollments_nfc_tag_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "dancer_nfc_enrollments.dancer_nfc_enrollments_venue_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "dancer_payout_accounts.dancer_payout_accounts_dancer_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "dancer_payout_batches.dancer_payout_batches_dancer_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "dancer_payout_items.dancer_payout_items_commission_event_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "dancer_payout_items.dancer_payout_items_payout_batch_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "dancer_photos.dancer_photos_dancer_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "dancer_profile_slug_aliases.dancer_profile_slug_aliases_dancer_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "dancer_profiles.dancer_profiles_user_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "dancer_profiles.dancer_profiles_venue_approved_by_user_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "dancer_profiles.dancer_profiles_venue_approved_venue_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "deal_revenue_events.deal_revenue_events_club_deal_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "deal_revenue_events.deal_revenue_events_club_invoice_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "deal_revenue_events.deal_revenue_events_dancer_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "deal_revenue_events.deal_revenue_events_qr_redemption_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "deal_revenue_events.deal_revenue_events_venue_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "deal_revenue_events.deal_revenue_events_venue_sales_attribution_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "direction_requests.direction_requests_dancer_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "direction_requests.direction_requests_requester_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "direction_requests.direction_requests_venue_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "dmca_agent_settings.dmca_agent_settings_updated_by_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "dmca_cases.dmca_cases_reviewed_by_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "dmca_cases.dmca_cases_uploader_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "dmca_counter_notices.dmca_counter_notices_case_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "dmca_counter_notices.dmca_counter_notices_uploader_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "dmca_strikes.dmca_strikes_case_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "dmca_strikes.dmca_strikes_user_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "favorites.favorites_customer_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "favorites.favorites_dancer_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "financial_audit_events.financial_audit_events_actor_user_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "follows.follows_customer_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "follows.follows_dancer_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "going_signals.going_signals_customer_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "going_signals.going_signals_shift_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "image_moderation_records.image_moderation_records_image_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "image_moderation_records.image_moderation_records_reviewed_by_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "image_moderation_records.image_moderation_records_user_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "media_likes.media_likes_photo_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "media_likes.media_likes_video_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "mydancr_tv_events.mydancr_tv_events_video_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "mydancr_tv_events.mydancr_tv_events_viewer_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "mydancr_tv_videos.mydancr_tv_videos_dancer_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "mydancr_tv_videos.mydancr_tv_videos_reviewed_by_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "mydancr_tv_videos.mydancr_tv_videos_shift_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "mydancr_tv_videos.mydancr_tv_videos_submitted_by_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "mydancr_tv_videos.mydancr_tv_videos_venue_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "nats_affiliate_accounts.nats_affiliate_accounts_dancer_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "nats_affiliate_accounts.nats_affiliate_accounts_verified_by_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "nats_agent_affiliate_accounts.nats_agent_affiliate_accounts_agent_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "nats_agent_affiliate_accounts.nats_agent_affiliate_accounts_verified_by_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "nats_agent_commission_exports.nats_agent_commission_exports_agent_commission_event_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "nats_agent_commission_exports.nats_agent_commission_exports_agent_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "nats_commission_exports.nats_commission_exports_commission_event_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "nats_commission_exports.nats_commission_exports_dancer_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "nfc_tags.nfc_tags_created_by_user_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "nfc_tags.nfc_tags_rotated_from_tag_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "nfc_tags.nfc_tags_venue_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "nfc_tap_events.nfc_tap_events_actor_user_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "nfc_tap_events.nfc_tap_events_nfc_tag_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "nfc_tap_events.nfc_tap_events_venue_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "notifications.notifications_recipient_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "payout_settings.payout_settings_updated_by_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "profile_views.profile_views_dancer_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "profile_views.profile_views_viewer_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "qr_redemption_events.qr_redemption_events_actor_user_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "qr_redemption_events.qr_redemption_events_qr_redemption_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "qr_redemptions.qr_redemptions_club_deal_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "qr_redemptions.qr_redemptions_customer_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "qr_redemptions.qr_redemptions_dancer_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "qr_redemptions.qr_redemptions_nfc_tag_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "qr_redemptions.qr_redemptions_redeemed_by_club_user_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "qr_redemptions.qr_redemptions_shift_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "qr_redemptions.qr_redemptions_venue_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "qr_redemptions.qr_redemptions_voided_by_admin_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "ranking_events.ranking_events_dancer_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "sales_agents.sales_agents_created_by_admin_user_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "sales_agents.sales_agents_sponsor_agent_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "sales_agents.sales_agents_updated_by_admin_user_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "sales_agents.sales_agents_user_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "schedule_views.schedule_views_dancer_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "schedule_views.schedule_views_shift_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "schedule_views.schedule_views_viewer_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "shift_location_events.shift_location_events_dancer_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "shift_location_events.shift_location_events_shift_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "shift_location_events.shift_location_events_user_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "shifts.shifts_dancer_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "shifts.shifts_nfc_tag_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "shifts.shifts_venue_affiliation_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "shifts.shifts_venue_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "social_clicks.social_clicks_clicker_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "social_clicks.social_clicks_dancer_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "social_links.social_links_dancer_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "subscriptions.subscriptions_dancer_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "support_ai_runs.support_ai_runs_response_message_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "support_ai_runs.support_ai_runs_thread_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "support_ai_runs.support_ai_runs_trigger_message_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "support_messages.support_messages_sender_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "support_messages.support_messages_thread_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "support_threads.support_threads_assigned_admin_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "support_threads.support_threads_user_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "trending_scores.trending_scores_dancer_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "venue_activity_log.venue_activity_log_actor_user_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "venue_activity_log.venue_activity_log_venue_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "venue_claim_codes.venue_claim_codes_created_by_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "venue_claim_codes.venue_claim_codes_revoked_by_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "venue_claim_codes.venue_claim_codes_used_by_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "venue_claim_codes.venue_claim_codes_venue_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "venue_club_deal_requests.venue_club_deal_requests_linked_deal_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "venue_club_deal_requests.venue_club_deal_requests_requested_by_user_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "venue_club_deal_requests.venue_club_deal_requests_reviewed_by_admin_user_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "venue_club_deal_requests.venue_club_deal_requests_target_deal_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "venue_club_deal_requests.venue_club_deal_requests_venue_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "venue_dancer_affiliation_events.venue_dancer_affiliation_events_actor_user_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "venue_dancer_affiliation_events.venue_dancer_affiliation_events_affiliation_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "venue_dancer_affiliation_events.venue_dancer_affiliation_events_dancer_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "venue_dancer_affiliation_events.venue_dancer_affiliation_events_venue_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "venue_dancer_affiliations.venue_dancer_affiliations_approved_by_user_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "venue_dancer_affiliations.venue_dancer_affiliations_dancer_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "venue_dancer_affiliations.venue_dancer_affiliations_revoked_by_user_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "venue_dancer_affiliations.venue_dancer_affiliations_venue_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "venue_dancer_verification_tokens.venue_dancer_verification_tokens_created_by_user_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "venue_dancer_verification_tokens.venue_dancer_verification_tokens_dancer_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "venue_dancer_verification_tokens.venue_dancer_verification_tokens_used_by_user_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "venue_dancer_verification_tokens.venue_dancer_verification_tokens_venue_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "venue_follows.venue_follows_customer_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "venue_follows.venue_follows_venue_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "venue_nfc_support_requests.venue_nfc_support_requests_nfc_tag_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "venue_nfc_support_requests.venue_nfc_support_requests_requested_by_user_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "venue_nfc_support_requests.venue_nfc_support_requests_venue_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "venue_ownership_claims.venue_ownership_claims_claim_code_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "venue_ownership_claims.venue_ownership_claims_claimant_user_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "venue_ownership_claims.venue_ownership_claims_reviewed_by_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "venue_ownership_claims.venue_ownership_claims_venue_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "venue_page_events.venue_page_events_dancer_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "venue_page_events.venue_page_events_venue_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "venue_page_events.venue_page_events_viewer_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "venue_pilot_night_reports.venue_pilot_night_reports_reported_by_user_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "venue_pilot_night_reports.venue_pilot_night_reports_venue_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "venue_referral_fee_change_requests.venue_referral_fee_change_reques_reviewed_by_admin_user_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "venue_referral_fee_change_requests.venue_referral_fee_change_requests_requested_by_user_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "venue_referral_fee_change_requests.venue_referral_fee_change_requests_venue_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "venue_referral_fee_terms.venue_referral_fee_terms_created_by_admin_user_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "venue_referral_fee_terms.venue_referral_fee_terms_superseded_by_admin_user_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "venue_referral_fee_terms.venue_referral_fee_terms_venue_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "venue_sales_attributions.venue_sales_attributions_created_by_admin_user_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "venue_sales_attributions.venue_sales_attributions_signing_agent_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "venue_sales_attributions.venue_sales_attributions_sponsor_level_1_agent_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "venue_sales_attributions.venue_sales_attributions_sponsor_level_2_agent_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "venue_sales_attributions.venue_sales_attributions_sponsor_level_3_agent_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "venue_sales_attributions.venue_sales_attributions_sponsor_level_4_agent_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "venue_sales_attributions.venue_sales_attributions_sponsor_level_5_agent_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "venue_sales_attributions.venue_sales_attributions_venue_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "venue_signup_requests.venue_signup_requests_access_code_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "venue_signup_requests.venue_signup_requests_matched_venue_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "venue_signup_requests.venue_signup_requests_referring_agent_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "venue_signup_requests.venue_signup_requests_requester_user_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "venue_signup_requests.venue_signup_requests_reviewed_by_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "venue_team_invitations.venue_team_invitations_accepted_by_user_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "venue_team_invitations.venue_team_invitations_invited_by_user_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "venue_team_invitations.venue_team_invitations_venue_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "venue_team_members.venue_team_members_invited_by_user_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "venue_team_members.venue_team_members_user_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "venue_team_members.venue_team_members_venue_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "venues.venues_owner_user_id_fkey",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "venues.venues_page_reviewed_by_user_id_fkey",
+      "orphan_rows": 0
+    }
+  ],
+  "reverse_provisioning_checks": [
+    {
+      "check_name": "auth_users_without_app_user",
+      "orphan_rows": 0
+    },
+    {
+      "check_name": "dancer_accounts_without_profile",
+      "orphan_rows": 1
+    },
+    {
+      "check_name": "customer_accounts_without_profile",
+      "orphan_rows": 0
+    }
+  ],
+  "additional_aggregate_checks": {
+    "captured_at": "2026-09-09T16:36:33.799001+00:00",
+    "dancer_profile_role_mismatches": 0,
+    "liquor_check_exceptions": {
+      "active": 0,
+      "total": 1
+    },
+    "missing_primary_keys": 0,
+    "read_only": "on",
+    "set_null_required_columns": 0,
+    "shift_affiliation_mismatches": 0,
+    "unvalidated_foreign_keys": 0,
+    "video_shift_dancer_mismatches": 0
+  },
+  "limitations": [
+    "No account or private row details returned.",
+    "Historical migration replay remains deferred.",
+    "Missing dancer profile needs lifecycle context before repair."
+  ]
+}

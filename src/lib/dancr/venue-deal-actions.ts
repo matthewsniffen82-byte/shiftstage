@@ -13,6 +13,7 @@ import { getVenueReferralFeeState } from "./referral-fees";
 import type { ClubDeal, ClubDealOfferType } from "./types";
 import { requireVenueAccess } from "./venue-access";
 import { safeErrorMetadata } from "../security/safe-error-metadata";
+import { PublicApiError } from "../api-error-policy";
 
 type DancrClient = SupabaseClient;
 
@@ -135,7 +136,21 @@ export async function removeAdminVenueDeal(
     .select("id")
     .maybeSingle();
   if (error) throw error;
-  if (!data) throw new Error("Club Deal not found for this venue or already removed.");
+  if (!data) {
+    // A prior request may have committed before its response was lost. Confirm
+    // the same venue's archived row without rewriting its original timestamp.
+    const { data: current, error: currentError } = await (client as any)
+      .from("club_deals")
+      .select("id, is_active, removed_at")
+      .eq("id", dealId)
+      .eq("venue_id", venueId)
+      .maybeSingle();
+    if (currentError) throw currentError;
+    if (!current) throw new PublicApiError("NOT_FOUND", "Club Deal not found for this venue.", 404);
+    if (!current.removed_at || current.is_active) {
+      throw new PublicApiError("CONFLICT", "This Club Deal changed. Refresh and try again.", 409);
+    }
+  }
   return { id: dealId, deals: await getAdminVenueDealCatalog(client) };
 }
 
