@@ -16,13 +16,13 @@
     "@supabase/supabase-js": "^2.45.4",
     "@zxing/browser": "^0.1.5",
     "ffmpeg-static": "^5.3.0",
-    "next": "^15.3.4",
+    "next": "15.5.24",
     "openai": "^5.10.2",
     "postcss": "^8.5.23",
     "qrcode": "^1.5.4",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "sharp": "^0.35.3",
+    "sharp": "0.35.4",
     "stripe": "^16.12.0"
   },
   "scripts": {

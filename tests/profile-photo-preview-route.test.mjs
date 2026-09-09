@@ -82,3 +82,23 @@ test("preview honors EXIF orientation and sends a bounded private JPEG without p
   assert.equal(meta.orientation, undefined);
   assert.deepEqual(api.events, ["auth", "rate", "body", "decode"]);
 });
+
+test("private previews decode PNG and WebP uploads and flatten transparency safely", async () => {
+  for (const format of ["png", "webp"]) {
+    const input = await sharp({ create: {
+      width: 80, height: 120, channels: 4, background: { r: 255, g: 0, b: 0, alpha: 0 },
+    } })[format]().toBuffer();
+    const response = await route().post(request(new Blob([input], { type: `image/${format}` })));
+    assert.equal(response.status, 200);
+    assert.equal(response.headers.get("cache-control"), "private, no-store");
+    const data = await response.json();
+    const output = Buffer.from(data.imageDataUrl.split(",")[1], "base64");
+    const metadata = await sharp(output).metadata();
+    assert.equal(metadata.format, "jpeg");
+    assert.equal(metadata.width, 80);
+    assert.equal(metadata.height, 120);
+    assert.equal(metadata.hasAlpha, false);
+    const pixels = await sharp(output).raw().toBuffer();
+    assert.ok(pixels.every(value => value <= 2), `${format}: transparent pixels should become black`);
+  }
+});
