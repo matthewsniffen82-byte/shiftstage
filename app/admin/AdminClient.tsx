@@ -1749,7 +1749,8 @@ function ReferralFeeManager({
   const [venueId, setVenueId] = useState(scopedVenueId || "");
   const [isDirty, setIsDirty] = useState(false);
   const [fee, setFee] = useState("");
-  const [effectiveFrom, setEffectiveFrom] = useState(() => adminLocalDateTime(new Date()));
+  const [effectiveImmediately, setEffectiveImmediately] = useState(true);
+  const [effectiveFrom, setEffectiveFrom] = useState("");
   const [agreementReference, setAgreementReference] = useState("");
   const [decisionNote, setDecisionNote] = useState("");
   const [reviewRequestId, setReviewRequestId] = useState("");
@@ -1810,7 +1811,7 @@ function ReferralFeeManager({
   async function saveAgreement(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const feeCents = adminDollarsToCents(fee);
-    if (!venueId || feeCents === null || !agreementReference.trim() || !effectiveFrom) {
+    if (!venueId || feeCents === null || agreementReference.trim().length < 3 || (!effectiveImmediately && !Number.isFinite(Date.parse(effectiveFrom)))) {
       return setStatus("Choose a venue and enter a valid fee, effective date, and agreement reference.");
     }
     const request = beginReferralAction();
@@ -1827,7 +1828,7 @@ function ReferralFeeManager({
           requestId: reviewRequestId || null,
           venueId,
           feeCents,
-          effectiveFrom: new Date(effectiveFrom).toISOString(),
+          effectiveFrom: effectiveImmediately ? "now" : new Date(effectiveFrom).toISOString(),
           agreementReference,
           decisionNote,
         }),
@@ -1896,12 +1897,16 @@ function ReferralFeeManager({
             <input required inputMode="decimal" placeholder="20.00" value={fee} disabled={isSaving} onChange={(event) => setFee(event.target.value)} />
           </label>
           <label>
+            <input type="checkbox" checked={effectiveImmediately} disabled={isSaving} onChange={(event) => setEffectiveImmediately(event.target.checked)} />
+            Effective immediately when saved
+          </label>
+          {!effectiveImmediately && <label>
             Effective date and time
             <input required type="datetime-local" value={effectiveFrom} disabled={isSaving} onChange={(event) => setEffectiveFrom(event.target.value)} />
-          </label>
+          </label>}
           <label>
             Signed agreement reference
-            <input required maxLength={160} placeholder="Agreement or amendment ID" value={agreementReference} disabled={isSaving} onChange={(event) => setAgreementReference(event.target.value)} />
+            <input required minLength={3} maxLength={160} placeholder="Agreement or amendment ID" value={agreementReference} disabled={isSaving} onChange={(event) => setAgreementReference(event.target.value)} />
           </label>
           <label className="wide">
             Internal decision note (optional)
@@ -5182,11 +5187,6 @@ function previewCommission(item: Record<string, unknown>) {
   const commission = readFirst(item.commission_events);
   if (!commission) return "No dancer commission";
   return `Commission: ${String(commission.status || "pending")}`;
-}
-
-function adminLocalDateTime(date: Date) {
-  const offset = date.getTimezoneOffset() * 60_000;
-  return new Date(date.getTime() - offset).toISOString().slice(0, 16);
 }
 
 function adminDollarsToCents(value: string) {

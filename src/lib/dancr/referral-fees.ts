@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { PublicApiError } from "../api-error-policy";
 import { requireVenueAccess } from "./venue-access";
 
 type DancrClient = SupabaseClient;
@@ -247,39 +248,41 @@ function toReferralFeeRequest(row: any): VenueReferralFeeChangeRequest {
 function validFeeCents(value: unknown) {
   const cents = Math.trunc(Number(value));
   if (!Number.isSafeInteger(cents) || cents < 100 || cents > 100_000) {
-    throw new Error("Referral fee must be between $1.00 and $1,000.00 per verified customer redemption.");
+    throw new PublicApiError("INVALID_REQUEST", "Referral fee must be between $1.00 and $1,000.00 per verified customer redemption.", 400);
   }
   return cents;
 }
 
 function validEffectiveDate(value: unknown) {
+  // Resolve immediate agreements at submission, never at browser form mount.
+  if (value === "now") return new Date().toISOString();
   const date = new Date(String(value || ""));
   const earliest = Date.now() - 5 * 60_000;
   const latest = Date.now() + 5 * 365 * 24 * 60 * 60_000;
   if (!Number.isFinite(date.getTime()) || date.getTime() < earliest || date.getTime() > latest) {
-    throw new Error("Effective date must be between now and five years from now.");
+    throw new PublicApiError("INVALID_REQUEST", "Choose Effective immediately or a date between now and five years from now.", 400);
   }
   return date.toISOString();
 }
 
 function requiredText(value: unknown, message: string, min: number, max: number) {
   const text = typeof value === "string" ? value.trim() : "";
-  if (text.length < min) throw new Error(message);
-  if (text.length > max) throw new Error(`${message} Use ${max} characters or fewer.`);
+  if (text.length < min) throw new PublicApiError("INVALID_REQUEST", `${message} Use at least ${min} characters.`, 400);
+  if (text.length > max) throw new PublicApiError("INVALID_REQUEST", `${message} Use ${max} characters or fewer.`, 400);
   return text;
 }
 
 function optionalText(value: unknown, max: number) {
   if (value === null || value === undefined || value === "") return null;
   const text = String(value).trim();
-  if (text.length > max) throw new Error(`Notes must be ${max} characters or fewer.`);
+  if (text.length > max) throw new PublicApiError("INVALID_REQUEST", `Notes must be ${max} characters or fewer.`, 400);
   return text || null;
 }
 
 function requiredUuid(value: unknown, message: string) {
   const text = typeof value === "string" ? value.trim() : "";
   if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(text)) {
-    throw new Error(message);
+    throw new PublicApiError("INVALID_REQUEST", message, 400);
   }
   return text;
 }
