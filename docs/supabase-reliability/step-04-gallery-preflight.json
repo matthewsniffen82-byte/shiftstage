@@ -1,0 +1,17 @@
+{
+  "capturedAt": "2026-09-09T20:58:19.336762+00:00",
+  "readOnly": true,
+  "latestMigration": "20260909183820",
+  "targetMigration": "20260909203842",
+  "targetLedgerRows": 0,
+  "targetFunctionExists": false,
+  "targetColumnCount": 0,
+  "photoRows": 72,
+  "profileRows": 16,
+  "reviewRows": 43,
+  "pendingUnlinkedGalleryReviews": 4,
+  "rlsTables": 3,
+  "serviceStorageSelect": true,
+  "isolatedHistoricalReplay": "deferred by user",
+  "productionWritesPerformed": false
+}
