@@ -2846,7 +2846,7 @@ function VenuePanel({
 
       <nav className="venue-workspace-tabs" aria-label="Venue workspace" role="tablist">
         {([
-          ["tonight", "Tonight", "Roster · deals · check-in", `${workingNow.length} working · ${activeDealCount} live ${activeDealCount === 1 ? "deal" : "deals"}`],
+          ["tonight", "Tonight", "Roster · deals · check-in", `${workingNow.length} working now · ${activeDealCount} live ${activeDealCount === 1 ? "deal" : "deals"}`],
           ["venue", "Venue page", "Preview · review · MyDancr TV", venuePageTabStatus],
           ["business", "Business", "Analytics · team · account", "Management tools"],
         ] as const).map(([workspace, label, contents, status]) => (
@@ -2865,7 +2865,9 @@ function VenuePanel({
             <span className="venue-workspace-tab-icon"><VenueDashboardIcon section={workspace} /></span>
             <strong>{label}</strong>
             <small>{contents}</small>
-            <span className="venue-workspace-tab-status">{status}</span>
+            <span className="venue-workspace-tab-status">
+              {workspace === "tonight" ? status.split(" · ").map((line) => <span key={line}>{line}</span>) : status}
+            </span>
           </button>
         ))}
       </nav>
@@ -8391,6 +8393,7 @@ function DashboardStyles() {
       .venue-workspace-tabs small { display: grid; min-height: 21px; place-items: center; color: #cbd5e1; font-size: 9px; font-weight: 820; line-height: 1.18; }
       .venue-workspace-tabs button.active small { color: #f8fafc; }
       .venue-workspace-tab-status { min-width: 0; color: #94a3b8; font-size: 8px; font-weight: 780; line-height: 1.12; white-space: normal; overflow-wrap: anywhere; }
+      .venue-workspace-tab-status > span { display: block; }
       .venue-workspace-tabs button.active .venue-workspace-tab-status { color: #ddd6fe; }
       .venue-workspace-business-summary { display: grid; gap: 7px; padding: 16px 18px; border: 1px solid var(--mydancr-dashboard-border); border-radius: var(--mydancr-dashboard-radius); background: var(--mydancr-dashboard-panel); }
       .venue-workspace-business-summary h2 { margin: 0; color: #f8fafc; font-size: clamp(20px,3.5vw,25px); line-height: 1.08; }

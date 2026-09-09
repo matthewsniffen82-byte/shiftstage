@@ -110,7 +110,7 @@ test("venue owners navigate one simplified state-aware workspace without losing 
   assert.match(venuePanel, /role="tablist"[\s\S]*?\["tonight", "Tonight"[\s\S]*?\["venue", "Venue page"[\s\S]*?\["business", "Business"/);
   assert.match(venuePanel, /"Roster · deals · check-in"[\s\S]*?"Preview · review · MyDancr TV"[\s\S]*?"Analytics · team · account"/);
   assert.match(venuePanel, /aria-label=\{`\$\{label\}\. \$\{contents\}\. \$\{status\}\.`\}/);
-  assert.match(venuePanel, /className="venue-workspace-tab-status">\{status\}/);
+  assert.match(venuePanel, /className="venue-workspace-tab-status">[\s\S]*?workspace === "tonight" \? status\.split/);
   assert.match(venuePanel, /function moveVenueWorkspaceFocus[\s\S]*?"ArrowLeft"[\s\S]*?"ArrowRight"[\s\S]*?"Home"[\s\S]*?"End"/);
   assert.match(dashboard, /function initialVenueWorkspace[\s\S]*?return isPublished \? "tonight" : "venue";/);
   assert.match(dashboard, /function venueWorkspaceForSection[\s\S]*?"venue-working-now"[\s\S]*?"venue-tv"[\s\S]*?"venue-overview"/);
