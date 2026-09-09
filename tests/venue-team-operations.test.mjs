@@ -75,8 +75,7 @@ test("venue dashboard live operations refresh real data and expose honest workin
   assert.doesNotMatch(dashboard, /readOptionalJson\(`\/api\/venue\/dashboard/);
   assert.match(dashboard, /\["tonight", "7d", "30d"\]/);
   assert.match(dashboard, /isPublished \? "LIVE" : isPausedForDeals \? "HIDDEN" : "PRIVATE DRAFT"/);
-  assert.match(dashboard, /Check-in verified/);
-  assert.match(dashboard, /Active until/);
+  assert.match(dashboard, /workingNow=\{workingNow\}[\s\S]*?workingOnly=\{rosterWorkingOnly\}/);
   assert.doesNotMatch(dashboard, /Scheduled until/);
   assert.match(dashboard, /hours === 1 \? "hr" : "hrs"/);
   assert.match(dashboard, /VenueTeamPanel/);

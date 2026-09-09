@@ -609,7 +609,9 @@ export default function DashboardClient({
       ? initialSection === "offers" ? "customer-saved-deals" : "customer-followed-dancers"
       : "";
     const hashSectionId = decodeURIComponent(window.location.hash.replace(/^#/, ""));
-    const sectionId = initialSectionId || hashSectionId;
+    const sectionId = role === "venue" && hashSectionId === "venue-working-now"
+      ? "venue-dancer-roster"
+      : initialSectionId || hashSectionId;
     if (!sectionId) return;
     const frame = window.requestAnimationFrame(() => {
       const section = document.getElementById(sectionId);
@@ -2722,6 +2724,7 @@ function VenuePanel({
     const sectionId = typeof window === "undefined" ? "" : window.location.hash.replace(/^#/, "");
     return venueWorkspaceForSection(sectionId) || initialVenueWorkspace(profile?.isActive === true);
   });
+  const [rosterWorkingOnly, setRosterWorkingOnly] = useState(() => typeof window !== "undefined" && window.location.hash === "#venue-working-now");
   const mountedRef = useRef(false);
   const publicationSequenceRef = useRef(0);
   const publicationAbortRef = useRef<AbortController | null>(null);
@@ -2801,10 +2804,12 @@ function VenuePanel({
 
   function openVenueSection(event: React.MouseEvent<HTMLAnchorElement>, sectionId: string) {
     event.preventDefault();
+    const targetSectionId = sectionId === "venue-working-now" ? "venue-dancer-roster" : sectionId;
+    if (sectionId === "venue-working-now") setRosterWorkingOnly(true);
     setActiveWorkspace(venueWorkspaceForSection(sectionId) || activeWorkspace);
     window.history.replaceState(null, "", `#${sectionId}`);
     window.setTimeout(() => {
-      const section = document.getElementById(sectionId) as HTMLDetailsElement | null;
+      const section = document.getElementById(targetSectionId) as HTMLDetailsElement | null;
       if (!section) return;
       const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
       section.open = true;
@@ -3077,33 +3082,6 @@ function VenuePanel({
       </DashboardSection>
 
       <DashboardSection
-        badge={`${workingNow.length} active`}
-        description="Review dancers verified by this venue's official check-in sticker and open their live profiles."
-        eyebrow="Floor status"
-        hidden={activeWorkspace !== "tonight"}
-        id="venue-working-now"
-        icon={<VenueDashboardIcon section="roster" />}
-        toggleAffordance="chevron"
-        title="Working now"
-      >
-        <article className="info-panel venue-working-panel">
-          <h2>Verified dancer check-ins</h2>
-          <div className="venue-working-list">
-            {workingNow.map((dancer) => (
-              <Link href={`/dancers/${String(dancer.dancerSlug || "")}`} key={String(dancer.shiftId)}>
-                <span className="venue-working-identity">
-                  {dancer.avatarUrl ? <img src={String(dancer.avatarUrl)} srcSet={dancer.avatarSrcSet ? String(dancer.avatarSrcSet) : undefined} sizes="48px" alt="" loading="lazy" decoding="async" /> : <i aria-hidden="true">{String(dancer.stageName || "D").slice(0, 1)}</i>}
-                  <span><strong>{String(dancer.stageName || "Dancer")}</strong><small>Checked in {dancer.checkedInAt ? formatRelativeDashboardTime(String(dancer.checkedInAt)) : "during this shift"}</small></span>
-                </span>
-                <span className="venue-working-verification"><strong>Check-in verified</strong><small>Active until {formatDashboardTime(String(dancer.endsAt || ""))}</small></span>
-              </Link>
-            ))}
-            {!workingNow.length ? <p>No verified dancer check-ins right now.</p> : null}
-          </div>
-        </article>
-      </DashboardSection>
-
-      <DashboardSection
         description="Search your approved dancer roster, view profiles, see who's working now, and remove venue access."
         eyebrow="Venue roster"
         hidden={activeWorkspace !== "tonight"}
@@ -3116,6 +3094,8 @@ function VenuePanel({
         <VenueNfcTagPanel
           initialAffiliations={initialAffiliations}
           workingNow={workingNow}
+          workingOnly={rosterWorkingOnly}
+          onWorkingOnlyChange={setRosterWorkingOnly}
           onAccessRemoved={onAccessRemoved}
           canManageRoster={canManageRoster}
           canRequestSupport={canRequestNfcSupport}

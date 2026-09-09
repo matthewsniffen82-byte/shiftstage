@@ -100,7 +100,7 @@ test("venue operations prioritize tonight, Club Deals, phone-tap stickers, and t
   assert.match(venuePanel, /View \$\{activeDealCount\} current Club/);
   assert.match(venuePanel, /VenueNfcTagPanel/);
   assert.match(venuePanel, /Analytics & performance/);
-  assert.ok(venuePanel.indexOf('title="Current Club Deals"') < venuePanel.indexOf('title="Working now"'));
+  assert.ok(venuePanel.indexOf('title="Current Club Deals"') < venuePanel.indexOf('title="Affiliated dancers"'));
   assert.ok(venuePanel.indexOf('title="Current Club Deals"') < venuePanel.indexOf("VenueNfcTagPanel"));
   assert.ok(venuePanel.indexOf("Tonight") < venuePanel.indexOf("Analytics & performance"));
 });
@@ -114,7 +114,7 @@ test("venue owners navigate one simplified state-aware workspace without losing 
   assert.match(venuePanel, /function moveVenueWorkspaceFocus[\s\S]*?"ArrowLeft"[\s\S]*?"ArrowRight"[\s\S]*?"Home"[\s\S]*?"End"/);
   assert.match(dashboard, /function initialVenueWorkspace[\s\S]*?return isPublished \? "tonight" : "venue";/);
   assert.match(dashboard, /function venueWorkspaceForSection[\s\S]*?"venue-working-now"[\s\S]*?"venue-tv"[\s\S]*?"venue-overview"/);
-  assert.match(venuePanel, /hidden=\{activeWorkspace !== "tonight"\}[\s\S]*?title="Working now"/);
+  assert.match(venuePanel, /hidden=\{activeWorkspace !== "tonight"\}[\s\S]*?title="Affiliated dancers"/);
   assert.match(venuePanel, /<VenueTvPanel\s+city=\{venueCity\}\s+hidden=\{activeWorkspace !== "venue"\}\s+venueId=/);
   assert.match(venuePanel, /hidden=\{activeWorkspace !== "business"\}[\s\S]*?title="Analytics & performance"/);
   assert.match(venuePanel, /title="Account & support"/);
@@ -207,8 +207,12 @@ test("MyDancr supplies tap stickers while venue owners receive read-only invento
 test("venue-facing NFC language explains the physical actions in plain language", () => {
   const venuePanel = dashboard.match(/function VenuePanel\([\s\S]*?(?=\nfunction dealTypeLabel)/)?.[0] || "";
   const venueDealPanel = dashboard.match(/function VenueDealReadOnlyPanel\([\s\S]*?(?=\nfunction readOptionalNumber)/)?.[0] || "";
-  assert.match(venuePanel, /Verified dancer check-ins/);
-  assert.match(venuePanel, /Check-in verified/);
+  assert.doesNotMatch(venuePanel, /eyebrow="Floor status"|id="venue-working-now"|title="Working now"/);
+  assert.match(venuePanel, /<Metric label="Working now" value=\{String\(workingNow.length\)\}/);
+  assert.match(venuePanel, /sectionId === "venue-working-now" \? "venue-dancer-roster" : sectionId/);
+  assert.match(venuePanel, /if \(sectionId === "venue-working-now"\) setRosterWorkingOnly\(true\)/);
+  assert.match(nfcPanel, /All affiliated <b>\{activeAffiliations.length\}<\/b>/);
+  assert.match(nfcPanel, /Working now <b>\{workingCount\}<\/b>/);
   assert.match(venuePanel, /title="Affiliated dancers"/);
   assert.match(nfcPanel, /<summary>Check-in &amp; redemption stickers/);
   assert.match(venuePanel, /Dancer check-ins/);

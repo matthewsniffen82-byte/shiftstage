@@ -40,12 +40,16 @@ async function settleVenueNfcRequest<T>(request: () => Promise<T>): Promise<Prom
 export default function VenueNfcTagPanel({
   initialAffiliations = EMPTY_ROSTER,
   workingNow = EMPTY_ROSTER,
+  workingOnly,
+  onWorkingOnlyChange,
   canManageRoster = false,
   canRequestSupport = false,
   onAccessRemoved,
 }: {
   initialAffiliations?: Array<Record<string, unknown>>;
   workingNow?: Array<Record<string, unknown>>;
+  workingOnly: boolean;
+  onWorkingOnlyChange: (workingOnly: boolean) => void;
   canManageRoster?: boolean;
   canRequestSupport?: boolean;
   onAccessRemoved?: (affiliation: DancerAffiliation) => void;
@@ -56,7 +60,6 @@ export default function VenueNfcTagPanel({
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [search, setSearch] = useState("");
-  const [workingOnly, setWorkingOnly] = useState(false);
   const [visibleCount, setVisibleCount] = useState(50);
   const [testingTagId, setTestingTagId] = useState("");
   const [testStatus, setTestStatus] = useState("");
@@ -305,8 +308,8 @@ export default function VenueNfcTagPanel({
           <input type="search" value={search} placeholder="Stage name" onChange={(event) => { setSearch(event.target.value); setVisibleCount(50); }} />
         </label>
         <div className="venue-roster-filters" role="group" aria-label="Filter affiliated dancers">
-          <button type="button" aria-pressed={!workingOnly} onClick={() => { setWorkingOnly(false); setVisibleCount(50); }}>All affiliated <b>{activeAffiliations.length}</b></button>
-          <button type="button" aria-pressed={workingOnly} onClick={() => { setWorkingOnly(true); setVisibleCount(50); }}>Working now <b>{workingCount}</b></button>
+          <button type="button" aria-pressed={!workingOnly} onClick={() => { onWorkingOnlyChange(false); setVisibleCount(50); }}>All affiliated <b>{activeAffiliations.length}</b></button>
+          <button type="button" aria-pressed={workingOnly} onClick={() => { onWorkingOnlyChange(true); setVisibleCount(50); }}>Working now <b>{workingCount}</b></button>
         </div>
         <p className="venue-roster-results" role="status">{isLoading && !activeAffiliations.length ? "Loading dancers…" : `${matchingAffiliations.length} ${matchingAffiliations.length === 1 ? "dancer" : "dancers"}${search.trim() ? " matching your search" : workingOnly ? " working now" : " affiliated"}`}</p>
         {matchingAffiliations.slice(0, visibleCount).map((affiliation) => (
