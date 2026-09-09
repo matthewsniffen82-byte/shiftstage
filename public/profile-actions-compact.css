@@ -151,3 +151,12 @@ body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-she
     background: #25252D !important;
   }
 }
+
+/* Existing aria-pressed states are the single source of selected styling. */
+body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell, .dancer-profile-preview-overlay) :is(.modal-actions, .live-actions).profile-actions-compact :is(#followBtn, #goingBtn, .profile-action-icon-control)[aria-pressed="true"] {
+  border-color: #7C4DFF !important;
+}
+
+body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell, .dancer-profile-preview-overlay) :is(.modal-actions, .live-actions).profile-actions-compact :is(#followBtn, #goingBtn, .profile-action-icon-control)[aria-pressed="true"] :is(.action-icon, .profile-action-icon-frame) > svg {
+  color: #7C4DFF !important;
+}

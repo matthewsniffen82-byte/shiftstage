@@ -118,6 +118,7 @@ export function ProfileShareButton({ dancerId, stageName }: { dancerId: string; 
       <div className="profile-share">
         <button
           aria-haspopup="dialog"
+          aria-label={`Share ${stageName} profile`}
           className="profile-action-icon-control profile-share-trigger"
           onClick={() => setDialogOpen(true)}
           type="button"

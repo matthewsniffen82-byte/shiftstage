@@ -8,6 +8,16 @@ const css = read("public/profile-actions-compact.css");
 const live = read("outputs/index.html");
 const actions = read("app/dancers/[slug]/DancerProfileActions.tsx");
 
+test("selected actions use violet without changing their state or accessible labels", () => {
+  assert.match(css, /\[aria-pressed="true"\] \{\s*border-color: #7C4DFF !important/);
+  assert.match(css, /\[aria-pressed="true"\][^{}]+> svg \{\s*color: #7C4DFF !important/);
+  assert.match(actions, /saved\.following \? "Following" : "Follow"/);
+  assert.match(actions, /isGoing \? "Going" : "I’m Going"/);
+  assert.match(actions, /<button aria-label="Share" className="profile-action-preview-share/);
+  assert.match(read("app/dancers/[slug]/ProfileNavigationActions.tsx"), /aria-label=\{`Share \$\{stageName\} profile`\}/);
+  assert.match(live, /aria-label="Share \$\{escapeHtml\(profile\.name\)\} profile"/);
+});
+
 test("profile actions use restrained charcoal materials without green, gradients, or glow", () => {
   assert.match(css, /border: 1px solid #30303A !important/);
   assert.match(css, /border-radius: 11px !important/);

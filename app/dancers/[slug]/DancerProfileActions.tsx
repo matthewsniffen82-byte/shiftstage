@@ -145,7 +145,7 @@ export function DancerProfileActionsPreview({ onShare }: { onShare?: () => void 
       </button>
       <div className="profile-action-share-slot">
         <span className="profile-share">
-          <button className="profile-action-preview-share profile-action-icon-control" disabled={!onShare} onClick={onShare} type="button">
+          <button aria-label="Share" className="profile-action-preview-share profile-action-icon-control" disabled={!onShare} onClick={onShare} type="button">
             <span className="profile-action-main"><DancerProfileActionPreviewIcon type="share" /><span>Share</span></span>
           </button>
         </span>
@@ -577,7 +577,7 @@ export function DancerProfileActions({
         {shareControl ? (
           <div className="profile-action-share-slot">{shareControl}</div>
         ) : (
-          <button className="profile-action-secondary profile-action-unavailable profile-action-icon-control profile-share-action" disabled type="button">
+          <button aria-label="Share" className="profile-action-secondary profile-action-unavailable profile-action-icon-control profile-share-action" disabled type="button">
             <span className="profile-action-main"><DancerProfileActionPreviewIcon type="share" /><span>Share</span></span>
           </button>
         )}
