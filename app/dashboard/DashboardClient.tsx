@@ -2,6 +2,7 @@
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type FormEvent, type MouseEvent, type ReactNode, type SyntheticEvent } from "react";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { DashboardCloseButton } from "@/app/components/DashboardCloseButton";
 import { DancerPhotoCarousel } from "@/app/dancers/[slug]/DancerPhotoCarousel";
 import { SocialLinks, SocialPlatformIcon } from "@/app/dancers/[slug]/SocialLinks";
@@ -16,15 +17,11 @@ import { CUSTOMER_FOLLOW_ALERTS, customerNotificationSettings, type CustomerNoti
 import { customerPushDeviceEnabled, customerPushSupportMessage, disableCustomerPush, enableCustomerPush, type CustomerNotificationDelivery } from "@/src/lib/dancr/customer-push";
 import type { SocialPlatform } from "@/src/lib/dancr/types";
 import { CLUB_DEAL_OFFER_PRESETS } from "@/src/lib/dancr/club-deal-presets";
-import DancerNfcPanel from "./DancerNfcPanel";
-import DancerTvStudio from "./DancerTvStudio";
-import DancerProfileMediaUploads from "./DancerProfileMediaUploads";
 import { mediaReviewLabel } from "@/src/lib/dancr/media-review-label";
 import DancerMediaPinButton from "./DancerMediaPinButton";
 import { requestDancerMediaPin } from "./dashboard-session";
 import { cropProfilePhoto } from "./profile-photo-crop";
 import { AVATAR_REJECTED_MESSAGE, avatarUploadPresentation, type AvatarUploadFeedback } from "./avatar-upload-state";
-import DancerShiftManager from "./DancerShiftManager";
 import { DANCER_PROFILE_VIDEOS_CHANGED_EVENT } from "./dancer-profile-media-sync";
 import { DancerDashboardAvatar, DancerDashboardIcon } from "./DancerDashboardIdentity";
 import "./dancer-dashboard.css";
@@ -32,10 +29,7 @@ import { CustomerDashboardAvatar, CustomerDashboardIcon, type CustomerDashboardS
 import "./customer-dashboard.css";
 import "./venue-dashboard.css";
 import { VenueDashboardAvatar, VenueDashboardIcon } from "./VenueDashboardIdentity";
-import VenueNfcTagPanel from "./VenueNfcTagPanel";
 import { isAffiliatedDancerWorkingNow, type VenueDancerAffiliation } from "@/src/lib/dancr/venue-roster";
-import VenueTeamPanel from "./VenueTeamPanel";
-import VenueTvPanel from "./VenueTvPanel";
 import { loadCustomerDashboard } from "./customer-dashboard-loader";
 import { loadDancerDashboard } from "./dancer-dashboard-loader";
 import CustomerAccountPanel from "./CustomerAccountPanel";
@@ -77,6 +71,27 @@ import {
 
 type DashboardRole = "customer" | "dancer" | "venue";
 type CustomerDashboardSection = "offers" | "saved";
+
+// Keep role-specific tools out of every customer's initial JavaScript. Editors
+// load when mounted; the visible role's core tools warm while its data loads.
+const DancerNfcPanel = dynamic(() => import("./DancerNfcPanel"));
+const DancerTvStudio = dynamic(() => import("./DancerTvStudio"));
+const DancerProfileMediaUploads = dynamic(() => import("./DancerProfileMediaUploads"));
+const DancerShiftManager = dynamic(() => import("./DancerShiftManager"));
+const VenueNfcTagPanel = dynamic(() => import("./VenueNfcTagPanel"));
+const VenueTeamPanel = dynamic(() => import("./VenueTeamPanel"));
+const VenueTvPanel = dynamic(() => import("./VenueTvPanel"));
+
+function warmDashboardRoleTools(role: DashboardRole) {
+  const tools = role === "dancer"
+    ? [import("./DancerNfcPanel"), import("./DancerShiftManager")]
+    : role === "venue"
+      ? [import("./VenueNfcTagPanel"), import("./VenueTeamPanel"), import("./VenueTvPanel")]
+      : [];
+  // Warming must never block authentication or private data loading. React's
+  // dynamic component still owns rendering and normal chunk error handling.
+  void Promise.allSettled(tools);
+}
 
 const PUBLIC_DISCOVERY_REFRESH_KEY = "mydancrPublicDiscoveryRefreshV1";
 
@@ -365,6 +380,7 @@ export default function DashboardClient({
       }
 
       const cachedAccount = storedSessionAccount(session);
+      warmDashboardRoleTools(role);
       if (cachedAccount) {
         setState((current) => ({ ...current, account: cachedAccount }));
       }

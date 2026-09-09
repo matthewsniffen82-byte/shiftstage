@@ -1,0 +1,60 @@
+{
+  "baseCommit": "df0b3126",
+  "environment": "Chromium, 393x852, DPR 2, CPU 4x, 4 Mbps/1 Mbps, 100 ms latency; synthetic empty private responses; production static assets",
+  "name": "cellular /dashboard/customer [synthetic customer data]",
+  "samples": 3,
+  "lcpMs": 2192,
+  "fcpMs": 1796,
+  "ttfbMs": 92.7,
+  "cls": 0.001,
+  "interactionProxyMs": null,
+  "initialJsTransferBytes": 339945,
+  "initialTransferBytes": 670719,
+  "initialRequests": 30,
+  "domNodes": 410,
+  "longestTaskMs": 489,
+  "scrollFramesOver50msPercent": 0.791,
+  "heapBefore": 4459072,
+  "heapAfter": 4501612,
+  "videoFirstLoadToPlayMs": null,
+  "videoPlayFromNavigationMs": null,
+  "videoWaitingEvents": 0,
+  "droppedFrames": 0,
+  "errors": [],
+  "criticalFailures": [],
+  "api": [
+    {
+      "url": "https://www.mydancr.com/api/account",
+      "medianMs": 31.476,
+      "samples": 3
+    },
+    {
+      "url": "https://www.mydancr.com/api/customer/saved",
+      "medianMs": 17.608,
+      "samples": 3
+    },
+    {
+      "url": "https://www.mydancr.com/api/customer/profile",
+      "medianMs": 16.951,
+      "samples": 3
+    },
+    {
+      "url": "https://www.mydancr.com/api/support",
+      "medianMs": 16.761,
+      "samples": 3
+    },
+    {
+      "url": "https://www.mydancr.com/api/agent/commissions",
+      "medianMs": 14.04,
+      "samples": 3
+    },
+    {
+      "url": "https://www.mydancr.com/api/notifications",
+      "medianMs": 18.332,
+      "samples": 3
+    }
+  ],
+  "shellVersions": [
+    "a2dd30fca4e25b29d4b2dc48bcf3a789e4aaaec471cf0853dc86aa20824c3b91"
+  ]
+}
