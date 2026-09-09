@@ -8,9 +8,9 @@ const css = read("public/profile-actions-compact.css");
 const live = read("outputs/index.html");
 const actions = read("app/dancers/[slug]/DancerProfileActions.tsx");
 
-test("selected actions use violet without changing their state or accessible labels", () => {
-  assert.match(css, /\[aria-pressed="true"\] \{\s*border-color: #7C4DFF !important/);
-  assert.match(css, /\[aria-pressed="true"\][^{}]+> svg \{\s*color: #7C4DFF !important/);
+test("selected actions stay neutral without changing their state or accessible labels", () => {
+  assert.match(css, /\[aria-pressed="true"\] \{\s*border-color: #737373 !important/);
+  assert.match(css, /\[aria-pressed="true"\][^{}]+> svg \{\s*color: #FFFFFF !important/);
   assert.match(actions, /saved\.following \? "Following" : "Follow"/);
   assert.match(actions, /isGoing \? "Going" : "I’m Going"/);
   assert.match(actions, /<button aria-label="Share" className="profile-action-preview-share/);
@@ -19,10 +19,10 @@ test("selected actions use violet without changing their state or accessible lab
 });
 
 test("profile actions use restrained charcoal materials without green, gradients, or glow", () => {
-  assert.match(css, /border: 1px solid #30303A !important/);
-  assert.match(css, /border-radius: 11px !important/);
+  assert.match(css, /border: 1px solid #353535 !important/);
+  assert.match(css, /border-radius: 8px !important/);
   assert.match(css, /color: #FFFFFF !important/);
-  assert.match(css, /background: #1B1B22 !important/);
+  assert.match(css, /background: #191919 !important/);
   assert.match(css, /appearance: none !important/);
   assert.match(css, /outline: 2px solid #FFFFFF !important/);
   assert.doesNotMatch(css, /linear-gradient|radial-gradient|drop-shadow|#4dec9d|#22c55e/i);
@@ -44,7 +44,7 @@ test("layout keeps inline icons, equal primary widths, and a same-height square 
   assert.match(css, /flex: 0 0 var\(--profile-action-height\) !important/);
   assert.match(css, /height: var\(--profile-action-height\) !important/);
   assert.match(css, /flex-direction: row !important/);
-  assert.match(css, /gap: 8px !important/);
+  assert.match(css, /gap: 6px !important/);
   assert.match(css, /clip-path: inset\(50%\) !important/);
   assert.doesNotMatch(css, /\.profile-tonight|\.club-deal|\.profile-metrics/);
 });
