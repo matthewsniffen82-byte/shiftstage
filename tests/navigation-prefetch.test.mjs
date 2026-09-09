@@ -52,7 +52,7 @@ test("venue navigation remains immediately available from the existing discovery
 
 test("profile media opens directly from already-rendered poster grids", () => {
   assert.match(profileCarousel, /function openViewer[\s\S]*?flushSync\(\(\) => setViewer\(\{ kind, index \}\)\)/);
-  assert.match(profileCarousel, /data-image-state="loading"[\s\S]*?loading="lazy"[\s\S]*?src=\{item\.posterUrl\}/);
+  assert.match(profileCarousel, /\{item\.posterUrl \? \([\s\S]*?data-image-state="loading"[\s\S]*?loading=\{index < 6 \? "eager" : "lazy"\}[\s\S]*?src=\{item\.posterUrl\}/);
   assert.match(videoStrip, /onMouseEnter=\{\(event\) => playPreviewCard\(event\.currentTarget\)\}/);
   assert.match(videoStrip, /onClick=\{\(\) => \{[\s\S]*?setActiveVideo\(video\)/);
 });

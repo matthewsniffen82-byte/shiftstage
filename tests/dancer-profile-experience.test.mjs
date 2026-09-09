@@ -274,7 +274,7 @@ test("profile videos stay passive and duration-free in the grid, then open the c
   );
   const mediaGridPoster = mediaGrid.match(/<img[\s\S]*?src=\{item\.posterUrl\}[\s\S]*?\/>/)?.[0] || "";
   assert.match(profileCarousel, /className=\{`profile-media-grid-item is-\$\{item\.kind\}`\}/);
-  assert.match(mediaGridPoster, /<img[\s\S]*?data-image-state="loading"[\s\S]*?loading="lazy"[\s\S]*?src=\{item\.posterUrl\}/);
+  assert.match(mediaGridPoster, /<img[\s\S]*?data-image-state="loading"[\s\S]*?loading=\{index < 6 \? "eager" : "lazy"\}[\s\S]*?src=\{item\.posterUrl\}/);
   assert.doesNotMatch(mediaGrid, /<video[\s\S]*?poster=\{item\.posterUrl \|\| undefined\}[\s\S]*?preload="none"/);
   assert.doesNotMatch(mediaGrid, /autoPlay/);
   assert.match(profileCarousel, /className="profile-media-play"/);

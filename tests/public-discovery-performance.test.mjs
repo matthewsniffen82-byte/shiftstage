@@ -61,7 +61,13 @@ test("the exact supplied hero is preserved while an optimized WebP is preloaded"
   assert.ok(publicHeroWebp.length < 100_000);
   assert.equal(publicHeroWebp.subarray(0, 4).toString("ascii"), "RIFF");
   assert.equal(publicHeroWebp.subarray(8, 12).toString("ascii"), "WEBP");
-  assert.match(homeSource, /href="\/outputs\/dancr-hero\.webp\?v=exact-20260830-q84" type="image\/webp" fetchpriority="high"/);
+  const heroPreload = homeSource.match(/<link rel="preload" as="image"[^>]+>/)?.[0] || "";
+  const heroImage = homeSource.match(/<img\s+class="hero-art"[^>]+>/)?.[0] || "";
+  assert.doesNotMatch(heroPreload, /\shref=/, "older browsers must not preload a second, wrong-sized fallback");
+  assert.equal(heroPreload.match(/imagesrcset="([^"]+)"/)?.[1], heroImage.match(/srcset="([^"]+)"/)?.[1]);
+  assert.equal(heroPreload.match(/imagesizes="([^"]+)"/)?.[1], heroImage.match(/sizes="([^"]+)"/)?.[1]);
+  assert.match(heroPreload, /fetchpriority="high"/);
+  assert.match(heroImage, / 480w, .* 800w, .* 1280w, .* 1590w/);
   assert.match(
     homeSource,
     /class="hero-art"[\s\S]*?src="\/outputs\/dancr-hero\.webp\?v=exact-20260830-q84"[\s\S]*?width="1590"[\s\S]*?height="889"[\s\S]*?loading="eager"[\s\S]*?fetchpriority="high"/

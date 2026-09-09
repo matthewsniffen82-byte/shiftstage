@@ -33,7 +33,7 @@ test("routed profile grids remain poster-only and the viewer loads a bounded for
   );
   const gridPoster = grid.match(/<img[\s\S]*?src=\{item\.posterUrl\}[\s\S]*?\/>/)?.[0] || "";
   assert.match(gridPoster, /data-image-state="loading"/);
-  assert.match(gridPoster, /loading="lazy"/);
+  assert.match(gridPoster, /loading=\{index < 6 \? "eager" : "lazy"\}/);
   assert.doesNotMatch(grid, /<video[\s\S]*?poster=\{item\.posterUrl \|\| undefined\}[\s\S]*?preload="none"/);
 
   assert.match(profileCarousel, /const \[viewerVideoReadyVersion, setViewerVideoReadyVersion\] = useState\(0\)/);

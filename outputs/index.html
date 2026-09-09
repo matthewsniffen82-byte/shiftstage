@@ -17,7 +17,7 @@
   <link rel="manifest" href="/manifest.webmanifest">
   <link rel="icon" href="/mydancr-icon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="/mydancr-icon.svg">
-  <link rel="preload" as="image" href="/outputs/dancr-hero.webp?v=exact-20260830-q84" type="image/webp" fetchpriority="high">
+  <link rel="preload" as="image" type="image/webp" fetchpriority="high" imagesrcset="/outputs/dancr-hero-480-10b0c648e5b6.webp 480w, /outputs/dancr-hero-800-5d40507eaa79.webp 800w, /outputs/dancr-hero-1280-70c171eee35b.webp 1280w, /outputs/dancr-hero.webp?v=exact-20260830-q84 1590w" imagesizes="(max-width: 720px) calc(100vw - 24px), 640px">
   <meta property="og:title" content="mydancr">
   <meta property="og:site_name" content="mydancr">
   <meta property="og:description" content="Choose your city. See who's working now.">
@@ -32142,6 +32142,8 @@
         <img
           class="hero-art"
           src="/outputs/dancr-hero.webp?v=exact-20260830-q84"
+          srcset="/outputs/dancr-hero-480-10b0c648e5b6.webp 480w, /outputs/dancr-hero-800-5d40507eaa79.webp 800w, /outputs/dancr-hero-1280-70c171eee35b.webp 1280w, /outputs/dancr-hero.webp?v=exact-20260830-q84 1590w"
+          sizes="(max-width: 720px) calc(100vw - 24px), 640px"
           alt="Know who's working. Plan your night."
           width="1590"
           height="889"
@@ -44990,8 +44992,11 @@
         .filter((source) => source.url && Number.isFinite(source.width))
         .sort((left, right) => left.width - right.width);
       if (!sources.length) return "";
+      // Preserve the established CSS portrait choices when smaller candidates
+      // are added for native avatar srcsets. Array offsets are not densities.
+      const displaySources = sources.filter((source) => source.width >= 320);
       return `image-set(${sources
-        .map((source, index) => `url('${source.url}') ${index + 1}x`)
+        .map((source) => `url('${source.url}') ${source.width < 320 ? source.width / 320 : displaySources.indexOf(source) + 1}x`)
         .join(", ")})`;
     }
 
@@ -45012,7 +45017,7 @@
         .map((match) => ({ url: safeExternalHref(match[1]), width: Number(match[2]) }))
         .filter((source) => source.url && Number.isFinite(source.width))
         .sort((left, right) => left.width - right.width);
-      const fallbackUrl = sources[0]?.url || safeExternalHref(url);
+      const fallbackUrl = sources.find((source) => source.width >= 320)?.url || sources[sources.length - 1]?.url || safeExternalHref(url);
       if (!fallbackUrl) return "";
       const safeSrcSet = sources
         .map((source) => `${escapeOptionValue(source.url)} ${source.width}w`)

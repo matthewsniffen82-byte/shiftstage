@@ -313,6 +313,7 @@ export default async function DancerPublicPage({ params, searchParams }: PagePro
 
         <DancerPhotoCarousel
           dancerId={profile.id}
+          prioritizeInitialPhotos
           photos={gallery.map((photo) => ({
             id: photo.id,
             imageUrl: photo.imageUrl,

@@ -47,6 +47,7 @@ type DancerPhotoCarouselProps = {
   stageName: string;
   socialContent?: ReactNode;
   viewerStatus?: string;
+  prioritizeInitialPhotos?: boolean;
 };
 
 type PhotoMedia = {
@@ -106,6 +107,7 @@ export function DancerPhotoCarousel({
   stageName,
   socialContent,
   viewerStatus = "No shift posted",
+  prioritizeInitialPhotos = false,
 }: DancerPhotoCarouselProps) {
   const photoMedia = useMemo<PhotoMedia[]>(
     () =>
@@ -797,7 +799,8 @@ export function DancerPhotoCarousel({
                   decoding="async"
                   draggable={false}
                   height={item.imageHeight || undefined}
-                  loading="lazy"
+                  loading={prioritizeInitialPhotos && index < 3 ? "eager" : "lazy"}
+                  fetchPriority={prioritizeInitialPhotos && index === 0 ? "high" : "auto"}
                   onError={markImageUnavailable}
                   onLoad={markImageReady}
                   ref={settleImageElement}

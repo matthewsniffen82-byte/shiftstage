@@ -92,8 +92,21 @@ try {
     const initial = await page.evaluate(() => {
       const nav = performance.getEntriesByType("navigation")[0];
       const paints = performance.getEntriesByType("paint");
-      const images = [...document.images].map(img => ({ path: img.currentSrc ? new URL(img.currentSrc).pathname : "", naturalWidth: img.naturalWidth, displayedWidth: Math.round(img.getBoundingClientRect().width), loading: img.loading, complete: img.complete }));
-      return { title: document.title, finalPath: location.pathname, lcp: window.__perfLab?.lcp, cls: window.__perfLab?.cls, ttfbMs: nav?.responseStart, fcpMs: paints.find(p => p.name === "first-contentful-paint")?.startTime ?? null, domNodes: document.getElementsByTagName("*").length, images, links: [...document.querySelectorAll('a[href^="/dancers/"],a[href^="/venues/"]')].slice(0, 8).map(a => a.getAttribute("href")), videoCount: document.querySelectorAll("video").length, videoSources: [...document.querySelectorAll("video")].filter(v => v.currentSrc || v.getAttribute("src")).length };
+      const images = [...document.images].map(img => {
+        const rect = img.getBoundingClientRect();
+        const url = img.currentSrc ? new URL(img.currentSrc) : null;
+        return { path: url?.pathname || "", transformedWidth: url?.searchParams.get("width") || null,
+          naturalWidth: img.naturalWidth, naturalHeight: img.naturalHeight,
+          displayedWidth: Math.round(rect.width), displayedHeight: Math.round(rect.height),
+          top: Math.round(rect.top), aboveFold: rect.bottom > 0 && rect.top < innerHeight && rect.width > 0,
+          loading: img.loading, fetchPriority: img.fetchPriority, complete: img.complete };
+      });
+      const backgroundImages = [...document.querySelectorAll('[style*="--custom-photo"]')].map(el => {
+        const rect = el.getBoundingClientRect();
+        return { className: el.className, width: Math.round(rect.width), height: Math.round(rect.height),
+          top: Math.round(rect.top), aboveFold: rect.bottom > 0 && rect.top < innerHeight && rect.width > 0 };
+      });
+      return { title: document.title, finalPath: location.pathname, lcp: window.__perfLab?.lcp, cls: window.__perfLab?.cls, ttfbMs: nav?.responseStart, fcpMs: paints.find(p => p.name === "first-contentful-paint")?.startTime ?? null, domNodes: document.getElementsByTagName("*").length, images, backgroundImages, links: [...document.querySelectorAll('a[href^="/dancers/"],a[href^="/venues/"]')].slice(0, 8).map(a => a.getAttribute("href")), videoCount: document.querySelectorAll("video").length, videoSources: [...document.querySelectorAll("video")].filter(v => v.currentSrc || v.getAttribute("src")).length };
     });
     initial.journeySampleMs = performance.now() - journeyStarted;
     if (route === "/" || route.includes("tab=dancers")) {

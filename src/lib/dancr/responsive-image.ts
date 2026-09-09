@@ -10,6 +10,9 @@ export const DANCR_RESPONSIVE_IMAGE_WIDTHS = [320, 480, 640, 1280, 2048] as cons
 export const DANCR_RESPONSIVE_IMAGE_QUALITY = 84;
 const DANCR_RESPONSIVE_IMAGE_FALLBACK_WIDTH = 480;
 const DANCR_TRANSFORMED_IMAGE_QUALITY = 80;
+// Delivery-only thumbnail sizes reuse the existing watermarked source. Uploads
+// keep their current variants; no extra stored copies or master rewrites.
+const DANCR_THUMBNAIL_IMAGE_WIDTHS = [96, 160] as const;
 const DEFAULT_IMAGE_FOCAL_PERCENT = 50;
 
 type DancrClient = SupabaseClient<any, any, any>;
@@ -275,7 +278,7 @@ export function responsivePublicImage(
   const transformSourcePath = manifest.responsiveWidths.length
     ? responsiveVariantStoragePath(normalizedPath, smallestStoredWidth)
     : normalizedPath;
-  const transformedSources = DANCR_RESPONSIVE_IMAGE_WIDTHS.filter(
+  const transformedSources = [...DANCR_THUMBNAIL_IMAGE_WIDTHS, ...DANCR_RESPONSIVE_IMAGE_WIDTHS].filter(
     (width) => width < smallestStoredWidth && width < manifest.width,
   ).map((width) => ({
     url: publicStorageUrl(client, bucket, transformSourcePath, width),
@@ -292,10 +295,11 @@ export function responsivePublicImage(
   const responsiveSources = [...transformedSources, ...storedSources].sort(
     (left, right) => left.width - right.width,
   );
+  const displaySources = responsiveSources.filter((source) => source.width >= 320);
   const fallbackSource =
-    responsiveSources.find(
+    displaySources.find(
       (source) => source.width >= DANCR_RESPONSIVE_IMAGE_FALLBACK_WIDTH,
-    )?.url || responsiveSources[responsiveSources.length - 1]?.url || masterImageUrl;
+    )?.url || displaySources[displaySources.length - 1]?.url || masterImageUrl;
   const sourceSet = [
     ...responsiveSources.map((source) => `${source.url} ${source.width}w`),
     `${masterImageUrl} ${manifest.width}w`,
@@ -425,6 +429,7 @@ function publicStorageUrl(
         ? {
             transform: {
               quality: DANCR_TRANSFORMED_IMAGE_QUALITY,
+              resize: "contain",
               width: transformedWidth,
             },
           }

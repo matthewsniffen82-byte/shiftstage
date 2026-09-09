@@ -78,7 +78,7 @@ test("video grids show a passive frame from each actual video", () => {
     carousel.indexOf("{viewer && activeViewerItem"),
   );
   const gridPosterMarkup = gridMarkup.match(/<img[\s\S]*?src=\{item\.posterUrl\}[\s\S]*?\/>/)?.[0] || "";
-  assert.match(gridPosterMarkup, /data-image-state="loading"[\s\S]*?loading="lazy"[\s\S]*?src=\{item\.posterUrl\}/);
+  assert.match(gridPosterMarkup, /data-image-state="loading"[\s\S]*?loading=\{index < 6 \? "eager" : "lazy"\}[\s\S]*?src=\{item\.posterUrl\}/);
   assert.doesNotMatch(gridMarkup, /<video[\s\S]*?poster=\{item\.posterUrl \|\| undefined\}[\s\S]*?preload="none"/);
   assert.doesNotMatch(carousel, /posterUrl: video\.posterUrl \|\| photoMedia/);
   assert.doesNotMatch(profilePage, /posterUrl: video\.dancer\.primaryPhotoUrl/);
