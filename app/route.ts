@@ -43,7 +43,7 @@ export async function GET() {
   );
   const withExternalStyles = externalizeLiveShellStyles(
     withExternalAppScript,
-    `/outputs/live-shell.css?v=${liveShellSha256}`,
+    "/outputs/live-shell.css",
   );
   const activeEditProfileMarker = `<script>${createActiveEditProfileScript(liveShellSha256)}</script>`;
   const withBase = withExternalStyles.replace("<head>", `<head><base href="/outputs/">${activeEditProfileMarker}`);

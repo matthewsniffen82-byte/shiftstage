@@ -9,6 +9,7 @@ export const staticAssetPaths = [
   "/mydancr-icon.svg",
   "/outputs/dancr-hero.png",
   "/outputs/dancr-hero.webp",
+  "/outputs/live-shell.css",
   "/outputs/mydancr-logo-current.png",
   "/outputs/mydancr-logo.png",
   "/profile-media-owner-controls.css",

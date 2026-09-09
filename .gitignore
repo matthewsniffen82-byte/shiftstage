@@ -11,6 +11,7 @@ supabase/.temp/
 Thumbs.db
 tmp/pdfs/
 .platform-tv-import-*.json
+/public/outputs/live-shell.css
 .env.local
 .env*
 !.env.example

@@ -9,6 +9,7 @@ export const staticAssetVersions = {
   "/mydancr-icon.svg": "4d4c3f9efbc0e491",
   "/outputs/dancr-hero.png": "d16974879eb78003",
   "/outputs/dancr-hero.webp": "04a290c3af4ad444",
+  "/outputs/live-shell.css": "ba6f7a1e789f6131",
   "/outputs/mydancr-logo-current.png": "e7f5af001692cb08",
   "/outputs/mydancr-logo.png": "4b6b66793bf7a63d",
   "/profile-media-owner-controls.css": "01f6a195f45d5357",
