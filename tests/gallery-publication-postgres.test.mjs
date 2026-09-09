@@ -2,6 +2,9 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test, { before, beforeEach, after } from 'node:test';
 import { PGlite } from '@electric-sql/pglite';
+import vm from 'node:vm';
+import ts from 'typescript';
+import { PublicApiError } from '../src/lib/api-error-policy.ts';
 
 const migration = readFileSync(new URL('../supabase/migrations/20260909203842_add_atomic_gallery_publication.sql', import.meta.url), 'utf8');
 const id = value => `00000000-0000-4000-8000-${String(value).padStart(12, '0')}`;
@@ -46,7 +49,7 @@ let pg;
 before(async () => { pg = new PGlite(); await pg.exec(schema); await pg.exec(migration); });
 after(async () => pg?.close());
 beforeEach(async () => {
-  await pg.exec('reset role;drop trigger if exists synthetic_profile_failure on public.dancer_profiles;truncate public.media_likes,public.image_moderation_records,public.dancer_photos,public.dancer_profiles,public.app_users,auth.users,storage.objects cascade');
+  await pg.exec('reset role;drop trigger if exists synthetic_profile_failure on public.dancer_profiles;drop trigger if exists synthetic_review_timestamp on public.image_moderation_records;truncate public.media_likes,public.image_moderation_records,public.dancer_photos,public.dancer_profiles,public.app_users,auth.users,storage.objects cascade');
   for (const [userId, role] of [[owner,'dancer'],[other,'dancer'],[reviewer,'admin']]) {
     await pg.query('insert into auth.users values($1)', [userId]);
     await pg.query('insert into public.app_users(id,role) values($1,$2::public.user_role)', [userId,role]);
@@ -267,4 +270,153 @@ test('the additive migration preserves pre-existing review values and grants no 
       assert.equal((await legacyPg.query("select has_function_privilege($1,'public.publish_approved_dancer_gallery_photo(uuid,timestamptz,text,jsonb,jsonb,jsonb,boolean,text,uuid,text)','execute') as allowed",[role])).rows[0].allowed,false);
     }
   } finally { await legacyPg.close(); }
+});
+
+function applicationModule(path, names, dependencies) {
+  const source=readFileSync(new URL(path,import.meta.url),'utf8');
+  const exports={};
+  vm.runInNewContext(ts.transpileModule(`${source}\nexports.fixture={${names}};`,{
+    compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022},
+  }).outputText,{exports,require:()=>dependencies,Buffer,setTimeout,clearTimeout,
+    console:{log(){},info(){},warn(){},error(){}}});
+  return exports.fixture;
+}
+
+function applicationClient({lostResponse=false,beforeDelete,afterDelete}={}) {
+  const removed=[];
+  const client={
+    async rpc(name,args) {
+      assert.equal(name,'publish_approved_dancer_gallery_photo');
+      try {
+        const result=await pg.query(`select public.publish_approved_dancer_gallery_photo($1,$2,$3,$4::jsonb,$5::jsonb,$6::jsonb,$7,$8,$9,$10) as result`,
+          [args.p_record_id,args.p_expected_updated_at,args.p_storage_path,JSON.stringify(args.p_reason_codes),JSON.stringify(args.p_category_flags),
+            JSON.stringify(args.p_category_scores),args.p_provider_flagged,args.p_alt_text,args.p_reviewer_id,args.p_review_notes]);
+        return lostResponse?{data:null,error:{code:'08006'}}:{data:result.rows[0].result,error:null};
+      } catch(error) {return {data:null,error};}
+    },
+    from(table) {
+      assert.ok(['dancer_photos','dancer_profiles','image_moderation_records'].includes(table));
+      let operation='select',values,columns='*';const filters=[];
+      const query={
+        select(value){columns=value;return this;},insert(value){operation='insert';values=value;return this;},
+        update(value){operation='update';values=value;return this;},
+        eq(key,value){filters.push([key,'=',value]);return this;},neq(key,value){filters.push([key,'<>',value]);return this;},
+        is(key,value){assert.equal(value,null);filters.push([key,'is',value]);return this;},
+        in(key,values){filters.push([key,'in',values]);return this;},
+        delete(){operation='delete';return this;},
+        single(){return execute();},maybeSingle(){return execute();},then(resolve,reject){return execute().then(resolve,reject);},
+      };
+      async function execute(){
+        if(operation==='delete') await beforeDelete?.();
+        const params=[];let sql;
+        const bind=value=>{params.push(typeof value==='object'&&value!==null?JSON.stringify(value):value);return `$${params.length}`;};
+        if(operation==='insert') sql=`insert into ${table}(${Object.keys(values).join(',')}) values(${Object.values(values).map(bind).join(',')})`;
+        else if(operation==='update') sql=`update ${table} set ${Object.entries(values).map(([k,v])=>`${k}=${bind(v)}`).join(',')}`;
+        else sql=operation==='delete'?`delete from ${table}`:`select ${columns} from ${table}`;
+        if(filters.length) sql+=' where '+filters.map(([k,op,v])=>op==='in'?`${k} in (${v.map(bind).join(',')})`:`${k} ${op} ${op==='is'?'null':bind(v)}`).join(' and ');
+        if(operation!=='select') sql+=` returning ${columns}`;
+        try {
+          const rows=(await pg.query(sql,params)).rows;
+          // PostgREST preserves timestamp precision in JSON. PGlite's default
+          // Date parser does not, so model the JSON boundary explicitly.
+          if(table==='image_moderation_records' && rows[0]?.updated_at) {
+            rows[0].updated_at=(await pg.query('select to_jsonb(updated_at) as value from image_moderation_records where id=$1',
+              [rows[0].id || filters.find(([key])=>key==='id')?.[2]])).rows[0].value;
+          }
+          if(operation==='delete') await afterDelete?.();
+          return {data:rows[0]||null,error:null};
+        }catch(error){return {data:null,error};}
+      }
+      return query;
+    },
+    storage:{from(){return{download:async()=>({data:new Blob(['synthetic']),error:null}),remove:async paths=>{removed.push(...paths);return{error:null};}};}},
+  };
+  return {client,removed};
+}
+
+function applicationFunctions(record, removed) {
+  const dependencies={PublicApiError,safeErrorMetadata:error=>({code:error.code||'unknown'}),
+    uploadResponsiveImage:async()=>({storagePath:record.path,focalX:50,focalY:50}),
+    removeResponsiveImage:async(_client,_bucket,path)=>removed.push(path),removeArchivedOriginalMedia:async()=>{},
+    responsivePublicImage:(_client,_bucket,path)=>({imageUrl:path}),validateAndPrepareDancrImage:async()=>({}),
+    isProfileAvatarUploadContext:context=>context==='profile_avatar',DANCR_IMAGE_MODERATION_MODEL:'synthetic',
+  };
+  Object.assign(dependencies,applicationModule('../src/lib/dancr/photo-publication.ts','publishDancerPhoto',dependencies));
+  Object.assign(dependencies,applicationModule('../src/lib/dancr/photo-publication-intent.ts','resolvePhotoPublicationIntent',dependencies));
+  const library=applicationModule('../src/lib/dancr/image-moderation.ts','approveModeratedUpload,createModerationRecord,updateModerationRecord',dependencies);
+  Object.assign(dependencies,library);
+  return {...library,resolvePhotoPublicationIntent:dependencies.resolvePhotoPublicationIntent,...applicationModule('../app/api/admin/image-moderation/route.ts','approveReviewRecord,rejectReviewRecord',dependencies)};
+}
+
+for(const mode of ['automatic','admin']) {
+  test(`${mode} application caller uses the actual transaction and retains media after a lost response`,async()=>{
+    const old=await photo(200),record=await review(101,{mode:'replace',replaceId:old.id});
+    await pg.query("update image_moderation_records set temporary_storage_path='synthetic-temp' where id=$1",[record.recordId]);
+    const {client,removed}=applicationClient({lostResponse:true}),app=applicationFunctions(record,removed);
+    const run=()=>app.approveModeratedUpload(client,{recordId:record.recordId,expectedUpdatedAt:updatedAt,profileId:profile,userId:owner,
+        image:{},tempPath:'synthetic-temp',uploadContext:'profile_gallery:1',isAvatar:false,isPrimary:false,sortOrder:1,altText:null,
+        evaluation:{reasonCodes:[],categoryScores:{},providerFlagged:false},categoryFlags:{}});
+    if(mode==='admin') {
+      const current=(await allReviews())[0];
+      await assert.rejects(app.approveReviewRecord(client,current,reviewer,''),e=>e.code==='08006');
+    }else await assert.rejects(run(),e=>e.code==='08006');
+    assert.equal((await allReviews())[0].decision,'approved');
+    assert.equal((await allPhotos()).length,1);assert.equal((await allPhotos())[0].storage_path,record.path);
+    assert.deepEqual(removed,[]);
+  });
+}
+
+test('application records validated replacement identity and returns an exact moderation version',async()=>{
+  const old=await photo(200),{client,removed}=applicationClient(),app=applicationFunctions({},removed);
+  const target=await app.resolvePhotoPublicationIntent(client,profile,{replaceExisting:true,replacementPhotoId:old.id});
+  await assert.rejects(app.resolvePhotoPublicationIntent(client,otherProfile,{replaceExisting:true,replacementPhotoId:old.id}),e=>e.status===409);
+  await assert.rejects(app.resolvePhotoPublicationIntent(client,profile,{replaceExisting:true,replacementPhotoId:null}),e=>e.status===409);
+  const created=await app.createModerationRecord(client,{userId:owner,temporaryStoragePath:'synthetic',uploadContext:'profile_gallery:1',idempotencyKey:'same',photoPublicationMode:target.mode,replacementPhotoId:target.replacementPhotoId});
+  const stored=(await allReviews())[0];
+  assert.equal(stored.photo_publication_mode,'replace');assert.equal(stored.replacement_photo_id,old.id);
+  assert.ok(created.updated_at);
+  const version=await app.updateModerationRecord(client,created.id,{status:'moderating',attemptCount:2});
+  assert.equal((await pg.query('select updated_at=$1::timestamptz as matches from image_moderation_records where id=$2',[version,created.id])).rows[0].matches,true);
+});
+
+test('application stale rejection and retry cannot overwrite an acknowledged gallery approval',async()=>{
+  const record=await review(101),stale=(await allReviews())[0];await publish(record);
+  const {client,removed}=applicationClient(),app=applicationFunctions(record,removed);
+  await assert.rejects(app.rejectReviewRecord(client,stale,reviewer,''),e=>e.status===409);
+  await assert.rejects(app.updateModerationRecord(client,record.recordId,{status:'moderating'}),e=>e.status===409);
+  assert.equal((await allReviews())[0].decision,'approved');assert.deepEqual(removed,[]);
+});
+
+test('pending deletion stops when approval wins after its initial read',async()=>{
+  const record=await review(101);
+  const {client,removed}=applicationClient({beforeDelete:()=>publish(record)});
+  const {deleteOwnDancerPhoto}=applicationModule('../src/lib/dancr/dancer.ts','deleteOwnDancerPhoto',{
+    PublicApiError,PROFILE_AVATAR_CONTEXT:'profile_avatar',safeErrorMetadata:()=>({}),
+  });
+  await assert.rejects(deleteOwnDancerPhoto(client,owner,record.recordId,client),e=>e.status===409);
+  assert.equal((await allReviews())[0].decision,'approved');assert.equal((await allPhotos()).length,1);
+  assert.deepEqual(removed,[]);
+});
+
+test('approval cannot resurrect a cancelled pending record after an uncertain deletion response',async()=>{
+  const record=await review(101),lost={code:'08006'};
+  const {client,removed}=applicationClient({afterDelete:()=>{throw lost;}});
+  const {deleteOwnDancerPhoto}=applicationModule('../src/lib/dancr/dancer.ts','deleteOwnDancerPhoto',{
+    PublicApiError,PROFILE_AVATAR_CONTEXT:'profile_avatar',safeErrorMetadata:()=>({}),
+  });
+  await assert.rejects(deleteOwnDancerPhoto(client,owner,record.recordId,client),e=>e===lost);
+  assert.equal((await allReviews()).length,0);
+  await assert.rejects(publish(record),e=>e.code==='P0002');
+  assert.equal((await allPhotos()).length,0);assert.deepEqual(removed,[]);
+});
+
+test('retry publication uses the returned database timestamp including trigger-written microseconds',async()=>{
+  const record=await review(101);
+  await pg.exec(`reset role;create or replace function public.synthetic_review_timestamp() returns trigger language plpgsql as $$begin new.updated_at='2021-01-01T00:00:00.123456Z';return new;end$$;
+    create trigger synthetic_review_timestamp before update on image_moderation_records for each row execute function public.synthetic_review_timestamp();set role service_role`);
+  const {client,removed}=applicationClient(),app=applicationFunctions(record,removed);
+  const version=await app.updateModerationRecord(client,record.recordId,{status:'moderating'});
+  assert.match(version,/123456/);
+  const published=await publish(record,{expected:version});
+  assert.equal(published.record.decision,'approved');
 });

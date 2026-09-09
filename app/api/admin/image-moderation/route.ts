@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { apiError } from "@/src/lib/api";
+import { apiError, PublicApiError } from "@/src/lib/api";
 import { readBoundedJsonObject } from "@/src/lib/bounded-json-body";
 import { requireAdmin } from "@/src/lib/dancr/admin";
 import {
@@ -9,14 +9,12 @@ import {
   setApprovedDancerAvatar,
 } from "@/src/lib/dancr/image-moderation";
 import { validateAndPrepareDancrImage } from "@/src/lib/dancr/image-validation";
-import { isProfileAvatarUploadContext, profilePhotoSlotFromUploadContext } from "@/src/lib/dancr/photo-slot";
-import { MAX_DANCER_PROFILE_PHOTOS } from "@/src/lib/dancr/media-limits";
+import { isProfileAvatarUploadContext } from "@/src/lib/dancr/photo-slot";
+import { publishDancerPhoto } from "@/src/lib/dancr/photo-publication";
 import {
   removeResponsiveImage,
-  responsiveImageStoragePaths,
   uploadResponsiveImage,
 } from "@/src/lib/dancr/responsive-image";
-import { removeArchivedOriginalMedia } from "@/src/lib/dancr/media-watermark";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
 import { safeErrorMetadata } from "@/src/lib/security/safe-error-metadata";
@@ -115,6 +113,12 @@ async function withSignedThumbnail(admin: any, record: any) {
 }
 
 async function approveReviewRecord(admin: any, record: any, reviewerId: string, notes: string) {
+  const isAvatar = isProfileAvatarUploadContext(record.upload_context);
+  if (!isAvatar && record.decision === "approved") {
+    return (await publishDancerPhoto(admin, {
+      recordId: record.id, expectedUpdatedAt: record.updated_at, storagePath: record.final_storage_path, reviewerId, notes,
+    })).record;
+  }
   const profile = await profileForModerationRecord(admin, record);
   const sourcePath = record.temporary_storage_path;
   if (!sourcePath) throw new Error("Review image is missing.");
@@ -123,7 +127,6 @@ async function approveReviewRecord(admin: any, record: any, reviewerId: string, 
   if (downloadError || !file) throw downloadError || new Error("Unable to read review image.");
 
   const image = await validateAndPrepareDancrImage(file);
-  const isAvatar = isProfileAvatarUploadContext(record.upload_context);
   const uploadedImage = await uploadResponsiveImage(
     admin,
     APPROVED_PHOTO_BUCKET,
@@ -168,79 +171,11 @@ async function approveReviewRecord(admin: any, record: any, reviewerId: string, 
       return updated;
     }
 
-    const requestedSlot = profilePhotoSlotFromUploadContext(record.upload_context);
-    const isPrimary = requestedSlot.isPrimary;
-    const sortOrder = isPrimary ? 0 : requestedSlot.sortOrder || await nextPhotoSortOrder(admin, profile.id);
-    let supersededQuery = admin
-      .from("dancer_photos")
-      .select("id, storage_path")
-      .eq("dancer_id", profile.id)
-      .eq("is_primary", isPrimary);
-    if (!isPrimary) supersededQuery = supersededQuery.eq("sort_order", sortOrder);
-    const { data: supersededPhotos, error: supersededError } = await supersededQuery;
-    if (supersededError) throw supersededError;
-    const { data: photo, error: photoError } = await admin
-      .from("dancer_photos")
-      .insert({
-        dancer_id: profile.id,
-        storage_path: finalPath,
-        is_primary: isPrimary,
-        sort_order: sortOrder,
-        review_status: "approved",
-      })
-      .select("id")
-      .single();
-    if (photoError) throw photoError;
-
-    const update = {
-      image_id: photo.id,
-      final_storage_path: finalPath,
-      decision: "approved",
-      status: "approved",
-      reviewed_by: reviewerId,
-      reviewed_at: new Date().toISOString(),
-      review_decision: "approved",
-      review_notes: notes || null,
-      updated_at: new Date().toISOString(),
-    };
-    const { data: updated, error: updateError } = await admin.from("image_moderation_records").update(update).eq("id", record.id).select("*").single();
-    if (updateError) throw updateError;
-    const supersededIds = (supersededPhotos || []).map((item: any) => item.id).filter(Boolean);
-    if (supersededIds.length) {
-      const { error: deleteError } = await admin
-        .from("dancer_photos")
-        .delete()
-        .eq("dancer_id", profile.id)
-        .in("id", supersededIds);
-      if (deleteError) {
-        console.warn("IMAGE_MODERATION_SUPERSEDED_SLOT_CLEANUP_FAILED", {
-          recordId: record.id,
-          dancerId: profile.id,
-          ...safeErrorMetadata(deleteError),
-        });
-      } else {
-        const supersededPaths = (supersededPhotos || []).map((item: any) => item.storage_path).filter(Boolean);
-        if (supersededPaths.length) {
-          await admin.storage
-            .from(APPROVED_PHOTO_BUCKET)
-            .remove(
-              supersededPaths.flatMap((storagePath: string) =>
-                responsiveImageStoragePaths(storagePath),
-              ),
-            )
-            .catch(() => null);
-          await Promise.all(
-            supersededPaths.map((storagePath: string) =>
-              removeArchivedOriginalMedia(
-                admin,
-                APPROVED_PHOTO_BUCKET,
-                storagePath,
-              ).catch(() => null),
-            ),
-          );
-        }
-      }
-    }
+    const { record: updated } = await publishDancerPhoto(admin, {
+      recordId: record.id, expectedUpdatedAt: record.updated_at, storagePath: finalPath, reviewerId, notes,
+      metadata: { reasonCodes: record.reason_codes, categoryFlags: record.category_flags,
+        categoryScores: record.category_scores, providerFlagged: record.provider_flagged },
+    });
     await admin.storage.from(sourceBucket).remove([sourcePath]).catch(() => null);
     console.info(JSON.stringify({ event: "image_moderation.admin_decision", recordId: record.id, decision: "approved" }));
     return updated;
@@ -266,8 +201,10 @@ async function rejectReviewRecord(admin: any, record: any, reviewerId: string, n
     review_notes: notes || "Rejected by admin moderation.",
     updated_at: new Date().toISOString(),
   };
-  const { data: updated, error } = await admin.from("image_moderation_records").update(update).eq("id", record.id).select("*").single();
+  const { data: updated, error } = await admin.from("image_moderation_records").update(update)
+    .eq("id", record.id).eq("decision", "review").eq("updated_at", record.updated_at).select("*").maybeSingle();
   if (error) throw error;
+  if (!updated) throw new PublicApiError("CONFLICT", "This upload already changed. Refresh the review queue.", 409);
   if (sourcePath) {
     await admin.storage.from(MODERATION_REVIEW_BUCKET).remove([sourcePath]).catch(() => null);
     await admin.storage.from(MODERATION_TEMP_BUCKET).remove([sourcePath]).catch(() => null);
@@ -288,21 +225,6 @@ async function profileForModerationRecord(admin: any, record: any) {
   if (error) throw error;
   if (!data) throw new Error("Dancer profile not found.");
   return data;
-}
-
-async function nextPhotoSortOrder(admin: any, dancerId: string) {
-  const { data, error } = await admin
-    .from("dancer_photos")
-    .select("sort_order")
-    .eq("dancer_id", dancerId)
-    .eq("is_primary", false)
-    .in("review_status", ["approved", "pending"]);
-  if (error) throw error;
-  const used = new Set((data || []).map((photo: any) => Number(photo.sort_order)));
-  for (let sortOrder = 1; sortOrder <= MAX_DANCER_PROFILE_PHOTOS; sortOrder += 1) {
-    if (!used.has(sortOrder)) return sortOrder;
-  }
-  throw new Error("No profile photo slot is available for this approval.");
 }
 
 async function createNeutralNotification(admin: any, userId: string) {

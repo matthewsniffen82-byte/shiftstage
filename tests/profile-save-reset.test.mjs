@@ -192,12 +192,12 @@ test("combined Step 1 can be submitted with one approved photo while extra photo
 test("gallery uploads use unique database slots and deletion targets one exact id", () => {
   assert.match(dashboardSource, /formData\.set\("sortOrder", String\(uploadSortOrder\)\)/);
   assert.match(dashboardSource, /nextGalleryPhotoSortOrder\(workingPhotos\)/);
-  assert.match(imageModerationSource, /resolveDancerPhotoSortOrder\([^]*?input\.userId,[^]*?input\.sortOrder/);
+  assert.match(imageModerationSource, /resolvePhotoPublicationIntent\(admin/);
   assert.match(imageModerationSource, /profilePhotoUploadContext\(Boolean\(input\.isPrimary\), resolvedSortOrder\)/);
-  assert.match(imageModerationSource, /occupiedDancerPhotoSlots/);
+  assert.match(imageModerationSource, /replacement_photo_id: input\.replacementPhotoId/);
   assert.match(photoSlotSource, /`\$\{PROFILE_GALLERY_CONTEXT\}:\$\{normalizedSortOrder\}`/);
-  assert.match(imageModerationAdminSource, /profilePhotoSlotFromUploadContext\(record\.upload_context\)/);
-  assert.match(imageModerationAdminSource, /requestedSlot\.sortOrder \|\| await nextPhotoSortOrder/);
+  assert.match(imageModerationAdminSource, /publishDancerPhoto\(admin/);
+  assert.doesNotMatch(imageModerationAdminSource, /nextPhotoSortOrder/);
 
   const deleteHandler = dancerSource.match(/export async function deleteOwnDancerPhoto[\s\S]*?\r?\n}\r?\n\r?\nasync function deleteLinkedModerationRecords/)?.[0] || "";
   assert.match(deleteHandler, /\.eq\("id", photo\.id\)/);

@@ -9,6 +9,7 @@ const requireTest = createRequire(import.meta.url);
 const librarySource = readFileSync(new URL("../src/lib/dancr/image-moderation.ts", import.meta.url), "utf8");
 const adminSource = readFileSync(new URL("../app/api/admin/image-moderation/route.ts", import.meta.url), "utf8");
 const recenterSource = readFileSync(new URL("../app/api/admin/avatars/recenter/route.ts", import.meta.url), "utf8");
+const publicationSource = readFileSync(new URL("../src/lib/dancr/photo-publication.ts", import.meta.url), "utf8");
 const oldPath = "user/dancer/old.jpg";
 const newPath = "user/dancer/new.jpg";
 
@@ -98,6 +99,18 @@ function harness({ avatar = false, primary = false, failure = "", concurrentAvat
       getPublicUrl: path => ({ data: { publicUrl: `https://example.test/${path}` } }),
     }; } },
   };
+  client.rpc = async (name, args) => {
+    assert.equal(name, 'publish_approved_dancer_gallery_photo');
+    const fail = ['approval','approval_ack','insert_ack','retire','slot_read'].includes(failure) && !injected;
+    if (fail) injected = true;
+    if (fail && !['approval_ack','insert_ack'].includes(failure)) return {data:null,error:fault};
+    const old = tables.dancer_photos[0];
+    const photo = {id:'new',dancer_id:'dancer',storage_path:args.p_storage_path,is_primary:primary,sort_order:primary?0:1};
+    tables.dancer_photos=[photo];
+    Object.assign(tables.image_moderation_records[0], {image_id:photo.id,decision:'approved',status:'approved',final_storage_path:photo.storage_path});
+    if (fail) return {data:null,error:fault};
+    return {data:{record:{...tables.image_moderation_records[0]},photo,superseded_storage_paths:old?[old.storage_path]:[]},error:null};
+  };
   const responsive = {
     uploadResponsiveImage: async () => ({ storagePath: newPath, focalX: 50, focalY: 50 }),
     removeResponsiveImage: async (_client, _bucket, path) => { events.push(`remove:${path}`); files.delete(path); },
@@ -109,13 +122,19 @@ function harness({ avatar = false, primary = false, failure = "", concurrentAvat
     isProfileAvatarUploadContext: context => context === "profile_avatar",
     profilePhotoSlotFromUploadContext: () => ({ isPrimary: primary, sortOrder: primary ? 0 : 1 }),
   };
+  const publication = load(publicationSource, 'publishDancerPhoto', {
+    './responsive-image':responsive,'./media-watermark':watermark,
+    '../api-error-policy':requireTest('../src/lib/api-error-policy.ts'),
+    '../security/safe-error-metadata':{safeErrorMetadata:()=>({code:'synthetic'})},
+  });
   const library = load(librarySource, "approveModeratedUpload", {
-    "./responsive-image": responsive, "./media-watermark": watermark,
+    "./responsive-image": responsive, "./media-watermark": watermark, "./photo-publication": publication,
     "../security/safe-error-metadata": { safeErrorMetadata: () => ({ code: "synthetic" }) },
     "../api-error-policy": requireTest("../src/lib/api-error-policy.ts"),
   });
   const admin = load(adminSource, "approveReviewRecord", {
     "@/src/lib/dancr/image-moderation": library,
+    "@/src/lib/dancr/photo-publication": publication,
     "@/src/lib/dancr/responsive-image": responsive,
     "@/src/lib/dancr/media-watermark": watermark,
     "@/src/lib/dancr/photo-slot": slots,
@@ -179,11 +198,11 @@ for (const mode of ["automatic", "admin"]) {
     assert.equal(state.tables.dancer_profiles[0].avatar_storage_path, "user/dancer/newer.jpg");
     state.assertReferencedFilesExist();
   });
-  test(`${mode}: failed old-row removal retains both usable photos`, async () => {
+  test(`${mode}: failed transaction retirement preserves the previous photo`, async () => {
     const state = harness({ failure: "retire" });
-    await state.run(mode);
+    await assert.rejects(state.run(mode));
     state.assertReferencedFilesExist();
-    assert.equal(state.tables.dancer_photos.length, 2);
+    assert.equal(state.tables.dancer_photos.length, 1);
     assert.ok(state.files.has(oldPath));
   });
   test(`${mode}: pre-publication read failure preserves the previous live photo`, async () => {
@@ -192,10 +211,10 @@ for (const mode of ["automatic", "admin"]) {
     state.assertReferencedFilesExist();
     assert.ok(state.files.has(oldPath));
   });
-  test(`${mode}: legacy primary replacement retains both photos if approval fails`, async () => {
+  test(`${mode}: legacy primary replacement rolls back to the original if approval fails`, async () => {
     const state = harness({ primary: true, failure: "approval" });
     await assert.rejects(state.run(mode));
-    assert.equal(state.tables.dancer_photos.length, 2);
+    assert.equal(state.tables.dancer_photos.length, 1);
     assert.ok(state.files.has(oldPath));
     state.assertReferencedFilesExist();
   });

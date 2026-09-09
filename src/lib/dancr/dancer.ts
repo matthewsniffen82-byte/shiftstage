@@ -4,6 +4,7 @@ import { PROFILE_AVATAR_CONTEXT } from "./photo-slot";
 import { removeResponsiveImage } from "./responsive-image";
 import { removeArchivedOriginalMedia } from "./media-watermark";
 import type { ApprovalReview, DancerDashboardAnalytics, DancerWeeklyReport, SocialPlatform } from "./types";
+import { PublicApiError } from "../api-error-policy";
 import { safeErrorMetadata } from "../security/safe-error-metadata";
 
 type DancrClient = SupabaseClient;
@@ -118,6 +119,9 @@ export async function deleteOwnDancerPhoto(client: DancrClient, userId: string, 
     .delete()
     .eq("id", moderationRecord.id)
     .eq("user_id", userId)
+    .is("image_id", null)
+    .neq("decision", "approved")
+    .neq("upload_context", PROFILE_AVATAR_CONTEXT)
     .select("id");
   if (deleteModerationError) throw deleteModerationError;
   const deletedIds = (deletedModerationRows || []).map((row: any) => row.id);
@@ -127,7 +131,7 @@ export async function deleteOwnDancerPhoto(client: DancrClient, userId: string, 
     error: null,
   });
   if (!deletedIds.includes(moderationRecord.id)) {
-    throw new Error("PHOTO_DELETE_FAILED: no moderation row was deleted.");
+    throw new PublicApiError("CONFLICT", "This photo changed while you were removing it. Refresh your profile and try again.", 409);
   }
 
   const temporaryPath = String(moderationRecord.temporary_storage_path || "");

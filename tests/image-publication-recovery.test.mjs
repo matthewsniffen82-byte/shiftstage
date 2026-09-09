@@ -8,6 +8,7 @@ import { PublicApiError } from '../src/lib/api-error-policy.ts';
 
 const source = readFileSync(new URL('../src/lib/dancr/image-moderation.ts', import.meta.url), 'utf8');
 const adminSource = readFileSync(new URL('../app/api/admin/image-moderation/route.ts', import.meta.url), 'utf8');
+const publicationSource=readFileSync(new URL('../src/lib/dancr/photo-publication.ts',import.meta.url),'utf8');
 const lostResponse = { code: '08006', message: 'synthetic response lost' };
 function loadModule(code, names, dependencies) {
   const exports = {};
@@ -68,6 +69,22 @@ function scenario({ failTable, failOperation, failAfterCommit = true, diagnostic
     async remove(paths) { for (const path of paths) assets.delete(path); return { error: null }; },
     async download() { return { data: new Blob(['synthetic']), error: null }; },
   }; } } };
+  client.rpc = async (name, args) => {
+    assert.equal(name,'publish_approved_dancer_gallery_photo');
+    const fail=!failed && ((failTable==='image_moderation_records' && failOperation==='update') || (failTable==='dancer_photos' && ['insert','delete'].includes(failOperation)));
+    if(fail) failed=true;
+    if(fail && (!failAfterCommit || rejectionAfterFailure)) {
+      if(rejectionAfterFailure) Object.assign(rows.image_moderation_records[0],{decision:'rejected',status:'rejected'});
+      return {data:null,error:lostResponse};
+    }
+    const old=rows.dancer_photos[0];
+    const photo={id:'new-photo',dancer_id:'profile',storage_path:args.p_storage_path,is_primary:primary,sort_order:primary?0:1};
+    rows.dancer_photos=[photo];
+    Object.assign(rows.image_moderation_records[0],{decision:'approved',status:'approved',image_id:photo.id,final_storage_path:photo.storage_path});
+    if(old) mutations.push({table:'dancer_photos',operation:'delete',ids:[old.id]});
+    if(fail) return {data:null,error:lostResponse};
+    return {data:{record:{...rows.image_moderation_records[0]},photo,superseded_storage_paths:old?[old.storage_path]:[]},error:null};
+  };
   const dependencies = {
     PublicApiError,
     safeErrorMetadata: error => ({ code: error.code || 'unknown' }),
@@ -80,6 +97,7 @@ function scenario({ failTable, failOperation, failAfterCommit = true, diagnostic
     isProfileAvatarUploadContext: context => context === 'profile_avatar',
     profilePhotoSlotFromUploadContext: () => ({ isPrimary: primary, sortOrder: primary ? 0 : 1 }),
   };
+  Object.assign(dependencies,loadModule(publicationSource,'publishDancerPhoto',dependencies));
   const functions = loadModule(source, 'approveModeratedUpload, setApprovedDancerAvatar', dependencies);
   Object.assign(dependencies, { ...functions, APPROVED_PHOTO_BUCKET: 'dancer-photos' });
   const admin = loadModule(adminSource, 'approveReviewRecord', dependencies);
@@ -131,9 +149,9 @@ for (const failAfterCommit of [false, true]) {
   });
 }
 
-test('lost superseded-removal response preserves the acknowledged replacement without failing approval', async () => {
+test('lost transaction response preserves committed replacement and reports uncertainty', async () => {
   const s = scenario({ existingPhoto: true, failTable: 'dancer_photos', failOperation: 'delete' });
-  assert.equal((await s.publish()).decision, 'approved');
+  await assert.rejects(s.publish(), error => error === lostResponse);
   assert.deepEqual(s.rows.dancer_photos.map(row => row.id), ['new-photo']);
   assert.ok(s.assets.has('new'));
   assert.equal(s.mutations.filter(m => m.operation === 'delete').length, 1);
