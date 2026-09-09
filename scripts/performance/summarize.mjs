@@ -22,6 +22,7 @@ const pages = [...groups].map(([name, samples]) => {
   const api = apiPaths.map(url => ({ url, medianMs: median(requests.filter(request => request.url === url).map(request => request.durationMs)), samples: requests.filter(request => request.url === url).length }));
   return {
     name, samples: samples.length,
+    hostCpuBusyPercent: median(samples.map(s => s.hostCpuBusyPercent)),
     lcpMs: median(samples.map(s => s.initial.lcp?.ms)), fcpMs: median(samples.map(s => s.initial.fcpMs)),
     ttfbMs: median(samples.map(s => s.initial.ttfbMs)), cls: median(samples.map(s => s.initial.cls)),
     interactionProxyMs: median(samples.map(s => s.final.interactionMax)),

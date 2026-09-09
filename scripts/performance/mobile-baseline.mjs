@@ -3,6 +3,7 @@
 import { createRequire } from "node:module";
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { cpus } from "node:os";
 
 const require = createRequire(import.meta.url);
 const { chromium } = require(process.env.PERF_PLAYWRIGHT_MODULE || "playwright");
@@ -18,6 +19,7 @@ const profiles = {
   slow: { width: 360, height: 800, cpu: 6, latency: 180, download: 1_600_000 / 8, upload: 750_000 / 8 },
 };
 const selectedProfiles = (process.env.PERF_PROFILES || "cellular").split(",");
+const hostCpuSnapshot = () => cpus().reduce((sum, cpu) => ({ idle: sum.idle + cpu.times.idle, total: sum.total + Object.values(cpu.times).reduce((n, value) => n + value, 0) }), { idle: 0, total: 0 });
 const safeUrl = value => { try { const u = new URL(value); return u.origin + u.pathname; } catch { return ""; } };
 await mkdir(output, { recursive: true });
 const browser = await chromium.launch({ channel: process.env.PERF_BROWSER || "msedge", headless: true });
@@ -85,6 +87,7 @@ try {
     cdp.on("Network.loadingFailed", e => { const item = requests.get(e.requestId); if (item) item.failure = e.errorText; });
     page.on("pageerror", error => errors.push(error.message));
     let navigationError = null;
+    const hostBefore = hostCpuSnapshot();
     const journeyStarted = performance.now();
     try { await page.goto(base + route, { waitUntil: "load", timeout: 90000 }); } catch (error) { navigationError = error.message.split("\n")[0]; }
     await page.waitForTimeout(6000);
@@ -125,8 +128,11 @@ try {
     const after = await cdp.send("Performance.getMetrics");
     const final = await page.evaluate(() => ({ ...window.__perfLab, quality: [...document.querySelectorAll("video")].map(v => { const q = v.getVideoPlaybackQuality?.(); return { paused: v.paused, readyState: v.readyState, currentTime: v.currentTime, frames: q?.totalVideoFrames ?? null, dropped: q?.droppedVideoFrames ?? null }; }) }));
     const metric = (snapshot, name) => snapshot.metrics.find(m => m.name === name)?.value ?? null;
+    const hostAfter = hostCpuSnapshot();
+    const hostCpuBusyPercent = Math.round(1000 * (1 - (hostAfter.idle - hostBefore.idle) / Math.max(1, hostAfter.total - hostBefore.total))) / 10;
     const result = { route, profile: profileName, customerFixture, run, browser: browser.version(), measuredAt: new Date().toISOString(), initial, final, initialTransferBytes: initialRequests.reduce((n, r) => n + r.bytes, 0), initialJsTransferBytes: initialRequests.filter(r => r.type === "Script").reduce((n, r) => n + r.bytes, 0), initialRequestCount: initialRequests.length, memory: { heapBefore: metric(before, "JSHeapUsedSize"), heapAfter: metric(after, "JSHeapUsedSize"), nodesBefore: metric(before, "Nodes"), nodesAfter: metric(after, "Nodes") }, errors, navigationError, suppressedWrites, requests: [...requests.values()] };
     results.push(result);
+    result.hostCpuBusyPercent = hostCpuBusyPercent;
     await writeFile(path.join(output, "results.json"), JSON.stringify({ base, profiles, note: "Synthetic Chromium mobile lab, cold cache. Writes suppressed. INP is interaction proxy only; signed-out dashboard access is not authenticated dashboard performance.", results }, null, 2));
     console.log(JSON.stringify({ route, profile: profileName, run, lcpMs: initial.lcp?.ms, fcpMs: initial.fcpMs, ttfbMs: initial.ttfbMs, cls: initial.cls, bytes: result.initialTransferBytes, requests: result.initialRequestCount, errors: errors.length, navigationError }));
     if (run === 1) await page.screenshot({ path: path.join(output, `${profileName}-${results.length}.png`), fullPage: false, timeout: 15000 });

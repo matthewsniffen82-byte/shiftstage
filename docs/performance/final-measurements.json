@@ -1,0 +1,603 @@
+{
+  "generatedAt": "2026-09-09T16:33:35.135Z",
+  "environment": "Chromium mobile lab; cold cache; synthetic throttling; API writes suppressed; not physical iPhone/Android or field Core Web Vitals",
+  "metricCaveats": "INP column is a sampled interaction proxy, not field INP. Video waiting includes initial buffering. Heap growth over a five-second scroll is not proof of a leak. Redirected routes report final-document paint timings and whole-journey request bytes. Null means not measured, never zero.",
+  "pages": [
+    {
+      "name": "cellular /",
+      "samples": 3,
+      "hostCpuBusyPercent": 100,
+      "lcpMs": 1820,
+      "fcpMs": 1820,
+      "ttfbMs": 125.7,
+      "cls": 0.028,
+      "interactionProxyMs": 496,
+      "initialJsTransferBytes": 257197,
+      "initialTransferBytes": 913213,
+      "initialRequests": 43,
+      "domNodes": 1993,
+      "longestTaskMs": 481,
+      "scrollFramesOver50msPercent": 0.365,
+      "heapBefore": 3963468,
+      "heapAfter": 4094652,
+      "videoFirstLoadToPlayMs": null,
+      "videoPlayFromNavigationMs": null,
+      "videoWaitingEvents": 0,
+      "droppedFrames": 0,
+      "errors": [],
+      "criticalFailures": [],
+      "api": [
+        {
+          "url": "https://www.mydancr.com/api/public/cities",
+          "medianMs": 254.815,
+          "samples": 3
+        },
+        {
+          "url": "https://www.mydancr.com/api/public/discovery",
+          "medianMs": 549.101,
+          "samples": 3
+        },
+        {
+          "url": "https://www.mydancr.com/api/public/tv/count",
+          "medianMs": 191.475,
+          "samples": 3
+        },
+        {
+          "url": "https://www.mydancr.com/api/public/tv",
+          "medianMs": 206.731,
+          "samples": 18
+        }
+      ],
+      "shellVersions": [
+        "9aa44e1bfe21701e62d475ad33a9ba932983606a35f0cb06cf44dcc37ec91132"
+      ]
+    },
+    {
+      "name": "cellular /?city=Las%20Vegas&view=tonight",
+      "samples": 3,
+      "hostCpuBusyPercent": 100,
+      "lcpMs": 1964,
+      "fcpMs": 1964,
+      "ttfbMs": 117.9,
+      "cls": 0.052,
+      "interactionProxyMs": null,
+      "initialJsTransferBytes": 256951,
+      "initialTransferBytes": 795005,
+      "initialRequests": 36,
+      "domNodes": 1933,
+      "longestTaskMs": 555,
+      "scrollFramesOver50msPercent": 0,
+      "heapBefore": 2535500,
+      "heapAfter": 2587672,
+      "videoFirstLoadToPlayMs": null,
+      "videoPlayFromNavigationMs": null,
+      "videoWaitingEvents": 0,
+      "droppedFrames": 0,
+      "errors": [],
+      "criticalFailures": [],
+      "api": [
+        {
+          "url": "https://www.mydancr.com/api/public/cities",
+          "medianMs": 281.311,
+          "samples": 3
+        },
+        {
+          "url": "https://www.mydancr.com/api/public/discovery",
+          "medianMs": 303.643,
+          "samples": 3
+        },
+        {
+          "url": "https://www.mydancr.com/api/public/tv/count",
+          "medianMs": 247.444,
+          "samples": 3
+        },
+        {
+          "url": "https://www.mydancr.com/api/public/tv",
+          "medianMs": 217.203,
+          "samples": 3
+        }
+      ],
+      "shellVersions": [
+        "9aa44e1bfe21701e62d475ad33a9ba932983606a35f0cb06cf44dcc37ec91132"
+      ]
+    },
+    {
+      "name": "cellular /?city=Las%20Vegas&view=venues",
+      "samples": 3,
+      "hostCpuBusyPercent": 98.1,
+      "lcpMs": 1780,
+      "fcpMs": 1780,
+      "ttfbMs": 118.5,
+      "cls": 0,
+      "interactionProxyMs": null,
+      "initialJsTransferBytes": 257171,
+      "initialTransferBytes": 701566,
+      "initialRequests": 42,
+      "domNodes": 2923,
+      "longestTaskMs": 813,
+      "scrollFramesOver50msPercent": 3.365,
+      "heapBefore": 3805692,
+      "heapAfter": 3932792,
+      "videoFirstLoadToPlayMs": null,
+      "videoPlayFromNavigationMs": null,
+      "videoWaitingEvents": 0,
+      "droppedFrames": 0,
+      "errors": [],
+      "criticalFailures": [],
+      "api": [
+        {
+          "url": "https://www.mydancr.com/api/public/cities",
+          "medianMs": 312.631,
+          "samples": 3
+        },
+        {
+          "url": "https://www.mydancr.com/api/public/discovery",
+          "medianMs": 316.557,
+          "samples": 3
+        },
+        {
+          "url": "https://www.mydancr.com/api/public/tv/count",
+          "medianMs": 264.336,
+          "samples": 3
+        }
+      ],
+      "shellVersions": [
+        "9aa44e1bfe21701e62d475ad33a9ba932983606a35f0cb06cf44dcc37ec91132"
+      ]
+    },
+    {
+      "name": "cellular /dancers/layout-review-09",
+      "samples": 3,
+      "hostCpuBusyPercent": 81.2,
+      "lcpMs": 2680,
+      "fcpMs": 2272,
+      "ttfbMs": 115.4,
+      "cls": 0,
+      "interactionProxyMs": null,
+      "initialJsTransferBytes": 160245,
+      "initialTransferBytes": 313381,
+      "initialRequests": 31,
+      "domNodes": 246,
+      "longestTaskMs": 254,
+      "scrollFramesOver50msPercent": 0.36,
+      "heapBefore": 3428020,
+      "heapAfter": 3464360,
+      "videoFirstLoadToPlayMs": null,
+      "videoPlayFromNavigationMs": null,
+      "videoWaitingEvents": 0,
+      "droppedFrames": 0,
+      "errors": [],
+      "criticalFailures": [],
+      "api": [
+        {
+          "url": "https://www.mydancr.com/api/customer/going",
+          "medianMs": 551.888,
+          "samples": 3
+        },
+        {
+          "url": "https://www.mydancr.com/api/public/media-likes",
+          "medianMs": 382.764,
+          "samples": 3
+        }
+      ],
+      "shellVersions": []
+    },
+    {
+      "name": "cellular /venues/deja-vu-showgirls",
+      "samples": 3,
+      "hostCpuBusyPercent": 87.9,
+      "lcpMs": 2368,
+      "fcpMs": 2368,
+      "ttfbMs": 599.1,
+      "cls": 0.038,
+      "interactionProxyMs": null,
+      "initialJsTransferBytes": 257282,
+      "initialTransferBytes": 817851,
+      "initialRequests": 49,
+      "domNodes": 1933,
+      "longestTaskMs": 987,
+      "scrollFramesOver50msPercent": 0.369,
+      "heapBefore": 3609756,
+      "heapAfter": 3664916,
+      "videoFirstLoadToPlayMs": null,
+      "videoPlayFromNavigationMs": null,
+      "videoWaitingEvents": 0,
+      "droppedFrames": 0,
+      "errors": [],
+      "criticalFailures": [],
+      "api": [
+        {
+          "url": "https://www.mydancr.com/api/public/cities",
+          "medianMs": 216.89,
+          "samples": 3
+        },
+        {
+          "url": "https://www.mydancr.com/api/public/discovery",
+          "medianMs": 240.385,
+          "samples": 3
+        },
+        {
+          "url": "https://www.mydancr.com/api/public/tv/count",
+          "medianMs": 185.334,
+          "samples": 3
+        },
+        {
+          "url": "https://www.mydancr.com/api/public/venue-events",
+          "medianMs": 318.478,
+          "samples": 3
+        }
+      ],
+      "shellVersions": [
+        "9aa44e1bfe21701e62d475ad33a9ba932983606a35f0cb06cf44dcc37ec91132"
+      ]
+    },
+    {
+      "name": "cellular /tv",
+      "samples": 3,
+      "hostCpuBusyPercent": 99.6,
+      "lcpMs": 7412,
+      "fcpMs": 2364,
+      "ttfbMs": 278.7,
+      "cls": 0.014,
+      "interactionProxyMs": null,
+      "initialJsTransferBytes": 257727,
+      "initialTransferBytes": 2126016,
+      "initialRequests": 37,
+      "domNodes": 3457,
+      "longestTaskMs": 1516,
+      "scrollFramesOver50msPercent": 9.36,
+      "heapBefore": 3130956,
+      "heapAfter": 3280800,
+      "videoFirstLoadToPlayMs": 1216.3,
+      "videoPlayFromNavigationMs": 8055.1,
+      "videoWaitingEvents": 6,
+      "droppedFrames": 0,
+      "errors": [],
+      "criticalFailures": [],
+      "api": [
+        {
+          "url": "https://www.mydancr.com/api/public/cities",
+          "medianMs": 379.516,
+          "samples": 3
+        },
+        {
+          "url": "https://www.mydancr.com/api/public/discovery",
+          "medianMs": 380.521,
+          "samples": 3
+        },
+        {
+          "url": "https://www.mydancr.com/api/public/tv/count",
+          "medianMs": 514.903,
+          "samples": 3
+        },
+        {
+          "url": "https://www.mydancr.com/api/public/tv",
+          "medianMs": 489.943,
+          "samples": 3
+        },
+        {
+          "url": "https://www.mydancr.com/api/public/media-likes",
+          "medianMs": 1306.873,
+          "samples": 3
+        }
+      ],
+      "shellVersions": [
+        "9aa44e1bfe21701e62d475ad33a9ba932983606a35f0cb06cf44dcc37ec91132"
+      ]
+    },
+    {
+      "name": "cellular /?auth=login",
+      "samples": 3,
+      "hostCpuBusyPercent": 100,
+      "lcpMs": 3352,
+      "fcpMs": 3228,
+      "ttfbMs": 110.1,
+      "cls": 0.002,
+      "interactionProxyMs": null,
+      "initialJsTransferBytes": 257170,
+      "initialTransferBytes": 788558,
+      "initialRequests": 35,
+      "domNodes": 1993,
+      "longestTaskMs": 1830,
+      "scrollFramesOver50msPercent": 0,
+      "heapBefore": 2806928,
+      "heapAfter": 2853612,
+      "videoFirstLoadToPlayMs": null,
+      "videoPlayFromNavigationMs": null,
+      "videoWaitingEvents": 0,
+      "droppedFrames": 0,
+      "errors": [],
+      "criticalFailures": [],
+      "api": [
+        {
+          "url": "https://www.mydancr.com/api/public/cities",
+          "medianMs": 1549.201,
+          "samples": 3
+        },
+        {
+          "url": "https://www.mydancr.com/api/public/discovery",
+          "medianMs": 1549.181,
+          "samples": 3
+        },
+        {
+          "url": "https://www.mydancr.com/api/public/tv/count",
+          "medianMs": 1431.504,
+          "samples": 3
+        },
+        {
+          "url": "https://www.mydancr.com/api/public/tv",
+          "medianMs": 534.973,
+          "samples": 3
+        }
+      ],
+      "shellVersions": [
+        "9aa44e1bfe21701e62d475ad33a9ba932983606a35f0cb06cf44dcc37ec91132"
+      ]
+    },
+    {
+      "name": "cellular /dashboard/customer [synthetic customer data]",
+      "samples": 3,
+      "hostCpuBusyPercent": 99.9,
+      "lcpMs": 3028,
+      "fcpMs": 2124,
+      "ttfbMs": 109.6,
+      "cls": 0.001,
+      "interactionProxyMs": null,
+      "initialJsTransferBytes": 250124,
+      "initialTransferBytes": 566268,
+      "initialRequests": 27,
+      "domNodes": 405,
+      "longestTaskMs": 592,
+      "scrollFramesOver50msPercent": 1.107,
+      "heapBefore": 4080544,
+      "heapAfter": 4122916,
+      "videoFirstLoadToPlayMs": null,
+      "videoPlayFromNavigationMs": null,
+      "videoWaitingEvents": 0,
+      "droppedFrames": 0,
+      "errors": [],
+      "criticalFailures": [],
+      "api": [
+        {
+          "url": "https://www.mydancr.com/api/account",
+          "medianMs": 51.299,
+          "samples": 3
+        },
+        {
+          "url": "https://www.mydancr.com/api/customer/saved",
+          "medianMs": 54.065,
+          "samples": 3
+        },
+        {
+          "url": "https://www.mydancr.com/api/customer/profile",
+          "medianMs": 56.641,
+          "samples": 3
+        },
+        {
+          "url": "https://www.mydancr.com/api/support",
+          "medianMs": 36.167,
+          "samples": 3
+        },
+        {
+          "url": "https://www.mydancr.com/api/agent/commissions",
+          "medianMs": 28.569,
+          "samples": 3
+        },
+        {
+          "url": "https://www.mydancr.com/api/notifications",
+          "medianMs": 31.571,
+          "samples": 3
+        }
+      ],
+      "shellVersions": [
+        "9aa44e1bfe21701e62d475ad33a9ba932983606a35f0cb06cf44dcc37ec91132"
+      ]
+    },
+    {
+      "name": "wifi /",
+      "samples": 1,
+      "hostCpuBusyPercent": 100,
+      "lcpMs": 4028,
+      "fcpMs": 4028,
+      "ttfbMs": 104.2,
+      "cls": 0.015,
+      "interactionProxyMs": 544,
+      "initialJsTransferBytes": 257501,
+      "initialTransferBytes": 914041,
+      "initialRequests": 43,
+      "domNodes": 1993,
+      "longestTaskMs": 182,
+      "scrollFramesOver50msPercent": 0,
+      "heapBefore": 3977568,
+      "heapAfter": 4124384,
+      "videoFirstLoadToPlayMs": null,
+      "videoPlayFromNavigationMs": null,
+      "videoWaitingEvents": 0,
+      "droppedFrames": 0,
+      "errors": [],
+      "criticalFailures": [],
+      "api": [
+        {
+          "url": "https://www.mydancr.com/api/public/cities",
+          "medianMs": 112.005,
+          "samples": 1
+        },
+        {
+          "url": "https://www.mydancr.com/api/public/discovery",
+          "medianMs": 1867.862,
+          "samples": 1
+        },
+        {
+          "url": "https://www.mydancr.com/api/public/tv/count",
+          "medianMs": 1414.834,
+          "samples": 1
+        },
+        {
+          "url": "https://www.mydancr.com/api/public/tv",
+          "medianMs": 398.732,
+          "samples": 6
+        }
+      ],
+      "shellVersions": [
+        "9aa44e1bfe21701e62d475ad33a9ba932983606a35f0cb06cf44dcc37ec91132"
+      ]
+    },
+    {
+      "name": "wifi /tv",
+      "samples": 1,
+      "hostCpuBusyPercent": 100,
+      "lcpMs": 5208,
+      "fcpMs": 1596,
+      "ttfbMs": 306.8,
+      "cls": 0,
+      "interactionProxyMs": null,
+      "initialJsTransferBytes": 256970,
+      "initialTransferBytes": 8721576,
+      "initialRequests": 37,
+      "domNodes": 3457,
+      "longestTaskMs": 311,
+      "scrollFramesOver50msPercent": 1.845,
+      "heapBefore": 3171524,
+      "heapAfter": 3404740,
+      "videoFirstLoadToPlayMs": 1767.1,
+      "videoPlayFromNavigationMs": 5778.3,
+      "videoWaitingEvents": 4,
+      "droppedFrames": 0,
+      "errors": [],
+      "criticalFailures": [],
+      "api": [
+        {
+          "url": "https://www.mydancr.com/api/public/cities",
+          "medianMs": 151.122,
+          "samples": 1
+        },
+        {
+          "url": "https://www.mydancr.com/api/public/discovery",
+          "medianMs": 138.533,
+          "samples": 1
+        },
+        {
+          "url": "https://www.mydancr.com/api/public/tv/count",
+          "medianMs": 188.1,
+          "samples": 1
+        },
+        {
+          "url": "https://www.mydancr.com/api/public/tv",
+          "medianMs": 1893.577,
+          "samples": 1
+        },
+        {
+          "url": "https://www.mydancr.com/api/public/media-likes",
+          "medianMs": 585.893,
+          "samples": 1
+        }
+      ],
+      "shellVersions": [
+        "9aa44e1bfe21701e62d475ad33a9ba932983606a35f0cb06cf44dcc37ec91132"
+      ]
+    },
+    {
+      "name": "slow /",
+      "samples": 1,
+      "hostCpuBusyPercent": 99.9,
+      "lcpMs": 4636,
+      "fcpMs": 4636,
+      "ttfbMs": 117.3,
+      "cls": 0.03,
+      "interactionProxyMs": 1032,
+      "initialJsTransferBytes": 256489,
+      "initialTransferBytes": 913634,
+      "initialRequests": 43,
+      "domNodes": 1993,
+      "longestTaskMs": 1290,
+      "scrollFramesOver50msPercent": 1.908,
+      "heapBefore": 3617172,
+      "heapAfter": 3765068,
+      "videoFirstLoadToPlayMs": null,
+      "videoPlayFromNavigationMs": null,
+      "videoWaitingEvents": 0,
+      "droppedFrames": 0,
+      "errors": [],
+      "criticalFailures": [],
+      "api": [
+        {
+          "url": "https://www.mydancr.com/api/public/cities",
+          "medianMs": 450.676,
+          "samples": 1
+        },
+        {
+          "url": "https://www.mydancr.com/api/public/discovery",
+          "medianMs": 403.574,
+          "samples": 1
+        },
+        {
+          "url": "https://www.mydancr.com/api/public/tv/count",
+          "medianMs": 300.806,
+          "samples": 1
+        },
+        {
+          "url": "https://www.mydancr.com/api/public/tv",
+          "medianMs": 474.62,
+          "samples": 6
+        }
+      ],
+      "shellVersions": [
+        "9aa44e1bfe21701e62d475ad33a9ba932983606a35f0cb06cf44dcc37ec91132"
+      ]
+    },
+    {
+      "name": "slow /tv",
+      "samples": 1,
+      "hostCpuBusyPercent": 100,
+      "lcpMs": 10392,
+      "fcpMs": 4836,
+      "ttfbMs": 537.2,
+      "cls": 0.001,
+      "interactionProxyMs": null,
+      "initialJsTransferBytes": 257780,
+      "initialTransferBytes": 1079456,
+      "initialRequests": 36,
+      "domNodes": 3457,
+      "longestTaskMs": 2761,
+      "scrollFramesOver50msPercent": 26.087,
+      "heapBefore": 3023712,
+      "heapAfter": 3145712,
+      "videoFirstLoadToPlayMs": 1527.9,
+      "videoPlayFromNavigationMs": 12452.4,
+      "videoWaitingEvents": 5,
+      "droppedFrames": 0,
+      "errors": [],
+      "criticalFailures": [],
+      "api": [
+        {
+          "url": "https://www.mydancr.com/api/public/cities",
+          "medianMs": 773.806,
+          "samples": 1
+        },
+        {
+          "url": "https://www.mydancr.com/api/public/discovery",
+          "medianMs": 792.207,
+          "samples": 1
+        },
+        {
+          "url": "https://www.mydancr.com/api/public/tv/count",
+          "medianMs": 662.072,
+          "samples": 1
+        },
+        {
+          "url": "https://www.mydancr.com/api/public/tv",
+          "medianMs": 1050.248,
+          "samples": 1
+        },
+        {
+          "url": "https://www.mydancr.com/api/public/media-likes",
+          "medianMs": 2679.848,
+          "samples": 1
+        }
+      ],
+      "shellVersions": [
+        "9aa44e1bfe21701e62d475ad33a9ba932983606a35f0cb06cf44dcc37ec91132"
+      ]
+    }
+  ]
+}
