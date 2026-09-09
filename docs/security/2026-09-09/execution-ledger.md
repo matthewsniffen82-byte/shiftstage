@@ -38,8 +38,8 @@ Step 1 delivered as `50d4eb543dbfc93dbed6f0663c51aa2332542cb4`, pushed to origin
 | 15 | Security headers | Delivered and healthy: a777507f28d3c02d67c0bfc8f2f9e4c751259f19 |
 | 16 | CORS | Delivered and healthy: 94f95e9d4333fe1d3622bb40c280c7da557e1643 |
 | 17 | Cookies / sessions | Delivered and healthy: 65be771a1e38707f923440bfe4de9a164406ae30 |
-| 18 | Redirects / URLs | Validated; exact-commit production delivery pending |
-| 19 | Database functions / grants | Not started |
+| 18 | Redirects / URLs | Delivered and healthy: 4c7ae4d5f244633e88a4572076a5b5235acd1cc1 |
+| 19 | Database functions / grants | In progress: isolated privilege migration validation |
 | 20 | Webhooks | Not started |
 | 21 | Errors / disclosure | Not started |
 | 22 | Security logging | Not started |
@@ -227,3 +227,15 @@ Step 17 was pushed as `65be771a1e38707f923440bfe4de9a164406ae30`. [Exact Vercel 
 The redirect audit reproduced a MEDIUM normalization bypass affecting local return paths and a LOW overly broad email callback contract. Both validators now reject unsafe normalized destinations while preserving ordinary local and trusted callback navigation. Fifty-one new runtime regressions were added; the focused suite passed all 132 tests after reproducing 28 pre-fix failures. See `step-18-redirects-and-urls.md` for evidence and scope. The independently deployed pending-gallery identity release `686743648d7a46bcbb41c9b46993db2cca20f115` was reviewed and preserved. Full release validation, commit/push, exact Vercel success and live verification must complete before Step 19.
 
 Final validation on that integrated base passed all 3,246 tests, zero failures/skips, lint, standalone TypeScript and production build. The history guard retained 134 frozen SQL files and postbuild skipped layout-review population. At 23:09:10 UTC, eight native browser checks passed with no JavaScript errors: six retained session checks and two completed NFC logins with crafted normalized return paths, both landing on the local dancer dashboard. Browser API responses were synthetic and remote requests blocked. Only the redirect validators, generated shell version, regression tests and audit documents are included in this step. Exact-commit deployment and read-only live verification follow.
+
+## Step 18 delivery
+
+Step 18 was pushed as `4c7ae4d5f244633e88a4572076a5b5235acd1cc1`. [Exact Vercel deployment](https://vercel.com/ai-movie-jobs/shiftstage/DbQY2d7nAuuTg2ES8ECJn591uCE2) succeeded. At 23:12:10 UTC, eleven deployed redirect checks passed; at 23:12:20 UTC, all 15 header checks passed; at 23:12:25 UTC, all 17 deployment checks and 30 Supabase readiness checks passed. Local HEAD matched origin/main with a clean worktree before Step 19.
+
+## Step 19 implementation
+
+The database audit found a LOW least-privilege issue: four unnecessary bulk/schema/maintenance permissions for two browser roles on 67 tables. The explicit migration preserves ordinary row access, RLS and server rights. Eighty-eight native PostgreSQL regression tests pass; skipping the migration reproduces 73 failing denial checks. See `step-19-database-boundaries.md` and the function inventory for the 113-function review, safeguards and limitations. The independent profile-photo snapshot fix `4df4e252391508215651f90aa3aaaaed1b5d72f1` was reviewed and preserved; its exact Vercel deployment succeeded. Full validation, commit/push, exact deployment, targeted SQL application, catalog verification and the immutable delivery-record release are required before Step 20.
+
+The initial integrated candidate passed 3,348 tests, lint, TypeScript, production build and eight native browser checks. During validation, the independently deployed atomic primary-photo selector `1a96e4e98ad7b4930cc31b2181b4cfb589a68853` was reviewed and incorporated. Its exact Vercel deployment succeeded, and the fresh database catalog showed only that one additional function (114 total, still 96 definers) and one migration record (93 total). All original function fingerprints matched. Final combined checks follow. Six additional isolated release-wrapper checks prove interruption rollback, drift rejection, unchanged boundaries, exact SQL recording and duplicate-application refusal.
+
+Final validation on that integrated base passed all 3,370 tests, zero failures/skips, lint, standalone TypeScript, production build and eight native browser checks without JavaScript errors. The history guard retained 134 frozen SQL files and accepted the two reviewed additions; postbuild skipped demo population. Only the explicit table-privilege migration, its PostgreSQL tests/fixtures, function inventory and security audit documents are included in Step 19. Exact-commit deployment, targeted database application and immutable delivery recording follow before Step 20.

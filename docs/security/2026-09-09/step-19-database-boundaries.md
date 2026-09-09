@@ -1,0 +1,39 @@
+# Step 19: database functions and access paths
+
+## Confirmed finding
+
+**LOW — unnecessary browser-role table privileges.** The read-only production catalog on 2026-09-09 at 23:14 UTC showed TRUNCATE, REFERENCES, TRIGGER and MAINTAIN granted to both anon and authenticated on 67 public tables: 536 effective grants. These operations are unnecessary for the application's parameterized row-level CRUD and RPC calls. TRUNCATE is not protected by row policies; trigger/reference creation and maintenance also carry authority beyond ordinary row access.
+
+No anonymous HTTP endpoint accepting arbitrary SQL, browser-role SQL login, or demonstrated public exploit chain was found. This is a concrete least-privilege defect and reduction of potential impact if another database execution boundary fails, not a claim that an anonymous REST request can erase production. The migration explicitly revokes only those four privileges on the reviewed 67 tables, including inherited PUBLIC grants. Existing row/column privileges, policies, table contents, sequences, functions, schema permissions, and service-role rights remain intact.
+
+## Audit coverage and retained controls
+
+- The initial production capture contained 79 public base tables, 113 public functions, 96 SECURITY DEFINER functions, and 92 migration records. A 23:31 UTC preflight verified the independently deployed primary-photo selector: now 114 functions and 93 migration records. That new function is service-only SECURITY INVOKER with an empty search path and owner/admin checks. All 96 definers have pinned search paths. The accompanying function inventory records execute boundaries and definition fingerprints; no private records or credentials are included.
+- Seven functions are callable by browser roles. is_admin checks the caller's database role and active account state; current_user_role returns the caller's role. Both use schema-qualified relations and auth.uid. The two financial admin RPCs reject unauthenticated, ordinary and disabled-admin callers before looking up records, validate inputs, lock the selected record and enforce state transitions. Forged user metadata does not confer authorization.
+- The other browser-callable helpers are a pure liquor-related text predicate, a pure placeholder-address formatter and the public venue computed offer flag. The latter reveals an active-offer boolean for a supplied venue identifier; hidden-venue discoverability remains a specific Step 26/27 privacy review item. No claim of complete hidden-profile privacy is made here.
+- All other 107 public functions deny browser execution. Service-only functions retain their reviewed server authorization boundaries. Trigger functions and the RLS-enabling event trigger cannot be invoked directly by API roles. The event trigger's dynamic ALTER TABLE uses server catalog object identities and a public-schema/table-command filter, not caller-supplied SQL.
+- Application database calls use Supabase query builders and typed RPC arguments. No user-controlled raw SQL execution was found. Existing atomic publication and financial functions remain in place; changing all definers to invokers would break their intended authorization boundaries.
+- Browser roles are not superusers, cannot log in to SQL, create databases or roles, or bypass RLS. They lack CREATE on public/auth/storage/extensions. Service-role RLS bypass remains server-only by design. The two public sequences have no direct anon/authenticated/service-role privileges; do not broaden them.
+- Explicit column ACLs cover 41 columns with SELECT only. Existing postgres/public default grants deny browser table, sequence and function access and PUBLIC execution. Stronger existing defaults remain. Provider-managed supabase_admin defaults are broader; new provider-created public objects need explicit review, without casually modifying provider-owned roles. TEMPORARY permissions remain; schema-qualified authorization lookups resist temporary-table shadowing.
+
+## Regression verification
+
+Eighty-eight new tests use isolated PostgreSQL with typed catalog fixtures, existing RLS policies and synthetic data. They exercise all 536 browser denials and 268 preserved server privileges, actual pre/post TRUNCATE, trigger and foreign-key denials, unchanged CRUD/column/policy/function snapshots, idempotency, normal owner preferences, public visibility, private fields, admin rejection and successful admin financial transitions. Four existing live function definitions are captured only for this test fixture.
+
+REFERENCES execution is tested in a synthetic writable schema; production browser roles do not have public-schema CREATE. No production TRUNCATE, trigger creation, foreign-key creation, financial transaction, or real-user mutation is used as a test. PGlite validates these PostgreSQL semantics but does not reproduce the entire hosted Supabase service or reconcile historical migrations. The complete application suite, lint, TypeScript, production build, browser checks, exact-commit Vercel success, targeted migration application and live readiness must all pass before Step 20.
+
+## Deployment and recovery
+
+Apply only the committed 20260909233000_restrict_browser_table_privileges.sql after full validation. The release wrapper checks the reviewed catalog and migration ledger, uses three-second lock and thirty-second statement limits, records the exact source SQL/hash with the change in one transaction, and checks that unrelated permission/policy/function state is unchanged. No historical migration replay or blanket ledger repair is allowed. A failed preflight or postcondition aborts the transaction and progression.
+
+No application consumer requires the removed privileges, so old/new application deployments are compatible. If an unexpected dependency is demonstrated, identify the exact role/table/operation first; a reviewed forward GRANT can restore only that required permission. Reverting application documentation does not reverse database ACLs. Do not restore all 536 grants as a routine rollback. After deployed SQL and live checks succeed, freeze the exact migration hash in a separate Step 19 delivery-record commit, with full validation and exact-commit deployment again.
+
+The narrow privilege meanings and definer search-path guidance are documented by [PostgreSQL 17 privileges](https://www.postgresql.org/docs/17/ddl-priv.html) and [CREATE FUNCTION security guidance](https://www.postgresql.org/docs/17/sql-createfunction.html). Findings and tests above come from MyDancr's actual catalog and implementation.
+
+## Remaining provider review
+
+The hosted server reports PostgreSQL 17.6. [Upstream 17.7 release notes](https://www.postgresql.org/docs/release/17.7/) include security fixes; the version string alone does not establish whether the hosted build contains provider backports or meets a vulnerability's preconditions. Provider patch availability and backports remain unverified. Confirm the supported patched release and backup/recovery readiness before scheduling a managed database upgrade under [Supabase's upgrade procedure](https://supabase.com/docs/guides/platform/upgrading). No unplanned database restart, engine upgrade or maintenance outage is included in this permission-only release.
+
+## Final candidate validation
+
+The combined candidate based on `1a96e4e98ad7b4930cc31b2181b4cfb589a68853` passed all 3,370 tests with zero failures/skips, lint, standalone TypeScript, production build and eight isolated native browser checks with no JavaScript errors. The migration guard preserved 134 frozen historical files and accepted the two new reviewed migrations; postbuild skipped demo population. Six isolated deployment-wrapper checks passed, including transaction rollback and changed-catalog rejection. Production application/database delivery evidence follows in the release ledger.
