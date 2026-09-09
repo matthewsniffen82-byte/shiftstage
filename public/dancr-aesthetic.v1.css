@@ -12541,3 +12541,75 @@ body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-she
     padding-inline: 2px !important;
   }
 }
+
+/* Enabled travel actions: consistent contrast without changing their geometry. */
+body.dancr-button-system :is(
+  #profileBackdrop #profileModal .profile-tonight-travel-actions > :is(.profile-primary-directions, .profile-directions-button, .profile-uber-ride),
+  .public-profile-shell .profile-tonight-travel-actions > a[target="_blank"],
+  #results.home-venue-discovery-feed .home-venue-discovery-context-actions > :is(.home-discovery-feed-directions, .home-venue-discovery-uber),
+  #results.venue-profile-overlay .venue-detail .venue-primary-actions > :is(.venue-address-directions, .venue-detail-uber)
+)[href]:not(:disabled):not([aria-disabled="true"]):not(.is-travel-unavailable):not(.is-inactive-demo) {
+  border-color: #626a78 !important;
+  color: #fff !important;
+  background: #272a32 !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .12), 0 2px 5px rgba(0, 0, 0, .24) !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+  cursor: pointer !important;
+  transition: background-color .12s ease, border-color .12s ease, box-shadow .12s ease !important;
+}
+
+body.dancr-button-system :is(
+  #profileBackdrop #profileModal .profile-tonight-travel-actions > :is(.profile-primary-directions, .profile-directions-button, .profile-uber-ride),
+  .public-profile-shell .profile-tonight-travel-actions > a[target="_blank"],
+  #results.home-venue-discovery-feed .home-venue-discovery-context-actions > :is(.home-discovery-feed-directions, .home-venue-discovery-uber),
+  #results.venue-profile-overlay .venue-detail .venue-primary-actions > :is(.venue-address-directions, .venue-detail-uber)
+)[href]:not(:disabled):not([aria-disabled="true"]):not(.is-travel-unavailable):not(.is-inactive-demo) :is(.action-icon, svg) {
+  color: #f0f3f8 !important;
+  stroke: currentColor !important;
+  opacity: 1 !important;
+}
+
+@media (hover: hover) {
+  body.dancr-button-system :is(
+  #profileBackdrop #profileModal .profile-tonight-travel-actions > :is(.profile-primary-directions, .profile-directions-button, .profile-uber-ride),
+  .public-profile-shell .profile-tonight-travel-actions > a[target="_blank"],
+  #results.home-venue-discovery-feed .home-venue-discovery-context-actions > :is(.home-discovery-feed-directions, .home-venue-discovery-uber),
+  #results.venue-profile-overlay .venue-detail .venue-primary-actions > :is(.venue-address-directions, .venue-detail-uber)
+)[href]:not(:disabled):not([aria-disabled="true"]):not(.is-travel-unavailable):not(.is-inactive-demo):hover {
+    background: #323741 !important;
+    border-color: #8993a3 !important;
+  }
+}
+
+body.dancr-button-system :is(
+  #profileBackdrop #profileModal .profile-tonight-travel-actions > :is(.profile-primary-directions, .profile-directions-button, .profile-uber-ride),
+  .public-profile-shell .profile-tonight-travel-actions > a[target="_blank"],
+  #results.home-venue-discovery-feed .home-venue-discovery-context-actions > :is(.home-discovery-feed-directions, .home-venue-discovery-uber),
+  #results.venue-profile-overlay .venue-detail .venue-primary-actions > :is(.venue-address-directions, .venue-detail-uber)
+)[href]:not(:disabled):not([aria-disabled="true"]):not(.is-travel-unavailable):not(.is-inactive-demo):active {
+  background: #3b424f !important;
+  border-color: #a8b3c5 !important;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, .32) !important;
+}
+
+body.dancr-button-system :is(
+  #profileBackdrop #profileModal .profile-tonight-travel-actions > :is(.profile-primary-directions, .profile-directions-button, .profile-uber-ride),
+  .public-profile-shell .profile-tonight-travel-actions > a[target="_blank"],
+  #results.home-venue-discovery-feed .home-venue-discovery-context-actions > :is(.home-discovery-feed-directions, .home-venue-discovery-uber),
+  #results.venue-profile-overlay .venue-detail .venue-primary-actions > :is(.venue-address-directions, .venue-detail-uber)
+)[href]:not(:disabled):not([aria-disabled="true"]):not(.is-travel-unavailable):not(.is-inactive-demo):focus-visible {
+  outline: 2px solid #fff !important;
+  outline-offset: 3px !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body.dancr-button-system :is(
+  #profileBackdrop #profileModal .profile-tonight-travel-actions > :is(.profile-primary-directions, .profile-directions-button, .profile-uber-ride),
+  .public-profile-shell .profile-tonight-travel-actions > a[target="_blank"],
+  #results.home-venue-discovery-feed .home-venue-discovery-context-actions > :is(.home-discovery-feed-directions, .home-venue-discovery-uber),
+  #results.venue-profile-overlay .venue-detail .venue-primary-actions > :is(.venue-address-directions, .venue-detail-uber)
+)[href]:not(:disabled):not([aria-disabled="true"]):not(.is-travel-unavailable):not(.is-inactive-demo) {
+    transition: none !important;
+  }
+}
