@@ -56285,6 +56285,8 @@
       `;
     }
 
+    const approvedProfilePhotoAccountIds = new WeakMap();
+
     async function uploadSetupPhotoFile(file, isPrimary, sortOrder, options = {}) {
       const formData = new FormData();
       formData.append("file", file);
@@ -56292,7 +56294,12 @@
       formData.append("sortOrder", String(sortOrder));
       formData.append("idempotencyKey", `${file.name}:${file.size}:${file.lastModified}:${isPrimary}:${sortOrder}:${Date.now()}:${Math.random().toString(36).slice(2)}`);
       if (options.replaceExisting) formData.append("replaceExisting", "true");
-      const headers = authenticatedRequestHeaders();
+      const session = synchronizeAuthSession();
+      const photoAccountId = approvedProfilePhotoAccountIds.get(file);
+      if (photoAccountId && session?.account?.id !== photoAccountId) {
+        throw new DOMException("Your account changed. Select the photo again.", "AbortError");
+      }
+      const headers = authenticatedRequestHeaders(undefined, session);
       if (!headers) throw new Error("Sign in required");
       const response = await fetch("/api/dancer/photos", {
         method: "POST",
@@ -56310,21 +56317,49 @@
 
     async function cropApprovedProfilePhoto(file) {
       if (!window.DancrPhotoCrop) throw new Error("The photo editor is still loading. Please try again.");
-      const cropped = await window.DancrPhotoCrop.crop(file, {
-        prepare: async (original, signal) => {
-          const headers = authenticatedRequestHeaders();
-          if (!headers) throw new Error("Sign in required");
-          const body = new FormData();
-          body.set("file", original);
-          const response = await fetch("/api/dancer/photos/preview", { method: "POST", headers, body, signal });
-          const data = await response.json().catch(() => ({}));
-          if (!response.ok || data.ok === false) throw new Error(normalizeRequestError(data.error, "Unable to prepare this photo for cropping."));
-          applyResponseSession(data, headers);
-          return data.imageDataUrl;
+      const accountId = synchronizeAuthSession()?.account?.id;
+      if (!accountId || !isDancerSession()) throw new Error("Sign in as a dancer to upload photos.");
+      const photoAccountId = approvedProfilePhotoAccountIds.get(file);
+      if (photoAccountId && photoAccountId !== accountId) {
+        throw new DOMException("Your account changed. Select the photo again.", "AbortError");
+      }
+      approvedProfilePhotoAccountIds.set(file, accountId);
+      const controller = new AbortController();
+      const requireCropSession = () => {
+        const session = synchronizeAuthSession();
+        if (!isDancerSession() || session?.account?.id !== accountId || controller.signal.aborted) {
+          throw new DOMException("Your account changed. Select the photo again.", "AbortError");
         }
-      });
-      if (!cropped) throw new DOMException("Photo crop canceled. No photo was uploaded.", "AbortError");
-      return cropped;
+        return session;
+      };
+      const cancelChangedAccountCrop = (event) => {
+        if (event.key !== "dancrAuthSessionV1" && event.key !== null) return;
+        try { requireCropSession(); } catch { controller.abort(); }
+      };
+      window.addEventListener("storage", cancelChangedAccountCrop);
+      try {
+        const cropped = await window.DancrPhotoCrop.crop(file, {
+          signal: controller.signal,
+          prepare: async (original, signal) => {
+            const headers = authenticatedRequestHeaders(undefined, requireCropSession());
+            const body = new FormData();
+            body.set("file", original);
+            const response = await fetch("/api/dancer/photos/preview", { method: "POST", headers, body, signal });
+            const data = await response.json().catch(() => ({}));
+            requireCropSession();
+            if (!response.ok || data.ok === false) throw new Error(normalizeRequestError(data.error, "Unable to prepare this photo for cropping."));
+            applyResponseSession(data, headers);
+            return data.imageDataUrl;
+          }
+        });
+        requireCropSession();
+        if (!cropped) throw new DOMException("Photo crop canceled. No photo was added to your profile.", "AbortError");
+        approvedProfilePhotoAccountIds.set(cropped, accountId);
+        return cropped;
+      } finally {
+        window.removeEventListener("storage", cancelChangedAccountCrop);
+        controller.abort();
+      }
     }
 
     async function uploadApprovedDancerPhoto(file, target) {
