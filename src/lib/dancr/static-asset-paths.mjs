@@ -13,6 +13,7 @@ export const staticAssetPaths = [
   "/outputs/mydancr-logo-current.png",
   "/outputs/mydancr-logo.png",
   "/profile-media-owner-controls.css",
+  "/profile-actions-compact.css",
   "/profile-media-card-feed.css",
   "/profile-photo-crop.css",
   "/profile-photo-crop.js",

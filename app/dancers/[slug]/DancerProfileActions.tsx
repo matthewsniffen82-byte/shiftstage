@@ -136,7 +136,7 @@ function ReportFlagIcon() {
 
 export function DancerProfileActionsPreview({ onShare }: { onShare?: () => void }) {
   return (
-    <div className="live-actions is-no-live-shift dancer-profile-preview-actions" aria-label="Guest actions">
+    <div className="live-actions profile-actions-compact is-no-live-shift dancer-profile-preview-actions" aria-label="Guest actions">
       <button className="profile-action-secondary profile-action-icon-control profile-action-preview-static" disabled type="button">
         <span className="profile-action-main"><DancerProfileActionPreviewIcon type="personPlus" /><span>Follow</span></span>
       </button>
@@ -545,7 +545,7 @@ export function DancerProfileActions({
 
   return (
     <>
-      <div className={`live-actions${hasLiveActions ? " has-live-shift" : hasScheduledActions ? " has-upcoming-shift" : " is-no-live-shift"}`} aria-label="Guest actions" aria-busy={followSaving || goingSaving}>
+      <div className={`live-actions profile-actions-compact${hasLiveActions ? " has-live-shift" : hasScheduledActions ? " has-upcoming-shift" : " is-no-live-shift"}`} aria-label="Guest actions" aria-busy={followSaving || goingSaving}>
         <button
           aria-pressed={saved.following}
           className={`profile-action-secondary profile-action-icon-control${saved.following ? " is-selected" : ""}`}
@@ -577,7 +577,9 @@ export function DancerProfileActions({
         {shareControl ? (
           <div className="profile-action-share-slot">{shareControl}</div>
         ) : (
-          <button className="profile-action-secondary profile-action-unavailable" disabled type="button">Share</button>
+          <button className="profile-action-secondary profile-action-unavailable profile-action-icon-control profile-share-action" disabled type="button">
+            <span className="profile-action-main"><DancerProfileActionPreviewIcon type="share" /><span>Share</span></span>
+          </button>
         )}
         {status ? <span className="profile-action-status" role="status">{status}</span> : null}
       </div>

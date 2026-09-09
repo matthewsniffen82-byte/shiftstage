@@ -12,6 +12,7 @@ import "../public/dancr-status-pages.v1.css";
 import "../public/profile-media-owner-controls.css";
 import "../public/profile-media-card-feed.css";
 import "../public/profile-photo-crop.css";
+import "../public/profile-actions-compact.css";
 import "../public/third-party-social-link-warning.css";
 
 const androidDeviceClassScript = `
