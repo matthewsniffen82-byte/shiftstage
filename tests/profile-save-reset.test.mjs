@@ -292,7 +292,8 @@ test("save keeps non-deleted photos and releases deleted slots before upload", (
     assert.ok(imageModerationStatusSource.includes(`"${status}"`));
   }
   assert.match(profileRouteSource, /createSignedUrl\(storagePath, 60 \* 60\)/);
-  assert.match(profileRouteSource, /if \(submittedPhotoUrls\.length\) \{[\s\S]*?removeSupersededPendingPhotoRows/);
+  assert.match(profileRouteSource, /await validateProfilePhotoSnapshot\(db, profile\.id, body\)/);
+  assert.doesNotMatch(profileRouteSource, /removeSupersededPendingPhotoRows|saveProfilePhotoUrls/);
   assert.match(profileRouteSource, /NON_DELETED_PHOTO_MISSING_AFTER_SAVE/);
   assert.match(dashboardSource, /async function persistQueuedPhotoDeletions/);
   assert.match(dashboardSource, /await persistQueuedPhotoDeletions\(controller\.signal\);[\s\S]*?requestDancerPhotosJson\(\{/);

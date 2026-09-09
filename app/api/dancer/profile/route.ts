@@ -417,6 +417,7 @@ export async function PATCH(request: Request) {
       return withProfileSaveVersion(NextResponse.json({ ok: false, error: "Dancer profile not found." }, { status: 404 }));
     }
     const db = createAdminSupabaseClient() as any;
+    await validateProfilePhotoSnapshot(db, profile.id, body);
     const protectedFieldsBefore = publicProfileState(profile);
     console.log("PROTECTED_FIELDS_BEFORE_SAVE", {
       fields: Object.keys(protectedFieldsBefore),
@@ -517,7 +518,6 @@ export async function PATCH(request: Request) {
       },
     });
     const adminDb = db;
-    const submittedPhotoUrls = readProfilePhotoUrls(body);
     const { data: editorProfileBeforeSave, error: editorProfileBeforeSaveError } = await loadDancerProfile(createAdminSupabaseClient(), user.id);
     if (editorProfileBeforeSaveError) throw editorProfileBeforeSaveError;
     const editorProfileWithPhotosBeforeSave = editorProfileBeforeSave
@@ -536,12 +536,6 @@ export async function PATCH(request: Request) {
       deletedPhotoCount: deletedPhotoIds.length,
     });
     setSaveStage("delete_photos");
-    const deletedPhotoStoragePaths = deletedPhotoIds.length
-      ? [
-          ...readDeletedPhotoStoragePaths(body),
-          ...(await loadDeletedPhotoStoragePaths(adminDb, profile.id, user.id, deletedPhotoIds)),
-        ]
-      : readDeletedPhotoStoragePaths(body);
     const confirmedDeletedPhotoIds: string[] = [];
     const expectedProtectedChanges = new Set<ProtectedProfileKey>();
     if (typeof body.isPublic === "boolean") expectedProtectedChanges.add("isPublic");
@@ -589,18 +583,7 @@ export async function PATCH(request: Request) {
 
     setSaveStage("update_primary_photo");
     setSaveStage("insert_new_photos");
-    await saveProfilePhotoUrls(db, profile.id, body, deletedPhotoIds, deletedPhotoStoragePaths);
     setSaveStage("persist_photo_order");
-    if (submittedPhotoUrls.length) {
-      await removeSupersededPendingPhotoRows(adminDb as any, profile.id).catch((error: any) => {
-        console.warn("PROFILE_PHOTO_HISTORY_CLEANUP_WARNING", {
-          dancerId: profile.id,
-          ...safeErrorMetadata(error),
-        });
-        return false;
-      });
-    }
-
     setSaveStage("submit_for_review");
     if (body.submitForReview === true && profile.status !== "approved") {
       await submitProfileForReview(adminDb, user.id, profile.id, {
@@ -929,156 +912,24 @@ async function submitProfileForReview(
   }
 }
 
-async function loadDeletedPhotoStoragePaths(db: any, dancerId: string, userId: string, deletedPhotoIds: string[]) {
-  const deletedIds = deletedPhotoIds.map((id) => String(id || "").trim()).filter(Boolean);
-  if (!deletedIds.length) return [];
-
-  const paths = new Set<string>();
-
-  const { data: deletedPhotos, error: deletedPhotosError } = await db
-    .from("dancer_photos")
-    .select("id, storage_path")
-    .eq("dancer_id", dancerId)
-    .in("id", deletedIds);
-  if (deletedPhotosError) throw deletedPhotosError;
-  for (const photo of deletedPhotos || []) {
-    const path = normalizeStorageKey(photo?.storage_path);
-    if (path) paths.add(path);
-  }
-
-  const { data: moderationRows, error: moderationRowsError } = await db
-    .from("image_moderation_records")
-    .select("id, temporary_storage_path, final_storage_path")
-    .eq("user_id", userId)
-    .in("id", deletedIds);
-  if (moderationRowsError) throw moderationRowsError;
-  for (const row of moderationRows || []) {
-    const temporaryPath = normalizeStorageKey(row?.temporary_storage_path);
-    const finalPath = normalizeStorageKey(row?.final_storage_path);
-    if (temporaryPath) paths.add(temporaryPath);
-    if (finalPath) paths.add(finalPath);
-  }
-
-  return Array.from(paths);
-}
-
-async function saveProfilePhotoUrls(
-  db: any,
-  dancerId: string,
-  body: any,
-  deletedPhotoIds: string[] = [],
-  deletedPhotoStoragePaths: string[] = [],
-) {
-  const rawPhotoUrls = readProfilePhotoUrls(body);
-  const deletedPaths = new Set(deletedPhotoStoragePaths.map(normalizeStorageKey).filter(Boolean));
-  const photoUrls = rawPhotoUrls.filter((photo) => {
-    const storagePath = normalizeStorageKey(photo.storagePath);
-    const publicUrlPath = normalizeStorageKey(photo.publicUrl);
-    return !deletedPaths.has(storagePath) && !deletedPaths.has(publicUrlPath);
-  });
-  console.log("PROFILE_SAVE_PHOTO_URL_FILTER", {
-    submittedCount: rawPhotoUrls.length,
-    keptCount: photoUrls.length,
-    deletedPhotoCount: deletedPhotoIds.length,
-    deletedPhotoPathCount: deletedPaths.size,
-  });
-  if (!photoUrls.length) return;
-  const deletedIds = new Set(deletedPhotoIds);
-
-  const storagePaths = photoUrls.map((photo) => photo.storagePath);
-  const { data: existing, error: existingError } = await db
-    .from("dancer_photos")
-    .select("id, storage_path")
-    .eq("dancer_id", dancerId)
-    .in("storage_path", storagePaths);
-
-  if (existingError) throw existingError;
-
-  const existingByPath = new Map<string, { id: string }>(
-    (existing || [])
-      .filter((photo: any) => !deletedIds.has(String(photo.id || "")))
-      .map((photo: any) => [photo.storage_path, { id: photo.id }]),
-  );
-
-  await removeDuplicatePublicUrlPhotoRows(db, dancerId, photoUrls, existingByPath);
-
-  const newRows = photoUrls
-    .filter((photo) => !photo.fromApprovedBucket && !existingByPath.has(photo.storagePath))
-    .map((photo) => ({
-      dancer_id: dancerId,
-      storage_path: photo.storagePath,
-      is_primary: photo.isPrimary,
-      sort_order: photo.sortOrder,
-      review_status: "pending",
-    }));
-
-  if (photoUrls.some((photo) => photo.isPrimary)) {
-    const { error } = await db.from("dancer_photos").update({ is_primary: false }).eq("dancer_id", dancerId);
-    if (error) throw error;
-  }
-
-  const existingUpdates = photoUrls.flatMap((photo) => {
-    const existingPhoto = existingByPath.get(photo.storagePath);
-    return existingPhoto ? [{ ...photo, id: existingPhoto.id }] : [];
-  });
-
-  await Promise.all(
-    existingUpdates.map((photo) =>
-      db
-        .from("dancer_photos")
-        .update({ is_primary: photo.isPrimary, sort_order: photo.sortOrder })
-        .eq("id", photo.id),
-    ),
-  ).then((results) => {
-    const failed = results.find((result: any) => result.error);
-    if (failed) throw failed.error;
-  });
-
-  if (newRows.length) {
-    const { error } = await db.from("dancer_photos").insert(newRows);
-    if (error) throw error;
-
-    const { error: profileError } = await db
-      .from("dancer_profiles")
-      .update({ photo_review_status: "pending" })
-      .eq("id", dancerId);
-
-    if (profileError) throw profileError;
-  }
-}
-
-async function removeSupersededPendingPhotoRows(db: any, dancerId: string) {
-  const { data, error } = await db
-    .from("dancer_photos")
-    .select("id, is_primary, sort_order, review_status, created_at")
-    .eq("dancer_id", dancerId);
-
-  if (error) throw error;
-  const rows = data || [];
-  const approvedSlots = new Set(
-    rows
-      .filter((photo: any) => photo.review_status === "approved")
-      .map((photo: any) => photoSlotKey(photo)),
-  );
-  const pendingIds = rows
-    .filter((photo: any) => photo.review_status === "pending" && approvedSlots.has(photoSlotKey(photo)))
-    .map((photo: any) => photo.id)
-    .filter(Boolean);
-
-  if (!pendingIds.length) return false;
-
-  const { error: deleteError } = await db
-    .from("dancer_photos")
-    .delete()
-    .eq("dancer_id", dancerId)
-    .in("id", pendingIds);
-
-  if (deleteError) throw deleteError;
-  return true;
-}
-
 function photoSlotKey(photo: any) {
   return `${photo?.is_primary ? "main" : "gallery"}:${Number(photo?.sort_order || 0)}`;
+}
+
+async function validateProfilePhotoSnapshot(db: any, dancerId: string, body: any) {
+  const snapshots = readProfilePhotoUrls(body);
+  if (!snapshots.length) return;
+  const { data, error } = await db.from("dancer_photos").select("storage_path").eq("dancer_id", dancerId);
+  if (error) throw error;
+  const ownedPaths = new Set((data || []).map((photo: any) => normalizeStorageKey(photo.storage_path)));
+  if (snapshots.some((photo) => !ownedPaths.has(normalizeStorageKey(photo.storagePath)))) {
+    throw new PublicApiError(
+      "CONFLICT",
+      "Your photos have changed. Refresh your profile and use Add photo to upload a new picture.",
+      409,
+    );
+  }
+  // Compatibility snapshots never authorize publication, ordering or deletion.
 }
 
 function readProfilePhotoUrls(body: any) {
@@ -1108,15 +959,6 @@ function readDeletedPhotoIds(body: any): string[] {
   return [...new Set<string>(
     body.deletedPhotoIds
       .map((id: any) => String(id || "").trim())
-      .filter(Boolean),
-  )];
-}
-
-function readDeletedPhotoStoragePaths(body: any): string[] {
-  if (!Array.isArray(body?.deletedPhotoStoragePaths)) return [];
-  return [...new Set<string>(
-    body.deletedPhotoStoragePaths
-      .map((path: any) => normalizeStorageKey(path))
       .filter(Boolean),
   )];
 }
@@ -1165,26 +1007,4 @@ function approvedBucketPathFromPublicUrl(url: URL) {
   const index = url.pathname.indexOf(marker);
   if (index === -1) return "";
   return decodeURIComponent(url.pathname.slice(index + marker.length));
-}
-
-async function removeDuplicatePublicUrlPhotoRows(
-  db: any,
-  dancerId: string,
-  photoUrls: Array<{ storagePath: string; publicUrl?: string; fromApprovedBucket: boolean }>,
-  existingByPath: Map<string, { id: string }>,
-) {
-  const duplicatePublicUrls = photoUrls
-    .filter((photo) => photo.fromApprovedBucket && photo.publicUrl && existingByPath.has(photo.storagePath))
-    .map((photo) => photo.publicUrl as string);
-
-  if (!duplicatePublicUrls.length) return;
-
-  const { error } = await db
-    .from("dancer_photos")
-    .delete()
-    .eq("dancer_id", dancerId)
-    .eq("review_status", "pending")
-    .in("storage_path", duplicatePublicUrls);
-
-  if (error) throw error;
 }
