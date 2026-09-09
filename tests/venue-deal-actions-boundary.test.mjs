@@ -15,7 +15,7 @@ test("venue deal writes are denied while admin writes use the dedicated authoriz
   assert.doesNotMatch(route, /deleteVenueDealForAccount|updateVenueDealForAccount/);
   assert.match(adminRoute, /requireAdmin/);
   assert.match(adminRoute, /upsertAdminVenueDeal/);
-  assert.match(adminRoute, /deleteAdminVenueDeal/);
+  assert.match(adminRoute, /removeAdminVenueDeal/);
   assert.doesNotMatch(queries, /export async function updateVenueDealForAccount/);
   assert.doesNotMatch(queries, /export async function deleteVenueDealForAccount/);
 });

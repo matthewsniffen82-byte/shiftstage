@@ -1589,30 +1589,35 @@ function AdminClubDealManager({
     }
   }
 
-  async function deleteDeal() {
-    if (!venueId || !dealId) return setStatus("Choose an unpublished Club Deal first.");
-    if (isActive) return setStatus("Pause this Club Deal and save it before deleting it.");
-    if (!window.confirm("Delete this unpublished Club Deal? This cannot be undone.")) return;
+  async function removeDeal(deal: Record<string, unknown>) {
+    const targetVenueId = asText(deal.venueId);
+    const targetDealId = asText(deal.id);
+    if (!targetVenueId || !targetDealId) return setStatus("Choose a saved Club Deal first.");
+    const removesLastLiveDeal = deal.isActive === true && !clubDeals.some((candidate) => candidate.venueId === targetVenueId && candidate.id !== targetDealId && candidate.isActive === true);
+    const visibilityNote = removesLastLiveDeal ? " This is the last live deal, so the venue will be hidden from public listings until another deal is published." : "";
+    if (!window.confirm(`Remove ${asText(deal.dealTitle) || "this Club Deal"}? Guests will no longer be able to claim it. Past redemptions and payment records will be kept.${visibilityNote}`)) return;
     const request = beginDealAction();
     if (!request) return;
     setIsSaving(true);
-    setStatus("Deleting unpublished Club Deal…");
+    setStatus("Removing Club Deal…");
     try {
       const data = await requestAdminJson("/api/admin/deals", {
         method: "POST",
         signal: request.controller.signal,
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ action: "delete_contract_deal", venueId, dealId }),
-        fallbackMessage: "Unable to delete the contract Club Deal.",
+        body: JSON.stringify({ action: "remove_contract_deal", venueId: targetVenueId, dealId: targetDealId }),
+        fallbackMessage: "Unable to remove the Club Deal.",
       });
       if (!isCurrentDealAction(request)) return;
       onClubDealsChange(data.clubDeals || []);
       onDealRequestsChange(data.dealRequests || dealRequests);
-      resetEditor(venueId);
-      onActionConfirmed("Unpublished contract Club Deal deleted.");
+      if (targetDealId === dealId) resetEditor(venueId);
+      const message = "Club Deal removed. Past redemptions and payment records have been kept.";
+      setStatus(message);
+      onActionConfirmed(message);
     } catch (error) {
       if (!isCurrentDealAction(request)) return;
-      setStatus(error instanceof Error ? error.message : "Unable to delete the contract Club Deal.");
+      setStatus(error instanceof Error ? error.message : "Unable to remove the Club Deal.");
     } finally {
       finishDealAction(request);
     }
@@ -1739,16 +1744,19 @@ function AdminClubDealManager({
           <div className="admin-club-deal-actions wide">
             <button disabled={isSaving} type="submit">{isSaving ? "Saving…" : isActive ? "Publish contract deal" : "Save unpublished deal"}</button>
             {dealId ? <button className="secondary-action" disabled={isSaving} type="button" onClick={() => resetEditor(venueId)}>New deal</button> : null}
-            {dealId && !isActive ? <button className="danger-action" disabled={isSaving} type="button" onClick={() => void deleteDeal()}>Delete unpublished deal</button> : null}
+            {dealId ? <button className="danger-action" disabled={isSaving} type="button" onClick={() => { const deal = venueDeals.find((candidate) => asText(candidate.id) === dealId); if (deal) void removeDeal(deal); }}>Remove deal</button> : null}
           </div>
         </form>
         {status ? <p role="status">{status}</p> : null}
         <div className="admin-club-deal-list">
           {venueDeals.map((deal) => (
-            <button className={asText(deal.id) === dealId ? "selected" : ""} key={asText(deal.id)} type="button" disabled={isSaving} onClick={() => editDeal(deal)}>
-              <span><strong>{asText(deal.dealTitle) || "Club Deal"}</strong><small>{deal.isActive === true ? "Live" : "Unpublished"}</small></span>
-              <em>{formatAdminCents(Number(deal.payoutAmountCents || 0))} / verified guest</em>
-            </button>
+            <div className={`admin-club-deal-item${asText(deal.id) === dealId ? " selected" : ""}`} key={asText(deal.id)}>
+              <button className="admin-club-deal-edit" type="button" disabled={isSaving} onClick={() => editDeal(deal)} aria-label={`Edit ${asText(deal.dealTitle) || "Club Deal"}`}>
+                <span><strong>{asText(deal.dealTitle) || "Club Deal"}</strong><small>{deal.isActive === true ? "Live" : "Unpublished"}</small></span>
+                <em>{formatAdminCents(Number(deal.payoutAmountCents || 0))} / verified guest</em>
+              </button>
+              <button className="danger-action" type="button" disabled={isSaving} onClick={() => void removeDeal(deal)}>Remove deal</button>
+            </div>
           ))}
           {venueId && !venueDeals.length ? <p className="empty">No contract Club Deals have been entered for this venue.</p> : null}
         </div>
@@ -5744,11 +5752,13 @@ function AdminStyles() {
       .admin-club-deal-actions { display: flex; flex-wrap: wrap; gap: 8px; }
       .admin-club-deal-actions > button { min-height: 42px; }
       .admin-club-deal-list { display: grid; grid-template-columns: repeat(auto-fit,minmax(220px,1fr)); gap: 8px; }
-      .admin-club-deal-list > button { display: grid; gap: 7px; padding: 12px; border: 1px solid rgba(255,255,255,.12); border-radius: 9px; color: #f8fafc; background: #111118; text-align: left; cursor: pointer; }
-      .admin-club-deal-list > button.selected { border-color: rgba(124,58,237,.72); box-shadow: 0 0 0 2px rgba(124,58,237,.18); }
-      .admin-club-deal-list > button span { display: flex; justify-content: space-between; gap: 8px; }
-      .admin-club-deal-list > button small { color: #6ee7b7; }
-      .admin-club-deal-list > button em { color: #94a3b8; font-size: 11px; font-style: normal; }
+      .admin-club-deal-item { display: grid; gap: 8px; padding: 12px; border: 1px solid rgba(255,255,255,.12); border-radius: 9px; color: #f8fafc; background: #111118; }
+      .admin-club-deal-item.selected { border-color: rgba(124,58,237,.72); box-shadow: 0 0 0 2px rgba(124,58,237,.18); }
+      .admin-club-deal-edit { display: grid; gap: 7px; padding: 0; border: 0; color: inherit; background: transparent; text-align: left; cursor: pointer; }
+      .admin-club-deal-edit span { display: flex; justify-content: space-between; gap: 8px; }
+      .admin-club-deal-edit small { color: #6ee7b7; }
+      .admin-club-deal-edit em { color: #94a3b8; font-size: 11px; font-style: normal; }
+      .admin-club-deal-item > .danger-action { min-height: 44px; }
       .referral-fee-form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; padding: 12px; border: 1px solid rgba(148,229,255,.2); border-radius: 10px; background: rgba(148,229,255,.035); }
       .referral-fee-form label, .referral-fee-request-list label { display: grid; gap: 6px; color: #d8cfeb; font-size: 12px; font-weight: 850; }
       .referral-fee-form label.wide { grid-column: 1 / -1; }

@@ -13,7 +13,7 @@ import {
   reviewVenueClubDealRequest,
 } from "@/src/lib/dancr/venue-deal-requests";
 import {
-  deleteAdminVenueDeal,
+  removeAdminVenueDeal,
   getAdminVenueDealCatalog,
   upsertAdminVenueDeal,
 } from "@/src/lib/dancr/venue-deal-actions";
@@ -107,14 +107,14 @@ export async function POST(request: Request) {
       return NextResponse.json({ ok: true, clubDeals: result.deals, dealRequests, deal: result.deal, session: session || null });
     }
 
-    if (body.action === "delete_contract_deal") {
-      const result = await deleteAdminVenueDeal(
+    if (body.action === "remove_contract_deal" || body.action === "delete_contract_deal") {
+      const result = await removeAdminVenueDeal(
         admin,
         typeof body.venueId === "string" ? body.venueId : "",
         typeof body.dealId === "string" ? body.dealId : "",
       );
       await resetManagedVenuePageReview(admin, user.id, typeof body.venueId === "string" ? body.venueId : "", "contract Club Deal removed");
-      console.info("ADMIN_CONTRACT_CLUB_DEAL_DELETED", {
+      console.info("ADMIN_CONTRACT_CLUB_DEAL_REMOVED", {
         adminUserId: user.id,
         venueId: body.venueId,
         dealId: result.id,

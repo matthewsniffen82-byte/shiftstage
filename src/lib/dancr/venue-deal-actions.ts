@@ -97,7 +97,7 @@ export async function upsertAdminVenueDeal(
   };
 
   const query = existingDeal
-    ? db.from("club_deals").update(row).eq("id", existingDeal.id).eq("venue_id", venueId)
+    ? db.from("club_deals").update(row).eq("id", existingDeal.id).eq("venue_id", venueId).is("removed_at", null)
     : db.from("club_deals").insert(row);
   const { data, error } = await query.select(CLUB_DEAL_COLUMNS).single();
   if (error) throw error;
@@ -117,23 +117,25 @@ export async function upsertAdminVenueDeal(
   };
 }
 
-export async function deleteAdminVenueDeal(
+export async function removeAdminVenueDeal(
   client: DancrClient,
   venueIdValue: string,
   dealIdValue: string,
 ) {
   const venueId = requiredUuid(venueIdValue, "A venue is required.");
   const dealId = requiredUuid(dealIdValue, "The Club Deal is invalid.");
-  const existingDeal = await getAdminVenueDeal(client, venueId, dealId);
-  if (!existingDeal) throw new Error("Club Deal not found for this venue.");
-  if (existingDeal.isActive) throw new Error("Pause this Club Deal before deleting it.");
-
-  const { error } = await (client as any)
+  const now = new Date().toISOString();
+  // Retain the offer and its financial history while removing it from the catalog.
+  const { data, error } = await (client as any)
     .from("club_deals")
-    .delete()
+    .update({ is_active: false, removed_at: now, updated_at: now })
     .eq("id", dealId)
-    .eq("venue_id", venueId);
+    .eq("venue_id", venueId)
+    .is("removed_at", null)
+    .select("id")
+    .maybeSingle();
   if (error) throw error;
+  if (!data) throw new Error("Club Deal not found for this venue or already removed.");
   return { id: dealId, deals: await getAdminVenueDealCatalog(client) };
 }
 
@@ -247,6 +249,7 @@ async function getAdminVenueDeal(client: DancrClient, venueId: string, dealId: s
     .select(CLUB_DEAL_COLUMNS)
     .eq("id", dealId)
     .eq("venue_id", venueId)
+    .is("removed_at", null)
     .maybeSingle();
   if (error) throw error;
   return data ? toClubDeal(data) : null;

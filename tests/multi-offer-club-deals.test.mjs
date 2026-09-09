@@ -32,7 +32,7 @@ test("MyDancr admins can publish a prioritized collection of non-alcohol Club De
   assert.match(adminDealRoute, /upsert_contract_deal/);
   assert.match(adminDealRoute, /upsertAdminVenueDeal/);
   assert.match(adminDealRoute, /delete_contract_deal/);
-  assert.match(adminDealRoute, /deleteAdminVenueDeal/);
+  assert.match(adminDealRoute, /removeAdminVenueDeal/);
   assert.match(adminDealRoute, /clubDeals/);
   assert.match(venueDealRoute, /created and published by MyDancr/);
   assert.equal((venueDealRoute.match(/status: 403/g) || []).length, 2);
@@ -69,11 +69,11 @@ test("admins manage multiple deals while venue accounts see every campaign read-
   assert.match(adminManager, /venueDeals\.map/);
   assert.match(adminManager, /Publish contract deal/);
   assert.match(adminManager, /onClick=\{\(\) => editDeal\(deal\)\}/);
-  assert.match(adminManager, /Delete unpublished deal/);
+  assert.match(adminManager, /Remove deal/);
   assert.match(venueLedger, /displayedDeals\.map/);
   assert.match(venueLedger, /official offers currently attached to your venue/);
   assert.match(venueLedger, /Request changes anytime/);
-  assert.doesNotMatch(venueLedger, /Publish contract deal|Delete unpublished deal/);
+  assert.doesNotMatch(venueLedger, /Publish contract deal|Remove deal/);
 });
 
 test("liquor offers are rejected in application code and at the database boundary", () => {
