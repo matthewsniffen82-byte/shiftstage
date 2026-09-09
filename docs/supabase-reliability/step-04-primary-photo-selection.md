@@ -1,0 +1,21 @@
+# Step 4: atomic primary-photo selection
+
+## Inspection and controlled plan
+
+This work starts only after `4df4e252391508215651f90aa3aaaaed1b5d72f1` was pushed, its exact Vercel deployment G614gScTfCYBrT8scG3TfTPdvKxw succeeded, both production health routes returned 200/ok at 23:18:07-08 UTC on 2026-09-09, four protected routes rejected unauthenticated requests, and all thirty readiness checks passed. The previous release passed all 3,260 tests, lint, build and standalone TypeScript.
+
+Own-photo deletion currently selects a remaining approved photo, clears every primary flag, then promotes its earlier selection in separate requests. Administrator deletion separately selects any remaining photo and sets its primary flag. A concurrent upload can establish a new primary between those requests and have its selection cleared or duplicated. The administrator fallback can also choose an unapproved photo.
+
+Read-only production preflight at 23:19:33 UTC found 72 photos, no duplicate active or historical primary groups and no rejected primary rows. The separate approval-review queue has twenty rows, no duplicate pending groups and one repeated historical review group; preserve that history and address pending-review uniqueness separately. Both tables retain RLS. No preflight query changed data.
+
+1. Add one service-only SECURITY INVOKER function with an empty search path and bounded lock timeout. Use the same profile-before-photo lock order as the atomic publisher. Recheck the caller's account role/state and profile ownership.
+2. Preserve an existing active primary without rewriting it. If none exists, choose one approved photo deterministically, clear only obsolete rejected primary flags, and promote the selection in one transaction. Keep all rows, media paths, likes and pins. Reject inconsistent multiple active primaries rather than silently repairing them.
+3. Verify authorization, repeated calls, existing/pending primary preservation, approved-only fallback, deterministic selection, failure rollback and unchanged unrelated rows using synthetic native PostgreSQL tests.
+4. Deliver this unused database foundation first: complete checks, task-only commit/push, exact bounded migration/ledger transaction, metadata/data-preservation postflight, exact Vercel success and health. Do not invoke the production function on a real profile as a test.
+5. Only after that verified release, replace the two application promotion writers with this function and run another complete release cycle. Run selection after every confirmed stored-photo deletion: another request may have promoted a photo after the deleting request read its old non-primary flag. The unused function alone does not resolve the current caller race.
+
+No existing index, policy or historical migration is changed. No migration-time data repair is planned. Keep the function during application rollback; if it must be removed later, first verify every caller is retired. The migration delivery transaction will preserve a non-exported fingerprint of profiles/photos and existing migration entries and fail on unexpected existing objects or lock contention. Historical full-schema replay remains deferred by the user.
+
+## Foundation validation
+
+Validation on `4df4e252391508215651f90aa3aaaaed1b5d72f1` passed all 3,282 tests without failures, skips or cancellations, full lint, the production build, standalone TypeScript and all thirty live readiness checks. The suite used three workers after the standard generators; postbuild skipped layout-review population. Twenty-two new native PostgreSQL tests and a separate synthetic deployment-wrapper test passed, including failure rollback and repeated-application rejection. PGlite queues requests in one embedded instance and does not replace multi-connection Supabase testing or the deferred historical replay. At 23:26:42 UTC, read-only production preflight confirmed the function/ledger entry absent, 72 photos, 16 profiles, 92 previous migrations, retained RLS and no duplicate active primaries. The normalized migration SHA-256 is `096b9f962abfae7999b0edf66f1022e738b297003f14eb45dcb3f1f3519f1144`. No production migration or selector invocation occurred before this commit. Exact committed migration application, preservation postflight, Vercel success and production health remain the final release gates.
