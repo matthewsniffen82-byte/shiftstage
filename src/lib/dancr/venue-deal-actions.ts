@@ -254,7 +254,7 @@ function validatedDealFields(input: VenueDealInput) {
   const offerPreset = clubDealOfferPresetForTitle(input.dealTitle);
   if (!offerPreset) throw new Error("Choose an approved admission offer for this Club Deal.");
   const dealTitle = offerPreset.title;
-  const dealDescription = offerPreset.description;
+  const dealDescription = optionalDealText(input.dealDescription, "Public offer details", 1200) || offerPreset.description;
   const dealTerms = optionalDealText(input.dealTerms, "Deal terms", 1200) || offerPreset.terms;
   const offerType: ClubDealOfferType = "admission";
   assertLiquorFreeClubDeal({ offerType, dealTitle, dealDescription, dealTerms });

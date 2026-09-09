@@ -1448,6 +1448,7 @@ function AdminClubDealManager({
   const [dealId, setDealId] = useState("");
   const [requestId, setRequestId] = useState("");
   const [dealTitle, setDealTitle] = useState<string>(preset.title);
+  const [dealDescription, setDealDescription] = useState<string>(preset.description);
   const [dealTerms, setDealTerms] = useState<string>(preset.terms);
   const [sortOrder, setSortOrder] = useState("0");
   const [isActive, setIsActive] = useState(false);
@@ -1461,7 +1462,6 @@ function AdminClubDealManager({
   const venueDeals = clubDeals
     .filter((deal) => asText(deal.venueId) === venueId)
     .sort((left, right) => Number(left.sortOrder || 0) - Number(right.sortOrder || 0));
-  const selectedPreset = CLUB_DEAL_OFFER_PRESETS.find((offer) => offer.title === dealTitle) || preset;
   const terms = asRecordArray(referralFees?.terms);
   const currentTerm = currentAdminReferralTerm(terms.filter((term) => asText(term.venueId) === venueId));
   const openDealRequests = dealRequests.filter((request) => (!scopedVenueId || asText(request.venueId) === scopedVenueId) && (request.status === "pending" || request.status === "under_review"));
@@ -1503,6 +1503,7 @@ function AdminClubDealManager({
     setDealId("");
     setRequestId("");
     setDealTitle(preset.title);
+    setDealDescription(preset.description);
     setDealTerms(preset.terms);
     setSortOrder(String(clubDeals.filter((deal) => asText(deal.venueId) === nextVenueId).length * 10));
     setIsActive(false);
@@ -1514,6 +1515,7 @@ function AdminClubDealManager({
     setRequestId("");
     setDealId(asText(deal.id));
     setDealTitle(asText(deal.dealTitle) || preset.title);
+    setDealDescription(asText(deal.dealDescription) || (CLUB_DEAL_OFFER_PRESETS.find((offer) => offer.title === asText(deal.dealTitle)) || preset).description);
     setDealTerms(asText(deal.dealTerms) || preset.terms);
     setSortOrder(String(Number(deal.sortOrder || 0)));
     setIsActive(deal.isActive === true);
@@ -1529,6 +1531,7 @@ function AdminClubDealManager({
     setRequestId(asText(dealRequest.id));
     setDealId(linkedDeal ? asText(linkedDeal.id) : "");
     setDealTitle(linkedDeal ? asText(linkedDeal.dealTitle) || requestedPreset.title : requestedPreset.title);
+    setDealDescription(linkedDeal ? asText(linkedDeal.dealDescription) || requestedPreset.description : requestedPreset.description);
     setDealTerms(linkedDeal ? asText(linkedDeal.dealTerms) || requestedPreset.terms : requestedPreset.terms);
     setSortOrder(linkedDeal ? String(Number(linkedDeal.sortOrder || 0)) : String(clubDeals.filter((deal) => asText(deal.venueId) === nextVenueId).length * 10));
     setIsActive(linkedDeal?.isActive === true);
@@ -1538,6 +1541,7 @@ function AdminClubDealManager({
   function chooseOffer(nextTitle: string) {
     const offer = CLUB_DEAL_OFFER_PRESETS.find((candidate) => candidate.title === nextTitle) || preset;
     setDealTitle(offer.title);
+    setDealDescription(offer.description);
     setDealTerms(offer.terms);
   }
 
@@ -1560,7 +1564,7 @@ function AdminClubDealManager({
           dealId: dealId || null,
           requestId: requestId || null,
           dealTitle,
-          dealDescription: selectedPreset.description,
+          dealDescription,
           dealTerms,
           isActive,
           sortOrder: Number(sortOrder || 0),
@@ -1687,7 +1691,7 @@ function AdminClubDealManager({
           </label>
           <label className="wide">
             Public offer details
-            <textarea value={selectedPreset.description} readOnly rows={2} />
+            <textarea required value={dealDescription} disabled={isSaving} onChange={(event) => setDealDescription(event.target.value)} maxLength={1200} rows={4} />
           </label>
           <label className="wide">
             Contract and guest terms
