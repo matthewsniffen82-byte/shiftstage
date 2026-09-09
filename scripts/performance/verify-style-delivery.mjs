@@ -17,7 +17,9 @@ assert.match(response.headers.get("content-type"), /text\/css/);
 assert.equal(response.headers.get("cache-control"), "public, max-age=31536000, immutable");
 const deployed = await response.text();
 assert.equal(deployed, built);
-const document = await fetch(base).then(response => response.text());
+const documentResponse = await fetch(base);
+assert.equal(documentResponse.headers.get("link"), `<${url}>; rel=preload; as=style`);
+const document = await documentResponse.text();
 assert.ok(document.includes(`href="${url}"`));
 assert.ok(!document.includes(original));
 for (const suffix of ["", "?v=obsolete-version"]) {

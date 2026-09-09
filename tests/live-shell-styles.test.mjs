@@ -27,6 +27,12 @@ test("stylesheet URL keeps the document base for relative asset references", () 
   assert.throws(() => extractLiveShellStyles("<style>body{color:red}</style>"), /could not be found/);
 });
 
+test("the response preloads only the content-versioned critical stylesheet", async () => {
+  const source = await readFile(new URL("../app/route.ts", import.meta.url), "utf8");
+  assert.match(source, /"link": `<\$\{versionedStaticAssetUrl\("\/outputs\/live-shell\.css"\)\}>; rel=preload; as=style`/);
+  assert.equal((source.match(/rel=preload/g) || []).length, 1);
+});
+
 test("the build emits compact static CSS with a matching content version", async () => {
   const original = extractLiveShellStyles(html);
   const compact = compactLiveShellStyles(original);

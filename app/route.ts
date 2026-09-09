@@ -9,7 +9,7 @@ import {
   createRootContentSecurityPolicy,
 } from "../src/lib/security/root-content-security-policy.mjs";
 import { externalizeLiveShellAppScript } from "../src/lib/dancr/live-shell-script.mjs";
-import { versionStaticAssetReferences } from "../src/lib/dancr/static-asset-cache.mjs";
+import { versionedStaticAssetUrl, versionStaticAssetReferences } from "../src/lib/dancr/static-asset-cache.mjs";
 import { externalizeLiveShellStyles } from "../src/lib/dancr/live-shell-styles.mjs";
 
 export const runtime = "nodejs";
@@ -65,6 +65,7 @@ export async function GET() {
   return new Response(withVersionedAssets, {
     headers: {
       "content-type": "text/html; charset=utf-8",
+      "link": `<${versionedStaticAssetUrl("/outputs/live-shell.css")}>; rel=preload; as=style`,
       "cache-control": "public, max-age=30, s-maxage=60, stale-while-revalidate=300",
       "content-security-policy": contentSecurityPolicy,
       "x-dancr-live-shell-version": liveShellSha256,
