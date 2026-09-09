@@ -515,6 +515,10 @@
     {
       "file": "202609090003_archive_removed_venue_deals.sql",
       "sha256": "6b369a4d4f25580f591c4b25ebdf1e264f553a611fb98a9fd8f62b5b8a3a44a0"
+    },
+    {
+      "file": "20260909110000_enforce_active_account_preference_writes.sql",
+      "sha256": "eebe3fff9cd1428358246c9bd8ad1bed1894356f8cc58df3e8810d4b6c05963e"
     }
   ]
 }

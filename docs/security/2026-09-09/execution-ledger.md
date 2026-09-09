@@ -23,7 +23,7 @@ Step 1 delivered as `50d4eb543dbfc93dbed6f0663c51aa2332542cb4`, pushed to origin
 | --- | --- | --- |
 | 1 | Complete audit / threat model | Delivered and healthy: 50d4eb543dbfc93dbed6f0663c51aa2332542cb4 |
 | 2 | Secrets and environment | Delivered and healthy: f7dc39d362a2b4c2f70ed401d134593ea3d9c640 |
-| 3 | Supabase RLS | 94 PostgreSQL / 2,066 full tests, lint, TypeScript and build passed; database and Vercel deployment pending |
+| 3 | Supabase RLS | Fix deployed and healthy: 0829c12ed79f6525105a5b313ab374709670a4ad; verified migration hash added to history guard in this delivery-record follow-up |
 | 4 | Storage permissions | Not started |
 | 5 | Authentication / recovery | Not started |
 | 6 | Role authorization | Not started |
@@ -63,3 +63,13 @@ The production policy/function/grant catalog was freshly captured during Step 3.
 ## Step 2 delivery
 
 Delivered as `f7dc39d362a2b4c2f70ed401d134593ea3d9c640`, pushed to origin/main with matching clean local HEAD. [Exact Vercel deployment](https://vercel.com/ai-movie-jobs/shiftstage/3SFq9S6wvsh8pSeKtjjQ5Siyzm9D) reached success. At 2026-09-09 10:49 UTC, root and both health endpoints returned 200; account and admin approvals returned 401 without authentication. The final full suite passed 1,972 tests; lint, TypeScript, migration history check and production build passed. No credentials were rotated.
+
+## Step 3 delivery
+
+The fix was delivered as `0829c12ed79f6525105a5b313ab374709670a4ad`, pushed to origin/main with matching clean local HEAD. [Exact Vercel deployment](https://vercel.com/ai-movie-jobs/shiftstage/C8aCdAFs8xGw6MuABUExeujYFhK6) reached success. The new migration `20260909110000` was applied in a bounded transaction together with only its own migration-ledger entry. Preflight verified the original ownership predicates. The stored SQL matched the committed file.
+
+At 11:10 UTC, the fresh catalog showed exactly ten new restrictive policies and no changes to previous policies, grants, RLS settings or helper functions. Customer, dancer and venue read-only role-context probes passed again. At 11:11 UTC, root and both health endpoints returned 200; unauthenticated account/admin requests returned 401. No production user records were modified.
+
+The normalized SQL SHA-256 is `eebe3fff9cd1428358246c9bd8ad1bed1894356f8cc58df3e8810d4b6c05963e`. This follow-up freezes that verified file in the history guard after successful application, as required by the migration workflow; it does not replay SQL or repair any historical ledger entry. Complete release checks and exact-commit Vercel health must pass for this follow-up before Step 4 begins.
+
+The follow-up was integrated with the independently published image-performance release and passed all 2,069 tests, lint, TypeScript and the production build. The migration gate verified 129 frozen files; postbuild skipped demo population. Its Vercel status and health are recorded after deployment.
