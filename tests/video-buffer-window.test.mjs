@@ -8,7 +8,7 @@ const live = fs.readFileSync("outputs/index.html", "utf8");
 const carousel = fs.readFileSync("app/dancers/[slug]/DancerPhotoCarousel.tsx", "utf8");
 const source = (name) => live.match(new RegExp("    (?:async )?function " + name + "\\([^]*?\\n    \\}"))?.[0];
 
-test("profile and TV policies prepare one next clip, buffer frames after startup, and retain only a loaded previous clip", () => {
+test("profile and TV policies give startup priority, warm one next clip's metadata, and retain only a loaded previous clip", () => {
   const context = vm.createContext({});
   vm.runInContext(source("videoBufferMode"), context);
   for (const active of [0, 1, 15, 29]) {
@@ -18,7 +18,7 @@ test("profile and TV policies prepare one next clip, buffer frames after startup
           for (let index = 0; index < 30; index++) {
             const expected = index === active ? "auto"
               : !allowed ? "release"
-                : index === active + 1 ? ready ? "auto" : "metadata"
+                : index === active + 1 ? ready ? "metadata" : "release"
                   : index === active - 1 && attached ? "retain" : "release";
             assert.equal(videoBufferMode(index, active, allowed, ready, attached), expected);
             assert.equal(context.videoBufferMode(index, active, allowed, ready, attached), expected);
@@ -48,6 +48,7 @@ class Video {
   };
   set src(url) { this.assignments++; this.attrs.set("src", url); this.networkState = 2; }
   hasAttribute(name) { return this.attrs.has(name); }
+  getAttribute(name) { return this.attrs.get(name); }
   removeAttribute(name) { this.attrs.delete(name); }
   pause() { this.paused = true; }
   load() { this.resets++; this.readyState = 0; this.networkState = this.hasAttribute("src") ? 2 : 0; }
@@ -64,6 +65,7 @@ for (const surface of ["profile", "tv"]) {
     let warmup = true;
     const context = vm.createContext({
       HTMLVideoElement: Video, HTMLMediaElement: Video,
+      document: { visibilityState: "visible" }, pageSuspendedVideos: new Set(),
       canWarmAdjacentVideo: () => warmup,
       profileVideoPosterUrl: (item) => item.posterUrl,
       results: { querySelectorAll: () => slides },
@@ -80,9 +82,9 @@ for (const surface of ["profile", "tv"]) {
       }
     };
     sync(0, false);
-    assert.equal(videos[1].preload, "metadata", "prepare the next connection before the first frame arrives");
+    assert.equal(videos[1].hasAttribute("src"), false, "the next clip cannot compete with the first frame");
     sync(0, true);
-    assert.equal(videos[1].preload, "auto", "buffer playable frames, not just metadata");
+    assert.equal(videos[1].preload, "metadata", "prepare one next clip without requesting its full file");
     videos[0].dataset.frameReady = "true";
     sync(1, true);
     assert.equal(videos[1].assignments, 1, "promote the same warmed video element");

@@ -315,7 +315,9 @@ export function DancerPhotoCarousel({
     const videos = [...(viewerFeed.current?.querySelectorAll<HTMLVideoElement>("video") || [])];
     const activeReady = videos[viewerIndex]?.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA;
     videos.forEach((video, index) => {
-      const mode = videoBufferMode(index, viewerIndex, allowVideoWarmup, activeReady, video.hasAttribute("src"));
+      const mode = document.visibilityState === "hidden"
+        ? index === viewerIndex ? "retain" : "release"
+        : videoBufferMode(index, viewerIndex, allowVideoWarmup, activeReady, video.hasAttribute("src"));
       if (mode === "release") {
         video.pause();
         video.preload = "none";
@@ -343,6 +345,7 @@ export function DancerPhotoCarousel({
     videos.forEach((video, index) => {
       video.muted = inlineMuted;
       if (index === viewerIndex && viewerKind === "video") {
+        if (document.visibilityState === "hidden") return;
         if (video.dataset.userPaused === "true") return;
         void video.play().catch(async (error) => {
           if (cancelled || error?.name === "AbortError" || !video.isConnected) return;
@@ -366,6 +369,45 @@ export function DancerPhotoCarousel({
     });
     return () => { cancelled = true; };
   }, [inlineMuted, setInlineMuted, viewerIndex, viewerKind]);
+
+  useEffect(() => {
+    if (viewerKind !== "video") return;
+    let resumeVideo: HTMLVideoElement | null = null;
+    const suspend = () => {
+      const videos = [...(viewerFeed.current?.querySelectorAll<HTMLVideoElement>("video") || [])];
+      const active = videos[viewerIndex];
+      if (active && !active.paused) resumeVideo = active;
+      videos.forEach((video, index) => {
+        video.pause();
+        video.preload = "none";
+        if (index !== viewerIndex && video.hasAttribute("src")) {
+          delete video.dataset.frameReady;
+          video.removeAttribute("src");
+          video.load();
+        }
+      });
+    };
+    const resume = () => {
+      if (document.visibilityState === "hidden") return;
+      const video = resumeVideo;
+      resumeVideo = null;
+      setViewerVideoReadyVersion((version) => version + 1);
+      if (video?.isConnected && video.dataset.userPaused !== "true") {
+        video.preload = "auto";
+        void video.play().catch(() => undefined);
+      }
+    };
+    const visibilityChanged = () => document.visibilityState === "hidden" ? suspend() : resume();
+    document.addEventListener("visibilitychange", visibilityChanged);
+    window.addEventListener("pagehide", suspend);
+    window.addEventListener("pageshow", resume);
+    return () => {
+      resumeVideo = null;
+      document.removeEventListener("visibilitychange", visibilityChanged);
+      window.removeEventListener("pagehide", suspend);
+      window.removeEventListener("pageshow", resume);
+    };
+  }, [viewerIndex, viewerKind]);
 
   useEffect(() => {
     if (!viewerKind) return;

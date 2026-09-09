@@ -54,6 +54,7 @@ test("video poster windows stay bounded and work with adjacent video warmup disa
   };
   const context = vm.createContext({
     profileVideoPosterUrl: (item) => item.posterUrl,
+    document: { visibilityState: "visible" },
     canWarmAdjacentVideo: () => false,
     attachDeferredVideoSource: (video, preload) => { video.source = true; video.preload = preload; },
     releaseDeferredVideoSource: (video) => { video.source = false; video.preload = "none"; },

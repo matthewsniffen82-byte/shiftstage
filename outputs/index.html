@@ -54247,7 +54247,9 @@
           video.removeAttribute("poster");
           poster?.removeAttribute("src");
         }
-        const mode = videoBufferMode(index, activeIndex, allowNextWarmup, activeReady, video.hasAttribute("src"));
+        const mode = document.visibilityState === "hidden"
+          ? index === activeIndex ? "retain" : "release"
+          : videoBufferMode(index, activeIndex, allowNextWarmup, activeReady, video.hasAttribute("src"));
         applyVideoBufferMode(video, mode);
       });
     }
@@ -54349,6 +54351,7 @@
     }
 
     async function playProfileTvViewerVideo(video) {
+      if (document.visibilityState === "hidden") return;
       try {
         await video.play();
         return;
@@ -61171,7 +61174,7 @@
     function videoBufferMode(index, activeIndex, allowWarmup, activeReady, hasSource) {
       if (index === activeIndex) return "auto";
       if (!allowWarmup) return "release";
-      if (index === activeIndex + 1) return activeReady ? "auto" : "metadata";
+      if (index === activeIndex + 1) return activeReady ? "metadata" : "release";
       if (index === activeIndex - 1 && hasSource) return "retain";
       return "release";
     }
@@ -61187,6 +61190,48 @@
         attachDeferredVideoSource(video, mode);
       }
     }
+
+    const pageSuspendedVideos = new Set();
+
+    function suspendPageVideoPlayback() {
+      const profileVideo = activeProfileTvViewerVideo();
+      document.querySelectorAll(".home-tv-feed-video, .profile-tv-viewer-video").forEach((video) => {
+        if (!video.paused) pageSuspendedVideos.add(video);
+        video.autoplay = false;
+        video.removeAttribute("autoplay");
+        video.pause();
+        video.preload = "none";
+        const homeActive = video.closest(".home-tv-feed-slide")?.getAttribute("aria-current") === "true";
+        if (!homeActive && video !== profileVideo) releaseDeferredVideoSource(video);
+      });
+    }
+
+    function resumePageVideoPlayback() {
+      if (document.visibilityState === "hidden") return;
+      const videos = [...pageSuspendedVideos];
+      pageSuspendedVideos.clear();
+      videos.forEach((video) => {
+        if (!video.isConnected || !video.hasAttribute("src")) return;
+        if (video === activeProfileTvViewerVideo()) {
+          video.preload = "auto";
+          void playProfileTvViewerVideo(video);
+          return;
+        }
+        const slide = video.closest(".home-tv-feed-slide");
+        if (slide?.getAttribute("aria-current") === "true" && slide.dataset.userPaused !== "true" &&
+            slide.dataset.viewportInactive !== "true" &&
+            !document.body.classList.contains("profile-tv-viewer-open")) {
+          activateHomeTvFeedVideo(String(slide.dataset.videoId || ""));
+        }
+      });
+    }
+
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "hidden") suspendPageVideoPlayback();
+      else resumePageVideoPlayback();
+    });
+    window.addEventListener("pagehide", suspendPageVideoPlayback);
+    window.addEventListener("pageshow", resumePageVideoPlayback);
 
     function attachDeferredVideoSource(video, preload = "metadata") {
       if (!(video instanceof HTMLVideoElement)) return false;
@@ -61205,6 +61250,7 @@
 
     function releaseDeferredVideoSource(video) {
       if (!(video instanceof HTMLVideoElement)) return;
+      pageSuspendedVideos.delete(video);
       video.autoplay = false;
       video.removeAttribute("autoplay");
       video.pause();
@@ -61215,7 +61261,7 @@
     }
 
     function activateHomeTvFeedVideo(videoId) {
-      if (activeTab !== "tv" || !videoId) return;
+      if (activeTab !== "tv" || !videoId || document.visibilityState === "hidden") return;
       closeHomeTvFeedReportMenus();
       homeTvFeedActiveVideoId = videoId;
       results.querySelectorAll(".home-tv-feed-slide").forEach((slide) => {
@@ -61224,6 +61270,7 @@
         const isActive = slideVideoId === videoId;
         slide.classList.toggle("is-active", isActive);
         if (isActive) {
+          delete slide.dataset.viewportPaused;
           slide.setAttribute("aria-current", "true");
           video.autoplay = true;
           video.setAttribute("autoplay", "");
@@ -61276,12 +61323,19 @@
       const slides = [...results.querySelectorAll(".home-tv-feed-slide")];
       const activeIndex = slides.findIndex((slide) => String(slide.dataset.videoId || "") === videoId);
       if (activeIndex < 0) return;
-      const allowNextWarmup = canWarmAdjacentVideo();
       const activeVideo = slides[activeIndex].querySelector("video.home-tv-feed-video");
+      const allowNextWarmup = document.visibilityState !== "hidden" &&
+        slides[activeIndex].dataset.viewportInactive !== "true" && canWarmAdjacentVideo();
       const activeReady = activeVideo?.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA;
       slides.forEach((slide, index) => {
         const video = slide.querySelector("video.home-tv-feed-video");
         if (!video) return;
+        const posterUrl = String(video.dataset.posterUrl || "");
+        if (posterUrl && Math.abs(index - activeIndex) <= 1) {
+          if (video.getAttribute("poster") !== posterUrl) video.poster = posterUrl;
+        } else {
+          video.removeAttribute("poster");
+        }
         if (index === activeIndex) return;
         const mode = videoBufferMode(index, activeIndex, allowNextWarmup, activeReady, video.hasAttribute("src"));
         applyVideoBufferMode(video, mode);
@@ -61411,12 +61465,33 @@
         return;
       }
       const fullscreenRoot = homeTvFeedIsImmersive() ? results : null;
+      const visibleRatios = new Map();
       homeTvFeedObserver = new IntersectionObserver((entries) => {
-        const visible = entries
-          .filter((entry) => entry.isIntersecting && entry.intersectionRatio >= .72)
-          .sort((left, right) => right.intersectionRatio - left.intersectionRatio)[0];
-        const visibleVideoId = String(visible?.target.dataset.videoId || "");
-        if (visibleVideoId && visibleVideoId !== homeTvFeedActiveVideoId) activateHomeTvFeedVideo(visibleVideoId);
+        entries.forEach((entry) => {
+          visibleRatios.set(entry.target, entry.isIntersecting ? entry.intersectionRatio : 0);
+          entry.target.dataset.viewportInactive = entry.isIntersecting ? "false" : "true";
+        });
+        const activeSlide = slides.find((slide) => String(slide.dataset.videoId || "") === homeTvFeedActiveVideoId);
+        const activeRatio = visibleRatios.get(activeSlide) || 0;
+        const visible = [...visibleRatios.entries()].filter(([, ratio]) => ratio > .25)
+          .sort((left, right) => right[1] - left[1])[0];
+        const visibleVideoId = String(visible?.[0].dataset.videoId || "");
+        if (visibleVideoId && (visible[1] >= .72 || activeRatio <= .25)) {
+          if (visibleVideoId !== homeTvFeedActiveVideoId || visible[0].dataset.viewportPaused === "true") {
+            activateHomeTvFeedVideo(visibleVideoId);
+          }
+        } else if (activeSlide && activeRatio === 0) {
+          const video = activeSlide.querySelector("video");
+          if (video && activeSlide.dataset.userPaused !== "true") activeSlide.dataset.viewportPaused = "true";
+          if (video) {
+            video.autoplay = false;
+            video.removeAttribute("autoplay");
+            video.pause();
+            video.preload = "none";
+          }
+          clearHomeTvFeedEngagedTimer(homeTvFeedActiveVideoId);
+          primeHomeTvFeedNeighbors(homeTvFeedActiveVideoId);
+        }
       }, {
         root: fullscreenRoot,
         rootMargin: fullscreenRoot ? "0px" : "-72px 0px -88px",
@@ -61626,7 +61701,8 @@
       if (homeTvFeedMuted) video.setAttribute("muted", "");
       if (index === 0) video.setAttribute("autoplay", "");
       const posterUrl = String(item?.posterUrl || item?.poster_url || "").trim();
-      if (posterUrl) video.poster = posterUrl;
+      video.dataset.posterUrl = posterUrl;
+      if (posterUrl && index <= 1) video.poster = posterUrl;
       video.preload = index === 0 ? "auto" : "none";
       video.controlsList = "nodownload noremoteplayback nofullscreen";
       video.disablePictureInPicture = true;
