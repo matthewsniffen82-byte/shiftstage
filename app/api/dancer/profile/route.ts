@@ -11,6 +11,7 @@ import {
 } from "@/src/lib/dancr/photo-slot";
 import { responsivePublicImage } from "@/src/lib/dancr/responsive-image";
 import { MAX_DANCER_PROFILE_PHOTOS } from "@/src/lib/dancr/media-limits";
+import { validateProfilePhotoDeletionInput } from "@/src/lib/dancr/profile-photo-input";
 import type { SocialPlatform } from "@/src/lib/dancr/types";
 import { DancerSignupCityInputError, requireDancerSignupCity } from "@/src/lib/dancr/signup-cities";
 import { safeSocialProfileUrl, socialProfileHandle } from "@/src/lib/dancr/social-profile-url";
@@ -407,6 +408,7 @@ export async function PATCH(request: Request) {
       invalidMessage: "Invalid dancer profile request.",
       tooLargeMessage: "Dancer profile request is too large.",
     });
+    validateProfilePhotoDeletionInput(body);
     const { profile, error: profileError, supportsIsPublic } = await loadProfileForSave(client, user.id);
 
     if (profileError) throw profileError;

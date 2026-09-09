@@ -27,8 +27,8 @@ Step 1 delivered as `50d4eb543dbfc93dbed6f0663c51aa2332542cb4`, pushed to origin
 | 4 | Storage permissions | Delivered and healthy: b3b46b5d7485dc3bad5ef179a996f26730113d21 |
 | 5 | Authentication / recovery | Delivered and healthy: 7bc16ed2204df7a07678001c522544cec2425a10 |
 | 6 | Role authorization | Delivered and healthy: 5db6de15bbd5e5d9746f2c21a901286ecd980c92 and 39614027ff633836641227d30cb8256cd238859e |
-| 7 | Admin access / auditing | Fix and migrations deployed: d22462c5bd27675def76675af3f64e5e9a307fd8; verified migration-freeze follow-up pending |
-| 8 | Input validation | Not started |
+| 7 | Admin access / auditing | Delivered and healthy: d22462c5bd27675def76675af3f64e5e9a307fd8 and 61d926e9a1db7d1033e8d2f9fdd5fb3255d0ca5f |
+| 8 | Input validation | Implemented; release validation and exact-commit deployment verification pending |
 | 9 | XSS / HTML injection | Not started |
 | 10 | CSRF / state changes | Not started |
 | 11 | Rate limits | Not started |
@@ -121,4 +121,12 @@ Verified normalized migration SHA-256 values:
 
 This same-step follow-up freezes the two verified migrations, bringing the immutable history to 132 files. It does not rerun SQL. Its full checks, push and exact deployment verification must complete before Step 8.
 
-Follow-up validation passed all 2,676 tests, lint, TypeScript and production build. The history gate verified 132 frozen files; postbuild skipped demo population. Deployment evidence is recorded after publication.
+Follow-up validation passed all 2,676 tests, lint, TypeScript and production build. The history gate verified 132 frozen files; postbuild skipped demo population.
+
+The follow-up was pushed as `61d926e9a1db7d1033e8d2f9fdd5fb3255d0ca5f`. [Exact Vercel deployment](https://vercel.com/ai-movie-jobs/shiftstage/61RrjyGTzLrF7aP7qX9bti6yUbqn) succeeded. At 13:04:02 UTC, production health, anonymous authorization denials, callback regression and all 30 readiness checks passed. Local HEAD matched origin/main with a clean worktree before Step 8 began.
+
+## Step 8 implementation
+
+The input review identified one MEDIUM photo-deletion collection validation gap. A narrow guard rejects excessive or malformed collections before profile work and preserves existing ownership and moderation checks. Forty-one new regression cases and the existing profile-save and professional-role checks pass. No production records or database configuration were changed. See `step-08-input-validation.md` for the review and testing limits.
+
+Final validation passed all 2,724 tests, lint, TypeScript and production build after incorporating the independent stylesheet release `eb75d8436d5c9c662358cd4ea906fd367da688fc`. The migration gate verified 132 frozen files and postbuild skipped demo population. Push, exact-commit Vercel success and healthy production verification remain required before Step 9.
