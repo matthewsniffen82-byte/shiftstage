@@ -23,8 +23,8 @@ Step 1 delivered as `50d4eb543dbfc93dbed6f0663c51aa2332542cb4`, pushed to origin
 | --- | --- | --- |
 | 1 | Complete audit / threat model | Delivered and healthy: 50d4eb543dbfc93dbed6f0663c51aa2332542cb4 |
 | 2 | Secrets and environment | Delivered and healthy: f7dc39d362a2b4c2f70ed401d134593ea3d9c640 |
-| 3 | Supabase RLS | Fix deployed and healthy: 0829c12ed79f6525105a5b313ab374709670a4ad; verified migration hash added to history guard in this delivery-record follow-up |
-| 4 | Storage permissions | Not started |
+| 3 | Supabase RLS | Delivered and healthy: 0829c12ed79f6525105a5b313ab374709670a4ad and 9b74c805bc87cae8891269e6d03c005d7e8842ab |
+| 4 | Storage permissions | 34 focused / 2,098 full tests, 30 live readiness checks, lint, TypeScript and production build passed; deployment pending |
 | 5 | Authentication / recovery | Not started |
 | 6 | Role authorization | Not started |
 | 7 | Admin access / auditing | Not started |
@@ -73,3 +73,5 @@ At 11:10 UTC, the fresh catalog showed exactly ten new restrictive policies and 
 The normalized SQL SHA-256 is `eebe3fff9cd1428358246c9bd8ad1bed1894356f8cc58df3e8810d4b6c05963e`. This follow-up freezes that verified file in the history guard after successful application, as required by the migration workflow; it does not replay SQL or repair any historical ledger entry. Complete release checks and exact-commit Vercel health must pass for this follow-up before Step 4 begins.
 
 The follow-up was integrated with the independently published image-performance release and passed all 2,069 tests, lint, TypeScript and the production build. The migration gate verified 129 frozen files; postbuild skipped demo population. Its Vercel status and health are recorded after deployment.
+
+Step 3's delivery-record follow-up was pushed as `9b74c805bc87cae8891269e6d03c005d7e8842ab`. [Exact Vercel deployment](https://vercel.com/ai-movie-jobs/shiftstage/7V2qdEZjnnpXU2KjKTQMBkE8q3cv) succeeded. At 11:21 UTC, root and both health routes returned 200; anonymous account/admin requests returned 401. Local HEAD matched origin/main and the worktree was clean before Step 4.

@@ -1,4 +1,5 @@
 import { validatePublicSupabaseConfig } from "../src/lib/supabase/public-config.mjs";
+import { checkStorageBucketSecurity } from "../src/lib/security/storage-bucket-policy.mjs";
 
 // Read-only release verification. Run on the server/CLI, never in a browser.
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -16,13 +17,15 @@ async function read(path, key = anon) {
 
 const checks = [];
 try {
-  const [auth, schema, publicProfiles, legalNames, privateMetrics, savedDeals] = await Promise.all([
+  const [auth, schema, publicProfiles, legalNames, privateMetrics, savedDeals, storage] = await Promise.all([
     read("/auth/v1/health"), read("/rest/v1/", service),
     read("/rest/v1/dancer_profiles?select=id,stage_name&limit=0"),
     read("/rest/v1/dancer_profiles?select=real_name&limit=0"),
     read("/rest/v1/dancer_monthly_impact?select=dancer_id&limit=0"),
     read("/rest/v1/customer_deal_saves?select=customer_id&limit=0"),
+    read("/storage/v1/bucket", service),
   ]);
+  checks.push(...checkStorageBucketSecurity(storage.ok ? storage.data : null));
   checks.push({ name: "Auth service", ok: auth.ok }, { name: "Database schema", ok: schema.ok },
     { name: "Public profile projection", ok: publicProfiles.ok },
     ...[["Legal-name protection", legalNames], ["Private analytics protection", privateMetrics], ["Private saved-deal protection", savedDeals]]
