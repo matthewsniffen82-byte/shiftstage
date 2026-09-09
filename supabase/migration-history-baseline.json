@@ -519,6 +519,10 @@
     {
       "file": "20260909110000_enforce_active_account_preference_writes.sql",
       "sha256": "eebe3fff9cd1428358246c9bd8ad1bed1894356f8cc58df3e8810d4b6c05963e"
+    },
+    {
+      "file": "20260909120820_remove_stale_self_service_permissions.sql",
+      "sha256": "5ba86612d91b10e9d117e49518b6bfef4a0d5d6cf1185854703febffcaf4f6e2"
     }
   ]
 }

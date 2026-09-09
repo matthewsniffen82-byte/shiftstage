@@ -26,7 +26,7 @@ Step 1 delivered as `50d4eb543dbfc93dbed6f0663c51aa2332542cb4`, pushed to origin
 | 3 | Supabase RLS | Delivered and healthy: 0829c12ed79f6525105a5b313ab374709670a4ad and 9b74c805bc87cae8891269e6d03c005d7e8842ab |
 | 4 | Storage permissions | Delivered and healthy: b3b46b5d7485dc3bad5ef179a996f26730113d21 |
 | 5 | Authentication / recovery | Delivered and healthy: 7bc16ed2204df7a07678001c522544cec2425a10 |
-| 6 | Role authorization | 2,301 tests, lint, TypeScript and production build passed; exact-commit deployment and scoped metadata migration pending |
+| 6 | Role authorization | Fix deployed and cleanup verified: 5db6de15bbd5e5d9746f2c21a901286ecd980c92; migration-freeze delivery follow-up pending |
 | 7 | Admin access / auditing | Not started |
 | 8 | Input validation | Not started |
 | 9 | XSS / HTML injection | Not started |
@@ -91,3 +91,11 @@ Step 5 was delivered as `7bc16ed2204df7a07678001c522544cec2425a10`, pushed with 
 The role/ownership audit, three confirmed finding groups and repair scope are documented in `step-06-authorization.md`. New coverage includes 28 account-lifecycle, 151 professional-role and one PostgreSQL cleanup test. The original account-state implementation failed 22 of the initial 26 lifecycle checks. The fixed complete suite passed 2,301 tests after integrating the independent feed-performance release. Lint, TypeScript and production build passed; the migration gate retained 129 frozen files and recognized the new timestamped cleanup. Postbuild skipped demo population.
 
 Read-only production preflight found two obsolete active-account markers before the fixed cutoff and one current paused-account marker. No data has been repaired at this validation point. The fixed application must be successfully deployed before the committed cleanup runs; its postconditions and migration record must then be verified before Step 7.
+
+Step 6's fix was pushed as `5db6de15bbd5e5d9746f2c21a901286ecd980c92`. [Exact Vercel deployment](https://vercel.com/ai-movie-jobs/shiftstage/6HUuHmEYh2PX3Zm2NXpf6fWN2ySb) succeeded. At 2026-09-09 12:27 UTC, root and both health endpoints returned 200; anonymous account, admin, dancer profile/video, agent and venue requests returned 401. The deployed invalid-recovery callback regression passed and all 30 live readiness checks passed.
+
+After that verification, migration `20260909120820` ran in its bounded transaction and registered only its own committed SQL. Exactly two active accounts had their obsolete self-service permission keys removed. Transaction postconditions confirmed other metadata, roles and account states were preserved. A subsequent read-only query found zero active markers, one intact paused-account marker and zero deleted accounts with Auth identities. The migration ledger contains one matching version and its SQL checksum matches the committed file.
+
+Normalized SQL SHA-256: `5ba86612d91b10e9d117e49518b6bfef4a0d5d6cf1185854703febffcaf4f6e2`. This same-step follow-up freezes the verified file as the 130th history-baseline entry; it replays no SQL. The independently published Supabase query-performance commit was integrated without changing its ownership-scoped queries. Full release checks and exact-commit deployment verification are required for this follow-up before Step 7 begins.
+
+The follow-up passed all 2,307 automated tests, lint, TypeScript and the production build. The migration gate verified 130 frozen files, and postbuild skipped demo population. Its exact-commit deployment result is recorded after publication.

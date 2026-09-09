@@ -47,6 +47,8 @@ Deployment order is deliberate: publish and verify the fixed application first, 
 
 ## Limits and follow-up
 
+The fix commit `5db6de15bbd5e5d9746f2c21a901286ecd980c92` reached Vercel success and passed safe production health, anonymous authorization, callback and 30 Supabase readiness checks at 12:27 UTC. The committed cleanup then repaired exactly two active accounts and passed metadata/role/state preservation checks. A separate read-only verification confirmed no active self-pause markers remained, the current paused marker remained, and the migration ledger matched the committed SQL. The verified migration is frozen in the history baseline by this same-step follow-up, whose release checks and deployment must also pass before Step 7.
+
 No destructive tests or real-user impersonation were performed in production. Disposable staging accounts remain undesignated; runtime fixtures are not represented as full live Auth/cross-device tests. Fresh aggregate/provider metadata reads and safe deployed unauthenticated probes complement the fixtures.
 
 Account-state changes still span the application database and Auth API; this step does not claim transactional protection against every concurrent administrative change. That operation's broader transaction/reconciliation design remains part of the database and admin reviews. Previously issued signed upload URLs and access tokens retain their provider-defined lifetime; these request guards prevent new authorization, not retroactive revocation of already issued credentials.
