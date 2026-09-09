@@ -11,8 +11,8 @@ export function extractLiveShellStyles(html) {
   return mainStyleTag(html)[1];
 }
 
-export function externalizeLiveShellStyles(html, sourceUrl) {
+export function inlineLiveShellStyles(html, css) {
   const match = mainStyleTag(html);
   // Preserve the exact cascade position, all declarations and the other styles.
-  return html.replace(match[0], `<link rel="stylesheet" href="${sourceUrl}">`);
+  return html.replace(match[0], () => `<style>${css}</style>`);
 }

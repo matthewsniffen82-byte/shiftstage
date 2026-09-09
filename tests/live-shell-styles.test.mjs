@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
-import { externalizeLiveShellStyles, extractLiveShellStyles } from "../src/lib/dancr/live-shell-styles.mjs";
+import { inlineLiveShellStyles, extractLiveShellStyles } from "../src/lib/dancr/live-shell-styles.mjs";
 import { createRootContentSecurityPolicy } from "../src/lib/security/root-content-security-policy.mjs";
 import postcss from "postcss";
 import { compactLiveShellStyles } from "../src/lib/dancr/compact-live-shell-styles.mjs";
@@ -9,14 +9,14 @@ import { staticAssetCacheHeaders, versionedStaticAssetUrl } from "../src/lib/dan
 
 const html = (await readFile(new URL("../outputs/index.html", import.meta.url), "utf8")).replace(/\r\n?/g, "\n");
 
-test("external CSS preserves every declaration and exact cascade position", () => {
+test("inline CSS preserves the exact cascade position without another request", () => {
   const css = extractLiveShellStyles(html);
-  const link = '<link rel="stylesheet" href="/outputs/live-shell.css?v=test">';
-  const result = externalizeLiveShellStyles(html, "/outputs/live-shell.css?v=test");
+  const result = inlineLiveShellStyles(html, compactLiveShellStyles(css));
   assert.ok(css.length > 800_000);
-  assert.equal(result.replace(link, `<style>${css}</style>`), html);
+  assert.equal(inlineLiveShellStyles(html, css), html);
+  assert.ok(inlineLiveShellStyles(html, ':root{--literal:"$&"}').includes('<style>:root{--literal:"$&"}</style>'));
   assert.equal(createRootContentSecurityPolicy(result), createRootContentSecurityPolicy(html));
-  assert.ok(result.indexOf(link) < result.indexOf('/dancr-brand-tokens.v1.css'));
+  assert.ok(result.indexOf(`<style>${compactLiveShellStyles(css)}</style>`) < result.indexOf('/dancr-brand-tokens.v1.css'));
   assert.match(result, /Keep the city readable/);
   assert.match(result, /main\.stack,/);
 });
@@ -27,10 +27,12 @@ test("stylesheet URL keeps the document base for relative asset references", () 
   assert.throws(() => extractLiveShellStyles("<style>body{color:red}</style>"), /could not be found/);
 });
 
-test("the response preloads only the content-versioned critical stylesheet", async () => {
+test("critical CSS stays inline and the deployment includes the build artifact", async () => {
   const source = await readFile(new URL("../app/route.ts", import.meta.url), "utf8");
-  assert.match(source, /"link": `<\$\{versionedStaticAssetUrl\("\/outputs\/live-shell\.css"\)\}>; rel=preload; as=style`/);
-  assert.equal((source.match(/rel=preload/g) || []).length, 1);
+  assert.doesNotMatch(source, /rel=preload|externalizeLiveShellStyles/);
+  assert.match(source, /inlineLiveShellStyles\(withExternalAppScript, compactStyles\)/);
+  const config = await readFile(new URL("../next.config.mjs", import.meta.url), "utf8");
+  assert.match(config, /"\/": \["\.\/public\/outputs\/live-shell\.css"\]/);
 });
 
 test("the build emits compact static CSS with a matching content version", async () => {

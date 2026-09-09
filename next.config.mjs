@@ -96,6 +96,7 @@ const nextConfig = {
   },
   serverExternalPackages: ["ffmpeg-static"],
   outputFileTracingIncludes: {
+    "/": ["./public/outputs/live-shell.css"],
     "/api/admin/tv/import": ["./node_modules/ffmpeg-static/ffmpeg*"],
     "/api/admin/tv/videos": ["./node_modules/ffmpeg-static/ffmpeg*"],
     "/api/dancer/tv/videos/\\[id\\]": ["./node_modules/ffmpeg-static/ffmpeg*"],
