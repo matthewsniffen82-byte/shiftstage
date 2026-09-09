@@ -51,7 +51,7 @@ test("private venue workspaces can view and remove existing roster affiliations 
   assert.doesNotMatch(privateRosterMigration, /member\.role = 'staff'/);
 });
 
-test("dancer and venue dashboards show the official tap-sticker workflow", () => {
+test("dancers see tap guidance while venues keep their approved roster", () => {
   assert.match(dashboard, /<DancerNfcPanel initialAffiliations=\{affiliations\}/);
   assert.match(dashboard, /<DancerShiftManager \/>/);
   assert.match(dashboard, /<VenueNfcTagPanel/);
@@ -61,9 +61,8 @@ test("dancer and venue dashboards show the official tap-sticker workflow", () =>
   assert.match(dancerPanel, /Your first tap activates your completed profile and checks you in at that club/);
   assert.match(dancerPanel, /Working Now lasts 6 hours/);
   assert.match(dancerPanel, /6-hour cooldown at all clubs/);
-  assert.match(venuePanel, /no separate manager approval is needed/);
   assert.match(venuePanel, /Approved dancer roster/);
-  assert.match(venuePanel, /MyDancr supplies these tap-to-use stickers/);
+  assert.doesNotMatch(venuePanel, /MyDancr supplies these tap-to-use stickers|Installation only/);
 });
 
 test("venue roster affiliations expose responsive approved dancer avatars", () => {

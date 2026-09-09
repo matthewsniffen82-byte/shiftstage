@@ -194,14 +194,12 @@ test("MyDancr supplies tap stickers while venue owners receive read-only invento
   assert.match(nfcService, /recordNfcTagScan/);
   assert.match(nfcPanel, /scanCount > testBaselineRef\.current/);
   assert.match(nfcPanel, /phone[\s\S]*?completed/);
-  assert.match(nfcPanel, /MyDancr supplied hardware/);
-  assert.match(nfcPanel, /Check-in & redemption stickers/);
+  assert.match(nfcPanel, /Assigned sticker inventory/);
   assert.match(nfcPanel, /Approved dancer roster/);
-  assert.match(nfcPanel, /tap-to-use stickers/);
   assert.match(nfcPanel, /Dancer check-in/);
   assert.match(nfcPanel, /Guest redemption/);
   assert.doesNotMatch(nfcPanel, /Assigned NFC stickers|NFC-authorized dancer roster|NFC verified|NFC workflow/);
-  assert.match(nfcPanel, /no separate manager approval is needed/i);
+  assert.doesNotMatch(nfcPanel, /MyDancr supplied hardware|Phone-tap sticker workflow|Installation only/);
   assert.doesNotMatch(nfcPanel, /Create programming URL/);
   assert.doesNotMatch(nfcPanel, />Rotate</);
 });
