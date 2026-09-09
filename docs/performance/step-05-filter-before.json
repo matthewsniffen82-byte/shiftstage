@@ -1,0 +1,68 @@
+{
+  "base": "https://www.mydancr.com",
+  "cpuSlowdown": 4,
+  "initialFormatterConstructions": 179,
+  "filters": [
+    {
+      "filter": "now",
+      "expected": 7,
+      "actual": 7,
+      "selected": "true",
+      "focused": true,
+      "formatterConstructions": 177,
+      "synchronousMs": 173.59999990463257,
+      "paintOpportunityMs": 278.5
+    },
+    {
+      "filter": "upcoming",
+      "expected": 2,
+      "actual": 2,
+      "selected": "true",
+      "focused": true,
+      "formatterConstructions": 183,
+      "synchronousMs": 178.5,
+      "paintOpportunityMs": 209
+    },
+    {
+      "filter": "all",
+      "expected": 14,
+      "actual": 14,
+      "selected": "true",
+      "focused": true,
+      "formatterConstructions": 179,
+      "synchronousMs": 216.60000014305115,
+      "paintOpportunityMs": 278
+    },
+    {
+      "filter": "now",
+      "expected": 7,
+      "actual": 7,
+      "selected": "true",
+      "focused": true,
+      "formatterConstructions": 177,
+      "synchronousMs": 202.5,
+      "paintOpportunityMs": 277.59999990463257
+    },
+    {
+      "filter": "upcoming",
+      "expected": 2,
+      "actual": 2,
+      "selected": "true",
+      "focused": true,
+      "formatterConstructions": 183,
+      "synchronousMs": 174.59999990463257,
+      "paintOpportunityMs": 200.79999995231628
+    },
+    {
+      "filter": "all",
+      "expected": 14,
+      "actual": 14,
+      "selected": "true",
+      "focused": true,
+      "formatterConstructions": 179,
+      "synchronousMs": 172.90000009536743,
+      "paintOpportunityMs": 269.80000019073486
+    }
+  ],
+  "errors": []
+}

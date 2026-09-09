@@ -29,7 +29,7 @@ For a customer rendering-only sample, set `PERF_CUSTOMER_FIXTURE=1` and use `/da
 | 2 | Initial JavaScript and load overhead | Pushed `ac9ea442`; [Vercel success](https://vercel.com/ai-movie-jobs/shiftstage/GeAFzWFHbNtyJyTtktXCJXny217W); all three role smoke checks and live health passed |
 | 3 | Responsive image delivery | Pushed `8e12a9e9`; [Vercel success](https://vercel.com/ai-movie-jobs/shiftstage/GFZQwYjUHRop42BJjdauGBxwjemc); image selection, live health and nine mobile samples verified |
 | 4 | Mobile video loading and playback | Pushed `78067bf7`; [Vercel success](https://vercel.com/ai-movie-jobs/shiftstage/FaJDnCj1UZyRCGFvBhPxgUE5PQoP); live resource/profile journeys, health and nine mobile samples verified; verification-only follow-up records the corrected profile fixture and results |
-| 5 | Feed rendering and scrolling | Pending |
+| 5 | Feed rendering and scrolling | Measured repeated formatter construction; bounded configuration reuse; complete checks passed, live verification follows deployment |
 | 6 | Supabase and database access | Pending |
 | 7 | API/network requests | Pending |
 | 8 | Safe resource caching | Pending |

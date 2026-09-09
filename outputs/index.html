@@ -48158,9 +48158,13 @@
       return timeZoneByCity[city] || Intl.DateTimeFormat().resolvedOptions().timeZone || "America/Los_Angeles";
     }
 
-    function cityWallClock(date = new Date(), city = selectedCity()) {
-      const parts = new Intl.DateTimeFormat("en-US", {
-        timeZone: cityTimeZone(city),
+    const cityWallClockFormatters = new Map();
+
+    function cityWallClockFormatter(timeZone) {
+      const cached = cityWallClockFormatters.get(timeZone);
+      if (cached) return cached;
+      const formatter = new Intl.DateTimeFormat("en-US", {
+        timeZone,
         year: "numeric",
         month: "2-digit",
         day: "2-digit",
@@ -48168,7 +48172,15 @@
         minute: "2-digit",
         second: "2-digit",
         hour12: false
-      }).formatToParts(date).reduce((acc, part) => {
+      });
+      // Cache formatter configuration, never the current date or schedule result.
+      if (cityWallClockFormatters.size >= 16) cityWallClockFormatters.delete(cityWallClockFormatters.keys().next().value);
+      cityWallClockFormatters.set(timeZone, formatter);
+      return formatter;
+    }
+
+    function cityWallClock(date = new Date(), city = selectedCity()) {
+      const parts = cityWallClockFormatter(cityTimeZone(city)).formatToParts(date).reduce((acc, part) => {
         if (part.type !== "literal") acc[part.type] = part.value;
         return acc;
       }, {});
