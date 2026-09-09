@@ -1,0 +1,58 @@
+{
+  "syntheticSdkFixture": true,
+  "productionLatencyMeasured": false,
+  "results": [
+    {
+      "role": "dancer",
+      "inputRows": 50,
+      "returnedRows": 50,
+      "signedRows": 50,
+      "storageRequests": 50,
+      "databaseQueries": 3,
+      "methods": [
+        "single"
+      ],
+      "maxPathsPerRequest": 1,
+      "expirySeconds": [
+        3600
+      ]
+    },
+    {
+      "role": "admin",
+      "inputRows": 100,
+      "returnedRows": 100,
+      "signedRows": 100,
+      "storageRequests": 100,
+      "databaseQueries": 1,
+      "methods": [
+        "single"
+      ],
+      "maxPathsPerRequest": 1,
+      "expirySeconds": [
+        3600
+      ]
+    },
+    {
+      "role": "dancer",
+      "inputRows": 0,
+      "returnedRows": 0,
+      "signedRows": 0,
+      "storageRequests": 0,
+      "databaseQueries": 2,
+      "methods": [],
+      "maxPathsPerRequest": 0,
+      "expirySeconds": []
+    },
+    {
+      "role": "admin",
+      "inputRows": 0,
+      "returnedRows": 0,
+      "signedRows": 0,
+      "storageRequests": 0,
+      "databaseQueries": 1,
+      "methods": [],
+      "maxPathsPerRequest": 0,
+      "expirySeconds": []
+    }
+  ]
+}

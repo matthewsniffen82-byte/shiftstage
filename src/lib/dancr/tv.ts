@@ -695,6 +695,22 @@ function diversifyDancers(rows: NormalizedFeedRow[]) {
   return result;
 }
 
+async function signManagedVideoUrls(admin: AdminClient, videos: any[]) {
+  const paths = [...new Set<string>(videos.map((video) => video.storage_path).filter((path) => typeof path === "string" && path.length > 0))];
+  const signedByPath = new Map<string, string>();
+  // Only sign rows already selected by the authorized workspace/review query.
+  // Bound each request even if historical workspace rows exceed the current cap.
+  for (let offset = 0; offset < paths.length; offset += 100) {
+    const { data } = await admin.storage
+      .from(MYDANCR_TV_BUCKET)
+      .createSignedUrls(paths.slice(offset, offset + 100), MYDANCR_TV_SIGNED_URL_SECONDS);
+    for (const item of data || []) {
+      if (!item.error && item.path && item.signedUrl) signedByPath.set(item.path, item.signedUrl);
+    }
+  }
+  return signedByPath;
+}
+
 export async function getDancerMyDancrTvWorkspace(admin: AdminClient, userId: string) {
   const { data: dancer, error: dancerError }: any = await admin
     .from("dancer_profiles")
@@ -715,14 +731,12 @@ export async function getDancerMyDancrTvWorkspace(admin: AdminClient, userId: st
   if (videoError) throw videoError;
 
   const videoIds = (videos || []).map((video: any) => video.id);
-  const metrics = await getVideoMetrics(admin, videoIds);
-  const signedVideos = await Promise.all(
-    (videos || []).map(async (video: any) => {
-      const { data } = await admin.storage
-        .from(MYDANCR_TV_BUCKET)
-        .createSignedUrl(video.storage_path, MYDANCR_TV_SIGNED_URL_SECONDS);
-      return mapManagedVideo(admin, video, data?.signedUrl || "", metrics[video.id] || emptyMetrics());
-    }),
+  const [metrics, signedByPath] = await Promise.all([
+    getVideoMetrics(admin, videoIds),
+    signManagedVideoUrls(admin, videos || []),
+  ]);
+  const signedVideos = (videos || []).map((video: any) =>
+    mapManagedVideo(admin, video, signedByPath.get(video.storage_path) || "", metrics[video.id] || emptyMetrics()),
   );
 
   return {
@@ -1589,13 +1603,9 @@ export async function getAdminMyDancrTvVideos(admin: AdminClient, status = "subm
   const { data, error } = await query;
   if (error) throw error;
 
-  return Promise.all(
-    (data || []).map(async (video: any) => {
-      const { data: signed } = await admin.storage
-        .from(MYDANCR_TV_BUCKET)
-        .createSignedUrl(video.storage_path, MYDANCR_TV_SIGNED_URL_SECONDS);
-      return mapManagedVideo(admin, video, signed?.signedUrl || "", emptyMetrics());
-    }),
+  const signedByPath = await signManagedVideoUrls(admin, data || []);
+  return (data || []).map((video: any) =>
+    mapManagedVideo(admin, video, signedByPath.get(video.storage_path) || "", emptyMetrics()),
   );
 }
 
