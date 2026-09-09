@@ -1,0 +1,954 @@
+{
+  "commit": "bb14ecd162af1594c1b031d8aeb38442bbe114d6",
+  "source": {
+    "html": {
+      "raw": 2537868,
+      "gzip": 433591,
+      "brotli": 307437
+    },
+    "appScript": {
+      "raw": 1168674,
+      "gzip": 234878,
+      "brotli": 171026
+    },
+    "inlineCss": {
+      "raw": 1234683,
+      "gzip": 174096,
+      "brotli": 120304
+    }
+  },
+  "fontStylesheets": [
+    "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Manrope:wght@500;600;700;800;900&family=Outfit:wght@500;600;700;800;900&family=Space+Grotesk:wght@600;700;800&display=swap"
+  ],
+  "routeCount": 148,
+  "clientComponentCount": 48,
+  "largestSourceFiles": [
+    {
+      "file": "app/dashboard/DashboardClient.tsx",
+      "raw": 635630,
+      "gzip": 115859,
+      "brotli": 88901,
+      "clientComponent": true
+    },
+    {
+      "file": "public/dancr-aesthetic.v1.css",
+      "raw": 457303,
+      "gzip": 56976,
+      "brotli": 40481,
+      "clientComponent": false
+    },
+    {
+      "file": "app/admin/AdminClient.tsx",
+      "raw": 340936,
+      "gzip": 61211,
+      "brotli": 49724,
+      "clientComponent": true
+    },
+    {
+      "file": "app/dancers/[slug]/page.tsx",
+      "raw": 81840,
+      "gzip": 14920,
+      "brotli": 12635,
+      "clientComponent": false
+    },
+    {
+      "file": "src/lib/dancr/tv.ts",
+      "raw": 69700,
+      "gzip": 13821,
+      "brotli": 11778,
+      "clientComponent": false
+    },
+    {
+      "file": "src/lib/dancr/admin.ts",
+      "raw": 67166,
+      "gzip": 14401,
+      "brotli": 12280,
+      "clientComponent": false
+    },
+    {
+      "file": "app/tv/TvFeedClient.tsx",
+      "raw": 63958,
+      "gzip": 13887,
+      "brotli": 12033,
+      "clientComponent": true
+    },
+    {
+      "file": "src/lib/dancr/image-moderation.ts",
+      "raw": 55950,
+      "gzip": 11184,
+      "brotli": 9687,
+      "clientComponent": false
+    },
+    {
+      "file": "app/account/AccountClient.tsx",
+      "raw": 52314,
+      "gzip": 11753,
+      "brotli": 10129,
+      "clientComponent": true
+    },
+    {
+      "file": "app/api/dancer/profile/route.ts",
+      "raw": 47278,
+      "gzip": 10396,
+      "brotli": 9061,
+      "clientComponent": false
+    },
+    {
+      "file": "app/dashboard/DancerTvStudio.tsx",
+      "raw": 43732,
+      "gzip": 10183,
+      "brotli": 8835,
+      "clientComponent": true
+    },
+    {
+      "file": "app/dancers/[slug]/DancerPhotoCarousel.tsx",
+      "raw": 42092,
+      "gzip": 9615,
+      "brotli": 8344,
+      "clientComponent": true
+    },
+    {
+      "file": "app/components/ClubDealCard.tsx",
+      "raw": 39535,
+      "gzip": 9283,
+      "brotli": 8036,
+      "clientComponent": true
+    },
+    {
+      "file": "app/admin/AdminPilotAnalytics.tsx",
+      "raw": 32344,
+      "gzip": 7862,
+      "brotli": 6802,
+      "clientComponent": true
+    },
+    {
+      "file": "src/lib/dancr/dmca.ts",
+      "raw": 30975,
+      "gzip": 7311,
+      "brotli": 6332,
+      "clientComponent": false
+    },
+    {
+      "file": "app/components/TvVideoStrip.tsx",
+      "raw": 30818,
+      "gzip": 7218,
+      "brotli": 6267,
+      "clientComponent": true
+    },
+    {
+      "file": "src/lib/dancr/venue.ts",
+      "raw": 30808,
+      "gzip": 6217,
+      "brotli": 5413,
+      "clientComponent": false
+    },
+    {
+      "file": "src/lib/dancr/public.ts",
+      "raw": 28041,
+      "gzip": 5668,
+      "brotli": 4978,
+      "clientComponent": false
+    },
+    {
+      "file": "app/components/GlobalMobileBottomNav.tsx",
+      "raw": 26716,
+      "gzip": 5786,
+      "brotli": 4929,
+      "clientComponent": true
+    },
+    {
+      "file": "src/lib/dancr/venue-affiliations.ts",
+      "raw": 25219,
+      "gzip": 5625,
+      "brotli": 4914,
+      "clientComponent": false
+    },
+    {
+      "file": "app/dashboard/VenueNfcTagPanel.tsx",
+      "raw": 24774,
+      "gzip": 6144,
+      "brotli": 5294,
+      "clientComponent": true
+    },
+    {
+      "file": "app/dancers/[slug]/DancerProfileActions.tsx",
+      "raw": 24680,
+      "gzip": 5446,
+      "brotli": 4708,
+      "clientComponent": true
+    },
+    {
+      "file": "app/admin/AdminTvPanel.tsx",
+      "raw": 22816,
+      "gzip": 5034,
+      "brotli": 4309,
+      "clientComponent": true
+    },
+    {
+      "file": "app/dashboard/agent/AgentDashboardClient.tsx",
+      "raw": 22592,
+      "gzip": 6454,
+      "brotli": 5476,
+      "clientComponent": true
+    },
+    {
+      "file": "src/lib/dancr/venue-claims.ts",
+      "raw": 22124,
+      "gzip": 5446,
+      "brotli": 4756,
+      "clientComponent": false
+    }
+  ],
+  "routeBundles": {
+    "/_not-found/page": {
+      "raw": 353284,
+      "gzip": 103755,
+      "note": "Route entry plus listed shared chunks; layout entry may load additional chunks."
+    },
+    "/layout": {
+      "raw": 379321,
+      "gzip": 111969,
+      "note": "Route entry plus listed shared chunks; layout entry may load additional chunks."
+    },
+    "/api/admin/dancers/[id]/photos/[photoId]/route": {
+      "raw": 351356,
+      "gzip": 103183,
+      "note": "Route entry plus listed shared chunks; layout entry may load additional chunks."
+    },
+    "/api/admin/dancers/[id]/route": {
+      "raw": 351356,
+      "gzip": 103183,
+      "note": "Route entry plus listed shared chunks; layout entry may load additional chunks."
+    },
+    "/api/admin/dancers/[id]/social-links/[socialId]/route": {
+      "raw": 351356,
+      "gzip": 103183,
+      "note": "Route entry plus listed shared chunks; layout entry may load additional chunks."
+    },
+    "/api/admin/dancers/route": {
+      "raw": 351356,
+      "gzip": 103183,
+      "note": "Route entry plus listed shared chunks; layout entry may load additional chunks."
+    },
+    "/api/admin/dmca/route": {
+      "raw": 351356,
+      "gzip": 103183,
+      "note": "Route entry plus listed shared chunks; layout entry may load additional chunks."
+    },
+    "/api/admin/deals/route": {
+      "raw": 351356,
+      "gzip": 103183,
+      "note": "Route entry plus listed shared chunks; layout entry may load additional chunks."
+    },
+    "/api/account-recovery/route": {
+      "raw": 351356,
+      "gzip": 103183,
+      "note": "Route entry plus listed shared chunks; layout entry may load additional chunks."
+    },
+    "/api/admin/finance/route": {
+      "raw": 351356,
+      "gzip": 103183,
+      "note": "Route entry plus listed shared chunks; layout entry may load additional chunks."
+    },
+    "/api/admin/monitoring/route": {
+      "raw": 351356,
+      "gzip": 103183,
+      "note": "Route entry plus listed shared chunks; layout entry may load additional chunks."
+    },
+    "/api/account/route": {
+      "raw": 351356,
+      "gzip": 103183,
+      "note": "Route entry plus listed shared chunks; layout entry may load additional chunks."
+    },
+    "/api/admin/avatars/recenter/route": {
+      "raw": 351356,
+      "gzip": 103183,
+      "note": "Route entry plus listed shared chunks; layout entry may load additional chunks."
+    },
+    "/api/admin/rankings/recalculate/route": {
+      "raw": 351356,
+      "gzip": 103183,
+      "note": "Route entry plus listed shared chunks; layout entry may load additional chunks."
+    },
+    "/api/admin/referral-fees/route": {
+      "raw": 351356,
+      "gzip": 103183,
+      "note": "Route entry plus listed shared chunks; layout entry may load additional chunks."
+    },
+    "/api/admin/reports/route": {
+      "raw": 351356,
+      "gzip": 103183,
+      "note": "Route entry plus listed shared chunks; layout entry may load additional chunks."
+    },
+    "/api/admin/pilot-analytics/route": {
+      "raw": 351356,
+      "gzip": 103183,
+      "note": "Route entry plus listed shared chunks; layout entry may load additional chunks."
+    },
+    "/api/admin/support/route": {
+      "raw": 351356,
+      "gzip": 103183,
+      "note": "Route entry plus listed shared chunks; layout entry may load additional chunks."
+    },
+    "/api/admin/tv/videos/route": {
+      "raw": 351356,
+      "gzip": 103183,
+      "note": "Route entry plus listed shared chunks; layout entry may load additional chunks."
+    },
+    "/api/admin/venue-claim-codes/route": {
+      "raw": 351356,
+      "gzip": 103183,
+      "note": "Route entry plus listed shared chunks; layout entry may load additional chunks."
+    },
+    "/api/admin/venue-claims/route": {
+      "raw": 351356,
+      "gzip": 103183,
+      "note": "Route entry plus listed shared chunks; layout entry may load additional chunks."
+    },
+    "/api/admin/nfc-tags/route": {
+      "raw": 351356,
+      "gzip": 103183,
+      "note": "Route entry plus listed shared chunks; layout entry may load additional chunks."
+    },
+    "/api/admin/venue-signup-requests/route": {
+      "raw": 351356,
+      "gzip": 103183,
+      "note": "Route entry plus listed shared chunks; layout entry may load additional chunks."
+    },
+    "/api/admin/venues/preview/route": {
+      "raw": 351356,
+      "gzip": 103183,
+      "note": "Route entry plus listed shared chunks; layout entry may load additional chunks."
+    },
+    "/api/admin/venues/media/route": {
+      "raw": 351356,
+      "gzip": 103183,
+      "note": "Route entry plus listed shared chunks; layout entry may load additional chunks."
+    },
+    "/api/admin/venues/route": {
+      "raw": 351356,
+      "gzip": 103183,
+      "note": "Route entry plus listed shared chunks; layout entry may load additional chunks."
+    },
+    "/api/agent/commissions/route": {
+      "raw": 351356,
+      "gzip": 103183,
+      "note": "Route entry plus listed shared chunks; layout entry may load additional chunks."
+    },
+    "/api/admin/tv/import/route": {
+      "raw": 351356,
+      "gzip": 103183,
+      "note": "Route entry plus listed shared chunks; layout entry may load additional chunks."
+    },
+    "/api/cron/dmca-restoration/route": {
+      "raw": 351356,
+      "gzip": 103183,
+      "note": "Route entry plus listed shared chunks; layout entry may load additional chunks."
+    },
+    "/api/cron/finance/route": {
+      "raw": 351356,
+      "gzip": 103183,
+      "note": "Route entry plus listed shared chunks; layout entry may load additional chunks."
+    },
+    "/api/cron/image-moderation/route": {
+      "raw": 351356,
+      "gzip": 103183,
+      "note": "Route entry plus listed shared chunks; layout entry may load additional chunks."
+    },
+    "/api/admin/sales-agents/route": {
+      "raw": 351356,
+      "gzip": 103183,
+      "note": "Route entry plus listed shared chunks; layout entry may load additional chunks."
+    },
+    "/api/cron/shift-checkins/route": {
+      "raw": 351356,
+      "gzip": 103183,
+      "note": "Route entry plus listed shared chunks; layout entry may load additional chunks."
+    },
+    "/api/cron/video-moderation/route": {
+      "raw": 351356,
+      "gzip": 103183,
+      "note": "Route entry plus listed shared chunks; layout entry may load additional chunks."
+    },
+    "/api/customer/directions/route": {
+      "raw": 351356,
+      "gzip": 103183,
+      "note": "Route entry plus listed shared chunks; layout entry may load additional chunks."
+    },
+    "/api/customer/favorites/route": {
+      "raw": 351356,
+      "gzip": 103183,
+      "note": "Route entry plus listed shared chunks; layout entry may load additional chunks."
+    },
+    "/api/customer/follows/route": {
+      "raw": 351356,
+      "gzip": 103183,
+      "note": "Route entry plus listed shared chunks; layout entry may load additional chunks."
+    },
+    "/api/admin/image-moderation/route": {
+      "raw": 351356,
+      "gzip": 103183,
+      "note": "Route entry plus listed shared chunks; layout entry may load additional chunks."
+    },
+    "/api/customer/profile/route": {
+      "raw": 351356,
+      "gzip": 103183,
+      "note": "Route entry plus listed shared chunks; layout entry may load additional chunks."
+    },
+    "/api/customer/saved/route": {
+      "raw": 351356,
+      "gzip": 103183,
+      "note": "Route entry plus listed shared chunks; layout entry may load additional chunks."
+    },
+    "/api/customer/venue-follows/route": {
+      "raw": 351356,
+      "gzip": 103183,
+      "note": "Route entry plus listed shared chunks; layout entry may load additional chunks."
+    },
+    "/api/customer/going/route": {
+      "raw": 351356,
+      "gzip": 103183,
+      "note": "Route entry plus listed shared chunks; layout entry may load additional chunks."
+    },
+    "/api/dancer/analytics/route": {
+      "raw": 351356,
+      "gzip": 103183,
+      "note": "Route entry plus listed shared chunks; layout entry may load additional chunks."
+    },
+    "/api/dancer/billing/checkout/route": {
+      "raw": 351356,
+      "gzip": 103183,
+      "note": "Route entry plus listed shared chunks; layout entry may load additional chunks."
+    },
+    "/api/dancer/billing/portal/route": {
+      "raw": 351356,
+      "gzip": 103183,
+      "note": "Route entry plus listed shared chunks; layout entry may load additional chunks."
+    },
+    "/api/dancer/billing/route": {
+      "raw": 351356,
+      "gzip": 103183,
+      "note": "Route entry plus listed shared chunks; layout entry may load additional chunks."
+    },
+    "/api/dancer/finance/route": {
+      "raw": 351356,
+      "gzip": 103183,
+      "note": "Route entry plus listed shared chunks; layout entry may load additional chunks."
+    },
+    "/api/dancer/finance/statement/route": {
+      "raw": 351356,
+      "gzip": 103183,
+      "note": "Route entry plus listed shared chunks; layout entry may load additional chunks."
+    },
+    "/api/admin/subscriptions/route": {
+      "raw": 351356,
+      "gzip": 103183,
+      "note": "Route entry plus listed shared chunks; layout entry may load additional chunks."
+    },
+    "/api/dancer/photos/preview/route": {
+      "raw": 351356,
+      "gzip": 103183,
+      "note": "Route entry plus listed shared chunks; layout entry may load additional chunks."
+    },
+    "/api/dancer/media/pin/route": {
+      "raw": 351356,
+      "gzip": 103183,
+      "note": "Route entry plus listed shared chunks; layout entry may load additional chunks."
+    },
+    "/api/dancer/photos/route": {
+      "raw": 351356,
+      "gzip": 103183,
+      "note": "Route entry plus listed shared chunks; layout entry may load additional chunks."
+    },
+    "/api/customer/deal-saves/route": {
+      "raw": 351356,
+      "gzip": 103183,
+      "note": "Route entry plus listed shared chunks; layout entry may load additional chunks."
+    },
+    "/api/dancer/ranking-events/route": {
+      "raw": 351356,
+      "gzip": 103183,
+      "note": "Route entry plus listed shared chunks; layout entry may load additional chunks."
+    },
+    "/api/auth/route": {
+      "raw": 351356,
+      "gzip": 103183,
+      "note": "Route entry plus listed shared chunks; layout entry may load additional chunks."
+    },
+    "/api/dancer/reviews/route": {
+      "raw": 351356,
+      "gzip": 103183,
+      "note": "Route entry plus listed shared chunks; layout entry may load additional chunks."
+    },
+    "/api/dancer/profile/visibility/route": {
+      "raw": 351356,
+      "gzip": 103183,
+      "note": "Route entry plus listed shared chunks; layout entry may load additional chunks."
+    },
+    "/api/dancer/shifts/route": {
+      "raw": 351356,
+      "gzip": 103183,
+      "note": "Route entry plus listed shared chunks; layout entry may load additional chunks."
+    },
+    "/api/dancer/tv/videos/route": {
+      "raw": 351356,
+      "gzip": 103183,
+      "note": "Route entry plus listed shared chunks; layout entry may load additional chunks."
+    },
+    "/api/dancer/tv/videos/[id]/route": {
+      "raw": 351356,
+      "gzip": 103183,
+      "note": "Route entry plus listed shared chunks; layout entry may load additional chunks."
+    },
+    "/api/dancer/shifts/check-in/route": {
+      "raw": 351356,
+      "gzip": 103183,
+      "note": "Route entry plus listed shared chunks; layout entry may load additional chunks."
+    },
+    "/api/dancer/verification-documents/route": {
+      "raw": 351356,
+      "gzip": 103183,
+      "note": "Route entry plus listed shared chunks; layout entry may load additional chunks."
+    },
+    "/api/dancer/venue-verification/route": {
+      "raw": 351356,
+      "gzip": 103183,
+      "note": "Route entry plus listed shared chunks; layout entry may load additional chunks."
+    },
+    "/api/dancer/weekly-report/route": {
+      "raw": 351356,
+      "gzip": 103183,
+      "note": "Route entry plus listed shared chunks; layout entry may load additional chunks."
+    },
+    "/api/deals/redeem/[token]/route": {
+      "raw": 351356,
+      "gzip": 103183,
+      "note": "Route entry plus listed shared chunks; layout entry may load additional chunks."
+    },
+    "/api/dmca/cases/[id]/route": {
+      "raw": 351356,
+      "gzip": 103183,
+      "note": "Route entry plus listed shared chunks; layout entry may load additional chunks."
+    },
+    "/api/deals/redemptions/route": {
+      "raw": 351356,
+      "gzip": 103183,
+      "note": "Route entry plus listed shared chunks; layout entry may load additional chunks."
+    },
+    "/api/dmca/notices/route": {
+      "raw": 351356,
+      "gzip": 103183,
+      "note": "Route entry plus listed shared chunks; layout entry may load additional chunks."
+    },
+    "/api/health/route": {
+      "raw": 351356,
+      "gzip": 103183,
+      "note": "Route entry plus listed shared chunks; layout entry may load additional chunks."
+    },
+    "/api/health/supabase/route": {
+      "raw": 351356,
+      "gzip": 103183,
+      "note": "Route entry plus listed shared chunks; layout entry may load additional chunks."
+    },
+    "/api/nfc/[token]/route": {
+      "raw": 351356,
+      "gzip": 103183,
+      "note": "Route entry plus listed shared chunks; layout entry may load additional chunks."
+    },
+    "/api/dancer/profile/route": {
+      "raw": 351356,
+      "gzip": 103183,
+      "note": "Route entry plus listed shared chunks; layout entry may load additional chunks."
+    },
+    "/api/notifications/route": {
+      "raw": 351356,
+      "gzip": 103183,
+      "note": "Route entry plus listed shared chunks; layout entry may load additional chunks."
+    },
+    "/api/events/route": {
+      "raw": 351356,
+      "gzip": 103183,
+      "note": "Route entry plus listed shared chunks; layout entry may load additional chunks."
+    },
+    "/api/public/cities/route": {
+      "raw": 351356,
+      "gzip": 103183,
+      "note": "Route entry plus listed shared chunks; layout entry may load additional chunks."
+    },
+    "/api/public/dancers/[slug]/route": {
+      "raw": 351356,
+      "gzip": 103183,
+      "note": "Route entry plus listed shared chunks; layout entry may load additional chunks."
+    },
+    "/api/public/dancers/route": {
+      "raw": 351356,
+      "gzip": 103183,
+      "note": "Route entry plus listed shared chunks; layout entry may load additional chunks."
+    },
+    "/api/public/discovery/route": {
+      "raw": 351356,
+      "gzip": 103183,
+      "note": "Route entry plus listed shared chunks; layout entry may load additional chunks."
+    },
+    "/api/public/engagement-shares/route": {
+      "raw": 351356,
+      "gzip": 103183,
+      "note": "Route entry plus listed shared chunks; layout entry may load additional chunks."
+    },
+    "/api/public/maps/embed/route": {
+      "raw": 351356,
+      "gzip": 103183,
+      "note": "Route entry plus listed shared chunks; layout entry may load additional chunks."
+    },
+    "/api/public/share-qr/route": {
+      "raw": 351356,
+      "gzip": 103183,
+      "note": "Route entry plus listed shared chunks; layout entry may load additional chunks."
+    },
+    "/api/public/tv/[id]/events/route": {
+      "raw": 351356,
+      "gzip": 103183,
+      "note": "Route entry plus listed shared chunks; layout entry may load additional chunks."
+    },
+    "/api/deals/redemptions/[token]/events/route": {
+      "raw": 351356,
+      "gzip": 103183,
+      "note": "Route entry plus listed shared chunks; layout entry may load additional chunks."
+    },
+    "/api/public/tv/count/route": {
+      "raw": 351356,
+      "gzip": 103183,
+      "note": "Route entry plus listed shared chunks; layout entry may load additional chunks."
+    },
+    "/api/public/tv/route": {
+      "raw": 351356,
+      "gzip": 103183,
+      "note": "Route entry plus listed shared chunks; layout entry may load additional chunks."
+    },
+    "/api/public/venue-events/route": {
+      "raw": 351356,
+      "gzip": 103183,
+      "note": "Route entry plus listed shared chunks; layout entry may load additional chunks."
+    },
+    "/api/public/venues/route": {
+      "raw": 351356,
+      "gzip": 103183,
+      "note": "Route entry plus listed shared chunks; layout entry may load additional chunks."
+    },
+    "/api/public/media-likes/route": {
+      "raw": 351356,
+      "gzip": 103183,
+      "note": "Route entry plus listed shared chunks; layout entry may load additional chunks."
+    },
+    "/api/stripe/webhook/route": {
+      "raw": 351356,
+      "gzip": 103183,
+      "note": "Route entry plus listed shared chunks; layout entry may load additional chunks."
+    },
+    "/api/support/route": {
+      "raw": 351356,
+      "gzip": 103183,
+      "note": "Route entry plus listed shared chunks; layout entry may load additional chunks."
+    },
+    "/api/venue/access-code/preview/route": {
+      "raw": 351356,
+      "gzip": 103183,
+      "note": "Route entry plus listed shared chunks; layout entry may load additional chunks."
+    },
+    "/api/venue/claims/route": {
+      "raw": 351356,
+      "gzip": 103183,
+      "note": "Route entry plus listed shared chunks; layout entry may load additional chunks."
+    },
+    "/api/dancer/dashboard/route": {
+      "raw": 351356,
+      "gzip": 103183,
+      "note": "Route entry plus listed shared chunks; layout entry may load additional chunks."
+    },
+    "/api/reports/route": {
+      "raw": 351356,
+      "gzip": 103183,
+      "note": "Route entry plus listed shared chunks; layout entry may load additional chunks."
+    },
+    "/api/venue/cover-image/route": {
+      "raw": 351356,
+      "gzip": 103183,
+      "note": "Route entry plus listed shared chunks; layout entry may load additional chunks."
+    },
+    "/api/venue/dancer-verifications/route": {
+      "raw": 351356,
+      "gzip": 103183,
+      "note": "Route entry plus listed shared chunks; layout entry may load additional chunks."
+    },
+    "/api/venue/deal/qr/route": {
+      "raw": 351356,
+      "gzip": 103183,
+      "note": "Route entry plus listed shared chunks; layout entry may load additional chunks."
+    },
+    "/api/venue/deal-requests/route": {
+      "raw": 351356,
+      "gzip": 103183,
+      "note": "Route entry plus listed shared chunks; layout entry may load additional chunks."
+    },
+    "/api/venue/dashboard/route": {
+      "raw": 351356,
+      "gzip": 103183,
+      "note": "Route entry plus listed shared chunks; layout entry may load additional chunks."
+    },
+    "/api/venue/finance/route": {
+      "raw": 351356,
+      "gzip": 103183,
+      "note": "Route entry plus listed shared chunks; layout entry may load additional chunks."
+    },
+    "/api/venue/deal/route": {
+      "raw": 351356,
+      "gzip": 103183,
+      "note": "Route entry plus listed shared chunks; layout entry may load additional chunks."
+    },
+    "/api/venue/logo-image/route": {
+      "raw": 351356,
+      "gzip": 103183,
+      "note": "Route entry plus listed shared chunks; layout entry may load additional chunks."
+    },
+    "/api/venue/nfc-tags/route": {
+      "raw": 351356,
+      "gzip": 103183,
+      "note": "Route entry plus listed shared chunks; layout entry may load additional chunks."
+    },
+    "/api/venue/finance/statement/route": {
+      "raw": 351356,
+      "gzip": 103183,
+      "note": "Route entry plus listed shared chunks; layout entry may load additional chunks."
+    },
+    "/api/venue/nfc-support/route": {
+      "raw": 351356,
+      "gzip": 103183,
+      "note": "Route entry plus listed shared chunks; layout entry may load additional chunks."
+    },
+    "/api/venue/profile/route": {
+      "raw": 351356,
+      "gzip": 103183,
+      "note": "Route entry plus listed shared chunks; layout entry may load additional chunks."
+    },
+    "/api/venue/qr-code/route": {
+      "raw": 351356,
+      "gzip": 103183,
+      "note": "Route entry plus listed shared chunks; layout entry may load additional chunks."
+    },
+    "/api/venue/referral-fee/route": {
+      "raw": 351356,
+      "gzip": 103183,
+      "note": "Route entry plus listed shared chunks; layout entry may load additional chunks."
+    },
+    "/api/venue/signup-requests/confirmation/route": {
+      "raw": 351356,
+      "gzip": 103183,
+      "note": "Route entry plus listed shared chunks; layout entry may load additional chunks."
+    },
+    "/api/venue/team/invitations/route": {
+      "raw": 351356,
+      "gzip": 103183,
+      "note": "Route entry plus listed shared chunks; layout entry may load additional chunks."
+    },
+    "/api/public/venues/[slug]/route": {
+      "raw": 351356,
+      "gzip": 103183,
+      "note": "Route entry plus listed shared chunks; layout entry may load additional chunks."
+    },
+    "/api/venue/publication/route": {
+      "raw": 351356,
+      "gzip": 103183,
+      "note": "Route entry plus listed shared chunks; layout entry may load additional chunks."
+    },
+    "/api/venue/tv/videos/route": {
+      "raw": 351356,
+      "gzip": 103183,
+      "note": "Route entry plus listed shared chunks; layout entry may load additional chunks."
+    },
+    "/api/venue/signup-requests/route": {
+      "raw": 351356,
+      "gzip": 103183,
+      "note": "Route entry plus listed shared chunks; layout entry may load additional chunks."
+    },
+    "/api/venue/team/route": {
+      "raw": 351356,
+      "gzip": 103183,
+      "note": "Route entry plus listed shared chunks; layout entry may load additional chunks."
+    },
+    "/api/dancer/avatar/route": {
+      "raw": 351356,
+      "gzip": 103183,
+      "note": "Route entry plus listed shared chunks; layout entry may load additional chunks."
+    },
+    "/auth/callback/route": {
+      "raw": 351356,
+      "gzip": 103183,
+      "note": "Route entry plus listed shared chunks; layout entry may load additional chunks."
+    },
+    "/route": {
+      "raw": 351356,
+      "gzip": 103183,
+      "note": "Route entry plus listed shared chunks; layout entry may load additional chunks."
+    },
+    "/live-shell.js/route": {
+      "raw": 351356,
+      "gzip": 103183,
+      "note": "Route entry plus listed shared chunks; layout entry may load additional chunks."
+    },
+    "/api/admin/approvals/route": {
+      "raw": 351356,
+      "gzip": 103183,
+      "note": "Route entry plus listed shared chunks; layout entry may load additional chunks."
+    },
+    "/api/admin/operations/route": {
+      "raw": 351356,
+      "gzip": 103183,
+      "note": "Route entry plus listed shared chunks; layout entry may load additional chunks."
+    },
+    "/clubs/join/page": {
+      "raw": 351356,
+      "gzip": 103183,
+      "note": "Route entry plus listed shared chunks; layout entry may load additional chunks."
+    },
+    "/dancers/page": {
+      "raw": 351356,
+      "gzip": 103183,
+      "note": "Route entry plus listed shared chunks; layout entry may load additional chunks."
+    },
+    "/tonight/page": {
+      "raw": 351356,
+      "gzip": 103183,
+      "note": "Route entry plus listed shared chunks; layout entry may load additional chunks."
+    },
+    "/trending/page": {
+      "raw": 351356,
+      "gzip": 103183,
+      "note": "Route entry plus listed shared chunks; layout entry may load additional chunks."
+    },
+    "/venues/[slug]/claim/page": {
+      "raw": 351356,
+      "gzip": 103183,
+      "note": "Route entry plus listed shared chunks; layout entry may load additional chunks."
+    },
+    "/venues/page": {
+      "raw": 351356,
+      "gzip": 103183,
+      "note": "Route entry plus listed shared chunks; layout entry may load additional chunks."
+    },
+    "/account/page": {
+      "raw": 401807,
+      "gzip": 117691,
+      "note": "Route entry plus listed shared chunks; layout entry may load additional chunks."
+    },
+    "/admin/page": {
+      "raw": 677121,
+      "gzip": 175908,
+      "note": "Route entry plus listed shared chunks; layout entry may load additional chunks."
+    },
+    "/admin/operations/page": {
+      "raw": 677121,
+      "gzip": 175908,
+      "note": "Route entry plus listed shared chunks; layout entry may load additional chunks."
+    },
+    "/account/reset-password/page": {
+      "raw": 360548,
+      "gzip": 106410,
+      "note": "Route entry plus listed shared chunks; layout entry may load additional chunks."
+    },
+    "/dashboard/customer/saved/page": {
+      "raw": 1241845,
+      "gzip": 307723,
+      "note": "Route entry plus listed shared chunks; layout entry may load additional chunks."
+    },
+    "/dashboard/agent/page": {
+      "raw": 392333,
+      "gzip": 116214,
+      "note": "Route entry plus listed shared chunks; layout entry may load additional chunks."
+    },
+    "/dashboard/dancer/page": {
+      "raw": 1241845,
+      "gzip": 307723,
+      "note": "Route entry plus listed shared chunks; layout entry may load additional chunks."
+    },
+    "/dashboard/customer/offers/page": {
+      "raw": 1241845,
+      "gzip": 307723,
+      "note": "Route entry plus listed shared chunks; layout entry may load additional chunks."
+    },
+    "/dashboard/venue/page": {
+      "raw": 1241845,
+      "gzip": 307723,
+      "note": "Route entry plus listed shared chunks; layout entry may load additional chunks."
+    },
+    "/deals/claim/[dealId]/page": {
+      "raw": 363038,
+      "gzip": 107898,
+      "note": "Route entry plus listed shared chunks; layout entry may load additional chunks."
+    },
+    "/dashboard/dancer/tv/page": {
+      "raw": 649034,
+      "gzip": 183030,
+      "note": "Route entry plus listed shared chunks; layout entry may load additional chunks."
+    },
+    "/deals/redeem/[token]/page": {
+      "raw": 366142,
+      "gzip": 108940,
+      "note": "Route entry plus listed shared chunks; layout entry may load additional chunks."
+    },
+    "/dmca/counter/[id]/page": {
+      "raw": 368871,
+      "gzip": 109338,
+      "note": "Route entry plus listed shared chunks; layout entry may load additional chunks."
+    },
+    "/deals/pass/[token]/page": {
+      "raw": 359330,
+      "gzip": 106310,
+      "note": "Route entry plus listed shared chunks; layout entry may load additional chunks."
+    },
+    "/nfc/[token]/page": {
+      "raw": 376606,
+      "gzip": 112314,
+      "note": "Route entry plus listed shared chunks; layout entry may load additional chunks."
+    },
+    "/tv/[id]/page": {
+      "raw": 351356,
+      "gzip": 103183,
+      "note": "Route entry plus listed shared chunks; layout entry may load additional chunks."
+    },
+    "/tv/page": {
+      "raw": 351356,
+      "gzip": 103183,
+      "note": "Route entry plus listed shared chunks; layout entry may load additional chunks."
+    },
+    "/venue-team/invite/[token]/page": {
+      "raw": 368625,
+      "gzip": 109609,
+      "note": "Route entry plus listed shared chunks; layout entry may load additional chunks."
+    },
+    "/venue/confirm-email/page": {
+      "raw": 363583,
+      "gzip": 108131,
+      "note": "Route entry plus listed shared chunks; layout entry may load additional chunks."
+    },
+    "/venues/[slug]/page": {
+      "raw": 351356,
+      "gzip": 103183,
+      "note": "Route entry plus listed shared chunks; layout entry may load additional chunks."
+    },
+    "/dmca/page": {
+      "raw": 364774,
+      "gzip": 108070,
+      "note": "Route entry plus listed shared chunks; layout entry may load additional chunks."
+    },
+    "/dashboard/customer/page": {
+      "raw": 1241845,
+      "gzip": 307723,
+      "note": "Route entry plus listed shared chunks; layout entry may load additional chunks."
+    },
+    "/dancers/[slug]/page": {
+      "raw": 457328,
+      "gzip": 134955,
+      "note": "Route entry plus listed shared chunks; layout entry may load additional chunks."
+    }
+  }
+}

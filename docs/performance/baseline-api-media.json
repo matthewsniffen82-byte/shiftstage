@@ -1,0 +1,237 @@
+{
+  "measuredAt": "2026-09-09T09:05:54.939Z",
+  "base": "https://www.mydancr.com",
+  "note": "Unthrottled read-only probes; at most three 1 MiB video prefixes. Signed URL query strings are not retained. Results are not mobile startup measurements.",
+  "api": [
+    {
+      "endpoint": "/api/public/cities",
+      "run": 1,
+      "status": 200,
+      "headersMs": 200.03310000000002,
+      "totalMs": 205.3856,
+      "decodedBytes": 101,
+      "cacheControl": "public, max-age=60",
+      "serverTiming": null
+    },
+    {
+      "endpoint": "/api/public/cities",
+      "run": 2,
+      "status": 200,
+      "headersMs": 48.76650000000001,
+      "totalMs": 49.99260000000004,
+      "decodedBytes": 101,
+      "cacheControl": "public, max-age=60",
+      "serverTiming": null
+    },
+    {
+      "endpoint": "/api/public/cities",
+      "run": 3,
+      "status": 200,
+      "headersMs": 59.96350000000001,
+      "totalMs": 60.73290000000003,
+      "decodedBytes": 101,
+      "cacheControl": "public, max-age=60",
+      "serverTiming": null
+    },
+    {
+      "endpoint": "/api/public/discovery?city=Las%20Vegas",
+      "run": 1,
+      "status": 200,
+      "headersMs": 616.7540999999999,
+      "totalMs": 679.2657999999999,
+      "decodedBytes": 270467,
+      "cacheControl": "public, max-age=10",
+      "serverTiming": "discovery;dur=481"
+    },
+    {
+      "endpoint": "/api/public/discovery?city=Las%20Vegas",
+      "run": 2,
+      "status": 200,
+      "headersMs": 49.753400000000056,
+      "totalMs": 53.065900000000056,
+      "decodedBytes": 270467,
+      "cacheControl": "public, max-age=10",
+      "serverTiming": "discovery;dur=481"
+    },
+    {
+      "endpoint": "/api/public/discovery?city=Las%20Vegas",
+      "run": 3,
+      "status": 200,
+      "headersMs": 47.346900000000005,
+      "totalMs": 51.46270000000004,
+      "decodedBytes": 270467,
+      "cacheControl": "public, max-age=10",
+      "serverTiming": "discovery;dur=481"
+    },
+    {
+      "endpoint": "/api/public/venues?city=Las%20Vegas",
+      "run": 1,
+      "status": 200,
+      "headersMs": 255.75,
+      "totalMs": 256.88340000000017,
+      "decodedBytes": 10863,
+      "cacheControl": "public, max-age=10",
+      "serverTiming": null
+    },
+    {
+      "endpoint": "/api/public/venues?city=Las%20Vegas",
+      "run": 2,
+      "status": 200,
+      "headersMs": 58.12049999999999,
+      "totalMs": 59.09590000000003,
+      "decodedBytes": 10863,
+      "cacheControl": "public, max-age=10",
+      "serverTiming": null
+    },
+    {
+      "endpoint": "/api/public/venues?city=Las%20Vegas",
+      "run": 3,
+      "status": 200,
+      "headersMs": 41.74800000000005,
+      "totalMs": 42.896600000000035,
+      "decodedBytes": 10863,
+      "cacheControl": "public, max-age=10",
+      "serverTiming": null
+    },
+    {
+      "endpoint": "/api/public/tv?city=Las%20Vegas",
+      "run": 1,
+      "status": 200,
+      "headersMs": 712.3269999999998,
+      "totalMs": 714.5283,
+      "decodedBytes": 55590,
+      "cacheControl": "public, max-age=10",
+      "serverTiming": null
+    },
+    {
+      "endpoint": "/api/public/tv?city=Las%20Vegas",
+      "run": 2,
+      "status": 200,
+      "headersMs": 53.19679999999971,
+      "totalMs": 54.22689999999966,
+      "decodedBytes": 55590,
+      "cacheControl": "public, max-age=10",
+      "serverTiming": null
+    },
+    {
+      "endpoint": "/api/public/tv?city=Las%20Vegas",
+      "run": 3,
+      "status": 200,
+      "headersMs": 48.63030000000026,
+      "totalMs": 52.978599999999915,
+      "decodedBytes": 55590,
+      "cacheControl": "public, max-age=10",
+      "serverTiming": null
+    }
+  ],
+  "media": [
+    {
+      "id": "7fd16e1d-7f80-4672-8a27-8ffcbc0d2593",
+      "width": 1080,
+      "height": 1920,
+      "durationSeconds": 15.09,
+      "status": 206,
+      "range": "bytes 0-1048575/9452984",
+      "acceptRanges": null,
+      "cacheControl": null,
+      "contentType": "video/mp4",
+      "headersMs": 398.9552999999996,
+      "prefixBytes": 1048576,
+      "totalMs": 452.9848999999999,
+      "topLevelAtomsInPrefix": [
+        {
+          "type": "ftyp",
+          "offset": 0,
+          "size": 32
+        },
+        {
+          "type": "moov",
+          "offset": 32,
+          "size": 12579
+        },
+        {
+          "type": "free",
+          "offset": 12611,
+          "size": 8
+        },
+        {
+          "type": "mdat",
+          "offset": 12619,
+          "size": 9440365
+        }
+      ]
+    },
+    {
+      "id": "805f3199-9a24-4f1d-80bf-f75b37dd606f",
+      "width": 1080,
+      "height": 1920,
+      "durationSeconds": 15.09,
+      "status": 206,
+      "range": "bytes 0-1048575/10319504",
+      "acceptRanges": null,
+      "cacheControl": null,
+      "contentType": "video/mp4",
+      "headersMs": 371.5490999999997,
+      "prefixBytes": 1048576,
+      "totalMs": 556.6023,
+      "topLevelAtomsInPrefix": [
+        {
+          "type": "ftyp",
+          "offset": 0,
+          "size": 32
+        },
+        {
+          "type": "moov",
+          "offset": 32,
+          "size": 12827
+        },
+        {
+          "type": "free",
+          "offset": 12859,
+          "size": 8
+        },
+        {
+          "type": "mdat",
+          "offset": 12867,
+          "size": 10306637
+        }
+      ]
+    },
+    {
+      "id": "27b937ba-1138-4552-9522-652aa613d715",
+      "width": 1080,
+      "height": 1920,
+      "durationSeconds": 9.9,
+      "status": 206,
+      "range": "bytes 0-1048575/3256367",
+      "acceptRanges": null,
+      "cacheControl": null,
+      "contentType": "video/mp4",
+      "headersMs": 555.4749000000002,
+      "prefixBytes": 1048576,
+      "totalMs": 808.2873999999997,
+      "topLevelAtomsInPrefix": [
+        {
+          "type": "ftyp",
+          "offset": 0,
+          "size": 32
+        },
+        {
+          "type": "moov",
+          "offset": 32,
+          "size": 9007
+        },
+        {
+          "type": "free",
+          "offset": 9039,
+          "size": 8
+        },
+        {
+          "type": "mdat",
+          "offset": 9047,
+          "size": 3247320
+        }
+      ]
+    }
+  ]
+}
