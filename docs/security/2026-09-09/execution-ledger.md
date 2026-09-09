@@ -15,14 +15,14 @@ The initial source baseline is `bb14ecd162af1594c1b031d8aeb38442bbe114d6`. Step 
 - Production data mutations during audit: none.
 - New automated application tests: none in the documentation-only baseline. Existing tests establish starting behavior, with their limits explicitly documented.
 
-The build and deployment evidence will be recorded after verification. A commit cannot contain its own hash; the first following delivery record will carry the Step 1 hash and exact deployment URL.
+Step 1 delivered as `50d4eb543dbfc93dbed6f0663c51aa2332542cb4`, pushed to origin/main with matching local HEAD. [Exact Vercel deployment](https://vercel.com/ai-movie-jobs/shiftstage/A8nLZchDawqDwFrvZQEGRgRGkrhj) reached success. At 2026-09-09 09:08 UTC, root and both health endpoints returned 200; account and admin approval APIs rejected anonymous requests with 401. Working tree was clean.
 
 ## Step status
 
 | Step | Area | State |
 | --- | --- | --- |
-| 1 | Complete audit / threat model | All baseline validation passed; commit/deployment pending |
-| 2 | Secrets and environment | Not started |
+| 1 | Complete audit / threat model | Delivered and healthy: 50d4eb543dbfc93dbed6f0663c51aa2332542cb4 |
+| 2 | Secrets and environment | 18 focused / 1,972 full tests, lint, TypeScript and production build passed; deployment pending |
 | 3 | Supabase RLS | Not started |
 | 4 | Storage permissions | Not started |
 | 5 | Authentication / recovery | Not started |
