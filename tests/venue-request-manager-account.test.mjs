@@ -126,6 +126,7 @@ test('an interrupted insert response preserves a request that already committed'
 test('a saved request waits for email confirmation when delivery is temporarily unavailable', async () => {
   let created = 0;
   const route = compile(read('app/api/venue/signup-requests/route.ts'), {
+    '@/src/lib/security/request-client-address': { requestClientAddress: () => "unknown" },
     '@/src/lib/bounded-json-body': { readBoundedJsonObject: request => request.json() },
     '@/src/lib/supabase/admin': { createAdminSupabaseClient: () => ({}) },
     '@/src/lib/dancr/public-request-rate-limit': { enforcePublicRequestRateLimit: async () => {}, PublicRequestRateLimitError: class extends Error {} },
@@ -186,6 +187,7 @@ test('venue validation errors reach the applicant without exposing internal erro
   const api = compile(read('src/lib/api.ts'), { './api-error-policy': policy, './security/safe-error-metadata': { safeErrorMetadata: () => ({}) } });
   let failure = new VenueSignupRequestUserError('The passwords do not match.');
   const route = compile(read('app/api/venue/signup-requests/route.ts'), {
+    '@/src/lib/security/request-client-address': { requestClientAddress: () => "unknown" },
     '@/src/lib/api': api,
     '@/src/lib/bounded-json-body': { readBoundedJsonObject: request => request.json() },
     '@/src/lib/supabase/admin': { createAdminSupabaseClient: () => ({}) },

@@ -20,9 +20,10 @@ test("public authentication and recovery bodies are stream bounded", () => {
 });
 
 test("login and signup attempts have durable keyed throttles", () => {
-  assert.match(auth, /enforceAuthAttemptRateLimit\(request, mode, role, email\)/);
+  assert.match(auth, /enforceAuthAttemptRateLimit\(request, mode, email\)/);
   assert.match(auth, /namespace: `auth_\$\{mode\}`/);
-  assert.match(auth, /subject: `\$\{role\}:\$\{email\}`/);
+  assert.match(auth, /subject: email/);
+  assert.doesNotMatch(auth, /subject: `\$\{role\}:/);
   assert.match(auth, /error instanceof PublicRequestRateLimitError/);
   assert.match(auth, /status: 429/);
 });

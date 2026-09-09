@@ -7,6 +7,7 @@ import {
 } from "@/src/lib/dancr/venue-signup-requests";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { safeErrorMetadata } from "@/src/lib/security/safe-error-metadata";
+import { requestClientAddress } from "@/src/lib/security/request-client-address";
 import { requireActiveVenueAccount } from "@/src/lib/dancr/auth";
 import { getVenueRequestForManager } from "@/src/lib/dancr/venue-request-account";
 import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
@@ -106,11 +107,5 @@ function acceptedResponse() {
 }
 
 function requestIp(request: Request) {
-  return (
-    request.headers.get("cf-connecting-ip")
-    || request.headers.get("x-vercel-forwarded-for")?.split(",")[0]?.trim()
-    || request.headers.get("x-forwarded-for")?.split(",")[0]?.trim()
-    || request.headers.get("x-real-ip")?.trim()
-    || `unknown:${request.headers.get("user-agent")?.slice(0, 160) || "client"}`
-  );
+  return requestClientAddress(request);
 }

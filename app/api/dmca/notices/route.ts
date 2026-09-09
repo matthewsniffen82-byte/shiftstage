@@ -8,6 +8,7 @@ import {
 } from "@/src/lib/dancr/dmca";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { safeErrorMetadata } from "@/src/lib/security/safe-error-metadata";
+import { requestClientAddress } from "@/src/lib/security/request-client-address";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -58,10 +59,5 @@ export async function POST(request: Request) {
 }
 
 function requestIp(request: Request) {
-  return (
-    request.headers.get("cf-connecting-ip")
-    || request.headers.get("x-real-ip")
-    || request.headers.get("x-forwarded-for")?.split(",")[0]?.trim()
-    || "unknown"
-  );
+  return requestClientAddress(request);
 }

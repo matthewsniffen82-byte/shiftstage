@@ -30,8 +30,8 @@ Step 1 delivered as `50d4eb543dbfc93dbed6f0663c51aa2332542cb4`, pushed to origin
 | 7 | Admin access / auditing | Delivered and healthy: d22462c5bd27675def76675af3f64e5e9a307fd8 and 61d926e9a1db7d1033e8d2f9fdd5fb3255d0ca5f |
 | 8 | Input validation | Delivered and healthy: 70cfac08932c4373a780f3714588d564da9c4cb4 |
 | 9 | XSS / HTML injection | Delivered and healthy: 96745f706e42030be530664bc704234ca298a10a |
-| 10 | CSRF / state changes | Implemented; final release validation and deployment verification pending |
-| 11 | Rate limits | Not started |
+| 10 | CSRF / state changes | Delivered and healthy: 15b6fbffece8d2ed437346d0567afb266b554756 |
+| 11 | Rate limits | Implemented; final release validation and deployment verification pending |
 | 12 | Bot resistance | Not started |
 | 13 | File upload handling | Not started |
 | 14 | API authorization / exposure | Not started |
@@ -144,5 +144,13 @@ Step 9 was pushed as `96745f706e42030be530664bc704234ca298a10a`. [Exact Vercel d
 ## Step 10 implementation
 
 The CSRF review found one LOW origin/content-type gap affecting three visitor-cookie POST endpoints. A shared guard rejects browser-origin mismatches and non-JSON forms before body/database work. Bearer-authenticated account and admin paths, worker authorization, webhooks and auth callbacks retain their existing boundaries. Thirty-eight new tests and the complete 2,805-test suite pass. See `step-10-csrf.md` for the review, machine-GET exception and testing limits. Final release checks and exact-commit deployment verification remain required before Step 11.
+
+## Step 10 delivery
+
+Step 10 was pushed as `15b6fbffece8d2ed437346d0567afb266b554756`. [Exact Vercel deployment](https://vercel.com/ai-movie-jobs/shiftstage/FfxD1QCo8RYXYw87oTwNbB9vHF8h) succeeded. Final validation after integrating the independent stylesheet-preload change passed all 2,806 tests, lint, TypeScript and production build. At 14:07:37 UTC, twelve safe live CSRF probes returned the expected 400/403/415 responses without valid engagement targets. At 14:07:38 UTC, health, protected-route denials, callback regression and all 30 readiness checks passed. Local HEAD matched origin/main with a clean worktree before Step 11.
+
+## Step 11 implementation
+
+Three MEDIUM rate-limit gaps were corrected: untrusted address-header precedence, role-dependent email attempt budgets and non-atomic venue access-preview admission. Existing limits and stronger rolling checks remain. Fifty new request/PostgreSQL regression tests exercise these boundaries; see `step-11-rate-limits.md` for coverage and limitations. No database or provider configuration is changed. Final release checks and exact-commit deployment verification are required before Step 12.
 
 After incorporating the independent stylesheet-preload release `bd70d9fa57e3a2acab72709ac8679a09c7f1159a`, final validation passed 2,806 tests, lint, TypeScript and production build. The migration gate verified 132 frozen files and postbuild skipped demo population. Only the three route hooks, shared guard, regression test and two audit documents belong to this step. Push, exact-commit deployment and health verification follow next.

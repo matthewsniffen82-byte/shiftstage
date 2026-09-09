@@ -2,6 +2,7 @@ import "server-only";
 
 import { createHmac } from "node:crypto";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { requestClientAddress } from "../security/request-client-address";
 
 export class PublicRequestRateLimitError extends Error {
   readonly retryAfterSeconds: number;
@@ -136,16 +137,6 @@ function throttleRecord(targetType: string, targetId: string, namespace: string)
     details: null,
     status: "resolved",
   };
-}
-
-function requestClientAddress(request: Request) {
-  return (
-    request.headers.get("x-vercel-forwarded-for")?.split(",")[0]?.trim()
-    || request.headers.get("x-forwarded-for")?.split(",")[0]?.trim()
-    || request.headers.get("cf-connecting-ip")?.trim()
-    || request.headers.get("x-real-ip")?.trim()
-    || `unknown:${request.headers.get("user-agent")?.slice(0, 160) || "client"}`
-  );
 }
 
 function securityHash(value: string) {

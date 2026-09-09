@@ -2,6 +2,8 @@ import "server-only";
 
 import { createHmac } from "node:crypto";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { requestClientAddress } from "../security/request-client-address";
+import { enforcePublicRequestRateLimit, PublicRequestRateLimitError } from "./public-request-rate-limit";
 
 export type AccountRecoveryRole = "customer" | "dancer" | "venue" | "admin";
 export type AccountRecoveryEventType = "password_reset" | "email_lookup" | "venue_access_preview";
@@ -17,13 +19,7 @@ export class AccountRecoveryRateLimitError extends Error {
 }
 
 export function accountRecoveryRequestIp(request: Request) {
-  return (
-    request.headers.get("cf-connecting-ip")
-    || request.headers.get("x-vercel-forwarded-for")?.split(",")[0]?.trim()
-    || request.headers.get("x-forwarded-for")?.split(",")[0]?.trim()
-    || request.headers.get("x-real-ip")?.trim()
-    || `unknown:${request.headers.get("user-agent")?.slice(0, 160) || "client"}`
-  );
+  return requestClientAddress(request);
 }
 
 export async function enforceAccountRecoveryRateLimit(client: SupabaseClient, input: {
@@ -40,6 +36,20 @@ export async function enforceAccountRecoveryRateLimit(client: SupabaseClient, in
   const requestIpHash = recoveryHash(`ip:${accountRecoveryRequestIp(input.request)}`);
   const subjectHash = recoveryHash(`subject:${input.eventType}:${input.subject.trim().toLowerCase()}`);
   if (input.eventType === "venue_access_preview") {
+    // Serialize burst admission while preserving the existing rolling-window check.
+    try {
+      await enforcePublicRequestRateLimit(client, {
+        namespace: "venue_access_preview",
+        request: input.request,
+        subject: input.subject,
+        ...limits,
+      });
+    } catch (error) {
+      if (error instanceof PublicRequestRateLimitError) {
+        throw new AccountRecoveryRateLimitError(error.retryAfterSeconds);
+      }
+      throw error;
+    }
     await enforceCompatibilityRateLimit(client, {
       ...input,
       ...limits,

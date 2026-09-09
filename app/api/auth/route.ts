@@ -135,7 +135,7 @@ export async function POST(request: Request) {
       });
     }
 
-    await enforceAuthAttemptRateLimit(request, mode, role, email);
+    await enforceAuthAttemptRateLimit(request, mode, email);
     const password = readPassword(body.password);
 
     if (mode === "login") {
@@ -550,7 +550,6 @@ function authRateLimitMessage(error: unknown) {
 async function enforceAuthAttemptRateLimit(
   request: Request,
   mode: Exclude<AuthMode, "reset_password">,
-  role: AuthRole,
   email: string,
 ) {
   const limits = mode === "login"
@@ -559,7 +558,7 @@ async function enforceAuthAttemptRateLimit(
   await enforcePublicRequestRateLimit(createAdminSupabaseClient(), {
     namespace: `auth_${mode}`,
     request,
-    subject: `${role}:${email}`,
+    subject: email,
     ...limits,
   });
 }
