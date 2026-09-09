@@ -1,7 +1,7 @@
 import "server-only";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
-import OpenAI from "openai";
+import { createOpenAIClient } from "../openai-client";
 import { getOptionalServerEnv, getServerEnv } from "../server-env.ts";
 import {
   DancerIdentityReferenceRequiredError,
@@ -38,7 +38,7 @@ export async function analyzeDancerMediaIdentity(input: {
     throw new Error("Dancer media identity review requires at least one image.");
   }
   const referenceProvided = Boolean(input.referenceImage?.length);
-  const openai = new OpenAI({ apiKey: getServerEnv("OPENAI_API_KEY") });
+  const openai = await createOpenAIClient({ apiKey: getServerEnv("OPENAI_API_KEY") });
   const content: any[] = [
     {
       type: "input_text",

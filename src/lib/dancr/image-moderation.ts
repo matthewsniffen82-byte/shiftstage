@@ -2,7 +2,7 @@ import "server-only";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createHash, randomUUID } from "crypto";
-import OpenAI from "openai";
+import { createOpenAIClient } from "../openai-client";
 import { getServerEnv } from "../server-env";
 import { safeErrorMetadata } from "../security/safe-error-metadata";
 import {
@@ -709,7 +709,7 @@ export async function moderateImageWithOpenAI(admin: DancrClient, tempPath: stri
     apiKeyPresent: Boolean(apiKey),
     model: DANCR_IMAGE_MODERATION_MODEL,
   });
-  const openai = new OpenAI({ apiKey });
+  const openai = await createOpenAIClient({ apiKey });
   await runOpenAITextDiagnostic(openai);
   await verifyStorageObjectExists(admin, MODERATION_TEMP_BUCKET, tempPath);
   const imageUrl = await createModerationSignedUrl(admin, tempPath);

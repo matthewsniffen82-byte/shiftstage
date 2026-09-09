@@ -7,7 +7,8 @@ import { mkdtemp, readFile, readdir, rm, stat, writeFile } from "node:fs/promise
 import { tmpdir } from "node:os";
 import path from "node:path";
 import ffmpegPath from "ffmpeg-static";
-import OpenAI from "openai";
+import type OpenAI from "openai";
+import { createOpenAIClient } from "../openai-client";
 import { getServerEnv } from "../server-env";
 import { runVideoReviewChecks } from "./video-review-checks";
 import {
@@ -98,7 +99,7 @@ export async function moderateStoredMyDancrTvVideo(
   },
 ): Promise<MyDancrTvModerationResult> {
   const apiKey = getServerEnv("OPENAI_API_KEY");
-  const openai = new OpenAI({ apiKey });
+  const openai = await createOpenAIClient({ apiKey });
   const workspace = await mkdtemp(path.join(tmpdir(), "mydancr-tv-moderation-"));
   const extension = input.storageMime === "video/webm" ? "webm" : input.storageMime === "video/quicktime" ? "mov" : "mp4";
   const videoPath = path.join(workspace, `source.${extension}`);

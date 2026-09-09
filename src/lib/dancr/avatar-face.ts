@@ -1,7 +1,7 @@
 import "server-only";
 
 import { createHash } from "crypto";
-import OpenAI from "openai";
+import { createOpenAIClient } from "../openai-client";
 import { getOptionalServerEnv, getServerEnv } from "../server-env.ts";
 import {
   AvatarFaceDetectionUnavailableError,
@@ -112,7 +112,7 @@ async function selectPrimaryAvatarCandidate(
   candidates: Array<{ position: AvatarCandidatePosition; buffer: Buffer }>,
 ): Promise<AvatarCandidateSelection> {
   if (!process.env.OPENAI_API_KEY) throw new AvatarFaceDetectionUnavailableError();
-  const openai = new OpenAI({ apiKey: getServerEnv("OPENAI_API_KEY") });
+  const openai = await createOpenAIClient({ apiKey: getServerEnv("OPENAI_API_KEY") });
   const content: any[] = [
     {
       type: "input_text",
