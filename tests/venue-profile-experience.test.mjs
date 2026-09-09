@@ -36,7 +36,7 @@ test("the canonical in-app venue page is dedicated to the selected club and its 
   assert.match(venueDetail, /class="venue-secondary-actions"[\s\S]*?class="action-btn secondary follow-venue-btn[\s\S]*?data-venue-follow="\$\{venueValue\}"[\s\S]*?class="action-btn secondary venue-detail-share"[\s\S]*?data-share-venue="\$\{venueValue\}"/);
   assert.match(venueDetail, /venueDirectionsMarkup\(\{ venue, className: "venue-address-directions", city \}\)/);
   assert.match(venueDetail, /class="venue-identity-meta"[\s\S]*?class="venue-identity-location"><span class="meta">[\s\S]*?details\.city[\s\S]*?details\.state[\s\S]*?venue-identity-distance[\s\S]*?details\.distanceLabel/);
-  assert.match(venueDetail, /<h2 id="venueDetailName" class="venue-detail-accessible-name">\$\{details\.name\}<\/h2>[\s\S]*?class="venue-identity-meta"/);
+  assert.match(venueDetail, /<h2 id="venueDetailName" class="venue-detail-accessible-name">\$\{escapeHtml\(details\.name\)\}<\/h2>[\s\S]*?class="venue-identity-meta"/);
   assert.match(venueDetail, /details\.address \? `<div class="venue-address-line"><span>[\s\S]*?escapeHtml\(details\.address\)[\s\S]*?: ""/);
   assert.equal((venueDetail.match(/actionIconMarkup\("pin"\)/g) || []).length, 0);
   assert.equal((venueDetail.match(/venueDirectionsMarkup\(/g) || []).length, 1);
@@ -305,7 +305,7 @@ test("venue profiles stay full-screen with X dismissal and the shared floating n
   );
   assert.match(
     liveApp,
-    /class="venue-hero-brand-row">[\s\S]*?class="venue-main-photo\$\{visual\.attrs\.className\}"[\s\S]*?class="close-btn venue-detail-close"[\s\S]*?data-close-venue-profile[\s\S]*?aria-label="Close \$\{details\.name\} club profile"[\s\S]*?<svg class="icon" viewBox="0 0 24 24"><path d="M18 6 6 18"><\/path><path d="m6 6 12 12"><\/path><\/svg>[\s\S]*?class="venue-hero-body">/,
+    /class="venue-hero-brand-row">[\s\S]*?class="venue-main-photo\$\{visual\.attrs\.className\}"[\s\S]*?class="close-btn venue-detail-close"[\s\S]*?data-close-venue-profile[\s\S]*?aria-label="Close \$\{escapeHtml\(details\.name\)\} club profile"[\s\S]*?<svg class="icon" viewBox="0 0 24 24"><path d="M18 6 6 18"><\/path><path d="m6 6 12 12"><\/path><\/svg>[\s\S]*?class="venue-hero-body">/,
   );
   assert.doesNotMatch(
     liveApp,

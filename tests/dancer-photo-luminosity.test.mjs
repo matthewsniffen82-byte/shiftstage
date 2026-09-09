@@ -76,7 +76,7 @@ test("profile grid photos use the native responsive image path used by dancer di
   );
   assert.match(
     profileThumbRenderer,
-    /<img class="portrait \$\{item\.photoClass\} has-custom-photo" \$\{photoAttrs\}[^>]*sizes="\(max-width: 720px\) calc\(\(100vw - 6px\) \/ 3\), 250px"[^>]*width="360" height="504"[^>]*loading="lazy"[^>]*decoding="async"[^>]*draggable="false"[^>]*data-image-state="loading"[^>]*>/,
+    /<img class="portrait \$\{escapeHtml\(item\.photoClass\)\} has-custom-photo" \$\{photoAttrs\}[^>]*sizes="\(max-width: 720px\) calc\(\(100vw - 6px\) \/ 3\), 250px"[^>]*width="360" height="504"[^>]*loading="lazy"[^>]*decoding="async"[^>]*draggable="false"[^>]*data-image-state="loading"[^>]*>/,
   );
   assert.doesNotMatch(profileThumbRenderer, /customPhotoAttrs\(/);
   assert.match(

@@ -28,8 +28,8 @@ Step 1 delivered as `50d4eb543dbfc93dbed6f0663c51aa2332542cb4`, pushed to origin
 | 5 | Authentication / recovery | Delivered and healthy: 7bc16ed2204df7a07678001c522544cec2425a10 |
 | 6 | Role authorization | Delivered and healthy: 5db6de15bbd5e5d9746f2c21a901286ecd980c92 and 39614027ff633836641227d30cb8256cd238859e |
 | 7 | Admin access / auditing | Delivered and healthy: d22462c5bd27675def76675af3f64e5e9a307fd8 and 61d926e9a1db7d1033e8d2f9fdd5fb3255d0ca5f |
-| 8 | Input validation | Implemented; release validation and exact-commit deployment verification pending |
-| 9 | XSS / HTML injection | Not started |
+| 8 | Input validation | Delivered and healthy: 70cfac08932c4373a780f3714588d564da9c4cb4 |
+| 9 | XSS / HTML injection | Implemented; final release validation and deployment verification pending |
 | 10 | CSRF / state changes | Not started |
 | 11 | Rate limits | Not started |
 | 12 | Bot resistance | Not started |
@@ -130,3 +130,11 @@ The follow-up was pushed as `61d926e9a1db7d1033e8d2f9fdd5fb3255d0ca5f`. [Exact V
 The input review identified one MEDIUM photo-deletion collection validation gap. A narrow guard rejects excessive or malformed collections before profile work and preserves existing ownership and moderation checks. Forty-one new regression cases and the existing profile-save and professional-role checks pass. No production records or database configuration were changed. See `step-08-input-validation.md` for the review and testing limits.
 
 Final validation passed all 2,724 tests, lint, TypeScript and production build after incorporating the independent stylesheet release `eb75d8436d5c9c662358cd4ea906fd367da688fc`. The migration gate verified 132 frozen files and postbuild skipped demo population. Push, exact-commit Vercel success and healthy production verification remain required before Step 9.
+
+Step 8 was pushed as `70cfac08932c4373a780f3714588d564da9c4cb4`. [Exact Vercel deployment](https://vercel.com/ai-movie-jobs/shiftstage/6suCjq33K8jLahEfDpjNp65bAShv) succeeded. At 13:24:48 UTC, root and both health endpoints returned 200, sampled protected APIs and both admin POSTs returned 401 anonymously, callback regression passed, and all 30 Supabase readiness checks passed. Local HEAD matched origin/main and the worktree was clean before Step 9.
+
+## Step 9 implementation
+
+The XSS review corrected one MEDIUM raw HTML/attribute interpolation issue and two LOW CSS-attribute/URL-rendering gaps, with existing CSP and server validation retained. Forty-three new runtime tests cover the actual rendering functions. See `step-09-output-encoding.md` for evidence and limits. No production records or database configuration changed. Complete validation and exact-commit deployment verification are required before Step 10.
+
+Final combined validation passed all 2,767 tests, lint, TypeScript and production build after incorporating the independent static-CSS release `ac451c674a64af33753cf2d1c178b1bea285ca94`. Stale generated types for its removed CSS route were regenerated/cleared locally before TypeScript passed. The migration gate verified 132 frozen files; postbuild skipped demo population. Only this step's source, generated home-shell hash, regression tests and audit notes are included in its commit. Publication and verification follow next.

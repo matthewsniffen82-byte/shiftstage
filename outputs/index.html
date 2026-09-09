@@ -43086,7 +43086,12 @@
         showToast("No preview available");
         return;
       }
-      const safeUrl = displayText(url);
+      const previewUrl = safeExternalHref(url);
+      if (!previewUrl) {
+        showToast("No preview available");
+        return;
+      }
+      const safeUrl = displayText(previewUrl);
       const safeTitle = displayText(title || "Preview");
       adminPreviewTitle.textContent = title || "Preview";
       if (kind === "image" || adminPreviewIsImage(url)) {
@@ -44963,7 +44968,7 @@
 
     function safeCssUrl(value) {
       const trimmed = String(value || "").trim();
-      if (!trimmed || (!/^https?:\/\//i.test(trimmed) && !/^data:image\//i.test(trimmed) && !/^blob:/i.test(trimmed))) return "";
+      if (!trimmed || /[\u0000-\u001f\u007f]/.test(trimmed) || (!/^https?:\/\//i.test(trimmed) && !/^data:image\//i.test(trimmed) && !/^blob:/i.test(trimmed))) return "";
       return trimmed.replace(/\\/g, "\\\\").replace(/'/g, "\\'");
     }
 
@@ -45006,7 +45011,7 @@
       const responsiveImageSet = responsiveCssImageSet(srcSet);
       return safeUrl ? {
         className: " has-custom-photo",
-        style: ` style="--custom-photo: ${responsiveImageSet || `url('${safeUrl}')`}"`
+        style: ` style="--custom-photo: ${escapeHtml(responsiveImageSet || `url('${safeUrl}')`)}"`
       } : { className: "", style: "" };
     }
 
@@ -47186,8 +47191,8 @@
     function metricPhraseMarkup(value) {
       const text = String(value || "");
       const match = text.match(/^([\d,.]+[KMB]?)\s+(.+)$/i);
-      if (!match) return text;
-      return `<span class="metric-number">${match[1]}</span><span class="metric-label">${match[2]}</span>`;
+      if (!match) return escapeHtml(text);
+      return `<span class="metric-number">${escapeHtml(match[1])}</span><span class="metric-label">${escapeHtml(match[2])}</span>`;
     }
 
     function compactProfileMetric(value) {
@@ -47222,7 +47227,7 @@
     }
 
     function metricCardMarkup(value, label) {
-      return `<div class="metric-card"><strong>${value}</strong><span>${label}</span></div>`;
+      return `<div class="metric-card"><strong>${escapeHtml(value)}</strong><span>${escapeHtml(label)}</span></div>`;
     }
 
     function lockedMetricCards(labels) {
@@ -47260,9 +47265,9 @@
 
     function rankingNotificationMarkup(event) {
       return `
-        <article class="rank-event ${event.type}">
-          <span class="rank-event-icon">${event.icon}</span>
-          <span><strong>${event.title}</strong><p>${event.message}</p></span>
+        <article class="rank-event ${escapeHtml(event.type)}">
+          <span class="rank-event-icon">${escapeHtml(event.icon)}</span>
+          <span><strong>${escapeHtml(event.title)}</strong><p>${escapeHtml(event.message)}</p></span>
         </article>
       `;
     }
@@ -48295,7 +48300,7 @@
       const title = Number.isFinite(distance)
         ? `${label} within ${Math.round(distance)} ft of ${profile.venue || "the venue"}`
         : `${label} near ${profile.venue || "the venue"}`;
-      return `<span class="location-confirmed-badge" title="${title}">${label}</span>`;
+      return `<span class="location-confirmed-badge" title="${escapeHtml(title)}">${escapeHtml(label)}</span>`;
     }
 
     function profileLocationStatusTile(profile, city = selectedCity()) {
@@ -48308,8 +48313,8 @@
         : `Checked in near ${profile.venue || "the venue"}.`;
       return `
         <div class="info-tile location-status-tile">
-          <strong>${label}</strong>
-          <div class="meta">${detail}</div>
+          <strong>${escapeHtml(label)}</strong>
+          <div class="meta">${escapeHtml(detail)}</div>
         </div>
       `;
     }
@@ -49140,9 +49145,9 @@
         ? `Published while ${pass.dancerName} is working now`
         : `Published by ${pass.venueName}`;
       return `
-        <button class="${className} deal-qr-trigger" type="button" data-deal-pass="${encodeDealPass(pass)}" aria-label="Prepare ${pass.venueName} Club Deal for a cashier tap">
+        <button class="${className} deal-qr-trigger" type="button" data-deal-pass="${encodeDealPass(pass)}" aria-label="Prepare ${escapeHtml(pass.venueName)} Club Deal for a cashier tap">
           ${clubDealQrSymbolMarkup("saved-deal-nfc-symbol")}
-          <span class="meta">${sourceLabel}</span>
+          <span class="meta">${escapeHtml(sourceLabel)}</span>
         </button>
       `;
     }
@@ -49154,8 +49159,8 @@
       return `
         <button class="saved-deal-pass" type="button" data-deal-pass="${encodeDealPass(pass)}">
           <span>
-            <strong>${pass.title}</strong>
-            <span>${pass.venueName} · ${sourceLabel}</span>
+            <strong>${escapeHtml(pass.title)}</strong>
+            <span>${escapeHtml(pass.venueName)} · ${escapeHtml(sourceLabel)}</span>
           </span>
           ${clubDealQrSymbolMarkup("saved-deal-nfc-symbol")}
         </button>
@@ -50116,13 +50121,13 @@
       return `
         <div class="share-panel">
           <div class="share-link-row">
-            <div class="share-url">${profileShareUrl(profileName, city)}</div>
-            <button class="share-copy" type="button" data-copy-share="${profileName}" data-share-city="${city}">${copyLabel}</button>
+            <div class="share-url">${escapeHtml(profileShareUrl(profileName, city))}</div>
+            <button class="share-copy" type="button" data-copy-share="${escapeHtml(profileName)}" data-share-city="${escapeHtml(city)}">${copyLabel}</button>
           </div>
           <div class="share-buttons">
-            <button class="share-open" type="button" data-native-share="${profileName}" data-share-city="${city}">${actionButtonLabel("share", nativeLabel)}</button>
+            <button class="share-open" type="button" data-native-share="${escapeHtml(profileName)}" data-share-city="${escapeHtml(city)}">${actionButtonLabel("share", nativeLabel)}</button>
             ${sharePlatforms.map((platform) => `
-              <a class="social-link social-${platform.key}" href="${socialShareUrl(platform.key, profileName, city)}" target="_blank" rel="noreferrer" data-social-share="${platform.key}" data-share-city="${city}" data-profile="${profileName}" aria-label="Share to ${platform.label}">
+              <a class="social-link social-${platform.key}" href="${escapeHtml(socialShareUrl(platform.key, profileName, city))}" target="_blank" rel="noreferrer" data-social-share="${platform.key}" data-share-city="${escapeHtml(city)}" data-profile="${escapeHtml(profileName)}" aria-label="Share to ${platform.label}">
                 ${socialIconMarkup(platform.key)}<span>${platform.label}</span>
               </a>
             `).join("")}
@@ -50155,7 +50160,7 @@
                 : "";
           return {
             ...platform,
-            url,
+            url: safeExternalHref(url),
             status
           };
         })
@@ -50166,7 +50171,7 @@
       return `
         <div class="info-tile social-tile" aria-label="External profiles">
           <div class="social-links" role="list">
-            ${links.map((platform) => `<a class="social-link social-${platform.key}" href="${platform.url}" target="_blank" rel="noopener noreferrer" aria-label="${platform.label}" title="${platform.label}" data-profile="${profile.name}" data-social="${platform.key}">${socialIconMarkup(platform.key)}</a>`).join("")}
+            ${links.map((platform) => `<a class="social-link social-${platform.key}" href="${escapeHtml(platform.url)}" target="_blank" rel="noopener noreferrer" aria-label="${platform.label}" title="${platform.label}" data-profile="${escapeHtml(profile.name)}" data-social="${platform.key}">${socialIconMarkup(platform.key)}</a>`).join("")}
           </div>
         </div>
       `;
@@ -51321,7 +51326,7 @@
           <div class="social-links">
             ${visibleSocials.map((social) => `
               <span class="social-edit-item" data-fix-anchor="${displayText(`profile-${social.key}`)}">
-                <a class="social-link social-${displayText(social.key)} ${social.status === "rejected" ? "is-rejected" : social.status === "pending" ? "is-pending" : ""}" href="${displayText(social.value)}" target="_blank" rel="noreferrer" aria-label="${displayText(social.label)}" data-social-url="${displayText(social.value)}" title="${displayText(social.status === "rejected" ? `Not approved: ${social.notes || "No reason added."}` : social.status === "pending" ? "Pending admin approval" : social.label)}">
+                  <a class="social-link social-${displayText(social.key)} ${social.status === "rejected" ? "is-rejected" : social.status === "pending" ? "is-pending" : ""}" href="${displayText(safeExternalHref(social.value) || "#")}" target="_blank" rel="noreferrer" aria-label="${displayText(social.label)}" data-social-url="${displayText(social.value)}" title="${displayText(social.status === "rejected" ? `Not approved: ${social.notes || "No reason added."}` : social.status === "pending" ? "Pending admin approval" : social.label)}">
                   ${socialIconMarkup(social.key)}
                 </a>
               </span>
@@ -51641,12 +51646,12 @@
       const selectedCity = preserveCitySelection ? cityField.value : currentCity;
       const city = markets[selectedCity] ? selectedCity : currentCity;
       const profile = activeDancerProfile(currentCity) || ensureActiveDancerProfile("Verified");
-      cityField.innerHTML = Object.keys(markets).map((name) => `<option${name === city ? " selected" : ""}>${name}</option>`).join("");
+      cityField.innerHTML = Object.keys(markets).map((name) => `<option${name === city ? " selected" : ""}>${escapeHtml(name)}</option>`).join("");
       const controlCityField = document.getElementById("approvedControlCity");
       if (controlCityField) controlCityField.innerHTML = cityField.innerHTML;
       const venues = discoveryMarket(city)?.venues || [];
       const venueName = profile?.venue || venues[0]?.name || "";
-      venueField.innerHTML = venues.map((venue) => `<option${venue.name === venueName ? " selected" : ""}>${venue.name}</option>`).join("");
+      venueField.innerHTML = venues.map((venue) => `<option${venue.name === venueName ? " selected" : ""}>${escapeHtml(venue.name)}</option>`).join("");
       const controlVenueField = document.getElementById("approvedControlVenue");
       if (controlVenueField) controlVenueField.innerHTML = venueField.innerHTML;
       cityField.onchange = () => renderApprovedDancerProfileEditor(true);
@@ -52268,7 +52273,7 @@
       const statusBadge = isPending ? '<span class="badge pending">Pending</span>' : "";
       const trendBadge = "";
       const trendMarker = isTrending
-        ? `<span class="card-trend-marker" aria-label="Trending rank ${profile.trendRank}"><span class="card-trend-symbol" aria-hidden="true">↗</span><span>#${profile.trendRank}</span></span>`
+        ? `<span class="card-trend-marker" aria-label="Trending rank ${escapeHtml(profile.trendRank)}"><span class="card-trend-symbol" aria-hidden="true">↗</span><span>#${escapeHtml(profile.trendRank)}</span></span>`
         : "";
       const upcomingLabel = upcomingCardLabel(profile);
       const workingTonight = isWorkingTonight(profile);
@@ -52277,19 +52282,19 @@
       const scheduleMarkup = isPending
         ? '<div class="pill-row"><span class="pill muted">Schedule locked</span></div>'
         : workingTonight
-          ? `<div class="schedule-row is-tonight">${clockIconMarkup()}<span class="card-schedule-text tonight"><span class="schedule-time">${displayPublicShiftTime(profile.time, profile)}</span></span></div>`
+          ? `<div class="schedule-row is-tonight">${clockIconMarkup()}<span class="card-schedule-text tonight"><span class="schedule-time">${escapeHtml(displayPublicShiftTime(profile.time, profile))}</span></span></div>`
           : profile.scheduled
-            ? `<div class="schedule-row is-upcoming">${clockIconMarkup()}<span class="card-schedule-text upcoming"><span class="schedule-time">${displayPublicShiftTime(profile.time, profile)}</span></span></div>`
+            ? `<div class="schedule-row is-upcoming">${clockIconMarkup()}<span class="card-schedule-text upcoming"><span class="schedule-time">${escapeHtml(displayPublicShiftTime(profile.time, profile))}</span></span></div>`
             : '<div class="meta no-shifts no-shifts-state"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v4M16 2v4M3.5 9h17M5 5h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Z"/></svg><span>No schedule posted</span></div>';
       const clubMarkup = !isPending && profile.scheduled
-        ? `<div class="meta card-venue-line ${workingTonight ? "is-tonight" : "is-upcoming"}">${venueIconMarkup()}<span class="card-venue-name card-venue-link" role="link" tabindex="0" data-card-venue="${profile.venue}" aria-label="Open ${profile.venue} club page">${profile.venue}</span>${distanceLabel ? `<span class="card-distance">• ${distanceLabel}</span>` : ""}</div>`
+        ? `<div class="meta card-venue-line ${workingTonight ? "is-tonight" : "is-upcoming"}">${venueIconMarkup()}<span class="card-venue-name card-venue-link" role="link" tabindex="0" data-card-venue="${escapeHtml(profile.venue)}" aria-label="Open ${escapeHtml(profile.venue)} club page">${escapeHtml(profile.venue)}</span>${distanceLabel ? `<span class="card-distance">• ${escapeHtml(distanceLabel)}</span>` : ""}</div>`
         : "";
       const portraitPhotoUrl = isPending ? customPhotoUrl(profile, 0) : publicProfilePhotoUrl(profile);
       const portraitPhotoAttrs = customPhotoAttrs(
         portraitPhotoUrl,
         isPending ? "" : profilePhotoSrcSet(profile, portraitPhotoUrl)
       );
-      const profileHref = profile.slug ? `/dancers/${profile.slug}` : `#profile-${slugify(profile.name)}`;
+      const profileHref = profile.slug ? `/dancers/${encodeURIComponent(profile.slug)}` : `#profile-${slugify(profile.name)}`;
       const profileCardBody = `
         <div class="portrait ${portraitClass(index)}${portraitPhotoAttrs.className}"${portraitPhotoAttrs.style}>
           <div class="card-badges">
@@ -52301,7 +52306,7 @@
         </div>
         <div class="profile-body">
           <div class="card-info-stack">
-            <h3><span class="card-stage-name">${profile.name}</span></h3>
+            <h3><span class="card-stage-name">${escapeHtml(profile.name)}</span></h3>
             ${locationBadge}
             ${clubMarkup}
           </div>
@@ -52324,16 +52329,16 @@
             })
           : "";
         const goingActionMarkup = canMarkGoing
-          ? `<button class="feed-card-action ${isGoing ? "is-active" : ""}" type="button" data-feed-action="going" data-profile="${profile.name}" data-shift-state="tonight" aria-pressed="${isGoing}">${homeFeedGoingActionMarkup(profile, isGoing)}</button>`
+          ? `<button class="feed-card-action ${isGoing ? "is-active" : ""}" type="button" data-feed-action="going" data-profile="${escapeHtml(profile.name)}" data-shift-state="tonight" aria-pressed="${isGoing}">${homeFeedGoingActionMarkup(profile, isGoing)}</button>`
           : "";
         return `
-          <article class="card dancer-card home-feed-card ${isTrending ? "trending-card" : ""} ${profile.trendRank === 1 ? "rank-one-card" : ""}" data-profile="${profile.name}">
-            <a class="dancer-card-link" href="${profileHref}" aria-label="Open ${profile.name} profile">
+          <article class="card dancer-card home-feed-card ${isTrending ? "trending-card" : ""} ${profile.trendRank === 1 ? "rank-one-card" : ""}" data-profile="${escapeHtml(profile.name)}">
+            <a class="dancer-card-link" href="${escapeHtml(profileHref)}" aria-label="Open ${escapeHtml(profile.name)} profile">
               ${profileCardBody}
             </a>
-            <div class="feed-card-actions${canMarkGoing ? "" : " without-going"}" aria-label="${profile.name} actions">
-              <button class="feed-card-action ${isFollowed ? "is-active" : ""}" type="button" data-feed-action="follow" data-profile="${profile.name}" aria-pressed="${isFollowed}">${actionButtonLabel(isFollowed ? "check" : "personPlus", isFollowed ? "Following" : "Follow")}</button>
-              <button class="feed-card-action ${isNotified ? "is-active" : ""}" type="button" data-feed-action="notify" data-profile="${profile.name}" aria-pressed="${isNotified}">${actionButtonLabel(isNotified ? "check" : "bell", isNotified ? "Notifications On" : "Notify")}</button>
+            <div class="feed-card-actions${canMarkGoing ? "" : " without-going"}" aria-label="${escapeHtml(profile.name)} actions">
+              <button class="feed-card-action ${isFollowed ? "is-active" : ""}" type="button" data-feed-action="follow" data-profile="${escapeHtml(profile.name)}" aria-pressed="${isFollowed}">${actionButtonLabel(isFollowed ? "check" : "personPlus", isFollowed ? "Following" : "Follow")}</button>
+              <button class="feed-card-action ${isNotified ? "is-active" : ""}" type="button" data-feed-action="notify" data-profile="${escapeHtml(profile.name)}" aria-pressed="${isNotified}">${actionButtonLabel(isNotified ? "check" : "bell", isNotified ? "Notifications On" : "Notify")}</button>
               ${goingActionMarkup}
               ${rideMarkup}
             </div>
@@ -52341,7 +52346,7 @@
         `;
       }
       return `
-        <a class="card dancer-card ${isPending ? "pending" : ""} ${isTrending ? "trending-card" : ""} ${profile.trendRank === 1 ? "rank-one-card" : ""}" href="${profileHref}" data-profile="${profile.name}" aria-label="${profile.name} profile">
+        <a class="card dancer-card ${isPending ? "pending" : ""} ${isTrending ? "trending-card" : ""} ${profile.trendRank === 1 ? "rank-one-card" : ""}" href="${escapeHtml(profileHref)}" data-profile="${escapeHtml(profile.name)}" aria-label="${escapeHtml(profile.name)} profile">
           ${profileCardBody}
         </a>
       `;
@@ -52579,20 +52584,20 @@
                 <div class="venue-art">
                   ${logoMarkup || `
                     <div class="venue-sign">
-                      <div class="venue-sign-name">${details.name}</div>
-                      <div class="venue-sign-meta">${details.city} nightlife</div>
+                      <div class="venue-sign-name">${escapeHtml(details.name)}</div>
+                      <div class="venue-sign-meta">${escapeHtml(details.city)} nightlife</div>
                     </div>
                   `}
                 </div>
               </div>
-              <button class="close-btn venue-detail-close" type="button" data-close-venue-profile aria-label="Close ${details.name} club profile">
+              <button class="close-btn venue-detail-close" type="button" data-close-venue-profile aria-label="Close ${escapeHtml(details.name)} club profile">
                 <svg class="icon" viewBox="0 0 24 24"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
               </button>
             </div>
             <div class="venue-hero-body">
               <div class="venue-identity-block">
                 <div class="venue-identity-copy">
-                  <h2 id="venueDetailName" class="venue-detail-accessible-name">${details.name}</h2>
+                  <h2 id="venueDetailName" class="venue-detail-accessible-name">${escapeHtml(details.name)}</h2>
                   <div class="venue-identity-meta">
                     <span class="venue-identity-location"><span class="meta">${escapeHtml(details.city)}${details.state ? `, ${escapeHtml(details.state)}` : ""}</span></span>
                     <span class="venue-identity-distance">${escapeHtml(details.distanceLabel)}</span>
@@ -53470,10 +53475,10 @@
     function profilePhotoThumbMarkup(item, total, galleryIndex = item.index) {
       const photoAttrs = nativeResponsivePhotoAttrs(item.photoUrl, item.photoSrcSet);
       const photoMarkup = photoAttrs
-        ? `<img class="portrait ${item.photoClass} has-custom-photo" ${photoAttrs} sizes="(max-width: 720px) calc((100vw - 6px) / 3), 250px" width="360" height="504" alt="" aria-hidden="true" loading="lazy" decoding="async" draggable="false" data-image-state="loading">`
-        : `<span class="portrait ${item.photoClass}"></span>`;
+        ? `<img class="portrait ${escapeHtml(item.photoClass)} has-custom-photo" ${photoAttrs} sizes="(max-width: 720px) calc((100vw - 6px) / 3), 250px" width="360" height="504" alt="" aria-hidden="true" loading="lazy" decoding="async" draggable="false" data-image-state="loading">`
+        : `<span class="portrait ${escapeHtml(item.photoClass)}"></span>`;
       return `
-        <button class="thumb ${galleryIndex === 0 ? "active" : ""}" type="button" data-profile-photo-index="${galleryIndex}" data-photo="${item.photoClass}" data-photo-url="${displayText(item.photoUrl)}" aria-label="Open gallery photo ${galleryIndex + 1} of ${total} in scrolling cards" aria-pressed="${galleryIndex === 0 ? "true" : "false"}">
+        <button class="thumb ${galleryIndex === 0 ? "active" : ""}" type="button" data-profile-photo-index="${galleryIndex}" data-photo="${escapeHtml(item.photoClass)}" data-photo-url="${displayText(item.photoUrl)}" aria-label="Open gallery photo ${galleryIndex + 1} of ${total} in scrolling cards" aria-pressed="${galleryIndex === 0 ? "true" : "false"}">
           ${photoMarkup}
         </button>
       `;
@@ -53613,7 +53618,7 @@
 
     function shiftNotesMarkup(profile) {
       return profile.notes
-        ? `<div class="info-tile"><strong>Notes</strong><div class="meta">${profile.notes}</div></div>`
+        ? `<div class="info-tile"><strong>Notes</strong><div class="meta">${escapeHtml(profile.notes)}</div></div>`
         : "";
     }
 
@@ -53826,13 +53831,13 @@
       const canMarkGoing = Boolean(profile?.scheduled && profile.shiftId);
       const goingCopy = { idle: "I'm Going", active: "Going" };
       const goingButton = canMarkGoing
-        ? `<button class="action-btn going-btn profile-action-icon-control is-available-action ${isGoingTonight ? "is-going" : ""}" id="goingBtn" type="button" data-profile="${profile.name}" data-shift-state="posted" aria-label="${isGoingTonight ? "Remove this shift from your plans" : "Add this shift to your plans"}" aria-pressed="${isGoingTonight}">${profileActionButtonMarkup(isGoingTonight ? "check" : "clock", isGoingTonight ? goingCopy.active : goingCopy.idle)}</button>`
-        : `<button class="action-btn going-btn profile-action-icon-control secondary is-unavailable" id="goingBtn" type="button" data-profile="${profile.name}" data-shift-state="unavailable" aria-disabled="true" disabled>${profileActionButtonMarkup("clock", goingCopy.idle)}</button>`;
+        ? `<button class="action-btn going-btn profile-action-icon-control is-available-action ${isGoingTonight ? "is-going" : ""}" id="goingBtn" type="button" data-profile="${escapeHtml(profile.name)}" data-shift-state="posted" aria-label="${isGoingTonight ? "Remove this shift from your plans" : "Add this shift to your plans"}" aria-pressed="${isGoingTonight}">${profileActionButtonMarkup(isGoingTonight ? "check" : "clock", isGoingTonight ? goingCopy.active : goingCopy.idle)}</button>`
+        : `<button class="action-btn going-btn profile-action-icon-control secondary is-unavailable" id="goingBtn" type="button" data-profile="${escapeHtml(profile.name)}" data-shift-state="unavailable" aria-disabled="true" disabled>${profileActionButtonMarkup("clock", goingCopy.idle)}</button>`;
       return `
         <div class="modal-actions ${isWorkingNow ? "is-working-now" : profile?.scheduled ? "is-upcoming-shift" : "is-no-live-shift"}" aria-label="Guest actions">
           <button class="action-btn follow-primary profile-action-icon-control ${isFollowed ? "is-following" : ""}" id="followBtn" data-profile="${escapeOptionValue(profile.id || profile.name)}" aria-pressed="${isFollowed}">${profileActionButtonMarkup(isFollowed ? "check" : "personPlus", isFollowed ? "Following" : "Follow")}</button>
           ${goingButton}
-          <button class="action-btn secondary profile-share-action profile-action-icon-control" type="button" data-profile-share-menu="${profile.name}" data-share-city="${city}" aria-haspopup="dialog" aria-label="Share ${profile.name} profile">${profileActionButtonMarkup("share", "Share")}</button>
+          <button class="action-btn secondary profile-share-action profile-action-icon-control" type="button" data-profile-share-menu="${escapeHtml(profile.name)}" data-share-city="${escapeHtml(city)}" aria-haspopup="dialog" aria-label="Share ${escapeHtml(profile.name)} profile">${profileActionButtonMarkup("share", "Share")}</button>
         </div>
       `;
     }
@@ -56311,7 +56316,7 @@
     }
 
     function escapeHtml(value) {
-      return String(value || "")
+      return String(value ?? "")
         .replace(/&/g, "&amp;")
         .replace(/</g, "&lt;")
         .replace(/>/g, "&gt;")
@@ -57957,7 +57962,7 @@
         const hasTrafficData = dashboardMetrics.profileViews30 || dashboardMetrics.scheduleViews30 || dashboardMetrics.directionRequests30 || highIntentActions || totalSocialClicks;
 
         document.getElementById("dancerValueMessage").innerHTML = hasTrafficData
-          ? `We sent <strong>${compactNumber(dashboardMetrics.profileViews30)}</strong> people to your profile, <strong>${compactNumber(dashboardMetrics.scheduleViews30)}</strong> viewed your schedule, and <strong>${compactNumber(dashboardMetrics.directionRequests30)}</strong> requested directions to <strong>${dashboardMetrics.venue}</strong> this month.`
+          ? `We sent <strong>${compactNumber(dashboardMetrics.profileViews30)}</strong> people to your profile, <strong>${compactNumber(dashboardMetrics.scheduleViews30)}</strong> viewed your schedule, and <strong>${compactNumber(dashboardMetrics.directionRequests30)}</strong> requested directions to <strong>${escapeHtml(dashboardMetrics.venue)}</strong> this month.`
           : "No live analytics yet. Real profile views, schedule views, followers, social clicks, notifications, direction requests, and Club Deal commissions will appear here after guests interact with your profile.";
         document.getElementById("dancerRankMetrics").innerHTML = [
           metricCardMarkup(rankLabel(dashboardMetrics.currentRank), `${city} rank`),
@@ -58361,13 +58366,13 @@
       const socialCount = normalizeSubmittedSocials(profile).length;
       const photoCount = profile.submittedPhotos?.length || profile.galleryPhotoUrls?.length || (profile.mainPhotoUrl ? 1 : 0);
       return `
-        <article class="admin-item" data-admin-profile="${profile.name}" data-admin-city="${city}">
+        <article class="admin-item" data-admin-profile="${escapeHtml(profile.name)}" data-admin-city="${escapeHtml(city)}">
           <div class="row">
             <div>
               <h3><button class="admin-profile-open-link" type="button" data-admin-action="view-dancer-profile">${displayText(profile.name)}</button></h3>
-              <div class="meta">${city} · ${visibleStatus} · ${shiftText}</div>
+              <div class="meta">${escapeHtml(city)} · ${escapeHtml(visibleStatus)} · ${escapeHtml(shiftText)}</div>
             </div>
-            <span class="${profile.status === "Pending" ? "badge pending" : "badge"}">${visibleStatus}</span>
+            <span class="${profile.status === "Pending" ? "badge pending" : "badge"}">${escapeHtml(visibleStatus)}</span>
           </div>
           <div class="meta">Venue affiliation: ${profile.venueApprovedAt ? "Confirmed" : "Required"} · Photos: ${displayText(profile.photoStatus)}</div>
           <div class="meta">Socials: ${socialCount} · Photos: ${photoCount}</div>
@@ -58448,10 +58453,10 @@
       );
       if (!socials.length) return '<div class="locked">No newly submitted social links waiting for review.</div>';
       return `<div class="admin-social-icons">${socials.map((social, index) => {
-        const url = social.url || "#";
+        const url = safeExternalHref(social.url);
         const handle = social.handle ? `@${social.handle.replace(/^@/, "")}` : social.url;
         const label = `${social.label}${handle ? ` ${handle}` : ""}`;
-        const hrefAttr = social.url ? ` href="${displayText(url)}"` : "";
+        const hrefAttr = url ? ` href="${displayText(url)}"` : "";
         const targetId = social.id || `${profile.id || profile.name}-social-${index}`;
         const key = `social_link:${targetId}`;
         return `
@@ -58545,7 +58550,7 @@
       }).join("") : '<div class="locked">No profile photos.</div>';
       const socialMarkup = socials.length ? socials.map((social) => `
         <div class="admin-full-row admin-full-managed">
-          <a class="admin-full-row-link" href="${displayText(social.url || "#")}" target="_blank" rel="noreferrer">
+          <a class="admin-full-row-link" href="${displayText(safeExternalHref(social.url) || "#")}" target="_blank" rel="noreferrer">
             <strong>${displayText(social.platform || "Social link")}</strong>
             <span>${displayText(social.handle || social.url || "No handle")}</span>
             <span>${displayText(social.reviewStatus || social.review_status || "pending")}</span>
@@ -58815,7 +58820,7 @@
       const submittedLabel = profile.approvalChangesSubmitted ? "Profile changes submitted" : "Submitted for review";
       const pendingLabel = profile.approvalChangesPending ? "Profile changes pending submission" : "Pending submission";
       return `
-        <details class="admin-item" data-admin-city="${city}" data-admin-profile="${profile.name}" data-admin-approval-key="${displayText(approvalKey)}" ${adminClosedDancerApprovalCards.has(approvalKey) ? "" : "open"}>
+        <details class="admin-item" data-admin-city="${escapeHtml(city)}" data-admin-profile="${escapeHtml(profile.name)}" data-admin-approval-key="${displayText(approvalKey)}" ${adminClosedDancerApprovalCards.has(approvalKey) ? "" : "open"}>
           <summary class="row">
             <div>
               <h3>${displayText(profile.name || "Stage name missing")}</h3>
@@ -58908,12 +58913,12 @@
         <article class="admin-item">
           <div class="row">
             <div>
-              <h3>${stageName}</h3>
-              <div class="meta">${city} · ${detail}</div>
+              <h3>${escapeHtml(stageName)}</h3>
+              <div class="meta">${escapeHtml(city)} · ${escapeHtml(detail)}</div>
             </div>
-            <span class="${badgeClass}">${status}</span>
+            <span class="${badgeClass}">${escapeHtml(status)}</span>
           </div>
-          <div class="meta">Stripe subscription: ${subscription.stripeSubscriptionId || "not created"}</div>
+          <div class="meta">Stripe subscription: ${escapeHtml(subscription.stripeSubscriptionId || "not created")}</div>
         </article>
       `;
     }
@@ -59012,7 +59017,7 @@
       const adminUserRows = [
         ...adminUsers.map((user) => `
           <article class="admin-item">
-            <div class="row"><div><h3>${user.name}</h3><div class="meta">${user.role}</div></div><span class="pill">${user.status}</span></div>
+            <div class="row"><div><h3>${escapeHtml(user.name)}</h3><div class="meta">${escapeHtml(user.role)}</div></div><span class="pill">${escapeHtml(user.status)}</span></div>
           </article>
         `),
         ...visibleProfiles.map(({ city, profile }) => adminProfileRow(city, profile))
@@ -59041,8 +59046,8 @@
         : '<div class="locked">No live subscriptions found.</div>';
 
       document.getElementById("adminShifts").innerHTML = shiftProfiles.map(({ city, profile }) => `
-        <article class="admin-item" data-admin-city="${city}" data-admin-profile="${profile.name}">
-          <div class="row"><div><h3>${profile.name}</h3><div class="meta">${profile.venue} · ${displayShiftTime(profile.time)}</div></div><span class="pill">${profile.tonight ? "Now" : "Upcoming"}</span></div>
+        <article class="admin-item" data-admin-city="${escapeHtml(city)}" data-admin-profile="${escapeHtml(profile.name)}">
+          <div class="row"><div><h3>${escapeHtml(profile.name)}</h3><div class="meta">${escapeHtml(profile.venue)} · ${escapeHtml(displayShiftTime(profile.time))}</div></div><span class="pill">${profile.tonight ? "Now" : "Upcoming"}</span></div>
           <div class="admin-actions">
             <button class="action-btn secondary" data-admin-action="feature-dancer">Feature dancer</button>
             <button class="action-btn danger" data-admin-action="remove-shift">Remove shift</button>
@@ -59052,14 +59057,14 @@
 
       document.getElementById("adminFeatured").innerHTML = `
         ${visibleProfiles.filter(({ profile }) => profile.status === "Verified").slice(0, 6).map(({ city, profile }) => `
-          <article class="admin-item" data-admin-city="${city}" data-admin-profile="${profile.name}">
-            <div class="row"><div><h3>${profile.name}</h3><div class="meta">${city}</div></div><span class="${profile.featured ? "pill featured" : "pill"}">${profile.featured ? `${badgeIconMarkup("featured")}Featured` : "Standard"}</span></div>
+          <article class="admin-item" data-admin-city="${escapeHtml(city)}" data-admin-profile="${escapeHtml(profile.name)}">
+            <div class="row"><div><h3>${escapeHtml(profile.name)}</h3><div class="meta">${escapeHtml(city)}</div></div><span class="${profile.featured ? "pill featured" : "pill"}">${profile.featured ? `${badgeIconMarkup("featured")}Featured` : "Standard"}</span></div>
             <button class="action-btn secondary" data-admin-action="feature-dancer">${profile.featured ? "Unfeature dancer" : "Feature dancer"}</button>
           </article>
         `).join("")}
         ${Object.entries(markets).flatMap(([city, market]) => market.venues.filter((venue) => !venue.hidden).slice(0, 2).map((venue) => `
-          <article class="admin-item" data-admin-city="${city}" data-admin-venue="${venue.name}">
-            <div class="row"><div><h3>${venue.name}</h3><div class="meta">${city}</div></div><span class="${venue.featured ? "pill featured" : "pill"}">${venue.featured ? `${badgeIconMarkup("featured")}Featured` : "Standard"}</span></div>
+          <article class="admin-item" data-admin-city="${escapeHtml(city)}" data-admin-venue="${escapeHtml(venue.name)}">
+            <div class="row"><div><h3>${escapeHtml(venue.name)}</h3><div class="meta">${escapeHtml(city)}</div></div><span class="${venue.featured ? "pill featured" : "pill"}">${venue.featured ? `${badgeIconMarkup("featured")}Featured` : "Standard"}</span></div>
             <button class="action-btn secondary" data-admin-action="feature-venue">${venue.featured ? "Unfeature venue" : "Feature venue"}</button>
           </article>
         `)).join("")}
@@ -59068,8 +59073,8 @@
       const managedVenueMarkup = Object.entries(markets).flatMap(([city, market]) => (
         market.venues.filter((venue) => !venue.hidden).map((venue, index) => {
           return `
-            <details class="admin-item" data-admin-city="${city}" data-admin-venue="${venue.name}" ${index === 0 ? "open" : ""}>
-              <summary class="row"><div><h3>${venue.name}</h3><div class="meta">${city} · ${venue.shifts} posted shifts</div></div><span class="badge">Active</span></summary>
+            <details class="admin-item" data-admin-city="${escapeHtml(city)}" data-admin-venue="${escapeHtml(venue.name)}" ${index === 0 ? "open" : ""}>
+              <summary class="row"><div><h3>${escapeHtml(venue.name)}</h3><div class="meta">${escapeHtml(city)} · ${escapeHtml(venue.shifts)} posted shifts</div></div><span class="badge">Active</span></summary>
               <div class="meta">Directory status: Active · Featured: ${venue.featured ? "Yes" : "No"}</div>
               <div class="admin-actions">
                 <button class="action-btn secondary" data-admin-action="feature-venue">${venue.featured ? "Unfeature venue" : "Feature venue"}</button>
@@ -59177,10 +59182,10 @@
       const dashboardLoading = liveCustomerDashboardState === "loading";
       const dashboardError = liveCustomerDashboardState === "error";
       const dashboardListMessage = (loadingMessage, emptyMessage) => dashboardLoading
-        ? `<div class="locked" role="status">${loadingMessage}</div>`
+        ? `<div class="locked" role="status">${escapeHtml(loadingMessage)}</div>`
         : dashboardError
           ? '<div class="locked" role="status">Saved dashboard data is temporarily unavailable.</div>'
-          : `<div class="locked">${emptyMessage}</div>`;
+          : `<div class="locked">${escapeHtml(emptyMessage)}</div>`;
       const followed = followedProfiles(city);
       const venues = followedVenues(city);
       const workingTonight = followed
@@ -59217,17 +59222,17 @@
         ? dashboardListMessage("Loading followed dancers working now…", `No followed dancers working now in ${city}.`)
         : visibleTonight.length
         ? visibleTonight.map((profile, index) => profileCard(profile, index, { tonight: true })).join("")
-        : `<div class="locked">No followed dancers working now in ${city}.</div>`;
+        : `<div class="locked">No followed dancers working now in ${escapeHtml(city)}.</div>`;
       dashFollowedList.innerHTML = dashboardLoading || dashboardError
         ? dashboardListMessage("Loading followed dancers…", `No followed dancers in ${city} yet.`)
         : visibleFollowed.length
         ? visibleFollowed.map((profile, index) => profileCard(profile, index + 2)).join("")
-        : `<div class="locked">No followed dancers in ${city} yet.</div>`;
+        : `<div class="locked">No followed dancers in ${escapeHtml(city)} yet.</div>`;
       dashVenueList.innerHTML = dashboardLoading || dashboardError
         ? dashboardListMessage("Loading favorite clubs…", `No favorite clubs in ${city} yet.`)
         : visibleVenues.length
         ? visibleVenues.map((venue) => venueCard(venue)).join("")
-        : `<div class="locked">No favorite clubs in ${city} yet.</div>`;
+        : `<div class="locked">No favorite clubs in ${escapeHtml(city)} yet.</div>`;
       dashSavedDealsList.innerHTML = savedDealPasses.length
         ? savedDealPasses.map((pass) => savedDealPassMarkup(pass)).join("")
         : `<div class="locked">No saved Club Deals yet. Save a Club Deal to find it here later.</div>`;
@@ -66399,10 +66404,10 @@
       if (!strip || !discoveryMarket(city)) return;
       const venues = discoveryMarket(city).venues.filter((venue) => !venue.hidden && venueWithinSelectedRadius(venue)).slice(0, 5);
       strip.innerHTML = venues.map((venue, index) => `
-        <button class="club-mini club-mini-${index + 1}" type="button" data-popular-venue="${venue.name}">
-          <span class="club-neon">${venue.name}</span>
-          <strong>${venue.name}</strong>
-          <small>${city}</small>
+        <button class="club-mini club-mini-${index + 1}" type="button" data-popular-venue="${escapeHtml(venue.name)}">
+          <span class="club-neon">${escapeHtml(venue.name)}</span>
+          <strong>${escapeHtml(venue.name)}</strong>
+          <small>${escapeHtml(city)}</small>
         </button>
       `).join("");
       strip.querySelectorAll("[data-popular-venue]").forEach((button) => {

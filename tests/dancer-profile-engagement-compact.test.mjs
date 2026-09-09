@@ -29,7 +29,11 @@ const renderSocialLinks = new Function(
   "normalizeSubmittedSocials",
   "normalizedReviewStatus",
   "socialIconMarkup",
-  `${socialFunctionSource}; return socialLinksMarkup;`,
+  `${["escapeHtml", "safeExternalHref"].map(name => {
+    const helper = liveApp.match(new RegExp("    function " + name + "\\([^]*?\\n    \\}"))?.[0];
+    assert.ok(helper, name);
+    return helper;
+  }).join("\n")}\n${socialFunctionSource}; return socialLinksMarkup;`,
 )(
   platforms,
   () => [],

@@ -241,7 +241,7 @@ test("profile actions keep profile controls separate from Tonight travel actions
   assert.match(liveApp, /personPlus: '<svg[\s\S]*?M18 8\.5v6M15 11\.5h6/);
   assert.match(liveActionsMarkup, /id="followBtn"[\s\S]*?aria-pressed="\$\{isFollowed\}"[\s\S]*?profileActionButtonMarkup\(isFollowed \? "check" : "personPlus", isFollowed \? "Following" : "Follow"\)/);
   assert.doesNotMatch(liveActionsMarkup, /id="notifyBtn"|"Alerts On"|"Notify"/);
-  assert.match(liveApp, /data-profile-share-menu="\$\{profile\.name\}"/);
+  assert.match(liveApp, /data-profile-share-menu="\$\{escapeHtml\(profile\.name\)\}"/);
   assert.doesNotMatch(liveApp, /data-show-profile-share-qr/);
   assert.match(liveApp, /Club Deals redeem only when you tap your phone at the club cashier/);
   assert.doesNotMatch(profileNavigationActions, /import QRCode from "qrcode"/);
