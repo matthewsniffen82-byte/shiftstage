@@ -271,9 +271,9 @@ function normalizeVenueSignupRequest(input: VenueSignupRequestInput) {
     throw new VenueSignupRequestUserError("Confirm that you are authorized to request access for this venue.");
   }
 
-  const contactEmail = requiredText(input.contactEmail, "Enter a valid business email address.", 5, 320).toLowerCase();
+  const contactEmail = requiredText(input.loginEmail, "Enter a valid manager login email.", 5, 254).toLowerCase();
   if (!EMAIL_PATTERN.test(contactEmail)) {
-    throw new VenueSignupRequestUserError("Enter a valid business email address.");
+    throw new VenueSignupRequestUserError("Enter a valid manager login email.");
   }
 
   const contactPhone = requiredText(input.contactPhone, "Enter a reachable business phone number.", 7, 40);

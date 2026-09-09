@@ -16,14 +16,14 @@ function compile(source, dependencies = {}) {
   return exports;
 }
 const policy = compile(read('src/lib/dancr/password-policy.ts'));
-const input = { loginEmail: ' Manager@Example.com ', password: ' Exact1! ', confirmPassword: ' Exact1! ', venueName: 'Test Club', streetAddress: '123 Test Street', city: 'Las Vegas', state: 'NV', postalCode: '89101', contactName: 'Test Manager', contactTitle: 'Owner', contactEmail: 'business@example.com', contactPhone: '702-555-0123', authorizedToRepresentVenue: true };
+const input = { loginEmail: ' Manager@Example.com ', password: ' Exact1! ', confirmPassword: ' Exact1! ', venueName: 'Test Club', streetAddress: '123 Test Street', city: 'Las Vegas', state: 'NV', postalCode: '89101', contactName: 'Test Manager', contactTitle: 'Owner', contactPhone: '702-555-0123', authorizedToRepresentVenue: true };
 function managerModule(provision = async () => {}) {
   return compile(read('src/lib/dancr/venue-request-account.ts'), {
     './password-policy': policy, './account-provisioning': { provisionAppAccount: provision },
     '../security/safe-error-metadata': { safeErrorMetadata: () => ({}) },
   });
 }
-test('manager credentials use a separate normalized email and preserve exact passwords', () => {
+test('manager credentials normalize the login email and preserve exact passwords', () => {
   const m = managerModule();
   const result = m.venueRequestCredentials(input);
   assert.equal(result.email, 'manager@example.com');
@@ -66,7 +66,7 @@ test('saved requests bind the manager without storing password fields', async ()
   const f = requestFixture(); const result = await f.submit();
   assert.equal(result.requesterUserId, 'new-manager');
   assert.equal(result.loginEmail, 'manager@example.com');
-  assert.equal(f.rows[0].contact_email, input.contactEmail);
+  assert.equal(f.rows[0].contact_email, result.loginEmail);
   assert.equal('password' in f.rows[0], false);
   assert.equal('confirmPassword' in f.rows[0], false);
   assert.equal(f.removed.length, 0);

@@ -40982,10 +40982,6 @@
                   <input id="venueRequestContactTitle" name="contactTitle" type="text" autocomplete="organization-title" minlength="2" maxlength="120" placeholder="Owner, general manager…" required>
                 </div>
                 <div class="field">
-                  <label for="venueRequestContactEmail">Business email</label>
-                  <input id="venueRequestContactEmail" name="contactEmail" type="email" autocomplete="email" maxlength="320" required>
-                </div>
-                <div class="field">
                   <label for="venueRequestContactPhone">Business phone</label>
                   <input id="venueRequestContactPhone" name="contactPhone" type="tel" inputmode="tel" autocomplete="tel" placeholder="702-555-0123" minlength="7" maxlength="40" required>
                 </div>
@@ -41000,15 +40996,11 @@
                 <span>Manager login</span>
                 <strong id="venueRequestLoginHeading">Create your account once</strong>
               </div>
-              <p>Your business email is for club verification. Your manager login is how you access the dashboard after approval.</p>
-              <label class="venue-request-consent">
-                <input id="venueRequestUseBusinessEmail" type="checkbox" checked>
-                <span>Use business email for my manager login</span>
-              </label>
+              <p>Use this email for club verification, approval updates, and signing in to your dashboard.</p>
               <div class="venue-request-grid">
                 <div class="field wide">
                   <label for="venueRequestLoginEmail">Manager login email</label>
-                  <input id="venueRequestLoginEmail" name="loginEmail" type="email" autocomplete="username" maxlength="254" readonly required>
+                  <input id="venueRequestLoginEmail" name="loginEmail" type="email" autocomplete="username" maxlength="254" required>
                 </div>
                 <div class="field">
                   <label for="venueRequestPassword">Password</label>
@@ -64242,15 +64234,6 @@
     document.getElementById("venueRequestContactPhone").addEventListener("input", formatBusinessPhoneInput);
     document.getElementById("venueRequestContactPhone").addEventListener("change", formatBusinessPhoneInput);
 
-    function syncVenueRequestLoginEmail() {
-      const login = document.getElementById("venueRequestLoginEmail");
-      const sameEmail = document.getElementById("venueRequestUseBusinessEmail").checked;
-      login.readOnly = sameEmail;
-      if (sameEmail) login.value = document.getElementById("venueRequestContactEmail").value;
-    }
-
-    document.getElementById("venueRequestUseBusinessEmail").addEventListener("change", syncVenueRequestLoginEmail);
-    document.getElementById("venueRequestContactEmail").addEventListener("input", syncVenueRequestLoginEmail);
     ["venueRequestPassword", "venueRequestConfirmPassword"].forEach((id) => {
       document.getElementById(id).addEventListener("input", () => {
         document.getElementById("venueRequestPassword").setCustomValidity("");
@@ -64261,7 +64244,6 @@
     document.getElementById("venueRequestForm").addEventListener("submit", async (event) => {
       event.preventDefault();
       const form = event.currentTarget;
-      syncVenueRequestLoginEmail();
       const password = document.getElementById("venueRequestPassword");
       const confirmation = document.getElementById("venueRequestConfirmPassword");
       password.setCustomValidity(passwordValidationMessage(password.value));
@@ -64293,7 +64275,6 @@
             website: document.getElementById("venueRequestWebsite").value.trim(),
             contactName: document.getElementById("venueRequestContactName").value.trim(),
             contactTitle: document.getElementById("venueRequestContactTitle").value.trim(),
-            contactEmail: document.getElementById("venueRequestContactEmail").value.trim(),
             contactPhone: document.getElementById("venueRequestContactPhone").value.trim(),
             message: document.getElementById("venueRequestMessage").value.trim(),
             companyFax: document.getElementById("venueRequestCompanyFax").value,
@@ -64307,7 +64288,6 @@
         }
 
         form.reset();
-        syncVenueRequestLoginEmail();
         pendingVenueAgentReferralCode = "";
         authPage.classList.add("venue-request-succeeded");
         submit.classList.add("is-submitted");
