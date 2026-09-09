@@ -28,7 +28,7 @@ For a customer rendering-only sample, set `PERF_CUSTOMER_FIXTURE=1` and use `/da
 | 1 | Audit, measurements, optimization plan | Pushed `d93ecffe`; [Vercel success](https://vercel.com/ai-movie-jobs/shiftstage/HwxUkNVjXgKbRaexJuXQuRped5sQ); live health, private access rejection and mobile samples verified |
 | 2 | Initial JavaScript and load overhead | Pushed `ac9ea442`; [Vercel success](https://vercel.com/ai-movie-jobs/shiftstage/GeAFzWFHbNtyJyTtktXCJXny217W); all three role smoke checks and live health passed |
 | 3 | Responsive image delivery | Pushed `8e12a9e9`; [Vercel success](https://vercel.com/ai-movie-jobs/shiftstage/GFZQwYjUHRop42BJjdauGBxwjemc); image selection, live health and nine mobile samples verified |
-| 4 | Mobile video loading and playback | Bounded warmup/posters and background pause/resume; deployment verification follows this commit |
+| 4 | Mobile video loading and playback | Pushed `78067bf7`; [Vercel success](https://vercel.com/ai-movie-jobs/shiftstage/FaJDnCj1UZyRCGFvBhPxgUE5PQoP); live resource/profile journeys, health and nine mobile samples verified; verification-only follow-up records the corrected profile fixture and results |
 | 5 | Feed rendering and scrolling | Pending |
 | 6 | Supabase and database access | Pending |
 | 7 | API/network requests | Pending |

@@ -25,3 +25,19 @@ Policy tests cover 30-card windows, rapid index jumps, Data Saver, no repeat sou
 The first scroll probe sampled geometry on a timer before a queued IntersectionObserver callback had necessarily run. The refined before/after probe waits two paint opportunities after each jump; both versions then passed the basic offscreen check. The stricter observer unit test additionally covers a partially visible replacement and scrolling entirely outside the feed. Do not claim the initial transient observation proves prolonged background playback during every scroll. The hidden-page issue was reproduced in both baseline journeys.
 
 Visibility events in the automated resource journey are simulated and explicitly labeled; they do not claim physical-phone background behavior. Browser preload heuristics vary. The sampled 1080 × 1920 source files remain 3.3–10.3 MB for roughly 10–15 seconds, with the largest exceeding a 4 Mbps connection's sustainable rate. An adaptive rendition ladder or a separately reviewed lower-bitrate delivery derivative could improve that case. This pass does not rewrite existing media, silently reduce quality, add a paid service, or create a new transcoding job. Source bitrate remains a documented infrastructure/delivery follow-up.
+
+## Deployed results
+
+Implementation commit `78067bf7b2895f4b8068860b4d0ccc18ac15a0a3` was pushed and [Vercel succeeded](https://vercel.com/ai-movie-jobs/shiftstage/FaJDnCj1UZyRCGFvBhPxgUE5PQoP). Live health, Supabase health, exact deployed shell/source matching and anonymous private-data rejection passed. The public profile smoke test was corrected to select `profile_and_feed` media; feed-only clips correctly do not appear on profiles. The final journey passed playback, hidden pause, same-player resume, manual-pause preservation and keyboard close cleanup. The unrelated mobile pointer-close overlap is recorded in `known-issues.md`.
+
+Three cold runs per network profile are recorded in `step-04-after.json`. All used the same optimized shell. Public feed rotation and server/network variability remain limits on timing comparisons.
+
+| Network | Initial bytes before → after | Requests before → after | First playing video startup before → after | LCP before → after |
+| --- | --- | --- | --- | --- |
+| Wi-Fi | 14,565,328 → 10,237,983 (−29.7%) | 57 → 37 | 540 → 378 ms | 1,128 → 1,236 ms |
+| Cellular | 3,146,678 → 2,931,811 (−6.8%) | 56 → 37 | 2,069 → 912 ms | 3,368 → 3,480 ms |
+| Slow cellular | 1,541,205 → 1,537,042 (−0.3%) | 57 → 36 | See note below | 8,780 → 6,936 ms |
+
+On slow cellular the first card started in **3/3 optimized runs versus 0/3 baseline runs** within the observation window. Its optimized median load-to-play was 1,504 ms; baseline's 5,167 ms summary came from a later card, so these are not a matched first-card timing comparison. Cellular first-card startup fell 55.9%, and navigation-to-first-play fell from 5,318 to 4,378 ms. Waiting-event medians stayed 1 on Wi-Fi and 7 on cellular; slow waiting events increased from 4 to 6 while actual first-card playback became possible. Zero sampled dropped frames, JavaScript errors or critical failed requests were recorded. No claim of eliminated buffering is made.
+
+Live resource checks confirmed at most three attached sources/posters, one playing clip, only one paused retained source when hidden, and zero sources after leaving TV. The first-run Wi-Fi CLS outlier was .343; median was zero (also zero before). Cellular median CLS became zero and slow remained .005. Paint variability and the source bitrate limitation remain for later passes.
