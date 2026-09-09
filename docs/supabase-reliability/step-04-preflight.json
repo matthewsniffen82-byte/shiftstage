@@ -1,0 +1,220 @@
+{
+  "source_commit": "3ba3644dea928219915a2497b6baef63e181513e",
+  "project_ref": "hfmzwadzabmgxkjzmqun",
+  "active_nfc_session_duplicate_groups": 0,
+  "captured_at": "2026-09-09T18:36:22.915479+00:00",
+  "case_insensitive_dancer_slug_duplicate_groups": 0,
+  "photo_storage_duplicate_groups": 0,
+  "read_only": "on",
+  "scheduled_date_duplicate_groups": 0,
+  "shift_rows": 53,
+  "unique_indexes": [
+    {
+      "definition": "CREATE UNIQUE INDEX dancer_profile_slug_aliases_pkey ON public.dancer_profile_slug_aliases USING btree (slug)",
+      "name": "dancer_profile_slug_aliases_pkey",
+      "ready": true,
+      "table": "dancer_profile_slug_aliases",
+      "valid": true
+    },
+    {
+      "definition": "CREATE UNIQUE INDEX dancer_profiles_pkey ON public.dancer_profiles USING btree (id)",
+      "name": "dancer_profiles_pkey",
+      "ready": true,
+      "table": "dancer_profiles",
+      "valid": true
+    },
+    {
+      "definition": "CREATE UNIQUE INDEX dancer_profiles_slug_key ON public.dancer_profiles USING btree (slug)",
+      "name": "dancer_profiles_slug_key",
+      "ready": true,
+      "table": "dancer_profiles",
+      "valid": true
+    },
+    {
+      "definition": "CREATE UNIQUE INDEX dancer_profiles_user_id_key ON public.dancer_profiles USING btree (user_id)",
+      "name": "dancer_profiles_user_id_key",
+      "ready": true,
+      "table": "dancer_profiles",
+      "valid": true
+    },
+    {
+      "definition": "CREATE UNIQUE INDEX favorites_pkey ON public.favorites USING btree (customer_id, dancer_id)",
+      "name": "favorites_pkey",
+      "ready": true,
+      "table": "favorites",
+      "valid": true
+    },
+    {
+      "definition": "CREATE UNIQUE INDEX follows_pkey ON public.follows USING btree (customer_id, dancer_id)",
+      "name": "follows_pkey",
+      "ready": true,
+      "table": "follows",
+      "valid": true
+    },
+    {
+      "definition": "CREATE UNIQUE INDEX going_signals_customer_shift_unique ON public.going_signals USING btree (customer_id, shift_id) WHERE (customer_id IS NOT NULL)",
+      "name": "going_signals_customer_shift_unique",
+      "ready": true,
+      "table": "going_signals",
+      "valid": true
+    },
+    {
+      "definition": "CREATE UNIQUE INDEX going_signals_pkey ON public.going_signals USING btree (id)",
+      "name": "going_signals_pkey",
+      "ready": true,
+      "table": "going_signals",
+      "valid": true
+    },
+    {
+      "definition": "CREATE UNIQUE INDEX going_signals_visitor_shift_unique ON public.going_signals USING btree (visitor_token_hash, shift_id) WHERE (visitor_token_hash IS NOT NULL)",
+      "name": "going_signals_visitor_shift_unique",
+      "ready": true,
+      "table": "going_signals",
+      "valid": true
+    },
+    {
+      "definition": "CREATE UNIQUE INDEX image_moderation_records_pkey ON public.image_moderation_records USING btree (id)",
+      "name": "image_moderation_records_pkey",
+      "ready": true,
+      "table": "image_moderation_records",
+      "valid": true
+    },
+    {
+      "definition": "CREATE UNIQUE INDEX image_moderation_records_user_idempotency_idx ON public.image_moderation_records USING btree (user_id, idempotency_key) WHERE (idempotency_key IS NOT NULL)",
+      "name": "image_moderation_records_user_idempotency_idx",
+      "ready": true,
+      "table": "image_moderation_records",
+      "valid": true
+    },
+    {
+      "definition": "CREATE UNIQUE INDEX media_likes_pkey ON public.media_likes USING btree (id)",
+      "name": "media_likes_pkey",
+      "ready": true,
+      "table": "media_likes",
+      "valid": true
+    },
+    {
+      "definition": "CREATE UNIQUE INDEX media_likes_visitor_photo_unique ON public.media_likes USING btree (visitor_token_hash, photo_id) WHERE (photo_id IS NOT NULL)",
+      "name": "media_likes_visitor_photo_unique",
+      "ready": true,
+      "table": "media_likes",
+      "valid": true
+    },
+    {
+      "definition": "CREATE UNIQUE INDEX media_likes_visitor_video_unique ON public.media_likes USING btree (visitor_token_hash, video_id) WHERE (video_id IS NOT NULL)",
+      "name": "media_likes_visitor_video_unique",
+      "ready": true,
+      "table": "media_likes",
+      "valid": true
+    },
+    {
+      "definition": "CREATE UNIQUE INDEX payment_provider_webhook_events_pkey ON public.payment_provider_webhook_events USING btree (id)",
+      "name": "payment_provider_webhook_events_pkey",
+      "ready": true,
+      "table": "payment_provider_webhook_events",
+      "valid": true
+    },
+    {
+      "definition": "CREATE UNIQUE INDEX payment_provider_webhook_events_provider_event_key ON public.payment_provider_webhook_events USING btree (payment_provider, provider_event_id)",
+      "name": "payment_provider_webhook_events_provider_event_key",
+      "ready": true,
+      "table": "payment_provider_webhook_events",
+      "valid": true
+    },
+    {
+      "definition": "CREATE UNIQUE INDEX venue_dancer_affiliations_pkey ON public.venue_dancer_affiliations USING btree (id)",
+      "name": "venue_dancer_affiliations_pkey",
+      "ready": true,
+      "table": "venue_dancer_affiliations",
+      "valid": true
+    },
+    {
+      "definition": "CREATE UNIQUE INDEX venue_dancer_affiliations_unique ON public.venue_dancer_affiliations USING btree (venue_id, dancer_id)",
+      "name": "venue_dancer_affiliations_unique",
+      "ready": true,
+      "table": "venue_dancer_affiliations",
+      "valid": true
+    },
+    {
+      "definition": "CREATE UNIQUE INDEX venue_dancer_verification_tokens_one_active_idx ON public.venue_dancer_verification_tokens USING btree (venue_id, dancer_id) WHERE ((used_at IS NULL) AND (revoked_at IS NULL))",
+      "name": "venue_dancer_verification_tokens_one_active_idx",
+      "ready": true,
+      "table": "venue_dancer_verification_tokens",
+      "valid": true
+    },
+    {
+      "definition": "CREATE UNIQUE INDEX venue_dancer_verification_tokens_pkey ON public.venue_dancer_verification_tokens USING btree (id)",
+      "name": "venue_dancer_verification_tokens_pkey",
+      "ready": true,
+      "table": "venue_dancer_verification_tokens",
+      "valid": true
+    },
+    {
+      "definition": "CREATE UNIQUE INDEX venue_dancer_verification_tokens_token_digest_key ON public.venue_dancer_verification_tokens USING btree (token_digest)",
+      "name": "venue_dancer_verification_tokens_token_digest_key",
+      "ready": true,
+      "table": "venue_dancer_verification_tokens",
+      "valid": true
+    },
+    {
+      "definition": "CREATE UNIQUE INDEX venue_follows_pkey ON public.venue_follows USING btree (customer_id, venue_id)",
+      "name": "venue_follows_pkey",
+      "ready": true,
+      "table": "venue_follows",
+      "valid": true
+    }
+  ],
+  "unique_index_count": 141,
+  "invalid_unique_indexes": [],
+  "function_fingerprints": [
+    {
+      "name": "activate_dancer_shift_from_nfc",
+      "sha256": "73d9be686be855bd42347c299b6c940850d8521db153432b18ab1b0dd42b6491"
+    },
+    {
+      "name": "confirm_deal_redemption_from_nfc",
+      "sha256": "2e18951bea0e0632351e4a26b0873ad2f957002f5fcbef7e74ca2f8895dc79ad"
+    },
+    {
+      "name": "consume_request_rate_limit",
+      "sha256": "2539eb863f2908dbaac32752521ec30202de7c275105351cc2c03c6f6e22e320"
+    },
+    {
+      "name": "create_dancer_payout_batch",
+      "sha256": "46b92fe06032feeef5e1335732bce891eec426ecc5eb45aa69ee25489024004e"
+    },
+    {
+      "name": "issue_and_confirm_deal_redemption_from_nfc",
+      "sha256": "a48405ca95115d398338ce7f98382c4e757613ae49215b5a480b6baa0a32a9e7"
+    },
+    {
+      "name": "provision_app_account_safely",
+      "sha256": "7f8d3e237d36dc8bf8bbc9ec7fa978354c2c52c5d385a65266c7b9213e3460d7"
+    },
+    {
+      "name": "request_dancer_payout",
+      "sha256": "ba9d4ec99e658bcc46317d2650d3fb7130d0a2ad2e79115472fdc8d4688eaadf"
+    },
+    {
+      "name": "unique_dancer_slug",
+      "sha256": "fb342a3c631e0df8d81460eb6f2f3654aebdbecb6a370ae4e8c3e94bb83d02a2"
+    },
+    {
+      "name": "assign_dancer_profile_link",
+      "sha256": "8df8e1d917274ef7c52874c5f24a9bda79abf57caae029db09910f73aa70d2fe"
+    }
+  ],
+  "target_index_existed": false,
+  "target_version_recorded": 0,
+  "shifts_rls": true,
+  "preReleaseRecheck": {
+    "active_session_duplicate_groups": 0,
+    "captured_at": "2026-09-09T19:01:24.907824+00:00",
+    "case_insensitive_dancer_slug_duplicate_groups": 0,
+    "photo_storage_duplicate_groups": 0,
+    "read_only": "on",
+    "scheduled_date_duplicate_groups": 0,
+    "shift_rows": 53,
+    "unique_indexes": 141
+  }
+}

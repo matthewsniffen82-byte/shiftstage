@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { PublicApiError } from "../api-error-policy";
 
 type DancrClient = SupabaseClient<any, any, any>;
 type EndReason = "manual" | "automatic";
@@ -52,7 +53,7 @@ export async function createScheduledDancerShift(
     })
     .select("id")
     .single();
-  if (error) throw error;
+  if (error) throwScheduledDateError(error);
   return data;
 }
 
@@ -76,9 +77,16 @@ export async function updateOwnedDancerShift(
     .or("checked_in_at.is.null,checked_out_at.not.is.null")
     .select("id")
     .maybeSingle();
-  if (error) throw error;
+  if (error) throwScheduledDateError(error);
   if (!data) throw new Error("Dancer shift update was not applied.");
   return data;
+}
+
+function throwScheduledDateError(error: { code?: string; message?: string }): never {
+  if (error.code === "23505" && error.message?.includes('"shifts_one_posted_scheduled_date_idx"')) {
+    throw new PublicApiError("CONFLICT", "This upcoming date is already posted at this club.", 409);
+  }
+  throw error;
 }
 
 export async function recordDancerShiftBroadcast(
