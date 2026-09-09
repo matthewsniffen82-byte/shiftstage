@@ -93,7 +93,7 @@ export async function POST(request: Request) {
     if (!userMessage) console.error("VENUE_SIGNUP_REQUEST_FAILED", safeErrorMetadata(error));
     const status = userMessage.startsWith("Too many venue requests") ? 429 : userMessage ? 400 : 500;
     return apiError(
-      new Error(userMessage || "Unable to submit the venue request."),
+      userMessage ? new PublicApiError("INVALID_REQUEST", userMessage, status) : error,
       "Unable to submit the venue request.",
       status,
     );

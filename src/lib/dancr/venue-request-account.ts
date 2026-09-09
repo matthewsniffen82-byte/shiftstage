@@ -21,7 +21,16 @@ export async function createRequestManager(client: SupabaseClient, input: { emai
   });
   if (error || !data.user) throw new Error("Unable to create this manager login. Use a different email, or sign in if you already have an account.");
   try {
+    // GoTrue can insert the auth row before persisting trusted app metadata.
+    // Reconcile only the user just returned by successful admin creation;
+    // never change the role of an existing login supplied by an applicant.
+    if (data.user.app_metadata?.mydancr_provisioned_role !== "venue") throw new Error("Trusted venue role was not saved.");
+    const promoted = await client.from("app_users").update({ role: "venue" })
+      .eq("id", data.user.id).eq("role", "customer");
+    if (promoted.error) throw promoted.error;
     await provisionAppAccount(client, { role: "venue", userId: data.user.id, email: input.email, displayName: input.displayName, city: input.city });
+    const removed = await client.from("customer_profiles").delete().eq("user_id", data.user.id);
+    if (removed.error) throw removed.error;
     return data.user.id;
   } catch (error) {
     await removeUnsubmittedRequestManager(client, data.user.id);

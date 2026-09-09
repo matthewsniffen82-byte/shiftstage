@@ -35,8 +35,8 @@ test('manager credentials normalize the login email and preserve exact passwords
 test('a provisioning failure cleans up only the newly created auth account', async () => {
   const calls = [];
   const m = managerModule(async () => { throw new Error('private database detail'); });
-  const client = { auth: { admin: {
-    createUser: async value => { calls.push(value); return { data: { user: { id: 'new-manager' } } }; },
+  const client = { from() { const q = { update() { return q; }, eq() { return q; }, then(resolve) { return Promise.resolve({}).then(resolve); } }; return q; }, auth: { admin: {
+    createUser: async value => { calls.push(value); return { data: { user: { id: 'new-manager', app_metadata: { mydancr_provisioned_role: 'venue' } } } }; },
     deleteUser: async id => { calls.push(id); return {}; },
   } } };
   await assert.rejects(m.createRequestManager(client, { email: 'manager@example.com', password: input.password, displayName: 'Test Club', city: 'Las Vegas' }), /Unable to set up/);
@@ -148,4 +148,49 @@ test('request status requires authentication before looking up a manager request
   });
   const response = await route.GET(new Request('https://mydancr.com/api/venue/signup-requests'));
   assert.equal(response.status, 401); assert.equal(reads, 0);
+});
+test('new venue managers reconcile the auth bootstrap before provisioning', async () => {
+  const changes = [];
+  const m = managerModule(async () => { changes.push('provision'); });
+  const client = {
+    auth: { admin: { createUser: async () => ({ data: { user: { id: 'new-only', app_metadata: { mydancr_provisioned_role: 'venue' } } } }) } },
+    from(table) {
+      const op = { table, filters: [] };
+      const q = { update(value) { op.value = value; return q; }, delete() { op.delete = true; return q; }, eq(key, value) { op.filters.push([key, value]); return q; }, then(resolve) { changes.push(op); return Promise.resolve({}).then(resolve); } };
+      return q;
+    },
+  };
+  assert.equal(await m.createRequestManager(client, { email: 'manager@example.com', password: input.password, displayName: 'Club', city: 'Las Vegas' }), 'new-only');
+  assert.equal(changes[0].table, 'app_users');
+  assert.equal(changes[0].value.role, 'venue');
+  assert.deepEqual(changes[0].filters, [['id', 'new-only'], ['role', 'customer']]);
+  assert.equal(changes[1], 'provision');
+  assert.equal(changes[2].table, 'customer_profiles');
+  assert.deepEqual(changes[2].filters, [['user_id', 'new-only']]);
+});
+test('an existing-email creation error cannot change or delete an existing account', async () => {
+  const m = managerModule(); let mutations = 0;
+  const client = { from() { mutations++; throw new Error('must not mutate'); }, auth: { admin: {
+    createUser: async () => ({ data: {}, error: new Error('Email exists') }), deleteUser: async () => { mutations++; },
+  } } };
+  await assert.rejects(m.createRequestManager(client, { email: 'existing@example.com', password: input.password, displayName: 'Club', city: 'Las Vegas' }), /sign in if you already/);
+  assert.equal(mutations, 0);
+});
+test('venue validation errors reach the applicant without exposing internal errors', async () => {
+  class VenueSignupRequestUserError extends Error {}
+  const policy = compile(read('src/lib/api-error-policy.ts'), { './dancr/phone-tap-copy.ts': { phoneTapCopy: value => value }, './dancr/payout-copy.ts': { payoutCopy: value => value } });
+  const api = compile(read('src/lib/api.ts'), { './api-error-policy': policy, './security/safe-error-metadata': { safeErrorMetadata: () => ({}) } });
+  let failure = new VenueSignupRequestUserError('The passwords do not match.');
+  const route = compile(read('app/api/venue/signup-requests/route.ts'), {
+    '@/src/lib/api': api,
+    '@/src/lib/bounded-json-body': { readBoundedJsonObject: request => request.json() },
+    '@/src/lib/supabase/admin': { createAdminSupabaseClient: () => ({}) },
+    '@/src/lib/dancr/public-request-rate-limit': { enforcePublicRequestRateLimit: async () => {}, PublicRequestRateLimitError: class extends Error {} },
+    '@/src/lib/dancr/venue-signup-requests': { VenueSignupRequestUserError, createVenueSignupRequest: async () => { throw failure; } },
+    '@/src/lib/security/safe-error-metadata': { safeErrorMetadata: () => ({}) },
+  });
+  const send = () => route.POST(new Request('https://mydancr.com/api/venue/signup-requests', { method: 'POST', body: JSON.stringify(input) }));
+  let response = await send(); assert.equal(response.status, 400); assert.equal((await response.json()).error, failure.message);
+  failure = new Error('Private database information');
+  response = await send(); assert.equal(response.status, 500); assert.equal((await response.json()).error, 'Unable to submit the venue request.');
 });
