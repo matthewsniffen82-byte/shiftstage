@@ -92,7 +92,7 @@
           frame.hidden = false;
           dialog.querySelector("[data-crop-zoom]").hidden = false;
           confirm.disabled = reset.disabled = false;
-          status.textContent = "Your photo uploads only after you choose Use photo.";
+          status.textContent = "Your photo is added to your profile only after you choose Use photo.";
           draw();
           canvas.focus({ preventScroll: true });
         } catch (error) {
