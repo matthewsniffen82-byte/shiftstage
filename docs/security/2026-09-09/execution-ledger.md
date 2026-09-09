@@ -22,8 +22,8 @@ Step 1 delivered as `50d4eb543dbfc93dbed6f0663c51aa2332542cb4`, pushed to origin
 | Step | Area | State |
 | --- | --- | --- |
 | 1 | Complete audit / threat model | Delivered and healthy: 50d4eb543dbfc93dbed6f0663c51aa2332542cb4 |
-| 2 | Secrets and environment | 18 focused / 1,972 full tests, lint, TypeScript and production build passed; deployment pending |
-| 3 | Supabase RLS | Not started |
+| 2 | Secrets and environment | Delivered and healthy: f7dc39d362a2b4c2f70ed401d134593ea3d9c640 |
+| 3 | Supabase RLS | 94 PostgreSQL / 2,066 full tests, lint, TypeScript and build passed; database and Vercel deployment pending |
 | 4 | Storage permissions | Not started |
 | 5 | Authentication / recovery | Not started |
 | 6 | Role authorization | Not started |
@@ -58,4 +58,8 @@ Step 1 delivered as `50d4eb543dbfc93dbed6f0663c51aa2332542cb4`, pushed to origin
 
 Only sanitized evidence belongs in Git. Local validation logs and read-only metadata snapshots are retained outside the worktree under the task's delivery directory. Never copy environment values, tokens, private account records or verification documents into this ledger.
 
-The provider's current complete policy/function/grant catalog, Supabase Auth settings, GitHub branch protection and disposable authenticated staging accounts are not yet verified. A zero-row anonymous query is not proof of cross-user isolation. Do not substitute source assertions for actual database execution tests.
+The production policy/function/grant catalog was freshly captured during Step 3. Auth settings, GitHub branch protection and disposable authenticated staging accounts still need their scheduled reviews. Step 3 uses isolated PostgreSQL policy tests with synthetic rows and separate read-only production role-context checks; these do not certify Supabase Auth token issuance or full historical migration replay.
+
+## Step 2 delivery
+
+Delivered as `f7dc39d362a2b4c2f70ed401d134593ea3d9c640`, pushed to origin/main with matching clean local HEAD. [Exact Vercel deployment](https://vercel.com/ai-movie-jobs/shiftstage/3SFq9S6wvsh8pSeKtjjQ5Siyzm9D) reached success. At 2026-09-09 10:49 UTC, root and both health endpoints returned 200; account and admin approvals returned 401 without authentication. The final full suite passed 1,972 tests; lint, TypeScript, migration history check and production build passed. No credentials were rotated.
