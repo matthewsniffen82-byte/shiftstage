@@ -4,6 +4,8 @@ import { mkdtemp, readFile, rm, writeFile } from "fs/promises";
 import { tmpdir } from "os";
 import path from "path";
 import ffmpegPath from "ffmpeg-static";
+import { assertAllowedVideoContainer } from "./video-upload-policy.ts";
+import { LOCAL_VIDEO_INPUT_OPTIONS } from "./local-video-input.ts";
 
 export const DANCR_ORIGINAL_MEDIA_BUCKET = "dancr-media-originals";
 export const DANCR_MEDIA_WATERMARK_TEXT = "mydancr";
@@ -214,6 +216,7 @@ export async function watermarkStoredVideo(
     input.publicBucket,
     input.storagePath,
   );
+  assertAllowedVideoContainer(original, input.storageMime);
   if (!archived) {
     await archiveOriginalMedia(
       client,
@@ -305,6 +308,7 @@ export async function createDancrVideoPoster(
   storageMime: "video/mp4" | "video/webm",
 ) {
   if (!source.length) throw new Error("A video is required to create its preview image.");
+  assertAllowedVideoContainer(source, storageMime);
   const workspace = await mkdtemp(path.join(tmpdir(), "mydancr-poster-"));
   const extension = storageMime === "video/webm" ? "webm" : "mp4";
   const sourcePath = path.join(workspace, `source.${extension}`);
@@ -329,6 +333,7 @@ async function runVideoPosterFfmpeg(sourcePath: string, framePath: string) {
   await new Promise<void>((resolve, reject) => {
     const child = spawn(executable, [
       "-y",
+      ...LOCAL_VIDEO_INPUT_OPTIONS,
       "-hide_banner",
       "-loglevel",
       "error",
@@ -395,6 +400,7 @@ async function runVideoWatermarkFfmpeg(input: {
   await new Promise<void>((resolve, reject) => {
     const child = spawn(executable, [
       "-y",
+      ...LOCAL_VIDEO_INPUT_OPTIONS,
       "-hide_banner",
       "-loglevel",
       "error",

@@ -1,5 +1,7 @@
 import { parseFfmpegDuration } from "./video-frame-sampling.ts";
 
+export const MAX_STORED_VIDEO_DIMENSION = 7680;
+
 export type VerifiedVideoMetadata = {
   durationSeconds: number;
   formatNames: string[];
@@ -22,6 +24,15 @@ export function detectVideoContainer(buffer: Buffer) {
     return "webm" as const;
   }
   return null;
+}
+
+export function assertAllowedVideoContainer(buffer: Buffer, mimeType: string) {
+  const container = detectVideoContainer(buffer);
+  if (
+    (mimeType === "video/webm" && container === "webm") ||
+    ((mimeType === "video/mp4" || mimeType === "video/quicktime") && container === "iso-bmff")
+  ) return container;
+  throw new Error("The uploaded video format does not match an allowed MP4, WebM, or MOV file.");
 }
 
 export function parseFfmpegVideoMetadata(output: string): VerifiedVideoMetadata | null {
@@ -59,7 +70,7 @@ export function assertAllowedStoredVideo(input: {
     throw new Error("Video files must be 75 MB or smaller.");
   }
 
-  const container = detectVideoContainer(input.buffer);
+  const container = assertAllowedVideoContainer(input.buffer, input.mimeType);
   const isWebm = input.mimeType === "video/webm";
   const isIsoMedia = input.mimeType === "video/mp4" || input.mimeType === "video/quicktime";
   if (
@@ -82,8 +93,8 @@ export function assertAllowedStoredVideo(input: {
     !Number.isSafeInteger(input.metadata.height) ||
     input.metadata.width < 240 ||
     input.metadata.height < input.metadata.width ||
-    input.metadata.width > 7680 ||
-    input.metadata.height > 7680
+    input.metadata.width > MAX_STORED_VIDEO_DIMENSION ||
+    input.metadata.height > MAX_STORED_VIDEO_DIMENSION
   ) {
     throw new Error("Upload a vertical or square video at least 240 pixels wide.");
   }

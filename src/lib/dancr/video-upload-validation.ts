@@ -7,9 +7,11 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import ffmpegPath from "ffmpeg-static";
 import {
+  assertAllowedVideoContainer,
   assertAllowedStoredVideo,
   parseFfmpegVideoMetadata,
 } from "./video-upload-policy";
+import { LOCAL_VIDEO_INPUT_OPTIONS } from "./local-video-input.ts";
 
 type AdminClient = SupabaseClient<any, any, any>;
 
@@ -36,6 +38,7 @@ export async function inspectStoredMyDancrTvVideo(
   if (buffer.length !== input.expectedBytes) {
     throw new Error("The uploaded video size could not be verified.");
   }
+  assertAllowedVideoContainer(buffer, input.mimeType);
 
   const workspace = await mkdtemp(path.join(tmpdir(), "mydancr-tv-inspection-"));
   const extension = input.mimeType === "video/webm" ? "webm" : input.mimeType === "video/quicktime" ? "mov" : "mp4";
@@ -65,6 +68,7 @@ function inspectVideoWithFfmpeg(videoPath: string) {
   return new Promise<string>((resolve, reject) => {
     const child = spawn(executable, [
       "-y",
+      ...LOCAL_VIDEO_INPUT_OPTIONS,
       "-hide_banner",
       "-loglevel",
       "info",

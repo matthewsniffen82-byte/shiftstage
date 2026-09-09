@@ -11,6 +11,8 @@ import type OpenAI from "openai";
 import { createOpenAIClient } from "../openai-client";
 import { getServerEnv } from "../server-env";
 import { runVideoReviewChecks } from "./video-review-checks";
+import { assertAllowedVideoContainer } from "./video-upload-policy";
+import { LOCAL_VIDEO_INPUT_OPTIONS } from "./local-video-input.ts";
 import {
   DANCR_IMAGE_MODERATION_MODEL,
   evaluateDancrImageModeration,
@@ -110,6 +112,7 @@ export async function moderateStoredMyDancrTvVideo(
       input.dancerAvatarStoragePath,
     );
     const videoBuffer = await downloadVideo(admin, input.storagePath);
+    assertAllowedVideoContainer(videoBuffer, input.storageMime);
     await writeFile(videoPath, videoBuffer);
     const videoDurationSeconds = await probeVideoDurationSeconds(videoPath);
     const frames = await extractVideoFrames(videoPath, workspace, videoDurationSeconds);
@@ -485,7 +488,7 @@ function runFfmpeg(args: string[], options: { allowNoOutput?: boolean; captureSt
   const executable = ffmpegPath;
   if (!executable) return Promise.reject(new Error("Video moderation decoder is unavailable."));
   return new Promise<{ stdout: string; stderr: string }>((resolve, reject) => {
-    const child = spawn(executable, ["-y", ...args], {
+    const child = spawn(executable, ["-y", ...LOCAL_VIDEO_INPUT_OPTIONS, ...args], {
       windowsHide: true,
       stdio: ["ignore", options.captureStdout ? "pipe" : "ignore", "pipe"],
     });
