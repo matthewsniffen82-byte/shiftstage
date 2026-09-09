@@ -36,8 +36,8 @@ For a customer rendering-only sample, set `PERF_CUSTOMER_FIXTURE=1` and use `/da
 | 9 | CSS, fonts, rendering | Final `25f63e91` pushed; [Vercel success](https://vercel.com/ai-movie-jobs/shiftstage/iXGjRceT8PYVjEs7WvPnHideYssz); lossless inline CSS compaction, home/venue paint and transfer improved; external-delivery experiments rejected after cold-load checks |
 | 10 | Third-party overhead | Pushed `9cfa154e`; [Vercel success](https://vercel.com/ai-movie-jobs/shiftstage/59YtDi7wtQyLFaLrMrW3q6JvR1qH); initial public TV server code reduced 16.8%, 2,859 tests and live API/media/role checks passed |
 | 11 | Memory/resource lifecycle | Pushed `3b589b18`; [Vercel success](https://vercel.com/ai-movie-jobs/shiftstage/2ipeQZWLZK95eADtL5Soax3F3yvz); 2,879 tests/checks, bounded metadata resources and six live browsing cycles verified |
-| 12 | Mobile matrix | Chromium/WebKit mobile journeys and profile viewer touch-close correction; validation in progress |
-| 13 | Perceived loading | Pending |
+| 12 | Mobile matrix | Pushed `a57946ce`; [Vercel success](https://vercel.com/ai-movie-jobs/shiftstage/22iLfeGj1YKJ5ELXJExrmtBD4v2m); 2,923 tests/checks, six deployed mobile configurations, profile touch-close/lifecycle and three roles passed |
+| 13 | Perceived loading | Existing progressive/optimistic states verified; held-response and retry regression coverage added; release validation in progress |
 | 14 | Final vitals comparison | Pending |
 | 15 | Regression and production validation | Pending |
 
