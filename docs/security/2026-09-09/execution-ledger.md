@@ -27,7 +27,7 @@ Step 1 delivered as `50d4eb543dbfc93dbed6f0663c51aa2332542cb4`, pushed to origin
 | 4 | Storage permissions | Delivered and healthy: b3b46b5d7485dc3bad5ef179a996f26730113d21 |
 | 5 | Authentication / recovery | Delivered and healthy: 7bc16ed2204df7a07678001c522544cec2425a10 |
 | 6 | Role authorization | Delivered and healthy: 5db6de15bbd5e5d9746f2c21a901286ecd980c92 and 39614027ff633836641227d30cb8256cd238859e |
-| 7 | Admin access / auditing | Inspected and focused tests passed; full validation and deployment pending |
+| 7 | Admin access / auditing | Fix and migrations deployed: d22462c5bd27675def76675af3f64e5e9a307fd8; verified migration-freeze follow-up pending |
 | 8 | Input validation | Not started |
 | 9 | XSS / HTML injection | Not started |
 | 10 | CSRF / state changes | Not started |
@@ -107,3 +107,18 @@ Step 6's follow-up was pushed as `39614027ff633836641227d30cb8256cd238859e`. [Ex
 The administrative review and three confirmed findings are documented in `step-07-admin.md`. The focused admin/audit suite passed 360 checks; the final suspension suite passed seven runtime tests, including the actual account self-service flow against synthetic PostgreSQL data. Pre-fix tests reproduced audit tampering and profile-suspension bypass, and 14 admin denial responses were incorrectly classified as 500. No production data was changed during these tests. Full release checks and exact-commit application/database deployment verification are pending.
 
 After integrating the independent request-cancellation performance release, all 2,676 automated tests passed. Lint, TypeScript and the production build passed. The migration guard retained 130 frozen files and recognized the two new migrations; postbuild skipped demo population. The exact deployment transaction passed an isolated PostgreSQL dry run with the current live function body and synthetic records, including record preservation, browser audit-write denial, private suspension state and retained server capabilities. Exact-commit publication and production migration application remain pending.
+
+Step 7's fix was pushed as `d22462c5bd27675def76675af3f64e5e9a307fd8`. [Exact Vercel deployment](https://vercel.com/ai-movie-jobs/shiftstage/HB8GteybQTULq6j23g7t6F97FgUA) succeeded. After its health check, both committed migrations ran in one bounded transaction at 12:57 UTC. Locked before/after fingerprints confirmed existing profile and audit records were unchanged. Read-only postflight confirmed browser audit writes were revoked, admin reads and server inserts retained, the new flag was private, the publication function was service-only with its pinned search path, and both tables retained RLS. Both ledger SQL checksums matched the committed files.
+
+At 12:57:52 UTC, root and both health endpoints returned 200, all sampled protected routes returned 401 anonymously, both corrected admin POST routes returned 401, the recovery callback regression passed, and all 30 Supabase readiness checks passed. No production account or moderation state was altered to test the controls.
+
+Verified normalized migration SHA-256 values:
+
+| File | SHA-256 |
+| --- | --- |
+| `20260909124500_protect_admin_audit_history.sql` | `5c7813569f9101aafb39e030aca16a048377a681322616cc0920f45932d7bc86` |
+| `20260909124600_preserve_admin_profile_suspensions.sql` | `7d672c1e87c5734f597e129e6256050ae2b5be526cdf0d00a30e6fb6fa64ea46` |
+
+This same-step follow-up freezes the two verified migrations, bringing the immutable history to 132 files. It does not rerun SQL. Its full checks, push and exact deployment verification must complete before Step 8.
+
+Follow-up validation passed all 2,676 tests, lint, TypeScript and production build. The history gate verified 132 frozen files; postbuild skipped demo population. Deployment evidence is recorded after publication.
