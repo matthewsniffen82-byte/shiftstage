@@ -44,7 +44,7 @@ test("admin panels and individual venue controls remain collapsible without manu
   assert.match(adminClient, /<details className=\{title === "Support Inbox"/);
   assert.match(adminClient, /<summary className="admin-panel-head">/);
   assert.match(adminClient, /className="admin-panel-body"/);
-  assert.match(adminClient, /<details className="venue-admin-row" key=\{venueId\}>/);
+  assert.match(adminClient, /<details className="venue-admin-row" key=\{venueId\} onToggle=/);
   assert.match(adminClient, /\.admin-panel\[open\] \.admin-panel-chevron/);
   assert.doesNotMatch(adminClient, /<details className="venue-create-panel">/);
 });

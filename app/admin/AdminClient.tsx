@@ -869,6 +869,13 @@ export default function AdminClient() {
                 {clubRequestPanel}
                 <Panel title="Club accounts" badge={`${adminCountLabel(state.operations?.counts?.clubs)} managed`} defaultOpen>
                   <VenueManager
+                    clubDeals={state.clubDeals || []}
+                    dealRequests={state.dealRequests || []}
+                    referralFees={state.referralFees || null}
+                    onClubDealsChange={(clubDeals) => setState(current => ({ ...current, clubDeals }))}
+                    onDealRequestsChange={(dealRequests) => setState(current => ({ ...current, dealRequests }))}
+                    onReferralFeesChange={(referralFees) => setState(current => ({ ...current, referralFees }))}
+                    onActionConfirmed={confirmAdminAction}
                     venues={state.venues || []}
                     claimCodes={state.venueClaimCodes || []}
                     onVenuesChange={(venues) => setState((current) => ({ ...current, venues }))}
@@ -879,15 +886,6 @@ export default function AdminClient() {
                   <AdminNfcInventoryPanel />
                 </Panel>
               </section>
-              <AdminClubDealManager
-                venues={state.venues || []}
-                clubDeals={state.clubDeals || []}
-                dealRequests={state.dealRequests || []}
-                referralFees={state.referralFees || null}
-                onClubDealsChange={(clubDeals) => setState((current) => ({ ...current, clubDeals }))}
-                onDealRequestsChange={(dealRequests) => setState((current) => ({ ...current, dealRequests }))}
-                onActionConfirmed={confirmAdminAction}
-              />
             </>
           ) : null}
 
@@ -1417,7 +1415,15 @@ function FinanceManager({
   );
 }
 
+function useAdminCommercialEditorState(dirty: boolean, busy: boolean, onChange?: (state: { dirty: boolean; busy: boolean }) => void) {
+  const callback = useRef(onChange);
+  callback.current = onChange;
+  useEffect(() => { callback.current?.({ dirty, busy }); }, [dirty, busy]);
+}
+
 function AdminClubDealManager({
+  scopedVenueId,
+  onEditorStateChange,
   venues,
   clubDeals,
   dealRequests,
@@ -1426,6 +1432,8 @@ function AdminClubDealManager({
   onDealRequestsChange,
   onActionConfirmed,
 }: {
+  scopedVenueId?: string;
+  onEditorStateChange?: (state: { dirty: boolean; busy: boolean }) => void;
   venues: Array<Record<string, unknown>>;
   clubDeals: Array<Record<string, unknown>>;
   dealRequests: Array<Record<string, unknown>>;
@@ -1435,7 +1443,8 @@ function AdminClubDealManager({
   onActionConfirmed: (message: string) => void;
 }) {
   const preset = defaultClubDealOfferPreset();
-  const [venueId, setVenueId] = useState("");
+  const [venueId, setVenueId] = useState(scopedVenueId || "");
+  const [isDirty, setIsDirty] = useState(false);
   const [dealId, setDealId] = useState("");
   const [requestId, setRequestId] = useState("");
   const [dealTitle, setDealTitle] = useState<string>(preset.title);
@@ -1444,6 +1453,7 @@ function AdminClubDealManager({
   const [isActive, setIsActive] = useState(false);
   const [status, setStatus] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  useAdminCommercialEditorState(isDirty, isSaving, onEditorStateChange);
   const mountedRef = useRef(false);
   const actionSequenceRef = useRef(0);
   const actionAbortRef = useRef<AbortController | null>(null);
@@ -1454,7 +1464,7 @@ function AdminClubDealManager({
   const selectedPreset = CLUB_DEAL_OFFER_PRESETS.find((offer) => offer.title === dealTitle) || preset;
   const terms = asRecordArray(referralFees?.terms);
   const currentTerm = currentAdminReferralTerm(terms.filter((term) => asText(term.venueId) === venueId));
-  const openDealRequests = dealRequests.filter((request) => request.status === "pending" || request.status === "under_review");
+  const openDealRequests = dealRequests.filter((request) => (!scopedVenueId || asText(request.venueId) === scopedVenueId) && (request.status === "pending" || request.status === "under_review"));
 
   useEffect(() => {
     mountedRef.current = true;
@@ -1489,6 +1499,7 @@ function AdminClubDealManager({
 
   function resetEditor(nextVenueId = venueId) {
     setVenueId(nextVenueId);
+    setIsDirty(false);
     setDealId("");
     setRequestId("");
     setDealTitle(preset.title);
@@ -1499,6 +1510,7 @@ function AdminClubDealManager({
   }
 
   function editDeal(deal: Record<string, unknown>) {
+    setIsDirty(false);
     setRequestId("");
     setDealId(asText(deal.id));
     setDealTitle(asText(deal.dealTitle) || preset.title);
@@ -1509,6 +1521,7 @@ function AdminClubDealManager({
   }
 
   function prepareDealRequest(dealRequest: Record<string, unknown>) {
+    setIsDirty(true);
     const nextVenueId = asText(dealRequest.venueId);
     const linkedDeal = clubDeals.find((deal) => asText(deal.id) === asText(dealRequest.linkedDealId));
     const requestedPreset = CLUB_DEAL_OFFER_PRESETS.find((offer) => offer.title === asText(dealRequest.offerTitle)) || preset;
@@ -1555,6 +1568,7 @@ function AdminClubDealManager({
         fallbackMessage: "Unable to save the contract Club Deal.",
       });
       if (!isCurrentDealAction(request)) return;
+      setIsDirty(false);
       onClubDealsChange(data.clubDeals || []);
       onDealRequestsChange(data.dealRequests || dealRequests);
       setDealId(asText(data.deal?.id));
@@ -1634,14 +1648,14 @@ function AdminClubDealManager({
   }
 
   return (
-    <section className="operations-center admin-club-deal-manager" aria-labelledby="admin-club-deal-manager-heading">
-      <Panel title="Contract Club Deals" badge={`${clubDeals.filter((deal) => deal.isActive === true).length} live`}>
+    <section className="operations-center admin-club-deal-manager" aria-labelledby={`admin-club-deal-manager-heading-${scopedVenueId || "all"}`}>
+      <Panel title="Contract Club Deals" badge={`${(scopedVenueId ? venueDeals : clubDeals).filter((deal) => deal.isActive === true).length} live`} defaultOpen={Boolean(scopedVenueId)}>
         <span className="eyebrow">MyDancr controlled</span>
-        <h2 id="admin-club-deal-manager-heading">Create and publish venue offers</h2>
+        <h2 id={`admin-club-deal-manager-heading-${scopedVenueId || "all"}`}>Create and publish venue offers</h2>
         <p>Enter only the admission offer authorized by the signed deal order. Venue dashboards receive a read-only copy of every offer, fee, status, and settlement metric.</p>
-        <section className="admin-deal-request-inbox" aria-labelledby="admin-deal-request-inbox-heading">
+        {!scopedVenueId || openDealRequests.length ? <section className="admin-deal-request-inbox" aria-labelledby={`admin-deal-request-inbox-heading-${scopedVenueId || "all"}`}>
           <div>
-            <h3 id="admin-deal-request-inbox-heading">Venue deal requests</h3>
+            <h3 id={`admin-deal-request-inbox-heading-${scopedVenueId || "all"}`}>Venue deal requests</h3>
             <span>{openDealRequests.length} open</span>
           </div>
           {openDealRequests.map((dealRequest) => (
@@ -1656,11 +1670,11 @@ function AdminClubDealManager({
             </article>
           ))}
           {!openDealRequests.length ? <p className="empty">No venue Club Deal requests are waiting for review.</p> : null}
-        </section>
-        <form className="admin-club-deal-form" onSubmit={saveDeal}>
+        </section> : null}
+        <form className="admin-club-deal-form" onSubmit={saveDeal} onChangeCapture={() => setIsDirty(true)}>
           <label>
             Contracted venue
-            <select value={venueId} disabled={isSaving} onChange={(event) => resetEditor(event.target.value)} required>
+            <select value={venueId} disabled={isSaving || Boolean(scopedVenueId)} onChange={(event) => resetEditor(event.target.value)} required>
               <option value="">Choose venue</option>
               {venues.map((venue) => <option key={asText(venue.id)} value={asText(venue.id)}>{asText(venue.name)}</option>)}
             </select>
@@ -1690,7 +1704,7 @@ function AdminClubDealManager({
           <div className="admin-club-deal-agreement wide">
             <span>Signed referral fee</span>
             <strong>{currentTerm ? `${formatAdminCents(Number(currentTerm.feeCents || 0))} per verified guest` : "Agreement required before publishing"}</strong>
-            <small>{currentTerm ? `${asText(currentTerm.agreementReference)} · effective ${formatDate(currentTerm.effectiveFrom)}` : "Record the fee in Venue referral terms below."}</small>
+            <small>{currentTerm ? `${asText(currentTerm.agreementReference)} · effective ${formatDate(currentTerm.effectiveFrom)}` : "Record the signed fee in Referral fee agreements above."}</small>
           </div>
           {requestId ? <p className="admin-club-deal-request-link wide">This draft is linked to venue request {requestId}. Publishing it will approve the request automatically.</p> : null}
           <div className="admin-club-deal-actions wide">
@@ -1715,20 +1729,25 @@ function AdminClubDealManager({
 }
 
 function ReferralFeeManager({
+  scopedVenueId,
+  onEditorStateChange,
   venues,
   referralFees,
   onReferralFeesChange,
   onActionConfirmed,
 }: {
+  scopedVenueId?: string;
+  onEditorStateChange?: (state: { dirty: boolean; busy: boolean }) => void;
   venues: Array<Record<string, unknown>>;
   referralFees: Record<string, unknown> | null;
   onReferralFeesChange: (referralFees: Record<string, unknown>) => void;
   onActionConfirmed: (message: string) => void;
 }) {
-  const terms = asRecordArray(referralFees?.terms);
-  const requests = asRecordArray(referralFees?.requests);
+  const terms = asRecordArray(referralFees?.terms).filter(term => !scopedVenueId || asText(term.venueId) === scopedVenueId);
+  const requests = asRecordArray(referralFees?.requests).filter(request => !scopedVenueId || asText(request.venueId) === scopedVenueId);
   const pendingRequests = requests.filter((request) => asText(request.status) === "pending");
-  const [venueId, setVenueId] = useState("");
+  const [venueId, setVenueId] = useState(scopedVenueId || "");
+  const [isDirty, setIsDirty] = useState(false);
   const [fee, setFee] = useState("");
   const [effectiveFrom, setEffectiveFrom] = useState(() => adminLocalDateTime(new Date()));
   const [agreementReference, setAgreementReference] = useState("");
@@ -1737,6 +1756,7 @@ function ReferralFeeManager({
   const [requestNotes, setRequestNotes] = useState<Record<string, string>>({});
   const [status, setStatus] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  useAdminCommercialEditorState(isDirty, isSaving, onEditorStateChange);
   const mountedRef = useRef(false);
   const actionSequenceRef = useRef(0);
   const actionAbortRef = useRef<AbortController | null>(null);
@@ -1777,13 +1797,14 @@ function ReferralFeeManager({
   }
 
   function beginRequestApproval(request: Record<string, unknown>) {
+    setIsDirty(true);
     const requestedVenueId = asText(request.venueId);
     setVenueId(requestedVenueId);
     setFee((Number(request.requestedFeeCents || 0) / 100).toFixed(2));
     setReviewRequestId(asText(request.id));
     setDecisionNote(requestNotes[asText(request.id)] || "Approved after MyDancr agreement review.");
     setStatus("Complete the agreement reference and effective date, then approve this request.");
-    window.requestAnimationFrame(() => document.getElementById("admin-referral-fee-form")?.scrollIntoView({ behavior: "smooth", block: "start" }));
+    window.requestAnimationFrame(() => document.getElementById(`admin-referral-fee-form-${scopedVenueId || "all"}`)?.scrollIntoView({ behavior: "smooth", block: "start" }));
   }
 
   async function saveAgreement(event: FormEvent<HTMLFormElement>) {
@@ -1813,6 +1834,7 @@ function ReferralFeeManager({
         fallbackMessage: "Unable to save the referral fee agreement.",
       });
       if (!isCurrentReferralAction(request)) return;
+      setIsDirty(false);
       onReferralFeesChange(data.referralFees);
       const message = reviewRequestId ? "Venue fee request approved and agreement recorded." : "Referral fee agreement recorded.";
       setStatus(message);
@@ -1856,15 +1878,15 @@ function ReferralFeeManager({
   }
 
   return (
-    <section className="operations-center referral-fee-manager" aria-labelledby="referral-fee-manager-heading">
-      <Panel title="Referral fee agreements" badge={`${pendingRequests.length} requests`}>
+    <section className="operations-center referral-fee-manager" aria-labelledby={`referral-fee-manager-heading-${scopedVenueId || "all"}`}>
+      <Panel title="Referral fee agreements" badge={scopedVenueId ? currentTerm ? "Recorded" : "Needed" : `${pendingRequests.length} requests`} defaultOpen={Boolean(scopedVenueId)}>
         <span className="eyebrow">MyDancr controlled</span>
-        <h2 id="referral-fee-manager-heading">Venue referral terms</h2>
+        <h2 id={`referral-fee-manager-heading-${scopedVenueId || "all"}`}>Venue referral terms</h2>
         <p>Only MyDancr admins can record the fee charged for each verified individual phone tap redemption. Venue managers receive a complete read-only view of the signed amount and history.</p>
-        <form id="admin-referral-fee-form" className="referral-fee-form" onSubmit={saveAgreement}>
+        <form id={`admin-referral-fee-form-${scopedVenueId || "all"}`} className="referral-fee-form" onSubmit={saveAgreement} onChangeCapture={() => setIsDirty(true)}>
           <label>
             Venue
-            <select required value={venueId} disabled={isSaving} onChange={(event) => { setVenueId(event.target.value); setReviewRequestId(""); }}>
+            <select required value={venueId} disabled={isSaving || Boolean(scopedVenueId)} onChange={(event) => { setVenueId(event.target.value); setReviewRequestId(""); }}>
               <option value="">Choose venue</option>
               {venues.map((venue) => <option key={asText(venue.id)} value={asText(venue.id)}>{asText(venue.name)} · {asText(venue.city)}</option>)}
             </select>
@@ -1898,7 +1920,7 @@ function ReferralFeeManager({
         {status ? <p role="status">{status}</p> : null}
       </Panel>
 
-      <Panel title="Venue fee change requests" badge={`${pendingRequests.length} pending`}>
+      {!scopedVenueId || pendingRequests.length ? <Panel title="Venue fee change requests" badge={`${pendingRequests.length} pending`}>
         <div className="referral-fee-request-list">
           {pendingRequests.map((request) => {
             const requestId = asText(request.id);
@@ -1921,9 +1943,9 @@ function ReferralFeeManager({
           })}
           {!pendingRequests.length ? <p className="empty">No venue fee change requests are waiting.</p> : null}
         </div>
-      </Panel>
+      </Panel> : null}
 
-      <Panel title="Agreement history" badge={`${terms.length} terms`}>
+      {!scopedVenueId || terms.length ? <Panel title="Agreement history" badge={`${terms.length} terms`}>
         <div className="referral-fee-history">
           {terms.slice(0, 100).map((term) => {
             const venue = venues.find((item) => asText(item.id) === asText(term.venueId));
@@ -1939,7 +1961,7 @@ function ReferralFeeManager({
           })}
           {!terms.length ? <p className="empty">No referral fee agreements have been recorded.</p> : null}
         </div>
-      </Panel>
+      </Panel> : null}
     </section>
   );
 }
@@ -3318,16 +3340,26 @@ function VenueSignupRequestQueue({
 }
 
 function VenueManager({
+  clubDeals, dealRequests, referralFees, onClubDealsChange, onDealRequestsChange, onReferralFeesChange, onActionConfirmed,
   venues,
   claimCodes,
   onVenuesChange,
   onClaimCodesChange,
 }: {
+  clubDeals: Array<Record<string, unknown>>;
+  dealRequests: Array<Record<string, unknown>>;
+  referralFees: Record<string, unknown> | null;
+  onClubDealsChange: (deals: Array<Record<string, unknown>>) => void;
+  onDealRequestsChange: (requests: Array<Record<string, unknown>>) => void;
+  onReferralFeesChange: (fees: Record<string, unknown>) => void;
+  onActionConfirmed: (message: string) => void;
   venues: Array<Record<string, unknown>>;
   claimCodes: Array<Record<string, unknown>>;
   onVenuesChange: (venues: Array<Record<string, unknown>>) => void;
   onClaimCodesChange: (claimCodes: Array<Record<string, unknown>>) => void;
 }) {
+  const [openedVenues, setOpenedVenues] = useState<Record<string, boolean>>({});
+  const [commercialStates, setCommercialStates] = useState<Record<string, { dirty: boolean; busy: boolean }>>({});
   const [searchQuery, setSearchQuery] = useState("");
   const [unsavedByVenue, setUnsavedByVenue] = useState<Record<string, boolean>>({});
   const [statusByVenue, setStatusByVenue] = useState<Record<string, string>>({});
@@ -3604,13 +3636,16 @@ function VenueManager({
           const connectedManager = Boolean(asText(venue.owner_user_id || venue.ownerUserId));
           const isActive = venue.is_active !== false;
           const reviewStatus = asText(venue.page_review_status) || (isActive ? "published" : "admin_draft");
+          const commercialDirty = commercialStates[venueId + ":fee"]?.dirty || commercialStates[venueId + ":deal"]?.dirty;
+          const commercialBusy = commercialStates[venueId + ":fee"]?.busy || commercialStates[venueId + ":deal"]?.busy;
           const requirements = [
             { label: "Venue details", complete: Boolean(asText(venue.name) && asText(venue.address) && asText(venue.city) && asText(venue.state)) },
             { label: "Map coordinates", complete: validAdminCoordinate(venue.latitude, -90, 90) !== null && validAdminCoordinate(venue.longitude, -180, 180) !== null },
             { label: "Public phone", complete: Boolean(asText(venue.phone)) },
             { label: "Venue hours", complete: Boolean(asText(venue.opens_at) && asText(venue.closes_at)) },
             { label: "Venue logo", complete: Boolean(asText(venue.logo_image_url)) },
-            { label: "Active Club Deal", complete: Number(venue.active_deal_count || 0) > 0 },
+            { label: "Signed referral fee agreement", complete: Boolean(currentAdminReferralTerm(asRecordArray(referralFees?.terms).filter(term => asText(term.venueId) === venueId))) },
+            { label: "Active Club Deal", complete: clubDeals.some(deal => asText(deal.venueId) === venueId && deal.isActive === true) },
           ];
           const isReady = requirements.every((requirement) => requirement.complete);
           const reviewLabel = reviewStatus === "venue_review"
@@ -3623,7 +3658,7 @@ function VenueManager({
                   ? "Published"
                   : "MyDancr draft";
           return (
-            <details className="venue-admin-row" key={venueId}>
+            <details className="venue-admin-row" key={venueId} onToggle={event => { if (event.currentTarget.open) setOpenedVenues(current => current[venueId] ? current : { ...current, [venueId]: true }); }}>
               <summary>
                 <span className="venue-admin-identity">
                   <strong>{asText(venue.name) || "Venue"}</strong>
@@ -3700,6 +3735,14 @@ function VenueManager({
                     );
                   })}
                 </div>
+                {openedVenues[venueId] ? <section className="venue-commercial-setup" aria-label={`${asText(venue.name)} Club Deal and contract`}>
+                  <ReferralFeeManager scopedVenueId={venueId} venues={[venue]} referralFees={referralFees}
+                    onReferralFeesChange={onReferralFeesChange} onActionConfirmed={onActionConfirmed}
+                    onEditorStateChange={state => setCommercialStates(current => ({ ...current, [venueId + ":fee"]: state }))} />
+                  <AdminClubDealManager scopedVenueId={venueId} venues={[venue]} clubDeals={clubDeals} dealRequests={dealRequests} referralFees={referralFees}
+                    onClubDealsChange={onClubDealsChange} onDealRequestsChange={onDealRequestsChange} onActionConfirmed={onActionConfirmed}
+                    onEditorStateChange={state => setCommercialStates(current => ({ ...current, [venueId + ":deal"]: state }))} />
+                </section> : null}
                 <ul className="venue-page-requirements">
                   {requirements.map((requirement) => <li className={requirement.complete ? "complete" : ""} key={requirement.label}><span>{requirement.complete ? "✓" : "○"}</span>{requirement.label}</li>)}
                 </ul>
@@ -3714,9 +3757,9 @@ function VenueManager({
                   {statusByVenue[venueId] ? <p className="venue-status" role="status" aria-live="polite">{statusByVenue[venueId]}</p> : null}
                   <a className="venue-page-preview-action" href={venuePagePreviewHref(venue)} rel="noopener noreferrer" target="_blank">Preview full customer page</a>
                   {!isActive && reviewStatus !== "venue_approved" ? (
-                    <button type="button" disabled={controlsBusy || Boolean(unsavedByVenue[venueId]) || !isReady || !connectedManager} onClick={() => void sendVenuePageForReview(venue)}>{reviewStatus === "venue_review" ? "Resend venue review" : "Send for approval"}</button>
+                    <button type="button" disabled={controlsBusy || Boolean(commercialBusy || commercialDirty || unsavedByVenue[venueId]) || !isReady || !connectedManager} onClick={() => void sendVenuePageForReview(venue)}>{reviewStatus === "venue_review" ? "Resend venue review" : "Send for approval"}</button>
                   ) : null}
-                  {unsavedByVenue[venueId] ? <small>Save your changes before sending this page for approval.</small> : !isReady ? <small>Complete every requirement before sending this page to the venue.</small> : !connectedManager && !isActive ? <small>The manager must redeem the approved access code before review can be sent.</small> : null}
+                  {commercialDirty ? <small>Save the Club Deal and agreement edits in their sections before sending for approval.</small> : unsavedByVenue[venueId] ? <small>Save your changes before sending this page for approval.</small> : !isReady ? <small>Complete every requirement before sending this page to the venue.</small> : !connectedManager && !isActive ? <small>The manager must redeem the approved access code before review can be sent.</small> : null}
                 </div>
               </section>
               <section className="venue-access-panel" aria-label={`${asText(venue.name) || "Venue"} access code`}>

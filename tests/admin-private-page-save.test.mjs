@@ -35,7 +35,7 @@ test('a save error remains next to the draft button, and publication requirement
  const form=ui.slice(ui.indexOf('className="venue-page-editor"'),ui.indexOf('</form>',ui.indexOf('className="venue-page-editor"')));
  assert.match(form,/onInvalidCapture/);assert.match(form,/validationMessage/);assert.match(ui,/className="venue-page-workflow-actions"[\s\S]*?statusByVenue\[venueId\]/);
  assert.match(ui,/form=\{`venue-page-editor-\$\{venueId\}`\}/);
- assert.match(ui,/Boolean\(unsavedByVenue\[venueId\]\)/);
+ assert.match(ui,/Boolean\(commercialBusy \|\| commercialDirty \|\| unsavedByVenue\[venueId\]\)/);
  for(const field of ['latitude','longitude','opensAt','closesAt'])assert.doesNotMatch(form.match(new RegExp('<input name="'+field+'"[^>]*>'))?.[0]||'',/\brequired\b/);
  assert.match(source,/if \(!publication.isReady\)/);
 });

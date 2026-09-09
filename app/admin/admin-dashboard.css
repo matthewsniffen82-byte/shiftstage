@@ -105,3 +105,9 @@ body .dashboard-shell-admin .attention-grid { grid-template-columns: repeat(auto
   body .dashboard-shell-admin .admin-workspace-nav { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   body .dashboard-shell-admin .admin-workspace-nav button { padding: 10px 8px; font-size: 12px; }
 }
+/* Contract setup stays inside the selected club, with independent nested disclosures. */
+body .dashboard-shell-admin .venue-commercial-setup { display: grid; gap: 12px; min-width: 0; margin-block: 16px; }
+body .dashboard-shell-admin .venue-commercial-setup .operations-center { max-width: 100%; margin: 0; }
+body .dashboard-shell-admin .venue-commercial-setup .admin-panel-chevron { transform: rotate(0); }
+body .dashboard-shell-admin .venue-commercial-setup .admin-panel[open] > .admin-panel-head .admin-panel-chevron { transform: rotate(180deg); }
+body .dashboard-shell-admin .venue-commercial-setup select:disabled { opacity: 1; color: #e1d9eb; }
