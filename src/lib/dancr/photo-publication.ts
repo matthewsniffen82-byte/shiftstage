@@ -1,44 +1,109 @@
 import "server-only";
+
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { PublicApiError } from "../api-error-policy";
 import { safeErrorMetadata } from "../security/safe-error-metadata";
 import { removeResponsiveImage } from "./responsive-image";
 import { removeArchivedOriginalMedia } from "./media-watermark";
 
-function publicationError(error: { code?: string; message?: string }) {
-  if (["40001", "23505", "P0002"].includes(error.code || "")) {
-    return new PublicApiError("CONFLICT", "This photo changed during approval. Refresh your profile and try again.", 409);
-  }
-  if (error.code === "23514") return new PublicApiError("CONFLICT", "You can upload up to 50 profile photos. Remove one before adding another.", 409);
-  if (error.code === "42501") return new PublicApiError("FORBIDDEN", "This photo cannot be published for this account.", 403);
-  return error;
+export function galleryReviewConflict() {
+  return new PublicApiError("CONFLICT", "This photo or its review has changed. Refresh your profile before trying again.", 409);
 }
 
-export async function publishDancerPhoto(client: SupabaseClient, input: {
-  recordId: string; expectedUpdatedAt: string; storagePath: string; altText?: string | null;
-  metadata?: Record<string, unknown>; reviewerId?: string; notes?: string;
-}) {
+export function galleryReviewVersion(value: unknown): string {
+  if (typeof value !== "string" || !value.trim() || !Number.isFinite(Date.parse(value))) throw galleryReviewConflict();
+  return value;
+}
+
+/** A late vendor result must never replace a newer moderator or worker decision. */
+export async function updatePendingGalleryReview(
+  client: SupabaseClient, id: string, expectedVersion: unknown, update: Record<string, unknown>,
+) {
+  const version = galleryReviewVersion(expectedVersion);
+  const updatedAt = new Date(Math.max(Date.now(), Date.parse(version) + 1)).toISOString();
+  const { data, error } = await client.from("image_moderation_records")
+    .update({ ...update, updated_at: updatedAt }).eq("id", id).eq("updated_at", version)
+    .eq("decision", "review").neq("status", "approved").neq("status", "rejected")
+    .select("*").maybeSingle();
+  if (error) throw error;
+  if (!data) throw galleryReviewConflict();
+  galleryReviewVersion(data.updated_at);
+  return data;
+}
+
+type PublicationInput = {
+  recordId: string; expectedUpdatedAt: unknown; userId: string; profileId: string; storagePath: string;
+  reasonCodes: unknown[]; categoryFlags: Record<string, unknown>; categoryScores: Record<string, unknown>;
+  providerFlagged: boolean; altText?: string | null; reviewerId?: string; reviewNotes?: string;
+};
+type PublishedPhoto = {
+  id: string; dancer_id: string; storage_path: string; is_primary: boolean; sort_order: number; review_status: "approved";
+};
+type PublishedReview = Record<string, any> & { id: string; user_id: string; image_id: string; final_storage_path: string };
+export type GalleryPublication = {
+  photo: PublishedPhoto; record: PublishedReview; alreadyPublished: boolean; supersededStoragePaths: string[];
+};
+
+/** One transaction, no write retry or fallback to separate gallery mutations. */
+export async function publishDancerPhoto(client: SupabaseClient, input: PublicationInput): Promise<GalleryPublication> {
+  const version = galleryReviewVersion(input.expectedUpdatedAt);
   const { data, error } = await client.rpc("publish_approved_dancer_gallery_photo", {
-    p_record_id: input.recordId, p_expected_updated_at: input.expectedUpdatedAt,
-    p_storage_path: input.storagePath, p_alt_text: input.altText || null,
-    p_reason_codes: input.metadata?.reasonCodes || [], p_category_flags: input.metadata?.categoryFlags || {},
-    p_category_scores: input.metadata?.categoryScores || {}, p_provider_flagged: Boolean(input.metadata?.providerFlagged),
-    p_reviewer_id: input.reviewerId || null, p_review_notes: input.notes || null,
+    p_record_id: input.recordId, p_expected_updated_at: version, p_storage_path: input.storagePath,
+    p_reason_codes: input.reasonCodes, p_category_flags: input.categoryFlags, p_category_scores: input.categoryScores,
+    p_provider_flagged: input.providerFlagged, p_alt_text: input.altText ?? null,
+    p_reviewer_id: input.reviewerId ?? null, p_review_notes: input.reviewNotes ?? null,
   });
-  if (error) throw publicationError(error);
-  if (!data?.photo?.id || !data?.record?.id) throw new Error("Photo publication was not confirmed.");
-  // Only an acknowledged transaction authorizes retiring its predecessor files.
-  // Lost responses retain both originals; retries return the committed photo.
-  for (const path of (data.superseded_storage_paths || []) as string[]) {
+  if (error) {
+    if (["40001", "23505", "P0002"].includes(error.code)) throw galleryReviewConflict();
+    if (error.code === "23514" && error.message === "PHOTO_PUBLICATION_LIBRARY_FULL") {
+      throw new PublicApiError("CONFLICT", "Your photo library is full. Remove a photo before adding another.", 409);
+    }
+    if (error.code === "42501") throw new PublicApiError("FORBIDDEN", "This account cannot publish this photo.", 403);
+    throw error;
+  }
+  const photo = data?.photo, record = data?.record;
+  if (!photo || !record || typeof photo.id !== "string" || !photo.id || photo.dancer_id !== input.profileId
+    || record.id !== input.recordId || record.user_id !== input.userId || record.image_id !== photo.id
+    || typeof photo.storage_path !== "string" || !photo.storage_path || record.final_storage_path !== photo.storage_path
+    || photo.review_status !== "approved" || record.decision !== "approved" || record.status !== "approved"
+    || typeof photo.is_primary !== "boolean" || !Number.isInteger(photo.sort_order)
+    || typeof data.already_published !== "boolean" || (!data.already_published && photo.storage_path !== input.storagePath)
+    || !Array.isArray(data.superseded_storage_paths) || data.superseded_storage_paths.some((path: unknown) => typeof path !== "string")) {
+    throw new PublicApiError("UNAVAILABLE", "Publication could not be confirmed. Refresh your profile to check the photo before trying again.", 503);
+  }
+  return { photo, record, alreadyPublished: data.already_published, supersededStoragePaths: data.superseded_storage_paths };
+}
+
+/** Only acknowledged publication permits cleanup; uncertainty always retains bytes. */
+export async function cleanPublishedGalleryFiles(
+  client: SupabaseClient, published: GalleryPublication,
+  source: { userId: string; profileId: string; bucket: string; path: string },
+) {
+  const prefix = `${source.userId}/${source.profileId}/`;
+  for (const path of new Set(published.supersededStoragePaths)) {
+    if (!path.startsWith(prefix) || path.split("/").includes("..") || path === published.photo.storage_path) continue;
     try {
+      const [photos, avatars] = await Promise.all([
+        client.from("dancer_photos").select("id").eq("storage_path", path).limit(1),
+        client.from("dancer_profiles").select("id").eq("avatar_storage_path", path).limit(1),
+      ]);
+      if (photos.error) throw photos.error;
+      if (avatars.error) throw avatars.error;
+      if (!photos.data || !avatars.data || photos.data.length || avatars.data.length) continue;
       await removeResponsiveImage(client, "dancer-photos", path);
       await removeArchivedOriginalMedia(client, "dancer-photos", path);
-    } catch (cleanupError) {
-      console.warn("PHOTO_PUBLICATION_CLEANUP_FAILED", { recordId: input.recordId, ...safeErrorMetadata(cleanupError) });
+    } catch (error) {
+      console.warn("IMAGE_MODERATION_SUPERSEDED_FILE_RETAINED", { ...safeErrorMetadata(error) });
     }
   }
-  return data as {
-    record: Record<string, any>;
-    photo: { id: string; storage_path: string; is_primary: boolean; sort_order: number };
-  };
+  // Never treat the public bucket as a temporary source on an idempotent replay.
+  if (source.path.startsWith(prefix) && !source.path.split("/").includes("..")
+    && ["dancr-image-moderation-temp", "dancr-image-moderation-review"].includes(source.bucket)) {
+    try {
+      const { error } = await client.storage.from(source.bucket).remove([source.path]);
+      if (error) throw error;
+    } catch (error) {
+      console.warn("IMAGE_MODERATION_SOURCE_FILE_RETAINED", { ...safeErrorMetadata(error) });
+    }
+  }
 }

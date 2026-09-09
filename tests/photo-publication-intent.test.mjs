@@ -96,6 +96,11 @@ test('a completed upload retry returns its own result before checking the retire
     validateAndPrepareDancrImage:async()=>({sha256:'synthetic'}),
     profilePhotoSlotFromUploadContext:()=>({isPrimary:false,sortOrder:3}),
     responsivePublicImage:()=>({imageUrl:'https://example.test/approved.jpg'}),
+    publishDancerPhoto:async(_client,input)=>{
+      assert.equal(input.recordId,'review');
+      assert.equal(input.profileId,'profile');
+      return {photo:{id:nextId,storage_path:'owner/profile/approved.jpg',is_primary:false,sort_order:3},record:{id:'review'}};
+    },
     resolvePhotoPublicationIntent:()=>assert.fail('Must reuse the confirmed idempotent result first'),
   });
   const result=await moderateAndStoreDancerPhoto(client,client,{file:new Blob(['synthetic']),userId:'owner',idempotencyKey:'synthetic-retry',replaceExisting:true,replacementPhotoId:photoId});

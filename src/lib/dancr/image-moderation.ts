@@ -40,8 +40,7 @@ import {
   responsivePublicImage,
   uploadResponsiveImage,
 } from "./responsive-image";
-
-import { publishDancerPhoto } from "./photo-publication";
+import { cleanPublishedGalleryFiles, galleryReviewVersion, publishDancerPhoto, updatePendingGalleryReview } from "./photo-publication";
 
 type DancrClient = SupabaseClient;
 
@@ -92,7 +91,7 @@ export async function moderateAndStoreDancerPhoto(client: DancrClient, admin: Da
   const image = await validateAndPrepareDancrImage(input.file);
   let idempotencyKey = safeIdempotencyKey(input.idempotencyKey || `${image.sha256}:${randomUUID()}`);
   const existing = await findExistingModerationRecord(admin, input.userId, idempotencyKey);
-  if (existing && existing.status !== "error") return moderationRecordToUploadResponse(admin, existing);
+  if (existing && existing.status !== "error") return moderationRecordToUploadResponse(admin, existing, profile.id);
   if (existing?.status === "error") {
     idempotencyKey = safeIdempotencyKey(`${input.idempotencyKey || image.sha256}:retry:${Date.now()}`);
   }
@@ -154,11 +153,13 @@ export async function moderateAndStoreDancerPhoto(client: DancrClient, admin: Da
       const duplicate = await findExistingModerationRecord(admin, input.userId, idempotencyKey);
       if (duplicate) {
         if (duplicate.temporary_storage_path !== tempPath) await safeRemoveObject(admin, MODERATION_TEMP_BUCKET, tempPath);
-        return moderationRecordToUploadResponse(admin, duplicate);
+        return moderationRecordToUploadResponse(admin, duplicate, profile.id);
       }
     }
     throw error;
   }
+
+  const expectedUpdatedAt = isAvatar ? undefined : galleryReviewVersion(record.updated_at);
 
   let evaluation: DancrImageModerationEvaluation;
   let categoryFlags: Record<string, boolean> = {};
@@ -232,7 +233,7 @@ export async function moderateAndStoreDancerPhoto(client: DancrClient, admin: Da
       nextAttemptAt: null,
       lastErrorCode: diagnosticCode,
       lastErrorMessage: diagnosticCode,
-    });
+    }, false, expectedUpdatedAt);
     logModeration("database_status_written", {
       recordId: record.id,
       databaseStatus: "moderation_error",
@@ -253,7 +254,7 @@ export async function moderateAndStoreDancerPhoto(client: DancrClient, admin: Da
   if (evaluation.decision === "approved") {
     return approveModeratedUpload(admin, {
       recordId: record.id,
-      expectedUpdatedAt: record.updated_at,
+      expectedUpdatedAt,
       profileId: profile.id,
       userId: input.userId,
       image: publicationImage,
@@ -270,7 +271,7 @@ export async function moderateAndStoreDancerPhoto(client: DancrClient, admin: Da
 
   if (evaluation.decision === "review") {
     const reviewPath = tempPath.replace(`${input.userId}/${profile.id}/`, `${input.userId}/${profile.id}/review-`);
-    await movePrivateObject(admin, MODERATION_TEMP_BUCKET, tempPath, MODERATION_REVIEW_BUCKET, reviewPath, image.contentType);
+    await copyPrivateModerationObject(admin, MODERATION_TEMP_BUCKET, tempPath, MODERATION_REVIEW_BUCKET, reviewPath, image.contentType);
     await updateModerationRecord(admin, record.id, {
       decision: "review",
       status: "pending_review",
@@ -281,7 +282,8 @@ export async function moderateAndStoreDancerPhoto(client: DancrClient, admin: Da
       providerFlagged: evaluation.providerFlagged,
       errorCode,
       completedAt: new Date().toISOString(),
-    });
+    }, false, expectedUpdatedAt);
+    await safeRemoveObject(admin, MODERATION_TEMP_BUCKET, tempPath);
     logModeration("queued_for_review", { recordId: record.id });
     logModeration("database_status_written", { recordId: record.id, databaseStatus: "pending_review" });
     return {
@@ -303,7 +305,7 @@ export async function moderateAndStoreDancerPhoto(client: DancrClient, admin: Da
     providerFlagged: evaluation.providerFlagged,
     errorCode,
     completedAt: new Date().toISOString(),
-  });
+  }, false, expectedUpdatedAt);
   await safeRemoveObject(admin, MODERATION_TEMP_BUCKET, tempPath);
   await createAutoRejectedPhotoNotification(admin, input.userId, record.id, evaluation.reasonCodes);
   logModeration("rejected", { recordId: record.id, reasonCodes: evaluation.reasonCodes });
@@ -328,12 +330,14 @@ export async function processImageModerationRetryRecord(admin: DancrClient, reco
   const isAvatar = isProfileAvatarUploadContext(uploadContext);
   const uploadSlot = profilePhotoSlotFromUploadContext(uploadContext);
   const attemptCount = Number(record.attempt_count || 0) + 1;
-  const expectedUpdatedAt = await updateModerationRecord(admin, record.id, {
+  let expectedUpdatedAt = isAvatar ? undefined : galleryReviewVersion(record.updated_at);
+  const advancedVersion = await updateModerationRecord(admin, record.id, {
     status: "moderating",
     attemptCount,
     lockedAt: new Date().toISOString(),
     nextAttemptAt: null,
-  });
+  }, false, expectedUpdatedAt);
+  if (!isAvatar) expectedUpdatedAt = galleryReviewVersion(advancedVersion);
 
   let categoryFlags: Record<string, boolean> = {};
   let errorCode: string | null = null;
@@ -386,7 +390,7 @@ export async function processImageModerationRetryRecord(admin: DancrClient, reco
         uploadContext,
         isAvatar,
         isPrimary: uploadSlot.isPrimary,
-        sortOrder: uploadSlot.sortOrder || 0,
+        sortOrder: isAvatar || uploadSlot.isPrimary ? 0 : uploadSlot.sortOrder ?? 1,
         altText: null,
         evaluation,
         categoryFlags,
@@ -395,7 +399,7 @@ export async function processImageModerationRetryRecord(admin: DancrClient, reco
 
     if (evaluation.decision === "review") {
       const reviewPath = tempPath.replace(`${record.user_id}/${profile.id}/`, `${record.user_id}/${profile.id}/review-`);
-      await movePrivateObject(admin, MODERATION_TEMP_BUCKET, tempPath, MODERATION_REVIEW_BUCKET, reviewPath, "image/jpeg");
+      await copyPrivateModerationObject(admin, MODERATION_TEMP_BUCKET, tempPath, MODERATION_REVIEW_BUCKET, reviewPath, "image/jpeg");
       await updateModerationRecord(admin, record.id, {
         decision: "review",
         status: "pending_review",
@@ -407,7 +411,8 @@ export async function processImageModerationRetryRecord(admin: DancrClient, reco
         attemptCount,
         lockedAt: null,
         completedAt: new Date().toISOString(),
-      });
+      }, false, expectedUpdatedAt);
+      await safeRemoveObject(admin, MODERATION_TEMP_BUCKET, tempPath);
       logModeration("retry_database_status_written", { recordId: record.id, databaseStatus: "pending_review", attemptCount });
       return {
         decision: "review",
@@ -429,7 +434,7 @@ export async function processImageModerationRetryRecord(admin: DancrClient, reco
       attemptCount,
       lockedAt: null,
       completedAt: new Date().toISOString(),
-    });
+    }, false, expectedUpdatedAt);
     await safeRemoveObject(admin, MODERATION_TEMP_BUCKET, tempPath);
     await createAutoRejectedPhotoNotification(admin, record.user_id, record.id, evaluation.reasonCodes);
     logModeration("retry_database_status_written", { recordId: record.id, databaseStatus: "rejected", attemptCount });
@@ -452,7 +457,7 @@ export async function processImageModerationRetryRecord(admin: DancrClient, reco
         attemptCount,
         lockedAt: null,
         completedAt: new Date().toISOString(),
-      });
+      }, false, expectedUpdatedAt);
       await safeRemoveObject(admin, MODERATION_TEMP_BUCKET, tempPath);
       await createAutoRejectedPhotoNotification(admin, record.user_id, record.id, ["avatar_face_required"]);
       logModeration("avatar_face_rejected", { recordId: record.id, attemptCount });
@@ -479,8 +484,8 @@ export async function processImageModerationRetryRecord(admin: DancrClient, reco
       lockedAt: null,
       lastErrorCode: errorCode,
       lastErrorMessage: safeErrorMessage(error),
-    });
-    if (!retryable) {
+    }, false, expectedUpdatedAt);
+    if (!retryable && isAvatar) {
       await safeRemoveObject(admin, MODERATION_TEMP_BUCKET, tempPath);
     }
     logModeration("retry_database_status_written", {
@@ -530,7 +535,7 @@ async function approveModeratedUpload(
   admin: DancrClient,
   input: {
     recordId: string;
-    expectedUpdatedAt: string;
+    expectedUpdatedAt?: string;
     profileId: string;
     userId: string;
     image: ValidatedDancrImage;
@@ -599,31 +604,18 @@ async function approveModeratedUpload(
     }
 
     const published = await publishDancerPhoto(admin, {
-      recordId: input.recordId, expectedUpdatedAt: input.expectedUpdatedAt, storagePath: finalPath, altText: input.altText,
-      metadata: { reasonCodes: input.evaluation.reasonCodes, categoryFlags: input.categoryFlags,
-        categoryScores: input.evaluation.categoryScores, providerFlagged: input.evaluation.providerFlagged },
+      recordId: input.recordId, expectedUpdatedAt: input.expectedUpdatedAt,
+      profileId: input.profileId, userId: input.userId, storagePath: finalPath,
+      reasonCodes: input.evaluation.reasonCodes, categoryFlags: input.categoryFlags,
+      categoryScores: input.evaluation.categoryScores, providerFlagged: input.evaluation.providerFlagged,
+      altText: input.altText,
     });
-    const photo = { id: published.photo.id, storage_path: published.photo.storage_path,
-      isPrimary: published.photo.is_primary, sortOrder: published.photo.sort_order };
-    await safeRemoveObject(admin, MODERATION_TEMP_BUCKET, input.tempPath);
-    logModeration("approved", { recordId: input.recordId, photoId: photo.id });
-    logModeration("database_status_written", { recordId: input.recordId, photoId: photo.id, databaseStatus: "approved" });
+    await cleanPublishedGalleryFiles(admin, published, {
+      userId: input.userId, profileId: input.profileId, bucket: MODERATION_TEMP_BUCKET, path: input.tempPath,
+    });
+    logModeration("approved", { recordId: input.recordId, photoId: published.photo.id });
     await logStoredModerationStatus(admin, input.recordId, "approved");
-    return {
-      decision: "approved",
-      moderationRecordId: input.recordId,
-      reasonCodes: input.evaluation.reasonCodes,
-      providerFlagged: input.evaluation.providerFlagged,
-      message: "Photo uploaded successfully.",
-      photo: {
-        ...photo,
-        focalX: uploadedImage.focalX,
-        focalY: uploadedImage.focalY,
-        imageUrl: getDancerPhotoUrl(admin, photo.storage_path),
-        reviewStatus: "approved",
-        kind: "profile_photo",
-      },
-    };
+    return galleryPublicationResponse(admin, published);
   } catch (error) {
     // A write can commit before its response is lost. Keep the approved files
     // and current profile reference; a compensating delete/restore can lose
@@ -638,7 +630,7 @@ async function approveModeratedUpload(
       categoryScores: input.evaluation.categoryScores,
       providerFlagged: input.evaluation.providerFlagged,
       errorCode: "database_after_storage_error",
-    }, true).catch((recoveryError) => {
+    }, true, input.isAvatar ? undefined : galleryReviewVersion(input.expectedUpdatedAt)).catch((recoveryError) => {
       logModeration("publication_recovery_record_failed", {
         recordId: input.recordId,
         ...safeErrorMetadata(recoveryError),
@@ -1000,12 +992,12 @@ async function uploadPrivateObject(client: DancrClient, bucket: string, path: st
   if (error) throw error;
 }
 
-async function movePrivateObject(client: DancrClient, fromBucket: string, fromPath: string, toBucket: string, toPath: string, contentType: string) {
+async function copyPrivateModerationObject(client: DancrClient, fromBucket: string, fromPath: string, toBucket: string, toPath: string, contentType: string) {
   const { data, error } = await client.storage.from(fromBucket).download(fromPath);
   if (error || !data) throw error || new Error("Unable to read private moderation object.");
   const { error: uploadError } = await client.storage.from(toBucket).upload(toPath, data, { contentType, upsert: false });
   if (uploadError) throw uploadError;
-  await safeRemoveObject(client, fromBucket, fromPath);
+  // Retain the source until the record points to the copy with a confirmed versioned write.
 }
 
 async function safeRemoveObject(client: DancrClient, bucket: string, path: string) {
@@ -1046,7 +1038,7 @@ async function createModerationRecord(client: DancrClient, input: { userId: stri
   return data as { id: string; updated_at: string };
 }
 
-async function updateModerationRecord(client: DancrClient, id: string, update: Record<string, unknown>, preserveFinalDecision = false) {
+async function updateModerationRecord(client: DancrClient, id: string, update: Record<string, unknown>, preserveFinalDecision = false, expectedUpdatedAt?: string) {
   const dbUpdate: Record<string, unknown> = { updated_at: new Date().toISOString() };
   if ("imageId" in update) dbUpdate.image_id = update.imageId;
   if ("temporaryStoragePath" in update) dbUpdate.temporary_storage_path = update.temporaryStoragePath;
@@ -1064,6 +1056,10 @@ async function updateModerationRecord(client: DancrClient, id: string, update: R
   if ("lastErrorCode" in update) dbUpdate.last_error_code = update.lastErrorCode;
   if ("lastErrorMessage" in update) dbUpdate.last_error_message = update.lastErrorMessage;
   if ("completedAt" in update) dbUpdate.completed_at = update.completedAt;
+  if (expectedUpdatedAt !== undefined) {
+    const updated = await updatePendingGalleryReview(client, id, expectedUpdatedAt, dbUpdate);
+    return updated.updated_at as string;
+  }
   const { data, error } = await client.from("image_moderation_records").update(dbUpdate).eq("id", id)
     .eq("decision", "review").neq("status", "approved").neq("status", "rejected")
     .select("updated_at").maybeSingle();
@@ -1098,7 +1094,7 @@ async function logStoredModerationStatus(client: DancrClient, recordId: string, 
 async function findExistingModerationRecord(client: DancrClient, userId: string, idempotencyKey: string) {
   const { data, error } = await client
     .from("image_moderation_records")
-    .select("id, image_id, decision, status, temporary_storage_path, final_storage_path, upload_context, reason_codes, provider_flagged, error_code")
+    .select("id, user_id, updated_at, image_id, decision, status, temporary_storage_path, final_storage_path, upload_context, reason_codes, category_flags, category_scores, provider_flagged, error_code")
     .eq("user_id", userId)
     .eq("idempotency_key", idempotencyKey)
     .maybeSingle();
@@ -1106,9 +1102,18 @@ async function findExistingModerationRecord(client: DancrClient, userId: string,
   return data as any;
 }
 
-async function moderationRecordToUploadResponse(client: DancrClient, record: any): Promise<ModeratedPhotoResult> {
+async function moderationRecordToUploadResponse(client: DancrClient, record: any, profileId: string): Promise<ModeratedPhotoResult> {
   const slot = profilePhotoSlotFromUploadContext(record.upload_context);
   const isAvatar = isProfileAvatarUploadContext(record.upload_context);
+  if (record.decision === "approved" && !isAvatar) {
+    const published = await publishDancerPhoto(client, {
+      recordId: record.id, expectedUpdatedAt: record.updated_at, userId: record.user_id, profileId,
+      storagePath: record.final_storage_path || [record.user_id, profileId, "unavailable"].join("/"),
+      reasonCodes: record.reason_codes || [], categoryFlags: record.category_flags || {},
+      categoryScores: record.category_scores || {}, providerFlagged: Boolean(record.provider_flagged),
+    });
+    return galleryPublicationResponse(client, published);
+  }
   if (record.decision === "approved" && (record.image_id || (isAvatar && record.final_storage_path))) {
     const publicImage = responsivePublicImage(
       client,
@@ -1143,6 +1148,23 @@ async function moderationRecordToUploadResponse(client: DancrClient, record: any
       ? photoRejectionMessage(record.reason_codes || [])
       : "Your photo was uploaded and is awaiting a quick review. It will not appear publicly until approved.",
     photo: record.decision === "rejected" ? undefined : pendingModerationPhoto(record.id, record.upload_context),
+  };
+}
+
+function galleryPublicationResponse(
+  client: DancrClient, published: Awaited<ReturnType<typeof publishDancerPhoto>>,
+): ModeratedPhotoResult {
+  const { photo, record } = published;
+  const image = responsivePublicImage(client, APPROVED_PHOTO_BUCKET, photo.storage_path);
+  return {
+    decision: "approved", moderationRecordId: record.id,
+    reasonCodes: record.reason_codes || [], providerFlagged: Boolean(record.provider_flagged),
+    message: "Photo uploaded successfully.",
+    photo: {
+      id: photo.id, storage_path: photo.storage_path, imageUrl: image?.imageUrl || "",
+      focalX: image?.imageFocalX ?? 50, focalY: image?.imageFocalY ?? 50,
+      reviewStatus: "approved", kind: "profile_photo", isPrimary: photo.is_primary, sortOrder: photo.sort_order,
+    },
   };
 }
 

@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test, { before, beforeEach, after } from 'node:test';
 import { PGlite } from '@electric-sql/pglite';
+import { loadGalleryGateway } from './helpers/gallery-publication-fixture.mjs';
 import vm from 'node:vm';
 import ts from 'typescript';
 import { PublicApiError } from '../src/lib/api-error-policy.ts';
@@ -341,7 +342,7 @@ function applicationFunctions(record, removed) {
     responsivePublicImage:(_client,_bucket,path)=>({imageUrl:path}),validateAndPrepareDancrImage:async()=>({}),
     isProfileAvatarUploadContext:context=>context==='profile_avatar',DANCR_IMAGE_MODERATION_MODEL:'synthetic',
   };
-  Object.assign(dependencies,applicationModule('../src/lib/dancr/photo-publication.ts','publishDancerPhoto',dependencies));
+  Object.assign(dependencies,applicationModule('../src/lib/dancr/photo-publication.ts','publishDancerPhoto,cleanPublishedGalleryFiles,galleryReviewVersion,galleryReviewConflict,updatePendingGalleryReview',dependencies));
   Object.assign(dependencies,applicationModule('../src/lib/dancr/photo-publication-intent.ts','resolvePhotoPublicationIntent',dependencies));
   const library=applicationModule('../src/lib/dancr/image-moderation.ts','approveModeratedUpload,createModerationRecord,updateModerationRecord',dependencies);
   Object.assign(dependencies,library);
@@ -358,6 +359,7 @@ for(const mode of ['automatic','admin']) {
         evaluation:{reasonCodes:[],categoryScores:{},providerFlagged:false},categoryFlags:{}});
     if(mode==='admin') {
       const current=(await allReviews())[0];
+      current.updated_at=(await pg.query('select to_jsonb(updated_at) as value from image_moderation_records where id=$1',[record.recordId])).rows[0].value;
       await assert.rejects(app.approveReviewRecord(client,current,reviewer,''),e=>e.code==='08006');
     }else await assert.rejects(run(),e=>e.code==='08006');
     assert.equal((await allReviews())[0].decision,'approved');
@@ -419,4 +421,160 @@ test('retry publication uses the returned database timestamp including trigger-w
   assert.match(version,/123456/);
   const published=await publish(record,{expected:version});
   assert.equal(published.record.decision,'approved');
+});
+
+const gateway = loadGalleryGateway();
+function gatewayClient({ loseResponse = false } = {}) {
+  let lost = false;
+  return {
+    async rpc(name, input) {
+      assert.equal(name, 'publish_approved_dancer_gallery_photo');
+      let result;
+      try {
+        result = await pg.query('select public.publish_approved_dancer_gallery_photo($1,$2,$3,$4::jsonb,$5::jsonb,$6::jsonb,$7,$8,$9,$10) as result', [
+          input.p_record_id,input.p_expected_updated_at,input.p_storage_path,JSON.stringify(input.p_reason_codes),
+          JSON.stringify(input.p_category_flags),JSON.stringify(input.p_category_scores),input.p_provider_flagged,
+          input.p_alt_text,input.p_reviewer_id,input.p_review_notes,
+        ]);
+      } catch (error) { return { data: null, error }; }
+      if (loseResponse && !lost) { lost = true; throw Object.assign(new Error('synthetic response lost'), { code: '08006' }); }
+      return { data: result.rows[0].result, error: null };
+    },
+    from(table) {
+      assert.equal(table, 'image_moderation_records');
+      const predicates = [], values = [];
+      let update;
+      const query = {
+        update(value) { update = value; return query; }, select() { return query; },
+        eq(key,value) { predicate(key, '=', value); return query; },
+        neq(key,value) { predicate(key, '<>', value); return query; },
+        async maybeSingle() {
+          const set = Object.entries(update).map(([key,value]) => {
+            assert.match(key,/^[a-z_]+$/); values.push(value); return key + '=$' + values.length;
+          });
+          try {
+            const result = await pg.query('update public.image_moderation_records set ' + set.join(',') + ' where ' + predicates.join(' and ') + ' returning row_to_json(image_moderation_records) as record',values);
+            return { data: result.rows[0]?.record || null, error: null };
+          } catch (error) { return { data: null, error }; }
+        },
+      };
+      function predicate(key, operator, value) {
+        assert.match(key,/^[a-z_]+$/); values.push(value); predicates.push(key + operator + '$' + values.length);
+      }
+      return query;
+    },
+  };
+}
+function publicationInput(record, overrides={}) {
+  return { recordId:record.recordId,expectedUpdatedAt:updatedAt,userId:owner,profileId:profile,storagePath:record.path,
+    reasonCodes:[],categoryFlags:{},categoryScores:{},providerFlagged:false,...overrides };
+}
+
+test('application gateway runs the deployed transaction and preserves both queued additions', async()=>{
+  const a=await review(101),b=await review(102),client=gatewayClient();
+  const results=await Promise.all([a,b].map(r=>gateway.publishDancerPhoto(client,publicationInput(r))));
+  assert.deepEqual(results.map(r=>r.photo.sort_order).sort(),[1,2]);
+  assert.equal((await allPhotos()).length,2);
+});
+
+test('gateway response loss retains the committed identity and retry returns its actual metadata', async()=>{
+  const r=await review(101),client=gatewayClient({loseResponse:true});
+  await assert.rejects(gateway.publishDancerPhoto(client,publicationInput(r)),{code:'08006'});
+  const photos=await allPhotos(),reviews=await allReviews();
+  const retry=await gateway.publishDancerPhoto(client,publicationInput(r,{storagePath:owner+'/'+profile+'/unused.jpg'}));
+  assert.equal(retry.alreadyPublished,true);
+  assert.equal(retry.photo.id,photos[0].id);
+  assert.equal(retry.photo.storage_path,r.path);
+  assert.deepEqual(await allPhotos(),photos);
+  assert.deepEqual(await allReviews(),reviews);
+});
+
+for (const status of ['pending_review','moderation_error','moderation_retry','rejected']) {
+  test('late '+status+' result cannot overwrite an atomic approval',async()=>{
+    const r=await review(101),client=gatewayClient();
+    await gateway.publishDancerPhoto(client,publicationInput(r));
+    const before=await allReviews();
+    await assert.rejects(gateway.updatePendingGalleryReview(client,r.recordId,updatedAt,{
+      status,decision:status==='rejected'?'rejected':'review',final_storage_path:'should-never-be-written',
+    }),{status:409});
+    assert.deepEqual(await allReviews(),before);
+  });
+}
+
+test('only one worker can advance a captured pending version and stale publication fails',async()=>{
+  const r=await review(101),client=gatewayClient();
+  const results=await Promise.allSettled([1,2].map(attempt_count=>gateway.updatePendingGalleryReview(client,r.recordId,updatedAt,{status:'moderating',attempt_count})));
+  assert.equal(results.filter(r=>r.status==='fulfilled').length,1);
+  assert.equal(results.find(r=>r.status==='rejected').reason.status,409);
+  await assert.rejects(gateway.publishDancerPhoto(client,publicationInput(r)),{status:409});
+  const version=results.find(r=>r.status==='fulfilled').value.updated_at;
+  assert.ok(Date.parse(version)>Date.parse(updatedAt));
+  await gateway.publishDancerPhoto(client,publicationInput(r,{expectedUpdatedAt:version}));
+});
+
+test('an administrator rejection racing publication has one winner and no contradictory photo',async()=>{
+  const r=await review(101),client=gatewayClient();
+  const results=await Promise.allSettled([
+    gateway.updatePendingGalleryReview(client,r.recordId,updatedAt,{decision:'rejected',status:'rejected',reviewed_by:reviewer}),
+    gateway.publishDancerPhoto(client,publicationInput(r,{reviewerId:reviewer})),
+  ]);
+  assert.equal(results.filter(r=>r.status==='fulfilled').length,1);
+  assert.equal(results.find(r=>r.status==='rejected').reason.status,409);
+  const [record]=await allReviews();
+  assert.equal((await allPhotos()).length,record.decision==='approved'?1:0);
+});
+
+test('gallery replay does not resurrect a deleted approved result',async()=>{
+  const r=await review(101),client=gatewayClient();
+  const result=await gateway.publishDancerPhoto(client,publicationInput(r));
+  await pg.query('delete from public.dancer_photos where id=$1',[result.photo.id]);
+  await assert.rejects(gateway.publishDancerPhoto(client,publicationInput(r)),{status:409});
+  assert.equal((await allPhotos()).length,0);
+});
+
+test('application gateway rejects a foreign, incomplete or contradictory success response',async()=>{
+  const r=await review(101),result=await publish(r);
+  const mutations=[
+    d=>{d.photo.dancer_id=otherProfile;},d=>{d.record.user_id=other;},d=>{d.record.image_id=id(999);},
+    d=>{d.photo.storage_path='wrong';},d=>{d.record.decision='review';},d=>{d.photo.review_status='pending';},
+    d=>{d.photo.is_primary=null;},d=>{d.photo.sort_order=1.5;},d=>{d.already_published='true';},
+    d=>{delete d.photo;},d=>{d.superseded_storage_paths=[{}];},
+  ];
+  for (const mutate of mutations) {
+    const data=structuredClone(result);mutate(data);
+    await assert.rejects(gateway.publishDancerPhoto({rpc:async()=>({data,error:null})},publicationInput(r)),{status:503});
+  }
+});
+
+test('missing review versions fail before a write is sent',async()=>{
+  let writes=0;const client={rpc(){writes++;},from(){writes++;}};
+  const r={recordId:id(101),path:owner+'/'+profile+'/101.jpg'};
+  for (const value of [undefined,null,'','not-a-date']) {
+    await assert.rejects(gateway.publishDancerPhoto(client,publicationInput(r,{expectedUpdatedAt:value})),{status:409});
+    await assert.rejects(gateway.updatePendingGalleryReview(client,r.recordId,value,{status:'rejected'}),{status:409});
+  }
+  assert.equal(writes,0);
+});
+
+test('post-commit cleanup preserves shared and unknown paths and tolerates failed storage',async()=>{
+  const r=await review(101),published=await gateway.publishDancerPhoto(gatewayClient(),publicationInput(r));
+  const prefix=owner+'/'+profile+'/',removed=[];
+  const cleaner=loadGalleryGateway({
+    removeResponsiveImage:async(_client,_bucket,path)=>{if(path.endsWith('fail.jpg'))throw new Error('storage unavailable');removed.push(path);},
+    removeArchivedOriginalMedia:async()=>{},
+  });
+  for (const situation of ['photo','avatar','query-error','unowned','failure','unreferenced']) {
+    const path=situation==='unowned'?'legacy/shared.jpg':prefix+(situation==='failure'?'fail.jpg':'old.jpg');
+    const client={
+      from(table){const q={select(){return q;},eq(){return q;},async limit(){
+        return {data:(situation==='photo'&&table==='dancer_photos')||(situation==='avatar'&&table==='dancer_profiles')?[{id:id(200)}]:[],
+          error:situation==='query-error'?new Error('read failed'):null};}};return q;},
+      storage:{from(){return {async remove(){throw new Error('source cleanup failed');}};}},
+    };
+    await cleaner.cleanPublishedGalleryFiles(client,{...published,supersededStoragePaths:[path]},{
+      userId:owner,profileId:profile,bucket:'dancr-image-moderation-temp',path:prefix+'temp.jpg',
+    });
+  }
+  assert.deepEqual(removed,[prefix+'old.jpg']);
+  assert.equal((await allPhotos())[0].storage_path,published.photo.storage_path);
 });

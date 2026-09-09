@@ -1,3 +1,4 @@
+import { loadGalleryGateway } from "./helpers/gallery-publication-fixture.mjs";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
@@ -9,7 +10,6 @@ const requireTest = createRequire(import.meta.url);
 const librarySource = readFileSync(new URL("../src/lib/dancr/image-moderation.ts", import.meta.url), "utf8");
 const adminSource = readFileSync(new URL("../app/api/admin/image-moderation/route.ts", import.meta.url), "utf8");
 const recenterSource = readFileSync(new URL("../app/api/admin/avatars/recenter/route.ts", import.meta.url), "utf8");
-const publicationSource = readFileSync(new URL("../src/lib/dancr/photo-publication.ts", import.meta.url), "utf8");
 const oldPath = "user/dancer/old.jpg";
 const newPath = "user/dancer/new.jpg";
 
@@ -34,13 +34,26 @@ function harness({ avatar = false, primary = false, failure = "", concurrentAvat
   const tables = {
     dancer_profiles: [{ id: "dancer", user_id: "user", slug: "test-dancer", avatar_storage_path: avatar ? oldPath : null }],
     dancer_photos: avatar ? [] : [{ id: "old", dancer_id: "dancer", storage_path: oldPath, is_primary: primary, sort_order: primary ? 0 : 1, review_status: "approved" }],
-    image_moderation_records: [{ id: "record", user_id: "user", temporary_storage_path: "temporary", upload_context: avatar ? "profile_avatar" : "profile_gallery:1", decision: "review", status: "moderating" }],
+    image_moderation_records: [{ id: "record", user_id: "user", temporary_storage_path: "temporary", upload_context: avatar ? "profile_avatar" : "profile_gallery:1", updated_at: "2020-01-01T00:00:00Z", decision: "review", status: "moderating" }],
     admin_actions: [],
   };
   const events = [];
   let injected = false;
   const fault = new Error("Synthetic database failure");
   const client = {
+    async rpc(name, input) {
+      assert.equal(name, "publish_approved_dancer_gallery_photo");
+      const afterCommit = ["approval_ack", "insert_ack"].includes(failure);
+      const shouldFail = ["approval", "approval_ack", "insert_ack", "retire", "slot_read"].includes(failure);
+      if (shouldFail && !afterCommit) return { data: null, error: fault };
+      const photo = { id: "new", dancer_id: "dancer", storage_path: newPath, is_primary: primary, sort_order: primary ? 0 : 1, review_status: "approved" };
+      tables.dancer_photos = [photo];
+      Object.assign(tables.image_moderation_records[0], { image_id: "new", final_storage_path: newPath, decision: "approved", status: "approved", updated_at: "2020-01-02T00:00:00Z" });
+      events.push("publication:commit");
+      return shouldFail ? { data: null, error: fault } : { data: {
+        photo, record: tables.image_moderation_records[0], already_published: false, superseded_storage_paths: [oldPath],
+      }, error: null };
+    },
     from(table) {
       let operation = "select", payload, columns = "*";
       const filters = [];
@@ -99,18 +112,6 @@ function harness({ avatar = false, primary = false, failure = "", concurrentAvat
       getPublicUrl: path => ({ data: { publicUrl: `https://example.test/${path}` } }),
     }; } },
   };
-  client.rpc = async (name, args) => {
-    assert.equal(name, 'publish_approved_dancer_gallery_photo');
-    const fail = ['approval','approval_ack','insert_ack','retire','slot_read'].includes(failure) && !injected;
-    if (fail) injected = true;
-    if (fail && !['approval_ack','insert_ack'].includes(failure)) return {data:null,error:fault};
-    const old = tables.dancer_photos[0];
-    const photo = {id:'new',dancer_id:'dancer',storage_path:args.p_storage_path,is_primary:primary,sort_order:primary?0:1};
-    tables.dancer_photos=[photo];
-    Object.assign(tables.image_moderation_records[0], {image_id:photo.id,decision:'approved',status:'approved',final_storage_path:photo.storage_path});
-    if (fail) return {data:null,error:fault};
-    return {data:{record:{...tables.image_moderation_records[0]},photo,superseded_storage_paths:old?[old.storage_path]:[]},error:null};
-  };
   const responsive = {
     uploadResponsiveImage: async () => ({ storagePath: newPath, focalX: 50, focalY: 50 }),
     removeResponsiveImage: async (_client, _bucket, path) => { events.push(`remove:${path}`); files.delete(path); },
@@ -122,19 +123,16 @@ function harness({ avatar = false, primary = false, failure = "", concurrentAvat
     isProfileAvatarUploadContext: context => context === "profile_avatar",
     profilePhotoSlotFromUploadContext: () => ({ isPrimary: primary, sortOrder: primary ? 0 : 1 }),
   };
-  const publication = load(publicationSource, 'publishDancerPhoto', {
-    './responsive-image':responsive,'./media-watermark':watermark,
-    '../api-error-policy':requireTest('../src/lib/api-error-policy.ts'),
-    '../security/safe-error-metadata':{safeErrorMetadata:()=>({code:'synthetic'})},
-  });
+  const gateway = loadGalleryGateway({ ...responsive, ...watermark });
   const library = load(librarySource, "approveModeratedUpload", {
-    "./responsive-image": responsive, "./media-watermark": watermark, "./photo-publication": publication,
+    "./photo-publication": gateway,
+    "./responsive-image": responsive, "./media-watermark": watermark,
     "../security/safe-error-metadata": { safeErrorMetadata: () => ({ code: "synthetic" }) },
     "../api-error-policy": requireTest("../src/lib/api-error-policy.ts"),
   });
   const admin = load(adminSource, "approveReviewRecord", {
+    "@/src/lib/dancr/photo-publication": gateway,
     "@/src/lib/dancr/image-moderation": library,
-    "@/src/lib/dancr/photo-publication": publication,
     "@/src/lib/dancr/responsive-image": responsive,
     "@/src/lib/dancr/media-watermark": watermark,
     "@/src/lib/dancr/photo-slot": slots,
@@ -158,7 +156,7 @@ function harness({ avatar = false, primary = false, failure = "", concurrentAvat
     recenter: () => recenter.testSubject({ headers: { get: () => "s".repeat(32) } }),
     run: mode => mode === "admin"
       ? admin.testSubject(client, { ...tables.image_moderation_records[0] }, "reviewer", "")
-      : library.testSubject(client, { recordId: "record", profileId: "dancer", userId: "user", image: {},
+      : library.testSubject(client, { recordId: "record", expectedUpdatedAt: "2020-01-01T00:00:00Z", profileId: "dancer", userId: "user", image: {},
         tempPath: "temporary", uploadContext: avatar ? "profile_avatar" : "profile_gallery:1",
         isAvatar: avatar, isPrimary: primary, sortOrder: primary ? 0 : 1, altText: null,
         evaluation: { decision: "approved", reasonCodes: [], categoryScores: {}, providerFlagged: false }, categoryFlags: {},
@@ -198,9 +196,9 @@ for (const mode of ["automatic", "admin"]) {
     assert.equal(state.tables.dancer_profiles[0].avatar_storage_path, "user/dancer/newer.jpg");
     state.assertReferencedFilesExist();
   });
-  test(`${mode}: failed transaction retirement preserves the previous photo`, async () => {
+  test(`${mode}: failed removal inside publication rolls back the entire replacement`, async () => {
     const state = harness({ failure: "retire" });
-    await assert.rejects(state.run(mode));
+    await assert.rejects(state.run(mode), error => error === state.fault);
     state.assertReferencedFilesExist();
     assert.equal(state.tables.dancer_photos.length, 1);
     assert.ok(state.files.has(oldPath));
@@ -211,7 +209,7 @@ for (const mode of ["automatic", "admin"]) {
     state.assertReferencedFilesExist();
     assert.ok(state.files.has(oldPath));
   });
-  test(`${mode}: legacy primary replacement rolls back to the original if approval fails`, async () => {
+  test(`${mode}: primary replacement retains the original photo if publication rolls back`, async () => {
     const state = harness({ primary: true, failure: "approval" });
     await assert.rejects(state.run(mode));
     assert.equal(state.tables.dancer_photos.length, 1);

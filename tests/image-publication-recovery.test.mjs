@@ -1,3 +1,4 @@
+import { loadGalleryGateway } from './helpers/gallery-publication-fixture.mjs';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
@@ -8,7 +9,6 @@ import { PublicApiError } from '../src/lib/api-error-policy.ts';
 
 const source = readFileSync(new URL('../src/lib/dancr/image-moderation.ts', import.meta.url), 'utf8');
 const adminSource = readFileSync(new URL('../app/api/admin/image-moderation/route.ts', import.meta.url), 'utf8');
-const publicationSource=readFileSync(new URL('../src/lib/dancr/photo-publication.ts',import.meta.url),'utf8');
 const lostResponse = { code: '08006', message: 'synthetic response lost' };
 function loadModule(code, names, dependencies) {
   const exports = {};
@@ -26,11 +26,27 @@ function scenario({ failTable, failOperation, failAfterCommit = true, diagnostic
   const rows = {
     dancer_profiles: [{ id: 'profile', user_id: 'owner', avatar_storage_path: 'old' }],
     dancer_photos: existingPhoto ? [{ id: 'old-photo', dancer_id: 'profile', storage_path: 'old', is_primary: primary, sort_order: primary ? 0 : 1 }] : [],
-    image_moderation_records: [{ id: 'review', user_id: 'owner', status: 'moderating', decision: 'review', temporary_storage_path: 'temp', upload_context: avatar ? 'profile_avatar' : 'profile_gallery:1' }],
+    image_moderation_records: [{ id: 'review', user_id: 'owner', updated_at: '2020-01-01T00:00:00Z', status: 'moderating', decision: 'review', temporary_storage_path: 'temp', upload_context: avatar ? 'profile_avatar' : 'profile_gallery:1' }],
   };
   const mutations = [];
   let failed = false;
-  const client = { from(table) {
+  const client = { async rpc(name, input) {
+    assert.equal(name, 'publish_approved_dancer_gallery_photo');
+    const shouldFail = !failed && ((failTable === 'image_moderation_records' && failOperation === 'update')
+      || (failTable === 'dancer_photos' && ['insert', 'delete'].includes(failOperation)));
+    if (shouldFail) failed = true;
+    if (shouldFail && (!failAfterCommit || rejectionAfterFailure)) { if (rejectionAfterFailure) Object.assign(rows.image_moderation_records[0], { decision: 'rejected', status: 'rejected' }); return { data: null, error: lostResponse }; }
+    const previous = [...rows.dancer_photos];
+    const photo = { id: 'new-photo', dancer_id: 'profile', storage_path: 'new', is_primary: primary, sort_order: primary ? 0 : 1, review_status: 'approved' };
+    rows.dancer_photos = [photo];
+    Object.assign(rows.image_moderation_records[0], { image_id: photo.id, final_storage_path: 'new', status: 'approved', decision: 'approved', updated_at: '2020-01-02T00:00:00Z' });
+    if (previous.length) mutations.push({ table: 'dancer_photos', operation: 'delete', ids: previous.map(p => p.id) });
+    if (shouldFail) {
+      if (rejectionAfterFailure) Object.assign(rows.image_moderation_records[0], { decision: 'rejected', status: 'rejected' });
+      return { data: null, error: lostResponse };
+    }
+    return { data: { photo, record: rows.image_moderation_records[0], already_published: false, superseded_storage_paths: previous.map(p => p.storage_path) }, error: null };
+  }, from(table) {
     let operation = 'select', value, single = false;
     const predicates = [];
     const execute = async () => {
@@ -52,7 +68,7 @@ function scenario({ failTable, failOperation, failAfterCommit = true, diagnostic
       return { data: single ? result[0] || null : result, error: null };
     };
     const q = {
-      select() { return q; },
+      select() { return q; }, limit() { return q; },
       insert(v) { operation = 'insert'; value = v; return q; },
       update(v) { operation = 'update'; value = v; return q; },
       delete() { operation = 'delete'; return q; },
@@ -69,22 +85,6 @@ function scenario({ failTable, failOperation, failAfterCommit = true, diagnostic
     async remove(paths) { for (const path of paths) assets.delete(path); return { error: null }; },
     async download() { return { data: new Blob(['synthetic']), error: null }; },
   }; } } };
-  client.rpc = async (name, args) => {
-    assert.equal(name,'publish_approved_dancer_gallery_photo');
-    const fail=!failed && ((failTable==='image_moderation_records' && failOperation==='update') || (failTable==='dancer_photos' && ['insert','delete'].includes(failOperation)));
-    if(fail) failed=true;
-    if(fail && (!failAfterCommit || rejectionAfterFailure)) {
-      if(rejectionAfterFailure) Object.assign(rows.image_moderation_records[0],{decision:'rejected',status:'rejected'});
-      return {data:null,error:lostResponse};
-    }
-    const old=rows.dancer_photos[0];
-    const photo={id:'new-photo',dancer_id:'profile',storage_path:args.p_storage_path,is_primary:primary,sort_order:primary?0:1};
-    rows.dancer_photos=[photo];
-    Object.assign(rows.image_moderation_records[0],{decision:'approved',status:'approved',image_id:photo.id,final_storage_path:photo.storage_path});
-    if(old) mutations.push({table:'dancer_photos',operation:'delete',ids:[old.id]});
-    if(fail) return {data:null,error:lostResponse};
-    return {data:{record:{...rows.image_moderation_records[0]},photo,superseded_storage_paths:old?[old.storage_path]:[]},error:null};
-  };
   const dependencies = {
     PublicApiError,
     safeErrorMetadata: error => ({ code: error.code || 'unknown' }),
@@ -97,14 +97,14 @@ function scenario({ failTable, failOperation, failAfterCommit = true, diagnostic
     isProfileAvatarUploadContext: context => context === 'profile_avatar',
     profilePhotoSlotFromUploadContext: () => ({ isPrimary: primary, sortOrder: primary ? 0 : 1 }),
   };
-  Object.assign(dependencies,loadModule(publicationSource,'publishDancerPhoto',dependencies));
+  Object.assign(dependencies, loadGalleryGateway(dependencies));
   const functions = loadModule(source, 'approveModeratedUpload, setApprovedDancerAvatar', dependencies);
   Object.assign(dependencies, { ...functions, APPROVED_PHOTO_BUCKET: 'dancer-photos' });
   const admin = loadModule(adminSource, 'approveReviewRecord', dependencies);
   return {
     assets, rows, mutations,
     publish: () => functions.approveModeratedUpload(client, {
-      recordId: 'review', profileId: 'profile', userId: 'owner', image: {}, tempPath: 'temp',
+      recordId: 'review', expectedUpdatedAt: '2020-01-01T00:00:00Z', profileId: 'profile', userId: 'owner', image: {}, tempPath: 'temp',
       uploadContext: avatar ? 'profile_avatar' : 'profile_gallery:1', isAvatar: avatar,
       isPrimary: primary, sortOrder: primary ? 0 : 1, altText: null,
       evaluation: { decision: 'approved', reasonCodes: [], categoryScores: {}, providerFlagged: false }, categoryFlags: {},
@@ -131,7 +131,7 @@ for (const avatar of [false, true]) {
   });
 }
 
-test('lost photo-insert response cannot delete the file referenced by the committed row', async () => {
+test('lost atomic insert response cannot delete the file referenced by the committed row', async () => {
   const s = scenario({ failTable: 'dancer_photos', failOperation: 'insert' });
   await assert.rejects(s.publish(), error => error === lostResponse);
   assert.equal(s.rows.dancer_photos.length, 1);
@@ -149,7 +149,7 @@ for (const failAfterCommit of [false, true]) {
   });
 }
 
-test('lost transaction response preserves committed replacement and reports uncertainty', async () => {
+test('lost atomic replacement response retains committed media without destructive cleanup', async () => {
   const s = scenario({ existingPhoto: true, failTable: 'dancer_photos', failOperation: 'delete' });
   await assert.rejects(s.publish(), error => error === lostResponse);
   assert.deepEqual(s.rows.dancer_photos.map(row => row.id), ['new-photo']);
@@ -199,12 +199,28 @@ test('PostgreSQL allows only one avatar update when both requests read the same 
       await pg.query('insert into dancer_profiles values ($1,$2,null) on conflict(id) do update set avatar_storage_path=excluded.avatar_storage_path', ['profile', previous]);
       let reads = 0, release;
       const bothRead = new Promise(resolve => { release = resolve; });
-      const client = { from(table) {
+      const client = { async rpc(name, input) {
+    assert.equal(name, 'publish_approved_dancer_gallery_photo');
+    const shouldFail = !failed && ((failTable === 'image_moderation_records' && failOperation === 'update')
+      || (failTable === 'dancer_photos' && ['insert', 'delete'].includes(failOperation)));
+    if (shouldFail) failed = true;
+    if (shouldFail && !failAfterCommit) return { data: null, error: lostResponse };
+    const previous = [...rows.dancer_photos];
+    const photo = { id: 'new-photo', dancer_id: 'profile', storage_path: 'new', is_primary: primary, sort_order: primary ? 0 : 1, review_status: 'approved' };
+    rows.dancer_photos = [photo];
+    Object.assign(rows.image_moderation_records[0], { image_id: photo.id, final_storage_path: 'new', status: 'approved', decision: 'approved', updated_at: '2020-01-02T00:00:00Z' });
+    if (previous.length) mutations.push({ table: 'dancer_photos', operation: 'delete', ids: previous.map(p => p.id) });
+    if (shouldFail) {
+      if (rejectionAfterFailure) Object.assign(rows.image_moderation_records[0], { decision: 'rejected', status: 'rejected' });
+      return { data: null, error: lostResponse };
+    }
+    return { data: { photo, record: rows.image_moderation_records[0], already_published: false, superseded_storage_paths: previous.map(p => p.storage_path) }, error: null };
+  }, from(table) {
         assert.equal(table, 'dancer_profiles');
         let update, nullable = false;
         const filters = {};
         const q = {
-          select() { return q; },
+          select() { return q; }, limit() { return q; },
           update(value) { update = value; return q; },
           eq(key, value) { filters[key] = value; return q; },
           is(key, value) { assert.equal(key, 'avatar_storage_path'); assert.equal(value, null); nullable = true; return q; },

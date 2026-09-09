@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { apiError, PublicApiError } from "@/src/lib/api";
+import { apiError } from "@/src/lib/api";
 import { readBoundedJsonObject } from "@/src/lib/bounded-json-body";
 import { requireAdmin } from "@/src/lib/dancr/admin";
 import {
@@ -10,7 +10,7 @@ import {
 } from "@/src/lib/dancr/image-moderation";
 import { validateAndPrepareDancrImage } from "@/src/lib/dancr/image-validation";
 import { isProfileAvatarUploadContext } from "@/src/lib/dancr/photo-slot";
-import { publishDancerPhoto } from "@/src/lib/dancr/photo-publication";
+import { cleanPublishedGalleryFiles, galleryReviewConflict, galleryReviewVersion, publishDancerPhoto, updatePendingGalleryReview } from "@/src/lib/dancr/photo-publication";
 import {
   removeResponsiveImage,
   uploadResponsiveImage,
@@ -113,13 +113,20 @@ async function withSignedThumbnail(admin: any, record: any) {
 }
 
 async function approveReviewRecord(admin: any, record: any, reviewerId: string, notes: string) {
-  const isAvatar = isProfileAvatarUploadContext(record.upload_context);
-  if (!isAvatar && record.decision === "approved") {
-    return (await publishDancerPhoto(admin, {
-      recordId: record.id, expectedUpdatedAt: record.updated_at, storagePath: record.final_storage_path, reviewerId, notes,
-    })).record;
-  }
   const profile = await profileForModerationRecord(admin, record);
+  const isAvatar = isProfileAvatarUploadContext(record.upload_context);
+  const expectedUpdatedAt = isAvatar ? undefined : galleryReviewVersion(record.updated_at);
+  if (!isAvatar && record.decision === "approved") {
+    const published = await publishDancerPhoto(admin, {
+      recordId: record.id, expectedUpdatedAt, userId: record.user_id, profileId: profile.id,
+      storagePath: record.final_storage_path || [record.user_id, profile.id, "unavailable"].join("/"),
+      reasonCodes: record.reason_codes || [], categoryFlags: record.category_flags || {},
+      categoryScores: record.category_scores || {}, providerFlagged: Boolean(record.provider_flagged),
+      reviewerId, reviewNotes: notes,
+    });
+    return published.record;
+  }
+  if (!isAvatar && (record.decision !== "review" || ["approved", "rejected"].includes(record.status))) throw galleryReviewConflict();
   const sourcePath = record.temporary_storage_path;
   if (!sourcePath) throw new Error("Review image is missing.");
   const sourceBucket = moderationStorageBucket(record);
@@ -171,14 +178,17 @@ async function approveReviewRecord(admin: any, record: any, reviewerId: string, 
       return updated;
     }
 
-    const { record: updated } = await publishDancerPhoto(admin, {
-      recordId: record.id, expectedUpdatedAt: record.updated_at, storagePath: finalPath, reviewerId, notes,
-      metadata: { reasonCodes: record.reason_codes, categoryFlags: record.category_flags,
-        categoryScores: record.category_scores, providerFlagged: record.provider_flagged },
+    const published = await publishDancerPhoto(admin, {
+      recordId: record.id, expectedUpdatedAt, userId: record.user_id, profileId: profile.id, storagePath: finalPath,
+      reasonCodes: record.reason_codes || [], categoryFlags: record.category_flags || {},
+      categoryScores: record.category_scores || {}, providerFlagged: Boolean(record.provider_flagged),
+      reviewerId, reviewNotes: notes,
     });
-    await admin.storage.from(sourceBucket).remove([sourcePath]).catch(() => null);
+    await cleanPublishedGalleryFiles(admin, published, {
+      userId: record.user_id, profileId: profile.id, bucket: sourceBucket, path: sourcePath,
+    });
     console.info(JSON.stringify({ event: "image_moderation.admin_decision", recordId: record.id, decision: "approved" }));
-    return updated;
+    return published.record;
   } catch (error) {
     // An unconfirmed write may already reference finalPath. Retain approved
     // files and current references instead of destructive compensation.
@@ -201,10 +211,16 @@ async function rejectReviewRecord(admin: any, record: any, reviewerId: string, n
     review_notes: notes || "Rejected by admin moderation.",
     updated_at: new Date().toISOString(),
   };
-  const { data: updated, error } = await admin.from("image_moderation_records").update(update)
-    .eq("id", record.id).eq("decision", "review").eq("updated_at", record.updated_at).select("*").maybeSingle();
-  if (error) throw error;
-  if (!updated) throw new PublicApiError("CONFLICT", "This upload already changed. Refresh the review queue.", 409);
+  let updated;
+  if (isProfileAvatarUploadContext(record.upload_context)) {
+    const result = await admin.from("image_moderation_records").update(update)
+      .eq("id", record.id).eq("decision", "review").eq("updated_at", record.updated_at).select("*").maybeSingle();
+    if (result.error) throw result.error;
+    if (!result.data) throw galleryReviewConflict();
+    updated = result.data;
+  } else {
+    updated = await updatePendingGalleryReview(admin, record.id, record.updated_at, update);
+  }
   if (sourcePath) {
     await admin.storage.from(MODERATION_REVIEW_BUCKET).remove([sourcePath]).catch(() => null);
     await admin.storage.from(MODERATION_TEMP_BUCKET).remove([sourcePath]).catch(() => null);
