@@ -706,9 +706,9 @@ export default function DashboardClient({
       <article className="info-panel">
         <h2>{state.venueRequest.status === "rejected" ? "Request not approved" : "Waiting for approval"}</h2>
         <p>{state.venueRequest.status === "rejected" ? "Your club request was reviewed and was not approved. Contact support if you need help with the decision." : "Your manager login is saved. We’ll email you when your club is approved. Your dashboard will unlock with this same account—no new password or access code needed."}</p>
-        <div className="action-row"><button type="button" onClick={retryDashboard}>Check approval status</button><a href="#venue-request-support">Contact support</a></div>
+        <div className="action-row"><button type="button" onClick={retryDashboard}>Check approval status</button><a href="#venue-support">Contact support</a></div>
       </article>
-      <SupportInboxPanel initialThreads={state.supportThreads || []} panelId="venue-request-support" />
+      <SupportInboxPanel initialThreads={state.supportThreads || []} panelId="venue-support" />
     </main>;
   }
 
@@ -2657,7 +2657,7 @@ type VenueWorkspace = "tonight" | "venue" | "business";
 function venueWorkspaceForSection(sectionId: string): VenueWorkspace | null {
   if (["venue-working-now", "venue-dancer-roster", "venue-club-deals", "venue-deal-contract-ledger"].includes(sectionId)) return "tonight";
   if (sectionId === "venue-tv") return "venue";
-  if (["venue-overview", "venue-team", "venue-account"].includes(sectionId)) return "business";
+  if (["venue-overview", "venue-team", "venue-account", "venue-support"].includes(sectionId)) return "business";
   return null;
 }
 
@@ -2718,16 +2718,14 @@ function VenuePanel({
   const [isPublishingVenue, setIsPublishingVenue] = useState(false);
   const [reviewNotes, setReviewNotes] = useState("");
   const [notificationRevision, setNotificationRevision] = useState(0);
-  const [activeWorkspace, setActiveWorkspace] = useState<VenueWorkspace>(() => initialVenueWorkspace(profile?.isActive === true));
+  const [activeWorkspace, setActiveWorkspace] = useState<VenueWorkspace>(() => {
+    const sectionId = typeof window === "undefined" ? "" : window.location.hash.replace(/^#/, "");
+    return venueWorkspaceForSection(sectionId) || initialVenueWorkspace(profile?.isActive === true);
+  });
   const mountedRef = useRef(false);
   const publicationSequenceRef = useRef(0);
   const publicationAbortRef = useRef<AbortController | null>(null);
   const publicationInFlightRef = useRef(false);
-
-  useEffect(() => {
-    const hashWorkspace = venueWorkspaceForSection(window.location.hash.replace(/^#/, ""));
-    if (hashWorkspace) setActiveWorkspace(hashWorkspace);
-  }, []);
 
   useEffect(() => {
     mountedRef.current = true;
@@ -3210,7 +3208,7 @@ function VenuePanel({
             <Metric label="Role" value={String(account?.role || "venue")} />
           </InfoPanel>
           <NotificationPanel refreshKey={notificationRevision} />
-          <SupportInboxPanel initialThreads={supportThreads} />
+          <SupportInboxPanel initialThreads={supportThreads} panelId="venue-support" />
           <AccountControlsPanel
             accountRole="venue"
             accountState={String(account?.accountState || "active")}
@@ -8775,6 +8773,7 @@ function DashboardStyles() {
       .notification-row em { color: #7eeaff; font-size: 11px; font-style: normal; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; }
       .notification-clear-button { min-height: 38px; justify-self: end; border: 1px solid rgba(255,255,255,.12); border-radius: 999px; color: #c9c3d1; background: transparent; font: inherit; font-size: 11px; font-weight: 900; cursor: pointer; padding: 0 13px; }
       .notification-panel > p { margin: 0; color: #94e5ff; font-size: 13px; }
+      #venue-support { scroll-margin-top: calc(var(--mydancr-preview-banner-offset, 0px) + 12px); }
       .support-panel form, .support-thread { display: grid; gap: 12px; }
       .support-panel label { display: grid; gap: 7px; color: #d8cfeb; font-size: 13px; font-weight: 850; }
       .support-panel input, .support-panel textarea { border-radius: 12px; border: 1px solid rgba(255,255,255,.13); background: rgba(255,255,255,.045); color: #fff; padding: 11px 13px; font: inherit; }

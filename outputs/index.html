@@ -55891,8 +55891,12 @@
     }
 
     function activeSupportRole() {
-      if (isDancerSession() || isDancerLoggedIn) return "dancer";
-      if (isCustomerSession() || isCustomerLoggedIn) return "customer";
+      if (isVenueSession()) return "venue";
+      if (isDancerSession()) return "dancer";
+      if (isCustomerSession()) return "customer";
+      if (isVenueLoggedIn) return "venue";
+      if (isDancerLoggedIn) return "dancer";
+      if (isCustomerLoggedIn) return "customer";
       return "";
     }
 
@@ -55902,6 +55906,7 @@
         openPublicContactForm();
         return;
       }
+      if (role === "venue") return openUnifiedDashboard("venue", "venue-support");
       if (role === "customer") return openUnifiedDashboard("customer", "customer-support");
       return openUnifiedDashboard("dancer", "dancer-support");
     }

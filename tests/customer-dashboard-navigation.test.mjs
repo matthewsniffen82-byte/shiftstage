@@ -14,6 +14,8 @@ function fixture({ signedIn = true, customerFlag = true } = {}) {
     isDancerLoggedIn: false,
     isCustomerSession: () => signedIn,
     isDancerSession: () => false,
+    isVenueSession: () => false,
+    isVenueLoggedIn: false,
     openAuthRole: role => auth.push(role),
     openPublicContactForm: () => publicContact.push(true),
     window: { location: { assign: url => navigations.push(url) } },

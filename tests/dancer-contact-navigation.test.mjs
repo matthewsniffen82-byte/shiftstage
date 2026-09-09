@@ -16,6 +16,8 @@ function contact({ session = true, loginFlag = true, cachedApproval = false } = 
     authSession: session ? { accessToken: "fixture", account: { role: "dancer" } } : null,
     isDancerSession: () => session,
     isCustomerSession: () => false,
+    isVenueSession: () => false,
+    isVenueLoggedIn: false,
     isDancerLoggedIn: loginFlag,
     isCustomerLoggedIn: false,
     dancerSetup: { approval: cachedApproval },
