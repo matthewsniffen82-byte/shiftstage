@@ -3184,6 +3184,7 @@ function VenueSignupRequestQueue({
         const venueId = asText(data.venue.id);
         const normalizedVenue = {
           ...data.venue,
+          signup_request: data.request || request,
           is_active: data.venue.isActive !== false,
           owner_user_id: data.managerAccountReady ? asText(data.request?.requesterUserId) : null,
         };
@@ -3597,6 +3598,7 @@ function VenueManager({
         {visibleVenues.map((venue) => {
           const venueId = asText(venue.id);
           const activeCode = activeCodeForVenue(venueId);
+          const registration = asRecordObject(venue.signup_request);
           const connectedManager = Boolean(asText(venue.owner_user_id || venue.ownerUserId));
           const isActive = venue.is_active !== false;
           const reviewStatus = asText(venue.page_review_status) || (isActive ? "published" : "admin_draft");
@@ -3636,6 +3638,22 @@ function VenueManager({
                 <small>{asText(venue.address) || "No address submitted"}</small>
                 {isActive ? <button type="button" disabled={controlsBusy} onClick={() => hideVenue(venue)}>Hide venue</button> : <span>Private workspace · {connectedManager ? "manager connected" : "waiting for manager account"}</span>}
               </div>
+              {registration.id ? <section className="submission-section" aria-label="Venue registration details">
+                <h3>Provided during signup</h3>
+                <p className="empty">Original venue submission. The managed page below contains the current public details.</p>
+                <div className="submission-grid">
+                  <SubmissionValue label="Venue name" value={registration.venueName} />
+                  <SubmissionValue label="Public address" value={[registration.streetAddress, registration.city, registration.state, registration.postalCode].filter(Boolean).join(", ")} wide />
+                  <SubmissionValue label="Contact name" value={registration.contactName} />
+                  <SubmissionValue label="Contact title" value={registration.contactTitle} />
+                  <SubmissionValue label="Business email" value={registration.contactEmail} />
+                  <SubmissionValue label="Business phone" value={registration.contactPhone} />
+                  <SubmissionValue label="Manager login email" value={registration.loginEmail} />
+                  <SubmissionValue label="Website" value={registration.website} />
+                  {registration.message ? <SubmissionValue label="Signup note" value={registration.message} wide /> : null}
+                  <SubmissionValue label="Submitted" value={formatDate(registration.submittedAt)} />
+                </div>
+              </section> : null}
               <section className="venue-page-admin-panel" aria-label={`${asText(venue.name) || "Venue"} managed page`}>
                 <div className="venue-page-admin-heading">
                   <span><small>Managed venue page</small><strong>{reviewLabel}</strong></span>

@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { mapApprovedVenue } from "./admin-venue-registration";
 import { sendTransactionalEmail } from "./notification-delivery";
 import { publicAppUrl } from "./public-app-url";
 import {
@@ -417,19 +418,6 @@ function agentAccountLabel(value: any) {
   const account = Array.isArray(agent?.account) ? agent.account[0] || null : agent?.account || null;
   if (!account) return null;
   return String(account.display_name || account.email || "Sales agent");
-}
-
-function mapApprovedVenue(row: any) {
-  if (!row?.id) return null;
-  return {
-    id: String(row.id),
-    slug: String(row.slug || ""),
-    name: String(row.name || ""),
-    city: String(row.city || ""),
-    state: row.state ? String(row.state) : null,
-    address: row.address ? String(row.address) : null,
-    isActive: row.is_active !== false,
-  };
 }
 
 function mapApprovedClaimCode(row: any) {

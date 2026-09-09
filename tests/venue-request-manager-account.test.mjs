@@ -100,6 +100,7 @@ test('pending managers can sign in but cannot manage any venue', async () => {
 test('approval emails the existing login and never exposes a reusable access code', async () => {
   const messages = [];
   const service = compile(read('src/lib/dancr/venue-signup-requests.ts'), {
+    './admin-venue-registration': compile(read('src/lib/dancr/admin-venue-registration.ts')),
     './venue-claims': { createVenueSignupCredential: () => ({ code: 'legacy-secret', digest: 'a'.repeat(64) }) },
     './public-app-url': { publicAppUrl: () => 'https://mydancr.com' },
     './notification-delivery': { sendTransactionalEmail: async message => { messages.push(message); return { delivered: true }; } },

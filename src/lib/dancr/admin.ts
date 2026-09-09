@@ -14,6 +14,7 @@ import { getVenueById, getVenuePublicationState } from "./venue";
 import { getStripe } from "../stripe";
 import { safeErrorMetadata } from "../security/safe-error-metadata";
 import { getRankingMetricBatch, type TrendingMetricCounts } from "./ranking-metrics";
+import { getAdminVenueRegistrations } from "./admin-venue-registration";
 
 type DancrClient = SupabaseClient;
 
@@ -614,12 +615,17 @@ export async function getAdminVenues(client: DancrClient, city?: string | null) 
   if (error) throw error;
 
   const rows = data || [];
-  const dealLists = await getActiveClubDealListsForVenues(client, rows.map((row: any) => String(row.id)));
+  const venueIds = rows.map((row: any) => String(row.id));
+  const [dealLists, registrations] = await Promise.all([
+    getActiveClubDealListsForVenues(client, venueIds),
+    getAdminVenueRegistrations(client, venueIds),
+  ]);
   return rows.map((row: any) => {
     const logo = responsivePublicImage(client, "venue-logo-images", row.logo_storage_path);
     const cover = responsivePublicImage(client, "venue-cover-images", row.cover_image_storage_path);
     return {
       ...row,
+      signup_request: registrations.get(String(row.id)) || null,
       logo_image_url: logo?.imageUrl || null,
       cover_image_url: cover?.imageUrl || null,
       active_deal_count: dealLists.get(String(row.id))?.length || 0,
