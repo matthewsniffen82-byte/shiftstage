@@ -1,0 +1,15 @@
+{
+  "avatar_paths_shared_with_gallery": 0,
+  "captured_at": "2026-09-09T19:45:00.104656+00:00",
+  "duplicate_gallery_slot_groups": 0,
+  "duplicate_primary_groups": 0,
+  "empty_avatar_paths": 0,
+  "moderation_error_records": 0,
+  "photo_rows": 72,
+  "read_only": "on",
+  "rls": {
+    "dancer_photos": true,
+    "dancer_profiles": true,
+    "image_moderation_records": true
+  }
+}

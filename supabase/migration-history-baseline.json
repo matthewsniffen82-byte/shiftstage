@@ -531,6 +531,10 @@
     {
       "file": "20260909124600_preserve_admin_profile_suspensions.sql",
       "sha256": "7d672c1e87c5734f597e129e6256050ae2b5be526cdf0d00a30e6fb6fa64ea46"
+    },
+    {
+      "file": "20260909183820_prevent_duplicate_scheduled_dates.sql",
+      "sha256": "1bfb735c395dd0e853246d866f1295a693fef866be6a696eaa99b1b20daa2ea8"
     }
   ]
 }

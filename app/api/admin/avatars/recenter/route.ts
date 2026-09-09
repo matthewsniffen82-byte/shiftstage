@@ -11,7 +11,6 @@ import {
 import { validateAndPrepareDancrImage } from "@/src/lib/dancr/image-validation";
 import {
   APPROVED_PHOTO_BUCKET,
-  restoreDancerAvatar,
   setApprovedDancerAvatar,
 } from "@/src/lib/dancr/image-moderation";
 import {
@@ -85,27 +84,16 @@ export async function POST(request: Request) {
       `${dancer.user_id}/${dancer.id}/avatar`,
       centeredAvatar,
     );
-    let switched = false;
-    try {
-      const actualPreviousPath = await setApprovedDancerAvatar(
-        admin,
-        dancer.id,
-        uploaded.storagePath,
+    // Preserve the uploaded file if the database response is uncertain.
+    const actualPreviousPath = await setApprovedDancerAvatar(
+      admin,
+      dancer.id,
+      uploaded.storagePath,
+    );
+    if (actualPreviousPath && actualPreviousPath !== uploaded.storagePath) {
+      await removeResponsiveImage(admin, APPROVED_PHOTO_BUCKET, actualPreviousPath).catch(
+        () => null,
       );
-      switched = true;
-      if (actualPreviousPath && actualPreviousPath !== uploaded.storagePath) {
-        await removeResponsiveImage(admin, APPROVED_PHOTO_BUCKET, actualPreviousPath).catch(
-          () => null,
-        );
-      }
-    } catch (error) {
-      if (switched) await restoreDancerAvatar(admin, dancer.id, previousPath).catch(() => null);
-      await removeResponsiveImage(
-        admin,
-        APPROVED_PHOTO_BUCKET,
-        uploaded.storagePath,
-      ).catch(() => null);
-      throw error;
     }
 
     const publicAvatar = responsivePublicImage(

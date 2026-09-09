@@ -6,7 +6,6 @@ import {
   APPROVED_PHOTO_BUCKET,
   MODERATION_REVIEW_BUCKET,
   MODERATION_TEMP_BUCKET,
-  restoreDancerAvatar,
   setApprovedDancerAvatar,
 } from "@/src/lib/dancr/image-moderation";
 import { validateAndPrepareDancrImage } from "@/src/lib/dancr/image-validation";
@@ -139,12 +138,10 @@ async function approveReviewRecord(admin: any, record: any, reviewerId: string, 
   );
   const finalPath = uploadedImage.storagePath;
   let previousAvatarPath: string | null = null;
-  let avatarWasSwitched = false;
 
   try {
     if (isAvatar) {
       previousAvatarPath = await setApprovedDancerAvatar(admin, profile.id, finalPath);
-      avatarWasSwitched = true;
       const update = {
         image_id: null,
         final_storage_path: finalPath,
@@ -248,21 +245,12 @@ async function approveReviewRecord(admin: any, record: any, reviewerId: string, 
     console.info(JSON.stringify({ event: "image_moderation.admin_decision", recordId: record.id, decision: "approved" }));
     return updated;
   } catch (error) {
-    if (avatarWasSwitched) {
-      await restoreDancerAvatar(admin, profile.id, previousAvatarPath).catch(() => null);
-    }
-    await removeResponsiveImage(
-      admin,
-      APPROVED_PHOTO_BUCKET,
-      finalPath,
-    ).catch(() => null);
-    if (!isAvatar) {
-      await removeArchivedOriginalMedia(
-        admin,
-        APPROVED_PHOTO_BUCKET,
-        finalPath,
-      ).catch(() => null);
-    }
+    // An unconfirmed write may already reference finalPath. Retain approved
+    // files and current references instead of destructive compensation.
+    console.warn("IMAGE_MODERATION_PUBLICATION_UNCONFIRMED", {
+      recordId: record.id,
+      ...safeErrorMetadata(error),
+    });
     throw error;
   }
 }

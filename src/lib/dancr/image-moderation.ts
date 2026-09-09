@@ -5,6 +5,7 @@ import { createHash, randomUUID } from "crypto";
 import { createOpenAIClient } from "../openai-client";
 import { getServerEnv } from "../server-env";
 import { safeErrorMetadata } from "../security/safe-error-metadata";
+import { PublicApiError } from "../api-error-policy";
 import {
   isAvatarFaceRequiredError,
   prepareFaceCenteredAvatar,
@@ -550,12 +551,10 @@ async function approveModeratedUpload(
   );
   const finalPath = uploadedImage.storagePath;
   let previousAvatarPath: string | null = null;
-  let avatarWasSwitched = false;
 
   try {
     if (input.isAvatar) {
       previousAvatarPath = await setApprovedDancerAvatar(admin, input.profileId, finalPath);
-      avatarWasSwitched = true;
       await updateModerationRecord(admin, input.recordId, {
         imageId: null,
         finalStoragePath: finalPath,
@@ -630,32 +629,26 @@ async function approveModeratedUpload(
       },
     };
   } catch (error) {
-    if (avatarWasSwitched) {
-      await restoreDancerAvatar(admin, input.profileId, previousAvatarPath).catch(() => null);
-    }
-    await removeResponsiveImage(
-      admin,
-      APPROVED_PHOTO_BUCKET,
-      finalPath,
-    ).catch(() => null);
-    if (!input.isAvatar) {
-      await removeArchivedOriginalMedia(
-        admin,
-        APPROVED_PHOTO_BUCKET,
-        finalPath,
-      ).catch(() => null);
-    }
+    // A write can commit before its response is lost. Keep the approved files
+    // and current profile reference; a compensating delete/restore can lose
+    // published media or overwrite a newer upload. Reconcile retained files
+    // separately after their references and operation outcome are confirmed.
     await updateModerationRecord(admin, input.recordId, {
       finalStoragePath: finalPath,
       decision: "review",
       status: "moderation_error",
-      reasonCodes: ["approved_storage_db_compensation"],
+      reasonCodes: ["approved_publication_unconfirmed"],
       categoryFlags: input.categoryFlags,
       categoryScores: input.evaluation.categoryScores,
       providerFlagged: input.evaluation.providerFlagged,
       errorCode: "database_after_storage_error",
+    }, true).catch((recoveryError) => {
+      logModeration("publication_recovery_record_failed", {
+        recordId: input.recordId,
+        ...safeErrorMetadata(recoveryError),
+      });
     });
-    logModeration("storage_error", { recordId: input.recordId, errorCode: "database_after_storage_error" });
+    logModeration("publication_unconfirmed", { recordId: input.recordId, ...safeErrorMetadata(error) });
     throw error;
   }
 }
@@ -673,31 +666,26 @@ export async function setApprovedDancerAvatar(
   if (profileError) throw profileError;
   if (!profile) throw new Error("Dancer profile not found.");
 
-  const previousPath = String((profile as any).avatar_storage_path || "").trim() || null;
-  const { error: updateError } = await client
+  const previousValue = (profile as any).avatar_storage_path as string | null;
+  const previousPath = String(previousValue || "").trim() || null;
+  let update = client
     .from("dancer_profiles")
     .update({
       avatar_storage_path: storagePath,
       avatar_updated_at: new Date().toISOString(),
     })
     .eq("id", dancerId);
+  // Only replace the avatar read above. Another upload or deletion wins if
+  // the reference changed while this request was preparing publication.
+  update = previousValue === null
+    ? update.is("avatar_storage_path", null)
+    : update.eq("avatar_storage_path", previousValue);
+  const { data: updated, error: updateError } = await update.select("id").maybeSingle();
   if (updateError) throw updateError;
+  if (!updated) {
+    throw new PublicApiError("CONFLICT", "Your avatar changed during this upload. Refresh your profile before trying again.", 409);
+  }
   return previousPath;
-}
-
-export async function restoreDancerAvatar(
-  client: DancrClient,
-  dancerId: string,
-  storagePath: string | null,
-) {
-  const { error } = await client
-    .from("dancer_profiles")
-    .update({
-      avatar_storage_path: storagePath,
-      avatar_updated_at: new Date().toISOString(),
-    })
-    .eq("id", dancerId);
-  if (error) throw error;
 }
 
 export async function moderateImageWithOpenAI(admin: DancrClient, tempPath: string): Promise<any> {
@@ -1053,7 +1041,8 @@ async function insertApprovedDancerPhoto(client: DancrClient, input: { dancerId:
       .eq("dancer_id", input.dancerId)
       .in("id", supersededIds);
     if (supersededDeleteError) {
-      await safeDeleteDancerPhotoRow(client, data.id);
+      // The removal may have committed despite a lost response. Preserve the
+      // new row and both sets of files until the outcome can be reconciled.
       throw supersededDeleteError;
     }
     await Promise.all(
@@ -1078,17 +1067,6 @@ async function insertApprovedDancerPhoto(client: DancrClient, input: { dancerId:
       .eq("dancer_id", input.dancerId)
       .neq("id", data.id);
     if (demoteError) {
-      await safeDeleteDancerPhotoRow(client, data.id);
-      await removeResponsiveImage(
-        client,
-        APPROVED_PHOTO_BUCKET,
-        input.storagePath,
-      ).catch(() => null);
-      await removeArchivedOriginalMedia(
-        client,
-        APPROVED_PHOTO_BUCKET,
-        input.storagePath,
-      ).catch(() => null);
       throw demoteError;
     }
   }
@@ -1110,18 +1088,6 @@ async function findCurrentPhotoSlot(client: DancrClient, dancerId: string, isPri
   const { data, error } = await query;
   if (error) throw error;
   return (data || []) as Array<{ id: string; storage_path: string; is_primary: boolean; sort_order: number }>;
-}
-
-async function safeDeleteDancerPhotoRow(client: DancrClient, photoId: string) {
-  try {
-    const { error } = await client.from("dancer_photos").delete().eq("id", photoId);
-    if (error) logModeration("photo_row_cleanup_error", {
-      photoId,
-      ...safeErrorMetadata(error),
-    });
-  } catch {
-    logModeration("photo_row_cleanup_error", { photoId });
-  }
 }
 
 function getDancerPhotoUrl(client: DancrClient, storagePath: string) {
@@ -1155,7 +1121,7 @@ async function createModerationRecord(client: DancrClient, input: { userId: stri
   return data as { id: string };
 }
 
-async function updateModerationRecord(client: DancrClient, id: string, update: Record<string, unknown>) {
+async function updateModerationRecord(client: DancrClient, id: string, update: Record<string, unknown>, preserveFinalDecision = false) {
   const dbUpdate: Record<string, unknown> = { updated_at: new Date().toISOString() };
   if ("imageId" in update) dbUpdate.image_id = update.imageId;
   if ("temporaryStoragePath" in update) dbUpdate.temporary_storage_path = update.temporaryStoragePath;
@@ -1173,7 +1139,11 @@ async function updateModerationRecord(client: DancrClient, id: string, update: R
   if ("lastErrorCode" in update) dbUpdate.last_error_code = update.lastErrorCode;
   if ("lastErrorMessage" in update) dbUpdate.last_error_message = update.lastErrorMessage;
   if ("completedAt" in update) dbUpdate.completed_at = update.completedAt;
-  const { error } = await client.from("image_moderation_records").update(dbUpdate).eq("id", id);
+  let query = client.from("image_moderation_records").update(dbUpdate).eq("id", id);
+  if (preserveFinalDecision) {
+    query = query.eq("decision", "review").neq("status", "approved").neq("status", "rejected");
+  }
+  const { error } = await query;
   if (error) throw error;
 }
 
@@ -1189,7 +1159,8 @@ async function logStoredModerationStatus(client: DancrClient, recordId: string, 
       stored: null,
       ...safeErrorMetadata(error),
     });
-    throw new Error("DATABASE_UPDATE_FAILED");
+    // Diagnostic reads must not undo an acknowledged publication.
+    return;
   }
   console.log("DATABASE_STATUS_RESULT", {
     expected,

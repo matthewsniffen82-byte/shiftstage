@@ -41,10 +41,12 @@ test("approved avatar replacement preserves the current live image until moderat
   assert.match(moderation, /previousAvatarPath = await setApprovedDancerAvatar/);
   assert.match(moderation, /await updateModerationRecord[\s\S]*?decision: "approved"/);
   assert.match(moderation, /if \(previousAvatarPath && previousAvatarPath !== finalPath\)[\s\S]*?removeResponsiveImage/);
-  assert.match(moderation, /if \(avatarWasSwitched\)[\s\S]*?restoreDancerAvatar/);
+  assert.doesNotMatch(moderation, /restoreDancerAvatar|avatarWasSwitched/);
+  assert.match(moderation, /update\.eq\("avatar_storage_path", previousValue\)/);
   assert.match(adminModeration, /const isAvatar = isProfileAvatarUploadContext\(record\.upload_context\)/);
   assert.match(adminModeration, /setApprovedDancerAvatar\(admin, profile\.id, finalPath\)/);
-  assert.match(adminModeration, /restoreDancerAvatar\(admin, profile\.id, previousAvatarPath\)/);
+  assert.doesNotMatch(adminModeration, /restoreDancerAvatar/);
+  assert.match(adminModeration, /IMAGE_MODERATION_PUBLICATION_UNCONFIRMED/);
 });
 
 test("Edit Profile owns the real avatar upload, pending state, and removal workflow", () => {

@@ -1,0 +1,33 @@
+# Step 4: preserve media after uncertain publication
+
+## Finding and controlled scope
+
+The automated photo/ avatar approval path and the administrator review path removed newly uploaded files whenever a later database operation failed. A database write can commit before its response is lost: the compensating removal then leaves a committed photo or avatar pointing at a missing file. The automated gallery replacement also deleted the new row after an uncertain superseded-row removal, potentially deleting both records. Primary-photo demotion failure had a similar destructive rollback. Even a diagnostic status read could trigger cleanup after acknowledged approval.
+
+Avatar replacement separately read the current reference and then updated by profile ID alone. A concurrent request could change that reference before the write or before the unconditional restoration on failure. Administrator avatar recentering used the same unsafe recovery pattern.
+
+This controlled release removes destructive failure compensation, rather than introducing a large publication refactor. Already approved files and current references survive uncertain writes; failures still propagate to the request. Failure bookkeeping only updates records whose decision remains review and whose status is not approved/rejected. It cannot replace an acknowledged approval or a concurrent moderator rejection. Failure to record recovery context logs sanitized metadata and preserves the original error. A failed diagnostic read is logged without undoing or failing an acknowledged publication.
+
+The shared avatar setter now performs an atomic conditional update against the exact reference read earlier, with a returned-row check. This covers a stored path, null, and a legacy empty value. Zero updated rows produce HTTP 409 and a refresh instruction. All upload, review and recenter callers use the shared setter; the unconditional restoration helper and its callers are removed.
+
+## Production scope and tradeoff
+
+No production account, photo, avatar, moderation record, storage object, schema, RLS policy or permission is changed by this release. The application behavior changes only for overlapping avatar writes and failure recovery. Normal approved publication and explicit deletion remain available. The prior verified upcoming-date migration is added to the immutable history manifest, using its verified committed/database SQL hash; no historical SQL or ledger entry is rewritten.
+
+Read-only production inspection at 2026-09-09T19:45:00.104656+00:00 found 72 photo rows, zero duplicate active gallery slots or primary-photo groups, zero empty avatar paths, zero avatar paths shared with gallery files, and zero moderation-error records. RLS remains enabled for profiles, photos and moderation records. These aggregate counts do not prove that every stored object exists or that races cannot occur.
+
+An uncertain publication can leave an unused approved file retained for later reconciliation. Preserving potentially referenced media is preferable to deleting it without a confirmed outcome. This release does not introduce an automatic garbage collector, retry writes, suppress database errors, or report an unconfirmed write as successful. Reconciliation must check operation outcome and all references before removal; a temporarily missing row is not sufficient proof after a lost write response.
+
+## Regression coverage
+
+`image-publication-recovery.test.mjs` executes the actual approval functions with fault-injected database/storage adapters. It covers pre-commit and post-commit avatar failures, lost photo insertion and approval acknowledgments, lost superseded removal acknowledgment, failed primary demotion, failed recovery logging, concurrent moderator rejection, administrator photo/avatar approval, and a failed diagnostic read after successful publication. Assertions verify actual retained rows, file references, approval decisions, original errors and absence of further destructive writes.
+
+An embedded PostgreSQL test forces two avatar requests to read the same initial reference before either updates. Only one conditional update succeeds; the loser receives 409. Stored, null and empty initial references are covered. PGlite serializes statements within one instance; this demonstrates the actual SQL predicate and application handling, not a full multi-connection Supabase/RLS/storage or historical migration replay test. No real uploads, accounts or emails are used for testing.
+
+All 3,030 full-suite tests and full lint passed on application base `6e66f848ec64f2894ec6d109c2853086adcb65ea`, including thirteen new publication-recovery tests. Final parent `9a138ab0dd6d4977e10708ac7d5949e07c3e5fbf` changes only profile-button CSS, its generated version and its four tests. All four affected tests and targeted lint passed again. Application, dependency and build-configuration code is identical across that final synchronization. The production build passed and contains the updated CSS version `60656c9345feb2d9`; the standalone TypeScript check passed afterward. An earlier overlapping typecheck encountered files being regenerated by Next; sequential execution resolved that tooling conflict without changing application code. All 30 fresh Supabase readiness checks passed. Exact commit, Vercel and post-deployment results remain required after commit and must be recorded in the execution ledger.
+
+## Remaining work within Step 4
+
+Gallery slot selection remains a read-before-write operation. Both automated approval and administrator approval infer replacement from a slot, and separate photo/record/profile writes can partially succeed. This release prevents the identified failure cleanup from destroying data; it does not make gallery publication atomic or resolve concurrent different uploads selecting the same slot. That requires a separately tested publication/reservation design that preserves explicit add/replace intent, ownership, limits, moderator decisions and retry identity. Do not add a slot unique index alone: the current replacement inserts before deleting its predecessor, so such an index would break existing uploads. No production media should be deleted or renumbered to force a new guard through.
+
+Step 4 remains open for that work before Step 5. Full historical replay remains deferred by the user.
