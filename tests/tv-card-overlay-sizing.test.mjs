@@ -50,14 +50,14 @@ test("standalone TV cards use the same sound, avatar, and title scale", () => {
   );
 });
 
-test("TV card frame and bottom navigation geometry remain unchanged", () => {
+test("TV card frame shares profile sizing while bottom navigation stays unchanged", () => {
   assert.match(
     homeSource,
-    /\.home-tv-feed-slide \{[\s\S]*?height: clamp\(560px, calc\(100svh - 140px\), 760px\);/,
+    /\.home-tv-feed-slide \{[\s\S]*?height: var\(--dancr-scroll-card-height\);/,
   );
   assert.match(
     homeSource,
-    /#results\.home-tv-feed > \.home-tv-feed-slide \{[\s\S]*?height: clamp\(520px, calc\(100svh - 112px\), 920px\) !important;/,
+    /#results\.home-tv-feed > \.home-tv-feed-slide \{[\s\S]*?height: var\(--dancr-scroll-card-height\) !important;/,
   );
   assert.match(homeSource, /#discoveryTabs \{[\s\S]*?height: 72px;/);
 });

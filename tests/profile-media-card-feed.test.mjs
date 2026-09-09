@@ -25,12 +25,13 @@ test("both profile entry points share TV video sizing and screen-filling photo c
   assert.match(live, /class="profile-tv-viewer profile-media-card-feed"/);
   assert.match(carousel, /profile-media-viewer profile-media-card-feed/);
   for (const size of [
-    "clamp(560px, calc(100svh - 140px), 760px)",
-    "clamp(520px, calc(100svh - 112px), 920px)",
+    "clamp(560px, calc(100svh - 80px), 920px)",
+    "clamp(520px, calc(100svh - 64px), 1040px)",
   ]) {
-    assert.ok(live.includes(size), "dimensions must match regular MyDancr TV");
     assert.ok(css.includes(size));
   }
+  assert.match(css, /--profile-media-card-height: var\(--dancr-scroll-card-height\)/);
+  assert.match(live, /\.home-tv-feed-slide \{[^}]*height: var\(--dancr-scroll-card-height\);[^}]*min-height: var\(--dancr-scroll-card-height\);[^}]*max-height: var\(--dancr-scroll-card-height\)/);
   assert.match(css, /--profile-media-card-gap: 16px/);
   assert.match(css, /--profile-media-card-gap: 12px/);
   assert.match(css, /scroll-snap-type: none !important/);
@@ -104,6 +105,23 @@ test("photo cards use the same height and spacing as regular TV cards", () => {
   assert.match(css, /height: var\(--profile-media-card-height\) !important/);
 });
 
+test("taller shared phone cards leave only a small neighboring-card peek", () => {
+  const mobile = css.split("@media (max-width: 720px)")[1];
+  const heightRule = mobile.match(/--dancr-scroll-card-height: clamp\((\d+)px, calc\(100svh - (\d+)px\), (\d+)px\)/);
+  assert.ok(heightRule);
+  const [, minimum, inset, maximum] = heightRule.map(Number);
+  const gap = Number(mobile.match(/--profile-media-card-gap: (\d+)px/)[1]);
+  for (const viewport of [667, 800, 844, 852, 915, 932]) {
+    const card = Math.min(maximum, Math.max(minimum, viewport - inset));
+    const oldCard = Math.min(920, Math.max(520, viewport - 112));
+    assert.equal(card - oldCard, 48, "grow the card without changing its width or gap");
+    const neighborPeek = (viewport - card) / 2 - gap;
+    assert.ok(neighborPeek >= 16 && neighborPeek <= 24, "a centered card leaves just a sliver above and below");
+  }
+  assert.match(live, /\.home-tv-feed-loading \{[^}]*height: var\(--dancr-scroll-card-height\);[^}]*min-height: var\(--dancr-scroll-card-height\);[^}]*max-height: var\(--dancr-scroll-card-height\)/);
+  assert.match(fs.readFileSync("public/profile-photo-crop.js", "utf8"), /height:var\(--profile-media-card-height\)/);
+});
+
 test("mixed-height photo feeds select the visible card and can reach a short final photo", () => {
   vm.runInContext(functionSource("profilePhotoCardScrollIndex"), context);
   const offsets = [72, 1284, 1688, 1900];
@@ -134,12 +152,12 @@ test("photo windows load the lower card before the previous card fully leaves th
   const reactWindow = carousel.match(/src=\{(Math\.abs\(index - viewerIndex\) <= \d+) \? item\.imageUrl : undefined\}/)?.[1];
   assert.ok(reactWindow, "React photo sources must have a bounded preload window");
   const reactShouldLoad = vm.runInNewContext(`(index, viewerIndex) => ${reactWindow}`);
-  const offsets = images.map((_, index) => 72 + index * (732 + 12));
+  const offsets = images.map((_, index) => 72 + index * (780 + 12));
   for (const previous of [0, 1, 12, 35, 47, 12, 1, 0]) {
-    // The previous card still has 55px onscreen, while the card after the
+    // The previous card still has a small sliver onscreen, while the card after the
     // central one is already visible below it. Selection has not advanced yet.
-    const scrollTop = offsets[previous + 1] - 55;
-    const active = photoContext.profilePhotoCardScrollIndex(scrollTop, offsets, 844, offsets.at(-1) + 732 + 24);
+    const scrollTop = offsets[previous + 1] - 32;
+    const active = photoContext.profilePhotoCardScrollIndex(scrollTop, offsets, 844, offsets.at(-1) + 780 + 24);
     assert.equal(active, previous);
     assert.ok(offsets[previous + 2] < scrollTop + 844, "lower card is onscreen");
     photoContext.syncProfilePhotoViewerWindow(active);

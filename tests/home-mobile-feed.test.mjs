@@ -39,7 +39,7 @@ test("the Home TV button renders a larger mobile snap-scroll feed without leavin
   );
   assert.match(
     homeSource,
-    /#results\.home-tv-feed \{[\s\S]*?max-width: 720px[\s\S]*?display: grid[\s\S]*?overflow: visible[\s\S]*?scroll-snap-type: none[\s\S]*?\.home-tv-feed-slide \{[\s\S]*?height: clamp\(560px, calc\(100svh - 140px\), 760px\)[\s\S]*?border-radius: 18px/,
+    /#results\.home-tv-feed \{[\s\S]*?max-width: 720px[\s\S]*?display: grid[\s\S]*?overflow: visible[\s\S]*?scroll-snap-type: none[\s\S]*?\.home-tv-feed-slide \{[\s\S]*?height: var\(--dancr-scroll-card-height\)[\s\S]*?border-radius: 18px/,
   );
   assert.match(
     homeSource,
@@ -47,7 +47,7 @@ test("the Home TV button renders a larger mobile snap-scroll feed without leavin
   );
   assert.match(
     homeSource,
-    /@media \(max-width: 720px\) \{[\s\S]*?html\.home-tv-page-snap \{[\s\S]*?scroll-snap-type: y proximity;[\s\S]*?#results\.home-tv-feed \{[\s\S]*?width: calc\(100% \+ 14px\) !important;[\s\S]*?height: auto !important;[\s\S]*?margin: 0 -7px calc\(112px \+ env\(safe-area-inset-bottom, 0px\)\) !important;[\s\S]*?grid-auto-rows: auto;[\s\S]*?overflow: visible !important;[\s\S]*?scroll-snap-type: none;[\s\S]*?#results\.home-tv-feed > \.home-tv-feed-loading,[\s\S]*?#results\.home-tv-feed > \.home-tv-feed-slide \{[\s\S]*?height: clamp\(520px, calc\(100svh - 112px\), 920px\) !important;[\s\S]*?scroll-snap-align: start;[\s\S]*?scroll-snap-stop: normal;/,
+    /@media \(max-width: 720px\) \{[\s\S]*?html\.home-tv-page-snap \{[\s\S]*?scroll-snap-type: y proximity;[\s\S]*?#results\.home-tv-feed \{[\s\S]*?width: calc\(100% \+ 14px\) !important;[\s\S]*?height: auto !important;[\s\S]*?margin: 0 -7px calc\(112px \+ env\(safe-area-inset-bottom, 0px\)\) !important;[\s\S]*?grid-auto-rows: auto;[\s\S]*?overflow: visible !important;[\s\S]*?scroll-snap-type: none;[\s\S]*?#results\.home-tv-feed > \.home-tv-feed-loading,[\s\S]*?#results\.home-tv-feed > \.home-tv-feed-slide \{[\s\S]*?height: var\(--dancr-scroll-card-height\) !important;[\s\S]*?scroll-snap-align: start;[\s\S]*?scroll-snap-stop: normal;/,
   );
   assert.match(
     homeSource,
@@ -95,7 +95,7 @@ test("the Home TV button renders a larger mobile snap-scroll feed without leavin
   );
   assert.match(
     homeSource,
-    /\.home-tv-feed-loading \{[\s\S]*?min-height: clamp\(520px[\s\S]*?radial-gradient[\s\S]*?\.home-tv-feed-loading::before \{[\s\S]*?animation: homeTvFeedLoadingSweep 1\.6s ease-in-out infinite[\s\S]*?\.home-tv-feed-loading-copy span:first-child/,
+    /\.home-tv-feed-loading \{[\s\S]*?min-height: var\(--dancr-scroll-card-height\)[\s\S]*?radial-gradient[\s\S]*?\.home-tv-feed-loading::before \{[\s\S]*?animation: homeTvFeedLoadingSweep 1\.6s ease-in-out infinite[\s\S]*?\.home-tv-feed-loading-copy span:first-child/,
   );
   assert.doesNotMatch(homeSource, /Loading approved MyDancr TV videos/);
   assert.doesNotMatch(homeSource, /homeTvDrawer|openHomeTvDrawer|closeHomeTvDrawer/);
@@ -486,7 +486,7 @@ test("TV uses document-level mobile snapping while discovery cards keep natural 
   );
   assert.match(
     homeSource,
-    /\.home-tv-feed-slide \{[\s\S]*?box-sizing: border-box;[\s\S]*?height: clamp\(560px, calc\(100svh - 140px\), 760px\);[\s\S]*?min-height: 560px;[\s\S]*?max-height: 760px;[\s\S]*?contain: layout paint style;/,
+    /\.home-tv-feed-slide \{[\s\S]*?box-sizing: border-box;[\s\S]*?height: var\(--dancr-scroll-card-height\);[\s\S]*?min-height: var\(--dancr-scroll-card-height\);[\s\S]*?max-height: var\(--dancr-scroll-card-height\);[\s\S]*?contain: layout paint style;/,
   );
   assert.match(
     homeSource,
@@ -498,7 +498,7 @@ test("TV uses document-level mobile snapping while discovery cards keep natural 
   );
   assert.match(
     homeSource,
-    /#results\.home-tv-feed > \.home-tv-feed-loading,[\s\S]*?#results\.home-tv-feed > \.home-tv-feed-slide \{[\s\S]*?height: clamp\(520px, calc\(100svh - 112px\), 920px\) !important;[\s\S]*?min-height: 520px !important;[\s\S]*?max-height: 920px !important;[\s\S]*?scroll-snap-align: start;[\s\S]*?scroll-snap-stop: normal;/,
+    /#results\.home-tv-feed > \.home-tv-feed-loading,[\s\S]*?#results\.home-tv-feed > \.home-tv-feed-slide \{[\s\S]*?height: var\(--dancr-scroll-card-height\) !important;[\s\S]*?min-height: var\(--dancr-scroll-card-height\) !important;[\s\S]*?max-height: var\(--dancr-scroll-card-height\) !important;[\s\S]*?scroll-snap-align: start;[\s\S]*?scroll-snap-stop: normal;/,
   );
   assert.match(homeSource, /const homeTvFeedSnapMedia = window\.matchMedia\("\(max-width: 720px\)"\)/);
   assert.match(homeSource, /root: null,[\s\S]*?rootMargin: "-72px 0px -88px"/);

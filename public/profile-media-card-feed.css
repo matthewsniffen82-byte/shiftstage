@@ -1,7 +1,12 @@
-/* Photos and videos share the regular MyDancr TV card size and spacing. */
+/* One height for profile media, upload cropping, and the regular MyDancr TV feed.
+ * Leave a small neighboring-card peek without resizing as browser bars collapse. */
+:root {
+  --dancr-scroll-card-height: clamp(560px, calc(100vh - 80px), 920px);
+  --dancr-scroll-card-height: clamp(560px, calc(100svh - 80px), 920px);
+}
+
 .profile-media-card-feed {
-  --profile-media-card-height: clamp(560px, calc(100vh - 140px), 760px);
-  --profile-media-card-height: clamp(560px, calc(100svh - 140px), 760px);
+  --profile-media-card-height: var(--dancr-scroll-card-height);
   --profile-media-card-gap: 16px;
   --profile-media-card-header: calc(72px + env(safe-area-inset-top, 0px));
 }
@@ -263,9 +268,12 @@ body.dancr-button-system :is(#profilePhotoViewer, #profileTvViewer, .profile-med
 }
 
 @media (max-width: 720px) {
+  :root {
+    --dancr-scroll-card-height: clamp(520px, calc(100vh - 64px), 1040px);
+    --dancr-scroll-card-height: clamp(520px, calc(100svh - 64px), 1040px);
+  }
+
   .profile-media-card-feed {
-    --profile-media-card-height: clamp(520px, calc(100vh - 112px), 920px);
-    --profile-media-card-height: clamp(520px, calc(100svh - 112px), 920px);
     --profile-media-card-gap: 12px;
   }
 }

@@ -19,7 +19,7 @@ test("public discovery keeps final card geometry instead of visible loading copy
 
 test("home TV uses a poster-shaped shell without a black loading box", () => {
   assert.match(liveShell, /className = "home-tv-feed-loading"[\s\S]*?home-tv-feed-loading-copy/);
-  assert.match(liveShell, /\.home-tv-feed-loading \{[\s\S]*?min-height: clamp\(520px[\s\S]*?radial-gradient/);
+  assert.match(liveShell, /\.home-tv-feed-loading \{[\s\S]*?min-height: var\(--dancr-scroll-card-height\)[\s\S]*?radial-gradient/);
   assert.match(liveShell, /\.home-tv-feed-loading-copy span:first-child/);
   assert.doesNotMatch(liveShell, /setHomeTvFeedCount\("Loading videos…"/);
   assert.match(liveShell, /id="homeTvLaunchCount" aria-live="polite">Videos<\/span>/);
