@@ -55,7 +55,7 @@ test("signed-in discovery renders and settles while saved-account data is stalle
   const panel = { classList: { contains: () => false } };
   const ctx = context({
     markets: { Vegas: { dancers: [], venues: [] } },
-    liveMarketState: {}, liveMarketRefreshes: new Set(),
+    liveMarketState: {}, liveMarketRefreshes: new Set(), liveMarketPendingRefreshes: new Set(),
     citySelect: { value: "Vegas" }, customerDashboard: panel, adminDashboard: panel,
     fetchJson: async () => ({ dancers: [{ id: "dancer" }], venues: [{ id: "venue" }] }),
     applyLiveMarket: () => true, isCustomerSession: () => true,

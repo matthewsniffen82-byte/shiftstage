@@ -91,7 +91,7 @@ test("first publication notifies every active venue account that its card is liv
   assert.match(venueLiveNotificationMigration, /after update of is_active, published_at, page_review_status on public\.venues/);
   assert.match(dancrTypes, /\| "venue_publication_status"/);
   assert.match(dashboard, /const \[notificationRevision, setNotificationRevision\] = useState\(0\)/);
-  assert.match(dashboard, /decision === "approved"\) setNotificationRevision\(\(current\) => current \+ 1\)/);
+  assert.match(dashboard, /decision === "approved"\) \{\s*notifyPublicVenuePublication\(\);\s*setNotificationRevision\(\(current\) => current \+ 1\)/);
   assert.match(dashboard, /<NotificationPanel refreshKey=\{notificationRevision\} \/>/);
 });
 

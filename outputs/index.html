@@ -42849,6 +42849,7 @@
     const trendEventStore = loadTrendEventStore();
     const liveMarketState = {};
     const liveMarketRefreshes = new Set();
+    const liveMarketPendingRefreshes = new Set();
     let liveDancerAnalytics = null;
     let liveDancerDeals = null;
     let liveDancerWeeklyReport = null;
@@ -46921,7 +46922,13 @@
       const force = Boolean(options.force);
       const cacheBust = force && options.cacheBust !== false;
       const background = Boolean(options.background && liveMarketState[city] === "ready");
-      if (!discoveryMarket(city) || liveMarketState[city] === "loading" || liveMarketRefreshes.has(city) || (!force && liveMarketState[city] === "ready")) return;
+      if (!discoveryMarket(city)) return;
+      if (liveMarketState[city] === "loading" || liveMarketRefreshes.has(city)) {
+        // Publication or browser Back must not lose a fresh read behind an older request.
+        if (cacheBust) liveMarketPendingRefreshes.add(city);
+        return;
+      }
+      if (!force && liveMarketState[city] === "ready") return;
       if (background) liveMarketRefreshes.add(city);
       else liveMarketState[city] = "loading";
       const params = new URLSearchParams({ city });
@@ -46968,6 +46975,9 @@
         }
       } finally {
         liveMarketRefreshes.delete(city);
+        if (liveMarketPendingRefreshes.delete(city)) {
+          void loadLiveDiscovery(city, { force: true, cacheBust: true, background: true });
+        }
       }
     }
 
@@ -65563,6 +65573,7 @@
       homeBottomTv?.setAttribute("aria-current", isTv ? "page" : "false");
       syncHomeDestinationLocation(nextTab);
       render();
+      if (nextTab === "venues") void refreshVisibleHomeDiscovery({ bypassCache: true });
       if (options.scroll !== false) {
         homeResultsSmoothLandingPending = true;
         startHomeDestinationTransition(transitionDirection);
@@ -66513,6 +66524,10 @@
     });
     window.addEventListener("focus", () => { void refreshVisibleHomeDiscovery({ bypassCache: true }); });
     window.addEventListener("storage", (event) => {
+      if (event.key === PUBLIC_DISCOVERY_REFRESH_KEY && event.newValue) {
+        void refreshVisibleHomeDiscovery({ bypassCache: true });
+        return;
+      }
       if (!event.key?.startsWith("dancrSavedDealPassesV3:") && event.key !== "dancrAuthSessionV1" && event.key !== null) return;
       if (event.key === "dancrAuthSessionV1" || event.key === null) synchronizeAuthSession();
       syncDeviceSavedDealPasses();
@@ -66520,6 +66535,8 @@
     });
     window.addEventListener("pageshow", (event) => {
       if (!event.persisted) return;
+      consumePublicDiscoveryRefreshRequest();
+      void refreshVisibleHomeDiscovery({ bypassCache: true });
       syncDeviceSavedDealPasses();
       renderCustomerQuickActions();
       if (isCustomerSession()) void loadLiveCustomerSaved();

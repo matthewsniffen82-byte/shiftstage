@@ -80,6 +80,14 @@ type CustomerDashboardSection = "offers" | "saved";
 
 const PUBLIC_DISCOVERY_REFRESH_KEY = "mydancrPublicDiscoveryRefreshV1";
 
+function notifyPublicVenuePublication() {
+  const revision = String(Date.now());
+  // Refresh when this tab returns to discovery, including browser Back.
+  try { window.sessionStorage.setItem(PUBLIC_DISCOVERY_REFRESH_KEY, revision); } catch { /* Storage may be unavailable. */ }
+  // Other open discovery tabs receive this storage event immediately.
+  try { window.localStorage.setItem(PUBLIC_DISCOVERY_REFRESH_KEY, revision); } catch { /* Focus and periodic refresh still work. */ }
+}
+
 type SavedImageSummary = {
   imageUrl?: string | null;
   imageSrcSet?: string | null;
@@ -2754,7 +2762,10 @@ function VenuePanel({
       if (!mountedRef.current || controller.signal.aborted || requestId !== publicationSequenceRef.current) return;
       onProfileChange(data.profile);
       onPublicationChange(data.publication);
-      if (decision === "approved") setNotificationRevision((current) => current + 1);
+      if (decision === "approved") {
+        notifyPublicVenuePublication();
+        setNotificationRevision((current) => current + 1);
+      }
       if (decision === "changes_requested") setReviewNotes("");
       setPublicationStatus(data.message || "Venue page review saved.");
     } catch (error) {
