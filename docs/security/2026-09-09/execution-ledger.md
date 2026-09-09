@@ -36,8 +36,8 @@ Step 1 delivered as `50d4eb543dbfc93dbed6f0663c51aa2332542cb4`, pushed to origin
 | 13 | File upload handling | Delivered and healthy: 189c4b1afb43c4ace8a075dab0aca5422f3a83cf |
 | 14 | API authorization / exposure | Delivered and healthy: a72f13b523fb4ef323c87eb33daa6cdb07c42ffe |
 | 15 | Security headers | Delivered and healthy: a777507f28d3c02d67c0bfc8f2f9e4c751259f19 |
-| 16 | CORS | Validated; commit/push and exact deployment verification pending |
-| 17 | Cookies / sessions | Not started |
+| 16 | CORS | Delivered and healthy: 94f95e9d4333fe1d3622bb40c280c7da557e1643 |
+| 17 | Cookies / sessions | Validated; exact-commit production delivery pending |
 | 18 | Redirects / URLs | Not started |
 | 19 | Database functions / grants | Not started |
 | 20 | Webhooks | Not started |
@@ -204,3 +204,16 @@ The CORS audit confirmed the existing no-grant application API policy and explic
 Independent releases for paused account recovery, profile styling, detached-video cleanup, scheduled-date uniqueness and uncertain media-publication recovery were reviewed and incorporated during validation. Their ownership and active-account restrictions remain. This step contributes only the CORS regression tests and audit documents; it introduces no application policy or database migration.
 
 Final combined validation on `685a53394f05c06579cfd18705651f8b1a43dc99` passed all 3,040 tests, lint, TypeScript and the production build. The migration-history gate passed and postbuild skipped demo population. At 20:48:16 UTC, native Edge verified same-origin health/account access, unreadable cross-origin responses with credentials included and omitted, blocked opaque-origin reads, and a JSON admin request stopped at preflight. No mutation reached the local application and the browser requested only owned loopback fixtures. Only the ten CORS regressions and two audit documents belong to this step. Commit/push, exact-commit Vercel success and deployed health verification follow before Step 17.
+
+## Step 16 delivery
+
+Step 16 was pushed as `94f95e9d4333fe1d3622bb40c280c7da557e1643`. [Exact Vercel deployment](https://vercel.com/ai-movie-jobs/shiftstage/AcM3vyLUSNEysWyBfvxHqYBy7zP5) succeeded. At 20:52:45 UTC, 36 live application CORS checks passed, with six provider preflights and three public-asset HEAD checks recorded. At 20:52:52 UTC, all 15 retained header checks passed; at 20:52:57 UTC, all 17 deployment checks and 30 Supabase readiness checks passed. A concurrent, successfully deployed CSS-only descendant, `ef160087ec0f1c563515b499d923954624541032`, was reviewed and incorporated; its application CORS/session code is identical, and all fourteen affected CORS/profile-style tests passed. Local HEAD matched origin/main with a clean worktree before the Step 17 audit. No production mutation or database change was part of Step 16.
+
+
+## Step 17 validation
+
+The cookie/session audit and four confirmed finding groups are documented in `step-17-cookies-and-sessions.md`. Forty-eight new runtime regressions cover stale admin cleanup, private views after cross-tab logout/account switching, delayed sign-in writes, confirmation-only signup, storage failure, account deletion and slow logout cleanup. Existing cookie protections and server authentication/authorization remain unchanged. No database migration, provider configuration change, credential rotation or paid service was introduced.
+
+The final candidate based on `5652eb3c7529e34751929e792406287cfaa7d86a` passed all 3,181 tests, zero failures/skips, after the normal pretest generators with four test workers. Lint, standalone TypeScript and the full production build passed. The history check retained all 134 frozen SQL files, and postbuild reported LAYOUT_REVIEW_POPULATION_SKIPPED. Independently delivered atomic media publication and review cleanup, travel-button and close-button styling updates were reviewed and preserved; they are not claimed as Step 17 fixes.
+
+At 2026-09-09 22:48 UTC, six native browser checks passed on the final local production build with no JavaScript errors. They verified that opening admin preserves a customer session, same-admin token refresh preserves the view, cross-tab account switching/logout removes the old admin workspace, and the dedicated NFC account form rejects a delayed sign-in response after another account signs in. All browser API calls used isolated synthetic fixtures; no production account or NFC tag was used. The final browser run used DOM readiness plus hydrated component assertions with a sixty-second local loading allowance, after an earlier thirty-second navigation timeout. Commit, push, exact-commit Vercel success and live verification must complete before Step 18.

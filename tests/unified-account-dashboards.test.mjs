@@ -450,7 +450,7 @@ test("account state changes and deletion use the shared refresh-aware boundary",
   assert.doesNotMatch(dashboard, /fetch\("\/api\/account"/);
   assert.match(
     dashboard,
-    /finally \{[\s\S]*?if \(accountDeleted\)[\s\S]*?sessionStorage\.setItem\(PUBLIC_DISCOVERY_REFRESH_KEY, String\(Date\.now\(\)\)\)[\s\S]*?clearDashboardSession\(\);\s*window\.location\.replace\("\/"\)/,
+    /finally \{[\s\S]*?if \(accountDeleted\)[\s\S]*?sessionStorage\.setItem\(PUBLIC_DISCOVERY_REFRESH_KEY, String\(Date\.now\(\)\)\)[\s\S]*?clearDashboardSession\(\);\s*\}\s*window\.location\.replace\("\/"\)/,
   );
 });
 

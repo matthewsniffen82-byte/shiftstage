@@ -7,6 +7,7 @@ import { DashboardCloseButton } from "@/app/components/DashboardCloseButton";
 import { DancerPhotoCarousel } from "@/app/dancers/[slug]/DancerPhotoCarousel";
 import { SocialLinks, SocialPlatformIcon } from "@/app/dancers/[slug]/SocialLinks";
 import { homeDiscoveryHref } from "@/src/lib/dancr/navigation";
+import { captureBrowserAuthSessionGuard, isCurrentBrowserSession } from "@/src/lib/dancr/browser-session";
 import { payoutCopy } from "@/src/lib/dancr/payout-copy";
 import { MAX_DANCER_PROFILE_PHOTOS } from "@/src/lib/dancr/media-limits";
 import { effectiveDancerProfileStatus } from "@/src/lib/dancr/profile-approval";
@@ -1574,7 +1575,7 @@ function AccountControlsPanel({
       });
       accountDeleted = true;
     } catch (error) {
-      if (isCurrentAccountAction(requestId, controller)) {
+      if (isCurrentAccountAction(requestId, controller) && isCurrentBrowserSession(session)) {
         const message = error instanceof Error ? error.message : "Unable to delete account.";
         window.alert(`${message} You have been signed out; sign in again to retry.`);
       }
@@ -1587,7 +1588,12 @@ function AccountControlsPanel({
           // A cache-busting foreground refresh still removes stale public results.
         }
       }
-      clearDashboardSession();
+      // A confirmed deletion invalidates that whole account, including refreshed
+      // credentials. A late failure must only clear the exact requesting session.
+      if (isCurrentBrowserSession(session)
+        || (accountDeleted && session.account?.id && readSession()?.account?.id === session.account.id)) {
+        clearDashboardSession();
+      }
       window.location.replace("/");
     }
   }
@@ -1597,8 +1603,9 @@ function AccountControlsPanel({
     actionAbortRef.current?.abort();
     actionAbortRef.current = null;
     actionInFlightRef.current = false;
-    await disableCustomerPush();
+    const pushCleanup = disableCustomerPush();
     void revokeDashboardSession();
+    await pushCleanup;
     window.location.href = "/";
   }
 
@@ -8182,6 +8189,7 @@ function DashboardSignInRecovery({
   async function signIn(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!mountedRef.current || signInInFlightRef.current) return;
+    const isSessionUnchanged = captureBrowserAuthSessionGuard();
 
     signInInFlightRef.current = true;
     const requestId = ++signInSequenceRef.current;
@@ -8204,6 +8212,7 @@ function DashboardSignInRecovery({
         throw new Error(`Use a ${role} account to open this dashboard.`);
       }
 
+      if (!isSessionUnchanged()) throw new Error("Your sign-in changed in another window. Please try again if you still want to switch accounts.");
       if (!persistDashboardSession({ ...data.session, account: data.account })) {
         throw new Error("Unable to save your dashboard session in this browser.");
       }

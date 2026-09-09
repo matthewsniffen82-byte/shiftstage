@@ -168,9 +168,10 @@ for (const code of ["user_already_exists", "unexpected_failure"]) test(`signup $
 test("dancer signup displays the password rejection and lets the user correct it and retry", async () => {
   const html = readFileSync(new URL("../outputs/index.html", import.meta.url), "utf8");
   const requestAuth = html.match(/    async function requestAuth\(payload\) \{[\s\S]*?\n    \}/)?.[0];
+  const sessionGuard = html.match(/    function captureAuthSessionGuard\(\) \{[\s\S]*?\n    \}/)?.[0];
   const friendlyError = html.match(/    function friendlyAuthErrorMessage\([\s\S]*?\n    \}/)?.[0];
   const signupHandler = html.match(/document\.getElementById\("dancerSignupForm"\)\.addEventListener\("submit"[\s\S]*?\n    \}\);/)?.[0];
-  assert.ok(requestAuth && friendlyError && signupHandler);
+  assert.ok(requestAuth && sessionGuard && friendlyError && signupHandler);
   const statuses = [], sentPasswords = [], attributes = new Map();
   let submitHandler, endSessionCalls = 0, cooldownCalls = 0;
   const submit = {
@@ -182,7 +183,8 @@ test("dancer signup displays the password rejection and lets the user correct it
   const form = { addEventListener: (_event, handler) => { submitHandler = handler; } };
   const rejected = authFixture(new AuthWeakPasswordError("private-provider-details", 422, ["pwned"]), { role: "dancer" });
   const accepted = authFixture(null, { role: "dancer", authSession: null });
-  vm.runInNewContext(`${requestAuth}\n${friendlyError}\n${signupHandler}`, {
+  vm.runInNewContext(`${sessionGuard}\n${requestAuth}\n${friendlyError}\n${signupHandler}`, {
+    localStorage: { getItem: () => null },
     document: { getElementById: id => ({ dancerSignupForm: form, dancerEmail: email, dancerPassword: password })[id] },
     fetch: async (_url, options) => {
       const body = JSON.parse(options.body);
@@ -208,6 +210,7 @@ test("dancer signup displays the password rejection and lets the user correct it
   assert.deepEqual(sentPasswords, ["Test1!password", "Unique1!Test1!password"]);
   assert.match(statuses.at(-1), /Confirmation email sent/);
   assert.equal(accepted.provisions.length, 1);
+  assert.equal(endSessionCalls, 1, "confirmation-only signup clears the original session once through the guarded helper");
   assert.equal(cooldownCalls, 1);
 });
 

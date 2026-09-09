@@ -16,6 +16,19 @@ export type BrowserAuthSession = {
 
 export const BROWSER_AUTH_SESSION_KEY = "dancrAuthSessionV1";
 
+// Orders asynchronous sign-in results; this is not an authorization check.
+export function captureBrowserAuthSessionGuard(): () => boolean {
+  try {
+    const expected = window.localStorage.getItem(BROWSER_AUTH_SESSION_KEY);
+    return () => {
+      try { return window.localStorage.getItem(BROWSER_AUTH_SESSION_KEY) === expected; }
+      catch { return false; }
+    };
+  } catch {
+    return () => false;
+  }
+}
+
 export function readBrowserAuthSession(): BrowserAuthSession | null {
   if (typeof window === "undefined") return null;
 

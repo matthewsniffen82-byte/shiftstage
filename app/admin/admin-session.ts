@@ -1,6 +1,7 @@
 import {
   BROWSER_AUTH_SESSION_KEY,
   clearBrowserAuthSession,
+  isCurrentBrowserSession,
   persistBrowserAuthSession,
   persistRefreshedBrowserAuthSession,
   readBrowserAuthSession,
@@ -31,8 +32,9 @@ export function persistAdminSession(session: StoredAdminSession, account: AdminS
   });
 }
 
-export function clearAdminSession() {
-  clearBrowserAuthSession();
+export function clearAdminSession(expected: StoredAdminSession | null) {
+  if (expected?.account?.role !== "admin" || !isCurrentBrowserSession(expected)) return false;
+  return clearBrowserAuthSession();
 }
 
 export function revokeAdminSession() {

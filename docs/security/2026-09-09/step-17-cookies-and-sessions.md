@@ -1,0 +1,43 @@
+# Step 17: cookie and session lifecycle hardening
+
+## Inspected boundaries and confirmed findings
+
+The audit covered the canonical browser session module, homepage session functions, account and invitation sign-in, dashboard recovery, admin loaders and logout, authenticated request/refresh middleware, the authentication DELETE route, callback/reset handling and all four application cookie writers. It also reviewed the installed Supabase session behavior and the earlier same-day provider configuration evidence. No production account was signed in, reset, revoked or modified for this audit.
+
+| Severity | Confirmed issue | Bounded repair |
+| --- | --- | --- |
+| LOW | Opening the admin page as a customer, or receiving an old admin authorization failure after another sign-in, cleared the shared browser credentials and push-account marker. | Admin failure cleanup now requires the exact failed admin access/refresh pair to remain current. Explicit logout retains its existing revocation behavior. |
+| MEDIUM | An already open admin page or older homepage shell retained private cached content after logout or an account switch in another tab. Returning to an old page could also retain the previous view. | Storage, page-show and focus handling detects identity changes and reloads under the current identity. Admin clears shell state and cancels outstanding loads/auth actions; the homepage immediately hides and disables its old private view during navigation. Same-account token refresh preserves the view. |
+| MEDIUM | Delayed successful login responses could replace a newer sign-in or restore login after logout. Account/homepage sign-in could also write credentials after awaiting old-session revocation, even when another account had signed in meanwhile. | Account, admin, dashboard recovery, invitation and homepage sign-in capture the shared session state before the request and check it immediately before changing credentials. Account/homepage check again after awaited revocation; account also rechecks cancellation/unmount. Confirmation-only signup follows the same ordering rule. |
+| LOW | Delayed dashboard deletion cleanup could clear another account's newer credentials, and logout waited for push cleanup before selecting the session to revoke. | Failed deletion clears only the requesting token pair; confirmed deletion can also clear refreshed credentials for the deleted account ID. Logout starts revocation immediately, before waiting for push cleanup, so it cannot select a later sign-in. |
+
+These are same-browser lifecycle and privacy failures, not demonstrated remote authentication bypasses. Server-verified user identity, current database roles/account state, RLS and existing bearer checks remain necessary and unchanged. The new ordering guard does not authenticate anyone or broaden the existing exact-token refresh guard. Browser storage errors fail closed for an attempted session replacement, with a retry message.
+
+The homepage logout now reads the current stored session before clearing and revoking it, rather than relying on a potentially stale in-memory account. Confirmation-only signup cleanup is centralized in the guarded authentication helper, so individual signup handlers cannot later revoke a different account. Invitation acceptance remains a server operation; if another sign-in supersedes its response, the browser preserves that sign-in and explains how to continue using the invited email.
+
+## Controls retained
+
+- Authentication uses explicit bearer credentials in the existing canonical browser storage, with refresh credentials sent only to intended first-party APIs. Server and storage-upload SDK clients disable automatic persistence, refresh and URL detection as previously audited. Response token rotation still requires the exact request token pair to be current; late refresh responses cannot resurrect logout or overwrite another login.
+- Logout clears local credentials immediately and makes a bounded, best-effort same-origin DELETE request. The server verifies the caller and requests Supabase's local-session sign-out scope. No GET logout or global account-wide revocation was added.
+- Private pages and API session responses retain no-store browser/CDN controls. The nonce-based private-page CSP, protected callback, same-origin visitor mutations and existing role checks remain in place.
+- Going, media-like and engagement-share visitor cookies are host-only, HttpOnly, Secure in production, SameSite=Lax, path `/`, with the existing one-year lifetime. They identify visitors, not account authorization.
+- The NFC browser-account cookie is host-only, HttpOnly, Secure in production, SameSite=Lax, path `/`, with its existing 400-day lifetime and server HMAC verification. It is an abuse deterrent, not proof of identity or a substitute for authentication. Its lifetime and key coupling were not casually changed.
+- The earlier same-day CLI comparison recorded `wrote: false`, 720-hour session inactivity and 2,160-hour timebox settings, email confirmation and TOTP capability. This step does not claim a second provider configuration capture or change these settings. The owner's explicit password policy remains intact.
+
+## Regression evidence and release gate
+
+Before repair, the exact admin cleanup boundary failed four of five synthetic tests. The actual admin shell lifecycle/loaders failed four of six logout/account-switch tests. The homepage's actual event handlers failed five of eight view-lifecycle tests. Nineteen initial tests executing the actual sign-in handlers failed fourteen scenarios while the five ordinary-login controls passed. Dashboard deletion/logout failed three of six cleanup tests. Evidence is retained outside Git without real credentials.
+
+The repair adds 48 runtime cases: five admin cleanup, six admin lifecycle, eight homepage lifecycle, twenty-three sign-in/storage-ordering and six dashboard cleanup tests. They cover newer accounts, logout, same-account token rotation, late revocation completion, unmount, confirmation-only signup, storage failures, ordinary sign-in and deletion success/failure. The existing admin-boundary test was corrected to require preservation of a newer dancer session, rather than unconditional deletion. The existing signup retry harness now executes the new shared guard alongside the actual handler and verifies that confirmation cleanup occurs exactly once. Discovery and deletion test fixtures account for the new lifecycle dependency and guarded cleanup; their existing business expectations remain intact. Other authorization, callback, refresh, logout and session tests remain in the full suite.
+
+Native browser verification uses the local production build, isolated synthetic sessions and two same-origin tabs. Browser API calls are intercepted and remote browser requests are blocked. These checks exercise hydrated account/admin components and real storage events without submitting real credentials or mutating production data. Full tests, lint, standalone TypeScript, production build, exact pushed-commit Vercel success and post-deployment health verification are required before Step 18. Final results are recorded in the execution ledger.
+
+## Limits and follow-up
+
+Browser-readable bearer credentials remain exposed to a successful same-origin script compromise. Replacing the app's entire client session architecture with an HttpOnly-cookie backend requires coordinated design/testing, not a cookie-flag edit; it is intentionally outside this bounded repair. The stronger CSP and XSS controls from prior steps remain in force.
+
+Supabase sign-out revokes refresh capability for the selected session; a previously issued access JWT can remain valid until expiry. No instantaneous JWT revocation or real-provider replay/expiry test is claimed here. No disposable staging users were supplied; mocked handlers and local browser sessions are not a substitute for a future designated-account provider test.
+
+Storage snapshots detect state changes visible at the commit point; they are not a cross-tab lock or a transaction. A session that changes and is restored byte-for-byte between checks is outside that guarantee. Missing storage events are covered when the admin page receives focus/page-show, but this does not remotely erase screenshots or data already seen by an authorized user. No secrets, new paid services, authentication bypasses or database migrations were introduced by this step.
+
+References: [Supabase session lifecycle and expiration](https://supabase.com/docs/guides/auth/sessions), [Supabase sign-out scopes](https://supabase.com/docs/guides/auth/signout), [browser storage-event behavior](https://developer.mozilla.org/en-US/docs/Web/API/Window/storage_event).

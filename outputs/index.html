@@ -42775,6 +42775,7 @@
     const ADMIN_CLOSED_DANCER_APPROVAL_CARDS_KEY = "dancrAdminClosedApprovalCardsV1";
     const adminClosedDancerApprovalCards = loadClosedAdminApprovalCards();
     let authSession = loadAuthSession();
+    let visibleAuthAccountIdentity = browserAccountIdentity(authSession);
     let dancerSignupStarted = false;
     let dancerSignupCities = [];
     let dancerSignupCitiesState = "idle";
@@ -43522,6 +43523,7 @@
         if (pushAccount && pushAccount !== session?.account?.id) void clearCustomerPushDevice();
       } catch (error) {}
       authSession = session;
+      visibleAuthAccountIdentity = browserAccountIdentity(session);
       const role = session?.account?.role || session?.role;
       const email =
         normalizeAccountEmail(session?.account?.email) ||
@@ -43536,7 +43538,7 @@
     }
 
     async function endAuthSession() {
-      const session = authSession;
+      const session = synchronizeAuthSession();
       saveAuthSession(null);
       if (!session?.accessToken) return true;
 
@@ -44148,7 +44150,39 @@
       return true;
     }
 
+    function browserAccountIdentity(session) {
+      if (!session?.accessToken) return "";
+      const accountId = typeof session.account?.id === "string" ? session.account.id : session.accessToken;
+      return JSON.stringify([session.account?.role || "", accountId]);
+    }
+
+    function refreshBrowserAccountView() {
+      const session = loadAuthSession();
+      const identity = browserAccountIdentity(session);
+      if (identity === visibleAuthAccountIdentity) return false;
+      visibleAuthAccountIdentity = identity;
+      authSession = session;
+      // Retire all cached private panels immediately while the new page loads.
+      document.body.inert = true;
+      document.body.style.visibility = "hidden";
+      window.location.reload();
+      return true;
+    }
+
+    function captureAuthSessionGuard() {
+      try {
+        const expected = localStorage.getItem("dancrAuthSessionV1");
+        return () => {
+          try { return localStorage.getItem("dancrAuthSessionV1") === expected; }
+          catch { return false; }
+        };
+      } catch {
+        return () => false;
+      }
+    }
+
     async function requestAuth(payload) {
+      const isSessionUnchanged = captureAuthSessionGuard();
       const response = await fetch("/api/auth", {
         method: "POST",
         headers: { "Content-Type": "application/json", Accept: "application/json" },
@@ -44158,14 +44192,24 @@
       if (!response.ok || data.ok === false) {
         throw new Error(friendlyAuthErrorMessage(data.error || (response.status === 429 ? "Email rate limit exceeded" : ""), "Authentication failed"));
       }
+      if (["login", "signup"].includes(payload.mode) && !isSessionUnchanged()) {
+        throw new Error("Your sign-in changed in another window. Please try again if you still want to switch accounts.");
+      }
       const email = normalizeAccountEmail(payload.email);
       const resolvedRole = data.account?.role || payload.role || null;
       if (resolvedRole && email) persistAccountEmail(resolvedRole, email);
-      if (data.session && (payload.mode !== "signup" || payload.role === "admin" || payload.role === "venue")) {
+      const shouldSaveSession = data.session && (payload.mode !== "signup" || payload.role === "admin" || payload.role === "venue");
+      const confirmationOnlySignup = payload.mode === "signup" && (payload.role === "customer" || (payload.role === "dancer" && data.requiresEmailConfirmation));
+      if (shouldSaveSession || confirmationOnlySignup) {
+        const revocation = endAuthSession();
+        const isSignedOutSessionUnchanged = captureAuthSessionGuard();
+        await revocation;
+        if (!isSignedOutSessionUnchanged()) throw new Error("Your sign-in changed in another window. Please try again if you still want to switch accounts.");
+      }
+      if (shouldSaveSession) {
         const account = data.account
           ? { ...data.account, email: normalizeAccountEmail(data.account.email) || email || null }
           : { role: resolvedRole, email: email || null, accountState: "active" };
-        await endAuthSession();
         saveAuthSession({ ...data.session, email: email || data.session.email || null, account });
       }
       return data;
@@ -64270,7 +64314,6 @@
         if (authMode === "signup") payload.emailRedirectTo = saveAuthResume("customer", "/dashboard/customer?confirmed=1");
         const result = await requestAuth(payload);
         if (authMode === "signup") {
-          await endAuthSession();
           isCustomerLoggedIn = false;
           updateAccountHeader();
           confirmationSent = true;
@@ -64573,7 +64616,6 @@
           emailRedirectTo: saveAuthResume("dancer")
         });
         if (result.requiresEmailConfirmation) {
-          await endAuthSession();
           confirmationSent = true;
           setDancerSignupStatus(`Confirmation email sent${email ? ` to ${email}` : ""}. Open the newest MyDancr email and tap Confirm email. Then finish your profile and dressing-room tap step.`);
           showToast("Confirmation email sent. Open the newest email to continue.");
@@ -66728,18 +66770,25 @@
     document.addEventListener("visibilitychange", () => {
       if (document.visibilityState === "visible") void refreshVisibleHomeDiscovery({ bypassCache: true });
     });
-    window.addEventListener("focus", () => { void refreshVisibleHomeDiscovery({ bypassCache: true }); });
+    window.addEventListener("focus", () => {
+      if (refreshBrowserAccountView()) return;
+      void refreshVisibleHomeDiscovery({ bypassCache: true });
+    });
     window.addEventListener("storage", (event) => {
       if (event.key === PUBLIC_DISCOVERY_REFRESH_KEY && event.newValue) {
         void refreshVisibleHomeDiscovery({ bypassCache: true });
         return;
       }
       if (!event.key?.startsWith("dancrSavedDealPassesV3:") && event.key !== "dancrAuthSessionV1" && event.key !== null) return;
-      if (event.key === "dancrAuthSessionV1" || event.key === null) synchronizeAuthSession();
+      if (event.key === "dancrAuthSessionV1" || event.key === null) {
+        if (refreshBrowserAccountView()) return;
+        synchronizeAuthSession();
+      }
       syncDeviceSavedDealPasses();
       renderCustomerQuickActions();
     });
     window.addEventListener("pageshow", (event) => {
+      if (refreshBrowserAccountView()) return;
       if (!event.persisted) return;
       consumePublicDiscoveryRefreshRequest();
       void refreshVisibleHomeDiscovery({ bypassCache: true });

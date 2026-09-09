@@ -63,6 +63,7 @@ test("publication events and browser Back refresh visible cards without reloadin
     document: { visibilityState: "visible", addEventListener: (name, listener) => { listeners[name] = listener; } },
     window: { addEventListener: (name, listener) => { listeners[name] = listener; }, setInterval: callback => intervals.push(callback) },
     citySelect: { value: "All cities" }, loadLiveDiscovery: async (...args) => calls.push(args),
+    refreshBrowserAccountView: () => false, // This fixture keeps the same signed-in identity.
     consumePublicDiscoveryRefreshRequest: () => { consumed++; }, syncDeviceSavedDealPasses() {}, renderCustomerQuickActions() {}, isCustomerSession: () => false,
   });
   vm.runInContext(between(home, "    async function refreshVisibleHomeDiscovery(", "    if (isCustomerSession()) loadLiveCustomerDashboardData();"), context);

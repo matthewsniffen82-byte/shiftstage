@@ -186,10 +186,12 @@ test("the admin session boundary stores only the canonical session and rejects n
       account: { role: "admin", displayName: "Platform Admin" },
     });
 
-    stored.set(ADMIN_SESSION_KEY, JSON.stringify({ accessToken: "dancer-access", account: { role: "dancer" } }));
+    const previousAdminSession = JSON.parse(stored.get(ADMIN_SESSION_KEY));
+    const dancerSession = JSON.stringify({ accessToken: "dancer-access", account: { role: "dancer" } });
+    stored.set(ADMIN_SESSION_KEY, dancerSession);
     assert.equal(readAdminAccessToken(), "");
-    clearAdminSession();
-    assert.equal(stored.has(ADMIN_SESSION_KEY), false);
+    clearAdminSession(previousAdminSession);
+    assert.equal(stored.get(ADMIN_SESSION_KEY), dancerSession);
   } finally {
     globalThis.window = previousWindow;
   }

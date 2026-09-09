@@ -5,6 +5,7 @@ import Link from "next/link";
 import { PasswordRequirements } from "@/app/components/PasswordRequirements";
 import { DashboardCloseButton } from "@/app/components/DashboardCloseButton";
 import { homeDiscoveryHref } from "@/src/lib/dancr/navigation";
+import { BROWSER_AUTH_SESSION_KEY, captureBrowserAuthSessionGuard, readBrowserAuthSession } from "@/src/lib/dancr/browser-session";
 import { safeSocialProfileUrl } from "@/src/lib/dancr/social-profile-url";
 import { phoneTapCopy } from "@/src/lib/dancr/phone-tap-copy";
 import { payoutCopy } from "@/src/lib/dancr/payout-copy";
@@ -64,6 +65,14 @@ type AdminClientRequest = { controller: AbortController; requestId: number };
 type AdminWorkspaceRequest = AdminClientRequest & { generation: number; workspace: AdminWorkspace };
 
 const OPEN_APPROVALS_SESSION_KEY = "dancrAdminOpenApprovalsV1";
+
+// A UI lifecycle key only; API access still requires server-verified credentials.
+function readBrowserAccountIdentity() {
+  const session = readBrowserAuthSession();
+  if (!session?.accessToken) return "";
+  const accountId = typeof session.account?.id === "string" ? session.account.id : session.accessToken;
+  return JSON.stringify([session.account?.role || "", accountId]);
+}
 
 const ADMIN_WORKSPACES: Array<{ id: AdminWorkspace; label: string }> = [
   { id: "home", label: "Home" },
@@ -187,12 +196,33 @@ export default function AdminClient() {
   const authActionSequenceRef = useRef(0);
   const authActionAbortRef = useRef<AbortController | null>(null);
   const authActionInFlightRef = useRef(false);
+  const browserAccountRef = useRef("");
   const authBusy = isSigningIn || isResettingPassword;
 
   useEffect(() => {
     mountedRef.current = true;
+    browserAccountRef.current = readBrowserAccountIdentity();
     void loadAdmin();
+    const synchronizeAccount = () => {
+      const identity = readBrowserAccountIdentity();
+      if (identity === browserAccountRef.current) return;
+      browserAccountRef.current = identity;
+      invalidateAdminDataRequests();
+      cancelAuthAction();
+      setState({ authRequired: true });
+      // Remount every private child panel after clearing the shell's cached data.
+      window.location.reload();
+    };
+    const onStorage = (event: StorageEvent) => {
+      if (event.key === BROWSER_AUTH_SESSION_KEY || event.key === null) synchronizeAccount();
+    };
+    window.addEventListener("storage", onStorage);
+    window.addEventListener("pageshow", synchronizeAccount);
+    window.addEventListener("focus", synchronizeAccount);
     return () => {
+      window.removeEventListener("storage", onStorage);
+      window.removeEventListener("pageshow", synchronizeAccount);
+      window.removeEventListener("focus", synchronizeAccount);
       mountedRef.current = false;
       invalidateAdminDataRequests();
       cancelAuthAction();
@@ -284,6 +314,7 @@ export default function AdminClient() {
     event.preventDefault();
     const action = beginAuthAction();
     if (!action) return;
+    const isSessionUnchanged = captureBrowserAuthSessionGuard();
     setIsSigningIn(true);
     setState({ authRequired: true });
 
@@ -298,8 +329,10 @@ export default function AdminClient() {
       if (!isCurrentAuthAction(action)) return;
       if (!response.ok || !data.ok) throw new Error(data.error || "Unable to sign in.");
       if (!data.session?.accessToken) throw new Error("Admin sign in requires a live session.");
+      if (!isSessionUnchanged()) throw new Error("Your sign-in changed in another window. Please try again if you still want to switch accounts.");
 
       persistAdminSession(data.session, data.account);
+      browserAccountRef.current = readBrowserAccountIdentity();
       await loadAdmin();
     } catch (error) {
       if (!isCurrentAuthAction(action)) return;
@@ -363,6 +396,7 @@ export default function AdminClient() {
     invalidateAdminDataRequests();
     cancelAuthAction();
     void revokeAdminSession();
+    browserAccountRef.current = readBrowserAccountIdentity();
     window.sessionStorage.removeItem(OPEN_APPROVALS_SESSION_KEY);
     openApprovalIdsRef.current = {};
     setOpenApprovalIds({});
@@ -400,6 +434,7 @@ export default function AdminClient() {
     };
     workspaceLoadRef.current = request;
     setLoadingWorkspace(nextWorkspace);
+    const requestSession = readAdminSession();
 
     const isCurrentRequest = () => mountedRef.current
       && !controller.signal.aborted
@@ -422,7 +457,7 @@ export default function AdminClient() {
           ? authenticationFailure.reason.message
           : "Admin sign in required.";
         invalidateAdminDataRequests();
-        clearAdminSession();
+        if (clearAdminSession(requestSession)) browserAccountRef.current = readBrowserAccountIdentity();
         setState({
           authRequired: true,
           error: message,
@@ -469,6 +504,7 @@ export default function AdminClient() {
   }
 
   async function loadAdmin() {
+    const requestSession = readAdminSession();
     const generation = invalidateAdminDataRequests();
     const controller = new AbortController();
     adminLoadAbortRef.current = controller;
@@ -496,7 +532,7 @@ export default function AdminClient() {
       );
 
       if (authenticationFailure?.status === "rejected") {
-        clearAdminSession();
+        if (clearAdminSession(requestSession)) browserAccountRef.current = readBrowserAccountIdentity();
         setState({
           authRequired: true,
           error: authenticationFailure.reason instanceof Error

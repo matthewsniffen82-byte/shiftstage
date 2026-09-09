@@ -5,6 +5,7 @@ import Link from "next/link";
 import { PasswordRequirements } from "@/app/components/PasswordRequirements";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
+  captureBrowserAuthSessionGuard,
   persistBrowserAuthSession,
   readBrowserAuthSession,
   revokeBrowserAuthSession,
@@ -276,6 +277,7 @@ export default function AccountClient() {
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!mountedRef.current || authInFlightRef.current) return;
+    const isSessionUnchanged = captureBrowserAuthSessionGuard();
     setStatus("");
 
     if (mode === "signup" && role === "customer" && password !== confirmPassword) {
@@ -315,6 +317,7 @@ export default function AccountClient() {
         return;
       }
       if (!response.ok || !data.ok) throw new Error(friendlyAuthErrorMessage(data.error, "Unable to sign in."));
+      if (!isSessionUnchanged()) throw new Error("Your sign-in changed in another window. Please try again if you still want to switch accounts.");
 
       if (mode === "signup") {
         setStatus(
@@ -337,7 +340,11 @@ export default function AccountClient() {
         expiresAt: data.session.expiresAt,
         account: data.account,
       };
-      await revokeBrowserAuthSession();
+      const revocation = revokeBrowserAuthSession();
+      const isSignedOutSessionUnchanged = captureBrowserAuthSessionGuard();
+      await revocation;
+      if (!mountedRef.current || controller.signal.aborted || authAbortRef.current !== controller) return;
+      if (!isSignedOutSessionUnchanged()) throw new Error("Your sign-in changed in another window. Please try again if you still want to switch accounts.");
       if (!persistBrowserAuthSession(session)) {
         throw new Error("Unable to save your sign-in in this browser.");
       }

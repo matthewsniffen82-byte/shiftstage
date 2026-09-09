@@ -42,7 +42,7 @@ test("the global deletion control requires confirmation and calls the authentica
 test("the standalone dashboard uses the refresh-aware account boundary before clearing the session", () => {
   assert.match(
     dashboardClient,
-    /async function deleteAccount\(\)[\s\S]*?await requestAccountJson\(\{[\s\S]*?method: "DELETE"[\s\S]*?accountDeleted = true[\s\S]*?finally \{[\s\S]*?sessionStorage\.setItem\(PUBLIC_DISCOVERY_REFRESH_KEY, String\(Date\.now\(\)\)\)[\s\S]*?clearDashboardSession\(\);\s*window\.location\.replace\("\/"\);/,
+    /async function deleteAccount\(\)[\s\S]*?await requestAccountJson\(\{[\s\S]*?method: "DELETE"[\s\S]*?accountDeleted = true[\s\S]*?finally \{[\s\S]*?sessionStorage\.setItem\(PUBLIC_DISCOVERY_REFRESH_KEY, String\(Date\.now\(\)\)\)[\s\S]*?clearDashboardSession\(\);\s*\}\s*window\.location\.replace\("\/"\);/,
   );
   assert.doesNotMatch(dashboardClient, /fetch\("\/api\/account"/);
   assert.match(

@@ -3,7 +3,7 @@ import { PasswordRequirements } from "@/app/components/PasswordRequirements";
 
 import Link from "next/link";
 import { useEffect, useRef, useState, type FormEvent } from "react";
-import { persistBrowserAuthSession } from "@/src/lib/dancr/browser-session";
+import { captureBrowserAuthSessionGuard, persistBrowserAuthSession } from "@/src/lib/dancr/browser-session";
 
 type Invitation = {
   email: string;
@@ -61,6 +61,7 @@ export default function VenueTeamInviteClient({ token }: { token: string }) {
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!invitation || submitInFlightRef.current) return;
+    const isSessionUnchanged = captureBrowserAuthSessionGuard();
     const controller = new AbortController();
     submitAbortRef.current?.abort();
     submitAbortRef.current = controller;
@@ -86,6 +87,7 @@ export default function VenueTeamInviteClient({ token }: { token: string }) {
       if (!response.ok || !data.ok || !data.session?.accessToken) {
         throw new Error(data.error || "Unable to accept this invitation.");
       }
+      if (!isSessionUnchanged()) throw new Error("Your sign-in changed in another window. Your invitation was accepted; sign in with the invited email to continue.");
       const sessionSaved = persistBrowserAuthSession({
         accessToken: data.session.accessToken,
         refreshToken: data.session.refreshToken,
