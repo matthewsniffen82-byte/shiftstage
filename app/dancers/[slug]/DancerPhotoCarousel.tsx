@@ -445,9 +445,15 @@ export function DancerPhotoCarousel({
     showPlaybackFeedback(index, paused);
   }
 
-  function toggleViewerPlayback(video: HTMLVideoElement) {
-    playbackTapIndex.current = viewerIndex;
+  function toggleViewerPlayback(video: HTMLVideoElement, index: number) {
+    playbackTapIndex.current = index;
+    viewerFeed.current?.querySelectorAll<HTMLVideoElement>("video").forEach((other) => {
+      if (other !== video) other.pause();
+    });
+    if (index !== viewerIndex) setViewer({ kind: "video", index });
     if (video.paused) {
+      // Attach an unwarmed card's source while this tap still grants playback permission.
+      if (!video.hasAttribute("src") && video.dataset.videoUrl) video.src = video.dataset.videoUrl;
       delete video.dataset.userPaused;
       void video.play().catch(() => undefined);
     } else {
@@ -910,11 +916,11 @@ export function DancerPhotoCarousel({
                     disablePictureInPicture
                     loop
                     muted={inlineMuted}
-                    onClick={(event) => toggleViewerPlayback(event.currentTarget)}
+                    onClick={(event) => toggleViewerPlayback(event.currentTarget, index)}
                     onKeyDown={(event) => {
                       if (event.key !== "Enter" && event.key !== " ") return;
                       event.preventDefault();
-                      toggleViewerPlayback(event.currentTarget);
+                      toggleViewerPlayback(event.currentTarget, index);
                     }}
                     onPause={() => handleViewerPlaybackChange(index, true)}
                     onPlay={() => handleViewerPlaybackChange(index, false)}

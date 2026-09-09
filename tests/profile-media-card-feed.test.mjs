@@ -53,7 +53,7 @@ test("profile media has no expand controls or native fullscreen requests", () =>
   assert.doesNotMatch(carousel, /requestFullscreen|webkitRequestFullscreen|viewerExpanded|profile-media-card-expand/);
   assert.doesNotMatch(live, /requestProfile(?:Photo|Tv)ViewerFullscreen|profile-media-card-expand|prepareProfileMediaCardExpand/);
   assert.match(carousel, /controls=\{false\}/);
-  assert.match(carousel, /toggleViewerPlayback\(event\.currentTarget\)/);
+  assert.match(carousel, /toggleViewerPlayback\(event\.currentTarget, index\)/);
   assert.match(carousel, /aria-label=\{inlineMuted \? "Turn sound on" : "Mute video"\}/);
 });
 
