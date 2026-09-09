@@ -37,7 +37,7 @@ test("incognito uses a dedicated authenticated database operation", () => {
   assert.match(dashboardSource, /requestDancerProfileVisibilityJson\(/);
   assert.match(dashboardSessionSource, /requestDashboardJson\("\/api\/dancer\/profile\/visibility"/);
   assert.match(dashboardSessionSource, /"x-dancr-refresh-token"/);
-  assert.match(dashboardSessionSource, /persistResponseSession\(data, authHeaders\)/);
+  assert.match(dashboardSessionSource, /persistResponseSession\(data, authHeaders,/);
   assert.match(dashboardSource, /data\.visibility\?\.publicProfileVisible !== nextPublic/);
   assert.doesNotMatch(
     dashboardSource.match(/async function toggleVisibility\(\)[\s\S]*?\n  }/)?.[0] || "",

@@ -6,7 +6,7 @@ import {
   requestOptionalDashboardJson,
 } from "./dashboard-session.ts";
 
-type CustomerPanel = "account" | "accountError" | "saved" | "savedError" | "profile" | "support" | "agentAccess";
+type CustomerPanel = "account" | "accountError" | "saved" | "savedError" | "profile" | "support" | "agentAccess" | "redirect";
 
 // Publish each result as it arrives. Support and referral access must never
 // hold the guest's account and followed profiles behind a full-page skeleton.
@@ -21,6 +21,11 @@ export async function loadCustomerDashboard(
   try {
     const account = await requestAccountJson({ cache: "no-store", signal, timeoutMs: 15000 });
     if (signal.aborted) return;
+    const accountRole = account.account?.role;
+    if (accountRole === "venue" || accountRole === "dancer" || accountRole === "admin") {
+      update("redirect", accountRole === "admin" ? "/admin" : `/dashboard/${accountRole}`);
+      return;
+    }
     update("account", account.account);
   } catch (error) {
     if (signal.aborted || (error instanceof DashboardDataRequestError && [401, 403, 404].includes(error.status))) throw error;

@@ -364,7 +364,9 @@ export default function DashboardClient({
         try {
           await loadCustomerDashboard(controller.signal, (panel, data) => {
             if (cancelled) return;
-            if (panel === "account") {
+            if (panel === "redirect") {
+              window.location.replace(data);
+            } else if (panel === "account") {
               setState((current) => ({ ...current, account: data, accountError: undefined }));
               setIsLoading(false);
             } else if (panel === "accountError") {

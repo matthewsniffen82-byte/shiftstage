@@ -56,16 +56,17 @@ export function storedSessionIsFresh(session: StoredDashboardSession | null) {
 }
 
 export function persistResponseSession(
-  data: { session?: StoredDashboardSession } | null | undefined,
+  data: { session?: StoredDashboardSession; account?: StoredDashboardSession["account"] } | null | undefined,
   requestHeaders?: Record<string, string> | null,
+  refreshAccount = false,
 ) {
-  if (!data?.session?.accessToken) return;
+  if (!data?.session?.accessToken && !(refreshAccount && data?.account)) return;
   const current = readSession();
   if (!current?.accessToken) return;
   // Do not restore credentials from a request that predates a shared-session change.
   if (requestHeaders && (requestHeaders.authorization !== `Bearer ${current.accessToken}`
     || (requestHeaders["x-dancr-refresh-token"] || "") !== (current.refreshToken || ""))) return;
-  persistBrowserAuthSession({ ...current, ...data.session });
+  persistBrowserAuthSession({ ...current, ...data?.session, ...(refreshAccount && data?.account ? { account: data.account } : {}) });
 }
 
 export function persistDashboardSession(session: StoredDashboardSession) {
@@ -168,7 +169,9 @@ export async function requestDashboardJson(
     if (!accepted) {
       throw new DashboardDataRequestError(data?.error || data?.message || fallbackMessage, response.status);
     }
-    if (!controller?.signal.aborted && !requestInit.signal?.aborted) persistResponseSession(data, authHeaders);
+    if (!controller?.signal.aborted && !requestInit.signal?.aborted) {
+      persistResponseSession(data, authHeaders, path === "/api/account" && (!requestInit.method || requestInit.method === "GET"));
+    }
     return data;
   };
   try {

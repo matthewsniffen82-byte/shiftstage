@@ -121,7 +121,7 @@ test("dashboard session persistence and optional panel failures have one typed b
   assert.match(dashboardSession, /export const DASHBOARD_SESSION_KEY = BROWSER_AUTH_SESSION_KEY/);
   assert.match(dashboardSession, /from "\.\.\/\.\.\/src\/lib\/dancr\/browser-session\.ts"/);
   assert.match(dashboardSession, /return readBrowserAuthSession\(\) as StoredDashboardSession \| null/);
-  assert.match(dashboardSession, /persistBrowserAuthSession\(\{ \.\.\.current, \.\.\.data\.session \}\)/);
+  assert.match(dashboardSession, /persistBrowserAuthSession\(\{ \.\.\.current, \.\.\.data\?\.session,/);
   assert.match(dashboardSession, /return persistBrowserAuthSession\(session\)/);
   assert.match(dashboardSession, /return clearBrowserAuthSession\(\)/);
   assert.match(dashboardSession, /persistRefreshedBrowserAuthSession\(session, expected\)/);
@@ -329,7 +329,7 @@ test("shared dashboard JSON requests are role-aware and preserve refreshed sessi
   assert.match(dashboardSession, /class DashboardDataRequestError extends Error/);
   assert.match(dashboardSession, /const authHeaders = currentDashboardAuthHeaders\(expectedRole\)/);
   assert.match(dashboardSession, /headers: \{ \.\.\.requestHeaders, \.\.\.authHeaders \}/);
-  assert.match(dashboardSession, /persistResponseSession\(data, authHeaders\)/);
+  assert.match(dashboardSession, /persistResponseSession\(data, authHeaders, path === "\/api\/account" && \(!requestInit\.method \|\| requestInit\.method === "GET"\)\)/);
 });
 
 test("shared dashboard panels use the refresh-aware request boundary", () => {

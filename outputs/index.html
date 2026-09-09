@@ -55342,12 +55342,14 @@
     }
 
     function openUnifiedDashboard(role = activeDashboardType, section = "") {
-      const dashboardRole = role === "dancer" || role === "venue" ? role : "customer";
+      const dashboardRole = ["customer", "dancer", "venue"].includes(authSession?.account?.role)
+        ? authSession.account.role
+        : role === "dancer" || role === "venue" ? role : "customer";
       if (!authSession?.accessToken) {
         openAuthRole(dashboardRole);
         return false;
       }
-      const sectionHash = section ? `#${encodeURIComponent(section)}` : "";
+      const sectionHash = section && role === dashboardRole ? `#${encodeURIComponent(section)}` : "";
       window.location.assign(`/dashboard/${dashboardRole}${sectionHash}`);
       return true;
     }
@@ -64063,8 +64065,9 @@
         }
         if (!result.session?.accessToken) throw new Error("Sign in did not start a session. Confirm your email, then try again.");
         const signedInRole = result.account?.role;
+        restoreLoggedInSessionState();
         if (["customer", "dancer", "venue"].includes(signedInRole) && pendingAccountAuthReturnTo) {
-          const destination = pendingAccountAuthReturnTo;
+          const destination = accountLoginDestination(signedInRole, pendingAccountAuthReturnTo);
           pendingAccountAuthReturnTo = "";
           window.location.assign(destination);
           return;
@@ -64132,7 +64135,8 @@
       if (!isVenueSession()) {
         throw new Error("A verified venue session is required. Sign in and try again.");
       }
-      const destination = pendingVenueAuthReturnTo || "/dashboard/venue";
+      restoreLoggedInSessionState();
+      const destination = accountLoginDestination("venue", pendingVenueAuthReturnTo);
       pendingVenueAuthReturnTo = "";
       closeAuthPage();
       updateAccountHeader();
@@ -66367,6 +66371,17 @@
       } catch (error) {
         return "";
       }
+    }
+
+    function accountLoginDestination(role, returnTo = "") {
+      const dashboard = `/dashboard/${role}`;
+      const requested = safeLocalReturnPath(returnTo);
+      if (!requested || /^\/(?:account|auth|admin)(?:[/?#]|$)/.test(requested)) return dashboard;
+      if (/^\/dashboard(?:[/?#]|$)/.test(requested)) {
+        const dashboardMatch = requested.match(/^\/dashboard\/(customer|dancer|venue)(?:[/?#]|$)/);
+        if (dashboardMatch?.[1] !== role) return dashboard;
+      }
+      return requested;
     }
 
     function handleAccountAccessDeepLink() {
