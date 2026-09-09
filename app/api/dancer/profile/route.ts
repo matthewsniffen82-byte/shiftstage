@@ -278,7 +278,8 @@ async function loadPendingPhotoReviews(userId: string, occupiedPhotos: any[] = [
       }
       slot = profilePhotoSlotFromUploadContext(review.upload_context, fallbackSortOrder || 1);
     }
-    if (pendingSlots.has(slot.key)) return [];
+    // Positions are provisional until publication. Distinct review IDs must
+    // remain visible even when simultaneous uploads requested the same slot.
     pendingSlots.add(slot.key);
     return [{ ...review, slot }];
   }).slice(0, MAX_DANCER_PROFILE_PHOTOS);

@@ -50635,20 +50635,22 @@
     }
 
     function editableDancerPhotoRows(profile) {
-      const bySlot = new Map();
-      activeDancerPhotoRows(profile).forEach((photo) => bySlot.set(dancerPhotoSlotKey(photo), photo));
+      const byId = new Map();
+      activeDancerPhotoRows(profile).forEach((photo) => byId.set(String(photo.id), photo));
       (profile?.submittedPhotos || [])
         .filter((photo) => normalizedReviewStatus(photo.review_status || photo.reviewStatus || "pending") === "pending")
         .filter((photo) => !photoMatchesDeletedDancerPhoto(profile, photo))
-        .forEach((photo) => bySlot.set(dancerPhotoSlotKey(photo), photo));
-      return Array.from(bySlot.values())
+        .forEach((photo) => {
+          const id = String(photo.id || "");
+          if (id && !byId.has(id)) byId.set(id, photo);
+        });
+      return Array.from(byId.values())
         .sort((left, right) => {
           const leftPrimary = Boolean(left.is_primary || left.isPrimary);
           const rightPrimary = Boolean(right.is_primary || right.isPrimary);
           if (leftPrimary !== rightPrimary) return leftPrimary ? -1 : 1;
           return Number(left.sort_order ?? left.sortOrder ?? 0) - Number(right.sort_order ?? right.sortOrder ?? 0);
-        })
-        .slice(0, MAX_DANCER_PROFILE_PHOTOS);
+        });
     }
 
     function dancerPhotoDebugShape(photo = {}) {
@@ -50697,7 +50699,9 @@
         .map((photo) => {
           const isPrimary = Boolean(photo.is_primary || photo.isPrimary);
           const sortOrder = Number(photo.sort_order ?? photo.sortOrder ?? 1);
-          const target = isPrimary ? "main" : `gallery:${Math.max(0, sortOrder - 1)}`;
+          const target = normalizedReviewStatus(photo.review_status || photo.reviewStatus || "pending") === "pending"
+            ? `pending:${photo.id}`
+            : isPrimary ? "main" : `gallery:${Math.max(0, sortOrder - 1)}`;
           const imageUrl = photo.imageUrl || photo.image_url || photo.url || photo.storage_path || "";
           const review = latestContentReview(`photo:${photo.id}`);
           return {
@@ -50745,6 +50749,7 @@
     function isReplacingApprovedPhotoTarget(profile, target) {
       const text = String(target || "");
       if (text === "gallery" || text === "gallery-add" || text.startsWith("gallery-add:")) return false;
+      if (text.startsWith("pending:")) return true;
       if (text.startsWith("submitted:")) {
         const submittedIndex = Number(text.split(":")[1]);
         return Number.isInteger(submittedIndex) && submittedIndex >= 0 && Boolean(profile?.submittedPhotos?.[submittedIndex]);
@@ -50975,11 +50980,7 @@
       profile.submittedPhotos = (profile.submittedPhotos || []).filter((photo, index) => {
         const id = String(photo?.id || "");
         const url = photo?.imageUrl || photo?.image_url || photo?.url || "";
-        return !(
-          (photoId && id === photoId) ||
-          (photoUrl && url === photoUrl) ||
-          (!photoId && !photoUrl && target === `submitted:${index}`)
-        );
+        return !(photoId ? id === photoId : photoUrl ? url === photoUrl : target === `submitted:${index}`);
       });
       if (photoUrl && profile.mainPhotoUrl === photoUrl) profile.mainPhotoUrl = "";
       profile.galleryPhotoUrls = (profile.galleryPhotoUrls || []).filter((url) => !photoUrl || url !== photoUrl);
@@ -51571,15 +51572,16 @@
       popover.style.removeProperty("--approved-social-popover-top");
       if (kind === "photo") {
         document.querySelector(".approved-visual-profile")?.appendChild(popover);
+        const pending = normalizedReviewStatus(data.status) === "pending";
         const rejectionReason = normalizedReviewStatus(data.status) === "rejected"
           ? `<div class="approved-visual-reason">${displayText(data.label || "Photo")} not approved: ${displayText(data.notes || "No reason added.")}</div>`
           : "";
         card.innerHTML = `
-          <div class="row"><div><strong>${displayText(data.label || "Profile photo")}</strong><div class="meta">Replace or delete this picture. Approved photos go live automatically. Save Profile keeps your live profile in sync.</div></div><button class="close-btn" type="button" data-approved-edit-close aria-label="Close"><svg class="icon" viewBox="0 0 24 24"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg></button></div>
+          <div class="row"><div><strong>${displayText(data.label || "Profile photo")}</strong><div class="meta">${pending ? "This upload is awaiting review. You can remove it below. Your approved photos stay live." : "Replace or delete this picture. Approved photos go live automatically. Save Profile keeps your live profile in sync."}</div></div><button class="close-btn" type="button" data-approved-edit-close aria-label="Close"><svg class="icon" viewBox="0 0 24 24"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg></button></div>
           ${rejectionReason}
           <div class="approved-visual-photo-actions">
-            <button type="button" data-approved-visual-photo-replace data-photo-id="${displayText(data.photoId || "")}" data-photo-target="${displayText(data.target || "gallery")}">Replace picture</button>
-            <button class="approved-visual-delete" type="button" data-approved-visual-photo-delete data-photo-id="${displayText(data.photoId || "")}" data-photo-target="${displayText(data.target || "gallery")}" data-photo-label="${displayText(data.label || "Profile photo")}" data-photo-url="${displayText(data.photoUrl || "")}" data-photo-storage-path="${displayText(data.storagePath || "")}">Delete picture</button>
+            ${pending ? "" : `<button type="button" data-approved-visual-photo-replace data-photo-id="${displayText(data.photoId || "")}" data-photo-target="${displayText(data.target || "gallery")}">Replace picture</button>`}
+            <button class="approved-visual-delete" type="button" data-approved-visual-photo-delete data-photo-id="${displayText(data.photoId || "")}" data-photo-target="${displayText(data.target || "gallery")}" data-photo-label="${displayText(data.label || "Profile photo")}" data-photo-url="${displayText(data.photoUrl || "")}" data-photo-storage-path="${displayText(data.storagePath || "")}">${pending ? "Remove upload" : "Delete picture"}</button>
           </div>
         `;
       } else {
@@ -56548,14 +56550,8 @@
         };
         const submittedPhotos = [...(profile.submittedPhotos || [])];
         if (approvedUpload && imageUrl) {
-          const withoutReplacedSubmitted = replacingSubmitted
-            ? submittedPhotos.filter((_, index) => index !== submittedIndex)
-            : submittedPhotos.filter((item) => {
-              const sameMain = target === "main" && (item.isPrimary || item.is_primary);
-              const sameGallery = galleryIndex >= 0 && Number(item.sortOrder ?? item.sort_order) === sortOrder;
-              return !sameMain && !sameGallery;
-            });
-          profile.submittedPhotos = withoutReplacedSubmitted;
+          const completedIds = new Set([data?.moderationRecordId, uploaded.id, replacement?.id].filter(Boolean).map(String));
+          profile.submittedPhotos = submittedPhotos.filter((item) => !completedIds.has(String(item.id)));
           const existingRows = Array.isArray(profile.dancer_photos) ? profile.dancer_photos : [];
           profile.dancer_photos = [
             ...existingRows.filter((item) => {
@@ -56596,23 +56592,10 @@
           profile.approvalChangesPending = false;
           profile.approvalChangesSubmitted = false;
         } else if (pendingUpload) {
-          if (replacingSubmitted) {
-            submittedPhotos[submittedIndex] = photo;
-          } else {
-            const withoutSameSlot = submittedPhotos.filter((item) => {
-              const sameMain = target === "main" && (item.isPrimary || item.is_primary);
-              const sameGallery = galleryIndex >= 0 && Number(item.sortOrder ?? item.sort_order) === sortOrder;
-              return !sameMain && !sameGallery;
-            });
-            submittedPhotos.length = 0;
-            submittedPhotos.push(...withoutSameSlot, photo);
-          }
-          profile.submittedPhotos = submittedPhotos
-            .filter(Boolean)
-            .sort((left, right) => Number(left.sortOrder ?? left.sort_order ?? 0) - Number(right.sortOrder ?? right.sort_order ?? 0))
-            .slice(0, MAX_DANCER_PROFILE_PHOTOS);
+          profile.submittedPhotos = [...submittedPhotos.filter((item) => String(item.id) !== String(photo.id)), photo]
+            .sort((left, right) => Number(left.sortOrder ?? left.sort_order ?? 0) - Number(right.sortOrder ?? right.sort_order ?? 0));
           normalizeLocalDancerPhotos(profile);
-          uploadedPhotoTarget = isPrimary ? "main" : `gallery:${Math.max(0, Number(photo.sortOrder) - 1)}`;
+          uploadedPhotoTarget = `pending:${photo.id}`;
           profile.photoStatus = "Pending";
           profile.approvalChangesPending = true;
           profile.approvalChangesSubmitted = false;
@@ -56983,12 +56966,12 @@
           review_status: "pending"
         }))
       ];
-      const bySlot = new Map();
+      const byId = new Map();
       pendingRows
         .slice()
         .sort((a, b) => String(a.created_at || "").localeCompare(String(b.created_at || "")))
-        .forEach((photo) => bySlot.set(dancerPhotoSlotKey(photo), photo));
-      return Array.from(bySlot.values())
+        .forEach((photo) => byId.set(String(photo.id), photo));
+      return Array.from(byId.values())
         .sort((a, b) => Number(a.sort_order ?? a.sortOrder ?? 0) - Number(b.sort_order ?? b.sortOrder ?? 0))
         .map((photo, index) => {
           const imageUrl = photo.imageUrl || photo.image_url || photo.url || photo.storage_path || "";
@@ -56997,8 +56980,8 @@
             id: photo.id || `${profile?.id || profile?.stage_name || profile?.stageName || "profile"}-photo-${index}`,
             imageUrl,
             image_url: imageUrl,
-            isPrimary: Boolean(photo.is_primary || photo.isPrimary || index === 0),
-            is_primary: Boolean(photo.is_primary || photo.isPrimary || index === 0),
+            isPrimary: Boolean(photo.is_primary || photo.isPrimary),
+            is_primary: Boolean(photo.is_primary || photo.isPrimary),
             sortOrder: Number(photo.sort_order ?? photo.sortOrder ?? index),
             sort_order: Number(photo.sort_order ?? photo.sortOrder ?? index),
             reviewStatus: review?.status || photo.review_status || photo.reviewStatus || "pending",
@@ -57053,12 +57036,11 @@
       const seen = new Set();
       const items = [...approvedItems, ...pendingItems, ...setupPhotoSelectionItems()]
         .filter((photo) => {
-          const key = photo.imageUrl || photo.id;
+          const key = photo.category === "review" ? `review:${photo.id}` : photo.imageUrl || photo.id;
           if (!key || seen.has(key)) return false;
           seen.add(key);
           return true;
-        })
-        .slice(0, MAX_DANCER_PROFILE_PHOTOS);
+        });
 
       if (!items.length) {
         return '<div class="locked">No uploaded photos yet.</div>';

@@ -124,10 +124,30 @@ test("the Add photo box retains failed upload feedback and retry", async () => {
 test("a real pending replacement stays checking until the server approves it", async () => {
   const ui = photoHarness({ read: async () => ({ profile: { dancer_photos: [approved("old")], pending_photo_reviews: [pending()] } }) });
   ui.select(); await ui.settle();
-  assert.deepEqual(ui.statuses, ["Checking"]);
+  assert.deepEqual(ui.statuses, ["Approved", "Checking"]);
   assert.deepEqual(ui.notes, []);
   ui.updateProfile({ dancer_photos: [approved("replacement")] });
   assert.deepEqual(ui.statuses, ["Approved"]);
+});
+
+test("the dashboard keeps same-position pending uploads and the current approved photo distinct", () => {
+  const ui = photoHarness({ profile: {
+    dancer_photos: [approved("current", 1)],
+    pending_photo_reviews: [pending("first", 1), pending("second", 1)],
+  } });
+  assert.deepEqual(ui.statuses, ["Approved", "Checking", "Checking"]);
+  assert.deepEqual(Array.from(ui.mapProfile({ pending_photo_reviews: [pending("first", 1), pending("second", 1)] }), item => item.id), ["first", "second"]);
+  ui.updateProfile({ dancer_photos: [approved("current", 1), approved("published", 2)], pending_photo_reviews: [pending("first", 1)] });
+  assert.deepEqual(ui.statuses, ["Approved", "Checking", "Approved"]);
+});
+
+test("pending replacements stay manageable even when the approved library fills every slot", () => {
+  const ui = photoHarness({ profile: {
+    dancer_photos: Array.from({ length: 30 }, (_, index) => approved(`saved-${index}`, index + 1)),
+    pending_photo_reviews: [pending("replacement", 1)],
+  } });
+  assert.equal(ui.cards.length, 31);
+  assert.equal(ui.statuses.filter(status => status === "Checking").length, 1);
 });
 
 test("completed checks awaiting review are distinct from active checks and become approved after refresh", () => {

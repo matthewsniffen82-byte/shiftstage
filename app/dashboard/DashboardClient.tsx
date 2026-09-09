@@ -7398,8 +7398,9 @@ function DancerPhotoPanel({
         if (!isCurrentPhotoAction(requestId, controller)) return;
         if (refreshData.profile) {
           const refreshedPhotos = preserveConfirmedPhotoPreviews(dancerPhotoItemsFromProfile(refreshData.profile), workingPhotos);
-          // Fresh server results must replace older local "checking" entries for the same slot.
-          workingPhotos = relabelPhotoItems(mergePhotoItems(workingPhotos.filter((photo) => photo.status === "pending"), refreshedPhotos));
+          // The server identifies which reviews remain pending. A published
+          // photo can have a different ID and position from its review record.
+          workingPhotos = relabelPhotoItems(refreshedPhotos);
           setPhotos(workingPhotos);
           onProfileChange?.(refreshData.profile);
         }
@@ -7714,17 +7715,20 @@ function primaryPhotoIdFromProfile(profile: LoadState["profile"]) {
 }
 
 function mergePhotoItems(...groups: DancerPhotoItem[][]) {
+  const byId = new Map(groups.flat().map((photo) => [photo.id, photo]));
   const byKey = new Map<string, DancerPhotoItem>();
-  groups.flat().forEach((photo) => {
+  byId.forEach((photo) => {
     const sortOrder = Number(photo.sortOrder);
-    const key = photo.isPrimary
+    const key = photo.status === "pending"
+      ? `photo:${photo.id}`
+      : photo.isPrimary
       ? "main"
       : Number.isInteger(sortOrder) && sortOrder > 0
         ? `gallery:${sortOrder}`
         : `photo:${photo.id}`;
     byKey.set(key, photo);
   });
-  return Array.from(byKey.values()).slice(0, MAX_DANCER_PROFILE_PHOTOS);
+  return Array.from(byKey.values());
 }
 
 function relabelPhotoItems(items: DancerPhotoItem[]) {

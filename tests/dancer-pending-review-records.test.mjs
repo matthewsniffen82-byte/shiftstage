@@ -54,6 +54,17 @@ test("linked pending or rejected photos never count as approval", async () => {
   }
 });
 
+for (const upload_context of ["profile_gallery:2", "profile_main"]) {
+  test(`distinct pending uploads sharing ${upload_context} are both returned with private previews`, async () => {
+    const result = await pendingReviews([
+      { id: "first-review", status: "pending_review", upload_context, temporary_storage_path: "first.jpg" },
+      { id: "second-review", status: "moderating", upload_context, temporary_storage_path: "second.jpg" },
+    ], []);
+    assert.deepEqual(Array.from(result.rows, row => row.id), ["first-review", "second-review"]);
+    assert.deepEqual(result.signed, [["review", "first.jpg"], ["temp", "second.jpg"]]);
+  });
+}
+
 test("final media decisions take precedence and waiting review is distinct from an active check", () => {
   assert.equal(mediaReview.mediaReviewLabel("approved", "pending_review"), "Approved");
   assert.equal(mediaReview.mediaReviewLabel("rejected", "moderating"), "Not approved");
