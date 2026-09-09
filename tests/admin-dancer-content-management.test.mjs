@@ -43,7 +43,8 @@ test("photo deletion is dancer-scoped, removes stored content, promotes a replac
   assert.match(deletion, /\.from\("dancer_photos"\)[\s\S]*?\.delete\(\)[\s\S]*?\.eq\("id", photo\.id\)[\s\S]*?\.eq\("dancer_id", input\.dancerId\)/);
   assert.match(deletion, /contentReviewType\("photo", photo\.id\)/);
   assert.match(deletion, /\.from\("image_moderation_records"\)/);
-  assert.match(deletion, /\.update\(\{ is_primary: true \}\)/);
+  assert.match(deletion, /ensureDancerPrimaryPhoto\(client, input\.dancerId, input\.adminId\)/);
+  assert.doesNotMatch(deletion, /\.update\(\{ is_primary:/);
   assert.match(
     deletion,
     /removeBucketPaths\([\s\S]*?responsiveImageStoragePaths\(photo\.storage_path\)[\s\S]*?warnings/,

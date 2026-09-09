@@ -17,6 +17,7 @@ import { getRankingMetricBatch, type TrendingMetricCounts } from "./ranking-metr
 import { getAdminVenueRegistrations } from "./admin-venue-registration";
 import { findAvailableMyDancrCity } from "./markets";
 import { PublicApiError } from "../api-error-policy";
+import { ensureDancerPrimaryPhoto } from "./primary-photo";
 
 type DancrClient = SupabaseClient;
 
@@ -395,25 +396,11 @@ export async function deleteAdminDancerPhoto(
   }
 
   let promotedPhotoId: string | null = null;
-  if (photo.is_primary) {
-    const { data: replacement, error: replacementError } = await db
-      .from("dancer_photos")
-      .select("id")
-      .eq("dancer_id", input.dancerId)
-      .order("sort_order", { ascending: true })
-      .limit(1)
-      .maybeSingle();
-    if (replacementError) {
-      warnings.push(`Primary photo lookup failed: ${replacementError.message}`);
-    } else if (replacement?.id) {
-      const { error } = await db
-        .from("dancer_photos")
-        .update({ is_primary: true })
-        .eq("id", replacement.id)
-        .eq("dancer_id", input.dancerId);
-      if (error) warnings.push(`Primary photo promotion failed: ${error.message}`);
-      else promotedPhotoId = replacement.id;
-    }
+  try {
+    promotedPhotoId = await ensureDancerPrimaryPhoto(client, input.dancerId, input.adminId);
+  } catch (error) {
+    console.warn("PRIMARY_PHOTO_SELECTION_FAILED", safeErrorMetadata(error));
+    warnings.push("Photo deleted; primary photo selection could not be confirmed. Refresh the profile to check it.");
   }
 
   await removeBucketPaths(

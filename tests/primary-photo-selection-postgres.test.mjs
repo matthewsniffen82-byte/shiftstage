@@ -2,6 +2,9 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import test, {before, beforeEach, after} from 'node:test';
 import {PGlite} from '@electric-sql/pglite';
+import vm from 'node:vm';
+import ts from 'typescript';
+import {PublicApiError} from '../src/lib/api-error-policy.ts';
 
 const migration=readFileSync(new URL('../supabase/migrations/20260909232100_add_atomic_primary_photo_selection.sql',import.meta.url),'utf8');
 const id=n=>`00000000-0000-4000-8000-${String(n).padStart(12,'0')}`;
@@ -133,3 +136,104 @@ test('the function retains RLS, invoker security, empty search path and a bounde
  assert.equal(row.prosecdef,false);assert.ok(row.proconfig.includes('search_path=""'));assert.ok(row.proconfig.includes('lock_timeout=3s'));
  assert.equal((await pg.query("select count(*)::int as count from pg_class where oid in ('public.dancer_profiles'::regclass,'public.dancer_photos'::regclass) and relrowsecurity")).rows[0].count,2);
 });
+
+function applicationModule(path,dependencies={},overrides=''){
+ const source=readFileSync(new URL(path,import.meta.url),'utf8'),exports={};
+ vm.runInNewContext(ts.transpileModule(source+'\n'+overrides,{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText,
+  {exports,console:{log(){},warn(){},info(){},error(){}},require:()=>({PublicApiError,...dependencies})});
+ return exports;
+}
+const gateway=()=>applicationModule('../src/lib/dancr/primary-photo.ts').ensureDancerPrimaryPhoto;
+function applicationClient({lost=false,beforeDelete=null,deleteError=null}={}){
+ const calls=[];
+ const client={
+  async rpc(name,args){
+   assert.equal(name,'ensure_dancer_primary_photo');calls.push({operation:'rpc',args:{...args}});
+   try{
+    const selected=(await pg.query('select public.ensure_dancer_primary_photo($1,$2) as selected',[args.p_dancer_id,args.p_actor_user_id])).rows[0].selected;
+    return {data:lost?null:selected,error:lost?{code:'08006'}:null};
+   }catch(error){return {data:null,error};}
+  },
+  from(table){
+   let operation='select';const filters=[];
+   const query={select(){return this;},delete(){operation='delete';return this;},eq(k,v){filters.push([k,v]);return this;},
+    maybeSingle(){return execute(true);},then(resolve,reject){return execute(false).then(resolve,reject);}};
+   async function execute(single){
+    if(table!=='dancer_photos')return {data:single?null:[],error:null};
+    assert.ok(filters.every(([key])=>['id','dancer_id'].includes(key)));
+    if(operation==='delete'){
+     calls.push({operation:'delete'});if(deleteError)return {data:null,error:deleteError};await beforeDelete?.();
+    }
+    const sql=(operation==='delete'?'delete from':'select * from')+' public.dancer_photos where '+filters.map(([key],n)=>`${key}=$${n+1}`).join(' and ')+(operation==='delete'?' returning id':'');
+    const rows=(await pg.query(sql,filters.map(([,value])=>value))).rows;
+    return {data:single?(rows[0]||null):rows,error:null};
+   }
+   return query;
+  },
+ };
+ return {client,calls};
+}
+function deletionCallers(){
+ const dependencies={ensureDancerPrimaryPhoto:gateway(),safeErrorMetadata:error=>({code:error.code||'synthetic'}),
+  removeResponsiveImage:async()=>{},removeArchivedOriginalMedia:async()=>{},responsiveImageStoragePaths:path=>[path]};
+ const dancer=applicationModule('../src/lib/dancr/dancer.ts',dependencies,`
+  getOwnDancerProfile=async()=>({id:'${profile}'});deleteLinkedModerationRecords=async()=>{};
+  getOwnPhotoIds=async()=>[];refreshOwnPhotoReviewStatus=async()=>{};`);
+ const administrator=applicationModule('../src/lib/dancr/admin.ts',dependencies,'removeBucketPaths=async()=>{};logAdminAction=async()=>{};');
+ return {dancer:dancer.deleteOwnDancerPhoto,admin:administrator.deleteAdminDancerPhoto};
+}
+async function remove(kind,client,photoId){
+ const fn=deletionCallers()[kind];
+ return kind==='dancer'?fn(client,owner,photoId,client):fn(client,{dancerId:profile,targetId:photoId,adminId:admin});
+}
+
+test('application gateway passes the actor and profile to native SQL and accepts an empty library',async()=>{
+ const {client,calls}=applicationClient();assert.equal(await gateway()(client,profile,owner),null);
+ assert.deepEqual(calls,[{operation:'rpc',args:{p_dancer_id:profile,p_actor_user_id:owner}}]);
+});
+test('application gateway preserves a committed selection after response loss without retrying or clearing flags',async()=>{
+ const selected=await photo(100),{client,calls}=applicationClient({lost:true});
+ await assert.rejects(gateway()(client,profile,owner),{code:'08006'});assert.equal(calls.length,1);
+ assert.equal((await photos())[0].is_primary,true);const before=await photos();
+ assert.equal(await gateway()(applicationClient().client,profile,owner),selected);assert.deepEqual(await photos(),before);
+});
+for(const kind of ['dancer','admin']){
+ test(kind+' deletion uses native primary selection even when the earlier photo read was non-primary',async()=>{
+  const deleted=await photo(100),next=await photo(101);
+  const {client,calls}=applicationClient({beforeDelete:()=>pg.query('update public.dancer_photos set is_primary=true where id=$1',[deleted])});
+  await remove(kind,client,deleted);
+  assert.deepEqual(calls.map(call=>call.operation),['delete','rpc']);
+  assert.deepEqual(calls[1].args,{p_dancer_id:profile,p_actor_user_id:kind==='dancer'?owner:admin});
+  assert.deepEqual((await photos()).map(row=>[row.id,row.is_primary]),[[next,true]]);
+ });
+ test(kind+' deletion keeps a primary established by a different upload',async()=>{
+  const deleted=await photo(100),published=await photo(101,{primary:true,sort:3});
+  const {client}=applicationClient();await remove(kind,client,deleted);
+  assert.deepEqual((await photos()).map(row=>[row.id,row.is_primary,row.sort_order]),[[published,true,3]]);
+ });
+ test(kind+' failed deletion never invokes primary selection',async()=>{
+  const deleted=await photo(100,{primary:true}),before=await photos(),failure={code:'08006'};
+  const {client,calls}=applicationClient({deleteError:failure});await assert.rejects(remove(kind,client,deleted),e=>e===failure);
+  assert.deepEqual(calls.map(call=>call.operation),['delete']);assert.deepEqual(await photos(),before);
+ });
+}
+test('administrator deletion preserves its confirmed result and reports uncertain primary selection as a warning',async()=>{
+ const deleted=await photo(100,{primary:true}),next=await photo(101),{client,calls}=applicationClient({lost:true});
+ const result=await remove('admin',client,deleted);
+ assert.equal(result.id,deleted);assert.equal(result.promotedPhotoId,null);assert.equal(result.warnings.length,1);
+ assert.match(result.warnings[0],/could not be confirmed/);assert.deepEqual((await photos()).map(row=>[row.id,row.is_primary]),[[next,true]]);
+ assert.equal(calls.filter(call=>call.operation==='rpc').length,1);
+});
+
+for(const [code,status] of [['40001',409],['P0002',409],['42501',403],['55P03',503]]){
+ test('application gateway handles '+code+' without a write retry',async()=>{
+  let calls=0;const client={rpc:async()=>{calls++;return {data:null,error:{code}};}};
+  await assert.rejects(gateway()(client,profile,owner),{status});assert.equal(calls,1);
+ });
+}
+for(const data of [undefined,'',false,[],{},'not-a-uuid']){
+ test('an invalid RPC result cannot report a confirmed primary: '+String(data),async()=>{
+  let calls=0;const client={rpc:async()=>{calls++;return {data,error:null};}};
+  await assert.rejects(gateway()(client,profile,owner),{status:503});assert.equal(calls,1);
+ });
+}

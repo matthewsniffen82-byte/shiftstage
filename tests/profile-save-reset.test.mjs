@@ -87,7 +87,7 @@ test("fresh database photos replace stale editor photos", () => {
   assert.equal(stalePhotos.some((photo) => photo.id === "DELETED"), true);
   assert.equal(visiblePhotos.some((photo) => photo.id === "DELETED"), false);
   assert.match(dancerSource, /photoReviewStatusMayChange/);
-  assert.match(dancerSource, /promoteNextApprovedPrimaryPhoto/);
+  assert.match(dancerSource, /ensureDancerPrimaryPhoto\(adminClient, profile\.id, userId\)/);
 });
 
 test("save refresh preserves previews only for photos confirmed by the server", () => {

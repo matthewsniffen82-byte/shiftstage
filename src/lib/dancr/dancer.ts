@@ -6,6 +6,7 @@ import { removeArchivedOriginalMedia } from "./media-watermark";
 import type { ApprovalReview, DancerDashboardAnalytics, DancerWeeklyReport, SocialPlatform } from "./types";
 import { PublicApiError } from "../api-error-policy";
 import { safeErrorMetadata } from "../security/safe-error-metadata";
+import { ensureDancerPrimaryPhoto } from "./primary-photo";
 
 type DancrClient = SupabaseClient;
 
@@ -68,9 +69,8 @@ export async function deleteOwnDancerPhoto(client: DancrClient, userId: string, 
       ).catch(() => null);
     }
 
-    if (photo.is_primary) {
-      await promoteNextApprovedPrimaryPhoto(adminClient, profile.id);
-    }
+    // A concurrent request may have promoted this photo after our initial read.
+    await ensureDancerPrimaryPhoto(adminClient, profile.id, userId);
 
     if (photoReviewStatusMayChange) {
       await refreshOwnPhotoReviewStatus(adminClient, userId, profile.id).catch((error: any) => {
@@ -273,37 +273,6 @@ async function getOwnPhotoIds(client: DancrClient, dancerId: string) {
     .order("sort_order", { ascending: true });
   if (error) throw error;
   return (data || []).map((photo: any) => photo.id);
-}
-
-async function promoteNextApprovedPrimaryPhoto(client: DancrClient, dancerId: string) {
-  const { data: nextPhoto, error: nextPhotoError } = await client
-    .from("dancer_photos")
-    .select("id")
-    .eq("dancer_id", dancerId)
-    .eq("review_status", "approved")
-    .order("sort_order", { ascending: true })
-    .order("created_at", { ascending: true })
-    .limit(1)
-    .maybeSingle();
-
-  if (nextPhotoError) throw nextPhotoError;
-  if (!nextPhoto?.id) return null;
-
-  const { error: clearPrimaryError } = await client
-    .from("dancer_photos")
-    .update({ is_primary: false })
-    .eq("dancer_id", dancerId);
-  if (clearPrimaryError) throw clearPrimaryError;
-
-  const { error: promoteError } = await client
-    .from("dancer_photos")
-    .update({ is_primary: true, sort_order: 0 })
-    .eq("id", nextPhoto.id)
-    .eq("dancer_id", dancerId);
-  if (promoteError) throw promoteError;
-
-  console.log("PHOTO_PRIMARY_PROMOTED", { dancerId, promotedPhotoId: nextPhoto.id });
-  return nextPhoto.id;
 }
 
 async function refreshOwnPhotoReviewStatus(client: DancrClient, userId: string, dancerId: string) {
