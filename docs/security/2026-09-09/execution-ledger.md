@@ -35,8 +35,8 @@ Step 1 delivered as `50d4eb543dbfc93dbed6f0663c51aa2332542cb4`, pushed to origin
 | 12 | Bot resistance | Delivered and healthy: 68a04ea1c502eaef5a7aab78068399b052c453bf |
 | 13 | File upload handling | Delivered and healthy: 189c4b1afb43c4ace8a075dab0aca5422f3a83cf |
 | 14 | API authorization / exposure | Delivered and healthy: a72f13b523fb4ef323c87eb33daa6cdb07c42ffe |
-| 15 | Security headers | Validated; commit/push and exact deployment verification pending |
-| 16 | CORS | Not started |
+| 15 | Security headers | Delivered and healthy: a777507f28d3c02d67c0bfc8f2f9e4c751259f19 |
+| 16 | CORS | Validated; commit/push and exact deployment verification pending |
 | 17 | Cookies / sessions | Not started |
 | 18 | Redirects / URLs | Not started |
 | 19 | Database functions / grants | Not started |
@@ -192,3 +192,15 @@ Step 14 was pushed as `a72f13b523fb4ef323c87eb33daa6cdb07c42ffe`. [Exact Vercel 
 Sensitive document pages now use fresh script nonces and private caching; the authentication callback uses exact script hashes. Existing strong root/API policies, resource sources and application authorization remain. Twenty-four new tests cover the policy boundaries. See `step-15-browser-headers.md` for the header inventory, conservative public-page scope and verification limits. The independent admin deal-removal release and later profile-action UI/accessibility changes were reviewed and incorporated, retaining their authorization and action behavior. Local production verification caught an incompatible broad-prefix policy on static 404 pages before publication; explicit dynamic-page coverage and a page-inventory regression guard correct it. Complete validation, native browser execution, commit/push and exact deployment health verification are required before Step 16.
 
 Final validation passed all 2,965 tests, lint, TypeScript and production build. The migration gate retained 132 frozen files and postbuild skipped demo population. At 18:13:36 UTC, the native Edge check against the local production build passed all eleven private-page variants, retained root policy/cache behavior, and the corrected static 404. Admin controls hydrated, Android classes were preserved, nonce-authorized scripts executed, a synthetic untrusted inline script was blocked, and password-reset/callback navigation worked without unexpected CSP violations or JavaScript errors. Browser API calls were intercepted and external requests blocked. No database change is part of this step. Commit/push and exact deployed verification follow.
+
+## Step 15 delivery
+
+Step 15 was pushed as `a777507f28d3c02d67c0bfc8f2f9e4c751259f19`. [Exact Vercel deployment](https://vercel.com/ai-movie-jobs/shiftstage/2onuKyWeZbQj89EdjjRirncyjujY) succeeded. At 18:17:41 UTC, all 15 live header checks passed: eleven private pages, callback, root, API and static 404. At 18:17:47 UTC, health, protected-route denials, recovery regression and all 30 Supabase readiness checks passed. Local HEAD matched origin/main with a clean worktree before Step 16.
+
+## Step 16 implementation
+
+The CORS audit confirmed the existing no-grant application API policy and explicit-token Supabase integration. No exploitable CORS defect or justified application policy change was found. Ten regression tests preserve the framework/deployment/middleware boundaries; 36 safe production application checks and six provider preflights support the inventory. See `step-16-cors-boundaries.md`. Full tests, lint, TypeScript, production build, native browser checks and exact deployment verification must finish before Step 17.
+
+Independent releases for paused account recovery, profile styling, detached-video cleanup, scheduled-date uniqueness and uncertain media-publication recovery were reviewed and incorporated during validation. Their ownership and active-account restrictions remain. This step contributes only the CORS regression tests and audit documents; it introduces no application policy or database migration.
+
+Final combined validation on `685a53394f05c06579cfd18705651f8b1a43dc99` passed all 3,040 tests, lint, TypeScript and the production build. The migration-history gate passed and postbuild skipped demo population. At 20:48:16 UTC, native Edge verified same-origin health/account access, unreadable cross-origin responses with credentials included and omitted, blocked opaque-origin reads, and a JSON admin request stopped at preflight. No mutation reached the local application and the browser requested only owned loopback fixtures. Only the ten CORS regressions and two audit documents belong to this step. Commit/push, exact-commit Vercel success and deployed health verification follow before Step 17.
