@@ -6574,7 +6574,7 @@ body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-her
   box-sizing: border-box;
   width: 100%;
   display: grid;
-  grid-template-columns: 36px minmax(0, 1fr) 36px;
+  grid-template-columns: 44px minmax(0, 1fr) 44px;
   align-items: start;
   gap: 8px;
   padding: 6px 10px 0;
@@ -12262,4 +12262,68 @@ body.dancr-button-system .public-profile-shell .profile-media-tabs button.active
   transform: none !important;
   z-index: 2 !important;
   pointer-events: none !important;
+}
+
+/* Dancer and club profile exits share a clear, neutral close control. Keep
+ * this after the utility styles so both profiles retain the same contrast. */
+body.dancr-button-system :is(
+  #profileBackdrop #profileModal #modalClose,
+  #results.venue-profile-overlay .venue-detail .venue-detail-close,
+  .public-profile-shell .public-profile-close
+) {
+  box-sizing: border-box !important;
+  width: 44px !important;
+  min-width: 44px !important;
+  max-width: 44px !important;
+  height: 44px !important;
+  min-height: 44px !important;
+  max-height: 44px !important;
+  display: inline-grid !important;
+  place-items: center !important;
+  padding: 0 !important;
+  border: 1px solid rgba(255, 255, 255, 0.36) !important;
+  border-radius: 50% !important;
+  color: #fff !important;
+  background: #24242c !important;
+  box-shadow: none !important;
+  text-shadow: none !important;
+  opacity: 1 !important;
+  touch-action: manipulation;
+}
+
+body.dancr-button-system :is(
+  #profileBackdrop #profileModal #modalClose,
+  #results.venue-profile-overlay .venue-detail .venue-detail-close
+) .icon {
+  width: 22px !important;
+  height: 22px !important;
+  display: block !important;
+  margin: 0 !important;
+  color: #fff !important;
+  fill: none !important;
+  stroke: currentColor !important;
+  stroke-width: 2.4 !important;
+  stroke-linecap: round !important;
+  opacity: 1 !important;
+  transform: none !important;
+}
+
+body.dancr-button-system :is(
+  #profileBackdrop #profileModal #modalClose,
+  #results.venue-profile-overlay .venue-detail .venue-detail-close,
+  .public-profile-shell .public-profile-close
+):is(:hover, :focus-visible) {
+  border-color: rgba(255, 255, 255, 0.65) !important;
+  color: #fff !important;
+  background: #34343e !important;
+  box-shadow: none !important;
+}
+
+body.dancr-button-system :is(
+  #profileBackdrop #profileModal #modalClose,
+  #results.venue-profile-overlay .venue-detail .venue-detail-close:not([data-auto-focus]),
+  .public-profile-shell .public-profile-close
+):focus-visible {
+  outline: 2px solid #fff !important;
+  outline-offset: 3px !important;
 }

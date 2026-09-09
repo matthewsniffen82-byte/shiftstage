@@ -215,7 +215,7 @@ test("venue profile hierarchy stays compact and carries the restrained venue bra
   assert.match(refinement, /\.venue-main-photo \{[\s\S]*?position: relative !important;[\s\S]*?min-height: clamp\(88px, 20vw, 104px\) !important;[\s\S]*?height: clamp\(88px, 20vw, 104px\) !important;/);
   assert.match(refinement, /\.venue-detail-logo-shell \{[\s\S]*?width: calc\(100% - clamp\(82px, 22vw, 112px\)\) !important;[\s\S]*?height: calc\(100% - 6px\) !important;[\s\S]*?max-height: 96px !important;[\s\S]*?border: 0 !important;[\s\S]*?background: transparent !important;/);
   assert.match(refinement, /\.venue-detail-logo \{[\s\S]*?position: absolute !important;[\s\S]*?inset: 0 !important;[\s\S]*?width: 100% !important;[\s\S]*?height: 100% !important;[\s\S]*?max-width: 100% !important;[\s\S]*?max-height: 100% !important;[\s\S]*?object-fit: contain !important;[\s\S]*?object-position: center center !important;/);
-  assert.match(refinement, /\.venue-hero-brand-row \{[\s\S]*?display: grid;[\s\S]*?grid-template-columns: 36px minmax\(0, 1fr\) 36px;[\s\S]*?align-items: start;[\s\S]*?gap: 8px;[\s\S]*?padding: 6px 10px 0;/);
+  assert.match(refinement, /\.venue-hero-brand-row \{[\s\S]*?display: grid;[\s\S]*?grid-template-columns: 44px minmax\(0, 1fr\) 44px;[\s\S]*?align-items: start;[\s\S]*?gap: 8px;[\s\S]*?padding: 6px 10px 0;/);
   assert.match(refinement, /\.venue-hero-brand-row \.venue-detail-logo-shell \{[\s\S]*?width: 100% !important;/);
   assert.match(refinement, /@media \(max-width: 650px\) \{[\s\S]*?\.venue-hero-brand-row \.venue-detail-logo-shell \{[\s\S]*?width: 100% !important;/);
   assert.match(refinement, /\.venue-hero-body \{[\s\S]*?display: grid !important;[\s\S]*?gap: 6px !important;[\s\S]*?padding: 8px 12px 10px !important;/);
