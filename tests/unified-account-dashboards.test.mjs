@@ -514,7 +514,7 @@ test("venue Club Deal requests prevent duplicate and stale submissions", () => {
   assert.match(dealRequests, /signal: controller\.signal/);
   assert.match(dealRequests, /if \(!mountedRef\.current \|\| controller\.signal\.aborted \|\| requestId !== requestSequenceRef\.current\) return;/);
   assert.match(dealRequests, /mountedRef\.current = false;[\s\S]*?requestSequenceRef\.current \+= 1;[\s\S]*?requestAbortRef\.current\?\.abort\(\)/);
-  assert.equal((dealRequests.match(/disabled=\{isRequesting\}/g) || []).length, 2);
+  assert.equal((dealRequests.match(/disabled=\{isRequesting\}/g) || []).length, 4);
 });
 
 test("dashboard sign-in recovery prevents duplicate and stale session replacement", () => {

@@ -313,6 +313,7 @@ export async function getVenueDealsForAccount(
     .from("club_deals")
     .select(CLUB_DEAL_COLUMNS)
     .eq("venue_id", access.venueId)
+    .is("removed_at", null)
     .order("sort_order", { ascending: true })
     .order("created_at", { ascending: false });
   if (dealError) throw dealError;

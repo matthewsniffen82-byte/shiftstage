@@ -1,3 +1,4 @@
+import { isPublicVenueRow } from "./venue-public-visibility";
 import { resolveDancerProfileAlias } from "./profile-link-alias";
 import { isAllMyDancrCities } from "./markets";
 import type { SupabaseClient } from "@supabase/supabase-js";
@@ -85,7 +86,7 @@ async function getApprovedDancerRowsByCity(client: DancrClient, city: string): P
         trending_scores(rank),
         dancer_photos(id, storage_path, is_primary, review_status, sort_order, like_count, is_pinned),
         social_links(id, platform, handle, url, is_active),
-        shifts(id, shift_date, shift_source, starts_at, ends_at, timezone, status, location_status, checked_in_at, checked_out_at, location_verification_expires_at, venue_id, venues(id, name, slug, timezone, is_active))
+        shifts(id, shift_date, shift_source, starts_at, ends_at, timezone, status, location_status, checked_in_at, checked_out_at, location_verification_expires_at, venue_id, venues(id, name, slug, timezone, is_active, has_active_club_deal))
       `,
     ), cityName))
     .eq("is_public", true)
@@ -115,7 +116,7 @@ async function getApprovedDancerRowsByCity(client: DancrClient, city: string): P
           trending_scores(rank),
           dancer_photos(id, storage_path, is_primary, review_status, sort_order, like_count, is_pinned),
           social_links(id, platform, handle, url, is_active),
-          shifts(id, shift_date, shift_source, starts_at, ends_at, timezone, status, location_status, checked_in_at, checked_out_at, location_verification_expires_at, venue_id, venues(id, name, slug, timezone, is_active))
+          shifts(id, shift_date, shift_source, starts_at, ends_at, timezone, status, location_status, checked_in_at, checked_out_at, location_verification_expires_at, venue_id, venues(id, name, slug, timezone, is_active, has_active_club_deal))
         `,
       ), cityName))
       .order("stage_name", { ascending: true })
@@ -158,7 +159,7 @@ export async function getTonightShifts(client: DancrClient, city: string, now = 
         trending_scores(rank),
         dancer_photos(id, storage_path, is_primary, review_status, sort_order, like_count, is_pinned),
         social_links(id, platform, handle, url, is_active),
-        shifts!inner(id, shift_date, shift_source, starts_at, ends_at, timezone, status, location_status, checked_in_at, checked_out_at, location_verification_expires_at, venue_id, venues(id, name, slug, timezone, is_active))
+        shifts!inner(id, shift_date, shift_source, starts_at, ends_at, timezone, status, location_status, checked_in_at, checked_out_at, location_verification_expires_at, venue_id, venues(id, name, slug, timezone, is_active, has_active_club_deal))
       `,
     )
     .ilike("city", cityName))
@@ -193,7 +194,7 @@ export async function getTonightShifts(client: DancrClient, city: string, now = 
           trending_scores(rank),
           dancer_photos(id, storage_path, is_primary, review_status, sort_order, like_count, is_pinned),
           social_links(id, platform, handle, url, is_active),
-          shifts!inner(id, shift_date, shift_source, starts_at, ends_at, timezone, status, location_status, checked_in_at, checked_out_at, location_verification_expires_at, venue_id, venues(id, name, slug, timezone, is_active))
+          shifts!inner(id, shift_date, shift_source, starts_at, ends_at, timezone, status, location_status, checked_in_at, checked_out_at, location_verification_expires_at, venue_id, venues(id, name, slug, timezone, is_active, has_active_club_deal))
         `,
       )
       .ilike("city", cityName))
@@ -234,7 +235,7 @@ export async function getDancerProfile(client: DancrClient, slug: string, resolv
         is_public,
         trending_scores(rank),
         social_links(id, platform, handle, url, is_active),
-        shifts(id, shift_date, shift_source, starts_at, ends_at, timezone, status, location_status, checked_in_at, checked_out_at, location_verification_expires_at, venues(id, name, slug, timezone, is_active))
+        shifts(id, shift_date, shift_source, starts_at, ends_at, timezone, status, location_status, checked_in_at, checked_out_at, location_verification_expires_at, venues(id, name, slug, timezone, is_active, has_active_club_deal))
       `,
     )
     .eq("slug", slug))
@@ -263,7 +264,7 @@ export async function getDancerProfile(client: DancrClient, slug: string, resolv
           avatar_storage_path,
           trending_scores(rank),
           social_links(id, platform, handle, url, is_active),
-          shifts(id, shift_date, shift_source, starts_at, ends_at, timezone, status, location_status, checked_in_at, checked_out_at, location_verification_expires_at, venues(id, name, slug, timezone, is_active))
+          shifts(id, shift_date, shift_source, starts_at, ends_at, timezone, status, location_status, checked_in_at, checked_out_at, location_verification_expires_at, venues(id, name, slug, timezone, is_active, has_active_club_deal))
         `,
       )
       .eq("slug", slug))
@@ -357,6 +358,7 @@ export async function getVenueProfile(client: DancrClient, slug: string): Promis
     .select("id, slug, name, city, state, address, latitude, longitude, opens_at, closes_at, cover_image_storage_path, logo_storage_path")
     .eq("slug", slug)
     .eq("is_active", true)
+    .eq("has_active_club_deal", true)
     .maybeSingle();
 
   if (error) throw error;
@@ -384,7 +386,7 @@ export async function getVenueProfile(client: DancrClient, slug: string): Promis
 export async function getUpcomingShiftsForDancer(client: DancrClient, dancerId: string): Promise<ShiftSummary[]> {
   const { data, error } = await client
     .from("shifts")
-    .select("id, shift_date, shift_source, starts_at, ends_at, timezone, status, location_status, checked_in_at, checked_out_at, location_verification_expires_at, venue_id, venues(id, name, slug, timezone, is_active)")
+    .select("id, shift_date, shift_source, starts_at, ends_at, timezone, status, location_status, checked_in_at, checked_out_at, location_verification_expires_at, venue_id, venues(id, name, slug, timezone, is_active, has_active_club_deal)")
     .eq("dancer_id", dancerId)
     .eq("status", "posted")
     .eq("shift_source", "scheduled")
@@ -693,6 +695,7 @@ function venueCoverImageFields(
 }
 
 function isShiftPubliclyVisible(shift: any, now = Date.now()) {
+  if (!isPublicVenueRow(shift.venues)) return false;
   if (shift.checked_out_at) return false;
   if (isActiveNfcPresence(shift, now)) return true;
   return shift.shift_source === "scheduled" && new Date(shift.ends_at).getTime() >= now;

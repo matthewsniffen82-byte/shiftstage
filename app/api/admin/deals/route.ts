@@ -9,6 +9,7 @@ import {
 import { getAdminDealActivity } from "@/src/lib/dancr/deals";
 import {
   getAdminVenueClubDealRequests,
+  approveVenueClubDealRemoval,
   reviewVenueClubDealRequest,
 } from "@/src/lib/dancr/venue-deal-requests";
 import {
@@ -57,7 +58,24 @@ export async function POST(request: Request) {
     const body = await readDealAdminBody(request);
     const admin = createAdminSupabaseClient();
 
+    if (body.action === "approve_deal_removal") {
+      const dealRequest = await approveVenueClubDealRemoval(admin, {
+        requestId: typeof body.requestId === "string" ? body.requestId : "",
+        venueId: typeof body.venueId === "string" ? body.venueId : "",
+        adminUserId: user.id,
+      });
+      await resetManagedVenuePageReview(admin, user.id, dealRequest.venueId, "requested Club Deal removal approved");
+      return NextResponse.json({ ok: true, dealRequest, clubDeals: await getAdminVenueDealCatalog(admin), dealRequests: await getAdminVenueClubDealRequests(admin), session: session || null });
+    }
+
     if (body.action === "upsert_contract_deal") {
+      if (typeof body.requestId === "string" && body.requestId) {
+        const requests = await getAdminVenueClubDealRequests(admin);
+        const request = requests.find((item: { id: string }) => item.id === body.requestId);
+        if (!request || request.venueId !== body.venueId || request.requestType === "remove" || !["pending", "under_review"].includes(request.status)) {
+          return NextResponse.json({ ok: false, error: "Choose an open new-deal request for this venue." }, { status: 400 });
+        }
+      }
       const result = await upsertAdminVenueDeal(admin, {
         venueId: typeof body.venueId === "string" ? body.venueId : "",
         dealId: typeof body.dealId === "string" ? body.dealId : null,

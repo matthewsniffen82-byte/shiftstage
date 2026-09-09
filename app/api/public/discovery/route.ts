@@ -41,6 +41,7 @@ export async function GET(request: Request) {
           "id, slug, name, city, state, address, latitude, longitude, opens_at, closes_at, cover_image_storage_path, logo_storage_path",
         )
         .eq("is_active", true)
+        .eq("has_active_club_deal", true)
         .order("name", { ascending: true })
         .limit(isAllMyDancrCities(city) ? MAX_PUBLIC_VENUES * 4 : MAX_PUBLIC_VENUES);
       if (!isAllMyDancrCities(city)) venueQuery = venueQuery.eq("city", city);

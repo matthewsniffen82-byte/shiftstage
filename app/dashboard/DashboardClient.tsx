@@ -2837,7 +2837,9 @@ function VenuePanel({
   const canManageRoster = permissions.includes("manage_roster");
   const canRequestNfcSupport = permissions.includes("request_nfc_support");
   const canViewTeam = permissions.includes("view_team");
-  const isPublished = profile?.isActive === true;
+  const isApprovedPage = profile?.isActive === true;
+  const isPublished = isApprovedPage && activeDealCount > 0;
+  const isPausedForDeals = isApprovedPage && !isPublished;
   const pageReviewStatus = String(profile?.pageReviewStatus || (isPublished ? "published" : "admin_draft"));
   const isAwaitingVenueReview = !isPublished && pageReviewStatus === "venue_review";
   const venueCustomerPreviewHref = isAwaitingVenueReview && venueSlug
@@ -2845,6 +2847,7 @@ function VenuePanel({
     : "";
   const venuePageTabStatus = isPublished
     ? "Live page"
+    : isPausedForDeals ? "Hidden · no active deal"
     : pageReviewStatus === "venue_review"
       ? "Ready to review"
       : pageReviewStatus === "changes_requested"
@@ -2857,10 +2860,10 @@ function VenuePanel({
     <>
       <section className="venue-command-panel" aria-labelledby="venue-command-heading">
         <div className="venue-command-status">
-          <span className={isPublished ? "venue-live-pill" : "venue-live-pill is-draft"}>{isPublished ? "LIVE" : "PRIVATE DRAFT"}</span>
+          <span className={isPublished ? "venue-live-pill" : "venue-live-pill is-draft"}>{isPublished ? "LIVE" : isPausedForDeals ? "HIDDEN" : "PRIVATE DRAFT"}</span>
           <div>
-          <h2 id="venue-command-heading">{isPublished ? `Tonight at ${venueName}` : `Private page for ${venueName}`}</h2>
-            <p>{isPublished ? `Run the floor, deals, and dancer roster for ${venueCity} from one live workspace.` : "MyDancr prepares the venue page. Your team reviews it and approves it to make it live."}</p>
+          <h2 id="venue-command-heading">{isApprovedPage ? `Tonight at ${venueName}` : `Private page for ${venueName}`}</h2>
+            <p>{isPausedForDeals ? "Your venue is hidden until it has an active Club Deal. Your dancer roster is saved." : isPublished ? `Run the floor, deals, and dancer roster for ${venueCity} from one live workspace.` : "MyDancr prepares the venue page. Your team reviews it and approves it to make it live."}</p>
           </div>
           <div className="venue-refresh-control">
             <small>{refreshedAt ? `Updated ${formatRelativeDashboardTime(refreshedAt)}` : "Live data loading"}</small>
@@ -2930,6 +2933,7 @@ function VenuePanel({
           <h2 id="venue-publication-heading">
             {isPublished
               ? "Your venue is live on MyDancr"
+              : isPausedForDeals ? "Your venue is hidden until a deal is active"
               : pageReviewStatus === "venue_review"
                 ? "Review your prepared venue page"
                 : pageReviewStatus === "changes_requested"
@@ -2941,6 +2945,7 @@ function VenuePanel({
           <p>
             {isPublished
               ? "Guests can find this venue, its current Club Deals, and affiliated dancers."
+              : isPausedForDeals ? "Your page approval and dancer affiliations are saved. Your venue and its dancer schedules return automatically when an active Club Deal is available. Dancer profiles and TV videos stay live."
               : pageReviewStatus === "venue_review"
                 ? "Review the official venue information and commercial terms below. Preview and approval controls are at the bottom."
                 : pageReviewStatus === "changes_requested"
@@ -7795,6 +7800,8 @@ function VenueDealReadOnlyPanel({
   onDealRequestsChange: (dealRequests: Array<Record<string, unknown>>) => void;
 }) {
   const [isRequestOpen, setIsRequestOpen] = useState(false);
+  const [requestType, setRequestType] = useState<"add" | "remove">("add");
+  const [targetDealId, setTargetDealId] = useState("");
   const [requestedOfferKey, setRequestedOfferKey] = useState<string>(CLUB_DEAL_OFFER_PRESETS[0].key);
   const [requestNotes, setRequestNotes] = useState("");
   const [requestStatus, setRequestStatus] = useState("");
@@ -7844,7 +7851,7 @@ function VenueDealReadOnlyPanel({
       const data = await requestDashboardJson("/api/venue/deal-requests", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ offerKey: requestedOfferKey, requestNotes }),
+        body: JSON.stringify({ offerKey: requestedOfferKey, requestNotes, requestType, targetDealId: requestType === "remove" ? targetDealId : null }),
         expectedRole: "venue",
         fallbackMessage: "Unable to send this Club Deal request.",
         signal: controller.signal,
@@ -7863,7 +7870,7 @@ function VenueDealReadOnlyPanel({
       setIsRequestOpen(false);
       setConfirmedRequestId(confirmedId);
       setRequestStatusTone("success");
-      setRequestStatus(`MyDancr received your ${confirmedOfferTitle} request. It is saved and pending review.`);
+      setRequestStatus(`MyDancr received your ${confirmedOfferTitle}${data.dealRequest?.requestType === "remove" ? " removal" : ""} request. It is saved and pending review.`);
     } catch (error) {
       if (mountedRef.current && !controller.signal.aborted && requestId === requestSequenceRef.current) {
         setRequestStatusTone("error");
@@ -7950,42 +7957,61 @@ function VenueDealReadOnlyPanel({
       <section className="venue-deal-request-center" aria-labelledby="venue-deal-request-heading">
         <div>
           <span className="eyebrow">Deal request</span>
-          <h3 id="venue-deal-request-heading">Request another deal</h3>
-          <p>Send the offer details. MyDancr reviews the terms and publishes approved deals.</p>
+          <h3 id="venue-deal-request-heading">Request a deal change</h3>
+          <p>Ask MyDancr to add or remove a Club Deal.</p>
         </div>
         {canRequestDeals ? (
           <button
             disabled={isRequesting}
             type="button"
             onClick={() => {
-              setIsRequestOpen((current) => !current);
+              setIsRequestOpen((current) => requestType === "add" ? !current : true);
+              setRequestType("add");
               setRequestStatus("");
               setRequestStatusTone("idle");
               setConfirmedRequestId("");
             }}
           >
-            {isRequestOpen ? "Close request" : "Request a new deal"}
+            {isRequestOpen && requestType === "add" ? "Close request" : "Request a new deal"}
           </button>
-        ) : <small>Only venue owners and managers can request a new deal.</small>}
+        ) : <small>Only venue owners and managers can request deal changes.</small>}
+        {canRequestDeals && deals.length > 0 ? (
+          <button type="button" disabled={isRequesting} onClick={() => {
+            setIsRequestOpen((current) => requestType === "remove" ? !current : true);
+            setRequestType("remove");
+            setTargetDealId(String(displayedDeals[0].id));
+            setRequestStatus("");
+            setRequestStatusTone("idle");
+            setConfirmedRequestId("");
+          }}>{isRequestOpen && requestType === "remove" ? "Close removal request" : "Request deal removal"}</button>
+        ) : null}
         {isRequestOpen && canRequestDeals ? (
           <form onSubmit={submitDealRequest}>
-            <label>
+            {requestType === "remove" ? <>
+              <label>Deal to remove
+                <select value={targetDealId} required disabled={isRequesting} onChange={(event) => setTargetDealId(event.target.value)}>
+                  <option value="">Choose a deal</option>
+                  {displayedDeals.map((deal) => <option key={String(deal.id)} value={String(deal.id)}>{String(deal.dealTitle)}{deal.isActive === true ? "" : " (inactive)"}</option>)}
+                </select>
+              </label>
+              <p>{liveDeals.length === 1 && String(liveDeals[0].id) === targetDealId ? "Removing your last active deal hides your venue and its dancer schedules from the site. Dancer profiles and TV videos stay live, and affiliations are saved. Your venue returns when a deal is active again." : "MyDancr reviews the removal request. Your current deals stay unchanged until approval."}</p>
+            </> : <label>
               Requested offer
               <select value={requestedOfferKey} onChange={(event) => setRequestedOfferKey(event.target.value)}>
                 {CLUB_DEAL_OFFER_PRESETS.map((offer) => <option value={offer.key} key={offer.key}>{offer.title}</option>)}
               </select>
-            </label>
+            </label>}
             <label>
               Notes (optional)
               <textarea
                 maxLength={1000}
                 onChange={(event) => setRequestNotes(event.target.value)}
-                placeholder="Dates, hours, exclusions, or other details"
+                placeholder={requestType === "remove" ? "Reason for removal or other details" : "Dates, hours, exclusions, or other details"}
                 rows={4}
                 value={requestNotes}
               />
             </label>
-            <button className="primary" disabled={isRequesting} type="submit">{isRequesting ? "Sending…" : "Send request to MyDancr"}</button>
+            <button className="primary" disabled={isRequesting} type="submit">{isRequesting ? "Sending…" : requestType === "remove" ? "Send removal request to MyDancr" : "Send request to MyDancr"}</button>
           </form>
         ) : null}
         {requestStatus ? (
@@ -8006,7 +8032,7 @@ function VenueDealReadOnlyPanel({
             {dealRequests.map((dealRequest) => (
               <article className={String(dealRequest.id) === confirmedRequestId ? "is-confirmed" : ""} key={String(dealRequest.id)}>
                 <div>
-                  <strong>{String(dealRequest.offerTitle || "Club Deal request")}</strong>
+                  <strong>{dealRequest.requestType === "remove" ? "Remove: " : ""}{String(dealRequest.offerTitle || "Club Deal request")}</strong>
                   <small>{formatDashboardDate(String(dealRequest.createdAt || ""))}</small>
                 </div>
                 <span data-status={String(dealRequest.status || "pending")}>{dealRequestStatusLabel(String(dealRequest.status || "pending"))}</span>

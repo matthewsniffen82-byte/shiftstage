@@ -199,6 +199,10 @@ for (const [key, method] of [
   });
   let inserted = [];
   const client = { from(table) {
+    if (table === "venues") {
+      const query = { select: () => query, eq: () => query, maybeSingle: async () => ({ data: { id: "club" }, error: null }) };
+      return query;
+    }
     const records = {
       follows: ["yes", "no", "paused", "inactive"].map(customer_id => ({ customer_id })),
       venue_follows: ["yes", "no", "paused", "inactive"].map(customer_id => ({ customer_id })),

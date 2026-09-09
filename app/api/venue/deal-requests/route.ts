@@ -39,6 +39,8 @@ export async function POST(request: Request) {
     const dealRequest = await createVenueClubDealRequest(admin, {
       venueId: access.venueId,
       requestedByUserId: auth.user.id,
+      requestType: typeof body.requestType === "string" ? body.requestType : "add",
+      targetDealId: typeof body.targetDealId === "string" ? body.targetDealId : null,
       offerKey: typeof body.offerKey === "string" ? body.offerKey : "",
       requestNotes: typeof body.requestNotes === "string" ? body.requestNotes : null,
     });
@@ -49,8 +51,8 @@ export async function POST(request: Request) {
       action: "deal.requested",
       targetType: "club_deal_request",
       targetId: dealRequest.id,
-      summary: `${dealRequest.offerTitle} was requested for MyDancr contract review.`,
-      metadata: { offerKey: dealRequest.offerKey },
+      summary: `${dealRequest.requestType === "remove" ? "Removal of " : ""}${dealRequest.offerTitle} was requested for MyDancr review.`,
+      metadata: { offerKey: dealRequest.offerKey, requestType: dealRequest.requestType, targetDealId: dealRequest.targetDealId },
     });
     const requests = await getVenueClubDealRequests(admin, access.venueId);
     console.info("VENUE_CLUB_DEAL_REQUESTED", {

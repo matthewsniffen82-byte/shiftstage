@@ -34,6 +34,7 @@ export async function getAdminVenueDealCatalog(client: DancrClient) {
   const { data, error } = await (client as any)
     .from("club_deals")
     .select(`${CLUB_DEAL_COLUMNS}, venues(id, name, slug, city, state)`)
+    .is("removed_at", null)
     .order("created_at", { ascending: false })
     .limit(1000);
   if (error) throw error;
@@ -77,6 +78,7 @@ export async function upsertAdminVenueDeal(
     deal_description: fields.dealDescription,
     deal_terms: fields.dealTerms,
     is_active: Boolean(input.isActive),
+    removed_at: null,
     redemption_rules: {
       one_per_guest: true,
       authenticated_venue_confirmation_required: true,

@@ -23,6 +23,7 @@ export async function broadcastFollowedDancerUpcomingShift(
   client: DancrClient,
   input: FollowNotificationInput & { shiftDate: string },
 ) {
+  if (!await isVenueListed(client, input.venueId)) return 0;
   const recipientIds = await followedCustomerIds(client, "follows", "dancer_id", input.dancerId || "", "upcomingShifts");
   return persistAndDeliver(client, recipientIds, input, {
     notificationType: "shift_posted",
@@ -37,6 +38,7 @@ export async function broadcastFollowedDancerWorkingNow(
   client: DancrClient,
   input: FollowNotificationInput,
 ) {
+  if (!await isVenueListed(client, input.venueId)) return 0;
   const recipientIds = await followedCustomerIds(client, "follows", "dancer_id", input.dancerId || "", "workingNow");
   return persistAndDeliver(client, recipientIds, input, {
     notificationType: "shift_updated",
@@ -50,6 +52,7 @@ export async function broadcastFollowedClubDealPublished(
   client: DancrClient,
   input: FollowNotificationInput & { dealTitle: string },
 ) {
+  if (!await isVenueListed(client, input.venueId)) return 0;
   const recipientIds = await followedCustomerIds(client, "venue_follows", "venue_id", input.venueId, "clubDeals");
   return persistAndDeliver(client, recipientIds, input, {
     notificationType: "engagement",
@@ -63,6 +66,7 @@ export async function broadcastFollowedClubRosterAddition(
   client: DancrClient,
   input: FollowNotificationInput,
 ) {
+  if (!await isVenueListed(client, input.venueId)) return 0;
   const recipientIds = await followedCustomerIds(client, "venue_follows", "venue_id", input.venueId, "newDancers");
   return persistAndDeliver(client, recipientIds, input, {
     notificationType: "engagement",
@@ -70,6 +74,13 @@ export async function broadcastFollowedClubRosterAddition(
     body: `${input.stageName} was added to ${input.venueName}'s dancer roster.`,
     kind: "followed_club_roster_addition",
   });
+}
+
+async function isVenueListed(client: DancrClient, venueId: string) {
+  const { data, error } = await client.from("venues").select("id")
+    .eq("id", venueId).eq("is_active", true).eq("has_active_club_deal", true).maybeSingle();
+  if (error) throw error;
+  return Boolean(data);
 }
 
 async function followedCustomerIds(

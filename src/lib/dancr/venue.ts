@@ -433,7 +433,7 @@ export function getVenuePublicationState(
   ];
   const completedCount = requirements.filter((requirement) => requirement.complete).length;
   return {
-    isPublished: profile.isActive,
+    isPublished: profile.isActive && deals.some((deal) => deal.isActive),
     isReady: completedCount === requirements.length,
     workflowStatus: profile.pageReviewStatus,
     canVenueReview: !profile.isActive && profile.pageReviewStatus === "venue_review",

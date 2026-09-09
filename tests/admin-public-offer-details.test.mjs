@@ -28,7 +28,7 @@ function database() {
   let writes = 0;
   return { get writes() { return writes; }, from(table) {
     const query = {
-      select(){ return this; }, eq(){return this;},gt(){return this;},order(){return this;},
+      select(){ return this; }, eq(){return this;},is(){return this;},gt(){return this;},order(){return this;},
       async maybeSingle(){return {data: table === 'venues' ? {id:venueId,name:'Club B'} : row,error:null};},
       insert(value){writes++;row={...value,id:dealId};return this;},
       update(value){writes++;row={...row,...value};return this;},

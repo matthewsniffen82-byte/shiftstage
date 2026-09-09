@@ -1,3 +1,4 @@
+import { isPublicVenueRow } from "./venue-public-visibility";
 import { isAllMyDancrCities } from "./markets";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createDancerDealAttributionToken } from "./deal-attribution";
@@ -144,6 +145,7 @@ export async function getPublicMyDancrTvVenue(
     .select("id, slug, name, city")
     .eq("id", venueId)
     .eq("is_active", true)
+    .eq("has_active_club_deal", true)
     .maybeSingle();
 
   if (error) throw error;
@@ -457,11 +459,12 @@ async function getPublicTvVenueScope(
   const shiftResult = await admin
     .from("shifts")
     .select(
-      "dancer_id, shift_date, shift_source, starts_at, ends_at, status, location_status, checked_in_at, checked_out_at, location_verification_expires_at, venues!inner(id, is_active)",
+      "dancer_id, shift_date, shift_source, starts_at, ends_at, status, location_status, checked_in_at, checked_out_at, location_verification_expires_at, venues!inner(id, is_active, has_active_club_deal)",
     )
     .eq("venue_id", venueId)
     .eq("status", "posted")
     .eq("venues.is_active", true)
+    .eq("venues.has_active_club_deal", true)
     .is("checked_out_at", null)
     .gte("ends_at", new Date(now).toISOString())
     .order("starts_at", { ascending: true })
@@ -497,11 +500,12 @@ async function getPublicTvShiftContexts(
   let query = admin
     .from("shifts")
     .select(
-      "id, dancer_id, shift_date, shift_source, starts_at, ends_at, timezone, status, location_status, checked_in_at, checked_out_at, location_verification_expires_at, venues!inner(id, slug, name, city, is_active)",
+      "id, dancer_id, shift_date, shift_source, starts_at, ends_at, timezone, status, location_status, checked_in_at, checked_out_at, location_verification_expires_at, venues!inner(id, slug, name, city, is_active, has_active_club_deal)",
     )
     .in("dancer_id", uniqueDancerIds)
     .eq("status", "posted")
     .eq("venues.is_active", true)
+    .eq("venues.has_active_club_deal", true)
     .is("checked_out_at", null)
     .gte("ends_at", new Date(now).toISOString())
     .order("starts_at", { ascending: true })
@@ -519,7 +523,7 @@ async function getPublicTvShiftContexts(
     const end = new Date(row.ends_at).getTime();
     const isActive = isConfirmedActiveTvShift(row, now);
     const isScheduled = row.shift_source === "scheduled" && Number.isFinite(start) && Number.isFinite(end) && end >= now;
-    if (!venue || (!isActive && !isScheduled)) continue;
+    if (!venue || !isPublicVenueRow(venue) || (!isActive && !isScheduled)) continue;
 
     const candidate: PublicTvShiftContext = {
       venue: {

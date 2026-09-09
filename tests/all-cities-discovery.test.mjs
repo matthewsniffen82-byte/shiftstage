@@ -196,8 +196,9 @@ test('combined club ranking uses each venue city for hours and lineup', () => {
 
 test('public venue API combines active cities and preserves a single-city query', async () => {
   const client = queryFixture([
-    { id: 'vegas', name: 'The Club', city: 'Las Vegas', is_active: true },
-    { id: 'miami', name: 'The Club', city: 'Miami', is_active: true },
+    { id: 'vegas', name: 'The Club', city: 'Las Vegas', is_active: true, has_active_club_deal: true },
+    { id: 'miami', name: 'The Club', city: 'Miami', is_active: true, has_active_club_deal: true },
+    { id: 'paused', name: 'Paused Club', city: 'Miami', is_active: true, has_active_club_deal: false },
     { id: 'inactive', city: 'Atlanta', is_active: false },
   ]);
   const exports = {};

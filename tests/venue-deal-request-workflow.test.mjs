@@ -45,7 +45,7 @@ test("venue owners and managers can request but cannot publish contract deals", 
   assert.match(venueLedger, /venue-deal-request-feedback is-\$\{requestStatusTone\}/);
   assert.match(venueLedger, /requestStatusTone === "error" \? "alert" : "status"/);
   assert.match(venueLedger, /Club Deal request history/);
-  assert.match(venueLedger, /Only venue owners and managers can request a new deal/);
+  assert.match(venueLedger, /Only venue owners and managers can request deal changes/);
   assert.doesNotMatch(venueLedger, /Publish contract deal/);
   assert.match(dashboardRoute, /getVenueClubDealRequests/);
 });

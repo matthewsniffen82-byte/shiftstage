@@ -1652,6 +1652,29 @@ function AdminClubDealManager({
     }
   }
 
+  async function approveDealRemoval(dealRequest: Record<string, unknown>) {
+    const request = beginDealAction();
+    if (!request) return;
+    setIsSaving(true);
+    setStatus("Approving Club Deal removal…");
+    try {
+      const data = await requestAdminJson("/api/admin/deals", {
+        method: "POST", signal: request.controller.signal,
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ action: "approve_deal_removal", requestId: asText(dealRequest.id), venueId: asText(dealRequest.venueId) }),
+        fallbackMessage: "Unable to approve this removal request.",
+      });
+      if (!isCurrentDealAction(request)) return;
+      onClubDealsChange(data.clubDeals || []);
+      onDealRequestsChange(data.dealRequests || []);
+      if (dealId === asText(dealRequest.targetDealId)) resetEditor();
+      setStatus("Removal approved. The Club Deal is no longer available to guests.");
+      onActionConfirmed("Club Deal removal approved.");
+    } catch (error) {
+      if (isCurrentDealAction(request)) setStatus(error instanceof Error ? error.message : "Unable to approve this removal request.");
+    } finally { finishDealAction(request); }
+  }
+
   return (
     <section className="operations-center admin-club-deal-manager" aria-labelledby={`admin-club-deal-manager-heading-${scopedVenueId || "all"}`}>
       <Panel title="Contract Club Deals" badge={`${(scopedVenueId ? venueDeals : clubDeals).filter((deal) => deal.isActive === true).length} live`} defaultOpen={Boolean(scopedVenueId)}>
@@ -1666,11 +1689,12 @@ function AdminClubDealManager({
           {openDealRequests.map((dealRequest) => (
             <article key={asText(dealRequest.id)}>
               <div>
-                <strong>{asText((dealRequest.venue as Record<string, unknown> | null)?.name) || "Venue"} · {asText(dealRequest.offerTitle)}</strong>
+                <strong>{asText((dealRequest.venue as Record<string, unknown> | null)?.name) || "Venue"} · {dealRequest.requestType === "remove" ? "Remove: " : ""}{asText(dealRequest.offerTitle)}</strong>
                 <small>{asText(dealRequest.requestNotes) || "No additional contract notes."}</small>
+                {dealRequest.requestType === "remove" && clubDeals.some((deal) => deal.id === dealRequest.targetDealId && deal.isActive === true) && clubDeals.filter((deal) => deal.venueId === dealRequest.venueId && deal.isActive === true).length === 1 ? <small>Removing the last active deal hides this venue. Dancer profiles, videos, and saved affiliations remain active.</small> : null}
               </div>
               <span>{dealRequest.status === "under_review" ? "Under review" : "New request"}</span>
-              <button type="button" disabled={isSaving} onClick={() => prepareDealRequest(dealRequest)}>Prepare deal</button>
+              {dealRequest.requestType === "remove" ? <button type="button" disabled={isSaving} onClick={() => void approveDealRemoval(dealRequest)}>Approve removal</button> : <button type="button" disabled={isSaving} onClick={() => prepareDealRequest(dealRequest)}>Prepare deal</button>}
               <button className="danger-action" type="button" disabled={isSaving} onClick={() => void rejectDealRequest(dealRequest)}>Reject</button>
             </article>
           ))}

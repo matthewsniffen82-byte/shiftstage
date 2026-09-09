@@ -27,6 +27,7 @@ export async function GET(_request: Request, context: RouteContext) {
         .select("id, dancer_id, shift_date, shift_source, starts_at, ends_at, timezone, status, venues!inner(slug, is_active), dancer_profiles(id, slug, stage_name, status, approved_at, venue_approved_at, disabled_at, verification_status, photo_review_status, is_public)")
         .eq("venues.slug", slug)
         .eq("venues.is_active", true)
+        .eq("venues.has_active_club_deal", true)
         .eq("status", "posted")
         .eq("shift_source", "scheduled")
         .gte("ends_at", new Date().toISOString())

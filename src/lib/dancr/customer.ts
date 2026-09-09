@@ -1,3 +1,4 @@
+import { isPublicVenueRow } from "./venue-public-visibility";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { isApprovedPublicDancerRow } from "./public";
 import { responsivePublicImage } from "./responsive-image";
@@ -83,7 +84,7 @@ export async function getCustomerSavedClubDeals(client: DancrClient, customerId:
   const { data, error } = await (client as any)
     .from("customer_deal_saves")
     .select(
-      "club_deal_id, source_type, dancer_id, created_at, club_deals(id, venue_id, deal_title, deal_description, deal_terms, is_active, valid_days, valid_start_time, valid_end_time, offer_type, venues(id, slug, name, city, state, address, latitude, longitude, is_active, cover_image_storage_path))",
+      "club_deal_id, source_type, dancer_id, created_at, club_deals(id, venue_id, deal_title, deal_description, deal_terms, is_active, valid_days, valid_start_time, valid_end_time, offer_type, venues(id, slug, name, city, state, address, latitude, longitude, is_active, has_active_club_deal, cover_image_storage_path))",
     )
     .eq("customer_id", customerId)
     .order("created_at", { ascending: false })
@@ -357,7 +358,7 @@ async function getFavoriteDancers(client: DancrClient, customerId: string) {
 async function getFollowedVenues(client: DancrClient, customerId: string) {
   const { data, error } = await client
     .from("venue_follows")
-    .select("venue_id, notifications_enabled, created_at, venues(id, slug, name, city, state, address, latitude, longitude, is_active, cover_image_storage_path, logo_storage_path)")
+    .select("venue_id, notifications_enabled, created_at, venues(id, slug, name, city, state, address, latitude, longitude, is_active, has_active_club_deal, cover_image_storage_path, logo_storage_path)")
     .eq("customer_id", customerId)
     .order("created_at", { ascending: false });
 
@@ -375,7 +376,7 @@ async function getGoingShifts(client: DancrClient, customerId: string) {
   const current = await client
     .from("going_signals")
     .select(
-      "shift_id, created_at, shifts(id, starts_at, ends_at, timezone, status, dancer_profiles(id, slug, stage_name, city, status, verification_status, venue_approved_at, is_public, avatar_storage_path, dancer_photos(storage_path, is_primary, review_status, sort_order)), venues(id, slug, name, city, state, address, latitude, longitude, is_active, cover_image_storage_path))",
+      "shift_id, created_at, shifts(id, starts_at, ends_at, timezone, status, dancer_profiles(id, slug, stage_name, city, status, verification_status, venue_approved_at, is_public, avatar_storage_path, dancer_photos(storage_path, is_primary, review_status, sort_order)), venues(id, slug, name, city, state, address, latitude, longitude, is_active, has_active_club_deal, cover_image_storage_path))",
     )
     .eq("customer_id", customerId)
     .order("created_at", { ascending: false });
@@ -387,7 +388,7 @@ async function getGoingShifts(client: DancrClient, customerId: string) {
     const legacy = await client
       .from("going_signals")
       .select(
-        "shift_id, created_at, shifts(id, starts_at, ends_at, timezone, status, dancer_profiles(id, slug, stage_name, city, status, avatar_storage_path, dancer_photos(storage_path, is_primary, review_status, sort_order)), venues(id, slug, name, city, state, address, latitude, longitude, is_active, cover_image_storage_path))",
+        "shift_id, created_at, shifts(id, starts_at, ends_at, timezone, status, dancer_profiles(id, slug, stage_name, city, status, avatar_storage_path, dancer_photos(storage_path, is_primary, review_status, sort_order)), venues(id, slug, name, city, state, address, latitude, longitude, is_active, has_active_club_deal, cover_image_storage_path))",
       )
       .eq("customer_id", customerId)
       .order("created_at", { ascending: false });
@@ -462,7 +463,7 @@ async function getSavedDancerSchedules(client: DancrClient, dancerIds: string[])
 
   const { data, error } = await client
     .from("shifts")
-    .select("id, dancer_id, shift_date, shift_source, starts_at, ends_at, timezone, status, location_status, checked_in_at, checked_out_at, location_verification_expires_at, venues(id, slug, name, city, state, address, latitude, longitude, is_active, cover_image_storage_path)")
+    .select("id, dancer_id, shift_date, shift_source, starts_at, ends_at, timezone, status, location_status, checked_in_at, checked_out_at, location_verification_expires_at, venues(id, slug, name, city, state, address, latitude, longitude, is_active, has_active_club_deal, cover_image_storage_path)")
     .in("dancer_id", dancerIds)
     .eq("status", "posted")
     .gt("ends_at", new Date().toISOString())
@@ -530,7 +531,7 @@ function savedDancerImageSummary(client: DancrClient, dancer: any) {
 
 function toVenueSummary(client: DancrClient, value: any) {
   const venue = single(value);
-  if (!venue || venue.is_active === false) return null;
+  if (!isPublicVenueRow(venue)) return null;
   const image = responsivePublicImage(client, "venue-cover-images", venue.cover_image_storage_path);
   const logo = responsivePublicImage(client, "venue-logo-images", venue.logo_storage_path);
 

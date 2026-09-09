@@ -19,8 +19,8 @@ test("admin deal routes delegate every settlement and fraud write to one boundar
 
 test("admin deal operations share the refresh-aware role-isolated request boundary", () => {
   assert.equal((route.match(/const \{ client, session, user \} = await createRequestSupabaseContext\(request\)/g) || []).length, 3);
-  assert.equal((route.match(/session: session \|\| null/g) || []).length, 6);
-  assert.equal((adminClient.match(/requestAdminJson\((?:"|`)\/api\/admin\/deals/g) || []).length, 6);
+  assert.equal((route.match(/session: session \|\| null/g) || []).length, 7);
+  assert.equal((adminClient.match(/requestAdminJson\((?:"|`)\/api\/admin\/deals/g) || []).length, 7);
   assert.doesNotMatch(adminClient, /fetch\((?:"|`)\/api\/admin\/deals/);
 });
 
@@ -30,8 +30,8 @@ test("admin contract deal writes are abortable and serialized", () => {
   assert.match(manager, /if \(!mountedRef\.current \|\| actionInFlightRef\.current\) return null;/);
   assert.match(manager, /function isCurrentDealAction/);
   assert.match(manager, /function finishDealAction/);
-  assert.equal((manager.match(/const request = beginDealAction\(\)/g) || []).length, 3);
-  assert.equal((manager.match(/signal: request\.controller\.signal/g) || []).length, 3);
+  assert.equal((manager.match(/const request = beginDealAction\(\)/g) || []).length, 4);
+  assert.equal((manager.match(/signal: request\.controller\.signal/g) || []).length, 4);
 });
 
 test("admin deal activity rejects stale filters and serializes financial mutations", () => {
