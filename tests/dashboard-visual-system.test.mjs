@@ -96,7 +96,7 @@ test("venue dashboard uses one state-aware three-destination workspace", () => {
   );
   assert.match(venuePanel, /function openVenueSection[\s\S]*?section\.open = true[\s\S]*?scrollIntoView/);
   assert.doesNotMatch(venuePanel, /<DashboardSection\s+defaultOpen[\s\S]*?id="venue-overview"/);
-  assert.match(routedDashboards, /\.venue-workspace-tabs \{ position: sticky;[\s\S]*?grid-template-columns: repeat\(3/);
+  assert.match(routedDashboards, /\.venue-workspace-tabs \{ display: grid; grid-template-columns: repeat\(3/);
   assert.match(routedDashboards, /\.venue-workspace-tabs button\.active \{[^}]*?linear-gradient/);
   assert.match(routedDashboards, /\.venue-workspace-summary\[hidden\][\s\S]*?\.venue-dashboard-section\[hidden\] \{ display: none !important; \}/);
   assert.match(routedDashboards, /\.venue-dashboard-metrics \{ display: grid; grid-template-columns: repeat\(3/);

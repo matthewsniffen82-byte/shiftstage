@@ -8380,7 +8380,7 @@ function DashboardStyles() {
       .venue-review-request textarea:focus { border-color: #7c3aed; outline: 2px solid rgba(124,58,237,.22); outline-offset: 1px; }
       .venue-review-request button { width: fit-content; min-height: 42px; padding: 0 14px; border: 1px solid rgba(255,255,255,.16); border-radius: 9px; color: #f8fafc; background: #17171d; font: inherit; font-weight: 900; }
       .venue-review-request button:disabled { opacity: .45; cursor: not-allowed; }
-      .venue-workspace-tabs { position: sticky; z-index: 30; top: max(8px, env(safe-area-inset-top)); display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 5px; padding: 5px; border: 1px solid rgba(255,255,255,.12); border-radius: 16px; background: rgba(7,7,11,.94); box-shadow: 0 16px 38px rgba(0,0,0,.42); backdrop-filter: blur(18px); }
+      .venue-workspace-tabs { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 5px; padding: 5px; border: 1px solid rgba(255,255,255,.12); border-radius: 16px; background: rgba(7,7,11,.94); box-shadow: 0 16px 38px rgba(0,0,0,.42); backdrop-filter: blur(18px); }
       .venue-workspace-tabs button { min-width: 0; min-height: 78px; display: grid; align-content: center; gap: 4px; padding: 8px 9px; border: 0; border-radius: 11px; color: #a9a3b3; background: transparent; font: inherit; text-align: center; cursor: pointer; }
       .venue-workspace-tabs button:hover { color: #fff; background: rgba(255,255,255,.045); }
       .venue-workspace-tabs button:focus-visible { outline: 2px solid #a78bfa; outline-offset: -2px; }
@@ -9770,7 +9770,7 @@ function DashboardStyles() {
         .venue-review-package-heading { grid-template-columns: 60px minmax(0,1fr); gap: 11px; }
         .venue-review-logo { width: 60px; height: 60px; border-radius: 14px; }
         .venue-review-package dl > div { grid-template-columns: 1fr; gap: 4px; }
-        .venue-workspace-tabs { top: max(6px,env(safe-area-inset-top)); gap: 3px; padding: 4px; border-radius: 14px; }
+        .venue-workspace-tabs { gap: 3px; padding: 4px; border-radius: 14px; }
         .venue-workspace-tabs button { min-height: 76px; padding-inline: 5px; }
         .venue-workspace-tabs strong { font-size: 12px; }
         .venue-workspace-tabs small { font-size: 8px; }
