@@ -9,7 +9,7 @@ const live = read("outputs/index.html");
 const actions = read("app/dancers/[slug]/DancerProfileActions.tsx");
 
 test("selected actions stay neutral without changing their state or accessible labels", () => {
-  assert.match(css, /\[aria-pressed="true"\] \{\s*border-color: #737373 !important/);
+  assert.match(css, /\[aria-pressed="true"\] \{\s*--profile-action-border: #737373/);
   assert.match(css, /\[aria-pressed="true"\][^{}]+> svg \{\s*color: #FFFFFF !important/);
   assert.match(actions, /saved\.following \? "Following" : "Follow"/);
   assert.match(actions, /isGoing \? "Going" : "I’m Going"/);
@@ -19,10 +19,10 @@ test("selected actions stay neutral without changing their state or accessible l
 });
 
 test("profile actions use restrained charcoal materials without green, gradients, or glow", () => {
-  assert.match(css, /border: 1px solid #353535 !important/);
+  assert.match(css, /--profile-action-border: #353535/);
   assert.match(css, /border-radius: 8px !important/);
   assert.match(css, /color: #FFFFFF !important/);
-  assert.match(css, /background: #191919 !important/);
+  assert.match(css, /--profile-action-background: #191919/);
   assert.match(css, /appearance: none !important/);
   assert.match(css, /outline: 2px solid #FFFFFF !important/);
   assert.doesNotMatch(css, /linear-gradient|radial-gradient|drop-shadow|#4dec9d|#22c55e/i);
@@ -40,6 +40,7 @@ test("compact action layout is shared by live, routed, and dashboard-preview pro
 test("layout keeps inline icons, equal primary widths, and a same-height square share control", () => {
   assert.doesNotThrow(() => postcss.parse(css));
   assert.match(css, /--profile-action-height: 44px/);
+  assert.match(css, /--profile-action-face-inset: 3px/);
   assert.match(css, /flex: 1 1 0 !important/);
   assert.match(css, /flex: 0 0 var\(--profile-action-height\) !important/);
   assert.match(css, /height: var\(--profile-action-height\) !important/);
