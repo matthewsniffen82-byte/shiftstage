@@ -8,6 +8,7 @@ import { homeDiscoveryHref } from "@/src/lib/dancr/navigation";
 import { safeSocialProfileUrl } from "@/src/lib/dancr/social-profile-url";
 import { phoneTapCopy } from "@/src/lib/dancr/phone-tap-copy";
 import { payoutCopy } from "@/src/lib/dancr/payout-copy";
+import { findAvailableMyDancrCity, MYDANCR_AVAILABLE_CITIES } from "@/src/lib/dancr/markets";
 import {
   CLUB_DEAL_OFFER_PRESETS,
   defaultClubDealOfferPreset,
@@ -3436,13 +3437,15 @@ function VenueManager({
     event.preventDefault();
     const venueId = asText(venue.id);
     const form = new FormData(event.currentTarget);
-    const body = Object.fromEntries(["name", "address", "city", "state", "latitude", "longitude", "phone", "website", "timezone", "opensAt", "closesAt"]
+    const cityOnly = venue.is_active !== false;
+    const fields = cityOnly ? ["city"] : ["name", "address", "city", "state", "latitude", "longitude", "phone", "website", "timezone", "opensAt", "closesAt"];
+    const body = Object.fromEntries(fields
       .map((key) => [key, String(form.get(key) || "").trim()]));
     const action = beginVenueAction();
     if (!action) return;
     try {
       setBusyVenueId(venueId);
-      setVenueStatus(venueId, "Saving private venue page...");
+      setVenueStatus(venueId, cityOnly ? "Updating venue city..." : "Saving private venue page...");
       const data = await requestAdminJson("/api/admin/venues", {
         method: "PATCH",
         signal: action.controller.signal,
@@ -3454,7 +3457,7 @@ function VenueManager({
       if (!data.venue) throw new Error("Unable to save venue page.");
       mergeVenue(venueId, data.venue);
       setUnsavedByVenue(current => ({ ...current, [venueId]: false }));
-      setVenueStatus(venueId, "Private page saved. Complete the remaining items before sending it for approval.");
+      setVenueStatus(venueId, cityOnly ? "Venue city updated." : "Private page saved. Complete the remaining items before sending it for approval.");
     } catch (error) {
       if (!isCurrentVenueAction(action)) return;
       setVenueStatus(venueId, error instanceof Error ? error.message : "Unable to save venue page.");
@@ -3641,6 +3644,7 @@ function VenueManager({
         {visibleVenues.map((venue) => {
           const venueId = asText(venue.id);
           const activeCode = activeCodeForVenue(venueId);
+          const availableCity = findAvailableMyDancrCity(venue.city);
           const registration = asRecordObject(venue.signup_request);
           const connectedManager = Boolean(asText(venue.owner_user_id || venue.ownerUserId));
           const isActive = venue.is_active !== false;
@@ -3648,7 +3652,7 @@ function VenueManager({
           const commercialDirty = commercialStates[venueId + ":fee"]?.dirty || commercialStates[venueId + ":deal"]?.dirty;
           const commercialBusy = commercialStates[venueId + ":fee"]?.busy || commercialStates[venueId + ":deal"]?.busy;
           const requirements = [
-            { label: "Venue details", complete: Boolean(asText(venue.name) && asText(venue.address) && asText(venue.city) && asText(venue.state)) },
+            { label: "Venue details", complete: Boolean(asText(venue.name) && asText(venue.address) && availableCity && asText(venue.state)) },
             { label: "Map coordinates", complete: validAdminCoordinate(venue.latitude, -90, 90) !== null && validAdminCoordinate(venue.longitude, -180, 180) !== null },
             { label: "Public phone", complete: Boolean(asText(venue.phone)) },
             { label: "Venue hours", complete: Boolean(asText(venue.opens_at) && asText(venue.closes_at)) },
@@ -3714,7 +3718,13 @@ function VenueManager({
                 }}>
                   <label>Venue name<input name="name" defaultValue={asText(venue.name)} required readOnly={isActive || controlsBusy} /></label>
                   <label>Public address<input name="address" defaultValue={asText(venue.address)} readOnly={isActive || controlsBusy} /></label>
-                  <label>City<input name="city" defaultValue={asText(venue.city)} required readOnly={isActive || controlsBusy} /></label>
+                  <label>City
+                    <select name="city" defaultValue={availableCity || ""} required disabled={controlsBusy}>
+                      <option value="" disabled>Select an available city</option>
+                      {MYDANCR_AVAILABLE_CITIES.map(city => <option key={city} value={city}>{city}</option>)}
+                    </select>
+                    {!availableCity && asText(venue.city) ? <small>The submitted city, {asText(venue.city)}, is unavailable. Select an available city.</small> : null}
+                  </label>
                   <label>State<input name="state" defaultValue={asText(venue.state)} readOnly={isActive || controlsBusy} /></label>
                   <label>Latitude<input name="latitude" defaultValue={asText(venue.latitude)} inputMode="decimal" max="90" min="-90" readOnly={isActive || controlsBusy} step="any" type="number" /></label>
                   <label>Longitude<input name="longitude" defaultValue={asText(venue.longitude)} inputMode="decimal" max="180" min="-180" readOnly={isActive || controlsBusy} step="any" type="number" /></label>
@@ -3723,7 +3733,7 @@ function VenueManager({
                   <label>Time zone<input name="timezone" defaultValue={asText(venue.timezone) || "America/Los_Angeles"} required readOnly={isActive || controlsBusy} /></label>
                   <label>Opens<input name="opensAt" defaultValue={asText(venue.opens_at).slice(0, 5)} readOnly={isActive || controlsBusy} type="time" /></label>
                   <label>Closes<input name="closesAt" defaultValue={asText(venue.closes_at).slice(0, 5)} readOnly={isActive || controlsBusy} type="time" /></label>
-                  {isActive ? <small>Published venue details are locked here. Hide the venue before replacing its approved public page.</small> : null}
+                  {isActive ? <small>Admins can update the city here. Hide the venue to edit its other public details.</small> : null}
                 </form>
                 <div className="venue-page-media-admin">
                   {(["logo", "cover"] as const).map((kind) => {
@@ -3761,14 +3771,14 @@ function VenueManager({
                     <strong>Preview the completed customer experience, then send it to the venue.</strong>
                     <p>The preview uses the same venue-page renderer the manager will review and customers will see after approval.</p>
                   </div>
-                  {!isActive ? <button className="secondary-action" type="submit" form={`venue-page-editor-${venueId}`} disabled={controlsBusy}>{busyVenueId === venueId ? "Saving..." : "Save progress"}</button> : null}
+                  <button className="secondary-action" type="submit" form={`venue-page-editor-${venueId}`} disabled={controlsBusy || (isActive && !unsavedByVenue[venueId])}>{busyVenueId === venueId ? "Saving..." : isActive ? "Save city" : "Save progress"}</button>
                   {!isActive ? <small>Save an unfinished private page at any time. Send it for approval when every requirement is complete.</small> : null}
                   {statusByVenue[venueId] ? <p className="venue-status" role="status" aria-live="polite">{statusByVenue[venueId]}</p> : null}
                   <a className="venue-page-preview-action" href={venuePagePreviewHref(venue)} rel="noopener noreferrer" target="_blank">Preview full customer page</a>
                   {!isActive && reviewStatus !== "venue_approved" ? (
                     <button type="button" disabled={controlsBusy || Boolean(commercialBusy || commercialDirty || unsavedByVenue[venueId]) || !isReady || !connectedManager} onClick={() => void sendVenuePageForReview(venue)}>{reviewStatus === "venue_review" ? "Resend venue review" : "Send for approval"}</button>
                   ) : null}
-                  {commercialDirty ? <small>Save the Club Deal and agreement edits in their sections before sending for approval.</small> : unsavedByVenue[venueId] ? <small>Save your changes before sending this page for approval.</small> : !isReady ? <small>Complete every requirement before sending this page to the venue.</small> : !connectedManager && !isActive ? <small>The manager must redeem the approved access code before review can be sent.</small> : null}
+                  {commercialDirty ? <small>Save the Club Deal and agreement edits in their sections before sending for approval.</small> : unsavedByVenue[venueId] ? <small>{isActive ? "Save the city change." : "Save your changes before sending this page for approval."}</small> : !isReady ? <small>Complete every requirement before sending this page to the venue.</small> : !connectedManager && !isActive ? <small>The manager must redeem the approved access code before review can be sent.</small> : null}
                 </div>
               </section>
               <section className="venue-access-panel" aria-label={`${asText(venue.name) || "Venue"} access code`}>

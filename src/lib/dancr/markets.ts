@@ -5,6 +5,12 @@ export const MYDANCR_AVAILABLE_CITIES = [
   "New York",
 ] as const;
 
+export function findAvailableMyDancrCity(value: unknown) {
+  if (typeof value !== "string") return null;
+  const requestedCity = value.trim().toLocaleLowerCase("en-US");
+  return MYDANCR_AVAILABLE_CITIES.find((city) => city.toLocaleLowerCase("en-US") === requestedCity) || null;
+}
+
 export function resolveMyDancrCity(value: string | null | undefined) {
   const requestedCity = String(value || "").trim();
   return (

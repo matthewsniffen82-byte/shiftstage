@@ -15,6 +15,8 @@ import { getStripe } from "../stripe";
 import { safeErrorMetadata } from "../security/safe-error-metadata";
 import { getRankingMetricBatch, type TrendingMetricCounts } from "./ranking-metrics";
 import { getAdminVenueRegistrations } from "./admin-venue-registration";
+import { findAvailableMyDancrCity } from "./markets";
+import { PublicApiError } from "../api-error-policy";
 
 type DancrClient = SupabaseClient;
 
@@ -705,6 +707,7 @@ export async function transitionAdminManagedVenuePage(
   action: "send_for_review" | "publish",
 ) {
   const profile = await getVenueById(client, venueId);
+  requireAvailableVenueCity(profile.city);
   const deals = await getActiveClubDealsForVenue(client, venueId);
   const referralFee = (await getVenueReferralFeeState(client, venueId)).current;
   const publication = getVenuePublicationState(profile, deals);
@@ -1728,7 +1731,7 @@ function venueInputToRow(input: AdminVenueInput, creating: boolean) {
   }
 
   if (typeof input.slug === "string") row.slug = requiredText(input.slug, "Venue slug is required.");
-  if (typeof input.city === "string") row.city = requiredText(input.city, "Venue city is required.");
+  if ("city" in input) row.city = requireAvailableVenueCity(input.city);
   if ("state" in input) row.state = optionalText(input.state);
   if ("address" in input) row.address = optionalText(input.address);
   if ("latitude" in input) row.latitude = creating ? requiredCoordinate(input.latitude, "latitude", -90, 90) : optionalCoordinate(input.latitude, "latitude", -90, 90);
@@ -1747,6 +1750,12 @@ function venueInputToRow(input: AdminVenueInput, creating: boolean) {
   }
 
   return row;
+}
+
+function requireAvailableVenueCity(value: unknown) {
+  const city = findAvailableMyDancrCity(value);
+  if (!city) throw new PublicApiError("INVALID_REQUEST", "Select an available city for this venue.", 400);
+  return city;
 }
 
 function optionalCoordinate(value: number | string | null | undefined, label: string, minimum: number, maximum: number) {
