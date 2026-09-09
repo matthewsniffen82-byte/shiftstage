@@ -591,6 +591,7 @@ async function approveModeratedUpload(
       };
     }
 
+    const supersededPhotos = await findCurrentPhotoSlot(admin, input.profileId, input.isPrimary, input.sortOrder);
     const photo = await insertApprovedDancerPhoto(admin, {
       dancerId: input.profileId,
       storagePath: finalPath,
@@ -609,6 +610,7 @@ async function approveModeratedUpload(
       providerFlagged: input.evaluation.providerFlagged,
       completedAt: new Date().toISOString(),
     });
+    await retireSupersededDancerPhotos(admin, input.profileId, photo.id, supersededPhotos);
     await safeRemoveObject(admin, MODERATION_TEMP_BUCKET, input.tempPath);
     logModeration("approved", { recordId: input.recordId, photoId: photo.id });
     logModeration("database_status_written", { recordId: input.recordId, photoId: photo.id, databaseStatus: "approved" });
@@ -1017,7 +1019,6 @@ async function safeRemoveObject(client: DancrClient, bucket: string, path: strin
 }
 
 async function insertApprovedDancerPhoto(client: DancrClient, input: { dancerId: string; storagePath: string; isPrimary: boolean; sortOrder: number; altText: string | null }) {
-  const supersededPhotos = await findCurrentPhotoSlot(client, input.dancerId, input.isPrimary, input.sortOrder);
   const { data, error } = await client
     .from("dancer_photos")
     .insert({
@@ -1031,51 +1032,51 @@ async function insertApprovedDancerPhoto(client: DancrClient, input: { dancerId:
     .select("id, storage_path")
     .single();
   if (error) throw error;
-  const supersededIds = supersededPhotos
-    .map((photo) => photo.id)
-    .filter((id) => id && id !== data.id);
-  if (supersededIds.length) {
-    const { error: supersededDeleteError } = await client
-      .from("dancer_photos")
-      .delete()
-      .eq("dancer_id", input.dancerId)
-      .in("id", supersededIds);
-    if (supersededDeleteError) {
-      // The removal may have committed despite a lost response. Preserve the
-      // new row and both sets of files until the outcome can be reconciled.
-      throw supersededDeleteError;
-    }
-    await Promise.all(
-      supersededPhotos.flatMap((photo) => [
-        removeResponsiveImage(
-          client,
-          APPROVED_PHOTO_BUCKET,
-          photo.storage_path,
-        ).catch(() => null),
-        removeArchivedOriginalMedia(
-          client,
-          APPROVED_PHOTO_BUCKET,
-          photo.storage_path,
-        ).catch(() => null),
-      ]),
-    );
-  }
-  if (input.isPrimary) {
-    const { error: demoteError } = await client
-      .from("dancer_photos")
-      .update({ is_primary: false })
-      .eq("dancer_id", input.dancerId)
-      .neq("id", data.id);
-    if (demoteError) {
-      throw demoteError;
-    }
-  }
-  await client.from("dancer_profiles").update({ photo_review_status: "approved" }).eq("id", input.dancerId);
   return {
     ...(data as { id: string; storage_path: string }),
     isPrimary: input.isPrimary,
     sortOrder: input.sortOrder,
   };
+}
+
+async function retireSupersededDancerPhotos(
+  client: DancrClient,
+  dancerId: string,
+  photoId: string,
+  supersededPhotos: Array<{ id: string; storage_path: string }>,
+) {
+  const supersededIds = supersededPhotos
+    .map((photo) => photo.id)
+    .filter((id) => id && id !== photoId);
+  try {
+    if (supersededIds.length) {
+      const { error: supersededDeleteError } = await client
+        .from("dancer_photos")
+        .delete()
+        .eq("dancer_id", dancerId)
+        .in("id", supersededIds);
+      if (supersededDeleteError) throw supersededDeleteError;
+      await Promise.all(
+        supersededPhotos.flatMap((photo) => [
+          removeResponsiveImage(
+            client,
+            APPROVED_PHOTO_BUCKET,
+            photo.storage_path,
+          ).catch(() => null),
+          removeArchivedOriginalMedia(
+            client,
+            APPROVED_PHOTO_BUCKET,
+            photo.storage_path,
+          ).catch(() => null),
+        ]),
+      );
+    }
+    const { error } = await client.from("dancer_profiles").update({ photo_review_status: "approved" }).eq("id", dancerId);
+    if (error) throw error;
+  } catch (error) {
+    // Approval is committed. Cleanup failure must leave the new photo usable.
+    logModeration("superseded_photo_cleanup_error", { photoId, ...safeErrorMetadata(error) });
+  }
 }
 
 async function findCurrentPhotoSlot(client: DancrClient, dancerId: string, isPrimary: boolean, sortOrder: number) {
@@ -1148,28 +1149,24 @@ async function updateModerationRecord(client: DancrClient, id: string, update: R
 }
 
 async function logStoredModerationStatus(client: DancrClient, recordId: string, expected: string) {
-  const { data, error } = await client
-    .from("image_moderation_records")
-    .select("status")
-    .eq("id", recordId)
-    .maybeSingle();
-  if (error) {
-    console.error("DATABASE_STATUS_RESULT", {
+  try {
+    const { data, error } = await client
+      .from("image_moderation_records")
+      .select("status")
+      .eq("id", recordId)
+      .maybeSingle();
+    if (error) throw error;
+    console.log("DATABASE_STATUS_RESULT", {
       expected,
-      stored: null,
-      ...safeErrorMetadata(error),
+      stored: data?.status || null,
     });
-    // Diagnostic reads must not undo an acknowledged publication.
-    return;
+    console.log("FINAL_MODERATION_STATUS", {
+      expected,
+      stored: data?.status || null,
+    });
+  } catch (error) {
+    console.error("DATABASE_STATUS_RESULT", { expected, stored: null, ...safeErrorMetadata(error) });
   }
-  console.log("DATABASE_STATUS_RESULT", {
-    expected,
-    stored: data?.status || null,
-  });
-  console.log("FINAL_MODERATION_STATUS", {
-    expected,
-    stored: data?.status || null,
-  });
 }
 
 async function findExistingModerationRecord(client: DancrClient, userId: string, idempotencyKey: string) {

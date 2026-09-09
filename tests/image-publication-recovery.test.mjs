@@ -131,19 +131,20 @@ for (const failAfterCommit of [false, true]) {
   });
 }
 
-test('lost superseded-removal response preserves the replacement instead of deleting both photos', async () => {
+test('lost superseded-removal response preserves the acknowledged replacement without failing approval', async () => {
   const s = scenario({ existingPhoto: true, failTable: 'dancer_photos', failOperation: 'delete' });
-  await assert.rejects(s.publish(), error => error === lostResponse);
+  assert.equal((await s.publish()).decision, 'approved');
   assert.deepEqual(s.rows.dancer_photos.map(row => row.id), ['new-photo']);
   assert.ok(s.assets.has('new'));
   assert.equal(s.mutations.filter(m => m.operation === 'delete').length, 1);
 });
 
-test('failed primary demotion retains the published replacement row and file', async () => {
+test('primary replacement retires the selected predecessor without broadly demoting other photos', async () => {
   const s = scenario({ primary: true, existingPhoto: true, failTable: 'dancer_photos', failOperation: 'update', failAfterCommit: false });
-  await assert.rejects(s.publish(), error => error === lostResponse);
+  assert.equal((await s.publish()).decision, 'approved');
   assert.deepEqual(s.rows.dancer_photos.map(row => row.id), ['new-photo']);
   assert.ok(s.assets.has('new'));
+  assert.equal(s.mutations.filter(m => m.table === 'dancer_photos' && m.operation === 'update').length, 0);
 });
 
 test('recovery logging failure preserves both approved files and the original database error', async () => {
