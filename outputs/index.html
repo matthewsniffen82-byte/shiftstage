@@ -53011,8 +53011,10 @@
 
     function syncProfilePhotoViewerWindow(activePhotoIndex) {
       if (!profilePhotoViewerImage) return;
+      // Selection follows the top card, so two following cards can be visible.
+      // Warm both neighbors before scrolling reveals them, without loading the whole gallery.
       profilePhotoViewerImage.querySelectorAll(".profile-photo-viewer-slide-image").forEach((image, index) => {
-        if (Math.abs(index - activePhotoIndex) > 1) {
+        if (Math.abs(index - activePhotoIndex) > 2) {
           image.style.removeProperty("background-image");
           return;
         }

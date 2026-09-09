@@ -55,8 +55,9 @@ test("fifty-photo viewers keep only the active media window network-active", () 
     carousel.indexOf("{viewerItems.map"),
     carousel.indexOf('<div className="profile-media-viewer-footer">'),
   );
-  assert.match(reactViewer, /src=\{Math\.abs\(index - viewerIndex\) <= 1 \? item\.imageUrl : undefined\}/);
-  assert.match(reactViewer, /srcSet=\{Math\.abs\(index - viewerIndex\) <= 1 \? item\.imageSrcSet \|\| undefined : undefined\}/);
+  assert.match(reactViewer, /src=\{Math\.abs\(index - viewerIndex\) <= 2 \? item\.imageUrl : undefined\}/);
+  assert.match(reactViewer, /srcSet=\{Math\.abs\(index - viewerIndex\) <= 2 \? item\.imageSrcSet \|\| undefined : undefined\}/);
+  assert.match(reactViewer, /loading=\{Math\.abs\(index - viewerIndex\) <= 2 \? "eager" : "lazy"\}/);
 
   const legacyViewer = liveApp.slice(
     liveApp.indexOf("function renderProfilePhotoViewerSlides()"),
@@ -64,7 +65,7 @@ test("fifty-photo viewers keep only the active media window network-active", () 
   );
   assert.match(legacyViewer, /image\.dataset\.profilePhotoUrl = String\(item\.photoUrl \|\| ""\)\.trim\(\)/);
   assert.match(legacyViewer, /function syncProfilePhotoViewerWindow\(activePhotoIndex\)/);
-  assert.match(legacyViewer, /Math\.abs\(index - activePhotoIndex\) > 1/);
+  assert.match(legacyViewer, /Math\.abs\(index - activePhotoIndex\) > 2/);
   assert.match(legacyViewer, /image\.style\.removeProperty\("background-image"\)/);
   assert.match(legacyViewer, /syncProfilePhotoViewerWindow\(activePhotoIndex\)/);
   const initialRenderer = legacyViewer.slice(0, legacyViewer.indexOf("function syncProfilePhotoViewerWindow"));

@@ -88,7 +88,7 @@ test("Android and iPhone keep media sizing stable and resource windows bounded",
   assert.match(publicProfile, /height: 100vh; height: 100dvh;/);
   assert.match(
     profileCarousel,
-    /src=\{Math\.abs\(index - viewerIndex\) <= 1 \? item\.imageUrl : undefined\}/,
+    /src=\{Math\.abs\(index - viewerIndex\) <= 2 \? item\.imageUrl : undefined\}/,
   );
   assert.match(
     profileCarousel,

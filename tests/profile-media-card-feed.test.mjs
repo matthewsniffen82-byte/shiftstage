@@ -115,6 +115,43 @@ test("mixed-height photo feeds select the visible card and can reach a short fin
   assert.match(carousel, /viewerKind === "photo"[^]*?profilePhotoCardScrollIndex\(scrollTop, slides\.map/);
 });
 
+test("photo windows load the lower card before the previous card fully leaves the screen", () => {
+  const images = Array.from({ length: 50 }, (_, index) => ({
+    dataset: { profilePhotoUrl: `https://media.test/photo-${index}.jpg`, profilePhotoSized: "true" },
+    style: {
+      backgroundImage: "",
+      removeProperty(name) { if (name === "background-image") this.backgroundImage = ""; },
+    },
+  }));
+  const photoContext = vm.createContext({
+    profilePhotoViewerImage: { querySelectorAll: () => images },
+    safeCssUrl: (url) => url,
+  });
+  vm.runInContext([
+    functionSource("profilePhotoCardScrollIndex"),
+    functionSource("syncProfilePhotoViewerWindow"),
+  ].join("\n"), photoContext);
+  const reactWindow = carousel.match(/src=\{(Math\.abs\(index - viewerIndex\) <= \d+) \? item\.imageUrl : undefined\}/)?.[1];
+  assert.ok(reactWindow, "React photo sources must have a bounded preload window");
+  const reactShouldLoad = vm.runInNewContext(`(index, viewerIndex) => ${reactWindow}`);
+  const offsets = images.map((_, index) => 72 + index * (732 + 12));
+  for (const previous of [0, 1, 12, 35, 47, 12, 1, 0]) {
+    // The previous card still has 55px onscreen, while the card after the
+    // central one is already visible below it. Selection has not advanced yet.
+    const scrollTop = offsets[previous + 1] - 55;
+    const active = photoContext.profilePhotoCardScrollIndex(scrollTop, offsets, 844, offsets.at(-1) + 732 + 24);
+    assert.equal(active, previous);
+    assert.ok(offsets[previous + 2] < scrollTop + 844, "lower card is onscreen");
+    photoContext.syncProfilePhotoViewerWindow(active);
+    for (const visible of [previous, previous + 1, previous + 2]) {
+      assert.ok(images[visible].style.backgroundImage, `live photo ${visible} must already have its source`);
+      assert.equal(reactShouldLoad(visible, active), true, `React photo ${visible} must already have its source`);
+    }
+    assert.ok(images.filter((image) => image.style.backgroundImage).length <= 5, "do not load all fifty photos");
+    assert.ok(images.filter((_, index) => reactShouldLoad(index, active)).length <= 5);
+  }
+});
+
 test("one in-flow header scrolls away, with no header padding repeated on later cards", () => {
   assert.match(css, /\.profile-media-card-header \{[^}]*position: relative;[^}]*height: var\(--profile-media-card-header\)/);
   assert.doesNotMatch(css, /position: (?:fixed|sticky)/);
