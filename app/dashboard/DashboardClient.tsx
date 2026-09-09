@@ -8390,7 +8390,7 @@ function DashboardStyles() {
       .venue-workspace-tabs strong { overflow: hidden; font-size: 14px; line-height: 1.1; text-overflow: ellipsis; white-space: nowrap; }
       .venue-workspace-tabs small { display: grid; min-height: 21px; place-items: center; color: #cbd5e1; font-size: 9px; font-weight: 820; line-height: 1.18; }
       .venue-workspace-tabs button.active small { color: #f8fafc; }
-      .venue-workspace-tab-status { overflow: hidden; color: #94a3b8; font-size: 8px; font-weight: 780; line-height: 1.12; text-overflow: ellipsis; white-space: nowrap; }
+      .venue-workspace-tab-status { min-width: 0; color: #94a3b8; font-size: 8px; font-weight: 780; line-height: 1.12; white-space: normal; overflow-wrap: anywhere; }
       .venue-workspace-tabs button.active .venue-workspace-tab-status { color: #ddd6fe; }
       .venue-workspace-business-summary { display: grid; gap: 7px; padding: 16px 18px; border: 1px solid var(--mydancr-dashboard-border); border-radius: var(--mydancr-dashboard-radius); background: var(--mydancr-dashboard-panel); }
       .venue-workspace-business-summary h2 { margin: 0; color: #f8fafc; font-size: clamp(20px,3.5vw,25px); line-height: 1.08; }
