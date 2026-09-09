@@ -83,8 +83,8 @@ test("video grids show a passive frame from each actual video", () => {
   assert.doesNotMatch(carousel, /posterUrl: video\.posterUrl \|\| photoMedia/);
   assert.doesNotMatch(profilePage, /posterUrl: video\.dancer\.primaryPhotoUrl/);
   assert.match(carousel, /\{viewerItems\.map\(\(item, index\) => \(/);
-  assert.match(carousel, /preload=\{index === viewerIndex[\s\S]*?\? "auto"[\s\S]*?index === viewerIndex \+ 1[\s\S]*?\? "metadata"[\s\S]*?: "none"\}/);
-  assert.match(carousel, /src=\{index === viewerIndex \|\| \([\s\S]*?index === viewerIndex \+ 1[\s\S]*?\? item\.videoUrl : undefined\}/);
+  assert.match(carousel, /videoBufferMode\(index, viewerIndex, allowVideoWarmup, activeReady, video.hasAttribute\("src"\)\)/);
+  assert.match(carousel, /preload="none"\s*data-video-url=\{item.videoUrl\}/);
   assert.match(liveApp, /function profileVideoThumbMarkup/);
   assert.doesNotMatch(liveApp, /function profileVideoPreviewUrl\(item\)/);
   assert.match(liveApp, /function profileVideoThumbMarkup\(item[\s\S]*?<img class="portrait profile-media-thumb-poster-image" src="\$\{escapeHtml\(posterUrl\)\}"[\s\S]*?loading="lazy"[\s\S]*?data-image-state="loading"/);

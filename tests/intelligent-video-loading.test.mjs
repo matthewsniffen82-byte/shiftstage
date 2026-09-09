@@ -36,10 +36,11 @@ test("routed profile grids remain poster-only and the viewer loads a bounded for
   assert.match(gridPoster, /loading="lazy"/);
   assert.doesNotMatch(grid, /<video[\s\S]*?poster=\{item\.posterUrl \|\| undefined\}[\s\S]*?preload="none"/);
 
-  assert.match(profileCarousel, /const \[loadedViewerVideoIndex, setLoadedViewerVideoIndex\] = useState\(-1\)/);
-  assert.match(profileCarousel, /index === viewerIndex[\s\S]*?\? "auto"[\s\S]*?index === viewerIndex \+ 1[\s\S]*?\? "metadata"[\s\S]*?: "none"/);
-  assert.match(profileCarousel, /src=\{index === viewerIndex \|\| \([\s\S]*?loadedViewerVideoIndex === viewerIndex[\s\S]*?index === viewerIndex \+ 1[\s\S]*?\? item\.videoUrl : undefined\}/);
-  assert.match(profileCarousel, /if \(!video\.hasAttribute\("src"\)\) \{\s*delete video\.dataset\.frameReady;\s*video\.load\(\)/);
+  assert.match(profileCarousel, /const \[viewerVideoReadyVersion, setViewerVideoReadyVersion\] = useState\(0\)/);
+  assert.match(profileCarousel, /videoBufferMode\(index, viewerIndex, allowVideoWarmup, activeReady, video.hasAttribute\("src"\)\)/);
+  assert.match(profileCarousel, /if \(!video.hasAttribute\("src"\)\) video.src = video.dataset.videoUrl/);
+  assert.match(profileCarousel, /if \(video.hasAttribute\("src"\)\) \{\s*delete video.dataset.frameReady;\s*video.removeAttribute\("src"\);\s*video.load\(\)/);
+  assert.match(profileCarousel, /preload="none"\s*data-video-url=\{item.videoUrl\}/);
 });
 
 test("routed TV feed starts with one source and warms only the immediate next item", () => {
@@ -62,10 +63,10 @@ test("profile strips attach previews on intent and release inactive media resour
 test("live shell defers home and full-profile video sources beyond the active window", () => {
   assert.match(liveShell, /function attachDeferredVideoSource[\s\S]*?video\.dataset\.videoUrl[\s\S]*?if \(!video\.hasAttribute\("src"\)\) video\.src = videoUrl/);
   assert.match(liveShell, /function releaseDeferredVideoSource[\s\S]*?video\.removeAttribute\("src"\)[\s\S]*?video\.load\(\)/);
-  assert.match(liveShell, /function primeHomeTvFeedNeighbors[\s\S]*?index === activeIndex \+ 1[\s\S]*?attachDeferredVideoSource\(video, "metadata"\)[\s\S]*?releaseDeferredVideoSource\(video\)/);
+  assert.match(liveShell, /function primeHomeTvFeedNeighbors[\s\S]*?videoBufferMode\(index, activeIndex, allowNextWarmup, activeReady, video.hasAttribute\("src"\)\)[\s\S]*?applyVideoBufferMode\(video, mode\)/);
   assert.match(liveShell, /video\.dataset\.videoUrl = String\(item\.videoUrl \|\| ""\)\.trim\(\)[\s\S]*?if \(index === 0\) attachDeferredVideoSource\(video, "auto"\)/);
 
-  assert.match(liveShell, /function syncProfileTvVideoLoading[\s\S]*?activeReady && canWarmAdjacentVideo\(\)[\s\S]*?index === activeIndex \+ 1[\s\S]*?attachDeferredVideoSource\(video, "metadata"\)[\s\S]*?releaseDeferredVideoSource\(video\)/);
+  assert.match(liveShell, /function syncProfileTvVideoLoading[\s\S]*?canWarmAdjacentVideo\(\)[\s\S]*?videoBufferMode\(index, activeIndex, allowNextWarmup, activeReady, video.hasAttribute\("src"\)\)[\s\S]*?applyVideoBufferMode\(video, mode\)/);
   assert.match(liveShell, /video\.className = "profile-tv-viewer-video"[\s\S]*?video\.dataset\.videoUrl[\s\S]*?video\.preload = "none"/);
   assert.doesNotMatch(liveShell, /video\.className = "profile-tv-viewer-video"[\s\S]{0,500}?video\.src = item\.videoUrl/);
 });

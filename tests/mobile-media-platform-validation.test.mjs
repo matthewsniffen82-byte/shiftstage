@@ -92,7 +92,7 @@ test("Android and iPhone keep media sizing stable and resource windows bounded",
   );
   assert.match(
     profileCarousel,
-    /src=\{index === viewerIndex \|\| \([\s\S]*?index === viewerIndex \+ 1[\s\S]*?\? item\.videoUrl : undefined\}/,
+    /videoBufferMode\(index, viewerIndex, allowVideoWarmup, activeReady, video.hasAttribute\("src"\)\)/,
   );
   assert.match(tvFeed, /playsInline[\s\S]*?preload=\{/);
   assert.match(tvFeed, /setAttribute\("webkit-playsinline", ""\)/);

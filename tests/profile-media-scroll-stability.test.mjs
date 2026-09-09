@@ -38,6 +38,7 @@ test("upcoming video posters remain visible independently of native iOS video lo
 test("video poster windows stay bounded and work with adjacent video warmup disabled", () => {
   const videos = Array.from({ length: 30 }, () => ({
     dataset: {}, poster: "", source: false, preload: "none",
+    hasAttribute(name) { return name === "src" && this.source; },
     removeAttribute(name) { if (name === "poster") this.poster = ""; },
     nextElementSibling: {
       src: null,
@@ -57,7 +58,7 @@ test("video poster windows stay bounded and work with adjacent video warmup disa
     attachDeferredVideoSource: (video, preload) => { video.source = true; video.preload = preload; },
     releaseDeferredVideoSource: (video) => { video.source = false; video.preload = "none"; },
   });
-  vm.runInContext(source("syncProfileTvVideoLoading"), context);
+  vm.runInContext(["videoBufferMode", "applyVideoBufferMode", "syncProfileTvVideoLoading"].map(source).join("\n"), context);
   for (const active of [0, 1, 12, 28, 12, 0]) {
     context.syncProfileTvVideoLoading(overlay, active);
     videos.forEach((video, index) => {

@@ -18,6 +18,7 @@ import { readBrowserAccessToken } from "@/src/lib/dancr/browser-session";
 import { recordPublicEngagementShare } from "@/src/lib/dancr/engagement-client";
 import { useVideoSoundPreference } from "@/src/lib/dancr/use-video-sound-preference";
 import { useAdaptiveVideoWarmup } from "@/src/lib/dancr/use-adaptive-video-warmup";
+import { videoBufferMode } from "@/src/lib/dancr/video-buffer-policy";
 import { useAnonymousMediaLikes } from "@/src/lib/dancr/use-anonymous-media-likes";
 import { DANCER_PROFILE_MEDIA_PAGE_SIZE } from "@/src/lib/dancr/media-limits";
 
@@ -143,7 +144,7 @@ export function DancerPhotoCarousel({
   });
   const [inlineMuted, setInlineMuted] = useVideoSoundPreference();
   const allowVideoWarmup = useAdaptiveVideoWarmup();
-  const [loadedViewerVideoIndex, setLoadedViewerVideoIndex] = useState(-1);
+  const [viewerVideoReadyVersion, setViewerVideoReadyVersion] = useState(0);
   const [shareStatus, setShareStatus] = useState("");
   const [shareStatusIndex, setShareStatusIndex] = useState(0);
   const [reportTarget, setReportTarget] = useState<MediaReportTarget | null>(null);
@@ -308,6 +309,30 @@ export function DancerPhotoCarousel({
   }, []);
 
   useEffect(() => {
+    if (viewerKind !== "video") return;
+    const videos = [...(viewerFeed.current?.querySelectorAll<HTMLVideoElement>("video") || [])];
+    const activeReady = videos[viewerIndex]?.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA;
+    videos.forEach((video, index) => {
+      const mode = videoBufferMode(index, viewerIndex, allowVideoWarmup, activeReady, video.hasAttribute("src"));
+      if (mode === "release") {
+        video.pause();
+        video.preload = "none";
+        if (video.hasAttribute("src")) {
+          delete video.dataset.frameReady;
+          video.removeAttribute("src");
+          video.load();
+        }
+      } else if (mode === "retain") {
+        video.pause();
+        video.preload = "none";
+      } else {
+        video.preload = mode;
+        if (!video.hasAttribute("src")) video.src = video.dataset.videoUrl || "";
+      }
+    });
+  }, [allowVideoWarmup, viewerVideoReadyVersion, viewerIndex, viewerKind]);
+
+  useEffect(() => {
     if (!viewerKind) return;
     const feed = viewerFeed.current;
     if (!feed) return;
@@ -316,12 +341,7 @@ export function DancerPhotoCarousel({
     videos.forEach((video, index) => {
       video.muted = inlineMuted;
       if (index === viewerIndex && viewerKind === "video") {
-        if (
-          video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA &&
-          loadedViewerVideoIndex !== viewerIndex
-        ) {
-          setLoadedViewerVideoIndex(viewerIndex);
-        }
+        if (video.dataset.userPaused === "true") return;
         void video.play().catch(async (error) => {
           if (cancelled || error?.name === "AbortError" || !video.isConnected) return;
           if (!video.muted) {
@@ -339,14 +359,11 @@ export function DancerPhotoCarousel({
         });
       } else {
         video.pause();
-        if (!video.hasAttribute("src")) {
-          delete video.dataset.frameReady;
-          video.load();
-        }
+        delete video.dataset.userPaused;
       }
     });
     return () => { cancelled = true; };
-  }, [allowVideoWarmup, inlineMuted, loadedViewerVideoIndex, setInlineMuted, viewerIndex, viewerKind]);
+  }, [inlineMuted, setInlineMuted, viewerIndex, viewerKind]);
 
   useEffect(() => {
     if (!viewerKind) return;
@@ -430,8 +447,13 @@ export function DancerPhotoCarousel({
 
   function toggleViewerPlayback(video: HTMLVideoElement) {
     playbackTapIndex.current = viewerIndex;
-    if (video.paused) void video.play().catch(() => undefined);
-    else video.pause();
+    if (video.paused) {
+      delete video.dataset.userPaused;
+      void video.play().catch(() => undefined);
+    } else {
+      video.dataset.userPaused = "true";
+      video.pause();
+    }
   }
 
   function viewerShareUrl(item: ProfileMedia, index = viewerIndex) {
@@ -898,7 +920,7 @@ export function DancerPhotoCarousel({
                     onPlay={() => handleViewerPlaybackChange(index, false)}
                     onLoadedData={(event) => {
                       event.currentTarget.dataset.frameReady = "true";
-                      if (index === viewerIndex) setLoadedViewerVideoIndex(index);
+                      if (index === viewerIndex) setViewerVideoReadyVersion((version) => version + 1);
                     }}
                     onEmptied={(event) => { delete event.currentTarget.dataset.frameReady; }}
                     onPointerDown={() => {
@@ -917,16 +939,8 @@ export function DancerPhotoCarousel({
                     role="button"
                     tabIndex={index === viewerIndex ? 0 : -1}
                     poster={Math.abs(index - viewerIndex) <= 2 ? item.posterUrl || undefined : undefined}
-                    preload={index === viewerIndex
-                      ? "auto"
-                      : allowVideoWarmup && loadedViewerVideoIndex === viewerIndex && index === viewerIndex + 1
-                        ? "metadata"
-                        : "none"}
-                    src={index === viewerIndex || (
-                      allowVideoWarmup &&
-                      loadedViewerVideoIndex === viewerIndex &&
-                      index === viewerIndex + 1
-                    ) ? item.videoUrl : undefined}
+                    preload="none"
+                    data-video-url={item.videoUrl}
                   />
                   {item.posterUrl ? (
                     <img

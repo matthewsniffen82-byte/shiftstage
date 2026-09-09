@@ -82,7 +82,7 @@ test("the homepage TV card uses a resilient, readable media-first presentation",
   assert.match(videoFactory, /video\.addEventListener\("error"[\s\S]*?"Video unavailable"/);
   assert.match(
     homeSource,
-    /function primeHomeTvFeedNeighbors\(videoId\)[\s\S]*?canWarmAdjacentVideo\(\)[\s\S]*?index === activeIndex \+ 1[\s\S]*?attachDeferredVideoSource\(video, "metadata"\)[\s\S]*?releaseDeferredVideoSource\(video\)/,
+    /function primeHomeTvFeedNeighbors\(videoId\)[\s\S]*?canWarmAdjacentVideo\(\)[\s\S]*?videoBufferMode\(index, activeIndex, allowNextWarmup, activeReady, video.hasAttribute\("src"\)\)[\s\S]*?applyVideoBufferMode\(video, mode\)/,
   );
   assert.match(
     homeSource,

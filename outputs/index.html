@@ -54218,7 +54218,7 @@
     function syncProfileTvVideoLoading(overlay, activeIndex) {
       const videos = Array.isArray(overlay?.profileTvVideos) ? overlay.profileTvVideos : [];
       const activeReady = overlay?.dataset.loadedVideoIndex === String(activeIndex);
-      const allowNextWarmup = activeReady && canWarmAdjacentVideo();
+      const allowNextWarmup = canWarmAdjacentVideo();
       overlay?.querySelectorAll(".profile-tv-viewer-video").forEach((video, index) => {
         const item = videos[index];
         const posterUrl = profileVideoPosterUrl(item);
@@ -54230,16 +54230,8 @@
           video.removeAttribute("poster");
           poster?.removeAttribute("src");
         }
-        if (index === activeIndex) {
-          attachDeferredVideoSource(video, "auto");
-          return;
-        }
-        if (allowNextWarmup && index === activeIndex + 1) {
-          attachDeferredVideoSource(video, "metadata");
-          return;
-        }
-        delete video.dataset.frameReady;
-        releaseDeferredVideoSource(video);
+        const mode = videoBufferMode(index, activeIndex, allowNextWarmup, activeReady, video.hasAttribute("src"));
+        applyVideoBufferMode(video, mode);
       });
     }
 
@@ -61117,6 +61109,26 @@
       return !["slow-2g", "2g"].includes(String(connection.effectiveType || "").toLowerCase());
     }
 
+    function videoBufferMode(index, activeIndex, allowWarmup, activeReady, hasSource) {
+      if (index === activeIndex) return "auto";
+      if (!allowWarmup) return "release";
+      if (index === activeIndex + 1) return activeReady ? "auto" : "metadata";
+      if (index === activeIndex - 1 && hasSource) return "retain";
+      return "release";
+    }
+
+    function applyVideoBufferMode(video, mode) {
+      if (mode === "release") {
+        delete video.dataset.frameReady;
+        releaseDeferredVideoSource(video);
+      } else if (mode === "retain") {
+        video.pause();
+        video.preload = "none";
+      } else {
+        attachDeferredVideoSource(video, mode);
+      }
+    }
+
     function attachDeferredVideoSource(video, preload = "metadata") {
       if (!(video instanceof HTMLVideoElement)) return false;
       const videoUrl = String(video.dataset.videoUrl || "").trim();
@@ -61191,10 +61203,13 @@
           slide.removeAttribute("aria-current");
           slide.classList.remove("is-autoplay-blocked");
           clearHomeTvFeedEngagedTimer(slideVideoId);
-          releaseDeferredVideoSource(video);
+          video.autoplay = false;
+          video.removeAttribute("autoplay");
+          video.pause();
           slide.classList.add("is-paused");
         }
       });
+      primeHomeTvFeedNeighbors(videoId);
       syncHomeTvFeedSoundButtons();
     }
 
@@ -61203,13 +61218,14 @@
       const activeIndex = slides.findIndex((slide) => String(slide.dataset.videoId || "") === videoId);
       if (activeIndex < 0) return;
       const allowNextWarmup = canWarmAdjacentVideo();
+      const activeVideo = slides[activeIndex].querySelector("video.home-tv-feed-video");
+      const activeReady = activeVideo?.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA;
       slides.forEach((slide, index) => {
         const video = slide.querySelector("video.home-tv-feed-video");
         if (!video) return;
         if (index === activeIndex) return;
-        const shouldWarm = allowNextWarmup && index === activeIndex + 1;
-        if (shouldWarm) attachDeferredVideoSource(video, "metadata");
-        else releaseDeferredVideoSource(video);
+        const mode = videoBufferMode(index, activeIndex, allowNextWarmup, activeReady, video.hasAttribute("src"));
+        applyVideoBufferMode(video, mode);
       });
     }
 
@@ -61340,7 +61356,8 @@
         const visible = entries
           .filter((entry) => entry.isIntersecting && entry.intersectionRatio >= .72)
           .sort((left, right) => right.intersectionRatio - left.intersectionRatio)[0];
-        if (visible) activateHomeTvFeedVideo(String(visible.target.dataset.videoId || ""));
+        const visibleVideoId = String(visible?.target.dataset.videoId || "");
+        if (visibleVideoId && visibleVideoId !== homeTvFeedActiveVideoId) activateHomeTvFeedVideo(visibleVideoId);
       }, {
         root: fullscreenRoot,
         rootMargin: fullscreenRoot ? "0px" : "-72px 0px -88px",
