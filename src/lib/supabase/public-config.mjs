@@ -1,14 +1,15 @@
 /** Validate public configuration without including its values in errors.
  * @param {string | undefined} url
  * @param {string | undefined} key
- * @param {{allowMissing?: boolean}} options
+ * @param {{allowMissing?: boolean, allowLocal?: boolean}} options
  */
-export function validatePublicSupabaseConfig(url, key, { allowMissing = false } = {}) {
+export function validatePublicSupabaseConfig(url, key, { allowMissing = false, allowLocal = true } = {}) {
   if (allowMissing && !url && !key) return;
   if (!url || !key) throw new Error("Missing Supabase public environment variables.");
   let parsed;
   try { parsed = new URL(url); } catch { throw new Error("Supabase public URL is invalid."); }
   const local = ["localhost", "127.0.0.1", "[::1]"].includes(parsed.hostname);
+  if (local && !allowLocal) throw new Error("Production Supabase public URL cannot target localhost.");
   if ((parsed.protocol !== "https:" && !(local && parsed.protocol === "http:")) || parsed.username || parsed.password || parsed.search || parsed.hash) {
     throw new Error("Supabase public URL must be a secure API URL (HTTP is allowed only on localhost).");
   }

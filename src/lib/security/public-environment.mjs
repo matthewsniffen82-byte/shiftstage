@@ -6,6 +6,12 @@ const SECRET_SERVER_NAME = /(?:SECRET|PASSWORD|TOKEN|(?:^|_)KEY|ADMIN_SIGNUP_COD
 
 /** @param {Record<string, string | undefined>} environment */
 export function validatePublicEnvironment(environment) {
+  // Next also embeds this non-NEXT_PUBLIC setting through nextConfig.env.
+  // Validate the complete allowed value set before it can enter a browser asset.
+  const moderationMode = environment.DANCR_VIDEO_MODERATION_MODE?.trim().toLowerCase();
+  if (moderationMode && !["ai", "demo_auto_approve"].includes(moderationMode)) {
+    throw new Error("Public environment configuration rejected: DANCR_VIDEO_MODERATION_MODE must be ai or demo_auto_approve.");
+  }
   const privateValues = Object.entries(environment)
     .filter(([name, value]) => !name.startsWith("NEXT_PUBLIC_")
       && SECRET_SERVER_NAME.test(name) && typeof value === "string" && value.length >= 8)

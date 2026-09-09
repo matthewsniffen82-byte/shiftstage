@@ -7,6 +7,7 @@ const projectRoot = process.cwd();
 const privilegedModules = [
   "src/lib/server-env.ts",
   "src/lib/supabase/admin.ts",
+  "src/lib/supabase/server-config.ts",
   "src/lib/stripe.ts",
   "src/lib/dancr/account-recovery.ts",
   "src/lib/dancr/admin.ts",

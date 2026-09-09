@@ -76,3 +76,16 @@ test("Next checks public environment before creating its exported configuration"
   const check = config.indexOf("validatePublicEnvironment(process.env)");
   assert.ok(check >= 0 && check < config.indexOf("const nextConfig ="));
 });
+
+test("the explicitly browser-exposed moderation setting only accepts supported modes", () => {
+  for (const value of [undefined, "", "  ", "ai", "AI", " demo_auto_approve "]) {
+    assert.doesNotThrow(() => validatePublicEnvironment({ DANCR_VIDEO_MODERATION_MODE: value }));
+  }
+  for (const value of ["disabled", "fixture-mistyped-mode", "sb_secret_fixture-private-key", jwt("service_role")]) {
+    assert.throws(() => validatePublicEnvironment({ DANCR_VIDEO_MODERATION_MODE: value }), error => {
+      assert.match(error.message, /DANCR_VIDEO_MODERATION_MODE/);
+      assert.equal(error.message.includes(value), false);
+      return true;
+    });
+  }
+});

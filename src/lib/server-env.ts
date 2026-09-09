@@ -3,7 +3,7 @@ import "server-only";
 export function getServerEnv(name: string): string {
   const value = process.env[name];
 
-  if (!value) {
+  if (!value?.trim()) {
     throw new Error(`Missing server environment variable: ${name}`);
   }
 
