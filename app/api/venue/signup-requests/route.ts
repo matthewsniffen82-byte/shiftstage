@@ -7,10 +7,10 @@ import {
 } from "@/src/lib/dancr/venue-signup-requests";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { safeErrorMetadata } from "@/src/lib/security/safe-error-metadata";
-import { getAccountByUserId, requireActiveVenueAccount } from "@/src/lib/dancr/auth";
+import { requireActiveVenueAccount } from "@/src/lib/dancr/auth";
 import { getVenueRequestForManager } from "@/src/lib/dancr/venue-request-account";
 import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
-import { createServerSupabaseClient } from "@/src/lib/supabase/server";
+import { sendVenueRequestConfirmation } from "@/src/lib/dancr/venue-email-confirmation";
 import { enforcePublicRequestRateLimit, PublicRequestRateLimitError } from "@/src/lib/dancr/public-request-rate-limit";
 
 export const runtime = "nodejs";
@@ -21,6 +21,7 @@ export async function GET(request: Request) {
   try {
     const { client, user, session } = await createRequestSupabaseContext(request);
     await requireActiveVenueAccount(client, user.id);
+    if (!user.email_confirmed_at) throw new PublicApiError("FORBIDDEN", "Confirm your email before viewing your club request.", 403);
     const venueRequest = await getVenueRequestForManager(createAdminSupabaseClient(), user.id);
     return NextResponse.json({ ok: true, request: venueRequest, session }, { headers: { "Cache-Control": "no-store" } });
   } catch (error) {
@@ -52,33 +53,27 @@ export async function POST(request: Request) {
       requestIp(request),
     );
 
-    // The request is already durable. A transient sign-in failure must not
-    // invite the manager to submit it again or recreate their password.
-    let session = null;
-    let account = null;
-    try {
-      const { data, error } = await createServerSupabaseClient().auth.signInWithPassword({
-        email: venueRequest.loginEmail!, password: String(body.password || ""),
-      });
-      if (error) throw error;
-      if (data.user?.id !== venueRequest.requesterUserId || !data.session) throw new Error("Unable to start the manager session.");
-      account = await getAccountByUserId(admin, data.user.id);
-      session = { accessToken: data.session.access_token, refreshToken: data.session.refresh_token, expiresAt: data.session.expires_at };
-    } catch (error) {
-      console.warn("VENUE_REQUEST_SESSION_UNAVAILABLE", safeErrorMetadata(error));
-    }
+    // Keep the saved request even if email delivery is temporarily unavailable.
+    const emailDelivery = await sendVenueRequestConfirmation(admin, {
+      userId: venueRequest.requesterUserId!, email: venueRequest.loginEmail!,
+    }).catch((error) => {
+      console.warn("VENUE_CONFIRMATION_DELIVERY_FAILED", safeErrorMetadata(error));
+      return { delivered: false };
+    });
     return NextResponse.json(
       {
         ok: true,
-        account,
-        session,
+        account: null,
+        session: null,
+        requiresEmailConfirmation: true,
+        emailDelivered: emailDelivery.delivered,
         request: {
           id: venueRequest.id,
           venueName: venueRequest.venueName,
           status: venueRequest.status,
           submittedAt: venueRequest.submittedAt,
         },
-        message: "Your manager login and club request are saved. After approval, use this same login to open your venue dashboard.",
+        message: "Your details are saved. Confirm your email to send your club request for approval.",
       },
       { status: 201, headers: { "Cache-Control": "no-store" } },
     );

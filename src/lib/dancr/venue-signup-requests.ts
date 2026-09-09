@@ -91,7 +91,7 @@ export async function createVenueSignupRequest(
     db
       .from("venue_signup_requests")
       .select("id, status")
-      .eq("status", "pending")
+      .in("status", ["awaiting_email_confirmation", "pending"])
       .ilike("venue_name", escapeLike(normalized.venueName))
       .ilike("street_address", escapeLike(normalized.streetAddress))
       .ilike("contact_email", escapeLike(normalized.contactEmail))
@@ -117,6 +117,7 @@ export async function createVenueSignupRequest(
     const { data, error } = await db
       .from("venue_signup_requests")
       .insert({
+        status: "awaiting_email_confirmation",
         requester_user_id: requesterUserId,
         login_email: credentials.email,
         venue_name: normalized.venueName,

@@ -16,6 +16,7 @@ const publicServiceRoleRoutes = new Set([
   "app/api/nfc/[token]/route.ts",
   "app/api/reports/route.ts",
   "app/api/venue/access-code/preview/route.ts",
+  "app/api/venue/signup-requests/confirmation/route.ts",
   "app/api/venue/signup-requests/route.ts",
 ]);
 

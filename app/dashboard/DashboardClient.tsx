@@ -578,7 +578,7 @@ export default function DashboardClient({
   }, [analyticsPeriod, role]);
 
   useEffect(() => {
-    if (role !== "venue" || isLoading || state.error) return;
+    if (role !== "venue" || isLoading || state.error || state.venueRequest) return;
     void refreshVenueDashboard(false);
     const refreshWhenVisible = () => { if (document.visibilityState === "visible") void refreshVenueDashboard(false); };
     const timer = window.setInterval(refreshWhenVisible, 45_000);
@@ -590,7 +590,7 @@ export default function DashboardClient({
       venueRefreshAbortRef.current = null;
       venueRefreshRequestRef.current += 1;
     };
-  }, [analyticsPeriod, isLoading, refreshVenueDashboard, role, state.error]);
+  }, [analyticsPeriod, isLoading, refreshVenueDashboard, role, state.error, state.venueRequest]);
 
   useEffect(() => {
     if (isLoading || state.error) return;

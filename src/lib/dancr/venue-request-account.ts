@@ -15,7 +15,7 @@ export function venueRequestCredentials(input: { loginEmail?: unknown; password?
 
 export async function createRequestManager(client: SupabaseClient, input: { email: string; password: string; displayName: string; city: string }) {
   const { data, error } = await client.auth.admin.createUser({
-    email: input.email, password: input.password, email_confirm: true,
+    email: input.email, password: input.password, email_confirm: false,
     app_metadata: { mydancr_provisioned_role: "venue" },
     user_metadata: { role: "venue", display_name: input.displayName, city: input.city },
   });

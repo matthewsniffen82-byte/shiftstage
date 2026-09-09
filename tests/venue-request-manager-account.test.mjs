@@ -42,6 +42,7 @@ test('a provisioning failure cleans up only the newly created auth account', asy
   await assert.rejects(m.createRequestManager(client, { email: 'manager@example.com', password: input.password, displayName: 'Test Club', city: 'Las Vegas' }), /Unable to set up/);
   assert.equal(calls[0].app_metadata.mydancr_provisioned_role, 'venue');
   assert.equal(calls[0].password, input.password);
+  assert.equal(calls[0].email_confirm, false);
   assert.equal(calls[1], 'new-manager');
 });
 function requestFixture({ insertError = null, duplicate = false, committed = false } = {}) {
@@ -54,7 +55,7 @@ function requestFixture({ insertError = null, duplicate = false, committed = fal
   const client = { from() {
     let inserted = null;
     const q = {
-      select() { return q; }, eq() { return q; }, ilike() { return q; },
+      select() { return q; }, eq() { return q; }, in() { return q; }, ilike() { return q; },
       gte: async () => ({ count: 0 }), maybeSingle: async () => ({ data: committed && rows.length ? { id: 'request', ...rows[0] } : duplicate ? { id: 'existing' } : null }),
       insert(row) { inserted = row; rows.push(row); return q; },
       single: async () => ({ data: { id: 'request', ...inserted }, error: insertError }),
@@ -121,20 +122,22 @@ test('an interrupted insert response preserves a request that already committed'
   assert.equal(request.requesterUserId, 'new-manager');
   assert.equal(f.removed.length, 0);
 });
-test('a saved request remains successful when automatic sign-in is temporarily unavailable', async () => {
+test('a saved request waits for email confirmation when delivery is temporarily unavailable', async () => {
   let created = 0;
   const route = compile(read('app/api/venue/signup-requests/route.ts'), {
     '@/src/lib/bounded-json-body': { readBoundedJsonObject: request => request.json() },
     '@/src/lib/supabase/admin': { createAdminSupabaseClient: () => ({}) },
     '@/src/lib/dancr/public-request-rate-limit': { enforcePublicRequestRateLimit: async () => {}, PublicRequestRateLimitError: class extends Error {} },
-    '@/src/lib/dancr/venue-signup-requests': { createVenueSignupRequest: async () => { created++; return { id: 'request', venueName: 'Test Club', loginEmail: 'manager@example.com', requesterUserId: 'manager', status: 'pending' }; } },
-    '@/src/lib/supabase/server': { createServerSupabaseClient: () => ({ auth: { signInWithPassword: async () => ({ error: new Error('Temporary sign-in outage') }) } }) },
+    '@/src/lib/dancr/venue-signup-requests': { createVenueSignupRequest: async () => { created++; return { id: 'request', venueName: 'Test Club', loginEmail: 'manager@example.com', requesterUserId: 'manager', status: 'awaiting_email_confirmation' }; } },
+    '@/src/lib/dancr/venue-email-confirmation': { sendVenueRequestConfirmation: async () => { throw new Error('Temporary email outage'); } },
     '@/src/lib/security/safe-error-metadata': { safeErrorMetadata: () => ({}) },
   });
   const response = await route.POST(new Request('https://mydancr.com/api/venue/signup-requests', { method: 'POST', body: JSON.stringify(input) }));
   const payload = await response.json();
   assert.equal(response.status, 201);
-  assert.equal(payload.request.status, 'pending');
+  assert.equal(payload.request.status, 'awaiting_email_confirmation');
+  assert.equal(payload.requiresEmailConfirmation, true);
+  assert.equal(payload.emailDelivered, false);
   assert.equal(payload.session, null);
   assert.equal(created, 1);
   assert.doesNotMatch(JSON.stringify(payload), /Exact1|manager@example.com/);

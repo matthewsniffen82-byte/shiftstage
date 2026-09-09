@@ -40,6 +40,7 @@ const expectedRoutes = [
   "publication/route.ts",
   "qr-code/route.ts",
   "referral-fee/route.ts",
+  "signup-requests/confirmation/route.ts",
   "signup-requests/route.ts",
   "team/invitations/route.ts",
   "team/route.ts",
@@ -53,6 +54,7 @@ const retiredRoutes = new Set([
 ]);
 const reviewedPublicRoutes = new Set([
   "access-code/preview/route.ts",
+  "signup-requests/confirmation/route.ts",
   "signup-requests/route.ts",
   "team/invitations/route.ts",
 ]);

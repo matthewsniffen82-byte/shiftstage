@@ -18,6 +18,7 @@ begin
     insert into auth.users(id, email, raw_app_meta_data, raw_user_meta_data)
     values (target_id, target_id || '@example.invalid', '{"mydancr_provisioned_role":"venue"}', '{}');
   end loop;
+  update auth.users set email_confirmed_at=now() where id in (manager_id,rejected_id);
   update public.app_users set account_state='disabled' where id=disabled_id;
   foreach kind in array array['approved','rejected','legacy','disabled'] loop
     target_id := case kind when 'approved' then manager_id when 'rejected' then rejected_id when 'disabled' then disabled_id else null end;

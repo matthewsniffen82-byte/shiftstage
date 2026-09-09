@@ -101,6 +101,8 @@ function liveAppCallbackPath(url: URL, role: CallbackRole) {
     url.searchParams.get("reset_target") === "account_password" ||
     url.searchParams.get("type") === "recovery";
 
+  if (role === "venue" && !isPasswordReset) return "/dashboard/venue?confirmed=1";
+
   if (role === "customer" && !isPasswordReset) {
     return "/dashboard/customer?confirmed=1";
   }
@@ -165,6 +167,7 @@ function callbackHtml(
       <h1>Confirmation link unavailable</h1>
       <p>This link is invalid, already used, or has expired. Try signing in if you already confirmed your email, or request a new email.</p>
       <a href="/?auth=login">Continue to sign in</a>
+      ${redirectPath.startsWith("/dashboard/venue") ? '<a href="/venue/confirm-email">Request a new confirmation email</a>' : ""}
     </main>
     <main id="openingDancr" class="dancr-status-card">
       <p class="eyebrow">MyDancr</p>

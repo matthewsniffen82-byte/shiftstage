@@ -1523,7 +1523,7 @@ test("venue live refresh uses the current role-aware session and preserves the l
   assert.doesNotMatch(venueRefresh, /dashboardAuthHeaders|readOptionalJson/);
   assert.match(venueRefresh, /try \{[\s\S]*?await requestVenueDashboardJson[\s\S]*?setState[\s\S]*?\} catch \(error\)/);
 
-  const venueRefreshEffect = dashboard.match(/useEffect\(\(\) => \{\s*if \(role !== "venue" \|\| isLoading \|\| state\.error\)[\s\S]*?\}, \[analyticsPeriod, isLoading, refreshVenueDashboard, role, state\.error\]\);/)?.[0] || "";
+  const venueRefreshEffect = dashboard.match(/useEffect\(\(\) => \{\s*if \(role !== "venue" \|\| isLoading \|\| state\.error \|\| state\.venueRequest\)[\s\S]*?\}, \[analyticsPeriod, isLoading, refreshVenueDashboard, role, state\.error, state\.venueRequest\]\);/)?.[0] || "";
   assert.match(venueRefreshEffect, /venueRefreshAbortRef\.current\?\.abort\(\);/);
   assert.match(venueRefreshEffect, /venueRefreshRequestRef\.current \+= 1;/);
 });

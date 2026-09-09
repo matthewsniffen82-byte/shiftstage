@@ -40929,10 +40929,10 @@
           <form class="auth-form venue-request-form" id="venueRequestForm" data-auth-view="venue-request" novalidate hidden>
             <div class="venue-auth-mode-copy">
               <strong>Request to list your club</strong>
-              <span>Submit your club details and create your manager login. After approval, open your dashboard with the same account.</span>
+              <span>Submit your club details and create your manager login. Confirm your email, then wait for club approval.</span>
             </div>
             <div class="venue-request-intro">
-              <strong>Create your login now. Club access follows approval.</strong>
+              <strong>Create your login, confirm your email, then get approved.</strong>
               <span>Your club stays private until an approved manager finishes the page and chooses to publish it.</span>
             </div>
             <section class="venue-request-section" aria-labelledby="venueRequestVenueHeading">
@@ -40996,7 +40996,7 @@
                 <span>Manager login</span>
                 <strong id="venueRequestLoginHeading">Create your account once</strong>
               </div>
-              <p>Use this email for club verification, approval updates, and signing in to your dashboard.</p>
+              <p>We’ll send a confirmation link to this email before your club request goes for approval. Use the same email to sign in.</p>
               <div class="venue-request-grid">
                 <div class="field wide">
                   <label for="venueRequestLoginEmail">Manager login email</label>
@@ -41033,6 +41033,7 @@
             </label>
             <button class="action-btn venue-request-submit" id="venueRequestSubmit" type="submit">Send club request</button>
             <div class="venue-request-privacy">MyDancr uses these details only to verify the business and contact you about club access.</div>
+            <a class="venue-request-back" href="/venue/confirm-email">Need another confirmation email?</a>
             <button class="venue-request-back" id="venueRequestBackBtn" type="button">Have an access code? Continue</button>
             <button class="auth-back-to-types" id="venueRequestBackToTypes" type="button">← Back to account types</button>
             <div class="rule-note auth-status" id="venueRequestStatus" role="status" aria-live="polite" aria-atomic="true" hidden></div>
@@ -64304,20 +64305,19 @@
           throw new Error(payload?.error || payload?.message || "Unable to submit the club request.");
         }
 
+        try {
+          sessionStorage.setItem("dancrVenueConfirmationEmail", document.getElementById("venueRequestLoginEmail").value.trim());
+        } catch {}
         form.reset();
         pendingVenueAgentReferralCode = "";
         authPage.classList.add("venue-request-succeeded");
         submit.classList.add("is-submitted");
         submit.textContent = "✓ Request received";
         setVenueRequestStatus(
-          "Your manager login and club request are saved. We’ll email you after approval. Sign in with this same email and password to open your dashboard."
+          "Your details are saved. Confirm your email to send your club request for approval."
         );
         showToast("Club request received");
-        if (payload.session?.accessToken && payload.account?.role === "venue") {
-          await endAuthSession();
-          saveAuthSession({ ...payload.session, account: payload.account });
-          openUnifiedDashboard("venue");
-        }
+        window.location.assign(payload.emailDelivered === false ? "/venue/confirm-email?delivery=failed" : "/venue/confirm-email");
       } catch (error) {
         submit.disabled = false;
         submit.textContent = defaultLabel;
