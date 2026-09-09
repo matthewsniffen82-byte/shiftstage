@@ -209,7 +209,8 @@ test("venue-facing NFC language explains the physical actions in plain language"
   const venueDealPanel = dashboard.match(/function VenueDealReadOnlyPanel\([\s\S]*?(?=\nfunction readOptionalNumber)/)?.[0] || "";
   assert.match(venuePanel, /Verified dancer check-ins/);
   assert.match(venuePanel, /Check-in verified/);
-  assert.match(venuePanel, /title="Check-in & redemption stickers"/);
+  assert.match(venuePanel, /title="Affiliated dancers"/);
+  assert.match(nfcPanel, /<summary>Check-in &amp; redemption stickers/);
   assert.match(venuePanel, /Dancer check-ins/);
   assert.match(venuePanel, /Guest redemption attempts/);
   assert.doesNotMatch(venuePanel, /NFC-authorized check-ins|Assigned NFC access|NFC Deal visibility|Dressing-room taps|Cashier tap attempts/);

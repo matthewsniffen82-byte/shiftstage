@@ -272,16 +272,29 @@ export async function getVenueDancerVerificationState(
   rawToken?: string | null,
 ) {
   const venue = await requireManagedVenue(client, managerUserId);
-  const { data: affiliations, error } = await (client as any)
-    .from("venue_dancer_affiliations")
-    .select(AFFILIATION_COLUMNS)
-    .eq("venue_id", venue.id)
-    .order("updated_at", { ascending: false });
-  if (error) throw error;
+  // Read every affiliation using a stable cursor; Supabase otherwise caps a roster at 1,000 rows.
+  const affiliations: any[] = [];
+  let afterId: string | null = null;
+  while (true) {
+    let query = (client as any)
+      .from("venue_dancer_affiliations")
+      .select(AFFILIATION_COLUMNS)
+      .eq("venue_id", venue.id)
+      .order("id", { ascending: true })
+      .limit(500);
+    if (afterId) query = query.gt("id", afterId);
+    const { data, error } = await query;
+    if (error) throw error;
+    const page = data || [];
+    affiliations.push(...page);
+    if (page.length < 500) break;
+    afterId = String(page[page.length - 1].id);
+  }
+  affiliations.sort((a, b) => String(b.updated_at || "").localeCompare(String(a.updated_at || "")));
 
   return {
     venue: mapVenue(venue),
-    affiliations: (affiliations || []).map((row: any) => mapAffiliation(client, row)),
+    affiliations: affiliations.map((row: any) => mapAffiliation(client, row)),
     verification: rawToken
       ? await previewDancerVenueVerification(client, managerUserId, rawToken, venue.id)
       : null,

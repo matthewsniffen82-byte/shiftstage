@@ -31,7 +31,7 @@ test("secondary account panels do not claim data is empty while requests are loa
   assert.doesNotMatch(dancerNfcPanel, /No venue has verified your profile yet\./);
   assert.match(
     venueNfcPanel,
-    /const \[isLoading, setIsLoading\] = useState\(true\);[\s\S]*?: !isLoading \? <p>No dancers have used this venue&apos;s dancer check-in sticker yet\.<\/p>/,
+    /const \[isLoading, setIsLoading\] = useState\(true\);[\s\S]*?\{!isLoading && !matchingAffiliations\.length \? <p>[\s\S]*?No dancers have used this venue's dancer check-in sticker yet\./,
   );
   assert.match(
     venueTeamPanel,

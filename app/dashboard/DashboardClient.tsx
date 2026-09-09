@@ -33,6 +33,7 @@ import "./customer-dashboard.css";
 import "./venue-dashboard.css";
 import { VenueDashboardAvatar, VenueDashboardIcon } from "./VenueDashboardIdentity";
 import VenueNfcTagPanel from "./VenueNfcTagPanel";
+import { isAffiliatedDancerWorkingNow, type VenueDancerAffiliation } from "@/src/lib/dancr/venue-roster";
 import VenueTeamPanel from "./VenueTeamPanel";
 import VenueTvPanel from "./VenueTvPanel";
 import { loadCustomerDashboard } from "./customer-dashboard-loader";
@@ -852,6 +853,17 @@ export default function DashboardClient({
                   refreshStatus={venueRefreshStatus}
                   onAnalyticsPeriodChange={setAnalyticsPeriod}
                   onRefresh={() => void refreshVenueDashboard(true)}
+                  onAccessRemoved={(affiliation) => {
+                    venueRefreshAbortRef.current?.abort();
+                    venueRefreshRequestRef.current += 1;
+                    setIsVenueRefreshing(false);
+                    setState((current) => ({
+                      ...current,
+                      affiliations: (current.affiliations || []).map((item) => item.id === affiliation.id ? { ...item, status: "revoked" } : item),
+                      workingNow: (current.workingNow || []).filter((shift) => !isAffiliatedDancerWorkingNow(affiliation, [shift])),
+                    }));
+                    void refreshVenueDashboard(false);
+                  }}
                   onProfileChange={updateProfile}
                    onPublicationChange={(publication) => setState((current) => ({ ...current, publication }))}
                    onDealRequestsChange={(dealRequests) => setState((current) => ({ ...current, dealRequests }))}
@@ -2665,6 +2677,7 @@ function VenuePanel({
   refreshStatus,
   onAnalyticsPeriodChange,
   onRefresh,
+  onAccessRemoved,
   onProfileChange,
   onPublicationChange,
   onDealRequestsChange,
@@ -2688,6 +2701,7 @@ function VenuePanel({
   refreshStatus: string;
   onAnalyticsPeriodChange: (period: "tonight" | "7d" | "30d") => void;
   onRefresh: () => void;
+  onAccessRemoved: (affiliation: VenueDancerAffiliation) => void;
   onProfileChange: (profile: Record<string, unknown>) => void;
   onPublicationChange: (publication: Record<string, unknown>) => void;
   onDealRequestsChange: (dealRequests: Array<Record<string, unknown>>) => void;
@@ -3076,17 +3090,19 @@ function VenuePanel({
       </DashboardSection>
 
       <DashboardSection
-        description="View the official dancer check-in and guest redemption stickers assigned to this venue. A dancer uses the check-in sticker to verify venue access and start a current posted shift."
-        eyebrow="Floor access"
+        description="Search your approved dancer roster, view profiles, see who's working now, and remove venue access."
+        eyebrow="Venue roster"
         hidden={activeWorkspace !== "tonight"}
         id="venue-dancer-roster"
-        icon={<VenueDashboardIcon section="stickers" />}
+        icon={<VenueDashboardIcon section="roster" />}
         toggleAffordance="chevron"
-        title="Check-in & redemption stickers"
-        badge={`${nfcAuthorizedDancerCount} authorized`}
+        title="Affiliated dancers"
+        badge={`${nfcAuthorizedDancerCount} affiliated`}
       >
         <VenueNfcTagPanel
-          initialAffiliations={activeAffiliations}
+          initialAffiliations={initialAffiliations}
+          workingNow={workingNow}
+          onAccessRemoved={onAccessRemoved}
           canManageRoster={canManageRoster}
           canRequestSupport={canRequestNfcSupport}
         />

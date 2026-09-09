@@ -1,6 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import Link from "next/link";
+import { filterVenueAffiliations, isAffiliatedDancerWorkingNow, type VenueDancerAffiliation as DancerAffiliation } from "@/src/lib/dancr/venue-roster";
 import {
   readDashboardAccessToken,
   requestVenueDancerVerificationsJson,
@@ -21,22 +23,11 @@ type NfcTag = {
   createdAt: string;
 };
 
-type DancerAffiliation = {
-  id: string;
-  status: string;
-  approvedAt?: string | null;
-  dancer?: {
-    stageName?: string;
-    slug?: string;
-    city?: string;
-    avatarUrl?: string | null;
-    avatarSrcSet?: string | null;
-  } | null;
-};
-
 type VenueNfcLoadOptions = {
   silent?: boolean;
 };
+
+const EMPTY_ROSTER: Array<Record<string, unknown>> = [];
 
 async function settleVenueNfcRequest<T>(request: () => Promise<T>): Promise<PromiseSettledResult<T>> {
   try {
@@ -47,19 +38,26 @@ async function settleVenueNfcRequest<T>(request: () => Promise<T>): Promise<Prom
 }
 
 export default function VenueNfcTagPanel({
-  initialAffiliations = [],
+  initialAffiliations = EMPTY_ROSTER,
+  workingNow = EMPTY_ROSTER,
   canManageRoster = false,
   canRequestSupport = false,
+  onAccessRemoved,
 }: {
   initialAffiliations?: Array<Record<string, unknown>>;
+  workingNow?: Array<Record<string, unknown>>;
   canManageRoster?: boolean;
   canRequestSupport?: boolean;
+  onAccessRemoved?: (affiliation: DancerAffiliation) => void;
 }) {
   const [tags, setTags] = useState<NfcTag[]>([]);
   const [affiliations, setAffiliations] = useState<DancerAffiliation[]>(initialAffiliations as DancerAffiliation[]);
-  const [status, setStatus] = useState("Loading assigned phone-tap stickers…");
+  const [status, setStatus] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [search, setSearch] = useState("");
+  const [workingOnly, setWorkingOnly] = useState(false);
+  const [visibleCount, setVisibleCount] = useState(50);
   const [testingTagId, setTestingTagId] = useState("");
   const [testStatus, setTestStatus] = useState("");
   const testBaselineRef = useRef(0);
@@ -73,6 +71,10 @@ export default function VenueNfcTagPanel({
   const savingRef = useRef(false);
   const actionSequenceRef = useRef(0);
   const actionAbortRef = useRef<AbortController | null>(null);
+
+  useEffect(() => {
+    if (!savingRef.current) setAffiliations(initialAffiliations as DancerAffiliation[]);
+  }, [initialAffiliations]);
 
   const load = useCallback(({ silent = false }: VenueNfcLoadOptions = {}) => {
     if (!mountedRef.current || savingRef.current) return Promise.resolve();
@@ -118,9 +120,7 @@ export default function VenueNfcTagPanel({
         setStatus(rosterResult.reason instanceof Error ? rosterResult.reason.message : "Unable to load the verified dancer roster.");
         return;
       }
-      setStatus(tagResult.value.tags?.length
-        ? ""
-        : "No stickers are assigned yet. MyDancr will program and supply this venue's dancer check-in and guest redemption stickers.");
+      setStatus("");
     })().finally(() => {
       if (requestId !== loadSequenceRef.current) return;
       loadAbortRef.current = null;
@@ -205,6 +205,7 @@ export default function VenueNfcTagPanel({
   }, [testingTagId]);
 
   async function removeAccess(affiliation: DancerAffiliation) {
+    if (!canManageRoster || savingRef.current) return;
     const dancerName = affiliation.dancer?.stageName || "this dancer";
     if (!window.confirm(`Remove ${dancerName} from this venue's approved dancer roster? They must use the dancer check-in sticker again before they can check in here.`)) return;
     if (!readDashboardAccessToken("venue")) return setStatus("Sign in required.");
@@ -230,6 +231,7 @@ export default function VenueNfcTagPanel({
       });
       if (!mountedRef.current || controller.signal.aborted || requestId !== actionSequenceRef.current) return;
       setAffiliations((current) => current.map((item) => item.id === affiliation.id ? { ...item, status: "revoked" } : item));
+      onAccessRemoved?.(affiliation);
       setStatus(`${dancerName} was removed. Using the dancer check-in sticker again restores access.`);
     } catch (error) {
       if (!mountedRef.current || controller.signal.aborted || requestId !== actionSequenceRef.current) return;
@@ -288,9 +290,58 @@ export default function VenueNfcTagPanel({
   }
 
   const activeAffiliations = affiliations.filter((item) => item.status === "active");
+  const workingCount = activeAffiliations.filter((item) => isAffiliatedDancerWorkingNow(item, workingNow)).length;
+  const matchingAffiliations = filterVenueAffiliations(affiliations, workingNow, search, workingOnly);
 
   return (
     <article className="info-panel venue-nfc-panel" id="venue-nfc-tags">
+      <section className="venue-nfc-roster" aria-label="Verified dancer roster">
+        <div className="venue-nfc-roster-head">
+          <span><strong>Approved dancer roster</strong><small>Search dancers, view profiles, and manage venue access.</small></span>
+          <b>{isLoading && !activeAffiliations.length ? "…" : `${activeAffiliations.length} affiliated`}</b>
+        </div>
+        <label className="venue-roster-search">
+          Search affiliated dancers
+          <input type="search" value={search} placeholder="Stage name or city" onChange={(event) => { setSearch(event.target.value); setVisibleCount(50); }} />
+        </label>
+        <div className="venue-roster-filters" role="group" aria-label="Filter affiliated dancers">
+          <button type="button" aria-pressed={!workingOnly} onClick={() => { setWorkingOnly(false); setVisibleCount(50); }}>All affiliated <b>{activeAffiliations.length}</b></button>
+          <button type="button" aria-pressed={workingOnly} onClick={() => { setWorkingOnly(true); setVisibleCount(50); }}>Working now <b>{workingCount}</b></button>
+        </div>
+        <p className="venue-roster-results" role="status">{isLoading && !activeAffiliations.length ? "Loading dancers…" : `${matchingAffiliations.length} ${matchingAffiliations.length === 1 ? "dancer" : "dancers"}${search.trim() ? " matching your search" : workingOnly ? " working now" : " affiliated"}`}</p>
+        {matchingAffiliations.slice(0, visibleCount).map((affiliation) => (
+          <div className="venue-nfc-dancer" key={affiliation.id}>
+            <span className="venue-nfc-dancer-identity">
+              <span className="venue-nfc-dancer-avatar" data-dancer-avatar="" aria-hidden="true">
+                <span data-dancer-avatar-border="">
+                  {affiliation.dancer?.avatarUrl ? (
+                    <img src={affiliation.dancer.avatarUrl} srcSet={affiliation.dancer.avatarSrcSet || undefined} sizes="48px" alt="" loading="lazy" decoding="async" />
+                  ) : (affiliation.dancer?.stageName || "D").slice(0, 1).toUpperCase()}
+                </span>
+              </span>
+              <span className="venue-nfc-dancer-copy">
+                <strong>{affiliation.dancer?.stageName || "Dancer"}</strong>
+                {affiliation.dancer?.city ? <small>{affiliation.dancer.city}</small> : null}
+                <small className={isAffiliatedDancerWorkingNow(affiliation, workingNow) ? "venue-roster-working" : ""}>{isAffiliatedDancerWorkingNow(affiliation, workingNow) ? "● Working now" : "Not working now"}</small>
+              </span>
+            </span>
+            <div className="venue-roster-actions">
+              {affiliation.dancer?.slug ? <Link href={`/dancers/${encodeURIComponent(affiliation.dancer.slug)}`} aria-label={`View ${affiliation.dancer.stageName || "dancer"} profile`}>View profile</Link> : null}
+              {canManageRoster ? (
+                <button className="venue-nfc-remove-access" type="button" disabled={isSaving}
+                  aria-label={`Remove ${affiliation.dancer?.stageName || "dancer"} access`} onClick={() => removeAccess(affiliation)}>
+                  Remove access
+                </button>
+              ) : null}
+            </div>
+          </div>
+        ))}
+        {!isLoading && !matchingAffiliations.length ? <p>{search.trim() ? "No affiliated dancers match your search." : workingOnly ? "No affiliated dancers are working now." : "No dancers have used this venue's dancer check-in sticker yet."}</p> : null}
+        {matchingAffiliations.length > visibleCount ? <button type="button" onClick={() => setVisibleCount((count) => count + 50)}>Show more dancers ({matchingAffiliations.length - visibleCount} remaining)</button> : null}
+      </section>
+      {status ? <p role="status">{status}</p> : null}
+      <details className="venue-roster-stickers">
+        <summary>Check-in &amp; redemption stickers <span>{tags.length} assigned</span></summary>
       {tags.length ? <div className="nfc-tag-list" aria-label="Assigned sticker inventory">
         {tags.map((tag) => (
           <section key={tag.id} className={`nfc-tag-row ${tag.status}`}>
@@ -323,49 +374,28 @@ export default function VenueNfcTagPanel({
           <div><button type="button" disabled={isSaving} onClick={() => void sendSupportRequest()}>Send request</button><button type="button" disabled={isSaving} onClick={() => setSupportTagId("")}>Cancel</button></div>
         </section>
       ) : null}
-      <section className="venue-nfc-roster" aria-label="Verified dancer roster">
-        <div className="venue-nfc-roster-head">
-          <span><strong>Approved dancer roster</strong><small>Authorized by the dancer check-in sticker</small></span>
-          <b>{isLoading && !activeAffiliations.length ? "…" : `${activeAffiliations.length} active`}</b>
-        </div>
-        {activeAffiliations.length ? activeAffiliations.map((affiliation) => (
-          <div className="venue-nfc-dancer" key={affiliation.id}>
-            <span className="venue-nfc-dancer-identity">
-              <span className="venue-nfc-dancer-avatar" data-dancer-avatar="" aria-hidden="true">
-                <span data-dancer-avatar-border="">
-                  {affiliation.dancer?.avatarUrl ? (
-                    <img
-                      src={affiliation.dancer.avatarUrl}
-                      srcSet={affiliation.dancer.avatarSrcSet || undefined}
-                      sizes="48px"
-                      alt=""
-                    />
-                  ) : (
-                    (affiliation.dancer?.stageName || "D").slice(0, 1).toUpperCase()
-                  )}
-                </span>
-              </span>
-              <span className="venue-nfc-dancer-copy">
-                <strong>{affiliation.dancer?.stageName || "Dancer"}</strong>
-                <small>Check-in verified{affiliation.approvedAt ? ` · ${formatDate(affiliation.approvedAt)}` : ""}</small>
-              </span>
-            </span>
-            {canManageRoster ? (
-              <button
-                className="venue-nfc-remove-access"
-                type="button"
-                disabled={isSaving}
-                aria-label={`Remove ${affiliation.dancer?.stageName || "dancer"} access`}
-                onClick={() => removeAccess(affiliation)}
-              >
-                Remove access
-              </button>
-            ) : null}
-          </div>
-        )) : !isLoading ? <p>No dancers have used this venue&apos;s dancer check-in sticker yet.</p> : null}
-      </section>
-      {status ? <p role="status">{status}</p> : null}
+      {!tags.length && !isLoading ? <p>No stickers are assigned yet.</p> : null}
+      </details>
       <style>{`
+        .venue-roster-search{display:grid;gap:6px;margin:10px 0 4px;color:#c4b5fd;font-size:12px;font-weight:750}
+        .venue-roster-search input{width:100%;min-width:0;box-sizing:border-box;min-height:44px;padding:10px 12px;border:1px solid #42394f;border-radius:10px;color:#f8fafc;background:#111118;font:inherit;font-size:16px}
+        .venue-roster-search input:focus-visible,.venue-roster-actions a:focus-visible,.venue-roster-stickers summary:focus-visible{outline:2px solid #a78bfa;outline-offset:2px}
+        .venue-roster-filters{display:flex;flex-wrap:wrap;gap:8px}
+        .venue-roster-filters button{display:flex;gap:8px;align-items:center;font-size:12px!important}
+        .venue-roster-filters button[aria-pressed="true"]{border-color:#8b5cf6;background:rgba(124,58,237,.24)}
+        .venue-roster-filters b{font-variant-numeric:tabular-nums;color:#c4b5fd}
+        .venue-roster-results{font-size:12px}
+        .venue-roster-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+        .venue-roster-actions a{display:inline-flex;align-items:center;min-height:36px;padding:0 10px;border:1px solid rgba(167,139,250,.3);border-radius:10px;color:#ddd6fe;font-size:12px;font-weight:750;text-decoration:none}
+        .venue-nfc-dancer-copy .venue-roster-working{color:#6ee7b7;font-weight:750}
+        .venue-roster-stickers{min-width:0;border-top:1px solid rgba(255,255,255,.1);padding-top:14px}
+        .venue-roster-stickers summary{cursor:pointer;color:#d1c4e1;font-size:13px;font-weight:750}
+        .venue-roster-stickers summary span{display:block;margin-top:4px;color:#9e94aa;font-size:11px}
+        .venue-roster-stickers[open]>.nfc-tag-list{margin-top:14px}
+        .venue-nfc-roster-head{flex-wrap:wrap}
+        .venue-nfc-dancer .venue-nfc-dancer-copy strong{white-space:normal;overflow-wrap:anywhere}
+        @media(max-width:600px){.venue-nfc-panel .venue-nfc-dancer{grid-template-columns:minmax(0,1fr)}.venue-roster-actions{padding-left:58px}}
+        @media(max-width:390px){.venue-roster-actions{padding-left:0}.venue-roster-actions>*{flex:1;justify-content:center}}
         .venue-nfc-roster:first-child{padding-top:0;border-top:0}
         .venue-nfc-panel{display:grid;gap:16px}.venue-nfc-panel h2,.venue-nfc-panel p{margin:4px 0}.venue-nfc-panel>div>p{color:#b9accd;line-height:1.45}.venue-nfc-roster-head span{display:grid;gap:3px}.venue-nfc-roster small{color:#9e94aa;line-height:1.35}.venue-nfc-panel button{min-height:40px;padding:0 12px;border:1px solid rgba(255,255,255,.14);border-radius:10px;color:#f8fafc;background:rgba(255,255,255,.055);font:inherit;font-weight:850;cursor:pointer}.venue-nfc-panel button:focus-visible{outline:2px solid #7c3aed;outline-offset:2px}.venue-nfc-panel button:disabled{opacity:.6;cursor:wait}.nfc-tag-list{display:grid;gap:8px}.nfc-tag-row{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:12px;padding:13px;border:1px solid rgba(255,255,255,.1);border-radius:12px;background:rgba(255,255,255,.035)}.nfc-tag-row>div{display:grid;gap:2px}.nfc-tag-row span{color:#c4b5fd;font-size:9px;font-weight:950;letter-spacing:.12em;text-transform:uppercase}.nfc-tag-row small{color:#938a9f}.nfc-tag-row b{color:#6ee7b7;font-size:10px;text-transform:uppercase}.nfc-tag-row.disabled b,.nfc-tag-row.revoked b{color:#b4aabf}.nfc-tag-actions{display:flex!important;align-items:center;justify-content:flex-end;gap:8px;flex-wrap:wrap}.nfc-tag-actions button{min-height:34px;font-size:11px}.nfc-test-status{padding:12px 14px;border:1px solid rgba(16,185,129,.3);border-radius:11px;color:#a7f3d0;background:rgba(16,185,129,.06)}.nfc-support-form{display:grid;gap:12px;padding:14px;border:1px solid #334155;border-radius:12px;background:#0b0b10}.nfc-support-form label{display:grid;gap:6px;color:#cbd5e1;font-size:12px;font-weight:850}.nfc-support-form select,.nfc-support-form textarea{width:100%;box-sizing:border-box;padding:11px;border:1px solid #334155;border-radius:9px;color:#f8fafc;background:#111118;font:inherit}.nfc-support-form>div{display:flex;gap:8px;flex-wrap:wrap}.venue-nfc-roster{display:grid;gap:8px;padding-top:14px;border-top:1px solid rgba(255,255,255,.1)}.venue-nfc-roster-head{display:flex;align-items:center;justify-content:space-between;gap:12px}.venue-nfc-roster-head>b{padding:6px 9px;border-radius:999px;color:#6ee7b7;background:rgba(16,185,129,.1);font-size:10px}.venue-nfc-dancer{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:10px;padding:10px 11px;border:1px solid rgba(16,185,129,.16);border-radius:11px;background:rgba(16,185,129,.04)}.venue-nfc-dancer-identity{min-width:0;display:flex!important;align-items:center;gap:10px}.venue-nfc-dancer-avatar{width:48px;height:48px;display:grid!important;place-items:center;flex:0 0 48px;overflow:hidden;border-radius:50%;color:#f8fafc;background:#111118;font-weight:900}.venue-nfc-dancer-copy{min-width:0;display:grid!important;gap:3px}.venue-nfc-dancer-copy strong{overflow:hidden;color:#f8fafc;text-overflow:ellipsis;white-space:nowrap}.venue-nfc-remove-access{min-height:34px!important;padding:0 10px!important;border-color:rgba(251,113,133,.24)!important;color:#fda4af!important;background:rgba(159,18,57,.08)!important;font-size:11px!important;white-space:nowrap}.venue-nfc-remove-access:hover{border-color:rgba(251,113,133,.4)!important;background:rgba(159,18,57,.14)!important}.venue-nfc-roster>p{color:#978da3}@media(max-width:760px){.nfc-tag-row{grid-template-columns:1fr}.nfc-tag-actions{justify-content:flex-start}}@media(max-width:390px){.venue-nfc-dancer{gap:8px;padding:9px}.venue-nfc-dancer-avatar{width:44px;height:44px;flex-basis:44px}.venue-nfc-remove-access{padding:0 8px!important;font-size:10px!important}}
       `}</style>
