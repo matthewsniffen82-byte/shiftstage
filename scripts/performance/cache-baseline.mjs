@@ -42,7 +42,9 @@ try {
     cdp.on("Network.responseReceived", ({ requestId, response }) => { if (requests.has(requestId)) Object.assign(requests.get(requestId), { status: response.status, cached: requests.get(requestId).cached || response.fromDiskCache === true }); });
     cdp.on("Network.loadingFinished", ({ requestId, encodedDataLength }) => { if (requests.has(requestId)) requests.get(requestId).bytes = encodedDataLength; });
     page.on("pageerror", error => errors.push(error.message));
-    await page.goto(base + route, { waitUntil: "load" });
+    const destination = new URL(base + route);
+    if (process.env.PERF_FRESH_DOCUMENT === "1") destination.searchParams.set("performance_cache_probe", String(samples.length));
+    await page.goto(destination.href, { waitUntil: "load" });
     await page.waitForTimeout(3500);
     const all = [...requests.values()];
     samples.push({ route, visit, bytes: all.reduce((sum, request) => sum + request.bytes, 0), cachedRequests: all.filter(request => request.cached).length,

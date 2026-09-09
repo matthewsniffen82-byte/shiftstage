@@ -32,8 +32,8 @@ For a customer rendering-only sample, set `PERF_CUSTOMER_FIXTURE=1` and use `/da
 | 5 | Feed rendering and scrolling | Pushed `b9ca4140`; [Vercel success](https://vercel.com/ai-movie-jobs/shiftstage/F6aMciXAAQtpJrGN4XwJvEqdU3ye); live filter work reduced 44%, counts/focus/scroll and three role journeys passed |
 | 6 | Supabase and database access | Pushed `d62c04e5`; [Vercel success](https://vercel.com/ai-movie-jobs/shiftstage/81P2nPTKPvYNjcobK4E51ngrjAta); private signing requests reduced 98–99% in loader fixtures; live API/media/role and access-boundary checks passed |
 | 7 | API/network requests | Pushed `d2383163`; [Vercel success](https://vercel.com/ai-movie-jobs/shiftstage/5cpXqrqABfv9vA47Z5XB3aX22CTz); obsolete requests cancel on navigation; normal profile/video journeys and live API/health checks passed |
-| 8 | Safe resource caching | Automatic public static content versions; complete checks and deployment verification in progress |
-| 9 | CSS, fonts, rendering | Pending |
+| 8 | Safe resource caching | Pushed `3f14c633`; [Vercel success](https://vercel.com/ai-movie-jobs/shiftstage/3CRniT2G4FpxrMYKKQ2WtwaVat42); version headers, warm cache reuse, three roles and public playback verified |
+| 9 | CSS, fonts, rendering | Main stylesheet reuse with exact cascade/declaration preservation; validation and live verification in progress |
 | 10 | Third-party overhead | Pending |
 | 11 | Memory/resource lifecycle | Pending |
 | 12 | Mobile matrix | Pending |
