@@ -34,7 +34,7 @@ export function filterVenueAffiliations(
   return affiliations.filter((affiliation) => {
     if (affiliation.status !== "active") return false;
     if (workingOnly && !isAffiliatedDancerWorkingNow(affiliation, workingNow)) return false;
-    const identity = `${affiliation.dancer?.stageName || ""} ${affiliation.dancer?.city || ""}`.toLocaleLowerCase();
-    return terms.every((term) => identity.includes(term));
+    const stageName = (affiliation.dancer?.stageName || "").toLocaleLowerCase();
+    return terms.every((term) => stageName.includes(term));
   });
 }

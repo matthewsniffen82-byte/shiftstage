@@ -302,7 +302,7 @@ export default function VenueNfcTagPanel({
         </div>
         <label className="venue-roster-search">
           Search affiliated dancers
-          <input type="search" value={search} placeholder="Stage name or city" onChange={(event) => { setSearch(event.target.value); setVisibleCount(50); }} />
+          <input type="search" value={search} placeholder="Stage name" onChange={(event) => { setSearch(event.target.value); setVisibleCount(50); }} />
         </label>
         <div className="venue-roster-filters" role="group" aria-label="Filter affiliated dancers">
           <button type="button" aria-pressed={!workingOnly} onClick={() => { setWorkingOnly(false); setVisibleCount(50); }}>All affiliated <b>{activeAffiliations.length}</b></button>

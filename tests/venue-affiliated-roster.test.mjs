@@ -16,9 +16,11 @@ const affiliations = [
 const workingNow = [{ dancerId: "two", dancerSlug: "ivy" }];
 const ids = results => Array.from(results, row => row.id);
 
-test("affiliated roster searches all active dancers by stage name and city regardless of case or spacing", () => {
-  assert.deepEqual(ids(roster.filterVenueAffiliations(affiliations, workingNow, "  ROSE  vegas ", false)), ["a"]);
-  assert.deepEqual(ids(roster.filterVenueAffiliations(affiliations, workingNow, "PHOENIX", false)), ["b"]);
+test("affiliated roster searches active dancers by stage name only regardless of case or spacing", () => {
+  assert.deepEqual(ids(roster.filterVenueAffiliations(affiliations, workingNow, "  ROSE  bella ", false)), ["a"]);
+  assert.deepEqual(ids(roster.filterVenueAffiliations(affiliations, workingNow, "IVY", false)), ["b"]);
+  assert.deepEqual(ids(roster.filterVenueAffiliations(affiliations, workingNow, "PHOENIX", false)), []);
+  assert.deepEqual(ids(roster.filterVenueAffiliations(affiliations, workingNow, "ROSE vegas", false)), []);
   assert.deepEqual(ids(roster.filterVenueAffiliations(affiliations, workingNow, "", false)), ["a", "b"]);
   assert.deepEqual(ids(roster.filterVenueAffiliations(affiliations, workingNow, "missing", false)), []);
 });
