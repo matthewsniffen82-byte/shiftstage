@@ -29,7 +29,7 @@ const [
 test("dancer avatars are separate approved profile assets outside gallery slots", () => {
   assert.match(migration, /add column if not exists avatar_storage_path text null/);
   assert.match(migration, /add column if not exists avatar_updated_at timestamptz null/);
-  assert.match(avatarRoute, /createRequestSupabaseContext\(request\)/);
+  assert.match(avatarRoute, /createRequestSupabaseContext\(request, \{ role: "dancer" \}\)/);
   assert.match(avatarRoute, /uploadContext: PROFILE_AVATAR_CONTEXT/);
   assert.match(avatarRoute, /replaceExisting: true/);
   assert.match(moderation, /const isAvatar = isProfileAvatarUploadContext\(input\.uploadContext\)/);

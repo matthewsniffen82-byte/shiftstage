@@ -31,7 +31,7 @@ test("the public photo bucket no longer accepts direct dancer writes", () => {
 });
 
 test("profile writes authorize ownership before using the server mutation client", () => {
-  const authIndex = profileRoute.indexOf("createRequestSupabaseContext(request)");
+  const authIndex = profileRoute.indexOf('createRequestSupabaseContext(request, { role: "dancer" })');
   const ownershipIndex = profileRoute.indexOf("loadProfileForSave(client, user.id)");
   const privilegedIndex = profileRoute.indexOf("const db = createAdminSupabaseClient()", authIndex);
   const updateIndex = profileRoute.indexOf('.from("dancer_profiles")', privilegedIndex);

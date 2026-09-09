@@ -57,7 +57,7 @@ test("every service-role API route has an explicit reviewed trust boundary", () 
       return false;
     }
 
-    return !/createRequestSupabaseContext\(request\)/.test(source);
+    return !/createRequestSupabaseContext\(request(?:, \{ (?:role: "dancer"|active: true) \})?\)/.test(source);
   });
 
   assert.deepEqual(unclassified, []);

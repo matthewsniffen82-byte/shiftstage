@@ -23,7 +23,7 @@ const MAX_AVATAR_UPLOAD_BODY_BYTES = MAX_DANCR_RAW_UPLOAD_BYTES + 64 * 1024;
 
 export async function POST(request: Request) {
   try {
-    const { client, user } = await createRequestSupabaseContext(request);
+    const { client, user } = await createRequestSupabaseContext(request, { role: "dancer" });
     const admin = createAdminSupabaseClient();
     await enforceDancerMediaRequestRateLimit(admin, {
       media: "image",
@@ -80,7 +80,7 @@ export async function POST(request: Request) {
 
 export async function DELETE(request: Request) {
   try {
-    const { client, user } = await createRequestSupabaseContext(request);
+    const { client, user } = await createRequestSupabaseContext(request, { role: "dancer" });
     const result = await deleteOwnDancerAvatar(client, user.id, createAdminSupabaseClient());
     return NextResponse.json({ ok: true, avatar: result });
   } catch (error) {

@@ -1286,7 +1286,7 @@ test("dancer gallery photo uploads and deletions preserve refresh and moderation
   assert.match(photoPanel, /requestDancerPhotosJson/);
   assert.doesNotMatch(photoPanel, /fetch\("\/api\/dancer\/photos"/);
   assert.doesNotMatch(photoPanel, /authorization: `Bearer/);
-  assert.match(dancerPhotoRoute, /const \{ client, user, session \} = await createRequestSupabaseContext\(request\)/);
+  assert.match(dancerPhotoRoute, /const \{ client, user, session \} = await createRequestSupabaseContext\(request, \{ role: "dancer" \}\)/);
   assert.match(dancerPhotoRoute, /result, session \}, \{ status \}/);
   assert.match(dancerPhotoRoute, /\{ ok: true, photo, session \}/);
 });

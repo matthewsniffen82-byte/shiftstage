@@ -12,7 +12,7 @@ const [routeSource, dashboardSource, dashboardSessionSource, mobileAppSource, mi
 ]);
 
 test("incognito uses a dedicated authenticated database operation", () => {
-  assert.match(routeSource, /createRequestSupabaseContext\(request\)/);
+  assert.match(routeSource, /createRequestSupabaseContext\(request, \{ role: "dancer" \}\)/);
   assert.match(routeSource, /createAdminSupabaseClient\(\)/);
   assert.match(routeSource, /typeof body\.isPublic === "boolean"/);
   assert.match(routeSource, /\.eq\("user_id", user\.id\)/);

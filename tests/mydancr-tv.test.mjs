@@ -64,7 +64,7 @@ test("MyDancr TV stores private reviewed videos and enforces profile visibility"
 });
 
 test("dancer uploads are direct, validated, persistent, and submitted for automated review", () => {
-  assert.match(dancerApi, /createRequestSupabaseContext\(request\)/);
+  assert.match(dancerApi, /createRequestSupabaseContext\(request, \{ role: "dancer" \}\)/);
   assert.match(dancerApi, /createMyDancrTvUpload/);
   assert.match(tvSource, /createSignedUploadUrl\(storagePath\)/);
   assert.match(tvSource, /MYDANCR_TV_MAX_BYTES = 75 \* 1024 \* 1024/);

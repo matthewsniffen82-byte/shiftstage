@@ -24,7 +24,7 @@ test("administrative suspensions cannot be undone through self-service reactivat
   assert.match(accountAuth, /app_metadata[\s\S]*?mydancr_self_disabled_at/);
   assert.match(accountAuth, /current\.account_state === "disabled" && !selfDisabledAt[\s\S]*?disabled by MyDancr/);
   assert.match(accountAuth, /auth\.admin\.updateUserById\(userId, \{[\s\S]*?app_metadata/);
-  assert.match(accountAuth, /delete restoredMetadata\.mydancr_self_disabled_at/);
+  assert.match(accountAuth, /restoredMetadata = \{ mydancr_self_disabled_at: null, mydancr_venue_was_active: null \}/);
   assert.match(authRoute, /account\.role === "venue" && account\.accountState === "active"/);
   assert.match(authRoute, /account\.accountState === "deleted"[\s\S]*?account has been deleted/);
 });

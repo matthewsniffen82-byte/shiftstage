@@ -207,7 +207,7 @@ export async function GET(request: Request) {
   }
 
   try {
-    const { client, user } = await createRequestSupabaseContext(request);
+    const { client, user } = await createRequestSupabaseContext(request, { role: "dancer" });
     const { data, error } = await loadDancerProfile(createAdminSupabaseClient(), user.id);
 
     if (error) throw error;
@@ -401,7 +401,7 @@ export async function PATCH(request: Request) {
 
   try {
     setSaveStage("authenticate");
-    const { client, user } = await createRequestSupabaseContext(request);
+    const { client, user } = await createRequestSupabaseContext(request, { role: "dancer" });
     const body = await readBoundedJsonObject(request, {
       maxBytes: MAX_DANCER_PROFILE_BODY_BYTES,
       invalidMessage: "Invalid dancer profile request.",

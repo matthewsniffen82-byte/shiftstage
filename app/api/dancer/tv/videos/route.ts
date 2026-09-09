@@ -18,7 +18,7 @@ const MAX_TV_UPLOAD_METADATA_BYTES = 4_096;
 
 export async function GET(request: Request) {
   try {
-    const { user } = await createRequestSupabaseContext(request);
+    const { user } = await createRequestSupabaseContext(request, { role: "dancer" });
     const workspace = await getDancerMyDancrTvWorkspace(createAdminSupabaseClient(), user.id);
     return NextResponse.json({ ok: true, ...workspace });
   } catch (error) {
@@ -28,7 +28,7 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const { user } = await createRequestSupabaseContext(request);
+    const { user } = await createRequestSupabaseContext(request, { role: "dancer" });
     const admin = createAdminSupabaseClient();
     await enforceDancerMediaRequestRateLimit(admin, {
       media: "video",

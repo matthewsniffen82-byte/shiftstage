@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 
 export async function GET(request: Request) {
   try {
-    const { client, user } = await createRequestSupabaseContext(request);
+    const { client, user } = await createRequestSupabaseContext(request, { role: "dancer" });
     const reviews = await getOwnDancerApprovalReviews(client, user.id);
 
     return NextResponse.json({ ok: true, reviews });

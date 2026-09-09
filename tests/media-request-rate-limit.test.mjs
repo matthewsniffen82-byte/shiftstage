@@ -16,7 +16,7 @@ test("authenticated media uploads use persistent per-user and per-IP limits", ()
   assert.match(limiter, /windowSeconds: 60 \* 60/);
 
   for (const source of [photos, avatar, videos, videoAction]) {
-    const authIndex = source.indexOf("createRequestSupabaseContext(request)");
+    const authIndex = source.indexOf('createRequestSupabaseContext(request, { role: "dancer" })');
     const limitIndex = source.indexOf("enforceDancerMediaRequestRateLimit", authIndex);
     assert.ok(authIndex >= 0);
     assert.ok(limitIndex > authIndex);

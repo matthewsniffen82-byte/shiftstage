@@ -63,7 +63,7 @@ async function verifyPublicVisibility(
 
 export async function PATCH(request: Request) {
   try {
-    const { user, session } = await createRequestSupabaseContext(request);
+    const { user, session } = await createRequestSupabaseContext(request, { role: "dancer" });
     const body = await readBoundedJsonObject(request, {
       maxBytes: MAX_VISIBILITY_BODY_BYTES,
       invalidMessage: "Invalid profile visibility request.",

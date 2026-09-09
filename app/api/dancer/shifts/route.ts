@@ -22,7 +22,7 @@ const UUID_PATTERN =
 
 export async function GET(request: Request) {
   try {
-    const { client, user } = await createRequestSupabaseContext(request);
+    const { client, user } = await createRequestSupabaseContext(request, { role: "dancer" });
     const dancer = await getOwnDancerProfile(client as any, user.id);
     const admin = createAdminSupabaseClient() as any;
     await reconcileExpiredDancerShifts(admin, dancer.id);
@@ -46,7 +46,7 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const { client, user } = await createRequestSupabaseContext(request);
+    const { client, user } = await createRequestSupabaseContext(request, { role: "dancer" });
     const body = await readShiftBody(request);
     const dancer = await getOwnDancerProfile(client as any, user.id);
 
@@ -104,7 +104,7 @@ export async function POST(request: Request) {
 
 export async function PATCH(request: Request) {
   try {
-    const { client, user } = await createRequestSupabaseContext(request);
+    const { client, user } = await createRequestSupabaseContext(request, { role: "dancer" });
     const body = await readShiftBody(request);
 
     const shiftId = readUuid(body.shiftId);

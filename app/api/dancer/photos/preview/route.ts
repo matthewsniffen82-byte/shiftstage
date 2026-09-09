@@ -15,7 +15,7 @@ const privateHeaders = { "cache-control": "private, no-store", "x-content-type-o
 // moderation decisions are created until the dancer confirms their crop.
 export async function POST(request: Request) {
   try {
-    const { client, user, session } = await createRequestSupabaseContext(request);
+    const { client, user, session } = await createRequestSupabaseContext(request, { role: "dancer" });
     await enforcePublicRequestRateLimit(createAdminSupabaseClient(), {
       namespace: "dancer_photo_crop_preview", request, subject: user.id,
       windowSeconds: 3600, subjectLimit: 60, ipLimit: 120,

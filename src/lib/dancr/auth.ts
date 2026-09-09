@@ -180,9 +180,16 @@ export async function setAccountState(
   const selfDisabledAt = typeof originalMetadata.mydancr_self_disabled_at === "string"
     ? originalMetadata.mydancr_self_disabled_at
     : "";
+  const originalSelfServiceMetadata = {
+    mydancr_self_disabled_at: originalMetadata.mydancr_self_disabled_at ?? null,
+    mydancr_venue_was_active: originalMetadata.mydancr_venue_was_active ?? null,
+  };
 
-  if (accountState === "active" && current.account_state === "disabled" && !selfDisabledAt) {
-    throw new Error("This account was disabled by MyDancr. Contact support to restore access.");
+  if (current.account_state === "deleted" && accountState !== "deleted") {
+    throw new PublicApiError("FORBIDDEN", "Deleted accounts cannot be reactivated.", 403);
+  }
+  if (current.account_state === "disabled" && !selfDisabledAt && accountState !== "deleted") {
+    throw new PublicApiError("FORBIDDEN", "This account was disabled by MyDancr. Contact support to restore access.", 403);
   }
 
   const { data: ownedVenue, error: venueReadError } = current.role === "venue"
@@ -195,7 +202,7 @@ export async function setAccountState(
   if (venueReadError) throw venueReadError;
 
   const originalVenueActive = ownedVenue?.is_active === true;
-  const priorVenueActive = typeof originalMetadata.mydancr_venue_was_active === "boolean"
+  const priorVenueActive = current.account_state === "disabled" && typeof originalMetadata.mydancr_venue_was_active === "boolean"
     ? originalMetadata.mydancr_venue_was_active
     : originalVenueActive;
   const nextAccountUpdate: Record<string, string | null> = { account_state: accountState };
@@ -207,8 +214,7 @@ export async function setAccountState(
   if (accountState === "disabled") {
     const { error: metadataError } = await publicationClient.auth.admin.updateUserById(userId, {
       app_metadata: {
-        ...originalMetadata,
-        mydancr_self_disabled_at: selfDisabledAt || new Date().toISOString(),
+        mydancr_self_disabled_at: current.account_state === "disabled" ? selfDisabledAt : new Date().toISOString(),
         ...(ownedVenue ? { mydancr_venue_was_active: priorVenueActive } : {}),
       },
     });
@@ -222,7 +228,7 @@ export async function setAccountState(
       .eq("id", ownedVenue.id);
     if (venueError) {
       if (accountState === "disabled") {
-        await publicationClient.auth.admin.updateUserById(userId, { app_metadata: originalMetadata });
+        await publicationClient.auth.admin.updateUserById(userId, { app_metadata: originalSelfServiceMetadata });
       }
       throw venueError;
     }
@@ -240,7 +246,7 @@ export async function setAccountState(
       await publicationClient.from("venues").update({ is_active: originalVenueActive }).eq("id", ownedVenue.id);
     }
     if (accountState === "disabled") {
-      await publicationClient.auth.admin.updateUserById(userId, { app_metadata: originalMetadata });
+      await publicationClient.auth.admin.updateUserById(userId, { app_metadata: originalSelfServiceMetadata });
     }
     throw error;
   }
@@ -249,15 +255,17 @@ export async function setAccountState(
     const { error: venueError } = ownedVenue
       ? await publicationClient.from("venues").update({ is_active: priorVenueActive }).eq("id", ownedVenue.id)
       : { error: null };
-    const restoredMetadata = { ...originalMetadata };
-    delete restoredMetadata.mydancr_self_disabled_at;
-    delete restoredMetadata.mydancr_venue_was_active;
+    // Supabase merges metadata updates; null explicitly removes these permissions.
+    const restoredMetadata = { mydancr_self_disabled_at: null, mydancr_venue_was_active: null };
     const { error: metadataError } = await publicationClient.auth.admin.updateUserById(userId, {
       app_metadata: restoredMetadata,
     });
     if (venueError || metadataError) {
       if (ownedVenue) await publicationClient.from("venues").update({ is_active: false }).eq("id", ownedVenue.id);
-      await publicationClient.from("app_users").update({ account_state: "disabled" }).eq("id", userId);
+      const { error: rollbackError } = await publicationClient.from("app_users").update({ account_state: "disabled" }).eq("id", userId);
+      if (!rollbackError) {
+        await publicationClient.auth.admin.updateUserById(userId, { app_metadata: originalSelfServiceMetadata });
+      }
       throw venueError || metadataError;
     }
   }

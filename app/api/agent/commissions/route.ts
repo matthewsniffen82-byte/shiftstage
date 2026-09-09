@@ -13,7 +13,7 @@ const MAX_AGENT_ACTION_BODY_BYTES = 2_048;
 
 export async function GET(request: Request) {
   try {
-    const authContext = await createRequestSupabaseContext(request);
+    const authContext = await createRequestSupabaseContext(request, { active: true });
     const { user } = authContext;
     const url = new URL(request.url);
     const admin = createAdminSupabaseClient();
@@ -50,7 +50,7 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const authContext = await createRequestSupabaseContext(request);
+    const authContext = await createRequestSupabaseContext(request, { active: true });
     const { user } = authContext;
     const body = await readBoundedJsonObject(request, {
       maxBytes: MAX_AGENT_ACTION_BODY_BYTES,

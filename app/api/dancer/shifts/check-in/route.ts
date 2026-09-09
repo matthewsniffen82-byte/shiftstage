@@ -18,7 +18,7 @@ export async function POST() {
 
 export async function PATCH(request: Request) {
   try {
-    const { user } = await createRequestSupabaseContext(request);
+    const { user } = await createRequestSupabaseContext(request, { role: "dancer" });
     const body = await readShiftActionBody(request);
     const action = typeof body.action === "string" ? body.action : "";
     const shiftId = readShiftId(body);
@@ -51,7 +51,7 @@ export async function PATCH(request: Request) {
 
 export async function DELETE(request: Request) {
   try {
-    const { user } = await createRequestSupabaseContext(request);
+    const { user } = await createRequestSupabaseContext(request, { role: "dancer" });
     const body = await readShiftActionBody(request);
     const shiftId = readShiftId(body);
     if (!shiftId) return missingShiftIdResponse();
