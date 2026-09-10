@@ -901,7 +901,7 @@ test("dancer grid hierarchy stays readable without changing the production card 
   assert.doesNotMatch(homeSource, /home-dancer-grid-venue\$\{venueStateClass\}/);
   assert.match(
     homeSource,
-    /const resultCountLabel = activeTab === "venues"[\s\S]*?`\$\{allItems\.length\} club\$\{allItems\.length === 1 \? "" : "s"\}`[\s\S]*?: `\$\{allItems\.length\} dancer\$\{allItems\.length === 1 \? "" : "s"\}`/,
+    /const resultCountLabel = activeTab === "venues"[\s\S]*?`\$\{resultCount\} club\$\{resultCount === 1 \? "" : "s"\}`[\s\S]*?: `\$\{resultCount\} dancer\$\{resultCount === 1 \? "" : "s"\}`/,
   );
   assert.match(homeSource, /#homeLiveWorking\.is-empty \{[\s\S]*?rgba\(248, 250, 252, 0\.58\)/);
   assert.match(homeSource, /\.home-dancer-grid-venue span \{[\s\S]*?-webkit-line-clamp: 2;/);
@@ -1114,7 +1114,7 @@ test("mobile discovery headings share a compact hierarchy across Android and iPh
     homeSource,
     /\.home-dancer-grid-heading\.is-upcoming strong \{[\s\S]*?color: #b9f6ff;[\s\S]*?text-shadow: none;/,
   );
-  assert.match(homeSource, /activeTab === "dancers"[\s\S]*?`\$\{allItems\.length\} dancer\$\{allItems\.length === 1 \? "" : "s"\}`/);
+  assert.match(homeSource, /activeTab === "dancers"[\s\S]*?`\$\{resultCount\} dancer\$\{resultCount === 1 \? "" : "s"\}`/);
   assert.match(
     homeSource,
     /function renderHomeTvFeed\(city\)[\s\S]*?classList\.add\("discovery-section-head", "tv-section-head"\)/,

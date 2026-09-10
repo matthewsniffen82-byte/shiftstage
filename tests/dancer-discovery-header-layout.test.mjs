@@ -16,7 +16,7 @@ test("dancer discovery reuses canonical state and shared discovery-control dimen
 
 test("directory heading, dynamic total, and segmented filters are compact and accessible", () => {
   assert.match(liveShell, /href="\/dancr-aesthetic\.v1\.css\?v=271"/);
-  assert.match(liveShell, /: `\$\{allItems\.length\} dancer\$\{allItems\.length === 1 \? "" : "s"\}`/);
+  assert.match(liveShell, /: `\$\{resultCount\} dancer\$\{resultCount === 1 \? "" : "s"\}`/);
   assert.match(liveShell, /class="dancer-directory-filters" role="tablist" aria-label="Filter dancers"/);
   assert.match(liveShell, /role="tab"[\s\S]*?aria-controls="results"[\s\S]*?aria-selected="\$\{active\}"/);
   assert.match(liveShell, /dancer-directory-filter-count">\$\{counts\[filter\.id\]\}<\/span>/);
@@ -26,11 +26,7 @@ test("directory heading, dynamic total, and segmented filters are compact and ac
   assert.match(aesthetic, /\.dancer-directory-filter \{[\s\S]*?min-height: 48px !important/);
   assert.match(
     aesthetic,
-    /#results\.home-dancer-grid\.home-dancer-filtered-view > \.home-dancer-grid-heading \{[\s\S]*?display: none !important/,
-  );
-  assert.match(
-    aesthetic,
-    /#results\.home-dancer-grid:not\(\.home-dancer-filtered-view\)[\s\S]*?> \.dancer-directory-filters \+ \.home-dancer-grid-heading \{[\s\S]*?display: flex !important/,
+    /#results\.home-dancer-grid > \.home-dancer-grid-heading \{\s*display: flex !important/,
   );
 });
 

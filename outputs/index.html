@@ -60231,8 +60231,8 @@
       `;
     }
 
-    function homeDancerGridSectionMarkup(label, className, profiles, city, compactDirectory = false, startIndex = 0) {
-      if (!profiles.length) return "";
+    function homeDancerGridSectionMarkup(label, className, profiles, city, compactDirectory = false, startIndex = 0, showEmpty = false) {
+      if (!profiles.length && !showEmpty) return "";
       return `
         <div class="home-dancer-grid-heading ${className}" role="heading" aria-level="3">
           <strong>${label}</strong>
@@ -60312,7 +60312,8 @@
           section.profiles,
           city,
           true,
-          imageOffset
+          imageOffset,
+          dancerDirectoryFilter !== "all"
         );
         imageOffset += section.profiles.length;
         return markup;
@@ -60327,9 +60328,8 @@
       results.setAttribute("aria-label", `Approved dancers ${locationPhrase}, grouped by live status and schedule`);
       const gridMarkup = `
         ${dancerDirectoryFilterMarkup(profiles, city)}
-        ${visibleCount
-          ? sectionMarkup
-          : `<div class="dancer-directory-filter-empty">${escapeHtml(emptyLabels[dancerDirectoryFilter] || `No approved dancer profiles are available ${locationPhrase} yet.`)}</div>`}
+        ${sectionMarkup}
+        ${visibleCount ? "" : `<div class="dancer-directory-filter-empty">${escapeHtml(emptyLabels[dancerDirectoryFilter] || `No approved dancer profiles are available ${locationPhrase} yet.`)}</div>`}
       `;
       const nextRenderKey = homeDancerGridContentKey(city, gridMarkup);
       if (
@@ -60773,9 +60773,12 @@
       } else {
         tabTitle.textContent = selectedVenue ? `${selectedVenue.name}` : titles[activeTab];
       }
+      const resultCount = activeTab === "dancers"
+        ? dancerDirectorySections(allItems, city).reduce((total, section) => total + section.profiles.length, 0)
+        : allItems.length;
       const resultCountLabel = activeTab === "venues"
-        ? `${allItems.length} club${allItems.length === 1 ? "" : "s"}`
-        : `${allItems.length} dancer${allItems.length === 1 ? "" : "s"}`;
+        ? `${resultCount} club${resultCount === 1 ? "" : "s"}`
+        : `${resultCount} dancer${resultCount === 1 ? "" : "s"}`;
       setHomeTvFeedCount(unavailableDiscovery
         ? "Unavailable"
         : loadingDiscovery

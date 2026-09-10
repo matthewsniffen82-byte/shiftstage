@@ -8637,23 +8637,10 @@ body.dancer-directory-active > .app main.stack > section.stack
   box-shadow: 0 0 8px var(--dancr-color-info-soft) !important;
 }
 
-/* The selected tab already names a single-status result set, so repeating that
- * same heading delays the first card without adding context. All keeps its
- * compact group labels because they still distinguish the sorted sections. */
+/* Every tab shows the status label and count above its matching cards. */
 body.dancer-directory-active > .app main.stack > section.stack
-  > #results.home-dancer-grid.home-dancer-filtered-view > .home-dancer-grid-heading {
-  display: none !important;
-}
-
-/* All presents three status groups with the same readable heading hierarchy. */
-body.dancer-directory-active > .app main.stack > section.stack
-  > #results.home-dancer-grid:not(.home-dancer-filtered-view)
-  > .dancer-directory-filters + .home-dancer-grid-heading {
+  > #results.home-dancer-grid > .home-dancer-grid-heading {
   display: flex !important;
-}
-
-body.dancer-directory-active > .app main.stack > section.stack
-  > #results.home-dancer-grid:not(.home-dancer-filtered-view) > .home-dancer-grid-heading {
   min-height: 24px;
   gap: 8px;
   /* Including the grid's 2px gap and 1px divider: 24px above, 12px below. */
@@ -8663,14 +8650,14 @@ body.dancer-directory-active > .app main.stack > section.stack
 }
 
 body.dancer-directory-active > .app main.stack > section.stack
-  > #results.home-dancer-grid:not(.home-dancer-filtered-view) > .home-dancer-grid-heading > strong {
+  > #results.home-dancer-grid > .home-dancer-grid-heading > strong {
   font-size: 16px !important;
   font-weight: 650;
   line-height: 24px;
 }
 
 body.dancer-directory-active > .app main.stack > section.stack
-  > #results.home-dancer-grid:not(.home-dancer-filtered-view) > .home-dancer-grid-heading > span {
+  > #results.home-dancer-grid > .home-dancer-grid-heading > span {
   box-sizing: border-box;
   min-width: 24px;
   height: 24px;
