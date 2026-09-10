@@ -486,3 +486,13 @@ Step 10 closed with `58e6a5c04ffa6f3038ee7586aa6317dc87128181`. Exact committed 
 The video-removal correction passes 51 actual-caller/native cases, including 38 failures against the previous implementation; all 82 focused storage checks pass. Read-only schema comparison at 11:47:01 UTC confirms the complete video fixture matches production. Full validation and exact push/deployment/health gates remain required; no production file or database row was changed by testing.
 
 Full validation passed all 5,393 tests, lint, production build, standalone TypeScript, migration guard and thirty readiness checks. No production media mutation or SQL application was used. Exact commit/push and Vercel/health gates remain required before continuing storage hardening.
+
+The correction was pushed as `8739f5d96963d447cc365894441234595b330d30`, with matching main references and successful [exact Vercel deployment](https://vercel.com/ai-movie-jobs/shiftstage/HmbfkQygiaP91NceUL3cEYPU4fzE). Health, protected-route checks and thirty readiness checks passed at 11:52:22–25 UTC. No production video removal was invoked as a test.
+
+## Step 11 gallery reference-history rollout
+
+`step-11-gallery-history-rollout.md` records the plan for the exact existing committed migration `20260910092022`. Fresh read-only preflight found matching source schemas, 72 photos, sixteen avatars and no target objects/ledger entry. Rehearse committed-source preservation, privacy, rollback and repeat protection; complete the release gates before applying this one migration. This does not authorize orphan-file deletion.
+
+All 53 existing history/publication cases and the complete-source-schema deployment rehearsals pass, including drift, repeated target, row corruption, missing baseline and accidental browser-grant rejection. The original committed migration remains unchanged. Full validation, exact rollout commit/push, guarded application and privacy/deployment verification remain required.
+
+Full rollout validation passed all 5,393 tests, lint, production build, standalone TypeScript, migration guard and thirty readiness checks. No production media mutation or migration application occurred during testing. Exact rollout push, committed-source rehearsal/application, preservation/privacy checks and Vercel/health remain the release gates.
