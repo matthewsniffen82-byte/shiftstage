@@ -1289,7 +1289,14 @@ export async function reviewSubmissionContent(client: DancrClient, input: Review
       .select("id")
       .maybeSingle();
 
-    if (photoError) throw photoError;
+    if (photoError) {
+      const positionIndexes = ["dancer_photos_one_active_primary_idx", "dancer_photos_one_active_gallery_position_idx"];
+      if (photoError.code === "23505" && positionIndexes.some((name) =>
+        photoError.constraint === name || String(photoError.message || "").includes(`"${name}"`))) {
+        throw new PublicApiError("CONFLICT", "Another photo now uses this profile position. Refresh the dancer's photos before reviewing this item again.", 409);
+      }
+      throw photoError;
+    }
     if (!photo) throw new Error("Submitted photo not found.");
     await updatePhotoReviewSummary(client, input.dancerId);
   } else {
