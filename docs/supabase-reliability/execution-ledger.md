@@ -416,3 +416,13 @@ The foundation was pushed as `cb51c4fc10ca1e93581ae8f9cfec21d96b9bb7c1`; exact c
 The inspected plan is `step-09-webhook-attempt-caller.md`. Connect the atomic receipt to both completion paths and require exact attempt ownership and acknowledgment. All 267 focused tests pass, including stale workers, malformed receipts and lost responses against native local SQL. Keep the applied migration frozen. Full validation, exact push and Vercel/health gates remain required.
 
 Full validation passed all 5,062 automated tests, lint, production build, standalone TypeScript, migration guard and thirty readiness checks. Read-only verification at 09:18:24 UTC retained the frozen function/dependency, ledger, permissions and zero event rows. No SQL was reapplied or production webhook, payout or email sent. Exact push, Vercel success and deployed health remain required.
+
+The caller was pushed as `6a0afba20cf187e25652699199d98c0c05e34540`, with matching main references and successful [exact Vercel deployment](https://vercel.com/ai-movie-jobs/shiftstage/3gUu2J7gqwhm8Go7gEkKEXVot2ru). Health, protected routes, unsigned webhook rejection and thirty readiness checks passed at 09:24:12–15 UTC. No signed production webhook, payout or email was sent.
+
+## Step 9 payout dispatch: additive atomic claim
+
+The inspected plan is `step-09-payout-dispatch-claim.md`. Add an unused fresh-dispatch claim around the existing processing marker and audit, refusing reclaims of uncertain/previously started payouts. Thirty-three native tests and transaction/repeat/schema-drift deployment rehearsals pass. Full validation, committed SQL application, preservation/security checks and exact deployment gates remain required before caller integration.
+
+Full validation passed all 5,095 automated tests, lint, production build, standalone TypeScript, migration guard and thirty readiness checks. No production payout or provider call was performed. Exact commit/push, guarded application of the committed SQL, preservation/security verification and Vercel/health gates remain required; the worker remains unchanged until the caller release.
+
+The first push was rejected because `bfe54fcc2c4f0e17c6ec337cfa2ab634dbe6a547` concurrently added gallery reference history. Preserved that change and rebased this unpublished step. The unchanged payout SQL passed its committed-source rehearsal again; the combined revision passed all 5,111 tests, lint, production build, standalone TypeScript, migration guard and thirty readiness checks. No forced push or unrelated file edits were used.
