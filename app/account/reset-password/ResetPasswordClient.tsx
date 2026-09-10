@@ -17,6 +17,7 @@ export default function ResetPasswordClient() {
   const [saving, setSaving] = useState(false);
   const [destination, setDestination] = useState("/account");
   const [attempt, setAttempt] = useState(0);
+  const [completionWarning, setCompletionWarning] = useState("");
   const inFlight = useRef(false);
   const saveController = useRef<AbortController | null>(null);
   const verifiedAccount = useRef("");
@@ -32,7 +33,7 @@ export default function ResetPasswordClient() {
     setPhase("loading");
     const timeout = globalThis.setTimeout(() => controller.abort(), 15_000);
     void fetch("/api/account", {
-      headers: sessionHeaders(),
+      headers: sessionHeaders(session),
       cache: "no-store",
       credentials: "same-origin",
       signal: controller.signal,
@@ -82,7 +83,7 @@ export default function ResetPasswordClient() {
     try {
       const response = await fetch("/api/account", {
         method: "PATCH",
-        headers: sessionHeaders(),
+        headers: sessionHeaders(session),
         credentials: "same-origin",
         cache: "no-store",
         body: JSON.stringify({ password }),
@@ -98,6 +99,9 @@ export default function ResetPasswordClient() {
       persistRefreshedBrowserAuthSession(data.session, session);
       setPassword("");
       setConfirmPassword("");
+      setCompletionWarning(data.otherSessionsRevoked === false
+        ? "We could not confirm that your other sessions were signed out. Contact support if you need help securing another device."
+        : "");
       setPhase("complete");
     } catch (reason) {
       if (saveController.current !== controller) return;
@@ -143,6 +147,7 @@ export default function ResetPasswordClient() {
         </form> : null}
         {phase === "complete" ? <>
           <p role="status">Your new password has been saved.</p>
+          {completionWarning ? <p role="alert">{completionWarning}</p> : null}
           <a href={destination}>Continue to your account</a>
         </> : null}
       </section>
@@ -158,8 +163,7 @@ export default function ResetPasswordClient() {
   );
 }
 
-function sessionHeaders(): Record<string, string> {
-  const session = readBrowserAuthSession();
+function sessionHeaders(session: ReturnType<typeof readBrowserAuthSession>): Record<string, string> {
   return {
     "content-type": "application/json",
     ...(session?.accessToken ? { authorization: `Bearer ${session.accessToken}` } : {}),

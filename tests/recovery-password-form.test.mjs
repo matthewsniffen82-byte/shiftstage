@@ -70,7 +70,7 @@ test("ordinary dancer confirmation retains its confirmation screen", async () =>
 
 const formSource = readFileSync(new URL("../app/account/reset-password/ResetPasswordClient.tsx", import.meta.url), "utf8");
 const passwordPolicy = compile(readFileSync(new URL("../src/lib/dancr/password-policy.ts", import.meta.url), "utf8"), {});
-function formFixture({ succeeds = true, storedSession = session, search = "", getStatus = 200, networkFailure = false, hang = false } = {}) {
+function formFixture({ succeeds = true, storedSession = session, search = "", getStatus = 200, networkFailure = false, hang = false, afterSessionRead, otherSessionsRevoked } = {}) {
   const states = [], effects = [], calls = [];
   let index = 0;
   const refs = [];
@@ -85,7 +85,11 @@ function formFixture({ succeeds = true, storedSession = session, search = "", ge
     },
     "react/jsx-runtime": require("react/jsx-runtime"),
     "@/src/lib/dancr/browser-session": {
-      readBrowserAuthSession: () => storedSession, persistRefreshedBrowserAuthSession() {},
+      readBrowserAuthSession: () => {
+        const captured = storedSession;
+        storedSession = afterSessionRead?.(captured) ?? storedSession;
+        return captured;
+      }, persistRefreshedBrowserAuthSession() {},
       isCurrentBrowserSession: expected => storedSession?.accessToken === expected?.accessToken && storedSession?.refreshToken === expected?.refreshToken,
     },
   }, {
@@ -96,7 +100,7 @@ function formFixture({ succeeds = true, storedSession = session, search = "", ge
       if (networkFailure) throw new Error("Network unavailable");
       if (hang) return new Promise((_resolve, reject) => options.signal.addEventListener("abort", () => reject(new Error("Aborted")), { once: true }));
       const status = options.method === "PATCH" ? (succeeds ? 200 : 400) : getStatus;
-      return { status, ok: status === 200, json: async () => ({ ok: status === 200, account: { role: "dancer" }, error: "Update rejected" }) };
+      return { status, ok: status === 200, json: async () => ({ ok: status === 200, account: { role: "dancer" }, error: "Update rejected", otherSessionsRevoked }) };
     },
   }).default;
   const render = () => { index = 0; refIndex = 0; return component(); };
@@ -212,4 +216,50 @@ test("switching accounts after opening recovery cannot change the new account pa
   await fixture.find(fixture.render(), "form").props.onSubmit({ preventDefault() {} });
   assert.equal(fixture.states[0], "expired");
   assert.equal(fixture.calls.length, 1);
+});
+
+const firstAccountSession = { ...session, account: { id: "recovery-account", role: "dancer" } };
+const secondAccountSession = { accessToken: "other-access", refreshToken: "other-refresh", account: { id: "different-account", role: "customer" } };
+
+test("reset verification sends the captured session even when another tab changes storage before headers are built", async () => {
+  let switched = false;
+  const fixture = await readyForm({ storedSession: firstAccountSession, afterSessionRead: () => {
+    if (switched) return;
+    switched = true;
+    return secondAccountSession;
+  } });
+  assert.equal(fixture.calls.length, 1);
+  assert.equal(fixture.calls[0].headers.authorization, "Bearer test-access");
+  assert.equal(fixture.calls[0].headers["x-dancr-refresh-token"], "test-refresh");
+  assert.equal(fixture.states[0], "expired");
+});
+
+test("password submission cannot take a different account's credentials from a second storage read", async () => {
+  let armed = false;
+  const fixture = await readyForm({ storedSession: firstAccountSession, afterSessionRead: () => {
+    if (!armed) return;
+    armed = false;
+    return secondAccountSession;
+  } });
+  fixture.states[1] = fixture.states[2] = "New1!password";
+  const form = fixture.find(fixture.render(), "form");
+  armed = true;
+  await form.props.onSubmit({ preventDefault() {} });
+  assert.equal(fixture.calls.length, 2);
+  assert.equal(fixture.calls[1].headers.authorization, "Bearer test-access");
+  assert.equal(fixture.calls[1].headers["x-dancr-refresh-token"], "test-refresh");
+  assert.equal(fixture.states[0], "expired");
+});
+
+for (const otherSessionsRevoked of [true, false]) test(`confirmed password success retains the other-session revocation result: ${otherSessionsRevoked}`, async () => {
+  const fixture = await readyForm({ storedSession: firstAccountSession, otherSessionsRevoked });
+  fixture.states[1] = fixture.states[2] = "New1!password";
+  await fixture.find(fixture.render(), "form").props.onSubmit({ preventDefault() {} });
+  assert.equal(fixture.states[0], "complete");
+  assert.equal(fixture.states[1], "");
+  assert.equal(fixture.states[2], "");
+  assert.equal(fixture.calls.filter(call => call.method === "PATCH").length, 1);
+  const rendered = JSON.stringify(fixture.render());
+  if (otherSessionsRevoked) assert.doesNotMatch(rendered, /could not confirm that your other sessions were signed out/i);
+  else assert.match(rendered, /could not confirm that your other sessions were signed out/i);
 });
