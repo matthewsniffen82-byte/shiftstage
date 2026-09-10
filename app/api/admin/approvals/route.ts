@@ -86,6 +86,7 @@ export async function POST(request: Request) {
       reviewerId: user.id,
       status: status as ReviewStatus,
       notes,
+      expectedVersion: body.expectedVersion,
     });
 
     return NextResponse.json({ ok: true, review, session: session || null });

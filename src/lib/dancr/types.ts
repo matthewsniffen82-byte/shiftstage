@@ -281,6 +281,7 @@ export type AdminDancerSubscription = {
 };
 
 export type AdminApprovalDancer = {
+  profileReviewVersion?: import("./profile-review-version").ProfileReviewVersion;
   id: string;
   userId: string;
   stageName: string;

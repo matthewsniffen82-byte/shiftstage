@@ -6,6 +6,7 @@ import ts from "typescript";
 import {PublicApiError,resolveApiError} from "../src/lib/api-error-policy.ts";
 import {safeErrorMetadata} from "../src/lib/security/safe-error-metadata.ts";
 import {buildContentReviewVersion,isContentReviewVersion} from "../src/lib/dancr/content-review-version.ts";
+import {buildProfileReviewVersion} from "../src/lib/dancr/profile-review-version.ts";
 import {createDecisionDatabase,seedDecisionDatabase,decisionVersion,decisionSnapshot,decideContent,fixtureId as id} from "./helpers/content-decision-database.mjs";
 const source=p=>readFileSync(new URL("../"+p,import.meta.url),"utf8");
 const compile=s=>ts.transpileModule(s,{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText;
@@ -46,6 +47,7 @@ function harness(options={}){
  vm.runInNewContext(libraryCode,{exports:library,Error,Date,console:{warn:(...args)=>warnings.push(args)},require(name){
   if(name.endsWith("content-decisions"))return helpers;
   if(name.endsWith("content-review-version"))return {buildContentReviewVersion};
+  if(name.endsWith("profile-review-version"))return {buildProfileReviewVersion};
   if(name.endsWith("notification-delivery"))return {async deliverNotificationRows(...args){deliveries.push(args);if(options.deliveryFailure)throw new Error("private delivery details");return {push:0,email:0};}};
   if(name.endsWith("safe-error-metadata"))return {safeErrorMetadata};
   return {PublicApiError,responsivePublicImage:()=>({imageUrl:"https://example.invalid/photo"})};

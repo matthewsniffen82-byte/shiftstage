@@ -8,6 +8,7 @@ import { homeDiscoveryHref } from "@/src/lib/dancr/navigation";
 import { BROWSER_AUTH_SESSION_KEY, captureBrowserAuthSessionGuard, readBrowserAuthSession } from "@/src/lib/dancr/browser-session";
 import { safeSocialProfileUrl } from "@/src/lib/dancr/social-profile-url";
 import { isContentReviewVersion, type ContentReviewVersion } from "@/src/lib/dancr/content-review-version";
+import { isProfileReviewVersion } from "@/src/lib/dancr/profile-review-version";
 import { phoneTapCopy } from "@/src/lib/dancr/phone-tap-copy";
 import { payoutCopy } from "@/src/lib/dancr/payout-copy";
 import { findAvailableMyDancrCity, MYDANCR_AVAILABLE_CITIES } from "@/src/lib/dancr/markets";
@@ -4005,16 +4006,24 @@ function ApprovalQueue({
     setActionBusyKey(`reject:${dancerId}`);
     setStatusById((current) => ({ ...current, [dancerId]: "Saving..." }));
     try {
-      await requestAdminJson("/api/admin/approvals", {
+      const expectedVersion = items.find(item => asText(item.id) === dancerId)?.profileReviewVersion;
+      if (!isProfileReviewVersion(expectedVersion)) throw new Error("Refresh the approval queue before reviewing this profile.");
+      const data = await requestAdminJson("/api/admin/approvals", {
         method: "POST",
         signal: action.controller.signal,
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ dancerId, status: "rejected", notes: notesById[dancerId] || null }),
+        body: JSON.stringify({ dancerId, status: "rejected", notes: notesById[dancerId] || null, expectedVersion }),
         fallbackMessage: "Unable to review profile.",
       });
       if (!isCurrentApprovalAction(action)) return;
-
-      const confirmation = "Dancer profile rejected successfully.";
+      if (data.review?.dancerId !== dancerId || data.review?.status !== "rejected" || data.review?.decision !== "rejected"
+        || typeof data.review?.reviewId !== "string" || !data.review.reviewId
+        || typeof data.review?.reviewedAt !== "string" || !Number.isFinite(Date.parse(data.review.reviewedAt))
+        || !isProfileReviewVersion(data.review?.reviewVersion) || data.review.reviewVersion.status !== "rejected"
+        || data.review.reviewVersion.is_public !== false || data.review.reviewVersion.verification_status !== "rejected") {
+        throw new Error("The review could not be confirmed. Refresh the approval queue before trying again.");
+      }
+      const confirmation = "Dancer profile rejected successfully." + (data.review.notificationNeedsReview ? " Notification could not be confirmed." : "");
       setStatusById((current) => ({ ...current, [dancerId]: confirmation }));
       onActionConfirmed(confirmation);
       onReviewed(dancerId);

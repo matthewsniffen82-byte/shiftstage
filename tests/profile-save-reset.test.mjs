@@ -347,7 +347,7 @@ test("profile approval stays synchronized with account and core verification sta
   assert.doesNotMatch(accountStateWriter, /\.from\("dancer_profiles"\)[\s\S]*?\.update\(/);
   assert.doesNotMatch(adminSource, /VerifyMy|identity_provider|identity_verified_at/);
   assert.doesNotMatch(adminSource, /const statusUpdate = approved[\s\S]*?status: "approved"/);
-  assert.match(adminSource, /approved \? "admin_accept" : "admin_reject"/);
+  assert.match(adminSource, /const recorded = await recordProfileDecision\(client, input\)/);
   assert.match(visibilityRouteSource, /isCoreVerificationApproved\(currentProfile\)/);
   const accountGet = accountRouteSource.match(/export async function GET[\s\S]*?\n}\n\nexport async function PATCH/)?.[0] || "";
   assert.doesNotMatch(accountGet, /setAccountState|\.update\(/);

@@ -20,6 +20,8 @@ import { PublicApiError } from "../api-error-policy";
 import { ensureDancerPrimaryPhoto } from "./primary-photo";
 import { recordContentDecision } from "./content-decisions";
 import { buildContentReviewVersion } from "./content-review-version";
+import { buildProfileReviewVersion } from "./profile-review-version";
+import { recordProfileDecision } from "./profile-decisions";
 
 type DancrClient = SupabaseClient;
 
@@ -36,9 +38,13 @@ const APPROVAL_QUEUE_SELECT = `
   is_public,
   verification_status,
   venue_approved_at,
+  venue_approved_by_user_id,
+  venue_approved_venue_id,
   photo_review_status,
+  avatar_storage_path,
   approved_at,
   disabled_at,
+  admin_disabled_at,
   created_at,
   updated_at,
   social_links(id, platform, handle, url, is_active, updated_at),
@@ -52,6 +58,7 @@ export type ReviewDancerInput = {
   reviewerId: string;
   status: ReviewStatus;
   notes?: string | null;
+  expectedVersion?: unknown;
 };
 
 export type DeleteAdminDancerProfileInput = {
@@ -535,6 +542,7 @@ async function mapAdminApprovalDancer(client: DancrClient, row: any): Promise<Ad
     updatedAt: row.updated_at || null,
     approvedAt: row.approved_at || null,
     disabledAt: row.disabled_at || null,
+    profileReviewVersion: buildProfileReviewVersion(row),
     socialLinks: (row.social_links || [])
       .filter((social: any) => social.is_active !== false)
       .map((social: any) => {
@@ -1195,70 +1203,41 @@ export async function reviewDancerProfile(client: DancrClient, input: ReviewDanc
     throw new Error("Review status must be approved or rejected.");
   }
 
-  const approved = input.status === "approved";
-  const reviewedAt = new Date().toISOString();
+  const recorded = await recordProfileDecision(client, input);
+  const approved = recorded.decision === "approved";
+  const reviewedAt = recorded.reviewedAt;
   const db = client as any;
-
-  const { data: dancer, error: dancerError } = await db
-    .from("dancer_profiles")
-    .select("id, user_id, stage_name, disabled_at")
-    .eq("id", input.dancerId)
-    .maybeSingle();
-
-  if (dancerError) throw dancerError;
-  if (!dancer) throw new Error("Dancer profile not found.");
-
-  await transitionDancerPublication(
-    client,
-    input.dancerId,
-    approved ? "admin_accept" : "admin_reject",
-    { actorUserId: input.reviewerId },
-  );
-
-  const reviewTypes = ["profile"];
-  const reviewRows = reviewTypes.map((reviewType) => ({
-    dancer_id: input.dancerId,
-    reviewer_id: input.reviewerId,
-    review_type: reviewType,
-    status: input.status,
-    notes: input.notes || null,
-    reviewed_at: reviewedAt,
-  }));
-
-  const { error: reviewError } = await db.from("approval_reviews").insert(reviewRows);
-  if (reviewError) throw reviewError;
-
-  const approvalIssues = await profileApprovalIssueSummary(client, input.dancerId);
-  const notificationCopy = dancerApprovalNotificationCopy(dancer.stage_name, approved, input.notes, approvalIssues);
-  const notificationRow = {
-    recipient_id: dancer.user_id,
-    notification_type: "approval_status" as const,
-    channel: "in_app",
-    title: notificationCopy.title,
-    body: notificationCopy.body,
-    payload: { dancerId: input.dancerId, status: input.status, notes: input.notes || null, setupStep: approved ? null : "approval", reviewedAt },
-    sent_at: reviewedAt,
-  };
-
-  const [{ error: actionError }, { error: notificationError }] = await Promise.all([
-    db.from("admin_actions").insert({
-      admin_id: input.reviewerId,
-      target_type: "dancer_profile",
-      target_id: input.dancerId,
-      action: approved ? "approve_dancer" : "reject_dancer",
-      notes: input.notes || null,
-    }),
-    db.from("notifications").insert(notificationRow),
-  ]);
-
-  if (actionError) throw actionError;
-  if (notificationError) throw notificationError;
-  const notificationDelivery = await deliverNotificationRows(client, [notificationRow]);
+  let notificationNeedsReview = false;
+  let notificationDelivery = { push: 0, email: 0 };
+  try {
+    const approvalIssues = await profileApprovalIssueSummary(client, input.dancerId);
+    const notificationCopy = dancerApprovalNotificationCopy(recorded.stageName, approved, input.notes, approvalIssues);
+    const notificationRow = {
+      recipient_id: recorded.recipientId,
+      notification_type: "approval_status" as const,
+      channel: "in_app",
+      title: notificationCopy.title,
+      body: notificationCopy.body,
+      payload: { dancerId: input.dancerId, status: input.status, notes: input.notes || null, setupStep: approved ? null : "approval", reviewedAt },
+      sent_at: reviewedAt,
+    };
+    const { data: savedNotification, error: notificationError } = await db.from("notifications").insert(notificationRow).select("id").single();
+    if (notificationError) throw notificationError;
+    if (!savedNotification?.id) throw new Error("PROFILE_NOTIFICATION_NOT_CONFIRMED");
+    notificationDelivery = await deliverNotificationRows(client, [notificationRow]);
+  } catch (error) {
+    notificationNeedsReview = true;
+    console.warn("PROFILE_REVIEW_NOTIFICATION_NOT_CONFIRMED", safeErrorMetadata(error));
+  }
 
   return {
-    dancerId: input.dancerId,
-    status: approved ? "pending_review" : "rejected",
+    dancerId: recorded.dancerId,
+    status: recorded.status,
+    decision: recorded.decision,
+    reviewId: recorded.reviewId,
     reviewedAt,
+    reviewVersion: recorded.reviewVersion,
+    notificationNeedsReview,
     notificationDelivery,
   };
 }
