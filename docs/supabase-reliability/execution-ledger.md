@@ -288,3 +288,11 @@ It was pushed as `1cd620d9cb03f78aa15a6384ea78692a99618ee3` with matching main r
 The inspected plan is `step-09-nfc-caller.md`. Freeze the applied SQL and activate one checked atomic request with a stable form submission UUID. Preserve optional delivery/activity and never delete a request after an uncertain result. Full validation and exact deployment/health gates are required.
 
 The caller passed 57 focused checks including 44 new endpoint/helper/form cases; 35 endpoint regressions fail against the prior route. All 4,302 automated tests, lint, build, standalone TypeScript, migration guard and thirty live readiness checks passed. Read-only API schema and database checks confirmed RPC exposure, frozen function/ledger hashes and retained access/data. No migration was reapplied or production support message sent. Exact push, Vercel success and deployed health gates remain required.
+
+The NFC caller was pushed as `30f41526a4ccb17b1792c6304df29b1e62f89ddd`, with local HEAD and both remote main references matching. Its [exact Vercel deployment](https://vercel.com/ai-movie-jobs/shiftstage/AacfmKbF66zEbhrhfqetqb4BahZw) succeeded. At 05:04:27–31 UTC, production health, protected NFC/account/finance denials, server RPC exposure and thirty readiness checks passed. No production support message was created.
+
+## Step 9 counter-notice submission: additive atomic function
+
+The inspected plan is `step-09-counter-submission.md`. Add an unused service-only transaction for a counter-notice and its case transition, using the existing unique case relationship for safe identical retries. Preserve appeal eligibility, stored decisions, UTC weekday rules and all takedown/restoration/account/media behavior. Test and verify the additive database release before caller integration.
+
+The additive counter-notice function passed 82 new PostgreSQL cases and all 4,384 automated tests, full lint, build, standalone TypeScript, migration guard and thirty live readiness checks. Deployment-wrapper transaction, repeated-version and schema-drift guards passed. Exact push, committed SQL application, production hash/access/data verification and Vercel/health gates remain required; existing callers are unchanged.

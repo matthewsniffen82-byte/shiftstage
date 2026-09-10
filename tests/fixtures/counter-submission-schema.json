@@ -1,0 +1,743 @@
+{
+  "captured_at": "2026-09-10T05:06:35.218802+00:00",
+  "columns": [
+    {
+      "default": "gen_random_uuid()",
+      "name": "id",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "dmca_cases",
+      "type": "uuid"
+    },
+    {
+      "default": null,
+      "name": "claimant_name",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "dmca_cases",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "claimant_company",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "dmca_cases",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "claimant_email",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "dmca_cases",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "claimant_phone",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "dmca_cases",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "claimant_address",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "dmca_cases",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "copyrighted_work_description",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "dmca_cases",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "original_work_url",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "dmca_cases",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "infringing_url",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "dmca_cases",
+      "type": "text"
+    },
+    {
+      "default": "'other'::text",
+      "name": "target_type",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "dmca_cases",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "target_id",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "dmca_cases",
+      "type": "uuid"
+    },
+    {
+      "default": null,
+      "name": "uploader_id",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "dmca_cases",
+      "type": "uuid"
+    },
+    {
+      "default": "'submitted'::text",
+      "name": "status",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "dmca_cases",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "good_faith_confirmed",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "dmca_cases",
+      "type": "bool"
+    },
+    {
+      "default": null,
+      "name": "accuracy_confirmed",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "dmca_cases",
+      "type": "bool"
+    },
+    {
+      "default": null,
+      "name": "authority_confirmed",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "dmca_cases",
+      "type": "bool"
+    },
+    {
+      "default": null,
+      "name": "signature",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "dmca_cases",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "request_ip_hash",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "dmca_cases",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "content_previous_status",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "dmca_cases",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "reviewed_by",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "dmca_cases",
+      "type": "uuid"
+    },
+    {
+      "default": null,
+      "name": "reviewed_at",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "dmca_cases",
+      "type": "timestamptz"
+    },
+    {
+      "default": null,
+      "name": "disabled_at",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "dmca_cases",
+      "type": "timestamptz"
+    },
+    {
+      "default": null,
+      "name": "uploader_notified_at",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "dmca_cases",
+      "type": "timestamptz"
+    },
+    {
+      "default": null,
+      "name": "counter_received_at",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "dmca_cases",
+      "type": "timestamptz"
+    },
+    {
+      "default": null,
+      "name": "restore_eligible_at",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "dmca_cases",
+      "type": "timestamptz"
+    },
+    {
+      "default": null,
+      "name": "restore_deadline_at",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "dmca_cases",
+      "type": "timestamptz"
+    },
+    {
+      "default": "false",
+      "name": "court_filing_received",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "dmca_cases",
+      "type": "bool"
+    },
+    {
+      "default": null,
+      "name": "court_filing_notes",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "dmca_cases",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "restored_at",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "dmca_cases",
+      "type": "timestamptz"
+    },
+    {
+      "default": "false",
+      "name": "repeat_infringer_enforced",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "dmca_cases",
+      "type": "bool"
+    },
+    {
+      "default": null,
+      "name": "account_previous_state",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "dmca_cases",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "dancer_previous_status",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "dmca_cases",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "admin_notes",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "dmca_cases",
+      "type": "text"
+    },
+    {
+      "default": "now()",
+      "name": "created_at",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "dmca_cases",
+      "type": "timestamptz"
+    },
+    {
+      "default": "now()",
+      "name": "updated_at",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "dmca_cases",
+      "type": "timestamptz"
+    },
+    {
+      "default": "gen_random_uuid()",
+      "name": "id",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "dmca_counter_notices",
+      "type": "uuid"
+    },
+    {
+      "default": null,
+      "name": "case_id",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "dmca_counter_notices",
+      "type": "uuid"
+    },
+    {
+      "default": null,
+      "name": "uploader_id",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "dmca_counter_notices",
+      "type": "uuid"
+    },
+    {
+      "default": null,
+      "name": "legal_name",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "dmca_counter_notices",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "email",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "dmca_counter_notices",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "phone",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "dmca_counter_notices",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "address",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "dmca_counter_notices",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "removed_material_location",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "dmca_counter_notices",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "mistake_belief_confirmed",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "dmca_counter_notices",
+      "type": "bool"
+    },
+    {
+      "default": null,
+      "name": "perjury_confirmed",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "dmca_counter_notices",
+      "type": "bool"
+    },
+    {
+      "default": null,
+      "name": "jurisdiction_confirmed",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "dmca_counter_notices",
+      "type": "bool"
+    },
+    {
+      "default": null,
+      "name": "service_confirmed",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "dmca_counter_notices",
+      "type": "bool"
+    },
+    {
+      "default": null,
+      "name": "signature",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "dmca_counter_notices",
+      "type": "text"
+    },
+    {
+      "default": "'submitted'::text",
+      "name": "status",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "dmca_counter_notices",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "forwarded_to_claimant_at",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "dmca_counter_notices",
+      "type": "timestamptz"
+    },
+    {
+      "default": "now()",
+      "name": "created_at",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "dmca_counter_notices",
+      "type": "timestamptz"
+    },
+    {
+      "default": "now()",
+      "name": "updated_at",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "dmca_counter_notices",
+      "type": "timestamptz"
+    },
+    {
+      "default": "gen_random_uuid()",
+      "name": "id",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "dmca_strikes",
+      "type": "uuid"
+    },
+    {
+      "default": null,
+      "name": "case_id",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "dmca_strikes",
+      "type": "uuid"
+    },
+    {
+      "default": null,
+      "name": "user_id",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "dmca_strikes",
+      "type": "uuid"
+    },
+    {
+      "default": "true",
+      "name": "active",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "dmca_strikes",
+      "type": "bool"
+    },
+    {
+      "default": "now()",
+      "name": "issued_at",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "dmca_strikes",
+      "type": "timestamptz"
+    },
+    {
+      "default": null,
+      "name": "rescinded_at",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "dmca_strikes",
+      "type": "timestamptz"
+    },
+    {
+      "default": null,
+      "name": "rescinded_reason",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "dmca_strikes",
+      "type": "text"
+    }
+  ],
+  "constraints": [
+    {
+      "definition": "CHECK (((length(TRIM(BOTH FROM claimant_address)) >= 10) AND (length(TRIM(BOTH FROM claimant_address)) <= 1000)))",
+      "name": "dmca_cases_claimant_address_check",
+      "table": "dmca_cases"
+    },
+    {
+      "definition": "CHECK (((length(TRIM(BOTH FROM claimant_email)) >= 5) AND (length(TRIM(BOTH FROM claimant_email)) <= 320)))",
+      "name": "dmca_cases_claimant_email_check",
+      "table": "dmca_cases"
+    },
+    {
+      "definition": "CHECK (((length(TRIM(BOTH FROM claimant_name)) >= 2) AND (length(TRIM(BOTH FROM claimant_name)) <= 160)))",
+      "name": "dmca_cases_claimant_name_check",
+      "table": "dmca_cases"
+    },
+    {
+      "definition": "CHECK (((length(TRIM(BOTH FROM claimant_phone)) >= 7) AND (length(TRIM(BOTH FROM claimant_phone)) <= 50)))",
+      "name": "dmca_cases_claimant_phone_check",
+      "table": "dmca_cases"
+    },
+    {
+      "definition": "PRIMARY KEY (id)",
+      "name": "dmca_cases_pkey",
+      "table": "dmca_cases"
+    },
+    {
+      "definition": "FOREIGN KEY (reviewed_by) REFERENCES app_users(id) ON DELETE SET NULL",
+      "name": "dmca_cases_reviewed_by_fkey",
+      "table": "dmca_cases"
+    },
+    {
+      "definition": "CHECK (((length(TRIM(BOTH FROM signature)) >= 2) AND (length(TRIM(BOTH FROM signature)) <= 160)))",
+      "name": "dmca_cases_signature_check",
+      "table": "dmca_cases"
+    },
+    {
+      "definition": "CHECK ((status = ANY (ARRAY['submitted'::text, 'needs_information'::text, 'rejected'::text, 'disabled'::text, 'countered'::text, 'court_hold'::text, 'restored'::text, 'closed'::text])))",
+      "name": "dmca_cases_status_check",
+      "table": "dmca_cases"
+    },
+    {
+      "definition": "CHECK ((target_type = ANY (ARRAY['tv_video'::text, 'profile_media'::text, 'other'::text])))",
+      "name": "dmca_cases_target_type_check",
+      "table": "dmca_cases"
+    },
+    {
+      "definition": "FOREIGN KEY (uploader_id) REFERENCES app_users(id) ON DELETE SET NULL",
+      "name": "dmca_cases_uploader_id_fkey",
+      "table": "dmca_cases"
+    },
+    {
+      "definition": "CHECK (((length(TRIM(BOTH FROM copyrighted_work_description)) >= 10) AND (length(TRIM(BOTH FROM copyrighted_work_description)) <= 4000)))",
+      "name": "dmca_cases_work_check",
+      "table": "dmca_cases"
+    },
+    {
+      "definition": "CHECK (((length(TRIM(BOTH FROM address)) >= 10) AND (length(TRIM(BOTH FROM address)) <= 1000)))",
+      "name": "dmca_counter_address_check",
+      "table": "dmca_counter_notices"
+    },
+    {
+      "definition": "CHECK (((length(TRIM(BOTH FROM email)) >= 5) AND (length(TRIM(BOTH FROM email)) <= 320)))",
+      "name": "dmca_counter_email_check",
+      "table": "dmca_counter_notices"
+    },
+    {
+      "definition": "CHECK (((length(TRIM(BOTH FROM legal_name)) >= 2) AND (length(TRIM(BOTH FROM legal_name)) <= 160)))",
+      "name": "dmca_counter_legal_name_check",
+      "table": "dmca_counter_notices"
+    },
+    {
+      "definition": "CHECK (((length(TRIM(BOTH FROM removed_material_location)) >= 8) AND (length(TRIM(BOTH FROM removed_material_location)) <= 2000)))",
+      "name": "dmca_counter_location_check",
+      "table": "dmca_counter_notices"
+    },
+    {
+      "definition": "FOREIGN KEY (case_id) REFERENCES dmca_cases(id) ON DELETE CASCADE",
+      "name": "dmca_counter_notices_case_id_fkey",
+      "table": "dmca_counter_notices"
+    },
+    {
+      "definition": "UNIQUE (case_id)",
+      "name": "dmca_counter_notices_case_id_key",
+      "table": "dmca_counter_notices"
+    },
+    {
+      "definition": "PRIMARY KEY (id)",
+      "name": "dmca_counter_notices_pkey",
+      "table": "dmca_counter_notices"
+    },
+    {
+      "definition": "FOREIGN KEY (uploader_id) REFERENCES app_users(id) ON DELETE CASCADE",
+      "name": "dmca_counter_notices_uploader_id_fkey",
+      "table": "dmca_counter_notices"
+    },
+    {
+      "definition": "CHECK (((length(TRIM(BOTH FROM phone)) >= 7) AND (length(TRIM(BOTH FROM phone)) <= 50)))",
+      "name": "dmca_counter_phone_check",
+      "table": "dmca_counter_notices"
+    },
+    {
+      "definition": "CHECK (((length(TRIM(BOTH FROM signature)) >= 2) AND (length(TRIM(BOTH FROM signature)) <= 160)))",
+      "name": "dmca_counter_signature_check",
+      "table": "dmca_counter_notices"
+    },
+    {
+      "definition": "CHECK ((status = ANY (ARRAY['submitted'::text, 'forwarded'::text, 'rejected'::text, 'withdrawn'::text, 'completed'::text])))",
+      "name": "dmca_counter_status_check",
+      "table": "dmca_counter_notices"
+    },
+    {
+      "definition": "FOREIGN KEY (case_id) REFERENCES dmca_cases(id) ON DELETE CASCADE",
+      "name": "dmca_strikes_case_id_fkey",
+      "table": "dmca_strikes"
+    },
+    {
+      "definition": "UNIQUE (case_id)",
+      "name": "dmca_strikes_case_id_key",
+      "table": "dmca_strikes"
+    },
+    {
+      "definition": "PRIMARY KEY (id)",
+      "name": "dmca_strikes_pkey",
+      "table": "dmca_strikes"
+    },
+    {
+      "definition": "FOREIGN KEY (user_id) REFERENCES app_users(id) ON DELETE CASCADE",
+      "name": "dmca_strikes_user_id_fkey",
+      "table": "dmca_strikes"
+    }
+  ],
+  "counts": {
+    "cases": 0,
+    "counters": 0,
+    "strikes": 0,
+    "users": 29,
+    "videos": 34
+  },
+  "function_absent": true,
+  "indexes": [
+    {
+      "definition": "CREATE UNIQUE INDEX dmca_cases_pkey ON public.dmca_cases USING btree (id)",
+      "name": "dmca_cases_pkey",
+      "ready": true,
+      "table": "dmca_cases",
+      "valid": true
+    },
+    {
+      "definition": "CREATE INDEX dmca_cases_rate_limit_idx ON public.dmca_cases USING btree (request_ip_hash, created_at DESC)",
+      "name": "dmca_cases_rate_limit_idx",
+      "ready": true,
+      "table": "dmca_cases",
+      "valid": true
+    },
+    {
+      "definition": "CREATE INDEX dmca_cases_restore_idx ON public.dmca_cases USING btree (restore_eligible_at) WHERE ((status = 'countered'::text) AND (court_filing_received = false))",
+      "name": "dmca_cases_restore_idx",
+      "ready": true,
+      "table": "dmca_cases",
+      "valid": true
+    },
+    {
+      "definition": "CREATE INDEX dmca_cases_status_created_idx ON public.dmca_cases USING btree (status, created_at)",
+      "name": "dmca_cases_status_created_idx",
+      "ready": true,
+      "table": "dmca_cases",
+      "valid": true
+    },
+    {
+      "definition": "CREATE INDEX dmca_cases_uploader_created_idx ON public.dmca_cases USING btree (uploader_id, created_at DESC)",
+      "name": "dmca_cases_uploader_created_idx",
+      "ready": true,
+      "table": "dmca_cases",
+      "valid": true
+    },
+    {
+      "definition": "CREATE UNIQUE INDEX dmca_counter_notices_case_id_key ON public.dmca_counter_notices USING btree (case_id)",
+      "name": "dmca_counter_notices_case_id_key",
+      "ready": true,
+      "table": "dmca_counter_notices",
+      "valid": true
+    },
+    {
+      "definition": "CREATE UNIQUE INDEX dmca_counter_notices_pkey ON public.dmca_counter_notices USING btree (id)",
+      "name": "dmca_counter_notices_pkey",
+      "ready": true,
+      "table": "dmca_counter_notices",
+      "valid": true
+    },
+    {
+      "definition": "CREATE UNIQUE INDEX dmca_strikes_case_id_key ON public.dmca_strikes USING btree (case_id)",
+      "name": "dmca_strikes_case_id_key",
+      "ready": true,
+      "table": "dmca_strikes",
+      "valid": true
+    },
+    {
+      "definition": "CREATE UNIQUE INDEX dmca_strikes_pkey ON public.dmca_strikes USING btree (id)",
+      "name": "dmca_strikes_pkey",
+      "ready": true,
+      "table": "dmca_strikes",
+      "valid": true
+    },
+    {
+      "definition": "CREATE INDEX dmca_strikes_user_active_idx ON public.dmca_strikes USING btree (user_id, active, issued_at DESC)",
+      "name": "dmca_strikes_user_active_idx",
+      "ready": true,
+      "table": "dmca_strikes",
+      "valid": true
+    }
+  ],
+  "latest_migration": "20260910043551",
+  "read_only": "on",
+  "related_functions": [
+    {
+      "anon_execute": false,
+      "authenticated_execute": false,
+      "fingerprint": "bd41d4fde042aae77067fbee550742f7",
+      "name": "apply_dmca_takedown",
+      "service_execute": true
+    },
+    {
+      "anon_execute": false,
+      "authenticated_execute": false,
+      "fingerprint": "7e44a85cc2c03473d67541300ee69936",
+      "name": "restore_dmca_case",
+      "service_execute": true
+    }
+  ],
+  "target_access": [
+    {
+      "acl": [
+        "postgres=arwdDxtm/postgres",
+        "anon=r/postgres",
+        "authenticated=arwd/postgres",
+        "service_role=arwdDxtm/postgres"
+      ],
+      "force": false,
+      "rls": true,
+      "table": "dmca_cases"
+    },
+    {
+      "acl": [
+        "postgres=arwdDxtm/postgres",
+        "anon=r/postgres",
+        "authenticated=arwd/postgres",
+        "service_role=arwdDxtm/postgres"
+      ],
+      "force": false,
+      "rls": true,
+      "table": "dmca_counter_notices"
+    },
+    {
+      "acl": [
+        "postgres=arwdDxtm/postgres",
+        "anon=r/postgres",
+        "authenticated=arwd/postgres",
+        "service_role=arwdDxtm/postgres"
+      ],
+      "force": false,
+      "rls": true,
+      "table": "dmca_strikes"
+    }
+  ],
+  "target_triggers": []
+}
