@@ -49,7 +49,7 @@ test("profile deletion cancels billing before deleting database content and pres
   assert.match(deleteFunction, /\.from\("image_moderation_records"\)[\s\S]*?\.delete\(\)/);
   assert.match(
     deleteFunction,
-    /removeBucketPaths\([\s\S]*?"dancer-photos"[\s\S]*?responsiveImageStoragePaths/,
+    /tryRetireGalleryStorageFiles\(client, dancer\.id, storagePath\)/,
   );
   assert.match(deleteFunction, /removeBucketPaths\(client, "verification-documents"/);
   assert.match(deleteFunction, /action: "delete_dancer_profile"/);

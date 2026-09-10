@@ -89,8 +89,9 @@ function scenario({ failTable, failOperation, failAfterCommit = true, diagnostic
     PublicApiError,
     safeErrorMetadata: error => ({ code: error.code || 'unknown' }),
     uploadResponsiveImage: async () => ({ storagePath: 'new', focalX: 50, focalY: 50 }),
-    removeResponsiveImage: async (_client, _bucket, path) => assets.delete(path),
-    removeArchivedOriginalMedia: async () => {},
+    // This suite isolates publication acknowledgment; native retirement behavior
+    // and transport failures are covered by gallery-storage-cleanup.test.mjs.
+    tryRetireGalleryStorageFiles: async (_client, _profileId, path) => { assets.delete(path); return 'retired'; },
     responsivePublicImage: (_client, _bucket, path) => ({ imageUrl: path }),
     responsiveImageStoragePaths: path => [path],
     validateAndPrepareDancrImage: async () => ({}),

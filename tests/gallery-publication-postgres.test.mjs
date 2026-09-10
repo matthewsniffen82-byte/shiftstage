@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs';
 import test, { before, beforeEach, after } from 'node:test';
 import { PGlite } from '@electric-sql/pglite';
 import { loadGalleryGateway } from './helpers/gallery-publication-fixture.mjs';
+import { loadGalleryCleanupRuntime } from './helpers/gallery-cleanup-runtime.mjs';
 import vm from 'node:vm';
 import ts from 'typescript';
 import { PublicApiError } from '../src/lib/api-error-policy.ts';
@@ -346,7 +347,7 @@ function applicationClient({lostResponse=false,beforeDelete,afterDelete}={}) {
 function applicationFunctions(record, removed) {
   const dependencies={PublicApiError,safeErrorMetadata:error=>({code:error.code||'unknown'}),
     uploadResponsiveImage:async()=>({storagePath:record.path,focalX:50,focalY:50}),
-    removeResponsiveImage:async(_client,_bucket,path)=>removed.push(path),removeArchivedOriginalMedia:async()=>{},
+    tryRetireGalleryStorageFiles:async(_client,_profileId,path)=>{removed.push(path);return 'retired';},
     responsivePublicImage:(_client,_bucket,path)=>({imageUrl:path}),validateAndPrepareDancrImage:async()=>({}),
     isProfileAvatarUploadContext:context=>context==='profile_avatar',DANCR_IMAGE_MODERATION_MODEL:'synthetic',
   };
@@ -567,17 +568,22 @@ test('missing review versions fail before a write is sent',async()=>{
 test('post-commit cleanup preserves shared and unknown paths and tolerates failed storage',async()=>{
   const r=await review(101),published=await gateway.publishDancerPhoto(gatewayClient(),publicationInput(r));
   const prefix=owner+'/'+profile+'/',removed=[];
-  const cleaner=loadGalleryGateway({
-    removeResponsiveImage:async(_client,_bucket,path)=>{if(path.endsWith('fail.jpg'))throw new Error('storage unavailable');removed.push(path);},
-    removeArchivedOriginalMedia:async()=>{},
-  });
+  const cleaner=loadGalleryCleanupRuntime().publication;
   for (const situation of ['photo','avatar','query-error','unowned','failure','unreferenced']) {
     const path=situation==='unowned'?'legacy/shared.jpg':prefix+(situation==='failure'?'fail.jpg':'old.jpg');
     const client={
-      from(table){const q={select(){return q;},eq(){return q;},async limit(){
-        return {data:(situation==='photo'&&table==='dancer_photos')||(situation==='avatar'&&table==='dancer_profiles')?[{id:id(200)}]:[],
-          error:situation==='query-error'?new Error('read failed'):null};}};return q;},
-      storage:{from(){return {async remove(){throw new Error('source cleanup failed');}};}},
+      async rpc(name,args){
+        assert.equal(name,'claim_gallery_storage_retirement');assert.equal(args.p_profile_id,profile);assert.equal(args.p_storage_path,path);
+        if(situation==='query-error')return {data:null,error:new Error('claim unavailable')};
+        return {data:{profile_id:profile,storage_path:path,...(['photo','avatar'].includes(situation)
+          ?{status:'retained',reason:'referenced'}:{status:'retired',retirement_id:id(900),retired_at:'2026-09-10T00:00:00Z'})},error:null};
+      },
+      from(){throw new Error('An unlocked reference lookup cannot authorize deletion');},
+      storage:{from(bucket){return {async remove(paths){
+        if(bucket==='dancr-image-moderation-temp'||paths.some(p=>p.endsWith('fail.jpg')))throw new Error('storage unavailable');
+        if(bucket==='dancer-photos')removed.push(...paths);
+        return {data:paths.map(name=>({name})),error:null};
+      }};}},
     };
     await cleaner.cleanPublishedGalleryFiles(client,{...published,supersededStoragePaths:[path]},{
       userId:owner,profileId:profile,bucket:'dancr-image-moderation-temp',path:prefix+'temp.jpg',

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { apiError } from "@/src/lib/api";
 import { readBoundedJsonObject } from "@/src/lib/bounded-json-body";
 import { requireAdmin } from "@/src/lib/dancr/admin";
+import { tryRetireGalleryStorageFiles } from "@/src/lib/dancr/gallery-storage-retirement";
 import {
   APPROVED_PHOTO_BUCKET,
   MODERATION_REVIEW_BUCKET,
@@ -12,7 +13,6 @@ import { validateAndPrepareDancrImage } from "@/src/lib/dancr/image-validation";
 import { isProfileAvatarUploadContext } from "@/src/lib/dancr/photo-slot";
 import { cleanPublishedGalleryFiles, galleryReviewConflict, galleryReviewVersion, publishDancerPhoto, updatePendingGalleryReview } from "@/src/lib/dancr/photo-publication";
 import {
-  removeResponsiveImage,
   uploadResponsiveImage,
 } from "@/src/lib/dancr/responsive-image";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
@@ -172,7 +172,7 @@ async function approveReviewRecord(admin: any, record: any, reviewerId: string, 
       if (updateError) throw updateError;
       await admin.storage.from(sourceBucket).remove([sourcePath]).catch(() => null);
       if (previousAvatarPath && previousAvatarPath !== finalPath) {
-        await removeResponsiveImage(admin, APPROVED_PHOTO_BUCKET, previousAvatarPath).catch(() => null);
+        await tryRetireGalleryStorageFiles(admin, profile.id, previousAvatarPath);
       }
       console.info(JSON.stringify({ event: "image_moderation.admin_decision", recordId: record.id, decision: "approved", target: "avatar" }));
       return updated;

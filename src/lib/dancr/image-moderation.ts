@@ -6,6 +6,7 @@ import { createOpenAIClient } from "../openai-client";
 import { getServerEnv } from "../server-env";
 import { safeErrorMetadata } from "../security/safe-error-metadata";
 import { PublicApiError } from "../api-error-policy";
+import { tryRetireGalleryStorageFiles } from "./gallery-storage-retirement";
 import {
   isAvatarFaceRequiredError,
   prepareFaceCenteredAvatar,
@@ -36,7 +37,6 @@ import {
   profilePhotoUploadContext,
 } from "./photo-slot";
 import {
-  removeResponsiveImage,
   responsivePublicImage,
   uploadResponsiveImage,
 } from "./responsive-image";
@@ -584,7 +584,7 @@ async function approveModeratedUpload(
       });
       await safeRemoveObject(admin, MODERATION_TEMP_BUCKET, input.tempPath);
       if (previousAvatarPath && previousAvatarPath !== finalPath) {
-        await removeResponsiveImage(admin, APPROVED_PHOTO_BUCKET, previousAvatarPath).catch(() => null);
+        await tryRetireGalleryStorageFiles(admin, input.profileId, previousAvatarPath);
       }
       logModeration("approved", { recordId: input.recordId, avatar: true });
       logModeration("database_status_written", { recordId: input.recordId, avatar: true, databaseStatus: "approved" });

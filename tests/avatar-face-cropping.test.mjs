@@ -116,7 +116,7 @@ test("existing approved avatars can be securely reprocessed from an original app
   assert.match(recenterRouteSource, /prepareFaceCenteredAvatar\(sourceImage\)/);
   assert.match(recenterRouteSource, /setApprovedDancerAvatar/);
   assert.doesNotMatch(recenterRouteSource, /restoreDancerAvatar/);
-  assert.match(recenterRouteSource, /removeResponsiveImage/);
+  assert.match(recenterRouteSource, /tryRetireGalleryStorageFiles/);
   assert.match(recenterRouteSource, /from\("admin_actions"\)\.insert/);
   assert.match(recenterRouteSource, /recenter_dancer_avatar/);
 });

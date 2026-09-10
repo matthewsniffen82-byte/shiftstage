@@ -175,7 +175,7 @@ function applicationClient({lost=false,beforeDelete=null,deleteError=null}={}){
 }
 function deletionCallers(){
  const dependencies={ensureDancerPrimaryPhoto:gateway(),safeErrorMetadata:error=>({code:error.code||'synthetic'}),
-  removeResponsiveImage:async()=>{},removeArchivedOriginalMedia:async()=>{},responsiveImageStoragePaths:path=>[path]};
+  tryRetireGalleryStorageFiles:async()=> 'retired',responsiveImageStoragePaths:path=>[path]};
  const dancer=applicationModule('../src/lib/dancr/dancer.ts',dependencies,`
   getOwnDancerProfile=async()=>({id:'${profile}'});deleteLinkedModerationRecords=async()=>{};
   getOwnPhotoIds=async()=>[];refreshOwnPhotoReviewStatus=async()=>{};`);

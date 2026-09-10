@@ -1,8 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { ACTIVE_IMAGE_MODERATION_STATUSES } from "./image-moderation-status";
 import { PROFILE_AVATAR_CONTEXT } from "./photo-slot";
-import { removeResponsiveImage } from "./responsive-image";
-import { removeArchivedOriginalMedia } from "./media-watermark";
+import { tryRetireGalleryStorageFiles } from "./gallery-storage-retirement";
 import type { ApprovalReview, DancerDashboardAnalytics, DancerWeeklyReport, SocialPlatform } from "./types";
 import { PublicApiError } from "../api-error-policy";
 import { safeErrorMetadata } from "../security/safe-error-metadata";
@@ -57,16 +56,7 @@ export async function deleteOwnDancerPhoto(client: DancrClient, userId: string, 
     });
 
     if (photo.storage_path) {
-      await removeResponsiveImage(
-        adminClient,
-        "dancer-photos",
-        photo.storage_path,
-      ).catch(() => null);
-      await removeArchivedOriginalMedia(
-        adminClient,
-        "dancer-photos",
-        photo.storage_path,
-      ).catch(() => null);
+      await tryRetireGalleryStorageFiles(adminClient, profile.id, photo.storage_path);
     }
 
     // A concurrent request may have promoted this photo after our initial read.
@@ -141,11 +131,7 @@ export async function deleteOwnDancerPhoto(client: DancrClient, userId: string, 
     await adminClient.storage.from("dancr-image-moderation-review").remove([temporaryPath]).catch(() => null);
   }
   if (finalPath) {
-    await removeResponsiveImage(
-      adminClient,
-      "dancer-photos",
-      finalPath,
-    ).catch(() => null);
+    await tryRetireGalleryStorageFiles(adminClient, profile.id, finalPath);
   }
 
   await refreshOwnPhotoReviewStatus(adminClient, userId, profile.id);
@@ -214,7 +200,7 @@ export async function deleteOwnDancerAvatar(
     ...(moderationRecords || []).map((record: any) => String(record.final_storage_path || "").trim()),
   ].filter(Boolean))];
   await Promise.all(approvedPaths.map((storagePath) =>
-    removeResponsiveImage(adminClient, "dancer-photos", storagePath).catch(() => null),
+    tryRetireGalleryStorageFiles(adminClient, profile.id, storagePath),
   ));
 
   console.info(JSON.stringify({

@@ -216,7 +216,7 @@ test("legacy responsive photos gain small transformed sources and retain a cente
 
 test("dancer and venue uploads publish and clean up complete responsive image sets", () => {
   assert.match(moderation, /uploadResponsiveImage\(/);
-  assert.match(moderation, /removeResponsiveImage\(/);
+  assert.match(moderation, /tryRetireGalleryStorageFiles\(/);
   assert.match(venue, /uploadResponsiveImage\(/);
   assert.match(venue, /removeResponsiveImage\(/);
   assert.match(venue, /coverImageSrcSet:/);

@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { apiError, PublicApiError } from "@/src/lib/api";
 import { readBoundedJsonObject } from "@/src/lib/bounded-json-body";
 import { requireAdmin } from "@/src/lib/dancr/admin";
+import { tryRetireGalleryStorageFiles } from "@/src/lib/dancr/gallery-storage-retirement";
 import {
   isAvatarFaceDetectionUnavailableError,
   isAvatarFaceRequiredError,
@@ -14,7 +15,6 @@ import {
   setApprovedDancerAvatar,
 } from "@/src/lib/dancr/image-moderation";
 import {
-  removeResponsiveImage,
   responsivePublicImage,
   uploadResponsiveImage,
 } from "@/src/lib/dancr/responsive-image";
@@ -91,9 +91,7 @@ export async function POST(request: Request) {
       uploaded.storagePath,
     );
     if (actualPreviousPath && actualPreviousPath !== uploaded.storagePath) {
-      await removeResponsiveImage(admin, APPROVED_PHOTO_BUCKET, actualPreviousPath).catch(
-        () => null,
-      );
+      await tryRetireGalleryStorageFiles(admin, dancer.id, actualPreviousPath);
     }
 
     const publicAvatar = responsivePublicImage(

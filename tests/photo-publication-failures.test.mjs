@@ -119,19 +119,26 @@ function harness({ avatar = false, primary = false, failure = "", concurrentAvat
     responsivePublicImage: () => ({ imageUrl: "https://example.test/avatar.jpg" }),
   };
   const watermark = { removeArchivedOriginalMedia: async (_client, _bucket, path) => { archived.delete(path); } };
+  // Publication tests supply a confirmed cleanup boundary; the actual boundary
+  // is exercised with native retirement triggers in gallery-storage-cleanup.
+  const retirement = { tryRetireGalleryStorageFiles: async (_client, profileId, path) => {
+    assert.equal(profileId, "dancer"); events.push(`retire:${path}`); files.delete(path); archived.delete(path); return "retired";
+  } };
   const slots = {
     isProfileAvatarUploadContext: context => context === "profile_avatar",
     profilePhotoSlotFromUploadContext: () => ({ isPrimary: primary, sortOrder: primary ? 0 : 1 }),
   };
-  const gateway = loadGalleryGateway({ ...responsive, ...watermark });
+  const gateway = loadGalleryGateway({ ...responsive, ...watermark, ...retirement });
   const library = load(librarySource, "approveModeratedUpload", {
     "./photo-publication": gateway,
+    "./gallery-storage-retirement": retirement,
     "./responsive-image": responsive, "./media-watermark": watermark,
     "../security/safe-error-metadata": { safeErrorMetadata: () => ({ code: "synthetic" }) },
     "../api-error-policy": requireTest("../src/lib/api-error-policy.ts"),
   });
   const admin = load(adminSource, "approveReviewRecord", {
     "@/src/lib/dancr/photo-publication": gateway,
+    "@/src/lib/dancr/gallery-storage-retirement": retirement,
     "@/src/lib/dancr/image-moderation": library,
     "@/src/lib/dancr/responsive-image": responsive,
     "@/src/lib/dancr/media-watermark": watermark,
@@ -140,6 +147,7 @@ function harness({ avatar = false, primary = false, failure = "", concurrentAvat
     "@/src/lib/security/safe-error-metadata": { safeErrorMetadata: () => ({ code: "synthetic" }) },
   });
   const recenter = load(recenterSource, "POST", {
+    "@/src/lib/dancr/gallery-storage-retirement": retirement,
     "next/server": { NextResponse: { json: (body, options = {}) => ({ body, status: options.status || 200 }) } },
     "@/src/lib/api": { apiError: () => ({ status: 500 }), PublicApiError: Error },
     "@/src/lib/bounded-json-body": { readBoundedJsonObject: async () => ({ dancerSlug: "test-dancer" }) },

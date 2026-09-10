@@ -40,7 +40,7 @@ test("dancer avatars are separate approved profile assets outside gallery slots"
 test("approved avatar replacement preserves the current live image until moderation succeeds", () => {
   assert.match(moderation, /previousAvatarPath = await setApprovedDancerAvatar/);
   assert.match(moderation, /await updateModerationRecord[\s\S]*?decision: "approved"/);
-  assert.match(moderation, /if \(previousAvatarPath && previousAvatarPath !== finalPath\)[\s\S]*?removeResponsiveImage/);
+  assert.match(moderation, /if \(previousAvatarPath && previousAvatarPath !== finalPath\)[\s\S]*?tryRetireGalleryStorageFiles/);
   assert.doesNotMatch(moderation, /restoreDancerAvatar|avatarWasSwitched/);
   assert.match(moderation, /update\.eq\("avatar_storage_path", previousValue\)/);
   assert.match(adminModeration, /const isAvatar = isProfileAvatarUploadContext\(record\.upload_context\)/);

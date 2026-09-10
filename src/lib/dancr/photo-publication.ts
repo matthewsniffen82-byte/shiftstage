@@ -3,8 +3,7 @@ import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { PublicApiError } from "../api-error-policy";
 import { safeErrorMetadata } from "../security/safe-error-metadata";
-import { removeResponsiveImage } from "./responsive-image";
-import { removeArchivedOriginalMedia } from "./media-watermark";
+import { tryRetireGalleryStorageFiles } from "./gallery-storage-retirement";
 
 export function galleryReviewConflict() {
   return new PublicApiError("CONFLICT", "This photo or its review has changed. Refresh your profile before trying again.", 409);
@@ -82,19 +81,7 @@ export async function cleanPublishedGalleryFiles(
   const prefix = `${source.userId}/${source.profileId}/`;
   for (const path of new Set(published.supersededStoragePaths)) {
     if (!path.startsWith(prefix) || path.split("/").includes("..") || path === published.photo.storage_path) continue;
-    try {
-      const [photos, avatars] = await Promise.all([
-        client.from("dancer_photos").select("id").eq("storage_path", path).limit(1),
-        client.from("dancer_profiles").select("id").eq("avatar_storage_path", path).limit(1),
-      ]);
-      if (photos.error) throw photos.error;
-      if (avatars.error) throw avatars.error;
-      if (!photos.data || !avatars.data || photos.data.length || avatars.data.length) continue;
-      await removeResponsiveImage(client, "dancer-photos", path);
-      await removeArchivedOriginalMedia(client, "dancer-photos", path);
-    } catch (error) {
-      console.warn("IMAGE_MODERATION_SUPERSEDED_FILE_RETAINED", { ...safeErrorMetadata(error) });
-    }
+    await tryRetireGalleryStorageFiles(client, source.profileId, path);
   }
   // Never treat the public bucket as a temporary source on an idempotent replay.
   if (source.path.startsWith(prefix) && !source.path.split("/").includes("..")

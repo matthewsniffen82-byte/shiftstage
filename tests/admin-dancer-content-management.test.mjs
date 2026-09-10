@@ -47,7 +47,7 @@ test("photo deletion is dancer-scoped, removes stored content, promotes a replac
   assert.doesNotMatch(deletion, /\.update\(\{ is_primary:/);
   assert.match(
     deletion,
-    /removeBucketPaths\([\s\S]*?responsiveImageStoragePaths\(photo\.storage_path\)[\s\S]*?warnings/,
+    /tryRetireGalleryStorageFiles\(client, input\.dancerId, photo\.storage_path\)[\s\S]*?warnings/,
   );
   assert.match(deletion, /action: "delete_dancer_photo"/);
 });
