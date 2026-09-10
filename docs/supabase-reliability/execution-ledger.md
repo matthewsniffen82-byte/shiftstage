@@ -460,3 +460,11 @@ Step 9 closed with `91d03c844192203a9c787f4701914b9bd01c7d23`, matching main ref
 The deployed row cap was confirmed with a HEAD request returning `0-999/1974` for a 1,500-row limit; no private events were retrieved. All 35 native aggregate tests and the transaction/repeat/drift deployment rehearsals pass. Full validation and committed SQL/push/deployment gates remain required.
 
 Full foundation validation passed all 5,280 tests, lint, production build, standalone TypeScript, migration guard and thirty readiness checks. The application still uses its existing metric reader. Exact commit/push, committed SQL application, read-only preservation/API verification and Vercel/health gates remain required.
+
+The foundation was pushed as `ab0a1078d928b2397593d03d7f410bdf1ff52ece`; exact migration `20260910105400` applied with 1,974 events, 34 videos, 29 accounts, access, 27 constraints, twelve indexes, seven policies, two triggers, 125 existing functions and 108 prior ledger entries preserved. Read-only database/API verification passed at 11:02:37 UTC, including service-only execution and an empty read receipt. Main references matched, [exact Vercel success](https://vercel.com/ai-movie-jobs/shiftstage/4md3FapwozqYfp1Q5yqaXU86VUK2) was confirmed, and health/thirty readiness checks passed at 11:03:51–54 UTC.
+
+## Step 10 TV metrics: caller
+
+The plan is `step-10-tv-metric-caller.md`: use bounded aggregate requests for previously authorized videos, validate every response and preserve existing zero metrics and signing behavior. Keep the applied SQL frozen. Native caller tests, full validation and exact push/deployment/health gates remain required.
+
+Full validation passed all 5,320 tests, lint, production build, standalone TypeScript, migration guard and thirty readiness checks. The 81 focused checks include exact native counts beyond 1,000 events and failure rejection without partial totals. Fresh read-only database/API verification at 11:17:04 UTC retained the frozen function, ledger, RLS, service-only permissions and indexes; no SQL was reapplied. Exact commit/push and Vercel/health gates remain required.

@@ -30,6 +30,7 @@ import {
 } from "./media-watermark";
 import { inspectStoredMyDancrTvVideo } from "./video-upload-validation";
 import { safeErrorMetadata } from "../security/safe-error-metadata";
+import { getManagedVideoMetricCounts } from "./tv-metric-counts";
 
 export const MYDANCR_TV_BUCKET = "mydancr-tv-videos";
 export const MYDANCR_TV_MAX_BYTES = 75 * 1024 * 1024;
@@ -1779,21 +1780,7 @@ export async function recordMyDancrTvEvent(
 }
 
 async function getVideoMetrics(admin: AdminClient, videoIds: string[]) {
-  if (!videoIds.length) return {};
-  const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
-  const { data, error } = await admin
-    .from("mydancr_tv_events")
-    .select("video_id, event_type")
-    .in("video_id", videoIds)
-    .gte("occurred_at", since);
-  if (error) throw error;
-
-  return (data || []).reduce((all: Record<string, Record<string, number>>, event: any) => {
-    const metrics = all[event.video_id] || emptyMetrics();
-    metrics[event.event_type] = (metrics[event.event_type] || 0) + 1;
-    all[event.video_id] = metrics;
-    return all;
-  }, {});
+  return getManagedVideoMetricCounts(admin, videoIds, MYDANCR_TV_EVENT_TYPES);
 }
 
 function mapManagedVideo(

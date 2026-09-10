@@ -3,19 +3,31 @@ import vm from "node:vm";
 import ts from "typescript";
 
 const source = readFileSync(new URL("../../src/lib/dancr/tv.ts", import.meta.url), "utf8");
+const metricSource = readFileSync(new URL("../../src/lib/dancr/tv-metric-counts.ts", import.meta.url), "utf8");
+const metricExports = {};
+vm.runInNewContext(ts.transpileModule(metricSource, {
+  compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
+}).outputText, { exports: metricExports });
 const exports = {};
 vm.runInNewContext(ts.transpileModule(source, {
   compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
-}).outputText, { exports, require: () => ({ MAX_DANCER_PROFILE_VIDEOS: 50, isPublicDancerProfileEligible: () => true }) });
+}).outputText, { exports, require: name => name === "./tv-metric-counts" ? metricExports : ({ MAX_DANCER_PROFILE_VIDEOS: 50, isPublicDancerProfileEligible: () => true }) });
 export const tvWorkspace = exports;
 
 export function workspaceFixture(count, options = {}) {
   const calls = [], queries = [], timeline = [];
-  const rows = Array.from({ length: count }, (_, index) => ({ id: `video-${index}`, storage_path: `owner/dancer/video-${index}.mp4`, caption: `Clip ${index}`, status: "approved", distribution_scope: "profile_and_feed" }));
+  const rows = Array.from({ length: count }, (_, index) => ({ id: `96000000-0000-4000-8000-${String(index+1).padStart(12,"0")}`, storage_path: `owner/dancer/video-${index}.mp4`, caption: `Clip ${index}`, status: "approved", distribution_scope: "profile_and_feed" }));
   const resultForPath = path => options.failedPaths?.includes(path)
     ? { path, signedUrl: null, error: "Object unavailable" }
     : { path, signedUrl: `https://storage.example.test/signed/${path}`, error: null };
   const client = {
+    async rpc(name, args) {
+      if (name !== "get_mydancr_tv_metric_counts") throw new Error("Unexpected RPC");
+      queries.push({ table: name, operations: [["rpc", args]] }); timeline.push("metrics");
+      if (options.metricsGate) await options.metricsGate;
+      if (options.queryError === "mydancr_tv_events") return { data: null, error: new Error("Query rejected") };
+      return { data: Object.fromEntries(args.p_video_ids.map(id => [id, id === rows[0]?.id ? { impression: 1 } : {}])), error: null };
+    },
     from(table) {
       const queryRecord = { table, operations: [] };
       queries.push(queryRecord);
