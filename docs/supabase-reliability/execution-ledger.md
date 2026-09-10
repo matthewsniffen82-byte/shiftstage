@@ -344,3 +344,11 @@ The caller was pushed as `d81459f37ed8286381f56d5df9af0e9155aa87bc`, with matchi
 The inspected plan is `step-09-review-precision.md`. Preserve PostgreSQL microsecond ordering in the administrator mapper so fresh review snapshots cannot falsely conflict. Keep applied SQL frozen. Twelve native mapper/endpoint regressions cover both target types; eight fail against the prior mapper. All 118 focused checks pass after the fix. Full release validation and exact deployment/health gates remain required.
 
 Full validation passed all 4,632 automated tests, lint, build, standalone TypeScript, migration guard and thirty live readiness checks. Read-only dependency verification retained frozen SQL/ledger hashes, permissions, RLS and aggregate data counts. No migration or production business operation was needed. Exact push, Vercel success and deployed health remain required.
+
+The precision fix was pushed as `e913c86fd902a6f5a70e9d965d77ddf450284ca1` with matching main references and successful [exact Vercel deployment](https://vercel.com/ai-movie-jobs/shiftstage/4Tp42dAk13NQv1Rch9ovBYm4Y2E2). Health, protected administrator/account denials, RPC exposure and thirty readiness checks passed at 06:57:23–26 UTC.
+
+## Step 9 whole-profile decisions: additive function
+
+The inspected plan is `step-09-profile-decisions.md`. Add an unused transaction around the existing publication transition, profile review and audit, requiring the loaded profile version. Preserve private pending acceptance, suspension markers and prior history. Fifty native database cases and guarded deployment transaction/repeat/schema-drift rehearsals pass. Full validation, exact committed application and deployment/health gates remain required before caller integration.
+
+Full validation passed all 4,682 automated tests, lint, production build, standalone TypeScript, migration guard and thirty readiness checks. Captured schema comparisons passed. Exact push, committed additive SQL application, read-only data/catalog/access preservation and Vercel/health gates remain required; existing application callers are unchanged.
