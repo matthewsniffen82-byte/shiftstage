@@ -35,7 +35,7 @@ test("failed paths remain unavailable without changing other rows or borrowing a
   assert.equal(videos[1].videoUrl, "");
   assert.ok(videos[2].videoUrl.endsWith("video-2.mp4"));
   const failed = workspaceFixture(3, { storageError: true });
-  assert.ok((await tvWorkspace.getAdminMyDancrTvVideos(failed.client)).every(video => video.videoUrl === ""));
+  await assert.rejects(tvWorkspace.getAdminMyDancrTvVideos(failed.client), /Storage unavailable/);
 });
 
 test("empty or rejected owner queries never sign media", async () => {

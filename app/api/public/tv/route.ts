@@ -57,17 +57,13 @@ async function followingIdsForRequest(
   request: Request,
 ) {
   if (!getBearerToken(request)) return [];
-  try {
-    const { user } = await createRequestSupabaseContext(request);
-    const { data, error } = await admin
-      .from("follows")
-      .select("dancer_id")
-      .eq("customer_id", user.id);
-    if (error) throw error;
-    return (data || []).map((follow) => follow.dancer_id);
-  } catch {
-    return [];
-  }
+  const { user } = await createRequestSupabaseContext(request);
+  const { data, error } = await admin
+    .from("follows")
+    .select("dancer_id")
+    .eq("customer_id", user.id);
+  if (error) throw error;
+  return (data || []).map((follow) => follow.dancer_id);
 }
 
 function cleanUuid(value: string | null) {

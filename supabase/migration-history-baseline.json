@@ -555,6 +555,10 @@
     {
       "file": "20260910004200_protect_active_photo_positions.sql",
       "sha256": "7b0db9cf5a113386bf3b94b83c796dea77de188a14e830d9937d3d7c8cc3bb89"
+    },
+    {
+      "file": "20260910014900_preserve_existing_account_profiles.sql",
+      "sha256": "4d7cf6a56c61b11554f866ef724c75f2f6cef93cf69864876a2eedc1e22d00e2"
     }
   ]
 }

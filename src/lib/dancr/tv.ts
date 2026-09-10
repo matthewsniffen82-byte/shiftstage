@@ -701,10 +701,12 @@ async function signManagedVideoUrls(admin: AdminClient, videos: any[]) {
   // Only sign rows already selected by the authorized workspace/review query.
   // Bound each request even if historical workspace rows exceed the current cap.
   for (let offset = 0; offset < paths.length; offset += 100) {
-    const { data } = await admin.storage
+    const { data, error } = await admin.storage
       .from(MYDANCR_TV_BUCKET)
       .createSignedUrls(paths.slice(offset, offset + 100), MYDANCR_TV_SIGNED_URL_SECONDS);
-    for (const item of data || []) {
+    if (error) throw error;
+    if (!data) throw new Error("Unable to prepare MyDancr TV playback.");
+    for (const item of data) {
       if (!item.error && item.path && item.signedUrl) signedByPath.set(item.path, item.signedUrl);
     }
   }
