@@ -15,7 +15,7 @@ The user subsequently deferred disposable test-project setup and explicitly requ
 | 5 | RLS and cross-role access | Released and verified; hosted cross-account tests deferred | `5c63d1ef639c23344ced04178a68c8354231a599` pushed; exact Vercel success; health/readiness passed at 01:25 UTC on September 10; 3,667 tests, lint, build and TypeScript passed. Current policies and column permissions covered without weakening RLS. |
 | 6 | Authentication and password recovery | Released and verified; hosted account/mail tests deferred | `ca0e2c7d45582a04d55657a3ec30fcf82a98e0e7` pushed; exact Vercel success; health, served reset-client and readiness checks passed at 01:38 UTC on September 10; 3,671 tests, lint, build and TypeScript passed. |
 | 7 | User/profile provisioning | Released and verified; hosted signup tests deferred | `043d8d83e5cb878cf58f18bc913fb7065f6393fd` pushed; exact Vercel success; guarded SQL applied with data/access preserved; health/readiness passed at 02:06 UTC on September 10. 3,792 tests, lint, build and TypeScript passed. |
-| 8 | Query/error handling | TV, reminder and publishing corrections released; optional-auth correction in validation | See step-08-query-error-review.md and its focused follow-ups. Cleanup and aggregate error findings remain open. |
+| 8 | Query/error handling | TV reads, invoices and optional-auth corrections released; upload preservation in validation | See step-08-query-error-review.md and its focused follow-ups. Secondary writes and aggregate error findings remain open. |
 | 9 | Transactions/atomicity | Pending | |
 | 10 | Indexes/query performance | Pending | |
 | 11 | Storage security/reliability | Pending | |
@@ -222,3 +222,11 @@ The inspected plan is `step-08-optional-auth-errors.md`. Preserve public guest a
 Optional-auth validation on `f73d48b1` passed all 3,957 tests, full lint, production build, standalone TypeScript and thirty live readiness checks. The reserved fixture variable was corrected, then lint and all 67 new focused cases passed again. The broader 124-case auth/public-action set also passed. Postbuild skipped layout-review population. No production account, activity or schema change was used for testing. Exact push, Vercel success and post-deployment health remain required.
 
 The incoming `dc83d703` payout-account reconciliation correction was preserved. Final validation on the combined tree passed all 3,991 tests, full lint, production build, standalone TypeScript and thirty live readiness checks. Postbuild skipped layout-review population. This supersedes the earlier 3,957-test count and includes the fixture-name correction. Exact push and deployment/health verification remain required.
+
+Optional-auth handling was pushed as `794a1850a2ee49f7109b95e6a0d759ed27c01762`, with local HEAD and both remote main references matching. Its [exact Vercel deployment](https://vercel.com/ai-movie-jobs/shiftstage/GaPEorifQViEZY7J7KXxiWGaRxMu) succeeded. Both health routes, unauthenticated account denial, affected public input gates and all thirty readiness checks passed at 03:10:38–40 UTC on 2026-09-10. No production activity or provider email was invoked.
+
+## Step 8 video upload acknowledgments: next controlled release
+
+The inspected plan is `step-08-video-upload-acknowledgments.md`. Preserve pending upload records after uncertain signing, check exact insert/path/token acknowledgments, and reject unconfirmed resume listings. Legacy venue-claim write paths were confirmed retired. Full validation and exact deployment verification remain required; other atomicity/storage/lifecycle findings remain open.
+
+Video upload validation on `794a1850` passed all 4,012 tests, full lint, production build, standalone TypeScript and thirty live readiness checks. All 41 focused cases passed, including twenty-one new runtime cases. Postbuild skipped layout-review population. No production upload, deletion or schema change was used for testing. Exact push and deployment/health verification remain required.

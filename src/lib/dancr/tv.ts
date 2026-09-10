@@ -845,7 +845,7 @@ export async function createMyDancrTvUpload(
       const { data: resumedUpload, error: resumedUploadError } = await admin.storage
         .from(MYDANCR_TV_BUCKET)
         .createSignedUploadUrl(existing.storage_path);
-      if (resumedUploadError || !resumedUpload?.token) {
+      if (resumedUploadError || !usableSignedUpload(resumedUpload, existing.storage_path)) {
         throw resumedUploadError || new Error("Unable to resume the video upload.");
       }
       return {
@@ -900,12 +900,16 @@ export async function createMyDancrTvUpload(
     .select("id, storage_path")
     .single();
   if (insertError) throw insertError;
+  if (video?.id !== videoId || video.storage_path !== storagePath) {
+    throw new Error("Video upload reservation could not be confirmed.");
+  }
 
   const { data: upload, error: uploadError } = await admin.storage
     .from(MYDANCR_TV_BUCKET)
     .createSignedUploadUrl(storagePath);
-  if (uploadError || !upload?.token) {
-    await admin.from("mydancr_tv_videos").delete().eq("id", videoId);
+  if (uploadError || !usableSignedUpload(upload, storagePath)) {
+    // A parallel request may already be resuming this upload. Retain its record
+    // so the same upload identity can recover without losing incoming media.
     throw uploadError || new Error("Unable to prepare the video upload.");
   }
 
@@ -921,6 +925,11 @@ export async function createMyDancrTvUpload(
 
 const MYDANCR_TV_VIDEO_ID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+function usableSignedUpload(upload: { token?: unknown; path?: unknown } | null, expectedPath: string): upload is { token: string; path?: string } {
+  return typeof upload?.token === "string" && Boolean(upload.token.trim())
+    && (upload.path === undefined || upload.path === expectedPath);
+}
 
 const MYDANCR_TV_COMPLETED_UPLOAD_STATUSES = new Set([
   "moderating",
@@ -964,7 +973,8 @@ async function myDancrTvUploadObjectExists(admin: AdminClient, video: any) {
     .from(MYDANCR_TV_BUCKET)
     .list(directory, { search: filename, limit: 10 });
   if (error) throw error;
-  const object = (objects || []).find((item: any) => item.name === filename);
+  if (!Array.isArray(objects)) throw new Error("Video upload storage state could not be confirmed.");
+  const object = objects.find((item: any) => item.name === filename);
   if (!object) return false;
   const storedSize = Number(object.metadata?.size || 0);
   const storedMime = String(object.metadata?.mimetype || object.metadata?.contentType || "");
