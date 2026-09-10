@@ -1,0 +1,734 @@
+{
+  "capturedAt": "2026-09-10T12:48:20.719Z",
+  "columns": [
+    {
+      "default": "gen_random_uuid()",
+      "name": "id",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "dancer_photos",
+      "type": "uuid"
+    },
+    {
+      "default": null,
+      "name": "dancer_id",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "dancer_photos",
+      "type": "uuid"
+    },
+    {
+      "default": null,
+      "name": "storage_path",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "dancer_photos",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "alt_text",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "dancer_photos",
+      "type": "text"
+    },
+    {
+      "default": "0",
+      "name": "sort_order",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "dancer_photos",
+      "type": "int4"
+    },
+    {
+      "default": "false",
+      "name": "is_primary",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "dancer_photos",
+      "type": "bool"
+    },
+    {
+      "default": "'pending'::review_status",
+      "name": "review_status",
+      "nullable": "NO",
+      "schema": "public",
+      "table": "dancer_photos",
+      "type": "review_status"
+    },
+    {
+      "default": "now()",
+      "name": "created_at",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "dancer_photos",
+      "type": "timestamptz"
+    },
+    {
+      "default": "0",
+      "name": "like_count",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "dancer_photos",
+      "type": "int8"
+    },
+    {
+      "default": "false",
+      "name": "is_pinned",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "dancer_photos",
+      "type": "bool"
+    },
+    {
+      "default": "gen_random_uuid()",
+      "name": "id",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "dancer_profiles",
+      "type": "uuid"
+    },
+    {
+      "default": null,
+      "name": "user_id",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "dancer_profiles",
+      "type": "uuid"
+    },
+    {
+      "default": null,
+      "name": "real_name",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "dancer_profiles",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "stage_name",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "dancer_profiles",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "slug",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "dancer_profiles",
+      "type": "text"
+    },
+    {
+      "default": "'Las Vegas'::text",
+      "name": "city",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "dancer_profiles",
+      "type": "text"
+    },
+    {
+      "default": "'draft'::dancer_status",
+      "name": "status",
+      "nullable": "NO",
+      "schema": "public",
+      "table": "dancer_profiles",
+      "type": "dancer_status"
+    },
+    {
+      "default": "'pending'::review_status",
+      "name": "verification_status",
+      "nullable": "NO",
+      "schema": "public",
+      "table": "dancer_profiles",
+      "type": "review_status"
+    },
+    {
+      "default": "'pending'::review_status",
+      "name": "photo_review_status",
+      "nullable": "NO",
+      "schema": "public",
+      "table": "dancer_profiles",
+      "type": "review_status"
+    },
+    {
+      "default": null,
+      "name": "approved_at",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "dancer_profiles",
+      "type": "timestamptz"
+    },
+    {
+      "default": null,
+      "name": "disabled_at",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "dancer_profiles",
+      "type": "timestamptz"
+    },
+    {
+      "default": "now()",
+      "name": "created_at",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "dancer_profiles",
+      "type": "timestamptz"
+    },
+    {
+      "default": "now()",
+      "name": "updated_at",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "dancer_profiles",
+      "type": "timestamptz"
+    },
+    {
+      "default": "false",
+      "name": "is_public",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "dancer_profiles",
+      "type": "bool"
+    },
+    {
+      "default": null,
+      "name": "dmca_suspended_at",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "dancer_profiles",
+      "type": "timestamptz"
+    },
+    {
+      "default": null,
+      "name": "avatar_storage_path",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "dancer_profiles",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "avatar_updated_at",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "dancer_profiles",
+      "type": "timestamptz"
+    },
+    {
+      "default": null,
+      "name": "venue_approved_at",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "dancer_profiles",
+      "type": "timestamptz"
+    },
+    {
+      "default": null,
+      "name": "venue_approved_by_user_id",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "dancer_profiles",
+      "type": "uuid"
+    },
+    {
+      "default": null,
+      "name": "venue_approved_venue_id",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "dancer_profiles",
+      "type": "uuid"
+    },
+    {
+      "default": null,
+      "name": "identity_saved_at",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "dancer_profiles",
+      "type": "timestamptz"
+    },
+    {
+      "default": null,
+      "name": "admin_disabled_at",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "dancer_profiles",
+      "type": "timestamptz"
+    },
+    {
+      "default": "gen_random_uuid()",
+      "name": "id",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "image_moderation_records",
+      "type": "uuid"
+    },
+    {
+      "default": null,
+      "name": "user_id",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "image_moderation_records",
+      "type": "uuid"
+    },
+    {
+      "default": null,
+      "name": "image_id",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "image_moderation_records",
+      "type": "uuid"
+    },
+    {
+      "default": null,
+      "name": "temporary_storage_path",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "image_moderation_records",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "final_storage_path",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "image_moderation_records",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "upload_context",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "image_moderation_records",
+      "type": "text"
+    },
+    {
+      "default": "'openai'::text",
+      "name": "provider",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "image_moderation_records",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "provider_model",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "image_moderation_records",
+      "type": "text"
+    },
+    {
+      "default": "false",
+      "name": "provider_flagged",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "image_moderation_records",
+      "type": "bool"
+    },
+    {
+      "default": null,
+      "name": "decision",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "image_moderation_records",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "status",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "image_moderation_records",
+      "type": "text"
+    },
+    {
+      "default": "'[]'::jsonb",
+      "name": "reason_codes",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "image_moderation_records",
+      "type": "jsonb"
+    },
+    {
+      "default": "'{}'::jsonb",
+      "name": "category_flags",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "image_moderation_records",
+      "type": "jsonb"
+    },
+    {
+      "default": "'{}'::jsonb",
+      "name": "category_scores",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "image_moderation_records",
+      "type": "jsonb"
+    },
+    {
+      "default": null,
+      "name": "error_code",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "image_moderation_records",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "reviewed_by",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "image_moderation_records",
+      "type": "uuid"
+    },
+    {
+      "default": null,
+      "name": "reviewed_at",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "image_moderation_records",
+      "type": "timestamptz"
+    },
+    {
+      "default": null,
+      "name": "review_decision",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "image_moderation_records",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "review_notes",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "image_moderation_records",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "idempotency_key",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "image_moderation_records",
+      "type": "text"
+    },
+    {
+      "default": "now()",
+      "name": "created_at",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "image_moderation_records",
+      "type": "timestamptz"
+    },
+    {
+      "default": "now()",
+      "name": "updated_at",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "image_moderation_records",
+      "type": "timestamptz"
+    },
+    {
+      "default": "0",
+      "name": "attempt_count",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "image_moderation_records",
+      "type": "int4"
+    },
+    {
+      "default": null,
+      "name": "next_attempt_at",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "image_moderation_records",
+      "type": "timestamptz"
+    },
+    {
+      "default": null,
+      "name": "locked_at",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "image_moderation_records",
+      "type": "timestamptz"
+    },
+    {
+      "default": null,
+      "name": "last_error_code",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "image_moderation_records",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "last_error_message",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "image_moderation_records",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "completed_at",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "image_moderation_records",
+      "type": "timestamptz"
+    },
+    {
+      "default": "'legacy'::text",
+      "name": "photo_publication_mode",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "image_moderation_records",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "replacement_photo_id",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "image_moderation_records",
+      "type": "uuid"
+    }
+  ],
+  "constraints": [
+    {
+      "definition": "FOREIGN KEY (dancer_id) REFERENCES dancer_profiles(id) ON DELETE CASCADE",
+      "name": "dancer_photos_dancer_id_fkey",
+      "table": "dancer_photos"
+    },
+    {
+      "definition": "CHECK ((like_count >= 0))",
+      "name": "dancer_photos_like_count_nonnegative",
+      "table": "dancer_photos"
+    },
+    {
+      "definition": "PRIMARY KEY (id)",
+      "name": "dancer_photos_pkey",
+      "table": "dancer_photos"
+    },
+    {
+      "definition": "PRIMARY KEY (id)",
+      "name": "dancer_profiles_pkey",
+      "table": "dancer_profiles"
+    },
+    {
+      "definition": "UNIQUE (slug)",
+      "name": "dancer_profiles_slug_key",
+      "table": "dancer_profiles"
+    },
+    {
+      "definition": "CHECK (((length(TRIM(BOTH FROM stage_name)) = 0) OR ((length(TRIM(BOTH FROM stage_name)) >= 2) AND (length(TRIM(BOTH FROM stage_name)) <= 40))))",
+      "name": "dancer_profiles_stage_name_check",
+      "table": "dancer_profiles"
+    },
+    {
+      "definition": "FOREIGN KEY (user_id) REFERENCES app_users(id) ON DELETE CASCADE",
+      "name": "dancer_profiles_user_id_fkey",
+      "table": "dancer_profiles"
+    },
+    {
+      "definition": "UNIQUE (user_id)",
+      "name": "dancer_profiles_user_id_key",
+      "table": "dancer_profiles"
+    },
+    {
+      "definition": "FOREIGN KEY (venue_approved_by_user_id) REFERENCES app_users(id) ON DELETE SET NULL",
+      "name": "dancer_profiles_venue_approved_by_user_id_fkey",
+      "table": "dancer_profiles"
+    },
+    {
+      "definition": "FOREIGN KEY (venue_approved_venue_id) REFERENCES venues(id) ON DELETE SET NULL",
+      "name": "dancer_profiles_venue_approved_venue_id_fkey",
+      "table": "dancer_profiles"
+    },
+    {
+      "definition": "CHECK ((((photo_publication_mode = ANY (ARRAY['legacy'::text, 'add'::text])) AND (replacement_photo_id IS NULL)) OR ((photo_publication_mode = 'replace'::text) AND (replacement_photo_id IS NOT NULL))))",
+      "name": "image_moderation_photo_publication_intent_check",
+      "table": "image_moderation_records"
+    },
+    {
+      "definition": "CHECK ((decision = ANY (ARRAY['approved'::text, 'review'::text, 'rejected'::text])))",
+      "name": "image_moderation_records_decision_check",
+      "table": "image_moderation_records"
+    },
+    {
+      "definition": "FOREIGN KEY (image_id) REFERENCES dancer_photos(id) ON DELETE SET NULL",
+      "name": "image_moderation_records_image_id_fkey",
+      "table": "image_moderation_records"
+    },
+    {
+      "definition": "PRIMARY KEY (id)",
+      "name": "image_moderation_records_pkey",
+      "table": "image_moderation_records"
+    },
+    {
+      "definition": "CHECK (((review_decision IS NULL) OR (review_decision = ANY (ARRAY['approved'::text, 'rejected'::text]))))",
+      "name": "image_moderation_records_review_decision_check",
+      "table": "image_moderation_records"
+    },
+    {
+      "definition": "FOREIGN KEY (reviewed_by) REFERENCES auth.users(id) ON DELETE SET NULL",
+      "name": "image_moderation_records_reviewed_by_fkey",
+      "table": "image_moderation_records"
+    },
+    {
+      "definition": "CHECK ((status = ANY (ARRAY['pending'::text, 'completed'::text, 'error'::text, 'moderating'::text, 'approved'::text, 'pending_review'::text, 'rejected'::text, 'moderation_retry'::text, 'moderation_error'::text])))",
+      "name": "image_moderation_records_status_check",
+      "table": "image_moderation_records"
+    },
+    {
+      "definition": "FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE",
+      "name": "image_moderation_records_user_id_fkey",
+      "table": "image_moderation_records"
+    }
+  ],
+  "indexes": [
+    {
+      "definition": "CREATE UNIQUE INDEX dancer_photos_one_active_gallery_position_idx ON public.dancer_photos USING btree (dancer_id, sort_order) WHERE ((NOT is_primary) AND (sort_order > 0) AND (review_status = ANY (ARRAY['approved'::review_status, 'pending'::review_status])))",
+      "name": "dancer_photos_one_active_gallery_position_idx",
+      "ready": true,
+      "table": "dancer_photos",
+      "valid": true
+    },
+    {
+      "definition": "CREATE UNIQUE INDEX dancer_photos_one_active_primary_idx ON public.dancer_photos USING btree (dancer_id) WHERE (is_primary AND (review_status = ANY (ARRAY['approved'::review_status, 'pending'::review_status])))",
+      "name": "dancer_photos_one_active_primary_idx",
+      "ready": true,
+      "table": "dancer_photos",
+      "valid": true
+    },
+    {
+      "definition": "CREATE UNIQUE INDEX dancer_photos_pkey ON public.dancer_photos USING btree (id)",
+      "name": "dancer_photos_pkey",
+      "ready": true,
+      "table": "dancer_photos",
+      "valid": true
+    },
+    {
+      "definition": "CREATE UNIQUE INDEX dancer_profiles_pkey ON public.dancer_profiles USING btree (id)",
+      "name": "dancer_profiles_pkey",
+      "ready": true,
+      "table": "dancer_profiles",
+      "valid": true
+    },
+    {
+      "definition": "CREATE INDEX dancer_profiles_public_discovery_idx ON public.dancer_profiles USING btree (city, stage_name) WHERE ((status = 'approved'::dancer_status) AND (verification_status = 'approved'::review_status) AND (venue_approved_at IS NOT NULL) AND (is_public = true) AND (disabled_at IS NULL))",
+      "name": "dancer_profiles_public_discovery_idx",
+      "ready": true,
+      "table": "dancer_profiles",
+      "valid": true
+    },
+    {
+      "definition": "CREATE UNIQUE INDEX dancer_profiles_slug_key ON public.dancer_profiles USING btree (slug)",
+      "name": "dancer_profiles_slug_key",
+      "ready": true,
+      "table": "dancer_profiles",
+      "valid": true
+    },
+    {
+      "definition": "CREATE INDEX dancer_profiles_status_city_idx ON public.dancer_profiles USING btree (status, city)",
+      "name": "dancer_profiles_status_city_idx",
+      "ready": true,
+      "table": "dancer_profiles",
+      "valid": true
+    },
+    {
+      "definition": "CREATE UNIQUE INDEX dancer_profiles_user_id_key ON public.dancer_profiles USING btree (user_id)",
+      "name": "dancer_profiles_user_id_key",
+      "ready": true,
+      "table": "dancer_profiles",
+      "valid": true
+    },
+    {
+      "definition": "CREATE INDEX image_moderation_records_created_at_idx ON public.image_moderation_records USING btree (created_at DESC)",
+      "name": "image_moderation_records_created_at_idx",
+      "ready": true,
+      "table": "image_moderation_records",
+      "valid": true
+    },
+    {
+      "definition": "CREATE INDEX image_moderation_records_decision_idx ON public.image_moderation_records USING btree (decision)",
+      "name": "image_moderation_records_decision_idx",
+      "ready": true,
+      "table": "image_moderation_records",
+      "valid": true
+    },
+    {
+      "definition": "CREATE UNIQUE INDEX image_moderation_records_pkey ON public.image_moderation_records USING btree (id)",
+      "name": "image_moderation_records_pkey",
+      "ready": true,
+      "table": "image_moderation_records",
+      "valid": true
+    },
+    {
+      "definition": "CREATE INDEX image_moderation_records_retry_due_idx ON public.image_moderation_records USING btree (status, next_attempt_at) WHERE (status = ANY (ARRAY['moderation_retry'::text, 'moderating'::text]))",
+      "name": "image_moderation_records_retry_due_idx",
+      "ready": true,
+      "table": "image_moderation_records",
+      "valid": true
+    },
+    {
+      "definition": "CREATE INDEX image_moderation_records_reviewed_at_idx ON public.image_moderation_records USING btree (reviewed_at DESC)",
+      "name": "image_moderation_records_reviewed_at_idx",
+      "ready": true,
+      "table": "image_moderation_records",
+      "valid": true
+    },
+    {
+      "definition": "CREATE INDEX image_moderation_records_status_idx ON public.image_moderation_records USING btree (status)",
+      "name": "image_moderation_records_status_idx",
+      "ready": true,
+      "table": "image_moderation_records",
+      "valid": true
+    },
+    {
+      "definition": "CREATE INDEX image_moderation_records_user_id_idx ON public.image_moderation_records USING btree (user_id)",
+      "name": "image_moderation_records_user_id_idx",
+      "ready": true,
+      "table": "image_moderation_records",
+      "valid": true
+    },
+    {
+      "definition": "CREATE UNIQUE INDEX image_moderation_records_user_idempotency_idx ON public.image_moderation_records USING btree (user_id, idempotency_key) WHERE (idempotency_key IS NOT NULL)",
+      "name": "image_moderation_records_user_idempotency_idx",
+      "ready": true,
+      "table": "image_moderation_records",
+      "valid": true
+    }
+  ],
+  "triggers": [
+    {
+      "definition": "CREATE TRIGGER dancer_photos_capture_media_reference AFTER INSERT OR DELETE OR UPDATE OF id, dancer_id, storage_path ON public.dancer_photos FOR EACH ROW EXECUTE FUNCTION capture_gallery_media_reference_history()",
+      "function_definition": "CREATE OR REPLACE FUNCTION public.capture_gallery_media_reference_history()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO ''\nAS $function$\ndeclare\n  v_kind text;\n  v_old_id uuid;\n  v_new_id uuid;\n  v_old_profile uuid;\n  v_new_profile uuid;\n  v_old_path text;\n  v_new_path text;\nbegin\n  -- Restrict this privileged writer to its two fixed source relations.\n  if tg_level <> 'ROW' or tg_when <> 'AFTER' or tg_op not in ('INSERT','UPDATE','DELETE') then\n    raise exception 'GALLERY_HISTORY_INVALID_TRIGGER' using errcode='42501';\n  end if;\n  if tg_relid = 'public.dancer_photos'::regclass then\n    v_kind := 'photo';\n    if tg_op <> 'INSERT' then\n      v_old_id := old.id; v_old_profile := old.dancer_id; v_old_path := old.storage_path;\n    end if;\n    if tg_op <> 'DELETE' then\n      v_new_id := new.id; v_new_profile := new.dancer_id; v_new_path := new.storage_path;\n    end if;\n  elsif tg_relid = 'public.dancer_profiles'::regclass then\n    v_kind := 'avatar';\n    if tg_op <> 'INSERT' then\n      v_old_id := old.id; v_old_profile := old.id; v_old_path := old.avatar_storage_path;\n    end if;\n    if tg_op <> 'DELETE' then\n      v_new_id := new.id; v_new_profile := new.id; v_new_path := new.avatar_storage_path;\n    end if;\n  else\n    raise exception 'GALLERY_HISTORY_INVALID_SOURCE' using errcode='42501';\n  end if;\n  if tg_op = 'UPDATE' and v_old_id is not distinct from v_new_id\n    and v_old_profile is not distinct from v_new_profile and v_old_path is not distinct from v_new_path then\n    return null;\n  end if;\n  if v_old_path is not null and v_old_path <> '' then\n    insert into public.gallery_media_reference_history(source_kind,source_id,profile_id,storage_path,event_kind)\n      values(v_kind,v_old_id,v_old_profile,v_old_path,'released');\n  end if;\n  if v_new_path is not null and v_new_path <> '' then\n    insert into public.gallery_media_reference_history(source_kind,source_id,profile_id,storage_path,event_kind)\n      values(v_kind,v_new_id,v_new_profile,v_new_path,'referenced');\n  end if;\n  return null;\nend;\n$function$\n",
+      "name": "dancer_photos_capture_media_reference",
+      "table": "dancer_photos"
+    },
+    {
+      "definition": "CREATE TRIGGER assign_dancer_profile_link BEFORE INSERT OR UPDATE OF stage_name, slug ON public.dancer_profiles FOR EACH ROW EXECUTE FUNCTION assign_dancer_profile_link()",
+      "function_definition": "CREATE OR REPLACE FUNCTION public.assign_dancer_profile_link()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO ''\nAS $function$\r\ndeclare\r\n  base_slug text;\r\n  candidate text;\r\n  suffix integer := 1;\r\nbegin\r\n  -- Serialize assignments, including reservations of old links.\r\n  perform pg_catalog.pg_advisory_xact_lock(7682451001::bigint);\r\n  if new.slug ~ '^dancer(-[0-9]+|-[0-9a-f]{8}(-[0-9]+)?|-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})?$'\r\n    and (tg_op = 'INSERT' or new.slug = old.slug) then\r\n    base_slug := trim(both '-' from left(public.slugify(new.stage_name), 70));\r\n    if base_slug <> '' and base_slug <> 'dancer' then\r\n      candidate := base_slug;\r\n      while exists (select 1 from public.dancer_profiles where slug = candidate and id <> new.id)\r\n         or exists (select 1 from public.dancer_profile_slug_aliases where slug = candidate and dancer_id <> new.id) loop\r\n        suffix := suffix + 1;\r\n        candidate := base_slug || '-' || suffix::text;\r\n      end loop;\r\n      new.slug := candidate;\r\n    end if;\r\n  end if;\r\n\r\n  if exists (select 1 from public.dancer_profile_slug_aliases where slug = new.slug and dancer_id <> new.id) then\r\n    raise exception 'Profile link is already assigned' using errcode = '23505';\r\n  end if;\r\n  if tg_op = 'UPDATE' and old.slug is distinct from new.slug then\r\n    insert into public.dancer_profile_slug_aliases(slug, dancer_id)\r\n      values (old.slug, new.id) on conflict (slug) do nothing;\r\n  end if;\r\n  return new;\r\nend;\r\n$function$\n",
+      "name": "assign_dancer_profile_link",
+      "table": "dancer_profiles"
+    },
+    {
+      "definition": "CREATE TRIGGER dancer_profiles_capture_avatar_reference AFTER INSERT OR DELETE OR UPDATE OF id, avatar_storage_path ON public.dancer_profiles FOR EACH ROW EXECUTE FUNCTION capture_gallery_media_reference_history()",
+      "function_definition": "CREATE OR REPLACE FUNCTION public.capture_gallery_media_reference_history()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO ''\nAS $function$\ndeclare\n  v_kind text;\n  v_old_id uuid;\n  v_new_id uuid;\n  v_old_profile uuid;\n  v_new_profile uuid;\n  v_old_path text;\n  v_new_path text;\nbegin\n  -- Restrict this privileged writer to its two fixed source relations.\n  if tg_level <> 'ROW' or tg_when <> 'AFTER' or tg_op not in ('INSERT','UPDATE','DELETE') then\n    raise exception 'GALLERY_HISTORY_INVALID_TRIGGER' using errcode='42501';\n  end if;\n  if tg_relid = 'public.dancer_photos'::regclass then\n    v_kind := 'photo';\n    if tg_op <> 'INSERT' then\n      v_old_id := old.id; v_old_profile := old.dancer_id; v_old_path := old.storage_path;\n    end if;\n    if tg_op <> 'DELETE' then\n      v_new_id := new.id; v_new_profile := new.dancer_id; v_new_path := new.storage_path;\n    end if;\n  elsif tg_relid = 'public.dancer_profiles'::regclass then\n    v_kind := 'avatar';\n    if tg_op <> 'INSERT' then\n      v_old_id := old.id; v_old_profile := old.id; v_old_path := old.avatar_storage_path;\n    end if;\n    if tg_op <> 'DELETE' then\n      v_new_id := new.id; v_new_profile := new.id; v_new_path := new.avatar_storage_path;\n    end if;\n  else\n    raise exception 'GALLERY_HISTORY_INVALID_SOURCE' using errcode='42501';\n  end if;\n  if tg_op = 'UPDATE' and v_old_id is not distinct from v_new_id\n    and v_old_profile is not distinct from v_new_profile and v_old_path is not distinct from v_new_path then\n    return null;\n  end if;\n  if v_old_path is not null and v_old_path <> '' then\n    insert into public.gallery_media_reference_history(source_kind,source_id,profile_id,storage_path,event_kind)\n      values(v_kind,v_old_id,v_old_profile,v_old_path,'released');\n  end if;\n  if v_new_path is not null and v_new_path <> '' then\n    insert into public.gallery_media_reference_history(source_kind,source_id,profile_id,storage_path,event_kind)\n      values(v_kind,v_new_id,v_new_profile,v_new_path,'referenced');\n  end if;\n  return null;\nend;\n$function$\n",
+      "name": "dancer_profiles_capture_avatar_reference",
+      "table": "dancer_profiles"
+    },
+    {
+      "definition": "CREATE TRIGGER notify_dancer_profile_live_after_activation AFTER UPDATE OF status, verification_status, is_public ON public.dancer_profiles FOR EACH ROW EXECUTE FUNCTION notify_dancer_profile_live()",
+      "function_definition": "CREATE OR REPLACE FUNCTION public.notify_dancer_profile_live()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\ndeclare\n  v_venue_name text;\nbegin\n  if new.status = 'approved'\n    and new.verification_status = 'approved'\n    and new.is_public = true\n    and new.venue_approved_at is not null\n    and (\n      old.status is distinct from new.status\n      or old.verification_status is distinct from new.verification_status\n      or old.is_public is distinct from new.is_public\n    )\n  then\n    select venue.name\n    into v_venue_name\n    from public.venues venue\n    where venue.id = new.venue_approved_venue_id;\n\n    insert into public.notifications (\n      recipient_id,\n      notification_type,\n      channel,\n      title,\n      body,\n      payload,\n      sent_at\n    ) values (\n      new.user_id,\n      'venue_affiliation_status',\n      'in_app',\n      'Your profile is live',\n      case\n        when v_venue_name is not null then 'Approved through ' || v_venue_name || '. Customers can now discover your profile on MyDancr.'\n        else 'Your dressing-room tap was approved. Customers can now discover your profile on MyDancr.'\n      end,\n      jsonb_build_object(\n        'kind', 'dancer_profile_live',\n        'dancerId', new.id,\n        'dancerSlug', new.slug,\n        'venueId', new.venue_approved_venue_id,\n        'venueName', v_venue_name\n      ),\n      coalesce(new.approved_at, now())\n    );\n  end if;\n\n  return new;\nend;\n$function$\n",
+      "name": "notify_dancer_profile_live_after_activation",
+      "table": "dancer_profiles"
+    }
+  ],
+  "historyFingerprint": "a7d1c2f8c56b50b97835f34db25e3b97"
+}
