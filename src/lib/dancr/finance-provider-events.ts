@@ -118,7 +118,7 @@ export async function syncDancerConnectAccount(client: DancrClient, account: Str
 
 export async function reverseDancerPayoutTransfer(
   client: DancrClient,
-  transfer: Pick<Stripe.Transfer, "id" | "amount" | "amount_reversed" | "created">,
+  transfer: Pick<Stripe.Transfer, "id" | "amount" | "amount_reversed" | "created"> & Partial<Pick<Stripe.Transfer, "metadata">>,
   message: string,
 ) {
   if (!Number.isSafeInteger(transfer.amount) || transfer.amount <= 0
@@ -128,12 +128,30 @@ export async function reverseDancerPayoutTransfer(
   }
   const transferId = transfer.id;
   const partial = transfer.amount_reversed < transfer.amount;
-  const { data: batch, error } = await (client as any)
+  const { data: matchedBatch, error } = await (client as any)
     .from("dancer_payout_batches")
     .select("id, status, provider_reference_id")
     .eq("provider_reference_id", transferId)
     .maybeSingle();
   if (error) throw error;
+  let batch = matchedBatch;
+  const internalPayoutId = transfer.metadata?.payout_batch_id;
+  if (!batch && typeof internalPayoutId === "string"
+    && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(internalPayoutId)) {
+    const { data: pending, error: pendingError } = await (client as any).from("dancer_payout_batches")
+      .select("id, status, provider_reference_id")
+      .eq("id", internalPayoutId).eq("payment_provider", "stripe").maybeSingle();
+    if (pendingError) throw pendingError;
+    if (pending?.provider_reference_id === transferId) {
+      // Dispatch or completion may have saved the reference after our first read.
+      batch = pending;
+    } else if (pending?.status === "processing"
+      && pending.provider_reference_id === `mydancr-payout-${pending.id}`) {
+      // A signed reversal can beat the dispatch acknowledgment. Keep it retryable
+      // without using metadata alone to release or complete reserved earnings.
+      throw new Error("Provider payout transfer reference is not yet confirmed.");
+    }
+  }
   if (!batch) return null;
   if (batch.provider_reference_id === transferId && (batch.status === "failed" || batch.status === "canceled")) {
     return { id: batch.id, status: batch.status };

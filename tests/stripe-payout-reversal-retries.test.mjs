@@ -21,7 +21,7 @@ before(async () => {
   pg = new PGlite();
   await pg.exec([
     'create role anon; create role authenticated; create role service_role bypassrls;',
-    'create table public.dancer_payout_batches(id uuid primary key, status text not null, provider_reference_id text unique, external_reference text, paid_at timestamptz, failed_at timestamptz, canceled_at timestamptz, failure_message text, updated_at timestamptz not null);',
+    "create table public.dancer_payout_batches(id uuid primary key, status text not null, payment_provider text not null default 'stripe', provider_reference_id text unique, external_reference text, paid_at timestamptz, failed_at timestamptz, canceled_at timestamptz, failure_message text, updated_at timestamptz not null);",
     "create table public.commission_events(id uuid primary key, payout_batch_id uuid, status text not null, paid_at timestamptz, payment_provider text, metadata jsonb not null default '{}', recovery_required boolean not null default false, review_flag text);",
     'create table public.financial_audit_events(actor_type text, action text, target_type text, target_id text, after_state jsonb, reason text, metadata jsonb);',
     'alter table public.dancer_payout_batches enable row level security;',
@@ -73,7 +73,7 @@ function harness({rpc, beforeRpc, completion, beforeCompletion, readErrorAt=0, b
   const calls=[], finished=[];
   let reads=0, sequence=0;
   const allowed = {
-    dancer_payout_batches:new Set(['id','status','provider_reference_id']),
+    dancer_payout_batches:new Set(['id','status','provider_reference_id','payment_provider']),
     commission_events:new Set(['payout_batch_id','status','recovery_required','review_flag']),
     financial_audit_events:new Set(['actor_type','action','target_type','target_id','reason','metadata']),
   };
@@ -199,6 +199,104 @@ test('unknown reference is a no-op even when a released payout exists',async()=>
   assert.deepEqual(await state(),prior);
   assert.equal(h.calls.filter(c=>c.kind==='release').length,0);
 });
+
+async function pendingReference() {
+  await pg.query('update public.dancer_payout_batches set provider_reference_id=$1 where id=$2',['mydancr-payout-'+id,id]);
+}
+
+for (const amountReversed of [250,1000]) {
+  test('early '+amountReversed+' reversal retries until the dispatch reference is saved',async()=>{
+    await pendingReference();
+    const prior=await state(),h=harness();
+    const transfer={amount_reversed:amountReversed,metadata:{payout_batch_id:id}};
+    await failed(await h.deliver(transferId,transfer),h);
+    assert.deepEqual(await state(),prior,'An early callback must retain all reservations and financial history');
+    assert.ok(h.calls.every(c=>c.kind==='read'),'Metadata alone never authorizes a financial write');
+    await pg.query('update public.dancer_payout_batches set provider_reference_id=$1 where id=$2',[transferId,id]);
+    assert.equal((await h.deliver(transferId,transfer)).status,200);
+    assert.deepEqual(h.finished,['failed','processed']);
+    const s=await state();
+    assert.equal(s.payouts[0].status,amountReversed===1000?'failed':'paid');
+    assert.equal(s.earnings[0].status,amountReversed===1000?'available':'paid');
+    assert.equal(s.earnings[0].recovery_required,amountReversed!==1000);
+    assert.deepEqual(s.payouts[1],prior.payouts[1]);
+    assert.deepEqual(s.earnings[1],prior.earnings[1]);
+  });
+
+  test('reference saved between the two reads retains '+amountReversed+' reversal handling',async()=>{
+    await pendingReference();
+    const h=harness({beforeRead:async count=>{
+      if(count===2) await pg.query('update public.dancer_payout_batches set provider_reference_id=$1 where id=$2',[transferId,id]);
+    }});
+    assert.equal((await h.deliver(transferId,{amount_reversed:amountReversed,metadata:{payout_batch_id:id}})).status,200);
+    const s=await state();
+    assert.equal(s.payouts[0].status,amountReversed===1000?'failed':'paid');
+    assert.equal(s.earnings[0].status,amountReversed===1000?'available':'paid');
+    assert.equal(s.earnings[0].recovery_required,amountReversed!==1000);
+    assert.deepEqual(h.finished,['processed']);
+  });
+}
+
+test('completion between reference lookups preserves paid manual recovery',async()=>{
+  await pendingReference();
+  const h=harness({beforeRead:async count=>{if(count===2) await complete();}});
+  assert.equal((await h.deliver(transferId,{metadata:{payout_batch_id:id}})).status,200);
+  const s=await state();
+  assert.equal(s.payouts[0].status,'paid');
+  assert.equal(s.earnings[0].status,'paid');
+  assert.equal(s.earnings[0].recovery_required,true);
+  assert.equal(h.calls.filter(c=>c.kind==='release').length,0);
+});
+
+test('uncertain pending-reference lookup fails safely without acknowledging the reversal',async()=>{
+  await pendingReference();
+  const prior=await state(),h=harness({readErrorAt:2});
+  await failed(await h.deliver(transferId,{metadata:{payout_batch_id:id}}),h);
+  assert.deepEqual(await state(),prior);
+});
+
+for (const status of ['requested','paid','failed','canceled']) {
+  test('metadata does not claim a '+status+' payout with an unmatched reference',async()=>{
+    await pendingReference();
+    await pg.query('update public.dancer_payout_batches set status=$1 where id=$2',[status,id]);
+    const prior=await state(),h=harness();
+    assert.equal((await h.deliver(transferId,{metadata:{payout_batch_id:id}})).status,200);
+    assert.deepEqual(await state(),prior);
+    assert.ok(h.calls.every(c=>c.kind==='read'));
+  });
+}
+
+for (const provider of ['adyen','other']) {
+  test('metadata cannot attach a Stripe reversal to a '+provider+' payout',async()=>{
+    await pendingReference();
+    await pg.query('update public.dancer_payout_batches set payment_provider=$1 where id=$2',[provider,id]);
+    const prior=await state(),h=harness();
+    assert.equal((await h.deliver(transferId,{metadata:{payout_batch_id:id}})).status,200);
+    assert.deepEqual(await state(),prior);
+    assert.ok(h.calls.every(c=>c.kind==='read'));
+  });
+}
+
+for (const reference of [null,'tr_different','mydancr-payout-'+otherId]) {
+  test('metadata alone cannot replace unmatched reference '+String(reference),async()=>{
+    await pg.query('update public.dancer_payout_batches set provider_reference_id=$1 where id=$2',[reference,id]);
+    const prior=await state(),h=harness();
+    assert.equal((await h.deliver(transferId,{metadata:{payout_batch_id:id}})).status,200);
+    assert.deepEqual(await state(),prior);
+    assert.ok(h.calls.every(c=>c.kind==='read'));
+  });
+}
+
+for (const batchId of [undefined,'','not-a-uuid','id.eq.'+id,id+',id.eq.'+otherId,{},'00000000-0000-4000-8000-000000000099']) {
+  test('unrelated or malformed metadata remains a no-op: '+JSON.stringify(batchId),async()=>{
+    await pendingReference();
+    const prior=await state(),h=harness();
+    assert.equal((await h.deliver(transferId,{metadata:{payout_batch_id:batchId}})).status,200);
+    assert.deepEqual(await state(),prior);
+    assert.ok(h.calls.every(c=>c.kind==='read'));
+    if(batchId!=='00000000-0000-4000-8000-000000000099') assert.equal(h.calls.length,1,'Invalid identifiers never reach the fallback query');
+  });
+}
 test('paid reversal keeps paid earnings and flags manual recovery without an automatic debit',async()=>{
   await complete();
   const h=harness();
