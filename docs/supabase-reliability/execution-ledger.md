@@ -15,7 +15,7 @@ The user subsequently deferred disposable test-project setup and explicitly requ
 | 5 | RLS and cross-role access | Released and verified; hosted cross-account tests deferred | `5c63d1ef639c23344ced04178a68c8354231a599` pushed; exact Vercel success; health/readiness passed at 01:25 UTC on September 10; 3,667 tests, lint, build and TypeScript passed. Current policies and column permissions covered without weakening RLS. |
 | 6 | Authentication and password recovery | Released and verified; hosted account/mail tests deferred | `ca0e2c7d45582a04d55657a3ec30fcf82a98e0e7` pushed; exact Vercel success; health, served reset-client and readiness checks passed at 01:38 UTC on September 10; 3,671 tests, lint, build and TypeScript passed. |
 | 7 | User/profile provisioning | Released and verified; hosted signup tests deferred | `043d8d83e5cb878cf58f18bc913fb7065f6393fd` pushed; exact Vercel success; guarded SQL applied with data/access preserved; health/readiness passed at 02:06 UTC on September 10. 3,792 tests, lint, build and TypeScript passed. |
-| 8 | Query/error handling | TV reads, invoices and optional-auth corrections released; upload preservation in validation | See step-08-query-error-review.md and its focused follow-ups. Secondary writes and aggregate error findings remain open. |
+| 8 | Query/error handling | TV, invoices, optional-auth and upload corrections released; moderation notifications in validation | See step-08-query-error-review.md and its focused follow-ups. Multi-write workflows and aggregate error findings remain open. |
 | 9 | Transactions/atomicity | Pending | |
 | 10 | Indexes/query performance | Pending | |
 | 11 | Storage security/reliability | Pending | |
@@ -230,3 +230,11 @@ Optional-auth handling was pushed as `794a1850a2ee49f7109b95e6a0d759ed27c01762`,
 The inspected plan is `step-08-video-upload-acknowledgments.md`. Preserve pending upload records after uncertain signing, check exact insert/path/token acknowledgments, and reject unconfirmed resume listings. Legacy venue-claim write paths were confirmed retired. Full validation and exact deployment verification remain required; other atomicity/storage/lifecycle findings remain open.
 
 Video upload validation on `794a1850` passed all 4,012 tests, full lint, production build, standalone TypeScript and thirty live readiness checks. All 41 focused cases passed, including twenty-one new runtime cases. Postbuild skipped layout-review population. No production upload, deletion or schema change was used for testing. Exact push and deployment/health verification remain required.
+
+Video upload preservation was pushed as `06c37da94f04ab0123a09bbccbb6eeba623a5857`, with local HEAD and both remote main references matching. Its [exact Vercel deployment](https://vercel.com/ai-movie-jobs/shiftstage/2RVPCs179LX2EKwjsngd4tEwJoQm) succeeded. Public TV, protected owner/admin video denial, Following guest/invalid-session behavior, both health routes and all thirty readiness checks passed at 03:21:03–07 UTC on 2026-09-10. No production media write was used for testing.
+
+## Step 8 optional moderation notification failures
+
+The inspected plan is `step-08-moderation-notification-errors.md`. Check returned notification errors and record sanitized diagnostics while preserving already-completed rejection decisions. No retry or new external delivery is added. Complete validation and exact deployment verification remain required.
+
+Moderation-notification validation on `06c37da9` passed all 4,022 tests, full lint, production build, standalone TypeScript and thirty live readiness checks. All 23 focused cases passed, including ten new runtime cases. Postbuild skipped layout-review population. No production moderation, notification, media or schema write was used for testing. Exact push and deployment/health verification remain required.

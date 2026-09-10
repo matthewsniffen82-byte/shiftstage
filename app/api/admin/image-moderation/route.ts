@@ -244,13 +244,18 @@ async function profileForModerationRecord(admin: any, record: any) {
 }
 
 async function createNeutralNotification(admin: any, userId: string) {
-  await admin.from("notifications").insert({
-    recipient_id: userId,
-    notification_type: "approval_status",
-    channel: "in_app",
-    title: "Photo not approved",
-    body: "This photo does not meet Dancr's photo guidelines. Please upload a different image.",
-    payload: { status: "rejected", targetType: "photo", setupStep: "photos" },
-    sent_at: new Date().toISOString(),
-  }).catch(() => null);
+  try {
+    const { error } = await admin.from("notifications").insert({
+      recipient_id: userId,
+      notification_type: "approval_status",
+      channel: "in_app",
+      title: "Photo not approved",
+      body: "This photo does not meet Dancr's photo guidelines. Please upload a different image.",
+      payload: { status: "rejected", targetType: "photo", setupStep: "photos" },
+      sent_at: new Date().toISOString(),
+    });
+    if (error) throw error;
+  } catch (error) {
+    console.warn("ADMIN_IMAGE_MODERATION_NOTIFICATION_NOT_SAVED", safeErrorMetadata(error));
+  }
 }

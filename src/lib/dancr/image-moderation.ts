@@ -512,23 +512,27 @@ async function createAutoRejectedPhotoNotification(
   reasonCodes: string[],
 ) {
   const now = new Date().toISOString();
-  await (client as any)
-    .from("notifications")
-    .insert({
-      recipient_id: userId,
-      notification_type: "approval_status",
-      channel: "in_app",
-      title: "Photo not approved",
-      body: photoRejectionMessage(reasonCodes),
-      payload: {
-        status: "rejected",
-        targetType: "photo",
-        moderationRecordId,
-        setupStep: "photos",
-      },
-      sent_at: now,
-    })
-    .catch(() => null);
+  try {
+    const { error } = await (client as any)
+      .from("notifications")
+      .insert({
+        recipient_id: userId,
+        notification_type: "approval_status",
+        channel: "in_app",
+        title: "Photo not approved",
+        body: photoRejectionMessage(reasonCodes),
+        payload: {
+          status: "rejected",
+          targetType: "photo",
+          moderationRecordId,
+          setupStep: "photos",
+        },
+        sent_at: now,
+      });
+    if (error) throw error;
+  } catch (error) {
+    console.warn("IMAGE_MODERATION_NOTIFICATION_NOT_SAVED", safeErrorMetadata(error));
+  }
 }
 
 async function approveModeratedUpload(

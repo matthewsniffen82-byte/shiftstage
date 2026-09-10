@@ -1,0 +1,13 @@
+# Step 8: acknowledge optional moderation notification failures
+
+The video-upload correction was pushed as `06c37da94f04ab0123a09bbccbb6eeba623a5857`; its [exact Vercel deployment](https://vercel.com/ai-movie-jobs/shiftstage/2RVPCs179LX2EKwjsngd4tEwJoQm) succeeded. Public TV, protected owner/admin video denial, Following guest/invalid-session behavior, both health routes and all thirty readiness checks passed at 03:21:03–07 UTC on 2026-09-10. No production media write was used for testing.
+
+Automatic and administrator photo rejection helpers insert an optional in-app notification with `.catch(() => null)`. Supabase normally returns a database failure in `error` without rejecting the promise, so these failures disappear. Thrown failures disappear too. The moderation decision has already been saved and must not be retried or reversed merely because its notification failed.
+
+Keep the existing insert, recipient, content and success contract. Check its returned error and catch thrown failures, logging a fixed operation label plus sanitized metadata only. Do not log notification bodies, recipient identities or database messages; do not add automatic retries or external delivery. The optional notification must not turn a completed moderation decision into failure. Test the actual notification functions and existing moderation lifecycle, then complete the full validation, commit/push and exact deployment/health gates.
+
+Counter-notice notification and delivery bookkeeping remain part of its separate multi-write workflow review. No schema, policy, provider call or production moderation decision is changed for testing.
+
+The two helpers now inspect the returned error and report thrown failures through the existing safe metadata formatter. Ten runtime tests execute the actual private notification functions from their source modules and verify one insert, preserved rejection content, no additional table mutation, no retry, quiet success and sanitized failure diagnostics. Eight failure-diagnostic cases fail against the previous source; all ten pass after the change. The focused set passes 23 cases including the existing moderation lifecycle and administrator-session checks. These tests do not invoke image classification, a live notification insert or an external message provider.
+
+Validation on `06c37da9` passed all 4,022 tests without failures, skips or cancellations, full lint, production build, standalone TypeScript and thirty live readiness checks. Postbuild skipped layout-review population. No production moderation, notification, media or schema write was used for testing. Exact push, Vercel success and post-deployment health remain required.
