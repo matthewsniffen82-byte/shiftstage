@@ -7,7 +7,7 @@ import { archivedOriginalStoragePath, DANCR_ORIGINAL_MEDIA_BUCKET } from "./medi
 
 const PHOTO_BUCKET = "dancer-photos";
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-const MASTER = /^[0-9a-f-]{36}\/[0-9a-f-]{36}\/[A-Za-z0-9][A-Za-z0-9._-]*\.(jpg|jpeg|png|webp)$/;
+const MASTER = /^[0-9a-f-]{36}\/[0-9a-f-]{36}\/(avatar\/)?[A-Za-z0-9][A-Za-z0-9._-]*\.(jpg|jpeg|png|webp)$/;
 const RETAINED_REASONS = new Set(["unrecognized_path", "no_reference_history", "referenced"]);
 
 function receiptError() {

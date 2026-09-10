@@ -530,3 +530,13 @@ The inspected plan is `step-11-gallery-retirement-callers.md`. Connect owner/adm
 All 76 new checks pass, including 56 native-backed retirement/transport cases and twenty actual owner/admin caller cases. All twenty caller cases fail against the previous implementation. Existing publication, primary-selection, avatar and admin contracts pass after replacing their direct-deletion expectations. Full validation and exact commit/push/deployment/health gates remain required.
 
 Full release validation passed all 5,633 tests, lint, production build, standalone TypeScript, migration guard and thirty readiness checks. Postbuild population was skipped. No production retirement, storage mutation or schema change was used for testing. Exact commit/push, preservation and Vercel/health verification remain required.
+
+Caller correction `9f6515ad1d6151007ed9c1b70e21fd0b789ccde3` was pushed with matching main references and successful [exact Vercel deployment](https://vercel.com/ai-movie-jobs/shiftstage/FdtE56NS6D3wrfnxTMi3Vy8AZSCu). Health and anonymous owner/admin media rejection passed at 13:38:17–22 UTC, followed by thirty readiness checks. Read-only fingerprints preserved all profiles, photos, moderation/history rows, zero markers, venues, 452 storage objects, buckets, policies, functions and 112 ledger entries.
+
+## Step 11 canonical avatar retirement paths
+
+The inspected plan is `step-11-avatar-retirement-paths.md`. Accept only the actual optional `avatar/` directory in the claim RPC and caller validator, preserving all retirement safeguards and source data. All sixteen current avatar paths match that directory. The current deployed function retains them; no cleanup bypass is permitted.
+
+All 32 native/gateway cases pass, including reproduction of prior retention, existing receipt preservation, master/variant cross-source protection, late publisher rejection, malformed/unproven path retention and role/isolation restrictions. Guarded deployment rehearsals pass normal application, repeat rejection, dependency/permission/trigger drift rejection and source/marker/access rollback. Full validation and exact committed-source rollout gates remain required.
+
+Full validation passed all 5,665 tests, lint, production build, standalone TypeScript, migration guard and thirty readiness checks. No production mutation was used as a test. Exact commit/push, committed migration application and privacy/preservation/deployment/health verification remain required.
