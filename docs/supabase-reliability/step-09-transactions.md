@@ -2,7 +2,9 @@
 
 Step 8's final direct acknowledgment correction was pushed as `819aef7b117d7007567643e3f3f82b5811b4fdd9`. Its [exact Vercel deployment](https://vercel.com/ai-movie-jobs/shiftstage/5aDLvLiHZ3o7WiJereqaeXyieQaE) succeeded, and both health routes, authorized-route denials and thirty readiness checks passed at 04:03:27–29 UTC on 2026-09-10. The initial admin probe used unsupported POST and correctly returned 405; using the implemented PATCH method confirmed 401 before mutations. No production email or case action occurred.
 
-## Current workflow map
+## Initial workflow map
+
+This is the initial 04:05 UTC inspection. The completed corrections, retained native functions and explicit remaining boundaries are recorded in [the transaction review](step-09-transaction-review.md) and the execution ledger.
 
 | Workflow | Inspected boundary and remaining concern |
 | --- | --- |
