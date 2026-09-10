@@ -24,7 +24,8 @@ before(async()=>{
  alter table public.payment_provider_webhook_events enable row level security;
  grant select on public.payment_provider_webhook_events to anon,authenticated;
  grant all on public.payment_provider_webhook_events to service_role;`);
- await pg.exec(read('./fixtures/payment-webhook-claim.sql'));
+ // Git may check SQL out with CRLF on Windows; compare the documented LF definition.
+ await pg.exec(read('./fixtures/payment-webhook-claim.sql').replace(/\r\n/g,'\n'));
  await pg.exec(`revoke all on function public.claim_payment_provider_webhook(text,text,text,text) from public,anon,authenticated;
  grant execute on function public.claim_payment_provider_webhook(text,text,text,text) to service_role;`);
 });

@@ -551,6 +551,10 @@
     {
       "file": "20260910000149_prevent_duplicate_pending_content_reviews.sql",
       "sha256": "45cd4538469e80f9f9332eb575c861630327c021bfbacb0e279e1e7a2e946841"
+    },
+    {
+      "file": "20260910004200_protect_active_photo_positions.sql",
+      "sha256": "7b0db9cf5a113386bf3b94b83c796dea77de188a14e830d9937d3d7c8cc3bb89"
     }
   ]
 }

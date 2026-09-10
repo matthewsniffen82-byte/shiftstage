@@ -16,49 +16,68 @@ export const ids = {
   disabled: "10000000-0000-4000-8000-000000000004",
 };
 
-export async function createPolicyDatabase({ applyCurrentMigration = true } = {}) {
+export async function createPolicyDatabase({ applyCurrentMigration = true, catalogSnapshot = null, columnGrantSnapshot = null, helperDefinitions = null } = {}) {
+  const fixtureCatalog = catalogSnapshot || catalog;
+  const fixtureTables = fixtureCatalog.relations.filter(r => r.schema_name === "public" && r.kind === "r");
   const db = new PGlite();
   const statements = [
     "create role anon nologin; create role authenticated nologin; create role service_role nologin bypassrls; create schema auth;",
     "grant usage on schema public, auth to anon, authenticated, service_role;",
     "create function auth.uid() returns uuid language sql stable as $$ select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid $$;",
   ];
-  for (const e of catalog.enums.filter(e => e.schema_name === "public")) {
+  for (const e of fixtureCatalog.enums.filter(e => e.schema_name === "public")) {
     statements.push(`create type public.${quote(e.name)} as enum (${e.labels.map(literal).join(",")});`);
   }
-  for (const table of tables) {
-    const columns = catalog.columns.filter(c => c.table_schema === "public" && c.table_name === table.name);
+  for (const table of fixtureTables) {
+    const columns = fixtureCatalog.columns.filter(c => c.table_schema === "public" && c.table_name === table.name);
     statements.push(`create table public.${quote(table.name)} (${columns.map(c => `${quote(c.column_name)} ${c.udt_name === "_text" ? "text[]" : `${quote(c.udt_schema)}.${quote(c.udt_name)}`} ${preferenceTables.includes(table.name) ? `${c.column_default ? `default ${c.column_default}` : ""} ${c.is_nullable === "NO" ? "not null" : ""}` : ""}`).join(",")});`);
     if (table.rls) statements.push(`alter table public.${quote(table.name)} enable row level security;`);
   }
   for (const table of ["app_users", "dancer_profiles", "shifts", "venues"]) {
     statements.push(`alter table public.${quote(table)} add primary key (id);`);
   }
-  for (const c of catalog.constraints.filter(c => c.schema_name === "public" && preferenceTables.includes(c.table_name))) {
+  for (const c of fixtureCatalog.constraints.filter(c => c.schema_name === "public" && preferenceTables.includes(c.table_name))) {
     statements.push(`alter table public.${quote(c.table_name)} add constraint ${quote(c.name)} ${c.definition};`);
   }
-  const schema = readFileSync(new URL("../../supabase/migrations/202606250001_initial_schema.sql", import.meta.url), "utf8");
-  for (const name of ["is_admin", "current_user_role"]) {
-    const definition = schema.match(new RegExp(`create or replace function public\\.${name}\\(\\)[\\s\\S]*?\\$\\$;`, "i"));
-    if (!definition) throw new Error(`Missing audited helper ${name}`);
-    statements.push(definition[0]);
+  if (helperDefinitions) {
+    for (const helper of helperDefinitions) {
+      if (!["is_admin", "current_user_role"].includes(helper.name)) throw new Error("Unexpected policy helper");
+      statements.push(helper.definition + ";");
+      statements.push(`revoke all on function public.${quote(helper.name)}() from public,anon,authenticated,service_role;`);
+      // Both live policy helpers are intentionally executable by these three roles.
+      statements.push(`grant execute on function public.${quote(helper.name)}() to anon,authenticated,service_role;`);
+    }
+  } else {
+    const schema = readFileSync(new URL("../../supabase/migrations/202606250001_initial_schema.sql", import.meta.url), "utf8");
+    for (const name of ["is_admin", "current_user_role"]) {
+      const definition = schema.match(new RegExp(`create or replace function public\\.${name}\\(\\)[\\s\\S]*?\\$\\$;`, "i"));
+      if (!definition) throw new Error(`Missing audited helper ${name}`);
+      statements.push(definition[0]);
+    }
   }
-  for (const p of catalog.policies.filter(p => p.schemaname === "public")) {
+  for (const p of fixtureCatalog.policies.filter(p => p.schemaname === "public")) {
     statements.push(`create policy ${quote(p.policyname)} on public.${quote(p.tablename)} as ${p.permissive} for ${p.cmd} to ${p.roles.map(quote).join(",")} ${p.qual ? `using (${p.qual})` : ""} ${p.with_check ? `with check (${p.with_check})` : ""};`);
   }
-  for (const table of tables) {
+  for (const table of fixtureTables) {
     for (const [role, grants] of Object.entries(table.grants)) {
       const commands = Object.entries(grants).filter(([, allowed]) => allowed).map(([command]) => command);
       if (commands.length) statements.push(`grant ${commands.join(",")} on public.${quote(table.name)} to ${quote(role)};`);
     }
   }
   // Exact column grants captured separately from pg_attribute on 2026-09-09.
-  const columnGrants = JSON.parse(readFileSync(new URL("../fixtures/rls-column-grants.json", import.meta.url), "utf8"));
-  for (const [table, columns] of Object.entries(columnGrants)) {
-    statements.push(`grant select (${columns.map(quote).join(",")}) on public.${quote(table)} to anon, authenticated;`);
+  if (columnGrantSnapshot) {
+    for (const grant of columnGrantSnapshot) {
+      if (grant.privilege !== "SELECT" || !["anon", "authenticated", "service_role"].includes(grant.role)) throw new Error("Unexpected column privilege in policy fixture");
+      statements.push(`grant select (${quote(grant.column)}) on public.${quote(grant.table)} to ${quote(grant.role)};`);
+    }
+  } else {
+    const columnGrants = JSON.parse(readFileSync(new URL("../fixtures/rls-column-grants.json", import.meta.url), "utf8"));
+    for (const [table, columns] of Object.entries(columnGrants)) {
+      statements.push(`grant select (${columns.map(quote).join(",")}) on public.${quote(table)} to anon, authenticated;`);
+    }
   }
-  for (const view of catalog.views.filter(v => v.schemaname === "public")) {
-    const r = catalog.relations.find(r => r.schema_name === "public" && r.name === view.viewname);
+  for (const view of fixtureCatalog.views.filter(v => v.schemaname === "public")) {
+    const r = fixtureCatalog.relations.find(r => r.schema_name === "public" && r.name === view.viewname);
     statements.push(`create view public.${quote(view.viewname)} ${r.options?.length ? `with (${r.options.join(",")})` : ""} as ${view.definition};`);
     for (const [role, grants] of Object.entries(r.grants)) {
       if (grants.select) statements.push(`grant select on public.${quote(view.viewname)} to ${quote(role)};`);
@@ -67,9 +86,9 @@ export async function createPolicyDatabase({ applyCurrentMigration = true } = {}
   await db.exec(statements.join("\n"));
   // One synthetic private record in every base table makes negative tests non-vacuous.
   const referenced = ["app_users", "dancer_profiles", "shifts", "venues"];
-  const seedOrder = [...tables.filter(t => referenced.includes(t.name)), ...tables.filter(t => !referenced.includes(t.name))];
+  const seedOrder = [...fixtureTables.filter(t => referenced.includes(t.name)), ...fixtureTables.filter(t => !referenced.includes(t.name))];
   for (const table of seedOrder) {
-    const columns = catalog.columns.filter(c => c.table_schema === "public" && c.table_name === table.name && (c.udt_name === "uuid" || c.udt_name === "bool"));
+    const columns = fixtureCatalog.columns.filter(c => c.table_schema === "public" && c.table_name === table.name && (c.udt_name === "uuid" || c.udt_name === "bool"));
     await db.exec(`insert into public.${quote(table.name)} (${columns.map(c => quote(c.column_name)).join(",")}) values (${columns.map(c => c.udt_name === "uuid" ? literal(ids.owner) : "false").join(",")});`);
   }
   await db.exec(`update app_users set role='customer', account_state='active' where id=${literal(ids.owner)};
