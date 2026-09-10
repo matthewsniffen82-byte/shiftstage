@@ -122,7 +122,12 @@ export async function sendClubInvoiceReminders(client: DancrClient, now = new Da
     if (existing) continue;
 
     if (daysFromDue < 0 && invoice.status !== "overdue") {
-      await (client as any).from("club_invoices").update({ status: "overdue", updated_at: now.toISOString() }).eq("id", invoice.id);
+      const { data: overdue, error: overdueError } = await (client as any).from("club_invoices")
+        .update({ status: "overdue", updated_at: now.toISOString() })
+        .eq("id", invoice.id).in("status", ["open", "overdue"])
+        .select("id").maybeSingle();
+      if (overdueError) throw overdueError;
+      if (overdue?.id !== invoice.id) throw new Error("Invoice changed before its reminder could be sent.");
     }
 
     const stripeInvoice = await getStripe().invoices.retrieve(invoice.stripe_invoice_id);
@@ -135,11 +140,16 @@ export async function sendClubInvoiceReminders(client: DancrClient, now = new Da
       audit: { due_at: invoice.due_at, days_from_due: daysFromDue },
     });
     if (reminderError) throw reminderError;
-    await (client as any).from("club_invoices").update({
+    const { data: summary, error: summaryError } = await (client as any).from("club_invoices").update({
       last_reminder_at: now.toISOString(),
       reminder_count: Number(invoice.reminder_count || 0) + 1,
       updated_at: now.toISOString(),
-    }).eq("id", invoice.id);
+    }).eq("id", invoice.id).select("id").maybeSingle();
+    if (summaryError || summary?.id !== invoice.id) {
+      // Delivery is already recorded. Preserve that ledger so an explicit retry
+      // cannot resend this reminder merely because the summary was unavailable.
+      throw new Error("Reminder was sent, but its invoice summary could not be confirmed. Review the invoice before retrying.", { cause: summaryError });
+    }
     sent += 1;
   }
   return sent;

@@ -1,0 +1,306 @@
+{
+  "capturedAt": "2026-09-10T02:21:24.343289+00:00",
+  "columns": [
+    {
+      "default": "gen_random_uuid()",
+      "name": "id",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "club_invoice_reminders",
+      "type": "uuid"
+    },
+    {
+      "default": null,
+      "name": "invoice_id",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "club_invoice_reminders",
+      "type": "uuid"
+    },
+    {
+      "default": null,
+      "name": "reminder_key",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "club_invoice_reminders",
+      "type": "text"
+    },
+    {
+      "default": "'stripe'::text",
+      "name": "delivery_provider",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "club_invoice_reminders",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "provider_reference",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "club_invoice_reminders",
+      "type": "text"
+    },
+    {
+      "default": "now()",
+      "name": "sent_at",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "club_invoice_reminders",
+      "type": "timestamptz"
+    },
+    {
+      "default": "'{}'::jsonb",
+      "name": "audit",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "club_invoice_reminders",
+      "type": "jsonb"
+    },
+    {
+      "default": "gen_random_uuid()",
+      "name": "id",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "club_invoices",
+      "type": "uuid"
+    },
+    {
+      "default": null,
+      "name": "venue_id",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "club_invoices",
+      "type": "uuid"
+    },
+    {
+      "default": null,
+      "name": "period_start",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "club_invoices",
+      "type": "date"
+    },
+    {
+      "default": null,
+      "name": "period_end",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "club_invoices",
+      "type": "date"
+    },
+    {
+      "default": "1",
+      "name": "sequence",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "club_invoices",
+      "type": "int4"
+    },
+    {
+      "default": "'draft'::text",
+      "name": "status",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "club_invoices",
+      "type": "text"
+    },
+    {
+      "default": "'usd'::text",
+      "name": "currency",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "club_invoices",
+      "type": "text"
+    },
+    {
+      "default": "0",
+      "name": "amount_due_cents",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "club_invoices",
+      "type": "int4"
+    },
+    {
+      "default": "0",
+      "name": "amount_paid_cents",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "club_invoices",
+      "type": "int4"
+    },
+    {
+      "default": null,
+      "name": "due_at",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "club_invoices",
+      "type": "timestamptz"
+    },
+    {
+      "default": null,
+      "name": "stripe_customer_id",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "club_invoices",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "stripe_invoice_id",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "club_invoices",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "hosted_invoice_url",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "club_invoices",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "invoice_pdf_url",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "club_invoices",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "external_payment_reference",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "club_invoices",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "paid_at",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "club_invoices",
+      "type": "timestamptz"
+    },
+    {
+      "default": null,
+      "name": "last_reminder_at",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "club_invoices",
+      "type": "timestamptz"
+    },
+    {
+      "default": "0",
+      "name": "reminder_count",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "club_invoices",
+      "type": "int4"
+    },
+    {
+      "default": null,
+      "name": "last_error",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "club_invoices",
+      "type": "text"
+    },
+    {
+      "default": "now()",
+      "name": "created_at",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "club_invoices",
+      "type": "timestamptz"
+    },
+    {
+      "default": "now()",
+      "name": "updated_at",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "club_invoices",
+      "type": "timestamptz"
+    }
+  ],
+  "constraints": [
+    {
+      "definition": "FOREIGN KEY (invoice_id) REFERENCES club_invoices(id) ON DELETE CASCADE",
+      "name": "club_invoice_reminders_invoice_id_fkey",
+      "table": "club_invoice_reminders"
+    },
+    {
+      "definition": "UNIQUE (invoice_id, reminder_key)",
+      "name": "club_invoice_reminders_invoice_id_reminder_key_key",
+      "table": "club_invoice_reminders"
+    },
+    {
+      "definition": "PRIMARY KEY (id)",
+      "name": "club_invoice_reminders_pkey",
+      "table": "club_invoice_reminders"
+    },
+    {
+      "definition": "CHECK ((amount_due_cents >= 0))",
+      "name": "club_invoices_amount_due_cents_check",
+      "table": "club_invoices"
+    },
+    {
+      "definition": "CHECK ((amount_paid_cents >= 0))",
+      "name": "club_invoices_amount_paid_cents_check",
+      "table": "club_invoices"
+    },
+    {
+      "definition": "CHECK ((period_end >= period_start))",
+      "name": "club_invoices_check",
+      "table": "club_invoices"
+    },
+    {
+      "definition": "CHECK ((amount_paid_cents <= amount_due_cents))",
+      "name": "club_invoices_check1",
+      "table": "club_invoices"
+    },
+    {
+      "definition": "CHECK ((currency ~ '^[a-z]{3}$'::text))",
+      "name": "club_invoices_currency_check",
+      "table": "club_invoices"
+    },
+    {
+      "definition": "PRIMARY KEY (id)",
+      "name": "club_invoices_pkey",
+      "table": "club_invoices"
+    },
+    {
+      "definition": "CHECK ((reminder_count >= 0))",
+      "name": "club_invoices_reminder_count_check",
+      "table": "club_invoices"
+    },
+    {
+      "definition": "CHECK ((sequence > 0))",
+      "name": "club_invoices_sequence_check",
+      "table": "club_invoices"
+    },
+    {
+      "definition": "CHECK ((status = ANY (ARRAY['draft'::text, 'open'::text, 'paid'::text, 'overdue'::text, 'void'::text, 'uncollectible'::text, 'failed'::text])))",
+      "name": "club_invoices_status_check",
+      "table": "club_invoices"
+    },
+    {
+      "definition": "UNIQUE (stripe_invoice_id)",
+      "name": "club_invoices_stripe_invoice_id_key",
+      "table": "club_invoices"
+    },
+    {
+      "definition": "FOREIGN KEY (venue_id) REFERENCES venues(id) ON DELETE CASCADE",
+      "name": "club_invoices_venue_id_fkey",
+      "table": "club_invoices"
+    },
+    {
+      "definition": "UNIQUE (venue_id, period_start, period_end, sequence)",
+      "name": "club_invoices_venue_id_period_start_period_end_sequence_key",
+      "table": "club_invoices"
+    }
+  ]
+}

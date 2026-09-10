@@ -1,0 +1,27 @@
+# Step 8: invoice reminder write acknowledgments
+
+## Prerequisite and inspection
+
+The prior TV correction was pushed as `46017b79e4e625a359b87afcd3b06982149f6e48`. Its [exact Vercel deployment](https://vercel.com/ai-movie-jobs/shiftstage/B1GKxx59B4UxuJ6fdCkoaS6bFS8t) succeeded. Production verification at 02:19:36–40 UTC on 2026-09-10 confirmed healthy application/database endpoints, anonymous denial at both managed-video routes, the intentional visitor Following state, 401 for synthetic invalid credentials, a working public feed, and all thirty readiness checks. No real credentials or media writes were used. Local and remote main references matched.
+
+`sendClubInvoiceReminders` checks the initial invoice query, existing reminder lookup and reminder-ledger insert. It ignores the result of marking an invoice overdue before contacting the provider and ignores the summary update after a reminder is sent. A rejected update can therefore still produce a success count. The initial invoice snapshot can also be stale: an unrestricted overdue update can overwrite a paid/void status committed after that read.
+
+Read-only production metadata at 02:21:24 UTC found one invoice (failed), zero reminder rows, one finance account and one account with automatic billing enabled. Twenty-eight column definitions and fifteen constraints were captured without invoice identities, amounts, addresses or provider references. The existing reminder uniqueness constraint is `(invoice_id, reminder_key)`; no schema change or data repair is required for this correction.
+
+## Controlled implementation plan
+
+For the overdue transition, constrain the update to open/overdue states, request the updated ID and require an acknowledged row before any provider call. Throw on query errors or zero affected rows; preserve concurrent paid/void/uncollectible states. For the summary update, also request and check the updated ID. If it fails after the provider sent the reminder and the ledger insert succeeded, retain that ledger and report explicit partial completion instead of incrementing the successful count. The existing ledger prevents a normal explicit retry from resending that reminder. Do not add automatic write/email retries or delete delivery history.
+
+Use the real function with a native PostgreSQL fixture of the captured columns/constraints and a synthetic provider. Cover returned database errors, zero-row updates, concurrent terminal status, uncertain committed summary writes, provider/ledger failures, genuine duplicate skips and successful reminders. Run all release checks, commit/push, verify exact Vercel success and safe production health before the next controlled change. Never run invoice automation against production or send an actual reminder for testing.
+
+## Remaining boundaries
+
+Invoice creation/publishing has separate unchecked writes and a retry boundary between storing its provider ID and attaching the invoice item; it remains open in Step 8. Concurrent email dispatch and atomic reminder-ledger/summary bookkeeping need the Step 9 transaction review. This patch does not claim an atomic transaction across Supabase and the external provider. Stripe documents that [idempotency keys can expire after at least 24 hours](https://docs.stripe.com/api/idempotent_requests); a later publishing recovery fix must check persisted provider state rather than assuming a key lasts forever.
+
+## Implemented behavior and regression evidence
+
+The overdue update now requires a matching returned invoice ID and permits only open/overdue source states. The summary update requires the same ID acknowledgment; errors or missing rows report that delivery occurred but its summary could not be confirmed. No delivery history is removed or automatically retried. Twenty native PostgreSQL cases execute the actual reminder function through a query adapter with the captured 28 columns and fifteen constraints. Nine assertions failed before the correction; all twenty pass afterward, alongside fifteen existing finance boundary checks. Tests cover six read/overdue error cases, a zero-row transition, three concurrent terminal states, provider/read/ledger failures, three uncertain summary cases with explicit retry, confirmed delivery, due-soon delivery, non-email/future skips and the existing duplicate-reminder constraint. The provider is synthetic; no external billing request or email is sent.
+
+Final reminder validation on `c46443fb` passed all 3,855 tests with no failures, skips or cancellations, full lint, production build, standalone TypeScript and all thirty live readiness checks. The concurrent completed-payout webhook retry fix was preserved. The complete suite used three workers after the standard generators; postbuild skipped layout-review population. All 35 focused cases passed. No schema migration, invoice automation, production data write, provider dispatch or email send is part of validation. Exact push, Vercel success and post-deployment health remain the release gates before another change.
+
+The existing administrator finance UI explicitly reports the automation result's error count; the new partial-delivery failure reaches that error list. The cron route still wraps aggregate errors in a top-level `ok: true` response, which needs a separate Step 8/observability follow-up. A partially completed job must not be blindly retried just because its HTTP status changes. The summary count is not automatically repaired by this patch; the durable reminder ledger remains the evidence of delivery.
