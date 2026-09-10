@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { apiError } from "@/src/lib/api";
 import { readBoundedJsonObject } from "@/src/lib/bounded-json-body";
 import { getAccountByUserId, setAccountState } from "@/src/lib/dancr/auth";
+import { recoverVerifiedPublicAccount } from "@/src/lib/dancr/account-profile-recovery";
 import { sendTransactionalEmail } from "@/src/lib/dancr/notification-delivery";
 import { publicAppUrl } from "@/src/lib/dancr/public-app-url";
 import type { AccountState } from "@/src/lib/dancr/types";
@@ -19,7 +20,9 @@ const MAX_ACCOUNT_BODY_BYTES = 8_192;
 export async function GET(request: Request) {
   try {
     const { client, user, session } = await createRequestSupabaseContext(request);
-    const account = await getAccountByUserId(client, user.id);
+    const account = await recoverVerifiedPublicAccount(
+      createAdminSupabaseClient(), user, await getAccountByUserId(client, user.id),
+    );
 
     if (!account) {
       return NextResponse.json({ ok: false, error: "Account not found." }, { status: 404 });

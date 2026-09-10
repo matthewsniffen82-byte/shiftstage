@@ -52,6 +52,7 @@ function authFixture(providerError = null, { role = "customer", authSession = se
     } }) },
     "@/src/lib/supabase/admin": { createAdminSupabaseClient: () => ({}) },
     "@/src/lib/dancr/auth": { getAccountByUserId: async () => ({ ...account, role }) },
+    "@/src/lib/dancr/account-profile-recovery": { recoverVerifiedPublicAccount: async (_admin, _user, existing) => existing },
     "@/src/lib/dancr/account-provisioning": { provisionAppAccount: async (_admin, input) => { provisions.push(input); } },
     "@/src/lib/dancr/nfc-browser-account": { readNfcBrowserAccountToken: () => null },
     "@/src/lib/dancr/account-recovery": { AccountRecoveryRateLimitError: class extends Error {} },

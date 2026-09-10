@@ -4,6 +4,7 @@ import { isAuthError } from "@supabase/supabase-js";
 import { apiError, PublicApiError } from "@/src/lib/api";
 import { readBoundedJsonObject } from "@/src/lib/bounded-json-body";
 import { provisionAppAccount } from "@/src/lib/dancr/account-provisioning";
+import { recoverVerifiedPublicAccount, type VerifiedAccountIdentity } from "@/src/lib/dancr/account-profile-recovery";
 import { getAccountByUserId } from "@/src/lib/dancr/auth";
 import { getVenueForAccount } from "@/src/lib/dancr/venue";
 import { getVenueRequestForManager } from "@/src/lib/dancr/venue-request-account";
@@ -63,7 +64,7 @@ export async function PUT(request: Request) {
       access_token: session.accessToken,
       refresh_token: session.refreshToken,
       expires_at: session.expiresAt,
-    }, false));
+    }, false, user));
   } catch (error) {
     return secureAuthResponse(apiError(error, "Unable to confirm the session."));
   }
@@ -155,7 +156,7 @@ export async function POST(request: Request) {
       }
 
       const expectedRole = role === "admin" ? "admin" : null;
-      return authJson(await authResponse(data.user.id, expectedRole, data.session, false));
+      return authJson(await authResponse(data.user.id, expectedRole, data.session, false, data.user));
     }
 
     const passwordError = passwordValidationMessage(password);
@@ -310,9 +311,11 @@ async function authResponse(
   expectedRole: AuthRole | null,
   session: { access_token?: string; refresh_token?: string; expires_at?: number } | null,
   requiresEmailConfirmation: boolean,
+  verifiedUser?: VerifiedAccountIdentity,
 ) {
   const admin = createAdminSupabaseClient();
-  const account = await getAccountByUserId(admin, userId);
+  let account = await getAccountByUserId(admin, userId);
+  if (verifiedUser) account = await recoverVerifiedPublicAccount(admin, verifiedUser, account);
   if (!account?.role) {
     throw conflict("This account is not ready for sign in. Contact support for help.");
   }

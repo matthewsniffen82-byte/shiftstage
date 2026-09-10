@@ -9,7 +9,7 @@ const [liveApp, authRoute] = await Promise.all([
 
 test("public sign-in resolves the real database role while admin remains strict", () => {
   assert.match(authRoute, /const expectedRole = role === "admin" \? "admin" : null/);
-  assert.match(authRoute, /authResponse\(data\.user\.id, expectedRole, data\.session, false\)/);
+  assert.match(authRoute, /authResponse\(data\.user\.id, expectedRole, data\.session, false, data\.user\)/);
   assert.match(authRoute, /expectedRole: AuthRole \| null/);
   assert.match(authRoute, /if \(!account\?\.role\) \{[\s\S]*?This account is not ready for sign in/);
   assert.match(authRoute, /if \(expectedRole && account\.role !== expectedRole\)/);

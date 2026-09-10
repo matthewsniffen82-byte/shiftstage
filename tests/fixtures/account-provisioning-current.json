@@ -1,0 +1,936 @@
+{
+  "capturedAt": "2026-09-10T01:45:50.982289+00:00",
+  "catalogCapturedAt": "2026-09-10T01:12:37.598875+00:00",
+  "scope": "Metadata only. Isolated Auth bootstrap and account/profile SQL; hosted Auth, unrelated triggers and external venue foreign keys are not reproduced.",
+  "functions": [
+    {
+      "anon_execute": false,
+      "authenticated_execute": false,
+      "definition": "CREATE OR REPLACE FUNCTION public.assign_dancer_profile_link()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO ''\nAS $function$\r\ndeclare\r\n  base_slug text;\r\n  candidate text;\r\n  suffix integer := 1;\r\nbegin\r\n  -- Serialize assignments, including reservations of old links.\r\n  perform pg_catalog.pg_advisory_xact_lock(7682451001::bigint);\r\n  if new.slug ~ '^dancer(-[0-9]+|-[0-9a-f]{8}(-[0-9]+)?|-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})?$'\r\n    and (tg_op = 'INSERT' or new.slug = old.slug) then\r\n    base_slug := trim(both '-' from left(public.slugify(new.stage_name), 70));\r\n    if base_slug <> '' and base_slug <> 'dancer' then\r\n      candidate := base_slug;\r\n      while exists (select 1 from public.dancer_profiles where slug = candidate and id <> new.id)\r\n         or exists (select 1 from public.dancer_profile_slug_aliases where slug = candidate and dancer_id <> new.id) loop\r\n        suffix := suffix + 1;\r\n        candidate := base_slug || '-' || suffix::text;\r\n      end loop;\r\n      new.slug := candidate;\r\n    end if;\r\n  end if;\r\n\r\n  if exists (select 1 from public.dancer_profile_slug_aliases where slug = new.slug and dancer_id <> new.id) then\r\n    raise exception 'Profile link is already assigned' using errcode = '23505';\r\n  end if;\r\n  if tg_op = 'UPDATE' and old.slug is distinct from new.slug then\r\n    insert into public.dancer_profile_slug_aliases(slug, dancer_id)\r\n      values (old.slug, new.id) on conflict (slug) do nothing;\r\n  end if;\r\n  return new;\r\nend;\r\n$function$\n",
+      "fingerprint": "2eacb5ea205bcd6ef27ff5a9e21f58da",
+      "name": "assign_dancer_profile_link",
+      "service_execute": false
+    },
+    {
+      "anon_execute": false,
+      "authenticated_execute": false,
+      "definition": "CREATE OR REPLACE FUNCTION public.handle_new_auth_user()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\ndeclare\n  requested_role public.user_role;\n  public_role text := lower(trim(coalesce(new.raw_user_meta_data->>'role', '')));\n  trusted_role text := lower(trim(coalesce(new.raw_app_meta_data->>'mydancr_provisioned_role', '')));\n  display_name text;\n  real_name text;\n  stage_name text;\n  city_name text;\nbegin\n  requested_role := case\n    when trusted_role in ('admin', 'venue') then trusted_role::public.user_role\n    when public_role in ('customer', 'dancer') then public_role::public.user_role\n    else 'customer'::public.user_role\n  end;\n\n  display_name := nullif(trim(coalesce(new.raw_user_meta_data->>'display_name', '')), '');\n  real_name := nullif(trim(coalesce(new.raw_user_meta_data->>'real_name', '')), '');\n  stage_name := nullif(trim(coalesce(new.raw_user_meta_data->>'stage_name', '')), '');\n  city_name := nullif(trim(coalesce(new.raw_user_meta_data->>'city', '')), '');\n\n  insert into public.app_users (id, role, display_name, email)\n  values (\n    new.id,\n    requested_role,\n    case\n      when requested_role = 'dancer' then coalesce(display_name, 'Dancer')\n      else coalesce(display_name, split_part(new.email, '@', 1))\n    end,\n    new.email\n  )\n  on conflict (id) do update set\n    role = excluded.role,\n    display_name = excluded.display_name,\n    email = excluded.email,\n    updated_at = now();\n\n  if requested_role = 'customer' then\n    insert into public.customer_profiles (user_id, city)\n    values (new.id, coalesce(city_name, 'Las Vegas'))\n    on conflict (user_id) do nothing;\n  end if;\n\n  if requested_role = 'dancer' then\n    insert into public.dancer_profiles (\n      user_id,\n      real_name,\n      stage_name,\n      slug,\n      city,\n      status,\n      identity_saved_at\n    )\n    values (\n      new.id,\n      coalesce(real_name, 'Verification pending'),\n      coalesce(stage_name, ''),\n      public.unique_dancer_slug(coalesce(stage_name, ''), new.id),\n      coalesce(city_name, ''),\n      'draft',\n      null\n    )\n    on conflict (user_id) do nothing;\n  end if;\n\n  return new;\nend;\n$function$\n",
+      "fingerprint": "a9f314eb30a408e81a0bf3d75e9192eb",
+      "name": "handle_new_auth_user",
+      "service_execute": false
+    },
+    {
+      "anon_execute": false,
+      "authenticated_execute": false,
+      "definition": "CREATE OR REPLACE FUNCTION public.provision_app_account_safely(p_user_id uuid, p_role text, p_email text, p_display_name text, p_city text)\n RETURNS boolean\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public', 'pg_temp'\nAS $function$\r\ndeclare v_role public.user_role;\r\nbegin\r\n if p_user_id is null or p_role is null or p_role not in ('customer','dancer','venue','admin') then raise exception using errcode='22023', message='Invalid account provisioning input.'; end if;\r\n insert into public.app_users(id,role,email,display_name) values(p_user_id,p_role::public.user_role,p_email,case when p_role='dancer' then 'Dancer' else p_display_name end) on conflict(id) do nothing;\r\n select role into v_role from public.app_users where id=p_user_id for update;\r\n if v_role::text <> p_role then raise exception using errcode='22023', message='Existing account type must be preserved.'; end if;\r\n if p_role='customer' then insert into public.customer_profiles(user_id,city) values(p_user_id,coalesce(p_city,'')) on conflict(user_id) do nothing;\r\n elsif p_role='dancer' then insert into public.dancer_profiles(user_id,real_name,stage_name,slug,city,status,verification_status,photo_review_status,is_public,approved_at,disabled_at,identity_saved_at) values(p_user_id,'Verification pending','','dancer-'||p_user_id::text,coalesce(p_city,''),'draft','pending','pending',false,null,null,null) on conflict(user_id) do nothing;\r\n end if; return true;\r\nend; $function$\n",
+      "fingerprint": "f55c6f2411fe1e22da7fe068d690e70d",
+      "name": "provision_app_account_safely",
+      "service_execute": true
+    },
+    {
+      "anon_execute": false,
+      "authenticated_execute": false,
+      "definition": "CREATE OR REPLACE FUNCTION public.slugify(input text)\n RETURNS text\n LANGUAGE sql\n IMMUTABLE\n SET search_path TO 'pg_catalog', 'pg_temp'\nAS $function$\r\n  select trim(both '-' from regexp_replace(lower(coalesce(input, '')), '[^a-z0-9]+', '-', 'g'));\r\n$function$\n",
+      "fingerprint": "5459ecb305990deb93a45da230ecb252",
+      "name": "slugify",
+      "service_execute": false
+    },
+    {
+      "anon_execute": false,
+      "authenticated_execute": false,
+      "definition": "CREATE OR REPLACE FUNCTION public.unique_dancer_slug(stage_name text, user_id uuid)\n RETURNS text\n LANGUAGE plpgsql\n STABLE\n SET search_path TO 'pg_catalog', 'pg_temp'\nAS $function$\r\ndeclare\r\n  base_slug text;\r\n  candidate text;\r\n  suffix int := 0;\r\nbegin\r\n  base_slug := public.slugify(stage_name);\r\n\r\n  if base_slug = '' then\r\n    base_slug := 'dancer';\r\n  end if;\r\n\r\n  candidate := base_slug;\r\n\r\n  while exists (\r\n    select 1\r\n    from public.dancer_profiles\r\n    where slug = candidate\r\n      and dancer_profiles.user_id <> unique_dancer_slug.user_id\r\n  ) loop\r\n    suffix := suffix + 1;\r\n    candidate := base_slug || '-' || suffix::text;\r\n  end loop;\r\n\r\n  return candidate;\r\nend;\r\n$function$\n",
+      "fingerprint": "5e7885d707a8b6c394dd4c2bc9b0913a",
+      "name": "unique_dancer_slug",
+      "service_execute": false
+    }
+  ],
+  "triggers": [
+    {
+      "definition": "CREATE TRIGGER on_auth_user_created AFTER INSERT ON auth.users FOR EACH ROW EXECUTE FUNCTION handle_new_auth_user()",
+      "enabled": "O",
+      "table": "auth.users"
+    },
+    {
+      "definition": "CREATE TRIGGER sync_verified_auth_email AFTER UPDATE OF email ON auth.users FOR EACH ROW WHEN (((old.email)::text IS DISTINCT FROM (new.email)::text)) EXECUTE FUNCTION sync_verified_auth_email()",
+      "enabled": "O",
+      "table": "auth.users"
+    },
+    {
+      "definition": "CREATE TRIGGER venue_request_email_confirmed AFTER UPDATE OF email_confirmed_at ON auth.users FOR EACH ROW WHEN (((new.email_confirmed_at IS NOT NULL) AND (old.email_confirmed_at IS DISTINCT FROM new.email_confirmed_at))) EXECUTE FUNCTION confirm_venue_request_email()",
+      "enabled": "O",
+      "table": "auth.users"
+    },
+    {
+      "definition": "CREATE TRIGGER assign_dancer_profile_link BEFORE INSERT OR UPDATE OF stage_name, slug ON public.dancer_profiles FOR EACH ROW EXECUTE FUNCTION assign_dancer_profile_link()",
+      "enabled": "O",
+      "table": "dancer_profiles"
+    },
+    {
+      "definition": "CREATE TRIGGER notify_dancer_profile_live_after_activation AFTER UPDATE OF status, verification_status, is_public ON public.dancer_profiles FOR EACH ROW EXECUTE FUNCTION notify_dancer_profile_live()",
+      "enabled": "O",
+      "table": "dancer_profiles"
+    }
+  ],
+  "columns": [
+    {
+      "column_default": null,
+      "column_name": "id",
+      "data_type": "uuid",
+      "is_generated": "NEVER",
+      "is_identity": "NO",
+      "is_nullable": "NO",
+      "ordinal_position": 1,
+      "table_name": "app_users",
+      "table_schema": "public",
+      "udt_name": "uuid",
+      "udt_schema": "pg_catalog"
+    },
+    {
+      "column_default": null,
+      "column_name": "role",
+      "data_type": "USER-DEFINED",
+      "is_generated": "NEVER",
+      "is_identity": "NO",
+      "is_nullable": "NO",
+      "ordinal_position": 2,
+      "table_name": "app_users",
+      "table_schema": "public",
+      "udt_name": "user_role",
+      "udt_schema": "public"
+    },
+    {
+      "column_default": null,
+      "column_name": "display_name",
+      "data_type": "text",
+      "is_generated": "NEVER",
+      "is_identity": "NO",
+      "is_nullable": "YES",
+      "ordinal_position": 3,
+      "table_name": "app_users",
+      "table_schema": "public",
+      "udt_name": "text",
+      "udt_schema": "pg_catalog"
+    },
+    {
+      "column_default": null,
+      "column_name": "email",
+      "data_type": "text",
+      "is_generated": "NEVER",
+      "is_identity": "NO",
+      "is_nullable": "YES",
+      "ordinal_position": 4,
+      "table_name": "app_users",
+      "table_schema": "public",
+      "udt_name": "text",
+      "udt_schema": "pg_catalog"
+    },
+    {
+      "column_default": "'active'::account_state",
+      "column_name": "account_state",
+      "data_type": "USER-DEFINED",
+      "is_generated": "NEVER",
+      "is_identity": "NO",
+      "is_nullable": "NO",
+      "ordinal_position": 5,
+      "table_name": "app_users",
+      "table_schema": "public",
+      "udt_name": "account_state",
+      "udt_schema": "public"
+    },
+    {
+      "column_default": "now()",
+      "column_name": "created_at",
+      "data_type": "timestamp with time zone",
+      "is_generated": "NEVER",
+      "is_identity": "NO",
+      "is_nullable": "NO",
+      "ordinal_position": 6,
+      "table_name": "app_users",
+      "table_schema": "public",
+      "udt_name": "timestamptz",
+      "udt_schema": "pg_catalog"
+    },
+    {
+      "column_default": "now()",
+      "column_name": "updated_at",
+      "data_type": "timestamp with time zone",
+      "is_generated": "NEVER",
+      "is_identity": "NO",
+      "is_nullable": "NO",
+      "ordinal_position": 7,
+      "table_name": "app_users",
+      "table_schema": "public",
+      "udt_name": "timestamptz",
+      "udt_schema": "pg_catalog"
+    },
+    {
+      "column_default": null,
+      "column_name": "dmca_suspended_at",
+      "data_type": "timestamp with time zone",
+      "is_generated": "NEVER",
+      "is_identity": "NO",
+      "is_nullable": "YES",
+      "ordinal_position": 8,
+      "table_name": "app_users",
+      "table_schema": "public",
+      "udt_name": "timestamptz",
+      "udt_schema": "pg_catalog"
+    },
+    {
+      "column_default": null,
+      "column_name": "user_id",
+      "data_type": "uuid",
+      "is_generated": "NEVER",
+      "is_identity": "NO",
+      "is_nullable": "NO",
+      "ordinal_position": 1,
+      "table_name": "customer_profiles",
+      "table_schema": "public",
+      "udt_name": "uuid",
+      "udt_schema": "pg_catalog"
+    },
+    {
+      "column_default": "'Las Vegas'::text",
+      "column_name": "city",
+      "data_type": "text",
+      "is_generated": "NEVER",
+      "is_identity": "NO",
+      "is_nullable": "NO",
+      "ordinal_position": 2,
+      "table_name": "customer_profiles",
+      "table_schema": "public",
+      "udt_name": "text",
+      "udt_schema": "pg_catalog"
+    },
+    {
+      "column_default": "'{\"newShifts\": true, \"clubChanges\": true, \"venueSchedules\": true, \"workingTonight\": true, \"anyDancerInCity\": false, \"cancelledShifts\": true, \"followedVenuesOnly\": true, \"followedDancersOnly\": true}'::jsonb",
+      "column_name": "notification_settings",
+      "data_type": "jsonb",
+      "is_generated": "NEVER",
+      "is_identity": "NO",
+      "is_nullable": "NO",
+      "ordinal_position": 3,
+      "table_name": "customer_profiles",
+      "table_schema": "public",
+      "udt_name": "jsonb",
+      "udt_schema": "pg_catalog"
+    },
+    {
+      "column_default": "now()",
+      "column_name": "created_at",
+      "data_type": "timestamp with time zone",
+      "is_generated": "NEVER",
+      "is_identity": "NO",
+      "is_nullable": "NO",
+      "ordinal_position": 4,
+      "table_name": "customer_profiles",
+      "table_schema": "public",
+      "udt_name": "timestamptz",
+      "udt_schema": "pg_catalog"
+    },
+    {
+      "column_default": "now()",
+      "column_name": "updated_at",
+      "data_type": "timestamp with time zone",
+      "is_generated": "NEVER",
+      "is_identity": "NO",
+      "is_nullable": "NO",
+      "ordinal_position": 5,
+      "table_name": "customer_profiles",
+      "table_schema": "public",
+      "udt_name": "timestamptz",
+      "udt_schema": "pg_catalog"
+    },
+    {
+      "column_default": null,
+      "column_name": "slug",
+      "data_type": "text",
+      "is_generated": "NEVER",
+      "is_identity": "NO",
+      "is_nullable": "NO",
+      "ordinal_position": 1,
+      "table_name": "dancer_profile_slug_aliases",
+      "table_schema": "public",
+      "udt_name": "text",
+      "udt_schema": "pg_catalog"
+    },
+    {
+      "column_default": null,
+      "column_name": "dancer_id",
+      "data_type": "uuid",
+      "is_generated": "NEVER",
+      "is_identity": "NO",
+      "is_nullable": "NO",
+      "ordinal_position": 2,
+      "table_name": "dancer_profile_slug_aliases",
+      "table_schema": "public",
+      "udt_name": "uuid",
+      "udt_schema": "pg_catalog"
+    },
+    {
+      "column_default": "now()",
+      "column_name": "created_at",
+      "data_type": "timestamp with time zone",
+      "is_generated": "NEVER",
+      "is_identity": "NO",
+      "is_nullable": "NO",
+      "ordinal_position": 3,
+      "table_name": "dancer_profile_slug_aliases",
+      "table_schema": "public",
+      "udt_name": "timestamptz",
+      "udt_schema": "pg_catalog"
+    },
+    {
+      "column_default": "gen_random_uuid()",
+      "column_name": "id",
+      "data_type": "uuid",
+      "is_generated": "NEVER",
+      "is_identity": "NO",
+      "is_nullable": "NO",
+      "ordinal_position": 1,
+      "table_name": "dancer_profiles",
+      "table_schema": "public",
+      "udt_name": "uuid",
+      "udt_schema": "pg_catalog"
+    },
+    {
+      "column_default": null,
+      "column_name": "user_id",
+      "data_type": "uuid",
+      "is_generated": "NEVER",
+      "is_identity": "NO",
+      "is_nullable": "NO",
+      "ordinal_position": 2,
+      "table_name": "dancer_profiles",
+      "table_schema": "public",
+      "udt_name": "uuid",
+      "udt_schema": "pg_catalog"
+    },
+    {
+      "column_default": null,
+      "column_name": "real_name",
+      "data_type": "text",
+      "is_generated": "NEVER",
+      "is_identity": "NO",
+      "is_nullable": "NO",
+      "ordinal_position": 3,
+      "table_name": "dancer_profiles",
+      "table_schema": "public",
+      "udt_name": "text",
+      "udt_schema": "pg_catalog"
+    },
+    {
+      "column_default": null,
+      "column_name": "stage_name",
+      "data_type": "text",
+      "is_generated": "NEVER",
+      "is_identity": "NO",
+      "is_nullable": "NO",
+      "ordinal_position": 4,
+      "table_name": "dancer_profiles",
+      "table_schema": "public",
+      "udt_name": "text",
+      "udt_schema": "pg_catalog"
+    },
+    {
+      "column_default": null,
+      "column_name": "slug",
+      "data_type": "text",
+      "is_generated": "NEVER",
+      "is_identity": "NO",
+      "is_nullable": "NO",
+      "ordinal_position": 5,
+      "table_name": "dancer_profiles",
+      "table_schema": "public",
+      "udt_name": "text",
+      "udt_schema": "pg_catalog"
+    },
+    {
+      "column_default": "'Las Vegas'::text",
+      "column_name": "city",
+      "data_type": "text",
+      "is_generated": "NEVER",
+      "is_identity": "NO",
+      "is_nullable": "NO",
+      "ordinal_position": 6,
+      "table_name": "dancer_profiles",
+      "table_schema": "public",
+      "udt_name": "text",
+      "udt_schema": "pg_catalog"
+    },
+    {
+      "column_default": "'draft'::dancer_status",
+      "column_name": "status",
+      "data_type": "USER-DEFINED",
+      "is_generated": "NEVER",
+      "is_identity": "NO",
+      "is_nullable": "NO",
+      "ordinal_position": 8,
+      "table_name": "dancer_profiles",
+      "table_schema": "public",
+      "udt_name": "dancer_status",
+      "udt_schema": "public"
+    },
+    {
+      "column_default": "'pending'::review_status",
+      "column_name": "verification_status",
+      "data_type": "USER-DEFINED",
+      "is_generated": "NEVER",
+      "is_identity": "NO",
+      "is_nullable": "NO",
+      "ordinal_position": 9,
+      "table_name": "dancer_profiles",
+      "table_schema": "public",
+      "udt_name": "review_status",
+      "udt_schema": "public"
+    },
+    {
+      "column_default": "'pending'::review_status",
+      "column_name": "photo_review_status",
+      "data_type": "USER-DEFINED",
+      "is_generated": "NEVER",
+      "is_identity": "NO",
+      "is_nullable": "NO",
+      "ordinal_position": 10,
+      "table_name": "dancer_profiles",
+      "table_schema": "public",
+      "udt_name": "review_status",
+      "udt_schema": "public"
+    },
+    {
+      "column_default": null,
+      "column_name": "approved_at",
+      "data_type": "timestamp with time zone",
+      "is_generated": "NEVER",
+      "is_identity": "NO",
+      "is_nullable": "YES",
+      "ordinal_position": 11,
+      "table_name": "dancer_profiles",
+      "table_schema": "public",
+      "udt_name": "timestamptz",
+      "udt_schema": "pg_catalog"
+    },
+    {
+      "column_default": null,
+      "column_name": "disabled_at",
+      "data_type": "timestamp with time zone",
+      "is_generated": "NEVER",
+      "is_identity": "NO",
+      "is_nullable": "YES",
+      "ordinal_position": 12,
+      "table_name": "dancer_profiles",
+      "table_schema": "public",
+      "udt_name": "timestamptz",
+      "udt_schema": "pg_catalog"
+    },
+    {
+      "column_default": "now()",
+      "column_name": "created_at",
+      "data_type": "timestamp with time zone",
+      "is_generated": "NEVER",
+      "is_identity": "NO",
+      "is_nullable": "NO",
+      "ordinal_position": 13,
+      "table_name": "dancer_profiles",
+      "table_schema": "public",
+      "udt_name": "timestamptz",
+      "udt_schema": "pg_catalog"
+    },
+    {
+      "column_default": "now()",
+      "column_name": "updated_at",
+      "data_type": "timestamp with time zone",
+      "is_generated": "NEVER",
+      "is_identity": "NO",
+      "is_nullable": "NO",
+      "ordinal_position": 14,
+      "table_name": "dancer_profiles",
+      "table_schema": "public",
+      "udt_name": "timestamptz",
+      "udt_schema": "pg_catalog"
+    },
+    {
+      "column_default": "false",
+      "column_name": "is_public",
+      "data_type": "boolean",
+      "is_generated": "NEVER",
+      "is_identity": "NO",
+      "is_nullable": "NO",
+      "ordinal_position": 15,
+      "table_name": "dancer_profiles",
+      "table_schema": "public",
+      "udt_name": "bool",
+      "udt_schema": "pg_catalog"
+    },
+    {
+      "column_default": null,
+      "column_name": "dmca_suspended_at",
+      "data_type": "timestamp with time zone",
+      "is_generated": "NEVER",
+      "is_identity": "NO",
+      "is_nullable": "YES",
+      "ordinal_position": 16,
+      "table_name": "dancer_profiles",
+      "table_schema": "public",
+      "udt_name": "timestamptz",
+      "udt_schema": "pg_catalog"
+    },
+    {
+      "column_default": null,
+      "column_name": "avatar_storage_path",
+      "data_type": "text",
+      "is_generated": "NEVER",
+      "is_identity": "NO",
+      "is_nullable": "YES",
+      "ordinal_position": 17,
+      "table_name": "dancer_profiles",
+      "table_schema": "public",
+      "udt_name": "text",
+      "udt_schema": "pg_catalog"
+    },
+    {
+      "column_default": null,
+      "column_name": "avatar_updated_at",
+      "data_type": "timestamp with time zone",
+      "is_generated": "NEVER",
+      "is_identity": "NO",
+      "is_nullable": "YES",
+      "ordinal_position": 18,
+      "table_name": "dancer_profiles",
+      "table_schema": "public",
+      "udt_name": "timestamptz",
+      "udt_schema": "pg_catalog"
+    },
+    {
+      "column_default": null,
+      "column_name": "venue_approved_at",
+      "data_type": "timestamp with time zone",
+      "is_generated": "NEVER",
+      "is_identity": "NO",
+      "is_nullable": "YES",
+      "ordinal_position": 19,
+      "table_name": "dancer_profiles",
+      "table_schema": "public",
+      "udt_name": "timestamptz",
+      "udt_schema": "pg_catalog"
+    },
+    {
+      "column_default": null,
+      "column_name": "venue_approved_by_user_id",
+      "data_type": "uuid",
+      "is_generated": "NEVER",
+      "is_identity": "NO",
+      "is_nullable": "YES",
+      "ordinal_position": 20,
+      "table_name": "dancer_profiles",
+      "table_schema": "public",
+      "udt_name": "uuid",
+      "udt_schema": "pg_catalog"
+    },
+    {
+      "column_default": null,
+      "column_name": "venue_approved_venue_id",
+      "data_type": "uuid",
+      "is_generated": "NEVER",
+      "is_identity": "NO",
+      "is_nullable": "YES",
+      "ordinal_position": 21,
+      "table_name": "dancer_profiles",
+      "table_schema": "public",
+      "udt_name": "uuid",
+      "udt_schema": "pg_catalog"
+    },
+    {
+      "column_default": null,
+      "column_name": "identity_saved_at",
+      "data_type": "timestamp with time zone",
+      "is_generated": "NEVER",
+      "is_identity": "NO",
+      "is_nullable": "YES",
+      "ordinal_position": 22,
+      "table_name": "dancer_profiles",
+      "table_schema": "public",
+      "udt_name": "timestamptz",
+      "udt_schema": "pg_catalog"
+    },
+    {
+      "column_default": null,
+      "column_name": "admin_disabled_at",
+      "data_type": "timestamp with time zone",
+      "is_generated": "NEVER",
+      "is_identity": "NO",
+      "is_nullable": "YES",
+      "ordinal_position": 23,
+      "table_name": "dancer_profiles",
+      "table_schema": "public",
+      "udt_name": "timestamptz",
+      "udt_schema": "pg_catalog"
+    }
+  ],
+  "constraints": [
+    {
+      "deferrable": false,
+      "definition": "FOREIGN KEY (id) REFERENCES auth.users(id) ON DELETE CASCADE",
+      "delete_action": "c",
+      "initially_deferred": false,
+      "name": "app_users_id_fkey",
+      "referenced_table": "auth.users",
+      "schema_name": "public",
+      "table_name": "app_users",
+      "type": "f",
+      "validated": true
+    },
+    {
+      "deferrable": false,
+      "definition": "PRIMARY KEY (id)",
+      "delete_action": " ",
+      "initially_deferred": false,
+      "name": "app_users_pkey",
+      "referenced_table": null,
+      "schema_name": "public",
+      "table_name": "app_users",
+      "type": "p",
+      "validated": true
+    },
+    {
+      "deferrable": false,
+      "definition": "PRIMARY KEY (user_id)",
+      "delete_action": " ",
+      "initially_deferred": false,
+      "name": "customer_profiles_pkey",
+      "referenced_table": null,
+      "schema_name": "public",
+      "table_name": "customer_profiles",
+      "type": "p",
+      "validated": true
+    },
+    {
+      "deferrable": false,
+      "definition": "FOREIGN KEY (user_id) REFERENCES app_users(id) ON DELETE CASCADE",
+      "delete_action": "c",
+      "initially_deferred": false,
+      "name": "customer_profiles_user_id_fkey",
+      "referenced_table": "app_users",
+      "schema_name": "public",
+      "table_name": "customer_profiles",
+      "type": "f",
+      "validated": true
+    },
+    {
+      "deferrable": false,
+      "definition": "FOREIGN KEY (dancer_id) REFERENCES dancer_profiles(id) ON DELETE CASCADE",
+      "delete_action": "c",
+      "initially_deferred": false,
+      "name": "dancer_profile_slug_aliases_dancer_id_fkey",
+      "referenced_table": "dancer_profiles",
+      "schema_name": "public",
+      "table_name": "dancer_profile_slug_aliases",
+      "type": "f",
+      "validated": true
+    },
+    {
+      "deferrable": false,
+      "definition": "PRIMARY KEY (slug)",
+      "delete_action": " ",
+      "initially_deferred": false,
+      "name": "dancer_profile_slug_aliases_pkey",
+      "referenced_table": null,
+      "schema_name": "public",
+      "table_name": "dancer_profile_slug_aliases",
+      "type": "p",
+      "validated": true
+    },
+    {
+      "deferrable": false,
+      "definition": "PRIMARY KEY (id)",
+      "delete_action": " ",
+      "initially_deferred": false,
+      "name": "dancer_profiles_pkey",
+      "referenced_table": null,
+      "schema_name": "public",
+      "table_name": "dancer_profiles",
+      "type": "p",
+      "validated": true
+    },
+    {
+      "deferrable": false,
+      "definition": "UNIQUE (slug)",
+      "delete_action": " ",
+      "initially_deferred": false,
+      "name": "dancer_profiles_slug_key",
+      "referenced_table": null,
+      "schema_name": "public",
+      "table_name": "dancer_profiles",
+      "type": "u",
+      "validated": true
+    },
+    {
+      "deferrable": false,
+      "definition": "CHECK (((length(TRIM(BOTH FROM stage_name)) = 0) OR ((length(TRIM(BOTH FROM stage_name)) >= 2) AND (length(TRIM(BOTH FROM stage_name)) <= 40))))",
+      "delete_action": " ",
+      "initially_deferred": false,
+      "name": "dancer_profiles_stage_name_check",
+      "referenced_table": null,
+      "schema_name": "public",
+      "table_name": "dancer_profiles",
+      "type": "c",
+      "validated": true
+    },
+    {
+      "deferrable": false,
+      "definition": "FOREIGN KEY (user_id) REFERENCES app_users(id) ON DELETE CASCADE",
+      "delete_action": "c",
+      "initially_deferred": false,
+      "name": "dancer_profiles_user_id_fkey",
+      "referenced_table": "app_users",
+      "schema_name": "public",
+      "table_name": "dancer_profiles",
+      "type": "f",
+      "validated": true
+    },
+    {
+      "deferrable": false,
+      "definition": "UNIQUE (user_id)",
+      "delete_action": " ",
+      "initially_deferred": false,
+      "name": "dancer_profiles_user_id_key",
+      "referenced_table": null,
+      "schema_name": "public",
+      "table_name": "dancer_profiles",
+      "type": "u",
+      "validated": true
+    },
+    {
+      "deferrable": false,
+      "definition": "FOREIGN KEY (venue_approved_by_user_id) REFERENCES app_users(id) ON DELETE SET NULL",
+      "delete_action": "n",
+      "initially_deferred": false,
+      "name": "dancer_profiles_venue_approved_by_user_id_fkey",
+      "referenced_table": "app_users",
+      "schema_name": "public",
+      "table_name": "dancer_profiles",
+      "type": "f",
+      "validated": true
+    },
+    {
+      "deferrable": false,
+      "definition": "FOREIGN KEY (venue_approved_venue_id) REFERENCES venues(id) ON DELETE SET NULL",
+      "delete_action": "n",
+      "initially_deferred": false,
+      "name": "dancer_profiles_venue_approved_venue_id_fkey",
+      "referenced_table": "venues",
+      "schema_name": "public",
+      "table_name": "dancer_profiles",
+      "type": "f",
+      "validated": true
+    }
+  ],
+  "enums": [
+    {
+      "labels": [
+        "active",
+        "disabled",
+        "deleted"
+      ],
+      "name": "account_state",
+      "schema_name": "public"
+    },
+    {
+      "labels": [
+        "draft",
+        "pending_review",
+        "approved",
+        "rejected",
+        "disabled"
+      ],
+      "name": "dancer_status",
+      "schema_name": "public"
+    },
+    {
+      "labels": [
+        "in_app",
+        "push",
+        "email"
+      ],
+      "name": "notification_channel",
+      "schema_name": "public"
+    },
+    {
+      "labels": [
+        "shift_posted",
+        "shift_updated",
+        "shift_cancelled",
+        "ranking_milestone",
+        "approval_status",
+        "weekly_summary",
+        "support_message",
+        "tv_video_status",
+        "dmca_status",
+        "venue_claim_status",
+        "venue_affiliation_status",
+        "venue_publication_status",
+        "engagement"
+      ],
+      "name": "notification_type",
+      "schema_name": "public"
+    },
+    {
+      "labels": [
+        "pending",
+        "approved",
+        "rejected"
+      ],
+      "name": "review_status",
+      "schema_name": "public"
+    },
+    {
+      "labels": [
+        "draft",
+        "posted",
+        "cancelled",
+        "completed"
+      ],
+      "name": "shift_status",
+      "schema_name": "public"
+    },
+    {
+      "labels": [
+        "instagram",
+        "tiktok",
+        "snapchat",
+        "x",
+        "onlyfans"
+      ],
+      "name": "social_platform",
+      "schema_name": "public"
+    },
+    {
+      "labels": [
+        "customer",
+        "dancer",
+        "admin",
+        "venue"
+      ],
+      "name": "user_role",
+      "schema_name": "public"
+    }
+  ],
+  "relations": [
+    {
+      "force_rls": false,
+      "grants": {
+        "anon": {
+          "delete": false,
+          "insert": false,
+          "select": true,
+          "update": false
+        },
+        "authenticated": {
+          "delete": false,
+          "insert": false,
+          "select": true,
+          "update": false
+        },
+        "service_role": {
+          "delete": true,
+          "insert": true,
+          "select": true,
+          "update": true
+        }
+      },
+      "kind": "r",
+      "name": "app_users",
+      "options": null,
+      "owner": "postgres",
+      "rls": true,
+      "schema_name": "public"
+    },
+    {
+      "force_rls": false,
+      "grants": {
+        "anon": {
+          "delete": false,
+          "insert": false,
+          "select": true,
+          "update": false
+        },
+        "authenticated": {
+          "delete": true,
+          "insert": true,
+          "select": true,
+          "update": true
+        },
+        "service_role": {
+          "delete": true,
+          "insert": true,
+          "select": true,
+          "update": true
+        }
+      },
+      "kind": "r",
+      "name": "customer_profiles",
+      "options": null,
+      "owner": "postgres",
+      "rls": true,
+      "schema_name": "public"
+    },
+    {
+      "force_rls": false,
+      "grants": {
+        "anon": {
+          "delete": false,
+          "insert": false,
+          "select": false,
+          "update": false
+        },
+        "authenticated": {
+          "delete": false,
+          "insert": false,
+          "select": false,
+          "update": false
+        },
+        "service_role": {
+          "delete": true,
+          "insert": true,
+          "select": true,
+          "update": true
+        }
+      },
+      "kind": "r",
+      "name": "dancer_profile_slug_aliases",
+      "options": null,
+      "owner": "postgres",
+      "rls": true,
+      "schema_name": "public"
+    },
+    {
+      "force_rls": false,
+      "grants": {
+        "anon": {
+          "delete": false,
+          "insert": false,
+          "select": false,
+          "update": false
+        },
+        "authenticated": {
+          "delete": false,
+          "insert": false,
+          "select": false,
+          "update": false
+        },
+        "service_role": {
+          "delete": true,
+          "insert": true,
+          "select": true,
+          "update": true
+        }
+      },
+      "kind": "r",
+      "name": "dancer_profiles",
+      "options": null,
+      "owner": "postgres",
+      "rls": true,
+      "schema_name": "public"
+    }
+  ]
+}
