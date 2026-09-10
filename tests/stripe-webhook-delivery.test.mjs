@@ -82,7 +82,7 @@ function database(options={}){
 function harness(options={}){
  const db=database(options),effects=[],logs=[];let adminAccess=0,secretAccess=0;
  const events=module('../src/lib/dancr/finance-provider-events.ts',{
-  './finance-audit-log':{},'./payout-account-store':{},'./payout-provider':{},
+  './finance-audit-log':{},'./payout-account-store':{},'./payout-provider':{},'../stripe':{},
  });
  const handlers=Object.fromEntries(processors.map(name=>[name,async(...args)=>{effects.push({name,args});await options.process?.(name,args);}]));
  const route=module('../app/api/stripe/webhook/route.ts',{
@@ -91,7 +91,8 @@ function harness(options={}){
   '@/src/lib/bounded-json-body':{readBoundedRequestBytes},
   '@/src/lib/supabase/admin':{createAdminSupabaseClient:()=>{adminAccess++;return db.client;}},
   '@/src/lib/dancr/payments':handlers,
-  '@/src/lib/dancr/finance-provider-events':{...handlers,recordPaymentProviderWebhook:events.recordPaymentProviderWebhook,finishPaymentProviderWebhook:events.finishPaymentProviderWebhook},
+  '@/src/lib/dancr/finance-provider-events':{...handlers,recordPaymentProviderWebhook:events.recordPaymentProviderWebhook,finishPaymentProviderWebhook:events.finishPaymentProviderWebhook,
+   loadCurrentStripeWebhookInvoice:async(_client,invoice)=>({invoice:{...invoice,status:'open'},version:{id:'synthetic-invoice',updatedAt:'2020-01-01T00:00:00Z'}})},
   '@/src/lib/server-env':{getServerEnv:name=>{assert.equal(name,'STRIPE_WEBHOOK_SECRET');secretAccess++;return secret;}},
   '@/src/lib/security/safe-error-metadata':{safeErrorMetadata},stripe:Stripe,
  },{console:{warn:(...args)=>logs.push(args),error:(...args)=>logs.push(args)}});

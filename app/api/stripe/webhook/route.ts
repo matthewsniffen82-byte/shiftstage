@@ -10,6 +10,7 @@ import {
 import {
   completeProviderPayout,
   finishPaymentProviderWebhook,
+  loadCurrentStripeWebhookInvoice,
   markStripeInvoiceFailure,
   recordPaymentProviderWebhook,
   reverseDancerPayoutTransfer,
@@ -92,11 +93,14 @@ export async function POST(request: Request) {
 
       if (isFinanceEvent(event.type)) {
         if (event.type.startsWith("invoice.")) {
-          const invoice = event.data.object as Stripe.Invoice;
-          if (event.type === "invoice.payment_failed" || event.type === "invoice.payment_action_required") {
-            await markStripeInvoiceFailure(admin, invoice, "Stripe could not collect this invoice. Payment is still required.");
-          } else {
-            await syncStripeInvoice(admin, invoice);
+          const current = await loadCurrentStripeWebhookInvoice(admin, event.data.object as Stripe.Invoice);
+          if (current) {
+            const { invoice, version } = current;
+            if (invoice.status === "open" && (event.type === "invoice.payment_failed" || event.type === "invoice.payment_action_required")) {
+              await markStripeInvoiceFailure(admin, invoice, "Stripe could not collect this invoice. Payment is still required.", version);
+            } else {
+              await syncStripeInvoice(admin, invoice, version);
+            }
           }
         }
 

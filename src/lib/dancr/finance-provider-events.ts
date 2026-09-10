@@ -1,12 +1,35 @@
 import type Stripe from "stripe";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { getStripe } from "../stripe";
 import { writeFinancialAuditEvent } from "./finance-audit-log";
 import { upsertDancerPayoutAccount } from "./payout-account-store";
 import { stripeAccountState, type PayoutProviderName } from "./payout-provider";
 
 type DancrClient = SupabaseClient;
 
-export async function syncStripeInvoice(client: DancrClient, invoice: Stripe.Invoice) {
+type InvoiceWebhookVersion = { id: string; updatedAt: string };
+
+export async function loadCurrentStripeWebhookInvoice(client: DancrClient, snapshot: Stripe.Invoice) {
+  const invoiceId = snapshot.metadata?.mydancr_invoice_id;
+  const { data: record, error } = await (client as any).from("club_invoices")
+    .select("id, updated_at")
+    .or(invoiceId ? `id.eq.${invoiceId},stripe_invoice_id.eq.${snapshot.id}` : `stripe_invoice_id.eq.${snapshot.id}`)
+    .limit(1).maybeSingle();
+  if (error) throw error;
+  if (!record) return null;
+  // Capture the local version before the provider read. Different signed events
+  // can arrive out of order or reconcile the same invoice concurrently.
+  const invoice = await getStripe().invoices.retrieve(snapshot.id, {}, { timeout: 10_000, maxNetworkRetries: 0 });
+  if (invoice.id !== snapshot.id || typeof record.updated_at !== "string") {
+    throw new Error("Current provider invoice could not be confirmed.");
+  }
+  if (invoice.metadata?.mydancr_invoice_id && invoice.metadata.mydancr_invoice_id.toLowerCase() !== record.id.toLowerCase()) {
+    throw new Error("Current provider invoice identity could not be confirmed.");
+  }
+  return { invoice, version: { id: record.id, updatedAt: record.updated_at } };
+}
+
+export async function syncStripeInvoice(client: DancrClient, invoice: Stripe.Invoice, version?: InvoiceWebhookVersion) {
   const invoiceId = invoice.metadata?.mydancr_invoice_id;
   const { data: record, error } = await (client as any)
     .from("club_invoices")
@@ -16,6 +39,7 @@ export async function syncStripeInvoice(client: DancrClient, invoice: Stripe.Inv
     .maybeSingle();
   if (error) throw error;
   if (!record) return null;
+  if (version && record.id !== version.id) throw new Error("Provider invoice identity changed during reconciliation.");
 
   const status = stripeInvoiceStatus(invoice, record.status);
   const paidAt = invoice.status_transitions?.paid_at
@@ -37,7 +61,7 @@ export async function syncStripeInvoice(client: DancrClient, invoice: Stripe.Inv
   }
 
   const dueAt = invoice.due_date ? new Date(invoice.due_date * 1000).toISOString() : undefined;
-  const { data, error: updateError } = await (client as any).from("club_invoices").update({
+  let update = (client as any).from("club_invoices").update({
     status,
     stripe_customer_id: stripeId(invoice.customer),
     stripe_invoice_id: invoice.id,
@@ -46,14 +70,17 @@ export async function syncStripeInvoice(client: DancrClient, invoice: Stripe.Inv
     ...(dueAt ? { due_at: dueAt } : {}),
     last_error: null,
     updated_at: new Date().toISOString(),
-  }).eq("id", record.id).select("*").single();
+  }).eq("id", record.id);
+  if (version) update = update.eq("updated_at", version.updatedAt);
+  const { data, error: updateError } = await update.select("*").maybeSingle();
   if (updateError) throw updateError;
+  if (!data) throw new Error("Provider invoice update could not be confirmed.");
   return data;
 }
 
-export async function markStripeInvoiceFailure(client: DancrClient, invoice: Stripe.Invoice, message: string) {
+export async function markStripeInvoiceFailure(client: DancrClient, invoice: Stripe.Invoice, message: string, version?: InvoiceWebhookVersion) {
   const invoiceId = invoice.metadata?.mydancr_invoice_id;
-  const { data, error } = await (client as any).from("club_invoices").update({
+  let update = (client as any).from("club_invoices").update({
     status: invoice.due_date && invoice.due_date * 1000 < Date.now() ? "overdue" : "open",
     stripe_customer_id: stripeId(invoice.customer),
     stripe_invoice_id: invoice.id,
@@ -61,9 +88,11 @@ export async function markStripeInvoiceFailure(client: DancrClient, invoice: Str
     invoice_pdf_url: invoice.invoice_pdf || null,
     last_error: message.slice(0, 500),
     updated_at: new Date().toISOString(),
-  }).or(invoiceId ? `id.eq.${invoiceId},stripe_invoice_id.eq.${invoice.id}` : `stripe_invoice_id.eq.${invoice.id}`)
-    .select("*").maybeSingle();
+  }).or(invoiceId ? `id.eq.${invoiceId},stripe_invoice_id.eq.${invoice.id}` : `stripe_invoice_id.eq.${invoice.id}`);
+  if (version) update = update.eq("id", version.id).eq("updated_at", version.updatedAt);
+  const { data, error } = await update.select("*").maybeSingle();
   if (error) throw error;
+  if (version && !data) throw new Error("Provider invoice failure update could not be confirmed.");
   return data;
 }
 

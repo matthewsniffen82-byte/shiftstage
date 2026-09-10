@@ -38,4 +38,3 @@ begin
   return v_event_id is not null;
 end;
 $function$
-
