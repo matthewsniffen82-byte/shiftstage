@@ -255,7 +255,7 @@ export async function watermarkStoredVideo(
     if (!watermarked.length) throw new Error("The public video watermark could not be generated.");
     const posterStoragePath = myDancrTvPosterStoragePath(input.storagePath);
     const poster = await createDancrVideoPoster(watermarked, input.storageMime);
-    const { error } = await client.storage
+    const { data: uploaded, error } = await client.storage
       .from(input.publicBucket)
       .upload(input.storagePath, watermarked, {
         cacheControl: MYDANCR_TV_PUBLIC_CACHE_CONTROL,
@@ -263,7 +263,8 @@ export async function watermarkStoredVideo(
         upsert: true,
       });
     if (error) throw error;
-    const { error: posterError } = await client.storage
+    requireStorageUploadReceipt(uploaded, input.publicBucket, input.storagePath);
+    const { data: posterUploaded, error: posterError } = await client.storage
       .from(MYDANCR_TV_POSTER_BUCKET)
       .upload(posterStoragePath, poster, {
         cacheControl: "31536000",
@@ -271,6 +272,7 @@ export async function watermarkStoredVideo(
         upsert: true,
       });
     if (posterError) throw posterError;
+    requireStorageUploadReceipt(posterUploaded, MYDANCR_TV_POSTER_BUCKET, posterStoragePath);
     console.info(JSON.stringify({
       event: "public_media.video_watermarked",
       bytes: watermarked.length,
@@ -297,7 +299,7 @@ export async function generateStoredVideoPoster(
   );
   const poster = await createDancrVideoPoster(source, input.storageMime);
   const posterStoragePath = myDancrTvPosterStoragePath(input.storagePath);
-  const { error } = await client.storage
+  const { data: uploaded, error } = await client.storage
     .from(MYDANCR_TV_POSTER_BUCKET)
     .upload(posterStoragePath, poster, {
       cacheControl: "31536000",
@@ -305,6 +307,7 @@ export async function generateStoredVideoPoster(
       upsert: true,
     });
   if (error) throw error;
+  requireStorageUploadReceipt(uploaded, MYDANCR_TV_POSTER_BUCKET, posterStoragePath);
   return { posterStoragePath, bytes: poster.length };
 }
 

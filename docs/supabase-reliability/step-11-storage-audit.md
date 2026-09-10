@@ -23,7 +23,7 @@ These are metadata counts, not a backup or proof of file decodability. Video ori
 
 At the initial 11:37:50 UTC inspection there were 72 gallery rows, sixteen nonempty avatars and 34 video records (25 approved, eight hidden, one rejected). The committed gallery reference-history migration `20260910092022` was then absent in production. It subsequently passed guarded application and privacy/preservation verification, as recorded below; repository tests alone were not treated as production evidence.
 
-## Inspected failure boundaries and remaining work
+## Initial failure boundaries at 11:37 UTC
 
 - Video owner removal currently deletes video/poster/original bytes before acknowledging the database hide. Storage errors are partly ignored. Correct this first with a confirmed, version-scoped hide before any removal, explicit removal errors and recovery by the same owned record ID.
 - Photo deletion acknowledges its database removal first, but shared avatar/gallery paths and linked moderation cleanup still need coordinated retirement. An absent reference at one moment is insufficient proof against a concurrent publisher. Preserve the existing read-only gallery inventory; never bulk-delete its observations.
@@ -57,4 +57,34 @@ Full validation passed all 5,393 tests, lint, production build, standalone TypeS
 - Gallery-history rollout `8a7222d50e6a1e8d6e07d7f2a259aaf984174eeb` applied exact migration `20260910092022` and recorded 88 baseline references. Privacy, preservation, API boundaries and deployment/health passed by 12:05:43 UTC. See `step-11-gallery-history-rollout.md`. This history does not authorize orphan deletion.
 - Venue image publication `52a63c8e9bccc5fe6606bce7d10416779fbd72a4` prevents deletion after uncertain database acknowledgment and rejects stale media replacements. All 5,458 tests passed; exact deployment and health/readiness passed at 12:27:23–27 UTC. Read-only checks preserved 22 venue records, 452 storage objects and 111 migration entries. See `step-11-venue-media-publication.md`.
 
-Responsive-upload rollback, durable retirement and the other listed recovery boundaries remain open. The audit step is not complete merely because individual corrections have deployed.
+Subsequent separately validated and deployed corrections are recorded in the execution ledger:
+
+- Responsive upload retention and exact receipts: `2ca86776984219d599a982dfb5f3e32904c243dc` (`step-11-responsive-upload-recovery.md`).
+- Permanent gallery retirement guards: `111ea6dab0c48d1744adad1f6e9a892cd68aad5f`, exact migration `20260910125000`; caller integration `9f6515ad1d6151007ed9c1b70e21fd0b789ccde3` (`step-11-gallery-retirement-foundation.md`, `step-11-gallery-retirement-callers.md`).
+- Canonical avatar retirement paths: `19cda43a81b8e676a4646f9c069f431bdbbcc405`, exact migration `20260910134200` (`step-11-avatar-retirement-paths.md`).
+- Active-admin recovery for one permanent retirement receipt: `83608deb0432fdd9a413d26d794fe96f3e5f7f6b` (`step-11-gallery-cleanup-recovery.md`).
+- Stale venue deletion protection: `c659ec3c8c0574ff2a536b7ef3fac784980623d1` (`step-11-venue-media-deletion.md`).
+- Private upload/copy acknowledgments: `4ff0ceb3999cfa2b7c516baddcb3e0da197e4567` (`step-11-private-upload-acknowledgments.md`).
+- Retained avatar sources after technical failure: `e2ede1d11aa33c9a2fc8d7592e2b89a51d405661` (`step-11-avatar-recovery-source.md`).
+
+## Closing checks and handoff
+
+The read-only closing inventory still matches all ten original bucket configurations, fourteen policies and enabled storage RLS. There are 452 objects, 72 gallery rows, sixteen avatar references and 34 video records; the video states remain 25 approved, eight hidden and one rejected. No privacy flip or browser write privilege was introduced.
+
+At 14:56:33 UTC, a transport-restricted dry run of the actual source reconciler inspected 33 records across two bounded pages using 191 GET requests. Fourteen were already clean; nineteen were retained (fourteen unconfirmed approvals and five unrecognized publication paths). No deletion, private file download or automatic apply occurred. This establishes current dry-run behavior, not eligibility for a bulk purge or an atomic guarantee against arbitrary manual writers.
+
+The remaining processing-receipt correction is described in `step-11-processing-upload-receipts.md`; its exact commit, push, deployment and preservation/health gates must pass before beginning Step 12. It covers venue inputs/QRs and generated videos/posters, with 69 new cases including 42 failures against the preceding implementation.
+
+Carry these concrete limits into the named remaining steps; do not count them as verified fixes:
+
+| Remaining boundary | Required follow-up |
+| --- | --- |
+| Avatar/profile/moderation approval and deletion, shared moderation metadata, whole-account removal and DMCA video restoration are not one protected lifecycle transaction. | Steps 13/17: inspect final ownership/version checks, atomic metadata transitions, audit coupling and competing lifecycle writers. |
+| Venue derivative cleanup has no permanent shared-reference retirement/history or durable failed-cleanup receipt; separate page-review/audit writes remain. | Steps 13/17: review metadata/administrative lifecycle and safe retirement scope before adding any cleaner. |
+| Failed uploads without a confirmed publication/history record retain files; legacy/unattributed paths are not safe deletion candidates. | Steps 19/22: recovery provenance, bounded reconciliation and storage recovery procedures. No automatic orphan sweep. |
+| Worker error classification and best-effort private-source/venue cleanup can leave retained files without a specific cleanup acknowledgment. | Steps 19/20: distinguish provider versus storage failures, preserve recovery records, add safe diagnostics where needed. |
+| Public media URLs and caches can outlive application visibility; database backups alone do not prove storage-byte recovery. | Steps 17/22: retention, public visibility limitations and separate storage recovery documentation. |
+| Dormant ownership-claim/proof helper and manual demo/backfill writers retain older assumptions. | Steps 18/19/21: keep retired routes closed and require a new review before activation; never execute historical writers as validation. |
+| Hosted cross-connection concurrency and disposable authenticated Storage writes were deferred by the user. | Step 21/23: preserve the explicit test gap; native/simulated tests do not certify those hosted flows. |
+
+The Step 11 controlled pass closes only after the processing-receipt release gates pass. Its successful closure does not classify all twenty-four audit steps complete or erase the listed lifecycle/recovery work.

@@ -14,6 +14,7 @@ import {
   uploadResponsiveImage,
 } from "./responsive-image";
 import { removeArchivedOriginalMedia } from "./media-watermark";
+import { requireStorageUploadReceipt } from "./storage-upload-receipt";
 import {
   getActiveClubDealsForVenue,
   getVenueDealsForAccount,
@@ -87,7 +88,7 @@ export async function uploadVenueQrCode(
   }
 
   const storagePath = `${venue.id}/${image.storageFileName}`;
-  const { error: uploadError } = await client.storage
+  const { data: uploaded, error: uploadError } = await client.storage
     .from(QR_BUCKET)
     .upload(storagePath, image.buffer, {
       contentType: image.contentType,
@@ -95,6 +96,7 @@ export async function uploadVenueQrCode(
       upsert: false,
     });
   if (uploadError) throw uploadError;
+  requireStorageUploadReceipt(uploaded, QR_BUCKET, storagePath);
 
   const { data, error } = await client
     .from("venues")
@@ -172,7 +174,7 @@ export async function uploadVenueCoverImageByAdmin(
   const tempPath = `${adminId}/venue-cover/${venue.id}/${Date.now()}-${image.storageFileName}`;
 
   try {
-    const { error: tempUploadError } = await client.storage
+    const { data: tempUploaded, error: tempUploadError } = await client.storage
       .from(MODERATION_TEMP_BUCKET)
       .upload(tempPath, image.buffer, {
         contentType: image.contentType,
@@ -180,6 +182,7 @@ export async function uploadVenueCoverImageByAdmin(
         upsert: false,
       });
     if (tempUploadError) throw tempUploadError;
+    requireStorageUploadReceipt(tempUploaded, MODERATION_TEMP_BUCKET, tempPath);
 
     const evaluation = evaluateDancrImageModeration(
       await moderateImageWithOpenAI(client, tempPath),
@@ -319,7 +322,7 @@ export async function uploadVenueLogoImageByAdmin(
 
   const tempPath = `${adminId}/venue-logo/${venue.id}/${Date.now()}-${image.storageFileName}`;
   try {
-    const { error: tempUploadError } = await client.storage
+    const { data: tempUploaded, error: tempUploadError } = await client.storage
       .from(MODERATION_TEMP_BUCKET)
       .upload(tempPath, image.buffer, {
         contentType: image.contentType,
@@ -327,6 +330,7 @@ export async function uploadVenueLogoImageByAdmin(
         upsert: false,
       });
     if (tempUploadError) throw tempUploadError;
+    requireStorageUploadReceipt(tempUploaded, MODERATION_TEMP_BUCKET, tempPath);
 
     const evaluation = evaluateDancrImageModeration(
       await moderateImageWithOpenAI(client, tempPath),

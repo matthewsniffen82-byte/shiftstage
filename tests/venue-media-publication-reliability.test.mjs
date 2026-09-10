@@ -6,10 +6,14 @@ import test,{before,beforeEach,after} from 'node:test';
 import ts from 'typescript';
 import {createVenueMediaDatabase,seedVenueMediaDatabase,venueMediaId as id,venueMediaSnapshot} from './helpers/venue-media-database.mjs';
 
-const source=process.env.MYDANCR_VENUE_MEDIA_BASELINE==='1'
+const source=process.env.MYDANCR_REMAINING_RECEIPT_BASELINE==='1'
+ ?execFileSync('git',['show','e2ede1d11aa33c9a2fc8d7592e2b89a51d405661:src/lib/dancr/venue.ts'],{encoding:'utf8',windowsHide:true})
+ :process.env.MYDANCR_VENUE_MEDIA_BASELINE==='1'
  ?execFileSync('git',['show','8a7222d50e6a1e8d6e07d7f2a259aaf984174eeb:src/lib/dancr/venue.ts'],{encoding:'utf8',windowsHide:true})
  :readFileSync(new URL('../src/lib/dancr/venue.ts',import.meta.url),'utf8');
 const compiled=ts.transpileModule(source,{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText;
+const storageReceipt={};
+vm.runInNewContext(ts.transpileModule(readFileSync(new URL('../src/lib/dancr/storage-upload-receipt.ts',import.meta.url),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText,{exports:storageReceipt,Error});
 const venueId=id(11),owner=id(1),oldPath=venueId+'/old.webp',newPath=venueId+'/new.webp',tempBucket='moderation-temp';
 const kinds={cover:{bucket:'venue-cover-images',column:'cover_image_storage_path',time:'cover_image_updated_at',mapped:'coverImageStoragePath',fn:'uploadVenueCoverImageByAdmin'},logo:{bucket:'venue-logo-images',column:'logo_storage_path',time:'logo_updated_at',mapped:'logoStoragePath',fn:'uploadVenueLogoImageByAdmin'},qr:{bucket:'venue-qr-codes',column:'qr_code_storage_path',time:'qr_code_updated_at',mapped:'qrCodeStoragePath',fn:'uploadVenueQrCode'}};
 let db;
@@ -19,7 +23,7 @@ after(async()=>db?.close());
 const row=async()=> (await db.query('select to_jsonb(v) row from public.venues v where id=$1',[venueId])).rows[0].row;
 
 function harness(kind,options={}){
- const spec=kinds[kind],calls=[],messages=[],files=new Set([spec.bucket+'/'+oldPath,...(kind==='qr'?[]:['original/'+spec.bucket+'/'+oldPath])]);let wrote=false;
+ const spec=kinds[kind],calls=[],messages=[],providerCalls=[],files=new Set([spec.bucket+'/'+oldPath,...(kind==='qr'?[]:['original/'+spec.bucket+'/'+oldPath])]);let wrote=false;
  const remove=async(bucket,paths)=>{calls.push({kind:'remove',bucket,paths});for(const path of paths)files.delete(bucket+'/'+path);return {data:paths.map(name=>({name})),error:null};};
  const client={from(table){assert.equal(table,'venues');const filters=[];let values=null;
   const query={select(){return query;},eq(key,value){filters.push([key,'eq',value]);return query;},filter(key,op,value){filters.push([key,op,value]);return query;},update(input){values=input;return query;},single(){return execute();},maybeSingle(){return execute();}};
@@ -37,12 +41,13 @@ function harness(kind,options={}){
    if(values){wrote=rows.length===1;if(options.lostWriteReply)return {data:null,error:new Error('Synthetic lost database reply')};if(options.lostWriteThrow)throw new Error('Synthetic lost response');if(Object.hasOwn(options,'receipt'))return {data:options.receipt,error:null};}
    return rows.length===1?{data:values&&options.transformReceipt?options.transformReceipt(rows[0].row):rows[0].row,error:null}:{data:null,error:values?{code:'PGRST116'}:null};
   }return query;
- },storage:{from(bucket){return {async upload(path){calls.push({kind:'upload',bucket,path});if(options.uploadError)return {data:null,error:new Error('Synthetic upload failure')};files.add(bucket+'/'+path);return {data:{path},error:null};},remove:paths=>remove(bucket,paths),getPublicUrl(path){if(wrote&&options.mappingFailure)throw new Error('Synthetic URL mapping failure');return {data:{publicUrl:'https://example.invalid/'+bucket+'/'+path}};}}}}};
+ },storage:{from(bucket){return {async upload(path){calls.push({kind:'upload',bucket,path});if(options.uploadError)return {data:null,error:new Error('Synthetic upload failure')};files.add(bucket+'/'+path);if(options.uploadThrow)throw new Error('Synthetic lost upload reply');const receipts={valid:{path,fullPath:bucket+'/'+path},legacy:{path},null:null,undefined:undefined,empty:{},array:[],boolean:false,foreignPath:{path:'different/path'},foreignBucket:{path,fullPath:'different/'+path}};return {data:receipts[options.uploadReceiptKind||'valid'],error:null};},remove:paths=>remove(bucket,paths),getPublicUrl(path){if(wrote&&options.mappingFailure)throw new Error('Synthetic URL mapping failure');return {data:{publicUrl:'https://example.invalid/'+bucket+'/'+path}};}}}}};
  const image={width:900,height:900,buffer:Buffer.from('synthetic'),contentType:'image/webp',storageFileName:'new.webp'};
  const dependencies={
   './venue-access':{getVenueAccess:async()=>options.denyAccess?null:{venueId},requireVenueAccess:async(_client,actor,permission)=>{assert.equal(permission,'manage_profile');if(options.denyAccess||actor!==owner)throw new Error('Access denied');return {venueId};}},
   './image-validation':{validateAndPrepareDancrImage:async()=>options.image||image,normalizeDancrVenueLogoImage:async value=>value},
-  './image-moderation':{MODERATION_TEMP_BUCKET:tempBucket,moderateImageWithOpenAI:async()=>({})},
+  './image-moderation':{MODERATION_TEMP_BUCKET:tempBucket,moderateImageWithOpenAI:async()=>{providerCalls.push('moderate');return {};}},
+  './storage-upload-receipt':storageReceipt,
   './moderation-policy':{evaluateDancrImageModeration:()=>({decision:options.moderation||'approved',reasonCodes:[]})},
   './responsive-image':{
    uploadResponsiveImage:async(_client,bucket,directory,_image,_cache,config)=>{assert.equal(directory,venueId);assert.equal(config.archiveOriginal,true);assert.equal(config.watermark,kind==='cover');calls.push({kind:'publishUpload',bucket});files.add(bucket+'/'+newPath);files.add('original/'+bucket+'/'+newPath);return {storagePath:newPath};},
@@ -52,7 +57,7 @@ function harness(kind,options={}){
   './media-watermark':{removeArchivedOriginalMedia:(_client,bucket,path)=>remove('original/'+bucket,[path])},
  };
  const exports={};vm.runInNewContext(compiled,{exports,require:name=>dependencies[name]||{},console:{info:(...value)=>messages.push(value),warn:()=>{}},Buffer,Date});
- return {calls,files,messages,run:()=>kind==='qr'?exports[spec.fn](client,owner,new Blob(['synthetic']),options.label):exports[spec.fn](client,id(3),venueId,new Blob(['synthetic'])),deleteRun:()=>exports[kind==='cover'?'deleteVenueCoverImageByAdmin':'deleteVenueLogoImageByAdmin'](client,venueId),retainedNew:()=>{assert.ok(files.has(spec.bucket+'/'+newPath));if(kind!=='qr')assert.ok(files.has('original/'+spec.bucket+'/'+newPath));},retainedOld:()=>assert.ok(files.has(spec.bucket+'/'+oldPath)),noRetirement:()=>assert.ok(calls.filter(c=>c.kind==='remove').every(c=>c.bucket===tempBucket))};
+ return {calls,files,messages,providerCalls,run:()=>kind==='qr'?exports[spec.fn](client,owner,new Blob(['synthetic']),options.label):exports[spec.fn](client,id(3),venueId,new Blob(['synthetic'])),deleteRun:()=>exports[kind==='cover'?'deleteVenueCoverImageByAdmin':'deleteVenueLogoImageByAdmin'](client,venueId),retainedNew:()=>{assert.ok(files.has(spec.bucket+'/'+newPath));if(kind!=='qr')assert.ok(files.has('original/'+spec.bucket+'/'+newPath));},retainedOld:()=>assert.ok(files.has(spec.bucket+'/'+oldPath)),noRetirement:()=>assert.ok(calls.filter(c=>c.kind==='remove').every(c=>c.bucket===tempBucket))};
 }
 
 for(const [kind,spec]of Object.entries(kinds)){
@@ -99,6 +104,21 @@ for(const kind of ['cover','logo']){
 }
 test('QR access denial performs no storage or database operation',async()=>{const h=harness('qr',{denyAccess:true});await assert.rejects(h.run());assert.equal(h.calls.length,0);});
 test('an invalid QR label is rejected before storage upload',async()=>{const h=harness('qr',{label:'x'.repeat(101)});await assert.rejects(h.run());assert.deepEqual(h.calls.map(c=>c.kind),['read']);});
+
+for(const kind of Object.keys(kinds)){
+ for(const uploadReceiptKind of ['null','undefined','empty','array','boolean','foreignPath','foreignBucket'])test(kind+' storage acknowledgment rejects '+uploadReceiptKind+' before publication',async()=>{
+  const previous=await venueMediaSnapshot(db),h=harness(kind,{uploadReceiptKind});await assert.rejects(h.run());
+  assert.deepEqual(await venueMediaSnapshot(db),previous);h.retainedOld();h.noRetirement();assert.equal(h.messages.length,0);assert.equal(h.providerCalls.length,0);
+  assert.ok(!h.calls.some(c=>['update','publishUpload'].includes(c.kind)));if(kind==='qr')h.retainedNew();
+ });
+ for(const failure of ['uploadError','uploadThrow'])test(kind+' storage acknowledgment preserves prior media on '+failure,async()=>{
+  const previous=await venueMediaSnapshot(db),h=harness(kind,{[failure]:true});await assert.rejects(h.run());
+  assert.deepEqual(await venueMediaSnapshot(db),previous);h.retainedOld();h.noRetirement();assert.equal(h.providerCalls.length,0);
+ });
+ for(const uploadReceiptKind of ['legacy','valid'])test(kind+' storage acknowledgment accepts exact '+uploadReceiptKind+' before publication',async()=>{
+  const h=harness(kind,{uploadReceiptKind}),result=await h.run();assert.equal(result[kinds[kind].mapped],newPath);h.retainedNew();
+ });
+}
 
 for(const [kind,spec] of Object.entries(kinds).filter(([kind])=>kind!=='qr')){
  for(const empty of [false,true])test(kind+' deletion acknowledges '+(empty?'already empty':'existing')+' media without changing other data',async()=>{
