@@ -1,0 +1,621 @@
+{
+  "captured_at": "2026-09-10T07:44:23.12412+00:00",
+  "columns": [
+    {
+      "default": "gen_random_uuid()",
+      "name": "id",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "admin_actions",
+      "type": "uuid"
+    },
+    {
+      "default": null,
+      "name": "admin_id",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "admin_actions",
+      "type": "uuid"
+    },
+    {
+      "default": null,
+      "name": "target_type",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "admin_actions",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "target_id",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "admin_actions",
+      "type": "uuid"
+    },
+    {
+      "default": null,
+      "name": "action",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "admin_actions",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "notes",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "admin_actions",
+      "type": "text"
+    },
+    {
+      "default": "now()",
+      "name": "created_at",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "admin_actions",
+      "type": "timestamptz"
+    },
+    {
+      "default": "gen_random_uuid()",
+      "name": "id",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "mydancr_tv_videos",
+      "type": "uuid"
+    },
+    {
+      "default": null,
+      "name": "dancer_id",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "mydancr_tv_videos",
+      "type": "uuid"
+    },
+    {
+      "default": null,
+      "name": "submitted_by",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "mydancr_tv_videos",
+      "type": "uuid"
+    },
+    {
+      "default": null,
+      "name": "venue_id",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "mydancr_tv_videos",
+      "type": "uuid"
+    },
+    {
+      "default": null,
+      "name": "shift_id",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "mydancr_tv_videos",
+      "type": "uuid"
+    },
+    {
+      "default": null,
+      "name": "caption",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "mydancr_tv_videos",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "storage_path",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "mydancr_tv_videos",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "storage_mime",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "mydancr_tv_videos",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "file_size_bytes",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "mydancr_tv_videos",
+      "type": "int8"
+    },
+    {
+      "default": null,
+      "name": "duration_seconds",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "mydancr_tv_videos",
+      "type": "numeric"
+    },
+    {
+      "default": null,
+      "name": "width",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "mydancr_tv_videos",
+      "type": "int4"
+    },
+    {
+      "default": null,
+      "name": "height",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "mydancr_tv_videos",
+      "type": "int4"
+    },
+    {
+      "default": "'uploading'::text",
+      "name": "status",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "mydancr_tv_videos",
+      "type": "text"
+    },
+    {
+      "default": "'unlinked'::text",
+      "name": "venue_tag_status",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "mydancr_tv_videos",
+      "type": "text"
+    },
+    {
+      "default": "false",
+      "name": "venue_featured",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "mydancr_tv_videos",
+      "type": "bool"
+    },
+    {
+      "default": "false",
+      "name": "consent_confirmed",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "mydancr_tv_videos",
+      "type": "bool"
+    },
+    {
+      "default": "false",
+      "name": "rights_confirmed",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "mydancr_tv_videos",
+      "type": "bool"
+    },
+    {
+      "default": null,
+      "name": "review_notes",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "mydancr_tv_videos",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "reviewed_by",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "mydancr_tv_videos",
+      "type": "uuid"
+    },
+    {
+      "default": null,
+      "name": "submitted_at",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "mydancr_tv_videos",
+      "type": "timestamptz"
+    },
+    {
+      "default": null,
+      "name": "reviewed_at",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "mydancr_tv_videos",
+      "type": "timestamptz"
+    },
+    {
+      "default": null,
+      "name": "published_at",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "mydancr_tv_videos",
+      "type": "timestamptz"
+    },
+    {
+      "default": null,
+      "name": "expires_at",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "mydancr_tv_videos",
+      "type": "timestamptz"
+    },
+    {
+      "default": "now()",
+      "name": "created_at",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "mydancr_tv_videos",
+      "type": "timestamptz"
+    },
+    {
+      "default": "now()",
+      "name": "updated_at",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "mydancr_tv_videos",
+      "type": "timestamptz"
+    },
+    {
+      "default": null,
+      "name": "moderation_decision",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "mydancr_tv_videos",
+      "type": "text"
+    },
+    {
+      "default": "'{}'::text[]",
+      "name": "moderation_reason_codes",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "mydancr_tv_videos",
+      "type": "_text"
+    },
+    {
+      "default": "'{}'::jsonb",
+      "name": "moderation_category_scores",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "mydancr_tv_videos",
+      "type": "jsonb"
+    },
+    {
+      "default": "false",
+      "name": "moderation_provider_flagged",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "mydancr_tv_videos",
+      "type": "bool"
+    },
+    {
+      "default": "0",
+      "name": "moderation_frame_count",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "mydancr_tv_videos",
+      "type": "int4"
+    },
+    {
+      "default": null,
+      "name": "moderation_model",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "mydancr_tv_videos",
+      "type": "text"
+    },
+    {
+      "default": "'{}'::jsonb",
+      "name": "moderation_details",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "mydancr_tv_videos",
+      "type": "jsonb"
+    },
+    {
+      "default": "0",
+      "name": "moderation_attempt_count",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "mydancr_tv_videos",
+      "type": "int4"
+    },
+    {
+      "default": null,
+      "name": "moderation_started_at",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "mydancr_tv_videos",
+      "type": "timestamptz"
+    },
+    {
+      "default": null,
+      "name": "moderation_completed_at",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "mydancr_tv_videos",
+      "type": "timestamptz"
+    },
+    {
+      "default": "'profile_and_feed'::text",
+      "name": "distribution_scope",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "mydancr_tv_videos",
+      "type": "text"
+    },
+    {
+      "default": "0",
+      "name": "like_count",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "mydancr_tv_videos",
+      "type": "int8"
+    },
+    {
+      "default": "false",
+      "name": "is_pinned",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "mydancr_tv_videos",
+      "type": "bool"
+    }
+  ],
+  "constraints": [
+    {
+      "definition": "FOREIGN KEY (admin_id) REFERENCES app_users(id) ON DELETE SET NULL",
+      "name": "admin_actions_admin_id_fkey",
+      "table": "admin_actions"
+    },
+    {
+      "definition": "PRIMARY KEY (id)",
+      "name": "admin_actions_pkey",
+      "table": "admin_actions"
+    },
+    {
+      "definition": "CHECK (((length(TRIM(BOTH FROM caption)) >= 1) AND (length(TRIM(BOTH FROM caption)) <= 500)))",
+      "name": "mydancr_tv_caption_check",
+      "table": "mydancr_tv_videos"
+    },
+    {
+      "definition": "CHECK ((((width >= 240) AND (width <= 4320)) AND ((height >= width) AND (height <= 7680))))",
+      "name": "mydancr_tv_dimensions_check",
+      "table": "mydancr_tv_videos"
+    },
+    {
+      "definition": "CHECK ((distribution_scope = ANY (ARRAY['profile_and_feed'::text, 'feed_only'::text])))",
+      "name": "mydancr_tv_distribution_scope_check",
+      "table": "mydancr_tv_videos"
+    },
+    {
+      "definition": "CHECK (((duration_seconds >= (1)::numeric) AND (duration_seconds <= (30)::numeric)))",
+      "name": "mydancr_tv_duration_check",
+      "table": "mydancr_tv_videos"
+    },
+    {
+      "definition": "CHECK (((file_size_bytes >= 1) AND (file_size_bytes <= 78643200)))",
+      "name": "mydancr_tv_file_size_check",
+      "table": "mydancr_tv_videos"
+    },
+    {
+      "definition": "CHECK (((moderation_attempt_count >= 0) AND (moderation_attempt_count <= 10)))",
+      "name": "mydancr_tv_moderation_attempt_count_check",
+      "table": "mydancr_tv_videos"
+    },
+    {
+      "definition": "CHECK (((moderation_decision IS NULL) OR (moderation_decision = ANY (ARRAY['approved'::text, 'review'::text, 'rejected'::text]))))",
+      "name": "mydancr_tv_moderation_decision_check",
+      "table": "mydancr_tv_videos"
+    },
+    {
+      "definition": "CHECK (((moderation_frame_count >= 0) AND (moderation_frame_count <= 10)))",
+      "name": "mydancr_tv_moderation_frame_count_check",
+      "table": "mydancr_tv_videos"
+    },
+    {
+      "definition": "CHECK ((status = ANY (ARRAY['uploading'::text, 'moderating'::text, 'submitted'::text, 'approved'::text, 'rejected'::text, 'hidden'::text, 'expired'::text])))",
+      "name": "mydancr_tv_status_check",
+      "table": "mydancr_tv_videos"
+    },
+    {
+      "definition": "CHECK ((storage_mime = ANY (ARRAY['video/mp4'::text, 'video/webm'::text, 'video/quicktime'::text])))",
+      "name": "mydancr_tv_storage_mime_check",
+      "table": "mydancr_tv_videos"
+    },
+    {
+      "definition": "CHECK ((venue_tag_status = ANY (ARRAY['unlinked'::text, 'pending'::text, 'confirmed'::text, 'rejected'::text])))",
+      "name": "mydancr_tv_venue_tag_status_check",
+      "table": "mydancr_tv_videos"
+    },
+    {
+      "definition": "FOREIGN KEY (dancer_id) REFERENCES dancer_profiles(id) ON DELETE CASCADE",
+      "name": "mydancr_tv_videos_dancer_id_fkey",
+      "table": "mydancr_tv_videos"
+    },
+    {
+      "definition": "CHECK ((like_count >= 0))",
+      "name": "mydancr_tv_videos_like_count_nonnegative",
+      "table": "mydancr_tv_videos"
+    },
+    {
+      "definition": "PRIMARY KEY (id)",
+      "name": "mydancr_tv_videos_pkey",
+      "table": "mydancr_tv_videos"
+    },
+    {
+      "definition": "FOREIGN KEY (reviewed_by) REFERENCES app_users(id) ON DELETE SET NULL",
+      "name": "mydancr_tv_videos_reviewed_by_fkey",
+      "table": "mydancr_tv_videos"
+    },
+    {
+      "definition": "FOREIGN KEY (shift_id) REFERENCES shifts(id) ON DELETE SET NULL",
+      "name": "mydancr_tv_videos_shift_id_fkey",
+      "table": "mydancr_tv_videos"
+    },
+    {
+      "definition": "UNIQUE (storage_path)",
+      "name": "mydancr_tv_videos_storage_path_key",
+      "table": "mydancr_tv_videos"
+    },
+    {
+      "definition": "FOREIGN KEY (submitted_by) REFERENCES app_users(id) ON DELETE CASCADE",
+      "name": "mydancr_tv_videos_submitted_by_fkey",
+      "table": "mydancr_tv_videos"
+    },
+    {
+      "definition": "FOREIGN KEY (venue_id) REFERENCES venues(id) ON DELETE SET NULL",
+      "name": "mydancr_tv_videos_venue_id_fkey",
+      "table": "mydancr_tv_videos"
+    }
+  ],
+  "counts": {
+    "actions": 168,
+    "users": 29,
+    "videos": 34
+  },
+  "enums": null,
+  "function_absent": true,
+  "indexes": [
+    {
+      "definition": "CREATE UNIQUE INDEX admin_actions_pkey ON public.admin_actions USING btree (id)",
+      "name": "admin_actions_pkey",
+      "ready": true,
+      "table": "admin_actions",
+      "valid": true
+    },
+    {
+      "definition": "CREATE INDEX mydancr_tv_dancer_created_idx ON public.mydancr_tv_videos USING btree (dancer_id, created_at DESC)",
+      "name": "mydancr_tv_dancer_created_idx",
+      "ready": true,
+      "table": "mydancr_tv_videos",
+      "valid": true
+    },
+    {
+      "definition": "CREATE INDEX mydancr_tv_profile_distribution_idx ON public.mydancr_tv_videos USING btree (dancer_id, created_at DESC) WHERE (distribution_scope = 'profile_and_feed'::text)",
+      "name": "mydancr_tv_profile_distribution_idx",
+      "ready": true,
+      "table": "mydancr_tv_videos",
+      "valid": true
+    },
+    {
+      "definition": "CREATE INDEX mydancr_tv_public_feed_idx ON public.mydancr_tv_videos USING btree (status, published_at DESC) WHERE (status = 'approved'::text)",
+      "name": "mydancr_tv_public_feed_idx",
+      "ready": true,
+      "table": "mydancr_tv_videos",
+      "valid": true
+    },
+    {
+      "definition": "CREATE INDEX mydancr_tv_review_queue_idx ON public.mydancr_tv_videos USING btree (status, submitted_at) WHERE (status = 'submitted'::text)",
+      "name": "mydancr_tv_review_queue_idx",
+      "ready": true,
+      "table": "mydancr_tv_videos",
+      "valid": true
+    },
+    {
+      "definition": "CREATE INDEX mydancr_tv_stale_moderation_idx ON public.mydancr_tv_videos USING btree (moderation_started_at) WHERE (status = 'moderating'::text)",
+      "name": "mydancr_tv_stale_moderation_idx",
+      "ready": true,
+      "table": "mydancr_tv_videos",
+      "valid": true
+    },
+    {
+      "definition": "CREATE INDEX mydancr_tv_venue_published_idx ON public.mydancr_tv_videos USING btree (venue_id, published_at DESC) WHERE ((status = 'approved'::text) AND (venue_tag_status = 'confirmed'::text))",
+      "name": "mydancr_tv_venue_published_idx",
+      "ready": true,
+      "table": "mydancr_tv_videos",
+      "valid": true
+    },
+    {
+      "definition": "CREATE UNIQUE INDEX mydancr_tv_videos_pkey ON public.mydancr_tv_videos USING btree (id)",
+      "name": "mydancr_tv_videos_pkey",
+      "ready": true,
+      "table": "mydancr_tv_videos",
+      "valid": true
+    },
+    {
+      "definition": "CREATE UNIQUE INDEX mydancr_tv_videos_storage_path_key ON public.mydancr_tv_videos USING btree (storage_path)",
+      "name": "mydancr_tv_videos_storage_path_key",
+      "ready": true,
+      "table": "mydancr_tv_videos",
+      "valid": true
+    }
+  ],
+  "policies": [
+    {
+      "cmd": "SELECT",
+      "permissive": "PERMISSIVE",
+      "policyname": "active admins read audit history",
+      "qual": "is_admin()",
+      "roles": [
+        "authenticated"
+      ],
+      "schemaname": "public",
+      "tablename": "admin_actions",
+      "with_check": null
+    },
+    {
+      "cmd": "ALL",
+      "permissive": "PERMISSIVE",
+      "policyname": "admins manage MyDancr TV videos",
+      "qual": "is_admin()",
+      "roles": [
+        "public"
+      ],
+      "schemaname": "public",
+      "tablename": "mydancr_tv_videos",
+      "with_check": "is_admin()"
+    },
+    {
+      "cmd": "SELECT",
+      "permissive": "PERMISSIVE",
+      "policyname": "dancers read own MyDancr TV videos",
+      "qual": "((submitted_by = auth.uid()) OR is_admin())",
+      "roles": [
+        "public"
+      ],
+      "schemaname": "public",
+      "tablename": "mydancr_tv_videos",
+      "with_check": null
+    },
+    {
+      "cmd": "SELECT",
+      "permissive": "PERMISSIVE",
+      "policyname": "public reads approved MyDancr TV videos",
+      "qual": "((status = 'approved'::text) AND ((duration_seconds >= (1)::numeric) AND (duration_seconds <= (30)::numeric)) AND (published_at IS NOT NULL) AND (published_at <= now()) AND ((expires_at IS NULL) OR (expires_at > now())) AND (EXISTS ( SELECT 1\n   FROM dancer_profiles dancer\n  WHERE ((dancer.id = mydancr_tv_videos.dancer_id) AND (dancer.status = 'approved'::dancer_status) AND (dancer.verification_status = 'approved'::review_status) AND (dancer.photo_review_status = 'approved'::review_status) AND (dancer.approved_at IS NOT NULL) AND (dancer.disabled_at IS NULL) AND (dancer.is_public = true)))))",
+      "roles": [
+        "public"
+      ],
+      "schemaname": "public",
+      "tablename": "mydancr_tv_videos",
+      "with_check": null
+    },
+    {
+      "cmd": "SELECT",
+      "permissive": "PERMISSIVE",
+      "policyname": "venue owners read tagged MyDancr TV videos",
+      "qual": "(EXISTS ( SELECT 1\n   FROM venues venue\n  WHERE ((venue.id = mydancr_tv_videos.venue_id) AND (venue.owner_user_id = auth.uid()))))",
+      "roles": [
+        "public"
+      ],
+      "schemaname": "public",
+      "tablename": "mydancr_tv_videos",
+      "with_check": null
+    }
+  ],
+  "read_only": "on",
+  "triggers": [
+    {
+      "definition": "CREATE TRIGGER record_mydancr_tv_review_decision AFTER UPDATE OF status ON public.mydancr_tv_videos FOR EACH ROW EXECUTE FUNCTION record_mydancr_tv_review_decision()",
+      "function_definition": "CREATE OR REPLACE FUNCTION public.record_mydancr_tv_review_decision()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\r\nbegin\r\n  if old.status in ('submitted', 'moderating')\r\n    and new.status in ('approved', 'rejected')\r\n    and new.status is distinct from old.status\r\n  then\r\n    insert into public.notifications (\r\n      recipient_id,\r\n      notification_type,\r\n      channel,\r\n      title,\r\n      body,\r\n      payload,\r\n      sent_at\r\n    )\r\n    values (\r\n      new.submitted_by,\r\n      'tv_video_status',\r\n      'in_app',\r\n      case\r\n        when new.status = 'approved' then 'MyDancr TV video approved'\r\n        else 'MyDancr TV video needs changes'\r\n      end,\r\n      case\r\n        when new.status = 'approved' then 'Your video is live on MyDancr TV.'\r\n        else coalesce(new.review_notes, 'Your video was not approved.')\r\n      end,\r\n      jsonb_build_object(\r\n        'videoId', new.id,\r\n        'status', new.status,\r\n        'moderationDecision', new.moderation_decision\r\n      ),\r\n      coalesce(new.reviewed_at, now())\r\n    );\r\n\r\n    insert into public.admin_actions (\r\n      admin_id,\r\n      target_type,\r\n      target_id,\r\n      action,\r\n      notes\r\n    )\r\n    values (\r\n      new.reviewed_by,\r\n      'mydancr_tv_video',\r\n      new.id,\r\n      case\r\n        when new.reviewed_by is null then 'ai_' || new.status\r\n        else new.status\r\n      end,\r\n      coalesce(\r\n        new.review_notes,\r\n        array_to_string(new.moderation_reason_codes, ', ')\r\n      )\r\n    );\r\n  end if;\r\n  return new;\r\nend;\r\n$function$\n",
+      "name": "record_mydancr_tv_review_decision",
+      "table": "mydancr_tv_videos"
+    },
+    {
+      "definition": "CREATE TRIGGER validate_mydancr_tv_video_links BEFORE INSERT OR UPDATE OF dancer_id, venue_id, shift_id, venue_tag_status, venue_featured ON public.mydancr_tv_videos FOR EACH ROW EXECUTE FUNCTION validate_mydancr_tv_video_links()",
+      "function_definition": "CREATE OR REPLACE FUNCTION public.validate_mydancr_tv_video_links()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\r\ndeclare\r\n  linked_shift public.shifts%rowtype;\r\n  link_changed boolean := false;\r\nbegin\r\n  if new.shift_id is not null then\r\n    select * into linked_shift from public.shifts where id = new.shift_id;\r\n    if linked_shift.id is null or linked_shift.dancer_id <> new.dancer_id then\r\n      raise exception 'The selected shift does not belong to this dancer.';\r\n    end if;\r\n    new.venue_id := linked_shift.venue_id;\r\n    if tg_op = 'INSERT' then\r\n      link_changed := true;\r\n    else\r\n      link_changed :=\r\n        old.shift_id is distinct from new.shift_id\r\n        or old.dancer_id is distinct from new.dancer_id\r\n        or old.venue_id is distinct from new.venue_id;\r\n    end if;\r\n    if link_changed then\r\n      new.venue_tag_status := case\r\n        when linked_shift.location_status in ('location_confirmed', 'club_confirmed')\r\n          then 'confirmed'\r\n        else 'pending'\r\n      end;\r\n      new.venue_featured := false;\r\n    end if;\r\n  elsif new.venue_id is null then\r\n    new.venue_tag_status := 'unlinked';\r\n    new.venue_featured := false;\r\n  elsif tg_op = 'INSERT' or old.venue_id is distinct from new.venue_id then\r\n    new.venue_tag_status := 'pending';\r\n    new.venue_featured := false;\r\n  end if;\r\n\r\n  if new.venue_tag_status <> 'confirmed' then\r\n    new.venue_featured := false;\r\n  end if;\r\n  new.updated_at := now();\r\n  return new;\r\nend;\r\n$function$\n",
+      "name": "validate_mydancr_tv_video_links",
+      "table": "mydancr_tv_videos"
+    }
+  ]
+}

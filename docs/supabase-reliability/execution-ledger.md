@@ -15,8 +15,8 @@ The user subsequently deferred disposable test-project setup and explicitly requ
 | 5 | RLS and cross-role access | Released and verified; hosted cross-account tests deferred | `5c63d1ef639c23344ced04178a68c8354231a599` pushed; exact Vercel success; health/readiness passed at 01:25 UTC on September 10; 3,667 tests, lint, build and TypeScript passed. Current policies and column permissions covered without weakening RLS. |
 | 6 | Authentication and password recovery | Released and verified; hosted account/mail tests deferred | `ca0e2c7d45582a04d55657a3ec30fcf82a98e0e7` pushed; exact Vercel success; health, served reset-client and readiness checks passed at 01:38 UTC on September 10; 3,671 tests, lint, build and TypeScript passed. |
 | 7 | User/profile provisioning | Released and verified; hosted signup tests deferred | `043d8d83e5cb878cf58f18bc913fb7065f6393fd` pushed; exact Vercel success; guarded SQL applied with data/access preserved; health/readiness passed at 02:06 UTC on September 10. 3,792 tests, lint, build and TypeScript passed. |
-| 8 | Query/error handling | TV, invoices, optional-auth and upload corrections released; moderation notifications in validation | See step-08-query-error-review.md and its focused follow-ups. Multi-write workflows and aggregate error findings remain open. |
-| 9 | Transactions/atomicity | Pending | |
+| 8 | Query/error handling | Controlled corrections released and verified | See step-08-query-error-review.md and the release entries below. Multi-write workflows and diagnostics remain in their named later steps. |
+| 9 | Transactions/atomicity | In progress; controlled transaction foundations and callers released | Redemption, NFC support, counter notices, social saves and administrator decisions are deployed; import finalization is in validation. See individual releases below. |
 | 10 | Indexes/query performance | Pending | |
 | 11 | Storage security/reliability | Pending | |
 | 12 | Realtime lifecycle | Pending; no active subscriptions in baseline | |
@@ -368,3 +368,11 @@ The whole-profile caller was pushed as `a08f680c8a884c88592ad75612c9c00becf50749
 The inspected plan is `step-09-import-preservation.md`. Block bulk replacement before it deletes existing media, retain prepared files/records after uncertain results, require marker/audit acknowledgments, and route asynchronous errors through the safe response policy. Forty focused checks pass, including 32 new stateful endpoint failure tests. Full validation and exact deployment/health gates remain required. Safe staged replacement, batch claims/resume and video deletion lifecycle remain separate work.
 
 All 4,761 automated tests, lint, build, standalone TypeScript, migration guard and thirty live readiness checks passed. Read-only inspection confirmed target RLS, the retained profile-review function and aggregate video/import/audit counts. No migration or production import/deletion was performed. Exact push, Vercel success and deployed health remain required.
+
+The preservation fix was pushed as `d27b110034a422decd745dbcc082e83dc10c228a`, with matching main references and successful [exact Vercel deployment](https://vercel.com/ai-movie-jobs/shiftstage/FiJeoa7TikX6PiyqvKMvp9bYyeo1). Health, protected import/administrator/account routes and thirty readiness checks passed at 07:37:11–17 UTC. No production import or media deletion was used as a test.
+
+## Step 9 import finalization: additive transaction
+
+The inspected plan is `step-09-import-finalization.md`. Add an unused version-checked transaction for a private batch note and its audit receipt, with safe identical replay. Preserve all other video fields and existing triggers, publication, notifications and media bytes. Sixty-two new native database checks and the guarded deployment transaction/repeat/schema-drift rehearsals pass. Full release validation and exact application/deployment/health gates remain required before switching the caller.
+
+Full validation passed all 4,823 automated tests, lint, production build, standalone TypeScript, migration guard and thirty readiness checks. Exact push, committed additive SQL application, read-only preservation/security checks and Vercel/health gates remain required. The application still uses its existing caller until that separate release.
