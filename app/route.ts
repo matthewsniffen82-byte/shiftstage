@@ -4,6 +4,7 @@ import path from "node:path";
 import { myDancrPreviewBannerHtml } from "./components/MyDancrPreviewBanner";
 
 import { LIVE_SHELL_SHA256 } from "../src/generated/live-shell-version";
+import { LIVE_SHELL_SCRIPT_SHA256 } from "../src/generated/live-shell-script-version.mjs";
 import {
   createActiveEditProfileScript,
   createRootContentSecurityPolicy,
@@ -42,9 +43,10 @@ export async function GET() {
   ]);
   const normalizedHtml = html.replace(/\r\n?/g, "\n");
   const liveShellSha256 = createHash("sha256").update(normalizedHtml).digest("hex");
+  const scriptVersion = process.env.NODE_ENV === "production" ? LIVE_SHELL_SCRIPT_SHA256 : liveShellSha256;
   const withExternalAppScript = externalizeLiveShellAppScript(
     normalizedHtml,
-    `/live-shell.js?v=${liveShellSha256}`,
+    `/live-shell.js?v=${scriptVersion}`,
   );
   // Development keeps live CSS edits visible without rebuilding the artifact.
   const withCompactStyles = compactStyles
@@ -74,6 +76,7 @@ export async function GET() {
       "content-security-policy": contentSecurityPolicy,
       "x-dancr-live-shell-version": liveShellSha256,
       "x-dancr-live-shell-build-version": LIVE_SHELL_SHA256,
+      "x-dancr-live-shell-script-version": scriptVersion,
     },
   });
 }

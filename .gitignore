@@ -12,6 +12,7 @@ Thumbs.db
 tmp/pdfs/
 .platform-tv-import-*.json
 /public/outputs/live-shell.css
+/outputs/live-shell-app.js
 .env.local
 .env*
 !.env.example

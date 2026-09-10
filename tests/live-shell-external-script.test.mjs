@@ -25,7 +25,7 @@ test("the large home application script is cacheable and no longer blocks HTML p
 });
 
 test("the versioned production application script receives an immutable cache policy", () => {
-  assert.match(scriptRoute, /requestedVersion === LIVE_SHELL_SHA256/);
+  assert.match(scriptRoute, /requestedVersion === scriptVersion/);
   assert.match(scriptRoute, /public, max-age=31536000, immutable/);
   assert.match(scriptRoute, /application\/javascript; charset=utf-8/);
 });
