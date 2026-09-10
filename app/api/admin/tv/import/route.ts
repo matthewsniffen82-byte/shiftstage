@@ -3,14 +3,9 @@ import { NextResponse } from "next/server";
 import { apiError, PublicApiError } from "@/src/lib/api";
 import { readBoundedJsonObject } from "@/src/lib/bounded-json-body";
 import { requireAdmin } from "@/src/lib/dancr/admin";
-import {
-  MYDANCR_TV_POSTER_BUCKET,
-  myDancrTvPosterStoragePath,
-} from "@/src/lib/dancr/media-watermark";
+import { safeErrorMetadata } from "@/src/lib/security/safe-error-metadata";
 import {
   createMyDancrTvUpload,
-  hideOwnMyDancrTvVideo,
-  MYDANCR_TV_BUCKET,
   MYDANCR_TV_MAX_BYTES,
   MYDANCR_TV_MAX_DURATION_SECONDS,
   MYDANCR_TV_MIME_TYPES,
@@ -19,7 +14,6 @@ import {
   publishPlatformMyDancrTvUpload,
   retryMyDancrTvAutomatedModeration,
   reviewMyDancrTvVideo,
-  submitMyDancrTvUpload,
 } from "@/src/lib/dancr/tv";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
@@ -58,8 +52,8 @@ export async function POST(request: Request) {
       tooLargeMessage: "Import request is too large.",
     });
     const action = body?.action;
-    if (action === "prepare") return prepareImport(body, user.id);
-    if (action === "finalize") return finalizeImport(body, user.id);
+    if (action === "prepare") return await prepareImport(body, user.id);
+    if (action === "finalize") return await finalizeImport(body, user.id);
     return NextResponse.json({ ok: false, error: "Choose a supported import action." }, { status: 400 });
   } catch (error) {
     return apiError(error, "Unable to import MyDancr TV media.");
@@ -70,7 +64,9 @@ async function prepareImport(body: any, adminId: string) {
   const dancerSlug = cleanSlug(body?.dancerSlug);
   const batchId = cleanBatchId(body?.batchId);
   const videos = parseVideos(body?.videos);
-  const replaceExisting = body?.replaceExisting === true;
+  if (body?.replaceExisting === true) {
+    throw invalid("Bulk replacement is unavailable because it cannot safely preserve existing videos. Prepare an append-only batch instead.", 409);
+  }
   const admin = createAdminSupabaseClient();
 
   const { data: dancer, error: dancerError } = await admin
@@ -88,7 +84,10 @@ async function prepareImport(body: any, adminId: string) {
     .eq("dancer_id", dancer.id)
     .like("review_notes", `${markerPrefix}%`);
   if (batchError) throw batchError;
-  if (Number(existingBatchCount || 0) > 0) {
+  if (!Number.isSafeInteger(existingBatchCount) || Number(existingBatchCount) < 0) {
+    throw new PublicApiError("UNAVAILABLE", "The import batch could not be checked. Try again when the service is available.", 503);
+  }
+  if (Number(existingBatchCount) > 0) {
     throw invalid("This import batch has already been prepared.", 409);
   }
 
@@ -99,18 +98,13 @@ async function prepareImport(body: any, adminId: string) {
     .eq("distribution_scope", "profile_and_feed")
     .in("status", [...MYDANCR_TV_PROFILE_SLOT_STATUSES]);
   if (activeError) throw activeError;
-  const activeCount = activeVideos?.length || 0;
+  if (!Array.isArray(activeVideos)) throw new PublicApiError("UNAVAILABLE", "The current video library could not be checked.", 503);
+  const activeCount = activeVideos.length;
   const requestedProfileVideoCount = videos.filter(
     (video) => video.distributionScope === "profile_and_feed",
   ).length;
-  if (!replaceExisting && activeCount + requestedProfileVideoCount > MYDANCR_TV_PROFILE_VIDEO_LIMIT) {
-    throw invalid(`This profile has ${activeCount} occupied video slots; replace existing videos or reduce this batch.`, 409);
-  }
-
-  if (replaceExisting) {
-    for (const video of activeVideos || []) {
-      await hideOwnMyDancrTvVideo(admin, dancer.user_id, video.id);
-    }
+  if (activeCount + requestedProfileVideoCount > MYDANCR_TV_PROFILE_VIDEO_LIMIT) {
+    throw invalid(`This profile has ${activeCount} occupied video slots. Reduce this batch to fit the available slots.`, 409);
   }
 
   const prepared: PreparedUpload[] = [];
@@ -127,31 +121,41 @@ async function prepareImport(body: any, adminId: string) {
         rightsConfirmed: true,
         distributionScope: video.distributionScope,
       });
-      const { error: markerError } = await admin
+      if (!upload || !UUID_PATTERN.test(upload.videoId) || typeof upload.token !== "string" || !upload.token
+        || upload.path !== `${dancer.user_id}/${dancer.id}/${upload.videoId}.${video.mimeType === "video/webm" ? "webm" : "mp4"}`) {
+        throw new PublicApiError("UNAVAILABLE", "The prepared upload could not be confirmed.", 503);
+      }
+      prepared.push(upload);
+      const marker = `${markerPrefix}${index + 1}`;
+      const { data: marked, error: markerError } = await admin
         .from("mydancr_tv_videos")
         .update({
-          review_notes: `${markerPrefix}${index + 1}`,
+          review_notes: marker,
         })
         .eq("id", upload.videoId)
-        .eq("submitted_by", dancer.user_id);
+        .eq("submitted_by", dancer.user_id)
+        .eq("status", "uploading")
+        .select("id, submitted_by, status, review_notes")
+        .single();
       if (markerError) throw markerError;
-      prepared.push(upload);
+      if (marked?.id !== upload.videoId || marked.submitted_by !== dancer.user_id || marked.status !== "uploading" || marked.review_notes !== marker) {
+        throw new PublicApiError("UNAVAILABLE", "The import marker could not be confirmed.", 503);
+      }
     }
+    const { data: audit, error: auditError } = await admin.from("admin_actions").insert({
+      admin_id: adminId,
+      target_type: "dancer_profile",
+      target_id: dancer.id,
+      action: "prepare_platform_tv_import",
+      notes: `Batch ${batchId}; ${prepared.length} video(s); replaced 0`,
+    }).select("id").single();
+    if (auditError) throw auditError;
+    if (!audit?.id) throw new PublicApiError("UNAVAILABLE", "The import audit could not be confirmed.", 503);
   } catch (error) {
-    await cleanupPreparedUploads(admin, prepared);
-    throw error;
-  }
-
-  const { error: auditError } = await admin.from("admin_actions").insert({
-    admin_id: adminId,
-    target_type: "dancer_profile",
-    target_id: dancer.id,
-    action: "prepare_platform_tv_import",
-    notes: `Batch ${batchId}; ${prepared.length} video(s); replaced ${replaceExisting ? activeCount : 0}`,
-  });
-  if (auditError) {
-    await cleanupPreparedUploads(admin, prepared);
-    throw auditError;
+    console.warn("PLATFORM_IMPORT_PREPARATION_UNCONFIRMED", {
+      batchId, dancerId: dancer.id, preparedVideoIds: prepared.map(upload => upload.videoId), ...safeErrorMetadata(error),
+    });
+    throw new PublicApiError("UNAVAILABLE", "Import preparation could not be confirmed. Uploads were kept; review this batch before retrying.", 503);
   }
 
   console.info(JSON.stringify({
@@ -159,7 +163,7 @@ async function prepareImport(body: any, adminId: string) {
     adminId,
     batchId,
     dancerId: dancer.id,
-    replacedCount: replaceExisting ? activeCount : 0,
+    replacedCount: 0,
     videoCount: prepared.length,
   }));
 
@@ -167,7 +171,7 @@ async function prepareImport(body: any, adminId: string) {
     ok: true,
     batchId,
     dancer: { id: dancer.id, slug: dancer.slug, stageName: dancer.stage_name },
-    replacedCount: replaceExisting ? activeCount : 0,
+    replacedCount: 0,
     uploads: prepared,
     publicSupabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL,
     publicSupabaseAnonKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
@@ -267,16 +271,6 @@ function parseVideos(value: unknown): ImportVideoInput[] {
     }
     return video;
   });
-}
-
-async function cleanupPreparedUploads(admin: ReturnType<typeof createAdminSupabaseClient>, prepared: PreparedUpload[]) {
-  if (!prepared.length) return;
-  const paths = prepared.map((upload) => upload.path);
-  const posterPaths = prepared.map((upload) => myDancrTvPosterStoragePath(upload.path));
-  const ids = prepared.map((upload) => upload.videoId);
-  await admin.storage.from(MYDANCR_TV_BUCKET).remove(paths).catch(() => null);
-  await admin.storage.from(MYDANCR_TV_POSTER_BUCKET).remove(posterPaths).catch(() => null);
-  await admin.from("mydancr_tv_videos").delete().in("id", ids);
 }
 
 function authorizeImportRequest(request: Request) {

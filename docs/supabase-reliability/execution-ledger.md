@@ -360,3 +360,11 @@ The foundation was pushed as `7a539275d90e9d506c131c60761f4b725f52f3e3` and exac
 The inspected plan is `step-09-profile-decision-caller.md`. Keep applied SQL frozen and connect administrator responses, endpoint and UI to the loaded profile version and checked atomic result. Preserve saved decisions when optional notification work fails. All 171 focused checks pass, including 47 new mapper, endpoint, helper and UI cases. Full validation and exact deployment/health gates remain required.
 
 All 4,729 automated tests passed after updating one obsolete source assertion, with lint, build, standalone TypeScript, migration guard and thirty readiness checks. Read-only verification retained frozen hashes, permissions and aggregate data counts. No migration was reapplied or production decision/notification sent. Exact push, Vercel success and deployed health remain required.
+
+The whole-profile caller was pushed as `a08f680c8a884c88592ad75612c9c00becf50749`, with matching main references and successful [exact Vercel deployment](https://vercel.com/ai-movie-jobs/shiftstage/B6fRRMaVjpfKocw7Un2iKSaU6WLr). Health, protected administrator/account routes, RPC exposure and thirty readiness checks passed at 07:24:49–53 UTC. No production decision or notification was used as a test.
+
+## Step 9 administrator import preservation
+
+The inspected plan is `step-09-import-preservation.md`. Block bulk replacement before it deletes existing media, retain prepared files/records after uncertain results, require marker/audit acknowledgments, and route asynchronous errors through the safe response policy. Forty focused checks pass, including 32 new stateful endpoint failure tests. Full validation and exact deployment/health gates remain required. Safe staged replacement, batch claims/resume and video deletion lifecycle remain separate work.
+
+All 4,761 automated tests, lint, build, standalone TypeScript, migration guard and thirty live readiness checks passed. Read-only inspection confirmed target RLS, the retained profile-review function and aggregate video/import/audit counts. No migration or production import/deletion was performed. Exact push, Vercel success and deployed health remain required.

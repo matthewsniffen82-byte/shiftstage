@@ -36,14 +36,15 @@ test("platform TV imports use the production upload and watermark pipeline with 
   assert.match(tv, /watermarkStoredVideo/);
 });
 
-test("platform TV replacement and import batches are bounded and idempotent", () => {
+test("platform TV imports are bounded and unsafe bulk replacement is blocked", () => {
   assert.match(route, /MYDANCR_TV_PROFILE_VIDEO_LIMIT/);
   assert.match(route, /PLATFORM_IMPORT_BATCH_LIMIT = 30/);
   assert.match(route, /distributionScope === "profile_and_feed"/);
-  assert.match(route, /hideOwnMyDancrTvVideo/);
+  assert.match(route, /Bulk replacement is unavailable/);
+  assert.doesNotMatch(route, /hideOwnMyDancrTvVideo/);
   assert.match(route, /platform-import:/);
   assert.match(route, /already been prepared/);
-  assert.match(route, /cleanupPreparedUploads/);
+  assert.doesNotMatch(route, /cleanupPreparedUploads|\.delete\(\)|\.remove\(/);
   assert.match(route, /const MAX_IMPORT_BODY_BYTES = 32_768/);
   assert.match(route, /readBoundedJsonObject\(request, \{/);
   assert.match(route, /maxBytes: MAX_IMPORT_BODY_BYTES/);
@@ -58,7 +59,8 @@ test("platform TV import exposes only typed operator errors", () => {
 });
 
 test("platform import bookkeeping never becomes a public video caption", () => {
-  assert.match(route, /review_notes: `\$\{markerPrefix\}/);
+  assert.match(route, /const marker = `\$\{markerPrefix\}/);
+  assert.match(route, /review_notes: marker/);
   assert.doesNotMatch(route, /caption:/);
 });
 
