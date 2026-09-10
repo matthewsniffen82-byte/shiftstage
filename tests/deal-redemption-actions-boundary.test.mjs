@@ -36,8 +36,8 @@ test("cashier confirmation keeps its atomic NFC and attribution payload", () => 
 });
 
 test("engagement events remain rate-limited, non-paying lifecycle records", () => {
-  assert.match(actions, /const column = eventType === "saved"/);
-  assert.match(actions, /from\("qr_redemption_events"\)\.insert/);
+  assert.match(actions, /rpc\("record_deal_lifecycle_event_safely"/);
+  assert.doesNotMatch(actions, /from\("qr_redemption_events"\)\.insert|const column = eventType/);
   assert.doesNotMatch(actions.match(/export async function recordDealRedemptionEvent[\s\S]*?(?=\nfunction issuedDealSnapshot)/)?.[0] || "", /commission_events|deal_revenue_events/);
   assert.match(eventRoute, /enforceEventRateLimit\(admin, request, token, eventType\)/);
 });

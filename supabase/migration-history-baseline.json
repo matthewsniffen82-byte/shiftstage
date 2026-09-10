@@ -559,6 +559,10 @@
     {
       "file": "20260910014900_preserve_existing_account_profiles.sql",
       "sha256": "4d7cf6a56c61b11554f866ef724c75f2f6cef93cf69864876a2eedc1e22d00e2"
+    },
+    {
+      "file": "20260910041000_add_atomic_redemption_lifecycle_events.sql",
+      "sha256": "83696ad4b3ee6491af025bfb0c43605a8a398488d8a43c43a7cd640121afc9fd"
     }
   ]
 }

@@ -77,41 +77,24 @@ export async function recordDealRedemptionEvent(
   request: Request,
   input?: { actorUserId?: string | null; sessionId?: string | null },
 ) {
-  const db = client as any;
-  const { data: redemption, error: redemptionError } = await db
-    .from("qr_redemptions")
-    .select("id, status")
-    .eq("redemption_token", token)
-    .maybeSingle();
-  if (redemptionError) throw redemptionError;
-  if (!redemption) return null;
-
   const audit = readRequestAudit(request);
-  const column = eventType === "saved"
-    ? "saved_at"
-    : eventType === "shared"
-      ? "shared_at"
-      : "first_scanned_at";
-  const now = new Date().toISOString();
-
-  await db
-    .from("qr_redemptions")
-    .update({ [column]: now })
-    .eq("id", redemption.id)
-    .is(column, null);
-
-  const { error } = await db.from("qr_redemption_events").insert({
-    qr_redemption_id: redemption.id,
-    event_type: eventType,
-    actor_user_id: input?.actorUserId || null,
-    session_id: input?.sessionId || null,
-    ip_address: audit.ipAddress,
-    user_agent: audit.userAgent,
-    audit: { device_fingerprint: audit.deviceFingerprint },
+  const { data, error } = await (client as any).rpc("record_deal_lifecycle_event_safely", {
+    p_token: token,
+    p_event_type: eventType,
+    p_actor_user_id: input?.actorUserId || null,
+    p_session_id: input?.sessionId || null,
+    p_ip_address: audit.ipAddress,
+    p_user_agent: audit.userAgent,
+    p_device_fingerprint: audit.deviceFingerprint,
   });
   if (error) throw error;
-
-  return { id: redemption.id, eventType, status: redemption.status };
+  if (data === null) return null;
+  if (!data || typeof data.id !== "string"
+    || !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(data.id)
+    || data.eventType !== eventType || !["generated", "redeemed", "expired", "voided"].includes(data.status)) {
+    throw new Error("QR activity could not be confirmed.");
+  }
+  return { id: data.id, eventType, status: data.status };
 }
 
 function issuedDealSnapshot(

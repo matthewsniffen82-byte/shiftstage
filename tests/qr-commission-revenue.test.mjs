@@ -126,7 +126,7 @@ test("save, share, scan, and confirmation have durable lifecycle events without 
   const lifecycleFunction = dealRedemptionActions.match(
     /export async function recordDealRedemptionEvent\([\s\S]*?(?=\nfunction issuedDealSnapshot)/,
   )?.[0] || "";
-  assert.match(lifecycleFunction, /eventType === "saved"/);
+  assert.match(lifecycleFunction, /rpc\("record_deal_lifecycle_event_safely"/);
   assert.doesNotMatch(lifecycleFunction, /commission_events|deal_revenue_events/);
 });
 
