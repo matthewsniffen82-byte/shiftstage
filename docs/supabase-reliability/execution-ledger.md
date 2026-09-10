@@ -320,3 +320,11 @@ The foundation was pushed as `3c8571816c4d80f7692c39bde8a7d78c00d2fb7f` and appl
 The inspected plan is `step-09-social-caller.md`. Keep the deployed SQL frozen and replace separate social writes with one checked RPC, preserving canonicalization, ownership and unrelated profile behavior. Full validation and exact deployment/health gates are required.
 
 All 96 focused checks passed, including 42 new actual-helper/native-RPC cases. Full validation passed 4,519 tests, lint, build, standalone TypeScript, migration guard and thirty live readiness checks. Read-only verification retained the exact deployed function/queue/ledger hashes and permissions. No migration was reapplied and no production profile was changed. Exact push, Vercel success and production health remain required.
+
+The social caller was pushed as `e0fcd3437cfef53af6c78db081e1cff6f1ae669f`, with matching main references and successful [exact Vercel deployment](https://vercel.com/ai-movie-jobs/shiftstage/H16v37vVgTsA9bvcQfgZzNBC5dKf). Both health routes, protected profile/account/admin denials, RPC exposure and thirty readiness checks passed at 06:01:37–39 UTC. No production social save was used as a test.
+
+## Step 9 administrator content decisions: additive function
+
+The inspected plan is `step-09-content-decisions.md`. Add an unused service-only transaction that checks the administrator's expected target/review snapshot and commits the decision, photo summary and audit together. Preserve completed history and existing publication, account and media-position rules. Verify the database release before replacing callers.
+
+All 54 new PostgreSQL cases and all 4,573 automated tests passed, with lint, build, standalone TypeScript, migration guard and thirty readiness checks. The deployment wrapper passed transaction, repeated-version and schema-drift rejection rehearsals. Exact push, committed SQL application, read-only preservation/permissions and Vercel/health gates remain required.
