@@ -10,7 +10,7 @@ Only the exact server-generated upload name is accepted: `<user UUID>/<profile U
 
 Before selecting a copy, it checks all other moderation-record temporary paths, all moderation final paths, gallery paths and avatar paths for references, without restricting those reference checks to the selected owner or review status. The moderation temporary, moderation review and original-media buckets must still be private. Public photos, responsive derivatives and archived originals are never deletion targets. No SQL row or policy is changed.
 
-This is a recovery operation for known completed approvals, not a general historical orphan purge. Unattributed public or archived files still need a durable provenance/retirement design before they can be deleted safely. An absent current reference alone does not establish that an in-flight publisher will not reference such a file later.
+This is a recovery operation for known completed approvals, not a general historical orphan purge. Unattributed public or archived files still need a durable provenance/retirement design before they can be deleted safely. An absent current reference alone does not establish that an in-flight publisher will not reference such a file later. Use the [read-only gallery storage audit](gallery-storage-audit.md) to inventory one verified profile's public files and originals without deleting them.
 
 ## Dry run and pagination
 

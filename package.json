@@ -48,6 +48,7 @@
     "media:backfill-watermarks": "node scripts/backfill-public-media-watermarks.mjs",
     "media:backfill-video-posters": "node scripts/backfill-video-posters.mjs",
     "media:reconcile-gallery-sources": "node scripts/reconcile-gallery-sources.mjs",
+    "media:audit-gallery-storage": "node scripts/audit-gallery-storage.mjs",
     "media:import-platform-tv": "node scripts/import-platform-tv-videos.mjs",
     "pretypecheck": "npm run generate:live-shell-version && npm run generate:live-shell-styles && npm run generate:static-asset-versions",
     "typecheck": "node --test tests/*.test.mjs && tsc --noEmit --incremental false",
