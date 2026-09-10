@@ -7,6 +7,7 @@ import { getServerEnv } from "../server-env";
 import { safeErrorMetadata } from "../security/safe-error-metadata";
 import { PublicApiError } from "../api-error-policy";
 import { tryRetireGalleryStorageFiles } from "./gallery-storage-retirement";
+import { requireStorageUploadReceipt } from "./storage-upload-receipt";
 import {
   isAvatarFaceRequiredError,
   prepareFaceCenteredAvatar,
@@ -992,15 +993,17 @@ async function occupiedDancerPhotoSlots(
 }
 
 async function uploadPrivateObject(client: DancrClient, bucket: string, path: string, image: ValidatedDancrImage) {
-  const { error } = await client.storage.from(bucket).upload(path, image.buffer, { contentType: image.contentType, upsert: false });
+  const { data, error } = await client.storage.from(bucket).upload(path, image.buffer, { contentType: image.contentType, upsert: false });
   if (error) throw error;
+  requireStorageUploadReceipt(data, bucket, path);
 }
 
 async function copyPrivateModerationObject(client: DancrClient, fromBucket: string, fromPath: string, toBucket: string, toPath: string, contentType: string) {
   const { data, error } = await client.storage.from(fromBucket).download(fromPath);
   if (error || !data) throw error || new Error("Unable to read private moderation object.");
-  const { error: uploadError } = await client.storage.from(toBucket).upload(toPath, data, { contentType, upsert: false });
+  const { data: uploaded, error: uploadError } = await client.storage.from(toBucket).upload(toPath, data, { contentType, upsert: false });
   if (uploadError) throw uploadError;
+  requireStorageUploadReceipt(uploaded, toBucket, toPath);
   // Retain the source until the record points to the copy with a confirmed versioned write.
 }
 

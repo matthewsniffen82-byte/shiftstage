@@ -560,3 +560,13 @@ The inspected plan is `step-11-venue-media-deletion.md`. Prevent stale admin del
 All 107 focused actual-module/native venue cases pass, including 42 new deletion cases. They cover stale paths, full-precision timestamps, concurrent uploads into empty slots, lost acknowledgments, malformed responses and preservation on mapping failures. Full validation and exact commit/push/deployment/preservation gates remain required.
 
 Full validation passed all 5,745 tests, lint, production build, standalone TypeScript, migration guard and thirty readiness checks. Twenty-four deletion cases fail against the preceding implementation. Read-only preservation at 14:23:24 UTC confirms unchanged source/history rows, zero markers, venues, 452 storage objects, buckets, policies, functions and 113 ledger entries. No production image mutation or migration was performed. Exact commit/push and deployment/health remain required.
+
+Venue deletion correction `c659ec3c8c0574ff2a536b7ef3fac784980623d1` was pushed with matching main references and successful [exact Vercel deployment](https://vercel.com/ai-movie-jobs/shiftstage/HNB6smjAUBdn8H2CbiiTi46xx7h6). Health, unauthorized venue/media rejection and thirty readiness checks passed at 14:27:13–18 UTC. Read-only fingerprints again preserved all source/history rows, zero markers, venues, 452 storage objects, buckets, policies, functions and 113 ledger entries. No production image deletion was used as a test.
+
+## Step 11 private moderation upload acknowledgments
+
+The inspected plan is `step-11-private-upload-acknowledgments.md`. Require exact storage receipts for the first private upload and its review-bucket copy before creating or moving moderation metadata. Preserve uncertain uploads and the versioned source-retention order. No schema, bucket or access change is planned.
+
+The actual initial/review/retry flow has 27 new cases, including seventeen failures against the preceding implementation. Existing generic worker errors use their bounded retry state; the tests preserve that behavior while requiring the original source and database pointer to survive an unconfirmed copy. Full validation and exact commit/push/deployment/preservation gates remain required.
+
+All 117 focused cases and all 5,772 full-suite tests pass, together with lint, production build, standalone TypeScript, migration guard and thirty readiness checks. Read-only preservation at 14:32:58 UTC confirmed unchanged source/history rows, zero markers, venues, 452 storage objects, buckets, policies, functions and 113 ledger entries. No production file upload or deletion, schema change or provider moderation call was used as a test. Exact push/deployment/health remain required.
