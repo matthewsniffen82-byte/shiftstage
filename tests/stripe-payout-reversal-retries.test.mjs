@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
+import {execFileSync} from 'node:child_process';
 import vm from 'node:vm';
 import test, {before, beforeEach, after} from 'node:test';
 import ts from 'typescript';
@@ -9,7 +10,9 @@ import {readBoundedRequestBytes} from '../src/lib/bounded-json-body.ts';
 import {resolveApiError} from '../src/lib/api-error-policy.ts';
 import {safeErrorMetadata} from '../src/lib/security/safe-error-metadata.ts';
 
-const read = path => readFileSync(new URL(path, import.meta.url), 'utf8');
+const read = path => path==='../src/lib/dancr/finance-provider-events.ts'&&process.env.MYDANCR_PAID_RECOVERY_CALLER_BASELINE==='1'
+  ? execFileSync('git',['show','f61aa2bbbede15453af95fb360e54bbd0d636057:src/lib/dancr/finance-provider-events.ts'],{encoding:'utf8',windowsHide:true})
+  : readFileSync(new URL(path, import.meta.url), 'utf8');
 const id = '00000000-0000-4000-8000-000000000001';
 const otherId = '00000000-0000-4000-8000-000000000002';
 const transferId = 'tr_reversal_synthetic';
@@ -21,13 +24,15 @@ before(async () => {
   pg = new PGlite();
   await pg.exec([
     'create role anon; create role authenticated; create role service_role bypassrls;',
-    "create table public.dancer_payout_batches(id uuid primary key, status text not null, payment_provider text not null default 'stripe', provider_reference_id text unique, external_reference text, paid_at timestamptz, failed_at timestamptz, canceled_at timestamptz, failure_message text, updated_at timestamptz not null);",
-    "create table public.commission_events(id uuid primary key, payout_batch_id uuid, status text not null, paid_at timestamptz, payment_provider text, metadata jsonb not null default '{}', recovery_required boolean not null default false, review_flag text);",
-    'create table public.financial_audit_events(actor_type text, action text, target_type text, target_id text, after_state jsonb, reason text, metadata jsonb);',
+    "create table public.dancer_payout_batches(id uuid primary key, dancer_id uuid not null, currency text not null default 'usd', amount_cents integer not null default 1000, status text not null, payment_provider text not null default 'stripe', provider_reference_id text unique, external_reference text, paid_at timestamptz, failed_at timestamptz, canceled_at timestamptz, failure_message text, updated_at timestamptz not null);",
+    "create table public.commission_events(id uuid primary key, dancer_id uuid not null, currency text not null default 'usd', amount_cents integer not null default 1000, payout_batch_id uuid, status text not null, paid_at timestamptz, payment_provider text, metadata jsonb not null default '{}', recovery_required boolean not null default false, review_flag text);",
+    'create table public.dancer_payout_items(id uuid primary key default gen_random_uuid(), payout_batch_id uuid not null, commission_event_id uuid not null, amount_cents integer not null);',
+    'create table public.financial_audit_events(id bigint generated always as identity primary key, actor_type text, action text, target_type text, target_id text, after_state jsonb, reason text, metadata jsonb);',
     'alter table public.dancer_payout_batches enable row level security;',
     'alter table public.commission_events enable row level security;',
     'alter table public.financial_audit_events enable row level security;',
-    'grant all on public.dancer_payout_batches, public.commission_events, public.financial_audit_events to service_role;',
+    'alter table public.dancer_payout_items enable row level security;',
+    'grant all on public.dancer_payout_batches, public.dancer_payout_items, public.commission_events, public.financial_audit_events to service_role; grant all on all sequences in schema public to service_role;',
   ].join('\n'));
   for (const [file, signature] of [
     ['stripe-payout-release.sql', 'release_dancer_payout_batch(uuid,text,text)'],
@@ -36,13 +41,17 @@ before(async () => {
     await pg.exec(read('./fixtures/' + file).replace(/\r\n/g, '\n'));
     await pg.exec('revoke all on function public.' + signature + ' from public,anon,authenticated; grant execute on function public.' + signature + ' to service_role;');
   }
+  // This signed-webhook harness uses explicit table projections. Full captured
+  // financial schema/trigger coverage is in paid-payout-recovery-postgres.test.mjs.
+  await pg.exec(read('../supabase/migrations/20260910160000_add_atomic_paid_payout_recovery.sql').replace(/\r\n/g,'\n'));
 });
 after(async () => pg?.close());
 beforeEach(async () => {
-  await pg.exec('reset role; truncate public.dancer_payout_batches, public.commission_events, public.financial_audit_events; set role service_role');
+  await pg.exec('reset role; drop trigger if exists synthetic_audit_failure on financial_audit_events; truncate public.dancer_payout_batches, public.dancer_payout_items, public.commission_events, public.financial_audit_events restart identity; set role service_role');
   for (const [key, ref] of [[id, transferId], [otherId, 'tr_unrelated']]) {
-    await pg.query("insert into public.dancer_payout_batches(id,status,provider_reference_id,updated_at) values($1,'processing',$2,$3)", [key,ref,initialTime]);
-    await pg.query("insert into public.commission_events(id,payout_batch_id,status,payment_provider,metadata) values($1,$1,'payout_processing','stripe','{\"existing\":true}')", [key]);
+    await pg.query("insert into public.dancer_payout_batches(id,dancer_id,status,provider_reference_id,updated_at) values($1,$1,'processing',$2,$3)", [key,ref,initialTime]);
+    await pg.query("insert into public.commission_events(id,dancer_id,payout_batch_id,status,payment_provider,metadata) values($1,$1,$1,'payout_processing','stripe','{\"existing\":true}')", [key]);
+    await pg.query('insert into public.dancer_payout_items(payout_batch_id,commission_event_id,amount_cents) values($1,$1,1000)',[key]);
   }
 });
 async function release(payoutId = id, status = 'failed') {
@@ -50,6 +59,9 @@ async function release(payoutId = id, status = 'failed') {
 }
 async function complete(payoutId = id, reference = transferId) {
   return (await pg.query('select public.complete_dancer_payout_batch($1,$2,$3) result', [payoutId,reference,initialTime])).rows[0].result;
+}
+async function recover(args={p_payout_id:id,p_provider_reference_id:transferId,p_reason:'Synthetic reversal'}) {
+  return (await pg.query('select public.flag_paid_payout_recovery_safely($1,$2,$3) result',[args.p_payout_id,args.p_provider_reference_id,args.p_reason])).rows[0].result;
 }
 const state = async () => ({
   payouts:(await pg.query('select * from public.dancer_payout_batches order by id')).rows,
@@ -69,7 +81,7 @@ function module(path, dependencies) {
   });
   return exports;
 }
-function harness({rpc, beforeRpc, completion, beforeCompletion, readErrorAt=0, beforeRead, recoveryError=false, auditError=false} = {}) {
+function harness({rpc, beforeRpc, completion, beforeCompletion, recovery, beforeRecovery, readErrorAt=0, beforeRead, recoveryError=false, auditError=false} = {}) {
   const calls=[], finished=[];
   let reads=0, sequence=0;
   const allowed = {
@@ -79,6 +91,14 @@ function harness({rpc, beforeRpc, completion, beforeCompletion, readErrorAt=0, b
   };
   const client = {
     async rpc(name,args) {
+      if (name==='flag_paid_payout_recovery_safely') {
+        calls.push({kind:'recovery',args});await beforeRecovery?.();
+        if(recoveryError)return {data:null,error:{code:'08006',message:'Synthetic private recovery failure'}};
+        if(recovery)return recovery(args);
+        if(auditError)await pg.exec("reset role;create or replace function public.synthetic_audit_failure() returns trigger language plpgsql as $$begin raise exception 'Synthetic private audit failure';end$$;create trigger synthetic_audit_failure before insert on financial_audit_events for each row execute function public.synthetic_audit_failure();set role service_role");
+        try{return {data:await recover(args),error:null};}catch(error){return {data:null,error};}
+        finally{if(auditError)await pg.exec('reset role;drop trigger synthetic_audit_failure on financial_audit_events;set role service_role');}
+      }
       if (name==='complete_dancer_payout_batch') {
         calls.push({kind:'complete',args});
         await beforeCompletion?.();
@@ -536,4 +556,56 @@ test('a thrown response after partial completion remains recoverable by explicit
   assert.equal((await retry.deliver(transferId,{amount_reversed:250,reversed:false})).status,200);
   assert.equal((await state()).earnings[0].recovery_required,true);
   assert.equal(retry.calls.filter(c=>c.kind==='complete'||c.kind==='release').length,0);
+});
+
+const recoveryReceipt={id,status:'paid',providerReferenceId:transferId,recoveryRequired:true,earningCount:1,duplicate:false};
+const invalidRecoveryReceipts=[
+ ['null',null],['array',[]],['empty',{}],['wrong payout',{...recoveryReceipt,id:otherId}],
+ ['wrong status',{...recoveryReceipt,status:'processing'}],['wrong provider reference',{...recoveryReceipt,providerReferenceId:'tr_unrelated'}],
+ ['unconfirmed recovery',{...recoveryReceipt,recoveryRequired:false}],['string recovery flag',{...recoveryReceipt,recoveryRequired:'true'}],
+ ['missing count',{...recoveryReceipt,earningCount:undefined}],['zero count',{...recoveryReceipt,earningCount:0}],
+ ['negative count',{...recoveryReceipt,earningCount:-1}],['fractional count',{...recoveryReceipt,earningCount:1.5}],
+ ['string count',{...recoveryReceipt,earningCount:'1'}],['unsafe count',{...recoveryReceipt,earningCount:Number.MAX_SAFE_INTEGER+1}],
+ ['missing retry flag',{...recoveryReceipt,duplicate:undefined}],['string retry flag',{...recoveryReceipt,duplicate:'false'}],
+];
+for(const [label,data]of invalidRecoveryReceipts){
+ test('uncommitted paid recovery with '+label+' cannot acknowledge the signed webhook',async()=>{
+  await complete();const prior=await state(),h=harness({recovery:async()=>({data,error:null})});
+  await failed(await h.deliver(),h);assert.deepEqual(await state(),prior);assert.equal(h.calls.filter(c=>c.kind==='recovery').length,1);
+ });
+ test('committed paid recovery with '+label+' stays retryable without duplicate audits',async()=>{
+  await complete();const h=harness({recovery:async args=>{await recover(args);return {data,error:null};}});
+  await failed(await h.deliver(),h);const prior=await state();assert.equal(prior.earnings[0].recovery_required,true);
+  const retry=harness();assert.equal((await retry.deliver()).status,200);assert.deepEqual(await state(),prior);
+  assert.equal(prior.audits.filter(a=>a.action==='paid_payout_recovery_required').length,1);assert.equal(retry.calls.filter(c=>c.kind==='recovery').length,1);
+ });
+}
+test('an explicit error cannot be hidden by an apparently valid recovery receipt',async()=>{
+ await complete();const prior=await state(),h=harness({recovery:async()=>({data:recoveryReceipt,error:{code:'08006',message:'Private error'}})});
+ await failed(await h.deliver(),h);assert.deepEqual(await state(),prior);
+});
+test('a thrown recovery response after commit is safe to retry',async()=>{
+ await complete();const h=harness({recovery:async args=>{await recover(args);throw new Error('Private response failure');}});
+ await failed(await h.deliver(),h);const prior=await state(),retry=harness();assert.equal((await retry.deliver()).status,200);assert.deepEqual(await state(),prior);
+});
+test('audit failure rolls back recovery flags and signed redelivery can finish safely',async()=>{
+ await complete();const prior=await state(),h=harness({auditError:true});await failed(await h.deliver(),h);assert.deepEqual(await state(),prior);
+ const retry=harness();assert.equal((await retry.deliver()).status,200);assert.equal((await state()).audits.filter(a=>a.action==='paid_payout_recovery_required').length,1);
+});
+test('signed redelivery preserves an existing manual review reason and one recovery audit',async()=>{
+ await complete();await pg.query("update commission_events set review_flag='manual_fraud_review' where id=$1",[id]);
+ const h=harness();assert.equal((await h.deliver()).status,200);const prior=await state();assert.equal(prior.earnings[0].review_flag,'manual_fraud_review');
+ assert.equal((await h.deliver()).status,200);assert.deepEqual(await state(),prior);
+});
+test('a provider reference changed after the initial read cannot receive old-transfer recovery',async()=>{
+ await complete();const h=harness({beforeRecovery:async()=>pg.query("update dancer_payout_batches set provider_reference_id='tr_new_reference' where id=$1",[id])});
+ await failed(await h.deliver(),h);assert.equal((await state()).earnings[0].recovery_required,false);assert.equal((await state()).audits.filter(a=>a.action==='paid_payout_recovery_required').length,0);
+});
+test('a payout state changed after the initial read cannot falsely acknowledge paid recovery',async()=>{
+ await complete();const h=harness({beforeRecovery:async()=>pg.query("update dancer_payout_batches set status='failed' where id=$1",[id])});
+ await failed(await h.deliver(),h);assert.equal((await state()).earnings[0].recovery_required,false);
+});
+test('missing payout items keep a paid reversal retryable and never release paid earnings',async()=>{
+ await complete();await pg.query('delete from dancer_payout_items where payout_batch_id=$1',[id]);const prior=await state(),h=harness();
+ await failed(await h.deliver(),h);assert.deepEqual(await state(),prior);assert.equal(h.calls.filter(c=>c.kind==='release').length,0);
 });

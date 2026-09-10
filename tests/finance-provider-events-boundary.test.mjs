@@ -49,13 +49,15 @@ test("Stripe webhook failures keep provider and database details private", () =>
   assert.doesNotMatch(route, /error: error instanceof Error \? error\.message/);
 });
 
-test("payout completion and reversal preserve ledger and recovery controls", () => {
-  assert.match(events, /from "\.\/finance-audit-log"/);
+test("payout completion and reversal preserve ledger and recovery controls", async () => {
+  const recovery = await readFile(new URL("../supabase/migrations/20260910160000_add_atomic_paid_payout_recovery.sql", import.meta.url), "utf8");
   assert.match(events, /rpc\("complete_dancer_payout_batch"/);
   assert.match(events, /eq\("id", internalPayoutId\)\.eq\("status", "processing"\)/);
-  assert.match(events, /review_flag: "paid_payout_reversed_by_provider"/);
-  assert.match(events, /automatic_debit_attempted: false/);
-  assert.match(events, /await writeFinancialAuditEvent\(client, \{/);
+  assert.match(events, /rpc\("flag_paid_payout_recovery_safely"/);
+  assert.match(events, /recovery\.providerReferenceId !== transferId/);
+  assert.match(events, /Number\.isSafeInteger\(recovery\.earningCount\)/);
+  assert.match(recovery, /paid_payout_reversed_by_provider/);
+  assert.match(recovery, /'automatic_debit_attempted',false/);
   assert.doesNotMatch(events, /from\("financial_audit_events"\)/);
   assert.match(events, /rpc\("release_dancer_payout_batch"/);
 });

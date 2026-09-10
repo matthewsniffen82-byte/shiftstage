@@ -5,6 +5,7 @@ import test from "node:test";
 const read = (path) => readFileSync(new URL(`../${path}`, import.meta.url), "utf8");
 const migration = read("supabase/migrations/202608170004_dancer_earnings_payout_system.sql");
 const providerRetirementMigration = read("supabase/migrations/202608200002_decommission_bitsafe_payout_provider.sql");
+const paidRecoveryMigration = read("supabase/migrations/20260910160000_add_atomic_paid_payout_recovery.sql");
 const finance = read("src/lib/dancr/finance.ts");
 const financeReporting = read("src/lib/dancr/finance-reporting.ts");
 const financeAdminActions = read("src/lib/dancr/finance-admin-actions.ts");
@@ -36,7 +37,8 @@ test("hold release reversal and post-payment recovery preserve accounting histor
   assert.match(migration, /admin_manage_dancer_earning/);
   assert.match(migration, /A reversal reason is required/);
   assert.match(migration, /Paid earnings cannot be reversed or silently debited/);
-  assert.match(financeProviderEvents, /automatic_debit_attempted: false/);
+  assert.match(financeProviderEvents, /rpc\("flag_paid_payout_recovery_safely"/);
+  assert.match(paidRecoveryMigration, /'automatic_debit_attempted',false/);
 });
 
 test("cash out locks ledger rows and prevents concurrent or duplicate payment", () => {

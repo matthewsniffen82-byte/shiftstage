@@ -1,7 +1,6 @@
 import type Stripe from "stripe";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { getStripe } from "../stripe";
-import { writeFinancialAuditEvent } from "./finance-audit-log";
 import { getDancerPayoutAccount, upsertDancerPayoutAccount } from "./payout-account-store";
 import { stripeAccountState, type PayoutProviderName } from "./payout-provider";
 
@@ -168,16 +167,18 @@ export async function reverseDancerPayoutTransfer(
     }
   }
   if (batch.status === "paid" || partial) {
-    const { error: recoveryError } = await (client as any).from("commission_events").update({
-      recovery_required: true,
-      review_flag: "paid_payout_reversed_by_provider",
-    }).eq("payout_batch_id", batch.id).eq("status", "paid");
-    if (recoveryError) throw recoveryError;
-    await writeFinancialAuditEvent(client, {
-      actor_type: "provider", action: "paid_payout_recovery_required", target_type: "payout",
-      target_id: batch.id, reason: message.slice(0, 500),
-      metadata: { provider_reference_id: transferId, automatic_debit_attempted: false },
+    const { data: recovery, error: recoveryError } = await (client as any).rpc("flag_paid_payout_recovery_safely", {
+      p_payout_id: batch.id,
+      p_provider_reference_id: transferId,
+      p_reason: message.slice(0, 500),
     });
+    if (recoveryError) throw recoveryError;
+    if (!recovery || recovery.id !== batch.id || recovery.status !== "paid"
+      || recovery.providerReferenceId !== transferId || recovery.recoveryRequired !== true
+      || !Number.isSafeInteger(recovery.earningCount) || recovery.earningCount < 1
+      || typeof recovery.duplicate !== "boolean") {
+      throw new Error("Provider payout recovery could not be confirmed.");
+    }
     return { id: batch.id, status: "paid", recoveryRequired: true };
   }
   const { data, error: releaseError } = await (client as any).rpc("release_dancer_payout_batch", {
