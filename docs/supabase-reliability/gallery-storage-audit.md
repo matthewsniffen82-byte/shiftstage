@@ -37,6 +37,6 @@ Statuses:
 
 ## Recovery boundary
 
-This audit cannot account for every historical manual writer, external consumer or unfinished transaction. Before adding public/original deletion, publication attempts need durable provenance and a retirement state that every writer honors. A future cleanup must coordinate reference creation with retirement, protect current media and originals, and distinguish acknowledged removal from an uncertain storage response. Do not feed `no_known_reference` results into a bulk deletion script.
+This audit cannot account for every historical manual writer, external consumer or unfinished transaction. The [gallery reference history](gallery-reference-history.md) records committed reference changes from its rollout onward. Before adding public/original deletion, publication attempts still need durable provenance and a retirement state that every writer honors. A future cleanup must coordinate reference creation with retirement, protect current media and originals, and distinguish acknowledged removal from an uncertain storage response. Do not feed `no_known_reference` results into a bulk deletion script.
 
 Behavioral tests cover grouping, owner and cross-owner references, history/uncertain publication, both storage sides, missing companions, pagination, legacy retention, malformed/provider failures, privacy checks and the read-only transport. The audit changes no API, UI, database schema, RLS policy or video player behavior.

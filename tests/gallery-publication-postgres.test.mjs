@@ -22,7 +22,7 @@ create type public.user_role as enum('dancer','admin','customer','venue');
 create type public.account_state as enum('active','disabled','deleted');
 create type public.review_status as enum('pending','approved','rejected');
 create table public.app_users(id uuid primary key references auth.users(id),role public.user_role not null,account_state public.account_state not null default 'active',dmca_suspended_at timestamptz);
-create table public.dancer_profiles(id uuid primary key,user_id uuid unique not null references public.app_users(id),photo_review_status public.review_status not null default 'pending');
+create table public.dancer_profiles(id uuid primary key,user_id uuid unique not null references public.app_users(id),avatar_storage_path text,photo_review_status public.review_status not null default 'pending');
 create table public.dancer_photos(
  id uuid primary key default gen_random_uuid(),dancer_id uuid not null references public.dancer_profiles(id) on delete cascade,
  storage_path text not null,alt_text text,sort_order integer not null default 0,is_primary boolean not null default false,
@@ -47,10 +47,11 @@ grant usage on schema public,auth,storage to service_role,anon,authenticated;
 grant all on all tables in schema public,auth,storage to service_role;
 `;
 let pg;
-before(async () => { pg = new PGlite(); await pg.exec(schema); await pg.exec(migration); });
+before(async () => { pg = new PGlite(); await pg.exec(schema); await pg.exec(migration);
+  await pg.exec(readFileSync(new URL('../supabase/migrations/20260910092022_add_gallery_reference_history.sql',import.meta.url),'utf8')); });
 after(async () => pg?.close());
 beforeEach(async () => {
-  await pg.exec('reset role;drop trigger if exists synthetic_profile_failure on public.dancer_profiles;drop trigger if exists synthetic_review_timestamp on public.image_moderation_records;truncate public.media_likes,public.image_moderation_records,public.dancer_photos,public.dancer_profiles,public.app_users,auth.users,storage.objects cascade');
+  await pg.exec('reset role;drop trigger if exists synthetic_profile_failure on public.dancer_profiles;drop trigger if exists synthetic_review_timestamp on public.image_moderation_records;truncate public.gallery_media_reference_history,public.media_likes,public.image_moderation_records,public.dancer_photos,public.dancer_profiles,public.app_users,auth.users,storage.objects cascade');
   for (const [userId, role] of [[owner,'dancer'],[other,'dancer'],[reviewer,'admin']]) {
     await pg.query('insert into auth.users values($1)', [userId]);
     await pg.query('insert into public.app_users(id,role) values($1,$2::public.user_role)', [userId,role]);
@@ -101,6 +102,7 @@ test('a lost approval response returns the prior committed identity without rewr
   assert.equal(retry.photo.id, first.photo.id);
   assert.deepEqual(await allPhotos(), photos);
   assert.deepEqual(await allReviews(), reviews);
+  assert.equal((await pg.query('select count(*)::int as n from public.gallery_media_reference_history')).rows[0].n,1,'idempotent publication does not duplicate reference events');
 });
 
 test('two explicit replacements of one photo cannot overwrite the winning replacement', async () => {
@@ -114,6 +116,11 @@ test('two explicit replacements of one photo cannot overwrite the winning replac
   assert.deepEqual(winner.superseded_storage_paths,[old.path]);
   assert.equal(winner.photo.sort_order,3);
   assert.deepEqual((await allPhotos()).map(r=>r.id),[winner.photo.id]);
+  const events=(await pg.query('select source_id,storage_path,event_kind from public.gallery_media_reference_history order by event_id')).rows;
+  assert.deepEqual(events.map(e=>e.event_kind),['referenced','released','referenced']);
+  assert.equal(events[1].source_id,old.id);
+  assert.equal(events[1].storage_path,old.path);
+  assert.equal(events[2].source_id,winner.photo.id);
 });
 
 test('a failure after replacement rolls back photo removal, likes, review state and insertion together', async () => {
@@ -127,6 +134,7 @@ test('a failure after replacement rolls back photo removal, likes, review state 
   assert.deepEqual(await allPhotos(),photos);
   assert.deepEqual(await allReviews(),reviews);
   assert.equal((await pg.query('select count(*)::int as count from public.media_likes')).rows[0].count,1);
+  assert.deepEqual((await pg.query('select event_kind,source_id from public.gallery_media_reference_history')).rows,[{event_kind:'referenced',source_id:old.id}],'failed replacement leaves no released or replacement reference');
 });
 
 test('legacy reviews add to a free slot and preserve an occupied slot and zero-order history', async () => {
