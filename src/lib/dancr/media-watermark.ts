@@ -6,6 +6,7 @@ import path from "path";
 import ffmpegPath from "ffmpeg-static";
 import { assertAllowedVideoContainer } from "./video-upload-policy.ts";
 import { LOCAL_VIDEO_INPUT_OPTIONS } from "./local-video-input.ts";
+import { requireStorageUploadReceipt } from "./storage-upload-receipt.ts";
 
 export const DANCR_ORIGINAL_MEDIA_BUCKET = "dancr-media-originals";
 export const DANCR_MEDIA_WATERMARK_TEXT = "mydancr";
@@ -150,14 +151,18 @@ export async function archiveOriginalMedia(
 ) {
   const archivePath = archivedOriginalStoragePath(publicBucket, publicStoragePath);
   const archiveBucket = originalArchiveBucket(publicBucket);
-  const { error } = await client.storage
+  const { data, error } = await client.storage
     .from(archiveBucket)
     .upload(archivePath, buffer, {
       cacheControl: "0",
       contentType,
       upsert: false,
     });
-  if (error && !isAlreadyExistsError(error)) throw error;
+  if (error) {
+    if (!isAlreadyExistsError(error)) throw error;
+  } else {
+    requireStorageUploadReceipt(data, archiveBucket, archivePath);
+  }
   return archivePath;
 }
 

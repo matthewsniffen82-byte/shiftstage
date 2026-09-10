@@ -21,7 +21,7 @@ At 11:37:50 UTC, all ten buckets and fourteen storage policies match the initial
 
 These are metadata counts, not a backup or proof of file decodability. Video originals use the private video's `__originals` prefix; video posters use the public photo bucket. Verification-document uploads are retired (410), but existing private files are preserved. Venue ownership proofs also remain private. Public media URLs can outlive application visibility and CDN caches; do not claim public-bucket RLS alone revokes an already-known URL.
 
-There are 72 gallery rows, sixteen nonempty avatars and 34 video records (25 approved, eight hidden, one rejected). The committed gallery reference-history migration `20260910092022` is **not applied**: its table, function and ledger entry are absent. Its successful repository tests do not establish production history capture.
+At the initial 11:37:50 UTC inspection there were 72 gallery rows, sixteen nonempty avatars and 34 video records (25 approved, eight hidden, one rejected). The committed gallery reference-history migration `20260910092022` was then absent in production. It subsequently passed guarded application and privacy/preservation verification, as recorded below; repository tests alone were not treated as production evidence.
 
 ## Inspected failure boundaries and remaining work
 
@@ -50,3 +50,11 @@ The installed storage SDK returns `FileObject[]` for removal. The [Supabase stor
 On a rejected or lost database acknowledgment, no storage call runs. A failed or lost storage acknowledgment leaves hidden metadata intact, stops later cleanup calls, reports failure and permits the same owned ID to be retried. The current route's authentication and response shape are retained. Full release validation and exact deployment gates remain required.
 
 Full validation passed all 5,393 tests, lint, production build, standalone TypeScript, migration guard and thirty readiness checks. Postbuild skipped population. No migration, production media deletion, test upload, email or provider mutation was performed. Exact commit/push, matching main references and Vercel/health verification remain the release gates. A code rollback requires no database reversal; retain any hidden rows and inspect partial storage cleanup before considering restoration.
+
+## Verified subsequent releases
+
+- Video removal `8739f5d96963d447cc365894441234595b330d30` deployed successfully; health/readiness passed at 11:52:22–25 UTC.
+- Gallery-history rollout `8a7222d50e6a1e8d6e07d7f2a259aaf984174eeb` applied exact migration `20260910092022` and recorded 88 baseline references. Privacy, preservation, API boundaries and deployment/health passed by 12:05:43 UTC. See `step-11-gallery-history-rollout.md`. This history does not authorize orphan deletion.
+- Venue image publication `52a63c8e9bccc5fe6606bce7d10416779fbd72a4` prevents deletion after uncertain database acknowledgment and rejects stale media replacements. All 5,458 tests passed; exact deployment and health/readiness passed at 12:27:23–27 UTC. Read-only checks preserved 22 venue records, 452 storage objects and 111 migration entries. See `step-11-venue-media-publication.md`.
+
+Responsive-upload rollback, durable retirement and the other listed recovery boundaries remain open. The audit step is not complete merely because individual corrections have deployed.

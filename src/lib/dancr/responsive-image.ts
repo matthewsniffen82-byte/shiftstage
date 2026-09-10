@@ -3,8 +3,8 @@ import type { ValidatedDancrImage } from "./image-validation";
 import {
   applyDancrImageWatermark,
   archiveOriginalMedia,
-  removeArchivedOriginalMedia,
 } from "./media-watermark.ts";
+import { requireStorageUploadReceipt } from "./storage-upload-receipt.ts";
 
 export const DANCR_RESPONSIVE_IMAGE_WIDTHS = [320, 480, 640, 1280, 2048] as const;
 export const DANCR_RESPONSIVE_IMAGE_QUALITY = 84;
@@ -184,7 +184,7 @@ export async function uploadResponsiveImage(
     );
   }
 
-  const uploadResults = await Promise.all(
+  const uploadResults = await Promise.allSettled(
     objects.map(async (object) => ({
       path: object.path,
       result: await client.storage.from(bucket).upload(object.path, object.buffer, {
@@ -194,16 +194,14 @@ export async function uploadResponsiveImage(
       }),
     })),
   );
-  const failedUpload = uploadResults.find(({ result }) => result.error);
-  if (failedUpload) {
-    await client.storage
-      .from(bucket)
-      .remove(objects.map((object) => object.path))
-      .catch(() => null);
-    if (options.archiveOriginal) {
-      await removeArchivedOriginalMedia(client, bucket, storagePath).catch(() => null);
-    }
-    throw failedUpload.result.error;
+  // A collision or lost reply does not prove these paths belong to this request.
+  // Retain partial uploads and originals for reconciliation, and wait for every
+  // in-flight request before returning an error to the publication caller.
+  for (const upload of uploadResults) {
+    if (upload.status === "rejected") throw upload.reason;
+    const { path, result } = upload.value;
+    if (result.error) throw result.error;
+    requireStorageUploadReceipt(result.data, bucket, path);
   }
 
   return {

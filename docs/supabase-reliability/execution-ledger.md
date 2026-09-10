@@ -504,3 +504,11 @@ The rollout was pushed as `8a7222d50e6a1e8d6e07d7f2a259aaf984174eeb`; exact exis
 The inspected plan is `step-11-venue-media-publication.md`. Prevent cleanup from deleting a newly referenced venue image after an uncertain database response, require an exact publication receipt and reject stale media replacements. All 65 actual-helper/native tests pass, including forty failures against the previous implementation. The production venue schema was captured read-only; storage operations are simulated. Full validation and exact commit/push/deployment/health gates remain required.
 
 Full validation passed all 5,458 tests, lint, production build, standalone TypeScript, migration guard and thirty readiness checks. No schema migration or production media mutation was performed. Exact commit/push, read-only preservation and Vercel/health gates remain required before the next correction.
+
+The venue correction was pushed as `52a63c8e9bccc5fe6606bce7d10416779fbd72a4`, with matching main references and successful [exact Vercel deployment](https://vercel.com/ai-movie-jobs/shiftstage/3j9gNzdagXnSc4x8pJ2wzf5Y4BD1). Read-only comparison preserved all 22 venues, 452 storage objects and 111 migration entries. Health, unauthorized venue-media route rejection and thirty readiness checks passed at 12:27:23–27 UTC. No production image upload or deletion was used as a test.
+
+## Step 11 responsive upload failure handling
+
+The inspected plan is `step-11-responsive-upload-recovery.md`. Replace unsafe all-path rollback with preservation of uncertain uploads, wait for in-flight variants and require confirmed storage receipts. Existing originals must never be deleted because a public derivative failed. Actual image/storage-response tests, full validation and exact commit/push/deployment gates remain required.
+
+All 49 focused checks pass, including 34 new cases and 21 failures against the previous implementation. Full validation passed all 5,492 tests, lint, production build, standalone TypeScript, migration guard and thirty readiness checks. Read-only storage inspection at 12:34:14 UTC retained ten buckets, fourteen policies and RLS. No production media was uploaded, downloaded or deleted. Exact commit/push, preservation and Vercel/health gates remain required.
