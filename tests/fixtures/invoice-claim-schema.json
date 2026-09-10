@@ -1,0 +1,831 @@
+{
+  "captured_at": "2026-09-10T10:19:31.722566+00:00",
+  "columns": [
+    {
+      "default": "gen_random_uuid()",
+      "name": "id",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "club_invoice_items",
+      "type": "uuid"
+    },
+    {
+      "default": null,
+      "name": "invoice_id",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "club_invoice_items",
+      "type": "uuid"
+    },
+    {
+      "default": null,
+      "name": "revenue_event_id",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "club_invoice_items",
+      "type": "uuid"
+    },
+    {
+      "default": null,
+      "name": "amount_cents",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "club_invoice_items",
+      "type": "int4"
+    },
+    {
+      "default": "now()",
+      "name": "created_at",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "club_invoice_items",
+      "type": "timestamptz"
+    },
+    {
+      "default": "gen_random_uuid()",
+      "name": "id",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "club_invoices",
+      "type": "uuid"
+    },
+    {
+      "default": null,
+      "name": "venue_id",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "club_invoices",
+      "type": "uuid"
+    },
+    {
+      "default": null,
+      "name": "period_start",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "club_invoices",
+      "type": "date"
+    },
+    {
+      "default": null,
+      "name": "period_end",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "club_invoices",
+      "type": "date"
+    },
+    {
+      "default": "1",
+      "name": "sequence",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "club_invoices",
+      "type": "int4"
+    },
+    {
+      "default": "'draft'::text",
+      "name": "status",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "club_invoices",
+      "type": "text"
+    },
+    {
+      "default": "'usd'::text",
+      "name": "currency",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "club_invoices",
+      "type": "text"
+    },
+    {
+      "default": "0",
+      "name": "amount_due_cents",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "club_invoices",
+      "type": "int4"
+    },
+    {
+      "default": "0",
+      "name": "amount_paid_cents",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "club_invoices",
+      "type": "int4"
+    },
+    {
+      "default": null,
+      "name": "due_at",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "club_invoices",
+      "type": "timestamptz"
+    },
+    {
+      "default": null,
+      "name": "stripe_customer_id",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "club_invoices",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "stripe_invoice_id",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "club_invoices",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "hosted_invoice_url",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "club_invoices",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "invoice_pdf_url",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "club_invoices",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "external_payment_reference",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "club_invoices",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "paid_at",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "club_invoices",
+      "type": "timestamptz"
+    },
+    {
+      "default": null,
+      "name": "last_reminder_at",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "club_invoices",
+      "type": "timestamptz"
+    },
+    {
+      "default": "0",
+      "name": "reminder_count",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "club_invoices",
+      "type": "int4"
+    },
+    {
+      "default": null,
+      "name": "last_error",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "club_invoices",
+      "type": "text"
+    },
+    {
+      "default": "now()",
+      "name": "created_at",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "club_invoices",
+      "type": "timestamptz"
+    },
+    {
+      "default": "now()",
+      "name": "updated_at",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "club_invoices",
+      "type": "timestamptz"
+    },
+    {
+      "default": "gen_random_uuid()",
+      "name": "id",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "deal_revenue_events",
+      "type": "uuid"
+    },
+    {
+      "default": null,
+      "name": "qr_redemption_id",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "deal_revenue_events",
+      "type": "uuid"
+    },
+    {
+      "default": null,
+      "name": "venue_id",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "deal_revenue_events",
+      "type": "uuid"
+    },
+    {
+      "default": null,
+      "name": "club_deal_id",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "deal_revenue_events",
+      "type": "uuid"
+    },
+    {
+      "default": null,
+      "name": "dancer_id",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "deal_revenue_events",
+      "type": "uuid"
+    },
+    {
+      "default": null,
+      "name": "source_type",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "deal_revenue_events",
+      "type": "text"
+    },
+    {
+      "default": "'usd'::text",
+      "name": "currency",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "deal_revenue_events",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "gross_commission_cents",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "deal_revenue_events",
+      "type": "int4"
+    },
+    {
+      "default": "0",
+      "name": "dancer_share_bps",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "deal_revenue_events",
+      "type": "int4"
+    },
+    {
+      "default": "0",
+      "name": "dancer_commission_cents",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "deal_revenue_events",
+      "type": "int4"
+    },
+    {
+      "default": null,
+      "name": "platform_commission_cents",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "deal_revenue_events",
+      "type": "int4"
+    },
+    {
+      "default": null,
+      "name": "successful_redemption_number",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "deal_revenue_events",
+      "type": "int4"
+    },
+    {
+      "default": null,
+      "name": "commission_month",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "deal_revenue_events",
+      "type": "date"
+    },
+    {
+      "default": "'dancer-profile-monthly-30-40-50-v1'::text",
+      "name": "policy_version",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "deal_revenue_events",
+      "type": "text"
+    },
+    {
+      "default": "'pending_venue_payment'::text",
+      "name": "status",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "deal_revenue_events",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "venue_payment_reference",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "deal_revenue_events",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "venue_payment_received_at",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "deal_revenue_events",
+      "type": "timestamptz"
+    },
+    {
+      "default": null,
+      "name": "dancer_payout_reference",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "deal_revenue_events",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "dancer_paid_at",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "deal_revenue_events",
+      "type": "timestamptz"
+    },
+    {
+      "default": null,
+      "name": "refunded_at",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "deal_revenue_events",
+      "type": "timestamptz"
+    },
+    {
+      "default": null,
+      "name": "voided_at",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "deal_revenue_events",
+      "type": "timestamptz"
+    },
+    {
+      "default": "'{}'::jsonb",
+      "name": "audit",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "deal_revenue_events",
+      "type": "jsonb"
+    },
+    {
+      "default": "now()",
+      "name": "confirmed_at",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "deal_revenue_events",
+      "type": "timestamptz"
+    },
+    {
+      "default": "now()",
+      "name": "created_at",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "deal_revenue_events",
+      "type": "timestamptz"
+    },
+    {
+      "default": null,
+      "name": "club_invoice_id",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "deal_revenue_events",
+      "type": "uuid"
+    },
+    {
+      "default": "0",
+      "name": "agent_commission_cents",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "deal_revenue_events",
+      "type": "int4"
+    },
+    {
+      "default": null,
+      "name": "venue_sales_attribution_id",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "deal_revenue_events",
+      "type": "uuid"
+    },
+    {
+      "default": "false",
+      "name": "dancer_commission_eligible",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "deal_revenue_events",
+      "type": "bool"
+    },
+    {
+      "default": null,
+      "name": "dancer_nats_activated_at",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "deal_revenue_events",
+      "type": "timestamptz"
+    }
+  ],
+  "constraints": [
+    {
+      "definition": "CHECK ((amount_cents > 0))",
+      "name": "club_invoice_items_amount_cents_check",
+      "table": "club_invoice_items"
+    },
+    {
+      "definition": "FOREIGN KEY (invoice_id) REFERENCES club_invoices(id) ON DELETE CASCADE",
+      "name": "club_invoice_items_invoice_id_fkey",
+      "table": "club_invoice_items"
+    },
+    {
+      "definition": "UNIQUE (invoice_id, revenue_event_id)",
+      "name": "club_invoice_items_invoice_id_revenue_event_id_key",
+      "table": "club_invoice_items"
+    },
+    {
+      "definition": "PRIMARY KEY (id)",
+      "name": "club_invoice_items_pkey",
+      "table": "club_invoice_items"
+    },
+    {
+      "definition": "FOREIGN KEY (revenue_event_id) REFERENCES deal_revenue_events(id) ON DELETE RESTRICT",
+      "name": "club_invoice_items_revenue_event_id_fkey",
+      "table": "club_invoice_items"
+    },
+    {
+      "definition": "CHECK ((amount_due_cents >= 0))",
+      "name": "club_invoices_amount_due_cents_check",
+      "table": "club_invoices"
+    },
+    {
+      "definition": "CHECK ((amount_paid_cents >= 0))",
+      "name": "club_invoices_amount_paid_cents_check",
+      "table": "club_invoices"
+    },
+    {
+      "definition": "CHECK ((period_end >= period_start))",
+      "name": "club_invoices_check",
+      "table": "club_invoices"
+    },
+    {
+      "definition": "CHECK ((amount_paid_cents <= amount_due_cents))",
+      "name": "club_invoices_check1",
+      "table": "club_invoices"
+    },
+    {
+      "definition": "CHECK ((currency ~ '^[a-z]{3}$'::text))",
+      "name": "club_invoices_currency_check",
+      "table": "club_invoices"
+    },
+    {
+      "definition": "PRIMARY KEY (id)",
+      "name": "club_invoices_pkey",
+      "table": "club_invoices"
+    },
+    {
+      "definition": "CHECK ((reminder_count >= 0))",
+      "name": "club_invoices_reminder_count_check",
+      "table": "club_invoices"
+    },
+    {
+      "definition": "CHECK ((sequence > 0))",
+      "name": "club_invoices_sequence_check",
+      "table": "club_invoices"
+    },
+    {
+      "definition": "CHECK ((status = ANY (ARRAY['draft'::text, 'open'::text, 'paid'::text, 'overdue'::text, 'void'::text, 'uncollectible'::text, 'failed'::text])))",
+      "name": "club_invoices_status_check",
+      "table": "club_invoices"
+    },
+    {
+      "definition": "UNIQUE (stripe_invoice_id)",
+      "name": "club_invoices_stripe_invoice_id_key",
+      "table": "club_invoices"
+    },
+    {
+      "definition": "FOREIGN KEY (venue_id) REFERENCES venues(id) ON DELETE CASCADE",
+      "name": "club_invoices_venue_id_fkey",
+      "table": "club_invoices"
+    },
+    {
+      "definition": "UNIQUE (venue_id, period_start, period_end, sequence)",
+      "name": "club_invoices_venue_id_period_start_period_end_sequence_key",
+      "table": "club_invoices"
+    },
+    {
+      "definition": "CHECK ((agent_commission_cents >= 0))",
+      "name": "deal_revenue_events_agent_commission_cents_check",
+      "table": "deal_revenue_events"
+    },
+    {
+      "definition": "FOREIGN KEY (club_deal_id) REFERENCES club_deals(id) ON DELETE CASCADE",
+      "name": "deal_revenue_events_club_deal_id_fkey",
+      "table": "deal_revenue_events"
+    },
+    {
+      "definition": "FOREIGN KEY (club_invoice_id) REFERENCES club_invoices(id) ON DELETE SET NULL",
+      "name": "deal_revenue_events_club_invoice_id_fkey",
+      "table": "deal_revenue_events"
+    },
+    {
+      "definition": "CHECK ((((dancer_commission_cents + agent_commission_cents) + platform_commission_cents) = gross_commission_cents))",
+      "name": "deal_revenue_events_commission_balance_check",
+      "table": "deal_revenue_events"
+    },
+    {
+      "definition": "CHECK ((currency ~ '^[a-z]{3}$'::text))",
+      "name": "deal_revenue_events_currency_check",
+      "table": "deal_revenue_events"
+    },
+    {
+      "definition": "CHECK ((dancer_commission_cents >= 0))",
+      "name": "deal_revenue_events_dancer_commission_cents_check",
+      "table": "deal_revenue_events"
+    },
+    {
+      "definition": "CHECK ((((source_type = 'club_page'::text) AND (dancer_id IS NULL) AND (NOT dancer_commission_eligible) AND (dancer_nats_activated_at IS NULL) AND (dancer_share_bps = 0) AND (dancer_commission_cents = 0)) OR ((source_type = 'dancer_profile'::text) AND (dancer_id IS NOT NULL) AND ((dancer_commission_eligible AND (dancer_nats_activated_at IS NOT NULL) AND (dancer_nats_activated_at <= confirmed_at) AND (dancer_share_bps > 0)) OR ((NOT dancer_commission_eligible) AND (dancer_nats_activated_at IS NULL) AND (dancer_share_bps = 0) AND (dancer_commission_cents = 0) AND (successful_redemption_number IS NULL))))))",
+      "name": "deal_revenue_events_dancer_enrollment_check",
+      "table": "deal_revenue_events"
+    },
+    {
+      "definition": "FOREIGN KEY (dancer_id) REFERENCES dancer_profiles(id) ON DELETE SET NULL",
+      "name": "deal_revenue_events_dancer_id_fkey",
+      "table": "deal_revenue_events"
+    },
+    {
+      "definition": "CHECK (((dancer_share_bps >= 0) AND (dancer_share_bps <= 10000)))",
+      "name": "deal_revenue_events_dancer_share_bps_check",
+      "table": "deal_revenue_events"
+    },
+    {
+      "definition": "CHECK ((gross_commission_cents >= 0))",
+      "name": "deal_revenue_events_gross_commission_cents_check",
+      "table": "deal_revenue_events"
+    },
+    {
+      "definition": "PRIMARY KEY (id)",
+      "name": "deal_revenue_events_pkey",
+      "table": "deal_revenue_events"
+    },
+    {
+      "definition": "CHECK ((platform_commission_cents >= 0))",
+      "name": "deal_revenue_events_platform_commission_cents_check",
+      "table": "deal_revenue_events"
+    },
+    {
+      "definition": "FOREIGN KEY (qr_redemption_id) REFERENCES qr_redemptions(id) ON DELETE CASCADE",
+      "name": "deal_revenue_events_qr_redemption_id_fkey",
+      "table": "deal_revenue_events"
+    },
+    {
+      "definition": "UNIQUE (qr_redemption_id)",
+      "name": "deal_revenue_events_qr_redemption_id_key",
+      "table": "deal_revenue_events"
+    },
+    {
+      "definition": "CHECK ((source_type = ANY (ARRAY['club_page'::text, 'dancer_profile'::text])))",
+      "name": "deal_revenue_events_source_type_check",
+      "table": "deal_revenue_events"
+    },
+    {
+      "definition": "CHECK ((status = ANY (ARRAY['pending_venue_payment'::text, 'payable'::text, 'settled'::text, 'refunded'::text, 'voided'::text])))",
+      "name": "deal_revenue_events_status_check",
+      "table": "deal_revenue_events"
+    },
+    {
+      "definition": "CHECK ((successful_redemption_number > 0))",
+      "name": "deal_revenue_events_successful_redemption_number_check",
+      "table": "deal_revenue_events"
+    },
+    {
+      "definition": "FOREIGN KEY (venue_id) REFERENCES venues(id) ON DELETE CASCADE",
+      "name": "deal_revenue_events_venue_id_fkey",
+      "table": "deal_revenue_events"
+    },
+    {
+      "definition": "FOREIGN KEY (venue_sales_attribution_id) REFERENCES venue_sales_attributions(id) ON DELETE SET NULL",
+      "name": "deal_revenue_events_venue_sales_attribution_id_fkey",
+      "table": "deal_revenue_events"
+    }
+  ],
+  "indexes": [
+    {
+      "definition": "CREATE UNIQUE INDEX club_invoice_items_invoice_id_revenue_event_id_key ON public.club_invoice_items USING btree (invoice_id, revenue_event_id)",
+      "name": "club_invoice_items_invoice_id_revenue_event_id_key",
+      "table": "club_invoice_items"
+    },
+    {
+      "definition": "CREATE UNIQUE INDEX club_invoice_items_pkey ON public.club_invoice_items USING btree (id)",
+      "name": "club_invoice_items_pkey",
+      "table": "club_invoice_items"
+    },
+    {
+      "definition": "CREATE INDEX club_invoice_items_revenue_idx ON public.club_invoice_items USING btree (revenue_event_id)",
+      "name": "club_invoice_items_revenue_idx",
+      "table": "club_invoice_items"
+    },
+    {
+      "definition": "CREATE UNIQUE INDEX club_invoices_pkey ON public.club_invoices USING btree (id)",
+      "name": "club_invoices_pkey",
+      "table": "club_invoices"
+    },
+    {
+      "definition": "CREATE INDEX club_invoices_status_due_idx ON public.club_invoices USING btree (status, due_at)",
+      "name": "club_invoices_status_due_idx",
+      "table": "club_invoices"
+    },
+    {
+      "definition": "CREATE UNIQUE INDEX club_invoices_stripe_invoice_id_key ON public.club_invoices USING btree (stripe_invoice_id)",
+      "name": "club_invoices_stripe_invoice_id_key",
+      "table": "club_invoices"
+    },
+    {
+      "definition": "CREATE UNIQUE INDEX club_invoices_venue_id_period_start_period_end_sequence_key ON public.club_invoices USING btree (venue_id, period_start, period_end, sequence)",
+      "name": "club_invoices_venue_id_period_start_period_end_sequence_key",
+      "table": "club_invoices"
+    },
+    {
+      "definition": "CREATE INDEX club_invoices_venue_status_due_idx ON public.club_invoices USING btree (venue_id, status, due_at DESC)",
+      "name": "club_invoices_venue_status_due_idx",
+      "table": "club_invoices"
+    },
+    {
+      "definition": "CREATE INDEX deal_revenue_events_dancer_month_idx ON public.deal_revenue_events USING btree (dancer_id, commission_month, confirmed_at) WHERE (dancer_id IS NOT NULL)",
+      "name": "deal_revenue_events_dancer_month_idx",
+      "table": "deal_revenue_events"
+    },
+    {
+      "definition": "CREATE UNIQUE INDEX deal_revenue_events_dancer_success_number_idx ON public.deal_revenue_events USING btree (dancer_id, commission_month, successful_redemption_number) WHERE ((dancer_id IS NOT NULL) AND (status <> ALL (ARRAY['refunded'::text, 'voided'::text])))",
+      "name": "deal_revenue_events_dancer_success_number_idx",
+      "table": "deal_revenue_events"
+    },
+    {
+      "definition": "CREATE INDEX deal_revenue_events_invoice_idx ON public.deal_revenue_events USING btree (club_invoice_id, status)",
+      "name": "deal_revenue_events_invoice_idx",
+      "table": "deal_revenue_events"
+    },
+    {
+      "definition": "CREATE UNIQUE INDEX deal_revenue_events_pkey ON public.deal_revenue_events USING btree (id)",
+      "name": "deal_revenue_events_pkey",
+      "table": "deal_revenue_events"
+    },
+    {
+      "definition": "CREATE UNIQUE INDEX deal_revenue_events_qr_redemption_id_key ON public.deal_revenue_events USING btree (qr_redemption_id)",
+      "name": "deal_revenue_events_qr_redemption_id_key",
+      "table": "deal_revenue_events"
+    },
+    {
+      "definition": "CREATE INDEX deal_revenue_events_venue_status_idx ON public.deal_revenue_events USING btree (venue_id, status, confirmed_at DESC)",
+      "name": "deal_revenue_events_venue_status_idx",
+      "table": "deal_revenue_events"
+    }
+  ],
+  "triggers": [
+    {
+      "definition": "CREATE TRIGGER deal_revenue_events_preserve_dancer_eligibility BEFORE UPDATE ON public.deal_revenue_events FOR EACH ROW EXECUTE FUNCTION preserve_dancer_commission_eligibility()",
+      "function_definition": "CREATE OR REPLACE FUNCTION public.preserve_dancer_commission_eligibility()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public', 'pg_temp'\nAS $function$\r\nbegin\r\n  if (new.dancer_commission_eligible, new.dancer_nats_activated_at, new.confirmed_at)\r\n    is distinct from\r\n    (old.dancer_commission_eligible, old.dancer_nats_activated_at, old.confirmed_at)\r\n  then\r\n    raise exception using errcode = '22023', message = 'Redemption commission eligibility is immutable.';\r\n  end if;\r\n  return new;\r\nend;\r\n$function$\n",
+      "name": "deal_revenue_events_preserve_dancer_eligibility",
+      "table": "deal_revenue_events"
+    },
+    {
+      "definition": "CREATE TRIGGER deal_revenue_events_void_agent_commissions AFTER UPDATE OF status ON public.deal_revenue_events FOR EACH ROW EXECUTE FUNCTION void_agent_commissions_with_revenue()",
+      "function_definition": "CREATE OR REPLACE FUNCTION public.void_agent_commissions_with_revenue()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\nbegin\n  if new.status in ('refunded', 'voided') and old.status not in ('refunded', 'voided') then\n    update public.agent_commission_events\n    set status = 'voided', voided_at = clock_timestamp(),\n        audit = audit || jsonb_build_object('source_revenue_status', new.status)\n    where deal_revenue_event_id = new.id and status <> 'voided';\n  end if;\n  return new;\nend;\n$function$\n",
+      "name": "deal_revenue_events_void_agent_commissions",
+      "table": "deal_revenue_events"
+    }
+  ],
+  "access": [
+    {
+      "acl": [
+        "postgres=arwdDxtm/postgres",
+        "anon=r/postgres",
+        "authenticated=arwd/postgres",
+        "service_role=arwdDxtm/postgres"
+      ],
+      "force_rls": false,
+      "rls": true,
+      "table": "club_invoice_items"
+    },
+    {
+      "acl": [
+        "postgres=arwdDxtm/postgres",
+        "anon=r/postgres",
+        "authenticated=arwd/postgres",
+        "service_role=arwdDxtm/postgres"
+      ],
+      "force_rls": false,
+      "rls": true,
+      "table": "club_invoices"
+    },
+    {
+      "acl": [
+        "postgres=arwdDxtm/postgres",
+        "anon=r/postgres",
+        "authenticated=arwd/postgres",
+        "service_role=arwdDxtm/postgres"
+      ],
+      "force_rls": false,
+      "rls": true,
+      "table": "deal_revenue_events"
+    }
+  ],
+  "policies": [
+    {
+      "cmd": "ALL",
+      "permissive": "PERMISSIVE",
+      "policyname": "Admins manage club invoice items",
+      "qual": "is_admin()",
+      "roles": [
+        "public"
+      ],
+      "schemaname": "public",
+      "tablename": "club_invoice_items",
+      "with_check": "is_admin()"
+    },
+    {
+      "cmd": "ALL",
+      "permissive": "PERMISSIVE",
+      "policyname": "Admins manage club invoices",
+      "qual": "is_admin()",
+      "roles": [
+        "public"
+      ],
+      "schemaname": "public",
+      "tablename": "club_invoices",
+      "with_check": "is_admin()"
+    },
+    {
+      "cmd": "ALL",
+      "permissive": "PERMISSIVE",
+      "policyname": "Admins manage deal revenue events",
+      "qual": "is_admin()",
+      "roles": [
+        "public"
+      ],
+      "schemaname": "public",
+      "tablename": "deal_revenue_events",
+      "with_check": "is_admin()"
+    },
+    {
+      "cmd": "SELECT",
+      "permissive": "PERMISSIVE",
+      "policyname": "Venue owners read own invoice items",
+      "qual": "(EXISTS ( SELECT 1\n   FROM (club_invoices invoice\n     JOIN venues venue ON ((venue.id = invoice.venue_id)))\n  WHERE ((invoice.id = club_invoice_items.invoice_id) AND (venue.owner_user_id = auth.uid()))))",
+      "roles": [
+        "public"
+      ],
+      "schemaname": "public",
+      "tablename": "club_invoice_items",
+      "with_check": null
+    },
+    {
+      "cmd": "SELECT",
+      "permissive": "PERMISSIVE",
+      "policyname": "Venue owners read own invoices",
+      "qual": "(EXISTS ( SELECT 1\n   FROM venues venue\n  WHERE ((venue.id = club_invoices.venue_id) AND (venue.owner_user_id = auth.uid()))))",
+      "roles": [
+        "public"
+      ],
+      "schemaname": "public",
+      "tablename": "club_invoices",
+      "with_check": null
+    }
+  ],
+  "functions": [
+    {
+      "anon_execute": false,
+      "authenticated_execute": false,
+      "definition": "CREATE OR REPLACE FUNCTION public.apply_club_invoice_payment(p_invoice_id uuid, p_total_paid_cents integer, p_payment_reference text, p_paid_at timestamp with time zone DEFAULT now(), p_stripe_invoice_id text DEFAULT NULL::text, p_hosted_invoice_url text DEFAULT NULL::text, p_invoice_pdf_url text DEFAULT NULL::text)\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\ndeclare\n  v_invoice public.club_invoices%rowtype;\n  v_paid integer;\nbegin\n  if length(trim(coalesce(p_payment_reference, ''))) < 3 then\n    raise exception using errcode = '22023', message = 'A valid payment reference is required.';\n  end if;\n  select invoice.* into v_invoice from public.club_invoices invoice\n  where invoice.id = p_invoice_id for update;\n  if not found then\n    raise exception using errcode = 'P0002', message = 'Club invoice not found.';\n  end if;\n  if v_invoice.status in ('void', 'uncollectible') then\n    raise exception using errcode = '22023', message = 'This invoice cannot accept payment.';\n  end if;\n\n  v_paid := least(v_invoice.amount_due_cents,\n    greatest(v_invoice.amount_paid_cents, p_total_paid_cents));\n  update public.club_invoices\n  set amount_paid_cents = v_paid,\n      status = case when v_paid >= amount_due_cents then 'paid' else 'open' end,\n      external_payment_reference = trim(p_payment_reference),\n      paid_at = case when v_paid >= amount_due_cents then p_paid_at else paid_at end,\n      stripe_invoice_id = coalesce(p_stripe_invoice_id, stripe_invoice_id),\n      hosted_invoice_url = coalesce(p_hosted_invoice_url, hosted_invoice_url),\n      invoice_pdf_url = coalesce(p_invoice_pdf_url, invoice_pdf_url),\n      last_error = null, updated_at = now()\n  where id = p_invoice_id;\n\n  if v_paid >= v_invoice.amount_due_cents then\n    update public.deal_revenue_events revenue\n    set status = 'settled', venue_payment_reference = trim(p_payment_reference),\n        venue_payment_received_at = p_paid_at,\n        audit = coalesce(revenue.audit, '{}'::jsonb) || jsonb_build_object(\n          'club_invoice_id', p_invoice_id, 'dancer_payout_dependency', false,\n          'agent_payout_dependency_released', true\n        )\n    where revenue.club_invoice_id = p_invoice_id\n      and revenue.status = 'pending_venue_payment';\n\n    update public.agent_commission_events commission\n    set status = 'payable', venue_payment_received_at = p_paid_at, payable_at = p_paid_at,\n        audit = commission.audit || jsonb_build_object(\n          'club_invoice_id', p_invoice_id,\n          'venue_payment_reference', trim(p_payment_reference)\n        )\n    where commission.deal_revenue_event_id in (\n      select revenue.id from public.deal_revenue_events revenue\n      where revenue.club_invoice_id = p_invoice_id\n    ) and commission.status = 'pending_venue_payment';\n  end if;\n  return jsonb_build_object('id', p_invoice_id, 'amount_paid_cents', v_paid,\n    'status', case when v_paid >= v_invoice.amount_due_cents then 'paid' else 'open' end);\nend;\n$function$\n",
+      "fingerprint": "8a2ba72df6bea9b786b9681b6661d279",
+      "name": "apply_club_invoice_payment",
+      "service_execute": true,
+      "signature": "apply_club_invoice_payment(uuid,integer,text,timestamp with time zone,text,text,text)"
+    },
+    {
+      "anon_execute": false,
+      "authenticated_execute": false,
+      "definition": "CREATE OR REPLACE FUNCTION public.create_club_invoice_draft(p_venue_id uuid, p_period_start date, p_period_end date, p_due_at timestamp with time zone, p_revenue_event_ids uuid[])\n RETURNS uuid\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\r\ndeclare\r\n  v_invoice_id uuid;\r\n  v_sequence integer;\r\n  v_expected integer := coalesce(array_length(p_revenue_event_ids, 1), 0);\r\n  v_amount integer;\r\nbegin\r\n  if v_expected = 0 then\r\n    raise exception using errcode = '22023', message = 'At least one revenue event is required.';\r\n  end if;\r\n\r\n  select count(*)::integer, coalesce(sum(revenue.gross_commission_cents), 0)::integer\r\n    into v_sequence, v_amount\r\n  from public.deal_revenue_events revenue\r\n  where revenue.id = any(p_revenue_event_ids)\r\n    and revenue.venue_id = p_venue_id\r\n    and revenue.status = 'pending_venue_payment'\r\n    and revenue.club_invoice_id is null;\r\n\r\n  if v_sequence <> v_expected or v_amount <= 0 then\r\n    raise exception using errcode = '22023', message = 'Revenue events are no longer invoiceable.';\r\n  end if;\r\n\r\n  select coalesce(max(invoice.sequence), 0) + 1\r\n    into v_sequence\r\n  from public.club_invoices invoice\r\n  where invoice.venue_id = p_venue_id\r\n    and invoice.period_start = p_period_start\r\n    and invoice.period_end = p_period_end;\r\n\r\n  insert into public.club_invoices (\r\n    venue_id, period_start, period_end, sequence, amount_due_cents, due_at\r\n  ) values (\r\n    p_venue_id, p_period_start, p_period_end, v_sequence, v_amount, p_due_at\r\n  ) returning id into v_invoice_id;\r\n\r\n  insert into public.club_invoice_items (invoice_id, revenue_event_id, amount_cents)\r\n  select v_invoice_id, revenue.id, revenue.gross_commission_cents\r\n  from public.deal_revenue_events revenue\r\n  where revenue.id = any(p_revenue_event_ids);\r\n\r\n  update public.deal_revenue_events\r\n  set club_invoice_id = v_invoice_id\r\n  where id = any(p_revenue_event_ids);\r\n\r\n  return v_invoice_id;\r\nend;\r\n$function$\n",
+      "fingerprint": "7d84e02839aa33e17d7b6d01bee8393b",
+      "name": "create_club_invoice_draft",
+      "service_execute": true,
+      "signature": "create_club_invoice_draft(uuid,date,date,timestamp with time zone,uuid[])"
+    }
+  ],
+  "enums": {}
+}
