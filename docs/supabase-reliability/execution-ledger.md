@@ -468,3 +468,11 @@ The foundation was pushed as `ab0a1078d928b2397593d03d7f410bdf1ff52ece`; exact m
 The plan is `step-10-tv-metric-caller.md`: use bounded aggregate requests for previously authorized videos, validate every response and preserve existing zero metrics and signing behavior. Keep the applied SQL frozen. Native caller tests, full validation and exact push/deployment/health gates remain required.
 
 Full validation passed all 5,320 tests, lint, production build, standalone TypeScript, migration guard and thirty readiness checks. The 81 focused checks include exact native counts beyond 1,000 events and failure rejection without partial totals. Fresh read-only database/API verification at 11:17:04 UTC retained the frozen function, ledger, RLS, service-only permissions and indexes; no SQL was reapplied. Exact commit/push and Vercel/health gates remain required.
+
+The caller was pushed as `b35a7b15bd42117571d7bc9bafbf3544736d7413`, with matching main references and successful [exact Vercel deployment](https://vercel.com/ai-movie-jobs/shiftstage/FpJmqYFqAufwQdC6aWQdXSiBhtgP). Health, protected routes and thirty readiness checks passed at 11:22:18–20 UTC. No production event, payout or email was sent.
+
+## Step 10 redundant indexes
+
+The inspected plan is `step-10-redundant-indexes.md`. Two ordinary indexes exactly duplicate retained unique constraints; neither has dependent objects or replica/cluster identity duties. Remove only those indexes after native drift/rollback checks and full validation, with short locks, committed SQL, transactional preservation and exact deployment gates.
+
+All 22 native index checks and transaction/repeat/drift/postflight-rollback deployment rehearsals pass. Full validation passed all 5,342 tests, lint, production build, standalone TypeScript, migration guard and thirty readiness checks. No production index or row has changed in preparation. Exact commit/push, guarded committed migration, preservation/query-plan verification and Vercel/health gates remain required.

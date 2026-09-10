@@ -31,3 +31,15 @@ All 35 native tests pass. They count 5,500 events exactly, return 1,200 metric g
 Run full tests, lint, production build, standalone TypeScript, migration guard and readiness. Rehearse exact application, repeat rejection and schema-drift rejection. Apply only committed additive SQL with data/access/catalog/dependency/ledger preservation checks; verify the function and server schema before switching the caller. No event writes, schema replacement, index deletion, new paid service or production analytics mutation is part of this release.
 
 Full foundation validation passed all 5,280 automated tests without failures, skips or cancellations, lint, production build, standalone TypeScript, migration guard and thirty live readiness checks. Postbuild skipped population. Exact commit/push, committed-source rehearsal, guarded application, read-only security/preservation/API verification and successful Vercel/health gates remain required before caller integration.
+
+## Delivered aggregate and caller
+
+The foundation was delivered as `ab0a1078d928b2397593d03d7f410bdf1ff52ece`; migration `20260910105400` is applied and frozen. The caller was delivered as `b35a7b15bd42117571d7bc9bafbf3544736d7413`. Both exact deployments succeeded, with the latest health/readiness checks passing at 11:22:18–20 UTC. See `step-10-tv-metric-caller.md` for the 5,320-test validation, exact-count and malformed-response coverage. Owner/venue metrics now use bounded aggregate receipts rather than capped raw event rows.
+
+## Final index decision and limits
+
+The second inspection confirmed the two ordinary indexes are exact duplicates without dependencies. `step-10-redundant-indexes.md` defines their guarded removal, preservation checks, native tests and rollback. Both covering unique constraints remain mandatory. This final performance release does not add speculative indexes or change existing public visibility, city matching, schedule timing, favorites or Working Now behavior.
+
+The 108 structural foreign-key flags do not justify blanket indexes: the inventory includes nullable historical/audit references and partial indexing, and all currently inspected critical query paths have usable indexes or appropriate small-table plans. Production-scale latency, directory relation growth and case-insensitive city search remain measurement/pagination work, not proven regressions in this inspection. Preserve these as growth-monitoring recommendations for the final report. Step 16 owns the existing local-time profile-view day boundary; Step 21 owns expanded hosted/load regression when a disposable environment is available.
+
+Step 10 can close after this index migration's complete validation, exact committed deployment, preservation checks, retained query-plan verification and Vercel/health gates. Storage reliability is the next numbered step; do not begin it before those gates pass.

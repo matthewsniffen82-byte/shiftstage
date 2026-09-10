@@ -1,0 +1,44 @@
+{
+  "capturedAt": "2026-09-10T11:23:25.365249+00:00",
+  "scope": "Index-focused projection; complete captured index definitions and owning unique constraints, synthetic surrounding tables.",
+  "indexes": [
+    {
+      "table": "club_invoice_items",
+      "name": "club_invoice_items_revenue_event_once_key",
+      "definition": "CREATE UNIQUE INDEX club_invoice_items_revenue_event_once_key ON public.club_invoice_items USING btree (revenue_event_id)",
+      "constraints": [
+        {
+          "definition": "UNIQUE (revenue_event_id)",
+          "kind": "u",
+          "name": "club_invoice_items_revenue_event_once_key",
+          "table": "club_invoice_items"
+        }
+      ]
+    },
+    {
+      "table": "club_invoice_items",
+      "name": "club_invoice_items_revenue_idx",
+      "definition": "CREATE INDEX club_invoice_items_revenue_idx ON public.club_invoice_items USING btree (revenue_event_id)",
+      "constraints": []
+    },
+    {
+      "table": "venues",
+      "name": "venues_owner_user_id_idx",
+      "definition": "CREATE INDEX venues_owner_user_id_idx ON public.venues USING btree (owner_user_id)",
+      "constraints": []
+    },
+    {
+      "table": "venues",
+      "name": "venues_owner_user_id_key",
+      "definition": "CREATE UNIQUE INDEX venues_owner_user_id_key ON public.venues USING btree (owner_user_id)",
+      "constraints": [
+        {
+          "definition": "UNIQUE (owner_user_id)",
+          "kind": "u",
+          "name": "venues_owner_user_id_key",
+          "table": "venues"
+        }
+      ]
+    }
+  ]
+}
