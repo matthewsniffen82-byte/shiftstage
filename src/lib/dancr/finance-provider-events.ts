@@ -115,7 +115,22 @@ export async function recordPaymentProviderWebhook(
     p_object_id: event.objectId || null,
   });
   if (error) throw error;
-  return data === true;
+  if (data === true) return true;
+  if (data !== false) throw new Error("Provider event claim was not confirmed.");
+
+  // A live lease is not a completed delivery. Acknowledge only processed events
+  // so Stripe keeps retrying if the original worker failed or disappeared.
+  const { data: existing, error: readError } = await (client as any)
+    .from("payment_provider_webhook_events")
+    .select("processing_status")
+    .eq("payment_provider", provider)
+    .eq("provider_event_id", event.id)
+    .maybeSingle();
+  if (readError) throw readError;
+  if (existing?.processing_status !== "processed") {
+    throw new Error("Provider event processing is not complete.");
+  }
+  return false;
 }
 
 export async function finishPaymentProviderWebhook(
@@ -124,12 +139,14 @@ export async function finishPaymentProviderWebhook(
   eventId: string,
   failureReason?: string,
 ) {
-  const { error } = await (client as any).from("payment_provider_webhook_events").update({
+  const { data, error } = await (client as any).from("payment_provider_webhook_events").update({
     processing_status: failureReason ? "failed" : "processed",
     failure_reason: failureReason ? failureReason.slice(0, 500) : null,
     processed_at: new Date().toISOString(),
-  }).eq("payment_provider", provider).eq("provider_event_id", eventId).eq("processing_status", "processing");
+  }).eq("payment_provider", provider).eq("provider_event_id", eventId).eq("processing_status", "processing")
+    .select("id").maybeSingle();
   if (error) throw error;
+  if (!data?.id) throw new Error("Provider event completion was not confirmed.");
 }
 
 export async function completeProviderPayout(

@@ -39,8 +39,8 @@ Step 1 delivered as `50d4eb543dbfc93dbed6f0663c51aa2332542cb4`, pushed to origin
 | 16 | CORS | Delivered and healthy: 94f95e9d4333fe1d3622bb40c280c7da557e1643 |
 | 17 | Cookies / sessions | Delivered and healthy: 65be771a1e38707f923440bfe4de9a164406ae30 |
 | 18 | Redirects / URLs | Delivered and healthy: 4c7ae4d5f244633e88a4572076a5b5235acd1cc1 |
-| 19 | Database functions / grants | Application and database delivered: 508bf4b89804a5b403cb6bb12fcdfc24c4db6b27; immutable record release pending |
-| 20 | Webhooks | Not started |
+| 19 | Database functions / grants | Delivered and healthy: 508bf4b89804a5b403cb6bb12fcdfc24c4db6b27 and b8f3f254ddea427252cef528cffb7b118f5330ed |
+| 20 | Webhooks | In progress: confirmed-delivery acknowledgments; ordering review follows |
 | 21 | Errors / disclosure | Not started |
 | 22 | Security logging | Not started |
 | 23 | Dependencies | Not started |
@@ -265,3 +265,11 @@ The final record candidate on `ac9696c18296871eb48999f450de00d5c33a5ae7` passed 
 Before publication, independent release `3cdb4c116a315b16c7fe0b05dc9ab06a13142c0a` added two partial unique indexes for active photo positions and safe administrator conflict handling. Its SQL, handler and 29 new native tests were reviewed and preserved; its exact Vercel deployment AoDWMKiJm548TNJ5Kq8xSm2G8Npw succeeded. It changes no grants, policies or functions. This security task does not apply that separate migration. Combined validation is repeated before this document-only record is published.
 
 Final combined validation on `3cdb4c116a315b16c7fe0b05dc9ab06a13142c0a` passed all 3,524 tests, zero failures/skips/cancellations, uncached lint, standalone TypeScript, production build and all eight isolated native browser checks without JavaScript errors. All 137 frozen migrations remained intact and postbuild skipped demo population. At 00:56:03 UTC, production metadata again confirmed zero extra browser permissions, exact Step 19 tracking and unchanged prior boundaries; the independent index release brought the live ledger to 96 entries. Only these three security audit documents are staged for the record release.
+
+Step 19's immutable record was pushed as `b8f3f254ddea427252cef528cffb7b118f5330ed`, with clean local HEAD matching origin/main. [Exact Vercel deployment](https://vercel.com/ai-movie-jobs/shiftstage/Aso3ydXuUbWWCMtp6YaRwvKzAPJC) succeeded. At 00:59:52 UTC on 2026-09-10, read-only production verification again confirmed zero extra browser table privileges, exact migration tracking and unchanged prior boundaries. Fifteen live header checks and all seventeen health/authorization/callback checks, including thirty readiness checks, passed by 00:59:59 UTC. Step 19 is delivered; Step 20 begins only after these gates.
+
+## Step 20: confirmed webhook delivery acknowledgments
+
+Inspection and the bounded fix are documented in `step-20-webhooks.md`. The atomic claim's false result previously acknowledged both completed and still-processing events. The gateway now acknowledges only a confirmed processed event and requires confirmation of finalization. Real SDK signatures and isolated native PostgreSQL reproduce the defect: twenty of the initial fifty runtime tests fail against the original gateway and pass after the fix. Existing signature, size, lease, RLS and financial-handler boundaries are preserved. No production payment delivery or database mutation is used for testing. Full validation and exact deployment are required before the remaining Step 20 ordering/state review.
+
+The first Step 20 candidate, based on `b8f3f254ddea427252cef528cffb7b118f5330ed`, passed all 3,577 tests with zero failures/skips/cancellations, uncached lint, standalone TypeScript, the production build and eight native browser checks without JavaScript errors. Fifty-three new runtime/PostgreSQL checks were added; all 65 focused webhook checks passed. An initial fixture fingerprint comparison differed only because captured production SQL used CRLF; normalized source comparison and the native fingerprint verified identical function contents. The history guard kept all 137 frozen migrations; no new SQL is included and postbuild skipped demo population. Exact delivery and production verification follow before further implementation.

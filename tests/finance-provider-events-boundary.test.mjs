@@ -36,7 +36,7 @@ test("invoice event reconciliation preserves production payment and failure beha
 
 test("provider webhooks remain idempotently claimed and explicitly finalized", () => {
   assert.match(events, /rpc\("claim_payment_provider_webhook"/);
-  assert.match(events, /return data === true/);
+  assert.match(events, /if \(data === true\) return true/);
   assert.match(events, /processing_status: failureReason \? "failed" : "processed"/);
   assert.match(events, /eq\("processing_status", "processing"\)/);
   assert.match(events, /failureReason\.slice\(0, 500\)/);
