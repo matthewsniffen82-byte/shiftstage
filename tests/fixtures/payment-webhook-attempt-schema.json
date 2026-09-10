@@ -1,0 +1,200 @@
+{
+  "access": {
+    "acl": [
+      "postgres=arwdDxtm/postgres",
+      "anon=r/postgres",
+      "authenticated=r/postgres",
+      "service_role=arwdDxtm/postgres"
+    ],
+    "force_rls": false,
+    "rls": true
+  },
+  "captured_at": "2026-09-10T02:02:31.662088-07:00",
+  "columns": [
+    {
+      "default": null,
+      "name": "provider_event_id",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "payment_provider_webhook_events",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "event_type",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "payment_provider_webhook_events",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "object_id",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "payment_provider_webhook_events",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "processed_at",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "payment_provider_webhook_events",
+      "type": "timestamptz"
+    },
+    {
+      "default": "'{}'::jsonb",
+      "name": "metadata",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "payment_provider_webhook_events",
+      "type": "jsonb"
+    },
+    {
+      "default": "gen_random_uuid()",
+      "name": "id",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "payment_provider_webhook_events",
+      "type": "uuid"
+    },
+    {
+      "default": "'stripe'::text",
+      "name": "payment_provider",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "payment_provider_webhook_events",
+      "type": "text"
+    },
+    {
+      "default": "'processing'::text",
+      "name": "processing_status",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "payment_provider_webhook_events",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "failure_reason",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "payment_provider_webhook_events",
+      "type": "text"
+    },
+    {
+      "default": "now()",
+      "name": "received_at",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "payment_provider_webhook_events",
+      "type": "timestamptz"
+    },
+    {
+      "default": "now()",
+      "name": "processing_started_at",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "payment_provider_webhook_events",
+      "type": "timestamptz"
+    },
+    {
+      "default": "1",
+      "name": "attempt_count",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "payment_provider_webhook_events",
+      "type": "int4"
+    }
+  ],
+  "constraints": [
+    {
+      "definition": "CHECK ((attempt_count > 0))",
+      "name": "payment_provider_webhook_events_attempt_count_check",
+      "table": "payment_provider_webhook_events"
+    },
+    {
+      "definition": "CHECK ((payment_provider = ANY (ARRAY['stripe'::text, 'bitsafe'::text, 'adyen'::text, 'other'::text])))",
+      "name": "payment_provider_webhook_events_payment_provider_check",
+      "table": "payment_provider_webhook_events"
+    },
+    {
+      "definition": "PRIMARY KEY (id)",
+      "name": "payment_provider_webhook_events_pkey",
+      "table": "payment_provider_webhook_events"
+    },
+    {
+      "definition": "CHECK ((processing_status = ANY (ARRAY['processing'::text, 'processed'::text, 'failed'::text])))",
+      "name": "payment_provider_webhook_events_processing_status_check",
+      "table": "payment_provider_webhook_events"
+    },
+    {
+      "definition": "UNIQUE (payment_provider, provider_event_id)",
+      "name": "payment_provider_webhook_events_provider_event_key",
+      "table": "payment_provider_webhook_events"
+    }
+  ],
+  "existing_function": {
+    "anon_execute": false,
+    "authenticated_execute": false,
+    "definition": "CREATE OR REPLACE FUNCTION public.claim_payment_provider_webhook(p_payment_provider text, p_provider_event_id text, p_event_type text, p_object_id text DEFAULT NULL::text)\n RETURNS boolean\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\r\ndeclare v_event_id uuid;\r\nbegin\r\n  if p_payment_provider not in ('stripe', 'bitsafe', 'adyen', 'other')\r\n    or nullif(trim(coalesce(p_provider_event_id, '')), '') is null\r\n    or nullif(trim(coalesce(p_event_type, '')), '') is null\r\n  then\r\n    raise exception using errcode = '22023', message = 'A valid provider webhook event is required.';\r\n  end if;\r\n\r\n  insert into public.payment_provider_webhook_events (\r\n    payment_provider, provider_event_id, event_type, object_id\r\n  ) values (\r\n    p_payment_provider, trim(p_provider_event_id), trim(p_event_type), nullif(trim(coalesce(p_object_id, '')), '')\r\n  )\r\n  on conflict (payment_provider, provider_event_id) do nothing\r\n  returning id into v_event_id;\r\n  if v_event_id is not null then return true; end if;\r\n\r\n  -- A failed delivery may retry immediately. A processing delivery is leased\r\n  -- for ten minutes so concurrent duplicates cannot run, while a process crash\r\n  -- cannot strand the provider event forever.\r\n  update public.payment_provider_webhook_events\r\n  set processing_status = 'processing', failure_reason = null, processed_at = null,\r\n      processing_started_at = clock_timestamp(), attempt_count = attempt_count + 1\r\n  where payment_provider = p_payment_provider\r\n    and provider_event_id = trim(p_provider_event_id)\r\n    and (\r\n      processing_status = 'failed'\r\n      or (processing_status = 'processing' and processing_started_at <= clock_timestamp() - interval '10 minutes')\r\n    )\r\n  returning id into v_event_id;\r\n  return v_event_id is not null;\r\nend;\r\n$function$\n",
+    "fingerprint": "a59ee6e538a8ff65dd2731f3bc89ebb6",
+    "service_execute": true
+  },
+  "indexes": [
+    {
+      "definition": "CREATE UNIQUE INDEX payment_provider_webhook_events_pkey ON public.payment_provider_webhook_events USING btree (id)",
+      "name": "payment_provider_webhook_events_pkey",
+      "table": "payment_provider_webhook_events"
+    },
+    {
+      "definition": "CREATE UNIQUE INDEX payment_provider_webhook_events_provider_event_key ON public.payment_provider_webhook_events USING btree (payment_provider, provider_event_id)",
+      "name": "payment_provider_webhook_events_provider_event_key",
+      "table": "payment_provider_webhook_events"
+    },
+    {
+      "definition": "CREATE INDEX provider_webhooks_status_idx ON public.payment_provider_webhook_events USING btree (payment_provider, processing_status, received_at)",
+      "name": "provider_webhooks_status_idx",
+      "table": "payment_provider_webhook_events"
+    }
+  ],
+  "ledger": {
+    "count": 105,
+    "latest": "20260910082000"
+  },
+  "new_function_exists": false,
+  "policies": [
+    {
+      "cmd": "SELECT",
+      "permissive": "PERMISSIVE",
+      "policyname": "Admins read provider webhooks",
+      "qual": "is_admin()",
+      "roles": [
+        "public"
+      ],
+      "schemaname": "public",
+      "tablename": "payment_provider_webhook_events",
+      "with_check": null
+    }
+  ],
+  "read_only": "on",
+  "records": {
+    "count": 0,
+    "fingerprint": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  "triggers": [
+    {
+      "definition": "CREATE TRIGGER provider_webhooks_no_delete BEFORE DELETE ON public.payment_provider_webhook_events FOR EACH ROW EXECUTE FUNCTION prohibit_financial_record_delete()",
+      "function_definition": "CREATE OR REPLACE FUNCTION public.prohibit_financial_record_delete()\n RETURNS trigger\n LANGUAGE plpgsql\n SET search_path TO 'pg_catalog', 'pg_temp'\nAS $function$\r\nbegin\r\n  raise exception using errcode = '22023', message = 'Financial records cannot be deleted.';\r\nend;\r\n$function$\n",
+      "name": "provider_webhooks_no_delete",
+      "table": "payment_provider_webhook_events"
+    },
+    {
+      "definition": "CREATE TRIGGER reject_retired_provider_webhooks BEFORE INSERT OR UPDATE OF payment_provider ON public.payment_provider_webhook_events FOR EACH ROW EXECUTE FUNCTION reject_retired_payout_provider()",
+      "function_definition": "CREATE OR REPLACE FUNCTION public.reject_retired_payout_provider()\n RETURNS trigger\n LANGUAGE plpgsql\n SET search_path TO 'public'\nAS $function$\r\nbegin\r\n  if lower(trim(new.payment_provider)) = 'bitsafe' then\r\n    if tg_op = 'INSERT' then\r\n      raise exception 'The selected payout provider is no longer supported.' using errcode = '22023';\r\n    elsif old.payment_provider is distinct from new.payment_provider then\r\n      raise exception 'The selected payout provider is no longer supported.' using errcode = '22023';\r\n    end if;\r\n  end if;\r\n  return new;\r\nend;\r\n$function$\n",
+      "name": "reject_retired_provider_webhooks",
+      "table": "payment_provider_webhook_events"
+    }
+  ]
+}

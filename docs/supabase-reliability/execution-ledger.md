@@ -400,3 +400,11 @@ The foundation was pushed as `3866bd5919ab902377194d3266d22befb5c282c8`; exact c
 The inspected plan is `step-09-dancer-tap-caller.md`. Replace the two database calls with the verified wrapper, validate receipts and retain auth/browser binding, pending setup, session/cooldown and optional notification behavior. All 146 focused tests pass, including 63 new actual endpoint/service/native SQL cases. Read-only dependency verification retains the deployed function, dependencies, ledger, RLS and aggregate counts. Full release checks and exact push/Vercel/health gates remain required.
 
 Full validation passed all 4,991 automated tests, lint, build, standalone TypeScript, migration guard and thirty readiness checks. SQL stayed frozen and no production tap or notification was used for testing. Exact push, Vercel success and deployed health remain required.
+
+The caller was pushed as `5f1ec834146c5ca52f57a4c2a07f8925ed5f547c`, with matching main references and successful [exact Vercel deployment](https://vercel.com/ai-movie-jobs/shiftstage/FepZb2y23pr2P1RgrGSzXy7bn7RM). Health, protected routes, RPC schema exposure and thirty readiness checks passed at 08:39:40–43 UTC. No production tap or notification was used as a test.
+
+## Step 9 webhook attempt ownership: additive receipt
+
+The inspected plan is `step-09-webhook-attempt-receipts.md`. Add an unused atomic receipt around the existing provider event claim so a later caller can distinguish its attempt from reclaimed work. Thirty-four native database checks and transaction/repeat/schema-drift deployment rehearsals pass. Full validation, committed additive SQL application, read-only preservation and exact push/Vercel/health gates remain required before switching the caller.
+
+Full validation passed all 5,025 automated tests, lint, production build, standalone TypeScript, migration guard and thirty readiness checks. Initial fixture-only timezone and replacement-function signature errors were corrected before the complete successful run. Exact push, committed SQL application, preservation/security checks and Vercel/health gates remain required; the application caller remains unchanged.
