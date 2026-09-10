@@ -76,6 +76,7 @@ export async function uploadVenueQrCode(
 ): Promise<VenueOwnerProfile> {
   const access = await requireVenueAccess(client, userId, "manage_profile");
   const venue = await requireVenueForAccount(client, userId);
+  const qrCodeLabel = optionalText(label, "QR label", 100);
   const image = await validateAndPrepareDancrImage(file);
   if (image.width < 180 || image.height < 180) {
     throw new Error("QR image must be at least 180 by 180 pixels.");
@@ -99,23 +100,25 @@ export async function uploadVenueQrCode(
     .from("venues")
     .update({
       qr_code_storage_path: storagePath,
-      qr_code_label: optionalText(label, "QR label", 100),
+      qr_code_label: qrCodeLabel,
       qr_code_updated_at: new Date().toISOString(),
     })
     .eq("id", access.venueId)
+    .filter("qr_code_storage_path", venue.qrCodeStoragePath === null ? "is" : "eq", venue.qrCodeStoragePath)
+    .filter("qr_code_updated_at", venue.qrCodeUpdatedAt === null ? "is" : "eq", venue.qrCodeUpdatedAt)
     .select(VENUE_OWNER_COLUMNS)
     .single();
 
-  if (error) {
-    await client.storage.from(QR_BUCKET).remove([storagePath]);
-    throw error;
-  }
+  // A missing database reply does not prove publication failed. Retain the upload.
+  if (error) throw error;
+  requireVenueMediaReceipt(data, venue.id, "qr_code_storage_path", storagePath);
+  const profile = toVenueOwnerProfile(client, data);
 
   if (venue.qrCodeStoragePath && venue.qrCodeStoragePath !== storagePath) {
     await client.storage.from(QR_BUCKET).remove([venue.qrCodeStoragePath]).catch(() => null);
   }
 
-  return toVenueOwnerProfile(client, data);
+  return profile;
 }
 
 export async function deleteVenueQrCode(client: DancrClient, userId: string): Promise<VenueOwnerProfile> {
@@ -167,8 +170,6 @@ export async function uploadVenueCoverImageByAdmin(
   }
 
   const tempPath = `${adminId}/venue-cover/${venue.id}/${Date.now()}-${image.storageFileName}`;
-  let finalPath = "";
-  let finalUploaded = false;
 
   try {
     const { error: tempUploadError } = await client.storage
@@ -204,8 +205,7 @@ export async function uploadVenueCoverImageByAdmin(
       "31536000",
       { archiveOriginal: true, watermark: true },
     );
-    finalPath = uploadedImage.storagePath;
-    finalUploaded = true;
+    const finalPath = uploadedImage.storagePath;
 
     const { data, error } = await client
       .from("venues")
@@ -215,10 +215,14 @@ export async function uploadVenueCoverImageByAdmin(
         ...venuePageDraftReset(venue),
       })
       .eq("id", venue.id)
+      .filter("cover_image_storage_path", venue.coverImageStoragePath === null ? "is" : "eq", venue.coverImageStoragePath)
+      .filter("cover_image_updated_at", venue.coverImageUpdatedAt === null ? "is" : "eq", venue.coverImageUpdatedAt)
       .select(VENUE_OWNER_COLUMNS)
       .single();
 
     if (error) throw error;
+    requireVenueMediaReceipt(data, venue.id, "cover_image_storage_path", finalPath);
+    const profile = toVenueOwnerProfile(client, data);
     if (venue.coverImageStoragePath && venue.coverImageStoragePath !== finalPath) {
       await removeResponsiveImage(
         client,
@@ -232,18 +236,10 @@ export async function uploadVenueCoverImageByAdmin(
       ).catch(() => null);
     }
     console.info("VENUE_COVER_PUBLISHED", { venueId: venue.id });
-    return toVenueOwnerProfile(client, data);
-  } catch (error) {
-    if (finalUploaded) {
-      await removeResponsiveImage(client, COVER_BUCKET, finalPath).catch(
-        () => null,
-      );
-      await removeArchivedOriginalMedia(client, COVER_BUCKET, finalPath).catch(
-        () => null,
-      );
-    }
-    throw error;
+    return profile;
   } finally {
+    // Only the moderation input is temporary. The published image may already
+    // be referenced even when the database reply or profile mapping failed.
     await client.storage.from(MODERATION_TEMP_BUCKET).remove([tempPath]).catch(() => null);
   }
 }
@@ -318,8 +314,6 @@ export async function uploadVenueLogoImageByAdmin(
   const image = await normalizeDancrVenueLogoImage(validatedImage);
 
   const tempPath = `${adminId}/venue-logo/${venue.id}/${Date.now()}-${image.storageFileName}`;
-  let finalPath = "";
-  let finalUploaded = false;
   try {
     const { error: tempUploadError } = await client.storage
       .from(MODERATION_TEMP_BUCKET)
@@ -349,8 +343,7 @@ export async function uploadVenueLogoImageByAdmin(
       "31536000",
       { archiveOriginal: true, watermark: false },
     );
-    finalPath = uploadedImage.storagePath;
-    finalUploaded = true;
+    const finalPath = uploadedImage.storagePath;
 
     const { data, error } = await client
       .from("venues")
@@ -360,23 +353,22 @@ export async function uploadVenueLogoImageByAdmin(
         ...venuePageDraftReset(venue),
       })
       .eq("id", venue.id)
+      .filter("logo_storage_path", venue.logoStoragePath === null ? "is" : "eq", venue.logoStoragePath)
+      .filter("logo_updated_at", venue.logoUpdatedAt === null ? "is" : "eq", venue.logoUpdatedAt)
       .select(VENUE_OWNER_COLUMNS)
       .single();
     if (error) throw error;
+    requireVenueMediaReceipt(data, venue.id, "logo_storage_path", finalPath);
+    const profile = toVenueOwnerProfile(client, data);
 
     if (venue.logoStoragePath && venue.logoStoragePath !== finalPath) {
       await removeResponsiveImage(client, LOGO_BUCKET, venue.logoStoragePath).catch(() => null);
       await removeArchivedOriginalMedia(client, LOGO_BUCKET, venue.logoStoragePath).catch(() => null);
     }
     console.info("VENUE_LOGO_PUBLISHED", { venueId: venue.id });
-    return toVenueOwnerProfile(client, data);
-  } catch (error) {
-    if (finalUploaded) {
-      await removeResponsiveImage(client, LOGO_BUCKET, finalPath).catch(() => null);
-      await removeArchivedOriginalMedia(client, LOGO_BUCKET, finalPath).catch(() => null);
-    }
-    throw error;
+    return profile;
   } finally {
+    // Retain final objects after an uncertain database acknowledgment.
     await client.storage.from(MODERATION_TEMP_BUCKET).remove([tempPath]).catch(() => null);
   }
 }
@@ -595,6 +587,19 @@ export function readVenueAnalyticsPeriod(value: string | null | undefined): Venu
 
 const VENUE_OWNER_COLUMNS =
   "id, owner_user_id, slug, name, city, state, address, latitude, longitude, phone, website, timezone, opens_at, closes_at, is_active, published_at, page_review_status, page_review_sent_at, page_reviewed_at, page_reviewed_by_user_id, page_review_notes, logo_storage_path, logo_updated_at, cover_image_storage_path, cover_image_updated_at, qr_code_storage_path, qr_code_label, qr_code_updated_at";
+
+function requireVenueMediaReceipt(
+  data: unknown,
+  venueId: string,
+  column: "cover_image_storage_path" | "logo_storage_path" | "qr_code_storage_path",
+  storagePath: string,
+): void {
+  if (!data || typeof data !== "object" || Array.isArray(data)
+    || !("id" in data) || data.id !== venueId
+    || !(column in data) || (data as Record<string, unknown>)[column] !== storagePath) {
+    throw new Error("Unable to confirm the venue image update. Refresh the venue before trying again.");
+  }
+}
 
 async function requireVenueForAccount(client: DancrClient, userId: string) {
   const venue = await getVenueForAccount(client, userId);

@@ -43,7 +43,7 @@ test("venue cover storage is owner-scoped and public only after publication", ()
   );
 });
 
-test("admin-managed venue cover uploads are validated, moderated, and compensated", () => {
+test("admin-managed venue cover uploads are validated and moderated before confirmed publication", () => {
   assert.match(venueService, /uploadVenueCoverImageByAdmin/);
   assert.match(venueService, /validateAndPrepareDancrImage\(file\)/);
   assert.match(venueService, /image\.width < 720 \|\| image\.height < 720/);
@@ -52,7 +52,7 @@ test("admin-managed venue cover uploads are validated, moderated, and compensate
   assert.match(venueService, /evaluation\.decision !== "approved"/);
   assert.match(venueService, /const COVER_BUCKET = "venue-cover-images"/);
   assert.match(venueService, /cover_image_storage_path: finalPath/);
-  assert.match(venueService, /if \(finalUploaded\)[\s\S]*?removeResponsiveImage\(/);
+  assert.match(venueService, /requireVenueMediaReceipt\(data, venue\.id, "cover_image_storage_path", finalPath\)/);
   assert.match(venueService, /getVenueById\(client, venueId\)/);
   assert.match(moderationService, /export async function moderateImageWithOpenAI/);
 });

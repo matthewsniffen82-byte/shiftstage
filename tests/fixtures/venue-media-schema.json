@@ -1,0 +1,331 @@
+{
+  "capturedAt": "2026-09-10T12:16:28.381Z",
+  "columns": [
+    {
+      "default": "gen_random_uuid()",
+      "name": "id",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "venues",
+      "type": "uuid"
+    },
+    {
+      "default": null,
+      "name": "name",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "venues",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "slug",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "venues",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "city",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "venues",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "state",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "venues",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "address",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "venues",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "phone",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "venues",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "website",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "venues",
+      "type": "text"
+    },
+    {
+      "default": "'America/Los_Angeles'::text",
+      "name": "timezone",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "venues",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "opens_at",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "venues",
+      "type": "time"
+    },
+    {
+      "default": null,
+      "name": "closes_at",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "venues",
+      "type": "time"
+    },
+    {
+      "default": "true",
+      "name": "is_active",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "venues",
+      "type": "bool"
+    },
+    {
+      "default": "now()",
+      "name": "created_at",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "venues",
+      "type": "timestamptz"
+    },
+    {
+      "default": "now()",
+      "name": "updated_at",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "venues",
+      "type": "timestamptz"
+    },
+    {
+      "default": null,
+      "name": "latitude",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "venues",
+      "type": "numeric"
+    },
+    {
+      "default": null,
+      "name": "longitude",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "venues",
+      "type": "numeric"
+    },
+    {
+      "default": null,
+      "name": "owner_user_id",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "venues",
+      "type": "uuid"
+    },
+    {
+      "default": null,
+      "name": "qr_code_storage_path",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "venues",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "qr_code_label",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "venues",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "qr_code_updated_at",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "venues",
+      "type": "timestamptz"
+    },
+    {
+      "default": null,
+      "name": "cover_image_storage_path",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "venues",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "cover_image_updated_at",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "venues",
+      "type": "timestamptz"
+    },
+    {
+      "default": null,
+      "name": "published_at",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "venues",
+      "type": "timestamptz"
+    },
+    {
+      "default": null,
+      "name": "logo_storage_path",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "venues",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "logo_updated_at",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "venues",
+      "type": "timestamptz"
+    },
+    {
+      "default": "'admin_draft'::text",
+      "name": "page_review_status",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "venues",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "page_review_sent_at",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "venues",
+      "type": "timestamptz"
+    },
+    {
+      "default": null,
+      "name": "page_reviewed_at",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "venues",
+      "type": "timestamptz"
+    },
+    {
+      "default": null,
+      "name": "page_reviewed_by_user_id",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "venues",
+      "type": "uuid"
+    },
+    {
+      "default": null,
+      "name": "page_review_notes",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "venues",
+      "type": "text"
+    }
+  ],
+  "constraints": [
+    {
+      "definition": "CHECK (((latitude IS NULL) OR ((latitude >= ('-90'::integer)::numeric) AND (latitude <= (90)::numeric))))",
+      "name": "venues_latitude_range",
+      "table": "venues"
+    },
+    {
+      "definition": "CHECK (((longitude IS NULL) OR ((longitude >= ('-180'::integer)::numeric) AND (longitude <= (180)::numeric))))",
+      "name": "venues_longitude_range",
+      "table": "venues"
+    },
+    {
+      "definition": "FOREIGN KEY (owner_user_id) REFERENCES app_users(id) ON DELETE SET NULL",
+      "name": "venues_owner_user_id_fkey",
+      "table": "venues"
+    },
+    {
+      "definition": "UNIQUE (owner_user_id)",
+      "name": "venues_owner_user_id_key",
+      "table": "venues"
+    },
+    {
+      "definition": "CHECK ((page_review_status = ANY (ARRAY['admin_draft'::text, 'venue_review'::text, 'changes_requested'::text, 'venue_approved'::text, 'published'::text])))",
+      "name": "venues_page_review_status_check",
+      "table": "venues"
+    },
+    {
+      "definition": "FOREIGN KEY (page_reviewed_by_user_id) REFERENCES app_users(id) ON DELETE SET NULL",
+      "name": "venues_page_reviewed_by_user_id_fkey",
+      "table": "venues"
+    },
+    {
+      "definition": "PRIMARY KEY (id)",
+      "name": "venues_pkey",
+      "table": "venues"
+    },
+    {
+      "definition": "UNIQUE (slug)",
+      "name": "venues_slug_key",
+      "table": "venues"
+    }
+  ],
+  "indexes": [
+    {
+      "definition": "CREATE UNIQUE INDEX venues_owner_user_id_key ON public.venues USING btree (owner_user_id)",
+      "name": "venues_owner_user_id_key",
+      "ready": true,
+      "table": "venues",
+      "valid": true
+    },
+    {
+      "definition": "CREATE INDEX venues_page_review_status_idx ON public.venues USING btree (page_review_status, updated_at DESC)",
+      "name": "venues_page_review_status_idx",
+      "ready": true,
+      "table": "venues",
+      "valid": true
+    },
+    {
+      "definition": "CREATE UNIQUE INDEX venues_pkey ON public.venues USING btree (id)",
+      "name": "venues_pkey",
+      "ready": true,
+      "table": "venues",
+      "valid": true
+    },
+    {
+      "definition": "CREATE UNIQUE INDEX venues_slug_key ON public.venues USING btree (slug)",
+      "name": "venues_slug_key",
+      "ready": true,
+      "table": "venues",
+      "valid": true
+    }
+  ],
+  "triggers": [
+    {
+      "definition": "CREATE TRIGGER notify_venue_card_live_after_publication AFTER UPDATE OF is_active, published_at, page_review_status ON public.venues FOR EACH ROW EXECUTE FUNCTION notify_venue_card_live()",
+      "function_definition": "CREATE OR REPLACE FUNCTION public.notify_venue_card_live()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\nbegin\n  if new.is_active is true\n    and new.page_review_status = 'published'\n    and new.published_at is not null\n    and old.published_at is null\n  then\n    insert into public.notifications (\n      recipient_id,\n      notification_type,\n      channel,\n      title,\n      body,\n      payload,\n      sent_at\n    )\n    select\n      recipients.user_id,\n      'venue_publication_status',\n      'in_app',\n      'Your venue card is live',\n      new.name || ' is now visible in MyDancr venue discovery and on its public venue page.',\n      jsonb_build_object(\n        'kind', 'venue_card_live',\n        'status', 'live',\n        'venueId', new.id,\n        'venueSlug', new.slug,\n        'venueName', new.name,\n        'publishedAt', new.published_at\n      ),\n      new.published_at\n    from (\n      select new.owner_user_id as user_id\n      union\n      select member.user_id\n      from public.venue_team_members as member\n      where member.venue_id = new.id\n        and member.status = 'active'\n    ) as recipients\n    join public.app_users as account\n      on account.id = recipients.user_id\n     and account.role = 'venue'\n     and account.account_state = 'active'\n    where recipients.user_id is not null\n      and not exists (\n        select 1\n        from public.notifications as existing\n        where existing.recipient_id = recipients.user_id\n          and existing.notification_type = 'venue_publication_status'\n          and existing.payload @> jsonb_build_object(\n            'kind', 'venue_card_live',\n            'venueId', new.id\n          )\n      );\n  end if;\n\n  return new;\nend;\n$function$\n",
+      "name": "notify_venue_card_live_after_publication",
+      "table": "venues"
+    },
+    {
+      "definition": "CREATE TRIGGER venues_create_default_club_deal AFTER INSERT ON public.venues FOR EACH ROW EXECUTE FUNCTION create_venue_default_club_deal()",
+      "function_definition": "CREATE OR REPLACE FUNCTION public.create_venue_default_club_deal()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\r\nbegin\r\n  insert into public.club_deals (\r\n    venue_id,\r\n    deal_title,\r\n    deal_description,\r\n    deal_terms,\r\n    is_active,\r\n    redemption_rules,\r\n    payout_type,\r\n    payout_amount_cents,\r\n    currency\r\n  )\r\n  values (\r\n    new.id,\r\n    'Tonight''s venue offer',\r\n    'Show your unique MyDancr QR to venue staff for the active offer.',\r\n    'Offer is subject to venue availability and house rules.',\r\n    false,\r\n    jsonb_build_object(\r\n      'one_per_guest', true,\r\n      'authenticated_venue_confirmation_required', true,\r\n      'attribution_policy', 'locked_at_issue',\r\n      'commission_policy', 'monthly-tier-v1'\r\n    ),\r\n    'flat',\r\n    0,\r\n    'usd'\r\n  )\r\n  on conflict do nothing;\r\n  return new;\r\nend;\r\n$function$\n",
+      "name": "venues_create_default_club_deal",
+      "table": "venues"
+    }
+  ]
+}

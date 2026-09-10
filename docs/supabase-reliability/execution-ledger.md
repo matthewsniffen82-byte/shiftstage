@@ -496,3 +496,11 @@ The correction was pushed as `8739f5d96963d447cc365894441234595b330d30`, with ma
 All 53 existing history/publication cases and the complete-source-schema deployment rehearsals pass, including drift, repeated target, row corruption, missing baseline and accidental browser-grant rejection. The original committed migration remains unchanged. Full validation, exact rollout commit/push, guarded application and privacy/deployment verification remain required.
 
 Full rollout validation passed all 5,393 tests, lint, production build, standalone TypeScript, migration guard and thirty readiness checks. No production media mutation or migration application occurred during testing. Exact rollout push, committed-source rehearsal/application, preservation/privacy checks and Vercel/health remain the release gates.
+
+The rollout was pushed as `8a7222d50e6a1e8d6e07d7f2a259aaf984174eeb`; exact existing migration `20260910092022` applied with all source rows, previous schema/access/functions and 110 prior ledger entries preserved. It recorded 88 baseline references. Read-only checks confirmed the history function, privacy, permissions and service/anonymous API boundaries. Main references matched; [exact Vercel success](https://vercel.com/ai-movie-jobs/shiftstage/5FyjA3pe2eVgJPjrCufhC9pbtY21) and health/thirty readiness checks passed at 12:05:40–43 UTC. No production media was modified or removed.
+
+## Step 11 venue image publication
+
+The inspected plan is `step-11-venue-media-publication.md`. Prevent cleanup from deleting a newly referenced venue image after an uncertain database response, require an exact publication receipt and reject stale media replacements. All 65 actual-helper/native tests pass, including forty failures against the previous implementation. The production venue schema was captured read-only; storage operations are simulated. Full validation and exact commit/push/deployment/health gates remain required.
+
+Full validation passed all 5,458 tests, lint, production build, standalone TypeScript, migration guard and thirty readiness checks. No schema migration or production media mutation was performed. Exact commit/push, read-only preservation and Vercel/health gates remain required before the next correction.
