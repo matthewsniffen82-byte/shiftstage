@@ -30,7 +30,7 @@ export async function createDancerConnectOnboarding(
 
   if (!payoutAccount) {
     const account = await provider.createConnectedAccount({ dancerId: dancer.id, userId, email: dancer.email });
-    payoutAccount = await upsertDancerPayoutAccount(client, dancer.id, settings.paymentProvider, account);
+    payoutAccount = await upsertDancerPayoutAccount(client, dancer.id, settings.paymentProvider, account, null);
   }
 
   const providerAccountId = String(payoutAccount.provider_account_id || "");
@@ -53,7 +53,7 @@ export async function refreshDancerConnectAccount(client: DancrClient, userId: s
   const providerAccountId = String(payoutAccount.provider_account_id || "");
   if (!providerAccountId) return null;
   const account = await getPayoutProvider(settings.paymentProvider).retrieveConnectedAccount(providerAccountId);
-  return upsertDancerPayoutAccount(client, dancer.id, settings.paymentProvider, account);
+  return upsertDancerPayoutAccount(client, dancer.id, settings.paymentProvider, account, payoutAccount);
 }
 
 export async function requestDancerCashOut(client: DancrClient, userId: string, requestKey: string) {

@@ -2,7 +2,7 @@ import type Stripe from "stripe";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { getStripe } from "../stripe";
 import { writeFinancialAuditEvent } from "./finance-audit-log";
-import { upsertDancerPayoutAccount } from "./payout-account-store";
+import { getDancerPayoutAccount, upsertDancerPayoutAccount } from "./payout-account-store";
 import { stripeAccountState, type PayoutProviderName } from "./payout-provider";
 
 type DancrClient = SupabaseClient;
@@ -97,9 +97,15 @@ export async function markStripeInvoiceFailure(client: DancrClient, invoice: Str
 }
 
 export async function syncDancerConnectAccount(client: DancrClient, account: Stripe.Account) {
-  const dancerId = account.metadata?.dancer_id;
+  const dancerId = account.metadata?.dancer_id?.toLowerCase();
   if (!dancerId) return null;
-  return upsertDancerPayoutAccount(client, dancerId, "stripe", stripeAccountState(account));
+  const existing = await getDancerPayoutAccount(client, dancerId, "stripe");
+  if (existing?.provider_account_id && existing.provider_account_id !== account.id) return null;
+  const current = await getStripe().accounts.retrieve(account.id, {}, { timeout: 10_000, maxNetworkRetries: 0 });
+  if (current.id !== account.id || current.metadata?.dancer_id?.toLowerCase() !== dancerId.toLowerCase()) {
+    throw new Error("Current payout account identity could not be confirmed.");
+  }
+  return upsertDancerPayoutAccount(client, dancerId, "stripe", stripeAccountState(current), existing);
 }
 
 export async function reverseDancerPayoutTransfer(client: DancrClient, transferId: string, message: string) {

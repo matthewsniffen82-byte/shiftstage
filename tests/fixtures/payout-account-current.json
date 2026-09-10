@@ -1,0 +1,205 @@
+{
+  "capturedAt": "2026-09-09T19:37:22.116305-07:00",
+  "scope": "Metadata only for isolated payout account writes; no account rows or provider payloads.",
+  "columns": [
+    {
+      "default": null,
+      "name": "dancer_id",
+      "nullable": "NO",
+      "table": "dancer_payout_accounts",
+      "type": "uuid",
+      "type_schema": "pg_catalog"
+    },
+    {
+      "default": null,
+      "name": "stripe_account_id",
+      "nullable": "YES",
+      "table": "dancer_payout_accounts",
+      "type": "text",
+      "type_schema": "pg_catalog"
+    },
+    {
+      "default": "'US'::text",
+      "name": "country",
+      "nullable": "NO",
+      "table": "dancer_payout_accounts",
+      "type": "text",
+      "type_schema": "pg_catalog"
+    },
+    {
+      "default": "'usd'::text",
+      "name": "default_currency",
+      "nullable": "NO",
+      "table": "dancer_payout_accounts",
+      "type": "text",
+      "type_schema": "pg_catalog"
+    },
+    {
+      "default": "false",
+      "name": "details_submitted",
+      "nullable": "NO",
+      "table": "dancer_payout_accounts",
+      "type": "bool",
+      "type_schema": "pg_catalog"
+    },
+    {
+      "default": "false",
+      "name": "charges_enabled",
+      "nullable": "NO",
+      "table": "dancer_payout_accounts",
+      "type": "bool",
+      "type_schema": "pg_catalog"
+    },
+    {
+      "default": "false",
+      "name": "payouts_enabled",
+      "nullable": "NO",
+      "table": "dancer_payout_accounts",
+      "type": "bool",
+      "type_schema": "pg_catalog"
+    },
+    {
+      "default": "false",
+      "name": "onboarding_complete",
+      "nullable": "NO",
+      "table": "dancer_payout_accounts",
+      "type": "bool",
+      "type_schema": "pg_catalog"
+    },
+    {
+      "default": null,
+      "name": "last_error",
+      "nullable": "YES",
+      "table": "dancer_payout_accounts",
+      "type": "text",
+      "type_schema": "pg_catalog"
+    },
+    {
+      "default": "now()",
+      "name": "created_at",
+      "nullable": "NO",
+      "table": "dancer_payout_accounts",
+      "type": "timestamptz",
+      "type_schema": "pg_catalog"
+    },
+    {
+      "default": "now()",
+      "name": "updated_at",
+      "nullable": "NO",
+      "table": "dancer_payout_accounts",
+      "type": "timestamptz",
+      "type_schema": "pg_catalog"
+    },
+    {
+      "default": "gen_random_uuid()",
+      "name": "id",
+      "nullable": "NO",
+      "table": "dancer_payout_accounts",
+      "type": "uuid",
+      "type_schema": "pg_catalog"
+    },
+    {
+      "default": "'stripe'::text",
+      "name": "payment_provider",
+      "nullable": "NO",
+      "table": "dancer_payout_accounts",
+      "type": "text",
+      "type_schema": "pg_catalog"
+    },
+    {
+      "default": null,
+      "name": "provider_account_id",
+      "nullable": "YES",
+      "table": "dancer_payout_accounts",
+      "type": "text",
+      "type_schema": "pg_catalog"
+    },
+    {
+      "default": "'not_started'::text",
+      "name": "onboarding_status",
+      "nullable": "NO",
+      "table": "dancer_payout_accounts",
+      "type": "text",
+      "type_schema": "pg_catalog"
+    },
+    {
+      "default": "'ineligible'::text",
+      "name": "payout_eligibility",
+      "nullable": "NO",
+      "table": "dancer_payout_accounts",
+      "type": "text",
+      "type_schema": "pg_catalog"
+    },
+    {
+      "default": "'unverified'::text",
+      "name": "verification_status",
+      "nullable": "NO",
+      "table": "dancer_payout_accounts",
+      "type": "text",
+      "type_schema": "pg_catalog"
+    },
+    {
+      "default": "'{}'::jsonb",
+      "name": "provider_status",
+      "nullable": "NO",
+      "table": "dancer_payout_accounts",
+      "type": "jsonb",
+      "type_schema": "pg_catalog"
+    }
+  ],
+  "constraints": [
+    {
+      "definition": "FOREIGN KEY (dancer_id) REFERENCES dancer_profiles(id) ON DELETE CASCADE",
+      "name": "dancer_payout_accounts_dancer_id_fkey",
+      "table": "dancer_payout_accounts"
+    },
+    {
+      "definition": "UNIQUE (dancer_id, payment_provider)",
+      "name": "dancer_payout_accounts_dancer_provider_key",
+      "table": "dancer_payout_accounts"
+    },
+    {
+      "definition": "CHECK ((default_currency ~ '^[a-z]{3}$'::text))",
+      "name": "dancer_payout_accounts_default_currency_check",
+      "table": "dancer_payout_accounts"
+    },
+    {
+      "definition": "CHECK ((onboarding_status = ANY (ARRAY['not_started'::text, 'pending'::text, 'complete'::text, 'restricted'::text, 'disabled'::text])))",
+      "name": "dancer_payout_accounts_onboarding_status_check",
+      "table": "dancer_payout_accounts"
+    },
+    {
+      "definition": "CHECK ((payment_provider = ANY (ARRAY['stripe'::text, 'bitsafe'::text, 'adyen'::text, 'other'::text])))",
+      "name": "dancer_payout_accounts_payment_provider_check",
+      "table": "dancer_payout_accounts"
+    },
+    {
+      "definition": "CHECK ((payout_eligibility = ANY (ARRAY['ineligible'::text, 'pending'::text, 'eligible'::text, 'restricted'::text])))",
+      "name": "dancer_payout_accounts_payout_eligibility_check",
+      "table": "dancer_payout_accounts"
+    },
+    {
+      "definition": "PRIMARY KEY (id)",
+      "name": "dancer_payout_accounts_pkey",
+      "table": "dancer_payout_accounts"
+    },
+    {
+      "definition": "UNIQUE (stripe_account_id)",
+      "name": "dancer_payout_accounts_stripe_account_id_key",
+      "table": "dancer_payout_accounts"
+    },
+    {
+      "definition": "CHECK ((verification_status = ANY (ARRAY['unverified'::text, 'pending'::text, 'verified'::text, 'restricted'::text])))",
+      "name": "dancer_payout_accounts_verification_status_check",
+      "table": "dancer_payout_accounts"
+    }
+  ],
+  "triggers": [
+    {
+      "definition": "CREATE TRIGGER reject_retired_provider_accounts BEFORE INSERT OR UPDATE OF payment_provider ON public.dancer_payout_accounts FOR EACH ROW EXECUTE FUNCTION reject_retired_payout_provider()",
+      "function_definition": "CREATE OR REPLACE FUNCTION public.reject_retired_payout_provider()\n RETURNS trigger\n LANGUAGE plpgsql\n SET search_path TO 'public'\nAS $function$\r\nbegin\r\n  if lower(trim(new.payment_provider)) = 'bitsafe' then\r\n    if tg_op = 'INSERT' then\r\n      raise exception 'The selected payout provider is no longer supported.' using errcode = '22023';\r\n    elsif old.payment_provider is distinct from new.payment_provider then\r\n      raise exception 'The selected payout provider is no longer supported.' using errcode = '22023';\r\n    end if;\r\n  end if;\r\n  return new;\r\nend;\r\n$function$\n",
+      "name": "reject_retired_provider_accounts",
+      "table": "dancer_payout_accounts"
+    }
+  ]
+}
