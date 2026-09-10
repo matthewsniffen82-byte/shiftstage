@@ -185,22 +185,37 @@ export async function completeProviderPayout(
   internalPayoutId?: string | null,
 ) {
   const query = (client as any).from("dancer_payout_batches")
-    .select("id").eq("provider_reference_id", providerReferenceId).maybeSingle();
+    .select("id, status, provider_reference_id").eq("provider_reference_id", providerReferenceId).maybeSingle();
   let { data: payout, error } = await query;
   if (error) throw error;
   if (!payout && internalPayoutId) {
     const fallback = await (client as any).from("dancer_payout_batches")
-      .select("id").eq("id", internalPayoutId).eq("status", "processing").maybeSingle();
+      .select("id, status, provider_reference_id").eq("id", internalPayoutId).eq("status", "processing").maybeSingle();
     payout = fallback.data;
     error = fallback.error;
   }
   if (error) throw error;
   if (!payout) return null;
+  if (payout.status === "paid" && payout.provider_reference_id === providerReferenceId) {
+    return { id: payout.id, status: "paid", provider_reference_id: providerReferenceId };
+  }
   const { data, error: completeError } = await (client as any).rpc("complete_dancer_payout_batch", {
     p_batch_id: payout.id, p_transfer_id: providerReferenceId, p_paid_at: paidAt,
   });
+  if (!completeError && data?.id === payout.id && data.status === "paid" && data.provider_reference_id === providerReferenceId) {
+    return data;
+  }
+  // A competing delivery or a lost acknowledgment may have completed the same
+  // payout. Confirm its exact stored result; never repeat the financial write.
+  const { data: completed, error: readError } = await (client as any).from("dancer_payout_batches")
+    .select("id, status, provider_reference_id").eq("id", payout.id)
+    .eq("status", "paid").eq("provider_reference_id", providerReferenceId).maybeSingle();
+  if (readError) throw readError;
+  if (completed?.id === payout.id && completed.status === "paid" && completed.provider_reference_id === providerReferenceId) {
+    return { id: completed.id, status: "paid", provider_reference_id: providerReferenceId };
+  }
   if (completeError) throw completeError;
-  return data;
+  throw new Error("Provider payout completion could not be confirmed.");
 }
 
 function stripeInvoiceStatus(invoice: Stripe.Invoice, currentStatus: string) {
