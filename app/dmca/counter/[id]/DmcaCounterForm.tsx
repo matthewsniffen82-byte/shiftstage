@@ -125,9 +125,11 @@ export default function DmcaCounterForm({ caseId }: { caseId: string }) {
       setStatus(data.message || "Counter-notice submitted.");
       setDmcaCase((current) => current ? {
         ...current,
-        status: "countered",
-        counterReceivedAt: new Date().toISOString(),
+        status: data.counterNotice?.caseStatus || current.status,
+        counterReceivedAt: data.counterNotice?.counterReceivedAt || current.counterReceivedAt,
         restoreEligibleAt: data.counterNotice?.restoreEligibleAt,
+        counterNotices: current.counterNotices?.some((notice) => notice.id === data.counterNotice?.id)
+          ? current.counterNotices : [...(current.counterNotices || []), { id: data.counterNotice?.id, status: data.counterNotice?.status }],
       } : current);
     } catch (error) {
       if (!mountedRef.current || controller.signal.aborted) return;

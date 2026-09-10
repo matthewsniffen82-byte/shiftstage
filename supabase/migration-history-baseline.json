@@ -567,6 +567,10 @@
     {
       "file": "20260910043551_add_atomic_venue_nfc_support.sql",
       "sha256": "de8c1d06733557beda5cfad32bb2dfebe2511a2eab5132f3b7d58db55eae5fb2"
+    },
+    {
+      "file": "20260910050900_add_atomic_counter_notice_submission.sql",
+      "sha256": "b66d08f060c658682311a5d12a6414779c8f59de68a1e92d4ccb0fd5205be7e4"
     }
   ]
 }

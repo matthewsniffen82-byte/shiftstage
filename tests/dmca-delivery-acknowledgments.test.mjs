@@ -92,6 +92,15 @@ function setup({ mode = "success", delivered = true, notification = "success", w
     exports, Error, Date,
     console: { warn: (...args) => logs.push(args), error: (...args) => logs.push(args) },
     require(name) {
+      if (name.endsWith("dmca-counter-submission")) return { async recordDmcaCounterSubmission() {
+        // These cases isolate delivery acknowledgment after a confirmed atomic
+        // submission. Native transaction/caller cases cover the actual RPC.
+        state.counter = { id: counterId, case_id: caseId, status: "submitted", forwarded_to_claimant_at: null };
+        state.dmcaCase.status = "countered";
+        return { id: counterId, caseId, status: "submitted", caseStatus: "countered", duplicate: false,
+          counterReceivedAt: stamp, restoreEligibleAt: "2026-09-24T04:00:00.000Z", restoreDeadlineAt: "2026-09-30T04:00:00.000Z",
+          claimantName: state.dmcaCase.claimant_name, claimantEmail: state.dmcaCase.claimant_email };
+      } };
       if (name.endsWith("notification-delivery")) return { async sendTransactionalEmail() { events.push({ op: "email" }); return { delivered }; } };
       if (name.endsWith("safe-error-metadata")) return { safeErrorMetadata };
       return {};

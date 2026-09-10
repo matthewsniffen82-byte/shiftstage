@@ -6,6 +6,7 @@ import { sendTransactionalEmail } from "./notification-delivery";
 import { publicAppUrl } from "./public-app-url";
 import { safeErrorMetadata } from "../security/safe-error-metadata";
 import { enforcePublicRequestRateLimit } from "./public-request-rate-limit";
+import { recordDmcaCounterSubmission } from "./dmca-counter-submission";
 
 type DancrClient = SupabaseClient;
 
@@ -221,102 +222,42 @@ export async function submitDmcaCounterNotice(
   requireConfirmation(input.jurisdictionConfirmed, "Federal court jurisdiction consent");
   requireConfirmation(input.serviceConfirmed, "Service-of-process consent");
 
-  const { data: dmcaCase, error: caseError } = await (client as any)
-    .from("dmca_cases")
-    .select("id, claimant_name, claimant_email, infringing_url, uploader_id, status, target_id")
-    .eq("id", caseId)
-    .eq("uploader_id", userId)
-    .maybeSingle();
-
-  if (caseError) throw caseError;
-  if (!dmcaCase) throw new DmcaUserError("Copyright case not found.");
-  if (dmcaCase.status !== "disabled") {
-    throw new DmcaUserError("This copyright case is not eligible for a counter-notice.");
-  }
-
-  const counterReceivedAt = new Date();
-  const restoreEligibleAt = addBusinessDays(counterReceivedAt, 10);
-  const restoreDeadlineAt = addBusinessDays(counterReceivedAt, 14);
-  const db = client as any;
-
-  const { data: counter, error: counterError } = await db
-    .from("dmca_counter_notices")
-    .insert({
-      case_id: caseId,
-      uploader_id: userId,
-      legal_name: legalName,
-      email,
-      phone,
-      address,
-      removed_material_location: removedMaterialLocation,
-      mistake_belief_confirmed: true,
-      perjury_confirmed: true,
-      jurisdiction_confirmed: true,
-      service_confirmed: true,
-      signature,
-      status: "submitted",
-    })
-    .select("id, case_id, status, created_at")
-    .single();
-
-  if (counterError) {
-    if (String(counterError.code) === "23505") throw new DmcaUserError("A counter-notice was already submitted for this case.");
-    throw counterError;
-  }
-
-  const { data: updatedCase, error: updateError } = await db
-    .from("dmca_cases")
-    .update({
-      status: "countered",
-      counter_received_at: counterReceivedAt.toISOString(),
-      restore_eligible_at: restoreEligibleAt.toISOString(),
-      restore_deadline_at: restoreDeadlineAt.toISOString(),
-      updated_at: counterReceivedAt.toISOString(),
-    })
-    .eq("id", caseId)
-    .eq("uploader_id", userId)
-    .eq("status", "disabled")
-    .select("id")
-    .maybeSingle();
-
-  if (updateError || !updatedCase) {
-    const { error: rollbackError } = await db
-      .from("dmca_counter_notices")
-      .delete()
-      .eq("id", counter.id)
-      .eq("uploader_id", userId);
-    if (rollbackError) {
-      console.error("Unable to roll back an uncommitted DMCA counter-notice", {
-        caseId,
-        counterNoticeId: counter.id,
-        rollbackError,
-      });
-    }
-    if (updateError) throw updateError;
-    throw new DmcaUserError("This copyright case is no longer eligible for a counter-notice.");
-  }
-
-  const forwarded = await sendTransactionalEmail({
-    to: dmcaCase.claimant_email,
-    subject: `Counter-notice for MyDancr copyright case ${caseId}`,
-    text: counterNoticeEmail({
-      caseId,
-      claimantName: dmcaCase.claimant_name,
-      legalName,
-      email,
-      phone,
-      address,
-      removedMaterialLocation,
-      signature,
-      restoreEligibleAt,
-      restoreDeadlineAt,
-    }),
+  const stored = await recordDmcaCounterSubmission(client, userId, caseId, {
+    legalName, email, phone, address, removedMaterialLocation, signature,
+    mistakeBeliefConfirmed: true, perjuryConfirmed: true, jurisdictionConfirmed: true, serviceConfirmed: true,
   });
-
+  const { claimantName, claimantEmail, ...receipt } = stored;
+  if (stored.duplicate) return { ...receipt, deliveryNeedsReview: false };
+  const restoreEligibleAt = new Date(stored.restoreEligibleAt);
+  const restoreDeadlineAt = new Date(stored.restoreDeadlineAt);
+  const db = client as any;
+  let forwarded: { delivered: boolean } = { delivered: false };
+  let deliveryNeedsReview = false;
+  try {
+    forwarded = await sendTransactionalEmail({
+      to: claimantEmail,
+      subject: `Counter-notice for MyDancr copyright case ${caseId}`,
+      text: counterNoticeEmail({
+        caseId,
+        claimantName,
+        legalName,
+        email,
+        phone,
+        address,
+        removedMaterialLocation,
+        signature,
+        restoreEligibleAt,
+        restoreDeadlineAt,
+      }),
+    });
+  } catch (error) {
+    deliveryNeedsReview = true;
+    console.warn("DMCA_COUNTER_DELIVERY_UNCONFIRMED", safeErrorMetadata(error));
+  }
   const forwardingConfirmed = forwarded.delivered
-    ? await confirmCounterNoticeForwarding(client, counter.id, caseId)
+    ? await confirmCounterNoticeForwarding(client, stored.id, caseId)
     : false;
-  const deliveryNeedsReview = forwarded.delivered && !forwardingConfirmed;
+  deliveryNeedsReview ||= forwarded.delivered && !forwardingConfirmed;
 
   try {
     const { error: notificationError } = await db.from("notifications").insert({
@@ -338,12 +279,9 @@ export async function submitDmcaCounterNotice(
   }
 
   return {
-    id: counter.id,
-    caseId,
+    ...receipt,
     status: forwardingConfirmed ? "forwarded" : "submitted",
     deliveryNeedsReview,
-    restoreEligibleAt: restoreEligibleAt.toISOString(),
-    restoreDeadlineAt: restoreDeadlineAt.toISOString(),
   };
 }
 
@@ -814,17 +752,6 @@ function hashRequestIp(requestIp: string) {
     || process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!salt) throw new Error("DMCA request security is not configured.");
   return createHash("sha256").update(`${salt}:${requestIp || "unknown"}`).digest("hex");
-}
-
-function addBusinessDays(date: Date, days: number) {
-  const result = new Date(date);
-  let remaining = days;
-  while (remaining > 0) {
-    result.setUTCDate(result.getUTCDate() + 1);
-    const weekday = result.getUTCDay();
-    if (weekday !== 0 && weekday !== 6) remaining -= 1;
-  }
-  return result;
 }
 
 function counterNoticeEmail(input: {

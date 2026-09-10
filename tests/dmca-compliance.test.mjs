@@ -85,11 +85,12 @@ test("counter-notices are uploader-authenticated, forwarded, and wait 10 to 14 b
   assert.match(dmcaLibrary, /perjuryConfirmed/);
   assert.match(dmcaLibrary, /jurisdictionConfirmed/);
   assert.match(dmcaLibrary, /serviceConfirmed/);
-  assert.match(dmcaLibrary, /addBusinessDays\(counterReceivedAt, 10\)/);
-  assert.match(dmcaLibrary, /addBusinessDays\(counterReceivedAt, 14\)/);
+  assert.match(dmcaLibrary, /recordDmcaCounterSubmission/);
+  assert.match(dmcaLibrary, /new Date\(stored\.restoreEligibleAt\)/);
+  assert.match(dmcaLibrary, /new Date\(stored\.restoreDeadlineAt\)/);
   assert.match(dmcaLibrary, /sendTransactionalEmail\(\{[\s\S]*?Counter-notice for MyDancr copyright case/);
   assert.match(dmcaLibrary, /forwardPendingDmcaCounterNotices/);
-  assert.match(dmcaLibrary, /Unable to roll back an uncommitted DMCA counter-notice/);
+  assert.doesNotMatch(dmcaLibrary, /Unable to roll back an uncommitted DMCA counter-notice/);
   assert.match(counterForm, /accept service of process/);
   assert.match(counterForm, /United States Federal District Court/);
 });

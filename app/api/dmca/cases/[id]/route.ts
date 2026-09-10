@@ -49,9 +49,11 @@ export async function POST(request: Request, context: RouteContext) {
         partial: counterNotice.deliveryNeedsReview,
         message: counterNotice.deliveryNeedsReview
           ? "Your counter-notice was received, but its delivery status could not be confirmed. Do not submit it again. Contact support with your case number."
-          : "Your counter-notice was submitted and the required waiting period has started.",
+          : counterNotice.duplicate
+            ? "Your counter-notice was already received. The existing case status is unchanged."
+            : "Your counter-notice was submitted and the required waiting period has started.",
       },
-      { status: 201 },
+      { status: counterNotice.duplicate ? 200 : 201 },
     );
   } catch (error) {
     return dmcaCaseError(error, "Unable to submit counter-notice.");
