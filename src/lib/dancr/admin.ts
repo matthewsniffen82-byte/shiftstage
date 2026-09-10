@@ -385,9 +385,9 @@ export async function deleteAdminDancerPhoto(
       .eq("final_storage_path", photo.storage_path),
   ]);
 
-  if (reviewCleanup.error) warnings.push(`Photo review cleanup failed: ${reviewCleanup.error.message}`);
+  if (reviewCleanup.error) recordAdminCleanupWarning(warnings, "Photo review cleanup failed.", reviewCleanup.error);
   if (moderationRows.error) {
-    warnings.push(`Photo moderation cleanup lookup failed: ${moderationRows.error.message}`);
+    recordAdminCleanupWarning(warnings, "Photo moderation cleanup lookup failed.", moderationRows.error);
   } else {
     const moderationIds = (moderationRows.data || []).map((row: any) => row.id).filter(Boolean);
     if (moderationIds.length) {
@@ -395,7 +395,7 @@ export async function deleteAdminDancerPhoto(
         .from("image_moderation_records")
         .delete()
         .in("id", moderationIds);
-      if (error) warnings.push(`Photo moderation cleanup failed: ${error.message}`);
+      if (error) recordAdminCleanupWarning(warnings, "Photo moderation cleanup failed.", error);
     }
     const temporaryPaths = (moderationRows.data || []).map((row: any) => row.temporary_storage_path);
     await removeBucketPaths(client, "dancr-image-moderation-temp", temporaryPaths, warnings);
@@ -423,7 +423,7 @@ export async function deleteAdminDancerPhoto(
       notes: `Dancer ${input.dancerId}; storage path ${photo.storage_path}`,
     });
   } catch (error) {
-    warnings.push(`Audit log failed: ${error instanceof Error ? error.message : "Unknown error."}`);
+    recordAdminCleanupWarning(warnings, "Audit log failed.", error);
   }
 
   console.info("ADMIN_DANCER_PHOTO_DELETED", {
@@ -474,7 +474,7 @@ export async function deleteAdminDancerSocialLink(
     .delete()
     .eq("dancer_id", input.dancerId)
     .eq("review_type", contentReviewType("social_link", social.id));
-  if (reviewCleanupError) warnings.push(`Social review cleanup failed: ${reviewCleanupError.message}`);
+  if (reviewCleanupError) recordAdminCleanupWarning(warnings, "Social review cleanup failed.", reviewCleanupError);
 
   try {
     await logAdminAction(client, {
@@ -485,7 +485,7 @@ export async function deleteAdminDancerSocialLink(
       notes: `Dancer ${input.dancerId}; ${social.platform} ${social.handle}`,
     });
   } catch (error) {
-    warnings.push(`Audit log failed: ${error instanceof Error ? error.message : "Unknown error."}`);
+    recordAdminCleanupWarning(warnings, "Audit log failed.", error);
   }
 
   console.info("ADMIN_DANCER_SOCIAL_LINK_DELETED", {
@@ -1684,6 +1684,11 @@ function requiredCoordinate(value: number | string | null | undefined, label: st
     throw new Error(`Enter a valid venue ${label} between ${minimum} and ${maximum}.`);
   }
   return coordinate;
+}
+
+function recordAdminCleanupWarning(warnings: string[], warning: string, error: unknown) {
+  warnings.push(warning);
+  console.warn("ADMIN_CONTENT_CLEANUP_FAILED", { warning, ...safeErrorMetadata(error) });
 }
 
 async function logAdminAction(

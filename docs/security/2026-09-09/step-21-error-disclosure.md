@@ -1,0 +1,53 @@
+# Step 21: error handling and information disclosure
+
+Step 21 started only after Step 20's closing commit 060b2976d3e7856efb2cc0c9ce3c64c0732fb919 was pushed, deployed successfully and verified. Its exact [Vercel deployment](https://vercel.com/ai-movie-jobs/shiftstage/5zw4t5k9VYB5zPPepZXMFUjGK26z) succeeded. At 18:49:24–41 UTC on 2026-09-10, seventeen health/authorization checks, thirty readiness checks, four webhook rejections, fifteen header checks and read-only financial-function/transfer comparisons passed. Step 20's inactive-provider deferrals remain explicit in its closing review. The branch matched origin/main and was clean.
+
+## Inspection and retained controls
+
+The syntax inventory covers 383 TypeScript/TSX source files, including 117 API routes. It identifies six variable API fallbacks, twenty variable PublicApiError messages and twenty-two variable direct JSON error expressions for tracing. These counts are syntax candidates, not vulnerabilities or a proof that every dynamically assembled response is safe. Separate text searches trace warning arrays, stored provider errors, SDK/decoder errors, server-rendered pages and logging.
+
+The existing resolveApiError/apiError boundary is retained. Unexpected messages are replaced with fixed operation text, known availability failures become generic 503 responses, and only explicitly public errors or exact known messages are published. Its logger already uses allowlisted metadata instead of messages, stacks or response bodies. The source traces establish:
+
+| Surface | Current behavior |
+| --- | --- |
+| Public directory/profile reads and health probes | Fixed error responses; health exposes only service readiness, without database errors or settings. |
+| Auth, recovery and account settings | Explicit local validation, fixed provider failures and safe outage responses; password/reset/session behavior from earlier steps remains intact. |
+| Body validation and input wrappers | Caller-defined constant messages and fixed bounds; parsed JSON does not supply executable getters to local notification validation. |
+| Media uploads | Decoder exceptions reach the shared fallback. Avatar-face rejection uses an application-defined error. Persisted moderation errors require the separate follow-up below. |
+| Venue affiliation, DMCA and notifications | The variable fallback callers supply fixed operation text. Affiliation maps database failures to authored messages; rate-limit classes construct fixed feedback. |
+| Venue review | The existing shared wrapper conceals its untyped database-derived error, even though an internal helper classifies a substring match. This is not reported as a demonstrated public disclosure. |
+| Finance cron | The separately delivered handler already replaces aggregate errors with fixed review instructions and counts. Its stronger handling is preserved. The admin action and stored-record paths are separate candidates below. |
+
+The review follows [OWASP's error-handling guidance](https://cheatsheetseries.owasp.org/cheatsheets/Error_Handling_Cheat_Sheet.html): unexpected failures must not publish implementation details. MyDancr's existing data-minimized diagnostics are retained rather than logging raw errors.
+
+## First bounded correction
+
+**LOW — unexpected venue account-creation errors became public input errors.** createVenueSignupRequest wrapped any thrown Error from createRequestManager as VenueSignupRequestUserError, which the public signup route intentionally publishes. A thrown dependency exception could therefore reach an unauthenticated applicant and lose its original 503 classification. Returned Auth errors and ordinary provisioning failures already had safe authored messages; those paths are preserved. This is reproduced with synthetic exceptions through the real route, signup service and manager helper. No real secret disclosure or account takeover is claimed.
+
+The manager helper now labels only its own validation/setup messages with VenueRequestAccountUserError. The signup service converts that exact class to public feedback and lets unknown errors reach the existing shared boundary. Matching an error's name is insufficient. Successful signup, the configured password requirements, existing-email feedback, duplicate handling, saved-request recovery and cleanup limited to a newly created manager remain unchanged.
+
+**LOW — administrative content-deletion warning arrays included raw errors.** Six warning sites in photo/social cleanup interpolated database or exception messages after deletion had succeeded. The authenticated admin API returned those warnings directly. Admin access does not require disclosure of SQL, paths or provider details. Fixed warnings now identify the failed cleanup stage, while ADMIN_CONTENT_CLEANUP_FAILED retains safe operational metadata. A cleanup warning still preserves the completed deletion and does not trigger a retry or undo the result. Existing owner/target predicates, primary-photo selection, guarded storage retirement and audit attempts remain in place.
+
+This release changes only these error boundaries. It introduces no migration, permission change, provider request, new service, account workflow or UI redesign.
+
+## Regression evidence
+
+Thirty-six new tests execute the actual public signup route/service/manager and admin deletion route/library with synthetic Auth/database dependencies. Twenty-two assertions fail against the previous code; all thirty-six pass with the correction. Fourteen cases already passed before the change. The pre-fix failures include wrong failure classification or missing safe diagnostic metadata as well as raw disclosure; they are not twenty-two distinct vulnerabilities.
+
+Coverage includes plain exceptions, connection/outage codes, forged class names, object/string rejections, local credential feedback, provider-declared setup failure, new-account compensation, normal signup, returned/thrown cleanup failures, retained completed deletions, successful cleanup, unauthenticated requests and customer attempts. The focused run passes 81 checks, including existing account provisioning, abuse budgets, admin deletion and shared error/logging tests. These are controlled request-handler tests, not destructive production tests or hosted provider fault injection.
+
+Full tests, lint, standalone TypeScript, production build, isolated browser checks, task-only commit/push, exact Vercel success and safe deployed checks are required before the next correction.
+
+## Remaining Step 21 follow-up
+
+Step 21 remains open after this first correction until the following paths are resolved or explicitly justified. Step 22 has not begun.
+
+| Candidate | Evidence and next review |
+| --- | --- |
+| Stored provider/moderation errors | Finance and agent dashboards select last_error/failure_message, and moderation retry stores a raw truncated message. RLS ownership alone does not sanitize a readable column. Audit the writer and direct database boundary, plus existing rows; changing only the visible UI would be insufficient. |
+| Admin finance results | run_automation/process_payouts and related NATS actions can return raw aggregate error arrays via successfulFinanceMutation. Review failures after partial completion without repeating financial work or changing success accounting. |
+| Persisted provider results and audit diagnostics | NATS result/metadata and financial audit reasons need an explicit data-minimization decision. Preserve reconciliation semantics and avoid a new payment operation. |
+
+A read-only production catalog query at 19:00:20 UTC confirms RLS on all eight inspected stored-error tables and owner/admin SELECT policies. The ten inspected error/result columns have browser-role column grants, but RLS still limits rows; this is not anonymous access to private records. Aggregate counts find one nonempty club-invoice error and one nonempty dancer NATS-export error, with zero nonempty errors in the other six tables. The query returns no error contents, identifiers, account data or credentials. Those two values have not been classified as sensitive and no credential compromise is inferred. Source review and isolated tests will determine the next bounded fix.
+
+Final validation on 060b2976d3e7856efb2cc0c9ce3c64c0732fb919 passed all 6,079 tests with zero failures, skips or cancellations, full uncached lint, standalone TypeScript, the production build and eight isolated browser checks at 19:06:24 UTC on 2026-09-10. The 158-file migration guard preserved all 142 frozen files, and postbuild skipped demo population. This build reported no disk-space cache warning. The existing npm configuration warning remains for Step 24. Final review is limited to three error-boundary source files, the 36-test regression suite and the security records. Exact task-only commit/push, Vercel success and deployed verification follow; Step 21 remains open for its separately documented stored-error and finance-result work.

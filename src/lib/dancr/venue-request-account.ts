@@ -3,13 +3,15 @@ import { passwordValidationMessage } from "./password-policy";
 import { provisionAppAccount } from "./account-provisioning";
 import { safeErrorMetadata } from "../security/safe-error-metadata";
 
+export class VenueRequestAccountUserError extends Error {}
+
 export function venueRequestCredentials(input: { loginEmail?: unknown; password?: unknown; confirmPassword?: unknown }) {
   const email = typeof input.loginEmail === "string" ? input.loginEmail.trim().toLowerCase() : "";
-  if (email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new Error("Enter a valid manager login email.");
+  if (email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new VenueRequestAccountUserError("Enter a valid manager login email.");
   const password = typeof input.password === "string" ? input.password : "";
   const message = passwordValidationMessage(password);
-  if (message) throw new Error(message);
-  if (input.confirmPassword !== password) throw new Error("The passwords do not match.");
+  if (message) throw new VenueRequestAccountUserError(message);
+  if (input.confirmPassword !== password) throw new VenueRequestAccountUserError("The passwords do not match.");
   return { email, password };
 }
 
@@ -19,7 +21,7 @@ export async function createRequestManager(client: SupabaseClient, input: { emai
     app_metadata: { mydancr_provisioned_role: "venue" },
     user_metadata: { role: "venue", display_name: input.displayName, city: input.city },
   });
-  if (error || !data.user) throw new Error("Unable to create this manager login. Use a different email, or sign in if you already have an account.");
+  if (error || !data.user) throw new VenueRequestAccountUserError("Unable to create this manager login. Use a different email, or sign in if you already have an account.");
   try {
     // GoTrue can insert the auth row before persisting trusted app metadata.
     // Reconcile only the user just returned by successful admin creation;
@@ -35,7 +37,7 @@ export async function createRequestManager(client: SupabaseClient, input: { emai
   } catch (error) {
     await removeUnsubmittedRequestManager(client, data.user.id);
     console.error("VENUE_REQUEST_ACCOUNT_PROVISION_FAILED", safeErrorMetadata(error));
-    throw new Error("Unable to set up the manager login. Please try again.");
+    throw new VenueRequestAccountUserError("Unable to set up the manager login. Please try again.");
   }
 }
 

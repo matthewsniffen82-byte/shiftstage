@@ -6,7 +6,7 @@ import {
   createVenueSignupCredential,
   hashVenueClaimRequestIp,
 } from "./venue-claims";
-import { createRequestManager, removeUnsubmittedRequestManager, venueRequestCredentials } from "./venue-request-account";
+import { createRequestManager, removeUnsubmittedRequestManager, VenueRequestAccountUserError, venueRequestCredentials } from "./venue-request-account";
 import { safeErrorMetadata } from "../security/safe-error-metadata";
 import { enforcePublicRequestRateLimit } from "./public-request-rate-limit";
 
@@ -78,7 +78,8 @@ export async function createVenueSignupRequest(
   try {
     credentials = venueRequestCredentials(input);
   } catch (error) {
-    throw new VenueSignupRequestUserError(error instanceof Error ? error.message : "Enter your manager login details.");
+    if (error instanceof VenueRequestAccountUserError) throw new VenueSignupRequestUserError(error.message);
+    throw error;
   }
   const referringAgentId = await resolveReferringAgent(client, input.agentReferralCode);
   const requestIpHash = hashVenueClaimRequestIp(requestIp);
@@ -124,7 +125,8 @@ export async function createVenueSignupRequest(
   try {
     requesterUserId = await createRequestManager(client, { ...credentials, displayName: normalized.venueName, city: normalized.city });
   } catch (error) {
-    throw new VenueSignupRequestUserError(error instanceof Error ? error.message : "Unable to create manager login.");
+    if (error instanceof VenueRequestAccountUserError) throw new VenueSignupRequestUserError(error.message);
+    throw error;
   }
   let submitted = false;
   try {
