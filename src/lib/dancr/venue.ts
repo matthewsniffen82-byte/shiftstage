@@ -266,10 +266,14 @@ export async function deleteVenueCoverImageByAdmin(
       ...venuePageDraftReset(venue),
     })
     .eq("id", venue.id)
+    .filter("cover_image_storage_path", venue.coverImageStoragePath === null ? "is" : "eq", venue.coverImageStoragePath)
+    .filter("cover_image_updated_at", venue.coverImageUpdatedAt === null ? "is" : "eq", venue.coverImageUpdatedAt)
     .select(VENUE_OWNER_COLUMNS)
     .single();
 
   if (error) throw error;
+  requireVenueMediaReceipt(data, venue.id, "cover_image_storage_path", null);
+  const profile = toVenueOwnerProfile(client, data);
   if (venue.coverImageStoragePath) {
     await removeResponsiveImage(
       client,
@@ -283,7 +287,7 @@ export async function deleteVenueCoverImageByAdmin(
     ).catch(() => null);
   }
   console.info("VENUE_COVER_REMOVED", { venueId: venue.id });
-  return toVenueOwnerProfile(client, data);
+  return profile;
 }
 
 export async function uploadVenueLogoImage(
@@ -391,15 +395,19 @@ export async function deleteVenueLogoImageByAdmin(
     .from("venues")
     .update({ logo_storage_path: null, logo_updated_at: null, ...venuePageDraftReset(venue) })
     .eq("id", venue.id)
+    .filter("logo_storage_path", venue.logoStoragePath === null ? "is" : "eq", venue.logoStoragePath)
+    .filter("logo_updated_at", venue.logoUpdatedAt === null ? "is" : "eq", venue.logoUpdatedAt)
     .select(VENUE_OWNER_COLUMNS)
     .single();
   if (error) throw error;
+  requireVenueMediaReceipt(data, venue.id, "logo_storage_path", null);
+  const profile = toVenueOwnerProfile(client, data);
   if (venue.logoStoragePath) {
     await removeResponsiveImage(client, LOGO_BUCKET, venue.logoStoragePath).catch(() => null);
     await removeArchivedOriginalMedia(client, LOGO_BUCKET, venue.logoStoragePath).catch(() => null);
   }
   console.info("VENUE_LOGO_REMOVED", { venueId: venue.id });
-  return toVenueOwnerProfile(client, data);
+  return profile;
 }
 
 export type VenuePublicationState = {
@@ -592,7 +600,7 @@ function requireVenueMediaReceipt(
   data: unknown,
   venueId: string,
   column: "cover_image_storage_path" | "logo_storage_path" | "qr_code_storage_path",
-  storagePath: string,
+  storagePath: string | null,
 ): void {
   if (!data || typeof data !== "object" || Array.isArray(data)
     || !("id" in data) || data.id !== venueId

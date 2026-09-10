@@ -550,3 +550,13 @@ The inspected plan and operator procedure are `step-11-gallery-cleanup-recovery.
 All 31 actual-endpoint/native cases pass. They exercise the real active-admin check, actual retirement functions and response validation, synthetic storage failures, unauthorized access, wrong/malformed receipts, absent markers, preserved sessions and explicit idempotent retries. Source-policy and hosted-auth coverage are not inferred from these isolated tests. Full validation, commit/push and exact deployment/preservation/health gates remain required.
 
 Full validation passed all 5,703 tests, lint, production build, standalone TypeScript, migration guard and thirty readiness checks. Existing route-inventory tests include the new protected endpoint. No database migration or production mutation is part of this correction. Exact commit/push, Vercel success and preservation/health checks remain required.
+
+Explicit recovery correction `83608deb0432fdd9a413d26d794fe96f3e5f7f6b` was pushed with matching main references and successful [exact Vercel deployment](https://vercel.com/ai-movie-jobs/shiftstage/DK68Q6jpPQ1RVvQcZwqbNX6UE4Vr). Health, unauthorized retry/media rejection and thirty readiness checks passed at 14:08:26–31 UTC. Read-only fingerprints preserved all source/history rows, zero markers, venues, 452 storage objects, buckets, policies, functions and 113 ledger entries. No production cleanup retry was invoked as a test.
+
+## Step 11 venue media deletion acknowledgment
+
+The inspected plan is `step-11-venue-media-deletion.md`. Prevent stale admin deletion from clearing a newer cover/logo; validate the returned cleared path and complete response mapping before physical cleanup. Preserve the existing owner restrictions and inactive-venue draft workflow. No SQL or production media mutation is required.
+
+All 107 focused actual-module/native venue cases pass, including 42 new deletion cases. They cover stale paths, full-precision timestamps, concurrent uploads into empty slots, lost acknowledgments, malformed responses and preservation on mapping failures. Full validation and exact commit/push/deployment/preservation gates remain required.
+
+Full validation passed all 5,745 tests, lint, production build, standalone TypeScript, migration guard and thirty readiness checks. Twenty-four deletion cases fail against the preceding implementation. Read-only preservation at 14:23:24 UTC confirms unchanged source/history rows, zero markers, venues, 452 storage objects, buckets, policies, functions and 113 ledger entries. No production image mutation or migration was performed. Exact commit/push and deployment/health remain required.

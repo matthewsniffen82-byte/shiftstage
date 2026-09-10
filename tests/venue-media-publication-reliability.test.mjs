@@ -52,7 +52,7 @@ function harness(kind,options={}){
   './media-watermark':{removeArchivedOriginalMedia:(_client,bucket,path)=>remove('original/'+bucket,[path])},
  };
  const exports={};vm.runInNewContext(compiled,{exports,require:name=>dependencies[name]||{},console:{info:(...value)=>messages.push(value),warn:()=>{}},Buffer,Date});
- return {calls,files,messages,run:()=>kind==='qr'?exports[spec.fn](client,owner,new Blob(['synthetic']),options.label):exports[spec.fn](client,id(3),venueId,new Blob(['synthetic'])),retainedNew:()=>{assert.ok(files.has(spec.bucket+'/'+newPath));if(kind!=='qr')assert.ok(files.has('original/'+spec.bucket+'/'+newPath));},retainedOld:()=>assert.ok(files.has(spec.bucket+'/'+oldPath)),noRetirement:()=>assert.ok(calls.filter(c=>c.kind==='remove').every(c=>c.bucket===tempBucket))};
+ return {calls,files,messages,run:()=>kind==='qr'?exports[spec.fn](client,owner,new Blob(['synthetic']),options.label):exports[spec.fn](client,id(3),venueId,new Blob(['synthetic'])),deleteRun:()=>exports[kind==='cover'?'deleteVenueCoverImageByAdmin':'deleteVenueLogoImageByAdmin'](client,venueId),retainedNew:()=>{assert.ok(files.has(spec.bucket+'/'+newPath));if(kind!=='qr')assert.ok(files.has('original/'+spec.bucket+'/'+newPath));},retainedOld:()=>assert.ok(files.has(spec.bucket+'/'+oldPath)),noRetirement:()=>assert.ok(calls.filter(c=>c.kind==='remove').every(c=>c.bucket===tempBucket))};
 }
 
 for(const [kind,spec]of Object.entries(kinds)){
@@ -99,3 +99,49 @@ for(const kind of ['cover','logo']){
 }
 test('QR access denial performs no storage or database operation',async()=>{const h=harness('qr',{denyAccess:true});await assert.rejects(h.run());assert.equal(h.calls.length,0);});
 test('an invalid QR label is rejected before storage upload',async()=>{const h=harness('qr',{label:'x'.repeat(101)});await assert.rejects(h.run());assert.deepEqual(h.calls.map(c=>c.kind),['read']);});
+
+for(const [kind,spec] of Object.entries(kinds).filter(([kind])=>kind!=='qr')){
+ for(const empty of [false,true])test(kind+' deletion acknowledges '+(empty?'already empty':'existing')+' media without changing other data',async()=>{
+  if(empty)await db.query('update public.venues set '+spec.column+'=null,'+spec.time+'=null where id=$1',[venueId]);
+  const previous=await venueMediaSnapshot(db),h=harness(kind),result=await h.deleteRun();
+  assert.equal(result[spec.mapped],null);assert.equal((await row())[spec.column],null);assert.equal((await row())[spec.time],null);
+  assert.equal(h.messages.length,1);assert.deepEqual(h.calls.map(c=>c.kind),empty?['read','update']:['read','update','remove','remove']);
+  if(empty)h.retainedOld();else{assert.ok(!h.files.has(spec.bucket+'/'+oldPath));assert.ok(!h.files.has('original/'+spec.bucket+'/'+oldPath));}
+  const expected=structuredClone(previous);Object.assign(expected.venues.find(v=>v.id===venueId),{[spec.column]:null,[spec.time]:null});
+  assert.deepEqual(await venueMediaSnapshot(db),expected);
+ });
+ for(const failure of ['readError','updateError','updateThrow','lostWriteReply','lostWriteThrow'])test(kind+' deletion preserves bytes on '+failure,async()=>{
+  const h=harness(kind,{[failure]:true});await assert.rejects(h.deleteRun());h.retainedOld();h.noRetirement();assert.equal(h.messages.length,0);
+  assert.equal((await row())[spec.column],failure.startsWith('lost')?null:oldPath);
+ });
+ for(const receipt of [null,undefined,{},[],false])test(kind+' deletion refuses unconfirmed receipt '+String(receipt),async()=>{
+  const h=harness(kind,{receipt});await assert.rejects(h.deleteRun());h.retainedOld();h.noRetirement();assert.equal(h.messages.length,0);
+ });
+ for(const [key,value] of [['id',id(12)],[spec.column,oldPath]])test(kind+' deletion refuses mismatched receipt '+key,async()=>{
+  const h=harness(kind,{transformReceipt:row=>({...row,[key]:value})});await assert.rejects(h.deleteRun());h.retainedOld();h.noRetirement();assert.equal(h.messages.length,0);
+ });
+ test(kind+' deletion refuses a receipt missing the cleared column',async()=>{
+  const h=harness(kind,{transformReceipt:row=>{delete row[spec.column];return row;}});await assert.rejects(h.deleteRun());h.retainedOld();h.noRetirement();assert.equal(h.messages.length,0);
+ });
+ for(const [key,value]of [[spec.column,venueId+'/competing.webp'],[spec.time,'2026-09-01T01:02:03.123457Z']])test(kind+' deletion rejects stale '+key+' including microseconds',async()=>{
+  const h=harness(kind,{beforeUpdate:()=>db.query('update public.venues set '+key+'=$1 where id=$2',[value,venueId])});await assert.rejects(h.deleteRun());h.retainedOld();h.noRetirement();assert.equal(h.messages.length,0);
+  assert.equal((await row())[spec.column],key===spec.column?value:oldPath);
+ });
+ test(kind+' deletion from an empty slot cannot clear a concurrent upload',async()=>{
+  await db.query('update public.venues set '+spec.column+'=null,'+spec.time+'=null where id=$1',[venueId]);
+  const h=harness(kind,{beforeUpdate:()=>db.query('update public.venues set '+spec.column+'=$1,'+spec.time+"='2026-09-01T01:02:03.123457Z' where id=$2",[newPath,venueId])});
+  await assert.rejects(h.deleteRun());assert.equal((await row())[spec.column],newPath);h.noRetirement();assert.equal(h.messages.length,0);
+ });
+ test(kind+' deletion accepts a legacy null timestamp and preserves unrelated edits',async()=>{
+  await db.query('update public.venues set '+spec.time+'=null where id=$1',[venueId]);
+  const h=harness(kind,{beforeUpdate:()=>db.query("update public.venues set name='Concurrent name' where id=$1",[venueId])});await h.deleteRun();
+  assert.equal((await row()).name,'Concurrent name');assert.equal((await row())[spec.column],null);
+ });
+ test(kind+' deletion retains bytes and suppresses success logging when response mapping fails',async()=>{
+  const h=harness(kind,{mappingFailure:true});await assert.rejects(h.deleteRun());assert.equal((await row())[spec.column],null);h.retainedOld();h.noRetirement();assert.equal(h.messages.length,0);
+ });
+ test(kind+' deletion from an inactive venue retains the existing draft workflow',async()=>{
+  await db.query("update public.venues set is_active=false,page_review_status='venue_approved',page_review_notes='Synthetic notes' where id=$1",[venueId]);
+  await harness(kind).deleteRun();assert.equal((await row()).page_review_status,'admin_draft');assert.equal((await row()).page_review_notes,null);
+ });
+}
