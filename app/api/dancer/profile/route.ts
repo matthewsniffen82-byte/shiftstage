@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { apiError, PublicApiError } from "@/src/lib/api";
 import { readBoundedJsonObject } from "@/src/lib/bounded-json-body";
 import { deleteOwnDancerPhoto } from "@/src/lib/dancr/dancer";
+import { enqueueDancerContentReviews } from "@/src/lib/dancr/content-reviews";
 import { ACTIVE_IMAGE_MODERATION_STATUSES } from "@/src/lib/dancr/image-moderation-status";
 import { transitionDancerPublication } from "@/src/lib/dancr/profile-publication";
 import {
@@ -490,7 +491,7 @@ export async function PATCH(request: Request) {
       }
 
       const submittedSocialPlatforms = readSubmittedSocialPlatforms(body, changedSocialPlatforms);
-      await submitChangedSocialLinksForReview(db, profile.id, submittedSocialPlatforms);
+      await submitChangedSocialLinksForReview(db, profile.id, user.id, submittedSocialPlatforms);
 
       const activePlatforms: SocialPlatform[] = rows.map((social: any) => social.platform);
       const submittedPlatforms: SocialPlatform[] = submittedRows.map((social: any) => social.platform);
@@ -593,7 +594,7 @@ export async function PATCH(request: Request) {
         status: profile.status,
       });
     } else if (body.submitForReview === true) {
-      await submitPendingApprovedContentForReview(db, profile.id);
+      await submitPendingApprovedContentForReview(db, profile.id, user.id);
     }
 
     setSaveStage("verify_saved_profile");
@@ -769,7 +770,7 @@ function withoutDancerBio<T extends Record<string, any>>(profile: T): Omit<T, "b
   return profileWithoutBio as Omit<T, "bio">;
 }
 
-async function submitChangedSocialLinksForReview(db: any, dancerId: string, platforms: SocialPlatform[]) {
+async function submitChangedSocialLinksForReview(db: any, dancerId: string, actorUserId: string, platforms: SocialPlatform[]) {
   const uniquePlatforms = [...new Set(platforms)];
   if (!uniquePlatforms.length) return 0;
 
@@ -783,35 +784,7 @@ async function submitChangedSocialLinksForReview(db: any, dancerId: string, plat
   if (error) throw error;
   if (!socials?.length) return 0;
 
-  const adminDb = createAdminSupabaseClient() as any;
-  const reviewTypes = socials.map((social: any) => `social_link:${social.id}`);
-  const { data: existingReviews, error: existingReviewsError } = await adminDb
-    .from("approval_reviews")
-    .select("review_type")
-    .eq("dancer_id", dancerId)
-    .eq("status", "pending")
-    .in("review_type", reviewTypes);
-
-  if (existingReviewsError) throw existingReviewsError;
-  const existingTypes = new Set((existingReviews || []).map((review: any) => review.review_type));
-  const rows = socials
-    .filter((social: any) => !existingTypes.has(`social_link:${social.id}`))
-    .map((social: any) => ({
-      dancer_id: dancerId,
-      reviewer_id: null,
-      review_type: `social_link:${social.id}`,
-      status: "pending",
-      notes: "Submitted by dancer.",
-      reviewed_at: null,
-    }));
-
-  if (!rows.length) return 0;
-  const { error: insertError } = await adminDb.from("approval_reviews").insert(
-    rows,
-  );
-
-  if (insertError) throw insertError;
-  return rows.length;
+  return enqueueDancerContentReviews(db, dancerId, actorUserId, "social_link", socials.map((social: any) => social.id));
 }
 
 function readSubmittedSocialPlatforms(body: any, fallbackPlatforms: SocialPlatform[]) {
@@ -820,7 +793,7 @@ function readSubmittedSocialPlatforms(body: any, fallbackPlatforms: SocialPlatfo
   return platforms.length ? platforms : fallbackPlatforms;
 }
 
-async function submitPendingApprovedContentForReview(db: any, dancerId: string) {
+async function submitPendingApprovedContentForReview(db: any, dancerId: string, actorUserId: string) {
   const { data: photos, error } = await db
     .from("dancer_photos")
     .select("id")
@@ -829,34 +802,7 @@ async function submitPendingApprovedContentForReview(db: any, dancerId: string) 
 
   if (error) throw error;
 
-  const reviewTypes = (photos || []).map((photo: any) => `photo:${photo.id}`);
-  if (!reviewTypes.length) return;
-
-  const adminDb = createAdminSupabaseClient() as any;
-  const { data: existingReviews, error: existingReviewsError } = await adminDb
-    .from("approval_reviews")
-    .select("review_type")
-    .eq("dancer_id", dancerId)
-    .eq("status", "pending")
-    .in("review_type", reviewTypes);
-
-  if (existingReviewsError) throw existingReviewsError;
-  const existingTypes = new Set((existingReviews || []).map((review: any) => review.review_type));
-  const reviewRows = (photos || [])
-    .filter((photo: any) => !existingTypes.has(`photo:${photo.id}`))
-    .map((photo: any) => ({
-    dancer_id: dancerId,
-    reviewer_id: null,
-    review_type: `photo:${photo.id}`,
-    status: "pending",
-    notes: "Submitted by dancer.",
-    reviewed_at: null,
-  }));
-
-  if (!reviewRows.length) return;
-
-  const { error: insertError } = await adminDb.from("approval_reviews").insert(reviewRows);
-  if (insertError) throw insertError;
+  return enqueueDancerContentReviews(db, dancerId, actorUserId, "photo", (photos || []).map((photo: any) => photo.id));
 }
 
 async function markApprovedProfileContentPending(db: any, dancerId: string) {

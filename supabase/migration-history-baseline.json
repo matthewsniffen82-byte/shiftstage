@@ -543,6 +543,14 @@
     {
       "file": "20260909232100_add_atomic_primary_photo_selection.sql",
       "sha256": "096b9f962abfae7999b0edf66f1022e738b297003f14eb45dcb3f1f3519f1144"
+    },
+    {
+      "file": "20260909233000_restrict_browser_table_privileges.sql",
+      "sha256": "c52f928c88e1148a5c471346ed24f215735e6b059c589092d20799606b3ee772"
+    },
+    {
+      "file": "20260910000149_prevent_duplicate_pending_content_reviews.sql",
+      "sha256": "45cd4538469e80f9f9332eb575c861630327c021bfbacb0e279e1e7a2e946841"
     }
   ]
 }
