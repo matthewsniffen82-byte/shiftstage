@@ -450,3 +450,13 @@ The invoice correction was pushed as `87904f0b5609430ae6f630144f5e22f43fee2d3c`;
 `step-09-transaction-review.md` records the delivered boundaries, current native function inspection and explicit remaining work for later audit steps. Twelve additional actual invoice-payment tests pass, including rollback after failures at the invoice, revenue and agent update stages. This closing release changes tests/documentation only. Full validation and exact push/Vercel/health gates remain required before Step 10.
 
 Full validation passed all 5,245 tests, lint, production build, standalone TypeScript, migration guard and thirty readiness checks. Read-only verification retained the frozen invoice function, payment dependency, valid unique constraint, ledger and permissions. No SQL or production settlement was executed. Exact commit/push and deployment/health gates remain required.
+
+Step 9 closed with `91d03c844192203a9c787f4701914b9bd01c7d23`, matching main references and successful [exact Vercel deployment](https://vercel.com/ai-movie-jobs/shiftstage/EHrwTx1VPAgydYpnstCAiyi4wE3D). Health, protected routes, unsigned webhook rejection and thirty readiness checks passed at 10:44:13–16 UTC. Deferred tests and the explicit later-step risk list remain open.
+
+## Step 10 query performance
+
+`step-10-query-performance.md` records a fresh read-only catalog/plan audit: 271 valid indexes, two structural redundancy candidates and fifteen representative SELECT plans. The first bounded correction addresses uncapped raw TV event retrieval with a service-only database aggregate. Add and verify the unused function before changing its caller. No speculative bulk indexing or production event mutation is authorized by this plan.
+
+The deployed row cap was confirmed with a HEAD request returning `0-999/1974` for a 1,500-row limit; no private events were retrieved. All 35 native aggregate tests and the transaction/repeat/drift deployment rehearsals pass. Full validation and committed SQL/push/deployment gates remain required.
+
+Full foundation validation passed all 5,280 tests, lint, production build, standalone TypeScript, migration guard and thirty readiness checks. The application still uses its existing metric reader. Exact commit/push, committed SQL application, read-only preservation/API verification and Vercel/health gates remain required.

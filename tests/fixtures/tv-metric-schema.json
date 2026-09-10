@@ -1,0 +1,155 @@
+{
+  "captured_at": "2026-09-10T10:49:45.485Z",
+  "columns": [
+    {
+      "default": "gen_random_uuid()",
+      "name": "id",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "mydancr_tv_events",
+      "type": "uuid"
+    },
+    {
+      "default": null,
+      "name": "video_id",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "mydancr_tv_events",
+      "type": "uuid"
+    },
+    {
+      "default": null,
+      "name": "viewer_id",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "mydancr_tv_events",
+      "type": "uuid"
+    },
+    {
+      "default": null,
+      "name": "session_id",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "mydancr_tv_events",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "event_type",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "mydancr_tv_events",
+      "type": "text"
+    },
+    {
+      "default": "'tv_feed'::text",
+      "name": "source",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "mydancr_tv_events",
+      "type": "text"
+    },
+    {
+      "default": "CURRENT_DATE",
+      "name": "occurred_on",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "mydancr_tv_events",
+      "type": "date"
+    },
+    {
+      "default": "now()",
+      "name": "occurred_at",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "mydancr_tv_events",
+      "type": "timestamptz"
+    }
+  ],
+  "constraints": [
+    {
+      "definition": "CHECK (((length(session_id) >= 8) AND (length(session_id) <= 120)))",
+      "name": "mydancr_tv_event_session_check",
+      "table": "mydancr_tv_events"
+    },
+    {
+      "definition": "CHECK ((source = ANY (ARRAY['tv_feed'::text, 'home'::text, 'dancer_profile'::text, 'venue_page'::text, 'shared_link'::text])))",
+      "name": "mydancr_tv_event_source_check",
+      "table": "mydancr_tv_events"
+    },
+    {
+      "definition": "CHECK ((event_type = ANY (ARRAY['impression'::text, 'engaged_view'::text, 'completed'::text, 'profile_click'::text, 'venue_click'::text, 'shift_click'::text, 'follow'::text, 'going'::text, 'reminder'::text, 'applause'::text, 'share'::text, 'report'::text])))",
+      "name": "mydancr_tv_event_type_check",
+      "table": "mydancr_tv_events"
+    },
+    {
+      "definition": "PRIMARY KEY (id)",
+      "name": "mydancr_tv_events_pkey",
+      "table": "mydancr_tv_events"
+    },
+    {
+      "definition": "FOREIGN KEY (video_id) REFERENCES mydancr_tv_videos(id) ON DELETE CASCADE",
+      "name": "mydancr_tv_events_video_id_fkey",
+      "table": "mydancr_tv_events"
+    },
+    {
+      "definition": "FOREIGN KEY (viewer_id) REFERENCES app_users(id) ON DELETE SET NULL",
+      "name": "mydancr_tv_events_viewer_id_fkey",
+      "table": "mydancr_tv_events"
+    }
+  ],
+  "indexes": [
+    {
+      "definition": "CREATE UNIQUE INDEX mydancr_tv_events_daily_unique_idx ON public.mydancr_tv_events USING btree (video_id, event_type, session_id, occurred_on)",
+      "name": "mydancr_tv_events_daily_unique_idx",
+      "table": "mydancr_tv_events"
+    },
+    {
+      "definition": "CREATE UNIQUE INDEX mydancr_tv_events_pkey ON public.mydancr_tv_events USING btree (id)",
+      "name": "mydancr_tv_events_pkey",
+      "table": "mydancr_tv_events"
+    },
+    {
+      "definition": "CREATE INDEX mydancr_tv_events_video_occurred_idx ON public.mydancr_tv_events USING btree (video_id, occurred_at DESC)",
+      "name": "mydancr_tv_events_video_occurred_idx",
+      "table": "mydancr_tv_events"
+    }
+  ],
+  "triggers": [],
+  "policies": [
+    {
+      "cmd": "SELECT",
+      "permissive": "PERMISSIVE",
+      "policyname": "dancers read own MyDancr TV analytics",
+      "qual": "((EXISTS ( SELECT 1\n   FROM (mydancr_tv_videos video\n     JOIN dancer_profiles dancer ON ((dancer.id = video.dancer_id)))\n  WHERE ((video.id = mydancr_tv_events.video_id) AND (dancer.user_id = auth.uid())))) OR is_admin())",
+      "roles": [
+        "public"
+      ],
+      "schemaname": "public",
+      "tablename": "mydancr_tv_events",
+      "with_check": null
+    },
+    {
+      "cmd": "SELECT",
+      "permissive": "PERMISSIVE",
+      "policyname": "venue owners read MyDancr TV analytics",
+      "qual": "((EXISTS ( SELECT 1\n   FROM (mydancr_tv_videos video\n     JOIN venues venue ON ((venue.id = video.venue_id)))\n  WHERE ((video.id = mydancr_tv_events.video_id) AND (venue.owner_user_id = auth.uid())))) OR is_admin())",
+      "roles": [
+        "public"
+      ],
+      "schemaname": "public",
+      "tablename": "mydancr_tv_events",
+      "with_check": null
+    }
+  ],
+  "access": {
+    "acl": [
+      "postgres=arwdDxtm/postgres",
+      "anon=r/postgres",
+      "authenticated=r/postgres",
+      "service_role=arwdDxtm/postgres"
+    ],
+    "force_rls": false,
+    "rls": true
+  }
+}
