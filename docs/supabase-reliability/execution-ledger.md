@@ -238,3 +238,11 @@ Video upload preservation was pushed as `06c37da94f04ab0123a09bbccbb6eeba623a585
 The inspected plan is `step-08-moderation-notification-errors.md`. Check returned notification errors and record sanitized diagnostics while preserving already-completed rejection decisions. No retry or new external delivery is added. Complete validation and exact deployment verification remain required.
 
 Moderation-notification validation on `06c37da9` passed all 4,022 tests, full lint, production build, standalone TypeScript and thirty live readiness checks. All 23 focused cases passed, including ten new runtime cases. Postbuild skipped layout-review population. No production moderation, notification, media or schema write was used for testing. Exact push and deployment/health verification remain required.
+
+Moderation-notification handling was pushed as `5440ee86b3b5aab751dd11e3a07a25c4bd65254a`, with local HEAD and both remote main references matching. Its [exact Vercel deployment](https://vercel.com/ai-movie-jobs/shiftstage/dFRHqggSxVKRakrqYSLJEKcWMfdr) succeeded. Both health routes, protected moderation/account denials and thirty readiness checks passed at 03:31:29–31 UTC on 2026-09-10. No production notification or moderation action was used for testing.
+
+## Step 8 finance cron partial results
+
+The inspected plan is `step-08-finance-cron-results.md`. Report partial financial job failures accurately, preserve counters and avoid raw provider/database text in cron logs/results. Keep the existing authorization, schedule and single execution. No real finance run is permitted for testing; full validation and exact deployment/health gates remain required.
+
+Finance-cron validation on the combined tree with incoming `acef1c77` passed all 4,073 tests, full lint, production build, standalone TypeScript and thirty live readiness checks. The 35 focused cases include 22 new runtime cases; eighteen fail against the prior route. Postbuild skipped layout-review population. No production billing, email, schema or data mutation was used. Exact push and deployment/health verification remain required.

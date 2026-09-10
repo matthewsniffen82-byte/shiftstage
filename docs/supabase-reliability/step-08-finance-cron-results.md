@@ -1,0 +1,17 @@
+# Step 8: truthful finance job results
+
+Moderation-notification handling was pushed as `5440ee86b3b5aab751dd11e3a07a25c4bd65254a`; its [exact Vercel deployment](https://vercel.com/ai-movie-jobs/shiftstage/dFRHqggSxVKRakrqYSLJEKcWMfdr) succeeded. Both health routes, protected moderation/account denials and thirty readiness checks passed at 03:31:29–31 UTC on 2026-09-10. No production notification or moderation action was used for testing.
+
+The finance cron returns HTTP 200/`ok:true` and logs the whole result even when individual stages report errors, failed payouts/exports or exports requiring reconciliation. Some existing stage errors contain raw database/provider messages. The public result must distinguish completed work from a fully successful job, and cron logs must not copy arbitrary provider text.
+
+Keep authorization, the daily schedule, stage ordering and one execution per request. Return a non-success partial result when the error list or failure/reconciliation counters indicate unfinished work. Preserve acknowledged counts, validate their shape, log an explicit numeric summary only and replace raw result errors with a generic review instruction. An unexpected result shape or thrown job failure uses the existing generic failure boundary. Do not automatically rerun the job or change billing/provider operations.
+
+Vercel's [cron management documentation](https://vercel.com/docs/cron-jobs/manage-cron-jobs#cron-job-error-handling), checked on 2026-09-10, says failed invocations are not retried automatically. The same documentation warns that duplicate delivery can occur independently. Therefore this response correction does not itself add retries, and it does not replace the separate Step 9 dispatch/overlap safeguards. Operator retries require reviewing current invoice/payout state.
+
+Test the actual route with successful, partial, malformed and thrown synthetic results; ensure unauthorized requests never create a privileged client or run automation, and every authorized request executes at most once. Run all tests/lint/build/TypeScript/readiness, commit/push, verify exact Vercel success and safe unauthenticated production checks. Never invoke real finance automation as a test.
+
+The new runtime coverage exercises the actual route and constant-time cron guard with synthetic results and credentials. All 22 new cases pass; eighteen fail against the previous route. The focused finance/cron set passes 35 cases. Coverage includes confirmed zero/nonzero counts, each partial-failure signal, malformed counts/results, database exceptions, response/log privacy and authorization before privileged initialization. No test dispatches external billing, writes production data or sends email.
+
+The incoming `acef1c77` completed payout-reversal retry fix was inspected and preserved before final validation. It changes a different provider-event flow and is not included in this task's staged files. Remaining finance overlap, durable dispatch and multi-stage transaction concerns stay assigned to Step 9; this response change is not evidence that those concerns are resolved.
+
+Final validation on the combined tree passed all 4,073 automated tests, full lint, production build, standalone TypeScript and all thirty live readiness checks. Postbuild skipped layout-review population. No database migration, schema/data write, authorized finance invocation or real email was used. Exact push/deployment and safe production health verification are the remaining release gates.
