@@ -1,0 +1,4342 @@
+{
+  "access": [
+    {
+      "acl": [
+        "postgres=arwdDxtm/postgres",
+        "anon=r/postgres",
+        "authenticated=arwd/postgres",
+        "service_role=arwdDxtm/postgres"
+      ],
+      "force_rls": false,
+      "rls": true,
+      "table": "agent_commission_events"
+    },
+    {
+      "acl": [
+        "postgres=arwdDxtm/postgres",
+        "anon=r/postgres",
+        "authenticated=r/postgres",
+        "service_role=arwdDxtm/postgres"
+      ],
+      "force_rls": false,
+      "rls": true,
+      "table": "club_deals"
+    },
+    {
+      "acl": [
+        "postgres=arwdDxtm/postgres",
+        "anon=r/postgres",
+        "authenticated=r/postgres",
+        "service_role=arwdDxtm/postgres"
+      ],
+      "force_rls": false,
+      "rls": true,
+      "table": "commission_events"
+    },
+    {
+      "acl": [
+        "postgres=arwdDxtm/postgres",
+        "anon=r/postgres",
+        "authenticated=arwd/postgres",
+        "service_role=arwdDxtm/postgres"
+      ],
+      "force_rls": false,
+      "rls": true,
+      "table": "deal_revenue_events"
+    },
+    {
+      "acl": [
+        "postgres=arwdDxtm/postgres",
+        "anon=r/postgres",
+        "authenticated=r/postgres",
+        "service_role=arwdDxtm/postgres"
+      ],
+      "force_rls": false,
+      "rls": true,
+      "table": "nats_affiliate_accounts"
+    },
+    {
+      "acl": [
+        "postgres=arwdDxtm/postgres",
+        "anon=r/postgres",
+        "authenticated=r/postgres",
+        "service_role=arwdDxtm/postgres"
+      ],
+      "force_rls": false,
+      "rls": true,
+      "table": "nats_agent_affiliate_accounts"
+    },
+    {
+      "acl": [
+        "postgres=arwdDxtm/postgres",
+        "anon=r/postgres",
+        "authenticated=r/postgres",
+        "service_role=arwdDxtm/postgres"
+      ],
+      "force_rls": false,
+      "rls": true,
+      "table": "nats_agent_commission_exports"
+    },
+    {
+      "acl": [
+        "postgres=arwdDxtm/postgres",
+        "anon=r/postgres",
+        "authenticated=r/postgres",
+        "service_role=arwdDxtm/postgres"
+      ],
+      "force_rls": false,
+      "rls": true,
+      "table": "nats_commission_exports"
+    },
+    {
+      "acl": [
+        "postgres=arwdDxtm/postgres",
+        "anon=r/postgres",
+        "authenticated=arwd/postgres",
+        "service_role=arwdDxtm/postgres"
+      ],
+      "force_rls": false,
+      "rls": true,
+      "table": "nfc_tags"
+    },
+    {
+      "acl": [
+        "postgres=arwdDxtm/postgres",
+        "anon=r/postgres",
+        "authenticated=arwd/postgres",
+        "service_role=arwdDxtm/postgres"
+      ],
+      "force_rls": false,
+      "rls": true,
+      "table": "nfc_tap_events"
+    },
+    {
+      "acl": [
+        "postgres=arwdDxtm/postgres",
+        "anon=r/postgres",
+        "authenticated=arwd/postgres",
+        "service_role=arwdDxtm/postgres"
+      ],
+      "force_rls": false,
+      "rls": true,
+      "table": "qr_redemption_events"
+    },
+    {
+      "acl": [
+        "postgres=arwdDxtm/postgres",
+        "anon=r/postgres",
+        "authenticated=arwd/postgres",
+        "service_role=arwdDxtm/postgres"
+      ],
+      "force_rls": false,
+      "rls": true,
+      "table": "qr_redemptions"
+    },
+    {
+      "acl": [
+        "postgres=arwdDxtm/postgres",
+        "anon=r/postgres",
+        "authenticated=arwd/postgres",
+        "service_role=arwdDxtm/postgres"
+      ],
+      "force_rls": false,
+      "rls": true,
+      "table": "sales_agents"
+    },
+    {
+      "acl": [
+        "postgres=arwdDxtm/postgres",
+        "anon=r/postgres",
+        "authenticated=arwd/postgres",
+        "service_role=arwdDxtm/postgres"
+      ],
+      "force_rls": false,
+      "rls": true,
+      "table": "venue_referral_fee_terms"
+    },
+    {
+      "acl": [
+        "postgres=arwdDxtm/postgres",
+        "anon=r/postgres",
+        "authenticated=arwd/postgres",
+        "service_role=arwdDxtm/postgres"
+      ],
+      "force_rls": false,
+      "rls": true,
+      "table": "venue_sales_attributions"
+    },
+    {
+      "acl": [
+        "postgres=arwdDxtm/postgres",
+        "anon=r/postgres",
+        "authenticated=arwd/postgres",
+        "service_role=arwdDxtm/postgres"
+      ],
+      "force_rls": false,
+      "rls": true,
+      "table": "venues"
+    }
+  ],
+  "captured_at": "2026-09-10T16:33:08.9146+00:00",
+  "columns": [
+    {
+      "default": "gen_random_uuid()",
+      "name": "id",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "agent_commission_events",
+      "type": "uuid"
+    },
+    {
+      "default": null,
+      "name": "deal_revenue_event_id",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "agent_commission_events",
+      "type": "uuid"
+    },
+    {
+      "default": null,
+      "name": "qr_redemption_id",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "agent_commission_events",
+      "type": "uuid"
+    },
+    {
+      "default": null,
+      "name": "venue_id",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "agent_commission_events",
+      "type": "uuid"
+    },
+    {
+      "default": null,
+      "name": "venue_sales_attribution_id",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "agent_commission_events",
+      "type": "uuid"
+    },
+    {
+      "default": null,
+      "name": "recipient_agent_id",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "agent_commission_events",
+      "type": "uuid"
+    },
+    {
+      "default": null,
+      "name": "signing_agent_id",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "agent_commission_events",
+      "type": "uuid"
+    },
+    {
+      "default": null,
+      "name": "sponsor_level",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "agent_commission_events",
+      "type": "int2"
+    },
+    {
+      "default": null,
+      "name": "share_bps",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "agent_commission_events",
+      "type": "int4"
+    },
+    {
+      "default": null,
+      "name": "amount_cents",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "agent_commission_events",
+      "type": "int4"
+    },
+    {
+      "default": "'usd'::text",
+      "name": "currency",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "agent_commission_events",
+      "type": "text"
+    },
+    {
+      "default": "'pending_venue_payment'::text",
+      "name": "status",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "agent_commission_events",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "commission_month",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "agent_commission_events",
+      "type": "date"
+    },
+    {
+      "default": null,
+      "name": "venue_payment_received_at",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "agent_commission_events",
+      "type": "timestamptz"
+    },
+    {
+      "default": null,
+      "name": "payable_at",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "agent_commission_events",
+      "type": "timestamptz"
+    },
+    {
+      "default": null,
+      "name": "paid_at",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "agent_commission_events",
+      "type": "timestamptz"
+    },
+    {
+      "default": null,
+      "name": "payout_reference",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "agent_commission_events",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "voided_at",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "agent_commission_events",
+      "type": "timestamptz"
+    },
+    {
+      "default": "'{}'::jsonb",
+      "name": "audit",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "agent_commission_events",
+      "type": "jsonb"
+    },
+    {
+      "default": "now()",
+      "name": "created_at",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "agent_commission_events",
+      "type": "timestamptz"
+    },
+    {
+      "default": "gen_random_uuid()",
+      "name": "id",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "club_deals",
+      "type": "uuid"
+    },
+    {
+      "default": null,
+      "name": "venue_id",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "club_deals",
+      "type": "uuid"
+    },
+    {
+      "default": null,
+      "name": "deal_title",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "club_deals",
+      "type": "text"
+    },
+    {
+      "default": "''::text",
+      "name": "deal_description",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "club_deals",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "deal_terms",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "club_deals",
+      "type": "text"
+    },
+    {
+      "default": "true",
+      "name": "is_active",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "club_deals",
+      "type": "bool"
+    },
+    {
+      "default": null,
+      "name": "valid_days",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "club_deals",
+      "type": "_text"
+    },
+    {
+      "default": null,
+      "name": "valid_start_time",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "club_deals",
+      "type": "time"
+    },
+    {
+      "default": null,
+      "name": "valid_end_time",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "club_deals",
+      "type": "time"
+    },
+    {
+      "default": "'{}'::jsonb",
+      "name": "redemption_rules",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "club_deals",
+      "type": "jsonb"
+    },
+    {
+      "default": "'none'::text",
+      "name": "payout_type",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "club_deals",
+      "type": "text"
+    },
+    {
+      "default": "0",
+      "name": "payout_amount_cents",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "club_deals",
+      "type": "int4"
+    },
+    {
+      "default": "now()",
+      "name": "created_at",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "club_deals",
+      "type": "timestamptz"
+    },
+    {
+      "default": "now()",
+      "name": "updated_at",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "club_deals",
+      "type": "timestamptz"
+    },
+    {
+      "default": "'usd'::text",
+      "name": "currency",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "club_deals",
+      "type": "text"
+    },
+    {
+      "default": "'admission'::text",
+      "name": "offer_type",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "club_deals",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "booking_url",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "club_deals",
+      "type": "text"
+    },
+    {
+      "default": "0",
+      "name": "sort_order",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "club_deals",
+      "type": "int4"
+    },
+    {
+      "default": null,
+      "name": "removed_at",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "club_deals",
+      "type": "timestamptz"
+    },
+    {
+      "default": "gen_random_uuid()",
+      "name": "id",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "commission_events",
+      "type": "uuid"
+    },
+    {
+      "default": null,
+      "name": "qr_redemption_id",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "commission_events",
+      "type": "uuid"
+    },
+    {
+      "default": null,
+      "name": "venue_id",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "commission_events",
+      "type": "uuid"
+    },
+    {
+      "default": null,
+      "name": "club_deal_id",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "commission_events",
+      "type": "uuid"
+    },
+    {
+      "default": null,
+      "name": "dancer_id",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "commission_events",
+      "type": "uuid"
+    },
+    {
+      "default": "'pending'::text",
+      "name": "status",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "commission_events",
+      "type": "text"
+    },
+    {
+      "default": "0",
+      "name": "amount_cents",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "commission_events",
+      "type": "int4"
+    },
+    {
+      "default": "'none'::text",
+      "name": "payout_type",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "commission_events",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "club_payment_received_at",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "commission_events",
+      "type": "timestamptz"
+    },
+    {
+      "default": null,
+      "name": "payable_at",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "commission_events",
+      "type": "timestamptz"
+    },
+    {
+      "default": null,
+      "name": "paid_at",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "commission_events",
+      "type": "timestamptz"
+    },
+    {
+      "default": null,
+      "name": "rejected_at",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "commission_events",
+      "type": "timestamptz"
+    },
+    {
+      "default": null,
+      "name": "voided_at",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "commission_events",
+      "type": "timestamptz"
+    },
+    {
+      "default": "'{}'::jsonb",
+      "name": "audit",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "commission_events",
+      "type": "jsonb"
+    },
+    {
+      "default": "now()",
+      "name": "created_at",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "commission_events",
+      "type": "timestamptz"
+    },
+    {
+      "default": "0",
+      "name": "gross_commission_cents",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "commission_events",
+      "type": "int4"
+    },
+    {
+      "default": "0",
+      "name": "dancer_share_bps",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "commission_events",
+      "type": "int4"
+    },
+    {
+      "default": "0",
+      "name": "platform_amount_cents",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "commission_events",
+      "type": "int4"
+    },
+    {
+      "default": null,
+      "name": "successful_redemption_number",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "commission_events",
+      "type": "int4"
+    },
+    {
+      "default": null,
+      "name": "commission_month",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "commission_events",
+      "type": "date"
+    },
+    {
+      "default": "'usd'::text",
+      "name": "currency",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "commission_events",
+      "type": "text"
+    },
+    {
+      "default": "'dancer-profile-monthly-30-40-50-v1'::text",
+      "name": "policy_version",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "commission_events",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "payout_batch_id",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "commission_events",
+      "type": "uuid"
+    },
+    {
+      "default": "'club_deal_redemption'::text",
+      "name": "earning_type",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "commission_events",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "gross_transaction_amount_cents",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "commission_events",
+      "type": "int8"
+    },
+    {
+      "default": null,
+      "name": "payment_provider",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "commission_events",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "pending_until",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "commission_events",
+      "type": "timestamptz"
+    },
+    {
+      "default": null,
+      "name": "available_at",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "commission_events",
+      "type": "timestamptz"
+    },
+    {
+      "default": null,
+      "name": "reversed_at",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "commission_events",
+      "type": "timestamptz"
+    },
+    {
+      "default": null,
+      "name": "reversal_reason",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "commission_events",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "held_at",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "commission_events",
+      "type": "timestamptz"
+    },
+    {
+      "default": null,
+      "name": "hold_reason",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "commission_events",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "review_flag",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "commission_events",
+      "type": "text"
+    },
+    {
+      "default": "false",
+      "name": "recovery_required",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "commission_events",
+      "type": "bool"
+    },
+    {
+      "default": "false",
+      "name": "is_test",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "commission_events",
+      "type": "bool"
+    },
+    {
+      "default": "'{}'::jsonb",
+      "name": "metadata",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "commission_events",
+      "type": "jsonb"
+    },
+    {
+      "default": "gen_random_uuid()",
+      "name": "id",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "deal_revenue_events",
+      "type": "uuid"
+    },
+    {
+      "default": null,
+      "name": "qr_redemption_id",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "deal_revenue_events",
+      "type": "uuid"
+    },
+    {
+      "default": null,
+      "name": "venue_id",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "deal_revenue_events",
+      "type": "uuid"
+    },
+    {
+      "default": null,
+      "name": "club_deal_id",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "deal_revenue_events",
+      "type": "uuid"
+    },
+    {
+      "default": null,
+      "name": "dancer_id",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "deal_revenue_events",
+      "type": "uuid"
+    },
+    {
+      "default": null,
+      "name": "source_type",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "deal_revenue_events",
+      "type": "text"
+    },
+    {
+      "default": "'usd'::text",
+      "name": "currency",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "deal_revenue_events",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "gross_commission_cents",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "deal_revenue_events",
+      "type": "int4"
+    },
+    {
+      "default": "0",
+      "name": "dancer_share_bps",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "deal_revenue_events",
+      "type": "int4"
+    },
+    {
+      "default": "0",
+      "name": "dancer_commission_cents",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "deal_revenue_events",
+      "type": "int4"
+    },
+    {
+      "default": null,
+      "name": "platform_commission_cents",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "deal_revenue_events",
+      "type": "int4"
+    },
+    {
+      "default": null,
+      "name": "successful_redemption_number",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "deal_revenue_events",
+      "type": "int4"
+    },
+    {
+      "default": null,
+      "name": "commission_month",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "deal_revenue_events",
+      "type": "date"
+    },
+    {
+      "default": "'dancer-profile-monthly-30-40-50-v1'::text",
+      "name": "policy_version",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "deal_revenue_events",
+      "type": "text"
+    },
+    {
+      "default": "'pending_venue_payment'::text",
+      "name": "status",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "deal_revenue_events",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "venue_payment_reference",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "deal_revenue_events",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "venue_payment_received_at",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "deal_revenue_events",
+      "type": "timestamptz"
+    },
+    {
+      "default": null,
+      "name": "dancer_payout_reference",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "deal_revenue_events",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "dancer_paid_at",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "deal_revenue_events",
+      "type": "timestamptz"
+    },
+    {
+      "default": null,
+      "name": "refunded_at",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "deal_revenue_events",
+      "type": "timestamptz"
+    },
+    {
+      "default": null,
+      "name": "voided_at",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "deal_revenue_events",
+      "type": "timestamptz"
+    },
+    {
+      "default": "'{}'::jsonb",
+      "name": "audit",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "deal_revenue_events",
+      "type": "jsonb"
+    },
+    {
+      "default": "now()",
+      "name": "confirmed_at",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "deal_revenue_events",
+      "type": "timestamptz"
+    },
+    {
+      "default": "now()",
+      "name": "created_at",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "deal_revenue_events",
+      "type": "timestamptz"
+    },
+    {
+      "default": null,
+      "name": "club_invoice_id",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "deal_revenue_events",
+      "type": "uuid"
+    },
+    {
+      "default": "0",
+      "name": "agent_commission_cents",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "deal_revenue_events",
+      "type": "int4"
+    },
+    {
+      "default": null,
+      "name": "venue_sales_attribution_id",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "deal_revenue_events",
+      "type": "uuid"
+    },
+    {
+      "default": "false",
+      "name": "dancer_commission_eligible",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "deal_revenue_events",
+      "type": "bool"
+    },
+    {
+      "default": null,
+      "name": "dancer_nats_activated_at",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "deal_revenue_events",
+      "type": "timestamptz"
+    },
+    {
+      "default": null,
+      "name": "dancer_id",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "nats_affiliate_accounts",
+      "type": "uuid"
+    },
+    {
+      "default": null,
+      "name": "login_id",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "nats_affiliate_accounts",
+      "type": "int8"
+    },
+    {
+      "default": null,
+      "name": "username",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "nats_affiliate_accounts",
+      "type": "text"
+    },
+    {
+      "default": "'requested'::text",
+      "name": "status",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "nats_affiliate_accounts",
+      "type": "text"
+    },
+    {
+      "default": "now()",
+      "name": "requested_at",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "nats_affiliate_accounts",
+      "type": "timestamptz"
+    },
+    {
+      "default": null,
+      "name": "activated_at",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "nats_affiliate_accounts",
+      "type": "timestamptz"
+    },
+    {
+      "default": null,
+      "name": "disabled_at",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "nats_affiliate_accounts",
+      "type": "timestamptz"
+    },
+    {
+      "default": null,
+      "name": "verified_by",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "nats_affiliate_accounts",
+      "type": "uuid"
+    },
+    {
+      "default": null,
+      "name": "verification_note",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "nats_affiliate_accounts",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "last_error",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "nats_affiliate_accounts",
+      "type": "text"
+    },
+    {
+      "default": "'{}'::jsonb",
+      "name": "metadata",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "nats_affiliate_accounts",
+      "type": "jsonb"
+    },
+    {
+      "default": "now()",
+      "name": "created_at",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "nats_affiliate_accounts",
+      "type": "timestamptz"
+    },
+    {
+      "default": "now()",
+      "name": "updated_at",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "nats_affiliate_accounts",
+      "type": "timestamptz"
+    },
+    {
+      "default": null,
+      "name": "agent_id",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "nats_agent_affiliate_accounts",
+      "type": "uuid"
+    },
+    {
+      "default": null,
+      "name": "login_id",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "nats_agent_affiliate_accounts",
+      "type": "int8"
+    },
+    {
+      "default": null,
+      "name": "username",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "nats_agent_affiliate_accounts",
+      "type": "text"
+    },
+    {
+      "default": "'requested'::text",
+      "name": "status",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "nats_agent_affiliate_accounts",
+      "type": "text"
+    },
+    {
+      "default": "now()",
+      "name": "requested_at",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "nats_agent_affiliate_accounts",
+      "type": "timestamptz"
+    },
+    {
+      "default": null,
+      "name": "activated_at",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "nats_agent_affiliate_accounts",
+      "type": "timestamptz"
+    },
+    {
+      "default": null,
+      "name": "disabled_at",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "nats_agent_affiliate_accounts",
+      "type": "timestamptz"
+    },
+    {
+      "default": null,
+      "name": "verified_by",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "nats_agent_affiliate_accounts",
+      "type": "uuid"
+    },
+    {
+      "default": null,
+      "name": "verification_note",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "nats_agent_affiliate_accounts",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "last_error",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "nats_agent_affiliate_accounts",
+      "type": "text"
+    },
+    {
+      "default": "'{}'::jsonb",
+      "name": "metadata",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "nats_agent_affiliate_accounts",
+      "type": "jsonb"
+    },
+    {
+      "default": "now()",
+      "name": "created_at",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "nats_agent_affiliate_accounts",
+      "type": "timestamptz"
+    },
+    {
+      "default": "now()",
+      "name": "updated_at",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "nats_agent_affiliate_accounts",
+      "type": "timestamptz"
+    },
+    {
+      "default": "gen_random_uuid()",
+      "name": "id",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "nats_agent_commission_exports",
+      "type": "uuid"
+    },
+    {
+      "default": null,
+      "name": "agent_commission_event_id",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "nats_agent_commission_exports",
+      "type": "uuid"
+    },
+    {
+      "default": null,
+      "name": "agent_id",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "nats_agent_commission_exports",
+      "type": "uuid"
+    },
+    {
+      "default": null,
+      "name": "amount_cents",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "nats_agent_commission_exports",
+      "type": "int8"
+    },
+    {
+      "default": "'usd'::text",
+      "name": "currency",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "nats_agent_commission_exports",
+      "type": "text"
+    },
+    {
+      "default": "'waiting_for_affiliate'::text",
+      "name": "status",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "nats_agent_commission_exports",
+      "type": "text"
+    },
+    {
+      "default": "0",
+      "name": "attempt_count",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "nats_agent_commission_exports",
+      "type": "int4"
+    },
+    {
+      "default": null,
+      "name": "processing_started_at",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "nats_agent_commission_exports",
+      "type": "timestamptz"
+    },
+    {
+      "default": null,
+      "name": "exported_at",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "nats_agent_commission_exports",
+      "type": "timestamptz"
+    },
+    {
+      "default": null,
+      "name": "failed_at",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "nats_agent_commission_exports",
+      "type": "timestamptz"
+    },
+    {
+      "default": null,
+      "name": "reconciled_at",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "nats_agent_commission_exports",
+      "type": "timestamptz"
+    },
+    {
+      "default": null,
+      "name": "nats_result",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "nats_agent_commission_exports",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "last_error",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "nats_agent_commission_exports",
+      "type": "text"
+    },
+    {
+      "default": "'{}'::jsonb",
+      "name": "response_metadata",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "nats_agent_commission_exports",
+      "type": "jsonb"
+    },
+    {
+      "default": "now()",
+      "name": "created_at",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "nats_agent_commission_exports",
+      "type": "timestamptz"
+    },
+    {
+      "default": "now()",
+      "name": "updated_at",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "nats_agent_commission_exports",
+      "type": "timestamptz"
+    },
+    {
+      "default": "gen_random_uuid()",
+      "name": "id",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "nats_commission_exports",
+      "type": "uuid"
+    },
+    {
+      "default": null,
+      "name": "commission_event_id",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "nats_commission_exports",
+      "type": "uuid"
+    },
+    {
+      "default": null,
+      "name": "dancer_id",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "nats_commission_exports",
+      "type": "uuid"
+    },
+    {
+      "default": null,
+      "name": "amount_cents",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "nats_commission_exports",
+      "type": "int8"
+    },
+    {
+      "default": "'usd'::text",
+      "name": "currency",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "nats_commission_exports",
+      "type": "text"
+    },
+    {
+      "default": "'waiting_for_affiliate'::text",
+      "name": "status",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "nats_commission_exports",
+      "type": "text"
+    },
+    {
+      "default": "0",
+      "name": "attempt_count",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "nats_commission_exports",
+      "type": "int4"
+    },
+    {
+      "default": null,
+      "name": "processing_started_at",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "nats_commission_exports",
+      "type": "timestamptz"
+    },
+    {
+      "default": null,
+      "name": "exported_at",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "nats_commission_exports",
+      "type": "timestamptz"
+    },
+    {
+      "default": null,
+      "name": "failed_at",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "nats_commission_exports",
+      "type": "timestamptz"
+    },
+    {
+      "default": null,
+      "name": "reconciled_at",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "nats_commission_exports",
+      "type": "timestamptz"
+    },
+    {
+      "default": null,
+      "name": "nats_result",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "nats_commission_exports",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "last_error",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "nats_commission_exports",
+      "type": "text"
+    },
+    {
+      "default": "'{}'::jsonb",
+      "name": "response_metadata",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "nats_commission_exports",
+      "type": "jsonb"
+    },
+    {
+      "default": "now()",
+      "name": "created_at",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "nats_commission_exports",
+      "type": "timestamptz"
+    },
+    {
+      "default": "now()",
+      "name": "updated_at",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "nats_commission_exports",
+      "type": "timestamptz"
+    },
+    {
+      "default": "gen_random_uuid()",
+      "name": "id",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "nfc_tags",
+      "type": "uuid"
+    },
+    {
+      "default": null,
+      "name": "venue_id",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "nfc_tags",
+      "type": "uuid"
+    },
+    {
+      "default": null,
+      "name": "tag_type",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "nfc_tags",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "label",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "nfc_tags",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "token_digest",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "nfc_tags",
+      "type": "text"
+    },
+    {
+      "default": "'active'::text",
+      "name": "status",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "nfc_tags",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "created_by_user_id",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "nfc_tags",
+      "type": "uuid"
+    },
+    {
+      "default": null,
+      "name": "rotated_from_tag_id",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "nfc_tags",
+      "type": "uuid"
+    },
+    {
+      "default": null,
+      "name": "last_tapped_at",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "nfc_tags",
+      "type": "timestamptz"
+    },
+    {
+      "default": "0",
+      "name": "tap_count",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "nfc_tags",
+      "type": "int8"
+    },
+    {
+      "default": null,
+      "name": "disabled_at",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "nfc_tags",
+      "type": "timestamptz"
+    },
+    {
+      "default": null,
+      "name": "revoked_at",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "nfc_tags",
+      "type": "timestamptz"
+    },
+    {
+      "default": "now()",
+      "name": "created_at",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "nfc_tags",
+      "type": "timestamptz"
+    },
+    {
+      "default": "now()",
+      "name": "updated_at",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "nfc_tags",
+      "type": "timestamptz"
+    },
+    {
+      "default": "0",
+      "name": "scan_count",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "nfc_tags",
+      "type": "int8"
+    },
+    {
+      "default": null,
+      "name": "last_scanned_at",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "nfc_tags",
+      "type": "timestamptz"
+    },
+    {
+      "default": "gen_random_uuid()",
+      "name": "id",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "nfc_tap_events",
+      "type": "uuid"
+    },
+    {
+      "default": null,
+      "name": "nfc_tag_id",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "nfc_tap_events",
+      "type": "uuid"
+    },
+    {
+      "default": null,
+      "name": "venue_id",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "nfc_tap_events",
+      "type": "uuid"
+    },
+    {
+      "default": null,
+      "name": "tag_type",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "nfc_tap_events",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "event_type",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "nfc_tap_events",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "actor_user_id",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "nfc_tap_events",
+      "type": "uuid"
+    },
+    {
+      "default": null,
+      "name": "session_id",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "nfc_tap_events",
+      "type": "uuid"
+    },
+    {
+      "default": null,
+      "name": "ip_address",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "nfc_tap_events",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "user_agent",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "nfc_tap_events",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "device_fingerprint",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "nfc_tap_events",
+      "type": "text"
+    },
+    {
+      "default": "'{}'::jsonb",
+      "name": "audit",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "nfc_tap_events",
+      "type": "jsonb"
+    },
+    {
+      "default": "now()",
+      "name": "occurred_at",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "nfc_tap_events",
+      "type": "timestamptz"
+    },
+    {
+      "default": "gen_random_uuid()",
+      "name": "id",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "qr_redemption_events",
+      "type": "uuid"
+    },
+    {
+      "default": null,
+      "name": "qr_redemption_id",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "qr_redemption_events",
+      "type": "uuid"
+    },
+    {
+      "default": null,
+      "name": "event_type",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "qr_redemption_events",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "actor_user_id",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "qr_redemption_events",
+      "type": "uuid"
+    },
+    {
+      "default": null,
+      "name": "session_id",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "qr_redemption_events",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "ip_address",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "qr_redemption_events",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "user_agent",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "qr_redemption_events",
+      "type": "text"
+    },
+    {
+      "default": "'{}'::jsonb",
+      "name": "audit",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "qr_redemption_events",
+      "type": "jsonb"
+    },
+    {
+      "default": "now()",
+      "name": "occurred_at",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "qr_redemption_events",
+      "type": "timestamptz"
+    },
+    {
+      "default": "gen_random_uuid()",
+      "name": "id",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "qr_redemptions",
+      "type": "uuid"
+    },
+    {
+      "default": null,
+      "name": "redemption_token",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "qr_redemptions",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "venue_id",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "qr_redemptions",
+      "type": "uuid"
+    },
+    {
+      "default": null,
+      "name": "club_deal_id",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "qr_redemptions",
+      "type": "uuid"
+    },
+    {
+      "default": null,
+      "name": "source_type",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "qr_redemptions",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "dancer_id",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "qr_redemptions",
+      "type": "uuid"
+    },
+    {
+      "default": null,
+      "name": "customer_id",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "qr_redemptions",
+      "type": "uuid"
+    },
+    {
+      "default": null,
+      "name": "session_id",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "qr_redemptions",
+      "type": "text"
+    },
+    {
+      "default": "now()",
+      "name": "generated_at",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "qr_redemptions",
+      "type": "timestamptz"
+    },
+    {
+      "default": null,
+      "name": "expires_at",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "qr_redemptions",
+      "type": "timestamptz"
+    },
+    {
+      "default": null,
+      "name": "redeemed_at",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "qr_redemptions",
+      "type": "timestamptz"
+    },
+    {
+      "default": null,
+      "name": "redeemed_by_club_user",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "qr_redemptions",
+      "type": "uuid"
+    },
+    {
+      "default": "'generated'::text",
+      "name": "status",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "qr_redemptions",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "ip_address",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "qr_redemptions",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "user_agent",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "qr_redemptions",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "device_fingerprint",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "qr_redemptions",
+      "type": "text"
+    },
+    {
+      "default": "'{}'::jsonb",
+      "name": "audit",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "qr_redemptions",
+      "type": "jsonb"
+    },
+    {
+      "default": "false",
+      "name": "suspicious",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "qr_redemptions",
+      "type": "bool"
+    },
+    {
+      "default": null,
+      "name": "voided_at",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "qr_redemptions",
+      "type": "timestamptz"
+    },
+    {
+      "default": null,
+      "name": "voided_by_admin",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "qr_redemptions",
+      "type": "uuid"
+    },
+    {
+      "default": "now()",
+      "name": "created_at",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "qr_redemptions",
+      "type": "timestamptz"
+    },
+    {
+      "default": null,
+      "name": "shift_id",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "qr_redemptions",
+      "type": "uuid"
+    },
+    {
+      "default": null,
+      "name": "attribution_locked_at",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "qr_redemptions",
+      "type": "timestamptz"
+    },
+    {
+      "default": null,
+      "name": "saved_at",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "qr_redemptions",
+      "type": "timestamptz"
+    },
+    {
+      "default": null,
+      "name": "shared_at",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "qr_redemptions",
+      "type": "timestamptz"
+    },
+    {
+      "default": null,
+      "name": "first_scanned_at",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "qr_redemptions",
+      "type": "timestamptz"
+    },
+    {
+      "default": null,
+      "name": "confirmed_at",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "qr_redemptions",
+      "type": "timestamptz"
+    },
+    {
+      "default": null,
+      "name": "nfc_tag_id",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "qr_redemptions",
+      "type": "uuid"
+    },
+    {
+      "default": "gen_random_uuid()",
+      "name": "id",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "sales_agents",
+      "type": "uuid"
+    },
+    {
+      "default": null,
+      "name": "user_id",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "sales_agents",
+      "type": "uuid"
+    },
+    {
+      "default": null,
+      "name": "sponsor_agent_id",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "sales_agents",
+      "type": "uuid"
+    },
+    {
+      "default": "'active'::text",
+      "name": "status",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "sales_agents",
+      "type": "text"
+    },
+    {
+      "default": "3",
+      "name": "commission_depth_limit",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "sales_agents",
+      "type": "int2"
+    },
+    {
+      "default": null,
+      "name": "created_by_admin_user_id",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "sales_agents",
+      "type": "uuid"
+    },
+    {
+      "default": null,
+      "name": "updated_by_admin_user_id",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "sales_agents",
+      "type": "uuid"
+    },
+    {
+      "default": "now()",
+      "name": "created_at",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "sales_agents",
+      "type": "timestamptz"
+    },
+    {
+      "default": "now()",
+      "name": "updated_at",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "sales_agents",
+      "type": "timestamptz"
+    },
+    {
+      "default": "encode(gen_random_bytes(18), 'hex'::text)",
+      "name": "referral_code",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "sales_agents",
+      "type": "text"
+    },
+    {
+      "default": "gen_random_uuid()",
+      "name": "id",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "venue_referral_fee_terms",
+      "type": "uuid"
+    },
+    {
+      "default": null,
+      "name": "venue_id",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "venue_referral_fee_terms",
+      "type": "uuid"
+    },
+    {
+      "default": null,
+      "name": "fee_cents",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "venue_referral_fee_terms",
+      "type": "int4"
+    },
+    {
+      "default": "'usd'::text",
+      "name": "currency",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "venue_referral_fee_terms",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "effective_from",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "venue_referral_fee_terms",
+      "type": "timestamptz"
+    },
+    {
+      "default": null,
+      "name": "effective_until",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "venue_referral_fee_terms",
+      "type": "timestamptz"
+    },
+    {
+      "default": null,
+      "name": "agreement_reference",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "venue_referral_fee_terms",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "decision_note",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "venue_referral_fee_terms",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "created_by_admin_user_id",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "venue_referral_fee_terms",
+      "type": "uuid"
+    },
+    {
+      "default": null,
+      "name": "superseded_at",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "venue_referral_fee_terms",
+      "type": "timestamptz"
+    },
+    {
+      "default": null,
+      "name": "superseded_by_admin_user_id",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "venue_referral_fee_terms",
+      "type": "uuid"
+    },
+    {
+      "default": "now()",
+      "name": "created_at",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "venue_referral_fee_terms",
+      "type": "timestamptz"
+    },
+    {
+      "default": "gen_random_uuid()",
+      "name": "id",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "venue_sales_attributions",
+      "type": "uuid"
+    },
+    {
+      "default": null,
+      "name": "venue_id",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "venue_sales_attributions",
+      "type": "uuid"
+    },
+    {
+      "default": null,
+      "name": "signing_agent_id",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "venue_sales_attributions",
+      "type": "uuid"
+    },
+    {
+      "default": null,
+      "name": "sponsor_level_1_agent_id",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "venue_sales_attributions",
+      "type": "uuid"
+    },
+    {
+      "default": null,
+      "name": "sponsor_level_2_agent_id",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "venue_sales_attributions",
+      "type": "uuid"
+    },
+    {
+      "default": null,
+      "name": "sponsor_level_3_agent_id",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "venue_sales_attributions",
+      "type": "uuid"
+    },
+    {
+      "default": null,
+      "name": "sponsor_level_4_agent_id",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "venue_sales_attributions",
+      "type": "uuid"
+    },
+    {
+      "default": null,
+      "name": "sponsor_level_5_agent_id",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "venue_sales_attributions",
+      "type": "uuid"
+    },
+    {
+      "default": null,
+      "name": "agreement_reference",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "venue_sales_attributions",
+      "type": "text"
+    },
+    {
+      "default": "now()",
+      "name": "effective_from",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "venue_sales_attributions",
+      "type": "timestamptz"
+    },
+    {
+      "default": null,
+      "name": "superseded_at",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "venue_sales_attributions",
+      "type": "timestamptz"
+    },
+    {
+      "default": null,
+      "name": "created_by_admin_user_id",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "venue_sales_attributions",
+      "type": "uuid"
+    },
+    {
+      "default": "now()",
+      "name": "created_at",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "venue_sales_attributions",
+      "type": "timestamptz"
+    },
+    {
+      "default": "gen_random_uuid()",
+      "name": "id",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "venues",
+      "type": "uuid"
+    },
+    {
+      "default": null,
+      "name": "name",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "venues",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "slug",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "venues",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "city",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "venues",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "state",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "venues",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "address",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "venues",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "phone",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "venues",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "website",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "venues",
+      "type": "text"
+    },
+    {
+      "default": "'America/Los_Angeles'::text",
+      "name": "timezone",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "venues",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "opens_at",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "venues",
+      "type": "time"
+    },
+    {
+      "default": null,
+      "name": "closes_at",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "venues",
+      "type": "time"
+    },
+    {
+      "default": "true",
+      "name": "is_active",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "venues",
+      "type": "bool"
+    },
+    {
+      "default": "now()",
+      "name": "created_at",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "venues",
+      "type": "timestamptz"
+    },
+    {
+      "default": "now()",
+      "name": "updated_at",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "venues",
+      "type": "timestamptz"
+    },
+    {
+      "default": null,
+      "name": "latitude",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "venues",
+      "type": "numeric"
+    },
+    {
+      "default": null,
+      "name": "longitude",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "venues",
+      "type": "numeric"
+    },
+    {
+      "default": null,
+      "name": "owner_user_id",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "venues",
+      "type": "uuid"
+    },
+    {
+      "default": null,
+      "name": "qr_code_storage_path",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "venues",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "qr_code_label",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "venues",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "qr_code_updated_at",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "venues",
+      "type": "timestamptz"
+    },
+    {
+      "default": null,
+      "name": "cover_image_storage_path",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "venues",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "cover_image_updated_at",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "venues",
+      "type": "timestamptz"
+    },
+    {
+      "default": null,
+      "name": "published_at",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "venues",
+      "type": "timestamptz"
+    },
+    {
+      "default": null,
+      "name": "logo_storage_path",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "venues",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "logo_updated_at",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "venues",
+      "type": "timestamptz"
+    },
+    {
+      "default": "'admin_draft'::text",
+      "name": "page_review_status",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "venues",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "page_review_sent_at",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "venues",
+      "type": "timestamptz"
+    },
+    {
+      "default": null,
+      "name": "page_reviewed_at",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "venues",
+      "type": "timestamptz"
+    },
+    {
+      "default": null,
+      "name": "page_reviewed_by_user_id",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "venues",
+      "type": "uuid"
+    },
+    {
+      "default": null,
+      "name": "page_review_notes",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "venues",
+      "type": "text"
+    }
+  ],
+  "constraints": [
+    {
+      "definition": "CHECK ((amount_cents > 0))",
+      "name": "agent_commission_events_amount_cents_check",
+      "table": "agent_commission_events"
+    },
+    {
+      "definition": "CHECK ((((sponsor_level = 0) AND (share_bps = 1500) AND (recipient_agent_id = signing_agent_id)) OR ((sponsor_level = 1) AND (share_bps = 300)) OR ((sponsor_level = 2) AND (share_bps = 250)) OR ((sponsor_level = 3) AND (share_bps = 200)) OR ((sponsor_level = 4) AND (share_bps = 150)) OR ((sponsor_level = 5) AND (share_bps = 100))))",
+      "name": "agent_commission_events_check",
+      "table": "agent_commission_events"
+    },
+    {
+      "definition": "CHECK ((currency = 'usd'::text))",
+      "name": "agent_commission_events_currency_check",
+      "table": "agent_commission_events"
+    },
+    {
+      "definition": "FOREIGN KEY (deal_revenue_event_id) REFERENCES deal_revenue_events(id) ON DELETE RESTRICT",
+      "name": "agent_commission_events_deal_revenue_event_id_fkey",
+      "table": "agent_commission_events"
+    },
+    {
+      "definition": "UNIQUE (deal_revenue_event_id, sponsor_level)",
+      "name": "agent_commission_events_deal_revenue_event_id_sponsor_level_key",
+      "table": "agent_commission_events"
+    },
+    {
+      "definition": "PRIMARY KEY (id)",
+      "name": "agent_commission_events_pkey",
+      "table": "agent_commission_events"
+    },
+    {
+      "definition": "FOREIGN KEY (qr_redemption_id) REFERENCES qr_redemptions(id) ON DELETE RESTRICT",
+      "name": "agent_commission_events_qr_redemption_id_fkey",
+      "table": "agent_commission_events"
+    },
+    {
+      "definition": "FOREIGN KEY (recipient_agent_id) REFERENCES sales_agents(id) ON DELETE RESTRICT",
+      "name": "agent_commission_events_recipient_agent_id_fkey",
+      "table": "agent_commission_events"
+    },
+    {
+      "definition": "CHECK ((share_bps = ANY (ARRAY[100, 150, 200, 250, 300, 1500])))",
+      "name": "agent_commission_events_share_bps_check",
+      "table": "agent_commission_events"
+    },
+    {
+      "definition": "FOREIGN KEY (signing_agent_id) REFERENCES sales_agents(id) ON DELETE RESTRICT",
+      "name": "agent_commission_events_signing_agent_id_fkey",
+      "table": "agent_commission_events"
+    },
+    {
+      "definition": "CHECK (((sponsor_level >= 0) AND (sponsor_level <= 5)))",
+      "name": "agent_commission_events_sponsor_level_check",
+      "table": "agent_commission_events"
+    },
+    {
+      "definition": "CHECK ((status = ANY (ARRAY['pending_venue_payment'::text, 'payable'::text, 'paid'::text, 'voided'::text])))",
+      "name": "agent_commission_events_status_check",
+      "table": "agent_commission_events"
+    },
+    {
+      "definition": "FOREIGN KEY (venue_id) REFERENCES venues(id) ON DELETE RESTRICT",
+      "name": "agent_commission_events_venue_id_fkey",
+      "table": "agent_commission_events"
+    },
+    {
+      "definition": "FOREIGN KEY (venue_sales_attribution_id) REFERENCES venue_sales_attributions(id) ON DELETE RESTRICT",
+      "name": "agent_commission_events_venue_sales_attribution_id_fkey",
+      "table": "agent_commission_events"
+    },
+    {
+      "definition": "CHECK (((NOT is_active) OR ((deal_title = ANY (ARRAY['Half-off admission'::text, 'Skip the line'::text, 'Free admission'::text])) AND (offer_type = 'admission'::text) AND (booking_url IS NULL))))",
+      "name": "club_deals_active_supported_offer_check",
+      "table": "club_deals"
+    },
+    {
+      "definition": "CHECK (((booking_url IS NULL) OR (booking_url ~* '^https://[^[:space:]]+$'::text)))",
+      "name": "club_deals_booking_url_check",
+      "table": "club_deals"
+    },
+    {
+      "definition": "CHECK ((currency ~ '^[a-z]{3}$'::text))",
+      "name": "club_deals_currency_check",
+      "table": "club_deals"
+    },
+    {
+      "definition": "CHECK ((NOT club_deal_is_liquor_related(offer_type, deal_title, deal_description, deal_terms))) NOT VALID",
+      "name": "club_deals_liquor_free_check",
+      "table": "club_deals"
+    },
+    {
+      "definition": "CHECK ((offer_type = ANY (ARRAY['admission'::text, 'other'::text])))",
+      "name": "club_deals_offer_type_check",
+      "table": "club_deals"
+    },
+    {
+      "definition": "CHECK ((payout_amount_cents >= 0))",
+      "name": "club_deals_payout_amount_cents_check",
+      "table": "club_deals"
+    },
+    {
+      "definition": "CHECK ((payout_type = ANY (ARRAY['none'::text, 'flat'::text, 'percent'::text])))",
+      "name": "club_deals_payout_type_check",
+      "table": "club_deals"
+    },
+    {
+      "definition": "PRIMARY KEY (id)",
+      "name": "club_deals_pkey",
+      "table": "club_deals"
+    },
+    {
+      "definition": "CHECK (((removed_at IS NULL) OR (NOT is_active)))",
+      "name": "club_deals_removed_are_inactive",
+      "table": "club_deals"
+    },
+    {
+      "definition": "CHECK (((sort_order >= 0) AND (sort_order <= 1000)))",
+      "name": "club_deals_sort_order_check",
+      "table": "club_deals"
+    },
+    {
+      "definition": "FOREIGN KEY (venue_id) REFERENCES venues(id) ON DELETE CASCADE",
+      "name": "club_deals_venue_id_fkey",
+      "table": "club_deals"
+    },
+    {
+      "definition": "CHECK ((amount_cents >= 0))",
+      "name": "commission_events_amount_cents_check",
+      "table": "commission_events"
+    },
+    {
+      "definition": "FOREIGN KEY (club_deal_id) REFERENCES club_deals(id) ON DELETE CASCADE",
+      "name": "commission_events_club_deal_id_fkey",
+      "table": "commission_events"
+    },
+    {
+      "definition": "CHECK ((currency ~ '^[a-z]{3}$'::text))",
+      "name": "commission_events_currency_check",
+      "table": "commission_events"
+    },
+    {
+      "definition": "FOREIGN KEY (dancer_id) REFERENCES dancer_profiles(id) ON DELETE CASCADE",
+      "name": "commission_events_dancer_id_fkey",
+      "table": "commission_events"
+    },
+    {
+      "definition": "CHECK (((dancer_share_bps >= 0) AND (dancer_share_bps <= 10000)))",
+      "name": "commission_events_dancer_share_bps_check",
+      "table": "commission_events"
+    },
+    {
+      "definition": "CHECK ((status = ANY (ARRAY['pending'::text, 'available'::text, 'payout_processing'::text, 'paid'::text, 'reversed'::text, 'failed'::text])))",
+      "name": "commission_events_earning_status_check",
+      "table": "commission_events"
+    },
+    {
+      "definition": "CHECK ((earning_type = ANY (ARRAY['club_deal_redemption'::text, 'referral'::text, 'bottle_service'::text, 'promotion'::text, 'manual_adjustment'::text, 'other'::text])))",
+      "name": "commission_events_earning_type_check",
+      "table": "commission_events"
+    },
+    {
+      "definition": "CHECK ((gross_commission_cents >= 0))",
+      "name": "commission_events_gross_commission_cents_check",
+      "table": "commission_events"
+    },
+    {
+      "definition": "CHECK (((gross_transaction_amount_cents IS NULL) OR (gross_transaction_amount_cents >= 0)))",
+      "name": "commission_events_gross_transaction_check",
+      "table": "commission_events"
+    },
+    {
+      "definition": "CHECK (((payment_provider IS NULL) OR (payment_provider = ANY (ARRAY['stripe'::text, 'bitsafe'::text, 'adyen'::text, 'other'::text]))))",
+      "name": "commission_events_payment_provider_check",
+      "table": "commission_events"
+    },
+    {
+      "definition": "FOREIGN KEY (payout_batch_id) REFERENCES dancer_payout_batches(id) ON DELETE SET NULL",
+      "name": "commission_events_payout_batch_id_fkey",
+      "table": "commission_events"
+    },
+    {
+      "definition": "CHECK ((payout_type = ANY (ARRAY['none'::text, 'flat'::text, 'percent'::text])))",
+      "name": "commission_events_payout_type_check",
+      "table": "commission_events"
+    },
+    {
+      "definition": "PRIMARY KEY (id)",
+      "name": "commission_events_pkey",
+      "table": "commission_events"
+    },
+    {
+      "definition": "CHECK ((platform_amount_cents >= 0))",
+      "name": "commission_events_platform_amount_cents_check",
+      "table": "commission_events"
+    },
+    {
+      "definition": "FOREIGN KEY (qr_redemption_id) REFERENCES qr_redemptions(id) ON DELETE CASCADE",
+      "name": "commission_events_qr_redemption_id_fkey",
+      "table": "commission_events"
+    },
+    {
+      "definition": "UNIQUE (qr_redemption_id)",
+      "name": "commission_events_qr_redemption_id_key",
+      "table": "commission_events"
+    },
+    {
+      "definition": "CHECK (((status <> 'reversed'::text) OR ((reversed_at IS NOT NULL) AND (char_length(TRIM(BOTH FROM COALESCE(reversal_reason, ''::text))) >= 3))))",
+      "name": "commission_events_reversal_fields_check",
+      "table": "commission_events"
+    },
+    {
+      "definition": "FOREIGN KEY (venue_id) REFERENCES venues(id) ON DELETE CASCADE",
+      "name": "commission_events_venue_id_fkey",
+      "table": "commission_events"
+    },
+    {
+      "definition": "CHECK ((agent_commission_cents >= 0))",
+      "name": "deal_revenue_events_agent_commission_cents_check",
+      "table": "deal_revenue_events"
+    },
+    {
+      "definition": "FOREIGN KEY (club_deal_id) REFERENCES club_deals(id) ON DELETE CASCADE",
+      "name": "deal_revenue_events_club_deal_id_fkey",
+      "table": "deal_revenue_events"
+    },
+    {
+      "definition": "FOREIGN KEY (club_invoice_id) REFERENCES club_invoices(id) ON DELETE SET NULL",
+      "name": "deal_revenue_events_club_invoice_id_fkey",
+      "table": "deal_revenue_events"
+    },
+    {
+      "definition": "CHECK ((((dancer_commission_cents + agent_commission_cents) + platform_commission_cents) = gross_commission_cents))",
+      "name": "deal_revenue_events_commission_balance_check",
+      "table": "deal_revenue_events"
+    },
+    {
+      "definition": "CHECK ((currency ~ '^[a-z]{3}$'::text))",
+      "name": "deal_revenue_events_currency_check",
+      "table": "deal_revenue_events"
+    },
+    {
+      "definition": "CHECK ((dancer_commission_cents >= 0))",
+      "name": "deal_revenue_events_dancer_commission_cents_check",
+      "table": "deal_revenue_events"
+    },
+    {
+      "definition": "CHECK ((((source_type = 'club_page'::text) AND (dancer_id IS NULL) AND (NOT dancer_commission_eligible) AND (dancer_nats_activated_at IS NULL) AND (dancer_share_bps = 0) AND (dancer_commission_cents = 0)) OR ((source_type = 'dancer_profile'::text) AND (dancer_id IS NOT NULL) AND ((dancer_commission_eligible AND (dancer_nats_activated_at IS NOT NULL) AND (dancer_nats_activated_at <= confirmed_at) AND (dancer_share_bps > 0)) OR ((NOT dancer_commission_eligible) AND (dancer_nats_activated_at IS NULL) AND (dancer_share_bps = 0) AND (dancer_commission_cents = 0) AND (successful_redemption_number IS NULL))))))",
+      "name": "deal_revenue_events_dancer_enrollment_check",
+      "table": "deal_revenue_events"
+    },
+    {
+      "definition": "FOREIGN KEY (dancer_id) REFERENCES dancer_profiles(id) ON DELETE SET NULL",
+      "name": "deal_revenue_events_dancer_id_fkey",
+      "table": "deal_revenue_events"
+    },
+    {
+      "definition": "CHECK (((dancer_share_bps >= 0) AND (dancer_share_bps <= 10000)))",
+      "name": "deal_revenue_events_dancer_share_bps_check",
+      "table": "deal_revenue_events"
+    },
+    {
+      "definition": "CHECK ((gross_commission_cents >= 0))",
+      "name": "deal_revenue_events_gross_commission_cents_check",
+      "table": "deal_revenue_events"
+    },
+    {
+      "definition": "PRIMARY KEY (id)",
+      "name": "deal_revenue_events_pkey",
+      "table": "deal_revenue_events"
+    },
+    {
+      "definition": "CHECK ((platform_commission_cents >= 0))",
+      "name": "deal_revenue_events_platform_commission_cents_check",
+      "table": "deal_revenue_events"
+    },
+    {
+      "definition": "FOREIGN KEY (qr_redemption_id) REFERENCES qr_redemptions(id) ON DELETE CASCADE",
+      "name": "deal_revenue_events_qr_redemption_id_fkey",
+      "table": "deal_revenue_events"
+    },
+    {
+      "definition": "UNIQUE (qr_redemption_id)",
+      "name": "deal_revenue_events_qr_redemption_id_key",
+      "table": "deal_revenue_events"
+    },
+    {
+      "definition": "CHECK ((source_type = ANY (ARRAY['club_page'::text, 'dancer_profile'::text])))",
+      "name": "deal_revenue_events_source_type_check",
+      "table": "deal_revenue_events"
+    },
+    {
+      "definition": "CHECK ((status = ANY (ARRAY['pending_venue_payment'::text, 'payable'::text, 'settled'::text, 'refunded'::text, 'voided'::text])))",
+      "name": "deal_revenue_events_status_check",
+      "table": "deal_revenue_events"
+    },
+    {
+      "definition": "CHECK ((successful_redemption_number > 0))",
+      "name": "deal_revenue_events_successful_redemption_number_check",
+      "table": "deal_revenue_events"
+    },
+    {
+      "definition": "FOREIGN KEY (venue_id) REFERENCES venues(id) ON DELETE CASCADE",
+      "name": "deal_revenue_events_venue_id_fkey",
+      "table": "deal_revenue_events"
+    },
+    {
+      "definition": "FOREIGN KEY (venue_sales_attribution_id) REFERENCES venue_sales_attributions(id) ON DELETE SET NULL",
+      "name": "deal_revenue_events_venue_sales_attribution_id_fkey",
+      "table": "deal_revenue_events"
+    },
+    {
+      "definition": "CHECK ((((status = 'active'::text) AND (activated_at IS NOT NULL) AND (verified_by IS NOT NULL)) OR (status <> 'active'::text)))",
+      "name": "nats_affiliate_accounts_activation_check",
+      "table": "nats_affiliate_accounts"
+    },
+    {
+      "definition": "FOREIGN KEY (dancer_id) REFERENCES dancer_profiles(id) ON DELETE RESTRICT",
+      "name": "nats_affiliate_accounts_dancer_id_fkey",
+      "table": "nats_affiliate_accounts"
+    },
+    {
+      "definition": "CHECK ((login_id > 0))",
+      "name": "nats_affiliate_accounts_login_id_check",
+      "table": "nats_affiliate_accounts"
+    },
+    {
+      "definition": "UNIQUE (login_id)",
+      "name": "nats_affiliate_accounts_login_id_key",
+      "table": "nats_affiliate_accounts"
+    },
+    {
+      "definition": "PRIMARY KEY (dancer_id)",
+      "name": "nats_affiliate_accounts_pkey",
+      "table": "nats_affiliate_accounts"
+    },
+    {
+      "definition": "CHECK ((status = ANY (ARRAY['requested'::text, 'active'::text, 'disabled'::text])))",
+      "name": "nats_affiliate_accounts_status_check",
+      "table": "nats_affiliate_accounts"
+    },
+    {
+      "definition": "FOREIGN KEY (verified_by) REFERENCES auth.users(id) ON DELETE SET NULL",
+      "name": "nats_affiliate_accounts_verified_by_fkey",
+      "table": "nats_affiliate_accounts"
+    },
+    {
+      "definition": "CHECK ((((status = 'active'::text) AND (activated_at IS NOT NULL) AND (verified_by IS NOT NULL)) OR (status <> 'active'::text)))",
+      "name": "nats_agent_affiliate_accounts_activation_check",
+      "table": "nats_agent_affiliate_accounts"
+    },
+    {
+      "definition": "FOREIGN KEY (agent_id) REFERENCES sales_agents(id) ON DELETE RESTRICT",
+      "name": "nats_agent_affiliate_accounts_agent_id_fkey",
+      "table": "nats_agent_affiliate_accounts"
+    },
+    {
+      "definition": "CHECK ((login_id > 0))",
+      "name": "nats_agent_affiliate_accounts_login_id_check",
+      "table": "nats_agent_affiliate_accounts"
+    },
+    {
+      "definition": "UNIQUE (login_id)",
+      "name": "nats_agent_affiliate_accounts_login_id_key",
+      "table": "nats_agent_affiliate_accounts"
+    },
+    {
+      "definition": "PRIMARY KEY (agent_id)",
+      "name": "nats_agent_affiliate_accounts_pkey",
+      "table": "nats_agent_affiliate_accounts"
+    },
+    {
+      "definition": "CHECK ((status = ANY (ARRAY['requested'::text, 'active'::text, 'disabled'::text])))",
+      "name": "nats_agent_affiliate_accounts_status_check",
+      "table": "nats_agent_affiliate_accounts"
+    },
+    {
+      "definition": "FOREIGN KEY (verified_by) REFERENCES auth.users(id) ON DELETE SET NULL",
+      "name": "nats_agent_affiliate_accounts_verified_by_fkey",
+      "table": "nats_agent_affiliate_accounts"
+    },
+    {
+      "definition": "FOREIGN KEY (agent_commission_event_id) REFERENCES agent_commission_events(id) ON DELETE RESTRICT",
+      "name": "nats_agent_commission_exports_agent_commission_event_id_fkey",
+      "table": "nats_agent_commission_exports"
+    },
+    {
+      "definition": "UNIQUE (agent_commission_event_id)",
+      "name": "nats_agent_commission_exports_agent_commission_event_id_key",
+      "table": "nats_agent_commission_exports"
+    },
+    {
+      "definition": "FOREIGN KEY (agent_id) REFERENCES sales_agents(id) ON DELETE RESTRICT",
+      "name": "nats_agent_commission_exports_agent_id_fkey",
+      "table": "nats_agent_commission_exports"
+    },
+    {
+      "definition": "CHECK ((amount_cents > 0))",
+      "name": "nats_agent_commission_exports_amount_cents_check",
+      "table": "nats_agent_commission_exports"
+    },
+    {
+      "definition": "CHECK ((attempt_count >= 0))",
+      "name": "nats_agent_commission_exports_attempt_count_check",
+      "table": "nats_agent_commission_exports"
+    },
+    {
+      "definition": "CHECK ((currency = 'usd'::text))",
+      "name": "nats_agent_commission_exports_currency_check",
+      "table": "nats_agent_commission_exports"
+    },
+    {
+      "definition": "PRIMARY KEY (id)",
+      "name": "nats_agent_commission_exports_pkey",
+      "table": "nats_agent_commission_exports"
+    },
+    {
+      "definition": "CHECK ((status = ANY (ARRAY['waiting_for_affiliate'::text, 'pending'::text, 'processing'::text, 'exported'::text, 'failed'::text, 'reconciliation_required'::text, 'canceled'::text])))",
+      "name": "nats_agent_commission_exports_status_check",
+      "table": "nats_agent_commission_exports"
+    },
+    {
+      "definition": "CHECK ((amount_cents > 0))",
+      "name": "nats_commission_exports_amount_cents_check",
+      "table": "nats_commission_exports"
+    },
+    {
+      "definition": "CHECK ((attempt_count >= 0))",
+      "name": "nats_commission_exports_attempt_count_check",
+      "table": "nats_commission_exports"
+    },
+    {
+      "definition": "FOREIGN KEY (commission_event_id) REFERENCES commission_events(id) ON DELETE RESTRICT",
+      "name": "nats_commission_exports_commission_event_id_fkey",
+      "table": "nats_commission_exports"
+    },
+    {
+      "definition": "UNIQUE (commission_event_id)",
+      "name": "nats_commission_exports_commission_event_id_key",
+      "table": "nats_commission_exports"
+    },
+    {
+      "definition": "CHECK ((currency = 'usd'::text))",
+      "name": "nats_commission_exports_currency_check",
+      "table": "nats_commission_exports"
+    },
+    {
+      "definition": "FOREIGN KEY (dancer_id) REFERENCES dancer_profiles(id) ON DELETE RESTRICT",
+      "name": "nats_commission_exports_dancer_id_fkey",
+      "table": "nats_commission_exports"
+    },
+    {
+      "definition": "PRIMARY KEY (id)",
+      "name": "nats_commission_exports_pkey",
+      "table": "nats_commission_exports"
+    },
+    {
+      "definition": "CHECK ((status = ANY (ARRAY['waiting_for_affiliate'::text, 'pending'::text, 'processing'::text, 'exported'::text, 'failed'::text, 'reconciliation_required'::text, 'canceled'::text])))",
+      "name": "nats_commission_exports_status_check",
+      "table": "nats_commission_exports"
+    },
+    {
+      "definition": "FOREIGN KEY (created_by_user_id) REFERENCES app_users(id) ON DELETE SET NULL",
+      "name": "nfc_tags_created_by_user_id_fkey",
+      "table": "nfc_tags"
+    },
+    {
+      "definition": "CHECK (((char_length(TRIM(BOTH FROM label)) >= 2) AND (char_length(TRIM(BOTH FROM label)) <= 80)))",
+      "name": "nfc_tags_label_check",
+      "table": "nfc_tags"
+    },
+    {
+      "definition": "PRIMARY KEY (id)",
+      "name": "nfc_tags_pkey",
+      "table": "nfc_tags"
+    },
+    {
+      "definition": "FOREIGN KEY (rotated_from_tag_id) REFERENCES nfc_tags(id) ON DELETE SET NULL",
+      "name": "nfc_tags_rotated_from_tag_id_fkey",
+      "table": "nfc_tags"
+    },
+    {
+      "definition": "CHECK ((status = ANY (ARRAY['active'::text, 'disabled'::text, 'revoked'::text])))",
+      "name": "nfc_tags_status_check",
+      "table": "nfc_tags"
+    },
+    {
+      "definition": "CHECK ((tag_type = ANY (ARRAY['dressing_room'::text, 'cashier'::text])))",
+      "name": "nfc_tags_tag_type_check",
+      "table": "nfc_tags"
+    },
+    {
+      "definition": "CHECK ((tap_count >= 0))",
+      "name": "nfc_tags_tap_count_check",
+      "table": "nfc_tags"
+    },
+    {
+      "definition": "CHECK ((token_digest ~ '^[0-9a-f]{64}$'::text))",
+      "name": "nfc_tags_token_digest_check",
+      "table": "nfc_tags"
+    },
+    {
+      "definition": "UNIQUE (token_digest)",
+      "name": "nfc_tags_token_digest_key",
+      "table": "nfc_tags"
+    },
+    {
+      "definition": "FOREIGN KEY (venue_id) REFERENCES venues(id) ON DELETE CASCADE",
+      "name": "nfc_tags_venue_id_fkey",
+      "table": "nfc_tags"
+    },
+    {
+      "definition": "FOREIGN KEY (actor_user_id) REFERENCES auth.users(id) ON DELETE SET NULL",
+      "name": "nfc_tap_events_actor_user_id_fkey",
+      "table": "nfc_tap_events"
+    },
+    {
+      "definition": "CHECK ((event_type = ANY (ARRAY['opened'::text, 'affiliation_approved'::text, 'shift_checked_in'::text, 'deal_redeemed'::text, 'rejected'::text])))",
+      "name": "nfc_tap_events_event_type_check",
+      "table": "nfc_tap_events"
+    },
+    {
+      "definition": "FOREIGN KEY (nfc_tag_id) REFERENCES nfc_tags(id) ON DELETE RESTRICT",
+      "name": "nfc_tap_events_nfc_tag_id_fkey",
+      "table": "nfc_tap_events"
+    },
+    {
+      "definition": "PRIMARY KEY (id)",
+      "name": "nfc_tap_events_pkey",
+      "table": "nfc_tap_events"
+    },
+    {
+      "definition": "CHECK ((tag_type = ANY (ARRAY['dressing_room'::text, 'cashier'::text])))",
+      "name": "nfc_tap_events_tag_type_check",
+      "table": "nfc_tap_events"
+    },
+    {
+      "definition": "FOREIGN KEY (venue_id) REFERENCES venues(id) ON DELETE CASCADE",
+      "name": "nfc_tap_events_venue_id_fkey",
+      "table": "nfc_tap_events"
+    },
+    {
+      "definition": "FOREIGN KEY (actor_user_id) REFERENCES auth.users(id) ON DELETE SET NULL",
+      "name": "qr_redemption_events_actor_user_id_fkey",
+      "table": "qr_redemption_events"
+    },
+    {
+      "definition": "CHECK ((event_type = ANY (ARRAY['issued'::text, 'saved'::text, 'shared'::text, 'scanner_opened'::text, 'venue_confirmed'::text, 'expired'::text, 'voided'::text])))",
+      "name": "qr_redemption_events_event_type_check",
+      "table": "qr_redemption_events"
+    },
+    {
+      "definition": "PRIMARY KEY (id)",
+      "name": "qr_redemption_events_pkey",
+      "table": "qr_redemption_events"
+    },
+    {
+      "definition": "FOREIGN KEY (qr_redemption_id) REFERENCES qr_redemptions(id) ON DELETE CASCADE",
+      "name": "qr_redemption_events_qr_redemption_id_fkey",
+      "table": "qr_redemption_events"
+    },
+    {
+      "definition": "FOREIGN KEY (club_deal_id) REFERENCES club_deals(id) ON DELETE CASCADE",
+      "name": "qr_redemptions_club_deal_id_fkey",
+      "table": "qr_redemptions"
+    },
+    {
+      "definition": "FOREIGN KEY (customer_id) REFERENCES auth.users(id) ON DELETE SET NULL",
+      "name": "qr_redemptions_customer_id_fkey",
+      "table": "qr_redemptions"
+    },
+    {
+      "definition": "FOREIGN KEY (dancer_id) REFERENCES dancer_profiles(id) ON DELETE SET NULL",
+      "name": "qr_redemptions_dancer_id_fkey",
+      "table": "qr_redemptions"
+    },
+    {
+      "definition": "FOREIGN KEY (nfc_tag_id) REFERENCES nfc_tags(id) ON DELETE SET NULL",
+      "name": "qr_redemptions_nfc_tag_id_fkey",
+      "table": "qr_redemptions"
+    },
+    {
+      "definition": "PRIMARY KEY (id)",
+      "name": "qr_redemptions_pkey",
+      "table": "qr_redemptions"
+    },
+    {
+      "definition": "FOREIGN KEY (redeemed_by_club_user) REFERENCES auth.users(id) ON DELETE SET NULL",
+      "name": "qr_redemptions_redeemed_by_club_user_fkey",
+      "table": "qr_redemptions"
+    },
+    {
+      "definition": "UNIQUE (redemption_token)",
+      "name": "qr_redemptions_redemption_token_key",
+      "table": "qr_redemptions"
+    },
+    {
+      "definition": "FOREIGN KEY (shift_id) REFERENCES shifts(id) ON DELETE SET NULL",
+      "name": "qr_redemptions_shift_id_fkey",
+      "table": "qr_redemptions"
+    },
+    {
+      "definition": "CHECK ((source_type = ANY (ARRAY['club_page'::text, 'dancer_profile'::text])))",
+      "name": "qr_redemptions_source_type_check",
+      "table": "qr_redemptions"
+    },
+    {
+      "definition": "CHECK ((status = ANY (ARRAY['generated'::text, 'redeemed'::text, 'expired'::text, 'voided'::text])))",
+      "name": "qr_redemptions_status_check",
+      "table": "qr_redemptions"
+    },
+    {
+      "definition": "FOREIGN KEY (venue_id) REFERENCES venues(id) ON DELETE CASCADE",
+      "name": "qr_redemptions_venue_id_fkey",
+      "table": "qr_redemptions"
+    },
+    {
+      "definition": "FOREIGN KEY (voided_by_admin) REFERENCES auth.users(id) ON DELETE SET NULL",
+      "name": "qr_redemptions_voided_by_admin_fkey",
+      "table": "qr_redemptions"
+    },
+    {
+      "definition": "CHECK (((sponsor_agent_id IS NULL) OR (sponsor_agent_id <> id)))",
+      "name": "sales_agents_check",
+      "table": "sales_agents"
+    },
+    {
+      "definition": "CHECK ((commission_depth_limit = ANY (ARRAY[3, 5])))",
+      "name": "sales_agents_commission_depth_limit_check",
+      "table": "sales_agents"
+    },
+    {
+      "definition": "FOREIGN KEY (created_by_admin_user_id) REFERENCES app_users(id) ON DELETE RESTRICT",
+      "name": "sales_agents_created_by_admin_user_id_fkey",
+      "table": "sales_agents"
+    },
+    {
+      "definition": "PRIMARY KEY (id)",
+      "name": "sales_agents_pkey",
+      "table": "sales_agents"
+    },
+    {
+      "definition": "CHECK ((referral_code ~ '^[0-9a-f]{36}$'::text))",
+      "name": "sales_agents_referral_code_check",
+      "table": "sales_agents"
+    },
+    {
+      "definition": "FOREIGN KEY (sponsor_agent_id) REFERENCES sales_agents(id) ON DELETE RESTRICT",
+      "name": "sales_agents_sponsor_agent_id_fkey",
+      "table": "sales_agents"
+    },
+    {
+      "definition": "CHECK ((status = ANY (ARRAY['active'::text, 'suspended'::text, 'terminated'::text])))",
+      "name": "sales_agents_status_check",
+      "table": "sales_agents"
+    },
+    {
+      "definition": "FOREIGN KEY (updated_by_admin_user_id) REFERENCES app_users(id) ON DELETE RESTRICT",
+      "name": "sales_agents_updated_by_admin_user_id_fkey",
+      "table": "sales_agents"
+    },
+    {
+      "definition": "FOREIGN KEY (user_id) REFERENCES app_users(id) ON DELETE RESTRICT",
+      "name": "sales_agents_user_id_fkey",
+      "table": "sales_agents"
+    },
+    {
+      "definition": "UNIQUE (user_id)",
+      "name": "sales_agents_user_id_key",
+      "table": "sales_agents"
+    },
+    {
+      "definition": "CHECK (((char_length(TRIM(BOTH FROM agreement_reference)) >= 3) AND (char_length(TRIM(BOTH FROM agreement_reference)) <= 160)))",
+      "name": "venue_referral_fee_terms_agreement_reference_check",
+      "table": "venue_referral_fee_terms"
+    },
+    {
+      "definition": "CHECK (((effective_until IS NULL) OR (effective_until > effective_from)))",
+      "name": "venue_referral_fee_terms_check",
+      "table": "venue_referral_fee_terms"
+    },
+    {
+      "definition": "FOREIGN KEY (created_by_admin_user_id) REFERENCES app_users(id) ON DELETE SET NULL",
+      "name": "venue_referral_fee_terms_created_by_admin_user_id_fkey",
+      "table": "venue_referral_fee_terms"
+    },
+    {
+      "definition": "CHECK ((currency ~ '^[a-z]{3}$'::text))",
+      "name": "venue_referral_fee_terms_currency_check",
+      "table": "venue_referral_fee_terms"
+    },
+    {
+      "definition": "CHECK (((decision_note IS NULL) OR (char_length(decision_note) <= 500)))",
+      "name": "venue_referral_fee_terms_decision_note_check",
+      "table": "venue_referral_fee_terms"
+    },
+    {
+      "definition": "CHECK (((fee_cents >= 100) AND (fee_cents <= 100000)))",
+      "name": "venue_referral_fee_terms_fee_cents_check",
+      "table": "venue_referral_fee_terms"
+    },
+    {
+      "definition": "PRIMARY KEY (id)",
+      "name": "venue_referral_fee_terms_pkey",
+      "table": "venue_referral_fee_terms"
+    },
+    {
+      "definition": "FOREIGN KEY (superseded_by_admin_user_id) REFERENCES app_users(id) ON DELETE SET NULL",
+      "name": "venue_referral_fee_terms_superseded_by_admin_user_id_fkey",
+      "table": "venue_referral_fee_terms"
+    },
+    {
+      "definition": "FOREIGN KEY (venue_id) REFERENCES venues(id) ON DELETE CASCADE",
+      "name": "venue_referral_fee_terms_venue_id_fkey",
+      "table": "venue_referral_fee_terms"
+    },
+    {
+      "definition": "CHECK (((char_length(TRIM(BOTH FROM agreement_reference)) >= 3) AND (char_length(TRIM(BOTH FROM agreement_reference)) <= 180)))",
+      "name": "venue_sales_attributions_agreement_reference_check",
+      "table": "venue_sales_attributions"
+    },
+    {
+      "definition": "CHECK (((superseded_at IS NULL) OR (superseded_at > effective_from)))",
+      "name": "venue_sales_attributions_check",
+      "table": "venue_sales_attributions"
+    },
+    {
+      "definition": "FOREIGN KEY (created_by_admin_user_id) REFERENCES app_users(id) ON DELETE RESTRICT",
+      "name": "venue_sales_attributions_created_by_admin_user_id_fkey",
+      "table": "venue_sales_attributions"
+    },
+    {
+      "definition": "PRIMARY KEY (id)",
+      "name": "venue_sales_attributions_pkey",
+      "table": "venue_sales_attributions"
+    },
+    {
+      "definition": "FOREIGN KEY (signing_agent_id) REFERENCES sales_agents(id) ON DELETE RESTRICT",
+      "name": "venue_sales_attributions_signing_agent_id_fkey",
+      "table": "venue_sales_attributions"
+    },
+    {
+      "definition": "FOREIGN KEY (sponsor_level_1_agent_id) REFERENCES sales_agents(id) ON DELETE RESTRICT",
+      "name": "venue_sales_attributions_sponsor_level_1_agent_id_fkey",
+      "table": "venue_sales_attributions"
+    },
+    {
+      "definition": "FOREIGN KEY (sponsor_level_2_agent_id) REFERENCES sales_agents(id) ON DELETE RESTRICT",
+      "name": "venue_sales_attributions_sponsor_level_2_agent_id_fkey",
+      "table": "venue_sales_attributions"
+    },
+    {
+      "definition": "FOREIGN KEY (sponsor_level_3_agent_id) REFERENCES sales_agents(id) ON DELETE RESTRICT",
+      "name": "venue_sales_attributions_sponsor_level_3_agent_id_fkey",
+      "table": "venue_sales_attributions"
+    },
+    {
+      "definition": "FOREIGN KEY (sponsor_level_4_agent_id) REFERENCES sales_agents(id) ON DELETE RESTRICT",
+      "name": "venue_sales_attributions_sponsor_level_4_agent_id_fkey",
+      "table": "venue_sales_attributions"
+    },
+    {
+      "definition": "FOREIGN KEY (sponsor_level_5_agent_id) REFERENCES sales_agents(id) ON DELETE RESTRICT",
+      "name": "venue_sales_attributions_sponsor_level_5_agent_id_fkey",
+      "table": "venue_sales_attributions"
+    },
+    {
+      "definition": "FOREIGN KEY (venue_id) REFERENCES venues(id) ON DELETE RESTRICT",
+      "name": "venue_sales_attributions_venue_id_fkey",
+      "table": "venue_sales_attributions"
+    },
+    {
+      "definition": "CHECK (((latitude IS NULL) OR ((latitude >= ('-90'::integer)::numeric) AND (latitude <= (90)::numeric))))",
+      "name": "venues_latitude_range",
+      "table": "venues"
+    },
+    {
+      "definition": "CHECK (((longitude IS NULL) OR ((longitude >= ('-180'::integer)::numeric) AND (longitude <= (180)::numeric))))",
+      "name": "venues_longitude_range",
+      "table": "venues"
+    },
+    {
+      "definition": "FOREIGN KEY (owner_user_id) REFERENCES app_users(id) ON DELETE SET NULL",
+      "name": "venues_owner_user_id_fkey",
+      "table": "venues"
+    },
+    {
+      "definition": "UNIQUE (owner_user_id)",
+      "name": "venues_owner_user_id_key",
+      "table": "venues"
+    },
+    {
+      "definition": "CHECK ((page_review_status = ANY (ARRAY['admin_draft'::text, 'venue_review'::text, 'changes_requested'::text, 'venue_approved'::text, 'published'::text])))",
+      "name": "venues_page_review_status_check",
+      "table": "venues"
+    },
+    {
+      "definition": "FOREIGN KEY (page_reviewed_by_user_id) REFERENCES app_users(id) ON DELETE SET NULL",
+      "name": "venues_page_reviewed_by_user_id_fkey",
+      "table": "venues"
+    },
+    {
+      "definition": "PRIMARY KEY (id)",
+      "name": "venues_pkey",
+      "table": "venues"
+    },
+    {
+      "definition": "UNIQUE (slug)",
+      "name": "venues_slug_key",
+      "table": "venues"
+    }
+  ],
+  "enums": {},
+  "functions": [
+    {
+      "anon_execute": false,
+      "authenticated_execute": false,
+      "definition": "CREATE OR REPLACE FUNCTION public.agent_allocations_for_venue(p_venue_id uuid, p_gross_cents integer, p_at timestamp with time zone DEFAULT now())\n RETURNS TABLE(venue_sales_attribution_id uuid, signing_agent_id uuid, recipient_agent_id uuid, sponsor_level smallint, share_bps integer, amount_cents integer)\n LANGUAGE sql\n STABLE SECURITY DEFINER\n SET search_path TO 'public', 'pg_temp'\nAS $function$\n  with attribution as (\n    select * from public.venue_sales_attributions attribution\n    where attribution.venue_id = p_venue_id\n      and attribution.effective_from <= p_at\n      and (attribution.superseded_at is null or attribution.superseded_at > p_at)\n    order by attribution.effective_from desc limit 1\n  ), candidates as (\n    select attribution.id, attribution.signing_agent_id, levels.recipient_agent_id,\n      levels.sponsor_level, levels.share_bps\n    from attribution cross join lateral (\n      values\n        (attribution.signing_agent_id, 0::smallint, 1500),\n        (attribution.sponsor_level_1_agent_id, 1::smallint, 300),\n        (attribution.sponsor_level_2_agent_id, 2::smallint, 250),\n        (attribution.sponsor_level_3_agent_id, 3::smallint, 200),\n        (attribution.sponsor_level_4_agent_id, 4::smallint, 150),\n        (attribution.sponsor_level_5_agent_id, 5::smallint, 100)\n    ) levels(recipient_agent_id, sponsor_level, share_bps)\n    where levels.recipient_agent_id is not null\n  )\n  select candidates.id, candidates.signing_agent_id, candidates.recipient_agent_id,\n    candidates.sponsor_level, candidates.share_bps,\n    round(greatest(p_gross_cents, 0) * candidates.share_bps / 10000.0)::integer\n  from candidates\n  join public.sales_agents recipient on recipient.id = candidates.recipient_agent_id\n  where recipient.status = 'active'\n    and (candidates.sponsor_level <= 3 or recipient.commission_depth_limit = 5)\n    and round(greatest(p_gross_cents, 0) * candidates.share_bps / 10000.0)::integer > 0;\n$function$\n",
+      "fingerprint": "53d947a8e9c8708d0cf727a4e200a8fd",
+      "name": "agent_allocations_for_venue",
+      "service_execute": true,
+      "signature": "agent_allocations_for_venue(uuid,integer,timestamp with time zone)"
+    },
+    {
+      "anon_execute": false,
+      "authenticated_execute": true,
+      "definition": "CREATE OR REPLACE FUNCTION public.club_deal_is_liquor_related(p_offer_type text, p_deal_title text, p_deal_description text, p_deal_terms text)\n RETURNS boolean\n LANGUAGE sql\n IMMUTABLE\n SET search_path TO 'public', 'pg_temp'\nAS $function$\n  select\n    lower(coalesce(p_offer_type, '')) in ('drink', 'bottle_service')\n    or concat_ws(' ', p_deal_title, p_deal_description, p_deal_terms) ~*\n      '(^|[^[:alnum:]_])(alcohol(ic)?|liquor|beer|wine|champagne|cocktails?|vodka|tequila|whisk(e)?y|bourbon|scotch|rum|gin|cognac|brandy|mezcal|lager|ale|hard[[:space:]]+seltzer|sake|bottle[[:space:]]+service|bar[[:space:]]+(tab|credit)|happy[[:space:]]+hour)([^[:alnum:]_]|$)'\n    or concat_ws(' ', p_deal_title, p_deal_description, p_deal_terms) ~*\n      '(^|[^[:alnum:]_])((free|complimentary|discounted|reduced|two[-[:space:]]?for[-[:space:]]?one|2[-[:space:]]?for[-[:space:]]?1)[[:space:]]+(alcoholic[[:space:]]+)?drinks?|drinks?[[:space:]]+(special|ticket|credit|voucher)|(free|complimentary|discounted|reduced)[[:space:]]+shots?)([^[:alnum:]_]|$)';\n$function$\n",
+      "fingerprint": "35306ccee7c39d837d4df307e863203b",
+      "name": "club_deal_is_liquor_related",
+      "service_execute": true,
+      "signature": "club_deal_is_liquor_related(text,text,text,text)"
+    },
+    {
+      "anon_execute": false,
+      "authenticated_execute": false,
+      "definition": "CREATE OR REPLACE FUNCTION public.confirm_deal_redemption_from_nfc(p_token text, p_tag_id uuid, p_session_id uuid, p_audit jsonb DEFAULT '{}'::jsonb)\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public', 'pg_temp'\nAS $function$\r\ndeclare\r\n  v_now timestamptz := clock_timestamp();\r\n  v_redemption public.qr_redemptions;\r\n  v_deal public.club_deals;\r\n  v_venue public.venues;\r\n  v_tag public.nfc_tags;\r\n  v_referral_term public.venue_referral_fee_terms;\r\n  v_month date;\r\n  v_success_number integer;\r\n  v_share_bps integer := 0;\r\n  v_gross_cents integer := 0;\r\n  v_dancer_cents integer := 0;\r\n  v_agent_cents integer := 0;\r\n  v_platform_cents integer := 0;\r\n  v_revenue_id uuid;\r\n  v_attribution_id uuid;\r\n  v_nats_activated_at timestamptz;\r\n  v_policy_version constant text := 'nats-enrolled-dancer-30-40-50+sales-agent-v2';\r\nbegin\r\n  select * into v_tag from public.nfc_tags where id = p_tag_id for update;\r\n  if not found or v_tag.status <> 'active' or v_tag.tag_type <> 'cashier' then\r\n    raise exception using errcode = '42501', message = 'This cashier NFC tag is inactive.';\r\n  end if;\r\n\r\n  select redemption.* into v_redemption\r\n  from public.qr_redemptions redemption\r\n  where redemption.redemption_token = p_token\r\n  for update;\r\n  if not found then\r\n    raise exception using errcode = 'P0002', message = 'Club Deal redemption not found.';\r\n  end if;\r\n\r\n  if v_redemption.source_type = 'dancer_profile' then\r\n    perform pg_advisory_xact_lock(hashtext(v_redemption.dancer_id::text), hashtext('nats-dancer-enrollment'));\r\n    v_now := clock_timestamp();\r\n    select account.activated_at into v_nats_activated_at\r\n    from public.nats_affiliate_accounts account\r\n    where account.dancer_id = v_redemption.dancer_id\r\n      and account.status = 'active' and account.activated_at <= v_now;\r\n  end if;\r\n\r\n  select * into v_deal from public.club_deals where id = v_redemption.club_deal_id;\r\n  select venue.* into v_venue\r\n  from public.venues venue\r\n  join public.app_users account on account.id = venue.owner_user_id\r\n  where venue.id = v_tag.venue_id and venue.is_active = true\r\n    and account.role = 'venue' and account.account_state = 'active';\r\n  if not found or v_redemption.venue_id <> v_tag.venue_id then\r\n    raise exception using errcode = '42501', message = 'This Club Deal belongs to a different venue.';\r\n  end if;\r\n  if not v_deal.is_active or v_deal.venue_id <> v_tag.venue_id then\r\n    raise exception using errcode = '22023', message = 'This Club Deal is no longer active.';\r\n  end if;\r\n  if v_redemption.status = 'redeemed' then\r\n    raise exception using errcode = '23505', message = 'This Club Deal was already redeemed.';\r\n  end if;\r\n  if v_redemption.status in ('voided', 'expired') or v_redemption.expires_at <= v_now then\r\n    update public.qr_redemptions set status = 'expired'\r\n    where id = v_redemption.id and status = 'generated';\r\n    raise exception using errcode = '22023', message = 'This Club Deal is no longer valid.';\r\n  end if;\r\n\r\n  select term.* into v_referral_term\r\n  from public.venue_referral_fee_terms term\r\n  where term.venue_id = v_redemption.venue_id\r\n    and term.superseded_at is null\r\n    and term.effective_from <= v_now\r\n    and (term.effective_until is null or term.effective_until > v_now)\r\n  order by term.effective_from desc limit 1;\r\n  if not found then\r\n    raise exception using errcode = '22023', message = 'This venue does not have an active MyDancr referral fee agreement.';\r\n  end if;\r\n\r\n  if v_redemption.source_type = 'dancer_profile'\r\n    and (v_redemption.dancer_id is null or v_redemption.shift_id is null) then\r\n    raise exception using errcode = '22023', message = 'Dancer attribution is incomplete for this Club Deal.';\r\n  end if;\r\n  if exists (\r\n    select 1 from public.qr_redemptions previous\r\n    where previous.id <> v_redemption.id\r\n      and previous.club_deal_id = v_redemption.club_deal_id\r\n      and previous.venue_id = v_redemption.venue_id\r\n      and previous.status = 'redeemed'\r\n      and previous.redeemed_at >= v_now - interval '24 hours'\r\n      and (\r\n        (v_redemption.customer_id is not null and previous.customer_id = v_redemption.customer_id)\r\n        or (v_redemption.customer_id is null and v_redemption.session_id is not null\r\n          and previous.session_id = v_redemption.session_id)\r\n      )\r\n  ) then\r\n    raise exception using errcode = '23505', message = 'This Club Deal has already been used in the last 24 hours.';\r\n  end if;\r\n\r\n  v_month := date_trunc('month', timezone(coalesce(nullif(v_venue.timezone, ''), 'UTC'), v_now))::date;\r\n  v_gross_cents := v_referral_term.fee_cents;\r\n  if v_nats_activated_at is not null then\r\n    perform pg_advisory_xact_lock(hashtext(v_redemption.dancer_id::text), hashtext(v_month::text));\r\n    select count(*)::integer + 1 into v_success_number\r\n    from public.deal_revenue_events revenue\r\n    where revenue.dancer_id = v_redemption.dancer_id\r\n      and revenue.commission_month = v_month\r\n      and revenue.dancer_commission_eligible\r\n      and revenue.status not in ('refunded', 'voided');\r\n    v_share_bps := case\r\n      when v_success_number >= 25 then 5000\r\n      when v_success_number >= 10 then 4000\r\n      else 3000\r\n    end;\r\n    v_dancer_cents := round(v_gross_cents * v_share_bps / 10000.0)::integer;\r\n  else\r\n    v_success_number := null;\r\n  end if;\r\n\r\n  select coalesce(sum(allocation.amount_cents), 0)::integer into v_agent_cents\r\n  from public.agent_allocations_for_venue(v_redemption.venue_id, v_gross_cents, v_now) allocation;\r\n  select attribution.id into v_attribution_id\r\n  from public.venue_sales_attributions attribution\r\n  where attribution.venue_id = v_redemption.venue_id\r\n    and attribution.effective_from <= v_now\r\n    and (attribution.superseded_at is null or attribution.superseded_at > v_now)\r\n  order by attribution.effective_from desc limit 1;\r\n\r\n  v_platform_cents := v_gross_cents - v_dancer_cents - v_agent_cents;\r\n  if v_platform_cents < 0 then\r\n    raise exception using errcode = '22023', message = 'Commission allocations exceed the venue referral fee.';\r\n  end if;\r\n\r\n  update public.qr_redemptions set\r\n    status = 'redeemed', redeemed_at = v_now, confirmed_at = v_now,\r\n    first_scanned_at = coalesce(first_scanned_at, v_now), nfc_tag_id = v_tag.id,\r\n    audit = coalesce(audit, '{}'::jsonb)\r\n      || jsonb_build_object('nfc_confirmed', p_audit, 'nfc_tag_id', v_tag.id)\r\n  where id = v_redemption.id;\r\n\r\n  insert into public.qr_redemption_events (qr_redemption_id, event_type, session_id, audit)\r\n  values (v_redemption.id, 'venue_confirmed', p_session_id::text,\r\n    p_audit || jsonb_build_object('method', 'nfc', 'tagId', v_tag.id));\r\n\r\n  insert into public.deal_revenue_events (\r\n    qr_redemption_id, venue_id, club_deal_id, dancer_id, source_type, currency,\r\n    gross_commission_cents, dancer_share_bps, dancer_commission_cents,\r\n    agent_commission_cents, platform_commission_cents, venue_sales_attribution_id,\r\n    successful_redemption_number, commission_month, policy_version, audit, confirmed_at,\r\n    dancer_commission_eligible, dancer_nats_activated_at\r\n  ) values (\r\n    v_redemption.id, v_redemption.venue_id, v_redemption.club_deal_id,\r\n    v_redemption.dancer_id, v_redemption.source_type, v_referral_term.currency,\r\n    v_gross_cents, v_share_bps, v_dancer_cents,\r\n    v_agent_cents, v_platform_cents, v_attribution_id,\r\n    v_success_number, v_month, v_policy_version,\r\n    jsonb_build_object(\r\n      'source', 'cashier_nfc_tap', 'nfc_tag_id', v_tag.id,\r\n      'shift_id', v_redemption.shift_id,\r\n      'referral_fee_term_id', v_referral_term.id,\r\n      'agreement_reference', v_referral_term.agreement_reference,\r\n      'sales_agent_policy', 'direct-15_l1-3_l2-2.5_l3-2_l4-1.5_l5-1',\r\n      'dancer_commission_reason', case when v_nats_activated_at is not null\r\n        then 'enrolled_at_redemption' else 'not_enrolled_in_nats' end\r\n    ), v_now, v_nats_activated_at is not null, v_nats_activated_at\r\n  ) returning id into v_revenue_id;\r\n\r\n  insert into public.agent_commission_events (\r\n    deal_revenue_event_id, qr_redemption_id, venue_id, venue_sales_attribution_id,\r\n    recipient_agent_id, signing_agent_id, sponsor_level, share_bps,\r\n    amount_cents, currency, commission_month, audit\r\n  )\r\n  select v_revenue_id, v_redemption.id, v_redemption.venue_id,\r\n    allocation.venue_sales_attribution_id, allocation.recipient_agent_id,\r\n    allocation.signing_agent_id, allocation.sponsor_level, allocation.share_bps,\r\n    allocation.amount_cents, lower(v_referral_term.currency), v_month,\r\n    jsonb_build_object('source', 'verified_cashier_nfc', 'nfc_tag_id', v_tag.id)\r\n  from public.agent_allocations_for_venue(v_redemption.venue_id, v_gross_cents, v_now) allocation;\r\n\r\n  if v_nats_activated_at is not null and v_dancer_cents > 0 then\r\n    insert into public.commission_events (\r\n      qr_redemption_id, venue_id, club_deal_id, dancer_id, status, amount_cents,\r\n      payout_type, gross_commission_cents, dancer_share_bps, platform_amount_cents,\r\n      successful_redemption_number, commission_month, currency, policy_version, audit\r\n    ) values (\r\n      v_redemption.id, v_redemption.venue_id, v_redemption.club_deal_id,\r\n      v_redemption.dancer_id, 'pending_club_payment', v_dancer_cents, 'flat',\r\n      v_gross_cents, v_share_bps, v_platform_cents, v_success_number, v_month,\r\n      lower(v_referral_term.currency), v_policy_version,\r\n      jsonb_build_object(\r\n        'source', 'deal_revenue_event', 'deal_revenue_event_id', v_revenue_id,\r\n        'nfc_tag_id', v_tag.id, 'referral_fee_term_id', v_referral_term.id,\r\n        'agent_commission_cents', v_agent_cents\r\n      )\r\n    );\r\n  end if;\r\n\r\n  insert into public.nfc_tap_events (\r\n    nfc_tag_id, venue_id, tag_type, event_type, actor_user_id, session_id,\r\n    ip_address, user_agent, device_fingerprint, audit\r\n  ) values (\r\n    v_tag.id, v_tag.venue_id, v_tag.tag_type, 'deal_redeemed', v_redemption.customer_id,\r\n    p_session_id, p_audit->>'ip_address', p_audit->>'user_agent', p_audit->>'device_fingerprint',\r\n    p_audit || jsonb_build_object('redemptionId', v_redemption.id,\r\n      'dealId', v_deal.id, 'revenueEventId', v_revenue_id)\r\n  );\r\n  update public.nfc_tags\r\n  set last_tapped_at = v_now, tap_count = tap_count + 1, updated_at = v_now\r\n  where id = v_tag.id;\r\n\r\n  return jsonb_build_object(\r\n    'redemptionId', v_redemption.id, 'revenueEventId', v_revenue_id,\r\n    'dealTitle', v_deal.deal_title, 'venueName', v_venue.name,\r\n    'sourceType', v_redemption.source_type,\r\n    'grossCommissionCents', v_gross_cents,\r\n    'dancerCommissionEligible', v_nats_activated_at is not null,\r\n    'dancerShareBps', v_share_bps,\r\n    'dancerCommissionCents', v_dancer_cents,\r\n    'agentCommissionCents', v_agent_cents,\r\n    'platformCommissionCents', v_platform_cents,\r\n    'successfulRedemptionNumber', v_success_number,\r\n    'referralFeeTermId', v_referral_term.id, 'status', 'redeemed'\r\n  );\r\nend;\r\n$function$\n",
+      "fingerprint": "fffe4ecf407c242bb997dc75b4e3a9cc",
+      "name": "confirm_deal_redemption_from_nfc",
+      "service_execute": true,
+      "signature": "confirm_deal_redemption_from_nfc(text,uuid,uuid,jsonb)"
+    },
+    {
+      "anon_execute": true,
+      "authenticated_execute": true,
+      "definition": "CREATE OR REPLACE FUNCTION public.current_user_role()\n RETURNS user_role\n LANGUAGE sql\n STABLE SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\r\n  select role from public.app_users where id = auth.uid();\r\n$function$\n",
+      "fingerprint": "4c4ef252da393e4bf294cbb87a6671da",
+      "name": "current_user_role",
+      "service_execute": true,
+      "signature": "current_user_role()"
+    },
+    {
+      "anon_execute": true,
+      "authenticated_execute": true,
+      "definition": "CREATE OR REPLACE FUNCTION public.is_admin()\n RETURNS boolean\n LANGUAGE sql\n STABLE SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\r\n  select exists (\r\n    select 1 from public.app_users\r\n    where id = auth.uid()\r\n      and role = 'admin'\r\n      and account_state = 'active'\r\n  );\r\n$function$\n",
+      "fingerprint": "aa75a61376ef5a45ec72cb30fb0eb229",
+      "name": "is_admin",
+      "service_execute": true,
+      "signature": "is_admin()"
+    },
+    {
+      "anon_execute": false,
+      "authenticated_execute": false,
+      "definition": "CREATE OR REPLACE FUNCTION public.is_nats_eligible_club_deal_earning(p_earning_id uuid)\n RETURNS boolean\n LANGUAGE sql\n STABLE SECURITY DEFINER\n SET search_path TO 'public', 'pg_temp'\nAS $function$\r\n  select exists (\r\n    select 1 from public.commission_events earning\r\n    join public.deal_revenue_events revenue on revenue.qr_redemption_id = earning.qr_redemption_id\r\n    where earning.id = p_earning_id\r\n      and revenue.dancer_id = earning.dancer_id\r\n      and revenue.dancer_commission_eligible\r\n      and revenue.dancer_nats_activated_at <= revenue.confirmed_at\r\n      and revenue.dancer_commission_cents = earning.amount_cents\r\n      and revenue.status not in ('refunded', 'voided')\r\n  );\r\n$function$\n",
+      "fingerprint": "10ede0c3fe1f3e16de1bb3f3efeca214",
+      "name": "is_nats_eligible_club_deal_earning",
+      "service_execute": true,
+      "signature": "is_nats_eligible_club_deal_earning(uuid)"
+    },
+    {
+      "anon_execute": false,
+      "authenticated_execute": false,
+      "definition": "CREATE OR REPLACE FUNCTION public.issue_and_confirm_deal_redemption_from_nfc(p_redemption_token text, p_tag_id uuid, p_session_id uuid, p_venue_id uuid, p_club_deal_id uuid, p_source_type text, p_dancer_id uuid, p_shift_id uuid, p_customer_id uuid, p_expires_at timestamp with time zone, p_audit jsonb DEFAULT '{}'::jsonb)\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public', 'pg_temp'\nAS $function$\r\ndeclare\r\n  v_confirmation jsonb;\r\nbegin\r\n  if p_redemption_token !~ '^[A-Za-z0-9_-]{40,120}$' then\r\n    raise exception using errcode = '22023', message = 'A valid Club Deal redemption token is required.';\r\n  end if;\r\n  if p_source_type not in ('club_page', 'dancer_profile') then\r\n    raise exception using errcode = '22023', message = 'A valid Club Deal source is required.';\r\n  end if;\r\n  if p_expires_at <= clock_timestamp() then\r\n    raise exception using errcode = '22023', message = 'The Club Deal redemption expiration must be in the future.';\r\n  end if;\r\n  if p_source_type = 'dancer_profile' and (p_dancer_id is null or p_shift_id is null) then\r\n    raise exception using errcode = '22023', message = 'Dancer attribution is incomplete for this Club Deal.';\r\n  end if;\r\n  if p_source_type = 'club_page' and (p_dancer_id is not null or p_shift_id is not null) then\r\n    raise exception using errcode = '22023', message = 'Club-page redemptions cannot include dancer attribution.';\r\n  end if;\r\n\r\n  perform pg_advisory_xact_lock(\r\n    hashtext(p_club_deal_id::text),\r\n    hashtext(coalesce(p_customer_id::text, p_session_id::text))\r\n  );\r\n\r\n  insert into public.qr_redemptions (\r\n    redemption_token,\r\n    venue_id,\r\n    club_deal_id,\r\n    source_type,\r\n    dancer_id,\r\n    shift_id,\r\n    attribution_locked_at,\r\n    customer_id,\r\n    session_id,\r\n    nfc_tag_id,\r\n    expires_at,\r\n    ip_address,\r\n    user_agent,\r\n    device_fingerprint,\r\n    audit\r\n  ) values (\r\n    p_redemption_token,\r\n    p_venue_id,\r\n    p_club_deal_id,\r\n    p_source_type,\r\n    p_dancer_id,\r\n    p_shift_id,\r\n    case when p_source_type = 'dancer_profile' then clock_timestamp() else null end,\r\n    p_customer_id,\r\n    p_session_id::text,\r\n    p_tag_id,\r\n    p_expires_at,\r\n    p_audit->>'ip_address',\r\n    p_audit->>'user_agent',\r\n    p_audit->>'device_fingerprint',\r\n    coalesce(p_audit, '{}'::jsonb)\r\n  );\r\n\r\n  v_confirmation := public.confirm_deal_redemption_from_nfc(\r\n    p_redemption_token,\r\n    p_tag_id,\r\n    p_session_id,\r\n    coalesce(p_audit, '{}'::jsonb)\r\n  );\r\n\r\n  return v_confirmation;\r\nend;\r\n$function$\n",
+      "fingerprint": "935442d2de3b4fe4c2f1fb24a39bb9ca",
+      "name": "issue_and_confirm_deal_redemption_from_nfc",
+      "service_execute": true,
+      "signature": "issue_and_confirm_deal_redemption_from_nfc(text,uuid,uuid,uuid,uuid,text,uuid,uuid,uuid,timestamp with time zone,jsonb)"
+    }
+  ],
+  "identities": [],
+  "indexes": [
+    {
+      "definition": "CREATE UNIQUE INDEX agent_commission_events_deal_revenue_event_id_sponsor_level_key ON public.agent_commission_events USING btree (deal_revenue_event_id, sponsor_level)",
+      "name": "agent_commission_events_deal_revenue_event_id_sponsor_level_key",
+      "table": "agent_commission_events"
+    },
+    {
+      "definition": "CREATE UNIQUE INDEX agent_commission_events_pkey ON public.agent_commission_events USING btree (id)",
+      "name": "agent_commission_events_pkey",
+      "table": "agent_commission_events"
+    },
+    {
+      "definition": "CREATE INDEX agent_commission_events_recipient_status_idx ON public.agent_commission_events USING btree (recipient_agent_id, status, created_at DESC)",
+      "name": "agent_commission_events_recipient_status_idx",
+      "table": "agent_commission_events"
+    },
+    {
+      "definition": "CREATE INDEX agent_commission_events_venue_idx ON public.agent_commission_events USING btree (venue_id, created_at DESC)",
+      "name": "agent_commission_events_venue_idx",
+      "table": "agent_commission_events"
+    },
+    {
+      "definition": "CREATE INDEX club_deals_active_venue_listing_idx ON public.club_deals USING btree (venue_id) WHERE (is_active AND (payout_type = 'flat'::text) AND (payout_amount_cents > 0))",
+      "name": "club_deals_active_venue_listing_idx",
+      "table": "club_deals"
+    },
+    {
+      "definition": "CREATE UNIQUE INDEX club_deals_pkey ON public.club_deals USING btree (id)",
+      "name": "club_deals_pkey",
+      "table": "club_deals"
+    },
+    {
+      "definition": "CREATE INDEX club_deals_public_offer_order_idx ON public.club_deals USING btree (venue_id, is_active, sort_order, created_at DESC)",
+      "name": "club_deals_public_offer_order_idx",
+      "table": "club_deals"
+    },
+    {
+      "definition": "CREATE INDEX club_deals_venue_active_idx ON public.club_deals USING btree (venue_id, is_active)",
+      "name": "club_deals_venue_active_idx",
+      "table": "club_deals"
+    },
+    {
+      "definition": "CREATE INDEX commission_events_dancer_status_available_idx ON public.commission_events USING btree (dancer_id, status, available_at DESC, created_at DESC)",
+      "name": "commission_events_dancer_status_available_idx",
+      "table": "commission_events"
+    },
+    {
+      "definition": "CREATE INDEX commission_events_dancer_status_idx ON public.commission_events USING btree (dancer_id, status)",
+      "name": "commission_events_dancer_status_idx",
+      "table": "commission_events"
+    },
+    {
+      "definition": "CREATE INDEX commission_events_payout_batch_idx ON public.commission_events USING btree (payout_batch_id, status)",
+      "name": "commission_events_payout_batch_idx",
+      "table": "commission_events"
+    },
+    {
+      "definition": "CREATE INDEX commission_events_pending_release_idx ON public.commission_events USING btree (pending_until) WHERE ((status = 'pending'::text) AND (held_at IS NULL) AND (review_flag IS NULL))",
+      "name": "commission_events_pending_release_idx",
+      "table": "commission_events"
+    },
+    {
+      "definition": "CREATE UNIQUE INDEX commission_events_pkey ON public.commission_events USING btree (id)",
+      "name": "commission_events_pkey",
+      "table": "commission_events"
+    },
+    {
+      "definition": "CREATE UNIQUE INDEX commission_events_qr_redemption_id_key ON public.commission_events USING btree (qr_redemption_id)",
+      "name": "commission_events_qr_redemption_id_key",
+      "table": "commission_events"
+    },
+    {
+      "definition": "CREATE INDEX commission_events_venue_created_idx ON public.commission_events USING btree (venue_id, created_at DESC)",
+      "name": "commission_events_venue_created_idx",
+      "table": "commission_events"
+    },
+    {
+      "definition": "CREATE INDEX commission_events_venue_status_idx ON public.commission_events USING btree (venue_id, status)",
+      "name": "commission_events_venue_status_idx",
+      "table": "commission_events"
+    },
+    {
+      "definition": "CREATE INDEX deal_revenue_events_dancer_month_idx ON public.deal_revenue_events USING btree (dancer_id, commission_month, confirmed_at) WHERE (dancer_id IS NOT NULL)",
+      "name": "deal_revenue_events_dancer_month_idx",
+      "table": "deal_revenue_events"
+    },
+    {
+      "definition": "CREATE UNIQUE INDEX deal_revenue_events_dancer_success_number_idx ON public.deal_revenue_events USING btree (dancer_id, commission_month, successful_redemption_number) WHERE ((dancer_id IS NOT NULL) AND (status <> ALL (ARRAY['refunded'::text, 'voided'::text])))",
+      "name": "deal_revenue_events_dancer_success_number_idx",
+      "table": "deal_revenue_events"
+    },
+    {
+      "definition": "CREATE INDEX deal_revenue_events_invoice_idx ON public.deal_revenue_events USING btree (club_invoice_id, status)",
+      "name": "deal_revenue_events_invoice_idx",
+      "table": "deal_revenue_events"
+    },
+    {
+      "definition": "CREATE UNIQUE INDEX deal_revenue_events_pkey ON public.deal_revenue_events USING btree (id)",
+      "name": "deal_revenue_events_pkey",
+      "table": "deal_revenue_events"
+    },
+    {
+      "definition": "CREATE UNIQUE INDEX deal_revenue_events_qr_redemption_id_key ON public.deal_revenue_events USING btree (qr_redemption_id)",
+      "name": "deal_revenue_events_qr_redemption_id_key",
+      "table": "deal_revenue_events"
+    },
+    {
+      "definition": "CREATE INDEX deal_revenue_events_venue_status_idx ON public.deal_revenue_events USING btree (venue_id, status, confirmed_at DESC)",
+      "name": "deal_revenue_events_venue_status_idx",
+      "table": "deal_revenue_events"
+    },
+    {
+      "definition": "CREATE UNIQUE INDEX nats_affiliate_accounts_login_id_key ON public.nats_affiliate_accounts USING btree (login_id)",
+      "name": "nats_affiliate_accounts_login_id_key",
+      "table": "nats_affiliate_accounts"
+    },
+    {
+      "definition": "CREATE UNIQUE INDEX nats_affiliate_accounts_pkey ON public.nats_affiliate_accounts USING btree (dancer_id)",
+      "name": "nats_affiliate_accounts_pkey",
+      "table": "nats_affiliate_accounts"
+    },
+    {
+      "definition": "CREATE UNIQUE INDEX nats_agent_affiliate_accounts_login_id_key ON public.nats_agent_affiliate_accounts USING btree (login_id)",
+      "name": "nats_agent_affiliate_accounts_login_id_key",
+      "table": "nats_agent_affiliate_accounts"
+    },
+    {
+      "definition": "CREATE UNIQUE INDEX nats_agent_affiliate_accounts_pkey ON public.nats_agent_affiliate_accounts USING btree (agent_id)",
+      "name": "nats_agent_affiliate_accounts_pkey",
+      "table": "nats_agent_affiliate_accounts"
+    },
+    {
+      "definition": "CREATE UNIQUE INDEX nats_agent_commission_exports_agent_commission_event_id_key ON public.nats_agent_commission_exports USING btree (agent_commission_event_id)",
+      "name": "nats_agent_commission_exports_agent_commission_event_id_key",
+      "table": "nats_agent_commission_exports"
+    },
+    {
+      "definition": "CREATE INDEX nats_agent_commission_exports_agent_created_idx ON public.nats_agent_commission_exports USING btree (agent_id, created_at DESC)",
+      "name": "nats_agent_commission_exports_agent_created_idx",
+      "table": "nats_agent_commission_exports"
+    },
+    {
+      "definition": "CREATE UNIQUE INDEX nats_agent_commission_exports_pkey ON public.nats_agent_commission_exports USING btree (id)",
+      "name": "nats_agent_commission_exports_pkey",
+      "table": "nats_agent_commission_exports"
+    },
+    {
+      "definition": "CREATE INDEX nats_agent_commission_exports_status_created_idx ON public.nats_agent_commission_exports USING btree (status, created_at)",
+      "name": "nats_agent_commission_exports_status_created_idx",
+      "table": "nats_agent_commission_exports"
+    },
+    {
+      "definition": "CREATE UNIQUE INDEX nats_commission_exports_commission_event_id_key ON public.nats_commission_exports USING btree (commission_event_id)",
+      "name": "nats_commission_exports_commission_event_id_key",
+      "table": "nats_commission_exports"
+    },
+    {
+      "definition": "CREATE INDEX nats_commission_exports_dancer_created_idx ON public.nats_commission_exports USING btree (dancer_id, created_at DESC)",
+      "name": "nats_commission_exports_dancer_created_idx",
+      "table": "nats_commission_exports"
+    },
+    {
+      "definition": "CREATE UNIQUE INDEX nats_commission_exports_pkey ON public.nats_commission_exports USING btree (id)",
+      "name": "nats_commission_exports_pkey",
+      "table": "nats_commission_exports"
+    },
+    {
+      "definition": "CREATE INDEX nats_commission_exports_status_created_idx ON public.nats_commission_exports USING btree (status, created_at)",
+      "name": "nats_commission_exports_status_created_idx",
+      "table": "nats_commission_exports"
+    },
+    {
+      "definition": "CREATE UNIQUE INDEX nfc_tags_one_active_cashier_label_idx ON public.nfc_tags USING btree (venue_id, lower(label)) WHERE ((tag_type = 'cashier'::text) AND (status = 'active'::text))",
+      "name": "nfc_tags_one_active_cashier_label_idx",
+      "table": "nfc_tags"
+    },
+    {
+      "definition": "CREATE UNIQUE INDEX nfc_tags_one_active_dressing_room_label_idx ON public.nfc_tags USING btree (venue_id, lower(label)) WHERE ((tag_type = 'dressing_room'::text) AND (status = 'active'::text))",
+      "name": "nfc_tags_one_active_dressing_room_label_idx",
+      "table": "nfc_tags"
+    },
+    {
+      "definition": "CREATE UNIQUE INDEX nfc_tags_pkey ON public.nfc_tags USING btree (id)",
+      "name": "nfc_tags_pkey",
+      "table": "nfc_tags"
+    },
+    {
+      "definition": "CREATE UNIQUE INDEX nfc_tags_token_digest_key ON public.nfc_tags USING btree (token_digest)",
+      "name": "nfc_tags_token_digest_key",
+      "table": "nfc_tags"
+    },
+    {
+      "definition": "CREATE INDEX nfc_tags_venue_status_idx ON public.nfc_tags USING btree (venue_id, status, tag_type, created_at DESC)",
+      "name": "nfc_tags_venue_status_idx",
+      "table": "nfc_tags"
+    },
+    {
+      "definition": "CREATE UNIQUE INDEX nfc_tap_events_pkey ON public.nfc_tap_events USING btree (id)",
+      "name": "nfc_tap_events_pkey",
+      "table": "nfc_tap_events"
+    },
+    {
+      "definition": "CREATE INDEX nfc_tap_events_tag_time_idx ON public.nfc_tap_events USING btree (nfc_tag_id, occurred_at DESC)",
+      "name": "nfc_tap_events_tag_time_idx",
+      "table": "nfc_tap_events"
+    },
+    {
+      "definition": "CREATE INDEX nfc_tap_events_venue_type_time_idx ON public.nfc_tap_events USING btree (venue_id, event_type, occurred_at DESC)",
+      "name": "nfc_tap_events_venue_type_time_idx",
+      "table": "nfc_tap_events"
+    },
+    {
+      "definition": "CREATE UNIQUE INDEX qr_redemption_events_pkey ON public.qr_redemption_events USING btree (id)",
+      "name": "qr_redemption_events_pkey",
+      "table": "qr_redemption_events"
+    },
+    {
+      "definition": "CREATE INDEX qr_redemption_events_redemption_time_idx ON public.qr_redemption_events USING btree (qr_redemption_id, occurred_at DESC)",
+      "name": "qr_redemption_events_redemption_time_idx",
+      "table": "qr_redemption_events"
+    },
+    {
+      "definition": "CREATE INDEX qr_redemption_events_type_time_idx ON public.qr_redemption_events USING btree (event_type, occurred_at DESC)",
+      "name": "qr_redemption_events_type_time_idx",
+      "table": "qr_redemption_events"
+    },
+    {
+      "definition": "CREATE INDEX qr_redemptions_dancer_status_idx ON public.qr_redemptions USING btree (dancer_id, status) WHERE (dancer_id IS NOT NULL)",
+      "name": "qr_redemptions_dancer_status_idx",
+      "table": "qr_redemptions"
+    },
+    {
+      "definition": "CREATE INDEX qr_redemptions_deal_status_idx ON public.qr_redemptions USING btree (club_deal_id, status)",
+      "name": "qr_redemptions_deal_status_idx",
+      "table": "qr_redemptions"
+    },
+    {
+      "definition": "CREATE INDEX qr_redemptions_generated_idx ON public.qr_redemptions USING btree (generated_at DESC)",
+      "name": "qr_redemptions_generated_idx",
+      "table": "qr_redemptions"
+    },
+    {
+      "definition": "CREATE INDEX qr_redemptions_nfc_tag_idx ON public.qr_redemptions USING btree (nfc_tag_id, generated_at DESC) WHERE (nfc_tag_id IS NOT NULL)",
+      "name": "qr_redemptions_nfc_tag_idx",
+      "table": "qr_redemptions"
+    },
+    {
+      "definition": "CREATE UNIQUE INDEX qr_redemptions_pkey ON public.qr_redemptions USING btree (id)",
+      "name": "qr_redemptions_pkey",
+      "table": "qr_redemptions"
+    },
+    {
+      "definition": "CREATE UNIQUE INDEX qr_redemptions_redemption_token_key ON public.qr_redemptions USING btree (redemption_token)",
+      "name": "qr_redemptions_redemption_token_key",
+      "table": "qr_redemptions"
+    },
+    {
+      "definition": "CREATE INDEX qr_redemptions_shift_idx ON public.qr_redemptions USING btree (shift_id) WHERE (shift_id IS NOT NULL)",
+      "name": "qr_redemptions_shift_idx",
+      "table": "qr_redemptions"
+    },
+    {
+      "definition": "CREATE UNIQUE INDEX sales_agents_pkey ON public.sales_agents USING btree (id)",
+      "name": "sales_agents_pkey",
+      "table": "sales_agents"
+    },
+    {
+      "definition": "CREATE UNIQUE INDEX sales_agents_referral_code_idx ON public.sales_agents USING btree (referral_code)",
+      "name": "sales_agents_referral_code_idx",
+      "table": "sales_agents"
+    },
+    {
+      "definition": "CREATE UNIQUE INDEX sales_agents_single_active_founder_idx ON public.sales_agents USING btree (commission_depth_limit) WHERE ((commission_depth_limit = 5) AND (status = 'active'::text))",
+      "name": "sales_agents_single_active_founder_idx",
+      "table": "sales_agents"
+    },
+    {
+      "definition": "CREATE INDEX sales_agents_sponsor_idx ON public.sales_agents USING btree (sponsor_agent_id) WHERE (sponsor_agent_id IS NOT NULL)",
+      "name": "sales_agents_sponsor_idx",
+      "table": "sales_agents"
+    },
+    {
+      "definition": "CREATE UNIQUE INDEX sales_agents_user_id_key ON public.sales_agents USING btree (user_id)",
+      "name": "sales_agents_user_id_key",
+      "table": "sales_agents"
+    },
+    {
+      "definition": "CREATE INDEX venue_referral_fee_terms_effective_idx ON public.venue_referral_fee_terms USING btree (venue_id, effective_from DESC, effective_until)",
+      "name": "venue_referral_fee_terms_effective_idx",
+      "table": "venue_referral_fee_terms"
+    },
+    {
+      "definition": "CREATE UNIQUE INDEX venue_referral_fee_terms_pkey ON public.venue_referral_fee_terms USING btree (id)",
+      "name": "venue_referral_fee_terms_pkey",
+      "table": "venue_referral_fee_terms"
+    },
+    {
+      "definition": "CREATE UNIQUE INDEX venue_sales_attributions_one_active_idx ON public.venue_sales_attributions USING btree (venue_id) WHERE (superseded_at IS NULL)",
+      "name": "venue_sales_attributions_one_active_idx",
+      "table": "venue_sales_attributions"
+    },
+    {
+      "definition": "CREATE UNIQUE INDEX venue_sales_attributions_pkey ON public.venue_sales_attributions USING btree (id)",
+      "name": "venue_sales_attributions_pkey",
+      "table": "venue_sales_attributions"
+    },
+    {
+      "definition": "CREATE INDEX venue_sales_attributions_signer_idx ON public.venue_sales_attributions USING btree (signing_agent_id, effective_from DESC)",
+      "name": "venue_sales_attributions_signer_idx",
+      "table": "venue_sales_attributions"
+    },
+    {
+      "definition": "CREATE UNIQUE INDEX venues_owner_user_id_key ON public.venues USING btree (owner_user_id)",
+      "name": "venues_owner_user_id_key",
+      "table": "venues"
+    },
+    {
+      "definition": "CREATE INDEX venues_page_review_status_idx ON public.venues USING btree (page_review_status, updated_at DESC)",
+      "name": "venues_page_review_status_idx",
+      "table": "venues"
+    },
+    {
+      "definition": "CREATE UNIQUE INDEX venues_pkey ON public.venues USING btree (id)",
+      "name": "venues_pkey",
+      "table": "venues"
+    },
+    {
+      "definition": "CREATE UNIQUE INDEX venues_slug_key ON public.venues USING btree (slug)",
+      "name": "venues_slug_key",
+      "table": "venues"
+    }
+  ],
+  "policies": [
+    {
+      "cmd": "SELECT",
+      "permissive": "PERMISSIVE",
+      "policyname": "Active club deals are public",
+      "qual": "(is_active = true)",
+      "roles": [
+        "public"
+      ],
+      "schemaname": "public",
+      "tablename": "club_deals",
+      "with_check": null
+    },
+    {
+      "cmd": "ALL",
+      "permissive": "PERMISSIVE",
+      "policyname": "Admins manage NFC tags",
+      "qual": "is_admin()",
+      "roles": [
+        "public"
+      ],
+      "schemaname": "public",
+      "tablename": "nfc_tags",
+      "with_check": "is_admin()"
+    },
+    {
+      "cmd": "ALL",
+      "permissive": "PERMISSIVE",
+      "policyname": "Admins manage NFC tap events",
+      "qual": "is_admin()",
+      "roles": [
+        "public"
+      ],
+      "schemaname": "public",
+      "tablename": "nfc_tap_events",
+      "with_check": "is_admin()"
+    },
+    {
+      "cmd": "ALL",
+      "permissive": "PERMISSIVE",
+      "policyname": "Admins manage QR redemption events",
+      "qual": "is_admin()",
+      "roles": [
+        "public"
+      ],
+      "schemaname": "public",
+      "tablename": "qr_redemption_events",
+      "with_check": "is_admin()"
+    },
+    {
+      "cmd": "ALL",
+      "permissive": "PERMISSIVE",
+      "policyname": "Admins manage agent commissions",
+      "qual": "is_admin()",
+      "roles": [
+        "public"
+      ],
+      "schemaname": "public",
+      "tablename": "agent_commission_events",
+      "with_check": "is_admin()"
+    },
+    {
+      "cmd": "ALL",
+      "permissive": "PERMISSIVE",
+      "policyname": "Admins manage club deals",
+      "qual": "is_admin()",
+      "roles": [
+        "public"
+      ],
+      "schemaname": "public",
+      "tablename": "club_deals",
+      "with_check": "is_admin()"
+    },
+    {
+      "cmd": "ALL",
+      "permissive": "PERMISSIVE",
+      "policyname": "Admins manage deal revenue events",
+      "qual": "is_admin()",
+      "roles": [
+        "public"
+      ],
+      "schemaname": "public",
+      "tablename": "deal_revenue_events",
+      "with_check": "is_admin()"
+    },
+    {
+      "cmd": "ALL",
+      "permissive": "PERMISSIVE",
+      "policyname": "Admins manage qr redemptions",
+      "qual": "is_admin()",
+      "roles": [
+        "public"
+      ],
+      "schemaname": "public",
+      "tablename": "qr_redemptions",
+      "with_check": "is_admin()"
+    },
+    {
+      "cmd": "ALL",
+      "permissive": "PERMISSIVE",
+      "policyname": "Admins manage referral fee terms",
+      "qual": "is_admin()",
+      "roles": [
+        "public"
+      ],
+      "schemaname": "public",
+      "tablename": "venue_referral_fee_terms",
+      "with_check": "is_admin()"
+    },
+    {
+      "cmd": "ALL",
+      "permissive": "PERMISSIVE",
+      "policyname": "Admins manage sales agents",
+      "qual": "is_admin()",
+      "roles": [
+        "public"
+      ],
+      "schemaname": "public",
+      "tablename": "sales_agents",
+      "with_check": "is_admin()"
+    },
+    {
+      "cmd": "ALL",
+      "permissive": "PERMISSIVE",
+      "policyname": "Admins manage venue sales attribution",
+      "qual": "is_admin()",
+      "roles": [
+        "public"
+      ],
+      "schemaname": "public",
+      "tablename": "venue_sales_attributions",
+      "with_check": "is_admin()"
+    },
+    {
+      "cmd": "SELECT",
+      "permissive": "PERMISSIVE",
+      "policyname": "Admins read NATS affiliate accounts",
+      "qual": "is_admin()",
+      "roles": [
+        "public"
+      ],
+      "schemaname": "public",
+      "tablename": "nats_affiliate_accounts",
+      "with_check": null
+    },
+    {
+      "cmd": "SELECT",
+      "permissive": "PERMISSIVE",
+      "policyname": "Admins read NATS agent affiliate accounts",
+      "qual": "is_admin()",
+      "roles": [
+        "public"
+      ],
+      "schemaname": "public",
+      "tablename": "nats_agent_affiliate_accounts",
+      "with_check": null
+    },
+    {
+      "cmd": "SELECT",
+      "permissive": "PERMISSIVE",
+      "policyname": "Admins read NATS agent commission exports",
+      "qual": "is_admin()",
+      "roles": [
+        "public"
+      ],
+      "schemaname": "public",
+      "tablename": "nats_agent_commission_exports",
+      "with_check": null
+    },
+    {
+      "cmd": "SELECT",
+      "permissive": "PERMISSIVE",
+      "policyname": "Admins read NATS commission exports",
+      "qual": "is_admin()",
+      "roles": [
+        "public"
+      ],
+      "schemaname": "public",
+      "tablename": "nats_commission_exports",
+      "with_check": null
+    },
+    {
+      "cmd": "SELECT",
+      "permissive": "PERMISSIVE",
+      "policyname": "Admins read commission events",
+      "qual": "is_admin()",
+      "roles": [
+        "public"
+      ],
+      "schemaname": "public",
+      "tablename": "commission_events",
+      "with_check": null
+    },
+    {
+      "cmd": "SELECT",
+      "permissive": "PERMISSIVE",
+      "policyname": "Agents read attributed venues",
+      "qual": "(EXISTS ( SELECT 1\n   FROM sales_agents agent\n  WHERE ((agent.user_id = auth.uid()) AND (agent.id = ANY (ARRAY[venue_sales_attributions.signing_agent_id, venue_sales_attributions.sponsor_level_1_agent_id, venue_sales_attributions.sponsor_level_2_agent_id, venue_sales_attributions.sponsor_level_3_agent_id, venue_sales_attributions.sponsor_level_4_agent_id, venue_sales_attributions.sponsor_level_5_agent_id])))))",
+      "roles": [
+        "public"
+      ],
+      "schemaname": "public",
+      "tablename": "venue_sales_attributions",
+      "with_check": null
+    },
+    {
+      "cmd": "SELECT",
+      "permissive": "PERMISSIVE",
+      "policyname": "Agents read own NATS affiliate account",
+      "qual": "(EXISTS ( SELECT 1\n   FROM sales_agents agent\n  WHERE ((agent.id = nats_agent_affiliate_accounts.agent_id) AND (agent.user_id = auth.uid()))))",
+      "roles": [
+        "public"
+      ],
+      "schemaname": "public",
+      "tablename": "nats_agent_affiliate_accounts",
+      "with_check": null
+    },
+    {
+      "cmd": "SELECT",
+      "permissive": "PERMISSIVE",
+      "policyname": "Agents read own NATS commission exports",
+      "qual": "(EXISTS ( SELECT 1\n   FROM sales_agents agent\n  WHERE ((agent.id = nats_agent_commission_exports.agent_id) AND (agent.user_id = auth.uid()))))",
+      "roles": [
+        "public"
+      ],
+      "schemaname": "public",
+      "tablename": "nats_agent_commission_exports",
+      "with_check": null
+    },
+    {
+      "cmd": "SELECT",
+      "permissive": "PERMISSIVE",
+      "policyname": "Agents read own commissions",
+      "qual": "(EXISTS ( SELECT 1\n   FROM sales_agents agent\n  WHERE ((agent.id = agent_commission_events.recipient_agent_id) AND (agent.user_id = auth.uid()))))",
+      "roles": [
+        "public"
+      ],
+      "schemaname": "public",
+      "tablename": "agent_commission_events",
+      "with_check": null
+    },
+    {
+      "cmd": "SELECT",
+      "permissive": "PERMISSIVE",
+      "policyname": "Agents read own sales record",
+      "qual": "(user_id = auth.uid())",
+      "roles": [
+        "public"
+      ],
+      "schemaname": "public",
+      "tablename": "sales_agents",
+      "with_check": null
+    },
+    {
+      "cmd": "SELECT",
+      "permissive": "PERMISSIVE",
+      "policyname": "Dancers read own NATS affiliate account",
+      "qual": "(EXISTS ( SELECT 1\n   FROM dancer_profiles dancer\n  WHERE ((dancer.id = nats_affiliate_accounts.dancer_id) AND (dancer.user_id = auth.uid()))))",
+      "roles": [
+        "public"
+      ],
+      "schemaname": "public",
+      "tablename": "nats_affiliate_accounts",
+      "with_check": null
+    },
+    {
+      "cmd": "SELECT",
+      "permissive": "PERMISSIVE",
+      "policyname": "Dancers read own NATS commission exports",
+      "qual": "(EXISTS ( SELECT 1\n   FROM dancer_profiles dancer\n  WHERE ((dancer.id = nats_commission_exports.dancer_id) AND (dancer.user_id = auth.uid()))))",
+      "roles": [
+        "public"
+      ],
+      "schemaname": "public",
+      "tablename": "nats_commission_exports",
+      "with_check": null
+    },
+    {
+      "cmd": "SELECT",
+      "permissive": "PERMISSIVE",
+      "policyname": "Dancers read own NFC tap events",
+      "qual": "(actor_user_id = auth.uid())",
+      "roles": [
+        "public"
+      ],
+      "schemaname": "public",
+      "tablename": "nfc_tap_events",
+      "with_check": null
+    },
+    {
+      "cmd": "SELECT",
+      "permissive": "PERMISSIVE",
+      "policyname": "Dancers read own QR redemption events",
+      "qual": "(EXISTS ( SELECT 1\n   FROM (qr_redemptions redemption\n     JOIN dancer_profiles dancer ON ((dancer.id = redemption.dancer_id)))\n  WHERE ((redemption.id = qr_redemption_events.qr_redemption_id) AND (dancer.user_id = auth.uid()))))",
+      "roles": [
+        "public"
+      ],
+      "schemaname": "public",
+      "tablename": "qr_redemption_events",
+      "with_check": null
+    },
+    {
+      "cmd": "SELECT",
+      "permissive": "PERMISSIVE",
+      "policyname": "Dancers read own earnings",
+      "qual": "(EXISTS ( SELECT 1\n   FROM dancer_profiles dancer\n  WHERE ((dancer.id = commission_events.dancer_id) AND (dancer.user_id = auth.uid()))))",
+      "roles": [
+        "public"
+      ],
+      "schemaname": "public",
+      "tablename": "commission_events",
+      "with_check": null
+    },
+    {
+      "cmd": "SELECT",
+      "permissive": "PERMISSIVE",
+      "policyname": "Dancers view own attributed redemptions",
+      "qual": "(dancer_id IN ( SELECT dancer_profiles.id\n   FROM dancer_profiles\n  WHERE (dancer_profiles.user_id = auth.uid())))",
+      "roles": [
+        "public"
+      ],
+      "schemaname": "public",
+      "tablename": "qr_redemptions",
+      "with_check": null
+    },
+    {
+      "cmd": "SELECT",
+      "permissive": "PERMISSIVE",
+      "policyname": "Venue owners read own NFC tags",
+      "qual": "(EXISTS ( SELECT 1\n   FROM venues venue\n  WHERE ((venue.id = nfc_tags.venue_id) AND (venue.owner_user_id = auth.uid()))))",
+      "roles": [
+        "public"
+      ],
+      "schemaname": "public",
+      "tablename": "nfc_tags",
+      "with_check": null
+    },
+    {
+      "cmd": "SELECT",
+      "permissive": "PERMISSIVE",
+      "policyname": "Venue owners read own NFC tap events",
+      "qual": "(EXISTS ( SELECT 1\n   FROM venues venue\n  WHERE ((venue.id = nfc_tap_events.venue_id) AND (venue.owner_user_id = auth.uid()))))",
+      "roles": [
+        "public"
+      ],
+      "schemaname": "public",
+      "tablename": "nfc_tap_events",
+      "with_check": null
+    },
+    {
+      "cmd": "SELECT",
+      "permissive": "PERMISSIVE",
+      "policyname": "Venue owners read own QR redemption events",
+      "qual": "(EXISTS ( SELECT 1\n   FROM (qr_redemptions redemption\n     JOIN venues venue ON ((venue.id = redemption.venue_id)))\n  WHERE ((redemption.id = qr_redemption_events.qr_redemption_id) AND (venue.owner_user_id = auth.uid()))))",
+      "roles": [
+        "public"
+      ],
+      "schemaname": "public",
+      "tablename": "qr_redemption_events",
+      "with_check": null
+    },
+    {
+      "cmd": "SELECT",
+      "permissive": "PERMISSIVE",
+      "policyname": "Venue owners read own QR redemptions",
+      "qual": "(EXISTS ( SELECT 1\n   FROM venues venue\n  WHERE ((venue.id = qr_redemptions.venue_id) AND (venue.owner_user_id = auth.uid()))))",
+      "roles": [
+        "public"
+      ],
+      "schemaname": "public",
+      "tablename": "qr_redemptions",
+      "with_check": null
+    },
+    {
+      "cmd": "SELECT",
+      "permissive": "PERMISSIVE",
+      "policyname": "Venue owners read own club deals",
+      "qual": "(EXISTS ( SELECT 1\n   FROM venues v\n  WHERE ((v.id = club_deals.venue_id) AND (v.owner_user_id = auth.uid()))))",
+      "roles": [
+        "public"
+      ],
+      "schemaname": "public",
+      "tablename": "club_deals",
+      "with_check": null
+    },
+    {
+      "cmd": "SELECT",
+      "permissive": "PERMISSIVE",
+      "policyname": "Venue owners read own referral fee terms",
+      "qual": "(EXISTS ( SELECT 1\n   FROM venues venue\n  WHERE ((venue.id = venue_referral_fee_terms.venue_id) AND (venue.owner_user_id = auth.uid()))))",
+      "roles": [
+        "public"
+      ],
+      "schemaname": "public",
+      "tablename": "venue_referral_fee_terms",
+      "with_check": null
+    },
+    {
+      "cmd": "SELECT",
+      "permissive": "PERMISSIVE",
+      "policyname": "active venues are public",
+      "qual": "((is_active = true) OR is_admin())",
+      "roles": [
+        "public"
+      ],
+      "schemaname": "public",
+      "tablename": "venues",
+      "with_check": null
+    },
+    {
+      "cmd": "ALL",
+      "permissive": "PERMISSIVE",
+      "policyname": "admins manage venues",
+      "qual": "is_admin()",
+      "roles": [
+        "public"
+      ],
+      "schemaname": "public",
+      "tablename": "venues",
+      "with_check": "is_admin()"
+    },
+    {
+      "cmd": "SELECT",
+      "permissive": "PERMISSIVE",
+      "policyname": "venue owners read own venue",
+      "qual": "(owner_user_id = auth.uid())",
+      "roles": [
+        "public"
+      ],
+      "schemaname": "public",
+      "tablename": "venues",
+      "with_check": null
+    }
+  ],
+  "read_only": "on",
+  "triggers": [
+    {
+      "definition": "CREATE TRIGGER agent_commission_events_enqueue_nats_export AFTER INSERT OR UPDATE OF status ON public.agent_commission_events FOR EACH ROW EXECUTE FUNCTION enqueue_nats_agent_commission_export()",
+      "function_definition": "CREATE OR REPLACE FUNCTION public.enqueue_nats_agent_commission_export()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\ndeclare v_account_active boolean;\nbegin\n  if new.status <> 'payable' or new.amount_cents <= 0 or lower(new.currency) <> 'usd' then\n    return new;\n  end if;\n  select exists (\n    select 1 from public.nats_agent_affiliate_accounts account\n    where account.agent_id = new.recipient_agent_id and account.status = 'active'\n  ) into v_account_active;\n  insert into public.nats_agent_commission_exports (\n    agent_commission_event_id, agent_id, amount_cents, currency, status\n  ) values (\n    new.id, new.recipient_agent_id, new.amount_cents, lower(new.currency),\n    case when v_account_active then 'pending' else 'waiting_for_affiliate' end\n  ) on conflict (agent_commission_event_id) do nothing;\n  return new;\nend;\n$function$\n",
+      "name": "agent_commission_events_enqueue_nats_export",
+      "table": "agent_commission_events"
+    },
+    {
+      "definition": "CREATE TRIGGER agent_commission_events_no_delete BEFORE DELETE ON public.agent_commission_events FOR EACH ROW EXECUTE FUNCTION prohibit_financial_record_delete()",
+      "function_definition": "CREATE OR REPLACE FUNCTION public.prohibit_financial_record_delete()\n RETURNS trigger\n LANGUAGE plpgsql\n SET search_path TO 'pg_catalog', 'pg_temp'\nAS $function$\r\nbegin\r\n  raise exception using errcode = '22023', message = 'Financial records cannot be deleted.';\r\nend;\r\n$function$\n",
+      "name": "agent_commission_events_no_delete",
+      "table": "agent_commission_events"
+    },
+    {
+      "definition": "CREATE TRIGGER agent_commission_events_reconcile_nats_void AFTER UPDATE OF status ON public.agent_commission_events FOR EACH ROW EXECUTE FUNCTION flag_voided_nats_agent_commission()",
+      "function_definition": "CREATE OR REPLACE FUNCTION public.flag_voided_nats_agent_commission()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\nbegin\n  if old.status <> 'voided' and new.status = 'voided' then\n    update public.nats_agent_commission_exports\n    set status = case when status = 'exported' then 'reconciliation_required' else 'canceled' end,\n        last_error = case when status = 'exported'\n          then 'The source agent earning was voided after export. Reconcile the matching manual invoice in NATS.'\n          else 'The source agent earning was voided before NATS export.' end,\n        failed_at = case when status = 'exported' then clock_timestamp() else failed_at end,\n        updated_at = clock_timestamp()\n    where agent_commission_event_id = new.id\n      and status in ('waiting_for_affiliate', 'pending', 'failed', 'exported');\n  end if;\n  return new;\nend;\n$function$\n",
+      "name": "agent_commission_events_reconcile_nats_void",
+      "table": "agent_commission_events"
+    },
+    {
+      "definition": "CREATE TRIGGER commission_events_enqueue_nats_export AFTER INSERT OR UPDATE OF status, held_at, review_flag ON public.commission_events FOR EACH ROW EXECUTE FUNCTION enqueue_nats_commission_export()",
+      "function_definition": "CREATE OR REPLACE FUNCTION public.enqueue_nats_commission_export()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public', 'pg_temp'\nAS $function$\r\ndeclare v_account_active boolean;\r\nbegin\r\n  if new.status <> 'available' or new.is_test or new.held_at is not null\r\n    or new.review_flag is not null or new.amount_cents <= 0 or lower(new.currency) <> 'usd'\r\n  then return new; end if;\r\n\r\n  if new.qr_redemption_id is not null\r\n    and not public.is_nats_eligible_club_deal_earning(new.id)\r\n  then return new; end if;\r\n\r\n  select exists (\r\n    select 1 from public.nats_affiliate_accounts account\r\n    where account.dancer_id = new.dancer_id and account.status = 'active'\r\n  ) into v_account_active;\r\n\r\n  insert into public.nats_commission_exports (\r\n    commission_event_id, dancer_id, amount_cents, currency, status\r\n  ) values (\r\n    new.id, new.dancer_id, new.amount_cents, lower(new.currency),\r\n    case when new.qr_redemption_id is not null or v_account_active\r\n      then 'pending' else 'waiting_for_affiliate' end\r\n  ) on conflict (commission_event_id) do nothing;\r\n  return new;\r\nend;\r\n$function$\n",
+      "name": "commission_events_enqueue_nats_export",
+      "table": "commission_events"
+    },
+    {
+      "definition": "CREATE TRIGGER commission_events_no_delete BEFORE DELETE ON public.commission_events FOR EACH ROW EXECUTE FUNCTION prohibit_financial_record_delete()",
+      "function_definition": "CREATE OR REPLACE FUNCTION public.prohibit_financial_record_delete()\n RETURNS trigger\n LANGUAGE plpgsql\n SET search_path TO 'pg_catalog', 'pg_temp'\nAS $function$\r\nbegin\r\n  raise exception using errcode = '22023', message = 'Financial records cannot be deleted.';\r\nend;\r\n$function$\n",
+      "name": "commission_events_no_delete",
+      "table": "commission_events"
+    },
+    {
+      "definition": "CREATE TRIGGER commission_events_prepare_earning BEFORE INSERT OR UPDATE ON public.commission_events FOR EACH ROW EXECUTE FUNCTION prepare_dancer_earning()",
+      "function_definition": "CREATE OR REPLACE FUNCTION public.prepare_dancer_earning()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\r\ndeclare v_hold_days integer;\r\nbegin\r\n  if tg_op = 'INSERT' then\r\n    select earnings_hold_days into v_hold_days from public.payout_settings where id = 'default';\r\n    new.status := case new.status\r\n      when 'pending_club_payment' then 'pending'\r\n      when 'payable' then 'pending'\r\n      when 'rejected' then 'reversed'\r\n      when 'voided' then 'reversed'\r\n      else new.status\r\n    end;\r\n    new.pending_until := coalesce(new.pending_until, clock_timestamp() + make_interval(days => coalesce(v_hold_days, 7)));\r\n    new.metadata := coalesce(new.metadata, '{}'::jsonb) || jsonb_build_object(\r\n      'commission_funder', 'mydancr',\r\n      'venue_payment_dependency', false\r\n    );\r\n    if new.status = 'reversed' then\r\n      new.reversed_at := coalesce(new.reversed_at, clock_timestamp());\r\n      new.reversal_reason := coalesce(nullif(trim(new.reversal_reason), ''), 'Earning invalidated during creation');\r\n    end if;\r\n    return new;\r\n  end if;\r\n\r\n  new.status := case new.status\r\n    when 'pending_club_payment' then 'pending'\r\n    when 'payable' then 'pending'\r\n    when 'rejected' then 'reversed'\r\n    when 'voided' then 'reversed'\r\n    else new.status\r\n  end;\r\n  if new.status = 'reversed' and old.status <> 'reversed' then\r\n    new.reversed_at := coalesce(new.reversed_at, clock_timestamp());\r\n    new.reversal_reason := coalesce(nullif(trim(new.reversal_reason), ''), 'Earning invalidated by the originating workflow');\r\n  end if;\r\n\r\n  if (new.qr_redemption_id, new.venue_id, new.club_deal_id, new.dancer_id, new.amount_cents,\r\n      new.gross_commission_cents, new.dancer_share_bps, new.platform_amount_cents, new.currency,\r\n      new.earning_type, new.created_at, new.is_test)\r\n     is distinct from\r\n     (old.qr_redemption_id, old.venue_id, old.club_deal_id, old.dancer_id, old.amount_cents,\r\n      old.gross_commission_cents, old.dancer_share_bps, old.platform_amount_cents, old.currency,\r\n      old.earning_type, old.created_at, old.is_test)\r\n  then\r\n    raise exception using errcode = '22023', message = 'Core earning fields are immutable.';\r\n  end if;\r\n\r\n  if old.status = 'paid' and new.status <> 'paid' then\r\n    raise exception using errcode = '22023', message = 'Paid earnings cannot be reversed or silently debited.';\r\n  end if;\r\n\r\n  if old.status <> new.status and not (\r\n    (old.status = 'pending' and new.status in ('available', 'reversed', 'failed')) or\r\n    (old.status = 'available' and new.status in ('payout_processing', 'reversed', 'failed')) or\r\n    (old.status = 'payout_processing' and new.status in ('paid', 'available', 'failed')) or\r\n    (old.status = 'failed' and new.status in ('pending', 'available', 'reversed'))\r\n  ) then\r\n    raise exception using errcode = '22023', message = 'Invalid earning status transition.';\r\n  end if;\r\n\r\n  if new.status = 'available' and old.status <> 'available' then\r\n    new.available_at := coalesce(new.available_at, clock_timestamp());\r\n  end if;\r\n  if new.status = 'paid' and old.status <> 'paid' then\r\n    new.paid_at := coalesce(new.paid_at, clock_timestamp());\r\n  end if;\r\n  if new.status = 'reversed' and old.status <> 'reversed' then\r\n    new.reversed_at := coalesce(new.reversed_at, clock_timestamp());\r\n    if char_length(trim(coalesce(new.reversal_reason, ''))) < 3 then\r\n      raise exception using errcode = '22023', message = 'A reversal reason is required.';\r\n    end if;\r\n  end if;\r\n  return new;\r\nend;\r\n$function$\n",
+      "name": "commission_events_prepare_earning",
+      "table": "commission_events"
+    },
+    {
+      "definition": "CREATE TRIGGER commission_events_reconcile_nats_reversal AFTER UPDATE OF status ON public.commission_events FOR EACH ROW EXECUTE FUNCTION flag_reversed_nats_commission()",
+      "function_definition": "CREATE OR REPLACE FUNCTION public.flag_reversed_nats_commission()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\nbegin\n  if old.status <> 'reversed' and new.status = 'reversed' then\n    update public.nats_commission_exports\n    set status = case when status = 'exported' then 'reconciliation_required' else 'canceled' end,\n        last_error = case when status = 'exported'\n          then 'The source earning was reversed after export. Reconcile the matching manual invoice in NATS.'\n          else 'The source earning was reversed before NATS export.' end,\n        failed_at = case when status = 'exported' then clock_timestamp() else failed_at end,\n        updated_at = clock_timestamp()\n    where commission_event_id = new.id\n      and status in ('waiting_for_affiliate', 'pending', 'failed', 'exported');\n  end if;\n  return new;\nend;\n$function$\n",
+      "name": "commission_events_reconcile_nats_reversal",
+      "table": "commission_events"
+    },
+    {
+      "definition": "CREATE TRIGGER commission_events_require_nats_enrollment BEFORE INSERT ON public.commission_events FOR EACH ROW EXECUTE FUNCTION require_enrolled_club_deal_earning()",
+      "function_definition": "CREATE OR REPLACE FUNCTION public.require_enrolled_club_deal_earning()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public', 'pg_temp'\nAS $function$\r\nbegin\r\n  if new.qr_redemption_id is not null and not exists (\r\n    select 1 from public.deal_revenue_events revenue\r\n    where revenue.qr_redemption_id = new.qr_redemption_id\r\n      and revenue.dancer_id = new.dancer_id and revenue.dancer_commission_eligible\r\n      and revenue.dancer_nats_activated_at <= revenue.confirmed_at\r\n      and revenue.dancer_commission_cents = new.amount_cents\r\n      and revenue.status not in ('refunded', 'voided')\r\n  ) then\r\n    raise exception using errcode = '22023', message = 'Club Deal commission requires NATS eligibility at redemption.';\r\n  end if;\r\n  return new;\r\nend;\r\n$function$\n",
+      "name": "commission_events_require_nats_enrollment",
+      "table": "commission_events"
+    },
+    {
+      "definition": "CREATE TRIGGER commission_events_status_history AFTER INSERT OR UPDATE OF status ON public.commission_events FOR EACH ROW EXECUTE FUNCTION record_dancer_earning_status_history()",
+      "function_definition": "CREATE OR REPLACE FUNCTION public.record_dancer_earning_status_history()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\r\ndeclare\r\n  v_actor_type text := 'system';\r\nbegin\r\n  if auth.uid() is not null then\r\n    if exists (\r\n      select 1\r\n      from public.app_users\r\n      where id = auth.uid()\r\n        and role = 'admin'\r\n        and account_state = 'active'\r\n    ) then\r\n      v_actor_type := 'admin';\r\n    elsif exists (\r\n      select 1\r\n      from public.dancer_profiles\r\n      where user_id = auth.uid()\r\n    ) then\r\n      v_actor_type := 'dancer';\r\n    end if;\r\n  end if;\r\n\r\n  if tg_op = 'INSERT' then\r\n    insert into public.dancer_earning_status_history (\r\n      earning_id, from_status, to_status, actor_user_id, actor_type, reason, metadata\r\n    ) values (\r\n      new.id,\r\n      null,\r\n      new.status,\r\n      auth.uid(),\r\n      v_actor_type,\r\n      coalesce(new.reversal_reason, new.hold_reason),\r\n      jsonb_build_object('payout_id', new.payout_batch_id, 'provider', new.payment_provider)\r\n    );\r\n  elsif old.status is distinct from new.status then\r\n    insert into public.dancer_earning_status_history (\r\n      earning_id, from_status, to_status, actor_user_id, actor_type, reason, metadata\r\n    ) values (\r\n      new.id,\r\n      old.status,\r\n      new.status,\r\n      auth.uid(),\r\n      v_actor_type,\r\n      coalesce(new.reversal_reason, new.hold_reason),\r\n      jsonb_build_object('payout_id', new.payout_batch_id, 'provider', new.payment_provider)\r\n    );\r\n  end if;\r\n  return new;\r\nend;\r\n$function$\n",
+      "name": "commission_events_status_history",
+      "table": "commission_events"
+    },
+    {
+      "definition": "CREATE TRIGGER deal_revenue_events_preserve_dancer_eligibility BEFORE UPDATE ON public.deal_revenue_events FOR EACH ROW EXECUTE FUNCTION preserve_dancer_commission_eligibility()",
+      "function_definition": "CREATE OR REPLACE FUNCTION public.preserve_dancer_commission_eligibility()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public', 'pg_temp'\nAS $function$\r\nbegin\r\n  if (new.dancer_commission_eligible, new.dancer_nats_activated_at, new.confirmed_at)\r\n    is distinct from\r\n    (old.dancer_commission_eligible, old.dancer_nats_activated_at, old.confirmed_at)\r\n  then\r\n    raise exception using errcode = '22023', message = 'Redemption commission eligibility is immutable.';\r\n  end if;\r\n  return new;\r\nend;\r\n$function$\n",
+      "name": "deal_revenue_events_preserve_dancer_eligibility",
+      "table": "deal_revenue_events"
+    },
+    {
+      "definition": "CREATE TRIGGER deal_revenue_events_void_agent_commissions AFTER UPDATE OF status ON public.deal_revenue_events FOR EACH ROW EXECUTE FUNCTION void_agent_commissions_with_revenue()",
+      "function_definition": "CREATE OR REPLACE FUNCTION public.void_agent_commissions_with_revenue()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\nbegin\n  if new.status in ('refunded', 'voided') and old.status not in ('refunded', 'voided') then\n    update public.agent_commission_events\n    set status = 'voided', voided_at = clock_timestamp(),\n        audit = audit || jsonb_build_object('source_revenue_status', new.status)\n    where deal_revenue_event_id = new.id and status <> 'voided';\n  end if;\n  return new;\nend;\n$function$\n",
+      "name": "deal_revenue_events_void_agent_commissions",
+      "table": "deal_revenue_events"
+    },
+    {
+      "definition": "CREATE TRIGGER nats_affiliate_accounts_activate_exports BEFORE INSERT OR UPDATE ON public.nats_affiliate_accounts FOR EACH ROW EXECUTE FUNCTION activate_waiting_nats_exports()",
+      "function_definition": "CREATE OR REPLACE FUNCTION public.activate_waiting_nats_exports()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public', 'pg_temp'\nAS $function$\r\nbegin\r\n  perform pg_advisory_xact_lock(hashtext(new.dancer_id::text), hashtext('nats-dancer-enrollment'));\r\n  new.updated_at := clock_timestamp();\r\n  if new.status = 'active' and (tg_op = 'INSERT' or old.status is distinct from 'active') then\r\n    new.activated_at := clock_timestamp();\r\n    new.disabled_at := null;\r\n    -- Other, non-Club-Deal earning types keep their existing settlement behavior.\r\n    update public.nats_commission_exports export\r\n    set status = 'pending', updated_at = clock_timestamp(), last_error = null, failed_at = null\r\n    where export.dancer_id = new.dancer_id and export.status = 'waiting_for_affiliate'\r\n      and exists (\r\n        select 1 from public.commission_events earning\r\n        where earning.id = export.commission_event_id and earning.qr_redemption_id is null\r\n          and earning.status = 'available' and not earning.is_test\r\n          and earning.held_at is null and earning.review_flag is null\r\n      );\r\n  elsif tg_op = 'UPDATE' then\r\n    new.activated_at := old.activated_at;\r\n    if new.status = 'disabled' and old.status is distinct from 'disabled' then\r\n      new.disabled_at := clock_timestamp();\r\n    end if;\r\n  else\r\n    new.activated_at := null;\r\n  end if;\r\n  return new;\r\nend;\r\n$function$\n",
+      "name": "nats_affiliate_accounts_activate_exports",
+      "table": "nats_affiliate_accounts"
+    },
+    {
+      "definition": "CREATE TRIGGER nats_affiliate_accounts_no_delete BEFORE DELETE ON public.nats_affiliate_accounts FOR EACH ROW EXECUTE FUNCTION prohibit_financial_record_delete()",
+      "function_definition": "CREATE OR REPLACE FUNCTION public.prohibit_financial_record_delete()\n RETURNS trigger\n LANGUAGE plpgsql\n SET search_path TO 'pg_catalog', 'pg_temp'\nAS $function$\r\nbegin\r\n  raise exception using errcode = '22023', message = 'Financial records cannot be deleted.';\r\nend;\r\n$function$\n",
+      "name": "nats_affiliate_accounts_no_delete",
+      "table": "nats_affiliate_accounts"
+    },
+    {
+      "definition": "CREATE TRIGGER nats_agent_affiliate_accounts_activate_exports BEFORE UPDATE ON public.nats_agent_affiliate_accounts FOR EACH ROW EXECUTE FUNCTION activate_waiting_nats_agent_exports()",
+      "function_definition": "CREATE OR REPLACE FUNCTION public.activate_waiting_nats_agent_exports()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\nbegin\n  new.updated_at := clock_timestamp();\n  if new.status = 'active' and old.status is distinct from 'active' then\n    update public.nats_agent_commission_exports export\n    set status = 'pending', updated_at = clock_timestamp(), last_error = null, failed_at = null\n    where export.agent_id = new.agent_id\n      and export.status = 'waiting_for_affiliate'\n      and exists (\n        select 1 from public.agent_commission_events earning\n        where earning.id = export.agent_commission_event_id and earning.status = 'payable'\n      );\n  elsif new.status = 'disabled' and old.status is distinct from 'disabled' then\n    new.disabled_at := coalesce(new.disabled_at, clock_timestamp());\n  end if;\n  return new;\nend;\n$function$\n",
+      "name": "nats_agent_affiliate_accounts_activate_exports",
+      "table": "nats_agent_affiliate_accounts"
+    },
+    {
+      "definition": "CREATE TRIGGER nats_agent_affiliate_accounts_no_delete BEFORE DELETE ON public.nats_agent_affiliate_accounts FOR EACH ROW EXECUTE FUNCTION prohibit_financial_record_delete()",
+      "function_definition": "CREATE OR REPLACE FUNCTION public.prohibit_financial_record_delete()\n RETURNS trigger\n LANGUAGE plpgsql\n SET search_path TO 'pg_catalog', 'pg_temp'\nAS $function$\r\nbegin\r\n  raise exception using errcode = '22023', message = 'Financial records cannot be deleted.';\r\nend;\r\n$function$\n",
+      "name": "nats_agent_affiliate_accounts_no_delete",
+      "table": "nats_agent_affiliate_accounts"
+    },
+    {
+      "definition": "CREATE TRIGGER nats_agent_affiliate_login_unique BEFORE INSERT OR UPDATE OF login_id ON public.nats_agent_affiliate_accounts FOR EACH ROW EXECUTE FUNCTION enforce_unique_nats_affiliate_login()",
+      "function_definition": "CREATE OR REPLACE FUNCTION public.enforce_unique_nats_affiliate_login()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\nbegin\n  perform pg_advisory_xact_lock(hashtext('nats-login'), hashtext(new.login_id::text));\n  if tg_table_name = 'nats_agent_affiliate_accounts' and exists (\n    select 1 from public.nats_affiliate_accounts dancer where dancer.login_id = new.login_id\n  ) then\n    raise exception using errcode = '23505', message = 'That NATS affiliate login is already linked to a dancer.';\n  end if;\n  if tg_table_name = 'nats_affiliate_accounts' and exists (\n    select 1 from public.nats_agent_affiliate_accounts agent where agent.login_id = new.login_id\n  ) then\n    raise exception using errcode = '23505', message = 'That NATS affiliate login is already linked to an agent.';\n  end if;\n  return new;\nend;\n$function$\n",
+      "name": "nats_agent_affiliate_login_unique",
+      "table": "nats_agent_affiliate_accounts"
+    },
+    {
+      "definition": "CREATE TRIGGER nats_agent_commission_exports_no_delete BEFORE DELETE ON public.nats_agent_commission_exports FOR EACH ROW EXECUTE FUNCTION prohibit_financial_record_delete()",
+      "function_definition": "CREATE OR REPLACE FUNCTION public.prohibit_financial_record_delete()\n RETURNS trigger\n LANGUAGE plpgsql\n SET search_path TO 'pg_catalog', 'pg_temp'\nAS $function$\r\nbegin\r\n  raise exception using errcode = '22023', message = 'Financial records cannot be deleted.';\r\nend;\r\n$function$\n",
+      "name": "nats_agent_commission_exports_no_delete",
+      "table": "nats_agent_commission_exports"
+    },
+    {
+      "definition": "CREATE TRIGGER nats_commission_exports_no_delete BEFORE DELETE ON public.nats_commission_exports FOR EACH ROW EXECUTE FUNCTION prohibit_financial_record_delete()",
+      "function_definition": "CREATE OR REPLACE FUNCTION public.prohibit_financial_record_delete()\n RETURNS trigger\n LANGUAGE plpgsql\n SET search_path TO 'pg_catalog', 'pg_temp'\nAS $function$\r\nbegin\r\n  raise exception using errcode = '22023', message = 'Financial records cannot be deleted.';\r\nend;\r\n$function$\n",
+      "name": "nats_commission_exports_no_delete",
+      "table": "nats_commission_exports"
+    },
+    {
+      "definition": "CREATE TRIGGER nats_dancer_affiliate_login_unique BEFORE INSERT OR UPDATE OF login_id ON public.nats_affiliate_accounts FOR EACH ROW EXECUTE FUNCTION enforce_unique_nats_affiliate_login()",
+      "function_definition": "CREATE OR REPLACE FUNCTION public.enforce_unique_nats_affiliate_login()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\nbegin\n  perform pg_advisory_xact_lock(hashtext('nats-login'), hashtext(new.login_id::text));\n  if tg_table_name = 'nats_agent_affiliate_accounts' and exists (\n    select 1 from public.nats_affiliate_accounts dancer where dancer.login_id = new.login_id\n  ) then\n    raise exception using errcode = '23505', message = 'That NATS affiliate login is already linked to a dancer.';\n  end if;\n  if tg_table_name = 'nats_affiliate_accounts' and exists (\n    select 1 from public.nats_agent_affiliate_accounts agent where agent.login_id = new.login_id\n  ) then\n    raise exception using errcode = '23505', message = 'That NATS affiliate login is already linked to an agent.';\n  end if;\n  return new;\nend;\n$function$\n",
+      "name": "nats_dancer_affiliate_login_unique",
+      "table": "nats_affiliate_accounts"
+    },
+    {
+      "definition": "CREATE TRIGGER notify_venue_card_live_after_publication AFTER UPDATE OF is_active, published_at, page_review_status ON public.venues FOR EACH ROW EXECUTE FUNCTION notify_venue_card_live()",
+      "function_definition": "CREATE OR REPLACE FUNCTION public.notify_venue_card_live()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\nbegin\n  if new.is_active is true\n    and new.page_review_status = 'published'\n    and new.published_at is not null\n    and old.published_at is null\n  then\n    insert into public.notifications (\n      recipient_id,\n      notification_type,\n      channel,\n      title,\n      body,\n      payload,\n      sent_at\n    )\n    select\n      recipients.user_id,\n      'venue_publication_status',\n      'in_app',\n      'Your venue card is live',\n      new.name || ' is now visible in MyDancr venue discovery and on its public venue page.',\n      jsonb_build_object(\n        'kind', 'venue_card_live',\n        'status', 'live',\n        'venueId', new.id,\n        'venueSlug', new.slug,\n        'venueName', new.name,\n        'publishedAt', new.published_at\n      ),\n      new.published_at\n    from (\n      select new.owner_user_id as user_id\n      union\n      select member.user_id\n      from public.venue_team_members as member\n      where member.venue_id = new.id\n        and member.status = 'active'\n    ) as recipients\n    join public.app_users as account\n      on account.id = recipients.user_id\n     and account.role = 'venue'\n     and account.account_state = 'active'\n    where recipients.user_id is not null\n      and not exists (\n        select 1\n        from public.notifications as existing\n        where existing.recipient_id = recipients.user_id\n          and existing.notification_type = 'venue_publication_status'\n          and existing.payload @> jsonb_build_object(\n            'kind', 'venue_card_live',\n            'venueId', new.id\n          )\n      );\n  end if;\n\n  return new;\nend;\n$function$\n",
+      "name": "notify_venue_card_live_after_publication",
+      "table": "venues"
+    },
+    {
+      "definition": "CREATE TRIGGER qr_redemptions_log_issued AFTER INSERT ON public.qr_redemptions FOR EACH ROW EXECUTE FUNCTION log_qr_redemption_issued()",
+      "function_definition": "CREATE OR REPLACE FUNCTION public.log_qr_redemption_issued()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\r\nbegin\r\n  insert into public.qr_redemption_events (\r\n    qr_redemption_id,\r\n    event_type,\r\n    actor_user_id,\r\n    session_id,\r\n    ip_address,\r\n    user_agent,\r\n    audit\r\n  )\r\n  values (\r\n    new.id,\r\n    'issued',\r\n    new.customer_id,\r\n    new.session_id,\r\n    new.ip_address,\r\n    new.user_agent,\r\n    jsonb_build_object(\r\n      'source_type', new.source_type,\r\n      'dancer_id', new.dancer_id,\r\n      'shift_id', new.shift_id\r\n    )\r\n  );\r\n  return new;\r\nend;\r\n$function$\n",
+      "name": "qr_redemptions_log_issued",
+      "table": "qr_redemptions"
+    },
+    {
+      "definition": "CREATE TRIGGER reject_retired_provider_earnings BEFORE INSERT OR UPDATE OF payment_provider ON public.commission_events FOR EACH ROW EXECUTE FUNCTION reject_retired_payout_provider()",
+      "function_definition": "CREATE OR REPLACE FUNCTION public.reject_retired_payout_provider()\n RETURNS trigger\n LANGUAGE plpgsql\n SET search_path TO 'public'\nAS $function$\r\nbegin\r\n  if lower(trim(new.payment_provider)) = 'bitsafe' then\r\n    if tg_op = 'INSERT' then\r\n      raise exception 'The selected payout provider is no longer supported.' using errcode = '22023';\r\n    elsif old.payment_provider is distinct from new.payment_provider then\r\n      raise exception 'The selected payout provider is no longer supported.' using errcode = '22023';\r\n    end if;\r\n  end if;\r\n  return new;\r\nend;\r\n$function$\n",
+      "name": "reject_retired_provider_earnings",
+      "table": "commission_events"
+    },
+    {
+      "definition": "CREATE TRIGGER sales_agents_no_delete BEFORE DELETE ON public.sales_agents FOR EACH ROW EXECUTE FUNCTION prohibit_financial_record_delete()",
+      "function_definition": "CREATE OR REPLACE FUNCTION public.prohibit_financial_record_delete()\n RETURNS trigger\n LANGUAGE plpgsql\n SET search_path TO 'pg_catalog', 'pg_temp'\nAS $function$\r\nbegin\r\n  raise exception using errcode = '22023', message = 'Financial records cannot be deleted.';\r\nend;\r\n$function$\n",
+      "name": "sales_agents_no_delete",
+      "table": "sales_agents"
+    },
+    {
+      "definition": "CREATE TRIGGER validate_sales_agent_hierarchy_trigger BEFORE INSERT OR UPDATE OF sponsor_agent_id, status, commission_depth_limit ON public.sales_agents FOR EACH ROW EXECUTE FUNCTION validate_sales_agent_hierarchy()",
+      "function_definition": "CREATE OR REPLACE FUNCTION public.validate_sales_agent_hierarchy()\n RETURNS trigger\n LANGUAGE plpgsql\n SET search_path TO 'public', 'pg_temp'\nAS $function$\ndeclare v_cycle boolean := false;\nbegin\n  if new.sponsor_agent_id is not null then\n    if new.sponsor_agent_id = new.id then\n      raise exception using errcode = '22023', message = 'An agent cannot sponsor their own account.';\n    end if;\n    if not exists (\n      select 1 from public.sales_agents sponsor\n      where sponsor.id = new.sponsor_agent_id and sponsor.status = 'active'\n    ) then\n      raise exception using errcode = '22023', message = 'The selected sponsor must be an active sales agent.';\n    end if;\n    with recursive sponsors as (\n      select agent.id, agent.sponsor_agent_id\n      from public.sales_agents agent where agent.id = new.sponsor_agent_id\n      union\n      select parent.id, parent.sponsor_agent_id\n      from public.sales_agents parent join sponsors on parent.id = sponsors.sponsor_agent_id\n    )\n    select exists(select 1 from sponsors where id = new.id) into v_cycle;\n    if v_cycle then\n      raise exception using errcode = '22023', message = 'This sponsor would create an invalid circular agent hierarchy.';\n    end if;\n  end if;\n  new.updated_at := clock_timestamp();\n  return new;\nend;\n$function$\n",
+      "name": "validate_sales_agent_hierarchy_trigger",
+      "table": "sales_agents"
+    },
+    {
+      "definition": "CREATE TRIGGER venue_sales_attributions_no_delete BEFORE DELETE ON public.venue_sales_attributions FOR EACH ROW EXECUTE FUNCTION prohibit_financial_record_delete()",
+      "function_definition": "CREATE OR REPLACE FUNCTION public.prohibit_financial_record_delete()\n RETURNS trigger\n LANGUAGE plpgsql\n SET search_path TO 'pg_catalog', 'pg_temp'\nAS $function$\r\nbegin\r\n  raise exception using errcode = '22023', message = 'Financial records cannot be deleted.';\r\nend;\r\n$function$\n",
+      "name": "venue_sales_attributions_no_delete",
+      "table": "venue_sales_attributions"
+    },
+    {
+      "definition": "CREATE TRIGGER venues_create_default_club_deal AFTER INSERT ON public.venues FOR EACH ROW EXECUTE FUNCTION create_venue_default_club_deal()",
+      "function_definition": "CREATE OR REPLACE FUNCTION public.create_venue_default_club_deal()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\r\nbegin\r\n  insert into public.club_deals (\r\n    venue_id,\r\n    deal_title,\r\n    deal_description,\r\n    deal_terms,\r\n    is_active,\r\n    redemption_rules,\r\n    payout_type,\r\n    payout_amount_cents,\r\n    currency\r\n  )\r\n  values (\r\n    new.id,\r\n    'Tonight''s venue offer',\r\n    'Show your unique MyDancr QR to venue staff for the active offer.',\r\n    'Offer is subject to venue availability and house rules.',\r\n    false,\r\n    jsonb_build_object(\r\n      'one_per_guest', true,\r\n      'authenticated_venue_confirmation_required', true,\r\n      'attribution_policy', 'locked_at_issue',\r\n      'commission_policy', 'monthly-tier-v1'\r\n    ),\r\n    'flat',\r\n    0,\r\n    'usd'\r\n  )\r\n  on conflict do nothing;\r\n  return new;\r\nend;\r\n$function$\n",
+      "name": "venues_create_default_club_deal",
+      "table": "venues"
+    }
+  ],
+  "tables": [
+    "agent_commission_events",
+    "club_deals",
+    "commission_events",
+    "deal_revenue_events",
+    "nats_affiliate_accounts",
+    "nats_agent_affiliate_accounts",
+    "nats_agent_commission_exports",
+    "nats_commission_exports",
+    "nfc_tags",
+    "nfc_tap_events",
+    "qr_redemption_events",
+    "qr_redemptions",
+    "sales_agents",
+    "venue_referral_fee_terms",
+    "venue_sales_attributions",
+    "venues"
+  ],
+  "fixture_scope": "Production metadata only; sixteen target tables retain columns, constraints, indexes and triggers. Referenced identities, histories, notification targets and payout settings are explicit synthetic projections. Browser policy behavior is covered separately; these tests exercise service-only RPC access."
+}
