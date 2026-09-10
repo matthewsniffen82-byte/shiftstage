@@ -1,0 +1,133 @@
+{
+  "capturedAt": "2026-09-10T19:16:00.614212+00:00",
+  "scope": "Seven intentionally browser-executable functions. No production rows.",
+  "functions": [
+    {
+      "acl": [
+        "postgres=X/postgres",
+        "authenticated=X/postgres",
+        "service_role=X/postgres"
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true,
+      "definition": "CREATE OR REPLACE FUNCTION public.club_deal_is_liquor_related(p_offer_type text, p_deal_title text, p_deal_description text, p_deal_terms text)\n RETURNS boolean\n LANGUAGE sql\n IMMUTABLE\n SET search_path TO 'public', 'pg_temp'\nAS $function$\n  select\n    lower(coalesce(p_offer_type, '')) in ('drink', 'bottle_service')\n    or concat_ws(' ', p_deal_title, p_deal_description, p_deal_terms) ~*\n      '(^|[^[:alnum:]_])(alcohol(ic)?|liquor|beer|wine|champagne|cocktails?|vodka|tequila|whisk(e)?y|bourbon|scotch|rum|gin|cognac|brandy|mezcal|lager|ale|hard[[:space:]]+seltzer|sake|bottle[[:space:]]+service|bar[[:space:]]+(tab|credit)|happy[[:space:]]+hour)([^[:alnum:]_]|$)'\n    or concat_ws(' ', p_deal_title, p_deal_description, p_deal_terms) ~*\n      '(^|[^[:alnum:]_])((free|complimentary|discounted|reduced|two[-[:space:]]?for[-[:space:]]?one|2[-[:space:]]?for[-[:space:]]?1)[[:space:]]+(alcoholic[[:space:]]+)?drinks?|drinks?[[:space:]]+(special|ticket|credit|voucher)|(free|complimentary|discounted|reduced)[[:space:]]+shots?)([^[:alnum:]_]|$)';\n$function$\n",
+      "fingerprint": "35306ccee7c39d837d4df307e863203b",
+      "name": "club_deal_is_liquor_related",
+      "owner": "postgres",
+      "security_definer": false,
+      "service_execute": true,
+      "settings": [
+        "search_path=public, pg_temp"
+      ],
+      "signature": "club_deal_is_liquor_related(text,text,text,text)",
+      "volatility": "i"
+    },
+    {
+      "acl": null,
+      "anon_execute": true,
+      "authenticated_execute": true,
+      "definition": "CREATE OR REPLACE FUNCTION public.current_user_role()\n RETURNS user_role\n LANGUAGE sql\n STABLE SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\r\n  select role from public.app_users where id = auth.uid();\r\n$function$\n",
+      "fingerprint": "4c4ef252da393e4bf294cbb87a6671da",
+      "name": "current_user_role",
+      "owner": "postgres",
+      "security_definer": true,
+      "service_execute": true,
+      "settings": [
+        "search_path=public"
+      ],
+      "signature": "current_user_role()",
+      "volatility": "s"
+    },
+    {
+      "acl": [
+        "postgres=X/postgres",
+        "anon=X/postgres",
+        "authenticated=X/postgres",
+        "service_role=X/postgres"
+      ],
+      "anon_execute": true,
+      "authenticated_execute": true,
+      "definition": "CREATE OR REPLACE FUNCTION public.has_active_club_deal(venues)\n RETURNS boolean\n LANGUAGE sql\n STABLE SECURITY DEFINER\n SET search_path TO 'public', 'pg_temp'\nAS $function$ select exists (select 1 from public.club_deals d where d.venue_id = $1.id and d.is_active and d.payout_type = 'flat' and d.payout_amount_cents > 0 and d.offer_type = 'admission' and d.deal_title in ('Half-off admission', 'Skip the line', 'Free admission')); $function$\n",
+      "fingerprint": "d695658ec212784c67b16cdb5fbc584b",
+      "name": "has_active_club_deal",
+      "owner": "postgres",
+      "security_definer": true,
+      "service_execute": true,
+      "settings": [
+        "search_path=public, pg_temp"
+      ],
+      "signature": "has_active_club_deal(venues)",
+      "volatility": "s"
+    },
+    {
+      "acl": null,
+      "anon_execute": true,
+      "authenticated_execute": true,
+      "definition": "CREATE OR REPLACE FUNCTION public.is_admin()\n RETURNS boolean\n LANGUAGE sql\n STABLE SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\r\n  select exists (\r\n    select 1 from public.app_users\r\n    where id = auth.uid()\r\n      and role = 'admin'\r\n      and account_state = 'active'\r\n  );\r\n$function$\n",
+      "fingerprint": "aa75a61376ef5a45ec72cb30fb0eb229",
+      "name": "is_admin",
+      "owner": "postgres",
+      "security_definer": true,
+      "service_execute": true,
+      "settings": [
+        "search_path=public"
+      ],
+      "signature": "is_admin()",
+      "volatility": "s"
+    },
+    {
+      "acl": null,
+      "anon_execute": true,
+      "authenticated_execute": true,
+      "definition": "CREATE OR REPLACE FUNCTION public.mydancr_placeholder_venue_address(venue_city text, venue_state text)\n RETURNS text\n LANGUAGE sql\n IMMUTABLE\n SET search_path TO ''\nAS $function$\n  select concat_ws(\n    ', ',\n    '0000 MyDancr Ave',\n    nullif(btrim(venue_city), ''),\n    case\n      when nullif(btrim(venue_state), '') is not null\n        then btrim(venue_state) || ' 55555'\n      else '55555'\n    end\n  );\n$function$\n",
+      "fingerprint": "89a47d26b02c5c4f8fbd8d62746e51c3",
+      "name": "mydancr_placeholder_venue_address",
+      "owner": "postgres",
+      "security_definer": false,
+      "service_execute": true,
+      "settings": [
+        "search_path=\"\""
+      ],
+      "signature": "mydancr_placeholder_venue_address(text,text)",
+      "volatility": "i"
+    },
+    {
+      "acl": [
+        "postgres=X/postgres",
+        "authenticated=X/postgres"
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true,
+      "definition": "CREATE OR REPLACE FUNCTION public.settle_deal_revenue_event(p_revenue_event_id uuid, p_action text, p_external_reference text)\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public', 'auth'\nAS $function$\ndeclare\n  v_now timestamptz := clock_timestamp();\n  v_event public.deal_revenue_events%rowtype;\nbegin\n  if auth.uid() is null or not public.is_admin() then\n    raise exception using errcode = '42501', message = 'Admin access required.';\n  end if;\n  if p_action <> 'venue_payment_received' then\n    raise exception using errcode = '22023', message = 'Payee settlements are recorded from their independent commission ledgers.';\n  end if;\n  if length(trim(coalesce(p_external_reference, ''))) < 3\n    or length(trim(p_external_reference)) > 180 then\n    raise exception using errcode = '22023', message = 'A valid venue payment reference is required.';\n  end if;\n  select revenue.* into v_event\n  from public.deal_revenue_events revenue\n  where revenue.id = p_revenue_event_id for update;\n  if not found then\n    raise exception using errcode = 'P0002', message = 'Venue receivable not found.';\n  end if;\n  if v_event.status <> 'pending_venue_payment' then\n    raise exception using errcode = '22023', message = 'Venue payment cannot be recorded from the current status.';\n  end if;\n\n  update public.deal_revenue_events\n  set status = 'settled', venue_payment_reference = trim(p_external_reference),\n      venue_payment_received_at = v_now,\n      audit = coalesce(audit, '{}'::jsonb) || jsonb_build_object(\n        'venue_receivable_settled_by', auth.uid(), 'dancer_payout_dependency', false,\n        'agent_payout_dependency_released', true\n      )\n  where id = v_event.id;\n  update public.agent_commission_events\n  set status = 'payable', venue_payment_received_at = v_now, payable_at = v_now,\n      audit = audit || jsonb_build_object('venue_payment_reference', trim(p_external_reference))\n  where deal_revenue_event_id = v_event.id and status = 'pending_venue_payment';\n\n  return jsonb_build_object('id', v_event.id, 'status', 'settled',\n    'venue_payment_reference', trim(p_external_reference),\n    'venue_payment_received_at', v_now);\nend;\n$function$\n",
+      "fingerprint": "7e8ceefbca38b6cff1699bfb458844cc",
+      "name": "settle_deal_revenue_event",
+      "owner": "postgres",
+      "security_definer": true,
+      "service_execute": false,
+      "settings": [
+        "search_path=public, auth"
+      ],
+      "signature": "settle_deal_revenue_event(uuid,text,text)",
+      "volatility": "v"
+    },
+    {
+      "acl": [
+        "postgres=X/postgres",
+        "authenticated=X/postgres"
+      ],
+      "anon_execute": false,
+      "authenticated_execute": true,
+      "definition": "CREATE OR REPLACE FUNCTION public.void_generated_deal_redemption(p_redemption_id uuid, p_reason text DEFAULT 'admin_marked_suspicious'::text)\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public', 'auth'\nAS $function$\r\ndeclare\r\n  v_now timestamptz := clock_timestamp();\r\n  v_user_id uuid := auth.uid();\r\n  v_redemption public.qr_redemptions%rowtype;\r\nbegin\r\n  if v_user_id is null or not public.is_admin() then\r\n    raise exception using errcode = '42501', message = 'Admin access required.';\r\n  end if;\r\n\r\n  if length(trim(coalesce(p_reason, ''))) < 3\r\n    or length(trim(p_reason)) > 180 then\r\n    raise exception using errcode = '22023', message = 'A valid void reason is required.';\r\n  end if;\r\n\r\n  select redemption.*\r\n    into v_redemption\r\n  from public.qr_redemptions redemption\r\n  where redemption.id = p_redemption_id\r\n  for update;\r\n\r\n  if not found then\r\n    raise exception using errcode = 'P0002', message = 'Redemption not found.';\r\n  end if;\r\n\r\n  if v_redemption.status <> 'generated' then\r\n    raise exception using\r\n      errcode = '22023',\r\n      message = 'Only an unused generated QR can be voided. Financial reversals require a separate refund record.';\r\n  end if;\r\n\r\n  update public.qr_redemptions\r\n  set\r\n    status = 'voided',\r\n    suspicious = true,\r\n    voided_at = v_now,\r\n    voided_by_admin = v_user_id,\r\n    audit = coalesce(audit, '{}'::jsonb) || jsonb_build_object(\r\n      'voided_by_admin', v_user_id,\r\n      'void_reason', trim(p_reason)\r\n    )\r\n  where id = v_redemption.id;\r\n\r\n  insert into public.qr_redemption_events (\r\n    qr_redemption_id,\r\n    event_type,\r\n    actor_user_id,\r\n    audit\r\n  )\r\n  values (\r\n    v_redemption.id,\r\n    'voided',\r\n    v_user_id,\r\n    jsonb_build_object('reason', trim(p_reason))\r\n  );\r\n\r\n  return jsonb_build_object(\r\n    'id', v_redemption.id,\r\n    'status', 'voided',\r\n    'suspicious', true\r\n  );\r\nend;\r\n$function$\n",
+      "fingerprint": "24f6800dc2e788f604088acf25e10105",
+      "name": "void_generated_deal_redemption",
+      "owner": "postgres",
+      "security_definer": true,
+      "service_execute": false,
+      "settings": [
+        "search_path=public, auth"
+      ],
+      "signature": "void_generated_deal_redemption(uuid,text)",
+      "volatility": "v"
+    }
+  ]
+}
