@@ -2,6 +2,7 @@ import type Stripe from "stripe";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { getStripe } from "../stripe";
 import { syncStripeInvoice } from "./finance-provider-events";
+import { safeErrorMetadata } from "../security/safe-error-metadata";
 
 type DancrClient = SupabaseClient;
 
@@ -60,19 +61,28 @@ export async function publishClubInvoiceDrafts(client: DancrClient) {
   if (error) throw error;
 
   let opened = 0;
+  const errors: string[] = [];
   for (const invoice of data || []) {
     try {
-      await publishClubInvoice(client, invoice);
-      opened += 1;
+      if (await publishClubInvoice(client, invoice)) opened += 1;
     } catch (error) {
-      await (client as any).from("club_invoices").update({
-        status: "failed",
-        last_error: financeError(error),
-        updated_at: new Date().toISOString(),
-      }).eq("id", invoice.id);
+      console.error("CLUB_INVOICE_PUBLICATION_UNCONFIRMED", { invoiceId: invoice.id, ...safeErrorMetadata(error) });
+      const message = "Invoice publishing could not be confirmed. Review the invoice before retrying.";
+      try {
+        const { data: failed, error: failureError } = await (client as any).from("club_invoices").update({
+          status: "failed",
+          last_error: message,
+          updated_at: new Date().toISOString(),
+        }).eq("id", invoice.id).in("status", ["draft", "failed"]).select("id").maybeSingle();
+        if (failureError) throw failureError;
+        errors.push(failed?.id === invoice.id ? message : "Invoice changed during publishing. Review its current state before retrying.");
+      } catch (failureError) {
+        console.error("CLUB_INVOICE_FAILURE_STATUS_UNCONFIRMED", { invoiceId: invoice.id, ...safeErrorMetadata(failureError) });
+        errors.push("Invoice publishing and its failure status could not be confirmed. Review the invoice before retrying.");
+      }
     }
   }
-  return opened;
+  return { opened, errors };
 }
 
 export async function reconcileOpenClubInvoices(client: DancrClient) {
@@ -181,30 +191,68 @@ async function publishClubInvoice(client: DancrClient, invoice: any) {
       },
     }, { idempotencyKey: `mydancr-club-invoice-${invoice.id}` });
 
-    await (client as any).from("club_invoices").update({
+    assertInvoiceProviderIdentity(stripeInvoice, invoice, account.stripe_customer_id);
+    const { data: linked, error: linkError } = await (client as any).from("club_invoices").update({
       stripe_customer_id: account.stripe_customer_id,
       stripe_invoice_id: stripeInvoice.id,
       updated_at: new Date().toISOString(),
-    }).eq("id", invoice.id);
-
-    await stripe.invoiceItems.create({
-      customer: account.stripe_customer_id,
-      invoice: stripeInvoice.id,
-      amount: Number(invoice.amount_due_cents),
-      currency: String(invoice.currency || "usd"),
-      description: `Confirmed MyDancr Club Deal redemptions · ${invoice.period_start}–${invoice.period_end}`,
-      metadata: { mydancr_invoice_id: invoice.id },
-    }, { idempotencyKey: `mydancr-club-invoice-item-${invoice.id}` });
+    }).eq("id", invoice.id).in("status", ["draft", "failed"])
+      .or(`stripe_invoice_id.is.null,stripe_invoice_id.eq.${stripeInvoice.id}`)
+      .select("id").maybeSingle();
+    if (linkError) throw linkError;
+    if (linked?.id !== invoice.id) throw new Error("Invoice provider reference could not be confirmed.");
   }
 
+  assertInvoiceProviderIdentity(stripeInvoice, invoice, account.stripe_customer_id);
   if (stripeInvoice.status === "draft") {
+    await ensureInvoiceDraftLine(stripe, stripeInvoice, invoice, account.stripe_customer_id);
     stripeInvoice = await stripe.invoices.finalizeInvoice(stripeInvoice.id, { auto_advance: true });
   }
   if (stripeInvoice.status === "open" && stripeInvoice.collection_method === "send_invoice") {
     stripeInvoice = await stripe.invoices.sendInvoice(stripeInvoice.id);
   }
 
-  await syncStripeInvoice(client, stripeInvoice);
+  assertInvoiceProviderIdentity(stripeInvoice, invoice, account.stripe_customer_id);
+  if (stripeInvoice.status === "draft") throw new Error("Invoice finalization could not be confirmed.");
+  const synced = await syncStripeInvoice(client, stripeInvoice);
+  if (synced?.id !== invoice.id) throw new Error("Invoice publication reconciliation could not be confirmed.");
+  return stripeInvoice.status === "open" || stripeInvoice.status === "paid";
+}
+
+function assertInvoiceProviderIdentity(provider: Stripe.Invoice, invoice: any, customerId: string) {
+  const providerCustomerId = typeof provider.customer === "string" ? provider.customer : provider.customer?.id;
+  if (!provider.id || !["draft", "open", "paid", "void", "uncollectible"].includes(provider.status || "")
+    || providerCustomerId !== customerId || provider.metadata?.mydancr_invoice_id !== invoice.id
+    || (invoice.stripe_invoice_id && provider.id !== invoice.stripe_invoice_id)) {
+    throw new Error("Invoice provider identity could not be confirmed.");
+  }
+}
+
+async function ensureInvoiceDraftLine(stripe: Stripe, provider: Stripe.Invoice, invoice: any, customerId: string) {
+  const amount = Number(invoice.amount_due_cents);
+  const currency = String(invoice.currency || "usd");
+  if (!Number.isSafeInteger(amount) || amount < 0 || !/^[a-z]{3}$/.test(currency)) throw new Error("Invoice amount is invalid.");
+  const readLines = async () => {
+    const result = await stripe.invoices.listLineItems(provider.id, { limit: 100 }, { timeout: 10_000, maxNetworkRetries: 0 });
+    if (!result || !Array.isArray(result.data) || result.has_more !== false) throw new Error("Invoice lines could not be confirmed.");
+    return result.data;
+  };
+  let lines = await readLines();
+  if (!lines.length) {
+    await stripe.invoiceItems.create({
+      customer: customerId,
+      invoice: provider.id,
+      amount,
+      currency,
+      description: `Confirmed MyDancr Club Deal redemptions · ${invoice.period_start}–${invoice.period_end}`,
+      metadata: { mydancr_invoice_id: invoice.id },
+    }, { idempotencyKey: `mydancr-club-invoice-item-${invoice.id}` });
+    lines = await readLines();
+  }
+  if (lines.length !== 1 || lines[0].metadata?.mydancr_invoice_id !== invoice.id
+    || lines[0].amount !== amount || lines[0].currency !== currency) {
+    throw new Error("Invoice lines need review before publishing.");
+  }
 }
 
 async function getOrCreateFinanceAccountRow(client: DancrClient, venueId: string) {
@@ -242,10 +290,4 @@ function monthEnd(monthStart: string) {
 
 function joined(value: any) {
   return Array.isArray(value) ? value[0] || null : value || null;
-}
-
-function financeError(error: unknown) {
-  if (error instanceof Error) return error.message.slice(0, 500);
-  if (error && typeof error === "object" && "message" in error) return String((error as any).message).slice(0, 500);
-  return "Finance operation failed.";
 }

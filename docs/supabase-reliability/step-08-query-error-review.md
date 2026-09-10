@@ -30,4 +30,4 @@ Final TV correction validation on `043d8d83` passed all 3,806 tests with no fail
 
 ## Reminder follow-up
 
-The TV correction was deployed and verified at 02:19:36–40 UTC; the complete receipt is in the execution ledger. The next bounded fix is described in `step-08-invoice-reminder-errors.md`. It addresses the two unchecked reminder updates, including terminal-status preservation and an explicit partial-delivery error. The other publishing writes remain open.
+The TV correction was deployed and verified at 02:19:36–40 UTC; the complete receipt is in the execution ledger. The reminder correction in `step-08-invoice-reminder-errors.md` was released as `dbf368034b0f460ec14eca435eb547c0ba1059e5`. It checks the two reminder updates, including terminal-status preservation and an explicit partial-delivery error. The next controlled correction is in `step-08-invoice-publication-errors.md`: checked provider-reference/failure writes, resumed-draft line verification and accurate aggregate publication errors. Cleanup, optional-auth and other findings remain open.

@@ -77,6 +77,7 @@ export function reminderHarness(db,options={}){
  }).outputText,{exports,Date,Error,console,require:name=>{
   if(name==='../stripe')return {getStripe:()=>stripe};
   if(name==='./finance-provider-events')return {};
+  if(name==='../security/safe-error-metadata')return {};
   throw new Error('Unexpected module '+name);
  }});
  return {calls,run:()=>exports.sendClubInvoiceReminders(client,now)};

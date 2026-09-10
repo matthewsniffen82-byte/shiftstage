@@ -43,7 +43,9 @@ export async function runClubInvoiceAutomation(client: DancrClient): Promise<Clu
     result.invoicesCreated = await createMonthlyClubInvoiceDrafts(client);
   });
   await captureFinanceStep(result, async () => {
-    result.invoicesOpened = await publishClubInvoiceDrafts(client);
+    const publication = await publishClubInvoiceDrafts(client);
+    result.invoicesOpened = publication.opened;
+    result.errors.push(...publication.errors);
   });
   await captureFinanceStep(result, async () => {
     result.invoicesReconciled = await reconcileOpenClubInvoices(client);
