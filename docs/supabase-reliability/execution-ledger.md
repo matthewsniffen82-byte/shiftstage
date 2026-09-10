@@ -476,3 +476,13 @@ The caller was pushed as `b35a7b15bd42117571d7bc9bafbf3544736d7413`, with matchi
 The inspected plan is `step-10-redundant-indexes.md`. Two ordinary indexes exactly duplicate retained unique constraints; neither has dependent objects or replica/cluster identity duties. Remove only those indexes after native drift/rollback checks and full validation, with short locks, committed SQL, transactional preservation and exact deployment gates.
 
 All 22 native index checks and transaction/repeat/drift/postflight-rollback deployment rehearsals pass. Full validation passed all 5,342 tests, lint, production build, standalone TypeScript, migration guard and thirty readiness checks. No production index or row has changed in preparation. Exact commit/push, guarded committed migration, preservation/query-plan verification and Vercel/health gates remain required.
+
+Step 10 closed with `58e6a5c04ffa6f3038ee7586aa6317dc87128181`. Exact committed migration `20260910112700` applied with rows/access, constraints, retained indexes, triggers, functions and prior ledger entries preserved. Read-only checks confirmed only the two intended removals, 269 valid/ready remaining indexes and both affected query plans. Main references matched; [exact Vercel success](https://vercel.com/ai-movie-jobs/shiftstage/3YRQpucBQf3KLbwL4F7yQyvJcf2K) and health/readiness passed at 11:36:27–29 UTC.
+
+## Step 11 storage reliability
+
+`step-11-storage-audit.md` records the current ten buckets, fourteen unchanged policies, aggregate object inventory and outstanding retirement/recovery boundaries. The gallery-history migration is confirmed absent in production. The first correction will require a confirmed owner/version-scoped video hide before storage deletion and reject storage failures rather than silently completing. No production media mutation is authorized as a test.
+
+The video-removal correction passes 51 actual-caller/native cases, including 38 failures against the previous implementation; all 82 focused storage checks pass. Read-only schema comparison at 11:47:01 UTC confirms the complete video fixture matches production. Full validation and exact push/deployment/health gates remain required; no production file or database row was changed by testing.
+
+Full validation passed all 5,393 tests, lint, production build, standalone TypeScript, migration guard and thirty readiness checks. No production media mutation or SQL application was used. Exact commit/push and Vercel/health gates remain required before continuing storage hardening.

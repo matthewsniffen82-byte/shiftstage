@@ -25,7 +25,7 @@ import {
 import {
   MYDANCR_TV_POSTER_BUCKET,
   myDancrTvPosterStoragePath,
-  removeArchivedOriginalMedia,
+  archivedOriginalStoragePath,
   watermarkStoredVideo,
 } from "./media-watermark";
 import { inspectStoredMyDancrTvVideo } from "./video-upload-validation";
@@ -1558,34 +1558,52 @@ const RETRYABLE_VIDEO_MODERATION_REASON_CODES = new Set([
 export async function hideOwnMyDancrTvVideo(admin: AdminClient, userId: string, videoId: string) {
   const { data: video, error } = await admin
     .from("mydancr_tv_videos")
-    .select("id, dancer_id, submitted_by, storage_path, storage_mime, status")
+    .select("id, dancer_id, submitted_by, storage_path, storage_mime, status, updated_at")
     .eq("id", videoId)
     .eq("submitted_by", userId)
     .maybeSingle();
   if (error) throw error;
   if (!video) throw new Error("Video not found.");
+  if (video.id !== videoId || video.submitted_by !== userId
+    || typeof video.dancer_id !== "string" || !MYDANCR_TV_VIDEO_ID_PATTERN.test(video.dancer_id)
+    || typeof video.updated_at !== "string" || !Number.isFinite(Date.parse(video.updated_at))) {
+    throw new Error("The video removal could not be confirmed.");
+  }
   assertMyDancrTvStoragePath(video);
-  await Promise.all([
-    admin.storage.from(MYDANCR_TV_BUCKET).remove([video.storage_path]),
-    admin.storage
-      .from(MYDANCR_TV_POSTER_BUCKET)
-      .remove([myDancrTvPosterStoragePath(video.storage_path)]),
-  ]);
-  await removeArchivedOriginalMedia(
-    admin,
-    MYDANCR_TV_BUCKET,
-    video.storage_path,
-  ).catch(() => null);
   const { data, error: updateError } = await admin
     .from("mydancr_tv_videos")
     .update({ status: "hidden", venue_featured: false })
     .eq("id", videoId)
     .eq("submitted_by", userId)
-    .select("id, status")
+    .eq("dancer_id", video.dancer_id)
+    .eq("storage_path", video.storage_path)
+    .eq("storage_mime", video.storage_mime)
+    .eq("status", video.status)
+    .eq("updated_at", video.updated_at)
+    .select("id, status, dancer_id, submitted_by, storage_path, storage_mime, venue_featured")
     .single();
   if (updateError) throw updateError;
+  if (!data || Array.isArray(data) || data.id !== videoId || data.status !== "hidden"
+    || data.submitted_by !== userId || data.dancer_id !== video.dancer_id
+    || data.storage_path !== video.storage_path || data.storage_mime !== video.storage_mime
+    || data.venue_featured !== false) {
+    throw new Error("The video removal could not be confirmed.");
+  }
+  // Retain hidden metadata on cleanup failure; it is the receipt/path for an explicit retry.
+  for (const [bucket, path] of [
+    [MYDANCR_TV_BUCKET, video.storage_path],
+    [MYDANCR_TV_POSTER_BUCKET, myDancrTvPosterStoragePath(video.storage_path)],
+    [MYDANCR_TV_BUCKET, archivedOriginalStoragePath(MYDANCR_TV_BUCKET, video.storage_path)],
+  ]) {
+    const { data: removed, error: removeError } = await admin.storage.from(bucket).remove([path]);
+    if (removeError) throw removeError;
+    // An empty array is the storage API's successful idempotent response for an absent object.
+    if (!Array.isArray(removed) || removed.some((object: any) => !object || object.name !== path)) {
+      throw new Error("The video is hidden, but file cleanup could not be confirmed. Retry the removal.");
+    }
+  }
   console.info(JSON.stringify({ event: "mydancr_tv.video_hidden", videoId }));
-  return data;
+  return { id: data.id, status: data.status };
 }
 
 function assertMyDancrTvStoragePath(video: any) {
