@@ -3,6 +3,7 @@ import { apiError, PublicApiError } from "@/src/lib/api";
 import { readBoundedJsonObject } from "@/src/lib/bounded-json-body";
 import { deleteOwnDancerPhoto } from "@/src/lib/dancr/dancer";
 import { enqueueDancerContentReviews } from "@/src/lib/dancr/content-reviews";
+import { saveDancerSocialLinks } from "@/src/lib/dancr/social-saves";
 import { ACTIVE_IMAGE_MODERATION_STATUSES } from "@/src/lib/dancr/image-moderation-status";
 import { transitionDancerPublication } from "@/src/lib/dancr/profile-publication";
 import {
@@ -454,58 +455,8 @@ export async function PATCH(request: Request) {
       keys: Object.keys(cleanProfilePayload),
     });
 
-    let changedSocialPlatforms: SocialPlatform[] = [];
     setSaveStage("update_social_links");
-    if (Array.isArray(body.socials)) {
-      const submittedRows = body.socials
-        .filter((social: any) => SOCIAL_PLATFORMS.has(social?.platform))
-        .map((social: any) => normalizeSubmittedSocial(profile.id, social));
-      const rows = submittedRows.filter((social: any) => social.is_active && (social.handle || social.url));
-
-      if (rows.length) {
-        const { data: existingSocials, error: existingSocialsError } = await db
-          .from("social_links")
-          .select("platform, handle, url, is_active")
-          .eq("dancer_id", profile.id)
-          .in("platform", rows.map((social: any) => social.platform));
-
-        if (existingSocialsError) throw existingSocialsError;
-
-        const existingByPlatform = new Map<string, any>(
-          (existingSocials || []).map((social: any) => [social.platform, social]),
-        );
-        changedSocialPlatforms = rows
-          .filter((social: any) => {
-            const existing = existingByPlatform.get(social.platform);
-            return !existing ||
-              String(existing.handle || "") !== social.handle ||
-              String(existing.url || "") !== social.url ||
-              existing.is_active === false;
-          })
-          .map((social: any) => social.platform);
-      }
-
-      if (rows.length) {
-        const { error } = await db.from("social_links").upsert(rows, { onConflict: "dancer_id,platform" });
-        if (error) throw error;
-      }
-
-      const submittedSocialPlatforms = readSubmittedSocialPlatforms(body, changedSocialPlatforms);
-      await submitChangedSocialLinksForReview(db, profile.id, user.id, submittedSocialPlatforms);
-
-      const activePlatforms: SocialPlatform[] = rows.map((social: any) => social.platform);
-      const submittedPlatforms: SocialPlatform[] = submittedRows.map((social: any) => social.platform);
-      const inactivePlatforms = submittedPlatforms.filter((platform: SocialPlatform) => !activePlatforms.includes(platform));
-      if (inactivePlatforms.length) {
-        const { error } = await db
-          .from("social_links")
-          .update({ handle: "", url: "", is_active: false })
-          .eq("dancer_id", profile.id)
-          .in("platform", inactivePlatforms);
-
-        if (error) throw error;
-      }
-    }
+    await saveSubmittedSocialLinks(db, profile.id, user.id, body);
 
     const deletedPhotoIds = readDeletedPhotoIds(body);
     console.log("PROFILE_SAVE_PAYLOAD", {
@@ -770,27 +721,18 @@ function withoutDancerBio<T extends Record<string, any>>(profile: T): Omit<T, "b
   return profileWithoutBio as Omit<T, "bio">;
 }
 
-async function submitChangedSocialLinksForReview(db: any, dancerId: string, actorUserId: string, platforms: SocialPlatform[]) {
-  const uniquePlatforms = [...new Set(platforms)];
-  if (!uniquePlatforms.length) return 0;
-
-  const { data: socials, error } = await db
-    .from("social_links")
-    .select("id, platform")
-    .eq("dancer_id", dancerId)
-    .eq("is_active", true)
-    .in("platform", uniquePlatforms);
-
-  if (error) throw error;
-  if (!socials?.length) return 0;
-
-  return enqueueDancerContentReviews(db, dancerId, actorUserId, "social_link", socials.map((social: any) => social.id));
-}
-
-function readSubmittedSocialPlatforms(body: any, fallbackPlatforms: SocialPlatform[]) {
-  const rawPlatforms = Array.isArray(body?.submittedSocialPlatforms) ? body.submittedSocialPlatforms : [];
-  const platforms = rawPlatforms.filter((platform: any) => SOCIAL_PLATFORMS.has(platform)) as SocialPlatform[];
-  return platforms.length ? platforms : fallbackPlatforms;
+async function saveSubmittedSocialLinks(db: any, dancerId: string, actorUserId: string, body: any) {
+  if (!Array.isArray(body.socials)) return;
+  const rows = body.socials
+    .filter((social: any) => SOCIAL_PLATFORMS.has(social?.platform))
+    .map((social: any) => normalizeSubmittedSocial(dancerId, social))
+    .map((social: ReturnType<typeof normalizeSubmittedSocial>) => ({
+      ...social, is_active: Boolean(social.is_active && (social.handle || social.url)),
+    }));
+  const platforms = Array.isArray(body.submittedSocialPlatforms)
+    ? body.submittedSocialPlatforms.filter((platform: any) => SOCIAL_PLATFORMS.has(platform)) as SocialPlatform[]
+    : [];
+  return saveDancerSocialLinks(db, dancerId, actorUserId, rows, platforms);
 }
 
 async function submitPendingApprovedContentForReview(db: any, dancerId: string, actorUserId: string) {

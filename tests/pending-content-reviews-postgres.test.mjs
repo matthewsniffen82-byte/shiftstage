@@ -159,7 +159,7 @@ function applicationModule(path,dependencies={},suffix=''){
 const gateway=()=>applicationModule('../src/lib/dancr/content-reviews.ts').enqueueDancerContentReviews;
 function queueCallers(){
  return applicationModule('../app/api/dancer/profile/route.ts',{enqueueDancerContentReviews:gateway(),MAX_DANCER_PROFILE_PHOTOS:50},
-  'exports.photos=submitPendingApprovedContentForReview;exports.socials=submitChangedSocialLinksForReview;');
+  'exports.photos=submitPendingApprovedContentForReview;');
 }
 function applicationClient({afterRead=null,readError=null,lost=false,failAt=null}={}){
  const calls=[];
@@ -203,31 +203,18 @@ test('the photo queue uses owned pending targets and repeated submissions reuse 
  assert.deepEqual((await reviews()).map(row=>row.review_type),['photo:'+a,'photo:'+b]);
  assert.equal(calls.filter(c=>c.operation==='rpc').length,2);
 });
-test('the social queue only submits active owned links for the selected platforms',async()=>{
- const target=await social(100);await social(101,{active:false});await social(102,{dancer:otherProfile});const otherPlatform=await social(103);
- await pg.query("update public.social_links set platform='tiktok' where id=$1",[otherPlatform]);
- const {client,calls}=applicationClient(),queue=queueCallers().socials;
- assert.equal(await queue(client,profile,owner,[]),0);assert.deepEqual(calls,[]);
- assert.equal(await queue(client,profile,owner,['instagram','instagram']),1);
- assert.equal(await queue(client,profile,owner,['instagram']),0);
- assert.deepEqual((await reviews()).map(row=>row.review_type),['social_link:'+target]);
-});
 test('the photo queue rechecks a newly approved photo after its pending query',async()=>{
  const target=await photo(100),{client}=applicationClient({afterRead:()=>pg.query("update public.dancer_photos set review_status='approved' where id=$1",[target])});
  assert.equal(await queueCallers().photos(client,profile,owner),0);assert.deepEqual(await reviews(),[]);
-});
-test('the social queue rechecks a link deactivated after its active query',async()=>{
- const target=await social(100),{client}=applicationClient({afterRead:()=>pg.query('update public.social_links set is_active=false where id=$1',[target])});
- assert.equal(await queueCallers().socials(client,profile,owner,['instagram']),0);assert.deepEqual(await reviews(),[]);
 });
 test('a target removed after the queue query returns a conflict without an orphan review',async()=>{
  const target=await photo(100),{client}=applicationClient({afterRead:()=>pg.query('delete from public.dancer_photos where id=$1',[target])});
  await assert.rejects(queueCallers().photos(client,profile,owner),{status:409});assert.deepEqual(await reviews(),[]);
 });
-test('both application queues reject an actor who does not own the requested profile',async()=>{
+test('the photo application queue rejects an actor who does not own the requested profile',async()=>{
  await photo(100);await social(101);const {client}=applicationClient();
  await assert.rejects(queueCallers().photos(client,profile,other),{status:403});
- await assert.rejects(queueCallers().socials(client,profile,other,['instagram']),{status:403});assert.deepEqual(await reviews(),[]);
+ assert.deepEqual(await reviews(),[]);
 });
 test('a lost committed response is reported as failure and a later resubmission preserves the existing review',async()=>{
  await photo(100);const failed=applicationClient({lost:true});
@@ -250,7 +237,6 @@ test('a later batch failure stops further writes and a fresh submission reuses t
 test('queue read failures retain the database error and cannot become an empty success',async()=>{
  const failure={code:'08006'},db=applicationClient({readError:failure});
  await assert.rejects(queueCallers().photos(db.client,profile,owner),error=>error===failure);
- await assert.rejects(queueCallers().socials(db.client,profile,owner,['instagram']),error=>error===failure);
  assert.equal(db.calls.filter(c=>c.operation==='rpc').length,0);
 });
 for(const [code,status] of [['40001',409],['P0002',409],['42501',403],['55P03',503],['57014',503]]){
@@ -265,8 +251,8 @@ for(const data of [undefined,null,-1,1.5,2,'1',false,{},[],NaN,Infinity]){
   await assert.rejects(gateway()(client,profile,owner,'photo',[id(100)]),{status:503});assert.equal(calls,1);
  });
 }
-test('profile PATCH supplies the authenticated actor to both queues',()=>{
+test('profile PATCH supplies the authenticated actor to photo enqueue and atomic social saves',()=>{
  const route=readFileSync(new URL('../app/api/dancer/profile/route.ts',import.meta.url),'utf8');
- assert.match(route,/submitChangedSocialLinksForReview\(db, profile\.id, user\.id, submittedSocialPlatforms\)/);
+ assert.match(route,/saveSubmittedSocialLinks\(db, profile\.id, user\.id, body\)/);
  assert.match(route,/submitPendingApprovedContentForReview\(db, profile\.id, user\.id\)/);
 });

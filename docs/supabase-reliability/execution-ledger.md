@@ -312,3 +312,11 @@ The counter-notice caller was pushed as `fa645e259ec490e01a88d280d78e6ee236c7fb2
 The inspected plan is `step-09-social-saves.md`. Add an unused service-only transaction for canonical social-link changes and their pending review requests. Preserve ownership, public visibility behavior, completed review history, omitted links and existing IDs. Apply and verify the foundation before switching the caller.
 
 All 55 new PostgreSQL tests and all 4,479 automated tests passed, with lint, build, standalone TypeScript, migration guard and thirty live readiness checks. Guarded deployment transaction, repeated-version and schema-drift rejection rehearsals passed. Existing data/access/helper preservation, exact push, committed SQL application and Vercel/health gates remain required.
+
+The foundation was pushed as `3c8571816c4d80f7692c39bde8a7d78c00d2fb7f` and applied from exact committed SQL. The guarded transaction preserved all existing records, five access records, 87 column catalog rows, eighteen constraints, thirteen indexes, six policies, two triggers, 118 public functions and 100 previous ledger entries. Read-only verification at 05:50:01 UTC confirmed the expected hashes and service-only access. Main references matched and its [exact Vercel deployment](https://vercel.com/ai-movie-jobs/shiftstage/9d4gAzznHw66h9Ym1JUgs15pQXZB) succeeded; health, protected routes and thirty readiness checks passed at 05:51:27–29 UTC. No production social save was invoked.
+
+## Step 9 social-link saves: caller
+
+The inspected plan is `step-09-social-caller.md`. Keep the deployed SQL frozen and replace separate social writes with one checked RPC, preserving canonicalization, ownership and unrelated profile behavior. Full validation and exact deployment/health gates are required.
+
+All 96 focused checks passed, including 42 new actual-helper/native-RPC cases. Full validation passed 4,519 tests, lint, build, standalone TypeScript, migration guard and thirty live readiness checks. Read-only verification retained the exact deployed function/queue/ledger hashes and permissions. No migration was reapplied and no production profile was changed. Exact push, Vercel success and production health remain required.

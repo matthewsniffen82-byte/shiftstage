@@ -48,7 +48,7 @@ test("profile writes validate social destinations server-side and API/public res
     readFile(new URL("../src/lib/dancr/public.ts", import.meta.url), "utf8"),
   ]);
 
-  assert.match(route, /normalizeSubmittedSocial\(profile\.id, social\)/);
+  assert.match(route, /normalizeSubmittedSocial\(dancerId, social\)/);
   assert.match(route, /safeSocialProfileUrl\(platform, submittedValue\)/);
   assert.match(route, /throw new ProfileInputError\(`\$\{socialPlatformLabel\(platform\)\} must be a valid profile link or username\.`\)/);
   assert.match(route, /profileWithoutBio\.social_links = profileWithoutBio\.social_links\.map/);
