@@ -108,7 +108,18 @@ export async function syncDancerConnectAccount(client: DancrClient, account: Str
   return upsertDancerPayoutAccount(client, dancerId, "stripe", stripeAccountState(current), existing);
 }
 
-export async function reverseDancerPayoutTransfer(client: DancrClient, transferId: string, message: string) {
+export async function reverseDancerPayoutTransfer(
+  client: DancrClient,
+  transfer: Pick<Stripe.Transfer, "id" | "amount" | "amount_reversed" | "created">,
+  message: string,
+) {
+  if (!Number.isSafeInteger(transfer.amount) || transfer.amount <= 0
+    || !Number.isSafeInteger(transfer.amount_reversed) || transfer.amount_reversed <= 0
+    || transfer.amount_reversed > transfer.amount) {
+    throw new Error("Provider transfer reversal amount could not be confirmed.");
+  }
+  const transferId = transfer.id;
+  const partial = transfer.amount_reversed < transfer.amount;
   const { data: batch, error } = await (client as any)
     .from("dancer_payout_batches")
     .select("id, status, provider_reference_id")
@@ -119,7 +130,18 @@ export async function reverseDancerPayoutTransfer(client: DancrClient, transferI
   if (batch.provider_reference_id === transferId && (batch.status === "failed" || batch.status === "canceled")) {
     return { id: batch.id, status: batch.status };
   }
-  if (batch.status === "paid") {
+  if (partial && batch.status !== "paid") {
+    // The original transfer paid the earning; a partial reversal must never
+    // release its entire reservation for another payout. Keep manual recovery.
+    if (!Number.isSafeInteger(transfer.created) || transfer.created < 0) {
+      throw new Error("Provider transfer creation time could not be confirmed.");
+    }
+    const paid = await completeProviderPayout(client, transferId, new Date(transfer.created * 1000).toISOString());
+    if (paid?.id !== batch.id || paid.status !== "paid" || paid.provider_reference_id !== transferId) {
+      throw new Error("Partially reversed provider payout could not be confirmed.");
+    }
+  }
+  if (batch.status === "paid" || partial) {
     const { error: recoveryError } = await (client as any).from("commission_events").update({
       recovery_required: true,
       review_flag: "paid_payout_reversed_by_provider",

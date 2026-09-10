@@ -99,7 +99,7 @@ function harness(options={}){
  return {...db,effects,logs,events,post:route.POST,access:()=>({adminAccess,secretAccess})};
 }
 function event(type='customer.subscription.updated',id='evt_synthetic'){
- return {id,object:'event',type,created:Math.floor(Date.now()/1000),data:{object:{id:'sub_synthetic',metadata:{payout_batch_id:'synthetic-batch'},description:'Unicode café 🎉'}}};
+ return {id,object:'event',type,created:Math.floor(Date.now()/1000),data:{object:{id:'sub_synthetic',metadata:{payout_batch_id:'synthetic-batch'},description:'Unicode café 🎉',...(type==='transfer.reversed'?{amount:1000,amount_reversed:1000,created:1700000000}:{})}}};
 }
 function request(value=event(),options={}){
  const body=typeof value==='string'?value:JSON.stringify(value);

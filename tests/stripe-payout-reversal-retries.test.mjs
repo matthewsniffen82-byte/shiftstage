@@ -69,7 +69,7 @@ function module(path, dependencies) {
   });
   return exports;
 }
-function harness({rpc, beforeRpc, readErrorAt=0, beforeRead, recoveryError=false, auditError=false} = {}) {
+function harness({rpc, beforeRpc, completion, beforeCompletion, readErrorAt=0, beforeRead, recoveryError=false, auditError=false} = {}) {
   const calls=[], finished=[];
   let reads=0, sequence=0;
   const allowed = {
@@ -79,6 +79,13 @@ function harness({rpc, beforeRpc, readErrorAt=0, beforeRead, recoveryError=false
   };
   const client = {
     async rpc(name,args) {
+      if (name==='complete_dancer_payout_batch') {
+        calls.push({kind:'complete',args});
+        await beforeCompletion?.();
+        if (completion) return completion(args);
+        try {return {data:(await pg.query('select public.complete_dancer_payout_batch($1,$2,$3) result',[args.p_batch_id,args.p_transfer_id,args.p_paid_at])).rows[0].result,error:null};}
+        catch (error) {return {data:null,error};}
+      }
       assert.equal(name,'release_dancer_payout_batch');
       calls.push({kind:'release',args});
       await beforeRpc?.();
@@ -142,8 +149,8 @@ function harness({rpc, beforeRpc, readErrorAt=0, beforeRead, recoveryError=false
     '@/src/lib/server-env':{getServerEnv:()=>secret},
     '@/src/lib/security/safe-error-metadata':{safeErrorMetadata},stripe:Stripe,
   });
-  async function deliver(reference=transferId) {
-    const payload=JSON.stringify({id:'evt_reversal_synthetic_'+(++sequence),type:'transfer.reversed',created:1700000000,data:{object:{id:reference,object:'transfer',amount:1000,amount_reversed:1000,reversed:true}}});
+  async function deliver(reference=transferId, transfer={}) {
+    const payload=JSON.stringify({id:'evt_reversal_synthetic_'+(++sequence),type:'transfer.reversed',created:1700000000,data:{object:{id:reference,object:'transfer',created:1700000000,amount:1000,amount_reversed:1000,reversed:true,...transfer}}});
     const signature=Stripe.webhooks.generateTestHeaderString({payload,secret});
     return route.POST(new Request('https://example.test/api/stripe/webhook',{method:'POST',headers:{'stripe-signature':signature},body:payload}));
   }
@@ -295,3 +302,140 @@ for (const role of ['anon','authenticated']) {
     assert.equal((await state()).payouts[0].status,'processing');
   });
 }
+
+test('partial reversal preserves the original paid earning and requires manual recovery',async()=>{
+  const h=harness();
+  assert.equal((await h.deliver(transferId,{amount_reversed:250,reversed:false})).status,200);
+  const s=await state();
+  assert.deepEqual(s.payouts.map(x=>x.status),['paid','processing']);
+  assert.deepEqual(s.earnings.map(x=>x.status),['paid','payout_processing']);
+  assert.equal(s.earnings[0].payout_batch_id,id);
+  assert.equal(s.earnings[0].payment_provider,'stripe');
+  assert.equal(s.earnings[0].recovery_required,true);
+  assert.equal(s.earnings[0].review_flag,'paid_payout_reversed_by_provider');
+  assert.equal(s.earnings[0].metadata.released_payout_id,undefined);
+  assert.equal(s.payouts[0].paid_at.toISOString(),'2023-11-14T22:13:20.000Z');
+  assert.equal(s.earnings[1].recovery_required,false);
+  assert.equal(s.audits.filter(x=>x.action==='payout_paid').length,1);
+  assert.equal(s.audits.filter(x=>x.action==='release_payout_reservation').length,0);
+  assert.equal(s.audits.find(x=>x.action==='paid_payout_recovery_required').metadata.automatic_debit_attempted,false);
+  assert.equal(h.calls.filter(c=>c.kind==='release').length,0);
+  assert.equal(h.calls.filter(c=>c.kind==='complete').length,1);
+});
+test('partial then full reversal never releases a paid earning for another automatic payout',async()=>{
+  const h=harness();
+  assert.equal((await h.deliver(transferId,{amount_reversed:250,reversed:false})).status,200);
+  assert.equal((await h.deliver()).status,200);
+  const s=await state();
+  assert.equal(s.payouts[0].status,'paid');
+  assert.equal(s.earnings[0].status,'paid');
+  assert.equal(s.earnings[0].recovery_required,true);
+  assert.equal(h.calls.filter(c=>c.kind==='release').length,0);
+  assert.equal(h.calls.filter(c=>c.kind==='complete').length,1);
+});
+test('an old partial reversal after a completed full release leaves its terminal state intact',async()=>{
+  await release();
+  const prior=await state(),h=harness();
+  assert.equal((await h.deliver(transferId,{amount_reversed:250,reversed:false})).status,200);
+  assert.deepEqual(await state(),prior);
+  assert.equal(h.calls.filter(c=>c.kind==='complete'||c.kind==='release').length,0);
+});
+test('an already-paid partial reversal uses manual recovery without a new completion',async()=>{
+  await complete();
+  const h=harness();
+  assert.equal((await h.deliver(transferId,{amount_reversed:250,reversed:false})).status,200);
+  assert.equal((await state()).earnings[0].recovery_required,true);
+  assert.equal(h.calls.filter(c=>c.kind==='complete'||c.kind==='release').length,0);
+});
+test('a partial reversal cannot release a requested payout before its transfer is confirmed',async()=>{
+  await pg.query("update public.dancer_payout_batches set status='requested' where id=$1",[id]);
+  const prior=await state(),h=harness();
+  await failed(await h.deliver(transferId,{amount_reversed:250,reversed:false}),h);
+  assert.deepEqual(await state(),prior);
+  assert.equal(h.calls.filter(c=>c.kind==='release').length,0);
+});
+test('a full release committed before partial completion is preserved and the stale attempt retries',async()=>{
+  const h=harness({beforeCompletion:async()=>release()});
+  await failed(await h.deliver(transferId,{amount_reversed:250,reversed:false}),h);
+  const prior=await state(),retry=harness();
+  assert.equal((await retry.deliver(transferId,{amount_reversed:250,reversed:false})).status,200);
+  assert.deepEqual(await state(),prior);
+  assert.equal(h.calls.filter(c=>c.kind==='release').length,0);
+});
+test('uncertain partial completion fails without releasing the reservation',async()=>{
+  const prior=await state(),h=harness({completion:async()=>({data:null,error:null})});
+  await failed(await h.deliver(transferId,{amount_reversed:250,reversed:false}),h);
+  assert.deepEqual(await state(),prior);
+  assert.equal(h.calls.filter(c=>c.kind==='release').length,0);
+});
+test('lost partial completion response is confirmed and recovery flags are retained',async()=>{
+  const h=harness({completion:async()=>{await complete(); return {data:null,error:{code:'08006'}};}});
+  assert.equal((await h.deliver(transferId,{amount_reversed:250,reversed:false})).status,200);
+  assert.equal((await state()).earnings[0].status,'paid');
+  assert.equal((await state()).earnings[0].recovery_required,true);
+  assert.equal(h.calls.filter(c=>c.kind==='complete').length,1);
+  assert.equal(h.calls.filter(c=>c.kind==='release').length,0);
+});
+test('partial recovery write failure retains paid state and an explicit retry completes recovery',async()=>{
+  const h=harness({recoveryError:true});
+  await failed(await h.deliver(transferId,{amount_reversed:250,reversed:false}),h);
+  assert.equal((await state()).earnings[0].status,'paid');
+  const retry=harness();
+  assert.equal((await retry.deliver(transferId,{amount_reversed:250,reversed:false})).status,200);
+  assert.equal((await state()).earnings[0].recovery_required,true);
+  assert.equal(retry.calls.filter(c=>c.kind==='complete'||c.kind==='release').length,0);
+});
+for (const transfer of [
+  {amount:0},{amount:-1},{amount:0.5},{amount:'1000'},{amount:null},
+  {amount_reversed:0},{amount_reversed:-1},{amount_reversed:1001},
+  {amount_reversed:0.5},{amount_reversed:'250'},{amount_reversed:null},
+  {amount:Number.MAX_SAFE_INTEGER+1},{amount_reversed:Number.MAX_SAFE_INTEGER+1},
+]) {
+  test('invalid signed reversal amounts cannot release earnings: '+JSON.stringify(transfer),async()=>{
+    const prior=await state(),h=harness();
+    await failed(await h.deliver(transferId,transfer),h);
+    assert.deepEqual(await state(),prior);
+    assert.equal(h.calls.filter(c=>c.kind==='complete'||c.kind==='release').length,0);
+  });
+}
+
+for (const created of [null,-1,'1700000000',Number.MAX_SAFE_INTEGER]) {
+  test('invalid original transfer time cannot complete a partial reversal: '+String(created),async()=>{
+    const prior=await state(),h=harness();
+    await failed(await h.deliver(transferId,{amount_reversed:250,reversed:false,created}),h);
+    assert.deepEqual(await state(),prior);
+    assert.equal(h.calls.filter(c=>c.kind==='complete'||c.kind==='release').length,0);
+  });
+}
+test('repeated partial deliveries keep one payout completion and never release earnings',async()=>{
+  const h=harness();
+  for(let i=0;i<2;i++) assert.equal((await h.deliver(transferId,{amount_reversed:250,reversed:false})).status,200);
+  assert.equal((await state()).earnings[0].recovery_required,true);
+  assert.equal((await state()).audits.filter(x=>x.action==='payout_paid').length,1);
+  assert.equal(h.calls.filter(c=>c.kind==='complete').length,1);
+  assert.equal(h.calls.filter(c=>c.kind==='release').length,0);
+});
+test('a concurrent completion of the same transfer is confirmed before partial recovery',async()=>{
+  const h=harness({beforeCompletion:async()=>complete()});
+  assert.equal((await h.deliver(transferId,{amount_reversed:250,reversed:false})).status,200);
+  assert.equal((await state()).earnings[0].recovery_required,true);
+  assert.equal((await state()).audits.filter(x=>x.action==='payout_paid').length,1);
+  assert.equal(h.calls.filter(c=>c.kind==='release').length,0);
+});
+test('a replaced transfer reference cannot receive partial recovery for the previous transfer',async()=>{
+  const h=harness({beforeRead:async n=>{if(n===2) await pg.query('update public.dancer_payout_batches set provider_reference_id=$1 where id=$2',['tr_replaced',id]);}});
+  await failed(await h.deliver(transferId,{amount_reversed:250,reversed:false}),h);
+  const s=await state();
+  assert.equal(s.earnings[0].status,'payout_processing');
+  assert.equal(s.earnings[0].recovery_required,false);
+  assert.equal(h.calls.filter(c=>c.kind==='complete'||c.kind==='release').length,0);
+});
+test('a thrown response after partial completion remains recoverable by explicit redelivery',async()=>{
+  const h=harness({completion:async()=>{await complete(); throw new Error('Synthetic private completion failure');}});
+  await failed(await h.deliver(transferId,{amount_reversed:250,reversed:false}),h);
+  assert.equal((await state()).earnings[0].status,'paid');
+  const retry=harness();
+  assert.equal((await retry.deliver(transferId,{amount_reversed:250,reversed:false})).status,200);
+  assert.equal((await state()).earnings[0].recovery_required,true);
+  assert.equal(retry.calls.filter(c=>c.kind==='complete'||c.kind==='release').length,0);
+});

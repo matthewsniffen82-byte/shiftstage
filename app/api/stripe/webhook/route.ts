@@ -120,7 +120,7 @@ export async function POST(request: Request) {
 
         if (event.type === "transfer.reversed") {
           const transfer = event.data.object as Stripe.Transfer;
-          await reverseDancerPayoutTransfer(admin, transfer.id, "Stripe reported that this payout transfer was reversed.");
+          await reverseDancerPayoutTransfer(admin, transfer, "Stripe reported that this payout transfer was reversed.");
         }
       }
 
