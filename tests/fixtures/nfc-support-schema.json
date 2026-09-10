@@ -1,0 +1,582 @@
+{
+  "captured_at": "2026-09-09T21:37:43.081238-07:00",
+  "columns": [
+    {
+      "default": "gen_random_uuid()",
+      "name": "id",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "notifications",
+      "type": "uuid"
+    },
+    {
+      "default": null,
+      "name": "recipient_id",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "notifications",
+      "type": "uuid"
+    },
+    {
+      "default": null,
+      "name": "notification_type",
+      "nullable": "NO",
+      "schema": "public",
+      "table": "notifications",
+      "type": "notification_type"
+    },
+    {
+      "default": "'in_app'::notification_channel",
+      "name": "channel",
+      "nullable": "NO",
+      "schema": "public",
+      "table": "notifications",
+      "type": "notification_channel"
+    },
+    {
+      "default": null,
+      "name": "title",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "notifications",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "body",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "notifications",
+      "type": "text"
+    },
+    {
+      "default": "'{}'::jsonb",
+      "name": "payload",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "notifications",
+      "type": "jsonb"
+    },
+    {
+      "default": null,
+      "name": "read_at",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "notifications",
+      "type": "timestamptz"
+    },
+    {
+      "default": null,
+      "name": "sent_at",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "notifications",
+      "type": "timestamptz"
+    },
+    {
+      "default": "now()",
+      "name": "created_at",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "notifications",
+      "type": "timestamptz"
+    },
+    {
+      "default": "gen_random_uuid()",
+      "name": "id",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "support_messages",
+      "type": "uuid"
+    },
+    {
+      "default": null,
+      "name": "thread_id",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "support_messages",
+      "type": "uuid"
+    },
+    {
+      "default": null,
+      "name": "sender_id",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "support_messages",
+      "type": "uuid"
+    },
+    {
+      "default": null,
+      "name": "sender_role",
+      "nullable": "NO",
+      "schema": "public",
+      "table": "support_messages",
+      "type": "user_role"
+    },
+    {
+      "default": null,
+      "name": "body",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "support_messages",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "read_at",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "support_messages",
+      "type": "timestamptz"
+    },
+    {
+      "default": "now()",
+      "name": "created_at",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "support_messages",
+      "type": "timestamptz"
+    },
+    {
+      "default": "'human'::text",
+      "name": "sender_kind",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "support_messages",
+      "type": "text"
+    },
+    {
+      "default": "'{}'::jsonb",
+      "name": "metadata",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "support_messages",
+      "type": "jsonb"
+    },
+    {
+      "default": "gen_random_uuid()",
+      "name": "id",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "support_threads",
+      "type": "uuid"
+    },
+    {
+      "default": null,
+      "name": "user_id",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "support_threads",
+      "type": "uuid"
+    },
+    {
+      "default": null,
+      "name": "user_role",
+      "nullable": "NO",
+      "schema": "public",
+      "table": "support_threads",
+      "type": "user_role"
+    },
+    {
+      "default": null,
+      "name": "subject",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "support_threads",
+      "type": "text"
+    },
+    {
+      "default": "'open'::text",
+      "name": "status",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "support_threads",
+      "type": "text"
+    },
+    {
+      "default": "now()",
+      "name": "last_message_at",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "support_threads",
+      "type": "timestamptz"
+    },
+    {
+      "default": "now()",
+      "name": "created_at",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "support_threads",
+      "type": "timestamptz"
+    },
+    {
+      "default": "now()",
+      "name": "updated_at",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "support_threads",
+      "type": "timestamptz"
+    },
+    {
+      "default": "'none'::text",
+      "name": "escalation_status",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "support_threads",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "escalation_category",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "support_threads",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "escalation_reason",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "support_threads",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "escalation_priority",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "support_threads",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "escalated_at",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "support_threads",
+      "type": "timestamptz"
+    },
+    {
+      "default": null,
+      "name": "assigned_admin_id",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "support_threads",
+      "type": "uuid"
+    },
+    {
+      "default": "0",
+      "name": "ai_reply_count",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "support_threads",
+      "type": "int4"
+    },
+    {
+      "default": null,
+      "name": "last_ai_response_id",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "support_threads",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "last_ai_replied_at",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "support_threads",
+      "type": "timestamptz"
+    },
+    {
+      "default": "gen_random_uuid()",
+      "name": "id",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "venue_nfc_support_requests",
+      "type": "uuid"
+    },
+    {
+      "default": null,
+      "name": "venue_id",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "venue_nfc_support_requests",
+      "type": "uuid"
+    },
+    {
+      "default": null,
+      "name": "nfc_tag_id",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "venue_nfc_support_requests",
+      "type": "uuid"
+    },
+    {
+      "default": null,
+      "name": "requested_by_user_id",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "venue_nfc_support_requests",
+      "type": "uuid"
+    },
+    {
+      "default": null,
+      "name": "request_type",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "venue_nfc_support_requests",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "notes",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "venue_nfc_support_requests",
+      "type": "text"
+    },
+    {
+      "default": "'open'::text",
+      "name": "status",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "venue_nfc_support_requests",
+      "type": "text"
+    },
+    {
+      "default": "now()",
+      "name": "created_at",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "venue_nfc_support_requests",
+      "type": "timestamptz"
+    },
+    {
+      "default": "now()",
+      "name": "updated_at",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "venue_nfc_support_requests",
+      "type": "timestamptz"
+    },
+    {
+      "default": null,
+      "name": "resolved_at",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "venue_nfc_support_requests",
+      "type": "timestamptz"
+    }
+  ],
+  "constraints": [
+    {
+      "definition": "PRIMARY KEY (id)",
+      "name": "notifications_pkey",
+      "table": "notifications"
+    },
+    {
+      "definition": "FOREIGN KEY (recipient_id) REFERENCES app_users(id) ON DELETE CASCADE",
+      "name": "notifications_recipient_id_fkey",
+      "table": "notifications"
+    },
+    {
+      "definition": "PRIMARY KEY (id)",
+      "name": "support_messages_pkey",
+      "table": "support_messages"
+    },
+    {
+      "definition": "FOREIGN KEY (sender_id) REFERENCES app_users(id) ON DELETE CASCADE",
+      "name": "support_messages_sender_id_fkey",
+      "table": "support_messages"
+    },
+    {
+      "definition": "CHECK (((sender_kind <> 'human'::text) OR (sender_id IS NOT NULL)))",
+      "name": "support_messages_sender_identity_check",
+      "table": "support_messages"
+    },
+    {
+      "definition": "CHECK ((sender_kind = ANY (ARRAY['human'::text, 'ai'::text, 'system'::text])))",
+      "name": "support_messages_sender_kind_check",
+      "table": "support_messages"
+    },
+    {
+      "definition": "FOREIGN KEY (thread_id) REFERENCES support_threads(id) ON DELETE CASCADE",
+      "name": "support_messages_thread_id_fkey",
+      "table": "support_messages"
+    },
+    {
+      "definition": "FOREIGN KEY (assigned_admin_id) REFERENCES app_users(id) ON DELETE SET NULL",
+      "name": "support_threads_assigned_admin_id_fkey",
+      "table": "support_threads"
+    },
+    {
+      "definition": "CHECK (((escalation_priority IS NULL) OR (escalation_priority = ANY (ARRAY['low'::text, 'normal'::text, 'high'::text, 'urgent'::text]))))",
+      "name": "support_threads_escalation_priority_check",
+      "table": "support_threads"
+    },
+    {
+      "definition": "CHECK ((escalation_status = ANY (ARRAY['none'::text, 'pending'::text, 'escalated'::text, 'resolved'::text])))",
+      "name": "support_threads_escalation_status_check",
+      "table": "support_threads"
+    },
+    {
+      "definition": "PRIMARY KEY (id)",
+      "name": "support_threads_pkey",
+      "table": "support_threads"
+    },
+    {
+      "definition": "FOREIGN KEY (user_id) REFERENCES app_users(id) ON DELETE CASCADE",
+      "name": "support_threads_user_id_fkey",
+      "table": "support_threads"
+    },
+    {
+      "definition": "FOREIGN KEY (nfc_tag_id) REFERENCES nfc_tags(id) ON DELETE SET NULL",
+      "name": "venue_nfc_support_requests_nfc_tag_id_fkey",
+      "table": "venue_nfc_support_requests"
+    },
+    {
+      "definition": "CHECK (((notes IS NULL) OR (char_length(notes) <= 1000)))",
+      "name": "venue_nfc_support_requests_notes_check",
+      "table": "venue_nfc_support_requests"
+    },
+    {
+      "definition": "PRIMARY KEY (id)",
+      "name": "venue_nfc_support_requests_pkey",
+      "table": "venue_nfc_support_requests"
+    },
+    {
+      "definition": "CHECK ((request_type = ANY (ARRAY['damaged'::text, 'lost'::text, 'relocate'::text, 'replacement'::text])))",
+      "name": "venue_nfc_support_requests_request_type_check",
+      "table": "venue_nfc_support_requests"
+    },
+    {
+      "definition": "FOREIGN KEY (requested_by_user_id) REFERENCES app_users(id) ON DELETE SET NULL",
+      "name": "venue_nfc_support_requests_requested_by_user_id_fkey",
+      "table": "venue_nfc_support_requests"
+    },
+    {
+      "definition": "CHECK ((status = ANY (ARRAY['open'::text, 'in_progress'::text, 'resolved'::text, 'cancelled'::text])))",
+      "name": "venue_nfc_support_requests_status_check",
+      "table": "venue_nfc_support_requests"
+    },
+    {
+      "definition": "FOREIGN KEY (venue_id) REFERENCES venues(id) ON DELETE CASCADE",
+      "name": "venue_nfc_support_requests_venue_id_fkey",
+      "table": "venue_nfc_support_requests"
+    }
+  ],
+  "counts": {
+    "memberships": 0,
+    "messages": 9,
+    "notifications": 78,
+    "requests": 0,
+    "tags": 20,
+    "threads": 7,
+    "users": 29,
+    "venues": 22
+  },
+  "enums": [
+    {
+      "labels": [
+        "active",
+        "disabled",
+        "deleted"
+      ],
+      "name": "account_state"
+    },
+    {
+      "labels": [
+        "in_app",
+        "push",
+        "email"
+      ],
+      "name": "notification_channel"
+    },
+    {
+      "labels": [
+        "shift_posted",
+        "shift_updated",
+        "shift_cancelled",
+        "ranking_milestone",
+        "approval_status",
+        "weekly_summary",
+        "support_message",
+        "tv_video_status",
+        "dmca_status",
+        "venue_claim_status",
+        "venue_affiliation_status",
+        "venue_publication_status",
+        "engagement"
+      ],
+      "name": "notification_type"
+    },
+    {
+      "labels": [
+        "customer",
+        "dancer",
+        "admin",
+        "venue"
+      ],
+      "name": "user_role"
+    }
+  ],
+  "function_absent": true,
+  "latest_migration": "20260910041000",
+  "read_only": "on",
+  "support_function": {
+    "anon_execute": false,
+    "authenticated_execute": false,
+    "definition": "CREATE OR REPLACE FUNCTION public.create_support_message_safely(p_user_id uuid, p_role text, p_thread_id uuid, p_subject text, p_body text, p_message_id uuid)\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public', 'pg_temp'\nAS $function$\r\ndeclare\r\n v_message_id uuid := coalesce(p_message_id,gen_random_uuid()); v_thread public.support_threads%rowtype; v_existing public.support_messages%rowtype; v_duplicate boolean := false; v_subject text := coalesce(nullif(trim(p_subject),''),'Message to admin'); v_body text := trim(p_body); v_count integer; v_notifications jsonb := '[]'::jsonb;\r\nbegin\r\n if p_user_id is null or p_role is null or p_role not in ('customer','dancer','venue','admin') or not exists(select 1 from public.app_users where id=p_user_id and role::text=p_role and account_state='active') then raise exception using errcode='42501',message='Active support account required.'; end if;\r\n if p_role='admin' and p_thread_id is null then raise exception using errcode='22023',message='An existing thread is required.'; end if;\r\n if v_body is null or length(v_body)<1 or length(v_body)>4000 or length(v_subject)>160 then raise exception using errcode='22023',message='Invalid support message.'; end if;\r\n perform pg_advisory_xact_lock(hashtextextended('support:'||p_user_id::text,0));\r\n select * into v_existing from public.support_messages where id=v_message_id;\r\n if found then\r\n if v_existing.sender_id is distinct from p_user_id or v_existing.body is distinct from v_body or v_existing.sender_role::text is distinct from p_role or (p_thread_id is not null and v_existing.thread_id<>p_thread_id) then raise exception using errcode='22023',message='Message request ID already has different content.'; end if;\r\n select * into v_thread from public.support_threads where id=v_existing.thread_id and (p_role='admin' or user_id=p_user_id);\r\n if not found then raise exception using errcode='42501',message='Support thread not found.'; end if;\r\n v_duplicate := true;\r\n else\r\n select count(*) into v_count from public.support_messages where sender_id=p_user_id and sender_kind='human' and created_at>=now()-interval '60 seconds';\r\n if v_count>=12 then raise exception using errcode='P0001',message='Support message rate limit reached.'; end if;\r\n if p_thread_id is not null then\r\n select * into v_thread from public.support_threads where id=p_thread_id and (p_role='admin' or user_id=p_user_id) for update;\r\n if not found then raise exception using errcode='42501',message='Support thread not found.'; end if;\r\n else\r\n insert into public.support_threads(user_id,user_role,subject,status,last_message_at) values(p_user_id,p_role::public.user_role,v_subject,'open',now()) returning * into v_thread;\r\n end if;\r\n insert into public.support_messages(id,thread_id,sender_id,sender_role,sender_kind,body) values(v_message_id,v_thread.id,p_user_id,p_role::public.user_role,'human',v_body);\r\n update public.support_threads set status=case when p_role='admin' then 'answered' else 'open' end,assigned_admin_id=case when p_role='admin' then p_user_id else assigned_admin_id end,last_message_at=now(),updated_at=now() where id=v_thread.id and (p_role='admin' or user_id=p_user_id) returning * into v_thread;\r\n if p_role='admin' then\r\n with inserted as (insert into public.notifications(recipient_id,notification_type,channel,title,body,payload,sent_at) values(v_thread.user_id,'support_message','in_app','Admin replied',case when length(v_body)>140 then left(v_body,137)||'...' else v_body end,jsonb_build_object('threadId',v_thread.id,'subject',v_thread.subject),now()) returning *) select coalesce(jsonb_agg(to_jsonb(i)),'[]'::jsonb) into v_notifications from inserted i;\r\n else\r\n with inserted as (insert into public.notifications(recipient_id,notification_type,channel,title,body,payload,sent_at) select a.id,'support_message','in_app','New '||p_role||' support message',left(v_subject||': '||v_body,500),jsonb_build_object('threadId',v_thread.id,'userRole',p_role),now() from public.app_users a where a.role='admin' and a.account_state='active' returning *) select coalesce(jsonb_agg(to_jsonb(i)),'[]'::jsonb) into v_notifications from inserted i;\r\n end if;\r\n end if;\r\n return jsonb_build_object('duplicate',v_duplicate,'notifications',v_notifications,'thread',to_jsonb(v_thread)||jsonb_build_object('app_users',case when p_role='admin' then (select jsonb_build_object('display_name',a.display_name,'email',a.email,'role',a.role) from public.app_users a where a.id=v_thread.user_id) else null end,'support_messages',coalesce((select jsonb_agg(to_jsonb(m) order by m.created_at,m.id) from (select * from public.support_messages where thread_id=v_thread.id order by created_at desc,id desc limit 1000) m),'[]'::jsonb)));\r\nend; $function$\n",
+    "fingerprint": "d5d61fbef96086292d66d41989b52d46",
+    "service_execute": true
+  },
+  "target_access": [
+    {
+      "acl": [
+        "postgres=arwdDxtm/postgres",
+        "anon=r/postgres",
+        "authenticated=arwd/postgres",
+        "service_role=arwdDxtm/postgres"
+      ],
+      "force": false,
+      "rls": true,
+      "table": "notifications"
+    },
+    {
+      "acl": [
+        "postgres=arwdDxtm/postgres",
+        "anon=r/postgres",
+        "authenticated=r/postgres",
+        "service_role=arwdDxtm/postgres"
+      ],
+      "force": false,
+      "rls": true,
+      "table": "support_messages"
+    },
+    {
+      "acl": [
+        "postgres=arwdDxtm/postgres",
+        "anon=r/postgres",
+        "authenticated=r/postgres",
+        "service_role=arwdDxtm/postgres"
+      ],
+      "force": false,
+      "rls": true,
+      "table": "support_threads"
+    },
+    {
+      "acl": [
+        "postgres=arwdDxtm/postgres",
+        "anon=r/postgres",
+        "authenticated=arwd/postgres",
+        "service_role=arwdDxtm/postgres"
+      ],
+      "force": false,
+      "rls": true,
+      "table": "venue_nfc_support_requests"
+    }
+  ],
+  "target_triggers": []
+}

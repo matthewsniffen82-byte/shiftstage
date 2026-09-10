@@ -272,3 +272,11 @@ The additive RPC was pushed as `89e9e46b14b9a59a3a16a845362a6c348a1edd17`, with 
 The inspected plan is `step-09-redemption-caller.md`. Freeze the verified migration and switch only the engagement caller to one checked atomic RPC, preserving public null/results, validation, authorization and event semantics. No fallback/retry or new migration is added. Full validation and exact deployment/health verification are required.
 
 The caller passed all 67 focused cases, including 21 new actual-helper/API cases backed by local PostgreSQL. Final validation after preserving incoming `01987783` startup work passed all 4,200 tests, lint, build, standalone TypeScript and thirty readiness checks. Read-only API-schema verification confirms server exposure of the deployed RPC; its applied source is frozen unchanged. Postbuild skipped layout-review population. Exact push, Vercel success and deployed health remain required.
+
+The atomic caller was pushed as `0624a4b28bb35a0df9b53f4f05a5d229269bfdf6`, with local HEAD and both remote main references matching. Its [exact Vercel deployment](https://vercel.com/ai-movie-jobs/shiftstage/8cT6q77jaiZiVEtemywn3wVHhcsU) succeeded. At 04:31:30–32 UTC, health, safe event input gates, account/finance denials, server RPC exposure and thirty readiness checks passed. Read-only verification retained the exact SQL/function/ledger hashes, permissions and record counts. No production event was created for verification.
+
+## Step 9 NFC support: additive atomic function
+
+The inspected plan is `step-09-nfc-support.md`. Add an unused function that validates venue/tag authority and commits its request with the existing atomic support-message operation. Support replay by explicit request identity without overwrites. Preserve optional external delivery/activity behavior for the later caller integration. Exact migration/dependency/data preservation checks and full application release gates remain required.
+
+The additive NFC function passed 58 new PostgreSQL cases and all 4,258 automated tests, full lint, build, standalone TypeScript, migration guard and thirty live readiness checks. Its deployment transaction, repeat protection, schema-drift and dependency-permission rehearsals passed. Existing helper/data/access preservation and exact Vercel/health delivery gates remain required; the application caller is unchanged.
