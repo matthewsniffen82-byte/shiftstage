@@ -2,6 +2,8 @@
 
 The initial 113-function capture below was compared with production again at 23:31 UTC. The only addition was the independently delivered `ensure_dancer_primary_photo(p_dancer_id uuid, p_actor_user_id uuid)`: SECURITY INVOKER, empty search path, three-second lock timeout, anon/authenticated execution denied, service execution allowed, definition MD5 `28141ae81bae41b9e1de482a1e1da947`. Its source and 22 isolated PostgreSQL tests were reviewed. All original definition fingerprints matched. The resulting inventory has 114 functions, including 96 definers.
 
+At 2026-09-10 00:27:47 UTC, the separately deployed `enqueue_dancer_content_reviews(uuid, uuid, text, uuid[])` was also verified: SECURITY INVOKER, empty search path, three-second lock timeout, browser execution denied and service execution allowed. Its exact committed body matched production; definition MD5 `29b2215964595c56f4339424df7e2a85`. It requires an active dancer owner and owned targets, bounds the batch to fifty and preserves completed review history. All prior boundaries remained unchanged when this reviewed addition was excluded from the original fingerprint. There are now 115 public functions, still 96 definers; seven remain browser-callable. This addition belongs to the independent moderation-reliability release.
+
 Read-only production catalog at 2026-09-09T23:14:51.558622+00:00. Definitions are fingerprinted with MD5 for drift comparison, not authentication. No account rows or credentials are included. Search paths and execute grants shown are effective API-role boundaries.
 
 | Function and arguments | Definer | Search path | anon / authenticated / service | Definition MD5 |
