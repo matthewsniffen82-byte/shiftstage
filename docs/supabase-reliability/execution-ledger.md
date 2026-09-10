@@ -328,3 +328,11 @@ The social caller was pushed as `e0fcd3437cfef53af6c78db081e1cff6f1ae669f`, with
 The inspected plan is `step-09-content-decisions.md`. Add an unused service-only transaction that checks the administrator's expected target/review snapshot and commits the decision, photo summary and audit together. Preserve completed history and existing publication, account and media-position rules. Verify the database release before replacing callers.
 
 All 54 new PostgreSQL cases and all 4,573 automated tests passed, with lint, build, standalone TypeScript, migration guard and thirty readiness checks. The deployment wrapper passed transaction, repeated-version and schema-drift rejection rehearsals. Exact push, committed SQL application, read-only preservation/permissions and Vercel/health gates remain required.
+
+The review foundation was pushed as `4ca036bb9ee3ec039e06bc9c20a70278b6af6834` and applied from exact committed SQL, preserving existing data, six access records, 100 column catalog rows, twenty constraints, fourteen indexes, seven policies, two triggers, 119 public functions and 101 prior ledger entries. Read-only verification at 06:18:09 UTC confirmed the expected hashes and service-only execution. Main references matched and its [exact Vercel deployment](https://vercel.com/ai-movie-jobs/shiftstage/BxVv3Y5f7xcDixQCFgf4A3pV7Bhf) succeeded; production health, protected administrator/account routes and thirty readiness checks passed at 06:19:45–47 UTC. No production decision was invoked.
+
+## Step 9 administrator content decisions: caller
+
+The inspected plan is `step-09-decision-caller.md`. Keep applied SQL frozen and connect administrator views, the endpoint and decision helper to the required loaded snapshot. Preserve confirmed decisions when optional notification work fails. Validate receipts and prevent stale or implicit retries before full release checks.
+
+All 82 focused checks passed, including 52 new actual endpoint/helper/mapper/UI cases backed by local PostgreSQL. Full validation passed 4,620 automated tests, lint, build, standalone TypeScript, migration guard and thirty readiness checks. Read-only dependency checks confirmed frozen hashes, permissions and data counts. Exact push, Vercel success and production health remain required.

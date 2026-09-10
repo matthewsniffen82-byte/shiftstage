@@ -18,6 +18,8 @@ import { getAdminVenueRegistrations } from "./admin-venue-registration";
 import { findAvailableMyDancrCity } from "./markets";
 import { PublicApiError } from "../api-error-policy";
 import { ensureDancerPrimaryPhoto } from "./primary-photo";
+import { recordContentDecision } from "./content-decisions";
+import { buildContentReviewVersion } from "./content-review-version";
 
 type DancrClient = SupabaseClient;
 
@@ -39,7 +41,7 @@ const APPROVAL_QUEUE_SELECT = `
   disabled_at,
   created_at,
   updated_at,
-  social_links(id, platform, handle, url, is_active),
+  social_links(id, platform, handle, url, is_active, updated_at),
   dancer_photos(id, storage_path, is_primary, review_status, sort_order, created_at),
   approval_reviews(id, review_type, status, notes, created_at, reviewed_at)
 `;
@@ -68,6 +70,7 @@ export type ReviewSubmissionContentInput = {
   reviewerId: string;
   targetType: "photo" | "social_link";
   targetId: string;
+  expectedVersion?: unknown;
   status: ReviewStatus;
   notes?: string | null;
   label?: string | null;
@@ -539,6 +542,7 @@ async function mapAdminApprovalDancer(client: DancrClient, row: any): Promise<Ad
         const defaultReviewStatus = row.status === "approved" ? "approved" : "pending";
         return {
           id: social.id,
+          reviewVersion: buildContentReviewVersion("social_link", social, review),
           platform: social.platform,
           handle: social.handle,
           url: social.url,
@@ -552,6 +556,7 @@ async function mapAdminApprovalDancer(client: DancrClient, row: any): Promise<Ad
         const review = latestReviewFor(reviews, contentReviewType("photo", photo.id));
         return {
           id: photo.id,
+          reviewVersion: buildContentReviewVersion("photo", photo, review),
           imageUrl: toDancerPhotoUrl(client, photo.storage_path),
           isPrimary: photo.is_primary,
           reviewStatus: review?.status || photo.review_status,
@@ -1268,89 +1273,14 @@ export async function reviewSubmissionContent(client: DancrClient, input: Review
     throw new Error("Add a reason before disapproving this submitted item.");
   }
 
-  const reviewedAt = new Date().toISOString();
+  const recorded = await recordContentDecision(client, { ...input, notes });
+  const reviewedAt = recorded.reviewedAt;
+  const dancer = { user_id: recorded.recipientId, status: recorded.profileStatus };
   const db = client as any;
-  const { data: dancer, error: dancerError } = await db
-    .from("dancer_profiles")
-    .select("id, user_id, stage_name, status")
-    .eq("id", input.dancerId)
-    .maybeSingle();
-
-  if (dancerError) throw dancerError;
-  if (!dancer) throw new Error("Dancer profile not found.");
-
-  const reviewType = contentReviewType(input.targetType, input.targetId);
-  if (input.targetType === "photo") {
-    const { data: photo, error: photoError } = await db
-      .from("dancer_photos")
-      .update({ review_status: input.status })
-      .eq("id", input.targetId)
-      .eq("dancer_id", input.dancerId)
-      .select("id")
-      .maybeSingle();
-
-    if (photoError) {
-      const positionIndexes = ["dancer_photos_one_active_primary_idx", "dancer_photos_one_active_gallery_position_idx"];
-      if (photoError.code === "23505" && positionIndexes.some((name) =>
-        photoError.constraint === name || String(photoError.message || "").includes(`"${name}"`))) {
-        throw new PublicApiError("CONFLICT", "Another photo now uses this profile position. Refresh the dancer's photos before reviewing this item again.", 409);
-      }
-      throw photoError;
-    }
-    if (!photo) throw new Error("Submitted photo not found.");
-    await updatePhotoReviewSummary(client, input.dancerId);
-  } else {
-    const { data: social, error: socialError } = await db
-      .from("social_links")
-      .select("id")
-      .eq("id", input.targetId)
-      .eq("dancer_id", input.dancerId)
-      .maybeSingle();
-
-    if (socialError) throw socialError;
-    if (!social) throw new Error("Submitted social link not found.");
-  }
-
-  const reviewUpdate = {
-    reviewer_id: input.reviewerId,
-    status: input.status,
-    notes,
-    reviewed_at: reviewedAt,
-  };
-  const { data: updatedReviews, error: updateReviewError } = await db
-    .from("approval_reviews")
-    .update(reviewUpdate)
-    .eq("dancer_id", input.dancerId)
-    .eq("review_type", reviewType)
-    .select("id, status, reviewed_at");
-
-  if (updateReviewError) throw updateReviewError;
-
-  let persistedReview = updatedReviews?.[0] || null;
-  if (!persistedReview) {
-    const { data: insertedReview, error: reviewError } = await db
-      .from("approval_reviews")
-      .insert({
-        dancer_id: input.dancerId,
-        review_type: reviewType,
-        ...reviewUpdate,
-      })
-      .select("id, status, reviewed_at")
-      .single();
-    if (reviewError) throw reviewError;
-    persistedReview = insertedReview;
-  }
-
-  await logAdminAction(client, {
-    adminId: input.reviewerId,
-    targetType: input.targetType,
-    targetId: input.dancerId,
-    action: input.status === "approved" ? "approve_submitted_content" : "reject_submitted_content",
-    notes: `${input.label || input.targetId}${notes ? `: ${notes}` : ""}`,
-  });
 
   const isApprovedProfileContentFix = dancer.status === "approved" && (input.targetType === "photo" || input.targetType === "social_link");
   let notificationDelivery = null;
+  let notificationNeedsReview = false;
   if (input.status === "rejected" || isApprovedProfileContentFix) {
     const notificationCopy =
       input.status === "approved"
@@ -1374,17 +1304,26 @@ export async function reviewSubmissionContent(client: DancrClient, input: Review
       },
       sent_at: reviewedAt,
     };
-    const { error: notificationError } = await db.from("notifications").insert(notificationRow);
-    if (notificationError) throw notificationError;
-    notificationDelivery = await deliverNotificationRows(client, [notificationRow], { email: isApprovedProfileContentFix });
+    try {
+      const { data: savedNotification, error: notificationError } = await db.from("notifications").insert(notificationRow).select("id").single();
+      if (notificationError) throw notificationError;
+      if (!savedNotification?.id) throw new Error("CONTENT_NOTIFICATION_NOT_CONFIRMED");
+      notificationDelivery = await deliverNotificationRows(client, [notificationRow], { email: isApprovedProfileContentFix });
+    } catch (error) {
+      notificationNeedsReview = true;
+      console.warn("CONTENT_REVIEW_NOTIFICATION_NOT_CONFIRMED", safeErrorMetadata(error));
+    }
   }
 
   return {
     dancerId: input.dancerId,
     targetType: input.targetType,
     targetId: input.targetId,
-    status: persistedReview.status,
-    reviewedAt: persistedReview.reviewed_at || reviewedAt,
+    reviewId: recorded.reviewId,
+    status: recorded.status,
+    reviewedAt,
+    reviewVersion: recorded.reviewVersion,
+    notificationNeedsReview,
     notificationDelivery,
   };
 }
@@ -1833,23 +1772,6 @@ function toDancerPhotoUrl(client: DancrClient, storagePath: string) {
   );
 }
 
-async function updatePhotoReviewSummary(client: DancrClient, dancerId: string) {
-  const db = client as any;
-  const { data, error } = await db.from("dancer_photos").select("review_status").eq("dancer_id", dancerId);
-  if (error) throw error;
-
-  const status = aggregateReviewStatus((data || []).map((row: any) => row.review_status));
-  const { error: updateError } = await db.from("dancer_profiles").update({ photo_review_status: status }).eq("id", dancerId);
-  if (updateError) throw updateError;
-}
-
-function aggregateReviewStatus(statuses: string[]) {
-  if (!statuses.length) return "pending";
-  if (statuses.some((status) => status === "rejected")) return "rejected";
-  if (statuses.every((status) => status === "approved")) return "approved";
-  return "pending";
-}
-
 function isFinalReviewStatus(status: string | null | undefined) {
   return status === "approved" || status === "rejected";
 }
@@ -1861,7 +1783,8 @@ function contentReviewType(targetType: ReviewSubmissionContentInput["targetType"
 function latestReviewFor(reviews: any[], reviewType: string) {
   return (reviews || [])
     .filter((review) => review.review_type === reviewType || review.reviewType === reviewType)
-    .sort((a, b) => reviewTimestamp(b) - reviewTimestamp(a) || String(b.id || "").localeCompare(String(a.id || "")))[0];
+    .sort((a, b) => Number(b.status === "pending") - Number(a.status === "pending")
+      || reviewTimestamp(b) - reviewTimestamp(a) || String(b.id || "").localeCompare(String(a.id || "")))[0];
 }
 
 function reviewTimestamp(review: any) {

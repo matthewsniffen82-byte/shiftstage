@@ -2,9 +2,6 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import test,{before,beforeEach,after} from 'node:test';
 import {PGlite} from '@electric-sql/pglite';
-import vm from 'node:vm';
-import ts from 'typescript';
-import {PublicApiError} from '../src/lib/api-error-policy.ts';
 
 const read=path=>readFileSync(new URL(path,import.meta.url),'utf8');
 const migration=read('../supabase/migrations/20260910004200_protect_active_photo_positions.sql');
@@ -114,44 +111,7 @@ for(const primary of [true,false]){
   }finally{await db.close();}
  });
 }
-function administrator(client,effects){
- const exports={};
- const suffix='updatePhotoReviewSummary=async()=>effects.push("summary");logAdminAction=async()=>effects.push("audit");';
- vm.runInNewContext(ts.transpileModule(read('../src/lib/dancr/admin.ts')+'\n'+suffix,{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText,
-  {exports,effects,console:{log(){},warn(){},error(){}},require:()=>({PublicApiError})});
- return target=>exports.reviewSubmissionContent(client,{dancerId:profile,targetId:target,targetType:'photo',status:'approved',reviewerId:admin});
-}
-function adminClient({errorOverride=null,postgrest=false}={}){
- const calls=[];
- return {calls,client:{from(table){
-  assert.ok(['dancer_profiles','dancer_photos'].includes(table),'A rejected photo conflict must stop later database writes');
-  calls.push(table);let value=null;const filters=[];
-  const q={select(){return q;},update(v){value=v;return q;},eq(key,v){assert.ok(['id','dancer_id'].includes(key));filters.push([key,v]);return q;},
-   async maybeSingle(){
-    if(table==='dancer_profiles')return {data:(await pg.query('select * from public.dancer_profiles where id=$1',[profile])).rows[0],error:null};
-    if(errorOverride)return {data:null,error:errorOverride};
-    try{
-     const rows=(await pg.query('update public.dancer_photos set review_status=$1 where '+filters.map(([key],n)=>`${key}=$${n+2}`).join(' and ')+' returning id',[value.review_status,...filters.map(([,v])=>v)])).rows;
-     return {data:rows[0]||null,error:null};
-    }catch(error){return {data:null,error:postgrest?{code:error.code,message:error.message}:error};}
-   }};return q;
- }}};
-}
-for(const primary of [true,false])for(const postgrest of [true,false]){
- test(`administrator ${primary?'primary':'gallery'} approval returns 409 before later writes with ${postgrest?'REST':'native'} errors`,async()=>{
-  const old=await photo(100,{primary,status:'rejected'});await photo(101,{primary});
-  await pg.query("insert into public.approval_reviews(dancer_id,review_type,notes) values($1,$2,'Keep original review')",[profile,'photo:'+old]);
-  const before=await photos(),beforeHistory=(await pg.query('select * from public.approval_reviews')).rows,effects=[],db=adminClient({postgrest});
-  await assert.rejects(administrator(db.client,effects)(old),{status:409});assert.deepEqual(await photos(),before);
-  assert.deepEqual((await pg.query('select * from public.approval_reviews')).rows,beforeHistory);assert.deepEqual(effects,[]);
-  assert.deepEqual(db.calls,['dancer_profiles','dancer_photos']);
- });
-}
-test('unrelated uniqueness and network errors retain their original error object',async()=>{
- for(const failure of [{code:'23505',message:'duplicate key value violates unique constraint "dancer_photos_pkey"'},{code:'08006',constraint:primaryIndex}]){
-  const effects=[],db=adminClient({errorOverride:failure});await assert.rejects(administrator(db.client,effects)(id(100)),error=>error===failure);assert.deepEqual(effects,[]);
- }
-});
+// Native atomic-decision caller conflicts are covered in content-decision-caller.test.mjs.
 test('the new indexes are valid, partial and unique while existing RLS remains enabled',async()=>{
  const rows=(await pg.query('select indisunique,indisvalid,indisready,indpred is not null as partial from pg_index where indexrelid in($1::regclass,$2::regclass)',[primaryIndex,galleryIndex])).rows;
  assert.equal(rows.length,2);assert.ok(rows.every(row=>row.indisunique&&row.indisvalid&&row.indisready&&row.partial));

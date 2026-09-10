@@ -7,6 +7,7 @@ import { DashboardCloseButton } from "@/app/components/DashboardCloseButton";
 import { homeDiscoveryHref } from "@/src/lib/dancr/navigation";
 import { BROWSER_AUTH_SESSION_KEY, captureBrowserAuthSessionGuard, readBrowserAuthSession } from "@/src/lib/dancr/browser-session";
 import { safeSocialProfileUrl } from "@/src/lib/dancr/social-profile-url";
+import { isContentReviewVersion, type ContentReviewVersion } from "@/src/lib/dancr/content-review-version";
 import { phoneTapCopy } from "@/src/lib/dancr/phone-tap-copy";
 import { payoutCopy } from "@/src/lib/dancr/payout-copy";
 import { findAvailableMyDancrCity, MYDANCR_AVAILABLE_CITIES } from "@/src/lib/dancr/markets";
@@ -4167,6 +4168,7 @@ function SubmissionDetails({
   const [workingByKey, setWorkingByKey] = useState<Record<string, boolean>>({});
   const [preview, setPreview] = useState<AdminPreview | null>(null);
   const activeActionRef = useRef<ApprovalActionRequest | null>(null);
+  const versionByKeyRef = useRef<Record<string, { source: string; version: ContentReviewVersion }>>({});
 
   useEffect(() => () => {
     activeActionRef.current?.controller.abort();
@@ -4198,6 +4200,14 @@ function SubmissionDetails({
       }));
       return;
     }
+    const loadedItem = (targetType === "photo" ? photos : socials).find(item => asText(item.id) === targetId);
+    const source = JSON.stringify(loadedItem?.reviewVersion ?? null);
+    const cached = versionByKeyRef.current[key];
+    const expectedVersion = cached?.source === source ? cached.version : loadedItem?.reviewVersion;
+    if (!isContentReviewVersion(expectedVersion, targetType)) {
+      setFeedbackByKey(current => ({ ...current, [key]: { tone: "error", message: "Refresh the approval queue before reviewing this item." } }));
+      return;
+    }
     const action = beginAction();
     if (!action) return;
     activeActionRef.current = action;
@@ -4219,6 +4229,7 @@ function SubmissionDetails({
           dancerId,
           targetType,
           targetId,
+          expectedVersion,
           status,
           notes,
           label,
@@ -4228,7 +4239,14 @@ function SubmissionDetails({
       if (!isCurrentAction(action)) return;
 
       const responseStatus = asText(data.review?.status);
-      const savedStatus = responseStatus === "approved" || responseStatus === "rejected" ? responseStatus : status;
+      if (responseStatus !== status || data.review?.dancerId !== dancerId || data.review?.targetId !== targetId
+        || data.review?.targetType !== targetType || !isContentReviewVersion(data.review?.reviewVersion, targetType)
+        || data.review.reviewVersion.review?.id !== data.review.reviewId
+        || data.review.reviewVersion.review?.status !== responseStatus) {
+        throw new Error("The review could not be confirmed. Refresh the approval queue.");
+      }
+      const savedStatus = responseStatus as "approved" | "rejected";
+      versionByKeyRef.current[key] = { source, version: data.review.reviewVersion };
       const confirmation = `${label} ${savedStatus === "approved" ? "approved" : "rejected"} successfully.`;
       setStatusByKey((current) => ({ ...current, [key]: savedStatus }));
       if (targetType === "social_link") {
@@ -4236,7 +4254,7 @@ function SubmissionDetails({
       }
       setFeedbackByKey((current) => ({
         ...current,
-        [key]: { tone: "success", message: confirmation },
+        [key]: { tone: "success", message: confirmation + (data.review.notificationNeedsReview ? " Notification could not be confirmed." : "") },
       }));
       onActionConfirmed(confirmation);
       onKeepOpen();
@@ -4536,6 +4554,7 @@ function normalizeSubmissionSocials(item: Record<string, unknown>) {
         label: socialPlatformLabel(platform),
         handle,
         url,
+        reviewVersion: social.reviewVersion,
         reviewStatus: asText(social.reviewStatus || social.review_status),
         reviewNotes: asText(social.reviewNotes || social.review_notes),
       };

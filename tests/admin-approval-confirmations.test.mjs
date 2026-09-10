@@ -30,7 +30,9 @@ test("content decisions stay visible without collapsing the dancer approval", ()
   assert.match(reviewContent, /onKeepOpen\(\)/);
   assert.match(reviewContent, /setWorkingByKey\(\(current\) => \(\{ \.\.\.current, \[key\]: true \}\)\)/);
   assert.match(reviewContent, /const responseStatus = asText\(data\.review\?\.status\)/);
-  assert.match(reviewContent, /const savedStatus = responseStatus === "approved" \|\| responseStatus === "rejected" \? responseStatus : status/);
+  assert.match(reviewContent, /responseStatus !== status/);
+  assert.match(reviewContent, /!isContentReviewVersion\(data\.review\?\.reviewVersion, targetType\)/);
+  assert.doesNotMatch(reviewContent, /\? responseStatus : status/);
   assert.match(reviewContent, /const confirmation = `\$\{label\} \$\{savedStatus === "approved" \? "approved" : "rejected"\} successfully\.`/);
   assert.match(reviewContent, /setStatusByKey\(\(current\) => \(\{ \.\.\.current, \[key\]: savedStatus \}\)\)/);
   assert.match(reviewContent, /onActionConfirmed\(confirmation\)/);

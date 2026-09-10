@@ -72,6 +72,7 @@ export async function POST(request: Request) {
         reviewerId: user.id,
         targetType,
         targetId,
+        expectedVersion: body.expectedVersion,
         status: status as ReviewStatus,
         notes,
         label,
