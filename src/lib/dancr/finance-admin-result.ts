@@ -20,7 +20,17 @@ export async function successfulFinanceMutation(
 }
 
 function success(body: Record<string, unknown>): AdminFinanceSuccessResult {
-  return { status: 200, body: { ok: true, ...body } };
+  const result = body.result;
+  const publicBody = result && typeof result === "object" && "errors" in result && Array.isArray(result.errors)
+    ? {
+      ...body,
+      result: {
+        ...result,
+        errors: result.errors.map(() => "Some finance work needs review. Check current invoice and payout states before retrying."),
+      },
+    }
+    : body;
+  return { status: 200, body: { ok: true, ...publicBody } };
 }
 
 function defaultRefreshFailureLogger(error: unknown) {
