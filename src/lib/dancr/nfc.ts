@@ -2,6 +2,7 @@ import crypto from "node:crypto";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { requireVenueAccess } from "./venue-access";
 import { phoneTapCopy } from "./phone-tap-copy";
+import { recordDancerTap } from "./dancer-tap";
 
 type DancrClient = SupabaseClient;
 
@@ -203,35 +204,20 @@ export async function registerDancerFromNfc(
   client: DancrClient,
   input: { tagId: string; dancerUserId: string; sessionId: string; request: Request },
 ) {
-  if (!UUID_PATTERN.test(input.tagId) || !UUID_PATTERN.test(input.sessionId)) {
+  if (!UUID_PATTERN.test(input.tagId) || !UUID_PATTERN.test(input.dancerUserId) || !UUID_PATTERN.test(input.sessionId)) {
     throw new Error("Invalid phone-tap session.");
   }
   const audit = requestAudit(input.request);
-  const { data, error } = await (client as any).rpc("register_dancer_nfc_enrollment", {
-    p_tag_id: input.tagId,
-    p_dancer_user_id: input.dancerUserId,
-    p_session_id: input.sessionId,
-    p_audit: {
+  return recordDancerTap(client, {
+    tagId: input.tagId,
+    dancerUserId: input.dancerUserId,
+    sessionId: input.sessionId,
+    audit: {
       ip_address: audit.ipAddress,
       user_agent: audit.userAgent,
       device_fingerprint: audit.deviceFingerprint,
     },
   });
-  if (error) throw error;
-  if (data?.enrollmentStatus !== "completed") return data;
-
-  const { data: presence, error: presenceError } = await (client as any).rpc("activate_dancer_shift_from_nfc", {
-    p_tag_id: input.tagId,
-    p_dancer_user_id: input.dancerUserId,
-    p_session_id: input.sessionId,
-    p_audit: {
-      ip_address: audit.ipAddress,
-      user_agent: audit.userAgent,
-      device_fingerprint: audit.deviceFingerprint,
-    },
-  });
-  if (presenceError) throw presenceError;
-  return { ...data, ...presence };
 }
 
 export async function finalizePendingDancerNfcEnrollment(

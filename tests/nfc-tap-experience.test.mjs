@@ -47,7 +47,7 @@ test("a dressing-room tap authorizes the venue and renews a current shift for no
 });
 
 test("new and existing dancers use the same submitted-profile NFC flow without manager QR approval", () => {
-  assert.match(service, /register_dancer_nfc_enrollment/);
+  assert.match(service, /recordDancerTap/);
   assert.match(service, /finalize_pending_dancer_nfc_enrollment/);
   assert.doesNotMatch(service, /authorize_dancer_profile_from_nfc/);
   assert.match(submissionGateMigration, /require_submitted_dancer_profile_for_active_affiliation/);

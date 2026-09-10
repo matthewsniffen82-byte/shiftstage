@@ -1,0 +1,11 @@
+# Step 9: connect the atomic dancer tap
+
+The foundation `3866bd5919ab902377194d3266d22befb5c282c8` is applied and verified. Its exact Vercel deployment succeeded; health, protected-route denials, RPC exposure and thirty readiness checks passed at 08:26:46–49 UTC on September 10, 2026. The installed wrapper fingerprint is `ec438babea11a4e72938baad10474e2e`.
+
+Replace the fresh tap service's separate enrollment/presence calls with one wrapper RPC. Preserve request auditing, authenticated dancer identity, browser-account binding, tag resolution, rate limits and the public response states. Validate enrollment identity, active affiliation, presence flags and required receipt fields before treating the tap as successful. Return only the established public receipt fields. Invalid/missing results and transient failures must not trigger fallback writes, compensation, implicit retries or optional follow notifications.
+
+Use native PostgreSQL tests through the actual service and NFC endpoint to cover pending setup, first activation, existing session, cooldown, lost responses, malformed receipts, cross-account protection and post-save optional notification failures. Preserve deferred completion and cashier behavior. Do not reapply SQL or use a production tap/account/notification as a test. Complete full tests/lint/build/TypeScript and read-only dependency checks, then commit/push and verify the exact deployed commit before moving on.
+
+All 146 focused checks pass, including 63 new actual endpoint/service/native SQL cases. The explicit retry after response loss retains the original shift window and sends no duplicate Working Now broadcast. Malformed results fail before browser binding or follow notifications, with committed records retained for reconciliation. Unknown receipt fields are excluded from the public response. Read-only checks at 08:34:02–04 UTC confirmed frozen function/dependency/ledger hashes, service-only execution, target RLS and unchanged aggregate counts.
+
+All 4,991 automated tests, lint, production build, standalone TypeScript, migration guard and thirty live readiness checks passed. No migration or production check-in was performed for this caller release. Exact push, Vercel success and deployed health remain required.
