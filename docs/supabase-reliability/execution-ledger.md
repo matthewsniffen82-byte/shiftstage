@@ -246,3 +246,13 @@ Moderation-notification handling was pushed as `5440ee86b3b5aab751dd11e3a07a25c4
 The inspected plan is `step-08-finance-cron-results.md`. Report partial financial job failures accurately, preserve counters and avoid raw provider/database text in cron logs/results. Keep the existing authorization, schedule and single execution. No real finance run is permitted for testing; full validation and exact deployment/health gates remain required.
 
 Finance-cron validation on the combined tree with incoming `acef1c77` passed all 4,073 tests, full lint, production build, standalone TypeScript and thirty live readiness checks. The 35 focused cases include 22 new runtime cases; eighteen fail against the prior route. Postbuild skipped layout-review population. No production billing, email, schema or data mutation was used. Exact push and deployment/health verification remain required.
+
+Finance-cron handling was pushed as `62c25da0ecd2603fee6cb67b1fa3ea40cacfd995`, with local HEAD and both remote main references matching. Its [exact Vercel deployment](https://vercel.com/ai-movie-jobs/shiftstage/9cPSziFpYMtoiq7kHB9iQ2jc6RvS) succeeded. Both health routes, protected finance denials and thirty readiness checks passed at 03:46:40–42 UTC on 2026-09-10. No authorized finance run or production write was used for verification.
+
+## Step 8 counter-notice delivery acknowledgments
+
+The inspected plan is `step-08-counter-notice-delivery.md`. Confirm exact forwarding writes in both active callers, recover uncertain acknowledgments through one read, preserve completed submission with a clear delivery warning, and diagnose optional notification failures. Legal content/dates and restoration behavior remain unchanged; transactional submission and durable delivery work remain assigned to Step 9. Full validation and exact deployment verification are required.
+
+Counter-notice validation passed all 4,111 tests, full lint, production build, standalone TypeScript and thirty live readiness checks. All 47 focused cases passed, including 38 new cases (36 fail against the prior implementation). Postbuild skipped layout-review population. Read-only captures preserve affected counts/states, 59 columns and 26 constraints; no production case, notification or email was created. Exact push and deployment/health verification remain required.
+
+The initial push was safely rejected after `bbcae094` partial payout-reversal protection reached main. That correction was preserved by rebase without conflict. The final combined tree passed all 4,141 tests, lint, build, standalone TypeScript and thirty live readiness checks; postbuild skipped layout-review population. This supersedes the earlier test total. Exact push and deployment/health verification remain required.

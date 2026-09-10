@@ -313,35 +313,35 @@ export async function submitDmcaCounterNotice(
     }),
   });
 
-  if (forwarded.delivered) {
-    await db
-      .from("dmca_counter_notices")
-      .update({
-        status: "forwarded",
-        forwarded_to_claimant_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", counter.id);
-  }
+  const forwardingConfirmed = forwarded.delivered
+    ? await confirmCounterNoticeForwarding(client, counter.id, caseId)
+    : false;
+  const deliveryNeedsReview = forwarded.delivered && !forwardingConfirmed;
 
-  await db.from("notifications").insert({
-    recipient_id: userId,
-    notification_type: "dmca_status",
-    channel: "in_app",
-    title: "Counter-notice submitted",
-    body: "Your counter-notice was received. The content remains disabled during the required waiting period.",
-    payload: {
-      caseId,
-      status: "countered",
-      restoreEligibleAt: restoreEligibleAt.toISOString(),
-    },
-    sent_at: new Date().toISOString(),
-  });
+  try {
+    const { error: notificationError } = await db.from("notifications").insert({
+      recipient_id: userId,
+      notification_type: "dmca_status",
+      channel: "in_app",
+      title: "Counter-notice submitted",
+      body: "Your counter-notice was received. The content remains disabled during the required waiting period.",
+      payload: {
+        caseId,
+        status: "countered",
+        restoreEligibleAt: restoreEligibleAt.toISOString(),
+      },
+      sent_at: new Date().toISOString(),
+    });
+    if (notificationError) throw notificationError;
+  } catch (error) {
+    console.warn("DMCA_COUNTER_NOTIFICATION_NOT_SAVED", safeErrorMetadata(error));
+  }
 
   return {
     id: counter.id,
     caseId,
-    status: forwarded.delivered ? "forwarded" : "submitted",
+    status: forwardingConfirmed ? "forwarded" : "submitted",
+    deliveryNeedsReview,
     restoreEligibleAt: restoreEligibleAt.toISOString(),
     restoreDeadlineAt: restoreDeadlineAt.toISOString(),
   };
@@ -634,21 +634,45 @@ export async function forwardPendingDmcaCounterNotices(client: DancrClient, limi
     });
 
     if (sent.delivered) {
-      const forwardedAt = new Date().toISOString();
-      const { error: updateError } = await db
-        .from("dmca_counter_notices")
-        .update({
-          status: "forwarded",
-          forwarded_to_claimant_at: forwardedAt,
-          updated_at: forwardedAt,
-        })
-        .eq("id", counter.id)
-        .eq("status", "submitted");
-      if (updateError) throw updateError;
+      if (!await confirmCounterNoticeForwarding(client, counter.id, counter.case_id)) {
+        throw new Error("Counter-notice delivery status could not be confirmed. Review the case before retrying.");
+      }
     }
     results.push({ counterNoticeId: counter.id, forwarded: sent.delivered });
   }
   return results;
+}
+
+async function confirmCounterNoticeForwarding(client: DancrClient, counterId: string, caseId: string) {
+  const db = client as any;
+  const forwardedAt = new Date().toISOString();
+  const confirmed = (row: any) => row?.id === counterId && row.case_id === caseId
+    && row.status === "forwarded" && typeof row.forwarded_to_claimant_at === "string"
+    && Number.isFinite(Date.parse(row.forwarded_to_claimant_at));
+  try {
+    const { data, error } = await db.from("dmca_counter_notices")
+      .update({ status: "forwarded", forwarded_to_claimant_at: forwardedAt, updated_at: forwardedAt })
+      .eq("id", counterId).eq("case_id", caseId)
+      .eq("status", "submitted").is("forwarded_to_claimant_at", null)
+      .select("id, case_id, status, forwarded_to_claimant_at").maybeSingle();
+    if (error) throw error;
+    if (confirmed(data)) return true;
+  } catch (error) {
+    console.warn("DMCA_COUNTER_FORWARDING_WRITE_UNCONFIRMED", safeErrorMetadata(error));
+  }
+
+  // The email was already sent. Confirm a lost write response without sending it again.
+  try {
+    const { data, error } = await db.from("dmca_counter_notices")
+      .select("id, case_id, status, forwarded_to_claimant_at")
+      .eq("id", counterId).eq("case_id", caseId).maybeSingle();
+    if (error) throw error;
+    if (confirmed(data)) return true;
+  } catch (error) {
+    console.warn("DMCA_COUNTER_FORWARDING_READ_UNCONFIRMED", safeErrorMetadata(error));
+  }
+  console.error("DMCA_COUNTER_DELIVERY_REQUIRES_REVIEW");
+  return false;
 }
 
 function mapAgent(row: any) {

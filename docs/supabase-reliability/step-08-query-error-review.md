@@ -37,3 +37,20 @@ The publishing correction was released as `f73d48b1fc6b62fd148b0a587076c576b38ce
 Optional-auth handling was released as `794a1850a2ee49f7109b95e6a0d759ed27c01762` and verified at 03:10:38–40 UTC. The next correction, `step-08-video-upload-acknowledgments.md`, removes unsafe metadata deletion after signing failure and validates upload acknowledgments. Venue-claim submission and administrator mutation paths were confirmed retired (410, no active callers of the legacy write functions). The remaining active compensation and bookkeeping candidates require their named atomicity/storage/lifecycle review; notification and aggregate error findings are still open.
 
 Video-upload preservation was released as `06c37da94f04ab0123a09bbccbb6eeba623a5857` and verified at 03:21:03–07 UTC. The next correction, `step-08-moderation-notification-errors.md`, records returned/thrown optional photo-rejection notification failures while preserving the completed moderation decision. Critical counter-notice, NFC support and account lifecycle compensation require their separate workflow corrections; aggregate finance-cron error handling is still open.
+
+Moderation-notification handling was released as `5440ee86b3b5aab751dd11e3a07a25c4bd65254a` and verified at 03:31:29–31 UTC. Finance-cron partial failure reporting was released as `62c25da0ecd2603fee6cb67b1fa3ea40cacfd995` and verified at 03:46:40–42 UTC. The final direct acknowledgment correction is described in `step-08-counter-notice-delivery.md`; its release gates remain required.
+
+## Disposition for transaction and storage review
+
+The original fifteen standalone table-result candidates are accounted for: four invoice writes, one video-signing compensation, two moderation notifications and two counter-notice delivery/notification writes have controlled corrections; legacy claim-proof cleanup is retired. The remaining five belong to active multi-operation workflows, where merely adding a throw cannot restore consistency:
+
+| Remaining workflow | Required next review |
+| --- | --- |
+| Redemption first-event timestamp followed by event insertion | Step 9: one atomic timestamp/event operation; preserve appropriate repeat-event semantics. |
+| Account state compensation (two sites) involving application rows, venue state and Auth metadata | Step 9 atomic database boundary and Step 17 lifecycle recovery; preserve suspension decisions. |
+| Administrator video-import compensation after preparation/audit failure | Step 9 partial-result preservation and Step 11 object cleanup; never erase an uncertain committed import. |
+| NFC support request followed by message/activity writes | Step 9 transactional request/message creation; no blind delete after an uncertain message result. |
+
+Counter-notice insertion/case transition/rollback and durable email dispatch also remain Step 9 work, even after the forwarding acknowledgment is corrected. Storage removal and per-file signing placeholders remain Step 11. These are explicitly open integrity/recovery findings, not successful transactional tests. Hosted fault injection and disposable-project migration replay remain deferred by the user. This query pass does not justify a final production-hardening classification before those later steps.
+
+The final syntax scan on the counter-notice correction tree identifies 800 candidates (670 table, 66 RPC, 64 Storage). Its six standalone table-write results are exactly the five active workflow sites above and the retired venue-claim path. This confirms the disposition list, not every dynamic query's correctness. Normal cardinality and failure tests remain necessary per workflow.

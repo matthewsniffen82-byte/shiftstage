@@ -46,7 +46,10 @@ export async function POST(request: Request, context: RouteContext) {
       {
         ok: true,
         counterNotice,
-        message: "Your counter-notice was submitted and the required waiting period has started.",
+        partial: counterNotice.deliveryNeedsReview,
+        message: counterNotice.deliveryNeedsReview
+          ? "Your counter-notice was received, but its delivery status could not be confirmed. Do not submit it again. Contact support with your case number."
+          : "Your counter-notice was submitted and the required waiting period has started.",
       },
       { status: 201 },
     );
