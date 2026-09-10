@@ -10,15 +10,15 @@ const compile = source => ts.transpileModule(source, {
   compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX, target: ts.ScriptTarget.ES2022 },
 }).outputText;
 
-function contact({ session = true, loginFlag = true, cachedApproval = false } = {}) {
+function contact({ session = true, loginFlag = true, cachedApproval = false, role = "dancer", accountState = "active" } = {}) {
   const destinations = [], signIns = [];
   const context = {
-    authSession: session ? { accessToken: "fixture", account: { role: "dancer" } } : null,
-    isDancerSession: () => session,
+    authSession: session ? { accessToken: "fixture", account: { role, accountState } } : null,
+    isDancerSession: () => session && role === "dancer",
     isCustomerSession: () => false,
-    isVenueSession: () => false,
-    isVenueLoggedIn: false,
-    isDancerLoggedIn: loginFlag,
+    isVenueSession: () => session && role === "venue",
+    isVenueLoggedIn: loginFlag && role === "venue",
+    isDancerLoggedIn: loginFlag && role === "dancer",
     isCustomerLoggedIn: false,
     dancerSetup: { approval: cachedApproval },
     openAuthRole: role => signIns.push(role),
@@ -46,6 +46,10 @@ test("an expired dancer session opens sign-in instead of the legacy dashboard", 
   const result = contact({ session: false });
   assert.deepEqual(result.destinations, []);
   assert.deepEqual(result.signIns, ["dancer"]);
+});
+
+for (const accountState of ["active", "disabled"]) test(`venue Contact opens messaging for an ${accountState} account`, () => {
+  assert.deepEqual(contact({ role: "venue", accountState, loginFlag: false }).destinations, ["/dashboard/venue#venue-support"]);
 });
 
 // Exercise the real dashboard branch and approval helper with saved profile states.
@@ -107,6 +111,7 @@ test("Contact targets messaging inside Help & Account and opens its collapsed an
   let pendingFrame;
   const context = {
     isLoading: true, state: {}, role: "dancer", initialSection: undefined,
+    supportReady: true, initialSectionTargetRef: { current: "" },
     useEffect: fn => fn(), HTMLDetailsElement: Details,
     document: { getElementById: id => id === "dancer-support" ? support : null },
     window: { location: { hash: "#dancer-support" }, requestAnimationFrame: fn => { pendingFrame = fn; return 1; }, cancelAnimationFrame() {} },
@@ -117,6 +122,51 @@ test("Contact targets messaging inside Help & Account and opens its collapsed an
   runInNewContext(effect, context);
   pendingFrame();
   assert.equal(accountDetails.open, true);
+  assert.deepEqual(calls, ["scroll", "focus"]);
+});
+
+test("paused venue Contact waits for deferred messaging and navigates only once", () => {
+  const start = dashboard.indexOf('  useEffect(() => {\n    if (isLoading || state.error) return;');
+  const end = dashboard.indexOf('\n\n  const updateProfile', start);
+  const effect = dashboard.slice(start, end);
+  class Details { open = false; parentElement = null; }
+  const account = new Details();
+  const calls = [];
+  const support = { parentElement: account, scrollIntoView: () => calls.push("scroll"), focus: () => calls.push("focus") };
+  let mounted = false, pendingFrame, previousDependencies;
+  const context = {
+    isLoading: true, state: { account: { accountState: "disabled" } }, role: "venue", initialSection: undefined,
+    supportReady: false, initialSectionTargetRef: { current: "" }, HTMLDetailsElement: Details,
+    useEffect: (callback, dependencies) => {
+      if (!previousDependencies || dependencies.some((value, index) => !Object.is(value, previousDependencies[index]))) callback();
+      previousDependencies = dependencies;
+    },
+    document: { getElementById: id => mounted && id === "venue-support" ? support : null },
+    window: { location: { hash: "#venue-support" }, requestAnimationFrame: callback => { pendingFrame = callback; return 1; }, cancelAnimationFrame() {} },
+  };
+  const render = () => {
+    pendingFrame = undefined;
+    runInNewContext(effect, context);
+    pendingFrame?.();
+  };
+  render();
+  context.isLoading = false;
+  render();
+  assert.deepEqual(calls, [], "recovery can render before messaging without losing the destination");
+  assert.equal(context.initialSectionTargetRef.current, "");
+  mounted = true;
+  context.supportReady = true;
+  context.state.supportThreads = [];
+  render();
+  assert.equal(account.open, true);
+  assert.deepEqual(calls, ["scroll", "focus"], "opening Contact must land on messaging when it arrives");
+  context.state.supportThreads = [{ id: "refreshed-thread" }];
+  render();
+  // A later reload must not steal the user's position after Contact has landed.
+  context.isLoading = true;
+  render();
+  context.isLoading = false;
+  render();
   assert.deepEqual(calls, ["scroll", "focus"]);
 });
 

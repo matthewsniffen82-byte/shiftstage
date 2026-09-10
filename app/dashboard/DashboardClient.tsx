@@ -29,7 +29,7 @@ import "./dancer-dashboard.css";
 import { CustomerDashboardAvatar, CustomerDashboardIcon, type CustomerDashboardSectionId } from "./CustomerDashboardIdentity";
 import "./customer-dashboard.css";
 import "./venue-dashboard.css";
-import { VenueDashboardAvatar, VenueDashboardIcon } from "./VenueDashboardIdentity";
+import { VenueDashboardIcon } from "./VenueDashboardIdentity";
 import { isAffiliatedDancerWorkingNow, type VenueDancerAffiliation } from "@/src/lib/dancr/venue-roster";
 import { loadCustomerDashboard } from "./customer-dashboard-loader";
 import { loadDancerDashboard } from "./dancer-dashboard-loader";
@@ -321,6 +321,8 @@ export default function DashboardClient({
   const [customerSupportCount, setCustomerSupportCount] = useState(0);
   const venueRefreshAbortRef = useRef<AbortController | null>(null);
   const venueRefreshRequestRef = useRef(0);
+  const initialSectionTargetRef = useRef("");
+  const supportReady = state.supportThreads !== undefined;
 
   useEffect(() => {
     if (role !== "customer") return;
@@ -620,20 +622,23 @@ export default function DashboardClient({
     const sectionId = role === "venue" && hashSectionId === "venue-working-now"
       ? "venue-dancer-roster"
       : initialSectionId || hashSectionId;
-    if (!sectionId) return;
+    if (!sectionId || initialSectionTargetRef.current === sectionId) return;
     const frame = window.requestAnimationFrame(() => {
       const section = document.getElementById(sectionId);
+      // Paused venues show account recovery before their messaging panel loads.
+      if (!section) return;
       if (section instanceof HTMLDetailsElement) section.open = true;
-      let parent = section?.parentElement;
+      let parent = section.parentElement;
       while (parent) {
         if (parent instanceof HTMLDetailsElement) parent.open = true;
         parent = parent.parentElement;
       }
-      section?.scrollIntoView({ behavior: "smooth", block: "start" });
-      section?.focus({ preventScroll: true });
+      section.scrollIntoView({ behavior: "smooth", block: "start" });
+      section.focus({ preventScroll: true });
+      initialSectionTargetRef.current = sectionId;
     });
     return () => window.cancelAnimationFrame(frame);
-  }, [initialSection, isLoading, role, state.error]);
+  }, [initialSection, isLoading, role, state.error, supportReady]);
 
   const updateProfile = useCallback((profile: Record<string, unknown> | null | undefined) => {
     if (!profile) return;
@@ -710,7 +715,6 @@ export default function DashboardClient({
       <DashboardStyles />
       <section className="dashboard-head">
         <div className="dashboard-head-row">
-          <VenueDashboardAvatar name={state.venueRequest.venueName} />
           <div className="dashboard-head-copy"><span className="eyebrow">Club request</span><h1>{state.venueRequest.venueName}</h1></div>
           <DashboardCloseButton fallbackHref={dashboardCloseHref} label="Close club request" />
         </div>
@@ -731,7 +735,6 @@ export default function DashboardClient({
         <div className="dashboard-head-row">
           {role === "dancer" ? <DancerDashboardAvatar avatarUrl={String(state.profile?.avatarPhotoUrl || "")} name={profileDisplayName} /> : null}
           {role === "customer" ? <CustomerDashboardAvatar name={dashboardHeading} /> : null}
-          {role === "venue" ? <VenueDashboardAvatar name={String(state.profile?.name || "Venue")} /> : null}
           <div className="dashboard-head-copy">
             <span className="eyebrow">{dashboardEyebrow}</span>
             <div className="dashboard-head-title-row">
@@ -865,8 +868,8 @@ export default function DashboardClient({
                 <DashboardSection defaultOpen id="venue-account" title="Account & support" description="Account status, recovery, and help from MyDancr." icon={<VenueDashboardIcon section="account" />} toggleAffordance="chevron">
                   <div className="venue-dashboard-inner-grid venue-dashboard-account-grid">
                     <AccountSummaryPanel accountState={String(state.account?.accountState)} email={String(state.account?.email || "Private")} role="venue" />
-                    <AccountControlsPanel accountRole="venue" accountState={String(state.account?.accountState)} />
                     {state.supportThreads ? <SupportInboxPanel initialThreads={state.supportThreads} panelId="venue-support" /> : <p role="status">Loading support…</p>}
+                    <AccountControlsPanel accountRole="venue" accountState={String(state.account?.accountState)} />
                   </div>
                 </DashboardSection>
               </> : <VenuePanel

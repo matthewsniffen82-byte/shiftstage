@@ -15,8 +15,3 @@ export function VenueDashboardIcon({ section }: { section: VenueIcon }) {
   };
   return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d={paths[section]} /></svg>;
 }
-
-export function VenueDashboardAvatar({ name }: { name: string }) {
-  const initials = name.trim().split(/\s+/).slice(0, 2).map(word => Array.from(word)[0] || "").join("").toLocaleUpperCase();
-  return <span className="venue-dashboard-avatar" aria-hidden="true">{initials || "V"}</span>;
-}
