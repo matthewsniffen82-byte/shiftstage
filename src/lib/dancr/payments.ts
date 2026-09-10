@@ -49,7 +49,8 @@ export async function markStripeSubscriptionDeleted(client: DancrClient, subscri
         ? new Date(subscription.current_period_end * 1000).toISOString()
         : null,
     })
-    .eq("dancer_id", dancerId);
+    .eq("dancer_id", dancerId)
+    .eq("stripe_subscription_id", subscription.id);
 
   if (error) throw error;
 }
