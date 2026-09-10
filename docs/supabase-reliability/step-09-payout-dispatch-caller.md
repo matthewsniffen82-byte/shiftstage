@@ -1,0 +1,21 @@
+# Step 9: confirmed payout dispatch
+
+The database foundation was pushed as `98890646a50418f6c5c56b1f10e763ff8f8a8409`. Its [exact Vercel deployment](https://vercel.com/ai-movie-jobs/shiftstage/EewckuRSLMWLi4A73BHmJTsUzB4c) succeeded; health, protected routes, unsigned webhook rejection and thirty readiness checks passed at 09:55:37–40 UTC on 2026-09-10. Migration `20260910094000` is applied and frozen. Read-only verification confirmed its function MD5 `821f2959d65d722b559158276baccef4`, source MD5 `dc465f5fde10fc84d0b75c160a085364`, five unchanged dependencies and service-only access. Existing financial records, 29 constraints, fifteen indexes, ten triggers, five policies, 124 functions and 106 prior ledger entries were preserved.
+
+## Controlled change
+
+The worker now selects only requested production payouts, avoiding automatic retransmission and queue starvation behind unresolved processing rows. Retain the existing NATS/disabled-payout gates, scheduled request creation, account eligibility check, provider abstraction and stable idempotency key.
+
+After eligibility checks, obtain the atomic dispatch claim. Validate the payout ID, dancer, exact positive integer amount, currency, provider, status and dispatch key before contacting the provider. A competing worker's already claimed/finished result is skipped without sending. Treat a missing, malformed or lost claim response as uncertain; it cannot authorize a transfer.
+
+Validate the provider reference and existing processing marker's receipt before counting a transfer as created. A signed completion racing ahead of that marker can return the existing paid duplicate receipt. Preserve the reservation after provider/claim/acknowledgment uncertainty and record the existing reconciliation flag. Check that flag's acknowledgment and report its failure separately without undoing or repeating the transfer.
+
+A failure before any claim attempt leaves the requested batch and reserved earnings intact, so a later eligibility recovery can retry the same pending request. Remove the unused automatic-release convenience helper and its two obsolete unit tests. The database release function remains available to the existing confirmed provider-reversal flow; its behavior is unchanged. Processing payouts require provider reconciliation instead of blind cron retransmission. The foundation document describes operator recovery and its limits.
+
+## Validation and limits
+
+Fifty-five new actual-worker tests run against the native payout transaction fixture. Forty fail against the previous worker. Coverage includes competing workers, stale/processing selections, wrong identities and amounts, null receipts, lost responses, provider failures, eligibility races, preserved reservations, confirmed paid races and failed reconciliation acknowledgments. All 101 focused worker/native/source-boundary tests pass after updating obsolete source assertions.
+
+Initial validation passed all 5,164 tests, lint and the production build. Independent early-reversal handling arrived as `96dd84c9fc4df615cf3806a2dd4fc559632aa084`; its separate gateway change was reviewed, preserved by fast-forward integration, and its [exact Vercel deployment](https://vercel.com/ai-movie-jobs/shiftstage/GEs3EK4JWuKbhgY9YijTXnf7QhCW) succeeded. Fresh combined validation passed all 5,186 tests without failures, skips or cancellations, full lint, production build, standalone TypeScript, migration guard and thirty readiness checks. Postbuild skipped population. Read-only dependency verification retained the frozen function, five dependencies, ledger, permissions and financial record counts. Exact commit/push, Vercel success and deployed health are the remaining release gates. No new SQL is applied in this caller release.
+
+The tests use synthetic provider calls and serialized local database connections; they do not establish hosted multi-connection or live payment-provider behavior. This is not an external exactly-once guarantee or a new reconciliation UI. Existing ambiguous processing rows remain reserved for evidence-based reconciliation. Rollback concerns include restoring the previous worker's unsafe retry behavior, so prefer a forward correction while preserving reservations and all financial records.

@@ -29,17 +29,18 @@ test("processing remains disabled until every production payout gate is enabled"
 
 test("provider dispatch preserves reservation and idempotency safeguards", () => {
   assert.match(processing, /const dispatchKey = `mydancr-payout-\$\{batch\.id\}`/);
-  assert.match(processing, /batch\.status === "processing" && !isDispatchRetry/);
+  assert.match(processing, /eq\("status", "requested"\)/);
+  assert.match(processing, /rpc\("claim_dancer_payout_dispatch"/);
   assert.match(processing, /rpc\("mark_dancer_payout_processing"/);
   assert.match(processing, /idempotencyKey: dispatchKey/);
   assert.match(processing, /p_provider_reference_id: transfer\.providerReferenceId/);
 });
 
 test("dispatch failures remain recoverable and financially audited", () => {
-  assert.match(processing, /from "\.\/finance-payout-recovery"/);
+  assert.doesNotMatch(processing, /finance-payout-recovery|releaseFailedDancerPayoutBatch/);
   assert.match(processing, /rpc\("flag_dancer_payout_dispatch_review"/);
-  assert.match(processing, /await releaseFailedDancerPayoutBatch\(client, batch\.id, message\)/);
-  assert.match(processing, /Unable to release failed payout batch for retry/);
+  assert.match(processing, /if \(claimAttempted\)/);
+  assert.match(processing, /Unable to audit provider dispatch review/);
   assert.doesNotMatch(processing, /rpc\("release_dancer_payout_batch"/);
   assert.doesNotMatch(processing, /bitsafe|yoursafe/i);
 });

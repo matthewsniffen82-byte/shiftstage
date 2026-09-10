@@ -52,11 +52,11 @@ test("cash out locks ledger rows and prevents concurrent or duplicate payment", 
   assert.match(migration, /Only a processing payout can be marked paid/);
   assert.match(financePayoutProcessing, /const dispatchKey = `mydancr-payout-\$\{batch\.id\}`/);
   assert.match(financePayoutProcessing, /idempotencyKey: dispatchKey/);
-  assert.match(financePayoutProcessing, /p_provider_reference_id: dispatchKey/);
+  assert.match(financePayoutProcessing, /rpc\("claim_dancer_payout_dispatch"/);
   assert.match(financePayoutProcessing, /flag_dancer_payout_dispatch_review/);
   assert.match(financeReporting, /get_dancer_earnings_summary/);
   assert.match(financeReporting, /get_admin_dancer_financial_summary/);
-  assert.match(financePayoutProcessing, /batch\.status === "processing" && !isDispatchRetry/);
+  assert.match(financePayoutProcessing, /eq\("status", "requested"\)/);
   assert.match(migration, /reservation_released', false/);
 });
 
