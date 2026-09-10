@@ -106,7 +106,7 @@ test("physical NFC testing is separate from completed dancer and cashier actions
 
 test("NFC support and venue changes create durable operational records", () => {
   assert.match(supportRoute, /venue_nfc_support_requests/);
-  assert.match(supportRoute, /createOwnSupportMessage/);
+  assert.match(supportRoute, /createVenueNfcSupportRequest/);
   assert.match(supportRoute, /\.eq\("venue_id", access\.venueId\)/);
   assert.match(supportRoute, /notes\.length > 1000/);
   assert.match(supportRoute, /recordVenueActivity/);

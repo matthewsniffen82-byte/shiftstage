@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
+import { randomUUID } from "node:crypto";
 import { apiError } from "@/src/lib/api";
 import { readBoundedJsonObject } from "@/src/lib/bounded-json-body";
-import { createOwnSupportMessage } from "@/src/lib/dancr/support";
+import { deliverAtomicSupportNotifications } from "@/src/lib/dancr/support";
+import { createVenueNfcSupportRequest } from "@/src/lib/dancr/nfc-support";
 import { requireVenueAccess } from "@/src/lib/dancr/venue-access";
 import { recordVenueActivity } from "@/src/lib/dancr/venue-team";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
@@ -42,6 +44,10 @@ export async function POST(request: Request) {
     const requestType = String(body?.requestType || "").trim();
     const tagId = String(body?.tagId || "").trim();
     const notes = String(body?.notes || "").trim();
+    const requestId = body.requestId === undefined ? randomUUID() : typeof body.requestId === "string" ? body.requestId.trim().toLowerCase() : "";
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(requestId)) {
+      return noStore({ ok: false, error: "Invalid tap-sticker request ID." }, 400);
+    }
     if (!REQUEST_TYPES.has(requestType)) {
       return noStore({ ok: false, error: "Choose why this tap sticker needs support." }, 400);
     }
@@ -63,46 +69,27 @@ export async function POST(request: Request) {
     if (tagError) throw tagError;
     if (!tag) return noStore({ ok: false, error: "This tap sticker is not assigned to your venue." }, 404);
 
-    const { data: supportRequest, error: insertError } = await (admin as any)
-      .from("venue_nfc_support_requests")
-      .insert({
-        venue_id: access.venueId,
-        nfc_tag_id: tag.id,
-        requested_by_user_id: auth.user.id,
-        request_type: requestType,
-        notes: notes || null,
-      })
-      .select("id, nfc_tag_id, request_type, notes, status, created_at")
-      .single();
-    if (insertError) throw insertError;
-
-    try {
-      await createOwnSupportMessage(auth.client, {
-        userId: auth.user.id,
-        role: "venue",
-        subject: `Tap-sticker support · ${String(tag.label)}`,
-        body: [
-          `${access.venueName} requested ${requestType} tap-sticker support.`,
-          `Sticker: ${String(tag.label)} (${String(tag.tag_type).replace("_", " ")})`,
-          `Request ID: ${String(supportRequest.id)}`,
-          notes ? `Notes: ${notes}` : "Notes: None provided.",
-        ].join("\n"),
-      }, admin);
-    } catch (supportError) {
-      await (admin as any).from("venue_nfc_support_requests").delete().eq("id", supportRequest.id);
-      throw supportError;
-    }
-
-    await recordVenueActivity(admin, {
-      venueId: access.venueId,
-      actorUserId: auth.user.id,
-      actorRole: access.role,
-      action: "nfc.support_requested",
-      targetType: "nfc_tag",
-      targetId: tag.id,
-      summary: `${String(tag.label)} was reported for ${requestType} support.`,
-      metadata: { requestId: supportRequest.id, requestType },
+    const result = await createVenueNfcSupportRequest(admin, {
+      userId: auth.user.id, venueId: access.venueId, tagId: tag.id, requestType, notes, requestId,
     });
+    const { supportRequest } = result;
+    await deliverAtomicSupportNotifications(admin, result);
+    if (!result.duplicate) {
+      try {
+        await recordVenueActivity(admin, {
+          venueId: access.venueId,
+          actorUserId: auth.user.id,
+          actorRole: access.role,
+          action: "nfc.support_requested",
+          targetType: "nfc_tag",
+          targetId: tag.id,
+          summary: `${String(tag.label)} was reported for ${requestType} support.`,
+          metadata: { requestId: supportRequest.id, requestType },
+        });
+      } catch {
+        console.error("NFC_SUPPORT_ACTIVITY_FAILED", { requestId: supportRequest.id });
+      }
+    }
     return noStore({
       ok: true,
       supportRequest,
@@ -110,7 +97,7 @@ export async function POST(request: Request) {
       session: auth.session || null,
     });
   } catch (error) {
-    return apiError(error, "Unable to send this tap-sticker support request.", 400);
+    return apiError(error, "Unable to send this tap-sticker support request.");
   }
 }
 

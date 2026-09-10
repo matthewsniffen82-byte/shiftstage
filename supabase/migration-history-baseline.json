@@ -563,6 +563,10 @@
     {
       "file": "20260910041000_add_atomic_redemption_lifecycle_events.sql",
       "sha256": "83696ad4b3ee6491af025bfb0c43605a8a398488d8a43c43a7cd640121afc9fd"
+    },
+    {
+      "file": "20260910043551_add_atomic_venue_nfc_support.sql",
+      "sha256": "de8c1d06733557beda5cfad32bb2dfebe2511a2eab5132f3b7d58db55eae5fb2"
     }
   ]
 }

@@ -336,7 +336,7 @@ async function notifyActiveAdmins(client: DancrClient, input: {
   await deliverNotificationRows(client, rows);
 }
 
-async function deliverAtomicSupportNotifications(client: DancrClient, result: any) {
+export async function deliverAtomicSupportNotifications(client: DancrClient, result: any) {
   if (result.duplicate || !Array.isArray(result.notifications) || !result.notifications.length) return;
   try { await deliverNotificationRows(client, result.notifications); }
   catch (error) { console.error("SUPPORT_NOTIFICATION_DELIVERY_FAILED", { errorCode: databaseErrorCode(error) }); }

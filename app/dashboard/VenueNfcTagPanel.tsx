@@ -67,6 +67,7 @@ export default function VenueNfcTagPanel({
   const [supportTagId, setSupportTagId] = useState("");
   const [supportType, setSupportType] = useState<"damaged" | "lost" | "relocate" | "replacement">("damaged");
   const [supportNotes, setSupportNotes] = useState("");
+  const supportSubmissionRef = useRef<{ payload: string; id: string } | null>(null);
   const mountedRef = useRef(false);
   const loadInFlightRef = useRef<Promise<void> | null>(null);
   const loadSequenceRef = useRef(0);
@@ -255,6 +256,7 @@ export default function VenueNfcTagPanel({
   }
 
   async function sendSupportRequest() {
+    if (!canRequestSupport || savingRef.current) return;
     if (!readDashboardAccessToken("venue")) return setStatus("Sign in required.");
     if (!supportTagId) return setStatus("Choose an assigned sticker.");
     if (!mountedRef.current) return;
@@ -270,13 +272,20 @@ export default function VenueNfcTagPanel({
     setIsLoading(false);
     setIsSaving(true);
     try {
+      const payload = JSON.stringify({ tagId: supportTagId, requestType: supportType, notes: supportNotes.trim() });
+      if (supportSubmissionRef.current?.payload !== payload) {
+        supportSubmissionRef.current = { payload, id: crypto.randomUUID() };
+      }
+      const submission = supportSubmissionRef.current;
       const data = await requestVenueNfcSupportJson({
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ tagId: supportTagId, requestType: supportType, notes: supportNotes }),
+        body: JSON.stringify({ tagId: supportTagId, requestType: supportType, notes: supportNotes.trim(), requestId: submission.id }),
         signal: controller.signal,
       });
       if (!mountedRef.current || controller.signal.aborted || requestId !== actionSequenceRef.current) return;
+      if (data.supportRequest?.id !== submission.id) throw new Error("The request could not be confirmed. Try again with the same details.");
+      supportSubmissionRef.current = null;
       setStatus(data.message || "Sticker support request sent.");
       setSupportTagId("");
       setSupportNotes("");
@@ -356,7 +365,7 @@ export default function VenueNfcTagPanel({
             <div className="nfc-tag-actions">
               <b>{tag.status}</b>
               {tag.status === "active" ? <button type="button" disabled={Boolean(testingTagId)} onClick={() => startTapTest(tag)}>{testingTagId === tag.id ? "Listening…" : "Test sticker"}</button> : null}
-              {canRequestSupport ? <button type="button" onClick={() => setSupportTagId(tag.id)}>Get support</button> : null}
+              {canRequestSupport ? <button type="button" disabled={isSaving} onClick={() => setSupportTagId(tag.id)}>Get support</button> : null}
             </div>
           </section>
         ))}
@@ -366,15 +375,15 @@ export default function VenueNfcTagPanel({
         <section className="nfc-support-form" aria-label="Sticker support request">
           <strong>Request support for {tags.find((tag) => tag.id === supportTagId)?.label || "sticker"}</strong>
           <label>Issue
-            <select value={supportType} onChange={(event) => setSupportType(event.target.value as typeof supportType)}>
+            <select value={supportType} disabled={isSaving} onChange={(event) => setSupportType(event.target.value as typeof supportType)}>
               <option value="damaged">Damaged</option>
               <option value="lost">Lost</option>
               <option value="relocate">Needs to move</option>
               <option value="replacement">Replacement needed</option>
             </select>
           </label>
-          <label>Details<textarea value={supportNotes} maxLength={1000} rows={3} onChange={(event) => setSupportNotes(event.target.value)} /></label>
-          <div><button type="button" disabled={isSaving} onClick={() => void sendSupportRequest()}>Send request</button><button type="button" disabled={isSaving} onClick={() => setSupportTagId("")}>Cancel</button></div>
+          <label>Details<textarea value={supportNotes} disabled={isSaving} maxLength={1000} rows={3} onChange={(event) => setSupportNotes(event.target.value)} /></label>
+          <div><button type="button" disabled={isSaving} onClick={() => void sendSupportRequest()}>Send request</button><button type="button" disabled={isSaving} onClick={() => { supportSubmissionRef.current = null; setSupportTagId(""); }}>Cancel</button></div>
         </section>
       ) : null}
       {!tags.length && !isLoading ? <p>No stickers are assigned yet.</p> : null}
