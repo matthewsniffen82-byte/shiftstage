@@ -25,7 +25,7 @@ test("platform TV imports require an active admin and attribute work to the call
   assert.doesNotMatch(route, /activeAdminUserId/);
   assert.match(route, /from\("admin_actions"\)\.insert/);
   assert.match(route, /prepare_platform_tv_import/);
-  assert.match(route, /finalize_platform_tv_import/);
+  assert.match(route, /recordImportFinalization/);
 });
 
 test("platform TV imports use the production upload and watermark pipeline with owner-authorized publication", () => {

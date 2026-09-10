@@ -4,6 +4,7 @@ import { apiError, PublicApiError } from "@/src/lib/api";
 import { readBoundedJsonObject } from "@/src/lib/bounded-json-body";
 import { requireAdmin } from "@/src/lib/dancr/admin";
 import { safeErrorMetadata } from "@/src/lib/security/safe-error-metadata";
+import { IMPORT_FINALIZATION_FIELDS, recordImportFinalization } from "@/src/lib/dancr/import-finalization";
 import {
   createMyDancrTvUpload,
   MYDANCR_TV_MAX_BYTES,
@@ -194,56 +195,36 @@ async function finalizeImport(body: any, adminId: string) {
     throw invalid("The requested import video does not belong to this batch.");
   }
 
-  let result: any = row;
-  if (row.status === "uploading") {
-    result = await publishPlatformMyDancrTvUpload(admin, adminId, row.id);
-  } else if (row.status === "moderating") {
-    result = await retryMyDancrTvAutomatedModeration(admin, row.id);
+  try {
+    if (row.status === "uploading") {
+      await publishPlatformMyDancrTvUpload(admin, adminId, row.id);
+    } else if (row.status === "moderating") {
+      await retryMyDancrTvAutomatedModeration(admin, row.id);
+    }
+    const loadCurrentVideo = async () => {
+      const { data, error } = await admin.from("mydancr_tv_videos")
+        .select(["id", ...IMPORT_FINALIZATION_FIELDS].join(","))
+        .eq("id", row.id).single().overrideTypes<Record<string, unknown>, { merge: false }>();
+      if (error) throw error;
+      if (!data || data.id !== row.id) throw invalid("This import video is no longer available.", 409);
+      return data;
+    };
+    let finalized = await loadCurrentVideo();
+    if (finalized.status === "submitted") {
+      await reviewMyDancrTvVideo(admin, adminId, row.id, "approved", "Approved for publication by the platform media owner.");
+      finalized = await loadCurrentVideo();
+    }
+    const receipt = await recordImportFinalization(admin, { adminId, videoId: row.id, batchId, snapshot: finalized });
+    console.info(JSON.stringify({ event: "mydancr_tv.platform_import_finalized", adminId, batchId,
+      videoId: receipt.videoId, status: receipt.status, auditId: receipt.auditId, alreadyRecorded: receipt.alreadyRecorded }));
+    return NextResponse.json({ ok: true, batchId, video: { id: receipt.videoId, status: receipt.status },
+      finalization: { auditId: receipt.auditId, recordedAt: receipt.recordedAt, alreadyRecorded: receipt.alreadyRecorded } },
+    { headers: { "Cache-Control": "no-store" } });
+  } catch (error) {
+    console.warn(JSON.stringify({ event: "PLATFORM_IMPORT_FINALIZATION_UNCONFIRMED", batchId, videoId: row.id, ...safeErrorMetadata(error) }));
+    if (error instanceof PublicApiError) throw error;
+    throw new PublicApiError("UNAVAILABLE", "Import finalization could not be confirmed. The video may already be published. Check this batch before retrying.", 503);
   }
-
-  if (result?.status === "submitted" || row.status === "submitted") {
-    result = await reviewMyDancrTvVideo(
-      admin,
-      adminId,
-      row.id,
-      "approved",
-      "Approved for publication by the platform media owner.",
-    );
-  }
-
-  const { data: finalized, error: finalizedError } = await admin
-    .from("mydancr_tv_videos")
-    .select("status, review_notes")
-    .eq("id", row.id)
-    .single();
-  if (finalizedError) throw finalizedError;
-  const moderationNote = String(finalized.review_notes || "").trim();
-  const privateReviewNote = `${markerPrefix}${finalized.status}${moderationNote ? `\n${moderationNote}` : ""}`;
-  const { error: noteError } = await admin
-    .from("mydancr_tv_videos")
-    .update({ review_notes: privateReviewNote })
-    .eq("id", row.id);
-  if (noteError) throw noteError;
-
-  const { error: auditError } = await admin.from("admin_actions").insert({
-    admin_id: adminId,
-    target_type: "mydancr_tv_video",
-    target_id: row.id,
-    action: "finalize_platform_tv_import",
-    notes: `Batch ${batchId}; status ${result?.status || row.status}`,
-  });
-  if (auditError) throw auditError;
-
-  console.info(JSON.stringify({
-    event: "mydancr_tv.platform_import_finalized",
-    adminId,
-    batchId,
-    videoId: row.id,
-    status: result?.status || row.status,
-  }));
-  return NextResponse.json({ ok: true, batchId, video: result }, {
-    headers: { "Cache-Control": "no-store" },
-  });
 }
 
 function parseVideos(value: unknown): ImportVideoInput[] {
