@@ -1784,10 +1784,14 @@ function latestReviewFor(reviews: any[], reviewType: string) {
   return (reviews || [])
     .filter((review) => review.review_type === reviewType || review.reviewType === reviewType)
     .sort((a, b) => Number(b.status === "pending") - Number(a.status === "pending")
-      || reviewTimestamp(b) - reviewTimestamp(a) || String(b.id || "").localeCompare(String(a.id || "")))[0];
+      || Number(reviewTimestamp(b) - reviewTimestamp(a)) || String(b.id || "").localeCompare(String(a.id || "")))[0];
 }
 
 function reviewTimestamp(review: any) {
-  const timestamp = Date.parse(review.reviewed_at || review.reviewedAt || review.created_at || review.createdAt || "");
-  return Number.isFinite(timestamp) ? timestamp : 0;
+  const value = review.reviewed_at || review.reviewedAt || review.created_at || review.createdAt || "";
+  const timestamp = Date.parse(value);
+  if (!Number.isFinite(timestamp)) return BigInt(0);
+  // Date.parse normalizes the timezone but discards PostgreSQL's last three fractional digits.
+  const fraction = String(value).match(/[T ]\d{2}:\d{2}:\d{2}\.(\d{1,6})(?:Z|[+-]\d{2}(?::?\d{2})?)$/i)?.[1] || "";
+  return BigInt(timestamp) * BigInt(1000) + BigInt(fraction.padEnd(6, "0").slice(3));
 }

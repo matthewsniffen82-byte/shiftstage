@@ -336,3 +336,11 @@ The review foundation was pushed as `4ca036bb9ee3ec039e06bc9c20a70278b6af6834` a
 The inspected plan is `step-09-decision-caller.md`. Keep applied SQL frozen and connect administrator views, the endpoint and decision helper to the required loaded snapshot. Preserve confirmed decisions when optional notification work fails. Validate receipts and prevent stale or implicit retries before full release checks.
 
 All 82 focused checks passed, including 52 new actual endpoint/helper/mapper/UI cases backed by local PostgreSQL. Full validation passed 4,620 automated tests, lint, build, standalone TypeScript, migration guard and thirty readiness checks. Read-only dependency checks confirmed frozen hashes, permissions and data counts. Exact push, Vercel success and production health remain required.
+
+The caller was pushed as `d81459f37ed8286381f56d5df9af0e9155aa87bc`, with matching main references and successful [exact Vercel deployment](https://vercel.com/ai-movie-jobs/shiftstage/9jDGiHBEgSWk6ys2RYYqWMuGHQQv). At 06:48:09–12 UTC, both health routes, protected administrator/account denials, RPC schema exposure and thirty readiness checks passed. No production decision or notification was created.
+
+## Step 9 administrator review timestamp precision
+
+The inspected plan is `step-09-review-precision.md`. Preserve PostgreSQL microsecond ordering in the administrator mapper so fresh review snapshots cannot falsely conflict. Keep applied SQL frozen. Twelve native mapper/endpoint regressions cover both target types; eight fail against the prior mapper. All 118 focused checks pass after the fix. Full release validation and exact deployment/health gates remain required.
+
+Full validation passed all 4,632 automated tests, lint, build, standalone TypeScript, migration guard and thirty live readiness checks. Read-only dependency verification retained frozen SQL/ledger hashes, permissions, RLS and aggregate data counts. No migration or production business operation was needed. Exact push, Vercel success and deployed health remain required.

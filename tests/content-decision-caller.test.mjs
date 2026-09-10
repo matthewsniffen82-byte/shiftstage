@@ -123,6 +123,25 @@ test("actual mapper supplies exact native versions and prioritizes a pending rev
  assert.deepEqual(mapped.socialLinks[0].reviewVersion,await decisionVersion(pg,"social_link",id(200)));
  for(const photo of mapped.photos)assert.deepEqual(photo.reviewVersion,await decisionVersion(pg,"photo",photo.id));
 });
+for(const type of ["photo","social_link"])for(const [name,newer,older,createdOnly]of [
+ ["microsecond ordering","2026-01-02T00:00:00.123456Z","2026-01-02T00:00:00.123455Z",false],
+ ["offset normalization","2026-01-01T16:00:00.123456-08:00","2026-01-02T01:00:00.123455+01:00",false],
+ ["created time fallback","2026-01-02T00:00:00.123456Z","2026-01-02T00:00:00.123455Z",true],
+ ["before epoch","1969-12-31T23:59:59.999999Z","1969-12-31T23:59:59.999998Z",false],
+ ["equal instant UUID tie","2026-01-01T16:00:00.12345-08:00","2026-01-02T00:00:00.123450Z",false],
+ ["different milliseconds","2026-01-02T00:00:00.124Z","2026-01-02T00:00:00.123999Z",false],
+])test("actual "+type+" mapper and transaction agree on "+name,async()=>{
+ const target=type==="photo"?id(101):id(200),reviewType=type+":"+target;
+ await pg.query("delete from public.approval_reviews where review_type=$1",[reviewType]);
+ for(const [n,time]of [[600,newer],[601,older]])await pg.query("insert into public.approval_reviews(id,dancer_id,review_type,status,created_at,reviewed_at,reviewer_id) values($1,$2,$3,'approved',$4,$5,$6)",[id(n),id(11),reviewType,time,createdOnly?null:time,id(3)]);
+ const h=harness(),row={...(await decisionSnapshot(pg)).dancer_profiles[0]};
+ for(const table of ["dancer_photos","social_links","approval_reviews"])row[table]=(await pg.query("select to_jsonb(r) value from public."+table+" r where dancer_id=$1",[id(11)])).rows.map(r=>r.value);
+ const mapped=await h.library.map(h.client,row),item=(type==="photo"?mapped.photos:mapped.socialLinks).find(r=>r.id===target);
+ assert.deepEqual(item.reviewVersion,await decisionVersion(pg,type,target),"Loaded snapshot must identify the same review as PostgreSQL, including sub-millisecond order");
+ const result=await h.post({targetType:type,targetId:target,expectedVersion:item.reviewVersion});
+ assert.equal(result.response.status,200,"A freshly loaded version must not conflict");
+ assert.equal(result.body.review.status,"approved");assert.equal(h.calls.length,1);
+});
 const receipt=()=>({dancer_id:id(11),target_id:id(101),target_type:"photo",status:"approved",review_id:id(300),audit_id:id(401),recipient_id:id(1),profile_status:"approved",reviewed_at:"2026-01-02T00:00:00Z",version:{target:{storage_path:"synthetic/photo-101",is_primary:false,sort_order:2,review_status:"approved"},review:{id:id(300),status:"approved",reviewed_at:"2026-01-02T00:00:00Z"}}});
 for(const [name,change]of [
  ["missing",()=>null],["foreign profile",r=>({...r,dancer_id:id(12)})],["foreign target",r=>({...r,target_id:id(100)})],["wrong type",r=>({...r,target_type:"social_link"})],
