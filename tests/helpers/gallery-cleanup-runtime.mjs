@@ -15,10 +15,10 @@ export function loadGalleryCleanupRuntime({warn=()=>{}}={}){
   if(cache.has(absolute))return cache.get(absolute).exports;
   const testModule={exports:{}};cache.set(absolute,testModule);
   const compiled=ts.transpileModule(readFileSync(absolute,'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,esModuleInterop:true}}).outputText;
-  vm.runInNewContext(compiled,{exports:testModule.exports,module:testModule,Buffer,Headers,URL,process,setTimeout,clearTimeout,console:{warn},
+  vm.runInNewContext(compiled,{exports:testModule.exports,module:testModule,Buffer,Headers,URL,Error,process,setTimeout,clearTimeout,console:{warn},
    require:name=>name==='server-only'?{}:name.startsWith('.')?load(path.relative(root,path.resolve(path.dirname(absolute),name))):nativeRequire(name)});
   return testModule.exports;
  }
- return {cleanup:load('src/lib/dancr/gallery-storage-retirement.ts'),publication:load('src/lib/dancr/photo-publication.ts'),
+ return {cleanup:load('src/lib/dancr/gallery-storage-retirement.ts'),retry:load('src/lib/dancr/gallery-storage-retry.ts'),apiPolicy:load('src/lib/api-error-policy.ts'),publication:load('src/lib/dancr/photo-publication.ts'),
   responsive:load('src/lib/dancr/responsive-image.ts'),watermark:load('src/lib/dancr/media-watermark.ts')};
 }

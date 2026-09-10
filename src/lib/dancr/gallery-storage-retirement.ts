@@ -23,9 +23,10 @@ async function removeConfirmed(client: SupabaseClient, bucket: string, paths: st
 }
 
 /** Permanent database retirement must commit before any external byte removal. */
-export async function retireGalleryStorageFiles(client: SupabaseClient, profileId: string, storagePath: string) {
+export async function retireGalleryStorageFiles(client: SupabaseClient, profileId: string, storagePath: string, expectedRetirementId?: string) {
   if (!UUID.test(profileId) || typeof storagePath !== "string" || !storagePath || storagePath !== storagePath.trim()) throw receiptError();
   const normalizedProfileId = profileId.toLowerCase();
+  if (expectedRetirementId !== undefined && !UUID.test(expectedRetirementId)) throw receiptError();
   const { data, error } = await client.rpc("claim_gallery_storage_retirement", {
     p_profile_id: normalizedProfileId, p_storage_path: storagePath,
   });
@@ -33,6 +34,7 @@ export async function retireGalleryStorageFiles(client: SupabaseClient, profileI
   if (!data || Array.isArray(data) || data.profile_id !== normalizedProfileId || data.storage_path !== storagePath) throw receiptError();
   if (data.status === "retained" && RETAINED_REASONS.has(data.reason)) return "retained" as const;
   if (data.status !== "retired" || typeof data.retirement_id !== "string" || !UUID.test(data.retirement_id)
+    || (expectedRetirementId !== undefined && data.retirement_id !== expectedRetirementId.toLowerCase())
     || typeof data.retired_at !== "string" || !/^\d{4}-\d{2}-\d{2}T/.test(data.retired_at) || !Number.isFinite(Date.parse(data.retired_at))
     || !MASTER.test(storagePath) || storagePath.includes("..") || !UUID.test(storagePath.split("/")[0])
     || storagePath.split("/")[1] !== normalizedProfileId || /\.w[1-9][0-9]*\.webp$/.test(storagePath)) throw receiptError();

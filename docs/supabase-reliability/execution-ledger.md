@@ -540,3 +540,13 @@ The inspected plan is `step-11-avatar-retirement-paths.md`. Accept only the actu
 All 32 native/gateway cases pass, including reproduction of prior retention, existing receipt preservation, master/variant cross-source protection, late publisher rejection, malformed/unproven path retention and role/isolation restrictions. Guarded deployment rehearsals pass normal application, repeat rejection, dependency/permission/trigger drift rejection and source/marker/access rollback. Full validation and exact committed-source rollout gates remain required.
 
 Full validation passed all 5,665 tests, lint, production build, standalone TypeScript, migration guard and thirty readiness checks. No production mutation was used as a test. Exact commit/push, committed migration application and privacy/preservation/deployment/health verification remain required.
+
+Avatar-path correction `19cda43a81b8e676a4646f9c069f431bdbbcc405` was pushed and exact migration `20260910134200` applied through the committed-source wrapper. All source rows/history/markers, access/schema/triggers, other functions and previous ledger entries were preserved. Read-only postflight confirmed the intended function change, privacy/guards, 113 ledger entries and all 452 storage objects at 13:51:03–07 UTC. Matching main references, [exact Vercel success](https://vercel.com/ai-movie-jobs/shiftstage/5QxrEeZPJVvMtTw3HdgwAoxkcB8f), health, unauthorized media rejection and thirty readiness checks passed by 13:52:23 UTC. No production retirement or storage mutation was performed.
+
+## Step 11 explicit gallery cleanup recovery
+
+The inspected plan and operator procedure are `step-11-gallery-cleanup-recovery.md`. Add an active-admin-only retry endpoint for one existing retirement UUID; look up its stored path and require the RPC's permanent receipt UUID to match. Never accept an arbitrary path or remove the marker. A failed or retained cleanup cannot report success.
+
+All 31 actual-endpoint/native cases pass. They exercise the real active-admin check, actual retirement functions and response validation, synthetic storage failures, unauthorized access, wrong/malformed receipts, absent markers, preserved sessions and explicit idempotent retries. Source-policy and hosted-auth coverage are not inferred from these isolated tests. Full validation, commit/push and exact deployment/preservation/health gates remain required.
+
+Full validation passed all 5,703 tests, lint, production build, standalone TypeScript, migration guard and thirty readiness checks. Existing route-inventory tests include the new protected endpoint. No database migration or production mutation is part of this correction. Exact commit/push, Vercel success and preservation/health checks remain required.
