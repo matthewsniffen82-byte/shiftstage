@@ -6,7 +6,7 @@ import {
 } from "./deal-redemption-actions";
 import { getActiveClubDealByIdForVenue } from "./deals";
 import type { DealSourceType } from "./types";
-import { createRequestSupabaseContext, getBearerToken } from "../supabase/request";
+import { createRequestSupabaseContext, getBearerToken, isRequestAuthenticationRequired } from "../supabase/request";
 
 type DancrClient = SupabaseClient;
 
@@ -84,16 +84,18 @@ export async function completeCashierDealRedemption(
 
 async function optionalCustomerId(request: Request, client: DancrClient) {
   if (!getBearerToken(request)) return null;
+  let user;
   try {
-    const { user } = await createRequestSupabaseContext(request);
-    const { data, error } = await client
-      .from("app_users")
-      .select("role, account_state")
-      .eq("id", user.id)
-      .maybeSingle();
-    if (error) throw error;
-    return data?.role === "customer" && data?.account_state === "active" ? user.id : null;
-  } catch {
-    return null;
+    ({ user } = await createRequestSupabaseContext(request));
+  } catch (error) {
+    if (isRequestAuthenticationRequired(error)) return null;
+    throw error;
   }
+  const { data, error } = await client
+    .from("app_users")
+    .select("role, account_state")
+    .eq("id", user.id)
+    .maybeSingle();
+  if (error) throw error;
+  return data?.role === "customer" && data?.account_state === "active" ? user.id : null;
 }

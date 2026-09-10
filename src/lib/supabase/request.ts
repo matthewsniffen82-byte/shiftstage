@@ -101,8 +101,20 @@ async function requireRequestAccountAccess(client: SupabaseClient, userId: strin
   }
 }
 
+export function isRequestAuthenticationRequired(error: unknown) {
+  return error instanceof PublicApiError
+    ? error.status === 401 && error.code === "AUTH_REQUIRED"
+    : error instanceof Error && error.message === "Sign in required.";
+}
+
+export function assertOptionalAuthAvailable(error: { status?: number; name?: string } | null) {
+  if (!error) return;
+  const failure = requestAuthenticationError(error);
+  if (!isRequestAuthenticationRequired(failure)) throw failure;
+}
+
 function requestAuthenticationError(error: { status?: number; name?: string } | null) {
-  if (error && (error.status === 0 || error.status === 408 || error.status === 429 || Number(error.status) >= 500 || error.name === "AuthRetryableFetchError")) {
+  if (error && (![400, 401, 403, 404, 422].includes(Number(error.status)) || error.name === "AuthRetryableFetchError")) {
     return new PublicApiError("UNAVAILABLE", "We couldn't verify your session right now. Please try again.", 503);
   }
   return new Error("Sign in required.");

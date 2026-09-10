@@ -10,7 +10,7 @@ import {
   requirePublicShiftForDancer,
 } from "@/src/lib/dancr/resource-authorization";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
-import { getBearerToken } from "@/src/lib/supabase/request";
+import { assertOptionalAuthAvailable, getBearerToken } from "@/src/lib/supabase/request";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -294,6 +294,7 @@ async function optionalViewerId(client: AdminClient, request: Request) {
   const token = getBearerToken(request);
   if (!token) return null;
   const { data, error } = await client.auth.getUser(token);
+  assertOptionalAuthAvailable(error);
   return error ? null : data.user?.id || null;
 }
 

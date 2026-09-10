@@ -9,6 +9,7 @@ import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import {
   createRequestSupabaseContext,
   getBearerToken,
+  isRequestAuthenticationRequired,
 } from "@/src/lib/supabase/request";
 
 export const runtime = "nodejs";
@@ -81,18 +82,21 @@ export async function POST(request: Request, { params }: RouteProps) {
 
 async function optionalActiveUserId(request: Request) {
   if (!getBearerToken(request)) return null;
+  let context;
   try {
-    const { client, user } = await createRequestSupabaseContext(request);
-    const { data, error } = await client
-      .from("app_users")
-      .select("account_state")
-      .eq("id", user.id)
-      .maybeSingle();
-    if (error) throw error;
-    return data?.account_state === "active" ? user.id : null;
-  } catch {
-    return null;
+    context = await createRequestSupabaseContext(request);
+  } catch (error) {
+    if (isRequestAuthenticationRequired(error)) return null;
+    throw error;
   }
+  const { client, user } = context;
+  const { data, error } = await client
+    .from("app_users")
+    .select("account_state")
+    .eq("id", user.id)
+    .maybeSingle();
+  if (error) throw error;
+  return data?.account_state === "active" ? user.id : null;
 }
 
 async function enforceEventRateLimit(

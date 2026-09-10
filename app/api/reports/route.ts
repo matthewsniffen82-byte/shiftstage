@@ -6,7 +6,7 @@ import {
   PublicRequestRateLimitError,
 } from "@/src/lib/dancr/public-request-rate-limit";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
-import { getBearerToken } from "@/src/lib/supabase/request";
+import { assertOptionalAuthAvailable, getBearerToken } from "@/src/lib/supabase/request";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -25,6 +25,7 @@ async function reporterIdForRequest(client: ReturnType<typeof createAdminSupabas
   if (!token) return null;
 
   const { data, error } = await client.auth.getUser(token);
+  assertOptionalAuthAvailable(error);
   if (error || !data.user) return null;
 
   return data.user.id;

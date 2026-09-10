@@ -31,3 +31,5 @@ Final TV correction validation on `043d8d83` passed all 3,806 tests with no fail
 ## Reminder follow-up
 
 The TV correction was deployed and verified at 02:19:36–40 UTC; the complete receipt is in the execution ledger. The reminder correction in `step-08-invoice-reminder-errors.md` was released as `dbf368034b0f460ec14eca435eb547c0ba1059e5`. It checks the two reminder updates, including terminal-status preservation and an explicit partial-delivery error. The next controlled correction is in `step-08-invoice-publication-errors.md`: checked provider-reference/failure writes, resumed-draft line verification and accurate aggregate publication errors. Cleanup, optional-auth and other findings remain open.
+
+The publishing correction was released as `f73d48b1fc6b62fd148b0a587076c576b38ce6c5` and verified at 02:54:50–53 UTC. The next controlled correction is in `step-08-optional-auth-errors.md`, covering silent guest fallback during Auth infrastructure and account-query failures. Notification/cleanup acknowledgments, redemption timestamps, counter-notice bookkeeping and aggregate cron errors remain open.

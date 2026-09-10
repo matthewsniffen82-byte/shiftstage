@@ -18,6 +18,7 @@ import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import {
   createRequestSupabaseContext,
   getBearerToken,
+  isRequestAuthenticationRequired,
 } from "@/src/lib/supabase/request";
 
 export const runtime = "nodejs";
@@ -129,7 +130,8 @@ async function resolveGoingIdentity(request: Request, createAnonymous: boolean):
     try {
       const { user } = await createRequestSupabaseContext(request);
       return { customerId: user.id, visitorTokenHash: null, newVisitorToken: null };
-    } catch {
+    } catch (error) {
+      if (!isRequestAuthenticationRequired(error)) throw error;
       // An expired session can still use the public action as an anonymous visitor.
     }
   }
