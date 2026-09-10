@@ -7,7 +7,9 @@ import { createHash, randomUUID } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 import { loadGalleryGateway } from './helpers/gallery-publication-fixture.mjs';
 
-const source=process.env.MYDANCR_PRIVATE_UPLOAD_BASELINE==='1'
+const source=process.env.MYDANCR_AVATAR_SOURCE_BASELINE==='1'
+  ?execFileSync('git',['show','4ff0ceb3999cfa2b7c516baddcb3e0da197e4567:src/lib/dancr/image-moderation.ts'],{encoding:'utf8',windowsHide:true})
+  :process.env.MYDANCR_PRIVATE_UPLOAD_BASELINE==='1'
   ?execFileSync('git',['show','c659ec3c8c0574ff2a536b7ef3fac784980623d1:src/lib/dancr/image-moderation.ts'],{encoding:'utf8',windowsHide:true})
   :readFileSync(new URL('../src/lib/dancr/image-moderation.ts',import.meta.url),'utf8');
 const storageReceipt={};
@@ -15,10 +17,10 @@ vm.runInNewContext(ts.transpileModule(readFileSync(new URL('../src/lib/dancr/sto
   compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022},
 }).outputText,{exports:storageReceipt,Error});
 const version='2020-01-01T00:00:00Z';
-function scenario({decision='review',concurrentDecision='',providerError=false,stateResponseLoss='',retry=false,uploadBucket='',uploadFailure='',receiptKind='valid'}={}) {
+function scenario({decision='review',concurrentDecision='',providerError=false,providerMessage='provider_timeout',providerStatus=0,faceRejection=false,avatar=false,attemptCount=1,stateResponseLoss='',retry=false,uploadBucket='',uploadFailure='',receiptKind='valid'}={}) {
   const events=[],files=new Set(),record=retry?{
-    id:'record',user_id:'owner',upload_context:'profile_gallery:1',temporary_storage_path:'owner/profile/temp.jpg',
-    decision:'review',status:'moderating',updated_at:version,attempt_count:1,
+    id:'record',user_id:'owner',upload_context:avatar?'profile_avatar':'profile_gallery:1',temporary_storage_path:'owner/profile/temp.jpg',
+    decision:'review',status:'moderating',updated_at:version,attempt_count:attemptCount,
   }:{};
   if(retry)files.add(record.temporary_storage_path);
   let writeFailed=false,rpcVersion;
@@ -79,13 +81,13 @@ function scenario({decision='review',concurrentDecision='',providerError=false,s
     validateAndPrepareDancrImage:async()=>({sha256:'synthetic',storageFileName:'image.jpg',buffer:Buffer.from('synthetic'),contentType:'image/jpeg'}),
     resolvePhotoPublicationIntent:async()=>({mode:'add',replacementPhotoId:null}),
     MAX_DANCER_PROFILE_PHOTOS:50,ACTIVE_IMAGE_MODERATION_STATUSES:[],
-    isProfileAvatarUploadContext:()=>false,
+    isProfileAvatarUploadContext:()=>avatar,
     profilePhotoSlotFromUploadContext:()=>({isPrimary:false,sortOrder:1}),
     profilePhotoUploadContext:()=> 'profile_gallery:1',
     loadApprovedDancerIdentityReference:async()=>Buffer.from('reference'),
     analyzeDancerMediaIdentity:async()=>({}),dancerMediaIdentityCategoryFlags:()=>({}),
     evaluateDancrImageModeration:()=>evaluation,evaluateDancerMediaIdentity:()=>({}),combineDancerMediaModeration:()=>evaluation,
-    safeErrorMetadata:()=>({code:'synthetic'}),isAvatarFaceRequiredError:()=>false,
+    safeErrorMetadata:()=>({code:'synthetic'}),isAvatarFaceRequiredError:()=>faceRejection,
     uploadResponsiveImage:async()=>({storagePath:'owner/profile/public.jpg'}),
   };
   const exports={};
@@ -95,7 +97,7 @@ function scenario({decision='review',concurrentDecision='',providerError=false,s
     console:{log(){},warn(){},error(){},info(){}},
     testProvider:async()=>{
       if(concurrentDecision)Object.assign(record,{decision:concurrentDecision,status:concurrentDecision,updated_at:'2020-01-02T00:00:00Z'});
-      if(providerError)throw new Error('provider_timeout');
+      if(providerError)throw Object.assign(new Error(providerMessage),providerStatus?{status:providerStatus}:{});
       return {categories:{}};
     },
   });
@@ -169,4 +171,32 @@ for(const receiptKind of ['null','foreignPath','foreignBucket'])test('retry revi
  const s=scenario({retry:true,uploadBucket:reviewBucket,receiptKind});await s.run();
  assert.equal(s.record.status,'moderation_retry');assert.equal(s.record.temporary_storage_path,'owner/profile/temp.jpg');
  assert.ok(s.files.has('owner/profile/temp.jpg'));assert.equal(s.files.size,2);assert.equal(s.events.some(e=>e.startsWith('remove:')),false);
+});
+
+for(const attemptCount of [1,3,4]){
+ for(const [providerMessage,providerStatus,expectedCode] of [
+  ['provider_timeout',0,'provider_timeout'],['Synthetic failure',429,'provider_rate_limited'],
+  ['Synthetic failure',401,'invalid_openai_api_key'],['Synthetic failure',403,'provider_forbidden'],
+  ['Synthetic failure',400,'provider_invalid_request'],['OPENAI_API_KEY missing',0,'missing_openai_api_key'],
+  ['Synthetic failure',0,'provider_error'],
+ ])test('avatar worker preserves recovery source after '+expectedCode+' at attempt '+(attemptCount+1),async()=>{
+  const s=scenario({retry:true,avatar:true,attemptCount,providerError:true,providerMessage,providerStatus});
+  const result=await s.run(),retryable=attemptCount<3&&['provider_timeout','provider_rate_limited','provider_error'].includes(expectedCode);
+  assert.equal(result.decision,retryable?'moderation_retry':'moderation_error');assert.equal(s.record.status,result.decision);
+  assert.equal(s.record.decision,'review');assert.equal(s.record.error_code,expectedCode);assert.equal(s.record.attempt_count,attemptCount+1);
+  assert.equal(s.record.locked_at,null);assert.equal(s.record.next_attempt_at===null,!retryable);
+  assert.equal(s.record.temporary_storage_path,'owner/profile/temp.jpg');assert.ok(s.files.has('owner/profile/temp.jpg'));
+  assert.equal(s.events.some(e=>e.startsWith('remove:')),false);assert.equal(s.files.size,1);
+ });
+}
+for(const receiptKind of ['null','foreignPath','foreignBucket'])test('exhausted avatar retry retains source after unconfirmed '+receiptKind+' review copy',async()=>{
+ const s=scenario({retry:true,avatar:true,attemptCount:3,uploadBucket:reviewBucket,receiptKind}),result=await s.run();
+ assert.equal(result.decision,'moderation_error');assert.equal(s.record.decision,'review');assert.equal(s.record.next_attempt_at,null);
+ assert.equal(s.record.temporary_storage_path,'owner/profile/temp.jpg');assert.ok(s.files.has('owner/profile/temp.jpg'));assert.equal(s.files.size,2);
+ assert.equal(s.events.some(e=>e.startsWith('remove:')),false);
+});
+for(const faceRejection of [false,true])test('avatar worker still cleans a confirmed '+(faceRejection?'face':'moderation')+' rejection',async()=>{
+ const s=scenario({retry:true,avatar:true,attemptCount:3,decision:'rejected',providerError:faceRejection,faceRejection}),result=await s.run();
+ assert.equal(result.decision,'rejected');assert.equal(s.record.decision,'rejected');assert.equal(s.record.status,'rejected');
+ assert.equal(s.files.size,0);assert.ok(s.events.indexOf('state:rejected')<s.events.indexOf('remove:'+tempBucket));
 });

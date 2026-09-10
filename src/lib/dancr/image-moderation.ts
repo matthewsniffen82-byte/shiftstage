@@ -486,9 +486,8 @@ export async function processImageModerationRetryRecord(admin: DancrClient, reco
       lastErrorCode: errorCode,
       lastErrorMessage: safeErrorMessage(error),
     }, false, expectedUpdatedAt);
-    if (!retryable && isAvatar) {
-      await safeRemoveObject(admin, MODERATION_TEMP_BUCKET, tempPath);
-    }
+    // A technical failure is not a moderation rejection. Keep the private
+    // source for recovery even when automatic retries have been exhausted.
     logModeration("retry_database_status_written", {
       recordId: record.id,
       databaseStatus: retryable ? "moderation_retry" : "moderation_error",

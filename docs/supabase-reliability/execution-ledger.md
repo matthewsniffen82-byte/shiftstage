@@ -570,3 +570,13 @@ The inspected plan is `step-11-private-upload-acknowledgments.md`. Require exact
 The actual initial/review/retry flow has 27 new cases, including seventeen failures against the preceding implementation. Existing generic worker errors use their bounded retry state; the tests preserve that behavior while requiring the original source and database pointer to survive an unconfirmed copy. Full validation and exact commit/push/deployment/preservation gates remain required.
 
 All 117 focused cases and all 5,772 full-suite tests pass, together with lint, production build, standalone TypeScript, migration guard and thirty readiness checks. Read-only preservation at 14:32:58 UTC confirmed unchanged source/history rows, zero markers, venues, 452 storage objects, buckets, policies, functions and 113 ledger entries. No production file upload or deletion, schema change or provider moderation call was used as a test. Exact push/deployment/health remain required.
+
+Private-upload correction `4ff0ceb3999cfa2b7c516baddcb3e0da197e4567` was pushed with matching main references and successful [exact Vercel deployment](https://vercel.com/ai-movie-jobs/shiftstage/DruegztDP4xQUmPL4qgbd33XLFCQ). Health, unauthorized media rejection and thirty readiness checks passed at 14:37:40–45 UTC. Read-only fingerprints again preserved source/history rows, zero markers, venues, all 452 storage objects, buckets, policies, functions and 113 ledger entries. No production upload or deletion was used as a test.
+
+## Step 11 exhausted avatar recovery
+
+The inspected plan is `step-11-avatar-recovery-source.md`. Stop deleting a private avatar source on a technical error or exhausted retries while retaining the existing bounded worker states. Keep cleanup for acknowledged moderation/face rejection. No migration, access change, retry expansion or public visibility change is part of this correction.
+
+All 63 focused lifecycle cases pass, including 26 new avatar cases exercising actual worker decisions and simulated transport. Full validation, exact commit/push/deployment and preservation/health gates remain required.
+
+Twenty-one new cases fail against the preceding implementation. Full validation passed all 5,798 tests, lint, production build, standalone TypeScript, migration guard and thirty readiness checks. Read-only preservation at 14:42:31 UTC confirmed unchanged source/history rows, zero markers, venues, 452 storage objects, buckets, policies, functions and 113 ledger entries. No production moderation, storage mutation or schema change was used as a test. Exact push/deployment/health remain required.
