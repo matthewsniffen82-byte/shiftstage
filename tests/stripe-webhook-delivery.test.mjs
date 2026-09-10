@@ -4,7 +4,7 @@ import vm from 'node:vm';
 import test,{before,beforeEach,after} from 'node:test';
 import ts from 'typescript';
 import Stripe from 'stripe';
-import {PGlite} from '@electric-sql/pglite';
+import {createWebhookAttemptDatabase,seedWebhookAttemptDatabase,webhookSchema} from './helpers/payment-webhook-attempt-database.mjs';
 import {readBoundedRequestBytes} from '../src/lib/bounded-json-body.ts';
 import {resolveApiError} from '../src/lib/api-error-policy.ts';
 import {safeErrorMetadata} from '../src/lib/security/safe-error-metadata.ts';
@@ -13,24 +13,9 @@ const read=path=>readFileSync(new URL(path,import.meta.url),'utf8');
 const secret='synthetic-webhook-test-secret';
 const processors=['syncCheckoutSessionSubscription','syncStripeSubscription','markStripeSubscriptionDeleted','syncStripeInvoice','markStripeInvoiceFailure','syncDancerConnectAccount','completeProviderPayout','reverseDancerPayoutTransfer'];
 let pg;
-before(async()=>{
- pg=new PGlite();
- await pg.exec(`create role anon;create role authenticated;create role service_role bypassrls;
- create table public.payment_provider_webhook_events(
- id uuid primary key default gen_random_uuid(),payment_provider text not null,provider_event_id text not null,
- event_type text not null,object_id text,processing_status text not null default 'processing',
- failure_reason text,processed_at timestamptz,processing_started_at timestamptz not null default now(),
- attempt_count integer not null default 1,unique(payment_provider,provider_event_id));
- alter table public.payment_provider_webhook_events enable row level security;
- grant select on public.payment_provider_webhook_events to anon,authenticated;
- grant all on public.payment_provider_webhook_events to service_role;`);
- // Git may check SQL out with CRLF on Windows; compare the documented LF definition.
- await pg.exec(read('./fixtures/payment-webhook-claim.sql').replace(/\r\n/g,'\n'));
- await pg.exec(`revoke all on function public.claim_payment_provider_webhook(text,text,text,text) from public,anon,authenticated;
- grant execute on function public.claim_payment_provider_webhook(text,text,text,text) to service_role;`);
-});
+before(async()=>{pg=await createWebhookAttemptDatabase();});
 after(async()=>pg?.close());
-beforeEach(async()=>{await pg.exec('reset role;truncate public.payment_provider_webhook_events;set role service_role');});
+beforeEach(async()=>seedWebhookAttemptDatabase(pg));
 
 function module(path,dependencies,context={}){
  const exports={};
@@ -45,11 +30,14 @@ function database(options={}){
  const calls=[];
  const client={
   async rpc(name,args){
-   calls.push({kind:'claim',name,args});assert.equal(name,'claim_payment_provider_webhook');
+   calls.push({kind:'claim',name,args});assert.equal(name,'claim_payment_webhook_attempt');
+   if(options.claimThrow)throw new Error('Synthetic private network detail');
    if(options.claimError)return {data:null,error:options.claimError};
    if(Object.hasOwn(options,'claimData'))return {data:options.claimData,error:null};
-   const {rows}=await pg.query('select public.claim_payment_provider_webhook($1,$2,$3,$4) as claimed',
+   const {rows}=await pg.query('select public.claim_payment_webhook_attempt($1,$2,$3,$4) as claimed',
     [args.p_payment_provider,args.p_provider_event_id,args.p_event_type,args.p_object_id]);
+   if(options.loseClaimResponse)return {data:null,error:{code:'08006'}};
+   if(options.transformClaim)return {data:options.transformClaim(rows[0].claimed),error:null};
    return {data:rows[0].claimed,error:null};
   },
   from(table){
@@ -57,23 +45,22 @@ function database(options={}){
    const q={
     update(value){update=value;return q;},select(value){selection=value;return q;},
     then(resolve,reject){return q.maybeSingle().then(resolve,reject);},
-    eq(key,value){assert.ok(['payment_provider','provider_event_id','processing_status'].includes(key));filters.push([key,value]);return q;},
+    eq(key,value){assert.ok(['payment_provider','provider_event_id','id','attempt_count','processing_started_at','processing_status'].includes(key));filters.push([key,value]);return q;},
     async maybeSingle(){
      calls.push({kind:update?'finish':'lookup',filters,selection,update});
      assert.deepEqual(filters.slice(0,2).map(([key])=>key),['payment_provider','provider_event_id']);
      if(update){
-      assert.ok(selection===null||selection==='id');assert.deepEqual(filters[2],['processing_status','processing']);
+      assert.equal(selection,'id');assert.deepEqual(filters.map(([key])=>key),['payment_provider','provider_event_id','id','attempt_count','processing_started_at','processing_status']);
+      assert.deepEqual(filters[5],['processing_status','processing']);
+      if(options.finishThrow)throw new Error('Synthetic private network detail');
       if(options.finishError)return {data:null,error:options.finishError};
       if(Object.hasOwn(options,'finishData'))return {data:options.finishData,error:null};
-      const {rows}=await pg.query('update public.payment_provider_webhook_events set processing_status=$1,failure_reason=$2,processed_at=$3 where payment_provider=$4 and provider_event_id=$5 and processing_status=$6 returning id',
+      const {rows}=await pg.query('update public.payment_provider_webhook_events set processing_status=$1,failure_reason=$2,processed_at=$3 where payment_provider=$4 and provider_event_id=$5 and id=$6 and attempt_count=$7 and processing_started_at=$8::timestamptz and processing_status=$9 returning id',
        [update.processing_status,update.failure_reason,update.processed_at,...filters.map(([,value])=>value)]);
+      if(options.loseFinishResponse)return {data:null,error:{code:'08006'}};
       return {data:selection?rows[0]||null:null,error:null};
      }
-     assert.equal(selection,'processing_status');
-     if(options.lookupError)return {data:null,error:options.lookupError};
-     if(Object.hasOwn(options,'row'))return {data:options.row,error:null};
-     const {rows}=await pg.query('select processing_status from public.payment_provider_webhook_events where payment_provider=$1 and provider_event_id=$2',filters.map(([,value])=>value));
-     return {data:rows[0]||null,error:null};
+     assert.fail('Ownership must be returned atomically, without a second lookup');
     },
    };return q;
   },
@@ -154,24 +141,24 @@ test('a failed delivery is retried with the same event ID and completed without 
  assert.equal((await rows()).length,1);assert.equal((await rows())[0].attempt_count,2);assert.equal((await rows())[0].processing_status,'processed');
 });
 test('crashed worker remains retryable during its lease and is reclaimed after the existing ten-minute expiry',async()=>{
- const h=harness();await h.events.recordPaymentProviderWebhook(h.client,'stripe',{id:'evt_synthetic',type:'customer.subscription.updated'});
+ const h=harness();await h.events.recordPaymentProviderWebhook(h.client,'stripe',{id:'evt_synthetic',type:'customer.subscription.updated',objectId:'sub_synthetic'});
  assert.equal((await h.post(request())).status,500);assert.equal(h.effects.length,0);
  await pg.exec("update public.payment_provider_webhook_events set processing_started_at=now()-interval '11 minutes'");
  assert.equal((await h.post(request())).status,200);assert.equal(h.effects.length,1);assert.equal((await rows())[0].attempt_count,2);
 });
-for(const claimData of [undefined,null,0,1,'true','false',[],{},NaN]){
+for(const claimData of [undefined,null,0,1,true,false,'true','false',[],{},NaN]){
  test('unconfirmed claim '+String(claimData)+' returns failure without processing or finalizing',async()=>{
   const h=harness({claimData});assert.equal((await h.post(request())).status,500);assert.equal(h.effects.length,0);assert.equal(h.calls.length,1);
  });
 }
-for(const row of [null,{}, {processing_status:'processing'},{processing_status:'failed'},{processing_status:'unexpected'}]){
- test('false claim with '+JSON.stringify(row)+' cannot be acknowledged as completed',async()=>{
-  const h=harness({claimData:false,row});assert.equal((await h.post(request())).status,500);assert.equal(h.effects.length,0);assert.equal(h.calls.length,2);
+for(const status of ['processing','failed','unexpected']){
+ test('false claim with '+status+' cannot be acknowledged as completed',async()=>{
+  const h=harness({transformClaim:r=>({...r,claimed:false,status})});assert.equal((await h.post(request())).status,500);assert.equal(h.effects.length,0);assert.equal(h.calls.length,1);
  });
 }
-for(const key of ['claimError','lookupError','finishError']){
+for(const key of ['claimError','finishError']){
  test(key+' remains a generic retryable failure',async()=>{
-  const options={[key]:{code:'08006',message:'Synthetic private database detail'},...(key==='lookupError'?{claimData:false}:{})};
+  const options={[key]:{code:'08006',message:'Synthetic private database detail'}};
   const h=harness(options),response=await h.post(request());assert.equal(response.status,500);
   assert.deepEqual(await response.json(),{ok:false,error:'Unable to process Stripe webhook.'});
   assert.ok(!JSON.stringify(h.logs).includes('private database'));
@@ -199,9 +186,7 @@ for(const role of ['anon','authenticated']){
 }
 test('the native fixture matches the captured production function definition',async()=>{
  const result=await pg.query("select md5(pg_get_functiondef('public.claim_payment_provider_webhook(text,text,text,text)'::regprocedure)) as fingerprint");
- // Production's captured function body contains CRLF. The fixture normalizes
- // only those line endings; its PostgreSQL-rendered definition is otherwise exact.
- assert.equal(result.rows[0].fingerprint,'01f6affe019c165528e9198595526479');
+ assert.equal(result.rows[0].fingerprint,webhookSchema.existing_function.fingerprint);
 });
 for(const [provider,id] of [['adyen','evt_synthetic'],['stripe','evt_other']]){
  test('processed '+provider+'/'+id+' cannot acknowledge a different claimed delivery',async()=>{
@@ -210,3 +195,76 @@ for(const [provider,id] of [['adyen','evt_synthetic'],['stripe','evt_other']]){
   const h=harness();assert.equal((await h.post(request())).status,500);assert.deepEqual(h.effects,[]);
  });
 }
+
+for(const field of ['id','paymentProvider','eventId','eventType','objectId','claimed','status','attemptCount','processingStartedAt']){
+ test('missing receipt '+field+' prevents handler execution',async()=>{
+  const h=harness({transformClaim:r=>{delete r[field];return r;}});
+  assert.equal((await h.post(request())).status,500);assert.deepEqual(h.effects,[]);assert.equal(h.calls.length,1);
+ });
+}
+for(const [field,value] of [['id','invalid'],['id','98000000-0000-4000-8000-000000000099'],['paymentProvider','adyen'],['eventId','evt_other'],['eventType','invoice.voided'],['objectId','in_other'],['claimed','true'],['status','processed'],['attemptCount',0],['attemptCount',-1],['attemptCount',1.5],['attemptCount','1'],['attemptCount',Number.MAX_SAFE_INTEGER+1],['processingStartedAt','yesterday'],['processingStartedAt','2026-09-10T09:00:00.1234567Z']]){
+ test('altered receipt '+field+' '+value+' never confirms a delivery',async()=>{
+  const h=harness({transformClaim:r=>({...r,[field]:value})});assert.equal((await h.post(request())).status,500);
+  // A well-formed but incorrect UUID passes receipt shape and is fenced by the stored row on completion.
+  assert.equal(h.effects.length,field==='id'&&String(value).startsWith('9800')?1:0);
+  assert.equal((await rows())[0].processing_status,'processing');
+ });
+}
+for(const failure of [false,true]){
+ test('an expired '+(failure?'failing':'successful')+' worker cannot finalize a newer in-flight worker',async()=>{
+  let enterA,releaseA,enterB,releaseB;
+  const enteredA=new Promise(r=>{enterA=r;}),gateA=new Promise(r=>{releaseA=r;});
+  const enteredB=new Promise(r=>{enterB=r;}),gateB=new Promise(r=>{releaseB=r;});
+  const a=harness({process:async()=>{enterA();await gateA;if(failure)throw new Error('synthetic failure');}});
+  const b=harness({process:async()=>{enterB();await gateB;}});
+  const pendingA=a.post(request());await enteredA;
+  await pg.exec("update public.payment_provider_webhook_events set processing_started_at=clock_timestamp()-interval '11 minutes'");
+  const pendingB=b.post(request());await enteredB;const before=await rows();
+  try{
+   releaseA();assert.equal((await pendingA).status,500);assert.deepEqual(await rows(),before);
+   assert.equal(before[0].attempt_count,2);assert.equal(before[0].processing_status,'processing');
+  }finally{releaseA();releaseB();}
+  assert.equal((await pendingB).status,200);assert.equal((await rows())[0].processing_status,'processed');
+ });
+}
+test('a stale failure cannot downgrade a newer completed delivery',async()=>{
+ let entered,release;const started=new Promise(r=>{entered=r;}),gate=new Promise(r=>{release=r;});
+ const old=harness({process:async()=>{entered();await gate;throw new Error('synthetic failure');}});
+ const pending=old.post(request());await started;
+ try{
+  await pg.exec("update public.payment_provider_webhook_events set processing_started_at=clock_timestamp()-interval '11 minutes'");
+  assert.equal((await harness().post(request())).status,200);const before=await rows();
+  release();assert.equal((await pending).status,500);assert.deepEqual(await rows(),before);
+ }finally{release();}
+});
+test('a lost claim response does not execute a handler or release an uncertain lease',async()=>{
+ const h=harness({loseClaimResponse:true});assert.equal((await h.post(request())).status,500);
+ assert.deepEqual(h.effects,[]);assert.deepEqual(h.calls.map(c=>c.kind),['claim']);assert.equal((await rows())[0].processing_status,'processing');
+ assert.equal((await harness().post(request())).status,500);
+});
+test('a lost completion response preserves committed success and duplicate delivery does not replay work',async()=>{
+ const h=harness({loseFinishResponse:true});assert.equal((await h.post(request())).status,500);
+ assert.equal((await rows())[0].processing_status,'processed');assert.equal(h.effects.length,1);
+ const retry=harness();assert.equal((await retry.post(request())).status,200);assert.deepEqual(retry.effects,[]);
+});
+for(const key of ['claimThrow','finishThrow'])test(key+' does not expose transport details or acknowledge success',async()=>{
+ const h=harness({[key]:true}),response=await h.post(request());assert.equal(response.status,500);
+ assert.ok(!(await response.text()).includes('private'));assert.ok(!JSON.stringify(h.logs).includes('private'));
+});
+test('receipt passed to completion is frozen, whitelisted and preserves timestamp microseconds',async()=>{
+ await pg.exec("reset role;create or replace function public.synthetic_webhook_time() returns trigger language plpgsql as $$begin new.processing_started_at:='2099-01-01T00:00:00.123456Z';return new;end$$;create trigger synthetic_failure before insert on public.payment_provider_webhook_events for each row execute function public.synthetic_webhook_time();set role service_role");
+ const h=harness({transformClaim:r=>({...r,metadata:{private:'never returned'},failure_reason:'private'})});
+ const attempt=await h.events.recordPaymentProviderWebhook(h.client,'stripe',{id:'evt_synthetic',type:'invoice.paid',objectId:'in_synthetic'});
+ assert.equal(Object.isFrozen(attempt),true);assert.deepEqual(Object.keys(attempt).sort(),['id','paymentProvider','eventId','attemptCount','processingStartedAt'].sort());
+ assert.equal(attempt.processingStartedAt,'2099-01-01T00:00:00.123456+00:00');
+ await h.events.finishPaymentProviderWebhook(h.client,attempt);
+ assert.equal((await rows())[0].processing_status,'processed');
+ assert.deepEqual(h.calls[1].filters[4],['processing_started_at','2099-01-01T00:00:00.123456+00:00']);
+});
+for(const attempt of [undefined,null,true,{}, {id:'not-a-receipt'}])test('invalid completion ownership '+String(attempt)+' never starts a query',async()=>{
+ const h=harness();await assert.rejects(h.events.finishPaymentProviderWebhook(h.client,attempt));assert.deepEqual(h.calls,[]);
+});
+test('a wrong completion row cannot be acknowledged',async()=>{
+ const h=harness({finishData:{id:'98000000-0000-4000-8000-000000000099'}});
+ assert.equal((await h.post(request())).status,500);assert.equal((await rows())[0].processing_status,'processing');
+});

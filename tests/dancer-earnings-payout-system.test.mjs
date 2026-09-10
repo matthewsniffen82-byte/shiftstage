@@ -92,7 +92,7 @@ test("webhooks are signature verified and idempotently recorded without secrets"
   assert.match(webhook, /recordPaymentProviderWebhook/);
   assert.match(webhook, /completeProviderPayout/);
   assert.match(webhook, /transfer\.metadata\?\.payout_batch_id/);
-  assert.match(financeProviderEvents, /rpc\("claim_payment_provider_webhook"/);
+  assert.match(financeProviderEvents, /rpc\("claim_payment_webhook_attempt"/);
   assert.doesNotMatch(read("app/dashboard/DashboardClient.tsx"), /STRIPE_SECRET_KEY|STRIPE_WEBHOOK_SECRET|bank_account|routing_number/);
 });
 

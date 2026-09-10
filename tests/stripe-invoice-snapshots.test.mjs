@@ -81,7 +81,7 @@ function harness({current=invoice(),retrieve=null,readError=null,updateError=nul
   'next/server':{NextResponse:{json:Response.json}},
   '@/src/lib/api':{apiError:(error,fallback)=>{const result=resolveApiError(error,fallback);return Response.json(result.body,{status:result.status});}},
   '@/src/lib/bounded-json-body':{readBoundedRequestBytes},'@/src/lib/supabase/admin':{createAdminSupabaseClient:()=>client},
-  '@/src/lib/dancr/payments':{},'@/src/lib/dancr/finance-provider-events':{...events,recordPaymentProviderWebhook:async()=>{claimed=true;return true;},finishPaymentProviderWebhook:async(...args)=>finished.push(args[3]?'failed':'processed')},
+  '@/src/lib/dancr/payments':{},'@/src/lib/dancr/finance-provider-events':{...events,recordPaymentProviderWebhook:async()=>{claimed=true;return true;},finishPaymentProviderWebhook:async(...args)=>finished.push(args[2]?'failed':'processed')},
   '@/src/lib/server-env':{getServerEnv:()=>secret},'@/src/lib/security/safe-error-metadata':{safeErrorMetadata},stripe:Stripe,
  });
  async function deliver(snapshot=invoice(),type='invoice.updated'){

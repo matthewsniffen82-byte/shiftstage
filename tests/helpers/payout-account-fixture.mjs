@@ -130,7 +130,7 @@ export function harness(db,options={}){
     '@/src/lib/bounded-json-body':{readBoundedRequestBytes},'@/src/lib/supabase/admin':{createAdminSupabaseClient:()=>client},
     '@/src/lib/dancr/payments':{},'@/src/lib/dancr/finance-provider-events':{
       ...events,recordPaymentProviderWebhook:async()=>{claimed=true;return true;},
-      finishPaymentProviderWebhook:async(...args)=>finished.push(args[3]?'failed':'processed'),
+      finishPaymentProviderWebhook:async(...args)=>finished.push(args[2]?'failed':'processed'),
     },
     '@/src/lib/server-env':{getServerEnv:()=>'synthetic-account-webhook-secret'},
     '@/src/lib/security/safe-error-metadata':{safeErrorMetadata},stripe:Stripe,

@@ -71,7 +71,7 @@ function harness({beforeUpdate,error}={}){
     '@/src/lib/dancr/payments':payments,
     '@/src/lib/dancr/finance-provider-events':{
       recordPaymentProviderWebhook:async()=>true,
-      finishPaymentProviderWebhook:async(...args)=>finished.push(args[3]?'failed':'processed'),
+      finishPaymentProviderWebhook:async(...args)=>finished.push(args[2]?'failed':'processed'),
     },
     '@/src/lib/server-env':{getServerEnv:()=>secret},
     '@/src/lib/security/safe-error-metadata':{safeErrorMetadata},stripe:Stripe,

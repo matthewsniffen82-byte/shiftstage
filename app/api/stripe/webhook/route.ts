@@ -124,9 +124,9 @@ export async function POST(request: Request) {
         }
       }
 
-      await finishPaymentProviderWebhook(admin, "stripe", event.id);
+      await finishPaymentProviderWebhook(admin, claimed);
     } catch (error) {
-      await finishPaymentProviderWebhook(admin, "stripe", event.id, internalWebhookError(error));
+      await finishPaymentProviderWebhook(admin, claimed, internalWebhookError(error));
       throw error;
     }
 

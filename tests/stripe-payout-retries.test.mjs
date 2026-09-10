@@ -117,7 +117,7 @@ function harness({rpc, beforeRpc, readErrorAt = 0} = {}) {
     '@/src/lib/dancr/finance-provider-events':{
       ...events,
       recordPaymentProviderWebhook:async () => true,
-      finishPaymentProviderWebhook:async (...args) => finished.push(args[3] ? 'failed' : 'processed'),
+      finishPaymentProviderWebhook:async (...args) => finished.push(args[2] ? 'failed' : 'processed'),
     },
     '@/src/lib/server-env':{getServerEnv:() => secret},
     '@/src/lib/security/safe-error-metadata':{safeErrorMetadata},

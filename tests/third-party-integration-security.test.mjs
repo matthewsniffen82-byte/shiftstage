@@ -26,7 +26,7 @@ test("handled Stripe callbacks enforce timestamp freshness and one idempotent bo
   ]) {
     assert.ok(claimIndex < stripeWebhook.indexOf(operation), `${operation} must run after the event claim`);
   }
-  assert.match(stripeWebhook, /await finishPaymentProviderWebhook\(admin, "stripe", event\.id\);/);
+  assert.match(stripeWebhook, /await finishPaymentProviderWebhook\(admin, claimed\);/);
   assert.match(providerEvents, /processing_status = 'failed'|processing_status: failureReason/);
 });
 

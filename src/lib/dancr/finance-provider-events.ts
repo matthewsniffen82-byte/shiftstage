@@ -9,6 +9,14 @@ type DancrClient = SupabaseClient;
 
 type InvoiceWebhookVersion = { id: string; updatedAt: string };
 
+export type PaymentWebhookAttempt = {
+  id: string;
+  paymentProvider: PayoutProviderName;
+  eventId: string;
+  attemptCount: number;
+  processingStartedAt: string;
+};
+
 export async function loadCurrentStripeWebhookInvoice(client: DancrClient, snapshot: Stripe.Invoice) {
   const invoiceId = snapshot.metadata?.mydancr_invoice_id;
   const { data: record, error } = await (client as any).from("club_invoices")
@@ -178,46 +186,60 @@ export async function recordPaymentProviderWebhook(
   client: DancrClient,
   provider: PayoutProviderName,
   event: { id: string; type: string; objectId?: string | null },
-) {
-  const { data, error } = await (client as any).rpc("claim_payment_provider_webhook", {
+): Promise<PaymentWebhookAttempt | false> {
+  const { data, error } = await (client as any).rpc("claim_payment_webhook_attempt", {
     p_payment_provider: provider,
     p_provider_event_id: event.id,
     p_event_type: event.type,
     p_object_id: event.objectId || null,
   });
   if (error) throw error;
-  if (data === true) return true;
-  if (data !== false) throw new Error("Provider event claim was not confirmed.");
-
-  // A live lease is not a completed delivery. Acknowledge only processed events
-  // so Stripe keeps retrying if the original worker failed or disappeared.
-  const { data: existing, error: readError } = await (client as any)
-    .from("payment_provider_webhook_events")
-    .select("processing_status")
-    .eq("payment_provider", provider)
-    .eq("provider_event_id", event.id)
-    .maybeSingle();
-  if (readError) throw readError;
-  if (existing?.processing_status !== "processed") {
+  if (!validWebhookAttempt(data) || data.paymentProvider !== provider || data.eventId !== event.id
+    || data.eventType !== event.type || data.objectId !== (event.objectId || null)
+    || typeof data.claimed !== "boolean") {
+    throw new Error("Provider event claim was not confirmed.");
+  }
+  if (!data.claimed && data.status === "processed") return false;
+  if (!data.claimed || data.status !== "processing") {
     throw new Error("Provider event processing is not complete.");
   }
-  return false;
+  // Keep the database timestamp verbatim: JavaScript dates lose microseconds.
+  return Object.freeze({
+    id: data.id,
+    paymentProvider: data.paymentProvider,
+    eventId: data.eventId,
+    attemptCount: data.attemptCount,
+    processingStartedAt: data.processingStartedAt,
+  });
 }
 
 export async function finishPaymentProviderWebhook(
   client: DancrClient,
-  provider: PayoutProviderName,
-  eventId: string,
+  attempt: PaymentWebhookAttempt,
   failureReason?: string,
 ) {
+  if (!validWebhookAttempt(attempt)) throw new Error("Provider event ownership was not confirmed.");
   const { data, error } = await (client as any).from("payment_provider_webhook_events").update({
     processing_status: failureReason ? "failed" : "processed",
     failure_reason: failureReason ? failureReason.slice(0, 500) : null,
     processed_at: new Date().toISOString(),
-  }).eq("payment_provider", provider).eq("provider_event_id", eventId).eq("processing_status", "processing")
+  }).eq("payment_provider", attempt.paymentProvider).eq("provider_event_id", attempt.eventId)
+    .eq("id", attempt.id).eq("attempt_count", attempt.attemptCount)
+    .eq("processing_started_at", attempt.processingStartedAt).eq("processing_status", "processing")
     .select("id").maybeSingle();
   if (error) throw error;
-  if (!data?.id) throw new Error("Provider event completion was not confirmed.");
+  if (data?.id !== attempt.id) throw new Error("Provider event completion was not confirmed.");
+}
+
+function validWebhookAttempt(value: any): value is PaymentWebhookAttempt & Record<string, unknown> {
+  return value !== null && typeof value === "object" && !Array.isArray(value)
+    && typeof value.id === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value.id)
+    && ["stripe", "bitsafe", "adyen", "other"].includes(value.paymentProvider)
+    && typeof value.eventId === "string" && value.eventId.length > 0
+    && Number.isSafeInteger(value.attemptCount) && value.attemptCount > 0
+    && typeof value.processingStartedAt === "string"
+    && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,6})?(?:Z|[+-]\d{2}:\d{2})$/.test(value.processingStartedAt)
+    && Number.isFinite(Date.parse(value.processingStartedAt));
 }
 
 export async function completeProviderPayout(
