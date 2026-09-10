@@ -111,11 +111,14 @@ export async function syncDancerConnectAccount(client: DancrClient, account: Str
 export async function reverseDancerPayoutTransfer(client: DancrClient, transferId: string, message: string) {
   const { data: batch, error } = await (client as any)
     .from("dancer_payout_batches")
-    .select("id, status")
+    .select("id, status, provider_reference_id")
     .eq("provider_reference_id", transferId)
     .maybeSingle();
   if (error) throw error;
   if (!batch) return null;
+  if (batch.provider_reference_id === transferId && (batch.status === "failed" || batch.status === "canceled")) {
+    return { id: batch.id, status: batch.status };
+  }
   if (batch.status === "paid") {
     const { error: recoveryError } = await (client as any).from("commission_events").update({
       recovery_required: true,
@@ -134,8 +137,19 @@ export async function reverseDancerPayoutTransfer(client: DancrClient, transferI
     p_status: "failed",
     p_failure_message: message,
   });
+  if (!releaseError && data?.id === batch.id && data.status === "failed") return data;
+  // The release can commit before its response is lost, or another delivery can
+  // finish it first. Confirm the exact transfer's result without repeating SQL.
+  const { data: released, error: readError } = await (client as any).from("dancer_payout_batches")
+    .select("id, status, provider_reference_id").eq("id", batch.id)
+    .eq("provider_reference_id", transferId).maybeSingle();
+  if (readError) throw readError;
+  if (released?.id === batch.id && released.provider_reference_id === transferId
+    && (released.status === "failed" || released.status === "canceled")) {
+    return { id: released.id, status: released.status };
+  }
   if (releaseError) throw releaseError;
-  return data;
+  throw new Error("Provider payout reversal could not be confirmed.");
 }
 
 export async function recordPaymentProviderWebhook(
