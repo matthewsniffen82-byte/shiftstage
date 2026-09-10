@@ -1,0 +1,395 @@
+{
+  "capturedAt": "2026-09-09T21:05:48.024055-07:00",
+  "tables": [
+    "qr_redemptions",
+    "qr_redemption_events"
+  ],
+  "columns": [
+    {
+      "default": "gen_random_uuid()",
+      "name": "id",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "qr_redemption_events",
+      "type": "uuid"
+    },
+    {
+      "default": null,
+      "name": "qr_redemption_id",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "qr_redemption_events",
+      "type": "uuid"
+    },
+    {
+      "default": null,
+      "name": "event_type",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "qr_redemption_events",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "actor_user_id",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "qr_redemption_events",
+      "type": "uuid"
+    },
+    {
+      "default": null,
+      "name": "session_id",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "qr_redemption_events",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "ip_address",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "qr_redemption_events",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "user_agent",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "qr_redemption_events",
+      "type": "text"
+    },
+    {
+      "default": "'{}'::jsonb",
+      "name": "audit",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "qr_redemption_events",
+      "type": "jsonb"
+    },
+    {
+      "default": "now()",
+      "name": "occurred_at",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "qr_redemption_events",
+      "type": "timestamptz"
+    },
+    {
+      "default": "gen_random_uuid()",
+      "name": "id",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "qr_redemptions",
+      "type": "uuid"
+    },
+    {
+      "default": null,
+      "name": "redemption_token",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "qr_redemptions",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "venue_id",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "qr_redemptions",
+      "type": "uuid"
+    },
+    {
+      "default": null,
+      "name": "club_deal_id",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "qr_redemptions",
+      "type": "uuid"
+    },
+    {
+      "default": null,
+      "name": "source_type",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "qr_redemptions",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "dancer_id",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "qr_redemptions",
+      "type": "uuid"
+    },
+    {
+      "default": null,
+      "name": "customer_id",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "qr_redemptions",
+      "type": "uuid"
+    },
+    {
+      "default": null,
+      "name": "session_id",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "qr_redemptions",
+      "type": "text"
+    },
+    {
+      "default": "now()",
+      "name": "generated_at",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "qr_redemptions",
+      "type": "timestamptz"
+    },
+    {
+      "default": null,
+      "name": "expires_at",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "qr_redemptions",
+      "type": "timestamptz"
+    },
+    {
+      "default": null,
+      "name": "redeemed_at",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "qr_redemptions",
+      "type": "timestamptz"
+    },
+    {
+      "default": null,
+      "name": "redeemed_by_club_user",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "qr_redemptions",
+      "type": "uuid"
+    },
+    {
+      "default": "'generated'::text",
+      "name": "status",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "qr_redemptions",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "ip_address",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "qr_redemptions",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "user_agent",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "qr_redemptions",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "device_fingerprint",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "qr_redemptions",
+      "type": "text"
+    },
+    {
+      "default": "'{}'::jsonb",
+      "name": "audit",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "qr_redemptions",
+      "type": "jsonb"
+    },
+    {
+      "default": "false",
+      "name": "suspicious",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "qr_redemptions",
+      "type": "bool"
+    },
+    {
+      "default": null,
+      "name": "voided_at",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "qr_redemptions",
+      "type": "timestamptz"
+    },
+    {
+      "default": null,
+      "name": "voided_by_admin",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "qr_redemptions",
+      "type": "uuid"
+    },
+    {
+      "default": "now()",
+      "name": "created_at",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "qr_redemptions",
+      "type": "timestamptz"
+    },
+    {
+      "default": null,
+      "name": "shift_id",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "qr_redemptions",
+      "type": "uuid"
+    },
+    {
+      "default": null,
+      "name": "attribution_locked_at",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "qr_redemptions",
+      "type": "timestamptz"
+    },
+    {
+      "default": null,
+      "name": "saved_at",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "qr_redemptions",
+      "type": "timestamptz"
+    },
+    {
+      "default": null,
+      "name": "shared_at",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "qr_redemptions",
+      "type": "timestamptz"
+    },
+    {
+      "default": null,
+      "name": "first_scanned_at",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "qr_redemptions",
+      "type": "timestamptz"
+    },
+    {
+      "default": null,
+      "name": "confirmed_at",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "qr_redemptions",
+      "type": "timestamptz"
+    },
+    {
+      "default": null,
+      "name": "nfc_tag_id",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "qr_redemptions",
+      "type": "uuid"
+    }
+  ],
+  "constraints": [
+    {
+      "definition": "FOREIGN KEY (actor_user_id) REFERENCES auth.users(id) ON DELETE SET NULL",
+      "name": "qr_redemption_events_actor_user_id_fkey",
+      "table": "qr_redemption_events"
+    },
+    {
+      "definition": "CHECK ((event_type = ANY (ARRAY['issued'::text, 'saved'::text, 'shared'::text, 'scanner_opened'::text, 'venue_confirmed'::text, 'expired'::text, 'voided'::text])))",
+      "name": "qr_redemption_events_event_type_check",
+      "table": "qr_redemption_events"
+    },
+    {
+      "definition": "PRIMARY KEY (id)",
+      "name": "qr_redemption_events_pkey",
+      "table": "qr_redemption_events"
+    },
+    {
+      "definition": "FOREIGN KEY (qr_redemption_id) REFERENCES qr_redemptions(id) ON DELETE CASCADE",
+      "name": "qr_redemption_events_qr_redemption_id_fkey",
+      "table": "qr_redemption_events"
+    },
+    {
+      "definition": "FOREIGN KEY (club_deal_id) REFERENCES club_deals(id) ON DELETE CASCADE",
+      "name": "qr_redemptions_club_deal_id_fkey",
+      "table": "qr_redemptions"
+    },
+    {
+      "definition": "FOREIGN KEY (customer_id) REFERENCES auth.users(id) ON DELETE SET NULL",
+      "name": "qr_redemptions_customer_id_fkey",
+      "table": "qr_redemptions"
+    },
+    {
+      "definition": "FOREIGN KEY (dancer_id) REFERENCES dancer_profiles(id) ON DELETE SET NULL",
+      "name": "qr_redemptions_dancer_id_fkey",
+      "table": "qr_redemptions"
+    },
+    {
+      "definition": "FOREIGN KEY (nfc_tag_id) REFERENCES nfc_tags(id) ON DELETE SET NULL",
+      "name": "qr_redemptions_nfc_tag_id_fkey",
+      "table": "qr_redemptions"
+    },
+    {
+      "definition": "PRIMARY KEY (id)",
+      "name": "qr_redemptions_pkey",
+      "table": "qr_redemptions"
+    },
+    {
+      "definition": "FOREIGN KEY (redeemed_by_club_user) REFERENCES auth.users(id) ON DELETE SET NULL",
+      "name": "qr_redemptions_redeemed_by_club_user_fkey",
+      "table": "qr_redemptions"
+    },
+    {
+      "definition": "UNIQUE (redemption_token)",
+      "name": "qr_redemptions_redemption_token_key",
+      "table": "qr_redemptions"
+    },
+    {
+      "definition": "FOREIGN KEY (shift_id) REFERENCES shifts(id) ON DELETE SET NULL",
+      "name": "qr_redemptions_shift_id_fkey",
+      "table": "qr_redemptions"
+    },
+    {
+      "definition": "CHECK ((source_type = ANY (ARRAY['club_page'::text, 'dancer_profile'::text])))",
+      "name": "qr_redemptions_source_type_check",
+      "table": "qr_redemptions"
+    },
+    {
+      "definition": "CHECK ((status = ANY (ARRAY['generated'::text, 'redeemed'::text, 'expired'::text, 'voided'::text])))",
+      "name": "qr_redemptions_status_check",
+      "table": "qr_redemptions"
+    },
+    {
+      "definition": "FOREIGN KEY (venue_id) REFERENCES venues(id) ON DELETE CASCADE",
+      "name": "qr_redemptions_venue_id_fkey",
+      "table": "qr_redemptions"
+    },
+    {
+      "definition": "FOREIGN KEY (voided_by_admin) REFERENCES auth.users(id) ON DELETE SET NULL",
+      "name": "qr_redemptions_voided_by_admin_fkey",
+      "table": "qr_redemptions"
+    }
+  ],
+  "triggers": [
+    {
+      "definition": "CREATE TRIGGER qr_redemptions_log_issued AFTER INSERT ON public.qr_redemptions FOR EACH ROW EXECUTE FUNCTION log_qr_redemption_issued()",
+      "function_definition": "CREATE OR REPLACE FUNCTION public.log_qr_redemption_issued()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\r\nbegin\r\n  insert into public.qr_redemption_events (\r\n    qr_redemption_id,\r\n    event_type,\r\n    actor_user_id,\r\n    session_id,\r\n    ip_address,\r\n    user_agent,\r\n    audit\r\n  )\r\n  values (\r\n    new.id,\r\n    'issued',\r\n    new.customer_id,\r\n    new.session_id,\r\n    new.ip_address,\r\n    new.user_agent,\r\n    jsonb_build_object(\r\n      'source_type', new.source_type,\r\n      'dancer_id', new.dancer_id,\r\n      'shift_id', new.shift_id\r\n    )\r\n  );\r\n  return new;\r\nend;\r\n$function$\n",
+      "name": "qr_redemptions_log_issued",
+      "table": "qr_redemptions"
+    }
+  ]
+}
