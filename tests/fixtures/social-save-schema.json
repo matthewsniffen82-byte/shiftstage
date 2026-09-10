@@ -1,0 +1,215 @@
+{
+  "columns": [
+    {
+      "default": "gen_random_uuid()",
+      "name": "id",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "approval_reviews",
+      "type": "uuid"
+    },
+    {
+      "default": null,
+      "name": "dancer_id",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "approval_reviews",
+      "type": "uuid"
+    },
+    {
+      "default": null,
+      "name": "reviewer_id",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "approval_reviews",
+      "type": "uuid"
+    },
+    {
+      "default": null,
+      "name": "review_type",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "approval_reviews",
+      "type": "text"
+    },
+    {
+      "default": "'pending'::review_status",
+      "name": "status",
+      "nullable": "NO",
+      "schema": "public",
+      "table": "approval_reviews",
+      "type": "review_status"
+    },
+    {
+      "default": null,
+      "name": "notes",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "approval_reviews",
+      "type": "text"
+    },
+    {
+      "default": "now()",
+      "name": "created_at",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "approval_reviews",
+      "type": "timestamptz"
+    },
+    {
+      "default": null,
+      "name": "reviewed_at",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "approval_reviews",
+      "type": "timestamptz"
+    },
+    {
+      "default": "gen_random_uuid()",
+      "name": "id",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "social_links",
+      "type": "uuid"
+    },
+    {
+      "default": null,
+      "name": "dancer_id",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "social_links",
+      "type": "uuid"
+    },
+    {
+      "default": null,
+      "name": "platform",
+      "nullable": "NO",
+      "schema": "public",
+      "table": "social_links",
+      "type": "social_platform"
+    },
+    {
+      "default": null,
+      "name": "handle",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "social_links",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "url",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "social_links",
+      "type": "text"
+    },
+    {
+      "default": "true",
+      "name": "is_active",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "social_links",
+      "type": "bool"
+    },
+    {
+      "default": "now()",
+      "name": "created_at",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "social_links",
+      "type": "timestamptz"
+    },
+    {
+      "default": "now()",
+      "name": "updated_at",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "social_links",
+      "type": "timestamptz"
+    }
+  ],
+  "constraints": [
+    {
+      "definition": "FOREIGN KEY (dancer_id) REFERENCES dancer_profiles(id) ON DELETE CASCADE",
+      "name": "approval_reviews_dancer_id_fkey",
+      "table": "approval_reviews"
+    },
+    {
+      "definition": "PRIMARY KEY (id)",
+      "name": "approval_reviews_pkey",
+      "table": "approval_reviews"
+    },
+    {
+      "definition": "FOREIGN KEY (reviewer_id) REFERENCES app_users(id) ON DELETE SET NULL",
+      "name": "approval_reviews_reviewer_id_fkey",
+      "table": "approval_reviews"
+    },
+    {
+      "definition": "FOREIGN KEY (dancer_id) REFERENCES dancer_profiles(id) ON DELETE CASCADE",
+      "name": "social_links_dancer_id_fkey",
+      "table": "social_links"
+    },
+    {
+      "definition": "UNIQUE (dancer_id, platform)",
+      "name": "social_links_dancer_id_platform_key",
+      "table": "social_links"
+    },
+    {
+      "definition": "PRIMARY KEY (id)",
+      "name": "social_links_pkey",
+      "table": "social_links"
+    }
+  ],
+  "enums": {
+    "review_status": [
+      "pending",
+      "approved",
+      "rejected"
+    ],
+    "social_platform": [
+      "instagram",
+      "tiktok",
+      "snapchat",
+      "x",
+      "onlyfans"
+    ]
+  },
+  "queue": {
+    "anon_execute": false,
+    "authenticated_execute": false,
+    "definition": "CREATE OR REPLACE FUNCTION public.enqueue_dancer_content_reviews(p_dancer_id uuid, p_actor_user_id uuid, p_target_type text, p_target_ids uuid[])\n RETURNS integer\n LANGUAGE plpgsql\n SET search_path TO ''\n SET lock_timeout TO '3s'\nAS $function$\ndeclare\n  v_owner uuid;\n  v_ids uuid[];\n  v_found integer;\n  v_added integer;\nbegin\n  if p_dancer_id is null or p_actor_user_id is null or p_target_type is null\n    or p_target_type not in ('photo','social_link') or p_target_ids is null\n    or array_ndims(p_target_ids) is distinct from 1 or cardinality(p_target_ids) not between 1 and 50 then\n    raise exception 'CONTENT_REVIEW_INVALID_INPUT' using errcode = '22023';\n  end if;\n  if array_position(p_target_ids, null) is not null then\n    raise exception 'CONTENT_REVIEW_INVALID_INPUT' using errcode = '22023';\n  end if;\n  select array_agg(distinct x.id order by x.id) into v_ids from unnest(p_target_ids) x(id);\n\n  select d.user_id into v_owner from public.dancer_profiles d where d.id = p_dancer_id for update;\n  if not found then\n    raise exception 'CONTENT_REVIEW_PROFILE_MISSING' using errcode = 'P0002';\n  end if;\n  if p_actor_user_id <> v_owner or not exists(select 1 from public.app_users a\n    where a.id = p_actor_user_id and a.role = 'dancer' and a.account_state = 'active' and a.dmca_suspended_at is null) then\n    raise exception 'CONTENT_REVIEW_FORBIDDEN' using errcode = '42501';\n  end if;\n\n  -- Lock the profile before its targets, matching gallery publication order.\n  -- Recheck eligibility after locking; do not queue an already-reviewed photo.\n  if p_target_type = 'photo' then\n    perform p.id from public.dancer_photos p where p.dancer_id = p_dancer_id and p.id = any(v_ids)\n      order by p.id for update;\n    get diagnostics v_found = row_count;\n    if v_found <> cardinality(v_ids) then\n      raise exception 'CONTENT_REVIEW_TARGET_CHANGED' using errcode = 'P0002';\n    end if;\n    insert into public.approval_reviews(dancer_id, review_type, status, reviewer_id, notes, reviewed_at)\n      select p_dancer_id, 'photo:' || p.id::text, 'pending', null, 'Submitted by dancer.', null\n      from public.dancer_photos p where p.dancer_id = p_dancer_id and p.id = any(v_ids) and p.review_status = 'pending'\n      order by p.id\n      on conflict (dancer_id, review_type) where status = 'pending' and (review_type like 'photo:%' or review_type like 'social_link:%')\n      do nothing;\n  else\n    perform s.id from public.social_links s where s.dancer_id = p_dancer_id and s.id = any(v_ids)\n      order by s.id for update;\n    get diagnostics v_found = row_count;\n    if v_found <> cardinality(v_ids) then\n      raise exception 'CONTENT_REVIEW_TARGET_CHANGED' using errcode = 'P0002';\n    end if;\n    insert into public.approval_reviews(dancer_id, review_type, status, reviewer_id, notes, reviewed_at)\n      select p_dancer_id, 'social_link:' || s.id::text, 'pending', null, 'Submitted by dancer.', null\n      from public.social_links s where s.dancer_id = p_dancer_id and s.id = any(v_ids) and s.is_active\n      order by s.id\n      on conflict (dancer_id, review_type) where status = 'pending' and (review_type like 'photo:%' or review_type like 'social_link:%')\n      do nothing;\n  end if;\n  get diagnostics v_added = row_count;\n  return v_added;\nend;\n$function$\n",
+    "fingerprint": "29b2215964595c56f4339424df7e2a85",
+    "service_execute": true
+  },
+  "indexes": [
+    {
+      "definition": "CREATE UNIQUE INDEX approval_reviews_one_pending_content_idx ON public.approval_reviews USING btree (dancer_id, review_type) WHERE ((status = 'pending'::review_status) AND ((review_type ~~ 'photo:%'::text) OR (review_type ~~ 'social_link:%'::text)))",
+      "name": "approval_reviews_one_pending_content_idx",
+      "ready": true,
+      "table": "approval_reviews",
+      "valid": true
+    },
+    {
+      "definition": "CREATE UNIQUE INDEX approval_reviews_pkey ON public.approval_reviews USING btree (id)",
+      "name": "approval_reviews_pkey",
+      "ready": true,
+      "table": "approval_reviews",
+      "valid": true
+    },
+    {
+      "definition": "CREATE UNIQUE INDEX social_links_dancer_id_platform_key ON public.social_links USING btree (dancer_id, platform)",
+      "name": "social_links_dancer_id_platform_key",
+      "ready": true,
+      "table": "social_links",
+      "valid": true
+    },
+    {
+      "definition": "CREATE UNIQUE INDEX social_links_pkey ON public.social_links USING btree (id)",
+      "name": "social_links_pkey",
+      "ready": true,
+      "table": "social_links",
+      "valid": true
+    }
+  ]
+}

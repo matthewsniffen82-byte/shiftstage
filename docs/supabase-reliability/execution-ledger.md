@@ -304,3 +304,11 @@ It was pushed as `52d6a240bf95d2b805e38f23c18aad14cefa1fb1`, applied from exact 
 The inspected plan is `step-09-counter-caller.md`. Freeze the applied SQL and replace separate submission/compensation with a checked atomic receipt. Preserve stored dates, decisions, forwarding acknowledgments and legal inputs. Verify retries and failures before full validation and exact deployment/health gates.
 
 All 87 focused checks passed, including forty new actual-helper/endpoint/form tests; 36 regressions fail against the previous library. Full validation passed 4,424 tests, lint, build, standalone TypeScript, migration guard and thirty live readiness checks. Read-only RPC schema/dependency checks confirm the exact deployed function, frozen ledger/source, preserved access/helpers and zero production case/counter/strike rows. Exact push, Vercel success and production health remain required.
+
+The counter-notice caller was pushed as `fa645e259ec490e01a88d280d78e6ee236c7fb2f` with matching main references. Its [exact Vercel deployment](https://vercel.com/ai-movie-jobs/shiftstage/2Sebx7kqBWnGGg2Fa6pAcH7T7eUR) succeeded; production health, protected routes, RPC exposure and thirty readiness checks passed at 05:31:19–23 UTC. No production notice or email was sent.
+
+## Step 9 social-link saves: additive atomic function
+
+The inspected plan is `step-09-social-saves.md`. Add an unused service-only transaction for canonical social-link changes and their pending review requests. Preserve ownership, public visibility behavior, completed review history, omitted links and existing IDs. Apply and verify the foundation before switching the caller.
+
+All 55 new PostgreSQL tests and all 4,479 automated tests passed, with lint, build, standalone TypeScript, migration guard and thirty live readiness checks. Guarded deployment transaction, repeated-version and schema-drift rejection rehearsals passed. Existing data/access/helper preservation, exact push, committed SQL application and Vercel/health gates remain required.
