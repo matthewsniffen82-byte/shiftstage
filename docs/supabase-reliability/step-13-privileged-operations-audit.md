@@ -1,0 +1,19 @@
+# Step 13 — privileged operations
+
+Read-only production inspection on 2026-09-10 at 15:18 UTC found 130 application-schema functions: 99 security definers and 31 invokers. The anonymous, authenticated and service roles cannot CREATE in the public schema. Five definers are browser-executable: the role/admin/public-deal helpers and the two previously role-tested admin settlement/void operations. These grants alone do not establish authorization correctness. The remaining function bodies, webhooks and privileged callers remain under review. The authenticated CLI reports no deployed Edge Functions; no Edge Function source is checked in.
+
+## First correction: payout retry ownership
+
+`request_dancer_payout(uuid,text,text,boolean)` is service-only. Its normal idempotency lookup filters both request key and dancer ID. Its `unique_violation` handler filters only the globally unique request key. A direct server invocation using another dancer's key can consequently receive that dancer's payout ID, status, amount, currency and test flag.
+
+The current public finance route already prefixes every supplied key with the authenticated user's UUID and applies active-dancer/payout enablement gates. That prevents this cross-user key collision through the existing public caller. This is database-level defense in depth for privileged or future callers, not evidence that the current public API exposes another dancer's payout. The route, prefix and settings remain unchanged.
+
+Plan: add the missing dancer-ID predicate only in that exception handler. Preserve the function signature, owner, grants, search path, locking, eligibility checks, financial writes and successful same-owner retries. Re-raise a collision that does not belong to the requesting dancer. Use a new forward migration; never rewrite its historical definition or modify existing payout data.
+
+Validation executes the actual inspected function and six financial table definitions in isolated PostgreSQL, including request-key collisions across dancers, same-owner retries, downstream failures and denied browser access. The fixture includes all 101 columns, 50 constraints, 23 indexes and 13 triggers of those tables. Referenced identity, revenue, history and NATS tables are explicit synthetic projections; this is not a complete production database rebuild. Production verification is metadata and aggregate fingerprints only; no payout, transfer or account mutation is used as a test. Hosted multi-connection races remain deferred rather than claimed passed.
+
+Deployment must reject function/permission drift, preserve all financial rows and schema metadata, record the exact committed source, and verify the new definition in the same transaction. A transaction failure leaves the original definition and migration ledger intact. Restoring the previous function is technically possible without touching data, but reintroduces the information disclosure; prefer a tested forward correction.
+
+All 36 focused cases pass, including a direct reproduction of the old disclosure. Foreign collisions must now raise `23505` without changing either dancer's records. Existing requested, processing, paid, failed and canceled payouts remain idempotent for their owner. Fault injection at each financial write verifies transaction rollback, and repeat migration verifies record, function-metadata and access preservation.
+
+Full validation passed all 5,906 tests, lint, production build, standalone TypeScript, thirty readiness checks and the migration guard. The forward migration uses the repository's required `SET search_path =` spelling while preserving the same setting. Its transaction rehearsals reject unexpected definitions, grants and RLS changes and roll back injected data/access changes. The remaining Step 13 review and later audit steps are not complete. Exact committed-source delivery and production verification still apply to this correction.

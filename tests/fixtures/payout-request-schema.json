@@ -1,0 +1,1534 @@
+{
+  "columns": [
+    {
+      "default": "gen_random_uuid()",
+      "name": "id",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "commission_events",
+      "type": "uuid"
+    },
+    {
+      "default": null,
+      "name": "qr_redemption_id",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "commission_events",
+      "type": "uuid"
+    },
+    {
+      "default": null,
+      "name": "venue_id",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "commission_events",
+      "type": "uuid"
+    },
+    {
+      "default": null,
+      "name": "club_deal_id",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "commission_events",
+      "type": "uuid"
+    },
+    {
+      "default": null,
+      "name": "dancer_id",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "commission_events",
+      "type": "uuid"
+    },
+    {
+      "default": "'pending'::text",
+      "name": "status",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "commission_events",
+      "type": "text"
+    },
+    {
+      "default": "0",
+      "name": "amount_cents",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "commission_events",
+      "type": "int4"
+    },
+    {
+      "default": "'none'::text",
+      "name": "payout_type",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "commission_events",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "club_payment_received_at",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "commission_events",
+      "type": "timestamptz"
+    },
+    {
+      "default": null,
+      "name": "payable_at",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "commission_events",
+      "type": "timestamptz"
+    },
+    {
+      "default": null,
+      "name": "paid_at",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "commission_events",
+      "type": "timestamptz"
+    },
+    {
+      "default": null,
+      "name": "rejected_at",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "commission_events",
+      "type": "timestamptz"
+    },
+    {
+      "default": null,
+      "name": "voided_at",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "commission_events",
+      "type": "timestamptz"
+    },
+    {
+      "default": "'{}'::jsonb",
+      "name": "audit",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "commission_events",
+      "type": "jsonb"
+    },
+    {
+      "default": "now()",
+      "name": "created_at",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "commission_events",
+      "type": "timestamptz"
+    },
+    {
+      "default": "0",
+      "name": "gross_commission_cents",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "commission_events",
+      "type": "int4"
+    },
+    {
+      "default": "0",
+      "name": "dancer_share_bps",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "commission_events",
+      "type": "int4"
+    },
+    {
+      "default": "0",
+      "name": "platform_amount_cents",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "commission_events",
+      "type": "int4"
+    },
+    {
+      "default": null,
+      "name": "successful_redemption_number",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "commission_events",
+      "type": "int4"
+    },
+    {
+      "default": null,
+      "name": "commission_month",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "commission_events",
+      "type": "date"
+    },
+    {
+      "default": "'usd'::text",
+      "name": "currency",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "commission_events",
+      "type": "text"
+    },
+    {
+      "default": "'dancer-profile-monthly-30-40-50-v1'::text",
+      "name": "policy_version",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "commission_events",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "payout_batch_id",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "commission_events",
+      "type": "uuid"
+    },
+    {
+      "default": "'club_deal_redemption'::text",
+      "name": "earning_type",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "commission_events",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "gross_transaction_amount_cents",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "commission_events",
+      "type": "int8"
+    },
+    {
+      "default": null,
+      "name": "payment_provider",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "commission_events",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "pending_until",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "commission_events",
+      "type": "timestamptz"
+    },
+    {
+      "default": null,
+      "name": "available_at",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "commission_events",
+      "type": "timestamptz"
+    },
+    {
+      "default": null,
+      "name": "reversed_at",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "commission_events",
+      "type": "timestamptz"
+    },
+    {
+      "default": null,
+      "name": "reversal_reason",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "commission_events",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "held_at",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "commission_events",
+      "type": "timestamptz"
+    },
+    {
+      "default": null,
+      "name": "hold_reason",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "commission_events",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "review_flag",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "commission_events",
+      "type": "text"
+    },
+    {
+      "default": "false",
+      "name": "recovery_required",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "commission_events",
+      "type": "bool"
+    },
+    {
+      "default": "false",
+      "name": "is_test",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "commission_events",
+      "type": "bool"
+    },
+    {
+      "default": "'{}'::jsonb",
+      "name": "metadata",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "commission_events",
+      "type": "jsonb"
+    },
+    {
+      "default": null,
+      "name": "dancer_id",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "dancer_payout_accounts",
+      "type": "uuid"
+    },
+    {
+      "default": null,
+      "name": "stripe_account_id",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "dancer_payout_accounts",
+      "type": "text"
+    },
+    {
+      "default": "'US'::text",
+      "name": "country",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "dancer_payout_accounts",
+      "type": "text"
+    },
+    {
+      "default": "'usd'::text",
+      "name": "default_currency",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "dancer_payout_accounts",
+      "type": "text"
+    },
+    {
+      "default": "false",
+      "name": "details_submitted",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "dancer_payout_accounts",
+      "type": "bool"
+    },
+    {
+      "default": "false",
+      "name": "charges_enabled",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "dancer_payout_accounts",
+      "type": "bool"
+    },
+    {
+      "default": "false",
+      "name": "payouts_enabled",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "dancer_payout_accounts",
+      "type": "bool"
+    },
+    {
+      "default": "false",
+      "name": "onboarding_complete",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "dancer_payout_accounts",
+      "type": "bool"
+    },
+    {
+      "default": null,
+      "name": "last_error",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "dancer_payout_accounts",
+      "type": "text"
+    },
+    {
+      "default": "now()",
+      "name": "created_at",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "dancer_payout_accounts",
+      "type": "timestamptz"
+    },
+    {
+      "default": "now()",
+      "name": "updated_at",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "dancer_payout_accounts",
+      "type": "timestamptz"
+    },
+    {
+      "default": "gen_random_uuid()",
+      "name": "id",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "dancer_payout_accounts",
+      "type": "uuid"
+    },
+    {
+      "default": "'stripe'::text",
+      "name": "payment_provider",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "dancer_payout_accounts",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "provider_account_id",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "dancer_payout_accounts",
+      "type": "text"
+    },
+    {
+      "default": "'not_started'::text",
+      "name": "onboarding_status",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "dancer_payout_accounts",
+      "type": "text"
+    },
+    {
+      "default": "'ineligible'::text",
+      "name": "payout_eligibility",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "dancer_payout_accounts",
+      "type": "text"
+    },
+    {
+      "default": "'unverified'::text",
+      "name": "verification_status",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "dancer_payout_accounts",
+      "type": "text"
+    },
+    {
+      "default": "'{}'::jsonb",
+      "name": "provider_status",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "dancer_payout_accounts",
+      "type": "jsonb"
+    },
+    {
+      "default": "gen_random_uuid()",
+      "name": "id",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "dancer_payout_batches",
+      "type": "uuid"
+    },
+    {
+      "default": null,
+      "name": "dancer_id",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "dancer_payout_batches",
+      "type": "uuid"
+    },
+    {
+      "default": "'requested'::text",
+      "name": "status",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "dancer_payout_batches",
+      "type": "text"
+    },
+    {
+      "default": "'usd'::text",
+      "name": "currency",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "dancer_payout_batches",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "amount_cents",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "dancer_payout_batches",
+      "type": "int4"
+    },
+    {
+      "default": null,
+      "name": "period_start",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "dancer_payout_batches",
+      "type": "date"
+    },
+    {
+      "default": null,
+      "name": "period_end",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "dancer_payout_batches",
+      "type": "date"
+    },
+    {
+      "default": null,
+      "name": "stripe_transfer_id",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "dancer_payout_batches",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "external_reference",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "dancer_payout_batches",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "failure_message",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "dancer_payout_batches",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "paid_at",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "dancer_payout_batches",
+      "type": "timestamptz"
+    },
+    {
+      "default": "now()",
+      "name": "created_at",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "dancer_payout_batches",
+      "type": "timestamptz"
+    },
+    {
+      "default": "now()",
+      "name": "updated_at",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "dancer_payout_batches",
+      "type": "timestamptz"
+    },
+    {
+      "default": "'stripe'::text",
+      "name": "payment_provider",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "dancer_payout_batches",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "provider_reference_id",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "dancer_payout_batches",
+      "type": "text"
+    },
+    {
+      "default": "now()",
+      "name": "requested_at",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "dancer_payout_batches",
+      "type": "timestamptz"
+    },
+    {
+      "default": null,
+      "name": "processing_at",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "dancer_payout_batches",
+      "type": "timestamptz"
+    },
+    {
+      "default": null,
+      "name": "failed_at",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "dancer_payout_batches",
+      "type": "timestamptz"
+    },
+    {
+      "default": null,
+      "name": "canceled_at",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "dancer_payout_batches",
+      "type": "timestamptz"
+    },
+    {
+      "default": null,
+      "name": "request_key",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "dancer_payout_batches",
+      "type": "text"
+    },
+    {
+      "default": "false",
+      "name": "is_test",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "dancer_payout_batches",
+      "type": "bool"
+    },
+    {
+      "default": "'{}'::jsonb",
+      "name": "metadata",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "dancer_payout_batches",
+      "type": "jsonb"
+    },
+    {
+      "default": "gen_random_uuid()",
+      "name": "id",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "dancer_payout_items",
+      "type": "uuid"
+    },
+    {
+      "default": null,
+      "name": "payout_batch_id",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "dancer_payout_items",
+      "type": "uuid"
+    },
+    {
+      "default": null,
+      "name": "commission_event_id",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "dancer_payout_items",
+      "type": "uuid"
+    },
+    {
+      "default": null,
+      "name": "amount_cents",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "dancer_payout_items",
+      "type": "int4"
+    },
+    {
+      "default": "now()",
+      "name": "created_at",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "dancer_payout_items",
+      "type": "timestamptz"
+    },
+    {
+      "default": null,
+      "name": "id",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "financial_audit_events",
+      "type": "int8"
+    },
+    {
+      "default": null,
+      "name": "actor_user_id",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "financial_audit_events",
+      "type": "uuid"
+    },
+    {
+      "default": null,
+      "name": "actor_type",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "financial_audit_events",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "action",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "financial_audit_events",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "target_type",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "financial_audit_events",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "target_id",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "financial_audit_events",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "reason",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "financial_audit_events",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "before_state",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "financial_audit_events",
+      "type": "jsonb"
+    },
+    {
+      "default": null,
+      "name": "after_state",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "financial_audit_events",
+      "type": "jsonb"
+    },
+    {
+      "default": "'{}'::jsonb",
+      "name": "metadata",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "financial_audit_events",
+      "type": "jsonb"
+    },
+    {
+      "default": "now()",
+      "name": "created_at",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "financial_audit_events",
+      "type": "timestamptz"
+    },
+    {
+      "default": "'default'::text",
+      "name": "id",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "payout_settings",
+      "type": "text"
+    },
+    {
+      "default": "false",
+      "name": "payouts_enabled",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "payout_settings",
+      "type": "bool"
+    },
+    {
+      "default": "'stripe'::text",
+      "name": "payment_provider",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "payout_settings",
+      "type": "text"
+    },
+    {
+      "default": "7",
+      "name": "earnings_hold_days",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "payout_settings",
+      "type": "int4"
+    },
+    {
+      "default": "2000",
+      "name": "minimum_payout_cents",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "payout_settings",
+      "type": "int4"
+    },
+    {
+      "default": "'manual_cashout'::text",
+      "name": "payout_mode",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "payout_settings",
+      "type": "text"
+    },
+    {
+      "default": null,
+      "name": "updated_by",
+      "nullable": "YES",
+      "schema": "pg_catalog",
+      "table": "payout_settings",
+      "type": "uuid"
+    },
+    {
+      "default": "now()",
+      "name": "created_at",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "payout_settings",
+      "type": "timestamptz"
+    },
+    {
+      "default": "now()",
+      "name": "updated_at",
+      "nullable": "NO",
+      "schema": "pg_catalog",
+      "table": "payout_settings",
+      "type": "timestamptz"
+    }
+  ],
+  "constraints": [
+    {
+      "definition": "CHECK ((amount_cents >= 0))",
+      "name": "commission_events_amount_cents_check",
+      "table": "commission_events"
+    },
+    {
+      "definition": "FOREIGN KEY (club_deal_id) REFERENCES club_deals(id) ON DELETE CASCADE",
+      "name": "commission_events_club_deal_id_fkey",
+      "table": "commission_events"
+    },
+    {
+      "definition": "CHECK ((currency ~ '^[a-z]{3}$'::text))",
+      "name": "commission_events_currency_check",
+      "table": "commission_events"
+    },
+    {
+      "definition": "FOREIGN KEY (dancer_id) REFERENCES dancer_profiles(id) ON DELETE CASCADE",
+      "name": "commission_events_dancer_id_fkey",
+      "table": "commission_events"
+    },
+    {
+      "definition": "CHECK (((dancer_share_bps >= 0) AND (dancer_share_bps <= 10000)))",
+      "name": "commission_events_dancer_share_bps_check",
+      "table": "commission_events"
+    },
+    {
+      "definition": "CHECK ((status = ANY (ARRAY['pending'::text, 'available'::text, 'payout_processing'::text, 'paid'::text, 'reversed'::text, 'failed'::text])))",
+      "name": "commission_events_earning_status_check",
+      "table": "commission_events"
+    },
+    {
+      "definition": "CHECK ((earning_type = ANY (ARRAY['club_deal_redemption'::text, 'referral'::text, 'bottle_service'::text, 'promotion'::text, 'manual_adjustment'::text, 'other'::text])))",
+      "name": "commission_events_earning_type_check",
+      "table": "commission_events"
+    },
+    {
+      "definition": "CHECK ((gross_commission_cents >= 0))",
+      "name": "commission_events_gross_commission_cents_check",
+      "table": "commission_events"
+    },
+    {
+      "definition": "CHECK (((gross_transaction_amount_cents IS NULL) OR (gross_transaction_amount_cents >= 0)))",
+      "name": "commission_events_gross_transaction_check",
+      "table": "commission_events"
+    },
+    {
+      "definition": "CHECK (((payment_provider IS NULL) OR (payment_provider = ANY (ARRAY['stripe'::text, 'bitsafe'::text, 'adyen'::text, 'other'::text]))))",
+      "name": "commission_events_payment_provider_check",
+      "table": "commission_events"
+    },
+    {
+      "definition": "FOREIGN KEY (payout_batch_id) REFERENCES dancer_payout_batches(id) ON DELETE SET NULL",
+      "name": "commission_events_payout_batch_id_fkey",
+      "table": "commission_events"
+    },
+    {
+      "definition": "CHECK ((payout_type = ANY (ARRAY['none'::text, 'flat'::text, 'percent'::text])))",
+      "name": "commission_events_payout_type_check",
+      "table": "commission_events"
+    },
+    {
+      "definition": "PRIMARY KEY (id)",
+      "name": "commission_events_pkey",
+      "table": "commission_events"
+    },
+    {
+      "definition": "CHECK ((platform_amount_cents >= 0))",
+      "name": "commission_events_platform_amount_cents_check",
+      "table": "commission_events"
+    },
+    {
+      "definition": "FOREIGN KEY (qr_redemption_id) REFERENCES qr_redemptions(id) ON DELETE CASCADE",
+      "name": "commission_events_qr_redemption_id_fkey",
+      "table": "commission_events"
+    },
+    {
+      "definition": "UNIQUE (qr_redemption_id)",
+      "name": "commission_events_qr_redemption_id_key",
+      "table": "commission_events"
+    },
+    {
+      "definition": "CHECK (((status <> 'reversed'::text) OR ((reversed_at IS NOT NULL) AND (char_length(TRIM(BOTH FROM COALESCE(reversal_reason, ''::text))) >= 3))))",
+      "name": "commission_events_reversal_fields_check",
+      "table": "commission_events"
+    },
+    {
+      "definition": "FOREIGN KEY (venue_id) REFERENCES venues(id) ON DELETE CASCADE",
+      "name": "commission_events_venue_id_fkey",
+      "table": "commission_events"
+    },
+    {
+      "definition": "FOREIGN KEY (dancer_id) REFERENCES dancer_profiles(id) ON DELETE CASCADE",
+      "name": "dancer_payout_accounts_dancer_id_fkey",
+      "table": "dancer_payout_accounts"
+    },
+    {
+      "definition": "UNIQUE (dancer_id, payment_provider)",
+      "name": "dancer_payout_accounts_dancer_provider_key",
+      "table": "dancer_payout_accounts"
+    },
+    {
+      "definition": "CHECK ((default_currency ~ '^[a-z]{3}$'::text))",
+      "name": "dancer_payout_accounts_default_currency_check",
+      "table": "dancer_payout_accounts"
+    },
+    {
+      "definition": "CHECK ((onboarding_status = ANY (ARRAY['not_started'::text, 'pending'::text, 'complete'::text, 'restricted'::text, 'disabled'::text])))",
+      "name": "dancer_payout_accounts_onboarding_status_check",
+      "table": "dancer_payout_accounts"
+    },
+    {
+      "definition": "CHECK ((payment_provider = ANY (ARRAY['stripe'::text, 'bitsafe'::text, 'adyen'::text, 'other'::text])))",
+      "name": "dancer_payout_accounts_payment_provider_check",
+      "table": "dancer_payout_accounts"
+    },
+    {
+      "definition": "CHECK ((payout_eligibility = ANY (ARRAY['ineligible'::text, 'pending'::text, 'eligible'::text, 'restricted'::text])))",
+      "name": "dancer_payout_accounts_payout_eligibility_check",
+      "table": "dancer_payout_accounts"
+    },
+    {
+      "definition": "PRIMARY KEY (id)",
+      "name": "dancer_payout_accounts_pkey",
+      "table": "dancer_payout_accounts"
+    },
+    {
+      "definition": "UNIQUE (stripe_account_id)",
+      "name": "dancer_payout_accounts_stripe_account_id_key",
+      "table": "dancer_payout_accounts"
+    },
+    {
+      "definition": "CHECK ((verification_status = ANY (ARRAY['unverified'::text, 'pending'::text, 'verified'::text, 'restricted'::text])))",
+      "name": "dancer_payout_accounts_verification_status_check",
+      "table": "dancer_payout_accounts"
+    },
+    {
+      "definition": "CHECK ((amount_cents > 0))",
+      "name": "dancer_payout_batches_amount_cents_check",
+      "table": "dancer_payout_batches"
+    },
+    {
+      "definition": "CHECK ((currency ~ '^[a-z]{3}$'::text))",
+      "name": "dancer_payout_batches_currency_check",
+      "table": "dancer_payout_batches"
+    },
+    {
+      "definition": "FOREIGN KEY (dancer_id) REFERENCES dancer_profiles(id) ON DELETE CASCADE",
+      "name": "dancer_payout_batches_dancer_id_fkey",
+      "table": "dancer_payout_batches"
+    },
+    {
+      "definition": "CHECK ((payment_provider = ANY (ARRAY['stripe'::text, 'bitsafe'::text, 'adyen'::text, 'other'::text])))",
+      "name": "dancer_payout_batches_payment_provider_check",
+      "table": "dancer_payout_batches"
+    },
+    {
+      "definition": "PRIMARY KEY (id)",
+      "name": "dancer_payout_batches_pkey",
+      "table": "dancer_payout_batches"
+    },
+    {
+      "definition": "CHECK ((status = ANY (ARRAY['requested'::text, 'processing'::text, 'paid'::text, 'failed'::text, 'canceled'::text])))",
+      "name": "dancer_payout_batches_status_check",
+      "table": "dancer_payout_batches"
+    },
+    {
+      "definition": "UNIQUE (stripe_transfer_id)",
+      "name": "dancer_payout_batches_stripe_transfer_id_key",
+      "table": "dancer_payout_batches"
+    },
+    {
+      "definition": "CHECK ((amount_cents > 0))",
+      "name": "dancer_payout_items_amount_cents_check",
+      "table": "dancer_payout_items"
+    },
+    {
+      "definition": "FOREIGN KEY (commission_event_id) REFERENCES commission_events(id) ON DELETE RESTRICT",
+      "name": "dancer_payout_items_commission_event_id_fkey",
+      "table": "dancer_payout_items"
+    },
+    {
+      "definition": "UNIQUE (payout_batch_id, commission_event_id)",
+      "name": "dancer_payout_items_payout_batch_id_commission_event_id_key",
+      "table": "dancer_payout_items"
+    },
+    {
+      "definition": "FOREIGN KEY (payout_batch_id) REFERENCES dancer_payout_batches(id) ON DELETE CASCADE",
+      "name": "dancer_payout_items_payout_batch_id_fkey",
+      "table": "dancer_payout_items"
+    },
+    {
+      "definition": "PRIMARY KEY (id)",
+      "name": "dancer_payout_items_pkey",
+      "table": "dancer_payout_items"
+    },
+    {
+      "definition": "CHECK ((actor_type = ANY (ARRAY['system'::text, 'admin'::text, 'dancer'::text, 'agent'::text, 'provider'::text])))",
+      "name": "financial_audit_events_actor_type_check",
+      "table": "financial_audit_events"
+    },
+    {
+      "definition": "FOREIGN KEY (actor_user_id) REFERENCES auth.users(id) ON DELETE SET NULL",
+      "name": "financial_audit_events_actor_user_id_fkey",
+      "table": "financial_audit_events"
+    },
+    {
+      "definition": "PRIMARY KEY (id)",
+      "name": "financial_audit_events_pkey",
+      "table": "financial_audit_events"
+    },
+    {
+      "definition": "CHECK ((target_type = ANY (ARRAY['earning'::text, 'payout'::text, 'payout_account'::text, 'settings'::text, 'webhook'::text])))",
+      "name": "financial_audit_events_target_type_check",
+      "table": "financial_audit_events"
+    },
+    {
+      "definition": "CHECK (((earnings_hold_days >= 0) AND (earnings_hold_days <= 90)))",
+      "name": "payout_settings_earnings_hold_days_check",
+      "table": "payout_settings"
+    },
+    {
+      "definition": "CHECK ((id = 'default'::text))",
+      "name": "payout_settings_id_check",
+      "table": "payout_settings"
+    },
+    {
+      "definition": "CHECK (((minimum_payout_cents >= 1) AND (minimum_payout_cents <= 10000000)))",
+      "name": "payout_settings_minimum_payout_cents_check",
+      "table": "payout_settings"
+    },
+    {
+      "definition": "CHECK ((payment_provider = ANY (ARRAY['stripe'::text, 'bitsafe'::text, 'adyen'::text, 'other'::text])))",
+      "name": "payout_settings_payment_provider_check",
+      "table": "payout_settings"
+    },
+    {
+      "definition": "CHECK ((payout_mode = ANY (ARRAY['manual_cashout'::text, 'scheduled'::text, 'both'::text])))",
+      "name": "payout_settings_payout_mode_check",
+      "table": "payout_settings"
+    },
+    {
+      "definition": "PRIMARY KEY (id)",
+      "name": "payout_settings_pkey",
+      "table": "payout_settings"
+    },
+    {
+      "definition": "FOREIGN KEY (updated_by) REFERENCES auth.users(id) ON DELETE SET NULL",
+      "name": "payout_settings_updated_by_fkey",
+      "table": "payout_settings"
+    }
+  ],
+  "indexes": [
+    {
+      "definition": "CREATE INDEX commission_events_dancer_status_available_idx ON public.commission_events USING btree (dancer_id, status, available_at DESC, created_at DESC)",
+      "name": "commission_events_dancer_status_available_idx",
+      "table": "commission_events"
+    },
+    {
+      "definition": "CREATE INDEX commission_events_dancer_status_idx ON public.commission_events USING btree (dancer_id, status)",
+      "name": "commission_events_dancer_status_idx",
+      "table": "commission_events"
+    },
+    {
+      "definition": "CREATE INDEX commission_events_payout_batch_idx ON public.commission_events USING btree (payout_batch_id, status)",
+      "name": "commission_events_payout_batch_idx",
+      "table": "commission_events"
+    },
+    {
+      "definition": "CREATE INDEX commission_events_pending_release_idx ON public.commission_events USING btree (pending_until) WHERE ((status = 'pending'::text) AND (held_at IS NULL) AND (review_flag IS NULL))",
+      "name": "commission_events_pending_release_idx",
+      "table": "commission_events"
+    },
+    {
+      "definition": "CREATE UNIQUE INDEX commission_events_pkey ON public.commission_events USING btree (id)",
+      "name": "commission_events_pkey",
+      "table": "commission_events"
+    },
+    {
+      "definition": "CREATE UNIQUE INDEX commission_events_qr_redemption_id_key ON public.commission_events USING btree (qr_redemption_id)",
+      "name": "commission_events_qr_redemption_id_key",
+      "table": "commission_events"
+    },
+    {
+      "definition": "CREATE INDEX commission_events_venue_created_idx ON public.commission_events USING btree (venue_id, created_at DESC)",
+      "name": "commission_events_venue_created_idx",
+      "table": "commission_events"
+    },
+    {
+      "definition": "CREATE INDEX commission_events_venue_status_idx ON public.commission_events USING btree (venue_id, status)",
+      "name": "commission_events_venue_status_idx",
+      "table": "commission_events"
+    },
+    {
+      "definition": "CREATE UNIQUE INDEX dancer_payout_accounts_dancer_provider_key ON public.dancer_payout_accounts USING btree (dancer_id, payment_provider)",
+      "name": "dancer_payout_accounts_dancer_provider_key",
+      "table": "dancer_payout_accounts"
+    },
+    {
+      "definition": "CREATE UNIQUE INDEX dancer_payout_accounts_pkey ON public.dancer_payout_accounts USING btree (id)",
+      "name": "dancer_payout_accounts_pkey",
+      "table": "dancer_payout_accounts"
+    },
+    {
+      "definition": "CREATE UNIQUE INDEX dancer_payout_accounts_provider_account_uidx ON public.dancer_payout_accounts USING btree (payment_provider, provider_account_id) WHERE (provider_account_id IS NOT NULL)",
+      "name": "dancer_payout_accounts_provider_account_uidx",
+      "table": "dancer_payout_accounts"
+    },
+    {
+      "definition": "CREATE UNIQUE INDEX dancer_payout_accounts_stripe_account_id_key ON public.dancer_payout_accounts USING btree (stripe_account_id)",
+      "name": "dancer_payout_accounts_stripe_account_id_key",
+      "table": "dancer_payout_accounts"
+    },
+    {
+      "definition": "CREATE INDEX dancer_payout_batches_dancer_status_idx ON public.dancer_payout_batches USING btree (dancer_id, status, created_at DESC)",
+      "name": "dancer_payout_batches_dancer_status_idx",
+      "table": "dancer_payout_batches"
+    },
+    {
+      "definition": "CREATE UNIQUE INDEX dancer_payout_batches_one_active_uidx ON public.dancer_payout_batches USING btree (dancer_id, currency) WHERE (status = ANY (ARRAY['requested'::text, 'processing'::text]))",
+      "name": "dancer_payout_batches_one_active_uidx",
+      "table": "dancer_payout_batches"
+    },
+    {
+      "definition": "CREATE UNIQUE INDEX dancer_payout_batches_pkey ON public.dancer_payout_batches USING btree (id)",
+      "name": "dancer_payout_batches_pkey",
+      "table": "dancer_payout_batches"
+    },
+    {
+      "definition": "CREATE UNIQUE INDEX dancer_payout_batches_request_key_uidx ON public.dancer_payout_batches USING btree (request_key) WHERE (request_key IS NOT NULL)",
+      "name": "dancer_payout_batches_request_key_uidx",
+      "table": "dancer_payout_batches"
+    },
+    {
+      "definition": "CREATE UNIQUE INDEX dancer_payout_batches_stripe_transfer_id_key ON public.dancer_payout_batches USING btree (stripe_transfer_id)",
+      "name": "dancer_payout_batches_stripe_transfer_id_key",
+      "table": "dancer_payout_batches"
+    },
+    {
+      "definition": "CREATE INDEX dancer_payout_items_commission_idx ON public.dancer_payout_items USING btree (commission_event_id)",
+      "name": "dancer_payout_items_commission_idx",
+      "table": "dancer_payout_items"
+    },
+    {
+      "definition": "CREATE UNIQUE INDEX dancer_payout_items_payout_batch_id_commission_event_id_key ON public.dancer_payout_items USING btree (payout_batch_id, commission_event_id)",
+      "name": "dancer_payout_items_payout_batch_id_commission_event_id_key",
+      "table": "dancer_payout_items"
+    },
+    {
+      "definition": "CREATE UNIQUE INDEX dancer_payout_items_pkey ON public.dancer_payout_items USING btree (id)",
+      "name": "dancer_payout_items_pkey",
+      "table": "dancer_payout_items"
+    },
+    {
+      "definition": "CREATE UNIQUE INDEX financial_audit_events_pkey ON public.financial_audit_events USING btree (id)",
+      "name": "financial_audit_events_pkey",
+      "table": "financial_audit_events"
+    },
+    {
+      "definition": "CREATE INDEX financial_audit_target_idx ON public.financial_audit_events USING btree (target_type, target_id, created_at DESC)",
+      "name": "financial_audit_target_idx",
+      "table": "financial_audit_events"
+    },
+    {
+      "definition": "CREATE UNIQUE INDEX payout_settings_pkey ON public.payout_settings USING btree (id)",
+      "name": "payout_settings_pkey",
+      "table": "payout_settings"
+    }
+  ],
+  "triggers": [
+    {
+      "definition": "CREATE TRIGGER commission_events_enqueue_nats_export AFTER INSERT OR UPDATE OF status, held_at, review_flag ON public.commission_events FOR EACH ROW EXECUTE FUNCTION enqueue_nats_commission_export()",
+      "function_definition": "CREATE OR REPLACE FUNCTION public.enqueue_nats_commission_export()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public', 'pg_temp'\nAS $function$\r\ndeclare v_account_active boolean;\r\nbegin\r\n  if new.status <> 'available' or new.is_test or new.held_at is not null\r\n    or new.review_flag is not null or new.amount_cents <= 0 or lower(new.currency) <> 'usd'\r\n  then return new; end if;\r\n\r\n  if new.qr_redemption_id is not null\r\n    and not public.is_nats_eligible_club_deal_earning(new.id)\r\n  then return new; end if;\r\n\r\n  select exists (\r\n    select 1 from public.nats_affiliate_accounts account\r\n    where account.dancer_id = new.dancer_id and account.status = 'active'\r\n  ) into v_account_active;\r\n\r\n  insert into public.nats_commission_exports (\r\n    commission_event_id, dancer_id, amount_cents, currency, status\r\n  ) values (\r\n    new.id, new.dancer_id, new.amount_cents, lower(new.currency),\r\n    case when new.qr_redemption_id is not null or v_account_active\r\n      then 'pending' else 'waiting_for_affiliate' end\r\n  ) on conflict (commission_event_id) do nothing;\r\n  return new;\r\nend;\r\n$function$\n",
+      "name": "commission_events_enqueue_nats_export",
+      "table": "commission_events"
+    },
+    {
+      "definition": "CREATE TRIGGER commission_events_no_delete BEFORE DELETE ON public.commission_events FOR EACH ROW EXECUTE FUNCTION prohibit_financial_record_delete()",
+      "function_definition": "CREATE OR REPLACE FUNCTION public.prohibit_financial_record_delete()\n RETURNS trigger\n LANGUAGE plpgsql\n SET search_path TO 'pg_catalog', 'pg_temp'\nAS $function$\r\nbegin\r\n  raise exception using errcode = '22023', message = 'Financial records cannot be deleted.';\r\nend;\r\n$function$\n",
+      "name": "commission_events_no_delete",
+      "table": "commission_events"
+    },
+    {
+      "definition": "CREATE TRIGGER commission_events_prepare_earning BEFORE INSERT OR UPDATE ON public.commission_events FOR EACH ROW EXECUTE FUNCTION prepare_dancer_earning()",
+      "function_definition": "CREATE OR REPLACE FUNCTION public.prepare_dancer_earning()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\r\ndeclare v_hold_days integer;\r\nbegin\r\n  if tg_op = 'INSERT' then\r\n    select earnings_hold_days into v_hold_days from public.payout_settings where id = 'default';\r\n    new.status := case new.status\r\n      when 'pending_club_payment' then 'pending'\r\n      when 'payable' then 'pending'\r\n      when 'rejected' then 'reversed'\r\n      when 'voided' then 'reversed'\r\n      else new.status\r\n    end;\r\n    new.pending_until := coalesce(new.pending_until, clock_timestamp() + make_interval(days => coalesce(v_hold_days, 7)));\r\n    new.metadata := coalesce(new.metadata, '{}'::jsonb) || jsonb_build_object(\r\n      'commission_funder', 'mydancr',\r\n      'venue_payment_dependency', false\r\n    );\r\n    if new.status = 'reversed' then\r\n      new.reversed_at := coalesce(new.reversed_at, clock_timestamp());\r\n      new.reversal_reason := coalesce(nullif(trim(new.reversal_reason), ''), 'Earning invalidated during creation');\r\n    end if;\r\n    return new;\r\n  end if;\r\n\r\n  new.status := case new.status\r\n    when 'pending_club_payment' then 'pending'\r\n    when 'payable' then 'pending'\r\n    when 'rejected' then 'reversed'\r\n    when 'voided' then 'reversed'\r\n    else new.status\r\n  end;\r\n  if new.status = 'reversed' and old.status <> 'reversed' then\r\n    new.reversed_at := coalesce(new.reversed_at, clock_timestamp());\r\n    new.reversal_reason := coalesce(nullif(trim(new.reversal_reason), ''), 'Earning invalidated by the originating workflow');\r\n  end if;\r\n\r\n  if (new.qr_redemption_id, new.venue_id, new.club_deal_id, new.dancer_id, new.amount_cents,\r\n      new.gross_commission_cents, new.dancer_share_bps, new.platform_amount_cents, new.currency,\r\n      new.earning_type, new.created_at, new.is_test)\r\n     is distinct from\r\n     (old.qr_redemption_id, old.venue_id, old.club_deal_id, old.dancer_id, old.amount_cents,\r\n      old.gross_commission_cents, old.dancer_share_bps, old.platform_amount_cents, old.currency,\r\n      old.earning_type, old.created_at, old.is_test)\r\n  then\r\n    raise exception using errcode = '22023', message = 'Core earning fields are immutable.';\r\n  end if;\r\n\r\n  if old.status = 'paid' and new.status <> 'paid' then\r\n    raise exception using errcode = '22023', message = 'Paid earnings cannot be reversed or silently debited.';\r\n  end if;\r\n\r\n  if old.status <> new.status and not (\r\n    (old.status = 'pending' and new.status in ('available', 'reversed', 'failed')) or\r\n    (old.status = 'available' and new.status in ('payout_processing', 'reversed', 'failed')) or\r\n    (old.status = 'payout_processing' and new.status in ('paid', 'available', 'failed')) or\r\n    (old.status = 'failed' and new.status in ('pending', 'available', 'reversed'))\r\n  ) then\r\n    raise exception using errcode = '22023', message = 'Invalid earning status transition.';\r\n  end if;\r\n\r\n  if new.status = 'available' and old.status <> 'available' then\r\n    new.available_at := coalesce(new.available_at, clock_timestamp());\r\n  end if;\r\n  if new.status = 'paid' and old.status <> 'paid' then\r\n    new.paid_at := coalesce(new.paid_at, clock_timestamp());\r\n  end if;\r\n  if new.status = 'reversed' and old.status <> 'reversed' then\r\n    new.reversed_at := coalesce(new.reversed_at, clock_timestamp());\r\n    if char_length(trim(coalesce(new.reversal_reason, ''))) < 3 then\r\n      raise exception using errcode = '22023', message = 'A reversal reason is required.';\r\n    end if;\r\n  end if;\r\n  return new;\r\nend;\r\n$function$\n",
+      "name": "commission_events_prepare_earning",
+      "table": "commission_events"
+    },
+    {
+      "definition": "CREATE TRIGGER commission_events_reconcile_nats_reversal AFTER UPDATE OF status ON public.commission_events FOR EACH ROW EXECUTE FUNCTION flag_reversed_nats_commission()",
+      "function_definition": "CREATE OR REPLACE FUNCTION public.flag_reversed_nats_commission()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\nbegin\n  if old.status <> 'reversed' and new.status = 'reversed' then\n    update public.nats_commission_exports\n    set status = case when status = 'exported' then 'reconciliation_required' else 'canceled' end,\n        last_error = case when status = 'exported'\n          then 'The source earning was reversed after export. Reconcile the matching manual invoice in NATS.'\n          else 'The source earning was reversed before NATS export.' end,\n        failed_at = case when status = 'exported' then clock_timestamp() else failed_at end,\n        updated_at = clock_timestamp()\n    where commission_event_id = new.id\n      and status in ('waiting_for_affiliate', 'pending', 'failed', 'exported');\n  end if;\n  return new;\nend;\n$function$\n",
+      "name": "commission_events_reconcile_nats_reversal",
+      "table": "commission_events"
+    },
+    {
+      "definition": "CREATE TRIGGER commission_events_require_nats_enrollment BEFORE INSERT ON public.commission_events FOR EACH ROW EXECUTE FUNCTION require_enrolled_club_deal_earning()",
+      "function_definition": "CREATE OR REPLACE FUNCTION public.require_enrolled_club_deal_earning()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public', 'pg_temp'\nAS $function$\r\nbegin\r\n  if new.qr_redemption_id is not null and not exists (\r\n    select 1 from public.deal_revenue_events revenue\r\n    where revenue.qr_redemption_id = new.qr_redemption_id\r\n      and revenue.dancer_id = new.dancer_id and revenue.dancer_commission_eligible\r\n      and revenue.dancer_nats_activated_at <= revenue.confirmed_at\r\n      and revenue.dancer_commission_cents = new.amount_cents\r\n      and revenue.status not in ('refunded', 'voided')\r\n  ) then\r\n    raise exception using errcode = '22023', message = 'Club Deal commission requires NATS eligibility at redemption.';\r\n  end if;\r\n  return new;\r\nend;\r\n$function$\n",
+      "name": "commission_events_require_nats_enrollment",
+      "table": "commission_events"
+    },
+    {
+      "definition": "CREATE TRIGGER commission_events_status_history AFTER INSERT OR UPDATE OF status ON public.commission_events FOR EACH ROW EXECUTE FUNCTION record_dancer_earning_status_history()",
+      "function_definition": "CREATE OR REPLACE FUNCTION public.record_dancer_earning_status_history()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\r\ndeclare\r\n  v_actor_type text := 'system';\r\nbegin\r\n  if auth.uid() is not null then\r\n    if exists (\r\n      select 1\r\n      from public.app_users\r\n      where id = auth.uid()\r\n        and role = 'admin'\r\n        and account_state = 'active'\r\n    ) then\r\n      v_actor_type := 'admin';\r\n    elsif exists (\r\n      select 1\r\n      from public.dancer_profiles\r\n      where user_id = auth.uid()\r\n    ) then\r\n      v_actor_type := 'dancer';\r\n    end if;\r\n  end if;\r\n\r\n  if tg_op = 'INSERT' then\r\n    insert into public.dancer_earning_status_history (\r\n      earning_id, from_status, to_status, actor_user_id, actor_type, reason, metadata\r\n    ) values (\r\n      new.id,\r\n      null,\r\n      new.status,\r\n      auth.uid(),\r\n      v_actor_type,\r\n      coalesce(new.reversal_reason, new.hold_reason),\r\n      jsonb_build_object('payout_id', new.payout_batch_id, 'provider', new.payment_provider)\r\n    );\r\n  elsif old.status is distinct from new.status then\r\n    insert into public.dancer_earning_status_history (\r\n      earning_id, from_status, to_status, actor_user_id, actor_type, reason, metadata\r\n    ) values (\r\n      new.id,\r\n      old.status,\r\n      new.status,\r\n      auth.uid(),\r\n      v_actor_type,\r\n      coalesce(new.reversal_reason, new.hold_reason),\r\n      jsonb_build_object('payout_id', new.payout_batch_id, 'provider', new.payment_provider)\r\n    );\r\n  end if;\r\n  return new;\r\nend;\r\n$function$\n",
+      "name": "commission_events_status_history",
+      "table": "commission_events"
+    },
+    {
+      "definition": "CREATE TRIGGER dancer_payout_batches_no_delete BEFORE DELETE ON public.dancer_payout_batches FOR EACH ROW EXECUTE FUNCTION prohibit_financial_record_delete()",
+      "function_definition": "CREATE OR REPLACE FUNCTION public.prohibit_financial_record_delete()\n RETURNS trigger\n LANGUAGE plpgsql\n SET search_path TO 'pg_catalog', 'pg_temp'\nAS $function$\r\nbegin\r\n  raise exception using errcode = '22023', message = 'Financial records cannot be deleted.';\r\nend;\r\n$function$\n",
+      "name": "dancer_payout_batches_no_delete",
+      "table": "dancer_payout_batches"
+    },
+    {
+      "definition": "CREATE TRIGGER dancer_payout_items_no_delete BEFORE DELETE ON public.dancer_payout_items FOR EACH ROW EXECUTE FUNCTION prohibit_financial_record_delete()",
+      "function_definition": "CREATE OR REPLACE FUNCTION public.prohibit_financial_record_delete()\n RETURNS trigger\n LANGUAGE plpgsql\n SET search_path TO 'pg_catalog', 'pg_temp'\nAS $function$\r\nbegin\r\n  raise exception using errcode = '22023', message = 'Financial records cannot be deleted.';\r\nend;\r\n$function$\n",
+      "name": "dancer_payout_items_no_delete",
+      "table": "dancer_payout_items"
+    },
+    {
+      "definition": "CREATE TRIGGER financial_audit_no_delete BEFORE DELETE ON public.financial_audit_events FOR EACH ROW EXECUTE FUNCTION prohibit_financial_record_delete()",
+      "function_definition": "CREATE OR REPLACE FUNCTION public.prohibit_financial_record_delete()\n RETURNS trigger\n LANGUAGE plpgsql\n SET search_path TO 'pg_catalog', 'pg_temp'\nAS $function$\r\nbegin\r\n  raise exception using errcode = '22023', message = 'Financial records cannot be deleted.';\r\nend;\r\n$function$\n",
+      "name": "financial_audit_no_delete",
+      "table": "financial_audit_events"
+    },
+    {
+      "definition": "CREATE TRIGGER reject_retired_provider_accounts BEFORE INSERT OR UPDATE OF payment_provider ON public.dancer_payout_accounts FOR EACH ROW EXECUTE FUNCTION reject_retired_payout_provider()",
+      "function_definition": "CREATE OR REPLACE FUNCTION public.reject_retired_payout_provider()\n RETURNS trigger\n LANGUAGE plpgsql\n SET search_path TO 'public'\nAS $function$\r\nbegin\r\n  if lower(trim(new.payment_provider)) = 'bitsafe' then\r\n    if tg_op = 'INSERT' then\r\n      raise exception 'The selected payout provider is no longer supported.' using errcode = '22023';\r\n    elsif old.payment_provider is distinct from new.payment_provider then\r\n      raise exception 'The selected payout provider is no longer supported.' using errcode = '22023';\r\n    end if;\r\n  end if;\r\n  return new;\r\nend;\r\n$function$\n",
+      "name": "reject_retired_provider_accounts",
+      "table": "dancer_payout_accounts"
+    },
+    {
+      "definition": "CREATE TRIGGER reject_retired_provider_batches BEFORE INSERT OR UPDATE OF payment_provider ON public.dancer_payout_batches FOR EACH ROW EXECUTE FUNCTION reject_retired_payout_provider()",
+      "function_definition": "CREATE OR REPLACE FUNCTION public.reject_retired_payout_provider()\n RETURNS trigger\n LANGUAGE plpgsql\n SET search_path TO 'public'\nAS $function$\r\nbegin\r\n  if lower(trim(new.payment_provider)) = 'bitsafe' then\r\n    if tg_op = 'INSERT' then\r\n      raise exception 'The selected payout provider is no longer supported.' using errcode = '22023';\r\n    elsif old.payment_provider is distinct from new.payment_provider then\r\n      raise exception 'The selected payout provider is no longer supported.' using errcode = '22023';\r\n    end if;\r\n  end if;\r\n  return new;\r\nend;\r\n$function$\n",
+      "name": "reject_retired_provider_batches",
+      "table": "dancer_payout_batches"
+    },
+    {
+      "definition": "CREATE TRIGGER reject_retired_provider_earnings BEFORE INSERT OR UPDATE OF payment_provider ON public.commission_events FOR EACH ROW EXECUTE FUNCTION reject_retired_payout_provider()",
+      "function_definition": "CREATE OR REPLACE FUNCTION public.reject_retired_payout_provider()\n RETURNS trigger\n LANGUAGE plpgsql\n SET search_path TO 'public'\nAS $function$\r\nbegin\r\n  if lower(trim(new.payment_provider)) = 'bitsafe' then\r\n    if tg_op = 'INSERT' then\r\n      raise exception 'The selected payout provider is no longer supported.' using errcode = '22023';\r\n    elsif old.payment_provider is distinct from new.payment_provider then\r\n      raise exception 'The selected payout provider is no longer supported.' using errcode = '22023';\r\n    end if;\r\n  end if;\r\n  return new;\r\nend;\r\n$function$\n",
+      "name": "reject_retired_provider_earnings",
+      "table": "commission_events"
+    },
+    {
+      "definition": "CREATE TRIGGER reject_retired_provider_settings BEFORE INSERT OR UPDATE OF payment_provider ON public.payout_settings FOR EACH ROW EXECUTE FUNCTION reject_retired_payout_provider()",
+      "function_definition": "CREATE OR REPLACE FUNCTION public.reject_retired_payout_provider()\n RETURNS trigger\n LANGUAGE plpgsql\n SET search_path TO 'public'\nAS $function$\r\nbegin\r\n  if lower(trim(new.payment_provider)) = 'bitsafe' then\r\n    if tg_op = 'INSERT' then\r\n      raise exception 'The selected payout provider is no longer supported.' using errcode = '22023';\r\n    elsif old.payment_provider is distinct from new.payment_provider then\r\n      raise exception 'The selected payout provider is no longer supported.' using errcode = '22023';\r\n    end if;\r\n  end if;\r\n  return new;\r\nend;\r\n$function$\n",
+      "name": "reject_retired_provider_settings",
+      "table": "payout_settings"
+    }
+  ],
+  "access": [
+    {
+      "acl": [
+        "postgres=arwdDxtm/postgres",
+        "anon=r/postgres",
+        "authenticated=r/postgres",
+        "service_role=arwdDxtm/postgres"
+      ],
+      "force_rls": false,
+      "rls": true,
+      "table": "commission_events"
+    },
+    {
+      "acl": [
+        "postgres=arwdDxtm/postgres",
+        "anon=r/postgres",
+        "authenticated=r/postgres",
+        "service_role=arwdDxtm/postgres"
+      ],
+      "force_rls": false,
+      "rls": true,
+      "table": "dancer_payout_accounts"
+    },
+    {
+      "acl": [
+        "postgres=arwdDxtm/postgres",
+        "anon=r/postgres",
+        "authenticated=r/postgres",
+        "service_role=arwdDxtm/postgres"
+      ],
+      "force_rls": false,
+      "rls": true,
+      "table": "dancer_payout_batches"
+    },
+    {
+      "acl": [
+        "postgres=arwdDxtm/postgres",
+        "anon=r/postgres",
+        "authenticated=r/postgres",
+        "service_role=arwdDxtm/postgres"
+      ],
+      "force_rls": false,
+      "rls": true,
+      "table": "dancer_payout_items"
+    },
+    {
+      "acl": [
+        "postgres=arwdDxtm/postgres",
+        "anon=r/postgres",
+        "authenticated=r/postgres",
+        "service_role=arwdDxtm/postgres"
+      ],
+      "force_rls": false,
+      "rls": true,
+      "table": "financial_audit_events"
+    },
+    {
+      "acl": [
+        "postgres=arwdDxtm/postgres",
+        "anon=r/postgres",
+        "authenticated=r/postgres",
+        "service_role=arwdDxtm/postgres"
+      ],
+      "force_rls": false,
+      "rls": true,
+      "table": "payout_settings"
+    }
+  ],
+  "policies": [
+    {
+      "cmd": "SELECT",
+      "permissive": "PERMISSIVE",
+      "policyname": "Admins read commission events",
+      "qual": "is_admin()",
+      "roles": [
+        "public"
+      ],
+      "schemaname": "public",
+      "tablename": "commission_events",
+      "with_check": null
+    },
+    {
+      "cmd": "SELECT",
+      "permissive": "PERMISSIVE",
+      "policyname": "Admins read dancer payout accounts",
+      "qual": "is_admin()",
+      "roles": [
+        "public"
+      ],
+      "schemaname": "public",
+      "tablename": "dancer_payout_accounts",
+      "with_check": null
+    },
+    {
+      "cmd": "SELECT",
+      "permissive": "PERMISSIVE",
+      "policyname": "Admins read dancer payout batches",
+      "qual": "is_admin()",
+      "roles": [
+        "public"
+      ],
+      "schemaname": "public",
+      "tablename": "dancer_payout_batches",
+      "with_check": null
+    },
+    {
+      "cmd": "SELECT",
+      "permissive": "PERMISSIVE",
+      "policyname": "Admins read dancer payout items",
+      "qual": "is_admin()",
+      "roles": [
+        "public"
+      ],
+      "schemaname": "public",
+      "tablename": "dancer_payout_items",
+      "with_check": null
+    },
+    {
+      "cmd": "SELECT",
+      "permissive": "PERMISSIVE",
+      "policyname": "Admins read financial audit",
+      "qual": "is_admin()",
+      "roles": [
+        "public"
+      ],
+      "schemaname": "public",
+      "tablename": "financial_audit_events",
+      "with_check": null
+    },
+    {
+      "cmd": "SELECT",
+      "permissive": "PERMISSIVE",
+      "policyname": "Admins read payout settings",
+      "qual": "is_admin()",
+      "roles": [
+        "public"
+      ],
+      "schemaname": "public",
+      "tablename": "payout_settings",
+      "with_check": null
+    },
+    {
+      "cmd": "SELECT",
+      "permissive": "PERMISSIVE",
+      "policyname": "Dancers read own earnings",
+      "qual": "(EXISTS ( SELECT 1\n   FROM dancer_profiles dancer\n  WHERE ((dancer.id = commission_events.dancer_id) AND (dancer.user_id = auth.uid()))))",
+      "roles": [
+        "public"
+      ],
+      "schemaname": "public",
+      "tablename": "commission_events",
+      "with_check": null
+    },
+    {
+      "cmd": "SELECT",
+      "permissive": "PERMISSIVE",
+      "policyname": "Dancers read own payout account",
+      "qual": "(EXISTS ( SELECT 1\n   FROM dancer_profiles dancer\n  WHERE ((dancer.id = dancer_payout_accounts.dancer_id) AND (dancer.user_id = auth.uid()))))",
+      "roles": [
+        "public"
+      ],
+      "schemaname": "public",
+      "tablename": "dancer_payout_accounts",
+      "with_check": null
+    },
+    {
+      "cmd": "SELECT",
+      "permissive": "PERMISSIVE",
+      "policyname": "Dancers read own payout batches",
+      "qual": "(EXISTS ( SELECT 1\n   FROM dancer_profiles dancer\n  WHERE ((dancer.id = dancer_payout_batches.dancer_id) AND (dancer.user_id = auth.uid()))))",
+      "roles": [
+        "public"
+      ],
+      "schemaname": "public",
+      "tablename": "dancer_payout_batches",
+      "with_check": null
+    },
+    {
+      "cmd": "SELECT",
+      "permissive": "PERMISSIVE",
+      "policyname": "Dancers read own payout items",
+      "qual": "(EXISTS ( SELECT 1\n   FROM (dancer_payout_batches batch\n     JOIN dancer_profiles dancer ON ((dancer.id = batch.dancer_id)))\n  WHERE ((batch.id = dancer_payout_items.payout_batch_id) AND (dancer.user_id = auth.uid()))))",
+      "roles": [
+        "public"
+      ],
+      "schemaname": "public",
+      "tablename": "dancer_payout_items",
+      "with_check": null
+    }
+  ],
+  "identities": [
+    {
+      "column_name": "id",
+      "identity_generation": "ALWAYS",
+      "table_name": "financial_audit_events"
+    }
+  ],
+  "enums": {},
+  "functions": [
+    {
+      "anon_execute": false,
+      "authenticated_execute": false,
+      "definition": "CREATE OR REPLACE FUNCTION public.admin_retry_dancer_payout(p_admin_user_id uuid, p_failed_payout_id uuid, p_reason text)\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\r\ndeclare\r\n  v_old public.dancer_payout_batches%rowtype;\r\n  v_new_id uuid;\r\n  v_count integer;\r\n  v_amount bigint;\r\nbegin\r\n  if not exists (select 1 from public.app_users where id = p_admin_user_id and role = 'admin' and account_state = 'active') then\r\n    raise exception using errcode = '42501', message = 'Active admin access required.';\r\n  end if;\r\n  if char_length(trim(coalesce(p_reason, ''))) < 3 then\r\n    raise exception using errcode = '22023', message = 'A retry reason is required.';\r\n  end if;\r\n  select * into v_old from public.dancer_payout_batches where id = p_failed_payout_id for update;\r\n  if not found or v_old.status <> 'failed' then\r\n    raise exception using errcode = '22023', message = 'Only a failed payout can be retried.';\r\n  end if;\r\n  perform 1 from public.dancer_payout_batches\r\n    where dancer_id = v_old.dancer_id and currency = v_old.currency and status in ('requested', 'processing') for update;\r\n  if found then raise exception using errcode = '23505', message = 'A payout request is already active.'; end if;\r\n  with locked_earnings as (\r\n    select earning.id, earning.amount_cents\r\n    from public.dancer_payout_items old_item\r\n    join public.commission_events earning on earning.id = old_item.commission_event_id\r\n    where old_item.payout_batch_id = p_failed_payout_id\r\n      and earning.status = 'available' and earning.payout_batch_id is null\r\n      and earning.held_at is null and earning.review_flag is null\r\n    order by earning.created_at, earning.id for update of earning\r\n  )\r\n  select count(*)::integer, coalesce(sum(amount_cents), 0)::bigint into v_count, v_amount from locked_earnings;\r\n  if v_count = 0 or v_amount <> v_old.amount_cents then\r\n    raise exception using errcode = '22023', message = 'The original earnings are not all eligible for a safe retry.';\r\n  end if;\r\n  insert into public.dancer_payout_batches (dancer_id, status, currency, amount_cents, payment_provider, request_key, requested_at, metadata)\r\n  values (v_old.dancer_id, 'requested', v_old.currency, v_old.amount_cents, v_old.payment_provider,\r\n    'retry:' || p_failed_payout_id::text || ':' || gen_random_uuid()::text, now(),\r\n    jsonb_build_object('retry_of', p_failed_payout_id, 'retry_reason', trim(p_reason))) returning id into v_new_id;\r\n  insert into public.dancer_payout_items (payout_batch_id, commission_event_id, amount_cents)\r\n  select v_new_id, earning.id, earning.amount_cents\r\n  from public.dancer_payout_items old_item join public.commission_events earning on earning.id = old_item.commission_event_id\r\n  where old_item.payout_batch_id = p_failed_payout_id and earning.status = 'available' and earning.payout_batch_id is null;\r\n  update public.commission_events set status = 'payout_processing', payout_batch_id = v_new_id,\r\n    payment_provider = v_old.payment_provider\r\n  where id in (select commission_event_id from public.dancer_payout_items where payout_batch_id = v_new_id);\r\n  insert into public.financial_audit_events (actor_user_id, actor_type, action, target_type, target_id, reason, after_state)\r\n  values (p_admin_user_id, 'admin', 'retry_failed_payout', 'payout', v_new_id::text, trim(p_reason),\r\n    jsonb_build_object('status', 'requested', 'retry_of', p_failed_payout_id, 'amount_cents', v_old.amount_cents));\r\n  return jsonb_build_object('id', v_new_id, 'status', 'requested', 'retry_of', p_failed_payout_id);\r\nend;\r\n$function$\n",
+      "fingerprint": "7c968a844eec3a23ec89c1fffcbf5a36",
+      "name": "admin_retry_dancer_payout",
+      "service_execute": true,
+      "signature": "admin_retry_dancer_payout(uuid,uuid,text)"
+    },
+    {
+      "anon_execute": false,
+      "authenticated_execute": false,
+      "definition": "CREATE OR REPLACE FUNCTION public.complete_dancer_payout_batch(p_batch_id uuid, p_transfer_id text, p_paid_at timestamp with time zone DEFAULT now())\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\r\ndeclare v_payout public.dancer_payout_batches%rowtype;\r\nbegin\r\n  if char_length(trim(coalesce(p_transfer_id, ''))) < 3 then\r\n    raise exception using errcode = '22023', message = 'A valid provider payout reference is required.';\r\n  end if;\r\n  select * into v_payout from public.dancer_payout_batches where id = p_batch_id for update;\r\n  if not found then raise exception using errcode = 'P0002', message = 'Payout not found.'; end if;\r\n  if v_payout.status <> 'processing' then\r\n    raise exception using errcode = '22023', message = 'Only a processing payout can be marked paid.';\r\n  end if;\r\n  update public.dancer_payout_batches set status = 'paid', provider_reference_id = trim(p_transfer_id),\r\n    external_reference = trim(p_transfer_id), paid_at = p_paid_at, failure_message = null, updated_at = now()\r\n  where id = p_batch_id;\r\n  update public.commission_events set status = 'paid', paid_at = p_paid_at\r\n  where payout_batch_id = p_batch_id and status = 'payout_processing';\r\n  insert into public.financial_audit_events (actor_type, action, target_type, target_id, after_state)\r\n  values ('provider', 'payout_paid', 'payout', p_batch_id::text,\r\n    jsonb_build_object('status', 'paid', 'provider_reference_id', trim(p_transfer_id), 'paid_at', p_paid_at));\r\n  return jsonb_build_object('id', p_batch_id, 'status', 'paid', 'provider_reference_id', trim(p_transfer_id));\r\nend;\r\n$function$\n",
+      "fingerprint": "844efefc029bda3c20c74578cf716f0c",
+      "name": "complete_dancer_payout_batch",
+      "service_execute": true,
+      "signature": "complete_dancer_payout_batch(uuid,text,timestamp with time zone)"
+    },
+    {
+      "anon_execute": false,
+      "authenticated_execute": false,
+      "definition": "CREATE OR REPLACE FUNCTION public.flag_dancer_payout_dispatch_review(p_payout_id uuid, p_failure_message text)\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\r\ndeclare v_payout public.dancer_payout_batches%rowtype;\r\nbegin\r\n  select * into v_payout from public.dancer_payout_batches where id = p_payout_id for update;\r\n  if not found then raise exception using errcode = 'P0002', message = 'Payout not found.'; end if;\r\n  if v_payout.status <> 'processing' then\r\n    return jsonb_build_object('id', p_payout_id, 'status', v_payout.status, 'unchanged', true);\r\n  end if;\r\n  update public.dancer_payout_batches\r\n  set failure_message = left('Provider dispatch needs reconciliation: ' || coalesce(p_failure_message, 'Unknown provider response'), 500),\r\n      metadata = metadata || jsonb_build_object(\r\n        'dispatch_review_required', true,\r\n        'dispatch_last_error', left(coalesce(p_failure_message, 'Unknown provider response'), 500)\r\n      ),\r\n      updated_at = now()\r\n  where id = p_payout_id;\r\n  insert into public.financial_audit_events (actor_type, action, target_type, target_id, reason, after_state)\r\n  values ('system', 'payout_dispatch_review', 'payout', p_payout_id::text,\r\n    left(coalesce(p_failure_message, 'Unknown provider response'), 500),\r\n    jsonb_build_object('status', 'processing', 'reservation_released', false));\r\n  return jsonb_build_object('id', p_payout_id, 'status', 'processing', 'review_required', true);\r\nend;\r\n$function$\n",
+      "fingerprint": "cd4e5a28519f49dc11c86670e078b215",
+      "name": "flag_dancer_payout_dispatch_review",
+      "service_execute": true,
+      "signature": "flag_dancer_payout_dispatch_review(uuid,text)"
+    },
+    {
+      "anon_execute": false,
+      "authenticated_execute": false,
+      "definition": "CREATE OR REPLACE FUNCTION public.mark_dancer_payout_processing(p_payout_id uuid, p_provider_reference_id text)\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\r\ndeclare v_payout public.dancer_payout_batches%rowtype;\r\nbegin\r\n  if char_length(trim(coalesce(p_provider_reference_id, ''))) < 3 then\r\n    raise exception using errcode = '22023', message = 'Provider reference is required.';\r\n  end if;\r\n  select * into v_payout from public.dancer_payout_batches where id = p_payout_id for update;\r\n  if not found then raise exception using errcode = 'P0002', message = 'Payout not found.'; end if;\r\n  if v_payout.status = 'paid' and v_payout.provider_reference_id = trim(p_provider_reference_id) then\r\n    return jsonb_build_object('id', p_payout_id, 'status', 'paid', 'duplicate', true);\r\n  end if;\r\n  if v_payout.status not in ('requested', 'processing') then\r\n    raise exception using errcode = '22023', message = 'Payout cannot enter processing from its current status.';\r\n  end if;\r\n  update public.dancer_payout_batches set status = 'processing', processing_at = coalesce(processing_at, now()),\r\n    provider_reference_id = trim(p_provider_reference_id),\r\n    stripe_transfer_id = case when payment_provider = 'stripe' then trim(p_provider_reference_id) else stripe_transfer_id end,\r\n    external_reference = trim(p_provider_reference_id), failure_message = null,\r\n    metadata = metadata - 'dispatch_review_required' - 'dispatch_last_error', updated_at = now()\r\n  where id = p_payout_id;\r\n  insert into public.financial_audit_events (actor_type, action, target_type, target_id, before_state, after_state)\r\n  values ('system', 'payout_processing', 'payout', p_payout_id::text,\r\n    jsonb_build_object('status', v_payout.status),\r\n    jsonb_build_object('status', 'processing', 'provider_reference_id', trim(p_provider_reference_id)));\r\n  return jsonb_build_object('id', p_payout_id, 'status', 'processing');\r\nend;\r\n$function$\n",
+      "fingerprint": "11da35979eae2a357380e60ec8fd2e2e",
+      "name": "mark_dancer_payout_processing",
+      "service_execute": true,
+      "signature": "mark_dancer_payout_processing(uuid,text)"
+    },
+    {
+      "anon_execute": false,
+      "authenticated_execute": false,
+      "definition": "CREATE OR REPLACE FUNCTION public.release_dancer_payout_batch(p_batch_id uuid, p_status text, p_failure_message text)\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\r\ndeclare v_payout public.dancer_payout_batches%rowtype; v_final_status text;\r\nbegin\r\n  v_final_status := case when p_status in ('canceled') then 'canceled' else 'failed' end;\r\n  select * into v_payout from public.dancer_payout_batches where id = p_batch_id for update;\r\n  if not found then raise exception using errcode = 'P0002', message = 'Payout not found.'; end if;\r\n  if v_payout.status not in ('requested', 'processing') then\r\n    raise exception using errcode = '22023', message = 'Payout cannot be released from its current status.';\r\n  end if;\r\n  update public.commission_events set status = 'available', payout_batch_id = null, payment_provider = null,\r\n    metadata = metadata || jsonb_build_object('released_payout_id', p_batch_id,\r\n      'release_reason', left(coalesce(p_failure_message, ''), 500))\r\n  where payout_batch_id = p_batch_id and status = 'payout_processing';\r\n  update public.dancer_payout_batches set status = v_final_status,\r\n    failed_at = case when v_final_status = 'failed' then now() else failed_at end,\r\n    canceled_at = case when v_final_status = 'canceled' then now() else canceled_at end,\r\n    failure_message = left(coalesce(p_failure_message, 'Payout was not completed.'), 500), updated_at = now()\r\n  where id = p_batch_id;\r\n  insert into public.financial_audit_events (actor_type, action, target_type, target_id, after_state, reason)\r\n  values ('system', 'release_payout_reservation', 'payout', p_batch_id::text,\r\n    jsonb_build_object('status', v_final_status), left(coalesce(p_failure_message, ''), 500));\r\n  return jsonb_build_object('id', p_batch_id, 'status', v_final_status);\r\nend;\r\n$function$\n",
+      "fingerprint": "cac4fd9d6d272e254308f0e489ab91fa",
+      "name": "release_dancer_payout_batch",
+      "service_execute": true,
+      "signature": "release_dancer_payout_batch(uuid,text,text)"
+    },
+    {
+      "anon_execute": false,
+      "authenticated_execute": false,
+      "definition": "CREATE OR REPLACE FUNCTION public.request_dancer_payout(p_user_id uuid, p_request_key text, p_payment_provider text, p_is_test boolean DEFAULT false)\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\r\ndeclare\r\n  v_dancer_id uuid;\r\n  v_account public.dancer_payout_accounts%rowtype;\r\n  v_settings public.payout_settings%rowtype;\r\n  v_payout_id uuid;\r\n  v_amount bigint;\r\n  v_count integer;\r\n  v_earning_ids uuid[];\r\n  v_duplicate jsonb;\r\nbegin\r\n  if char_length(trim(coalesce(p_request_key, ''))) < 12 then\r\n    raise exception using errcode = '22023', message = 'A valid idempotency key is required.';\r\n  end if;\r\n  if p_payment_provider not in ('stripe', 'bitsafe', 'adyen', 'other') then\r\n    raise exception using errcode = '22023', message = 'Unsupported payout provider.';\r\n  end if;\r\n\r\n  -- Lock the dancer row before inspecting idempotency or active batches. This\r\n  -- serializes simultaneous cash-out requests even before a payout row exists.\r\n  select id into v_dancer_id from public.dancer_profiles where user_id = p_user_id for update;\r\n  if v_dancer_id is null then\r\n    raise exception using errcode = '42501', message = 'Dancer account required.';\r\n  end if;\r\n  select * into v_settings from public.payout_settings where id = 'default' for share;\r\n  if v_settings.payout_mode not in ('manual_cashout', 'both') then\r\n    raise exception using errcode = '22023', message = 'Manual cash out is not enabled.';\r\n  end if;\r\n\r\n  select jsonb_build_object('id', id, 'status', status, 'amount_cents', amount_cents,\r\n    'currency', currency, 'is_test', is_test, 'duplicate', true)\r\n    into v_duplicate\r\n  from public.dancer_payout_batches\r\n  where request_key = trim(p_request_key) and dancer_id = v_dancer_id;\r\n  if v_duplicate is not null then return v_duplicate; end if;\r\n\r\n  if not p_is_test then\r\n    select * into v_account from public.dancer_payout_accounts\r\n    where dancer_id = v_dancer_id and payment_provider = p_payment_provider;\r\n    if not found or v_account.onboarding_status <> 'complete'\r\n      or v_account.payout_eligibility <> 'eligible'\r\n      or v_account.verification_status <> 'verified'\r\n    then\r\n      raise exception using errcode = '22023', message = 'Payout setup and verification must be completed first.';\r\n    end if;\r\n  end if;\r\n\r\n  perform 1 from public.dancer_payout_batches\r\n  where dancer_id = v_dancer_id and currency = 'usd' and status in ('requested', 'processing')\r\n  for update;\r\n  if found then\r\n    raise exception using errcode = '23505', message = 'A payout request is already active.';\r\n  end if;\r\n\r\n  with locked_earnings as (\r\n    select id, amount_cents\r\n    from public.commission_events\r\n    where dancer_id = v_dancer_id and status = 'available' and payout_batch_id is null\r\n      and held_at is null and review_flag is null and currency = 'usd'\r\n    order by created_at, id\r\n    for update\r\n  )\r\n  select count(*)::integer, coalesce(sum(amount_cents), 0)::bigint, array_agg(id order by id)\r\n    into v_count, v_amount, v_earning_ids\r\n  from locked_earnings;\r\n\r\n  if v_count = 0 or v_amount < v_settings.minimum_payout_cents then\r\n    raise exception using errcode = '22023', message = 'Available earnings do not meet the minimum cash-out amount.';\r\n  end if;\r\n\r\n  insert into public.dancer_payout_batches (\r\n    dancer_id, status, currency, amount_cents, payment_provider, request_key, is_test,\r\n    requested_at, metadata\r\n  ) values (\r\n    v_dancer_id, 'requested', 'usd', v_amount::integer, p_payment_provider,\r\n    trim(p_request_key), p_is_test, clock_timestamp(),\r\n    jsonb_build_object('requested_by_user_id', p_user_id, 'source', 'manual_cashout')\r\n  ) returning id into v_payout_id;\r\n\r\n  insert into public.dancer_payout_items (payout_batch_id, commission_event_id, amount_cents)\r\n  select v_payout_id, id, amount_cents from public.commission_events\r\n  where id = any(v_earning_ids);\r\n\r\n  update public.commission_events\r\n  set status = 'payout_processing', payout_batch_id = v_payout_id,\r\n      payment_provider = p_payment_provider\r\n  where id in (\r\n    select commission_event_id from public.dancer_payout_items where payout_batch_id = v_payout_id\r\n  );\r\n\r\n  insert into public.financial_audit_events (\r\n    actor_user_id, actor_type, action, target_type, target_id, after_state, metadata\r\n  ) values (\r\n    p_user_id, 'dancer', 'request_cash_out', 'payout', v_payout_id::text,\r\n    jsonb_build_object('status', 'requested', 'amount_cents', v_amount, 'currency', 'usd'),\r\n    jsonb_build_object('is_test', p_is_test, 'request_key', trim(p_request_key))\r\n  );\r\n\r\n  return jsonb_build_object('id', v_payout_id, 'status', 'requested',\r\n    'amount_cents', v_amount, 'currency', 'usd', 'is_test', p_is_test);\r\nexception when unique_violation then\r\n  select jsonb_build_object('id', id, 'status', status, 'amount_cents', amount_cents,\r\n    'currency', currency, 'is_test', is_test, 'duplicate', true)\r\n    into v_duplicate from public.dancer_payout_batches where request_key = trim(p_request_key);\r\n  if v_duplicate is not null then return v_duplicate; end if;\r\n  raise;\r\nend;\r\n$function$\n",
+      "fingerprint": "3220931b0c67d7157ded928325ab226b",
+      "name": "request_dancer_payout",
+      "service_execute": true,
+      "signature": "request_dancer_payout(uuid,text,text,boolean)"
+    },
+    {
+      "acl": [
+        "postgres=X/postgres",
+        "service_role=X/postgres"
+      ],
+      "anon_execute": false,
+      "authenticated_execute": false,
+      "definition": "CREATE OR REPLACE FUNCTION public.is_nats_eligible_club_deal_earning(p_earning_id uuid)\n RETURNS boolean\n LANGUAGE sql\n STABLE SECURITY DEFINER\n SET search_path TO 'public', 'pg_temp'\nAS $function$\r\n  select exists (\r\n    select 1 from public.commission_events earning\r\n    join public.deal_revenue_events revenue on revenue.qr_redemption_id = earning.qr_redemption_id\r\n    where earning.id = p_earning_id\r\n      and revenue.dancer_id = earning.dancer_id\r\n      and revenue.dancer_commission_eligible\r\n      and revenue.dancer_nats_activated_at <= revenue.confirmed_at\r\n      and revenue.dancer_commission_cents = earning.amount_cents\r\n      and revenue.status not in ('refunded', 'voided')\r\n  );\r\n$function$\n",
+      "fingerprint": "10ede0c3fe1f3e16de1bb3f3efeca214",
+      "name": "is_nats_eligible_club_deal_earning",
+      "owner": "postgres",
+      "security_definer": true,
+      "service_execute": true,
+      "settings": [
+        "search_path=public, pg_temp"
+      ],
+      "signature": "is_nats_eligible_club_deal_earning(uuid)",
+      "volatility": "s"
+    }
+  ]
+}
