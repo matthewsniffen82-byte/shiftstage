@@ -73,6 +73,7 @@ export async function createNatsManualInvoice(input: {
     loginid: String(input.loginId),
     amount: (input.amountCents / 100).toFixed(2),
   });
+  const signal = AbortSignal.timeout(15_000);
   let response: Response;
   try {
     response = await fetch(new URL("/api/v1/affiliate/invoice", config.baseUrl), {
@@ -85,7 +86,7 @@ export async function createNatsManualInvoice(input: {
       },
       body,
       cache: "no-store",
-      signal: AbortSignal.timeout(15_000),
+      signal,
     });
   } catch {
     throw new NatsAmbiguousDispatchError(
@@ -97,7 +98,15 @@ export async function createNatsManualInvoice(input: {
     http_status: response.status,
     content_type: safeNatsContentType(response.headers.get("content-type")),
   };
-  const payload = await readNatsJson(response);
+  let payload: Record<string, unknown> | null;
+  try {
+    payload = await readNatsJson(response, signal);
+  } catch {
+    throw new NatsAmbiguousDispatchError(
+      "NATS did not return a complete invoice response. Verify the affiliate invoice before retrying.",
+      responseMetadata,
+    );
+  }
   const result = typeof payload?.result === "string" ? payload.result.trim() : "";
   if (response.ok && /successfully added manual invoice/i.test(result)) {
     return { result: "Successfully added manual invoice", responseMetadata };
@@ -137,16 +146,42 @@ function trimmed(value: string | undefined) {
   return result || null;
 }
 
-async function readNatsJson(response: Response): Promise<Record<string, unknown> | null> {
-  const text = (await response.text()).slice(0, 5_000);
-  if (!text) return null;
+async function readNatsJson(response: Response, signal: AbortSignal): Promise<Record<string, unknown> | null> {
+  if (!response.body) return null;
+  const reader = response.body.getReader();
+  const cancel = () => { void reader.cancel().catch(() => undefined); };
+  signal.addEventListener("abort", cancel, { once: true });
+  let complete = false;
   try {
-    const parsed = JSON.parse(text);
-    return parsed && typeof parsed === "object" && !Array.isArray(parsed)
-      ? parsed as Record<string, unknown>
-      : null;
-  } catch {
-    return null;
+    // Count decoded bytes while streaming; slicing response.text() still buffers
+    // the entire provider body. Invoice receipts are small JSON objects.
+    const bytes = new Uint8Array(64 * 1024);
+    let total = 0;
+    let chunks = 0;
+    for (;;) {
+      if (signal.aborted) throw new Error("NATS_RESPONSE_ABORTED");
+      const { done, value } = await reader.read();
+      if (signal.aborted) throw new Error("NATS_RESPONSE_ABORTED");
+      if (done) { complete = true; break; }
+      if (++chunks > 4096 || !(value instanceof Uint8Array) || total + value.byteLength > bytes.byteLength) {
+        throw new Error("NATS_RESPONSE_TOO_LARGE");
+      }
+      bytes.set(value, total);
+      total += value.byteLength;
+    }
+    if (!total) return null;
+    try {
+      const parsed: unknown = JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(bytes.subarray(0, total)));
+      return parsed && typeof parsed === "object" && !Array.isArray(parsed)
+        ? parsed as Record<string, unknown>
+        : null;
+    } catch {
+      return null;
+    }
+  } finally {
+    signal.removeEventListener("abort", cancel);
+    if (!complete) cancel();
+    reader.releaseLock();
   }
 }
 

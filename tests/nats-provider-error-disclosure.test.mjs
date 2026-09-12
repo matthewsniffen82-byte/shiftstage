@@ -12,16 +12,17 @@ function module(name, dependencies, globals = {}) {
   vm.runInNewContext(ts.transpileModule(source, {
     compilerOptions: {module:ts.ModuleKind.CommonJS, target:ts.ScriptTarget.ES2022},
   }).outputText, {
-    exports, Error, Date, URL, URLSearchParams, AbortSignal,
+    exports, Error, Date, URL, URLSearchParams, AbortSignal, Uint8Array, TextDecoder,
     require: name => {assert.ok(Object.hasOwn(dependencies, name), name); return dependencies[name];},
     ...globals,
   });
   return exports;
 }
 
-function harness({agent=false, status=200, payload={result:'Successfully added manual invoice'}, contentType='application/json', networkFailure=false, bodyFailure=false, completion='success', failureWrite=false, selected=true, configured=true, loginId=123, sequence=null}={}) {
+function harness({agent=false, status=200, payload={result:'Successfully added manual invoice'}, contentType='application/json', networkFailure=false, bodyFailure=false, completion='success', failureWrite=false, selected=true, configured=true, loginId=123, sequence=null, responseFactory=null, signal=null}={}) {
   const requests = [], calls = [];
   const nats = module('nats.ts', {'server-only':{}}, {
+    ...(signal ? {AbortSignal:{timeout: milliseconds => { assert.equal(milliseconds, 15_000); return signal; }}} : {}),
     process: {env: {
       NODE_ENV:'production', COMMISSION_SETTLEMENT_PROVIDER:selected?'nats':'mydancr',
       NATS_BASE_URL:'https://provider.example.invalid', NATS_AFFILIATE_PORTAL_URL:'https://portal.example.invalid',
@@ -33,10 +34,13 @@ function harness({agent=false, status=200, payload={result:'Successfully added m
       const config = sequence?.[requests.length] || {status,payload,contentType,networkFailure,bodyFailure};
       requests.push({body:String(options.body)});
       if (config.networkFailure) throw new Error(privateText);
-      const response = new Response(typeof config.payload === 'string' ? config.payload : JSON.stringify(config.payload), {
+      if (responseFactory) return responseFactory(options);
+      const body = config.bodyFailure
+        ? new ReadableStream({start(controller) {controller.error(new Error(privateText));}})
+        : typeof config.payload === 'string' ? config.payload : JSON.stringify(config.payload);
+      const response = new Response(body, {
         status:config.status, headers:{'content-type':config.contentType},
       });
-      if (config.bodyFailure) response.text = async () => {throw new Error(privateText);};
       return response;
     },
   });
@@ -53,8 +57,66 @@ function harness({agent=false, status=200, payload={result:'Successfully added m
     assert.equal(name, 'fail_' + prefix);
     return {data:null,error:failureWrite?{message:privateText,code:'08006'}:null};
   }};
-  return {calls, requests, run:() => agent ? worker.syncNatsAgentCommissions(client) : worker.syncNatsCommissions(client)};
+  return {nats, calls, requests, run:() => agent ? worker.syncNatsAgentCommissions(client) : worker.syncNatsCommissions(client)};
 }
+
+for (const kind of ['oversized chunk', 'multiple chunks', 'empty chunk flood']) {
+  test('invoice response bounds cancel '+kind+' without another dispatch', async () => {
+    let cancelled = 0, pulls = 0;
+    const h = harness({responseFactory:() => new Response(new ReadableStream({
+      pull(controller) {
+        pulls++;
+        controller.enqueue(new Uint8Array(kind === 'oversized chunk' ? 65537 : kind === 'multiple chunks' ? 16384 : 0));
+      },
+      cancel() { cancelled++; },
+    }), {headers:{'content-type':'application/json'}})});
+    const result = await h.run();
+    assert.equal(result.reconciliationRequired, 1);
+    assert.equal(h.requests.length, 1);
+    assert.equal(cancelled, 1);
+    assert.ok(pulls <= (kind === 'empty chunk flood' ? 4098 : 6));
+    const failure = h.calls.find(call => call.name.startsWith('fail_'));
+    assert.equal(failure.args.p_response_metadata.http_status, 200);
+  });
+}
+
+test('invoice deadline includes a stalled body and disposes the reader', async () => {
+  const controller = new AbortController();
+  let cancelled = 0;
+  const response = new Response(new ReadableStream({cancel() {cancelled++;}}));
+  const h = harness({signal:controller.signal,responseFactory:() => response});
+  const pending = h.run();
+  await new Promise(resolve => setImmediate(resolve));
+  controller.abort();
+  const result = await pending;
+  assert.equal(result.reconciliationRequired, 1);
+  assert.equal(h.requests.length, 1);
+  assert.equal(cancelled, 1);
+  assert.equal(response.body.locked, false);
+});
+
+test('body failures expose typed ambiguity and sanitized HTTP context', async () => {
+  const h = harness({bodyFailure:true});
+  await assert.rejects(h.nats.createNatsManualInvoice({loginId:123,amountCents:1234,currency:'usd'}), error => {
+    assert.ok(error instanceof h.nats.NatsAmbiguousDispatchError);
+    assert.equal(error.responseMetadata.http_status, 200);
+    assert.doesNotMatch(error.message, /synthetic-provider-secret/);
+    return true;
+  });
+});
+
+test('chunked UTF-8 receipts parse only after the complete body arrives', async () => {
+  const bytes = new TextEncoder().encode(JSON.stringify({result:'Successfully added manual invoice',note:'é'}));
+  let index = 0;
+  const response = new Response(new ReadableStream({pull(controller) {
+    if (index === bytes.length) controller.close();
+    else controller.enqueue(bytes.subarray(index,index++ + 1));
+  }}));
+  const h = harness({responseFactory:() => response});
+  assert.equal((await h.run()).exported, 1);
+  assert.equal(response.body.locked, false);
+  assert.equal(h.requests.length, 1);
+});
 
 const cases = [
   ['provider rejection', {status:400,payload:{error:privateText}}, 'failed'],
