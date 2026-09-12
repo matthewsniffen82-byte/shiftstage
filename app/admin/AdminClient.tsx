@@ -978,7 +978,7 @@ export default function AdminClient() {
                   {Object.entries(state.monitoring || {}).slice(0, 6).map(([key, value]) => (
                     <Metric key={key} label={labelize(key)} value={formatValue(value)} />
                   ))}
-                  {!state.monitoring ? <Metric label="Status" value="Ready" /> : null}
+                  {!state.monitoring ? <Metric label="Status" value="Not checked" /> : null}
                 </Panel>
                 <Panel title="Rankings" badge={`${adminCountLabel(state.operations?.analytics.activeDancers)} approved dancers`}>
                   <RankingManager />
@@ -2178,16 +2178,24 @@ function SystemHealthSummary({
 }) {
   const integrations = asRecordArray(monitoring?.integrations);
   const database = asRecordArray(monitoring?.database);
-  const disconnected = integrations.filter((item) => item.configured === false || item.status === "missing");
-  const databaseErrors = database.filter((item) => Boolean(item.error));
+  const disconnected = integrations.filter((item) => item.ok === false);
+  const databaseErrors = database.filter((item) => item.ok === false || Boolean(item.error));
+  const unavailable = !monitoring
+    || !Array.isArray(monitoring.integrations) || !Array.isArray(monitoring.database)
+    || !integrations.length || !database.length
+    || integrations.length !== monitoring.integrations.length || database.length !== monitoring.database.length
+    || integrations.some((item) => typeof item.ok !== "boolean")
+    || database.some((item) => typeof item.ok !== "boolean"
+      || (item.ok === true && (typeof item.count !== "number" || !Number.isSafeInteger(item.count) || item.count < 0)));
   const issues = warnings.length + disconnected.length + databaseErrors.length;
+  const confirmed = !issues && !unavailable;
   return (
-    <Panel title="Platform health" badge={`${issues} issues`}>
+    <Panel title="Platform health" badge={issues ? `${issues} ${issues === 1 ? "issue" : "issues"}` : unavailable ? "Not confirmed" : "0 issues"}>
       <div className="health-row">
-        <span className={issues ? "health-dot warning" : "health-dot healthy"} aria-hidden="true" />
+        <span className={confirmed ? "health-dot healthy" : "health-dot warning"} aria-hidden="true" />
         <div>
-          <strong>{issues ? "Degraded services need review" : "Core services are operational"}</strong>
-          <small>{integrations.length} integrations · {database.length} database checks</small>
+          <strong>{issues ? "Checks need attention" : unavailable ? "Status checks unavailable" : "Last checks passed"}</strong>
+          <small>{integrations.length} integration {integrations.length === 1 ? "setting" : "settings"} · {database.length} database {database.length === 1 ? "check" : "checks"}</small>
         </div>
       </div>
       {warnings.slice(0, 4).map((warning) => (
@@ -2208,7 +2216,7 @@ function ActivityTimeline({ operations }: { operations: AdminOperationsCenter | 
       <header>
         <span className="eyebrow">Audit trail</span>
         <h2>Recent admin activity</h2>
-        <p>Every approval, moderation decision, account change, ranking action, and legal action recorded by the production system.</p>
+        <p>Recent approvals, moderation decisions, account changes, ranking actions, and legal actions recorded by the production system.</p>
       </header>
       <div className="activity-timeline">
         {activity.length ? activity.map((item) => (

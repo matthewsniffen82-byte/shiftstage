@@ -1442,14 +1442,14 @@ async function countTable(client: DancrClient, table: string) {
     .from(table)
     .select("id", { count: "exact", head: true });
 
-  if (error) {
+  if (error || !Number.isSafeInteger(count) || count < 0) {
     console.warn("ADMIN_MONITORING_COUNT_FAILED", {
       table,
       ...safeErrorMetadata(error),
     });
     return { ok: false, count: null, error: "Monitoring query failed." };
   }
-  return { ok: true, count: count || 0 };
+  return { ok: true, count };
 }
 
 async function listBucketPaths(

@@ -37,8 +37,8 @@ being treated as present state.
 | 10 | Atomic operations, idempotency and partial-write recovery, including venue provisioning compensation | Published: `0ac237ee6a0d99f30a58b711d6fa802b9d8ee8f1`; 7,356 tests and all release gates; [Vercel success](https://vercel.com/ai-movie-jobs/shiftstage/5k3A4LX4Rc3B6ck8g11rqjX4nA6N) |
 | 11 | Query bounds, caching, network behavior and generated asset consistency | Published: `104b221da2417f58fc1f60dd710c1d9db21229e0`; 7,365 tests and all release gates; [Vercel success](https://vercel.com/ai-movie-jobs/shiftstage/F5EMcpzuXxq1jd1BnUYpLzDBrami) |
 | 12 | Frontend exceptions, loading/empty/error states and interrupted navigation | Published: `e8586070673d11f48c96be50cd86cebd6ab9ae05`; 7,770 tests and all release gates; [Vercel success](https://vercel.com/ai-movie-jobs/shiftstage/H9C1pohZoeoyGbN9FQq573Eu4apP) |
-| 13 | Background jobs, overlapping runs, deadlines and retry recovery | Validated: 8,048 tests, TypeScript, lint, build and 51 readiness checks; delivery receipt follows |
-| 14 | Privacy-safe diagnostics, exception monitoring and failure visibility | Pending |
+| 13 | Background jobs, overlapping runs, deadlines and retry recovery | Published: `a519813ea8211a440e695f62858bbc2896f09846`; 8,048 tests and all release gates; [Vercel success](https://vercel.com/ai-movie-jobs/shiftstage/H13p7p12hrw7tgSzaDqtFTMjF9dV) |
+| 14 | Privacy-safe diagnostics, exception monitoring and failure visibility | Validated: 8,841 tests, TypeScript, lint, build and 58 readiness checks; delivery receipt follows |
 | 15 | Provider integrations, webhook replay and uncertain external outcomes | Pending |
 | 16 | Dependencies, installation scripts, advisory review and runtime consistency | Pending |
 | 17 | CI/deployment gates, reproducible releases and application rollback | Pending |
