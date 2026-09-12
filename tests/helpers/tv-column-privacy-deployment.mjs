@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import { slotMetadataSql } from "./profile-video-slot-deployment.mjs";
 import { accountLifecycleRecordsSql } from "./account-lifecycle-deployment.mjs";
-import { privacyCatalogMetadataSql } from "./privacy-catalog-preservation.mjs";
+import { privacyCatalogMetadataSql, privacyGuardDelimiter } from "./privacy-catalog-preservation.mjs";
 
 export const tvPrivacyVersion = "20260912150922";
 export const publicTvColumns = ["id","dancer_id","venue_id","shift_id","caption","duration_seconds","width","height","status","venue_tag_status","venue_featured","published_at","expires_at","distribution_scope","like_count","is_pinned"];
@@ -31,33 +31,34 @@ export function buildTvPrivacyDeployment({ source, expectedTarget, expectedMetad
   const md5 = createHash("md5").update(source).digest("hex");
   if (!Array.isArray(tables) || !tables.includes("public.mydancr_tv_videos")) throw new Error("TV record preservation relations required");
   const records = accountLifecycleRecordsSql(tables);
+  const guardTag = privacyGuardDelimiter(source,after,expectedTarget,expectedMetadata,tvPrivacyMetadataSql,tvPrivacyTargetSql,records);
   return `begin;
 set local search_path=pg_catalog,public,pg_temp;set local lock_timeout='3s';set local statement_timeout='30s';
 lock table supabase_migrations.schema_migrations in exclusive mode;
 lock table public.mydancr_tv_videos in share row exclusive mode;
-do $guard$ begin
+do ${guardTag} begin
   if exists(select 1 from supabase_migrations.schema_migrations where version=${literal(tvPrivacyVersion)})then raise exception 'TV_PRIVACY_ALREADY_APPLIED';end if;
   if(${tvPrivacyTargetSql})is distinct from ${literal(JSON.stringify(expectedTarget))}::jsonb then raise exception 'TV_PRIVACY_ACCESS_DRIFT';end if;
   if(${tvPrivacyMetadataSql})is distinct from ${literal(JSON.stringify(expectedMetadata))}::jsonb then raise exception 'TV_PRIVACY_CATALOG_DRIFT';end if;
-end $guard$;
+end ${guardTag};
 create temporary table tv_privacy_metadata_before on commit drop as ${tvPrivacyMetadataSql};
 create temporary table tv_privacy_records_before on commit drop as ${records};
 create temporary table tv_privacy_auth_before on commit drop as ${authSql};
 ${body}
 ${after}
 ;
-do $guard$ begin
+do ${guardTag} begin
   if(select metadata from tv_privacy_metadata_before)is distinct from(${tvPrivacyMetadataSql})then raise exception 'TV_PRIVACY_METADATA_CHANGED';end if;
   if(select records from tv_privacy_records_before)is distinct from(${records})then raise exception 'TV_PRIVACY_RECORDS_CHANGED';end if;
   if(select fingerprint from tv_privacy_auth_before)is distinct from(${authSql})then raise exception 'TV_PRIVACY_AUTH_CHANGED';end if;
   if exists(select 1 from pg_attribute a cross join unnest(array['anon','authenticated'])r where a.attrelid='public.mydancr_tv_videos'::regclass and a.attnum>0 and not a.attisdropped
     and has_column_privilege(r,a.attrelid,a.attname,'SELECT')is distinct from(a.attname=any(${array(publicTvColumns)})))then raise exception 'TV_PRIVACY_PROJECTION_MISMATCH';end if;
-end $guard$;
+end ${guardTag};
 insert into supabase_migrations.schema_migrations(version,name,statements)values(${literal(tvPrivacyVersion)},'protect_public_tv_moderation_columns',array[${literal(source)}]);
-do $guard$ begin
+do ${guardTag} begin
   if not exists(select 1 from supabase_migrations.schema_migrations where version=${literal(tvPrivacyVersion)} and name='protect_public_tv_moderation_columns'
     and md5(array_to_string(statements,E'\\n'))=${literal(md5)})then raise exception 'TV_PRIVACY_LEDGER_MISMATCH';end if;
-end $guard$;
+end ${guardTag};
 select jsonb_build_object('version',${literal(tvPrivacyVersion)},'source_md5',${literal(md5)},'records_preserved',true,'metadata_preserved',true,'auth_metadata_preserved',true,'public_columns',16,'private_columns',22)release;
 commit;\n`;
 }

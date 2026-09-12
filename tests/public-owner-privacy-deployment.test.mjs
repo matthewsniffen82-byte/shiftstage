@@ -8,6 +8,8 @@ test('owner privacy committed-source deployment fails closed and preserves rollb
  const db=await createOwnerPolicyDatabase({migrate:false});
  try{
   await seedOwnerPolicyRows(db);
+  const historicalSql="do $guard$ begin perform '$privacy_guard$ $privacy_guard_1$ ''quoted'' \\\\path'; end $guard$;";
+  await db.query('insert into supabase_migrations.schema_migrations(version,name,statements)values($1,$2,$3)',['20000101000000','synthetic_prior_sql',[historicalSql]]);
   const target=await value(db,ownerPrivacyTargetSql),baseline=await value(db,ownerPrivacyMetadataSql);
   await db.exec('begin');
   await db.exec(ownerPrivacySource.replace('\nbegin;','\n').replace(/commit;\s*$/,''));
@@ -64,6 +66,9 @@ test('owner privacy committed-source deployment fails closed and preserves rollb
   await t.test('already applied source is rejected without replay',async()=>{
    await assert.rejects(db.exec(buildOwnerPrivacyDeployment(config)),error=>error.message.includes('OWNER_PRIVACY_ALREADY_APPLIED'));
    await db.exec('rollback');assert.deepEqual(await value(db,ownerPrivacyObjectsSql),objects);
+  });
+  await t.test('historical SQL delimiters and escaped data survive exact-source deployment',async()=>{
+   assert.deepEqual((await db.query('select statements from supabase_migrations.schema_migrations where version=$1',['20000101000000'])).rows[0].statements,[historicalSql]);
   });
  }finally{await db.close();}
 });

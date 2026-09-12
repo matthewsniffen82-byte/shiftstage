@@ -572,3 +572,13 @@ Implementation `3e2456128cf78408bf8c2db45247ae85852c7297` reached exact Vercel s
 
 
 The corrected fixture passed all 821 focused checks and fresh native capture at 2026-09-12T15:34:13.865Z. Its exact ownership and TV targets then matched the independent read-only production preflight with zero differences. The full configured correction gate completed at 2026-09-12T15:42:01.000Z: 8,672 tests, zero failures/skips/cancellations, all eight canonical gates, configured artifact inspection and postbuild TypeScript. Both migration SQL sources remain byte-identical to the first deployed commit. The correction must reach exact deployment success before renewed preflight and any SQL application.
+
+
+## Deployment history quoting correction
+
+The corrected fixture commit `0fc3612ac237ef2470cdf8807858393ae0b1feec` deployed successfully. The first bounded ownership application was rejected with SQL syntax error 42601 at 2026-09-12T15:49:37.512Z: captured historical ledger SQL contained twelve occurrences of the fixed outer DO delimiter. Independent read-only verification at 15:52:40Z confirmed zero Step 28 migration entries, unchanged target and unrelated metadata, all 83 table fingerprints unchanged, and unchanged Auth metadata. Neither privacy migration was applied.
+
+Both deployment wrappers now choose a PostgreSQL dollar delimiter absent from every embedded input. Native regressions seed prior ledger SQL containing the original delimiter, two candidate delimiters, quotes and backslashes, then require exact-source success, rollback/replay protection and preserved historical bytes. The old wrappers failed 43 of 48 cases with this realistic ledger fixture. Both committed migration SQL files remain unchanged. The corrected wrappers require fresh full release validation and exact deployment before a renewed preflight and an explicitly verified retry.
+
+
+The delimiter correction passed all 823 focused checks and a fresh native capture at 2026-09-12T15:54:45.340Z, including all 48 ownership/TV deployment cases. Separate isolated parsing of both generated wrappers with the complete 127-entry production history reached the intended catalog-drift guard, confirming that historical SQL remains data. The configured full release gate completed at 2026-09-12T16:03:08.295Z: 8,674 tests, no failures/skips/cancellations, all eight canonical gates, configured artifact inspection and postbuild TypeScript. The two added historical-ledger cases bring this step to 626 new regressions. The two migration source files remain unchanged. Exact correction deployment, renewed preflight, individually verified application and manifest closure remain required.

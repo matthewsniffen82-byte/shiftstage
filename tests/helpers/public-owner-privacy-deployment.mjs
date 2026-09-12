@@ -2,7 +2,7 @@ import {createHash} from 'node:crypto';
 import {readFileSync} from 'node:fs';
 import {slotMetadataSql} from './profile-video-slot-deployment.mjs';
 import {accountLifecycleRecordsSql} from './account-lifecycle-deployment.mjs';
-import {privacyCatalogMetadataSql} from './privacy-catalog-preservation.mjs';
+import {privacyCatalogMetadataSql,privacyGuardDelimiter} from './privacy-catalog-preservation.mjs';
 export const ownerPrivacyVersion='20260912150921';
 export const ownerPolicyTargets=JSON.parse(readFileSync(new URL('../fixtures/public-owner-policy-current.json',import.meta.url),'utf8')).targets;
 export const privateOwnerColumns={venues:['owner_user_id'],dancer_profiles:['user_id','created_at','updated_at','dmca_suspended_at','venue_approved_by_user_id','venue_approved_venue_id','identity_saved_at']};
@@ -34,31 +34,32 @@ export function buildOwnerPrivacyDeployment({source,expectedTarget,expectedObjec
  source=source.replaceAll('\r\n','\n');if(!source.includes('\nbegin;')||!source.trimEnd().endsWith('commit;'))throw Error('Unexpected owner privacy transaction source');
  const body=source.replace('\nbegin;','\n').replace(/commit;\s*$/,''),md5=createHash('md5').update(source).digest('hex'),records=accountLifecycleRecordsSql(preservedTables);
  const lockTables=[...new Set([...ownerPolicyTargets.map(p=>p.tablename),'venues','dancer_profiles'])].sort().map(table=>'public."'+table+'"').join(',');
+ const guardTag=privacyGuardDelimiter(source,after,expectedTarget,expectedObjects,expectedMetadata,ownerPrivacyMetadataSql,ownerPrivacyTargetSql,ownerPrivacyObjectsSql,records,lockTables);
  return `begin;
 set local search_path=pg_catalog,public,pg_temp;set local lock_timeout='3s';set local statement_timeout='30s';
 lock table supabase_migrations.schema_migrations in exclusive mode;
 lock table ${lockTables} in share row exclusive mode;
-do $guard$ begin
+do ${guardTag} begin
  if exists(select 1 from supabase_migrations.schema_migrations where version=${literal(ownerPrivacyVersion)})then raise exception 'OWNER_PRIVACY_ALREADY_APPLIED';end if;
  if(${ownerPrivacyTargetSql})is distinct from ${literal(JSON.stringify(expectedTarget))}::jsonb then raise exception 'OWNER_PRIVACY_TARGET_DRIFT';end if;
  if(${ownerPrivacyMetadataSql})is distinct from ${literal(JSON.stringify(expectedMetadata))}::jsonb then raise exception 'OWNER_PRIVACY_CATALOG_DRIFT';end if;
-end $guard$;
+end ${guardTag};
 create temporary table owner_privacy_metadata_before on commit drop as ${ownerPrivacyMetadataSql};
 create temporary table owner_privacy_records_before on commit drop as ${records};
 create temporary table owner_privacy_auth_before on commit drop as ${authSql};
 ${body}
 ${after}
 ;
-do $guard$ begin
+do ${guardTag} begin
  if(${ownerPrivacyObjectsSql})is distinct from ${literal(JSON.stringify(expectedObjects))}::jsonb then raise exception 'OWNER_PRIVACY_OBJECT_MISMATCH';end if;
  if(select metadata from owner_privacy_metadata_before)is distinct from(${ownerPrivacyMetadataSql})then raise exception 'OWNER_PRIVACY_METADATA_CHANGED';end if;
  if(select records from owner_privacy_records_before)is distinct from(${records})then raise exception 'OWNER_PRIVACY_RECORDS_CHANGED';end if;
  if(select fingerprint from owner_privacy_auth_before)is distinct from(${authSql})then raise exception 'OWNER_PRIVACY_AUTH_CHANGED';end if;
-end $guard$;
+end ${guardTag};
 insert into supabase_migrations.schema_migrations(version,name,statements)values(${literal(ownerPrivacyVersion)},'hide_public_account_identifiers',array[${literal(source)}]);
-do $guard$ begin
+do ${guardTag} begin
  if not exists(select 1 from supabase_migrations.schema_migrations where version=${literal(ownerPrivacyVersion)}and name='hide_public_account_identifiers'and md5(array_to_string(statements,E'\\n'))=${literal(md5)})then raise exception 'OWNER_PRIVACY_LEDGER_MISMATCH';end if;
-end $guard$;
+end ${guardTag};
 select jsonb_build_object('version',${literal(ownerPrivacyVersion)},'source_md5',${literal(md5)},'metadata_preserved',true,'records_preserved',true,'auth_metadata_preserved',true,'policies',43,'functions',2)release;
 commit;
 `;

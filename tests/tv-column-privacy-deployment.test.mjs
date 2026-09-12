@@ -7,6 +7,8 @@ test('TV workflow privacy preserves exact committed-source deployment and rollba
  const db=await createOwnerPolicyDatabase({migrate:false});
  try{
   await seedOwnerPolicyRows(db);await db.exec(ownerPrivacySource);
+  const historicalSql="do $guard$ begin perform '$privacy_guard$ $privacy_guard_1$ ''quoted'' \\\\path'; end $guard$;";
+  await db.query('insert into supabase_migrations.schema_migrations(version,name,statements)values($1,$2,$3)',['20000101000000','synthetic_prior_sql',[historicalSql]]);
   const target=await value(db,tvPrivacyTargetSql),baseline=await value(db,tvPrivacyMetadataSql);
   const config={source:tvPrivacySource,expectedTarget:target,expectedMetadata:baseline,tables:ownerPolicyFixture.tables.map(table=>'public.'+table)};
   for(const[name,after,code]of [
@@ -47,6 +49,9 @@ test('TV workflow privacy preserves exact committed-source deployment and rollba
   });
   await t.test('verified TV migration cannot replay',async()=>{
    await assert.rejects(db.exec(buildTvPrivacyDeployment(config)),error=>error.message.includes('TV_PRIVACY_ALREADY_APPLIED'));await db.exec('rollback');
+  });
+  await t.test('historical SQL delimiters and escaped data survive exact-source TV deployment',async()=>{
+   assert.deepEqual((await db.query('select statements from supabase_migrations.schema_migrations where version=$1',['20000101000000'])).rows[0].statements,[historicalSql]);
   });
  }finally{await db.close();}
 });

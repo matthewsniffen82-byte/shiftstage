@@ -1,5 +1,13 @@
 // Supplement the existing function/row-policy/grant catalog with schema and
 // type boundaries that a privilege-only comparison would otherwise miss.
+export function privacyGuardDelimiter(...values) {
+  const content = values.map(value => typeof value === 'string' ? value : JSON.stringify(value)).join('\n');
+  let suffix = 0;
+  let delimiter = '$privacy_guard$';
+  while (content.includes(delimiter)) delimiter = '$privacy_guard_' + (++suffix) + '$';
+  return delimiter;
+}
+
 export function privacyCatalogMetadataSql(base) {
   return `select (${base}) || jsonb_build_object(
     'schemas',(select jsonb_agg(jsonb_build_object('name',nspname,'owner',nspowner,'acl',nspacl::text)order by nspname)from pg_namespace where nspname in('public','auth','storage')),
