@@ -659,6 +659,10 @@
     {
       "file": "20260912084000_require_finite_attribution_times.sql",
       "sha256": "ab3c0f80b8cf22b8965b9358fc22824be6e554776777e80bab57e8c888fead37"
+    },
+    {
+      "file": "20260912103000_minimize_public_deal_columns.sql",
+      "sha256": "d3a982374fb011f627e38c301215e639a5f04785ecd2836be8174f124c7c6ef8"
     }
   ]
 }

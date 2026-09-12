@@ -39,3 +39,13 @@ Privacy cannot revoke an already downloaded response, a copied image, a browser 
 ## Delivery
 
 The complete isolated release gate on exact parent `19ca1b4292af071a3d6395bb1f044acd4d367d03` passed at 2026-09-12T10:24:56.481Z: **7,192 tests**, zero failures/skips/cancellations, dependency/signature audits, route type generation, standalone TypeScript, full zero-warning lint and production build. The artifact guard checked 263 files, 239 text assets and 7,715,539 text bytes; postbuild skipped population. All source files are compared before integration, followed by the configured shared build, private-value artifact scan and postbuild TypeScript check. Task-only commit/push, exact committed migration application, exact Vercel success, deployed health and the verified migration-manifest followup remain pending. Step 27 has not begun.
+
+
+## Step 26 applied database boundary
+
+The implementation was committed and pushed as `3e7eeb4fbfdfec183d74f95099d3814498056882`. Only its committed migration `20260912103000` was applied. The bounded transaction verified unchanged captured metadata and all 42 deal records. The independent read-only postflight at 2026-09-12T10:33:57.847454+00:00 confirms exactly twelve selectable public columns, seven protected columns, unchanged RLS/owner, full service access and the exact source-ledger MD5 `275d0073ca7489e1067a008cb6abec58`. All 32 database readiness checks pass. The normalized SQL SHA-256 is `d3a982374fb011f627e38c301215e639a5f04785ecd2836be8174f124c7c6ef8`. This same-step followup adds only that verified file to the immutable migration manifest (165 files); it replays no SQL. Full followup validation and both exact hosted release checks remain before Step 27.
+
+
+## Step 26 implementation release and followup validation
+
+Implementation `3e7eeb4fbfdfec183d74f95099d3814498056882` reached [exact Vercel success](https://vercel.com/ai-movie-jobs/shiftstage/CrjLC7RHfyucwiudALvTGPezsjuJ). Eight production health/anonymous-denial checks passed at 2026-09-12T10:40:25.601Z; thirty-two database readiness checks and deployed discovery/TV deal-field projections passed. The homepage rendered without browser warnings or errors. No live NFC scan, redemption, paid/provider action or private row retrieval was used. The checksum followup passed all **7,192 tests**, zero failures/skips/cancellations and all eight canonical gates at 2026-09-12T10:42:46.652Z, plus configured private-value artifact inspection and postbuild TypeScript. Only these two evidence records and the one verified migration-manifest entry change. Its exact commit/deployment closure remains required before Step 27.

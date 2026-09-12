@@ -510,3 +510,13 @@ See `step-26-data-minimization.md` for the public financial-field disclosure, di
 
 
 The Step 26 candidate preserves Supabase Step 16 and Arch Step 8, with exact parent `19ca1b4292af071a3d6395bb1f044acd4d367d03`. All **7,192 tests** and all eight canonical release gates passed at 2026-09-12T10:24:56.481Z. Its 69 new regression cases and related checks total 124 passing focused tests; 36 assertions reproduce the prior vulnerabilities. The fresh read-only catalog confirms nineteen publicly selectable deal columns; the bounded migration restricts access to twelve customer-facing columns while preserving RLS, service access and records. Aggregate counts also identify 18 legacy verification objects and 7 reviews retained pending an operator retention decision; no private content was downloaded or purged. Configured integration checks, exact migration application, both delivery receipts and manifest freeze remain before Step 27.
+
+
+## Step 26 applied database boundary
+
+The implementation was committed and pushed as `3e7eeb4fbfdfec183d74f95099d3814498056882`. Only its committed migration `20260912103000` was applied. The bounded transaction verified unchanged captured metadata and all 42 deal records. The independent read-only postflight at 2026-09-12T10:33:57.847454+00:00 confirms exactly twelve selectable public columns, seven protected columns, unchanged RLS/owner, full service access and the exact source-ledger MD5 `275d0073ca7489e1067a008cb6abec58`. All 32 database readiness checks pass. The normalized SQL SHA-256 is `d3a982374fb011f627e38c301215e639a5f04785ecd2836be8174f124c7c6ef8`. This same-step followup adds only that verified file to the immutable migration manifest (165 files); it replays no SQL. Full followup validation and both exact hosted release checks remain before Step 27.
+
+
+## Step 26 implementation release and followup validation
+
+Implementation `3e7eeb4fbfdfec183d74f95099d3814498056882` reached [exact Vercel success](https://vercel.com/ai-movie-jobs/shiftstage/CrjLC7RHfyucwiudALvTGPezsjuJ). Eight production health/anonymous-denial checks passed at 2026-09-12T10:40:25.601Z; thirty-two database readiness checks and deployed discovery/TV deal-field projections passed. The homepage rendered without browser warnings or errors. No live NFC scan, redemption, paid/provider action or private row retrieval was used. The checksum followup passed all **7,192 tests**, zero failures/skips/cancellations and all eight canonical gates at 2026-09-12T10:42:46.652Z, plus configured private-value artifact inspection and postbuild TypeScript. Only these two evidence records and the one verified migration-manifest entry change. Its exact commit/deployment closure remains required before Step 27.
