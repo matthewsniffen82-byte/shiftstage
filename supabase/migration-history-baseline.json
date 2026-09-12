@@ -679,6 +679,14 @@
     {
       "file": "20260912140704_preserve_owned_dmca_lifecycle_states.sql",
       "sha256": "e5e2fdea66eeaebdaa9c6230faaacf83b34181020dd36d1979100cd34c50364b"
+    },
+    {
+      "file": "20260912150921_hide_public_account_identifiers.sql",
+      "sha256": "2146e14407fd6cca59f5481c94b76ead748d18a16516f01ec126c1ffaea1e7f8"
+    },
+    {
+      "file": "20260912150922_protect_public_tv_moderation_columns.sql",
+      "sha256": "cf772bc7e14c8817ca7e472875e56467912b63669f0a92ea305e738c3687fb9b"
     }
   ]
 }

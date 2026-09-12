@@ -1,6 +1,6 @@
 # Step 28 — Scraping resilience and public projections
 
-Status: isolated implementation and complete release validation passed; configured deployment and database application remain pending. External evidence is retained under D:/Codex/MyDancr-security-delivery-2026-09-12/step-28.
+Status: implementation deployed and both committed database migrations independently verified; final manifest delivery remains pending.
 
 ## Confirmed boundaries
 
@@ -74,3 +74,13 @@ Both deployment wrappers now choose a PostgreSQL dollar delimiter absent from ev
 
 
 The delimiter correction passed all 823 focused checks and a fresh native capture at 2026-09-12T15:54:45.340Z, including all 48 ownership/TV deployment cases. Separate isolated parsing of both generated wrappers with the complete 127-entry production history reached the intended catalog-drift guard, confirming that historical SQL remains data. The configured full release gate completed at 2026-09-12T16:03:08.295Z: 8,674 tests, no failures/skips/cancellations, all eight canonical gates, configured artifact inspection and postbuild TypeScript. The two added historical-ledger cases bring this step to 626 new regressions. The two migration source files remain unchanged. Exact correction deployment, renewed preflight, individually verified application and manifest closure remain required.
+
+
+## Applied boundaries and pending manifest closure
+
+Implementation `8875091e974d48e87c33b11fb543ba1d7bf27d2d` reached [exact Vercel success](https://vercel.com/ai-movie-jobs/shiftstage/6WFjVJGkbK3sBheJk9kZMw4NDebA) before either committed migration was applied. Independent read-only postflight at 2026-09-12T16:13:01.636648+00:00 verified the exact two ownership helpers, all 43 policy bodies, nineteen public venue fields, thirteen public dancer fields and sixteen public TV fields. Both deployment phases preserve unrelated metadata and ledger entries, all 83 existing public-table fingerprints and Auth metadata. All 58 readiness checks pass. The two exact applied sources are now frozen in the 171-file migration manifest. Existing public media URL identifiers and cache/copy limitations remain explicit. The full manifest-followup checks, commit/push and exact successful deployment still precede Step 29.
+
+
+## Step 28 implementation release and followup validation
+
+Implementation `8875091e974d48e87c33b11fb543ba1d7bf27d2d` reached [exact Vercel success](https://vercel.com/ai-movie-jobs/shiftstage/6WFjVJGkbK3sBheJk9kZMw4NDebA). All eight health/anonymous-denial checks, fifty-eight database readiness checks and four public projection checks passed; the homepage rendered without browser warnings or errors. Both committed SQL sources passed independent catalog, row-fingerprint and Auth-metadata preservation checks. The checksum followup passed all **8,674 tests**, zero failures/skips/cancellations and all eight canonical gates at 2026-09-12T16:21:29.198Z, plus configured artifact inspection and postbuild TypeScript. Only the two evidence documents and two verified migration-manifest entries change. Exact followup commit/deployment closure remains required before Step 29. No live account, upload, moderation, financial or provider action was used as a test.
