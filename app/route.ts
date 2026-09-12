@@ -33,7 +33,23 @@ const ADMIN_AUTH_ENTRY_STYLES = `<style>
 
 const ADMIN_AUTH_ENTRY_HTML = `<a class="auth-admin-entry" id="platformAdminAuthLink" href="/admin" aria-label="Open Platform admin sign in or signup"><span class="auth-admin-entry-mark" aria-hidden="true">ADMIN</span><span class="auth-admin-entry-copy"><strong>Platform admin</strong><small>Private admin access</small></span><span class="auth-admin-entry-arrow" aria-hidden="true">›</span></a>`;
 
+let productionShell: ReturnType<typeof renderLiveShell> | undefined;
+
 export async function GET() {
+  // Only deployment files live here. Discovery, accounts and live schedules
+  // still load through their existing APIs and retain their HTTP freshness.
+  const rendered = process.env.NODE_ENV === "production"
+    ? productionShell ??= renderLiveShell().catch((error) => {
+        productionShell = undefined;
+        throw error;
+      })
+    : renderLiveShell();
+  const { html, headers } = await rendered;
+  // Never retain a Response/body stream across callers.
+  return new Response(html, { headers });
+}
+
+async function renderLiveShell() {
   const htmlPath = path.join(process.cwd(), "outputs", "index.html");
   const [html, compactStyles] = await Promise.all([
     readFile(htmlPath, "utf8"),
@@ -69,7 +85,8 @@ export async function GET() {
   const withVersionedAssets = versionStaticAssetReferences(withAdminAuthEntry);
   const contentSecurityPolicy = createRootContentSecurityPolicy(withVersionedAssets);
 
-  return new Response(withVersionedAssets, {
+  return {
+    html: withVersionedAssets,
     headers: {
       "content-type": "text/html; charset=utf-8",
       "cache-control": "public, max-age=30, s-maxage=60, stale-while-revalidate=300",
@@ -78,5 +95,5 @@ export async function GET() {
       "x-dancr-live-shell-build-version": LIVE_SHELL_SHA256,
       "x-dancr-live-shell-script-version": scriptVersion,
     },
-  });
+  };
 }
