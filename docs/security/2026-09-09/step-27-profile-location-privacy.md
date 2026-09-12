@@ -1,6 +1,6 @@
 # Step 27 — Profile, schedule and account visibility
 
-Status: isolated validation and fresh read-only production preflight passed. Configured integration checks, task-only publication, exact deployment, committed migration application and delivery closure remain required. Steps 28–32 have not begun.
+Status: implementation deployed and all three committed database migrations independently verified. Full manifest-followup validation, publication and exact deployment remain before Step 28.
 
 ## Findings and changes
 
@@ -65,3 +65,13 @@ The candidate preserves exact parent `104b221da2417f58fc1f60dd710c1d9db21229e0`,
 The read-only production preflight at 2026-09-12T12:54:38.652737Z captured metadata and aggregate record fingerprints for all 81 public tables and Auth metadata. All twelve native fixture helper fingerprints match production. There is exactly one eligible legacy venue self-pause and no held legacy marker. Its import preserves login resumption without inventing earlier venue publication state. No business records were retrieved or changed during this preflight. An initial oversized JSON-construction expression failed read-only and was replaced with bounded batches; an 81-table native regression verifies the deployment guard.
 
 Configured build, postbuild TypeScript, private-value artifact inspection, exact commit/push/deployment, guarded application of the three committed migrations, independent postflight, 41 readiness checks and the fully validated 168-file manifest followup remain delivery requirements.
+
+
+## Step 27 applied boundaries
+
+Implementation `8840f2a741dcc83f3929e0e7c17cdd2c97f861ab` reached exact Vercel success before its three committed migrations were applied. Independent read-only postflight at 2026-09-12T13:25:09.421738+00:00 confirms thirteen public shift columns, twenty public venue columns, protected internal fields, the three exact account/venue function definitions, private pause ownership and the retired direct account/publication writes. All 81 existing table fingerprints and the Auth metadata fingerprint match preflight; 1 existing trusted pause was imported without inventing publication ownership. All 41 database readiness checks pass. The three exact applied sources are now added to the immutable migration manifest (168 files). The venue owner identifier remains explicitly public for existing RLS compatibility and is a Step 28 followup. No business/provider operation was used as a test. Full followup validation, commit/push and exact deployment remain before Step 28.
+
+
+## Step 27 implementation release and followup validation
+
+Implementation `8840f2a741dcc83f3929e0e7c17cdd2c97f861ab` reached [exact Vercel success](https://vercel.com/ai-movie-jobs/shiftstage/7P1kdKtu1W1gB7pruydMHoSktHPo). Eight production health/anonymous-denial checks passed at 2026-09-12T13:26:03.819Z; forty-one database readiness checks and deployed discovery/TV deal-field projections passed. The homepage rendered without browser warnings or errors. No live NFC scan, redemption, paid/provider action or private row retrieval was used. The checksum followup passed all **7,763 tests**, zero failures/skips/cancellations and all eight canonical gates at 2026-09-12T13:32:07.113Z, plus configured private-value artifact inspection and postbuild TypeScript. Only these two evidence records and the three verified migration-manifest entries change. Its exact commit/deployment closure remains required before Step 28.

@@ -663,6 +663,18 @@
     {
       "file": "20260912103000_minimize_public_deal_columns.sql",
       "sha256": "d3a982374fb011f627e38c301215e639a5f04785ecd2836be8174f124c7c6ef8"
+    },
+    {
+      "file": "20260912110619_minimize_public_shift_location_columns.sql",
+      "sha256": "f9fc6cf6eb02f126071ee978fa5f8b28ccd566548db63c5c557ac578ae74fdc2"
+    },
+    {
+      "file": "20260912113200_make_self_service_account_transitions_atomic.sql",
+      "sha256": "f99814437b6af8ba283577f3a5298d31897fb48ac3cf44dca24b82d0d2ae9cbf"
+    },
+    {
+      "file": "20260912123000_minimize_public_venue_review_columns.sql",
+      "sha256": "1c1d6159b075fa0545a401b09e3b6b276717db6fa4d6fcba522c132887878db6"
     }
   ]
 }
