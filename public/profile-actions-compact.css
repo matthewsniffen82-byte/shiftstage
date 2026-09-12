@@ -34,13 +34,15 @@ body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-she
 
   body.dancr-button-system #profileBackdrop #profileModal .modal-identity-stack {
     height: auto !important;
-    grid-template: auto / minmax(0, 1fr) minmax(240px, 1.35fr) !important;
+    grid-template: auto / fit-content(160px) minmax(240px, 288px) !important;
     align-items: center !important;
+    justify-content: start !important;
     gap: 16px !important;
   }
 
   body.dancr-button-system #profileBackdrop #profileModal .modal-identity {
     grid-area: 1 / 1 !important;
+    min-width: 120px !important;
     width: 100% !important;
     max-width: none !important;
     grid-template: auto auto / minmax(0, 1fr) !important;
