@@ -24,6 +24,15 @@ select jsonb_build_object(
       is_nullable,column_default,is_identity,is_generated
     from information_schema.columns where table_schema in ('public','auth','storage')
   ) x),
+  'column_grants', (select coalesce(jsonb_agg(to_jsonb(x) order by table_name,column_name,grantee,privilege_type), '[]') from (
+    select c.relname table_name,a.attname column_name,
+      case when g.grantee=0 then 'PUBLIC' else pg_get_userbyid(g.grantee) end grantee,
+      g.privilege_type,g.is_grantable
+    from pg_attribute a join pg_class c on c.oid=a.attrelid
+    join pg_namespace n on n.oid=c.relnamespace cross join lateral aclexplode(a.attacl) g
+    where n.nspname='public' and a.attnum>0 and not a.attisdropped
+      and (g.grantee=0 or pg_get_userbyid(g.grantee) in ('anon','authenticated','service_role'))
+  ) x),
   'constraints', (select coalesce(jsonb_agg(to_jsonb(x) order by schema_name,table_name,name), '[]') from (
     select n.nspname schema_name, cl.relname table_name, c.conname name,c.contype type,
       c.convalidated validated,c.condeferrable deferrable,c.condeferred initially_deferred,

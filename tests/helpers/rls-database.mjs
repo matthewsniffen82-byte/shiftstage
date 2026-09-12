@@ -41,11 +41,14 @@ export async function createPolicyDatabase({ applyCurrentMigration = true, catal
   }
   if (helperDefinitions) {
     for (const helper of helperDefinitions) {
-      if (!["is_admin", "current_user_role"].includes(helper.name)) throw new Error("Unexpected policy helper");
+      const signatures = { is_admin: 'public.is_admin()', current_user_role: 'public.current_user_role()',
+        is_current_dancer_owner: 'public.is_current_dancer_owner(uuid)', is_current_venue_owner: 'public.is_current_venue_owner(uuid)' };
+      const signature = signatures[helper.name];
+      if (!signature) throw new Error("Unexpected policy helper");
       statements.push(helper.definition + ";");
-      statements.push(`revoke all on function public.${quote(helper.name)}() from public,anon,authenticated,service_role;`);
-      // Both live policy helpers are intentionally executable by these three roles.
-      statements.push(`grant execute on function public.${quote(helper.name)}() to anon,authenticated,service_role;`);
+      statements.push(`revoke all on function ${signature} from public,anon,authenticated,service_role;`);
+      // Reviewed identity/ownership helpers intentionally support these three roles.
+      statements.push(`grant execute on function ${signature} to anon,authenticated,service_role;`);
     }
   } else {
     const schema = readFileSync(new URL("../../supabase/migrations/202606250001_initial_schema.sql", import.meta.url), "utf8");
@@ -64,11 +67,12 @@ export async function createPolicyDatabase({ applyCurrentMigration = true, catal
       if (commands.length) statements.push(`grant ${commands.join(",")} on public.${quote(table.name)} to ${quote(role)};`);
     }
   }
-  // Exact column grants captured separately from pg_attribute on 2026-09-09.
+  // Current callers supply reviewed SELECT/UPDATE ACLs; legacy callers retain
+  // the historical SELECT-only snapshot for their original boundary tests.
   if (columnGrantSnapshot) {
     for (const grant of columnGrantSnapshot) {
-      if (grant.privilege !== "SELECT" || !["anon", "authenticated", "service_role"].includes(grant.role)) throw new Error("Unexpected column privilege in policy fixture");
-      statements.push(`grant select (${quote(grant.column)}) on public.${quote(grant.table)} to ${quote(grant.role)};`);
+      if (!["SELECT", "UPDATE"].includes(grant.privilege) || !["anon", "authenticated", "service_role"].includes(grant.role)) throw new Error("Unexpected column privilege in policy fixture");
+      statements.push(`grant ${grant.privilege} (${quote(grant.column)}) on public.${quote(grant.table)} to ${quote(grant.role)};`);
     }
   } else {
     const columnGrants = JSON.parse(readFileSync(new URL("../fixtures/rls-column-grants.json", import.meta.url), "utf8"));

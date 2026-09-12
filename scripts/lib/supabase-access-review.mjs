@@ -23,7 +23,7 @@ function sameRows(actual, expected, key, fields) {
 // Compare metadata exported by catalog-read-only.sql with the reviewed runtime
 // fixtures. This never connects to a provider or evaluates SQL/function bodies.
 // A new table or changed policy requires review even when access became stricter.
-// Column ACLs, role memberships and non-CRUD grants need their separate SQL gate.
+// Column ACLs are checked below; memberships/non-CRUD grants have a separate SQL gate.
 export function reviewSupabaseAccessCatalog(catalog, { publicAccess, storageAccess }) {
   const checks = [];
   const add = (name, ok) => checks.push({ name, ok: Boolean(ok) });
@@ -43,9 +43,15 @@ export function reviewSupabaseAccessCatalog(catalog, { publicAccess, storageAcce
       row => row.viewname, ["schemaname", "viewname", "definition"]));
   }
   for (const helper of publicAccess.helpers) {
-    const matching = select("functions", "schema_name", "public")?.filter(fn => fn.name === helper.name && fn.arguments === "");
+    const matching = select("functions", "schema_name", "public")?.filter(fn => fn.name === helper.name && fn.arguments === (helper.arguments || ""));
     add(`Policy helper: ${helper.name}`, matching?.length === 1 && matching[0].definition_fingerprint === helper.fingerprint);
   }
+  const columnGrants = catalog?.column_grants?.filter(grant => ["anon", "authenticated", "service_role", "PUBLIC"].includes(grant.grantee));
+  const expectedColumns = publicAccess.columnGrants.map(grant => ({ table_name: grant.table, column_name: grant.column,
+    grantee: grant.role, privilege_type: grant.privilege, is_grantable: false }));
+  add("public explicit column privileges", sameRows(columnGrants, expectedColumns,
+    row => `${row.table_name}.${row.column_name}.${row.grantee}.${row.privilege_type}`,
+    ["table_name", "column_name", "grantee", "privilege_type", "is_grantable"]));
   checks.push(...checkStorageBucketSecurity(catalog?.buckets));
   return { ok: checks.every(check => check.ok), capturedAt: checks[0].ok ? catalog.captured_at : null, checks };
 }

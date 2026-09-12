@@ -16,7 +16,9 @@ const catalog = () => structuredClone({
   relations: [...publicAccess.relations, ...storageAccess.relations.filter(row => row.schema_name === "storage")],
   policies: [...publicAccess.policies, ...storageAccess.policies.filter(row => row.schemaname === "storage")],
   views: [...publicAccess.views, ...storageAccess.views.filter(row => row.schemaname === "storage")],
-  functions: publicAccess.helpers.map(helper => ({ schema_name: "public", name: helper.name, arguments: "", definition_fingerprint: helper.fingerprint })),
+  functions: publicAccess.helpers.map(helper => ({ schema_name: "public", name: helper.name, arguments: helper.arguments || "", definition_fingerprint: helper.fingerprint })),
+  column_grants: publicAccess.columnGrants.map(grant => ({ table_name: grant.table, column_name: grant.column,
+    grantee: grant.role, privilege_type: grant.privilege, is_grantable: false })),
   buckets: storageAccess.buckets,
 });
 
@@ -45,6 +47,11 @@ const changes = [
   ["missing policy metadata", input => { delete input.policies; }],
   ["missing required relation fields", input => { delete input.relations[0].grants; }],
   ["changed identity helper code", input => { input.functions[0].definition_fingerprint = "changed"; }],
+  ["missing column privilege metadata", input => { delete input.column_grants; }],
+  ["an unexpected notification payload UPDATE", input => input.column_grants.push({ table_name: 'notifications', column_name: 'payload', grantee: 'authenticated', privilege_type: 'UPDATE', is_grantable: false })],
+  ["a column privilege widened to PUBLIC", input => { input.column_grants[0].grantee = 'PUBLIC'; }],
+  ["a column privilege with grant option", input => { input.column_grants[0].is_grantable = true; }],
+  ["a removed public column read", input => { input.column_grants.splice(input.column_grants.findIndex(g => g.grantee==='anon'),1); }],
   ["an overload cannot stand in for the reviewed helper", input => { input.functions[0].arguments = "uuid"; }],
   ["a duplicate identity helper", input => input.functions.push(input.functions[0])],
   ["a private bucket becoming public", input => { input.buckets.find(bucket => !bucket.public).public = true; }],
