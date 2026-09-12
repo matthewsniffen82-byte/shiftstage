@@ -639,6 +639,10 @@
     {
       "file": "20260910172000_serialize_dancer_nfc_enrollment.sql",
       "sha256": "6001c96c8a7caaa5a828e2581f9ab6a79716d67559298ea7d73ce8e8fc8fa031"
+    },
+    {
+      "file": "20260912052200_enforce_profile_video_slot_limit.sql",
+      "sha256": "be8cc1c64cbde3c49ca9ee2e315d838224fe3f635e68f10f3ccd37c7096aceda"
     }
   ]
 }

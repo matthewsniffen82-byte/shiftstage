@@ -1,0 +1,672 @@
+{
+  "captured_at": "2026-09-11T22:35:28.53247-07:00",
+  "source": "Production metadata only. Two complete target tables; account/venue control relations are explicit native projections.",
+  "relations": [
+    {
+      "force_rls": false,
+      "grants": {
+        "anon": {
+          "delete": false,
+          "insert": false,
+          "select": false,
+          "update": false
+        },
+        "authenticated": {
+          "delete": false,
+          "insert": false,
+          "select": true,
+          "update": false
+        },
+        "service_role": {
+          "delete": true,
+          "insert": true,
+          "select": true,
+          "update": true
+        }
+      },
+      "kind": "r",
+      "name": "admin_actions",
+      "options": null,
+      "owner": "postgres",
+      "rls": true,
+      "schema_name": "public"
+    },
+    {
+      "force_rls": false,
+      "grants": {
+        "anon": {
+          "delete": false,
+          "insert": false,
+          "select": true,
+          "update": false
+        },
+        "authenticated": {
+          "delete": true,
+          "insert": true,
+          "select": true,
+          "update": true
+        },
+        "service_role": {
+          "delete": true,
+          "insert": true,
+          "select": true,
+          "update": true
+        }
+      },
+      "kind": "r",
+      "name": "nfc_tags",
+      "options": null,
+      "owner": "postgres",
+      "rls": true,
+      "schema_name": "public"
+    }
+  ],
+  "columns": [
+    {
+      "column_default": "gen_random_uuid()",
+      "column_name": "id",
+      "data_type": "uuid",
+      "is_generated": "NEVER",
+      "is_identity": "NO",
+      "is_nullable": "NO",
+      "ordinal_position": 1,
+      "table_name": "admin_actions",
+      "table_schema": "public",
+      "udt_name": "uuid",
+      "udt_schema": "pg_catalog"
+    },
+    {
+      "column_default": null,
+      "column_name": "admin_id",
+      "data_type": "uuid",
+      "is_generated": "NEVER",
+      "is_identity": "NO",
+      "is_nullable": "YES",
+      "ordinal_position": 2,
+      "table_name": "admin_actions",
+      "table_schema": "public",
+      "udt_name": "uuid",
+      "udt_schema": "pg_catalog"
+    },
+    {
+      "column_default": null,
+      "column_name": "target_type",
+      "data_type": "text",
+      "is_generated": "NEVER",
+      "is_identity": "NO",
+      "is_nullable": "NO",
+      "ordinal_position": 3,
+      "table_name": "admin_actions",
+      "table_schema": "public",
+      "udt_name": "text",
+      "udt_schema": "pg_catalog"
+    },
+    {
+      "column_default": null,
+      "column_name": "target_id",
+      "data_type": "uuid",
+      "is_generated": "NEVER",
+      "is_identity": "NO",
+      "is_nullable": "YES",
+      "ordinal_position": 4,
+      "table_name": "admin_actions",
+      "table_schema": "public",
+      "udt_name": "uuid",
+      "udt_schema": "pg_catalog"
+    },
+    {
+      "column_default": null,
+      "column_name": "action",
+      "data_type": "text",
+      "is_generated": "NEVER",
+      "is_identity": "NO",
+      "is_nullable": "NO",
+      "ordinal_position": 5,
+      "table_name": "admin_actions",
+      "table_schema": "public",
+      "udt_name": "text",
+      "udt_schema": "pg_catalog"
+    },
+    {
+      "column_default": null,
+      "column_name": "notes",
+      "data_type": "text",
+      "is_generated": "NEVER",
+      "is_identity": "NO",
+      "is_nullable": "YES",
+      "ordinal_position": 6,
+      "table_name": "admin_actions",
+      "table_schema": "public",
+      "udt_name": "text",
+      "udt_schema": "pg_catalog"
+    },
+    {
+      "column_default": "now()",
+      "column_name": "created_at",
+      "data_type": "timestamp with time zone",
+      "is_generated": "NEVER",
+      "is_identity": "NO",
+      "is_nullable": "NO",
+      "ordinal_position": 7,
+      "table_name": "admin_actions",
+      "table_schema": "public",
+      "udt_name": "timestamptz",
+      "udt_schema": "pg_catalog"
+    },
+    {
+      "column_default": "gen_random_uuid()",
+      "column_name": "id",
+      "data_type": "uuid",
+      "is_generated": "NEVER",
+      "is_identity": "NO",
+      "is_nullable": "NO",
+      "ordinal_position": 1,
+      "table_name": "nfc_tags",
+      "table_schema": "public",
+      "udt_name": "uuid",
+      "udt_schema": "pg_catalog"
+    },
+    {
+      "column_default": null,
+      "column_name": "venue_id",
+      "data_type": "uuid",
+      "is_generated": "NEVER",
+      "is_identity": "NO",
+      "is_nullable": "NO",
+      "ordinal_position": 2,
+      "table_name": "nfc_tags",
+      "table_schema": "public",
+      "udt_name": "uuid",
+      "udt_schema": "pg_catalog"
+    },
+    {
+      "column_default": null,
+      "column_name": "tag_type",
+      "data_type": "text",
+      "is_generated": "NEVER",
+      "is_identity": "NO",
+      "is_nullable": "NO",
+      "ordinal_position": 3,
+      "table_name": "nfc_tags",
+      "table_schema": "public",
+      "udt_name": "text",
+      "udt_schema": "pg_catalog"
+    },
+    {
+      "column_default": null,
+      "column_name": "label",
+      "data_type": "text",
+      "is_generated": "NEVER",
+      "is_identity": "NO",
+      "is_nullable": "NO",
+      "ordinal_position": 4,
+      "table_name": "nfc_tags",
+      "table_schema": "public",
+      "udt_name": "text",
+      "udt_schema": "pg_catalog"
+    },
+    {
+      "column_default": null,
+      "column_name": "token_digest",
+      "data_type": "text",
+      "is_generated": "NEVER",
+      "is_identity": "NO",
+      "is_nullable": "NO",
+      "ordinal_position": 5,
+      "table_name": "nfc_tags",
+      "table_schema": "public",
+      "udt_name": "text",
+      "udt_schema": "pg_catalog"
+    },
+    {
+      "column_default": "'active'::text",
+      "column_name": "status",
+      "data_type": "text",
+      "is_generated": "NEVER",
+      "is_identity": "NO",
+      "is_nullable": "NO",
+      "ordinal_position": 6,
+      "table_name": "nfc_tags",
+      "table_schema": "public",
+      "udt_name": "text",
+      "udt_schema": "pg_catalog"
+    },
+    {
+      "column_default": null,
+      "column_name": "created_by_user_id",
+      "data_type": "uuid",
+      "is_generated": "NEVER",
+      "is_identity": "NO",
+      "is_nullable": "YES",
+      "ordinal_position": 7,
+      "table_name": "nfc_tags",
+      "table_schema": "public",
+      "udt_name": "uuid",
+      "udt_schema": "pg_catalog"
+    },
+    {
+      "column_default": null,
+      "column_name": "rotated_from_tag_id",
+      "data_type": "uuid",
+      "is_generated": "NEVER",
+      "is_identity": "NO",
+      "is_nullable": "YES",
+      "ordinal_position": 8,
+      "table_name": "nfc_tags",
+      "table_schema": "public",
+      "udt_name": "uuid",
+      "udt_schema": "pg_catalog"
+    },
+    {
+      "column_default": null,
+      "column_name": "last_tapped_at",
+      "data_type": "timestamp with time zone",
+      "is_generated": "NEVER",
+      "is_identity": "NO",
+      "is_nullable": "YES",
+      "ordinal_position": 9,
+      "table_name": "nfc_tags",
+      "table_schema": "public",
+      "udt_name": "timestamptz",
+      "udt_schema": "pg_catalog"
+    },
+    {
+      "column_default": "0",
+      "column_name": "tap_count",
+      "data_type": "bigint",
+      "is_generated": "NEVER",
+      "is_identity": "NO",
+      "is_nullable": "NO",
+      "ordinal_position": 10,
+      "table_name": "nfc_tags",
+      "table_schema": "public",
+      "udt_name": "int8",
+      "udt_schema": "pg_catalog"
+    },
+    {
+      "column_default": null,
+      "column_name": "disabled_at",
+      "data_type": "timestamp with time zone",
+      "is_generated": "NEVER",
+      "is_identity": "NO",
+      "is_nullable": "YES",
+      "ordinal_position": 11,
+      "table_name": "nfc_tags",
+      "table_schema": "public",
+      "udt_name": "timestamptz",
+      "udt_schema": "pg_catalog"
+    },
+    {
+      "column_default": null,
+      "column_name": "revoked_at",
+      "data_type": "timestamp with time zone",
+      "is_generated": "NEVER",
+      "is_identity": "NO",
+      "is_nullable": "YES",
+      "ordinal_position": 12,
+      "table_name": "nfc_tags",
+      "table_schema": "public",
+      "udt_name": "timestamptz",
+      "udt_schema": "pg_catalog"
+    },
+    {
+      "column_default": "now()",
+      "column_name": "created_at",
+      "data_type": "timestamp with time zone",
+      "is_generated": "NEVER",
+      "is_identity": "NO",
+      "is_nullable": "NO",
+      "ordinal_position": 13,
+      "table_name": "nfc_tags",
+      "table_schema": "public",
+      "udt_name": "timestamptz",
+      "udt_schema": "pg_catalog"
+    },
+    {
+      "column_default": "now()",
+      "column_name": "updated_at",
+      "data_type": "timestamp with time zone",
+      "is_generated": "NEVER",
+      "is_identity": "NO",
+      "is_nullable": "NO",
+      "ordinal_position": 14,
+      "table_name": "nfc_tags",
+      "table_schema": "public",
+      "udt_name": "timestamptz",
+      "udt_schema": "pg_catalog"
+    },
+    {
+      "column_default": "0",
+      "column_name": "scan_count",
+      "data_type": "bigint",
+      "is_generated": "NEVER",
+      "is_identity": "NO",
+      "is_nullable": "NO",
+      "ordinal_position": 15,
+      "table_name": "nfc_tags",
+      "table_schema": "public",
+      "udt_name": "int8",
+      "udt_schema": "pg_catalog"
+    },
+    {
+      "column_default": null,
+      "column_name": "last_scanned_at",
+      "data_type": "timestamp with time zone",
+      "is_generated": "NEVER",
+      "is_identity": "NO",
+      "is_nullable": "YES",
+      "ordinal_position": 16,
+      "table_name": "nfc_tags",
+      "table_schema": "public",
+      "udt_name": "timestamptz",
+      "udt_schema": "pg_catalog"
+    }
+  ],
+  "constraints": [
+    {
+      "deferrable": false,
+      "definition": "FOREIGN KEY (admin_id) REFERENCES app_users(id) ON DELETE SET NULL",
+      "delete_action": "n",
+      "initially_deferred": false,
+      "name": "admin_actions_admin_id_fkey",
+      "referenced_table": "app_users",
+      "schema_name": "public",
+      "table_name": "admin_actions",
+      "type": "f",
+      "validated": true
+    },
+    {
+      "deferrable": false,
+      "definition": "PRIMARY KEY (id)",
+      "delete_action": " ",
+      "initially_deferred": false,
+      "name": "admin_actions_pkey",
+      "referenced_table": null,
+      "schema_name": "public",
+      "table_name": "admin_actions",
+      "type": "p",
+      "validated": true
+    },
+    {
+      "deferrable": false,
+      "definition": "FOREIGN KEY (created_by_user_id) REFERENCES app_users(id) ON DELETE SET NULL",
+      "delete_action": "n",
+      "initially_deferred": false,
+      "name": "nfc_tags_created_by_user_id_fkey",
+      "referenced_table": "app_users",
+      "schema_name": "public",
+      "table_name": "nfc_tags",
+      "type": "f",
+      "validated": true
+    },
+    {
+      "deferrable": false,
+      "definition": "CHECK (((char_length(TRIM(BOTH FROM label)) >= 2) AND (char_length(TRIM(BOTH FROM label)) <= 80)))",
+      "delete_action": " ",
+      "initially_deferred": false,
+      "name": "nfc_tags_label_check",
+      "referenced_table": null,
+      "schema_name": "public",
+      "table_name": "nfc_tags",
+      "type": "c",
+      "validated": true
+    },
+    {
+      "deferrable": false,
+      "definition": "PRIMARY KEY (id)",
+      "delete_action": " ",
+      "initially_deferred": false,
+      "name": "nfc_tags_pkey",
+      "referenced_table": null,
+      "schema_name": "public",
+      "table_name": "nfc_tags",
+      "type": "p",
+      "validated": true
+    },
+    {
+      "deferrable": false,
+      "definition": "FOREIGN KEY (rotated_from_tag_id) REFERENCES nfc_tags(id) ON DELETE SET NULL",
+      "delete_action": "n",
+      "initially_deferred": false,
+      "name": "nfc_tags_rotated_from_tag_id_fkey",
+      "referenced_table": "nfc_tags",
+      "schema_name": "public",
+      "table_name": "nfc_tags",
+      "type": "f",
+      "validated": true
+    },
+    {
+      "deferrable": false,
+      "definition": "CHECK ((status = ANY (ARRAY['active'::text, 'disabled'::text, 'revoked'::text])))",
+      "delete_action": " ",
+      "initially_deferred": false,
+      "name": "nfc_tags_status_check",
+      "referenced_table": null,
+      "schema_name": "public",
+      "table_name": "nfc_tags",
+      "type": "c",
+      "validated": true
+    },
+    {
+      "deferrable": false,
+      "definition": "CHECK ((tag_type = ANY (ARRAY['dressing_room'::text, 'cashier'::text])))",
+      "delete_action": " ",
+      "initially_deferred": false,
+      "name": "nfc_tags_tag_type_check",
+      "referenced_table": null,
+      "schema_name": "public",
+      "table_name": "nfc_tags",
+      "type": "c",
+      "validated": true
+    },
+    {
+      "deferrable": false,
+      "definition": "CHECK ((tap_count >= 0))",
+      "delete_action": " ",
+      "initially_deferred": false,
+      "name": "nfc_tags_tap_count_check",
+      "referenced_table": null,
+      "schema_name": "public",
+      "table_name": "nfc_tags",
+      "type": "c",
+      "validated": true
+    },
+    {
+      "deferrable": false,
+      "definition": "CHECK ((token_digest ~ '^[0-9a-f]{64}$'::text))",
+      "delete_action": " ",
+      "initially_deferred": false,
+      "name": "nfc_tags_token_digest_check",
+      "referenced_table": null,
+      "schema_name": "public",
+      "table_name": "nfc_tags",
+      "type": "c",
+      "validated": true
+    },
+    {
+      "deferrable": false,
+      "definition": "UNIQUE (token_digest)",
+      "delete_action": " ",
+      "initially_deferred": false,
+      "name": "nfc_tags_token_digest_key",
+      "referenced_table": null,
+      "schema_name": "public",
+      "table_name": "nfc_tags",
+      "type": "u",
+      "validated": true
+    },
+    {
+      "deferrable": false,
+      "definition": "FOREIGN KEY (venue_id) REFERENCES venues(id) ON DELETE CASCADE",
+      "delete_action": "c",
+      "initially_deferred": false,
+      "name": "nfc_tags_venue_id_fkey",
+      "referenced_table": "venues",
+      "schema_name": "public",
+      "table_name": "nfc_tags",
+      "type": "f",
+      "validated": true
+    }
+  ],
+  "indexes": [
+    {
+      "indexdef": "CREATE UNIQUE INDEX admin_actions_pkey ON public.admin_actions USING btree (id)",
+      "indexname": "admin_actions_pkey",
+      "indisready": true,
+      "indisunique": true,
+      "indisvalid": true,
+      "schemaname": "public",
+      "tablename": "admin_actions"
+    },
+    {
+      "indexdef": "CREATE UNIQUE INDEX nfc_tags_one_active_cashier_label_idx ON public.nfc_tags USING btree (venue_id, lower(label)) WHERE ((tag_type = 'cashier'::text) AND (status = 'active'::text))",
+      "indexname": "nfc_tags_one_active_cashier_label_idx",
+      "indisready": true,
+      "indisunique": true,
+      "indisvalid": true,
+      "schemaname": "public",
+      "tablename": "nfc_tags"
+    },
+    {
+      "indexdef": "CREATE UNIQUE INDEX nfc_tags_one_active_dressing_room_label_idx ON public.nfc_tags USING btree (venue_id, lower(label)) WHERE ((tag_type = 'dressing_room'::text) AND (status = 'active'::text))",
+      "indexname": "nfc_tags_one_active_dressing_room_label_idx",
+      "indisready": true,
+      "indisunique": true,
+      "indisvalid": true,
+      "schemaname": "public",
+      "tablename": "nfc_tags"
+    },
+    {
+      "indexdef": "CREATE UNIQUE INDEX nfc_tags_pkey ON public.nfc_tags USING btree (id)",
+      "indexname": "nfc_tags_pkey",
+      "indisready": true,
+      "indisunique": true,
+      "indisvalid": true,
+      "schemaname": "public",
+      "tablename": "nfc_tags"
+    },
+    {
+      "indexdef": "CREATE UNIQUE INDEX nfc_tags_token_digest_key ON public.nfc_tags USING btree (token_digest)",
+      "indexname": "nfc_tags_token_digest_key",
+      "indisready": true,
+      "indisunique": true,
+      "indisvalid": true,
+      "schemaname": "public",
+      "tablename": "nfc_tags"
+    },
+    {
+      "indexdef": "CREATE INDEX nfc_tags_venue_status_idx ON public.nfc_tags USING btree (venue_id, status, tag_type, created_at DESC)",
+      "indexname": "nfc_tags_venue_status_idx",
+      "indisready": true,
+      "indisunique": false,
+      "indisvalid": true,
+      "schemaname": "public",
+      "tablename": "nfc_tags"
+    }
+  ],
+  "triggers": [],
+  "functions": [
+    {
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "anon": false,
+      "authenticated": false,
+      "definition": "CREATE OR REPLACE FUNCTION public.provision_admin_venue_nfc_tag(p_tag_id uuid, p_venue_id uuid, p_admin_user_id uuid, p_tag_type text, p_label text, p_token_digest text)\n RETURNS nfc_tags\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public', 'pg_temp'\nAS $function$\ndeclare\n  v_tag public.nfc_tags;\n  v_venue public.venues;\nbegin\n  if not exists (\n    select 1 from public.app_users account\n    where account.id = p_admin_user_id and account.role = 'admin' and account.account_state = 'active'\n  ) then\n    raise exception using errcode = '42501', message = 'Admin access required.';\n  end if;\n  if p_tag_type not in ('dressing_room', 'cashier') then\n    raise exception using errcode = '22023', message = 'Choose a dressing-room or cashier NFC sticker.';\n  end if;\n  if char_length(trim(p_label)) not between 2 and 80 then\n    raise exception using errcode = '22023', message = 'NFC sticker label must be 2 to 80 characters.';\n  end if;\n  if p_token_digest !~ '^[0-9a-f]{64}$' then\n    raise exception using errcode = '22023', message = 'Invalid NFC sticker secret.';\n  end if;\n\n  select venue.* into v_venue\n  from public.venues venue\n  where venue.id = p_venue_id and venue.is_active = true\n  for key share;\n  if not found then\n    raise exception using errcode = 'P0002', message = 'An active venue is required.';\n  end if;\n  if (select count(*) from public.nfc_tags tag where tag.venue_id = p_venue_id and tag.status = 'active') >= 25 then\n    raise exception using errcode = '54000', message = 'This venue already has the maximum of 25 active NFC stickers.';\n  end if;\n\n  insert into public.nfc_tags (\n    id, venue_id, tag_type, label, token_digest, status, created_by_user_id\n  ) values (\n    p_tag_id, p_venue_id, p_tag_type, trim(p_label), p_token_digest, 'active', p_admin_user_id\n  ) returning * into v_tag;\n\n  insert into public.admin_actions (admin_id, target_type, target_id, action, notes)\n  values (p_admin_user_id, 'nfc_tag', v_tag.id, 'provision_nfc_sticker', v_venue.name || ' · ' || p_tag_type || ' · ' || trim(p_label));\n\n  return v_tag;\nend;\n$function$\n",
+      "fingerprint": "2cf90b5ffeea947333be9e9dad40e762",
+      "name": "provision_admin_venue_nfc_tag",
+      "owner": "postgres",
+      "return_type": "nfc_tags",
+      "security_definer": true,
+      "service": true,
+      "settings": [
+        "search_path=public, pg_temp"
+      ],
+      "signature": "provision_admin_venue_nfc_tag(uuid,uuid,uuid,text,text,text)"
+    },
+    {
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "anon": false,
+      "authenticated": false,
+      "definition": "CREATE OR REPLACE FUNCTION public.rotate_admin_venue_nfc_tag(p_tag_id uuid, p_admin_user_id uuid, p_replacement_id uuid, p_token_digest text)\n RETURNS nfc_tags\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public', 'pg_temp'\nAS $function$\ndeclare\n  v_current public.nfc_tags;\n  v_replacement public.nfc_tags;\n  v_now timestamptz := clock_timestamp();\nbegin\n  if not exists (\n    select 1 from public.app_users account\n    where account.id = p_admin_user_id and account.role = 'admin' and account.account_state = 'active'\n  ) then\n    raise exception using errcode = '42501', message = 'Admin access required.';\n  end if;\n  if p_token_digest !~ '^[0-9a-f]{64}$' then\n    raise exception using errcode = '22023', message = 'Invalid NFC sticker secret.';\n  end if;\n  select tag.* into v_current\n  from public.nfc_tags tag\n  join public.venues venue on venue.id = tag.venue_id\n  where tag.id = p_tag_id and tag.status <> 'revoked' and venue.is_active = true\n  for update of tag;\n  if not found then\n    raise exception using errcode = 'P0002', message = 'NFC sticker not found.';\n  end if;\n  update public.nfc_tags\n  set status = 'revoked', revoked_at = v_now, updated_at = v_now\n  where id = v_current.id;\n  insert into public.nfc_tags (\n    id, venue_id, tag_type, label, token_digest, status, created_by_user_id, rotated_from_tag_id\n  ) values (\n    p_replacement_id, v_current.venue_id, v_current.tag_type, v_current.label,\n    p_token_digest, 'active', p_admin_user_id, v_current.id\n  ) returning * into v_replacement;\n  insert into public.admin_actions (admin_id, target_type, target_id, action, notes)\n  values (p_admin_user_id, 'nfc_tag', v_replacement.id, 'rotate_nfc_sticker', 'Replaced ' || v_current.id::text);\n  return v_replacement;\nend;\n$function$\n",
+      "fingerprint": "1086a4468a588567c067e8ccc4a63282",
+      "name": "rotate_admin_venue_nfc_tag",
+      "owner": "postgres",
+      "return_type": "nfc_tags",
+      "security_definer": true,
+      "service": true,
+      "settings": [
+        "search_path=public, pg_temp"
+      ],
+      "signature": "rotate_admin_venue_nfc_tag(uuid,uuid,uuid,text)"
+    },
+    {
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "anon": false,
+      "authenticated": false,
+      "definition": "CREATE OR REPLACE FUNCTION public.set_admin_venue_nfc_tag_status(p_tag_id uuid, p_admin_user_id uuid, p_status text)\n RETURNS nfc_tags\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public', 'pg_temp'\nAS $function$\ndeclare\n  v_tag public.nfc_tags;\n  v_now timestamptz := clock_timestamp();\nbegin\n  if not exists (\n    select 1 from public.app_users account\n    where account.id = p_admin_user_id and account.role = 'admin' and account.account_state = 'active'\n  ) then\n    raise exception using errcode = '42501', message = 'Admin access required.';\n  end if;\n  if p_status not in ('active', 'disabled') then\n    raise exception using errcode = '22023', message = 'Choose active or disabled.';\n  end if;\n  update public.nfc_tags set\n    status = p_status,\n    disabled_at = case when p_status = 'disabled' then v_now else null end,\n    updated_at = v_now\n  where id = p_tag_id and status <> 'revoked'\n  returning * into v_tag;\n  if not found then\n    raise exception using errcode = 'P0002', message = 'NFC sticker not found.';\n  end if;\n  insert into public.admin_actions (admin_id, target_type, target_id, action)\n  values (p_admin_user_id, 'nfc_tag', v_tag.id, p_status || '_nfc_sticker');\n  return v_tag;\nend;\n$function$\n",
+      "fingerprint": "c407c516cb1c021243a1d52f491bb362",
+      "name": "set_admin_venue_nfc_tag_status",
+      "owner": "postgres",
+      "return_type": "nfc_tags",
+      "security_definer": true,
+      "service": true,
+      "settings": [
+        "search_path=public, pg_temp"
+      ],
+      "signature": "set_admin_venue_nfc_tag_status(uuid,uuid,text)"
+    },
+    {
+      "acl": null,
+      "anon": true,
+      "authenticated": true,
+      "definition": "CREATE OR REPLACE FUNCTION public.is_admin()\n RETURNS boolean\n LANGUAGE sql\n STABLE SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\r\n  select exists (\r\n    select 1 from public.app_users\r\n    where id = auth.uid()\r\n      and role = 'admin'\r\n      and account_state = 'active'\r\n  );\r\n$function$\n",
+      "fingerprint": "aa75a61376ef5a45ec72cb30fb0eb229",
+      "name": "is_admin",
+      "owner": "postgres",
+      "return_type": "boolean",
+      "security_definer": true,
+      "service": true,
+      "settings": [
+        "search_path=public"
+      ],
+      "signature": "is_admin()"
+    }
+  ],
+  "policies": [
+    {
+      "cmd": "SELECT",
+      "permissive": "PERMISSIVE",
+      "policyname": "active admins read audit history",
+      "qual": "is_admin()",
+      "roles": [
+        "authenticated"
+      ],
+      "schemaname": "public",
+      "tablename": "admin_actions",
+      "with_check": null
+    },
+    {
+      "cmd": "ALL",
+      "permissive": "PERMISSIVE",
+      "policyname": "Admins manage NFC tags",
+      "qual": "is_admin()",
+      "roles": [
+        "public"
+      ],
+      "schemaname": "public",
+      "tablename": "nfc_tags",
+      "with_check": "is_admin()"
+    },
+    {
+      "cmd": "SELECT",
+      "permissive": "PERMISSIVE",
+      "policyname": "Venue owners read own NFC tags",
+      "qual": "(EXISTS ( SELECT 1\n   FROM venues venue\n  WHERE ((venue.id = nfc_tags.venue_id) AND (venue.owner_user_id = auth.uid()))))",
+      "roles": [
+        "public"
+      ],
+      "schemaname": "public",
+      "tablename": "nfc_tags",
+      "with_check": null
+    }
+  ]
+}

@@ -21,8 +21,8 @@ The user subsequently deferred disposable test-project setup and explicitly requ
 | 11 | Storage security/reliability | Controlled pass released and verified; lifecycle/recovery handoffs retained | Closing commit `31518b1614a1aebe6cbf0b860e7a35e337563539`; exact Vercel success freshly reconfirmed September 12. Deferred hosted tests remain explicit. |
 | 12 | Realtime lifecycle | Released and verified; no active subscriptions | Closing commit `1ef18d7502a2904e6e4ae5653e6916e4fde84737`; exact Vercel success freshly reconfirmed September 12. |
 | 13 | Privileged functions/RPC/webhooks | Controlled pass released and verified; named later handoffs retained | Closing commit `f1cb4ff3b554c431b1195facdde7b7a2c3f218d5`; exact Vercel success, 6,269 tests and all release gates passed; 131 functions, 117 migrations and 18 table fingerprints preserved. |
-| 14 | Triggers/functions | Trigger repair in release validation | See step-14-trigger-review.md; 59 native behavioral/deployment cases pass. Exact delivery remains required. |
-| 15 | Data validation | Pending | |
+| 14 | Triggers/functions | Controlled pass released and verified; later handoffs retained | `ef752f858c5284bdd69f0089187aaeca4e4dbdd5`; exact SQL/Vercel success, 6,418 tests/all gates, 20 table fingerprints and 130 other functions preserved. |
+| 15 | Data validation | NFC capacity correction in release validation; agent/domain review continues | See step-15-nfc-capacity.md; 70 native cases pass. Full delivery and subsequent Step 15 review remain required. |
 | 16 | Timestamps/timezones | Pending | |
 | 17 | Account/record lifecycle | Pending | |
 | 18 | Environment configuration | Pending | |
@@ -688,3 +688,19 @@ The narrow additive correction replaces one invoker function and adds its AFTER 
 Security error-boundary release `3e8106d781e578a982e2cbdcdaf210c19f988cd7` and architecture access-matrix release `5e04e6359671af0cbccbe8e1604aed71c306e00b` are preserved with exact successful deployments. Full combined suite, lint, production build, standalone TypeScript, commit/push, exact committed SQL application, Vercel and independent preservation/health remain required.
 
 The combined release passed all 6,418 tests with zero failures, skips or cancellations, full lint, production build with population skipped, standalone TypeScript after the build and thirty readiness checks. The new migration has SHA-256 `be8cc1c64cbde3c49ca9ee2e315d838224fe3f635e68f10f3ccd37c7096aceda` and MD5 `189cc62ce11abf2e71b61fae66cbd43b`; expected installed function fingerprint is `7712668d238dcb107394fde5db83ff9f`. Exact commit/push, committed-source SQL application, Vercel success and independent preservation/health remain required. No production business operation was invoked as a test.
+
+## Step 14 delivered trigger correction
+
+Commit `ef752f858c5284bdd69f0089187aaeca4e4dbdd5` reached successful [exact Vercel deployment](https://vercel.com/ai-movie-jobs/shiftstage/DLFDgDX2BgtBGzR4RuvWxz17fjcU). Exact committed SQL `20260912052200` applied transactionally, adding the video-cap attachment and replacing one function. At 05:36:58–59 UTC on September 12, independent checks preserved twenty table fingerprints including 34 videos and 452 storage objects, 130 other functions, ten unchanged schema groups and 117 prior ledger entries. The catalog now has 131 functions, 60 trigger attachments and 118 migrations. Seven deployed health/access checks, thirty readiness checks and the function-security gate passed; clean local/tracking/remote main matched. All 6,418 tests, lint, build and standalone TypeScript passed. No production business operation was used as a mutable test.
+
+## Step 15 active NFC capacity correction
+
+The inspected plan is `step-15-nfc-capacity.md`. Current provision/enable/rotation paths do not consistently enforce the same 25-active-sticker limit; native tests reproduce 26 active stickers through enable and disabled rotation. Add a narrow invoker AFTER trigger for new active slots, preserving all three administrator RPCs, current RLS/grants and sticker/audit history. Fifty behavioral and twenty guarded-deployment cases pass. The 05:40:27 UTC read-only preflight found twenty active tags, a maximum of three per venue and no capacity/negative-scan exceptions. Exact schema/access/dependency preconditions passed at 05:54:30 UTC.
+
+The original domain constraints also reject null labels/types/secrets/status and invalid values transactionally. The retained liquor-free constraint still has one inactive historical exception and zero active exceptions; no historical row or constraint is changed to force validation. The agent preflight at 05:58:07 UTC found no sales agents or active attributions; concurrent hierarchy validation and multi-statement sponsor reads remain the next Step 15 investigation, not a claim of a live financial incident.
+
+The history manifest adds only the already verified video migration, extending 159 to 160 protected files and preserving previous hashes/metadata/collision disclosures. The new NFC SQL has SHA-256 `2a16569db2917e4801e85718f2349b9ab8e34b11e92d3ee178164f66413419a1`, MD5 `be42c9234a262d649d2cdca5592dbc20`; expected function fingerprint is `93ad88652a30d0a5d3bfdf50b0b1bd6a`. After exact SQL application is verified, freeze this source in a fully validated closing commit before handoff. This preserves the distinction between proposed and already-applied history while closing the protection window within the controlled release.
+
+Candidate integration preserves all concurrent releases through parent `bc4812b7b41550f59c2f803219a7db0f94fcd51a`. Full combined tests, lint, build, standalone TypeScript, commit/push, exact SQL application, Vercel success, preservation/health and the manifest closing release remain required.
+
+Initial NFC release validation passed all 6,601 tests without failures, skips or cancellations, full lint, production build with population skipped, standalone TypeScript and thirty read-only readiness checks. Commit/push, exact SQL/deployment verification and the subsequent manifest closing release remain required before shared-workspace handoff.
