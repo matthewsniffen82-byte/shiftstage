@@ -17,7 +17,7 @@ vm.runInNewContext(ts.transpileModule(readFileSync(new URL('../src/lib/dancr/sto
   compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022},
 }).outputText,{exports:storageReceipt,Error});
 const version='2020-01-01T00:00:00Z';
-function scenario({decision='review',concurrentDecision='',providerError=false,providerMessage='provider_timeout',providerStatus=0,faceRejection=false,avatar=false,attemptCount=1,stateResponseLoss='',retry=false,uploadBucket='',uploadFailure='',receiptKind='valid'}={}) {
+function scenario({decision='review',concurrentDecision='',providerError=false,providerFailure=null,providerMessage='provider_timeout',providerStatus=0,faceRejection=false,avatar=false,attemptCount=1,stateResponseLoss='',retry=false,uploadBucket='',uploadFailure='',receiptKind='valid'}={}) {
   const events=[],files=new Set(),record=retry?{
     id:'record',user_id:'owner',upload_context:avatar?'profile_avatar':'profile_gallery:1',temporary_storage_path:'owner/profile/temp.jpg',
     decision:'review',status:'moderating',updated_at:version,attempt_count:attemptCount,
@@ -93,11 +93,11 @@ function scenario({decision='review',concurrentDecision='',providerError=false,p
   const exports={};
   vm.runInNewContext(ts.transpileModule(source+'\nmoderateImageWithOpenAI = testProvider;',{
     compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022},
-  }).outputText,{exports,require:()=>deps,Buffer,Blob,Date,setTimeout,clearTimeout,
+  }).outputText,{exports,require:()=>deps,Buffer,Blob,Date,Error,setTimeout,clearTimeout,
     console:{log(){},warn(){},error(){},info(){}},
     testProvider:async()=>{
       if(concurrentDecision)Object.assign(record,{decision:concurrentDecision,status:concurrentDecision,updated_at:'2020-01-02T00:00:00Z'});
-      if(providerError)throw Object.assign(new Error(providerMessage),providerStatus?{status:providerStatus}:{});
+      if(providerError)throw providerFailure ?? Object.assign(new Error(providerMessage),providerStatus?{status:providerStatus}:{});
       return {categories:{}};
     },
   });
@@ -200,3 +200,38 @@ for(const faceRejection of [false,true])test('avatar worker still cleans a confi
  assert.equal(result.decision,'rejected');assert.equal(s.record.decision,'rejected');assert.equal(s.record.status,'rejected');
  assert.equal(s.files.size,0);assert.ok(s.events.indexOf('state:rejected')<s.events.indexOf('remove:'+tempBucket));
 });
+
+const privateDiagnostic = 'synthetic-private-token owner@example.invalid /srv/private/query.sql https://example.invalid/object?token=synthetic-private-token';
+const diagnosticFailures = [
+  ['exception', () => new Error(privateDiagnostic), 'provider_error'],
+  ['authentication', () => Object.assign(new Error(privateDiagnostic), {status:401}), 'invalid_openai_api_key'],
+  ['rate limit', () => Object.assign(new Error(privateDiagnostic), {status:429}), 'provider_rate_limited'],
+  ['timeout', () => new Error('provider_timeout ' + privateDiagnostic), 'provider_timeout'],
+  ['string', () => privateDiagnostic, 'provider_error'],
+  ['object', () => ({message:privateDiagnostic, status:503}), 'provider_error'],
+  ['stringified object', () => ({toString:() => 'provider_timeout ' + privateDiagnostic}), 'provider_timeout'],
+  ['missing key', () => new Error('OPENAI_API_KEY ' + privateDiagnostic), 'missing_openai_api_key'],
+];
+for (const avatar of [false, true]) for (const attemptCount of [1, 3]) {
+  for (const [kind, failure, expectedCode] of diagnosticFailures) {
+    test('retry diagnostic privacy: ' + (avatar ? 'avatar' : 'gallery') + ' ' + kind + ' attempt ' + (attemptCount + 1), async () => {
+      const s = scenario({retry:true, avatar, attemptCount, providerError:true, providerFailure:failure()});
+      const result = await s.run();
+      const retryable = attemptCount < 3 && ['provider_timeout', 'provider_rate_limited', 'provider_error'].includes(expectedCode);
+      assert.equal(s.record.last_error_message, expectedCode);
+      assert.equal(s.record.last_error_code, expectedCode);
+      assert.equal(s.record.error_code, expectedCode);
+      assert.deepEqual(Array.from(result.reasonCodes), [expectedCode]);
+      assert.equal(s.record.status, retryable ? 'moderation_retry' : 'moderation_error');
+      assert.equal(result.decision, s.record.status);
+      assert.equal(s.record.decision, 'review');
+      assert.equal(s.record.attempt_count, attemptCount + 1);
+      assert.equal(s.record.locked_at, null);
+      assert.equal(s.record.next_attempt_at === null, !retryable);
+      assert.equal(s.files.size, 1);
+      assert.ok(s.files.has('owner/profile/temp.jpg'));
+      assert.equal(s.events.some(event => event.startsWith('remove:')), false);
+      assert.doesNotMatch(JSON.stringify({record:s.record, result}), /synthetic-private-token|owner@example|srv\/private|query\.sql/);
+    });
+  }
+}

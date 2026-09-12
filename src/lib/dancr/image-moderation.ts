@@ -484,7 +484,7 @@ export async function processImageModerationRetryRecord(admin: DancrClient, reco
       nextAttemptAt: retryable ? retryDelayTimestamp(attemptCount) : null,
       lockedAt: null,
       lastErrorCode: errorCode,
-      lastErrorMessage: safeErrorMessage(error),
+      lastErrorMessage: errorCode,
     }, false, expectedUpdatedAt);
     // A technical failure is not a moderation rejection. Keep the private
     // source for recovery even when automatic retries have been exhausted.
@@ -1365,8 +1365,4 @@ function retryDelayTimestamp(attemptCount: number) {
       ? 120_000
       : 600_000;
   return new Date(Date.now() + delayMs).toISOString();
-}
-
-function safeErrorMessage(error: unknown) {
-  return error instanceof Error ? error.message.slice(0, 500) : String(error || "").slice(0, 500);
 }
