@@ -137,7 +137,16 @@ async function createScheduledPayoutRequests(client: DancrClient, minimumPayoutC
 }
 
 function financeError(error: unknown) {
-  if (error instanceof Error) return error.message.slice(0, 500);
-  if (error && typeof error === "object" && "message" in error) return String((error as any).message).slice(0, 500);
-  return "Finance operation failed.";
+  const message = error && typeof error === "object" && "message" in error
+    ? (error as { message: unknown }).message : null;
+  const knownMessages = [
+    "The dancer payout account is not currently eligible for payouts.",
+    "The dancer payout account is missing its provider reference.",
+    "Payout dispatch claim could not be confirmed.",
+    "Provider payout reference could not be confirmed.",
+    "Provider payout acknowledgment could not be confirmed.",
+    "Payout reconciliation flag could not be confirmed.",
+  ];
+  return typeof message === "string" && knownMessages.includes(message)
+    ? message : "Payout processing could not be confirmed. Review the payout before retrying.";
 }

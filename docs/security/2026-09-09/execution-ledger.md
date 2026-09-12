@@ -41,7 +41,7 @@ Step 1 delivered as `50d4eb543dbfc93dbed6f0663c51aa2332542cb4`, pushed to origin
 | 18 | Redirects / URLs | Delivered and healthy: 4c7ae4d5f244633e88a4572076a5b5235acd1cc1 |
 | 19 | Database functions / grants | Delivered and healthy: 508bf4b89804a5b403cb6bb12fcdfc24c4db6b27 and b8f3f254ddea427252cef528cffb7b118f5330ed |
 | 20 | Webhooks | Delivered with documented inactive-provider deferrals: 060b2976d3e7856efb2cc0c9ce3c64c0732fb919 |
-| 21 | Errors / disclosure | In progress: signup/admin cleanup fa3b1405 and finance aggregate responses fcd8e58e delivered; stored moderation/provider diagnostics under review |
+| 21 | Errors / disclosure | Final correction validated, awaiting exact deployment: fa3b1405, fcd8e58e and moderation 7c8f5be2 delivered; payout/NATS diagnostics fixed |
 | 22 | Security logging | Not started |
 | 23 | Dependencies | Not started |
 | 24 | CI / supply chain | Not started |
@@ -406,3 +406,37 @@ At 2026-09-12T04:16:14Z, fresh HEAD-only production aggregate queries found zero
 Full combined validation, reviewed task-only commit/push, exact Vercel success and deployed health remain release gates. Step 21 remains open for payout/export/provider diagnostics and NATS results/metadata; Step 22 has not started.
 
 The frozen moderation candidate on 87863f2d passed all 6,201 automated tests with zero failures, skips or cancellations, standalone TypeScript, full lint and the production build (completed 2026-09-12T04:27:42Z). The migration guard passed and postbuild reported LAYOUT_REVIEW_POPULATION_SKIPPED. All 102 focused moderation/logging checks passed. The rebuilt local homepage rendered discovery normally without browser warnings/errors; eight local health/anonymous-denial checks and all 30 Supabase readiness checks passed. An initial local probe incorrectly expected GET on the upload-only photo route to return 401; its correct 405 response led to correcting the probe to the supported dancer-profile GET route, with no application change. Only the two source/test files and these two security documents belong to this release; exact push/deployment verification follows.
+
+## Stored payout and NATS provider diagnostics
+
+The moderation correction 7c8f5be2520f5b871405058ce5cc7294a5735a5b is separately delivered: exact Vercel BcYeSiC7ENJq3spBCfrbYBjvamvZ succeeded, 6,201 tests/TypeScript/lint/build passed, and production health/readiness/zero moderation diagnostic counts passed at 2026-09-12T04:32:33Z. Step 22 has not begun.
+
+**LOW — payout dispatch review persisted raw dependency messages.** finance-payout-processing.ts supplied its truncation-only financeError result to flag_dancer_payout_dispatch_review. The updated boundary preserves six exact authored messages and replaces other messages/shapes with a fixed instruction to review the payout before retrying. This covers the owner-readable payout failure message and the function's associated metadata/audit record. Existing counters, uncertain-claim handling, dispatch keys, single provider calls, reserved earnings and reconciliation-only recovery stay unchanged. A failed review acknowledgment still contributes its own aggregate error.
+
+**LOW — NATS export workers persisted provider/database messages, success text and response header content.** The adapter retains its existing success/rejection/ambiguous-outcome classification, while returning a fixed success receipt, fixed provider-failure text and a normalized allowlist of content types with HTTP status. Both dancer and agent workers use fixed failure instructions selected by the actual error class. Unexpected network, body-reading and database errors cannot become stored last_error values. Completed-export uncertainty remains reconciliation_required; no automatic resend, provider retry, SQL change or new export action is added. Successful export identity, amount, currency, timestamps and operation counters are retained.
+
+Focused regression evidence: 56 actual adapter/worker tests with synthetic transport and RPC dependencies pass, including mixed successful/uncertain batches, acceptance followed by failed/lost completion, failure-record errors, malformed responses, untrusted provider headers/bodies and inactive provider gates. Forty-six fail on the previous source; ten already passed. Six new payout regressions fail before the fix, and all 61 native PostgreSQL payout dispatcher tests pass afterward. They verify both safe stored/audit messages and retained reservations/no redispatch after uncertainty. Full final integrated tests, TypeScript, lint, production build and exact deployment remain required on the final integrated candidate.
+
+Fresh production inspection uses HEAD requests with count=exact; it retrieves no row values, identifiers or credentials. At 04:28 UTC one club invoice last_error and one dancer NATS export last_error were nonempty, with other inspected error/result fields empty. Fixed-message equality counts at 04:31:27Z classify the invoice as the existing authored publication warning and the NATS export as the authored before-export reversal warning. Both records must be preserved. Subsequent aggregate checks find no nonempty dancer/agent NATS nats_result or response_metadata; no historical cleanup is needed for these fields at that snapshot. These counts do not certify the full live RLS catalog or provider configuration.
+
+Remaining writer tracing:
+
+| Writer/surface | Disposition |
+| --- | --- |
+| Invoice publication last_error | Already stores fixed authored warning; retained. |
+| Stripe invoice failure/reversal helpers | All application callers supply fixed authored strings; paid/reversed state, attempt ownership and financial functions are retained. |
+| Stripe webhook failure_reason | Existing safeErrorMetadata-only serialized event record; no message, stack or body. |
+| Payout account last_error | stripeAccountState supplies fixed authored eligibility/information messages; account compare-and-swap behavior retained. |
+| Image moderation diagnostics | Delivered 7c8f5be2; retry stores fixed existing classification code; fresh stored counts remain zero. |
+| Finance automation aggregate arrays | Existing admin and cron boundaries sanitize serialized results; no extra finance call introduced. |
+| Admin reconciliation reasons/verification notes | Intentional administrator-authored audit content, required and bounded at API parsing. Preserve it and its attribution; it is distinct from unsolicited dependency exception text. Broader sensitive-data minimization remains Step 26. |
+| NATS successful result/response metadata | This candidate fixes subsequent writes; no old nonempty values found. |
+
+The Step 21 closure can be marked delivered only after final source inspection, complete validation, commit/push, matching main, exact-commit Vercel success and read-only deployed checks. Provider-console activation testing and the Step 20 inactive-provider deferrals remain explicit; this work never sends a production payout, invoice, export, email or moderation request.
+
+The refreshed syntax review covers 383 TypeScript/TSX files and 120 route modules (including non-API route handlers). It finds six variable API fallback arguments, twenty variable PublicApiError message arguments, and thirty-two variable JSON error/message expressions. This newer JSON count includes ordinary success messages, so it is not directly comparable with the original error-only count. These are trace candidates, not vulnerabilities. The raw-message expressions are guarded by concrete local rate-limit/input classes or the synchronous JSON notification-settings validator, whose exceptions are fixed authored strings. Venue-affiliation database classifications translate into authored messages. Variable wrapper arguments trace to local validation constants, bounded numeric limits and authorized public venue names; unexpected exceptions retain the shared boundary. No server page/error JSX directly references error.message or error.stack. This is a source review with the existing regression suite, not a claim that syntax searches prove all dynamic data safe.
+
+
+The independent review release 994bd0ad and atomic-account-provisioning caller release 34b6f50d were preserved; both exact Vercel statuses were independently verified as success. The current candidate starts from f1cb4ff3b554c431b1195facdde7b7a2c3f218d5. The Supabase closure adds reviewed regression coverage and verified frozen-migration checksums; Security applies no SQL. The local preview remains stopped after automatic approval review rejected its restart in the architecture task. This release uses isolated runtime tests, the production build and deployed read-only verification.
+
+Final integrated validation passed on the frozen f1cb4ff3 baseline: all 6,331 automated tests with zero failures, skips or cancellations, standalone TypeScript, full lint and production build. All 178 focused finance/provider checks passed. The migration-history guard passed and postbuild reported LAYOUT_REVIEW_POPULATION_SKIPPED. The reviewed release contains three source files, two test files and these two security documents. Commit/push, matching main, exact Vercel success and deployed read-only checks are the remaining delivery gates.

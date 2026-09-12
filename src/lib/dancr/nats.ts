@@ -87,22 +87,22 @@ export async function createNatsManualInvoice(input: {
       cache: "no-store",
       signal: AbortSignal.timeout(15_000),
     });
-  } catch (error) {
+  } catch {
     throw new NatsAmbiguousDispatchError(
-      `NATS did not return a response. Verify the affiliate invoice before retrying: ${safeError(error)}`,
+      "NATS did not return a response. Verify the affiliate invoice before retrying.",
     );
   }
 
   const responseMetadata = {
     http_status: response.status,
-    content_type: response.headers.get("content-type") || null,
+    content_type: safeNatsContentType(response.headers.get("content-type")),
   };
   const payload = await readNatsJson(response);
   const result = typeof payload?.result === "string" ? payload.result.trim() : "";
   if (response.ok && /successfully added manual invoice/i.test(result)) {
-    return { result, responseMetadata };
+    return { result: "Successfully added manual invoice", responseMetadata };
   }
-  const message = result || safeNatsMessage(payload) || `NATS rejected the invoice with HTTP ${response.status}.`;
+  const message = `NATS rejected the invoice with HTTP ${response.status}.`;
   if (response.status >= 400 && response.status < 500) {
     throw new NatsDefiniteRejectionError(message, responseMetadata);
   }
@@ -150,14 +150,8 @@ async function readNatsJson(response: Response): Promise<Record<string, unknown>
   }
 }
 
-function safeNatsMessage(payload: Record<string, unknown> | null) {
-  if (!payload) return null;
-  for (const key of ["error", "message"]) {
-    if (typeof payload[key] === "string") return String(payload[key]).slice(0, 500);
-  }
-  return null;
-}
-
-function safeError(error: unknown) {
-  return error instanceof Error ? error.message.slice(0, 300) : "network request failed";
+function safeNatsContentType(value: string | null) {
+  const type = value?.split(";", 1)[0].trim().toLowerCase();
+  return ["application/json", "application/problem+json", "text/plain", "text/html"].includes(type || "")
+    ? type : null;
 }

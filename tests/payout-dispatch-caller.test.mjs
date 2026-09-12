@@ -21,7 +21,7 @@ function harness(options={}){
   },
   async rpc(name,args){calls.push({kind:'rpc',name,args});
    const phase=name==='claim_dancer_payout_dispatch'?'claim':name==='mark_dancer_payout_processing'?(String(args.p_provider_reference_id).startsWith('mydancr-payout-')?'claim':'confirm'):name==='flag_dancer_payout_dispatch_review'?'review':'release';
-   if(options[phase+'Throw'])throw new Error('Synthetic '+phase+' transport failure');
+   if(options[phase+'Throw'])throw options[phase+'Failure'] ?? new Error('Synthetic '+phase+' transport failure');
    if(options[phase+'Error'])return {data:null,error:{code:'08006',message:'Synthetic '+phase+' failure'}};
    if(Object.hasOwn(options,phase+'Data'))return {data:options[phase+'Data'],error:null};
    try{
@@ -39,7 +39,7 @@ function harness(options={}){
  const service=module('../src/lib/dancr/finance-payout-processing.ts',{
   './finance-earning-lifecycle':{releasePendingDancerEarnings:async()=>{releasePending++;}},
   './payout-account-store':{getEffectivePayoutSettings:async()=>({payoutsEnabled:options.enabled!==false,payoutMode:'manual',paymentProvider:'stripe'}),getDancerPayoutAccount:async(_client,dancer,provider)=>{accounts++;assert.equal(dancer,payoutId(1));assert.equal(provider,'stripe');await options.accountWait?.();if(options.accountError)throw new Error('Synthetic account lookup failure');return Object.hasOwn(options,'account')?options.account:{payout_eligibility:'eligible',verification_status:'verified',provider_account_id:'acct_synthetic'};}},
-  './payout-provider':{getPayoutProvider:provider=>{assert.equal(provider,'stripe');return {initiatePayout:async input=>{transfers.push({...input});await options.transferWait?.();if(options.transferError)throw new Error('Synthetic provider response lost');return Object.hasOwn(options,'transferData')?options.transferData:{providerReferenceId:'tr_synthetic'};}};}},
+  './payout-provider':{getPayoutProvider:provider=>{assert.equal(provider,'stripe');return {initiatePayout:async input=>{transfers.push({...input});await options.transferWait?.();if(options.transferError)throw options.transferFailure ?? new Error('Synthetic provider response lost');return Object.hasOwn(options,'transferData')?options.transferData:{providerReferenceId:'tr_synthetic'};}};}},
   './nats':{getNatsRuntimeConfig:()=>({selected:options.nats===true})}
  });
  return {run:()=>service.processDancerPayouts(client),calls,transfers,counts:()=>({releasePending,accounts})};
@@ -111,3 +111,24 @@ for(const readData of [null,{},undefined])test('unconfirmed payout selection '+J
  const h=harness({readData});await assert.rejects(h.run());assert.deepEqual(h.transfers,[]);
 });
 test('payout selection failure prevents dispatch',async()=>{const h=harness({readError:true});await assert.rejects(h.run());assert.deepEqual(h.transfers,[]);});
+
+const privatePayoutDiagnostic = 'synthetic-payout-secret owner@example.invalid /srv/private/query.sql';
+for (const [kind, failure] of [
+  ['exception', () => new Error(privatePayoutDiagnostic)],
+  ['object', () => ({message:privatePayoutDiagnostic,code:'08006'})],
+  ['string', () => privatePayoutDiagnostic],
+]) for (const reviewThrow of [false,true]) {
+  test('stored payout diagnostic privacy: '+kind+' review failure '+reviewThrow, async () => {
+    const h=harness({transferError:true,transferFailure:failure(),reviewThrow,reviewFailure:failure()});
+    const result=await h.run();
+    assert.equal(result.created,0); assert.equal(result.failed,1);
+    assert.equal(result.errors.length,reviewThrow?2:1); assert.equal(h.transfers.length,1);
+    const review=h.calls.find(call=>call.name==='flag_dancer_payout_dispatch_review');
+    assert.equal(review.args.p_failure_message,'Payout processing could not be confirmed. Review the payout before retrying.');
+    const state=await assertReserved();
+    assert.equal(state.dancer_payout_batches[0].status,'processing');
+    assert.doesNotMatch(JSON.stringify({result,state}),/synthetic-payout-secret|owner@example|srv\/private|query\.sql/);
+    assert.ok(!rpcNames(h).includes('release_dancer_payout_batch'));
+    const retry=harness();await retry.run();assert.equal(retry.transfers.length,0);
+  });
+}

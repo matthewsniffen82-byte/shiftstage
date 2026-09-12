@@ -153,7 +153,7 @@ function safePositiveInteger(value: unknown, label: string) {
 }
 
 function financeError(error: unknown) {
-  if (error instanceof Error) return error.message.slice(0, 500);
-  if (error && typeof error === "object" && "message" in error) return String((error as any).message).slice(0, 500);
-  return "NATS commission export failed.";
+  return error instanceof NatsDefiniteRejectionError
+    ? "NATS rejected the commission export. Review the affiliate invoice before retrying."
+    : "NATS commission export outcome could not be confirmed. Verify the affiliate invoice in NATS before retrying.";
 }
