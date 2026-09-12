@@ -1,4 +1,5 @@
 import "server-only";
+import { withOpenAIRequestDeadline as withTimeout } from "../openai-request.ts";
 import { safeErrorMetadata } from "../security/safe-error-metadata";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
@@ -295,30 +296,47 @@ async function extractOptionalAudio(videoPath: string, workspace: string) {
 }
 
 async function transcribeAudio(openai: OpenAI, audioPath: string) {
-  const response = await withTimeout(
-    openai.audio.transcriptions.create({
-      file: createReadStream(audioPath),
-      model: VIDEO_TRANSCRIPTION_MODEL,
-      response_format: "json",
-    }),
-    OPENAI_TIMEOUT_MS,
-  );
-  return String(response.text || "").trim().slice(0, 4000);
+  const audioStream = createReadStream(audioPath);
+  try {
+    const response = await withTimeout(
+      (requestOptions) => openai.audio.transcriptions.create({
+        file: audioStream,
+        model: VIDEO_TRANSCRIPTION_MODEL,
+        response_format: "json",
+      }, requestOptions),
+      OPENAI_TIMEOUT_MS,
+      "Video moderation provider timed out.",
+    );
+    return String(response.text || "").trim().slice(0, 4000);
+  } finally {
+    // Multipart preparation can still be reading before the SDK starts fetch.
+    audioStream.destroy();
+  }
 }
 
 async function moderateFrames(openai: OpenAI, frames: Buffer[]) {
   const results = new Array<Awaited<ReturnType<typeof moderateFrame>>>(frames.length);
   let nextFrameIndex = 0;
+  let failed = false;
+  let failure: unknown;
   const workerCount = Math.min(FRAME_MODERATION_CONCURRENCY, frames.length);
 
-  await Promise.all(Array.from({ length: workerCount }, async () => {
-    while (nextFrameIndex < frames.length) {
+  await Promise.allSettled(Array.from({ length: workerCount }, async () => {
+    while (!failed && nextFrameIndex < frames.length) {
       const frameIndex = nextFrameIndex;
       nextFrameIndex += 1;
-      results[frameIndex] = await moderateFrame(openai, frames[frameIndex], frameIndex);
+      try {
+        results[frameIndex] = await moderateFrame(openai, frames[frameIndex], frameIndex);
+      } catch (error) {
+        if (!failed) failure = error;
+        failed = true;
+        throw error;
+      }
     }
   }));
 
+  // Do not hand cleanup back to the caller while sibling requests are active.
+  if (failed) throw failure;
   if (results.some((result) => !result)) {
     throw new Error("Video moderation returned an incomplete frame result.");
   }
@@ -328,7 +346,7 @@ async function moderateFrames(openai: OpenAI, frames: Buffer[]) {
 async function moderateFrame(openai: OpenAI, frame: Buffer, frameIndex: number) {
   return withVideoProviderRetry(async () => {
     const response = await withTimeout(
-      openai.moderations.create({
+      (requestOptions) => openai.moderations.create({
         model: DANCR_IMAGE_MODERATION_MODEL,
         input: [
           {
@@ -336,8 +354,9 @@ async function moderateFrame(openai: OpenAI, frame: Buffer, frameIndex: number) 
             image_url: { url: `data:image/jpeg;base64,${frame.toString("base64")}` },
           },
         ],
-      }),
+      }, requestOptions),
       FRAME_MODERATION_TIMEOUT_MS,
+      "Video moderation provider timed out.",
     );
     const result = response.results?.[0];
     if (!result) throw new Error("Video moderation returned an incomplete frame result.");
@@ -367,11 +386,12 @@ async function withVideoProviderRetry<T>(operation: () => Promise<T>, frameIndex
 
 async function moderateText(openai: OpenAI, text: string) {
   const response = await withTimeout(
-    openai.moderations.create({
+    (requestOptions) => openai.moderations.create({
       model: DANCR_IMAGE_MODERATION_MODEL,
       input: text,
-    }),
+    }, requestOptions),
     OPENAI_TIMEOUT_MS,
+    "Video moderation provider timed out.",
   );
   const result = response.results?.[0];
   if (!result) throw new Error("Video moderation returned an incomplete text result.");
@@ -404,7 +424,7 @@ async function classifyVideoPolicy(
   ];
 
   const response = await withTimeout(
-    openai.chat.completions.create({
+    (requestOptions) => openai.chat.completions.create({
       model: VIDEO_POLICY_MODEL,
       temperature: 0,
       max_completion_tokens: 500,
@@ -443,8 +463,9 @@ async function classifyVideoPolicy(
         },
         { role: "user", content },
       ],
-    } as any),
+    } as any, requestOptions),
     OPENAI_TIMEOUT_MS,
+    "Video moderation provider timed out.",
   );
   const raw = response.choices?.[0]?.message?.content;
   if (!raw) throw new Error("Video policy review returned no decision.");
@@ -516,13 +537,6 @@ function runFfmpeg(args: string[], options: { allowNoOutput?: boolean; captureSt
       }
       reject(new Error(`Video moderation decoding failed: ${stderr.slice(-600) || `exit ${code}`}`));
     });
-  });
-}
-
-function withTimeout<T>(promise: Promise<T>, timeoutMs: number) {
-  return new Promise<T>((resolve, reject) => {
-    const timer = setTimeout(() => reject(new Error("Video moderation provider timed out.")), timeoutMs);
-    promise.then(resolve, reject).finally(() => clearTimeout(timer));
   });
 }
 

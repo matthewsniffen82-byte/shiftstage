@@ -1,4 +1,5 @@
 import "server-only";
+import { withOpenAIRequestDeadline as withTimeout } from "../openai-request.ts";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createHash, randomUUID } from "crypto";
@@ -752,11 +753,12 @@ export async function moderateImageWithOpenAI(admin: DancrClient, tempPath: stri
 async function createModeration(openai: any, input: Array<{ type: "image_url"; image_url: { url: string } }>) {
   return withRetry<any>(() =>
     withTimeout(
-      openai.moderations.create({
+      (requestOptions) => openai.moderations.create({
         model: DANCR_IMAGE_MODERATION_MODEL,
         input,
-      }),
+      }, requestOptions),
       20000,
+      "provider_timeout",
     ),
   );
 }
@@ -766,11 +768,12 @@ async function runOpenAITextDiagnostic(openai: any) {
     openAITextDiagnosticPromise = (async () => {
       try {
         const testResponse: any = await withTimeout(
-          openai.moderations.create({
+          (requestOptions) => openai.moderations.create({
             model: DANCR_IMAGE_MODERATION_MODEL,
             input: "A normal profile photo",
-          }),
+          }, requestOptions),
           20000,
+          "provider_timeout",
         );
         console.log("OPENAI_TEXT_TEST", {
           success: true,
@@ -903,13 +906,6 @@ async function withRetry<T>(operation: () => Promise<T>) {
     }
   }
   throw lastError;
-}
-
-function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
-  return new Promise((resolve, reject) => {
-    const timer = setTimeout(() => reject(new Error("provider_timeout")), ms);
-    promise.then(resolve, reject).finally(() => clearTimeout(timer));
-  });
 }
 
 async function getOwnDancerProfile(client: DancrClient, userId: string) {

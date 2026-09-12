@@ -1,4 +1,5 @@
 import "server-only";
+import { withOpenAIRequestDeadline as withTimeout } from "../openai-request.ts";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createOpenAIClient } from "../openai-client";
@@ -75,7 +76,7 @@ export async function analyzeDancerMediaIdentity(input: {
   });
 
   const response = await withTimeout(
-    openai.responses.create({
+    (requestOptions) => openai.responses.create({
       model: DANCR_MEDIA_IDENTITY_MODEL,
       store: false,
       temperature: 0,
@@ -104,8 +105,9 @@ export async function analyzeDancerMediaIdentity(input: {
           },
         },
       },
-    }),
+    }, requestOptions),
     MEDIA_IDENTITY_TIMEOUT_MS,
+    "Dancer media identity review timed out.",
   );
   if (!response.output_text) {
     throw new Error("Dancer media identity review returned an incomplete response.");
@@ -127,14 +129,4 @@ export async function loadApprovedDancerIdentityReference(
     .download(normalizedPath);
   if (error || !data) throw new DancerIdentityReferenceRequiredError();
   return Buffer.from(await data.arrayBuffer());
-}
-
-function withTimeout<T>(promise: Promise<T>, milliseconds: number): Promise<T> {
-  return new Promise((resolve, reject) => {
-    const timer = setTimeout(
-      () => reject(new Error("Dancer media identity review timed out.")),
-      milliseconds,
-    );
-    promise.then(resolve, reject).finally(() => clearTimeout(timer));
-  });
 }

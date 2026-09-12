@@ -4,6 +4,7 @@ import test from 'node:test';
 import vm from 'node:vm';
 import {createHmac} from 'node:crypto';
 import ts from 'typescript';
+import {withOpenAIRequestDeadline} from '../src/lib/openai-request.ts';
 
 const root = new URL('../', import.meta.url);
 function source(file) { return readFileSync(new URL(file, root), 'utf8'); }
@@ -12,7 +13,8 @@ function load(file, {internals=[],dependencies={},globals={}}={}) {
   const code=source(file)+'\n'+internals.map(name=>'exports.'+name+' = '+name+';').join('\n');
   vm.runInNewContext(ts.transpileModule(code, {compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText, {
     exports,Error,Headers,Date,URL,AbortController,Map,process:{env:{}},
-    require:name=>Object.hasOwn(dependencies,name)?dependencies[name]:{},...globals,
+    require:name=>Object.hasOwn(dependencies,name)?dependencies[name]
+      :name==='../openai-request.ts'?{withOpenAIRequestDeadline}:{},...globals,
   });
   return exports;
 }
