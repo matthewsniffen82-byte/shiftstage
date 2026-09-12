@@ -6,6 +6,7 @@ import vm from "node:vm";
 import ts from "typescript";
 import { PublicApiError, resolveApiError } from "../src/lib/api-error-policy.ts";
 import { requestRoleFixture } from "./helpers/request-role-fixture.mjs";
+import * as serverJobs from "../src/lib/server-job.ts";
 const require = createRequire(import.meta.url);
 function request(path="/api/dancer/profile", refresh=false, method="GET") {
   return new Request("https://mydancr.com"+path+"?userId=other-user&role=admin", {
@@ -66,8 +67,9 @@ for (const file of routeFiles) {
         if(/^is[A-Z].*Error$/.test(String(name)))return ()=>false;
         return class { constructor(){ sideEffects.push(String(name)); throw new Error("Privileged work must not run"); } };
       }});
-      vm.runInNewContext(code,{exports,Request,Response,URL,Blob,Buffer,console:{log(){},warn(){},error(){}},require(name){
+      vm.runInNewContext(code,{exports,Request,Response,URL,Blob,Buffer,performance,console:{log(){},warn(){},error(){}},require(name){
         if(name==="next/server")return require(name);
+        if(name==="@/src/lib/server-job")return serverJobs;
         if(name==="@/src/lib/supabase/request")return {createRequestSupabaseContext:auth.createContext};
         if(name==="@/src/lib/api")return {PublicApiError,apiError(error,fallback,status){
           const r=resolveApiError(error,fallback,status);return require("next/server").NextResponse.json(r.body,{status:r.status});

@@ -113,7 +113,7 @@ test("photo uploads count people and compare against the approved avatar", () =>
   assert.match(identitySource, /Do not identify or name anyone/);
   assert.match(identitySource, /store: false/);
   assert.match(identitySource, /DANCER_IDENTITY_REFERENCE_BUCKET = "dancer-photos"/);
-  assert.match(imageModeration, /\.select\("id, avatar_storage_path"\)/);
+  assert.match(imageModeration, /\.select\("id, avatar_storage_path, avatar_updated_at"\)/);
   assert.match(imageModeration, /loadApprovedDancerIdentityReference/);
   assert.match(
     imageModeration,

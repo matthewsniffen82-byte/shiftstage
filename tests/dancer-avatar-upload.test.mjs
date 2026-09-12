@@ -38,14 +38,14 @@ test("dancer avatars are separate approved profile assets outside gallery slots"
 });
 
 test("approved avatar replacement preserves the current live image until moderation succeeds", () => {
-  assert.match(moderation, /previousAvatarPath = await setApprovedDancerAvatar/);
-  assert.match(moderation, /await updateModerationRecord[\s\S]*?decision: "approved"/);
-  assert.match(moderation, /if \(previousAvatarPath && previousAvatarPath !== finalPath\)[\s\S]*?tryRetireGalleryStorageFiles/);
-  assert.doesNotMatch(moderation, /restoreDancerAvatar|avatarWasSwitched/);
-  assert.match(moderation, /update\.eq\("avatar_storage_path", previousValue\)/);
+  assert.match(moderation, /createDancerAvatarReview\(admin/);
+  assert.match(moderation, /const published = await publishDancerAvatar\(admin/);
+  assert.match(moderation, /published\.previousStoragePath[\s\S]*?tryRetireGalleryStorageFiles/);
+  assert.doesNotMatch(moderation, /setApprovedDancerAvatar|restoreDancerAvatar|avatarWasSwitched/);
   assert.match(adminModeration, /const isAvatar = isProfileAvatarUploadContext\(record\.upload_context\)/);
-  assert.match(adminModeration, /setApprovedDancerAvatar\(admin, profile\.id, finalPath\)/);
-  assert.doesNotMatch(adminModeration, /restoreDancerAvatar/);
+  assert.match(adminModeration, /publishDancerAvatar\(admin/);
+  assert.match(adminModeration, /legacyExpected: profile/);
+  assert.doesNotMatch(adminModeration, /setApprovedDancerAvatar|restoreDancerAvatar/);
   assert.match(adminModeration, /IMAGE_MODERATION_PUBLICATION_UNCONFIRMED/);
 });
 

@@ -15,10 +15,10 @@ function load(path,dependencies={}){
   require(name){if(Object.hasOwn(dependencies,name))return dependencies[name];return new Proxy({},{get(_t,key){if(key==='__esModule')return false;return()=>assert.fail('Unexpected dependency '+name+'.'+String(key));}});},
  });return exports;
 }
-function clients({ownerError,missing=false,stopPrivate}={}){
+function clients({ownerError,missing=false,stopPrivate,profileFields='id'}={}){
  const ownerCalls=[],privateCalls=[];
  const server={from(table){assert.equal(table,'dancer_profiles','Only the own-profile lookup may use the server');const call={table,methods:[]};ownerCalls.push(call);const q={
-  select(fields){assert.equal(fields,'id');call.methods.push(['select',fields]);return q;},
+  select(fields){assert.equal(fields,profileFields);call.methods.push(['select',fields]);return q;},
   eq(field,value){assert.equal(field,'user_id');assert.equal(value,owner);call.methods.push(['eq',field,value]);return q;},
   async maybeSingle(){return {data:missing?null:{id:dancer},error:ownerError||null};},
  };return q;}};
@@ -45,7 +45,7 @@ for(const name of [...readers,'getDancerDealMetrics']){
  });
 }
 for(const name of ['deleteOwnDancerPhoto','deleteOwnDancerAvatar'])test(name+' resolves the private owner before any media access',async()=>{
- const h=clients({missing:true});const args=name==='deleteOwnDancerPhoto'?[h.request,owner,'synthetic-photo',h.server]:[h.request,owner,h.server];
+ const h=clients({missing:true,profileFields:name==='deleteOwnDancerAvatar'?'id, avatar_storage_path, avatar_updated_at':'id'});const args=name==='deleteOwnDancerPhoto'?[h.request,owner,'synthetic-photo',h.server]:[h.request,owner,h.server];
  await assert.rejects(library[name](...args),/profile not found/);assert.equal(h.ownerCalls.length,1);assert.equal(h.privateCalls.length,0);
 });
 const routes=[['analytics',readers[0]],['weekly-report',readers[1]],['ranking-events',readers[2]],['reviews',readers[3]]];

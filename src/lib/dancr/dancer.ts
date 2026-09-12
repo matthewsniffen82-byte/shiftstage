@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { ACTIVE_IMAGE_MODERATION_STATUSES } from "./image-moderation-status";
 import { PROFILE_AVATAR_CONTEXT } from "./photo-slot";
+import { clearDancerAvatar, isOwnedAvatarMediaPath } from "./avatar-publication";
 import { tryRetireGalleryStorageFiles } from "./gallery-storage-retirement";
 import type { ApprovalReview, DancerDashboardAnalytics, DancerWeeklyReport, SocialPlatform } from "./types";
 import { PublicApiError } from "../api-error-policy";
@@ -151,66 +152,24 @@ export async function deleteOwnDancerAvatar(
   userId: string,
   adminClient: DancrClient = client,
 ) {
-  const profile = await getOwnDancerProfile(adminClient, userId);
-  const { data: currentProfile, error: profileError } = await adminClient
-    .from("dancer_profiles")
-    .select("avatar_storage_path")
-    .eq("id", profile.id)
-    .maybeSingle();
-  if (profileError) throw profileError;
-  if (!currentProfile) throw new Error("Dancer profile not found.");
-
-  const { data: moderationRecords, error: moderationError } = await (adminClient as any)
-    .from("image_moderation_records")
-    .select("id, temporary_storage_path, final_storage_path")
-    .eq("user_id", userId)
-    .eq("upload_context", PROFILE_AVATAR_CONTEXT);
-  if (moderationError) throw moderationError;
-
-  const recordIds = (moderationRecords || []).map((record: any) => String(record.id || "")).filter(Boolean);
-  if (recordIds.length) {
-    const { error: deleteError } = await (adminClient as any)
-      .from("image_moderation_records")
-      .delete()
-      .eq("user_id", userId)
-      .in("id", recordIds);
-    if (deleteError) throw deleteError;
-  }
-
-  const { error: updateError } = await adminClient
-    .from("dancer_profiles")
-    .update({
-      avatar_storage_path: null,
-      avatar_updated_at: new Date().toISOString(),
-    })
-    .eq("id", profile.id);
-  if (updateError) throw updateError;
-
-  const temporaryPaths: string[] = [...new Set<string>((moderationRecords || [])
-    .map((record: any) => String(record.temporary_storage_path || "").trim())
-    .filter(Boolean))];
+  const { data: profile, error } = await adminClient.from("dancer_profiles")
+    .select("id, avatar_storage_path, avatar_updated_at").eq("user_id", userId).maybeSingle();
+  if (error) throw error;
+  if (!profile) throw new Error("Dancer profile not found.");
+  const owner = { userId, profileId: profile.id };
+  const deleted = await clearDancerAvatar(adminClient, { ...owner, expected: profile });
+  const recordIds = deleted.records.map(record => record.id);
+  const temporaryPaths = [...new Set(deleted.records.map(record => record.temporary_storage_path)
+    .filter((path): path is string => isOwnedAvatarMediaPath(path, owner)))];
   if (temporaryPaths.length) {
     await adminClient.storage.from("dancr-image-moderation-temp").remove(temporaryPaths).catch(() => null);
     await adminClient.storage.from("dancr-image-moderation-review").remove(temporaryPaths).catch(() => null);
   }
-
-  const currentPath = String((currentProfile as any).avatar_storage_path || "").trim();
-  const approvedPaths: string[] = [...new Set<string>([
-    currentPath,
-    ...(moderationRecords || []).map((record: any) => String(record.final_storage_path || "").trim()),
-  ].filter(Boolean))];
-  await Promise.all(approvedPaths.map((storagePath) =>
-    tryRetireGalleryStorageFiles(adminClient, profile.id, storagePath),
-  ));
-
-  console.info(JSON.stringify({
-    event: "dancer.avatar_deleted",
-    clearedModerationRecords: recordIds.length,
-  }));
-  return {
-    deleted: Boolean(currentPath || recordIds.length),
-    moderationRecordIds: recordIds,
-  };
+  const approvedPaths = [...new Set([deleted.previousStoragePath, ...deleted.records.map(record => record.final_storage_path)]
+    .filter((path): path is string => isOwnedAvatarMediaPath(path, owner)))];
+  await Promise.all(approvedPaths.map(path => tryRetireGalleryStorageFiles(adminClient, profile.id, path)));
+  console.info(JSON.stringify({ event: "dancer.avatar_deleted", clearedModerationRecords: recordIds.length }));
+  return { deleted: Boolean(deleted.previousStoragePath || recordIds.length), moderationRecordIds: recordIds };
 }
 
 async function deleteLinkedModerationRecords(

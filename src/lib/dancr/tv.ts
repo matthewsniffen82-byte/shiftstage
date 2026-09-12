@@ -33,6 +33,7 @@ import { inspectStoredMyDancrTvVideo } from "./video-upload-validation";
 import { safeErrorMetadata } from "../security/safe-error-metadata";
 import { getManagedVideoMetricCounts } from "./tv-metric-counts";
 import { PublicApiError } from "../api-error-policy";
+import { assertServerJobActive, runWithServerJob } from "../server-job.ts";
 
 export const MYDANCR_TV_BUCKET = "mydancr-tv-videos";
 export const MYDANCR_TV_MAX_BYTES = 75 * 1024 * 1024;
@@ -1349,6 +1350,7 @@ async function autoApproveMyDancrTvDemoUpload(
   submittedAt: string,
   expectedStatus: "uploading" | "moderating",
 ) {
+  return runWithServerJob(async () => {
   if (!isDancerMediaOnboardingEligible(one(video.dancer_profiles))) {
     throw new Error("The dancer profile is not eligible for media onboarding.");
   }
@@ -1375,6 +1377,7 @@ async function autoApproveMyDancrTvDemoUpload(
     }));
   }
 
+  assertServerJobActive();
   const update = admin
     .from("mydancr_tv_videos")
     .update(demoVideoAutoApprovalValues({
@@ -1394,6 +1397,7 @@ async function autoApproveMyDancrTvDemoUpload(
     watermarkApplied,
   }));
   return completed;
+  });
 }
 
 function videoWorkerUnavailable() {
@@ -1472,6 +1476,7 @@ function videoWorkerOutcome(data: any, error: unknown, videoId: string, expected
 }
 
 async function finalizeMyDancrTvAutomatedModeration(admin: AdminClient, video: any) {
+  return runWithServerJob(async () => {
   if (!videoWorkerState(video).workerId) throw videoWorkerUnavailable();
   let moderation: MyDancrTvModerationResult;
   try {
@@ -1485,6 +1490,7 @@ async function finalizeMyDancrTvAutomatedModeration(admin: AdminClient, video: a
       ),
     });
   } catch (error) {
+    assertServerJobActive();
     const completedAt = new Date().toISOString();
     const errorCode = videoModerationErrorCode(error);
     const identityReferenceMissing = isDancerIdentityReferenceRequiredError(error);
@@ -1516,6 +1522,7 @@ async function finalizeMyDancrTvAutomatedModeration(admin: AdminClient, video: a
     return videoWorkerOutcome(data, updateError, video.id, identityReferenceMissing ? "rejected" : "submitted");
   }
 
+  assertServerJobActive();
   let decision = moderation.decision;
   let reasonCodes = moderation.reasonCodes;
   let posterStoragePath: string | null = null;
@@ -1585,6 +1592,7 @@ async function finalizeMyDancrTvAutomatedModeration(admin: AdminClient, video: a
             venue_featured: false,
           }),
   };
+  assertServerJobActive();
   const query = admin
     .from("mydancr_tv_videos")
     .update(update);
@@ -1601,6 +1609,7 @@ async function finalizeMyDancrTvAutomatedModeration(admin: AdminClient, video: a
     reasonCodes,
   }));
   return completed;
+  });
 }
 
 function myDancrTvExpiry() {
@@ -1746,6 +1755,7 @@ export async function reviewMyDancrTvVideo(
   decision: "approved" | "rejected",
   notes: string,
 ) {
+  return runWithServerJob(async () => {
   const { data: video, error } = await admin
     .from("mydancr_tv_videos")
     .select(`id, status, storage_path, storage_mime, duration_seconds, width, height, moderation_details, dancer_profiles(stage_name, city, status, verification_status${IDENTITY_PROFILE_FIELDS}, photo_review_status, approved_at, disabled_at, is_public)`)
@@ -1801,6 +1811,7 @@ export async function reviewMyDancrTvVideo(
         venue_featured: false,
       };
 
+  assertServerJobActive();
   const { data: updated, error: updateError } = await admin
     .from("mydancr_tv_videos")
     .update(update)
@@ -1812,6 +1823,7 @@ export async function reviewMyDancrTvVideo(
 
   console.info(JSON.stringify({ event: "mydancr_tv.admin_decision", videoId, decision, adminId }));
   return updated;
+  });
 }
 
 export async function getVenueMyDancrTvVideos(admin: AdminClient, ownerUserId: string) {

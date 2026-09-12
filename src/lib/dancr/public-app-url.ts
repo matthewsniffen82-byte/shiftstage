@@ -4,6 +4,7 @@ type PublicAppEnvironment = Record<string, string | undefined>;
 
 const MYDANCR_HOSTS = new Set(["mydancr.com", "www.mydancr.com"]);
 const LOCAL_DEVELOPMENT_HOSTS = new Set(["localhost", "127.0.0.1", "[::1]", "::1"]);
+const PRODUCTION_SUPABASE_REF = "hfmzwadzabmgxkjzmqun";
 
 export function publicAppUrl(environment: PublicAppEnvironment = process.env) {
   const configured = (
@@ -13,6 +14,10 @@ export function publicAppUrl(environment: PublicAppEnvironment = process.env) {
     || environment.APP_URL
     || ""
   ).trim();
+
+  if (environment.DANCR_ISOLATED_SUPABASE_REF !== undefined) {
+    return isolatedAppUrl(environment, configured);
+  }
 
   if (!configured) return MYDANCR_PUBLIC_APP_URL;
 
@@ -28,4 +33,25 @@ export function publicAppUrl(environment: PublicAppEnvironment = process.env) {
   }
 
   return MYDANCR_PUBLIC_APP_URL;
+}
+
+function isolatedAppUrl(environment: PublicAppEnvironment, configured: string) {
+  const ref = environment.DANCR_ISOLATED_SUPABASE_REF || "";
+  const projectDomain = environment.VERCEL_PROJECT_PRODUCTION_URL || "";
+  const validProjectDomain = /^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.vercel\.app$/.test(projectDomain);
+
+  if (
+    environment.VERCEL !== "1"
+    || !/^[a-z]{20}$/.test(ref)
+    || ref === PRODUCTION_SUPABASE_REF
+    || environment.NEXT_PUBLIC_SUPABASE_URL !== `https://${ref}.supabase.co`
+    || !validProjectDomain
+    || projectDomain === "shiftstage.vercel.app"
+    || (configured !== `https://${projectDomain}` && configured !== `https://${projectDomain}/`)
+  ) {
+    // A broken rehearsal configuration must never send its account links to production.
+    throw new Error("Invalid isolated application configuration.");
+  }
+
+  return `https://${projectDomain}`;
 }

@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { spawn } from "child_process";
+import { runMediaProcess } from "./media-process.ts";
+import { assertServerJobActive } from "../server-job.ts";
 import { mkdtemp, readFile, rm, writeFile } from "fs/promises";
 import { tmpdir } from "os";
 import path from "path";
@@ -151,6 +152,7 @@ export async function archiveOriginalMedia(
 ) {
   const archivePath = archivedOriginalStoragePath(publicBucket, publicStoragePath);
   const archiveBucket = originalArchiveBucket(publicBucket);
+  assertServerJobActive();
   const { data, error } = await client.storage
     .from(archiveBucket)
     .upload(archivePath, buffer, {
@@ -255,6 +257,7 @@ export async function watermarkStoredVideo(
     if (!watermarked.length) throw new Error("The public video watermark could not be generated.");
     const posterStoragePath = myDancrTvPosterStoragePath(input.storagePath);
     const poster = await createDancrVideoPoster(watermarked, input.storageMime);
+    assertServerJobActive();
     const { data: uploaded, error } = await client.storage
       .from(input.publicBucket)
       .upload(input.storagePath, watermarked, {
@@ -264,6 +267,7 @@ export async function watermarkStoredVideo(
       });
     if (error) throw error;
     requireStorageUploadReceipt(uploaded, input.publicBucket, input.storagePath);
+    assertServerJobActive();
     const { data: posterUploaded, error: posterError } = await client.storage
       .from(MYDANCR_TV_POSTER_BUCKET)
       .upload(posterStoragePath, poster, {
@@ -338,8 +342,7 @@ export async function createDancrVideoPoster(
 async function runVideoPosterFfmpeg(sourcePath: string, framePath: string) {
   const executable = ffmpegPath;
   if (!executable) throw new Error("The video preview encoder is unavailable.");
-  await new Promise<void>((resolve, reject) => {
-    const child = spawn(executable, [
+  await runMediaProcess(executable, [
       "-y",
       ...LOCAL_VIDEO_INPUT_OPTIONS,
       "-hide_banner",
@@ -356,29 +359,9 @@ async function runVideoPosterFfmpeg(sourcePath: string, framePath: string) {
       "-an",
       framePath,
     ], {
-      windowsHide: true,
-      stdio: ["ignore", "ignore", "pipe"],
-    });
-    let stderr = "";
-    let settled = false;
-    const finish = (callback: () => void) => {
-      if (settled) return;
-      settled = true;
-      clearTimeout(timer);
-      callback();
-    };
-    const timer = setTimeout(() => {
-      child.kill();
-      finish(() => reject(new Error("The video preview encoder timed out.")));
-    }, VIDEO_POSTER_TIMEOUT_MS);
-    child.stderr?.on("data", (chunk) => {
-      stderr = `${stderr}${String(chunk)}`.slice(-4000);
-    });
-    child.once("error", (error) => finish(() => reject(error)));
-    child.once("close", (code) => finish(() => {
-      if (code === 0) resolve();
-      else reject(new Error(`The video preview encoder failed: ${stderr.slice(-700) || `exit ${code}`}`));
-    }));
+      timeoutMs: VIDEO_POSTER_TIMEOUT_MS,
+      timeoutMessage: "The video preview encoder timed out.",
+      failureMessage: "The video preview encoder failed",
   });
 }
 
@@ -405,8 +388,7 @@ async function runVideoWatermarkFfmpeg(input: {
   const codecArgs = input.storageMime === "video/webm"
     ? ["-c:v", "libvpx-vp9", "-crf", "24", "-b:v", "0", "-c:a", "libopus"]
     : ["-c:v", "libx264", "-preset", "veryfast", "-crf", "20", "-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", "128k", "-movflags", "+faststart"];
-  await new Promise<void>((resolve, reject) => {
-    const child = spawn(executable, [
+  await runMediaProcess(executable, [
       "-y",
       ...LOCAL_VIDEO_INPUT_OPTIONS,
       "-hide_banner",
@@ -425,29 +407,9 @@ async function runVideoWatermarkFfmpeg(input: {
       ...codecArgs,
       input.resultPath,
     ], {
-      windowsHide: true,
-      stdio: ["ignore", "ignore", "pipe"],
-    });
-    let stderr = "";
-    let settled = false;
-    const finish = (callback: () => void) => {
-      if (settled) return;
-      settled = true;
-      clearTimeout(timer);
-      callback();
-    };
-    const timer = setTimeout(() => {
-      child.kill();
-      finish(() => reject(new Error("The public video watermark encoder timed out.")));
-    }, VIDEO_WATERMARK_TIMEOUT_MS);
-    child.stderr?.on("data", (chunk) => {
-      stderr = `${stderr}${String(chunk)}`.slice(-4000);
-    });
-    child.once("error", (error) => finish(() => reject(error)));
-    child.once("close", (code) => finish(() => {
-      if (code === 0) resolve();
-      else reject(new Error(`The public video watermark encoder failed: ${stderr.slice(-700) || `exit ${code}`}`));
-    }));
+      timeoutMs: VIDEO_WATERMARK_TIMEOUT_MS,
+      timeoutMessage: "The public video watermark encoder timed out.",
+      failureMessage: "The public video watermark encoder failed",
   });
 }
 

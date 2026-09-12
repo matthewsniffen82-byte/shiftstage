@@ -1,5 +1,7 @@
 # Consolidated architecture and stability closeout
 
+The user subsequently authorized execution of the deferred work in one combined release. See [the follow-up](deferred-architecture-followup.md) for the new implementation and evidence. The dated findings below describe this earlier closeout.
+
 Reviewed on `72d32f5bd04dbc0c09a9cb1f62a6e635158c343f`.
 
 This parent includes the separately verified Security 29 and consolidated

@@ -13,6 +13,7 @@ import {
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
 import { safeErrorMetadata } from "@/src/lib/security/safe-error-metadata";
+import { runWithServerJob } from "@/src/lib/server-job";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -24,6 +25,7 @@ type RouteProps = {
 };
 
 export async function PATCH(request: Request, { params }: RouteProps) {
+  const startedAt = performance.now();
   try {
     const { id } = await params;
     if (!UUID_PATTERN.test(id)) {
@@ -53,7 +55,12 @@ export async function PATCH(request: Request, { params }: RouteProps) {
     if (!("submissionAlreadyAccepted" in video) || video.submissionAlreadyAccepted !== true) {
       after(async () => {
         try {
-          await retryMyDancrTvAutomatedModeration(createAdminSupabaseClient(), video.id);
+          const remainingMs = Math.floor(50_000 - (performance.now() - startedAt));
+          if (remainingMs <= 0) return;
+          await runWithServerJob(
+            () => retryMyDancrTvAutomatedModeration(createAdminSupabaseClient(), video.id),
+            remainingMs,
+          );
         } catch (error) {
           console.error(JSON.stringify({
             event: "mydancr_tv.background_moderation_failed",

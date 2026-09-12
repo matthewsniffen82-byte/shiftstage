@@ -55,3 +55,28 @@ for (const origin of ["https://www.mydancr.com", "https://mydancr.com", "https:/
     assert.equal(emailContext.safeEmailRedirectTo(input), input);
   });
 }
+
+
+for (const configuredOrigin of ["https://dancr-recovery-example.vercel.app", "http://localhost:3000"]) {
+  const isolatedContext = { URL, publicAppUrl: () => configuredOrigin };
+  vm.runInNewContext(ts.transpileModule(functions.map(node => node.getText(parsed)).join("\n"), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText, isolatedContext);
+  const isolatedFallback = `${configuredOrigin}/auth/callback`;
+
+  test(`account email callbacks stay within their isolated or local site: ${configuredOrigin}`, () => {
+    const ownCallback = `${isolatedFallback}?dancr_reset=1&role=dancer&return_to=%2Fdashboard%2Fdancer`;
+    assert.equal(isolatedContext.safeEmailRedirectTo(ownCallback), ownCallback);
+    assert.equal(isolatedContext.safeEmailRedirectTo(undefined), isolatedFallback);
+    for (const otherOrigin of ["https://www.mydancr.com", "https://mydancr.com", "https://shiftstage.vercel.app", "https://another-rehearsal.vercel.app"]) {
+      assert.equal(isolatedContext.safeEmailRedirectTo(`${otherOrigin}/auth/callback?dancr_reset=1`), isolatedFallback);
+    }
+  });
+}
+
+test("an invalid isolated deployment never falls back to a live account email callback", () => {
+  const invalidContext = {
+    URL,
+    publicAppUrl: () => publicAppUrl({ DANCR_ISOLATED_SUPABASE_REF: "" }),
+  };
+  vm.runInNewContext(ts.transpileModule(functions.map(node => node.getText(parsed)).join("\n"), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText, invalidContext);
+  assert.throws(() => invalidContext.safeEmailRedirectTo("https://www.mydancr.com/auth/callback"), /Invalid isolated application configuration/);
+});

@@ -4,11 +4,12 @@ import vm from 'node:vm';
 import test from 'node:test';
 import ts from 'typescript';
 import {createClient} from '@supabase/supabase-js';
+import * as serverJobs from '../src/lib/server-job.ts';
 
 function loadModule(name,dependencies){
  const source=readFileSync(new URL('../src/lib/supabase/'+name,import.meta.url),'utf8'),exports={};
  vm.runInNewContext(ts.transpileModule(source,{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText,
-  {exports,require:specifier=>{if(specifier==='server-only')return {};assert.ok(specifier in dependencies,'Unexpected dependency');return dependencies[specifier];},Buffer,URL,Error});
+  {exports,require:specifier=>{if(specifier==='server-only')return {};if(specifier==='../server-job.ts')return serverJobs;assert.ok(specifier in dependencies,'Unexpected dependency');return dependencies[specifier];},Buffer,URL,Error});
  return exports;
 }
 

@@ -3,7 +3,7 @@ import { withOpenAIRequestDeadline as withTimeout } from "../openai-request.ts";
 import { safeErrorMetadata } from "../security/safe-error-metadata";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { spawn } from "node:child_process";
+import { runMediaProcess } from "./media-process.ts";
 import { createReadStream } from "node:fs";
 import { mkdtemp, readFile, readdir, rm, stat, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -508,35 +508,11 @@ function uniqueReasonCodes(reasons: string[]) {
 function runFfmpeg(args: string[], options: { allowNoOutput?: boolean; captureStdout?: boolean } = {}) {
   const executable = ffmpegPath;
   if (!executable) return Promise.reject(new Error("Video moderation decoder is unavailable."));
-  return new Promise<{ stdout: string; stderr: string }>((resolve, reject) => {
-    const child = spawn(executable, ["-y", ...LOCAL_VIDEO_INPUT_OPTIONS, ...args], {
-      windowsHide: true,
-      stdio: ["ignore", options.captureStdout ? "pipe" : "ignore", "pipe"],
-    });
-    let stdout = "";
-    let stderr = "";
-    const timer = setTimeout(() => {
-      child.kill();
-      reject(new Error("Video moderation decoding timed out."));
-    }, FFMPEG_TIMEOUT_MS);
-    child.stderr?.on("data", (chunk) => {
-      stderr = `${stderr}${String(chunk)}`.slice(-4000);
-    });
-    child.stdout?.on("data", (chunk) => {
-      stdout = `${stdout}${String(chunk)}`.slice(-8000);
-    });
-    child.once("error", (error) => {
-      clearTimeout(timer);
-      reject(error);
-    });
-    child.once("close", (code) => {
-      clearTimeout(timer);
-      if (code === 0 || options.allowNoOutput) {
-        resolve({ stdout, stderr });
-        return;
-      }
-      reject(new Error(`Video moderation decoding failed: ${stderr.slice(-600) || `exit ${code}`}`));
-    });
+  return runMediaProcess(executable, ["-y", ...LOCAL_VIDEO_INPUT_OPTIONS, ...args], {
+    ...options,
+    timeoutMs: FFMPEG_TIMEOUT_MS,
+    timeoutMessage: "Video moderation decoding timed out.",
+    failureMessage: "Video moderation decoding failed",
   });
 }
 

@@ -50,9 +50,9 @@ Step 1 delivered as `50d4eb543dbfc93dbed6f0663c51aa2332542cb4`, pushed to origin
 | 27 | Profile / location safety | Delivered and healthy: 0e8e9b54e885a4d008bd4345199681402687ffc5 |
 | 28 | Scraping resilience | Delivered and healthy: 32d77f5cf2c48ede662ba5e943433b77a8361349 |
 | 29 | Resource abuse / DoS | Delivered and healthy: 8e01369bda91831d0f3952062082b21f67899a0d |
-| 30 | Security regression coverage | All 9,086 tests/eight isolated gates passed; configured integration and exact deployment pending |
-| 31 | Defensive validation | Not started |
-| 32 | Final report | Not started |
+| 30 | Security regression coverage | Delivered and healthy: ab90b36f78cf589b2a89711498d920d0ed19b079 |
+| 31 | Defensive validation | Avatar correction prepared for the user-authorized combined release; validation and deployment pending |
+| 32 | Final report | Consolidated report prepared; shares Step 31 integration and final verification |
 
 ## Evidence and constraints
 
@@ -619,3 +619,10 @@ See `step-30-regression-coverage.md` for the video worker claim/result race and 
 The candidate is rebased to independently closed architecture commit `d401d4d88ba212f8689e42fc80e8432ef2685b3d`. Fresh hosted metadata found one missing copyright ownership trigger in the historical native fixture; the fixture now executes its exact committed source and preserves synthetic enforcement records. The corrected comparison again passed all 100 focused cases, while the prior code failed 41 of 50 new cases. All four video triggers and twelve relevant column identities match production; server-only update/private-details permissions remain intact. Both zero-row server claim-query checks passed without application writes or private-row retrieval.
 
 The full isolated gate completed at 2026-09-12T19:16:45.983Z: **9,086 tests**, no failures, skips or cancellations, all eight canonical gates, standalone TypeScript, zero-warning lint, production build and artifact inspection. Seven task files are included. Configured production build inspection, exact commit/push/Vercel success and independent health/source/user-file verification remain required before Step 31. No SQL is proposed or applied by Step 30.
+
+
+## Step 30 closure and combined remaining delivery
+
+Step 30 closed at 2026-09-12T19:27:12.523Z as ab90b36f78cf589b2a89711498d920d0ed19b079, after exact Vercel success D9tTBXCqjRFf1oSKL3PnsNq7Exaf. All 9,086 tests and eight canonical gates passed, with configured artifact inspection, postbuild TypeScript, eight health checks, 58 readiness checks and four public projections. Local/tracking/actual remote main matched and both user screenshots were preserved. No SQL was applied; 172 source-manifest entries and 130 provider-ledger entries remained unchanged. The receipt is D:/Codex/MyDancr-security-delivery-2026-09-12/step-30/delivery.json.
+
+The user's subsequent request for one combined outstanding release supersedes separate-release sequencing for Steps 31 and 32. The avatar correction and final report are prepared externally alongside the architecture/recovery exercises. Final combined validation, committed-source SQL proof, push and exact Vercel verification remain required. See step-31-avatar-validation.md and step-32-final-report.md.

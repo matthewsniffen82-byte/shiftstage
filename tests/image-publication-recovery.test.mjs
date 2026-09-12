@@ -1,10 +1,12 @@
 import { loadGalleryGateway } from './helpers/gallery-publication-fixture.mjs';
 import assert from 'node:assert/strict';
+import * as serverJobs from '../src/lib/server-job.ts';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
 import vm from 'node:vm';
 import ts from 'typescript';
-import { PGlite } from '@electric-sql/pglite';
+import {loadAvatarGateway} from './helpers/avatar-publication-fixture.mjs';
+import {createAvatarDatabase,seedAvatarDatabase,avatarDatabaseClient,readAvatarProfile,putAvatarObject,avatarUser,avatarProfile,avatarTemp} from './helpers/avatar-publication-database.mjs';
 import { PublicApiError } from '../src/lib/api-error-policy.ts';
 
 const source = readFileSync(new URL('../src/lib/dancr/image-moderation.ts', import.meta.url), 'utf8');
@@ -15,7 +17,7 @@ function loadModule(code, names, dependencies) {
   vm.runInNewContext(ts.transpileModule(`${code}\nexport const fixture = { ${names} };`, {
     compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
   }).outputText, {
-    exports, require: () => dependencies, Buffer, setTimeout, clearTimeout,
+    exports, require: () => ({ ...serverJobs, ...dependencies }), Buffer, setTimeout, clearTimeout,
     console: { log() {}, info() {}, warn() {}, error() {} },
   });
   return exports.fixture;
@@ -24,13 +26,23 @@ function loadModule(code, names, dependencies) {
 function scenario({ failTable, failOperation, failAfterCommit = true, diagnosticFailure = false, recoveryFailure = false, rejectionAfterFailure = false, avatar = false, primary = false, existingPhoto = false } = {}) {
   const assets = new Set(['old', 'new', 'temp']);
   const rows = {
-    dancer_profiles: [{ id: 'profile', user_id: 'owner', avatar_storage_path: 'old' }],
+    dancer_profiles: [{ id: 'profile', user_id: 'owner', avatar_storage_path: 'old', avatar_updated_at: '2020-01-01T00:00:00Z' }],
     dancer_photos: existingPhoto ? [{ id: 'old-photo', dancer_id: 'profile', storage_path: 'old', is_primary: primary, sort_order: primary ? 0 : 1 }] : [],
     image_moderation_records: [{ id: 'review', user_id: 'owner', updated_at: '2020-01-01T00:00:00Z', status: 'moderating', decision: 'review', temporary_storage_path: 'temp', upload_context: avatar ? 'profile_avatar' : 'profile_gallery:1' }],
   };
   const mutations = [];
   let failed = false;
   const client = { async rpc(name, input) {
+    if(name==='publish_approved_dancer_avatar') {
+      const shouldFail=!failed&&failOperation==='update'&&['image_moderation_records','dancer_profiles'].includes(failTable);
+      if(shouldFail)failed=true;
+      if(shouldFail&&!failAfterCommit)return {data:null,error:lostResponse};
+      Object.assign(rows.dancer_profiles[0],{avatar_storage_path:'new',avatar_updated_at:'2020-01-02T00:00:00Z'});
+      Object.assign(rows.image_moderation_records[0],{image_id:null,final_storage_path:'new',status:'approved',decision:'approved',updated_at:'2020-01-02T00:00:00Z'});
+      mutations.push({table:'dancer_profiles',operation:'update',ids:['profile']});
+      if(shouldFail)return {data:null,error:lostResponse};
+      return {data:{profile:rows.dancer_profiles[0],record:rows.image_moderation_records[0],already_published:false,previous_storage_path:'old'},error:null};
+    }
     assert.equal(name, 'publish_approved_dancer_gallery_photo');
     const shouldFail = !failed && ((failTable === 'image_moderation_records' && failOperation === 'update')
       || (failTable === 'dancer_photos' && ['insert', 'delete'].includes(failOperation)));
@@ -98,8 +110,8 @@ function scenario({ failTable, failOperation, failAfterCommit = true, diagnostic
     isProfileAvatarUploadContext: context => context === 'profile_avatar',
     profilePhotoSlotFromUploadContext: () => ({ isPrimary: primary, sortOrder: primary ? 0 : 1 }),
   };
-  Object.assign(dependencies, loadGalleryGateway(dependencies));
-  const functions = loadModule(source, 'approveModeratedUpload, setApprovedDancerAvatar', dependencies);
+  Object.assign(dependencies, loadGalleryGateway(dependencies), loadAvatarGateway());
+  const functions = loadModule(source, 'approveModeratedUpload', dependencies);
   Object.assign(dependencies, { ...functions, APPROVED_PHOTO_BUCKET: 'dancer-photos' });
   const admin = loadModule(adminSource, 'approveReviewRecord', dependencies);
   return {
@@ -171,7 +183,7 @@ test('recovery logging failure preserves both approved files and the original da
   await assert.rejects(s.publish(), error => error === lostResponse);
   assert.ok(s.assets.has('new'));
   assert.ok(s.assets.has('old'));
-  assert.equal(s.rows.dancer_profiles[0].avatar_storage_path, 'new');
+  assert.equal(s.rows.dancer_profiles[0].avatar_storage_path, 'old');
 });
 
 test('failure bookkeeping cannot replace a concurrent moderator rejection', async () => {
@@ -191,61 +203,16 @@ for (const avatar of [false, true]) {
   });
 }
 
-test('PostgreSQL allows only one avatar update when both requests read the same reference', async () => {
-  const pg = new PGlite();
+test('PostgreSQL accepts only one reservation from two copies of the same original avatar snapshot',async()=>{
+  const db=await createAvatarDatabase();
   try {
-    await pg.exec('create table dancer_profiles(id text primary key, avatar_storage_path text, avatar_updated_at timestamptz)');
-    const { setApprovedDancerAvatar } = loadModule(source, 'setApprovedDancerAvatar', { PublicApiError });
-    for (const previous of ['old', null, '']) {
-      await pg.query('insert into dancer_profiles values ($1,$2,null) on conflict(id) do update set avatar_storage_path=excluded.avatar_storage_path', ['profile', previous]);
-      let reads = 0, release;
-      const bothRead = new Promise(resolve => { release = resolve; });
-      const client = { async rpc(name, input) {
-    assert.equal(name, 'publish_approved_dancer_gallery_photo');
-    const shouldFail = !failed && ((failTable === 'image_moderation_records' && failOperation === 'update')
-      || (failTable === 'dancer_photos' && ['insert', 'delete'].includes(failOperation)));
-    if (shouldFail) failed = true;
-    if (shouldFail && !failAfterCommit) return { data: null, error: lostResponse };
-    const previous = [...rows.dancer_photos];
-    const photo = { id: 'new-photo', dancer_id: 'profile', storage_path: 'new', is_primary: primary, sort_order: primary ? 0 : 1, review_status: 'approved' };
-    rows.dancer_photos = [photo];
-    Object.assign(rows.image_moderation_records[0], { image_id: photo.id, final_storage_path: 'new', status: 'approved', decision: 'approved', updated_at: '2020-01-02T00:00:00Z' });
-    if (previous.length) mutations.push({ table: 'dancer_photos', operation: 'delete', ids: previous.map(p => p.id) });
-    if (shouldFail) {
-      if (rejectionAfterFailure) Object.assign(rows.image_moderation_records[0], { decision: 'rejected', status: 'rejected' });
-      return { data: null, error: lostResponse };
-    }
-    return { data: { photo, record: rows.image_moderation_records[0], already_published: false, superseded_storage_paths: previous.map(p => p.storage_path) }, error: null };
-  }, from(table) {
-        assert.equal(table, 'dancer_profiles');
-        let update, nullable = false;
-        const filters = {};
-        const q = {
-          select() { return q; }, limit() { return q; },
-          update(value) { update = value; return q; },
-          eq(key, value) { filters[key] = value; return q; },
-          is(key, value) { assert.equal(key, 'avatar_storage_path'); assert.equal(value, null); nullable = true; return q; },
-          async maybeSingle() {
-            if (!update) {
-              const result = await pg.query('select avatar_storage_path from dancer_profiles where id=$1', [filters.id]);
-              if (++reads === 2) release();
-              await bothRead;
-              return { data: result.rows[0] || null, error: null };
-            }
-            const values = [update.avatar_storage_path, update.avatar_updated_at, filters.id];
-            if (!nullable) values.push(filters.avatar_storage_path);
-            const result = await pg.query(`update dancer_profiles set avatar_storage_path=$1, avatar_updated_at=$2 where id=$3 and avatar_storage_path ${nullable ? 'is null' : '=$4'} returning id`, values);
-            return { data: result.rows[0] || null, error: null };
-          },
-        };
-        return q;
-      } };
-      const results = await Promise.allSettled(['first', 'second'].map(path => setApprovedDancerAvatar(client, 'profile', path)));
-      assert.equal(results.filter(result => result.status === 'fulfilled').length, 1);
-      const rejected = results.find(result => result.status === 'rejected').reason;
-      assert.ok(rejected instanceof PublicApiError);
-      assert.equal(rejected.status, 409);
-      assert.ok(['first', 'second'].includes((await pg.query('select avatar_storage_path from dancer_profiles')).rows[0].avatar_storage_path));
-    }
-  } finally { await pg.close(); }
+    await seedAvatarDatabase(db);const client=avatarDatabaseClient(db),gateway=loadAvatarGateway(),expected=await readAvatarProfile(db);
+    await putAvatarObject(db,avatarTemp('first'),'dancr-image-moderation-temp');await putAvatarObject(db,avatarTemp('second'),'dancr-image-moderation-temp');
+    const results=await Promise.allSettled(['first','second'].map(name=>gateway.createDancerAvatarReview(client,{
+      userId:avatarUser,profileId:avatarProfile,expected,temporaryStoragePath:avatarTemp(name),idempotencyKey:name,providerModel:'synthetic',
+    })));
+    assert.equal(results.filter(r=>r.status==='fulfilled').length,1);
+    assert.equal(results.find(r=>r.status==='rejected').reason.status,409);
+    assert.equal((await readAvatarProfile(db)).avatar_storage_path,expected.avatar_storage_path);
+  }finally{await db.close();}
 });

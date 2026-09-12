@@ -57,7 +57,7 @@ try {
   for (const table of ["app_users", "dancer_profiles", "customer_profiles", "venues", "shifts", "support_threads", "support_messages", "notifications", "account_recovery_events", "customer_deal_saves", "dmca_cases", "dmca_counter_notices", "dmca_strikes", "dmca_enforcement_states"]) {
     checks.push({ name: `Schema: ${table}`, ok: Boolean(schema.data?.paths?.[`/${table}`]) });
   }
-  for (const rpc of ["is_current_venue_owner", "is_current_dancer_owner", "consume_request_rate_limit", "provision_app_account_safely", "transition_dancer_publication_safely", "transition_own_account_safely", "change_venue_publication_safely", "create_support_message_safely", "get_ranking_metric_batch", "apply_dmca_takedown", "restore_dmca_case", "submit_dmca_counter_notice_safely", "transition_dmca_admin_case", "confirm_dmca_counter_forwarding"]) {
+  for (const rpc of ["is_current_venue_owner", "is_current_dancer_owner", "consume_request_rate_limit", "provision_app_account_safely", "transition_dancer_publication_safely", "transition_own_account_safely", "change_venue_publication_safely", "create_support_message_safely", "get_ranking_metric_batch", "apply_dmca_takedown", "restore_dmca_case", "submit_dmca_counter_notice_safely", "transition_dmca_admin_case", "confirm_dmca_counter_forwarding", "create_dancer_avatar_review", "publish_approved_dancer_avatar", "clear_dancer_avatar_safely", "recenter_dancer_avatar_safely"]) {
     checks.push({ name: `Function: ${rpc}`, ok: Boolean(schema.data?.paths?.[`/rpc/${rpc}`]) });
   }
 } catch {

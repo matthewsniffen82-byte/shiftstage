@@ -1,5 +1,6 @@
 import { timingSafeEqual } from "crypto";
 import { NextResponse } from "next/server";
+import { runWithServerJob } from "@/src/lib/server-job";
 import { apiError, PublicApiError } from "@/src/lib/api";
 import { readBoundedJsonObject } from "@/src/lib/bounded-json-body";
 import { requireAdmin } from "@/src/lib/dancr/admin";
@@ -12,12 +13,12 @@ import {
 import { validateAndPrepareDancrImage } from "@/src/lib/dancr/image-validation";
 import {
   APPROVED_PHOTO_BUCKET,
-  setApprovedDancerAvatar,
 } from "@/src/lib/dancr/image-moderation";
 import {
   responsivePublicImage,
   uploadResponsiveImage,
 } from "@/src/lib/dancr/responsive-image";
+import { recenterDancerAvatar } from "@/src/lib/dancr/avatar-publication";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
 import { getOptionalServerEnv } from "@/src/lib/server-env";
@@ -30,6 +31,7 @@ const MAX_RECENTER_BODY_BYTES = 4_096;
 
 export async function POST(request: Request) {
   try {
+    return await runWithServerJob(async () => {
     const { client, user } = await createRequestSupabaseContext(request);
     await requireAdmin(client, user.id);
     authorizeMaintenanceRequest(request);
@@ -42,7 +44,7 @@ export async function POST(request: Request) {
     const admin = createAdminSupabaseClient();
     const { data: dancer, error: dancerError } = await admin
       .from("dancer_profiles")
-      .select("id, user_id, stage_name, slug, avatar_storage_path")
+      .select("id, user_id, stage_name, slug, avatar_storage_path, avatar_updated_at")
       .eq("slug", dancerSlug)
       .maybeSingle();
     if (dancerError) throw dancerError;
@@ -60,7 +62,7 @@ export async function POST(request: Request) {
     }
     const { data: sourcePhoto, error: sourcePhotoError } = await admin
       .from("dancer_photos")
-      .select("storage_path")
+      .select("id, storage_path")
       .eq("dancer_id", dancer.id)
       .eq("review_status", "approved")
       .order("is_primary", { ascending: false })
@@ -85,13 +87,12 @@ export async function POST(request: Request) {
       centeredAvatar,
     );
     // Preserve the uploaded file if the database response is uncertain.
-    const actualPreviousPath = await setApprovedDancerAvatar(
-      admin,
-      dancer.id,
-      uploaded.storagePath,
-    );
-    if (actualPreviousPath && actualPreviousPath !== uploaded.storagePath) {
-      await tryRetireGalleryStorageFiles(admin, dancer.id, actualPreviousPath);
+    const published = await recenterDancerAvatar(admin, {
+      profileId: dancer.id, userId: dancer.user_id, reviewerId: user.id, expected: dancer,
+      storagePath: uploaded.storagePath, sourcePath, sourcePhotoId: sourcePhoto?.id ?? null,
+    });
+    if (published.previousStoragePath && published.previousStoragePath !== uploaded.storagePath) {
+      await tryRetireGalleryStorageFiles(admin, dancer.id, published.previousStoragePath);
     }
 
     const publicAvatar = responsivePublicImage(
@@ -99,14 +100,6 @@ export async function POST(request: Request) {
       APPROVED_PHOTO_BUCKET,
       uploaded.storagePath,
     );
-    const { error: auditError } = await admin.from("admin_actions").insert({
-      admin_id: user.id,
-      target_type: "dancer_profile",
-      target_id: dancer.id,
-      action: "recenter_dancer_avatar",
-      notes: `Source: ${sourcePath === previousPath ? "avatar" : "approved photo"}`,
-    });
-    if (auditError) throw auditError;
     console.info(
       JSON.stringify({
         event: "dancer_avatar.platform_recentered",
@@ -136,6 +129,7 @@ export async function POST(request: Request) {
       },
       { headers: { "Cache-Control": "no-store" } },
     );
+    });
   } catch (error) {
     if (isAvatarFaceRequiredError(error)) {
       return apiError(error, "The stored avatar does not contain a clear face.", 422);

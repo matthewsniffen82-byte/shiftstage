@@ -1,4 +1,6 @@
 import { loadGalleryGateway } from "./helpers/gallery-publication-fixture.mjs";
+import { loadAvatarGateway } from "./helpers/avatar-publication-fixture.mjs";
+import * as serverJobs from "../src/lib/server-job.ts";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
@@ -20,6 +22,7 @@ function load(source, name, dependencies) {
   }).outputText, { exports, Buffer, setTimeout, clearTimeout,
     console: { log() {}, info() {}, warn() {}, error() {} },
     require(name) {
+      if (name === "../server-job.ts" || name === "@/src/lib/server-job") return serverJobs;
       if (name in dependencies) return dependencies[name];
       if (name === "crypto") return requireTest(name);
       return {};
@@ -32,9 +35,9 @@ function harness({ avatar = false, primary = false, failure = "", concurrentAvat
   const files = new Set([oldPath, newPath, "temporary"]);
   const archived = new Set([oldPath, newPath]);
   const tables = {
-    dancer_profiles: [{ id: "dancer", user_id: "user", slug: "test-dancer", avatar_storage_path: avatar ? oldPath : null }],
+    dancer_profiles: [{ id: "dancer", user_id: "user", slug: "test-dancer", avatar_storage_path: avatar ? oldPath : null, avatar_updated_at: "2020-01-01T00:00:00Z" }],
     dancer_photos: avatar ? [] : [{ id: "old", dancer_id: "dancer", storage_path: oldPath, is_primary: primary, sort_order: primary ? 0 : 1, review_status: "approved" }],
-    image_moderation_records: [{ id: "record", user_id: "user", temporary_storage_path: "temporary", upload_context: avatar ? "profile_avatar" : "profile_gallery:1", updated_at: "2020-01-01T00:00:00Z", decision: "review", status: "moderating" }],
+    image_moderation_records: [{ id: "record", user_id: "user", image_id: null, temporary_storage_path: "temporary", upload_context: avatar ? "profile_avatar" : "profile_gallery:1", updated_at: "2020-01-01T00:00:00Z", decision: "review", status: "moderating" }],
     admin_actions: [],
   };
   const events = [];
@@ -42,17 +45,43 @@ function harness({ avatar = false, primary = false, failure = "", concurrentAvat
   const fault = new Error("Synthetic database failure");
   const client = {
     async rpc(name, input) {
-      assert.equal(name, "publish_approved_dancer_gallery_photo");
-      const afterCommit = ["approval_ack", "insert_ack"].includes(failure);
-      const shouldFail = ["approval", "approval_ack", "insert_ack", "retire", "slot_read"].includes(failure);
-      if (shouldFail && !afterCommit) return { data: null, error: fault };
+      assert.ok(["publish_approved_dancer_gallery_photo", "publish_approved_dancer_avatar", "recenter_dancer_avatar_safely"].includes(name));
+      const afterCommit = ["approval_ack", "insert_ack", "avatar_ack"].includes(failure);
+      const shouldFail = ["approval", "approval_ack", "insert_ack", "avatar_ack", "retire", "slot_read"].includes(failure);
+      if (shouldFail && !afterCommit) {
+        if (concurrentAvatar) {
+          files.add("user/dancer/newer.jpg");
+          Object.assign(tables.dancer_profiles[0], { avatar_storage_path: "user/dancer/newer.jpg", avatar_updated_at: "2020-01-03T00:00:00Z" });
+        }
+        return { data: null, error: fault };
+      }
+      if (name !== "publish_approved_dancer_gallery_photo") {
+        const profile = tables.dancer_profiles[0];
+        assert.equal(input.p_storage_path, newPath);
+        if (name === "recenter_dancer_avatar_safely") {
+          assert.equal(input.p_profile_id, profile.id);
+          assert.equal(input.p_expected_avatar_path, oldPath);
+          assert.equal(input.p_expected_avatar_updated_at, "2020-01-01T00:00:00Z");
+          assert.equal(input.p_source_path, oldPath);
+          tables.admin_actions.push({ admin_id: input.p_reviewer_id, target_id: profile.id, action: "recenter_dancer_avatar" });
+        } else {
+          assert.equal(input.p_record_id, "record");
+          assert.equal(input.p_expected_updated_at, "2020-01-01T00:00:00Z");
+          Object.assign(tables.image_moderation_records[0], { final_storage_path: newPath, decision: "approved", status: "approved", updated_at: "2020-01-02T00:00:00Z" });
+        }
+        Object.assign(profile, { avatar_storage_path: newPath, avatar_updated_at: "2020-01-02T00:00:00Z" });
+        events.push("publication:commit");
+        return shouldFail ? { data: null, error: fault } : { data: structuredClone({
+          profile, record: tables.image_moderation_records[0], previous_storage_path: oldPath, already_published: false,
+        }), error: null };
+      }
       const photo = { id: "new", dancer_id: "dancer", storage_path: newPath, is_primary: primary, sort_order: primary ? 0 : 1, review_status: "approved" };
       tables.dancer_photos = [photo];
       Object.assign(tables.image_moderation_records[0], { image_id: "new", final_storage_path: newPath, decision: "approved", status: "approved", updated_at: "2020-01-02T00:00:00Z" });
       events.push("publication:commit");
-      return shouldFail ? { data: null, error: fault } : { data: {
+      return shouldFail ? { data: null, error: fault } : { data: structuredClone({
         photo, record: tables.image_moderation_records[0], already_published: false, superseded_storage_paths: [oldPath],
-      }, error: null };
+      }), error: null };
     },
     from(table) {
       let operation = "select", payload, columns = "*";
@@ -129,7 +158,9 @@ function harness({ avatar = false, primary = false, failure = "", concurrentAvat
     profilePhotoSlotFromUploadContext: () => ({ isPrimary: primary, sortOrder: primary ? 0 : 1 }),
   };
   const gateway = loadGalleryGateway({ ...responsive, ...watermark, ...retirement });
+  const avatarGateway = loadAvatarGateway();
   const library = load(librarySource, "approveModeratedUpload", {
+    "./avatar-publication": avatarGateway,
     "./photo-publication": gateway,
     "./gallery-storage-retirement": retirement,
     "./responsive-image": responsive, "./media-watermark": watermark,
@@ -137,6 +168,7 @@ function harness({ avatar = false, primary = false, failure = "", concurrentAvat
     "../api-error-policy": requireTest("../src/lib/api-error-policy.ts"),
   });
   const admin = load(adminSource, "approveReviewRecord", {
+    "@/src/lib/dancr/avatar-publication": avatarGateway,
     "@/src/lib/dancr/photo-publication": gateway,
     "@/src/lib/dancr/gallery-storage-retirement": retirement,
     "@/src/lib/dancr/image-moderation": library,
@@ -147,6 +179,7 @@ function harness({ avatar = false, primary = false, failure = "", concurrentAvat
     "@/src/lib/security/safe-error-metadata": { safeErrorMetadata: () => ({ code: "synthetic" }) },
   });
   const recenter = load(recenterSource, "POST", {
+    "@/src/lib/dancr/avatar-publication": avatarGateway,
     "@/src/lib/dancr/gallery-storage-retirement": retirement,
     "next/server": { NextResponse: { json: (body, options = {}) => ({ body, status: options.status || 200 }) } },
     "@/src/lib/api": { apiError: () => ({ status: 500 }), PublicApiError: Error },
@@ -185,6 +218,7 @@ for (const mode of ["automatic", "admin"]) {
       state.assertReferencedFilesExist();
       assert.equal(state.files.has(oldPath), false);
       assert.equal(state.tables.image_moderation_records[0].decision, "approved");
+      assert.ok(state.events.indexOf("publication:commit") < state.events.indexOf(`retire:${oldPath}`));
     });
     for (const failure of ["approval", "approval_ack", avatar ? "avatar_ack" : "insert_ack"]) {
       test(`${mode} ${kind}: ${failure} preserves published files and the previous original`, async () => {
@@ -245,6 +279,8 @@ test("avatar recentering preserves a committed image after a lost update acknowl
   state.assertReferencedFilesExist();
   assert.ok(state.files.has(oldPath));
   assert.ok(state.files.has(newPath));
+  assert.equal(state.tables.dancer_profiles[0].avatar_storage_path, newPath);
+  assert.equal(state.tables.admin_actions.length, 1, "The audit commits with the avatar even when its response is lost");
 });
 
 test("successful avatar recentering retains its audit and removes only the previous file", async () => {

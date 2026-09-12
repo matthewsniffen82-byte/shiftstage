@@ -691,6 +691,14 @@
     {
       "file": "20260912181237_retire_legacy_case_and_venue_claim_writes.sql",
       "sha256": "f89fd03c2ef250ac87d94f8f0a0b13402ab5dfba2721b62dfb800d80c216a9cc"
+    },
+    {
+      "file": "20260912194200_make_avatar_publication_atomic.sql",
+      "sha256": "b040215faf24858f23aa296a6e22c23013f8723278c94755879103c6354c20a4"
+    },
+    {
+      "file": "20260912202533_respect_reserved_dancer_signup_links.sql",
+      "sha256": "dcb4fa3870b63669c4cb2422bcd22d75e3b73c2c2fea0e32e2d14c70c384dec3"
     }
   ]
 }

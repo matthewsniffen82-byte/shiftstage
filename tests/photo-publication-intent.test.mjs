@@ -5,6 +5,7 @@ import vm from 'node:vm';
 import { createHash, randomUUID } from 'node:crypto';
 import ts from 'typescript';
 import { PublicApiError } from '../src/lib/api-error-policy.ts';
+import * as serverJobs from '../src/lib/server-job.ts';
 
 const intentSource=readFileSync(new URL('../src/lib/dancr/photo-publication-intent.ts',import.meta.url),'utf8');
 const moderationSource=readFileSync(new URL('../src/lib/dancr/image-moderation.ts',import.meta.url),'utf8');
@@ -15,7 +16,7 @@ function load(source,names,dependencies={}) {
   const exports={};
   vm.runInNewContext(ts.transpileModule(`${source}\nexport const subject={${names}};`,{
     compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022},
-  }).outputText,{exports,require:()=>({PublicApiError,createHash,randomUUID,...dependencies}),Buffer,Blob,console,setTimeout,clearTimeout});
+  }).outputText,{exports,require:()=>({PublicApiError,createHash,randomUUID,...dependencies,...serverJobs}),Buffer,Blob,console,setTimeout,clearTimeout});
   return exports.subject;
 }
 const {resolvePhotoPublicationIntent}=load(intentSource,'resolvePhotoPublicationIntent');

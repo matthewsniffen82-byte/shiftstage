@@ -7,6 +7,7 @@ import { loadGalleryCleanupRuntime } from './helpers/gallery-cleanup-runtime.mjs
 import vm from 'node:vm';
 import ts from 'typescript';
 import { PublicApiError } from '../src/lib/api-error-policy.ts';
+import * as serverJobs from '../src/lib/server-job.ts';
 
 const migration = readFileSync(new URL('../supabase/migrations/20260909203842_add_atomic_gallery_publication.sql', import.meta.url), 'utf8');
 const id = value => `00000000-0000-4000-8000-${String(value).padStart(12, '0')}`;
@@ -23,7 +24,7 @@ create type public.user_role as enum('dancer','admin','customer','venue');
 create type public.account_state as enum('active','disabled','deleted');
 create type public.review_status as enum('pending','approved','rejected');
 create table public.app_users(id uuid primary key references auth.users(id),role public.user_role not null,account_state public.account_state not null default 'active',dmca_suspended_at timestamptz);
-create table public.dancer_profiles(id uuid primary key,user_id uuid unique not null references public.app_users(id),avatar_storage_path text,photo_review_status public.review_status not null default 'pending');
+create table public.dancer_profiles(id uuid primary key,user_id uuid unique not null references public.app_users(id),avatar_storage_path text,avatar_updated_at timestamptz,photo_review_status public.review_status not null default 'pending');
 create table public.dancer_photos(
  id uuid primary key default gen_random_uuid(),dancer_id uuid not null references public.dancer_profiles(id) on delete cascade,
  storage_path text not null,alt_text text,sort_order integer not null default 0,is_primary boolean not null default false,
@@ -287,7 +288,7 @@ function applicationModule(path, names, dependencies) {
   const exports={};
   vm.runInNewContext(ts.transpileModule(`${source}\nexports.fixture={${names}};`,{
     compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022},
-  }).outputText,{exports,require:()=>dependencies,Buffer,setTimeout,clearTimeout,
+  }).outputText,{exports,require:()=>({...dependencies,...serverJobs}),Buffer,setTimeout,clearTimeout,
     console:{log(){},info(){},warn(){},error(){}}});
   return exports.fixture;
 }
@@ -386,7 +387,7 @@ test('application records validated replacement identity and returns an exact mo
   const stored=(await allReviews())[0];
   assert.equal(stored.photo_publication_mode,'replace');assert.equal(stored.replacement_photo_id,old.id);
   assert.ok(created.updated_at);
-  const version=await app.updateModerationRecord(client,created.id,{status:'moderating',attemptCount:2});
+  const version=await app.updateModerationRecord(client,created.id,{status:'moderating',attemptCount:2},created.updated_at);
   assert.equal((await pg.query('select updated_at=$1::timestamptz as matches from image_moderation_records where id=$2',[version,created.id])).rows[0].matches,true);
 });
 
@@ -394,7 +395,7 @@ test('application stale rejection and retry cannot overwrite an acknowledged gal
   const record=await review(101),stale=(await allReviews())[0];await publish(record);
   const {client,removed}=applicationClient(),app=applicationFunctions(record,removed);
   await assert.rejects(app.rejectReviewRecord(client,stale,reviewer,''),e=>e.status===409);
-  await assert.rejects(app.updateModerationRecord(client,record.recordId,{status:'moderating'}),e=>e.status===409);
+  await assert.rejects(app.updateModerationRecord(client,record.recordId,{status:'moderating'},stale.updated_at),e=>e.status===409);
   assert.equal((await allReviews())[0].decision,'approved');assert.deepEqual(removed,[]);
 });
 
@@ -426,7 +427,7 @@ test('retry publication uses the returned database timestamp including trigger-w
   await pg.exec(`reset role;create or replace function public.synthetic_review_timestamp() returns trigger language plpgsql as $$begin new.updated_at='2021-01-01T00:00:00.123456Z';return new;end$$;
     create trigger synthetic_review_timestamp before update on image_moderation_records for each row execute function public.synthetic_review_timestamp();set role service_role`);
   const {client,removed}=applicationClient(),app=applicationFunctions(record,removed);
-  const version=await app.updateModerationRecord(client,record.recordId,{status:'moderating'});
+  const version=await app.updateModerationRecord(client,record.recordId,{status:'moderating'},updatedAt);
   assert.match(version,/123456/);
   const published=await publish(record,{expected:version});
   assert.equal(published.record.decision,'approved');

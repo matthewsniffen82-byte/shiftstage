@@ -1,7 +1,7 @@
 import "server-only";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { spawn } from "node:child_process";
+import { runMediaProcess } from "./media-process.ts";
 import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
@@ -65,8 +65,7 @@ export async function inspectStoredMyDancrTvVideo(
 function inspectVideoWithFfmpeg(videoPath: string) {
   const executable = ffmpegPath;
   if (!executable) return Promise.reject(new Error("Video inspection decoder is unavailable."));
-  return new Promise<string>((resolve, reject) => {
-    const child = spawn(executable, [
+  return runMediaProcess(executable, [
       "-y",
       ...LOCAL_VIDEO_INPUT_OPTIONS,
       "-hide_banner",
@@ -82,28 +81,9 @@ function inspectVideoWithFfmpeg(videoPath: string) {
       "null",
       "-",
     ], {
-      windowsHide: true,
-      stdio: ["ignore", "ignore", "pipe"],
-    });
-    let stderr = "";
-    let settled = false;
-    const finish = (callback: () => void) => {
-      if (settled) return;
-      settled = true;
-      clearTimeout(timer);
-      callback();
-    };
-    const timer = setTimeout(() => {
-      child.kill();
-      finish(() => reject(new Error("Video inspection decoding timed out.")));
-    }, VIDEO_INSPECTION_TIMEOUT_MS);
-    child.stderr?.on("data", (chunk) => {
-      stderr = `${stderr}${String(chunk)}`.slice(-16_000);
-    });
-    child.once("error", (error) => finish(() => reject(error)));
-    child.once("close", (code) => finish(() => {
-      if (code === 0) resolve(stderr);
-      else reject(new Error("The uploaded video could not be decoded safely."));
-    }));
-  });
+      timeoutMs: VIDEO_INSPECTION_TIMEOUT_MS,
+      timeoutMessage: "Video inspection decoding timed out.",
+      failureMessage: "The uploaded video could not be decoded safely.",
+      stderrMaxChars: 16_000,
+    }).then(result => result.stderr);
 }

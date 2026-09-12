@@ -6,6 +6,7 @@ import vm from "node:vm";
 import ts from "typescript";
 import { PublicApiError, resolveApiError } from "../src/lib/api-error-policy.ts";
 import { requestRoleFixture } from "./helpers/request-role-fixture.mjs";
+import * as serverJobs from "../src/lib/server-job.ts";
 
 const require = createRequire(import.meta.url);
 const compile = file => ts.transpileModule(readFileSync(new URL("../" + file, import.meta.url), "utf8"), {
@@ -34,6 +35,7 @@ function loadRoute(code, f) {
   const exports = {};
   vm.runInNewContext(code, { exports, Error, Request, Response, URL, Blob, Buffer, console: quietConsole, require(name) {
     if (name === "next/server" || name.startsWith("node:")) return require(name);
+    if (name === "@/src/lib/server-job") return serverJobs;
     if (name === "@/src/lib/dancr/admin") return { ...f.unavailable, requireAdmin: f.adminExports.requireAdmin };
     if (name === "@/src/lib/supabase/request") return { createRequestSupabaseContext: f.auth.createContext };
     if (name === "@/src/lib/api" || name === "@/src/lib/api-error-policy") return {
