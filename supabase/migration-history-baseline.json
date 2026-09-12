@@ -643,6 +643,10 @@
     {
       "file": "20260912052200_enforce_profile_video_slot_limit.sql",
       "sha256": "be8cc1c64cbde3c49ca9ee2e315d838224fe3f635e68f10f3ccd37c7096aceda"
+    },
+    {
+      "file": "20260912054100_enforce_active_nfc_sticker_capacity.sql",
+      "sha256": "2a16569db2917e4801e85718f2349b9ab8e34b11e92d3ee178164f66413419a1"
     }
   ]
 }

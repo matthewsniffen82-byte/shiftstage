@@ -22,7 +22,7 @@ The user subsequently deferred disposable test-project setup and explicitly requ
 | 12 | Realtime lifecycle | Released and verified; no active subscriptions | Closing commit `1ef18d7502a2904e6e4ae5653e6916e4fde84737`; exact Vercel success freshly reconfirmed September 12. |
 | 13 | Privileged functions/RPC/webhooks | Controlled pass released and verified; named later handoffs retained | Closing commit `f1cb4ff3b554c431b1195facdde7b7a2c3f218d5`; exact Vercel success, 6,269 tests and all release gates passed; 131 functions, 117 migrations and 18 table fingerprints preserved. |
 | 14 | Triggers/functions | Controlled pass released and verified; later handoffs retained | `ef752f858c5284bdd69f0089187aaeca4e4dbdd5`; exact SQL/Vercel success, 6,418 tests/all gates, 20 table fingerprints and 130 other functions preserved. |
-| 15 | Data validation | NFC capacity correction in release validation; agent/domain review continues | See step-15-nfc-capacity.md; 70 native cases pass. Full delivery and subsequent Step 15 review remain required. |
+| 15 | Data validation | NFC correction delivered; source-protection closure in validation; agent/domain review continues | `c5d3ddc91178c81df1c884050d401682b81603eb`; exact SQL/Vercel success and all 6,601 tests/gates passed. Closing release and remaining Step 15 review required. |
 | 16 | Timestamps/timezones | Pending | |
 | 17 | Account/record lifecycle | Pending | |
 | 18 | Environment configuration | Pending | |
@@ -704,3 +704,9 @@ The history manifest adds only the already verified video migration, extending 1
 Candidate integration preserves all concurrent releases through parent `bc4812b7b41550f59c2f803219a7db0f94fcd51a`. Full combined tests, lint, build, standalone TypeScript, commit/push, exact SQL application, Vercel success, preservation/health and the manifest closing release remain required.
 
 Initial NFC release validation passed all 6,601 tests without failures, skips or cancellations, full lint, production build with population skipped, standalone TypeScript and thirty read-only readiness checks. Commit/push, exact SQL/deployment verification and the subsequent manifest closing release remain required before shared-workspace handoff.
+
+The NFC correction commit `c5d3ddc91178c81df1c884050d401682b81603eb` reached [exact Vercel success](https://vercel.com/ai-movie-jobs/shiftstage/AoyhjPbTF8sU5hFLrKeLqYccrJjR). Guarded committed SQL applied with the reviewed source/function hashes and in-transaction preservation. At 06:26:37 UTC, independent checks preserved all 131 previous functions, 118 prior ledger entries, ten schema groups and twenty table fingerprints, including twenty NFC tags, 34 videos and 452 storage objects. The catalog now contains 132 functions, 61 trigger attachments and 119 migrations; function-security checks passed. Seven deployed health/access checks and thirty readiness checks passed at 06:27:52 UTC, with clean local/tracking/remote main equal.
+
+The closing release adds the verified NFC hash to the manifest (160→161) and three behavioral history checks rejecting alterations to both capacity migrations. It changes no SQL or business records. Complete combined validation and exact closing deployment remain required before handing the shared workspace to the queued review/security/architecture releases. Agent/domain investigation continues within Step 15 afterward.
+
+The NFC source-protection closing candidate passed all 6,604 tests with no failures, skips or cancellations, full lint, population-disabled production build, standalone TypeScript and thirty readiness checks. Its final commit/push, exact deployment and fresh read-only production verification remain required before shared-workspace handoff.
