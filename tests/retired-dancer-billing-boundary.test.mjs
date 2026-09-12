@@ -20,10 +20,11 @@ function harness(kind,{status='active',authError,queryError}={}){
   const dependencies={
     'next/server':{NextResponse:{json:Response.json}},
     '@/src/lib/api':{apiError:(error,fallback)=>{const result=resolveApiError(error,fallback);return Response.json(result.body,{status:result.status});}},
+    '@/src/lib/supabase/admin':{createAdminSupabaseClient:()=>client},
     '@/src/lib/supabase/request':{createRequestSupabaseContext:async(request,options)=>{
       calls.push({kind:'auth',url:request.url,options:options?JSON.parse(JSON.stringify(options)):null});
       if(authError)throw authError;
-      return {client,user:{id:userId}};
+      return {client:{from(){assert.fail('Private profile identifiers require the owner-scoped server lookup');}},user:{id:userId}};
     }},
   };
   const suffix=kind==='status'?'':kind+'/';

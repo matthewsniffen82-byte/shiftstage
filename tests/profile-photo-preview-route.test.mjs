@@ -35,10 +35,10 @@ function route({ signedIn = true, ownsProfile = true, limited = false } = {}) {
       PublicRequestRateLimitError: RateLimitError,
       enforcePublicRequestRateLimit: async (_admin, input) => { events.push("rate"); assert.equal(input.subject, "signed-in-user"); if (limited) throw new RateLimitError(); },
     },
-    "@/src/lib/supabase/admin": { createAdminSupabaseClient: () => ({}) },
+    "@/src/lib/supabase/admin": { createAdminSupabaseClient: () => { assert.ok(signedIn); return client; } },
     "@/src/lib/supabase/request": { createRequestSupabaseContext: async () => {
       events.push("auth"); if (!signedIn) throw Object.assign(new Error("Sign in required."), { status: 401 });
-      return { client, user: { id: "signed-in-user" }, session: { accessToken: "test-session-only" } };
+      return { client: { from() { assert.fail("The private profile identifier requires the owner-scoped server lookup"); } }, user: { id: "signed-in-user" }, session: { accessToken: "test-session-only" } };
     } },
   };
   vm.runInNewContext(code, { exports, Blob, Buffer, require: name => { assert.ok(name in modules, name); return modules[name]; } });

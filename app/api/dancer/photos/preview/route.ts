@@ -15,12 +15,13 @@ const privateHeaders = { "cache-control": "private, no-store", "x-content-type-o
 // moderation decisions are created until the dancer confirms their crop.
 export async function POST(request: Request) {
   try {
-    const { client, user, session } = await createRequestSupabaseContext(request, { role: "dancer" });
-    await enforcePublicRequestRateLimit(createAdminSupabaseClient(), {
+    const { user, session } = await createRequestSupabaseContext(request, { role: "dancer" });
+    const admin = createAdminSupabaseClient();
+    await enforcePublicRequestRateLimit(admin, {
       namespace: "dancer_photo_crop_preview", request, subject: user.id,
       windowSeconds: 3600, subjectLimit: 60, ipLimit: 120,
     });
-    const { data: profile, error } = await client.from("dancer_profiles").select("id").eq("user_id", user.id).maybeSingle();
+    const { data: profile, error } = await admin.from("dancer_profiles").select("id").eq("user_id", user.id).maybeSingle();
     if (error) throw error;
     if (!profile) return NextResponse.json({ ok: false, error: "Dancer profile required." }, { status: 403, headers: privateHeaders });
     const form = await readBoundedFormData(request, {

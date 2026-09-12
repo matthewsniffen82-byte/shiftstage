@@ -17,9 +17,9 @@ async function read(path, key = anon) {
 
 const checks = [];
 try {
-  const [auth, schema, publicProfiles, legalNames, privateMetrics, savedDeals, storage, publicDeals, privateDealFields, publicShifts, shiftCoordinates, internalShiftFields, privateAccountPauses, publicVenues, privateVenueFields, privateDmcaStates] = await Promise.all([
+  const [auth, schema, publicProfiles, legalNames, privateMetrics, savedDeals, storage, publicDeals, privateDealFields, publicShifts, shiftCoordinates, internalShiftFields, privateAccountPauses, publicVenues, privateVenueFields, privateDmcaStates, venueOwnerId, dancerUserId, publicTv, tvUploaderId, privateTvReview] = await Promise.all([
     read("/auth/v1/health"), read("/rest/v1/", service),
-    read("/rest/v1/dancer_profiles?select=id,stage_name&limit=0"),
+    read("/rest/v1/dancer_profiles?select=id,stage_name,slug,city,status,verification_status,photo_review_status,approved_at,disabled_at,is_public,avatar_storage_path,avatar_updated_at,venue_approved_at&limit=0"),
     read("/rest/v1/dancer_profiles?select=real_name&limit=0"),
     read("/rest/v1/dancer_monthly_impact?select=dancer_id&limit=0"),
     read("/rest/v1/customer_deal_saves?select=customer_id&limit=0"),
@@ -30,10 +30,18 @@ try {
     read("/rest/v1/shifts?select=checkin_latitude,checkin_longitude,last_location_latitude,last_location_longitude,checkout_latitude,checkout_longitude&limit=0"),
     read("/rest/v1/shifts?select=created_at,updated_at,checkin_distance_feet,last_location_verified_at,working_status,venue_affiliation_id,nfc_tag_id,nfc_last_tapped_at&limit=0"),
     read("/rest/v1/account_self_pauses?select=user_id&limit=0"),
-    read("/rest/v1/venues?select=id,name,slug,city,state,address,phone,website,timezone,opens_at,closes_at,is_active,latitude,longitude,cover_image_storage_path,cover_image_updated_at,published_at,logo_storage_path,logo_updated_at,owner_user_id&limit=0"),
+    read("/rest/v1/venues?select=id,name,slug,city,state,address,phone,website,timezone,opens_at,closes_at,is_active,latitude,longitude,cover_image_storage_path,cover_image_updated_at,published_at,logo_storage_path,logo_updated_at&limit=0"),
     read("/rest/v1/venues?select=page_review_notes,page_reviewed_by_user_id,qr_code_label&limit=0"),
     read("/rest/v1/dmca_enforcement_states?select=target_type,target_id&limit=0"),
+    read("/rest/v1/venues?select=owner_user_id&limit=0"),
+    read("/rest/v1/dancer_profiles?select=user_id&limit=0"),
+    read("/rest/v1/mydancr_tv_videos?select=id,dancer_id,venue_id,shift_id,caption,duration_seconds,width,height,status,venue_tag_status,venue_featured,published_at,expires_at,distribution_scope,like_count,is_pinned&limit=0"),
+    read("/rest/v1/mydancr_tv_videos?select=submitted_by&limit=0"),
+    read("/rest/v1/mydancr_tv_videos?select=review_notes,reviewed_by,moderation_details&limit=0"),
   ]);
+  checks.push({ name: "Public TV projection", ok: publicTv.ok },
+    ...[["Venue account identifier protected", venueOwnerId], ["Dancer account identifier protected", dancerUserId], ["TV uploader identifier protected", tvUploaderId], ["Private TV review projection protected", privateTvReview]]
+      .map(([name, result]) => ({ name, ok: [401, 403].includes(result.status) && result.data?.code === "42501" })));
   checks.push(...checkStorageBucketSecurity(storage.ok ? storage.data : null));
   checks.push({ name: "Public venue projection", ok: publicVenues.ok },
     { name: "Internal venue fields protected", ok: [401, 403].includes(privateVenueFields.status) && privateVenueFields.data?.code === "42501" });
@@ -49,7 +57,7 @@ try {
   for (const table of ["app_users", "dancer_profiles", "customer_profiles", "venues", "shifts", "support_threads", "support_messages", "notifications", "account_recovery_events", "customer_deal_saves", "dmca_cases", "dmca_counter_notices", "dmca_strikes", "dmca_enforcement_states"]) {
     checks.push({ name: `Schema: ${table}`, ok: Boolean(schema.data?.paths?.[`/${table}`]) });
   }
-  for (const rpc of ["consume_request_rate_limit", "provision_app_account_safely", "transition_dancer_publication_safely", "transition_own_account_safely", "change_venue_publication_safely", "create_support_message_safely", "get_ranking_metric_batch", "apply_dmca_takedown", "restore_dmca_case", "submit_dmca_counter_notice_safely", "transition_dmca_admin_case", "confirm_dmca_counter_forwarding"]) {
+  for (const rpc of ["is_current_venue_owner", "is_current_dancer_owner", "consume_request_rate_limit", "provision_app_account_safely", "transition_dancer_publication_safely", "transition_own_account_safely", "change_venue_publication_safely", "create_support_message_safely", "get_ranking_metric_batch", "apply_dmca_takedown", "restore_dmca_case", "submit_dmca_counter_notice_safely", "transition_dmca_admin_case", "confirm_dmca_counter_forwarding"]) {
     checks.push({ name: `Function: ${rpc}`, ok: Boolean(schema.data?.paths?.[`/rpc/${rpc}`]) });
   }
 } catch {

@@ -88,7 +88,7 @@ let openAITextDiagnosticPromise: Promise<void> | null = null;
 
 export async function moderateAndStoreDancerPhoto(client: DancrClient, admin: DancrClient, input: ModeratedPhotoInput): Promise<ModeratedPhotoResult> {
   enforceUploadRateLimit(input.userId, input.ipAddress);
-  const profile = await getOwnDancerProfile(client, input.userId);
+  const profile = await getOwnDancerProfile(admin, input.userId);
   const isAvatar = isProfileAvatarUploadContext(input.uploadContext);
   const image = await validateAndPrepareDancrImage(input.file);
   let idempotencyKey = safeIdempotencyKey(input.idempotencyKey || `${image.sha256}:${randomUUID()}`);

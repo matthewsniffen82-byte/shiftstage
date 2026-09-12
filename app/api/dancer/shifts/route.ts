@@ -22,9 +22,9 @@ const UUID_PATTERN =
 
 export async function GET(request: Request) {
   try {
-    const { client, user } = await createRequestSupabaseContext(request, { role: "dancer" });
-    const dancer = await getOwnDancerProfile(client as any, user.id);
+    const { user } = await createRequestSupabaseContext(request, { role: "dancer" });
     const admin = createAdminSupabaseClient() as any;
+    const dancer = await getOwnDancerProfile(admin, user.id);
     await reconcileExpiredDancerShifts(admin, dancer.id);
     const [{ data, error }, venues] = await Promise.all([
       admin
@@ -46,9 +46,9 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const { client, user } = await createRequestSupabaseContext(request, { role: "dancer" });
+    const { user } = await createRequestSupabaseContext(request, { role: "dancer" });
     const body = await readShiftBody(request);
-    const dancer = await getOwnDancerProfile(client as any, user.id);
+    const dancer = await getOwnDancerProfile(createAdminSupabaseClient() as any, user.id);
 
     if (dancer.status !== "approved") {
       return NextResponse.json({ ok: false, error: "Profile approval required before posting shifts." }, { status: 403 });
@@ -112,7 +112,7 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ ok: false, error: "Missing shiftId." }, { status: 400 });
     }
 
-    const dancer = await getOwnDancerProfile(client as any, user.id);
+    const dancer = await getOwnDancerProfile(createAdminSupabaseClient() as any, user.id);
     const existingShift = await getOwnShift(client as any, dancer.id, shiftId);
     if (existingShift.shift_source === "demo_locked") {
       return NextResponse.json(

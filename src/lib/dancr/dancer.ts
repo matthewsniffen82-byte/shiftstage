@@ -10,7 +10,7 @@ import { ensureDancerPrimaryPhoto } from "./primary-photo";
 type DancrClient = SupabaseClient;
 
 export async function deleteOwnDancerPhoto(client: DancrClient, userId: string, photoId: string, adminClient: DancrClient = client) {
-  const profile = await getOwnDancerProfile(client, userId);
+  const profile = await getOwnDancerProfile(adminClient, userId);
   const { data: photo, error: photoError } = await client
     .from("dancer_photos")
     .select("id, storage_path, is_primary, sort_order, review_status")
@@ -151,7 +151,7 @@ export async function deleteOwnDancerAvatar(
   userId: string,
   adminClient: DancrClient = client,
 ) {
-  const profile = await getOwnDancerProfile(client, userId);
+  const profile = await getOwnDancerProfile(adminClient, userId);
   const { data: currentProfile, error: profileError } = await adminClient
     .from("dancer_profiles")
     .select("avatar_storage_path")
@@ -361,8 +361,8 @@ async function countDancerMediaLikes(client: DancrClient, dancerId: string) {
     .reduce((total, row: any) => total + Math.max(0, Number(row.like_count) || 0), 0);
 }
 
-export async function getOwnDancerDashboardAnalytics(client: DancrClient, userId: string) {
-  const profile = await getOwnDancerProfile(client, userId);
+export async function getOwnDancerDashboardAnalytics(client: DancrClient, userId: string, ownerClient: DancrClient) {
+  const profile = await getOwnDancerProfile(ownerClient, userId);
   return getDancerDashboardAnalytics(client, profile.id);
 }
 
@@ -406,13 +406,13 @@ export async function getDancerWeeklyReport(client: DancrClient, dancerId: strin
   };
 }
 
-export async function getOwnDancerWeeklyReport(client: DancrClient, userId: string) {
-  const profile = await getOwnDancerProfile(client, userId);
+export async function getOwnDancerWeeklyReport(client: DancrClient, userId: string, ownerClient: DancrClient) {
+  const profile = await getOwnDancerProfile(ownerClient, userId);
   return getDancerWeeklyReport(client, profile.id);
 }
 
-export async function getDancerRankingEvents(client: DancrClient, userId: string) {
-  const profile = await getOwnDancerProfile(client, userId);
+export async function getDancerRankingEvents(client: DancrClient, userId: string, ownerClient: DancrClient) {
+  const profile = await getOwnDancerProfile(ownerClient, userId);
   const { data, error } = await client
     .from("ranking_events")
     .select("id, city, event_type, old_rank, new_rank, message, notified_at, created_at")
@@ -434,8 +434,8 @@ export async function getDancerRankingEvents(client: DancrClient, userId: string
   }));
 }
 
-export async function getOwnDancerApprovalReviews(client: DancrClient, userId: string): Promise<ApprovalReview[]> {
-  const profile = await getOwnDancerProfile(client, userId);
+export async function getOwnDancerApprovalReviews(client: DancrClient, userId: string, ownerClient: DancrClient): Promise<ApprovalReview[]> {
+  const profile = await getOwnDancerProfile(ownerClient, userId);
   const { data, error } = await client
     .from("approval_reviews")
     .select("id, review_type, status, notes, created_at, reviewed_at")

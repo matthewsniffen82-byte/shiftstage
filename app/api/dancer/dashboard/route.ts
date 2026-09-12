@@ -38,8 +38,8 @@ export async function GET(request: Request) {
       });
     }
     const [analytics, deals, finance, nfc] = await Promise.all([
-      getOwnDancerDashboardAnalytics(client, user.id),
-      getDancerDealMetrics(client, user.id),
+      getOwnDancerDashboardAnalytics(client, user.id, admin),
+      getDancerDealMetrics(client, user.id, admin),
       getDancerFinance(admin, user.id),
       getDancerNfcDashboardState(admin, user.id),
     ]);

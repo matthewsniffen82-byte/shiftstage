@@ -47,8 +47,8 @@ Step 1 delivered as `50d4eb543dbfc93dbed6f0663c51aa2332542cb4`, pushed to origin
 | 24 | CI / supply chain | Delivered with documented administrative limits: ffc628e230200c29ab6c602071b70ad1e3f3774b |
 | 25 | Production build / source maps | Delivered and healthy: e947a5ed57d2c08cd2bd0faac95b35b13fd43855 |
 | 26 | Sensitive data minimization | Delivered and healthy: 22bed212abe82bfdfaf0e7acd00f236ff091d7c0 |
-| 27 | Profile / location safety | Implementation 8840f2a741dcc83f3929e0e7c17cdd2c97f861ab deployed; SQL verified; manifest followup deployment pending |
-| 28 | Scraping resilience | Not started |
+| 27 | Profile / location safety | Delivered and healthy: 0e8e9b54e885a4d008bd4345199681402687ffc5 |
+| 28 | Scraping resilience | Isolated draft: public ownership and TV workflow projections; full validation and delivery pending |
 | 29 | Resource abuse / DoS | Not started |
 | 30 | Security regression coverage | Not started |
 | 31 | Defensive validation | Not started |
@@ -548,3 +548,19 @@ Implementation `8840f2a741dcc83f3929e0e7c17cdd2c97f861ab` reached exact Vercel s
 ## Step 27 implementation release and followup validation
 
 Implementation `8840f2a741dcc83f3929e0e7c17cdd2c97f861ab` reached [exact Vercel success](https://vercel.com/ai-movie-jobs/shiftstage/7P1kdKtu1W1gB7pruydMHoSktHPo). Eight production health/anonymous-denial checks passed at 2026-09-12T13:26:03.819Z; forty-one database readiness checks and deployed discovery/TV deal-field projections passed. The homepage rendered without browser warnings or errors. No live NFC scan, redemption, paid/provider action or private row retrieval was used. The checksum followup passed all **7,763 tests**, zero failures/skips/cancellations and all eight canonical gates at 2026-09-12T13:32:07.113Z, plus configured private-value artifact inspection and postbuild TypeScript. Only these two evidence records and the three verified migration-manifest entries change. Its exact commit/deployment closure remains required before Step 28.
+
+
+## Step 27 final delivery
+
+Step 27 closed at 2026-09-12T13:38:43.914Z with manifest followup `0e8e9b54e885a4d008bd4345199681402687ffc5` and [exact Vercel success](https://vercel.com/ai-movie-jobs/shiftstage/2BNxnCquykvtcyypFhNUQbAFmA1S). All 7,763 tests and eight canonical gates passed, together with configured artifact inspection, postbuild TypeScript, eight health/anonymous-denial checks, forty-one database readiness checks and four public projections. The homepage rendered without warnings or errors. All three committed migrations were independently verified and frozen in the 168-file manifest. HEAD, origin/main and the actual remote matched; the tracked worktree and index were clean and both user screenshots were preserved. The complete external receipt is `D:/Codex/MyDancr-security-delivery-2026-09-12/step-27/delivery.json`. Only after this closure did Step 28 begin.
+
+## Step 28 boundary review
+
+The review and isolated changes are recorded in step-28-scraping-resilience.md. Production application, full validation, exact commit/deployment and independent verification remain pending. Steps 29–32 have not begun.
+
+
+## Rebased isolated release validation
+
+The candidate is rebased to architecture commit `a519813ea8211a440e695f62858bbc2896f09846`, independently deployed at 2026-09-12T15:10:16.842Z, and includes the independently closed Supabase lifecycle foundation. The two uncommitted migration filenames were advanced to 20260912150921 and 20260912150922 because that foundation froze a later historical version; their SQL bytes did not change. The first canonical attempt was explicitly interrupted before test completion for this version correction and is not counted as a passing release.
+
+After the correction, all 821 focused checks and a fresh native-postcondition capture passed at 2026-09-12T15:15:20.815Z, including complete captured service ACLs and the expanded schema/default-privilege/enum rollback checks. The full isolated release completed at 2026-09-12T15:23:05.583Z: **8,672 tests**, no failures, skips or cancellations, all eight canonical gates, standalone TypeScript, zero-warning lint, dependency/signature checks, generated-file checks, production build and public artifact inspection. The 624 new regression cases comprise 553 policy/access cases, 26 ownership deployment cases, 20 TV deployment cases and 25 caller cases. Source identities and unrelated screenshots are checked before shared integration and publication. Configured build inspection, exact deployment, fresh production preflight, both guarded committed migrations, independent postflight and the fully validated manifest followup remain required.

@@ -166,9 +166,9 @@ export async function getRedemptionForScanner(client: DancrClient, token: string
   return data ? normalizeScannerRedemption(data) : null;
 }
 
-export async function getDancerDealMetrics(client: DancrClient, userId: string) {
+export async function getDancerDealMetrics(client: DancrClient, userId: string, ownerClient: DancrClient) {
   const db = client as any;
-  const { data: profile, error: profileError } = await db
+  const { data: profile, error: profileError } = await (ownerClient as any)
     .from("dancer_profiles")
     .select("id")
     .eq("user_id", userId)
