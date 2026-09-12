@@ -107,7 +107,9 @@ test("daily automation and every production finance dashboard are wired", () => 
   const dashboard = read("app/dashboard/DashboardClient.tsx");
   const venueDashboard = read("app/api/venue/dashboard/route.ts");
   const dancerDashboard = read("app/api/dancer/dashboard/route.ts");
-  assert.match(vercel, /"path": "\/api\/cron\/finance"/);
+  assert.deepEqual(JSON.parse(vercel).crons.filter(({ path }) => path === "/api/cron/finance"), [
+    { path: "/api/cron/finance", schedule: "0 10 * * *" },
+  ]);
   assert.match(cron, /authorizeCronRequest\(request\)/);
   assert.match(cron, /runQrFinanceAutomation/);
   assert.match(adminUi, /type AdminWorkspace = "home" \| "approvals" \| "people" \| "clubs" \| "money" \| "more"/);

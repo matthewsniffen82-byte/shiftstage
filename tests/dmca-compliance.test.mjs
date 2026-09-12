@@ -123,7 +123,9 @@ test("eligible counter-notices restore content and rescind strikes unless a cour
   assert.match(migration, /status = 'restored'/);
   assert.match(restorationRoute, /authorizeCronRequest/);
   assert.match(restorationRoute, /restoreEligibleDmcaCases/);
-  assert.match(vercelConfig, /"path": "\/api\/cron\/dmca-restoration"[\s\S]*?"schedule": "30 9 \* \* \*"/);
+  assert.deepEqual(JSON.parse(vercelConfig).crons.filter(({ path }) => path === "/api/cron/dmca-restoration"), [
+    { path: "/api/cron/dmca-restoration", schedule: "30 9 * * *" },
+  ]);
 });
 
 test("copyright contact, public policy, and admin registration controls are visible", () => {
