@@ -23,6 +23,6 @@ export const staticAssetVersions = {
   "/third-party-social-link-warning.js": "0843cd3ce5fb584c",
   "/trending-flame-clean.png": "22dd616e6de1cf86",
   "/trending-flame.png": "058fa71484bc4433",
-  "/video-autoplay-recovery.js": "e9f38b5b7f4d60d0",
+  "/video-autoplay-recovery.js": "3386c0c57e6b4e41",
   "/video-sound-preference.js": "8f075662e607f34a"
 };

@@ -86,7 +86,8 @@ test("the production home shell loads Safari-safe autoplay recovery for dynamica
   assert.match(homeRecovery, /video\.addEventListener\("loadedmetadata"/);
   assert.match(homeRecovery, /video\.addEventListener\("canplay"/);
   assert.match(homeRecovery, /video\.addEventListener\("loadeddata"/);
-  assert.match(homeRecovery, /new MutationObserver\(queueHomeFeedVideoScan\)/);
+  assert.match(homeRecovery, /new MutationObserver\(\(records\) =>/);
+  assert.match(homeRecovery, /if \(addedVideo\) queueHomeFeedVideoScan\(\)/);
   assert.match(homeRecovery, /window\.addEventListener\("pageshow", queueHomeFeedVideoScan\)/);
   assert.match(homeRecovery, /classList\.add\("is-paused", "is-autoplay-blocked"\)/);
 });

@@ -97,11 +97,19 @@
   }
 
   function queueHomeFeedVideoScan() {
-    if (scanFrame) cancelAnimationFrame(scanFrame);
+    if (scanFrame) return;
     scanFrame = requestAnimationFrame(scanHomeFeedVideos);
   }
 
-  const observer = new MutationObserver(queueHomeFeedVideoScan);
+  const observer = new MutationObserver((records) => {
+    // Counts, feedback and other page updates must not retry a blocked player.
+    // Readiness events and page return still handle playback recovery below.
+    const addedVideo = records.some((record) => [...record.addedNodes].some((node) => (
+      node instanceof Element &&
+      (node.matches(HOME_FEED_VIDEO_SELECTOR) || node.querySelector(HOME_FEED_VIDEO_SELECTOR))
+    )));
+    if (addedVideo) queueHomeFeedVideoScan();
+  });
   observer.observe(document.documentElement, { childList: true, subtree: true });
   document.addEventListener("visibilitychange", () => {
     if (document.visibilityState !== "hidden") queueHomeFeedVideoScan();
