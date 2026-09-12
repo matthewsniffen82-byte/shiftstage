@@ -1,3 +1,4 @@
+import { AsyncLocalStorage } from "node:async_hooks";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 type DancrClient = SupabaseClient;
@@ -66,7 +67,26 @@ const ROLE_PERMISSIONS: Record<VenueTeamRole, VenuePermission[]> = {
 
 const VENUE_ACCESS_COLUMNS = "id, name, slug, is_active, owner_user_id";
 
+const accessReadScope = new AsyncLocalStorage<{
+  client: DancrClient;
+  userId: string;
+  result?: Promise<VenueAccess | null>;
+}>();
+
+// Opt in only around a read-only request. Mutations and other requests always
+// read fresh authorization; callers still check their own required permission.
+export function withVenueAccessReadScope<T>(client: DancrClient, userId: string, read: () => Promise<T>): Promise<T> {
+  return accessReadScope.run({ client, userId }, read);
+}
+
 export async function getVenueAccess(client: DancrClient, userId: string): Promise<VenueAccess | null> {
+  const scope = accessReadScope.getStore();
+  if (!scope || scope.client !== client || scope.userId !== userId) return readVenueAccess(client, userId);
+  scope.result ??= readVenueAccess(client, userId);
+  return scope.result;
+}
+
+async function readVenueAccess(client: DancrClient, userId: string): Promise<VenueAccess | null> {
   const { data: account, error: accountError } = await (client as any)
     .from("app_users")
     .select("id, role, account_state")

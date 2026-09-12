@@ -11,7 +11,7 @@ function compile(source, dependencies = {}) {
   vm.runInNewContext(ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText, {
     exports, URL, Request, Response, Error, Buffer,
     console: { info() {}, warn() {}, error() {} },
-    require: name => name === 'next/server' ? require(name) : dependencies[name] || {},
+    require: name => name === 'next/server' || name === 'node:async_hooks' ? require(name) : dependencies[name] || {},
   });
   return exports;
 }

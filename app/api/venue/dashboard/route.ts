@@ -3,7 +3,7 @@ import { apiError } from "@/src/lib/api";
 import { requireActiveVenueAccount } from "@/src/lib/dancr/auth";
 import { getVenueFinance } from "@/src/lib/dancr/finance-reporting";
 import { getVenueDashboard, readVenueAnalyticsPeriod } from "@/src/lib/dancr/venue";
-import { canVenue, requireVenueAccess } from "@/src/lib/dancr/venue-access";
+import { canVenue, requireVenueAccess, withVenueAccessReadScope } from "@/src/lib/dancr/venue-access";
 import { getVenueDancerVerificationState } from "@/src/lib/dancr/venue-affiliations";
 import { getVenueReferralFeeState } from "@/src/lib/dancr/referral-fees";
 import { getVenueClubDealRequests } from "@/src/lib/dancr/venue-deal-requests";
@@ -19,26 +19,28 @@ export async function GET(request: Request) {
     await requireActiveVenueAccount(client, user.id);
 
     const admin = createAdminSupabaseClient();
-    const access = await requireVenueAccess(admin, user.id, "view_dashboard");
+    return await withVenueAccessReadScope(admin, user.id, async () => {
+      const access = await requireVenueAccess(admin, user.id, "view_dashboard");
 
-    const period = readVenueAnalyticsPeriod(new URL(request.url).searchParams.get("period"));
+      const period = readVenueAnalyticsPeriod(new URL(request.url).searchParams.get("period"));
 
-    const [dashboard, finance, verification, referralFee, dealRequests] = await Promise.all([
-      getVenueDashboard(admin, user.id, period),
-      canVenue(access, "view_finance") ? getVenueFinance(admin, user.id) : null,
-      getVenueDancerVerificationState(admin, user.id),
-      getVenueReferralFeeState(admin, access.venueId),
-      getVenueClubDealRequests(admin, access.venueId),
-    ]);
-    return NextResponse.json({
-      ok: true,
-      ...dashboard,
-      finance,
-      affiliations: verification.affiliations,
-      venueAccess: access,
-      referralFee,
-      dealRequests,
-      refreshedAt: new Date().toISOString(),
+      const [dashboard, finance, verification, referralFee, dealRequests] = await Promise.all([
+        getVenueDashboard(admin, user.id, period),
+        canVenue(access, "view_finance") ? getVenueFinance(admin, user.id) : null,
+        getVenueDancerVerificationState(admin, user.id),
+        getVenueReferralFeeState(admin, access.venueId),
+        getVenueClubDealRequests(admin, access.venueId),
+      ]);
+      return NextResponse.json({
+        ok: true,
+        ...dashboard,
+        finance,
+        affiliations: verification.affiliations,
+        venueAccess: access,
+        referralFee,
+        dealRequests,
+        refreshedAt: new Date().toISOString(),
+      });
     });
   } catch (error) {
     return apiError(error, "Unable to load venue dashboard.");
