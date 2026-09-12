@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { apiError } from "@/src/lib/api";
+import { apiError, PublicApiError } from "@/src/lib/api";
 import { readBoundedJsonObject } from "@/src/lib/bounded-json-body";
 import { requireAdmin } from "@/src/lib/dancr/admin";
 import {
@@ -32,7 +32,7 @@ export async function POST(request: Request) {
     }); const admin = createAdminSupabaseClient();
     if (body.action === "set_agent") await setAdminSalesAgent(admin, {
       adminUserId: user.id, userId: required(body.userId, "Account is required."),
-      sponsorAgentId: optional(body.sponsorAgentId), commissionDepthLimit: Number(body.commissionDepthLimit) === 5 ? 5 : 3,
+      sponsorAgentId: optional(body.sponsorAgentId), commissionDepthLimit: commissionDepth(body.commissionDepthLimit),
       status: status(body.status),
     });
     else if (body.action === "assign_venue") await assignAdminVenueSalesAgent(admin, {
@@ -54,11 +54,23 @@ export async function POST(request: Request) {
   } catch (error) { return apiError(error, "Unable to update the sales agent program."); }
 }
 
-function required(value: unknown, message: string) { if (typeof value !== "string" || !value.trim()) throw new Error(message); return value.trim(); }
-function optional(value: unknown) { return typeof value === "string" && value.trim() ? value.trim() : null; }
-function reason(value: unknown) { const result = required(value, "An audit note is required."); if (result.length > 500) throw new Error("Audit notes must be 500 characters or fewer."); return result; }
-function status(value: unknown): "active" | "suspended" | "terminated" { return value === "suspended" || value === "terminated" ? value : "active"; }
+function required(value: unknown, message: string) { if (typeof value !== "string" || !value.trim()) throw new PublicApiError("INVALID_REQUEST", message, 400); return value.trim(); }
+function optional(value: unknown) {
+  if (value === undefined || value === null) return null;
+  if (typeof value !== "string") throw new PublicApiError("INVALID_REQUEST", "Optional sales agent values must be text.", 400);
+  return value.trim() || null;
+}
+function reason(value: unknown) { const result = required(value, "An audit note is required."); if (result.length > 500) throw new PublicApiError("INVALID_REQUEST", "Audit notes must be 500 characters or fewer.", 400); return result; }
+function status(value: unknown): "active" | "suspended" | "terminated" {
+  if (value === "active" || value === "suspended" || value === "terminated") return value;
+  throw new PublicApiError("INVALID_REQUEST", "Choose a valid sales agent status.", 400);
+}
+function commissionDepth(value: unknown): 3 | 5 {
+  if (value === 3 || value === "3") return 3;
+  if (value === 5 || value === "5") return 5;
+  throw new PublicApiError("INVALID_REQUEST", "Agent depth must be three or five levels.", 400);
+}
 function resolution(value: unknown): "confirmed_exported" | "confirmed_not_exported" {
   if (value === "confirmed_exported" || value === "confirmed_not_exported") return value;
-  throw new Error("Choose a valid commission review outcome.");
+  throw new PublicApiError("INVALID_REQUEST", "Choose a valid commission review outcome.", 400);
 }

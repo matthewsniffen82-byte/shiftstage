@@ -80,6 +80,4 @@ thirty read-only Supabase readiness checks passed. Pretest/prebuild generators
 ran; postbuild confirmed `LAYOUT_REVIEW_POPULATION_SKIPPED`. Tests used three
 workers; the build's duplicate lint pass was omitted after full standalone lint.
 
-Exact-commit push/deployment and post-release health are the remaining delivery
-checks at publication. The final receipt is retained under
-`D:\Codex\MyDancr-validation-2026-09-11\arch-stability` after publication.
+Published as `8725ca85a8d696f50baacc314eff6194dab36fd9`, with [exact-commit Vercel success](https://vercel.com/ai-movie-jobs/shiftstage/5rkPQiZyeDQ1LBSkkF3LeaWVZAFH). At 2026-09-12T06:04:12.235Z the checkout was clean and local main, origin/main and the remote matched. Public root and both health endpoints passed; anonymous administrator monitoring remained 401. The final receipt is `D:\Codex\MyDancr-validation-2026-09-11\arch-stability\step5-delivery.json`.

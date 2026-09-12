@@ -14,6 +14,7 @@ export async function refreshExpiringRequestSession(request: Request, fetcher = 
   if (!access || !refresh || access.length > 8192 || refresh.length > 4096 || !tokenPattern.test(access) || !tokenPattern.test(refresh)) return null;
   let claims;
   try { claims = JSON.parse(atob(access.split(".")[1].replace(/-/g, "+").replace(/_/g, "/"))); } catch { return null; }
+  if (!claims || typeof claims !== "object" || Array.isArray(claims)) return null;
   if (!Number.isFinite(claims.exp) || typeof claims.sub !== "string" || claims.exp > Date.now() / 1000 + 120) return null;
   const env = getPublicEnv();
   const response = await fetcher(`${env.supabaseUrl}/auth/v1/token?grant_type=refresh_token`, {
