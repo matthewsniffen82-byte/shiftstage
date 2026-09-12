@@ -99,7 +99,4 @@ retained compilation and type validation; its duplicate lint pass was omitted
 after full standalone lint. Postbuild confirmed
 `LAYOUT_REVIEW_POPULATION_SKIPPED`. All 30 read-only readiness checks passed.
 
-Exact-commit push/deployment and post-release health are the remaining delivery
-checks at publication. The final receipt is retained in
-`D:\Codex\MyDancr-validation-2026-09-11\arch-stability\step6-delivery.json`
-after those checks succeed.
+Published as `b0f3ac2950b934793c07c9b63a32ecbf849727e1`, with [exact-commit Vercel success](https://vercel.com/ai-movie-jobs/shiftstage/5JHGBMZtCdFFkMstAtWrehtYvvJ5). At 2026-09-12T07:09:49.262Z the checkout was clean and local main, origin/main and the remote matched. Public root and both health endpoints passed; anonymous administrator monitoring remained 401. The final receipt is `D:\Codex\MyDancr-validation-2026-09-11\arch-stability\step6-delivery.json`.

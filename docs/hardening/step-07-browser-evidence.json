@@ -1,0 +1,376 @@
+{
+  "sourceReviewBaseline": "b0f3ac2950b934793c07c9b63a32ecbf849727e1",
+  "capturedUtc": "2026-09-12T07:23:43.936Z",
+  "origin": "https://www.mydancr.com",
+  "privateDocuments": 11,
+  "ok": true,
+  "requests": 23,
+  "results": [
+    {
+      "path": "/",
+      "method": "GET",
+      "status": 200,
+      "inlineScriptCount": 2,
+      "checks": {
+        "status": true,
+        "html": true,
+        "noCredentialHeaders": true,
+        "noFraming": true,
+        "noPlugins": true,
+        "noInlineHandlers": true,
+        "noSniff": true,
+        "httpsPolicy": true,
+        "controlledInlineScripts": true,
+        "exactHashes": true
+      },
+      "ok": true
+    },
+    {
+      "path": "/account?venue_nfc=browser-boundary-verification-xxxxxxxxxxxxxxxxxx",
+      "method": "GET",
+      "status": 200,
+      "inlineScriptCount": 14,
+      "checks": {
+        "status": true,
+        "html": true,
+        "noCredentialHeaders": true,
+        "noFraming": true,
+        "noPlugins": true,
+        "noInlineHandlers": true,
+        "noSniff": true,
+        "httpsPolicy": true,
+        "controlledInlineScripts": true,
+        "freshNonceShape": true,
+        "privateNoStore": true,
+        "coveredPath": true,
+        "uniqueNonce": true
+      },
+      "ok": true
+    },
+    {
+      "path": "/account/reset-password",
+      "method": "GET",
+      "status": 200,
+      "inlineScriptCount": 13,
+      "checks": {
+        "status": true,
+        "html": true,
+        "noCredentialHeaders": true,
+        "noFraming": true,
+        "noPlugins": true,
+        "noInlineHandlers": true,
+        "noSniff": true,
+        "httpsPolicy": true,
+        "controlledInlineScripts": true,
+        "freshNonceShape": true,
+        "privateNoStore": true,
+        "coveredPath": true,
+        "uniqueNonce": true
+      },
+      "ok": true
+    },
+    {
+      "path": "/admin",
+      "method": "GET",
+      "status": 200,
+      "inlineScriptCount": 13,
+      "checks": {
+        "status": true,
+        "html": true,
+        "noCredentialHeaders": true,
+        "noFraming": true,
+        "noPlugins": true,
+        "noInlineHandlers": true,
+        "noSniff": true,
+        "httpsPolicy": true,
+        "controlledInlineScripts": true,
+        "freshNonceShape": true,
+        "privateNoStore": true,
+        "coveredPath": true,
+        "uniqueNonce": true
+      },
+      "ok": true
+    },
+    {
+      "path": "/admin/operations",
+      "method": "GET",
+      "status": 200,
+      "inlineScriptCount": 13,
+      "checks": {
+        "status": true,
+        "html": true,
+        "noCredentialHeaders": true,
+        "noFraming": true,
+        "noPlugins": true,
+        "noInlineHandlers": true,
+        "noSniff": true,
+        "httpsPolicy": true,
+        "controlledInlineScripts": true,
+        "freshNonceShape": true,
+        "privateNoStore": true,
+        "coveredPath": true,
+        "uniqueNonce": true
+      },
+      "ok": true
+    },
+    {
+      "path": "/dashboard/agent",
+      "method": "GET",
+      "status": 200,
+      "inlineScriptCount": 13,
+      "checks": {
+        "status": true,
+        "html": true,
+        "noCredentialHeaders": true,
+        "noFraming": true,
+        "noPlugins": true,
+        "noInlineHandlers": true,
+        "noSniff": true,
+        "httpsPolicy": true,
+        "controlledInlineScripts": true,
+        "freshNonceShape": true,
+        "privateNoStore": true,
+        "coveredPath": true,
+        "uniqueNonce": true
+      },
+      "ok": true
+    },
+    {
+      "path": "/dashboard/customer",
+      "method": "GET",
+      "status": 200,
+      "inlineScriptCount": 13,
+      "checks": {
+        "status": true,
+        "html": true,
+        "noCredentialHeaders": true,
+        "noFraming": true,
+        "noPlugins": true,
+        "noInlineHandlers": true,
+        "noSniff": true,
+        "httpsPolicy": true,
+        "controlledInlineScripts": true,
+        "freshNonceShape": true,
+        "privateNoStore": true,
+        "coveredPath": true,
+        "uniqueNonce": true
+      },
+      "ok": true
+    },
+    {
+      "path": "/dashboard/customer/offers",
+      "method": "GET",
+      "status": 200,
+      "inlineScriptCount": 13,
+      "checks": {
+        "status": true,
+        "html": true,
+        "noCredentialHeaders": true,
+        "noFraming": true,
+        "noPlugins": true,
+        "noInlineHandlers": true,
+        "noSniff": true,
+        "httpsPolicy": true,
+        "controlledInlineScripts": true,
+        "freshNonceShape": true,
+        "privateNoStore": true,
+        "coveredPath": true,
+        "uniqueNonce": true
+      },
+      "ok": true
+    },
+    {
+      "path": "/dashboard/customer/saved",
+      "method": "GET",
+      "status": 200,
+      "inlineScriptCount": 13,
+      "checks": {
+        "status": true,
+        "html": true,
+        "noCredentialHeaders": true,
+        "noFraming": true,
+        "noPlugins": true,
+        "noInlineHandlers": true,
+        "noSniff": true,
+        "httpsPolicy": true,
+        "controlledInlineScripts": true,
+        "freshNonceShape": true,
+        "privateNoStore": true,
+        "coveredPath": true,
+        "uniqueNonce": true
+      },
+      "ok": true
+    },
+    {
+      "path": "/dashboard/dancer",
+      "method": "GET",
+      "status": 200,
+      "inlineScriptCount": 13,
+      "checks": {
+        "status": true,
+        "html": true,
+        "noCredentialHeaders": true,
+        "noFraming": true,
+        "noPlugins": true,
+        "noInlineHandlers": true,
+        "noSniff": true,
+        "httpsPolicy": true,
+        "controlledInlineScripts": true,
+        "freshNonceShape": true,
+        "privateNoStore": true,
+        "coveredPath": true,
+        "uniqueNonce": true
+      },
+      "ok": true
+    },
+    {
+      "path": "/dashboard/dancer/tv",
+      "method": "GET",
+      "status": 200,
+      "inlineScriptCount": 16,
+      "checks": {
+        "status": true,
+        "html": true,
+        "noCredentialHeaders": true,
+        "noFraming": true,
+        "noPlugins": true,
+        "noInlineHandlers": true,
+        "noSniff": true,
+        "httpsPolicy": true,
+        "controlledInlineScripts": true,
+        "freshNonceShape": true,
+        "privateNoStore": true,
+        "coveredPath": true,
+        "uniqueNonce": true
+      },
+      "ok": true
+    },
+    {
+      "path": "/dashboard/venue",
+      "method": "GET",
+      "status": 200,
+      "inlineScriptCount": 13,
+      "checks": {
+        "status": true,
+        "html": true,
+        "noCredentialHeaders": true,
+        "noFraming": true,
+        "noPlugins": true,
+        "noInlineHandlers": true,
+        "noSniff": true,
+        "httpsPolicy": true,
+        "controlledInlineScripts": true,
+        "freshNonceShape": true,
+        "privateNoStore": true,
+        "coveredPath": true,
+        "uniqueNonce": true
+      },
+      "ok": true
+    },
+    {
+      "path": "/account?venue_nfc=browser-boundary-verification-xxxxxxxxxxxxxxxxxx",
+      "method": "GET",
+      "status": 200,
+      "inlineScriptCount": 14,
+      "checks": {
+        "status": true,
+        "html": true,
+        "noCredentialHeaders": true,
+        "noFraming": true,
+        "noPlugins": true,
+        "noInlineHandlers": true,
+        "noSniff": true,
+        "httpsPolicy": true,
+        "controlledInlineScripts": true,
+        "freshNonceShape": true,
+        "privateNoStore": true,
+        "coveredPath": true,
+        "uniqueNonce": true
+      },
+      "ok": true
+    },
+    {
+      "path": "/auth/callback",
+      "method": "GET",
+      "status": 200,
+      "inlineScriptCount": 1,
+      "checks": {
+        "status": true,
+        "html": true,
+        "noCredentialHeaders": true,
+        "noFraming": true,
+        "noPlugins": true,
+        "noInlineHandlers": true,
+        "noSniff": true,
+        "httpsPolicy": true,
+        "controlledInlineScripts": true,
+        "exactHashes": true,
+        "noReferrer": true,
+        "noStore": true
+      },
+      "ok": true
+    },
+    {
+      "path": "/account",
+      "method": "GET",
+      "status": 307,
+      "ok": true
+    },
+    {
+      "path": "/api/account",
+      "method": "OPTIONS",
+      "origin": "https://unrelated.example",
+      "status": 204,
+      "ok": true
+    },
+    {
+      "path": "/api/account",
+      "method": "OPTIONS",
+      "origin": "null",
+      "status": 204,
+      "ok": true
+    },
+    {
+      "path": "/api/admin/sales-agents",
+      "method": "OPTIONS",
+      "origin": "https://unrelated.example",
+      "status": 204,
+      "ok": true
+    },
+    {
+      "path": "/api/admin/sales-agents",
+      "method": "OPTIONS",
+      "origin": "null",
+      "status": 204,
+      "ok": true
+    },
+    {
+      "path": "/api/auth",
+      "method": "OPTIONS",
+      "origin": "https://unrelated.example",
+      "status": 204,
+      "ok": true
+    },
+    {
+      "path": "/api/auth",
+      "method": "OPTIONS",
+      "origin": "null",
+      "status": 204,
+      "ok": true
+    },
+    {
+      "path": "/api/stripe/webhook",
+      "method": "OPTIONS",
+      "origin": "https://unrelated.example",
+      "status": 204,
+      "ok": true
+    },
+    {
+      "path": "/api/stripe/webhook",
+      "method": "OPTIONS",
+      "origin": "null",
+      "status": 204,
+      "ok": true
+    }
+  ]
+}
