@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { after, NextResponse } from "next/server";
 import { apiError, PublicApiError } from "@/src/lib/api";
 import { readBoundedJsonObject } from "@/src/lib/bounded-json-body";
 import { requireSameOriginJsonMutation } from "@/src/lib/security/browser-mutation";
@@ -21,7 +21,7 @@ export async function POST(request: Request, context: { params: Promise<{ venueI
     const admin = createAdminSupabaseClient();
     await enforcePublicRequestRateLimit(admin, { namespace: "club_shuttle", request, subject: details.phone,
       ipLimit: 10, subjectLimit: 5, windowSeconds: 3600 });
-    const result = await submitVenueShuttleRequest(admin, venueId, body);
+    const result = await submitVenueShuttleRequest(admin, venueId, body, null, after);
     return NextResponse.json({ ok: true, ...result }, { headers: { "Cache-Control": "private, no-store" } });
   } catch (error) {
     if (error instanceof PublicRequestRateLimitError) return NextResponse.json({ ok: false, error: "Too many shuttle requests. Please try again later." }, { status: 429, headers: { "Cache-Control": "no-store", "Retry-After": String(error.retryAfterSeconds) } });

@@ -34,8 +34,10 @@ test("shuttle details require bounded fields, a real phone format, whole party c
 });
 
 const compiled = ts.transpileModule(readFileSync(new URL("../src/lib/dancr/club-shuttle-requests.ts", import.meta.url), "utf8"), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText;
-function fixture({ active = true, venueActive = true, ownerActive = true, storeFails = false, conflict = false, sms = false, push = 0, handoffFails = false, providerThrows = false } = {}) {
+function fixture({ active = true, venueActive = true, ownerActive = true, storeFails = false, conflict = false, sms = false, push = 0, handoffFails = false, providerThrows = false, deliveryGate = Promise.resolve() } = {}) {
   const exports = {}, calls = [], notifications = new Map(), receipts = new Map();
+  const scheduled = [];
+  const afterResponse = task => scheduled.push(task);
   const state = { active, venueActive, ownerActive, handoffFails };
   const client = { from(table) {
     const filters = [];
@@ -73,13 +75,51 @@ function fixture({ active = true, venueActive = true, ownerActive = true, storeF
     if (name === "./club-deal-transportation") return { normalizeShuttleRequest, normalizeShuttlePhone };
     if (name === "./deals") return { getActiveClubDealById: async (_, id) => state.active ? { id, venueId: "venue" } : null };
     if (name === "./notification-delivery") return {
-      deliverNotificationRows: async (_, rows, options) => { calls.push({ push: rows, options }); if (providerThrows) throw new Error("Synthetic provider failure"); return { push }; },
-      sendShuttlePhoneAlert: async input => { calls.push({ sms: input }); if (providerThrows) throw new Error("Synthetic provider failure"); return sms; },
+      deliverNotificationRows: async (_, rows, options) => { calls.push({ push: rows, options }); await deliveryGate; if (providerThrows) throw new Error("Synthetic provider failure"); return { push }; },
+      sendShuttlePhoneAlert: async input => { calls.push({ sms: input }); await deliveryGate; if (providerThrows) throw new Error("Synthetic provider failure"); return sms; },
     };
     return {};
   } });
-  return { run: input => exports.submitClubShuttleRequest(client, "deal", input || request), runRide: input => exports.submitVenueShuttleRequest(client, "venue", input || request), calls, notifications, receipts, state };
+  return { run: input => exports.submitClubShuttleRequest(client, "deal", input || request), runRide: input => exports.submitVenueShuttleRequest(client, "venue", input || request),
+    runDeferred: (ride = false) => ride ? exports.submitVenueShuttleRequest(client, "venue", request, null, afterResponse)
+      : exports.submitClubShuttleRequest(client, "deal", request, afterResponse),
+    calls, notifications, receipts, state, scheduled };
 }
+
+for (const ride of [false, true]) {
+  test(`${ride ? "ride" : "deal"} acknowledgement waits for durable handoff but not external providers`, async () => {
+    let release;
+    const deliveryGate = new Promise(resolve => { release = resolve; });
+    const baseline = fixture({ deliveryGate });
+    let baselineSettled = false;
+    const blocking = (ride ? baseline.runRide() : baseline.run()).then(() => { baselineSettled = true; });
+    await new Promise(resolve => setImmediate(resolve));
+    assert.equal(baseline.notifications.size, 2);
+    assert.equal(baselineSettled, false, "baseline is held by the provider after handoff");
+
+    const f = fixture({ deliveryGate });
+    const result = await f.runDeferred(ride);
+    assert.equal(result.alertsScheduled, true);
+    assert.equal(result.phoneAlertAccepted, null); assert.equal(result.pushAlertAccepted, null);
+    assert.equal(f.receipts.size, 1); assert.equal(f.notifications.size, 2);
+    assert.equal(f.scheduled.length, 1);
+    assert.equal(f.calls.some(call => call.sms || call.push), false, "delivery begins after response");
+    await f.runDeferred(ride);
+    assert.equal(f.scheduled.length, 1, "retries never schedule a duplicate send");
+    const delivery = f.scheduled[0]();
+    release(); await Promise.all([delivery, blocking]);
+    assert.equal(f.calls.filter(call => call.sms || call.push).length, 2);
+  });
+}
+
+test("unconfirmed handoffs never schedule delivery, and deferred provider failures retain the accepted lead", async () => {
+  const failed = fixture({ handoffFails: true });
+  await assert.rejects(failed.runDeferred()); assert.equal(failed.scheduled.length, 0);
+  const f = fixture({ providerThrows: true }); await f.runDeferred();
+  await f.scheduled[0]();
+  assert.equal(f.receipts.size, 1); assert.equal(f.notifications.size, 2);
+  await f.runDeferred(); assert.equal(f.scheduled.length, 1);
+});
 
 test("requests reach only the server-selected venue owner and active managers, with all pickup details", async () => {
   const f = fixture({ sms: true, push: 2 });
@@ -191,7 +231,7 @@ function routeFixture({ limited = false, failed = false, ride = false } = {}) {
   const exports = {}; let clients = 0, sent = 0;
   class RateLimitError extends Error { retryAfterSeconds = 60; }
   vm.runInNewContext(routeSource, { exports, require(name) {
-    if (name === "next/server") return { NextResponse: { json: (body, init) => Response.json(body, init) } };
+    if (name === "next/server") return { after: task => { assert.equal(typeof task, "function"); }, NextResponse: { json: (body, init) => Response.json(body, init) } };
     if (name.endsWith("/api")) return { PublicApiError, apiError: (error, fallback) => { const resolved = resolveApiError(error, fallback); return Response.json(resolved.body, { status: resolved.status }); } };
     if (name.endsWith("/bounded-json-body")) return { readBoundedJsonObject };
     if (name.endsWith("/browser-mutation")) return { requireSameOriginJsonMutation };
@@ -199,8 +239,9 @@ function routeFixture({ limited = false, failed = false, ride = false } = {}) {
     if (name.endsWith("/club-deal-transportation")) return { normalizeShuttleRequest };
     if (name.endsWith("/public-request-rate-limit")) return { PublicRequestRateLimitError: RateLimitError,
       enforcePublicRequestRateLimit: async (_, options) => { assert.equal(options.subject, "+17025550123"); if (limited) throw new RateLimitError(); } };
-    if (name.endsWith("/club-shuttle-requests")) return { [ride ? "submitVenueShuttleRequest" : "submitClubShuttleRequest"]: async (_, dealId, details) => {
+    if (name.endsWith("/club-shuttle-requests")) return { [ride ? "submitVenueShuttleRequest" : "submitClubShuttleRequest"]: async (_, dealId, details, ...options) => {
       assert.equal(dealId, request.requestId); assert.equal(details.email, request.email);
+      assert.equal(typeof options.at(-1), "function", "both production routes pass the response-lifetime scheduler");
       if (failed) throw new Error("Synthetic database error with guest@example.test");
       sent++; return { requestId: request.requestId, message: "The club will contact you." };
     } };

@@ -7,6 +7,7 @@ import { getActiveClubDealById } from "./deals";
 import { deliverNotificationRows, sendShuttlePhoneAlert } from "./notification-delivery";
 
 type ShuttleDetails = NonNullable<ReturnType<typeof normalizeShuttleRequest>>;
+type AfterResponse = (delivery: () => Promise<void>) => void;
 type ShuttleReceipt = {
   id: string; venue_id: string; deal_id: string | null; details_hash: string;
   notification_rows: Array<Parameters<typeof deliverNotificationRows>[1][number] & { id: string }>;
@@ -28,24 +29,24 @@ export async function getClubShuttleRecipientIds(client: SupabaseClient, venueId
   return accounts.map(account => String(account.id));
 }
 
-export async function submitClubShuttleRequest(client: SupabaseClient, dealId: string, input: Record<string, unknown>) {
+export async function submitClubShuttleRequest(client: SupabaseClient, dealId: string, input: Record<string, unknown>, afterResponse?: AfterResponse) {
   const details = readDetails(input);
   const previous = await readReceipt(client, details.requestId);
   if (previous) {
     assertMatchingRequest(previous, details, null, dealId);
-    return handoffRequest(client, previous);
+    return handoffRequest(client, previous, afterResponse);
   }
   const deal = await getActiveClubDealById(client, dealId);
   if (!deal) throw new PublicApiError("NOT_FOUND", "This Club Deal is no longer available.", 404);
-  return submitVenueShuttleRequest(client, deal.venueId, input, dealId);
+  return submitVenueShuttleRequest(client, deal.venueId, input, dealId, afterResponse);
 }
 
-export async function submitVenueShuttleRequest(client: SupabaseClient, venueId: string, input: Record<string, unknown>, dealId: string | null = null) {
+export async function submitVenueShuttleRequest(client: SupabaseClient, venueId: string, input: Record<string, unknown>, dealId: string | null = null, afterResponse?: AfterResponse) {
   const details = readDetails(input);
   const previous = await readReceipt(client, details.requestId);
   if (previous) {
     assertMatchingRequest(previous, details, venueId, dealId);
-    return handoffRequest(client, previous);
+    return handoffRequest(client, previous, afterResponse);
   }
   const { data: venue, error: venueError } = await client.from("venues")
     .select("id, name, phone, owner_user_id").eq("id", venueId).eq("is_active", true)
@@ -71,7 +72,7 @@ export async function submitVenueShuttleRequest(client: SupabaseClient, venueId:
   const receipt = await readReceipt(client, details.requestId);
   if (!receipt) throw new PublicApiError("UNAVAILABLE", "Your request could not be confirmed. Retry the same request.", 503);
   assertMatchingRequest(receipt, details, venueId, dealId);
-  return handoffRequest(client, receipt);
+  return handoffRequest(client, receipt, afterResponse);
 }
 
 function readDetails(input: Record<string, unknown>) {
@@ -98,25 +99,33 @@ function assertMatchingRequest(receipt: ShuttleReceipt, details: ShuttleDetails,
   }
 }
 
-async function handoffRequest(client: SupabaseClient, receipt: ShuttleReceipt) {
+async function handoffRequest(client: SupabaseClient, receipt: ShuttleReceipt, afterResponse?: AfterResponse) {
   const { data, error } = await client.rpc("handoff_club_shuttle_request", { p_request_id: receipt.id });
   if (error || data?.request_id !== receipt.id || typeof data?.newly_handed_off !== "boolean") {
     console.warn("SHUTTLE_INBOX_HANDOFF_UNCONFIRMED");
     throw new PublicApiError("UNAVAILABLE", "Your request is saved, but the club handoff could not be confirmed. Retry the same request.", 503);
   }
   let push = { push: 0 }, sms = false;
+  const alertsScheduled = Boolean(data.newly_handed_off && afterResponse);
   // External alerts are best effort after the inbox transaction. A replay never
   // repeats an external send, even after provider idempotency keys expire.
   if (data.newly_handed_off) {
-    [push, sms] = await Promise.all([
-      deliverNotificationRows(client, receipt.notification_rows.map(row => ({ ...row, deliveryId: row.id })), { email: false })
-        .catch(() => { console.warn("SHUTTLE_PUSH_UNAVAILABLE"); return { push: 0 }; }),
-      receipt.venue_phone ? sendShuttlePhoneAlert({ phone: receipt.venue_phone,
-        body: receipt.notification_rows[0].body, requestId: notificationId(receipt.id, receipt.venue_id) })
-        .catch(() => { console.warn("SHUTTLE_PHONE_UNAVAILABLE"); return false; }) : Promise.resolve(false),
-    ]);
+    const deliver = async () => {
+      [push, sms] = await Promise.all([
+        deliverNotificationRows(client, receipt.notification_rows.map(row => ({ ...row, deliveryId: row.id })), { email: false })
+          .catch(() => { console.warn("SHUTTLE_PUSH_UNAVAILABLE"); return { push: 0 }; }),
+        receipt.venue_phone ? sendShuttlePhoneAlert({ phone: receipt.venue_phone,
+          body: receipt.notification_rows[0].body, requestId: notificationId(receipt.id, receipt.venue_id) })
+          .catch(() => { console.warn("SHUTTLE_PHONE_UNAVAILABLE"); return false; }) : Promise.resolve(false),
+      ]);
+    };
+    // Route handlers pass Next's after() so Vercel retains the response lifetime.
+    // The durable lead and inbox handoff above must succeed before scheduling.
+    if (afterResponse) afterResponse(deliver);
+    else await deliver();
   }
-  return { requestId: receipt.id, phoneAlertAccepted: sms, pushAlertAccepted: push.push > 0,
+  return { requestId: receipt.id, alertsScheduled,
+    phoneAlertAccepted: alertsScheduled ? null : sms, pushAlertAccepted: alertsScheduled ? null : push.push > 0,
     message: "Your request has been sent to the club manager. The club will contact you at the phone number you provided to arrange and confirm pickup. Your ride is not yet confirmed." };
 }
 
