@@ -68,12 +68,35 @@ test('alias lookups still enforce all public profile approval and visibility fil
   const code = source.slice(source.indexOf('export async function getDancerProfile'),source.indexOf('async function getApprovedDancerPhotos'));
   const api = {};
   const filters = [];
-  const client = { from(table) { assert.equal(table, 'dancer_profiles'); const query = { select() { return this; }, eq(key,value) { filters.push([key,value]); return this; }, limit() { return this; }, async maybeSingle() { return { data: null }; } }; return query; } };
-  vm.runInNewContext(compile(code), { exports: api, applyPublicApprovalFilters(query) { return query.eq('status','approved').eq('verification_status','approved'); }, PUBLIC_PROFILE_SHIFT_LIMIT: 30, isMissingIsPublicColumnError: () => false, resolveDancerProfileAlias: async () => 'stacy' });
+  const windows = [];
+  const client = { from(table) {
+    assert.equal(table, 'dancer_profiles');
+    const window = []; windows.push(window);
+    return {
+      select(value) { assert.match(value, /venues!inner\(/); return this; },
+      eq(key, value) { filters.push([key, value]); window.push(['eq', key, value]); return this; },
+      is(key, value) { window.push(['is', key, value]); return this; },
+      or(value, options) { assert.equal(options.referencedTable, 'shifts'); window.push(['or', value]); return this; },
+      order(key, options) { assert.equal(options.referencedTable, 'shifts'); assert.equal(options.ascending, true); window.push(['order', key]); return this; },
+      limit(value, options) { assert.equal(options.referencedTable, 'shifts'); window.push(['limit', value]); return this; },
+      async maybeSingle() { return { data: null }; },
+    };
+  } };
+  vm.runInNewContext(compile(code), { exports: api, applyPublicApprovalFilters(query) { return query.eq('status','approved').eq('verification_status','approved'); }, PUBLIC_PROFILE_SHIFT_LIMIT: 50, isMissingIsPublicColumnError: () => false, resolveDancerProfileAlias: async () => 'stacy' });
   assert.equal(await api.getDancerProfile(client,'dancer-3'), null);
   assert.deepEqual(filters.filter(([key]) => key === 'slug'), [['slug','dancer-3'],['slug','stacy']]);
   assert.equal(filters.filter(([key,value])=>key==='is_public'&&value===true).length,2);
   assert.equal(filters.filter(([key,value])=>key==='status'&&value==='approved').length,2);
+  assert.equal(windows.length, 2);
+  for (const window of windows) {
+    assert.deepEqual(window.slice(-3), [['order', 'starts_at'], ['order', 'id'], ['limit', 50]]);
+    for (const expected of [['eq', 'shifts.status', 'posted'], ['is', 'shifts.checked_out_at', null], ['eq', 'shifts.venues.is_active', true], ['eq', 'shifts.venues.has_active_club_deal', true]]) {
+      assert.ok(window.some(actual => JSON.stringify(actual) === JSON.stringify(expected)));
+    }
+    const expression = window.find(([method]) => method === 'or')?.[1];
+    assert.match(expression, /shift_source\.eq\.scheduled,ends_at\.gte\./);
+    assert.match(expression, /location_verification_expires_at\.gt\./);
+  }
 });
 
 test('legacy shared links retain their photo selection when the assigned slug has changed', async () => {

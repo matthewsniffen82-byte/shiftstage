@@ -34,8 +34,8 @@ being treated as present state.
 | 7 | Browser security, rendering, redirects and token exposure boundaries | Published: `0f5e0c31084dc53d58442202cea7ad6f761e1af0`; 6,851 tests and all release gates; [Vercel success](https://vercel.com/ai-movie-jobs/shiftstage/5UyvzVyCnUUwncbhTDV5VkZkT8MG) |
 | 8 | Upload/media validation, resource budgets and publication safety | Published: `19ca1b4292af071a3d6395bb1f044acd4d367d03`; 7,123 tests and all release gates; [Vercel success](https://vercel.com/ai-movie-jobs/shiftstage/DCCd34YEFm8Y9Zoo3sRagCvvvGNR) |
 | 9 | Rate limits, request budgets and abuse under concurrency | Published: `590ffc24e7b183358821267b43a903dd8cd29325`; 7,312 tests and all release gates; [Vercel success](https://vercel.com/ai-movie-jobs/shiftstage/zUReVoQ4GVjs5xgrLoBcND8aegip) |
-| 10 | Atomic operations, idempotency and partial-write recovery, including venue provisioning compensation | Validated: 7,356 tests, TypeScript, lint, build and 33 readiness checks; delivery receipt follows |
-| 11 | Query bounds, caching, network behavior and generated asset consistency | Pending |
+| 10 | Atomic operations, idempotency and partial-write recovery, including venue provisioning compensation | Published: `0ac237ee6a0d99f30a58b711d6fa802b9d8ee8f1`; 7,356 tests and all release gates; [Vercel success](https://vercel.com/ai-movie-jobs/shiftstage/5k3A4LX4Rc3B6ck8g11rqjX4nA6N) |
+| 11 | Query bounds, caching, network behavior and generated asset consistency | Validated: 7,365 tests, TypeScript, lint, build and 33 readiness checks; delivery receipt follows |
 | 12 | Frontend exceptions, loading/empty/error states and interrupted navigation | Pending |
 | 13 | Background jobs, overlapping runs, deadlines and retry recovery | Pending |
 | 14 | Privacy-safe diagnostics, exception monitoring and failure visibility | Pending |

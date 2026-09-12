@@ -216,6 +216,10 @@ export async function getTonightShifts(client: DancrClient, city: string, now = 
 }
 
 export async function getDancerProfile(client: DancrClient, slug: string, resolveAlias = true): Promise<DancerProfile | null> {
+  const now = new Date().toISOString();
+  // Filter visible dates before the window so historical rows cannot hide them.
+  // Active NFC presence remains valid independently of a scheduled end time.
+  const visibleShiftWindow = `and(shift_source.eq.scheduled,ends_at.gte.${now}),and(checked_in_at.not.is.null,location_status.eq.club_confirmed,location_verification_expires_at.gt.${now})`;
   const current = await applyPublicApprovalFilters(client
     .from("dancer_profiles")
     .select(
@@ -234,11 +238,18 @@ export async function getDancerProfile(client: DancrClient, slug: string, resolv
         is_public,
         trending_scores(rank),
         social_links(id, platform, handle, url, is_active),
-        shifts(id, shift_date, shift_source, starts_at, ends_at, timezone, status, location_status, checked_in_at, checked_out_at, location_verification_expires_at, venues(id, name, slug, timezone, is_active, has_active_club_deal))
+        shifts(id, shift_date, shift_source, starts_at, ends_at, timezone, status, location_status, checked_in_at, checked_out_at, location_verification_expires_at, venues!inner(id, name, slug, timezone, is_active, has_active_club_deal))
       `,
     )
     .eq("slug", slug))
     .eq("is_public", true)
+    .eq("shifts.status", "posted")
+    .is("shifts.checked_out_at", null)
+    .or(visibleShiftWindow, { referencedTable: "shifts" })
+    .eq("shifts.venues.is_active", true)
+    .eq("shifts.venues.has_active_club_deal", true)
+    .order("starts_at", { referencedTable: "shifts", ascending: true })
+    .order("id", { referencedTable: "shifts", ascending: true })
     .limit(PUBLIC_PROFILE_SHIFT_LIMIT, { referencedTable: "shifts" })
     .maybeSingle();
 
@@ -263,10 +274,17 @@ export async function getDancerProfile(client: DancrClient, slug: string, resolv
           avatar_storage_path,
           trending_scores(rank),
           social_links(id, platform, handle, url, is_active),
-          shifts(id, shift_date, shift_source, starts_at, ends_at, timezone, status, location_status, checked_in_at, checked_out_at, location_verification_expires_at, venues(id, name, slug, timezone, is_active, has_active_club_deal))
+          shifts(id, shift_date, shift_source, starts_at, ends_at, timezone, status, location_status, checked_in_at, checked_out_at, location_verification_expires_at, venues!inner(id, name, slug, timezone, is_active, has_active_club_deal))
         `,
       )
       .eq("slug", slug))
+      .eq("shifts.status", "posted")
+      .is("shifts.checked_out_at", null)
+      .or(visibleShiftWindow, { referencedTable: "shifts" })
+      .eq("shifts.venues.is_active", true)
+      .eq("shifts.venues.has_active_club_deal", true)
+      .order("starts_at", { referencedTable: "shifts", ascending: true })
+      .order("id", { referencedTable: "shifts", ascending: true })
       .limit(PUBLIC_PROFILE_SHIFT_LIMIT, { referencedTable: "shifts" })
       .maybeSingle();
     data = legacy.data;
