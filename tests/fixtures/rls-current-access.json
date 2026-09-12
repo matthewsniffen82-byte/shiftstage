@@ -1,8 +1,8 @@
 {
-  "capturedAt": "2026-09-10T00:55:22.697866+00:00",
-  "dependenciesCapturedAt": "2026-09-10T00:59:48.041918+00:00",
+  "capturedAt": "2026-09-12T04:43:52.243183+00:00",
+  "dependenciesCapturedAt": "2026-09-12T04:57:57.983488+00:00",
   "baseline": "docs/supabase-reliability/step-01-inventory.json",
-  "scope": "Current public policies/grants/views plus schema deltas for the isolated policy fixture. Contains metadata only. Does not replay production constraints/triggers or load hosted Auth/Storage.",
+  "scope": "Current public policies/grants/views and schema deltas for the isolated policy fixture, refreshed 2026-09-12. Contains metadata only. Does not replay production constraints/triggers or load hosted Auth/Storage. Column ACLs and API role capabilities separately rechecked at dependenciesCapturedAt; policy helper fingerprints match capturedAt.",
   "relations": [
     {
       "force_rls": false,
@@ -927,6 +927,64 @@
       },
       "kind": "r",
       "name": "follows",
+      "options": null,
+      "owner": "postgres",
+      "rls": true,
+      "schema_name": "public"
+    },
+    {
+      "force_rls": false,
+      "grants": {
+        "anon": {
+          "delete": false,
+          "insert": false,
+          "select": false,
+          "update": false
+        },
+        "authenticated": {
+          "delete": false,
+          "insert": false,
+          "select": false,
+          "update": false
+        },
+        "service_role": {
+          "delete": false,
+          "insert": false,
+          "select": true,
+          "update": false
+        }
+      },
+      "kind": "r",
+      "name": "gallery_media_reference_history",
+      "options": null,
+      "owner": "postgres",
+      "rls": true,
+      "schema_name": "public"
+    },
+    {
+      "force_rls": false,
+      "grants": {
+        "anon": {
+          "delete": false,
+          "insert": false,
+          "select": false,
+          "update": false
+        },
+        "authenticated": {
+          "delete": false,
+          "insert": false,
+          "select": false,
+          "update": false
+        },
+        "service_role": {
+          "delete": false,
+          "insert": false,
+          "select": true,
+          "update": false
+        }
+      },
+      "kind": "r",
+      "name": "gallery_storage_retirements",
       "options": null,
       "owner": "postgres",
       "rls": true,
@@ -4061,6 +4119,162 @@
       "is_nullable": "YES",
       "ordinal_position": 23,
       "table_name": "dancer_profiles",
+      "table_schema": "public",
+      "udt_name": "timestamptz",
+      "udt_schema": "pg_catalog"
+    },
+    {
+      "column_default": null,
+      "column_name": "event_id",
+      "data_type": "bigint",
+      "is_generated": "NEVER",
+      "is_identity": "YES",
+      "is_nullable": "NO",
+      "ordinal_position": 1,
+      "table_name": "gallery_media_reference_history",
+      "table_schema": "public",
+      "udt_name": "int8",
+      "udt_schema": "pg_catalog"
+    },
+    {
+      "column_default": "clock_timestamp()",
+      "column_name": "recorded_at",
+      "data_type": "timestamp with time zone",
+      "is_generated": "NEVER",
+      "is_identity": "NO",
+      "is_nullable": "NO",
+      "ordinal_position": 2,
+      "table_name": "gallery_media_reference_history",
+      "table_schema": "public",
+      "udt_name": "timestamptz",
+      "udt_schema": "pg_catalog"
+    },
+    {
+      "column_default": "txid_current()",
+      "column_name": "transaction_id",
+      "data_type": "bigint",
+      "is_generated": "NEVER",
+      "is_identity": "NO",
+      "is_nullable": "NO",
+      "ordinal_position": 3,
+      "table_name": "gallery_media_reference_history",
+      "table_schema": "public",
+      "udt_name": "int8",
+      "udt_schema": "pg_catalog"
+    },
+    {
+      "column_default": null,
+      "column_name": "source_kind",
+      "data_type": "text",
+      "is_generated": "NEVER",
+      "is_identity": "NO",
+      "is_nullable": "NO",
+      "ordinal_position": 4,
+      "table_name": "gallery_media_reference_history",
+      "table_schema": "public",
+      "udt_name": "text",
+      "udt_schema": "pg_catalog"
+    },
+    {
+      "column_default": null,
+      "column_name": "source_id",
+      "data_type": "uuid",
+      "is_generated": "NEVER",
+      "is_identity": "NO",
+      "is_nullable": "NO",
+      "ordinal_position": 5,
+      "table_name": "gallery_media_reference_history",
+      "table_schema": "public",
+      "udt_name": "uuid",
+      "udt_schema": "pg_catalog"
+    },
+    {
+      "column_default": null,
+      "column_name": "profile_id",
+      "data_type": "uuid",
+      "is_generated": "NEVER",
+      "is_identity": "NO",
+      "is_nullable": "NO",
+      "ordinal_position": 6,
+      "table_name": "gallery_media_reference_history",
+      "table_schema": "public",
+      "udt_name": "uuid",
+      "udt_schema": "pg_catalog"
+    },
+    {
+      "column_default": null,
+      "column_name": "storage_path",
+      "data_type": "text",
+      "is_generated": "NEVER",
+      "is_identity": "NO",
+      "is_nullable": "NO",
+      "ordinal_position": 7,
+      "table_name": "gallery_media_reference_history",
+      "table_schema": "public",
+      "udt_name": "text",
+      "udt_schema": "pg_catalog"
+    },
+    {
+      "column_default": null,
+      "column_name": "event_kind",
+      "data_type": "text",
+      "is_generated": "NEVER",
+      "is_identity": "NO",
+      "is_nullable": "NO",
+      "ordinal_position": 8,
+      "table_name": "gallery_media_reference_history",
+      "table_schema": "public",
+      "udt_name": "text",
+      "udt_schema": "pg_catalog"
+    },
+    {
+      "column_default": null,
+      "column_name": "storage_path",
+      "data_type": "text",
+      "is_generated": "NEVER",
+      "is_identity": "NO",
+      "is_nullable": "NO",
+      "ordinal_position": 1,
+      "table_name": "gallery_storage_retirements",
+      "table_schema": "public",
+      "udt_name": "text",
+      "udt_schema": "pg_catalog"
+    },
+    {
+      "column_default": "gen_random_uuid()",
+      "column_name": "retirement_id",
+      "data_type": "uuid",
+      "is_generated": "NEVER",
+      "is_identity": "NO",
+      "is_nullable": "NO",
+      "ordinal_position": 2,
+      "table_name": "gallery_storage_retirements",
+      "table_schema": "public",
+      "udt_name": "uuid",
+      "udt_schema": "pg_catalog"
+    },
+    {
+      "column_default": null,
+      "column_name": "profile_id",
+      "data_type": "uuid",
+      "is_generated": "NEVER",
+      "is_identity": "NO",
+      "is_nullable": "NO",
+      "ordinal_position": 3,
+      "table_name": "gallery_storage_retirements",
+      "table_schema": "public",
+      "udt_name": "uuid",
+      "udt_schema": "pg_catalog"
+    },
+    {
+      "column_default": "clock_timestamp()",
+      "column_name": "retired_at",
+      "data_type": "timestamp with time zone",
+      "is_generated": "NEVER",
+      "is_identity": "NO",
+      "is_nullable": "NO",
+      "ordinal_position": 4,
+      "table_name": "gallery_storage_retirements",
       "table_schema": "public",
       "udt_name": "timestamptz",
       "udt_schema": "pg_catalog"

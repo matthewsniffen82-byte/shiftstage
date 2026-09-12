@@ -23,7 +23,7 @@ before(async()=>{
 after(async()=>db?.close());
 
 test('the current fixture uses all captured policies, view security and column grants',async()=>{
- assert.equal(tables.length,79);assert.equal(snapshot.policies.length,140);
+ assert.equal(tables.length,81);assert.equal(snapshot.policies.length,140);
  const actual=(await db.query("select schemaname,tablename,policyname,permissive,roles,cmd,qual,with_check from pg_policies where schemaname='public' order by tablename,policyname")).rows;
  const shape=p=>[p.tablename,p.policyname,p.permissive,Array.from(p.roles).sort().join(','),p.cmd,p.qual?.replace(/\s+/g,' ').trim()||null,p.with_check?.replace(/\s+/g,' ').trim()||null];
  const ordered=rows=>rows.map(shape).sort((a,b)=>JSON.stringify(a).localeCompare(JSON.stringify(b)));
@@ -39,7 +39,7 @@ test('the current fixture uses all captured policies, view security and column g
    assert.equal((await db.query('select has_table_privilege($1,$2,$3) as allowed',[role,`public.${relation.name}`,command])).rows[0].allowed,allowed,`${role} ${command} ${relation.name}`);
   }
  }
- assert.equal((await db.query("select count(*)::int as n from pg_class c join pg_namespace n on n.oid=c.relnamespace where n.nspname='public' and c.relkind='r' and c.relrowsecurity")).rows[0].n,79);
+ assert.equal((await db.query("select count(*)::int as n from pg_class c join pg_namespace n on n.oid=c.relnamespace where n.nspname='public' and c.relkind='r' and c.relrowsecurity")).rows[0].n,81);
  for(const helper of snapshot.helpers){
   const definition=(await db.query('select prosrc from pg_proc where oid=$1::regprocedure',[`public.${helper.name}()`])).rows[0].prosrc;
   assert.equal(definition,helper.definition.split('$function$')[1]);
@@ -114,5 +114,15 @@ for(const table of preferenceTables){
   await db.query("update app_users set account_state='disabled' where id=$1",[ids.owner]);
   try{assert.equal(await asIdentity(db,'authenticated',ids.owner,()=>deniedOrEmpty(()=>db.query(`update ${target} set ${key}=${key} where ${key}=$1 returning 1`,[ids.owner]))),true);}
   finally{await db.query("update app_users set account_state='active' where id=$1",[ids.owner]);}
+ });
+}
+
+for (const table of ['gallery_media_reference_history', 'gallery_storage_retirements']) {
+ test('current ' + table + ' receipts are readable but cannot be forged by the service role', async () => {
+  const target = 'public.' + quote(table);
+  assert.ok((await asIdentity(db, 'service_role', null, () => db.query('select 1 from ' + target))).rows.length > 0);
+  for (const sql of ['insert into ' + target + ' default values returning 1', 'update ' + target + ' set profile_id=profile_id returning 1', 'delete from ' + target + ' returning 1']) {
+   assert.equal(await asIdentity(db, 'service_role', null, () => deniedOrEmpty(() => db.query(sql))), true);
+  }
  });
 }

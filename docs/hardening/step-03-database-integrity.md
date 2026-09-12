@@ -103,8 +103,11 @@ TypeScript was run separately to avoid repeating the same full suite inside the
 package's combined typecheck command. Build compilation/type checks remained
 enabled; only its duplicate lint pass was omitted after full standalone lint.
 
-Exact commit push/Vercel and post-release health are the remaining delivery
-checks at publication. Local results and the final delivery receipt are under
+Published as `34b6f50dadd61a5b38f7b3831499d34c8a21040b` with
+[exact Vercel success](https://vercel.com/ai-movie-jobs/shiftstage/5RqEiNACJtqxuqzeUeyrgWuaF7Bn).
+Clean local HEAD and remote main matched at 2026-09-12 04:51:43 UTC.
+Production root and both health endpoints returned 200; anonymous administrative
+monitoring returned 401. Local results and `step3-delivery.json` are under
 `D:\Codex\MyDancr-validation-2026-09-11\arch-stability`.
 
 The resumed task's 30 read-only Supabase readiness checks passed, including Auth,

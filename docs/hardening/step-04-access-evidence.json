@@ -1,0 +1,48 @@
+{
+  "capturedAt": "2026-09-12T04:43:52.243183+00:00",
+  "dependenciesCapturedAt": "2026-09-12T04:57:57.983488+00:00",
+  "readOnly": true,
+  "applicationRowsRead": false,
+  "applicationFunctionsInvoked": false,
+  "sourceCatalogSha256": "a1fe7f4156cc33c3b99c2ae014ab5802570a2afd52d89b418c3ea60fafa71266",
+  "sourceSupplementSha256": "cccc446c9c414ef656aefa4d74e122fa904a231dc0e65f1134267d7ca14c25fb",
+  "publicBaseTables": 81,
+  "publicViews": 2,
+  "publicPolicies": 140,
+  "storageRelations": 8,
+  "storagePolicies": 14,
+  "storageBuckets": 10,
+  "columnGrants": 82,
+  "roles": [
+    {
+      "bypass_rls": false,
+      "can_login": false,
+      "create_db": false,
+      "create_role": false,
+      "name": "anon",
+      "superuser": false
+    },
+    {
+      "bypass_rls": false,
+      "can_login": false,
+      "create_db": false,
+      "create_role": false,
+      "name": "authenticated",
+      "superuser": false
+    },
+    {
+      "bypass_rls": true,
+      "can_login": false,
+      "create_db": false,
+      "create_role": false,
+      "name": "service_role",
+      "superuser": false
+    }
+  ],
+  "apiMemberships": [],
+  "newMatrixTables": [
+    "gallery_media_reference_history",
+    "gallery_storage_retirements"
+  ],
+  "scope": "Metadata comparison and synthetic local policy execution. Hosted cross-account JWT, Storage HTTP/Realtime and engine-specific connection behavior were not exercised."
+}

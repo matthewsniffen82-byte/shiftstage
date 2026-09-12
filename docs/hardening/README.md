@@ -27,8 +27,8 @@ being treated as present state.
 | 0 | Architecture inventory and stability baseline | Published: `9421967012a04dccd24d99d14fa33dae29da43a1` |
 | 1 | Service boundaries and browser/server import isolation | Published: `47d165470d4ed4682497da7c21f6f3068fbd071f` |
 | 2 | Environment validation, credential boundaries and configuration | Published: `14cf8206`; see its report |
-| 3 | Database integrity, repeatable account provisioning and reconciliation of the unpublished fix | Validated release candidate: 6,225 tests, TypeScript, lint and build; delivery receipt follows |
-| 4 | Supabase access boundaries: RLS, grants, Storage and role isolation | Pending |
+| 3 | Database integrity, repeatable account provisioning and reconciliation of the unpublished fix | Published: `34b6f50dadd61a5b38f7b3831499d34c8a21040b`; 6,225 tests and all release gates; [Vercel success](https://vercel.com/ai-movie-jobs/shiftstage/5RqEiNACJtqxuqzeUeyrgWuaF7Bn) |
+| 4 | Supabase access boundaries: RLS, grants, Storage and role isolation | Validated: 6,359 tests, TypeScript, lint, build, 30 live readiness checks and 19 metadata comparisons; delivery receipt follows |
 | 5 | Authentication, session lifecycle and password recovery | Pending |
 | 6 | API authorization, input validation and consistent failure behavior | Pending |
 | 7 | Browser security, rendering, redirects and token exposure boundaries | Pending |
