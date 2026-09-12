@@ -9,6 +9,108 @@ body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-she
   transform: translateX(8px) !important;
 }
 
+/* Desktop has room for identity and metrics beside each other. Reset the
+ * legacy fixed-height identity rows so they cannot overflow above the modal. */
+@media (min-width: 760px) {
+  body.dancr-button-system #profileBackdrop #profileModal .profile-modal-summary {
+    min-height: 104px !important;
+    padding: 16px 112px 16px 16px !important;
+  }
+
+  body.dancr-button-system #profileBackdrop #profileModal .profile-modal-person {
+    grid-template-columns: 72px minmax(0, 1fr) !important;
+    align-items: center !important;
+    gap: 16px !important;
+  }
+
+  body.dancr-button-system #profileBackdrop #profileModal .profile-modal-avatar-column {
+    grid-template-rows: 72px !important;
+  }
+
+  body.dancr-button-system #profileBackdrop #profileModal .profile-modal-avatar {
+    width: 72px !important;
+    height: 72px !important;
+  }
+
+  body.dancr-button-system #profileBackdrop #profileModal .modal-identity-stack {
+    height: auto !important;
+    grid-template: auto / minmax(0, 1fr) minmax(240px, 1.35fr) !important;
+    align-items: center !important;
+    gap: 16px !important;
+  }
+
+  body.dancr-button-system #profileBackdrop #profileModal .modal-identity {
+    grid-area: 1 / 1 !important;
+    width: 100% !important;
+    max-width: none !important;
+    grid-template: auto auto / minmax(0, 1fr) !important;
+    gap: 6px !important;
+  }
+
+  body.dancr-button-system #profileBackdrop #profileModal .profile-modal-name-row {
+    padding: 0 !important;
+  }
+
+  body.dancr-button-system #profileBackdrop #profileModal #modalName {
+    font-size: 24px !important;
+    line-height: 1.2 !important;
+  }
+
+  body.dancr-button-system #profileBackdrop #profileModal .profile-modal-city-icon {
+    width: 16px !important;
+    height: 16px !important;
+    flex: 0 0 16px !important;
+  }
+
+  body.dancr-button-system #profileBackdrop #profileModal #modalCity {
+    width: auto !important;
+    max-width: 100% !important;
+    min-height: 18px !important;
+    padding: 0 !important;
+    border: 0 !important;
+    background: transparent !important;
+    font-size: 13px !important;
+    line-height: 1.3 !important;
+    transform: none !important;
+  }
+
+  body.dancr-button-system #profileBackdrop #profileModal .profile-modal-header-metrics {
+    grid-area: 1 / 2 !important;
+    width: 100% !important;
+    margin: 0 !important;
+    transform: none !important;
+  }
+
+  body.dancr-button-system #profileBackdrop #profileModal .profile-modal-header-metrics .profile-activity-metrics {
+    margin: 0 !important;
+    column-gap: 12px !important;
+    background: transparent !important;
+  }
+
+  body.dancr-button-system #profileBackdrop #profileModal .profile-modal-header-metrics .profile-activity-metrics > div {
+    display: grid !important;
+    grid-template: auto auto / minmax(0, 1fr) !important;
+    align-content: center !important;
+    gap: 4px !important;
+    padding: 0 !important;
+  }
+
+  body.dancr-button-system #profileBackdrop #profileModal .profile-modal-header-metrics dd {
+    font-size: 22px !important;
+    line-height: 1.2 !important;
+  }
+
+  body.dancr-button-system #profileBackdrop #profileModal .profile-modal-header-metrics dt {
+    font-size: 11px !important;
+    line-height: 1.3 !important;
+  }
+
+  body.dancr-button-system #profileBackdrop #profileModal .profile-modal-header-controls {
+    top: 16px !important;
+    right: 14px !important;
+  }
+}
+
 /* Shared profile-only layout. The explicit scope wins over legacy mobile
  * circle styles without changing buttons elsewhere or the Club Deal card. */
 body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell, .dancer-profile-preview-overlay) :is(.modal-actions, .live-actions).profile-actions-compact {
