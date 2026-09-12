@@ -1,3 +1,14 @@
+/* Bring the header flag toward close while preserving two separate 44px targets. */
+body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell, .dancer-profile-preview-overlay) :is(.profile-modal-header-controls, .profile-titlebar-controls) {
+  width: 88px !important;
+  grid-template-columns: repeat(2, 44px) !important;
+  gap: 0 !important;
+}
+
+body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell, .dancer-profile-preview-overlay) :is(.profile-modal-header-controls, .profile-titlebar-controls) .profile-header-report-action > svg {
+  transform: translateX(8px) !important;
+}
+
 /* Shared profile-only layout. The explicit scope wins over legacy mobile
  * circle styles without changing buttons elsewhere or the Club Deal card. */
 body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell, .dancer-profile-preview-overlay) :is(.modal-actions, .live-actions).profile-actions-compact {
