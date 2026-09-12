@@ -86,7 +86,7 @@ export async function getAdminOperationsCenter(client: DancrClient): Promise<Adm
     safeCount("Video moderation", () => db.from("mydancr_tv_videos").select("id", { count: "exact", head: true }).eq("status", "submitted")),
     safeCount("Social link reviews", () => db.from("approval_reviews").select("id", { count: "exact", head: true }).eq("status", "pending").like("review_type", "social_link:%")),
     safeCount("Content reports", () => db.from("content_reports").select("id", { count: "exact", head: true }).eq("status", "open")),
-    safeCount("Copyright cases", () => db.from("dmca_cases").select("id", { count: "exact", head: true }).in("status", ["submitted", "information_requested", "countered"])),
+    safeCount("Copyright cases", () => db.from("dmca_cases").select("id", { count: "exact", head: true }).in("status", ["submitted", "needs_information", "disabled", "countered", "court_hold"])),
     safeCount("Support inbox", () => db.from("support_threads").select("id", { count: "exact", head: true }).eq("status", "open")),
     safeCount("Venue setup", () => db.from("venues").select("id", { count: "exact", head: true }).eq("is_active", false)),
     safeCount("Overdue dancer approvals", () => db.from("dancer_profiles").select("id", { count: "exact", head: true }).eq("status", "pending_review").lt("updated_at", dayAgo)),
@@ -217,7 +217,8 @@ async function safeCount(section: string, query: () => PromiseLike<any>): Promis
   try {
     const result = await query();
     if (result.error) throw result.error;
-    return { count: Number(result.count || 0) };
+    if (!Number.isSafeInteger(result.count) || result.count < 0) throw new Error("ADMIN_COUNT_UNCONFIRMED");
+    return { count: result.count };
   } catch (error) {
     logOperationalQueryFailure(section, error);
     return { count: 0, warning: { section, message: operationalWarningMessage() } };

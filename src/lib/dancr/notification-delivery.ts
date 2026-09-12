@@ -137,6 +137,7 @@ async function deliverPushNotifications(rows: NotificationDeliveryRow[]) {
       logProviderRejection("onesignal", response.status);
       continue;
     }
+    if (response.created !== true) continue;
     delivered += 1;
   }
   return delivered;
@@ -191,15 +192,69 @@ async function requestDeliveryProvider(
   init: RequestInit,
 ) {
   try {
-    return await fetch(url, {
+    const signal = AbortSignal.timeout(DELIVERY_PROVIDER_TIMEOUT_MS);
+    const response = await fetch(url, {
       ...init,
       cache: "no-store",
       redirect: "error",
-      signal: AbortSignal.timeout(DELIVERY_PROVIDER_TIMEOUT_MS),
+      signal,
     });
+    try {
+      const created = provider === "onesignal" && response.ok
+        ? await hasCreatedPushMessage(response, signal)
+        : null;
+      return { ok: response.ok, status: response.status, created };
+    } finally {
+      // Resend callers only use HTTP acceptance. OneSignal success bodies have
+      // been read above; discard every remaining body without waiting on cleanup.
+      try {
+        void response.body?.cancel().catch(() => {});
+      } catch {
+        // Cleanup cannot reclassify an already acknowledged response.
+      }
+    }
   } catch {
     console.warn("NOTIFICATION_PROVIDER_REQUEST_FAILED", { provider });
     return null;
+  }
+}
+
+async function hasCreatedPushMessage(response: Response, signal: AbortSignal) {
+  if (signal.aborted) throw new Error("NOTIFICATION_RESPONSE_ABORTED");
+  if (!response.body) return false;
+  const maxBytes = 64 * 1024;
+  const maxChunks = 4096;
+  const reader = response.body.getReader();
+  const cancelRead = () => {
+    try { void reader.cancel().catch(() => {}); } catch { /* No cleanup wait. */ }
+  };
+  signal.addEventListener("abort", cancelRead, { once: true });
+  let complete = false;
+  try {
+    const bytes = new Uint8Array(maxBytes);
+    let total = 0;
+    let chunkCount = 0;
+    for (;;) {
+      if (signal.aborted) throw new Error("NOTIFICATION_RESPONSE_ABORTED");
+      const { done, value } = await reader.read();
+      if (signal.aborted) throw new Error("NOTIFICATION_RESPONSE_ABORTED");
+      if (done) { complete = true; break; }
+      // Count empty chunks too; they must not evade the finite byte budget.
+      if (++chunkCount > maxChunks || !(value instanceof Uint8Array) || total + value.byteLength > maxBytes) {
+        throw new Error("NOTIFICATION_RESPONSE_TOO_LARGE");
+      }
+      bytes.set(value, total);
+      total += value.byteLength;
+    }
+    const payload: unknown = JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(bytes.subarray(0, total)));
+    const id = payload && typeof payload === "object" && !Array.isArray(payload)
+      ? (payload as Record<string, unknown>).id : undefined;
+    // A created message can include warnings for individual subscriptions.
+    return typeof id === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id);
+  } finally {
+    signal.removeEventListener("abort", cancelRead);
+    if (!complete) cancelRead();
+    reader.releaseLock();
   }
 }
 

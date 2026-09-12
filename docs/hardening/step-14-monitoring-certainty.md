@@ -54,6 +54,7 @@ production build retained compilation, lint, type checks and lifecycle hooks.
 Postbuild reported `LAYOUT_REVIEW_POPULATION_SKIPPED`. All 58
 read-only readiness checks passed.
 
-Exact-commit push/deployment and post-release verification are the remaining
-delivery checks at publication. Their receipt is retained as `step14-delivery.json`
-in `D:\Codex\MyDancr-validation-2026-09-11\arch-stability` after success.
+Published as `d999a16218f8db7aacc3663206f36fc8e662b934`, with [exact Vercel success](https://vercel.com/ai-movie-jobs/shiftstage/Ebk7oT5oC9KBihU1rY6KXm6AFPrk).
+Post-release health passed at 2026-09-12T17:27:09.461Z. Local and remote main
+matched and both unrelated screenshots were preserved. The complete receipt
+is retained as `step14-delivery.json` in the external architecture evidence directory.

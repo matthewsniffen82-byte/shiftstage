@@ -14,7 +14,7 @@ function compile(path, overrides = {}, globals = {}) {
   vm.runInNewContext(ts.transpileModule(source(path), { compilerOptions: {
     module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022,
   } }).outputText, {
-    exports, Request, Response, URL, Error, Buffer, AbortSignal,
+    exports, Request, Response, URL, Error, Buffer, AbortSignal, TextDecoder, Uint8Array,
     console: { warn() {} }, process: { env: {} },
     require: name => overrides[name] ?? (name === "node:crypto" || name === "next/server" ? require(name) : {}),
     ...globals,
@@ -148,7 +148,7 @@ function deliveryFixture(settings, options = {}) {
     "./public-app-url": { publicAppUrl: () => "https://mydancr.com" },
   }, { process: { env }, fetch: async (url, init) => {
     requests.push({ url, body: JSON.parse(init.body) });
-    return Response.json({ id: "test-notification" });
+    return Response.json({ id: "aabbccdd-1111-4111-8111-aabbccddeeff" });
   } });
   return { requests, client, ...delivery };
 }

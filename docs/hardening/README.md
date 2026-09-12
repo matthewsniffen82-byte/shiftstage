@@ -38,16 +38,25 @@ being treated as present state.
 | 11 | Query bounds, caching, network behavior and generated asset consistency | Published: `104b221da2417f58fc1f60dd710c1d9db21229e0`; 7,365 tests and all release gates; [Vercel success](https://vercel.com/ai-movie-jobs/shiftstage/F5EMcpzuXxq1jd1BnUYpLzDBrami) |
 | 12 | Frontend exceptions, loading/empty/error states and interrupted navigation | Published: `e8586070673d11f48c96be50cd86cebd6ab9ae05`; 7,770 tests and all release gates; [Vercel success](https://vercel.com/ai-movie-jobs/shiftstage/H9C1pohZoeoyGbN9FQq573Eu4apP) |
 | 13 | Background jobs, overlapping runs, deadlines and retry recovery | Published: `a519813ea8211a440e695f62858bbc2896f09846`; 8,048 tests and all release gates; [Vercel success](https://vercel.com/ai-movie-jobs/shiftstage/H13p7p12hrw7tgSzaDqtFTMjF9dV) |
-| 14 | Privacy-safe diagnostics, exception monitoring and failure visibility | Validated: 8,841 tests, TypeScript, lint, build and 58 readiness checks; delivery receipt follows |
-| 15 | Provider integrations, webhook replay and uncertain external outcomes | Pending |
-| 16 | Dependencies, installation scripts, advisory review and runtime consistency | Pending |
-| 17 | CI/deployment gates, reproducible releases and application rollback | Pending |
-| 18 | Lightweight health checks and operational diagnosis | Pending |
-| 19 | Migration provenance, backups and restore procedures | Pending |
-| 20 | Critical journey and regression coverage, including browser verification where safely available | Pending |
-| 21 | Scalability, bounded load and measured resource use | Pending |
-| 22 | Maintenance ownership, operational documentation and remaining configuration | Pending |
-| 23 | Final architecture/stability audit and exact-release verification | Pending |
+| 14 | Privacy-safe diagnostics, exception monitoring and failure visibility | Published: `d999a16218f8db7aacc3663206f36fc8e662b934`; 8,841 tests and all release gates; [Vercel success](https://vercel.com/ai-movie-jobs/shiftstage/Ebk7oT5oC9KBihU1rY6KXm6AFPrk) |
+| 15 | Provider integrations, webhook replay and uncertain external outcomes | Notification and monitoring corrections with consolidated closeout; 9,036 tests and all local release gates; exact delivery recorded in `step15-delivery.json` |
+| 16 | Dependencies, installation scripts, advisory review and runtime consistency | Consolidated into the [final architecture review](final-architecture-review.md); see verified controls, remaining findings and unperformed checks |
+| 17 | CI/deployment gates, reproducible releases and application rollback | Consolidated into the [final architecture review](final-architecture-review.md); see verified controls, remaining findings and unperformed checks |
+| 18 | Lightweight health checks and operational diagnosis | Consolidated into the [final architecture review](final-architecture-review.md); see verified controls, remaining findings and unperformed checks |
+| 19 | Migration provenance, backups and restore procedures | Consolidated into the [final architecture review](final-architecture-review.md); see verified controls, remaining findings and unperformed checks |
+| 20 | Critical journey and regression coverage, including browser verification where safely available | Consolidated into the [final architecture review](final-architecture-review.md); see verified controls, remaining findings and unperformed checks |
+| 21 | Scalability, bounded load and measured resource use | Consolidated into the [final architecture review](final-architecture-review.md); see verified controls, remaining findings and unperformed checks |
+| 22 | Maintenance ownership, operational documentation and remaining configuration | Consolidated into the [final architecture review](final-architecture-review.md); see verified controls, remaining findings and unperformed checks |
+| 23 | Final architecture/stability audit and exact-release verification | Consolidated into the [final architecture review](final-architecture-review.md); see verified controls, remaining findings and unperformed checks |
+
+## Owner-approved consolidation
+
+On 2026-09-12, the owner chose to consolidate the remaining reviews. Steps 0–14
+retain their separate deliveries. Step 15 combines the confirmed notification and
+monitoring fixes with the final review of topics 16–23. Documentation-only topics do
+not receive separate release loops. Actual fixes retain full validation, normal
+push and exact deployment verification. The final report distinguishes unresolved
+findings and unperformed hosted exercises from completed corrections.
 
 ## Per-step delivery contract
 
