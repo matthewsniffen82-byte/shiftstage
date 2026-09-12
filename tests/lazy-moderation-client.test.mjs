@@ -3,6 +3,7 @@ import { readFile } from "node:fs/promises";
 import vm from "node:vm";
 import test from "node:test";
 import ts from "typescript";
+import * as serverJobs from "../src/lib/server-job.ts";
 
 const source = await readFile(new URL("../src/lib/openai-client.ts", import.meta.url), "utf8");
 const compiled = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020 } }).outputText;
@@ -12,6 +13,7 @@ function fixture(loadSdk) {
   vm.runInNewContext(compiled, { exports, require(name) {
     requested.push(name);
     if (name === "server-only") return {};
+    if (name === "./server-job.ts") return serverJobs;
     if (name === "openai") return loadSdk();
     throw new Error(`Unexpected dependency ${name}`);
   } });
@@ -21,7 +23,8 @@ function fixture(loadSdk) {
 test("importing moderation client helpers does not initialize the SDK", async () => {
   let clients = 0;
   const context = fixture(() => ({ default: class { constructor(options) { this.options = options; clients++; } } }));
-  assert.deepEqual(context.requested, ["server-only"]);
+  assert.ok(context.requested.includes("server-only"));
+  assert.equal(context.requested.includes("openai"), false);
   const firstOptions = { apiKey: "fixture-first", timeout: 1500, maxRetries: 1 };
   const secondOptions = { apiKey: "fixture-second" };
   const [first, second] = await Promise.all([context.exports.createOpenAIClient(firstOptions), context.exports.createOpenAIClient(secondOptions)]);

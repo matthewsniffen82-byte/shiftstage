@@ -8,11 +8,12 @@ const {
   parseAvatarCandidateSelection,
 } = await import(new URL("../src/lib/dancr/avatar-face-core.ts", import.meta.url));
 
-const [avatarFaceSource, moderationSource, avatarRouteSource, recenterRouteSource] = await Promise.all([
+const [avatarFaceSource, moderationSource, avatarRouteSource, recenterRouteSource, avatarMigration] = await Promise.all([
   readFile(new URL("../src/lib/dancr/avatar-face.ts", import.meta.url), "utf8"),
   readFile(new URL("../src/lib/dancr/image-moderation.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/api/dancer/avatar/route.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/api/admin/avatars/recenter/route.ts", import.meta.url), "utf8"),
+  readFile(new URL("../supabase/migrations/20260912194200_make_avatar_publication_atomic.sql", import.meta.url), "utf8"),
 ]);
 
 test("avatar candidate selection accepts a complete visible face and rejects missing faces", () => {
@@ -114,11 +115,13 @@ test("existing approved avatars can be securely reprocessed from an original app
   assert.match(recenterRouteSource, /\.from\("dancer_photos"\)[\s\S]*?\.eq\("review_status", "approved"\)/);
   assert.match(recenterRouteSource, /\.download\(sourcePath\)/);
   assert.match(recenterRouteSource, /prepareFaceCenteredAvatar\(sourceImage\)/);
-  assert.match(recenterRouteSource, /setApprovedDancerAvatar/);
-  assert.doesNotMatch(recenterRouteSource, /restoreDancerAvatar/);
+  assert.match(recenterRouteSource, /recenterDancerAvatar\(admin, \{/);
+  assert.match(recenterRouteSource, /reviewerId: user\.id, expected: dancer/);
+  assert.match(recenterRouteSource, /sourcePath, sourcePhotoId: sourcePhoto\?\.id \?\? null/);
+  assert.doesNotMatch(recenterRouteSource, /setApprovedDancerAvatar|restoreDancerAvatar/);
   assert.match(recenterRouteSource, /tryRetireGalleryStorageFiles/);
-  assert.match(recenterRouteSource, /from\("admin_actions"\)\.insert/);
-  assert.match(recenterRouteSource, /recenter_dancer_avatar/);
+  assert.doesNotMatch(recenterRouteSource, /from\("admin_actions"\)\.insert/);
+  assert.match(avatarMigration, /insert into public\.admin_actions\(admin_id,target_type,target_id,action,notes\)[\s\S]*?'recenter_dancer_avatar'/);
 });
 
 test("avatar maintenance bounds metadata and keeps infrastructure failures private", () => {

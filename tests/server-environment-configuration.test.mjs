@@ -4,6 +4,7 @@ import test from "node:test";
 import vm from "node:vm";
 import ts from "typescript";
 import { validatePublicSupabaseConfig } from "../src/lib/supabase/public-config.mjs";
+import * as serverJobs from "../src/lib/server-job.ts";
 
 const read = file => readFileSync(new URL("../" + file, import.meta.url), "utf8");
 function load(file, dependencies = {}, environment = {}) {
@@ -13,6 +14,7 @@ function load(file, dependencies = {}, environment = {}) {
   }).outputText;
   vm.runInNewContext(compiled, { exports, URL, Buffer, process: { env: environment }, require(name) {
     if (name === "server-only") return {};
+    if (name === "../server-job.ts") return serverJobs;
     if (Object.hasOwn(dependencies, name)) return dependencies[name];
     throw new Error("Unexpected fixture dependency: " + name);
   } });
@@ -49,10 +51,12 @@ test("server configuration rejects public, user, malformed and cross-project key
   assert.throws(() => serverConfig.validateServerSupabaseConfig("fixture-bad-url", validKey), /server URL is invalid/);
 });
 
-test("invalid admin configuration fails before constructing a client or issuing requests", () => {
+test("invalid admin configuration fails before constructing a client or issuing requests", async () => {
   const calls = [];
   let key = jwt({ role: "anon" });
-  const boundedFetch = () => { throw new Error("No network permitted in this fixture"); };
+  const transports = [];
+  const transportFailure = new Error("No network permitted in this fixture");
+  const boundedFetch = (...args) => { transports.push(args); throw transportFailure; };
   const sentinel = {};
   const admin = load("src/lib/supabase/admin.ts", {
     "@supabase/supabase-js": { createClient(...args) { calls.push(args); return sentinel; } },
@@ -72,7 +76,12 @@ test("invalid admin configuration fails before constructing a client or issuing 
   const [receivedUrl, receivedKey, options] = calls[0];
   assert.equal(receivedUrl, url);
   assert.equal(receivedKey, validKey);
-  assert.equal(options.global.fetch, boundedFetch);
+  assert.equal(transports.length, 0, "Client construction performs no request");
+  const requestOptions = { method: "GET" };
+  await assert.rejects(options.global.fetch(url, requestOptions), error => error === transportFailure);
+  assert.equal(transports.length, 1);
+  assert.equal(transports[0][0], url);
+  assert.equal(transports[0][1], requestOptions);
   assert.equal(options.auth.persistSession, false);
   assert.equal(options.auth.autoRefreshToken, false);
   assert.equal(options.auth.detectSessionInUrl, false);

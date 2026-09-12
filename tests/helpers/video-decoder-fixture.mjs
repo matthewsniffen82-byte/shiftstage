@@ -5,6 +5,7 @@ import { EventEmitter } from "node:events";
 import vm from "node:vm";
 import ts from "typescript";
 import * as policy from "../../src/lib/dancr/video-upload-policy.ts";
+import * as serverJobs from "../../src/lib/server-job.ts";
 
 const require = createRequire(import.meta.url);
 export function videoDecoderFixture(file, { extra = "", output = "", spawnImpl, realFiles = false } = {}) {
@@ -16,6 +17,8 @@ export function videoDecoderFixture(file, { extra = "", output = "", spawnImpl, 
     const code = ts.transpileModule(readFileSync(path, "utf8") + appended, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, esModuleInterop: true } }).outputText;
     vm.runInNewContext(code, { exports, Buffer, Blob, URL, Error, setTimeout, clearTimeout, process: { env: {} }, console: { info() {}, warn() {}, error() {} }, require(name) {
       if (name === "server-only") return {};
+      if (name === "../server-job.ts") return serverJobs;
+      if (name === "./media-process.ts") return load(resolve(dirname(path), name));
       if (name === "./video-upload-policy" || name === "./video-upload-policy.ts") return policy;
       if (name === "./local-video-input.ts") return load(resolve(dirname(path), name));
       if (name === "./video-frame-sampling") return load(resolve(dirname(path), name + ".ts"));

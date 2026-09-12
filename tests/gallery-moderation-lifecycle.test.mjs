@@ -5,7 +5,10 @@ import vm from 'node:vm';
 import ts from 'typescript';
 import { createHash, randomUUID } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
+import { loadAvatarGateway } from './helpers/avatar-publication-fixture.mjs';
+import { PublicApiError } from '../src/lib/api-error-policy.ts';
 import { loadGalleryGateway } from './helpers/gallery-publication-fixture.mjs';
+import * as serverJobs from '../src/lib/server-job.ts';
 
 const source=process.env.MYDANCR_AVATAR_SOURCE_BASELINE==='1'
   ?execFileSync('git',['show','4ff0ceb3999cfa2b7c516baddcb3e0da197e4567:src/lib/dancr/image-moderation.ts'],{encoding:'utf8',windowsHide:true})
@@ -17,10 +20,12 @@ vm.runInNewContext(ts.transpileModule(readFileSync(new URL('../src/lib/dancr/sto
   compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022},
 }).outputText,{exports:storageReceipt,Error});
 const version='2020-01-01T00:00:00Z';
+const claimedVersion='2020-01-01T00:00:01.001Z';
+const legacyRetryClaim=process.env.MYDANCR_AVATAR_SOURCE_BASELINE==='1'||process.env.MYDANCR_PRIVATE_UPLOAD_BASELINE==='1';
 function scenario({decision='review',concurrentDecision='',providerError=false,providerFailure=null,providerMessage='provider_timeout',providerStatus=0,faceRejection=false,avatar=false,attemptCount=1,stateResponseLoss='',retry=false,uploadBucket='',uploadFailure='',receiptKind='valid'}={}) {
   const events=[],files=new Set(),record=retry?{
     id:'record',user_id:'owner',upload_context:avatar?'profile_avatar':'profile_gallery:1',temporary_storage_path:'owner/profile/temp.jpg',
-    decision:'review',status:'moderating',updated_at:version,attempt_count:attemptCount,
+    decision:'review',status:'moderating',updated_at:legacyRetryClaim?version:claimedVersion,locked_at:claimedVersion,attempt_count:attemptCount+(legacyRetryClaim?0:1),avatar_expected_path:'avatar',avatar_expected_updated_at:version,
   }:{};
   if(retry)files.add(record.temporary_storage_path);
   let writeFailed=false,rpcVersion;
@@ -38,7 +43,7 @@ function scenario({decision='review',concurrentDecision='',providerError=false,p
         then(resolve,reject){return execute().then(resolve,reject);},
       };
       async function execute(){
-        if(table==='dancer_profiles')return {data:{id:'profile',user_id:'owner',avatar_storage_path:'avatar'},error:null};
+        if(table==='dancer_profiles')return {data:{id:'profile',user_id:'owner',avatar_storage_path:'avatar',avatar_updated_at:version},error:null};
         if(table==='dancer_photos')return {data:[],error:null};
         if(table==='notifications')return {data:[],error:null};
         assert.equal(table,'image_moderation_records');
@@ -77,7 +82,7 @@ function scenario({decision='review',concurrentDecision='',providerError=false,p
   };
   const evaluation={decision,reasonCodes:[],categoryScores:{},providerFlagged:false};
   const deps={
-    createHash,randomUUID,...loadGalleryGateway(),...storageReceipt,
+    createHash,randomUUID,PublicApiError,...serverJobs,...loadGalleryGateway(),...loadAvatarGateway(),...storageReceipt,
     validateAndPrepareDancrImage:async()=>({sha256:'synthetic',storageFileName:'image.jpg',buffer:Buffer.from('synthetic'),contentType:'image/jpeg'}),
     resolvePhotoPublicationIntent:async()=>({mode:'add',replacementPhotoId:null}),
     MAX_DANCER_PROFILE_PHOTOS:50,ACTIVE_IMAGE_MODERATION_STATUSES:[],
@@ -143,7 +148,8 @@ test('review source is removed only after the new private pointer is acknowledge
 test('retry publisher uses the advanced claim version and retains media after a publication conflict',async()=>{
   const s=scenario({retry:true,decision:'approved'});
   await assert.rejects(s.run(),{status:409});
-  assert.ok(Date.parse(s.rpcVersion)>Date.parse(version));
+  if(legacyRetryClaim)assert.ok(Date.parse(s.rpcVersion)>Date.parse(version));
+  else assert.equal(s.rpcVersion,claimedVersion);
   assert.ok(s.files.has('owner/profile/temp.jpg'));
 });
 
@@ -181,6 +187,12 @@ for(const attemptCount of [1,3,4]){
   ['Synthetic failure',0,'provider_error'],
  ])test('avatar worker preserves recovery source after '+expectedCode+' at attempt '+(attemptCount+1),async()=>{
   const s=scenario({retry:true,avatar:true,attemptCount,providerError:true,providerMessage,providerStatus});
+  if(attemptCount>=4&&!legacyRetryClaim){
+    const before=structuredClone(s.record);
+    await assert.rejects(s.run(),/retry_record_not_claimed/);
+    assert.deepEqual(s.record,before);assert.equal(s.events.length,0);
+    assert.ok(s.files.has('owner/profile/temp.jpg'));return;
+  }
   const result=await s.run(),retryable=attemptCount<3&&['provider_timeout','provider_rate_limited','provider_error'].includes(expectedCode);
   assert.equal(result.decision,retryable?'moderation_retry':'moderation_error');assert.equal(s.record.status,result.decision);
   assert.equal(s.record.decision,'review');assert.equal(s.record.error_code,expectedCode);assert.equal(s.record.attempt_count,attemptCount+1);

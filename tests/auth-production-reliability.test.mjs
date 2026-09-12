@@ -37,7 +37,7 @@ const jsonRequest = (method, body) => new Request("https://mydancr.com/api/auth"
   method, headers: { "content-type": "application/json" }, body: JSON.stringify(body),
 });
 
-function authFixture(providerError = null, { role = "customer", authSession = session } = {}) {
+function authFixture(providerError = null, { role = "customer", authSession = session, adminClient = {}, reconcileNewPrivilegedAccount, provisionError } = {}) {
   const calls = [];
   const provisions = [];
   const result = { data: { user: { id: account.id }, session: authSession }, error: providerError };
@@ -50,16 +50,70 @@ function authFixture(providerError = null, { role = "customer", authSession = se
       signInWithPassword: async payload => { calls.push(payload); return result; },
       signUp: async payload => { calls.push(payload); return result; },
     } }) },
-    "@/src/lib/supabase/admin": { createAdminSupabaseClient: () => ({}) },
+    "@/src/lib/supabase/admin": { createAdminSupabaseClient: () => adminClient },
+    "@/src/lib/server-env": { getOptionalServerEnv: key => key === "DANCR_ADMIN_SIGNUP_CODE" ? "synthetic-admin-code" : "" },
+    "@/src/lib/dancr/new-privileged-account": { reconcileNewPrivilegedAccount },
     "@/src/lib/dancr/auth": { getAccountByUserId: async () => ({ ...account, role }) },
     "@/src/lib/dancr/account-profile-recovery": { recoverVerifiedPublicAccount: async (_admin, _user, existing) => existing },
-    "@/src/lib/dancr/account-provisioning": { provisionAppAccount: async (_admin, input) => { provisions.push(input); } },
+    "@/src/lib/dancr/account-provisioning": { provisionAppAccount: async (_admin, input) => { provisions.push(input); if (provisionError) throw provisionError; } },
     "@/src/lib/dancr/nfc-browser-account": { readNfcBrowserAccountToken: () => null },
     "@/src/lib/dancr/account-recovery": { AccountRecoveryRateLimitError: class extends Error {} },
     "@/src/lib/dancr/public-request-rate-limit": { PublicRequestRateLimitError: class extends Error {}, enforcePublicRequestRateLimit: async () => {} },
     "@/src/lib/dancr/public-app-url": { publicAppUrl: () => "https://mydancr.com" },
     "@/src/lib/security/safe-error-metadata": { safeErrorMetadata: () => ({}) },
   }) };
+}
+
+function privilegedSignupFixture(options = {}) {
+  const events = [];
+  const user = { id: "new-admin-only", app_metadata: { mydancr_provisioned_role: "admin" } };
+  const adminClient = { auth: { admin: {
+    async createUser(input) { events.push({ create: input }); return { data: { user }, error: options.createError || null }; },
+    async deleteUser(id) { events.push({ deleted: id }); return { error: options.cleanupError || null }; },
+  } } };
+  const f = authFixture(null, { role: "admin", adminClient, provisionError: options.provisionError,
+    async reconcileNewPrivilegedAccount(client, created, role) {
+      assert.equal(client, adminClient); assert.equal(created, user); assert.equal(role, "admin");
+      events.push("reconcile"); if (options.reconcileError) throw options.reconcileError;
+    },
+  });
+  return { ...f, events, request: adminCode => f.POST(jsonRequest("POST", {
+    mode: "signup", role: "admin", username: "synthetic-admin", password: "Unique1!password", adminCode,
+  })) };
+}
+
+test("admin invitation validation precedes creation and new-user reconciliation", async () => {
+  const f = privilegedSignupFixture();
+  assert.equal((await f.request("wrong-code")).status, 403);
+  assert.deepEqual(f.events, []); assert.equal(f.provisions.length, 0);
+});
+
+test("authorized admin signup reconciles only the newly returned identity before provisioning", async () => {
+  const f = privilegedSignupFixture();
+  assert.equal((await f.request("synthetic-admin-code")).status, 200);
+  assert.equal(f.events[0].create.app_metadata.mydancr_provisioned_role, "admin");
+  assert.equal(f.events[1], "reconcile");
+  assert.equal(f.provisions[0].userId, "new-admin-only");
+  assert.equal(f.provisions[0].role, "admin");
+  assert.equal(f.events.length, 2);
+});
+
+test("an existing-user rejection never reconciles or deletes an account", async () => {
+  const f = privilegedSignupFixture({ createError: new AuthApiError("existing", 422, "user_already_exists") });
+  assert.equal((await f.request("synthetic-admin-code")).status, 400);
+  assert.equal(f.events.length, 1); assert.equal(f.provisions.length, 0);
+});
+
+for (const stage of ["reconcileError", "provisionError"]) for (const cleanupFails of [false, true]) {
+  test(`failed new admin ${stage} cleans up exactly its returned identity (cleanup failure ${cleanupFails})`, async () => {
+    const f = privilegedSignupFixture({ [stage]: new Error("private setup fault"), cleanupError: cleanupFails ? new Error("private cleanup fault") : null });
+    const response = await f.request("synthetic-admin-code");
+    assert.equal(response.status, 500);
+    assert.deepEqual(f.events.at(-1), { deleted: "new-admin-only" });
+    assert.equal(f.events.filter(event => event.deleted).length, 1);
+    assert.equal(f.calls.length, 0, "No login after incomplete account setup");
+    assert.doesNotMatch(JSON.stringify(await response.json()), /private setup|private cleanup/);
+  });
 }
 
 for (const mode of ["login", "signup"]) test(`${mode} preserves exact password characters`, async () => {

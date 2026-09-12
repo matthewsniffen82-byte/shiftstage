@@ -60,7 +60,7 @@ function load(file, functions, timer, client, audioStream = { destroy() {} }) {
     VIDEO_POLICY_REASON_CODES: ["safe_adult_promotional_content"],
     DANCR_MEDIA_IDENTITY_MODEL: "gpt-4o-mini", MEDIA_IDENTITY_TIMEOUT_MS: 30_000,
     OPENAI_TIMEOUT_MS: 30_000, FRAME_MODERATION_TIMEOUT_MS: 12_000,
-    FRAME_MODERATION_RETRY_DELAYS_MS: [350], openAITextDiagnosticPromise: null,
+    FRAME_MODERATION_RETRY_DELAYS_MS: [350], openAITextDiagnostics: new WeakMap(),
     createReadStream: () => audioStream, createOpenAIClient: async () => client,
     getServerEnv: () => "synthetic-only", openAIRequestFailureDetails: () => ({}),
     parseDancerMediaIdentityAnalysis: value => value,
@@ -79,6 +79,21 @@ const cases = [
   ["media identity", "media-identity.ts", ["analyzeDancerMediaIdentity"], 1,
     f => f.analyzeDancerMediaIdentity({ targetImages: [Buffer.from("fixture")], mediaType: "photo" })],
 ];
+
+test("diagnostic failures stay scoped to the client of the current moderation job", async () => {
+  const timer = clock();
+  const f = load("src/lib/dancr/image-moderation.ts", ["runOpenAITextDiagnostic"], timer, {});
+  let failedCalls = 0, healthyCalls = 0;
+  const failed = { moderations: { async create() { failedCalls++; throw new Error("synthetic cancelled job"); } } };
+  const healthy = { moderations: { async create() { healthyCalls++; return { results: [{ flagged: false }] }; } } };
+  await Promise.all([
+    assert.rejects(f.runOpenAITextDiagnostic(failed), /synthetic cancelled job/),
+    f.runOpenAITextDiagnostic(healthy),
+  ]);
+  await f.runOpenAITextDiagnostic(healthy);
+  await assert.rejects(f.runOpenAITextDiagnostic(failed), /synthetic cancelled job/);
+  assert.equal(healthyCalls, 1); assert.equal(failedCalls, 2);
+});
 
 for (const [name, file, functions, expectedCalls, invoke] of cases) {
   test(`${name} aborts each expired request before an application retry`, async () => {

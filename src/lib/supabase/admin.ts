@@ -3,6 +3,7 @@ import "server-only";
 import { createClient } from "@supabase/supabase-js";
 import { getPublicEnv } from "../env";
 import { getServerEnv } from "../server-env";
+import { withServerJobFetch } from "../server-job.ts";
 import { boundedSupabaseFetch } from "./bounded-fetch";
 import { validateServerSupabaseConfig } from "./server-config";
 
@@ -12,7 +13,7 @@ export function createAdminSupabaseClient() {
   validateServerSupabaseConfig(env.supabaseUrl, serviceRoleKey);
 
   return createClient(env.supabaseUrl, serviceRoleKey, {
-    global: { fetch: boundedSupabaseFetch },
+    global: { fetch: withServerJobFetch(boundedSupabaseFetch) },
     auth: {
       persistSession: false,
       autoRefreshToken: false,

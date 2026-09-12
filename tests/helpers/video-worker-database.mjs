@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import * as serverJobs from "../../src/lib/server-job.ts";
 import { readFileSync } from "node:fs";
 import { execFileSync } from "node:child_process";
 import { webcrypto } from "node:crypto";
@@ -144,6 +145,7 @@ export function videoWorkerHarness(db, options = {}) {
   const tv = {};
   vm.runInNewContext(compiled, { exports: tv, Error, Date: ControlledDate, crypto: webcrypto, console: { info() {}, warn() {}, error() {} },
     require(name) {
+      if (name === "../server-job.ts") return serverJobs;
       if (name === "../api-error-policy") return { PublicApiError };
       if (name === "./video-moderation") return { async moderateStoredMyDancrTvVideo(_client, input) {
         providers.push(input);

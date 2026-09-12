@@ -4,6 +4,7 @@ import { isAuthError } from "@supabase/supabase-js";
 import { apiError, PublicApiError } from "@/src/lib/api";
 import { readBoundedJsonObject } from "@/src/lib/bounded-json-body";
 import { provisionAppAccount } from "@/src/lib/dancr/account-provisioning";
+import { reconcileNewPrivilegedAccount } from "@/src/lib/dancr/new-privileged-account";
 import { recoverVerifiedPublicAccount, type VerifiedAccountIdentity } from "@/src/lib/dancr/account-profile-recovery";
 import { getAccountByUserId } from "@/src/lib/dancr/auth";
 import { getVenueForAccount } from "@/src/lib/dancr/venue";
@@ -184,13 +185,24 @@ export async function POST(request: Request) {
       if (error) throw error;
       if (!data.user) throw new Error("Unable to create admin account.");
 
-      await provisionAppAccount(createAdminSupabaseClient(), {
-        role,
-        userId: data.user.id,
-        email,
-        displayName,
-        city: "Las Vegas",
-      });
+      try {
+        await reconcileNewPrivilegedAccount(admin, data.user, "admin");
+        await provisionAppAccount(createAdminSupabaseClient(), {
+          role,
+          userId: data.user.id,
+          email,
+          displayName,
+          city: "Las Vegas",
+        });
+      } catch (setupError) {
+        try {
+          const cleanup = await admin.auth.admin.deleteUser(data.user.id);
+          if (cleanup.error) throw cleanup.error;
+        } catch (cleanupError) {
+          console.error("ADMIN_SIGNUP_CLEANUP_FAILED", safeErrorMetadata(cleanupError));
+        }
+        throw setupError;
+      }
 
       const { data: sessionData, error: sessionError } = await client.auth.signInWithPassword({ email, password });
       if (sessionError) throw sessionError;
@@ -383,6 +395,7 @@ async function createVenueSignupAccount(input: {
     if (!data.user) throw new Error("Unable to create venue account.");
     createdUserId = data.user.id;
 
+    await reconcileNewPrivilegedAccount(admin, data.user, "venue");
     await provisionAppAccount(admin, {
       role: "venue",
       userId: data.user.id,
@@ -533,6 +546,10 @@ function safeEmailRedirectTo(value: unknown) {
 }
 
 function allowedAuthRedirectOrigins(configuredOrigin: string) {
+  if (configuredOrigin !== "https://www.mydancr.com" && configuredOrigin !== "https://mydancr.com") {
+    return new Set([configuredOrigin]);
+  }
+
   return new Set([
     configuredOrigin,
     "https://mydancr.com",
