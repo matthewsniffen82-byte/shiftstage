@@ -4,6 +4,7 @@ import { readFileSync } from 'node:fs';
 import { PGlite } from '@electric-sql/pglite';
 
 const migration = readFileSync(new URL('../supabase/migrations/20260912232600_preserve_club_shuttle_requests.sql', import.meta.url), 'utf8');
+const narrowGrants = readFileSync(new URL('../supabase/migrations/20260913000500_narrow_shuttle_service_grants.sql', import.meta.url), 'utf8');
 const id = n => `95000000-0000-4000-8000-${String(n).padStart(12, '0')}`;
 async function fixture() {
   const db = new PGlite();
@@ -12,8 +13,10 @@ async function fixture() {
     grant usage on schema public,auth to anon,authenticated,service_role;
     create table public.notifications(id uuid primary key, recipient_id uuid not null,
       notification_type text,channel text,title text,body text,payload jsonb);
-    grant all on public.notifications to service_role;`);
+    grant all on public.notifications to service_role;
+    alter default privileges in schema public grant all on tables to service_role;`);
   await db.exec(migration);
+  await db.exec(narrowGrants);
   const rows = [1,2].map(n => ({ id:id(n+10),recipient_id:id(n),title:'Synthetic shuttle',body:'Synthetic pickup',payload:{kind:'club_shuttle_request',requestId:id(20)} }));
   await db.query(`insert into public.club_shuttle_requests(id,venue_id,details_hash,notification_rows)
     values($1,$2,repeat('a',64),$3)`, [id(20),id(30),JSON.stringify(rows)]);
