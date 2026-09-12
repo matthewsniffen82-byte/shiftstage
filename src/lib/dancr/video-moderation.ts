@@ -1,4 +1,5 @@
 import "server-only";
+import { safeErrorMetadata } from "../security/safe-error-metadata";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { spawn } from "node:child_process";
@@ -357,8 +358,7 @@ async function withVideoProviderRetry<T>(operation: () => Promise<T>, frameIndex
         event: "mydancr_tv.frame_moderation_retry",
         frameNumber: frameIndex + 1,
         nextAttempt: attempt + 1,
-        status: providerErrorStatus(error),
-        code: providerErrorCode(error),
+        ...safeErrorMetadata(error),
       }));
       await delay(retryDelayMs);
     }

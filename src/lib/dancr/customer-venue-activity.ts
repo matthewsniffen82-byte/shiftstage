@@ -1,3 +1,4 @@
+import { safeErrorMetadata } from "../security/safe-error-metadata.ts";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { isPublicDancerProfileEligible } from "./profile-approval.ts";
 import { isActiveNfcPresence } from "./shift-presence.ts";
@@ -68,7 +69,7 @@ export async function getSavedVenueActivity(client: SupabaseClient, venueIds: st
   } catch (error) {
     // Activity is optional: a failed count must not hide saved clubs or turn
     // unknown activity into a misleading zero.
-    console.warn("CUSTOMER_VENUE_ACTIVITY_UNAVAILABLE", { code: String((error as { code?: string })?.code || "unknown") });
+    console.warn("CUSTOMER_VENUE_ACTIVITY_UNAVAILABLE", safeErrorMetadata(error));
     return new Map<string, SavedVenueActivity>();
   } finally {
     clearTimeout(timeout);

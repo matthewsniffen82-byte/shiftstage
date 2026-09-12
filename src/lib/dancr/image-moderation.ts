@@ -728,24 +728,23 @@ export async function moderateImageWithOpenAI(admin: DancrClient, tempPath: stri
   if (!result) throw new Error("provider_response_incomplete");
   if (typeof result.flagged !== "boolean") throw new Error("INVALID_MODERATION_RESPONSE");
   console.log("OPENAI_MODERATION_RESULT", {
-    requestId: response?._request_id,
+    ...safeErrorMetadata({ request_id: response?._request_id }),
     resultExists: Boolean(result),
     flagged: result?.flagged,
   });
   console.log("OPENAI_IMAGE_MODERATION_RESULT", {
-    requestId: response?._request_id,
+    ...safeErrorMetadata({ request_id: response?._request_id }),
     resultExists: Boolean(result),
     flagged: result?.flagged,
   });
   logModeration("provider_response", {
     model: DANCR_IMAGE_MODERATION_MODEL,
-    response: sanitizeModerationResponse(response),
+    resultCount: Array.isArray(response?.results) ? response.results.length : 0,
   });
   logModeration("moderation_completed", {
     model: DANCR_IMAGE_MODERATION_MODEL,
     flagged: Boolean(result.flagged),
-    categories: result.categories || {},
-    categoryScores: result.category_scores || result.categoryScores || {},
+    categoryCount: Object.keys(result.categories || {}).length,
   });
   return result;
 }
@@ -775,8 +774,8 @@ async function runOpenAITextDiagnostic(openai: any) {
         );
         console.log("OPENAI_TEXT_TEST", {
           success: true,
-          requestId: testResponse?._request_id,
-          flagged: testResponse?.results?.[0]?.flagged,
+          ...safeErrorMetadata({ request_id: testResponse?._request_id }),
+          flagged: testResponse?.results?.[0]?.flagged === true,
         });
       } catch (error) {
         console.error("OPENAI_TEXT_TEST_FAILED", openAIRequestFailureDetails(error));
@@ -803,7 +802,7 @@ async function verifyStorageObjectExists(client: DancrClient, bucket: string, st
     imageId: "moderation_temp",
     bucket,
     exists: true,
-    mimeType: data.type || null,
+    mimeType: safeImageLogContentType(data.type),
     fileSize: data.size,
   });
 }
@@ -833,20 +832,20 @@ async function probeSignedImageUrl(imageUrl: string, tempPath: string) {
   console.log("IMAGE_PROBE_RESULT", {
     status: probe.status,
     ok: probe.ok,
-    contentType,
-    contentLength: probe.headers.get("content-length"),
+    contentType: safeImageLogContentType(contentType),
+    contentLength: safeImageLogContentLength(probe.headers.get("content-length")),
   });
   console.log("IMAGE_URL_PROBE", {
     status: probe.status,
     ok: probe.ok,
-    contentType,
+    contentType: safeImageLogContentType(contentType),
   });
   logModeration("signed_image_probe", {
     storageBucket: MODERATION_TEMP_BUCKET,
     status: probe.status,
     ok: probe.ok,
-    contentType,
-    contentLength: probe.headers.get("content-length"),
+    contentType: safeImageLogContentType(contentType),
+    contentLength: safeImageLogContentLength(probe.headers.get("content-length")),
     durationMs: Date.now() - startedAt,
   });
   if (!probe.ok) {
@@ -1282,20 +1281,6 @@ function logModeration(event: string, details: Record<string, unknown>) {
   console.info(JSON.stringify({ event: `image_moderation.${event}`, ...details }));
 }
 
-function sanitizeModerationResponse(response: any) {
-  return {
-    id: response?.id,
-    model: response?.model,
-    results: Array.isArray(response?.results)
-      ? response.results.map((result: any) => ({
-        flagged: Boolean(result?.flagged),
-        categories: result?.categories || {},
-        category_scores: result?.category_scores || result?.categoryScores || {},
-      }))
-      : [],
-  };
-}
-
 function sanitizeProviderError(error: unknown) {
   return safeErrorMetadata(error);
 }
@@ -1365,4 +1350,15 @@ function retryDelayTimestamp(attemptCount: number) {
       ? 120_000
       : 600_000;
   return new Date(Date.now() + delayMs).toISOString();
+}
+
+function safeImageLogContentType(value: string | null) {
+  const type = value?.split(";", 1)[0].trim().toLowerCase();
+  return ["image/jpeg", "image/png", "image/webp", "image/gif", "image/avif"].includes(type || "") ? type : undefined;
+}
+
+function safeImageLogContentLength(value: string | null) {
+  if (!value || !/^\d{1,16}$/.test(value)) return undefined;
+  const length = Number(value);
+  return Number.isSafeInteger(length) ? length : undefined;
 }

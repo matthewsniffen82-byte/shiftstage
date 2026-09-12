@@ -5,6 +5,7 @@ import { execFileSync } from "node:child_process";
 import vm from "node:vm";
 import ts from "typescript";
 import { PublicApiError, resolveApiError } from "../src/lib/api-error-policy.ts";
+import { safeErrorMetadata } from "../src/lib/security/safe-error-metadata.ts";
 import { createNfcDatabase, seedNfcDatabase, nfcSnapshot, fixtureId, requestNfcSupport } from "./helpers/nfc-support-database.mjs";
 
 const source = path => readFileSync(new URL("../" + path, import.meta.url), "utf8");
@@ -49,6 +50,7 @@ function nativeClient(options = {}) {
 function endpoint(client, options = {}) {
   const exports = {}, support = {}, delivery = [], activity = [], logs = [];
   const dependencies = name => {
+    if (name.endsWith("safe-error-metadata")) return { safeErrorMetadata };
     if (name.endsWith("notification-delivery")) return { deliverNotificationRows: async (_client, rows) => { delivery.push(rows); if (options.deliveryFailure) throw new Error("private delivery failure"); } };
     if (name.endsWith("api-error-policy")) return { PublicApiError };
     return {};

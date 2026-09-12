@@ -1,3 +1,4 @@
+import { safeErrorMetadata } from "../security/safe-error-metadata";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { deliverNotificationRows } from "./notification-delivery";
 import type { UserRole } from "./types";
@@ -344,8 +345,8 @@ export async function deliverAtomicSupportNotifications(client: DancrClient, res
 
 function databaseErrorCode(error: unknown) {
   if (!error || typeof error !== "object") return "unknown";
-  const candidate = error as { code?: unknown; name?: unknown };
-  return String(candidate.code || candidate.name || "database_error").slice(0, 120);
+  const metadata = safeErrorMetadata(error);
+  return metadata.code || metadata.errorName || "database_error";
 }
 
 function mapSupportThread(thread: SupportThreadRow) {

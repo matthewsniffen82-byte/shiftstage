@@ -97,7 +97,7 @@ async function getApprovedDancerRowsByCity(client: DancrClient, city: string): P
   let data: any[] | null = current.data as any[] | null;
   let error: any = current.error;
   if (isMissingIsPublicColumnError(error)) {
-    console.warn("PUBLIC_DANCERS_VISIBILITY_COLUMN_MISSING", { city: cityName, code: error.code });
+    console.warn("PUBLIC_DANCERS_VISIBILITY_COLUMN_MISSING", { code: error.code });
     const legacy = await applyPublicApprovalFilters(filterPublicDancerCity(client
       .from("dancer_profiles")
       .select(
@@ -130,7 +130,6 @@ async function getApprovedDancerRowsByCity(client: DancrClient, city: string): P
 
   const rows = (data || []).filter(isApprovedPublicDancerRow);
   console.log("PUBLIC_DANCERS_QUERY_RESULT", {
-    city: cityName,
     rawCount: data?.length || 0,
     publicApprovedCount: rows.length,
   });
@@ -175,7 +174,7 @@ export async function getTonightShifts(client: DancrClient, city: string, now = 
   let data: any[] | null = current.data as any[] | null;
   let error: any = current.error;
   if (isMissingIsPublicColumnError(error)) {
-    console.warn("PUBLIC_SHIFTS_VISIBILITY_COLUMN_MISSING", { city: cityName, code: error.code });
+    console.warn("PUBLIC_SHIFTS_VISIBILITY_COLUMN_MISSING", { code: error.code });
     const legacy = await applyPublicApprovalFilters(client
       .from("dancer_profiles")
       .select(
@@ -246,7 +245,7 @@ export async function getDancerProfile(client: DancrClient, slug: string, resolv
   let data: any = current.data;
   let error: any = current.error;
   if (isMissingIsPublicColumnError(error)) {
-    console.warn("PUBLIC_DANCER_PROFILE_VISIBILITY_COLUMN_MISSING", { slug, code: error.code });
+    console.warn("PUBLIC_DANCER_PROFILE_VISIBILITY_COLUMN_MISSING", { code: error.code });
     const legacy = await applyPublicApprovalFilters(client
       .from("dancer_profiles")
       .select(

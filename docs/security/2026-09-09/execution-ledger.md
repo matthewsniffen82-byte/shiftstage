@@ -41,8 +41,8 @@ Step 1 delivered as `50d4eb543dbfc93dbed6f0663c51aa2332542cb4`, pushed to origin
 | 18 | Redirects / URLs | Delivered and healthy: 4c7ae4d5f244633e88a4572076a5b5235acd1cc1 |
 | 19 | Database functions / grants | Delivered and healthy: 508bf4b89804a5b403cb6bb12fcdfc24c4db6b27 and b8f3f254ddea427252cef528cffb7b118f5330ed |
 | 20 | Webhooks | Delivered with documented inactive-provider deferrals: 060b2976d3e7856efb2cc0c9ce3c64c0732fb919 |
-| 21 | Errors / disclosure | Final correction validated, awaiting exact deployment: fa3b1405, fcd8e58e and moderation 7c8f5be2 delivered; payout/NATS diagnostics fixed |
-| 22 | Security logging | Not started |
+| 21 | Errors / disclosure | Delivered and healthy: final correction 3e8106d781e578a982e2cbdcdaf210c19f988cd7 |
+| 22 | Security logging | Final correction validated; awaiting exact deployment |
 | 23 | Dependencies | Not started |
 | 24 | CI / supply chain | Not started |
 | 25 | Production build / source maps | Not started |
@@ -440,3 +440,13 @@ The refreshed syntax review covers 383 TypeScript/TSX files and 120 route module
 The independent review release 994bd0ad and atomic-account-provisioning caller release 34b6f50d were preserved; both exact Vercel statuses were independently verified as success. The current candidate starts from f1cb4ff3b554c431b1195facdde7b7a2c3f218d5. The Supabase closure adds reviewed regression coverage and verified frozen-migration checksums; Security applies no SQL. The local preview remains stopped after automatic approval review rejected its restart in the architecture task. This release uses isolated runtime tests, the production build and deployed read-only verification.
 
 Final integrated validation passed on the frozen f1cb4ff3 baseline: all 6,331 automated tests with zero failures, skips or cancellations, standalone TypeScript, full lint and production build. All 178 focused finance/provider checks passed. The migration-history guard passed and postbuild reported LAYOUT_REVIEW_POPULATION_SKIPPED. The reviewed release contains three source files, two test files and these two security documents. Commit/push, matching main, exact Vercel success and deployed read-only checks are the remaining delivery gates.
+
+## Step 21 final delivery
+
+Step 21 closed as 3e8106d781e578a982e2cbdcdaf210c19f988cd7 after all 6,331 tests, standalone TypeScript, full lint and production build passed. The clean local main matched origin/main and the remote. [Exact Vercel deployment](https://vercel.com/ai-movie-jobs/shiftstage/CdSZ6de1eW7vrqkmWw23GRCBoNwm) succeeded. At 2026-09-12T05:17:42Z all eight production health/anonymous-denial checks and thirty Supabase readiness checks passed; the fully rendered homepage had no browser warning/error logs. HEAD-only counts retained the two existing authored financial warnings, found empty moderation diagnostics and other inspected financial error/result/metadata fields, and required no cleanup. No production business/provider operation or record mutation was used as a test. Local preview remained stopped. The Step 20 inactive-provider deferrals remain explicit.
+
+## Step 22 security logging
+
+See `step-22-security-logging.md` for nine source corrections, 97 regression cases (55 fail before; all 97 pass after), preserved security/audit events and operational verification limits. External TypeScript/lint passed; final integrated release gates and exact deployment remain required. No later numbered step has begun.
+
+The final integrated candidate on `ef752f858c5284bdd69f0089187aaeca4e4dbdd5` passed all 6,515 tests with zero failures, skips or cancellations, standalone TypeScript, full lint and production build. The migration guard passed and postbuild skipped population. An initial run's sole failing NFC support fixture was corrected to load the real logging helper; the complete suite was then rerun successfully. All eleven source/test files match the hashes captured for that rerun. The release includes those files and three security documents; only commit/push, matching main, exact Vercel success and deployed verification remain.

@@ -5781,14 +5781,7 @@ function DancerSetupPanel({
     const action = beginProfileAction();
     if (!action) return;
     const { requestId, controller } = action;
-    console.log("PUBLIC_PROFILE_STATE_BEFORE_RESET", {
-      dancerId: profile?.id || null,
-      status: profile?.status ?? null,
-      isPublic: profile?.is_public ?? profile?.isPublic ?? null,
-      approvedAt: profile?.approved_at ?? null,
-      verificationStatus: profile?.verification_status ?? null,
-      photoReviewStatus: profile?.photo_review_status ?? null,
-    });
+    console.log("PROFILE_RELOAD_REQUESTED");
     setIsResetting(true);
     setStatus("Reloading the latest saved profile...");
     try {

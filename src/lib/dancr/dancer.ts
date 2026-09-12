@@ -136,7 +136,7 @@ export async function deleteOwnDancerPhoto(client: DancrClient, userId: string, 
 
   await refreshOwnPhotoReviewStatus(adminClient, userId, profile.id);
   const remainingIds = await getOwnPhotoIds(adminClient, profile.id);
-  console.log("PROFILE_IMAGES_AFTER_SAVE", { dancerId: profile.id, remainingPhotoIds: remainingIds });
+  console.log("PROFILE_IMAGES_AFTER_SAVE", { remainingPhotoCount: remainingIds.length });
   return {
     id: moderationRecord.id,
     kind: "moderation_photo",

@@ -137,7 +137,6 @@ export async function GET(request: Request) {
     );
   } catch (error) {
     console.error("PUBLIC_DISCOVERY_LOAD_FAILED", {
-      city,
       ...safeErrorMetadata(error),
     });
     return NextResponse.json(
