@@ -1,3 +1,4 @@
+import { toPublicClubDeal } from "./public-club-deal";
 import { isPublicVenueRow } from "./venue-public-visibility";
 import { isAllMyDancrCities } from "./markets";
 import type { SupabaseClient } from "@supabase/supabase-js";
@@ -6,7 +7,7 @@ import { getActiveClubDealListsForVenues } from "./deals";
 import { isPublicDancerProfileEligible } from "./profile-approval";
 import { responsivePublicImage } from "./responsive-image";
 import { MAX_DANCER_PROFILE_VIDEOS } from "./media-limits";
-import type { ClubDeal } from "./types";
+import type { PublicClubDeal } from "./types";
 import { prioritizeMyDancrTvVenue } from "./tv-feed-order";
 import { isActiveNfcPresence } from "./shift-presence";
 import { requireVenueAccess } from "./venue-access";
@@ -130,8 +131,8 @@ export type MyDancrTvVideo = {
     isActive: boolean;
     isStartingSoon: boolean;
   } | null;
-  deal: ClubDeal | null;
-  deals: ClubDeal[];
+  deal: PublicClubDeal | null;
+  deals: PublicClubDeal[];
   dealAttributionToken: string | null;
   dealAttributionTokens: Record<string, string>;
 };
@@ -335,7 +336,7 @@ export async function getPublicMyDancrTvFeed(
     getActiveClubDealListsForVenues(admin, activeVenueIds),
   ]);
   return signedVideos.map((video) => {
-    const venueDeals = video.shift?.isActive && video.venue ? deals.get(video.venue.id) || [] : [];
+    const venueDeals = (video.shift?.isActive && video.venue ? deals.get(video.venue.id) || [] : []).map(toPublicClubDeal);
     const deal = venueDeals[0] || null;
     const dealAttributionTokens = video.shift && video.venue
       ? Object.fromEntries(venueDeals.map((offer) => [offer.id, createDancerDealAttributionToken({

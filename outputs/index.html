@@ -42877,7 +42877,8 @@
     let liveAdminSupportThreads = [];
     let liveAdminSupportThreadsState = authSession?.accessToken ? "loading" : "idle";
     let liveCustomerDashboardState = authSession?.accessToken && authSession?.account?.role === "customer" ? "loading" : "idle";
-    let savedAdminContentReviews = loadSavedAdminContentReviews();
+    let savedAdminContentReviews = [];
+    let savedAdminContentReviewAccount = "";
     let editingShiftId = null;
     let pendingApprovedPhotoTarget = "gallery";
     let pendingAvatarObjectUrl = "";
@@ -43472,6 +43473,7 @@
     });
 
     function loadAuthSession() {
+      clearRetiredAccountCaches();
       try {
         const raw = localStorage.getItem("dancrAuthSessionV1");
         return raw ? JSON.parse(raw) : null;
@@ -43488,26 +43490,17 @@
       return `dancrAccountEmail:${role}`;
     }
 
-    function persistAccountEmail(role, email) {
-      const normalized = normalizeAccountEmail(email);
-      if (!role || !normalized) return;
-      try {
-        localStorage.setItem(accountEmailStorageKey(role), normalized);
-      } catch (error) {}
+    function persistAccountEmail(role, _email) {
+      // Retire the duplicate email copy; the current authenticated session owns it.
+      try { localStorage.removeItem(accountEmailStorageKey(role)); } catch {}
     }
 
     function sessionEmailForRole(role) {
       const sessionRole = authSession?.account?.role || authSession?.role;
-      const sessionEmail =
-        normalizeAccountEmail(authSession?.account?.email) ||
+      if (!authSession?.accessToken || (role && sessionRole !== role)) return "";
+      return normalizeAccountEmail(authSession?.account?.email) ||
         normalizeAccountEmail(authSession?.email) ||
         normalizeAccountEmail(authSession?.user?.email);
-      if (sessionEmail && (!role || !sessionRole || sessionRole === role)) return sessionEmail;
-      try {
-        return normalizeAccountEmail(localStorage.getItem(accountEmailStorageKey(role)));
-      } catch (error) {
-        return "";
-      }
     }
 
     function updateCurrentEmailDisplays() {
@@ -43522,6 +43515,10 @@
         const pushAccount = localStorage.getItem("mydancr:push-account");
         if (pushAccount && pushAccount !== session?.account?.id) void clearCustomerPushDevice();
       } catch (error) {}
+      if (browserAccountIdentity(authSession) !== browserAccountIdentity(session)) {
+        savedAdminContentReviews = [];
+        savedAdminContentReviewAccount = "";
+      }
       authSession = session;
       visibleAuthAccountIdentity = browserAccountIdentity(session);
       const role = session?.account?.role || session?.role;
@@ -43643,6 +43640,7 @@
       }
     }
     const authResumeStorageKey = "dancrAuthResumeV1";
+    readAuthResumeStore();
     const accountTooltipStorageKey = "dancrAccountTooltipDismissedV1";
     let accountTooltipTimer = 0;
 
@@ -43653,16 +43651,41 @@
 
     function readAuthResumeStore() {
       try {
-        return JSON.parse(localStorage.getItem(authResumeStorageKey) || "{}") || {};
-      } catch (error) {
+        const raw = localStorage.getItem(authResumeStorageKey) || "{}";
+        const store = pruneAuthResumeStore(raw.length <= 262144 ? JSON.parse(raw) : {});
+        writeAuthResumeStore(store);
+        return store;
+      } catch {
+        try { localStorage.removeItem(authResumeStorageKey); } catch {}
         return {};
       }
     }
 
+    function pruneAuthResumeStore(value) {
+      if (!value || typeof value !== "object" || Array.isArray(value)) return {};
+      const now = Date.now();
+      const allowed = ["role", "email", "city", "activeTab", "selectedVenueName", "scrollY", "createdAt", "mode",
+        "dancerCity", "resumeTarget", "setupStep", "authIntent", "freshDancerVerification", "destination"];
+      return Object.fromEntries(Object.entries(value).filter(([token, state]) => {
+        return /^[a-zA-Z0-9-]{1,128}$/.test(token) && state && typeof state === "object" && !Array.isArray(state)
+          && ["customer", "dancer", "venue"].includes(state.role) && Number.isFinite(state.createdAt)
+          && state.createdAt <= now && now - state.createdAt < 86400000;
+      }).sort((left, right) => right[1].createdAt - left[1].createdAt).slice(0, 20).map(([token, state]) => {
+        const fields = Object.fromEntries(allowed.filter(key => {
+          const item = state[key];
+          return (typeof item === "string" && item.length <= (key === "destination" ? 2048 : 254)) || typeof item === "boolean"
+            || (typeof item === "number" && Number.isFinite(item));
+        }).map(key => [key, state[key]]));
+        return [token, fields];
+      }));
+    }
+
     function writeAuthResumeStore(store) {
       try {
-        localStorage.setItem(authResumeStorageKey, JSON.stringify(store));
-      } catch (error) {}
+        const retained = pruneAuthResumeStore(store);
+        if (Object.keys(retained).length) localStorage.setItem(authResumeStorageKey, JSON.stringify(retained));
+        else localStorage.removeItem(authResumeStorageKey);
+      } catch {}
     }
 
     function accountIconMarkup() {
@@ -59319,24 +59342,30 @@
       return venue ? { city, venue } : null;
     }
 
-    function adminContentReviewStorageKey() {
-      const adminId = authSession?.account?.id || authSession?.account?.email || "local-admin";
-      return `mydancr:admin-content-reviews:${adminId}`;
+    function clearRetiredAccountCaches() {
+      try {
+        for (let index = localStorage.length - 1; index >= 0; index -= 1) {
+          const key = localStorage.key(index) || "";
+          if (key.startsWith("dancrAccountEmail:") || key.startsWith("mydancr:admin-content-reviews:")) {
+            localStorage.removeItem(key);
+          }
+        }
+      } catch {}
     }
 
     function loadSavedAdminContentReviews() {
-      try {
-        const rows = JSON.parse(localStorage.getItem(adminContentReviewStorageKey()) || "[]");
-        return Array.isArray(rows) ? rows : [];
-      } catch {
-        return [];
-      }
+      clearRetiredAccountCaches();
+      const accountId = authSession?.account?.role === "admin" && authSession?.accessToken
+        ? String(authSession.account.id || "") : "";
+      if (!accountId || accountId !== savedAdminContentReviewAccount) savedAdminContentReviews = [];
+      savedAdminContentReviewAccount = accountId;
+      return savedAdminContentReviews;
     }
 
     function writeSavedAdminContentReviews() {
-      try {
-        localStorage.setItem(adminContentReviewStorageKey(), JSON.stringify(savedAdminContentReviews.slice(-500)));
-      } catch {}
+      clearRetiredAccountCaches();
+      // Server review records are authoritative; optimistic notes stay in this page.
+      savedAdminContentReviews = savedAdminContentReviews.slice(-500);
     }
 
     function adminContentReviewProfileKey(profile) {
@@ -59344,6 +59373,8 @@
     }
 
     function saveAdminContentReview(profile, targetType, targetId, status, notes) {
+      loadSavedAdminContentReviews();
+      if (!savedAdminContentReviewAccount) return;
       const row = {
         profileKey: adminContentReviewProfileKey(profile),
         targetType,

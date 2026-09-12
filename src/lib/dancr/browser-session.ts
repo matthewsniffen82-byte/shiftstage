@@ -31,6 +31,7 @@ export function captureBrowserAuthSessionGuard(): () => boolean {
 
 export function readBrowserAuthSession(): BrowserAuthSession | null {
   if (typeof window === "undefined") return null;
+  clearRetiredBrowserAccountCaches();
 
   try {
     return parseBrowserAuthSession(window.localStorage.getItem(BROWSER_AUTH_SESSION_KEY));
@@ -118,12 +119,24 @@ export function clearBrowserAuthSession() {
   if (typeof window === "undefined") return false;
 
   try {
+    clearRetiredBrowserAccountCaches();
     void clearCustomerPushDevice();
     window.localStorage.removeItem(BROWSER_AUTH_SESSION_KEY);
     return true;
   } catch {
     return false;
   }
+}
+
+function clearRetiredBrowserAccountCaches() {
+  try {
+    for (let index = window.localStorage.length - 1; index >= 0; index -= 1) {
+      const key = window.localStorage.key(index) || "";
+      if (key.startsWith("dancrAccountEmail:") || key.startsWith("mydancr:admin-content-reviews:")) {
+        window.localStorage.removeItem(key);
+      }
+    }
+  } catch { /* Storage denial must not prevent account cleanup. */ }
 }
 
 async function clearCustomerPushDevice() {

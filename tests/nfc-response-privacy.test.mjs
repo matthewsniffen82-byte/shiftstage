@@ -4,6 +4,7 @@ import { createRequire } from "node:module";
 import test from "node:test";
 import vm from "node:vm";
 import ts from "typescript";
+import { toPublicClubDeal } from "../src/lib/dancr/public-club-deal.ts";
 import { readBoundedJsonObject } from "../src/lib/bounded-json-body.ts";
 import { resolveApiError } from "../src/lib/api-error-policy.ts";
 
@@ -33,6 +34,7 @@ function fixture(options = {}) {
   const deal = { id: dealId, dealTitle: "Admission offer", dealDescription: "Synthetic customer copy", dealTerms: "Tonight" };
   vm.runInNewContext(code, { exports, Request, Response, URL, Error, console: { info() {}, warn() {}, error() {} }, require(name) {
     if (name === "next/server") return require(name);
+    if (name === "@/src/lib/dancr/public-club-deal") return { toPublicClubDeal };
     if (name === "@/src/lib/bounded-json-body") return { readBoundedJsonObject };
     if (name === "@/src/lib/api-error-policy" || name === "@/src/lib/api") return {
       resolveApiError, apiError(error, fallback, status) { const result = resolveApiError(error, fallback, status); return Response.json(result.body, { status: result.status }); },

@@ -1,3 +1,4 @@
+import { toPublicClubDeal } from "@/src/lib/dancr/public-club-deal";
 import Link from "next/link";
 import { notFound, permanentRedirect } from "next/navigation";
 import { ClubDealCard } from "@/app/components/ClubDealCard";
@@ -261,8 +262,8 @@ export default async function DancerPublicPage({ params, searchParams }: PagePro
                 aria-label="Active Club Deal for cashier tap"
               >
                 <ClubDealCard
-                  deal={activeDeal}
-                  deals={activeDeals}
+                  deal={toPublicClubDeal(activeDeal)}
+                  deals={activeDeals.map(toPublicClubDeal)}
                   venueId={activeShift.venueId}
                   venueName={activeShift.venueName}
                   sourceType={dealSourceType}

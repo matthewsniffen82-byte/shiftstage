@@ -1,3 +1,4 @@
+import { toPublicClubDeal } from "@/src/lib/dancr/public-club-deal";
 import { notFound } from "next/navigation";
 import { verifyVenueDealCampaignToken } from "@/src/lib/dancr/deal-campaign";
 import { getActiveClubDealById } from "@/src/lib/dancr/deals";
@@ -27,5 +28,5 @@ export default async function ClubDealClaimPage({ params, searchParams }: PagePr
   const deal = await getActiveClubDealById(createAdminSupabaseClient(), dealId);
   if (!deal || deal.venueId !== campaign.venueId) notFound();
 
-  return <DealClaimClient campaignToken={campaignToken} deal={deal} />;
+  return <DealClaimClient campaignToken={campaignToken} deal={toPublicClubDeal(deal)} />;
 }

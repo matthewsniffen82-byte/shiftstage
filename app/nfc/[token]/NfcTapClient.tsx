@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import type { ClubDeal } from "@/src/lib/dancr/types";
+import type { PublicClubDeal } from "@/src/lib/dancr/types";
 import NfcIcon from "@/app/components/NfcIcon";
 import {
   persistRefreshedBrowserAuthSession,
@@ -16,7 +16,7 @@ const DEAL_INTENT_KEY = "mydancrPendingNfcDealV2";
 type TagState = {
   tag: { id: string; type: "dressing_room" | "cashier"; label: string };
   venue: { id: string; name: string; slug: string; city: string; state: string };
-  deals: ClubDeal[];
+  deals: PublicClubDeal[];
   browserAccountLinked?: boolean;
 };
 
@@ -96,12 +96,12 @@ export function NfcTapClient({ token }: { token: string }) {
         setState(data);
         const pendingDealId = pendingIntent && pendingIntent.venueId === data.venue.id ? pendingIntent.dealId : "";
         const preferred = pendingDealId
-          && data.deals?.some((deal: ClubDeal) => deal.id === pendingDealId)
+          && data.deals?.some((deal: PublicClubDeal) => deal.id === pendingDealId)
           ? pendingDealId
           : "";
         setSelectedDealId(preferred || "");
         setPhase("ready");
-        const preferredDeal = data.deals?.find((deal: ClubDeal) => deal.id === preferred);
+        const preferredDeal = data.deals?.find((deal: PublicClubDeal) => deal.id === preferred);
         setStatus(data.tag.type === "dressing_room"
           ? "Sign in as a dancer to start one six-hour Working Now session."
           : pendingIntent?.venueId === data.venue.id && preferredDeal
@@ -353,7 +353,7 @@ function clearPendingDealIntent() {
   try { window.localStorage.removeItem(DEAL_INTENT_KEY); } catch { /* storage is optional */ }
 }
 
-function dealTypeLabel(value: ClubDeal["offerType"]) {
+function dealTypeLabel(value: PublicClubDeal["offerType"]) {
   if (value === "other") return "Club offer";
   return "Admission offer";
 }

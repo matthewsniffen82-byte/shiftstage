@@ -102,8 +102,8 @@ test("each selected offer keeps its exact deal and dancer attribution token", ()
 });
 
 test("all public surfaces expose the full offer list while preserving first-deal compatibility", () => {
-  assert.match(discoveryRoute, /activeDeals: activeDeals\.get\(venue\.id\) \|\| \[\]/);
-  assert.match(discoveryRoute, /activeDeal: activeDeals\.get\(venue\.id\)\?\.\[0\] \|\| null/);
+  assert.match(discoveryRoute, /activeDeals: \(activeDeals\.get\(venue\.id\) \|\| \[\]\)\.map\(toPublicClubDeal\)/);
+  assert.match(discoveryRoute, /activeDeal: activeDeals\.get\(venue\.id\)\?\.\[0\] \? toPublicClubDeal\(activeDeals\.get\(venue\.id\)!\[0\]\) : null/);
   assert.match(tvSource, /deals: venueDeals/);
   assert.match(tvSource, /deal: null,[\s\S]*?deals: \[\]/);
   assert.match(liveApp, /activeDeals: Array\.isArray\(item\.activeDeals\)/);

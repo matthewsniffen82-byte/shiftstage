@@ -1,3 +1,4 @@
+import { toPublicClubDeal } from "@/src/lib/dancr/public-club-deal";
 import { NextResponse } from "next/server";
 import { apiError } from "@/src/lib/api";
 import { resolveApiError } from "@/src/lib/api-error-policy";
@@ -61,7 +62,7 @@ export async function GET(request: Request, context: RouteContext) {
       ok: true,
       tag: { id: tag.id, type: tag.type, label: tag.label },
       venue: tag.venue,
-      deals,
+      deals: deals.map(toPublicClubDeal),
       browserAccountLinked: tag.type === "dressing_room" && Boolean(readNfcBrowserAccountToken(request)),
     });
   } catch (error) {
@@ -193,7 +194,7 @@ export async function POST(request: Request, context: RouteContext) {
     return noStore({
       ok: true,
       action: "deal_redemption",
-      deal: redemption.deal,
+      deal: toPublicClubDeal(redemption.deal),
       // The privileged transaction also returns private finance and payout fields.
       confirmation: {
         status: redemption.confirmation?.status === "redeemed" ? "redeemed" : null,

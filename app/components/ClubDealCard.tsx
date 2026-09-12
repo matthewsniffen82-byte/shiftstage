@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useId, useRef, useState } from "react";
-import type { ClubDeal, DealSourceType } from "@/src/lib/dancr/types";
+import type { PublicClubDeal, DealSourceType } from "@/src/lib/dancr/types";
 import { customerFacingDealDescription, customerFacingDealTerms } from "@/src/lib/dancr/deal-copy";
 import {
   hasSignedInCustomerDealAccount,
@@ -15,8 +15,8 @@ const DEAL_INTENT_KEY = "mydancrPendingNfcDealV2";
 const DEAL_INTENT_TTL_MS = 12 * 60 * 60 * 1000;
 
 type ClubDealCardProps = {
-  deal: ClubDeal;
-  deals?: ClubDeal[];
+  deal: PublicClubDeal;
+  deals?: PublicClubDeal[];
   venueId: string;
   venueName?: string;
   sourceType: DealSourceType;
@@ -565,7 +565,7 @@ export function ClubDealCard({
   );
 }
 
-function dealTypeLabel(value: ClubDeal["offerType"]) {
+function dealTypeLabel(value: PublicClubDeal["offerType"]) {
   if (value === "other") return "Club offer";
   return "Admission offer";
 }
@@ -665,7 +665,7 @@ function formatNfcExpiry(value: number) {
   }).format(new Date(value));
 }
 
-function dealAvailabilityLabel(deal: ClubDeal) {
+function dealAvailabilityLabel(deal: PublicClubDeal) {
   const days = Array.isArray(deal.validDays)
     ? deal.validDays.map((day) => String(day || "").slice(0, 3)).filter(Boolean).join(", ")
     : "";

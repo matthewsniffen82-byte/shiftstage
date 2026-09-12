@@ -17,15 +17,19 @@ async function read(path, key = anon) {
 
 const checks = [];
 try {
-  const [auth, schema, publicProfiles, legalNames, privateMetrics, savedDeals, storage] = await Promise.all([
+  const [auth, schema, publicProfiles, legalNames, privateMetrics, savedDeals, storage, publicDeals, privateDealFields] = await Promise.all([
     read("/auth/v1/health"), read("/rest/v1/", service),
     read("/rest/v1/dancer_profiles?select=id,stage_name&limit=0"),
     read("/rest/v1/dancer_profiles?select=real_name&limit=0"),
     read("/rest/v1/dancer_monthly_impact?select=dancer_id&limit=0"),
     read("/rest/v1/customer_deal_saves?select=customer_id&limit=0"),
     read("/storage/v1/bucket", service),
+    read("/rest/v1/club_deals?select=id,venue_id,deal_title,deal_description,deal_terms,is_active,valid_days,valid_start_time,valid_end_time,offer_type,booking_url,sort_order&limit=0"),
+    read("/rest/v1/club_deals?select=payout_amount_cents,redemption_rules&limit=0"),
   ]);
   checks.push(...checkStorageBucketSecurity(storage.ok ? storage.data : null));
+  checks.push({ name: "Public deal projection", ok: publicDeals.ok },
+    { name: "Private deal fields protected", ok: [401, 403].includes(privateDealFields.status) && privateDealFields.data?.code === "42501" });
   checks.push({ name: "Auth service", ok: auth.ok }, { name: "Database schema", ok: schema.ok },
     { name: "Public profile projection", ok: publicProfiles.ok },
     ...[["Legal-name protection", legalNames], ["Private analytics protection", privateMetrics], ["Private saved-deal protection", savedDeals]]

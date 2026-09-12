@@ -1,3 +1,4 @@
+import { toPublicClubDeal } from "@/src/lib/dancr/public-club-deal";
 import { isAllMyDancrCities } from "@/src/lib/dancr/markets";
 import { NextResponse } from "next/server";
 import { createDancerDealAttributionToken } from "@/src/lib/dancr/deal-attribution";
@@ -85,8 +86,8 @@ export async function GET(request: Request) {
         logoImageSrcSet: logoImage?.imageSrcSet || null,
         logoImageWidth: logoImage?.imageWidth || null,
         logoImageHeight: logoImage?.imageHeight || null,
-        activeDeals: activeDeals.get(venue.id) || [],
-        activeDeal: activeDeals.get(venue.id)?.[0] || null,
+        activeDeals: (activeDeals.get(venue.id) || []).map(toPublicClubDeal),
+        activeDeal: activeDeals.get(venue.id)?.[0] ? toPublicClubDeal(activeDeals.get(venue.id)![0]) : null,
         popularity: venuePopularityById.get(venue.id) || {
           followerCount: 0,
           directionRequests30d: 0,
@@ -95,7 +96,7 @@ export async function GET(request: Request) {
       };
     });
     const withActiveDeal = (dancer: (typeof discovery.dancers)[number]) => {
-      const dancerDeals = dancer.venueId ? activeDeals.get(dancer.venueId) || [] : [];
+      const dancerDeals = (dancer.venueId ? activeDeals.get(dancer.venueId) || [] : []).map(toPublicClubDeal);
       const activeDeal = dancerDeals[0] || null;
       const commissionEligible = dancer.shiftSource !== "demo_locked";
       const dealAttributionTokens = commissionEligible && dancer.venueId && dancer.shiftId

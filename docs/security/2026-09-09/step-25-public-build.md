@@ -53,3 +53,7 @@ GitHub rejected the push of unpublished task commit `e678c6a1cf3ec7d9221bb3a5667
 ## Step 25 final corrective validation
 
 The complete corrected release gate passed at 2026-09-12T09:43:52.8066047Z: all **6,901 tests**, zero failures/skips/cancellations, dependency and signature audits, route type generation, standalone TypeScript, full lint and production build. Both artifact inspection and the separate configured-private-value comparison passed with 263 files, 239 text assets and 7,726,442 text bytes. Postbuild skipped population. All five frozen source/config/test hashes match, and the unrelated screenshot retains its original hash. Only the test fixture and its audit records changed after the rejected push. The unpublished commit is amended before retrying publication; exact successful deployment and bounded health checks still precede Step 26.
+
+## Exact delivery
+
+Step 25 was delivered as `e947a5ed57d2c08cd2bd0faac95b35b13fd43855`. Its [exact Vercel deployment](https://vercel.com/ai-movie-jobs/shiftstage/36DQ3JApvBKGLRqqKyZh9uLfEUBu) succeeded. Closure at 2026-09-12T09:51:20.964Z verified all 6,901 tests and release gates, eight healthy HTTP checks, thirty database readiness checks and a rendered homepage with no browser warnings/errors. Local HEAD, origin/main and remote main matched; the tracked worktree/index were clean and the unrelated user screenshot was preserved. The source-map edge-checkpoint limitation remains explicit. Only after closure did Step 26 begin.

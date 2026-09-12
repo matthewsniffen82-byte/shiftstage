@@ -3,12 +3,12 @@
 import Link from "next/link";
 import NfcIcon from "@/app/components/NfcIcon";
 import { useEffect, useState } from "react";
-import type { ClubDeal } from "@/src/lib/dancr/types";
+import type { PublicClubDeal } from "@/src/lib/dancr/types";
 import { homeDiscoveryHref } from "@/src/lib/dancr/navigation";
 
 const DEAL_INTENT_KEY = "mydancrPendingNfcDealV2";
 
-export default function DealClaimClient({ deal }: { campaignToken: string; deal: ClubDeal }) {
+export default function DealClaimClient({ deal }: { campaignToken: string; deal: PublicClubDeal }) {
   const [status, setStatus] = useState("Preparing this offer for the cashier tap…");
 
   useEffect(() => {

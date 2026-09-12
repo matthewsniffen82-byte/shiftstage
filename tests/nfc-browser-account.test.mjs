@@ -4,6 +4,7 @@ import { createRequire } from "node:module";
 import test from "node:test";
 import vm from "node:vm";
 import ts from "typescript";
+import { toPublicClubDeal } from "../src/lib/dancr/public-club-deal.ts";
 
 const require = createRequire(import.meta.url);
 function load(path, dependencies, extra = {}) {
@@ -17,6 +18,7 @@ function load(path, dependencies, extra = {}) {
     console: { info() {}, warn() {}, error() {} },
     require(name) {
       if (name in dependencies) return dependencies[name];
+      if (name === "@/src/lib/dancr/public-club-deal") return { toPublicClubDeal };
       if (name === "node:crypto" || name === "next/server") return require(name);
       throw new Error(`Unexpected dependency: ${name}`);
     },

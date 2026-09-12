@@ -327,6 +327,11 @@ export type ShiftSummary = {
   locationVerificationExpiresAt?: string | null;
 };
 
+export type PublicClubDeal = Pick<ClubDeal,
+  "id" | "venueId" | "dealTitle" | "dealDescription" | "dealTerms" | "isActive" |
+  "validDays" | "validStartTime" | "validEndTime" | "offerType" | "bookingUrl" | "sortOrder"
+>;
+
 export type ClubDeal = {
   id: string;
   venueId: string;

@@ -45,8 +45,8 @@ Step 1 delivered as `50d4eb543dbfc93dbed6f0663c51aa2332542cb4`, pushed to origin
 | 22 | Security logging | Delivered and healthy: 5d5fdb936c3d42b2f8e487e228cd9e2db0658ec2 |
 | 23 | Dependencies | Delivered and healthy: 77ea0eb48d3de3a1b65c87fdca8e5754fb6d1579 |
 | 24 | CI / supply chain | Delivered with documented administrative limits: ffc628e230200c29ab6c602071b70ad1e3f3774b |
-| 25 | Production build / source maps | All 6,901 tests and release gates pass; exact delivery pending |
-| 26 | Sensitive data minimization | Not started |
+| 25 | Production build / source maps | Delivered and healthy: e947a5ed57d2c08cd2bd0faac95b35b13fd43855 |
+| 26 | Sensitive data minimization | Implementation and focused validation complete; final delivery pending |
 | 27 | Profile / location safety | Not started |
 | 28 | Scraping resilience | Not started |
 | 29 | Resource abuse / DoS | Not started |
@@ -499,3 +499,14 @@ GitHub rejected the push of unpublished task commit `e678c6a1cf3ec7d9221bb3a5667
 ## Step 25 final corrective validation
 
 The complete corrected release gate passed at 2026-09-12T09:43:52.8066047Z: all **6,901 tests**, zero failures/skips/cancellations, dependency and signature audits, route type generation, standalone TypeScript, full lint and production build. Both artifact inspection and the separate configured-private-value comparison passed with 263 files, 239 text assets and 7,726,442 text bytes. Postbuild skipped population. All five frozen source/config/test hashes match, and the unrelated screenshot retains its original hash. Only the test fixture and its audit records changed after the rejected push. The unpublished commit is amended before retrying publication; exact successful deployment and bounded health checks still precede Step 26.
+
+## Step 25 delivery
+
+Step 25 was delivered as `e947a5ed57d2c08cd2bd0faac95b35b13fd43855`. Its [exact Vercel deployment](https://vercel.com/ai-movie-jobs/shiftstage/36DQ3JApvBKGLRqqKyZh9uLfEUBu) succeeded. Closure at 2026-09-12T09:51:20.964Z verified all 6,901 tests and release gates, eight healthy HTTP checks, thirty database readiness checks and a rendered homepage with no browser warnings/errors. Local HEAD, origin/main and remote main matched; the tracked worktree/index were clean and the unrelated user screenshot was preserved. The source-map edge-checkpoint limitation remains explicit. Only after closure did Step 26 begin.
+
+## Step 26 implementation
+
+See `step-26-data-minimization.md` for the public financial-field disclosure, direct database column boundary, retired browser email/review caches and bounded auth-resume state. Synthetic checks exercise actual response functions and guarded PostgreSQL execution. Fresh production preflight, full integrated gates, task-only commit/push, exact migration application, deployment and health remain required before Step 27.
+
+
+The Step 26 candidate preserves Supabase Step 16 and Arch Step 8, with exact parent `19ca1b4292af071a3d6395bb1f044acd4d367d03`. All **7,192 tests** and all eight canonical release gates passed at 2026-09-12T10:24:56.481Z. Its 69 new regression cases and related checks total 124 passing focused tests; 36 assertions reproduce the prior vulnerabilities. The fresh read-only catalog confirms nineteen publicly selectable deal columns; the bounded migration restricts access to twelve customer-facing columns while preserving RLS, service access and records. Aggregate counts also identify 18 legacy verification objects and 7 reviews retained pending an operator retention decision; no private content was downloaded or purged. Configured integration checks, exact migration application, both delivery receipts and manifest freeze remain before Step 27.
