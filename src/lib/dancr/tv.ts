@@ -32,6 +32,7 @@ import {
 import { inspectStoredMyDancrTvVideo } from "./video-upload-validation";
 import { safeErrorMetadata } from "../security/safe-error-metadata";
 import { getManagedVideoMetricCounts } from "./tv-metric-counts";
+import { PublicApiError } from "../api-error-policy";
 
 export const MYDANCR_TV_BUCKET = "mydancr-tv-videos";
 export const MYDANCR_TV_MAX_BYTES = 75 * 1024 * 1024;
@@ -73,6 +74,9 @@ export const MYDANCR_TV_EVENT_SOURCES = new Set([
 
 const IDENTITY_PROFILE_FIELDS = ", venue_approved_at";
 const MODERATION_IDENTITY_PROFILE_FIELDS = `${IDENTITY_PROFILE_FIELDS}, avatar_storage_path`;
+const VIDEO_WORKER_FIELDS = "moderation_attempt_count, moderation_started_at, moderation_details, updated_at";
+const VIDEO_WORKER_STALE_AFTER_MS = 5 * 60 * 1000;
+const VIDEO_WORKER_ID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const PUBLIC_TV_SELECT =
   `id, storage_path, duration_seconds, width, height, published_at, expires_at, like_count, distribution_scope, is_pinned, moderation_details, dancer_profiles!inner(id, slug, stage_name, city, status, verification_status${IDENTITY_PROFILE_FIELDS}, photo_review_status, approved_at, disabled_at, is_public)`;
 const UUID_PATTERN =
@@ -1147,6 +1151,7 @@ export async function submitMyDancrTvUpload(
   const submittedAt = new Date().toISOString();
   const demoAutoApprove = isVideoDemoAutoApproveMode();
   const deferModeration = options.deferModeration === true;
+  const workerId = deferModeration ? null : crypto.randomUUID();
   const { data: moderating, error: updateError } = await admin
     .from("mydancr_tv_videos")
     .update({
@@ -1159,11 +1164,11 @@ export async function submitMyDancrTvUpload(
       moderation_provider_flagged: false,
       moderation_frame_count: 0,
       moderation_model: null,
-      moderation_details: {},
-      moderation_attempt_count: deferModeration || demoAutoApprove ? 0 : 1,
+      moderation_details: workerId ? { workerId } : {},
+      moderation_attempt_count: deferModeration ? 0 : 1,
       // Timestamp deferred work as queued so the existing stale-job cron can
       // recover it if the post-response worker is interrupted before claiming it.
-      moderation_started_at: demoAutoApprove ? null : submittedAt,
+      moderation_started_at: submittedAt,
       moderation_completed_at: null,
       duration_seconds: verified.durationSeconds,
       file_size_bytes: verified.fileSizeBytes,
@@ -1173,9 +1178,10 @@ export async function submitMyDancrTvUpload(
     .eq("id", video.id)
     .eq("submitted_by", userId)
     .eq("status", "uploading")
-    .select(`id, submitted_by, storage_path, storage_mime, caption, duration_seconds, width, height, status, submitted_at, dancer_profiles(stage_name, city, status, verification_status${MODERATION_IDENTITY_PROFILE_FIELDS}, photo_review_status, approved_at, disabled_at, is_public)`)
+    .select(`id, submitted_by, storage_path, storage_mime, caption, duration_seconds, width, height, status, submitted_at, ${VIDEO_WORKER_FIELDS}, dancer_profiles(stage_name, city, status, verification_status${MODERATION_IDENTITY_PROFILE_FIELDS}, photo_review_status, approved_at, disabled_at, is_public)`)
     .single();
   if (updateError) throw updateError;
+  assertVideoWorkerClaim(moderating, video, workerId, deferModeration ? 0 : 1, submittedAt);
   console.info(JSON.stringify({
     event: deferModeration
       ? "mydancr_tv.video_moderation_queued"
@@ -1195,26 +1201,33 @@ export async function submitMyDancrTvUpload(
 export async function retryMyDancrTvAutomatedModeration(admin: AdminClient, videoId: string) {
   const { data: video, error } = await admin
     .from("mydancr_tv_videos")
-    .select(`id, submitted_by, storage_path, storage_mime, caption, duration_seconds, width, height, status, moderation_attempt_count, submitted_at, dancer_profiles(stage_name, city, status, verification_status${MODERATION_IDENTITY_PROFILE_FIELDS}, photo_review_status, approved_at, disabled_at, is_public)`)
+    .select(`id, submitted_by, storage_path, storage_mime, caption, duration_seconds, width, height, status, submitted_at, ${VIDEO_WORKER_FIELDS}, dancer_profiles(stage_name, city, status, verification_status${MODERATION_IDENTITY_PROFILE_FIELDS}, photo_review_status, approved_at, disabled_at, is_public)`)
     .eq("id", videoId)
     .eq("status", "moderating")
     .maybeSingle();
   if (error) throw error;
   if (!video) return null;
 
+  const previous = videoWorkerState(video);
+  if (previous.attempt >= 3) return null;
+  const queued = previous.attempt === 0 && previous.workerId === null;
+  if (!queued && (previous.startedAt === null || Date.parse(previous.startedAt) >= Date.now() - VIDEO_WORKER_STALE_AFTER_MS)) return null;
   const startedAt = new Date().toISOString();
-  const { data: claimed, error: claimError } = await admin
+  const workerId = crypto.randomUUID();
+  const attempt = previous.attempt + 1;
+  const claim = admin
     .from("mydancr_tv_videos")
     .update({
-      moderation_attempt_count: Number(video.moderation_attempt_count || 0) + 1,
+      moderation_attempt_count: attempt,
       moderation_started_at: startedAt,
-    })
-    .eq("id", video.id)
-    .eq("status", "moderating")
-    .select(`id, submitted_by, storage_path, storage_mime, caption, duration_seconds, width, height, status, submitted_at, dancer_profiles(stage_name, city, status, verification_status${MODERATION_IDENTITY_PROFILE_FIELDS}, photo_review_status, approved_at, disabled_at, is_public)`)
+      moderation_details: { workerId },
+    });
+  const { data: claimed, error: claimError } = await matchVideoWorkerSnapshot(claim, video, "moderating")
+    .select(`id, submitted_by, storage_path, storage_mime, caption, duration_seconds, width, height, status, submitted_at, ${VIDEO_WORKER_FIELDS}, dancer_profiles(stage_name, city, status, verification_status${MODERATION_IDENTITY_PROFILE_FIELDS}, photo_review_status, approved_at, disabled_at, is_public)`)
     .maybeSingle();
   if (claimError) throw claimError;
   if (!claimed) return null;
+  assertVideoWorkerClaim(claimed, video, workerId, attempt, startedAt);
   if (isVideoDemoAutoApproveMode()) {
     return autoApproveMyDancrTvDemoUpload(
       admin,
@@ -1233,7 +1246,7 @@ export async function retrySubmittedMyDancrTvAutomatedModeration(
 ) {
   const { data: video, error } = await admin
     .from("mydancr_tv_videos")
-    .select("id, status, moderation_reason_codes, moderation_attempt_count")
+    .select(`id, submitted_by, storage_path, storage_mime, caption, duration_seconds, width, height, status, moderation_reason_codes, ${VIDEO_WORKER_FIELDS}`)
     .eq("id", videoId)
     .maybeSingle();
   if (error) throw error;
@@ -1248,8 +1261,12 @@ export async function retrySubmittedMyDancrTvAutomatedModeration(
     throw new Error("Only automated processing failures can restart automated review.");
   }
 
+  const previous = videoWorkerState(video);
   const startedAt = new Date().toISOString();
-  const { data: claimed, error: claimError } = await admin
+  const workerId = crypto.randomUUID();
+  const attempt = previous.attempt + 1;
+  if (!Number.isSafeInteger(attempt) || attempt > 2_147_483_647) throw videoWorkerUnavailable();
+  const claim = admin
     .from("mydancr_tv_videos")
     .update({
       status: "moderating",
@@ -1262,17 +1279,17 @@ export async function retrySubmittedMyDancrTvAutomatedModeration(
       moderation_provider_flagged: false,
       moderation_frame_count: 0,
       moderation_model: null,
-      moderation_details: {},
-      moderation_attempt_count: Number(video.moderation_attempt_count || 0) + 1,
+      moderation_details: { workerId },
+      moderation_attempt_count: attempt,
       moderation_started_at: startedAt,
       moderation_completed_at: null,
-    })
-    .eq("id", video.id)
-    .eq("status", "submitted")
-    .select(`id, submitted_by, storage_path, storage_mime, caption, duration_seconds, width, height, status, submitted_at, dancer_profiles(stage_name, city, status, verification_status${MODERATION_IDENTITY_PROFILE_FIELDS}, photo_review_status, approved_at, disabled_at, is_public)`)
+    });
+  const { data: claimed, error: claimError } = await matchVideoWorkerSnapshot(claim, video, "submitted")
+    .select(`id, submitted_by, storage_path, storage_mime, caption, duration_seconds, width, height, status, submitted_at, ${VIDEO_WORKER_FIELDS}, dancer_profiles(stage_name, city, status, verification_status${MODERATION_IDENTITY_PROFILE_FIELDS}, photo_review_status, approved_at, disabled_at, is_public)`)
     .maybeSingle();
   if (claimError) throw claimError;
   if (!claimed) throw new Error("This video is no longer waiting for review.");
+  assertVideoWorkerClaim(claimed, video, workerId, attempt, startedAt);
   console.info(JSON.stringify({
     event: "mydancr_tv.admin_automated_review_restarted",
     videoId: claimed.id,
@@ -1288,27 +1305,32 @@ export async function autoApprovePendingMyDancrTvDemoVideo(
   if (!isVideoDemoAutoApproveMode()) return null;
   const { data: video, error } = await admin
     .from("mydancr_tv_videos")
-    .select(`id, submitted_by, storage_path, storage_mime, caption, duration_seconds, width, height, status, submitted_at, dancer_profiles(stage_name, city, status, verification_status${IDENTITY_PROFILE_FIELDS}, photo_review_status, approved_at, disabled_at, is_public)`)
+    .select(`id, submitted_by, storage_path, storage_mime, caption, duration_seconds, width, height, status, submitted_at, ${VIDEO_WORKER_FIELDS}, dancer_profiles(stage_name, city, status, verification_status${IDENTITY_PROFILE_FIELDS}, photo_review_status, approved_at, disabled_at, is_public)`)
     .eq("id", videoId)
     .eq("status", "submitted")
     .maybeSingle();
   if (error) throw error;
   if (!video) return null;
 
+  const previous = videoWorkerState(video);
+  if (previous.attempt >= 3) return null;
   const claimedAt = new Date().toISOString();
-  const { data: claimed, error: claimError } = await admin
+  const workerId = crypto.randomUUID();
+  const attempt = previous.attempt + 1;
+  const claim = admin
     .from("mydancr_tv_videos")
     .update({
       status: "moderating",
-      moderation_attempt_count: 0,
-      moderation_started_at: null,
-    })
-    .eq("id", video.id)
-    .eq("status", "submitted")
-    .select(`id, submitted_by, storage_path, storage_mime, caption, duration_seconds, width, height, status, submitted_at, dancer_profiles(stage_name, city, status, verification_status${IDENTITY_PROFILE_FIELDS}, photo_review_status, approved_at, disabled_at, is_public)`)
+      moderation_attempt_count: attempt,
+      moderation_started_at: claimedAt,
+      moderation_details: { workerId },
+    });
+  const { data: claimed, error: claimError } = await matchVideoWorkerSnapshot(claim, video, "submitted")
+    .select(`id, submitted_by, storage_path, storage_mime, caption, duration_seconds, width, height, status, submitted_at, ${VIDEO_WORKER_FIELDS}, dancer_profiles(stage_name, city, status, verification_status${IDENTITY_PROFILE_FIELDS}, photo_review_status, approved_at, disabled_at, is_public)`)
     .maybeSingle();
   if (claimError) throw claimError;
   if (!claimed) return null;
+  assertVideoWorkerClaim(claimed, video, workerId, attempt, claimedAt);
   console.info(JSON.stringify({
     event: "mydancr_tv.demo_pending_video_claimed",
     videoId: claimed.id,
@@ -1330,6 +1352,7 @@ async function autoApproveMyDancrTvDemoUpload(
   if (!isDancerMediaOnboardingEligible(one(video.dancer_profiles))) {
     throw new Error("The dancer profile is not eligible for media onboarding.");
   }
+  await assertVideoWorkerCurrent(admin, video, expectedStatus);
 
   const completedAt = new Date().toISOString();
   let watermarkApplied = true;
@@ -1352,7 +1375,7 @@ async function autoApproveMyDancrTvDemoUpload(
     }));
   }
 
-  const { data, error } = await admin
+  const update = admin
     .from("mydancr_tv_videos")
     .update(demoVideoAutoApprovalValues({
       submittedAt,
@@ -1360,21 +1383,96 @@ async function autoApproveMyDancrTvDemoUpload(
       expiresAt: myDancrTvExpiry(),
       watermarkApplied,
       posterStoragePath,
-    }))
-    .eq("id", video.id)
-    .eq("status", expectedStatus)
+    }));
+  const { data, error } = await matchVideoWorkerOwner(update, video, expectedStatus)
     .select("id, status, submitted_at, reviewed_at, published_at, moderation_decision, moderation_reason_codes, moderation_model")
-    .single();
-  if (error) throw error;
+    .maybeSingle();
+  const completed = videoWorkerOutcome(data, error, video.id, "approved");
   console.info(JSON.stringify({
     event: "mydancr_tv.demo_auto_approved",
     videoId: video.id,
     watermarkApplied,
   }));
+  return completed;
+}
+
+function videoWorkerUnavailable() {
+  return new PublicApiError("UNAVAILABLE", "Video review could not be confirmed. Refresh the video before trying again.", 503);
+}
+
+function videoWorkerConflict() {
+  return new PublicApiError("CONFLICT", "This video's review changed. Refresh the video before trying again.", 409);
+}
+
+function videoWorkerState(video: any) {
+  const details = video?.moderation_details;
+  const attempt = video?.moderation_attempt_count;
+  const startedAt = video?.moderation_started_at;
+  const updatedAt = video?.updated_at;
+  if (typeof video?.id !== "string" || !video.id || !Number.isSafeInteger(attempt) || attempt < 0
+    || typeof updatedAt !== "string" || !Number.isFinite(Date.parse(updatedAt))
+    || (startedAt !== null && (typeof startedAt !== "string" || !Number.isFinite(Date.parse(startedAt))))
+    || !details || typeof details !== "object" || Array.isArray(details)) throw videoWorkerUnavailable();
+  const workerId = details.workerId ?? null;
+  if (workerId !== null && (typeof workerId !== "string" || !VIDEO_WORKER_ID_PATTERN.test(workerId))) throw videoWorkerUnavailable();
+  return { attempt: attempt as number, startedAt: startedAt as string | null, updatedAt, workerId: workerId as string | null };
+}
+
+function assertVideoWorkerInputs(video: any) {
+  for (const field of ["submitted_by", "storage_path", "storage_mime", "caption"]) {
+    if (typeof video[field] !== "string") throw videoWorkerUnavailable();
+  }
+  for (const field of ["duration_seconds", "width", "height"]) {
+    if (typeof video[field] !== "number" || !Number.isFinite(video[field])) throw videoWorkerUnavailable();
+  }
+}
+
+/** Compare the selected worker and media inputs in one write. */
+function matchVideoWorkerSnapshot(query: any, video: any, status: string) {
+  const state = videoWorkerState(video);
+  assertVideoWorkerInputs(video);
+  // The existing link trigger advances updated_at only for link changes.
+  // Compare moderation inputs too; a caption or source change may retain it.
+  let matched = query.eq("id", video.id).eq("status", status)
+    .eq("updated_at", state.updatedAt).eq("moderation_attempt_count", state.attempt)
+    .eq("submitted_by", video.submitted_by).eq("storage_path", video.storage_path)
+    .eq("storage_mime", video.storage_mime).eq("caption", video.caption)
+    .eq("duration_seconds", video.duration_seconds).eq("width", video.width).eq("height", video.height);
+  matched = state.startedAt === null ? matched.is("moderation_started_at", null) : matched.eq("moderation_started_at", state.startedAt);
+  return state.workerId === null ? matched.is("moderation_details->>workerId", null) : matched.eq("moderation_details->>workerId", state.workerId);
+}
+
+function matchVideoWorkerOwner(query: any, video: any, status = "moderating") {
+  if (!videoWorkerState(video).workerId) throw videoWorkerUnavailable();
+  return matchVideoWorkerSnapshot(query, video, status);
+}
+
+function assertVideoWorkerClaim(claimed: any, previous: any, workerId: string | null, attempt: number, startedAt: string) {
+  const state = videoWorkerState(claimed);
+  assertVideoWorkerInputs(claimed);
+  if (claimed.id !== previous.id || claimed.submitted_by !== previous.submitted_by
+    || claimed.storage_path !== previous.storage_path || claimed.status !== "moderating"
+    || state.workerId !== workerId || state.attempt !== attempt
+    || state.startedAt === null || Date.parse(state.startedAt) !== Date.parse(startedAt)) throw videoWorkerUnavailable();
+}
+
+async function assertVideoWorkerCurrent(admin: AdminClient, video: any, status = "moderating") {
+  const { data, error } = await matchVideoWorkerOwner(admin.from("mydancr_tv_videos").select("id"), video, status)
+    .maybeSingle();
+  if (error) throw error;
+  if (!data) throw videoWorkerConflict();
+  if (data.id !== video.id) throw videoWorkerUnavailable();
+}
+
+function videoWorkerOutcome(data: any, error: unknown, videoId: string, expectedStatus: string) {
+  if (error) throw error;
+  if (!data) throw videoWorkerConflict();
+  if (data.id !== videoId || data.status !== expectedStatus) throw videoWorkerUnavailable();
   return data;
 }
 
 async function finalizeMyDancrTvAutomatedModeration(admin: AdminClient, video: any) {
+  if (!videoWorkerState(video).workerId) throw videoWorkerUnavailable();
   let moderation: MyDancrTvModerationResult;
   try {
     moderation = await moderateStoredMyDancrTvVideo(admin, {
@@ -1396,7 +1494,7 @@ async function finalizeMyDancrTvAutomatedModeration(admin: AdminClient, video: a
       errorCode,
       ...safeErrorMetadata(error),
     }));
-    const { data, error: updateError } = await admin
+    const update = admin
       .from("mydancr_tv_videos")
       .update({
         status: identityReferenceMissing ? "rejected" : "submitted",
@@ -1411,19 +1509,20 @@ async function finalizeMyDancrTvAutomatedModeration(admin: AdminClient, video: a
         ...(identityReferenceMissing
           ? { reviewed_at: completedAt, published_at: null, expires_at: null }
           : {}),
-      })
-      .eq("id", video.id)
-      .eq("status", "moderating")
+      });
+    const { data, error: updateError } = await matchVideoWorkerOwner(update, video)
       .select("id, status, submitted_at, moderation_decision, moderation_reason_codes")
-      .single();
-    if (updateError) throw updateError;
-    return data;
+      .maybeSingle();
+    return videoWorkerOutcome(data, updateError, video.id, identityReferenceMissing ? "rejected" : "submitted");
   }
 
   let decision = moderation.decision;
   let reasonCodes = moderation.reasonCodes;
   let posterStoragePath: string | null = null;
   if (decision === "approved") {
+    // Avoid starting expensive public-media work for an already obsolete job.
+    // The final write repeats ownership checks if it changes during processing.
+    await assertVideoWorkerCurrent(admin, video);
     try {
       const media = await watermarkStoredVideo(admin, {
         publicBucket: MYDANCR_TV_BUCKET,
@@ -1486,23 +1585,22 @@ async function finalizeMyDancrTvAutomatedModeration(admin: AdminClient, video: a
             venue_featured: false,
           }),
   };
-  const { data, error } = await admin
+  const query = admin
     .from("mydancr_tv_videos")
-    .update(update)
-    .eq("id", video.id)
-    .eq("status", "moderating")
+    .update(update);
+  const { data, error } = await matchVideoWorkerOwner(query, video)
     .select("id, status, submitted_at, reviewed_at, published_at, moderation_decision, moderation_reason_codes")
-    .single();
-  if (error) throw error;
+    .maybeSingle();
+  const completed = videoWorkerOutcome(data, error, video.id, update.status);
   console.info(JSON.stringify({
     event: "mydancr_tv.ai_moderation_persisted",
     videoId: video.id,
     decision,
-    status: data.status,
+    status: completed.status,
     frameCount: moderation.frameCount,
     reasonCodes,
   }));
-  return data;
+  return completed;
 }
 
 function myDancrTvExpiry() {

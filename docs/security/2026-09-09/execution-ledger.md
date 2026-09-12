@@ -49,8 +49,8 @@ Step 1 delivered as `50d4eb543dbfc93dbed6f0663c51aa2332542cb4`, pushed to origin
 | 26 | Sensitive data minimization | Delivered and healthy: 22bed212abe82bfdfaf0e7acd00f236ff091d7c0 |
 | 27 | Profile / location safety | Delivered and healthy: 0e8e9b54e885a4d008bd4345199681402687ffc5 |
 | 28 | Scraping resilience | Delivered and healthy: 32d77f5cf2c48ede662ba5e943433b77a8361349 |
-| 29 | Resource abuse / DoS | Isolated validation passed; configured integration and exact deployment closure required |
-| 30 | Security regression coverage | Not started |
+| 29 | Resource abuse / DoS | Delivered and healthy: 8e01369bda91831d0f3952062082b21f67899a0d |
+| 30 | Security regression coverage | All 9,086 tests/eight isolated gates passed; configured integration and exact deployment pending |
 | 31 | Defensive validation | Not started |
 | 32 | Final report | Not started |
 
@@ -605,3 +605,17 @@ The incoming-body deadline, response-byte, directory-window and public QR reques
 ## Step 29 full validation
 
 The candidate on exact architecture parent `d999a16218f8db7aacc3663206f36fc8e662b934` passed all **8,898 tests** with zero failures, skips or cancellations and all eight canonical gates at 2026-09-12T18:00:05.252Z. This includes dependency/signature audits, generated assets, route types, standalone TypeScript, full zero-warning lint, production build and public artifact inspection; postbuild skipped population. All 208 focused resource tests and 42 corrected-fixture tests also passed. The first full run's 19 fixture failures and its correction remain recorded, as does the initial anonymous hosted-query rejection and the verified server-caller correction. No database grants or application source changed to correct those validation assumptions. Sixteen task files are included; there is no SQL. Configured build inspection, exact commit/push/Vercel success, public health and source/user-file preservation checks remain required for closure.
+
+## Step 29 final delivery
+
+Step 29 closed at 2026-09-12T18:09:12.404Z as `8e01369bda91831d0f3952062082b21f67899a0d`, with [exact Vercel success](https://vercel.com/ai-movie-jobs/shiftstage/EjPuUPu6bnEf373GrwrgqvAPmytf). All 8,898 tests and eight canonical gates passed, together with the configured production build, postbuild TypeScript and private-value artifact inspection. Eight health/anonymous-denial checks, fifty-eight database readiness checks, four public projections and the rendered homepage passed; browser warnings/errors were empty and the verification tab was closed. All 1,594 source identities matched, the sixteen task files were committed and pushed, both screenshots were preserved, and local/tracking/actual remote main matched with clean tracked work and index. No SQL was applied. The complete external receipt is `D:/Codex/MyDancr-security-delivery-2026-09-12/step-29/delivery.json`. Only after this closure did Step 30 preparation begin.
+
+## Step 30 preparation
+
+See `step-30-regression-coverage.md` for the video worker claim/result race and native/SDK regressions. The candidate uses a unique worker identifier, the existing row timestamp and explicit moderation-input comparisons without changing schema or grants. The first isolated comparison passed all 100 focused cases at 2026-09-12T19:00:52.853Z; the prior code failed 41 of the 50 new cases. It remains outside the shared project while the architecture release finishes. Fresh rebasing, complete release/deployment gates and independent verification remain pending; Step 31 has not begun.
+
+## Step 30 release validation
+
+The candidate is rebased to independently closed architecture commit `d401d4d88ba212f8689e42fc80e8432ef2685b3d`. Fresh hosted metadata found one missing copyright ownership trigger in the historical native fixture; the fixture now executes its exact committed source and preserves synthetic enforcement records. The corrected comparison again passed all 100 focused cases, while the prior code failed 41 of 50 new cases. All four video triggers and twelve relevant column identities match production; server-only update/private-details permissions remain intact. Both zero-row server claim-query checks passed without application writes or private-row retrieval.
+
+The full isolated gate completed at 2026-09-12T19:16:45.983Z: **9,086 tests**, no failures, skips or cancellations, all eight canonical gates, standalone TypeScript, zero-warning lint, production build and artifact inspection. Seven task files are included. Configured production build inspection, exact commit/push/Vercel success and independent health/source/user-file verification remain required before Step 31. No SQL is proposed or applied by Step 30.

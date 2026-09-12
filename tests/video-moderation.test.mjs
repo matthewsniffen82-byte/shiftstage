@@ -153,8 +153,9 @@ test("video submission persists exactly approve, human-review, or reject outcome
   assert.match(submitRoute, /if \(!\("submissionAlreadyAccepted" in video\) \|\| video\.submissionAlreadyAccepted !== true\) \{[\s\S]*?after\(async \(\) =>/);
   assert.match(submitRoute, /\{ deferModeration: true \}/);
   assert.match(submitRoute, /uploaded successfully and is queued for automatic safety review/);
-  assert.match(tvSource, /moderation_attempt_count: deferModeration \|\| demoAutoApprove \? 0 : 1/);
-  assert.match(tvSource, /moderation_started_at: demoAutoApprove \? null : submittedAt/);
+  assert.match(tvSource, /moderation_attempt_count: deferModeration \? 0 : 1/);
+  assert.match(tvSource, /moderation_started_at: submittedAt/);
+  assert.match(tvSource, /const workerId = deferModeration \? null : crypto\.randomUUID\(\)/);
   assert.match(submitRoute, /passed safety review and will appear whenever your dancer profile is live/);
   assert.match(submitRoute, /sent to an administrator for human review/);
 });
