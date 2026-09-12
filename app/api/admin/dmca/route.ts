@@ -28,7 +28,8 @@ export async function GET(request: Request) {
   try {
     const { client, session, user } = await createRequestSupabaseContext(request);
     await requireAdmin(client, user.id);
-    const state = await getAdminDmcaState(createAdminSupabaseClient());
+    const reviewCaseId = new URL(request.url).searchParams.get("caseId") || undefined;
+    const state = await getAdminDmcaState(createAdminSupabaseClient(), reviewCaseId);
     return NextResponse.json({ ok: true, ...state, session: session || null });
   } catch (error) {
     return apiError(error, "Unable to load copyright operations.");
@@ -47,11 +48,15 @@ export async function PATCH(request: Request) {
     const admin = createAdminSupabaseClient();
 
     if (body?.resource === "agent") {
-      const agent = await updateDmcaAgent(admin, user.id, body);
+      const { agent, auditNeedsReview } = await updateDmcaAgent(admin, user.id, body);
       return NextResponse.json({
         ok: true,
         agent,
-        message: "Copyright agent details saved.",
+        partial: auditNeedsReview,
+        auditNeedsReview,
+        message: auditNeedsReview
+          ? "Copyright agent details saved. The audit entry could not be confirmed. Review the audit log; do not repeat the save to create an audit entry."
+          : "Copyright agent details saved.",
         session: session || null,
       });
     }

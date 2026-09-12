@@ -25,6 +25,7 @@ function harness({patch=async()=>({message:'The case was marked as needing more 
   async settle(){await new Promise(resolve=>setImmediate(resolve));render();},
   button(label){return walk(tree).find(n=>n.type==='button'&&words(n)===label);},
   get textarea(){return walk(tree).find(n=>n.type==='textarea');},get text(){return words(tree);},
+  get caseLookup(){return walk(tree).find(n=>n.type==='input'&&n.props.name==='caseLookup');},
   get agentFormKey(){return walk(tree).find(n=>n.type==='form')?.key;},
   unmount(){cleanups.forEach(f=>f?.());}};
 }
@@ -54,4 +55,18 @@ test('partial email failure remains visible after a successful case refresh',asy
 });
 test('case refresh performs only a read and preserves unsaved notes and agent form',async()=>{
  const ui=harness();try{await ui.settle();ui.textarea.props.onChange({target:{value:'Unsaved note'}});await ui.settle();const key=ui.agentFormKey;ui.button('Refresh cases').props.onClick();await ui.settle();assert.equal(ui.textarea.props.value,'Unsaved note');assert.equal(ui.agentFormKey,key);assert.equal(ui.requests.length,2);assert.equal(ui.requests.filter(r=>r.options.method==='PATCH').length,0);}finally{ui.unmount();}
+});
+
+test('uncertain terminal action retrieves the exact case without repeating the write or losing notes',async()=>{
+ let ui;ui=harness({patch:async()=>{ui.setStatus('rejected');throw new Error('The copyright action could not be confirmed. Reopen the case and review its current state before trying again.');}});
+ try{await ui.settle();ui.textarea.props.onChange({target:{value:'Preserve terminal decision notes'}});await ui.settle();const key=ui.agentFormKey;await ui.button('Reject notice').props.onClick();await ui.settle();
+  assert.equal(ui.requests.filter(r=>r.options.method==='PATCH').length,1);assert.equal(ui.requests.at(-1).path,'/api/admin/dmca?caseId='+caseId);assert.match(ui.text,/Rejected/);assert.equal(ui.textarea.props.value,'Preserve terminal decision notes');assert.equal(ui.agentFormKey,key);assert.equal(ui.button('Reject notice'),undefined);assert.match(ui.text,/could not be confirmed/);
+  ui.button('Refresh cases').props.onClick();await ui.settle();assert.equal(ui.requests.at(-1).path,'/api/admin/dmca?caseId='+caseId);assert.equal(ui.requests.filter(r=>r.options.method==='PATCH').length,1);
+ }finally{ui.unmount();}
+});
+test('explicit saved-contact reload performs only a read and refreshes the form',async()=>{
+ const ui=harness();try{assert.equal(ui.button('Save copyright agent').props.disabled,true);await ui.settle();assert.equal(ui.button('Save copyright agent').props.disabled,false);const key=ui.agentFormKey;ui.button('Reload saved contact details').props.onClick();await ui.settle();assert.notEqual(ui.agentFormKey,key);assert.equal(ui.requests.filter(r=>r.options.method==='PATCH').length,0);}finally{ui.unmount();}
+});
+test('a completed case can be found by identity after reopening the panel without a new action',async()=>{
+ const ui=harness();try{await ui.settle();const key=ui.agentFormKey;ui.setStatus('closed');ui.caseLookup.props.onChange({target:{value:caseId}});await ui.settle();ui.button('Find case').props.onClick();await ui.settle();assert.equal(ui.requests.at(-1).path,'/api/admin/dmca?caseId='+caseId);assert.match(ui.text,/Closed/);assert.equal(ui.agentFormKey,key);assert.equal(ui.requests.filter(r=>r.options.method==='PATCH').length,0);}finally{ui.unmount();}
 });

@@ -286,13 +286,16 @@ export async function submitDmcaCounterNotice(
   };
 }
 
-export async function getAdminDmcaState(client: DancrClient) {
-  const [casesResult, agentResult] = await Promise.all([
+const ADMIN_CASE_FIELDS = "id, claimant_name, claimant_company, claimant_email, claimant_phone, claimant_address, copyrighted_work_description, original_work_url, infringing_url, target_type, target_id, uploader_id, status, signature, reviewed_by, reviewed_at, disabled_at, counter_received_at, restore_eligible_at, restore_deadline_at, court_filing_received, court_filing_notes, restored_at, repeat_infringer_enforced, admin_notes, created_at, updated_at, dmca_counter_notices(id, legal_name, email, phone, address, removed_material_location, status, forwarded_to_claimant_at, created_at), dmca_strikes(id, active, issued_at, rescinded_at)";
+
+export async function getAdminDmcaState(client: DancrClient, reviewCaseId?: string) {
+  if (reviewCaseId && !UUID_PATTERN.test(reviewCaseId)) {
+    throw new PublicApiError("INVALID_REQUEST", "Invalid copyright case.", 400);
+  }
+  const [casesResult, agentResult, reviewResult] = await Promise.all([
     (client as any)
       .from("dmca_cases")
-      .select(
-        "id, claimant_name, claimant_company, claimant_email, claimant_phone, claimant_address, copyrighted_work_description, original_work_url, infringing_url, target_type, target_id, uploader_id, status, signature, reviewed_by, reviewed_at, disabled_at, counter_received_at, restore_eligible_at, restore_deadline_at, court_filing_received, court_filing_notes, restored_at, repeat_infringer_enforced, admin_notes, created_at, updated_at, dmca_counter_notices(id, legal_name, email, phone, address, removed_material_location, status, forwarded_to_claimant_at, created_at), dmca_strikes(id, active, issued_at, rescinded_at)",
-      )
+      .select(ADMIN_CASE_FIELDS)
       .in("status", ACTIVE_ADMIN_STATUSES)
       .order("created_at", { ascending: true })
       .limit(100),
@@ -303,13 +306,24 @@ export async function getAdminDmcaState(client: DancrClient) {
       )
       .eq("id", true)
       .maybeSingle(),
+    reviewCaseId
+      ? (client as any).from("dmca_cases").select(ADMIN_CASE_FIELDS).eq("id", reviewCaseId.toLowerCase()).maybeSingle()
+      : Promise.resolve({ data: null, error: null }),
   ]);
 
   if (casesResult.error) throw casesResult.error;
   if (agentResult.error) throw agentResult.error;
+  if (reviewResult.error) throw reviewResult.error;
+  if (reviewCaseId && !reviewResult.data) {
+    throw new PublicApiError("NOT_FOUND", "This copyright case could not be found. No action was repeated.", 404);
+  }
+  const rows = casesResult.data || [];
+  const reviewedRows = reviewResult.data
+    ? [reviewResult.data, ...rows.filter((row: any) => row.id !== reviewResult.data.id)]
+    : rows;
 
   return {
-    cases: (casesResult.data || []).map(mapCase),
+    cases: reviewedRows.map(mapCase),
     agent: agentResult.data ? mapAgent(agentResult.data) : null,
   };
 }
@@ -336,34 +350,47 @@ export async function updateDmcaAgent(
     throw new DmcaUserError("Registered agent details require a phone, complete mailing address, country, and renewal date.");
   }
 
-  const { data, error } = await (client as any)
-    .from("dmca_agent_settings")
-    .upsert({
-      id: true,
-      legal_name: legalName,
-      organization,
-      email,
-      phone,
-      address_line_1: addressLine1,
-      address_line_2: addressLine2,
-      city,
-      state_region: stateRegion,
-      postal_code: postalCode,
-      country,
-      registered_with_copyright_office: registered,
-      registration_renewal_at: registrationRenewalAt,
-      updated_by: adminId,
-      updated_at: new Date().toISOString(),
-    })
-    .select(
-      "legal_name, organization, email, phone, address_line_1, address_line_2, city, state_region, postal_code, country, registered_with_copyright_office, registration_renewal_at, updated_at",
-    )
-    .single();
+  const expected = {
+    id: true,
+    legal_name: legalName,
+    organization,
+    email,
+    phone,
+    address_line_1: addressLine1,
+    address_line_2: addressLine2,
+    city,
+    state_region: stateRegion,
+    postal_code: postalCode,
+    country,
+    registered_with_copyright_office: registered,
+    registration_renewal_at: registrationRenewalAt,
+    updated_by: adminId,
+    updated_at: new Date().toISOString(),
+  };
+  let data: any;
+  try {
+    const result = await (client as any).from("dmca_agent_settings").upsert(expected)
+      .select("id, updated_by, legal_name, organization, email, phone, address_line_1, address_line_2, city, state_region, postal_code, country, registered_with_copyright_office, registration_renewal_at, updated_at").single();
+    if (result.error) throw result.error;
+    data = result.data;
+    const matches = data && !Array.isArray(data) && Object.entries(expected).every(([key, value]) =>
+      key === "updated_at"
+        ? isDmcaCaseVersion(data[key]) && Date.parse(data[key]) === Date.parse(String(value))
+        : data[key] === value);
+    if (!matches) throw new Error("Copyright settings receipt did not match.");
+  } catch (error) {
+    console.error("DMCA_AGENT_SAVE_NOT_CONFIRMED", safeErrorMetadata(error));
+    throw new PublicApiError("UNAVAILABLE", "The copyright contact save could not be confirmed. Reload the saved contact details before trying again.", 503);
+  }
 
-  if (error) throw error;
-
-  await logDmcaAdminAction(client, adminId, null, "update_dmca_agent", registered ? "Registered agent details updated." : "Copyright contact details updated.");
-  return mapAgent(data);
+  let auditNeedsReview = false;
+  try {
+    await logDmcaAdminAction(client, adminId, null, "update_dmca_agent", registered ? "Registered agent details updated." : "Copyright contact details updated.");
+  } catch (error) {
+    auditNeedsReview = true;
+    console.error("DMCA_AGENT_AUDIT_NOT_CONFIRMED", safeErrorMetadata(error));
+  }
+  return { agent: mapAgent(data), auditNeedsReview };
 }
 
 export async function applyDmcaAdminAction(
@@ -881,12 +908,18 @@ async function logDmcaAdminAction(
   action: string,
   notes: string | null,
 ) {
-  const { error } = await (client as any).from("admin_actions").insert({
+  const expected = {
     admin_id: adminId,
     target_type: "dmca_case",
     target_id: caseId,
     action,
     notes,
-  });
+  };
+  const { data, error } = await (client as any).from("admin_actions").insert(expected)
+    .select("id, admin_id, target_type, target_id, action, notes").single();
   if (error) throw error;
+  if (!data || typeof data.id !== "string" || !UUID_PATTERN.test(data.id)
+      || !Object.entries(expected).every(([key, value]) => data[key] === value)) {
+    throw new Error("Copyright audit receipt did not match.");
+  }
 }

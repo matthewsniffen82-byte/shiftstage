@@ -75,7 +75,10 @@ test("validated takedowns disable exact videos, notify uploaders, and enforce re
 test("copyright operations preserve refreshed admin sessions for every legal action", () => {
   assert.equal((adminRoute.match(/const \{ client, session, user \} = await createRequestSupabaseContext\(request\)/g) || []).length, 2);
   assert.equal((adminRoute.match(/session: session \|\| null/g) || []).length, 3);
-  assert.equal((adminPanel.match(/requestAdminJson\("\/api\/admin\/dmca"/g) || []).length, 3);
+  assert.equal((adminPanel.match(/requestAdminJson\(/g) || []).length, 3);
+  assert.match(adminPanel, /requestAdminJson\(path,\s*\{\s*signal: controller\.signal/);
+  assert.ok(adminPanel.includes('\x60/api/admin/dmca?caseId=\x24{encodeURIComponent(reviewCaseIdRef.current)}\x60'));
+  assert.match(adminPanel, /:\s*"\/api\/admin\/dmca";/);
   assert.doesNotMatch(adminPanel, /readAdminAccessToken|authorization:|fetch\("\/api\/admin\/dmca"/);
 });
 

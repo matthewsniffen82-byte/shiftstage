@@ -687,6 +687,10 @@
     {
       "file": "20260912150922_protect_public_tv_moderation_columns.sql",
       "sha256": "cf772bc7e14c8817ca7e472875e56467912b63669f0a92ea305e738c3687fb9b"
+    },
+    {
+      "file": "20260912181237_retire_legacy_case_and_venue_claim_writes.sql",
+      "sha256": "f89fd03c2ef250ac87d94f8f0a0b13402ab5dfba2721b62dfb800d80c216a9cc"
     }
   ]
 }

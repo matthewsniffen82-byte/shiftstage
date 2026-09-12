@@ -59,12 +59,14 @@ export default function AdminDmcaPanel() {
   const [notesById, setNotesById] = useState<Record<string, string>>({});
   const [workingId, setWorkingId] = useState("");
   const [agentFormVersion, setAgentFormVersion] = useState(0);
+  const [caseLookup, setCaseLookup] = useState("");
   const mountedRef = useRef(false);
   const loadSequenceRef = useRef(0);
   const loadAbortRef = useRef<AbortController | null>(null);
   const actionSequenceRef = useRef(0);
   const actionAbortRef = useRef<AbortController | null>(null);
   const actionInFlightRef = useRef(false);
+  const reviewCaseIdRef = useRef("");
 
   useEffect(() => {
     mountedRef.current = true;
@@ -87,7 +89,10 @@ export default function AdminDmcaPanel() {
     loadAbortRef.current = controller;
     if (mountedRef.current) setIsLoading(true);
     try {
-      const data = await requestAdminJson("/api/admin/dmca", {
+      const path = reviewCaseIdRef.current
+        ? `/api/admin/dmca?caseId=${encodeURIComponent(reviewCaseIdRef.current)}`
+        : "/api/admin/dmca";
+      const data = await requestAdminJson(path, {
         signal: controller.signal,
         fallbackMessage: "Unable to load copyright operations.",
       });
@@ -121,6 +126,8 @@ export default function AdminDmcaPanel() {
     actionAbortRef.current?.abort();
     const controller = new AbortController();
     actionAbortRef.current = controller;
+    reviewCaseIdRef.current = dmcaCase.id;
+    setCaseLookup(dmcaCase.id);
     setWorkingId(dmcaCase.id);
     setStatus("");
     try {
@@ -140,6 +147,7 @@ export default function AdminDmcaPanel() {
     } catch (error) {
       if (!mountedRef.current || controller.signal.aborted || requestId !== actionSequenceRef.current) return;
       setStatus(error instanceof Error ? error.message : "Unable to update copyright case.");
+      await load({ refreshAgent: false, clearStatus: false });
     } finally {
       if (actionAbortRef.current === controller) actionAbortRef.current = null;
       if (requestId === actionSequenceRef.current) actionInFlightRef.current = false;
@@ -149,7 +157,7 @@ export default function AdminDmcaPanel() {
 
   async function saveAgent(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!mountedRef.current || actionInFlightRef.current) return;
+    if (!mountedRef.current || actionInFlightRef.current || loadAbortRef.current) return;
     const values = new FormData(event.currentTarget);
     const payload = {
       resource: "agent",
@@ -202,7 +210,7 @@ export default function AdminDmcaPanel() {
   return (
     <div className="dmca-admin">
       <div className="dmca-admin-summary">
-        <strong>{cases.length} active cases</strong>
+        <strong>{cases.length} cases shown</strong>
         <button type="button" disabled={isLoading || Boolean(workingId)} onClick={() => void load({ refreshAgent: false, clearStatus: false })}>Refresh cases</button>
         <a href="/dmca" target="_blank" rel="noreferrer">Open public copyright page</a>
       </div>
@@ -215,6 +223,7 @@ export default function AdminDmcaPanel() {
 
       <details className="dmca-agent-settings">
         <summary>Copyright agent settings</summary>
+        <button type="button" disabled={isLoading || Boolean(workingId)} onClick={() => void load({ refreshAgent: true, clearStatus: false })}>Reload saved contact details</button>
         <form key={agentFormVersion} onSubmit={saveAgent}>
           <label>Agent legal name<input name="legalName" defaultValue={agent.legalName || ""} required /></label>
           <label>Organization<input name="organization" defaultValue={agent.organization || ""} /></label>
@@ -231,12 +240,20 @@ export default function AdminDmcaPanel() {
             <input name="registeredWithCopyrightOffice" type="checkbox" defaultChecked={agent.registeredWithCopyrightOffice === true} />
             Registered with the U.S. Copyright Office
           </label>
-          <button type="submit" disabled={Boolean(workingId)}>
+          <button type="submit" disabled={isLoading || Boolean(workingId)}>
             {workingId === "agent" ? "Saving…" : "Save copyright agent"}
           </button>
         </form>
       </details>
 
+      <div className="dmca-agent-settings dmca-case-detail" role="search" aria-label="Find a copyright case">
+        <label>Case ID<input name="caseLookup" value={caseLookup} onChange={(event) => setCaseLookup(event.target.value)} maxLength={36} /></label>
+        <button type="button" disabled={isLoading || Boolean(workingId) || !caseLookup.trim()} onClick={() => {
+          if (actionInFlightRef.current || loadAbortRef.current) return;
+          reviewCaseIdRef.current = caseLookup.trim();
+          void load({ refreshAgent: false, clearStatus: false });
+        }}>Find case</button>
+      </div>
       {status ? <p className="dmca-admin-status" role="status" aria-live="polite">{status}</p> : null}
       {isLoading ? <p>Loading copyright cases…</p> : null}
       {!isLoading && !cases.length ? <p className="empty">No active copyright cases.</p> : null}

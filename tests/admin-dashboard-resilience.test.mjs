@@ -95,7 +95,7 @@ test("copyright administration cancels stale loads and serializes mutations", ()
   assert.match(dmcaPanel, /const actionInFlightRef = useRef\(false\);/);
   assert.match(dmcaPanel, /signal: controller\.signal/);
   assert.match(dmcaPanel, /requestId !== loadSequenceRef\.current/);
-  assert.match(dmcaPanel, /if \(!mountedRef\.current \|\| actionInFlightRef\.current\) return;/);
+  assert.match(dmcaPanel, /if \(!mountedRef\.current \|\| actionInFlightRef\.current \|\| loadAbortRef\.current\) return;/);
   assert.match(dmcaPanel, /requestId !== actionSequenceRef\.current/);
   assert.match(dmcaPanel, /disabled=\{actionBusy\}/);
   assert.match(dmcaPanel, /<form key=\{agentFormVersion\} onSubmit=\{saveAgent\}>/);
@@ -318,7 +318,10 @@ test("every routed admin subpanel consumes the canonical role-aware session boun
   assert.equal((nfcPanel.match(/requestAdminJson\("\/api\/admin\/nfc-tags"/g) || []).length, 3);
   assert.doesNotMatch(nfcPanel, /adminAuthHeaders|persistRefreshedAdminSession|authorization:|fetch\("\/api\/admin\/nfc-tags"/);
   assert.match(dmcaPanel, /import \{ requestAdminJson \} from "\.\/admin-session"/);
-  assert.equal((dmcaPanel.match(/requestAdminJson\("\/api\/admin\/dmca"/g) || []).length, 3);
+  assert.equal((dmcaPanel.match(/requestAdminJson\(/g) || []).length, 3);
+  assert.match(dmcaPanel, /requestAdminJson\(path,\s*\{\s*signal: controller\.signal/);
+  assert.ok(dmcaPanel.includes('\x60/api/admin/dmca?caseId=\x24{encodeURIComponent(reviewCaseIdRef.current)}\x60'));
+  assert.match(dmcaPanel, /:\s*"\/api\/admin\/dmca";/);
   assert.doesNotMatch(dmcaPanel, /readAdminAccessToken|authorization:|fetch\("\/api\/admin\/dmca"/);
   assert.match(pilotPanel, /import \{ requestAdminJson \} from "\.\/admin-session"/);
   assert.equal((pilotPanel.match(/requestAdminJson\(/g) || []).length, 2);

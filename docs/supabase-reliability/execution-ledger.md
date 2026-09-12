@@ -1,6 +1,6 @@
 # Controlled Supabase hardening execution ledger
 
-This task follows the user's strict sequence: inspect one step, implement that step only, run the complete suite/TypeScript/lint/production build and relevant database checks, commit, push `origin/main`, verify that exact SHA's Vercel success and deployed health, then start the next step. A pending verification is not completion. Database changes require migrations and separate safe application; Vercel does not apply SQL.
+The original plan followed the user's strict sequence: inspect one step, implement that step only, run the complete suite/TypeScript/lint/production build and relevant database checks, commit, push `origin/main`, verify that exact SHA's Vercel success and deployed health, then start the next step. A pending verification is not completion. On September 12 the user explicitly chose “Consolidate”: finish the legacy permission boundary and confirmed recovery gaps, fold Steps 18–24 into one focused review and report, and retain full validation and deployment verification for the implementation. The older sequential notes below remain historical evidence, not a requirement for seven further audit-only releases. Database changes require migrations and separate safe application; Vercel does not apply SQL.
 
 No production database reset, account deletion, unsafe cascade change, RLS disabling, credential exposure, or destructive restore is permitted. Preserve unrelated work and recheck concurrent `main` and migration-ledger changes before every release.
 
@@ -24,14 +24,14 @@ The user subsequently deferred disposable test-project setup and explicitly requ
 | 14 | Triggers/functions | Controlled pass released and verified; later handoffs retained | `ef752f858c5284bdd69f0089187aaeca4e4dbdd5`; exact SQL/Vercel success, 6,418 tests/all gates, 20 table fingerprints and 130 other functions preserved. |
 | 15 | Data validation | Controlled pass released and verified; hosted exercises remain deferred | Closing `fce8a233375642ad900c932ccde33bf25a79b864`; exact SQL/Vercel success, 6,816 tests and all release gates, with data/access preserved. |
 | 16 | Timestamps/timezones | Controlled pass released and verified; hosted exercises remain deferred | `de1f3762e491ba5aae5d28354476933312df31d0`; exact SQL/Vercel success, 7,123 tests/all gates and 27 table fingerprints preserved. |
-| 17 | Account/record lifecycle | In progress: native foundation delivered; checked administrator, forwarding and publication callers in validation | Foundation closing `d4e472700d6dc5651eb048148b7029b13eb98bce` reached exact Vercel success; later caller and legacy-permission phases remain separate releases. |
-| 18 | Environment configuration | Pending | |
-| 19 | Failure resilience | Pending | |
-| 20 | Observability | Pending | |
-| 21 | Database regression tests | Pending | |
-| 22 | Backup/recovery readiness | Pending | |
-| 23 | Full end-to-end regression | Pending | |
-| 24 | Final report/classification | Pending | |
+| 17 | Account/record lifecycle | Foundation and checked callers delivered; remaining permission/recovery work consolidated | Caller `6f1a9048139a5c01125f3b11046feb0c21b1e3bf` reached exact Vercel success with 8,816 tests/all gates. See consolidated-closeout.md for the final implementation; its exact delivery result is recorded separately. |
+| 18 | Environment configuration | Consolidated into focused closeout | See consolidated-closeout.md; hosted exercises and recovery rehearsal remain explicitly deferred. |
+| 19 | Failure resilience | Consolidated into focused closeout | See consolidated-closeout.md; hosted exercises and recovery rehearsal remain explicitly deferred. |
+| 20 | Observability | Consolidated into focused closeout | See consolidated-closeout.md; hosted exercises and recovery rehearsal remain explicitly deferred. |
+| 21 | Database regression tests | Consolidated into focused closeout | See consolidated-closeout.md; hosted exercises and recovery rehearsal remain explicitly deferred. |
+| 22 | Backup/recovery readiness | Consolidated into focused closeout | See consolidated-closeout.md; hosted exercises and recovery rehearsal remain explicitly deferred. |
+| 23 | Full end-to-end regression | Consolidated into focused closeout | See consolidated-closeout.md; hosted exercises and recovery rehearsal remain explicitly deferred. |
+| 24 | Final report/classification | Consolidated into focused closeout | See consolidated-closeout.md; hosted exercises and recovery rehearsal remain explicitly deferred. |
 
 Subsequent step commits record the prior step's full SHA, checks and deployment result, avoiding a self-referential commit hash in its own content. The final response must include the final step's deployment evidence as well. No later step may be marked complete based only on a plan or old audit.
 
@@ -767,3 +767,10 @@ The closing source-protection change extends the immutable manifest from 168 to 
 The foundation closing commit `d4e472700d6dc5651eb048148b7029b13eb98bce` reached [exact Vercel success](https://vercel.com/ai-movie-jobs/shiftstage/6ohG5qusg4FSkoQJgGQiM43i2rvP). Final verification at 14:54:24 UTC on September 12 passed all 8,032 tests, eight canonical gates, configured artifact inspection, postbuild TypeScript, 169 protected migration sources, 51 readiness checks and ten deployed health/access checks. All 84 captured table fingerprints, current metadata and the applied migration receipt were preserved. No SQL was reapplied; main references matched and both screenshots remained unchanged.
 
 The next bounded release is described in `step-17-checked-transaction-callers.md`. Integration preserves the coordinated parent `32d77f5cf2c48ede662ba5e943433b77a8361349`. Administrator actions carry the raw displayed case version to the checked case/audit transaction; the panel can refresh without losing notes. Forwarding acknowledgements use their native transaction with one read-only reconciliation after uncertainty. Publication uses a checked transaction receipt and retires its direct-write fallback. Current deployed definitions and complete permissions are captured directly after the security release. Complete validation, final diff review, task-only commit/push, exact Vercel success and independent preservation/health remain required. This release applies no SQL. Legacy permissions follow only after these callers deploy, and Steps 18–24 remain open.
+
+
+## User-directed consolidated closeout
+
+The user asked whether all remaining stages were necessary and explicitly chose to consolidate. The checked caller release `6f1a9048139a5c01125f3b11046feb0c21b1e3bf` is fully delivered with exact Vercel `HfCwDwp9PpciSJv7T8JKSyioRnWz` success, 8,816 passing tests, eight gates, 58 readiness and ten deployed health checks. All 85 row counts and 84 table fingerprints were unchanged; one TV request-counter fingerprint changed and was independently reviewed as unattributed operational counter activity. Aggregate captures cannot retrospectively identify every changed field/request. No SQL was applied in that caller release.
+
+The remaining controlled work is one permission/recovery implementation with consolidated environment, monitoring, regression and backup-readiness review, followed by full release verification and a final report. It does not certify hosted cross-account/mail, independent sessions, historical replay or an unperformed restore drill. Prior staged findings and separate security/architecture tasks retain their own evidence and ownership.
