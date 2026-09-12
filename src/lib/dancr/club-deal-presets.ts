@@ -1,21 +1,9 @@
 export const CLUB_DEAL_OFFER_PRESETS = Object.freeze([
   Object.freeze({
-    key: "half_off_admission",
-    title: "Half-off admission",
-    description: "Receive 50% off the venue's standard general-admission cover charge after cashier confirmation.",
-    terms: "One redemption per guest. Discount applies to the standard general-admission cover only. Subject to venue capacity, age requirements, dress code, and house rules.",
-  }),
-  Object.freeze({
-    key: "skip_the_line",
-    title: "Skip the line",
-    description: "Use the venue's designated priority admission line after cashier confirmation.",
-    terms: "One redemption per guest. Priority access does not guarantee immediate admission and remains subject to venue capacity, age requirements, dress code, and house rules.",
-  }),
-  Object.freeze({
     key: "free_admission",
     title: "Free admission",
     description: "Receive one complimentary general-admission entry after cashier confirmation.",
-    terms: "One redemption per guest. Offer applies to standard general admission only and remains subject to venue capacity, age requirements, dress code, and house rules.",
+    terms: "Free admission requires arrival in your own car or other private car that is not an Uber or taxi, or use of the club's free shuttle service. One redemption per guest. Offer applies to standard general admission only and remains subject to venue capacity, age requirements, dress code, and house rules.",
   }),
 ]);
 

@@ -33,11 +33,10 @@ test("managed Demo Mode deals satisfy the production publication contract", () =
   assert.match(deals, /\.gt\("payout_amount_cents", 0\)/);
 });
 
-test("managed Demo Mode deals alternate only the two supported admission offers", () => {
-  assert.match(manager, /title: "Half-off admission"/);
-  assert.match(manager, /title: "Skip the line"/);
+test("managed Demo Mode deals use the free-admission catalog", () => {
+  assert.match(manager, /const DEAL_TEMPLATES = CLUB_DEAL_OFFER_PRESETS/);
   assert.match(manager, /\(state\.managedDeals\.length \+ index\) % DEAL_TEMPLATES\.length/);
-  assert.match(manager, /not Half-off admission or Skip the line/);
+  assert.match(manager, /not Free admission/);
   assert.doesNotMatch(
     manager,
     /Complimentary admission|Two-for-one admission|\$10 cover credit|Priority guest entry|Reduced general admission|Guest-list admission/,

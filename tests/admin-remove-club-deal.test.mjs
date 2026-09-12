@@ -1,3 +1,4 @@
+import * as transportation from "../src/lib/dancr/club-deal-transportation.ts";
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
@@ -18,6 +19,7 @@ const preset = { title: 'Half-off admission', description: 'Half-price general a
 const service = load('src/lib/dancr/venue-deal-actions.ts', {
   '../api-error-policy': { PublicApiError },
   './deals': load('src/lib/dancr/deals.ts'),
+  './club-deal-transportation': transportation,
   './club-deal-presets': { clubDealOfferPresetForTitle: () => preset },
   './deal-policy': { assertLiquorFreeClubDeal() {} },
   './referral-fees': { getVenueReferralFeeState: async () => ({ current: { feeCents: 500 } }) },

@@ -1,3 +1,4 @@
+import { CLUB_DEAL_OFFER_PRESETS } from "../src/lib/dancr/club-deal-presets.ts";
 import crypto from "node:crypto";
 import process from "node:process";
 import nextEnv from "@next/env";
@@ -11,18 +12,7 @@ const MANAGER_NAME = "manage-demo-club-deals";
 const BATCH_VERSION = "v2";
 const REFERRAL_COMMISSION_CENTS = 500;
 const MANAGED_CASHIER_LABEL = "Main cashier · Demo Mode";
-const DEAL_TEMPLATES = Object.freeze([
-  {
-    title: "Half-off admission",
-    description: "Receive 50% off the venue's standard general-admission cover charge after cashier confirmation.",
-    terms: "One redemption per guest. Discount applies to the standard general-admission cover only. Subject to venue capacity, age requirements, dress code, and house rules.",
-  },
-  {
-    title: "Skip the line",
-    description: "Use the venue's designated priority admission line after cashier confirmation.",
-    terms: "One redemption per guest. Priority access does not guarantee immediate admission and remains subject to venue capacity, age requirements, dress code, and house rules.",
-  },
-]);
+const DEAL_TEMPLATES = CLUB_DEAL_OFFER_PRESETS;
 
 const cli = parseArguments(process.argv.slice(2));
 const mode = readMode(cli);
@@ -266,7 +256,7 @@ async function verifyActiveVenueDeals() {
   const supportedTitles = new Set(DEAL_TEMPLATES.map((template) => template.title));
   const unsupportedDeals = state.managedDeals.filter((deal) => !supportedTitles.has(deal.deal_title));
   if (unsupportedDeals.length) {
-    throw new Error(`${unsupportedDeals.length} managed Club Deals are not Half-off admission or Skip the line.`);
+    throw new Error(`${unsupportedDeals.length} managed Club Deals are not Free admission.`);
   }
   return state;
 }

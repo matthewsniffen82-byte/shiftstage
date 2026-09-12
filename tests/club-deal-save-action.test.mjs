@@ -29,7 +29,7 @@ test("preview, cashier-tap selection, and saving are separate intentional action
     /const bindDealPassAction[\s\S]*?const currentPass/,
   )?.[0] || "";
   assert.doesNotMatch(actionBinding, /addEventListener\("pointerup"/);
-  assert.match(liveSource, /function selectDealPassForNfc[\s\S]*?localStorage\.setItem\("mydancrPendingNfcDealV2"/);
+  assert.match(liveSource, /function selectDealPassForNfc[\s\S]*?window\.location\.assign\(`\/deals\/transportation/);
   assert.match(liveSource, /button\.textContent = persisted \? "Saved ✓" : "Try saving again"/);
   assert.match(liveSource, /button\.classList\.toggle\("is-saved", persisted\)/);
   assert.match(liveSource, /if \(\(persisted \|\| savedToAccount\) && !wasAlreadySaved\) recordRevenueDealLifecycle\(pass, "saved"\)/);

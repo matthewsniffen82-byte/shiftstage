@@ -43428,39 +43428,25 @@
 
     function rideActionLabel(source, venueName) {
       const safeVenueName = String(venueName || "this club").trim() || "this club";
-      return source === "dancer_profile" ? `Get a Ride to ${safeVenueName}` : "Get a Ride";
+      return source === "dancer_profile" ? `Free ride to ${safeVenueName}` : "Free ride";
     }
 
-    function uberRideLinkMarkup({ venue, source, className = "", dancerId = "", city = selectedCity(), displayLabel = "" }) {
-      city = venue?.city || city;
-      const destination = publicVenueUberDestination(venue, city);
+    function uberRideLinkMarkup({ venue, source, className = "", displayLabel = "" }) {
       const label = rideActionLabel(source, venue?.name);
       const visibleLabel = String(displayLabel || label).trim() || label;
       const classes = ["uber-ride-link", className].filter(Boolean).join(" ");
-      if (!destination) {
+      if (!venue?.id || venue.isActive === false || venue.isPublic === false) {
         const safeName = escapeHtml(venue?.name || "this club");
-        return `<button class="${classes} is-travel-unavailable" type="button" data-travel-unavailable="uber" disabled aria-disabled="true" aria-label="Uber unavailable for ${safeName}">${actionButtonLabel("car", escapeHtml(label))}</button>`;
+        return `<button class="${classes} is-travel-unavailable" type="button" data-travel-unavailable="shuttle" disabled aria-disabled="true" aria-label="Free ride unavailable for ${safeName}">${actionButtonLabel("car", escapeHtml(label))}</button>`;
       }
-      const href = buildUberRideUrl(destination);
-      return `<a class="${classes}" href="${escapeHtml(href)}" target="_blank" rel="noopener noreferrer" data-uber-ride-link data-uber-venue-id="${escapeOptionValue(venue.id || "")}" data-uber-venue-name="${escapeOptionValue(destination.name)}" data-uber-dancer-id="${escapeOptionValue(dancerId)}" data-uber-source="${escapeOptionValue(source)}" data-uber-city="${escapeOptionValue(city)}" aria-label="${escapeHtml(label)}. Opens Uber with ${escapeHtml(destination.formattedAddress)} as the destination.">${actionButtonLabel("car", escapeHtml(visibleLabel))}</a>`;
-    }
-
-    function recordUberRideLinkClick(link) {
-      recordLiveEvent("uber_ride_link_clicked", {
-        venueId: link.dataset.uberVenueId || undefined,
-        venueName: link.dataset.uberVenueName || undefined,
-        dancerId: link.dataset.uberDancerId || undefined,
-        source: link.dataset.uberSource || "tonight_feed",
-        city: link.dataset.uberCity || selectedCity(),
-        timestamp: new Date().toISOString()
-      });
+      const href = `/rides/${encodeURIComponent(venue.id)}`;
+      return `<a class="${classes}" href="${escapeHtml(href)}" data-free-ride-link aria-label="${escapeHtml(label)}. Request the club’s free shuttle. The club will contact you to arrange pickup.">${actionButtonLabel("car", escapeHtml(visibleLabel))}</a>`;
     }
 
     document.addEventListener("click", (event) => {
-      const link = event.target.closest?.("[data-uber-ride-link]");
+      const link = event.target.closest?.("[data-free-ride-link]");
       if (!link) return;
       event.stopPropagation();
-      recordUberRideLinkClick(link);
     }, true);
 
     document.addEventListener("click", (event) => {
@@ -43468,8 +43454,8 @@
       if (!unavailableTravelButton) return;
       event.preventDefault();
       event.stopPropagation();
-      showToast(unavailableTravelButton.dataset.travelUnavailable === "uber"
-        ? "Uber is unavailable because this club has not published a usable address."
+      showToast(unavailableTravelButton.dataset.travelUnavailable === "shuttle"
+        ? "Free ride requests are unavailable for this club."
         : "Directions are unavailable because this club has not published a usable address.");
     });
 
@@ -49352,6 +49338,7 @@
       try {
         const intent = JSON.parse(localStorage.getItem("mydancrPendingNfcDealV2") || "null");
         if (!intent || intent.venueId !== pass?.venueId || intent.dealId !== pass?.dealId) return null;
+        if (intent.transportation !== "self_drive" && intent.transportation !== "club_shuttle") return null;
         const passSource = pass?.sourceType || "club_page";
         if ((intent.sourceType || "club_page") !== passSource) return null;
         if (passSource === "dancer_profile" && String(intent.dancerId || "") !== String(pass?.dancerId || "")) return null;
@@ -49364,22 +49351,13 @@
     }
 
     function selectDealPassForNfc(pass) {
-      const selectedAt = Date.now();
-      const intent = {
-        venueId: pass.venueId,
-        dealId: pass.dealId,
+      const query = new URLSearchParams({
         sourceType: pass.sourceType || "club_page",
-        dancerId: pass.sourceType === "dancer_profile" ? pass.dancerId || null : null,
-        attributionToken: pass.sourceType === "dancer_profile" ? pass.attributionToken || null : null,
-        savedAt: selectedAt,
-        expiresAt: selectedAt + pendingNfcDealIntentTtlMs
-      };
-      try {
-        localStorage.setItem("mydancrPendingNfcDealV2", JSON.stringify(intent));
-        return { ok: true, intent };
-      } catch {
-        return { ok: false, intent: null };
-      }
+        dancerId: pass.sourceType === "dancer_profile" ? pass.dancerId || "" : "",
+        attributionToken: pass.sourceType === "dancer_profile" ? pass.attributionToken || "" : ""
+      });
+      window.location.assign(`/deals/transportation/${encodeURIComponent(pass.dealId)}?${query}`);
+      return { ok: true, intent: null };
     }
 
     async function shareDealPass(pass) {
@@ -49715,7 +49693,7 @@
           : "Unable to prepare this deal. Try again.");
         selectButton.textContent = state === "error" ? "Try again"
           : String(pass.title).toLowerCase() === "free admission" ? "Use free admission" : "Use this deal";
-        document.getElementById("dealPassPreviewInstruction").textContent = `Tap “${selectButton.textContent}”, then go to the cashier.`;
+        document.getElementById("dealPassPreviewInstruction").textContent = `Tap “${selectButton.textContent}”, then choose your transportation.`;
         selectButton.disabled = false;
         selectButton.setAttribute("aria-pressed", "false");
         selectButton.classList.remove("is-ready");
@@ -53824,7 +53802,7 @@
         className: "profile-uber-ride",
         dancerId: profile.id || "",
         city,
-        displayLabel: "Get a Ride"
+        displayLabel: "Free ride"
       });
     }
 

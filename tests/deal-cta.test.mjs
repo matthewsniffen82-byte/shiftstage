@@ -89,7 +89,7 @@ test("customers explicitly select an exact offer and dancer token until the phys
   assert.match(dealCard, /dancerId: sourceType === "dancer_profile"/);
   assert.match(dealCard, /attributionTokens\?\.\[activeDeal\.id\]/);
   assert.doesNotMatch(dealCard, /Preview only—select this deal before tapping the cashier NFC sticker/);
-  assert.match(dealCard, /setIntentState\("ready"\)/);
+  assert.match(dealCard, /window\.location\.assign\(/);
   assert.doesNotMatch(dealCard, /QRCode\.toDataURL|import QRCode/);
 });
 

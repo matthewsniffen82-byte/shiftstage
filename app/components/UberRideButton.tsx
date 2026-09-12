@@ -1,13 +1,7 @@
 "use client";
 
 import styles from "./UberRideButton.module.css";
-import {
-  buildUberRideUrl,
-  isValidUberDestination,
-  publicVenueUberDestination,
-  type PublicVenueDestination,
-} from "@/src/lib/dancr/uber";
-import { trackUberRideLinkClicked } from "@/src/lib/dancr/uber-analytics";
+import type { PublicVenueDestination } from "@/src/lib/dancr/uber";
 import type { UberRideSource } from "@/src/lib/dancr/uber-types";
 
 type UberRideVenue = PublicVenueDestination & {
@@ -29,33 +23,24 @@ const sourceClass: Record<UberRideSource, string> = {
   tonight_feed: styles.tonightFeed,
 };
 
-export function UberRideButton({ venue, source, dancerId, compact = false }: UberRideButtonProps) {
+// Retain the existing component and CSS names for profile layout compatibility.
+export function UberRideButton({ venue, source, compact = false }: UberRideButtonProps) {
   if (venue.isActive === false || venue.isPublic === false) return null;
 
   const venueName = String(venue.name || "this club").trim() || "this club";
   const label = rideActionLabel(source, venueName);
-  const visibleLabel = compact ? "Get a Ride" : label;
+  const visibleLabel = compact ? "Free ride" : label;
 
-  const destination = publicVenueUberDestination(venue);
-  if (!isValidUberDestination(destination)) return null;
+  if (!venue.id) return null;
 
   return (
     <a
-      aria-label={`${label}. Opens Uber with ${destination.formattedAddress} as the destination.`}
+      aria-label={`${label}. Request the club’s free shuttle. The club will contact you to arrange pickup.`}
       className={`${styles.button} ${sourceClass[source]}`}
-      href={buildUberRideUrl(destination)}
+      href={`/rides/${encodeURIComponent(venue.id)}`}
       onClick={(event) => {
         event.stopPropagation();
-        trackUberRideLinkClicked({
-          venueId: venue.id,
-          venueName: destination.name,
-          dancerId: source === "venue_page" ? null : dancerId,
-          source,
-          city: venue.city?.trim() || "",
-        });
       }}
-      rel="noopener noreferrer"
-      target="_blank"
     >
       <RideIcon />
       <span>{visibleLabel}</span>
@@ -64,7 +49,7 @@ export function UberRideButton({ venue, source, dancerId, compact = false }: Ube
 }
 
 function rideActionLabel(source: UberRideSource, venueName: string) {
-  return source === "dancer_profile" ? `Get a Ride to ${venueName}` : "Get a Ride";
+  return source === "dancer_profile" ? `Free ride to ${venueName}` : "Free ride";
 }
 
 function RideIcon() {

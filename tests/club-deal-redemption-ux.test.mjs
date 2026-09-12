@@ -57,7 +57,7 @@ test("preview and pending cashier taps are distinct from successful redemption",
 
   assert.match(dealCard, /const dialogContent = intentState === "ready" \?/);
   assert.match(dealCard, /readPendingDealSelection\([\s\S]*?value\.venueId !== input\.venueId \|\| value\.dealId !== input\.dealId/);
-  assert.match(dealCard, /window\.localStorage\.setItem\(DEAL_INTENT_KEY/);
+  assert.match(dealCard, /window\.location\.assign\(`/);
   assert.match(liveOverlay, /pendingNfcDealIntentForPass\(pass\)/);
   assert.match(liveOverlay, /availableContent\.hidden = state === "ready"/);
   assert.match(liveOverlay, /readyContent\.hidden = state !== "ready"/);

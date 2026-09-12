@@ -178,29 +178,12 @@ export function ClubDealCard({
   }
 
   function selectForNfcTap() {
-    setStatus("");
-    try {
-      const selectedAt = Date.now();
-      const expiresAt = selectedAt + DEAL_INTENT_TTL_MS;
-      window.localStorage.setItem(DEAL_INTENT_KEY, JSON.stringify({
-        venueId,
-        dealId: activeDeal.id,
-        sourceType,
-        dancerId: sourceType === "dancer_profile" ? dancerId || null : null,
-        attributionToken: sourceType === "dancer_profile"
-          ? attributionTokens?.[activeDeal.id] || attributionToken || null
-          : null,
-        savedAt: selectedAt,
-        expiresAt,
-      }));
-      setIntentState("ready");
-      setIntentExpiresAt(expiresAt);
-      setStatus("");
-    } catch {
-      setIntentState("error");
-      setIntentExpiresAt(0);
-      setStatus("Couldn’t prepare this deal. Allow site storage, then try again.");
-    }
+    const query = new URLSearchParams({
+      sourceType,
+      dancerId: sourceType === "dancer_profile" ? dancerId || "" : "",
+      attributionToken: sourceType === "dancer_profile" ? attributionTokens?.[activeDeal.id] || attributionToken || "" : "",
+    });
+    window.location.assign(`/deals/transportation/${encodeURIComponent(activeDeal.id)}?${query}`);
   }
 
   async function saveForLater() {
@@ -399,7 +382,7 @@ export function ClubDealCard({
         {validityLabel ? <p className="club-deal-validity">{validityLabel}</p> : null}
         <div className="club-deal-preview-panel">
           <div className="club-deal-nfc-symbol" aria-hidden="true"><NfcIcon /></div>
-          <p className="club-deal-preview-instruction">Tap &ldquo;{intentState === "error" ? "Try again" : useLabel}&rdquo;, then go to the cashier.</p>
+          <p className="club-deal-preview-instruction">Tap &ldquo;{intentState === "error" ? "Try again" : useLabel}&rdquo;, then choose your transportation.</p>
           {status ? <em className={`deal-nfc-status ${intentState}`} role="status" aria-live="polite">{status}</em> : null}
           {displayDescription || displayTerms ? (
             <div className="club-deal-details">
@@ -571,6 +554,7 @@ function dealTypeLabel(value: PublicClubDeal["offerType"]) {
 }
 
 type PendingDealSelection = {
+  transportation?: "self_drive" | "club_shuttle";
   venueId: string;
   dealId: string;
   sourceType: DealSourceType;
@@ -591,6 +575,7 @@ function readPendingDealSelection(input: {
   try {
     const value = JSON.parse(window.localStorage.getItem(DEAL_INTENT_KEY) || "null") as Partial<PendingDealSelection> | null;
     if (!value || value.venueId !== input.venueId || value.dealId !== input.dealId) return null;
+    if (value.transportation !== "self_drive" && value.transportation !== "club_shuttle") return null;
     if ((value.sourceType || "club_page") !== input.sourceType) return null;
     if (input.sourceType === "dancer_profile" && String(value.dancerId || "") !== String(input.dancerId || "")) return null;
     const savedAt = Number(value.savedAt || 0);

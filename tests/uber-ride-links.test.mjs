@@ -186,27 +186,26 @@ const [componentSource, componentStyles, dancerPageSource, eventRouteSource, liv
   readFile(new URL("../public/dancr-aesthetic.v1.css", import.meta.url), "utf8"),
 ]);
 
-test("the reusable control uses one universal ride label with a destination-aware dancer CTA", () => {
+test("the reusable control opens the free shuttle form with a destination-aware dancer CTA", () => {
   assert.match(componentSource, /function rideActionLabel\(source: UberRideSource, venueName: string\)/);
-  assert.match(componentSource, /source === "dancer_profile" \? `Get a Ride to \$\{venueName\}` : "Get a Ride"/);
-  assert.match(componentSource, /const visibleLabel = compact \? "Get a Ride" : label/);
+  assert.match(componentSource, /source === "dancer_profile" \? `Free ride to \$\{venueName\}` : "Free ride"/);
+  assert.match(componentSource, /const visibleLabel = compact \? "Free ride" : label/);
   assert.doesNotMatch(componentSource, /"Request Uber"|`Ride to \$\{venueName\}`/);
-  assert.match(componentSource, /target="_blank"/);
-  assert.match(componentSource, /rel="noopener noreferrer"/);
+  assert.match(componentSource, /href=\{`\/rides\/\$\{encodeURIComponent\(venue.id\)\}`\}/);
+  assert.doesNotMatch(componentSource, /target="_blank"|buildUberRideUrl|Opens Uber/);
 });
 
 test("the reusable control hides private, unpublished, and invalid destinations", () => {
   assert.match(componentSource, /venue\.isActive === false \|\| venue\.isPublic === false/);
-  assert.match(componentSource, /if \(!isValidUberDestination\(destination\)\) return null/);
+  assert.match(componentSource, /if \(!venue.id\) return null/);
   assert.match(dancerPageSource, /const actionShift = activeShift \|\| upcomingShifts\[0\] \|\| null[\s\S]*?getVenueProfile\(client, actionShift\.venueSlug\)/);
   assert.match(dancerPageSource, /profile-tonight-travel-actions[\s\S]*?<DancerDirectionsButton[\s\S]*?<UberRideButton/);
   assert.match(dancerPageSource, /source="dancer_profile"/);
 });
 
-test("clicking the reusable control records the typed event and isolates card navigation", () => {
-  assert.match(componentSource, /onClick=\{\(event\) => \{[\s\S]*?event\.stopPropagation\(\)[\s\S]*?trackUberRideLinkClicked/);
-  assert.match(componentSource, /venueId: venue\.id/);
-  assert.match(componentSource, /dancerId: source === "venue_page" \? null : dancerId/);
+test("clicking the reusable free ride control isolates card navigation without recording an Uber booking", () => {
+  assert.match(componentSource, /onClick=\{\(event\) => \{[\s\S]*?event\.stopPropagation\(\)/);
+  assert.doesNotMatch(componentSource, /trackUberRideLinkClicked/);
   assert.match(eventRouteSource, /type === "uber_ride_link_clicked"/);
   assert.match(eventRouteSource, /const timestamp = optionalText\(body\.timestamp, "timestamp", 64\)/);
   assert.match(eventRouteSource, /session_id: uberAnalyticsSessionId\(source, sessionId, timestamp\)/);
@@ -215,11 +214,12 @@ test("clicking the reusable control records the typed event and isolates card na
 test("eligible live-shell dancer and venue cards expose compact ride links without parent navigation", () => {
   assert.match(liveShellSource, /const fallback = "https:\/\/m\.uber\.com\/looking"/);
   assert.match(liveShellSource, /url\.searchParams\.set\("drop\[0\]", JSON\.stringify\(dropoff\)\)/);
-  assert.match(liveShellSource, /function rideActionLabel\(source, venueName\)[\s\S]*?source === "dancer_profile" \? `Get a Ride to \$\{safeVenueName\}` : "Get a Ride"/);
+  assert.match(liveShellSource, /function rideActionLabel\(source, venueName\)[\s\S]*?source === "dancer_profile" \? `Free ride to \$\{safeVenueName\}` : "Free ride"/);
   assert.match(liveShellSource, /function homeDancerGridActionsMarkup[\s\S]*?source: "tonight_feed"[\s\S]*?home-dancer-grid-uber/);
   assert.match(liveShellSource, /function homeVenueDiscoveryFeedSlide[\s\S]*?source: "tonight_feed"[\s\S]*?home-venue-discovery-uber/);
   assert.doesNotMatch(liveShellSource, /label: "(?:Uber|Request Uber)"|label: `Ride to \$\{venue\.name\}`/);
-  assert.match(liveShellSource, /document\.addEventListener\("click", \(event\) => \{[\s\S]*?\[data-uber-ride-link\][\s\S]*?event\.stopPropagation\(\)[\s\S]*?recordUberRideLinkClick\(link\)[\s\S]*?\}, true\)/);
+  assert.match(liveShellSource, /document\.addEventListener\("click", \(event\) => \{[\s\S]*?\[data-free-ride-link\][\s\S]*?event\.stopPropagation\(\)[\s\S]*?\}, true\)/);
+  assert.doesNotMatch(liveShellSource, /recordUberRideLinkClick|Opens Uber|Get a Ride/);
 });
 
 test("venue and dancer profiles expose their required primary ride actions", () => {
@@ -257,8 +257,8 @@ test("venue travel actions use the fictional destination while preserving true u
   assert.match(liveShellSource, /function publicVenueUberDestination[\s\S]*?const fictionalAddress = fictionalDemoVenueTravelAddress\(venue\)[\s\S]*?latitude: fictionalAddress \? null : venue\.latitude[\s\S]*?longitude: fictionalAddress \? null : venue\.longitude/);
   assert.doesNotMatch(liveShellSource, /data-demo-travel|isFictionalDemoTravelPreviewOnly/);
   assert.match(liveShellSource, /function venueDirectionsMarkup[\s\S]*?data-travel-unavailable="directions" disabled aria-disabled="true"[\s\S]*?actionButtonLabel\("pin", escapeHtml\(label\)\)/);
-  assert.match(liveShellSource, /function uberRideLinkMarkup[\s\S]*?data-travel-unavailable="uber" disabled aria-disabled="true"[\s\S]*?actionButtonLabel\("car", escapeHtml\(label\)\)/);
-  assert.match(liveShellSource, /Uber is unavailable because this club has not published a usable address\./);
+  assert.match(liveShellSource, /function uberRideLinkMarkup[\s\S]*?data-travel-unavailable="shuttle" disabled aria-disabled="true"[\s\S]*?actionButtonLabel\("car", escapeHtml\(label\)\)/);
+  assert.match(liveShellSource, /Free ride requests are unavailable for this club\./);
   assert.match(liveShellSource, /Directions are unavailable because this club has not published a usable address\./);
   assert.match(liveShellSource, /\.venue-primary-actions[\s\S]*?grid-template-columns: repeat\(2, minmax\(0, 1fr\)\)/);
   assert.match(liveShellSource, /\.home-venue-discovery-context-actions \.home-discovery-feed-directions[\s\S]*?border-color: rgba\(226,232,240,\.28\)/);

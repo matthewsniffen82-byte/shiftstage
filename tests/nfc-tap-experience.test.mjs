@@ -166,7 +166,7 @@ test("cashier NFC preserves the selected Club Deal and current-shift attribution
 test("Club Deal activation persists the pending tap and keeps instructions concise", () => {
   assert.match(dealCard, /Use free admission/);
   assert.match(dealCard, /When you reach the cashier, unlock your phone and hold it near the MyDancr sticker/);
-  assert.match(dealCard, /window\.localStorage\.setItem\(DEAL_INTENT_KEY/);
+  assert.match(dealCard, /window\.location\.assign\(`/);
   assert.match(dealCard, /const dialogContent = intentState === "ready" \?/);
   assert.match(dealCard, /Saved to your account\./);
   assert.match(dealCard, /Saved on this device\./);

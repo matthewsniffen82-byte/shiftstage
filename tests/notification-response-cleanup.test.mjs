@@ -13,16 +13,35 @@ const input = { to: "synthetic@example.invalid", subject: "Synthetic subject", t
 const row = { recipient_id: "synthetic-user", notification_type: "approval_status", title: input.subject, body: input.text };
 const recipient = { id: row.recipient_id, email: input.to, role: "dancer" };
 
-function load(respond, { configured = true, signal = new AbortController().signal } = {}) {
+test("club SMS uses only the stored venue phone and stable request key, and requires a creation receipt", async () => {
+  const requestId = "11111111-1111-4111-8111-111111111111";
+  for (const id of [requestId, ""]) {
+    const service = load(() => Response.json({ id }), { smsConfigured: true });
+    assert.equal(await service.sendShuttlePhoneAlert({ phone: "+17025550101", body: "Synthetic shuttle request", requestId }), !!id);
+    const payload = JSON.parse(service.calls[0].init.body);
+    assert.equal(payload.target_channel, "sms");
+    assert.deepEqual(payload.include_phone_numbers, ["+17025550101"]);
+    assert.equal(payload.idempotency_key, requestId);
+    assert.equal(payload.sms_from, "+17025550100");
+  }
+});
+
+test("club SMS without OneSignal configuration performs no provider request", async () => {
+  const service = load(() => { throw new Error("Unexpected network request"); }, { configured: false });
+  assert.equal(await service.sendShuttlePhoneAlert({ phone: "+17025550101", body: "Synthetic request", requestId: "11111111-1111-4111-8111-111111111111" }), false);
+  assert.equal(service.calls.length, 0);
+});
+
+function load(respond, { configured = true, smsConfigured = false, signal = new AbortController().signal } = {}) {
   const calls = [], logs = [], budgets = [], exports = {};
   vm.runInNewContext(compiled, {
     exports, URLSearchParams, Map, Set, TextDecoder, Uint8Array,
     process: { env: configured ? { RESEND_API_KEY: "synthetic-email-key", EMAIL_FROM: input.to,
-      ONESIGNAL_REST_API_KEY: "synthetic-push-key", NEXT_PUBLIC_ONESIGNAL_APP_ID: "synthetic-app" } : {} },
+      ONESIGNAL_REST_API_KEY: "synthetic-push-key", NEXT_PUBLIC_ONESIGNAL_APP_ID: "synthetic-app", ...(smsConfigured ? { ONESIGNAL_SMS_FROM: "+17025550100" } : {}) } : {} },
     console: { warn: (...args) => logs.push(args) },
     AbortSignal: { timeout: ms => { budgets.push(ms); return signal; } },
     fetch: async (url, init) => {
-      assert.ok(["https://api.resend.com/emails", "https://onesignal.com/api/v1/notifications"].includes(url));
+      assert.ok(["https://api.resend.com/emails", "https://onesignal.com/api/v1/notifications", "https://api.onesignal.com/notifications"].includes(url));
       assert.equal(init.method, "POST"); assert.equal(init.redirect, "error"); assert.equal(init.cache, "no-store");
       calls.push({ url, init });
       return respond(url, init);

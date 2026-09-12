@@ -109,7 +109,7 @@ test("dancer attribution is locked to a verified shift when the cashier NFC tap 
     liveApp,
     /attributionToken: dancerAttributed \? profile\.dealAttributionToken : ""/,
   );
-  assert.match(liveApp, /function selectDealPassForNfc[\s\S]*?attributionToken: pass\.sourceType === "dancer_profile" \? pass\.attributionToken \|\| null : null/);
+  assert.match(liveApp, /function selectDealPassForNfc[\s\S]*?attributionToken: pass\.sourceType === "dancer_profile" \? pass\.attributionToken \|\| "" : ""/);
 });
 
 test("save, share, scan, and confirmation have durable lifecycle events without paying on engagement", () => {

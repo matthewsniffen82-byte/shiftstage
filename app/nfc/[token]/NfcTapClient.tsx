@@ -21,6 +21,7 @@ type TagState = {
 };
 
 type PendingDealIntent = {
+  transportation: "self_drive" | "club_shuttle";
   venueId: string;
   dealId: string;
   sourceType: "club_page" | "dancer_profile";
@@ -342,6 +343,7 @@ function readPendingDealIntent(routeToken: string): PendingDealIntent | null {
     const value = JSON.parse(window.localStorage.getItem(DEAL_INTENT_KEY) || "null");
     if (!value || typeof value !== "object" || Date.now() - Number(value.savedAt || 0) > 12 * 60 * 60 * 1000) return null;
     if (typeof value.venueId !== "string" || typeof value.dealId !== "string") return null;
+    if (value.transportation !== "self_drive" && value.transportation !== "club_shuttle") return null;
     if (Number(value.expiresAt || 0) > 0 && Date.now() >= Number(value.expiresAt)) return null;
     return value as PendingDealIntent;
   } catch {

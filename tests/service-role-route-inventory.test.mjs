@@ -8,6 +8,8 @@ const publicServiceRoleRoutes = new Set([
   "app/api/account-recovery/route.ts",
   "app/api/auth/route.ts",
   "app/api/customer/going/route.ts",
+  "app/api/deals/[dealId]/shuttle/route.ts",
+  "app/api/venues/[venueId]/shuttle/route.ts",
   "app/api/deals/redeem/[token]/route.ts",
   "app/api/deals/redemptions/[token]/events/route.ts",
   "app/api/dmca/notices/route.ts",

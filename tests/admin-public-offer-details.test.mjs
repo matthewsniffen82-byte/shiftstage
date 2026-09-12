@@ -1,3 +1,4 @@
+import * as transportation from "../src/lib/dancr/club-deal-transportation.ts";
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
@@ -15,6 +16,7 @@ function compile(path, dependencies = {}) {
 }
 const deals = compile('../src/lib/dancr/deals.ts');
 const service = compile('../src/lib/dancr/venue-deal-actions.ts', {
+  './club-deal-transportation': transportation,
   './club-deal-presets': presets,
   './deal-policy': policy,
   './deals': deals,

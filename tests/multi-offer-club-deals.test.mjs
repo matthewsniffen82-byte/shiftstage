@@ -40,10 +40,8 @@ test("MyDancr admins can publish a prioritized collection of non-alcohol Club De
 
 test("new and currently active Club Deals are limited to the approved admission catalog", () => {
   const adminManager = adminClient.match(/function AdminClubDealManager\([\s\S]*?(?=\nfunction ReferralFeeManager)/)?.[0] || "";
-  assert.match(presets, /title: "Half-off admission"/);
-  assert.match(presets, /title: "Skip the line"/);
   assert.match(presets, /title: "Free admission"/);
-  assert.equal((presets.match(/title: "/g) || []).length, 3);
+  assert.equal((presets.match(/title: "/g) || []).length, 1);
   assert.match(venueDealActions, /clubDealOfferPresetForTitle\(input\.dealTitle\)/);
   assert.match(venueDealActions, /Choose an approved admission offer/);
   assert.match(venueDealActions, /const offerType: ClubDealOfferType = "admission"/);

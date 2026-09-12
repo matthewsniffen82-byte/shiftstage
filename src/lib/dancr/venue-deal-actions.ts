@@ -1,3 +1,4 @@
+import { clubDealTransportationTerms } from "./club-deal-transportation";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { clubDealOfferPresetForTitle } from "./club-deal-presets";
 import { QR_COMMISSION_POLICY_VERSION } from "./commission-policy";
@@ -170,7 +171,7 @@ export async function updateVenueDealForAccount(
   }
   const dealTitle = offerPreset.title;
   const dealDescription = offerPreset.description;
-  const dealTerms = optionalDealText(input.dealTerms, "Deal terms", 1200) || offerPreset.terms;
+  const dealTerms = clubDealTransportationTerms(optionalDealText(input.dealTerms, "Deal terms", 900) || offerPreset.terms);
   const offerType: ClubDealOfferType = "admission";
   assertLiquorFreeClubDeal({ offerType, dealTitle, dealDescription, dealTerms });
   const sortOrder = Math.trunc(Number(input.sortOrder || 0));
@@ -275,7 +276,7 @@ function validatedDealFields(input: VenueDealInput) {
   if (!offerPreset) throw new Error("Choose an approved admission offer for this Club Deal.");
   const dealTitle = offerPreset.title;
   const dealDescription = optionalDealText(input.dealDescription, "Public offer details", 1200) || offerPreset.description;
-  const dealTerms = optionalDealText(input.dealTerms, "Deal terms", 1200) || offerPreset.terms;
+  const dealTerms = clubDealTransportationTerms(optionalDealText(input.dealTerms, "Deal terms", 900) || offerPreset.terms);
   const offerType: ClubDealOfferType = "admission";
   assertLiquorFreeClubDeal({ offerType, dealTitle, dealDescription, dealTerms });
   const sortOrder = Math.trunc(Number(input.sortOrder || 0));

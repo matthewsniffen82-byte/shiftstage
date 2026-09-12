@@ -10,6 +10,7 @@ type DancrClient = SupabaseClient;
 const DELIVERY_PROVIDER_TIMEOUT_MS = 10_000;
 
 export type NotificationDeliveryRow = {
+  deliveryId?: string;
   recipient_id: string;
   notification_type: NotificationType;
   title: string;
@@ -94,6 +95,23 @@ export async function sendTransactionalEmail(input: {
   return { delivered: true as const };
 }
 
+export async function sendShuttlePhoneAlert(input: { phone: string; body: string; requestId: string }) {
+  const appId = process.env.NEXT_PUBLIC_ONESIGNAL_APP_ID;
+  const apiKey = process.env.ONESIGNAL_REST_API_KEY;
+  const from = process.env.ONESIGNAL_SMS_FROM;
+  if (!appId || !apiKey || !from) return false;
+  const response = await requestDeliveryProvider("onesignal", "https://api.onesignal.com/notifications", {
+    method: "POST",
+    headers: { Authorization: `Key ${apiKey}`, "Content-Type": "application/json" },
+    body: JSON.stringify({
+      app_id: appId, target_channel: "sms", sms_from: from,
+      include_phone_numbers: [input.phone], contents: { en: input.body },
+      idempotency_key: input.requestId,
+    }),
+  });
+  return response?.created === true;
+}
+
 async function getRecipients(client: DancrClient, recipientIds: string[]): Promise<Recipient[]> {
   const ids = Array.from(new Set(recipientIds));
   if (!ids.length) return [];
@@ -128,6 +146,7 @@ async function deliverPushNotifications(rows: NotificationDeliveryRow[]) {
         headings: { en: row.title },
         contents: { en: row.body },
         data: row.payload || {},
+        ...(row.deliveryId ? { idempotency_key: row.deliveryId } : {}),
         ...(notificationActionUrl(row) ? { url: notificationActionUrl(row) } : {}),
       }),
     });
@@ -266,6 +285,7 @@ function notificationActionUrl(row: NotificationDeliveryRow) {
   const payload = (row.payload || {}) as Record<string, unknown>;
   const baseUrl = publicAppUrl();
   if (!baseUrl) return "";
+  if (payload.kind === "club_shuttle_request") return `${baseUrl}/dashboard/venue`;
   if (followAlertKey(payload.kind)) return `${baseUrl}/dashboard/customer#customer-alerts`;
 
   if (row.notification_type === "dmca_status" && payload.caseId) {

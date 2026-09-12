@@ -6,25 +6,13 @@ import { useEffect, useState } from "react";
 import type { PublicClubDeal } from "@/src/lib/dancr/types";
 import { homeDiscoveryHref } from "@/src/lib/dancr/navigation";
 
-const DEAL_INTENT_KEY = "mydancrPendingNfcDealV2";
 
 export default function DealClaimClient({ deal }: { campaignToken: string; deal: PublicClubDeal }) {
-  const [status, setStatus] = useState("Preparing this offer for the cashier tap…");
+  const [status, setStatus] = useState("Opening your transportation choices…");
 
   useEffect(() => {
-    try {
-      window.localStorage.setItem(DEAL_INTENT_KEY, JSON.stringify({
-        venueId: deal.venueId,
-        dealId: deal.id,
-        sourceType: "club_page",
-        dancerId: null,
-        attributionToken: null,
-        savedAt: Date.now(),
-      }));
-      setStatus("Offer ready. At the club, tap the physical MyDancr cashier sticker to redeem it.");
-    } catch {
-      setStatus("Open this offer again at the club, then tap the cashier sticker.");
-    }
+    setStatus("Choose your transportation to use free admission.");
+    window.location.replace(`/deals/transportation/${encodeURIComponent(deal.id)}`);
   }, [deal.id, deal.venueId]);
 
   return (
