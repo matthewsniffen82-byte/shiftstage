@@ -35,19 +35,12 @@ test("uncertain provisioning and support RPC failures never fall back to another
   assert.equal(writes, 0);
 });
 
-test("compatibility provisioning does not overwrite an existing account or customer city", async () => {
-  const rows = { app_users: { role: "customer", display_name: "Keep my name" }, customer_profiles: { city: "Keep my city" } };
-  const db = { rpc: async () => ({ error: { code: "PGRST202" } }), from(table) {
-    const query = { upsert: async (value, options) => {
-      assert.equal(options.ignoreDuplicates, true);
-      if (!options.ignoreDuplicates) rows[table] = value;
-      return { error: null };
-    }, select() { return query; }, eq() { return query; }, single: async () => ({ data: rows[table], error: null }) };
-    return query;
-  } };
-  await provisioning.provisionAppAccount(db, input);
-  assert.equal(rows.app_users.display_name, "Keep my name");
-  assert.equal(rows.customer_profiles.city, "Keep my city");
+test("missing account provisioning cannot fall back to partial account or profile writes", async () => {
+  const fault = { code: "PGRST202" };
+  let writes = 0;
+  const db = { rpc: async () => ({ error: fault }), from() { writes++; throw new Error("Unexpected fallback"); } };
+  await assert.rejects(provisioning.provisionAppAccount(db, input), error => error === fault);
+  assert.equal(writes, 0);
 });
 
 test("successful atomic support writes survive notification failure without another database read", async () => {

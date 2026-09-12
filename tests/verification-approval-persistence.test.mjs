@@ -49,7 +49,8 @@ test("new dancers stay private until venue tap authorization while existing appr
   assert.match(profileApproval, /is_public: false/);
   assert.match(signupRoute, /provisionAppAccount\(/);
   assert.match(callbackRoute, /provisionAppAccount\(/);
-  assert.match(accountProvisioning, /initialDancerApprovalValues\(\)/);
+  assert.match(accountProvisioning, /\.rpc\("provision_app_account_safely"/);
+  assert.doesNotMatch(accountProvisioning, /\.from\(/);
   assert.match(profileRoute, /transitionDancerPublication\([\s\S]*?"submit_for_venue_review"/);
   assert.match(publicProfiles, /applyPublicApprovalFilters/);
   assert.doesNotMatch(publicProfiles.match(/function applyPublicApprovalFilters[\s\S]*?\n}/)?.[0] || "", /venue_onboarding_required/);

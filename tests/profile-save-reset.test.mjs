@@ -278,13 +278,11 @@ test("confirmed profile saves stay visible on the save button until another edit
   assert.doesNotMatch(dashboardSource, /savedResetTimerRef/);
 });
 
-test("existing dancer signup cannot reset approval or visibility", () => {
-  const existingProfileBranch = accountProvisioningSource.match(/if \(existingProfile\) \{[\s\S]*?\n  \}/)?.[0] || "";
-  assert.match(authRouteSource, /EXISTING_DANCER_PROFILE_PRESERVED_DURING_SIGNUP/);
-  assert.match(existingProfileBranch, /input\.existingDancerLogEvent/);
-  assert.doesNotMatch(existingProfileBranch, /\.update\(|status:\s*"draft"|is_public\s*:/);
+test("existing dancer signup delegates profile preservation to the atomic provisioner", () => {
+  assert.match(authRouteSource, /provisionAppAccount\(/);
   assert.doesNotMatch(authRouteSource, /\.from\("dancer_profiles"\)/);
-  assert.match(accountProvisioningSource, /\.select\("id, status, verification_status, photo_review_status, is_public, approved_at, disabled_at"\)/);
+  assert.match(accountProvisioningSource, /\.rpc\("provision_app_account_safely"/);
+  assert.doesNotMatch(accountProvisioningSource, /\.from\(|\.update\(|\.upsert\(|\.insert\(/);
 });
 
 test("save keeps non-deleted photos and releases deleted slots before upload", () => {

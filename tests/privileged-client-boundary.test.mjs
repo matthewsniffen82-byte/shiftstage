@@ -10,6 +10,7 @@ const privilegedModules = [
   "src/lib/supabase/server-config.ts",
   "src/lib/stripe.ts",
   "src/lib/dancr/account-recovery.ts",
+  "src/lib/dancr/account-provisioning.ts",
   "src/lib/dancr/admin.ts",
   "src/lib/dancr/auth.ts",
   "src/lib/dancr/avatar-face.ts",

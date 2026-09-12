@@ -240,7 +240,6 @@ export async function POST(request: Request) {
       email,
       displayName,
       city,
-      existingDancerLogEvent: "EXISTING_DANCER_PROFILE_PRESERVED_DURING_SIGNUP",
     });
 
     if (role === "customer") {

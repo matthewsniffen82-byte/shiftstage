@@ -8,39 +8,12 @@ const [provisioning, signupRoute, callbackRoute] = await Promise.all([
   readFile(new URL("../app/auth/callback/route.ts", import.meta.url), "utf8"),
 ]);
 
-test("signup and email confirmation share one account provisioning boundary", () => {
+test("signup and email confirmation share one atomic account provisioning boundary", () => {
   for (const source of [signupRoute, callbackRoute]) {
     assert.match(source, /provisionAppAccount/);
-    assert.doesNotMatch(source, /\.from\("app_users"\)/);
-    assert.doesNotMatch(source, /\.from\("customer_profiles"\)/);
-    assert.doesNotMatch(source, /\.from\("dancer_profiles"\)/);
+    assert.doesNotMatch(source, /\.from\("app_users"\)|\.from\("customer_profiles"\)|\.from\("dancer_profiles"\)/);
   }
-
-  assert.match(provisioning, /export async function provisionAppAccount/);
-  assert.match(provisioning, /\.from\("app_users"\)\.upsert/);
-  assert.match(provisioning, /\.from\("customer_profiles"\)\.upsert/);
-  assert.match(provisioning, /\.from\("dancer_profiles"\)\.insert/);
-});
-
-test("new dancer accounts use a private schema-compatible placeholder and blank stage identity", () => {
-  const dancerInsert = provisioning.match(
-    /\.from\("dancer_profiles"\)\.insert\(\{[\s\S]*?\n  \}\);/,
-  )?.[0] || "";
-
-  assert.match(provisioning, /input\.role === "dancer" \? "Dancer" : input\.displayName/);
-  assert.match(dancerInsert, /real_name: "Verification pending"/);
-  assert.match(dancerInsert, /stage_name: ""/);
-  assert.match(dancerInsert, /city: input\.city/);
-  assert.match(dancerInsert, /initialDancerApprovalValues\(\)/);
-  assert.doesNotMatch(dancerInsert, /input\.email|input\.displayName|Las Vegas/);
-});
-
-test("account provisioning preserves every existing dancer profile", () => {
-  const existingProfileBranch = provisioning.match(
-    /if \(existingProfile\) \{[\s\S]*?\n  \}/,
-  )?.[0] || "";
-
-  assert.match(existingProfileBranch, /return/);
-  assert.doesNotMatch(existingProfileBranch, /\.update\(|\.upsert\(|status:\s*"draft"|is_public\s*:/);
-  assert.doesNotMatch(provisioning, /account_state/);
+  assert.match(provisioning, /import "server-only"/);
+  assert.match(provisioning, /\.rpc\("provision_app_account_safely"/);
+  assert.doesNotMatch(provisioning, /\.from\(|isMissingSupabaseFunction|existingDancerLogEvent/);
 });

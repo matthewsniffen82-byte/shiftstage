@@ -448,7 +448,6 @@ async function ensureCallbackAccount(admin: AdminClient, user: CallbackUser, rol
     city: role === "customer"
       ? readMetadataText(metadata.city) || "Las Vegas"
       : readMetadataText(metadata.city),
-    existingDancerLogEvent: "EXISTING_DANCER_PROFILE_PRESERVED_DURING_EMAIL_CALLBACK",
   });
 }
 
