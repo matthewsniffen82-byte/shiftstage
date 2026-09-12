@@ -571,6 +571,74 @@
     {
       "file": "20260910050900_add_atomic_counter_notice_submission.sql",
       "sha256": "b66d08f060c658682311a5d12a6414779c8f59de68a1e92d4ccb0fd5205be7e4"
+    },
+    {
+      "file": "20260910054000_add_atomic_social_link_saves.sql",
+      "sha256": "dcb5937cd13feca1a4a9ad4dc5094df0170b9b61989d26f9c8c86632241c536d"
+    },
+    {
+      "file": "20260910061000_add_atomic_content_review_decisions.sql",
+      "sha256": "911a97c634d97b4f6603a507532bf80113f794a557ed23f31f2a92bb0430eb5a"
+    },
+    {
+      "file": "20260910070000_add_atomic_profile_review_decisions.sql",
+      "sha256": "055e6ff41612231d7b7f83d90ebdfd011170ed4419f2b6203456ef4a791c2c37"
+    },
+    {
+      "file": "20260910075000_add_atomic_import_finalization.sql",
+      "sha256": "1eccee0c2312b792f7ebd5588788a4cf0be1319a41d7a308fbc30fbdf2b1fb44"
+    },
+    {
+      "file": "20260910082000_add_atomic_dancer_tap_entry.sql",
+      "sha256": "ed565beb3ac0749c4f9ad699b741c4e6059e59312ca404b72aea8d8b3e7a4ba2"
+    },
+    {
+      "file": "20260910091000_add_payment_webhook_attempt_receipts.sql",
+      "sha256": "59f0d438938dadac0160f1bb7f277aa59598442dd3f55d3a54a23c67476f61a2"
+    },
+    {
+      "file": "20260910092022_add_gallery_reference_history.sql",
+      "sha256": "1659161135a42e7d857a103175687feb8b47799c79a7c0e8d79d003d71e6e7b6"
+    },
+    {
+      "file": "20260910094000_add_atomic_payout_dispatch_claim.sql",
+      "sha256": "8b2b283ca3f37607915efddd003e3b1e59ab107266b57ef9f9804dceb440d8b5"
+    },
+    {
+      "file": "20260910102400_claim_invoice_revenue_atomically.sql",
+      "sha256": "e53908b529b19f4c2221b19918c33a640bb4c5b75686021a62b676f8922eb07c"
+    },
+    {
+      "file": "20260910105400_add_bounded_tv_metric_aggregation.sql",
+      "sha256": "3f34dfe88471cca6c2bf78a15ee1a3fe2eca465494841fe636883ac6a6fdc9f5"
+    },
+    {
+      "file": "20260910112700_remove_two_redundant_indexes.sql",
+      "sha256": "fd02610ce5a3fe47a1e7f6135d51d10a23425ea6ef328c002e46eca15d7de089"
+    },
+    {
+      "file": "20260910125000_add_gallery_storage_retirement_guards.sql",
+      "sha256": "691c91626b8e3aa81da3f040bb9ed10d0b373d823248984c2e841cb10c497c58"
+    },
+    {
+      "file": "20260910134200_support_canonical_avatar_retirement.sql",
+      "sha256": "5632430559d3f81f64c3af75291cae211b6e2c0d91ec7933ffd59424f0458d92"
+    },
+    {
+      "file": "20260910153000_scope_payout_retry_to_dancer.sql",
+      "sha256": "08bc29bebb4aa60633d22beaa5a9aaade8f0ebdf5130d81bf4c1deaf958e25fa"
+    },
+    {
+      "file": "20260910160000_add_atomic_paid_payout_recovery.sql",
+      "sha256": "dba38ab2bd981a9b047b4e4085061c9206c13a1ba617d4de17274ee541c71fc0"
+    },
+    {
+      "file": "20260910165000_snapshot_cashier_agent_allocations.sql",
+      "sha256": "718d6bd224c17d81f8c8e2a7881afa3ac53cf75fce040fb0999a10ac5f8805e5"
+    },
+    {
+      "file": "20260910172000_serialize_dancer_nfc_enrollment.sql",
+      "sha256": "6001c96c8a7caaa5a828e2581f9ab6a79716d67559298ea7d73ce8e8fc8fa031"
     }
   ]
 }

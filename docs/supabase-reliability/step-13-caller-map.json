@@ -1,0 +1,2139 @@
+{
+  "capturedAt": "2026-09-12T04:16:27.190023+00:00",
+  "scope": "Public function metadata and literal RPC references in app/src TypeScript. No application records or function bodies. Literal references are not proof of reachability.",
+  "functions": [
+    {
+      "signature": "activate_approved_venue_request_manager()",
+      "fingerprint": "34866b42304a920f15074dbf08f004b3",
+      "kind": "trigger",
+      "anon": false,
+      "authenticated": false,
+      "service": false,
+      "callers": [],
+      "owner": "postgres",
+      "securityDefiner": true,
+      "settings": [
+        "search_path=public, pg_temp"
+      ],
+      "acl": "{postgres=X/postgres}"
+    },
+    {
+      "signature": "activate_dancer_shift_from_nfc(uuid,uuid,uuid,jsonb)",
+      "fingerprint": "55969db7996b137d4455dc1d9eaec463",
+      "kind": "jsonb",
+      "anon": false,
+      "authenticated": false,
+      "service": true,
+      "callers": [],
+      "owner": "postgres",
+      "securityDefiner": true,
+      "settings": [
+        "search_path=public, pg_temp"
+      ],
+      "acl": "{postgres=X/postgres,service_role=X/postgres}"
+    },
+    {
+      "signature": "activate_waiting_nats_agent_exports()",
+      "fingerprint": "f3fbff8fe4f311c85db61e423b01c91d",
+      "kind": "trigger",
+      "anon": false,
+      "authenticated": false,
+      "service": false,
+      "callers": [],
+      "owner": "postgres",
+      "securityDefiner": true,
+      "settings": [
+        "search_path=public"
+      ],
+      "acl": "{postgres=X/postgres}"
+    },
+    {
+      "signature": "activate_waiting_nats_exports()",
+      "fingerprint": "dbae672fd513f39e772eb6b3cee9e6b8",
+      "kind": "trigger",
+      "anon": false,
+      "authenticated": false,
+      "service": false,
+      "callers": [],
+      "owner": "postgres",
+      "securityDefiner": true,
+      "settings": [
+        "search_path=public, pg_temp"
+      ],
+      "acl": "{postgres=X/postgres}"
+    },
+    {
+      "signature": "admin_manage_dancer_earning(uuid,uuid,text,text)",
+      "fingerprint": "9163630c473204df9022e06a499dfc12",
+      "kind": "jsonb",
+      "anon": false,
+      "authenticated": false,
+      "service": true,
+      "callers": [
+        "src/lib/dancr/finance-admin-actions.ts"
+      ],
+      "owner": "postgres",
+      "securityDefiner": true,
+      "settings": [
+        "search_path=public"
+      ],
+      "acl": "{postgres=X/postgres,service_role=X/postgres}"
+    },
+    {
+      "signature": "admin_retry_dancer_payout(uuid,uuid,text)",
+      "fingerprint": "7c968a844eec3a23ec89c1fffcbf5a36",
+      "kind": "jsonb",
+      "anon": false,
+      "authenticated": false,
+      "service": true,
+      "callers": [
+        "src/lib/dancr/finance-admin-actions.ts"
+      ],
+      "owner": "postgres",
+      "securityDefiner": true,
+      "settings": [
+        "search_path=public"
+      ],
+      "acl": "{postgres=X/postgres,service_role=X/postgres}"
+    },
+    {
+      "signature": "admin_update_payout_settings(uuid,boolean,text,integer,integer,text)",
+      "fingerprint": "3cafd2b15c16d0942d96e4d115a09dee",
+      "kind": "jsonb",
+      "anon": false,
+      "authenticated": false,
+      "service": true,
+      "callers": [
+        "src/lib/dancr/finance-admin-actions.ts"
+      ],
+      "owner": "postgres",
+      "securityDefiner": true,
+      "settings": [
+        "search_path=public"
+      ],
+      "acl": "{postgres=X/postgres,service_role=X/postgres}"
+    },
+    {
+      "signature": "agent_allocations_for_venue(uuid,integer,timestamp with time zone)",
+      "fingerprint": "53d947a8e9c8708d0cf727a4e200a8fd",
+      "kind": "record",
+      "anon": false,
+      "authenticated": false,
+      "service": true,
+      "callers": [],
+      "owner": "postgres",
+      "securityDefiner": true,
+      "settings": [
+        "search_path=public, pg_temp"
+      ],
+      "acl": "{postgres=X/postgres,service_role=X/postgres}"
+    },
+    {
+      "signature": "apply_club_invoice_payment(uuid,integer,text,timestamp with time zone,text,text,text)",
+      "fingerprint": "8a2ba72df6bea9b786b9681b6661d279",
+      "kind": "jsonb",
+      "anon": false,
+      "authenticated": false,
+      "service": true,
+      "callers": [
+        "src/lib/dancr/finance-admin-actions.ts",
+        "src/lib/dancr/finance-provider-events.ts"
+      ],
+      "owner": "postgres",
+      "securityDefiner": true,
+      "settings": [
+        "search_path=public"
+      ],
+      "acl": "{postgres=X/postgres,service_role=X/postgres}"
+    },
+    {
+      "signature": "apply_dmca_takedown(uuid,uuid,text)",
+      "fingerprint": "bd41d4fde042aae77067fbee550742f7",
+      "kind": "jsonb",
+      "anon": false,
+      "authenticated": false,
+      "service": true,
+      "callers": [
+        "src/lib/dancr/dmca.ts"
+      ],
+      "owner": "postgres",
+      "securityDefiner": true,
+      "settings": [
+        "search_path=public"
+      ],
+      "acl": "{postgres=X/postgres,service_role=X/postgres}"
+    },
+    {
+      "signature": "approve_dancer_venue_affiliation_from_nfc(uuid,uuid,uuid,jsonb)",
+      "fingerprint": "bf4ce004c0490aa8df9c24fd9f9dcaa4",
+      "kind": "jsonb",
+      "anon": false,
+      "authenticated": false,
+      "service": true,
+      "callers": [],
+      "owner": "postgres",
+      "securityDefiner": true,
+      "settings": [
+        "search_path=public, pg_temp"
+      ],
+      "acl": "{postgres=X/postgres,service_role=X/postgres}"
+    },
+    {
+      "signature": "approve_dancer_venue_affiliation(text,uuid)",
+      "fingerprint": "99ba074692854dd72c12499f572645f5",
+      "kind": "jsonb",
+      "anon": false,
+      "authenticated": false,
+      "service": true,
+      "callers": [
+        "src/lib/dancr/venue-affiliations.ts"
+      ],
+      "owner": "postgres",
+      "securityDefiner": true,
+      "settings": [
+        "search_path=public, pg_temp"
+      ],
+      "acl": "{postgres=X/postgres,service_role=X/postgres}"
+    },
+    {
+      "signature": "approve_venue_deal_removal(uuid,uuid,uuid)",
+      "fingerprint": "cf6ba0da48022322c43063dc2e3ce76d",
+      "kind": "venue_club_deal_requests",
+      "anon": false,
+      "authenticated": false,
+      "service": true,
+      "callers": [
+        "src/lib/dancr/venue-deal-requests.ts"
+      ],
+      "owner": "postgres",
+      "securityDefiner": true,
+      "settings": [
+        "search_path=public, pg_temp"
+      ],
+      "acl": "{postgres=X/postgres,service_role=X/postgres}"
+    },
+    {
+      "signature": "assign_admin_venue_sales_agent(uuid,uuid,uuid,text,timestamp with time zone)",
+      "fingerprint": "5f3fe3738c95f7f252e641ec09bd3b36",
+      "kind": "uuid",
+      "anon": false,
+      "authenticated": false,
+      "service": true,
+      "callers": [
+        "src/lib/dancr/sales-agents.ts"
+      ],
+      "owner": "postgres",
+      "securityDefiner": true,
+      "settings": [
+        "search_path=public, pg_temp"
+      ],
+      "acl": "{postgres=X/postgres,service_role=X/postgres}"
+    },
+    {
+      "signature": "assign_dancer_profile_link()",
+      "fingerprint": "2eacb5ea205bcd6ef27ff5a9e21f58da",
+      "kind": "trigger",
+      "anon": false,
+      "authenticated": false,
+      "service": false,
+      "callers": [],
+      "owner": "postgres",
+      "securityDefiner": true,
+      "settings": [
+        "search_path=\"\""
+      ],
+      "acl": "{postgres=X/postgres}"
+    },
+    {
+      "signature": "attribute_approved_venue_agent_referral()",
+      "fingerprint": "c177a57a17ca6278fddefe924e316b16",
+      "kind": "trigger",
+      "anon": false,
+      "authenticated": false,
+      "service": false,
+      "callers": [],
+      "owner": "postgres",
+      "securityDefiner": true,
+      "settings": [
+        "search_path=public, pg_temp"
+      ],
+      "acl": "{postgres=X/postgres}"
+    },
+    {
+      "signature": "authorize_dancer_profile_from_nfc(uuid)",
+      "fingerprint": "05613b84c6cc8c82b95b9ddd05bc06e2",
+      "kind": "jsonb",
+      "anon": false,
+      "authenticated": false,
+      "service": true,
+      "callers": [],
+      "owner": "postgres",
+      "securityDefiner": true,
+      "settings": [
+        "search_path=public, pg_temp"
+      ],
+      "acl": "{postgres=X/postgres,service_role=X/postgres}"
+    },
+    {
+      "signature": "capture_gallery_media_reference_history()",
+      "fingerprint": "a7d1c2f8c56b50b97835f34db25e3b97",
+      "kind": "trigger",
+      "anon": false,
+      "authenticated": false,
+      "service": false,
+      "callers": [],
+      "owner": "postgres",
+      "securityDefiner": true,
+      "settings": [
+        "search_path=\"\""
+      ],
+      "acl": "{postgres=X/postgres}"
+    },
+    {
+      "signature": "claim_dancer_payout_dispatch(uuid)",
+      "fingerprint": "821f2959d65d722b559158276baccef4",
+      "kind": "jsonb",
+      "anon": false,
+      "authenticated": false,
+      "service": true,
+      "callers": [
+        "src/lib/dancr/finance-payout-processing.ts"
+      ],
+      "owner": "postgres",
+      "securityDefiner": false,
+      "settings": [
+        "search_path=\"\"",
+        "lock_timeout=3s",
+        "TimeZone=UTC"
+      ],
+      "acl": "{postgres=X/postgres,service_role=X/postgres}"
+    },
+    {
+      "signature": "claim_gallery_storage_retirement(uuid,text)",
+      "fingerprint": "264504ed81c831f6f76940030147470e",
+      "kind": "jsonb",
+      "anon": false,
+      "authenticated": false,
+      "service": true,
+      "callers": [
+        "src/lib/dancr/gallery-storage-retirement.ts"
+      ],
+      "owner": "postgres",
+      "securityDefiner": true,
+      "settings": [
+        "search_path=\"\"",
+        "TimeZone=UTC"
+      ],
+      "acl": "{postgres=X/postgres,service_role=X/postgres}"
+    },
+    {
+      "signature": "claim_nats_agent_commission_exports(integer)",
+      "fingerprint": "2954e923b223c092f0d83f0507e4da49",
+      "kind": "record",
+      "anon": false,
+      "authenticated": false,
+      "service": true,
+      "callers": [
+        "src/lib/dancr/nats-commission-sync.ts"
+      ],
+      "owner": "postgres",
+      "securityDefiner": true,
+      "settings": [
+        "search_path=public"
+      ],
+      "acl": "{postgres=X/postgres,service_role=X/postgres}"
+    },
+    {
+      "signature": "claim_nats_commission_exports(integer)",
+      "fingerprint": "2faa20c2106344568479d523b04a3a35",
+      "kind": "record",
+      "anon": false,
+      "authenticated": false,
+      "service": true,
+      "callers": [
+        "src/lib/dancr/nats-commission-sync.ts"
+      ],
+      "owner": "postgres",
+      "securityDefiner": true,
+      "settings": [
+        "search_path=public, pg_temp"
+      ],
+      "acl": "{postgres=X/postgres,service_role=X/postgres}"
+    },
+    {
+      "signature": "claim_payment_provider_webhook(text,text,text,text)",
+      "fingerprint": "a59ee6e538a8ff65dd2731f3bc89ebb6",
+      "kind": "boolean",
+      "anon": false,
+      "authenticated": false,
+      "service": true,
+      "callers": [],
+      "owner": "postgres",
+      "securityDefiner": true,
+      "settings": [
+        "search_path=public"
+      ],
+      "acl": "{postgres=X/postgres,service_role=X/postgres}"
+    },
+    {
+      "signature": "claim_payment_webhook_attempt(text,text,text,text)",
+      "fingerprint": "0109cad00c3e3436b0f71eea1d9cc28c",
+      "kind": "jsonb",
+      "anon": false,
+      "authenticated": false,
+      "service": true,
+      "callers": [
+        "src/lib/dancr/finance-provider-events.ts"
+      ],
+      "owner": "postgres",
+      "securityDefiner": false,
+      "settings": [
+        "search_path=\"\"",
+        "lock_timeout=3s",
+        "TimeZone=UTC"
+      ],
+      "acl": "{postgres=X/postgres,service_role=X/postgres}"
+    },
+    {
+      "signature": "club_deal_is_liquor_related(text,text,text,text)",
+      "fingerprint": "35306ccee7c39d837d4df307e863203b",
+      "kind": "boolean",
+      "anon": false,
+      "authenticated": true,
+      "service": true,
+      "callers": [],
+      "owner": "postgres",
+      "securityDefiner": false,
+      "settings": [
+        "search_path=public, pg_temp"
+      ],
+      "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+    },
+    {
+      "signature": "complete_dancer_payout_batch(uuid,text,timestamp with time zone)",
+      "fingerprint": "844efefc029bda3c20c74578cf716f0c",
+      "kind": "jsonb",
+      "anon": false,
+      "authenticated": false,
+      "service": true,
+      "callers": [
+        "src/lib/dancr/finance-provider-events.ts"
+      ],
+      "owner": "postgres",
+      "securityDefiner": true,
+      "settings": [
+        "search_path=public"
+      ],
+      "acl": "{postgres=X/postgres,service_role=X/postgres}"
+    },
+    {
+      "signature": "complete_nats_agent_commission_export(uuid,text,jsonb)",
+      "fingerprint": "f514e11c9ac59f87eca511af2f9af8dc",
+      "kind": "boolean",
+      "anon": false,
+      "authenticated": false,
+      "service": true,
+      "callers": [
+        "src/lib/dancr/nats-commission-sync.ts"
+      ],
+      "owner": "postgres",
+      "securityDefiner": true,
+      "settings": [
+        "search_path=public"
+      ],
+      "acl": "{postgres=X/postgres,service_role=X/postgres}"
+    },
+    {
+      "signature": "complete_nats_commission_export(uuid,text,jsonb)",
+      "fingerprint": "8a41327404e58aa77a91762d835e5024",
+      "kind": "boolean",
+      "anon": false,
+      "authenticated": false,
+      "service": true,
+      "callers": [
+        "src/lib/dancr/nats-commission-sync.ts"
+      ],
+      "owner": "postgres",
+      "securityDefiner": true,
+      "settings": [
+        "search_path=public"
+      ],
+      "acl": "{postgres=X/postgres,service_role=X/postgres}"
+    },
+    {
+      "signature": "confirm_deal_redemption_from_nfc(text,uuid,uuid,jsonb)",
+      "fingerprint": "21979c6d6db75319a656ec793cb7f51f",
+      "kind": "jsonb",
+      "anon": false,
+      "authenticated": false,
+      "service": true,
+      "callers": [],
+      "owner": "postgres",
+      "securityDefiner": true,
+      "settings": [
+        "search_path=public, pg_temp"
+      ],
+      "acl": "{postgres=X/postgres,service_role=X/postgres}"
+    },
+    {
+      "signature": "confirm_deal_redemption_with_financial_details(text,jsonb)",
+      "fingerprint": "c427e83cec6c9e48478faffd73abbb6e",
+      "kind": "jsonb",
+      "anon": false,
+      "authenticated": false,
+      "service": false,
+      "callers": [],
+      "owner": "postgres",
+      "securityDefiner": true,
+      "settings": [
+        "search_path=public, auth"
+      ],
+      "acl": "{postgres=X/postgres}"
+    },
+    {
+      "signature": "confirm_deal_redemption(text,jsonb)",
+      "fingerprint": "0a991ba63c2feac3601f84f890a5e4f1",
+      "kind": "jsonb",
+      "anon": false,
+      "authenticated": false,
+      "service": false,
+      "callers": [],
+      "owner": "postgres",
+      "securityDefiner": true,
+      "settings": [
+        "search_path=public, auth"
+      ],
+      "acl": "{postgres=X/postgres}"
+    },
+    {
+      "signature": "confirm_venue_request_email()",
+      "fingerprint": "bb4eb1d1e0d8dbe85d2484630a2b3ead",
+      "kind": "trigger",
+      "anon": false,
+      "authenticated": false,
+      "service": false,
+      "callers": [],
+      "owner": "postgres",
+      "securityDefiner": true,
+      "settings": [
+        "search_path=public, pg_temp"
+      ],
+      "acl": "{postgres=X/postgres}"
+    },
+    {
+      "signature": "consume_request_rate_limit(text,uuid,uuid,integer,integer,integer)",
+      "fingerprint": "9605a8fc41cfc570f6a14d2eacd18411",
+      "kind": "jsonb",
+      "anon": false,
+      "authenticated": false,
+      "service": true,
+      "callers": [
+        "src/lib/dancr/public-request-rate-limit.ts"
+      ],
+      "owner": "postgres",
+      "securityDefiner": true,
+      "settings": [
+        "search_path=public, pg_temp"
+      ],
+      "acl": "{postgres=X/postgres,service_role=X/postgres}"
+    },
+    {
+      "signature": "create_club_invoice_draft(uuid,date,date,timestamp with time zone,uuid[])",
+      "fingerprint": "3e0197ccd3d715c4322bd340eba69367",
+      "kind": "uuid",
+      "anon": false,
+      "authenticated": false,
+      "service": true,
+      "callers": [
+        "src/lib/dancr/finance-invoices.ts"
+      ],
+      "owner": "postgres",
+      "securityDefiner": true,
+      "settings": [
+        "search_path=\"\"",
+        "lock_timeout=3s"
+      ],
+      "acl": "{postgres=X/postgres,service_role=X/postgres}"
+    },
+    {
+      "signature": "create_dancer_payout_batch(uuid,text,uuid[],text)",
+      "fingerprint": "ce6e3d6fe15aa7c2391530300c004d39",
+      "kind": "uuid",
+      "anon": false,
+      "authenticated": false,
+      "service": true,
+      "callers": [
+        "src/lib/dancr/finance-payout-processing.ts"
+      ],
+      "owner": "postgres",
+      "securityDefiner": true,
+      "settings": [
+        "search_path=public"
+      ],
+      "acl": "{postgres=X/postgres,service_role=X/postgres}"
+    },
+    {
+      "signature": "create_support_message_safely(uuid,text,uuid,text,text,uuid)",
+      "fingerprint": "d5d61fbef96086292d66d41989b52d46",
+      "kind": "jsonb",
+      "anon": false,
+      "authenticated": false,
+      "service": true,
+      "callers": [
+        "src/lib/dancr/support.ts",
+        "src/lib/dancr/support.ts"
+      ],
+      "owner": "postgres",
+      "securityDefiner": true,
+      "settings": [
+        "search_path=public, pg_temp"
+      ],
+      "acl": "{postgres=X/postgres,service_role=X/postgres}"
+    },
+    {
+      "signature": "create_venue_default_club_deal()",
+      "fingerprint": "d70c919f0a24006333fc3015d3c56757",
+      "kind": "trigger",
+      "anon": false,
+      "authenticated": false,
+      "service": false,
+      "callers": [],
+      "owner": "postgres",
+      "securityDefiner": true,
+      "settings": [
+        "search_path=public"
+      ],
+      "acl": "{postgres=X/postgres}"
+    },
+    {
+      "signature": "create_venue_nfc_support_safely(uuid,uuid,uuid,text,text,uuid)",
+      "fingerprint": "8819ae94a588addf7d76f48f7500643b",
+      "kind": "jsonb",
+      "anon": false,
+      "authenticated": false,
+      "service": true,
+      "callers": [
+        "src/lib/dancr/nfc-support.ts"
+      ],
+      "owner": "postgres",
+      "securityDefiner": false,
+      "settings": [
+        "search_path=\"\"",
+        "lock_timeout=3s"
+      ],
+      "acl": "{postgres=X/postgres,service_role=X/postgres}"
+    },
+    {
+      "signature": "current_user_role()",
+      "fingerprint": "4c4ef252da393e4bf294cbb87a6671da",
+      "kind": "user_role",
+      "anon": true,
+      "authenticated": true,
+      "service": true,
+      "callers": [],
+      "owner": "postgres",
+      "securityDefiner": true,
+      "settings": [
+        "search_path=public"
+      ],
+      "acl": null
+    },
+    {
+      "signature": "enforce_available_venue_ownership_claim()",
+      "fingerprint": "f6be80e5c7ccdd8ee32c290fdb9e8700",
+      "kind": "trigger",
+      "anon": false,
+      "authenticated": false,
+      "service": false,
+      "callers": [],
+      "owner": "postgres",
+      "securityDefiner": true,
+      "settings": [
+        "search_path=public, pg_temp"
+      ],
+      "acl": "{postgres=X/postgres}"
+    },
+    {
+      "signature": "enforce_mydancr_tv_profile_video_limit()",
+      "fingerprint": "93f69eb8ee43fe394349521fb3cf25ab",
+      "kind": "trigger",
+      "anon": false,
+      "authenticated": false,
+      "service": false,
+      "callers": [],
+      "owner": "postgres",
+      "securityDefiner": false,
+      "settings": [
+        "search_path=public, pg_temp"
+      ],
+      "acl": "{postgres=X/postgres}"
+    },
+    {
+      "signature": "enforce_shift_verification_server_only()",
+      "fingerprint": "c531fe00a51df0f7b5ce56d1ee93afec",
+      "kind": "trigger",
+      "anon": false,
+      "authenticated": false,
+      "service": false,
+      "callers": [],
+      "owner": "postgres",
+      "securityDefiner": false,
+      "settings": [
+        "search_path=\"\""
+      ],
+      "acl": "{postgres=X/postgres}"
+    },
+    {
+      "signature": "enforce_unique_nats_affiliate_login()",
+      "fingerprint": "5d6e6816d8dceab69acb7e6732982284",
+      "kind": "trigger",
+      "anon": false,
+      "authenticated": false,
+      "service": false,
+      "callers": [],
+      "owner": "postgres",
+      "securityDefiner": true,
+      "settings": [
+        "search_path=public"
+      ],
+      "acl": "{postgres=X/postgres}"
+    },
+    {
+      "signature": "enforce_verified_venue_affiliation_for_checkin()",
+      "fingerprint": "956ce886abc193b1c54ed2ce8d6b0271",
+      "kind": "trigger",
+      "anon": false,
+      "authenticated": false,
+      "service": false,
+      "callers": [],
+      "owner": "postgres",
+      "securityDefiner": false,
+      "settings": [
+        "search_path=public, pg_temp"
+      ],
+      "acl": "{postgres=X/postgres}"
+    },
+    {
+      "signature": "enqueue_dancer_content_reviews(uuid,uuid,text,uuid[])",
+      "fingerprint": "29b2215964595c56f4339424df7e2a85",
+      "kind": "integer",
+      "anon": false,
+      "authenticated": false,
+      "service": true,
+      "callers": [
+        "src/lib/dancr/content-reviews.ts"
+      ],
+      "owner": "postgres",
+      "securityDefiner": false,
+      "settings": [
+        "search_path=\"\"",
+        "lock_timeout=3s"
+      ],
+      "acl": "{postgres=X/postgres,service_role=X/postgres}"
+    },
+    {
+      "signature": "enqueue_nats_agent_commission_export()",
+      "fingerprint": "286953fcd8ae1e735c40e780e7fa52b2",
+      "kind": "trigger",
+      "anon": false,
+      "authenticated": false,
+      "service": false,
+      "callers": [],
+      "owner": "postgres",
+      "securityDefiner": true,
+      "settings": [
+        "search_path=public"
+      ],
+      "acl": "{postgres=X/postgres}"
+    },
+    {
+      "signature": "enqueue_nats_commission_export()",
+      "fingerprint": "0ca845b29b1b84223d4542dbc52a2a55",
+      "kind": "trigger",
+      "anon": false,
+      "authenticated": false,
+      "service": false,
+      "callers": [],
+      "owner": "postgres",
+      "securityDefiner": true,
+      "settings": [
+        "search_path=public, pg_temp"
+      ],
+      "acl": "{postgres=X/postgres}"
+    },
+    {
+      "signature": "ensure_dancer_primary_photo(uuid,uuid)",
+      "fingerprint": "28141ae81bae41b9e1de482a1e1da947",
+      "kind": "uuid",
+      "anon": false,
+      "authenticated": false,
+      "service": true,
+      "callers": [
+        "src/lib/dancr/primary-photo.ts"
+      ],
+      "owner": "postgres",
+      "securityDefiner": false,
+      "settings": [
+        "search_path=\"\"",
+        "lock_timeout=3s"
+      ],
+      "acl": "{postgres=X/postgres,service_role=X/postgres}"
+    },
+    {
+      "signature": "ensure_mydancr_funded_commission()",
+      "fingerprint": "011bb8fa2b1f3c36f23810de493a264b",
+      "kind": "trigger",
+      "anon": false,
+      "authenticated": false,
+      "service": false,
+      "callers": [],
+      "owner": "postgres",
+      "securityDefiner": true,
+      "settings": [
+        "search_path=public"
+      ],
+      "acl": "{postgres=X/postgres}"
+    },
+    {
+      "signature": "fail_nats_agent_commission_export(uuid,text,text,jsonb)",
+      "fingerprint": "657774e57f9d6c4199f0c4fa833b7a43",
+      "kind": "boolean",
+      "anon": false,
+      "authenticated": false,
+      "service": true,
+      "callers": [
+        "src/lib/dancr/nats-commission-sync.ts"
+      ],
+      "owner": "postgres",
+      "securityDefiner": true,
+      "settings": [
+        "search_path=public"
+      ],
+      "acl": "{postgres=X/postgres,service_role=X/postgres}"
+    },
+    {
+      "signature": "fail_nats_commission_export(uuid,text,text,jsonb)",
+      "fingerprint": "308f423915b6fb68639a3d76cdd635b5",
+      "kind": "boolean",
+      "anon": false,
+      "authenticated": false,
+      "service": true,
+      "callers": [
+        "src/lib/dancr/nats-commission-sync.ts"
+      ],
+      "owner": "postgres",
+      "securityDefiner": true,
+      "settings": [
+        "search_path=public"
+      ],
+      "acl": "{postgres=X/postgres,service_role=X/postgres}"
+    },
+    {
+      "signature": "finalize_pending_dancer_nfc_enrollment(uuid,uuid,jsonb)",
+      "fingerprint": "f382dae05f592ee9b34cdad4e6c4afe7",
+      "kind": "jsonb",
+      "anon": false,
+      "authenticated": false,
+      "service": true,
+      "callers": [
+        "src/lib/dancr/nfc.ts"
+      ],
+      "owner": "postgres",
+      "securityDefiner": true,
+      "settings": [
+        "search_path=public, pg_temp"
+      ],
+      "acl": "{postgres=X/postgres,service_role=X/postgres}"
+    },
+    {
+      "signature": "finalize_platform_import_safely(uuid,uuid,text,jsonb)",
+      "fingerprint": "726e7836f338223473e3b71a36ee8d4d",
+      "kind": "jsonb",
+      "anon": false,
+      "authenticated": false,
+      "service": true,
+      "callers": [
+        "src/lib/dancr/import-finalization.ts"
+      ],
+      "owner": "postgres",
+      "securityDefiner": false,
+      "settings": [
+        "search_path=\"\"",
+        "lock_timeout=3s",
+        "TimeZone=UTC"
+      ],
+      "acl": "{postgres=X/postgres,service_role=X/postgres}"
+    },
+    {
+      "signature": "flag_dancer_payout_dispatch_review(uuid,text)",
+      "fingerprint": "cd4e5a28519f49dc11c86670e078b215",
+      "kind": "jsonb",
+      "anon": false,
+      "authenticated": false,
+      "service": true,
+      "callers": [
+        "src/lib/dancr/finance-payout-processing.ts"
+      ],
+      "owner": "postgres",
+      "securityDefiner": true,
+      "settings": [
+        "search_path=public"
+      ],
+      "acl": "{postgres=X/postgres,service_role=X/postgres}"
+    },
+    {
+      "signature": "flag_paid_payout_recovery_safely(uuid,text,text)",
+      "fingerprint": "aa3e2c160ed9709ff19934e06dac5f97",
+      "kind": "jsonb",
+      "anon": false,
+      "authenticated": false,
+      "service": true,
+      "callers": [
+        "src/lib/dancr/finance-provider-events.ts"
+      ],
+      "owner": "postgres",
+      "securityDefiner": false,
+      "settings": [
+        "search_path=\"\"",
+        "lock_timeout=3s",
+        "TimeZone=UTC"
+      ],
+      "acl": "{postgres=X/postgres,service_role=X/postgres}"
+    },
+    {
+      "signature": "flag_reversed_nats_commission()",
+      "fingerprint": "b6e2be37f49f6d0e660d6ad432c6b8d5",
+      "kind": "trigger",
+      "anon": false,
+      "authenticated": false,
+      "service": false,
+      "callers": [],
+      "owner": "postgres",
+      "securityDefiner": true,
+      "settings": [
+        "search_path=public"
+      ],
+      "acl": "{postgres=X/postgres}"
+    },
+    {
+      "signature": "flag_voided_nats_agent_commission()",
+      "fingerprint": "817465ee4dbbd01a08e12ba27b2254d6",
+      "kind": "trigger",
+      "anon": false,
+      "authenticated": false,
+      "service": false,
+      "callers": [],
+      "owner": "postgres",
+      "securityDefiner": true,
+      "settings": [
+        "search_path=public"
+      ],
+      "acl": "{postgres=X/postgres}"
+    },
+    {
+      "signature": "gallery_storage_family(text)",
+      "fingerprint": "a2400e2d1276542a034b29698e152f2f",
+      "kind": "text",
+      "anon": false,
+      "authenticated": false,
+      "service": false,
+      "callers": [],
+      "owner": "postgres",
+      "securityDefiner": false,
+      "settings": [
+        "search_path=\"\""
+      ],
+      "acl": "{postgres=X/postgres}"
+    },
+    {
+      "signature": "get_admin_dancer_financial_summary()",
+      "fingerprint": "28ccbac816d751c2a67e55cb8dd89cea",
+      "kind": "jsonb",
+      "anon": false,
+      "authenticated": false,
+      "service": true,
+      "callers": [
+        "src/lib/dancr/finance-reporting.ts"
+      ],
+      "owner": "postgres",
+      "securityDefiner": true,
+      "settings": [
+        "search_path=public"
+      ],
+      "acl": "{postgres=X/postgres,service_role=X/postgres}"
+    },
+    {
+      "signature": "get_dancer_earnings_summary(uuid)",
+      "fingerprint": "5481ad866ea254201e371ae5ea8d430c",
+      "kind": "jsonb",
+      "anon": false,
+      "authenticated": false,
+      "service": true,
+      "callers": [
+        "src/lib/dancr/finance-reporting.ts"
+      ],
+      "owner": "postgres",
+      "securityDefiner": true,
+      "settings": [
+        "search_path=public"
+      ],
+      "acl": "{postgres=X/postgres,service_role=X/postgres}"
+    },
+    {
+      "signature": "get_mydancr_tv_metric_counts(uuid[],timestamp with time zone)",
+      "fingerprint": "f7c115daa49ec58ad85ff8cdd4d65e12",
+      "kind": "jsonb",
+      "anon": false,
+      "authenticated": false,
+      "service": true,
+      "callers": [
+        "src/lib/dancr/tv-metric-counts.ts"
+      ],
+      "owner": "postgres",
+      "securityDefiner": false,
+      "settings": [
+        "search_path=\"\"",
+        "TimeZone=UTC"
+      ],
+      "acl": "{postgres=X/postgres,service_role=X/postgres}"
+    },
+    {
+      "signature": "get_public_dancer_metric_counts(uuid[],uuid[],timestamp with time zone)",
+      "fingerprint": "54a9ea59dcc44818b995a2bcce7f1b3c",
+      "kind": "record",
+      "anon": false,
+      "authenticated": false,
+      "service": true,
+      "callers": [
+        "src/lib/dancr/public.ts"
+      ],
+      "owner": "postgres",
+      "securityDefiner": false,
+      "settings": [
+        "search_path=pg_catalog, public, pg_temp"
+      ],
+      "acl": "{postgres=X/postgres,service_role=X/postgres}"
+    },
+    {
+      "signature": "get_public_venue_metric_counts(uuid[],timestamp with time zone)",
+      "fingerprint": "a9e849fd266e90eff9cd4317b3046c71",
+      "kind": "record",
+      "anon": false,
+      "authenticated": false,
+      "service": true,
+      "callers": [
+        "src/lib/dancr/public.ts"
+      ],
+      "owner": "postgres",
+      "securityDefiner": false,
+      "settings": [
+        "search_path=pg_catalog, public, pg_temp"
+      ],
+      "acl": "{postgres=X/postgres,service_role=X/postgres}"
+    },
+    {
+      "signature": "get_ranking_metric_batch(uuid[],timestamp with time zone)",
+      "fingerprint": "9f19a9617438bbca15251c3817317965",
+      "kind": "record",
+      "anon": false,
+      "authenticated": false,
+      "service": true,
+      "callers": [
+        "src/lib/dancr/ranking-metrics.ts"
+      ],
+      "owner": "postgres",
+      "securityDefiner": true,
+      "settings": [
+        "search_path=public, pg_temp"
+      ],
+      "acl": "{postgres=X/postgres,service_role=X/postgres}"
+    },
+    {
+      "signature": "guard_gallery_storage_reference()",
+      "fingerprint": "4eacfe09a1c51d2a614c4c7934f26741",
+      "kind": "trigger",
+      "anon": false,
+      "authenticated": false,
+      "service": false,
+      "callers": [],
+      "owner": "postgres",
+      "securityDefiner": true,
+      "settings": [
+        "search_path=\"\""
+      ],
+      "acl": "{postgres=X/postgres}"
+    },
+    {
+      "signature": "handle_new_auth_user()",
+      "fingerprint": "a9f314eb30a408e81a0bf3d75e9192eb",
+      "kind": "trigger",
+      "anon": false,
+      "authenticated": false,
+      "service": false,
+      "callers": [],
+      "owner": "postgres",
+      "securityDefiner": true,
+      "settings": [
+        "search_path=public"
+      ],
+      "acl": "{postgres=X/postgres}"
+    },
+    {
+      "signature": "has_active_club_deal(venues)",
+      "fingerprint": "d695658ec212784c67b16cdb5fbc584b",
+      "kind": "boolean",
+      "anon": true,
+      "authenticated": true,
+      "service": true,
+      "callers": [],
+      "owner": "postgres",
+      "securityDefiner": true,
+      "settings": [
+        "search_path=public, pg_temp"
+      ],
+      "acl": "{postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+    },
+    {
+      "signature": "is_admin()",
+      "fingerprint": "aa75a61376ef5a45ec72cb30fb0eb229",
+      "kind": "boolean",
+      "anon": true,
+      "authenticated": true,
+      "service": true,
+      "callers": [],
+      "owner": "postgres",
+      "securityDefiner": true,
+      "settings": [
+        "search_path=public"
+      ],
+      "acl": null
+    },
+    {
+      "signature": "is_nats_eligible_club_deal_earning(uuid)",
+      "fingerprint": "10ede0c3fe1f3e16de1bb3f3efeca214",
+      "kind": "boolean",
+      "anon": false,
+      "authenticated": false,
+      "service": true,
+      "callers": [],
+      "owner": "postgres",
+      "securityDefiner": true,
+      "settings": [
+        "search_path=public, pg_temp"
+      ],
+      "acl": "{postgres=X/postgres,service_role=X/postgres}"
+    },
+    {
+      "signature": "issue_and_confirm_deal_redemption_from_nfc(text,uuid,uuid,uuid,uuid,text,uuid,uuid,uuid,timestamp with time zone,jsonb)",
+      "fingerprint": "935442d2de3b4fe4c2f1fb24a39bb9ca",
+      "kind": "jsonb",
+      "anon": false,
+      "authenticated": false,
+      "service": true,
+      "callers": [
+        "src/lib/dancr/deal-redemption-actions.ts"
+      ],
+      "owner": "postgres",
+      "securityDefiner": true,
+      "settings": [
+        "search_path=public, pg_temp"
+      ],
+      "acl": "{postgres=X/postgres,service_role=X/postgres}"
+    },
+    {
+      "signature": "issue_dancer_venue_verification_token(uuid,uuid,uuid,text,text,timestamp with time zone)",
+      "fingerprint": "d3e3751a13e43cdde82d115e11e440cd",
+      "kind": "venue_dancer_verification_tokens",
+      "anon": false,
+      "authenticated": false,
+      "service": true,
+      "callers": [
+        "src/lib/dancr/venue-affiliations.ts"
+      ],
+      "owner": "postgres",
+      "securityDefiner": true,
+      "settings": [
+        "search_path=public, pg_temp"
+      ],
+      "acl": "{postgres=X/postgres,service_role=X/postgres}"
+    },
+    {
+      "signature": "issue_venue_claim_code(uuid,uuid,text,timestamp with time zone)",
+      "fingerprint": "da59286878418b5d373b9fac90b29ffb",
+      "kind": "venue_claim_codes",
+      "anon": false,
+      "authenticated": false,
+      "service": true,
+      "callers": [
+        "src/lib/dancr/venue-claims.ts"
+      ],
+      "owner": "postgres",
+      "securityDefiner": true,
+      "settings": [
+        "search_path=public, pg_temp"
+      ],
+      "acl": "{postgres=X/postgres,service_role=X/postgres}"
+    },
+    {
+      "signature": "log_qr_redemption_issued()",
+      "fingerprint": "3e5a925daf90df13dcb0da9a8aaafbb5",
+      "kind": "trigger",
+      "anon": false,
+      "authenticated": false,
+      "service": false,
+      "callers": [],
+      "owner": "postgres",
+      "securityDefiner": true,
+      "settings": [
+        "search_path=public"
+      ],
+      "acl": "{postgres=X/postgres}"
+    },
+    {
+      "signature": "mark_dancer_payout_processing(uuid,text)",
+      "fingerprint": "11da35979eae2a357380e60ec8fd2e2e",
+      "kind": "jsonb",
+      "anon": false,
+      "authenticated": false,
+      "service": true,
+      "callers": [
+        "src/lib/dancr/finance-payout-processing.ts"
+      ],
+      "owner": "postgres",
+      "securityDefiner": true,
+      "settings": [
+        "search_path=public"
+      ],
+      "acl": "{postgres=X/postgres,service_role=X/postgres}"
+    },
+    {
+      "signature": "mydancr_placeholder_venue_address(text,text)",
+      "fingerprint": "89a47d26b02c5c4f8fbd8d62746e51c3",
+      "kind": "text",
+      "anon": true,
+      "authenticated": true,
+      "service": true,
+      "callers": [],
+      "owner": "postgres",
+      "securityDefiner": false,
+      "settings": [
+        "search_path=\"\""
+      ],
+      "acl": null
+    },
+    {
+      "signature": "notify_dancer_profile_live()",
+      "fingerprint": "92087e8a10afb15fcc9a7da024dafaa8",
+      "kind": "trigger",
+      "anon": false,
+      "authenticated": false,
+      "service": false,
+      "callers": [],
+      "owner": "postgres",
+      "securityDefiner": true,
+      "settings": [
+        "search_path=public"
+      ],
+      "acl": "{postgres=X/postgres}"
+    },
+    {
+      "signature": "notify_venue_card_live()",
+      "fingerprint": "8470bfc433393beb8a8e3e8771291e49",
+      "kind": "trigger",
+      "anon": false,
+      "authenticated": false,
+      "service": false,
+      "callers": [],
+      "owner": "postgres",
+      "securityDefiner": true,
+      "settings": [
+        "search_path=public"
+      ],
+      "acl": "{postgres=X/postgres}"
+    },
+    {
+      "signature": "prepare_dancer_earning()",
+      "fingerprint": "324fdabcd33d5d5a52440940240aa771",
+      "kind": "trigger",
+      "anon": false,
+      "authenticated": false,
+      "service": false,
+      "callers": [],
+      "owner": "postgres",
+      "securityDefiner": true,
+      "settings": [
+        "search_path=public"
+      ],
+      "acl": "{postgres=X/postgres}"
+    },
+    {
+      "signature": "preserve_dancer_commission_eligibility()",
+      "fingerprint": "a1a5bb61190f4174139ab0fe8558784a",
+      "kind": "trigger",
+      "anon": false,
+      "authenticated": false,
+      "service": false,
+      "callers": [],
+      "owner": "postgres",
+      "securityDefiner": true,
+      "settings": [
+        "search_path=public, pg_temp"
+      ],
+      "acl": "{postgres=X/postgres}"
+    },
+    {
+      "signature": "process_dancer_location_verification(uuid,uuid,text,numeric,numeric,numeric,timestamp with time zone)",
+      "fingerprint": "1bffca6bb214fc454bd7a9410d2f943a",
+      "kind": "jsonb",
+      "anon": false,
+      "authenticated": false,
+      "service": false,
+      "callers": [],
+      "owner": "postgres",
+      "securityDefiner": true,
+      "settings": [
+        "search_path=\"\""
+      ],
+      "acl": "{postgres=X/postgres}"
+    },
+    {
+      "signature": "prohibit_financial_record_delete()",
+      "fingerprint": "2b68c719dc081a4a6d4029bceac646d9",
+      "kind": "trigger",
+      "anon": false,
+      "authenticated": false,
+      "service": false,
+      "callers": [],
+      "owner": "postgres",
+      "securityDefiner": false,
+      "settings": [
+        "search_path=pg_catalog, pg_temp"
+      ],
+      "acl": "{postgres=X/postgres}"
+    },
+    {
+      "signature": "provision_admin_venue_nfc_tag(uuid,uuid,uuid,text,text,text)",
+      "fingerprint": "2cf90b5ffeea947333be9e9dad40e762",
+      "kind": "nfc_tags",
+      "anon": false,
+      "authenticated": false,
+      "service": true,
+      "callers": [
+        "src/lib/dancr/nfc.ts"
+      ],
+      "owner": "postgres",
+      "securityDefiner": true,
+      "settings": [
+        "search_path=public, pg_temp"
+      ],
+      "acl": "{postgres=X/postgres,service_role=X/postgres}"
+    },
+    {
+      "signature": "provision_app_account_safely(uuid,text,text,text,text)",
+      "fingerprint": "4976257073739281a44a64f8a33324f7",
+      "kind": "boolean",
+      "anon": false,
+      "authenticated": false,
+      "service": true,
+      "callers": [
+        "src/lib/dancr/account-profile-recovery.ts",
+        "src/lib/dancr/account-provisioning.ts"
+      ],
+      "owner": "postgres",
+      "securityDefiner": true,
+      "settings": [
+        "search_path=\"\"",
+        "lock_timeout=3s"
+      ],
+      "acl": "{postgres=X/postgres,service_role=X/postgres}"
+    },
+    {
+      "signature": "publish_approved_dancer_gallery_photo(uuid,timestamp with time zone,text,jsonb,jsonb,jsonb,boolean,text,uuid,text)",
+      "fingerprint": "f2d5a9ce425eb0e1596ba68d7cb6e072",
+      "kind": "jsonb",
+      "anon": false,
+      "authenticated": false,
+      "service": true,
+      "callers": [
+        "src/lib/dancr/photo-publication.ts"
+      ],
+      "owner": "postgres",
+      "securityDefiner": false,
+      "settings": [
+        "search_path=\"\"",
+        "lock_timeout=3s"
+      ],
+      "acl": "{postgres=X/postgres,service_role=X/postgres}"
+    },
+    {
+      "signature": "record_account_recovery_event(text,text,text,text,integer,integer,integer)",
+      "fingerprint": "bedb5b32279ac02aca5adbbfcbb54eea",
+      "kind": "boolean",
+      "anon": false,
+      "authenticated": false,
+      "service": true,
+      "callers": [
+        "src/lib/dancr/account-recovery.ts"
+      ],
+      "owner": "postgres",
+      "securityDefiner": true,
+      "settings": [
+        "search_path=public, pg_temp"
+      ],
+      "acl": "{postgres=X/postgres,service_role=X/postgres}"
+    },
+    {
+      "signature": "record_dancer_earning_status_history()",
+      "fingerprint": "14dcd746ada8ad71c2b788121ebc4561",
+      "kind": "trigger",
+      "anon": false,
+      "authenticated": false,
+      "service": false,
+      "callers": [],
+      "owner": "postgres",
+      "securityDefiner": true,
+      "settings": [
+        "search_path=public"
+      ],
+      "acl": "{postgres=X/postgres}"
+    },
+    {
+      "signature": "record_deal_lifecycle_event_safely(text,text,uuid,text,text,text,text)",
+      "fingerprint": "bbb2365ebeaa93a9e072cbffe50026d9",
+      "kind": "jsonb",
+      "anon": false,
+      "authenticated": false,
+      "service": true,
+      "callers": [
+        "src/lib/dancr/deal-redemption-actions.ts"
+      ],
+      "owner": "postgres",
+      "securityDefiner": false,
+      "settings": [
+        "search_path=\"\"",
+        "lock_timeout=3s"
+      ],
+      "acl": "{postgres=X/postgres,service_role=X/postgres}"
+    },
+    {
+      "signature": "record_mydancr_tv_review_decision()",
+      "fingerprint": "48d3e31463c983823ece1833384190a6",
+      "kind": "trigger",
+      "anon": false,
+      "authenticated": false,
+      "service": false,
+      "callers": [],
+      "owner": "postgres",
+      "securityDefiner": true,
+      "settings": [
+        "search_path=public"
+      ],
+      "acl": "{postgres=X/postgres}"
+    },
+    {
+      "signature": "record_nfc_tag_scan(uuid)",
+      "fingerprint": "a7faa6bcea2af9d2689639f9c64c7787",
+      "kind": "nfc_tags",
+      "anon": false,
+      "authenticated": false,
+      "service": true,
+      "callers": [
+        "src/lib/dancr/nfc.ts"
+      ],
+      "owner": "postgres",
+      "securityDefiner": true,
+      "settings": [
+        "search_path=public"
+      ],
+      "acl": "{postgres=X/postgres,service_role=X/postgres}"
+    },
+    {
+      "signature": "redeem_venue_signup_code(uuid,uuid)",
+      "fingerprint": "a10ff7b180f30384f5dd0d6d2e666f3b",
+      "kind": "venues",
+      "anon": false,
+      "authenticated": false,
+      "service": true,
+      "callers": [
+        "src/lib/dancr/venue-claims.ts"
+      ],
+      "owner": "postgres",
+      "securityDefiner": true,
+      "settings": [
+        "search_path=public, pg_temp"
+      ],
+      "acl": "{postgres=X/postgres,service_role=X/postgres}"
+    },
+    {
+      "signature": "redeem_venue_team_invitation(uuid,uuid)",
+      "fingerprint": "10912fcdcd603096e12bbf79edbf3e92",
+      "kind": "venue_team_members",
+      "anon": false,
+      "authenticated": false,
+      "service": true,
+      "callers": [
+        "src/lib/dancr/venue-team.ts"
+      ],
+      "owner": "postgres",
+      "securityDefiner": true,
+      "settings": [
+        "search_path=public"
+      ],
+      "acl": "{postgres=X/postgres,service_role=X/postgres}"
+    },
+    {
+      "signature": "register_and_activate_dancer_tap(uuid,uuid,uuid,jsonb)",
+      "fingerprint": "ec438babea11a4e72938baad10474e2e",
+      "kind": "jsonb",
+      "anon": false,
+      "authenticated": false,
+      "service": true,
+      "callers": [
+        "src/lib/dancr/dancer-tap.ts"
+      ],
+      "owner": "postgres",
+      "securityDefiner": false,
+      "settings": [
+        "search_path=\"\"",
+        "lock_timeout=3s"
+      ],
+      "acl": "{postgres=X/postgres,service_role=X/postgres}"
+    },
+    {
+      "signature": "register_dancer_nfc_enrollment(uuid,uuid,uuid,jsonb)",
+      "fingerprint": "dd876469ac66d123922e9da3fd4e33b3",
+      "kind": "jsonb",
+      "anon": false,
+      "authenticated": false,
+      "service": true,
+      "callers": [],
+      "owner": "postgres",
+      "securityDefiner": true,
+      "settings": [
+        "search_path=public, pg_temp"
+      ],
+      "acl": "{postgres=X/postgres,service_role=X/postgres}"
+    },
+    {
+      "signature": "reject_admin_venue_referral_fee_request(uuid,uuid,text)",
+      "fingerprint": "e2e340f66102968191eb73881ff9c9cf",
+      "kind": "uuid",
+      "anon": false,
+      "authenticated": false,
+      "service": true,
+      "callers": [
+        "src/lib/dancr/referral-fees.ts"
+      ],
+      "owner": "postgres",
+      "securityDefiner": true,
+      "settings": [
+        "search_path=public, pg_temp"
+      ],
+      "acl": "{postgres=X/postgres,service_role=X/postgres}"
+    },
+    {
+      "signature": "reject_retired_payout_provider()",
+      "fingerprint": "accd393bdc4eacd38e47f3729e263250",
+      "kind": "trigger",
+      "anon": false,
+      "authenticated": false,
+      "service": false,
+      "callers": [],
+      "owner": "postgres",
+      "securityDefiner": false,
+      "settings": [
+        "search_path=public"
+      ],
+      "acl": "{postgres=X/postgres}"
+    },
+    {
+      "signature": "release_dancer_payout_batch(uuid,text,text)",
+      "fingerprint": "cac4fd9d6d272e254308f0e489ab91fa",
+      "kind": "jsonb",
+      "anon": false,
+      "authenticated": false,
+      "service": true,
+      "callers": [
+        "src/lib/dancr/finance-provider-events.ts"
+      ],
+      "owner": "postgres",
+      "securityDefiner": true,
+      "settings": [
+        "search_path=public"
+      ],
+      "acl": "{postgres=X/postgres,service_role=X/postgres}"
+    },
+    {
+      "signature": "release_pending_dancer_earnings(integer)",
+      "fingerprint": "743dab4ffd90ddb96b737f025bd24d7b",
+      "kind": "integer",
+      "anon": false,
+      "authenticated": false,
+      "service": true,
+      "callers": [
+        "src/lib/dancr/finance-earning-lifecycle.ts"
+      ],
+      "owner": "postgres",
+      "securityDefiner": true,
+      "settings": [
+        "search_path=public"
+      ],
+      "acl": "{postgres=X/postgres,service_role=X/postgres}"
+    },
+    {
+      "signature": "request_dancer_payout(uuid,text,text,boolean)",
+      "fingerprint": "1eff47d0542cae3b0f335aabd74c0b15",
+      "kind": "jsonb",
+      "anon": false,
+      "authenticated": false,
+      "service": true,
+      "callers": [
+        "src/lib/dancr/dancer-payout-actions.ts"
+      ],
+      "owner": "postgres",
+      "securityDefiner": true,
+      "settings": [
+        "search_path=public"
+      ],
+      "acl": "{postgres=X/postgres,service_role=X/postgres}"
+    },
+    {
+      "signature": "require_enrolled_club_deal_earning()",
+      "fingerprint": "a75c1ea92d335f44fa3b9ef9c9a2f6bb",
+      "kind": "trigger",
+      "anon": false,
+      "authenticated": false,
+      "service": false,
+      "callers": [],
+      "owner": "postgres",
+      "securityDefiner": true,
+      "settings": [
+        "search_path=public, pg_temp"
+      ],
+      "acl": "{postgres=X/postgres}"
+    },
+    {
+      "signature": "require_submitted_dancer_profile_for_active_affiliation()",
+      "fingerprint": "dae3529d41636e7b5aaefa5ab19cf835",
+      "kind": "trigger",
+      "anon": false,
+      "authenticated": false,
+      "service": false,
+      "callers": [],
+      "owner": "postgres",
+      "securityDefiner": true,
+      "settings": [
+        "search_path=public, pg_temp"
+      ],
+      "acl": "{postgres=X/postgres}"
+    },
+    {
+      "signature": "require_venue_request_email_confirmation()",
+      "fingerprint": "0f0b6e93d490fe6a2add27ce27b13b62",
+      "kind": "trigger",
+      "anon": false,
+      "authenticated": false,
+      "service": false,
+      "callers": [],
+      "owner": "postgres",
+      "securityDefiner": true,
+      "settings": [
+        "search_path=public, pg_temp"
+      ],
+      "acl": "{postgres=X/postgres}"
+    },
+    {
+      "signature": "restore_dmca_case(uuid,uuid,text)",
+      "fingerprint": "7e44a85cc2c03473d67541300ee69936",
+      "kind": "jsonb",
+      "anon": false,
+      "authenticated": false,
+      "service": true,
+      "callers": [
+        "src/lib/dancr/dmca.ts",
+        "src/lib/dancr/dmca.ts"
+      ],
+      "owner": "postgres",
+      "securityDefiner": true,
+      "settings": [
+        "search_path=public"
+      ],
+      "acl": "{postgres=X/postgres,service_role=X/postgres}"
+    },
+    {
+      "signature": "review_dancer_content_safely(uuid,uuid,text,uuid,text,text,text,jsonb)",
+      "fingerprint": "98ca354aa34c4128586778fbe839535f",
+      "kind": "jsonb",
+      "anon": false,
+      "authenticated": false,
+      "service": true,
+      "callers": [
+        "src/lib/dancr/content-decisions.ts"
+      ],
+      "owner": "postgres",
+      "securityDefiner": false,
+      "settings": [
+        "search_path=\"\"",
+        "lock_timeout=3s",
+        "TimeZone=UTC"
+      ],
+      "acl": "{postgres=X/postgres,service_role=X/postgres}"
+    },
+    {
+      "signature": "review_dancer_profile_safely(uuid,uuid,text,text,jsonb)",
+      "fingerprint": "e51f89f529d00858c79b53452a2df4ee",
+      "kind": "jsonb",
+      "anon": false,
+      "authenticated": false,
+      "service": true,
+      "callers": [
+        "src/lib/dancr/profile-decisions.ts"
+      ],
+      "owner": "postgres",
+      "securityDefiner": false,
+      "settings": [
+        "search_path=\"\"",
+        "lock_timeout=3s",
+        "TimeZone=UTC"
+      ],
+      "acl": "{postgres=X/postgres,service_role=X/postgres}"
+    },
+    {
+      "signature": "review_venue_ownership_claim(uuid,uuid,text,text)",
+      "fingerprint": "08265e7e4ca1b7ab2c20857ecd0fe7a9",
+      "kind": "venue_ownership_claims",
+      "anon": false,
+      "authenticated": false,
+      "service": true,
+      "callers": [
+        "src/lib/dancr/venue-claims.ts"
+      ],
+      "owner": "postgres",
+      "securityDefiner": true,
+      "settings": [
+        "search_path=public, pg_temp"
+      ],
+      "acl": "{postgres=X/postgres,service_role=X/postgres}"
+    },
+    {
+      "signature": "review_venue_signup_request(uuid,uuid,text,uuid,text,text,timestamp with time zone)",
+      "fingerprint": "b8aae0e938769db00a32d091becc2ebf",
+      "kind": "jsonb",
+      "anon": false,
+      "authenticated": false,
+      "service": true,
+      "callers": [
+        "src/lib/dancr/venue-signup-requests.ts"
+      ],
+      "owner": "postgres",
+      "securityDefiner": true,
+      "settings": [
+        "search_path=public, pg_temp"
+      ],
+      "acl": "{postgres=X/postgres,service_role=X/postgres}"
+    },
+    {
+      "signature": "revoke_dancer_venue_affiliation(uuid,uuid,text)",
+      "fingerprint": "f9bee58343c9cb1a95a7577a19486ab1",
+      "kind": "jsonb",
+      "anon": false,
+      "authenticated": false,
+      "service": true,
+      "callers": [
+        "src/lib/dancr/venue-affiliations.ts"
+      ],
+      "owner": "postgres",
+      "securityDefiner": true,
+      "settings": [
+        "search_path=public, pg_temp"
+      ],
+      "acl": "{postgres=X/postgres,service_role=X/postgres}"
+    },
+    {
+      "signature": "revoke_venue_claim_code(uuid,uuid)",
+      "fingerprint": "5bd4f5131d5280cd55f20a51445c7610",
+      "kind": "venue_claim_codes",
+      "anon": false,
+      "authenticated": false,
+      "service": true,
+      "callers": [
+        "src/lib/dancr/venue-claims.ts"
+      ],
+      "owner": "postgres",
+      "securityDefiner": true,
+      "settings": [
+        "search_path=public, pg_temp"
+      ],
+      "acl": "{postgres=X/postgres,service_role=X/postgres}"
+    },
+    {
+      "signature": "rls_auto_enable()",
+      "fingerprint": "6998ea6b4c2480f5d2e34b5dcf3f8d36",
+      "kind": "event_trigger",
+      "anon": false,
+      "authenticated": false,
+      "service": false,
+      "callers": [],
+      "owner": "postgres",
+      "securityDefiner": true,
+      "settings": [
+        "search_path=pg_catalog"
+      ],
+      "acl": "{postgres=X/postgres}"
+    },
+    {
+      "signature": "rotate_admin_venue_nfc_tag(uuid,uuid,uuid,text)",
+      "fingerprint": "1086a4468a588567c067e8ccc4a63282",
+      "kind": "nfc_tags",
+      "anon": false,
+      "authenticated": false,
+      "service": true,
+      "callers": [
+        "src/lib/dancr/nfc.ts"
+      ],
+      "owner": "postgres",
+      "securityDefiner": true,
+      "settings": [
+        "search_path=public, pg_temp"
+      ],
+      "acl": "{postgres=X/postgres,service_role=X/postgres}"
+    },
+    {
+      "signature": "save_dancer_social_links_safely(uuid,uuid,jsonb,text[])",
+      "fingerprint": "6a29da79d7399da38b32fc3d753753af",
+      "kind": "jsonb",
+      "anon": false,
+      "authenticated": false,
+      "service": true,
+      "callers": [
+        "src/lib/dancr/social-saves.ts"
+      ],
+      "owner": "postgres",
+      "securityDefiner": false,
+      "settings": [
+        "search_path=\"\"",
+        "lock_timeout=3s"
+      ],
+      "acl": "{postgres=X/postgres,service_role=X/postgres}"
+    },
+    {
+      "signature": "set_admin_sales_agent(uuid,uuid,uuid,smallint,text)",
+      "fingerprint": "be9dc4851adb5c20ef35bb111c3e07ed",
+      "kind": "uuid",
+      "anon": false,
+      "authenticated": false,
+      "service": true,
+      "callers": [
+        "src/lib/dancr/sales-agents.ts"
+      ],
+      "owner": "postgres",
+      "securityDefiner": true,
+      "settings": [
+        "search_path=public, pg_temp"
+      ],
+      "acl": "{postgres=X/postgres,service_role=X/postgres}"
+    },
+    {
+      "signature": "set_admin_venue_nfc_tag_status(uuid,uuid,text)",
+      "fingerprint": "c407c516cb1c021243a1d52f491bb362",
+      "kind": "nfc_tags",
+      "anon": false,
+      "authenticated": false,
+      "service": true,
+      "callers": [
+        "src/lib/dancr/nfc.ts"
+      ],
+      "owner": "postgres",
+      "securityDefiner": true,
+      "settings": [
+        "search_path=public, pg_temp"
+      ],
+      "acl": "{postgres=X/postgres,service_role=X/postgres}"
+    },
+    {
+      "signature": "set_admin_venue_referral_fee(uuid,uuid,integer,text,timestamp with time zone,text,text,uuid)",
+      "fingerprint": "e14dde05ed249eae702656ad12c72c49",
+      "kind": "uuid",
+      "anon": false,
+      "authenticated": false,
+      "service": true,
+      "callers": [
+        "src/lib/dancr/referral-fees.ts"
+      ],
+      "owner": "postgres",
+      "securityDefiner": true,
+      "settings": [
+        "search_path=public, pg_temp"
+      ],
+      "acl": "{postgres=X/postgres,service_role=X/postgres}"
+    },
+    {
+      "signature": "set_shift_date_from_starts_at()",
+      "fingerprint": "f9e79d46a086d6dd1afe273912f964c3",
+      "kind": "trigger",
+      "anon": false,
+      "authenticated": false,
+      "service": false,
+      "callers": [],
+      "owner": "postgres",
+      "securityDefiner": false,
+      "settings": [
+        "search_path=public, pg_temp"
+      ],
+      "acl": "{postgres=X/postgres}"
+    },
+    {
+      "signature": "settle_dancer_commission_event(uuid,text)",
+      "fingerprint": "61e52e0b0cbd0b561aa53d76b1ed331a",
+      "kind": "jsonb",
+      "anon": false,
+      "authenticated": false,
+      "service": false,
+      "callers": [
+        "src/lib/dancr/deal-admin-actions.ts"
+      ],
+      "owner": "postgres",
+      "securityDefiner": true,
+      "settings": [
+        "search_path=public"
+      ],
+      "acl": "{postgres=X/postgres}"
+    },
+    {
+      "signature": "settle_deal_revenue_event(uuid,text,text)",
+      "fingerprint": "7e8ceefbca38b6cff1699bfb458844cc",
+      "kind": "jsonb",
+      "anon": false,
+      "authenticated": true,
+      "service": false,
+      "callers": [
+        "src/lib/dancr/deal-admin-actions.ts"
+      ],
+      "owner": "postgres",
+      "securityDefiner": true,
+      "settings": [
+        "search_path=public, auth"
+      ],
+      "acl": "{postgres=X/postgres,authenticated=X/postgres}"
+    },
+    {
+      "signature": "slugify(text)",
+      "fingerprint": "5459ecb305990deb93a45da230ecb252",
+      "kind": "text",
+      "anon": false,
+      "authenticated": false,
+      "service": false,
+      "callers": [],
+      "owner": "postgres",
+      "securityDefiner": false,
+      "settings": [
+        "search_path=pg_catalog, pg_temp"
+      ],
+      "acl": "{postgres=X/postgres}"
+    },
+    {
+      "signature": "submit_dmca_counter_notice_safely(uuid,uuid,jsonb)",
+      "fingerprint": "95d49e30ad70d6c10d9f192582e09eb8",
+      "kind": "jsonb",
+      "anon": false,
+      "authenticated": false,
+      "service": true,
+      "callers": [
+        "src/lib/dancr/dmca-counter-submission.ts"
+      ],
+      "owner": "postgres",
+      "securityDefiner": false,
+      "settings": [
+        "search_path=\"\"",
+        "lock_timeout=3s"
+      ],
+      "acl": "{postgres=X/postgres,service_role=X/postgres}"
+    },
+    {
+      "signature": "sync_media_like_count()",
+      "fingerprint": "3c7e2387fc85f30488e72983450371cc",
+      "kind": "trigger",
+      "anon": false,
+      "authenticated": false,
+      "service": false,
+      "callers": [],
+      "owner": "postgres",
+      "securityDefiner": true,
+      "settings": [
+        "search_path=pg_catalog, public"
+      ],
+      "acl": "{postgres=X/postgres}"
+    },
+    {
+      "signature": "sync_verified_auth_email()",
+      "fingerprint": "ccfb7b2ce67a3503eaadf1d5b101fdcc",
+      "kind": "trigger",
+      "anon": false,
+      "authenticated": false,
+      "service": false,
+      "callers": [],
+      "owner": "postgres",
+      "securityDefiner": true,
+      "settings": [
+        "search_path=\"\""
+      ],
+      "acl": "{postgres=X/postgres}"
+    },
+    {
+      "signature": "touch_venue_club_deal_request_updated_at()",
+      "fingerprint": "a98a7cc9a6cdd3f29be8ba96658bd506",
+      "kind": "trigger",
+      "anon": false,
+      "authenticated": false,
+      "service": false,
+      "callers": [],
+      "owner": "postgres",
+      "securityDefiner": false,
+      "settings": [
+        "search_path=public, pg_temp"
+      ],
+      "acl": "{postgres=X/postgres}"
+    },
+    {
+      "signature": "touch_venue_pilot_night_report_updated_at()",
+      "fingerprint": "67342f2c7a8c669495641111cd2df8d0",
+      "kind": "trigger",
+      "anon": false,
+      "authenticated": false,
+      "service": false,
+      "callers": [],
+      "owner": "postgres",
+      "securityDefiner": false,
+      "settings": [
+        "search_path=public"
+      ],
+      "acl": "{postgres=X/postgres}"
+    },
+    {
+      "signature": "touch_venue_signup_request_updated_at()",
+      "fingerprint": "9766149748fe94422e2f7829e6ee1563",
+      "kind": "trigger",
+      "anon": false,
+      "authenticated": false,
+      "service": false,
+      "callers": [],
+      "owner": "postgres",
+      "securityDefiner": false,
+      "settings": [
+        "search_path=public"
+      ],
+      "acl": "{postgres=X/postgres}"
+    },
+    {
+      "signature": "transition_dancer_publication_safely(uuid,text,uuid)",
+      "fingerprint": "0c6d40bbafb36514bb03a65b4efb3e49",
+      "kind": "jsonb",
+      "anon": false,
+      "authenticated": false,
+      "service": true,
+      "callers": [
+        "src/lib/dancr/profile-publication.ts"
+      ],
+      "owner": "postgres",
+      "securityDefiner": true,
+      "settings": [
+        "search_path=public, pg_temp"
+      ],
+      "acl": "{postgres=X/postgres,service_role=X/postgres}"
+    },
+    {
+      "signature": "unique_dancer_slug(text,uuid)",
+      "fingerprint": "5e7885d707a8b6c394dd4c2bc9b0913a",
+      "kind": "text",
+      "anon": false,
+      "authenticated": false,
+      "service": false,
+      "callers": [],
+      "owner": "postgres",
+      "securityDefiner": false,
+      "settings": [
+        "search_path=pg_catalog, pg_temp"
+      ],
+      "acl": "{postgres=X/postgres}"
+    },
+    {
+      "signature": "upsert_venue_pilot_night_report(uuid,uuid,date,integer,integer,text)",
+      "fingerprint": "ecc99ffd5471a92fcdb66060126052ae",
+      "kind": "venue_pilot_night_reports",
+      "anon": false,
+      "authenticated": false,
+      "service": true,
+      "callers": [
+        "src/lib/dancr/pilot-analytics.ts"
+      ],
+      "owner": "postgres",
+      "securityDefiner": true,
+      "settings": [
+        "search_path=public"
+      ],
+      "acl": "{postgres=X/postgres,service_role=X/postgres}"
+    },
+    {
+      "signature": "validate_mydancr_tv_video_links()",
+      "fingerprint": "dd497e44e00343d3c36f9de033bda5f1",
+      "kind": "trigger",
+      "anon": false,
+      "authenticated": false,
+      "service": false,
+      "callers": [],
+      "owner": "postgres",
+      "securityDefiner": true,
+      "settings": [
+        "search_path=public"
+      ],
+      "acl": "{postgres=X/postgres}"
+    },
+    {
+      "signature": "validate_sales_agent_hierarchy()",
+      "fingerprint": "6aea8fd29aa4737924faaeb2f4ef936a",
+      "kind": "trigger",
+      "anon": false,
+      "authenticated": false,
+      "service": false,
+      "callers": [],
+      "owner": "postgres",
+      "securityDefiner": false,
+      "settings": [
+        "search_path=public, pg_temp"
+      ],
+      "acl": "{postgres=X/postgres}"
+    },
+    {
+      "signature": "void_agent_commissions_with_revenue()",
+      "fingerprint": "d8b428c20b6d686fee8b3911a17aca91",
+      "kind": "trigger",
+      "anon": false,
+      "authenticated": false,
+      "service": false,
+      "callers": [],
+      "owner": "postgres",
+      "securityDefiner": true,
+      "settings": [
+        "search_path=public"
+      ],
+      "acl": "{postgres=X/postgres}"
+    },
+    {
+      "signature": "void_generated_deal_redemption(uuid,text)",
+      "fingerprint": "24f6800dc2e788f604088acf25e10105",
+      "kind": "jsonb",
+      "anon": false,
+      "authenticated": true,
+      "service": false,
+      "callers": [
+        "src/lib/dancr/deal-admin-actions.ts"
+      ],
+      "owner": "postgres",
+      "securityDefiner": true,
+      "settings": [
+        "search_path=public, auth"
+      ],
+      "acl": "{postgres=X/postgres,authenticated=X/postgres}"
+    }
+  ]
+}

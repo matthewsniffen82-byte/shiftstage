@@ -1,0 +1,263 @@
+{
+  "capturedAt": "2026-09-12T04:16:27.190023+00:00",
+  "scope": "Freeze verified source content only. Does not apply SQL, repair ledger entries, or certify replay. Existing 142 manifest entries are unchanged.",
+  "previousFrozenFiles": 142,
+  "entries": [
+    {
+      "file": "20260910054000_add_atomic_social_link_saves.sql",
+      "version": "20260910054000",
+      "sha256": "dcb5937cd13feca1a4a9ad4dc5094df0170b9b61989d26f9c8c86632241c536d",
+      "ledgerSqlMd5": "44f18eb0562bb649497858193f5387bc"
+    },
+    {
+      "file": "20260910061000_add_atomic_content_review_decisions.sql",
+      "version": "20260910061000",
+      "sha256": "911a97c634d97b4f6603a507532bf80113f794a557ed23f31f2a92bb0430eb5a",
+      "ledgerSqlMd5": "44ba6fc8005bc424e61d5c74a47ca05a"
+    },
+    {
+      "file": "20260910070000_add_atomic_profile_review_decisions.sql",
+      "version": "20260910070000",
+      "sha256": "055e6ff41612231d7b7f83d90ebdfd011170ed4419f2b6203456ef4a791c2c37",
+      "ledgerSqlMd5": "bb2ea22d2940d7fcd9c4137a15adc603"
+    },
+    {
+      "file": "20260910075000_add_atomic_import_finalization.sql",
+      "version": "20260910075000",
+      "sha256": "1eccee0c2312b792f7ebd5588788a4cf0be1319a41d7a308fbc30fbdf2b1fb44",
+      "ledgerSqlMd5": "ee6245076ffcd67a146fb3b690aeebcf"
+    },
+    {
+      "file": "20260910082000_add_atomic_dancer_tap_entry.sql",
+      "version": "20260910082000",
+      "sha256": "ed565beb3ac0749c4f9ad699b741c4e6059e59312ca404b72aea8d8b3e7a4ba2",
+      "ledgerSqlMd5": "f5dd74a55cac0e6397799561f657e7d8"
+    },
+    {
+      "file": "20260910091000_add_payment_webhook_attempt_receipts.sql",
+      "version": "20260910091000",
+      "sha256": "59f0d438938dadac0160f1bb7f277aa59598442dd3f55d3a54a23c67476f61a2",
+      "ledgerSqlMd5": "d811a581f7bb886f97414fde80484211"
+    },
+    {
+      "file": "20260910092022_add_gallery_reference_history.sql",
+      "version": "20260910092022",
+      "sha256": "1659161135a42e7d857a103175687feb8b47799c79a7c0e8d79d003d71e6e7b6",
+      "ledgerSqlMd5": "4dadec68c5b2f903dc4351adc7088b36"
+    },
+    {
+      "file": "20260910094000_add_atomic_payout_dispatch_claim.sql",
+      "version": "20260910094000",
+      "sha256": "8b2b283ca3f37607915efddd003e3b1e59ab107266b57ef9f9804dceb440d8b5",
+      "ledgerSqlMd5": "dc465f5fde10fc84d0b75c160a085364"
+    },
+    {
+      "file": "20260910102400_claim_invoice_revenue_atomically.sql",
+      "version": "20260910102400",
+      "sha256": "e53908b529b19f4c2221b19918c33a640bb4c5b75686021a62b676f8922eb07c",
+      "ledgerSqlMd5": "e01bbdf1ba0ececd4176344543d139a4"
+    },
+    {
+      "file": "20260910105400_add_bounded_tv_metric_aggregation.sql",
+      "version": "20260910105400",
+      "sha256": "3f34dfe88471cca6c2bf78a15ee1a3fe2eca465494841fe636883ac6a6fdc9f5",
+      "ledgerSqlMd5": "572e4360051937c83437c7e8c301d8f2"
+    },
+    {
+      "file": "20260910112700_remove_two_redundant_indexes.sql",
+      "version": "20260910112700",
+      "sha256": "fd02610ce5a3fe47a1e7f6135d51d10a23425ea6ef328c002e46eca15d7de089",
+      "ledgerSqlMd5": "727731836ef9eb42b1aa72f03a040caf"
+    },
+    {
+      "file": "20260910125000_add_gallery_storage_retirement_guards.sql",
+      "version": "20260910125000",
+      "sha256": "691c91626b8e3aa81da3f040bb9ed10d0b373d823248984c2e841cb10c497c58",
+      "ledgerSqlMd5": "ad5b4ec426b5254a7cc28ea3c02aa515"
+    },
+    {
+      "file": "20260910134200_support_canonical_avatar_retirement.sql",
+      "version": "20260910134200",
+      "sha256": "5632430559d3f81f64c3af75291cae211b6e2c0d91ec7933ffd59424f0458d92",
+      "ledgerSqlMd5": "8b4e062dfca276df20159b0bc81b1721"
+    },
+    {
+      "file": "20260910153000_scope_payout_retry_to_dancer.sql",
+      "version": "20260910153000",
+      "sha256": "08bc29bebb4aa60633d22beaa5a9aaade8f0ebdf5130d81bf4c1deaf958e25fa",
+      "ledgerSqlMd5": "df81c14f9eaf0fdbbad5790c7688f35e"
+    },
+    {
+      "file": "20260910160000_add_atomic_paid_payout_recovery.sql",
+      "version": "20260910160000",
+      "sha256": "dba38ab2bd981a9b047b4e4085061c9206c13a1ba617d4de17274ee541c71fc0",
+      "ledgerSqlMd5": "240fe43e4341c61d626c013ac0bb9037"
+    },
+    {
+      "file": "20260910165000_snapshot_cashier_agent_allocations.sql",
+      "version": "20260910165000",
+      "sha256": "718d6bd224c17d81f8c8e2a7881afa3ac53cf75fce040fb0999a10ac5f8805e5",
+      "ledgerSqlMd5": "78adb595d233d4d216e10432052aa90a"
+    },
+    {
+      "file": "20260910172000_serialize_dancer_nfc_enrollment.sql",
+      "version": "20260910172000",
+      "sha256": "6001c96c8a7caaa5a828e2581f9ab6a79716d67559298ea7d73ce8e8fc8fa031",
+      "ledgerSqlMd5": "5c4fe70307f6dcf3027be2a513881400"
+    }
+  ],
+  "currentFunctionBodyChecks": [
+    {
+      "signature": "capture_gallery_media_reference_history()",
+      "fingerprint": "a7d1c2f8c56b50b97835f34db25e3b97",
+      "latestMigrationBodyMatches": true
+    },
+    {
+      "signature": "claim_dancer_payout_dispatch(uuid)",
+      "fingerprint": "821f2959d65d722b559158276baccef4",
+      "latestMigrationBodyMatches": true
+    },
+    {
+      "signature": "claim_gallery_storage_retirement(uuid,text)",
+      "fingerprint": "264504ed81c831f6f76940030147470e",
+      "latestMigrationBodyMatches": true
+    },
+    {
+      "signature": "claim_payment_webhook_attempt(text,text,text,text)",
+      "fingerprint": "0109cad00c3e3436b0f71eea1d9cc28c",
+      "latestMigrationBodyMatches": true
+    },
+    {
+      "signature": "confirm_deal_redemption_from_nfc(text,uuid,uuid,jsonb)",
+      "fingerprint": "21979c6d6db75319a656ec793cb7f51f",
+      "latestMigrationBodyMatches": true
+    },
+    {
+      "signature": "create_club_invoice_draft(uuid,date,date,timestamp with time zone,uuid[])",
+      "fingerprint": "3e0197ccd3d715c4322bd340eba69367",
+      "latestMigrationBodyMatches": true
+    },
+    {
+      "signature": "finalize_pending_dancer_nfc_enrollment(uuid,uuid,jsonb)",
+      "fingerprint": "f382dae05f592ee9b34cdad4e6c4afe7",
+      "latestMigrationBodyMatches": true
+    },
+    {
+      "signature": "finalize_platform_import_safely(uuid,uuid,text,jsonb)",
+      "fingerprint": "726e7836f338223473e3b71a36ee8d4d",
+      "latestMigrationBodyMatches": true
+    },
+    {
+      "signature": "flag_paid_payout_recovery_safely(uuid,text,text)",
+      "fingerprint": "aa3e2c160ed9709ff19934e06dac5f97",
+      "latestMigrationBodyMatches": true
+    },
+    {
+      "signature": "gallery_storage_family(text)",
+      "fingerprint": "a2400e2d1276542a034b29698e152f2f",
+      "latestMigrationBodyMatches": true
+    },
+    {
+      "signature": "get_mydancr_tv_metric_counts(uuid[],timestamp with time zone)",
+      "fingerprint": "f7c115daa49ec58ad85ff8cdd4d65e12",
+      "latestMigrationBodyMatches": true
+    },
+    {
+      "signature": "guard_gallery_storage_reference()",
+      "fingerprint": "4eacfe09a1c51d2a614c4c7934f26741",
+      "latestMigrationBodyMatches": true
+    },
+    {
+      "signature": "register_and_activate_dancer_tap(uuid,uuid,uuid,jsonb)",
+      "fingerprint": "ec438babea11a4e72938baad10474e2e",
+      "latestMigrationBodyMatches": true
+    },
+    {
+      "signature": "register_dancer_nfc_enrollment(uuid,uuid,uuid,jsonb)",
+      "fingerprint": "dd876469ac66d123922e9da3fd4e33b3",
+      "latestMigrationBodyMatches": true
+    },
+    {
+      "signature": "request_dancer_payout(uuid,text,text,boolean)",
+      "fingerprint": "1eff47d0542cae3b0f335aabd74c0b15",
+      "latestMigrationBodyMatches": true
+    },
+    {
+      "signature": "review_dancer_content_safely(uuid,uuid,text,uuid,text,text,text,jsonb)",
+      "fingerprint": "98ca354aa34c4128586778fbe839535f",
+      "latestMigrationBodyMatches": true
+    },
+    {
+      "signature": "review_dancer_profile_safely(uuid,uuid,text,text,jsonb)",
+      "fingerprint": "e51f89f529d00858c79b53452a2df4ee",
+      "latestMigrationBodyMatches": true
+    },
+    {
+      "signature": "save_dancer_social_links_safely(uuid,uuid,jsonb,text[])",
+      "fingerprint": "6a29da79d7399da38b32fc3d753753af",
+      "latestMigrationBodyMatches": true
+    }
+  ],
+  "schemaChecks": {
+    "capturedAt": "2026-09-12T04:43:52.243183+00:00",
+    "checks": [
+      {
+        "table": "gallery_media_reference_history",
+        "rls": true,
+        "anonymousSelect": false,
+        "authenticatedSelect": false
+      },
+      {
+        "table": "gallery_storage_retirements",
+        "rls": true,
+        "anonymousSelect": false,
+        "authenticatedSelect": false
+      },
+      {
+        "removedIndex": "club_invoice_items_revenue_idx",
+        "absent": true
+      },
+      {
+        "removedIndex": "venues_owner_user_id_idx",
+        "absent": true
+      },
+      {
+        "retainedUniqueIndex": "club_invoice_items_revenue_event_once_key",
+        "validReadyUnique": true
+      },
+      {
+        "retainedUniqueIndex": "venues_owner_user_id_key",
+        "validReadyUnique": true
+      },
+      {
+        "addedIndex": "gallery_media_reference_history_profile_event_idx",
+        "validReady": true
+      },
+      {
+        "constraint": "club_invoice_items_revenue_event_once_key",
+        "definition": "UNIQUE (revenue_event_id)",
+        "validated": true
+      },
+      {
+        "trigger": "dancer_photos_capture_media_reference",
+        "definition": "CREATE TRIGGER dancer_photos_capture_media_reference AFTER INSERT OR DELETE OR UPDATE OF id, dancer_id, storage_path ON public.dancer_photos FOR EACH ROW EXECUTE FUNCTION capture_gallery_media_reference_history()"
+      },
+      {
+        "trigger": "dancer_profiles_capture_avatar_reference",
+        "definition": "CREATE TRIGGER dancer_profiles_capture_avatar_reference AFTER INSERT OR DELETE OR UPDATE OF id, avatar_storage_path ON public.dancer_profiles FOR EACH ROW EXECUTE FUNCTION capture_gallery_media_reference_history()"
+      },
+      {
+        "trigger": "dancer_photos_guard_storage_reference",
+        "definition": "CREATE TRIGGER dancer_photos_guard_storage_reference AFTER INSERT OR UPDATE ON public.dancer_photos FOR EACH ROW EXECUTE FUNCTION guard_gallery_storage_reference()"
+      },
+      {
+        "trigger": "dancer_profiles_guard_storage_reference",
+        "definition": "CREATE TRIGGER dancer_profiles_guard_storage_reference AFTER INSERT OR UPDATE ON public.dancer_profiles FOR EACH ROW EXECUTE FUNCTION guard_gallery_storage_reference()"
+      },
+      {
+        "trigger": "image_moderation_guard_storage_reference",
+        "definition": "CREATE TRIGGER image_moderation_guard_storage_reference AFTER INSERT OR UPDATE ON public.image_moderation_records FOR EACH ROW EXECUTE FUNCTION guard_gallery_storage_reference()"
+      }
+    ]
+  }
+}
