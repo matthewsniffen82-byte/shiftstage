@@ -16,6 +16,12 @@ boolean results, never HTML bodies, script contents, cookies or nonce values.
 Failure produces a nonzero exit status. It is an on-demand tool, not a watcher
 or a scheduled task.
 
+An explicit Vercel edge challenge now stops the check immediately, cancels the
+response body and returns `EDGE_CHALLENGE` with `ok: false`. It neither examines
+checkpoint HTML as an application policy nor sends the remaining requests.
+This is blocked verification, not success. Ordinary application denials and
+transport failures retain their failure classifications.
+
 The private-page list is derived from existing admin, dashboard and account
 page files and checked against middleware coverage. All eleven pages are
 examined, with the dedicated account sign-in requested twice to check nonce
@@ -63,6 +69,27 @@ they are not an exhaustive live penetration test.
 
 ## Limits and delivery
 
+The initial Step 7 commit `def7ef5f3eb30cdc2fb6ae0f59b92fd9e34e81b1` reached
+[exact Vercel success](https://vercel.com/ai-movie-jobs/shiftstage/FuFw9ULYkxBYZnREujZgXFaQHtaa).
+Its 08:30:01 UTC post-deployment check received 23 Security Checkpoint responses.
+Read-only Vercel Firewall inspection identified an automatic System Rule
+Challenge beginning 08:23 UTC, with zero custom rules and Bot Protection
+inactive. These responses did not establish an application CSP failure.
+Automated site probes were paused. At 08:42:18 UTC, one bounded GET using the
+same client again received the normal 200 homepage with its application policy.
+No provider setting, proxy, user-agent, cookie or credential was changed and
+no support message was sent. The root check alone does not replace the final
+post-deployment boundary and health checks.
+
+This correction teaches the checker to stop and identify that condition.
+Eight synthetic regressions exercise challenges during document, redirect and
+preflight checks, cancellation failure, ordinary denial/transport failures and
+the full successful response set. Five fail against the preceding checker;
+all eight pass after correction. They make no provider requests. Vercel's
+[firewall concepts](https://vercel.com/docs/vercel-firewall/firewall-concepts)
+explain that challenged traffic is verified at the edge before reaching the
+application. A checkpoint response is never counted as application evidence.
+
 The common policy still permits inline scripts on other Next.js document
 surfaces. Inline styles and broad HTTPS image/media allowances also remain.
 Extending nonces to other pages requires rendering, caching and browser
@@ -89,7 +116,7 @@ provider-setting, UI or billing change is included.
 
 Final release validation:
 
-On `ffc628e230200c29ab6c602071b70ad1e3f3774b` plus this step, all **6,843 tests** passed
+On `def7ef5f3eb30cdc2fb6ae0f59b92fd9e34e81b1` plus this step, all **6,851 tests** passed
 with no failures, skips, cancellations or todo. Standalone TypeScript, full
 zero-warning lint and the production build passed on Node v24.21.0.
 The repository's canonical release gate also passed dependency and registry

@@ -8,6 +8,17 @@ const root = new URL("../", import.meta.url);
 const tokenHeaders = ["x-dancr-session-access", "x-dancr-session-refresh", "x-dancr-session-expires"];
 const corsHeaders = ["access-control-allow-origin", "access-control-allow-credentials", "access-control-allow-headers", "access-control-expose-headers"];
 
+class EdgeChallengeError extends Error {}
+
+async function fetchForVerification(url, options) {
+  const response = await fetch(url, options);
+  if (response.headers.get("x-vercel-mitigated") === "challenge") {
+    await response.body?.cancel().catch(() => undefined);
+    throw new EdgeChallengeError("The edge challenged this verification request.");
+  }
+  return response;
+}
+
 function scriptAttributes(source) {
   const attributes = new Map();
   const pattern = /([^\s"'<>/=]+)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'=<>\x60]+)))?/g;
@@ -80,6 +91,8 @@ export async function checkBrowserBoundaries() {
       .map(path => `/${area}${path === "page.tsx" ? "" : "/" + path.slice(0, -"/page.tsx".length)}`);
   }).sort();
   const results = [], nonces = new Set();
+  const summary = () => ({ capturedUtc: new Date().toISOString(), origin: MYDANCR_PUBLIC_APP_URL,
+    privateDocuments: paths.length, ok: results.every(result => result.ok), requests: results.length, results });
   // The ordinary account entry redirects to the homepage. This synthetic value
   // selects its dedicated sign-in HTML; fetching HTML executes no client code.
   const accountDocument = "/account?venue_nfc=" + "browser-boundary-verification-".padEnd(48, "x");
@@ -92,7 +105,7 @@ export async function checkBrowserBoundaries() {
   // Fixed public origin, no credentials, GET/OPTIONS only, no automatic retries.
   for (const document of documents) {
     try {
-      const response = await fetch(MYDANCR_PUBLIC_APP_URL + document.path, {
+      const response = await fetchForVerification(MYDANCR_PUBLIC_APP_URL + document.path, {
         cache: "no-store", redirect: "error", signal: AbortSignal.timeout(15_000),
         headers: { accept: "text/html" },
       });
@@ -104,12 +117,14 @@ export async function checkBrowserBoundaries() {
       }
       results.push({ path: document.path, method: "GET", status: response.status, inlineScriptCount: inspected.inlineScriptCount,
         checks: inspected.checks, ok: Object.values(inspected.checks).every(Boolean) });
-    } catch {
-      results.push({ path: document.path, method: "GET", ok: false, error: "DOCUMENT_CHECK_FAILED" });
+    } catch (error) {
+      const challenged = error instanceof EdgeChallengeError;
+      results.push({ path: document.path, method: "GET", ok: false, error: challenged ? "EDGE_CHALLENGE" : "DOCUMENT_CHECK_FAILED" });
+      if (challenged) return summary();
     }
   }
   try {
-    const response = await fetch(MYDANCR_PUBLIC_APP_URL + "/account", {
+    const response = await fetchForVerification(MYDANCR_PUBLIC_APP_URL + "/account", {
       redirect: "manual", cache: "no-store", signal: AbortSignal.timeout(15_000),
     });
     await response.body?.cancel();
@@ -119,22 +134,29 @@ export async function checkBrowserBoundaries() {
       ok: response.status === 307 && destination?.origin === MYDANCR_PUBLIC_APP_URL
         && destination.pathname === "/" && destination.searchParams.get("auth") === "login"
         && tokenHeaders.every(name => !response.headers.has(name)) });
-  } catch { results.push({ path: "/account", method: "GET", ok: false, error: "ACCOUNT_REDIRECT_CHECK_FAILED" }); }
+  } catch (error) {
+    const challenged = error instanceof EdgeChallengeError;
+    results.push({ path: "/account", method: "GET", ok: false, error: challenged ? "EDGE_CHALLENGE" : "ACCOUNT_REDIRECT_CHECK_FAILED" });
+    if (challenged) return summary();
+  }
   for (const path of ["/api/account", "/api/admin/sales-agents", "/api/auth", "/api/stripe/webhook"]) {
     for (const origin of ["https://unrelated.example", "null"]) {
       try {
-        const response = await fetch(MYDANCR_PUBLIC_APP_URL + path, {
+        const response = await fetchForVerification(MYDANCR_PUBLIC_APP_URL + path, {
           method: "OPTIONS", redirect: "error", signal: AbortSignal.timeout(15_000),
           headers: { origin, "access-control-request-method": "POST", "access-control-request-headers": "authorization,content-type,x-dancr-refresh-token" },
         });
         await response.body?.cancel();
         results.push({ path, method: "OPTIONS", origin, status: response.status,
           ok: response.status === 204 && corsHeaders.every(name => !response.headers.has(name)) });
-      } catch { results.push({ path, method: "OPTIONS", origin, ok: false, error: "PREFLIGHT_CHECK_FAILED" }); }
+      } catch (error) {
+        const challenged = error instanceof EdgeChallengeError;
+        results.push({ path, method: "OPTIONS", origin, ok: false, error: challenged ? "EDGE_CHALLENGE" : "PREFLIGHT_CHECK_FAILED" });
+        if (challenged) return summary();
+      }
     }
   }
-  return { capturedUtc: new Date().toISOString(), origin: MYDANCR_PUBLIC_APP_URL, privateDocuments: paths.length,
-    ok: results.every(result => result.ok), requests: results.length, results };
+  return summary();
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
