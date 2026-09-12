@@ -98,6 +98,9 @@ pretest/prebuild generators ran and postbuild confirmed
 duplicate lint pass was omitted after full standalone lint. All thirty live
 readiness checks and nineteen dated metadata comparisons passed.
 
-Exact-commit push/deployment and post-release health are the remaining delivery
-checks at publication. The final delivery receipt is retained under
-`D:\Codex\MyDancr-validation-2026-09-11\arch-stability` after publication.
+Published as `5e04e6359671af0cbccbe8e1604aed71c306e00b` with
+[exact Vercel success](https://vercel.com/ai-movie-jobs/shiftstage/DTTKfvKxd1HgzKhH34K2U5VRjbJy).
+At 2026-09-12 05:26:35 UTC, clean local HEAD and remote main matched; production
+root returned 200, both health endpoints returned 200/ok, and anonymous administrative
+monitoring returned 401. The final receipt is
+`D:\Codex\MyDancr-validation-2026-09-11\arch-stability\step4-delivery.json`.

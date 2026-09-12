@@ -33,15 +33,17 @@ export function readBrowserAuthSession(): BrowserAuthSession | null {
   if (typeof window === "undefined") return null;
 
   try {
-    const parsed = JSON.parse(
-      window.localStorage.getItem(BROWSER_AUTH_SESSION_KEY) || "null",
-    );
-    return parsed && typeof parsed === "object" && !Array.isArray(parsed)
-      ? parsed as BrowserAuthSession
-      : null;
+    return parseBrowserAuthSession(window.localStorage.getItem(BROWSER_AUTH_SESSION_KEY));
   } catch {
     return null;
   }
+}
+
+function parseBrowserAuthSession(raw: string | null): BrowserAuthSession | null {
+  const parsed = JSON.parse(raw || "null");
+  return parsed && typeof parsed === "object" && !Array.isArray(parsed)
+    ? parsed as BrowserAuthSession
+    : null;
 }
 
 export function readBrowserAccessToken(expectedRole?: BrowserSessionRole) {
@@ -82,23 +84,34 @@ export function isCurrentBrowserSession(expected?: BrowserSessionRequest | null)
 }
 
 export function persistRefreshedBrowserAuthSession(session: unknown, expected?: BrowserSessionRequest | null) {
-  if (!session || typeof session !== "object" || Array.isArray(session)) return false;
+  if (typeof window === "undefined" || !session || typeof session !== "object" || Array.isArray(session)) return false;
 
   const next = session as BrowserAuthSession;
   if (typeof next.accessToken !== "string" || !next.accessToken) return false;
-  if (!isCurrentBrowserSession(expected)) return false;
-  const current = readBrowserAuthSession()!;
 
-  return persistBrowserAuthSession({
-    ...current,
-    accessToken: next.accessToken,
-    refreshToken: typeof next.refreshToken === "string"
-      ? next.refreshToken
-      : current.refreshToken,
-    expiresAt: typeof next.expiresAt === "number"
-      ? next.expiresAt
-      : current.expiresAt,
-  });
+  try {
+    const snapshot = window.localStorage.getItem(BROWSER_AUTH_SESSION_KEY);
+    const current = parseBrowserAuthSession(snapshot);
+    if (!expected?.accessToken || !current || current.accessToken !== expected.accessToken
+      || (current.refreshToken || "") !== (expected.refreshToken || "")) return false;
+    const serialized = JSON.stringify({
+      ...current,
+      accessToken: next.accessToken,
+      refreshToken: typeof next.refreshToken === "string" ? next.refreshToken : current.refreshToken,
+      expiresAt: typeof next.expiresAt === "number" ? next.expiresAt : current.expiresAt,
+    });
+    const previousPushAccount = window.localStorage.getItem("mydancr:push-account");
+    // Keep account metadata from the same snapshot as the checked credentials.
+    // Compare again before writing; these checks are not a lock across tabs.
+    if (window.localStorage.getItem(BROWSER_AUTH_SESSION_KEY) !== snapshot) return false;
+    window.localStorage.setItem(BROWSER_AUTH_SESSION_KEY, serialized);
+    // Preserve successful-save cleanup; a rejected refresh must not clear the
+    // push identity belonging to a newer sign-in.
+    if (previousPushAccount && previousPushAccount !== current.account?.id) void clearCustomerPushDevice();
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 export function clearBrowserAuthSession() {
