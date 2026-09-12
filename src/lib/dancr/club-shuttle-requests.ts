@@ -115,7 +115,7 @@ async function handoffRequest(client: SupabaseClient, receipt: ShuttleReceipt, a
         deliverNotificationRows(client, receipt.notification_rows.map(row => ({ ...row, deliveryId: row.id })), { email: false })
           .catch(() => { console.warn("SHUTTLE_PUSH_UNAVAILABLE"); return { push: 0 }; }),
         receipt.venue_phone ? sendShuttlePhoneAlert({ phone: receipt.venue_phone,
-          body: receipt.notification_rows[0].body, requestId: notificationId(receipt.id, receipt.venue_id) })
+          requestId: notificationId(receipt.id, receipt.venue_id) })
           .catch(() => { console.warn("SHUTTLE_PHONE_UNAVAILABLE"); return false; }) : Promise.resolve(false),
       ]);
     };

@@ -47,7 +47,8 @@ function load(respond, { configured = true, smsConfigured = false, signal = new 
       return respond(url, init);
     },
     require: name => name === "./public-app-url" ? { publicAppUrl: () => "https://synthetic.invalid" }
-      : name === "./customer-notification-preferences" ? { followAlertKey: () => null } : {},
+      : name === "./customer-notification-preferences" ? { followAlertKey: () => null }
+      : name === "./customer-notification-delivery" ? { notificationPushExternalId: id => `synthetic-opaque-${id}` } : {},
   });
   const client = { from(table) {
     assert.equal(table, "app_users");
