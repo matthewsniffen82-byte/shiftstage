@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { apiError } from "@/src/lib/api";
 import { getDancerProfile } from "@/src/lib/dancr/public";
-import { PUBLIC_DYNAMIC_CACHE_CONTROL } from "@/src/lib/dancr/public-cache-policy";
+import { PRIVATE_NO_STORE_CACHE_CONTROL, PUBLIC_DYNAMIC_CACHE_CONTROL } from "@/src/lib/dancr/public-cache-policy";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import type { DancerProfile, ShiftSummary } from "@/src/lib/dancr/types";
 
@@ -27,7 +27,7 @@ export async function GET(_request: Request, context: RouteContext) {
 
     return NextResponse.json(
       { ok: true, profile: toPublicDancerProfile(profile) },
-      { headers: { "Cache-Control": PUBLIC_DYNAMIC_CACHE_CONTROL } },
+      { headers: { "Cache-Control": profile.metricsUnavailable ? PRIVATE_NO_STORE_CACHE_CONTROL : PUBLIC_DYNAMIC_CACHE_CONTROL } },
     );
   } catch (error) {
     return apiError(error, "Unable to load dancer profile.", 500);

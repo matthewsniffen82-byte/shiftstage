@@ -224,6 +224,7 @@ export type DancerCard = {
   checkedOutAt?: string | null;
   locationVerificationExpiresAt?: string | null;
   followerCount?: number;
+  metricsUnavailable?: boolean;
   notificationCount?: number;
   profileViewsToday?: number;
   goingCount?: number;

@@ -32,11 +32,11 @@ type SavedState = {
 type AccountAction = "follow";
 
 type DancerFollowState = {
-  followerCount: number;
+  followerCount: number | null;
   setFollowerCount: (count: number) => void;
-  notificationCount: number;
+  notificationCount: number | null;
   setNotificationCount: (count: number) => void;
-  goingCount: number;
+  goingCount: number | null;
   setGoingCount: (count: number) => void;
 };
 
@@ -46,17 +46,19 @@ export function DancerFollowStateProvider({
   initialFollowerCount,
   initialNotificationCount,
   initialGoingCount,
+  metricsUnavailable = false,
   children,
 }: PropsWithChildren<{
   initialFollowerCount: number;
   initialNotificationCount: number;
   initialGoingCount: number;
+  metricsUnavailable?: boolean;
 }>) {
-  const [followerCount, setFollowerCount] = useState(Math.max(0, initialFollowerCount));
-  const [notificationCount, setNotificationCount] = useState(
-    Math.max(0, initialNotificationCount),
+  const [followerCount, setFollowerCount] = useState<number | null>(metricsUnavailable ? null : Math.max(0, initialFollowerCount));
+  const [notificationCount, setNotificationCount] = useState<number | null>(
+    metricsUnavailable ? null : Math.max(0, initialNotificationCount),
   );
-  const [goingCount, setGoingCount] = useState(Math.max(0, initialGoingCount));
+  const [goingCount, setGoingCount] = useState<number | null>(metricsUnavailable ? null : Math.max(0, initialGoingCount));
   const setConfirmedFollowerCount = useCallback((count: number) => {
     setFollowerCount(Math.max(0, count));
   }, []);
@@ -90,14 +92,14 @@ export function DancerFollowStateProvider({
 
 export function DancerFollowerCount() {
   const { followerCount } = useDancerFollowState();
-  return <>{new Intl.NumberFormat("en-US").format(followerCount)}</>;
+  return <>{followerCount === null ? "—" : new Intl.NumberFormat("en-US").format(followerCount)}</>;
 }
 
 export function DancerFollowerMetric() {
   const { followerCount } = useDancerFollowState();
   return (
     <>
-      <dd>{new Intl.NumberFormat("en-US").format(followerCount)}</dd>
+      <dd>{followerCount === null ? "—" : new Intl.NumberFormat("en-US").format(followerCount)}</dd>
       <dt>{followerCount === 1 ? "Follower" : "Followers"}</dt>
     </>
   );
@@ -105,7 +107,7 @@ export function DancerFollowerMetric() {
 
 export function DancerGoingCount() {
   const { goingCount } = useDancerFollowState();
-  return <>{new Intl.NumberFormat("en-US").format(goingCount)}</>;
+  return <>{goingCount === null ? "—" : new Intl.NumberFormat("en-US").format(goingCount)}</>;
 }
 
 function DancerProfileActionPreviewIcon({
@@ -156,7 +158,7 @@ export function DancerProfileActionsPreview({ onShare }: { onShare?: () => void 
 
 export function DancerNotificationCount() {
   const { notificationCount } = useDancerFollowState();
-  return <>{new Intl.NumberFormat("en-US").format(notificationCount)}</>;
+  return <>{notificationCount === null ? "—" : new Intl.NumberFormat("en-US").format(notificationCount)}</>;
 }
 
 export function DancerReportControl({

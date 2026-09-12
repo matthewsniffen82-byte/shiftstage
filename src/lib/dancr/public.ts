@@ -241,6 +241,12 @@ export async function getDancerProfile(client: DancrClient, slug: string, resolv
 
   const row: any = data;
   if (!isApprovedPublicDancerRow(row)) return null;
+  let metricsUnavailable = false;
+  const unavailableMetric = () => {
+    if (!metricsUnavailable) console.warn("PUBLIC_PROFILE_METRICS_UNAVAILABLE");
+    metricsUnavailable = true;
+    return 0;
+  };
   const [
     approvedPhotos,
     followerCount,
@@ -249,10 +255,10 @@ export async function getDancerProfile(client: DancrClient, slug: string, resolv
     goingCount,
   ] = await Promise.all([
     getApprovedDancerPhotos(client, row.id),
-    countDancerFollowers(client, row.id),
-    countDancerNotificationSubscribers(client, row.id),
-    countDancerProfileViewsToday(client, row.id),
-    countDancerGoingSignals(client, row.id),
+    countDancerFollowers(client, row.id).catch(unavailableMetric),
+    countDancerNotificationSubscribers(client, row.id).catch(unavailableMetric),
+    countDancerProfileViewsToday(client, row.id).catch(unavailableMetric),
+    countDancerGoingSignals(client, row.id).catch(unavailableMetric),
   ]);
   const card = {
     ...buildDancerCard(client, { ...row, dancer_photos: approvedPhotos }).card,
@@ -264,6 +270,7 @@ export async function getDancerProfile(client: DancrClient, slug: string, resolv
 
   return {
     ...card,
+    ...(metricsUnavailable ? { metricsUnavailable: true } : {}),
     followerCount: card.followerCount || 0,
     goingCount,
     photos: approvedPhotos.map((photo: any) => {
@@ -507,7 +514,10 @@ async function hydrateDancerCardMetrics(client: DancrClient, cards: DancerCard[]
     p_shift_ids: shiftIds,
     p_profile_views_since: today.toISOString(),
   });
-  if (error) throw error;
+  if (error) {
+    console.warn("PUBLIC_DISCOVERY_METRICS_UNAVAILABLE");
+    return cards.map(card => ({ ...card, metricsUnavailable: true }));
+  }
 
   const followerCounts = new Map<string, number>();
   const notificationCounts = new Map<string, number>();
@@ -537,6 +547,7 @@ function safeMetricCount(value: unknown) {
 }
 
 export type PublicVenuePopularity = {
+  metricsUnavailable?: boolean;
   followerCount: number;
   directionRequests30d: number;
   profileViews30d: number;
@@ -547,7 +558,7 @@ export async function getPublicVenuePopularity(
   venueIds: string[],
 ): Promise<Map<string, PublicVenuePopularity>> {
   const uniqueVenueIds = [...new Set(venueIds.filter(Boolean))];
-  const popularityByVenue = new Map(
+  const popularityByVenue = new Map<string, PublicVenuePopularity>(
     uniqueVenueIds.map((venueId) => [
       venueId,
       { followerCount: 0, directionRequests30d: 0, profileViews30d: 0 },
@@ -560,7 +571,11 @@ export async function getPublicVenuePopularity(
     p_venue_ids: uniqueVenueIds,
     p_activity_since: since,
   });
-  if (error) throw error;
+  if (error) {
+    console.warn("PUBLIC_VENUE_METRICS_UNAVAILABLE");
+    for (const popularity of popularityByVenue.values()) popularity.metricsUnavailable = true;
+    return popularityByVenue;
+  }
 
   for (const row of data || []) {
     const popularity = popularityByVenue.get(row.entity_id);

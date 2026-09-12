@@ -45184,6 +45184,7 @@
         followerCount: item.followerCount ?? item.follower_count ?? 0,
         notificationCount: item.notificationCount ?? item.notification_count ?? 0,
         profileViewsToday: item.profileViewsToday ?? item.profile_views_today ?? 0,
+        metricsUnavailable: item.metricsUnavailable === true,
         goingCount: item.goingCount ?? item.going_count ?? 0,
         workingStatus: item.workingStatus || item.working_status || "self_reported",
         commissionTrackingStartedAt: item.commissionTrackingStartedAt || item.commission_tracking_started_at || "",
@@ -47261,10 +47262,12 @@
     }
 
     function followerMetricMarkup(profile, city = selectedCity()) {
+      if (profile.metricsUnavailable) return metricPhraseMarkup("— Followers");
       return metricPhraseMarkup(`${compactProfileMetric(followerNumber(profile, city))} Followers`);
     }
 
     function notificationMetricMarkup(profile, city = selectedCity()) {
+      if (profile.metricsUnavailable) return metricPhraseMarkup("— Notifications");
       return metricPhraseMarkup(`${compactProfileMetric(notificationNumber(profile, city))} Notifications`);
     }
 
@@ -47273,6 +47276,7 @@
     }
 
     function profileViewsTodayMarkup(profile, city = selectedCity()) {
+      if (profile.metricsUnavailable) return '<span class="profile-view-count">Activity counts temporarily unavailable</span>';
       return `
         <span class="profile-view-count">
           <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -53776,15 +53780,15 @@
       return `
         <dl class="profile-activity-metrics" aria-label="Profile activity">
           <div>
-            <dd id="modalFollowerCount" aria-live="polite">${followerCount.toLocaleString()}</dd>
+            <dd id="modalFollowerCount" aria-live="polite">${profile.metricsUnavailable ? "—" : followerCount.toLocaleString()}</dd>
             <dt id="modalFollowerLabel">${followerCount === 1 ? "Follower" : "Followers"}</dt>
           </div>
           <div>
-            <dd id="tonightInterestCount" aria-live="polite">${tonightInterestCount(profile).toLocaleString()}</dd>
+            <dd id="tonightInterestCount" aria-live="polite">${profile.metricsUnavailable ? "—" : tonightInterestCount(profile).toLocaleString()}</dd>
             <dt>Going</dt>
           </div>
           <div>
-            <dd id="modalProfileViews" aria-live="polite">${profileViewsToday(profile, city).toLocaleString()}</dd>
+            <dd id="modalProfileViews" aria-live="polite">${profile.metricsUnavailable ? "—" : profileViewsToday(profile, city).toLocaleString()}</dd>
             <dt>Views today</dt>
           </div>
         </dl>

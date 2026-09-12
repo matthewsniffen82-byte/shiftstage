@@ -80,17 +80,22 @@ export default async function DancerPublicPage({ params, searchParams }: PagePro
   );
   const hasUpcomingShift = !activeShift && upcomingShifts.length > 0;
   const actionShift = activeShift || upcomingShifts[0] || null;
+  let secondaryUnavailable = false;
+  const optionalFailure = () => {
+    if (!secondaryUnavailable) console.warn("PUBLIC_PROFILE_SECONDARY_CONTENT_UNAVAILABLE");
+    secondaryUnavailable = true;
+  };
   const [activeDeals, tvVideos, actionVenue] = await Promise.all([
     activeShift?.venueId
-      ? getActiveClubDealsForVenue(client, activeShift.venueId)
+      ? getActiveClubDealsForVenue(client, activeShift.venueId).catch(() => { optionalFailure(); return []; })
       : Promise.resolve([]),
     getPublicMyDancrTvFeed(client, {
       city: profile.city,
       dancerId: profile.id,
       limit: MAX_DANCER_PROFILE_VIDEOS,
-    }),
+    }).catch(() => { optionalFailure(); return []; }),
     actionShift?.venueSlug
-      ? getVenueProfile(client, actionShift.venueSlug)
+      ? getVenueProfile(client, actionShift.venueSlug).catch(() => { optionalFailure(); return null; })
       : Promise.resolve(null),
   ]);
   const activeDeal = activeDeals[0] || null;
@@ -113,6 +118,7 @@ export default async function DancerPublicPage({ params, searchParams }: PagePro
       initialFollowerCount={profile.followerCount}
       initialGoingCount={profile.goingCount}
       initialNotificationCount={profile.notificationCount || 0}
+      metricsUnavailable={profile.metricsUnavailable}
       key={profile.id}
     >
       <main className="public-profile-shell">
@@ -172,7 +178,7 @@ export default async function DancerPublicPage({ params, searchParams }: PagePro
               <dt>Going</dt>
             </div>
             <div>
-              <dd>{new Intl.NumberFormat("en-US").format(profile.profileViewsToday || 0)}</dd>
+              <dd>{profile.metricsUnavailable ? "—" : new Intl.NumberFormat("en-US").format(profile.profileViewsToday || 0)}</dd>
               <dt>Views today</dt>
             </div>
           </dl>
@@ -183,6 +189,10 @@ export default async function DancerPublicPage({ params, searchParams }: PagePro
             />
           </div>
         </header>
+
+        {profile.metricsUnavailable || secondaryUnavailable ? (
+          <p role="status">Some profile details are temporarily unavailable. Reload the page to try again.</p>
+        ) : null}
 
         <DancerProfileActions
           dancerId={profile.id}

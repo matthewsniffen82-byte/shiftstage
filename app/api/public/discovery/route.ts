@@ -8,7 +8,7 @@ import {
   getLiveDancerDiscovery,
   getPublicVenuePopularity,
 } from "@/src/lib/dancr/public";
-import { PUBLIC_DYNAMIC_CACHE_CONTROL } from "@/src/lib/dancr/public-cache-policy";
+import { PRIVATE_NO_STORE_CACHE_CONTROL, PUBLIC_DYNAMIC_CACHE_CONTROL } from "@/src/lib/dancr/public-cache-policy";
 import { responsivePublicImage } from "@/src/lib/dancr/responsive-image";
 import { verifiedVenueLogoUrl } from "@/src/lib/dancr/venue-branding";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
@@ -131,7 +131,9 @@ export async function GET(request: Request) {
       },
       {
         headers: {
-          "cache-control": PUBLIC_DYNAMIC_CACHE_CONTROL,
+          "cache-control": discovery.dancers.some(dancer => dancer.metricsUnavailable)
+            || [...venuePopularityById.values()].some(venue => venue.metricsUnavailable)
+            ? PRIVATE_NO_STORE_CACHE_CONTROL : PUBLIC_DYNAMIC_CACHE_CONTROL,
           "server-timing": `discovery;dur=${Date.now() - startedAt}`,
         },
       },

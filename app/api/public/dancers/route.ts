@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { apiError } from "@/src/lib/api";
 import { getApprovedDancersByCity, getTonightShifts } from "@/src/lib/dancr/public";
-import { PUBLIC_DYNAMIC_CACHE_CONTROL } from "@/src/lib/dancr/public-cache-policy";
+import { PRIVATE_NO_STORE_CACHE_CONTROL, PUBLIC_DYNAMIC_CACHE_CONTROL } from "@/src/lib/dancr/public-cache-policy";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import type { DancerCard } from "@/src/lib/dancr/types";
 
@@ -23,7 +23,7 @@ export async function GET(request: Request) {
 
     return NextResponse.json(
       { ok: true, city, scope, dancers: dancers.map(toPublicDancerCard) },
-      { headers: { "Cache-Control": PUBLIC_DYNAMIC_CACHE_CONTROL } },
+      { headers: { "Cache-Control": dancers.some(dancer => dancer.metricsUnavailable) ? PRIVATE_NO_STORE_CACHE_CONTROL : PUBLIC_DYNAMIC_CACHE_CONTROL } },
     );
   } catch (error) {
     return apiError(error, "Unable to load dancers.", 500);
