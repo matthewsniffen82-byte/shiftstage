@@ -110,7 +110,7 @@ test("fictional club direction controls navigate to the shared MyDancr destinati
 });
 
 test("saved customer data includes approved responsive imagery and the next real posted shift", () => {
-  assert.match(customerService, /getSavedDancerSchedules\(client, dancerIds\)/);
+  assert.match(customerService, /getSavedDancerSchedules\(publicMediaClient, dancerIds\)/);
   assert.match(customerService, /getSavedDancerImages\(publicMediaClient, dancerIds\)/);
   assert.match(savedRoute, /getCustomerSavedItems\(client, user\.id, admin\)/);
   assert.match(customerService, /\.from\("shifts"\)[\s\S]*?\.eq\("status", "posted"\)[\s\S]*?\.gt\("ends_at", new Date\(\)\.toISOString\(\)\)/);

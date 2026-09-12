@@ -46,8 +46,8 @@ Step 1 delivered as `50d4eb543dbfc93dbed6f0663c51aa2332542cb4`, pushed to origin
 | 23 | Dependencies | Delivered and healthy: 77ea0eb48d3de3a1b65c87fdca8e5754fb6d1579 |
 | 24 | CI / supply chain | Delivered with documented administrative limits: ffc628e230200c29ab6c602071b70ad1e3f3774b |
 | 25 | Production build / source maps | Delivered and healthy: e947a5ed57d2c08cd2bd0faac95b35b13fd43855 |
-| 26 | Sensitive data minimization | Implementation and focused validation complete; final delivery pending |
-| 27 | Profile / location safety | Not started |
+| 26 | Sensitive data minimization | Delivered and healthy: 22bed212abe82bfdfaf0e7acd00f236ff091d7c0 |
+| 27 | Profile / location safety | Isolated implementation and native validation in progress; delivery pending |
 | 28 | Scraping resilience | Not started |
 | 29 | Resource abuse / DoS | Not started |
 | 30 | Security regression coverage | Not started |
@@ -520,3 +520,21 @@ The implementation was committed and pushed as `3e7eeb4fbfdfec183d74f95099d38144
 ## Step 26 implementation release and followup validation
 
 Implementation `3e7eeb4fbfdfec183d74f95099d3814498056882` reached [exact Vercel success](https://vercel.com/ai-movie-jobs/shiftstage/CrjLC7RHfyucwiudALvTGPezsjuJ). Eight production health/anonymous-denial checks passed at 2026-09-12T10:40:25.601Z; thirty-two database readiness checks and deployed discovery/TV deal-field projections passed. The homepage rendered without browser warnings or errors. No live NFC scan, redemption, paid/provider action or private row retrieval was used. The checksum followup passed all **7,192 tests**, zero failures/skips/cancellations and all eight canonical gates at 2026-09-12T10:42:46.652Z, plus configured private-value artifact inspection and postbuild TypeScript. Only these two evidence records and the one verified migration-manifest entry change. Its exact commit/deployment closure remains required before Step 27.
+
+
+### Step 26 final delivery closure
+
+The immutable-manifest followup `22bed212abe82bfdfaf0e7acd00f236ff091d7c0` reached [exact Vercel success](https://vercel.com/ai-movie-jobs/shiftstage/3SFgxcHJHiVr3pM6FHnBR1PHp699) and closed at 2026-09-12T10:48:33.226Z. All **7,192 tests**, standalone TypeScript, zero-warning lint, production build and artifact inspection passed. The final eight production health checks, thirty-two database readiness checks, public discovery/TV field checks and browser rendering passed. Local, tracking and remote main matched exactly, tracked work/index were clean and both user screenshots retained their recorded hashes. Step 26 is fully delivered; Step 27 begins from that completed release.
+
+## Step 27 — Profile and location privacy
+
+See `step-27-profile-location-privacy.md` for fail-closed public eligibility, removal of weaker schema fallbacks, next-shift selection, operational location-column privacy, accurate incognito copy and atomic account pause/recovery ownership. This work remains isolated while the related architecture releases finish. Native and caller regressions are being extended; fresh production preflight, full integrated checks, exact committed SQL, deployment and delivery closure are required before Step 28.
+
+
+## Step 27 isolated validation and production preflight
+
+The candidate preserves exact parent `104b221da2417f58fc1f60dd710c1d9db21229e0`, including the independently delivered architecture and Supabase changes. All **7,763 tests** passed with no failures, skips or cancellations, together with dependency/signature audits, generated-file checks, route type generation, standalone TypeScript and zero-warning lint. The production build initially exited at startup without diagnostic output. A subsequent launcher-path error was corrected outside the repository. The successful build retry completed at 2026-09-12T13:10:47.538Z on the same **1,541 source files**, with all hashes unchanged. This is seven successful canonical checks plus an unchanged-source production build retry, not a claim that the original command completed in one attempt. The artifact guard checked 263 files, 239 text assets and 7,666,579 bytes; postbuild skipped population. The final suite adds 398 cases over its parent.
+
+The read-only production preflight at 2026-09-12T12:54:38.652737Z captured metadata and aggregate record fingerprints for all 81 public tables and Auth metadata. All twelve native fixture helper fingerprints match production. There is exactly one eligible legacy venue self-pause and no held legacy marker. Its import preserves login resumption without inventing earlier venue publication state. No business records were retrieved or changed during this preflight. An initial oversized JSON-construction expression failed read-only and was replaced with bounded batches; an 81-table native regression verifies the deployment guard.
+
+Configured build, postbuild TypeScript, private-value artifact inspection, exact commit/push/deployment, guarded application of the three committed migrations, independent postflight, 41 readiness checks and the fully validated 168-file manifest followup remain delivery requirements.

@@ -1,18 +1,12 @@
 import { isPublicVenueRow } from "./venue-public-visibility";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { isApprovedPublicDancerRow } from "./public";
+import { isApprovedPublicDancerRow, isShiftPubliclyVisible } from "./public";
 import { responsivePublicImage } from "./responsive-image";
 import { isActiveNfcPresence } from "./shift-presence";
 import { verifiedVenueLogoUrl } from "./venue-branding";
 import { getSavedVenueActivity } from "./customer-venue-activity";
 
 type DancrClient = SupabaseClient;
-
-function isMissingIsPublicColumnError(error: any) {
-  const code = String(error?.code || "");
-  const message = String(error?.message || "").toLowerCase();
-  return (code === "42703" || code === "PGRST204") && message.includes("is_public");
-}
 
 export function isMissingCustomerDealSavesTableError(error: any) {
   const code = String(error?.code || "");
@@ -35,8 +29,8 @@ export async function getCustomerSavedItems(
   const [follows, favorites, venueFollows, goingSignals] = await Promise.all([
     getFollowedDancers(client, customerId),
     getFavoriteDancers(client, customerId),
-    getFollowedVenues(client, customerId),
-    getGoingShifts(client, customerId),
+    getFollowedVenues(client, customerId, publicMediaClient),
+    getGoingShifts(client, customerId, publicMediaClient),
   ]);
 
   const dancerIds = Array.from(new Set([
@@ -45,7 +39,7 @@ export async function getCustomerSavedItems(
     ...goingSignals.map((item: any) => item.shift?.dancer?.id),
   ].filter(Boolean)));
   const [schedules, publicImages, venueActivity] = await Promise.all([
-    getSavedDancerSchedules(client, dancerIds),
+    getSavedDancerSchedules(publicMediaClient, dancerIds),
     getSavedDancerImages(publicMediaClient, dancerIds),
     getSavedVenueActivity(publicMediaClient, venueFollows.map((item: any) => String(item.venueId))),
   ]);
@@ -299,22 +293,12 @@ export async function recordDirectionRequest(
 async function getFollowedDancers(client: DancrClient, customerId: string) {
   const current = await client
     .from("follows")
-    .select("dancer_id, notifications_enabled, created_at, dancer_profiles(id, slug, stage_name, city, status, verification_status, venue_approved_at, is_public, avatar_storage_path, dancer_photos(storage_path, is_primary, review_status, sort_order))")
+    .select("dancer_id, notifications_enabled, created_at, dancer_profiles(id, slug, stage_name, city, status, verification_status, venue_approved_at, disabled_at, is_public, avatar_storage_path, dancer_photos(storage_path, is_primary, review_status, sort_order))")
     .eq("customer_id", customerId)
     .order("created_at", { ascending: false });
 
-  let data: any[] | null = current.data as any[] | null;
-  let error: any = current.error;
-  if (isMissingIsPublicColumnError(error)) {
-    console.warn("CUSTOMER_SAVED_VISIBILITY_COLUMN_MISSING", { relation: "follows", code: error.code });
-    const legacy = await client
-      .from("follows")
-      .select("dancer_id, notifications_enabled, created_at, dancer_profiles(id, slug, stage_name, city, status, avatar_storage_path, dancer_photos(storage_path, is_primary, review_status, sort_order))")
-      .eq("customer_id", customerId)
-      .order("created_at", { ascending: false });
-    data = legacy.data as any[] | null;
-    error = legacy.error;
-  }
+  const data: any[] | null = current.data as any[] | null;
+  const error: any = current.error;
 
   if (error) throw error;
 
@@ -329,22 +313,12 @@ async function getFollowedDancers(client: DancrClient, customerId: string) {
 async function getFavoriteDancers(client: DancrClient, customerId: string) {
   const current = await client
     .from("favorites")
-    .select("dancer_id, created_at, dancer_profiles(id, slug, stage_name, city, status, verification_status, venue_approved_at, is_public, avatar_storage_path, dancer_photos(storage_path, is_primary, review_status, sort_order))")
+    .select("dancer_id, created_at, dancer_profiles(id, slug, stage_name, city, status, verification_status, venue_approved_at, disabled_at, is_public, avatar_storage_path, dancer_photos(storage_path, is_primary, review_status, sort_order))")
     .eq("customer_id", customerId)
     .order("created_at", { ascending: false });
 
-  let data: any[] | null = current.data as any[] | null;
-  let error: any = current.error;
-  if (isMissingIsPublicColumnError(error)) {
-    console.warn("CUSTOMER_SAVED_VISIBILITY_COLUMN_MISSING", { relation: "favorites", code: error.code });
-    const legacy = await client
-      .from("favorites")
-      .select("dancer_id, created_at, dancer_profiles(id, slug, stage_name, city, status, avatar_storage_path, dancer_photos(storage_path, is_primary, review_status, sort_order))")
-      .eq("customer_id", customerId)
-      .order("created_at", { ascending: false });
-    data = legacy.data as any[] | null;
-    error = legacy.error;
-  }
+  const data: any[] | null = current.data as any[] | null;
+  const error: any = current.error;
 
   if (error) throw error;
 
@@ -355,49 +329,39 @@ async function getFavoriteDancers(client: DancrClient, customerId: string) {
   })).filter((item: any) => item.dancer);
 }
 
-async function getFollowedVenues(client: DancrClient, customerId: string) {
+async function getFollowedVenues(client: DancrClient, customerId: string, publicClient: DancrClient = client) {
   const { data, error } = await client
     .from("venue_follows")
-    .select("venue_id, notifications_enabled, created_at, venues(id, slug, name, city, state, address, latitude, longitude, is_active, has_active_club_deal, cover_image_storage_path, logo_storage_path)")
+    .select("venue_id, notifications_enabled, created_at, venues(id, slug, name, city, state, address, latitude, longitude, is_active, cover_image_storage_path, logo_storage_path)")
     .eq("customer_id", customerId)
     .order("created_at", { ascending: false });
 
   if (error) throw error;
 
+  const listedVenueIds = await getListedSavedVenueIds(publicClient, (data || []).map((row: any) => single(row.venues)?.id));
   return (data || []).map((row: any) => ({
     venueId: row.venue_id,
     notificationsEnabled: row.notifications_enabled,
     createdAt: row.created_at,
-    venue: toVenueSummary(client, row.venues),
+    venue: toVenueSummary(client, { ...single(row.venues), has_active_club_deal: listedVenueIds.has(single(row.venues)?.id) }),
   })).filter((item: any) => item.venue);
 }
 
-async function getGoingShifts(client: DancrClient, customerId: string) {
+async function getGoingShifts(client: DancrClient, customerId: string, publicClient: DancrClient = client) {
   const current = await client
     .from("going_signals")
     .select(
-      "shift_id, created_at, shifts(id, starts_at, ends_at, timezone, status, dancer_profiles(id, slug, stage_name, city, status, verification_status, venue_approved_at, is_public, avatar_storage_path, dancer_photos(storage_path, is_primary, review_status, sort_order)), venues(id, slug, name, city, state, address, latitude, longitude, is_active, has_active_club_deal, cover_image_storage_path))",
+      "shift_id, created_at, shifts(id, starts_at, ends_at, timezone, status, dancer_profiles(id, slug, stage_name, city, status, verification_status, venue_approved_at, disabled_at, is_public, avatar_storage_path, dancer_photos(storage_path, is_primary, review_status, sort_order)), venues(id, slug, name, city, state, address, latitude, longitude, is_active, cover_image_storage_path))",
     )
     .eq("customer_id", customerId)
     .order("created_at", { ascending: false });
 
-  let data: any[] | null = current.data as any[] | null;
-  let error: any = current.error;
-  if (isMissingIsPublicColumnError(error)) {
-    console.warn("CUSTOMER_SAVED_VISIBILITY_COLUMN_MISSING", { relation: "going_signals", code: error.code });
-    const legacy = await client
-      .from("going_signals")
-      .select(
-        "shift_id, created_at, shifts(id, starts_at, ends_at, timezone, status, dancer_profiles(id, slug, stage_name, city, status, avatar_storage_path, dancer_photos(storage_path, is_primary, review_status, sort_order)), venues(id, slug, name, city, state, address, latitude, longitude, is_active, has_active_club_deal, cover_image_storage_path))",
-      )
-      .eq("customer_id", customerId)
-      .order("created_at", { ascending: false });
-    data = legacy.data as any[] | null;
-    error = legacy.error;
-  }
+  const data: any[] | null = current.data as any[] | null;
+  const error: any = current.error;
 
   if (error) throw error;
 
+  const listedVenueIds = await getListedSavedVenueIds(publicClient, (data || []).map((row: any) => single(single(row.shifts)?.venues)?.id));
   return (data || []).map((row: any) => {
     const shift = single(row.shifts);
 
@@ -412,11 +376,26 @@ async function getGoingShifts(client: DancrClient, customerId: string) {
             timezone: shift.timezone,
             status: shift.status,
             dancer: toDancerSummary(client, shift.dancer_profiles),
-            venue: toVenueSummary(client, shift.venues),
+            venue: toVenueSummary(client, { ...single(shift.venues), has_active_club_deal: listedVenueIds.has(single(shift.venues)?.id) }),
           }
         : null,
     };
   }).filter((item: any) => item.shift?.dancer && item.shift?.venue);
+}
+
+async function getListedSavedVenueIds(publicClient: DancrClient, venueIds: unknown[]) {
+  const ids = Array.from(new Set(venueIds.filter((id): id is string => typeof id === "string" && Boolean(id))));
+  const listed = new Set<string>();
+  // Keep private follows/going reads under the customer's RLS. Only the already
+  // referenced public venue IDs are checked using the server's computed field.
+  for (let offset = 0; offset < ids.length; offset += 200) {
+    const batch = ids.slice(offset, offset + 200);
+    const { data, error } = await publicClient.from("venues").select("id")
+      .in("id", batch).eq("is_active", true).eq("has_active_club_deal", true).limit(batch.length);
+    if (error) throw error;
+    for (const row of data || []) if (batch.includes(row.id)) listed.add(row.id);
+  }
+  return listed;
 }
 
 async function getSavedDancerImages(client: DancrClient, dancerIds: string[]) {
@@ -432,20 +411,8 @@ async function getSavedDancerImages(client: DancrClient, dancerIds: string[]) {
     .eq("is_public", true)
     .is("disabled_at", null);
 
-  let data: any[] | null = current.data as any[] | null;
-  let error: any = current.error;
-  if (isMissingIsPublicColumnError(error)) {
-    console.warn("CUSTOMER_SAVED_VISIBILITY_COLUMN_MISSING", { relation: "saved_dancer_images", code: error.code });
-    const legacy = await client
-      .from("dancer_profiles")
-      .select("id, slug, stage_name, city, status, verification_status, venue_approved_at, disabled_at, avatar_storage_path, dancer_photos(storage_path, is_primary, review_status, sort_order)")
-      .in("id", dancerIds)
-      .eq("status", "approved")
-      .eq("verification_status", "approved")
-      .is("disabled_at", null);
-    data = legacy.data as any[] | null;
-    error = legacy.error;
-  }
+  const data: any[] | null = current.data as any[] | null;
+  const error: any = current.error;
 
   if (error) throw error;
 
@@ -472,6 +439,7 @@ async function getSavedDancerSchedules(client: DancrClient, dancerIds: string[])
   if (error) throw error;
 
   for (const shift of data || []) {
+    if (!isShiftPubliclyVisible(shift)) continue;
     if (schedules.has(shift.dancer_id)) continue;
     const venue = toVenueSummary(client, shift.venues);
     if (!venue) continue;

@@ -1,4 +1,5 @@
 import "server-only";
+import { changeVenuePublication } from "./venue-publication";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 import {
@@ -680,12 +681,15 @@ export async function updateAdminVenue(
     row.page_review_status = "admin_draft";
   }
 
-  const { data, error } = await (client as any)
+  const result = Object.hasOwn(row, "is_active")
+    ? { data: await changeVenuePublication(client, adminId, venueId, "admin_edit", row, "id, slug, name, city, state, address, latitude, longitude, phone, website, timezone, opens_at, closes_at, is_active, published_at, owner_user_id, logo_storage_path, cover_image_storage_path, page_review_status, page_review_sent_at, page_reviewed_at, page_reviewed_by_user_id, page_review_notes"), error: null }
+    : await (client as any)
     .from("venues")
     .update(row)
     .eq("id", venueId)
     .select("id, slug, name, city, state, address, latitude, longitude, phone, website, timezone, opens_at, closes_at, is_active, published_at, owner_user_id, logo_storage_path, cover_image_storage_path, page_review_status, page_review_sent_at, page_reviewed_at, page_reviewed_by_user_id, page_review_notes")
     .single();
+  const { data, error } = result;
 
   if (error) throw error;
 
@@ -762,14 +766,7 @@ export async function transitionAdminManagedVenuePage(
     throw new Error("The connected venue manager must approve this exact page before MyDancr can publish it.");
   }
 
-  const { data, error } = await (client as any)
-    .from("venues")
-    .update({ is_active: true, published_at: now, page_review_status: "published", page_review_notes: null })
-    .eq("id", venueId)
-    .eq("page_review_status", "venue_approved")
-    .select("id, slug, name, city, state, address, latitude, longitude, phone, website, timezone, opens_at, closes_at, is_active, published_at, owner_user_id, logo_storage_path, cover_image_storage_path, page_review_status, page_review_sent_at, page_reviewed_at, page_reviewed_by_user_id, page_review_notes")
-    .single();
-  if (error) throw error;
+  const data = await changeVenuePublication(client, adminId, venueId, "admin_publish", {}, "id, slug, name, city, state, address, latitude, longitude, phone, website, timezone, opens_at, closes_at, is_active, published_at, owner_user_id, logo_storage_path, cover_image_storage_path, page_review_status, page_review_sent_at, page_reviewed_at, page_reviewed_by_user_id, page_review_notes");
 
   if (profile.ownerUserId) {
     const notificationRow = {

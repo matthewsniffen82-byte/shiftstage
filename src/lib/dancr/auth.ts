@@ -2,7 +2,6 @@ import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { PublicApiError } from "../api-error-policy";
 import type { AccountState, CustomerProfile, DancrAccount, DancerAccountProfile, Json } from "./types";
-import { transitionDancerPublication } from "./profile-publication";
 
 type DancrClient = SupabaseClient;
 
@@ -38,140 +37,40 @@ export async function setAccountState(
   userId: string,
   accountState: AccountState,
   publicationClient: DancrClient = client,
-) {
-  const { data: current, error: currentError } = await publicationClient
-    .from("app_users")
-    .select("id, role, display_name, email, account_state, dmca_suspended_at")
-    .eq("id", userId)
-    .single();
-  if (currentError) throw currentError;
-
-  const { data: authData, error: authError } = await publicationClient.auth.admin.getUserById(userId);
-  if (authError) throw authError;
-  const originalMetadata = { ...(authData.user.app_metadata || {}) };
-  const selfDisabledAt = typeof originalMetadata.mydancr_self_disabled_at === "string"
-    ? originalMetadata.mydancr_self_disabled_at
-    : "";
-  const originalSelfServiceMetadata = {
-    mydancr_self_disabled_at: originalMetadata.mydancr_self_disabled_at ?? null,
-    mydancr_venue_was_active: originalMetadata.mydancr_venue_was_active ?? null,
-  };
-
-  if (current.account_state === "deleted" && accountState !== "deleted") {
-    throw new PublicApiError("FORBIDDEN", "Deleted accounts cannot be reactivated.", 403);
-  }
-  if (accountState === "active" && current.dmca_suspended_at != null) {
-    throw new PublicApiError("FORBIDDEN", "Account restrictions require administrator review before reactivation.", 403);
-  }
-  if (current.account_state === "disabled" && !selfDisabledAt && accountState !== "deleted") {
-    throw new PublicApiError("FORBIDDEN", "This account was disabled by MyDancr. Contact support to restore access.", 403);
-  }
-
-  const { data: ownedVenue, error: venueReadError } = current.role === "venue"
-    ? await publicationClient
-        .from("venues")
-        .select("id, is_active")
-        .eq("owner_user_id", userId)
-        .maybeSingle()
-    : { data: null, error: null };
-  if (venueReadError) throw venueReadError;
-
-  const originalVenueActive = ownedVenue?.is_active === true;
-  const priorVenueActive = current.account_state === "disabled" && typeof originalMetadata.mydancr_venue_was_active === "boolean"
-    ? originalMetadata.mydancr_venue_was_active
-    : originalVenueActive;
-  const nextAccountUpdate: Record<string, string | null> = { account_state: accountState };
-  if (accountState === "deleted") {
-    nextAccountUpdate.display_name = null;
-    nextAccountUpdate.email = null;
-  }
-
-  if (accountState === "disabled") {
-    const { error: metadataError } = await publicationClient.auth.admin.updateUserById(userId, {
-      app_metadata: {
-        mydancr_self_disabled_at: current.account_state === "disabled" ? selfDisabledAt : new Date().toISOString(),
-        ...(ownedVenue ? { mydancr_venue_was_active: priorVenueActive } : {}),
-      },
+): Promise<DancrAccount> {
+  const unavailable = () => new PublicApiError(
+    "UNAVAILABLE", "We couldn't confirm the account change. Check your account state before trying again.", 503,
+  );
+  let result;
+  try {
+    result = await publicationClient.rpc("transition_own_account_safely", {
+      p_user_id: userId, p_account_state: accountState,
     });
-    if (metadataError) throw metadataError;
+  } catch {
+    throw unavailable();
   }
-
-  if (ownedVenue && accountState !== "active") {
-    const { error: venueError } = await publicationClient
-      .from("venues")
-      .update({ is_active: false })
-      .eq("id", ownedVenue.id);
-    if (venueError) {
-      if (accountState === "disabled") {
-        await publicationClient.auth.admin.updateUserById(userId, { app_metadata: originalSelfServiceMetadata });
-      }
-      throw venueError;
+  if (result.error) {
+    if (result.error.code === "42501") {
+      throw new PublicApiError("FORBIDDEN", "This account cannot make that change. Contact support to restore restricted access.", 403);
     }
+    if (result.error.code === "22023") {
+      throw new PublicApiError("INVALID_REQUEST", "This account change is not available.", 400);
+    }
+    // A missing function or lost response never triggers independent writes or
+    // compensation. Retrying reads the committed state and its private pause.
+    throw unavailable();
   }
-
-  let accountUpdate = publicationClient
-    .from("app_users")
-    .update(nextAccountUpdate)
-    .eq("id", userId);
-  // A copyright hold can arrive after the initial permission read.
-  if (accountState === "active") accountUpdate = accountUpdate.is("dmca_suspended_at", null);
-  const { data, error } = await accountUpdate
-    .select("id, role, display_name, email, account_state")
-    .single();
-
-  if (error) {
-    if (ownedVenue && accountState !== "active") {
-      await publicationClient.from("venues").update({ is_active: originalVenueActive }).eq("id", ownedVenue.id);
-    }
-    if (accountState === "disabled") {
-      await publicationClient.auth.admin.updateUserById(userId, { app_metadata: originalSelfServiceMetadata });
-    }
-    throw error;
+  const data = result.data;
+  if (!data || typeof data !== "object" || Array.isArray(data)
+    || data.id !== userId || data.account_state !== accountState
+    || !["customer", "dancer", "venue", "admin"].includes(data.role)
+    || (data.display_name !== null && typeof data.display_name !== "string")
+    || (data.email !== null && typeof data.email !== "string")) {
+    throw unavailable();
   }
-
-  if (accountState === "active") {
-    const { error: venueError } = ownedVenue
-      ? await publicationClient.from("venues").update({ is_active: priorVenueActive }).eq("id", ownedVenue.id)
-      : { error: null };
-    // Supabase merges metadata updates; null explicitly removes these permissions.
-    const restoredMetadata = { mydancr_self_disabled_at: null, mydancr_venue_was_active: null };
-    const { error: metadataError } = await publicationClient.auth.admin.updateUserById(userId, {
-      app_metadata: restoredMetadata,
-    });
-    if (venueError || metadataError) {
-      if (ownedVenue) await publicationClient.from("venues").update({ is_active: false }).eq("id", ownedVenue.id);
-      const { error: rollbackError } = await publicationClient.from("app_users").update({ account_state: "disabled" }).eq("id", userId);
-      if (!rollbackError) {
-        await publicationClient.auth.admin.updateUserById(userId, { app_metadata: originalSelfServiceMetadata });
-      }
-      throw venueError || metadataError;
-    }
-  }
-
-  if (data.role === "dancer") {
-    const { data: dancer, error: dancerError } = await publicationClient
-      .from("dancer_profiles")
-      .select("id")
-      .eq("user_id", userId)
-      .maybeSingle();
-
-    if (dancerError) throw dancerError;
-    if (dancer?.id) {
-      await transitionDancerPublication(
-        publicationClient,
-        dancer.id,
-        accountState === "active" ? "reactivate" : "disable",
-        { actorUserId: userId },
-      );
-    }
-  }
-
   return {
-    id: data.id,
-    role: data.role,
-    displayName: data.display_name,
-    email: data.email,
-    accountState: data.account_state,
+    id: data.id, role: data.role, displayName: data.display_name,
+    email: data.email, accountState: data.account_state,
   };
 }
 

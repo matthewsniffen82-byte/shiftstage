@@ -119,73 +119,28 @@ test("the missing-RPC fallback also preserves an administrative suspension", asy
 });
 
 test("the real account self-service flow cannot restore an administratively suspended profile", async (t) => {
-  const db = await database();
-  const metadata = {}, publication = {}, auth = {};
-  let applyHoldBeforeWrite = false;
-  const compile = path => ts.transpileModule(readFileSync(new URL("../" + path, import.meta.url), "utf8"), {
-    compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
-  }).outputText;
-  vm.runInNewContext(compile("src/lib/dancr/profile-publication.ts"), { exports: publication, Error, require(name) {
-    if (name === "../api-error-policy") return { PublicApiError };
-    if (name === "../supabase/missing-function") return { isMissingSupabaseFunction: () => false };
-    throw new Error(name);
-  } });
-  vm.runInNewContext(compile("src/lib/dancr/auth.ts"), { exports: auth, Error, require(name) {
-    if (name === "./profile-publication") return publication;
-    if (name === "../api-error-policy") return { PublicApiError };
-    return {};
-  } });
-  const client = { auth: { admin: {
-    async getUserById() { return { data: { user: { app_metadata: { ...metadata } } }, error: null }; },
-    async updateUserById(_id, input) {
-      for (const [key, value] of Object.entries(input.app_metadata)) {
-        if (value === null) delete metadata[key]; else metadata[key] = value;
-      }
-      return { error: null };
-    },
-  } }, async rpc(name, input) {
-    assert.equal(name, "transition_dancer_publication_safely");
-    return { data: await transition(db, input.p_transition, input.p_actor_user_id), error: null };
-  }, from(table) {
-    assert.ok(["app_users", "dancer_profiles"].includes(table));
-    let columns, field, value, update, requiresNoCopyrightHold = false;
-    const query = { select(c) { columns = c; return query; }, eq(f, v) { field = f; value = v; return query; },
-      is(f, v) { assert.equal(f, "dmca_suspended_at"); assert.equal(v, null); requiresNoCopyrightHold = true; return query; },
-      update(v) { update = v; return query; }, async single() { return result(); }, async maybeSingle() { return result(); } };
-    async function result() {
-      assert.ok(["id", "user_id"].includes(field));
-      if (update) {
-        assert.equal(table, "app_users");
-        if (applyHoldBeforeWrite && update.account_state === "active") {
-          applyHoldBeforeWrite = false;
-          await db.query("update app_users set account_state='disabled',dmca_suspended_at=now() where id=$1", [value]);
-        }
-        const written = await db.query(`update app_users set account_state=$1 where id=$2${requiresNoCopyrightHold ? " and dmca_suspended_at is null" : ""} returning id`, [update.account_state, value]);
-        if (!written.rows.length) return { data: null, error: new Error("Conditional account update returned no row") };
-      }
-      const row = (await db.query(`select ${columns} from ${table} where ${field}=$1`, [value])).rows[0];
-      return { data: row || null, error: null };
-    }
-    return query;
-  } };
+  const { createAccountLifecycleDatabase, seedAccountLifecycle } = await import("./helpers/account-lifecycle-database.mjs");
+  const { accountLifecycleCaller } = await import("./helpers/account-lifecycle-caller.mjs");
+  const db = await createAccountLifecycleDatabase();
   try {
-    await transition(db, "disable", ids.admin);
+    const owner = await seedAccountLifecycle(db, { role: "dancer", n: 1 });
+    const admin = await seedAccountLifecycle(db, { role: "admin", n: 2 });
+    await db.query("select public.transition_dancer_publication_safely($1,'disable',$2)", [owner.dancerId, admin.userId]);
+    const client = accountLifecycleCaller({ db, userId: owner.userId });
     for (const state of ["active", "disabled", "active"]) {
-      const result = await auth.setAccountState(client, ids.owner, state, client);
-      assert.equal(result.accountState, state);
-      const profile = await snapshot(db);
-      assert.equal(profile.status, "disabled");
-      assert.equal(profile.is_public, false);
-      assert.ok(profile.admin_disabled_at);
+      assert.equal((await client.run(state)).accountState, state);
+      const profile = (await db.query("select status,is_public,admin_disabled_at from public.dancer_profiles where id=$1", [owner.dancerId])).rows[0];
+      assert.equal(profile.status, "disabled"); assert.equal(profile.is_public, false); assert.ok(profile.admin_disabled_at);
     }
-    await t.test("a copyright hold arriving after the account read also fences the actual database update", async () => {
-      const profileBefore = await snapshot(db);
-      applyHoldBeforeWrite = true;
-      await assert.rejects(auth.setAccountState(client, ids.owner, "active", client), /Conditional account update returned no row/);
-      const account = (await db.query("select account_state,dmca_suspended_at from app_users where id=$1", [ids.owner])).rows[0];
-      assert.equal(account.account_state, "disabled");
-      assert.ok(account.dmca_suspended_at);
-      assert.deepEqual(await snapshot(db), profileBefore);
+    await t.test("a copyright hold after an earlier account read still fences the atomic database change", async () => {
+      const profileBefore = (await db.query("select status,is_public,admin_disabled_at from public.dancer_profiles where id=$1", [owner.dancerId])).rows[0];
+      const observed = (await db.query("select account_state from public.app_users where id=$1", [owner.userId])).rows[0];
+      assert.equal(observed.account_state, "active");
+      await db.query("update public.app_users set account_state='disabled',dmca_suspended_at=now()where id=$1", [owner.userId]);
+      await assert.rejects(client.run("active"), error => error.status === 403);
+      const account = (await db.query("select account_state,dmca_suspended_at from public.app_users where id=$1", [owner.userId])).rows[0];
+      assert.equal(account.account_state, "disabled"); assert.ok(account.dmca_suspended_at);
+      assert.deepEqual((await db.query("select status,is_public,admin_disabled_at from public.dancer_profiles where id=$1", [owner.dancerId])).rows[0], profileBefore);
     });
   } finally { await db.close(); }
 });

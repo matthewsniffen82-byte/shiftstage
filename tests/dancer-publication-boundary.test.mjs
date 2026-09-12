@@ -21,7 +21,7 @@ test("dancer submission, admin review, and visibility share one production trans
   assert.match(profileRoute, /transitionDancerPublication/);
   assert.match(visibilityRoute, /transitionDancerPublication/);
   assert.match(adminBackend, /transitionDancerPublication/);
-  assert.match(accountAuth, /transitionDancerPublication/);
+  assert.match(accountAuth, /transition_own_account_safely/);
 });
 
 test("profile writers no longer duplicate approval or publication state bundles", () => {
@@ -42,7 +42,7 @@ test("account disable and reactivation preserve approval safety at the publicati
   assert.match(boundary, /profile\.verification_status === "rejected" \|\| profile\.status === "rejected"/);
   assert.match(boundary, /profile\.verification_status === "approved" && profile\.approved_at && profile\.venue_approved_at/);
   assert.match(boundary, /status === "approved"/);
-  assert.match(accountStateWriter, /accountState === "active" \? "reactivate" : "disable"/);
+  assert.match(accountStateWriter, /p_account_state: accountState/);
   assert.doesNotMatch(accountStateWriter, /activeDancerProfileState/);
   assert.doesNotMatch(accountStateWriter, /\.from\("dancer_profiles"\)[\s\S]*?\.update\(/);
   assert.match(accountRoute, /setAccountState\(client, user\.id, accountState, createAdminSupabaseClient\(\)\)/);

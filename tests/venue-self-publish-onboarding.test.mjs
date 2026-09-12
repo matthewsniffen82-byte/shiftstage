@@ -72,9 +72,9 @@ test("private venue owners keep read-only access and approval publishes the comp
   assert.doesNotMatch(ownedVenueQuery, /\.eq\("is_active", true\)/);
   assert.match(venueService, /export async function reviewVenuePageForAccount/);
   assert.match(venueService, /profile\.pageReviewStatus !== "venue_review"/);
-  assert.match(venueService, /is_active: approved/);
-  assert.match(venueService, /published_at: approved \? reviewedAt : null/);
-  assert.match(venueService, /page_review_status: approved \? "published" : "changes_requested"/);
+  assert.match(venueService, /changeVenuePublication/);
+  assert.match(venueService, /approved \? "owner_approve" : "owner_request_changes"/);
+  assert.match(venueService, /\{ notes \}, VENUE_OWNER_COLUMNS/);
   assert.match(venueService, /Describe the requested changes in at least 10 characters/);
   assert.doesNotMatch(venueService, /export async function publishVenueForAccount/);
   assert.match(publicationRoute, /decision === "approved" \|\| body\?\.decision === "changes_requested"/);
@@ -99,7 +99,7 @@ test("only MyDancr can prepare and send a page before venue-controlled publicati
   assert.match(adminVenueRoute, /body\?\.action === "send_for_review" \|\| body\?\.action === "publish"/);
   assert.match(adminVenueRoute, /transitionAdminManagedVenuePage/);
   assert.match(adminService, /profile\.pageReviewStatus !== "venue_approved"/);
-  assert.match(adminService, /update\(\{ is_active: true, published_at: now, page_review_status: "published"/);
+  assert.match(adminService, /changeVenuePublication\(client, adminId, venueId, "admin_publish", \{\}/);
   assert.match(adminService, /Complete the MyDancr venue page first/);
   assert.match(adminService, /The connected venue manager must approve this exact page/);
   assert.match(adminService, /approve it to make it live/);

@@ -1,3 +1,4 @@
+import { changeVenuePublication } from "./venue-publication";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import {
   MODERATION_TEMP_BUCKET,
@@ -470,23 +471,11 @@ export async function reviewVenuePageForAccount(
     throw new Error("Describe the requested changes in at least 10 characters.");
   }
 
-  const reviewedAt = new Date().toISOString();
   const approved = input.decision === "approved";
-  const { data, error } = await client
-    .from("venues")
-    .update({
-      is_active: approved,
-      published_at: approved ? reviewedAt : null,
-      page_review_status: approved ? "published" : "changes_requested",
-      page_reviewed_at: reviewedAt,
-      page_reviewed_by_user_id: userId,
-      page_review_notes: approved ? null : notes,
-    })
-    .eq("id", access.venueId)
-    .eq("page_review_status", "venue_review")
-    .select(VENUE_OWNER_COLUMNS)
-    .single();
-  if (error) throw error;
+  const data = await changeVenuePublication(
+    client, userId, access.venueId, approved ? "owner_approve" : "owner_request_changes",
+    { notes }, VENUE_OWNER_COLUMNS,
+  );
   const reviewedProfile = toVenueOwnerProfile(client, data);
   console.info(approved ? "VENUE_PAGE_APPROVED_AND_PUBLISHED" : "VENUE_PAGE_CHANGES_REQUESTED", {
     venueId: access.venueId,

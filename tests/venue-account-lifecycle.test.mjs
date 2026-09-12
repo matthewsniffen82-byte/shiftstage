@@ -10,31 +10,23 @@ const [accountAuth, accountRoute, authRoute, venueAccess, dashboard] = await Pro
   readFile(new URL("../app/dashboard/DashboardClient.tsx", import.meta.url), "utf8"),
 ]);
 
-test("venue owner account changes pause and restore the exact prior venue publication state", () => {
-  assert.match(accountAuth, /\.select\("id, is_active"\)[\s\S]*?\.eq\("owner_user_id", userId\)/);
-  assert.match(accountAuth, /mydancr_venue_was_active: priorVenueActive/);
-  assert.match(accountAuth, /accountState !== "active"[\s\S]*?\.update\(\{ is_active: false \}\)/);
-  assert.match(accountAuth, /accountState === "active"[\s\S]*?\.update\(\{ is_active: priorVenueActive \}\)/);
-  assert.match(accountAuth, /if \(venueError \|\| metadataError\)[\s\S]*?account_state: "disabled"/);
+test("venue owner account changes use one server transaction with an exact account result", () => {
+  assert.match(accountAuth, /rpc\("transition_own_account_safely"/);
+  assert.match(accountAuth, /p_user_id: userId, p_account_state: accountState/);
+  assert.match(accountAuth, /data\.id !== userId \|\| data\.account_state !== accountState/);
   assert.match(accountRoute, /event: accountState === "disabled" \? "account\.self_disabled" : "account\.self_reactivated"/);
 });
-
-test("administrative suspensions cannot be undone through self-service reactivation", () => {
-  assert.match(accountAuth, /auth\.admin\.getUserById\(userId\)/);
-  assert.match(accountAuth, /app_metadata[\s\S]*?mydancr_self_disabled_at/);
-  assert.match(accountAuth, /current\.account_state === "disabled" && !selfDisabledAt[\s\S]*?disabled by MyDancr/);
-  assert.match(accountAuth, /auth\.admin\.updateUserById\(userId, \{[\s\S]*?app_metadata/);
-  assert.match(accountAuth, /restoredMetadata = \{ mydancr_self_disabled_at: null, mydancr_venue_was_active: null \}/);
+test("self-service restoration requires private database ownership, with no Auth compensation", () => {
+  const writer = accountAuth.slice(accountAuth.indexOf("export async function setAccountState"), accountAuth.indexOf("export async function getCustomerProfile"));
+  assert.doesNotMatch(writer, /auth\.admin|mydancr_self_disabled_at|\.from\(/);
+  assert.match(writer, /result\.error\.code === "42501"/);
   assert.match(authRoute, /account\.role === "venue" && account\.accountState === "active"/);
   assert.match(authRoute, /account\.accountState === "deleted"[\s\S]*?account has been deleted/);
 });
-
-test("owner pauses block every venue team role while personal team-account deletion preserves the venue", () => {
+test("owner pauses block venue team access while account operations keep the authenticated target", () => {
   assert.match(venueAccess, /\.select\("account_state"\)[\s\S]*?\.eq\("id", venue\.owner_user_id\)/);
   assert.match(venueAccess, /owner\?\.account_state !== "active"/);
-  assert.match(accountAuth, /\.eq\("owner_user_id", userId\)/);
-  assert.doesNotMatch(accountAuth, /\.from\("venues"\)[\s\S]*?\.delete\(/);
-  assert.doesNotMatch(accountAuth, /\.from\("venue_team_members"\)/);
+  assert.match(accountRoute, /setAccountState\(client, user\.id, accountState, createAdminSupabaseClient\(\)\)/);
 });
 
 test("venue dashboard exposes clear reversible and permanent account controls", () => {

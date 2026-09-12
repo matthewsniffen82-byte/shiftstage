@@ -41674,6 +41674,7 @@
               </button>
             </div>
           </div>
+          <p class="rule-note">Incognito hides your profile and schedule as pages refresh. Previously loaded content and shared media may remain visible.</p>
         </details>
         <details class="auth-card dashboard-collapse" id="dancerBillingSection" hidden>
           <summary><span class="dashboard-collapse-title"><strong>Payment authorization</strong><span>Expand to view subscription status and manage Stripe billing when billing is active.</span></span></summary>
@@ -64868,7 +64869,7 @@
           return;
         }
         const nextPublic = dancerProfileIsHidden(profile);
-        if (!nextPublic && !window.confirm("Go incognito? Your profile, posted schedule, and venue details will be hidden from guests until you turn the profile back on.")) {
+        if (!nextPublic && !window.confirm("Go incognito? Your profile and schedule will disappear as pages refresh. Previously loaded content and shared media may remain visible.")) {
           return;
         }
         if (trigger) {
@@ -64896,7 +64897,7 @@
           if (customerDashboard.classList.contains("show")) renderDashboard();
           setResult(savedPublic
             ? "Your profile is back on and visible to guests."
-            : "Incognito is on. Your profile was verified hidden from guests. You can turn it back on at any time.");
+            : "Incognito is on. Your profile and schedule will disappear as pages refresh. Previously loaded content and shared media may remain visible.");
           showToast(savedPublic ? "Profile is back on" : "Profile hidden · Incognito on");
         } catch (error) {
           setResult(error.message || "Could not update profile visibility.");

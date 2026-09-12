@@ -5187,7 +5187,7 @@ function DancerVisibilityPanel({
       setStatus(
         savedPublic
           ? "Your profile is back on and visible to guests."
-          : "Incognito is on. Your profile was verified hidden from guests. You can turn it back on at any time.",
+          : "Incognito is on. Your profile and schedule will disappear as pages refresh. Previously loaded content and shared media may remain visible.",
       );
     } catch (error) {
       if (mountedRef.current && !controller.signal.aborted && requestId === visibilitySequenceRef.current) {
@@ -5212,6 +5212,7 @@ function DancerVisibilityPanel({
           <b>{isPublic ? "Visible" : "Hidden"}</b>
         </div>
         <p>{isPublic ? "Guests can find your approved profile across MyDancr." : "Your profile is hidden from guests; your dashboard and tools stay available."}</p>
+        <p>Incognito hides your profile and schedule as pages refresh. Previously loaded content and shared media may remain visible.</p>
       </div>
       <button className="visibility-toggle" type="button" onClick={toggleVisibility} disabled={isSaving}>
         {isSaving ? "Verifying..." : isPublic ? "Go incognito" : "Make profile public"}

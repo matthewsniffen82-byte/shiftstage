@@ -98,12 +98,19 @@ function fixture(shifts, { legacy = false, queryError = null } = {}) {
   return { queries, get: () => service.getDancerProfile(client, "synthetic") };
 }
 
+async function rejectsMissingVisibility(fixture) {
+  await assert.rejects(fixture.get(), error => error.code === "42703");
+  assert.equal(fixture.queries.length, 1);
+  assert.equal(fixture.queries[0].is_public, "eq.true");
+}
+
 for (const legacy of [false, true]) {
-  test(`historical rows cannot hide an upcoming date, legacy=${legacy}`, async () => {
+  test(`historical rows cannot hide an upcoming date; missing visibility fails closed=${legacy}`, async () => {
     const f = fixture([...history(), scheduled("next", 86_400_000)], { legacy });
+    if (legacy) return rejectsMissingVisibility(f);
     const result = await f.get();
     assert.deepEqual(Array.from(result.upcomingShifts, row => row.id), ["next"]);
-    assert.equal(f.queries.length, legacy ? 2 : 1);
+    assert.equal(f.queries.length, 1);
     for (const query of f.queries) {
       assert.equal(query["shifts.limit"], "50");
       assert.equal(query["shifts.order"], "starts_at.asc,id.asc");
@@ -111,21 +118,25 @@ for (const legacy of [false, true]) {
     }
   });
 
-  test(`active NFC remains visible independently of scheduled end, legacy=${legacy}`, async () => {
+  test(`active NFC remains visible independently of scheduled end; missing visibility fails closed=${legacy}`, async () => {
     const live = scheduled("live", -86_400_000, { shift_source: "nfc", checked_in_at: iso(-60_000),
       location_status: "club_confirmed", location_verification_expires_at: iso(3_600_000) });
-    const result = await fixture([...history(), live, scheduled("next", 86_400_000)], { legacy }).get();
+    const f = fixture([...history(), live, scheduled("next", 86_400_000)], { legacy });
+    if (legacy) return rejectsMissingVisibility(f);
+    const result = await f.get();
     assert.equal(result.shiftId, "live");
     assert.deepEqual(Array.from(result.upcomingShifts, row => row.id), ["live", "next"]);
   });
 
-  test(`unpublished, checked-out and inactive-venue rows cannot consume the window, legacy=${legacy}`, async () => {
+  test(`unpublished, checked-out and inactive-venue rows cannot consume the window; missing visibility fails closed=${legacy}`, async () => {
     const excluded = [
       { status: "cancelled" }, { checked_out_at: iso(-1) },
       { venues: { ...venue, is_active: false } }, { venues: { ...venue, has_active_club_deal: false } },
       { venues: null }, { shift_source: "nfc", location_status: "club_confirmed", checked_in_at: iso(-60_000), location_verification_expires_at: iso(-1) },
     ].flatMap((overrides, group) => Array.from({ length: 55 }, (_, i) => scheduled(`excluded-${group}-${i}`, 10_000, overrides)));
-    const result = await fixture([...excluded, scheduled("visible", 86_400_000)], { legacy }).get();
+    const f = fixture([...excluded, scheduled("visible", 86_400_000)], { legacy });
+    if (legacy) return rejectsMissingVisibility(f);
+    const result = await f.get();
     assert.deepEqual(Array.from(result.upcomingShifts, row => row.id), ["visible"]);
   });
 }

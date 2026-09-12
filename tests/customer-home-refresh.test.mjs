@@ -39,17 +39,10 @@ test("customer refresh responses persist any rotated authentication session", ()
   assert.match(profileRouteSource, /NextResponse\.json\(\{ ok: true, profile: \{ \.\.\.profile, notificationDelivery: customerNotificationDelivery\(user.id, user.email\) \}, session \}\)/);
 });
 
-test("saved customer queries support the deployed schema until is_public migration is applied", () => {
-  assert.match(customerServiceSource, /function isMissingIsPublicColumnError/);
-  assert.match(customerServiceSource, /code === "42703" \|\| code === "PGRST204"/);
-  assert.match(customerServiceSource, /relation: "follows"/);
-  assert.match(customerServiceSource, /relation: "favorites"/);
-  assert.match(customerServiceSource, /relation: "going_signals"/);
-  assert.match(
-    customerServiceSource,
-    /dancer_profiles\(id, slug, stage_name, city, status, avatar_storage_path, dancer_photos\(storage_path, is_primary, review_status, sort_order\)\)/,
-  );
-  assert.match(customerServiceSource, /relation: "saved_dancer_images"/);
+test("saved customer queries require the deployed visibility boundary", () => {
+  assert.doesNotMatch(customerServiceSource, /isMissingIsPublicColumnError|CUSTOMER_SAVED_VISIBILITY_COLUMN_MISSING/);
+  assert.match(customerServiceSource, /verification_status, venue_approved_at, disabled_at, is_public/);
+  assert.match(customerServiceSource, /if \(!isShiftPubliclyVisible\(shift\)\) continue/);
 });
 
 test("missing private Club Deal storage cannot fail existing saved customer items", () => {

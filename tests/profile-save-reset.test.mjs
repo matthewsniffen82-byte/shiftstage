@@ -318,13 +318,13 @@ test("the live entry point and visibility query support the production schema", 
   assert.match(rootCspSource, /ACTIVE_EDIT_PROFILE_VERSION/);
   assert.match(rootCspSource, /canonical-profile-approval-v14/);
   assert.match(profileRouteSource, /PROFILE_SAVE_VERSION = "canonical-profile-approval-v14"/);
-  assert.match(publicSource, /PUBLIC_DANCERS_VISIBILITY_COLUMN_MISSING/);
-  assert.match(publicSource, /isMissingIsPublicColumnError/);
+  assert.doesNotMatch(publicSource, /PUBLIC_DANCERS_VISIBILITY_COLUMN_MISSING/);
+  assert.doesNotMatch(publicSource, /isMissingIsPublicColumnError/);
   assert.match(publicSource, /isPublicDancerProfileEligible\(dancer\)/);
   assert.doesNotMatch(approvalSource, /venue_approved_at \|\| profile\.venueApprovedAt/);
   assert.doesNotMatch(approvalSource, /identityProvider|identityVerifiedAt/);
   assert.match(approvalSource, /normalizedAccountState !== "active"/);
-  assert.match(approvalSource, /profile\.is_public !== false && profile\.isPublic !== false/);
+  assert.match(approvalSource, /profile\.is_public === true \|\| profile\.isPublic === true/);
   assert.match(publicSource, /\.eq\("status", "approved"\)/);
   assert.match(publicSource, /\.eq\("verification_status", "approved"\)/);
   assert.doesNotMatch(publicSource, /venue_onboarding_required/);
@@ -339,8 +339,8 @@ test("the live entry point and visibility query support the production schema", 
 
 test("profile approval stays synchronized with account and core verification state", () => {
   const accountStateWriter = accountAuthSource.match(/export async function setAccountState[\s\S]*?\n}\r?\n\r?\nexport async function getCustomerProfile/)?.[0] || "";
-  assert.match(accountAuthSource, /transitionDancerPublication/);
-  assert.match(accountStateWriter, /accountState === "active" \? "reactivate" : "disable"/);
+  assert.match(accountAuthSource, /transition_own_account_safely/);
+  assert.match(accountStateWriter, /p_account_state: accountState/);
   assert.doesNotMatch(accountStateWriter, /activeDancerProfileState/);
   assert.doesNotMatch(accountStateWriter, /\.from\("dancer_profiles"\)[\s\S]*?\.update\(/);
   assert.doesNotMatch(adminSource, /VerifyMy|identity_provider|identity_verified_at/);

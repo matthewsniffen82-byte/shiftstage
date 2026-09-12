@@ -28,7 +28,7 @@ function savedFixture() {
         then(resolve) {
           let data = [];
           if (kind === "customer") {
-            if (table !== "shifts") assert.ok(queryLog.filters.some(([key, value]) => key === "customer_id" && value === "signed-in-customer"));
+            assert.ok(queryLog.filters.some(([key, value]) => key === "customer_id" && value === "signed-in-customer"));
             if (table === "follows") data = rows.map((dancer, index) => ({
               dancer_id: dancer.id, notifications_enabled: true,
               // Reproduce production: customer RLS omits otherwise approved
@@ -36,8 +36,10 @@ function savedFixture() {
               dancer_profiles: index === 0 ? dancer : null,
             }));
           } else {
-            assert.equal(table, "dancer_profiles", "The public reader must never query another customer's private follows");
-            data = rows.filter(row => queryLog.ids.includes(row.id) && queryLog.filters.every(([key, value]) => row[key] === value));
+            assert.ok(["dancer_profiles", "shifts"].includes(table), "The public reader must never query another customer's private follows");
+            assert.ok(queryLog.ids.every(id => rows.some(row => row.id === id)), "Public lookups remain bounded to the customer's referenced dancers");
+            if (table === "dancer_profiles") data = rows.filter(row => queryLog.ids.includes(row.id) && queryLog.filters.every(([key, value]) => row[key] === value));
+            else assert.ok(queryLog.filters.some(([key, value]) => key === "status" && value === "posted"));
           }
           return Promise.resolve({ data, error: null }).then(resolve);
         },
@@ -63,7 +65,7 @@ test("saved follows survive an omitted embedded profile and use the approved dis
   assert.equal(saved.follows.length, 6, "A missing profile must not erase its saved follow");
   assert.deepEqual(Array.from(saved.follows.slice(0, 3), follow => follow.dancer.stageName), ["one", "two", "three"]);
   assert.ok(saved.follows.slice(3).every(follow => follow.dancer === null), "Private, disabled and unapproved profile details stay hidden");
-  const publicQuery = f.queries.find(query => query.kind === "public");
+  const publicQuery = f.queries.find(query => query.kind === "public" && query.table === "dancer_profiles");
   for (const [key, value] of [["status", "approved"], ["verification_status", "approved"], ["is_public", true], ["disabled_at", null]]) {
     assert.ok(publicQuery.filters.some(filter => filter[0] === key && filter[1] === value));
   }

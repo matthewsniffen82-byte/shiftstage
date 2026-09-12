@@ -1,136 +1,60 @@
-import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
-import test from "node:test";
-import vm from "node:vm";
-import ts from "typescript";
-import { PublicApiError } from "../src/lib/api-error-policy.ts";
-
-const source = readFileSync(new URL("../src/lib/dancr/auth.ts", import.meta.url), "utf8");
-const compiled = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText;
-function fixture({ role = "customer", state = "active", metadata = {}, forgedMetadata = {}, venueActive, failAccountUpdate = false, failVenueRestore = false } = {}) {
-  const row = { id: "owner", role, display_name: "Synthetic", email: "owner@example.test", account_state: state };
-  const appMetadata = { provider: "email", trusted_extra: "preserve", ...metadata };
-  const writes = [];
-  const venue = venueActive === undefined ? null : { id: "owned-venue", is_active: venueActive };
-  const client = {
-    from(table) {
-      let update = null;
-      const filters = [];
-      const query = {
-        select() { return query; }, eq(...args) { filters.push(args); return query; },
-        is(...args) { filters.push(args); return query; },
-        update(value) { update = value; return query; },
-        async single() { return result(); }, async maybeSingle() { return result(); },
-        then(resolve, reject) { return Promise.resolve(result()).then(resolve, reject); },
-      };
-      function result() {
-        const value = table === "app_users" ? row : table === "venues" ? venue : table === "dancer_profiles" && role === "dancer" ? { id: "owned-profile" } : null;
-        if (update) {
-          writes.push({ table, update: structuredClone(update), filters });
-          if (table === "app_users" && failAccountUpdate) return { data: null, error: new Error("Synthetic write failure") };
-          if (table === "venues" && update.is_active === true && failVenueRestore) return { data: null, error: new Error("Synthetic venue restore failure") };
-          if (value) Object.assign(value, update);
-        }
-        return { data: value && structuredClone(value), error: null };
-      }
-      return query;
-    },
-    auth: { admin: {
-      async getUserById(id) { assert.equal(id, "owner"); return { data: { user: { id, app_metadata: structuredClone(appMetadata), user_metadata: forgedMetadata } }, error: null }; },
-      async updateUserById(id, input) {
-        assert.equal(id, "owner");
-        writes.push({ table: "auth_metadata", update: structuredClone(input.app_metadata) });
-        // Supabase merges supplied keys; explicit null deletes a key.
-        for (const [key, value] of Object.entries(input.app_metadata)) {
-          if (value === null) delete appMetadata[key]; else appMetadata[key] = value;
-        }
-        return { error: null };
-      },
-    } },
-  };
-  const exports = {};
-  vm.runInNewContext(compiled, { exports, Date, Error, require: name => {
-    if (name === "../api-error-policy") return { PublicApiError };
-    if (name === "./profile-publication") return { transitionDancerPublication: async () => {} };
-    if (name === "server-only") return {};
-    throw new Error(name);
-  } });
-  return { row, appMetadata, writes, venue, run: state => exports.setAccountState(client, "owner", state, client) };
+import assert from 'node:assert/strict';
+import {after,before,test} from 'node:test';
+import {createAccountLifecycleDatabase,seedAccountLifecycle,accountLifecycleSnapshot} from './helpers/account-lifecycle-database.mjs';
+import {accountLifecycleCaller} from './helpers/account-lifecycle-caller.mjs';
+let db,next=1;
+before(async()=>{db=await createAccountLifecycleDatabase();});
+after(async()=>db?.close());
+async function fixture(options={}) {
+  const ids=await seedAccountLifecycle(db,{...options,n:next++});
+  return {...ids,...accountLifecycleCaller({db,userId:ids.userId})};
 }
-
-for (const role of ["customer", "dancer", "venue", "admin"]) {
-  for (const target of ["active", "disabled"]) {
-    test(`administratively disabled ${role} cannot use self-service ${target}`, async () => {
-      const f = fixture({ role, state: "disabled", venueActive: role === "venue" ? false : undefined });
-      await assert.rejects(f.run(target), error => error.status === 403);
-      assert.equal(f.row.account_state, "disabled");
-      assert.equal(f.writes.length, 0);
+const row=async(table,key,id)=>(await db.query(`select * from public.${table} where ${key}=$1`,[id])).rows[0];
+for(const role of ['customer','dancer','venue','admin']) {
+  for(const target of ['active','disabled']) {
+    test(`administratively disabled ${role} cannot use self-service ${target}`,async()=>{
+      const f=await fixture({role,state:'disabled'}),before=await accountLifecycleSnapshot(db);
+      await assert.rejects(f.run(target),error=>error.status===403);assert.deepEqual(await accountLifecycleSnapshot(db),before);
     });
-    test(`deleted ${role} cannot regain access through ${target}`, async () => {
-      const f = fixture({ role, state: "deleted", metadata: { mydancr_self_disabled_at: "old-pause" } });
-      await assert.rejects(f.run(target), error => error.status === 403);
-      assert.equal(f.row.account_state, "deleted");
-      assert.equal(f.writes.length, 0);
+    test(`deleted ${role} cannot regain access through ${target}`,async()=>{
+      const f=await fixture({role,state:'deleted',metadata:{mydancr_self_disabled_at:'old-pause'}}),before=await accountLifecycleSnapshot(db);
+      await assert.rejects(f.run(target),error=>error.status===403);assert.deepEqual(await accountLifecycleSnapshot(db),before);
     });
   }
-  test(`active ${role} retains self-disable and reactivation`, async () => {
-    const f = fixture({ role, venueActive: role === "venue" ? true : undefined });
-    await f.run("disabled");
-    assert.equal(f.row.account_state, "disabled");
-    assert.ok(f.appMetadata.mydancr_self_disabled_at);
-    if (f.venue) assert.equal(f.venue.is_active, false);
-    await f.run("active");
-    assert.equal(f.row.account_state, "active");
-    assert.equal(f.appMetadata.mydancr_self_disabled_at, undefined);
-    assert.equal(f.appMetadata.mydancr_venue_was_active, undefined);
-    assert.equal(f.appMetadata.trusted_extra, "preserve");
-    if (f.venue) assert.equal(f.venue.is_active, true);
-    // A later administrative suspension must not inherit the former self-pause permission.
-    f.row.account_state = "disabled";
-    await assert.rejects(f.run("active"), error => error.status === 403);
+  test(`active ${role} retains atomic self-disable and reactivation`,async()=>{
+    const f=await fixture({role});await f.run('disabled');
+    assert.equal((await row('app_users','id',f.userId)).account_state,'disabled');assert.ok(await row('account_self_pauses','user_id',f.userId));
+    if(f.venueId)assert.equal((await row('venues','id',f.venueId)).is_active,false);
+    await f.run('active');assert.equal((await row('app_users','id',f.userId)).account_state,'active');assert.equal(await row('account_self_pauses','user_id',f.userId),undefined);
+    if(f.venueId)assert.equal((await row('venues','id',f.venueId)).is_active,true);
+    await db.query("update public.app_users set account_state='disabled' where id=$1",[f.userId]);await assert.rejects(f.run('active'),error=>error.status===403);
   });
 }
-test("a suspended user cannot manufacture a self-disable marker then reactivate", async () => {
-  const f = fixture({ state: "disabled", forgedMetadata: { role: "admin", mydancr_self_disabled_at: "forged" } });
-  await assert.rejects(f.run("disabled"), error => error.status === 403);
-  await assert.rejects(f.run("active"), error => error.status === 403);
-  assert.equal(f.appMetadata.mydancr_self_disabled_at, undefined);
-  assert.equal(f.writes.length, 0);
+test('a suspended user cannot manufacture a self-pause permission using user metadata',async()=>{
+  const f=await fixture({state:'disabled',forgedMetadata:{role:'admin',mydancr_self_disabled_at:'forged'}}),before=await accountLifecycleSnapshot(db);
+  await assert.rejects(f.run('disabled'),error=>error.status===403);await assert.rejects(f.run('active'),error=>error.status===403);assert.deepEqual(await accountLifecycleSnapshot(db),before);
 });
-test("failed disable rolls back newly added metadata using provider merge semantics", async () => {
-  const f = fixture({ failAccountUpdate: true });
-  await assert.rejects(f.run("disabled"), /Synthetic write failure/);
-  assert.equal(f.row.account_state, "active");
-  assert.equal(f.appMetadata.mydancr_self_disabled_at, undefined);
-  assert.equal(f.appMetadata.trusted_extra, "preserve");
+test('a failed disable transaction preserves account, publication, Auth metadata and pause records',async()=>{
+  const f=await fixture({role:'venue'}),before=await accountLifecycleSnapshot(db);
+  await db.exec("create function public.synthetic_fail_pause()returns trigger language plpgsql as $$begin raise exception 'Synthetic write failure';end$$;create trigger synthetic_fail_pause before insert on public.account_self_pauses for each row execute function public.synthetic_fail_pause()");
+  try {await assert.rejects(f.run('disabled'),error=>error.status===503);assert.deepEqual(await accountLifecycleSnapshot(db),before);}
+  finally {await db.exec('drop trigger synthetic_fail_pause on public.account_self_pauses;drop function public.synthetic_fail_pause()');}
 });
-test("a private venue stays private through an authorized pause and resume", async () => {
-  const f = fixture({ role: "venue", venueActive: false });
-  await f.run("disabled"); await f.run("active");
-  assert.equal(f.venue.is_active, false);
+test('a private venue stays private through an authorized pause and resume',async()=>{
+  const f=await fixture({role:'venue',venueActive:false});await f.run('disabled');await f.run('active');assert.equal((await row('venues','id',f.venueId)).is_active,false);
 });
-test("an old active-account marker cannot restore an obsolete public venue state", async () => {
-  const f = fixture({ role: "venue", venueActive: false, metadata: { mydancr_self_disabled_at: "old-pause", mydancr_venue_was_active: true } });
-  await f.run("disabled");
-  assert.notEqual(f.appMetadata.mydancr_self_disabled_at, "old-pause");
-  await f.run("active");
-  assert.equal(f.venue.is_active, false);
+test('an old active-account Auth marker cannot restore an obsolete public venue state',async()=>{
+  const f=await fixture({role:'venue',venueActive:false,metadata:{mydancr_self_disabled_at:'old-pause',mydancr_venue_was_active:true}});
+  await f.run('disabled');await f.run('active');assert.equal((await row('venues','id',f.venueId)).is_active,false);
 });
-test("failed venue reactivation preserves the legitimate self-pause permission for retry", async () => {
-  const f = fixture({ role: "venue", state: "disabled", venueActive: false, failVenueRestore: true,
-    metadata: { mydancr_self_disabled_at: "original-pause", mydancr_venue_was_active: true } });
-  await assert.rejects(f.run("active"), /Synthetic venue restore failure/);
-  assert.equal(f.row.account_state, "disabled");
-  assert.equal(f.venue.is_active, false);
-  assert.equal(f.appMetadata.mydancr_self_disabled_at, "original-pause");
-  assert.equal(f.appMetadata.mydancr_venue_was_active, true);
-  assert.equal(f.appMetadata.trusted_extra, "preserve");
+test('failed venue restoration retains the exact self-pause and private state for retry',async()=>{
+  const f=await fixture({role:'venue'});await f.run('disabled');const before=await accountLifecycleSnapshot(db);
+  await db.exec("create function public.synthetic_fail_restore()returns trigger language plpgsql as $$begin if new.is_active then raise exception 'Synthetic restoration failure';end if;return new;end$$;create trigger synthetic_fail_restore before update on public.venues for each row execute function public.synthetic_fail_restore()");
+  try {await assert.rejects(f.run('active'),error=>error.status===503);assert.deepEqual(await accountLifecycleSnapshot(db),before);}
+  finally {await db.exec('drop trigger synthetic_fail_restore on public.venues;drop function public.synthetic_fail_restore()');}
+  await f.run('active');assert.equal((await row('venues','id',f.venueId)).is_active,true);
 });
-for (const state of ["active", "disabled", "deleted"]) test(`own account deletion remains available from ${state}`, async () => {
-  const f = fixture({ state, role: "venue", venueActive: state === "active" });
-  const result = await f.run("deleted");
-  assert.equal(result.accountState, "deleted");
-  assert.equal(f.row.email, null);
-  assert.equal(f.row.display_name, null);
-  assert.equal(f.venue.is_active, false);
+for(const state of ['active','disabled','deleted'])test(`own account deletion remains available from ${state}`,async()=>{
+  const f=await fixture({state,role:'venue'}),result=await f.run('deleted');assert.equal(result.accountState,'deleted');assert.equal(result.email,null);assert.equal(result.displayName,null);
+  assert.equal((await row('venues','id',f.venueId)).is_active,false);assert.equal(await row('account_self_pauses','user_id',f.userId),undefined);
 });

@@ -22,12 +22,6 @@ function applyPublicApprovalFilters(query: any) {
     .is("disabled_at", null);
 }
 
-function isMissingIsPublicColumnError(error: any) {
-  const code = String(error?.code || "");
-  const message = String(error?.message || "").toLowerCase();
-  return (code === "42703" || code === "PGRST204") && message.includes("is_public");
-}
-
 export function isApprovedPublicDancerRow(dancer: any) {
   return isPublicDancerProfileEligible(dancer);
 }
@@ -94,37 +88,8 @@ async function getApprovedDancerRowsByCity(client: DancrClient, city: string): P
     .order("starts_at", { referencedTable: "shifts", ascending: true })
     .limit(isAllMyDancrCities(cityName) ? PUBLIC_DANCER_DIRECTORY_LIMIT * 4 : PUBLIC_DANCER_DIRECTORY_LIMIT);
 
-  let data: any[] | null = current.data as any[] | null;
-  let error: any = current.error;
-  if (isMissingIsPublicColumnError(error)) {
-    console.warn("PUBLIC_DANCERS_VISIBILITY_COLUMN_MISSING", { code: error.code });
-    const legacy = await applyPublicApprovalFilters(filterPublicDancerCity(client
-      .from("dancer_profiles")
-      .select(
-        `
-          id,
-          slug,
-          stage_name,
-          city,
-          status,
-          approved_at,
-          disabled_at,
-          verification_status,
-          venue_approved_at,
-          photo_review_status,
-          avatar_storage_path,
-          trending_scores(rank),
-          dancer_photos(id, storage_path, is_primary, review_status, sort_order, like_count, is_pinned),
-          social_links(id, platform, handle, url, is_active),
-          shifts(id, shift_date, shift_source, starts_at, ends_at, timezone, status, location_status, checked_in_at, checked_out_at, location_verification_expires_at, venue_id, venues(id, name, slug, timezone, is_active, has_active_club_deal))
-        `,
-      ), cityName))
-      .order("stage_name", { ascending: true })
-      .order("starts_at", { referencedTable: "shifts", ascending: true })
-      .limit(isAllMyDancrCities(cityName) ? PUBLIC_DANCER_DIRECTORY_LIMIT * 4 : PUBLIC_DANCER_DIRECTORY_LIMIT);
-    data = legacy.data as any[] | null;
-    error = legacy.error;
-  }
+  const data: any[] | null = current.data as any[] | null;
+  const error: any = current.error;
 
   if (error) throw error;
 
@@ -171,42 +136,8 @@ export async function getTonightShifts(client: DancrClient, city: string, now = 
     .order("starts_at", { referencedTable: "shifts", ascending: true })
     .limit(PUBLIC_DANCER_DIRECTORY_LIMIT);
 
-  let data: any[] | null = current.data as any[] | null;
-  let error: any = current.error;
-  if (isMissingIsPublicColumnError(error)) {
-    console.warn("PUBLIC_SHIFTS_VISIBILITY_COLUMN_MISSING", { code: error.code });
-    const legacy = await applyPublicApprovalFilters(client
-      .from("dancer_profiles")
-      .select(
-        `
-          id,
-          slug,
-          stage_name,
-          city,
-          status,
-          approved_at,
-          disabled_at,
-          verification_status,
-          venue_approved_at,
-          photo_review_status,
-          avatar_storage_path,
-          trending_scores(rank),
-          dancer_photos(id, storage_path, is_primary, review_status, sort_order, like_count, is_pinned),
-          social_links(id, platform, handle, url, is_active),
-          shifts!inner(id, shift_date, shift_source, starts_at, ends_at, timezone, status, location_status, checked_in_at, checked_out_at, location_verification_expires_at, venue_id, venues(id, name, slug, timezone, is_active, has_active_club_deal))
-        `,
-      )
-      .ilike("city", cityName))
-      .eq("shifts.status", "posted")
-      .not("shifts.checked_in_at", "is", null)
-      .is("shifts.checked_out_at", null)
-      .eq("shifts.location_status", "club_confirmed")
-      .gt("shifts.location_verification_expires_at", now.toISOString())
-      .order("starts_at", { referencedTable: "shifts", ascending: true })
-      .limit(PUBLIC_DANCER_DIRECTORY_LIMIT);
-    data = legacy.data as any[] | null;
-    error = legacy.error;
-  }
+  const data: any[] | null = current.data as any[] | null;
+  const error: any = current.error;
 
   if (error) throw error;
 
@@ -253,43 +184,8 @@ export async function getDancerProfile(client: DancrClient, slug: string, resolv
     .limit(PUBLIC_PROFILE_SHIFT_LIMIT, { referencedTable: "shifts" })
     .maybeSingle();
 
-  let data: any = current.data;
-  let error: any = current.error;
-  if (isMissingIsPublicColumnError(error)) {
-    console.warn("PUBLIC_DANCER_PROFILE_VISIBILITY_COLUMN_MISSING", { code: error.code });
-    const legacy = await applyPublicApprovalFilters(client
-      .from("dancer_profiles")
-      .select(
-        `
-          id,
-          slug,
-          stage_name,
-          city,
-          status,
-          approved_at,
-          disabled_at,
-          verification_status,
-          venue_approved_at,
-          photo_review_status,
-          avatar_storage_path,
-          trending_scores(rank),
-          social_links(id, platform, handle, url, is_active),
-          shifts(id, shift_date, shift_source, starts_at, ends_at, timezone, status, location_status, checked_in_at, checked_out_at, location_verification_expires_at, venues!inner(id, name, slug, timezone, is_active, has_active_club_deal))
-        `,
-      )
-      .eq("slug", slug))
-      .eq("shifts.status", "posted")
-      .is("shifts.checked_out_at", null)
-      .or(visibleShiftWindow, { referencedTable: "shifts" })
-      .eq("shifts.venues.is_active", true)
-      .eq("shifts.venues.has_active_club_deal", true)
-      .order("starts_at", { referencedTable: "shifts", ascending: true })
-      .order("id", { referencedTable: "shifts", ascending: true })
-      .limit(PUBLIC_PROFILE_SHIFT_LIMIT, { referencedTable: "shifts" })
-      .maybeSingle();
-    data = legacy.data;
-    error = legacy.error;
-  }
+  const data: any = current.data;
+  const error: any = current.error;
 
   if (error) throw error;
   if (!data) {
@@ -711,7 +607,8 @@ function venueCoverImageFields(
   };
 }
 
-function isShiftPubliclyVisible(shift: any, now = Date.now()) {
+export function isShiftPubliclyVisible(shift: any, now = Date.now()) {
+  if (shift.status !== "posted") return false;
   if (!isPublicVenueRow(shift.venues)) return false;
   if (shift.checked_out_at) return false;
   if (isActiveNfcPresence(shift, now)) return true;

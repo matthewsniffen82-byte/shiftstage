@@ -56,6 +56,11 @@ export function effectiveDancerProfileStatus(
 }
 
 export function isPublicDancerProfileEligible(profile: DancerApprovalState | null | undefined) {
-  if (!profile || effectiveDancerProfileStatus(profile) !== "approved") return false;
-  return profile.is_public !== false && profile.isPublic !== false;
+  if (!profile || profile.status !== "approved" || !isCoreVerificationApproved(profile)) return false;
+  if (profile.disabled_at || profile.disabledAt) return false;
+  // Public readers require an explicit publication decision. Missing schema or
+  // contradictory representations must never make a profile visible.
+  if (profile.is_public !== undefined && profile.is_public !== true) return false;
+  if (profile.isPublic !== undefined && profile.isPublic !== true) return false;
+  return profile.is_public === true || profile.isPublic === true;
 }
