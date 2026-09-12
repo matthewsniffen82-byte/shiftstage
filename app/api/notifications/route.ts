@@ -13,6 +13,7 @@ import {
 } from "@/src/lib/dancr/public-request-rate-limit";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
+import { notificationPushDelivery } from "@/src/lib/dancr/customer-notification-delivery";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -21,11 +22,13 @@ const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3
 
 export async function GET(request: Request) {
   try {
-    const { client, user } = await createRequestSupabaseContext(request);
+    const { client, user } = await createRequestSupabaseContext(request, { active: true });
     const unreadOnly = new URL(request.url).searchParams.get("unread") === "true";
     const notifications = await getUserNotifications(client, user.id, unreadOnly);
 
-    return NextResponse.json({ ok: true, notifications });
+    return NextResponse.json({ ok: true, notifications, notificationDelivery: notificationPushDelivery(user.id) }, {
+      headers: { "cache-control": "private, no-store" },
+    });
   } catch (error) {
     return apiError(error, "Unable to load notifications.");
   }

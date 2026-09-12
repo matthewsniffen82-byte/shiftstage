@@ -4,7 +4,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { publicAppUrl } from "./public-app-url";
 import type { Json, NotificationType } from "./types";
 import { customerNotificationSettings, customerFollowAlertEnabled, followAlertKey } from "./customer-notification-preferences";
-import { customerPushExternalId } from "./customer-notification-delivery";
+import { notificationPushExternalId } from "./customer-notification-delivery";
 
 type DancrClient = SupabaseClient;
 const DELIVERY_PROVIDER_TIMEOUT_MS = 10_000;
@@ -49,7 +49,7 @@ export async function deliverNotificationRows(client: DancrClient, rows: Notific
   };
   const pushRows = rows.filter(row => allowed(row, "pushEnabled")).map(row => ({
     ...row,
-    recipient_id: recipientById.get(row.recipient_id)?.role === "customer" ? customerPushExternalId(row.recipient_id) : row.recipient_id,
+    recipient_id: notificationPushExternalId(row.recipient_id),
   }));
   const push = options.push === false ? 0 : await deliverPushNotifications(pushRows);
   const email = options.email === false ? 0 : await deliverEmailNotifications(rows.filter(row => allowed(row, "emailEnabled")), recipients);
@@ -95,7 +95,7 @@ export async function sendTransactionalEmail(input: {
   return { delivered: true as const };
 }
 
-export async function sendShuttlePhoneAlert(input: { phone: string; body: string; requestId: string }) {
+export async function sendShuttlePhoneAlert(input: { phone: string; requestId: string }) {
   const appId = process.env.NEXT_PUBLIC_ONESIGNAL_APP_ID;
   const apiKey = process.env.ONESIGNAL_REST_API_KEY;
   const from = process.env.ONESIGNAL_SMS_FROM;
@@ -105,7 +105,8 @@ export async function sendShuttlePhoneAlert(input: { phone: string; body: string
     headers: { Authorization: `Key ${apiKey}`, "Content-Type": "application/json" },
     body: JSON.stringify({
       app_id: appId, target_channel: "sms", sms_from: from,
-      include_phone_numbers: [input.phone], contents: { en: input.body },
+      include_phone_numbers: [input.phone],
+      contents: { en: `MyDancr: new free shuttle request. View guest contact and pickup details securely: ${publicAppUrl()}/dashboard/venue. The club confirms the ride.` },
       idempotency_key: input.requestId,
     }),
   });
@@ -133,6 +134,7 @@ async function deliverPushNotifications(rows: NotificationDeliveryRow[]) {
 
   let delivered = 0;
   for (const row of rows) {
+    const shuttleRequest = (row.payload as Record<string, unknown> | null)?.kind === "club_shuttle_request";
     const response = await requestDeliveryProvider("onesignal", "https://onesignal.com/api/v1/notifications", {
       method: "POST",
       headers: {
@@ -144,8 +146,10 @@ async function deliverPushNotifications(rows: NotificationDeliveryRow[]) {
         include_external_user_ids: [row.recipient_id],
         channel_for_external_user_ids: "push",
         headings: { en: row.title },
-        contents: { en: row.body },
-        data: row.payload || {},
+        // Pickup/contact details belong in the authenticated inbox, not a lock
+        // screen or a provider payload accessible outside the application.
+        contents: { en: shuttleRequest ? "New free shuttle request. Open your venue dashboard to contact the guest and confirm pickup." : row.body },
+        data: shuttleRequest ? { kind: "club_shuttle_request" } : row.payload || {},
         ...(row.deliveryId ? { idempotency_key: row.deliveryId } : {}),
         ...(notificationActionUrl(row) ? { url: notificationActionUrl(row) } : {}),
       }),
