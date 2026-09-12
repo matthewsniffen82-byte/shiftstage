@@ -28,7 +28,7 @@ test("the server hashes identities before the atomic limiter and fails closed on
   const rpcPosition = limiter.indexOf('.rpc("consume_request_rate_limit"');
   assert.ok(limiter.indexOf("requestIpHash = securityHash") < rpcPosition);
   assert.ok(limiter.indexOf("subjectHash = securityHash") < rpcPosition);
-  assert.match(limiter, /if \(!isMissingAtomicRateLimit\(error\)\) throw error/);
+  assert.doesNotMatch(limiter, /enforceCompatibilityRateLimit|compatibility_fallback_used/);
   assert.match(limiter, /code[\s\S]*?=== "PGRST202"/);
   assert.doesNotMatch(migration, /ip_address|user_agent|email|token/);
 });

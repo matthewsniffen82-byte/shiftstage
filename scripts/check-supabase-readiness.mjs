@@ -37,7 +37,7 @@ try {
   for (const table of ["app_users", "dancer_profiles", "customer_profiles", "venues", "shifts", "support_threads", "support_messages", "notifications", "account_recovery_events", "customer_deal_saves"]) {
     checks.push({ name: `Schema: ${table}`, ok: Boolean(schema.data?.paths?.[`/${table}`]) });
   }
-  for (const rpc of ["provision_app_account_safely", "transition_dancer_publication_safely", "create_support_message_safely", "get_ranking_metric_batch"]) {
+  for (const rpc of ["consume_request_rate_limit", "provision_app_account_safely", "transition_dancer_publication_safely", "create_support_message_safely", "get_ranking_metric_batch"]) {
     checks.push({ name: `Function: ${rpc}`, ok: Boolean(schema.data?.paths?.[`/rpc/${rpc}`]) });
   }
 } catch {

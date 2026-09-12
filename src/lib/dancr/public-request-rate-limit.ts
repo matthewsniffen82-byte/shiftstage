@@ -2,6 +2,7 @@ import "server-only";
 
 import { createHmac } from "node:crypto";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { PublicApiError } from "../api-error-policy.ts";
 import { requestClientAddress } from "../security/request-client-address";
 
 export class PublicRequestRateLimitError extends Error {
@@ -54,58 +55,14 @@ export async function enforcePublicRequestRateLimit(client: SupabaseClient, inpu
     return;
   }
 
-  if (!isMissingAtomicRateLimit(error)) throw error;
-  await enforceCompatibilityRateLimit(client, input, ipTargetId, subjectTargetId);
-  console.warn(JSON.stringify({
-    event: "request_rate_limit.compatibility_fallback_used",
-    namespace: input.namespace,
-  }));
-}
-
-async function enforceCompatibilityRateLimit(
-  client: SupabaseClient,
-  input: {
-    namespace: string;
-    windowSeconds: number;
-    ipLimit: number;
-    subjectLimit: number;
-  },
-  ipTargetId: string,
-  subjectTargetId: string,
-) {
-  const ipTargetType = `internal_rate_limit_${input.namespace}_ip`;
-  const subjectTargetType = `internal_rate_limit_${input.namespace}_subject`;
-  const since = new Date(Date.now() - input.windowSeconds * 1000).toISOString();
-
-  const [ipResult, subjectResult] = await Promise.all([
-    (client as any)
-      .from("content_reports")
-      .select("id", { count: "exact", head: true })
-      .eq("target_type", ipTargetType)
-      .eq("target_id", ipTargetId)
-      .eq("status", "resolved")
-      .gte("created_at", since),
-    (client as any)
-      .from("content_reports")
-      .select("id", { count: "exact", head: true })
-      .eq("target_type", subjectTargetType)
-      .eq("target_id", subjectTargetId)
-      .eq("status", "resolved")
-      .gte("created_at", since),
-  ]);
-
-  if (ipResult.error) throw ipResult.error;
-  if (subjectResult.error) throw subjectResult.error;
-  if ((ipResult.count || 0) >= input.ipLimit || (subjectResult.count || 0) >= input.subjectLimit) {
-    logRateLimitViolation(input.namespace, input.windowSeconds);
-    throw new PublicRequestRateLimitError(input.windowSeconds);
+  if (isMissingAtomicRateLimit(error)) {
+    throw new PublicApiError(
+      "UNAVAILABLE",
+      "Request protection is temporarily unavailable. Please try again shortly.",
+      503,
+    );
   }
-
-  const { error } = await (client as any).from("content_reports").insert([
-    throttleRecord(ipTargetType, ipTargetId, input.namespace),
-    throttleRecord(subjectTargetType, subjectTargetId, input.namespace),
-  ]);
-  if (error) throw error;
+  throw error;
 }
 
 function logRateLimitViolation(namespace: string, retryAfterSeconds: number) {
@@ -125,18 +82,6 @@ function readRetryAfter(value: unknown, fallback: number) {
 function isMissingAtomicRateLimit(error: unknown) {
   if (!error || typeof error !== "object") return false;
   return "code" in error && (error as { code?: unknown }).code === "PGRST202";
-}
-
-function throttleRecord(targetType: string, targetId: string, namespace: string) {
-  return {
-    reporter_id: null,
-    target_type: targetType,
-    target_id: targetId,
-    target_label: "Internal request throttle record",
-    reason: namespace,
-    details: null,
-    status: "resolved",
-  };
 }
 
 function securityHash(value: string) {
