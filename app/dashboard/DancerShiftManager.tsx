@@ -34,6 +34,7 @@ export default function DancerShiftManager() {
   const mountedRef = useRef(false);
   const loadSequenceRef = useRef(0);
   const loadAbortRef = useRef<AbortController | null>(null);
+  const actionPendingRef = useRef(false);
 
   const load = useCallback(async () => {
     if (!mountedRef.current) return false;
@@ -102,8 +103,8 @@ export default function DancerShiftManager() {
       setStatus("Choose a venue and date.");
       return;
     }
-    await saveRequest("POST", { venueId, shiftDate }, "Upcoming date posted.");
-    if (mountedRef.current) setShiftDate("");
+    const saved = await saveRequest("POST", { venueId, shiftDate }, "Upcoming date posted.");
+    if (saved && mountedRef.current) setShiftDate("");
   }
 
   async function saveEdit(shiftId: string) {
@@ -111,8 +112,8 @@ export default function DancerShiftManager() {
       setStatus("Choose a venue and date before saving.");
       return;
     }
-    await saveRequest("PATCH", { shiftId, venueId: editVenueId, shiftDate: editDate }, "Upcoming date updated.");
-    if (mountedRef.current) setEditingId("");
+    const saved = await saveRequest("PATCH", { shiftId, venueId: editVenueId, shiftDate: editDate }, "Upcoming date updated.");
+    if (saved && mountedRef.current) setEditingId("");
   }
 
   async function cancelDate(shiftId: string) {
@@ -120,7 +121,8 @@ export default function DancerShiftManager() {
   }
 
   async function endWorkingNow() {
-    if (!activeShift?.id) return;
+    if (!activeShift?.id || actionPendingRef.current) return;
+    actionPendingRef.current = true;
     setEndConfirmationOpen(false);
     setSaving(true);
     setWorkingNowStatusKind("");
@@ -151,11 +153,14 @@ export default function DancerShiftManager() {
           : error instanceof Error ? error.message : "Unable to end Working Now.");
       }
     } finally {
+      actionPendingRef.current = false;
       if (mountedRef.current) setSaving(false);
     }
   }
 
   async function saveRequest(method: "POST" | "PATCH" | "DELETE", body: Record<string, unknown>, success: string) {
+    if (!mountedRef.current || actionPendingRef.current) return false;
+    actionPendingRef.current = true;
     setSaving(true);
     setStatus("");
     loadSequenceRef.current += 1;
@@ -168,12 +173,19 @@ export default function DancerShiftManager() {
         body: JSON.stringify(body),
         fallbackMessage: "Unable to save changes.",
       });
-      if (!mountedRef.current) return;
+      if (!mountedRef.current) return false;
       setStatus(success);
-      await load();
+      try {
+        await load();
+      } catch {
+        if (mountedRef.current) setStatus(`${success} Refresh the dashboard to update the schedule.`);
+      }
+      return true;
     } catch (error) {
       if (mountedRef.current) setStatus(error instanceof Error ? error.message : "Unable to save changes.");
+      return false;
     } finally {
+      actionPendingRef.current = false;
       if (mountedRef.current) setSaving(false);
     }
   }
@@ -256,7 +268,7 @@ export default function DancerShiftManager() {
         <DancerVenuePicker venues={venues} value={venueId} onChange={setVenueId} disabled={saving} />
         <label>
           Upcoming date
-          <input className="dancer-schedule-control" type="date" min={todayDate()} value={shiftDate} onChange={(event) => setShiftDate(event.target.value)} required />
+          <input className="dancer-schedule-control" type="date" min={todayDate()} value={shiftDate} onChange={(event) => setShiftDate(event.target.value)} disabled={saving} required />
         </label>
         <button type="submit" disabled={saving || !venues.length}>{saving ? "Posting..." : "Post upcoming date"}</button>
         <p>Posting a date does not check you in.</p>
@@ -275,11 +287,11 @@ export default function DancerShiftManager() {
                 <DancerVenuePicker venues={venues} value={editVenueId} onChange={setEditVenueId} disabled={saving} />
                 <label>
                   Upcoming date
-                  <input className="dancer-schedule-control" type="date" min={todayDate()} value={editDate} onChange={(event) => setEditDate(event.target.value)} required />
+                  <input className="dancer-schedule-control" type="date" min={todayDate()} value={editDate} onChange={(event) => setEditDate(event.target.value)} disabled={saving} required />
                 </label>
                 <div className="shift-actions">
                   <button type="button" disabled={saving} onClick={() => void saveEdit(String(shift.id))}>{saving ? "Saving..." : "Save date"}</button>
-                  <button type="button" onClick={() => setEditingId("")}>Done</button>
+                  <button type="button" disabled={saving} onClick={() => setEditingId("")}>Done</button>
                 </div>
               </>
             ) : (
@@ -288,12 +300,12 @@ export default function DancerShiftManager() {
                 <em>{shift.status === "cancelled" ? "Cancelled" : "Upcoming"}</em>
                 {shift.status !== "cancelled" ? (
                   <div className="shift-actions">
-                    <button type="button" onClick={() => {
+                    <button type="button" disabled={saving} onClick={() => {
                       setEditingId(String(shift.id));
                       setEditVenueId(String(shift.venue_id || ""));
                       setEditDate(String(shift.shift_date || ""));
                     }}>Edit</button>
-                    <button type="button" onClick={() => void cancelDate(String(shift.id))}>Delete date</button>
+                    <button type="button" disabled={saving} onClick={() => void cancelDate(String(shift.id))}>Delete date</button>
                   </div>
                 ) : null}
               </>
