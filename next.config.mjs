@@ -1,3 +1,4 @@
+import { assertSupportedNodeRuntime } from "./src/lib/security/node-runtime.mjs";
 import { staticAssetCacheHeaders } from "./src/lib/dancr/static-asset-cache.mjs";
 import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
@@ -8,6 +9,8 @@ import {
   createActiveEditProfileScript,
   createRootContentSecurityPolicy,
 } from "./src/lib/security/root-content-security-policy.mjs";
+
+assertSupportedNodeRuntime();
 
 // Reject accidental private keys before Next can embed public variables in assets.
 validatePublicEnvironment(process.env);

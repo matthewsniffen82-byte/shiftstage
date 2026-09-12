@@ -4,7 +4,7 @@
   "private": true,
   "packageManager": "npm@11.19.1",
   "allowScripts": {
-    "ffmpeg-static@5.3.0": true,
+    "ffmpeg-static@5.3.0": false,
     "unrs-resolver": false
   },
   "overrides": {
@@ -15,7 +15,7 @@
   "dependencies": {
     "@supabase/supabase-js": "^2.45.4",
     "@zxing/browser": "^0.1.5",
-    "ffmpeg-static": "^5.3.0",
+    "ffmpeg-static": "5.3.0",
     "next": "15.5.24",
     "openai": "^5.10.2",
     "postcss": "^8.5.23",
@@ -31,9 +31,9 @@
     "generate:static-asset-versions": "node scripts/generate-static-asset-versions.mjs",
     "generate:fictional-venue-logos": "node scripts/generate-fictional-venue-logos.mjs",
     "generate:venue-logo-variants": "node scripts/generate-dark-card-venue-logos.mjs",
-    "predev": "npm run generate:live-shell-version && npm run generate:live-shell-styles && npm run generate:static-asset-versions",
+    "predev": "node scripts/check-runtime-dependencies.mjs && npm run generate:live-shell-version && npm run generate:live-shell-styles && npm run generate:static-asset-versions",
     "dev": "next dev",
-    "prebuild": "npm run db:check-migrations && npm run generate:live-shell-version && npm run generate:live-shell-styles && npm run generate:static-asset-versions",
+    "prebuild": "node scripts/check-runtime-dependencies.mjs && npm run db:check-migrations && npm run generate:live-shell-version && npm run generate:live-shell-styles && npm run generate:static-asset-versions",
     "build": "next build",
     "postbuild": "node scripts/manage-layout-review-postbuild.mjs",
     "lint": "eslint . --max-warnings=0",
@@ -42,7 +42,7 @@
     "demo:working-now": "node scripts/manage-demo-working-now.mjs",
     "demo:upcoming": "node scripts/manage-demo-upcoming.mjs",
     "demo:club-deals": "node scripts/manage-demo-club-deals.mjs",
-    "pretest": "npm run generate:live-shell-version && npm run generate:live-shell-styles && npm run generate:static-asset-versions",
+    "pretest": "node scripts/check-runtime-dependencies.mjs && npm run generate:live-shell-version && npm run generate:live-shell-styles && npm run generate:static-asset-versions",
     "test": "node --test tests/*.test.mjs",
     "privacy:purge-legacy-identity": "node scripts/purge-legacy-identity-data.mjs",
     "media:backfill-watermarks": "node scripts/backfill-public-media-watermarks.mjs",
@@ -50,10 +50,12 @@
     "media:reconcile-gallery-sources": "node scripts/reconcile-gallery-sources.mjs",
     "media:audit-gallery-storage": "node scripts/audit-gallery-storage.mjs",
     "media:import-platform-tv": "node scripts/import-platform-tv-videos.mjs",
-    "pretypecheck": "npm run generate:live-shell-version && npm run generate:live-shell-styles && npm run generate:static-asset-versions",
+    "pretypecheck": "node scripts/check-runtime-dependencies.mjs && npm run generate:live-shell-version && npm run generate:live-shell-styles && npm run generate:static-asset-versions",
     "typecheck": "node --test tests/*.test.mjs && tsc --noEmit --incremental false",
     "start": "next start",
-    "db:check-migrations": "node scripts/check-supabase-migrations.mjs"
+    "db:check-migrations": "node scripts/check-supabase-migrations.mjs",
+    "install:ffmpeg": "node scripts/install-ffmpeg.mjs",
+    "postinstall": "npm run install:ffmpeg"
   },
   "devDependencies": {
     "@electric-sql/pglite": "0.5.8",
@@ -66,5 +68,8 @@
     "eslint-config-next": "^15.5.19",
     "terser": "5.51.2",
     "typescript": "^5.8.2"
+  },
+  "engines": {
+    "node": "^24.18.1"
   }
 }

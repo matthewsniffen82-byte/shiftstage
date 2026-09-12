@@ -4,6 +4,14 @@ Premium nightlife schedule discovery live app.
 
 Dancr is a Next.js, Supabase, Vercel, and TypeScript application. Public discovery pages, dashboards, approvals, photo moderation, schedules, notifications, venues, and account tools are served from the live app and database.
 
+## Local runtime and dependencies
+
+Use Node.js 24 LTS, at least 24.18.1; the recommended local version is 24.21.0 (also in `.node-version`). Install the locked dependencies with `npx --yes npm@11.19.1 ci`.
+
+The install hook downloads and verifies a pinned FFmpeg 8.1.2 binary for Windows x64 or Linux x64. GitHub release access and a system `tar` executable are required. The legacy `ffmpeg-static` downloader is disabled; its path wrapper remains for application compatibility. After restoring a dependency cache, use `npm run install:ffmpeg` to repair an outdated or missing binary. Development, tests and builds check the runtime and native binary before proceeding.
+
+To update FFmpeg, review the upstream release and binary distributor, update the archive and executable sizes/hashes in `scripts/lib/ffmpeg-release.mjs`, then run installation, real media regressions and the complete release gates. Preserve the input restrictions and license. Do not set FFmpeg path/download environment overrides. See [the dependency review](docs/security/2026-09-09/step-23-dependencies.md).
+
 ## Live Stack
 
 The production app is implemented across:
@@ -32,7 +40,7 @@ The app service layer lives in `src/lib`. It provides Supabase clients and Dancr
 
 ## Go-live checklist
 
-1. Install dependencies with `npm install`.
+1. Use the supported Node.js runtime and install dependencies with `npx --yes npm@11.19.1 ci`.
 2. Run `npm run build` and confirm it completes without errors.
 3. Apply the Supabase migrations in `supabase/migrations`.
 4. Create the Supabase storage buckets and policies from the storage migration.
@@ -119,7 +127,7 @@ Mock OpenAI in automated tests; do not send real user photos. Minimum cases to c
 
 After deploying:
 
-1. Run `npm install`, `npm run build`, and any project tests.
+1. Run `npx --yes npm@11.19.1 ci`, the full automated checks, and `npm run build`.
 2. Verify `OPENAI_API_KEY` is present only in local `.env.local` and Vercel server environment variables.
 3. Verify no OpenAI key appears in `.next/static`, browser bundles, API responses, logs, or Supabase rows.
 4. Apply the migration and confirm RLS is enabled on `image_moderation_records`.

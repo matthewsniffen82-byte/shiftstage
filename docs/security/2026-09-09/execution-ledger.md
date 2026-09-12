@@ -42,8 +42,8 @@ Step 1 delivered as `50d4eb543dbfc93dbed6f0663c51aa2332542cb4`, pushed to origin
 | 19 | Database functions / grants | Delivered and healthy: 508bf4b89804a5b403cb6bb12fcdfc24c4db6b27 and b8f3f254ddea427252cef528cffb7b118f5330ed |
 | 20 | Webhooks | Delivered with documented inactive-provider deferrals: 060b2976d3e7856efb2cc0c9ce3c64c0732fb919 |
 | 21 | Errors / disclosure | Delivered and healthy: final correction 3e8106d781e578a982e2cbdcdaf210c19f988cd7 |
-| 22 | Security logging | Final correction validated; awaiting exact deployment |
-| 23 | Dependencies | Not started |
+| 22 | Security logging | Delivered and healthy: 5d5fdb936c3d42b2f8e487e228cd9e2db0658ec2 |
+| 23 | Dependencies | Validated native decoder/runtime correction; awaiting exact deployment |
 | 24 | CI / supply chain | Not started |
 | 25 | Production build / source maps | Not started |
 | 26 | Sensitive data minimization | Not started |
@@ -450,3 +450,16 @@ Step 21 closed as 3e8106d781e578a982e2cbdcdaf210c19f988cd7 after all 6,331 tests
 See `step-22-security-logging.md` for nine source corrections, 97 regression cases (55 fail before; all 97 pass after), preserved security/audit events and operational verification limits. External TypeScript/lint passed; final integrated release gates and exact deployment remain required. No later numbered step has begun.
 
 The final integrated candidate on `ef752f858c5284bdd69f0089187aaeca4e4dbdd5` passed all 6,515 tests with zero failures, skips or cancellations, standalone TypeScript, full lint and production build. The migration guard passed and postbuild skipped population. An initial run's sole failing NFC support fixture was corrected to load the real logging helper; the complete suite was then rerun successfully. All eleven source/test files match the hashes captured for that rerun. The release includes those files and three security documents; only commit/push, matching main, exact Vercel success and deployed verification remain.
+
+
+## Step 22 exact delivery
+
+Step 22 delivered as `5d5fdb936c3d42b2f8e487e228cd9e2db0658ec2`. [Exact Vercel deployment](https://vercel.com/ai-movie-jobs/shiftstage/G3yt7ici7r13co6xCtsj8vkmrN8e) succeeded after all 6,515 tests, standalone TypeScript, full lint and production build passed. At 2026-09-12T05:54:27Z eight production health/anonymous-denial checks and thirty Supabase readiness checks passed; the homepage rendered without browser warnings/errors. The local branch was clean and matched origin/main and the remote. No SQL or production business/provider operation was used as a test. Operational logging limitations remain explicit. Only after these gates did Step 23 begin.
+
+## Step 23 dependency review
+
+See `step-23-dependencies.md` for the zero-advisory package review, separately discovered outdated FFmpeg executable and local Node runtime, pinned native replacement, runtime floor, external installation/media regressions and remaining release gates. No Step 24 work has begun. Independent architecture/TV/Supabase/review releases are preserved; this security step applies no SQL.
+
+## Step 23 final validation
+
+Final integrated validation on `6a8454490250212bc2e7a175cf82798b02454dbf` passed all 6,653 automated tests with zero failures, skips or cancellations, standalone TypeScript, full lint and the production build. The runtime check verified Node 24.21.0 and the pinned FFmpeg executable; the migration-history guard passed and postbuild reported `LAYOUT_REVIEW_POPULATION_SKIPPED`. All thirteen frozen source/config/test files retained their validated hashes. Both complete and production-only package audits report zero known advisories. The eighteen-file release preserves every unrelated commit. Only task-only commit/push, matching main, exact Vercel success and deployed read-only checks remain before Step 24 may begin.

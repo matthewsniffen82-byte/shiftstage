@@ -9,7 +9,7 @@ test("dependency install scripts use an explicit least-privilege allowlist", asy
   const packageJson = JSON.parse(await readFile(packageJsonUrl, "utf8"));
 
   assert.deepEqual(packageJson.allowScripts, {
-    "ffmpeg-static@5.3.0": true,
+    "ffmpeg-static@5.3.0": false,
     "unrs-resolver": false,
   });
 });

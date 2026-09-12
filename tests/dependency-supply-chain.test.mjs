@@ -35,7 +35,7 @@ test("production installs use a pinned npm and immutable lockfile", () => {
 
 test("every dependency lifecycle script has an explicit allow or deny decision", () => {
   const scriptPackages = Object.entries(packageLock.packages)
-    .filter(([, metadata]) => metadata.hasInstallScript === true)
+    .filter(([path, metadata]) => path && metadata.hasInstallScript === true)
     .map(([path, metadata]) => ({
       name: packageNameFromLockPath(path),
       version: metadata.version,
@@ -55,7 +55,7 @@ test("every dependency lifecycle script has an explicit allow or deny decision",
     );
   }
 
-  assert.equal(packageJson.allowScripts["ffmpeg-static@5.3.0"], true);
+  assert.equal(packageJson.allowScripts["ffmpeg-static@5.3.0"], false);
   assert.equal(packageJson.allowScripts["unrs-resolver"], false);
 });
 

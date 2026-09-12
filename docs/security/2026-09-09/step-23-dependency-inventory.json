@@ -1,0 +1,147 @@
+{
+  "capturedAt": "2026-09-12T05:56:57.518Z",
+  "initialLockSha256": "103556d7ac290087b26d46b3e5112e17ebfac42d0088344555c2d7291152178c",
+  "lockfileVersion": 3,
+  "packageAudit": {
+    "all": {
+      "info": 0,
+      "low": 0,
+      "moderate": 0,
+      "high": 0,
+      "critical": 0
+    },
+    "production": {
+      "info": 0,
+      "low": 0,
+      "moderate": 0,
+      "high": 0,
+      "critical": 0
+    }
+  },
+  "directPackages": [
+    {
+      "name": "@supabase/supabase-js",
+      "locked": "2.108.2",
+      "development": false
+    },
+    {
+      "name": "@zxing/browser",
+      "locked": "0.1.5",
+      "development": false
+    },
+    {
+      "name": "ffmpeg-static",
+      "locked": "5.3.0",
+      "development": false
+    },
+    {
+      "name": "next",
+      "locked": "15.5.24",
+      "development": false
+    },
+    {
+      "name": "openai",
+      "locked": "5.23.2",
+      "development": false
+    },
+    {
+      "name": "postcss",
+      "locked": "8.5.23",
+      "development": false
+    },
+    {
+      "name": "qrcode",
+      "locked": "1.5.4",
+      "development": false
+    },
+    {
+      "name": "react",
+      "locked": "19.2.7",
+      "development": false
+    },
+    {
+      "name": "react-dom",
+      "locked": "19.2.7",
+      "development": false
+    },
+    {
+      "name": "sharp",
+      "locked": "0.35.4",
+      "development": false
+    },
+    {
+      "name": "stripe",
+      "locked": "16.12.0",
+      "development": false
+    },
+    {
+      "name": "@electric-sql/pglite",
+      "locked": "0.5.8",
+      "development": true
+    },
+    {
+      "name": "@eslint/eslintrc",
+      "locked": "3.3.6",
+      "development": true
+    },
+    {
+      "name": "@eslint/js",
+      "locked": "9.39.5",
+      "development": true
+    },
+    {
+      "name": "@types/node",
+      "locked": "22.20.0",
+      "development": true
+    },
+    {
+      "name": "@types/react",
+      "locked": "19.2.17",
+      "development": true
+    },
+    {
+      "name": "@types/react-dom",
+      "locked": "19.2.3",
+      "development": true
+    },
+    {
+      "name": "eslint",
+      "locked": "9.39.5",
+      "development": true
+    },
+    {
+      "name": "eslint-config-next",
+      "locked": "15.5.22",
+      "development": true
+    },
+    {
+      "name": "terser",
+      "locked": "5.51.2",
+      "development": true
+    },
+    {
+      "name": "typescript",
+      "locked": "5.9.3",
+      "development": true
+    }
+  ],
+  "initialLocalNode": "v24.16.0",
+  "validatedLocalNode": "v24.21.0",
+  "nodeMinimum": "24.18.1",
+  "nodeMajor": 24,
+  "initialFfmpeg": "6.1.1",
+  "replacementFfmpeg": "n8.1.2-50-g1a748fe2cd",
+  "sharp": {
+    "version": "0.35.4",
+    "libheif": "1.23.2",
+    "libvips": "8.18.6"
+  },
+  "limitations": [
+    "Package advisory results are time-bound.",
+    "Separately downloaded binaries require independent review.",
+    "Vercel runtime instances are not individually version-queried."
+  ],
+  "validatedAt": "2026-09-12T06:55:59.341Z",
+  "finalLockSha256": "76bd8e0f619ec79e63be9da9e9ca3fc6e19d5e7bb01a21a974eb27f20f5934ef",
+  "fullTestCount": 6653
+}

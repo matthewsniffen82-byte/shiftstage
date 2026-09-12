@@ -41,3 +41,8 @@ The local preview remains stopped after the architecture task's automatic approv
 ## Final integrated validation
 
 All 6,515 automated tests passed with zero failures, skips or cancellations after the NFC fixture correction. Standalone TypeScript, full lint, production build and migration-history guard passed; postbuild reported `LAYOUT_REVIEW_POPULATION_SKIPPED`. The eleven source/test files match their recorded validation hashes. The 220 initial focused checks and 141 post-fixture checks passed. This fourteen-file release retains the independently delivered architecture/Supabase changes. Exact commit/push and deployed verification follow before Step 23 begins.
+
+
+## Exact delivery
+
+Step 22 delivered as `5d5fdb936c3d42b2f8e487e228cd9e2db0658ec2`. [Exact Vercel deployment](https://vercel.com/ai-movie-jobs/shiftstage/G3yt7ici7r13co6xCtsj8vkmrN8e) succeeded after all 6,515 tests, standalone TypeScript, full lint and production build passed. At 2026-09-12T05:54:27Z eight production health/anonymous-denial checks and thirty Supabase readiness checks passed; the homepage rendered without browser warnings/errors. The local branch was clean and matched origin/main and the remote. No SQL or production business/provider operation was used as a test. Operational logging limitations remain explicit. Only after these gates did Step 23 begin.
