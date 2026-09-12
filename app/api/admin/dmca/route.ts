@@ -67,10 +67,14 @@ export async function PATCH(request: Request) {
     }
 
     const result = await applyDmcaAdminAction(admin, user.id, caseId, action, notes);
+    const deliveryNeedsReview = "deliveryNeedsReview" in result && result.deliveryNeedsReview;
     return NextResponse.json({
       ok: true,
       result,
-      message: actionMessage(action),
+      partial: Boolean(deliveryNeedsReview),
+      message: actionMessage(action) + (deliveryNeedsReview
+        ? " Email delivery could not be confirmed. Review notification delivery; do not repeat the completed action."
+        : ""),
       session: session || null,
     });
   } catch (error) {
@@ -79,7 +83,7 @@ export async function PATCH(request: Request) {
 }
 
 function actionMessage(action: DmcaAdminAction) {
-  if (action === "disable") return "The reported video was disabled and the uploader was notified.";
+  if (action === "disable") return "The reported video was disabled and the copyright strike was recorded.";
   if (action === "restore") return "The content was restored and the copyright strike was rescinded.";
   if (action === "record_court_action") return "Court action recorded. Automatic restoration is blocked.";
   if (action === "request_information") return "The claimant was asked for more information.";

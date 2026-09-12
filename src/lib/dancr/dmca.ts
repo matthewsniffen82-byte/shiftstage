@@ -7,6 +7,7 @@ import { publicAppUrl } from "./public-app-url";
 import { safeErrorMetadata } from "../security/safe-error-metadata";
 import { enforcePublicRequestRateLimit } from "./public-request-rate-limit";
 import { recordDmcaCounterSubmission } from "./dmca-counter-submission";
+import { PublicApiError } from "../api-error-policy";
 
 type DancrClient = SupabaseClient;
 
@@ -373,6 +374,7 @@ export async function applyDmcaAdminAction(
   notes?: string,
 ) {
   requireUuid(caseId, "Invalid copyright case.");
+  caseId = caseId.toLowerCase();
   const cleanNotes = optionalText(notes, 4000);
   const db = client as any;
   const { data: dmcaCase, error: caseError } = await db
@@ -383,60 +385,67 @@ export async function applyDmcaAdminAction(
 
   if (caseError) throw caseError;
   if (!dmcaCase) throw new DmcaUserError("Copyright case not found.");
+  if (dmcaCase.id !== caseId) throw unconfirmedDmcaAction();
 
   if (action === "disable") {
-    const { data, error } = await db.rpc("apply_dmca_takedown", {
+    const data = await confirmedDmcaAction(db, "disable", dmcaCase, {
       p_case_id: caseId,
       p_admin_id: adminId,
       p_admin_notes: cleanNotes,
     });
-    if (error) throw error;
+    let deliveryNeedsReview = false;
 
-    if (data?.uploaderId) {
+    try {
       const { data: uploader, error: uploaderError } = await db
         .from("app_users")
         .select("email")
         .eq("id", data.uploaderId)
         .maybeSingle();
       if (uploaderError) {
+        deliveryNeedsReview = true;
         console.error("Unable to load the DMCA uploader email", {
           caseId,
           ...safeErrorMetadata(uploaderError),
         });
       } else if (uploader?.email) {
         const counterUrl = `${publicAppUrl()}/dmca/counter/${encodeURIComponent(caseId)}`;
-        await sendTransactionalEmail({
+        const delivered = await sendDmcaActionEmail({
           to: uploader.email,
           subject: `MyDancr copyright notice ${caseId}`,
           text: [
             "A MyDancr TV video was disabled after a validated copyright notice.",
             "",
             `Review the case and, if appropriate, submit a legally complete counter-notice: ${counterUrl}`,
-            data.repeatInfringerEnforced
+            "repeatInfringerEnforced" in data && data.repeatInfringerEnforced
               ? "Your account was also suspended after reaching three active copyright strikes."
               : "",
           ].filter(Boolean).join("\n"),
         });
+        deliveryNeedsReview ||= !delivered;
+      } else {
+        deliveryNeedsReview = true;
       }
+    } catch (error) {
+      deliveryNeedsReview = true;
+      console.error("DMCA_UPLOADER_EMAIL_NOT_CONFIRMED", { caseId, ...safeErrorMetadata(error) });
     }
 
-    await sendTransactionalEmail({
+    const claimantDelivered = await sendDmcaActionEmail({
       to: dmcaCase.claimant_email,
       subject: `MyDancr copyright notice ${caseId} processed`,
       text: `The material identified in copyright notice ${caseId} has been disabled. The uploader may submit a counter-notice as permitted by law.`,
     });
-    return { caseId, status: "disabled", ...data };
+    return { ...data, deliveryNeedsReview: deliveryNeedsReview || !claimantDelivered };
   }
 
   if (action === "restore") {
-    const { data, error } = await db.rpc("restore_dmca_case", {
+    const data = await confirmedDmcaAction(db, "restore", dmcaCase, {
       p_case_id: caseId,
       p_admin_id: adminId,
       p_restoration_notes: cleanNotes,
     });
-    if (error) throw error;
-    await notifyClaimantOfRestoration(dmcaCase.claimant_email, caseId);
-    return { caseId, status: "restored", ...data };
+    const delivered = await notifyClaimantOfRestoration(dmcaCase.claimant_email, caseId);
+    return { ...data, deliveryNeedsReview: !delivered };
   }
 
   const nextStatus =
@@ -494,7 +503,7 @@ export async function restoreEligibleDmcaCases(client: DancrClient, limit = 25) 
   const now = new Date().toISOString();
   const { data: cases, error } = await db
     .from("dmca_cases")
-    .select("id, claimant_email")
+    .select("id, claimant_email, target_id, uploader_id")
     .eq("status", "countered")
     .eq("court_filing_received", false)
     .lte("restore_eligible_at", now)
@@ -503,17 +512,16 @@ export async function restoreEligibleDmcaCases(client: DancrClient, limit = 25) 
 
   if (error) throw error;
 
-  const results: Array<{ caseId: string; restored: boolean; error?: string }> = [];
+  const results: Array<{ caseId: string; restored: boolean; deliveryNeedsReview?: boolean; error?: string }> = [];
   for (const dmcaCase of cases || []) {
     try {
-      const { error: restoreError } = await db.rpc("restore_dmca_case", {
+      await confirmedDmcaAction(db, "restore", dmcaCase, {
         p_case_id: dmcaCase.id,
         p_admin_id: null,
         p_restoration_notes: "Automatically restored after the statutory waiting period.",
       });
-      if (restoreError) throw restoreError;
-      await notifyClaimantOfRestoration(dmcaCase.claimant_email, dmcaCase.id);
-      results.push({ caseId: dmcaCase.id, restored: true });
+      const delivered = await notifyClaimantOfRestoration(dmcaCase.claimant_email, dmcaCase.id);
+      results.push({ caseId: dmcaCase.id, restored: true, deliveryNeedsReview: !delivered });
     } catch (error) {
       console.error("DMCA automatic restoration failed", {
         caseId: dmcaCase.id,
@@ -522,7 +530,7 @@ export async function restoreEligibleDmcaCases(client: DancrClient, limit = 25) 
       results.push({
         caseId: dmcaCase.id,
         restored: false,
-        error: "Restoration failed.",
+        error: "Restoration could not be confirmed. Review the case before trying again.",
       });
     }
   }
@@ -786,11 +794,69 @@ function counterNoticeEmail(input: {
 }
 
 async function notifyClaimantOfRestoration(email: string, caseId: string) {
-  await sendTransactionalEmail({
+  return sendDmcaActionEmail({
     to: email,
     subject: `MyDancr copyright case ${caseId} restored`,
     text: `The material in copyright case ${caseId} was restored after the counter-notice waiting period ended without MyDancr recording a timely court filing notice.`,
   });
+}
+
+function unconfirmedDmcaAction() {
+  return new PublicApiError("UNAVAILABLE", "The copyright action could not be confirmed. Reopen the case and review its current state before trying again.", 503);
+}
+
+async function confirmedDmcaAction(
+  client: DancrClient,
+  action: "disable" | "restore",
+  expected: { id: string; target_id: string | null; uploader_id: string | null },
+  parameters: Record<string, string | null>,
+) {
+  let data: any;
+  try {
+    const result = await client.rpc(action === "disable" ? "apply_dmca_takedown" : "restore_dmca_case", parameters);
+    if (result.error) throw result.error;
+    data = result.data;
+  } catch (error) {
+    console.error("DMCA_ACTION_NOT_CONFIRMED", { caseId: expected.id, ...safeErrorMetadata(error) });
+    throw unconfirmedDmcaAction();
+  }
+  const uuid = (value: unknown) => typeof value === "string" && UUID_PATTERN.test(value);
+  const targetId = action === "disable" ? data?.videoId : data?.targetId;
+  if (!data || typeof data !== "object" || Array.isArray(data)
+    || data.caseId !== expected.id || !uuid(data.caseId)
+    || targetId !== expected.target_id || (targetId !== null && !uuid(targetId))
+    || (data.uploaderId !== null && !uuid(data.uploaderId))
+    || (action === "disable" ? !uuid(targetId) || !uuid(data.uploaderId)
+      || typeof data.repeatInfringerEnforced !== "boolean"
+      || data.repeatInfringerEnforced !== (data.activeStrikes >= 3)
+      || (data.status !== undefined && data.status !== "disabled")
+      : data.status !== "restored" || data.uploaderId !== expected.uploader_id)
+    || (expected.uploader_id !== null && data.uploaderId !== expected.uploader_id)
+    || !Number.isSafeInteger(data.activeStrikes) || data.activeStrikes < (action === "disable" ? 1 : 0)
+    || data.activeStrikes > 2147483647) {
+    throw unconfirmedDmcaAction();
+  }
+  // Return only checked fields; an RPC response cannot override the case/action
+  // identity or introduce unrelated data into the administrator's response.
+  return {
+    caseId: expected.id,
+    status: action === "disable" ? "disabled" as const : "restored" as const,
+    ...(action === "disable" ? { videoId: targetId as string, repeatInfringerEnforced: data.repeatInfringerEnforced as boolean }
+      : { targetId: targetId as string | null }),
+    uploaderId: data.uploaderId as string | null,
+    activeStrikes: data.activeStrikes as number,
+  };
+}
+
+async function sendDmcaActionEmail(input: Parameters<typeof sendTransactionalEmail>[0]) {
+  if (typeof input.to !== "string" || !EMAIL_PATTERN.test(input.to)) return false;
+  try {
+    const result = await sendTransactionalEmail(input);
+    return result?.delivered === true;
+  } catch (error) {
+    console.error("DMCA_ACTION_EMAIL_NOT_CONFIRMED", safeErrorMetadata(error));
+    return false;
+  }
 }
 
 async function logDmcaAdminAction(
