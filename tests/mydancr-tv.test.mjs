@@ -178,7 +178,7 @@ test("public feed is real, navigable, measurable, and preserves existing discove
   assert.doesNotMatch(liveApp, /toLowerCase\(\) === "las vegas" \? "Vegas"/);
   assert.match(liveApp, /const launchParams = new URLSearchParams\(\{ city: tvCityLabel, view: "tv" \}\)[\s\S]*?launchParams\.set\("tv_venue", venueId\)[\s\S]*?launch\.href = `\/\?\$\{launchParams\.toString\(\)\}`/);
   assert.match(liveApp, /function selectedHomeTvVideoId\(\)[\s\S]*?get\("tv_video"\)[\s\S]*?UUID_PATTERN|function selectedHomeTvVideoId\(\)[\s\S]*?get\("tv_video"\)[\s\S]*?\[0-9a-f\]/i);
-  assert.match(liveApp, /async function loadHomeTvFeed\(city, venueId = "", selectedVideoId = selectedHomeTvVideoId\(\)\)[\s\S]*?params\.set\("video", selectedVideoId\)/);
+  assert.match(liveApp, /async function loadHomeTvFeed\(city, venueId = "", selectedVideoId = selectedHomeTvVideoId\(\), options = \{\}\)[\s\S]*?params\.set\("video", selectedVideoId\)/);
   assert.match(liveApp, /homeTvFeedSelectedVideoId !== selectedVideoId[\s\S]*?homeTvFeedSelectedVideoId = selectedVideoId/);
   assert.match(liveApp, /const countParams = new URLSearchParams\(\{ city: tvCityLabel \}\)[\s\S]*?fetch\(`\/api\/public\/tv\/count\?\$\{countParams\.toString\(\)\}`[\s\S]*?cache: "default"/);
   assert.match(liveApp, /Number\(payload\.approvedVideoCount\)[\s\S]*?Number\.isSafeInteger\(approvedVideoCount\)[\s\S]*?`\$\{approvedVideoCount\} video\$\{approvedVideoCount === 1 \? "" : "s"\}`/);

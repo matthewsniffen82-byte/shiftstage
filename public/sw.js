@@ -1,4 +1,4 @@
-/* dancr-sw-release: safe-public-cache-v1 */
+/* dancr-sw-release: safe-public-cache-v2 */
 self.addEventListener("message", (event) => {
   if (event.data?.type === "SKIP_WAITING") self.skipWaiting();
 });
@@ -37,6 +37,6 @@ self.addEventListener("fetch", (event) => {
       requestUrl.pathname.startsWith("/tv/")
     );
   event.respondWith(fetch(event.request, {
-    cache: event.request.mode === "navigate" && !isPublicNavigation ? "no-store" : "default",
+    cache: event.request.mode === "navigate" && !isPublicNavigation ? "no-store" : event.request.cache,
   }));
 });

@@ -63,7 +63,7 @@ test("public TV clients reuse cached payloads without sending account credential
   assert.match(source.tvClient, /cache: nextFilter === "following" \? "no-store" : "default"/);
   assert.match(source.liveShell, /fetchJson\(`\/api\/public\/tv\?\$\{params\.toString\(\)\}`, \{\s*retries: PUBLIC_DISCOVERY_REQUEST_RETRIES/);
   const publicFetch = source.liveShell.slice(source.liveShell.indexOf("async function fetchJson("), source.liveShell.indexOf("function dancerSignupCityOptionsMarkup("));
-  assert.match(publicFetch, /headers: \{ Accept: "application\/json" \},\s*cache: "default"/);
+  assert.match(publicFetch, /headers: \{ Accept: "application\/json" \},\s*cache: options\.cache === "no-store" \|\| attempt > 0 \? "no-store" : "default"/);
   assert.doesNotMatch(publicFetch, /authorization|authenticatedRequestHeaders/i);
   assert.match(source.liveShell, /fetch\(`\/api\/public\/tv\/count\?\$\{countParams\.toString\(\)\}`, \{ cache: "default" \}\)/);
 });
@@ -75,7 +75,7 @@ test("the shell and versioned static assets can be reused by browser back naviga
   assert.match(source.staticAssetCache, /"\/venue-logos\/:path\*"/);
   assert.match(source.serviceWorker, /const isPublicNavigation = event\.request\.mode === "navigate"/);
   assert.match(source.serviceWorker, /requestUrl\.pathname === "\/"/);
-  assert.match(source.serviceWorker, /event\.request\.mode === "navigate" && !isPublicNavigation \? "no-store" : "default"/);
+  assert.match(source.serviceWorker, /event\.request\.mode === "navigate" && !isPublicNavigation \? "no-store" : event\.request\.cache/);
 });
 
 test("approved media keeps cacheable bytes while private originals stay uncached", () => {

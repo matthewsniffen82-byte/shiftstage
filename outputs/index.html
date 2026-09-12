@@ -43316,7 +43316,7 @@
     if ("serviceWorker" in navigator && window.location.protocol === "https:") {
       window.addEventListener("load", () => {
         navigator.serviceWorker
-          .register("/sw.js?v=safe-public-cache-v1", { updateViaCache: "none" })
+          .register("/sw.js?v=safe-public-cache-v2", { updateViaCache: "none" })
           .then((registration) => registration.update())
           .catch(() => {});
       });
@@ -46878,7 +46878,7 @@
           const response = await Promise.race([
             fetch(url, {
               headers: { Accept: "application/json" },
-              cache: "default",
+              cache: options.cache === "no-store" || attempt > 0 ? "no-store" : "default",
               signal: controller ? controller.signal : undefined
             }),
             timeoutRequest,
@@ -46887,6 +46887,9 @@
           if (!response.ok) {
             const requestError = new Error(`Request failed: ${response.status}`);
             requestError.status = response.status;
+            if (response.status === 403 && response.headers?.get("x-vercel-mitigated") === "challenge") {
+              requestError.code = "BROWSER_VERIFICATION_REQUIRED";
+            }
             throw requestError;
           }
           // The deadline includes the body: headers can arrive before a stalled download.
@@ -62343,20 +62346,35 @@
       tabCount.removeAttribute("title");
     }
 
-    function renderHomeTvFeedMessage(message, retryCity = "") {
+    function renderHomeTvFeedMessage(message, retryCity = "", requiresVerification = false) {
       const state = document.createElement("div");
       state.className = "locked";
       state.textContent = message;
       results.replaceChildren(state);
+      delete results.dataset.homeTvFeedKey;
       if (!retryCity) return;
       const retry = document.createElement("button");
       retry.className = "view-all";
       retry.type = "button";
-      retry.textContent = "Retry MyDancr TV";
+      retry.textContent = requiresVerification ? "Reload MyDancr TV" : "Retry MyDancr TV";
       retry.addEventListener("click", () => {
+        if (requiresVerification) {
+          // A challenge returned to fetch cannot run its browser check. Let a
+          // user-requested document navigation complete it, retaining TV scope.
+          const destination = new URL(window.location.href);
+          destination.searchParams.set("view", "tv");
+          destination.searchParams.set("city", retryCity);
+          for (const [key, value] of [["tv_venue", homeTvFeedVenueId], ["tv_video", homeTvFeedSelectedVideoId]]) {
+            if (value) destination.searchParams.set(key, value);
+            else destination.searchParams.delete(key);
+          }
+          destination.searchParams.set("tv_refresh", String(Date.now()));
+          window.location.replace(destination.href);
+          return;
+        }
         homeTvFeedStatus = "loading";
         renderHomeTvFeed(retryCity);
-        void loadHomeTvFeed(retryCity, homeTvFeedVenueId, homeTvFeedSelectedVideoId);
+        return loadHomeTvFeed(retryCity, homeTvFeedVenueId, homeTvFeedSelectedVideoId, { refresh: true });
       });
       results.appendChild(retry);
     }
@@ -62368,6 +62386,7 @@
       loading.setAttribute("aria-label", "Loading MyDancr TV");
       loading.innerHTML = '<span class="home-tv-feed-loading-copy" aria-hidden="true"><span></span><span></span><span></span></span>';
       results.replaceChildren(loading);
+      delete results.dataset.homeTvFeedKey;
     }
 
     function renderHomeTvFeed(city) {
@@ -62406,6 +62425,12 @@
         return;
       }
       results.removeAttribute("aria-busy");
+      if (homeTvFeedStatus === "verification-required") {
+        setHomeTvFeedCount("Reload needed", venueFilter);
+        renderHomeTvFeedMessage("Complete a quick browser check to continue watching.", city, true);
+        settleHomeTvFeedLanding({ complete: true });
+        return;
+      }
       if (homeTvFeedStatus === "error") {
         setHomeTvFeedCount("Unavailable", venueFilter);
         renderHomeTvFeedMessage("MyDancr TV videos are temporarily unavailable.", city);
@@ -62452,7 +62477,7 @@
       settleHomeTvFeedLanding({ complete: true });
     }
 
-    async function loadHomeTvFeed(city, venueId = "", selectedVideoId = selectedHomeTvVideoId()) {
+    async function loadHomeTvFeed(city, venueId = "", selectedVideoId = selectedHomeTvVideoId(), options = {}) {
       homeTvFeedAbort?.abort();
       const controller = typeof AbortController === "function" ? new AbortController() : null;
       homeTvFeedAbort = controller;
@@ -62461,8 +62486,10 @@
         const params = new URLSearchParams({ city, limit: "24" });
         if (venueId) params.set("venue", venueId);
         if (selectedVideoId) params.set("video", selectedVideoId);
+        if (options.refresh) params.set("refresh", String(Date.now()));
         const payload = await fetchJson(`/api/public/tv?${params.toString()}`, {
           retries: PUBLIC_DISCOVERY_REQUEST_RETRIES,
+          cache: options.refresh ? "no-store" : "default",
           signal: controller?.signal
         });
         if (!payload.ok) throw new Error(payload.error || "Unable to load MyDancr TV.");
@@ -62481,7 +62508,7 @@
             ))
           : [];
         homeTvFeedStatus = "ready";
-      } catch {
+      } catch (error) {
         if (
           requestId !== homeTvFeedRequest ||
           homeTvFeedCity !== city ||
@@ -62489,7 +62516,7 @@
           homeTvFeedSelectedVideoId !== selectedVideoId
         ) return;
         homeTvFeedVideos = [];
-        homeTvFeedStatus = "error";
+        homeTvFeedStatus = error?.code === "BROWSER_VERIFICATION_REQUIRED" ? "verification-required" : "error";
       } finally {
         if (homeTvFeedAbort === controller) homeTvFeedAbort = null;
       }

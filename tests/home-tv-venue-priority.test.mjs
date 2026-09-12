@@ -32,10 +32,10 @@ test("the homepage TV tab applies and clears an exact selected-club filter", () 
   );
   assert.match(
     homeSource,
-    /async function loadHomeTvFeed\(city, venueId = "", selectedVideoId = selectedHomeTvVideoId\(\)\) \{[\s\S]*?const params = new URLSearchParams\(\{ city, limit: "24" \}\);[\s\S]*?if \(venueId\) params\.set\("venue", venueId\);[\s\S]*?item\?\.venue\?\.id === venueId/,
+    /async function loadHomeTvFeed\(city, venueId = "", selectedVideoId = selectedHomeTvVideoId\(\), options = \{\}\) \{[\s\S]*?const params = new URLSearchParams\(\{ city, limit: "24" \}\);[\s\S]*?if \(venueId\) params\.set\("venue", venueId\);[\s\S]*?item\?\.venue\?\.id === venueId/,
   );
   assert.doesNotMatch(
-    homeSource.match(/async function loadHomeTvFeed\(city, venueId = "", selectedVideoId = selectedHomeTvVideoId\(\)\) \{[\s\S]*?\n    \}/)?.[0] || "",
+    homeSource.match(/async function loadHomeTvFeed\(city, venueId = "", selectedVideoId = selectedHomeTvVideoId\(\), options = \{\}\) \{[\s\S]*?\n    \}/)?.[0] || "",
     /preferredVenue/,
   );
   assert.match(homeSource, /function clearHomeTvVenueFilter\(\)[\s\S]*?venueSelect\.value = "all"[\s\S]*?dispatchEvent\(new Event\("change"/);

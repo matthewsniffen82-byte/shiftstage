@@ -61,14 +61,14 @@ test("live support interfaces use the production API and the venue dashboard exp
 });
 
 test("existing installed sessions refresh onto the current production shell", () => {
-  assert.match(liveAppSource, /register\("\/sw\.js\?v=safe-public-cache-v1", \{ updateViaCache: "none" \}\)/);
+  assert.match(liveAppSource, /register\("\/sw\.js\?v=safe-public-cache-v2", \{ updateViaCache: "none" \}\)/);
   assert.match(liveAppSource, /registration\.update\(\)/);
-  assert.match(serviceWorkerSource, /dancr-sw-release: safe-public-cache-v1/);
+  assert.match(serviceWorkerSource, /dancr-sw-release: safe-public-cache-v2/);
   assert.match(serviceWorkerSource, /self\.skipWaiting\(\)/);
   assert.match(serviceWorkerSource, /self\.clients\.claim\(\)/);
   assert.match(serviceWorkerSource, /client\.navigate\(client\.url\)/);
   assert.match(serviceWorkerSource, /caches\.delete\(cacheName\)/);
-  assert.match(serviceWorkerSource, /event\.request\.mode === "navigate" && !isPublicNavigation \? "no-store" : "default"/);
+  assert.match(serviceWorkerSource, /event\.request\.mode === "navigate" && !isPublicNavigation \? "no-store" : event\.request\.cache/);
   assert.match(liveRouteSource, /export const dynamic = "force-dynamic"/);
   assert.match(liveRouteSource, /public, max-age=30, s-maxage=60, stale-while-revalidate=300/);
 });
