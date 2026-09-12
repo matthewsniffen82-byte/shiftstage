@@ -1,0 +1,1128 @@
+{
+  "captured_at": "2026-09-11T22:04:34.835606-07:00",
+  "source": "Read-only production metadata; pre-correction snapshot.",
+  "counts": {
+    "attachments": 59,
+    "trigger_functions": 41,
+    "public_event_trigger_functions": 1
+  },
+  "triggers": [
+    {
+      "definition": "CREATE TRIGGER agent_commission_events_enqueue_nats_export AFTER INSERT OR UPDATE OF status ON public.agent_commission_events FOR EACH ROW EXECUTE FUNCTION enqueue_nats_agent_commission_export()",
+      "enabled": "O",
+      "function": "enqueue_nats_agent_commission_export()",
+      "name": "agent_commission_events_enqueue_nats_export",
+      "table": "agent_commission_events"
+    },
+    {
+      "definition": "CREATE TRIGGER agent_commission_events_no_delete BEFORE DELETE ON public.agent_commission_events FOR EACH ROW EXECUTE FUNCTION prohibit_financial_record_delete()",
+      "enabled": "O",
+      "function": "prohibit_financial_record_delete()",
+      "name": "agent_commission_events_no_delete",
+      "table": "agent_commission_events"
+    },
+    {
+      "definition": "CREATE TRIGGER agent_commission_events_reconcile_nats_void AFTER UPDATE OF status ON public.agent_commission_events FOR EACH ROW EXECUTE FUNCTION flag_voided_nats_agent_commission()",
+      "enabled": "O",
+      "function": "flag_voided_nats_agent_commission()",
+      "name": "agent_commission_events_reconcile_nats_void",
+      "table": "agent_commission_events"
+    },
+    {
+      "definition": "CREATE TRIGGER on_auth_user_created AFTER INSERT ON auth.users FOR EACH ROW EXECUTE FUNCTION handle_new_auth_user()",
+      "enabled": "O",
+      "function": "handle_new_auth_user()",
+      "name": "on_auth_user_created",
+      "table": "auth.users"
+    },
+    {
+      "definition": "CREATE TRIGGER sync_verified_auth_email AFTER UPDATE OF email ON auth.users FOR EACH ROW WHEN (((old.email)::text IS DISTINCT FROM (new.email)::text)) EXECUTE FUNCTION sync_verified_auth_email()",
+      "enabled": "O",
+      "function": "sync_verified_auth_email()",
+      "name": "sync_verified_auth_email",
+      "table": "auth.users"
+    },
+    {
+      "definition": "CREATE TRIGGER venue_request_email_confirmed AFTER UPDATE OF email_confirmed_at ON auth.users FOR EACH ROW WHEN (((new.email_confirmed_at IS NOT NULL) AND (old.email_confirmed_at IS DISTINCT FROM new.email_confirmed_at))) EXECUTE FUNCTION confirm_venue_request_email()",
+      "enabled": "O",
+      "function": "confirm_venue_request_email()",
+      "name": "venue_request_email_confirmed",
+      "table": "auth.users"
+    },
+    {
+      "definition": "CREATE TRIGGER commission_events_enqueue_nats_export AFTER INSERT OR UPDATE OF status, held_at, review_flag ON public.commission_events FOR EACH ROW EXECUTE FUNCTION enqueue_nats_commission_export()",
+      "enabled": "O",
+      "function": "enqueue_nats_commission_export()",
+      "name": "commission_events_enqueue_nats_export",
+      "table": "commission_events"
+    },
+    {
+      "definition": "CREATE TRIGGER commission_events_no_delete BEFORE DELETE ON public.commission_events FOR EACH ROW EXECUTE FUNCTION prohibit_financial_record_delete()",
+      "enabled": "O",
+      "function": "prohibit_financial_record_delete()",
+      "name": "commission_events_no_delete",
+      "table": "commission_events"
+    },
+    {
+      "definition": "CREATE TRIGGER commission_events_prepare_earning BEFORE INSERT OR UPDATE ON public.commission_events FOR EACH ROW EXECUTE FUNCTION prepare_dancer_earning()",
+      "enabled": "O",
+      "function": "prepare_dancer_earning()",
+      "name": "commission_events_prepare_earning",
+      "table": "commission_events"
+    },
+    {
+      "definition": "CREATE TRIGGER commission_events_reconcile_nats_reversal AFTER UPDATE OF status ON public.commission_events FOR EACH ROW EXECUTE FUNCTION flag_reversed_nats_commission()",
+      "enabled": "O",
+      "function": "flag_reversed_nats_commission()",
+      "name": "commission_events_reconcile_nats_reversal",
+      "table": "commission_events"
+    },
+    {
+      "definition": "CREATE TRIGGER commission_events_require_nats_enrollment BEFORE INSERT ON public.commission_events FOR EACH ROW EXECUTE FUNCTION require_enrolled_club_deal_earning()",
+      "enabled": "O",
+      "function": "require_enrolled_club_deal_earning()",
+      "name": "commission_events_require_nats_enrollment",
+      "table": "commission_events"
+    },
+    {
+      "definition": "CREATE TRIGGER commission_events_status_history AFTER INSERT OR UPDATE OF status ON public.commission_events FOR EACH ROW EXECUTE FUNCTION record_dancer_earning_status_history()",
+      "enabled": "O",
+      "function": "record_dancer_earning_status_history()",
+      "name": "commission_events_status_history",
+      "table": "commission_events"
+    },
+    {
+      "definition": "CREATE TRIGGER reject_retired_provider_earnings BEFORE INSERT OR UPDATE OF payment_provider ON public.commission_events FOR EACH ROW EXECUTE FUNCTION reject_retired_payout_provider()",
+      "enabled": "O",
+      "function": "reject_retired_payout_provider()",
+      "name": "reject_retired_provider_earnings",
+      "table": "commission_events"
+    },
+    {
+      "definition": "CREATE TRIGGER dancer_earning_history_no_delete BEFORE DELETE ON public.dancer_earning_status_history FOR EACH ROW EXECUTE FUNCTION prohibit_financial_record_delete()",
+      "enabled": "O",
+      "function": "prohibit_financial_record_delete()",
+      "name": "dancer_earning_history_no_delete",
+      "table": "dancer_earning_status_history"
+    },
+    {
+      "definition": "CREATE TRIGGER reject_retired_provider_accounts BEFORE INSERT OR UPDATE OF payment_provider ON public.dancer_payout_accounts FOR EACH ROW EXECUTE FUNCTION reject_retired_payout_provider()",
+      "enabled": "O",
+      "function": "reject_retired_payout_provider()",
+      "name": "reject_retired_provider_accounts",
+      "table": "dancer_payout_accounts"
+    },
+    {
+      "definition": "CREATE TRIGGER dancer_payout_batches_no_delete BEFORE DELETE ON public.dancer_payout_batches FOR EACH ROW EXECUTE FUNCTION prohibit_financial_record_delete()",
+      "enabled": "O",
+      "function": "prohibit_financial_record_delete()",
+      "name": "dancer_payout_batches_no_delete",
+      "table": "dancer_payout_batches"
+    },
+    {
+      "definition": "CREATE TRIGGER reject_retired_provider_batches BEFORE INSERT OR UPDATE OF payment_provider ON public.dancer_payout_batches FOR EACH ROW EXECUTE FUNCTION reject_retired_payout_provider()",
+      "enabled": "O",
+      "function": "reject_retired_payout_provider()",
+      "name": "reject_retired_provider_batches",
+      "table": "dancer_payout_batches"
+    },
+    {
+      "definition": "CREATE TRIGGER dancer_payout_items_no_delete BEFORE DELETE ON public.dancer_payout_items FOR EACH ROW EXECUTE FUNCTION prohibit_financial_record_delete()",
+      "enabled": "O",
+      "function": "prohibit_financial_record_delete()",
+      "name": "dancer_payout_items_no_delete",
+      "table": "dancer_payout_items"
+    },
+    {
+      "definition": "CREATE TRIGGER dancer_photos_capture_media_reference AFTER INSERT OR DELETE OR UPDATE OF id, dancer_id, storage_path ON public.dancer_photos FOR EACH ROW EXECUTE FUNCTION capture_gallery_media_reference_history()",
+      "enabled": "O",
+      "function": "capture_gallery_media_reference_history()",
+      "name": "dancer_photos_capture_media_reference",
+      "table": "dancer_photos"
+    },
+    {
+      "definition": "CREATE TRIGGER dancer_photos_guard_storage_reference AFTER INSERT OR UPDATE ON public.dancer_photos FOR EACH ROW EXECUTE FUNCTION guard_gallery_storage_reference()",
+      "enabled": "O",
+      "function": "guard_gallery_storage_reference()",
+      "name": "dancer_photos_guard_storage_reference",
+      "table": "dancer_photos"
+    },
+    {
+      "definition": "CREATE TRIGGER assign_dancer_profile_link BEFORE INSERT OR UPDATE OF stage_name, slug ON public.dancer_profiles FOR EACH ROW EXECUTE FUNCTION assign_dancer_profile_link()",
+      "enabled": "O",
+      "function": "assign_dancer_profile_link()",
+      "name": "assign_dancer_profile_link",
+      "table": "dancer_profiles"
+    },
+    {
+      "definition": "CREATE TRIGGER dancer_profiles_capture_avatar_reference AFTER INSERT OR DELETE OR UPDATE OF id, avatar_storage_path ON public.dancer_profiles FOR EACH ROW EXECUTE FUNCTION capture_gallery_media_reference_history()",
+      "enabled": "O",
+      "function": "capture_gallery_media_reference_history()",
+      "name": "dancer_profiles_capture_avatar_reference",
+      "table": "dancer_profiles"
+    },
+    {
+      "definition": "CREATE TRIGGER dancer_profiles_guard_storage_reference AFTER INSERT OR UPDATE ON public.dancer_profiles FOR EACH ROW EXECUTE FUNCTION guard_gallery_storage_reference()",
+      "enabled": "O",
+      "function": "guard_gallery_storage_reference()",
+      "name": "dancer_profiles_guard_storage_reference",
+      "table": "dancer_profiles"
+    },
+    {
+      "definition": "CREATE TRIGGER notify_dancer_profile_live_after_activation AFTER UPDATE OF status, verification_status, is_public ON public.dancer_profiles FOR EACH ROW EXECUTE FUNCTION notify_dancer_profile_live()",
+      "enabled": "O",
+      "function": "notify_dancer_profile_live()",
+      "name": "notify_dancer_profile_live_after_activation",
+      "table": "dancer_profiles"
+    },
+    {
+      "definition": "CREATE TRIGGER deal_revenue_events_preserve_dancer_eligibility BEFORE UPDATE ON public.deal_revenue_events FOR EACH ROW EXECUTE FUNCTION preserve_dancer_commission_eligibility()",
+      "enabled": "O",
+      "function": "preserve_dancer_commission_eligibility()",
+      "name": "deal_revenue_events_preserve_dancer_eligibility",
+      "table": "deal_revenue_events"
+    },
+    {
+      "definition": "CREATE TRIGGER deal_revenue_events_void_agent_commissions AFTER UPDATE OF status ON public.deal_revenue_events FOR EACH ROW EXECUTE FUNCTION void_agent_commissions_with_revenue()",
+      "enabled": "O",
+      "function": "void_agent_commissions_with_revenue()",
+      "name": "deal_revenue_events_void_agent_commissions",
+      "table": "deal_revenue_events"
+    },
+    {
+      "definition": "CREATE TRIGGER financial_audit_no_delete BEFORE DELETE ON public.financial_audit_events FOR EACH ROW EXECUTE FUNCTION prohibit_financial_record_delete()",
+      "enabled": "O",
+      "function": "prohibit_financial_record_delete()",
+      "name": "financial_audit_no_delete",
+      "table": "financial_audit_events"
+    },
+    {
+      "definition": "CREATE TRIGGER image_moderation_guard_storage_reference AFTER INSERT OR UPDATE ON public.image_moderation_records FOR EACH ROW EXECUTE FUNCTION guard_gallery_storage_reference()",
+      "enabled": "O",
+      "function": "guard_gallery_storage_reference()",
+      "name": "image_moderation_guard_storage_reference",
+      "table": "image_moderation_records"
+    },
+    {
+      "definition": "CREATE TRIGGER sync_media_like_count_after_insert_delete AFTER INSERT OR DELETE ON public.media_likes FOR EACH ROW EXECUTE FUNCTION sync_media_like_count()",
+      "enabled": "O",
+      "function": "sync_media_like_count()",
+      "name": "sync_media_like_count_after_insert_delete",
+      "table": "media_likes"
+    },
+    {
+      "definition": "CREATE TRIGGER record_mydancr_tv_review_decision AFTER UPDATE OF status ON public.mydancr_tv_videos FOR EACH ROW EXECUTE FUNCTION record_mydancr_tv_review_decision()",
+      "enabled": "O",
+      "function": "record_mydancr_tv_review_decision()",
+      "name": "record_mydancr_tv_review_decision",
+      "table": "mydancr_tv_videos"
+    },
+    {
+      "definition": "CREATE TRIGGER validate_mydancr_tv_video_links BEFORE INSERT OR UPDATE OF dancer_id, venue_id, shift_id, venue_tag_status, venue_featured ON public.mydancr_tv_videos FOR EACH ROW EXECUTE FUNCTION validate_mydancr_tv_video_links()",
+      "enabled": "O",
+      "function": "validate_mydancr_tv_video_links()",
+      "name": "validate_mydancr_tv_video_links",
+      "table": "mydancr_tv_videos"
+    },
+    {
+      "definition": "CREATE TRIGGER nats_affiliate_accounts_activate_exports BEFORE INSERT OR UPDATE ON public.nats_affiliate_accounts FOR EACH ROW EXECUTE FUNCTION activate_waiting_nats_exports()",
+      "enabled": "O",
+      "function": "activate_waiting_nats_exports()",
+      "name": "nats_affiliate_accounts_activate_exports",
+      "table": "nats_affiliate_accounts"
+    },
+    {
+      "definition": "CREATE TRIGGER nats_affiliate_accounts_no_delete BEFORE DELETE ON public.nats_affiliate_accounts FOR EACH ROW EXECUTE FUNCTION prohibit_financial_record_delete()",
+      "enabled": "O",
+      "function": "prohibit_financial_record_delete()",
+      "name": "nats_affiliate_accounts_no_delete",
+      "table": "nats_affiliate_accounts"
+    },
+    {
+      "definition": "CREATE TRIGGER nats_dancer_affiliate_login_unique BEFORE INSERT OR UPDATE OF login_id ON public.nats_affiliate_accounts FOR EACH ROW EXECUTE FUNCTION enforce_unique_nats_affiliate_login()",
+      "enabled": "O",
+      "function": "enforce_unique_nats_affiliate_login()",
+      "name": "nats_dancer_affiliate_login_unique",
+      "table": "nats_affiliate_accounts"
+    },
+    {
+      "definition": "CREATE TRIGGER nats_agent_affiliate_accounts_activate_exports BEFORE UPDATE ON public.nats_agent_affiliate_accounts FOR EACH ROW EXECUTE FUNCTION activate_waiting_nats_agent_exports()",
+      "enabled": "O",
+      "function": "activate_waiting_nats_agent_exports()",
+      "name": "nats_agent_affiliate_accounts_activate_exports",
+      "table": "nats_agent_affiliate_accounts"
+    },
+    {
+      "definition": "CREATE TRIGGER nats_agent_affiliate_accounts_no_delete BEFORE DELETE ON public.nats_agent_affiliate_accounts FOR EACH ROW EXECUTE FUNCTION prohibit_financial_record_delete()",
+      "enabled": "O",
+      "function": "prohibit_financial_record_delete()",
+      "name": "nats_agent_affiliate_accounts_no_delete",
+      "table": "nats_agent_affiliate_accounts"
+    },
+    {
+      "definition": "CREATE TRIGGER nats_agent_affiliate_login_unique BEFORE INSERT OR UPDATE OF login_id ON public.nats_agent_affiliate_accounts FOR EACH ROW EXECUTE FUNCTION enforce_unique_nats_affiliate_login()",
+      "enabled": "O",
+      "function": "enforce_unique_nats_affiliate_login()",
+      "name": "nats_agent_affiliate_login_unique",
+      "table": "nats_agent_affiliate_accounts"
+    },
+    {
+      "definition": "CREATE TRIGGER nats_agent_commission_exports_no_delete BEFORE DELETE ON public.nats_agent_commission_exports FOR EACH ROW EXECUTE FUNCTION prohibit_financial_record_delete()",
+      "enabled": "O",
+      "function": "prohibit_financial_record_delete()",
+      "name": "nats_agent_commission_exports_no_delete",
+      "table": "nats_agent_commission_exports"
+    },
+    {
+      "definition": "CREATE TRIGGER nats_commission_exports_no_delete BEFORE DELETE ON public.nats_commission_exports FOR EACH ROW EXECUTE FUNCTION prohibit_financial_record_delete()",
+      "enabled": "O",
+      "function": "prohibit_financial_record_delete()",
+      "name": "nats_commission_exports_no_delete",
+      "table": "nats_commission_exports"
+    },
+    {
+      "definition": "CREATE TRIGGER provider_webhooks_no_delete BEFORE DELETE ON public.payment_provider_webhook_events FOR EACH ROW EXECUTE FUNCTION prohibit_financial_record_delete()",
+      "enabled": "O",
+      "function": "prohibit_financial_record_delete()",
+      "name": "provider_webhooks_no_delete",
+      "table": "payment_provider_webhook_events"
+    },
+    {
+      "definition": "CREATE TRIGGER reject_retired_provider_webhooks BEFORE INSERT OR UPDATE OF payment_provider ON public.payment_provider_webhook_events FOR EACH ROW EXECUTE FUNCTION reject_retired_payout_provider()",
+      "enabled": "O",
+      "function": "reject_retired_payout_provider()",
+      "name": "reject_retired_provider_webhooks",
+      "table": "payment_provider_webhook_events"
+    },
+    {
+      "definition": "CREATE TRIGGER reject_retired_provider_settings BEFORE INSERT OR UPDATE OF payment_provider ON public.payout_settings FOR EACH ROW EXECUTE FUNCTION reject_retired_payout_provider()",
+      "enabled": "O",
+      "function": "reject_retired_payout_provider()",
+      "name": "reject_retired_provider_settings",
+      "table": "payout_settings"
+    },
+    {
+      "definition": "CREATE TRIGGER qr_redemptions_log_issued AFTER INSERT ON public.qr_redemptions FOR EACH ROW EXECUTE FUNCTION log_qr_redemption_issued()",
+      "enabled": "O",
+      "function": "log_qr_redemption_issued()",
+      "name": "qr_redemptions_log_issued",
+      "table": "qr_redemptions"
+    },
+    {
+      "definition": "CREATE TRIGGER sales_agents_no_delete BEFORE DELETE ON public.sales_agents FOR EACH ROW EXECUTE FUNCTION prohibit_financial_record_delete()",
+      "enabled": "O",
+      "function": "prohibit_financial_record_delete()",
+      "name": "sales_agents_no_delete",
+      "table": "sales_agents"
+    },
+    {
+      "definition": "CREATE TRIGGER validate_sales_agent_hierarchy_trigger BEFORE INSERT OR UPDATE OF sponsor_agent_id, status, commission_depth_limit ON public.sales_agents FOR EACH ROW EXECUTE FUNCTION validate_sales_agent_hierarchy()",
+      "enabled": "O",
+      "function": "validate_sales_agent_hierarchy()",
+      "name": "validate_sales_agent_hierarchy_trigger",
+      "table": "sales_agents"
+    },
+    {
+      "definition": "CREATE TRIGGER enforce_shift_verification_server_only BEFORE INSERT OR UPDATE ON public.shifts FOR EACH ROW EXECUTE FUNCTION enforce_shift_verification_server_only()",
+      "enabled": "O",
+      "function": "enforce_shift_verification_server_only()",
+      "name": "enforce_shift_verification_server_only",
+      "table": "shifts"
+    },
+    {
+      "definition": "CREATE TRIGGER enforce_verified_venue_affiliation_for_checkin BEFORE UPDATE ON public.shifts FOR EACH ROW EXECUTE FUNCTION enforce_verified_venue_affiliation_for_checkin()",
+      "enabled": "O",
+      "function": "enforce_verified_venue_affiliation_for_checkin()",
+      "name": "enforce_verified_venue_affiliation_for_checkin",
+      "table": "shifts"
+    },
+    {
+      "definition": "CREATE TRIGGER set_shift_date_from_starts_at BEFORE INSERT OR UPDATE OF starts_at, timezone, shift_date ON public.shifts FOR EACH ROW EXECUTE FUNCTION set_shift_date_from_starts_at()",
+      "enabled": "O",
+      "function": "set_shift_date_from_starts_at()",
+      "name": "set_shift_date_from_starts_at",
+      "table": "shifts"
+    },
+    {
+      "definition": "CREATE TRIGGER venue_club_deal_requests_touch_updated_at BEFORE UPDATE ON public.venue_club_deal_requests FOR EACH ROW EXECUTE FUNCTION touch_venue_club_deal_request_updated_at()",
+      "enabled": "O",
+      "function": "touch_venue_club_deal_request_updated_at()",
+      "name": "venue_club_deal_requests_touch_updated_at",
+      "table": "venue_club_deal_requests"
+    },
+    {
+      "definition": "CREATE TRIGGER venue_affiliation_requires_submitted_profile BEFORE INSERT OR UPDATE OF status ON public.venue_dancer_affiliations FOR EACH ROW EXECUTE FUNCTION require_submitted_dancer_profile_for_active_affiliation()",
+      "enabled": "O",
+      "function": "require_submitted_dancer_profile_for_active_affiliation()",
+      "name": "venue_affiliation_requires_submitted_profile",
+      "table": "venue_dancer_affiliations"
+    },
+    {
+      "definition": "CREATE TRIGGER enforce_available_venue_ownership_claim BEFORE INSERT ON public.venue_ownership_claims FOR EACH ROW EXECUTE FUNCTION enforce_available_venue_ownership_claim()",
+      "enabled": "O",
+      "function": "enforce_available_venue_ownership_claim()",
+      "name": "enforce_available_venue_ownership_claim",
+      "table": "venue_ownership_claims"
+    },
+    {
+      "definition": "CREATE TRIGGER venue_pilot_night_reports_touch_updated_at BEFORE UPDATE ON public.venue_pilot_night_reports FOR EACH ROW EXECUTE FUNCTION touch_venue_pilot_night_report_updated_at()",
+      "enabled": "O",
+      "function": "touch_venue_pilot_night_report_updated_at()",
+      "name": "venue_pilot_night_reports_touch_updated_at",
+      "table": "venue_pilot_night_reports"
+    },
+    {
+      "definition": "CREATE TRIGGER venue_sales_attributions_no_delete BEFORE DELETE ON public.venue_sales_attributions FOR EACH ROW EXECUTE FUNCTION prohibit_financial_record_delete()",
+      "enabled": "O",
+      "function": "prohibit_financial_record_delete()",
+      "name": "venue_sales_attributions_no_delete",
+      "table": "venue_sales_attributions"
+    },
+    {
+      "definition": "CREATE TRIGGER venue_request_activate_manager AFTER UPDATE OF status ON public.venue_signup_requests FOR EACH ROW EXECUTE FUNCTION activate_approved_venue_request_manager()",
+      "enabled": "O",
+      "function": "activate_approved_venue_request_manager()",
+      "name": "venue_request_activate_manager",
+      "table": "venue_signup_requests"
+    },
+    {
+      "definition": "CREATE TRIGGER venue_request_require_email_confirmation BEFORE UPDATE OF status ON public.venue_signup_requests FOR EACH ROW EXECUTE FUNCTION require_venue_request_email_confirmation()",
+      "enabled": "O",
+      "function": "require_venue_request_email_confirmation()",
+      "name": "venue_request_require_email_confirmation",
+      "table": "venue_signup_requests"
+    },
+    {
+      "definition": "CREATE TRIGGER venue_signup_requests_attribute_agent AFTER UPDATE OF status ON public.venue_signup_requests FOR EACH ROW WHEN (((new.status = 'approved'::text) AND (old.status IS DISTINCT FROM new.status))) EXECUTE FUNCTION attribute_approved_venue_agent_referral()",
+      "enabled": "O",
+      "function": "attribute_approved_venue_agent_referral()",
+      "name": "venue_signup_requests_attribute_agent",
+      "table": "venue_signup_requests"
+    },
+    {
+      "definition": "CREATE TRIGGER venue_signup_requests_touch_updated_at BEFORE UPDATE ON public.venue_signup_requests FOR EACH ROW EXECUTE FUNCTION touch_venue_signup_request_updated_at()",
+      "enabled": "O",
+      "function": "touch_venue_signup_request_updated_at()",
+      "name": "venue_signup_requests_touch_updated_at",
+      "table": "venue_signup_requests"
+    },
+    {
+      "definition": "CREATE TRIGGER notify_venue_card_live_after_publication AFTER UPDATE OF is_active, published_at, page_review_status ON public.venues FOR EACH ROW EXECUTE FUNCTION notify_venue_card_live()",
+      "enabled": "O",
+      "function": "notify_venue_card_live()",
+      "name": "notify_venue_card_live_after_publication",
+      "table": "venues"
+    },
+    {
+      "definition": "CREATE TRIGGER venues_create_default_club_deal AFTER INSERT ON public.venues FOR EACH ROW EXECUTE FUNCTION create_venue_default_club_deal()",
+      "enabled": "O",
+      "function": "create_venue_default_club_deal()",
+      "name": "venues_create_default_club_deal",
+      "table": "venues"
+    }
+  ],
+  "event_triggers": [
+    {
+      "enabled": "O",
+      "event": "ddl_command_end",
+      "function": "rls_auto_enable()",
+      "name": "ensure_rls",
+      "tags": [
+        "CREATE TABLE",
+        "CREATE TABLE AS",
+        "SELECT INTO"
+      ]
+    },
+    {
+      "enabled": "O",
+      "event": "sql_drop",
+      "function": "extensions.set_graphql_placeholder()",
+      "name": "issue_graphql_placeholder",
+      "tags": [
+        "DROP EXTENSION"
+      ]
+    },
+    {
+      "enabled": "O",
+      "event": "ddl_command_end",
+      "function": "extensions.grant_pg_cron_access()",
+      "name": "issue_pg_cron_access",
+      "tags": [
+        "CREATE EXTENSION"
+      ]
+    },
+    {
+      "enabled": "O",
+      "event": "ddl_command_end",
+      "function": "extensions.grant_pg_graphql_access()",
+      "name": "issue_pg_graphql_access",
+      "tags": [
+        "CREATE EXTENSION"
+      ]
+    },
+    {
+      "enabled": "O",
+      "event": "ddl_command_end",
+      "function": "extensions.grant_pg_net_access()",
+      "name": "issue_pg_net_access",
+      "tags": [
+        "CREATE EXTENSION"
+      ]
+    },
+    {
+      "enabled": "O",
+      "event": "ddl_command_end",
+      "function": "extensions.pgrst_ddl_watch()",
+      "name": "pgrst_ddl_watch",
+      "tags": null
+    },
+    {
+      "enabled": "O",
+      "event": "sql_drop",
+      "function": "extensions.pgrst_drop_watch()",
+      "name": "pgrst_drop_watch",
+      "tags": null
+    }
+  ],
+  "functions": [
+    {
+      "acl": "{postgres=X/postgres}",
+      "anon": false,
+      "authenticated": false,
+      "fingerprint": "34866b42304a920f15074dbf08f004b3",
+      "name": "activate_approved_venue_request_manager",
+      "owner": "postgres",
+      "return_type": "trigger",
+      "security_definer": true,
+      "service": false,
+      "settings": [
+        "search_path=public, pg_temp"
+      ],
+      "signature": "activate_approved_venue_request_manager()"
+    },
+    {
+      "acl": "{postgres=X/postgres}",
+      "anon": false,
+      "authenticated": false,
+      "fingerprint": "f3fbff8fe4f311c85db61e423b01c91d",
+      "name": "activate_waiting_nats_agent_exports",
+      "owner": "postgres",
+      "return_type": "trigger",
+      "security_definer": true,
+      "service": false,
+      "settings": [
+        "search_path=public"
+      ],
+      "signature": "activate_waiting_nats_agent_exports()"
+    },
+    {
+      "acl": "{postgres=X/postgres}",
+      "anon": false,
+      "authenticated": false,
+      "fingerprint": "dbae672fd513f39e772eb6b3cee9e6b8",
+      "name": "activate_waiting_nats_exports",
+      "owner": "postgres",
+      "return_type": "trigger",
+      "security_definer": true,
+      "service": false,
+      "settings": [
+        "search_path=public, pg_temp"
+      ],
+      "signature": "activate_waiting_nats_exports()"
+    },
+    {
+      "acl": "{postgres=X/postgres}",
+      "anon": false,
+      "authenticated": false,
+      "fingerprint": "2eacb5ea205bcd6ef27ff5a9e21f58da",
+      "name": "assign_dancer_profile_link",
+      "owner": "postgres",
+      "return_type": "trigger",
+      "security_definer": true,
+      "service": false,
+      "settings": [
+        "search_path=\"\""
+      ],
+      "signature": "assign_dancer_profile_link()"
+    },
+    {
+      "acl": "{postgres=X/postgres}",
+      "anon": false,
+      "authenticated": false,
+      "fingerprint": "c177a57a17ca6278fddefe924e316b16",
+      "name": "attribute_approved_venue_agent_referral",
+      "owner": "postgres",
+      "return_type": "trigger",
+      "security_definer": true,
+      "service": false,
+      "settings": [
+        "search_path=public, pg_temp"
+      ],
+      "signature": "attribute_approved_venue_agent_referral()"
+    },
+    {
+      "acl": "{postgres=X/postgres}",
+      "anon": false,
+      "authenticated": false,
+      "fingerprint": "a7d1c2f8c56b50b97835f34db25e3b97",
+      "name": "capture_gallery_media_reference_history",
+      "owner": "postgres",
+      "return_type": "trigger",
+      "security_definer": true,
+      "service": false,
+      "settings": [
+        "search_path=\"\""
+      ],
+      "signature": "capture_gallery_media_reference_history()"
+    },
+    {
+      "acl": "{postgres=X/postgres}",
+      "anon": false,
+      "authenticated": false,
+      "fingerprint": "bb4eb1d1e0d8dbe85d2484630a2b3ead",
+      "name": "confirm_venue_request_email",
+      "owner": "postgres",
+      "return_type": "trigger",
+      "security_definer": true,
+      "service": false,
+      "settings": [
+        "search_path=public, pg_temp"
+      ],
+      "signature": "confirm_venue_request_email()"
+    },
+    {
+      "acl": "{postgres=X/postgres}",
+      "anon": false,
+      "authenticated": false,
+      "fingerprint": "d70c919f0a24006333fc3015d3c56757",
+      "name": "create_venue_default_club_deal",
+      "owner": "postgres",
+      "return_type": "trigger",
+      "security_definer": true,
+      "service": false,
+      "settings": [
+        "search_path=public"
+      ],
+      "signature": "create_venue_default_club_deal()"
+    },
+    {
+      "acl": "{postgres=X/postgres}",
+      "anon": false,
+      "authenticated": false,
+      "fingerprint": "f6be80e5c7ccdd8ee32c290fdb9e8700",
+      "name": "enforce_available_venue_ownership_claim",
+      "owner": "postgres",
+      "return_type": "trigger",
+      "security_definer": true,
+      "service": false,
+      "settings": [
+        "search_path=public, pg_temp"
+      ],
+      "signature": "enforce_available_venue_ownership_claim()"
+    },
+    {
+      "acl": "{postgres=X/postgres}",
+      "anon": false,
+      "authenticated": false,
+      "fingerprint": "93f69eb8ee43fe394349521fb3cf25ab",
+      "name": "enforce_mydancr_tv_profile_video_limit",
+      "owner": "postgres",
+      "return_type": "trigger",
+      "security_definer": false,
+      "service": false,
+      "settings": [
+        "search_path=public, pg_temp"
+      ],
+      "signature": "enforce_mydancr_tv_profile_video_limit()"
+    },
+    {
+      "acl": "{postgres=X/postgres}",
+      "anon": false,
+      "authenticated": false,
+      "fingerprint": "c531fe00a51df0f7b5ce56d1ee93afec",
+      "name": "enforce_shift_verification_server_only",
+      "owner": "postgres",
+      "return_type": "trigger",
+      "security_definer": false,
+      "service": false,
+      "settings": [
+        "search_path=\"\""
+      ],
+      "signature": "enforce_shift_verification_server_only()"
+    },
+    {
+      "acl": "{postgres=X/postgres}",
+      "anon": false,
+      "authenticated": false,
+      "fingerprint": "5d6e6816d8dceab69acb7e6732982284",
+      "name": "enforce_unique_nats_affiliate_login",
+      "owner": "postgres",
+      "return_type": "trigger",
+      "security_definer": true,
+      "service": false,
+      "settings": [
+        "search_path=public"
+      ],
+      "signature": "enforce_unique_nats_affiliate_login()"
+    },
+    {
+      "acl": "{postgres=X/postgres}",
+      "anon": false,
+      "authenticated": false,
+      "fingerprint": "956ce886abc193b1c54ed2ce8d6b0271",
+      "name": "enforce_verified_venue_affiliation_for_checkin",
+      "owner": "postgres",
+      "return_type": "trigger",
+      "security_definer": false,
+      "service": false,
+      "settings": [
+        "search_path=public, pg_temp"
+      ],
+      "signature": "enforce_verified_venue_affiliation_for_checkin()"
+    },
+    {
+      "acl": "{postgres=X/postgres}",
+      "anon": false,
+      "authenticated": false,
+      "fingerprint": "286953fcd8ae1e735c40e780e7fa52b2",
+      "name": "enqueue_nats_agent_commission_export",
+      "owner": "postgres",
+      "return_type": "trigger",
+      "security_definer": true,
+      "service": false,
+      "settings": [
+        "search_path=public"
+      ],
+      "signature": "enqueue_nats_agent_commission_export()"
+    },
+    {
+      "acl": "{postgres=X/postgres}",
+      "anon": false,
+      "authenticated": false,
+      "fingerprint": "0ca845b29b1b84223d4542dbc52a2a55",
+      "name": "enqueue_nats_commission_export",
+      "owner": "postgres",
+      "return_type": "trigger",
+      "security_definer": true,
+      "service": false,
+      "settings": [
+        "search_path=public, pg_temp"
+      ],
+      "signature": "enqueue_nats_commission_export()"
+    },
+    {
+      "acl": "{postgres=X/postgres}",
+      "anon": false,
+      "authenticated": false,
+      "fingerprint": "011bb8fa2b1f3c36f23810de493a264b",
+      "name": "ensure_mydancr_funded_commission",
+      "owner": "postgres",
+      "return_type": "trigger",
+      "security_definer": true,
+      "service": false,
+      "settings": [
+        "search_path=public"
+      ],
+      "signature": "ensure_mydancr_funded_commission()"
+    },
+    {
+      "acl": "{postgres=X/postgres}",
+      "anon": false,
+      "authenticated": false,
+      "fingerprint": "b6e2be37f49f6d0e660d6ad432c6b8d5",
+      "name": "flag_reversed_nats_commission",
+      "owner": "postgres",
+      "return_type": "trigger",
+      "security_definer": true,
+      "service": false,
+      "settings": [
+        "search_path=public"
+      ],
+      "signature": "flag_reversed_nats_commission()"
+    },
+    {
+      "acl": "{postgres=X/postgres}",
+      "anon": false,
+      "authenticated": false,
+      "fingerprint": "817465ee4dbbd01a08e12ba27b2254d6",
+      "name": "flag_voided_nats_agent_commission",
+      "owner": "postgres",
+      "return_type": "trigger",
+      "security_definer": true,
+      "service": false,
+      "settings": [
+        "search_path=public"
+      ],
+      "signature": "flag_voided_nats_agent_commission()"
+    },
+    {
+      "acl": "{postgres=X/postgres}",
+      "anon": false,
+      "authenticated": false,
+      "fingerprint": "4eacfe09a1c51d2a614c4c7934f26741",
+      "name": "guard_gallery_storage_reference",
+      "owner": "postgres",
+      "return_type": "trigger",
+      "security_definer": true,
+      "service": false,
+      "settings": [
+        "search_path=\"\""
+      ],
+      "signature": "guard_gallery_storage_reference()"
+    },
+    {
+      "acl": "{postgres=X/postgres}",
+      "anon": false,
+      "authenticated": false,
+      "fingerprint": "a9f314eb30a408e81a0bf3d75e9192eb",
+      "name": "handle_new_auth_user",
+      "owner": "postgres",
+      "return_type": "trigger",
+      "security_definer": true,
+      "service": false,
+      "settings": [
+        "search_path=public"
+      ],
+      "signature": "handle_new_auth_user()"
+    },
+    {
+      "acl": "{postgres=X/postgres}",
+      "anon": false,
+      "authenticated": false,
+      "fingerprint": "3e5a925daf90df13dcb0da9a8aaafbb5",
+      "name": "log_qr_redemption_issued",
+      "owner": "postgres",
+      "return_type": "trigger",
+      "security_definer": true,
+      "service": false,
+      "settings": [
+        "search_path=public"
+      ],
+      "signature": "log_qr_redemption_issued()"
+    },
+    {
+      "acl": "{postgres=X/postgres}",
+      "anon": false,
+      "authenticated": false,
+      "fingerprint": "92087e8a10afb15fcc9a7da024dafaa8",
+      "name": "notify_dancer_profile_live",
+      "owner": "postgres",
+      "return_type": "trigger",
+      "security_definer": true,
+      "service": false,
+      "settings": [
+        "search_path=public"
+      ],
+      "signature": "notify_dancer_profile_live()"
+    },
+    {
+      "acl": "{postgres=X/postgres}",
+      "anon": false,
+      "authenticated": false,
+      "fingerprint": "8470bfc433393beb8a8e3e8771291e49",
+      "name": "notify_venue_card_live",
+      "owner": "postgres",
+      "return_type": "trigger",
+      "security_definer": true,
+      "service": false,
+      "settings": [
+        "search_path=public"
+      ],
+      "signature": "notify_venue_card_live()"
+    },
+    {
+      "acl": "{postgres=X/postgres}",
+      "anon": false,
+      "authenticated": false,
+      "fingerprint": "324fdabcd33d5d5a52440940240aa771",
+      "name": "prepare_dancer_earning",
+      "owner": "postgres",
+      "return_type": "trigger",
+      "security_definer": true,
+      "service": false,
+      "settings": [
+        "search_path=public"
+      ],
+      "signature": "prepare_dancer_earning()"
+    },
+    {
+      "acl": "{postgres=X/postgres}",
+      "anon": false,
+      "authenticated": false,
+      "fingerprint": "a1a5bb61190f4174139ab0fe8558784a",
+      "name": "preserve_dancer_commission_eligibility",
+      "owner": "postgres",
+      "return_type": "trigger",
+      "security_definer": true,
+      "service": false,
+      "settings": [
+        "search_path=public, pg_temp"
+      ],
+      "signature": "preserve_dancer_commission_eligibility()"
+    },
+    {
+      "acl": "{postgres=X/postgres}",
+      "anon": false,
+      "authenticated": false,
+      "fingerprint": "2b68c719dc081a4a6d4029bceac646d9",
+      "name": "prohibit_financial_record_delete",
+      "owner": "postgres",
+      "return_type": "trigger",
+      "security_definer": false,
+      "service": false,
+      "settings": [
+        "search_path=pg_catalog, pg_temp"
+      ],
+      "signature": "prohibit_financial_record_delete()"
+    },
+    {
+      "acl": "{postgres=X/postgres}",
+      "anon": false,
+      "authenticated": false,
+      "fingerprint": "14dcd746ada8ad71c2b788121ebc4561",
+      "name": "record_dancer_earning_status_history",
+      "owner": "postgres",
+      "return_type": "trigger",
+      "security_definer": true,
+      "service": false,
+      "settings": [
+        "search_path=public"
+      ],
+      "signature": "record_dancer_earning_status_history()"
+    },
+    {
+      "acl": "{postgres=X/postgres}",
+      "anon": false,
+      "authenticated": false,
+      "fingerprint": "48d3e31463c983823ece1833384190a6",
+      "name": "record_mydancr_tv_review_decision",
+      "owner": "postgres",
+      "return_type": "trigger",
+      "security_definer": true,
+      "service": false,
+      "settings": [
+        "search_path=public"
+      ],
+      "signature": "record_mydancr_tv_review_decision()"
+    },
+    {
+      "acl": "{postgres=X/postgres}",
+      "anon": false,
+      "authenticated": false,
+      "fingerprint": "accd393bdc4eacd38e47f3729e263250",
+      "name": "reject_retired_payout_provider",
+      "owner": "postgres",
+      "return_type": "trigger",
+      "security_definer": false,
+      "service": false,
+      "settings": [
+        "search_path=public"
+      ],
+      "signature": "reject_retired_payout_provider()"
+    },
+    {
+      "acl": "{postgres=X/postgres}",
+      "anon": false,
+      "authenticated": false,
+      "fingerprint": "a75c1ea92d335f44fa3b9ef9c9a2f6bb",
+      "name": "require_enrolled_club_deal_earning",
+      "owner": "postgres",
+      "return_type": "trigger",
+      "security_definer": true,
+      "service": false,
+      "settings": [
+        "search_path=public, pg_temp"
+      ],
+      "signature": "require_enrolled_club_deal_earning()"
+    },
+    {
+      "acl": "{postgres=X/postgres}",
+      "anon": false,
+      "authenticated": false,
+      "fingerprint": "dae3529d41636e7b5aaefa5ab19cf835",
+      "name": "require_submitted_dancer_profile_for_active_affiliation",
+      "owner": "postgres",
+      "return_type": "trigger",
+      "security_definer": true,
+      "service": false,
+      "settings": [
+        "search_path=public, pg_temp"
+      ],
+      "signature": "require_submitted_dancer_profile_for_active_affiliation()"
+    },
+    {
+      "acl": "{postgres=X/postgres}",
+      "anon": false,
+      "authenticated": false,
+      "fingerprint": "0f0b6e93d490fe6a2add27ce27b13b62",
+      "name": "require_venue_request_email_confirmation",
+      "owner": "postgres",
+      "return_type": "trigger",
+      "security_definer": true,
+      "service": false,
+      "settings": [
+        "search_path=public, pg_temp"
+      ],
+      "signature": "require_venue_request_email_confirmation()"
+    },
+    {
+      "acl": "{postgres=X/postgres}",
+      "anon": false,
+      "authenticated": false,
+      "fingerprint": "6998ea6b4c2480f5d2e34b5dcf3f8d36",
+      "name": "rls_auto_enable",
+      "owner": "postgres",
+      "return_type": "event_trigger",
+      "security_definer": true,
+      "service": false,
+      "settings": [
+        "search_path=pg_catalog"
+      ],
+      "signature": "rls_auto_enable()"
+    },
+    {
+      "acl": "{postgres=X/postgres}",
+      "anon": false,
+      "authenticated": false,
+      "fingerprint": "f9e79d46a086d6dd1afe273912f964c3",
+      "name": "set_shift_date_from_starts_at",
+      "owner": "postgres",
+      "return_type": "trigger",
+      "security_definer": false,
+      "service": false,
+      "settings": [
+        "search_path=public, pg_temp"
+      ],
+      "signature": "set_shift_date_from_starts_at()"
+    },
+    {
+      "acl": "{postgres=X/postgres}",
+      "anon": false,
+      "authenticated": false,
+      "fingerprint": "3c7e2387fc85f30488e72983450371cc",
+      "name": "sync_media_like_count",
+      "owner": "postgres",
+      "return_type": "trigger",
+      "security_definer": true,
+      "service": false,
+      "settings": [
+        "search_path=pg_catalog, public"
+      ],
+      "signature": "sync_media_like_count()"
+    },
+    {
+      "acl": "{postgres=X/postgres}",
+      "anon": false,
+      "authenticated": false,
+      "fingerprint": "ccfb7b2ce67a3503eaadf1d5b101fdcc",
+      "name": "sync_verified_auth_email",
+      "owner": "postgres",
+      "return_type": "trigger",
+      "security_definer": true,
+      "service": false,
+      "settings": [
+        "search_path=\"\""
+      ],
+      "signature": "sync_verified_auth_email()"
+    },
+    {
+      "acl": "{postgres=X/postgres}",
+      "anon": false,
+      "authenticated": false,
+      "fingerprint": "a98a7cc9a6cdd3f29be8ba96658bd506",
+      "name": "touch_venue_club_deal_request_updated_at",
+      "owner": "postgres",
+      "return_type": "trigger",
+      "security_definer": false,
+      "service": false,
+      "settings": [
+        "search_path=public, pg_temp"
+      ],
+      "signature": "touch_venue_club_deal_request_updated_at()"
+    },
+    {
+      "acl": "{postgres=X/postgres}",
+      "anon": false,
+      "authenticated": false,
+      "fingerprint": "67342f2c7a8c669495641111cd2df8d0",
+      "name": "touch_venue_pilot_night_report_updated_at",
+      "owner": "postgres",
+      "return_type": "trigger",
+      "security_definer": false,
+      "service": false,
+      "settings": [
+        "search_path=public"
+      ],
+      "signature": "touch_venue_pilot_night_report_updated_at()"
+    },
+    {
+      "acl": "{postgres=X/postgres}",
+      "anon": false,
+      "authenticated": false,
+      "fingerprint": "9766149748fe94422e2f7829e6ee1563",
+      "name": "touch_venue_signup_request_updated_at",
+      "owner": "postgres",
+      "return_type": "trigger",
+      "security_definer": false,
+      "service": false,
+      "settings": [
+        "search_path=public"
+      ],
+      "signature": "touch_venue_signup_request_updated_at()"
+    },
+    {
+      "acl": "{postgres=X/postgres}",
+      "anon": false,
+      "authenticated": false,
+      "fingerprint": "dd497e44e00343d3c36f9de033bda5f1",
+      "name": "validate_mydancr_tv_video_links",
+      "owner": "postgres",
+      "return_type": "trigger",
+      "security_definer": true,
+      "service": false,
+      "settings": [
+        "search_path=public"
+      ],
+      "signature": "validate_mydancr_tv_video_links()"
+    },
+    {
+      "acl": "{postgres=X/postgres}",
+      "anon": false,
+      "authenticated": false,
+      "fingerprint": "6aea8fd29aa4737924faaeb2f4ef936a",
+      "name": "validate_sales_agent_hierarchy",
+      "owner": "postgres",
+      "return_type": "trigger",
+      "security_definer": false,
+      "service": false,
+      "settings": [
+        "search_path=public, pg_temp"
+      ],
+      "signature": "validate_sales_agent_hierarchy()"
+    },
+    {
+      "acl": "{postgres=X/postgres}",
+      "anon": false,
+      "authenticated": false,
+      "fingerprint": "d8b428c20b6d686fee8b3911a17aca91",
+      "name": "void_agent_commissions_with_revenue",
+      "owner": "postgres",
+      "return_type": "trigger",
+      "security_definer": true,
+      "service": false,
+      "settings": [
+        "search_path=public"
+      ],
+      "signature": "void_agent_commissions_with_revenue()"
+    }
+  ],
+  "planned_correction": {
+    "old_attachment_count": 0,
+    "scope": "ROW",
+    "events": "AFTER INSERT OR UPDATE OF dancer_id, distribution_scope, status",
+    "new_attachment_count": 1,
+    "expected_new_fingerprint": "7712668d238dcb107394fde5db83ff9f",
+    "function": "enforce_mydancr_tv_profile_video_limit()",
+    "table": "public.mydancr_tv_videos"
+  }
+}
