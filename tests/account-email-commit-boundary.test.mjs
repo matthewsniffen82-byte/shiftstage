@@ -12,7 +12,7 @@ function compile(path, dependencies = {}) {
   vm.runInNewContext(ts.transpileModule(read(path), { compilerOptions: {
     module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022,
   } }).outputText, {
-    exports, Request, Response, URL, Error, Buffer, TextDecoder, Uint8Array,
+    exports, Request, Response, URL, Error, Buffer, TextDecoder, Uint8Array, setTimeout, clearTimeout,
     process: { env: { NODE_ENV: "production" } },
     console: { warn() {}, error() {}, info() {} },
     require: name => {

@@ -10,7 +10,12 @@ const require = createRequire(import.meta.url);
 const { RGBLuminanceSource, HybridBinarizer, BinaryBitmap, QRCodeReader } = require('@zxing/library');
 const compile = source => ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, esModuleInterop: true } }).outputText;
 const exports = {};
-vm.runInNewContext(compile(readFileSync('app/api/public/share-qr/route.ts', 'utf8')), { exports, require, URL, Request, Response, Uint8Array, process: { env: { NODE_ENV: 'production' } } });
+vm.runInNewContext(compile(readFileSync('app/api/public/share-qr/route.ts', 'utf8')), { exports, require(name) {
+  if (name.endsWith('/public-request-rate-limit')) return { enforcePublicRequestRateLimit: async () => {}, PublicRequestRateLimitError: class extends Error {} };
+  if (name.endsWith('/request-client-address')) return { requestClientAddress: () => 'synthetic' };
+  if (name.endsWith('/supabase/admin')) return { createAdminSupabaseClient: () => ({}) };
+  return require(name);
+}, URL, Request, Response, Uint8Array, process: { env: { NODE_ENV: 'production' } } });
 const request = value => new Request('https://www.mydancr.com/api/public/share-qr?url=' + encodeURIComponent(value));
 
 test('generated profile and club QR images scan to the exact public link', async () => {

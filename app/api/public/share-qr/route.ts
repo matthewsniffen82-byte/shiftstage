@@ -1,4 +1,7 @@
 import QRCode from "qrcode";
+import { enforcePublicRequestRateLimit, PublicRequestRateLimitError } from "@/src/lib/dancr/public-request-rate-limit";
+import { requestClientAddress } from "@/src/lib/security/request-client-address";
+import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 
 export const runtime = "nodejs";
 
@@ -31,6 +34,12 @@ export async function GET(request: Request) {
   }
 
   try {
+    // All valid link variants share the same client budget. A popular public
+    // profile must not acquire a global bucket that another visitor can exhaust.
+    await enforcePublicRequestRateLimit(createAdminSupabaseClient(), {
+      namespace: "public_share_qr", request, subject: requestClientAddress(request),
+      windowSeconds: 60, ipLimit: 60, subjectLimit: 60,
+    });
     const png = await QRCode.toBuffer(target.toString(), {
       width: 360, margin: 4, errorCorrectionLevel: "M",
       color: { dark: "#050507", light: "#ffffff" },
@@ -42,7 +51,12 @@ export async function GET(request: Request) {
         "x-content-type-options": "nosniff",
       },
     });
-  } catch {
+  } catch (error) {
+    if (error instanceof PublicRequestRateLimitError) {
+      return Response.json({ error: "Too many QR requests. Please wait and try again." }, {
+        status: 429, headers: { "cache-control": "private, no-store", "retry-after": String(error.retryAfterSeconds) },
+      });
+    }
     return Response.json({ error: "QR code unavailable. Please try again." }, {
       status: 503, headers: { "cache-control": "no-store" },
     });

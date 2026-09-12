@@ -61,6 +61,8 @@ function filterPublicDancerCity(query: any, city: string) {
 
 async function getApprovedDancerRowsByCity(client: DancrClient, city: string): Promise<any[]> {
   const cityName = city.trim();
+  const now = new Date().toISOString();
+  const shiftFields = `id, shift_date, shift_source, starts_at, ends_at, timezone, status, location_status, checked_in_at, checked_out_at, location_verification_expires_at, venue_id, venues!inner(id, name, slug, timezone, is_active, has_active_club_deal)`;
   const current = await applyPublicApprovalFilters(filterPublicDancerCity(client
     .from("dancer_profiles")
     .select(
@@ -80,25 +82,58 @@ async function getApprovedDancerRowsByCity(client: DancrClient, city: string): P
         trending_scores(rank),
         dancer_photos(id, storage_path, is_primary, review_status, sort_order, like_count, is_pinned),
         social_links(id, platform, handle, url, is_active),
-        shifts(id, shift_date, shift_source, starts_at, ends_at, timezone, status, location_status, checked_in_at, checked_out_at, location_verification_expires_at, venue_id, venues(id, name, slug, timezone, is_active, has_active_club_deal))
+        live_shifts:shifts(${shiftFields}),
+        scheduled_shifts:shifts(${shiftFields})
       `,
     ), cityName))
     .eq("is_public", true)
+    .eq("dancer_photos.review_status", "approved")
+    .order("is_pinned", { referencedTable: "dancer_photos", ascending: false, nullsFirst: false })
+    .order("is_primary", { referencedTable: "dancer_photos", ascending: false, nullsFirst: false })
+    .order("sort_order", { referencedTable: "dancer_photos", ascending: true, nullsFirst: true })
+    .order("id", { referencedTable: "dancer_photos", ascending: true })
+    .limit(PUBLIC_PROFILE_MEDIA_LIMIT, { referencedTable: "dancer_photos" })
+    .eq("live_shifts.status", "posted")
+    .not("live_shifts.checked_in_at", "is", null)
+    .is("live_shifts.checked_out_at", null)
+    .eq("live_shifts.location_status", "club_confirmed")
+    .gt("live_shifts.location_verification_expires_at", now)
+    .lt("live_shifts.location_verification_expires_at", "infinity")
+    .eq("live_shifts.venues.is_active", true)
+    .eq("live_shifts.venues.has_active_club_deal", true)
+    .eq("scheduled_shifts.status", "posted")
+    .eq("scheduled_shifts.shift_source", "scheduled")
+    .is("scheduled_shifts.checked_out_at", null)
+    .gte("scheduled_shifts.ends_at", now)
+    .lt("scheduled_shifts.ends_at", "infinity")
+    .eq("scheduled_shifts.venues.is_active", true)
+    .eq("scheduled_shifts.venues.has_active_club_deal", true)
     .order("stage_name", { ascending: true })
-    .order("starts_at", { referencedTable: "shifts", ascending: true })
+    .order("id", { ascending: true })
+    .order("starts_at", { referencedTable: "live_shifts", ascending: true })
+    .order("id", { referencedTable: "live_shifts", ascending: true })
+    .order("starts_at", { referencedTable: "scheduled_shifts", ascending: true })
+    .order("id", { referencedTable: "scheduled_shifts", ascending: true })
+    .limit(PUBLIC_PROFILE_SHIFT_LIMIT, { referencedTable: "live_shifts" })
+    .limit(PUBLIC_PROFILE_SHIFT_LIMIT, { referencedTable: "scheduled_shifts" })
     .limit(isAllMyDancrCities(cityName) ? PUBLIC_DANCER_DIRECTORY_LIMIT * 4 : PUBLIC_DANCER_DIRECTORY_LIMIT);
 
   const data: any[] | null = current.data as any[] | null;
   const error: any = current.error;
-
   if (error) throw error;
 
-  const rows = (data || []).filter(isApprovedPublicDancerRow);
+  // Separate windows preserve live priority over scheduled dates. Retain
+  // fallback candidates if an earlier date expires while the response travels.
+  // The card builder rechecks visibility; an exhausted window stays hidden.
+  const selected = (value: any) => Array.isArray(value) ? value.slice(0, PUBLIC_PROFILE_SHIFT_LIMIT) : value && typeof value === "object" ? [value] : [];
+  const rows = (data || []).filter(isApprovedPublicDancerRow).map(({ live_shifts, scheduled_shifts, ...row }) => ({
+    ...row,
+    shifts: [...selected(live_shifts), ...selected(scheduled_shifts)],
+  }));
   console.log("PUBLIC_DANCERS_QUERY_RESULT", {
     rawCount: data?.length || 0,
     publicApprovedCount: rows.length,
   });
-
   return rows;
 }
 
@@ -123,17 +158,28 @@ export async function getTonightShifts(client: DancrClient, city: string, now = 
         trending_scores(rank),
         dancer_photos(id, storage_path, is_primary, review_status, sort_order, like_count, is_pinned),
         social_links(id, platform, handle, url, is_active),
-        shifts!inner(id, shift_date, shift_source, starts_at, ends_at, timezone, status, location_status, checked_in_at, checked_out_at, location_verification_expires_at, venue_id, venues(id, name, slug, timezone, is_active, has_active_club_deal))
+        shifts!inner(id, shift_date, shift_source, starts_at, ends_at, timezone, status, location_status, checked_in_at, checked_out_at, location_verification_expires_at, venue_id, venues!inner(id, name, slug, timezone, is_active, has_active_club_deal))
       `,
     )
     .ilike("city", cityName))
     .eq("is_public", true)
+    .eq("dancer_photos.review_status", "approved")
+    .order("is_pinned", { referencedTable: "dancer_photos", ascending: false, nullsFirst: false })
+    .order("is_primary", { referencedTable: "dancer_photos", ascending: false, nullsFirst: false })
+    .order("sort_order", { referencedTable: "dancer_photos", ascending: true, nullsFirst: true })
+    .order("id", { referencedTable: "dancer_photos", ascending: true })
+    .limit(PUBLIC_PROFILE_MEDIA_LIMIT, { referencedTable: "dancer_photos" })
     .eq("shifts.status", "posted")
     .not("shifts.checked_in_at", "is", null)
     .is("shifts.checked_out_at", null)
     .eq("shifts.location_status", "club_confirmed")
     .gt("shifts.location_verification_expires_at", now.toISOString())
+    .lt("shifts.location_verification_expires_at", "infinity")
+    .eq("shifts.venues.is_active", true)
+    .eq("shifts.venues.has_active_club_deal", true)
     .order("starts_at", { referencedTable: "shifts", ascending: true })
+    .order("id", { referencedTable: "shifts", ascending: true })
+    .limit(PUBLIC_PROFILE_SHIFT_LIMIT, { referencedTable: "shifts" })
     .limit(PUBLIC_DANCER_DIRECTORY_LIMIT);
 
   const data: any[] | null = current.data as any[] | null;

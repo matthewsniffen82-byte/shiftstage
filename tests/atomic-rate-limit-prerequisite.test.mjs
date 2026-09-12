@@ -44,7 +44,7 @@ function fixture({ error = null, decision = { allowed: true }, thrown = null } =
     vm.runInNewContext(ts.transpileModule(readFileSync(absolute, "utf8"), { compilerOptions: {
       module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022,
     } }).outputText, {
-      exports, Error, Request, Response, URL, Date, Buffer, Headers, TextDecoder, Uint8Array,
+      exports, Error, Request, Response, URL, Date, Buffer, Headers, TextDecoder, Uint8Array, setTimeout, clearTimeout,
       process: { env: { SUPABASE_SERVICE_ROLE_KEY: "synthetic-rate-prerequisite-only" } },
       console: { warn() {}, error() {}, info() {} },
       require(name) {

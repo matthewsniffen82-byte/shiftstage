@@ -42,6 +42,9 @@ function queryFixture(rows = []) {
     const query = new Proxy({}, { get(_target, method) {
       if (method === 'then') return resolve => Promise.resolve({
         data: rows.filter(row => log.filters.every(([kind, key, value]) => {
+          // This fixture evaluates parent city/approval scope only. Filters on
+          // optional embedded records do not remove their parent profile.
+          if (typeof key === 'string' && key.includes('.')) return true;
           if (kind === 'ilike') return String(row[key]).toLowerCase() === String(value).toLowerCase();
           if (kind === 'eq' || kind === 'is') return row[key] === value;
           return true;

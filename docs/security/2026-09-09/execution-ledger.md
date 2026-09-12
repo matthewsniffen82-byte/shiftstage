@@ -48,8 +48,8 @@ Step 1 delivered as `50d4eb543dbfc93dbed6f0663c51aa2332542cb4`, pushed to origin
 | 25 | Production build / source maps | Delivered and healthy: e947a5ed57d2c08cd2bd0faac95b35b13fd43855 |
 | 26 | Sensitive data minimization | Delivered and healthy: 22bed212abe82bfdfaf0e7acd00f236ff091d7c0 |
 | 27 | Profile / location safety | Delivered and healthy: 0e8e9b54e885a4d008bd4345199681402687ffc5 |
-| 28 | Scraping resilience | Implementation 8875091e974d48e87c33b11fb543ba1d7bf27d2d deployed; SQL verified; manifest followup deployment pending |
-| 29 | Resource abuse / DoS | Not started |
+| 28 | Scraping resilience | Delivered and healthy: 32d77f5cf2c48ede662ba5e943433b77a8361349 |
+| 29 | Resource abuse / DoS | Isolated validation passed; configured integration and exact deployment closure required |
 | 30 | Security regression coverage | Not started |
 | 31 | Defensive validation | Not started |
 | 32 | Final report | Not started |
@@ -592,3 +592,16 @@ Implementation `8875091e974d48e87c33b11fb543ba1d7bf27d2d` reached [exact Vercel 
 ## Step 28 implementation release and followup validation
 
 Implementation `8875091e974d48e87c33b11fb543ba1d7bf27d2d` reached [exact Vercel success](https://vercel.com/ai-movie-jobs/shiftstage/6WFjVJGkbK3sBheJk9kZMw4NDebA). All eight health/anonymous-denial checks, fifty-eight database readiness checks and four public projection checks passed; the homepage rendered without browser warnings or errors. Both committed SQL sources passed independent catalog, row-fingerprint and Auth-metadata preservation checks. The checksum followup passed all **8,674 tests**, zero failures/skips/cancellations and all eight canonical gates at 2026-09-12T16:21:29.198Z, plus configured artifact inspection and postbuild TypeScript. Only the two evidence documents and two verified migration-manifest entries change. Exact followup commit/deployment closure remains required before Step 29. No live account, upload, moderation, financial or provider action was used as a test.
+
+
+## Step 28 final delivery
+
+Step 28 closed at 2026-09-12T16:28:32.314Z as `32d77f5cf2c48ede662ba5e943433b77a8361349`, with [exact Vercel success](https://vercel.com/ai-movie-jobs/shiftstage/BHFjZkQ9fvBvTu77z34HxcRjz33X), matching clean local/tracking/remote main and both unrelated user screenshots preserved. All 8,674 tests, all eight canonical gates, configured artifact inspection and postbuild TypeScript passed. Eight health/anonymous-denial checks, fifty-eight readiness checks, four public projection checks and the rendered homepage passed. Both SQL sources were independently verified and their hashes frozen in the 171-file manifest. The documented fixture and wrapper-delimiter corrections remain in the external receipt; the successful ownership SQL application was attempt two after independent proof that the rejected first attempt changed nothing. No migration is replayed by this record.
+
+## Step 29 implementation
+
+The incoming-body deadline, response-byte, directory-window and public QR request-budget corrections are documented in `step-29-resource-abuse.md`. Whole moderation-job and stale-worker ownership findings remain explicit; no unsafe automatic reclaim or production operation is used as a test. Step 30 remains unstarted until this step has passed complete validation and its exact commit is deployed and healthy.
+
+## Step 29 full validation
+
+The candidate on exact architecture parent `d999a16218f8db7aacc3663206f36fc8e662b934` passed all **8,898 tests** with zero failures, skips or cancellations and all eight canonical gates at 2026-09-12T18:00:05.252Z. This includes dependency/signature audits, generated assets, route types, standalone TypeScript, full zero-warning lint, production build and public artifact inspection; postbuild skipped population. All 208 focused resource tests and 42 corrected-fixture tests also passed. The first full run's 19 fixture failures and its correction remain recorded, as does the initial anonymous hosted-query rejection and the verified server-caller correction. No database grants or application source changed to correct those validation assumptions. Sixteen task files are included; there is no SQL. Configured build inspection, exact commit/push/Vercel success, public health and source/user-file preservation checks remain required for closure.

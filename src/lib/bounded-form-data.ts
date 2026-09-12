@@ -1,6 +1,8 @@
 import { PublicApiError } from "./api-error-policy.ts";
 import { readBoundedRequestBytes } from "./bounded-json-body.ts";
 
+export const MULTIPART_REQUEST_BODY_TIMEOUT_MS = 120_000;
+
 type BoundedFormDataOptions = {
   maxBytes: number;
   invalidMessage: string;
@@ -16,7 +18,7 @@ export async function readBoundedFormData(
     throw invalid(options.invalidMessage);
   }
 
-  const bytes = await readBoundedRequestBytes(request, options.maxBytes, options.tooLargeMessage);
+  const bytes = await readBoundedRequestBytes(request, options.maxBytes, options.tooLargeMessage, MULTIPART_REQUEST_BODY_TIMEOUT_MS);
   try {
     const bufferedRequest = new Request(request.url, {
       method: "POST",
