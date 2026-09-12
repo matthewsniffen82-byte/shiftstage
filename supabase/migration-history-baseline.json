@@ -651,6 +651,14 @@
     {
       "file": "20260912063000_serialize_sales_agent_hierarchy.sql",
       "sha256": "59657015126a4436b952acd841991ad3e41f5a47780df4f58e0a6ee00aa21d02"
+    },
+    {
+      "file": "20260912083000_preserve_shift_local_dates.sql",
+      "sha256": "b378321286590611909825ca5e3f3143fc037d3fe40350cac396e439482345ec"
+    },
+    {
+      "file": "20260912084000_require_finite_attribution_times.sql",
+      "sha256": "ab3c0f80b8cf22b8965b9358fc22824be6e554776777e80bab57e8c888fead37"
     }
   ]
 }

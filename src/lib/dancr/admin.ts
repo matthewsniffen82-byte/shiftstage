@@ -1650,7 +1650,7 @@ function venueInputToRow(input: AdminVenueInput, creating: boolean) {
   if ("longitude" in input) row.longitude = optionalCoordinate(input.longitude, "longitude", -180, 180);
   if ("phone" in input) row.phone = optionalText(input.phone);
   if ("website" in input) row.website = optionalWebsite(input.website);
-  if ("timezone" in input) row.timezone = optionalText(input.timezone) || "America/Los_Angeles";
+  if ("timezone" in input) row.timezone = venueTimeZone(input.timezone);
   if ("opensAt" in input) row.opens_at = optionalText(input.opensAt);
   if ("closesAt" in input) row.closes_at = optionalText(input.closesAt);
   if (typeof input.isActive === "boolean") row.is_active = input.isActive;
@@ -1772,4 +1772,18 @@ function reviewTimestamp(review: any) {
   // Date.parse normalizes the timezone but discards PostgreSQL's last three fractional digits.
   const fraction = String(value).match(/[T ]\d{2}:\d{2}:\d{2}\.(\d{1,6})(?:Z|[+-]\d{2}(?::?\d{2})?)$/i)?.[1] || "";
   return BigInt(timestamp) * BigInt(1000) + BigInt(fraction.padEnd(6, "0").slice(3));
+}
+
+function venueTimeZone(value: unknown): string {
+  const invalid = () => new PublicApiError("INVALID_REQUEST", "Choose a named time zone, such as America/Los_Angeles.", 400);
+  if (value !== null && value !== undefined && typeof value !== "string") throw invalid();
+  const zone = typeof value === "string" && value.trim() ? value.trim() : "America/Los_Angeles";
+  // Abbreviations and raw offsets can mean different things to Intl and PostgreSQL.
+  if (!zone.includes("/") && zone.toUpperCase() !== "UTC" && zone.toUpperCase() !== "GMT") throw invalid();
+  try {
+    new Intl.DateTimeFormat("en-US", { timeZone: zone }).format(0);
+    return zone;
+  } catch {
+    throw invalid();
+  }
 }

@@ -39,6 +39,11 @@ export function getScheduleDateWindow(shiftDate: string, timeZone: string): Toni
   ) throw new Error("Choose a valid shift date.");
   const tomorrow = addDays(year, month, day, 1);
   const startsAt = zonedDateTimeToUtc(year, month, day, 0, 1, timeZone);
+  // A whole local date can be skipped by a time-zone change (for example, Apia).
+  const localStart = getLocalDateParts(startsAt, timeZone);
+  if (localStart.year !== year || localStart.month !== month || localStart.day !== day) {
+    throw new Error("Choose a valid shift date.");
+  }
   const endsAt = zonedDateTimeToUtc(tomorrow.year, tomorrow.month, tomorrow.day, 0, 1, timeZone);
   return { startsAt: startsAt.toISOString(), endsAt: endsAt.toISOString(), activeAfter: startsAt.toISOString(), timeZone };
 }
@@ -93,10 +98,21 @@ function zonedDateTimeToUtc(
   minute: number,
   timeZone: string,
 ) {
-  const utcGuess = new Date(Date.UTC(year, month - 1, day, hour, minute));
-  const offset = getTimeZoneOffsetMs(utcGuess, timeZone);
-
-  return new Date(utcGuess.getTime() - offset);
+  const localAsUtc = Date.UTC(year, month - 1, day, hour, minute);
+  const dayMs = 24 * 60 * 60 * 1000;
+  // Inspect both sides of a nearby clock change, then check each possible instant.
+  // A UTC guess alone can use tomorrow's offset for today's local midnight.
+  const offsets = new Set([-dayMs, 0, dayMs].map((delta) =>
+    getTimeZoneOffsetMs(new Date(localAsUtc + delta), timeZone)));
+  const candidates = [...offsets].map((offset) => localAsUtc - offset).sort((a, b) => a - b);
+  const exact = candidates.find((instant) =>
+    instant + getTimeZoneOffsetMs(new Date(instant), timeZone) === localAsUtc);
+  // Use the first occurrence of a repeated time; advance across a skipped time.
+  if (exact !== undefined) return new Date(exact);
+  const afterGap = candidates.find((instant) =>
+    instant + getTimeZoneOffsetMs(new Date(instant), timeZone) > localAsUtc);
+  if (afterGap === undefined) throw new Error("Choose a valid shift date.");
+  return new Date(afterGap);
 }
 
 function getTimeZoneOffsetMs(date: Date, timeZone: string) {

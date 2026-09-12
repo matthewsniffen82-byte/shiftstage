@@ -1,0 +1,52 @@
+# Step 16 — local dates and finite time boundaries
+
+Status: candidate prepared outside the shared checkout. Full combined release validation, exact committed SQL application, commit/push, successful Vercel deployment and independent preservation/health are required before closure. No production business operation has been used as a mutable test.
+
+## Findings and corrections
+
+The scheduling helper sampled the timezone offset at one guessed UTC instant. For Sydney's October 4, 2026 transition, that produces October 3 at 23:01 locally instead of October 4 at 00:01. On April 4, 2027 it produces 01:01 instead of 00:01. The same error affects other southern-hemisphere transitions. There is no current Sydney venue: the production preflight found 57 shifts and 22 venues, all using America/Los_Angeles, with zero local-date mismatches.
+
+Resolve local boundaries by sampling offsets on both sides of the date and round-tripping each candidate instant. Keep the existing 00:01 start and next-local-day 00:01 end; do not assume every day is 24 hours. Select the first occurrence of a repeated clock time, advance through a clock gap, and reject a requested date that was skipped entirely. The preceding day may end at the next date that actually exists. This explicit repeated-time choice differs from PostgreSQL's default choice for an ambiguous local timestamp; the application sends a resolved absolute timestamp, so no ambiguous value is left for the database to reinterpret.
+
+Shift edits previously substituted the stored date after an explicitly invalid date/timestamp, and could still apply another change such as cancellation. Reject explicit invalid inputs before mutation. Only a venue-only edit with no date/timestamp may reuse the stored local date. Preserve authenticated ownership, profile approval, affiliated-venue timezone, existing legacy timestamp parsing, active-session, NFC and centrally managed demo protections.
+
+The administrator venue editor also accepted misspelled zones and ambiguous abbreviations as stored text, breaking later Intl scheduling or creating a different interpretation in PostgreSQL. Validate supported named zones before any venue save/audit. Retain valid names/aliases/case, UTC/GMT, the existing Los Angeles default for blank input, and unchanged timezone on unrelated edits. Do not change venue publication or review state. No production venue record is rewritten.
+
+The existing database date trigger filled only null dates. A direct/service writer changing starts_at or timezone could retain stale nonnull shift_date metadata. The revised invoker trigger derives a missing date, refreshes an unchanged old date when start/timezone changes, and rejects an explicitly inconsistent date. Preserve the original blank-timezone UTC fallback, all three attachments, grants, RLS, source distinctions, uniqueness and history. Two validated CHECK constraints require finite schedule/check-in/check-out times and prevent checkout before check-in. Existing end-after-start and checkout-presence constraints remain in place. The migration locks the target, refuses existing date mismatches and changes no record.
+
+The actual assignment RPC also accepted effective_from='infinity'. In a synthetic native reproduction, the saved attribution then prevented every later finite replacement. Add a finite-time CHECK to venue_sales_attributions, including optional superseded_at; null already represents an open end. Preserve the hierarchy lock, one-statement ancestor snapshot, all function bodies, grants, financial rates and audit behavior. The HTTP assignment boundary now requires a finite absolute timestamp with a timezone when supplied, rejects impossible dates and relative words, and preserves supplied PostgreSQL microseconds and offset. Omitted/blank input keeps the current-time behavior used by the existing administrator UI.
+
+## Evidence
+
+- Forty actual scheduling-helper cases cover local midnight, 23/25-hour days, half-hour transitions, quarter-hour offsets, leap/impossible dates, bounds, historical supported years, gaps, repeated times, skipped dates and TonightWindow consumers. Ten cases fail on the preceding converter. Twenty unambiguous cases also matched a read-only production PostgreSQL calculation at 08:08:43 UTC on September 12.
+- Twenty-nine actual dancer route/lifecycle cases cover explicit invalid edits, POST/PATCH timezone output, current fallbacks and retained guards. Fifteen fail on the preceding route.
+- Twenty-eight actual administrator route/service cases cover invalid/ambiguous/non-finite effective times, exact precision/offset, omitted defaults, authorization and a private non-retried unavailable response. Seventeen fail on the preceding route.
+- Thirty-two actual administrator venue route/service cases cover invalid/ambiguous/malformed zones, named aliases/case, defaults, partial edits, review state, actor identity, authorization and failed saves. Thirteen fail on the preceding mapping.
+- Thirty-five native shift cases use the complete 38-column target with its eighteen original constraints, fifteen indexes, two actual policies and all three actual triggers. The original is_admin definition is included. Account, dancer, venue, tag and affiliation controls are documented synthetic projections. They verify derived dates, explicit mismatch rejection, finite values, chronology, multi-row rollback, date uniqueness, NFC/demo behavior and denied direct API roles.
+- Thirteen native attribution cases execute the actual deployed Step 15 assignment/approval definitions and full target tables. They prove rejection before a saved attribution/audit, rollback of attempted supersession or approval, exact microseconds, preserved ancestor snapshots, service-only RPC access and refusal to rewrite bad historical records during migration. Supporting venue/request tables remain projected and omit unrelated approval triggers; these cases do not certify the complete venue approval workflow.
+- Twenty-seven shift and eighteen attribution deployment cases reject schema/access/dependency drift, injected record changes, weakened checks, changed unrelated functions/attachments/ledger, and repeated application. Exact-source application preserves the captured metadata and data in the same transaction.
+
+The combined focused set contains 222 tests. Native old-source reproduction is not evidence of a production incident or a hosted multi-session concurrency exercise.
+
+An isolated integration rehearsal on committed base `def7ef5f3eb30cdc2fb6ae0f59b92fd9e34e81b1` passed all 7,065 automated tests, dependency audit, registry signatures, runtime/generated assets, route type generation, standalone TypeScript, full lint, production build and post-build TypeScript at 09:09:12 UTC on September 12. The build used synthetic public configuration, no copied environment files, and skipped population. All 129 runtime cases also passed after adapting their imports to repository paths. This rehearsal did not touch the shared checkout, deploy application code or apply either migration. Final validation must still run on the exact combined release after the preceding queued work.
+
+## Production preflight and source identity
+
+The 06:54 UTC shift preflight found no derived-date mismatch, nonpositive schedule range or checkout before check-in. The 07:21 UTC scan covered all 269 date/timestamp/interval columns across 81 application tables and found no non-finite values. There are zero sales agents and zero attributions. Required-column and numeric checks from Step 15 also remain recorded separately. Fresh target/dependency/access preconditions passed read-only at 07:57:34 UTC for shifts and 08:04:35 UTC for attributions. Repeat these checks before application; a prior snapshot is not a release receipt.
+
+| Proposed migration | Normalized SHA-256 | MD5 |
+| --- | --- | --- |
+| 20260912083000_preserve_shift_local_dates.sql | b378321286590611909825ca5e3f3143fc037d3fe40350cac396e439482345ec | f8410e76c5f3635025bd4ea56e7ab979 |
+| 20260912084000_require_finite_attribution_times.sql | ab3c0f80b8cf22b8965b9358fc22824be6e554776777e80bab57e8c888fead37 | 3ebcc0840ace66120b6a07c58c96f8b6 |
+
+Expected installed shift-date function fingerprint: d1b3276ae1e651f716bf174d0ef4cb2b. No attribution function is replaced. Freeze both exact sources in the same commit's migration manifest; this protects proposed source and is separate from evidence of live application.
+
+Guarded deployment checks all affected target columns, constraints, indexes, policies, attachments, grants, owners and dependency definitions. Preserve all other schema/access/role/function metadata and previous ledger entries. Independently compare twenty-seven table fingerprints, extending the previous twenty-four with shifts, venue_dancer_affiliations and shift_location_events. Retain all 452 storage objects and existing business/history rows. Apply only wrappers generated from the exact committed SQL after the complete release gate passes.
+
+## Scope and remaining stages
+
+The original business boundaries use timestamptz for instants and date for local schedule/calendar labels. Existing referral-fee input already rejects non-finite dates and bounds scheduling; NFC activation constructs its local date from its venue timezone and an absolute server instant. No timezone setting, cron schedule, business-time policy, financial rate, historic record, object or hosted account is changed as an audit shortcut.
+
+Step 17 retains lifecycle/DMCA restoration ownership and cross-case interleavings; Step 19 retains uncertain NATS export completion/reversal and attempt ownership; later stages retain environment, recovery and complete end-to-end checks. Disposable hosted accounts, independent hosted database sessions, real mailbox/provider exercises and restore drills remain explicitly deferred under the user's existing instructions. Do not create a paid project, invoke a production business RPC, reset data, replay historical migrations or use GET /api/dancer/shifts as a read-only health check (it reconciles expired records).
+
+References: [PostgreSQL timestamp ambiguity](https://www.postgresql.org/docs/17/datetime-invalid-input.html), [PostgreSQL date/time functions](https://www.postgresql.org/docs/17/functions-datetime.html), [PostgreSQL triggers](https://www.postgresql.org/docs/17/trigger-definition.html). Existing audit history and final release receipts belong in the execution ledger.

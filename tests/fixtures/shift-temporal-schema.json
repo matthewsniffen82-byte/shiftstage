@@ -1,0 +1,1036 @@
+{
+  "capturedAt": "2026-09-12T07:33:37.25037+00:00",
+  "scope": "Full public.shifts target schema and all three actual triggers; dancer, venue, tag and affiliation controls are documented synthetic projections. No production records.",
+  "relations": [
+    {
+      "force_rls": false,
+      "grants": {
+        "anon": {
+          "delete": false,
+          "insert": false,
+          "select": false,
+          "update": false
+        },
+        "authenticated": {
+          "delete": false,
+          "insert": false,
+          "select": false,
+          "update": false
+        },
+        "service_role": {
+          "delete": true,
+          "insert": true,
+          "select": true,
+          "update": true
+        }
+      },
+      "kind": "r",
+      "name": "shifts",
+      "options": null,
+      "owner": "postgres",
+      "rls": true,
+      "schema_name": "public"
+    }
+  ],
+  "columns": [
+    {
+      "column_default": "gen_random_uuid()",
+      "column_name": "id",
+      "data_type": "uuid",
+      "is_generated": "NEVER",
+      "is_identity": "NO",
+      "is_nullable": "NO",
+      "ordinal_position": 1,
+      "table_name": "shifts",
+      "table_schema": "public",
+      "udt_name": "uuid",
+      "udt_schema": "pg_catalog"
+    },
+    {
+      "column_default": null,
+      "column_name": "dancer_id",
+      "data_type": "uuid",
+      "is_generated": "NEVER",
+      "is_identity": "NO",
+      "is_nullable": "NO",
+      "ordinal_position": 2,
+      "table_name": "shifts",
+      "table_schema": "public",
+      "udt_name": "uuid",
+      "udt_schema": "pg_catalog"
+    },
+    {
+      "column_default": null,
+      "column_name": "venue_id",
+      "data_type": "uuid",
+      "is_generated": "NEVER",
+      "is_identity": "NO",
+      "is_nullable": "NO",
+      "ordinal_position": 3,
+      "table_name": "shifts",
+      "table_schema": "public",
+      "udt_name": "uuid",
+      "udt_schema": "pg_catalog"
+    },
+    {
+      "column_default": null,
+      "column_name": "starts_at",
+      "data_type": "timestamp with time zone",
+      "is_generated": "NEVER",
+      "is_identity": "NO",
+      "is_nullable": "NO",
+      "ordinal_position": 4,
+      "table_name": "shifts",
+      "table_schema": "public",
+      "udt_name": "timestamptz",
+      "udt_schema": "pg_catalog"
+    },
+    {
+      "column_default": null,
+      "column_name": "ends_at",
+      "data_type": "timestamp with time zone",
+      "is_generated": "NEVER",
+      "is_identity": "NO",
+      "is_nullable": "NO",
+      "ordinal_position": 5,
+      "table_name": "shifts",
+      "table_schema": "public",
+      "udt_name": "timestamptz",
+      "udt_schema": "pg_catalog"
+    },
+    {
+      "column_default": "'America/Los_Angeles'::text",
+      "column_name": "timezone",
+      "data_type": "text",
+      "is_generated": "NEVER",
+      "is_identity": "NO",
+      "is_nullable": "NO",
+      "ordinal_position": 6,
+      "table_name": "shifts",
+      "table_schema": "public",
+      "udt_name": "text",
+      "udt_schema": "pg_catalog"
+    },
+    {
+      "column_default": "'posted'::shift_status",
+      "column_name": "status",
+      "data_type": "USER-DEFINED",
+      "is_generated": "NEVER",
+      "is_identity": "NO",
+      "is_nullable": "NO",
+      "ordinal_position": 7,
+      "table_name": "shifts",
+      "table_schema": "public",
+      "udt_name": "shift_status",
+      "udt_schema": "public"
+    },
+    {
+      "column_default": null,
+      "column_name": "broadcast_sent_at",
+      "data_type": "timestamp with time zone",
+      "is_generated": "NEVER",
+      "is_identity": "NO",
+      "is_nullable": "YES",
+      "ordinal_position": 8,
+      "table_name": "shifts",
+      "table_schema": "public",
+      "udt_name": "timestamptz",
+      "udt_schema": "pg_catalog"
+    },
+    {
+      "column_default": "0",
+      "column_name": "broadcast_recipients",
+      "data_type": "integer",
+      "is_generated": "NEVER",
+      "is_identity": "NO",
+      "is_nullable": "NO",
+      "ordinal_position": 9,
+      "table_name": "shifts",
+      "table_schema": "public",
+      "udt_name": "int4",
+      "udt_schema": "pg_catalog"
+    },
+    {
+      "column_default": "now()",
+      "column_name": "created_at",
+      "data_type": "timestamp with time zone",
+      "is_generated": "NEVER",
+      "is_identity": "NO",
+      "is_nullable": "NO",
+      "ordinal_position": 10,
+      "table_name": "shifts",
+      "table_schema": "public",
+      "udt_name": "timestamptz",
+      "udt_schema": "pg_catalog"
+    },
+    {
+      "column_default": "now()",
+      "column_name": "updated_at",
+      "data_type": "timestamp with time zone",
+      "is_generated": "NEVER",
+      "is_identity": "NO",
+      "is_nullable": "NO",
+      "ordinal_position": 11,
+      "table_name": "shifts",
+      "table_schema": "public",
+      "udt_name": "timestamptz",
+      "udt_schema": "pg_catalog"
+    },
+    {
+      "column_default": "'self_reported'::text",
+      "column_name": "location_status",
+      "data_type": "text",
+      "is_generated": "NEVER",
+      "is_identity": "NO",
+      "is_nullable": "NO",
+      "ordinal_position": 12,
+      "table_name": "shifts",
+      "table_schema": "public",
+      "udt_name": "text",
+      "udt_schema": "pg_catalog"
+    },
+    {
+      "column_default": null,
+      "column_name": "checked_in_at",
+      "data_type": "timestamp with time zone",
+      "is_generated": "NEVER",
+      "is_identity": "NO",
+      "is_nullable": "YES",
+      "ordinal_position": 13,
+      "table_name": "shifts",
+      "table_schema": "public",
+      "udt_name": "timestamptz",
+      "udt_schema": "pg_catalog"
+    },
+    {
+      "column_default": null,
+      "column_name": "checked_out_at",
+      "data_type": "timestamp with time zone",
+      "is_generated": "NEVER",
+      "is_identity": "NO",
+      "is_nullable": "YES",
+      "ordinal_position": 14,
+      "table_name": "shifts",
+      "table_schema": "public",
+      "udt_name": "timestamptz",
+      "udt_schema": "pg_catalog"
+    },
+    {
+      "column_default": null,
+      "column_name": "checkin_latitude",
+      "data_type": "numeric",
+      "is_generated": "NEVER",
+      "is_identity": "NO",
+      "is_nullable": "YES",
+      "ordinal_position": 15,
+      "table_name": "shifts",
+      "table_schema": "public",
+      "udt_name": "numeric",
+      "udt_schema": "pg_catalog"
+    },
+    {
+      "column_default": null,
+      "column_name": "checkin_longitude",
+      "data_type": "numeric",
+      "is_generated": "NEVER",
+      "is_identity": "NO",
+      "is_nullable": "YES",
+      "ordinal_position": 16,
+      "table_name": "shifts",
+      "table_schema": "public",
+      "udt_name": "numeric",
+      "udt_schema": "pg_catalog"
+    },
+    {
+      "column_default": null,
+      "column_name": "checkin_distance_feet",
+      "data_type": "numeric",
+      "is_generated": "NEVER",
+      "is_identity": "NO",
+      "is_nullable": "YES",
+      "ordinal_position": 17,
+      "table_name": "shifts",
+      "table_schema": "public",
+      "udt_name": "numeric",
+      "udt_schema": "pg_catalog"
+    },
+    {
+      "column_default": null,
+      "column_name": "checkin_accuracy_meters",
+      "data_type": "numeric",
+      "is_generated": "NEVER",
+      "is_identity": "NO",
+      "is_nullable": "YES",
+      "ordinal_position": 18,
+      "table_name": "shifts",
+      "table_schema": "public",
+      "udt_name": "numeric",
+      "udt_schema": "pg_catalog"
+    },
+    {
+      "column_default": null,
+      "column_name": "checkin_captured_at",
+      "data_type": "timestamp with time zone",
+      "is_generated": "NEVER",
+      "is_identity": "NO",
+      "is_nullable": "YES",
+      "ordinal_position": 19,
+      "table_name": "shifts",
+      "table_schema": "public",
+      "udt_name": "timestamptz",
+      "udt_schema": "pg_catalog"
+    },
+    {
+      "column_default": null,
+      "column_name": "last_location_latitude",
+      "data_type": "numeric",
+      "is_generated": "NEVER",
+      "is_identity": "NO",
+      "is_nullable": "YES",
+      "ordinal_position": 20,
+      "table_name": "shifts",
+      "table_schema": "public",
+      "udt_name": "numeric",
+      "udt_schema": "pg_catalog"
+    },
+    {
+      "column_default": null,
+      "column_name": "last_location_longitude",
+      "data_type": "numeric",
+      "is_generated": "NEVER",
+      "is_identity": "NO",
+      "is_nullable": "YES",
+      "ordinal_position": 21,
+      "table_name": "shifts",
+      "table_schema": "public",
+      "udt_name": "numeric",
+      "udt_schema": "pg_catalog"
+    },
+    {
+      "column_default": null,
+      "column_name": "last_location_accuracy_meters",
+      "data_type": "numeric",
+      "is_generated": "NEVER",
+      "is_identity": "NO",
+      "is_nullable": "YES",
+      "ordinal_position": 22,
+      "table_name": "shifts",
+      "table_schema": "public",
+      "udt_name": "numeric",
+      "udt_schema": "pg_catalog"
+    },
+    {
+      "column_default": null,
+      "column_name": "last_location_captured_at",
+      "data_type": "timestamp with time zone",
+      "is_generated": "NEVER",
+      "is_identity": "NO",
+      "is_nullable": "YES",
+      "ordinal_position": 23,
+      "table_name": "shifts",
+      "table_schema": "public",
+      "udt_name": "timestamptz",
+      "udt_schema": "pg_catalog"
+    },
+    {
+      "column_default": null,
+      "column_name": "last_location_verified_at",
+      "data_type": "timestamp with time zone",
+      "is_generated": "NEVER",
+      "is_identity": "NO",
+      "is_nullable": "YES",
+      "ordinal_position": 24,
+      "table_name": "shifts",
+      "table_schema": "public",
+      "udt_name": "timestamptz",
+      "udt_schema": "pg_catalog"
+    },
+    {
+      "column_default": null,
+      "column_name": "location_verification_expires_at",
+      "data_type": "timestamp with time zone",
+      "is_generated": "NEVER",
+      "is_identity": "NO",
+      "is_nullable": "YES",
+      "ordinal_position": 25,
+      "table_name": "shifts",
+      "table_schema": "public",
+      "udt_name": "timestamptz",
+      "udt_schema": "pg_catalog"
+    },
+    {
+      "column_default": "'self_reported'::text",
+      "column_name": "working_status",
+      "data_type": "text",
+      "is_generated": "NEVER",
+      "is_identity": "NO",
+      "is_nullable": "NO",
+      "ordinal_position": 26,
+      "table_name": "shifts",
+      "table_schema": "public",
+      "udt_name": "text",
+      "udt_schema": "pg_catalog"
+    },
+    {
+      "column_default": null,
+      "column_name": "commission_tracking_started_at",
+      "data_type": "timestamp with time zone",
+      "is_generated": "NEVER",
+      "is_identity": "NO",
+      "is_nullable": "YES",
+      "ordinal_position": 27,
+      "table_name": "shifts",
+      "table_schema": "public",
+      "udt_name": "timestamptz",
+      "udt_schema": "pg_catalog"
+    },
+    {
+      "column_default": null,
+      "column_name": "commission_tracking_stopped_at",
+      "data_type": "timestamp with time zone",
+      "is_generated": "NEVER",
+      "is_identity": "NO",
+      "is_nullable": "YES",
+      "ordinal_position": 28,
+      "table_name": "shifts",
+      "table_schema": "public",
+      "udt_name": "timestamptz",
+      "udt_schema": "pg_catalog"
+    },
+    {
+      "column_default": null,
+      "column_name": "ended_at",
+      "data_type": "timestamp with time zone",
+      "is_generated": "NEVER",
+      "is_identity": "NO",
+      "is_nullable": "YES",
+      "ordinal_position": 29,
+      "table_name": "shifts",
+      "table_schema": "public",
+      "udt_name": "timestamptz",
+      "udt_schema": "pg_catalog"
+    },
+    {
+      "column_default": null,
+      "column_name": "ended_reason",
+      "data_type": "text",
+      "is_generated": "NEVER",
+      "is_identity": "NO",
+      "is_nullable": "YES",
+      "ordinal_position": 30,
+      "table_name": "shifts",
+      "table_schema": "public",
+      "udt_name": "text",
+      "udt_schema": "pg_catalog"
+    },
+    {
+      "column_default": null,
+      "column_name": "checkout_latitude",
+      "data_type": "numeric",
+      "is_generated": "NEVER",
+      "is_identity": "NO",
+      "is_nullable": "YES",
+      "ordinal_position": 31,
+      "table_name": "shifts",
+      "table_schema": "public",
+      "udt_name": "numeric",
+      "udt_schema": "pg_catalog"
+    },
+    {
+      "column_default": null,
+      "column_name": "checkout_longitude",
+      "data_type": "numeric",
+      "is_generated": "NEVER",
+      "is_identity": "NO",
+      "is_nullable": "YES",
+      "ordinal_position": 32,
+      "table_name": "shifts",
+      "table_schema": "public",
+      "udt_name": "numeric",
+      "udt_schema": "pg_catalog"
+    },
+    {
+      "column_default": "'{}'::jsonb",
+      "column_name": "shift_summary",
+      "data_type": "jsonb",
+      "is_generated": "NEVER",
+      "is_identity": "NO",
+      "is_nullable": "NO",
+      "ordinal_position": 33,
+      "table_name": "shifts",
+      "table_schema": "public",
+      "udt_name": "jsonb",
+      "udt_schema": "pg_catalog"
+    },
+    {
+      "column_default": null,
+      "column_name": "venue_affiliation_id",
+      "data_type": "uuid",
+      "is_generated": "NEVER",
+      "is_identity": "NO",
+      "is_nullable": "YES",
+      "ordinal_position": 34,
+      "table_name": "shifts",
+      "table_schema": "public",
+      "udt_name": "uuid",
+      "udt_schema": "pg_catalog"
+    },
+    {
+      "column_default": null,
+      "column_name": "shift_date",
+      "data_type": "date",
+      "is_generated": "NEVER",
+      "is_identity": "NO",
+      "is_nullable": "NO",
+      "ordinal_position": 35,
+      "table_name": "shifts",
+      "table_schema": "public",
+      "udt_name": "date",
+      "udt_schema": "pg_catalog"
+    },
+    {
+      "column_default": "'scheduled'::text",
+      "column_name": "shift_source",
+      "data_type": "text",
+      "is_generated": "NEVER",
+      "is_identity": "NO",
+      "is_nullable": "NO",
+      "ordinal_position": 36,
+      "table_name": "shifts",
+      "table_schema": "public",
+      "udt_name": "text",
+      "udt_schema": "pg_catalog"
+    },
+    {
+      "column_default": null,
+      "column_name": "nfc_tag_id",
+      "data_type": "uuid",
+      "is_generated": "NEVER",
+      "is_identity": "NO",
+      "is_nullable": "YES",
+      "ordinal_position": 37,
+      "table_name": "shifts",
+      "table_schema": "public",
+      "udt_name": "uuid",
+      "udt_schema": "pg_catalog"
+    },
+    {
+      "column_default": null,
+      "column_name": "nfc_last_tapped_at",
+      "data_type": "timestamp with time zone",
+      "is_generated": "NEVER",
+      "is_identity": "NO",
+      "is_nullable": "YES",
+      "ordinal_position": 38,
+      "table_name": "shifts",
+      "table_schema": "public",
+      "udt_name": "timestamptz",
+      "udt_schema": "pg_catalog"
+    }
+  ],
+  "constraints": [
+    {
+      "deferrable": false,
+      "definition": "CHECK (((checkin_accuracy_meters IS NULL) OR (checkin_accuracy_meters >= (0)::numeric)))",
+      "delete_action": " ",
+      "initially_deferred": false,
+      "name": "shifts_checkin_accuracy_nonnegative",
+      "referenced_table": null,
+      "schema_name": "public",
+      "table_name": "shifts",
+      "type": "c",
+      "validated": true
+    },
+    {
+      "deferrable": false,
+      "definition": "CHECK (((checkin_latitude IS NULL) OR ((checkin_latitude >= ('-90'::integer)::numeric) AND (checkin_latitude <= (90)::numeric))))",
+      "delete_action": " ",
+      "initially_deferred": false,
+      "name": "shifts_checkin_latitude_range",
+      "referenced_table": null,
+      "schema_name": "public",
+      "table_name": "shifts",
+      "type": "c",
+      "validated": true
+    },
+    {
+      "deferrable": false,
+      "definition": "CHECK (((checkin_longitude IS NULL) OR ((checkin_longitude >= ('-180'::integer)::numeric) AND (checkin_longitude <= (180)::numeric))))",
+      "delete_action": " ",
+      "initially_deferred": false,
+      "name": "shifts_checkin_longitude_range",
+      "referenced_table": null,
+      "schema_name": "public",
+      "table_name": "shifts",
+      "type": "c",
+      "validated": true
+    },
+    {
+      "deferrable": false,
+      "definition": "CHECK (((checked_out_at IS NULL) OR (checked_in_at IS NOT NULL)))",
+      "delete_action": " ",
+      "initially_deferred": false,
+      "name": "shifts_checkout_after_checkin",
+      "referenced_table": null,
+      "schema_name": "public",
+      "table_name": "shifts",
+      "type": "c",
+      "validated": true
+    },
+    {
+      "deferrable": false,
+      "definition": "FOREIGN KEY (dancer_id) REFERENCES dancer_profiles(id) ON DELETE CASCADE",
+      "delete_action": "c",
+      "initially_deferred": false,
+      "name": "shifts_dancer_id_fkey",
+      "referenced_table": "dancer_profiles",
+      "schema_name": "public",
+      "table_name": "shifts",
+      "type": "f",
+      "validated": true
+    },
+    {
+      "deferrable": false,
+      "definition": "CHECK (((shift_source <> 'demo_locked'::text) OR ((nfc_tag_id IS NULL) AND (nfc_last_tapped_at IS NULL) AND (commission_tracking_started_at IS NULL) AND (commission_tracking_stopped_at IS NULL))))",
+      "delete_action": " ",
+      "initially_deferred": false,
+      "name": "shifts_demo_locked_no_nfc_or_commission_check",
+      "referenced_table": null,
+      "schema_name": "public",
+      "table_name": "shifts",
+      "type": "c",
+      "validated": true
+    },
+    {
+      "deferrable": false,
+      "definition": "CHECK ((ends_at > starts_at))",
+      "delete_action": " ",
+      "initially_deferred": false,
+      "name": "shifts_end_after_start",
+      "referenced_table": null,
+      "schema_name": "public",
+      "table_name": "shifts",
+      "type": "c",
+      "validated": true
+    },
+    {
+      "deferrable": false,
+      "definition": "CHECK (((last_location_accuracy_meters IS NULL) OR (last_location_accuracy_meters >= (0)::numeric)))",
+      "delete_action": " ",
+      "initially_deferred": false,
+      "name": "shifts_last_location_accuracy_nonnegative",
+      "referenced_table": null,
+      "schema_name": "public",
+      "table_name": "shifts",
+      "type": "c",
+      "validated": true
+    },
+    {
+      "deferrable": false,
+      "definition": "CHECK (((last_location_latitude IS NULL) OR ((last_location_latitude >= ('-90'::integer)::numeric) AND (last_location_latitude <= (90)::numeric))))",
+      "delete_action": " ",
+      "initially_deferred": false,
+      "name": "shifts_last_location_latitude_range",
+      "referenced_table": null,
+      "schema_name": "public",
+      "table_name": "shifts",
+      "type": "c",
+      "validated": true
+    },
+    {
+      "deferrable": false,
+      "definition": "CHECK (((last_location_longitude IS NULL) OR ((last_location_longitude >= ('-180'::integer)::numeric) AND (last_location_longitude <= (180)::numeric))))",
+      "delete_action": " ",
+      "initially_deferred": false,
+      "name": "shifts_last_location_longitude_range",
+      "referenced_table": null,
+      "schema_name": "public",
+      "table_name": "shifts",
+      "type": "c",
+      "validated": true
+    },
+    {
+      "deferrable": false,
+      "definition": "CHECK ((location_status = ANY (ARRAY['self_reported'::text, 'location_confirmed'::text, 'club_confirmed'::text])))",
+      "delete_action": " ",
+      "initially_deferred": false,
+      "name": "shifts_location_status_check",
+      "referenced_table": null,
+      "schema_name": "public",
+      "table_name": "shifts",
+      "type": "c",
+      "validated": true
+    },
+    {
+      "deferrable": false,
+      "definition": "CHECK (((location_verification_expires_at IS NULL) OR (last_location_verified_at IS NULL) OR (location_verification_expires_at >= last_location_verified_at)))",
+      "delete_action": " ",
+      "initially_deferred": false,
+      "name": "shifts_location_verification_expiry_order",
+      "referenced_table": null,
+      "schema_name": "public",
+      "table_name": "shifts",
+      "type": "c",
+      "validated": true
+    },
+    {
+      "deferrable": false,
+      "definition": "FOREIGN KEY (nfc_tag_id) REFERENCES nfc_tags(id) ON DELETE SET NULL",
+      "delete_action": "n",
+      "initially_deferred": false,
+      "name": "shifts_nfc_tag_id_fkey",
+      "referenced_table": "nfc_tags",
+      "schema_name": "public",
+      "table_name": "shifts",
+      "type": "f",
+      "validated": true
+    },
+    {
+      "deferrable": false,
+      "definition": "PRIMARY KEY (id)",
+      "delete_action": " ",
+      "initially_deferred": false,
+      "name": "shifts_pkey",
+      "referenced_table": null,
+      "schema_name": "public",
+      "table_name": "shifts",
+      "type": "p",
+      "validated": true
+    },
+    {
+      "deferrable": false,
+      "definition": "CHECK ((shift_source = ANY (ARRAY['scheduled'::text, 'nfc_presence'::text, 'demo_locked'::text])))",
+      "delete_action": " ",
+      "initially_deferred": false,
+      "name": "shifts_shift_source_check",
+      "referenced_table": null,
+      "schema_name": "public",
+      "table_name": "shifts",
+      "type": "c",
+      "validated": true
+    },
+    {
+      "deferrable": false,
+      "definition": "FOREIGN KEY (venue_affiliation_id) REFERENCES venue_dancer_affiliations(id) ON DELETE SET NULL",
+      "delete_action": "n",
+      "initially_deferred": false,
+      "name": "shifts_venue_affiliation_id_fkey",
+      "referenced_table": "venue_dancer_affiliations",
+      "schema_name": "public",
+      "table_name": "shifts",
+      "type": "f",
+      "validated": true
+    },
+    {
+      "deferrable": false,
+      "definition": "FOREIGN KEY (venue_id) REFERENCES venues(id) ON DELETE RESTRICT",
+      "delete_action": "r",
+      "initially_deferred": false,
+      "name": "shifts_venue_id_fkey",
+      "referenced_table": "venues",
+      "schema_name": "public",
+      "table_name": "shifts",
+      "type": "f",
+      "validated": true
+    },
+    {
+      "deferrable": false,
+      "definition": "CHECK ((working_status = ANY (ARRAY['self_reported'::text, 'checked_in'::text, 'ended'::text, 'club_confirmed'::text])))",
+      "delete_action": " ",
+      "initially_deferred": false,
+      "name": "shifts_working_status_check",
+      "referenced_table": null,
+      "schema_name": "public",
+      "table_name": "shifts",
+      "type": "c",
+      "validated": true
+    }
+  ],
+  "indexes": [
+    {
+      "indexdef": "CREATE INDEX shifts_checked_in_idx ON public.shifts USING btree (checked_in_at)",
+      "indexname": "shifts_checked_in_idx",
+      "indisready": true,
+      "indisunique": false,
+      "indisvalid": true,
+      "schemaname": "public",
+      "tablename": "shifts"
+    },
+    {
+      "indexdef": "CREATE INDEX shifts_commission_tracking_started_at_idx ON public.shifts USING btree (commission_tracking_started_at)",
+      "indexname": "shifts_commission_tracking_started_at_idx",
+      "indisready": true,
+      "indisunique": false,
+      "indisvalid": true,
+      "schemaname": "public",
+      "tablename": "shifts"
+    },
+    {
+      "indexdef": "CREATE INDEX shifts_dancer_nfc_last_tapped_idx ON public.shifts USING btree (dancer_id, nfc_last_tapped_at DESC) WHERE (nfc_last_tapped_at IS NOT NULL)",
+      "indexname": "shifts_dancer_nfc_last_tapped_idx",
+      "indisready": true,
+      "indisunique": false,
+      "indisvalid": true,
+      "schemaname": "public",
+      "tablename": "shifts"
+    },
+    {
+      "indexdef": "CREATE INDEX shifts_dancer_shift_date_idx ON public.shifts USING btree (dancer_id, shift_date DESC) WHERE (status = 'posted'::shift_status)",
+      "indexname": "shifts_dancer_shift_date_idx",
+      "indisready": true,
+      "indisunique": false,
+      "indisvalid": true,
+      "schemaname": "public",
+      "tablename": "shifts"
+    },
+    {
+      "indexdef": "CREATE INDEX shifts_dancer_starts_idx ON public.shifts USING btree (dancer_id, starts_at)",
+      "indexname": "shifts_dancer_starts_idx",
+      "indisready": true,
+      "indisunique": false,
+      "indisvalid": true,
+      "schemaname": "public",
+      "tablename": "shifts"
+    },
+    {
+      "indexdef": "CREATE INDEX shifts_demo_locked_active_idx ON public.shifts USING btree (dancer_id, venue_id) WHERE ((shift_source = 'demo_locked'::text) AND (status = 'posted'::shift_status) AND (checked_out_at IS NULL))",
+      "indexname": "shifts_demo_locked_active_idx",
+      "indisready": true,
+      "indisunique": false,
+      "indisvalid": true,
+      "schemaname": "public",
+      "tablename": "shifts"
+    },
+    {
+      "indexdef": "CREATE INDEX shifts_ended_at_idx ON public.shifts USING btree (ended_at)",
+      "indexname": "shifts_ended_at_idx",
+      "indisready": true,
+      "indisunique": false,
+      "indisvalid": true,
+      "schemaname": "public",
+      "tablename": "shifts"
+    },
+    {
+      "indexdef": "CREATE INDEX shifts_location_status_idx ON public.shifts USING btree (location_status)",
+      "indexname": "shifts_location_status_idx",
+      "indisready": true,
+      "indisunique": false,
+      "indisvalid": true,
+      "schemaname": "public",
+      "tablename": "shifts"
+    },
+    {
+      "indexdef": "CREATE INDEX shifts_location_verification_expires_idx ON public.shifts USING btree (location_verification_expires_at) WHERE ((checked_in_at IS NOT NULL) AND (checked_out_at IS NULL))",
+      "indexname": "shifts_location_verification_expires_idx",
+      "indisready": true,
+      "indisunique": false,
+      "indisvalid": true,
+      "schemaname": "public",
+      "tablename": "shifts"
+    },
+    {
+      "indexdef": "CREATE INDEX shifts_nfc_active_idx ON public.shifts USING btree (dancer_id, location_verification_expires_at) WHERE ((checked_in_at IS NOT NULL) AND (checked_out_at IS NULL))",
+      "indexname": "shifts_nfc_active_idx",
+      "indisready": true,
+      "indisunique": false,
+      "indisvalid": true,
+      "schemaname": "public",
+      "tablename": "shifts"
+    },
+    {
+      "indexdef": "CREATE UNIQUE INDEX shifts_one_posted_scheduled_date_idx ON public.shifts USING btree (dancer_id, venue_id, shift_date) WHERE ((shift_source = 'scheduled'::text) AND (status = 'posted'::shift_status))",
+      "indexname": "shifts_one_posted_scheduled_date_idx",
+      "indisready": true,
+      "indisunique": true,
+      "indisvalid": true,
+      "schemaname": "public",
+      "tablename": "shifts"
+    },
+    {
+      "indexdef": "CREATE UNIQUE INDEX shifts_pkey ON public.shifts USING btree (id)",
+      "indexname": "shifts_pkey",
+      "indisready": true,
+      "indisunique": true,
+      "indisvalid": true,
+      "schemaname": "public",
+      "tablename": "shifts"
+    },
+    {
+      "indexdef": "CREATE INDEX shifts_venue_affiliation_idx ON public.shifts USING btree (venue_affiliation_id) WHERE (venue_affiliation_id IS NOT NULL)",
+      "indexname": "shifts_venue_affiliation_idx",
+      "indisready": true,
+      "indisunique": false,
+      "indisvalid": true,
+      "schemaname": "public",
+      "tablename": "shifts"
+    },
+    {
+      "indexdef": "CREATE INDEX shifts_venue_starts_idx ON public.shifts USING btree (venue_id, starts_at)",
+      "indexname": "shifts_venue_starts_idx",
+      "indisready": true,
+      "indisunique": false,
+      "indisvalid": true,
+      "schemaname": "public",
+      "tablename": "shifts"
+    },
+    {
+      "indexdef": "CREATE INDEX shifts_working_status_idx ON public.shifts USING btree (working_status)",
+      "indexname": "shifts_working_status_idx",
+      "indisready": true,
+      "indisunique": false,
+      "indisvalid": true,
+      "schemaname": "public",
+      "tablename": "shifts"
+    }
+  ],
+  "policies": [
+    {
+      "cmd": "ALL",
+      "permissive": "PERMISSIVE",
+      "policyname": "approved dancers manage own shifts",
+      "qual": "((EXISTS ( SELECT 1\n   FROM dancer_profiles dp\n  WHERE ((dp.id = shifts.dancer_id) AND (dp.user_id = auth.uid()) AND (dp.status = 'approved'::dancer_status)))) OR is_admin())",
+      "roles": [
+        "public"
+      ],
+      "schemaname": "public",
+      "tablename": "shifts",
+      "with_check": "((EXISTS ( SELECT 1\n   FROM dancer_profiles dp\n  WHERE ((dp.id = shifts.dancer_id) AND (dp.user_id = auth.uid()) AND (dp.status = 'approved'::dancer_status)))) OR is_admin())"
+    },
+    {
+      "cmd": "SELECT",
+      "permissive": "PERMISSIVE",
+      "policyname": "posted approved shifts are public",
+      "qual": "(((status = 'posted'::shift_status) AND (EXISTS ( SELECT 1\n   FROM dancer_profiles dancer\n  WHERE ((dancer.id = shifts.dancer_id) AND (dancer.status = 'approved'::dancer_status) AND (dancer.verification_status = 'approved'::review_status) AND (dancer.venue_approved_at IS NOT NULL) AND (dancer.is_public = true) AND (dancer.disabled_at IS NULL))))) OR (EXISTS ( SELECT 1\n   FROM dancer_profiles dancer\n  WHERE ((dancer.id = shifts.dancer_id) AND (dancer.user_id = auth.uid())))) OR is_admin())",
+      "roles": [
+        "public"
+      ],
+      "schemaname": "public",
+      "tablename": "shifts",
+      "with_check": null
+    }
+  ],
+  "triggers": [
+    {
+      "definition": "CREATE TRIGGER enforce_shift_verification_server_only BEFORE INSERT OR UPDATE ON public.shifts FOR EACH ROW EXECUTE FUNCTION enforce_shift_verification_server_only()",
+      "enabled": "O",
+      "function_name": "enforce_shift_verification_server_only()",
+      "name": "enforce_shift_verification_server_only",
+      "schema_name": "public",
+      "table_name": "shifts"
+    },
+    {
+      "definition": "CREATE TRIGGER enforce_verified_venue_affiliation_for_checkin BEFORE UPDATE ON public.shifts FOR EACH ROW EXECUTE FUNCTION enforce_verified_venue_affiliation_for_checkin()",
+      "enabled": "O",
+      "function_name": "enforce_verified_venue_affiliation_for_checkin()",
+      "name": "enforce_verified_venue_affiliation_for_checkin",
+      "schema_name": "public",
+      "table_name": "shifts"
+    },
+    {
+      "definition": "CREATE TRIGGER set_shift_date_from_starts_at BEFORE INSERT OR UPDATE OF starts_at, timezone, shift_date ON public.shifts FOR EACH ROW EXECUTE FUNCTION set_shift_date_from_starts_at()",
+      "enabled": "O",
+      "function_name": "set_shift_date_from_starts_at()",
+      "name": "set_shift_date_from_starts_at",
+      "schema_name": "public",
+      "table_name": "shifts"
+    }
+  ],
+  "enums": [
+    {
+      "labels": [
+        "draft",
+        "pending_review",
+        "approved",
+        "rejected",
+        "disabled"
+      ],
+      "name": "dancer_status",
+      "schema_name": "public"
+    },
+    {
+      "labels": [
+        "pending",
+        "approved",
+        "rejected"
+      ],
+      "name": "review_status",
+      "schema_name": "public"
+    },
+    {
+      "labels": [
+        "draft",
+        "posted",
+        "cancelled",
+        "completed"
+      ],
+      "name": "shift_status",
+      "schema_name": "public"
+    }
+  ],
+  "functions": [
+    {
+      "acl": "{postgres=X/postgres}",
+      "anon": false,
+      "authenticated": false,
+      "definition": "CREATE OR REPLACE FUNCTION public.enforce_shift_verification_server_only()\n RETURNS trigger\n LANGUAGE plpgsql\n SET search_path TO ''\nAS $function$\r\nbegin\r\n  -- Service-role requests are the only application path allowed to mutate proof.\r\n  -- Direct database maintenance remains available to the database owner.\r\n  if auth.role() = 'service_role' or session_user in ('postgres', 'supabase_admin') then\r\n    return new;\r\n  end if;\r\n\r\n  if tg_op = 'INSERT' then\r\n    if new.location_status <> 'self_reported'\r\n      or new.checked_in_at is not null\r\n      or new.checked_out_at is not null\r\n      or new.checkin_latitude is not null\r\n      or new.checkin_longitude is not null\r\n      or new.checkin_distance_feet is not null\r\n      or new.checkin_accuracy_meters is not null\r\n      or new.checkin_captured_at is not null\r\n      or new.last_location_latitude is not null\r\n      or new.last_location_longitude is not null\r\n      or new.last_location_accuracy_meters is not null\r\n      or new.last_location_captured_at is not null\r\n      or new.last_location_verified_at is not null\r\n      or new.location_verification_expires_at is not null\r\n      or new.working_status <> 'self_reported'\r\n      or new.commission_tracking_started_at is not null\r\n      or new.commission_tracking_stopped_at is not null\r\n      or new.ended_at is not null\r\n      or new.ended_reason is not null\r\n      or new.checkout_latitude is not null\r\n      or new.checkout_longitude is not null\r\n      or new.shift_summary <> '{}'::jsonb then\r\n      raise exception using\r\n        errcode = '42501',\r\n        message = 'Shift verification state can only be set by the check-in service.';\r\n    end if;\r\n    return new;\r\n  end if;\r\n\r\n  if new.location_status is distinct from old.location_status\r\n    or new.checked_in_at is distinct from old.checked_in_at\r\n    or new.checked_out_at is distinct from old.checked_out_at\r\n    or new.checkin_latitude is distinct from old.checkin_latitude\r\n    or new.checkin_longitude is distinct from old.checkin_longitude\r\n    or new.checkin_distance_feet is distinct from old.checkin_distance_feet\r\n    or new.checkin_accuracy_meters is distinct from old.checkin_accuracy_meters\r\n    or new.checkin_captured_at is distinct from old.checkin_captured_at\r\n    or new.last_location_latitude is distinct from old.last_location_latitude\r\n    or new.last_location_longitude is distinct from old.last_location_longitude\r\n    or new.last_location_accuracy_meters is distinct from old.last_location_accuracy_meters\r\n    or new.last_location_captured_at is distinct from old.last_location_captured_at\r\n    or new.last_location_verified_at is distinct from old.last_location_verified_at\r\n    or new.location_verification_expires_at is distinct from old.location_verification_expires_at\r\n    or new.working_status is distinct from old.working_status\r\n    or new.commission_tracking_started_at is distinct from old.commission_tracking_started_at\r\n    or new.commission_tracking_stopped_at is distinct from old.commission_tracking_stopped_at\r\n    or new.ended_at is distinct from old.ended_at\r\n    or new.ended_reason is distinct from old.ended_reason\r\n    or new.checkout_latitude is distinct from old.checkout_latitude\r\n    or new.checkout_longitude is distinct from old.checkout_longitude\r\n    or new.shift_summary is distinct from old.shift_summary then\r\n    raise exception using\r\n      errcode = '42501',\r\n      message = 'Shift verification state can only be changed by the check-in service.';\r\n  end if;\r\n\r\n  if old.checked_in_at is not null\r\n    and old.checked_out_at is null\r\n    and (\r\n      new.venue_id is distinct from old.venue_id\r\n      or new.starts_at is distinct from old.starts_at\r\n      or new.ends_at is distinct from old.ends_at\r\n      or new.timezone is distinct from old.timezone\r\n      or new.status is distinct from old.status\r\n    ) then\r\n    raise exception using\r\n      errcode = '42501',\r\n      message = 'An active checked-in shift cannot be edited or cancelled.';\r\n  end if;\r\n\r\n  return new;\r\nend;\r\n$function$\n",
+      "fingerprint": "c531fe00a51df0f7b5ce56d1ee93afec",
+      "name": "enforce_shift_verification_server_only",
+      "owner": "postgres",
+      "return_type": "trigger",
+      "security_definer": false,
+      "service": false,
+      "settings": [
+        "search_path=\"\""
+      ],
+      "signature": "enforce_shift_verification_server_only()"
+    },
+    {
+      "acl": "{postgres=X/postgres}",
+      "anon": false,
+      "authenticated": false,
+      "definition": "CREATE OR REPLACE FUNCTION public.enforce_verified_venue_affiliation_for_checkin()\n RETURNS trigger\n LANGUAGE plpgsql\n SET search_path TO 'public', 'pg_temp'\nAS $function$\ndeclare\n  v_affiliation_id uuid;\nbegin\n  if tg_op = 'UPDATE'\n    and new.checked_in_at is not null\n    and new.checked_out_at is null\n    and (old.checked_in_at is null or old.checked_out_at is not null)\n  then\n    select affiliation.id into v_affiliation_id\n    from public.venue_dancer_affiliations affiliation\n    where affiliation.venue_id = new.venue_id\n      and affiliation.dancer_id = new.dancer_id\n      and affiliation.status = 'active'\n    for key share;\n\n    if not found then\n      raise exception using\n        errcode = '42501',\n        message = 'Tap this venue''s official dressing-room NFC sticker before checking in.';\n    end if;\n\n    new.venue_affiliation_id = v_affiliation_id;\n  elsif new.venue_affiliation_id is distinct from old.venue_affiliation_id\n    and auth.role() <> 'service_role'\n    and session_user not in ('postgres', 'supabase_admin')\n  then\n    raise exception using\n      errcode = '42501',\n      message = 'Venue affiliation proof can only be set by the NFC check-in service.';\n  end if;\n\n  return new;\nend;\n$function$\n",
+      "fingerprint": "956ce886abc193b1c54ed2ce8d6b0271",
+      "name": "enforce_verified_venue_affiliation_for_checkin",
+      "owner": "postgres",
+      "return_type": "trigger",
+      "security_definer": false,
+      "service": false,
+      "settings": [
+        "search_path=public, pg_temp"
+      ],
+      "signature": "enforce_verified_venue_affiliation_for_checkin()"
+    },
+    {
+      "acl": null,
+      "anon": true,
+      "authenticated": true,
+      "definition": "CREATE OR REPLACE FUNCTION public.is_admin()\n RETURNS boolean\n LANGUAGE sql\n STABLE SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\r\n  select exists (\r\n    select 1 from public.app_users\r\n    where id = auth.uid()\r\n      and role = 'admin'\r\n      and account_state = 'active'\r\n  );\r\n$function$\n",
+      "fingerprint": "aa75a61376ef5a45ec72cb30fb0eb229",
+      "name": "is_admin",
+      "owner": "postgres",
+      "return_type": "boolean",
+      "security_definer": true,
+      "service": true,
+      "settings": [
+        "search_path=public"
+      ],
+      "signature": "is_admin()"
+    },
+    {
+      "acl": "{postgres=X/postgres}",
+      "anon": false,
+      "authenticated": false,
+      "definition": "CREATE OR REPLACE FUNCTION public.set_shift_date_from_starts_at()\n RETURNS trigger\n LANGUAGE plpgsql\n SET search_path TO 'public', 'pg_temp'\nAS $function$\r\nbegin\r\n  if new.shift_date is null then\r\n    new.shift_date := timezone(coalesce(nullif(new.timezone, ''), 'UTC'), new.starts_at)::date;\r\n  end if;\r\n  return new;\r\nend;\r\n$function$\n",
+      "fingerprint": "f9e79d46a086d6dd1afe273912f964c3",
+      "name": "set_shift_date_from_starts_at",
+      "owner": "postgres",
+      "return_type": "trigger",
+      "security_definer": false,
+      "service": false,
+      "settings": [
+        "search_path=public, pg_temp"
+      ],
+      "signature": "set_shift_date_from_starts_at()"
+    }
+  ]
+}

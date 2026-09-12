@@ -142,12 +142,14 @@ export async function PATCH(request: Request) {
       update.status = body.status;
     }
 
-    const editingSchedule = typeof body.shiftDate === "string" || typeof body.startsAt === "string" || typeof body.venueId === "string";
+    const editingSchedule = body.shiftDate !== undefined || body.startsAt !== undefined || body.venueId !== undefined;
     if (editingSchedule) {
       if (existingShift.shift_source === "nfc_presence") {
         return NextResponse.json({ ok: false, error: "Working Now sessions cannot be edited." }, { status: 409 });
       }
-      const shiftDate = requestedShiftDate(body, nextTimezone) || existingShift.shift_date;
+      const shiftDate = body.shiftDate === undefined && body.startsAt === undefined
+        ? existingShift.shift_date
+        : requestedShiftDate(body, nextTimezone);
       if (!shiftDate || !isValidScheduleDate(shiftDate, nextTimezone)) {
         return NextResponse.json({ ok: false, error: "Choose a valid upcoming date." }, { status: 400 });
       }
@@ -272,7 +274,7 @@ async function getOwnDancerProfile(client: any, userId: string) {
 }
 
 function requestedShiftDate(body: Record<string, unknown>, timeZone: string) {
-  if (typeof body.shiftDate === "string") return body.shiftDate.trim();
+  if (body.shiftDate !== undefined) return typeof body.shiftDate === "string" ? body.shiftDate.trim() : "";
   if (typeof body.startsAt === "string") {
     const legacyDate = new Date(body.startsAt);
     if (Number.isFinite(legacyDate.getTime())) return localDateInTimeZone(timeZone, legacyDate);

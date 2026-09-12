@@ -39,7 +39,7 @@ export async function POST(request: Request) {
       adminUserId: user.id, venueId: required(body.venueId, "Venue is required."),
       signingAgentId: required(body.signingAgentId, "Signing agent is required."),
       agreementReference: required(body.agreementReference, "Signed agreement reference is required."),
-      effectiveFrom: optional(body.effectiveFrom) || undefined,
+      effectiveFrom: effectiveTime(body.effectiveFrom),
     });
     else if (body.action === "verify_nats_agent") await verifyNatsAgentAffiliateLink(admin, user.id,
       required(body.agentId, "Agent is required."), reason(body.reason));
@@ -73,4 +73,16 @@ function commissionDepth(value: unknown): 3 | 5 {
 function resolution(value: unknown): "confirmed_exported" | "confirmed_not_exported" {
   if (value === "confirmed_exported" || value === "confirmed_not_exported") return value;
   throw new PublicApiError("INVALID_REQUEST", "Choose a valid commission review outcome.", 400);
+}
+
+function effectiveTime(value: unknown): string | undefined {
+  const text = optional(value);
+  if (!text) return undefined;
+  const absoluteTime = /^\d{4}-\d{2}-\d{2}T(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d{1,6})?(?:Z|[+-](?:0\d|1[0-5]):[0-5]\d)$/;
+  if (!absoluteTime.test(text) || text.startsWith("0000-") || !Number.isFinite(Date.parse(text))
+    || new Date(text.slice(0, 10) + "T00:00:00Z").toISOString().slice(0, 10) !== text.slice(0, 10)) {
+    throw new PublicApiError("INVALID_REQUEST", "Choose a valid effective date and time with a timezone.", 400);
+  }
+  // Preserve PostgreSQL microseconds and the caller's explicit offset.
+  return text;
 }
