@@ -36,6 +36,7 @@ type DmcaCase = {
   counterReceivedAt?: string | null;
   restoreEligibleAt?: string | null;
   restoreDeadlineAt?: string | null;
+  updatedAt?: string;
   courtFilingReceived?: boolean;
   repeatInfringerEnforced?: boolean;
   counterNotices?: Array<Record<string, unknown>>;
@@ -107,7 +108,7 @@ export default function AdminDmcaPanel() {
   }
 
   async function takeAction(dmcaCase: DmcaCase, action: AdminAction) {
-    if (!mountedRef.current || actionInFlightRef.current) return;
+    if (!mountedRef.current || actionInFlightRef.current || loadAbortRef.current) return;
     const notes = notesById[dmcaCase.id]?.trim() || "";
     if ((action === "record_court_action" || action === "request_information" || action === "reject") && !notes) {
       setStatus("Add case notes before taking that action.");
@@ -129,7 +130,7 @@ export default function AdminDmcaPanel() {
         headers: {
           "content-type": "application/json",
         },
-        body: JSON.stringify({ caseId: dmcaCase.id, action, notes }),
+        body: JSON.stringify({ caseId: dmcaCase.id, action, notes, expectedUpdatedAt: dmcaCase.updatedAt }),
         fallbackMessage: "Unable to update copyright case.",
       });
       if (!mountedRef.current || controller.signal.aborted || requestId !== actionSequenceRef.current) return;
@@ -202,6 +203,7 @@ export default function AdminDmcaPanel() {
     <div className="dmca-admin">
       <div className="dmca-admin-summary">
         <strong>{cases.length} active cases</strong>
+        <button type="button" disabled={isLoading || Boolean(workingId)} onClick={() => void load({ refreshAgent: false, clearStatus: false })}>Refresh cases</button>
         <a href="/dmca" target="_blank" rel="noreferrer">Open public copyright page</a>
       </div>
       {!agent.registeredWithCopyrightOffice ? (
@@ -241,7 +243,7 @@ export default function AdminDmcaPanel() {
 
       <div className="dmca-case-list">
         {cases.map((dmcaCase) => {
-          const actionBusy = Boolean(workingId);
+          const actionBusy = isLoading || Boolean(workingId);
           const eligibleAt = dmcaCase.restoreEligibleAt ? new Date(dmcaCase.restoreEligibleAt) : null;
           const restorationEligible = Boolean(eligibleAt && eligibleAt.getTime() <= Date.now());
           const activeStrikes = (dmcaCase.strikes || []).filter((strike) => strike.active === true).length;

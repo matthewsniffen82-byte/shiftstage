@@ -1,10 +1,11 @@
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {PGlite} from '@electric-sql/pglite';
-export const schema=JSON.parse(readFileSync(new URL('../fixtures/dmca-lifecycle-current.json',import.meta.url),'utf8'));
+const capturedSchema=JSON.parse(readFileSync(new URL('../fixtures/dmca-lifecycle-current.json',import.meta.url),'utf8'));
+export const schema=capturedSchema;
 export const id=n=>'a1700000-0000-4000-8000-'+String(n).padStart(12,'0');
 const quote=s=>'"'+s.replaceAll('"','""')+'"';
-export async function database(){
+export async function database(schema=capturedSchema){
  const db=new PGlite();
  try{
   await db.exec(`create schema auth;create schema storage;
@@ -30,10 +31,14 @@ export async function database(){
     // recreating its old name, data or public interface in the native fixture.
     while(ordinal<c.ordinal_position){const name='fixture_removed_position_'+ordinal;assert.ok(!columns.some(v=>v.column_name===name));definitions.push(quote(name)+' text');dropped.push(name);ordinal++;}
     assert.equal(ordinal,c.ordinal_position);ordinal++;
-    definitions.push(quote(c.column_name)+' '+quote(c.udt_schema)+'.'+quote(c.udt_name)+(c.column_default?' default '+c.column_default:'')+(c.is_nullable==='NO'?' not null':''));
+    definitions.push(quote(c.column_name)+' '+(c.formatted_type||quote(c.udt_schema)+'.'+quote(c.udt_name))+(c.column_default?' default '+c.column_default:'')+(c.is_nullable==='NO'?' not null':''));
    }
    await db.exec('create table public.'+quote(table)+'('+definitions.join(',')+')');
    for(const name of dropped)await db.exec('alter table public.'+quote(table)+' drop column '+quote(name));
+   if(columns.every(c=>typeof c.formatted_type==='string'&&Number.isInteger(c.type_modifier))){
+    const actual=(await db.query('select attname as column_name,format_type(atttypid,atttypmod)as formatted_type,atttypmod as type_modifier from pg_attribute where attrelid=$1::regclass and attnum>0 and not attisdropped order by attnum',['public.'+table])).rows;
+    assert.deepEqual(actual,columns.map(c=>({column_name:c.column_name,formatted_type:c.formatted_type,type_modifier:c.type_modifier})),'Exact captured column types and modifiers: '+table);
+   }
   }
   // This immutable actual helper is referenced by captured club-deal checks.
   const checkHelper=schema.functions.find(f=>f.name==='club_deal_is_liquor_related');
@@ -129,7 +134,7 @@ export async function eligible(db,n=200){
  await db.query("insert into public.dmca_counter_notices(case_id,uploader_id,legal_name,email,phone,address,removed_material_location,mistake_belief_confirmed,perjury_confirmed,jurisdiction_confirmed,service_confirmed,signature,status,forwarded_to_claimant_at)values($1,$2,'Synthetic dancer','dancer@example.invalid','5555555555','123 Synthetic street','https://example.invalid/synthetic',true,true,true,true,'Synthetic dancer','forwarded',now()-interval '20 days')",[id(n),id(1)]);
 }
 export async function restore(db,n=200){return(await db.query('select public.restore_dmca_case($1,$2,$3)result',[id(n),id(2),'Synthetic restoration'])).rows[0].result;}
-export async function snapshot(db){
+export async function snapshot(db,schema=capturedSchema){
  const result={};
  for(const table of schema.scope.fullTargets)result[table]=(await db.query('select coalesce(jsonb_agg(to_jsonb(t)order by to_jsonb(t)::text),\'[]\')rows from public.'+quote(table)+' t')).rows[0].rows;
  return result;

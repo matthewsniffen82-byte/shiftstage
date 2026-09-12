@@ -66,7 +66,7 @@ export async function PATCH(request: Request) {
       );
     }
 
-    const result = await applyDmcaAdminAction(admin, user.id, caseId, action, notes);
+    const result = await applyDmcaAdminAction(admin, user.id, caseId, action, notes, body.expectedUpdatedAt);
     const deliveryNeedsReview = "deliveryNeedsReview" in result && result.deliveryNeedsReview;
     return NextResponse.json({
       ok: true,
@@ -86,7 +86,7 @@ function actionMessage(action: DmcaAdminAction) {
   if (action === "disable") return "The reported video was disabled and the copyright strike was recorded.";
   if (action === "restore") return "The copyright case was resolved. Other account or content restrictions may still apply.";
   if (action === "record_court_action") return "Court action recorded. Automatic restoration is blocked.";
-  if (action === "request_information") return "The claimant was asked for more information.";
-  if (action === "reject") return "The notice was rejected and the claimant was notified.";
+  if (action === "request_information") return "The case was marked as needing more information.";
+  if (action === "reject") return "The notice was rejected.";
   return "The copyright case was closed.";
 }

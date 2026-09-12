@@ -97,25 +97,18 @@ test("migration refuses to guess who disabled an existing profile", async () => 
   } finally { await db.close(); }
 });
 
-test("the missing-RPC fallback also preserves an administrative suspension", async () => {
+test("missing publication RPC requires review without another profile read or write", async () => {
   const source = readFileSync(new URL("../src/lib/dancr/profile-publication.ts", import.meta.url), "utf8");
   const code = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText;
-  const exports = {}, writes = [];
+  const exports = {}; let calls = 0;
   vm.runInNewContext(code, { exports, Error, require(name) {
     if (name === "../api-error-policy") return { PublicApiError };
-    if (name === "../supabase/missing-function") return { isMissingSupabaseFunction: () => true };
     throw new Error(name);
   } });
-  const profile = { id: ids.owner, user_id: ids.owner, status: "disabled", verification_status: "approved", approved_at: "2026-09-01", venue_approved_at: "2026-09-01", disabled_at: "2026-09-09", admin_disabled_at: "2026-09-09", is_public: false };
-  const db = { rpc: async () => ({ error: { code: "PGRST202" } }), from(table) {
-    const query = { select() { return query; }, eq() { return query; }, update(value) { writes.push(value); return query; },
-      maybeSingle: async () => ({ data: table === "dancer_profiles" ? profile : { id: ids.owner, role: "dancer", account_state: "active" }, error: null }) };
-    return query;
-  } };
-  const state = await exports.transitionDancerPublication(db, ids.owner, "reactivate", { actorUserId: ids.owner });
-  assert.equal(state.isPublic, false);
-  assert.equal(state.status, "disabled");
-  assert.deepEqual(writes, []);
+  const db = { rpc: async () => { calls++; return { error: { code: "PGRST202" } }; },
+    from() { assert.fail("An unavailable transaction must not trigger a direct profile operation"); } };
+  await assert.rejects(exports.transitionDancerPublication(db, ids.owner, "reactivate", { actorUserId: ids.owner }), error => error.status === 503);
+  assert.equal(calls, 1);
 });
 
 test("the real account self-service flow cannot restore an administratively suspended profile", async (t) => {

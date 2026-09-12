@@ -23,6 +23,14 @@ function setup(options = {}) {
   const calls = [], emails = [], notifications = [], logs = [], acknowledgments = [];
   const client = {
     async rpc(name, args) {
+      if (name === "confirm_dmca_counter_forwarding") {
+        // These historical submission cases isolate the acknowledgment boundary.
+        // The current-function caller fixture executes the real forwarding RPC.
+        acknowledgments.push(args);
+        if (options.ackFailure) return { data: null, error: { code: "08006", message: "private acknowledgment failure" } };
+        const rows = (await pg.query("update public.dmca_counter_notices set status='forwarded',forwarded_to_claimant_at=clock_timestamp(),updated_at=clock_timestamp() where id=$1 and case_id=$2 and status='submitted' and forwarded_to_claimant_at is null returning id,case_id,status,forwarded_to_claimant_at", [args.p_counter_id,args.p_case_id])).rows;
+        return { data: rows[0] ? JSON.parse(JSON.stringify(rows[0])) : null, error: null };
+      }
       assert.equal(name, "submit_dmca_counter_notice_safely"); calls.push(args);
       if (options.failure) return { data: null, error: options.failure };
       if (options.override) return { data: options.override(), error: null };
@@ -34,11 +42,11 @@ function setup(options = {}) {
     },
     from(table) {
       assert.ok(["dmca_counter_notices", "notifications"].includes(table), "Separate case access is not part of submission");
-      let values, op = "select"; const filters = [];
+      let values; const filters = [];
       const query = {
         select() { return query; }, eq(key, value) { filters.push([key, value]); return query; }, is(key, value) { filters.push([key, value]); return query; },
-        insert(row) { assert.equal(table, "notifications", "Notice insertion must be atomic"); op = "insert"; values = row; return query; },
-        update(row) { assert.equal(table, "dmca_counter_notices"); op = "update"; values = row; return query; },
+        insert(row) { assert.equal(table, "notifications", "Notice insertion must be atomic"); values = row; return query; },
+        update() { assert.fail("Acknowledgments must use their checked transaction RPC"); },
         delete() { assert.fail("No compensating delete is permitted"); },
         maybeSingle: run, single: run, then(resolve, reject) { return run().then(resolve, reject); },
       };
@@ -49,13 +57,7 @@ function setup(options = {}) {
         }
         const id = filters.find(([key]) => key === "id")?.[1], caseId = filters.find(([key]) => key === "case_id")?.[1];
         assert.ok(id && caseId);
-        if (op === "update") {
-          acknowledgments.push(values);
-          assert.deepEqual(filters.slice(2), [["status", "submitted"], ["forwarded_to_claimant_at", null]]);
-          if (options.ackFailure) return { data: null, error: { code: "08006", message: "private acknowledgment failure" } };
-          const rows = (await pg.query("update public.dmca_counter_notices set status=$1,forwarded_to_claimant_at=$2,updated_at=$3 where id=$4 and case_id=$5 and status='submitted' and forwarded_to_claimant_at is null returning id,case_id,status,forwarded_to_claimant_at", [values.status, values.forwarded_to_claimant_at, values.updated_at, id, caseId])).rows;
-          return { data: rows[0] ? JSON.parse(JSON.stringify(rows[0])) : null, error: null };
-        }
+
         const rows = (await pg.query("select id,case_id,status,forwarded_to_claimant_at from public.dmca_counter_notices where id=$1 and case_id=$2", [id, caseId])).rows;
         return { data: rows[0] ? JSON.parse(JSON.stringify(rows[0])) : null, error: null };
       }

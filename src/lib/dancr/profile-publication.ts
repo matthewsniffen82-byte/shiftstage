@@ -1,6 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { PublicApiError } from "../api-error-policy";
-import { isMissingSupabaseFunction } from "../supabase/missing-function";
 
 export type DancerPublicationTransition =
   | "submit_for_venue_review"
@@ -28,24 +27,38 @@ type TransitionOptions = {
   actorUserId?: string | null;
 };
 
-function requiredString(value: unknown, field: string) {
-  const normalized = String(value || "").trim();
-  if (!normalized) throw new Error(`DANCER_PUBLICATION_TRANSITION_MISSING_${field.toUpperCase()}`);
-  return normalized;
+const uuid = (value: unknown): value is string => typeof value === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
+const timestamp = (value: unknown) => value === null || typeof value === "string"
+  && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,6})?(?:Z|[+-]\d{2}:\d{2})$/.test(value)
+  && Number.isFinite(Date.parse(value));
+function unconfirmedPublication() {
+  return new PublicApiError("UNAVAILABLE", "The profile change could not be confirmed. Refresh the profile and review its current state before trying again.", 503);
 }
 
-function publicationState(profile: any): DancerPublicationState {
+function publicationState(profile: any, dancerId: string, transition: DancerPublicationTransition, actorUserId?: string | null): DancerPublicationState {
+  if (!profile || typeof profile !== "object" || Array.isArray(profile)
+    || !uuid(profile.id) || profile.id !== dancerId.toLowerCase() || !uuid(profile.user_id)
+    || !["draft", "pending_review", "approved", "rejected", "disabled"].includes(profile.status)
+    || !["pending", "approved", "rejected"].includes(profile.verification_status)
+    || typeof profile.is_public !== "boolean"
+    || ![profile.approved_at, profile.disabled_at, profile.venue_approved_at].every(timestamp)
+    || ![profile.venue_approved_by_user_id, profile.venue_approved_venue_id].every(value => value === null || uuid(value))
+    || (["submit_for_venue_review", "set_public", "set_private"].includes(transition) && profile.user_id !== actorUserId?.toLowerCase())
+    || (profile.is_public && (profile.status !== "approved" || profile.verification_status !== "approved"
+      || profile.approved_at === null || profile.venue_approved_at === null || profile.disabled_at !== null))) throw unconfirmedPublication();
+  if ((["submit_for_venue_review", "admin_accept"].includes(transition) && (profile.status !== "pending_review"
+      || profile.verification_status !== "pending" || profile.approved_at !== null || profile.is_public))
+    || (transition === "admin_reject" && (profile.status !== "rejected" || profile.verification_status !== "rejected" || profile.approved_at !== null || profile.is_public))
+    || (transition === "set_public" && !profile.is_public) || (transition === "set_private" && profile.is_public)
+    || (transition === "disable" && (profile.status !== "disabled" || profile.disabled_at === null || profile.is_public))
+    || (transition === "reactivate" && (profile.is_public !== (profile.status === "approved")
+      || !["approved", "rejected", "pending_review", "disabled"].includes(profile.status)
+      || (profile.status !== "disabled" && profile.disabled_at !== null)))) throw unconfirmedPublication();
   return {
-    id: requiredString(profile.id, "id"),
-    userId: requiredString(profile.user_id, "user_id"),
-    status: requiredString(profile.status, "status"),
-    verificationStatus: requiredString(profile.verification_status, "verification_status"),
-    approvedAt: profile.approved_at ? String(profile.approved_at) : null,
-    isPublic: profile.is_public === true,
-    disabledAt: profile.disabled_at ? String(profile.disabled_at) : null,
-    venueApprovedAt: profile.venue_approved_at ? String(profile.venue_approved_at) : null,
-    venueApprovedByUserId: profile.venue_approved_by_user_id ? String(profile.venue_approved_by_user_id) : null,
-    venueApprovedVenueId: profile.venue_approved_venue_id ? String(profile.venue_approved_venue_id) : null,
+    id: profile.id, userId: profile.user_id, status: profile.status, verificationStatus: profile.verification_status,
+    approvedAt: profile.approved_at, isPublic: profile.is_public, disabledAt: profile.disabled_at,
+    venueApprovedAt: profile.venue_approved_at, venueApprovedByUserId: profile.venue_approved_by_user_id,
+    venueApprovedVenueId: profile.venue_approved_venue_id,
   };
 }
 
@@ -55,123 +68,20 @@ export async function transitionDancerPublication(
   transition: DancerPublicationTransition,
   options: TransitionOptions = {},
 ): Promise<DancerPublicationState> {
-  const db = client as any;
-  const atomic = await db.rpc("transition_dancer_publication_safely", {
-    p_dancer_id: dancerId, p_transition: transition, p_actor_user_id: options.actorUserId || null,
-  });
-  if (!atomic.error) return publicationState(atomic.data);
-  if (!isMissingSupabaseFunction(atomic.error, "transition_dancer_publication_safely")) {
-    if (atomic.error.code === "42501") throw new PublicApiError("FORBIDDEN", "This profile change requires an active, authorized account.", 403);
-    if (atomic.error.code === "22023") throw new PublicApiError("CONFLICT", "This profile change is not available in its current state. Refresh and try again.", 409);
-    throw atomic.error;
+  let result;
+  try {
+    result = await client.rpc("transition_dancer_publication_safely", {
+      p_dancer_id: dancerId, p_transition: transition, p_actor_user_id: options.actorUserId || null,
+    });
+  } catch {
+    throw unconfirmedPublication();
   }
-  const { data: profile, error: profileError } = await db
-    .from("dancer_profiles")
-    .select("id, user_id, stage_name, city, status, verification_status, photo_review_status, avatar_storage_path, approved_at, is_public, disabled_at, admin_disabled_at, venue_approved_at, venue_approved_by_user_id, venue_approved_venue_id, updated_at")
-    .eq("id", dancerId)
-    .maybeSingle();
-  if (profileError) throw profileError;
-  if (!profile) throw new Error("Dancer profile not found.");
-
-  const { data: account, error: accountError } = await db
-    .from("app_users")
-    .select("id, role, account_state")
-    .eq("id", profile.user_id)
-    .maybeSingle();
-  if (accountError) throw accountError;
-  if (!account || account.role !== "dancer") throw new Error("Dancer account not found.");
-
-  let actor: any = null;
-  if (options.actorUserId) {
-    const { data, error } = await db
-      .from("app_users")
-      .select("id, role, account_state")
-      .eq("id", options.actorUserId)
-      .maybeSingle();
-    if (error) throw error;
-    actor = data;
+  if (!result || typeof result !== "object" || Array.isArray(result)) throw unconfirmedPublication();
+  if (result.error) {
+    if (result.error.code === "42501") throw new PublicApiError("FORBIDDEN", "This profile change requires an active, authorized account.", 403);
+    if (["22023", "40001"].includes(result.error.code)) throw new PublicApiError("CONFLICT", "This profile change is not available in its current state. Refresh and try again.", 409);
+    if (result.error.code === "P0002") throw new PublicApiError("NOT_FOUND", "The profile is no longer available. Refresh the profile list.", 404);
+    throw unconfirmedPublication();
   }
-
-  const actorIsOwner = options.actorUserId === profile.user_id;
-  const actorIsAdmin = actor?.role === "admin" && actor?.account_state === "active";
-  let update: Record<string, string | boolean | null>;
-
-  if (transition === "submit_for_venue_review") {
-    if (!actorIsOwner || profile.disabled_at || profile.admin_disabled_at || profile.status === "disabled") {
-      throw new Error("Only the active dancer can submit this profile.");
-    }
-    update = { status: "pending_review", verification_status: "pending", approved_at: null, is_public: false };
-  } else if (transition === "admin_accept" || transition === "admin_reject") {
-    if (!actorIsAdmin) throw new Error("An active admin account is required.");
-    const accepted = transition === "admin_accept";
-    update = {
-      status: accepted ? "pending_review" : "rejected",
-      verification_status: accepted ? "pending" : "rejected",
-      approved_at: null,
-      is_public: false,
-    };
-  } else if (transition === "set_public" || transition === "set_private") {
-    if (!actorIsOwner) throw new Error("Only the dancer can change profile visibility.");
-    const makingPublic = transition === "set_public";
-    if (
-      makingPublic
-      && (
-        account.account_state !== "active"
-        || profile.status !== "approved"
-        || profile.verification_status !== "approved"
-        || !profile.approved_at
-        || !profile.venue_approved_at
-        || profile.disabled_at
-        || profile.admin_disabled_at
-      )
-    ) {
-      throw new Error("Profile approval is required before reactivation.");
-    }
-    update = { is_public: makingPublic };
-  } else if (transition === "disable") {
-    if (!actorIsOwner && !actorIsAdmin) {
-      throw new Error("Only the dancer or an active admin can disable this profile.");
-    }
-    update = {
-      status: "disabled",
-      disabled_at: new Date().toISOString(),
-      is_public: false,
-    };
-    if (actorIsAdmin) update.admin_disabled_at = new Date().toISOString();
-  } else if (transition === "reactivate") {
-    if (!actorIsOwner && !actorIsAdmin) {
-      throw new Error("Only the dancer or an active admin can reactivate this profile.");
-    }
-    if (account.account_state !== "active") {
-      throw new Error("The dancer account must be active before reactivation.");
-    }
-    if (profile.admin_disabled_at && !actorIsAdmin) return publicationState(profile);
-
-    const status =
-      profile.verification_status === "rejected" || profile.status === "rejected"
-        ? "rejected"
-        : profile.verification_status === "approved" && profile.approved_at && profile.venue_approved_at
-          ? "approved"
-          : "pending_review";
-    update = {
-      status,
-      disabled_at: null,
-      admin_disabled_at: null,
-      is_public: status === "approved",
-    };
-  } else {
-    throw new Error("Unknown dancer publication transition.");
-  }
-
-  const { data: updated, error: updateError } = await db
-    .from("dancer_profiles")
-    .update({ ...update, updated_at: new Date().toISOString() })
-    .eq("id", dancerId)
-    .eq("updated_at", profile.updated_at)
-    .select("id, user_id, status, verification_status, approved_at, is_public, disabled_at, venue_approved_at, venue_approved_by_user_id, venue_approved_venue_id")
-    .maybeSingle();
-  if (updateError) throw updateError;
-  if (!updated) throw new PublicApiError("CONFLICT", "The profile changed while saving. Refresh and try again.", 409);
-
-  return publicationState(updated);
+  return publicationState(result.data, dancerId, transition, options.actorUserId);
 }

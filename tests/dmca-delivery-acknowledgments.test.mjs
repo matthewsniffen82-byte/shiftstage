@@ -34,7 +34,18 @@ function setup({ mode = "success", delivered = true, notification = "success", w
     counter: worker ? { id: counterId, case_id: caseId, status: "submitted", forwarded_to_claimant_at: null } : null,
     dmcaCase: { id: caseId, uploader_id: userId, status: worker ? "countered" : "disabled", claimant_name: "Synthetic Claimant", claimant_email: "claimant@example.invalid" },
   };
-  const client = { from(table) {
+  const client = { async rpc(name, args) {
+    assert.equal(name, "confirm_dmca_counter_forwarding");
+    assert.deepEqual({ ...args }, { p_counter_id: counterId, p_case_id: caseId });
+    events.push({ op: "rpc", name, args });
+    if (["rejected", "withdrawn", "completed"].includes(mode)) state.counter.status = mode;
+    if (mode === "already-forwarded") Object.assign(state.counter, { status: "forwarded", forwarded_to_claimant_at: stamp });
+    const commit = !["write-error", "write-throw", "read-error", "read-throw", "zero", "wrong-case", "bad-date", "null-date", "rejected", "withdrawn", "completed"].includes(mode);
+    if (commit && state.counter.status === "submitted") Object.assign(state.counter, { status: "forwarded", forwarded_to_claimant_at: stamp });
+    if (["write-throw", "commit-throw"].includes(mode)) throw privateError;
+    if (["write-error", "commit-error", "read-error", "read-throw"].includes(mode)) return { data: null, error: privateError };
+    return { data: commit && mode !== "commit-empty" ? { ...state.counter } : null, error: null };
+  }, from(table) {
     let op = "select", values, selected = false;
     const filters = [];
     const q = {
@@ -69,16 +80,7 @@ function setup({ mode = "success", delivered = true, notification = "success", w
           dmca_cases: { ...state.dmcaCase, restore_eligible_at: stamp, restore_deadline_at: stamp },
         }], error: null };
       }
-      if (op === "update") {
-        if (["rejected", "withdrawn", "completed"].includes(mode)) state.counter.status = mode;
-        if (mode === "already-forwarded") Object.assign(state.counter, { status: "forwarded", forwarded_to_claimant_at: stamp });
-        const matches = filters.every(([key, value]) => state.counter[key] === value);
-        const commit = !["write-error", "write-throw", "read-error", "read-throw", "zero", "wrong-case", "bad-date", "null-date"].includes(mode);
-        if (matches && commit) Object.assign(state.counter, values);
-        if (["write-throw", "commit-throw"].includes(mode)) throw privateError;
-        if (["write-error", "commit-error", "read-error", "read-throw"].includes(mode)) return { data: null, error: privateError };
-        return { data: selected && matches && commit && mode !== "commit-empty" ? { ...state.counter } : null, error: null };
-      }
+      assert.equal(op, "select", "Forwarding writes use the transaction RPC");
       if (mode === "read-error") return { data: null, error: privateError };
       if (mode === "read-throw") throw privateError;
       if (mode === "zero") return { data: null, error: null };
@@ -130,10 +132,11 @@ for (const worker of [false, true]) {
         }
       }
       assert.equal(h.events.filter(e => e.op === "email").length, 1, "No email resend during confirmation");
-      const writes = h.events.filter(e => e.table === "dmca_counter_notices" && e.op === "update");
+      const writes = h.events.filter(e => e.op === "rpc");
       assert.equal(writes.length, 1);
-      assert.deepEqual(writes[0].filters, [["id", counterId], ["case_id", caseId], ["status", "submitted"], ["forwarded_to_claimant_at", null]]);
-      assert.equal(h.events.filter(e => e.table === "dmca_counter_notices" && e.op === "select" && !e.filters.some(([key]) => key.includes("."))).length, mode === "success" ? 0 : 1);
+      assert.equal(writes[0].name, "confirm_dmca_counter_forwarding");
+      assert.equal(h.events.filter(e => e.table === "dmca_counter_notices" && e.op === "update").length, 0);
+      assert.equal(h.events.filter(e => e.table === "dmca_counter_notices" && e.op === "select" && !e.filters.some(([key]) => key.includes("."))).length, ["success", "already-forwarded"].includes(mode) ? 0 : 1);
       if (["rejected", "withdrawn", "completed"].includes(mode)) assert.equal(h.state.counter.status, mode);
       if (mode === "already-forwarded") assert.equal(h.state.counter.forwarded_to_claimant_at, stamp);
       assert.doesNotMatch(JSON.stringify(h.logs), /private|email@example|Synthetic Person|123 Synthetic/);
@@ -144,7 +147,7 @@ for (const worker of [false, true]) {
     const result = worker ? await h.library.forwardPendingDmcaCounterNotices(h.client)
       : await h.library.submitDmcaCounterNotice(h.client, userId, caseId, input);
     assert.equal(worker ? result[0].forwarded : result.status, worker ? false : "submitted");
-    assert.equal(h.events.filter(e => e.table === "dmca_counter_notices" && e.op === "update").length, 0);
+    assert.equal(h.events.filter(e => e.op === "rpc").length, 0);
     assert.equal(h.events.filter(e => e.op === "email").length, 1);
   });
 }

@@ -281,7 +281,7 @@ export async function submitDmcaCounterNotice(
 
   return {
     ...receipt,
-    status: forwardingConfirmed ? "forwarded" : "submitted",
+    status: forwardingConfirmed || "submitted",
     deliveryNeedsReview,
   };
 }
@@ -291,7 +291,7 @@ export async function getAdminDmcaState(client: DancrClient) {
     (client as any)
       .from("dmca_cases")
       .select(
-        "id, claimant_name, claimant_company, claimant_email, claimant_phone, claimant_address, copyrighted_work_description, original_work_url, infringing_url, target_type, target_id, uploader_id, status, signature, reviewed_by, reviewed_at, disabled_at, counter_received_at, restore_eligible_at, restore_deadline_at, court_filing_received, court_filing_notes, restored_at, repeat_infringer_enforced, admin_notes, created_at, dmca_counter_notices(id, legal_name, email, phone, address, removed_material_location, status, forwarded_to_claimant_at, created_at), dmca_strikes(id, active, issued_at, rescinded_at)",
+        "id, claimant_name, claimant_company, claimant_email, claimant_phone, claimant_address, copyrighted_work_description, original_work_url, infringing_url, target_type, target_id, uploader_id, status, signature, reviewed_by, reviewed_at, disabled_at, counter_received_at, restore_eligible_at, restore_deadline_at, court_filing_received, court_filing_notes, restored_at, repeat_infringer_enforced, admin_notes, created_at, updated_at, dmca_counter_notices(id, legal_name, email, phone, address, removed_material_location, status, forwarded_to_claimant_at, created_at), dmca_strikes(id, active, issued_at, rescinded_at)",
       )
       .in("status", ACTIVE_ADMIN_STATUSES)
       .order("created_at", { ascending: true })
@@ -372,6 +372,7 @@ export async function applyDmcaAdminAction(
   caseId: string,
   action: DmcaAdminAction,
   notes?: string,
+  expectedUpdatedAt?: unknown,
 ) {
   requireUuid(caseId, "Invalid copyright case.");
   caseId = caseId.toLowerCase();
@@ -379,7 +380,7 @@ export async function applyDmcaAdminAction(
   const db = client as any;
   const { data: dmcaCase, error: caseError } = await db
     .from("dmca_cases")
-    .select("id, claimant_name, claimant_email, uploader_id, status, target_id, restore_eligible_at")
+    .select("id, claimant_name, claimant_email, uploader_id, status, target_id, restore_eligible_at, updated_at")
     .eq("id", caseId)
     .maybeSingle();
 
@@ -457,45 +458,46 @@ export async function applyDmcaAdminAction(
           ? "court_hold"
           : "closed";
 
-  const update: Record<string, unknown> = {
-    status: nextStatus,
-    reviewed_by: adminId,
-    reviewed_at: new Date().toISOString(),
-    admin_notes: cleanNotes,
-    updated_at: new Date().toISOString(),
-  };
-  if (action === "record_court_action") {
-    if (dmcaCase.status !== "countered") throw new DmcaUserError("Only a countered notice can be placed on court hold.");
-    if (!cleanNotes) throw new DmcaUserError("Record the court filing details before placing the case on hold.");
-    update.court_filing_received = true;
-    update.court_filing_notes = cleanNotes;
+  if (!isDmcaCaseVersion(expectedUpdatedAt)) {
+    throw new PublicApiError("CONFLICT", "Refresh the copyright cases before reviewing this case.", 409);
   }
+  let data: any;
+  try {
+    const result = await db.rpc("transition_dmca_admin_case", {
+      p_case_id: caseId, p_admin_id: adminId, p_action: action,
+      p_expected_status: dmcaCase.status, p_expected_updated_at: expectedUpdatedAt, p_notes: cleanNotes,
+    });
+    if (result.error) {
+      if (result.error.code === "40001") throw new PublicApiError("CONFLICT", "The copyright case changed. Refresh it before deciding again.", 409);
+      if (result.error.code === "42501") throw new PublicApiError("FORBIDDEN", "An active administrator is required.", 403);
+      if (result.error.code === "P0002") throw new PublicApiError("NOT_FOUND", "The copyright case is no longer available.", 404);
+      if (["22023", "22007", "22008"].includes(result.error.code)) throw new PublicApiError("INVALID_REQUEST", "Check the case state and review details before trying again.", 400);
+      throw result.error;
+    }
+    data = result.data;
+  } catch (error) {
+    if (error instanceof PublicApiError) throw error;
+    console.error("DMCA_ADMIN_TRANSITION_NOT_CONFIRMED", { caseId, ...safeErrorMetadata(error) });
+    throw unconfirmedDmcaAction();
+  }
+  if (!data || typeof data !== "object" || Array.isArray(data) || data.caseId !== caseId
+    || data.status !== nextStatus || !isDmcaCaseVersion(data.updatedAt)) throw unconfirmedDmcaAction();
 
-  const { data, error } = await db
-    .from("dmca_cases")
-    .update(update)
-    .eq("id", caseId)
-    .select("id, status, updated_at")
-    .single();
-  if (error) throw error;
-
-  await logDmcaAdminAction(client, adminId, caseId, `dmca_${action}`, cleanNotes);
-
+  let deliveryNeedsReview = false;
   if (action === "request_information") {
-    await sendTransactionalEmail({
+    deliveryNeedsReview = !await sendDmcaActionEmail({
       to: dmcaCase.claimant_email,
       subject: `More information needed for MyDancr copyright notice ${caseId}`,
       text: `MyDancr needs more information before processing copyright notice ${caseId}.\n\n${cleanNotes || "Reply with the missing information and your case number."}`,
     });
   } else if (action === "reject") {
-    await sendTransactionalEmail({
+    deliveryNeedsReview = !await sendDmcaActionEmail({
       to: dmcaCase.claimant_email,
       subject: `MyDancr copyright notice ${caseId} could not be processed`,
       text: `MyDancr could not process copyright notice ${caseId}.\n\n${cleanNotes || "The notice did not provide the information required for a valid claim."}`,
     });
   }
-
-  return { caseId: data.id, status: data.status, updatedAt: data.updated_at };
+  return { caseId, status: nextStatus, updatedAt: data.updatedAt as string, deliveryNeedsReview };
 }
 
 export async function restoreEligibleDmcaCases(client: DancrClient, limit = 25) {
@@ -589,20 +591,17 @@ export async function forwardPendingDmcaCounterNotices(client: DancrClient, limi
   return results;
 }
 
-async function confirmCounterNoticeForwarding(client: DancrClient, counterId: string, caseId: string) {
+async function confirmCounterNoticeForwarding(client: DancrClient, counterId: string, caseId: string): Promise<"forwarded" | "completed" | null> {
   const db = client as any;
-  const forwardedAt = new Date().toISOString();
-  const confirmed = (row: any) => row?.id === counterId && row.case_id === caseId
-    && row.status === "forwarded" && typeof row.forwarded_to_claimant_at === "string"
-    && Number.isFinite(Date.parse(row.forwarded_to_claimant_at));
+  const confirmed = (row: any) => row && typeof row === "object" && !Array.isArray(row)
+    && row.id === counterId && row.case_id === caseId
+    && ["forwarded", "completed"].includes(row.status) && isDmcaCaseVersion(row.forwarded_to_claimant_at);
   try {
-    const { data, error } = await db.from("dmca_counter_notices")
-      .update({ status: "forwarded", forwarded_to_claimant_at: forwardedAt, updated_at: forwardedAt })
-      .eq("id", counterId).eq("case_id", caseId)
-      .eq("status", "submitted").is("forwarded_to_claimant_at", null)
-      .select("id, case_id, status, forwarded_to_claimant_at").maybeSingle();
+    const { data, error } = await db.rpc("confirm_dmca_counter_forwarding", {
+      p_counter_id: counterId, p_case_id: caseId,
+    });
     if (error) throw error;
-    if (confirmed(data)) return true;
+    if (confirmed(data)) return data.status as "forwarded" | "completed";
   } catch (error) {
     console.warn("DMCA_COUNTER_FORWARDING_WRITE_UNCONFIRMED", safeErrorMetadata(error));
   }
@@ -613,12 +612,12 @@ async function confirmCounterNoticeForwarding(client: DancrClient, counterId: st
       .select("id, case_id, status, forwarded_to_claimant_at")
       .eq("id", counterId).eq("case_id", caseId).maybeSingle();
     if (error) throw error;
-    if (confirmed(data)) return true;
+    if (confirmed(data)) return data.status as "forwarded" | "completed";
   } catch (error) {
     console.warn("DMCA_COUNTER_FORWARDING_READ_UNCONFIRMED", safeErrorMetadata(error));
   }
   console.error("DMCA_COUNTER_DELIVERY_REQUIRES_REVIEW");
-  return false;
+  return null;
 }
 
 function mapAgent(row: any) {
@@ -667,6 +666,7 @@ function mapCase(row: any) {
     repeatInfringerEnforced: row.repeat_infringer_enforced === true,
     adminNotes: row.admin_notes,
     createdAt: row.created_at,
+    updatedAt: row.updated_at,
     counterNotices: row.dmca_counter_notices || [],
     strikes: row.dmca_strikes || [],
   };
@@ -799,6 +799,11 @@ async function notifyClaimantOfRestoration(email: string, caseId: string) {
     subject: `MyDancr copyright case ${caseId} resolved`,
     text: `The copyright restriction for case ${caseId} was cleared after the counter-notice waiting period ended without MyDancr recording a timely court filing notice. Other account or content restrictions may still apply.`,
   });
+}
+
+function isDmcaCaseVersion(value: unknown): value is string {
+  return typeof value === "string" && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,6})?(?:Z|[+-]\d{2}:\d{2})$/.test(value)
+    && Number.isFinite(Date.parse(value));
 }
 
 function unconfirmedDmcaAction() {

@@ -13,9 +13,9 @@ const [boundary, profileRoute, visibilityRoute, adminBackend, accountAuth, accou
 
 test("dancer submission, admin review, and visibility share one production transition boundary", () => {
   assert.match(boundary, /export async function transitionDancerPublication/);
-  assert.match(boundary, /actorIsOwner/);
-  assert.match(boundary, /actorIsAdmin/);
-  assert.match(boundary, /account\.account_state !== "active"/);
+  assert.match(boundary, /client\.rpc\("transition_dancer_publication_safely"/);
+  assert.match(boundary, /p_actor_user_id: options\.actorUserId/);
+  assert.doesNotMatch(boundary, /\.from\(|isMissingSupabaseFunction/);
   assert.match(boundary, /profile\.venue_approved_at/);
 
   assert.match(profileRoute, /transitionDancerPublication/);
@@ -37,11 +37,11 @@ test("profile writers no longer duplicate approval or publication state bundles"
 test("account disable and reactivation preserve approval safety at the publication boundary", () => {
   const accountStateWriter = accountAuth.match(/export async function setAccountState[\s\S]*?\n}\r?\n\r?\nexport async function getCustomerProfile/)?.[0] || "";
   assert.match(boundary, /transition === "disable"/);
-  assert.match(boundary, /status: "disabled"[\s\S]*?disabled_at: new Date\(\)\.toISOString\(\)[\s\S]*?is_public: false/);
+  assert.match(boundary, /profile\.status !== "disabled"/);
+  assert.match(boundary, /profile\.disabled_at === null/);
   assert.match(boundary, /transition === "reactivate"/);
-  assert.match(boundary, /profile\.verification_status === "rejected" \|\| profile\.status === "rejected"/);
-  assert.match(boundary, /profile\.verification_status === "approved" && profile\.approved_at && profile\.venue_approved_at/);
-  assert.match(boundary, /status === "approved"/);
+  assert.match(boundary, /profile\.is_public !== \(profile\.status === "approved"\)/);
+  assert.match(boundary, /throw unconfirmedPublication\(\)/);
   assert.match(accountStateWriter, /p_account_state: accountState/);
   assert.doesNotMatch(accountStateWriter, /activeDancerProfileState/);
   assert.doesNotMatch(accountStateWriter, /\.from\("dancer_profiles"\)[\s\S]*?\.update\(/);

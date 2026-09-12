@@ -56,16 +56,13 @@ test("successful atomic support writes survive notification failure without anot
 
 test("publication authorization and concurrent edits fail safely", async () => {
   await assert.rejects(publication.transitionDancerPublication({ rpc: async () => ({ error: { code: "42501" } }) }, "dancer", "set_public", { actorUserId: "other" }), error => error.status === 403);
-  const profile = { id: "dancer", user_id: "user", status: "approved", verification_status: "approved", approved_at: "approved", venue_approved_at: "approved", updated_at: "old-version" };
-  const guards = [];
-  const db = { rpc: async () => ({ error: { code: "PGRST202" } }), from(table) {
-    let writing = false;
-    const query = { select() { return query; }, update() { writing = true; return query; }, eq(field, value) { if (writing) guards.push([field, value]); return query; },
-      maybeSingle: async () => ({ data: writing ? null : table === "dancer_profiles" ? profile : { id: "user", role: "dancer", account_state: "active" }, error: null }) };
-    return query;
-  } };
-  await assert.rejects(publication.transitionDancerPublication(db, "dancer", "set_private", { actorUserId: "user" }), error => error.status === 409);
-  assert.ok(guards.some(([field, value]) => field === "updated_at" && value === "old-version"));
+  for (const [code, status] of [["PGRST202", 503], ["40001", 409]]) {
+    let calls = 0;
+    const db = { rpc: async () => { calls++; return { error: { code } }; },
+      from() { assert.fail("Publication failure must not trigger a direct fallback"); } };
+    await assert.rejects(publication.transitionDancerPublication(db, "dancer", "set_private", { actorUserId: "user" }), error => error.status === status);
+    assert.equal(calls, 1);
+  }
 });
 
 const metrics = { profileViews: 1, scheduleViews: 2, followers: 3, favorites: 4, directionRequests: 5, goingSignals: 6, notificationOpens: 7, socialClicks: 8 };
