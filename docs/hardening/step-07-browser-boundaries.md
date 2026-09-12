@@ -125,6 +125,9 @@ production build retained compilation, lint, type checks and lifecycle hooks.
 Postbuild reported `LAYOUT_REVIEW_POPULATION_SKIPPED`. All 30
 read-only readiness checks passed.
 
-Exact-commit push/deployment and post-release verification are the remaining
-delivery checks at publication. Their receipt is retained as `step7-delivery.json`
-in `D:\Codex\MyDancr-validation-2026-09-11\arch-stability` after success.
+Published as `0f5e0c31084dc53d58442202cea7ad6f761e1af0`, with [exact Vercel success](https://vercel.com/ai-movie-jobs/shiftstage/5UyvzVyCnUUwncbhTDV5VkZkT8MG).
+All 23 deployed browser-boundary checks passed at 2026-09-12 08:58:31 UTC;
+health checks passed at 08:58:33 UTC. The automatic edge challenge had cleared
+without changing protections. Local and remote main matched; the unrelated
+user screenshot was preserved outside the commit. The full receipt remains
+`step7-delivery.json` in `D:\Codex\MyDancr-validation-2026-09-11\arch-stability`.

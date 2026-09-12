@@ -31,8 +31,8 @@ being treated as present state.
 | 4 | Supabase access boundaries: RLS, grants, Storage and role isolation | Published: `5e04e6359671af0cbccbe8e1604aed71c306e00b`; 6,359 tests and all release gates; [Vercel success](https://vercel.com/ai-movie-jobs/shiftstage/DTTKfvKxd1HgzKhH34K2U5VRjbJy) |
 | 5 | Authentication, session lifecycle and password recovery | Published: `8725ca85a8d696f50baacc314eff6194dab36fd9`; 6,528 tests and all release gates; [Vercel success](https://vercel.com/ai-movie-jobs/shiftstage/5rkPQiZyeDQ1LBSkkF3LeaWVZAFH) |
 | 6 | API authorization, input validation and consistent failure behavior | Published: `b0f3ac2950b934793c07c9b63a32ecbf849727e1`; 6,721 tests and all release gates; [Vercel success](https://vercel.com/ai-movie-jobs/shiftstage/5JHGBMZtCdFFkMstAtWrehtYvvJ5) |
-| 7 | Browser security, rendering, redirects and token exposure boundaries | Validated: 6,851 tests, TypeScript, lint, build and 30 readiness checks; delivery receipt follows |
-| 8 | Upload/media validation, resource budgets and publication safety | Pending |
+| 7 | Browser security, rendering, redirects and token exposure boundaries | Published: `0f5e0c31084dc53d58442202cea7ad6f761e1af0`; 6,851 tests and all release gates; [Vercel success](https://vercel.com/ai-movie-jobs/shiftstage/5UyvzVyCnUUwncbhTDV5VkZkT8MG) |
+| 8 | Upload/media validation, resource budgets and publication safety | Validated: 7,123 tests, TypeScript, lint, build and 30 readiness checks; delivery receipt follows |
 | 9 | Rate limits, request budgets and abuse under concurrency | Pending |
 | 10 | Atomic operations, idempotency and partial-write recovery, including venue provisioning compensation | Pending |
 | 11 | Query bounds, caching, network behavior and generated asset consistency | Pending |
