@@ -34,39 +34,51 @@ test("shuttle details require bounded fields, a real phone format, whole party c
 });
 
 const compiled = ts.transpileModule(readFileSync(new URL("../src/lib/dancr/club-shuttle-requests.ts", import.meta.url), "utf8"), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText;
-function fixture({ active = true, venueActive = true, ownerActive = true, storeFails = false, conflict = false, sms = false, push = 0 } = {}) {
-  const exports = {}, calls = [], notifications = new Map();
+function fixture({ active = true, venueActive = true, ownerActive = true, storeFails = false, conflict = false, sms = false, push = 0, handoffFails = false, providerThrows = false } = {}) {
+  const exports = {}, calls = [], notifications = new Map(), receipts = new Map();
+  const state = { active, venueActive, ownerActive, handoffFails };
   const client = { from(table) {
     const filters = [];
     const query = {
-      select() { return this; }, eq(...args) { filters.push(args); return this; }, not() { return this; }, in() { return this; }, maybeSingle() { return this; },
-      upsert(rows, options) {
+      select() { return this; }, eq(...args) { filters.push(args); return this; }, not() { return this; }, in() { return this; }, maybeSingle() { return this; }, limit() { return this; },
+      upsert(row, options) {
+        assert.equal(table, "club_shuttle_requests");
         assert.equal(options.ignoreDuplicates, true);
-        if (!storeFails) for (const row of rows) if (!notifications.has(row.id)) notifications.set(row.id, row);
+        if (!storeFails && !receipts.has(row.id)) receipts.set(row.id, { ...row, handed_off_at: null, ...(conflict ? { details_hash: "other" } : {}) });
         return Promise.resolve({ error: storeFails ? new Error("Store unavailable") : null });
       },
       then(resolve, reject) {
         calls.push({ table, filters });
-        const data = table === "venues" ? venueActive ? { id: "venue", name: "Test Club", phone: "7025550100", owner_user_id: "owner" } : null
+        const data = table === "venues" ? state.venueActive ? { id: "venue", name: "Test Club", phone: "7025550100", owner_user_id: "owner" } : null
           : table === "venue_team_members" ? [{ user_id: "manager" }]
-          : table === "app_users" ? ownerActive ? [{ id: "owner" }, { id: "manager" }] : []
-          : [...notifications.values()].map(row => conflict ? { ...row, body: "Other request" } : row);
+          : table === "app_users" ? state.ownerActive ? [{ id: "owner" }, { id: "manager" }] : []
+          : receipts.get(filters.find(([name]) => name === "id")?.[1]) || null;
         return Promise.resolve({ data, error: null }).then(resolve, reject);
       },
     }; return query;
+  }, async rpc(name, { p_request_id }) {
+    assert.equal(name, "handoff_club_shuttle_request");
+    if (state.handoffFails) return { data: null, error: { code: "08006" } };
+    const receipt = receipts.get(p_request_id);
+    const newly = !receipt.handed_off_at;
+    if (newly) {
+      for (const row of receipt.notification_rows) notifications.set(row.id, row);
+      receipt.handed_off_at = "2026-09-12T23:00:00Z";
+    }
+    return { data: { request_id: p_request_id, newly_handed_off: newly }, error: null };
   } };
   vm.runInNewContext(compiled, { exports, Set, console, require(name) {
     if (name === "node:crypto") return { createHash };
     if (name.includes("api-error-policy")) return { PublicApiError };
     if (name === "./club-deal-transportation") return { normalizeShuttleRequest, normalizeShuttlePhone };
-    if (name === "./deals") return { getActiveClubDealById: async (_, id) => active ? { id, venueId: "venue" } : null };
+    if (name === "./deals") return { getActiveClubDealById: async (_, id) => state.active ? { id, venueId: "venue" } : null };
     if (name === "./notification-delivery") return {
-      deliverNotificationRows: async (_, rows, options) => { calls.push({ push: rows, options }); return { push }; },
-      sendShuttlePhoneAlert: async input => { calls.push({ sms: input }); return sms; },
+      deliverNotificationRows: async (_, rows, options) => { calls.push({ push: rows, options }); if (providerThrows) throw new Error("Synthetic provider failure"); return { push }; },
+      sendShuttlePhoneAlert: async input => { calls.push({ sms: input }); if (providerThrows) throw new Error("Synthetic provider failure"); return sms; },
     };
     return {};
   } });
-  return { run: input => exports.submitClubShuttleRequest(client, "deal", input || request), runRide: input => exports.submitVenueShuttleRequest(client, "venue", input || request), calls, notifications };
+  return { run: input => exports.submitClubShuttleRequest(client, "deal", input || request), runRide: input => exports.submitVenueShuttleRequest(client, "venue", input || request), calls, notifications, receipts, state };
 }
 
 test("requests reach only the server-selected venue owner and active managers, with all pickup details", async () => {
@@ -115,13 +127,46 @@ test("standalone free rides reject unavailable venues and cannot reuse a deal re
   assert.equal(f.calls.filter(call => call.sms || call.push).length, deliveryCount);
 });
 
-test("network retries reuse durable request IDs and provider idempotency keys", async () => {
+test("network retries retain one lead and do not repeat external sends", async () => {
   const f = fixture(); await f.run(); await f.run();
   assert.equal(f.notifications.size, 2);
   const texts = f.calls.filter(call => call.sms);
-  assert.equal(texts[0].sms.requestId, texts[1].sms.requestId);
+  assert.equal(texts.length, 1);
   const pushes = f.calls.filter(call => call.push);
-  assert.deepEqual(pushes[0].push.map(row => row.deliveryId), pushes[1].push.map(row => row.deliveryId));
+  assert.equal(pushes.length, 1);
+  assert.equal(f.receipts.size, 1);
+  assert.ok(pushes[0].push.every(row => row.deliveryId === row.id));
+});
+
+test("clearing notifications and changing club availability cannot erase or re-send an accepted request", async () => {
+  const f = fixture(); await f.run(); f.notifications.clear();
+  Object.assign(f.state, { active: false, venueActive: false, ownerActive: false });
+  const result = await f.run();
+  assert.equal(result.requestId, request.requestId);
+  assert.equal(f.receipts.size, 1); assert.equal(f.notifications.size, 0);
+  assert.equal(f.calls.filter(call => call.sms).length, 1);
+  await assert.rejects(f.run({ ...request, partySize: 4 }), /different details/);
+});
+
+test("a failed inbox handoff leaves a recoverable lead and no external sends", async () => {
+  const f = fixture({ handoffFails: true });
+  await assert.rejects(f.run(), /request is saved/);
+  assert.equal(f.receipts.size, 1); assert.equal(f.notifications.size, 0);
+  assert.equal(f.calls.some(call => call.sms || call.push), false);
+  f.state.handoffFails = false;
+  await f.run(); assert.equal(f.notifications.size, 2); assert.equal(f.receipts.size, 1);
+});
+
+test("simultaneous retries create one lead and one external delivery attempt", async () => {
+  const f = fixture(); await Promise.all([f.run(), f.run(), f.run()]);
+  assert.equal(f.receipts.size, 1); assert.equal(f.notifications.size, 2);
+  assert.equal(f.calls.filter(call => call.sms).length, 1);
+});
+
+test("provider exceptions do not turn a committed handoff into a failed request", async () => {
+  const f = fixture({ providerThrows: true }); const result = await f.run();
+  assert.equal(result.phoneAlertAccepted, false); assert.equal(result.pushAlertAccepted, false);
+  assert.equal(f.receipts.size, 1); assert.equal(f.notifications.size, 2);
 });
 
 test("without a phone provider, the saved request still hands off to the club to contact the guest", async () => {
