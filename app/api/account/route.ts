@@ -50,6 +50,8 @@ export async function PATCH(request: Request) {
         return NextResponse.json({ ok: false, error: "Enter a valid email address." }, { status: 400 });
       }
 
+      // Resolve required response context before accepting the email change.
+      const account = await getAccountByUserId(client, user.id);
       const origin = publicAppUrl();
       const emailRedirectTo = `${origin}/auth/callback?role=customer&return_to=${encodeURIComponent("/dashboard/customer")}`;
       const { error } = await client.auth.updateUser({ email }, { emailRedirectTo });
@@ -60,7 +62,6 @@ export async function PATCH(request: Request) {
         return NextResponse.json({ ok: false, error: "Unable to update email. Check the address and try again." }, { status: 400 });
       }
 
-      const account = await getAccountByUserId(client, user.id);
       return NextResponse.json({
         ok: true,
         account,

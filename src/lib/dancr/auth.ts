@@ -41,7 +41,7 @@ export async function setAccountState(
 ) {
   const { data: current, error: currentError } = await publicationClient
     .from("app_users")
-    .select("id, role, display_name, email, account_state")
+    .select("id, role, display_name, email, account_state, dmca_suspended_at")
     .eq("id", userId)
     .single();
   if (currentError) throw currentError;
@@ -59,6 +59,9 @@ export async function setAccountState(
 
   if (current.account_state === "deleted" && accountState !== "deleted") {
     throw new PublicApiError("FORBIDDEN", "Deleted accounts cannot be reactivated.", 403);
+  }
+  if (accountState === "active" && current.dmca_suspended_at != null) {
+    throw new PublicApiError("FORBIDDEN", "Account restrictions require administrator review before reactivation.", 403);
   }
   if (current.account_state === "disabled" && !selfDisabledAt && accountState !== "deleted") {
     throw new PublicApiError("FORBIDDEN", "This account was disabled by MyDancr. Contact support to restore access.", 403);
@@ -106,10 +109,13 @@ export async function setAccountState(
     }
   }
 
-  const { data, error } = await publicationClient
+  let accountUpdate = publicationClient
     .from("app_users")
     .update(nextAccountUpdate)
-    .eq("id", userId)
+    .eq("id", userId);
+  // A copyright hold can arrive after the initial permission read.
+  if (accountState === "active") accountUpdate = accountUpdate.is("dmca_suspended_at", null);
+  const { data, error } = await accountUpdate
     .select("id, role, display_name, email, account_state")
     .single();
 

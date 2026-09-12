@@ -18,6 +18,7 @@ function fixture({ role = "customer", state = "active", metadata = {}, forgedMet
       const filters = [];
       const query = {
         select() { return query; }, eq(...args) { filters.push(args); return query; },
+        is(...args) { filters.push(args); return query; },
         update(value) { update = value; return query; },
         async single() { return result(); }, async maybeSingle() { return result(); },
         then(resolve, reject) { return Promise.resolve(result()).then(resolve, reject); },

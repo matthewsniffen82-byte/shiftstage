@@ -74,6 +74,7 @@ loaded the local deployment configuration to check for private values; it and
 postbuild TypeScript passed. Only this report and the ledger then received their
 validation-result text. No production record or provider setting changed.
 
-Exact-commit push/deployment and post-release verification are the remaining
-delivery checks at publication. Their receipt is retained as `step9-delivery.json`
-in `D:\Codex\MyDancr-validation-2026-09-11\arch-stability` after success.
+Published as `590ffc24e7b183358821267b43a903dd8cd29325`, with [exact Vercel success](https://vercel.com/ai-movie-jobs/shiftstage/zUReVoQ4GVjs5xgrLoBcND8aegip).
+Post-release health passed at 2026-09-12T11:39:49.739Z. Local and remote main
+matched and both unrelated screenshots were preserved. The complete receipt
+is retained as `step9-delivery.json` in the external architecture evidence directory.

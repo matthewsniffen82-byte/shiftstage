@@ -118,9 +118,10 @@ test("the missing-RPC fallback also preserves an administrative suspension", asy
   assert.deepEqual(writes, []);
 });
 
-test("the real account self-service flow cannot restore an administratively suspended profile", async () => {
+test("the real account self-service flow cannot restore an administratively suspended profile", async (t) => {
   const db = await database();
   const metadata = {}, publication = {}, auth = {};
+  let applyHoldBeforeWrite = false;
   const compile = path => ts.transpileModule(readFileSync(new URL("../" + path, import.meta.url), "utf8"), {
     compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
   }).outputText;
@@ -147,14 +148,20 @@ test("the real account self-service flow cannot restore an administratively susp
     return { data: await transition(db, input.p_transition, input.p_actor_user_id), error: null };
   }, from(table) {
     assert.ok(["app_users", "dancer_profiles"].includes(table));
-    let columns, field, value, update;
+    let columns, field, value, update, requiresNoCopyrightHold = false;
     const query = { select(c) { columns = c; return query; }, eq(f, v) { field = f; value = v; return query; },
+      is(f, v) { assert.equal(f, "dmca_suspended_at"); assert.equal(v, null); requiresNoCopyrightHold = true; return query; },
       update(v) { update = v; return query; }, async single() { return result(); }, async maybeSingle() { return result(); } };
     async function result() {
       assert.ok(["id", "user_id"].includes(field));
       if (update) {
         assert.equal(table, "app_users");
-        await db.query("update app_users set account_state=$1 where id=$2", [update.account_state, value]);
+        if (applyHoldBeforeWrite && update.account_state === "active") {
+          applyHoldBeforeWrite = false;
+          await db.query("update app_users set account_state='disabled',dmca_suspended_at=now() where id=$1", [value]);
+        }
+        const written = await db.query(`update app_users set account_state=$1 where id=$2${requiresNoCopyrightHold ? " and dmca_suspended_at is null" : ""} returning id`, [update.account_state, value]);
+        if (!written.rows.length) return { data: null, error: new Error("Conditional account update returned no row") };
       }
       const row = (await db.query(`select ${columns} from ${table} where ${field}=$1`, [value])).rows[0];
       return { data: row || null, error: null };
@@ -171,5 +178,14 @@ test("the real account self-service flow cannot restore an administratively susp
       assert.equal(profile.is_public, false);
       assert.ok(profile.admin_disabled_at);
     }
+    await t.test("a copyright hold arriving after the account read also fences the actual database update", async () => {
+      const profileBefore = await snapshot(db);
+      applyHoldBeforeWrite = true;
+      await assert.rejects(auth.setAccountState(client, ids.owner, "active", client), /Conditional account update returned no row/);
+      const account = (await db.query("select account_state,dmca_suspended_at from app_users where id=$1", [ids.owner])).rows[0];
+      assert.equal(account.account_state, "disabled");
+      assert.ok(account.dmca_suspended_at);
+      assert.deepEqual(await snapshot(db), profileBefore);
+    });
   } finally { await db.close(); }
 });
