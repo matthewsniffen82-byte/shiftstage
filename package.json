@@ -34,7 +34,7 @@
     "predev": "node scripts/check-runtime-dependencies.mjs && npm run generate:live-shell-version && npm run generate:live-shell-styles && npm run generate:static-asset-versions",
     "dev": "next dev",
     "prebuild": "node scripts/check-runtime-dependencies.mjs && npm run db:check-migrations && npm run generate:live-shell-version && npm run generate:live-shell-styles && npm run generate:static-asset-versions",
-    "build": "next build",
+    "build": "next build && node scripts/check-public-build.mjs",
     "postbuild": "node scripts/manage-layout-review-postbuild.mjs",
     "lint": "eslint . --max-warnings=0",
     "profiles:layout-review": "node scripts/manage-layout-review-profiles.mjs",

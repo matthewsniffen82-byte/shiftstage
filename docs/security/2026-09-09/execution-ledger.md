@@ -44,8 +44,8 @@ Step 1 delivered as `50d4eb543dbfc93dbed6f0663c51aa2332542cb4`, pushed to origin
 | 21 | Errors / disclosure | Delivered and healthy: final correction 3e8106d781e578a982e2cbdcdaf210c19f988cd7 |
 | 22 | Security logging | Delivered and healthy: 5d5fdb936c3d42b2f8e487e228cd9e2db0658ec2 |
 | 23 | Dependencies | Delivered and healthy: 77ea0eb48d3de3a1b65c87fdca8e5754fb6d1579 |
-| 24 | CI / supply chain | Full release gate validated; awaiting exact deployment, with documented administrative limits |
-| 25 | Production build / source maps | Not started |
+| 24 | CI / supply chain | Delivered with documented administrative limits: ffc628e230200c29ab6c602071b70ad1e3f3774b |
+| 25 | Production build / source maps | All 6,901 tests and release gates pass; exact delivery pending |
 | 26 | Sensitive data minimization | Not started |
 | 27 | Profile / location safety | Not started |
 | 28 | Scraping resilience | Not started |
@@ -477,3 +477,25 @@ The final integrated candidate preserves exact deployed Supabase release `fce8a2
 Commit `759e7a401a03f47dc4f2175fd1ca58a06835717e` was pushed, but exact Vercel `585ipaVHrQ5dcdqw1USq8jCJEGFa` failed after 6m 27s: 6,840 tests passed and three existing cron-wiring assertions depended on pretty-printed configuration spacing. Vercel had minified the JSON without changing the values. The new gate stopped the deployment before the production build. A minified local fixture reproduces all three failures. The corrected assertions parse JSON and retain exact paths/schedules; all 23 focused tests and nine negative controls pass. Full validation is running again. Step 24 remains open and Step 25 has not begun.
 
 The complete corrective rerun passed at 2026-09-12T08:02:53Z with all 6,843 tests, zero failures/skips/cancellations, both dependency audits, route type generation, standalone TypeScript, full lint and production build. Postbuild skipped population and the migration guard passed. All nine source/config/test hashes remain frozen. Only the three configuration tests and these two audit records change in this correction; commit/push, new exact Vercel success and deployed health remain required.
+
+## Step 24 exact delivery
+
+The corrective commit `ffc628e230200c29ab6c602071b70ad1e3f3774b` completed Step 24. [Exact Vercel deployment](https://vercel.com/ai-movie-jobs/shiftstage/CdXxEhyQqkWbAE75ER33QKFARPAs) succeeded after the complete hosted release gate; all 6,843 tests and all local gates also passed. At 2026-09-12T08:15:29Z eight production health/anonymous-denial checks passed, thirty readiness checks passed, and the homepage rendered without browser warnings/errors. At 08:16:11Z local main, origin/main and the remote matched with a clean worktree. Hosted build Node 24.19.0 meets the security floor; local validation used Node 24.21.0. The optional GitHub workflow was recognized but not dispatched; administrative and staging limitations remain explicit. Only then did Step 25 begin.
+
+## Step 25 public build inspection
+
+See `step-25-public-build.md` for the existing safe emitted settings, absence of detected private material in reviewed assets, new post-compilation artifact safeguard, 57 focused checks, successful clean production build and live request evidence. Map requests were denied by an edge security checkpoint and do not certify origin behavior. Final integrated validation is recorded below; exact delivery remains required. Step 26 has not begun.
+
+## Step 25 initial integrated validation
+
+On `088bc541dc35c41d99e26953a650dcc6cd506af1`, the complete release command passed all **6,901 tests** with zero failures, skips or cancellations, both dependency audits, route type generation, standalone TypeScript, full lint and the production build. The migration guard passed across 162 frozen files and postbuild reported `LAYOUT_REVIEW_POPULATION_SKIPPED`. The artifact guard inspected **263 files**, including **239 text assets and 7,726,442 text bytes**. The separate local check with configured private values also passed without printing any values. All five source/config/test files retain their validated hashes; only audit evidence was finalized afterward. The user screenshot is preserved by hash and remains outside the eight-file release. Completion of validation: 2026-09-12T09:33:35.7136695Z.
+
+Task-only commit/push, matching main, exact Vercel success and bounded deployed health remain the delivery gates before Step 26.
+
+## Push-protection fixture correction
+
+GitHub rejected the push of unpublished task commit `e678c6a1cf3ec7d9221bb3a5667047bbec444fd4` because a deliberately synthetic Stripe-format test literal matched its credential detector. Remote main remained `088bc541dc35c41d99e26953a650dcc6cd506af1`; no deployment started. The fixture now assembles the same synthetic value at runtime, and all forty artifact regressions pass. No real credential, provider request, protection-setting change or unblock exception is involved. This observes enforcement for the reported pattern, not every repository-administration setting. The complete gate is rerun before amending only the unpublished task commit and retrying publication.
+
+## Step 25 final corrective validation
+
+The complete corrected release gate passed at 2026-09-12T09:43:52.8066047Z: all **6,901 tests**, zero failures/skips/cancellations, dependency and signature audits, route type generation, standalone TypeScript, full lint and production build. Both artifact inspection and the separate configured-private-value comparison passed with 263 files, 239 text assets and 7,726,442 text bytes. Postbuild skipped population. All five frozen source/config/test hashes match, and the unrelated screenshot retains its original hash. Only the test fixture and its audit records changed after the rejected push. The unpublished commit is amended before retrying publication; exact successful deployment and bounded health checks still precede Step 26.
