@@ -1,0 +1,1040 @@
+{
+  "captured_at": "2026-09-11T23:10:49.743138-07:00",
+  "source": "Read-only production metadata under pg_catalog,public,pg_temp; target schemas complete, other relations explicitly projected.",
+  "relations": [
+    {
+      "force_rls": false,
+      "grants": {
+        "anon": {
+          "delete": false,
+          "insert": false,
+          "select": false,
+          "update": false
+        },
+        "authenticated": {
+          "delete": false,
+          "insert": false,
+          "select": true,
+          "update": false
+        },
+        "service_role": {
+          "delete": true,
+          "insert": true,
+          "select": true,
+          "update": true
+        }
+      },
+      "kind": "r",
+      "name": "admin_actions",
+      "options": null,
+      "owner": "postgres",
+      "rls": true,
+      "schema_name": "public"
+    },
+    {
+      "force_rls": false,
+      "grants": {
+        "anon": {
+          "delete": false,
+          "insert": false,
+          "select": true,
+          "update": false
+        },
+        "authenticated": {
+          "delete": true,
+          "insert": true,
+          "select": true,
+          "update": true
+        },
+        "service_role": {
+          "delete": true,
+          "insert": true,
+          "select": true,
+          "update": true
+        }
+      },
+      "kind": "r",
+      "name": "sales_agents",
+      "options": null,
+      "owner": "postgres",
+      "rls": true,
+      "schema_name": "public"
+    },
+    {
+      "force_rls": false,
+      "grants": {
+        "anon": {
+          "delete": false,
+          "insert": false,
+          "select": true,
+          "update": false
+        },
+        "authenticated": {
+          "delete": true,
+          "insert": true,
+          "select": true,
+          "update": true
+        },
+        "service_role": {
+          "delete": true,
+          "insert": true,
+          "select": true,
+          "update": true
+        }
+      },
+      "kind": "r",
+      "name": "venue_sales_attributions",
+      "options": null,
+      "owner": "postgres",
+      "rls": true,
+      "schema_name": "public"
+    }
+  ],
+  "columns": [
+    {
+      "column_default": "gen_random_uuid()",
+      "column_name": "id",
+      "data_type": "uuid",
+      "is_generated": "NEVER",
+      "is_identity": "NO",
+      "is_nullable": "NO",
+      "ordinal_position": 1,
+      "table_name": "admin_actions",
+      "table_schema": "public",
+      "udt_name": "uuid",
+      "udt_schema": "pg_catalog"
+    },
+    {
+      "column_default": null,
+      "column_name": "admin_id",
+      "data_type": "uuid",
+      "is_generated": "NEVER",
+      "is_identity": "NO",
+      "is_nullable": "YES",
+      "ordinal_position": 2,
+      "table_name": "admin_actions",
+      "table_schema": "public",
+      "udt_name": "uuid",
+      "udt_schema": "pg_catalog"
+    },
+    {
+      "column_default": null,
+      "column_name": "target_type",
+      "data_type": "text",
+      "is_generated": "NEVER",
+      "is_identity": "NO",
+      "is_nullable": "NO",
+      "ordinal_position": 3,
+      "table_name": "admin_actions",
+      "table_schema": "public",
+      "udt_name": "text",
+      "udt_schema": "pg_catalog"
+    },
+    {
+      "column_default": null,
+      "column_name": "target_id",
+      "data_type": "uuid",
+      "is_generated": "NEVER",
+      "is_identity": "NO",
+      "is_nullable": "YES",
+      "ordinal_position": 4,
+      "table_name": "admin_actions",
+      "table_schema": "public",
+      "udt_name": "uuid",
+      "udt_schema": "pg_catalog"
+    },
+    {
+      "column_default": null,
+      "column_name": "action",
+      "data_type": "text",
+      "is_generated": "NEVER",
+      "is_identity": "NO",
+      "is_nullable": "NO",
+      "ordinal_position": 5,
+      "table_name": "admin_actions",
+      "table_schema": "public",
+      "udt_name": "text",
+      "udt_schema": "pg_catalog"
+    },
+    {
+      "column_default": null,
+      "column_name": "notes",
+      "data_type": "text",
+      "is_generated": "NEVER",
+      "is_identity": "NO",
+      "is_nullable": "YES",
+      "ordinal_position": 6,
+      "table_name": "admin_actions",
+      "table_schema": "public",
+      "udt_name": "text",
+      "udt_schema": "pg_catalog"
+    },
+    {
+      "column_default": "now()",
+      "column_name": "created_at",
+      "data_type": "timestamp with time zone",
+      "is_generated": "NEVER",
+      "is_identity": "NO",
+      "is_nullable": "NO",
+      "ordinal_position": 7,
+      "table_name": "admin_actions",
+      "table_schema": "public",
+      "udt_name": "timestamptz",
+      "udt_schema": "pg_catalog"
+    },
+    {
+      "column_default": "gen_random_uuid()",
+      "column_name": "id",
+      "data_type": "uuid",
+      "is_generated": "NEVER",
+      "is_identity": "NO",
+      "is_nullable": "NO",
+      "ordinal_position": 1,
+      "table_name": "sales_agents",
+      "table_schema": "public",
+      "udt_name": "uuid",
+      "udt_schema": "pg_catalog"
+    },
+    {
+      "column_default": null,
+      "column_name": "user_id",
+      "data_type": "uuid",
+      "is_generated": "NEVER",
+      "is_identity": "NO",
+      "is_nullable": "NO",
+      "ordinal_position": 2,
+      "table_name": "sales_agents",
+      "table_schema": "public",
+      "udt_name": "uuid",
+      "udt_schema": "pg_catalog"
+    },
+    {
+      "column_default": null,
+      "column_name": "sponsor_agent_id",
+      "data_type": "uuid",
+      "is_generated": "NEVER",
+      "is_identity": "NO",
+      "is_nullable": "YES",
+      "ordinal_position": 3,
+      "table_name": "sales_agents",
+      "table_schema": "public",
+      "udt_name": "uuid",
+      "udt_schema": "pg_catalog"
+    },
+    {
+      "column_default": "'active'::text",
+      "column_name": "status",
+      "data_type": "text",
+      "is_generated": "NEVER",
+      "is_identity": "NO",
+      "is_nullable": "NO",
+      "ordinal_position": 4,
+      "table_name": "sales_agents",
+      "table_schema": "public",
+      "udt_name": "text",
+      "udt_schema": "pg_catalog"
+    },
+    {
+      "column_default": "3",
+      "column_name": "commission_depth_limit",
+      "data_type": "smallint",
+      "is_generated": "NEVER",
+      "is_identity": "NO",
+      "is_nullable": "NO",
+      "ordinal_position": 5,
+      "table_name": "sales_agents",
+      "table_schema": "public",
+      "udt_name": "int2",
+      "udt_schema": "pg_catalog"
+    },
+    {
+      "column_default": null,
+      "column_name": "created_by_admin_user_id",
+      "data_type": "uuid",
+      "is_generated": "NEVER",
+      "is_identity": "NO",
+      "is_nullable": "NO",
+      "ordinal_position": 6,
+      "table_name": "sales_agents",
+      "table_schema": "public",
+      "udt_name": "uuid",
+      "udt_schema": "pg_catalog"
+    },
+    {
+      "column_default": null,
+      "column_name": "updated_by_admin_user_id",
+      "data_type": "uuid",
+      "is_generated": "NEVER",
+      "is_identity": "NO",
+      "is_nullable": "NO",
+      "ordinal_position": 7,
+      "table_name": "sales_agents",
+      "table_schema": "public",
+      "udt_name": "uuid",
+      "udt_schema": "pg_catalog"
+    },
+    {
+      "column_default": "now()",
+      "column_name": "created_at",
+      "data_type": "timestamp with time zone",
+      "is_generated": "NEVER",
+      "is_identity": "NO",
+      "is_nullable": "NO",
+      "ordinal_position": 8,
+      "table_name": "sales_agents",
+      "table_schema": "public",
+      "udt_name": "timestamptz",
+      "udt_schema": "pg_catalog"
+    },
+    {
+      "column_default": "now()",
+      "column_name": "updated_at",
+      "data_type": "timestamp with time zone",
+      "is_generated": "NEVER",
+      "is_identity": "NO",
+      "is_nullable": "NO",
+      "ordinal_position": 9,
+      "table_name": "sales_agents",
+      "table_schema": "public",
+      "udt_name": "timestamptz",
+      "udt_schema": "pg_catalog"
+    },
+    {
+      "column_default": "encode(extensions.gen_random_bytes(18), 'hex'::text)",
+      "column_name": "referral_code",
+      "data_type": "text",
+      "is_generated": "NEVER",
+      "is_identity": "NO",
+      "is_nullable": "NO",
+      "ordinal_position": 10,
+      "table_name": "sales_agents",
+      "table_schema": "public",
+      "udt_name": "text",
+      "udt_schema": "pg_catalog"
+    },
+    {
+      "column_default": "gen_random_uuid()",
+      "column_name": "id",
+      "data_type": "uuid",
+      "is_generated": "NEVER",
+      "is_identity": "NO",
+      "is_nullable": "NO",
+      "ordinal_position": 1,
+      "table_name": "venue_sales_attributions",
+      "table_schema": "public",
+      "udt_name": "uuid",
+      "udt_schema": "pg_catalog"
+    },
+    {
+      "column_default": null,
+      "column_name": "venue_id",
+      "data_type": "uuid",
+      "is_generated": "NEVER",
+      "is_identity": "NO",
+      "is_nullable": "NO",
+      "ordinal_position": 2,
+      "table_name": "venue_sales_attributions",
+      "table_schema": "public",
+      "udt_name": "uuid",
+      "udt_schema": "pg_catalog"
+    },
+    {
+      "column_default": null,
+      "column_name": "signing_agent_id",
+      "data_type": "uuid",
+      "is_generated": "NEVER",
+      "is_identity": "NO",
+      "is_nullable": "NO",
+      "ordinal_position": 3,
+      "table_name": "venue_sales_attributions",
+      "table_schema": "public",
+      "udt_name": "uuid",
+      "udt_schema": "pg_catalog"
+    },
+    {
+      "column_default": null,
+      "column_name": "sponsor_level_1_agent_id",
+      "data_type": "uuid",
+      "is_generated": "NEVER",
+      "is_identity": "NO",
+      "is_nullable": "YES",
+      "ordinal_position": 4,
+      "table_name": "venue_sales_attributions",
+      "table_schema": "public",
+      "udt_name": "uuid",
+      "udt_schema": "pg_catalog"
+    },
+    {
+      "column_default": null,
+      "column_name": "sponsor_level_2_agent_id",
+      "data_type": "uuid",
+      "is_generated": "NEVER",
+      "is_identity": "NO",
+      "is_nullable": "YES",
+      "ordinal_position": 5,
+      "table_name": "venue_sales_attributions",
+      "table_schema": "public",
+      "udt_name": "uuid",
+      "udt_schema": "pg_catalog"
+    },
+    {
+      "column_default": null,
+      "column_name": "sponsor_level_3_agent_id",
+      "data_type": "uuid",
+      "is_generated": "NEVER",
+      "is_identity": "NO",
+      "is_nullable": "YES",
+      "ordinal_position": 6,
+      "table_name": "venue_sales_attributions",
+      "table_schema": "public",
+      "udt_name": "uuid",
+      "udt_schema": "pg_catalog"
+    },
+    {
+      "column_default": null,
+      "column_name": "sponsor_level_4_agent_id",
+      "data_type": "uuid",
+      "is_generated": "NEVER",
+      "is_identity": "NO",
+      "is_nullable": "YES",
+      "ordinal_position": 7,
+      "table_name": "venue_sales_attributions",
+      "table_schema": "public",
+      "udt_name": "uuid",
+      "udt_schema": "pg_catalog"
+    },
+    {
+      "column_default": null,
+      "column_name": "sponsor_level_5_agent_id",
+      "data_type": "uuid",
+      "is_generated": "NEVER",
+      "is_identity": "NO",
+      "is_nullable": "YES",
+      "ordinal_position": 8,
+      "table_name": "venue_sales_attributions",
+      "table_schema": "public",
+      "udt_name": "uuid",
+      "udt_schema": "pg_catalog"
+    },
+    {
+      "column_default": null,
+      "column_name": "agreement_reference",
+      "data_type": "text",
+      "is_generated": "NEVER",
+      "is_identity": "NO",
+      "is_nullable": "NO",
+      "ordinal_position": 9,
+      "table_name": "venue_sales_attributions",
+      "table_schema": "public",
+      "udt_name": "text",
+      "udt_schema": "pg_catalog"
+    },
+    {
+      "column_default": "now()",
+      "column_name": "effective_from",
+      "data_type": "timestamp with time zone",
+      "is_generated": "NEVER",
+      "is_identity": "NO",
+      "is_nullable": "NO",
+      "ordinal_position": 10,
+      "table_name": "venue_sales_attributions",
+      "table_schema": "public",
+      "udt_name": "timestamptz",
+      "udt_schema": "pg_catalog"
+    },
+    {
+      "column_default": null,
+      "column_name": "superseded_at",
+      "data_type": "timestamp with time zone",
+      "is_generated": "NEVER",
+      "is_identity": "NO",
+      "is_nullable": "YES",
+      "ordinal_position": 11,
+      "table_name": "venue_sales_attributions",
+      "table_schema": "public",
+      "udt_name": "timestamptz",
+      "udt_schema": "pg_catalog"
+    },
+    {
+      "column_default": null,
+      "column_name": "created_by_admin_user_id",
+      "data_type": "uuid",
+      "is_generated": "NEVER",
+      "is_identity": "NO",
+      "is_nullable": "NO",
+      "ordinal_position": 12,
+      "table_name": "venue_sales_attributions",
+      "table_schema": "public",
+      "udt_name": "uuid",
+      "udt_schema": "pg_catalog"
+    },
+    {
+      "column_default": "now()",
+      "column_name": "created_at",
+      "data_type": "timestamp with time zone",
+      "is_generated": "NEVER",
+      "is_identity": "NO",
+      "is_nullable": "NO",
+      "ordinal_position": 13,
+      "table_name": "venue_sales_attributions",
+      "table_schema": "public",
+      "udt_name": "timestamptz",
+      "udt_schema": "pg_catalog"
+    }
+  ],
+  "constraints": [
+    {
+      "deferrable": false,
+      "definition": "FOREIGN KEY (admin_id) REFERENCES app_users(id) ON DELETE SET NULL",
+      "delete_action": "n",
+      "initially_deferred": false,
+      "name": "admin_actions_admin_id_fkey",
+      "referenced_table": "app_users",
+      "schema_name": "public",
+      "table_name": "admin_actions",
+      "type": "f",
+      "validated": true
+    },
+    {
+      "deferrable": false,
+      "definition": "PRIMARY KEY (id)",
+      "delete_action": " ",
+      "initially_deferred": false,
+      "name": "admin_actions_pkey",
+      "referenced_table": null,
+      "schema_name": "public",
+      "table_name": "admin_actions",
+      "type": "p",
+      "validated": true
+    },
+    {
+      "deferrable": false,
+      "definition": "CHECK (((sponsor_agent_id IS NULL) OR (sponsor_agent_id <> id)))",
+      "delete_action": " ",
+      "initially_deferred": false,
+      "name": "sales_agents_check",
+      "referenced_table": null,
+      "schema_name": "public",
+      "table_name": "sales_agents",
+      "type": "c",
+      "validated": true
+    },
+    {
+      "deferrable": false,
+      "definition": "CHECK ((commission_depth_limit = ANY (ARRAY[3, 5])))",
+      "delete_action": " ",
+      "initially_deferred": false,
+      "name": "sales_agents_commission_depth_limit_check",
+      "referenced_table": null,
+      "schema_name": "public",
+      "table_name": "sales_agents",
+      "type": "c",
+      "validated": true
+    },
+    {
+      "deferrable": false,
+      "definition": "FOREIGN KEY (created_by_admin_user_id) REFERENCES app_users(id) ON DELETE RESTRICT",
+      "delete_action": "r",
+      "initially_deferred": false,
+      "name": "sales_agents_created_by_admin_user_id_fkey",
+      "referenced_table": "app_users",
+      "schema_name": "public",
+      "table_name": "sales_agents",
+      "type": "f",
+      "validated": true
+    },
+    {
+      "deferrable": false,
+      "definition": "PRIMARY KEY (id)",
+      "delete_action": " ",
+      "initially_deferred": false,
+      "name": "sales_agents_pkey",
+      "referenced_table": null,
+      "schema_name": "public",
+      "table_name": "sales_agents",
+      "type": "p",
+      "validated": true
+    },
+    {
+      "deferrable": false,
+      "definition": "CHECK ((referral_code ~ '^[0-9a-f]{36}$'::text))",
+      "delete_action": " ",
+      "initially_deferred": false,
+      "name": "sales_agents_referral_code_check",
+      "referenced_table": null,
+      "schema_name": "public",
+      "table_name": "sales_agents",
+      "type": "c",
+      "validated": true
+    },
+    {
+      "deferrable": false,
+      "definition": "FOREIGN KEY (sponsor_agent_id) REFERENCES sales_agents(id) ON DELETE RESTRICT",
+      "delete_action": "r",
+      "initially_deferred": false,
+      "name": "sales_agents_sponsor_agent_id_fkey",
+      "referenced_table": "sales_agents",
+      "schema_name": "public",
+      "table_name": "sales_agents",
+      "type": "f",
+      "validated": true
+    },
+    {
+      "deferrable": false,
+      "definition": "CHECK ((status = ANY (ARRAY['active'::text, 'suspended'::text, 'terminated'::text])))",
+      "delete_action": " ",
+      "initially_deferred": false,
+      "name": "sales_agents_status_check",
+      "referenced_table": null,
+      "schema_name": "public",
+      "table_name": "sales_agents",
+      "type": "c",
+      "validated": true
+    },
+    {
+      "deferrable": false,
+      "definition": "FOREIGN KEY (updated_by_admin_user_id) REFERENCES app_users(id) ON DELETE RESTRICT",
+      "delete_action": "r",
+      "initially_deferred": false,
+      "name": "sales_agents_updated_by_admin_user_id_fkey",
+      "referenced_table": "app_users",
+      "schema_name": "public",
+      "table_name": "sales_agents",
+      "type": "f",
+      "validated": true
+    },
+    {
+      "deferrable": false,
+      "definition": "FOREIGN KEY (user_id) REFERENCES app_users(id) ON DELETE RESTRICT",
+      "delete_action": "r",
+      "initially_deferred": false,
+      "name": "sales_agents_user_id_fkey",
+      "referenced_table": "app_users",
+      "schema_name": "public",
+      "table_name": "sales_agents",
+      "type": "f",
+      "validated": true
+    },
+    {
+      "deferrable": false,
+      "definition": "UNIQUE (user_id)",
+      "delete_action": " ",
+      "initially_deferred": false,
+      "name": "sales_agents_user_id_key",
+      "referenced_table": null,
+      "schema_name": "public",
+      "table_name": "sales_agents",
+      "type": "u",
+      "validated": true
+    },
+    {
+      "deferrable": false,
+      "definition": "CHECK (((char_length(TRIM(BOTH FROM agreement_reference)) >= 3) AND (char_length(TRIM(BOTH FROM agreement_reference)) <= 180)))",
+      "delete_action": " ",
+      "initially_deferred": false,
+      "name": "venue_sales_attributions_agreement_reference_check",
+      "referenced_table": null,
+      "schema_name": "public",
+      "table_name": "venue_sales_attributions",
+      "type": "c",
+      "validated": true
+    },
+    {
+      "deferrable": false,
+      "definition": "CHECK (((superseded_at IS NULL) OR (superseded_at > effective_from)))",
+      "delete_action": " ",
+      "initially_deferred": false,
+      "name": "venue_sales_attributions_check",
+      "referenced_table": null,
+      "schema_name": "public",
+      "table_name": "venue_sales_attributions",
+      "type": "c",
+      "validated": true
+    },
+    {
+      "deferrable": false,
+      "definition": "FOREIGN KEY (created_by_admin_user_id) REFERENCES app_users(id) ON DELETE RESTRICT",
+      "delete_action": "r",
+      "initially_deferred": false,
+      "name": "venue_sales_attributions_created_by_admin_user_id_fkey",
+      "referenced_table": "app_users",
+      "schema_name": "public",
+      "table_name": "venue_sales_attributions",
+      "type": "f",
+      "validated": true
+    },
+    {
+      "deferrable": false,
+      "definition": "PRIMARY KEY (id)",
+      "delete_action": " ",
+      "initially_deferred": false,
+      "name": "venue_sales_attributions_pkey",
+      "referenced_table": null,
+      "schema_name": "public",
+      "table_name": "venue_sales_attributions",
+      "type": "p",
+      "validated": true
+    },
+    {
+      "deferrable": false,
+      "definition": "FOREIGN KEY (signing_agent_id) REFERENCES sales_agents(id) ON DELETE RESTRICT",
+      "delete_action": "r",
+      "initially_deferred": false,
+      "name": "venue_sales_attributions_signing_agent_id_fkey",
+      "referenced_table": "sales_agents",
+      "schema_name": "public",
+      "table_name": "venue_sales_attributions",
+      "type": "f",
+      "validated": true
+    },
+    {
+      "deferrable": false,
+      "definition": "FOREIGN KEY (sponsor_level_1_agent_id) REFERENCES sales_agents(id) ON DELETE RESTRICT",
+      "delete_action": "r",
+      "initially_deferred": false,
+      "name": "venue_sales_attributions_sponsor_level_1_agent_id_fkey",
+      "referenced_table": "sales_agents",
+      "schema_name": "public",
+      "table_name": "venue_sales_attributions",
+      "type": "f",
+      "validated": true
+    },
+    {
+      "deferrable": false,
+      "definition": "FOREIGN KEY (sponsor_level_2_agent_id) REFERENCES sales_agents(id) ON DELETE RESTRICT",
+      "delete_action": "r",
+      "initially_deferred": false,
+      "name": "venue_sales_attributions_sponsor_level_2_agent_id_fkey",
+      "referenced_table": "sales_agents",
+      "schema_name": "public",
+      "table_name": "venue_sales_attributions",
+      "type": "f",
+      "validated": true
+    },
+    {
+      "deferrable": false,
+      "definition": "FOREIGN KEY (sponsor_level_3_agent_id) REFERENCES sales_agents(id) ON DELETE RESTRICT",
+      "delete_action": "r",
+      "initially_deferred": false,
+      "name": "venue_sales_attributions_sponsor_level_3_agent_id_fkey",
+      "referenced_table": "sales_agents",
+      "schema_name": "public",
+      "table_name": "venue_sales_attributions",
+      "type": "f",
+      "validated": true
+    },
+    {
+      "deferrable": false,
+      "definition": "FOREIGN KEY (sponsor_level_4_agent_id) REFERENCES sales_agents(id) ON DELETE RESTRICT",
+      "delete_action": "r",
+      "initially_deferred": false,
+      "name": "venue_sales_attributions_sponsor_level_4_agent_id_fkey",
+      "referenced_table": "sales_agents",
+      "schema_name": "public",
+      "table_name": "venue_sales_attributions",
+      "type": "f",
+      "validated": true
+    },
+    {
+      "deferrable": false,
+      "definition": "FOREIGN KEY (sponsor_level_5_agent_id) REFERENCES sales_agents(id) ON DELETE RESTRICT",
+      "delete_action": "r",
+      "initially_deferred": false,
+      "name": "venue_sales_attributions_sponsor_level_5_agent_id_fkey",
+      "referenced_table": "sales_agents",
+      "schema_name": "public",
+      "table_name": "venue_sales_attributions",
+      "type": "f",
+      "validated": true
+    },
+    {
+      "deferrable": false,
+      "definition": "FOREIGN KEY (venue_id) REFERENCES venues(id) ON DELETE RESTRICT",
+      "delete_action": "r",
+      "initially_deferred": false,
+      "name": "venue_sales_attributions_venue_id_fkey",
+      "referenced_table": "venues",
+      "schema_name": "public",
+      "table_name": "venue_sales_attributions",
+      "type": "f",
+      "validated": true
+    }
+  ],
+  "indexes": [
+    {
+      "indexdef": "CREATE UNIQUE INDEX admin_actions_pkey ON public.admin_actions USING btree (id)",
+      "indexname": "admin_actions_pkey",
+      "indisready": true,
+      "indisunique": true,
+      "indisvalid": true,
+      "schemaname": "public",
+      "tablename": "admin_actions"
+    },
+    {
+      "indexdef": "CREATE UNIQUE INDEX sales_agents_pkey ON public.sales_agents USING btree (id)",
+      "indexname": "sales_agents_pkey",
+      "indisready": true,
+      "indisunique": true,
+      "indisvalid": true,
+      "schemaname": "public",
+      "tablename": "sales_agents"
+    },
+    {
+      "indexdef": "CREATE UNIQUE INDEX sales_agents_referral_code_idx ON public.sales_agents USING btree (referral_code)",
+      "indexname": "sales_agents_referral_code_idx",
+      "indisready": true,
+      "indisunique": true,
+      "indisvalid": true,
+      "schemaname": "public",
+      "tablename": "sales_agents"
+    },
+    {
+      "indexdef": "CREATE UNIQUE INDEX sales_agents_single_active_founder_idx ON public.sales_agents USING btree (commission_depth_limit) WHERE ((commission_depth_limit = 5) AND (status = 'active'::text))",
+      "indexname": "sales_agents_single_active_founder_idx",
+      "indisready": true,
+      "indisunique": true,
+      "indisvalid": true,
+      "schemaname": "public",
+      "tablename": "sales_agents"
+    },
+    {
+      "indexdef": "CREATE INDEX sales_agents_sponsor_idx ON public.sales_agents USING btree (sponsor_agent_id) WHERE (sponsor_agent_id IS NOT NULL)",
+      "indexname": "sales_agents_sponsor_idx",
+      "indisready": true,
+      "indisunique": false,
+      "indisvalid": true,
+      "schemaname": "public",
+      "tablename": "sales_agents"
+    },
+    {
+      "indexdef": "CREATE UNIQUE INDEX sales_agents_user_id_key ON public.sales_agents USING btree (user_id)",
+      "indexname": "sales_agents_user_id_key",
+      "indisready": true,
+      "indisunique": true,
+      "indisvalid": true,
+      "schemaname": "public",
+      "tablename": "sales_agents"
+    },
+    {
+      "indexdef": "CREATE UNIQUE INDEX venue_sales_attributions_one_active_idx ON public.venue_sales_attributions USING btree (venue_id) WHERE (superseded_at IS NULL)",
+      "indexname": "venue_sales_attributions_one_active_idx",
+      "indisready": true,
+      "indisunique": true,
+      "indisvalid": true,
+      "schemaname": "public",
+      "tablename": "venue_sales_attributions"
+    },
+    {
+      "indexdef": "CREATE UNIQUE INDEX venue_sales_attributions_pkey ON public.venue_sales_attributions USING btree (id)",
+      "indexname": "venue_sales_attributions_pkey",
+      "indisready": true,
+      "indisunique": true,
+      "indisvalid": true,
+      "schemaname": "public",
+      "tablename": "venue_sales_attributions"
+    },
+    {
+      "indexdef": "CREATE INDEX venue_sales_attributions_signer_idx ON public.venue_sales_attributions USING btree (signing_agent_id, effective_from DESC)",
+      "indexname": "venue_sales_attributions_signer_idx",
+      "indisready": true,
+      "indisunique": false,
+      "indisvalid": true,
+      "schemaname": "public",
+      "tablename": "venue_sales_attributions"
+    }
+  ],
+  "policies": [
+    {
+      "cmd": "SELECT",
+      "permissive": "PERMISSIVE",
+      "policyname": "active admins read audit history",
+      "qual": "is_admin()",
+      "roles": [
+        "authenticated"
+      ],
+      "schemaname": "public",
+      "tablename": "admin_actions",
+      "with_check": null
+    },
+    {
+      "cmd": "ALL",
+      "permissive": "PERMISSIVE",
+      "policyname": "Admins manage sales agents",
+      "qual": "is_admin()",
+      "roles": [
+        "public"
+      ],
+      "schemaname": "public",
+      "tablename": "sales_agents",
+      "with_check": "is_admin()"
+    },
+    {
+      "cmd": "SELECT",
+      "permissive": "PERMISSIVE",
+      "policyname": "Agents read own sales record",
+      "qual": "(user_id = auth.uid())",
+      "roles": [
+        "public"
+      ],
+      "schemaname": "public",
+      "tablename": "sales_agents",
+      "with_check": null
+    },
+    {
+      "cmd": "ALL",
+      "permissive": "PERMISSIVE",
+      "policyname": "Admins manage venue sales attribution",
+      "qual": "is_admin()",
+      "roles": [
+        "public"
+      ],
+      "schemaname": "public",
+      "tablename": "venue_sales_attributions",
+      "with_check": "is_admin()"
+    },
+    {
+      "cmd": "SELECT",
+      "permissive": "PERMISSIVE",
+      "policyname": "Agents read attributed venues",
+      "qual": "(EXISTS ( SELECT 1\n   FROM sales_agents agent\n  WHERE ((agent.user_id = auth.uid()) AND (agent.id = ANY (ARRAY[venue_sales_attributions.signing_agent_id, venue_sales_attributions.sponsor_level_1_agent_id, venue_sales_attributions.sponsor_level_2_agent_id, venue_sales_attributions.sponsor_level_3_agent_id, venue_sales_attributions.sponsor_level_4_agent_id, venue_sales_attributions.sponsor_level_5_agent_id])))))",
+      "roles": [
+        "public"
+      ],
+      "schemaname": "public",
+      "tablename": "venue_sales_attributions",
+      "with_check": null
+    }
+  ],
+  "triggers": [
+    {
+      "definition": "CREATE TRIGGER sales_agents_no_delete BEFORE DELETE ON public.sales_agents FOR EACH ROW EXECUTE FUNCTION prohibit_financial_record_delete()",
+      "enabled": "O",
+      "function_name": "prohibit_financial_record_delete()",
+      "name": "sales_agents_no_delete",
+      "schema_name": "public",
+      "table_name": "sales_agents"
+    },
+    {
+      "definition": "CREATE TRIGGER validate_sales_agent_hierarchy_trigger BEFORE INSERT OR UPDATE OF sponsor_agent_id, status, commission_depth_limit ON public.sales_agents FOR EACH ROW EXECUTE FUNCTION validate_sales_agent_hierarchy()",
+      "enabled": "O",
+      "function_name": "validate_sales_agent_hierarchy()",
+      "name": "validate_sales_agent_hierarchy_trigger",
+      "schema_name": "public",
+      "table_name": "sales_agents"
+    },
+    {
+      "definition": "CREATE TRIGGER venue_sales_attributions_no_delete BEFORE DELETE ON public.venue_sales_attributions FOR EACH ROW EXECUTE FUNCTION prohibit_financial_record_delete()",
+      "enabled": "O",
+      "function_name": "prohibit_financial_record_delete()",
+      "name": "venue_sales_attributions_no_delete",
+      "schema_name": "public",
+      "table_name": "venue_sales_attributions"
+    },
+    {
+      "definition": "CREATE TRIGGER venue_signup_requests_attribute_agent AFTER UPDATE OF status ON public.venue_signup_requests FOR EACH ROW WHEN (((new.status = 'approved'::text) AND (old.status IS DISTINCT FROM new.status))) EXECUTE FUNCTION attribute_approved_venue_agent_referral()",
+      "enabled": "O",
+      "function_name": "attribute_approved_venue_agent_referral()",
+      "name": "venue_signup_requests_attribute_agent",
+      "schema_name": "public",
+      "table_name": "venue_signup_requests"
+    }
+  ],
+  "functions": [
+    {
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "anon": false,
+      "authenticated": false,
+      "definition": "CREATE OR REPLACE FUNCTION public.assign_admin_venue_sales_agent(p_admin_id uuid, p_venue_id uuid, p_signing_agent_id uuid, p_agreement_reference text, p_effective_from timestamp with time zone DEFAULT now())\n RETURNS uuid\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public', 'pg_temp'\nAS $function$\ndeclare\n  v_attribution_id uuid; v_signer public.sales_agents%rowtype;\n  v_level_1 uuid; v_level_2 uuid; v_level_3 uuid; v_level_4 uuid; v_level_5 uuid;\n  v_existing_effective_from timestamptz;\nbegin\n  if not exists (\n    select 1 from public.app_users account\n    where account.id = p_admin_id and account.role = 'admin' and account.account_state = 'active'\n  ) then raise exception using errcode = '42501', message = 'Admin access required.'; end if;\n  if not exists (select 1 from public.venues where id = p_venue_id and is_active = true) then\n    raise exception using errcode = '22023', message = 'Select an active venue.';\n  end if;\n  select * into v_signer from public.sales_agents where id = p_signing_agent_id for update;\n  if not found or v_signer.status <> 'active' then\n    raise exception using errcode = '22023', message = 'Select an active signing agent.';\n  end if;\n  if char_length(trim(coalesce(p_agreement_reference, ''))) not between 3 and 180 then\n    raise exception using errcode = '22023', message = 'A signed venue agreement reference is required.';\n  end if;\n  if p_effective_from is null then\n    raise exception using errcode = '22023', message = 'An attribution effective time is required.';\n  end if;\n  select attribution.effective_from into v_existing_effective_from\n  from public.venue_sales_attributions attribution\n  where attribution.venue_id = p_venue_id and attribution.superseded_at is null\n  for update;\n  if v_existing_effective_from is not null and p_effective_from <= v_existing_effective_from then\n    raise exception using errcode = '22023',\n      message = 'The replacement attribution must begin after the current attribution.';\n  end if;\n  v_level_1 := v_signer.sponsor_agent_id;\n  select sponsor_agent_id into v_level_2 from public.sales_agents where id = v_level_1;\n  select sponsor_agent_id into v_level_3 from public.sales_agents where id = v_level_2;\n  select sponsor_agent_id into v_level_4 from public.sales_agents where id = v_level_3;\n  select sponsor_agent_id into v_level_5 from public.sales_agents where id = v_level_4;\n  update public.venue_sales_attributions set superseded_at = p_effective_from\n  where venue_id = p_venue_id and superseded_at is null;\n  insert into public.venue_sales_attributions (\n    venue_id, signing_agent_id, sponsor_level_1_agent_id, sponsor_level_2_agent_id,\n    sponsor_level_3_agent_id, sponsor_level_4_agent_id, sponsor_level_5_agent_id,\n    agreement_reference, effective_from, created_by_admin_user_id\n  ) values (\n    p_venue_id, p_signing_agent_id, v_level_1, v_level_2, v_level_3, v_level_4, v_level_5,\n    trim(p_agreement_reference), p_effective_from, p_admin_id\n  ) returning id into v_attribution_id;\n  insert into public.admin_actions (admin_id, target_type, target_id, action, notes)\n  values (p_admin_id, 'venue_sales_attribution', v_attribution_id,\n    'assign_venue_signing_agent', trim(p_agreement_reference));\n  return v_attribution_id;\nend;\n$function$\n",
+      "fingerprint": "5f3fe3738c95f7f252e641ec09bd3b36",
+      "name": "assign_admin_venue_sales_agent",
+      "owner": "postgres",
+      "return_type": "uuid",
+      "security_definer": true,
+      "service": true,
+      "settings": [
+        "search_path=public, pg_temp"
+      ],
+      "signature": "assign_admin_venue_sales_agent(uuid,uuid,uuid,text,timestamp with time zone)"
+    },
+    {
+      "acl": "{postgres=X/postgres}",
+      "anon": false,
+      "authenticated": false,
+      "definition": "CREATE OR REPLACE FUNCTION public.attribute_approved_venue_agent_referral()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public', 'pg_temp'\nAS $function$\ndeclare\n  v_signer public.sales_agents%rowtype;\n  v_level_1 uuid;\n  v_level_2 uuid;\n  v_level_3 uuid;\n  v_level_4 uuid;\n  v_level_5 uuid;\n  v_attribution_id uuid;\n  v_effective_from timestamptz;\nbegin\n  if new.status <> 'approved'\n    or old.status = 'approved'\n    or new.referring_agent_id is null\n  then\n    return new;\n  end if;\n\n  if new.matched_venue_id is null or new.reviewed_by is null then\n    raise exception using errcode = '22023',\n      message = 'An approved referred venue requires a verified workspace and administrator.';\n  end if;\n\n  select * into v_signer\n  from public.sales_agents\n  where id = new.referring_agent_id\n  for update;\n\n  if not found or v_signer.status <> 'active' then\n    raise exception using errcode = '22023',\n      message = 'The referring sales agent is no longer active. Resolve the referral before approval.';\n  end if;\n\n  if exists (\n    select 1\n    from public.venue_sales_attributions attribution\n    where attribution.venue_id = new.matched_venue_id\n      and attribution.superseded_at is null\n  ) then\n    raise exception using errcode = '23505',\n      message = 'This venue already has an active sales-agent attribution.';\n  end if;\n\n  v_level_1 := v_signer.sponsor_agent_id;\n  select sponsor_agent_id into v_level_2 from public.sales_agents where id = v_level_1;\n  select sponsor_agent_id into v_level_3 from public.sales_agents where id = v_level_2;\n  select sponsor_agent_id into v_level_4 from public.sales_agents where id = v_level_3;\n  select sponsor_agent_id into v_level_5 from public.sales_agents where id = v_level_4;\n  v_effective_from := coalesce(new.reviewed_at, clock_timestamp());\n\n  insert into public.venue_sales_attributions (\n    venue_id,\n    signing_agent_id,\n    sponsor_level_1_agent_id,\n    sponsor_level_2_agent_id,\n    sponsor_level_3_agent_id,\n    sponsor_level_4_agent_id,\n    sponsor_level_5_agent_id,\n    agreement_reference,\n    effective_from,\n    created_by_admin_user_id\n  ) values (\n    new.matched_venue_id,\n    new.referring_agent_id,\n    v_level_1,\n    v_level_2,\n    v_level_3,\n    v_level_4,\n    v_level_5,\n    'verified-venue-request:' || new.id::text,\n    v_effective_from,\n    new.reviewed_by\n  )\n  returning id into v_attribution_id;\n\n  insert into public.admin_actions (\n    admin_id,\n    target_type,\n    target_id,\n    action,\n    notes\n  ) values (\n    new.reviewed_by,\n    'venue_sales_attribution',\n    v_attribution_id,\n    'confirm_agent_referred_venue',\n    'Verified venue request ' || new.id::text || ' attributed to agent ' || new.referring_agent_id::text\n  );\n\n  return new;\nend;\n$function$\n",
+      "fingerprint": "c177a57a17ca6278fddefe924e316b16",
+      "name": "attribute_approved_venue_agent_referral",
+      "owner": "postgres",
+      "return_type": "trigger",
+      "security_definer": true,
+      "service": false,
+      "settings": [
+        "search_path=public, pg_temp"
+      ],
+      "signature": "attribute_approved_venue_agent_referral()"
+    },
+    {
+      "acl": null,
+      "anon": true,
+      "authenticated": true,
+      "definition": "CREATE OR REPLACE FUNCTION public.is_admin()\n RETURNS boolean\n LANGUAGE sql\n STABLE SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\r\n  select exists (\r\n    select 1 from public.app_users\r\n    where id = auth.uid()\r\n      and role = 'admin'\r\n      and account_state = 'active'\r\n  );\r\n$function$\n",
+      "fingerprint": "aa75a61376ef5a45ec72cb30fb0eb229",
+      "name": "is_admin",
+      "owner": "postgres",
+      "return_type": "boolean",
+      "security_definer": true,
+      "service": true,
+      "settings": [
+        "search_path=public"
+      ],
+      "signature": "is_admin()"
+    },
+    {
+      "acl": "{postgres=X/postgres}",
+      "anon": false,
+      "authenticated": false,
+      "definition": "CREATE OR REPLACE FUNCTION public.prohibit_financial_record_delete()\n RETURNS trigger\n LANGUAGE plpgsql\n SET search_path TO 'pg_catalog', 'pg_temp'\nAS $function$\r\nbegin\r\n  raise exception using errcode = '22023', message = 'Financial records cannot be deleted.';\r\nend;\r\n$function$\n",
+      "fingerprint": "2b68c719dc081a4a6d4029bceac646d9",
+      "name": "prohibit_financial_record_delete",
+      "owner": "postgres",
+      "return_type": "trigger",
+      "security_definer": false,
+      "service": false,
+      "settings": [
+        "search_path=pg_catalog, pg_temp"
+      ],
+      "signature": "prohibit_financial_record_delete()"
+    },
+    {
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "anon": false,
+      "authenticated": false,
+      "definition": "CREATE OR REPLACE FUNCTION public.set_admin_sales_agent(p_admin_id uuid, p_user_id uuid, p_sponsor_agent_id uuid, p_commission_depth_limit smallint, p_status text)\n RETURNS uuid\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public', 'pg_temp'\nAS $function$\ndeclare v_agent_id uuid; v_account public.app_users%rowtype;\nbegin\n  if not exists (\n    select 1 from public.app_users account\n    where account.id = p_admin_id and account.role = 'admin' and account.account_state = 'active'\n  ) then raise exception using errcode = '42501', message = 'Admin access required.'; end if;\n  select * into v_account from public.app_users where id = p_user_id for update;\n  if not found or v_account.account_state <> 'active' then\n    raise exception using errcode = '22023', message = 'Select an active account for this sales agent.';\n  end if;\n  if p_commission_depth_limit not in (3, 5) then\n    raise exception using errcode = '22023', message = 'Agent depth must be three or five levels.';\n  end if;\n  if p_status not in ('active', 'suspended', 'terminated') then\n    raise exception using errcode = '22023', message = 'Agent status is invalid.';\n  end if;\n  insert into public.sales_agents (\n    user_id, sponsor_agent_id, status, commission_depth_limit,\n    created_by_admin_user_id, updated_by_admin_user_id\n  ) values (\n    p_user_id, p_sponsor_agent_id, p_status, p_commission_depth_limit,\n    p_admin_id, p_admin_id\n  ) on conflict (user_id) do update set\n    sponsor_agent_id = excluded.sponsor_agent_id,\n    status = excluded.status,\n    commission_depth_limit = excluded.commission_depth_limit,\n    updated_by_admin_user_id = p_admin_id,\n    updated_at = clock_timestamp()\n  returning id into v_agent_id;\n  insert into public.admin_actions (admin_id, target_type, target_id, action, notes)\n  values (p_admin_id, 'sales_agent', v_agent_id, 'set_sales_agent',\n    coalesce(v_account.display_name, v_account.email, p_user_id::text) || ': ' || p_status);\n  return v_agent_id;\nend;\n$function$\n",
+      "fingerprint": "be9dc4851adb5c20ef35bb111c3e07ed",
+      "name": "set_admin_sales_agent",
+      "owner": "postgres",
+      "return_type": "uuid",
+      "security_definer": true,
+      "service": true,
+      "settings": [
+        "search_path=public, pg_temp"
+      ],
+      "signature": "set_admin_sales_agent(uuid,uuid,uuid,smallint,text)"
+    },
+    {
+      "acl": "{postgres=X/postgres}",
+      "anon": false,
+      "authenticated": false,
+      "definition": "CREATE OR REPLACE FUNCTION public.validate_sales_agent_hierarchy()\n RETURNS trigger\n LANGUAGE plpgsql\n SET search_path TO 'public', 'pg_temp'\nAS $function$\ndeclare v_cycle boolean := false;\nbegin\n  if new.sponsor_agent_id is not null then\n    if new.sponsor_agent_id = new.id then\n      raise exception using errcode = '22023', message = 'An agent cannot sponsor their own account.';\n    end if;\n    if not exists (\n      select 1 from public.sales_agents sponsor\n      where sponsor.id = new.sponsor_agent_id and sponsor.status = 'active'\n    ) then\n      raise exception using errcode = '22023', message = 'The selected sponsor must be an active sales agent.';\n    end if;\n    with recursive sponsors as (\n      select agent.id, agent.sponsor_agent_id\n      from public.sales_agents agent where agent.id = new.sponsor_agent_id\n      union\n      select parent.id, parent.sponsor_agent_id\n      from public.sales_agents parent join sponsors on parent.id = sponsors.sponsor_agent_id\n    )\n    select exists(select 1 from sponsors where id = new.id) into v_cycle;\n    if v_cycle then\n      raise exception using errcode = '22023', message = 'This sponsor would create an invalid circular agent hierarchy.';\n    end if;\n  end if;\n  new.updated_at := clock_timestamp();\n  return new;\nend;\n$function$\n",
+      "fingerprint": "6aea8fd29aa4737924faaeb2f4ef936a",
+      "name": "validate_sales_agent_hierarchy",
+      "owner": "postgres",
+      "return_type": "trigger",
+      "security_definer": false,
+      "service": false,
+      "settings": [
+        "search_path=public, pg_temp"
+      ],
+      "signature": "validate_sales_agent_hierarchy()"
+    }
+  ]
+}
