@@ -35,6 +35,8 @@ if (mode === "inspect") {
   await inspectState();
 } else if (mode === "apply") {
   await applyAssignments();
+} else if (mode === "trim") {
+  await trimAssignments();
 } else {
   await removeAssignments();
 }
@@ -194,6 +196,75 @@ async function applyAssignments() {
       stageName: profile.stage_name,
       profileSlug: profile.slug,
     })),
+  });
+}
+
+async function trimAssignments() {
+  const profiles = await loadEligibleProfiles();
+  const profileIds = profiles.map((profile) => profile.id);
+  const now = new Date().toISOString();
+  const [workingNowIds, upcoming] = await Promise.all([
+    loadWorkingNowDancerIds(profileIds, now),
+    loadUpcomingAssignments(profileIds, now),
+  ]);
+  if (
+    profiles.length !== WORKING_NOW_COUNT + UPCOMING_COUNT + NO_SCHEDULE_COUNT
+    || workingNowIds.size !== WORKING_NOW_COUNT
+  ) {
+    throw new Error("Trimming requires ten eligible demo profiles with exactly six Working Now.");
+  }
+  if (
+    upcoming.length < UPCOMING_COUNT
+    || new Set(upcoming.map((shift) => String(shift.dancer_id))).size !== upcoming.length
+    || upcoming.some((shift) => workingNowIds.has(String(shift.dancer_id)))
+  ) {
+    throw new Error("Trimming requires at least three distinct, non-working Upcoming demo dancers with one schedule each.");
+  }
+  const retained = upcoming.slice(0, UPCOMING_COUNT);
+  const excess = upcoming.slice(UPCOMING_COUNT);
+  if (excess.some((shift) => !isManagedUpcoming(shift) || shift.checked_in_at)) {
+    throw new Error("Refusing to cancel an unmanaged or checked-in upcoming assignment.");
+  }
+  for (const profile of profiles) {
+    await assertMarkedDemoAccount(profile);
+  }
+  if (excess.length) {
+    const { data, error } = await admin
+      .from("shifts")
+      .update({ status: "cancelled" })
+      .in("id", excess.map((shift) => shift.id))
+      .eq("status", "posted")
+      .eq("shift_source", "scheduled")
+      .is("checked_in_at", null)
+      .is("checked_out_at", null)
+      .contains("shift_summary", { demoUpcoming: true, managedBy: MANAGED_BY })
+      .select("id");
+    assertSuccess(error, "cancel excess managed Demo Mode upcoming assignments");
+    if ((data || []).length !== excess.length) {
+      throw new Error("Upcoming assignments changed during trimming; inspect the current state before retrying.");
+    }
+  }
+  const [verification, verifiedWorkingNowIds] = await Promise.all([
+    loadUpcomingAssignments(profileIds, now),
+    loadWorkingNowDancerIds(profileIds, now),
+  ]);
+  if (
+    verification.length !== UPCOMING_COUNT
+    || retained.some((shift) => !verification.some((row) => row.id === shift.id))
+    || verifiedWorkingNowIds.size !== workingNowIds.size
+    || [...workingNowIds].some((id) => !verifiedWorkingNowIds.has(id))
+  ) {
+    throw new Error("Unable to verify three retained Upcoming dancers and unchanged Working Now assignments.");
+  }
+  writeResult({
+    event: "demo_upcoming.trimmed",
+    target,
+    workingNowCount: verifiedWorkingNowIds.size,
+    upcomingCount: verification.length,
+    noScheduleCount: profiles.length - verifiedWorkingNowIds.size - verification.length,
+    cancelledCount: excess.length,
+    upcoming: verification.map(publicAssignment),
+    cancelled: excess.map(publicAssignment),
   });
 }
 
@@ -412,8 +483,8 @@ function parseArguments(args) {
 
 function readMode(argumentsMap) {
   const value = argumentsMap.get("--mode");
-  if (!value || !["inspect", "apply", "remove"].includes(value)) {
-    throw new Error("--mode must be inspect, apply, or remove.");
+  if (!value || !["inspect", "apply", "trim", "remove"].includes(value)) {
+    throw new Error("--mode must be inspect, apply, trim, or remove.");
   }
   return value;
 }
