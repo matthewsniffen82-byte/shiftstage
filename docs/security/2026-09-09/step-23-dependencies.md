@@ -44,3 +44,7 @@ Fresh complete and production-only npm audits on the integrated lockfile again r
 ## Step 23 final validation
 
 Final integrated validation on `6a8454490250212bc2e7a175cf82798b02454dbf` passed all 6,653 automated tests with zero failures, skips or cancellations, standalone TypeScript, full lint and the production build. The runtime check verified Node 24.21.0 and the pinned FFmpeg executable; the migration-history guard passed and postbuild reported `LAYOUT_REVIEW_POPULATION_SKIPPED`. All thirteen frozen source/config/test files retained their validated hashes. Both complete and production-only package audits report zero known advisories. The eighteen-file release preserves every unrelated commit. Only task-only commit/push, matching main, exact Vercel success and deployed read-only checks remain before Step 24 may begin.
+
+## Step 23 exact delivery
+
+Step 23 delivered as `77ea0eb48d3de3a1b65c87fdca8e5754fb6d1579`. [Exact Vercel deployment](https://vercel.com/ai-movie-jobs/shiftstage/9G1hPeQD5qRiySQxey5ttcksnRLD) succeeded. All eight production health/anonymous-denial checks passed at 2026-09-12T07:00:11Z, thirty Supabase readiness checks passed, and the fully rendered homepage had no browser warnings/errors. At 07:01:30Z local main, origin/main and the remote matched with a clean worktree. No SQL or production business/provider mutation was used as a test. Only after these gates did Step 24 begin.

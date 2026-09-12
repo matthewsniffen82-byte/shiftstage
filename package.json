@@ -55,7 +55,8 @@
     "start": "next start",
     "db:check-migrations": "node scripts/check-supabase-migrations.mjs",
     "install:ffmpeg": "node scripts/install-ffmpeg.mjs",
-    "postinstall": "npm run install:ffmpeg"
+    "postinstall": "npm run install:ffmpeg",
+    "verify:release": "node scripts/validate-release.mjs"
   },
   "devDependencies": {
     "@electric-sql/pglite": "0.5.8",

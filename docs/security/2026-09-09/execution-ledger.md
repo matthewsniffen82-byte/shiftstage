@@ -43,8 +43,8 @@ Step 1 delivered as `50d4eb543dbfc93dbed6f0663c51aa2332542cb4`, pushed to origin
 | 20 | Webhooks | Delivered with documented inactive-provider deferrals: 060b2976d3e7856efb2cc0c9ce3c64c0732fb919 |
 | 21 | Errors / disclosure | Delivered and healthy: final correction 3e8106d781e578a982e2cbdcdaf210c19f988cd7 |
 | 22 | Security logging | Delivered and healthy: 5d5fdb936c3d42b2f8e487e228cd9e2db0658ec2 |
-| 23 | Dependencies | Validated native decoder/runtime correction; awaiting exact deployment |
-| 24 | CI / supply chain | Not started |
+| 23 | Dependencies | Delivered and healthy: 77ea0eb48d3de3a1b65c87fdca8e5754fb6d1579 |
+| 24 | CI / supply chain | Full release gate validated; awaiting exact deployment, with documented administrative limits |
 | 25 | Production build / source maps | Not started |
 | 26 | Sensitive data minimization | Not started |
 | 27 | Profile / location safety | Not started |
@@ -463,3 +463,13 @@ See `step-23-dependencies.md` for the zero-advisory package review, separately d
 ## Step 23 final validation
 
 Final integrated validation on `6a8454490250212bc2e7a175cf82798b02454dbf` passed all 6,653 automated tests with zero failures, skips or cancellations, standalone TypeScript, full lint and the production build. The runtime check verified Node 24.21.0 and the pinned FFmpeg executable; the migration-history guard passed and postbuild reported `LAYOUT_REVIEW_POPULATION_SKIPPED`. All thirteen frozen source/config/test files retained their validated hashes. Both complete and production-only package audits report zero known advisories. The eighteen-file release preserves every unrelated commit. Only task-only commit/push, matching main, exact Vercel success and deployed read-only checks remain before Step 24 may begin.
+
+## Step 23 exact delivery
+
+Step 23 delivered as `77ea0eb48d3de3a1b65c87fdca8e5754fb6d1579`. [Exact Vercel deployment](https://vercel.com/ai-movie-jobs/shiftstage/9G1hPeQD5qRiySQxey5ttcksnRLD) succeeded. All eight production health/anonymous-denial checks passed at 2026-09-12T07:00:11Z, thirty Supabase readiness checks passed, and the fully rendered homepage had no browser warnings/errors. At 07:01:30Z local main, origin/main and the remote matched with a clean worktree. No SQL or production business/provider mutation was used as a test. Only after these gates did Step 24 begin.
+
+## Step 24 CI and supply chain
+
+See `step-24-ci-supply-chain.md` for the missing automated release gate, pinned least-privilege workflow, common validation command, npm signature evidence and explicit repository-administration verification limits. The independent architecture release `b0f3ac2950b934793c07c9b63a32ecbf849727e1` is preserved. A clean committed checkout without local environment files is used for external pipeline validation while the Supabase task owns the shared release slot. Full integrated validation and exact hosted delivery remain required; Step 25 has not begun.
+
+The final integrated candidate preserves exact deployed Supabase release `fce8a233375642ad900c932ccde33bf25a79b864` and its protected 162-file migration history. At 2026-09-12T07:42:38Z the common release command passed all 6,843 tests with no failures, skips or cancellations, standalone TypeScript, full lint, route type generation and production build. Dependency audit/signature checks passed, and postbuild skipped population. All six frozen source/config/test hashes match. Three isolated registry lifecycle cases verify that npm 11.19.1 blocks unknown scripts, skips denied scripts and runs explicitly approved scripts; unsupported local-source limitations remain documented. The ten owned files have been reviewed. Commit/push, clean matching main, exact Vercel success and deployed health remain required before Step 25.

@@ -12,6 +12,8 @@ The install hook downloads and verifies a pinned FFmpeg 8.1.2 binary for Windows
 
 To update FFmpeg, review the upstream release and binary distributor, update the archive and executable sizes/hashes in `scripts/lib/ffmpeg-release.mjs`, then run installation, real media regressions and the complete release gates. Preserve the input restrictions and license. Do not set FFmpeg path/download environment overrides. See [the dependency review](docs/security/2026-09-09/step-23-dependencies.md).
 
+Run `npx --yes npm@11.19.1 run verify:release` for the complete release gate: dependency/signature audits, runtime checks, all automated tests, generated route types, standalone TypeScript, lint and production build. Vercel uses the same command before deployment. GitHub checks code pull requests on Linux and offers a manual Linux/Windows run without production credentials. Check subprocesses use synthetic public settings; the final build retains the current build environment and existing explicit maintenance rules. See [the CI review](docs/security/2026-09-09/step-24-ci-supply-chain.md).
+
 ## Live Stack
 
 The production app is implemented across:
@@ -41,7 +43,7 @@ The app service layer lives in `src/lib`. It provides Supabase clients and Dancr
 ## Go-live checklist
 
 1. Use the supported Node.js runtime and install dependencies with `npx --yes npm@11.19.1 ci`.
-2. Run `npm run build` and confirm it completes without errors.
+2. Run `npx --yes npm@11.19.1 run verify:release` and confirm every check and the production build passes.
 3. Apply the Supabase migrations in `supabase/migrations`.
 4. Create the Supabase storage buckets and policies from the storage migration.
 5. Set production environment variables in Vercel from `.env.example`.
