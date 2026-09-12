@@ -61274,7 +61274,7 @@
     function videoBufferMode(index, activeIndex, allowWarmup, activeReady, hasSource) {
       if (index === activeIndex) return "auto";
       if (!allowWarmup) return "release";
-      if (index === activeIndex + 1) return activeReady ? "metadata" : "release";
+      if (index === activeIndex + 1) return activeReady ? "metadata" : hasSource ? "retain" : "release";
       if (index === activeIndex - 1 && hasSource) return "retain";
       return "release";
     }
@@ -61364,7 +61364,17 @@
       if (activeTab !== "tv" || !videoId || document.visibilityState === "hidden") return;
       closeHomeTvFeedReportMenus();
       homeTvFeedActiveVideoId = videoId;
-      results.querySelectorAll(".home-tv-feed-slide").forEach((slide) => {
+      const slides = results.querySelectorAll(".home-tv-feed-slide");
+      // A backward swipe visits the incoming card first in DOM order. Stop the
+      // outgoing player before any new play request can compete for decoding.
+      slides.forEach((slide) => {
+        if (String(slide.dataset.videoId || "") === videoId) return;
+        const video = slide.querySelector("video");
+        video.autoplay = false;
+        video.removeAttribute("autoplay");
+        video.pause();
+      });
+      slides.forEach((slide) => {
         const slideVideoId = String(slide.dataset.videoId || "");
         const video = slide.querySelector("video");
         const isActive = slideVideoId === videoId;
@@ -61409,9 +61419,6 @@
           slide.removeAttribute("aria-current");
           slide.classList.remove("is-autoplay-blocked");
           clearHomeTvFeedEngagedTimer(slideVideoId);
-          video.autoplay = false;
-          video.removeAttribute("autoplay");
-          video.pause();
           slide.classList.add("is-paused");
         }
       });

@@ -18,7 +18,7 @@ test("profile and TV policies give startup priority, warm one next clip's metada
           for (let index = 0; index < 30; index++) {
             const expected = index === active ? "auto"
               : !allowed ? "release"
-                : index === active + 1 ? ready ? "metadata" : "release"
+                : index === active + 1 ? ready ? "metadata" : attached ? "retain" : "release"
                   : index === active - 1 && attached ? "retain" : "release";
             assert.equal(videoBufferMode(index, active, allowed, ready, attached), expected);
             assert.equal(context.videoBufferMode(index, active, allowed, ready, attached), expected);
@@ -91,6 +91,11 @@ for (const surface of ["profile", "tv"]) {
     assert.equal(videos[0].resets, 0);
     assert.equal(videos[0].preload, "none");
     assert.equal(videos[0].dataset.frameReady, "true");
+    const warmedNextResets = videos[1].resets;
+    sync(0, false);
+    assert.equal(videos[1].hasAttribute("src"), true, "a quick reversal keeps the attached neighbor while the active clip buffers");
+    assert.equal(videos[1].preload, "none", "retention does not compete with active playback");
+    assert.equal(videos[1].resets, warmedNextResets, "buffering must not reset the neighboring player");
     sync(0, true);
     assert.equal(videos[0].assignments, 1, "scrolling back reuses the existing buffer");
     assert.equal(videos[0].resets, 0);
