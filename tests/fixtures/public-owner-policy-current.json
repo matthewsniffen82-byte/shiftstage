@@ -11856,5 +11856,467 @@
         "acl": "{postgres=arwdDxtm/postgres,anon=r/postgres,authenticated=r/postgres,service_role=arwdDxtm/postgres}"
       }
     ]
+  },
+  "rawTargetColumns": {
+    "capturedAt": "2026-09-12T15:31:14.336389+00:00",
+    "source": "Independent read-only preflight before any Step 28 SQL application",
+    "tables": {
+      "dancer_profiles": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "acl": "{anon=r/postgres,authenticated=r/postgres}"
+        },
+        {
+          "name": "user_id",
+          "type": "uuid",
+          "acl": "{anon=r/postgres,authenticated=r/postgres}"
+        },
+        {
+          "name": "real_name",
+          "type": "text",
+          "acl": null
+        },
+        {
+          "name": "stage_name",
+          "type": "text",
+          "acl": "{anon=r/postgres,authenticated=r/postgres}"
+        },
+        {
+          "name": "slug",
+          "type": "text",
+          "acl": "{anon=r/postgres,authenticated=r/postgres}"
+        },
+        {
+          "name": "city",
+          "type": "text",
+          "acl": "{anon=r/postgres,authenticated=r/postgres}"
+        },
+        {
+          "name": "status",
+          "type": "dancer_status",
+          "acl": "{anon=r/postgres,authenticated=r/postgres}"
+        },
+        {
+          "name": "verification_status",
+          "type": "review_status",
+          "acl": "{anon=r/postgres,authenticated=r/postgres}"
+        },
+        {
+          "name": "photo_review_status",
+          "type": "review_status",
+          "acl": "{anon=r/postgres,authenticated=r/postgres}"
+        },
+        {
+          "name": "approved_at",
+          "type": "timestamp with time zone",
+          "acl": "{anon=r/postgres,authenticated=r/postgres}"
+        },
+        {
+          "name": "disabled_at",
+          "type": "timestamp with time zone",
+          "acl": "{anon=r/postgres,authenticated=r/postgres}"
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "acl": "{anon=r/postgres,authenticated=r/postgres}"
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "acl": "{anon=r/postgres,authenticated=r/postgres}"
+        },
+        {
+          "name": "is_public",
+          "type": "boolean",
+          "acl": "{anon=r/postgres,authenticated=r/postgres}"
+        },
+        {
+          "name": "dmca_suspended_at",
+          "type": "timestamp with time zone",
+          "acl": "{anon=r/postgres,authenticated=r/postgres}"
+        },
+        {
+          "name": "avatar_storage_path",
+          "type": "text",
+          "acl": "{anon=r/postgres,authenticated=r/postgres}"
+        },
+        {
+          "name": "avatar_updated_at",
+          "type": "timestamp with time zone",
+          "acl": "{anon=r/postgres,authenticated=r/postgres}"
+        },
+        {
+          "name": "venue_approved_at",
+          "type": "timestamp with time zone",
+          "acl": "{anon=r/postgres,authenticated=r/postgres}"
+        },
+        {
+          "name": "venue_approved_by_user_id",
+          "type": "uuid",
+          "acl": "{anon=r/postgres,authenticated=r/postgres}"
+        },
+        {
+          "name": "venue_approved_venue_id",
+          "type": "uuid",
+          "acl": "{anon=r/postgres,authenticated=r/postgres}"
+        },
+        {
+          "name": "identity_saved_at",
+          "type": "timestamp with time zone",
+          "acl": "{anon=r/postgres,authenticated=r/postgres}"
+        },
+        {
+          "name": "admin_disabled_at",
+          "type": "timestamp with time zone",
+          "acl": null
+        }
+      ],
+      "venues": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "acl": "{service_role=w/postgres,anon=r/postgres,authenticated=r/postgres}"
+        },
+        {
+          "name": "name",
+          "type": "text",
+          "acl": "{service_role=w/postgres,anon=r/postgres,authenticated=r/postgres}"
+        },
+        {
+          "name": "slug",
+          "type": "text",
+          "acl": "{service_role=w/postgres,anon=r/postgres,authenticated=r/postgres}"
+        },
+        {
+          "name": "city",
+          "type": "text",
+          "acl": "{service_role=w/postgres,anon=r/postgres,authenticated=r/postgres}"
+        },
+        {
+          "name": "state",
+          "type": "text",
+          "acl": "{service_role=w/postgres,anon=r/postgres,authenticated=r/postgres}"
+        },
+        {
+          "name": "address",
+          "type": "text",
+          "acl": "{service_role=w/postgres,anon=r/postgres,authenticated=r/postgres}"
+        },
+        {
+          "name": "phone",
+          "type": "text",
+          "acl": "{service_role=w/postgres,anon=r/postgres,authenticated=r/postgres}"
+        },
+        {
+          "name": "website",
+          "type": "text",
+          "acl": "{service_role=w/postgres,anon=r/postgres,authenticated=r/postgres}"
+        },
+        {
+          "name": "timezone",
+          "type": "text",
+          "acl": "{service_role=w/postgres,anon=r/postgres,authenticated=r/postgres}"
+        },
+        {
+          "name": "opens_at",
+          "type": "time without time zone",
+          "acl": "{service_role=w/postgres,anon=r/postgres,authenticated=r/postgres}"
+        },
+        {
+          "name": "closes_at",
+          "type": "time without time zone",
+          "acl": "{service_role=w/postgres,anon=r/postgres,authenticated=r/postgres}"
+        },
+        {
+          "name": "is_active",
+          "type": "boolean",
+          "acl": "{anon=r/postgres,authenticated=r/postgres}"
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "acl": "{service_role=w/postgres}"
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "acl": "{service_role=w/postgres}"
+        },
+        {
+          "name": "latitude",
+          "type": "numeric(9,6)",
+          "acl": "{service_role=w/postgres,anon=r/postgres,authenticated=r/postgres}"
+        },
+        {
+          "name": "longitude",
+          "type": "numeric(9,6)",
+          "acl": "{service_role=w/postgres,anon=r/postgres,authenticated=r/postgres}"
+        },
+        {
+          "name": "owner_user_id",
+          "type": "uuid",
+          "acl": "{service_role=w/postgres,anon=r/postgres,authenticated=r/postgres}"
+        },
+        {
+          "name": "qr_code_storage_path",
+          "type": "text",
+          "acl": "{service_role=w/postgres}"
+        },
+        {
+          "name": "qr_code_label",
+          "type": "text",
+          "acl": "{service_role=w/postgres}"
+        },
+        {
+          "name": "qr_code_updated_at",
+          "type": "timestamp with time zone",
+          "acl": "{service_role=w/postgres}"
+        },
+        {
+          "name": "cover_image_storage_path",
+          "type": "text",
+          "acl": "{service_role=w/postgres,anon=r/postgres,authenticated=r/postgres}"
+        },
+        {
+          "name": "cover_image_updated_at",
+          "type": "timestamp with time zone",
+          "acl": "{service_role=w/postgres,anon=r/postgres,authenticated=r/postgres}"
+        },
+        {
+          "name": "published_at",
+          "type": "timestamp with time zone",
+          "acl": "{service_role=w/postgres,anon=r/postgres,authenticated=r/postgres}"
+        },
+        {
+          "name": "logo_storage_path",
+          "type": "text",
+          "acl": "{service_role=w/postgres,anon=r/postgres,authenticated=r/postgres}"
+        },
+        {
+          "name": "logo_updated_at",
+          "type": "timestamp with time zone",
+          "acl": "{service_role=w/postgres,anon=r/postgres,authenticated=r/postgres}"
+        },
+        {
+          "name": "page_review_status",
+          "type": "text",
+          "acl": "{service_role=w/postgres}"
+        },
+        {
+          "name": "page_review_sent_at",
+          "type": "timestamp with time zone",
+          "acl": "{service_role=w/postgres}"
+        },
+        {
+          "name": "page_reviewed_at",
+          "type": "timestamp with time zone",
+          "acl": "{service_role=w/postgres}"
+        },
+        {
+          "name": "page_reviewed_by_user_id",
+          "type": "uuid",
+          "acl": "{service_role=w/postgres}"
+        },
+        {
+          "name": "page_review_notes",
+          "type": "text",
+          "acl": "{service_role=w/postgres}"
+        }
+      ],
+      "mydancr_tv_videos": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "acl": null
+        },
+        {
+          "name": "dancer_id",
+          "type": "uuid",
+          "acl": null
+        },
+        {
+          "name": "submitted_by",
+          "type": "uuid",
+          "acl": null
+        },
+        {
+          "name": "venue_id",
+          "type": "uuid",
+          "acl": null
+        },
+        {
+          "name": "shift_id",
+          "type": "uuid",
+          "acl": null
+        },
+        {
+          "name": "caption",
+          "type": "text",
+          "acl": null
+        },
+        {
+          "name": "storage_path",
+          "type": "text",
+          "acl": null
+        },
+        {
+          "name": "storage_mime",
+          "type": "text",
+          "acl": null
+        },
+        {
+          "name": "file_size_bytes",
+          "type": "bigint",
+          "acl": null
+        },
+        {
+          "name": "duration_seconds",
+          "type": "numeric(7,2)",
+          "acl": null
+        },
+        {
+          "name": "width",
+          "type": "integer",
+          "acl": null
+        },
+        {
+          "name": "height",
+          "type": "integer",
+          "acl": null
+        },
+        {
+          "name": "status",
+          "type": "text",
+          "acl": null
+        },
+        {
+          "name": "venue_tag_status",
+          "type": "text",
+          "acl": null
+        },
+        {
+          "name": "venue_featured",
+          "type": "boolean",
+          "acl": null
+        },
+        {
+          "name": "consent_confirmed",
+          "type": "boolean",
+          "acl": null
+        },
+        {
+          "name": "rights_confirmed",
+          "type": "boolean",
+          "acl": null
+        },
+        {
+          "name": "review_notes",
+          "type": "text",
+          "acl": null
+        },
+        {
+          "name": "reviewed_by",
+          "type": "uuid",
+          "acl": null
+        },
+        {
+          "name": "submitted_at",
+          "type": "timestamp with time zone",
+          "acl": null
+        },
+        {
+          "name": "reviewed_at",
+          "type": "timestamp with time zone",
+          "acl": null
+        },
+        {
+          "name": "published_at",
+          "type": "timestamp with time zone",
+          "acl": null
+        },
+        {
+          "name": "expires_at",
+          "type": "timestamp with time zone",
+          "acl": null
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "acl": null
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "acl": null
+        },
+        {
+          "name": "moderation_decision",
+          "type": "text",
+          "acl": null
+        },
+        {
+          "name": "moderation_reason_codes",
+          "type": "text[]",
+          "acl": null
+        },
+        {
+          "name": "moderation_category_scores",
+          "type": "jsonb",
+          "acl": null
+        },
+        {
+          "name": "moderation_provider_flagged",
+          "type": "boolean",
+          "acl": null
+        },
+        {
+          "name": "moderation_frame_count",
+          "type": "integer",
+          "acl": null
+        },
+        {
+          "name": "moderation_model",
+          "type": "text",
+          "acl": null
+        },
+        {
+          "name": "moderation_details",
+          "type": "jsonb",
+          "acl": null
+        },
+        {
+          "name": "moderation_attempt_count",
+          "type": "integer",
+          "acl": null
+        },
+        {
+          "name": "moderation_started_at",
+          "type": "timestamp with time zone",
+          "acl": null
+        },
+        {
+          "name": "moderation_completed_at",
+          "type": "timestamp with time zone",
+          "acl": null
+        },
+        {
+          "name": "distribution_scope",
+          "type": "text",
+          "acl": null
+        },
+        {
+          "name": "like_count",
+          "type": "bigint",
+          "acl": null
+        },
+        {
+          "name": "is_pinned",
+          "type": "boolean",
+          "acl": null
+        }
+      ]
+    }
   }
 }

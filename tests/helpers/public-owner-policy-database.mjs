@@ -11,6 +11,9 @@ export async function createOwnerPolicyDatabase({migrate=true}={}) {
  const db=await createAccountLifecycleDatabase();
  try {
   const fixture=ownerPolicyFixture,full=new Set(accountLifecycleSchema.scope.tables);
+  // Preserve the precision modifiers from the independent deployment capture.
+  // The reused account fixture describes UDT names and omits these modifiers.
+  await db.exec('alter table public.venues alter column latitude type numeric(9,6),alter column longitude type numeric(9,6)');
   for(const table of fixture.tables){
    if(full.has(table))continue;
    const columns=fixture.columns.filter(c=>c.table_name===table);
@@ -24,8 +27,11 @@ export async function createOwnerPolicyDatabase({migrate=true}={}) {
     const allowed=Object.entries(rights).filter(([,yes])=>yes).map(([right])=>right);
     if(allowed.length)await db.exec(`grant ${allowed.join(',')} on public.${quote(table)} to ${quote(role)}`);
    }
-   for(const c of fixture.columnAccess.filter(c=>c.table===table))for(const [role,key]of [['anon','anon_select'],['authenticated','authenticated_select']])if(c[key])await db.exec(`grant select(${quote(c.column)})on public.${quote(table)} to ${quote(role)}`);
+   // TV's captured effective SELECT comes from its table grant. It has no
+   // additional column ACLs; inventing those would mask deployment drift.
+   if(table!=='mydancr_tv_videos')for(const c of fixture.columnAccess.filter(c=>c.table===table))for(const [role,key]of [['anon','anon_select'],['authenticated','authenticated_select']])if(c[key])await db.exec(`grant select(${quote(c.column)})on public.${quote(table)} to ${quote(role)}`);
   }
+  await db.exec('alter table public.mydancr_tv_videos alter column duration_seconds type numeric(7,2)');
   for(const p of fixture.policies){
    if(full.has(p.tablename))continue;
    await db.exec(`create policy ${quote(p.policyname)} on public.${quote(p.tablename)} as ${p.permissive} for ${p.cmd} to ${p.roles.map(quote).join(',')}${p.qual?' using('+p.qual+')':''}${p.with_check?' with check('+p.with_check+')':''}`);
@@ -37,6 +43,10 @@ export async function createOwnerPolicyDatabase({migrate=true}={}) {
    assert.ok(['venues','dancer_profiles','mydancr_tv_videos'].includes(relation.table));
    await db.exec(`grant truncate,references,trigger,maintain on public.${quote(relation.table)} to service_role`);
    assert.equal((await db.query('select relacl::text acl from pg_class where oid=$1::regclass',['public.'+relation.table])).rows[0].acl,relation.acl,'Complete captured ACL for '+relation.table);
+  }
+  for(const table of ['venues','dancer_profiles','mydancr_tv_videos']){
+   const columns=(await db.query("select attname name,format_type(atttypid,atttypmod) type,attacl::text acl from pg_attribute where attrelid=$1::regclass and attnum>0 and not attisdropped order by attnum",['public.'+table])).rows;
+   assert.deepEqual(columns,fixture.rawTargetColumns.tables[table],'Complete captured column types and ACLs for '+table);
   }
   const view=fixture.publicView;
   await db.exec(`create view public.public_dancer_profiles with(${view.options.join(',')})as ${view.definition};grant select on public.public_dancer_profiles to anon,authenticated,service_role`);
