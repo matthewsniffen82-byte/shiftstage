@@ -518,7 +518,7 @@ export async function restoreEligibleDmcaCases(client: DancrClient, limit = 25) 
       await confirmedDmcaAction(db, "restore", dmcaCase, {
         p_case_id: dmcaCase.id,
         p_admin_id: null,
-        p_restoration_notes: "Automatically restored after the statutory waiting period.",
+        p_restoration_notes: "Copyright case resolved after the statutory waiting period.",
       });
       const delivered = await notifyClaimantOfRestoration(dmcaCase.claimant_email, dmcaCase.id);
       results.push({ caseId: dmcaCase.id, restored: true, deliveryNeedsReview: !delivered });
@@ -796,8 +796,8 @@ function counterNoticeEmail(input: {
 async function notifyClaimantOfRestoration(email: string, caseId: string) {
   return sendDmcaActionEmail({
     to: email,
-    subject: `MyDancr copyright case ${caseId} restored`,
-    text: `The material in copyright case ${caseId} was restored after the counter-notice waiting period ended without MyDancr recording a timely court filing notice.`,
+    subject: `MyDancr copyright case ${caseId} resolved`,
+    text: `The copyright restriction for case ${caseId} was cleared after the counter-notice waiting period ended without MyDancr recording a timely court filing notice. Other account or content restrictions may still apply.`,
   });
 }
 
@@ -836,6 +836,15 @@ async function confirmedDmcaAction(
     || data.activeStrikes > 2147483647) {
     throw unconfirmedDmcaAction();
   }
+  const restorationOutcomes = ["previous_state_restored", "another_active_case", "repeat_strike_restriction", "independent_decision_preserved", "missing_content"];
+  const contentStates = ["uploading", "moderating", "submitted", "approved", "rejected", "hidden", "expired"];
+  // Older deployed functions omit both optional fields during the rollout.
+  const hasRestorationOutcome = action === "restore" && (data.restorationOutcome !== undefined || data.contentStatus !== undefined);
+  if (hasRestorationOutcome && (!restorationOutcomes.includes(data.restorationOutcome)
+    || (data.contentStatus !== null && !contentStates.includes(data.contentStatus))
+    || (data.restorationOutcome === "missing_content") !== (data.contentStatus === null))) {
+    throw unconfirmedDmcaAction();
+  }
   // Return only checked fields; an RPC response cannot override the case/action
   // identity or introduce unrelated data into the administrator's response.
   return {
@@ -845,6 +854,7 @@ async function confirmedDmcaAction(
       : { targetId: targetId as string | null }),
     uploaderId: data.uploaderId as string | null,
     activeStrikes: data.activeStrikes as number,
+    ...(hasRestorationOutcome ? { restorationOutcome: data.restorationOutcome as string, contentStatus: data.contentStatus as string | null } : {}),
   };
 }
 

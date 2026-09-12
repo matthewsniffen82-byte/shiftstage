@@ -84,7 +84,7 @@ export async function PATCH(request: Request) {
 
 function actionMessage(action: DmcaAdminAction) {
   if (action === "disable") return "The reported video was disabled and the copyright strike was recorded.";
-  if (action === "restore") return "The content was restored and the copyright strike was rescinded.";
+  if (action === "restore") return "The copyright case was resolved. Other account or content restrictions may still apply.";
   if (action === "record_court_action") return "Court action recorded. Automatic restoration is blocked.";
   if (action === "request_information") return "The claimant was asked for more information.";
   if (action === "reject") return "The notice was rejected and the claimant was notified.";
