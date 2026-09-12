@@ -675,6 +675,10 @@
     {
       "file": "20260912123000_minimize_public_venue_review_columns.sql",
       "sha256": "1c1d6159b075fa0545a401b09e3b6b276717db6fa4d6fcba522c132887878db6"
+    },
+    {
+      "file": "20260912140704_preserve_owned_dmca_lifecycle_states.sql",
+      "sha256": "e5e2fdea66eeaebdaa9c6230faaacf83b34181020dd36d1979100cd34c50364b"
     }
   ]
 }
