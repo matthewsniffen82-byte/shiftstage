@@ -1,32 +1,31 @@
 .club-transport-page{min-height:100dvh;padding:32px 16px;box-sizing:border-box;display:grid;place-items:center;background:radial-gradient(ellipse at 50% 0, #281243,transparent 55%),#09080d;color:#f4effb;font-family:Arial,sans-serif}
-.club-transport-card{box-sizing:border-box;width:min(100%,480px);padding:28px;border:1px solid #392b48;border-radius:24px;background:#15111d;box-shadow:0 24px 80px #0006;overflow-wrap:anywhere}
+.club-transport-card{box-sizing:border-box;width:min(100%,480px);padding:24px;border:1px solid #392b48;border-radius:24px;background:#15111d;box-shadow:0 24px 80px #0006;overflow-wrap:anywhere}
 .club-transport-card h1{font-size:30px;line-height:1.15;letter-spacing:-.7px;margin:8px 0}
-.club-transport-card p{font-size:14px;line-height:1.6}
-.club-transport-card .club-transport-eyebrow{font-size:11px;letter-spacing:2px;color:#c7a5fa;margin:24px 0 0}
+.club-transport-card p{font-size:14px;line-height:1.45}
 .club-transport-venue{color:#c6b4da;margin-top:0}
 .club-transport-back{display:inline-flex;align-items:center;min-height:44px;color:#d8c6ee;text-decoration:none;font-size:14px}
 .club-transport-change{display:inline-flex;align-items:center;min-height:44px;padding:0;border:0;background:transparent;color:#d8c6ee;font:inherit;font-size:14px;cursor:pointer}
 .club-transport-change:disabled{opacity:.5;cursor:default}
 .club-transport-terms{color:#e1d7ed}
-.club-transport-options{border:0;padding:0;margin:24px 0 0;display:grid;gap:10px;min-width:0}
-.club-transport-options legend{font-size:15px;font-weight:600;margin-bottom:12px}
-.club-transport-options label{display:flex;align-items:center;gap:12px;border:1px solid #473654;border-radius:14px;padding:16px;cursor:pointer;min-height:48px;box-sizing:border-box}
+.club-transport-options{border:0;padding:0;margin:16px 0 0;display:grid;gap:8px;min-width:0}
+.club-transport-options legend{font-size:15px;font-weight:600;margin-bottom:10px}
+.club-transport-options label{display:flex;align-items:center;gap:12px;border:1px solid #473654;border-radius:14px;padding:12px;cursor:pointer;min-height:48px;box-sizing:border-box}
 .club-transport-options label.selected{border-color:#b98beb;background:#30203e}
 .club-transport-options label:has(input:disabled){opacity:.55;cursor:default}
 .club-transport-options strong,.club-transport-options small{display:block;font-size:14px;line-height:1.4}
 .club-transport-options small{font-size:12px;color:#c9bbd7;margin-top:5px}
 .club-transport-card input[type=radio],.club-transport-card input[type=checkbox]{width:20px;height:20px;accent-color:#ad77ed;flex-shrink:0}
-.club-transport-handoff{padding:16px;background:#251d30;border-radius:12px;margin:20px 0;font-size:14px}
+.club-transport-handoff{padding:12px;background:#251d30;border-radius:12px;margin:12px 0 16px;font-size:14px}
 .club-transport-handoff p{margin:6px 0 0;color:#d8cbe5}
-.club-transport-fields{display:grid;gap:16px}
-.club-transport-fields label{display:grid;gap:8px;font-size:13px;color:#e1d6eb}
+.club-transport-fields{display:grid;gap:12px}
+.club-transport-fields label{display:grid;gap:6px;font-size:13px;color:#e1d6eb}
 .club-transport-fields input:not([type=checkbox]){box-sizing:border-box;width:100%;min-width:0;min-height:48px;background:#0d0b12;border:1px solid #564164;color:#fff;border-radius:10px;padding:12px;font-size:16px}
 .club-transport-fields input::placeholder{color:#a798b6;font-size:13px}
 .club-transport-fields .club-transport-consent{display:flex;align-items:flex-start;gap:10px;line-height:1.5}
 .club-transport-consent input{margin:0}
-.club-transport-submit{box-sizing:border-box;display:flex;justify-content:center;align-items:center;width:100%;min-height:50px;margin-top:22px;padding:12px 16px;border:1px solid #bc92ed;border-radius:12px;background:#8049bc;color:#fff;font:600 15px Arial,sans-serif;text-decoration:none;cursor:pointer}
+.club-transport-submit{box-sizing:border-box;display:flex;justify-content:center;align-items:center;width:100%;min-height:50px;margin-top:16px;padding:12px 16px;border:1px solid #bc92ed;border-radius:12px;background:#8049bc;color:#fff;font:600 15px Arial,sans-serif;text-decoration:none;cursor:pointer}
 .club-transport-submit:disabled{opacity:.5;cursor:default}
-.club-transport-card .club-transport-note{font-size:12px;color:#b9aaca;margin:18px 0 0}
+.club-transport-card .club-transport-note{font-size:12px;color:#b9aaca;margin:12px 0 0}
 .club-transport-error{color:#ffc8d0}
 .club-transport-ineligible{margin-top:18px;padding:16px;border:1px solid #97704b;border-radius:12px;background:#302319;color:#ffe4c7;font-size:14px;line-height:1.5}
 .club-transport-ineligible .club-transport-submit{margin-top:12px}
@@ -34,4 +33,4 @@
 .club-transport-ready svg{width:42px;flex-shrink:0;color:#cfa4fb}
 .club-transport-ready p{margin:0}
 .club-transport-card :focus-visible{outline:2px solid #d4b0ff;outline-offset:4px}
-@media(max-width:480px){.club-transport-page{padding:12px 8px;align-items:start}.club-transport-card{padding:20px;border-radius:18px}.club-transport-card h1{font-size:28px}}
+@media(max-width:480px){.club-transport-page{padding:12px 8px;align-items:start}.club-transport-card{padding:16px;border-radius:18px}.club-transport-card h1{font-size:28px}}
