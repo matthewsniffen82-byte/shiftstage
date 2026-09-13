@@ -12674,3 +12674,50 @@ body.dancr-button-system :is(
     transition: none !important;
   }
 }
+
+/* Scroll-card pickup actions share the offer's green outline. Use the same
+ * action scope as the travel material above so its neutral overrides do not win. */
+body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell, #results.home-venue-discovery-feed)
+  .home-venue-discovery-slide .venue-card-primary-actions > .venue-card-ride-action[href]:not([aria-disabled="true"]):not(.is-travel-unavailable):not(.is-inactive-demo) {
+  border-color: var(--dancr-color-success-strong) !important;
+  background: color-mix(in srgb, var(--dancr-color-success) 6%, var(--dancr-color-surface-raised)) !important;
+  box-shadow: none !important;
+}
+
+body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell, #results.home-venue-discovery-feed)
+  .home-venue-discovery-slide .venue-card-primary-actions > .venue-card-ride-action[href]:not([aria-disabled="true"]):not(.is-travel-unavailable):not(.is-inactive-demo):is(:focus-visible, :active) {
+  border-color: var(--dancr-color-success) !important;
+  background: color-mix(in srgb, var(--dancr-color-success) 12%, var(--dancr-color-surface-raised)) !important;
+  outline-color: var(--dancr-color-success) !important;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell, #results.home-venue-discovery-feed)
+    .home-venue-discovery-slide .venue-card-primary-actions > .venue-card-ride-action[href]:not([aria-disabled="true"]):not(.is-travel-unavailable):not(.is-inactive-demo):hover {
+    border-color: var(--dancr-color-success) !important;
+    background: color-mix(in srgb, var(--dancr-color-success) 12%, var(--dancr-color-surface-raised)) !important;
+  }
+}
+
+body.dancr-button-system > .app main.stack > section.stack
+  > #results.home-venue-discovery-feed > .home-venue-discovery-slide
+  .venue-card-secondary-actions > .venue-card-directions-action {
+  border-color: var(--dancr-color-border-strong) !important;
+  background: var(--dancr-color-surface-raised) !important;
+  box-shadow: none !important;
+}
+
+body.dancr-button-system > .app main.stack > section.stack
+  > #results.home-venue-discovery-feed > .home-venue-discovery-slide
+  .venue-card-secondary-actions > .venue-card-directions-action :is(.action-icon, svg) {
+  color: var(--dancr-color-text-secondary) !important;
+  stroke: currentColor !important;
+  filter: none !important;
+}
+
+body.dancr-button-system > .app main.stack > section.stack
+  > #results.home-venue-discovery-feed > .home-venue-discovery-slide
+  .venue-card-secondary-actions > .venue-card-directions-action:focus-visible {
+  outline: 2px solid var(--dancr-color-text-primary) !important;
+  outline-offset: 3px !important;
+}
