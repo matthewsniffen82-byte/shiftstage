@@ -46,6 +46,18 @@ test("thumbnail candidates do not downgrade CSS portraits or native fallback ima
   assert.match(context.nativeResponsivePhotoAttrs("https://images.example/master", "https://images.example/96 96w, https://images.example/240 240w"), /^src="https:\/\/images.example\/240"/);
 });
 
+test("the profile photo grid starts two rows immediately and prioritizes the first row", () => {
+  const source = shell.match(/function profilePhotoThumbMarkup\([^]*?(?=\n    function galleryMarkup)/)?.[0];
+  const render = new Function('nativeResponsivePhotoAttrs', 'escapeHtml', 'displayText', `${source}; return profilePhotoThumbMarkup;`)(
+    () => 'src="https://images.example/photo"', value => String(value), value => String(value),
+  );
+  for (const index of [0, 2, 3, 5, 6, 20]) {
+    const markup = render({ index, photoClass: 'photo', photoUrl: 'https://images.example/photo' }, 21);
+    assert.match(markup, new RegExp(`loading="${index < 6 ? 'eager' : 'lazy'}"`));
+    assert.match(markup, new RegExp(`fetchpriority="${index < 3 ? 'high' : 'auto'}"`));
+  }
+});
+
 test("responsive hero assets retain geometry and use content-addressed, smaller WebP files", async () => {
   const original = readFileSync("public/outputs/dancr-hero.webp");
   const hero = shell.match(/<img[^>]*class="hero-art"[^>]*>/)?.[0];

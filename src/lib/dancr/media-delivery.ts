@@ -1,6 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { verifyMediaPreview } from './media-delivery-url.ts';
 import { myDancrTvPosterStoragePath } from './media-watermark.ts';
+import { MAX_CACHED_PHOTO_BYTES, type PhotoDeliveryCache } from './photo-delivery-cache.ts';
 
 const NO_STORE = 'private, no-store, max-age=0';
 const HEADERS = { 'Cache-Control': NO_STORE, 'CDN-Cache-Control': 'no-store', 'Vercel-CDN-Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff' };
@@ -11,7 +12,7 @@ const safePath = (path: string) => path.length > 0 && path.length <= 1024 && /^[
   && !path.startsWith('/') && !path.split('/').some(segment => !segment || segment === '.' || segment === '..');
 const unavailable = (status = 404) => new Response(null, { status, headers: HEADERS });
 
-type Dependencies = { publicClient: SupabaseClient; admin: SupabaseClient; storageUrl: string; serviceKey: string; fetch?: typeof fetch };
+type Dependencies = { publicClient: SupabaseClient; admin: SupabaseClient; storageUrl: string; serviceKey: string; fetch?: typeof fetch; photoCache?: PhotoDeliveryCache };
 export async function serveDancerMedia(request: Request, kind: 'photo' | 'video', deps: Dependencies) {
   try {
     if (request.signal.aborted) return unavailable(503);
@@ -72,6 +73,12 @@ export async function serveDancerMedia(request: Request, kind: 'photo' | 'video'
     const transform = width !== undefined && bucket === 'dancer-photos';
     const upstreamUrl = new URL(`/storage/v1/${transform ? 'render/image/authenticated' : 'object/authenticated'}/${bucket}/${path.split('/').map(encodeURIComponent).join('/')}`,deps.storageUrl);
     if (transform) { upstreamUrl.searchParams.set('width',String(width)); upstreamUrl.searchParams.set('quality','80'); upstreamUrl.searchParams.set('resize','contain'); }
+    // Reuse bytes only AFTER the current anonymous RLS checks and variant checks.
+    // Preview, ranged and video requests retain their existing streaming path.
+    const photoCache = kind === 'photo' && !preview && !range ? deps.photoCache : undefined;
+    const cacheKey = upstreamUrl.href;
+    const cached = photoCache?.get(cacheKey);
+    if (cached) return new Response(request.method === 'HEAD' ? null : cached.bytes, { headers: cached.headers });
     const abort = new AbortController();
     const cancel = () => abort.abort();
     request.signal.addEventListener('abort',cancel,{once:true});
@@ -93,7 +100,31 @@ export async function serveDancerMedia(request: Request, kind: 'photo' | 'video'
     const reader=upstream.body.getReader();
     const release=()=>{clearTimeout(timeout);request.signal.removeEventListener('abort',cancel);};
     let transferred = 0;
-    const body = new ReadableStream({async pull(controller){try{const next=await reader.read();if(next.done){release();controller.close();}else {transferred += next.value.byteLength;if(transferred > maximumBytes){cancel();await reader.cancel();throw new Error('Media size exceeded.');}controller.enqueue(next.value);}}catch{release();controller.error(new Error('Media stream unavailable.'));}},async cancel(){cancel();release();await reader.cancel();}});
+    let cacheChunks: Uint8Array[] | null = photoCache && upstream.status === 200 ? [] : null;
+    const body = new ReadableStream({
+      async pull(controller) {
+        try {
+          const next = await reader.read();
+          if (next.done) {
+            if (cacheChunks && !abort.signal.aborted) {
+              const bytes = new Uint8Array(transferred);
+              let offset = 0;
+              for (const chunk of cacheChunks) { bytes.set(chunk, offset); offset += chunk.byteLength; }
+              photoCache?.set(cacheKey, bytes, headers);
+            }
+            cacheChunks = null;
+            release(); controller.close();
+          } else {
+            transferred += next.value.byteLength;
+            if (transferred > maximumBytes) { cancel(); await reader.cancel(); throw new Error('Media size exceeded.'); }
+            if (transferred > MAX_CACHED_PHOTO_BYTES) cacheChunks = null;
+            cacheChunks?.push(next.value.slice());
+            controller.enqueue(next.value);
+          }
+        } catch { cacheChunks = null; release(); controller.error(new Error('Media stream unavailable.')); }
+      },
+      async cancel() { cacheChunks = null; cancel(); release(); await reader.cancel(); },
+    });
     return new Response(body,{status:upstream.status,headers});
   } catch {return unavailable(503);}
 }
