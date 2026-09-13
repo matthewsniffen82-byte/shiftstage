@@ -7496,13 +7496,33 @@ body.dancr-button-system #results.venue-profile-overlay .venue-detail
   justify-content: center;
   gap: 6px;
   padding: 8px 10px;
-  border: 1px solid var(--dancr-color-border-strong);
+  border: 1px solid var(--dancr-color-success-strong) !important;
   border-radius: 13px;
   color: var(--dancr-color-text-primary);
-  background: var(--dancr-color-surface-raised);
-  box-shadow: inset 0 1px 0 var(--dancr-color-white-soft);
+  background: color-mix(in srgb, var(--dancr-color-success) 6%, var(--dancr-color-surface-raised)) !important;
+  box-shadow: none !important;
   font-size: 11.5px;
   line-height: 1.2;
+}
+
+body.dancr-button-system #results.venue-profile-overlay .venue-detail
+  .venue-detail-club-deal-actions > .venue-detail-entry-ride:is(:focus-visible, :active) {
+  border-color: var(--dancr-color-success) !important;
+  background: color-mix(in srgb, var(--dancr-color-success) 12%, var(--dancr-color-surface-raised)) !important;
+}
+
+body.dancr-button-system #results.venue-profile-overlay .venue-detail
+  .venue-detail-club-deal-actions > .venue-detail-entry-ride:focus-visible {
+  outline: 2px solid var(--dancr-color-success) !important;
+  outline-offset: 3px !important;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  body.dancr-button-system #results.venue-profile-overlay .venue-detail
+    .venue-detail-club-deal-actions > .venue-detail-entry-ride:hover {
+    border-color: var(--dancr-color-success) !important;
+    background: color-mix(in srgb, var(--dancr-color-success) 12%, var(--dancr-color-surface-raised)) !important;
+  }
 }
 
 body.dancr-button-system #results.venue-profile-overlay .venue-detail
