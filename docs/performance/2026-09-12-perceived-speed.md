@@ -27,3 +27,22 @@ Three real source probes totaled 86,846 bytes at 480 pixels, 8,887 bytes at 96 p
 All 38 focused avatar, image, TV card, TV feature and shell-version tests passed, with focused lint. Two existing card-label assertions still expected the old “Club Deal” label; they now check the already-deployed “Free Entry” text. No product copy or behavior was changed to satisfy those assertions.
 
 The poster probe did not justify a transformation change: the existing 640-pixel WebP poster sources were already compact, and transformed responses sometimes increased bytes and latency. Those sources and neighboring preview behavior are retained.
+
+Delivered `5f02a925`; [Vercel success](https://vercel.com/ai-movie-jobs/shiftstage/HowK4MTGgTqdradscJuDkGk4u2cZ). A deployed Chromium mobile sample confirmed the 96-pixel candidates with the same 44-pixel displayed geometry and no uncaught errors. The single timing sample is not used to claim an LCP improvement.
+
+## Final verification corrections
+
+The one complete automated run exercised 9,486 tests: 9,465 passed and 21 exposed existing release mismatches. Focused rechecks resolved all failing cases. Most assertions described older Free Entry/travel copy, poster handling, signed Storage delivery or caching; they now assert the current behavior, including private/no-store media and anonymous RLS checks. No assertion was skipped and no production business behavior was reverted to satisfy an older test.
+
+Two small production corrections were justified during that investigation:
+
+- `venueCard` referenced an undefined `railQrMarkup` instead of its already-prepared `directionsMarkup`. A new executable renderer test reproduced the `ReferenceError`. The one-line fix preserves entry, directions and pickup actions.
+- The media preview signer read server secrets without Next's `server-only` build boundary. It now has that marker and is included in the client-import boundary inventory. Native Node tests resolve only this marker to Next's own empty server implementation; the actual signer, visibility handler and image serializer still execute.
+
+The affected final test groups passed (133 initial focused passes, then all 36 card tests after the remaining corrections, plus 30 media/import-boundary checks; groups overlap). Route type generation, whole-project TypeScript and lint, migration validation, the single final production build, public-build scanning and the non-mutating postbuild check passed. Production styling, dependencies and database policies have no diff in this pass.
+
+## Remaining scope review
+
+The main lists use the existing HTML shell; adding React memoization would not address their rendering. Content keys preserve identical dancer/venue DOM, frame-scheduled/passive handlers handle scrolling, profile grids load in batches, and Supabase parent/relationship reads have limits. Discovery enrichments and metrics use existing parallel/batched reads. Profile intent prefetch remains limited to four metadata entries with a short lifetime; venue details reuse discovery data and return navigation restores screen position. Heavy dashboard tools already use dynamic imports.
+
+No additional small, measured bottleneck justified changing these paths. Protected media and visibility metadata retain their current private/no-store policies; city metadata, versioned assets and venue artwork retain their existing caching. Existing high source bitrates, per-request authorization latency, and the large shared shell/CSS remain limitations. Adaptive bitrate renditions and deeper shell splitting require separate measurement and architecture work; neither is introduced here. Physical-phone testing and field INP remain outside the available lab environment.

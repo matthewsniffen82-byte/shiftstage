@@ -120,7 +120,7 @@ test("the mobile profile keeps nightlife actions and active deals above the medi
   assert.match(profilePage, /sourceType=\{dealSourceType\}/);
   assert.match(profilePage, /presentation="profileCompact"/);
   assert.doesNotMatch(profilePage, /contextLabel=\{`Available tonight at \$\{activeShift\.venueName\}`\}/);
-  assert.match(profilePage, /ctaLabel=\{activeDeals\.length > 1 \? "Club Deals" : "Club Deal"\}/);
+  assert.match(profilePage, /ctaLabel="Free Entry"/);
   assert.doesNotMatch(profilePage, /hasPrimaryDeal=/);
   assert.doesNotMatch(profilePage, /import \{ VenueQrUnavailable \}|<VenueQrUnavailable/);
   assert.match(profilePage, /\{activeShift && activeDeal \? \([\s\S]*?className="profile-active-deal has-club-deal"/);

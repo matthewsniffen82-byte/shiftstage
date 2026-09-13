@@ -22,12 +22,13 @@ test("the production home shell keeps bounded browser and edge cache lifetimes",
   assert.doesNotMatch(rootRouteSource, /no-store, no-cache/);
 });
 
-test("home discovery uses one short-lived cached production endpoint", () => {
+test("home discovery uses one consolidated endpoint with current visibility checks", () => {
   assert.match(homeSource, /fetchJson\(`\/api\/public\/discovery\?\$\{query\}`, \{/);
   assert.doesNotMatch(homeSource, /fetchJson\(`\/api\/public\/dancers\?\$\{query\}`\)/);
   assert.match(discoveryRouteSource, /getLiveDancerDiscovery\(client, city\)/);
   assert.match(discoveryRouteSource, /PUBLIC_DYNAMIC_CACHE_CONTROL/);
-  assert.match(publicCacheSource, /max-age=10, s-maxage=10, stale-while-revalidate=20/);
+  assert.match(publicCacheSource, /PRIVATE_NO_STORE_CACHE_CONTROL = "private, no-store, max-age=0"/);
+  assert.match(publicCacheSource, /PUBLIC_DYNAMIC_CACHE_CONTROL =\s+PRIVATE_NO_STORE_CACHE_CONTROL/);
 });
 
 test("live-card metrics use one bounded aggregate instead of row paging or per-dancer queries", () => {

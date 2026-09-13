@@ -15,6 +15,8 @@ const publicServiceRoleRoutes = new Set([
   "app/api/dmca/notices/route.ts",
   "app/api/events/route.ts",
   "app/api/health/supabase/route.ts",
+  "app/api/media/dancer-photo/route.ts",
+  "app/api/media/dancer-video/route.ts",
   "app/api/nfc/[token]/route.ts",
   "app/api/reports/route.ts",
   "app/api/venue/access-code/preview/route.ts",
@@ -69,6 +71,17 @@ test("reviewed public exceptions still exist and still use the service-role clie
   for (const routePath of publicServiceRoleRoutes) {
     assert.ok(serviceRoleRoutes.includes(routePath), `${routePath} must be re-reviewed if removed or renamed`);
   }
+});
+
+test("media route exceptions delegate to the checked delivery handler with an anonymous visibility client", () => {
+  for (const kind of ['photo', 'video']) {
+    const source = read(`app/api/media/dancer-${kind}/route.ts`);
+    assert.ok(source.includes(`serveDancerMedia(request, '${kind}', { publicClient: createServerSupabaseClient(), admin: createAdminSupabaseClient()`));
+  }
+  const handler = read('src/lib/dancr/media-delivery.ts');
+  assert.match(handler, /if \(params.has\('preview'\) && !preview\) return unavailable\(\)/);
+  assert.match(handler, /if \(!preview\) \{[\s\S]*?deps.publicClient.from\('mydancr_tv_videos'\)[\s\S]*?if \(!visible.data\) return unavailable\(\)/);
+  assert.match(handler, /const client = preview \? deps.admin : deps.publicClient/);
 });
 
 test("scheduled workers authorize before constructing a service-role client", () => {

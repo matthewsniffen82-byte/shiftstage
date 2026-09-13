@@ -1,7 +1,8 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { createClient } from '@supabase/supabase-js';
-import { serveDancerMedia } from '../src/lib/dancr/media-delivery.ts';
+import { importMediaModule } from './helpers/server-media-module.mjs';
+const { serveDancerMedia } = await importMediaModule('media-delivery.ts');
 
 const id = '96000000-0000-4000-8000-000000000001';
 const photoPath = 'owner/photo.jpg';

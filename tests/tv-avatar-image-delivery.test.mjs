@@ -3,7 +3,8 @@ import { readFileSync } from 'node:fs';
 import test from 'node:test';
 import vm from 'node:vm';
 import ts from 'typescript';
-import { responsivePublicImage } from '../src/lib/dancr/responsive-image.ts';
+import { importMediaModule } from './helpers/server-media-module.mjs';
+const { responsivePublicImage } = await importMediaModule('responsive-image.ts');
 
 const tv = readFileSync('src/lib/dancr/tv.ts', 'utf8');
 const shell = readFileSync('outputs/index.html', 'utf8');

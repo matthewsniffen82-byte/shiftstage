@@ -46,7 +46,7 @@ test("secondary account panels do not claim data is empty while requests are loa
 test("legacy dashboard notifications and support distinguish loading, error, and empty states", () => {
   assert.match(
     liveShell,
-    /let liveNotificationsState = authSession\?\.accessToken \? "loading" : "idle";[\s\S]*?if \(liveNotificationsState === "loading"\)[\s\S]*?Loading notifications…[\s\S]*?if \(liveNotificationsState === "error"\)[\s\S]*?Notifications are temporarily unavailable\.[\s\S]*?No notifications yet\./,
+    /let liveNotificationsState = authSession\?\.accessToken \? "loading" : "idle";[\s\S]*?if \(liveNotificationsState === "loading"\)[\s\S]*?Loading notifications…[\s\S]*?if \(liveNotificationsState === "error"\)[\s\S]*?Notifications could not be loaded\. Reopen notifications to try again\.[\s\S]*?No notifications yet\./,
   );
   assert.match(
     liveShell,

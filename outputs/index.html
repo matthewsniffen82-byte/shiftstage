@@ -52751,7 +52751,7 @@
           <button class="venue-card-follow ${followsVenue ? "is-active" : ""}" type="button" data-venue-follow="${venueValue}" data-account-action="venue-follow" aria-label="${followsVenue ? `Unfollow ${safeName}` : `Follow ${safeName}`}" aria-pressed="${followsVenue}">${actionIconMarkup("heart")}</button>
           <div class="venue-card-actions${rideMarkup ? " with-uber-ride" : ""}" aria-label="${safeName} quick actions">
             ${venueCardQrMarkup(venue)}
-            ${railQrMarkup}
+            ${directionsMarkup}
             ${rideMarkup}
           </div>
         </article>

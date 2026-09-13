@@ -138,12 +138,12 @@ test("fictional Vegas venue travel uses one active MyDancr destination", () => {
   assert.match(liveApp, /const FICTIONAL_DEMO_VENUE_TRAVEL_ADDRESS = "0000 MyDancr Ave, Las Vegas, NV 55555"/);
   assert.match(liveApp, /function fictionalDemoVenueTravelAddress\(venue\)[\s\S]*?isFictionalDemoVenue\(venue\) \? FICTIONAL_DEMO_VENUE_TRAVEL_ADDRESS : ""/);
   assert.match(liveApp, /function venueDirectionsMarkup[\s\S]*?destinationAddress = fictionalDemoVenueTravelAddress\(venue\)[\s\S]*?encodeURIComponent\(destinationAddress\)/);
-  assert.match(liveApp, /function uberRideLinkMarkup[\s\S]*?const href = `\/rides\/\$\{encodeURIComponent\(venue.id\)\}`[\s\S]*?data-free-ride-link/);
+  assert.match(liveApp, /function uberRideLinkMarkup[\s\S]*?const href = `\/rides\/\$\{encodeURIComponent\(venue.id\)\}\$\{query.size[\s\S]*?data-free-ride-link/);
   assert.doesNotMatch(liveApp, /data-demo-travel|isFictionalDemoTravelPreviewOnly/);
   assert.match(liveApp, /venueDirectionsMarkup\(\{[\s\S]*?venue-address-directions/);
   assert.match(liveApp, /venueDirectionsMarkup\(\{[\s\S]*?home-discovery-feed-directions venue-directions-btn/);
   assert.doesNotMatch(uberButton, /Preview only|aria-disabled="true"|isFictionalVenueTravelPreviewOnly/);
-  assert.match(uberButton, /<a[\s\S]*?href=\{`\/rides\/\$\{encodeURIComponent\(venue.id\)\}`\}/);
+  assert.match(uberButton, /const href = `\/rides\/\$\{encodeURIComponent\(venue.id\)\}[\s\S]*?<a[\s\S]*?href=\{href\}/);
 });
 
 test("demo venues keep placeholders while managed venue pages can use verified addresses", () => {

@@ -4,8 +4,9 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 import vm from "node:vm";
 import sharp from "sharp";
+import { importMediaModule } from './helpers/server-media-module.mjs';
 
-const { responsivePublicImage } = await import("../src/lib/dancr/responsive-image.ts");
+const { responsivePublicImage } = await importMediaModule('responsive-image.ts');
 const shell = readFileSync("outputs/index.html", "utf8");
 const client = { storage: { from: () => ({ getPublicUrl: (path, options) => {
   if (options) assert.equal(options.transform.resize, "contain", "preserve the full photo aspect ratio");

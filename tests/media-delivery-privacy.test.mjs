@@ -1,8 +1,9 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { serveDancerMedia } from '../src/lib/dancr/media-delivery.ts';
-import { dancerPhotoDeliveryUrl, dancerVideoDeliveryUrl, mediaPreviewToken, verifyMediaPreview } from '../src/lib/dancr/media-delivery-url.ts';
-import { responsivePublicImage } from '../src/lib/dancr/responsive-image.ts';
+import { importMediaModule } from './helpers/server-media-module.mjs';
+const { serveDancerMedia } = await importMediaModule('media-delivery.ts');
+const { dancerPhotoDeliveryUrl, dancerVideoDeliveryUrl, mediaPreviewToken, verifyMediaPreview } = await importMediaModule('media-delivery-url.ts');
+const { responsivePublicImage } = await importMediaModule('responsive-image.ts');
 process.env.DANCR_ACCOUNT_RECOVERY_SECRET = 'synthetic-media-test-secret-not-a-credential';
 const id='96000000-0000-4000-8000-000000000001';
 const path='owner/photo.r320-480.m900x1200.f50x50.jpg';

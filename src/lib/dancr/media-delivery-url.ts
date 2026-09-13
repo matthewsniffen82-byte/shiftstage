@@ -1,3 +1,5 @@
+import "server-only";
+
 import { publicAppUrl } from './public-app-url.ts';
 import { createHmac, timingSafeEqual } from 'node:crypto';
 

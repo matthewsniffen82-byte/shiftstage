@@ -66,7 +66,7 @@ test("dancers see tap guidance while venues keep their approved roster", () => {
 });
 
 test("venue roster affiliations expose responsive approved dancer avatars", () => {
-  assert.match(service, /responsivePublicImage\(client, DANCER_PHOTO_BUCKET, dancer\?\.avatar_storage_path\)/);
+  assert.match(service, /responsivePublicImage\(client, DANCER_PHOTO_BUCKET, dancer\?\.avatar_storage_path, \{ preview: true \}\)/);
   assert.match(service, /avatarUrl: avatar\?\.imageUrl \|\| null/);
   assert.match(service, /avatarSrcSet: avatar\?\.imageSrcSet \|\| null/);
   assert.match(venuePanel, /sizes="48px"/);

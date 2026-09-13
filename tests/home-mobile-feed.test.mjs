@@ -603,7 +603,7 @@ test("venue inline cards use production venue, schedule, revenue, and customer a
   );
   assert.match(
     homeSource,
-    /function homeVenueDiscoveryQrMarkup\(venue\)[\s\S]*?venue\?\.id && venue\.activeDeal\?\.id[\s\S]*?data-card-action-slot="qr"[\s\S]*?data-club-deal-state="available"[\s\S]*?data-club-deal-cta[\s\S]*?actionButtonLabel\("qr", offerCount > 1 \? "Club Deals" : "Club Deal"\)[\s\S]*?data-club-deal-state="unavailable"[\s\S]*?data-card-qr-label="Club Deal unavailable"[\s\S]*?actionButtonLabel\("qr", "Club Deals"\)/,
+    /function homeVenueDiscoveryQrMarkup\(venue\)[\s\S]*?venue\?\.id && venue\.activeDeal\?\.id[\s\S]*?data-card-action-slot="qr"[\s\S]*?data-club-deal-state="available"[\s\S]*?data-club-deal-cta[\s\S]*?actionButtonLabel\("qr", "Free Entry"\)[\s\S]*?data-club-deal-state="unavailable"[\s\S]*?data-card-qr-label="Free entry unavailable"[\s\S]*?actionButtonLabel\("qr", "Free Entry"\)/,
   );
   const venueQrHelper = homeSource.match(
     /function homeVenueDiscoveryQrMarkup\(venue\) \{[\s\S]*?(?=\n    function homeVenueDiscoveryFeedSlide)/,
@@ -623,7 +623,7 @@ test("venue inline cards use production venue, schedule, revenue, and customer a
   assert.doesNotMatch(venueSlide, /activeDealCount|dealIndicatorMarkup|home-venue-discovery-deal-indicator/);
   assert.match(
     venueSlide,
-    /home-venue-discovery-location[\s\S]*?home-venue-discovery-context-actions[\s\S]*?\$\{directionsMarkup\}[\s\S]*?\$\{rideMarkup\}[\s\S]*?home-venue-discovery-action-rail[\s\S]*?data-open-venue-profile="\$\{venueValue\}"[\s\S]*?actionButtonLabel\("clubProfile", "Club Page"\)[\s\S]*?\$\{railQrMarkup\}[\s\S]*?data-share-venue="\$\{venueValue\}"[\s\S]*?actionButtonLabel\("share", "Share"\)[\s\S]*?data-venue-follow="\$\{venueValue\}"/,
+    /home-venue-discovery-location[\s\S]*?home-venue-discovery-context-actions[\s\S]*?\$\{railQrMarkup\}[\s\S]*?\$\{rideMarkup\}[\s\S]*?home-venue-discovery-action-rail[\s\S]*?data-open-venue-profile="\$\{venueValue\}"[\s\S]*?actionButtonLabel\("clubProfile", "Club Page"\)[\s\S]*?\$\{directionsMarkup\}[\s\S]*?data-share-venue="\$\{venueValue\}"[\s\S]*?actionButtonLabel\("share", "Share"\)[\s\S]*?data-venue-follow="\$\{venueValue\}"/,
   );
   assert.doesNotMatch(venueSlide, /home-venue-discovery-name-row|home-venue-discovery-name/);
   assert.doesNotMatch(venueSlide, /home-venue-discovery-profile-cta/);
@@ -823,7 +823,7 @@ test("Working Now dancer grid cards expose a functional cashier-tap Club Deal ac
   );
   assert.match(
     homeSource,
-    /function homeDancerGridQrMarkup\(profile\)[\s\S]*?dancerClubDealState\(profile\)[\s\S]*?homeDiscoveryFeedLiveQrData\(profile\)[\s\S]*?state\.key !== "available"[\s\S]*?class="feed-card-action home-card-qr-rail-action is-unavailable is-\$\{state\.key\}"[\s\S]*?data-card-qr-label[\s\S]*?data-card-qr-message[\s\S]*?actionButtonLabel\("qr", "Club Deals"\)[\s\S]*?class="feed-card-action home-card-qr-rail-action is-available"[\s\S]*?data-feed-live-qr[\s\S]*?actionButtonLabel\("qr", qr\.offerCount > 1 \? "Club Deals" : "Club Deal"\)/,
+    /function homeDancerGridQrMarkup\(profile\)[\s\S]*?dancerClubDealState\(profile\)[\s\S]*?homeDiscoveryFeedLiveQrData\(profile\)[\s\S]*?state\.key !== "available"[\s\S]*?class="feed-card-action home-card-qr-rail-action is-unavailable is-\$\{state\.key\}"[\s\S]*?data-card-qr-label[\s\S]*?data-card-qr-message[\s\S]*?actionButtonLabel\("qr", "Free Entry"\)[\s\S]*?class="feed-card-action home-card-qr-rail-action is-available"[\s\S]*?data-feed-live-qr[\s\S]*?actionButtonLabel\("qr", "Free Entry"\)/,
   );
   assert.match(
     homeSource,

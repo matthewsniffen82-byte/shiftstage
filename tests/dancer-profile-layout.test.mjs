@@ -233,7 +233,7 @@ test("profile actions keep profile controls separate from Tonight travel actions
   assert.match(profileDirections, /source: "dancer_profile"/);
   assert.match(profilePage, /className=\{`profile-tonight-travel-actions\$\{activeShift \? " is-working-now" : " is-upcoming has-venue-deal-link"\}`\}/);
   assert.match(profilePage, /<DancerDirectionsButton dancerId=\{profile\.id\} venue=\{actionVenue\} \/>/);
-  assert.match(profilePage, /profile-tonight-travel-actions[\s\S]*?<DancerDirectionsButton[\s\S]*?<UberRideButton[\s\S]*?compact[\s\S]*?source="dancer_profile"[\s\S]*?profile-upcoming-venue-deal[\s\S]*?>View Deal</);
+  assert.match(profilePage, /profile-tonight-travel-actions[\s\S]*?<DancerDirectionsButton[\s\S]*?<UberRideButton[\s\S]*?compact[\s\S]*?source="dancer_profile"[\s\S]*?profile-upcoming-venue-deal[\s\S]*?>Free Entry</);
   assert.match(profilePage, /\.profile-tonight-travel-actions:is\(\.is-working-now, \.is-upcoming, \.is-no-schedule\) \{ grid-template-columns: repeat\(2, minmax\(0, 1fr\)\); \}/);
   assert.match(profilePage, /\.profile-tonight-travel-actions\.is-upcoming\.has-venue-deal-link \{ grid-template-columns: repeat\(3, minmax\(0, 1fr\)\); \}/);
   assert.match(profileActions, /readConfirmedNotificationCount/);
@@ -301,7 +301,7 @@ test("only Working Now activates dancer deal attribution while Upcoming links to
   assert.match(profilePage, /venueId=\{activeShift\.venueId\}[\s\S]*?venueName=\{activeShift\.venueName\}/);
   assert.doesNotMatch(profilePage, /contextLabel=\{`Available tonight at \$\{activeShift\.venueName\}`\}/);
   assert.match(profilePage, /presentation="profileCompact"/);
-  assert.match(profilePage, /\) : actionShift \? \([\s\S]*?className="profile-deal-availability-line"[\s\S]*?"Going tonight\? View the Club Deal"/);
+  assert.match(profilePage, /\) : actionShift \? \([\s\S]*?className="profile-deal-availability-line"[\s\S]*?"Going tonight\? View free entry"/);
   assert.doesNotMatch(profilePage, /className="profile-active-deal is-inactive"|Deals activate after a verified club check-in/);
   assert.match(liveApp, /const dealMarkup = profile\?\.scheduled[\s\S]*?profileDealTileMarkup\(profile\)[\s\S]*?: "";/);
   assert.match(
@@ -310,7 +310,7 @@ test("only Working Now activates dancer deal attribution while Upcoming links to
   );
   assert.match(profilePage, /sourceType=\{dealSourceType\}/);
   assert.match(profilePage, /const dancerAttributionEligible = Boolean\(\s+activeShift && activeShift\.shiftSource !== "demo_locked"/);
-  assert.match(profilePage, /ctaLabel=\{activeDeals\.length > 1 \? "Club Deals" : "Club Deal"\}/);
+  assert.match(profilePage, /ctaLabel="Free Entry"/);
   assert.match(profilePage, /createDancerDealAttributionToken/);
   assert.match(profilePage, /attributionToken=\{dealAttributionToken\}/);
   assert.match(profilePage, /attributionTokens=\{dealAttributionTokens\}/);
@@ -337,7 +337,7 @@ test("only Working Now activates dancer deal attribution while Upcoming links to
     liveApp.match(/function dancerProfileUpcomingVenueDealMarkup[\s\S]*?function dancerProfileTonightTravelActionsMarkup/)?.[0] || "",
     /data-club-deal-cta|dealAttributionToken|sourceType: "dancer_profile"/,
   );
-  assert.match(profilePage, /data-upcoming-venue-deal="venue-page"[\s\S]*?href=\{`\/venues\/\$\{encodeURIComponent\(actionShift\.venueSlug\)\}`\}[\s\S]*?<span>View Deal<\/span>/);
+  assert.match(profilePage, /data-upcoming-venue-deal="venue-page"[\s\S]*?href=\{`\/venues\/\$\{encodeURIComponent\(actionShift\.venueSlug\)\}`\}[\s\S]*?<span>Free Entry<\/span>/);
   assert.doesNotMatch(
     profilePage.match(/\{!activeShift && actionShift \? \([\s\S]*?\) : null\}/)?.[0] || "",
     /ClubDealCard|createDancerDealAttributionToken|data-club-deal-cta/,
@@ -390,7 +390,7 @@ test("active full-profile Club Deals render a compact cashier-tap action and use
   assert.doesNotMatch(activeDealMarkup, /Working Now Club Deal|How credit works|No sign-in required/);
   assert.match(
     liveApp,
-    /async function hydrateProfileClubDealQr\(root\)[\s\S]*?offers\.length > 1[\s\S]*?<strong>Club Deals<\/strong>[\s\S]*?createRevenueDealPass\(config\)[\s\S]*?profile-club-deal-nfc-symbol[\s\S]*?<strong>Club Deal<\/strong>/,
+    /async function hydrateProfileClubDealQr\(root\)[\s\S]*?offers\.length > 1[\s\S]*?<strong>Free Entry<\/strong>[\s\S]*?createRevenueDealPass\(config\)[\s\S]*?profile-club-deal-nfc-symbol[\s\S]*?<strong>Free Entry<\/strong>/,
   );
   assert.doesNotMatch(liveApp, /How to use<\/strong><small>View steps/);
   assert.match(

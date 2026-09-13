@@ -20,6 +20,7 @@ const privilegedModules = [
   "src/lib/dancr/dmca.ts",
   "src/lib/dancr/image-moderation.ts",
   "src/lib/dancr/media-identity.ts",
+  "src/lib/dancr/media-delivery-url.ts",
   "src/lib/dancr/nats.ts",
   "src/lib/dancr/notification-delivery.ts",
   "src/lib/dancr/payout-provider.ts",

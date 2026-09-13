@@ -86,8 +86,8 @@ test("poster paths are deterministic siblings of their approved videos", () => {
 test("public video payloads expose protected poster URLs without storage metadata", () => {
   assert.match(tvService, /distribution_scope, is_pinned, moderation_details, dancer_profiles/);
   assert.match(tvService, /normalizedVideoPosterStoragePath\(row\)/);
-  assert.match(tvService, /createSignedUrls\(rows\.map\(\(row\) => row\.storagePath\)/);
-  assert.match(tvService, /posterUrl: row\.posterStoragePath[\s\S]*?from\(MYDANCR_TV_POSTER_BUCKET\)[\s\S]*?getPublicUrl\(row\.posterStoragePath\)/);
+  assert.match(tvService, /const videoUrl = dancerVideoDeliveryUrl\(row\.id\)/);
+  assert.match(tvService, /posterUrl: row\.posterStoragePath\s*\? dancerVideoDeliveryUrl\(row\.id, true\)/);
   assert.match(tvService, /posterStoragePath: _posterStoragePath/);
   assert.doesNotMatch(tvService, /\.\.\.publicVideo,[\s\S]{0,120}posterStoragePath:/);
 });
