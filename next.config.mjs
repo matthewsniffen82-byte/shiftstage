@@ -85,6 +85,7 @@ const nextConfig = {
   outputFileTracingIncludes: {
     "/": ["./public/outputs/live-shell.css"],
     "/live-shell.js": ["./outputs/live-shell-app.js"],
+    "/live-shell-feature.js": ["./outputs/live-shell-tv.js"],
     "/hls-engine.js": ["./node_modules/hls.js/dist/hls.light.min.mjs"],
     "/api/admin/tv/import": ["./node_modules/ffmpeg-static/ffmpeg*"],
     "/api/admin/tv/videos": ["./node_modules/ffmpeg-static/ffmpeg*"],

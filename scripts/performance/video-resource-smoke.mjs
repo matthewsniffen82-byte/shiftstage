@@ -20,6 +20,7 @@ await context.route("**/*", async route => {
   if (localShell) {
     if (route.request().resourceType() === "document") return route.fulfill({ contentType: "text/html", body: shellHtml });
     if (url.pathname === "/live-shell.js") return route.fulfill({ contentType: "text/javascript", body: await readFile("outputs/live-shell-app.js") });
+    if (url.pathname === "/live-shell-feature.js" && url.searchParams.get("feature") === "tv") return route.fulfill({ contentType: "text/javascript", body: await readFile("outputs/live-shell-tv.js") });
     if (url.pathname === "/profile-media-card-feed.css") return route.fulfill({ contentType: "text/css", body: await readFile("public/profile-media-card-feed.css") });
     if (url.pathname === "/adaptive-video.mjs") return route.fulfill({ contentType: "application/javascript", body: await readFile("public/adaptive-video.mjs") });
     if (url.pathname === "/hls-engine.js") return route.fulfill({ contentType: "application/javascript", body: await readFile("node_modules/hls.js/dist/hls.light.min.mjs") });

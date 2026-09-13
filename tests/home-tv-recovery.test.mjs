@@ -76,6 +76,18 @@ test("ordinary forbidden responses remain ordinary errors without initiating ver
   assert.equal(f.navigations.length, 0);
 });
 
+test("an unavailable TV chunk offers a user-requested page reload with the current feed scope", async () => {
+  const f = fixture();
+  f.context.loadLiveShellFeature = async () => { throw Object.assign(new Error("chunk unavailable"), { code: "SHELL_FEATURE_UNAVAILABLE" }); };
+  f.context.fetch = async () => Response.json({ ok: true, videos: [] });
+  await f.load();
+  assert.equal(f.context.homeTvFeedStatus, "shell-reload-required");
+  assert.match(f.context.results.children[0].textContent, /Reload the page/);
+  assert.equal(f.navigations.length, 0);
+  f.button().listeners.click();
+  assert.equal(new URL(f.navigations[0]).searchParams.get("view"), "tv");
+});
+
 test("manual TV retry bypasses a stale response and renders recovered videos", async () => {
   const f = fixture(); const requests = [];
   f.context.fetch = async (url, options) => {

@@ -13,6 +13,7 @@ tmp/pdfs/
 .platform-tv-import-*.json
 /public/outputs/live-shell.css
 /outputs/live-shell-app.js
+/outputs/live-shell-tv.js
 .env.local
 .env*
 !.env.example

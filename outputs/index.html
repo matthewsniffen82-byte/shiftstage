@@ -62796,6 +62796,12 @@
         settleHomeTvFeedLanding({ complete: true });
         return;
       }
+      if (homeTvFeedStatus === "shell-reload-required") {
+        setHomeTvFeedCount("Reload needed", venueFilter);
+        renderHomeTvFeedMessage("Reload the page to finish loading MyDancr TV.", city, true);
+        settleHomeTvFeedLanding({ complete: true });
+        return;
+      }
       if (homeTvFeedStatus === "error") {
         setHomeTvFeedCount("Unavailable", venueFilter);
         renderHomeTvFeedMessage("MyDancr TV videos are temporarily unavailable.", city);
@@ -62842,6 +62848,30 @@
       settleHomeTvFeedLanding({ complete: true });
     }
 
+    // Development keeps the readable shell together. The production generator
+    // supplies content-versioned, on-demand classic scripts at this boundary.
+    const LIVE_SHELL_FEATURE_URLS = Object.freeze({});
+    const liveShellFeatureLoads = new Map();
+    function loadLiveShellFeature(feature) {
+      const source = LIVE_SHELL_FEATURE_URLS[feature];
+      if (!source) return Promise.resolve();
+      if (liveShellFeatureLoads.has(feature)) return liveShellFeatureLoads.get(feature);
+      const pending = new Promise((resolve, reject) => {
+        const script = document.createElement("script");
+        script.src = source;
+        script.async = true;
+        script.onload = () => { script.onload = script.onerror = null; resolve(); };
+        script.onerror = () => {
+          script.remove();
+          liveShellFeatureLoads.delete(feature);
+          reject(Object.assign(new Error("Unable to load MyDancr TV. Please reload the page."), { code: "SHELL_FEATURE_UNAVAILABLE" }));
+        };
+        document.head.appendChild(script);
+      });
+      liveShellFeatureLoads.set(feature, pending);
+      return pending;
+    }
+
     async function loadHomeTvFeed(city, venueId = "", selectedVideoId = selectedHomeTvVideoId(), options = {}) {
       void loadAdaptiveVideoController().catch(() => undefined);
       homeTvFeedAbort?.abort();
@@ -62853,11 +62883,11 @@
         if (venueId) params.set("venue", venueId);
         if (selectedVideoId) params.set("video", selectedVideoId);
         if (options.refresh) params.set("refresh", String(Date.now()));
-        const payload = await fetchJson(`/api/public/tv?${params.toString()}`, {
+        const [payload] = await Promise.all([fetchJson(`/api/public/tv?${params.toString()}`, {
           retries: PUBLIC_DISCOVERY_REQUEST_RETRIES,
           cache: options.refresh ? "no-store" : "default",
           signal: controller?.signal
-        });
+        }), loadLiveShellFeature("tv")]);
         if (!payload.ok) throw new Error(payload.error || "Unable to load MyDancr TV.");
         if (
           requestId !== homeTvFeedRequest ||
@@ -62882,7 +62912,8 @@
           homeTvFeedSelectedVideoId !== selectedVideoId
         ) return;
         homeTvFeedVideos = [];
-        homeTvFeedStatus = error?.code === "BROWSER_VERIFICATION_REQUIRED" ? "verification-required" : "error";
+        homeTvFeedStatus = error?.code === "BROWSER_VERIFICATION_REQUIRED" ? "verification-required"
+          : error?.code === "SHELL_FEATURE_UNAVAILABLE" ? "shell-reload-required" : "error";
       } finally {
         if (homeTvFeedAbort === controller) homeTvFeedAbort = null;
       }
