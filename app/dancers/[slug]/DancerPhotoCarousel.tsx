@@ -972,8 +972,7 @@ export function DancerPhotoCarousel({
                     }}
                     onPause={() => handleViewerPlaybackChange(index, true)}
                     onPlay={() => handleViewerPlaybackChange(index, false)}
-                    onLoadedData={(event) => {
-                      event.currentTarget.dataset.frameReady = "true";
+                    onLoadedData={() => {
                       if (index === viewerIndex) setViewerVideoReadyVersion((version) => version + 1);
                     }}
                     onEmptied={(event) => { delete event.currentTarget.dataset.frameReady; }}

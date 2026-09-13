@@ -32785,6 +32785,27 @@
           outline: 3px solid #7eeaff;
           outline-offset: -4px;
         }
+        /* Native video posters can disappear before the first mobile playback
+           frame. Keep an independent, untinted preview over that gap. */
+        .home-tv-feed-poster {
+          position: absolute;
+          z-index: 2;
+          inset: 0;
+          width: 100%;
+          height: 100%;
+          display: block;
+          object-fit: cover;
+          opacity: 1;
+          filter: none;
+          transition: none;
+          pointer-events: none;
+        }
+        .home-tv-feed-video[data-frame-ready="true"] + .home-tv-feed-poster {
+          visibility: hidden;
+        }
+        .home-tv-feed-poster:not([src]), .home-tv-feed-poster[hidden] {
+          display: none;
+        }
         .home-tv-feed-media-fallback {
           position: absolute;
           z-index: 0;
@@ -54505,12 +54526,12 @@
           video.poster = posterUrl;
         }
         video.addEventListener("loadeddata", () => {
-          video.dataset.frameReady = "true";
           if (Number(overlay.dataset.videoIndex || 0) !== index) return;
           overlay.dataset.loadedVideoIndex = String(index);
           syncProfileTvVideoLoading(overlay, index);
         });
         video.addEventListener("emptied", () => { delete video.dataset.frameReady; });
+        watchVideoPosterPresentation(video);
         slide.appendChild(video);
         const poster = document.createElement("img");
         poster.className = "profile-media-video-poster";
@@ -61515,6 +61536,68 @@
       }
     }
 
+    function watchVideoPosterPresentation(video) {
+        let frame = null;
+        let paint = null;
+        let generation = 0;
+        const cancel = () => {
+            generation++;
+            if (frame !== null)
+                video.cancelVideoFrameCallback(frame);
+            if (paint !== null)
+                window.cancelAnimationFrame(paint);
+            frame = null;
+            paint = null;
+        };
+        const reset = () => {
+            cancel();
+            delete video.dataset.frameReady;
+        };
+        const reveal = () => {
+            if (video.dataset.frameReady === "true" || frame !== null || paint !== null)
+                return;
+            const source = video.getAttribute("src");
+            if (!source)
+                return;
+            const version = generation;
+            const ready = () => video.isConnected && generation === version &&
+                video.getAttribute("src") === source && video.readyState >= 2;
+            if (typeof video.requestVideoFrameCallback === "function") {
+                frame = video.requestVideoFrameCallback(() => {
+                    if (generation !== version)
+                        return;
+                    frame = null;
+                    if (ready())
+                        video.dataset.frameReady = "true";
+                });
+            }
+            else {
+                // Older browsers: allow a paint after the native playing event, never
+                // reveal a merely preloaded or autoplay-blocked player.
+                paint = window.requestAnimationFrame(() => {
+                    if (generation !== version)
+                        return;
+                    paint = window.requestAnimationFrame(() => {
+                        if (generation !== version)
+                            return;
+                        paint = null;
+                        if (ready() && !video.paused)
+                            video.dataset.frameReady = "true";
+                    });
+                });
+            }
+        };
+        video.addEventListener("playing", reveal);
+        video.addEventListener("emptied", reset);
+        video.addEventListener("error", reset);
+        return () => {
+            reset();
+            video.removeEventListener("playing", reveal);
+            video.removeEventListener("emptied", reset);
+            video.removeEventListener("error", reset);
+        };
+    }
+
     function canWarmAdjacentVideo() {
       const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
       if (!connection) return true;
@@ -61699,10 +61782,13 @@
         const video = slide.querySelector("video.home-tv-feed-video");
         if (!video) return;
         const posterUrl = String(video.dataset.posterUrl || "");
-        if (posterUrl && Math.abs(index - activeIndex) <= 1) {
+        const poster = video.nextElementSibling;
+        if (posterUrl && Math.abs(index - activeIndex) <= 2) {
           if (video.getAttribute("poster") !== posterUrl) video.poster = posterUrl;
+          if (poster?.getAttribute("src") !== posterUrl) poster?.setAttribute("src", posterUrl);
         } else {
           video.removeAttribute("poster");
+          poster?.removeAttribute("src");
         }
         if (index === activeIndex) return;
         const mode = videoBufferMode(index, activeIndex, allowNextWarmup, activeReady, video.hasAttribute("src"));
@@ -62077,7 +62163,8 @@
       if (video.autoplay) video.setAttribute("autoplay", "");
       const posterUrl = String(item?.posterUrl || item?.poster_url || "").trim();
       video.dataset.posterUrl = posterUrl;
-      if (posterUrl && index <= 1) video.poster = posterUrl;
+      if (posterUrl && index <= 2) video.poster = posterUrl;
+      watchVideoPosterPresentation(video);
       video.preload = index === 0 ? "auto" : "none";
       video.controlsList = "nodownload noremoteplayback nofullscreen";
       video.disablePictureInPicture = true;
@@ -62533,6 +62620,15 @@
       );
       const fallback = createHomeTvFeedMediaFallback();
       const video = createHomeTvFeedVideo(item, videoIndex, slide, totalVideos);
+      const poster = document.createElement("img");
+      poster.className = "home-tv-feed-poster";
+      poster.alt = "";
+      poster.setAttribute("aria-hidden", "true");
+      poster.loading = "eager";
+      poster.decoding = "async";
+      if (video.poster) poster.src = video.poster;
+      poster.addEventListener("error", () => { poster.hidden = true; });
+      poster.addEventListener("load", () => { poster.hidden = false; });
       const playback = document.createElement("span");
       playback.className = "home-tv-feed-playback";
       playback.innerHTML = modalVideoPlaybackIcon(true);
@@ -62548,6 +62644,7 @@
       const children = [
         fallback,
         video,
+        poster,
         playback,
         createHomeTvFeedFullViewCloseButton(slide, video),
         createHomeTvFeedActions(item, slide, video),
