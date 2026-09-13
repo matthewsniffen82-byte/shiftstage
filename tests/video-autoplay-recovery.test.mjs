@@ -38,21 +38,21 @@ test("MyDancr TV declares and retries muted autoplay for the active snap-scroll 
 test("MyDancr TV gives the first card exclusive bandwidth before warming scroll neighbors", () => {
   assert.match(
     feedClient,
-    /const primeNextVideo[\s\S]*?allowVideoWarmup[\s\S]*?setWarmAfterVideoId\(videoId\)/,
+    /const primeVideoNeighbors[\s\S]*?allowVideoWarmup[\s\S]*?setVideoReadyVersion\(\(version\) => version \+ 1\)/,
   );
   assert.match(
     feedClient,
-    /element\.preload = isActive \? "auto" : shouldWarm \? "metadata" : "none"/,
+    /videoBufferMode\(videoIndex, activeIndex, allowVideoWarmup, activeReady, element\.hasAttribute\("src"\)\)/,
   );
   assert.match(
     feedClient,
-    /preload=\{[\s\S]*?video\.id === activeVideoId[\s\S]*?\? "auto"[\s\S]*?videoIndex === activeVideoIndex \+ 1[\s\S]*?\? "metadata"[\s\S]*?: "none"/,
+    /preload="none"\s*data-video-url=\{video\.videoUrl\}/,
   );
   assert.match(
     feedClient,
-    /onLoadedData=\{[\s\S]*?primeNextVideo\(video\.id\)/,
+    /onLoadedData=\{[\s\S]*?primeVideoNeighbors\(video\.id\)/,
   );
-  assert.match(feedClient, /src=\{video\.id === activeVideoId \|\| \([\s\S]*?videoIndex === activeVideoIndex \+ 1[\s\S]*?\? video\.videoUrl : undefined\}/);
+  assert.match(feedClient, /mode === "auto" && !element\.hasAttribute\("src"\)/);
 });
 
 test("profile and venue video strips autoplay only their visible muted preview", () => {

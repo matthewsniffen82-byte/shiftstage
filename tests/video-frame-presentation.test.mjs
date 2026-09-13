@@ -112,6 +112,21 @@ for (const [surface, source] of Object.entries(sources)) {
     assert.equal(h.video.dataset.frameReady, "true");
   });
 
+  test(`${surface}: returning to a paused buffered player waits for its new display frame`, () => {
+    const h = harness(source);
+    h.play(); h.frame(); h.paint(); h.paint();
+    h.video.paused = true;
+    h.emit("pause");
+    assert.equal(h.video.dataset.frameReady, "true", "manual pause retains the current frame");
+    h.video.paused = false;
+    h.emit("play");
+    assert.equal(h.video.dataset.frameReady, undefined, "resume cannot reuse a stale presentation marker");
+    h.emit("playing");
+    assert.equal(h.frames.size, 1);
+    h.frame(); h.paint(); h.paint();
+    assert.equal(h.video.dataset.frameReady, "true");
+  });
+
   test(`${surface}: errors and disposal cancel callbacks without affecting another player`, () => {
     for (const stop of ["error", "cleanup"]) {
       for (const phase of ["frame", "paint"]) {
@@ -152,10 +167,14 @@ test("all scrolling players attach presentation observers and keep a poster abov
   assert.match(resourceRef, /observeVideoPresentation\(video\)/);
   assert.match(resourceRef, /stopPresentation\(\)/);
   assert.doesNotMatch(profile, /dataset\.frameReady = "true"/);
-  assert.match(tv, /\.map\(observeVideoPresentation\)/);
+  assert.match(tv, /\.map\(videoResourceRef\)/);
   assert.match(tv, /video\[data-frame-ready="true"\] \+ \.tv-video-poster/);
   assert.match(live, /video\.addEventListener\("emptied"[^]*?observeVideoPresentation\(video\);\s*slide\.appendChild\(video\)/);
   assert.match(live, /video\.dataset\.posterUrl = posterUrl;[^]*?observeVideoPresentation\(video\)/);
   assert.match(live, /fallback,\s*video,\s*poster,/);
   assert.match(live, /\.home-tv-feed-video\[data-frame-ready="true"\] \+ \.home-tv-feed-video-poster/);
+  const css = readFileSync("public/profile-media-card-feed.css", "utf8");
+  assert.match(css, /\[aria-current="true"\] > video\[data-frame-ready="true"\]/);
+  assert.match(tv, /\.tv-slide\[aria-current="true"\] video\[data-frame-ready="true"\]/);
+  assert.match(live, /\.home-tv-feed-slide\[aria-current="true"\] \.home-tv-feed-video\[data-frame-ready="true"\]/);
 });

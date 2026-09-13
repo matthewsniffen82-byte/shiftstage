@@ -32795,7 +32795,7 @@
           background: #000;
           pointer-events: none;
         }
-        .home-tv-feed-video[data-frame-ready="true"] + .home-tv-feed-video-poster,
+        .home-tv-feed-slide[aria-current="true"] .home-tv-feed-video[data-frame-ready="true"] + .home-tv-feed-video-poster,
         .home-tv-feed-slide.is-media-unavailable .home-tv-feed-video-poster {
           visibility: hidden;
         }
@@ -54493,6 +54493,7 @@
         const slide = document.createElement("section");
         slide.className = "profile-tv-viewer-slide";
         slide.dataset.profileTvViewerIndex = String(index);
+        slide.setAttribute("aria-current", String(index === Number(overlay.dataset.videoIndex || 0)));
         slide.setAttribute("aria-label", `${profileName} video ${index + 1} of ${videos.length}`);
         const video = document.createElement("video");
         video.className = "profile-tv-viewer-video";
@@ -54520,9 +54521,10 @@
         poster.className = "profile-media-video-poster";
         poster.alt = "";
         poster.setAttribute("aria-hidden", "true");
-        poster.loading = "eager";
+        poster.loading = index < 6 || Math.abs(index - Number(overlay.dataset.videoIndex || 0)) <= 3 ? "eager" : "lazy";
+        poster.fetchPriority = index === Number(overlay.dataset.videoIndex || 0) ? "high" : "low";
         poster.decoding = "async";
-        if (video.poster) poster.src = video.poster;
+        if (posterUrl) poster.src = posterUrl;
         slide.appendChild(poster);
         stage.appendChild(slide);
       });
@@ -54538,11 +54540,13 @@
         const posterUrl = profileVideoPosterUrl(item);
         const poster = video.nextElementSibling;
         if (posterUrl && Math.abs(index - activeIndex) <= 2) {
-          video.poster = posterUrl;
-          if (poster?.getAttribute("src") !== posterUrl) poster?.setAttribute("src", posterUrl);
+          if (video.getAttribute("poster") !== posterUrl) video.poster = posterUrl;
         } else {
           video.removeAttribute("poster");
-          poster?.removeAttribute("src");
+        }
+        if (poster) {
+          poster.loading = index < 6 || Math.abs(index - activeIndex) <= 3 ? "eager" : "lazy";
+          poster.fetchPriority = index === activeIndex ? "high" : "low";
         }
         const mode = document.visibilityState === "hidden"
           ? index === activeIndex ? "retain" : "release"
@@ -54624,6 +54628,7 @@
       const viewerVideos = [...overlay.querySelectorAll(".profile-tv-viewer-video")];
       syncProfileTvVideoLoading(overlay, nextIndex);
       viewerVideos.forEach((video, videoIndex) => {
+        video.parentElement?.setAttribute("aria-current", String(videoIndex === nextIndex));
         if (videoIndex === nextIndex) {
           video.id = "profileTvViewerVideo";
         } else {
@@ -61472,8 +61477,7 @@
     function videoBufferMode(index, activeIndex, allowWarmup, activeReady, hasSource) {
       if (index === activeIndex) return "auto";
       if (!allowWarmup) return "release";
-      if (index === activeIndex + 1) return activeReady ? "metadata" : hasSource ? "retain" : "release";
-      if (index === activeIndex - 1 && hasSource) return "retain";
+      if (Math.abs(index - activeIndex) === 1) return activeReady ? "auto" : hasSource ? "retain" : "release";
       return "release";
     }
 
@@ -61579,6 +61583,13 @@
         }
       }
 
+      function startPlayback() {
+        // A resumed iPhone player can recreate its display surface after being offscreen.
+        reset();
+        reveal();
+      }
+
+      video.addEventListener("play", startPlayback);
       video.addEventListener("playing", reveal);
       video.addEventListener("timeupdate", reveal);
       video.addEventListener("pause", cancelPending);
@@ -61588,6 +61599,7 @@
       if (!video.paused) reveal();
       return () => {
         cancelPending();
+        video.removeEventListener("play", startPlayback);
         video.removeEventListener("playing", reveal);
         video.removeEventListener("timeupdate", reveal);
         video.removeEventListener("pause", cancelPending);
@@ -61705,10 +61717,12 @@
         const poster = video.nextElementSibling;
         if (posterUrl && Math.abs(index - activeIndex) <= 1) {
           if (video.getAttribute("poster") !== posterUrl) video.poster = posterUrl;
-          if (poster?.getAttribute("src") !== posterUrl) poster?.setAttribute("src", posterUrl);
         } else {
           video.removeAttribute("poster");
-          poster?.removeAttribute("src");
+        }
+        if (poster) {
+          poster.loading = index < 6 || Math.abs(index - activeIndex) <= 3 ? "eager" : "lazy";
+          poster.fetchPriority = index === activeIndex ? "high" : "low";
         }
         if (index === activeIndex) return;
         const mode = videoBufferMode(index, activeIndex, allowNextWarmup, activeReady, video.hasAttribute("src"));
@@ -62540,9 +62554,10 @@
       poster.className = "home-tv-feed-video-poster";
       poster.alt = "";
       poster.setAttribute("aria-hidden", "true");
-      poster.loading = "eager";
+      poster.loading = videoIndex < 6 ? "eager" : "lazy";
+      poster.fetchPriority = videoIndex === 0 ? "high" : "low";
       poster.decoding = "async";
-      if (video.poster) poster.src = video.poster;
+      if (video.dataset.posterUrl) poster.src = video.dataset.posterUrl;
       const playback = document.createElement("span");
       playback.className = "home-tv-feed-playback";
       playback.innerHTML = modalVideoPlaybackIcon(true);

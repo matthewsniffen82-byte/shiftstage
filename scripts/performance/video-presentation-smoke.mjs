@@ -52,7 +52,7 @@ try {
         video{display:block;width:100%;height:100%;object-fit:cover}${posterCss}</style>
         <div class="profile-media-card-feed"><section class="card profile-tv-viewer-slide"><video muted playsinline loop></video><img class="profile-media-video-poster" src="/poster.svg"></section></div>
         <section class="card home-tv-feed-slide"><video class="home-tv-feed-video" muted playsinline loop></video><img class="home-tv-feed-video-poster" src="/poster.svg"></section>
-        <section class="card tv-player"><video muted playsinline loop></video><img class="tv-video-poster" src="/poster.svg"></section>
+        <section class="card tv-player tv-slide"><video muted playsinline loop></video><img class="tv-video-poster" src="/poster.svg"></section>
         <script>${helper}
         window.players = [...document.querySelectorAll('video')];
         window.releaseFrame = () => {};
@@ -65,12 +65,13 @@ try {
     await page.goto("https://video-presentation.test/");
     for (const index of [0, 1, 2, 1, 0]) {
       await page.evaluate((active) => {
-        players.forEach(video => video.pause());
+        players.forEach((video, index) => {
+          video.pause();
+          video.parentElement.setAttribute("aria-current", String(index === active));
+        });
         const video = players[active];
         video.parentElement.scrollIntoView();
-        video.removeAttribute("src");
-        video.load();
-        video.src = "/video.mp4";
+        if (!video.hasAttribute("src")) video.src = "/video.mp4";
         window.releaseFrame = null;
         video.muted = true;
         void video.play().catch(error => { window.playError = error.message; });
@@ -93,6 +94,10 @@ try {
       await page.waitForFunction((active) => players[active].dataset.frameReady === "true", index);
       const revealed = await sharp(await card.screenshot()).extract({ left: 120, top: 220, width: 80, height: 80 }).stats();
       assert.ok(revealed.channels[1].mean > 140 && revealed.channels[0].mean < 70, "the revealed player shows its green frame without a blank cover");
+      const inactiveIndex = index === 0 ? 1 : 0;
+      const inactive = await sharp(await page.locator(".card").nth(inactiveIndex).screenshot())
+        .extract({ left: 120, top: 220, width: 80, height: 80 }).stats();
+      assert.ok(inactive.channels[0].mean > 180 && inactive.channels[1].mean < 80, "inactive neighbors keep their preview even if they played earlier");
       results.push({ engine, fallback, index, passed: true });
     }
     assert.deepEqual(errors, []);

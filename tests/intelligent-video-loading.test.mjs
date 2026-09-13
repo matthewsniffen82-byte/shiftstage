@@ -43,13 +43,13 @@ test("routed profile grids remain poster-only and the viewer loads a bounded for
   assert.match(profileCarousel, /preload="none"\s*data-video-url=\{item.videoUrl\}/);
 });
 
-test("routed TV feed starts with one source and warms only the immediate next item", () => {
-  assert.match(tvFeed, /const primeNextVideo[\s\S]*?setWarmAfterVideoId\(videoId\)/);
-  assert.match(tvFeed, /const shouldWarm = allowVideoWarmup[\s\S]*?videoIndex === activeIndex \+ 1/);
-  assert.match(tvFeed, /element\.preload = isActive \? "auto" : shouldWarm \? "metadata" : "none"/);
-  assert.match(tvFeed, /src=\{video\.id === activeVideoId \|\| \([\s\S]*?videoIndex === activeVideoIndex \+ 1[\s\S]*?\? video\.videoUrl : undefined\}/);
-  assert.match(tvFeed, /onLoadedData=\{[\s\S]*?primeNextVideo\(video\.id\)/);
-  assert.doesNotMatch(tvFeed, /Math\.abs\(videoIndex - activeIndex\) <= 1/);
+test("routed TV keeps neighboring sources under the same bounded policy as profiles", () => {
+  assert.match(tvFeed, /const primeVideoNeighbors[\s\S]*?setVideoReadyVersion\(\(version\) => version \+ 1\)/);
+  assert.match(tvFeed, /videoBufferMode\(videoIndex, activeIndex, allowVideoWarmup, activeReady, element\.hasAttribute\("src"\)\)/);
+  assert.match(tvFeed, /element\.preload = mode === "auto" \? "auto" : "none"/);
+  assert.match(tvFeed, /mode === "auto" && !element\.hasAttribute\("src"\)\) \{\s*element\.src = video\.videoUrl/);
+  assert.match(tvFeed, /onLoadedData=\{[\s\S]*?primeVideoNeighbors\(video\.id\)/);
+  assert.doesNotMatch(tvFeed, /src=\{video\.id === activeVideoId/);
 });
 
 test("profile strips attach previews on intent and release inactive media resources", () => {

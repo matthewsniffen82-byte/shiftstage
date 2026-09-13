@@ -24,7 +24,8 @@ import type { MyDancrTvVideo } from "@/src/lib/dancr/tv";
 import { useAdaptiveVideoWarmup } from "@/src/lib/dancr/use-adaptive-video-warmup";
 import { useVideoSoundPreference } from "@/src/lib/dancr/use-video-sound-preference";
 import { useAnonymousMediaLikes } from "@/src/lib/dancr/use-anonymous-media-likes";
-import { observeVideoPresentation } from "@/src/lib/dancr/video-frame-presentation.mjs";
+import { videoResourceRef } from "@/src/lib/dancr/video-resource-ref";
+import { videoBufferMode } from "@/src/lib/dancr/video-buffer-policy";
 
 const VIEWER_SESSION_KEY = "mydancrTvViewerSessionV1";
 const FILTERS = [
@@ -67,7 +68,7 @@ export default function TvFeedClient({
     FILTERS.some((item) => item.value === initialFilter) ? initialFilter : "for-you",
   );
   const [activeVideoId, setActiveVideoId] = useState(initialSelectedVideoId || initialVideos[0]?.id || "");
-  const [warmAfterVideoId, setWarmAfterVideoId] = useState("");
+  const [videoReadyVersion, setVideoReadyVersion] = useState(0);
   const allowVideoWarmup = useAdaptiveVideoWarmup();
   const [muted, setMuted] = useVideoSoundPreference();
   const [autoplayBlockedVideoId, setAutoplayBlockedVideoId] = useState("");
@@ -187,9 +188,9 @@ export default function TvFeedClient({
     setAutoplayBlockedVideoId(videoId);
   }, []);
 
-  const primeNextVideo = useCallback((videoId: string) => {
+  const primeVideoNeighbors = useCallback((videoId: string) => {
     if (!allowVideoWarmup || videoId !== activeVideoIdRef.current) return;
-    setWarmAfterVideoId(videoId);
+    setVideoReadyVersion((version) => version + 1);
   }, [allowVideoWarmup]);
 
   const loadFeed = useCallback(async (nextFilter: string, nextCity: string, selectedVideoId = "") => {
@@ -358,23 +359,38 @@ export default function TvFeedClient({
   useEffect(() => {
     const cleanups = Object.values(videoElements.current)
       .filter((element): element is HTMLVideoElement => element !== null)
-      .map(observeVideoPresentation);
-    return () => cleanups.forEach((cleanup) => cleanup());
+      .map(videoResourceRef);
+    return () => cleanups.forEach((cleanup) => cleanup?.());
   }, [videos]);
 
   useEffect(() => {
     const activeIndex = videos.findIndex((video) => video.id === activeVideoId);
+    const activeElement = videoElements.current[activeVideoId];
+    const activeReady = Boolean(activeElement && activeElement.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA);
+    // Stop the outgoing player before a backward swipe starts the earlier DOM node.
+    Object.entries(videoElements.current).forEach(([videoId, element]) => {
+      if (videoId !== activeVideoId && element) {
+        element.autoplay = false;
+        element.removeAttribute("autoplay");
+        element.pause();
+      }
+    });
     videos.forEach((video, videoIndex) => {
       const videoId = video.id;
       const element = videoElements.current[videoId];
       if (!element) return;
       const isActive = videoId === activeVideoId;
-      const shouldWarm = allowVideoWarmup &&
-        warmAfterVideoId === activeVideoId &&
-        videoIndex === activeIndex + 1;
-      element.preload = isActive ? "auto" : shouldWarm ? "metadata" : "none";
+      const mode = videoBufferMode(videoIndex, activeIndex, allowVideoWarmup, activeReady, element.hasAttribute("src"));
+      element.preload = mode === "auto" ? "auto" : "none";
+      if (mode === "release" && element.hasAttribute("src")) {
+        delete element.dataset.frameReady;
+        element.removeAttribute("src");
+        element.load();
+      } else if (mode === "auto" && !element.hasAttribute("src")) {
+        element.src = video.videoUrl;
+      }
       if (
-        (isActive || shouldWarm) &&
+        mode === "auto" &&
         element.readyState === HTMLMediaElement.HAVE_NOTHING &&
         element.networkState === HTMLMediaElement.NETWORK_EMPTY
       ) {
@@ -392,15 +408,10 @@ export default function TvFeedClient({
         element.autoplay = false;
         element.removeAttribute("autoplay");
         element.pause();
-        if (!shouldWarm && !element.hasAttribute("src")) element.load();
         window.clearTimeout(engagedTimers.current[videoId]);
       }
     });
-    const activeElement = videoElements.current[activeVideoId];
-    if (activeElement && activeElement.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) {
-      primeNextVideo(activeVideoId);
-    }
-  }, [activeVideoId, allowVideoWarmup, attemptVideoPlayback, muted, primeNextVideo, trackEvent, videos, warmAfterVideoId]);
+  }, [activeVideoId, allowVideoWarmup, attemptVideoPlayback, muted, trackEvent, videos, videoReadyVersion]);
 
   useEffect(() => {
     const resumeActiveVideo = () => {
@@ -698,6 +709,7 @@ export default function TvFeedClient({
         {videos.map((video, videoIndex) => (
           <article
             className="tv-slide"
+            aria-current={video.id === activeVideoId ? "true" : undefined}
             data-tv-slide
             data-video-id={video.id}
             data-tv-slide-key={video.id}
@@ -717,20 +729,8 @@ export default function TvFeedClient({
                   muted={muted}
                   playsInline
                   poster={video.posterUrl || undefined}
-                  preload={
-                    video.id === activeVideoId
-                      ? "auto"
-                      : allowVideoWarmup &&
-                          warmAfterVideoId === activeVideoId &&
-                          videoIndex === activeVideoIndex + 1
-                        ? "metadata"
-                        : "none"
-                  }
-                  src={video.id === activeVideoId || (
-                    allowVideoWarmup &&
-                    warmAfterVideoId === activeVideoId &&
-                    videoIndex === activeVideoIndex + 1
-                  ) ? video.videoUrl : undefined}
+                  preload="none"
+                  data-video-url={video.videoUrl}
                   onCanPlay={(event) => {
                     if (video.id === activeVideoIdRef.current && event.currentTarget.paused) {
                       void attemptVideoPlayback(video.id, event.currentTarget);
@@ -743,7 +743,7 @@ export default function TvFeedClient({
                   }}
                   onLoadedData={(event) => {
                     if (video.id !== activeVideoIdRef.current) return;
-                    primeNextVideo(video.id);
+                    primeVideoNeighbors(video.id);
                     if (event.currentTarget.paused) {
                       void attemptVideoPlayback(video.id, event.currentTarget);
                     }
@@ -777,7 +777,8 @@ export default function TvFeedClient({
                     aria-hidden="true"
                     draggable={false}
                     decoding="async"
-                    loading={Math.abs(videoIndex - activeVideoIndex) <= 1 ? "eager" : "lazy"}
+                    loading={videoIndex < 6 || Math.abs(videoIndex - activeVideoIndex) <= 3 ? "eager" : "lazy"}
+                    fetchPriority={video.id === activeVideoId ? "high" : "low"}
                   />
                 ) : null}
                 {playbackFeedback?.videoId === video.id ? (
@@ -1130,7 +1131,7 @@ function TvStyles() {
       .tv-profile-card { position: relative; width: 100%; height: 100%; display: block; overflow: hidden; color: inherit; background: #000; text-decoration: none; }
       .tv-player video { width: 100%; height: 100%; display: block; object-fit: contain; background: transparent; cursor: pointer; }
       .tv-video-poster { position: absolute; z-index: 1; inset: 0; width: 100%; height: 100%; object-fit: contain; background: #000; pointer-events: none; }
-      .tv-player video[data-frame-ready="true"] + .tv-video-poster { visibility: hidden; }
+      .tv-slide[aria-current="true"] video[data-frame-ready="true"] + .tv-video-poster { visibility: hidden; }
       .tv-player video:focus-visible { outline: 2px solid #67e8f9; outline-offset: -3px; }
       .tv-playback-feedback { position: absolute; z-index: 7; top: 50%; left: 50%; width: 64px; height: 64px; display: grid; place-items: center; border: 1px solid rgba(255,255,255,.28); border-radius: 50%; color: #fff; background: rgba(0,0,0,.58); box-shadow: 0 10px 30px rgba(0,0,0,.42); pointer-events: none; transform: translate(-50%, -50%); animation: tv-playback-feedback 850ms ease both; backdrop-filter: blur(10px); }
       .tv-playback-feedback svg { width: 29px; height: 29px; fill: currentColor; stroke: none; }

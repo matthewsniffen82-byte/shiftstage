@@ -1002,9 +1002,10 @@ export function DancerPhotoCarousel({
                       className="profile-media-video-poster"
                       decoding="async"
                       draggable={false}
-                      loading="eager"
+                      loading={index < 6 || Math.abs(index - viewerIndex) <= 3 ? "eager" : "lazy"}
+                      fetchPriority={index === viewerIndex ? "high" : "low"}
                       onError={markImageUnavailable}
-                      src={Math.abs(index - viewerIndex) <= 2 ? item.posterUrl : undefined}
+                      src={item.posterUrl}
                     />
                   ) : null}
                   </>

@@ -49,6 +49,13 @@ export function observeVideoPresentation(video) {
     }
   }
 
+  function startPlayback() {
+    // A resumed iPhone player can recreate its display surface after being offscreen.
+    reset();
+    reveal();
+  }
+
+  video.addEventListener("play", startPlayback);
   video.addEventListener("playing", reveal);
   video.addEventListener("timeupdate", reveal);
   video.addEventListener("pause", cancelPending);
@@ -58,6 +65,7 @@ export function observeVideoPresentation(video) {
   if (!video.paused) reveal();
   return () => {
     cancelPending();
+    video.removeEventListener("play", startPlayback);
     video.removeEventListener("playing", reveal);
     video.removeEventListener("timeupdate", reveal);
     video.removeEventListener("pause", cancelPending);

@@ -2,19 +2,27 @@
 // not to claim measurements of physical mobile background behavior.
 import assert from "node:assert/strict";
 import { createRequire } from "node:module";
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { liveShellRoute } from "../../tests/helpers/live-shell-route.mjs";
 const require = createRequire(import.meta.url);
 const { chromium } = require(process.env.PERF_PLAYWRIGHT_MODULE || "playwright");
 const base = process.env.PERF_BASE_URL || "https://www.mydancr.com";
 const output = process.env.PERF_OUTPUT || ".qa/video-resource";
 const enforce = process.env.PERF_EXPECT_OPTIMIZED === "1";
+const localShell = process.env.PERF_LOCAL_SHELL === "1";
+const shellHtml = localShell ? await (await liveShellRoute().route.GET()).text() : "";
 await mkdir(output, { recursive: true });
 const browser = await chromium.launch({ channel: "msedge", headless: true });
 const context = await browser.newContext({ viewport: { width: 393, height: 852 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true, serviceWorkers: "block" });
-await context.route("**/api/**", async route => {
+await context.route("**/*", async route => {
   if (!["GET", "HEAD", "OPTIONS"].includes(route.request().method())) return route.fulfill({ json: { ok: true } });
   const url = new URL(route.request().url());
-  if (new URL(base).hostname === "localhost") {
+  if (localShell) {
+    if (route.request().resourceType() === "document") return route.fulfill({ contentType: "text/html", body: shellHtml });
+    if (url.pathname === "/live-shell.js") return route.fulfill({ contentType: "text/javascript", body: await readFile("outputs/live-shell-app.js") });
+    if (url.pathname === "/profile-media-card-feed.css") return route.fulfill({ contentType: "text/css", body: await readFile("public/profile-media-card-feed.css") });
+  }
+  if (new URL(base).hostname === "localhost" && url.pathname.startsWith("/api/")) {
     if (!url.pathname.startsWith("/api/public/")) return route.fulfill({ json: { ok: false } });
     return route.fulfill({ response: await route.fetch({ url: "https://www.mydancr.com" + url.pathname + url.search }) });
   }
@@ -33,7 +41,8 @@ page.on("pageerror", error => errors.push(error.message));
 async function capture(label) {
   const state = await page.evaluate(label => ({ label, videos: [...document.querySelectorAll(".home-tv-feed-video")].map((video, index) => {
     const rect = video.getBoundingClientRect();
-    return { index, paused: video.paused, active: video.closest(".home-tv-feed-slide")?.getAttribute("aria-current") === "true", viewportInactive: video.closest(".home-tv-feed-slide")?.dataset.viewportInactive, viewportPaused: video.closest(".home-tv-feed-slide")?.dataset.viewportPaused, top: rect.top, bottom: rect.bottom, source: video.hasAttribute("src"), preload: video.preload, poster: video.hasAttribute("poster"), ready: video.readyState, time: video.currentTime, visible: rect.bottom > 72 && rect.top < innerHeight - 88, buffered: Array.from({ length: video.buffered.length }, (_, i) => [video.buffered.start(i), video.buffered.end(i)]) };
+    const poster = video.nextElementSibling;
+    return { index, paused: video.paused, active: video.closest(".home-tv-feed-slide")?.getAttribute("aria-current") === "true", viewportInactive: video.closest(".home-tv-feed-slide")?.dataset.viewportInactive, viewportPaused: video.closest(".home-tv-feed-slide")?.dataset.viewportPaused, top: rect.top, bottom: rect.bottom, source: video.hasAttribute("src"), preload: video.preload, poster: video.hasAttribute("poster"), posterLoaded: Boolean(poster?.complete && poster?.naturalWidth > 0), posterVisible: poster ? getComputedStyle(poster).visibility !== "hidden" : false, frameReady: video.dataset.frameReady === "true", ready: video.readyState, time: video.currentTime, visible: rect.bottom > 72 && rect.top < innerHeight - 88, buffered: Array.from({ length: video.buffered.length }, (_, i) => [video.buffered.start(i), video.buffered.end(i)]) };
   }) }), label);
   states.push(state);
   assert.ok(state.videos.filter(video => !video.paused).length <= 1, "only one feed video plays");
@@ -41,15 +50,19 @@ async function capture(label) {
     assert.ok(state.videos.filter(video => video.source).length <= 3, "bounded active/next/previous sources");
     assert.ok(state.videos.filter(video => video.poster).length <= 3, "bounded adjacent posters");
     assert.ok(state.videos.every(video => video.paused || video.visible), "offscreen clips stay paused");
+    for (const video of state.videos.filter(video => video.visible)) {
+      assert.ok(video.posterLoaded || (video.active && video.frameReady), `visible card ${video.index} has a preview or presented frame`);
+      if (!video.active && video.posterLoaded) assert.equal(video.posterVisible, true, "inactive players stay covered");
+    }
   }
   return state;
 }
 try {
-  await page.goto(base + "/tv", { waitUntil: "load" });
+  await page.goto(base + (localShell ? "/?view=tv&city=Las%20Vegas" : "/tv"), { waitUntil: "load" });
   await page.waitForFunction(() => [...document.querySelectorAll(".home-tv-feed-video")].some(video => !video.paused && video.currentTime > .1), null, { timeout: 30000 });
   await page.waitForTimeout(1000);
   await capture("first-playing");
-  for (const index of [1, 2, 5, 2, 1, 0]) {
+  for (const index of [1, 2, 3, 4, 3, 2, 1, 0]) {
     await page.locator(".home-tv-feed-slide").nth(index).evaluate(slide => slide.scrollIntoView({ block: "start", behavior: "instant" }));
     await page.waitForTimeout(250);
     // IntersectionObserver runs after layout; sample after two real paint
