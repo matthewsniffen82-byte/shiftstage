@@ -45,16 +45,16 @@ export async function serveDancerMedia(request: Request, kind: 'photo' | 'video'
         if (!manifest || !variant || !manifest[1].split('-').includes(variant)) return unavailable();
       }
     } else {
-      // Resolve private object names only after the public RLS row is visible.
-      if (!preview) {
-        const visible = await deps.publicClient.from('mydancr_tv_videos').select('id').eq('id',id).abortSignal(request.signal).maybeSingle();
-        if (request.signal.aborted) return unavailable(503);
-        if (visible.error) return unavailable(503);
-        if (!visible.data) return unavailable();
-      }
-      const video = await deps.admin.from('mydancr_tv_videos').select(`storage_path,moderation_details,dancer_profiles!inner(${ACTIVE_PROFILE})`).eq('id',id).abortSignal(request.signal).maybeSingle();
+      // These independent reads may run together, but BOTH current public RLS
+      // visibility and active-owner checks must pass before fetching any bytes.
+      // The private object lookup never grants public access by itself.
+      const [visible, video] = await Promise.all([
+        preview ? null : deps.publicClient.from('mydancr_tv_videos').select('id').eq('id',id).abortSignal(request.signal).maybeSingle(),
+        deps.admin.from('mydancr_tv_videos').select(`storage_path,moderation_details,dancer_profiles!inner(${ACTIVE_PROFILE})`).eq('id',id).abortSignal(request.signal).maybeSingle(),
+      ]);
       if (request.signal.aborted) return unavailable(503);
-      if (video.error) return unavailable(503);
+      if (visible?.error || video.error) return unavailable(503);
+      if (!preview && !visible?.data) return unavailable();
       if (!video.data || !isActive(one((video.data as any).dancer_profiles))) return unavailable();
       path = (video.data as any).storage_path;
       bucket = 'mydancr-tv-videos';

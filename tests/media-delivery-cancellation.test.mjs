@@ -52,7 +52,7 @@ test('a cancelled media request starts no database or Storage requests', async (
 });
 
 for (const [label, kind, holdQuery, queryCount] of [
-  ['video visibility', 'video', 1, 1],
+  ['video visibility', 'video', 1, 2],
   ['video object lookup', 'video', 2, 2],
   ['parallel photo visibility', 'photo', 1, 2],
 ]) test(`aborting during ${label} cancels queries and never starts a stale media download`, async () => {
@@ -64,7 +64,7 @@ for (const [label, kind, holdQuery, queryCount] of [
   const response = await pending;
   await response.body?.cancel();
   assert.equal(f.storage.length, 0, 'a late permission response must not start Storage');
-  assert.equal(f.queries.length, queryCount, 'obsolete requests stop at the current lookup');
+  assert.equal(f.queries.length, queryCount, 'only the parallel authorization reads may start');
   assert.ok(f.queries.every(query => query.signal?.aborted), 'the SDK receives cancellation');
 });
 
