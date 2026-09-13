@@ -59,6 +59,7 @@ function harness(options={}){
   if(name.endsWith('server-env'))return {getOptionalServerEnv:()=>key};
   if(name.endsWith('safe-error-metadata'))return {safeErrorMetadata};
   if(name.endsWith('import-finalization'))return library;
+  if(name.endsWith('adaptive-video-background'))return {scheduleAdaptiveVideoPreparation(){}};
   if(name.endsWith('/tv'))return {publishPlatformMyDancrTvUpload:()=>publish('publish'),retryMyDancrTvAutomatedModeration:()=>publish('retry'),reviewMyDancrTvVideo:()=>publish('review')};return {};
  }});
  return {client,calls,reads,publication,warnings,get clientCount(){return clientCount;},async post(extra={}){

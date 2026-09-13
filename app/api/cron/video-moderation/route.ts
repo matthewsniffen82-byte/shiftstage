@@ -8,10 +8,11 @@ import { isVideoDemoAutoApproveMode } from "@/src/lib/dancr/video-moderation-mod
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { safeErrorMetadata } from "@/src/lib/security/safe-error-metadata";
 import { MODERATION_JOB_TIMEOUT_MS, MODERATION_WORKER_STALE_MS, runWithServerJob, serverJobRemainingMs } from "@/src/lib/server-job";
+import { scheduleAdaptiveVideoRecovery } from "@/src/lib/dancr/adaptive-video-background";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-export const maxDuration = 60;
+export const maxDuration = 180;
 
 const MAX_JOBS_PER_RUN = 2;
 const STALE_AFTER_MS = MODERATION_WORKER_STALE_MS;
@@ -25,7 +26,7 @@ export async function GET(request: Request) {
   const demoAutoApprove = isVideoDemoAutoApproveMode();
 
   try {
-    return await runWithServerJob(async () => {
+    const response = await runWithServerJob(async () => {
     let query = admin
       .from("mydancr_tv_videos")
       .select("id, status")
@@ -69,6 +70,8 @@ export async function GET(request: Request) {
 
     return NextResponse.json({ ok: true, processed: results.length, results });
     }, 50_000);
+    scheduleAdaptiveVideoRecovery();
+    return response;
   } catch (error) {
     console.error(JSON.stringify({
       event: demoAutoApprove

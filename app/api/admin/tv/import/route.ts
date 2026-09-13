@@ -19,6 +19,7 @@ import {
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
 import { getOptionalServerEnv } from "@/src/lib/server-env";
+import { scheduleAdaptiveVideoPreparation } from "@/src/lib/dancr/adaptive-video-background";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -215,6 +216,7 @@ async function finalizeImport(body: any, adminId: string) {
       finalized = await loadCurrentVideo();
     }
     const receipt = await recordImportFinalization(admin, { adminId, videoId: row.id, batchId, snapshot: finalized });
+    if (receipt.status === "approved") scheduleAdaptiveVideoPreparation(receipt.videoId);
     console.info(JSON.stringify({ event: "mydancr_tv.platform_import_finalized", adminId, batchId,
       videoId: receipt.videoId, status: receipt.status, auditId: receipt.auditId, alreadyRecorded: receipt.alreadyRecorded }));
     return NextResponse.json({ ok: true, batchId, video: { id: receipt.videoId, status: receipt.status },
