@@ -54025,7 +54025,7 @@
       const openVenueAttribute = resolvedVenue
         ? ` data-open-venue-profile="${escapeOptionValue(venueName)}"`
         : "";
-      return `<a class="profile-upcoming-venue-deal" href="${venueExperienceHref(venue, city)}"${openVenueAttribute} data-upcoming-venue-deal="venue-page" aria-label="View Club Deals on ${escapeHtml(venueName)}'s venue page">${actionButtonLabel("clubProfile", "View Deal")}</a>`;
+      return `<a class="profile-upcoming-venue-deal" href="${venueExperienceHref(venue, city)}"${openVenueAttribute} data-upcoming-venue-deal="venue-page" aria-label="View free entry on ${escapeHtml(venueName)}'s venue page"><span>Free Entry</span><span aria-hidden="true">›</span></a>`;
     }
 
     function dancerProfileTonightTravelActionsMarkup(profile, options = {}) {

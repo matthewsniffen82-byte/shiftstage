@@ -316,8 +316,8 @@ export default async function DancerPublicPage({ params, searchParams }: PagePro
                   data-upcoming-venue-deal="venue-page"
                   href={`/venues/${encodeURIComponent(actionShift.venueSlug)}`}
                 >
-                  <VenuePageIcon />
                   <span>Free Entry</span>
+                  <span aria-hidden="true">›</span>
                 </Link>
               ) : null}
             </div>
@@ -413,15 +413,6 @@ function VenuePinIcon() {
     <svg aria-hidden="true" className="profile-venue-pin" viewBox="0 0 24 24">
       <path d="M12 21s7-6.1 7-12A7 7 0 1 0 5 9c0 5.9 7 12 7 12Z" />
       <circle cx="12" cy="9" r="2.4" />
-    </svg>
-  );
-}
-
-function VenuePageIcon() {
-  return (
-    <svg aria-hidden="true" className="profile-venue-page-icon" viewBox="0 0 24 24">
-      <path d="M5 20V9l7-4 7 4v11" />
-      <path d="M9 20v-6h6v6" />
     </svg>
   );
 }

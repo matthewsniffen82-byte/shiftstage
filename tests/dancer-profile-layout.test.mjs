@@ -331,7 +331,7 @@ test("only Working Now activates dancer deal attribution while Upcoming links to
   assert.match(liveApp, /profileDealTileMarkup\(profile\)/);
   assert.match(liveApp, /<section class="\$\{tonightClasses\}" data-profile-shift-state="\$\{shiftState\}" data-profile-deal-state="\$\{escapeHtml\(dealState\.key\)\}" aria-label="Tonight">[\s\S]*?shiftsMarkup\(profile, status,[\s\S]*?profile-tonight-deal/);
   assert.match(liveApp, /dealMarkup \? `<div class="profile-tonight-deal">\$\{dealMarkup\}<\/div>` : ""[\s\S]*?\$\{travelActionsMarkup\}/);
-  assert.match(liveApp, /function dancerProfileUpcomingVenueDealMarkup[\s\S]*?!profile\?\.scheduled \|\| isWorkingTonight\(profile, city\)[\s\S]*?data-upcoming-venue-deal="venue-page"[\s\S]*?actionButtonLabel\("clubProfile", "View Deal"\)/);
+  assert.match(liveApp, /function dancerProfileUpcomingVenueDealMarkup[\s\S]*?!profile\?\.scheduled \|\| isWorkingTonight\(profile, city\)[\s\S]*?data-upcoming-venue-deal="venue-page"[\s\S]*?<span>Free Entry<\/span><span aria-hidden="true">›<\/span>/);
   assert.match(liveApp, /function dancerProfileTonightTravelActionsMarkup[\s\S]*?\[directionsMarkup, rideMarkup, venueDealMarkup\]\.filter\(Boolean\)[\s\S]*?profile-tonight-travel-actions/);
   assert.doesNotMatch(
     liveApp.match(/function dancerProfileUpcomingVenueDealMarkup[\s\S]*?function dancerProfileTonightTravelActionsMarkup/)?.[0] || "",
@@ -348,7 +348,7 @@ test("only Working Now activates dancer deal attribution while Upcoming links to
   );
   assert.match(
     aesthetic,
-    /profile-tonight-travel-actions > :nth-child\(3\)[\s\S]*?grid-column: 3 !important;[\s\S]*?profile-upcoming-venue-deal[\s\S]*?color: var\(--dancr-color-info\) !important;/,
+    /profile-tonight-travel-actions > :nth-child\(3\)[\s\S]*?grid-column: 3 !important;[\s\S]*?profile-upcoming-venue-deal[\s\S]*?border-color: var\(--dancr-color-info-strong\) !important;/,
   );
   assert.match(liveApp, /profile\.scheduled && !isWorkingTonight\(profile, city\) \? "is-upcoming" : ""/);
   assert.doesNotMatch(liveApp.match(/function liveProfileModalActionsMarkup[\s\S]*?async function refreshProfileGoingState/)?.[0] || "", /rideAction|directionsAction|dancerProfileUberRideMarkup|dancerProfileDirectionsMarkup/);

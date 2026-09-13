@@ -4728,6 +4728,13 @@ body.dancr-button-system .public-profile-shell .profile-tonight-card.has-club-de
   display: none !important;
 }
 
+/* Upcoming uses the same status/action rows, with its date and cyan state kept. */
+body.dancr-button-system #profileBackdrop #profileModal .profile-tonight-card.is-upcoming.has-venue-deal-link
+  .profile-club-deal-tile.is-inactive:not(.is-error) .profile-club-deal-copy,
+body.dancr-button-system .public-profile-shell .profile-tonight-card.is-upcoming.has-venue-deal-link .profile-deal-availability-line {
+  display: none !important;
+}
+
 body.dancr-button-system #profileBackdrop #profileModal .profile-club-deal-title,
 body.dancr-button-system .public-profile-shell .club-deal-profile-copy strong {
   min-width: 0 !important;
@@ -4811,7 +4818,9 @@ body.dancr-button-system .public-profile-shell .profile-tonight-travel-actions >
 body.dancr-button-system #profileBackdrop #profileModal .profile-tonight-card.has-club-deal:not(:has(.profile-club-deal-tile.is-error))
   :is(.profile-club-deal-qr-button, .profile-tonight-travel-actions > :is(a, button)),
 body.dancr-button-system .public-profile-shell .profile-tonight-card.has-club-deal
-  :is(.club-deal-profile-action, .profile-tonight-travel-actions > :is(a, button)) {
+  :is(.club-deal-profile-action, .profile-tonight-travel-actions > :is(a, button)),
+body.dancr-button-system #profileBackdrop #profileModal .profile-tonight-card.is-upcoming.has-venue-deal-link:not(:has(.profile-club-deal-tile.is-error)) .profile-tonight-travel-actions > :is(a, button),
+body.dancr-button-system .public-profile-shell .profile-tonight-card.is-upcoming.has-venue-deal-link .profile-tonight-travel-actions > :is(a, button) {
   grid-row: 2 !important;
 }
 
@@ -4838,9 +4847,22 @@ body.dancr-button-system .public-profile-shell .profile-tonight-travel-actions >
   align-items: center !important;
   justify-content: center !important;
   gap: 5px !important;
-  border-color: var(--dancr-color-info-medium) !important;
-  color: var(--dancr-color-info) !important;
-  background: var(--dancr-color-info-soft) !important;
+  border-color: var(--dancr-color-info-strong) !important;
+  color: var(--dancr-color-text-primary) !important;
+  background:
+    linear-gradient(180deg, var(--dancr-color-white-medium), transparent 48%),
+    radial-gradient(circle at 50% -20%, var(--dancr-color-info-medium), transparent 58%),
+    linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--dancr-color-info) 64%, var(--dancr-color-background)),
+      color-mix(in srgb, var(--dancr-color-info) 48%, var(--dancr-color-background))
+    ) !important;
+  box-shadow:
+    0 8px 18px var(--dancr-color-black-soft),
+    0 0 20px var(--dancr-color-info-medium),
+    inset 0 1px 0 var(--dancr-color-white-medium) !important;
+  text-shadow: none !important;
+  font-size: 9px !important;
   font-weight: 900 !important;
   text-decoration: none !important;
 }
