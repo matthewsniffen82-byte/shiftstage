@@ -43,6 +43,7 @@ class Video {
   assignments = 0;
   nextElementSibling = {
     attrs: new Map(),
+    hasAttribute(name) { return this.attrs.has(name); },
     getAttribute(name) { return this.attrs.get(name); },
     setAttribute(name, value) { this.attrs.set(name, value); },
     removeAttribute(name) { this.attrs.delete(name); },
@@ -138,4 +139,23 @@ test("buffer updates do not restart profile playback or discard TV buffers durin
   assert.match(source("activateHomeTvFeedVideo"), /video.autoplay = false;\s*video.removeAttribute\("autoplay"\);\s*video.pause\(\)/);
   assert.match(source("activateHomeTvFeedVideo"), /\}\);\s*primeHomeTvFeedNeighbors\(videoId\)/);
   assert.match(source("setupHomeTvFeedObserver"), /visibleVideoId !== homeTvFeedActiveVideoId/);
+});
+
+test("repeated buffer readiness updates do not rewrite native media loading settings", () => {
+  const video = new Video();
+  video.paused = true;
+  video.autoplay = false;
+  const context = vm.createContext({ HTMLVideoElement: Video, HTMLMediaElement: Video, pageSuspendedVideos: new Set() });
+  vm.runInContext(["applyVideoBufferMode", "attachDeferredVideoSource", "releaseDeferredVideoSource"].map(source).join("\n"), context);
+  for (const mode of ["auto", "metadata", "retain", "release"]) {
+    context.applyVideoBufferMode(video, mode);
+    const preload = video.preload;
+    Object.defineProperty(video, "preload", { configurable: true, get: () => preload, set: () => assert.fail("unchanged preload must not be reassigned") });
+    Object.defineProperty(video, "autoplay", { configurable: true, get: () => false, set: () => assert.fail("unchanged autoplay must not be reassigned") });
+    video.pause = () => assert.fail("an already paused player must not be paused repeatedly");
+    const resets = video.resets;
+    context.applyVideoBufferMode(video, mode);
+    assert.equal(video.resets, resets);
+    Object.defineProperty(video, "preload", { configurable: true, writable: true, value: preload });
+  }
 });

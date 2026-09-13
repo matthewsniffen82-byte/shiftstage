@@ -61623,8 +61623,8 @@
         delete video.dataset.frameReady;
         releaseDeferredVideoSource(video);
       } else if (mode === "retain") {
-        video.pause();
-        video.preload = "none";
+        if (!video.paused) video.pause();
+        if (video.preload !== "none") video.preload = "none";
       } else {
         attachDeferredVideoSource(video, mode);
       }
@@ -61681,7 +61681,7 @@
       if (!(video instanceof HTMLVideoElement)) return false;
       const videoUrl = String(video.dataset.videoUrl || "").trim();
       if (!videoUrl) return false;
-      video.preload = preload;
+      if (video.preload !== preload) video.preload = preload;
       if (!video.hasAttribute("src")) video.src = videoUrl;
       if (
         video.readyState === HTMLMediaElement.HAVE_NOTHING &&
@@ -61695,10 +61695,10 @@
     function releaseDeferredVideoSource(video) {
       if (!(video instanceof HTMLVideoElement)) return;
       pageSuspendedVideos.delete(video);
-      video.autoplay = false;
-      video.removeAttribute("autoplay");
-      video.pause();
-      video.preload = "none";
+      if (video.autoplay) video.autoplay = false;
+      if (video.hasAttribute("autoplay")) video.removeAttribute("autoplay");
+      if (!video.paused) video.pause();
+      if (video.preload !== "none") video.preload = "none";
       if (!video.hasAttribute("src")) return;
       video.removeAttribute("src");
       video.load();
@@ -61719,14 +61719,18 @@
       slides.forEach((slide) => {
         if (String(slide.dataset.videoId || "") === videoId) return;
         const video = slide.querySelector("video");
-        video.autoplay = false;
-        video.removeAttribute("autoplay");
-        video.pause();
+        if (!video.paused || video.autoplay || video.hasAttribute("autoplay")) {
+          video.autoplay = false;
+          video.removeAttribute("autoplay");
+          video.pause();
+        }
       });
       slides.forEach((slide) => {
         const slideVideoId = String(slide.dataset.videoId || "");
         const video = slide.querySelector("video");
         const isActive = slideVideoId === videoId;
+        // Only the incoming and outgoing cards change state during a swipe.
+        if (!isActive && slide.getAttribute("aria-current") !== "true") return;
         slide.classList.toggle("is-active", isActive);
         if (isActive) {
           delete slide.dataset.viewportPaused;
@@ -61792,8 +61796,8 @@
           if (video.getAttribute("poster") !== posterUrl) video.poster = posterUrl;
           if (poster?.getAttribute("src") !== posterUrl) poster?.setAttribute("src", posterUrl);
         } else {
-          video.removeAttribute("poster");
-          poster?.removeAttribute("src");
+          if (video.hasAttribute("poster")) video.removeAttribute("poster");
+          if (poster?.hasAttribute("src")) poster.removeAttribute("src");
         }
         if (index === activeIndex) return;
         const mode = videoBufferMode(index, activeIndex, allowNextWarmup, activeReady, video.hasAttribute("src"));
