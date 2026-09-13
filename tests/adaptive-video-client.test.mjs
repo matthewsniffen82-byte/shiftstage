@@ -1,10 +1,10 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { attachAdaptiveVideo, releaseAdaptiveVideo } from '../public/adaptive-video.mjs';
+import { attachAdaptiveVideo, releaseAdaptiveVideo, warmAdaptiveVideo } from '../public/adaptive-video.mjs';
 globalThis.document=Object.assign(new EventTarget(),{visibilityState:'visible'});
 Object.defineProperty(globalThis,'navigator',{value:{userAgent:'Mozilla/5.0 (iPhone) AppleWebKit Safari'},configurable:true});
 function video(native=true){
- return Object.assign(new EventTarget(),{isConnected:true,paused:true,autoplay:false,currentTime:0,duration:15,preload:'auto',src:'',loads:0,
+ return Object.assign(new EventTarget(),{isConnected:true,paused:true,autoplay:false,currentTime:0,duration:15,readyState:0,buffered:{length:0},preload:'auto',src:'',loads:0,
  canPlayType(){return native?'maybe':'';},hasAttribute(name){return name==='src'&&Boolean(this.src);},removeAttribute(name){if(name==='src')this.src='';},
  load(){this.loads++;},pause(){this.paused=true;this.dispatchEvent(new Event('pause'));},async play(){this.paused=false;this.dispatchEvent(new Event('play'));}});
 }
@@ -32,4 +32,16 @@ test('releasing while the engine import is pending prevents any late source assi
 });
 test('engine loading failures use the original without leaving a broken video',async()=>{
  const v=video(false);assert.equal(await attachAdaptiveVideo(v,'/master','/original'),true);assert.equal(v.src,'/original');releaseAdaptiveVideo(v);
+});
+
+test('native Safari warms only one paused neighbor and preserves its source when playback begins',async()=>{
+ const first=video(),second=video();
+ await attachAdaptiveVideo(first,'/first','/first-original');await attachAdaptiveVideo(second,'/second','/second-original');
+ assert.equal(first.preload,'none');assert.equal(second.preload,'none');
+ const a=warmAdaptiveVideo(first),b=warmAdaptiveVideo(second);await new Promise(setImmediate);
+ assert.equal(first.preload,'auto');assert.equal(second.preload,'none');assert.ok(first.paused&&second.paused);
+ first.readyState=2;first.buffered.length=1;first.dispatchEvent(new Event('loadeddata'));await a;await new Promise(setImmediate);
+ assert.equal(first.preload,'none');assert.equal(second.preload,'auto');
+ await second.play();await b;assert.equal(second.src,'/second');assert.equal(second.preload,'auto');
+ releaseAdaptiveVideo(first);releaseAdaptiveVideo(second);
 });

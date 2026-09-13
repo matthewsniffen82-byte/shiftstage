@@ -42,13 +42,14 @@ for (const config of cases.filter(config => !process.env.PERF_MATRIX_CASES || pr
     await cdp.send("Network.emulateNetworkConditions", { offline: false, latency: config.latency, downloadThroughput: config.mbps * 1e6 / 8, uploadThroughput: 1e6 / 8 });
     await cdp.send("Emulation.setCPUThrottlingRate", { rate: config.cpu });
   }
-  const row = { config, phases: [], errors: [], consoleErrors: [], runtimeErrors: [], failedRequests: [], errorDetails: [] };
+  const row = { config, phases: [], errors: [], consoleErrors: [], browserConsoleErrors: [], runtimeErrors: [], failedRequests: [], errorDetails: [] };
   await context.exposeBinding("__recordRuntimeError", (_source, error) => row.runtimeErrors.push(error));
   await context.addInitScript(() => {
     window.addEventListener("error", event => { void window.__recordRuntimeError({ type: "error", message: event.message }).catch(() => {}); });
     window.addEventListener("unhandledrejection", event => { void window.__recordRuntimeError({ type: "unhandledrejection", message: String(event.reason) }).catch(() => {}); });
   });
   page.on("pageerror", e => row.consoleErrors.push(e.message));
+  page.on("console", message => { if (message.type() === "error") row.browserConsoleErrors.push(message.text()); });
   page.on("pageerror", e => row.errorDetails.push({ message: e.message, stack: e.stack, lastCompletedPhase: row.phases.at(-1) }));
   page.on("requestfailed", request => row.failedRequests.push({ path: new URL(request.url()).pathname, failure: request.failure()?.errorText, lastCompletedPhase: row.phases.at(-1) }));
   try {
