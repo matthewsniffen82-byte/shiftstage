@@ -26,7 +26,7 @@ export function observeVideoWarmup(video: HTMLVideoElement | null | undefined, o
   return () => events.forEach((event) => video.removeEventListener(event, update));
 }
 
-/** Give startup exclusive bandwidth, then prepare playable neighbors in both directions.
+/** Give startup exclusive bandwidth, then prepare two clips in each direction.
  * Retain attached neighbors during buffering; data saver keeps only the active source attached. */
 export function videoBufferMode(
   index: number,
@@ -37,6 +37,12 @@ export function videoBufferMode(
 ) {
   if (index === activeIndex) return "auto";
   if (!allowWarmup) return "release";
-  if (Math.abs(index - activeIndex) === 1) return activeReady ? "auto" : hasSource ? "retain" : "release";
+  if (Math.abs(index - activeIndex) <= 2) return activeReady ? "auto" : hasSource ? "retain" : "release";
   return "release";
+}
+
+/** Prepare upcoming clips first; previously played clips usually already have data. */
+export function videoWarmupOrder(activeIndex: number, length: number) {
+  return [activeIndex, activeIndex + 1, activeIndex + 2, activeIndex - 1, activeIndex - 2]
+    .filter((index) => index >= 0 && index < length);
 }

@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import test from "node:test";
 import vm from "node:vm";
-import { videoBufferMode } from "../src/lib/dancr/video-buffer-policy.ts";
+import { videoBufferMode, videoWarmupOrder } from "../src/lib/dancr/video-buffer-policy.ts";
 
 const live = fs.readFileSync("outputs/index.html", "utf8");
 const carousel = fs.readFileSync("app/dancers/[slug]/DancerPhotoCarousel.tsx", "utf8");
@@ -23,7 +23,7 @@ test("profile and TV policies give startup priority, then prepare the previous a
           for (let index = 0; index < 30; index++) {
             const expected = index === active ? "auto"
               : !allowed ? "release"
-                : Math.abs(index - active) === 1 ? ready ? "auto" : attached ? "retain" : "release"
+                : Math.abs(index - active) <= 2 ? ready ? "auto" : attached ? "retain" : "release"
                   : "release";
             assert.equal(videoBufferMode(index, active, allowed, ready, attached), expected);
             assert.equal(context.videoBufferMode(index, active, allowed, ready, attached), expected);
@@ -64,6 +64,16 @@ class Video {
   load() { this.resets++; this.readyState = 0; this.networkState = this.hasAttribute("src") ? 2 : 0; }
 }
 
+test("warmup queue prioritizes the next two clips and stays within the retained window", () => {
+  const context = vm.createContext({});
+  vm.runInContext(source("videoWarmupOrder"), context);
+  for (let active = 0; active < 30; active++) {
+    const expected = [active, active + 1, active + 2, active - 1, active - 2].filter(index => index >= 0 && index < 30);
+    assert.deepEqual(videoWarmupOrder(active, 30), expected);
+    assert.deepEqual(Array.from(context.videoWarmupOrder(active, 30)), expected);
+  }
+});
+
 for (const surface of ["profile", "tv", "routed-tv"]) {
   test(`${surface} scrolls keep warmed sources and decoded frames without restarting downloads`, () => {
     const videos = Array.from({ length: 30 }, () => new Video());
@@ -90,7 +100,7 @@ for (const surface of ["profile", "tv", "routed-tv"]) {
       window: { setTimeout() {}, clearTimeout() {} },
       attemptVideoPlayback() {}, trackEvent() {},
     });
-    vm.runInContext(["hasVideoWarmupBuffer", "videoBufferMode", "applyVideoBufferMode", "attachDeferredVideoSource", "releaseDeferredVideoSource",
+    vm.runInContext(["hasVideoWarmupBuffer", "videoBufferMode", "videoWarmupOrder", "applyVideoBufferMode", "attachDeferredVideoSource", "releaseDeferredVideoSource",
       "syncProfileTvVideoLoading", "primeHomeTvFeedNeighbors"].map(source).join("\n"), context);
     vm.runInContext(routedBuffering, context);
     const sync = (active, ready) => {
@@ -130,13 +140,23 @@ for (const surface of ["profile", "tv", "routed-tv"]) {
     sync(0, true);
     assert.equal(videos[0].assignments, 1, "scrolling back reuses the existing buffer");
     assert.equal(videos[0].resets, 0);
+    if (surface !== "routed-tv") {
+      sync(2, true);
+      const originalResets = videos[0].resets;
+      sync(2, false);
+      assert.equal(videos[0].hasAttribute("src"), true, "two clips back survives active buffering");
+      sync(0, true);
+      assert.equal(videos[0].resets, originalResets, "two-card reversal does not reload the original clip");
+      assert.equal(videos[0].assignments, 1);
+    }
     for (const active of [1, 2, 3, 18, 19, 18, 29, 0]) {
       sync(active, true);
-      assert.ok(videos.filter((v) => v.hasAttribute("src")).length <= 3);
+      const radius = 2;
+      assert.ok(videos.filter((v) => v.hasAttribute("src")).length <= radius * 2 + 1);
       videos.forEach((v, index) => {
-        if (Math.abs(index - active) > 1) assert.equal(v.hasAttribute("src"), false);
+        if (Math.abs(index - active) > radius) assert.equal(v.hasAttribute("src"), false);
         assert.equal(v.nextElementSibling.getAttribute("src"), `poster-${index}.webp`, "scrolling never clears an already available preview image");
-        if (Math.abs(index - active) === 1) assert.equal(v.preload, "auto", "both directions have playable buffers");
+        if (index !== active && Math.abs(index - active) <= radius) assert.equal(v.preload, "auto", "both directions have playable buffers");
       });
       const resets = videos.reduce((n, v) => n + v.resets, 0);
       sync(active, true);

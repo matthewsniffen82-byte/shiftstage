@@ -54536,7 +54536,8 @@
       const videos = Array.isArray(overlay?.profileTvVideos) ? overlay.profileTvVideos : [];
       const activeReady = hasVideoWarmupBuffer(overlay?.querySelectorAll(".profile-tv-viewer-video")[activeIndex]);
       const allowNextWarmup = canWarmAdjacentVideo();
-      overlay?.querySelectorAll(".profile-tv-viewer-video").forEach((video, index) => {
+      const elements = [...(overlay?.querySelectorAll(".profile-tv-viewer-video") || [])];
+      elements.forEach((video, index) => {
         const item = videos[index];
         const posterUrl = profileVideoPosterUrl(item);
         const poster = video.nextElementSibling;
@@ -54552,7 +54553,12 @@
         const mode = document.visibilityState === "hidden"
           ? index === activeIndex ? "retain" : "release"
           : videoBufferMode(index, activeIndex, allowNextWarmup, activeReady, video.hasAttribute("src"));
-        applyVideoBufferMode(video, mode);
+        video.dataset.bufferMode = mode;
+        if (mode !== "auto") applyVideoBufferMode(video, mode);
+      });
+      videoWarmupOrder(activeIndex, elements.length).forEach((index) => {
+        const video = elements[index];
+        if (video.dataset.bufferMode === "auto") applyVideoBufferMode(video, "auto");
       });
     }
 
@@ -61502,8 +61508,13 @@
     function videoBufferMode(index, activeIndex, allowWarmup, activeReady, hasSource) {
       if (index === activeIndex) return "auto";
       if (!allowWarmup) return "release";
-      if (Math.abs(index - activeIndex) === 1) return activeReady ? "auto" : hasSource ? "retain" : "release";
+      if (Math.abs(index - activeIndex) <= 2) return activeReady ? "auto" : hasSource ? "retain" : "release";
       return "release";
+    }
+
+    function videoWarmupOrder(activeIndex, length) {
+      return [activeIndex, activeIndex + 1, activeIndex + 2, activeIndex - 1, activeIndex - 2]
+        .filter((index) => index >= 0 && index < length);
     }
 
     function applyVideoBufferMode(video, mode) {
@@ -61793,7 +61804,7 @@
         if (!video) return;
         const posterUrl = String(video.dataset.posterUrl || "");
         const poster = video.nextElementSibling;
-        if (posterUrl && Math.abs(index - activeIndex) <= 1) {
+        if (posterUrl && Math.abs(index - activeIndex) <= 2) {
           if (video.getAttribute("poster") !== posterUrl) video.poster = posterUrl;
         } else {
           video.removeAttribute("poster");
@@ -61804,7 +61815,13 @@
         }
         if (index === activeIndex) return;
         const mode = videoBufferMode(index, activeIndex, allowNextWarmup, activeReady, video.hasAttribute("src"));
-        applyVideoBufferMode(video, mode);
+        video.dataset.bufferMode = mode;
+        if (mode !== "auto") applyVideoBufferMode(video, mode);
+      });
+      videoWarmupOrder(activeIndex, slides.length).forEach((index) => {
+        if (index === activeIndex) return;
+        const video = slides[index].querySelector("video.home-tv-feed-video");
+        if (video?.dataset.bufferMode === "auto") applyVideoBufferMode(video, "auto");
       });
     }
 

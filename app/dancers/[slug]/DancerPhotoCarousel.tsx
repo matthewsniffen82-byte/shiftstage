@@ -18,7 +18,7 @@ import { readBrowserAccessToken } from "@/src/lib/dancr/browser-session";
 import { recordPublicEngagementShare } from "@/src/lib/dancr/engagement-client";
 import { useVideoSoundPreference } from "@/src/lib/dancr/use-video-sound-preference";
 import { useAdaptiveVideoWarmup } from "@/src/lib/dancr/use-adaptive-video-warmup";
-import { hasVideoWarmupBuffer, observeVideoWarmup, videoBufferMode } from "@/src/lib/dancr/video-buffer-policy";
+import { hasVideoWarmupBuffer, observeVideoWarmup, videoBufferMode, videoWarmupOrder } from "@/src/lib/dancr/video-buffer-policy";
 import { videoResourceRef } from "@/src/lib/dancr/video-resource-ref";
 import { attachAdaptiveVideo, releaseAdaptiveVideo, suspendAdaptiveVideo, warmAdaptiveVideo } from "@/public/adaptive-video.mjs";
 import { useAnonymousMediaLikes } from "@/src/lib/dancr/use-anonymous-media-likes";
@@ -356,8 +356,13 @@ export function DancerPhotoCarousel({
           suspendAdaptiveVideo(video);
           video.pause();
           video.preload = "none";
-        } else {
-          video.preload = mode;
+        }
+      });
+      videoWarmupOrder(viewerIndex, videos.length).forEach((index) => {
+        const video = videos[index];
+        const mode = video.dataset.bufferMode;
+        if (mode === "auto") {
+          video.preload = "auto";
           const ready = attachViewerVideo(video);
           if (video.dataset.adaptiveUrl && index !== viewerIndex && ready !== true) {
             void ready.then((attached) => {
