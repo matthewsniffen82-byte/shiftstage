@@ -314,7 +314,7 @@ test("incomplete dancer rows start from the left edge of the three-card director
   );
 });
 
-test("Dancers reuses unchanged grid cards and prioritizes only the first visible rows", () => {
+test("Dancers reuses unchanged grid cards and starts every directory photo immediately", () => {
   const contentKey = homeSource.match(
     /function homeDancerGridContentKey\(city, markup\) \{[\s\S]*?(?=\n    function renderHomeDancerGrid)/,
   )?.[0] || "";
@@ -348,7 +348,7 @@ test("Dancers reuses unchanged grid cards and prioritizes only the first visible
   );
   assert.match(
     homeSource,
-    /const imageLoading = imageIndex < 6 \? "eager" : "lazy";[\s\S]*?const imageFetchPriority = imageIndex < 3 \? "high" : imageIndex >= 6 \? "low" : "auto";[\s\S]*?compactDirectory && nativePhotoAttrs[\s\S]*?<img class="home-dancer-grid-photo has-custom-photo" \$\{nativePhotoAttrs\} sizes="\(max-width: 720px\) calc\(\(100vw - 20px\) \/ 3\)[\s\S]*?loading="\$\{imageLoading\}" fetchpriority="\$\{imageFetchPriority\}" decoding="async" draggable="false"/,
+    /const imageLoading = "eager";[\s\S]*?const imageFetchPriority = imageIndex < 3 \? "high" : "auto";[\s\S]*?compactDirectory && nativePhotoAttrs[\s\S]*?<img class="home-dancer-grid-photo has-custom-photo" \$\{nativePhotoAttrs\} sizes="\(max-width: 720px\) calc\(\(100vw - 20px\) \/ 3\)[\s\S]*?loading="\$\{imageLoading\}" fetchpriority="\$\{imageFetchPriority\}" decoding="async" draggable="false"/,
   );
   assert.match(renderer, /let imageOffset = 0;[\s\S]*?startIndex|let imageOffset = 0;[\s\S]*?imageOffset \+= section\.profiles\.length/);
   assert.match(renderer, /results\.innerHTML = gridMarkup;/);
