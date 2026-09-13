@@ -4723,8 +4723,9 @@ body.dancr-button-system .public-profile-shell :is(.club-deal-profile-copy, .pro
   overflow: hidden !important;
 }
 
-body.dancr-button-system #profileBackdrop #profileModal .profile-club-deal-tile.is-active .profile-club-deal-copy {
-  flex-direction: row !important;
+body.dancr-button-system #profileBackdrop #profileModal .profile-club-deal-tile.is-active:not(.is-error) .profile-club-deal-copy,
+body.dancr-button-system .public-profile-shell .profile-tonight-card.has-club-deal .club-deal-profile-copy {
+  display: none !important;
 }
 
 body.dancr-button-system #profileBackdrop #profileModal .profile-club-deal-title,
@@ -4804,6 +4805,14 @@ body.dancr-button-system .public-profile-shell .profile-tonight-travel-actions >
   padding: 4px 7px !important;
   border-radius: 10px !important;
   font-size: 10px !important;
+}
+
+/* Active offers need only the venue/status row and the three actions. */
+body.dancr-button-system #profileBackdrop #profileModal .profile-tonight-card.has-club-deal:not(:has(.profile-club-deal-tile.is-error))
+  :is(.profile-club-deal-qr-button, .profile-tonight-travel-actions > :is(a, button)),
+body.dancr-button-system .public-profile-shell .profile-tonight-card.has-club-deal
+  :is(.club-deal-profile-action, .profile-tonight-travel-actions > :is(a, button)) {
+  grid-row: 2 !important;
 }
 
 body.dancr-button-system #profileBackdrop #profileModal .profile-tonight-travel-actions > :first-child,
