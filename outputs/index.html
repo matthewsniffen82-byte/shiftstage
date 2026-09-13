@@ -61454,7 +61454,8 @@
     function videoBufferMode(index, activeIndex, allowWarmup, activeReady, hasSource) {
       if (index === activeIndex) return "auto";
       if (!allowWarmup) return "release";
-      if (index === activeIndex + 1) return activeReady ? "metadata" : hasSource ? "retain" : "release";
+      if (index === activeIndex + 1) return activeReady ? "auto" : hasSource ? "retain" : "release";
+      if (index === activeIndex + 2) return activeReady ? "metadata" : hasSource ? "retain" : "release";
       if (index === activeIndex - 1 && hasSource) return "retain";
       return "release";
     }

@@ -7,6 +7,7 @@ const base = process.env.PERF_BASE_URL || 'https://www.mydancr.com';
 const localApp = process.env.PERF_LOCAL_APP_URL;
 const output = process.env.PERF_OUTPUT || '.qa/video-rollback';
 const engine = process.env.PERF_ENGINE || 'chromium';
+const expectForwardPreload = process.env.PERF_EXPECT_FORWARD_PRELOAD === '1';
 const browser = await (engine === 'webkit' ? webkit : chromium).launch({ headless: true, ...(engine === 'chromium' ? { channel: 'msedge' } : {}) });
 const context = await browser.newContext({ ...devices[engine === 'webkit' ? 'iPhone 13' : 'Pixel 5'], serviceWorkers: 'block' });
 const selector = '.home-tv-feed-video, .profile-media-viewer video';
@@ -70,8 +71,10 @@ const snapshot = async (surface, label) => {
   phase = surface + ':' + label;
   const videos = await page.locator(selector).evaluateAll(videos => videos.map(video => ({
     paused: video.paused, source: video.getAttribute('src'), ready: video.readyState, time: video.currentTime,
+    preload: video.preload, buffered: Array.from({ length: video.buffered.length }, (_, index) => [video.buffered.start(index), video.buffered.end(index)]),
   })));
   assert.ok(videos.filter(video => !video.paused).length <= 1, surface + ': only one player runs');
+  if (expectForwardPreload) assert.ok(videos.filter(video => video.source).length <= 4, 'Only current, two ahead and retained previous may have sources');
   for (const video of videos.filter(video => video.source)) assert.ok(!video.source.startsWith('blob:') && !video.source.includes('hls='), 'Normal video URL, no HLS/MSE');
   states.push({ surface, label, videos });
   return videos;
@@ -85,6 +88,16 @@ try {
     await page.waitForFunction(selector => [...document.querySelectorAll(selector)].some(video => !video.paused && video.currentTime > .1), selector, { timeout: 45000 });
     assert.equal((await snapshot(surface, 'initial-playback')).filter(video => !video.paused).length, 1);
     assert.ok(await page.locator(slides).count() >= 4, 'The fixture must exercise four distinct clips');
+    if (expectForwardPreload) {
+      await page.waitForFunction(selector => {
+        const videos = [...document.querySelectorAll(selector)];
+        return videos.length >= 4 && videos[0].preload === 'auto' && !videos[0].paused && videos[0].readyState >= 2
+          && videos[1].preload === 'auto' && videos[1].hasAttribute('src') && videos[1].paused
+          && videos[2].preload === 'metadata' && videos[2].hasAttribute('src') && videos[2].paused
+          && videos.slice(3).every(video => !video.hasAttribute('src') && video.paused);
+      }, selector, { timeout: 15000 });
+      await snapshot(surface, 'current-auto-next-auto-second-metadata-farther-wait');
+    }
     for (const index of [1, 2, 3, 2, 1, 0]) {
       await page.locator(slides).nth(index).evaluate(slide => slide.scrollIntoView({ block: 'start', behavior: 'instant' }));
       await page.waitForTimeout(250);
@@ -121,7 +134,7 @@ try {
   assert.deepEqual(errors, []);
   assert.deepEqual(consoleErrors.filter(message => message !== 'Viewport argument key "interactive-widget" not recognized and ignored.'), []);
 } finally {
-  await writeFile(output + '/results.json', JSON.stringify({ engine, localApp, states, starts, playing, hlsRequests, errors, consoleErrors, failedRequests }, null, 2));
+  await writeFile(output + '/results.json', JSON.stringify({ engine, localApp, expectForwardPreload, states, starts, playing, hlsRequests, errors, consoleErrors, failedRequests }, null, 2));
   await context.unrouteAll({ behavior: 'wait' });
   await browser.close();
 }

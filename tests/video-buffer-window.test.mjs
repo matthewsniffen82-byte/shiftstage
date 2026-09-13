@@ -8,7 +8,7 @@ const live = fs.readFileSync("outputs/index.html", "utf8");
 const carousel = fs.readFileSync("app/dancers/[slug]/DancerPhotoCarousel.tsx", "utf8");
 const source = (name) => live.match(new RegExp("    (?:async )?function " + name + "\\([^]*?\\n    \\}"))?.[0];
 
-test("profile and TV policies give startup priority, warm one next clip's metadata, and retain only a loaded previous clip", () => {
+test("profile and TV policies prioritize startup, preload the next clip, lightly preload the second, and retain a loaded previous clip", () => {
   const context = vm.createContext({});
   vm.runInContext(source("videoBufferMode"), context);
   for (const active of [0, 1, 15, 29]) {
@@ -18,8 +18,9 @@ test("profile and TV policies give startup priority, warm one next clip's metada
           for (let index = 0; index < 30; index++) {
             const expected = index === active ? "auto"
               : !allowed ? "release"
-                : index === active + 1 ? ready ? "metadata" : attached ? "retain" : "release"
-                  : index === active - 1 && attached ? "retain" : "release";
+                : index === active + 1 ? ready ? "auto" : attached ? "retain" : "release"
+                  : index === active + 2 ? ready ? "metadata" : attached ? "retain" : "release"
+                    : index === active - 1 && attached ? "retain" : "release";
             assert.equal(videoBufferMode(index, active, allowed, ready, attached), expected);
             assert.equal(context.videoBufferMode(index, active, allowed, ready, attached), expected);
           }
@@ -83,11 +84,18 @@ for (const surface of ["profile", "tv"]) {
     };
     sync(0, false);
     assert.equal(videos[1].hasAttribute("src"), false, "the next clip cannot compete with the first frame");
+    assert.equal(videos[2].hasAttribute("src"), false, "the second clip also waits for the current video");
     sync(0, true);
-    assert.equal(videos[1].preload, "metadata", "prepare one next clip without requesting its full file");
+    assert.equal(videos[0].preload, "auto", "current playback gets full loading");
+    assert.equal(videos[1].preload, "auto", "strongly preload the next clip");
+    assert.equal(videos[2].preload, "metadata", "lightly preload the second clip");
+    assert.equal(videos[3].hasAttribute("src"), false, "farther clips wait");
     videos[0].dataset.frameReady = "true";
     sync(1, true);
     assert.equal(videos[1].assignments, 1, "promote the same warmed video element");
+    assert.equal(videos[2].assignments, 1, "upgrade light preload without reattaching its source");
+    assert.equal(videos[2].preload, "auto");
+    assert.equal(videos[3].preload, "metadata");
     assert.equal(videos[0].resets, 0);
     assert.equal(videos[0].preload, "none");
     assert.equal(videos[0].dataset.frameReady, "true");
@@ -101,9 +109,9 @@ for (const surface of ["profile", "tv"]) {
     assert.equal(videos[0].resets, 0);
     for (const active of [1, 2, 3, 18, 19, 18, 29, 0]) {
       sync(active, true);
-      assert.ok(videos.filter((v) => v.hasAttribute("src")).length <= 3);
+      assert.ok(videos.filter((v) => v.hasAttribute("src")).length <= 4);
       videos.forEach((v, index) => {
-        if (Math.abs(index - active) > 1) assert.equal(v.hasAttribute("src"), false);
+        if (index < active - 1 || index > active + 2) assert.equal(v.hasAttribute("src"), false);
       });
       const resets = videos.reduce((n, v) => n + v.resets, 0);
       sync(active, true);
