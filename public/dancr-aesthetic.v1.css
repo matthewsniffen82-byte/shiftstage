@@ -7550,14 +7550,6 @@ body.dancr-button-system #results.venue-profile-overlay .venue-detail
 }
 
 body.dancr-button-system #results.venue-profile-overlay .venue-detail
-  .venue-detail-entry-terms {
-  margin: 0;
-  color: var(--dancr-color-text-secondary);
-  font-size: 11px;
-  line-height: 1.45;
-}
-
-body.dancr-button-system #results.venue-profile-overlay .venue-detail
   .venue-detail-club-deal-cta {
   width: 100%;
   box-sizing: border-box;

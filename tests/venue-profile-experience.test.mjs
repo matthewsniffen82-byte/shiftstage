@@ -189,7 +189,7 @@ test("venue detail offers expose free entry and the matching pickup link while r
   assert.match(singleOffer, />Free Ride \+ Entry</);
   assert.match(singleOffer, /href="\/rides\/venue-1\?dealId=deal-1"/);
   assert.match(singleOffer, /data-free-ride-link/);
-  assert.match(singleOffer, /Uber, Lyft, other rideshares, and taxis do not qualify/);
+  assert.doesNotMatch(singleOffer, /venue-detail-entry-terms|rideshares|taxis/);
   assert.doesNotMatch(singleOffer, /clubDealQrSymbolMarkup|venue-detail-club-deal-symbol|<svg/i);
 
   const multipleOffers = venueOfferMarkup({
