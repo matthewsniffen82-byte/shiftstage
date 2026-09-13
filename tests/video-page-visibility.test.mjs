@@ -19,7 +19,7 @@ function fixture() {
     activateHomeTvFeedVideo(id) { videos[Number(id)].paused = false; },
     playProfileTvViewerVideo(video) { video.paused = false; },
   });
-  vm.runInContext(source("suspendPageVideoPlayback") + "\n" + source("resumePageVideoPlayback"), context);
+  vm.runInContext(["homeTvFeedCoveredByProfile", "suspendPageVideoPlayback", "resumePageVideoPlayback"].map(source).join("\n"), context);
   return { context, videos };
 }
 

@@ -54978,6 +54978,7 @@
 
     function syncOverlayScrollLock() {
       const profileFullViewOpen = profileBackdrop.classList.contains("show");
+      const profileFullViewWasOpen = document.body.classList.contains("profile-full-view-open");
       const overlayOpen = !!document.querySelector(".page-panel.show, .modal-backdrop.show, .profile-tv-viewer.show, .profile-photo-viewer:not([hidden]), .deal-pass-overlay.show, .profile-qr-overlay.show, .account-required-popover:not([hidden])");
       const dealPassOverlayOpen = !!document.querySelector(".deal-pass-overlay.show");
       const dashboardOverlayOpen = !!document.querySelector(
@@ -55010,6 +55011,8 @@
       if (venueRequestOverlayOpen) document.body.classList.add("venue-auth-overlay-open");
       document.body.classList.toggle("account-surface-open", accountSurfaceOpen);
       document.body.classList.toggle("profile-full-view-open", profileFullViewOpen);
+      if (profileFullViewOpen && !profileFullViewWasOpen) suspendPageVideoPlayback();
+      else if (!profileFullViewOpen && profileFullViewWasOpen) resumePageVideoPlayback();
       syncProfileDestinationNavigation();
     }
 
@@ -61499,9 +61502,13 @@
           return;
         }
         const slide = video.closest(".home-tv-feed-slide");
+        if (slide && homeTvFeedCoveredByProfile()) {
+          pageSuspendedVideos.add(video);
+          return;
+        }
         if (slide?.getAttribute("aria-current") === "true" && slide.dataset.userPaused !== "true" &&
             slide.dataset.viewportInactive !== "true" &&
-            !document.body.classList.contains("profile-tv-viewer-open")) {
+            !homeTvFeedCoveredByProfile()) {
           activateHomeTvFeedVideo(String(slide.dataset.videoId || ""));
         }
       });
@@ -61541,8 +61548,13 @@
       video.load();
     }
 
+    function homeTvFeedCoveredByProfile() {
+      return document.body.classList.contains("profile-full-view-open") ||
+        document.body.classList.contains("profile-tv-viewer-open");
+    }
+
     function activateHomeTvFeedVideo(videoId) {
-      if (activeTab !== "tv" || !videoId || document.visibilityState === "hidden") return;
+      if (activeTab !== "tv" || !videoId || document.visibilityState === "hidden" || homeTvFeedCoveredByProfile()) return;
       closeHomeTvFeedReportMenus();
       homeTvFeedActiveVideoId = videoId;
       const slides = results.querySelectorAll(".home-tv-feed-slide");
@@ -61612,7 +61624,7 @@
       const activeIndex = slides.findIndex((slide) => String(slide.dataset.videoId || "") === videoId);
       if (activeIndex < 0) return;
       const activeVideo = slides[activeIndex].querySelector("video.home-tv-feed-video");
-      const allowNextWarmup = document.visibilityState !== "hidden" &&
+      const allowNextWarmup = document.visibilityState !== "hidden" && !homeTvFeedCoveredByProfile() &&
         slides[activeIndex].dataset.viewportInactive !== "true" && canWarmAdjacentVideo();
       const activeReady = activeVideo?.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA;
       slides.forEach((slide, index) => {
@@ -61987,14 +61999,14 @@
       video.className = "home-tv-feed-video";
       video.dataset.videoUrl = String(item.videoUrl || "").trim();
       video.loop = true;
-      video.autoplay = index === 0;
+      video.autoplay = index === 0 && !homeTvFeedCoveredByProfile();
       video.muted = homeTvFeedMuted;
       video.defaultMuted = homeTvFeedMuted;
       video.playsInline = true;
       video.setAttribute("playsinline", "");
       video.setAttribute("webkit-playsinline", "");
       if (homeTvFeedMuted) video.setAttribute("muted", "");
-      if (index === 0) video.setAttribute("autoplay", "");
+      if (video.autoplay) video.setAttribute("autoplay", "");
       const posterUrl = String(item?.posterUrl || item?.poster_url || "").trim();
       video.dataset.posterUrl = posterUrl;
       if (posterUrl && index <= 1) video.poster = posterUrl;

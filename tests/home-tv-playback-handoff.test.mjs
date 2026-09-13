@@ -34,6 +34,7 @@ function fixture(activeIndex) {
   const context = vm.createContext({
     activeTab: "tv", homeTvFeedActiveVideoId: String(activeIndex), homeTvFeedMuted: true,
     homeTvFeedImpressions: new Set(), document: { visibilityState: "visible" },
+    homeTvFeedCoveredByProfile: () => false,
     results: { querySelectorAll: () => slides },
     closeHomeTvFeedReportMenus() {}, attachDeferredVideoSource() {}, trackHomeTvFeedEvent() {},
     clearHomeTvFeedEngagedTimer() {}, syncHomeTvFeedSoundButtons() {},
@@ -76,4 +77,14 @@ test("scrolling to a manually paused clip preserves the pause without leaving an
   await state.settle();
   assert.deepEqual(state.starts, []);
   assert.ok(state.videos.every((video) => video.paused));
+});
+
+test("a stale viewport callback cannot restart the feed behind a full profile", async () => {
+  const state = fixture(0);
+  state.videos.forEach(video => video.pause());
+  state.context.homeTvFeedCoveredByProfile = () => true;
+  state.select(1);
+  await state.settle();
+  assert.deepEqual(state.starts, []);
+  assert.deepEqual(state.primed, []);
 });

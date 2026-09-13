@@ -5,7 +5,13 @@
   const preparedVideos = new WeakSet();
   let scanFrame = 0;
 
+  function homeTvFeedCoveredByProfile() {
+    return document.body.classList.contains("profile-full-view-open") ||
+      document.body.classList.contains("profile-tv-viewer-open");
+  }
+
   function isActiveHomeFeedVideo(video) {
+    if (homeTvFeedCoveredByProfile()) return false;
     const slide = video.closest(".home-tv-feed-slide");
     if (!slide) return false;
     if (slide.dataset.viewportInactive === "true") return false;
@@ -20,6 +26,12 @@
   }
 
   async function playActiveVideo(video) {
+    if (homeTvFeedCoveredByProfile()) {
+      video.autoplay = false;
+      video.removeAttribute("autoplay");
+      video.pause();
+      return;
+    }
     if (
       document.visibilityState === "hidden" ||
       !isActiveHomeFeedVideo(video) ||
@@ -91,6 +103,7 @@
       video.autoplay = isActive;
       if (isActive) video.setAttribute("autoplay", "");
       else video.removeAttribute("autoplay");
+      if (homeTvFeedCoveredByProfile()) video.pause();
     });
     const activeVideo = [...videos].find(isActiveHomeFeedVideo);
     if (activeVideo) void playActiveVideo(activeVideo);

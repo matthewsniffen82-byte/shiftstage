@@ -68,6 +68,7 @@ for (const surface of ["profile", "tv"]) {
       HTMLVideoElement: Video, HTMLMediaElement: Video,
       document: { visibilityState: "visible" }, pageSuspendedVideos: new Set(),
       canWarmAdjacentVideo: () => warmup,
+      homeTvFeedCoveredByProfile: () => false,
       profileVideoPosterUrl: (item) => item.posterUrl,
       results: { querySelectorAll: () => slides },
     });
