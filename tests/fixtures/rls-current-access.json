@@ -2951,7 +2951,7 @@
       "cmd": "SELECT",
       "permissive": "PERMISSIVE",
       "policyname": "approved photos are public",
-      "qual": "(((review_status = 'approved'::review_status) AND (EXISTS ( SELECT 1\n   FROM dancer_profiles dancer\n  WHERE ((dancer.id = dancer_photos.dancer_id) AND (dancer.status = 'approved'::dancer_status) AND (dancer.verification_status = 'approved'::review_status) AND (dancer.venue_approved_at IS NOT NULL) AND (dancer.is_public = true) AND (dancer.disabled_at IS NULL))))) OR (EXISTS ( SELECT 1\n   FROM dancer_profiles dancer\n  WHERE ((dancer.id = dancer_photos.dancer_id) AND is_current_dancer_owner(dancer.id)))) OR is_admin())",
+      "qual": "(((review_status = 'approved'::review_status) AND (EXISTS ( SELECT 1\n   FROM dancer_profiles dancer\n  WHERE ((dancer.id = dancer_photos.dancer_id) AND (dancer.status = 'approved'::dancer_status) AND (dancer.verification_status = 'approved'::review_status) AND (dancer.is_public = true) AND (dancer.disabled_at IS NULL))))) OR (EXISTS ( SELECT 1\n   FROM dancer_profiles dancer\n  WHERE ((dancer.id = dancer_photos.dancer_id) AND is_current_dancer_owner(dancer.id)))) OR is_admin())",
       "roles": [
         "public"
       ],
@@ -2963,7 +2963,7 @@
       "cmd": "SELECT",
       "permissive": "PERMISSIVE",
       "policyname": "approved public dancers are public",
-      "qual": "(((status = 'approved'::dancer_status) AND (verification_status = 'approved'::review_status) AND (venue_approved_at IS NOT NULL) AND (is_public = true) AND (disabled_at IS NULL)) OR (user_id = auth.uid()) OR is_admin())",
+      "qual": "(((status = 'approved'::dancer_status) AND (verification_status = 'approved'::review_status) AND (is_public = true) AND (disabled_at IS NULL)) OR (user_id = auth.uid()) OR is_admin())",
       "roles": [
         "public"
       ],

@@ -1,9 +1,10 @@
 import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
 import {after,before,test} from 'node:test';
 import {createAccountLifecycleDatabase,seedAccountLifecycle,accountLifecycleSnapshot,asAccountLifecycleRole,transitionOwnAccount,accountLifecycleSource,accountLifecycleId} from './helpers/account-lifecycle-database.mjs';
 import {accountLifecycleCaller} from './helpers/account-lifecycle-caller.mjs';
 let db,next=1000;
-before(async()=>{db=await createAccountLifecycleDatabase();});
+before(async()=>{db=await createAccountLifecycleDatabase();await db.exec(readFileSync(new URL('../supabase/migrations/20260913004600_preserve_unaffiliated_dancer_reactivation.sql',import.meta.url),'utf8'));});
 after(async()=>db?.close());
 async function fixture(options={}) {
   const ids=await seedAccountLifecycle(db,{...options,n:next++});
@@ -47,6 +48,14 @@ for(const profilePublic of [false,true])test(`dancer pause preserves prior publi
   const f=await fixture({role:'dancer',profilePublic});await f.run('disabled');assert.equal((await row('dancer_profiles','id',f.dancerId)).is_public,false);
   await f.run('active');const profile=await row('dancer_profiles','id',f.dancerId);
   assert.equal(profile.status,'approved');assert.equal(profile.is_public,profilePublic);assert.equal(profile.disabled_at,null);
+});
+
+for(const profilePublic of [false,true])test(`unaffiliated dancer pause preserves prior public=${profilePublic} on resume`,async()=>{
+ const f=await fixture({role:'dancer',profilePublic});
+ await db.query('update dancer_profiles set venue_approved_at=null where id=$1',[f.dancerId]);
+ await f.run('disabled');assert.equal((await row('dancer_profiles','id',f.dancerId)).is_public,false);
+ await f.run('active');const profile=await row('dancer_profiles','id',f.dancerId);
+ assert.equal(profile.status,'approved');assert.equal(profile.is_public,profilePublic);assert.equal(profile.disabled_at,null);assert.equal(profile.venue_approved_at,null);
 });
 test('active account reactivation is a no-op and cannot republish an incognito profile',async()=>{
   const f=await fixture({role:'dancer',profilePublic:false}),before=await accountLifecycleSnapshot(db);await f.run('active');assert.deepEqual(await accountLifecycleSnapshot(db),before);
