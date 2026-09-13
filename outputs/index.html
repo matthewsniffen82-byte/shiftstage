@@ -54511,6 +54511,9 @@
           overlay.dataset.loadedVideoIndex = String(index);
           syncProfileTvVideoLoading(overlay, index);
         });
+        observeVideoWarmup(video, () => {
+          if (Number(overlay.dataset.videoIndex || 0) === index) syncProfileTvVideoLoading(overlay, index);
+        });
         video.addEventListener("emptied", () => { delete video.dataset.frameReady; });
         observeVideoPresentation(video);
         slide.appendChild(video);
@@ -54530,7 +54533,7 @@
 
     function syncProfileTvVideoLoading(overlay, activeIndex) {
       const videos = Array.isArray(overlay?.profileTvVideos) ? overlay.profileTvVideos : [];
-      const activeReady = overlay?.dataset.loadedVideoIndex === String(activeIndex);
+      const activeReady = hasVideoWarmupBuffer(overlay?.querySelectorAll(".profile-tv-viewer-video")[activeIndex]);
       const allowNextWarmup = canWarmAdjacentVideo();
       overlay?.querySelectorAll(".profile-tv-viewer-video").forEach((video, index) => {
         const item = videos[index];
@@ -61471,6 +61474,30 @@
       return !["slow-2g", "2g"].includes(String(connection.effectiveType || "").toLowerCase());
     }
 
+    function hasVideoWarmupBuffer(video) {
+      if (!video || video.readyState < 2 || !Number.isFinite(video.duration)) return false;
+      const position = video.currentTime;
+      const target = Math.min(video.duration, position + 3);
+      for (let index = 0; index < video.buffered.length; index++) {
+        if (video.buffered.start(index) <= position && video.buffered.end(index) >= target - .05) return true;
+      }
+      return false;
+    }
+
+    function observeVideoWarmup(video, onChange) {
+      if (!video) return;
+      let ready = hasVideoWarmupBuffer(video);
+      const update = () => {
+        const next = hasVideoWarmupBuffer(video);
+        if (ready === next) return;
+        ready = next;
+        onChange();
+      };
+      const events = ["progress", "loadeddata", "waiting", "emptied"];
+      events.forEach((event) => video.addEventListener(event, update));
+      return () => events.forEach((event) => video.removeEventListener(event, update));
+    }
+
     function videoBufferMode(index, activeIndex, allowWarmup, activeReady, hasSource) {
       if (index === activeIndex) return "auto";
       if (!allowWarmup) return "release";
@@ -61706,7 +61733,7 @@
       const activeVideo = slides[activeIndex].querySelector("video.home-tv-feed-video");
       const allowNextWarmup = document.visibilityState !== "hidden" &&
         slides[activeIndex].dataset.viewportInactive !== "true" && canWarmAdjacentVideo();
-      const activeReady = activeVideo?.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA;
+      const activeReady = hasVideoWarmupBuffer(activeVideo);
       slides.forEach((slide, index) => {
         const video = slide.querySelector("video.home-tv-feed-video");
         if (!video) return;
@@ -62097,6 +62124,9 @@
       if (posterUrl && index <= 1) video.poster = posterUrl;
       observeVideoPresentation(video);
       video.preload = index === 0 ? "auto" : "none";
+      observeVideoWarmup(video, () => {
+        if (slide.classList.contains("is-active")) primeHomeTvFeedNeighbors(videoId);
+      });
       video.controlsList = "nodownload noremoteplayback nofullscreen";
       video.disablePictureInPicture = true;
       video.tabIndex = 0;

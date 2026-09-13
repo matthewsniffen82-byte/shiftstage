@@ -60,7 +60,7 @@ test("video poster windows stay bounded and work with adjacent video warmup disa
     attachDeferredVideoSource: (video, preload) => { video.source = true; video.preload = preload; },
     releaseDeferredVideoSource: (video) => { video.source = false; video.preload = "none"; },
   });
-  vm.runInContext(["videoBufferMode", "applyVideoBufferMode", "syncProfileTvVideoLoading"].map(source).join("\n"), context);
+  vm.runInContext(["hasVideoWarmupBuffer", "videoBufferMode", "applyVideoBufferMode", "syncProfileTvVideoLoading"].map(source).join("\n"), context);
   for (const active of [0, 1, 12, 28, 12, 0]) {
     context.syncProfileTvVideoLoading(overlay, active);
     videos.forEach((video, index) => {

@@ -42,6 +42,10 @@ class Video {
   attrs = new Map();
   preload = "none";
   readyState = 0;
+  currentTime = 0;
+  duration = 15;
+  bufferEnd = 4;
+  buffered = { length: 1, start: () => 0, end: () => this.bufferEnd };
   networkState = 0;
   resets = 0;
   assignments = 0;
@@ -85,7 +89,7 @@ for (const surface of ["profile", "tv", "routed-tv"]) {
       window: { setTimeout() {}, clearTimeout() {} },
       attemptVideoPlayback() {}, trackEvent() {},
     });
-    vm.runInContext(["videoBufferMode", "applyVideoBufferMode", "attachDeferredVideoSource", "releaseDeferredVideoSource",
+    vm.runInContext(["hasVideoWarmupBuffer", "videoBufferMode", "applyVideoBufferMode", "attachDeferredVideoSource", "releaseDeferredVideoSource",
       "syncProfileTvVideoLoading", "primeHomeTvFeedNeighbors"].map(source).join("\n"), context);
     vm.runInContext(routedBuffering, context);
     const sync = (active, ready) => {
@@ -103,6 +107,12 @@ for (const surface of ["profile", "tv", "routed-tv"]) {
     };
     sync(0, false);
     assert.equal(videos[1].hasAttribute("src"), false, "the next clip cannot compete with the first frame");
+    if (surface !== "routed-tv") {
+      videos[0].bufferEnd = .5;
+      sync(0, true);
+      assert.equal(videos[1].hasAttribute("src"), false, "a single frame with half a second buffered cannot fund a neighboring download");
+      videos[0].bufferEnd = 4;
+    }
     sync(0, true);
     assert.equal(videos[1].preload, "auto", "prepare playable data instead of only metadata");
     videos[0].dataset.frameReady = "true";

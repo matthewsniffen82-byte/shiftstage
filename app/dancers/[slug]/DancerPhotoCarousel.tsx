@@ -18,7 +18,7 @@ import { readBrowserAccessToken } from "@/src/lib/dancr/browser-session";
 import { recordPublicEngagementShare } from "@/src/lib/dancr/engagement-client";
 import { useVideoSoundPreference } from "@/src/lib/dancr/use-video-sound-preference";
 import { useAdaptiveVideoWarmup } from "@/src/lib/dancr/use-adaptive-video-warmup";
-import { videoBufferMode } from "@/src/lib/dancr/video-buffer-policy";
+import { hasVideoWarmupBuffer, observeVideoWarmup, videoBufferMode } from "@/src/lib/dancr/video-buffer-policy";
 import { videoResourceRef } from "@/src/lib/dancr/video-resource-ref";
 import { useAnonymousMediaLikes } from "@/src/lib/dancr/use-anonymous-media-likes";
 import { DANCER_PROFILE_MEDIA_PAGE_SIZE } from "@/src/lib/dancr/media-limits";
@@ -314,27 +314,31 @@ export function DancerPhotoCarousel({
   useEffect(() => {
     if (viewerKind !== "video") return;
     const videos = [...(viewerFeed.current?.querySelectorAll<HTMLVideoElement>("video") || [])];
-    const activeReady = videos[viewerIndex]?.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA;
-    videos.forEach((video, index) => {
-      const mode = document.visibilityState === "hidden"
-        ? index === viewerIndex ? "retain" : "release"
-        : videoBufferMode(index, viewerIndex, allowVideoWarmup, activeReady, video.hasAttribute("src"));
-      if (mode === "release") {
-        video.pause();
-        video.preload = "none";
-        if (video.hasAttribute("src")) {
-          delete video.dataset.frameReady;
-          video.removeAttribute("src");
-          video.load();
+    const syncLoading = () => {
+      const activeReady = hasVideoWarmupBuffer(videos[viewerIndex]);
+      videos.forEach((video, index) => {
+        const mode = document.visibilityState === "hidden"
+          ? index === viewerIndex ? "retain" : "release"
+          : videoBufferMode(index, viewerIndex, allowVideoWarmup, activeReady, video.hasAttribute("src"));
+        if (mode === "release") {
+          video.pause();
+          video.preload = "none";
+          if (video.hasAttribute("src")) {
+            delete video.dataset.frameReady;
+            video.removeAttribute("src");
+            video.load();
+          }
+        } else if (mode === "retain") {
+          video.pause();
+          video.preload = "none";
+        } else {
+          video.preload = mode;
+          if (!video.hasAttribute("src")) video.src = video.dataset.videoUrl || "";
         }
-      } else if (mode === "retain") {
-        video.pause();
-        video.preload = "none";
-      } else {
-        video.preload = mode;
-        if (!video.hasAttribute("src")) video.src = video.dataset.videoUrl || "";
-      }
-    });
+      });
+    };
+    syncLoading();
+    return observeVideoWarmup(videos[viewerIndex], syncLoading);
   }, [allowVideoWarmup, viewerVideoReadyVersion, viewerIndex, viewerKind]);
 
   useEffect(() => {
