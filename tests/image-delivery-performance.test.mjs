@@ -46,15 +46,24 @@ test("thumbnail candidates do not downgrade CSS portraits or native fallback ima
   assert.match(context.nativeResponsivePhotoAttrs("https://images.example/master", "https://images.example/96 96w, https://images.example/240 240w"), /^src="https:\/\/images.example\/240"/);
 });
 
-test("the profile photo grid starts two rows immediately and prioritizes the first row", () => {
+test("small profile galleries load together while large galleries prioritize their first two rows", () => {
   const source = shell.match(/function profilePhotoThumbMarkup\([^]*?(?=\n    function galleryMarkup)/)?.[0];
-  const render = new Function('nativeResponsivePhotoAttrs', 'escapeHtml', 'displayText', `${source}; return profilePhotoThumbMarkup;`)(
-    () => 'src="https://images.example/photo"', value => String(value), value => String(value),
+  const render = new Function('nativeResponsivePhotoAttrs', 'escapeHtml', 'displayText', 'PROFILE_MEDIA_PAGE_SIZE', `${source}; return profilePhotoThumbMarkup;`)(
+    () => 'src="https://images.example/photo"', value => String(value), value => String(value), 12,
   );
-  for (const index of [0, 2, 3, 5, 6, 20]) {
-    const markup = render({ index, photoClass: 'photo', photoUrl: 'https://images.example/photo' }, 21);
-    assert.match(markup, new RegExp(`loading="${index < 6 ? 'eager' : 'lazy'}"`));
-    assert.match(markup, new RegExp(`fetchpriority="${index < 3 ? 'high' : 'auto'}"`));
+  for (const [total, index, loading, priority] of [
+    [1, 0, 'eager', 'high'],
+    [12, 2, 'eager', 'high'],
+    [12, 6, 'eager', 'auto'],
+    [12, 11, 'eager', 'auto'],
+    [13, 0, 'eager', 'high'],
+    [13, 5, 'eager', 'auto'],
+    [13, 6, 'lazy', 'auto'],
+    [50, 20, 'lazy', 'auto'],
+  ]) {
+    const markup = render({ index, photoClass: 'photo', photoUrl: 'https://images.example/photo' }, total);
+    assert.match(markup, new RegExp(`loading="${loading}"`));
+    assert.match(markup, new RegExp(`fetchpriority="${priority}"`));
   }
 });
 

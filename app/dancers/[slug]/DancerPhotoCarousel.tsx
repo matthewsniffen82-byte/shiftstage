@@ -843,7 +843,7 @@ export function DancerPhotoCarousel({
                   decoding="async"
                   draggable={false}
                   height={item.imageHeight || undefined}
-                  loading={prioritizeInitialPhotos && index < 6 ? "eager" : "lazy"}
+                  loading={prioritizeInitialPhotos && (photoMedia.length <= DANCER_PROFILE_MEDIA_PAGE_SIZE || index < 6) ? "eager" : "lazy"}
                   fetchPriority={prioritizeInitialPhotos && index < 3 ? "high" : "auto"}
                   onError={markImageUnavailable}
                   onLoad={markImageReady}
