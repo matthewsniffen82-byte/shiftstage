@@ -50146,8 +50146,6 @@
 
     function venueOfferMarkup(venue) {
       if (venue?.activeDeal && venue?.id) {
-        const activeDealCount = Math.max(venue.activeDeals?.length || 0, 1);
-        const hasMultipleActiveDeals = activeDealCount > 1;
         const config = {
           deal: venue.activeDeal,
           deals: venue.activeDeals,
@@ -50161,10 +50159,8 @@
             <div class="venue-offer-grid">
               <div class="venue-deal-preview-copy">
                 <div class="venue-detail-club-deal-heading">
-                  <span class="eyebrow">Free entry options</span>
                   <span class="venue-detail-club-deal-status">Active tonight</span>
                 </div>
-                <h3>${hasMultipleActiveDeals ? `${activeDealCount} Club Deals` : escapeHtml(venue.activeDeal.dealTitle)}</h3>
               </div>
               <div class="venue-detail-club-deal-actions">
                 <button class="venue-detail-club-deal-cta" type="button" data-club-deal-state="available" data-club-deal-cta="${encodeDealPass(config)}" aria-label="View free entry at ${escapeHtml(venue.name || "this club")}">

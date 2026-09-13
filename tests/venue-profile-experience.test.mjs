@@ -136,7 +136,7 @@ test("venue profiles reserve customer Club Deal language for active offers", () 
     /venue\?\.activeDeal[\s\S]*?venue-deal-preview is-active-club-deal[\s\S]*?<button class="venue-detail-club-deal-cta"[\s\S]*?data-club-deal-cta="\$\{encodeDealPass\(config\)\}"[\s\S]*?Free Entry/,
   );
   assert.equal((venueOffer.match(/data-club-deal-cta=/g) || []).length, 1);
-  assert.match(venueOffer, /activeDealCount[\s\S]*?hasMultipleActiveDeals[\s\S]*?\$\{activeDealCount\} Club Deals[\s\S]*?Free Entry/);
+  assert.doesNotMatch(venueOffer, /Free entry options|<h3>/);
   assert.match(venueOffer, /uberRideLinkMarkup\(\{ venue, source: "venue_page", className: "venue-detail-entry-ride", dealConfig: config \}\)/);
   assert.doesNotMatch(venueOffer, /<p>|customerFacingDealDescription\(venue\.activeDeal\.dealDescription\)/);
   assert.match(venueOffer, /return "";/);
@@ -179,8 +179,10 @@ test("venue detail offers expose free entry and the matching pickup link while r
     activeDeal: { id: "deal-1", dealTitle: longTitle, dealDescription: longDescription },
     activeDeals: [{ id: "deal-1", dealTitle: longTitle, dealDescription: longDescription }],
   });
-  assert.match(singleOffer, new RegExp(longTitle));
+  assert.doesNotMatch(singleOffer, new RegExp(longTitle));
+  assert.match(singleOffer, />Active tonight</);
   assert.doesNotMatch(singleOffer, new RegExp(longDescription));
+  assert.equal(encodedConfig.deal.dealTitle, longTitle);
   assert.equal(encodedConfig.deal.dealDescription, longDescription);
   assert.equal(encodedConfig.deals[0].dealDescription, longDescription);
   assert.equal(encodedConfig.sourceType, "club_page");
@@ -201,7 +203,8 @@ test("venue detail offers expose free entry and the matching pickup link while r
       { id: "deal-2", dealTitle: "Second", dealDescription: "Second offer" },
     ],
   });
-  assert.match(multipleOffers, /2 Club Deals/);
+  assert.match(multipleOffers, />Active tonight</);
+  assert.doesNotMatch(multipleOffers, /Free entry options|<h3>/);
   assert.match(multipleOffers, />Free Entry</);
   assert.match(multipleOffers, /href="\/rides\/venue-1\?dealId=deal-1"/);
   assert.doesNotMatch(multipleOffers, /<p>/);
