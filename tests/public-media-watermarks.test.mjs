@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { execFile } from "node:child_process";
 import { readFileSync } from "node:fs";
-import { mkdtemp, readFile, rm } from "node:fs/promises";
+import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import test from "node:test";
@@ -9,6 +9,8 @@ import { promisify } from "node:util";
 import ffmpegPath from "ffmpeg-static";
 import sharp from "sharp";
 import { importMediaModule } from "./helpers/server-media-module.mjs";
+import { runWithServerJob } from "../src/lib/server-job.ts";
+import { parseFfmpegVideoMetadata } from "../src/lib/dancr/video-upload-policy.ts";
 
 const {
   applyDancrImageWatermark,
@@ -223,6 +225,10 @@ test("video processing archives the original and publishes a playable watermarke
       "lavfi",
       "-i",
       "color=c=#452078:s=240x320:d=1:r=24",
+      "-f",
+      "lavfi",
+      "-i",
+      "sine=frequency=440:duration=1:sample_rate=48000",
       "-c:v",
       "libx264",
       "-pix_fmt",
@@ -273,6 +279,33 @@ test("video processing archives the original and publishes a playable watermarke
     assert.equal(published.options.upsert, true);
     assert.notDeepEqual(published.value, original);
     assert.ok(published.value.length > 0);
+    assert.ok(published.value.includes(Buffer.from("crf=22.0")), "long jobs use the more efficient MP4 encoder");
+    const boxes = [];
+    for (let offset = 0; offset + 8 <= published.value.length;) {
+      const size = published.value.readUInt32BE(offset);
+      assert.ok(size >= 8 && offset + size <= published.value.length);
+      boxes.push(published.value.toString("ascii", offset + 4, offset + 8));
+      offset += size;
+    }
+    assert.ok(boxes.indexOf("moov") >= 0 && boxes.indexOf("moov") < boxes.indexOf("mdat"), "MP4 metadata stays before the video bytes for fast startup");
+    const publishedPath = path.join(workspace, "published.mp4");
+    await writeFile(publishedPath, published.value);
+    const decoded = await execFileAsync(ffmpegPath, ["-hide_banner", "-i", publishedPath, "-f", "null", "-"]);
+    const metadata = parseFfmpegVideoMetadata(decoded.stderr);
+    assert.equal(metadata?.width, 240);
+    assert.equal(metadata?.height, 320);
+    assert.equal(metadata?.durationSeconds, 1);
+    assert.match(decoded.stderr, /Video: h264/);
+    assert.match(decoded.stderr, /yuv420p/);
+    assert.match(decoded.stderr, /Audio: aac/);
+
+    await runWithServerJob(() => watermarkStoredVideo(storageClient, {
+      publicBucket: "mydancr-tv-videos", storagePath: "user/dancer/video.mp4",
+      storageMime: "video/mp4", width: 240, height: 320,
+    }), 45_000);
+    const shortJobVideo = uploads.filter(item => item.bucket === "mydancr-tv-videos" && item.storagePath === "user/dancer/video.mp4").at(-1);
+    assert.ok(shortJobVideo.value.includes(Buffer.from("crf=20.0")), "short moderation jobs retain their existing fast encoding path");
+    assert.equal(uploads.filter(item => item.storagePath.startsWith("__originals/")).length, 1, "re-encoding never overwrites the archived original");
   } finally {
     await rm(workspace, { recursive: true, force: true });
   }
