@@ -1,4 +1,5 @@
 import { dancerVideoDeliveryUrl } from './media-delivery-url';
+import { adaptiveVideoPath, parseAdaptiveVideoManifest } from './adaptive-video-manifest';
 import { toPublicClubDeal } from "./public-club-deal";
 import { isPublicVenueRow } from "./venue-public-visibility";
 import { isAllMyDancrCities } from "./markets";
@@ -1648,7 +1649,7 @@ const RETRYABLE_VIDEO_MODERATION_REASON_CODES = new Set([
 export async function hideOwnMyDancrTvVideo(admin: AdminClient, userId: string, videoId: string) {
   const { data: video, error } = await admin
     .from("mydancr_tv_videos")
-    .select("id, dancer_id, submitted_by, storage_path, storage_mime, status, updated_at")
+    .select("id, dancer_id, submitted_by, storage_path, storage_mime, status, updated_at, moderation_details")
     .eq("id", videoId)
     .eq("submitted_by", userId)
     .maybeSingle();
@@ -1680,10 +1681,12 @@ export async function hideOwnMyDancrTvVideo(admin: AdminClient, userId: string, 
     throw new Error("The video removal could not be confirmed.");
   }
   // Retain hidden metadata on cleanup failure; it is the receipt/path for an explicit retry.
+  const adaptive = parseAdaptiveVideoManifest(video.moderation_details?.adaptiveStreaming);
   for (const [bucket, path] of [
     [MYDANCR_TV_BUCKET, video.storage_path],
     [MYDANCR_TV_POSTER_BUCKET, myDancrTvPosterStoragePath(video.storage_path)],
     [MYDANCR_TV_BUCKET, archivedOriginalStoragePath(MYDANCR_TV_BUCKET, video.storage_path)],
+    ...(adaptive ? adaptive.renditions.map(row => [MYDANCR_TV_BUCKET, adaptiveVideoPath(video.storage_path, adaptive, row.name)]) : []),
   ]) {
     const { data: removed, error: removeError } = await admin.storage.from(bucket).remove([path]);
     if (removeError) throw removeError;

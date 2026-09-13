@@ -5,11 +5,12 @@ import vm from 'node:vm';
 import test,{before,beforeEach,after} from 'node:test';
 import ts from 'typescript';
 import {createImportDatabase,seedImportDatabase,fixtureId,importSnapshot} from './helpers/import-finalization-database.mjs';
+import * as adaptive from '../src/lib/dancr/adaptive-video-manifest.ts';
 const media={},exports={},messages=[];
 const compile=source=>ts.transpileModule(source,{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText;
 vm.runInNewContext(compile(readFileSync(new URL('../src/lib/dancr/media-watermark.ts',import.meta.url),'utf8')),{exports:media,require:()=>({})});
 const source=process.env.MYDANCR_VIDEO_DELETE_BASELINE==='1'?execFileSync('git',['show','HEAD:src/lib/dancr/tv.ts'],{encoding:'utf8',windowsHide:true}):readFileSync(new URL('../src/lib/dancr/tv.ts',import.meta.url),'utf8');
-vm.runInNewContext(compile(source),{exports,require:name=>name==='./media-watermark'?media:{},console:{info:value=>messages.push(JSON.parse(value))}});
+vm.runInNewContext(compile(source),{exports,require:name=>name==='./media-watermark'?media:name==='./adaptive-video-manifest'?adaptive:{},console:{info:value=>messages.push(JSON.parse(value))}});
 let db;
 const owner=fixtureId(1),dancer=fixtureId(10),video=fixtureId(20),pathFor=extension=>`${owner}/${dancer}/${video}.${extension}`;
 before(async()=>{db=await createImportDatabase({migrate:false});});
@@ -53,6 +54,14 @@ test('actual owner removal confirms native hidden state before deleting any of t
  const after=await importSnapshot(db);assert.deepEqual(after.mydancr_tv_videos.filter(v=>v.id!==video),before.mydancr_tv_videos.filter(v=>v.id!==video));
  for(const table of Object.keys(before).filter(t=>t!=='mydancr_tv_videos'))assert.deepEqual(after[table],before[table]);
  assert.equal(messages.length,1);
+});
+test('adaptive renditions are removed with the hidden video and can be retried idempotently',async()=>{
+ const manifest={version:1,generation:'a'.repeat(32),renditions:['360','source'].map(name=>({name,width:360,height:640,bytes:1100,initBytes:100,segments:[{duration:2,bytes:1000}]}))};
+ await db.query('update public.mydancr_tv_videos set moderation_details=$1 where id=$2',[{adaptiveStreaming:manifest},video]);
+ const h=harness();const paths=manifest.renditions.map(row=>adaptive.adaptiveVideoPath(pathFor('mp4'),manifest,row.name));
+ paths.forEach(path=>h.files.add('mydancr-tv-videos/'+path));await h.run();assert.equal(h.files.size,0);
+ assert.deepEqual(h.calls.filter(row=>row.kind==='remove').slice(-2).map(row=>row.path),paths);
+ await h.run();assert.equal(h.files.size,0);
 });
 for(const [mime,ext]of [['video/mp4','mp4'],['video/webm','webm'],['video/quicktime','mov']])test(mime+' derives the owned video, poster and private original paths',async()=>{
  await db.query('update public.mydancr_tv_videos set storage_mime=$1,storage_path=$2 where id=$3',[mime,pathFor(ext),video]);const h=harness({path:pathFor(ext)});await h.run();assert.equal(h.files.size,0);
