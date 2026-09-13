@@ -33,6 +33,7 @@ function fixture({ manual = false } = {}) {
     releaseDeferredVideoSource(video) { video.removeAttribute('src'); context.pageSuspendedVideos.delete(video); },
     activateHomeTvFeedVideo(id) { void videos[Number(id)].play(); }, playProfileTvViewerVideo(video) { void video.play(); },
     syncProfileDestinationNavigation() {},
+    homeTvLandingPreload: { clear() {} },
   });
   vm.runInContext(['homeTvFeedCoveredByProfile', 'suspendPageVideoPlayback', 'resumePageVideoPlayback', 'syncOverlayScrollLock'].map(source).join('\n'), context);
   vm.runInContext(recovery.replace(/\}\)\(\);\s*$/, 'globalThis.recovery = { scanHomeFeedVideos, playActiveVideo, isActiveHomeFeedVideo };})();'), context);

@@ -26,6 +26,7 @@ function harness(children) {
   const ctx = vm.createContext({
     Promise,
     settleCompletedStableImages() {},
+    homeTvLandingPreload: { schedule() {} },
     MutationObserver: class {
       constructor(callback) { this.callback = callback; observers.push(this); }
       observe() { this.connected = true; }

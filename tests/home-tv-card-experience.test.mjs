@@ -680,7 +680,7 @@ test("production TV cards use the neutral-first brand palette without changing m
 test("iPhone autoplay flags are applied before a TV card starts loading media", () => {
   assert.match(
     homeSource,
-    /const video = document\.createElement\("video"\)[\s\S]*?video\.dataset\.videoUrl = String\(item\.videoUrl \|\| ""\)\.trim\(\)[\s\S]*?video\.autoplay = index === 0[\s\S]*?video\.muted = homeTvFeedMuted[\s\S]*?video\.defaultMuted = homeTvFeedMuted[\s\S]*?video\.setAttribute\("playsinline", ""\)[\s\S]*?video\.setAttribute\("webkit-playsinline", ""\)[\s\S]*?video\.setAttribute\("muted", ""\)/,
+    /const video = homeTvLandingPreload\.takeVideo\(item\) \|\| document\.createElement\("video"\)[\s\S]*?video\.dataset\.videoUrl = String\(item\.videoUrl \|\| ""\)\.trim\(\)[\s\S]*?video\.autoplay = index === 0[\s\S]*?video\.muted = homeTvFeedMuted[\s\S]*?video\.defaultMuted = homeTvFeedMuted[\s\S]*?video\.setAttribute\("playsinline", ""\)[\s\S]*?video\.setAttribute\("webkit-playsinline", ""\)[\s\S]*?video\.setAttribute\("muted", ""\)/,
   );
   assert.match(
     homeSource,

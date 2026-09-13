@@ -15,6 +15,7 @@ export function publicVideoLoaders() {
     homeTvFeedFullscreenElement: () => null, setHomeTvFeedFallbackFullscreen() {}, releaseDeferredVideoSource() {},
     loadAdaptiveVideoController: async () => ({}),
     loadLiveShellFeature: async () => {},
+    homeTvLandingPreload: { takePayload: () => null, clear() {} },
     renderHomeTvFeed: city => renders.push(city),
     fetch: (url, options) => new Promise((resolve, reject) => {
       const request = { url, signal: options.signal, resolve: videos => resolve({ ok: true, json: async () => ({ ok: true, videos }) }) };

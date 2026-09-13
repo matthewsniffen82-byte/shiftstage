@@ -43,6 +43,8 @@ function directoryFixture(profiles) {
       createTextNode: (text) => ({ textContent: text }),
     },
     window: { requestAnimationFrame() {} },
+    homeTvLandingPreload: { sync() {} },
+    revealDancerGridRows() {},
     getItems: () => state.profiles,
     selectedVenueFilter: () => "all", selectedHomeTvVenueFilter: () => null,
     resolveVenueByName: () => null, liveDiscoveryIsLoading: () => state.loading,

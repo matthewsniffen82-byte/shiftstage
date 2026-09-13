@@ -103,6 +103,7 @@ test("a failed TV request exits loading and cannot replace a newer city's videos
     homeTvFeedStatus: "loading", homeTvFeedVideos: [], activeTab: "tv", citySelect: { value: "Vegas" },
     renderHomeTvFeed: () => { renders += 1; },
     loadAdaptiveVideoController: async () => ({}), loadLiveShellFeature: async () => {},
+    homeTvLandingPreload: { takePayload: () => null, clear() {} },
     fetchJson: () => new Promise((_resolve, reject) => { rejectOld = reject; }),
   });
   vm.runInContext(feedSource, ctx);

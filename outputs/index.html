@@ -42902,6 +42902,12 @@
     let homeTvFeedSelectedVideoId = "";
     let homeTvFeedStatus = "idle";
     let homeTvFeedVideos = [];
+    const homeTvLandingPreload = createHomeTvLandingPreloader();
+    window.addEventListener("load", () => homeTvLandingPreload.schedule(), { once: true });
+    const homeTvLandingConnection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+    homeTvLandingConnection?.addEventListener?.("change", () => {
+      if (!canWarmAdjacentVideo()) homeTvLandingPreload.clear();
+    });
     let homeTvFeedObserver = null;
     let homeTvFeedActiveVideoId = "";
     let homeTvFeedMuted = true;
@@ -60553,6 +60559,7 @@
                 card.removeAttribute("aria-busy");
               });
               row.ready = true;
+              homeTvLandingPreload.schedule();
               if (rows.every((item) => item.ready)) observer.disconnect();
             });
         }
@@ -60976,6 +60983,7 @@
     function render() {
       syncDiscoveryCityScope();
       const city = citySelect.value;
+      homeTvLandingPreload.sync(city);
       document.body.classList.toggle("dancer-directory-active", activeTab === "dancers");
       syncCityPickerSelection(city);
       populateVenueSelect(city);
@@ -61625,6 +61633,7 @@
     const pageSuspendedVideos = new Set();
 
     function suspendPageVideoPlayback() {
+      homeTvLandingPreload.clear();
       const profileVideo = activeProfileTvViewerVideo();
       document.querySelectorAll(".home-tv-feed-video, .profile-tv-viewer-video").forEach((video) => {
         if (!video.paused) pageSuspendedVideos.add(video);
@@ -62145,7 +62154,7 @@
     function createHomeTvFeedVideo(item, index, slide, totalVideos) {
       const dancerName = String(item?.dancer?.stageName || "MyDancr TV").trim() || "MyDancr TV";
       const videoId = String(item.id);
-      const video = document.createElement("video");
+      const video = homeTvLandingPreload.takeVideo(item) || document.createElement("video");
       video.className = "home-tv-feed-video";
       video.dataset.videoUrl = String(item.videoUrl || "").trim();
       video.loop = true;
@@ -62257,6 +62266,10 @@
         }
       });
       if (index === 0) attachDeferredVideoSource(video, "auto");
+      if (video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) {
+        slide.classList.remove("is-media-loading", "is-media-unavailable");
+        slide.removeAttribute("aria-busy");
+      }
       return video;
     }
 
@@ -62799,6 +62812,7 @@
         return;
       }
       if (!homeTvFeedVideos.length) {
+        homeTvLandingPreload.clear();
         setHomeTvFeedCount("0 videos", venueFilter);
         renderHomeTvFeedMessage(venueFilter
           ? `No approved MyDancr TV videos are available from dancers affiliated with, working now at, or scheduled at ${venueFilter.name}.`
@@ -62827,6 +62841,7 @@
           createHomeTvFeedSlide(item, index, homeTvFeedVideos.length)
         ))
       );
+      homeTvLandingPreload.clear();
       results.dataset.homeTvFeedKey = feedKey;
       syncHomeTvFeedSoundButtons();
       void loadPublicMediaLikes(homeTvFeedVideos.map((item) => ({
@@ -62836,6 +62851,135 @@
       })));
       window.requestAnimationFrame(setupHomeTvFeedObserver);
       settleHomeTvFeedLanding({ complete: true });
+    }
+
+    // Prepare only the first two paused players once the visible directory is
+    // ready. A short-lived, page-local result keeps the server's shuffled order
+    // intact; it is never persisted or used for a different city/TV scope.
+    function createHomeTvLandingPreloader() {
+      const ttl = 20 * 1000;
+      let timer = 0;
+      let idle = 0;
+      let state = null;
+      let attemptedCity = "";
+
+      function eligible(city) {
+        if (activeTab !== "dancers" || citySelect.value !== city ||
+            document.readyState !== "complete" || document.visibilityState === "hidden" ||
+            userLocationOutsideMarkets || document.body.classList.contains("overlay-open") ||
+            !canWarmAdjacentVideo() || homeTvFeedStatus === "ready") return false;
+        const cards = [...results.querySelectorAll(".home-dancer-grid-card")];
+        return cards.length > 0 && cards.every((card) => {
+          const rect = card.getBoundingClientRect();
+          return rect.bottom <= 0 || rect.top >= window.innerHeight || !card.hasAttribute("data-row-loading");
+        });
+      }
+
+      function clear() {
+        window.clearTimeout(timer);
+        timer = 0;
+        if (idle) window.cancelIdleCallback?.(idle);
+        idle = 0;
+        const previous = state;
+        state = null;
+        if (!previous) return;
+        window.clearTimeout(previous.expiryTimer);
+        previous.controller.abort();
+        previous.videos.forEach((video) => {
+          releaseDeferredVideoSource(video);
+          video.removeAttribute("poster");
+        });
+        previous.videos.clear();
+      }
+
+      function start(city) {
+        idle = 0;
+        if (state || attemptedCity === city || !eligible(city)) return;
+        attemptedCity = city;
+        const entry = { city, controller: new AbortController(), videos: new Map(),
+          expiresAt: Date.now() + ttl, expiryTimer: 0, claimed: false, promise: null };
+        state = entry;
+        entry.expiryTimer = window.setTimeout(clear, ttl);
+        const params = new URLSearchParams({ city, limit: "24" });
+        entry.promise = fetchJson(`/api/public/tv?${params.toString()}`, {
+          retries: 0, cache: "no-store", signal: entry.controller.signal
+        }).then((payload) => {
+          if (!payload.ok) throw new Error("TV preload unavailable");
+          if (state !== entry) return null;
+          if (!entry.claimed && eligible(city)) {
+            const videos = Array.isArray(payload.videos) ? payload.videos.filter((item) =>
+              item?.id && item?.videoUrl && item?.dancer?.stageName).slice(0, 2) : [];
+            videos.forEach((item, index) => {
+              const video = document.createElement("video");
+              video.dataset.videoUrl = String(item.videoUrl).trim();
+              video.autoplay = false;
+              video.muted = video.defaultMuted = true;
+              video.playsInline = true;
+              video.setAttribute("playsinline", "");
+              video.setAttribute("muted", "");
+              const poster = String(item.posterUrl || item.poster_url || "").trim();
+              if (poster) video.poster = poster;
+              entry.videos.set(String(item.id), video);
+              attachDeferredVideoSource(video, index === 0 ? "auto" : "metadata");
+            });
+          }
+          return payload;
+        }).catch(() => {
+          if (state === entry) clear();
+          return null;
+        });
+        void loadLiveShellFeature("tv").catch(() => {});
+      }
+
+      function schedule() {
+        const city = citySelect.value;
+        if (timer || idle || state || attemptedCity === city || !eligible(city)) return;
+        // Let the photo reveal paint before doing optional network/JS work.
+        timer = window.setTimeout(() => {
+          timer = 0;
+          if (window.requestIdleCallback) idle = window.requestIdleCallback(() => start(city), { timeout: 1500 });
+          else start(city);
+        }, 750);
+      }
+
+      function sync(city) {
+        if (activeTab !== "dancers") {
+          window.clearTimeout(timer);
+          timer = 0;
+          if (idle) window.cancelIdleCallback?.(idle);
+          idle = 0;
+        }
+        if (state && (state.city !== city || !canWarmAdjacentVideo() ||
+            !["dancers", "tv"].includes(activeTab) || (state.claimed && activeTab !== "tv"))) clear();
+      }
+
+      function takePayload(city, venueId, videoId, options, signal) {
+        const entry = state;
+        if (!entry) return null;
+        if (entry.claimed || entry.city !== city || venueId || videoId || options.refresh ||
+            entry.expiresAt <= Date.now() || !canWarmAdjacentVideo() || signal?.aborted) {
+          clear();
+          return null;
+        }
+        entry.claimed = true;
+        window.clearTimeout(entry.expiryTimer);
+        const abort = () => { if (state === entry) clear(); };
+        signal?.addEventListener("abort", abort, { once: true });
+        return entry.promise.finally(() => signal?.removeEventListener("abort", abort));
+      }
+
+      function takeVideo(item) {
+        const video = state?.videos.get(String(item.id));
+        if (!video) return null;
+        state.videos.delete(String(item.id));
+        if (video.error || video.dataset.videoUrl !== String(item.videoUrl || "").trim()) {
+          releaseDeferredVideoSource(video);
+          return null;
+        }
+        return video;
+      }
+
+      return { schedule, sync, clear, takePayload, takeVideo };
     }
 
     // Development keeps the readable shell together. The production generator
@@ -62872,11 +63016,16 @@
         if (venueId) params.set("venue", venueId);
         if (selectedVideoId) params.set("video", selectedVideoId);
         if (options.refresh) params.set("refresh", String(Date.now()));
-        const [payload] = await Promise.all([fetchJson(`/api/public/tv?${params.toString()}`, {
+        const prepared = homeTvLandingPreload.takePayload(city, venueId, selectedVideoId, options, controller?.signal);
+        const requestPayload = () => fetchJson(`/api/public/tv?${params.toString()}`, {
           retries: PUBLIC_DISCOVERY_REQUEST_RETRIES,
           cache: options.refresh ? "no-store" : "default",
           signal: controller?.signal
-        }), loadLiveShellFeature("tv")]);
+        });
+        const [payload] = await Promise.all([
+          prepared ? prepared.then((payload) => payload || requestPayload()) : requestPayload(),
+          loadLiveShellFeature("tv")
+        ]);
         if (!payload.ok) throw new Error(payload.error || "Unable to load MyDancr TV.");
         if (
           requestId !== homeTvFeedRequest ||
@@ -62900,6 +63049,7 @@
           homeTvFeedVenueId !== venueId ||
           homeTvFeedSelectedVideoId !== selectedVideoId
         ) return;
+        homeTvLandingPreload.clear();
         homeTvFeedVideos = [];
         homeTvFeedStatus = error?.code === "BROWSER_VERIFICATION_REQUIRED" ? "verification-required"
           : error?.code === "SHELL_FEATURE_UNAVAILABLE" ? "shell-reload-required" : "error";
