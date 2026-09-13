@@ -10,7 +10,6 @@ import {
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
 import { safeErrorMetadata } from "@/src/lib/security/safe-error-metadata";
-import { scheduleAdaptiveVideoPreparation } from "@/src/lib/dancr/adaptive-video-background";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -30,7 +29,6 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  const startedAt = Date.now();
   try {
     const { client, session, user } = await createRequestSupabaseContext(request);
     await requireAdmin(client, user.id);
@@ -49,7 +47,6 @@ export async function POST(request: Request) {
         user.id,
         videoId,
       );
-      if (video?.status === "approved") scheduleAdaptiveVideoPreparation(videoId, 160_000 - (Date.now() - startedAt));
       return NextResponse.json({
         ok: true,
         video,
@@ -71,7 +68,6 @@ export async function POST(request: Request) {
       decision,
       notes,
     );
-    if (video?.status === "approved") scheduleAdaptiveVideoPreparation(videoId, 160_000 - (Date.now() - startedAt));
     return NextResponse.json({
       ok: true,
       video,

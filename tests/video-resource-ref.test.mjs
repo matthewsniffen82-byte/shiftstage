@@ -1,13 +1,19 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
-import { videoResourceRef } from "../src/lib/dancr/video-resource-ref.ts";
+import vm from "node:vm";
+import ts from "typescript";
+const source = readFileSync("src/lib/dancr/video-resource-ref.ts", "utf8");
+const compiled = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText;
+const context = vm.createContext({ exports: {} });
+vm.runInContext(compiled, context);
+const { videoResourceRef } = context.exports;
 function video() {
-  return Object.assign(new EventTarget(), { paused: false, preload: "auto", dataset: { frameReady: "true" }, source: true, loads: 0, pauses: 0,
+  return { paused: false, preload: "auto", dataset: { frameReady: "true" }, source: true, loads: 0, pauses: 0,
     pause() { this.paused = true; this.pauses++; },
     hasAttribute(name) { return name === "src" && this.source; },
     removeAttribute(name) { if (name === "src") this.source = false; },
-    load() { this.loads++; } });
+    load() { this.loads++; } };
 }
 test("attaching preserves playback; detaching releases the exact retained element", () => {
   const active = video();

@@ -92,7 +92,7 @@ for (const config of cases.filter(config => !process.env.PERF_MATRIX_CASES || pr
       await page.waitForTimeout(350);
     }
     row.media = await page.locator(".home-tv-feed-video").evaluateAll(videos => ({ playing: videos.filter(v => !v.paused).length, sources: videos.filter(v => v.hasAttribute("src")).length, posters: videos.filter(v => v.hasAttribute("poster")).length }));
-    assert.ok(row.media.playing <= 1 && row.media.sources <= 5 && row.media.posters <= 5);
+    assert.ok(row.media.playing <= 1 && row.media.sources <= 3 && row.media.posters <= 3);
     row.phases.push("rapid-video-scroll-bounded-resources");
     await page.locator('[data-tab="dancers"]').first().tap();
     assert.equal(await page.locator(".home-tv-feed-video[src]").count(), 0);

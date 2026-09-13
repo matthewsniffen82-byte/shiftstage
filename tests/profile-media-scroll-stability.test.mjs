@@ -28,21 +28,20 @@ test("every photo owns persistent controls with its own like, share, report, and
 
 test("upcoming video posters remain visible independently of native iOS video loading", () => {
   assert.match(source("renderProfileTvViewerSlides"), /createElement\("img"\)/);
-  assert.match(source("renderProfileTvViewerSlides"), /poster.loading = index < 6 \|\| Math.abs\(index - Number\(overlay.dataset.videoIndex \|\| 0\)\) <= 3 \? "eager" : "lazy"/);
-  assert.match(carousel, /className="profile-media-video-poster"[^]*?loading=\{index < 6 \|\| Math.abs\(index - viewerIndex\) <= 3 \? "eager" : "lazy"\}[^]*?src=\{item.posterUrl\}/);
+  assert.match(source("renderProfileTvViewerSlides"), /poster.loading = "eager"/);
+  assert.match(carousel, /className="profile-media-video-poster"[^]*?loading="eager"[^]*?src=\{Math.abs\(index - viewerIndex\) <= 2 \? item.posterUrl : undefined\}/);
   assert.match(css, /video\[data-frame-ready="true"\] \+ .profile-media-video-poster/);
   assert.match(css, /\.profile-media-video-poster \{[^}]*z-index: 2 !important;[^}]*pointer-events: none/);
   assert.match(carousel, /onEmptied=\{\(event\) => \{ delete event.currentTarget.dataset.frameReady; \}\}/);
 });
 
 test("video poster windows stay bounded and work with adjacent video warmup disabled", () => {
-  const videos = Array.from({ length: 30 }, (_, index) => ({
+  const videos = Array.from({ length: 30 }, () => ({
     dataset: {}, poster: "", source: false, preload: "none",
     hasAttribute(name) { return name === "src" && this.source; },
-    getAttribute(name) { return name === "poster" ? this.poster : null; },
     removeAttribute(name) { if (name === "poster") this.poster = ""; },
     nextElementSibling: {
-      src: `poster-${index}.jpg`,
+      src: null,
       getAttribute() { return this.src; },
       setAttribute(name, value) { if (name === "src") this.src = value; },
       removeAttribute() { this.src = null; },
@@ -60,13 +59,11 @@ test("video poster windows stay bounded and work with adjacent video warmup disa
     attachDeferredVideoSource: (video, preload) => { video.source = true; video.preload = preload; },
     releaseDeferredVideoSource: (video) => { video.source = false; video.preload = "none"; },
   });
-  vm.runInContext(["hasVideoWarmupBuffer", "videoBufferMode", "applyVideoBufferMode", "syncProfileTvVideoLoading"].map(source).join("\n"), context);
+  vm.runInContext(["videoBufferMode", "applyVideoBufferMode", "syncProfileTvVideoLoading"].map(source).join("\n"), context);
   for (const active of [0, 1, 12, 28, 12, 0]) {
     context.syncProfileTvVideoLoading(overlay, active);
     videos.forEach((video, index) => {
-      assert.equal(Boolean(video.poster), Math.abs(index - active) <= 2);
-      assert.equal(video.nextElementSibling.src, `poster-${index}.jpg`, 'keep previously loaded previews while scrolling');
-      assert.equal(video.nextElementSibling.loading, index < 6 || Math.abs(index - active) <= 3 ? 'eager' : 'lazy');
+      assert.equal(Boolean(video.nextElementSibling.src), Math.abs(index - active) <= 2);
       assert.equal(video.source, index === active, "previews do not force background video downloads");
     });
   }
@@ -81,7 +78,6 @@ test("sound-on autoplay denial retries muted without reviving a stale video", as
   current = video;
   const context = vm.createContext({
     activeProfileTvViewerVideo: () => current,
-    playDeferredVideo: (video) => video.play(),
     syncProfileTvSoundControl: () => { syncs++; },
     document: { getElementById: () => status },
   });

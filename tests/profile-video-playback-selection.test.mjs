@@ -8,8 +8,7 @@ const source = fs.readFileSync("app/dancers/[slug]/DancerPhotoCarousel.tsx", "ut
 const start = source.indexOf("  function toggleViewerPlayback(");
 const end = source.indexOf("  function viewerShareUrl(", start);
 assert.ok(start >= 0 && end > start);
-const playerHelpers = source.slice(source.indexOf("function attachViewerVideo("), source.indexOf("function orderPinnedMedia<"));
-const handler = ts.transpileModule(playerHelpers + source.slice(start, end), {
+const handler = ts.transpileModule(source.slice(start, end), {
   compilerOptions: { target: ts.ScriptTarget.ES2022 },
 }).outputText;
 

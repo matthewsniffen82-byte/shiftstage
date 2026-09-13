@@ -38,21 +38,21 @@ test("MyDancr TV declares and retries muted autoplay for the active snap-scroll 
 test("MyDancr TV gives the first card exclusive bandwidth before warming scroll neighbors", () => {
   assert.match(
     feedClient,
-    /const primeVideoNeighbors[\s\S]*?allowVideoWarmup[\s\S]*?setVideoReadyVersion\(\(version\) => version \+ 1\)/,
+    /const primeNextVideo[\s\S]*?allowVideoWarmup[\s\S]*?setWarmAfterVideoId\(videoId\)/,
   );
   assert.match(
     feedClient,
-    /videoBufferMode\(videoIndex, activeIndex, allowVideoWarmup, activeReady, element\.hasAttribute\("src"\)\)/,
+    /element\.preload = isActive \? "auto" : shouldWarm \? "metadata" : "none"/,
   );
   assert.match(
     feedClient,
-    /preload="none"\s*data-video-url=\{video\.videoUrl\}/,
+    /preload=\{[\s\S]*?video\.id === activeVideoId[\s\S]*?\? "auto"[\s\S]*?videoIndex === activeVideoIndex \+ 1[\s\S]*?\? "metadata"[\s\S]*?: "none"/,
   );
   assert.match(
     feedClient,
-    /onLoadedData=\{[\s\S]*?primeVideoNeighbors\(video\.id\)/,
+    /onLoadedData=\{[\s\S]*?primeNextVideo\(video\.id\)/,
   );
-  assert.match(feedClient, /mode === "auto" && !element\.hasAttribute\("src"\)/);
+  assert.match(feedClient, /src=\{video\.id === activeVideoId \|\| \([\s\S]*?videoIndex === activeVideoIndex \+ 1[\s\S]*?\? video\.videoUrl : undefined\}/);
 });
 
 test("profile and venue video strips autoplay only their visible muted preview", () => {
@@ -86,8 +86,7 @@ test("the production home shell loads Safari-safe autoplay recovery for dynamica
   assert.match(homeRecovery, /video\.addEventListener\("loadedmetadata"/);
   assert.match(homeRecovery, /video\.addEventListener\("canplay"/);
   assert.match(homeRecovery, /video\.addEventListener\("loadeddata"/);
-  assert.match(homeRecovery, /new MutationObserver\(\(records\) =>/);
-  assert.match(homeRecovery, /if \(addedVideo\) queueHomeFeedVideoScan\(\)/);
+  assert.match(homeRecovery, /new MutationObserver\(queueHomeFeedVideoScan\)/);
   assert.match(homeRecovery, /window\.addEventListener\("pageshow", queueHomeFeedVideoScan\)/);
   assert.match(homeRecovery, /classList\.add\("is-paused", "is-autoplay-blocked"\)/);
 });
@@ -99,7 +98,7 @@ test("the homepage TV feed only shows its play overlay for an active manual paus
   );
   assert.match(
     homeSource,
-    /playDeferredVideo\(video\)\.then\(\(\) => \{[\s\S]*?slide\.classList\.remove\("is-paused", "is-autoplay-blocked"\)[\s\S]*?\.catch\(\(error\) => \{[\s\S]*?slide\.dataset\.userPaused === "true"[\s\S]*?slide\.classList\.add\("is-paused", "is-autoplay-blocked"\)/,
+    /video\.play\(\)\.then\(\(\) => \{[\s\S]*?slide\.classList\.remove\("is-paused", "is-autoplay-blocked"\)[\s\S]*?\.catch\(\(error\) => \{[\s\S]*?slide\.dataset\.userPaused === "true"[\s\S]*?slide\.classList\.add\("is-paused", "is-autoplay-blocked"\)/,
   );
   assert.doesNotMatch(homeSource, /\.home-tv-feed-slide\.is-paused \.home-tv-feed-playback/);
   const playbackToggle = homeSource.match(

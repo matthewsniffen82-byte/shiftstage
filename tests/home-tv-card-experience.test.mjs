@@ -684,7 +684,7 @@ test("iPhone autoplay flags are applied before a TV card starts loading media", 
   );
   assert.match(
     homeSource,
-    /function activateHomeTvFeedVideo\(videoId\)[\s\S]*?video\.setAttribute\("autoplay", ""\)[\s\S]*?video\.setAttribute\("webkit-playsinline", ""\)[\s\S]*?playDeferredVideo\(video\)/,
+    /function activateHomeTvFeedVideo\(videoId\)[\s\S]*?video\.setAttribute\("autoplay", ""\)[\s\S]*?video\.setAttribute\("webkit-playsinline", ""\)[\s\S]*?video\.play\(\)/,
   );
   assert.match(
     homeSource,
@@ -693,6 +693,6 @@ test("iPhone autoplay flags are applied before a TV card starts loading media", 
   assert.match(homeSource, /if \(index === 0\) attachDeferredVideoSource\(video, "auto"\)/);
   assert.match(
     homeSource,
-    /playDeferredVideo\(video\)\.then\(\(\) => \{[\s\S]*?primeHomeTvFeedNeighbors\(videoId\)/,
+    /video\.play\(\)\.then\(\(\) => \{[\s\S]*?primeHomeTvFeedNeighbors\(videoId\)/,
   );
 });

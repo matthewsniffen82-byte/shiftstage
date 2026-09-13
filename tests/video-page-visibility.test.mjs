@@ -13,7 +13,6 @@ function fixture() {
   });
   const context = vm.createContext({
     pageSuspendedVideos: new Set(),
-    adaptiveVideoController: null,
     document: { visibilityState: "hidden", querySelectorAll: () => videos, body: { classList: { contains: () => false } } },
     activeProfileTvViewerVideo: () => null,
     releaseDeferredVideoSource(video) { video.attrs.delete("src"); context.pageSuspendedVideos.delete(video); },

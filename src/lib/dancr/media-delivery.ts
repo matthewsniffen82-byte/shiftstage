@@ -1,7 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { verifyMediaPreview } from './media-delivery-url.ts';
 import { myDancrTvPosterStoragePath } from './media-watermark.ts';
-import { adaptiveVideoPath, adaptiveVideoPlaylist, parseAdaptiveVideoManifest } from './adaptive-video-manifest.ts';
 
 const NO_STORE = 'private, no-store, max-age=0';
 const HEADERS = { 'Cache-Control': NO_STORE, 'CDN-Cache-Control': 'no-store', 'Vercel-CDN-Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff' };
@@ -59,21 +58,8 @@ export async function serveDancerMedia(request: Request, kind: 'photo' | 'video'
       if (!video.data || !isActive(one((video.data as any).dancer_profiles))) return unavailable();
       path = (video.data as any).storage_path;
       bucket = 'mydancr-tv-videos';
-      if (params.has('hls')) {
-        if (params.has('poster')) return unavailable(400);
-        const manifest = parseAdaptiveVideoManifest((video.data as any).moderation_details?.adaptiveStreaming);
-        if (!manifest) return unavailable();
-        const mode = params.get('hls');
-        if (mode !== 'master' && params.get('generation') !== manifest.generation) return unavailable();
-        const rendition = manifest.renditions.find(row => row.name === (mode === 'media' ? params.get('rendition') : mode));
-        if (mode !== 'master' && !rendition) return unavailable();
-        if (mode !== 'media') {
-          const body = adaptiveVideoPlaylist(manifest, new URL(request.url), rendition);
-          return new Response(request.method === 'HEAD' ? null : body, { headers: { ...HEADERS,
-            'Content-Type': 'application/vnd.apple.mpegurl', 'Content-Length': String(Buffer.byteLength(body)) } });
-        }
-        path = adaptiveVideoPath(path, manifest, rendition!.name);
-      }
+      // Old open tabs must fail back to MP4, not download an MP4 as a playlist.
+      if (params.has('hls')) return unavailable();
       if (params.get('poster') === '1') {
         const expected = myDancrTvPosterStoragePath(path);
         if ((video.data as any).moderation_details?.posterStoragePath !== expected) return unavailable();

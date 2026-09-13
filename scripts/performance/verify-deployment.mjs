@@ -28,15 +28,15 @@ for (const [feature, hash] of Object.entries(LIVE_SHELL_FEATURE_VERSIONS)) {
 }
 assert.equal((await fetch(`${base}/live-shell-feature.js?feature=tv&v=obsolete`)).status, 404);
 const catalog = await fetch(base + "/api/public/tv?city=Las%20Vegas&limit=12").then(response => response.json());
-const clip = catalog.videos?.find(video => video.adaptiveUrl);
-assert.ok(clip, "A prepared public clip is required for adaptive deployment verification");
-const master = await fetch(new URL(clip.adaptiveUrl, base));
-assert.equal(master.status, 200);
-assert.ok(master.headers.get("cache-control")?.includes("private, no-store"));
-const playlist = await master.text();
-const adaptiveLevels = (playlist.match(/#EXT-X-STREAM-INF/g) || []).length;
-assert.ok(adaptiveLevels >= 2);
-assert.equal((playlist.match(/CODECS="avc1\.[a-f0-9]{6}(?:,mp4a\.40\.2)?"/g) || []).length, adaptiveLevels);
+const clip = catalog.videos?.find(video => video.videoUrl);
+assert.ok(clip, "A public clip is required for MP4 deployment verification");
+assert.ok(catalog.videos.every(video => !video.adaptiveUrl), "Feed advertises original video playback only");
+const media = await fetch(new URL(clip.videoUrl, base), { headers: { Range: "bytes=0-1023" } });
+assert.equal(media.status, 206);
+assert.equal(media.headers.get("content-type"), "video/mp4");
+assert.ok(media.headers.get("cache-control")?.includes("private, no-store"));
+assert.equal((await media.arrayBuffer()).byteLength, 1024);
+assert.equal((await fetch(new URL(clip.videoUrl + "&hls=master", base))).status, 404);
 const health = [];
 for (const endpoint of ["/api/health", "/api/health/supabase", "/api/public/cities"]) {
   const res = await fetch(base + endpoint);
@@ -48,7 +48,7 @@ assert.equal(privateResponse.status, 401);
 assert.ok(privateResponse.headers.get("cache-control")?.includes("no-store"));
 const report = {
   commit: process.env.PERF_COMMIT, base, shellVersion: version, scriptBytes: Buffer.byteLength(delivered),
-  matchesValidatedSource: true, features, adaptiveLevels, health, anonymousPrivateAccess: privateResponse.status,
+  matchesValidatedSource: true, features, playback: "MP4 byte ranges", retiredHlsStatus: 404, health, anonymousPrivateAccess: privateResponse.status,
   privateCache: privateResponse.headers.get("cache-control"),
 };
 await mkdir(output, { recursive: true });

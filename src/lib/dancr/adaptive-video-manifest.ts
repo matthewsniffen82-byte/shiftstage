@@ -1,3 +1,4 @@
+// Retained only to remove already-created private derivatives when their video is deleted.
 // Only generated, bounded indexes are accepted. Never trust a playlist URL or
 // object path from JSON metadata or from a browser request.
 export type VideoRendition = {
@@ -41,28 +42,4 @@ export function adaptiveVideoPath(source: string, manifest: AdaptiveVideoManifes
   if (!/^[a-zA-Z0-9/_ .-]+\.mp4$/.test(source) || source.split('/').some(part => !part || part === '.' || part === '..')
     || !parseAdaptiveVideoManifest(manifest) || !manifest.renditions.some(row => row.name === name)) throw new Error('Invalid adaptive video path.');
   return `${source}.hls-${manifest.generation}-${name}.mp4`;
-}
-
-export function adaptiveVideoPlaylist(manifest: AdaptiveVideoManifest, requestUrl: URL, rendition?: VideoRendition) {
-  const endpoint = (name: string, media = false) => {
-    const url = new URL(requestUrl.pathname, requestUrl.origin);
-    // Preserve only the resource-bound preview capability, never arbitrary input.
-    for (const key of ['id', 'preview']) if (requestUrl.searchParams.has(key)) url.searchParams.set(key, requestUrl.searchParams.get(key)!);
-    url.searchParams.set('hls', media ? 'media' : name);
-    url.searchParams.set('generation', manifest.generation);
-    if (media) url.searchParams.set('rendition', name);
-    return url.pathname + url.search;
-  };
-  if (!rendition) return '#EXTM3U\n#EXT-X-VERSION:7\n#EXT-X-INDEPENDENT-SEGMENTS\n' + manifest.renditions.map(row => {
-    const peak = Math.ceil(Math.max(...row.segments.map(segment => segment.bytes * 8 / segment.duration)));
-    const average = Math.ceil(row.bytes * 8 / row.segments.reduce((sum, segment) => sum + segment.duration, 0));
-    return `#EXT-X-STREAM-INF:BANDWIDTH=${peak},AVERAGE-BANDWIDTH=${average},RESOLUTION=${row.width}x${row.height}${row.codecs ? `,CODECS="${row.codecs}"` : ''}\n${endpoint(row.name)}\n`;
-  }).join('');
-  const uri = endpoint(rendition.name, true);
-  let offset = rendition.initBytes;
-  return `#EXTM3U\n#EXT-X-VERSION:7\n#EXT-X-TARGETDURATION:${Math.ceil(Math.max(...rendition.segments.map(row => row.duration)))}\n#EXT-X-MEDIA-SEQUENCE:0\n#EXT-X-PLAYLIST-TYPE:VOD\n#EXT-X-INDEPENDENT-SEGMENTS\n#EXT-X-MAP:URI="${uri}",BYTERANGE="${rendition.initBytes}@0"\n` + rendition.segments.map(segment => {
-    const line = `#EXTINF:${segment.duration.toFixed(6)},\n#EXT-X-BYTERANGE:${segment.bytes}@${offset}\n${uri}\n`;
-    offset += segment.bytes;
-    return line;
-  }).join('') + '#EXT-X-ENDLIST\n';
 }

@@ -36,7 +36,6 @@ function fixture(activeIndex) {
     homeTvFeedImpressions: new Set(), document: { visibilityState: "visible" },
     results: { querySelectorAll: () => slides },
     closeHomeTvFeedReportMenus() {}, attachDeferredVideoSource() {}, trackHomeTvFeedEvent() {},
-    playDeferredVideo: (video) => video.play(),
     clearHomeTvFeedEngagedTimer() {}, syncHomeTvFeedSoundButtons() {},
     primeHomeTvFeedNeighbors: (id) => primed.push(id),
     scheduleHomeTvFeedEngagedView: (id) => engaged.push(id),

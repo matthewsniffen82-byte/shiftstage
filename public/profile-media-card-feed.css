@@ -139,7 +139,7 @@
 }
 
 /* A real image stays visible even when iOS does not paint a deferred video's
- * native poster. Only hide it after a playing frame has been presented. */
+ * native poster. Only hide it after this video has a decoded frame. */
 .profile-media-card-feed .profile-media-video-poster {
   position: absolute !important;
   z-index: 2 !important;
@@ -153,7 +153,7 @@
   pointer-events: none;
 }
 
-.profile-media-card-feed [aria-current="true"] > video[data-frame-ready="true"] + .profile-media-video-poster {
+.profile-media-card-feed video[data-frame-ready="true"] + .profile-media-video-poster {
   visibility: hidden;
 }
 

@@ -14,11 +14,10 @@ import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
 import { safeErrorMetadata } from "@/src/lib/security/safe-error-metadata";
 import { runWithServerJob } from "@/src/lib/server-job";
-import { prepareAdaptiveVideoInBackground } from "@/src/lib/dancr/adaptive-video-background";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-export const maxDuration = 180;
+export const maxDuration = 60;
 const MAX_TV_ACTION_BODY_BYTES = 2_048;
 
 type RouteProps = {
@@ -58,13 +57,10 @@ export async function PATCH(request: Request, { params }: RouteProps) {
         try {
           const remainingMs = Math.floor(50_000 - (performance.now() - startedAt));
           if (remainingMs <= 0) return;
-          const moderated = await runWithServerJob(
+          await runWithServerJob(
             () => retryMyDancrTvAutomatedModeration(createAdminSupabaseClient(), video.id),
             remainingMs,
           );
-          if (moderated?.status === "approved") {
-            await prepareAdaptiveVideoInBackground(moderated.id, 160_000 - (performance.now() - startedAt));
-          }
         } catch (error) {
           console.error(JSON.stringify({
             event: "mydancr_tv.background_moderation_failed",

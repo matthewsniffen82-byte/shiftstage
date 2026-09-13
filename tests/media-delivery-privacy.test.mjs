@@ -72,6 +72,19 @@ test('authorized video previews do not bypass paused accounts or expose Storage 
  f.state.active=false;assert.equal((await f.get('video',url)).status,404);
  assert.ok(!url.includes('/storage/'));assert.ok(!url.includes('owner/video.mp4'));
 });
+
+test('retired HLS requests cannot download the original video as a playlist',async()=>{
+ const f=fixture();
+ for(const mode of ['master','360','media']){
+  const response=await f.get('video',dancerVideoDeliveryUrl(id)+'&hls='+mode);
+  assert.equal(response.status,404);
+  assert.match(response.headers.get('cache-control'),/private, no-store/);
+ }
+ assert.equal(f.requests.length,0,'obsolete playlist requests never fetch storage bytes');
+ const mp4=await consume(await f.get('video',dancerVideoDeliveryUrl(id),{headers:{range:'bytes=0-2'}}));
+ assert.equal(mp4.status,206);
+ assert.equal(mp4.headers.get('content-type'),'video/mp4');
+});
 test('all media responses including HEAD and errors prevent browser/CDN reuse',async()=>{
  const f=fixture();
  for(const response of [await f.get('photo',dancerPhotoDeliveryUrl(path),{method:'HEAD'}),await f.get('photo','https://app.example/api/media/dancer-photo?path=../private')]){
