@@ -224,7 +224,7 @@ test("eligible live-shell dancer and venue cards expose compact ride links witho
 });
 
 test("venue and dancer profiles expose their required primary ride actions", () => {
-  assert.match(liveShellSource, /source: "venue_page"[\s\S]*?className: "venue-detail-uber"/);
+  assert.match(liveShellSource, /source: "venue_page"[\s\S]*?className: "venue-detail-entry-ride"/);
   assert.match(liveShellSource, /function dancerProfileUberRideMarkup[\s\S]*?source: "dancer_profile"[\s\S]*?className: "profile-uber-ride"/);
   assert.match(componentStyles, /min-height: 44px/);
   assert.match(componentStyles, /\.venuePage[\s\S]*?width: 100%/);

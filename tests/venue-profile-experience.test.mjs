@@ -52,7 +52,9 @@ test("the canonical in-app venue page is dedicated to the selected club and its 
   assert.match(venueDetail, /data-venue-jump="venue-upcoming-shifts"[\s\S]*?<span>upcoming<\/span>/);
   assert.match(venueDetail, /id="venue-upcoming-shifts"[\s\S]*?<span>Upcoming · \$\{upcoming\.length\}<\/span>/);
   assert.match(venueDetail, /class="venue-status-grid" aria-label="Tonight at \$\{escapeHtml\(details\.name\)\}"[\s\S]*?venue-operating-summary[\s\S]*?venue-status-kicker">Hours[\s\S]*?\$\{quickStats\}/);
-  assert.match(venueDetail, /class="venue-info venue-location-section"[\s\S]*?class="venue-location-actions venue-primary-actions"[\s\S]*?venue-address-directions[\s\S]*?\$\{rideMarkup\}/);
+  assert.match(venueDetail, /class="venue-info venue-location-section"[\s\S]*?class="venue-location-actions venue-primary-actions"[\s\S]*?venue-address-directions/);
+  assert.doesNotMatch(venueDetail, /rideMarkup|uberRideLinkMarkup/);
+  assert.match(aesthetic, /\.venue-primary-actions \{\s+grid-template-columns: minmax\(0, 1fr\) !important;/);
   assert.ok(venueDetail.indexOf("${venueOfferMarkup(venue)}") < venueDetail.indexOf("${activitySections}"));
   assert.ok(venueDetail.indexOf("${activitySections}") < venueDetail.indexOf("venue-location-section"));
   assert.ok(venueDetail.indexOf("venue-location-section") < venueDetail.indexOf("venue-secondary-actions"));
@@ -63,7 +65,6 @@ test("the canonical in-app venue page is dedicated to the selected club and its 
   assert.doesNotMatch(venueDetail, /<details|<summary/);
   assert.match(venueDetail, /<\/article>[\s\S]*?<div class="venue-detail-exploration">[\s\S]*?\$\{activitySections\}[\s\S]*?class="venue-info venue-location-section"/);
   assert.match(venueDetail, /class="venue-action-stack"[\s\S]*?class="venue-location-actions venue-primary-actions"[\s\S]*?class="venue-secondary-actions"/);
-  assert.equal((venueDetail.match(/\$\{rideMarkup\}/g) || []).length, 1);
   assert.match(venueDetail, /id="venue-no-shift-posted"[\s\S]*?<span>No Shift Posted<\/span>/);
   assert.doesNotMatch(venueDetail, /Trending at|is-trending/);
   assert.doesNotMatch(venueDetail, /verified shifts/i);

@@ -2,7 +2,7 @@
 
 New Club Deals use free general admission. Public offer buttons say “Free Entry,” and pickup buttons say “Free Ride + Entry.” On Clubs feed cards, these are the two leading actions, with Free Entry highlighted; Directions appears alongside Club Page, Share, and Favorite below them.
 
-The venue detail offer card also shows both options side by side, with the private-car/club-transport eligibility rule directly underneath. Free Entry preserves the complete offer chooser; Free Ride + Entry opens the pickup form with that venue’s active deal attached.
+The venue detail offer card also shows both options side by side, with the private-car/club-transport eligibility rule directly underneath. Free Entry preserves the complete offer chooser; Free Ride + Entry opens the pickup form with that venue’s active deal attached. The bottom Location section has a full-width Directions button above Follow and Share, with no duplicate pickup action.
 
 Free Entry opens the offer and then asks how the guest will arrive: private car, free club transport, or rideshare/taxi. Free admission applies only to arrival in a private car or club-provided transport. Uber, Lyft, all other rideshares, and taxis are explicitly excluded. Selecting rideshare/taxi cannot prepare admission and clears a previous pending admission selection for the same venue. Guests can switch to requesting club transport.
 

@@ -52795,11 +52795,6 @@
         .sort((a, b) => dailyRotationScore(a, city) - dailyRotationScore(b, city));
       const followsVenue = isFollowingVenue(city, venue.name);
       const venueValue = escapeOptionValue(venue.id || venue.name);
-      const rideMarkup = uberRideLinkMarkup({
-        venue,
-        source: "venue_page",
-        className: "venue-detail-uber"
-      });
       const quickStats = [
         tonight.length
           ? `<button class="venue-quick-stat is-working" type="button" data-venue-jump="venue-working-now" aria-label="${tonight.length} ${tonight.length === 1 ? "dancer" : "dancers"} working now"><strong>${tonight.length}</strong><span>working now</span></button>`
@@ -52882,7 +52877,6 @@
               <div class="venue-action-stack" aria-label="Venue actions">
                 <div class="venue-location-actions venue-primary-actions" aria-label="Venue travel actions">
                   ${venueDirectionsMarkup({ venue, className: "venue-address-directions", city })}
-                  ${rideMarkup}
                 </div>
                 <div class="venue-secondary-actions" aria-label="Venue profile actions">
                   <button class="action-btn secondary follow-venue-btn ${followsVenue ? "is-following" : ""}" type="button" data-venue-follow="${venueValue}" data-account-action="venue-follow" aria-pressed="${followsVenue}">
