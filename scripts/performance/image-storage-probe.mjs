@@ -4,16 +4,22 @@ import { mkdir, writeFile } from "node:fs/promises";
 import sharp from "sharp";
 
 const output = process.env.PERF_OUTPUT || ".qa/image-storage";
+const base = process.env.PERF_BASE_URL || "https://www.mydancr.com";
 await mkdir(output, { recursive: true });
-const response = await fetch("https://www.mydancr.com/api/public/discovery?city=Las%20Vegas");
+const response = await fetch(base + "/api/public/discovery?city=Las%20Vegas");
 assert.ok(response.ok);
 const discovery = await response.json();
-const photos = discovery.dancers.filter(dancer => dancer.primaryPhotoUrl?.includes("/render/image/")).slice(0, 3);
+const photos = discovery.dancers.filter(dancer => {
+  if (!dancer.primaryPhotoUrl) return false;
+  const url = new URL(dancer.primaryPhotoUrl, base);
+  return url.pathname.includes("/render/image/")
+    || (url.origin === new URL(base).origin && url.pathname === "/api/media/dancer-photo");
+}).slice(0, 3);
 assert.equal(photos.length, 3);
 const results = [];
 for (const photo of photos) {
   for (const [width, resize] of [[320, null], [320, "contain"], [96, "contain"], [160, "contain"]]) {
-    const url = new URL(photo.primaryPhotoUrl);
+    const url = new URL(photo.primaryPhotoUrl, base);
     url.searchParams.set("width", String(width));
     url.searchParams.delete("resize");
     if (resize) url.searchParams.set("resize", resize);

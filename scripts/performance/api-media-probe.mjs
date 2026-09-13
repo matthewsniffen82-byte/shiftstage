@@ -1,5 +1,6 @@
 // Bounded, read-only API and video-range observations. Never writes signed URLs to disk.
 import { mkdir, writeFile } from "node:fs/promises";
+import assert from "node:assert/strict";
 
 const base = process.env.PERF_BASE_URL || "https://www.mydancr.com";
 const output = process.env.PERF_OUTPUT || ".qa/performance";
@@ -15,14 +16,16 @@ for (const endpoint of endpoints) for (let run = 1; run <= 3; run++) {
   if (endpoint.startsWith("/api/public/tv?") && response.ok) videos = JSON.parse(body).videos || [];
 }
 for (const video of videos.slice(0, 3)) {
-  const url = new URL(video.videoUrl);
-  if (!url.hostname.endsWith(".supabase.co") || !url.pathname.startsWith("/storage/v1/")) continue;
+  const url = new URL(video.videoUrl, base);
+  const protectedDelivery = url.origin === new URL(base).origin && url.pathname === "/api/media/dancer-video";
+  const storageDelivery = url.hostname.endsWith(".supabase.co") && url.pathname.startsWith("/storage/v1/");
+  assert.ok(protectedDelivery || storageDelivery, "Probe only recognized app or storage media delivery");
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 30000);
   try {
     const started = performance.now();
     const response = await fetch(url, { headers: { Range: "bytes=0-1048575" }, signal: controller.signal });
-    const item = { id: video.id, width: video.width, height: video.height, durationSeconds: video.durationSeconds, status: response.status, range: response.headers.get("content-range"), acceptRanges: response.headers.get("accept-ranges"), cacheControl: response.headers.get("cache-control"), contentType: response.headers.get("content-type"), headersMs: performance.now() - started };
+    const item = { id: video.id, delivery: protectedDelivery ? "protected-app" : "storage", width: video.width, height: video.height, durationSeconds: video.durationSeconds, status: response.status, range: response.headers.get("content-range"), acceptRanges: response.headers.get("accept-ranges"), cacheControl: response.headers.get("cache-control"), contentType: response.headers.get("content-type"), headersMs: performance.now() - started };
     if (response.status === 206) {
       const buffer = Buffer.from(await response.arrayBuffer());
       item.prefixBytes = buffer.length;
@@ -45,3 +48,6 @@ await mkdir(output, { recursive: true });
 const report = { measuredAt: new Date().toISOString(), base, note: "Unthrottled read-only probes; at most three 1 MiB video prefixes. Signed URL query strings are not retained. Results are not mobile startup measurements.", api, media };
 await writeFile(output + "/api-media.json", JSON.stringify(report, null, 2));
 console.log(JSON.stringify({ apiSamples: api.length, apiFailures: api.filter(item => item.status !== 200).length, media }));
+assert.ok(media.length > 0, "A successful probe must measure media, not silently skip new delivery URLs");
+assert.ok(api.every(item => item.status === 200), "Public APIs must succeed");
+assert.ok(media.every(item => item.status === 206 && item.prefixBytes <= 1048576), "Video delivery must honor the bounded range request");
