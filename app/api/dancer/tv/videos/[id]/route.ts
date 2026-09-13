@@ -13,11 +13,11 @@ import {
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
 import { safeErrorMetadata } from "@/src/lib/security/safe-error-metadata";
-import { runWithServerJob } from "@/src/lib/server-job";
+import { runWithServerJob, VIDEO_PROCESSING_JOB_TIMEOUT_MS, VIDEO_PROCESSING_ROUTE_TIMEOUT_MS } from "@/src/lib/server-job";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-export const maxDuration = 60;
+export const maxDuration = 300;
 const MAX_TV_ACTION_BODY_BYTES = 2_048;
 
 type RouteProps = {
@@ -55,8 +55,9 @@ export async function PATCH(request: Request, { params }: RouteProps) {
     if (!("submissionAlreadyAccepted" in video) || video.submissionAlreadyAccepted !== true) {
       after(async () => {
         try {
-          const remainingMs = Math.floor(50_000 - (performance.now() - startedAt));
-          if (remainingMs <= 0) return;
+          const remainingMs = Math.floor(VIDEO_PROCESSING_ROUTE_TIMEOUT_MS - (performance.now() - startedAt));
+          // Leave a queued upload for recovery if this request cannot finish a job.
+          if (remainingMs < VIDEO_PROCESSING_JOB_TIMEOUT_MS) return;
           await runWithServerJob(
             () => retryMyDancrTvAutomatedModeration(createAdminSupabaseClient(), video.id),
             remainingMs,

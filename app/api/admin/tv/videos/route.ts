@@ -13,7 +13,7 @@ import { safeErrorMetadata } from "@/src/lib/security/safe-error-metadata";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-export const maxDuration = 180;
+export const maxDuration = 300;
 const MAX_VIDEO_REVIEW_BODY_BYTES = 8_192;
 
 export async function GET(request: Request) {

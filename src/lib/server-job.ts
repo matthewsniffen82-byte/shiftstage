@@ -1,6 +1,10 @@
 import { AsyncLocalStorage } from "node:async_hooks";
 
 export const MODERATION_JOB_TIMEOUT_MS = 45_000;
+// Video review also encodes the public file. Leave time for that work while
+// ending before the five-minute worker lease and the route's 300-second cap.
+export const VIDEO_PROCESSING_JOB_TIMEOUT_MS = 240_000;
+export const VIDEO_PROCESSING_ROUTE_TIMEOUT_MS = 270_000;
 export const MODERATION_WORKER_STALE_MS = 5 * 60_000;
 
 type ServerJob = { signal: AbortSignal; expiresAt: number };

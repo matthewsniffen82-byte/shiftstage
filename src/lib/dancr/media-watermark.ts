@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { runMediaProcess } from "./media-process.ts";
-import { assertServerJobActive, serverJobRemainingMs } from "../server-job.ts";
+import { assertServerJobActive } from "../server-job.ts";
 import { mkdtemp, readFile, rm, writeFile } from "fs/promises";
 import { tmpdir } from "os";
 import path from "path";
@@ -385,15 +385,11 @@ async function runVideoWatermarkFfmpeg(input: {
   if (!executable) throw new Error("The public video watermark encoder is unavailable.");
   const margin = Math.max(12, Math.round(Math.min(input.width, input.height) * 0.03));
   const overlay = `overlay=x='if(lt(mod(t,6),3),${margin},W-w-${margin})':y='H-h-${margin}':eval=frame:eof_action=repeat`;
-  // Longer jobs can trade encoding time for smaller phone-sized MP4s. Keep
-  // short moderation jobs and larger sources on their existing faster path.
-  const mp4Compression = input.width <= 1080 && input.height <= 1920 &&
-    serverJobRemainingMs() >= VIDEO_WATERMARK_TIMEOUT_MS + VIDEO_POSTER_TIMEOUT_MS
-    ? ["-preset", "medium", "-crf", "22"]
-    : ["-preset", "veryfast", "-crf", "20"];
+  // Use the same efficient encoding for new uploads and existing-video refreshes.
+  // Deadline pressure must cancel the job, not silently change its output quality.
   const codecArgs = input.storageMime === "video/webm"
     ? ["-c:v", "libvpx-vp9", "-crf", "24", "-b:v", "0", "-c:a", "libopus"]
-    : ["-c:v", "libx264", ...mp4Compression, "-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", "128k", "-movflags", "+faststart"];
+    : ["-c:v", "libx264", "-preset", "medium", "-crf", "22", "-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", "128k", "-movflags", "+faststart"];
   await runMediaProcess(executable, [
       "-y",
       ...LOCAL_VIDEO_INPUT_OPTIONS,

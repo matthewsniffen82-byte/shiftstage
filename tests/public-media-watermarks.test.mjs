@@ -9,7 +9,7 @@ import { promisify } from "node:util";
 import ffmpegPath from "ffmpeg-static";
 import sharp from "sharp";
 import { importMediaModule } from "./helpers/server-media-module.mjs";
-import { runWithServerJob } from "../src/lib/server-job.ts";
+import { runWithServerJob, VIDEO_PROCESSING_JOB_TIMEOUT_MS } from "../src/lib/server-job.ts";
 import { parseFfmpegVideoMetadata } from "../src/lib/dancr/video-upload-policy.ts";
 
 const {
@@ -211,10 +211,13 @@ test("the idempotent production backfill covers existing public media without av
   assert.match(backfillScript, /contentType: "video\/mp4"/);
 });
 
-test("video processing archives the original and publishes a playable watermarked derivative", async () => {
+for (const [extension, width, height] of [["mp4", 240, 320], ["mov", 1080, 1922], ["webm", 240, 320]])
+test(`${extension} ${width}x${height} uploads archive the original and publish a playable encoded derivative`, async () => {
   assert.ok(ffmpegPath, "ffmpeg-static must provide the production encoder");
   const workspace = await mkdtemp(path.join(tmpdir(), "mydancr-watermark-test-"));
-  const sourcePath = path.join(workspace, "source.mp4");
+  const sourcePath = path.join(workspace, `source.${extension}`);
+  const storagePath = `user/dancer/video.${extension}`;
+  const storageMime = extension === "webm" ? "video/webm" : "video/mp4";
   try {
     await execFileAsync(ffmpegPath, [
       "-y",
@@ -224,19 +227,21 @@ test("video processing archives the original and publishes a playable watermarke
       "-f",
       "lavfi",
       "-i",
-      "color=c=#452078:s=240x320:d=1:r=24",
+      `color=c=#452078:s=${width}x${height}:d=1:r=24`,
       "-f",
       "lavfi",
       "-i",
       "sine=frequency=440:duration=1:sample_rate=48000",
       "-c:v",
-      "libx264",
+      extension === "webm" ? "libvpx-vp9" : "libx264",
+      "-c:a",
+      extension === "webm" ? "libopus" : "aac",
       "-pix_fmt",
       "yuv420p",
       sourcePath,
     ]);
     const original = await readFile(sourcePath);
-    const stored = new Map([["mydancr-tv-videos/user/dancer/video.mp4", original]]);
+    const stored = new Map([[`mydancr-tv-videos/${storagePath}`, original]]);
     const uploads = [];
     const storageClient = {
       storage: {
@@ -259,52 +264,51 @@ test("video processing archives the original and publishes a playable watermarke
       },
     };
 
-    await watermarkStoredVideo(storageClient, {
+    await runWithServerJob(() => watermarkStoredVideo(storageClient, {
       publicBucket: "mydancr-tv-videos",
-      storagePath: "user/dancer/video.mp4",
-      storageMime: "video/mp4",
-      width: 240,
-      height: 320,
-    });
+      storagePath, storageMime, width, height,
+    }), VIDEO_PROCESSING_JOB_TIMEOUT_MS);
 
     const archived = uploads.find(
       (item) => item.bucket === "mydancr-tv-videos" && item.storagePath.startsWith("__originals/"),
     );
     const published = uploads.find(
-      (item) => item.bucket === "mydancr-tv-videos" && item.storagePath === "user/dancer/video.mp4",
+      (item) => item.bucket === "mydancr-tv-videos" && item.storagePath === storagePath,
     );
     assert.ok(archived);
     assert.deepEqual(archived.value, original);
     assert.ok(published);
     assert.equal(published.options.upsert, true);
+    assert.equal(published.options.contentType, storageMime);
     assert.notDeepEqual(published.value, original);
     assert.ok(published.value.length > 0);
-    assert.ok(published.value.includes(Buffer.from("crf=22.0")), "long jobs use the more efficient MP4 encoder");
-    const boxes = [];
-    for (let offset = 0; offset + 8 <= published.value.length;) {
-      const size = published.value.readUInt32BE(offset);
-      assert.ok(size >= 8 && offset + size <= published.value.length);
-      boxes.push(published.value.toString("ascii", offset + 4, offset + 8));
-      offset += size;
+    if (extension !== "webm") {
+      assert.ok(published.value.includes(Buffer.from("crf=22.0")), "normal video jobs use the efficient MP4 encoder at every resolution");
+      const boxes = [];
+      for (let offset = 0; offset + 8 <= published.value.length;) {
+        const size = published.value.readUInt32BE(offset);
+        assert.ok(size >= 8 && offset + size <= published.value.length);
+        boxes.push(published.value.toString("ascii", offset + 4, offset + 8));
+        offset += size;
+      }
+      assert.ok(boxes.indexOf("moov") >= 0 && boxes.indexOf("moov") < boxes.indexOf("mdat"), "MP4 metadata stays before the video bytes for fast startup");
     }
-    assert.ok(boxes.indexOf("moov") >= 0 && boxes.indexOf("moov") < boxes.indexOf("mdat"), "MP4 metadata stays before the video bytes for fast startup");
-    const publishedPath = path.join(workspace, "published.mp4");
+    const publishedPath = path.join(workspace, extension === "webm" ? "published.webm" : "published.mp4");
     await writeFile(publishedPath, published.value);
     const decoded = await execFileAsync(ffmpegPath, ["-hide_banner", "-i", publishedPath, "-f", "null", "-"]);
     const metadata = parseFfmpegVideoMetadata(decoded.stderr);
-    assert.equal(metadata?.width, 240);
-    assert.equal(metadata?.height, 320);
-    assert.equal(metadata?.durationSeconds, 1);
-    assert.match(decoded.stderr, /Video: h264/);
+    assert.equal(metadata?.width, width);
+    assert.equal(metadata?.height, height);
+    assert.ok(Math.abs(metadata?.durationSeconds - 1) < 0.05);
+    assert.match(decoded.stderr, extension === "webm" ? /Video: vp9/ : /Video: h264/);
     assert.match(decoded.stderr, /yuv420p/);
-    assert.match(decoded.stderr, /Audio: aac/);
+    assert.match(decoded.stderr, extension === "webm" ? /Audio: opus/ : /Audio: aac/);
 
     await runWithServerJob(() => watermarkStoredVideo(storageClient, {
-      publicBucket: "mydancr-tv-videos", storagePath: "user/dancer/video.mp4",
-      storageMime: "video/mp4", width: 240, height: 320,
+      publicBucket: "mydancr-tv-videos", storagePath, storageMime, width, height,
     }), 45_000);
-    const shortJobVideo = uploads.filter(item => item.bucket === "mydancr-tv-videos" && item.storagePath === "user/dancer/video.mp4").at(-1);
-    assert.ok(shortJobVideo.value.includes(Buffer.from("crf=20.0")), "short moderation jobs retain their existing fast encoding path");
+    const shortJobVideo = uploads.filter(item => item.bucket === "mydancr-tv-videos" && item.storagePath === storagePath).at(-1);
+    if (extension !== "webm") assert.ok(shortJobVideo.value.includes(Buffer.from("crf=22.0")), "less remaining time does not silently restore the old encoder");
     assert.equal(uploads.filter(item => item.storagePath.startsWith("__originals/")).length, 1, "re-encoding never overwrites the archived original");
   } finally {
     await rm(workspace, { recursive: true, force: true });

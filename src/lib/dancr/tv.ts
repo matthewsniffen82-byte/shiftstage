@@ -35,7 +35,7 @@ import { inspectStoredMyDancrTvVideo } from "./video-upload-validation";
 import { safeErrorMetadata } from "../security/safe-error-metadata";
 import { getManagedVideoMetricCounts } from "./tv-metric-counts";
 import { PublicApiError } from "../api-error-policy";
-import { assertServerJobActive, runWithServerJob } from "../server-job.ts";
+import { assertServerJobActive, runWithServerJob, VIDEO_PROCESSING_JOB_TIMEOUT_MS } from "../server-job.ts";
 
 export const MYDANCR_TV_BUCKET = "mydancr-tv-videos";
 export const MYDANCR_TV_MAX_BYTES = 75 * 1024 * 1024;
@@ -1380,7 +1380,7 @@ async function autoApproveMyDancrTvDemoUpload(
     watermarkApplied,
   }));
   return completed;
-  });
+  }, VIDEO_PROCESSING_JOB_TIMEOUT_MS);
 }
 
 function videoWorkerUnavailable() {
@@ -1592,7 +1592,7 @@ async function finalizeMyDancrTvAutomatedModeration(admin: AdminClient, video: a
     reasonCodes,
   }));
   return completed;
-  });
+  }, VIDEO_PROCESSING_JOB_TIMEOUT_MS);
 }
 
 function myDancrTvExpiry() {
@@ -1808,7 +1808,7 @@ export async function reviewMyDancrTvVideo(
 
   console.info(JSON.stringify({ event: "mydancr_tv.admin_decision", videoId, decision, adminId }));
   return updated;
-  });
+  }, VIDEO_PROCESSING_JOB_TIMEOUT_MS);
 }
 
 export async function getVenueMyDancrTvVideos(admin: AdminClient, ownerUserId: string) {

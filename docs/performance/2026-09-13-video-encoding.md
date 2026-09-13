@@ -24,16 +24,24 @@ traffic. Neither experiment was applied to the player.
 
 ## Change
 
-Longer encoding jobs use H.264 medium/CRF 22 for sources up to 1080x1920, retaining
+All MP4 and MOV upload encoding jobs now use H.264 medium/CRF 22, retaining
 resolution, frame rate, AAC audio, yuv420p, moving watermark, and MP4 fast-start
 metadata. Three representative comparisons saved approximately 15–16% versus
 veryfast/CRF 20. Mean VMAF changed by +0.11, +0.28, and -0.36 points; visual
 inspection of a moving-water sample showed comparable appearance.
 
-A 30-second 1080x1920 sample took 58.6 seconds with two encoder threads. The
-existing 45-second moderation jobs therefore retain their faster encoding path.
-The efficient path requires at least the combined video/poster processing budget
-to remain. Sources above 1080x1920 and WebM keep their existing codec settings.
+A 30-second 1080x1920 sample took 58.6 seconds with two encoder threads. Video
+jobs therefore receive a dedicated 240-second budget, within a 270-second route
+budget and a 300-second hosting cap. Both stay below the existing five-minute
+worker lease. Image jobs retain their 45-second limit. Upload acknowledgments
+remain immediate; encoding runs in the existing deferred moderation work.
+
+There is no longer a resolution- or remaining-time-based fallback to the old
+veryfast/CRF 20 encoder. Automated review, demo processing, manual approval, and
+platform imports share the same encoder for both TV and profile videos. WebM
+continues to use its format-specific VP9/CRF 24 and Opus encoding. Container checks,
+original archives, Storage receipts, worker ownership, and cancellation remain
+in place. Recovery skips a new claim if a complete video job no longer fits.
 
 ## Refreshing existing videos
 
@@ -68,14 +76,16 @@ settings are preserved. Local manifests and media remain in ignored `.next-*`
 directories and must not be committed.
 
 Focused checks cover real H.264/AAC decoding, dimensions/duration, fast-start box
-order, the short-job fallback, preservation of originals, failed Storage receipts,
-changed or hidden videos, and existing preload/visibility/playback ownership.
+order, MP4/MOV/WebM inputs, larger dimensions, stable encoding with shorter remaining
+time, job deadlines, immediate upload acknowledgment, preservation of originals,
+failed Storage receipts, changed or hidden videos, and existing playback ownership.
 
 ## Remaining limits
 
 Browser preload hints do not guarantee a number of buffered seconds or strict
 network priority. High-bitrate videos can still outrun cellular throughput.
-Automating efficient encoding for every future upload needs a worker with a
-longer processing budget; the current short moderation jobs deliberately remain
-unchanged. Native WebKit checks use host networking and advancing playback time,
+Very large or complex sources may still exceed the bounded encoder/worker time
+limits. A dedicated media worker and adaptive renditions would be separate
+infrastructure work; this change does not lower resolution or introduce HLS.
+Native WebKit checks use host networking and advancing playback time,
 so their timing is not directly comparable to Chromium's throttled frame callbacks.

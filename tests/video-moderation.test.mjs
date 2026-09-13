@@ -148,7 +148,7 @@ test("video submission persists exactly approve, human-review, or reject outcome
   assert.match(tvSource, /isDancerMediaOnboardingEligible/);
   assert.match(tvSource, /Videos stay private during setup|venue_approved_at/);
   assert.match(tvSource, /video_moderation_provider_error/);
-  assert.match(submitRoute, /export const maxDuration = 60/);
+  assert.match(submitRoute, /export const maxDuration = 300/);
   assert.match(submitRoute, /after\(async \(\) => \{[\s\S]*?retryMyDancrTvAutomatedModeration/);
   assert.match(submitRoute, /if \(!\("submissionAlreadyAccepted" in video\) \|\| video\.submissionAlreadyAccepted !== true\) \{[\s\S]*?after\(async \(\) =>/);
   assert.match(submitRoute, /\{ deferModeration: true \}/);
@@ -213,7 +213,7 @@ test("every production video-processing route bundles FFmpeg and admin failures 
   assert.match(nextConfig, /"\/api\/admin\/tv\/videos": \["\.\/node_modules\/ffmpeg-static\/ffmpeg\*"\]/);
   assert.match(nextConfig, /"\/api\/dancer\/tv\/videos\/\\\\\[id\\\\\]": \["\.\/node_modules\/ffmpeg-static\/ffmpeg\*"\]/);
   assert.match(nextConfig, /"\/api\/cron\/video-moderation": \["\.\/node_modules\/ffmpeg-static\/ffmpeg\*"\]/);
-  assert.match(adminReviewRoute, /export const maxDuration = 180/);
+  assert.match(adminReviewRoute, /export const maxDuration = 300/);
   assert.match(adminReviewRoute, /Video processing is temporarily unavailable\. The video was not changed\. Try again shortly\./);
   assert.match(adminReviewRoute, /mydancr_tv\.admin_review_failed/);
   assert.match(adminReviewRoute, /retrySubmittedMyDancrTvAutomatedModeration/);

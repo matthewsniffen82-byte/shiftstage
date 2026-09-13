@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import test, { before, beforeEach, after } from "node:test";
+import { serverJobRemainingMs, VIDEO_PROCESSING_JOB_TIMEOUT_MS } from "../src/lib/server-job.ts";
 import {
   createWorkerDatabase, seedWorker, patchWorker, workerSnapshot, videoWorkerHarness,
   workerDecision, captureWorker, workerInstant,
@@ -10,6 +11,15 @@ before(async () => { db = await createWorkerDatabase(); });
 beforeEach(async () => { await seedWorker(db); });
 after(async () => { await db?.close(); });
 const foreignWorker = "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee";
+
+for (const demo of [false, true]) test(`${demo ? "demo" : "AI"} upload workers give encoding the video processing budget`, async () => {
+  const h = videoWorkerHarness(db, { demo, beforeWatermarkReturns() {
+    const remaining = serverJobRemainingMs();
+    assert.ok(remaining > 150_000 && remaining <= VIDEO_PROCESSING_JOB_TIMEOUT_MS);
+  } });
+  assert.equal((await h.retry()).status, "approved");
+  assert.equal(h.watermarks.length, 1);
+});
 
 test("two queued workers race through native compare-and-set but only one starts a provider", async () => {
   const h = videoWorkerHarness(db, { holdProviders: true, synchronizeInitialReads: 2 });
