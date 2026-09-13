@@ -35581,11 +35581,25 @@
         /* One production dancer grid for Now and Dancers. */
         #results.home-dancer-grid {
           display: grid !important;
+          position: relative;
           grid-template-columns: minmax(0, 1fr) !important;
           align-items: start !important;
           gap: 16px !important;
           overflow: visible;
           background: #050505 !important;
+        }
+        #results.home-dancer-grid[data-grid-loading="true"] > :is(.home-dancer-grid-card, .home-dancer-grid-heading) {
+          visibility: hidden !important;
+          opacity: 0 !important;
+          pointer-events: none !important;
+        }
+        #results.home-dancer-grid > .dancer-grid-loading {
+          position: absolute;
+          inset: 64px 0 auto;
+          padding: 32px 12px;
+          color: var(--dancr-color-text-secondary);
+          font: 700 14px/1.5 var(--font-ui);
+          text-align: center;
         }
         .home-dancer-grid-heading {
           grid-column: 1 / -1;
@@ -60479,6 +60493,42 @@
       });
     }
 
+    function revealDancerGridTogether(grid) {
+      const status = grid.querySelector(":scope > .dancer-grid-loading");
+      if (!status) return;
+      const photos = [...grid.querySelectorAll(".home-dancer-grid-photo[data-image-state]")];
+      let decoding = false;
+      const observer = new MutationObserver(check);
+
+      function check() {
+        // A filter or destination change replaces the status along with its cards.
+        // Old image completions must never reveal a newer grid.
+        if (status.parentNode !== grid) {
+          observer.disconnect();
+          if (!grid.querySelector(":scope > .dancer-grid-loading")) {
+            grid.removeAttribute("data-grid-loading");
+            grid.removeAttribute("aria-busy");
+          }
+          return;
+        }
+        if (decoding || photos.some((photo) => !["ready", "error"].includes(photo.dataset.imageState))) return;
+        decoding = true;
+        Promise.allSettled(photos.filter((photo) => photo.dataset.imageState === "ready").map((photo) => photo.decode()))
+          .then(() => {
+            observer.disconnect();
+            if (status.parentNode !== grid) return;
+            // One attribute change exposes every card in the same browser paint.
+            grid.removeAttribute("data-grid-loading");
+            grid.removeAttribute("aria-busy");
+            status.remove();
+          });
+      }
+
+      observer.observe(grid, { childList: true, subtree: true, attributes: true, attributeFilter: ["data-image-state"] });
+      settleCompletedStableImages(grid);
+      check();
+    }
+
     function renderHomeDancerGrid(city, profiles) {
       const sections = dancerDirectorySections(profiles, city);
       const visibleCount = sections.reduce((total, section) => total + section.profiles.length, 0);
@@ -60507,6 +60557,7 @@
       results.setAttribute("aria-label", `Approved dancers ${locationPhrase}, grouped by live status and schedule`);
       const gridMarkup = `
         ${dancerDirectoryFilterMarkup(profiles, city)}
+        <div class="dancer-grid-loading" role="status">Loading dancers&hellip;</div>
         ${sectionMarkup}
         ${visibleCount ? "" : `<div class="dancer-directory-filter-empty">${escapeHtml(emptyLabels[dancerDirectoryFilter] || `No approved dancer profiles are available ${locationPhrase} yet.`)}</div>`}
       `;
@@ -60517,8 +60568,11 @@
       ) {
         return;
       }
+      results.setAttribute("data-grid-loading", "true");
+      results.setAttribute("aria-busy", "true");
       homeDancerGridRenderKey = nextRenderKey;
       results.innerHTML = gridMarkup;
+      revealDancerGridTogether(results);
       window.requestAnimationFrame(() => {
         prefetchProfileNavigationFromElement(results.querySelector(".home-dancer-grid-card"));
       });
