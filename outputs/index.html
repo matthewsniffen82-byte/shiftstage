@@ -45726,7 +45726,7 @@
         return '<div class="locked" role="status">Loading notifications…</div>';
       }
       if (liveNotificationsState === "error") {
-        return '<div class="locked" role="status">Notifications are temporarily unavailable.</div>';
+        return '<div class="locked" role="status">Notifications could not be loaded. Reopen notifications to try again.</div>';
       }
       const notifications = visibleLiveNotifications();
       if (!notifications.length) {
@@ -45930,7 +45930,7 @@
       }
       if (liveNotificationsState === "error") {
         customerNotificationQuickCount.hidden = true;
-        customerNotificationsQuickList.innerHTML = '<div class="customer-quick-empty" role="status">Notifications are temporarily unavailable.</div>';
+        customerNotificationsQuickList.innerHTML = '<div class="customer-quick-empty" role="status">Notifications could not be loaded. Reopen notifications to try again.</div>';
         return;
       }
       const items = customerQuickNotificationItems();
@@ -46014,6 +46014,7 @@
       const openDeals = panelName === "deals" && customerDealsQuickPanel.hidden;
       closeCustomerQuickPanels();
       if (openNotifications) {
+        if (liveNotificationsState === "error") void loadLiveNotifications();
         renderCustomerQuickNotifications();
         customerNotificationsQuickPanel.hidden = false;
         customerNotificationQuickBtn.classList.add("active");
@@ -46040,10 +46041,10 @@
         if (requestVersion !== liveNotificationsRequestVersion || accountKey !== notificationClearStorageKey()) return;
         liveNotifications = (data.notifications || []).filter(isVisibleAfterNotificationClear);
         liveNotificationsState = "ready";
-      } catch (error) {
+      } catch {
         if (requestVersion !== liveNotificationsRequestVersion || accountKey !== notificationClearStorageKey()) return;
         liveNotificationsState = "error";
-        showToast(error.message || "Could not load notifications");
+        // Background notification failures belong in the inbox, not over public discovery.
       }
       renderNotificationCenters();
     }
