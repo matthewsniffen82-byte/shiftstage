@@ -41,6 +41,46 @@ Two small production corrections were justified during that investigation:
 
 The affected final test groups passed (133 initial focused passes, then all 36 card tests after the remaining corrections, plus 30 media/import-boundary checks; groups overlap). Route type generation, whole-project TypeScript and lint, migration validation, the single final production build, public-build scanning and the non-mutating postbuild check passed. Production styling, dependencies and database policies have no diff in this pass.
 
+Delivered `43511936`; [Vercel success](https://vercel.com/ai-movie-jobs/shiftstage/7XDAPbMDNo1vF2Syh3DzpLDmMjSM). The full suite was run once; after investigating its failures, only affected groups were rerun. The local production build and bundle inventory were made at this revision.
+
+## Final production verification
+
+A separate venue-detail change, `1e471ab3`, landed after the local build. It was preserved. The final browser pass waited for its [successful deployment](https://vercel.com/ai-movie-jobs/shiftstage/Af1eLyyQ4tju4TMoCJARQr78Biq4) and verified that the live shell and script exactly matched the working tree before measurement. No timed browser run overlapped this pass's build or automated tests. The later change's venue styling is not part of this performance pass.
+
+Three cold cellular samples per path used the same Chromium settings as the baseline:
+
+| Path | Median LCP | Median CLS | Initial requests |
+| --- | ---: | ---: | ---: |
+| Home | 1,468 ms | 0.006 | 43 |
+| Working Now | 1,432 ms | 0.007 | 36 |
+| Venues | 1,464 ms | <0.001 | 42 |
+| Dancer profile | 1,896 ms | 0 | 34 |
+| TV | 3,892 ms | 0 | 42 |
+
+All 15 samples had zero uncaught runtime errors or critical request failures. Homepage LCP is effectively unchanged from the 1,448 ms baseline. TV LCP was 4,108 ms before and 3,892 ms afterward; median video load-to-first-play was 1,853 ms before and 1,641 ms afterward. Three samples and variable origin/host conditions are insufficient to attribute these small timing differences to this patch. The reliable measured gains are the avoided abandoned requests and smaller avatar payloads, not a claimed whole-page speedup. TV video quality was unchanged, with zero reported dropped frames in these samples.
+
+The existing five-second scrolling sample recorded 0–0.733% of frames over 50 ms across the five paths. Initial long tasks remain (up to a 388 ms route median), and the homepage filter interaction proxy was 456 ms under 4× CPU slowdown; this is not field INP. These are remaining shared-shell costs, not evidence that all interactions are now instantaneous.
+
+Final checks passed:
+
+- Android cellular and slower Android emulation, plus the desktop WebKit engine with iPhone portrait and landscape viewport/UA: profile video playback, touch close, Now/Upcoming/All filters, venue navigation/back, authentication forms without submission, rapid video scrolling, and exit cleanup. Actual window errors and unhandled rejections were empty. Expected cancelled navigation/media requests remain recorded in the raw diagnostics.
+- Video lifecycle: one playing video maximum, three attached sources maximum across eight rapid forward/back transitions, zero playing when hidden, resumed playback when visible, and zero sources on leaving TV.
+- Responsive hero images at 393 px/2×, 390 px/3× and 1440 px/2×: one selected image request per viewport and immutable versioned caching. Deployed TV avatars used 96-pixel candidates for the same 44-pixel display size.
+- Cache-enabled repeat visits: homepage network transfer was 940,619 bytes cold and 329,573 warm, with 26 requests served from cache. Profile transfer was 339,910 on first visit and 126,898 on repeat, with 22 cache hits on repeat; its first visit shared the homepage's already-warmed common assets. These verify existing caching, not improvements introduced by this patch. Protected media remains private/no-store.
+- All 15 public-document checks and four anonymous private-API denials passed. Health endpoints returned 200 and protected customer access returned 401 with no-store.
+- Desktop at 1440 × 1000: home, 14 dancer cards, 17 venue cards and the profile grid rendered with loaded visible images, no horizontal overflow, no runtime errors, and no HTTP responses at or above 400. Console inspection found only the harness's service-worker-blocking warnings. Fully loaded desktop cards and mobile feed/profile screenshots were visually inspected.
+
+Raw JSON, logs and screenshots are retained locally under `.next-perceived-speed-20260912/final`; the baseline and step-specific probes are alongside that directory. Browser journeys used the production demo catalog and suppressed writes. They do not establish behavior for hundreds of real records, authenticated production accounts, physical phones, service-worker lifecycle, or field Core Web Vitals. No full audit or full build was repeated for the final documentation-only commit.
+
+## Files and components changed
+
+- `src/lib/dancr/media-delivery.ts`: cancel obsolete photo/video authorization and delivery work.
+- `src/lib/dancr/tv.ts`: preserve the existing responsive avatar candidate list in TV responses.
+- `outputs/index.html`: apply responsive TV avatar attributes before `src`; correct the undefined venue-card Directions markup reference.
+- `src/lib/dancr/media-delivery-url.ts`: enforce the server-only boundary for the existing media signer.
+- `src/generated/live-shell-version.ts` and `src/generated/live-shell-script-version.mjs`: regenerate delivery fingerprints.
+- Tests: add cancellation and TV-avatar behavioral coverage; reproduce the venue renderer failure; update affected release/privacy assertions and the narrow native-Node server-marker helper. No dependencies or migrations were added.
+
 ## Remaining scope review
 
 The main lists use the existing HTML shell; adding React memoization would not address their rendering. Content keys preserve identical dancer/venue DOM, frame-scheduled/passive handlers handle scrolling, profile grids load in batches, and Supabase parent/relationship reads have limits. Discovery enrichments and metrics use existing parallel/batched reads. Profile intent prefetch remains limited to four metadata entries with a short lifetime; venue details reuse discovery data and return navigation restores screen position. Heavy dashboard tools already use dynamic imports.
