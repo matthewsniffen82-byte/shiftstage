@@ -32785,6 +32785,23 @@
           outline: 3px solid #7eeaff;
           outline-offset: -4px;
         }
+        .home-tv-feed-video-poster {
+          position: absolute;
+          z-index: 1;
+          inset: 0;
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          background: #000;
+          pointer-events: none;
+        }
+        .home-tv-feed-video[data-frame-ready="true"] + .home-tv-feed-video-poster,
+        .home-tv-feed-slide.is-media-unavailable .home-tv-feed-video-poster {
+          visibility: hidden;
+        }
+        .home-tv-feed-video-poster:not([src]) {
+          display: none;
+        }
         .home-tv-feed-media-fallback {
           position: absolute;
           z-index: 0;
@@ -54481,12 +54498,12 @@
           video.poster = posterUrl;
         }
         video.addEventListener("loadeddata", () => {
-          video.dataset.frameReady = "true";
           if (Number(overlay.dataset.videoIndex || 0) !== index) return;
           overlay.dataset.loadedVideoIndex = String(index);
           syncProfileTvVideoLoading(overlay, index);
         });
         video.addEventListener("emptied", () => { delete video.dataset.frameReady; });
+        observeVideoPresentation(video);
         slide.appendChild(video);
         const poster = document.createElement("img");
         poster.className = "profile-media-video-poster";
@@ -61502,6 +61519,72 @@
     window.addEventListener("pagehide", suspendPageVideoPlayback);
     window.addEventListener("pageshow", resumePageVideoPlayback);
 
+    function observeVideoPresentation(video) {
+      let videoFrame = 0;
+      let paintFrame = 0;
+      let generation = 0;
+
+      function cancelPending() {
+        generation += 1;
+        if (videoFrame) video.cancelVideoFrameCallback(videoFrame);
+        if (paintFrame) window.cancelAnimationFrame(paintFrame);
+        videoFrame = 0;
+        paintFrame = 0;
+      }
+
+      function reset() {
+        cancelPending();
+        delete video.dataset.frameReady;
+      }
+
+      function revealAfterPaint() {
+        const pendingGeneration = generation;
+        // A submitted frame can still be one display refresh ahead of its paint.
+        paintFrame = window.requestAnimationFrame(() => {
+          if (pendingGeneration !== generation) return;
+          paintFrame = window.requestAnimationFrame(() => {
+            if (pendingGeneration !== generation) return;
+            paintFrame = 0;
+            if (video.isConnected && !video.paused && !video.seeking && video.readyState >= 2) {
+              video.dataset.frameReady = "true";
+            }
+          });
+        });
+      }
+
+      function reveal() {
+        if (video.dataset.frameReady === "true" || video.paused || video.seeking || videoFrame || paintFrame) return;
+        if (typeof video.requestVideoFrameCallback === "function") {
+          const pendingGeneration = generation;
+          videoFrame = video.requestVideoFrameCallback(() => {
+            if (pendingGeneration !== generation) return;
+            videoFrame = 0;
+            revealAfterPaint();
+          });
+        } else if (video.readyState >= 2) {
+          // Older browsers use actual playback plus two paint opportunities.
+          revealAfterPaint();
+        }
+      }
+
+      video.addEventListener("playing", reveal);
+      video.addEventListener("timeupdate", reveal);
+      video.addEventListener("pause", cancelPending);
+      video.addEventListener("loadstart", reset);
+      video.addEventListener("emptied", reset);
+      video.addEventListener("error", reset);
+      if (!video.paused) reveal();
+      return () => {
+        cancelPending();
+        video.removeEventListener("playing", reveal);
+        video.removeEventListener("timeupdate", reveal);
+        video.removeEventListener("pause", cancelPending);
+        video.removeEventListener("loadstart", reset);
+        video.removeEventListener("emptied", reset);
+        video.removeEventListener("error", reset);
+      };
+    }
+
     function attachDeferredVideoSource(video, preload = "metadata") {
       if (!(video instanceof HTMLVideoElement)) return false;
       const videoUrl = String(video.dataset.videoUrl || "").trim();
@@ -61607,10 +61690,13 @@
         const video = slide.querySelector("video.home-tv-feed-video");
         if (!video) return;
         const posterUrl = String(video.dataset.posterUrl || "");
+        const poster = video.nextElementSibling;
         if (posterUrl && Math.abs(index - activeIndex) <= 1) {
           if (video.getAttribute("poster") !== posterUrl) video.poster = posterUrl;
+          if (poster?.getAttribute("src") !== posterUrl) poster?.setAttribute("src", posterUrl);
         } else {
           video.removeAttribute("poster");
+          poster?.removeAttribute("src");
         }
         if (index === activeIndex) return;
         const mode = videoBufferMode(index, activeIndex, allowNextWarmup, activeReady, video.hasAttribute("src"));
@@ -61986,6 +62072,7 @@
       const posterUrl = String(item?.posterUrl || item?.poster_url || "").trim();
       video.dataset.posterUrl = posterUrl;
       if (posterUrl && index <= 1) video.poster = posterUrl;
+      observeVideoPresentation(video);
       video.preload = index === 0 ? "auto" : "none";
       video.controlsList = "nodownload noremoteplayback nofullscreen";
       video.disablePictureInPicture = true;
@@ -62437,6 +62524,13 @@
       );
       const fallback = createHomeTvFeedMediaFallback();
       const video = createHomeTvFeedVideo(item, videoIndex, slide, totalVideos);
+      const poster = document.createElement("img");
+      poster.className = "home-tv-feed-video-poster";
+      poster.alt = "";
+      poster.setAttribute("aria-hidden", "true");
+      poster.loading = "eager";
+      poster.decoding = "async";
+      if (video.poster) poster.src = video.poster;
       const playback = document.createElement("span");
       playback.className = "home-tv-feed-playback";
       playback.innerHTML = modalVideoPlaybackIcon(true);
@@ -62452,6 +62546,7 @@
       const children = [
         fallback,
         video,
+        poster,
         playback,
         createHomeTvFeedFullViewCloseButton(slide, video),
         createHomeTvFeedActions(item, slide, video),
