@@ -99,7 +99,7 @@ test("the homepage TV feed only shows its play overlay for an active manual paus
   );
   assert.match(
     homeSource,
-    /video\.play\(\)\.then\(\(\) => \{[\s\S]*?slide\.classList\.remove\("is-paused", "is-autoplay-blocked"\)[\s\S]*?\.catch\(\(error\) => \{[\s\S]*?slide\.dataset\.userPaused === "true"[\s\S]*?slide\.classList\.add\("is-paused", "is-autoplay-blocked"\)/,
+    /playDeferredVideo\(video\)\.then\(\(\) => \{[\s\S]*?slide\.classList\.remove\("is-paused", "is-autoplay-blocked"\)[\s\S]*?\.catch\(\(error\) => \{[\s\S]*?slide\.dataset\.userPaused === "true"[\s\S]*?slide\.classList\.add\("is-paused", "is-autoplay-blocked"\)/,
   );
   assert.doesNotMatch(homeSource, /\.home-tv-feed-slide\.is-paused \.home-tv-feed-playback/);
   const playbackToggle = homeSource.match(

@@ -26,6 +26,17 @@ for (const [surface, hasBuffer, observe] of [
   ["React profile", hasVideoWarmupBuffer, observeVideoWarmup],
   ["live TV and profile", context.hasVideoWarmupBuffer, context.observeVideoWarmup],
 ]) {
+  test(`${surface}: adaptive warmup starts with a playable first segment and reacts to MSE appends`, () => {
+    const video = player(); video.dataset = { adaptiveUrl: '/manifest' };
+    let changes = 0; const cleanup = observe(video, () => changes++);
+    video.ranges = [[0, 1.95]];
+    video.dispatchEvent(new Event('mydancrvideobufferchange'));
+    assert.equal(hasBuffer(video), true); assert.equal(changes, 1);
+    video.dataset = {};
+    assert.equal(hasBuffer(video), false, 'progressive downloads retain the larger safety margin');
+    cleanup();
+  });
+
   test(`${surface}: spare buffer is required before neighboring downloads`, () => {
     const video = player();
     assert.equal(hasBuffer(null), false);

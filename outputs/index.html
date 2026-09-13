@@ -54549,7 +54549,7 @@
           poster.loading = index < 6 || Math.abs(index - activeIndex) <= 3 ? "eager" : "lazy";
           poster.fetchPriority = index === activeIndex ? "high" : "low";
         }
-        const mode = video.dataset.adaptiveUrl && index !== activeIndex ? "release" : document.visibilityState === "hidden"
+        const mode = document.visibilityState === "hidden"
           ? index === activeIndex ? "retain" : "release"
           : videoBufferMode(index, activeIndex, allowNextWarmup, activeReady, video.hasAttribute("src"));
         applyVideoBufferMode(video, mode);
@@ -61478,7 +61478,7 @@
     function hasVideoWarmupBuffer(video) {
       if (!video || video.readyState < 2 || !Number.isFinite(video.duration)) return false;
       const position = video.currentTime;
-      const target = Math.min(video.duration, position + 3);
+      const target = Math.min(video.duration, position + (video.dataset?.adaptiveUrl ? 1.5 : 3));
       for (let index = 0; index < video.buffered.length; index++) {
         if (video.buffered.start(index) <= position && video.buffered.end(index) >= target - .05) return true;
       }
@@ -61494,7 +61494,7 @@
         ready = next;
         onChange();
       };
-      const events = ["progress", "loadeddata", "waiting", "emptied"];
+      const events = ["progress", "mydancrvideobufferchange", "loadeddata", "waiting", "emptied"];
       events.forEach((event) => video.addEventListener(event, update));
       return () => events.forEach((event) => video.removeEventListener(event, update));
     }
@@ -61507,14 +61507,23 @@
     }
 
     function applyVideoBufferMode(video, mode) {
+      video.dataset.bufferMode = mode;
       if (mode === "release") {
         delete video.dataset.frameReady;
         releaseDeferredVideoSource(video);
       } else if (mode === "retain") {
+        adaptiveVideoController?.suspendAdaptiveVideo(video);
         video.pause();
         video.preload = "none";
       } else {
-        attachDeferredVideoSource(video, mode);
+        const ready = attachDeferredVideoSource(video, mode);
+        if (video.dataset.adaptiveUrl && video.paused) {
+          void ready?.then?.((attached) => {
+            if (attached && video.dataset.bufferMode === mode && video.isConnected && video.paused && document.visibilityState !== "hidden") {
+              void adaptiveVideoController?.warmAdaptiveVideo(video);
+            }
+          });
+        }
       }
     }
 
@@ -61794,7 +61803,7 @@
           poster.fetchPriority = index === activeIndex ? "high" : "low";
         }
         if (index === activeIndex) return;
-        const mode = video.dataset.adaptiveUrl ? "release" : videoBufferMode(index, activeIndex, allowNextWarmup, activeReady, video.hasAttribute("src"));
+        const mode = videoBufferMode(index, activeIndex, allowNextWarmup, activeReady, video.hasAttribute("src"));
         applyVideoBufferMode(video, mode);
       });
     }

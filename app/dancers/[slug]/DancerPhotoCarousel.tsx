@@ -20,7 +20,7 @@ import { useVideoSoundPreference } from "@/src/lib/dancr/use-video-sound-prefere
 import { useAdaptiveVideoWarmup } from "@/src/lib/dancr/use-adaptive-video-warmup";
 import { hasVideoWarmupBuffer, observeVideoWarmup, videoBufferMode } from "@/src/lib/dancr/video-buffer-policy";
 import { videoResourceRef } from "@/src/lib/dancr/video-resource-ref";
-import { attachAdaptiveVideo, releaseAdaptiveVideo, suspendAdaptiveVideo } from "@/public/adaptive-video.mjs";
+import { attachAdaptiveVideo, releaseAdaptiveVideo, suspendAdaptiveVideo, warmAdaptiveVideo } from "@/public/adaptive-video.mjs";
 import { useAnonymousMediaLikes } from "@/src/lib/dancr/use-anonymous-media-likes";
 import { DANCER_PROFILE_MEDIA_PAGE_SIZE } from "@/src/lib/dancr/media-limits";
 
@@ -339,9 +339,10 @@ export function DancerPhotoCarousel({
     const syncLoading = () => {
       const activeReady = hasVideoWarmupBuffer(videos[viewerIndex]);
       videos.forEach((video, index) => {
-        const mode = video.dataset.adaptiveUrl && index !== viewerIndex ? "release" : document.visibilityState === "hidden"
+        const mode = document.visibilityState === "hidden"
           ? index === viewerIndex ? "retain" : "release"
           : videoBufferMode(index, viewerIndex, allowVideoWarmup, activeReady, video.hasAttribute("src"));
+        video.dataset.bufferMode = mode;
         if (mode === "release") {
           releaseAdaptiveVideo(video);
           video.pause();
@@ -357,7 +358,12 @@ export function DancerPhotoCarousel({
           video.preload = "none";
         } else {
           video.preload = mode;
-          void attachViewerVideo(video);
+          const ready = attachViewerVideo(video);
+          if (video.dataset.adaptiveUrl && index !== viewerIndex && ready !== true) {
+            void ready.then((attached) => {
+              if (attached && video.dataset.bufferMode === mode && video.isConnected && video.paused && document.visibilityState !== "hidden") void warmAdaptiveVideo(video);
+            });
+          }
         }
       });
     };

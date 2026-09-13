@@ -2,7 +2,9 @@
 export function hasVideoWarmupBuffer(video: HTMLVideoElement | null | undefined) {
   if (!video || video.readyState < 2 || !Number.isFinite(video.duration)) return false;
   const position = video.currentTime;
-  const target = Math.min(video.duration, position + 3);
+  // Adaptive neighbors fetch only one small segment. A progressive neighbor
+  // can request much more, so keep its larger three-second safety margin.
+  const target = Math.min(video.duration, position + (video.dataset?.adaptiveUrl ? 1.5 : 3));
   for (let index = 0; index < video.buffered.length; index++) {
     if (video.buffered.start(index) <= position && video.buffered.end(index) >= target - .05) return true;
   }
@@ -19,7 +21,7 @@ export function observeVideoWarmup(video: HTMLVideoElement | null | undefined, o
     ready = next;
     onChange();
   };
-  const events = ["progress", "loadeddata", "waiting", "emptied"];
+  const events = ["progress", "mydancrvideobufferchange", "loadeddata", "waiting", "emptied"];
   events.forEach((event) => video.addEventListener(event, update));
   return () => events.forEach((event) => video.removeEventListener(event, update));
 }

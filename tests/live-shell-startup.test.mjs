@@ -7,6 +7,8 @@ import vm from "node:vm";
 import test from "node:test";
 import ts from "typescript";
 import { compactLiveShellScript } from "../scripts/lib/compact-live-shell-script.mjs";
+import { splitLiveShellScript } from "../scripts/lib/split-live-shell-script.mjs";
+import { LIVE_SHELL_FEATURE_VERSIONS } from "../src/generated/live-shell-feature-versions.mjs";
 import { externalizeLiveShellAppScript, extractLiveShellAppScript } from "../src/lib/dancr/live-shell-script.mjs";
 import { LIVE_SHELL_SCRIPT_SHA256 } from "../src/generated/live-shell-script-version.mjs";
 
@@ -35,7 +37,16 @@ test("cold loads discover the app before styles without blocking on its helpers"
 });
 
 test("the generated script is deterministic, smaller, and content-addressed", async () => {
-  assert.equal(delivered, await compactLiveShellScript(original));
+  const { main, features } = splitLiveShellScript(original);
+  const urls = {};
+  for (const [name, source] of Object.entries(features)) {
+    const chunk = await compactLiveShellScript(source);
+    assert.equal(createHash("sha256").update(chunk).digest("hex"), LIVE_SHELL_FEATURE_VERSIONS[name]);
+    assert.equal(chunk, await readFile(new URL(`../outputs/live-shell-${name}.js`, import.meta.url), "utf8"));
+    urls[name] = `/live-shell-feature.js?feature=${name}&v=${LIVE_SHELL_FEATURE_VERSIONS[name]}`;
+  }
+  assert.equal(delivered, await compactLiveShellScript(main.replace("const LIVE_SHELL_FEATURE_URLS = Object.freeze({});",
+    `const LIVE_SHELL_FEATURE_URLS = Object.freeze(${JSON.stringify(urls)});`)));
   assert.equal(createHash("sha256").update(delivered).digest("hex"), LIVE_SHELL_SCRIPT_SHA256);
   assert.ok(Buffer.byteLength(delivered) < Buffer.byteLength(original) * 0.75);
   assert.ok(gzipSync(delivered).length < gzipSync(original).length * 0.85);

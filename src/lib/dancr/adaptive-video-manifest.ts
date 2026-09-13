@@ -6,6 +6,7 @@ export type VideoRendition = {
   height: number;
   bytes: number;
   initBytes: number;
+  codecs?: string;
   segments: Array<{ duration: number; bytes: number }>;
 };
 export type AdaptiveVideoManifest = { version: 1; generation: string; renditions: VideoRendition[] };
@@ -17,7 +18,8 @@ export function parseAdaptiveVideoManifest(value: any): AdaptiveVideoManifest | 
   for (const row of value.renditions) {
     if (!row || !['360', '720', 'source'].includes(row.name) || names.has(row.name)
       || !integer(row.width, 4096) || !integer(row.height, 4096) || !integer(row.bytes, 75 * 1024 * 1024)
-      || !integer(row.initBytes, 65536) || !Array.isArray(row.segments) || !row.segments.length || row.segments.length > 32) return null;
+      || !integer(row.initBytes, 65536) || !Array.isArray(row.segments) || !row.segments.length || row.segments.length > 32
+      || (row.codecs !== undefined && (typeof row.codecs !== 'string' || !/^avc1\.[a-f0-9]{6}(,mp4a\.40\.2)?$/.test(row.codecs)))) return null;
     names.add(row.name);
     let bytes = row.initBytes;
     let duration = 0;
@@ -54,7 +56,7 @@ export function adaptiveVideoPlaylist(manifest: AdaptiveVideoManifest, requestUr
   if (!rendition) return '#EXTM3U\n#EXT-X-VERSION:7\n#EXT-X-INDEPENDENT-SEGMENTS\n' + manifest.renditions.map(row => {
     const peak = Math.ceil(Math.max(...row.segments.map(segment => segment.bytes * 8 / segment.duration)));
     const average = Math.ceil(row.bytes * 8 / row.segments.reduce((sum, segment) => sum + segment.duration, 0));
-    return `#EXT-X-STREAM-INF:BANDWIDTH=${peak},AVERAGE-BANDWIDTH=${average},RESOLUTION=${row.width}x${row.height}\n${endpoint(row.name)}\n`;
+    return `#EXT-X-STREAM-INF:BANDWIDTH=${peak},AVERAGE-BANDWIDTH=${average},RESOLUTION=${row.width}x${row.height}${row.codecs ? `,CODECS="${row.codecs}"` : ''}\n${endpoint(row.name)}\n`;
   }).join('');
   const uri = endpoint(rendition.name, true);
   let offset = rendition.initBytes;

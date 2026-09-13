@@ -34,6 +34,8 @@ try {
   await page.goto(`${base}/dancers/${encodeURIComponent(slug)}?media=video&mediaIndex=0`, { waitUntil: "load" });
   await page.waitForFunction(() => [...document.querySelectorAll(".profile-media-viewer video")].some(video => !video.paused && video.currentTime > .1), null, { timeout: 30000 });
   assert.equal((await capture("playing")).filter(video => !video.paused).length, 1);
+  const adaptive = await page.locator(".profile-media-viewer video").first().evaluate(video => ({ available: Boolean(video.dataset.adaptiveUrl), source: video.src }));
+  if (adaptive.available) assert.ok(adaptive.source.startsWith("blob:") || adaptive.source.includes("hls=master"), "Prepared profile clips use adaptive playback");
   await page.evaluate(() => { window.__originalPlayer = document.querySelector(".profile-media-viewer video"); });
   await visibility("hidden");
   assert.ok((await capture("hidden")).every(video => video.paused));

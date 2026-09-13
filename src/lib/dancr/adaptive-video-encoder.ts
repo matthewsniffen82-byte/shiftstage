@@ -5,6 +5,7 @@ import path from 'node:path';
 import ffmpeg from 'ffmpeg-static';
 import { LOCAL_VIDEO_INPUT_OPTIONS } from './local-video-input.ts';
 import { runMediaProcess } from './media-process.ts';
+import { adaptiveVideoCodecs } from './adaptive-video-codecs.ts';
 import { parseAdaptiveVideoManifest, type AdaptiveVideoManifest, type VideoRendition } from './adaptive-video-manifest.ts';
 
 // The original published MP4 remains unchanged. The top HLS rendition preserves
@@ -30,7 +31,7 @@ export async function encodeAdaptiveVideo(source: Buffer, width: number, height:
       args.push('-c:v', 'libx264', '-threads', '2', '-preset', 'veryfast', '-crf', edge ? '20' : '18', '-pix_fmt', 'yuv420p',
         '-force_key_frames', 'expr:gte(t,n_forced*2)', '-sc_threshold', '0');
       if (bitrate) args.push('-maxrate', `${bitrate}k`, '-bufsize', `${bitrate * 2}k`);
-      args.push('-c:a', 'aac', '-b:a', '128k', '-f', 'hls', '-hls_time', '2', '-hls_playlist_type', 'vod',
+      args.push('-c:a', 'aac', '-profile:a', 'aac_low', '-b:a', '128k', '-f', 'hls', '-hls_time', '2', '-hls_playlist_type', 'vod',
         '-hls_segment_type', 'fmp4', '-hls_flags', 'single_file+independent_segments', '-hls_segment_filename', outputPath, playlistPath);
       await runMediaProcess(ffmpeg, args, { timeoutMs: 120_000, timeoutMessage: 'Adaptive video encoder timed out.', failureMessage: 'Adaptive video encoder failed' });
       const body = await readFile(outputPath);
@@ -46,7 +47,7 @@ export async function encodeAdaptiveVideo(source: Buffer, width: number, height:
       }
       const scale = edge ? edge / Math.min(width, height) : 1;
       outputs.push({ body, rendition: { name, width: Math.round(width * scale / 2) * 2, height: Math.round(height * scale / 2) * 2,
-        bytes: body.length, initBytes: Number(init[1]), segments } });
+        bytes: body.length, initBytes: Number(init[1]), codecs: adaptiveVideoCodecs(body.subarray(0, Number(init[1]))), segments } });
     }
     const manifest: AdaptiveVideoManifest = { version: 1, generation: randomUUID().replaceAll('-', ''), renditions: outputs.map(row => row.rendition) };
     if (!parseAdaptiveVideoManifest(manifest)) throw new Error('Adaptive video index validation failed.');

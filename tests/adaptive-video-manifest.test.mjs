@@ -25,3 +25,12 @@ test('object paths cannot cross a source boundary',()=>{
  for(const source of ['../a.mp4','/a.mp4','owner//a.mp4','owner/./a.mp4','https://other/a.mp4','owner/a.webm'])assert.throws(()=>adaptiveVideoPath(source,manifestFixture(),'360'));
  assert.throws(()=>adaptiveVideoPath('owner/a.mp4',manifestFixture(),'../source'));
 });
+
+test('master playlists declare verified codecs and reject playlist attribute injection',()=>{
+ const manifest=manifestFixture();manifest.renditions[0].codecs='avc1.64001e,mp4a.40.2';
+ assert.equal(parseAdaptiveVideoManifest(manifest),manifest);
+ assert.match(adaptiveVideoPlaylist(manifest,new URL('https://app.test/video?id=owned')),/CODECS="avc1.64001e,mp4a.40.2"/);
+ for(const codecs of ['avc1.64001e"\n/other','mp4a.40.2',123]){
+  manifest.renditions[0].codecs=codecs;assert.equal(parseAdaptiveVideoManifest(manifest),null);
+ }
+});

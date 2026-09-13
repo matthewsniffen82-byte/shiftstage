@@ -22,6 +22,11 @@ test('native manifest errors fall back once and preserve playback position',asyn
 test('removed native sessions cannot restart through stale error events',async()=>{
  const v=video();await attachAdaptiveVideo(v,'/master','/original');releaseAdaptiveVideo(v);v.dispatchEvent(new Event('error'));assert.equal(v.src,'');
 });
+
+test('an error fallback never overrides a manual pause on an autoplay card',async()=>{
+ const v=video();v.autoplay=true;await attachAdaptiveVideo(v,'/master','/original');await v.play();v.pause();
+ v.dispatchEvent(new Event('error'));assert.equal(v.src,'/original');assert.equal(v.paused,true);assert.equal(v.autoplay,false);releaseAdaptiveVideo(v);
+});
 test('releasing while the engine import is pending prevents any late source assignment',async()=>{
  const v=video(false);const ready=attachAdaptiveVideo(v,'/master','/original');releaseAdaptiveVideo(v);assert.equal(await ready,false);assert.equal(v.src,'');
 });

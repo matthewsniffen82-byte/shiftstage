@@ -3,6 +3,7 @@ import test from 'node:test';
 import { execFileSync } from 'node:child_process';
 import ffmpeg from 'ffmpeg-static';
 import { encodeAdaptiveVideo } from '../src/lib/dancr/adaptive-video-encoder.ts';
+import { adaptiveVideoCodecs } from '../src/lib/dancr/adaptive-video-codecs.ts';
 const run=(args,input)=>execFileSync(ffmpeg,args,{input,windowsHide:true,maxBuffer:10*1024*1024,stdio:['pipe','pipe','pipe']});
 for(const audio of [false,true])test('real encoder produces aligned playable full-resolution and low renditions '+(audio?'with audio':'without audio'),async()=>{
  const args=['-hide_banner','-loglevel','error','-f','lavfi','-i','testsrc2=size=480x854:rate=24'];
@@ -14,6 +15,9 @@ for(const audio of [false,true])test('real encoder produces aligned playable ful
  const original=result.manifest.renditions.find(row=>row.name==='source');assert.equal(original.width,480);assert.equal(original.height,854);
  for(const {body,rendition} of result.outputs){
   assert.equal(body.length,rendition.bytes);assert.equal(rendition.segments.length,3);
+  assert.match(rendition.codecs, audio ? /^avc1\.[a-f0-9]{6},mp4a\.40\.2$/ : /^avc1\.[a-f0-9]{6}$/);
+  assert.equal(adaptiveVideoCodecs(body.subarray(0,rendition.initBytes)),rendition.codecs);
+  assert.throws(()=>adaptiveVideoCodecs(body.subarray(0,rendition.initBytes-1)));
   assert.ok(rendition.segments.reduce((sum,row)=>sum+row.duration,0)>4.1);
   run(['-hide_banner','-loglevel','error','-i','pipe:0','-f','null','-'],body);
  }
