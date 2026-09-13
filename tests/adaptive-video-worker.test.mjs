@@ -45,3 +45,10 @@ for(const options of [{missing:true},{row:{storage_mime:'video/webm'}},{row:{wid
 test('mismatched source ownership fails before storage access',async()=>{
  const f=fixture({row:{storage_path:'other/file.mp4'}});await assert.rejects(f.run(),/ownership/);assert.deepEqual(f.calls.map(row=>row.type),['read']);
 });
+test('platform-approved shared clips remain confined to the same submitting owner',async()=>{
+ const owner='96000000-0000-4000-8000-000000000001';
+ const row={submitted_by:owner,storage_path:owner+'/96000000-0000-4000-8000-000000000002/96000000-0000-4000-8000-000000000003.mp4',moderation_details:{mode:'platform_owner_approval',bypassedAutomatedModeration:true}};
+ assert.equal((await fixture({row}).run()).state,'generated');
+ await assert.rejects(fixture({row:{...row,submitted_by:'another-owner'}}).run(),/ownership/);
+ await assert.rejects(fixture({row:{...row,moderation_details:{mode:'platform_owner_approval'}}}).run(),/ownership/);
+});

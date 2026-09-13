@@ -54495,6 +54495,7 @@
         const video = document.createElement("video");
         video.className = "profile-tv-viewer-video";
         video.dataset.videoUrl = String(item.videoUrl || "").trim();
+        video.dataset.adaptiveUrl = String(item.adaptiveUrl || "").trim();
         video.loop = true;
         video.muted = profileTvViewerMuted;
         video.defaultMuted = profileTvViewerMuted;
@@ -54548,7 +54549,7 @@
           poster.loading = index < 6 || Math.abs(index - activeIndex) <= 3 ? "eager" : "lazy";
           poster.fetchPriority = index === activeIndex ? "high" : "low";
         }
-        const mode = document.visibilityState === "hidden"
+        const mode = video.dataset.adaptiveUrl && index !== activeIndex ? "release" : document.visibilityState === "hidden"
           ? index === activeIndex ? "retain" : "release"
           : videoBufferMode(index, activeIndex, allowNextWarmup, activeReady, video.hasAttribute("src"));
         applyVideoBufferMode(video, mode);
@@ -54655,7 +54656,7 @@
     async function playProfileTvViewerVideo(video) {
       if (document.visibilityState === "hidden") return;
       try {
-        await video.play();
+        await playDeferredVideo(video);
         return;
       } catch (error) {
         if (error?.name === "AbortError" || video !== activeProfileTvViewerVideo()) return;
@@ -61522,12 +61523,15 @@
     function suspendPageVideoPlayback() {
       const profileVideo = activeProfileTvViewerVideo();
       document.querySelectorAll(".home-tv-feed-video, .profile-tv-viewer-video").forEach((video) => {
-        if (!video.paused) pageSuspendedVideos.add(video);
+        const homeActive = video.closest(".home-tv-feed-slide")?.getAttribute("aria-current") === "true";
+        const awaitingAdaptive = video.dataset.adaptiveUrl && adaptiveVideoLoads.has(video) && video.dataset.frameReady !== "true" &&
+          (homeActive || video === profileVideo) && video.dataset.userPaused !== "true" && video.closest(".home-tv-feed-slide")?.dataset.userPaused !== "true";
+        if (!video.paused || awaitingAdaptive) pageSuspendedVideos.add(video);
         video.autoplay = false;
         video.removeAttribute("autoplay");
         video.pause();
         video.preload = "none";
-        const homeActive = video.closest(".home-tv-feed-slide")?.getAttribute("aria-current") === "true";
+        adaptiveVideoController?.suspendAdaptiveVideo(video);
         if (!homeActive && video !== profileVideo) releaseDeferredVideoSource(video);
       });
     }
@@ -61537,7 +61541,7 @@
       const videos = [...pageSuspendedVideos];
       pageSuspendedVideos.clear();
       videos.forEach((video) => {
-        if (!video.isConnected || !video.hasAttribute("src")) return;
+        if (!video.isConnected || (!video.hasAttribute("src") && !adaptiveVideoLoads.has(video))) return;
         if (video === activeProfileTvViewerVideo()) {
           video.preload = "auto";
           void playProfileTvViewerVideo(video);
@@ -61633,11 +61637,50 @@
       };
     }
 
+    let adaptiveVideoController = null;
+    let adaptiveVideoControllerPromise = null;
+    const adaptiveVideoLoads = new WeakMap();
+    function loadAdaptiveVideoController() {
+      return adaptiveVideoControllerPromise ||= import("/adaptive-video.mjs")
+        .then((module) => (adaptiveVideoController = module))
+        .catch((error) => { adaptiveVideoControllerPromise = null; throw error; });
+    }
+
+    function playDeferredVideo(video) {
+      const ready = attachDeferredVideoSource(video, "auto");
+      if (!ready?.then) return video.play();
+      return ready.then((attached) => {
+        const homeSlide = video.closest(".home-tv-feed-slide");
+        const userPaused = video.dataset.userPaused === "true" || homeSlide?.dataset.userPaused === "true";
+        const active = homeSlide ? homeSlide.getAttribute("aria-current") === "true" : video === activeProfileTvViewerVideo();
+        if (!attached || !active || !video.isConnected || document.visibilityState === "hidden" || userPaused) {
+          throw new DOMException("Video playback was cancelled.", "AbortError");
+        }
+        return video.play();
+      });
+    }
+
     function attachDeferredVideoSource(video, preload = "metadata") {
       if (!(video instanceof HTMLVideoElement)) return false;
       const videoUrl = String(video.dataset.videoUrl || "").trim();
       if (!videoUrl) return false;
       video.preload = preload;
+      const adaptiveUrl = video.dataset.adaptiveUrl;
+      if (adaptiveUrl) {
+        const existing = adaptiveVideoLoads.get(video);
+        if (existing?.url === adaptiveUrl) return existing.ready;
+        const entry = { url: adaptiveUrl, ready: null };
+        adaptiveVideoLoads.set(video, entry);
+        entry.ready = loadAdaptiveVideoController().then((module) => {
+          if (adaptiveVideoLoads.get(video) !== entry || !video.isConnected) return false;
+          return module.attachAdaptiveVideo(video, adaptiveUrl, videoUrl);
+        }).catch(() => {
+          if (adaptiveVideoLoads.get(video) !== entry || !video.isConnected) return false;
+          video.src = videoUrl;
+          return true;
+        });
+        return entry.ready;
+      }
       if (!video.hasAttribute("src")) video.src = videoUrl;
       if (
         video.readyState === HTMLMediaElement.HAVE_NOTHING &&
@@ -61650,6 +61693,8 @@
 
     function releaseDeferredVideoSource(video) {
       if (!(video instanceof HTMLVideoElement)) return;
+      adaptiveVideoLoads.delete(video);
+      adaptiveVideoController?.releaseAdaptiveVideo(video);
       pageSuspendedVideos.delete(video);
       video.autoplay = false;
       video.removeAttribute("autoplay");
@@ -61702,7 +61747,7 @@
             return;
           }
           slide.classList.remove("is-autoplay-blocked");
-          void video.play().then(() => {
+          void playDeferredVideo(video).then(() => {
             if (video.paused || slide.dataset.userPaused === "true") return;
             slide.classList.remove("is-paused", "is-autoplay-blocked");
             primeHomeTvFeedNeighbors(videoId);
@@ -61749,7 +61794,7 @@
           poster.fetchPriority = index === activeIndex ? "high" : "low";
         }
         if (index === activeIndex) return;
-        const mode = videoBufferMode(index, activeIndex, allowNextWarmup, activeReady, video.hasAttribute("src"));
+        const mode = video.dataset.adaptiveUrl ? "release" : videoBufferMode(index, activeIndex, allowNextWarmup, activeReady, video.hasAttribute("src"));
         applyVideoBufferMode(video, mode);
       });
     }
@@ -62110,6 +62155,7 @@
       const video = document.createElement("video");
       video.className = "home-tv-feed-video";
       video.dataset.videoUrl = String(item.videoUrl || "").trim();
+      video.dataset.adaptiveUrl = String(item.adaptiveUrl || "").trim();
       video.loop = true;
       video.autoplay = index === 0;
       video.muted = homeTvFeedMuted;
@@ -62797,6 +62843,7 @@
     }
 
     async function loadHomeTvFeed(city, venueId = "", selectedVideoId = selectedHomeTvVideoId(), options = {}) {
+      void loadAdaptiveVideoController().catch(() => undefined);
       homeTvFeedAbort?.abort();
       const controller = typeof AbortController === "function" ? new AbortController() : null;
       homeTvFeedAbort = controller;

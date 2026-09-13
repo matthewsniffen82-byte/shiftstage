@@ -14,7 +14,13 @@ export async function prepareAdaptiveVideo(admin: SupabaseClient, id: string) {
   if (error) throw error;
   if (!row || row.storage_mime !== 'video/mp4' || Math.min(row.width, row.height) <= 360) return { state: 'ineligible' };
   if (parseAdaptiveVideoManifest(row.moderation_details?.adaptiveStreaming)) return { state: 'ready' };
-  if (row.storage_path !== `${row.submitted_by}/${row.dancer_id}/${row.id}.mp4`
+  // Platform-approved imports can intentionally reuse another dancer's clip
+  // under the same submitting owner. Ordinary uploads keep exact tuple ownership.
+  const sharedPlatformSource = row.moderation_details?.mode === 'platform_owner_approval'
+    && row.moderation_details?.bypassedAutomatedModeration === true
+    && row.storage_path.startsWith(row.submitted_by + '/')
+    && /^[0-9a-f-]{36}\/[0-9a-f-]{36}\/[0-9a-f-]{36}\.mp4$/i.test(row.storage_path);
+  if ((row.storage_path !== `${row.submitted_by}/${row.dancer_id}/${row.id}.mp4` && !sharedPlatformSource)
     || !Number.isFinite(Date.parse(row.updated_at))) throw new Error('Adaptive source ownership could not be verified.');
   assertServerJobActive();
   const { data: source, error: sourceError } = await admin.storage.from(BUCKET).download(row.storage_path);

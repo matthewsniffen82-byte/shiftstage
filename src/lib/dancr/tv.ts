@@ -103,6 +103,7 @@ export type MyDancrTvVideo = {
   isPinned?: boolean;
   likeCount: number;
   videoUrl: string;
+  adaptiveUrl?: string | null;
   posterUrl?: string | null;
   durationSeconds: number;
   width: number;
@@ -406,6 +407,7 @@ function tvCitiesMatch(left: string, right: string) {
 }
 
 type NormalizedFeedRow = Omit<MyDancrTvVideo, "videoUrl"> & {
+  adaptiveReady: boolean;
   storagePath: string;
   posterStoragePath: string | null;
   dancerPhotoPath: string | null;
@@ -421,6 +423,7 @@ function normalizeFeedRow(row: any, _now: number): NormalizedFeedRow | null {
     isPinned: row.is_pinned === true,
     likeCount: safePublicCount(row.like_count),
     storagePath: row.storage_path,
+    adaptiveReady: row.moderation_details?.adaptiveStreaming?.version === 1,
     posterStoragePath: normalizedVideoPosterStoragePath(row),
     durationSeconds: Number(row.duration_seconds || 0),
     width: Number(row.width || 0),
@@ -628,11 +631,13 @@ async function signPublicVideos(
       storagePath: _storagePath,
       posterStoragePath: _posterStoragePath,
       dancerPhotoPath: _dancerPhotoPath,
+      adaptiveReady,
       ...publicVideo
     } = row;
     return {
       ...publicVideo,
       videoUrl,
+      adaptiveUrl: adaptiveReady ? videoUrl + '&hls=master' : null,
       posterUrl: row.posterStoragePath
         ? dancerVideoDeliveryUrl(row.id, true)
         : null,

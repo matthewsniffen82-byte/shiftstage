@@ -80,6 +80,7 @@ for (const surface of ["profile", "tv", "routed-tv"]) {
     const context = vm.createContext({
       HTMLVideoElement: Video, HTMLMediaElement: Video,
       document: { visibilityState: "visible" }, pageSuspendedVideos: new Set(),
+      adaptiveVideoLoads: new WeakMap(), adaptiveVideoController: null,
       canWarmAdjacentVideo: () => warmup,
       profileVideoPosterUrl: (item) => item.posterUrl,
       results: { querySelectorAll: () => slides },

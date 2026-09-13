@@ -341,6 +341,7 @@ export default async function DancerPublicPage({ params, searchParams }: PagePro
           videos={tvVideos.map((video) => ({
             id: video.id,
             videoUrl: video.videoUrl,
+            adaptiveUrl: video.adaptiveUrl,
             posterUrl: video.posterUrl || null,
             durationSeconds: video.durationSeconds,
             likeCount: video.likeCount,

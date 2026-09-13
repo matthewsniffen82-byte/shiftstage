@@ -21,6 +21,15 @@ await context.route("**/*", async route => {
     if (route.request().resourceType() === "document") return route.fulfill({ contentType: "text/html", body: shellHtml });
     if (url.pathname === "/live-shell.js") return route.fulfill({ contentType: "text/javascript", body: await readFile("outputs/live-shell-app.js") });
     if (url.pathname === "/profile-media-card-feed.css") return route.fulfill({ contentType: "text/css", body: await readFile("public/profile-media-card-feed.css") });
+    if (url.pathname === "/adaptive-video.mjs") return route.fulfill({ contentType: "application/javascript", body: await readFile("public/adaptive-video.mjs") });
+    if (url.pathname === "/hls-engine.js") return route.fulfill({ contentType: "application/javascript", body: await readFile("node_modules/hls.js/dist/hls.light.min.mjs") });
+    if (url.pathname === "/api/public/tv" && process.env.PERF_ADAPTIVE_VIDEO_ID) {
+      const response = await route.fetch();
+      const payload = await response.json();
+      payload.videos = payload.videos.map(video => video.id === process.env.PERF_ADAPTIVE_VIDEO_ID
+        ? { ...video, adaptiveUrl: video.videoUrl + "&hls=master" } : video);
+      return route.fulfill({ json: payload });
+    }
   }
   if (new URL(base).hostname === "localhost" && url.pathname.startsWith("/api/")) {
     if (!url.pathname.startsWith("/api/public/")) return route.fulfill({ json: { ok: false } });
@@ -39,6 +48,12 @@ const page = await context.newPage();
 const states = [], errors = [];
 page.on("pageerror", error => errors.push(error.message));
 async function capture(label) {
+  if (label === "first-playing" && process.env.PERF_ADAPTIVE_VIDEO_ID) {
+    assert.equal(await page.evaluate(() => {
+      const video = document.querySelector('.home-tv-feed-slide[aria-current="true"] video');
+      return Boolean(video?.dataset.adaptiveUrl && (video.src.startsWith('blob:') || video.src.includes('hls=master')));
+    }), true, "the prepared clip uses adaptive playback instead of falling back to its original");
+  }
   const state = await page.evaluate(label => ({ label, videos: [...document.querySelectorAll(".home-tv-feed-video")].map((video, index) => {
     const rect = video.getBoundingClientRect();
     const poster = video.nextElementSibling;
@@ -58,7 +73,7 @@ async function capture(label) {
   return state;
 }
 try {
-  await page.goto(base + (localShell ? "/?view=tv&city=Las%20Vegas" : "/tv"), { waitUntil: "load" });
+  await page.goto(base + (process.env.PERF_ENTRY_PATH || (localShell ? "/?view=tv&city=Las%20Vegas" : "/tv")), { waitUntil: "load" });
   await page.waitForFunction(() => [...document.querySelectorAll(".home-tv-feed-video")].some(video => !video.paused && video.currentTime > .1), null, { timeout: 30000 });
   await page.waitForTimeout(1000);
   await capture("first-playing");
@@ -86,6 +101,7 @@ try {
   assert.equal(left.videos.filter(video => video.source || !video.paused).length, 0, "leaving TV releases feed videos");
   assert.deepEqual(errors, []);
 } finally {
+  await context.unrouteAll({ behavior: "wait" });
   const events = await page.evaluate(() => window.__videoEvents).catch(() => []);
   await writeFile(`${output}/results.json`, JSON.stringify({ base, enforce, simulatedVisibility: true, states, events, errors }, null, 2));
   await browser.close();

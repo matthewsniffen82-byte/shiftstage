@@ -13,6 +13,7 @@ export function publicVideoLoaders() {
     document: { documentElement: { classList: { remove() {} } }, getElementById: () => null },
     results: { classList: { remove() {} }, dataset: {}, querySelectorAll: () => [] },
     homeTvFeedFullscreenElement: () => null, setHomeTvFeedFallbackFullscreen() {}, releaseDeferredVideoSource() {},
+    loadAdaptiveVideoController: async () => ({}),
     renderHomeTvFeed: city => renders.push(city),
     fetch: (url, options) => new Promise((resolve, reject) => {
       const request = { url, signal: options.signal, resolve: videos => resolve({ ok: true, json: async () => ({ ok: true, videos }) }) };

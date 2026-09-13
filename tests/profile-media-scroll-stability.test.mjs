@@ -81,6 +81,7 @@ test("sound-on autoplay denial retries muted without reviving a stale video", as
   current = video;
   const context = vm.createContext({
     activeProfileTvViewerVideo: () => current,
+    playDeferredVideo: (video) => video.play(),
     syncProfileTvSoundControl: () => { syncs++; },
     document: { getElementById: () => status },
   });
