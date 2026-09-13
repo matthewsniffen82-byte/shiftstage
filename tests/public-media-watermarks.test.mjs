@@ -8,6 +8,7 @@ import test from "node:test";
 import { promisify } from "node:util";
 import ffmpegPath from "ffmpeg-static";
 import sharp from "sharp";
+import { importMediaModule } from "./helpers/server-media-module.mjs";
 
 const {
   applyDancrImageWatermark,
@@ -21,9 +22,7 @@ const {
 } = await import(
   new URL("../src/lib/dancr/media-watermark.ts", import.meta.url)
 );
-const { uploadResponsiveImage } = await import(
-  new URL("../src/lib/dancr/responsive-image.ts", import.meta.url)
-);
+const { uploadResponsiveImage } = await importMediaModule("responsive-image.ts");
 
 const watermarkSource = readFileSync(
   new URL("../src/lib/dancr/media-watermark.ts", import.meta.url),

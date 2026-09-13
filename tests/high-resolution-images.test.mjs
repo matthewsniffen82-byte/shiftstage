@@ -2,15 +2,14 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 import sharp from "sharp";
+import { importMediaModule } from "./helpers/server-media-module.mjs";
 
 const {
   prepareResponsiveImage,
   responsiveImageStoragePaths,
   responsivePublicImage,
   uploadResponsiveImage,
-} = await import(
-  new URL("../src/lib/dancr/responsive-image.ts", import.meta.url)
-);
+} = await importMediaModule("responsive-image.ts");
 
 const imageValidation = readFileSync(
   new URL("../src/lib/dancr/image-validation.ts", import.meta.url),
