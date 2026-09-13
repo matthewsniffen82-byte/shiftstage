@@ -4,21 +4,25 @@ import test from "node:test";
 import vm from "node:vm";
 
 const html = await readFile(new URL("../outputs/index.html", import.meta.url), "utf8");
-const source = html.match(/function revealDancerGridTogether\(grid\) \{[\s\S]*?(?=\n    function renderHomeDancerGrid)/)[0];
+const source = html.match(/function revealDancerGridRows\(grid\) \{[\s\S]*?(?=\n    function renderHomeDancerGrid)/)[0];
 const flush = () => new Promise((resolve) => setImmediate(resolve));
 const photo = (state, decode = () => Promise.resolve()) => ({ dataset: { imageState: state }, decode });
-
-function harness(photos) {
-  const observers = [];
-  const grid = {
-    photos,
-    attributes: new Map([["data-grid-loading", "true"], ["aria-busy", "true"]]),
-    querySelector() { return this.status; },
-    querySelectorAll() { return this.photos; },
+function card(image = photo("ready")) {
+  return {
+    attributes: new Map(),
+    matches: () => true,
+    querySelectorAll: () => image ? [image] : [],
+    setAttribute(name, value) { this.attributes.set(name, value); },
     removeAttribute(name) { this.attributes.delete(name); },
   };
-  const status = () => ({ parentNode: grid, remove() { this.parentNode = null; grid.status = null; } });
-  grid.status = status();
+}
+const heading = () => ({ matches: () => false });
+const loading = (card) => card.attributes.get("data-row-loading") === "true";
+
+function harness(children) {
+  const observers = [];
+  const grid = { children };
+  children.forEach((child) => { child.parentNode = grid; });
   const ctx = vm.createContext({
     Promise,
     settleCompletedStableImages() {},
@@ -31,74 +35,86 @@ function harness(photos) {
   vm.runInContext(source, ctx);
   return {
     grid, observers,
-    start() { ctx.revealDancerGridTogether(grid); },
+    start() { ctx.revealDancerGridRows(grid); },
     update() { observers.filter((observer) => observer.connected).forEach((observer) => observer.callback()); },
-    replace(nextPhotos) { grid.status.parentNode = null; grid.status = status(); grid.photos = nextPhotos; },
+    replace(next) {
+      grid.children.forEach((child) => { child.parentNode = null; });
+      grid.children = next;
+      next.forEach((child) => { child.parentNode = grid; });
+    },
   };
 }
 
-test("the entire grid waits for the last photo and its decoding before one reveal", async () => {
+test("a ready row appears while another waits, and each row waits for all three photos to decode", async () => {
   let finishDecode;
-  const last = photo("loading", () => new Promise((resolve) => { finishDecode = resolve; }));
-  const h = harness([photo("ready"), last]);
+  const delayed = photo("loading", () => new Promise((resolve) => { finishDecode = resolve; }));
+  const first = [card(), card(delayed), card()];
+  const second = [card(), card(), card()];
+  const h = harness([...first, ...second]);
   h.start();
   await flush();
-  assert.equal(h.grid.attributes.get("data-grid-loading"), "true");
-  last.dataset.imageState = "ready";
+  assert.ok(first.every(loading));
+  assert.ok(second.every((item) => !loading(item)));
+  delayed.dataset.imageState = "ready";
   h.update();
   await flush();
-  assert.equal(h.grid.attributes.get("aria-busy"), "true");
+  assert.ok(first.every(loading));
   finishDecode();
   await flush();
-  assert.equal(h.grid.attributes.size, 0);
-  assert.equal(h.grid.status, null);
+  assert.ok(first.every((item) => !loading(item)));
   assert.ok(h.observers.every((observer) => !observer.connected));
 });
 
-test("failed photos and decode rejections cannot keep the other cards hidden", async () => {
-  const h = harness([
-    photo("ready", () => Promise.reject(new Error("Decode failed"))),
-    photo("error", () => assert.fail("Failed photos should not decode")),
-  ]);
+test("section headings start new rows and incomplete rows reveal independently", async () => {
+  const delayed = card(photo("loading"));
+  const ready = [card(), card()];
+  const h = harness([heading(), delayed, heading(), ...ready]);
   h.start();
   await flush();
-  assert.equal(h.grid.attributes.size, 0);
-  assert.equal(h.grid.status, null);
+  assert.equal(loading(delayed), true);
+  assert.ok(ready.every((item) => !loading(item)));
 });
 
-test("a stale decode cannot reveal a replacement filter's cards", async () => {
+test("failed photos and decode rejections cannot keep a row hidden", async () => {
+  const cards = [card(photo("ready", () => Promise.reject(new Error("Decode failed")))), card(photo("error", () => assert.fail("Failed photos should not decode"))), card()];
+  const h = harness(cards);
+  h.start();
+  await flush();
+  assert.ok(cards.every((item) => item.attributes.size === 0));
+});
+
+test("a stale decode cannot reveal a replacement filter's row", async () => {
   let finishOldDecode;
-  const h = harness([photo("ready", () => new Promise((resolve) => { finishOldDecode = resolve; }))]);
+  const h = harness([card(photo("ready", () => new Promise((resolve) => { finishOldDecode = resolve; })))]);
   h.start();
   const newPhoto = photo("loading");
-  h.replace([newPhoto]);
+  const newCard = card(newPhoto);
+  h.replace([newCard]);
   h.start();
   h.update();
   finishOldDecode();
   await flush();
-  assert.equal(h.grid.attributes.get("data-grid-loading"), "true");
-  assert.ok(h.grid.status);
+  assert.equal(loading(newCard), true);
   newPhoto.dataset.imageState = "ready";
   h.update();
   await flush();
-  assert.equal(h.grid.attributes.size, 0);
+  assert.equal(loading(newCard), false);
 });
 
-test("leaving the grid disconnects its observer and clears its loading state", () => {
-  const h = harness([photo("loading")]);
+test("leaving the grid disconnects its row observer", () => {
+  const h = harness([card(photo("loading"))]);
   h.start();
-  h.grid.status.remove();
+  h.replace([]);
   h.update();
-  assert.equal(h.grid.attributes.size, 0);
   assert.ok(h.observers.every((observer) => !observer.connected));
 });
 
-test("cached photos and grids without photos reveal without waiting for another event", async () => {
-  for (const photos of [[], [photo("ready"), photo("ready")]]) {
-    const h = harness(photos);
+test("cached photos, initials-only cards and empty grids need no further load event", async () => {
+  for (const cards of [[], [card(), card(null)]]) {
+    const h = harness(cards);
     h.start();
     await flush();
-    assert.equal(h.grid.attributes.size, 0);
-    assert.equal(h.grid.status, null);
+    assert.ok(cards.every((item) => item.attributes.size === 0));
+    assert.ok(h.observers.every((observer) => !observer.connected));
   }
 });
