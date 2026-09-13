@@ -8,7 +8,7 @@ const live = fs.readFileSync("outputs/index.html", "utf8");
 const carousel = fs.readFileSync("app/dancers/[slug]/DancerPhotoCarousel.tsx", "utf8");
 const source = (name) => live.match(new RegExp("    (?:async )?function " + name + "\\([^]*?\\n    \\}"))?.[0];
 
-test("profile and TV policies prioritize startup, preload the next clip, lightly preload the second, and retain a loaded previous clip", () => {
+test("profile and TV policies prioritize startup, preload immediate neighbors strongly, and second neighbors lightly", () => {
   const context = vm.createContext({});
   vm.runInContext(source("videoBufferMode"), context);
   for (const active of [0, 1, 15, 29]) {
@@ -18,9 +18,9 @@ test("profile and TV policies prioritize startup, preload the next clip, lightly
           for (let index = 0; index < 30; index++) {
             const expected = index === active ? "auto"
               : !allowed ? "release"
-                : index === active + 1 ? ready ? "auto" : attached ? "retain" : "release"
-                  : index === active + 2 ? ready ? "metadata" : attached ? "retain" : "release"
-                    : index === active - 1 && attached ? "retain" : "release";
+                : index === active + 1 || index === active - 1 ? ready ? "auto" : attached ? "retain" : "release"
+                  : index === active + 2 || index === active - 2 ? ready ? "metadata" : attached ? "retain" : "release"
+                    : "release";
             assert.equal(videoBufferMode(index, active, allowed, ready, attached), expected);
             assert.equal(context.videoBufferMode(index, active, allowed, ready, attached), expected);
           }
@@ -98,8 +98,12 @@ for (const surface of ["profile", "tv"]) {
     assert.equal(videos[2].preload, "auto");
     assert.equal(videos[3].preload, "metadata");
     assert.equal(videos[0].resets, 0);
-    assert.equal(videos[0].preload, "none");
+    assert.equal(videos[0].preload, "auto", "the immediate previous clip gets strong preload too");
     assert.equal(videos[0].dataset.frameReady, "true");
+    sync(2, true);
+    assert.deepEqual(videos.slice(0, 5).map(video => video.preload), ["metadata", "auto", "auto", "auto", "metadata"]);
+    assert.equal(videos[0].assignments, 1, "the second previous clip reuses its attached source");
+    assert.equal(videos[0].resets, 0, "light preload must not discard a previously decoded frame");
     const warmedNextResets = videos[1].resets;
     sync(0, false);
     assert.equal(videos[1].hasAttribute("src"), true, "a quick reversal keeps the attached neighbor while the active clip buffers");
@@ -110,9 +114,9 @@ for (const surface of ["profile", "tv"]) {
     assert.equal(videos[0].resets, 0);
     for (const active of [1, 2, 3, 18, 19, 18, 29, 0]) {
       sync(active, true);
-      assert.ok(videos.filter((v) => v.hasAttribute("src")).length <= 4);
+      assert.ok(videos.filter((v) => v.hasAttribute("src")).length <= 5);
       videos.forEach((v, index) => {
-        if (index < active - 1 || index > active + 2) assert.equal(v.hasAttribute("src"), false);
+        if (index < active - 2 || index > active + 2) assert.equal(v.hasAttribute("src"), false);
       });
       const resets = videos.reduce((n, v) => n + v.resets, 0);
       sync(active, true);

@@ -38,7 +38,7 @@ async function capture(label) {
   states.push(state);
   assert.ok(state.videos.filter(video => !video.paused).length <= 1, "only one feed video plays");
   if (enforce) {
-    assert.ok(state.videos.filter(video => video.source).length <= 4, "bounded active/two-next/previous sources");
+    assert.ok(state.videos.filter(video => video.source).length <= 5, "bounded active/two-next/two-previous sources");
     assert.ok(state.videos.filter(video => video.poster).length <= 3, "bounded adjacent posters");
     assert.ok(state.videos.every(video => video.paused || video.visible), "offscreen clips stay paused");
   }

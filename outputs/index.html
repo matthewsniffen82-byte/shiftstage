@@ -61511,9 +61511,9 @@
     function videoBufferMode(index, activeIndex, allowWarmup, activeReady, hasSource) {
       if (index === activeIndex) return "auto";
       if (!allowWarmup) return "release";
-      if (index === activeIndex + 1) return activeReady ? "auto" : hasSource ? "retain" : "release";
-      if (index === activeIndex + 2) return activeReady ? "metadata" : hasSource ? "retain" : "release";
-      if (index === activeIndex - 1 && hasSource) return "retain";
+      const distance = Math.abs(index - activeIndex);
+      if (distance === 1) return activeReady ? "auto" : hasSource ? "retain" : "release";
+      if (distance === 2) return activeReady ? "metadata" : hasSource ? "retain" : "release";
       return "release";
     }
 

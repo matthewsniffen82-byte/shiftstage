@@ -57,7 +57,7 @@ try {
         sources: videos.filter((video) => video.hasAttribute("src")).length };
     }, index);
     assert.equal(state.playing, 1);
-    assert.ok(state.sources <= 4);
+    assert.ok(state.sources <= 5);
     selections.push(state);
   }
   const starts = await page.evaluate(() => window.__tvPlaybackStarts);
