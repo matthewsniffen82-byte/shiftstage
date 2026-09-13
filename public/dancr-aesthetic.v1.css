@@ -4841,6 +4841,19 @@ body.dancr-button-system .public-profile-shell .profile-tonight-travel-actions >
 
 /* Upcoming dancers can preview a venue's deal page, but cannot originate a
  * commission-bearing deal scan until they are verified as Working Now. */
+body.dancr-button-system #profileBackdrop #profileModal .profile-upcoming-offer-note,
+body.dancr-button-system .public-profile-shell .profile-upcoming-offer-note {
+  grid-column: 2 / -1 !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+  padding: 2px 0 !important;
+  color: var(--dancr-color-info) !important;
+  font-size: 10px !important;
+  font-weight: 700 !important;
+  line-height: 12px !important;
+  text-align: center !important;
+}
+
 body.dancr-button-system #profileBackdrop #profileModal .profile-tonight-travel-actions > .profile-upcoming-venue-deal,
 body.dancr-button-system .public-profile-shell .profile-tonight-travel-actions > .profile-upcoming-venue-deal {
   display: inline-flex !important;
@@ -12698,27 +12711,34 @@ body.dancr-button-system :is(
   }
 }
 
-/* Club-card and dancer-profile pickup actions share the offer's green outline. Use the same
+/* Upcoming pickup actions keep their cyan state; active offers use green. */
+body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell)
+  .profile-tonight-travel-actions.is-upcoming {
+  --profile-pickup-accent: var(--dancr-color-info);
+  --profile-pickup-border: var(--dancr-color-info-strong);
+}
+
+/* Club-card and dancer-profile pickup actions share the offer's outline. Use the same
  * action scope as the travel material above so its neutral overrides do not win. */
 body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell, #results.home-venue-discovery-feed)
   :is(.home-venue-discovery-slide .venue-card-primary-actions > .venue-card-ride-action, .profile-tonight-travel-actions > a[href^="/rides/"])[href]:not([aria-disabled="true"]):not(.is-travel-unavailable):not(.is-inactive-demo) {
-  border-color: var(--dancr-color-success-strong) !important;
-  background: color-mix(in srgb, var(--dancr-color-success) 6%, var(--dancr-color-surface-raised)) !important;
+  border-color: var(--profile-pickup-border, var(--dancr-color-success-strong)) !important;
+  background: color-mix(in srgb, var(--profile-pickup-accent, var(--dancr-color-success)) 6%, var(--dancr-color-surface-raised)) !important;
   box-shadow: none !important;
 }
 
 body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell, #results.home-venue-discovery-feed)
   :is(.home-venue-discovery-slide .venue-card-primary-actions > .venue-card-ride-action, .profile-tonight-travel-actions > a[href^="/rides/"])[href]:not([aria-disabled="true"]):not(.is-travel-unavailable):not(.is-inactive-demo):is(:focus-visible, :active) {
-  border-color: var(--dancr-color-success) !important;
-  background: color-mix(in srgb, var(--dancr-color-success) 12%, var(--dancr-color-surface-raised)) !important;
-  outline-color: var(--dancr-color-success) !important;
+  border-color: var(--profile-pickup-accent, var(--dancr-color-success)) !important;
+  background: color-mix(in srgb, var(--profile-pickup-accent, var(--dancr-color-success)) 12%, var(--dancr-color-surface-raised)) !important;
+  outline-color: var(--profile-pickup-accent, var(--dancr-color-success)) !important;
 }
 
 @media (hover: hover) and (pointer: fine) {
   body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell, #results.home-venue-discovery-feed)
     :is(.home-venue-discovery-slide .venue-card-primary-actions > .venue-card-ride-action, .profile-tonight-travel-actions > a[href^="/rides/"])[href]:not([aria-disabled="true"]):not(.is-travel-unavailable):not(.is-inactive-demo):hover {
-    border-color: var(--dancr-color-success) !important;
-    background: color-mix(in srgb, var(--dancr-color-success) 12%, var(--dancr-color-surface-raised)) !important;
+    border-color: var(--profile-pickup-accent, var(--dancr-color-success)) !important;
+    background: color-mix(in srgb, var(--profile-pickup-accent, var(--dancr-color-success)) 12%, var(--dancr-color-surface-raised)) !important;
   }
 }
 

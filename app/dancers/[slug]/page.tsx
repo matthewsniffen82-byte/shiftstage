@@ -320,6 +320,9 @@ export default async function DancerPublicPage({ params, searchParams }: PagePro
                   <span aria-hidden="true">›</span>
                 </Link>
               ) : null}
+              {!activeShift && actionShift ? (
+                <p className="profile-upcoming-offer-note">Available tonight</p>
+              ) : null}
             </div>
           ) : null}
         </section>
