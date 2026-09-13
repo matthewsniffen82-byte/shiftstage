@@ -50141,17 +50141,19 @@
             <div class="venue-offer-grid">
               <div class="venue-deal-preview-copy">
                 <div class="venue-detail-club-deal-heading">
-                  <span class="eyebrow">Club Deal</span>
+                  <span class="eyebrow">Free entry options</span>
                   <span class="venue-detail-club-deal-status">Active tonight</span>
                 </div>
                 <h3>${hasMultipleActiveDeals ? `${activeDealCount} Club Deals` : escapeHtml(venue.activeDeal.dealTitle)}</h3>
               </div>
               <div class="venue-detail-club-deal-actions">
-                <button class="venue-detail-club-deal-cta" type="button" data-club-deal-state="available" data-club-deal-cta="${encodeDealPass(config)}" aria-label="${hasMultipleActiveDeals ? `Open ${activeDealCount} Club Deals` : `Open Club Deal: ${escapeHtml(venue.activeDeal.dealTitle)}`}">
-                  <strong>${hasMultipleActiveDeals ? "View deals" : "View deal"}</strong>
+                <button class="venue-detail-club-deal-cta" type="button" data-club-deal-state="available" data-club-deal-cta="${encodeDealPass(config)}" aria-label="View free entry at ${escapeHtml(venue.name || "this club")}">
+                  <strong>Free Entry</strong>
                   <span aria-hidden="true">›</span>
                 </button>
+                ${uberRideLinkMarkup({ venue, source: "venue_page", className: "venue-detail-entry-ride", dealConfig: config })}
               </div>
+              <p class="venue-detail-entry-terms">Arrive in a private car or club-provided transport. Uber, Lyft, other rideshares, and taxis do not qualify for free entry.</p>
             </div>
           </article>
         `;

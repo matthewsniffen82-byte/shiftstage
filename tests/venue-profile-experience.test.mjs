@@ -132,10 +132,11 @@ test("venue profiles reserve customer Club Deal language for active offers", () 
   )?.[0] || "";
   assert.match(
     venueOffer,
-    /venue\?\.activeDeal[\s\S]*?venue-deal-preview is-active-club-deal[\s\S]*?<button class="venue-detail-club-deal-cta"[\s\S]*?data-club-deal-cta="\$\{encodeDealPass\(config\)\}"[\s\S]*?Club Deal/,
+    /venue\?\.activeDeal[\s\S]*?venue-deal-preview is-active-club-deal[\s\S]*?<button class="venue-detail-club-deal-cta"[\s\S]*?data-club-deal-cta="\$\{encodeDealPass\(config\)\}"[\s\S]*?Free Entry/,
   );
   assert.equal((venueOffer.match(/data-club-deal-cta=/g) || []).length, 1);
-  assert.match(venueOffer, /activeDealCount[\s\S]*?hasMultipleActiveDeals[\s\S]*?\$\{activeDealCount\} Club Deals[\s\S]*?Open \$\{activeDealCount\} Club Deals[\s\S]*?hasMultipleActiveDeals \? "View deals" : "View deal"/);
+  assert.match(venueOffer, /activeDealCount[\s\S]*?hasMultipleActiveDeals[\s\S]*?\$\{activeDealCount\} Club Deals[\s\S]*?Free Entry/);
+  assert.match(venueOffer, /uberRideLinkMarkup\(\{ venue, source: "venue_page", className: "venue-detail-entry-ride", dealConfig: config \}\)/);
   assert.doesNotMatch(venueOffer, /<p>|customerFacingDealDescription\(venue\.activeDeal\.dealDescription\)/);
   assert.match(venueOffer, /return "";/);
   assert.doesNotMatch(venueOffer, /Half-off admission|Skip the line|Tap at cashier/);
@@ -144,21 +145,27 @@ test("venue profiles reserve customer Club Deal language for active offers", () 
   assert.doesNotMatch(venueOffer, /data-venue-profile-qr|Show venue QR|Venue QR/);
 });
 
-test("venue deal previews use compact titles and preserve complete offers for View deal", () => {
+test("venue detail offers expose free entry and the matching pickup link while retaining the full offer", () => {
   const venueOfferSource = liveApp.match(
     /function venueOfferMarkup\(venue\) \{[\s\S]*?(?=\n    function profileDealTileMarkup)/,
   )?.[0] || "";
   let encodedConfig;
+  const escapeHtml = (value) => String(value).replaceAll("&", "&amp;").replaceAll('"', "&quot;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
+  const rideLabelSource = liveApp.match(/function rideActionLabel\(source, venueName\) \{[\s\S]*?(?=\n    function uberRideLinkMarkup)/)?.[0] || "";
+  const rideLinkSource = liveApp.match(/function uberRideLinkMarkup\([\s\S]*?(?=\n    document.addEventListener)/)?.[0] || "";
+  const rideMarkup = new Function("escapeHtml", "actionButtonLabel", `${rideLabelSource}; ${rideLinkSource}; return uberRideLinkMarkup;`)(escapeHtml, (_, label) => `<span>${label}</span>`);
   const venueOfferMarkup = new Function(
     "encodeDealPass",
     "escapeHtml",
+    "uberRideLinkMarkup",
     `${venueOfferSource}; return venueOfferMarkup;`,
   )(
     (config) => {
       encodedConfig = config;
       return "encoded-deal";
     },
-    (value) => String(value).replaceAll("&", "&amp;").replaceAll('"', "&quot;").replaceAll("<", "&lt;").replaceAll(">", "&gt;"),
+    escapeHtml,
+    rideMarkup,
   );
 
   assert.equal(venueOfferMarkup({ id: "venue-1", activeDeal: null }), "");
@@ -177,7 +184,11 @@ test("venue deal previews use compact titles and preserve complete offers for Vi
   assert.equal(encodedConfig.deals[0].dealDescription, longDescription);
   assert.equal(encodedConfig.sourceType, "club_page");
   assert.match(singleOffer, /data-club-deal-cta="encoded-deal"/);
-  assert.match(singleOffer, />View deal</);
+  assert.match(singleOffer, />Free Entry</);
+  assert.match(singleOffer, />Free Ride \+ Entry</);
+  assert.match(singleOffer, /href="\/rides\/venue-1\?dealId=deal-1"/);
+  assert.match(singleOffer, /data-free-ride-link/);
+  assert.match(singleOffer, /Uber, Lyft, other rideshares, and taxis do not qualify/);
   assert.doesNotMatch(singleOffer, /clubDealQrSymbolMarkup|venue-detail-club-deal-symbol|<svg/i);
 
   const multipleOffers = venueOfferMarkup({
@@ -190,7 +201,8 @@ test("venue deal previews use compact titles and preserve complete offers for Vi
     ],
   });
   assert.match(multipleOffers, /2 Club Deals/);
-  assert.match(multipleOffers, />View deals</);
+  assert.match(multipleOffers, />Free Entry</);
+  assert.match(multipleOffers, /href="\/rides\/venue-1\?dealId=deal-1"/);
   assert.doesNotMatch(multipleOffers, /<p>/);
   assert.deepEqual(encodedConfig.deals.map((deal) => deal.dealDescription), ["First offer", "Second offer"]);
 });
