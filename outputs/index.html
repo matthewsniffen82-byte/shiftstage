@@ -62250,6 +62250,10 @@
       dancerPhotoBorder.textContent = dancerName.charAt(0).toLocaleUpperCase();
       if (dancerPhotoUrl) {
         const dancerPhotoImage = document.createElement("img");
+        dancerPhotoImage.sizes = "48px";
+        dancerPhotoImage.srcset = String(item?.dancer?.avatarPhotoSrcSet || "");
+        dancerPhotoImage.width = 48;
+        dancerPhotoImage.height = 48;
         dancerPhotoImage.src = dancerPhotoUrl;
         dancerPhotoImage.alt = "";
         dancerPhotoImage.loading = "lazy";

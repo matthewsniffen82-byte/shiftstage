@@ -118,6 +118,7 @@ export type MyDancrTvVideo = {
     primaryPhotoFocalX: number;
     primaryPhotoFocalY: number;
     avatarPhotoUrl: string | null;
+    avatarPhotoSrcSet?: string | null;
     avatarPhotoFocalX: number;
     avatarPhotoFocalY: number;
   };
@@ -640,6 +641,7 @@ async function signPublicVideos(
         primaryPhotoFocalX: primaryPhoto?.imageFocalX ?? 50,
         primaryPhotoFocalY: primaryPhoto?.imageFocalY ?? 50,
         avatarPhotoUrl: avatarPhoto?.imageUrl || null,
+        avatarPhotoSrcSet: avatarPhoto?.imageSrcSet || null,
         avatarPhotoFocalX: avatarPhoto?.imageFocalX ?? 50,
         avatarPhotoFocalY: avatarPhoto?.imageFocalY ?? 50,
       },

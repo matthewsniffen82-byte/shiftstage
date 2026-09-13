@@ -132,7 +132,7 @@ test("TV cards render Deals only for an applicable verified live Club Deal", () 
   assert.match(actionsFactory, /deal\.dataset\.cardActionSlot = "qr"/);
   assert.doesNotMatch(actionsFactory, /cardQrLabel|cardQrMessage|aria-disabled/);
   assert.match(actionsFactory, /if \(deal\) actions\.appendChild\(deal\)/);
-  assert.match(actionsFactory, /home-tv-feed-deal-count">\$\{offerCount > 1 \? "Club Deals" : "Club Deal"\}/);
+  assert.match(actionsFactory, /home-tv-feed-deal-count">Free Entry<\/span>/);
   assert.doesNotMatch(actionsFactory, /home-tv-feed-deal-count">NFC/);
   assert.doesNotMatch(fullTvFeedSource, /<TvClubDealUnavailable video=\{video\} \/>|function TvClubDealUnavailable/);
 });
@@ -153,7 +153,7 @@ test("TV Club Deal states keep one fixed rounded-square shape", () => {
   assert.match(dealShell, /height: var\(--home-tv-action-control-size\) !important;[\s\S]*?min-height: var\(--home-tv-action-control-size\) !important;[\s\S]*?max-height: var\(--home-tv-action-control-size\) !important;/);
   assert.match(dealShell, /padding: 5px 3px !important;[\s\S]*?border-radius: 14px !important;[\s\S]*?overflow: hidden !important;/);
   assert.match(dealLabel, /position: static;[\s\S]*?width: 100%;[\s\S]*?background: transparent;/);
-  assert.equal((actionsFactory.match(/home-tv-feed-deal-count">\$\{offerCount > 1 \? "Club Deals" : "Club Deal"\}/g) || []).length, 1);
+  assert.equal((actionsFactory.match(/home-tv-feed-deal-count">Free Entry<\/span>/g) || []).length, 1);
 });
 
 test("TV Club Deal branding keeps the active control semantic without introducing inactive presentation", () => {
