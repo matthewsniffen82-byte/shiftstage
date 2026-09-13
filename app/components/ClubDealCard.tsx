@@ -3,6 +3,7 @@
 import { useEffect, useId, useRef, useState } from "react";
 import type { PublicClubDeal, DealSourceType } from "@/src/lib/dancr/types";
 import { customerFacingDealDescription, customerFacingDealTerms } from "@/src/lib/dancr/deal-copy";
+import { clubDealTransportationTerms } from "@/src/lib/dancr/club-deal-transportation";
 import {
   hasSignedInCustomerDealAccount,
   loadCustomerDealSavedState,
@@ -69,9 +70,9 @@ export function ClubDealCard({
   const [selectedDealId, setSelectedDealId] = useState(deal.id);
   const activeDeal = offerDeals.find((offer) => offer.id === selectedDealId) || offerDeals[0] || deal;
   const displayDescription = customerFacingDealDescription(activeDeal.dealDescription);
-  const displayTerms = customerFacingDealTerms(activeDeal.dealTerms);
+  const displayTerms = customerFacingDealTerms(clubDealTransportationTerms(activeDeal.dealTerms));
   const useLabel = activeDeal.dealTitle.toLowerCase() === "free admission" ? "Use free admission" : "Use this deal";
-  const actionLabel = ctaLabel || (offerDeals.length > 1 ? `Club Deals · ${offerDeals.length}` : "Use Club Deal");
+  const actionLabel = ctaLabel || "Free Entry";
 
   useEffect(() => {
     const selection = readPendingDealSelection({ venueId, dealId: activeDeal.id, sourceType, dancerId });
@@ -488,7 +489,7 @@ export function ClubDealCard({
           }}
         >
           <span>{deal.dealTitle}</span>
-          <strong>Club Deals</strong>
+          <strong>Free Entry</strong>
         </button>
       ) : null}
 

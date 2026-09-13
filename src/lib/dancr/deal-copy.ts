@@ -10,6 +10,7 @@ export function customerFacingDealDescription(value: string | null | undefined) 
 
 export function customerFacingDealTerms(value: string | null | undefined) {
   return phoneTapCopy(String(value || "")
+    .replace("Free admission requires arrival in your own car or other private car that is not an Uber or taxi, or use of the club's free shuttle service.", "Free admission when you arrive in a private car or club-provided transport. Arrivals by Uber, Lyft, other rideshares, or taxi do not qualify.")
     .replace(REDUNDANT_CASHIER_NFC_TERM, " ")
     .replace(/[ \t]{2,}/g, " ")
     .trim());

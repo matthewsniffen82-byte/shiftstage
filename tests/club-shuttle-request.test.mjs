@@ -16,7 +16,7 @@ test("catalog conversion retains venue rules, removes discount-only wording, and
   const patch = transportationDealFields(original);
   assert.equal(patch.deal_title, "Free admission");
   assert.match(patch.deal_terms, /Before midnight\. Valid ID required\./);
-  assert.match(patch.deal_terms, /not an Uber or taxi/);
+  assert.match(patch.deal_terms, /Uber, Lyft, other rideshares, or taxi do not qualify/);
   assert.doesNotMatch(patch.deal_terms, /Discount applies/);
   assert.equal("payout_amount_cents" in patch, false);
   assert.deepEqual(transportationDealFields(patch), patch);

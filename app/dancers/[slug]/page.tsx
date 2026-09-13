@@ -282,7 +282,7 @@ export default async function DancerPublicPage({ params, searchParams }: PagePro
                   attributionTokens={dealAttributionTokens}
                   dancerNote={dancerAttributionEligible}
                   presentation="profileCompact"
-                  ctaLabel={activeDeals.length > 1 ? "Club Deals" : "Club Deal"}
+                  ctaLabel="Free Entry"
                   sectionId="club-deal"
                 />
               </div>
@@ -290,7 +290,7 @@ export default async function DancerPublicPage({ params, searchParams }: PagePro
           ) : actionShift ? (
             <div className="profile-tonight-deal">
               <p className="profile-deal-availability-line">
-                {activeShift ? "No active club deal" : "Going tonight? View the Club Deal"}
+                {activeShift ? "Free entry unavailable" : "Going tonight? View free entry"}
               </p>
             </div>
           ) : null}
@@ -304,18 +304,20 @@ export default async function DancerPublicPage({ params, searchParams }: PagePro
               <UberRideButton
                 compact
                 dancerId={profile.id}
+                dealId={activeDeal?.id}
+                attributionToken={dancerAttributionEligible ? dealAttributionToken : null}
                 source="dancer_profile"
                 venue={{ ...actionVenue, isActive: true, isPublic: true }}
               />
               {!activeShift && actionShift ? (
                 <Link
-                  aria-label={`View Club Deals on ${actionShift.venueName}'s venue page`}
+                  aria-label={`View free entry on ${actionShift.venueName}'s venue page`}
                   className="profile-upcoming-venue-deal"
                   data-upcoming-venue-deal="venue-page"
                   href={`/venues/${encodeURIComponent(actionShift.venueSlug)}`}
                 >
                   <VenuePageIcon />
-                  <span>View Deal</span>
+                  <span>Free Entry</span>
                 </Link>
               ) : null}
             </div>

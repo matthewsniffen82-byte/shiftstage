@@ -888,7 +888,7 @@ export default function TvFeedClient({
                         attributionToken={video.dealAttributionToken}
                         attributionTokens={video.dealAttributionTokens}
                         presentation="launcher"
-                        ctaLabel="Club Deals"
+                        ctaLabel="Free Entry"
                       />
                     ) : null}
                   </div>

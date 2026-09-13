@@ -43592,10 +43592,10 @@
 
     function rideActionLabel(source, venueName) {
       const safeVenueName = String(venueName || "this club").trim() || "this club";
-      return source === "dancer_profile" ? `Free ride to ${safeVenueName}` : "Free ride";
+      return source === "dancer_profile" ? `Free Ride + Entry at ${safeVenueName}` : "Free Ride + Entry";
     }
 
-    function uberRideLinkMarkup({ venue, source, className = "", displayLabel = "" }) {
+    function uberRideLinkMarkup({ venue, source, className = "", displayLabel = "", dealConfig = null }) {
       const label = rideActionLabel(source, venue?.name);
       const visibleLabel = String(displayLabel || label).trim() || label;
       const classes = ["uber-ride-link", className].filter(Boolean).join(" ");
@@ -43603,8 +43603,17 @@
         const safeName = escapeHtml(venue?.name || "this club");
         return `<button class="${classes} is-travel-unavailable" type="button" data-travel-unavailable="shuttle" disabled aria-disabled="true" aria-label="Free ride unavailable for ${safeName}">${actionButtonLabel("car", escapeHtml(label))}</button>`;
       }
-      const href = `/rides/${encodeURIComponent(venue.id)}`;
-      return `<a class="${classes}" href="${escapeHtml(href)}" data-free-ride-link aria-label="${escapeHtml(label)}. Request the club’s free shuttle. The club will contact you to arrange pickup.">${actionButtonLabel("car", escapeHtml(visibleLabel))}</a>`;
+      const query = new URLSearchParams();
+      if (dealConfig?.deal?.id) {
+        query.set("dealId", dealConfig.deal.id);
+        if (dealConfig.sourceType === "dancer_profile" && dealConfig.dancerId && dealConfig.attributionToken) {
+          query.set("sourceType", "dancer_profile");
+          query.set("dancerId", dealConfig.dancerId);
+          query.set("attributionToken", dealConfig.attributionToken);
+        }
+      }
+      const href = `/rides/${encodeURIComponent(venue.id)}${query.size ? `?${query}` : ""}`;
+      return `<a class="${classes}" href="${escapeHtml(href)}" data-free-ride-link aria-label="${escapeHtml(label)}. Free admission with club-provided transport. Request pickup; the club will contact you to confirm.">${actionButtonLabel("car", escapeHtml(visibleLabel))}</a>`;
     }
 
     document.addEventListener("click", (event) => {
@@ -49300,8 +49309,8 @@
       const offers = clubDealOffers(config);
       if (offers.length > 1) {
         qrButton.dataset.clubDealCta = encodedConfig;
-        qrButton.setAttribute("aria-label", `Open ${offers.length} Club Deals at ${config.venueName || "this club"}`);
-        qrButton.innerHTML = `${clubDealQrSymbolMarkup("profile-club-deal-hub-symbol")}<span class="profile-club-deal-action-copy"><strong>Club Deals</strong></span>`;
+        qrButton.setAttribute("aria-label", `View free entry at ${config.venueName || "this club"}`);
+        qrButton.innerHTML = `${clubDealQrSymbolMarkup("profile-club-deal-hub-symbol")}<span class="profile-club-deal-action-copy"><strong>Free Entry</strong></span>`;
         qrButton.disabled = false;
         tile.classList.add("is-ready", "has-multiple-offers");
         return;
@@ -49314,8 +49323,8 @@
         if (!tile.isConnected || tile.dataset.profileClubDealConfig !== encodedConfig) return;
         qrButton.dataset.dealPass = encodeDealPass(pass);
         qrButton.removeAttribute("data-save-deal-pass-on-open");
-        qrButton.setAttribute("aria-label", `Open the ${config.venueName || "active"} Club Deal`);
-        qrButton.innerHTML = `${clubDealQrSymbolMarkup("profile-club-deal-nfc-symbol")}<span class="profile-club-deal-action-copy"><strong>Club Deal</strong></span>`;
+        qrButton.setAttribute("aria-label", `View free entry at ${config.venueName || "this club"}`);
+        qrButton.innerHTML = `${clubDealQrSymbolMarkup("profile-club-deal-nfc-symbol")}<span class="profile-club-deal-action-copy"><strong>Free Entry</strong></span>`;
         qrButton.disabled = false;
         tile.classList.add("is-ready");
         recordVenuePageEvent({
@@ -49769,6 +49778,7 @@
 
     function customerFacingDealTerms(value) {
       return phoneTapCopy(String(value || "")
+        .replace("Free admission requires arrival in your own car or other private car that is not an Uber or taxi, or use of the club's free shuttle service.", "Free admission when you arrive in a private car or club-provided transport. Arrivals by Uber, Lyft, other rideshares, or taxi do not qualify.")
         .replace(/(?:^|\s+)Cashier NFC confirmation is required\.(?=\s+|$)/gi, " ")
         .replace(/[ \t]{2,}/g, " ")
         .trim());
@@ -50194,7 +50204,7 @@
       if (profile?.scheduled) {
         return {
           key: "available-when-working",
-          label: "Going tonight? View the Club Deal",
+          label: "Going tonight? View free entry",
           detail: `Open ${profile?.venue || "the venue"}'s page to view its Club Deals.`
         };
       }
@@ -52690,7 +52700,7 @@
           sourceType: "club_page"
         };
         const offerCount = venue.activeDeals?.length || 1;
-        return `<button class="venue-card-deal-action" type="button" data-club-deal-cta="${encodeDealPass(config)}" aria-label="Open ${offerCount} Club ${offerCount === 1 ? "Deal" : "Deals"}">${actionButtonLabel("qr", offerCount > 1 ? "Club Deals" : "Club Deal")}</button>`;
+        return `<button class="venue-card-deal-action" type="button" data-club-deal-cta="${encodeDealPass(config)}" aria-label="View free entry">${actionButtonLabel("qr", "Free Entry")}</button>`;
       }
       return "";
     }
@@ -52740,7 +52750,7 @@
           <button class="venue-card-follow ${followsVenue ? "is-active" : ""}" type="button" data-venue-follow="${venueValue}" data-account-action="venue-follow" aria-label="${followsVenue ? `Unfollow ${safeName}` : `Follow ${safeName}`}" aria-pressed="${followsVenue}">${actionIconMarkup("heart")}</button>
           <div class="venue-card-actions${rideMarkup ? " with-uber-ride" : ""}" aria-label="${safeName} quick actions">
             ${venueCardQrMarkup(venue)}
-            ${directionsMarkup}
+            ${railQrMarkup}
             ${rideMarkup}
           </div>
         </article>
@@ -53969,9 +53979,10 @@
         venue,
         source: "dancer_profile",
         className: "profile-uber-ride",
+        dealConfig: dancerProfileClubDealConfig(profile),
         dancerId: profile.id || "",
         city,
-        displayLabel: "Free ride"
+        displayLabel: "Free Ride + Entry"
       });
     }
 
@@ -60203,22 +60214,22 @@
       const qr = homeDiscoveryFeedLiveQrData(profile);
       if (!qr) {
         if (presentation === "prompt") return "";
-        return `<button class="feed-card-action home-discovery-feed-live-qr is-unavailable" type="button" data-club-deal-state="${state.key}" disabled aria-disabled="true" aria-label="${escapeHtml(state.label)}">${actionButtonLabel("qr", "Club Deals")}</button>`;
+        return `<button class="feed-card-action home-discovery-feed-live-qr is-unavailable" type="button" data-club-deal-state="${state.key}" disabled aria-disabled="true" aria-label="${escapeHtml(state.label)}">${actionButtonLabel("qr", "Free Entry")}</button>`;
       }
       if (presentation === "prompt") {
         const safeVenueName = escapeHtml(qr.venueName || "this club");
         return `
-          <button class="home-discovery-feed-qr-prompt" type="button" ${qr.triggerAttribute} data-feed-live-qr data-feed-qr-prompt aria-hidden="true" aria-label="Get the Club Deal for ${safeVenueName}">
+          <button class="home-discovery-feed-qr-prompt" type="button" ${qr.triggerAttribute} data-feed-live-qr data-feed-qr-prompt aria-hidden="true" aria-label="View free entry for ${safeVenueName}">
             ${actionIconMarkup("qr")}
             <span class="home-discovery-feed-qr-prompt-copy">
-              <small>Club Deal available</small>
+              <small>Free entry available</small>
               <strong>${safeVenueName}</strong>
             </span>
-            <span class="home-discovery-feed-qr-prompt-action">${qr.offerCount > 1 ? "Club Deals" : "Club Deal"}</span>
+            <span class="home-discovery-feed-qr-prompt-action">Free Entry</span>
           </button>
         `;
       }
-      return `<button class="feed-card-action home-discovery-feed-live-qr" type="button" ${qr.triggerAttribute} data-feed-live-qr aria-label="Open the live ${qr.offerCount > 1 ? "Club Deals" : "Club Deal"}">${actionButtonLabel("qr", qr.offerCount > 1 ? "Club Deals" : "Club Deal")}</button>`;
+      return `<button class="feed-card-action home-discovery-feed-live-qr" type="button" ${qr.triggerAttribute} data-feed-live-qr aria-label="View free entry">${actionButtonLabel("qr", "Free Entry")}</button>`;
     }
 
     function homeDancerGridQrMarkup(profile) {
@@ -60226,10 +60237,10 @@
       const qr = homeDiscoveryFeedLiveQrData(profile);
       if (!qr || state.key !== "available") {
         const cardLabel = state.key === "available-when-working" ? "Unlocks when working" : state.label;
-        return `<button class="feed-card-action home-card-qr-rail-action is-unavailable is-${state.key}" type="button" data-card-action-slot="qr" data-club-deal-state="${state.key}" data-card-qr-label="${escapeOptionValue(cardLabel)}" data-card-qr-message="${escapeOptionValue(state.detail)}" aria-disabled="true" aria-expanded="false" aria-label="Club Deals: ${escapeHtml(cardLabel)}. Tap for details.">${actionButtonLabel("qr", "Club Deals")}</button>`;
+        return `<button class="feed-card-action home-card-qr-rail-action is-unavailable is-${state.key}" type="button" data-card-action-slot="qr" data-club-deal-state="${state.key}" data-card-qr-label="${escapeOptionValue(cardLabel)}" data-card-qr-message="${escapeOptionValue(state.detail)}" aria-disabled="true" aria-expanded="false" aria-label="Free Entry: ${escapeHtml(cardLabel)}. Tap for details.">${actionButtonLabel("qr", "Free Entry")}</button>`;
       }
       const venueName = escapeHtml(qr.venueName || "this club");
-      return `<button class="feed-card-action home-card-qr-rail-action is-available" type="button" ${qr.triggerAttribute} data-card-action-slot="qr" data-club-deal-state="available" data-feed-live-qr aria-label="Open ${qr.offerCount > 1 ? "Club Deals" : "Club Deal"} for ${venueName}">${actionButtonLabel("qr", qr.offerCount > 1 ? "Club Deals" : "Club Deal")}</button>`;
+      return `<button class="feed-card-action home-card-qr-rail-action is-available" type="button" ${qr.triggerAttribute} data-card-action-slot="qr" data-club-deal-state="available" data-feed-live-qr aria-label="View free entry for ${venueName}">${actionButtonLabel("qr", "Free Entry")}</button>`;
     }
 
     function homeVenueDiscoveryQrMarkup(venue) {
@@ -60244,9 +60255,9 @@
           sourceType: "club_page"
         };
         const offerCount = venue.activeDeals?.length || 1;
-        return `<button class="feed-card-action home-card-qr-rail-action home-venue-discovery-rail-qr is-available venue-card-secondary-action venue-card-deals-action" type="button" data-card-action-slot="qr" data-club-deal-state="available" data-club-deal-cta="${encodeDealPass(config)}" data-feed-venue-qr aria-label="Open ${offerCount} Club ${offerCount === 1 ? "Deal" : "Deals"} at ${venueName}">${actionButtonLabel("qr", offerCount > 1 ? "Club Deals" : "Club Deal")}</button>`;
+        return `<button class="feed-card-action home-card-qr-rail-action home-venue-discovery-rail-qr is-available venue-card-primary-action venue-card-deals-action" type="button" data-card-action-slot="qr" data-club-deal-state="available" data-club-deal-cta="${encodeDealPass(config)}" data-feed-venue-qr aria-label="View free entry at ${venueName}">${actionButtonLabel("qr", "Free Entry")}</button>`;
       }
-      return `<button class="feed-card-action home-card-qr-rail-action home-venue-discovery-rail-qr is-unavailable venue-card-secondary-action venue-card-deals-action" type="button" data-card-action-slot="qr" data-club-deal-state="unavailable" data-card-qr-label="Club Deal unavailable" data-card-qr-message="This club has not published a tracked Club Deal. Check back later." aria-expanded="false" aria-label="Check Club Deals status at ${venueName}">${actionButtonLabel("qr", "Club Deals")}</button>`;
+      return `<button class="feed-card-action home-card-qr-rail-action home-venue-discovery-rail-qr is-unavailable venue-card-primary-action venue-card-deals-action" type="button" data-card-action-slot="qr" data-club-deal-state="unavailable" data-card-qr-label="Free entry unavailable" data-card-qr-message="Free entry is currently unavailable at this club. Check back later." aria-expanded="false" aria-label="Check free entry availability at ${venueName}">${actionButtonLabel("qr", "Free Entry")}</button>`;
     }
 
     function homeVenueDiscoveryFeedSlide(venue, index, total, city) {
@@ -60271,7 +60282,7 @@
       const lineupMarkup = venueLineupMarkup(venue, city, { mobile: true, profiles: workingNow, eager: index < 2 });
       const directionsMarkup = venueDirectionsMarkup({
         venue,
-        className: "home-discovery-feed-directions venue-directions-btn venue-card-primary-action venue-card-directions-action",
+        className: "home-discovery-feed-directions venue-directions-btn venue-card-secondary-action venue-card-directions-action",
         city
       });
       const rideMarkup = uberRideLinkMarkup({
@@ -60296,12 +60307,12 @@
             <div class="home-venue-discovery-lineup-slot">${lineupMarkup}</div>
           </div>
           <div class="home-venue-discovery-context-actions venue-card-primary-actions${rideMarkup ? " with-uber-ride" : ""}" aria-label="${safeName} primary actions">
-            ${directionsMarkup}
+            ${railQrMarkup}
             ${rideMarkup}
           </div>
           <div class="home-dancer-grid-action-rail home-venue-discovery-action-rail venue-card-secondary-actions" aria-label="${safeName} secondary actions">
             <button class="feed-card-action home-venue-discovery-profile-action venue-card-secondary-action venue-card-page-action" type="button" data-open-venue-profile="${venueValue}" aria-label="Open ${safeName}'s full club profile" title="View club">${actionButtonLabel("clubProfile", "Club Page")}</button>
-            ${railQrMarkup}
+            ${directionsMarkup}
             <button class="feed-card-action home-dancer-grid-share venue-card-secondary-action venue-card-share-action" type="button" data-share-venue="${venueValue}" data-share-city="${escapeOptionValue(city)}" aria-label="Share ${safeName}'s club profile" title="Share">${actionButtonLabel("share", "Share")}</button>
             <button class="feed-card-action venue-card-secondary-action venue-card-favorite-action ${followsVenue ? "is-active" : ""}" type="button" data-venue-follow="${venueValue}" data-account-action="venue-follow" aria-label="${followsVenue ? `Unfollow ${safeName}` : `Follow ${safeName}`}" title="${followsVenue ? "Saved" : "Favorite"}" aria-pressed="${followsVenue}">${actionButtonLabel("heart", followsVenue ? "Saved" : "Favorite")}</button>
           </div>
@@ -60338,6 +60349,7 @@
             venue,
             source: "tonight_feed",
             className: "feed-card-action feed-uber-ride home-dancer-grid-uber",
+            dealConfig: dancerProfileClubDealConfig(profile),
             dancerId: profile.id || "",
             city
           })
@@ -62402,9 +62414,9 @@
         const dealTitle = String(item.deal.dealTitle || "Club Deal").trim() || "Club Deal";
         const venueName = String(item.venue.name || "this club").trim() || "this club";
         const offerCount = Array.isArray(item.deals) && item.deals.length ? item.deals.length : 1;
-        deal.setAttribute("aria-label", `Open ${offerCount} Club ${offerCount === 1 ? "Deal" : "Deals"} for ${venueName}`);
+        deal.setAttribute("aria-label", `View free entry for ${venueName}`);
         deal.title = offerCount > 1 ? `${offerCount} Club Deals` : dealTitle;
-        deal.insertAdjacentHTML("beforeend", `<span class="home-tv-feed-deal-count">${offerCount > 1 ? "Club Deals" : "Club Deal"}</span>`);
+        deal.insertAdjacentHTML("beforeend", `<span class="home-tv-feed-deal-count">Free Entry</span>`);
         deal.dataset.clubDealCta = encodeDealPass({
           deal: item.deal,
           deals: item.deals,

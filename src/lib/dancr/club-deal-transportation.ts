@@ -1,8 +1,9 @@
-export const CLUB_TRANSPORTATION_TERMS = "Free admission requires arrival in your own car or other private car that is not an Uber or taxi, or use of the club's free shuttle service.";
+export const CLUB_TRANSPORTATION_TERMS = "Free admission when you arrive in a private car or club-provided transport. Arrivals by Uber, Lyft, other rideshares, or taxi do not qualify.";
+export const CLUB_ARRIVAL_VERIFICATION = "Club staff must verify that you arrived in a private car or club-provided transport before admitting you for free.";
 export const CLUB_SHUTTLE_HANDOFF = "MyDancr sends your request to the club. The club handles transportation and will contact you to confirm availability, pickup location, and timing. Submitting a request does not confirm a ride.";
 
 export function clubDealTransportationTerms(terms: string | null | undefined) {
-  const additional = String(terms || "").trim();
+  const additional = String(terms || "").replace("Free admission requires arrival in your own car or other private car that is not an Uber or taxi, or use of the club's free shuttle service.", "").trim();
   return additional.includes(CLUB_TRANSPORTATION_TERMS) ? additional : [CLUB_TRANSPORTATION_TERMS, additional].filter(Boolean).join(" ");
 }
 

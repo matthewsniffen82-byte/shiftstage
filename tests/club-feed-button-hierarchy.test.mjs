@@ -15,14 +15,14 @@ const venueDealRenderer = liveApp.match(
 
 test("every Clubs-feed card uses the shared primary and secondary action tiers", () => {
   assert.match(venueRenderer, /venue-card-primary-actions/);
-  assert.match(venueRenderer, /venue-card-primary-action venue-card-directions-action/);
+  assert.match(venueRenderer, /venue-card-secondary-action venue-card-directions-action/);
   assert.match(venueRenderer, /venue-card-primary-action venue-card-ride-action/);
   assert.match(venueRenderer, /venue-card-secondary-actions/);
   assert.match(venueRenderer, /venue-card-secondary-action venue-card-page-action/);
   assert.match(venueRenderer, /venue-card-secondary-action venue-card-share-action/);
   assert.match(venueRenderer, /venue-card-secondary-action venue-card-favorite-action/);
-  assert.match(venueDealRenderer, /is-available venue-card-secondary-action venue-card-deals-action/);
-  assert.match(venueDealRenderer, /is-unavailable venue-card-secondary-action venue-card-deals-action/);
+  assert.match(venueDealRenderer, /is-available venue-card-primary-action venue-card-deals-action/);
+  assert.match(venueDealRenderer, /is-unavailable venue-card-primary-action venue-card-deals-action/);
 });
 
 test("the hierarchy preserves every existing venue action hook and state", () => {
@@ -42,9 +42,9 @@ test("mobile venue controls use a compact premium glass hierarchy without a back
   assert.match(hierarchy, /height: clamp\(278px, calc\(80vw - 24px\), 300px\) !important;/);
   assert.match(hierarchy, /\.venue-card-primary-actions \{[\s\S]*?height: 48px !important;[\s\S]*?gap: 10px !important;[\s\S]*?background: transparent !important;[\s\S]*?box-shadow: none !important;/);
   assert.match(hierarchy, /\.venue-card-primary-actions > \.venue-card-primary-action \{[\s\S]*?border-radius: 16px !important;[\s\S]*?linear-gradient\(180deg,[\s\S]*?font-size: 14\.5px !important;/);
-  assert.match(hierarchy, /\.venue-card-primary-actions > \.venue-card-directions-action \{[\s\S]*?border-color: rgba\(148, 163, 184, 0\.18\) !important;[\s\S]*?rgba\(24, 27, 35, 0\.66\)/);
-  assert.match(hierarchy, /\.venue-card-primary-actions > \.venue-card-directions-action \.action-icon \{[\s\S]*?rgba\(226, 232, 240, 0\.84\)/);
-  assert.doesNotMatch(hierarchy.match(/\.venue-card-primary-actions > \.venue-card-directions-action \{[\s\S]*?\n  \}/)?.[0] || "", /dancr-color-info|#72d8ff|rgba\(85, 199, 245/);
+  assert.match(hierarchy, /\.venue-card-secondary-actions > \.venue-card-directions-action \{[\s\S]*?border-color: rgba\(148, 163, 184, 0\.18\) !important;[\s\S]*?rgba\(24, 27, 35, 0\.66\)/);
+  assert.match(hierarchy, /\.venue-card-secondary-actions > \.venue-card-directions-action \.action-icon \{[\s\S]*?rgba\(226, 232, 240, 0\.84\)/);
+  assert.doesNotMatch(hierarchy.match(/\.venue-card-secondary-actions > \.venue-card-directions-action \{[\s\S]*?\n  \}/)?.[0] || "", /dancr-color-info|#72d8ff|rgba\(85, 199, 245/);
   const rideActionRule = hierarchy.match(
     /\.venue-card-primary-actions > \.venue-card-ride-action \{[\s\S]*?\n  \}/,
   )?.[0] || "";

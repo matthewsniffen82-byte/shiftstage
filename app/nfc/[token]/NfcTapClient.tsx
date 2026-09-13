@@ -9,6 +9,7 @@ import {
   readBrowserAuthSession,
 } from "@/src/lib/dancr/browser-session";
 import { customerFacingDealDescription, customerFacingDealTerms } from "@/src/lib/dancr/deal-copy";
+import { CLUB_ARRIVAL_VERIFICATION, CLUB_TRANSPORTATION_TERMS } from "@/src/lib/dancr/club-deal-transportation";
 
 const TAP_SESSION_KEY = "mydancrNfcTapSessionV1";
 const DEAL_INTENT_KEY = "mydancrPendingNfcDealV2";
@@ -270,6 +271,7 @@ export function NfcTapClient({ token }: { token: string }) {
         ) : null}
 
         {status ? <p className="nfc-status" role="status" aria-live="polite">{status}</p> : null}
+        {state?.tag.type === "cashier" ? <div className="nfc-action-copy"><strong>Arrival eligibility</strong><p>{CLUB_TRANSPORTATION_TERMS}</p><p>{CLUB_ARRIVAL_VERIFICATION}</p></div> : null}
         {error ? <p className="nfc-error" role="alert">{error}</p> : null}
 
         {!complete && state ? (

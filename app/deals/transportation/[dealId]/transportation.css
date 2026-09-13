@@ -28,6 +28,8 @@
 .club-transport-submit:disabled{opacity:.5;cursor:default}
 .club-transport-card .club-transport-note{font-size:12px;color:#b9aaca;margin:18px 0 0}
 .club-transport-error{color:#ffc8d0}
+.club-transport-ineligible{margin-top:18px;padding:16px;border:1px solid #97704b;border-radius:12px;background:#302319;color:#ffe4c7;font-size:14px;line-height:1.5}
+.club-transport-ineligible .club-transport-submit{margin-top:12px}
 .club-transport-ready{display:flex;gap:14px;align-items:center;padding:16px;border:1px solid #493259;border-radius:14px;margin-top:22px}
 .club-transport-ready svg{width:42px;flex-shrink:0;color:#cfa4fb}
 .club-transport-ready p{margin:0}

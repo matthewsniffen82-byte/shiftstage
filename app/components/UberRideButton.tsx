@@ -14,6 +14,8 @@ type UberRideButtonProps = {
   venue: UberRideVenue;
   source: UberRideSource;
   dancerId?: string | null;
+  dealId?: string | null;
+  attributionToken?: string | null;
   compact?: boolean;
 };
 
@@ -24,20 +26,30 @@ const sourceClass: Record<UberRideSource, string> = {
 };
 
 // Retain the existing component and CSS names for profile layout compatibility.
-export function UberRideButton({ venue, source, compact = false }: UberRideButtonProps) {
+export function UberRideButton({ venue, source, compact = false, dancerId, dealId, attributionToken }: UberRideButtonProps) {
   if (venue.isActive === false || venue.isPublic === false) return null;
 
   const venueName = String(venue.name || "this club").trim() || "this club";
   const label = rideActionLabel(source, venueName);
-  const visibleLabel = compact ? "Free ride" : label;
+  const visibleLabel = compact ? "Free Ride + Entry" : label;
+  const query = new URLSearchParams();
+  if (dealId) {
+    query.set("dealId", dealId);
+    if (source === "dancer_profile" && dancerId && attributionToken) {
+      query.set("sourceType", "dancer_profile");
+      query.set("dancerId", dancerId);
+      query.set("attributionToken", attributionToken);
+    }
+  }
+  const href = `/rides/${encodeURIComponent(venue.id)}${query.size ? `?${query}` : ""}`;
 
   if (!venue.id) return null;
 
   return (
     <a
-      aria-label={`${label}. Request the club’s free shuttle. The club will contact you to arrange pickup.`}
+      aria-label={`${label}. Free admission with club-provided transport. Request pickup; the club will contact you to confirm.`}
       className={`${styles.button} ${sourceClass[source]}`}
-      href={`/rides/${encodeURIComponent(venue.id)}`}
+      href={href}
       onClick={(event) => {
         event.stopPropagation();
       }}
@@ -49,7 +61,7 @@ export function UberRideButton({ venue, source, compact = false }: UberRideButto
 }
 
 function rideActionLabel(source: UberRideSource, venueName: string) {
-  return source === "dancer_profile" ? `Free ride to ${venueName}` : "Free ride";
+  return source === "dancer_profile" ? `Free Ride + Entry at ${venueName}` : "Free Ride + Entry";
 }
 
 function RideIcon() {
