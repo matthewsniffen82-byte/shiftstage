@@ -14,6 +14,7 @@ const unavailable = (status = 404) => new Response(null, { status, headers: HEAD
 type Dependencies = { publicClient: SupabaseClient; admin: SupabaseClient; storageUrl: string; serviceKey: string; fetch?: typeof fetch };
 export async function serveDancerMedia(request: Request, kind: 'photo' | 'video', deps: Dependencies) {
   try {
+    if (request.signal.aborted) return unavailable(503);
     const params = new URL(request.url).searchParams;
     const requestedPath = params.get('path') || '';
     const id = params.get('id') || '';
@@ -31,9 +32,10 @@ export async function serveDancerMedia(request: Request, kind: 'photo' | 'video'
       // visibility shortcut. A saved URL is rechecked even if its feed was cached.
       const client = preview ? deps.admin : deps.publicClient;
       const [photo, avatar] = await Promise.all([
-        client.from('dancer_photos').select(preview ? `storage_path,dancer_profiles!inner(${ACTIVE_PROFILE})` : 'storage_path').eq('storage_path', master).limit(1).maybeSingle(),
-        client.from('dancer_profiles').select(preview ? ACTIVE_PROFILE : 'id').eq('avatar_storage_path', master).limit(1).maybeSingle(),
+        client.from('dancer_photos').select(preview ? `storage_path,dancer_profiles!inner(${ACTIVE_PROFILE})` : 'storage_path').eq('storage_path', master).limit(1).abortSignal(request.signal).maybeSingle(),
+        client.from('dancer_profiles').select(preview ? ACTIVE_PROFILE : 'id').eq('avatar_storage_path', master).limit(1).abortSignal(request.signal).maybeSingle(),
       ]);
+      if (request.signal.aborted) return unavailable(503);
       if (photo.error || avatar.error) return unavailable(503);
       const allowed = preview ? isActive(one((photo.data as any)?.dancer_profiles)) || isActive(avatar.data) : Boolean(photo.data || avatar.data);
       if (!allowed) return unavailable();
@@ -45,11 +47,13 @@ export async function serveDancerMedia(request: Request, kind: 'photo' | 'video'
     } else {
       // Resolve private object names only after the public RLS row is visible.
       if (!preview) {
-        const visible = await deps.publicClient.from('mydancr_tv_videos').select('id').eq('id',id).maybeSingle();
+        const visible = await deps.publicClient.from('mydancr_tv_videos').select('id').eq('id',id).abortSignal(request.signal).maybeSingle();
+        if (request.signal.aborted) return unavailable(503);
         if (visible.error) return unavailable(503);
         if (!visible.data) return unavailable();
       }
-      const video = await deps.admin.from('mydancr_tv_videos').select(`storage_path,moderation_details,dancer_profiles!inner(${ACTIVE_PROFILE})`).eq('id',id).maybeSingle();
+      const video = await deps.admin.from('mydancr_tv_videos').select(`storage_path,moderation_details,dancer_profiles!inner(${ACTIVE_PROFILE})`).eq('id',id).abortSignal(request.signal).maybeSingle();
+      if (request.signal.aborted) return unavailable(503);
       if (video.error) return unavailable(503);
       if (!video.data || !isActive(one((video.data as any).dancer_profiles))) return unavailable();
       path = (video.data as any).storage_path;
@@ -75,6 +79,8 @@ export async function serveDancerMedia(request: Request, kind: 'photo' | 'video'
       upstream = await (deps.fetch || fetch)(upstreamUrl, { method:request.method==='HEAD'?'HEAD':'GET', cache:'no-store', redirect:'error',
         signal:abort.signal, headers:{apikey:deps.serviceKey,authorization:`Bearer ${deps.serviceKey}`,...(range?{range}:{})} });
     } catch { clearTimeout(timeout); request.signal.removeEventListener('abort',cancel); return unavailable(503); }
+    // Dispose of late headers even if the upstream transport ignored cancellation.
+    if (abort.signal.aborted) { await upstream.body?.cancel(); clearTimeout(timeout); request.signal.removeEventListener('abort',cancel); return unavailable(503); }
     if (![200,206].includes(upstream.status)) { await upstream.body?.cancel(); clearTimeout(timeout);request.signal.removeEventListener('abort',cancel);return unavailable(upstream.status===416?416:upstream.status>=500?503:404); }
     const headers = new Headers(HEADERS);
     for(const name of ['content-type','content-length','content-range','accept-ranges']) { const value=upstream.headers.get(name);if(value)headers.set(name,value); }
