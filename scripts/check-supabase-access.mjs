@@ -9,7 +9,7 @@ try {
     ? (exported.rows.length === 1 ? exported.rows[0].catalog : null)
     : exported.catalog || exported;
   const publicAccess = read(new URL("../tests/fixtures/rls-current-access.json", import.meta.url));
-  const storageAccess = read(new URL("../docs/supabase-reliability/step-01-inventory.json", import.meta.url)).catalog;
+  const storageAccess = read(new URL("../tests/fixtures/storage-current-access.json", import.meta.url)).catalog;
   const result = reviewSupabaseAccessCatalog(catalog, { publicAccess, storageAccess });
   console.log(JSON.stringify(result, null, 2));
   if (!result.ok) process.exitCode = 1;

@@ -64,20 +64,11 @@ test('the public TV feed does not require an account or query follows',async()=>
  assert.equal(f.calls.some(c=>c[0]==='auth'||c[0]==='from'),false);
 });
 
-for(const entry of ['owner','admin'])test(entry+' video workspace reports batch signing errors',async()=>{
+for(const entry of ['owner','admin'])test(entry+' workspace lists its authorized records without issuing irrevocable Storage URLs',async()=>{
  const f=workspaceFixture(3,{storageError:true});
- await assert.rejects(entry==='owner'?tvWorkspace.getDancerMyDancrTvWorkspace(f.client,'owner'):tvWorkspace.getAdminMyDancrTvVideos(f.client),/Storage unavailable/);
- assert.equal(f.calls.length,1);
-});
-test('a missing signing response cannot mark every existing video unavailable',async()=>{
- const f=workspaceFixture(3);
- f.client.storage.from=()=>({createSignedUrls:async()=>({data:null,error:null})});
- await assert.rejects(tvWorkspace.getDancerMyDancrTvWorkspace(f.client,'owner'),/Unable to prepare MyDancr TV playback/);
-});
-test('a later signing batch failure does not report a partial library as fully loaded',async()=>{
- const f=workspaceFixture(201),original=f.client.storage.from,problem={status:503,message:'Storage unavailable'};
- let batches=0;
- f.client.storage.from=bucket=>({createSignedUrls:async(...args)=>++batches===2?{data:null,error:problem}:original(bucket).createSignedUrls(...args)});
- await assert.rejects(tvWorkspace.getDancerMyDancrTvWorkspace(f.client,'owner'),error=>error===problem);
- assert.equal(batches,2);
+ const result=entry==='owner'?(await tvWorkspace.getDancerMyDancrTvWorkspace(f.client,'owner')).videos:await tvWorkspace.getAdminMyDancrTvVideos(f.client);
+ assert.equal(result.length,3);assert.equal(f.calls.length,0);
+ for(const row of result)assert.match(row.videoUrl,/\/api\/media\/dancer-video\?/);
+ // Provider failures are handled by the bounded playback route; they cannot
+ // turn the authorized library query into an invented empty list.
 });

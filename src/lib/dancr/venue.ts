@@ -788,7 +788,7 @@ async function getWorkingDancers(client: DancrClient, venueId: string, now: Date
 
   return (data || []).filter((row: any) => isActiveNfcPresence(row, now.getTime())).map((row: any) => {
     const dancer = Array.isArray(row.dancer_profiles) ? row.dancer_profiles[0] : row.dancer_profiles;
-    const avatar = responsivePublicImage(client, "dancer-photos", dancer?.avatar_storage_path);
+    const avatar = responsivePublicImage(client, "dancer-photos", dancer?.avatar_storage_path, { preview: true });
     return {
       shiftId: row.id,
       dancerId: dancer?.id || "",

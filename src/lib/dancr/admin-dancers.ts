@@ -299,7 +299,7 @@ async function hydrateRosterItems(client: DancrClient, profiles: any[], futureSh
     const dancerVideos = allVideos.filter((row) => row.dancer_id === profile.id);
     const affiliate = allAffiliates.find((row) => row.dancer_id === profile.id);
     const avatarPath = profile.avatar_storage_path || photosForDancer.find((row: any) => row.is_primary)?.storage_path || photosForDancer[0]?.storage_path;
-    const avatar = responsivePublicImage(client as any, "dancer-photos", avatarPath);
+    const avatar = responsivePublicImage(client as any, "dancer-photos", avatarPath, { preview: true });
     const activityDates = [profile.updated_at, account?.updated_at, next?.updated_at, affiliation?.updated_at, ...dancerVideos.map((row) => row.updated_at)].filter(Boolean).sort().reverse();
     return {
       id: profile.id,

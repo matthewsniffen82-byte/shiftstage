@@ -4,7 +4,7 @@ const DOCUMENT_TYPES = [...IMAGE_TYPES, "application/pdf"];
 const IMAGE_LIMIT = 10 * 1024 * 1024;
 
 export const STORAGE_BUCKET_REQUIREMENTS = Object.freeze([
-  { id: "dancer-photos", private: false, maxBytes: IMAGE_LIMIT, types: IMAGE_TYPES },
+  { id: "dancer-photos", private: true, maxBytes: IMAGE_LIMIT, types: IMAGE_TYPES },
   { id: "dancr-image-moderation-review", private: true, maxBytes: IMAGE_LIMIT, types: IMAGE_TYPES },
   { id: "dancr-image-moderation-temp", private: true, maxBytes: IMAGE_LIMIT, types: IMAGE_TYPES },
   { id: "dancr-media-originals", private: true, maxBytes: IMAGE_LIMIT, types: IMAGE_TYPES },

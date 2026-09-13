@@ -1,3 +1,4 @@
+import { dancerPhotoDeliveryUrl } from './media-delivery-url.ts';
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { ValidatedDancrImage } from "./image-validation";
 import {
@@ -243,10 +244,13 @@ export function responsivePublicImage(
   client: DancrClient,
   bucket: string,
   storagePath: string | null | undefined,
+  options: { preview?: boolean } = {},
 ): ResponsivePublicImage | null {
   const normalizedPath = String(storagePath || "").trim();
   if (!normalizedPath) return null;
   if (/^https?:\/\//i.test(normalizedPath)) {
+    // Dancer media must be a database-owned object; external URLs cannot be revoked.
+    if (bucket === "dancer-photos") return null;
     return {
       imageFocalX: DEFAULT_IMAGE_FOCAL_PERCENT,
       imageFocalY: DEFAULT_IMAGE_FOCAL_PERCENT,
@@ -258,7 +262,10 @@ export function responsivePublicImage(
     };
   }
 
-  const masterImageUrl = publicStorageUrl(client, bucket, normalizedPath);
+  const deliveryUrl = (path: string, width?: number) => bucket === "dancer-photos"
+    ? dancerPhotoDeliveryUrl(path, width, options.preview === true)
+    : publicStorageUrl(client, bucket, path, width);
+  const masterImageUrl = deliveryUrl(normalizedPath);
   const manifest = parseResponsiveImageManifest(normalizedPath);
   if (!manifest) {
     return {
@@ -279,15 +286,11 @@ export function responsivePublicImage(
   const transformedSources = [...DANCR_THUMBNAIL_IMAGE_WIDTHS, ...DANCR_RESPONSIVE_IMAGE_WIDTHS].filter(
     (width) => width < smallestStoredWidth && width < manifest.width,
   ).map((width) => ({
-    url: publicStorageUrl(client, bucket, transformSourcePath, width),
+    url: deliveryUrl(transformSourcePath, width),
     width,
   }));
   const storedSources = manifest.responsiveWidths.map((width) => ({
-    url: publicStorageUrl(
-      client,
-      bucket,
-      responsiveVariantStoragePath(normalizedPath, width),
-    ),
+    url: deliveryUrl(responsiveVariantStoragePath(normalizedPath, width)),
     width,
   }));
   const responsiveSources = [...transformedSources, ...storedSources].sort(

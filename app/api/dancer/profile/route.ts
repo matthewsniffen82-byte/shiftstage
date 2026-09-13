@@ -365,8 +365,7 @@ function withPhotoUrls(client: any, profile: any) {
   const avatar = responsivePublicImage(
     client,
     APPROVED_PHOTO_BUCKET,
-    profile?.avatar_storage_path,
-  );
+    profile?.avatar_storage_path, { preview: true });
   return {
     ...profile,
     avatarPhotoUrl: avatar?.imageUrl || "",
@@ -381,8 +380,7 @@ function withPhotoUrls(client: any, profile: any) {
         const image = responsivePublicImage(
           client,
           "dancer-photos",
-          photo.storage_path,
-        );
+          photo.storage_path, { preview: true });
         return {
           ...photo,
           focalX: image?.imageFocalX ?? 50,
@@ -891,6 +889,7 @@ function normalizeStorageKey(value: unknown) {
 }
 
 function approvedBucketPathFromPublicUrl(url: URL) {
+  if (url.pathname === "/api/media/dancer-photo") return url.searchParams.get("path") || "";
   const marker = `/storage/v1/object/public/${APPROVED_PHOTO_BUCKET}/`;
   const index = url.pathname.indexOf(marker);
   if (index === -1) return "";

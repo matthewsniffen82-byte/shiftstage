@@ -11,7 +11,7 @@ vm.runInNewContext(ts.transpileModule(metricSource, {
 const exports = {};
 vm.runInNewContext(ts.transpileModule(source, {
   compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
-}).outputText, { exports, require: name => name === "./tv-metric-counts" ? metricExports : ({ MAX_DANCER_PROFILE_VIDEOS: 50, isPublicDancerProfileEligible: () => true }) });
+}).outputText, { exports, require: name => name === "./tv-metric-counts" ? metricExports : ({ dancerVideoDeliveryUrl: (id, poster, preview) => `https://app.example/api/media/dancer-video?id=${id}&poster=${Boolean(poster)}&preview=${Boolean(preview)}`, MAX_DANCER_PROFILE_VIDEOS: 50, isPublicDancerProfileEligible: () => true }) });
 export const tvWorkspace = exports;
 
 export function workspaceFixture(count, options = {}) {

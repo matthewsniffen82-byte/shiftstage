@@ -35,10 +35,10 @@ const source = Object.fromEntries(await Promise.all(
   ]),
 ));
 
-test("public cache windows are short while personalized TV remains private", () => {
+test("account visibility responses are uncached while nonpersonal directory metadata retains caching", () => {
   assert.equal(
     PUBLIC_DYNAMIC_CACHE_CONTROL,
-    "public, max-age=10, s-maxage=10, stale-while-revalidate=20",
+    PRIVATE_NO_STORE_CACHE_CONTROL,
   );
   assert.equal(
     PUBLIC_DIRECTORY_CACHE_CONTROL,
@@ -50,7 +50,7 @@ test("public cache windows are short while personalized TV remains private", () 
   assert.match(source.tvRoute, /publicTvCacheControl\(filter\)/);
 });
 
-test("all reusable public JSON success responses opt into the shared short cache", () => {
+test("all profile and feed JSON success responses use the visibility cache policy", () => {
   for (const route of ["dancer", "dancers", "discovery", "tvCount", "venue", "venues"]) {
     assert.match(source[route], /PUBLIC_DYNAMIC_CACHE_CONTROL/, route);
   }

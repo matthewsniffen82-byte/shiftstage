@@ -1,3 +1,4 @@
+import { dancerPhotoDeliveryUrl } from './media-delivery-url';
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { ACTIVE_IMAGE_MODERATION_STATUSES } from "./image-moderation-status";
 import { PROFILE_AVATAR_CONTEXT } from "./photo-slot";
@@ -245,7 +246,7 @@ async function refreshOwnPhotoReviewStatus(client: DancrClient, userId: string, 
 }
 
 export function getDancerPhotoUrl(client: DancrClient, storagePath: string) {
-  return client.storage.from("dancer-photos").getPublicUrl(storagePath).data.publicUrl;
+  return dancerPhotoDeliveryUrl(storagePath, undefined, true);
 }
 
 export async function getDancerDashboardAnalytics(

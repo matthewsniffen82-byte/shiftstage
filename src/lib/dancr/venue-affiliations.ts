@@ -527,7 +527,7 @@ async function previewDancerVenueVerification(
   }
 
   const existing = await activeAffiliation(client, String(data.venue_id), String(data.dancer_id));
-  const avatar = responsivePublicImage(client, DANCER_PHOTO_BUCKET, dancer.avatar_storage_path);
+  const avatar = responsivePublicImage(client, DANCER_PHOTO_BUCKET, dancer.avatar_storage_path, { preview: true });
   return {
     tokenExpiresAt: data.expires_at,
     alreadyVerified: Boolean(existing),
@@ -607,7 +607,7 @@ const AFFILIATION_COLUMNS = `
 function mapAffiliation(client: DancrClient, row: any) {
   const venue = Array.isArray(row.venues) ? row.venues[0] : row.venues;
   const dancer = Array.isArray(row.dancer_profiles) ? row.dancer_profiles[0] : row.dancer_profiles;
-  const avatar = responsivePublicImage(client, DANCER_PHOTO_BUCKET, dancer?.avatar_storage_path);
+  const avatar = responsivePublicImage(client, DANCER_PHOTO_BUCKET, dancer?.avatar_storage_path, { preview: true });
   return {
     id: row.id,
     venueId: row.venue_id,

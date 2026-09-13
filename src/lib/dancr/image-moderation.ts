@@ -591,7 +591,7 @@ async function approveModeratedUpload(
       logModeration("approved", { recordId: input.recordId, avatar: true });
       logModeration("database_status_written", { recordId: input.recordId, avatar: true, databaseStatus: "approved" });
       await logStoredModerationStatus(admin, input.recordId, "approved");
-      const avatarImage = responsivePublicImage(admin, APPROVED_PHOTO_BUCKET, published.profile.avatar_storage_path!);
+      const avatarImage = responsivePublicImage(admin, APPROVED_PHOTO_BUCKET, published.profile.avatar_storage_path!, { preview: true });
       return {
         decision: "approved",
         moderationRecordId: input.recordId,
@@ -981,7 +981,7 @@ async function safeRemoveObject(client: DancrClient, bucket: string, path: strin
 
 function getDancerPhotoUrl(client: DancrClient, storagePath: string) {
   return (
-    responsivePublicImage(client, APPROVED_PHOTO_BUCKET, storagePath)
+    responsivePublicImage(client, APPROVED_PHOTO_BUCKET, storagePath, { preview: true })
       ?.imageUrl || ""
   );
 }
@@ -1091,8 +1091,7 @@ async function moderationRecordToUploadResponse(client: DancrClient, record: any
     const publicImage = responsivePublicImage(
       client,
       APPROVED_PHOTO_BUCKET,
-      record.final_storage_path,
-    );
+      record.final_storage_path, { preview: true });
     return {
       decision: "approved",
       moderationRecordId: record.id,
@@ -1128,7 +1127,7 @@ function galleryPublicationResponse(
   client: DancrClient, published: Awaited<ReturnType<typeof publishDancerPhoto>>,
 ): ModeratedPhotoResult {
   const { photo, record } = published;
-  const image = responsivePublicImage(client, APPROVED_PHOTO_BUCKET, photo.storage_path);
+  const image = responsivePublicImage(client, APPROVED_PHOTO_BUCKET, photo.storage_path, { preview: true });
   return {
     decision: "approved", moderationRecordId: record.id,
     reasonCodes: record.reason_codes || [], providerFlagged: Boolean(record.provider_flagged),

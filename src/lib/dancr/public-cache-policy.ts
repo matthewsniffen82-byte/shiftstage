@@ -1,9 +1,8 @@
 export const PRIVATE_NO_STORE_CACHE_CONTROL = "private, no-store, max-age=0";
 
-// Live public responses remain fresh while allowing immediate back-navigation
-// and short repeat visits to reuse the exact same payload and media URLs.
+// Profile and feed visibility must reflect an account pause on the next request.
 export const PUBLIC_DYNAMIC_CACHE_CONTROL =
-  "public, max-age=10, s-maxage=10, stale-while-revalidate=20";
+  PRIVATE_NO_STORE_CACHE_CONTROL;
 
 // City options and other non-personal directory metadata change infrequently.
 export const PUBLIC_DIRECTORY_CACHE_CONTROL =

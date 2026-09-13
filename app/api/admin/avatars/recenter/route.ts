@@ -98,8 +98,7 @@ export async function POST(request: Request) {
     const publicAvatar = responsivePublicImage(
       admin,
       APPROVED_PHOTO_BUCKET,
-      uploaded.storagePath,
-    );
+      uploaded.storagePath, { preview: true });
     console.info(
       JSON.stringify({
         event: "dancer_avatar.platform_recentered",

@@ -1743,7 +1743,7 @@ function slugify(value: string) {
 
 function toDancerPhotoUrl(client: DancrClient, storagePath: string) {
   return (
-    responsivePublicImage(client, "dancer-photos", storagePath)?.imageUrl || ""
+    responsivePublicImage(client, "dancer-photos", storagePath, { preview: true })?.imageUrl || ""
   );
 }
 

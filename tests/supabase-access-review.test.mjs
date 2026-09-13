@@ -9,7 +9,7 @@ import { reviewSupabaseAccessCatalog } from "../scripts/lib/supabase-access-revi
 
 const read = file => JSON.parse(readFileSync(new URL(file, import.meta.url), "utf8"));
 const publicAccess = read("./fixtures/rls-current-access.json");
-const storageAccess = read("../docs/supabase-reliability/step-01-inventory.json").catalog;
+const storageAccess = read("./fixtures/storage-current-access.json").catalog;
 const expected = { publicAccess, storageAccess };
 const catalog = () => structuredClone({
   captured_at: publicAccess.capturedAt, read_only: "on",

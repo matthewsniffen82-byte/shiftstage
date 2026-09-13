@@ -73,12 +73,12 @@ for(const key of ['throwAt','errorAt'])test('a second-batch '+key+' does not ret
 test('a malformed second batch cannot hide behind the first successful result',async()=>{
  const h=harness({transform:(data,n)=>n===2?{}:data});await assert.rejects(h.run(Array.from({length:251},(_,i)=>tvMetricId(i+1))));assert.equal(h.calls.length,2);
 });
-test('actual owner workspace keeps signing and ownership scope while receiving native totals',async()=>{
+test('actual owner workspace keeps revocable playback and ownership scope while receiving native totals',async()=>{
  const fixture=workspaceFixture(2),h=harness();fixture.client.rpc=h.client.rpc;
  await db.query('insert into public.mydancr_tv_videos select unnest($1::uuid[])',[fixture.rows.map(r=>r.id)]);
  await addMetricEvents(db,{video:fixture.rows[0].id,count:1600});
  const workspace=await tvWorkspace.getDancerMyDancrTvWorkspace(fixture.client,'owner');
- assert.equal(workspace.videos[0].metrics.impression,1600);assert.equal(workspace.videos[1].metrics.impression,0);assert.equal(fixture.calls.length,1);
+ assert.equal(workspace.videos[0].metrics.impression,1600);assert.equal(workspace.videos[1].metrics.impression,0);assert.equal(fixture.calls.length,0);
  assert.ok(fixture.queries[0].operations.some(([method,key,value])=>method==='eq'&&key==='user_id'&&value==='owner'));
  assert.ok(fixture.queries[1].operations.some(([method,key,value])=>method==='eq'&&key==='dancer_id'&&value==='dancer'));
  assert.deepEqual(h.calls[0].args.p_video_ids,fixture.rows.map(r=>r.id));

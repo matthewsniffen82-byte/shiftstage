@@ -51020,6 +51020,7 @@
       if (!text) return "";
       try {
         const parsed = new URL(text, window.location.origin);
+        if (parsed.pathname === "/api/media/dancer-photo") return parsed.searchParams.get("path") || "";
         const marker = "/storage/v1/object/public/dancer-photos/";
         const markerIndex = parsed.pathname.indexOf(marker);
         return markerIndex >= 0

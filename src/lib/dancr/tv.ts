@@ -1,3 +1,4 @@
+import { dancerVideoDeliveryUrl } from './media-delivery-url';
 import { toPublicClubDeal } from "./public-club-deal";
 import { isPublicVenueRow } from "./venue-public-visibility";
 import { isAllMyDancrCities } from "./markets";
@@ -586,13 +587,9 @@ async function signPublicVideos(
   if (!rows.length) return [];
   const dancerIds = [...new Set(rows.map((row) => row.dancer.id))];
   const [
-    { data: signed, error: signedError },
     { data: photos, error: photoError },
     { data: avatars, error: avatarError },
   ] = await Promise.all([
-    admin.storage
-      .from(MYDANCR_TV_BUCKET)
-      .createSignedUrls(rows.map((row) => row.storagePath), MYDANCR_TV_SIGNED_URL_SECONDS),
     admin
       .from("dancer_photos")
       .select("dancer_id, storage_path")
@@ -604,13 +601,9 @@ async function signPublicVideos(
       .select("id, avatar_storage_path")
       .in("id", dancerIds),
   ]);
-  if (signedError) throw signedError;
   if (photoError) throw photoError;
   if (avatarError) throw avatarError;
 
-  const signedByPath = new Map(
-    (signed || []).map((item: any) => [item.path, item.signedUrl || ""]),
-  );
   const photoByDancer = new Map(
     (photos || []).map((photo: any) => [photo.dancer_id, photo.storage_path]),
   );
@@ -619,7 +612,7 @@ async function signPublicVideos(
   );
 
   return rows.map((row) => {
-    const videoUrl = signedByPath.get(row.storagePath);
+    const videoUrl = dancerVideoDeliveryUrl(row.id);
     if (!videoUrl) throw new Error("Unable to prepare MyDancr TV playback.");
     const photoPath = photoByDancer.get(row.dancer.id);
     const primaryPhoto = photoPath
@@ -639,9 +632,7 @@ async function signPublicVideos(
       ...publicVideo,
       videoUrl,
       posterUrl: row.posterStoragePath
-        ? admin.storage
-            .from(MYDANCR_TV_POSTER_BUCKET)
-            .getPublicUrl(row.posterStoragePath).data.publicUrl
+        ? dancerVideoDeliveryUrl(row.id, true)
         : null,
       dancer: {
         ...publicVideo.dancer,
@@ -702,22 +693,11 @@ function diversifyDancers(rows: NormalizedFeedRow[]) {
   return result;
 }
 
-async function signManagedVideoUrls(admin: AdminClient, videos: any[]) {
-  const paths = [...new Set<string>(videos.map((video) => video.storage_path).filter((path) => typeof path === "string" && path.length > 0))];
-  const signedByPath = new Map<string, string>();
-  // Only sign rows already selected by the authorized workspace/review query.
-  // Bound each request even if historical workspace rows exceed the current cap.
-  for (let offset = 0; offset < paths.length; offset += 100) {
-    const { data, error } = await admin.storage
-      .from(MYDANCR_TV_BUCKET)
-      .createSignedUrls(paths.slice(offset, offset + 100), MYDANCR_TV_SIGNED_URL_SECONDS);
-    if (error) throw error;
-    if (!data) throw new Error("Unable to prepare MyDancr TV playback.");
-    for (const item of data) {
-      if (!item.error && item.path && item.signedUrl) signedByPath.set(item.path, item.signedUrl);
-    }
-  }
-  return signedByPath;
+async function signManagedVideoUrls(_admin: AdminClient, videos: any[]) {
+  // These rows were selected by the authorized owner/admin workspace query.
+  // The delivery endpoint rechecks account state and never releases a Storage token.
+  return new Map<string, string>(videos.filter(video => video.id && video.storage_path)
+    .map(video => [video.id, dancerVideoDeliveryUrl(video.id, false, true)]));
 }
 
 export async function getDancerMyDancrTvWorkspace(admin: AdminClient, userId: string) {
@@ -745,7 +725,7 @@ export async function getDancerMyDancrTvWorkspace(admin: AdminClient, userId: st
     signManagedVideoUrls(admin, videos || []),
   ]);
   const signedVideos = (videos || []).map((video: any) =>
-    mapManagedVideo(admin, video, signedByPath.get(video.storage_path) || "", metrics[video.id] || emptyMetrics()),
+    mapManagedVideo(admin, video, signedByPath.get(video.id) || "", metrics[video.id] || emptyMetrics()),
   );
 
   return {
@@ -1744,7 +1724,7 @@ export async function getAdminMyDancrTvVideos(admin: AdminClient, status = "subm
 
   const signedByPath = await signManagedVideoUrls(admin, data || []);
   return (data || []).map((video: any) =>
-    mapManagedVideo(admin, video, signedByPath.get(video.storage_path) || "", emptyMetrics()),
+    mapManagedVideo(admin, video, signedByPath.get(video.id) || "", emptyMetrics()),
   );
 }
 
@@ -1926,9 +1906,7 @@ function mapManagedVideo(
     caption: video.caption,
     videoUrl,
     posterUrl: posterStoragePath
-      ? admin.storage
-          .from(MYDANCR_TV_POSTER_BUCKET)
-          .getPublicUrl(posterStoragePath).data.publicUrl
+      ? dancerVideoDeliveryUrl(video.id, true, true)
       : null,
     durationSeconds: Number(video.duration_seconds || 0),
     width: Number(video.width || 0),

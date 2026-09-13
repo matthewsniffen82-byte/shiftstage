@@ -2,15 +2,12 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { tvWorkspace, workspaceFixture } from "./helpers/tv-workspace-fixture.mjs";
 
-test("owner video workspace batches signing and preserves query scope, order and metrics", async () => {
+test("owner video workspace creates revocable URLs and preserves query scope, order and metrics", async () => {
   const f = workspaceFixture(50);
   const workspace = await tvWorkspace.getDancerMyDancrTvWorkspace(f.client, "owner");
-  assert.equal(f.calls.length, 1);
-  assert.equal(f.calls[0].paths.length, 50);
-  assert.equal(f.calls[0].bucket, "mydancr-tv-videos");
-  assert.equal(f.calls[0].expiresIn, 3600);
+  assert.equal(f.calls.length, 0);
   assert.deepEqual(Array.from(workspace.videos, video => video.id), f.rows.map(row => row.id));
-  workspace.videos.forEach((video, index) => assert.ok(video.videoUrl.endsWith(f.rows[index].storage_path)));
+  workspace.videos.forEach((video, index) => assert.ok(new URL(video.videoUrl).searchParams.get("id") === f.rows[index].id));
   assert.equal(workspace.videos[0].metrics.impression, 1);
   assert.equal(workspace.remainingVideoSlots, 0);
   assert.ok(f.queries[0].operations.some(([method, field, value]) => method === "eq" && field === "user_id" && value === "owner"));
@@ -18,24 +15,23 @@ test("owner video workspace batches signing and preserves query scope, order and
   assert.ok(f.queries[1].operations.some(([method, field, value]) => method === "eq" && field === "distribution_scope" && value === "profile_and_feed"));
 });
 
-test("admin review queue signs 100 authorized rows in one request and retains status/limit", async () => {
+test("admin review queue prepares 100 authorized rows without a Storage token and retains status/limit", async () => {
   const f = workspaceFixture(100);
   const videos = await tvWorkspace.getAdminMyDancrTvVideos(f.client, "unexpected");
   assert.equal(videos.length, 100);
-  assert.equal(f.calls.length, 1);
-  assert.equal(f.calls[0].paths.length, 100);
+  assert.equal(f.calls.length, 0);
   assert.ok(f.queries[0].operations.some(([method, field, value]) => method === "eq" && field === "status" && value === "submitted"));
   assert.ok(f.queries[0].operations.some(([method, value]) => method === "limit" && value === 100));
 });
 
-test("failed paths remain unavailable without changing other rows or borrowing another URL", async () => {
-  const f = workspaceFixture(3, { failedPaths: ["owner/dancer/video-1.mp4"] });
+test("workspace URLs remain bound to each authorized record and expose no storage paths", async () => {
+  const f = workspaceFixture(3);
   const videos = await tvWorkspace.getAdminMyDancrTvVideos(f.client);
-  assert.ok(videos[0].videoUrl.endsWith("video-0.mp4"));
-  assert.equal(videos[1].videoUrl, "");
-  assert.ok(videos[2].videoUrl.endsWith("video-2.mp4"));
-  const failed = workspaceFixture(3, { storageError: true });
-  await assert.rejects(tvWorkspace.getAdminMyDancrTvVideos(failed.client), /Storage unavailable/);
+  for (let n = 0; n < videos.length; n++) {
+    assert.equal(new URL(videos[n].videoUrl).searchParams.get('id'), f.rows[n].id);
+    assert.ok(!videos[n].videoUrl.includes(f.rows[n].storage_path));
+  }
+  assert.equal(f.calls.length, 0);
 });
 
 test("empty or rejected owner queries never sign media", async () => {
@@ -49,23 +45,23 @@ test("empty or rejected owner queries never sign media", async () => {
   }
 });
 
-test("historical rows use bounded batches and duplicate paths are signed once", async () => {
+test("historical rows remain isolated by record ID even when storage paths repeat", async () => {
   const f = workspaceFixture(251);
   f.rows[250].storage_path = f.rows[0].storage_path;
   const result = await tvWorkspace.getDancerMyDancrTvWorkspace(f.client, "owner");
-  assert.deepEqual(f.calls.map(call => call.paths.length), [100, 100, 50]);
+  assert.equal(f.calls.length, 0);
   assert.equal(result.videos.length, 251);
-  assert.equal(result.videos[250].videoUrl, result.videos[0].videoUrl);
+  assert.notEqual(result.videos[250].videoUrl, result.videos[0].videoUrl);
 });
 
-test("signing and analytics begin independently after the owner video query", async () => {
+test("playback URL preparation does not wait on Storage while analytics loads", async () => {
   let release;
   const metricsGate = new Promise(resolve => { release = resolve; });
   const f = workspaceFixture(2, { metricsGate });
   const pending = tvWorkspace.getDancerMyDancrTvWorkspace(f.client, "owner");
   try {
     await new Promise(resolve => setImmediate(resolve));
-    assert.equal(f.calls.length, 1);
+    assert.equal(f.calls.length, 0);
   } finally { release(); }
   assert.equal((await pending).videos[0].metrics.impression, 1);
 });

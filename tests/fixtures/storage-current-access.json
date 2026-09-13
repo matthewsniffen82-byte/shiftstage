@@ -1,0 +1,527 @@
+{
+  "scope": "Reviewed Storage access for checked dancer media delivery; metadata only. Historic policies are preserved, with a restrictive browser SELECT policy for dancer media.",
+  "catalog": {
+    "relations": [
+      {
+        "force_rls": false,
+        "grants": {
+          "anon": {
+            "delete": true,
+            "insert": true,
+            "select": true,
+            "update": true
+          },
+          "authenticated": {
+            "delete": true,
+            "insert": true,
+            "select": true,
+            "update": true
+          },
+          "service_role": {
+            "delete": true,
+            "insert": true,
+            "select": true,
+            "update": true
+          }
+        },
+        "kind": "r",
+        "name": "buckets",
+        "options": null,
+        "owner": "supabase_storage_admin",
+        "rls": true,
+        "schema_name": "storage"
+      },
+      {
+        "force_rls": false,
+        "grants": {
+          "anon": {
+            "delete": true,
+            "insert": true,
+            "select": true,
+            "update": true
+          },
+          "authenticated": {
+            "delete": true,
+            "insert": true,
+            "select": true,
+            "update": true
+          },
+          "service_role": {
+            "delete": true,
+            "insert": true,
+            "select": true,
+            "update": true
+          }
+        },
+        "kind": "r",
+        "name": "buckets_analytics",
+        "options": null,
+        "owner": "supabase_storage_admin",
+        "rls": true,
+        "schema_name": "storage"
+      },
+      {
+        "force_rls": false,
+        "grants": {
+          "anon": {
+            "delete": false,
+            "insert": false,
+            "select": true,
+            "update": false
+          },
+          "authenticated": {
+            "delete": false,
+            "insert": false,
+            "select": true,
+            "update": false
+          },
+          "service_role": {
+            "delete": false,
+            "insert": false,
+            "select": true,
+            "update": false
+          }
+        },
+        "kind": "r",
+        "name": "buckets_vectors",
+        "options": null,
+        "owner": "supabase_storage_admin",
+        "rls": true,
+        "schema_name": "storage"
+      },
+      {
+        "force_rls": false,
+        "grants": {
+          "anon": {
+            "delete": false,
+            "insert": false,
+            "select": false,
+            "update": false
+          },
+          "authenticated": {
+            "delete": false,
+            "insert": false,
+            "select": false,
+            "update": false
+          },
+          "service_role": {
+            "delete": false,
+            "insert": false,
+            "select": false,
+            "update": false
+          }
+        },
+        "kind": "r",
+        "name": "migrations",
+        "options": null,
+        "owner": "supabase_storage_admin",
+        "rls": true,
+        "schema_name": "storage"
+      },
+      {
+        "force_rls": false,
+        "grants": {
+          "anon": {
+            "delete": true,
+            "insert": true,
+            "select": true,
+            "update": true
+          },
+          "authenticated": {
+            "delete": true,
+            "insert": true,
+            "select": true,
+            "update": true
+          },
+          "service_role": {
+            "delete": true,
+            "insert": true,
+            "select": true,
+            "update": true
+          }
+        },
+        "kind": "r",
+        "name": "objects",
+        "options": null,
+        "owner": "supabase_storage_admin",
+        "rls": true,
+        "schema_name": "storage"
+      },
+      {
+        "force_rls": false,
+        "grants": {
+          "anon": {
+            "delete": false,
+            "insert": false,
+            "select": true,
+            "update": false
+          },
+          "authenticated": {
+            "delete": false,
+            "insert": false,
+            "select": true,
+            "update": false
+          },
+          "service_role": {
+            "delete": true,
+            "insert": true,
+            "select": true,
+            "update": true
+          }
+        },
+        "kind": "r",
+        "name": "s3_multipart_uploads",
+        "options": null,
+        "owner": "supabase_storage_admin",
+        "rls": true,
+        "schema_name": "storage"
+      },
+      {
+        "force_rls": false,
+        "grants": {
+          "anon": {
+            "delete": false,
+            "insert": false,
+            "select": true,
+            "update": false
+          },
+          "authenticated": {
+            "delete": false,
+            "insert": false,
+            "select": true,
+            "update": false
+          },
+          "service_role": {
+            "delete": true,
+            "insert": true,
+            "select": true,
+            "update": true
+          }
+        },
+        "kind": "r",
+        "name": "s3_multipart_uploads_parts",
+        "options": null,
+        "owner": "supabase_storage_admin",
+        "rls": true,
+        "schema_name": "storage"
+      },
+      {
+        "force_rls": false,
+        "grants": {
+          "anon": {
+            "delete": false,
+            "insert": false,
+            "select": true,
+            "update": false
+          },
+          "authenticated": {
+            "delete": false,
+            "insert": false,
+            "select": true,
+            "update": false
+          },
+          "service_role": {
+            "delete": false,
+            "insert": false,
+            "select": true,
+            "update": false
+          }
+        },
+        "kind": "r",
+        "name": "vector_indexes",
+        "options": null,
+        "owner": "supabase_storage_admin",
+        "rls": true,
+        "schema_name": "storage"
+      }
+    ],
+    "policies": [
+      {
+        "cmd": "ALL",
+        "permissive": "PERMISSIVE",
+        "policyname": "admins manage MyDancr TV files",
+        "qual": "((bucket_id = 'mydancr-tv-videos'::text) AND is_admin())",
+        "roles": [
+          "authenticated"
+        ],
+        "schemaname": "storage",
+        "tablename": "objects",
+        "with_check": "((bucket_id = 'mydancr-tv-videos'::text) AND is_admin())"
+      },
+      {
+        "cmd": "ALL",
+        "permissive": "PERMISSIVE",
+        "policyname": "admins manage dancer photo files",
+        "qual": "((bucket_id = 'dancer-photos'::text) AND is_admin())",
+        "roles": [
+          "authenticated"
+        ],
+        "schemaname": "storage",
+        "tablename": "objects",
+        "with_check": "((bucket_id = 'dancer-photos'::text) AND is_admin())"
+      },
+      {
+        "cmd": "ALL",
+        "permissive": "PERMISSIVE",
+        "policyname": "admins manage moderation review files",
+        "qual": "((bucket_id = 'dancr-image-moderation-review'::text) AND is_admin())",
+        "roles": [
+          "authenticated"
+        ],
+        "schemaname": "storage",
+        "tablename": "objects",
+        "with_check": "((bucket_id = 'dancr-image-moderation-review'::text) AND is_admin())"
+      },
+      {
+        "cmd": "ALL",
+        "permissive": "PERMISSIVE",
+        "policyname": "admins manage moderation temp files",
+        "qual": "((bucket_id = 'dancr-image-moderation-temp'::text) AND is_admin())",
+        "roles": [
+          "authenticated"
+        ],
+        "schemaname": "storage",
+        "tablename": "objects",
+        "with_check": "((bucket_id = 'dancr-image-moderation-temp'::text) AND is_admin())"
+      },
+      {
+        "cmd": "ALL",
+        "permissive": "PERMISSIVE",
+        "policyname": "admins manage verification files",
+        "qual": "((bucket_id = 'verification-documents'::text) AND is_admin())",
+        "roles": [
+          "authenticated"
+        ],
+        "schemaname": "storage",
+        "tablename": "objects",
+        "with_check": "((bucket_id = 'verification-documents'::text) AND is_admin())"
+      },
+      {
+        "cmd": "SELECT",
+        "permissive": "PERMISSIVE",
+        "policyname": "admins read venue ownership proofs",
+        "qual": "((bucket_id = 'venue-ownership-proofs'::text) AND is_admin())",
+        "roles": [
+          "public"
+        ],
+        "schemaname": "storage",
+        "tablename": "objects",
+        "with_check": null
+      },
+      {
+        "cmd": "SELECT",
+        "permissive": "PERMISSIVE",
+        "policyname": "approved dancer photos are publicly readable",
+        "qual": "((bucket_id = 'dancer-photos'::text) AND (EXISTS ( SELECT 1\n   FROM (dancer_photos photo\n     JOIN dancer_profiles dancer ON ((dancer.id = photo.dancer_id)))\n  WHERE ((photo.storage_path = objects.name) AND (photo.review_status = 'approved'::review_status) AND (dancer.status = 'approved'::dancer_status) AND (dancer.verification_status = 'approved'::review_status) AND (dancer.venue_approved_at IS NOT NULL) AND (dancer.is_public = true) AND (dancer.disabled_at IS NULL)))))",
+        "roles": [
+          "public"
+        ],
+        "schemaname": "storage",
+        "tablename": "objects",
+        "with_check": null
+      },
+      {
+        "cmd": "SELECT",
+        "permissive": "PERMISSIVE",
+        "policyname": "claimants read own venue proof",
+        "qual": "((bucket_id = 'venue-ownership-proofs'::text) AND (EXISTS ( SELECT 1\n   FROM venue_ownership_claims claim\n  WHERE ((claim.claimant_user_id = auth.uid()) AND (claim.proof_storage_path = objects.name)))))",
+        "roles": [
+          "public"
+        ],
+        "schemaname": "storage",
+        "tablename": "objects",
+        "with_check": null
+      },
+      {
+        "cmd": "SELECT",
+        "permissive": "PERMISSIVE",
+        "policyname": "dancers read own MyDancr TV files",
+        "qual": "((bucket_id = 'mydancr-tv-videos'::text) AND ((storage.foldername(name))[1] = (auth.uid())::text))",
+        "roles": [
+          "authenticated"
+        ],
+        "schemaname": "storage",
+        "tablename": "objects",
+        "with_check": null
+      },
+      {
+        "cmd": "SELECT",
+        "permissive": "PERMISSIVE",
+        "policyname": "dancers read own dancer photo files",
+        "qual": "((bucket_id = 'dancer-photos'::text) AND ((storage.foldername(name))[1] = (auth.uid())::text))",
+        "roles": [
+          "authenticated"
+        ],
+        "schemaname": "storage",
+        "tablename": "objects",
+        "with_check": null
+      },
+      {
+        "cmd": "SELECT",
+        "permissive": "PERMISSIVE",
+        "policyname": "dancers read own verification files",
+        "qual": "((bucket_id = 'verification-documents'::text) AND ((storage.foldername(name))[1] = (auth.uid())::text))",
+        "roles": [
+          "authenticated"
+        ],
+        "schemaname": "storage",
+        "tablename": "objects",
+        "with_check": null
+      },
+      {
+        "cmd": "SELECT",
+        "permissive": "PERMISSIVE",
+        "policyname": "public reads venue cover images",
+        "qual": "(bucket_id = 'venue-cover-images'::text)",
+        "roles": [
+          "public"
+        ],
+        "schemaname": "storage",
+        "tablename": "objects",
+        "with_check": null
+      },
+      {
+        "cmd": "SELECT",
+        "permissive": "PERMISSIVE",
+        "policyname": "public reads venue logo images",
+        "qual": "(bucket_id = 'venue-logo-images'::text)",
+        "roles": [
+          "public"
+        ],
+        "schemaname": "storage",
+        "tablename": "objects",
+        "with_check": null
+      },
+      {
+        "cmd": "SELECT",
+        "permissive": "PERMISSIVE",
+        "policyname": "public reads venue qr codes",
+        "qual": "(bucket_id = 'venue-qr-codes'::text)",
+        "roles": [
+          "public"
+        ],
+        "schemaname": "storage",
+        "tablename": "objects",
+        "with_check": null
+      },
+      {
+        "schemaname": "storage",
+        "tablename": "objects",
+        "policyname": "Dancer media reads require checked delivery",
+        "permissive": "RESTRICTIVE",
+        "roles": [
+          "anon",
+          "authenticated"
+        ],
+        "cmd": "SELECT",
+        "qual": "(bucket_id <> ALL (ARRAY['dancer-photos'::text, 'mydancr-tv-videos'::text]))",
+        "with_check": null
+      }
+    ],
+    "views": [],
+    "buckets": [
+      {
+        "allowed_mime_types": [
+          "image/jpeg",
+          "image/png",
+          "image/webp"
+        ],
+        "file_size_limit": 10485760,
+        "id": "dancer-photos",
+        "public": false
+      },
+      {
+        "allowed_mime_types": [
+          "image/jpeg",
+          "image/png",
+          "image/webp"
+        ],
+        "file_size_limit": 10485760,
+        "id": "dancr-image-moderation-review",
+        "public": false
+      },
+      {
+        "allowed_mime_types": [
+          "image/jpeg",
+          "image/png",
+          "image/webp"
+        ],
+        "file_size_limit": 10485760,
+        "id": "dancr-image-moderation-temp",
+        "public": false
+      },
+      {
+        "allowed_mime_types": [
+          "image/jpeg",
+          "image/png",
+          "image/webp"
+        ],
+        "file_size_limit": 10485760,
+        "id": "dancr-media-originals",
+        "public": false
+      },
+      {
+        "allowed_mime_types": [
+          "video/mp4",
+          "video/webm",
+          "video/quicktime"
+        ],
+        "file_size_limit": 78643200,
+        "id": "mydancr-tv-videos",
+        "public": false
+      },
+      {
+        "allowed_mime_types": [
+          "image/jpeg",
+          "image/png",
+          "image/webp"
+        ],
+        "file_size_limit": 10485760,
+        "id": "venue-cover-images",
+        "public": true
+      },
+      {
+        "allowed_mime_types": [
+          "image/jpeg",
+          "image/png",
+          "image/webp"
+        ],
+        "file_size_limit": 10485760,
+        "id": "venue-logo-images",
+        "public": true
+      },
+      {
+        "allowed_mime_types": [
+          "application/pdf",
+          "image/jpeg",
+          "image/png",
+          "image/webp"
+        ],
+        "file_size_limit": 10485760,
+        "id": "venue-ownership-proofs",
+        "public": false
+      },
+      {
+        "allowed_mime_types": [
+          "image/jpeg",
+          "image/png",
+          "image/webp"
+        ],
+        "file_size_limit": 10485760,
+        "id": "venue-qr-codes",
+        "public": true
+      },
+      {
+        "allowed_mime_types": [
+          "image/jpeg",
+          "image/png",
+          "image/webp",
+          "application/pdf"
+        ],
+        "file_size_limit": 10485760,
+        "id": "verification-documents",
+        "public": false
+      }
+    ]
+  }
+}

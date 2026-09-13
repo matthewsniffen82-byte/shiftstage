@@ -1,12 +1,14 @@
 import assert from "node:assert/strict";
 import { before, after, test } from "node:test";
+import { readFileSync } from "node:fs";
 import { randomUUID } from "node:crypto";
 import { asIdentity, catalog, createPolicyDatabase, deniedOrEmpty, ids, quote } from "./helpers/rls-database.mjs";
 
 let db;
 const ownedPath = `${ids.owner}/fixture.jpg`;
 const otherPath = `${ids.other}/fixture.jpg`;
-const policies = catalog.policies.filter(p => p.schemaname === "storage");
+const currentStorage = JSON.parse(readFileSync(new URL("./fixtures/storage-current-access.json", import.meta.url), "utf8")).catalog;
+const policies = currentStorage.policies;
 
 before(async () => {
   db = await createPolicyDatabase();
@@ -24,7 +26,7 @@ before(async () => {
   for (const p of policies) {
     await db.exec(`create policy ${quote(p.policyname)} on storage.${quote(p.tablename)} as ${p.permissive} for ${p.cmd} to ${p.roles.map(quote).join(",")} ${p.qual ? `using (${p.qual})` : ""} ${p.with_check ? `with check (${p.with_check})` : ""};`);
   }
-  for (const bucket of catalog.buckets) {
+  for (const bucket of currentStorage.buckets) {
     await db.query("insert into storage.buckets values ($1,$2)", [bucket.id, bucket.public]);
     await db.query("insert into storage.objects(id,bucket_id,name,owner_id) values ($1,$2,$3,$4),($5,$2,$6,$7)", [randomUUID(), bucket.id, ownedPath, ids.owner, randomUUID(), otherPath, ids.other]);
   }
@@ -33,7 +35,7 @@ before(async () => {
 });
 after(async () => { await db?.close(); });
 
-for (const bucket of catalog.buckets) {
+for (const bucket of currentStorage.buckets) {
   test(`storage: ${bucket.id} rejects direct uploads, overwrites and deletion by ordinary users`, async () => {
     for (const [role, actor] of [["anon", null], ["authenticated", ids.owner], ["authenticated", ids.other]]) {
       const cases = [
@@ -55,7 +57,7 @@ for (const bucket of catalog.buckets) {
 }
 
 test("storage: intended owner reads, public venue artwork and active-admin access remain available", async () => {
-  for (const bucket of ["dancer-photos", "verification-documents", "mydancr-tv-videos", "venue-ownership-proofs"]) {
+  for (const bucket of ["verification-documents", "venue-ownership-proofs"]) {
     assert.equal((await asIdentity(db, "authenticated", ids.owner, () => db.query("select 1 from storage.objects where bucket_id=$1 and name=$2", [bucket, ownedPath]))).rows.length, 1);
   }
   for (const bucket of ["venue-logo-images", "venue-cover-images", "venue-qr-codes"]) {
@@ -77,4 +79,9 @@ test("storage: users cannot make buckets public or inherit inactive-admin permis
   }
   await db.query("update app_users set account_state='disabled' where id=$1", [ids.admin]);
   assert.equal((await asIdentity(db, "authenticated", ids.admin, () => db.query("select 1 from storage.objects where bucket_id='dancr-image-moderation-review'"))).rows.length, 0);
+});
+
+for (const bucket of ['dancer-photos','mydancr-tv-videos'])test('direct signed-link issuance is denied for '+bucket+' even to owners and administrators',async()=>{
+ for(const [role,user]of[['anon',null],['authenticated',ids.owner],['authenticated',ids.other],['authenticated',ids.admin]])assert.equal((await asIdentity(db,role,user,()=>db.query('select 1 from storage.objects where bucket_id=$1',[bucket]))).rows.length,0);
+ assert.ok((await asIdentity(db,'service_role',null,()=>db.query('select 1 from storage.objects where bucket_id=$1',[bucket]))).rows.length>0);
 });

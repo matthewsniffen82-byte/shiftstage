@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 import { checkStorageBucketSecurity, STORAGE_BUCKET_REQUIREMENTS } from "../src/lib/security/storage-bucket-policy.mjs";
 
-const buckets = JSON.parse(readFileSync(new URL("../docs/supabase-reliability/step-01-inventory.json", import.meta.url), "utf8")).catalog.buckets;
+const buckets = JSON.parse(readFileSync(new URL("./fixtures/storage-current-access.json", import.meta.url), "utf8")).catalog.buckets;
 const safe = value => checkStorageBucketSecurity(value).every(check => check.ok);
 
 test("storage readiness accepts the audited configuration and stronger restrictions", () => {

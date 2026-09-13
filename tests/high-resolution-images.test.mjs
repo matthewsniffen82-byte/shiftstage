@@ -208,9 +208,12 @@ test("legacy responsive photos gain small transformed sources and retain a cente
   );
   assert.equal(publicImage.imageFocalX, 50);
   assert.equal(publicImage.imageFocalY, 50);
-  assert.match(publicImage.imageUrl, /legacy\.r640\.m1200x1800\.jpg\.w640\.webp\?width=480&quality=80$/);
-  assert.match(publicImage.imageSrcSet, /\.w640\.webp\?width=320&quality=80 320w/);
-  assert.match(publicImage.imageSrcSet, /\.w640\.webp\?width=480&quality=80 480w/);
+  const delivery = new URL(publicImage.imageUrl);
+  assert.equal(delivery.pathname, '/api/media/dancer-photo');
+  assert.equal(delivery.searchParams.get('path'), 'user/profile/legacy.r640.m1200x1800.jpg.w640.webp');
+  assert.equal(delivery.searchParams.get('width'), '480');
+  assert.match(publicImage.imageSrcSet, /width=320 320w/);
+  assert.match(publicImage.imageSrcSet, /width=480 480w/);
   assert.match(publicImage.imageSrcSet, /\.w640\.webp 640w/);
 });
 
