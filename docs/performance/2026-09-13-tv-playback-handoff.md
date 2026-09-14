@@ -24,3 +24,10 @@ Focused checks cover early handoff in both directions, small partial scrolls,
 viewport exit/re-entry, page suspension, profile-overlay ownership, and preservation
 of the current/adjacent/second-adjacent loading window. Real native-player checks
 cover Chromium and WebKit using the existing TV and profile journeys.
+
+The top-card autoplay follow-up reproduced a separate resume failure in both
+Chromium and WebKit: a loaded current video paused when layout moved it out of
+view, then stayed paused at 35% visibility because that was below the handoff
+threshold. An automatic viewport pause now resumes the same current player once
+it is more than 25% visible. Manual pauses remain paused; new-card selection still
+uses the 50% threshold. The correction preserves playback position and buffers.

@@ -61945,6 +61945,11 @@
           if (visibleVideoId !== homeTvFeedActiveVideoId || visible[0].dataset.viewportPaused === "true") {
             activateHomeTvFeedVideo(visibleVideoId);
           }
+        } else if (activeSlide && activeRatio > .25 &&
+            activeSlide.dataset.viewportPaused === "true" && activeSlide.dataset.userPaused !== "true") {
+          // The current card may return below the handoff threshold after the
+          // initial layout or a scroll toward the header. Resume that same player.
+          activateHomeTvFeedVideo(String(activeSlide.dataset.videoId || ""));
         } else if (activeSlide && activeRatio === 0) {
           const video = activeSlide.querySelector("video");
           if (video && activeSlide.dataset.userPaused !== "true") activeSlide.dataset.viewportPaused = "true";

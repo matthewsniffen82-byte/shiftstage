@@ -88,9 +88,45 @@ test("rapid backward jumps select a partially visible card and pause a feed outs
   callback([entry(1, 0)]);
   assert.ok(videos.every(video => video.paused));
   assert.equal(slides[1].dataset.viewportInactive, "true");
-  callback([entry(1, .8)]);
+  callback([entry(1, .35)]);
   assert.equal(videos[1].paused, false);
   assert.equal(slides[1].dataset.viewportPaused, undefined);
+});
+
+for (const manual of [false, true]) test(`the top video resumes after layout visibility changes while respecting manual pause=${manual}`, () => {
+  const { videos } = fixture();
+  const slides = videos.map(video => ({ ...video.slide, querySelector: () => video }));
+  const starts = [];
+  let callback;
+  class Observer { constructor(fn) { callback = fn; } observe() {} disconnect() {} }
+  const context = vm.createContext({
+    homeTvFeedObserver: null, homeTvFeedActiveVideoId: "0", homeTvFeedIsImmersive: () => false,
+    window: { IntersectionObserver: Observer }, IntersectionObserver: Observer,
+    results: { querySelectorAll: () => slides },
+    activateHomeTvFeedVideo(id) {
+      starts.push(id); context.homeTvFeedActiveVideoId = id;
+      delete slides[Number(id)].dataset.viewportPaused;
+      videos.forEach((video, index) => { video.paused = index !== Number(id); });
+    },
+    clearHomeTvFeedEngagedTimer() {}, primeHomeTvFeedNeighbors() {},
+  });
+  vm.runInContext(source("setupHomeTvFeedObserver"), context);
+  context.setupHomeTvFeedObserver();
+  videos[0].currentTime = 3.5;
+  const entry = (index, ratio) => ({ target: slides[index], intersectionRatio: ratio, isIntersecting: ratio > 0 });
+  callback([entry(0, 0)]);
+  assert.equal(videos[0].paused, true);
+  assert.equal(slides[0].dataset.viewportPaused, "true");
+  if (manual) slides[0].dataset.userPaused = "true";
+  callback([entry(0, .2)]);
+  assert.deepEqual(starts, ["0"], "a tiny glimpse stays paused");
+  callback([entry(0, .35)]);
+  assert.equal(videos[0].paused, manual, "automatic viewport pauses resume without a tap; user pauses remain");
+  assert.equal(videos[0].currentTime, 3.5, "resuming never seeks or discards the existing position");
+  assert.deepEqual(starts, manual ? ["0"] : ["0", "0"]);
+  callback([entry(0, .4)]);
+  assert.deepEqual(starts, manual ? ["0"] : ["0", "0"], "subsequent visibility notifications do not replay the player");
+  assert.equal(videos.filter(video => !video.paused).length, manual ? 0 : 1);
 });
 
 test("TV hands playback to the half-visible incoming card in both directions without waiting for scroll end", () => {
