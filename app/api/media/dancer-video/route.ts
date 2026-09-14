@@ -4,6 +4,8 @@ import { createServerSupabaseClient } from '@/src/lib/supabase/server';
 import { getPublicEnv } from '@/src/lib/env';
 import { getServerEnv } from '@/src/lib/server-env';
 export const runtime = 'nodejs';
+// Keep authorized byte-range requests beside the Supabase project in us-west-2.
+export const preferredRegion = 'pdx1';
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
 export async function GET(request: Request) {
