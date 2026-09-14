@@ -84,11 +84,45 @@ test("rapid backward jumps select a partially visible card and pause a feed outs
   callback([entry(0, 0), entry(2, .8)]);
   assert.equal(context.homeTvFeedActiveVideoId, "2");
   callback([entry(2, 0), entry(1, .6)]);
-  assert.equal(context.homeTvFeedActiveVideoId, "1", "visible card wins even below the ordinary .72 snap threshold");
+  assert.equal(context.homeTvFeedActiveVideoId, "1", "a backward jump selects the visible card immediately");
   callback([entry(1, 0)]);
   assert.ok(videos.every(video => video.paused));
   assert.equal(slides[1].dataset.viewportInactive, "true");
   callback([entry(1, .8)]);
   assert.equal(videos[1].paused, false);
   assert.equal(slides[1].dataset.viewportPaused, undefined);
+});
+
+test("TV hands playback to the half-visible incoming card in both directions without waiting for scroll end", () => {
+  const { videos } = fixture();
+  const slides = videos.map(video => ({ ...video.slide, querySelector: () => video }));
+  const starts = [];
+  let callback, options;
+  class Observer {
+    constructor(fn, settings) { callback = fn; options = settings; }
+    observe() {} disconnect() {}
+  }
+  const context = vm.createContext({
+    homeTvFeedObserver: null, homeTvFeedActiveVideoId: "0", homeTvFeedIsImmersive: () => false,
+    window: { IntersectionObserver: Observer }, IntersectionObserver: Observer,
+    results: { querySelectorAll: () => slides },
+    activateHomeTvFeedVideo(id) {
+      starts.push(id); context.homeTvFeedActiveVideoId = id;
+      videos.forEach((video, index) => { video.paused = index !== Number(id); });
+    },
+    clearHomeTvFeedEngagedTimer() {}, primeHomeTvFeedNeighbors() {},
+  });
+  vm.runInContext(source("setupHomeTvFeedObserver"), context);
+  context.setupHomeTvFeedObserver();
+  assert.ok(options.threshold.includes(.5), "the observer must notify at the earlier handoff boundary");
+  const entry = (index, ratio) => ({ target: slides[index], intersectionRatio: ratio, isIntersecting: ratio > 0 });
+  callback([entry(0, .65), entry(1, .2)]);
+  assert.deepEqual(starts, ["0"], "a small glimpse does not interrupt the current video");
+  callback([entry(0, .4), entry(1, .51)]);
+  assert.deepEqual(starts, ["0", "1"], "forward playback starts while the old card is still visible");
+  callback([entry(0, .48), entry(1, .49)]);
+  assert.deepEqual(starts, ["0", "1"], "minor movement does not restart the active video");
+  callback([entry(0, .52), entry(1, .4)]);
+  assert.deepEqual(starts, ["0", "1", "0"], "the same early handoff works on a backward swipe");
+  assert.equal(videos.filter(video => !video.paused).length, 1);
 });

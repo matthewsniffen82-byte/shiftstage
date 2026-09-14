@@ -61939,7 +61939,9 @@
         const visible = [...visibleRatios.entries()].filter(([, ratio]) => ratio > .25)
           .sort((left, right) => right[1] - left[1])[0];
         const visibleVideoId = String(visible?.[0].dataset.videoId || "");
-        if (visibleVideoId && (visible[1] >= .72 || activeRatio <= .25)) {
+        // Start the incoming card while the swipe is still moving so its native
+        // continuation request does not wait until the card is almost settled.
+        if (visibleVideoId && (visible[1] >= .5 || activeRatio <= .25)) {
           if (visibleVideoId !== homeTvFeedActiveVideoId || visible[0].dataset.viewportPaused === "true") {
             activateHomeTvFeedVideo(visibleVideoId);
           }
@@ -61958,7 +61960,7 @@
       }, {
         root: fullscreenRoot,
         rootMargin: fullscreenRoot ? "0px" : "-72px 0px -88px",
-        threshold: [.25, .6, .72]
+        threshold: [0, .25, .5, .6, .72]
       });
       slides.forEach((slide) => homeTvFeedObserver.observe(slide));
       activateHomeTvFeedVideo(String(initialSlide?.dataset.videoId || ""));
