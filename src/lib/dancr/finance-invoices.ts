@@ -3,6 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { getStripe } from "../stripe";
 import { syncStripeInvoice } from "./finance-provider-events";
 import { safeErrorMetadata } from "../security/safe-error-metadata";
+import { deliverClubInvoiceReminder } from "./invoice-reminder-delivery";
 
 type DancrClient = SupabaseClient;
 
@@ -110,54 +111,44 @@ export async function sendClubInvoiceReminders(client: DancrClient, now = new Da
   if (!Array.isArray(data)) throw new Error("Due invoice reminders could not be confirmed.");
 
   let sent = 0;
+  let failure: unknown;
   for (const invoice of data || []) {
-    const dueAt = new Date(invoice.due_at);
-    const daysFromDue = Math.ceil((dueAt.getTime() - now.getTime()) / DAY_MS);
-    const reminderKey = daysFromDue >= 0
-      ? daysFromDue <= 3 ? "due_soon" : null
-      : `overdue_${Math.floor(Math.abs(daysFromDue) / 7) * 7}`;
-    if (!reminderKey) continue;
+    try {
+      const dueAt = new Date(invoice.due_at);
+      const daysFromDue = Math.ceil((dueAt.getTime() - now.getTime()) / DAY_MS);
+      const reminderKey = daysFromDue >= 0
+        ? daysFromDue <= 3 ? "due_soon" : null
+        : `overdue_${Math.floor(Math.abs(daysFromDue) / 7) * 7}`;
+      if (!reminderKey) continue;
 
-    const { data: existing, error: reminderReadError } = await (client as any)
-      .from("club_invoice_reminders")
-      .select("id")
-      .eq("invoice_id", invoice.id)
-      .eq("reminder_key", reminderKey)
-      .maybeSingle();
-    if (reminderReadError) throw reminderReadError;
-    if (existing) continue;
+      const { data: existing, error: reminderReadError } = await (client as any)
+        .from("club_invoice_reminders")
+        .select("id")
+        .eq("invoice_id", invoice.id)
+        .eq("reminder_key", reminderKey)
+        .maybeSingle();
+      if (reminderReadError) throw reminderReadError;
+      if (existing) continue;
 
-    if (daysFromDue < 0 && invoice.status !== "overdue") {
-      const { data: overdue, error: overdueError } = await (client as any).from("club_invoices")
-        .update({ status: "overdue", updated_at: now.toISOString() })
-        .eq("id", invoice.id).in("status", ["open", "overdue"])
-        .select("id").maybeSingle();
-      if (overdueError) throw overdueError;
-      if (overdue?.id !== invoice.id) throw new Error("Invoice changed before its reminder could be sent.");
+      if (daysFromDue < 0 && invoice.status !== "overdue") {
+        const { data: overdue, error: overdueError } = await (client as any).from("club_invoices")
+          .update({ status: "overdue", updated_at: now.toISOString() })
+          .eq("id", invoice.id).in("status", ["open", "overdue"])
+          .select("id").maybeSingle();
+        if (overdueError) throw overdueError;
+        if (overdue?.id !== invoice.id) throw new Error("Invoice changed before its reminder could be sent.");
+      }
+
+      const stripeInvoice = await getStripe().invoices.retrieve(invoice.stripe_invoice_id);
+      if (stripeInvoice.id !== invoice.stripe_invoice_id) throw new Error("Reminder invoice identity could not be confirmed.");
+      if (stripeInvoice.collection_method !== "send_invoice" || stripeInvoice.status !== "open") continue;
+      if (await deliverClubInvoiceReminder(client, invoice.id, invoice.stripe_invoice_id, reminderKey)) sent += 1;
+    } catch (error) {
+      // One uncertain invoice must not stop independent reminders in this batch.
+      failure ??= error;
     }
-
-    const stripeInvoice = await getStripe().invoices.retrieve(invoice.stripe_invoice_id);
-    if (stripeInvoice.collection_method !== "send_invoice") continue;
-    const sentInvoice = await getStripe().invoices.sendInvoice(invoice.stripe_invoice_id);
-    const { error: reminderError } = await (client as any).from("club_invoice_reminders").insert({
-      invoice_id: invoice.id,
-      reminder_key: reminderKey,
-      provider_reference: sentInvoice.id,
-      audit: { due_at: invoice.due_at, days_from_due: daysFromDue },
-    });
-    if (reminderError) throw reminderError;
-    const { data: summary, error: summaryError } = await (client as any).from("club_invoices").update({
-      last_reminder_at: now.toISOString(),
-      reminder_count: Number(invoice.reminder_count || 0) + 1,
-      updated_at: now.toISOString(),
-    }).eq("id", invoice.id).select("id").maybeSingle();
-    if (summaryError || summary?.id !== invoice.id) {
-      // Delivery is already recorded. Preserve that ledger so an explicit retry
-      // cannot resend this reminder merely because the summary was unavailable.
-      throw new Error("Reminder was sent, but its invoice summary could not be confirmed. Review the invoice before retrying.", { cause: summaryError });
-    }
-    sent += 1;
   }
+  if (failure) throw failure;
   return sent;
 }
 

@@ -25,7 +25,7 @@ test("finance reads use one dedicated reporting boundary", () => {
 test("admin reporting preserves receivable, payout, and ledger summaries", () => {
   assert.match(reporting, /from\("club_invoices"\)/);
   assert.match(reporting, /from\("dancer_payout_batches"\)/);
-  assert.match(reporting, /from\("deal_revenue_events"\)/);
+  assert.match(reporting, /rpc\("get_admin_finance_totals"\)/);
   assert.match(reporting, /from\("commission_events"\)/);
   assert.match(reporting, /rpc\("get_admin_dancer_financial_summary"\)/);
   assert.match(reporting, /outstandingReceivablesCents/);

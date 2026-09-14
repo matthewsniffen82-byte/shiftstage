@@ -19,8 +19,9 @@ export async function reminderDatabase(){
  for(const foreign of [false,true])for(const c of schema.constraints.filter(c=>c.definition.startsWith('FOREIGN KEY')===foreign)){
   await db.exec('alter table public.'+quote(c.table)+' add constraint '+quote(c.name)+' '+c.definition);
  }
- await db.exec('create role anon;create role authenticated;create role service_role');
+ await db.exec('create role anon;create role authenticated;create role service_role bypassrls');
  await db.exec(readFileSync(new URL('../../supabase/migrations/20260914040900_select_due_invoice_reminders.sql',import.meta.url),'utf8'));
+ await db.exec(readFileSync(new URL('../../supabase/migrations/20260914055314_guard_invoice_reminder_delivery.sql',import.meta.url),'utf8'));
  return db;
 }
 export async function resetReminders(db,{status='open',due='2026-09-08T12:00:00Z'}={}){
@@ -33,10 +34,17 @@ export const reminderCount=async db=>(await db.query('select count(*)::int as n 
 
 export function reminderHarness(db,options={}){
  const calls=[],exports={};
+ const providerKeys=options.providerKeys||new Map();
  const client={async rpc(name,args){
-  assert.equal(name,'get_due_club_invoice_reminders');calls.push('list');
-  if(options.listError)return {data:null,error:options.listError};
-  try{return {data:(await db.query('select * from public.get_due_club_invoice_reminders($1,$2)',[args.p_now,args.p_limit])).rows,error:null};}
+  const kind={get_due_club_invoice_reminders:'list',claim_club_invoice_reminder_delivery:'claim',complete_club_invoice_reminder_delivery:'complete'}[name];
+  assert.ok(kind,name);calls.push(kind);
+  await options['before'+kind[0].toUpperCase()+kind.slice(1)]?.();
+  if(options[kind+'Error'])return {data:null,error:options[kind+'Error']};
+  try{
+   const {rows}=await db.query('select * from public.'+name+'('+Object.values(args).map((_,i)=>'$'+(i+1)).join(',')+')',Object.values(args));
+   if(options['after'+kind[0].toUpperCase()+kind.slice(1)+'CommitError'])return {data:null,error:options['after'+kind[0].toUpperCase()+kind.slice(1)+'CommitError']};
+   return {data:options[kind+'Response']??(kind==='list'?rows:rows[0][name]),error:null};
+  }
   catch(error){return {data:null,error};}
  },from(table){
   assert.ok(['club_invoices','club_invoice_reminders'].includes(table));
@@ -76,16 +84,29 @@ export function reminderHarness(db,options={}){
   return q;
  }};
  const stripe={invoices:{
-  retrieve:async()=>{calls.push('retrieve');if(options.retrieveError)throw options.retrieveError;return {id:'in_synthetic',collection_method:options.collectionMethod||'send_invoice'};},
-  sendInvoice:async()=>{calls.push('send');if(options.sendError)throw options.sendError;return {id:'in_synthetic'};}
+  retrieve:async id=>{calls.push('retrieve');if(options.retrieveError)throw options.retrieveError;return {id:options.retrieveId||id,status:options.providerStatus||'open',collection_method:options.collectionMethod||'send_invoice'};},
+  sendInvoice:async(id,params,request)=>{
+   calls.push('send');assert.equal(JSON.stringify(params),'{}');assert.match(request.idempotencyKey,/^mydancr-reminder-/);
+   assert.equal(request.timeout,10000);assert.equal(request.maxNetworkRetries,0);
+   if(options.sendError)throw options.sendError;
+   if(!providerKeys.has(request.idempotencyKey)){calls.push('email');providerKeys.set(request.idempotencyKey,id);}
+   assert.equal(providerKeys.get(request.idempotencyKey),id);
+   if(options.afterSendError)throw options.afterSendError;
+   return {id:options.sentId||id};
+  }
  }};
+ const delivery={};
+ vm.runInNewContext(ts.transpileModule(readFileSync(new URL('../../src/lib/dancr/invoice-reminder-delivery.ts',import.meta.url),'utf8'),{
+  compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}
+ }).outputText,{exports:delivery,Date,Error,require:name=>{assert.equal(name,'../stripe');return {getStripe:()=>stripe};}});
  vm.runInNewContext(ts.transpileModule(readFileSync(new URL('../../src/lib/dancr/finance-invoices.ts',import.meta.url),'utf8'),{
   compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}
  }).outputText,{exports,Date,Error,console,require:name=>{
   if(name==='../stripe')return {getStripe:()=>stripe};
+  if(name==='./invoice-reminder-delivery')return delivery;
   if(name==='./finance-provider-events')return {};
   if(name==='../security/safe-error-metadata')return {};
   throw new Error('Unexpected module '+name);
  }});
- return {calls,run:()=>exports.sendClubInvoiceReminders(client,now)};
+ return {calls,providerKeys,client,deliver:()=>delivery.deliverClubInvoiceReminder(client,invoiceId,'in_synthetic','overdue_0'),run:()=>exports.sendClubInvoiceReminders(client,options.now||now)};
 }

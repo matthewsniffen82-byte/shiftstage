@@ -20,25 +20,30 @@ for(const status of ['paid','void','uncollectible'])test('an invoice concurrentl
  await assert.rejects(h.run(),/Invoice.*changed|overdue.*confirmed/i);
  assert.equal((await invoiceRow(db)).status,status);assert.equal(h.calls.includes('send'),false);assert.equal(await reminderCount(db),0);
 });
-for(const stage of ['retrieve','send','ledger'])test(stage+' failure is surfaced without a summary success',async()=>{
+for(const stage of ['retrieve','claim','send','complete'])test(stage+' failure is surfaced without a summary success',async()=>{
  const fault=new Error('Synthetic '+stage+' failure'),h=reminderHarness(db,{[stage+'Error']:fault});
  await assert.rejects(h.run(),error=>error===fault);
  assert.equal(h.calls.includes('summary'),false);assert.equal((await invoiceRow(db)).reminder_count,0);
 });
-for(const options of [{summaryError:{code:'57014'}},{summaryZero:true},{afterSummaryCommitError:{code:'08006'}}])test('an unconfirmed summary reports partial delivery and preserves its ledger on explicit retry',async()=>{
- const h=reminderHarness(db,options);
- await assert.rejects(h.run(),/Reminder was sent.*summary.*confirmed/);
- assert.equal(h.calls.filter(c=>c==='send').length,1);assert.equal(await reminderCount(db),1);
- assert.equal((await invoiceRow(db)).reminder_count,options.afterSummaryCommitError?1:0);
- const retry=reminderHarness(db);
- assert.equal(await retry.run(),0);assert.equal(retry.calls.includes('send'),false);assert.equal(await reminderCount(db),1);
+for(const stage of ['afterSend','complete','afterCompleteCommit'])test(stage+' failure retries without a second email',async()=>{
+ const options={[stage+'Error']:new Error('Synthetic uncertain delivery')},h=reminderHarness(db,options);
+ await assert.rejects(h.run(),/Synthetic uncertain delivery/);
+ assert.equal(h.calls.filter(c=>c==='email').length,1);
+ const committed=stage==='afterCompleteCommit';
+ assert.equal(await reminderCount(db),committed?1:0);
+ assert.equal((await invoiceRow(db)).reminder_count,committed?1:0);
+ await db.exec("update club_invoice_reminder_deliveries set locked_until=clock_timestamp()-interval '1 second'");
+ const retry=reminderHarness(db,{providerKeys:h.providerKeys});
+ assert.equal(await retry.run(),committed?0:1);assert.equal(retry.calls.includes('email'),false);
+ assert.equal(await reminderCount(db),1);assert.equal((await invoiceRow(db)).reminder_count,1);
 });
 test('a confirmed reminder saves its ledger and summary before returning the count',async()=>{
  const h=reminderHarness(db);assert.equal(await h.run(),1);
  assert.equal(await reminderCount(db),1);const row=await invoiceRow(db);
  assert.equal(row.status,'overdue');assert.equal(row.reminder_count,1);assert.ok(row.last_reminder_at);
  assert.ok(h.calls.indexOf('overdue')<h.calls.indexOf('retrieve'));
- assert.ok(h.calls.indexOf('ledger')<h.calls.indexOf('summary'));
+ assert.ok(h.calls.indexOf('claim')<h.calls.indexOf('send'));
+ assert.ok(h.calls.indexOf('send')<h.calls.indexOf('complete'));
 });
 test('a due-soon reminder keeps the open state and requires its summary acknowledgment',async()=>{
  await resetReminders(db,{due:'2026-09-12T12:00:00Z'});

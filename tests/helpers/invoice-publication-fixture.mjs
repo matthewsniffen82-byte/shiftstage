@@ -71,6 +71,7 @@ export function publicationHarness(db,{provider=publicationProvider(),...options
   return {id:'ii_synthetic',...params};
  }}};
  const exports=load('src/lib/dancr/finance-invoices.ts',{
+  './invoice-reminder-delivery':{},
   '../stripe':{getStripe:()=>stripe},
   '../security/safe-error-metadata':{safeErrorMetadata:error=>({code:error?.code||'unknown'})},
   './finance-provider-events':{syncStripeInvoice:async(_client,invoice)=>{

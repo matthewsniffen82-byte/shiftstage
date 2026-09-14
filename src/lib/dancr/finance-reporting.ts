@@ -17,16 +17,15 @@ type DancrClient = SupabaseClient;
 const MAX_FINANCE_ROWS = 5_000;
 
 export async function getAdminFinanceOverview(client: DancrClient) {
-  const now = new Date().toISOString();
-  const [invoicesResult, payoutsResult, revenueResult, commissionsResult, settingsResult, auditResult, dancerFinancialSummaryResult, natsAccountsResult, natsExportsResult] = await Promise.all([
+  const [invoicesResult, payoutsResult, totalsResult, commissionsResult, settingsResult, auditResult, dancerFinancialSummaryResult, natsAccountsResult, natsExportsResult] = await Promise.all([
     (client as any).from("club_invoices")
-      .select("id, venue_id, period_start, period_end, sequence, status, currency, amount_due_cents, amount_paid_cents, due_at, hosted_invoice_url, invoice_pdf_url, external_payment_reference, paid_at, reminder_count, last_error, venues(name)")
+      .select("id, venue_id, period_start, period_end, sequence, status, currency, amount_due_cents, amount_paid_cents, due_at, hosted_invoice_url, invoice_pdf_url, external_payment_reference, paid_at, reminder_count, last_error, venues(name), club_invoice_reminder_deliveries(status)")
+      .eq("club_invoice_reminder_deliveries.status", "review_required")
       .order("created_at", { ascending: false }).limit(200),
     (client as any).from("dancer_payout_batches")
       .select("id, dancer_id, status, currency, amount_cents, payment_provider, provider_reference_id, failure_message, requested_at, processing_at, paid_at, failed_at, is_test, created_at, dancer_profiles(stage_name)")
       .order("created_at", { ascending: false }).limit(200),
-    (client as any).from("deal_revenue_events")
-      .select("status, gross_commission_cents, dancer_commission_cents, platform_commission_cents").limit(MAX_FINANCE_ROWS),
+    (client as any).rpc("get_admin_finance_totals"),
     (client as any).from("commission_events")
       .select("id, qr_redemption_id, dancer_id, venue_id, club_deal_id, earning_type, status, amount_cents, currency, created_at, pending_until, available_at, held_at, hold_reason, review_flag, reversal_reason, is_test, dancer_profiles(stage_name), venues(name), club_deals(deal_title)")
       .order("created_at", { ascending: false }).limit(MAX_FINANCE_ROWS),
@@ -41,58 +40,41 @@ export async function getAdminFinanceOverview(client: DancrClient) {
       .select("id, commission_event_id, dancer_id, amount_cents, currency, status, attempt_count, processing_started_at, exported_at, failed_at, reconciled_at, nats_result, last_error, created_at, dancer_profiles(stage_name)")
       .order("created_at", { ascending: false }).limit(500),
   ]);
-  for (const result of [invoicesResult, payoutsResult, revenueResult, commissionsResult, settingsResult, auditResult, dancerFinancialSummaryResult, natsAccountsResult, natsExportsResult]) {
+  for (const result of [invoicesResult, payoutsResult, totalsResult, commissionsResult, settingsResult, auditResult, dancerFinancialSummaryResult, natsAccountsResult, natsExportsResult]) {
     if (result.error) throw result.error;
   }
-  const invoices = invoicesResult.data || [];
+  const invoices = (invoicesResult.data || []).map(({ club_invoice_reminder_deliveries: deliveries, ...invoice }: any) => ({
+    ...invoice,
+    // Provider reconciliation can clear last_error; the durable hold remains visible.
+    last_error: deliveries?.some((delivery: any) => delivery.status === "review_required")
+      ? "A reminder delivery is uncertain. Review Stripe delivery before sending another reminder."
+      : invoice.last_error,
+  }));
   const payouts = payoutsResult.data || [];
-  const revenue = revenueResult.data || [];
+  const totals = readAdminFinanceTotals(totalsResult.data);
   const commissions = commissionsResult.data || [];
-  const sum = (rows: any[], field: string) => rows.reduce((total, row) => total + Number(row[field] || 0), 0);
-  const outstanding = invoices.filter((row: any) => ["open", "overdue"].includes(row.status));
-  const overdue = outstanding.filter((row: any) => row.status === "overdue" || row.due_at < now);
-  const paidInvoices = invoices.filter((row: any) => row.status === "paid");
   const dancerFinancialSummary = dancerFinancialSummaryResult.data || {};
-  const earningGroup = (relationship: string, fallback: string) => Array.from(commissions.reduce((groups: Map<string, { name: string; amountCents: number; count: number }>, row: any) => {
-    if (["reversed", "failed"].includes(String(row.status))) return groups;
-    const related = joined(row[relationship]);
-    const name = String(related?.stage_name || related?.name || fallback);
-    const current = groups.get(name) || { name, amountCents: 0, count: 0 };
-    current.amountCents += Number(row.amount_cents || 0);
-    current.count += 1;
-    groups.set(name, current);
-    return groups;
-  }, new Map()).values()).sort((a: any, b: any) => b.amountCents - a.amountCents);
   const configuredProvider = String(settingsResult.data?.payment_provider || "stripe") as PayoutProviderName;
   const providerConfigured = isPayoutProviderConfigured(configuredProvider);
   const natsConfig = getNatsRuntimeConfig();
   const natsExports = natsExportsResult.data || [];
   return {
     metrics: {
-      outstandingReceivablesCents: sum(outstanding, "amount_due_cents") - sum(outstanding, "amount_paid_cents"),
-      overdueReceivablesCents: sum(overdue, "amount_due_cents") - sum(overdue, "amount_paid_cents"),
-      paidClubRevenueCents: sum(paidInvoices, "amount_paid_cents"),
+      ...totals.metrics,
       dancerPendingCents: safeIntegerCents(dancerFinancialSummary.pending_cents),
       dancerAvailableCents: safeIntegerCents(dancerFinancialSummary.available_cents),
       dancerProcessingCents: safeIntegerCents(dancerFinancialSummary.processing_cents),
       dancerPayableCents: safeIntegerCents(dancerFinancialSummary.available_cents),
       dancerPaidCents: safeIntegerCents(dancerFinancialSummary.paid_cents),
       reversedEarningsCents: safeIntegerCents(dancerFinancialSummary.reversed_cents),
-      myDancrNetRevenueCents: sum(revenue.filter((row: any) => row.status === "settled"), "platform_commission_cents"),
-      openInvoiceCount: outstanding.length,
-      overdueInvoiceCount: overdue.length,
       failedPayoutCount: safeIntegerCents(dancerFinancialSummary.failed_payout_count),
       completedPayoutCount: safeIntegerCents(dancerFinancialSummary.completed_payout_count),
-      natsPendingAccountCount: (natsAccountsResult.data || []).filter((row: any) => row.status === "requested").length,
-      natsPendingExportCount: natsExports.filter((row: any) => ["waiting_for_affiliate", "pending", "processing"].includes(row.status)).length,
-      natsReconciliationCount: natsExports.filter((row: any) => row.status === "reconciliation_required").length,
-      natsExportedCents: sum(natsExports.filter((row: any) => row.status === "exported"), "amount_cents"),
     },
     invoices,
     payouts,
     earnings: commissions,
-    earningsByVenue: earningGroup("venues", "Venue"),
-    earningsByDancer: earningGroup("dancer_profiles", "Dancer"),
+    earningsByVenue: totals.earningsByVenue,
+    earningsByDancer: totals.earningsByDancer,
     settings: {
       ...settingsResult.data,
       environmentEnabled: getPayoutRuntimeConfig().enabledByEnvironment,
@@ -187,8 +169,25 @@ export async function getDancerFinance(client: DancrClient, userId: string) {
   };
 }
 
-function joined(value: any) {
-  return Array.isArray(value) ? value[0] || null : value || null;
+function readAdminFinanceTotals(value: any) {
+  const fields = ["outstandingReceivablesCents", "overdueReceivablesCents", "paidClubRevenueCents",
+    "myDancrNetRevenueCents", "openInvoiceCount", "overdueInvoiceCount", "natsPendingAccountCount",
+    "natsPendingExportCount", "natsReconciliationCount", "natsExportedCents"];
+  const requiredInteger = (input: unknown) => {
+    if (!(typeof input === "number" || (typeof input === "string" && /^\d+$/.test(input)))) {
+      throw new Error("Financial totals could not be confirmed.");
+    }
+    return safeIntegerCents(input);
+  };
+  const metrics = Object.fromEntries(fields.map(field => [field, requiredInteger(value?.metrics?.[field])]));
+  const groups = (items: any) => {
+    if (!Array.isArray(items) || items.length > 10) throw new Error("Financial groups could not be confirmed.");
+    return items.map(item => {
+      if (typeof item?.name !== "string") throw new Error("Financial groups could not be confirmed.");
+      return { name: item.name, amountCents: requiredInteger(item.amountCents), count: requiredInteger(item.count) };
+    });
+  };
+  return { metrics, earningsByVenue: groups(value?.earningsByVenue), earningsByDancer: groups(value?.earningsByDancer) };
 }
 
 function safeIntegerCents(value: unknown) {

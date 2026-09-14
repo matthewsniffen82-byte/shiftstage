@@ -2,9 +2,11 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-const [invoices, finance] = await Promise.all([
+const [invoices, finance, delivery, deliverySql] = await Promise.all([
   readFile(new URL("../src/lib/dancr/finance-invoices.ts", import.meta.url), "utf8"),
   readFile(new URL("../src/lib/dancr/finance.ts", import.meta.url), "utf8"),
+  readFile(new URL("../src/lib/dancr/invoice-reminder-delivery.ts", import.meta.url), "utf8"),
+  readFile(new URL("../supabase/migrations/20260914055314_guard_invoice_reminder_delivery.sql", import.meta.url), "utf8"),
 ]);
 
 test("club invoice automation uses one dedicated finance boundary", () => {
@@ -41,7 +43,8 @@ test("invoice publishing preserves provider idempotency and reconciliation", () 
 test("invoice reminders remain deduplicated and audit their delivery", () => {
   assert.match(invoices, /eq\("reminder_key", reminderKey\)/);
   assert.match(invoices, /if \(existing\) continue/);
-  assert.match(invoices, /provider_reference: sentInvoice\.id/);
-  assert.match(invoices, /audit: \{ due_at: invoice\.due_at, days_from_due: daysFromDue \}/);
-  assert.match(invoices, /reminder_count: Number\(invoice\.reminder_count \|\| 0\) \+ 1/);
+  assert.match(invoices, /await deliverClubInvoiceReminder/);
+  assert.match(delivery, /idempotencyKey: claim.idempotencyKey/);
+  assert.match(deliverySql, /'due_at', v_invoice.due_at, 'days_from_due'/);
+  assert.match(deliverySql, /reminder_count = reminder_count \+ 1/);
 });
