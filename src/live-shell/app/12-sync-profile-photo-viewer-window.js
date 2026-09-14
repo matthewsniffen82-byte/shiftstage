@@ -673,8 +673,8 @@
       if (!actions.length) return "";
       const statusClass = isWorkingTonight(profile, city) ? "is-working-now" : "is-upcoming";
       const dealLinkClass = venueDealMarkup ? " has-venue-deal-link" : "";
-      const offerNote = venueDealMarkup ? `<p class="profile-upcoming-offer-note">Available tonight</p>` : "";
-      return `<div class="profile-tonight-travel-actions ${statusClass}${dealLinkClass}" aria-label="Venue travel actions">${actions.join("")}${offerNote}</div>`;
+      const offerNote = venueDealMarkup ? `<p class="profile-upcoming-offer-note">Going tonight?</p>` : "";
+      return `${offerNote}<div class="profile-tonight-travel-actions ${statusClass}${dealLinkClass}" aria-label="Venue travel actions">${actions.join("")}</div>`;
     }
 
     function profileModalGridMarkup(profile, options = {}) {

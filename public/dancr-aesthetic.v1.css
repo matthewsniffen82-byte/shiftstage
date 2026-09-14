@@ -4818,9 +4818,7 @@ body.dancr-button-system .public-profile-shell .profile-tonight-travel-actions >
 body.dancr-button-system #profileBackdrop #profileModal .profile-tonight-card.has-club-deal:not(:has(.profile-club-deal-tile.is-error))
   :is(.profile-club-deal-qr-button, .profile-tonight-travel-actions > :is(a, button)),
 body.dancr-button-system .public-profile-shell .profile-tonight-card.has-club-deal
-  :is(.club-deal-profile-action, .profile-tonight-travel-actions > :is(a, button)),
-body.dancr-button-system #profileBackdrop #profileModal .profile-tonight-card.is-upcoming.has-venue-deal-link:not(:has(.profile-club-deal-tile.is-error)) .profile-tonight-travel-actions > :is(a, button),
-body.dancr-button-system .public-profile-shell .profile-tonight-card.is-upcoming.has-venue-deal-link .profile-tonight-travel-actions > :is(a, button) {
+  :is(.club-deal-profile-action, .profile-tonight-travel-actions > :is(a, button)) {
   grid-row: 2 !important;
 }
 

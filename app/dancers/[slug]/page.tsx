@@ -295,6 +295,10 @@ export default async function DancerPublicPage({ params, searchParams }: PagePro
             </div>
           ) : null}
 
+          {actionVenue && !activeShift && actionShift ? (
+            <p className="profile-upcoming-offer-note">Going tonight?</p>
+          ) : null}
+
           {actionVenue ? (
             <div
               aria-label="Venue travel actions"
@@ -319,9 +323,6 @@ export default async function DancerPublicPage({ params, searchParams }: PagePro
                   <span>Free Entry</span>
                   <span aria-hidden="true">›</span>
                 </Link>
-              ) : null}
-              {!activeShift && actionShift ? (
-                <p className="profile-upcoming-offer-note">Available tonight</p>
               ) : null}
             </div>
           ) : null}
