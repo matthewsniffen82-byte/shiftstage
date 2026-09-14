@@ -6,6 +6,7 @@ import ts from "typescript";
 import { isPublicDancerProfileEligible } from "../src/lib/dancr/profile-approval.ts";
 import { isActiveNfcPresence } from "../src/lib/dancr/shift-presence.ts";
 import { isPublicVenueRow } from "../src/lib/dancr/venue-public-visibility.ts";
+import { parseMobileVideoPlayback } from "../src/lib/dancr/video-mobile-playback.ts";
 
 const read = path => readFileSync(new URL(`../${path}`, import.meta.url), "utf8");
 const copy = value => JSON.parse(JSON.stringify(value));
@@ -108,10 +109,18 @@ const tvFunction = tvAst.statements.find(node => ts.isFunctionDeclaration(node) 
 assert.ok(tvFunction);
 // Compile the actual normalizer with its production visibility guard. Other
 // helpers below only prepare synthetic artwork/count fields.
-const tvContext = { exports: {}, isPublicDancerProfileEligible, one: value => Array.isArray(value) ? value[0] : value, safePublicCount: Number, normalizedVideoPosterStoragePath: () => null };
+const tvContext = { exports: {}, isPublicDancerProfileEligible, parseMobileVideoPlayback, one: value => Array.isArray(value) ? value[0] : value, safePublicCount: Number, normalizedVideoPosterStoragePath: () => null };
 vm.runInNewContext(ts.transpileModule(tvFunction.getText(tvAst) + "\nexport { normalizeFeedRow };", { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText, tvContext);
 for (const [name, row] of invalidProfiles) test(`TV normalization excludes ${name} before signing media`, () => assert.equal(tvContext.exports.normalizeFeedRow({ dancer_profiles: row }, Date.now()), null));
 test("TV keeps a currently published profile", () => assert.equal(tvContext.exports.normalizeFeedRow({ id: "video", dancer_profiles: approved() }, Date.now()).id, "video"));
+
+test("public TV advertises only confirmed mobile copies without exposing processing metadata", () => {
+  for (const [mobilePlayback, expected] of [[null, false], [{ version: 2 }, false], [{ version: 1, bytes: 2000000, width: 720, height: 1280 }, true]]) {
+    const row = tvContext.exports.normalizeFeedRow({ id: "video", dancer_profiles: approved(), moderation_details: { mobilePlayback, privateDiagnostic: "synthetic" } }, Date.now());
+    assert.equal(row.mobilePlaybackAvailable, expected);
+    assert.equal(row.moderation_details, undefined);
+  }
+});
 
 test("hidden and unpublished follows remain saved without exposing their profile", async () => {
   const profiles = [approved(), ...invalidProfiles.map(([, row], index) => ({ ...row, id: "private-" + index }))];

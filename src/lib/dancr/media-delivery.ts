@@ -2,6 +2,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { verifyMediaPreview } from './media-delivery-url.ts';
 import { myDancrTvPosterStoragePath } from './media-watermark.ts';
 import { MAX_CACHED_PHOTO_BYTES, type PhotoDeliveryCache } from './photo-delivery-cache.ts';
+import { mobileVideoStoragePath, parseMobileVideoPlayback } from './video-mobile-playback.ts';
 
 const NO_STORE = 'private, no-store, max-age=0';
 const HEADERS = { 'Cache-Control': NO_STORE, 'CDN-Cache-Control': 'no-store', 'Vercel-CDN-Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff' };
@@ -27,6 +28,7 @@ export async function serveDancerMedia(request: Request, kind: 'photo' | 'video'
     if (params.has('preview') && !preview) return unavailable();
     let path = requestedPath;
     let bucket = 'dancer-photos';
+    let fullVideoPath: string | null = null;
     if (kind === 'photo') {
       const master = requestedPath.replace(/\.w(320|480|640|1280|2048)\.webp$/, '');
       // Both public reads use anonymous Postgres RLS, never a service-role public
@@ -65,6 +67,14 @@ export async function serveDancerMedia(request: Request, kind: 'photo' | 'video'
         const expected = myDancrTvPosterStoragePath(path);
         if ((video.data as any).moderation_details?.posterStoragePath !== expected) return unavailable();
         path = expected; bucket = 'dancer-photos';
+      } else if (params.get('playback') === 'mobile') {
+        if (!parseMobileVideoPlayback((video.data as any).moderation_details?.mobilePlayback)) {
+          const fallback = new URL(request.url);
+          fallback.searchParams.delete('playback');
+          return new Response(null, { status: 307, headers: { ...HEADERS, Location: fallback.pathname + fallback.search } });
+        }
+        fullVideoPath = path;
+        path = mobileVideoStoragePath(path);
       }
       if (!safePath(path)) return unavailable();
     }
@@ -87,6 +97,15 @@ export async function serveDancerMedia(request: Request, kind: 'photo' | 'video'
     try {
       upstream = await (deps.fetch || fetch)(upstreamUrl, { method:request.method==='HEAD'?'HEAD':'GET', cache:'no-store', redirect:'error',
         signal:abort.signal, headers:{apikey:deps.serviceKey,authorization:`Bearer ${deps.serviceKey}`,...(range?{range}:{})} });
+      // Redirect a missing derivative to the full-video endpoint so subsequent
+      // range requests use that representation's URL and repeat authorization.
+      if (fullVideoPath && upstream.status === 404 && !abort.signal.aborted) {
+        await upstream.body?.cancel();
+        clearTimeout(timeout); request.signal.removeEventListener('abort',cancel);
+        const fallback = new URL(request.url);
+        fallback.searchParams.delete('playback');
+        return new Response(null, { status: 307, headers: { ...HEADERS, Location: fallback.pathname + fallback.search } });
+      }
     } catch { clearTimeout(timeout); request.signal.removeEventListener('abort',cancel); return unavailable(503); }
     // Dispose of late headers even if the upstream transport ignored cancellation.
     if (abort.signal.aborted) { await upstream.body?.cancel(); clearTimeout(timeout); request.signal.removeEventListener('abort',cancel); return unavailable(503); }

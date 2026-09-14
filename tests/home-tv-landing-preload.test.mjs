@@ -58,7 +58,7 @@ function fixture() {
       options.signal.addEventListener("abort", () => reject(Object.assign(new Error("aborted"), { name: "AbortError" })), { once: true });
     }),
   });
-  vm.runInContext(["createHomeTvLandingPreloader", "canWarmAdjacentVideo", "attachDeferredVideoSource", "releaseDeferredVideoSource", "loadHomeTvFeed"].map(source).join("\n"), context);
+  vm.runInContext(["createHomeTvLandingPreloader", "homeTvPlaybackVideoUrl", "canWarmAdjacentVideo", "attachDeferredVideoSource", "releaseDeferredVideoSource", "loadHomeTvFeed"].map(source).join("\n"), context);
   context.homeTvLandingPreload = context.createHomeTvLandingPreloader();
   const api = context.homeTvLandingPreload;
   const runTimer = ms => {

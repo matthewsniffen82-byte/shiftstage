@@ -62162,12 +62162,41 @@
       nextSlide.querySelector("video")?.focus({ preventScroll: true });
     }
 
+    function homeTvPlaybackVideoUrl(item) {
+      const original = String(item?.videoUrl || "").trim();
+      if (item?.mobilePlaybackAvailable !== true || !/Android/i.test(navigator.userAgent || "") || !window.matchMedia("(max-width: 760px)").matches) return original;
+      try {
+        const url = new URL(original, window.location.href);
+        if (url.origin !== window.location.origin || url.pathname !== "/api/media/dancer-video" || !url.searchParams.get("id")) return original;
+        url.searchParams.set("playback", "mobile");
+        return url.href;
+      } catch { return original; }
+    }
+
+    function fallbackHomeTvFeedVideo(video, slide, videoId) {
+      const fullVideoUrl = video.dataset.fullVideoUrl;
+      if (!fullVideoUrl || video.dataset.videoUrl === fullVideoUrl || !video.hasAttribute("src")) return false;
+      const position = video.currentTime;
+      video.dataset.videoUrl = fullVideoUrl;
+      if (Number.isFinite(position) && position > 0) {
+        video.addEventListener("loadedmetadata", () => {
+          if (video.dataset.videoUrl === fullVideoUrl && Number.isFinite(video.duration)) {
+            video.currentTime = Math.min(position, Math.max(0, video.duration - .1));
+          }
+        }, { once: true });
+      }
+      video.src = fullVideoUrl;
+      if (slide.getAttribute("aria-current") === "true") activateHomeTvFeedVideo(videoId);
+      return true;
+    }
+
     function createHomeTvFeedVideo(item, index, slide, totalVideos) {
       const dancerName = String(item?.dancer?.stageName || "MyDancr TV").trim() || "MyDancr TV";
       const videoId = String(item.id);
       const video = homeTvLandingPreload.takeVideo(item) || document.createElement("video");
       video.className = "home-tv-feed-video";
-      video.dataset.videoUrl = String(item.videoUrl || "").trim();
+      video.dataset.videoUrl = homeTvPlaybackVideoUrl(item);
+      video.dataset.fullVideoUrl = String(item.videoUrl || "").trim();
       video.loop = true;
       video.autoplay = index === 0 && !homeTvFeedCoveredByProfile();
       video.muted = homeTvFeedMuted;
@@ -62245,6 +62274,7 @@
       });
       video.addEventListener("durationchange", () => syncHomeTvFeedProgress(video, slide));
       video.addEventListener("error", () => {
+        if (fallbackHomeTvFeedVideo(video, slide, videoId)) return;
         slide.classList.remove("is-media-loading");
         slide.classList.add("is-media-unavailable");
         slide.removeAttribute("aria-busy");
@@ -62922,7 +62952,7 @@
               item?.id && item?.videoUrl && item?.dancer?.stageName).slice(0, 2) : [];
             videos.forEach((item, index) => {
               const video = document.createElement("video");
-              video.dataset.videoUrl = String(item.videoUrl).trim();
+              video.dataset.videoUrl = homeTvPlaybackVideoUrl(item);
               video.autoplay = false;
               video.muted = video.defaultMuted = true;
               video.playsInline = true;
@@ -62983,7 +63013,7 @@
         const video = state?.videos.get(String(item.id));
         if (!video) return null;
         state.videos.delete(String(item.id));
-        if (video.error || video.dataset.videoUrl !== String(item.videoUrl || "").trim()) {
+        if (video.error || video.dataset.videoUrl !== homeTvPlaybackVideoUrl(item)) {
           releaseDeferredVideoSource(video);
           return null;
         }

@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { runMediaProcess } from "./media-process.ts";
-import { assertServerJobActive } from "../server-job.ts";
+import { assertServerJobActive, serverJobRemainingMs } from "../server-job.ts";
 import { mkdtemp, readFile, rm, writeFile } from "fs/promises";
 import { tmpdir } from "os";
 import path from "path";
@@ -8,6 +8,8 @@ import ffmpegPath from "ffmpeg-static";
 import { assertAllowedVideoContainer } from "./video-upload-policy.ts";
 import { LOCAL_VIDEO_INPUT_OPTIONS } from "./local-video-input.ts";
 import { requireStorageUploadReceipt } from "./storage-upload-receipt.ts";
+import { createMobileVideoPlayback } from "./video-mobile-encoding.ts";
+import { mobileVideoStoragePath, type MobileVideoPlayback } from "./video-mobile-playback.ts";
 
 export const DANCR_ORIGINAL_MEDIA_BUCKET = "dancr-media-originals";
 export const DANCR_MEDIA_WATERMARK_TEXT = "mydancr";
@@ -277,12 +279,34 @@ export async function watermarkStoredVideo(
       });
     if (posterError) throw posterError;
     requireStorageUploadReceipt(posterUploaded, MYDANCR_TV_POSTER_BUCKET, posterStoragePath);
+    let mobilePlayback: MobileVideoPlayback | null = null;
+    try {
+      const mobile = serverJobRemainingMs() >= 75_000
+        ? await createMobileVideoPlayback(watermarked, input.storageMime, input.width, input.height)
+        : null;
+      if (mobile) {
+        assertServerJobActive();
+        const mobilePath = mobileVideoStoragePath(input.storagePath);
+        const result = await client.storage.from(input.publicBucket).upload(mobilePath, mobile.bytes, {
+          cacheControl: MYDANCR_TV_PUBLIC_CACHE_CONTROL, contentType: "video/mp4", upsert: true,
+        });
+        if (result.error) throw result.error;
+        requireStorageUploadReceipt(result.data, input.publicBucket, mobilePath);
+        mobilePlayback = mobile.metadata;
+      }
+    } catch {
+      // A derivative failure must not hide an otherwise valid full-quality video.
+      // Parent-job cancellation still propagates before any approval is written.
+      assertServerJobActive();
+      console.warn(JSON.stringify({ event: "public_media.mobile_video_unavailable" }));
+    }
+    assertServerJobActive();
     console.info(JSON.stringify({
       event: "public_media.video_watermarked",
       bytes: watermarked.length,
       posterBytes: poster.length,
     }));
-    return { posterStoragePath };
+    return { posterStoragePath, mobilePlayback };
   } finally {
     await rm(workspace, { recursive: true, force: true });
   }

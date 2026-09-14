@@ -1,3 +1,5 @@
+import type { MobileVideoPlayback } from "./video-mobile-playback.ts";
+
 export const VIDEO_MODERATION_MODES = ["ai", "demo_auto_approve"] as const;
 
 export type VideoModerationMode = (typeof VIDEO_MODERATION_MODES)[number];
@@ -23,6 +25,7 @@ export function demoVideoAutoApprovalValues(input: {
   expiresAt: string;
   watermarkApplied: boolean;
   posterStoragePath?: string | null;
+  mobilePlayback?: MobileVideoPlayback | null;
 }) {
   return {
     status: "approved" as const,
@@ -41,6 +44,7 @@ export function demoVideoAutoApprovalValues(input: {
       mode: "demo_auto_approve",
       aiModerationSkipped: true,
       watermarkApplied: input.watermarkApplied,
+      ...(input.mobilePlayback && input.watermarkApplied ? { mobilePlayback: input.mobilePlayback } : {}),
       ...(input.posterStoragePath
         ? { posterStoragePath: input.posterStoragePath }
         : {}),

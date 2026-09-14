@@ -1,5 +1,6 @@
 import { dancerVideoDeliveryUrl } from './media-delivery-url';
 import { adaptiveVideoPath, parseAdaptiveVideoManifest } from './adaptive-video-manifest';
+import { mobileVideoStoragePath, parseMobileVideoPlayback, type MobileVideoPlayback } from './video-mobile-playback';
 import { toPublicClubDeal } from "./public-club-deal";
 import { isPublicVenueRow } from "./venue-public-visibility";
 import { isAllMyDancrCities } from "./markets";
@@ -103,6 +104,7 @@ export type MyDancrTvVideo = {
   isPinned?: boolean;
   likeCount: number;
   videoUrl: string;
+  mobilePlaybackAvailable?: boolean;
   posterUrl?: string | null;
   durationSeconds: number;
   width: number;
@@ -421,6 +423,7 @@ function normalizeFeedRow(row: any, _now: number): NormalizedFeedRow | null {
     isPinned: row.is_pinned === true,
     likeCount: safePublicCount(row.like_count),
     storagePath: row.storage_path,
+    mobilePlaybackAvailable: Boolean(parseMobileVideoPlayback(row.moderation_details?.mobilePlayback)),
     posterStoragePath: normalizedVideoPosterStoragePath(row),
     durationSeconds: Number(row.duration_seconds || 0),
     width: Number(row.width || 0),
@@ -1029,7 +1032,7 @@ export async function publishPlatformMyDancrTvUpload(
     storagePath: video.storage_path,
   });
 
-  const { posterStoragePath } = await watermarkStoredVideo(admin, {
+  const { posterStoragePath, mobilePlayback } = await watermarkStoredVideo(admin, {
     publicBucket: MYDANCR_TV_BUCKET,
     storagePath: video.storage_path,
     storageMime: video.storage_mime === "video/webm" ? "video/webm" : "video/mp4",
@@ -1058,6 +1061,7 @@ export async function publishPlatformMyDancrTvUpload(
         mode: "platform_owner_approval",
         bypassedAutomatedModeration: true,
         posterStoragePath,
+        mobilePlayback,
       },
       moderation_attempt_count: 0,
       moderation_started_at: publishedAt,
@@ -1342,6 +1346,7 @@ async function autoApproveMyDancrTvDemoUpload(
   const completedAt = new Date().toISOString();
   let watermarkApplied = true;
   let posterStoragePath: string | null = null;
+  let mobilePlayback: MobileVideoPlayback | null = null;
   try {
     const media = await watermarkStoredVideo(admin, {
       publicBucket: MYDANCR_TV_BUCKET,
@@ -1351,6 +1356,7 @@ async function autoApproveMyDancrTvDemoUpload(
       height: Number(video.height),
     });
     posterStoragePath = media.posterStoragePath;
+    mobilePlayback = media.mobilePlayback;
   } catch (error) {
     watermarkApplied = false;
     console.error(JSON.stringify({
@@ -1369,6 +1375,7 @@ async function autoApproveMyDancrTvDemoUpload(
       expiresAt: myDancrTvExpiry(),
       watermarkApplied,
       posterStoragePath,
+      mobilePlayback,
     }));
   const { data, error } = await matchVideoWorkerOwner(update, video, expectedStatus)
     .select("id, status, submitted_at, reviewed_at, published_at, moderation_decision, moderation_reason_codes, moderation_model")
@@ -1509,6 +1516,7 @@ async function finalizeMyDancrTvAutomatedModeration(admin: AdminClient, video: a
   let decision = moderation.decision;
   let reasonCodes = moderation.reasonCodes;
   let posterStoragePath: string | null = null;
+  let mobilePlayback: MobileVideoPlayback | null = null;
   if (decision === "approved") {
     // Avoid starting expensive public-media work for an already obsolete job.
     // The final write repeats ownership checks if it changes during processing.
@@ -1522,6 +1530,7 @@ async function finalizeMyDancrTvAutomatedModeration(admin: AdminClient, video: a
         height: Number(video.height),
       });
       posterStoragePath = media.posterStoragePath;
+      mobilePlayback = media.mobilePlayback;
     } catch (error) {
       decision = "review";
       reasonCodes = [...reasonCodes, "public_watermark_processing_failed"];
@@ -1544,6 +1553,7 @@ async function finalizeMyDancrTvAutomatedModeration(admin: AdminClient, video: a
     moderation_details: {
       ...moderation.details,
       ...(posterStoragePath ? { posterStoragePath } : {}),
+      mobilePlayback,
     },
     moderation_completed_at: completedAt,
     ...(decision === "approved"
@@ -1686,6 +1696,7 @@ export async function hideOwnMyDancrTvVideo(admin: AdminClient, userId: string, 
     [MYDANCR_TV_BUCKET, video.storage_path],
     [MYDANCR_TV_POSTER_BUCKET, myDancrTvPosterStoragePath(video.storage_path)],
     [MYDANCR_TV_BUCKET, archivedOriginalStoragePath(MYDANCR_TV_BUCKET, video.storage_path)],
+    [MYDANCR_TV_BUCKET, mobileVideoStoragePath(video.storage_path)],
     ...(adaptive ? adaptive.renditions.map(row => [MYDANCR_TV_BUCKET, adaptiveVideoPath(video.storage_path, adaptive, row.name)]) : []),
   ]) {
     const { data: removed, error: removeError } = await admin.storage.from(bucket).remove([path]);
@@ -1760,6 +1771,7 @@ export async function reviewMyDancrTvVideo(
     throw new Error("Add a clear rejection reason for the dancer.");
   }
   let posterStoragePath: string | null = null;
+  let mobilePlayback: MobileVideoPlayback | null = null;
   if (decision === "approved") {
     const media = await watermarkStoredVideo(admin, {
       publicBucket: MYDANCR_TV_BUCKET,
@@ -1769,6 +1781,7 @@ export async function reviewMyDancrTvVideo(
       height: Number(video.height),
     });
     posterStoragePath = media.posterStoragePath;
+    mobilePlayback = media.mobilePlayback;
   }
 
   const reviewedAt = new Date().toISOString();
@@ -1784,6 +1797,7 @@ export async function reviewMyDancrTvVideo(
         moderation_details: {
           ...(video.moderation_details || {}),
           posterStoragePath,
+          mobilePlayback,
         },
       }
     : {
