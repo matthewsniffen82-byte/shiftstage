@@ -1,0 +1,79 @@
+{
+  "format": 1,
+  "template": "shell.html",
+  "includes": {
+    "device-bootstrap": [
+      "device-bootstrap.js"
+    ],
+    "application": [
+      "app/01-user-agent.js",
+      "app/02-record-live-event.js",
+      "app/03-submit-password-recovery-form.js",
+      "app/04-apply-live-admin-venues.js",
+      "app/05-real-dancer-dashboard-metrics.js",
+      "app/06-rank-label.js",
+      "app/07-shift-window-for-date.js",
+      "app/08-save-customer-deal-pass.js",
+      "app/09-render-shift-post-form.js",
+      "app/10-submit-approved-profile-video.js",
+      "app/11-post-verified-shift.js",
+      "app/12-sync-profile-photo-viewer-window.js",
+      "app/13-open-profile-modal.js",
+      "app/14-set-venue-auth-mode.js",
+      "app/15-active-support-role.js",
+      "app/16-setup-photo-selection-items.js",
+      "app/17-render-dancer-setup.js",
+      "app/18-keep-admin-approval-card-open.js",
+      "app/19-reset-home-discovery-feed-qr-prompt.js",
+      "app/20-render.js",
+      "app/21-deactivate-home-tv-feed.js",
+      "app/22-create-home-tv-landing-preloader.js",
+      "app/23-events.js",
+      "app/24-events.js",
+      "app/25-events.js",
+      "app/26-sync-discovery-city-scope.js"
+    ],
+    "base-styles": [
+      "styles/base-styles-01-root.css",
+      "styles/base-styles-02-venue-address-directions-action-icon.css",
+      "styles/base-styles-03-approved-profile-video-slot.css",
+      "styles/base-styles-04-auth-role-grid.css",
+      "styles/base-styles-05-approved-tool-dropdown-head-span.css",
+      "styles/base-styles-06-media.css",
+      "styles/base-styles-07-root.css",
+      "styles/base-styles-08-badge-pending-pill-muted-locked-lock-row.css",
+      "styles/base-styles-09-header.css",
+      "styles/base-styles-10-media.css",
+      "styles/base-styles-11-profile-modal-modal-identity-verified-mark.css",
+      "styles/base-styles-12-profile-modal-modal-identity-stack-modal-rank.css",
+      "styles/base-styles-13-setup-toggle-btn.css",
+      "styles/base-styles-14-reference-hero.css",
+      "styles/base-styles-15-dancer-card-rank-one-card-dancer-card-rank-one-card-trending-car.css",
+      "styles/base-styles-16-badge-trend-not-rank-one-badge-icon-venue-shift-rank-not-rank-on.css",
+      "styles/base-styles-17-dancer-card-hover-dancer-card-focus-visible.css",
+      "styles/base-styles-18-rank-trend-pill-rising.css",
+      "styles/base-styles-19-account-center-section-label.css",
+      "styles/base-styles-20-media.css",
+      "styles/base-styles-21-media.css",
+      "styles/base-styles-22-is-android-logo-image-button-mydancr-live-logo-violet-r.css",
+      "styles/base-styles-23-deal-pass-meta.css",
+      "styles/base-styles-24-customer-quick-item-hover-customer-quick-item-focus-visible.css",
+      "styles/base-styles-25-media.css",
+      "styles/base-styles-26-approved-dancer-panel-dancer-control-center.css",
+      "styles/base-styles-27-profile-modal-social-tile-social-links.css"
+    ],
+    "directory-styles": [
+      "styles/directory-styles-01-theme.css"
+    ],
+    "override-styles": [
+      "styles/override-styles-01-main-stack-main-stack.css",
+      "styles/override-styles-02-media.css",
+      "styles/override-styles-03-home-discovery-empty-action-is-secondary-hover-home-discovery-em.css",
+      "styles/override-styles-04-dancr-button-system-home-dancer-grid-action-rail-feed-card-actio.css",
+      "styles/override-styles-05-profile-backdrop-modal-media-video-preview-profile-backdrop-moda.css",
+      "styles/override-styles-06-approved-edit-profile-dropdown-show-approved-visual-profile-edit.css",
+      "styles/override-styles-07-profile-backdrop-schedule-upcoming-profile-schedule-primary.css",
+      "styles/override-styles-08-profile-backdrop-profile-modal-modal-grid-social-tile.css"
+    ]
+  }
+}

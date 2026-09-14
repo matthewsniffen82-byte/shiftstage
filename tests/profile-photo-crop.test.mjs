@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import fs from "node:fs";
+import fs from "./helpers/dashboard-test-fs.mjs";
 import vm from "node:vm";
 import test from "node:test";
 

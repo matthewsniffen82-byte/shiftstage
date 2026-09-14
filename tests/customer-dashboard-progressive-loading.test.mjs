@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { readFileSync } from 'node:fs';
+import { readFileSync } from "./helpers/dashboard-test-fs.mjs";
 import vm from 'node:vm';
 import { createRequire } from 'node:module';
 import ts from 'typescript';

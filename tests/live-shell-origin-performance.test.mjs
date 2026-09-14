@@ -6,7 +6,7 @@ test("concurrent origin requests share one production artifact render with indep
   const f = liveShellRoute();
   const responses = await Promise.all([f.route.GET(), f.route.GET(), f.route.GET()]);
   const bodies = await Promise.all(responses.map(response => response.text()));
-  assert.equal(f.reads.length, 2, "one shell and one compact stylesheet read");
+  assert.deepEqual(f.reads, ['outputs/index.html'], 'one shell read; styles are independent static assets');
   assert.ok(bodies[0].length > 100000);
   assert.equal(bodies[0], bodies[1]); assert.equal(bodies[0], bodies[2]);
   const fresh = await liveShellRoute().route.GET();
@@ -17,7 +17,7 @@ test("concurrent origin requests share one production artifact render with indep
     assert.equal(response.headers.get("cache-control"), "public, max-age=30, s-maxage=60, stale-while-revalidate=300");
   }
   const later = await f.route.GET();
-  assert.equal(await later.text(), bodies[0]); assert.equal(f.reads.length, 2);
+  assert.equal(await later.text(), bodies[0]); assert.equal(f.reads.length, 1);
 });
 
 test("failed artifact reads reject the request and do not poison subsequent requests", async () => {
@@ -25,7 +25,7 @@ test("failed artifact reads reject the request and do not poison subsequent requ
   await assert.rejects(f.route.GET(), /Synthetic artifact read failure/);
   const response = await f.route.GET();
   assert.equal(response.status, 200); assert.match(await response.text(), /<body/);
-  assert.equal(f.reads.length, 4);
+  assert.equal(f.reads.length, 2);
 });
 
 test("development reads the live source for every request", async () => {

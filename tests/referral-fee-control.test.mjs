@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
+import { readFile } from "./helpers/dashboard-test-fs-promises.mjs";
 import test from "node:test";
 
 const [migration, currentTierMigration, uncontractedDealsMigration, rejectionMigration, service, adminRoute, venueRoute, adminClient, dashboard, venueDealActions, dealRoute, dashboardRoute] = await Promise.all([

@@ -10,6 +10,7 @@ export const staticAssetPaths = [
   "/outputs/dancr-hero.png",
   "/outputs/dancr-hero.webp",
   "/outputs/live-shell.css",
+  "/outputs/live-shell-overrides.css",
   "/outputs/mydancr-logo-current.png",
   "/outputs/mydancr-logo.png",
   "/profile-media-owner-controls.css",

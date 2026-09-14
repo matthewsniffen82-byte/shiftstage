@@ -31,12 +31,12 @@
     "generate:static-asset-versions": "node scripts/generate-static-asset-versions.mjs",
     "generate:fictional-venue-logos": "node scripts/generate-fictional-venue-logos.mjs",
     "generate:venue-logo-variants": "node scripts/generate-dark-card-venue-logos.mjs",
-    "predev": "node scripts/check-runtime-dependencies.mjs && npm run generate:live-shell-version && npm run generate:live-shell-styles && npm run generate:static-asset-versions",
+    "predev": "node scripts/check-runtime-dependencies.mjs && npm run generate:live-shell && npm run generate:live-shell-version && npm run generate:live-shell-styles && npm run generate:static-asset-versions",
     "dev": "next dev",
-    "prebuild": "node scripts/check-runtime-dependencies.mjs && npm run db:check-migrations && npm run generate:live-shell-version && npm run generate:live-shell-styles && npm run generate:static-asset-versions",
+    "prebuild": "node scripts/check-runtime-dependencies.mjs && npm run check:live-shell-source && npm run db:check-migrations && npm run generate:live-shell-version && npm run generate:live-shell-styles && npm run generate:static-asset-versions",
     "build": "next build && node scripts/check-public-build.mjs",
     "postbuild": "node scripts/manage-layout-review-postbuild.mjs",
-    "lint": "eslint . --max-warnings=0",
+    "lint": "npm run check:live-shell-source && eslint . --max-warnings=0",
     "profiles:layout-review": "node scripts/manage-layout-review-profiles.mjs",
     "profiles:replace-demo-media": "node scripts/replace-layout-review-profile-media.mjs",
     "demo:working-now": "node scripts/manage-demo-working-now.mjs",
@@ -56,7 +56,9 @@
     "db:check-migrations": "node scripts/check-supabase-migrations.mjs",
     "install:ffmpeg": "node scripts/install-ffmpeg.mjs",
     "postinstall": "npm run install:ffmpeg",
-    "verify:release": "node scripts/validate-release.mjs"
+    "verify:release": "node scripts/validate-release.mjs",
+    "generate:live-shell": "node scripts/generate-live-shell.mjs",
+    "check:live-shell-source": "node scripts/generate-live-shell.mjs --check"
   },
   "devDependencies": {
     "@electric-sql/pglite": "0.5.8",
@@ -67,6 +69,7 @@
     "@types/react-dom": "^19.0.2",
     "eslint": "^9.39.5",
     "eslint-config-next": "^15.5.19",
+    "globals": "14.0.0",
     "terser": "5.51.2",
     "typescript": "^5.8.2"
   },

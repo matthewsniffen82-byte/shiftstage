@@ -1,0 +1,1197 @@
+
+        main.stack,
+        main.stack > * { min-width: 0; max-width: 100%; }
+        @media (max-width: 720px) {
+          body .toast {
+            z-index: 110;
+            bottom: calc(92px + env(safe-area-inset-bottom, 0px)) !important;
+            width: fit-content;
+            max-width: calc(100% - 32px);
+            min-height: 40px;
+            padding: 10px 16px;
+            border-radius: 999px;
+            line-height: 1.2;
+            text-align: center;
+          }
+        }
+        .home-discovery-controls { width: 100%; min-width: 0; max-width: 100%; grid-template-columns: minmax(180px, .9fr) minmax(0, 2.1fr) !important; align-items: end; gap: 10px !important; padding: 10px !important; overflow: hidden; }
+        .home-discovery-controls > *,
+        .home-advanced-filters > * { min-width: 0; max-width: 100%; }
+        .home-advanced-filters { width: 100%; max-width: 100%; display: grid; grid-template-columns: minmax(120px, .75fr) minmax(170px, 1fr) minmax(190px, .9fr); align-items: end; gap: 10px; min-width: 0; overflow: hidden; }
+        .home-filter-toggle { display: none; min-height: 46px; align-items: center; justify-content: center; gap: 9px; padding: 0 14px; border: 1px solid rgba(126,234,255,.28); border-radius: 12px; color: #fff; background: linear-gradient(135deg, rgba(88,48,173,.36), rgba(17,94,117,.3)); font: inherit; font-weight: 950; cursor: pointer; }
+        .home-discovery-controls select,
+        .home-discovery-controls .location-btn { width: 100% !important; min-width: 0 !important; max-width: 100% !important; min-height: 46px !important; font-size: clamp(14px, 1.8vw, 17px) !important; }
+        .venue-picker-field { position: relative; }
+        .venue-picker-trigger[hidden] { display: none !important; }
+        .distance-picker-field.is-enhanced #distanceSelect { display: none !important; }
+        #distanceSelectButton { grid-template-columns: minmax(0, 1fr) auto; }
+        #distanceSelectDialog { box-sizing: border-box; width: min(440px, calc(100vw - 24px)); max-width: none; max-height: calc(100dvh - 24px); inset: auto 0 max(12px, env(safe-area-inset-bottom, 0px)); margin: 0 auto; padding: 0; overflow: auto; overscroll-behavior: contain; border: 1px solid #3d3d46; border-radius: 24px; color: #fafafa; background: #151519; box-shadow: 0 20px 70px rgba(0,0,0,.5); }
+        #distanceSelectDialog::backdrop { background: rgba(0,0,0,.65); }
+        #distanceSelectDialog .distance-picker-panel { display: grid; gap: 16px; margin: 0; padding: 18px; }
+        #distanceSelectDialog .distance-picker-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+        #distanceSelectDialog h2 { margin: 0; color: #fafafa; font-size: 22px; font-weight: 750; line-height: 1.2; letter-spacing: -.025em; text-transform: none; }
+        #distanceSelectClose { flex: 0 0 44px; width: 44px; height: 44px; min-height: 44px; display: grid; place-items: center; padding: 0; border: 1px solid #44444e; border-radius: 50% !important; color: #fafafa; background: #232329; box-shadow: none; cursor: pointer; }
+        #distanceSelectClose svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.8; }
+        #distanceSelectOrigin { margin: -8px 0 0; color: #c6c6cf; font-size: 14px; line-height: 1.45; }
+        #distanceSelectDialog .distance-picker-options { min-width: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin: 0; padding: 0; border: 0; }
+        #distanceSelectDialog legend { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+        #distanceSelectDialog .distance-picker-options label { position: relative; display: block; margin: 0; cursor: pointer; }
+        #distanceSelectDialog .distance-picker-options input { position: absolute; width: 1px; height: 1px; margin: 0; opacity: 0; }
+        #distanceSelectDialog .distance-picker-options span { box-sizing: border-box; min-height: 64px; display: grid; place-items: center; border: 1px solid #50505b; border-radius: 14px; color: #f1f1f5; background: #24242a; font-size: 17px; font-weight: 650; line-height: 1; letter-spacing: 0; text-transform: none; }
+        #distanceSelectDialog .distance-picker-options input:checked + span { border-color: #fafafa; color: #151519; background: #fafafa; font-weight: 800; }
+        #distanceSelectDialog .distance-picker-options input:focus-visible + span,
+        #distanceSelectDialog button:focus-visible { outline: 2px solid #fafafa; outline-offset: 3px; }
+        #distanceSelectApply { width: 100%; min-height: 48px; padding: 12px 16px; border: 1px solid #fafafa !important; border-radius: 14px; color: #151519 !important; background: #fafafa !important; box-shadow: none; font: inherit; font-weight: 750; line-height: 1.25; text-transform: none; cursor: pointer; }
+        @media (min-width: 721px) {
+          #distanceSelectDialog { inset: 0; height: fit-content; margin: auto; }
+        }
+        .venue-picker-field.is-enhanced #venueSelect { position: absolute !important; width: 1px !important; height: 1px !important; min-height: 1px !important; padding: 0 !important; overflow: hidden !important; clip-path: inset(50%) !important; opacity: 0 !important; pointer-events: none !important; }
+        #venueSelect option[data-working-now="true"] { color: #10b981; font-weight: 900; }
+        .venue-picker-trigger { width: 100%; min-width: 0; min-height: 46px; display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: 9px; padding: 0 13px; border: 1px solid #334155; border-radius: 12px; color: #f8fafc; background: #050507; font: inherit; font-size: clamp(14px, 1.8vw, 17px); font-weight: 850; text-align: left; cursor: pointer; }
+        .venue-picker-trigger:hover { border-color: #64748b; }
+        .venue-picker-trigger:focus-visible { outline: 2px solid #7c3aed; outline-offset: 2px; border-color: #7c3aed; }
+        .venue-picker-trigger-value { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .venue-picker-trigger-live, .venue-picker-now { display: inline-flex; align-items: center; justify-content: center; min-height: 22px; padding: 0 8px; border: 1px solid rgba(16,185,129,.55); border-radius: 999px; color: #10b981; background: rgba(16,185,129,.12); font-size: 10px; font-weight: 950; letter-spacing: .08em; line-height: 1; }
+        .venue-picker-chevron { width: 18px; height: 18px; fill: none; stroke: #94a3b8; stroke-width: 1.8; }
+        .venue-picker-dialog { width: min(520px, calc(100vw - 20px)); max-width: none; max-height: calc(100dvh - 20px); margin: auto; padding: 0; overflow: visible; border: 1px solid #334155; border-radius: 20px; color: #f8fafc; background: #111118; box-shadow: 0 28px 80px rgba(0,0,0,.62); }
+        .venue-picker-dialog::backdrop { background: rgba(5,5,7,.82); backdrop-filter: blur(8px); }
+        .venue-picker-panel { min-height: 0; display: grid; grid-template-rows: auto minmax(0, 1fr) auto; }
+        .venue-picker-header { min-height: 76px; display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 18px 13px; border-bottom: 1px solid #334155; }
+        .venue-picker-header > div { min-width: 0; display: grid; gap: 4px; }
+        .venue-picker-header span { color: #94a3b8; font-size: 10px; font-weight: 900; letter-spacing: .14em; text-transform: uppercase; }
+        .venue-picker-header strong { color: #f8fafc; font-size: 20px; }
+        .venue-picker-close { width: 42px; height: 42px; display: grid; place-items: center; padding: 0; border: 1px solid #334155; border-radius: 999px; color: #cbd5e1; background: #050507; font-size: 28px; line-height: 1; cursor: pointer; }
+        .venue-picker-close:focus-visible, .venue-picker-option:focus-visible, .venue-picker-done:focus-visible { outline: 2px solid #7c3aed; outline-offset: 2px; }
+        .venue-picker-options { max-height: calc(100dvh - 198px); padding: 8px; overflow-y: auto; overscroll-behavior: contain; scrollbar-color: #64748b transparent; }
+        .venue-picker-option { width: 100%; min-height: 58px; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 9px 11px; border: 1px solid transparent; border-radius: 13px; color: #f8fafc; background: transparent; font: inherit; font-size: 16px; font-weight: 780; text-align: left; cursor: pointer; }
+        .venue-picker-option:hover { background: rgba(248,250,252,.055); }
+        .venue-picker-option[aria-selected="true"] { border-color: rgba(124,58,237,.55); background: rgba(124,58,237,.13); }
+        .venue-picker-radio { width: 24px; height: 24px; display: grid; place-items: center; border: 2px solid #64748b; border-radius: 999px; }
+        .venue-picker-option[aria-selected="true"] .venue-picker-radio { border-color: #7c3aed; }
+        .venue-picker-option[aria-selected="true"] .venue-picker-radio::after { content: ""; width: 12px; height: 12px; border-radius: 999px; background: #7c3aed; }
+        .venue-picker-option-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .venue-picker-done { min-height: 50px; margin: 10px 16px 16px; border: 1px solid #7c3aed; border-radius: 13px; color: #f8fafc; background: #7c3aed; font: inherit; font-weight: 950; cursor: pointer; }
+        .venue-picker-done:hover { background: #6d28d9; }
+        .home-live-summary { width: 100%; min-width: 0; max-width: 100%; display: grid; grid-template-columns: max-content minmax(0, 1fr) max-content; overflow: hidden; }
+        .home-live-summary span,
+        .home-live-summary strong { max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+        #homeLiveRadius { min-width: 0; }
+        @media (min-width: 721px) {
+          .stack > .hero.reference-hero,
+          .stack > .hero.reference-hero.uploaded-hero-ready,
+          .stack > .hero.reference-hero:not(.uploaded-hero-ready) { width: min(100%, 640px) !important; max-width: 640px !important; margin-inline: auto !important; }
+        }
+        .home-tv-launch { width: 100%; min-width: 0; max-width: 100%; min-height: 76px; display: grid; grid-template-columns: auto minmax(0, 1fr) auto auto; align-items: center; gap: 12px; margin: 14px 0 10px; padding: 12px 14px; overflow: hidden; border: 1px solid #7c3aed; border-radius: 16px; color: #fff; background: #2d106f; box-shadow: 0 16px 38px rgba(0,0,0,.34), 0 0 24px rgba(124,58,237,.2), inset 0 1px 0 rgba(255,255,255,.12); text-decoration: none; }
+        .home-tv-launch:hover,
+        .home-tv-launch:focus-visible { border-color: #a78bfa; background: #371386; box-shadow: 0 18px 42px rgba(0,0,0,.38), 0 0 30px rgba(124,58,237,.3), inset 0 1px 0 rgba(255,255,255,.15); }
+        .home-tv-launch:focus-visible { outline: 2px solid #7eeaff; outline-offset: 3px; }
+        .home-tv-launch-icon { width: 46px; height: 46px; display: inline-grid; place-items: center; border: 1px solid rgba(255,255,255,.22); border-radius: 999px; color: #fff; background: #160638; font-size: 16px; line-height: 1; box-shadow: 0 0 18px rgba(126,234,255,.18); }
+        .home-tv-launch-copy { min-width: 0; display: grid; gap: 4px; }
+        .home-tv-launch-copy strong { overflow: hidden; color: #fff; font-size: clamp(15px, 2.1vw, 18px); font-weight: 950; letter-spacing: .06em; text-overflow: ellipsis; text-transform: uppercase; white-space: nowrap; }
+        .home-tv-launch-copy small { overflow: hidden; color: #c9c2dc; font-size: 11px; font-weight: 800; text-overflow: ellipsis; white-space: nowrap; }
+        .home-tv-launch-count { min-width: 58px; min-height: 32px; display: inline-flex; align-items: center; justify-content: center; padding: 0 10px; overflow: hidden; border: 1px solid rgba(126,234,255,.3); border-radius: 999px; color: #baf5ff; background: #12062f; font-size: 11px; font-weight: 950; text-overflow: ellipsis; white-space: nowrap; }
+        .home-tv-launch-arrow { color: #fff; font-size: 31px; font-weight: 500; line-height: 1; transform: translateY(-1px); }
+        #discoveryTabs { width: 100%; min-width: 0; max-width: 100%; scroll-margin-top: 86px; }
+        /* Desktop shares one discovery row; the mobile dock keeps its compact TV label. */
+        .home-tv-desktop-label,
+        .home-tv-desktop-count {
+          display: none;
+        }
+
+        @media (min-width: 721px) {
+          body > .app main.stack > .home-tv-launch {
+            display: none !important;
+          }
+
+          body.dancr-button-system > .app main.stack > #discoveryTabs {
+            display: grid !important;
+            grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+            width: min(100%, 720px) !important;
+            min-height: 0;
+            gap: 12px !important;
+            margin: 12px 0 18px !important;
+            padding: 0 !important;
+            overflow: visible !important;
+            border: 0 !important;
+            border-radius: 0 !important;
+            background: transparent !important;
+            box-shadow: none !important;
+          }
+
+          body.dancr-button-system #discoveryTabs > :is(.tab, .home-bottom-tv) {
+            box-sizing: border-box !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            width: 100% !important;
+            min-width: 0 !important;
+            height: 60px !important;
+            min-height: 60px !important;
+            max-height: 60px !important;
+            gap: 10px !important;
+            margin: 0 !important;
+            padding: 0 16px !important;
+            border: 1px solid #3b3349 !important;
+            border-radius: 16px !important;
+            color: var(--dancr-color-text-secondary) !important;
+            background: linear-gradient(180deg, rgba(255, 255, 255, .035), transparent), #111018 !important;
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, .04) !important;
+            font-size: 15px !important;
+            line-height: 1 !important;
+            letter-spacing: normal !important;
+            white-space: nowrap;
+            text-transform: none !important;
+            backdrop-filter: none !important;
+            -webkit-backdrop-filter: none !important;
+            transform: none !important;
+            filter: none !important;
+          }
+
+          body.dancr-button-system #discoveryTabs > :is(.tab, .home-bottom-tv).active {
+            border-color: #a271f4 !important;
+            color: #fff !important;
+            background: linear-gradient(120deg, rgba(124, 58, 237, .34), rgba(124, 58, 237, .16)), #171120 !important;
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, .1) !important;
+          }
+
+          body.dancr-button-system #discoveryTabs > :is(.tab, .home-bottom-tv)::before,
+          body.dancr-button-system #discoveryTabs > :is(.tab, .home-bottom-tv)::after,
+          body.dancr-button-system #discoveryTabs .mobile-nav-selection-halo,
+          body.dancr-button-system #discoveryTabs .home-tv-mobile-label {
+            display: none !important;
+          }
+
+          body.dancr-button-system #discoveryTabs :is(.home-nav-icon, .home-bottom-tv-icon) {
+            display: grid !important;
+            place-items: center;
+            flex: 0 0 22px;
+            width: 22px !important;
+            height: 22px !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            border: 0 !important;
+            color: inherit !important;
+            background: transparent !important;
+            box-shadow: none !important;
+            filter: none !important;
+          }
+
+          body.dancr-button-system #discoveryTabs :is(.home-nav-icon, .home-bottom-tv-icon) svg {
+            display: block;
+            width: 22px;
+            height: 22px;
+            fill: none;
+            stroke: currentColor;
+            stroke-width: 1.8;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+          }
+
+          body.dancr-button-system #discoveryTabs .mydancr-tv-play {
+            fill: currentColor;
+            stroke: none;
+          }
+
+          body.dancr-button-system #discoveryTabs .home-bottom-tv > span:last-child {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+          }
+
+          body.dancr-button-system #discoveryTabs .home-tv-desktop-label {
+            display: inline;
+          }
+
+          body.dancr-button-system #discoveryTabs :is(.tab-count, .home-tv-desktop-count) {
+            box-sizing: border-box;
+            display: inline-flex !important;
+            align-items: center;
+            justify-content: center;
+            min-width: 28px;
+            height: 28px;
+            margin: 0 !important;
+            padding: 0 7px !important;
+            border: 1px solid rgba(255, 255, 255, .12) !important;
+            border-radius: 999px !important;
+            color: inherit !important;
+            background: rgba(255, 255, 255, .06) !important;
+            box-shadow: none !important;
+            font-size: 12px !important;
+            line-height: 1 !important;
+            font-variant-numeric: tabular-nums;
+          }
+
+          body.dancr-button-system #discoveryTabs > :is(.tab, .home-bottom-tv):focus-visible {
+            outline: 2px solid var(--dancr-color-text-primary) !important;
+            outline-offset: 3px !important;
+          }
+
+          @media (hover: hover) and (pointer: fine) {
+            body.dancr-button-system #discoveryTabs > :is(.tab, .home-bottom-tv):hover {
+              border-color: #b994ff !important;
+              box-shadow: inset 0 1px 0 rgba(255, 255, 255, .1) !important;
+            }
+          }
+
+          @media (prefers-reduced-motion: reduce) {
+            body.dancr-button-system #discoveryTabs > :is(.tab, .home-bottom-tv) {
+              transition: none !important;
+            }
+          }
+        }
+        /* Keep the late-rendered discovery shell aligned with the canonical mobile utility header. */
+        @media (max-width: 720px) {
+          .content-head,
+          #results:not(.home-dancer-grid) {
+            transform: translate3d(0, 0, 0);
+            transition: transform 170ms cubic-bezier(.22, .74, .26, 1), opacity 170ms ease;
+          }
+          /* A translate3d on the complete photo grid turns the full directory
+             into one oversized WebKit compositing layer. Keep the resting grid
+             in normal document flow so iPhone can paint each visible card once
+             while scrolling; the swipe gesture still promotes it temporarily. */
+          #results.home-dancer-grid {
+            transform: none;
+            transition: opacity 170ms ease;
+            will-change: auto;
+          }
+          body.home-destination-swipe-active .content-head,
+          body.home-destination-swipe-active #results {
+            opacity: .97;
+            transform: translate3d(var(--home-destination-swipe-offset, 0px), 0, 0);
+            transition: none;
+            will-change: transform;
+          }
+
+          body.home-destination-transitioning .content-head,
+          body.home-destination-transitioning #results:not(.home-dancer-grid) {
+            animation: homeDestinationEnter 220ms cubic-bezier(.22, .74, .26, 1) both;
+          }
+
+          body.home-destination-transitioning #results.home-dancer-grid {
+            animation: homeDestinationFade 180ms ease-out both;
+          }
+        }
+        @keyframes homeDestinationEnter {
+          from {
+            opacity: .84;
+            transform: translate3d(var(--home-destination-enter-offset, 0px), 0, 0);
+          }
+          to {
+            opacity: 1;
+            transform: translate3d(0, 0, 0);
+          }
+        }
+        @keyframes homeDestinationFade {
+          from { opacity: .84; }
+          to { opacity: 1; }
+        }
+        @media (max-width: 720px) and (prefers-reduced-motion: reduce) {
+          .content-head,
+          #results {
+            transition: none;
+            animation: none !important;
+          }
+        }
+        #results.home-tv-feed {
+          position: relative;
+          width: 100%;
+          max-width: 720px;
+          height: auto;
+          min-height: 0;
+          margin-inline: auto;
+          display: grid;
+          grid-template-columns: minmax(0, 1fr);
+          gap: 16px;
+          overflow: visible;
+          overscroll-behavior-y: auto;
+          overflow-anchor: auto;
+          scroll-snap-type: none;
+          touch-action: pan-y;
+          border: 0;
+          border-radius: 0;
+          background: transparent;
+          box-shadow: none;
+        }
+        #results.home-tv-feed::-webkit-scrollbar {
+          display: none;
+        }
+        .home-tv-feed-loading {
+          position: relative;
+          z-index: 3;
+          width: 100%;
+          height: var(--dancr-scroll-card-height);
+          min-height: var(--dancr-scroll-card-height);
+          max-height: var(--dancr-scroll-card-height);
+          display: block;
+          overflow: hidden;
+          border: 0;
+          border-radius: 18px;
+          background:
+            radial-gradient(circle at 72% 22%, rgba(255,255,255,.09), transparent 34%),
+            linear-gradient(145deg,#111118,#030305 70%);
+          pointer-events: none;
+        }
+        .home-tv-feed-loading::before {
+          content: "";
+          position: absolute;
+          inset: 0;
+          background: linear-gradient(105deg,transparent 35%,rgba(255,255,255,.075) 50%,transparent 65%);
+          transform: translateX(-100%);
+          animation: homeTvFeedLoadingSweep 1.6s ease-in-out infinite;
+        }
+        .home-tv-feed-loading-copy {
+          position: absolute;
+          right: 76px;
+          bottom: 28px;
+          left: 18px;
+          display: grid;
+          gap: 9px;
+        }
+        .home-tv-feed-loading-copy span {
+          height: 13px;
+          border-radius: 999px;
+          background: rgba(255,255,255,.13);
+        }
+        .home-tv-feed-loading-copy span:first-child { width: min(58%, 240px); height: 22px; }
+        .home-tv-feed-loading-copy span:nth-child(2) { width: min(42%, 180px); }
+        .home-tv-feed-loading-copy span:last-child { width: min(74%, 310px); }
+        @keyframes homeTvFeedLoadingSweep {
+          to { transform: translateX(100%); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .home-tv-feed-loading::before { animation: none; }
+        }
+        .home-tv-feed-slide {
+          --home-tv-action-control-size: 46px;
+          --home-tv-action-inset-right: calc(10px + env(safe-area-inset-right, 0px));
+          position: relative;
+          box-sizing: border-box;
+          width: 100%;
+          height: var(--dancr-scroll-card-height);
+          min-height: var(--dancr-scroll-card-height);
+          max-height: var(--dancr-scroll-card-height);
+          overflow: hidden;
+          border: 0;
+          border-radius: 18px;
+          background: #000;
+          box-shadow: 0 20px 54px rgba(0,0,0,.48);
+          contain: layout paint style;
+          isolation: isolate;
+        }
+        html.home-tv-feed-immersive-open,
+        body.home-tv-feed-immersive-open {
+          overflow: hidden !important;
+          overscroll-behavior: none;
+        }
+        body.home-tv-feed-immersive-open > .app {
+          overflow: visible !important;
+        }
+        #results.home-tv-feed:fullscreen,
+        #results.home-tv-feed:-webkit-full-screen,
+        #results.home-tv-feed.is-fullscreen-feed {
+          position: fixed !important;
+          z-index: 2147483000 !important;
+          inset: 0 !important;
+          width: 100vw !important;
+          max-width: none !important;
+          height: 100vh !important;
+          height: 100dvh !important;
+          min-height: 0 !important;
+          max-height: 100vh !important;
+          max-height: 100dvh !important;
+          margin: 0 !important;
+          display: grid !important;
+          grid-template-columns: minmax(0, 1fr) !important;
+          grid-auto-rows: 100vh;
+          grid-auto-rows: 100dvh;
+          gap: 0 !important;
+          padding: 0 !important;
+          overflow-x: hidden !important;
+          overflow-y: auto !important;
+          overscroll-behavior-y: contain;
+          scroll-snap-type: y mandatory !important;
+          scroll-behavior: smooth;
+          touch-action: pan-y;
+          transform: none !important;
+          transition: none !important;
+          background: #000 !important;
+          scrollbar-width: none;
+          -webkit-overflow-scrolling: touch;
+        }
+        #results.home-tv-feed:fullscreen::-webkit-scrollbar,
+        #results.home-tv-feed:-webkit-full-screen::-webkit-scrollbar,
+        #results.home-tv-feed.is-fullscreen-feed::-webkit-scrollbar {
+          display: none;
+        }
+        #results.home-tv-feed:fullscreen > .home-tv-feed-slide,
+        #results.home-tv-feed:-webkit-full-screen > .home-tv-feed-slide,
+        #results.home-tv-feed.is-fullscreen-feed > .home-tv-feed-slide {
+          width: 100vw !important;
+          height: 100vh !important;
+          height: 100dvh !important;
+          min-height: 100vh !important;
+          min-height: 100dvh !important;
+          max-height: none !important;
+          margin: 0 !important;
+          border: 0 !important;
+          border-radius: 0 !important;
+          background: #000 !important;
+          box-shadow: none !important;
+          scroll-snap-align: start;
+          scroll-snap-stop: always;
+        }
+        .home-tv-feed-video {
+          position: absolute;
+          z-index: 1;
+          inset: 0;
+          width: 100%;
+          height: 100%;
+          display: block;
+          border: 0;
+          object-fit: cover;
+          background: #000;
+          cursor: pointer;
+          opacity: 1;
+          transition: opacity .22s ease;
+          user-select: none;
+          -webkit-user-select: none;
+        }
+        /* Expanded media fills the available viewport edge-to-edge on both
+           native fullscreen and Safari's in-page fullscreen fallback. */
+        #results.home-tv-feed:is(:fullscreen, :-webkit-full-screen, .is-fullscreen-feed) .home-tv-feed-video {
+          object-fit: cover;
+        }
+        .home-tv-feed-slide.is-media-loading:not(.has-media-poster) .home-tv-feed-video,
+        .home-tv-feed-slide.is-media-unavailable .home-tv-feed-video {
+          opacity: 0;
+        }
+        .home-tv-feed-video:focus-visible {
+          outline: 3px solid #7eeaff;
+          outline-offset: -4px;
+        }
+        /* Native video posters can disappear before the first mobile playback
+           frame. Keep an independent, untinted preview over that gap. */
+        .home-tv-feed-poster {
+          position: absolute;
+          z-index: 2;
+          inset: 0;
+          width: 100%;
+          height: 100%;
+          display: block;
+          object-fit: cover;
+          opacity: 1;
+          filter: none;
+          transition: none;
+          pointer-events: none;
+        }
+        .home-tv-feed-video[data-frame-ready="true"] + .home-tv-feed-poster {
+          visibility: hidden;
+        }
+        .home-tv-feed-poster:not([src]), .home-tv-feed-poster[hidden] {
+          display: none;
+        }
+        .home-tv-feed-media-fallback {
+          position: absolute;
+          z-index: 0;
+          inset: 0;
+          display: grid;
+          place-items: center;
+          overflow: hidden;
+          background: var(--dancr-color-background, #050507);
+        }
+        .home-tv-feed-media-fallback::before {
+          content: "";
+          position: absolute;
+          inset: 0;
+          background: linear-gradient(180deg, var(--dancr-color-white-soft), transparent 42%);
+          filter: none;
+          transform: none;
+        }
+        .home-tv-feed-media-status {
+          position: relative;
+          z-index: 1;
+          min-height: 34px;
+          display: inline-flex;
+          align-items: center;
+          padding: 0 12px;
+          border: 1px solid rgba(255,255,255,.18);
+          border-radius: 999px;
+          color: rgba(255,255,255,.9);
+          background: rgba(3,3,7,.72);
+          font-size: 11px;
+          font-weight: 900;
+          backdrop-filter: blur(12px);
+        }
+        .home-tv-feed-slide:not(.is-media-loading):not(.is-media-unavailable) .home-tv-feed-media-status {
+          display: none;
+        }
+        .home-tv-feed-copy {
+          position: absolute;
+          z-index: 4;
+          right: 68px;
+          bottom: 0;
+          left: 0;
+          display: grid;
+          justify-items: start;
+          gap: 4px;
+          padding: 68px 0 14px 14px;
+          pointer-events: none;
+        }
+        .home-tv-feed-copy a,
+        .home-tv-feed-sound,
+        .home-tv-feed-action,
+        .home-feed-return-home {
+          pointer-events: auto;
+        }
+        .home-tv-feed-dancer {
+          width: min(100%, 520px);
+          min-height: 48px;
+          max-width: 100%;
+          display: grid;
+          grid-template-columns: 48px minmax(0, 1fr);
+          align-items: center;
+          gap: 9px;
+          color: #fff;
+          font-size: clamp(20px, 5vw, 26px);
+          font-weight: 950;
+          line-height: 1.05;
+          text-decoration: none;
+          text-shadow: 0 3px 16px rgba(0,0,0,.88);
+        }
+        .home-tv-feed-dancer-photo {
+          position: relative;
+          width: 48px;
+          height: 48px;
+          display: grid;
+          place-items: center;
+          overflow: hidden;
+          border: 2px solid rgba(255,255,255,.88);
+          border-radius: 999px;
+          color: #fff;
+          background: linear-gradient(135deg, rgba(124,58,237,.94), rgba(8,145,178,.9));
+          box-shadow: 0 5px 18px rgba(0,0,0,.45), 0 0 14px rgba(124,58,237,.3);
+          font-size: 17px;
+          font-weight: 950;
+          line-height: 1;
+          text-shadow: none;
+        }
+        .home-tv-feed-dancer-photo img {
+          position: absolute;
+          inset: 0;
+          width: 100%;
+          height: 100%;
+          display: block;
+          object-fit: cover;
+          object-position: center;
+        }
+        .home-tv-feed-dancer-copy {
+          min-width: 0;
+          display: grid;
+          gap: 2px;
+        }
+        .home-tv-feed-dancer-name-row {
+          min-width: 0;
+          display: flex;
+          align-items: flex-start;
+          gap: 6px;
+        }
+        .home-tv-feed-dancer-name {
+          min-width: 0;
+          overflow: visible;
+          overflow-wrap: anywhere;
+          text-overflow: clip;
+          white-space: normal;
+        }
+        .home-tv-feed-dancer:hover,
+        .home-tv-feed-dancer:focus-visible,
+        .home-tv-feed-venue:hover,
+        .home-tv-feed-venue:focus-visible {
+          color: #9fefff;
+        }
+        .home-tv-feed-dancer:focus-visible,
+        .home-tv-feed-venue:focus-visible,
+        .home-tv-feed-action:focus-visible,
+        .home-tv-feed-sound:focus-visible,
+        .home-tv-feed-fullscreen:focus-visible {
+          outline: 2px solid #7eeaff;
+          outline-offset: 3px;
+        }
+        .home-tv-feed-meta {
+          width: 100%;
+          max-width: 100%;
+          overflow: visible;
+          overflow-wrap: anywhere;
+          color: rgba(247,244,255,.86);
+          font-size: 11px;
+          font-weight: 850;
+          letter-spacing: .025em;
+          line-height: 1.25;
+          text-overflow: clip;
+          text-shadow: 0 2px 12px rgba(0,0,0,.9);
+          white-space: normal;
+        }
+        .home-tv-feed-venue {
+          width: 100%;
+          max-width: 100%;
+          display: inline-flex;
+          align-items: flex-start;
+          gap: 7px;
+          overflow: visible;
+          color: #fff;
+          font-size: 13px;
+          font-weight: 900;
+          line-height: 1.25;
+          text-shadow: 0 2px 12px rgba(0,0,0,.9);
+        }
+        .home-tv-feed-venue svg {
+          width: 17px;
+          height: 17px;
+          flex: 0 0 auto;
+          fill: none;
+          stroke: currentColor;
+          stroke-width: 2;
+        }
+        .home-tv-feed-venue span {
+          min-width: 0;
+          overflow: visible;
+          overflow-wrap: anywhere;
+          text-overflow: clip;
+          white-space: normal;
+        }
+        .home-tv-feed-context {
+          width: 100%;
+          max-width: 100%;
+          display: grid;
+          align-items: start;
+          gap: 5px;
+          margin-left: 0;
+          overflow: visible;
+        }
+        .home-tv-feed-schedule {
+          width: fit-content;
+          max-width: 100%;
+          min-height: 28px;
+          display: inline-flex;
+          align-items: center;
+          padding: 5px 9px;
+          border: 1px solid rgba(255,255,255,.24);
+          border-radius: 999px;
+          color: #d7d3df;
+          background: rgba(0,0,0,.62);
+          font-size: 11px;
+          font-weight: 900;
+          line-height: 1.15;
+          overflow-wrap: anywhere;
+          text-align: left;
+          white-space: normal;
+        }
+        .home-tv-feed-schedule.is-now {
+          border-color: rgba(77,236,157,.78);
+          color: #d9ffea;
+          background: var(--dancr-color-live-surface-glass, rgba(16,185,129,.60));
+          box-shadow: inset 0 1px 0 rgba(224,255,242,.14);
+          -webkit-backdrop-filter: blur(10px) saturate(120%);
+          backdrop-filter: blur(10px) saturate(120%);
+        }
+        .home-tv-feed-schedule.is-upcoming {
+          border-color: rgba(34,211,238,.72);
+          color: #dcfbff;
+          background: var(--dancr-color-info-surface-glass, rgba(8,145,178,.66));
+          box-shadow: inset 0 1px 0 rgba(224,252,255,.14);
+          -webkit-backdrop-filter: blur(10px) saturate(120%);
+          backdrop-filter: blur(10px) saturate(120%);
+        }
+        .home-tv-feed-sound { position: relative; }
+        .home-tv-feed-sound svg {
+          width: 19px;
+          height: 19px;
+          fill: none;
+          stroke: currentColor;
+          stroke-width: 2;
+          stroke-linecap: round;
+          stroke-linejoin: round;
+        }
+        .home-tv-feed-sound-muted {
+          display: none;
+        }
+        .home-tv-feed-sound.is-muted .home-tv-feed-sound-waves {
+          display: none;
+        }
+        .home-tv-feed-sound.is-muted .home-tv-feed-sound-muted {
+          display: initial;
+        }
+        .home-tv-feed-playback {
+          position: absolute;
+          z-index: 5;
+          top: 50%;
+          left: 50%;
+          width: 68px;
+          height: 68px;
+          display: grid;
+          place-items: center;
+          border: 1px solid rgba(255,255,255,.32);
+          border-radius: 999px;
+          color: #fff;
+          background: rgba(0,0,0,.56);
+          box-shadow: 0 10px 30px rgba(0,0,0,.42);
+          font-size: 25px;
+          opacity: 0;
+          pointer-events: none;
+          transform: translate(-50%,-50%) scale(.88);
+          transition: opacity .18s ease, transform .18s ease;
+        }
+        .home-tv-feed-playback svg {
+          width: 30px;
+          height: 30px;
+          display: block;
+          fill: currentColor;
+          stroke: none;
+        }
+        .home-tv-feed-playback.show,
+        .home-tv-feed-slide.is-active[data-user-paused="true"] .home-tv-feed-playback,
+        .home-tv-feed-slide.is-active.is-autoplay-blocked .home-tv-feed-playback {
+          opacity: 1;
+          transform: translate(-50%,-50%) scale(1);
+        }
+        .home-tv-feed-media-position {
+          position: absolute;
+          z-index: 6;
+          top: 53px;
+          left: 15px;
+          min-height: 26px;
+          display: inline-flex;
+          align-items: center;
+          padding: 0 9px;
+          border: 1px solid rgba(167,139,250,.28);
+          border-radius: 999px;
+          color: #e7ddff;
+          background: rgba(31,15,52,.56);
+          font-size: 9px;
+          font-weight: 900;
+          backdrop-filter: blur(10px);
+        }
+        .home-tv-feed-actions {
+          position: absolute;
+          z-index: 7;
+          right: var(--home-tv-action-inset-right);
+          bottom: 76px;
+          width: var(--home-tv-action-control-size);
+          display: grid;
+          justify-items: center;
+          gap: 6px;
+        }
+        .home-tv-feed-action {
+          width: var(--home-tv-action-control-size);
+          min-width: var(--home-tv-action-control-size);
+          max-width: var(--home-tv-action-control-size);
+          height: var(--home-tv-action-control-size);
+          min-height: var(--home-tv-action-control-size);
+          max-height: var(--home-tv-action-control-size);
+          display: grid;
+          place-items: center;
+          padding: 0;
+          border: 1px solid rgba(255,255,255,.2);
+          border-radius: 999px;
+          color: #fff;
+          background: rgba(5,5,10,.58);
+          box-shadow: 0 8px 22px rgba(0,0,0,.28);
+          backdrop-filter: blur(12px);
+          touch-action: manipulation;
+        }
+        .home-tv-feed-action:hover,
+        .home-tv-feed-action:not(.home-tv-feed-sound):not(.home-tv-feed-like-action)[aria-pressed="true"],
+        .home-tv-feed-action[aria-expanded="true"] {
+          border-color: rgba(126,234,255,.58);
+          color: #e9fbff;
+          background: rgba(35,22,58,.82);
+          box-shadow: 0 0 16px rgba(124,58,237,.18);
+        }
+        .home-tv-feed-action svg {
+          width: 19px;
+          height: 19px;
+          fill: none;
+          stroke: currentColor;
+          stroke-width: 2;
+          stroke-linecap: round;
+          stroke-linejoin: round;
+        }
+        .home-tv-feed-action .action-icon {
+          width: 19px !important;
+          height: 19px !important;
+          flex: 0 0 19px !important;
+          display: grid;
+          place-items: center;
+        }
+        .home-tv-feed-action .action-auth-marker {
+          display: none;
+        }
+        .home-tv-feed-like-action {
+          width: var(--home-tv-action-control-size) !important;
+          min-width: var(--home-tv-action-control-size) !important;
+          max-width: var(--home-tv-action-control-size) !important;
+          height: var(--home-tv-action-control-size) !important;
+          min-height: var(--home-tv-action-control-size) !important;
+          max-height: var(--home-tv-action-control-size) !important;
+          aspect-ratio: 1;
+          gap: 0;
+          padding: 4px 0 2px;
+          border-radius: 50% !important;
+          color: #fff;
+          font-size: 8px;
+          font-weight: 950;
+          line-height: 1;
+        }
+        .home-tv-feed-like-action[aria-pressed="true"],
+        .home-tv-feed-like-action[aria-pressed="true"]:hover,
+        .home-tv-feed-like-action[aria-pressed="true"]:focus,
+        .home-tv-feed-like-action[aria-pressed="true"]:focus-visible {
+          border-color: rgba(255,255,255,.2) !important;
+          outline: none !important;
+          color: #fff !important;
+          background: rgba(5,5,10,.58) !important;
+          box-shadow: 0 8px 22px rgba(0,0,0,.28) !important;
+        }
+        .home-tv-feed-fullscreen { position: relative; }
+        .home-tv-feed-fullscreen .home-tv-feed-video-collapse-icon,
+        .home-tv-feed-fullscreen[aria-pressed="true"] .home-tv-feed-video-expand-icon {
+          display: none;
+        }
+        .home-tv-feed-fullscreen[aria-pressed="true"] .home-tv-feed-video-collapse-icon {
+          display: initial;
+        }
+        .home-tv-feed-full-view-close {
+          position: absolute;
+          z-index: 12;
+          top: calc(16px + env(safe-area-inset-top, 0px));
+          right: var(--home-tv-action-inset-right);
+          display: none;
+          border-color: rgba(255,255,255,.24);
+          background-color: rgba(5,5,10,.5);
+          background-image: linear-gradient(155deg, rgba(255,255,255,.13), rgba(255,255,255,.035));
+          box-shadow:
+            inset 0 1px 0 rgba(255,255,255,.16),
+            inset 0 -1px 0 rgba(255,255,255,.035),
+            0 10px 26px rgba(0,0,0,.32);
+          -webkit-backdrop-filter: blur(14px) saturate(1.12);
+          backdrop-filter: blur(14px) saturate(1.12);
+        }
+        .home-tv-feed-full-view-close[hidden] {
+          display: none !important;
+        }
+        .home-tv-feed-full-view-close .action-icon,
+        .home-tv-feed-full-view-close svg {
+          width: 20px !important;
+          height: 20px !important;
+        }
+        .home-tv-feed-deal-action {
+          position: relative;
+          box-sizing: border-box !important;
+          width: var(--home-tv-action-control-size) !important;
+          min-width: var(--home-tv-action-control-size) !important;
+          max-width: var(--home-tv-action-control-size) !important;
+          height: var(--home-tv-action-control-size) !important;
+          min-height: var(--home-tv-action-control-size) !important;
+          max-height: var(--home-tv-action-control-size) !important;
+          display: grid !important;
+          grid-template-rows: 19px 9px !important;
+          align-content: center !important;
+          justify-items: center !important;
+          gap: 3px !important;
+          padding: 5px 3px !important;
+          border-width: 1px !important;
+          border-style: solid !important;
+          border-radius: 14px !important;
+          overflow: hidden !important;
+          opacity: 1 !important;
+          -webkit-appearance: none;
+          appearance: none;
+          border-color: var(--dancr-color-success-strong);
+          color: var(--dancr-color-text-primary);
+          background:
+            radial-gradient(circle at 50% -20%, var(--dancr-color-success-medium), transparent 58%),
+            linear-gradient(145deg, var(--dancr-color-success), color-mix(in srgb, var(--dancr-color-success) 58%, var(--dancr-color-background)));
+          box-shadow: 0 8px 24px var(--dancr-color-black-medium), 0 0 20px var(--dancr-color-success-soft);
+        }
+        .home-tv-feed-deal-count {
+          position: static;
+          width: 100%;
+          min-width: 0;
+          height: 9px;
+          display: grid;
+          place-items: center;
+          padding: 0;
+          border: 0;
+          border-radius: 0;
+          color: currentColor;
+          background: transparent;
+          box-sizing: border-box;
+          font-size: 7px;
+          font-weight: 950;
+          line-height: 1;
+          white-space: nowrap;
+          transform: none;
+        }
+        .home-tv-feed-deal-action svg {
+          width: 19px;
+          height: 19px;
+        }
+        .home-tv-feed-deal-action.is-loading,
+        .home-tv-feed-deal-action:disabled {
+          opacity: .72;
+          cursor: wait;
+        }
+        .home-tv-feed-deal-action:hover,
+        .home-tv-feed-deal-action:focus-visible {
+          border-color: var(--dancr-color-success);
+          background:
+            radial-gradient(circle at 50% -20%, var(--dancr-color-success-medium), transparent 58%),
+            linear-gradient(145deg, var(--dancr-color-success), color-mix(in srgb, var(--dancr-color-success) 64%, var(--dancr-color-background)));
+          box-shadow: 0 10px 28px var(--dancr-color-black-medium), 0 0 22px var(--dancr-color-success-soft);
+        }
+        .home-tv-feed-deal-action.is-unavailable,
+        .home-tv-feed-deal-action.is-unavailable:hover,
+        .home-tv-feed-deal-action.is-unavailable:focus-visible {
+          border-color: rgba(148,163,184,.42) !important;
+          color: rgba(248,250,252,.82) !important;
+          background: rgba(17,17,24,.92) !important;
+          box-shadow: 0 8px 24px rgba(0,0,0,.34), inset 0 1px 0 rgba(248,250,252,.07) !important;
+          cursor: pointer;
+        }
+        .home-tv-feed-deal-action.is-unavailable .home-tv-feed-deal-count {
+          color: rgba(248,250,252,.82) !important;
+          background: transparent !important;
+          box-shadow: none !important;
+        }
+        .home-tv-feed-progress {
+          position: absolute;
+          z-index: 8;
+          right: 14px;
+          bottom: 8px;
+          left: 14px;
+          width: calc(100% - 28px);
+          height: 3px;
+          overflow: hidden;
+          border-radius: 999px;
+          display: block;
+          background: transparent;
+          box-shadow: none;
+          pointer-events: none;
+          opacity: 1;
+        }
+        .home-tv-feed-scrubber {
+          position: absolute;
+          z-index: 9;
+          right: 14px;
+          bottom: 0;
+          left: 14px;
+          width: auto;
+          height: 28px;
+          min-height: 0 !important;
+          margin: 0;
+          padding: 0 !important;
+          border: 0 !important;
+          border-radius: 0 !important;
+          outline: 0;
+          background: transparent !important;
+          background-color: transparent !important;
+          background-image: none !important;
+          box-shadow: none !important;
+          backdrop-filter: none !important;
+          -webkit-backdrop-filter: none !important;
+          filter: none !important;
+          appearance: none !important;
+          -webkit-appearance: none !important;
+          cursor: pointer;
+          color: transparent !important;
+          accent-color: transparent !important;
+          opacity: 0 !important;
+          touch-action: none;
+          -webkit-tap-highlight-color: transparent;
+          -webkit-touch-callout: none;
+          user-select: none;
+        }
+        .home-tv-feed-scrubber:focus-visible {
+          border-color: transparent !important;
+          outline: 0 !important;
+          outline-offset: 0 !important;
+          box-shadow: none !important;
+        }
+        .home-tv-feed-scrubber[aria-disabled="true"] {
+          opacity: 0 !important;
+          cursor: default;
+          pointer-events: none;
+        }
+        #results.home-tv-feed:fullscreen .home-tv-feed-progress,
+        #results.home-tv-feed:-webkit-full-screen .home-tv-feed-progress,
+        #results.home-tv-feed.is-fullscreen-feed .home-tv-feed-progress {
+          bottom: calc(8px + env(safe-area-inset-bottom, 0px)) !important;
+          height: 3px !important;
+          display: block !important;
+          visibility: visible !important;
+          background: transparent !important;
+          box-shadow: none !important;
+          opacity: 1 !important;
+        }
+        #results.home-tv-feed:fullscreen .home-tv-feed-scrubber,
+        #results.home-tv-feed:-webkit-full-screen .home-tv-feed-scrubber,
+        #results.home-tv-feed.is-fullscreen-feed .home-tv-feed-scrubber {
+          bottom: env(safe-area-inset-bottom, 0px);
+        }
+        /* Full-view controls retain their spacing while clearing the device edge. */
+        #results.home-tv-feed:fullscreen .home-tv-feed-copy,
+        #results.home-tv-feed:-webkit-full-screen .home-tv-feed-copy,
+        #results.home-tv-feed.is-fullscreen-feed .home-tv-feed-copy {
+          bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+        }
+        #results.home-tv-feed:fullscreen .home-tv-feed-actions,
+        #results.home-tv-feed:-webkit-full-screen .home-tv-feed-actions,
+        #results.home-tv-feed.is-fullscreen-feed .home-tv-feed-actions {
+          bottom: calc(42px + env(safe-area-inset-bottom, 0px));
+        }
+        #results.home-tv-feed:fullscreen .home-tv-feed-full-view-close,
+        #results.home-tv-feed:-webkit-full-screen .home-tv-feed-full-view-close,
+        #results.home-tv-feed.is-fullscreen-feed .home-tv-feed-full-view-close {
+          display: grid;
+        }
+        .home-tv-feed-feedback {
+          position: absolute;
+          z-index: 9;
+          top: 50%;
+          left: 50%;
+          min-width: 112px;
+          min-height: 42px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          padding: 0 14px;
+          border: 1px solid rgba(255,255,255,.22);
+          border-radius: 999px;
+          color: #fff;
+          background: rgba(6,6,10,.78);
+          box-shadow: 0 12px 34px rgba(0,0,0,.46), 0 0 24px rgba(124,58,237,.2);
+          font-size: 12px;
+          font-weight: 950;
+          opacity: 0;
+          pointer-events: none;
+          transform: translate(-50%,-50%) scale(.9);
+          transition: opacity .18s ease, transform .18s ease;
+          backdrop-filter: blur(12px);
+        }
+        .home-tv-feed-feedback.show {
+          opacity: 1;
+          transform: translate(-50%,-50%) scale(1);
+        }
+        .home-tv-feed-feedback.is-neutral {
+          border-color: rgba(255,255,255,.22);
+          color: #fff;
+          background: rgba(6,6,10,.78);
+          box-shadow: 0 12px 34px rgba(0,0,0,.46);
+        }
+        .home-tv-feed-applause {
+          position: absolute;
+          z-index: 8;
+          top: 46%;
+          left: 50%;
+          color: #fff;
+          font-size: 56px;
+          opacity: 0;
+          pointer-events: none;
+          transform: translate(-50%,-50%) scale(.5);
+          text-shadow: 0 0 22px rgba(236,72,153,.84), 0 0 42px rgba(124,58,237,.7);
+        }
+        .home-tv-feed-slide.is-applauding .home-tv-feed-applause {
+          animation: homeTvFeedApplause .7s ease-out;
+        }
+        @keyframes homeTvFeedApplause {
+          0% { opacity: 0; transform: translate(-50%,-50%) scale(.5) rotate(-8deg); }
+          24% { opacity: 1; transform: translate(-50%,-50%) scale(1.18) rotate(4deg); }
+          100% { opacity: 0; transform: translate(-50%,-58%) scale(.96) rotate(0); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .home-tv-feed-video,
+          .home-tv-feed-progress,
+          .home-tv-feed-feedback {
+            transition: none;
+          }
+          .home-tv-feed-slide.is-applauding .home-tv-feed-applause {
+            animation: none;
+          }
+        }
+        .home-feed-return-home {
+          position: fixed;
+          z-index: 110;
+          top: calc(14px + env(safe-area-inset-top));
+          left: 14px;
+          width: 46px;
+          height: 46px;
+          display: none;
+          place-items: center;
+          padding: 0;
+          border: 1px solid rgba(167,139,250,.5);
+          border-radius: 999px;
+          color: #fff;
+          background: rgba(5,5,10,.58);
+          box-shadow:
+            0 7px 20px rgba(0,0,0,.34),
+            0 0 12px rgba(124,58,237,.22);
+          backdrop-filter: blur(14px) saturate(1.2);
+          touch-action: manipulation;
+        }
+        .home-feed-return-home svg {
+          width: 19px;
+          height: 19px;
+          fill: none;
+          stroke: currentColor;
+          stroke-width: 2;
+          stroke-linecap: round;
+          stroke-linejoin: round;
+        }
+        .home-feed-return-home:hover,
+        .home-feed-return-home:focus-visible {
+          border-color: rgba(126,234,255,.76);
+          background: rgba(18,12,30,.94);
+          box-shadow:
+            0 8px 24px rgba(0,0,0,.46),
+            0 0 18px rgba(124,58,237,.46),
+            0 0 24px rgba(34,199,255,.22);
+        }
+        .home-feed-return-home:focus-visible {
+          outline: 2px solid #7eeaff;
+          outline-offset: 3px;
+        }
+        #results.home-discovery-feed {
+          position: relative;
+          width: 100%;
+          max-width: 640px;
+          height: auto;
+          min-height: 0;
+          margin-inline: auto;
+          display: grid !important;
+          grid-template-columns: minmax(0, 1fr) !important;
+          gap: 16px;
+          padding-bottom: 24px;
+          overflow: visible;
+          overscroll-behavior-y: auto;
+          overflow-anchor: none;
+          scroll-behavior: auto;
+          scroll-padding-block: 0;
+          scroll-snap-type: none;
+          scroll-margin-top: 72px;
+          touch-action: pan-y;
+          -webkit-overflow-scrolling: touch;
+          border: 0;
+          border-radius: 0;
+          background: transparent;
+          box-shadow: none;
+        }
+        #results.venue-card-grid {
+          display: grid;
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+          align-items: stretch;
+          gap: 16px;
+        }
+        #results.venue-card-grid > .venue.venue-card {
+          min-width: 0;
+          grid-template-columns: minmax(96px, 118px) minmax(0, 1fr);
+        }

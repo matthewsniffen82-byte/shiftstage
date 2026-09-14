@@ -1,0 +1,10 @@
+
+/* Keep the city readable in the combined dancer directory. */
+.home-dancer-grid-copy .home-dancer-grid-city {
+  display: block;
+  color: #fff;
+  font-size: clamp(10px, 2.8vw, 14px);
+  font-weight: 600;
+  line-height: 1.3;
+  text-shadow: 0 1px 3px #000;
+}

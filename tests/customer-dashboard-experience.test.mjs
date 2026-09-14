@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
+import { readFile } from "./helpers/dashboard-test-fs-promises.mjs";
 import test from "node:test";
 
 const [dashboard, customerService, favoritesRoute, venueFollowsRoute, directionsRoute, customerPage, savedRoute, dealSavesRoute, dealSaveClient, clubDealCard, dealSaveMigration] = await Promise.all([
@@ -103,7 +103,8 @@ test("followed dancer tiles keep the profile link separate from their unfollow b
 });
 
 test("fictional club direction controls navigate to the shared MyDancr destination", () => {
-  assert.match(dashboard, /import \{ fictionalVenueTravelAddress, verifiedVenueLogoUrl \}/);
+  assert.match(dashboard, /import \{ fictionalVenueTravelAddress \}/);
+  assert.match(dashboard, /import \{ verifiedVenueLogoUrl \}/);
   assert.doesNotMatch(dashboard, /isFictionalVenueTravelPreviewOnly|previewOnly/);
   assert.match(dashboard, /function CustomerDirectionsButton[\s\S]*?disabled=\{pending\}[\s\S]*?onClick=\{\(\) => void onDirections\(venue, dancerId\)\}/);
   assert.match(dashboard, /function customerDirectionsHref[\s\S]*?const fictionalAddress = fictionalVenueTravelAddress\(venue\)[\s\S]*?const query = fictionalAddress \|\|/);

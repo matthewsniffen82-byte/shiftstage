@@ -55028,7 +55028,7 @@
         stripeCheckoutPage.classList.contains("show");
       const customerAuthOverlayOpen =
         authPage.classList.contains("show") &&
-        !authForm.hidden;
+        !document.getElementById("authForm").hidden;
       const venueAuthOverlayOpen =
         authPage.classList.contains("show") &&
         !document.getElementById("venueLoginForm").hidden;
@@ -55223,6 +55223,7 @@
       status.textContent = message;
       status.hidden = !message;
     }
+
 
     function setVenueAuthMode(mode, options = {}) {
       venueAuthMode = "signup";
@@ -58150,7 +58151,7 @@
       const billingButton = document.getElementById("billingPortalBtn");
       if (billingButton) billingButton.textContent = billingSummary.action;
       const billingSection = document.getElementById("dancerBillingSection");
-      if (billingSection) billingSection.hidden = !Boolean(liveDancerBilling?.subscription?.hasStripeSubscription);
+      if (billingSection) billingSection.hidden = !liveDancerBilling?.subscription?.hasStripeSubscription;
       const approvalStatusSection = document.getElementById("dancerApprovalStatusSection");
       if (approvalStatusSection) approvalStatusSection.hidden = approved && !optionalProfileFixes && !rejected;
       document.getElementById("dancerPublicDetail").textContent = approved
@@ -65076,7 +65077,7 @@
 
     function formatBusinessPhoneNumber(value) {
       // Keep international numbers and extensions intact.
-      if (/[^\d\s()+.\-]/.test(value) || (value.trim().startsWith("+") && !value.trim().startsWith("+1"))) return value;
+      if (/[^\d\s()+.-]/.test(value) || (value.trim().startsWith("+") && !value.trim().startsWith("+1"))) return value;
       const digits = value.replace(/\D/g, "");
       const hasCountryCode = value.trim().startsWith("+1") || (digits.length === 11 && digits.startsWith("1"));
       const national = hasCountryCode ? digits.slice(1) : digits;

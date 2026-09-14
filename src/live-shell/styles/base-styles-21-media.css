@@ -1,0 +1,1198 @@
+
+    @media (max-width: 720px) {
+      .app {
+        width: 100% !important;
+        min-height: 100dvh !important;
+        border-inline: 0 !important;
+      }
+
+      header {
+        padding: calc(12px + env(safe-area-inset-top, 0px)) 14px 10px !important;
+      }
+
+      header .topbar {
+        gap: 10px !important;
+        min-width: 0 !important;
+      }
+
+      .brand-home,
+      .dancr-home-logo {
+        min-width: 0 !important;
+        max-width: 52vw !important;
+        flex: 1 1 auto !important;
+      }
+
+      .dancr-wordmark {
+        max-width: 100% !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+      }
+
+      .menu {
+        flex: 0 1 auto !important;
+        margin-left: auto !important;
+        min-width: 0 !important;
+      }
+
+      #accountBtn,
+      .dashboard-menu {
+        max-width: 42vw !important;
+        min-width: 0 !important;
+        min-height: 40px !important;
+        padding: 0 12px !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        white-space: nowrap !important;
+        font-size: clamp(12px, 3.2vw, 14px) !important;
+      }
+
+      .utility-menu-panel {
+        right: 0 !important;
+        width: min(220px, calc(100vw - 28px)) !important;
+      }
+
+      main {
+        padding: 14px 12px calc(28px + env(safe-area-inset-bottom, 0px)) !important;
+      }
+
+      .stack {
+        gap: 12px !important;
+      }
+
+      .hero,
+      .hero.reference-hero,
+      .hero.reference-hero.uploaded-hero-ready,
+      .hero.reference-hero:not(.uploaded-hero-ready) {
+        min-height: clamp(176px, 48vw, 230px) !important;
+        padding: 18px !important;
+        border-radius: 16px !important;
+      }
+
+      .hero-copy,
+      .reference-hero .hero-copy {
+        min-height: 0 !important;
+        max-width: min(100%, 24rem) !important;
+      }
+
+      .hero h2,
+      .reference-hero h2 {
+        margin-top: 0 !important;
+        max-width: 11ch !important;
+        font-size: clamp(30px, 10vw, 42px) !important;
+        line-height: 0.96 !important;
+      }
+
+      .reference-hero p {
+        max-width: 20rem !important;
+        font-size: 14px !important;
+      }
+
+      .controls {
+        grid-template-columns: 1fr !important;
+        gap: 10px !important;
+        padding: 12px !important;
+      }
+
+      .field,
+      select,
+      input,
+      textarea,
+      .location-btn {
+        min-width: 0 !important;
+        max-width: 100% !important;
+      }
+
+      select,
+      input,
+      textarea,
+      .location-btn {
+        min-height: 44px !important;
+      }
+
+      .stats {
+        grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+        gap: 8px !important;
+      }
+
+      .stat {
+        min-width: 0 !important;
+        min-height: 68px !important;
+        padding: 10px 8px !important;
+      }
+
+      .stat strong {
+        font-size: clamp(18px, 5vw, 22px) !important;
+      }
+
+      .stat span {
+        font-size: 10px !important;
+        overflow-wrap: anywhere !important;
+      }
+
+      .tabs {
+        display: flex !important;
+        gap: 8px !important;
+        overflow-x: auto !important;
+        overflow-y: hidden !important;
+        scroll-snap-type: x proximity;
+        -webkit-overflow-scrolling: touch;
+        padding-bottom: 5px !important;
+      }
+
+      .tabs .tab,
+      .tab {
+        flex: 0 0 auto !important;
+        min-width: 92px !important;
+        max-width: 42vw !important;
+        min-height: 42px !important;
+        padding: 0 10px !important;
+        scroll-snap-align: start;
+      }
+
+      .content-head {
+        align-items: flex-start !important;
+        gap: 8px !important;
+      }
+
+      .count {
+        white-space: nowrap !important;
+      }
+
+      .list.card-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        gap: 10px !important;
+      }
+
+      .list.card-grid .dancer-card,
+      .dancer-card {
+        min-width: 0 !important;
+        min-height: clamp(310px, 88vw, 390px) !important;
+      }
+
+      .dancer-card .profile-body {
+        padding-inline: 10px !important;
+      }
+
+      .dancer-card .card-stage-name,
+      .dancer-card .card-venue-name,
+      .dancer-card .card-schedule-text {
+        max-width: 100% !important;
+      }
+
+      .venue,
+      .auth-card,
+      .info-tile,
+      .metric-card,
+      .dashboard-panel {
+        min-width: 0 !important;
+        max-width: 100% !important;
+      }
+
+      .page-panel.show,
+      .modal-backdrop.show {
+        width: 100vw !important;
+        max-width: 100vw !important;
+        overflow-x: hidden !important;
+      }
+
+      .page-inner,
+      .dashboard-wide,
+      .profile-modal,
+      .modal-card {
+        width: min(100%, calc(100vw - 18px)) !important;
+        max-width: calc(100vw - 18px) !important;
+      }
+
+      .profile-modal {
+        max-height: 96dvh !important;
+        overflow-x: hidden !important;
+      }
+
+      .profile-modal .modal-body {
+        overflow-x: hidden !important;
+      }
+
+      .profile-modal .modal-actions,
+      .account-control-actions,
+      .admin-actions {
+        grid-template-columns: 1fr !important;
+      }
+    }
+
+    @media (max-width: 390px) {
+      main {
+        padding-inline: 10px !important;
+      }
+
+      #accountBtn,
+      .dashboard-menu {
+        max-width: 46vw !important;
+        padding-inline: 10px !important;
+      }
+
+      .tabs .tab,
+      .tab {
+        min-width: 84px !important;
+        max-width: 48vw !important;
+        font-size: 12px !important;
+      }
+
+      .list.card-grid {
+        gap: 8px !important;
+      }
+
+      .list.card-grid .dancer-card,
+      .dancer-card {
+        min-height: clamp(300px, 92vw, 360px) !important;
+      }
+    }
+
+    /* Restore demo mobile layout after the launch hardening pass. */
+    @media (max-width: 720px) {
+      header {
+        padding: calc(10px + env(safe-area-inset-top, 0px)) 12px 9px !important;
+      }
+
+      header .topbar {
+        display: grid !important;
+        grid-template-columns: minmax(0, 1fr) auto !important;
+        align-items: center !important;
+        gap: 10px !important;
+        padding: 0 !important;
+        background: transparent !important;
+        border: 0 !important;
+        box-shadow: none !important;
+      }
+
+      .brand-home,
+      .dancr-home-logo {
+        width: min(56vw, 268px) !important;
+        max-width: min(56vw, 268px) !important;
+        min-width: 136px !important;
+        min-height: 62px !important;
+        padding: 10px 18px 11px !important;
+        justify-content: flex-start !important;
+        border-radius: 17px !important;
+        flex: 0 1 auto !important;
+      }
+
+      .dancr-wordmark {
+        max-width: none !important;
+        overflow: visible !important;
+        text-overflow: clip !important;
+        font-size: clamp(31px, 9vw, 44px) !important;
+        line-height: .88 !important;
+        letter-spacing: -.075em !important;
+      }
+
+      .menu {
+        justify-self: end !important;
+        margin-left: 0 !important;
+      }
+
+      #accountBtn,
+      .dashboard-menu {
+        width: auto !important;
+        max-width: 36vw !important;
+        min-width: 104px !important;
+        min-height: 48px !important;
+        padding: 0 16px !important;
+        border-radius: 999px !important;
+        font-size: clamp(12px, 3.4vw, 15px) !important;
+      }
+
+      main {
+        padding: 14px 12px calc(30px + env(safe-area-inset-bottom, 0px)) !important;
+      }
+
+      .stack {
+        gap: 16px !important;
+      }
+
+      .hero.reference-hero,
+      .hero.reference-hero.uploaded-hero-ready,
+      .hero.reference-hero:not(.uploaded-hero-ready) {
+        aspect-ratio: 1900 / 850 !important;
+        min-height: 0 !important;
+        height: auto !important;
+        padding: 0 !important;
+        border-radius: 16px !important;
+        overflow: hidden !important;
+        background-image: none !important;
+        background-size: cover !important;
+        background-position: center center !important;
+        background-repeat: no-repeat !important;
+        background-color: #050507 !important;
+      }
+
+      .reference-hero .hero-copy,
+      .hero-copy,
+      .reference-hero h2,
+      .reference-hero p,
+      .reference-hero:before,
+      .reference-hero:after {
+        display: none !important;
+      }
+
+      .controls {
+        gap: 10px !important;
+        padding: 14px !important;
+        border-radius: 18px !important;
+      }
+
+      .controls select,
+      .location-btn {
+        min-height: 58px !important;
+        border-radius: 18px !important;
+        font-size: clamp(18px, 5vw, 22px) !important;
+      }
+
+      .location-btn {
+        font-size: clamp(16px, 4.6vw, 20px) !important;
+        font-weight: 950 !important;
+      }
+
+      .tabs {
+        display: grid !important;
+        grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+        gap: 7px !important;
+        overflow: visible !important;
+        padding: 0 !important;
+        scroll-snap-type: none !important;
+      }
+
+      .tabs .tab,
+      .tab {
+        width: 100% !important;
+        min-width: 0 !important;
+        max-width: none !important;
+        min-height: 58px !important;
+        padding: 0 6px !important;
+        justify-content: center !important;
+        gap: 5px !important;
+        font-size: clamp(11px, 3.1vw, 14px) !important;
+        line-height: 1 !important;
+        white-space: nowrap !important;
+      }
+
+      .tabs .tab-count,
+      .tab-count {
+        min-width: 24px !important;
+        height: 24px !important;
+        padding: 0 6px !important;
+        font-size: 11px !important;
+      }
+
+      .content-head {
+        align-items: center !important;
+        gap: 8px !important;
+        margin-top: 8px !important;
+      }
+
+      .content-head h2,
+      #tabTitle {
+        font-family: var(--font-display) !important;
+        font-size: clamp(24px, 6.4vw, 30px) !important;
+        font-weight: 800 !important;
+        line-height: 1.02 !important;
+        letter-spacing: -0.01em !important;
+      }
+
+      #tabTitle.dancers-city-title {
+        flex: 1 1 auto;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      #tabTitle .tab-title-city {
+        white-space: nowrap;
+      }
+
+      .count {
+        min-height: 28px !important;
+        padding: 0 10px !important;
+        font-size: 12px !important;
+      }
+
+      .list.card-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        gap: 12px 10px !important;
+        align-items: start !important;
+      }
+
+      .list.card-grid .dancer-card,
+      .dancer-card {
+        aspect-ratio: 1 / 1.72 !important;
+        min-height: 0 !important;
+        height: auto !important;
+        border-radius: 20px !important;
+        overflow: hidden !important;
+      }
+
+      .dancer-card .portrait {
+        position: absolute !important;
+        inset: 0 !important;
+        height: 100% !important;
+        border-radius: inherit !important;
+      }
+
+      .dancer-card .portrait:after {
+        border-radius: inherit !important;
+        background:
+          linear-gradient(180deg, rgba(5,5,7,0) 34%, rgba(5,5,7,.24) 57%, rgba(5,5,7,.94) 100%) !important;
+      }
+
+      .dancer-card .profile-body {
+        position: absolute !important;
+        inset: auto 0 0 !important;
+        z-index: 4 !important;
+        display: grid !important;
+        gap: 5px !important;
+        padding: 74px 12px 16px !important;
+        background: linear-gradient(180deg, rgba(3,3,5,0), rgba(3,3,5,.66) 44%, rgba(3,3,5,.98) 100%) !important;
+      }
+
+      .dancer-card .card-info-stack {
+        gap: 3px !important;
+      }
+
+      .dancer-card .profile-body h3 {
+        font-size: clamp(17px, 4.8vw, 20px) !important;
+        line-height: 1.04 !important;
+      }
+
+      .dancer-card .card-venue-line {
+        display: flex !important;
+        align-items: center !important;
+        gap: 4px !important;
+        min-width: 0 !important;
+        font-size: clamp(11px, 3vw, 12px) !important;
+        line-height: 1.12 !important;
+        white-space: nowrap !important;
+      }
+
+      .dancer-card .card-stage-name,
+      .dancer-card .card-venue-name {
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        white-space: nowrap !important;
+      }
+
+      .dancer-card .profile-body > .schedule-row {
+        grid-template-columns: 15px minmax(0, 1fr) !important;
+        column-gap: 6px !important;
+        margin-top: 2px !important;
+      }
+
+      .card-schedule-text {
+        display: block !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        white-space: nowrap !important;
+        font-size: clamp(10.5px, 2.95vw, 12px) !important;
+        line-height: 1.15 !important;
+      }
+
+      .profile-modal {
+        width: 100vw !important;
+        max-width: 100vw !important;
+        height: 100dvh !important;
+        max-height: 100dvh !important;
+        border-radius: 0 !important;
+        overflow: hidden !important;
+      }
+
+      .profile-modal .modal-image {
+        height: clamp(330px, 43dvh, 430px) !important;
+        min-height: 0 !important;
+        border-radius: 0 !important;
+        background-position: center top, center top, center !important;
+      }
+
+      .profile-modal .modal-identity {
+        top: 16px !important;
+        left: 16px !important;
+        max-width: calc(100vw - 126px) !important;
+        padding: 10px 12px !important;
+      }
+
+      .profile-modal .close-btn {
+        top: 14px !important;
+        right: 14px !important;
+        width: 54px !important;
+        min-height: 54px !important;
+      }
+
+      .profile-modal .gallery {
+        grid-template-columns: repeat(4, minmax(54px, 68px)) !important;
+        justify-content: center !important;
+        gap: 12px !important;
+        padding: 10px 14px 12px !important;
+      }
+
+      .profile-modal .thumb {
+        height: 66px !important;
+        border-radius: 12px !important;
+      }
+
+      .profile-modal .modal-body {
+        flex: 1 1 auto !important;
+        min-height: 0 !important;
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+        padding: 10px 14px calc(24px + env(safe-area-inset-bottom, 0px)) !important;
+      }
+
+      .profile-modal .modal-grid {
+        grid-template-columns: 1fr !important;
+        gap: 12px !important;
+      }
+
+      .profile-modal .info-tile,
+      .profile-modal .social-tile {
+        min-height: 84px !important;
+        padding: 14px 16px !important;
+        border-radius: 16px !important;
+      }
+
+      .profile-modal .detail-line,
+      .profile-modal .schedule-text-row,
+      .profile-modal .schedule-stack .detail-line {
+        display: grid !important;
+        grid-template-columns: 22px minmax(0, 1fr) !important;
+        align-items: center !important;
+        gap: 10px !important;
+      }
+
+      .profile-modal .modal-schedule-text,
+      .profile-modal .schedule-time,
+      .profile-modal .venue-inline-link {
+        min-width: 0 !important;
+        overflow-wrap: anywhere !important;
+        line-height: 1.28 !important;
+      }
+
+      .profile-modal .modal-actions {
+        position: static !important;
+        display: grid !important;
+        grid-template-columns: 1fr !important;
+        gap: 10px !important;
+        margin: 12px 0 0 !important;
+        padding: 0 !important;
+        background: transparent !important;
+      }
+    }
+
+    @media (max-width: 390px) {
+      .brand-home,
+      .dancr-home-logo {
+        width: 54vw !important;
+        max-width: 54vw !important;
+        min-width: 126px !important;
+        min-height: 58px !important;
+        padding-inline: 15px !important;
+      }
+
+      #accountBtn,
+      .dashboard-menu {
+        min-width: 98px !important;
+        max-width: 38vw !important;
+        min-height: 46px !important;
+        padding-inline: 12px !important;
+      }
+
+      .tabs {
+        gap: 5px !important;
+      }
+
+      .tabs .tab,
+      .tab {
+        min-height: 54px !important;
+        padding-inline: 4px !important;
+        font-size: 10.5px !important;
+      }
+
+      .list.card-grid {
+        gap: 10px 8px !important;
+      }
+
+      .dancer-card .profile-body {
+        padding: 68px 10px 14px !important;
+      }
+
+      .profile-modal .modal-image {
+        height: clamp(310px, 42dvh, 390px) !important;
+      }
+    }
+
+    /* Compact the social links card so the icons use the empty horizontal space. */
+    .profile-modal .social-tile {
+      display: grid !important;
+      grid-template-columns: auto minmax(0, 1fr) auto !important;
+      align-items: center !important;
+      column-gap: 18px !important;
+      row-gap: 8px !important;
+      min-height: auto !important;
+      padding: 18px 20px !important;
+    }
+
+    .profile-modal .social-tile .social-tile-head {
+      display: contents !important;
+      margin: 0 !important;
+    }
+
+    .profile-modal .social-tile .social-tile-head strong {
+      grid-column: 1 !important;
+      margin: 0 !important;
+      white-space: nowrap !important;
+    }
+
+    .profile-modal .social-tile .social-links {
+      grid-column: 2 !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: flex-start !important;
+      gap: 10px !important;
+      margin: 0 !important;
+      min-width: 0 !important;
+    }
+
+    .profile-modal .social-tile .profile-utility-actions {
+      grid-column: 3 !important;
+      justify-self: end !important;
+      margin: 0 !important;
+    }
+
+    @media (max-width: 620px) {
+      .profile-modal .social-tile {
+        grid-template-columns: minmax(0, 1fr) auto !important;
+        padding: 14px 16px !important;
+      }
+
+      .profile-modal .social-tile .social-links {
+        grid-column: 1 / -1 !important;
+        grid-row: 2 !important;
+      }
+
+      .profile-modal .social-tile .profile-utility-actions {
+        grid-column: 2 !important;
+        grid-row: 1 !important;
+      }
+    }
+
+    /* Homepage hierarchy: hero should lead, filters should support. */
+    .hero.reference-hero,
+    .hero.reference-hero.uploaded-hero-ready,
+    .hero.reference-hero:not(.uploaded-hero-ready) {
+      width: 100% !important;
+      aspect-ratio: 1900 / 850 !important;
+      min-height: clamp(300px, 34vw, 460px) !important;
+      background-size: contain !important;
+      background-position: center center !important;
+      background-repeat: no-repeat !important;
+      background-color: #050507 !important;
+      border-radius: 18px !important;
+      box-shadow:
+        0 30px 82px rgba(0, 0, 0, .58),
+        0 0 42px rgba(139, 92, 246, .20),
+        inset 0 0 0 1px rgba(255, 255, 255, .035) !important;
+    }
+
+    .hero.reference-hero + .controls {
+      margin-top: -2px !important;
+    }
+
+    .controls {
+      padding: 12px !important;
+      border-radius: 16px !important;
+      box-shadow:
+        0 16px 38px rgba(0, 0, 0, .34),
+        0 0 18px rgba(124, 58, 237, .10),
+        inset 0 1px 0 rgba(255, 255, 255, .035) !important;
+    }
+
+    .controls select,
+    .location-btn {
+      min-height: 50px !important;
+      font-size: clamp(15px, 2.2vw, 18px) !important;
+    }
+
+    @media (max-width: 720px) {
+      .hero.reference-hero,
+      .hero.reference-hero.uploaded-hero-ready,
+      .hero.reference-hero:not(.uploaded-hero-ready) {
+        aspect-ratio: 1900 / 850 !important;
+        min-height: clamp(230px, 56vw, 330px) !important;
+        background-size: contain !important;
+        background-position: center center !important;
+      }
+
+      .controls {
+        padding: 12px !important;
+        gap: 8px !important;
+      }
+
+      .controls select,
+      .location-btn {
+        min-height: 50px !important;
+        font-size: clamp(16px, 4.2vw, 19px) !important;
+      }
+    }
+
+    @media (max-width: 390px) {
+      .hero.reference-hero,
+      .hero.reference-hero.uploaded-hero-ready,
+      .hero.reference-hero:not(.uploaded-hero-ready) {
+        min-height: clamp(216px, 58vw, 286px) !important;
+      }
+    }
+
+    /* Final hero fit: match the supplied artwork ratio exactly. */
+    .hero.reference-hero,
+    .hero.reference-hero.uploaded-hero-ready,
+    .hero.reference-hero:not(.uploaded-hero-ready) {
+      aspect-ratio: 1672 / 941 !important;
+      min-height: 0 !important;
+      height: auto !important;
+      padding: 0 !important;
+      background-image:
+        radial-gradient(circle at 74% 22%, rgba(126,234,255,.1), transparent 28%),
+        radial-gradient(circle at 22% 78%, rgba(109,40,217,.18), transparent 42%),
+        linear-gradient(145deg,#101018,#050507) !important;
+      background-size: cover !important;
+      background-position: center center !important;
+      background-repeat: no-repeat !important;
+      background-color: #050507 !important;
+      filter: brightness(1.16) contrast(1.08) saturate(1.08) !important;
+      -webkit-filter: brightness(1.16) contrast(1.08) saturate(1.08) !important;
+    }
+
+    @media (max-width: 700px) {
+      .is-android .hero.reference-hero,
+      .is-android .hero.reference-hero.uploaded-hero-ready,
+      .is-android .hero.reference-hero:not(.uploaded-hero-ready) {
+        filter: brightness(1.38) contrast(1.16) saturate(1.13) !important;
+        -webkit-filter: brightness(1.38) contrast(1.16) saturate(1.13) !important;
+      }
+
+      .is-samsung-browser .hero.reference-hero,
+      .is-samsung-browser .hero.reference-hero.uploaded-hero-ready,
+      .is-samsung-browser .hero.reference-hero:not(.uploaded-hero-ready) {
+        filter: brightness(1.68) contrast(1.24) saturate(1.2) !important;
+        -webkit-filter: brightness(1.68) contrast(1.24) saturate(1.2) !important;
+      }
+    }
+
+    .hero.reference-hero::before,
+    .hero.reference-hero::after,
+    .hero.reference-hero.uploaded-hero-ready::before,
+    .hero.reference-hero.uploaded-hero-ready::after {
+      content: none !important;
+      display: none !important;
+    }
+
+    .hero.reference-hero .hero-art {
+      position: absolute !important;
+      inset: 0 !important;
+      z-index: 0 !important;
+      display: block !important;
+      width: 100% !important;
+      height: 100% !important;
+      object-fit: contain !important;
+      object-position: center center !important;
+      pointer-events: none !important;
+      opacity: 0;
+    }
+
+    .hero.reference-hero .hero-art[data-image-state="ready"] {
+      opacity: 1;
+    }
+
+    .hero.reference-hero .hero-art[data-image-state="error"] {
+      visibility: hidden;
+    }
+
+    @media (prefers-reduced-motion: no-preference) {
+      .hero.reference-hero .hero-art {
+        transition: opacity 160ms ease-out;
+      }
+    }
+
+    .dancr-home-logo,
+    .brand-home.dancr-home-logo {
+      min-width: 238px !important;
+      border-color: rgba(109, 40, 217, 0.58) !important;
+      background:
+        radial-gradient(circle at 74% 50%, rgba(76, 29, 149, 0.44), transparent 0 52%),
+        linear-gradient(180deg, rgba(18, 12, 31, 0.96), rgba(7, 7, 12, 0.98)) !important;
+      box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.035) inset,
+        0 0 28px rgba(76, 29, 149, 0.42),
+        0 0 42px rgba(109, 40, 217, 0.18),
+        0 12px 28px rgba(0, 0, 0, 0.34) !important;
+    }
+
+    .dancr-home-logo:hover,
+    .brand-home.dancr-home-logo:hover {
+      border-color: rgba(139, 92, 246, 0.72) !important;
+      box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.045) inset,
+        0 0 34px rgba(76, 29, 149, 0.52),
+        0 0 54px rgba(109, 40, 217, 0.24),
+        0 14px 30px rgba(0, 0, 0, 0.36) !important;
+    }
+
+    .dancr-wordmark {
+      font-family: var(--font-display) !important;
+      font-size: clamp(36px, 5.4vw, 46px) !important;
+      font-weight: 950 !important;
+      line-height: .88 !important;
+      letter-spacing: -0.075em !important;
+      text-transform: lowercase !important;
+    }
+
+    .dancr-wordmark .wordmark-y {
+      display: inline-block;
+      margin: 0 -0.018em 0 -0.01em;
+      font-family: Manrope, Inter, ui-sans-serif, system-ui, sans-serif !important;
+      font-size: 0.98em;
+      font-weight: 900;
+      line-height: 0.82;
+      transform: translateY(-0.045em) scaleX(0.96);
+      transform-origin: 50% 55%;
+      color: #FFFFFF;
+      text-shadow:
+        0 0 8px rgba(255, 255, 255, 0.28),
+        0 0 18px rgba(124, 58, 237, 0.10);
+    }
+
+    .dancr-wordmark .wordmark-violet {
+      color: transparent !important;
+      background: linear-gradient(135deg, #6D28D9 0%, #A855F7 54%, #C084FC 100%) !important;
+      -webkit-background-clip: text !important;
+      background-clip: text !important;
+      text-shadow: none !important;
+      filter:
+        drop-shadow(0 0 8px rgba(168, 85, 247, 0.88))
+        drop-shadow(0 0 18px rgba(109, 40, 217, 0.72))
+        drop-shadow(0 0 28px rgba(76, 29, 149, 0.44)) !important;
+    }
+
+    @media (max-width: 520px) {
+      .brand-home.dancr-home-logo,
+      .dancr-home-logo {
+        width: min(62vw, 304px) !important;
+        max-width: min(62vw, 304px) !important;
+        min-width: 188px !important;
+        padding-inline: 16px !important;
+      }
+
+      .dancr-wordmark {
+        font-size: clamp(32px, 8.8vw, 42px) !important;
+      }
+    }
+
+    @media (max-width: 390px) {
+      .brand-home.dancr-home-logo,
+      .dancr-home-logo {
+        width: 59vw !important;
+        max-width: 59vw !important;
+        min-width: 178px !important;
+        padding-inline: 14px !important;
+      }
+
+      .dancr-wordmark {
+        font-size: clamp(30px, 8.2vw, 38px) !important;
+      }
+    }
+
+    .dancr-home-logo.logo-image-button,
+    .brand-home.dancr-home-logo.logo-image-button {
+      width: min(34vw, 236px) !important;
+      aspect-ratio: 331 / 103 !important;
+      min-width: 196px !important;
+      max-width: 236px !important;
+      min-height: 0 !important;
+      padding: 0 !important;
+      overflow: hidden !important;
+      background: #050507 !important;
+      border: 1px solid rgba(148, 68, 255, 0.72) !important;
+      box-shadow:
+        0 0 18px rgba(132, 50, 255, 0.24),
+        inset 0 0 16px rgba(132, 50, 255, 0.08) !important;
+      border-radius: 15px !important;
+      display: inline-flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+    }
+
+    .logo-image-button .brand-logo-image {
+      display: block;
+      width: calc(100% + 16px);
+      height: calc(100% + 16px);
+      margin: -8px;
+      min-height: inherit;
+      object-fit: cover;
+      object-position: center;
+      pointer-events: none;
+      user-select: none;
+    }
+
+    .logo-image-button .mydancr-live-logo {
+      display: inline-flex !important;
+      align-items: baseline !important;
+      justify-content: center !important;
+      color: #fff !important;
+      font-family: Manrope, Inter, ui-sans-serif, system-ui, sans-serif !important;
+      font-size: clamp(38px, 5.7vw, 50px) !important;
+      font-weight: 950 !important;
+      letter-spacing: -0.065em !important;
+      line-height: 0.9 !important;
+      text-transform: lowercase !important;
+      text-shadow:
+        0 0 12px rgba(255, 255, 255, 0.7),
+        0 0 22px rgba(255, 255, 255, 0.28) !important;
+      transform: translateY(-1px) !important;
+      pointer-events: none !important;
+      user-select: none !important;
+    }
+
+    .logo-image-button .mydancr-live-logo .violet-r {
+      color: #8730f5 !important;
+      text-shadow:
+        0 0 8px rgba(135, 48, 245, 0.82),
+        0 0 18px rgba(135, 48, 245, 0.58),
+        0 0 28px rgba(135, 48, 245, 0.34) !important;
+    }
+
+    .is-samsung-browser .logo-image-button .mydancr-live-logo .violet-r {
+      color: #5b21d6 !important;
+      text-shadow:
+        0 0 10px rgba(91, 33, 214, 0.98),
+        0 0 24px rgba(76, 29, 149, 0.82),
+        0 0 38px rgba(49, 16, 102, 0.58) !important;
+    }
+
+    @media (max-width: 700px) {
+      .is-android .dancer-card .portrait,
+      .is-android .profile-modal .modal-image,
+      .is-android .profile-modal .thumb .portrait {
+        filter: brightness(1.28) contrast(1.1) saturate(1.1) !important;
+        -webkit-filter: brightness(1.28) contrast(1.1) saturate(1.1) !important;
+      }
+
+      .is-samsung-browser .dancer-card .portrait,
+      .is-samsung-browser .profile-modal .modal-image,
+      .is-samsung-browser .profile-modal .thumb .portrait {
+        filter: brightness(1.48) contrast(1.16) saturate(1.14) !important;
+        -webkit-filter: brightness(1.48) contrast(1.16) saturate(1.14) !important;
+      }
+
+      .is-android .dancer-card .portrait:after,
+      .is-android .profile-modal .modal-image:after {
+        background:
+          linear-gradient(180deg, rgba(5, 5, 7, 0) 34%, rgba(5, 5, 7, 0.14) 59%, rgba(5, 5, 7, 0.82) 100%) !important;
+      }
+
+      .is-samsung-browser .dancer-card .portrait:after,
+      .is-samsung-browser .profile-modal .modal-image:after {
+        background:
+          linear-gradient(180deg, rgba(5, 5, 7, 0) 36%, rgba(5, 5, 7, 0.08) 60%, rgba(5, 5, 7, 0.74) 100%) !important;
+      }
+
+      .is-android .portrait.has-custom-photo {
+        background-image:
+          linear-gradient(180deg, rgba(5,5,7,0) 0%, rgba(5,5,7,.04) 58%, rgba(5,5,7,.72) 100%),
+          var(--custom-photo),
+          linear-gradient(135deg, #17101f, #07090e) !important;
+      }
+
+      .is-samsung-browser .portrait.has-custom-photo {
+        background-image:
+          linear-gradient(180deg, rgba(5,5,7,0) 0%, rgba(5,5,7,.02) 62%, rgba(5,5,7,.64) 100%),
+          var(--custom-photo),
+          linear-gradient(135deg, #17101f, #07090e) !important;
+      }
+
+      .is-android .verified-mark,
+      .is-android .verified-check,
+      .is-android .dancer-card .verified-mark,
+      .is-android .profile-modal .verified-mark {
+        background: #35dfff !important;
+        color: #02070a !important;
+        border-color: rgba(181, 250, 255, 0.9) !important;
+        box-shadow:
+          0 0 0 1px rgba(4, 10, 14, 0.72),
+          0 0 16px rgba(53, 223, 255, 0.92),
+          inset 0 0 8px rgba(255, 255, 255, 0.42) !important;
+      }
+
+      .is-samsung-browser .verified-mark,
+      .is-samsung-browser .verified-check,
+      .is-samsung-browser .dancer-card .verified-mark,
+      .is-samsung-browser .profile-modal .verified-mark {
+        background: #55eeff !important;
+        color: #02070a !important;
+        border-color: rgba(205, 253, 255, 0.94) !important;
+        box-shadow:
+          0 0 0 1px rgba(4, 10, 14, 0.74),
+          0 0 18px rgba(85, 238, 255, 0.96),
+          inset 0 0 9px rgba(255, 255, 255, 0.46) !important;
+      }
+    }
+
+    @media (max-width: 720px) {
+      .dancr-home-logo.logo-image-button,
+      .brand-home.dancr-home-logo.logo-image-button {
+        width: min(57vw, 276px) !important;
+        max-width: min(57vw, 276px) !important;
+        min-width: 176px !important;
+        min-height: 0 !important;
+      }
+    }
+
+    @media (max-width: 390px) {
+      .dancr-home-logo.logo-image-button,
+      .brand-home.dancr-home-logo.logo-image-button {
+        width: 54vw !important;
+        max-width: 54vw !important;
+        min-width: 164px !important;
+        min-height: 0 !important;
+      }
+    }
+    /* Keep verified checks visibly cyan on mobile and dense photo cards. */
+    .verified-mark,
+    .dancer-card .verified-mark,
+    .profile-modal .verified-mark {
+      color: #041015 !important;
+      background: #22c7ff !important;
+      border-color: rgba(148, 245, 255, 0.78) !important;
+      box-shadow:
+        0 0 0 1px rgba(6, 16, 22, 0.62),
+        0 0 14px rgba(34, 199, 255, 0.72),
+        inset 0 0 8px rgba(255, 255, 255, 0.34) !important;
+      text-shadow: none !important;
+    }
+
+    @media (max-width: 560px) {
+      .verified-mark,
+      .dancer-card .verified-mark,
+      .profile-modal .verified-mark {
+        background: #22c7ff !important;
+        color: #02070a !important;
+        border-color: rgba(151, 247, 255, 0.86) !important;
+        box-shadow:
+          0 0 0 1px rgba(4, 10, 14, 0.74),
+          0 0 16px rgba(34, 199, 255, 0.9),
+          inset 0 0 9px rgba(255, 255, 255, 0.4) !important;
+      }
+    }
+
+    @media (max-width: 700px) {
+      .is-android .verified-mark,
+      .is-android .verified-check,
+      .is-android .dancer-card .verified-mark,
+      .is-android .profile-modal .verified-mark {
+        opacity: 1 !important;
+        color: #02070a !important;
+        background: #5defff !important;
+        background-color: #5defff !important;
+        background-image: none !important;
+        border: 1px solid rgba(206, 252, 255, 0.92) !important;
+        filter: brightness(1.08) saturate(1.22) !important;
+        -webkit-filter: brightness(1.08) saturate(1.22) !important;
+        mix-blend-mode: normal !important;
+        text-shadow: none !important;
+        box-shadow:
+          0 0 0 1px rgba(3, 9, 12, 0.66),
+          0 0 14px rgba(93, 239, 255, 0.78),
+          inset 0 0 7px rgba(255, 255, 255, 0.38) !important;
+      }
+
+      .is-samsung-browser .verified-mark,
+      .is-samsung-browser .verified-check,
+      .is-samsung-browser .dancer-card .verified-mark,
+      .is-samsung-browser .profile-modal .verified-mark {
+        color: #02070a !important;
+        background: #7cf9ff !important;
+        background-color: #7cf9ff !important;
+        background-image: none !important;
+        border-color: rgba(226, 255, 255, 0.96) !important;
+        filter: brightness(1.1) saturate(1.26) !important;
+        -webkit-filter: brightness(1.1) saturate(1.26) !important;
+        box-shadow:
+          0 0 0 1px rgba(3, 9, 12, 0.66),
+          0 0 16px rgba(124, 249, 255, 0.84),
+          inset 0 0 8px rgba(255, 255, 255, 0.44) !important;
+      }
+    }
+
+    /* Cross-device mobile foundation. The Android floating dock is the
+       navigation source of truth for every mobile browser, including Safari. */
+    :root {
+      --brand-violet: #7c3aed;
+      --brand-violet-glow: #6d28d9;
+      --matte-black: #050507;
+      --charcoal: #111118;
+      --text-white: #ffffff;
+      --brand-cyan: #22c7ff;
+      --brand-magenta: #f15bb5;
+    }
+
+    html,
+    body,
+    button,
+    input,
+    select,
+    textarea {
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      text-rendering: geometricPrecision;
+    }
+
+    body {
+      background: var(--matte-black) !important;
+      color: var(--text-white) !important;
+    }
+
+    .is-android body,
+    .is-android .app {
+      background: var(--matte-black) !important;
+    }
+
+    .is-android .controls,
+    .is-android .city-panel,
+    .is-android .tabs,
+    .is-android .profile-modal {
+      background-color: var(--charcoal) !important;
+      border-color: rgba(124, 58, 237, 0.34) !important;
+      box-shadow:
+        0 18px 46px rgba(0, 0, 0, 0.46),
+        0 0 22px rgba(109, 40, 217, 0.16),
+        inset 0 0 0 1px rgba(255, 255, 255, 0.026) !important;
+      -webkit-backdrop-filter: none !important;
+      backdrop-filter: none !important;
+    }
+
+    .is-android .brand-home.logo-image-button,
+    .is-android .dancr-home-logo.logo-image-button {
+      background:
+        radial-gradient(circle at 73% 50%, rgba(109, 40, 217, 0.32), transparent 0 48%),
+        linear-gradient(180deg, #12121a 0%, #07070b 100%) !important;
+      border-color: rgba(124, 58, 237, 0.68) !important;
+      box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.035) inset,
+        0 0 24px rgba(109, 40, 217, 0.34),
+        0 10px 28px rgba(0, 0, 0, 0.34) !important;
+    }
+
+    .is-android .logo-image-button .mydancr-live-logo {
+      color: var(--text-white) !important;
+      text-shadow:
+        0 0 8px rgba(255, 255, 255, 0.32),
+        0 0 18px rgba(255, 255, 255, 0.12) !important;
+      filter: none !important;
+      -webkit-filter: none !important;
+    }

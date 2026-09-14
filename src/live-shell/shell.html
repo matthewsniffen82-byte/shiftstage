@@ -1,0 +1,2005 @@
+<!doctype html>
+<!-- Dancr deployment refresh: small-commit-push-check -->
+<html lang="en">
+<head>
+  <script src="/mydancr-api-transport.js?v=1"></script>
+  <script src="/profile-photo-crop.js?v=1"></script>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
+  <meta name="color-scheme" content="only dark">
+  <title>mydancr</title>
+  <meta name="application-name" content="mydancr">
+  <meta name="apple-mobile-web-app-title" content="mydancr">
+  <meta name="theme-color" content="#050507">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="icon" href="/mydancr-icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/mydancr-icon.svg">
+  <link rel="preload" as="image" type="image/webp" fetchpriority="high" imagesrcset="/outputs/dancr-hero-480-10b0c648e5b6.webp 480w, /outputs/dancr-hero-800-5d40507eaa79.webp 800w, /outputs/dancr-hero-1280-70c171eee35b.webp 1280w, /outputs/dancr-hero.webp?v=exact-20260830-q84 1590w" imagesizes="(max-width: 720px) calc(100vw - 24px), 640px">
+  <meta property="og:title" content="mydancr">
+  <meta property="og:site_name" content="mydancr">
+  <meta property="og:description" content="Choose your city. See who's working now.">
+  <meta property="og:url" content="https://www.mydancr.com">
+  <meta name="twitter:title" content="mydancr">
+  <meta name="twitter:description" content="Choose your city. See who's working now.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Manrope:wght@500;600;700;800;900&family=Outfit:wght@500;600;700;800;900&family=Space+Grotesk:wght@600;700;800&display=swap" rel="stylesheet">
+  <script>{{include:device-bootstrap}}  </script>
+  <style>{{include:base-styles}}  </style>
+  <style>{{include:directory-styles}}  </style>
+  <link href="/dancr-brand-tokens.v1.css?v=13" rel="stylesheet">
+  <link href="/dancr-button-system.v1.css" rel="stylesheet">
+  <link href="/dancr-aesthetic.v1.css?v=271" rel="stylesheet">
+  <link href="/dancr-feedback.v1.css?v=2" rel="stylesheet">
+  <link href="/profile-media-owner-controls.css?v=3" rel="stylesheet">
+  <link href="/profile-media-card-feed.css?v=10" rel="stylesheet">
+  <link href="/profile-photo-crop.css?v=1" rel="stylesheet">
+  <link href="/profile-actions-compact.css" rel="stylesheet">
+</head>
+<body class="dancr-button-system">
+  <div class="app">
+    <header>
+      <div class="topbar">
+        <button class="brand brand-home dancr-home-logo logo-image-button" id="brandHome" type="button" aria-label="Go to Mydancr home">
+          <span class="mydancr-live-logo" aria-hidden="true">mydanc<span class="violet-r">r</span></span>
+        </button>
+        <div class="menu" aria-label="Menu">
+          <div class="customer-quick-actions" id="customerQuickActions" hidden>
+            <button class="customer-quick-btn" id="customerNotificationQuickBtn" type="button" aria-label="Open notifications" title="Notifications" aria-expanded="false" aria-controls="customerNotificationsQuickPanel">
+              <span id="customerNotificationQuickCount" class="customer-quick-count" hidden>0</span>
+              <span data-quick-icon="bell"></span>
+            </button>
+            <button class="customer-quick-btn" id="dancerProfileShareQuickBtn" type="button" aria-label="Share my profile" title="Share profile" aria-haspopup="dialog" aria-expanded="false" hidden>
+              <span data-quick-icon="share"></span>
+            </button>
+            <button class="customer-quick-btn" id="customerDealQuickBtn" type="button" aria-label="Open saved Club Deals" title="Saved Club Deals" aria-expanded="false" aria-controls="customerDealsQuickPanel">
+              <span id="customerDealQuickCount" class="customer-quick-count customer-deal-quick-count" hidden>0</span>
+              <span data-quick-icon="qr"></span>
+              <span id="customerDealQuickCta" class="customer-deal-quick-cta" role="status" aria-live="polite" hidden>New deal saved · Open</span>
+            </button>
+            <div class="customer-quick-panel" id="customerNotificationsQuickPanel" hidden>
+              <h3>Notifications</h3>
+              <p>Recent alerts from the settings you turned on.</p>
+              <div class="customer-quick-list" id="customerNotificationsQuickList"></div>
+              <button class="customer-quick-clear" type="button" data-notification-action="clear-all">Clear notifications</button>
+            </div>
+            <div class="customer-quick-panel" id="customerDealsQuickPanel" hidden>
+              <h3>Saved Club Deals</h3>
+              <div class="customer-quick-list" id="customerDealsQuickList"></div>
+            </div>
+          </div>
+          <div class="utility-menu">
+            <button class="menu-btn dashboard-menu" id="accountBtn" type="button" aria-haspopup="true" aria-expanded="false">Login / Join</button>
+            <div class="utility-menu-panel" id="moreMenuPanel" hidden>
+              <button class="utility-menu-item utility-menu-dashboard" id="dashboardBtn" type="button" hidden>Dashboard</button>
+              <nav class="utility-menu-legal" aria-label="Legal and support">
+                <span class="utility-menu-section-label">Legal &amp; support</span>
+                <button class="utility-menu-item" data-legal-page="termsPage" type="button">Terms</button>
+                <button class="utility-menu-item" data-legal-page="privacyPage" type="button">Privacy</button>
+                <button class="utility-menu-item" data-legal-page="guidelinesPage" type="button">Guidelines</button>
+                <a class="utility-menu-item" href="/dmca">Copyright / DMCA</a>
+                <button class="utility-menu-item" id="contactAdminBtn" type="button">Contact</button>
+                <button class="utility-menu-item admin-utility-menu-item" id="adminBtn" type="button">Platform admin</button>
+              </nav>
+              <div class="utility-menu-session-end" id="sessionMenuEnd" hidden>
+                <button class="utility-menu-item utility-menu-logout" id="logoutBtn" type="button">Logout</button>
+                <button class="utility-menu-item utility-menu-delete-account danger-button" id="deleteAccountBtn" type="button">Delete account</button>
+              </div>
+            </div>
+            <button class="account-tooltip" id="accountTooltip" type="button" hidden>Manage your account here.</button>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main class="stack">
+      <section class="hero reference-hero uploaded-hero-ready">
+        <img
+          class="hero-art"
+          src="/outputs/dancr-hero.webp?v=exact-20260830-q84"
+          srcset="/outputs/dancr-hero-480-10b0c648e5b6.webp 480w, /outputs/dancr-hero-800-5d40507eaa79.webp 800w, /outputs/dancr-hero-1280-70c171eee35b.webp 1280w, /outputs/dancr-hero.webp?v=exact-20260830-q84 1590w"
+          sizes="(max-width: 720px) calc(100vw - 24px), 640px"
+          alt="Know who's working. Plan your night."
+          width="1590"
+          height="889"
+          loading="eager"
+          decoding="sync"
+          fetchpriority="high"
+          data-image-state="ready"
+        >
+        <div class="hero-copy">
+          <h2><span>Know who's</span><span>working.</span><strong>Plan your night.</strong></h2>
+          <p>Choose your city. See who's working now.</p>
+        </div>
+      </section>
+
+      <section class="controls home-discovery-controls" aria-label="Discovery filters">
+        <div class="field home-city-filter" id="cityPickerField">
+          <label id="citySelectLabel" for="citySelect">City</label>
+          <div class="home-city-select-shell">
+            <svg class="home-city-select-icon" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z"></path>
+              <circle cx="12" cy="10" r="2.5"></circle>
+            </svg>
+            <select id="citySelect">
+              <option>All cities</option>
+              <option>Las Vegas</option>
+              <option>Miami</option>
+              <option>Atlanta</option>
+              <option>New York</option>
+            </select>
+            <button
+              class="city-picker-trigger"
+              id="citySelectButton"
+              type="button"
+              aria-controls="citySelectPanel"
+              aria-expanded="false"
+              aria-labelledby="citySelectLabel citySelectButtonText"
+              hidden
+            >
+              <svg class="city-picker-trigger-icon" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z"></path>
+                <circle cx="12" cy="10" r="2.5"></circle>
+              </svg>
+              <span class="city-picker-trigger-value" id="citySelectButtonText">Las Vegas</span>
+              <svg class="city-picker-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="m7 9 5 5 5-5"></path></svg>
+            </button>
+          </div>
+        </div>
+        <button
+          class="home-filter-toggle"
+          id="homeFilterToggle"
+          type="button"
+          aria-label="Filters"
+          aria-expanded="false"
+          aria-controls="homeAdvancedFilters"
+        >
+          <svg class="home-filter-toggle-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M4 7h10"></path>
+            <path d="M18 7h2"></path>
+            <circle cx="16" cy="7" r="2"></circle>
+            <path d="M4 17h2"></path>
+            <path d="M10 17h10"></path>
+            <circle cx="8" cy="17" r="2"></circle>
+          </svg>
+          <span>Filters</span>
+          <span class="home-filter-toggle-count" id="homeFilterCount" hidden>0</span>
+        </button>
+        <div class="home-advanced-filters" id="homeAdvancedFilters">
+          <div class="field distance-picker-field" id="distancePickerField">
+            <label id="distanceSelectLabel" for="distanceSelect">Distance</label>
+            <select id="distanceSelect">
+              <option>5 mi</option>
+              <option>10 mi</option>
+              <option selected>25 mi</option>
+              <option>50 mi</option>
+            </select>
+            <button class="venue-picker-trigger distance-picker-trigger" id="distanceSelectButton" type="button" aria-haspopup="dialog" aria-controls="distanceSelectDialog" aria-expanded="false" aria-labelledby="distanceSelectLabel distanceSelectButtonText" hidden>
+              <span class="venue-picker-trigger-value" id="distanceSelectButtonText">25 mi</span>
+              <svg class="venue-picker-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="m7 9 5 5 5-5"></path></svg>
+            </button>
+          </div>
+          <div class="field venue-picker-field" id="venuePickerField">
+            <label id="venueSelectLabel" for="venueSelect">Club</label>
+            <select id="venueSelect">
+              <option value="all">All clubs</option>
+            </select>
+            <button class="venue-picker-trigger" id="venueSelectButton" type="button" aria-haspopup="dialog" aria-controls="venueSelectDialog" aria-expanded="false" aria-labelledby="venueSelectLabel venueSelectButtonText" hidden>
+              <span class="venue-picker-trigger-value" id="venueSelectButtonText">All clubs</span>
+              <span class="venue-picker-trigger-live" id="venueSelectButtonLive" hidden>0 NOW</span>
+              <svg class="venue-picker-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="m7 9 5 5 5-5"></path></svg>
+            </button>
+          </div>
+          <div class="home-filter-actions">
+            <button class="location-btn" id="locationBtn" type="button">
+              <svg class="icon" viewBox="0 0 24 24"><path d="M12 2v4"></path><path d="M12 18v4"></path><path d="M2 12h4"></path><path d="M18 12h4"></path><circle cx="12" cy="12" r="4"></circle></svg>
+              <span class="location-btn-label">Use current location</span>
+            </button>
+            <button class="home-filter-reset" id="homeFilterReset" type="button" hidden>Reset</button>
+          </div>
+        </div>
+        <div class="city-picker-inline" id="citySelectPanel" hidden>
+          <div class="venue-picker-options city-picker-options" id="citySelectOptions" role="listbox" aria-labelledby="citySelectLabel"></div>
+        </div>
+        <dialog id="distanceSelectDialog" aria-labelledby="distanceSelectDialogTitle" aria-describedby="distanceSelectOrigin">
+          <form class="distance-picker-panel" id="distanceSelectForm">
+            <div class="distance-picker-header">
+              <h2 id="distanceSelectDialogTitle">Search radius</h2>
+              <button id="distanceSelectClose" type="button" aria-label="Close distance picker"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"></path></svg></button>
+            </div>
+            <p id="distanceSelectOrigin">From the center of Las Vegas</p>
+            <fieldset class="distance-picker-options">
+              <legend>Distance in miles</legend>
+              <label><input type="radio" name="discoveryDistance" value="5 mi"><span>5 mi</span></label>
+              <label><input type="radio" name="discoveryDistance" value="10 mi"><span>10 mi</span></label>
+              <label><input type="radio" name="discoveryDistance" value="25 mi" checked><span>25 mi</span></label>
+              <label><input type="radio" name="discoveryDistance" value="50 mi"><span>50 mi</span></label>
+            </fieldset>
+            <button id="distanceSelectApply" type="submit">Apply distance</button>
+          </form>
+        </dialog>
+        <dialog class="venue-picker-dialog" id="venueSelectDialog" aria-labelledby="venueSelectDialogTitle">
+          <div class="venue-picker-panel">
+            <div class="venue-picker-header">
+              <div><span>Club search</span><strong id="venueSelectDialogTitle">Choose a club</strong></div>
+              <button class="venue-picker-close" id="venueSelectClose" type="button" aria-label="Close club search">&times;</button>
+            </div>
+            <div class="venue-picker-options" id="venueSelectOptions" role="listbox" aria-labelledby="venueSelectDialogTitle"></div>
+            <button class="venue-picker-done" id="venueSelectDone" type="button">Done</button>
+          </div>
+        </dialog>
+      </section>
+
+      <div class="home-live-summary" id="homeLiveSummary" aria-live="polite">
+        <span id="homeLiveRadius">25 mi radius · All clubs</span>
+        <span class="home-live-summary-divider" aria-hidden="true">·</span>
+        <strong id="homeLiveWorking">0 working now</strong>
+      </div>
+
+      <a
+        class="home-tv-launch"
+        id="homeTvLaunch"
+        href="/?city=Las%20Vegas&amp;view=tv"
+        aria-label="Open MyDancr TV Las Vegas vertical video feed"
+        aria-busy="true"
+      >
+        <span class="home-tv-launch-icon" aria-hidden="true">▶</span>
+        <span class="home-tv-launch-copy">
+          <strong id="homeTvLaunchTitle">MyDancr TV Las Vegas</strong>
+          <small>Open full-screen vertical feed</small>
+        </span>
+        <span class="home-tv-launch-count" id="homeTvLaunchCount" aria-live="polite">Videos</span>
+        <span class="home-tv-launch-arrow" aria-hidden="true">›</span>
+      </a>
+
+      <nav class="tabs" id="discoveryTabs" aria-label="Discovery tabs">
+        <button class="tab active" data-tab="dancers" data-tab-label="Dancers" aria-current="page">Dancers</button>
+        <button class="home-bottom-tv" id="homeBottomTv" type="button" aria-label="Show MyDancr TV Las Vegas videos in the Home feed" aria-controls="results" aria-current="false">
+          <span class="home-bottom-tv-icon" aria-hidden="true">
+            <span class="mobile-nav-selection-halo"></span>
+            <svg class="mydancr-tv-mark" viewBox="0 0 24 24">
+              <path class="mydancr-tv-play" d="m8.5 7.25 8 4.75-8 4.75v-9.5Z"></path>
+              <path class="mydancr-tv-r" d="M17.05 8.35V4.35m0 1.45c.72-.95 1.62-1.25 2.7-.91"></path>
+            </svg>
+          </span>
+          <span><span class="home-tv-mobile-label">TV</span><span class="home-tv-desktop-label">MyDancr TV</span><span class="home-tv-desktop-count" id="homeTvDesktopCount" aria-hidden="true">...</span></span>
+        </button>
+        <button class="tab" data-tab="venues" data-tab-label="Clubs" aria-current="false">Clubs</button>
+      </nav>
+
+      <style>{{include:override-styles}}      </style>
+
+      <section class="stack" aria-live="polite">
+        <div class="content-head discovery-sticky-head">
+          <h2 id="tabTitle">Working Now in Las Vegas</h2>
+          <div class="count" id="tabCount">0 results</div>
+        </div>
+        <div class="list" id="results"></div>
+        <button
+          class="home-feed-return-home"
+          id="homeFeedReturnHomeBtn"
+          type="button"
+          aria-label="Return to the main city screen"
+          title="Return to city selection"
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M4 11.2 12 4l8 7.2"></path>
+            <path d="M6.5 10.5V20h11v-9.5"></path>
+            <path d="M9.5 20v-5.5h5V20"></path>
+          </svg>
+        </button>
+        <button class="view-all" id="viewAllBtn" hidden>View All</button>
+      </section>
+
+    </main>
+
+    <section class="page-panel legal-page" id="termsPage" aria-hidden="true">
+      <div class="page-inner">
+        <div class="page-head">
+          <div>
+            <span class="eyebrow">Legal</span>
+            <h2>Terms of Service</h2>
+          </div>
+          <button class="close-btn legal-close" aria-label="Close Terms of Service">
+            <svg class="icon" viewBox="0 0 24 24"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
+          </button>
+        </div>
+        <div class="auth-card">
+          <h3>Schedule discovery only</h3>
+          <p>Dancr is for verified schedules, follows, notifications, social profile links, and directions. It is not dating, messaging, escorting, or direct solicitation.</p>
+          <ul class="rule-list">
+            <li>18+ only.</li>
+            <li>No escorting or illegal services.</li>
+            <li>No direct sexual solicitation.</li>
+            <li>No fake profiles or impersonation.</li>
+            <li>No harassment, threats, or abuse.</li>
+            <li>Only upload content and music you own or are authorized to use. Repeat copyright infringement may suspend or terminate an account.</li>
+            <li>No private messaging.</li>
+            <li>Schedule discovery only.</li>
+          </ul>
+        </div>
+        <div class="auth-card">
+          <h3>Trust and review</h3>
+          <p>Dancer profiles, photos, shifts, venues, and reports are subject to review. Accounts, content, venues, or shifts that break the rules may be removed.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="page-panel legal-page" id="privacyPage" aria-hidden="true">
+      <div class="page-inner">
+        <div class="page-head">
+          <div>
+            <span class="eyebrow">Legal</span>
+            <h2>Privacy Policy</h2>
+          </div>
+          <button class="close-btn legal-close" aria-label="Close Privacy Policy">
+            <svg class="icon" viewBox="0 0 24 24"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
+          </button>
+        </div>
+        <div class="auth-card">
+          <h3>Data we use</h3>
+          <p>We use account details, city settings, follows, notifications, profile submissions, shift posts, venue details, safety reports, and information submitted in copyright notices or counter-notices to operate the app.</p>
+        </div>
+        <div class="auth-card">
+          <h3>Why we use it</h3>
+          <ul class="rule-list">
+            <li>Show verified schedules, profiles, venues, and directions.</li>
+            <li>Send notifications about followed dancers and posted shifts.</li>
+            <li>Review dancer verification, photos, venues, and reports.</li>
+            <li>Protect against fake profiles, harassment, illegal services, and rule-breaking content.</li>
+            <li>Process copyright notices, notify uploaders, forward legally required counter-notice information, and respond to court filings.</li>
+          </ul>
+        </div>
+        <div class="auth-card">
+          <h3>Private by default</h3>
+          <p>Guest profiles are not public. Dancr has no private messaging, no public follows, and no public going list.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="page-panel legal-page" id="guidelinesPage" aria-hidden="true">
+      <div class="page-inner">
+        <div class="page-head">
+          <div>
+            <span class="eyebrow">Safety</span>
+            <h2>Community Guidelines</h2>
+          </div>
+          <button class="close-btn legal-close" aria-label="Close Community Guidelines">
+            <svg class="icon" viewBox="0 0 24 24"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
+          </button>
+        </div>
+        <div class="auth-card">
+          <h3>House rules</h3>
+          <ul class="rule-list">
+            <li>18+ only.</li>
+            <li>No escorting.</li>
+            <li>No illegal services.</li>
+            <li>No direct sexual solicitation.</li>
+            <li>No fake profiles.</li>
+            <li>No harassment.</li>
+            <li>No private messaging.</li>
+            <li>Schedule discovery only.</li>
+          </ul>
+        </div>
+        <div class="auth-card">
+          <h3>Review standards</h3>
+          <p>Dancer profiles, ID/selfie checks, photos, venues, and reports are reviewed for trust and safety. Rule-breaking content may be removed.</p>
+        </div>
+        <div class="auth-card">
+          <h3>Billing and refunds</h3>
+          <p>Refund details stay with the legal terms instead of the bottom footer.</p>
+          <button class="action-btn secondary" data-legal-page="refundPage" type="button">Open refund policy</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="page-panel legal-page" id="refundPage" aria-hidden="true">
+      <div class="page-inner">
+        <div class="page-head">
+          <div>
+            <span class="eyebrow">Legal</span>
+            <h2>Refund Policy</h2>
+          </div>
+          <button class="close-btn legal-close" aria-label="Close Refund Policy">
+            <svg class="icon" viewBox="0 0 24 24"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
+          </button>
+        </div>
+        <div class="auth-card">
+          <h3>Dancer profile access</h3>
+          <p>Dancer profile access is free right now. No monthly subscription is due.</p>
+        </div>
+        <div class="auth-card">
+          <h3>Approval before activation</h3>
+          <p>Public profiles unlock only after platform approval. Rejected profiles stay private and are not published.</p>
+        </div>
+        <div class="auth-card">
+          <h3>Billing control</h3>
+          <p>Dancers can manage recurring subscriptions through the Stripe billing portal. Refund requests are reviewed for billing errors, duplicate charges, or account actions caused by platform review.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="page-panel" id="authPage" aria-hidden="true">
+      <div class="page-inner">
+        <div class="page-head">
+          <div>
+            <span class="eyebrow">Login / Join</span>
+            <h2 id="authPageTitle">Sign in to Mydancr</h2>
+          </div>
+          <button class="close-btn" id="authClose" aria-label="Close auth">
+            <svg class="icon" viewBox="0 0 24 24"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
+          </button>
+        </div>
+        <div class="auth-card auth-choice-card">
+          <div class="auth-entry-tabs" role="tablist" aria-label="Account access">
+            <button class="auth-entry-tab active" id="authSignInTab" type="button" role="tab" aria-selected="true">Sign in</button>
+            <button class="auth-entry-tab" id="authCreateTab" type="button" role="tab" aria-selected="false">Create account</button>
+          </div>
+          <div class="auth-form-head auth-selected-role">
+            <strong id="authRoleTitle">One sign-in for every account</strong>
+            <span id="authRoleSubtitle">Use the email and password for your guest, dancer, or venue account.</span>
+          </div>
+          <div class="role-options auth-role-grid" id="authOverview" aria-label="Choose account type" hidden>
+            <button class="role-option account-option auth-account-choice" id="customerSignupBtn" type="button">
+              <span class="auth-account-choice-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M20 21a8 8 0 0 0-16 0"></path><circle cx="12" cy="7" r="4"></circle></svg>
+              </span>
+              <span><strong>Guest</strong><small>Save dancers, clubs, Club Deals, and alerts privately.</small></span>
+              <span class="auth-account-choice-arrow" aria-hidden="true">›</span>
+            </button>
+            <button class="role-option account-option auth-account-choice" id="openDancerSignup" type="button">
+              <span class="auth-account-choice-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="m12 2 1.35 4.15L17.5 7.5l-4.15 1.35L12 13l-1.35-4.15L6.5 7.5l4.15-1.35L12 2Z"></path><path d="m18 14 .75 2.25L21 17l-2.25.75L18 20l-.75-2.25L15 17l2.25-.75L18 14Z"></path><path d="m5 14 .55 1.45L7 16l-1.45.55L5 18l-.55-1.45L3 16l1.45-.55L5 14Z"></path></svg>
+              </span>
+              <span><strong>Dancer</strong><small>Create a reviewed profile, then tap the dressing-room sticker to approve a venue.</small></span>
+              <span class="auth-account-choice-arrow" aria-hidden="true">›</span>
+            </button>
+            <button class="role-option account-option auth-account-choice" id="venueSignupBtn" type="button">
+              <span class="auth-account-choice-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M4 21V6l8-4 8 4v15"></path><path d="M2 21h20"></path><path d="M8 9h2M14 9h2M8 13h2M14 13h2M10 21v-4h4v4"></path></svg>
+              </span>
+              <span><strong>Club</strong><small>Request approval to list your club, build its page, and publish it on MyDancr.</small></span>
+              <span class="auth-account-choice-arrow" aria-hidden="true">›</span>
+            </button>
+          </div>
+          <form class="auth-form" id="authForm" data-auth-view="unified">
+            <div class="auth-form-head customer-form-head">
+              <strong id="customerAuthModeLabel">Sign in</strong>
+              <span id="customerAuthModeDescription">MyDancr opens the right dashboard automatically.</span>
+            </div>
+            <div class="field">
+              <label for="customerEmail">Email</label>
+              <input id="customerEmail" type="email" autocomplete="email" placeholder="you@example.com" required>
+            </div>
+            <div class="field">
+              <label for="customerPassword">Password</label>
+              <div class="password-wrap">
+                <input id="customerPassword" type="password" autocomplete="current-password" placeholder="Enter password" required>
+                <button class="password-toggle" type="button" data-password-toggle="customerPassword" aria-label="Show password" aria-pressed="false">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                </button>
+              </div>
+            </div>
+            <ul class="field-note" id="customerPasswordRequirements" aria-label="Password requirements" style="margin:0;padding-left:20px;line-height:1.6" hidden>
+              <li>At least 6 characters</li>
+              <li>At least 1 capital letter</li>
+              <li>At least 1 number</li>
+              <li>At least 1 special character (for example, ! @ # $)</li>
+            </ul>
+            <div class="auth-help-row">
+              <button class="forgot-password-link" id="customerForgotPasswordBtn" type="button" aria-haspopup="dialog" aria-expanded="false">Forgot password?</button>
+              <button class="forgot-password-link" id="customerForgotLoginBtn" type="button" aria-haspopup="dialog" aria-expanded="false">Forgot email?</button>
+            </div>
+            <div class="field" id="customerConfirmPasswordField" hidden>
+              <label for="customerConfirmPassword">Confirm password</label>
+              <div class="password-wrap">
+                <input id="customerConfirmPassword" type="password" autocomplete="new-password" minlength="6" placeholder="Re-enter password">
+                <button class="password-toggle" type="button" data-password-toggle="customerConfirmPassword" aria-label="Show confirm password" aria-pressed="false">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                </button>
+              </div>
+            </div>
+            <div class="rule-note auth-signup-note" id="customerSignupNote" hidden>
+              <span class="auth-signup-note-lock" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><rect x="5" y="10" width="14" height="10" rx="2"></rect><path d="M8 10V7a4 4 0 0 1 8 0v3"></path></svg>
+              </span>
+              <span class="auth-signup-note-copy">Your guest account and activity aren’t shown publicly. We’ll email you a confirmation link.</span>
+            </div>
+            <button class="action-btn" id="authSubmit" type="submit">Sign in</button>
+            <button class="auth-back-to-types" id="customerBackToTypes" type="button" hidden>← Back to account types</button>
+            <div class="rule-note auth-status" id="customerAuthStatus" role="status" aria-live="polite" hidden></div>
+          </form>
+          <form class="auth-form" id="venueLoginForm" data-auth-view="venue" novalidate hidden>
+            <div class="venue-auth-mode-copy">
+              <strong id="venueAuthModeTitle">Create a verified venue account</strong>
+              <span id="venueAuthModeDescription">Confirm the private code assigned to your venue, then create its manager login.</span>
+            </div>
+            <section class="venue-signup-step" id="venueSignupCodeStep" aria-labelledby="venueSignupCodeHeading">
+              <div class="venue-signup-step-head">
+                <span>Step 1 of 2</span>
+                <strong id="venueSignupCodeHeading">Connect your venue</strong>
+              </div>
+              <div class="field">
+                <label for="venueSignupCode">Private venue access code</label>
+                <input class="venue-code-input" id="venueSignupCode" type="text" inputmode="text" autocomplete="one-time-code" autocapitalize="characters" spellcheck="false" minlength="30" maxlength="30" placeholder="DANCR-XXXX-XXXX-XXXX-XXXX-XXXX" required>
+                <div class="rule-note">Paste the one-time code MyDancr sent privately. It can connect only the venue assigned to that code.</div>
+              </div>
+              <button class="venue-code-verify" id="venueCodeVerifyBtn" type="button">Verify access code</button>
+              <div class="venue-access-preview" id="venueAccessPreview" role="status" aria-live="polite" hidden>
+                <span class="venue-access-preview-mark" aria-hidden="true">✓</span>
+                <span class="venue-access-preview-copy">
+                  <span>Secure connection confirmed</span>
+                  <strong id="venueAccessPreviewName"></strong>
+                  <small id="venueAccessPreviewLocation"></small>
+                </span>
+              </div>
+              <div class="rule-note auth-status" id="venueCodeStatus" role="status" aria-live="polite" aria-atomic="true" hidden></div>
+            </section>
+            <div class="venue-request-entry" id="venueRequestEntry">
+              <span>Need approval before you receive a private access code?</span>
+              <button id="venueRequestOpenBtn" type="button">Request to list your club</button>
+            </div>
+            <div class="venue-account-fields" id="venueAccountFields">
+              <div class="venue-signup-step-head" id="venueAccountStepHeading" hidden>
+                <span>Step 2 of 2</span>
+                <strong>Create the manager login</strong>
+              </div>
+              <div class="field">
+                <label for="venueLoginEmail">Email</label>
+                <input id="venueLoginEmail" type="email" autocomplete="email" required>
+              </div>
+              <div class="field">
+                <label for="venueLoginPassword">Password</label>
+                <div class="password-wrap">
+                  <input id="venueLoginPassword" type="password" autocomplete="current-password" required>
+                  <button class="password-toggle" type="button" data-password-toggle="venueLoginPassword" aria-label="Show password" aria-pressed="false">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+            <ul class="field-note" id="venuePasswordRequirements" aria-label="Password requirements" style="margin:0;padding-left:20px;line-height:1.6" hidden>
+              <li>At least 6 characters</li>
+              <li>At least 1 capital letter</li>
+              <li>At least 1 number</li>
+              <li>At least 1 special character (for example, ! @ # $)</li>
+            </ul>
+            <button class="ghost auth-join-now venue-join-now" id="venueJoinNowBtn" type="submit" hidden>Create venue account</button>
+            <button class="auth-back-to-types" id="venueBackToTypes" type="button">← Back to account types</button>
+            <div class="rule-note auth-status" id="venueAuthStatus" role="status" aria-live="polite" aria-atomic="true" hidden></div>
+          </form>
+          <form class="auth-form venue-request-form" id="venueRequestForm" data-auth-view="venue-request" novalidate hidden>
+            <div class="venue-auth-mode-copy">
+              <strong>Request to list your club</strong>
+              <span>Submit your club details and create your manager login. Confirm your email, then wait for club approval.</span>
+            </div>
+            <div class="venue-request-intro">
+              <strong>Create your login, confirm your email, then get approved.</strong>
+              <span>Your club stays private until an approved manager finishes the page and chooses to publish it.</span>
+            </div>
+            <section class="venue-request-section" aria-labelledby="venueRequestVenueHeading">
+              <div class="venue-request-section-head">
+                <span>Club</span>
+                <strong id="venueRequestVenueHeading">Public business details</strong>
+              </div>
+              <div class="venue-request-grid">
+                <div class="field wide">
+                  <label for="venueRequestName">Club name</label>
+                  <input id="venueRequestName" name="venueName" type="text" autocomplete="organization" minlength="2" maxlength="160" required>
+                </div>
+                <div class="field wide">
+                  <label for="venueRequestAddress">Public street address</label>
+                  <input id="venueRequestAddress" name="streetAddress" type="text" autocomplete="street-address" minlength="5" maxlength="240" required>
+                </div>
+                <div class="field">
+                  <label for="venueRequestCity">City</label>
+                  <input id="venueRequestCity" name="city" type="text" autocomplete="address-level2" minlength="2" maxlength="120" required>
+                </div>
+                <div class="field">
+                  <label for="venueRequestState">State</label>
+                  <input id="venueRequestState" name="state" type="text" autocomplete="address-level1" minlength="2" maxlength="40" required>
+                </div>
+                <div class="field">
+                  <label for="venueRequestPostalCode">ZIP code</label>
+                  <input id="venueRequestPostalCode" name="postalCode" type="text" inputmode="numeric" autocomplete="postal-code" minlength="3" maxlength="16" required>
+                </div>
+                <div class="field">
+                  <label for="venueRequestWebsite">Club website <span aria-hidden="true">·</span> optional</label>
+                  <input id="venueRequestWebsite" name="website" type="text" inputmode="url" autocomplete="url" autocapitalize="none" spellcheck="false" maxlength="320" placeholder="www.yourclub.com">
+                </div>
+              </div>
+            </section>
+            <section class="venue-request-section" aria-labelledby="venueRequestContactHeading">
+              <div class="venue-request-section-head">
+                <span>Authorized contact</span>
+                <strong id="venueRequestContactHeading">Who MyDancr should verify</strong>
+              </div>
+              <div class="venue-request-grid">
+                <div class="field">
+                  <label for="venueRequestContactName">Full name</label>
+                  <input id="venueRequestContactName" name="contactName" type="text" autocomplete="name" minlength="2" maxlength="160" required>
+                </div>
+                <div class="field">
+                  <label for="venueRequestContactTitle">Position at club</label>
+                  <input id="venueRequestContactTitle" name="contactTitle" type="text" autocomplete="organization-title" minlength="2" maxlength="120" placeholder="Owner, general manager…" required>
+                </div>
+                <div class="field">
+                  <label for="venueRequestContactPhone">Business phone</label>
+                  <input id="venueRequestContactPhone" name="contactPhone" type="tel" inputmode="tel" autocomplete="off" minlength="7" maxlength="40" required>
+                </div>
+                <div class="field wide">
+                  <label for="venueRequestMessage">Anything the review team should know <span aria-hidden="true">·</span> optional</label>
+                  <textarea id="venueRequestMessage" name="message" maxlength="1500"></textarea>
+                </div>
+              </div>
+            </section>
+            <section class="venue-request-section" aria-labelledby="venueRequestLoginHeading">
+              <div class="venue-request-section-head">
+                <span>Manager login</span>
+                <strong id="venueRequestLoginHeading">Create your account once</strong>
+              </div>
+              <p>We’ll send a confirmation link to this email before your club request goes for approval. Use the same email to sign in.</p>
+              <div class="venue-request-grid">
+                <div class="field wide">
+                  <label for="venueRequestLoginEmail">Manager login email</label>
+                  <input id="venueRequestLoginEmail" name="loginEmail" type="email" autocomplete="username" maxlength="254" required>
+                </div>
+                <div class="field">
+                  <label for="venueRequestPassword">Password</label>
+                  <div class="password-wrap">
+                    <input id="venueRequestPassword" name="password" type="password" autocomplete="new-password" minlength="6" maxlength="1024" aria-describedby="venueRequestPasswordHelp" required>
+                    <button class="password-toggle" type="button" data-password-toggle="venueRequestPassword" aria-label="Show password" aria-pressed="false">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                </button>
+                  </div>
+                </div>
+                <div class="field">
+                  <label for="venueRequestConfirmPassword">Confirm password</label>
+                  <div class="password-wrap">
+                    <input id="venueRequestConfirmPassword" name="confirmPassword" type="password" autocomplete="new-password" minlength="6" maxlength="1024" required>
+                    <button class="password-toggle" type="button" data-password-toggle="venueRequestConfirmPassword" aria-label="Show confirm password" aria-pressed="false">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                </button>
+                  </div>
+                </div>
+              </div>
+              <p id="venueRequestPasswordHelp">Use at least 6 characters, including an uppercase letter, a number, and a special character.</p>
+            </section>
+            <label class="venue-request-honeypot" aria-hidden="true">
+              Company fax
+              <input id="venueRequestCompanyFax" name="companyFax" type="text" tabindex="-1" autocomplete="off">
+            </label>
+            <label class="venue-request-consent">
+              <input id="venueRequestAuthorization" name="authorizedToRepresentVenue" type="checkbox" required>
+              <span>I confirm that I am authorized to request manager access for this club and that the business details above are accurate.</span>
+            </label>
+            <button class="action-btn venue-request-submit" id="venueRequestSubmit" type="submit">Send club request</button>
+            <div class="venue-request-privacy">MyDancr uses these details only to verify the business and contact you about club access.</div>
+            <a class="venue-request-back" href="/venue/confirm-email">Need another confirmation email?</a>
+            <button class="venue-request-back" id="venueRequestBackBtn" type="button">Have an access code? Continue</button>
+            <button class="auth-back-to-types" id="venueRequestBackToTypes" type="button">← Back to account types</button>
+            <div class="rule-note auth-status" id="venueRequestStatus" role="status" aria-live="polite" aria-atomic="true" hidden></div>
+          </form>
+          <section class="recovery-popover" id="passwordRecoveryCard" role="dialog" aria-modal="true" aria-labelledby="passwordRecoveryTitle" hidden>
+            <div class="recovery-popover-surface" id="passwordRecoverySurface">
+              <div class="login-recovery-head">
+                <div><span class="eyebrow">Password recovery</span><h3 id="passwordRecoveryTitle">Reset your password</h3></div>
+                <button class="login-recovery-close" id="passwordRecoveryClose" type="button" aria-label="Close password recovery">×</button>
+              </div>
+              <p class="login-recovery-copy">Enter the email used for this account. MyDancr will send a secure reset link if the email matches an account.</p>
+              <form class="password-recovery-form" id="passwordRecoveryForm">
+                <input id="passwordRecoveryRole" type="hidden" value="customer">
+                <div class="field">
+                  <label for="passwordRecoveryEmail">Account email</label>
+                  <input id="passwordRecoveryEmail" type="email" maxlength="254" autocomplete="email" placeholder="you@example.com" required>
+                </div>
+                <button class="action-btn" id="passwordRecoverySubmit" type="submit">Send reset link</button>
+                <button class="ghost" id="passwordRecoveryBack" type="button">Back to sign in</button>
+                <div class="rule-note auth-status" id="passwordRecoveryStatus" role="status" aria-live="polite" aria-atomic="true" hidden></div>
+              </form>
+            </div>
+          </section>
+          <section class="recovery-popover" id="loginRecoveryCard" role="dialog" aria-modal="true" aria-labelledby="loginRecoveryTitle" hidden>
+            <div class="recovery-popover-surface" id="loginRecoverySurface">
+              <div class="login-recovery-head">
+                <div><span class="eyebrow">Email recovery</span><h3 id="loginRecoveryTitle">Find your sign-in email</h3></div>
+                <button class="login-recovery-close" id="loginRecoveryClose" type="button" aria-label="Close email recovery">×</button>
+              </div>
+              <p class="login-recovery-copy">MyDancr will not display possible account emails. Give support enough information to verify that the account belongs to you.</p>
+              <form class="auth-form" id="loginRecoveryForm">
+                <div class="field">
+                  <label for="loginRecoveryRole">Account type</label>
+                  <select id="loginRecoveryRole" required>
+                    <option value="customer">Guest</option>
+                    <option value="dancer">Dancer</option>
+                    <option value="venue">Venue</option>
+                  </select>
+                </div>
+                <div class="login-recovery-grid">
+                  <div class="field">
+                    <label for="loginRecoveryAccountName" id="loginRecoveryAccountNameLabel">Name used on the account</label>
+                    <input id="loginRecoveryAccountName" type="text" minlength="2" maxlength="80" autocomplete="name" required>
+                  </div>
+                  <div class="field">
+                    <label for="loginRecoveryCity">Account city</label>
+                    <input id="loginRecoveryCity" type="text" minlength="2" maxlength="80" placeholder="Las Vegas" required>
+                  </div>
+                </div>
+                <div class="field">
+                  <label for="loginRecoveryContactEmail">Email where support can reach you</label>
+                  <input id="loginRecoveryContactEmail" type="email" maxlength="254" autocomplete="email" required>
+                </div>
+                <div class="field">
+                  <label for="loginRecoveryDetails">Other details that can help verify the account</label>
+                  <textarea id="loginRecoveryDetails" rows="4" maxlength="1000" placeholder="Approximate signup date, profile details, or venues you remember"></textarea>
+                </div>
+                <p class="login-recovery-security">Never send a password, reset code, government ID, or payment information. Support verifies ownership before providing access.</p>
+                <div class="login-recovery-actions">
+                  <button class="action-btn" id="loginRecoverySubmit" type="submit">Send recovery request</button>
+                  <button class="ghost" id="loginRecoveryBack" type="button">Back to sign in</button>
+                </div>
+                <div class="rule-note auth-status" id="loginRecoveryStatus" role="status" aria-live="polite" aria-atomic="true" hidden></div>
+              </form>
+            </div>
+          </section>
+        </div>
+      </div>
+    </section>
+
+    <section class="page-panel" id="dancerSignupPage" aria-hidden="true">
+      <div class="page-inner">
+        <div class="page-head">
+          <div>
+            <span class="eyebrow">Dancer signup</span>
+            <h2>Create dancer account</h2>
+          </div>
+          <button class="close-btn" id="dancerSignupClose" aria-label="Close dancer signup">
+            <svg class="icon" viewBox="0 0 24 24"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
+          </button>
+        </div>
+        <div class="auth-card dancer-signup-card">
+          <div class="dancer-signup-progress" role="progressbar" aria-label="Dancer signup: create account, then confirm email and complete profile verification" aria-valuemin="1" aria-valuemax="3" aria-valuenow="1">
+            <div class="dancer-signup-progress-copy">
+              <span>Step 1 of 3</span>
+              <strong>Account login</strong>
+            </div>
+            <div class="dancer-signup-progress-track" aria-hidden="true"><i class="active"></i><i></i><i></i></div>
+          </div>
+          <form class="auth-form" id="dancerSignupForm">
+            <input id="dancerStageName" type="hidden" value="">
+            <input id="dancerLegalName" type="hidden" value="">
+            <input id="dancerCity" type="hidden" value="">
+            <div class="field">
+              <label for="dancerEmail">Email</label>
+              <input id="dancerEmail" type="email" value="" autocomplete="email" placeholder="you@example.com" required>
+            </div>
+            <div class="field">
+              <label for="dancerPassword">Password</label>
+              <div class="password-wrap">
+                <input id="dancerPassword" type="password" value="" autocomplete="new-password" minlength="6" placeholder="At least 6 characters" aria-describedby="dancerPasswordRequirements" required>
+                <button class="password-toggle" type="button" data-password-toggle="dancerPassword" aria-label="Show password" aria-pressed="false">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                </button>
+              </div>
+              <ul class="field-note" id="dancerPasswordRequirements" aria-label="Password requirements" style="margin:0;padding-left:20px;line-height:1.6">
+                <li>At least 6 characters</li>
+                <li>At least 1 capital letter</li>
+                <li>At least 1 number</li>
+                <li>At least 1 special character (for example, ! @ # $)</li>
+              </ul>
+            </div>
+            <div class="rule-note">Free account. Your profile becomes public after setup and verification.</div>
+            <button class="action-btn" type="submit">Create dancer account</button>
+            <div class="rule-note auth-status" id="dancerSignupStatus" role="status" aria-live="polite" hidden></div>
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <section class="page-panel" id="stripeCheckoutPage" aria-hidden="true">
+      <div class="page-inner">
+        <div class="page-head">
+          <div>
+            <span class="eyebrow">Stripe-hosted checkout</span>
+            <h2>Stripe checkout</h2>
+          </div>
+          <button class="close-btn" id="stripeClose" aria-label="Close Stripe checkout">
+            <svg class="icon" viewBox="0 0 24 24"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
+          </button>
+        </div>
+        <div class="auth-card stripe-hosted">
+          <div class="checkout-total">
+            <div>
+              <strong>FREE</strong>
+              <div class="meta">Monthly dancer profile access</div>
+            </div>
+            <span class="badge">No charge</span>
+          </div>
+          <div class="rule-note">Dancer profiles are free right now. No monthly subscription is due after approval.</div>
+          <div class="info-tile">
+            <strong>Payment rule</strong>
+            <div class="meta">Rejected profiles stay private and cannot publish a public dancer profile.</div>
+          </div>
+          <button class="action-btn" id="stripeConfirmBtn">Continue to Stripe</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="page-panel" id="dancerDashboard" aria-hidden="true">
+      <div class="page-inner dashboard-wide">
+        <div class="page-head">
+          <div>
+            <span class="eyebrow">Dancer dashboard</span>
+            <h2 id="dancerDashName">Dancer dashboard</h2>
+          </div>
+          <button class="close-btn" id="dancerDashboardClose" aria-label="Close dancer dashboard">
+            <svg class="icon" viewBox="0 0 24 24"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
+          </button>
+        </div>
+        <input id="approvedAvatarUploadInput" type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif" hidden>
+        <div class="approval-command" id="dancerApprovalCommand">
+          <div>
+            <div class="approval-command-summary" data-setup-checklist-toggle role="button" tabindex="0" aria-controls="setupChecklist" aria-expanded="false">
+              <div>
+                <span class="eyebrow" id="dancerApprovalEyebrow">Profile setup</span>
+                <h3 id="dancerApprovalTitle">Finish profile setup</h3>
+                <p id="dancerApprovalCopy">Dancer accounts are approved automatically right now. No ID, selfie, or dance-proof upload is required; photos and videos are moderated separately.</p>
+              </div>
+              <div class="approval-progress">
+                <strong id="dancerApprovalProgress">0/4</strong>
+                <span id="dancerApprovalNext">Next: Create profile</span>
+                <span class="approval-expand" id="dancerApprovalExpand">Show steps</span>
+              </div>
+            </div>
+            <div class="dancer-daily-center" id="dancerApprovedTopTools" aria-label="Dancer daily controls" hidden>
+              <div class="dancer-live-heading">
+                <span class="dancer-live-pill" id="dancerDashboardVisibilityPill">Public</span>
+                <div>
+                  <strong id="dancerDashboardOverviewTitle">Your profile is live</strong>
+                  <span id="dancerDashboardOverviewCopy">Keep your next shift current so guests know where to find you.</span>
+                </div>
+              </div>
+              <section class="dancer-next-shift" aria-labelledby="dancerDashboardShiftTitle">
+                <div class="dancer-next-shift-copy">
+                  <span class="eyebrow" id="dancerDashboardShiftKicker">Next shift</span>
+                  <h3 id="dancerDashboardShiftTitle">No shift posted</h3>
+                  <p id="dancerDashboardShiftDetail">Post your schedule so guests can find you at the right venue.</p>
+                </div>
+                <button class="dancer-shift-primary" id="dancerDashboardShiftAction" type="button" data-dancer-control-action="dashboard-primary" data-dashboard-shift-action="post-schedule">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3v3M17 3v3M4 9h16M5 5h14a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1Z"></path></svg>
+                  <span>Post schedule</span>
+                </button>
+                <div class="approved-tool-dropdown" id="approvedScheduleDropdown" hidden>
+                  <div class="approved-tool-dropdown-head">
+                    <strong>Post schedule</strong>
+                    <span>Add or update the shift guests see on your public profile and venue page.</span>
+                  </div>
+                  <div class="approved-tool-dropdown-actions">
+                    <button type="button" data-dancer-control-action="collapse-approved-tool">Collapse post schedule</button>
+                  </div>
+                  <div id="approvedScheduleFormMount"></div>
+                </div>
+              </section>
+              <div class="dancer-quick-actions" aria-label="Profile shortcuts">
+                <button type="button" data-dancer-control-action="edit-profile">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 20 4.5-1 10-10a2.1 2.1 0 0 0-3-3l-10 10L4 20Z"></path><path d="m14 7 3 3"></path></svg>
+                  <span><strong>Edit profile</strong><small>Profile, photos, videos, and socials</small></span>
+                </button>
+                <button type="button" data-dancer-control-action="preview-profile">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12Z"></path><circle cx="12" cy="12" r="2.5"></circle></svg>
+                  <span><strong>Preview profile</strong><small>Guest view</small></span>
+                </button>
+                <button type="button" data-dancer-control-action="share-profile">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="18" cy="5" r="2"></circle><circle cx="6" cy="12" r="2"></circle><circle cx="18" cy="19" r="2"></circle><path d="m8 11 8-5M8 13l8 5"></path></svg>
+                  <span><strong>Share profile</strong><small>Link and QR</small></span>
+                </button>
+              </div>
+              <section class="dancer-dashboard-avatar-card" id="dancerDashboardAvatarEditor" aria-label="Profile avatar editor"></section>
+              <div class="dancer-glance-metrics" aria-label="Last 30 days at a glance">
+                <div><strong id="dancerDashboardProfileViews">0</strong><span>Profile views</span></div>
+                <div><strong id="dancerDashboardFollowers">0</strong><span>Followers</span></div>
+                <div><strong id="dancerDashboardDirections">0</strong><span>Directions</span></div>
+              </div>
+            </div>
+            <div class="approved-tool-dropdown" id="approvedEditProfileDropdown" hidden>
+              <button class="approved-profile-editor-close" type="button" data-approved-profile-editor-close aria-label="Close edit profile">
+                <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
+              </button>
+              <div class="approved-tool-dropdown-head">
+                <strong>Edit profile</strong>
+                <span>Update public profile fields, resubmit rejected photos or social links, and preview your profile.</span>
+              </div>
+              <div id="approvedProfileFixList"></div>
+              <div id="approvedVisualProfileEditor"></div>
+              <div id="approvedProfileFormMount"></div>
+            </div>
+          </div>
+          <div id="setupChecklistWrap" class="setup-panel setup-panel-inline" hidden>
+            <div class="setup-list" id="setupChecklist" hidden></div>
+          </div>
+        </div>
+        <div class="dashboard-status-row">
+          <details class="status-chip">
+            <summary>
+              <span>Subscription</span>
+              <strong id="dancerSubscriptionStatus">FREE</strong>
+            </summary>
+            <p id="dancerSubscriptionDetail">Dancer profiles are free right now. No monthly subscription is due.</p>
+          </details>
+          <details class="status-chip">
+            <summary>
+              <span>Public profile</span>
+              <strong id="dancerPublicStatus">Verification required</strong>
+            </summary>
+            <p id="dancerPublicDetail">Your dancer account is free. Complete profile setup, photos, and verification so Dancr can review your profile and unlock public discovery.</p>
+          </details>
+        </div>
+        <aside class="auth-card dancer-payout-setup-notice" id="dancerPayoutSetupNotice" aria-live="polite" hidden></aside>
+        <details class="auth-card dashboard-collapse dancer-analytics-section" id="dancerAnalyticsSection">
+          <summary>
+            <span class="dashboard-collapse-title">
+              <strong>Dancer analytics</strong>
+              <span id="dancerAnalyticsSummary">Expand to view profile traffic, rank movement, social clicks, notifications, and guest intent.</span>
+            </span>
+          </summary>
+          <div class="dancer-analytics-body">
+            <div class="approved-analytics dancer-impact-card" id="dancerAnalyticsPreviewCard">
+              <span class="eyebrow">Monthly impact</span>
+              <div class="value-message" id="dancerValueMessage">Posting your schedule brings guests, followers, and direction requests.</div>
+            </div>
+            <div class="approved-analytics">
+              <h3>Current rank</h3>
+              <div class="metric-grid compact-metrics" id="dancerRankMetrics" aria-label="Dancer ranking metrics"></div>
+            </div>
+            <div class="approved-analytics">
+              <h3>Discovery and guest intent</h3>
+              <div class="metric-grid" id="dancerValueMetrics" aria-label="Discovery and guest intent"></div>
+            </div>
+            <div class="approved-analytics dancer-impact-card">
+              <h3>Estimated guest impact</h3>
+              <p class="dancer-impact-number" id="dancerCustomerImpact">Locked</p>
+              <p class="dancer-impact-subcopy" id="dancerCustomerImpactDetail">Direction requests and Going Now signals unlock after approval.</p>
+            </div>
+            <div class="approved-analytics">
+              <h3>Weekly rank report</h3>
+              <div class="value-message" id="dancerWeeklySummary">Your weekly summary will appear after your profile is active.</div>
+              <div class="metric-grid" id="dancerWeeklyMetrics" aria-label="Weekly rank report"></div>
+            </div>
+            <div class="approved-analytics">
+              <h3>Club traffic</h3>
+              <p class="value-message" id="dancerClubSummary">Your strongest venue appears after approval.</p>
+              <div class="metric-grid" id="dancerClubMetrics" aria-label="Club traffic"></div>
+            </div>
+            <div class="approved-analytics">
+              <h3>Social growth</h3>
+              <p class="value-message" id="dancerSocialSummary">Social clicks unlock after approval.</p>
+              <div class="metric-grid" id="dancerSocialMetrics" aria-label="Social growth"></div>
+            </div>
+            <div class="approved-analytics">
+              <h3>Notification performance</h3>
+              <div class="metric-grid" id="dancerNotificationMetrics" aria-label="Notification performance"></div>
+            </div>
+            <div class="approved-analytics advanced-analytics-card">
+              <h3>Advanced analytics</h3>
+              <p class="value-message">Search, returning viewers, and conversion detail.</p>
+              <div class="metric-grid" id="dancerAdvancedMetrics" aria-label="Advanced analytics"></div>
+            </div>
+            <div class="approved-analytics">
+              <h3>Ranking alerts</h3>
+              <div class="rank-notification-list" id="dancerRankingNotifications">Milestone notifications will appear here.</div>
+            </div>
+          </div>
+        </details>
+        <details class="auth-card dashboard-collapse approved-analytics" id="dancerCommissionSection">
+          <summary><span class="dashboard-collapse-title"><strong>Club Deal commissions</strong><span>Expand to see commissions earned from cashier-tap redemptions attributed to your profile.</span></span><span class="dashboard-summary-count" id="dancerQrSummaryCount">0</span></summary>
+          <div class="dashboard-collapse-body">
+            <p class="value-message" id="dancerCommissionSummary">Club Deal commissions appear after guests choose your attributed deal and tap the club cashier sticker.</p>
+            <div class="metric-grid" id="dancerCommissionMetrics" aria-label="Club Deal commission metrics"></div>
+            <div class="rank-notification-list" id="dancerCommissionActivity">Commission activity will appear here.</div>
+          </div>
+        </details>
+        <details class="auth-card dashboard-collapse approved-analytics" id="dancerNotificationSection">
+          <summary><span class="dashboard-collapse-title"><strong>Notification center</strong><span>Expand to read approval updates, review notes, shift alerts, and admin notifications.</span></span><span class="dashboard-summary-count" id="dancerNotificationSummaryCount">0</span></summary>
+          <div class="dashboard-collapse-body">
+            <div class="section-title-row">
+              <h3 class="section-title">Notification center</h3>
+              <button class="ghost" type="button" data-notification-action="mark-all">Mark all read</button>
+            </div>
+            <div class="rank-notification-list" id="dancerNotificationList">Notifications will appear here.</div>
+            <button class="notification-clear-btn" type="button" data-notification-action="clear-all">Clear notifications</button>
+          </div>
+        </details>
+        <details class="auth-card dashboard-collapse support-inbox-card" id="dancerSupportSection" data-support-panel="dancer">
+          <summary><span class="dashboard-collapse-title"><strong>Message admin</strong><span>Send a private message directly to the Dancr admin team.</span></span><span class="dashboard-summary-count" id="dancerSupportSummaryCount">0</span></summary>
+          <div class="dashboard-collapse-body">
+            <form class="auth-form support-contact-form" data-support-form="dancer">
+              <div class="field"><label for="dancerSupportSubject">Subject</label><input id="dancerSupportSubject" type="text" placeholder="What do you need help with?" required></div>
+              <div class="field"><label for="dancerSupportMessage">Message</label><textarea id="dancerSupportMessage" rows="4" placeholder="Write your message to the admin team" required></textarea></div>
+              <button class="action-btn support-send-button" type="submit" data-support-submit>Send to admin</button>
+              <div class="rule-note" id="dancerSupportStatus">Your messages and admin replies appear below.</div>
+            </form>
+            <div class="rank-notification-list support-thread-list" id="dancerSupportThreads">No support conversations yet.</div>
+          </div>
+        </details>
+        <details class="auth-card dashboard-collapse post-shift-panel" id="approvedDancerPanel" hidden>
+          <summary><span class="dashboard-collapse-title"><strong>Dancer tools</strong><span>Expand to edit profile details, replace photos, manage social links, post shifts, and share your profile.</span></span></summary>
+          <div class="dashboard-collapse-body">
+          <div class="approved-tool-launcher" aria-label="Approved dancer tools">
+            <button type="button" data-dancer-control-action="edit-profile">
+              <strong>Edit profile</strong>
+              <span>Stage name, city, venue, photos, videos, and socials</span>
+            </button>
+            <button type="button" data-dancer-control-action="post-schedule">
+              <strong>Post schedule</strong>
+              <span>Add or update your verified shift</span>
+            </button>
+          </div>
+          <details class="dancer-control-center">
+            <summary class="dancer-control-summary">
+              <span>
+                <span class="eyebrow">Dancer controls</span>
+                <strong>Edit profile, photos, socials, and shifts</strong>
+                <small>Post shifts, edit photos, update socials, share your profile, and manage your public stage name.</small>
+              </span>
+              <span class="control-summary-chip">Profile tools</span>
+            </summary>
+            <div class="dancer-control-body">
+              <div class="dancer-control-grid">
+                <section class="dancer-control-card dancer-control-card-wide">
+                  <div class="control-card-head">
+                    <span class="eyebrow">Public profile</span>
+                    <strong>Edit profile details</strong>
+                    <p>Stage name is what guests see on profile cards. Real name stays private for verification.</p>
+                  </div>
+                  <div class="control-field-grid" id="approvedProfileEditFields">
+                    <label>
+                      Stage name
+                      <input id="approvedControlStageName" type="text" value="" minlength="2" maxlength="40" autocomplete="nickname" aria-label="Stage name shown publicly">
+                    </label>
+                    <label>
+                      Verification name
+                      <input id="approvedControlRealName" type="text" value="" readonly aria-label="Private verification name">
+                    </label>
+                    <label>
+                      City
+                      <select id="approvedControlCity" aria-label="Profile city">
+                        <option>Las Vegas</option>
+                        <option>Miami</option>
+                        <option>New York</option>
+                      </select>
+                    </label>
+                    <label>
+                      Primary venue
+                      <select id="approvedControlVenue" aria-label="Primary venue">
+                        <option>Neon Ember</option>
+                        <option>Velvet Orbit</option>
+                        <option>Electric Mirage</option>
+                        <option>Afterglow Social</option>
+                        <option>Violet Hour</option>
+                        <option>Lunar House</option>
+                        <option>Prism Room</option>
+                        <option>Golden Halo</option>
+                        <option>Midnight Current</option>
+                        <option>Nova Lounge</option>
+                        <option>Silver Circuit</option>
+                        <option>Blue Ember</option>
+                        <option>Radiant Room</option>
+                        <option>Moonline Social</option>
+                        <option>Echo House</option>
+                        <option>Starlight Club</option>
+                        <option>Aurora Room</option>
+                        <option>Monarch</option>
+                      </select>
+                    </label>
+                  </div>
+                </section>
+
+                <section class="dancer-control-card">
+                  <div class="control-card-head">
+                    <span class="eyebrow">Photos</span>
+                    <strong>Manage profile pictures</strong>
+                    <p>Update the main card photo and gallery photos guests see in full profile view. For maximum detail, choose the original camera image—not a screenshot or social-media copy—ideally at least 2,000 pixels on its longest edge.</p>
+                  </div>
+                  <div class="control-action-row">
+                    <button type="button" data-dancer-control-action="main-photo">Main photo</button>
+                    <button type="button" data-dancer-control-action="gallery-photo">Gallery photos</button>
+                    <input id="approvedPhotoUploadInput" type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif" hidden>
+                  </div>
+                </section>
+
+                <section class="dancer-control-card">
+                  <div class="control-card-head">
+                    <span class="eyebrow">Social links</span>
+                    <strong>Connect socials</strong>
+                    <p>Add Instagram, TikTok, Snapchat, OnlyFans, and X links to the public profile.</p>
+                  </div>
+                  <div class="social-control-grid">
+                    <div class="social-edit-field">
+                      <label for="approvedControlInstagram">Instagram<input id="approvedControlInstagram" type="text" placeholder="Username or profile URL" aria-label="Instagram handle"></label>
+                      <button type="button" data-social-focus="approvedControlInstagram">Edit</button>
+                      <button type="button" data-social-clear="approvedControlInstagram">Clear</button>
+                    </div>
+                    <div class="social-edit-field">
+                      <label for="approvedControlTiktok">TikTok<input id="approvedControlTiktok" type="text" placeholder="Username or profile URL" aria-label="TikTok handle"></label>
+                      <button type="button" data-social-focus="approvedControlTiktok">Edit</button>
+                      <button type="button" data-social-clear="approvedControlTiktok">Clear</button>
+                    </div>
+                    <div class="social-edit-field">
+                      <label for="approvedControlSnapchat">Snapchat<input id="approvedControlSnapchat" type="text" placeholder="Username or profile URL" aria-label="Snapchat handle"></label>
+                      <button type="button" data-social-focus="approvedControlSnapchat">Edit</button>
+                      <button type="button" data-social-clear="approvedControlSnapchat">Clear</button>
+                    </div>
+                    <div class="social-edit-field">
+                      <label for="approvedControlOnlyfans">OnlyFans<input id="approvedControlOnlyfans" type="text" placeholder="Username or profile URL" aria-label="OnlyFans link"></label>
+                      <button type="button" data-social-focus="approvedControlOnlyfans">Edit</button>
+                      <button type="button" data-social-clear="approvedControlOnlyfans">Clear</button>
+                    </div>
+                    <div class="social-edit-field">
+                      <label for="approvedControlX">X<input id="approvedControlX" type="text" placeholder="Username or profile URL" aria-label="X handle"></label>
+                      <button type="button" data-social-focus="approvedControlX">Edit</button>
+                      <button type="button" data-social-clear="approvedControlX">Clear</button>
+                    </div>
+                  </div>
+                </section>
+
+                <section class="dancer-control-card dancer-control-card-wide">
+                  <div class="control-card-head">
+                    <span class="eyebrow">Share profile</span>
+                    <strong>Send guests to your profile</strong>
+                    <p>Share the public profile directly or copy its link. No account is needed to view it.</p>
+                  </div>
+                  <div class="control-action-row">
+                    <button type="button" data-dancer-control-action="share-profile">Share profile</button>
+                    <button type="button" data-dancer-control-action="save-profile">Save Profile</button>
+                  </div>
+                  <p class="control-result" id="dancerControlResult" aria-live="polite">Profile controls are ready.</p>
+                </section>
+              </div>
+          <div class="post-shift-head">
+            <span class="eyebrow">Shift posting</span>
+            <h3>Shift Manager</h3>
+            <p>Tap the dressing-room sticker to go Working Now. Upcoming schedules contain only the venue and date.</p>
+          </div>
+          <div class="post-shift-value-row" aria-label="Post shift benefits">
+            <div><strong>Broadcast</strong><span>followers notified</span></div>
+            <div><strong>Profile</strong><span>schedule updates live</span></div>
+            <div><strong>Venue page</strong><span>shift appears there</span></div>
+          </div>
+          <div class="info-tile share-tile" id="dancerSharePanel"></div>
+          <div class="shift-verification-panel" id="shiftVerificationPanel" hidden></div>
+          <form class="auth-form" id="shiftPostForm">
+            <div class="field">
+              <label for="shiftClub">Approved club</label>
+              <select class="dancer-schedule-control" id="shiftClub" disabled><option value="">Loading approved clubs…</option></select>
+            </div>
+            <div class="field">
+              <label for="shiftDate">Date</label>
+              <input class="dancer-schedule-control" id="shiftDate" type="date" required>
+            </div>
+            <div class="rule-note" id="shiftDisplayPreview">
+              A secure dressing-room tap starts one six-hour Working Now session. A six-hour cooldown follows, and retaps cannot extend the session. No phone location is collected.
+            </div>
+            <div class="rule-note">
+              <strong>Tracked Club Deal:</strong> During a verified check-in, guests can create a unique dancer-attributed MyDancr QR. Saving or sharing keeps your credit attached until that QR expires.
+            </div>
+            <div class="field">
+              <label for="shiftRepeat">Repeat option</label>
+              <select id="shiftRepeat">
+                <option>No repeat</option>
+                <option>Weekly</option>
+                <option>Every Friday</option>
+                <option>Every Saturday</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="shiftNotes">Notes</label>
+              <textarea id="shiftNotes" placeholder="Venue-confirmed schedule note"></textarea>
+            </div>
+          <button class="action-btn post-shift-submit" type="submit" disabled>Post another shift + notify followers</button>
+          </form>
+          <div class="rule-note" id="shiftPostResult" hidden>Schedule sent to followers and notify-only guests.</div>
+          <div class="schedule-broadcast-note">
+            <span class="eyebrow">Schedule broadcast</span>
+            <strong>Broadcast confirmation appears here after posting.</strong>
+            <p>Dancr shows how many followers and notify-only guests received the shift alert, so dancers can see the value immediately.</p>
+          </div>
+          <div class="dancer-management-stack">
+            <section class="info-tile dancer-manager-card">
+              <div class="manager-head">
+                <span class="eyebrow">Manage shifts</span>
+                <h4>Posted shifts</h4>
+                <p>See every posted shift here. Edit or delete any shift; public cards only show Working Now or the closest upcoming shift.</p>
+              </div>
+              <div class="shift-manager-list" id="dancerShiftManager"></div>
+            </section>
+            <section class="info-tile dancer-manager-card">
+              <div class="manager-head">
+                <span class="eyebrow">Public profile</span>
+                <h4>Edit profile</h4>
+                <p>Your real name stays private. Stage name is what guests see.</p>
+              </div>
+              <form class="auth-form public-profile-form" id="publicProfileForm">
+                <div class="profile-edit-grid">
+                  <div class="field">
+                    <label for="profileStageName">Stage name</label>
+                    <input id="profileStageName" type="text" minlength="2" maxlength="40" autocomplete="nickname">
+                    <div class="field-note"><strong>Shown publicly:</strong> Guests see this name on profile cards, schedules, search, and your full profile.</div>
+                  </div>
+                  <div class="field">
+                    <label for="profileCity">City</label>
+                    <select id="profileCity"></select>
+                  </div>
+                  <div class="field">
+                    <label for="profileVenue">Home club</label>
+                    <select id="profileVenue"></select>
+                  </div>
+                </div>
+                <div id="approvedProfilePhotoReview"></div>
+                <div class="profile-edit-grid" data-fix-anchor="profile-socials">
+                  <div class="field social-edit-field">
+                    <label for="profileInstagram">Instagram<input id="profileInstagram" data-fix-anchor="profile-instagram" type="text" placeholder="Username or profile URL"></label>
+                    <button type="button" data-social-focus="profileInstagram">Edit</button>
+                    <button type="button" data-social-clear="profileInstagram">Clear</button>
+                  </div>
+                  <div class="field social-edit-field">
+                    <label for="profileTiktok">TikTok<input id="profileTiktok" data-fix-anchor="profile-tiktok" type="text" placeholder="Username or profile URL"></label>
+                    <button type="button" data-social-focus="profileTiktok">Edit</button>
+                    <button type="button" data-social-clear="profileTiktok">Clear</button>
+                  </div>
+                  <div class="field social-edit-field">
+                    <label for="profileSnapchat">Snapchat<input id="profileSnapchat" data-fix-anchor="profile-snapchat" type="text" placeholder="Username or profile URL"></label>
+                    <button type="button" data-social-focus="profileSnapchat">Edit</button>
+                    <button type="button" data-social-clear="profileSnapchat">Clear</button>
+                  </div>
+                  <div class="field social-edit-field">
+                    <label for="profileOnlyfans">OnlyFans<input id="profileOnlyfans" data-fix-anchor="profile-onlyfans" type="text" placeholder="Username or profile URL"></label>
+                    <button type="button" data-social-focus="profileOnlyfans">Edit</button>
+                    <button type="button" data-social-clear="profileOnlyfans">Clear</button>
+                  </div>
+                  <div class="field social-edit-field">
+                    <label for="profileX">X<input id="profileX" data-fix-anchor="profile-x" type="text" placeholder="Username or profile URL"></label>
+                    <button type="button" data-social-focus="profileX">Edit</button>
+                    <button type="button" data-social-clear="profileX">Clear</button>
+                  </div>
+                </div>
+                <button class="action-btn secondary" type="button" data-dancer-control-action="save-profile">Save Profile</button>
+              </form>
+              <div class="rule-note" id="profileEditResult" hidden>Changes submitted for admin approval.</div>
+            </section>
+          </div>
+            </div>
+          </details>
+          </div>
+        </details>
+        <section class="auth-card venue-affiliation-card" id="dancerVenueVerificationSection" hidden>
+          <span class="eyebrow" id="dancerVenueVerificationEyebrow">Venue affiliation</span>
+          <h3 id="dancerVenueVerificationTitle">Manage where you work</h3>
+          <p id="dancerVenueVerificationDescription">At the club, tap its official MyDancr dressing-room sticker to approve venue access and check in a current posted shift.</p>
+          <p>Log in to your MyDancr dancer account first. No particular page needs to be open. Unlock your phone and tap the club's dressing-room sticker. Open the link if prompted, and log in there if asked.</p>
+          <div class="venue-affiliation-controls">
+            <label for="dancerVenueVerificationVenue">
+              Venue
+              <select id="dancerVenueVerificationVenue" aria-label="Venue to verify" disabled>
+                <option value="">Loading venues…</option>
+              </select>
+            </label>
+            <button class="action-btn" id="dancerVenueVerificationCreate" type="button" disabled>Show my verification QR</button>
+          </div>
+          <section class="venue-affiliation-qr" id="dancerVenueVerificationQr" hidden aria-label="Personal venue verification QR">
+            <img id="dancerVenueVerificationQrImage" alt="Personal venue verification QR">
+            <div>
+              <strong id="dancerVenueVerificationQrVenue">Venue</strong>
+              <span id="dancerVenueVerificationQrExpiry">Expires soon</span>
+              <small>This QR is tied to your profile and this venue. It works once and expires in 10 minutes.</small>
+              <small>It refreshes automatically every 10 minutes until the venue approves you.</small>
+              <button class="action-btn secondary" id="dancerVenueVerificationShare" type="button">Share private link</button>
+            </div>
+          </section>
+          <div class="venue-affiliation-list" id="dancerVenueAffiliationList" aria-label="Verified venues"></div>
+          <div class="rule-note">The manager confirms only that you work at the venue. MyDancr handles profile and media safety moderation separately.</div>
+          <div id="dancerVenueVerificationStatus" role="status" aria-live="polite">Loading venue affiliations…</div>
+        </section>
+        <details class="auth-card dashboard-collapse approved-analytics dancer-visibility-section" id="dancerVisibilitySection">
+          <summary><span class="dashboard-collapse-title"><strong>Profile visibility</strong><span id="dancerVisibilitySummary">Visible to guests</span></span></summary>
+          <div class="dashboard-collapse-body">
+            <div class="dancer-visibility-control">
+              <div>
+                <strong id="dancerVisibilityTitle">Your profile is live</strong>
+                <p class="dancer-incognito-status show" id="dancerIncognitoStatus" role="status" aria-live="polite">Guests can discover your profile, schedules, and venue directions.</p>
+              </div>
+              <button type="button" data-dancer-control-action="toggle-incognito" id="dancerIncognitoToggle">
+                <strong>Go incognito</strong>
+                <span>Hide profile from guests</span>
+              </button>
+            </div>
+          </div>
+          <p class="rule-note">Incognito hides your profile and schedule as pages refresh. Previously loaded content and shared media may remain visible.</p>
+        </details>
+        <details class="auth-card dashboard-collapse" id="dancerBillingSection" hidden>
+          <summary><span class="dashboard-collapse-title"><strong>Payment authorization</strong><span>Expand to view subscription status and manage Stripe billing when billing is active.</span></span></summary>
+          <div class="dashboard-collapse-body">
+            <div class="rule-note">Stripe checkout starts after platform approval. Public profile billing is managed from this dashboard.</div>
+            <div class="info-tile">
+              <strong>Subscription state</strong>
+              <div class="meta">Recurring until canceled once the subscription is active.</div>
+            </div>
+            <button class="action-btn secondary" id="billingPortalBtn">Manage subscription</button>
+          </div>
+        </details>
+        <details class="auth-card dashboard-collapse" id="dancerApprovalStatusSection">
+          <summary><span class="dashboard-collapse-title"><strong>Approval status</strong><span>Expand to see whether the profile is pending, approved, or needs fixes.</span></span></summary>
+          <div class="dashboard-collapse-body">
+            <div class="lock-row" id="dancerApprovalStatusPrimary">Complete the four verification steps so Dancr can review your profile.</div>
+            <div class="lock-row" id="dancerApprovalStatusSecondary">You will be notified by email and site notifications when review is complete.</div>
+          </div>
+        </details>
+        <details class="auth-card dashboard-collapse account-control-card" data-account-panel="dancer">
+          <summary><span class="dashboard-collapse-title"><strong>Dancer account</strong><span>Expand to update email, change password, disable temporarily, or delete the account.</span></span><span class="account-control-status" data-account-status>Active</span></summary>
+          <div class="dashboard-collapse-body">
+            <p class="account-control-copy" data-account-note>Your public profile, schedule posting, analytics, and follower alerts stay active.</p>
+            <div class="account-center">
+              <div class="account-center-head">
+                <strong>Account center</strong>
+                <span>Change the email or password you use to sign in.</span>
+              </div>
+              <div class="account-center-grid">
+                <div class="account-center-section">
+                  <div class="account-email-current">
+                    <span>Current email</span>
+                    <strong id="dancerCurrentEmail">Not signed in</strong>
+                  </div>
+                  <label for="dancerAccountEmail">New email</label>
+                  <input id="dancerAccountEmail" type="email" autocomplete="email" placeholder="you@example.com" />
+                  <button class="action-btn secondary" type="button" data-account-action="update-email" data-account-role="dancer">Update email</button>
+                </div>
+                <div class="account-center-section">
+                  <label for="dancerAccountPassword">New password</label>
+                  <div class="password-wrap">
+                    <input id="dancerAccountPassword" type="password" autocomplete="new-password" minlength="6" placeholder="At least 6 characters" />
+                    <button class="password-toggle" type="button" data-password-toggle="dancerAccountPassword" aria-label="Show password" aria-pressed="false">
+                      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                    </button>
+                  </div>
+                  <ul class="field-note" aria-label="Password requirements" style="margin:0;padding-left:20px;line-height:1.6">
+                    <li>At least 6 characters</li>
+                    <li>At least 1 capital letter</li>
+                    <li>At least 1 number</li>
+                    <li>At least 1 special character (for example, ! @ # $)</li>
+                  </ul>
+                  <label for="dancerAccountPasswordConfirm">Confirm password</label>
+                  <div class="password-wrap">
+                    <input id="dancerAccountPasswordConfirm" type="password" autocomplete="new-password" placeholder="Re-enter password" />
+                    <button class="password-toggle" type="button" data-password-toggle="dancerAccountPasswordConfirm" aria-label="Show password" aria-pressed="false">
+                      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                    </button>
+                  </div>
+                  <button class="action-btn secondary" type="button" data-account-action="update-password" data-account-role="dancer">Update password</button>
+                </div>
+              </div>
+              <p class="account-center-status" id="dancerAccountCenterStatus" aria-live="polite"></p>
+            </div>
+            <div class="account-control-actions">
+              <button class="action-btn secondary" type="button" data-account-action="disable" data-account-role="dancer">Disable temporarily</button>
+              <button class="action-btn danger" type="button" data-account-action="delete" data-account-role="dancer">Delete account</button>
+            </div>
+          </div>
+        </details>
+      </div>
+    </section>
+
+    <section class="page-panel" id="venueDashboard" aria-hidden="true">
+      <div class="page-inner dashboard-wide">
+        <div class="page-head">
+          <div>
+            <span class="eyebrow">Venue dashboard</span>
+            <h2 id="venueDashName">Venue</h2>
+          </div>
+          <button class="close-btn" id="venueDashboardClose" aria-label="Close venue dashboard">
+            <svg class="icon" viewBox="0 0 24 24"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
+          </button>
+        </div>
+        <div class="customer-summary venue-summary">
+          <div>
+            <span class="eyebrow">Live venue tools</span>
+            <h3>Manage your public venue page, tap access, and live performance.</h3>
+            <p>The dressing-room sticker authorizes dancer venue access and checks in a current posted shift. The cashier sticker completes the exact Club Deal a guest selected in MyDancr.</p>
+          </div>
+          <div class="customer-summary-actions">
+            <button class="action-btn secondary" id="venuePreviewPageBtn" type="button">Preview venue page</button>
+            <button class="action-btn secondary" type="button" onclick="window.location.href='/dashboard/venue'">Open venue workspace</button>
+          </div>
+        </div>
+        <div class="dashboard-stats">
+          <div class="stat"><strong id="venuePageViewCount">0</strong><span>page views · 30 days</span></div>
+          <div class="stat"><strong id="venueFollowerCount">0</strong><span>venue followers</span></div>
+          <div class="stat"><strong id="venueDirectionCount">0</strong><span>directions · 30 days</span></div>
+          <div class="stat"><strong id="venueShiftCount">0</strong><span>dancers working now</span></div>
+        </div>
+        <section class="auth-card venue-affiliation-card" id="venueDancerVerificationPanel">
+          <span class="eyebrow">Verified roster</span>
+          <h3>Dancer affiliation approvals</h3>
+          <p>Scan a dancer's current MyDancr approval QR to confirm only that she works at this venue. MyDancr reviews her profile and media separately.</p>
+          <section class="venue-affiliation-preview" id="venueDancerVerificationPreview" hidden aria-label="Dancer verification confirmation">
+            <span class="venue-affiliation-avatar" id="venueDancerVerificationAvatar"></span>
+            <div>
+              <strong id="venueDancerVerificationName">Dancer</strong>
+              <span id="venueDancerVerificationCity">City unavailable</span>
+              <small id="venueDancerVerificationExpiry">Link expires soon</small>
+            </div>
+            <button class="action-btn" id="venueDancerVerificationApprove" type="button">Confirm she works here</button>
+          </section>
+          <div class="venue-affiliation-list" id="venueDancerAffiliationList" aria-label="Approved dancer roster"></div>
+          <div class="rule-note" id="venueDancerVerificationStatus" role="status" aria-live="polite">Open the venue workspace to scan a dancer QR, or scan it with this phone's camera to open the secure approval preview.</div>
+        </section>
+        <div class="venue-dashboard-grid">
+          <form class="auth-card auth-form" id="venueProfileForm">
+            <div class="auth-form-head">
+              <strong>Public venue page</strong>
+              <span>Keep guest-facing venue details accurate.</span>
+            </div>
+            <div class="field">
+              <label for="venueProfileNameInput">Venue name</label>
+              <input id="venueProfileNameInput" type="text" minlength="2" maxlength="120" required>
+            </div>
+            <div class="field">
+              <label for="venueProfileAddressInput">Address</label>
+              <input id="venueProfileAddressInput" type="text" maxlength="240">
+            </div>
+            <div class="field">
+              <label for="venueProfilePhoneInput">Phone</label>
+              <input id="venueProfilePhoneInput" type="tel" maxlength="40">
+            </div>
+            <div class="field">
+              <label for="venueProfileWebsiteInput">Website</label>
+              <input id="venueProfileWebsiteInput" type="text" inputmode="url" autocomplete="url" autocapitalize="none" spellcheck="false" maxlength="300" placeholder="www.yourclub.com">
+            </div>
+            <button class="action-btn" type="submit">Save venue page</button>
+          </form>
+          <form class="auth-card auth-form venue-offer-preview" id="venueQrForm" hidden>
+            <span class="eyebrow">Retired venue code</span>
+            <p>This compatibility form is no longer available.</p>
+            <div class="field">
+              <label for="venueQrFileInput">QR image</label>
+              <input id="venueQrFileInput" type="file" accept="image/jpeg,image/png,image/webp" required>
+            </div>
+            <div class="field">
+              <label for="venueQrLabelInput">QR label</label>
+              <input id="venueQrLabelInput" type="text" maxlength="100" placeholder="What guests should know">
+            </div>
+            <div class="venue-offer-qr" id="venueQrPreview">
+              <img id="venueQrImage" alt="Published venue QR code" hidden>
+              <div class="rule-note" id="venueQrPlaceholder">
+                <strong>Club Scan preview</strong><br>
+                Upload a venue QR to publish it on this venue page and on dancer profiles while they are actively checked in here.
+              </div>
+            </div>
+            <button class="action-btn" type="submit">Upload QR code</button>
+            <button class="ghost" id="venueQrRemoveBtn" type="button" hidden>Remove QR code</button>
+          </form>
+          <section class="auth-card auth-form venue-offer-preview">
+            <span class="eyebrow">Physical venue access</span>
+            <h3>Tap stickers</h3>
+            <p>View the dressing-room and cashier tap stickers supplied by MyDancr, including their live status and tap activity.</p>
+            <a class="action-btn" href="/dashboard#venue-nfc-tags" style="text-decoration:none">View assigned tap stickers</a>
+          </section>
+        </div>
+        <div class="rule-note" id="venueDashboardStatus" role="status" aria-live="polite">Loading live venue data…</div>
+        <div class="auth-card">
+          <h3>Useful analytics</h3>
+          <div class="dashboard-stats">
+            <div class="stat"><strong id="venuePageViewsToday">0</strong><span>page views today</span></div>
+            <div class="stat"><strong id="venueDressingRoomNfcTaps">0</strong><span>dressing-room taps · 30 days</span></div>
+            <div class="stat"><strong id="venueCashierNfcRedemptions">0</strong><span>cashier redemptions · 30 days</span></div>
+            <div class="stat"><strong id="venueGoingSignals">0</strong><span>going signals · 30 days</span></div>
+          </div>
+        </div>
+        <div class="auth-card">
+          <h3>Working now</h3>
+          <div class="venue-admin-list" id="venueWorkingNowList"><div class="rule-note">No verified dancer check-ins right now.</div></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="page-panel" id="adminDashboard" aria-hidden="true">
+      <div class="page-inner dashboard-wide">
+        <div class="page-head">
+          <div>
+            <span class="eyebrow">Platform admin</span>
+            <h2>Trust operations</h2>
+          </div>
+          <div class="admin-head-actions">
+            <button class="admin-session-logout" id="adminLogoutBtn" type="button" hidden>Log out</button>
+            <button class="close-btn" id="adminClose" aria-label="Close admin dashboard">
+              <svg class="icon" viewBox="0 0 24 24"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
+            </button>
+          </div>
+        </div>
+        <form class="auth-card auth-form admin-login-form" id="adminLoginForm">
+          <div class="auth-tabs admin-auth-tabs" aria-label="Admin auth mode">
+            <button class="auth-tab active" id="adminLoginModeBtn" type="button" data-admin-auth-mode="login">Sign in</button>
+            <button class="auth-tab" id="adminSignupModeBtn" type="button" data-admin-auth-mode="signup">Create</button>
+          </div>
+          <div class="field">
+            <label for="adminEmail">Admin username</label>
+            <input id="adminEmail" type="text" autocomplete="username">
+          </div>
+          <div class="field">
+            <label for="adminPassword">Password</label>
+            <div class="password-wrap">
+              <input id="adminPassword" type="password" autocomplete="current-password">
+              <button class="password-toggle" type="button" data-password-toggle="adminPassword" aria-label="Show password" aria-pressed="false">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+              </button>
+            </div>
+          </div>
+          <div class="field" id="adminCodeField" hidden>
+            <label for="adminCode">Admin code</label>
+            <input id="adminCode" type="password" autocomplete="one-time-code">
+          </div>
+          <button class="forgot-password-link" id="adminForgotPasswordBtn" type="button">Forgot password?</button>
+          <button class="admin-login" id="adminLoginBtn" type="submit">Sign in</button>
+          <button class="admin-login" id="adminCreateBtn" type="submit" hidden>Create admin account</button>
+          <div class="rule-note" id="adminLiveStatus">Sign in or create an admin account to continue.</div>
+        </form>
+        <div id="adminDashboardContent" hidden>
+        <div class="status-grid">
+          <div class="stat"><strong id="adminUserCount">0</strong><span>Users</span></div>
+          <div class="stat"><strong id="adminPendingCount">0</strong><span>Pending dancers</span></div>
+          <div class="stat"><strong id="adminSubscriptionCount">0</strong><span>Subscriptions</span></div>
+          <div class="stat"><strong id="adminActiveSubscriptionCount">0</strong><span>Active billing</span></div>
+        </div>
+        <div class="auth-card">
+          <h3>Operations center</h3>
+          <p>See every queue needing attention, live check-ins, QR activity, revenue health, audit history, accounts, system status, and analytics.</p>
+          <div class="status-grid" id="adminOperationsSummary" aria-live="polite"></div>
+          <a class="action-btn" href="/admin/operations" style="text-decoration:none">Open full operations center</a>
+        </div>
+        <details class="auth-card dashboard-collapse admin-dashboard-collapse">
+          <summary><span class="dashboard-collapse-title"><strong>Platform monitoring</strong><span>Expand to view live system checks, approval queue health, reports, billing, and support activity.</span></span></summary>
+          <div class="dashboard-collapse-body">
+          <div class="admin-grid" id="adminMonitoring"></div>
+          </div>
+        </details>
+        <details class="auth-card dashboard-collapse admin-dashboard-collapse">
+          <summary><span class="dashboard-collapse-title"><strong>Users</strong><span>Expand to view real dancer accounts and submitted profiles visible to admin.</span></span></summary>
+          <div class="dashboard-collapse-body">
+          <div class="admin-grid" id="adminUsers"></div>
+          </div>
+        </details>
+        <details class="auth-card dashboard-collapse admin-dashboard-collapse">
+          <summary><span class="dashboard-collapse-title"><strong>Dancer content reviews</strong><span>Expand to review submitted socials and photos. Dancer accounts are approved automatically.</span></span></summary>
+          <div class="dashboard-collapse-body">
+          <div class="admin-grid" id="adminDancers"></div>
+          </div>
+        </details>
+        <details class="auth-card dashboard-collapse admin-dashboard-collapse admin-directory-card">
+          <summary><span class="dashboard-collapse-title"><strong>Approved dancers</strong><span>Expand to search real dancers whose required verification has been approved.</span></span>
+            <span class="pill" id="adminApprovedDancerCount">0</span>
+          </summary>
+          <div class="dashboard-collapse-body">
+          <label class="admin-search-field" for="adminApprovedDancerSearch">
+            <span>Search approved dancers</span>
+            <input id="adminApprovedDancerSearch" type="search" placeholder="Search by name, city, venue, or status" autocomplete="off">
+          </label>
+          <div class="admin-grid" id="adminApprovedDancers"></div>
+          </div>
+        </details>
+        <details class="auth-card dashboard-collapse admin-dashboard-collapse admin-directory-card">
+          <summary><span class="dashboard-collapse-title"><strong>Disapproved dancers</strong><span>Expand to search rejected dancer profiles and review what was disapproved.</span></span>
+            <span class="badge pending" id="adminDisapprovedDancerCount">0</span>
+          </summary>
+          <div class="dashboard-collapse-body">
+          <label class="admin-search-field" for="adminDisapprovedDancerSearch">
+            <span>Search disapproved dancers</span>
+            <input id="adminDisapprovedDancerSearch" type="search" placeholder="Search by name, city, venue, or status" autocomplete="off">
+          </label>
+          <div class="admin-grid" id="adminDisapprovedDancers"></div>
+          </div>
+        </details>
+        <details class="auth-card dashboard-collapse admin-dashboard-collapse">
+          <summary><span class="dashboard-collapse-title"><strong>Reports</strong><span>Expand to review real open reports and public contact messages sent to admin.</span></span></summary>
+          <div class="dashboard-collapse-body">
+          <div class="admin-grid" id="adminReports"></div>
+          </div>
+        </details>
+        <details class="auth-card dashboard-collapse admin-dashboard-collapse">
+          <summary><span class="dashboard-collapse-title"><strong>Support inbox</strong><span>Expand to read and reply to dancer, guest, venue, or visitor messages.</span></span></summary>
+          <div class="dashboard-collapse-body">
+          <div class="admin-grid" id="adminSupportInbox"></div>
+          </div>
+        </details>
+        <details class="auth-card dashboard-collapse admin-dashboard-collapse">
+          <summary><span class="dashboard-collapse-title"><strong>Billing subscriptions</strong><span>Expand to view live subscription and billing status from connected accounts.</span></span></summary>
+          <div class="dashboard-collapse-body">
+          <div class="admin-grid" id="adminSubscriptions"></div>
+          </div>
+        </details>
+        <details class="auth-card dashboard-collapse admin-dashboard-collapse">
+          <summary><span class="dashboard-collapse-title"><strong>Rankings</strong><span>Expand to refresh dancer ranking, trend, profile view, schedule view, and notification metrics.</span></span></summary>
+          <div class="dashboard-collapse-body">
+          <div class="admin-grid">
+            <article class="admin-item">
+              <div class="row">
+                <div>
+                  <h3>Trending recalculation</h3>
+                  <div class="meta" id="adminRankingStatus">Recalculate rankings for the selected city.</div>
+                </div>
+                <span class="pill">Manual</span>
+              </div>
+              <div class="admin-actions">
+                <button class="action-btn" data-admin-action="recalculate-rankings">Recalculate rankings</button>
+              </div>
+            </article>
+          </div>
+          </div>
+        </details>
+        <details class="auth-card dashboard-collapse admin-dashboard-collapse">
+          <summary><span class="dashboard-collapse-title"><strong>Shift controls</strong><span>Expand to manage real posted shifts and remove shifts that should not be shown.</span></span></summary>
+          <div class="dashboard-collapse-body">
+          <div class="admin-grid" id="adminShifts"></div>
+          </div>
+        </details>
+        <details class="auth-card dashboard-collapse admin-dashboard-collapse">
+          <summary><span class="dashboard-collapse-title"><strong>Featured placements</strong><span>Expand to feature or unfeature approved dancers and visible venues.</span></span></summary>
+          <div class="dashboard-collapse-body">
+          <div class="admin-grid" id="adminFeatured"></div>
+          </div>
+        </details>
+        <details class="auth-card dashboard-collapse admin-dashboard-collapse">
+          <summary><span class="dashboard-collapse-title"><strong>Venue directory</strong><span>Review live venue pages or remove a venue that should no longer appear publicly.</span></span></summary>
+          <div class="dashboard-collapse-body">
+          <div class="admin-grid" id="adminVenues"></div>
+          </div>
+        </details>
+        </div>
+      </div>
+    </section>
+
+    <!-- Retired customer UI: keep legacy data bindings inert; all entry points use /dashboard/customer. -->
+    <section class="page-panel" id="customerDashboard" aria-hidden="true" hidden inert style="display: none !important;">
+      <div class="page-inner">
+        <div class="page-head">
+          <div>
+            <span class="eyebrow">Guest dashboard</span>
+            <h2 id="dashboardCity">Las Vegas</h2>
+          </div>
+          <button class="close-btn" id="dashboardClose" aria-label="Close dashboard">
+            <svg class="icon" viewBox="0 0 24 24"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
+          </button>
+        </div>
+        <div class="customer-summary">
+          <div>
+            <span class="eyebrow">Dashboard</span>
+            <h3 id="customerSummaryTitle">Now in Las Vegas</h3>
+            <p id="customerSummaryCopy">Follow dancers to see your private working-now list, saved schedules, club alerts, and directions.</p>
+          </div>
+          <div class="customer-summary-actions">
+            <button class="ghost" id="customerBrowseTonight" type="button">Browse now</button>
+            <button class="ghost" id="customerBrowseDancers" type="button">Find dancers</button>
+          </div>
+        </div>
+        <div class="dashboard-stats">
+          <button class="stat" type="button" data-dashboard-jump="tonight">
+            <strong id="dashTonightCount">0</strong>
+            <span>Followed working now</span>
+          </button>
+          <button class="stat" type="button" data-dashboard-jump="followed">
+            <strong id="dashFollowedCount">0</strong>
+            <span>Followed dancers</span>
+          </button>
+          <button class="stat" type="button" data-dashboard-jump="venues">
+            <strong id="dashVenueCount">0</strong>
+            <span>Favorite clubs</span>
+          </button>
+          <button class="stat" type="button" data-dashboard-jump="notifications">
+            <strong id="dashNotificationsCount">0</strong>
+            <span>Notifications on</span>
+          </button>
+        </div>
+        <div class="section-title-row" data-dashboard-section="tonight">
+          <h3 class="section-title" id="dashTonightTitle">Working now</h3>
+          <span class="section-context" id="dashTonightContext">Las Vegas</span>
+        </div>
+        <div class="list card-grid" id="dashTonightList"></div>
+        <button class="view-all" id="dashTonightViewAll" hidden>View All</button>
+        <div class="section-title-row" data-dashboard-section="followed">
+          <h3 class="section-title" id="dashFollowedTitle">All followed dancers</h3>
+          <span class="section-context" id="dashFollowedContext">Las Vegas</span>
+        </div>
+        <div class="list card-grid" id="dashFollowedList"></div>
+        <button class="view-all" id="dashFollowedViewAll" hidden>View All Followed</button>
+        <div class="section-title-row" data-dashboard-section="venues">
+          <h3 class="section-title" id="dashVenuesTitle">Favorite clubs</h3>
+          <span class="section-context" id="dashVenuesContext">Las Vegas</span>
+        </div>
+        <div class="customer-venue-list" id="dashVenueList"></div>
+        <button class="view-all" id="dashVenueViewAll" hidden>View All Clubs</button>
+        <div class="section-title-row" data-dashboard-section="deals">
+          <h3 class="section-title">Saved Club Deals</h3>
+          <span class="section-context" id="dashSavedDealsContext">0 saved</span>
+        </div>
+        <div class="saved-deal-list" id="dashSavedDealsList"></div>
+        <div class="auth-card customer-notification-card" data-dashboard-section="notifications">
+          <h3 class="section-title">Alerts</h3>
+          <p class="customer-card-copy">Choose your updates and email or push delivery in Alerts.</p>
+          <div class="toggle-list" id="notificationSettings"></div>
+          <div class="section-title-row">
+            <h3 class="section-title">Notification center</h3>
+            <button class="ghost" type="button" data-notification-action="mark-all">Mark all read</button>
+          </div>
+          <div class="rank-notification-list" id="customerNotificationList">Notifications will appear here.</div>
+          <button class="notification-clear-btn" type="button" data-notification-action="clear-all">Clear notifications</button>
+        </div>
+        <div class="auth-card customer-notification-card support-inbox-card" data-dashboard-section="support" data-support-panel="customer">
+          <h3 class="section-title">Message admin</h3>
+          <form class="auth-form support-contact-form" data-support-form="customer">
+            <div class="field"><label for="customerSupportSubject">Subject</label><input id="customerSupportSubject" type="text" placeholder="What do you need help with?" required></div>
+            <div class="field"><label for="customerSupportMessage">Message</label><textarea id="customerSupportMessage" rows="4" placeholder="Write your message to the admin team" required></textarea></div>
+            <button class="action-btn" type="submit">Send to admin</button>
+            <div class="rule-note" id="customerSupportStatus">Your messages and admin replies appear below.</div>
+          </form>
+          <div class="rank-notification-list support-thread-list" id="customerSupportThreads">No support conversations yet.</div>
+        </div>
+        <div class="auth-card account-control-card" data-account-panel="customer" data-dashboard-section="account">
+          <div class="account-control-head">
+            <div>
+              <span class="eyebrow">Account controls</span>
+              <h3>Guest account</h3>
+            </div>
+            <span class="account-control-status" data-account-status>Active</span>
+          </div>
+          <p class="account-control-copy" data-account-note>Your private follows, club alerts, and going signals stay active.</p>
+          <div class="account-center">
+            <div class="account-center-head">
+              <strong>Account center</strong>
+              <span>Change the email or password you use to sign in.</span>
+            </div>
+            <div class="account-center-grid">
+              <div class="account-center-section">
+                <div class="account-email-current">
+                  <span>Current email</span>
+                  <strong id="customerCurrentEmail">Not signed in</strong>
+                </div>
+                <label for="customerAccountEmail">New email</label>
+                <input id="customerAccountEmail" type="email" autocomplete="email" placeholder="you@example.com" />
+                <button class="action-btn secondary" type="button" data-account-action="update-email" data-account-role="customer">Update email</button>
+              </div>
+              <div class="account-center-section">
+                <label for="customerAccountPassword">New password</label>
+                <div class="password-wrap">
+                  <input id="customerAccountPassword" type="password" autocomplete="new-password" minlength="6" placeholder="At least 6 characters" />
+                  <button class="password-toggle" type="button" data-password-toggle="customerAccountPassword" aria-label="Show password" aria-pressed="false">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                  </button>
+                </div>
+                <ul class="field-note" aria-label="Password requirements" style="margin:0;padding-left:20px;line-height:1.6">
+                  <li>At least 6 characters</li>
+                  <li>At least 1 capital letter</li>
+                  <li>At least 1 number</li>
+                  <li>At least 1 special character (for example, ! @ # $)</li>
+                </ul>
+                <label for="customerAccountPasswordConfirm">Confirm password</label>
+                <div class="password-wrap">
+                  <input id="customerAccountPasswordConfirm" type="password" autocomplete="new-password" placeholder="Re-enter password" />
+                  <button class="password-toggle" type="button" data-password-toggle="customerAccountPasswordConfirm" aria-label="Show confirm password" aria-pressed="false">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                  </button>
+                </div>
+                <button class="action-btn secondary" type="button" data-account-action="update-password" data-account-role="customer">Update password</button>
+              </div>
+            </div>
+            <p class="account-center-status" id="customerAccountCenterStatus" aria-live="polite"></p>
+          </div>
+          <div class="account-control-actions">
+            <button class="action-btn secondary" type="button" data-account-action="disable" data-account-role="customer">Disable temporarily</button>
+            <button class="action-btn danger" type="button" data-account-action="delete" data-account-role="customer">Delete account</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div class="modal-backdrop" id="profileBackdrop" aria-hidden="true">
+      <section class="profile-modal" id="profileModal" role="dialog" aria-modal="true" aria-labelledby="modalName">
+        <div class="profile-modal-summary">
+          <div class="profile-modal-person">
+            <div class="profile-modal-avatar-column">
+              <div class="profile-modal-avatar" id="modalProfileAvatar" data-dancer-avatar role="img" aria-label="Dancer profile photo">
+                <span id="modalProfileAvatarBorder" data-dancer-avatar-border aria-hidden="true"></span>
+                <span data-working-now-indicator aria-hidden="true">NOW</span>
+              </div>
+            </div>
+            <div class="modal-identity-stack">
+              <div class="modal-identity">
+                <div class="profile-modal-name-row" data-follower-label="Followers">
+                    <div class="profile-modal-name-anchor">
+                      <h2 id="modalName">Profile</h2>
+                    </div>
+                  <span class="badge" id="modalStatus">Verified</span>
+                </div>
+                <div class="profile-modal-context">
+                  <svg class="profile-modal-city-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s7-6.1 7-12A7 7 0 1 0 5 9c0 5.9 7 12 7 12Z"></path><circle cx="12" cy="9" r="2.4"></circle></svg>
+                  <span class="pill" id="modalCity">Las Vegas</span>
+                </div>
+              </div>
+              <div class="profile-modal-header-metrics" id="modalProfileMetrics"></div>
+              <span class="badge trend modal-rank" id="modalRank" hidden aria-hidden="true"></span>
+            </div>
+          </div>
+          <div class="profile-modal-header-controls">
+            <button class="profile-header-report-action" id="reportBtn" type="button" aria-label="Report profile" title="Report profile" aria-haspopup="dialog"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 21V4"></path><path d="M5 5h11l-1.8 3L16 11H5"></path></svg></button>
+            <button class="close-btn" id="modalClose" type="button" aria-label="Close profile">
+              <svg class="icon" viewBox="0 0 24 24"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
+            </button>
+          </div>
+        </div>
+        <div class="modal-body" id="modalBody"></div>
+        <section class="profile-modal-media" aria-label="Dancer profile content">
+          <div class="profile-media-socials" id="modalMediaSocials" aria-label="External profiles" hidden></div>
+          <div class="profile-modal-media-tabs" role="tablist" aria-label="Dancer profile media">
+            <button class="active" id="modalMediaPhotoTab" type="button" role="tab" aria-label="Photos" title="Photos" aria-selected="true" aria-controls="modalGallery" data-profile-media-tab="photo">
+              <svg class="profile-media-tab-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="3"></rect><circle cx="8.5" cy="9" r="1.5"></circle><path d="m5 17 4.5-4.5 3.2 3.2 2.2-2.2L19 17"></path></svg>
+              <span class="profile-media-tab-label">Photos</span>
+              <span class="profile-media-tab-count" id="modalMediaPhotoCount" aria-hidden="true">0</span>
+            </button>
+            <button id="modalMediaTvTab" type="button" role="tab" aria-label="Videos" title="Videos" aria-selected="false" aria-controls="modalGallery" data-profile-media-tab="video" disabled>
+              <svg class="profile-media-tab-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="3"></rect><path class="profile-media-tab-play" d="m10 9 5 3-5 3Z"></path></svg>
+              <span class="profile-media-tab-label">Videos</span>
+              <span class="profile-media-tab-count" id="modalMediaTvCount" aria-hidden="true">0</span>
+            </button>
+          </div>
+          <div class="modal-image" id="modalImage" role="group" tabindex="0" aria-label="Profile photos and videos. Swipe left or right to change media.">
+            <span class="profile-modal-media-position" id="modalMediaPosition">Photo 1 of 1</span>
+            <button class="profile-modal-media-previous" id="modalMediaPrevious" type="button" aria-label="Previous profile media">‹</button>
+            <button class="profile-modal-media-next" id="modalMediaNext" type="button" aria-label="Next profile media">›</button>
+            <span class="profile-modal-playback-feedback" id="modalVideoPlaybackFeedback" aria-hidden="true"></span>
+            <div class="profile-modal-video-controls is-visible" id="modalVideoControls" data-modal-video-controls role="group" aria-label="Video controls" hidden>
+              <button id="modalVideoPlayback" type="button" aria-label="Play TV video">
+                <svg class="profile-modal-media-control-icon" viewBox="0 0 24 24" aria-hidden="true"><path class="is-fill" d="m9 7 8 5-8 5Z"></path></svg>
+              </button>
+              <button id="modalVideoSound" type="button" aria-label="Turn TV video sound on">
+                <svg class="profile-modal-media-control-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10v4h4l5 4V6L8 10H4Z"></path><path d="m17 9 4 6"></path><path d="m21 9-4 6"></path></svg>
+              </button>
+              <input id="modalVideoProgress" type="range" min="0" max="0.1" step="0.1" value="0" aria-label="TV video progress" aria-valuetext="0:00 of 0:00">
+              <output id="modalVideoTime" for="modalVideoProgress">0:00 / 0:00</output>
+              <button class="profile-modal-media-expand" id="modalMediaExpand" type="button" aria-label="Open selected profile video in scrolling cards" title="View video cards" hidden>
+                <svg class="profile-modal-media-control-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"></path><path d="m13 6 6 6-6 6"></path></svg>
+              </button>
+            </div>
+          </div>
+          <div class="gallery" id="modalGallery" data-media-tab="photo" role="tabpanel" aria-labelledby="modalMediaPhotoTab"></div>
+          <p class="profile-modal-media-empty" id="modalMediaEmpty" hidden>No approved media yet.</p>
+        </section>
+        <div class="profile-scroll-spacer" aria-hidden="true"></div>
+      </section>
+      <div class="profile-photo-viewer profile-media-card-feed" id="profilePhotoViewer" role="dialog" aria-modal="true" aria-label="Profile photo" hidden>
+        <div class="profile-photo-viewer-shell">
+          <button class="close-btn profile-photo-viewer-close" id="profilePhotoViewerClose" type="button" aria-label="Close profile photos">
+            <svg class="icon" viewBox="0 0 24 24"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
+          </button>
+          <div class="profile-photo-viewer-stage">
+            <div class="profile-photo-viewer-image" id="profilePhotoViewerImage" role="group" tabindex="0" aria-label="Dancer photos. Scroll up or down to change photos."></div>
+            <button class="profile-photo-viewer-previous" id="profilePhotoViewerPrevious" type="button" aria-label="Previous dancer photo">↑</button>
+            <button class="profile-photo-viewer-next" id="profilePhotoViewerNext" type="button" aria-label="Next dancer photo">↓</button>
+          </div>
+          <div class="profile-photo-viewer-footer">
+            <div class="profile-photo-viewer-actions">
+              <button class="profile-photo-viewer-like" id="profilePhotoViewerLike" type="button" aria-label="Like this profile photo" aria-pressed="false">
+                <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.8 8.6c0 5.3-8.8 10.4-8.8 10.4S3.2 13.9 3.2 8.6A4.6 4.6 0 0 1 12 6.7a4.6 4.6 0 0 1 8.8 1.9Z"></path></svg>
+                <span data-media-like-count>0</span>
+              </button>
+              <button class="profile-photo-viewer-share" id="profilePhotoViewerShare" type="button" aria-label="Share this profile photo">
+                <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><path d="m8.6 10.5 6.8-4M8.6 13.5l6.8 4"></path></svg>
+              </button>
+              <button class="profile-photo-viewer-report" id="profilePhotoViewerReport" type="button" aria-label="Report this profile photo">
+                <span class="action-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 21V4"></path><path d="M5 5h11l-1.8 3L16 11H5"></path></svg></span>
+              </button>
+            </div>
+            <p class="profile-photo-viewer-status" id="profilePhotoViewerStatus" aria-live="polite"></p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="admin-preview-popover account-required-popover" id="accountRequiredPopover" role="dialog" aria-modal="true" aria-labelledby="accountRequiredTitle" aria-describedby="accountRequiredMessage" hidden>
+      <section class="admin-preview-sheet account-required-sheet guest-account-prompt">
+        <button class="close-btn admin-preview-close guest-account-close" id="accountRequiredClose" type="button" aria-label="Close account prompt">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
+        </button>
+        <p class="guest-account-eyebrow">FREE GUEST ACCOUNT</p>
+        <h3 id="accountRequiredTitle">Follow your favorites</h3>
+        <p class="guest-account-message" id="accountRequiredMessage">Create a free account to follow dancers, save profiles, and get updates.</p>
+        <div class="guest-account-actions">
+          <a class="guest-account-primary" id="accountRequiredCreateLink" href="/account?role=customer&amp;mode=signup">Create free account</a>
+          <a class="guest-account-signin" id="accountRequiredSignInLink" href="/account?role=customer">Already have an account? <span>Sign in</span></a>
+        </div>
+      </section>
+    </div>
+
+    <div class="admin-preview-popover content-report-popover" id="contentReportPopover" role="dialog" aria-modal="true" aria-labelledby="contentReportTitle" aria-describedby="contentReportMessage" hidden>
+      <section class="admin-preview-sheet content-report-sheet">
+        <header class="content-report-header">
+          <h3 id="contentReportTitle">Report content</h3>
+          <button class="close-btn admin-preview-close content-report-close" id="contentReportClose" type="button" aria-label="Close report form">
+            <svg class="icon" viewBox="0 0 24 24"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
+          </button>
+        </header>
+        <span>Safety report</span>
+        <p id="contentReportMessage">Tell the moderation team what is wrong. Reports can be submitted without signing in.</p>
+        <div class="content-report-quick-options" id="contentReportQuickOptions" role="menu" hidden>
+          <button class="content-report-quick-option" type="button" role="menuitem" data-content-report-reason="Sexual or unsafe content">Sexual or unsafe content</button>
+          <button class="content-report-quick-option" type="button" role="menuitem" data-content-report-reason="Harassment or abuse">Harassment or abuse</button>
+          <button class="content-report-quick-option" type="button" role="menuitem" data-content-report-reason="Spam or misleading content">Spam or misleading content</button>
+          <button class="content-report-quick-option" type="button" role="menuitem" data-content-report-reason="Other safety concern">Other safety concern</button>
+        </div>
+        <form class="content-report-form" id="contentReportForm">
+          <label for="contentReportReason">Reason
+            <select id="contentReportReason" required>
+              <option value="">Choose a reason</option>
+              <option>Misleading or inaccurate content</option>
+              <option>Impersonation</option>
+              <option>Harassment or unsafe content</option>
+              <option>Underage concern</option>
+              <option>Spam or prohibited promotion</option>
+              <option>Other safety concern</option>
+            </select>
+          </label>
+          <label for="contentReportDetails">Details <small>Optional</small>
+            <textarea id="contentReportDetails" maxlength="1200" rows="4" placeholder="Add information that will help the moderation team review this content."></textarea>
+          </label>
+          <p class="content-report-status" id="contentReportStatus" aria-live="polite"></p>
+          <div class="content-report-form-actions">
+            <button class="action-btn secondary" id="contentReportCancel" type="button">Cancel</button>
+            <button class="action-btn" id="contentReportSubmit" type="submit">Submit report</button>
+          </div>
+        </form>
+      </section>
+    </div>
+
+    <div class="admin-preview-popover" id="adminPreviewPopover" role="dialog" aria-modal="true" aria-labelledby="adminPreviewTitle" hidden>
+      <section class="admin-preview-sheet">
+        <button class="close-btn admin-preview-close" id="adminPreviewClose" type="button" aria-label="Close preview">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
+        </button>
+        <h3 id="adminPreviewTitle">Preview</h3>
+        <div class="admin-preview-body" id="adminPreviewBody"></div>
+      </section>
+    </div>
+
+    <div class="admin-preview-popover" id="publicContactPopover" role="dialog" aria-modal="true" aria-labelledby="publicContactTitle" hidden>
+      <section class="admin-preview-sheet">
+        <button class="close-btn admin-preview-close" id="publicContactClose" type="button" aria-label="Close contact form">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
+        </button>
+        <h3 id="publicContactTitle">Contact Admin</h3>
+        <form class="auth-form support-contact-form" id="publicContactForm">
+          <div class="field">
+            <label for="publicContactName">Name</label>
+            <input id="publicContactName" name="name" type="text" autocomplete="name" placeholder="Your name">
+          </div>
+          <div class="field">
+            <label for="publicContactEmail">Email</label>
+            <input id="publicContactEmail" name="email" type="email" autocomplete="email" placeholder="you@example.com">
+          </div>
+          <div class="field">
+            <label for="publicContactSubject">Subject</label>
+            <input id="publicContactSubject" name="subject" type="text" required placeholder="What do you need help with?">
+          </div>
+          <div class="field">
+            <label for="publicContactMessage">Message</label>
+            <textarea id="publicContactMessage" name="message" rows="4" required placeholder="Write your message to admin"></textarea>
+          </div>
+          <button class="action-btn" type="submit">Send to admin</button>
+          <div class="rule-note" id="publicContactStatus">You can send this without signing in. Add an email if you want admin to reply.</div>
+        </form>
+      </section>
+    </div>
+
+    <div class="toast" id="toast" role="status" aria-live="polite" aria-atomic="true"></div>
+  </div>
+
+  <script>{{include:application}}  </script>
+</body>
+</html>

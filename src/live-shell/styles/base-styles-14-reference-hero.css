@@ -1,0 +1,1191 @@
+
+    .reference-hero {
+      background:
+        radial-gradient(circle at 84% 42%, rgba(255, 47, 174, .16), transparent 0 20rem),
+        radial-gradient(circle at 68% 52%, rgba(124, 58, 237, .18), transparent 0 22rem),
+        linear-gradient(90deg, #050507 0%, #080711 48%, #180a3a 100%);
+      overflow: hidden;
+    }
+
+    .reference-hero:after {
+      right: clamp(26px, 6vw, 58px);
+      width: 2px;
+      border-radius: 999px;
+      background:
+        linear-gradient(180deg, transparent 0%, rgba(255, 255, 255, .34) 12%, #EC4899 36%, #D8B4FE 50%, #8B5CF6 66%, rgba(255, 255, 255, .28) 88%, transparent 100%);
+      box-shadow:
+        0 0 8px rgba(255, 255, 255, .45),
+        0 0 18px rgba(236, 72, 153, .55),
+        0 0 40px rgba(139, 92, 246, .58),
+        26px 0 72px rgba(124, 58, 237, .34),
+        -38px 0 82px rgba(255, 47, 174, .12);
+      opacity: .96;
+    }
+
+    .reference-hero .hero-copy {
+      position: relative;
+      z-index: 2;
+    }
+
+    .dancr-home-logo {
+      min-height: 56px;
+      padding: 8px 22px 9px;
+      border-radius: 18px;
+      background:
+        linear-gradient(135deg, rgba(255, 255, 255, .035), rgba(255, 255, 255, 0) 48%),
+        linear-gradient(135deg, rgba(17, 17, 24, .96), rgba(9, 8, 16, .94));
+      border: 1px solid rgba(124, 58, 237, .42);
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, .08),
+        inset 0 -16px 24px rgba(124, 58, 237, .08),
+        0 0 22px rgba(124, 58, 237, .20),
+        0 0 14px rgba(255, 47, 174, .08);
+      letter-spacing: -.045em;
+      transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease;
+    }
+
+    .dancr-home-logo:hover {
+      transform: translateY(-1px);
+      border-color: rgba(255, 47, 174, .55);
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, .10),
+        inset 0 -16px 24px rgba(124, 58, 237, .10),
+        0 0 28px rgba(124, 58, 237, .28),
+        0 0 20px rgba(255, 47, 174, .14);
+    }
+
+    .dancr-home-logo strong {
+      color: #FFFFFF;
+      font-weight: 900;
+      text-shadow: 0 0 12px rgba(255, 255, 255, .18);
+    }
+
+    .dancr-home-logo .logo-accent,
+    .dancr-home-logo strong:last-child {
+      color: #A855F7;
+      text-shadow:
+        0 0 12px rgba(124, 58, 237, .82),
+        0 0 24px rgba(255, 47, 174, .30);
+    }
+
+    #accountBtn {
+      min-height: 46px;
+      padding-inline: 22px;
+      border-radius: 999px;
+      font-weight: 900;
+      background:
+        linear-gradient(135deg, rgba(124, 58, 237, .22), rgba(255, 47, 174, .10)),
+        rgba(14, 14, 20, .94);
+      border-color: rgba(124, 58, 237, .58);
+      color: #FFFFFF;
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, .08),
+        0 0 20px rgba(124, 58, 237, .22);
+      transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease, background .18s ease;
+    }
+
+    #accountBtn:hover,
+    #accountBtn.active {
+      transform: translateY(-1px);
+      border-color: rgba(255, 47, 174, .70);
+      background:
+        linear-gradient(135deg, rgba(124, 58, 237, .36), rgba(255, 47, 174, .20)),
+        rgba(14, 14, 20, .96);
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, .10),
+        0 0 26px rgba(124, 58, 237, .30),
+        0 0 18px rgba(255, 47, 174, .20);
+    }
+
+    #accountBtn:not(:empty) {
+      text-shadow: 0 0 10px rgba(255, 255, 255, .10);
+    }
+
+    .venue.venue-card {
+      border-color: rgba(124, 58, 237, .30);
+      background:
+        radial-gradient(circle at 12% 50%, rgba(255, 47, 174, .09), transparent 0 28%),
+        linear-gradient(135deg, rgba(17, 17, 24, .96), rgba(8, 8, 13, .98));
+      box-shadow:
+        0 20px 54px rgba(0, 0, 0, .56),
+        0 0 24px rgba(124, 58, 237, .10),
+        inset 0 1px 0 rgba(255, 255, 255, .035);
+    }
+
+    .venue.venue-card:hover,
+    .venue.venue-card:focus-visible {
+      border-color: rgba(255, 47, 174, .48);
+      box-shadow:
+        0 24px 62px rgba(0, 0, 0, .64),
+        0 0 32px rgba(124, 58, 237, .22),
+        0 0 24px rgba(255, 47, 174, .12),
+        inset 0 1px 0 rgba(255, 255, 255, .045);
+    }
+
+    .venue.venue-card .venue-art {
+      background:
+        radial-gradient(circle at 50% 50%, rgba(255, 47, 174, .20), transparent 0 24%),
+        radial-gradient(circle at 58% 48%, rgba(124, 58, 237, .34), transparent 0 44%),
+        linear-gradient(135deg, rgba(14, 14, 20, .98), rgba(5, 5, 7, .98));
+    }
+
+    .venue.venue-card .venue-art:before {
+      color: #FFFFFF;
+      background:
+        linear-gradient(135deg, rgba(124, 58, 237, .88), rgba(255, 47, 174, .72));
+      border-color: rgba(255, 255, 255, .10);
+      box-shadow:
+        0 0 26px rgba(124, 58, 237, .32),
+        0 0 18px rgba(255, 47, 174, .18),
+        inset 0 1px 0 rgba(255, 255, 255, .22);
+    }
+
+    .venue.venue-card h3 {
+      color: #FFFFFF;
+      text-shadow: 0 0 12px rgba(255, 255, 255, .08);
+    }
+
+    .venue.venue-card .pill,
+    .venue.venue-card .venue-shift-pill {
+      color: #B8B8C5;
+      border-color: rgba(124, 58, 237, .26);
+      background: rgba(14, 14, 20, .72);
+      box-shadow: inset 0 0 12px rgba(124, 58, 237, .05);
+    }
+
+    .venue.venue-card .venue-shift-pill {
+      color: #F3E8FF;
+      border-color: rgba(255, 47, 174, .32);
+      background: rgba(255, 47, 174, .08);
+    }
+
+    .popular-head h2 {
+      color: #FFFFFF;
+    }
+
+    .mini-view {
+      color: #FFFFFF;
+      border-color: rgba(124, 58, 237, .42);
+      background: rgba(14, 14, 20, .82);
+      box-shadow: 0 0 16px rgba(124, 58, 237, .12);
+    }
+
+    .club-mini {
+      border-color: rgba(124, 58, 237, .26);
+      background:
+        radial-gradient(circle at 70% 10%, rgba(255, 47, 174, .18), transparent 0 48%),
+    .dancew0% 10%, rgba(255, 47, 174, .18), transparent 0 48%),
+        linear-gradient(135deg, rgba(17, 17, 24, .96), rgba(5, 5, 7, .98));
+      box-shadow: 0 16px 38px rgba(0, 0, 0, .48), 0 0 18px rgba(124, 58, 237, .10);
+    }
+
+    .club-mini:hover,
+    .club-mini:focus-visible {
+      border-color: rgba(255, 47, 174, .48);
+      box-shadow: 0 18px 46px rgba(0, 0, 0, .58), 0 0 26px rgba(124, 58, 237, .22), 0 0 18px rgba(255, 47, 174, .14);
+    }
+
+    .club-neon {
+      color: #FFFFFF;
+      text-shadow:
+        0 0 8px rgba(255, 255, 255, .35),
+        0 0 18px rgba(124, 58, 237, .55),
+        0 0 16px rgba(255, 47, 174, .28);
+    }
+
+    .popular-clubs {
+      padding-top: 4px;
+    }
+
+    .popular-head h2 {
+      letter-spacing: -.015em;
+      text-shadow: 0 0 18px rgba(124, 58, 237, .18);
+    }
+
+    .club-mini {
+      min-height: 134px;
+      border-color: rgba(124, 58, 237, .34);
+      background:
+        radial-gradient(circle at 62% 24%, rgba(255, 47, 174, .20), transparent 0 38%),
+        radial-gradient(circle at 34% 0%, rgba(124, 58, 237, .22), transparent 0 44%),
+        linear-gradient(145deg, rgba(17, 17, 24, .97), rgba(5, 5, 7, .98));
+      box-shadow:
+        0 18px 46px rgba(0, 0, 0, .58),
+        0 0 22px rgba(124, 58, 237, .14),
+        inset 0 1px 0 rgba(255, 255, 255, .04);
+    }
+
+    .club-mini:before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, .035), transparent 38%),
+        radial-gradient(circle at 50% 32%, rgba(255, 47, 174, .12), transparent 0 28%);
+      opacity: .92;
+    }
+
+    .club-mini:hover,
+    .club-mini:focus-visible {
+      border-color: rgba(255, 47, 174, .54);
+      box-shadow:
+        0 20px 52px rgba(0, 0, 0, .64),
+        0 0 30px rgba(124, 58, 237, .24),
+        0 0 22px rgba(255, 47, 174, .18),
+        inset 0 1px 0 rgba(255, 255, 255, .06);
+    }
+
+    .club-neon {
+      color: #F8F5FF;
+      text-shadow:
+        0 0 5px rgba(255, 255, 255, .34),
+        0 0 14px rgba(139, 92, 246, .78),
+        0 0 22px rgba(236, 72, 153, .46);
+      filter: drop-shadow(0 0 10px rgba(124, 58, 237, .22));
+    }
+
+    .club-mini small {
+      color: #B8B8C5;
+    }
+
+    .dancr-wordmark {
+      display: inline-flex;
+      align-items: baseline;
+      gap: 0;
+      font-family: var(--font-display);
+      font-size: clamp(36px, 5.4vw, 46px);
+      font-weight: 950;
+      line-height: .88;
+      letter-spacing: -.075em;
+      transform: translateY(-1px);
+      font-kerning: normal;
+    }
+
+    .dancr-wordmark .wordmark-light {
+      color: #FFFFFF;
+      text-shadow:
+        0 0 8px rgba(255, 255, 255, .26),
+        0 0 18px rgba(124, 58, 237, .10);
+    }
+
+    .dancr-wordmark .wordmark-violet {
+      margin-left: .015em;
+      color: transparent;
+      background: linear-gradient(135deg, #8B5CF6 0%, #A855F7 45%, #FF2FAE 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      text-shadow: none;
+      filter:
+        drop-shadow(0 0 7px rgba(124, 58, 237, .58))
+        drop-shadow(0 0 10px rgba(255, 47, 174, .22));
+    }
+
+    .dancr-home-logo:hover .wordmark-violet {
+      filter:
+        drop-shadow(0 0 9px rgba(124, 58, 237, .72))
+        drop-shadow(0 0 14px rgba(255, 47, 174, .30));
+    }
+
+    @media (max-width: 520px) {
+      .dancr-wordmark {
+        font-size: 34px;
+      }
+    }
+
+    * {
+      scrollbar-width: thin;
+      scrollbar-color: rgba(255, 255, 255, .18) transparent;
+    }
+
+    *::-webkit-scrollbar {
+      width: 3px;
+      height: 3px;
+    }
+
+    *::-webkit-scrollbar-track {
+      border: 0;
+      background: transparent;
+      box-shadow: none;
+    }
+
+    *::-webkit-scrollbar-thumb {
+      border: 0;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, .18);
+      box-shadow: none;
+      transition: background .18s ease;
+    }
+
+    *::-webkit-scrollbar-thumb:hover,
+    *::-webkit-scrollbar-thumb:active {
+      background: rgba(255, 255, 255, .32);
+      box-shadow: none;
+    }
+    .tabs .tab.active,
+    .tabs .tab.active[data-tab="tonight"],
+    .tab.active,
+    .tab.active[data-tab="tonight"] {
+      color: #ffffff;
+      border-color: transparent;
+      background: linear-gradient(135deg, #7c3aed 0%, #ff2fae 100%);
+      box-shadow:
+        0 16px 36px rgba(124, 58, 237, 0.3),
+        0 0 26px rgba(255, 47, 174, 0.24),
+        inset 0 1px 0 rgba(255, 255, 255, 0.16);
+    }
+
+    .tabs .tab.active .tab-count,
+    .tabs .tab.active[data-tab="tonight"] .tab-count,
+    .tab.active .tab-count,
+    .tab.active[data-tab="tonight"] .tab-count {
+      color: #ffffff;
+      border-color: rgba(255, 255, 255, 0.2);
+      background: rgba(255, 255, 255, 0.16);
+    }
+
+    /* Premium Vegas nightlife polish */
+    .reference-hero {
+      background:
+        radial-gradient(circle at 72% 36%, rgba(255, 47, 174, 0.18), transparent 0 18rem),
+        radial-gradient(circle at 92% 52%, rgba(124, 58, 237, 0.36), transparent 0 22rem),
+        radial-gradient(ellipse at 50% 120%, rgba(255, 47, 174, 0.08), transparent 0 36rem),
+        linear-gradient(90deg, #050507 0%, #080711 46%, #180a3a 74%, #2d1077 100%);
+      box-shadow:
+        0 24px 70px rgba(0, 0, 0, 0.76),
+        0 0 44px rgba(124, 58, 237, 0.22),
+        inset 0 0 0 1px rgba(255, 255, 255, 0.035),
+        inset 0 0 68px rgba(255, 47, 174, 0.07);
+    }
+
+    .reference-hero:after {
+      width: 3px;
+      background:
+        linear-gradient(180deg, transparent 0%, rgba(255, 255, 255, 0.35) 10%, #ff2fae 34%, #f4d5ff 50%, #8b5cf6 68%, rgba(34, 199, 255, 0.24) 88%, transparent 100%);
+      box-shadow:
+        0 0 10px rgba(255, 255, 255, 0.52),
+        0 0 24px rgba(255, 47, 174, 0.62),
+        0 0 56px rgba(139, 92, 246, 0.68),
+        34px 0 90px rgba(124, 58, 237, 0.42),
+        -46px 0 92px rgba(255, 47, 174, 0.18);
+      opacity: 0.98;
+    }
+
+    .badge.trend,
+    .dancer-card .badge.trend,
+    .profile-modal .badge.trend,
+    .venue-shift-rank {
+      color: #ffffff;
+      border-color: rgba(255, 255, 255, 0.22);
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0) 42%),
+        linear-gradient(135deg, rgba(139, 92, 246, 0.92) 0%, rgba(236, 72, 153, 0.9) 100%);
+      box-shadow:
+        0 0 22px rgba(139, 92, 246, 0.32),
+        0 0 24px rgba(236, 72, 153, 0.25),
+        inset 0 1px 0 rgba(255, 255, 255, 0.34),
+        inset 0 -12px 20px rgba(5, 5, 7, 0.16);
+      transform: translateZ(0);
+    }
+
+    .badge.trend.rank-one,
+    .dancer-card .badge.trend.rank-one,
+    .profile-modal .badge.trend.rank-one,
+    .venue-shift-rank.rank-one {
+      border-color: rgba(255, 231, 150, 0.6);
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.24), rgba(255, 255, 255, 0) 43%),
+        linear-gradient(135deg, #d8a935 0%, #ff2fae 100%);
+      box-shadow:
+        0 0 28px rgba(255, 191, 64, 0.36),
+        0 0 30px rgba(255, 47, 174, 0.28),
+        0 0 42px rgba(124, 58, 237, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.38),
+        inset 0 -14px 24px rgba(5, 5, 7, 0.16);
+      animation: rankOnePulse 2.8s ease-in-out infinite;
+    }
+
+    @keyframes rankOnePulse {
+      0%, 100% {
+        filter: brightness(1);
+        box-shadow:
+          0 0 22px rgba(255, 191, 64, 0.3),
+          0 0 24px rgba(255, 47, 174, 0.24),
+          0 0 34px rgba(124, 58, 237, 0.16),
+          inset 0 1px 0 rgba(255, 255, 255, 0.36),
+          inset 0 -14px 24px rgba(5, 5, 7, 0.16);
+      }
+      50% {
+        filter: brightness(1.08);
+        box-shadow:
+          0 0 34px rgba(255, 191, 64, 0.46),
+          0 0 34px rgba(255, 47, 174, 0.32),
+          0 0 50px rgba(124, 58, 237, 0.24),
+          inset 0 1px 0 rgba(255, 255, 255, 0.42),
+          inset 0 -14px 24px rgba(5, 5, 7, 0.12);
+      }
+    }
+
+    .badge.trend .badge-icon,
+    .venue-shift-rank .badge-icon {
+      color: #ffffff;
+      filter:
+        drop-shadow(0 0 5px rgba(255, 255, 255, 0.72))
+        drop-shadow(0 0 9px rgba(236, 72, 153, 0.72));
+    }
+
+    .card-schedule-text .schedule-label {
+      font-weight: 1000;
+      letter-spacing: 0.01em;
+    }
+
+    .card-schedule-text .schedule-time {
+      opacity: 0.82;
+      font-weight: 850;
+    }
+
+    .card-schedule-text.tonight .schedule-label {
+      color: #ff9bd7;
+      text-shadow: 0 0 16px rgba(255, 47, 174, 0.62);
+    }
+
+    .card-schedule-text.upcoming .schedule-label {
+      color: #8ee4ff;
+      text-shadow: 0 0 14px rgba(34, 199, 255, 0.42);
+    }
+
+    .tabs .tab.active,
+    .tabs .tab.active[data-tab="tonight"],
+    .tab.active,
+    .tab.active[data-tab="tonight"] {
+      box-shadow:
+        0 18px 42px rgba(124, 58, 237, 0.36),
+        0 0 34px rgba(255, 47, 174, 0.34),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    }
+
+    .action-btn,
+    .badge,
+    .tab,
+    .venue,
+    .dancer-card,
+    .modal-card,
+    .info-tile {
+      transition:
+        transform 180ms ease,
+        border-color 180ms ease,
+        box-shadow 180ms ease,
+        background 180ms ease,
+        opacity 180ms ease;
+    }
+
+    .action-btn:hover,
+    .action-btn:focus-visible,
+    .tab:hover,
+    .tab:focus-visible {
+      transform: translateY(-1px);
+    }
+
+    .dancer-card:hover,
+    .dancer-card:focus-visible,
+    .venue:hover,
+    .venue:focus-visible,
+    .modal-card:hover,
+    .info-tile:hover {
+      box-shadow:
+        0 24px 58px rgba(0, 0, 0, 0.52),
+        0 0 30px rgba(124, 58, 237, 0.2),
+        0 0 22px rgba(255, 47, 174, 0.12);
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .badge.trend.rank-one,
+      .dancer-card .badge.trend.rank-one,
+      .profile-modal .badge.trend.rank-one,
+      .venue-shift-rank.rank-one {
+        animation: none;
+      }
+    }
+
+    /* Final premium typography system */
+    :root {
+      --font-ui: Inter, Manrope, Satoshi, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      --font-display: "Space Grotesk", Outfit, Sora, Manrope, ui-sans-serif, system-ui, sans-serif;
+      --font-name: Outfit, Sora, "Space Grotesk", Manrope, ui-sans-serif, system-ui, sans-serif;
+    }
+
+    body,
+    button,
+    input,
+    select,
+    textarea {
+      font-family: var(--font-ui);
+      font-weight: 650;
+      letter-spacing: 0;
+      text-rendering: geometricPrecision;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    h1,
+    h2,
+    h3,
+    .section-title,
+    .modal-title,
+    .dashboard-title {
+      font-family: var(--font-display);
+      font-weight: 800;
+      letter-spacing: -0.01em;
+    }
+
+    .reference-hero h2 {
+      max-width: 660px;
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: clamp(39px, 6.8vw, 58px);
+      line-height: 0.9;
+      letter-spacing: -0.025em;
+      text-transform: uppercase;
+      text-wrap: balance;
+      text-shadow:
+        0 0 10px rgba(255, 255, 255, 0.18),
+        0 0 28px rgba(124, 58, 237, 0.18),
+        0 14px 34px rgba(0, 0, 0, 0.92);
+    }
+
+    .reference-hero h2 span,
+    .reference-hero h2 strong {
+      display: block;
+    }
+
+    .reference-hero h2 strong {
+      width: max-content;
+      max-width: 100%;
+      white-space: nowrap;
+      color: #a66bff;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      text-shadow:
+        0 0 14px rgba(166, 107, 255, 0.66),
+        0 0 34px rgba(255, 47, 174, 0.26),
+        0 16px 36px rgba(0, 0, 0, 0.82);
+    }
+
+    .reference-hero p {
+      max-width: 560px;
+      font-family: var(--font-ui);
+      font-size: clamp(14px, 1.8vw, 16px);
+      font-weight: 750;
+      line-height: 1.32;
+      letter-spacing: -0.006em;
+      color: rgba(232, 229, 240, 0.82);
+    }
+
+    .brand,
+    .dancr-logo-text,
+    .dancr-home-logo,
+    .tabs .tab,
+    .tab,
+    .auth-tab,
+    .menu-btn,
+    .action-btn,
+    .ghost,
+    .location-btn,
+    .badge,
+    .pill {
+      font-family: var(--font-name);
+      font-weight: 800;
+      letter-spacing: -0.006em;
+    }
+
+    .tabs .tab,
+    .tab,
+    .auth-tab {
+      font-weight: 800;
+    }
+
+    .tabs .tab-count {
+      font-family: var(--font-ui);
+      font-weight: 850;
+      letter-spacing: -0.01em;
+    }
+
+    .dancer-card .profile-body h3,
+    .modal-name,
+    .venue-shift-copy strong,
+    .admin-item h3 {
+      font-family: var(--font-name);
+      font-weight: 800;
+      letter-spacing: -0.025em;
+    }
+
+    .dancer-card .profile-body h3 {
+      font-size: clamp(19px, 4.8vw, 25px);
+      line-height: 1.02;
+      text-shadow: 0 12px 28px rgba(0, 0, 0, 0.82);
+    }
+
+    .dancer-card .card-venue-line {
+      font-family: var(--font-ui);
+      font-size: clamp(12px, 3.1vw, 14px);
+      font-weight: 780;
+      line-height: 1.22;
+      color: rgba(232, 229, 240, 0.82);
+      letter-spacing: -0.01em;
+    }
+
+    .dancer-card .card-venue-name {
+      font-weight: 850;
+      color: rgba(255, 255, 255, 0.9);
+    }
+
+    .dancer-card .card-distance,
+    .dancer-card .card-venue-prefix {
+      color: rgba(184, 184, 197, 0.78);
+      font-weight: 700;
+    }
+
+    .card-schedule-text {
+      font-family: var(--font-name);
+      font-size: clamp(11px, 3vw, 13px);
+      font-weight: 800;
+      letter-spacing: -0.01em;
+    }
+
+    .card-schedule-text .schedule-label {
+      font-weight: 900;
+      letter-spacing: -0.015em;
+    }
+
+    .card-schedule-text .schedule-time {
+      font-family: var(--font-ui);
+      font-weight: 780;
+      letter-spacing: -0.01em;
+    }
+
+    .meta,
+    .subtle,
+    .muted,
+    .info-tile p,
+    .metric-card p,
+    .modal-card p,
+    .legal-card p,
+    .dashboard-summary p {
+      font-family: var(--font-ui);
+      line-height: 1.42;
+      letter-spacing: -0.004em;
+    }
+
+    .stat strong,
+    .metric-card strong,
+    .info-tile strong,
+    .count,
+    .venue-quick-stat strong {
+      font-family: var(--font-display);
+      font-weight: 800;
+      letter-spacing: -0.035em;
+    }
+
+    @media (min-width: 760px) {
+      .reference-hero h2 {
+        font-size: clamp(50px, 4.7vw, 68px);
+      }
+    }
+
+    @media (max-width: 460px) {
+      .reference-hero h2 {
+        font-size: clamp(33px, 9.3vw, 43px);
+        line-height: 0.92;
+      }
+
+      .reference-hero h2 strong {
+        font-size: 0.92em;
+      }
+
+      .dancer-card .profile-body h3 {
+        font-size: clamp(18px, 5.2vw, 22px);
+      }
+    }
+    /* Final font system: premium display, readable UI, and memorable dancer names. */
+    :root {
+      --font-ui: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      --font-display: "Space Grotesk", Outfit, Inter, ui-sans-serif, system-ui, sans-serif;
+      --font-name: Outfit, "Space Grotesk", Inter, ui-sans-serif, system-ui, sans-serif;
+    }
+
+    body,
+    button,
+    input,
+    select,
+    textarea,
+    .tab,
+    .pill,
+    .badge,
+    .meta,
+    .locked,
+    .action-btn,
+    .section-context {
+      font-family: var(--font-ui);
+    }
+
+    h1,
+    h2,
+    .section-title,
+    .dashboard-title,
+    .auth-title,
+    .venue-detail h2,
+    .profile-setup-card h2,
+    .customer-summary h2,
+    .reference-hero h2 {
+      font-family: var(--font-display);
+      font-weight: 800;
+    }
+
+    .reference-hero h2,
+    .reference-hero h2 span,
+    .reference-hero h2 strong {
+      font-family: var(--font-display);
+      font-weight: 800;
+      letter-spacing: -0.015em;
+    }
+
+    .dancer-card .profile-body h3,
+    .dancer-card .card-stage-name,
+    #modalName,
+    #dancerDashName,
+    .venue-shift-copy strong,
+    .admin-item h3 {
+      font-family: var(--font-name);
+      font-weight: 600;
+    }
+
+    /* Slightly larger profile-photo presence without over-cropping full-body images. */
+    .list.card-grid .dancer-card {
+      aspect-ratio: 1 / 1.72;
+      min-height: 338px;
+    }
+
+    @media (max-width: 560px) {
+      .list.card-grid .dancer-card {
+        aspect-ratio: 1 / 1.78;
+        min-height: 342px;
+      }
+    }
+
+    @media (max-width: 380px) {
+      .list.card-grid .dancer-card {
+        min-height: 326px;
+      }
+    }
+
+    @media (min-width: 760px) {
+      .list.card-grid .dancer-card {
+        aspect-ratio: 1 / 1.56;
+        min-height: 368px;
+      }
+    }
+
+    @media (min-width: 1100px) {
+      .list.card-grid .dancer-card {
+        aspect-ratio: 1 / 1.5;
+        min-height: 372px;
+      }
+    }
+
+    /* Profile card stage-name hierarchy: clear ask-for language without oversized names. */
+    .dancer-card .profile-body h3 {
+      display: grid;
+      gap: 1px;
+      font-size: clamp(20px, 2.9vw, 27px);
+      line-height: 1.02;
+    }
+
+    .dancer-card .ask-for-label {
+      color: rgba(255, 255, 255, 0.68);
+      font-family: Inter, Manrope, sans-serif;
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      line-height: 1;
+      text-transform: uppercase;
+    }
+
+    .dancer-card .card-stage-name {
+      align-items: center;
+      display: inline-flex;
+      gap: 7px;
+      min-width: 0;
+    }
+
+    @media (max-width: 560px) {
+      .dancer-card .profile-body h3 {
+        font-size: clamp(16px, 4.45vw, 18px);
+        gap: 2px;
+      }
+
+      .dancer-card .ask-for-label {
+        font-size: 8.5px;
+        letter-spacing: 0.1em;
+      }
+    }
+
+    /* Make the #1 trending lightning mark readable on the brighter VIP badge. */
+    .badge.trend.rank-one .badge-icon,
+    .dancer-card .badge.trend.rank-one .badge-icon,
+    .profile-modal .badge.trend.rank-one .badge-icon,
+    .venue-shift-rank.rank-one .badge-icon {
+      align-items: center;
+      background: rgba(36, 8, 48, 0.34);
+      border-radius: 999px;
+      color: #FFF4B8;
+      display: inline-flex;
+      flex-basis: 16px;
+      height: 16px;
+      justify-content: center;
+      margin-right: 1px;
+      width: 16px;
+      filter:
+        drop-shadow(0 0 5px rgba(255, 244, 184, 0.58))
+        drop-shadow(0 0 10px rgba(124, 58, 237, 0.36));
+    }
+
+    .badge.trend.rank-one .badge-icon svg,
+    .dancer-card .badge.trend.rank-one .badge-icon svg,
+    .profile-modal .badge.trend.rank-one .badge-icon svg,
+    .venue-shift-rank.rank-one .badge-icon svg {
+      height: 11px;
+      width: 11px;
+      stroke-width: 3;
+    }
+
+    .dancer-card.rank-one-card,
+    .dancer-card.rank-one-card.trending-card {
+      border-color: rgba(255, 204, 92, 0.46);
+      box-shadow:
+        0 24px 58px rgba(0, 0, 0, 0.58),
+        0 0 22px rgba(124, 58, 237, 0.2),
+        0 0 16px rgba(255, 47, 174, 0.12),
+        0 0 14px rgba(255, 204, 92, 0.14),
+        inset 0 0 0 1px rgba(255, 255, 255, 0.03);
+    }
+
+    .dancer-card.rank-one-card:hover,
+    .dancer-card.rank-one-card:focus-visible,
+    .dancer-card.rank-one-card:active {
+      border-color: rgba(255, 220, 128, 0.78);
+      box-shadow:
+        0 30px 78px rgba(0, 0, 0, 0.7),
+        0 0 42px rgba(255, 47, 174, 0.3),
+        0 0 38px rgba(124, 58, 237, 0.28),
+        0 0 34px rgba(255, 204, 92, 0.32),
+        inset 0 0 0 1px rgba(255, 235, 164, 0.16);
+    }
+
+    /* Signature Dancr beam: premium violet/magenta spotlight with a hidden pole reference. */
+    .reference-hero {
+      position: relative;
+      isolation: isolate;
+      overflow: hidden;
+      background:
+        radial-gradient(ellipse at 91% 50%, rgba(255, 47, 174, 0.34), transparent 0 18rem),
+        radial-gradient(ellipse at 84% 52%, rgba(139, 92, 246, 0.52), transparent 0 26rem),
+        radial-gradient(ellipse at 76% 48%, rgba(34, 199, 255, 0.1), transparent 0 18rem),
+        radial-gradient(ellipse at 55% 8%, rgba(124, 58, 237, 0.18), transparent 0 22rem),
+        linear-gradient(90deg, #050507 0%, #07060d 39%, #120723 67%, #260864 100%);
+      box-shadow:
+        0 0 38px rgba(124, 58, 237, 0.22),
+        inset 0 0 0 1px rgba(139, 92, 246, 0.36),
+        inset -104px 0 164px rgba(124, 58, 237, 0.34),
+        inset -28px 0 86px rgba(255, 47, 174, 0.22);
+    }
+
+    .reference-hero:before {
+      content: "" !important;
+      display: block !important;
+      position: absolute;
+      right: calc(clamp(34px, 7vw, 72px) + 10px);
+      bottom: -10px;
+      z-index: 1;
+      width: clamp(124px, 18vw, 210px);
+      height: clamp(190px, 30vw, 310px);
+      opacity: 0.2;
+      background-image: url("data:image/svg+xml,%3Csvg width='220' height='330' viewBox='0 0 220 330' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23030208'%3E%3Ccircle cx='128' cy='34' r='15'/%3E%3Cpath d='M119 52c17-4 31 5 38 25 7 21 2 44-8 70-7 17-7 31-1 48l28 82c3 9-2 17-10 20-8 2-16-2-19-10l-32-76-39 71c-4 8-14 11-21 6-7-4-9-13-5-20l40-80c8-16 11-30 10-48-2-38 2-75 19-88Z'/%3E%3Cpath d='M150 68c17 21 27 44 32 69 2 9-4 17-13 19-8 2-16-4-18-12l-11-56 10-20Z'/%3E%3Cpath d='M154 136c21 3 37 0 50-9 7-4 15-2 19 5 4 6 2 14-4 18-20 13-43 18-69 14l4-28Z'/%3E%3Cpath d='M99 93c-18 16-39 29-63 39-8 3-17 0-20-8-3-8 1-16 9-20 22-9 40-21 55-36l19 25Z'/%3E%3Cpath d='M139 190c9 9 20 17 35 24 7 3 10 11 7 18-3 7-11 10-18 7-20-9-36-21-48-36l24-13Z'/%3E%3C/g%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right bottom;
+      background-size: contain;
+      filter:
+        blur(0.2px)
+        drop-shadow(0 0 18px rgba(255, 47, 174, 0.2))
+        drop-shadow(0 0 42px rgba(139, 92, 246, 0.24));
+      mix-blend-mode: screen;
+      pointer-events: none;
+    }
+
+    .reference-hero:after {
+      content: "" !important;
+      position: absolute;
+      top: -22%;
+      right: clamp(34px, 7vw, 72px);
+      bottom: -22%;
+      z-index: 2;
+      width: 4px;
+      border-radius: 999px;
+      background:
+        linear-gradient(180deg, transparent 0%, rgba(255, 255, 255, 0.44) 10%, rgba(255, 47, 174, 0.92) 32%, #fff 49%, rgba(139, 92, 246, 1) 66%, rgba(34, 199, 255, 0.34) 88%, transparent 100%);
+      box-shadow:
+        0 0 8px rgba(255, 255, 255, 0.96),
+        0 0 20px rgba(255, 47, 174, 0.98),
+        0 0 48px rgba(139, 92, 246, 0.94),
+        0 0 104px rgba(124, 58, 237, 0.76),
+        -48px 0 132px rgba(255, 47, 174, 0.3),
+        46px 0 132px rgba(34, 199, 255, 0.18),
+        -120px 0 190px rgba(124, 58, 237, 0.16);
+      opacity: 1;
+      animation: dancrBeamPulse 5.2s ease-in-out infinite;
+      pointer-events: none;
+    }
+
+    .reference-hero .hero-copy {
+      position: relative;
+      z-index: 4;
+    }
+
+    @keyframes dancrBeamPulse {
+      0%, 100% {
+        opacity: 0.88;
+        filter: saturate(1) brightness(1);
+      }
+      50% {
+        opacity: 1;
+        filter: saturate(1.14) brightness(1.12);
+      }
+    }
+
+    @media (max-width: 560px) {
+      .reference-hero:before {
+        right: calc(clamp(24px, 5vw, 38px) + 2px);
+        width: 112px;
+        height: 184px;
+        opacity: 0.14;
+      }
+
+      .reference-hero:after {
+        right: clamp(24px, 5vw, 38px);
+        width: 3px;
+      }
+    }
+    /* Dancr cleanup pass: unify current VIP purple/magenta palette across older layers. */
+    .reference-hero {
+      background:
+        radial-gradient(ellipse at 93% 50%, rgba(255, 47, 174, 0.26), transparent 0 16rem),
+        radial-gradient(ellipse at 88% 50%, rgba(124, 58, 237, 0.54), transparent 0 25rem),
+        radial-gradient(ellipse at 78% 42%, rgba(139, 92, 246, 0.24), transparent 0 23rem),
+        radial-gradient(ellipse at 34% 44%, rgba(255, 47, 174, 0.08), transparent 0 18rem),
+        linear-gradient(90deg, #050507 0%, #07060d 42%, #130821 70%, #2a0861 100%) !important;
+      box-shadow:
+        0 0 42px rgba(124, 58, 237, 0.24),
+        0 0 28px rgba(255, 47, 174, 0.1),
+        inset 0 0 0 1px rgba(124, 58, 237, 0.36),
+        inset -118px 0 172px rgba(124, 58, 237, 0.38) !important;
+    }
+
+    .reference-hero::after {
+      right: clamp(28px, 6vw, 50px) !important;
+      width: 4px !important;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0), rgba(255, 255, 255, 0.72) 16%, rgba(236, 72, 153, 0.94) 43%, rgba(139, 92, 246, 0.96) 58%, rgba(255, 255, 255, 0.58) 84%, rgba(255, 255, 255, 0)) !important;
+      box-shadow:
+        0 0 10px rgba(255, 255, 255, 0.58),
+        0 0 24px rgba(236, 72, 153, 0.64),
+        0 0 52px rgba(139, 92, 246, 0.7),
+        0 0 94px rgba(124, 58, 237, 0.44) !important;
+      opacity: 0.98 !important;
+    }
+
+    .reference-hero::before {
+      background:
+        radial-gradient(ellipse at 90% 50%, rgba(255, 47, 174, 0.16), transparent 0 13rem),
+        radial-gradient(ellipse at 86% 50%, rgba(124, 58, 237, 0.25), transparent 0 20rem) !important;
+      opacity: 0.86 !important;
+    }
+
+    .badge.trend:not(.rank-one),
+    .dancer-card .badge.trend:not(.rank-one),
+    .profile-modal .badge.trend:not(.rank-one),
+    .venue-shift-rank:not(.rank-one) {
+      color: #FFFFFF !important;
+      border-color: rgba(255, 47, 174, 0.44) !important;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0) 45%),
+        linear-gradient(135deg, rgba(124, 58, 237, 0.5), rgba(255, 47, 174, 0.38)) !important;
+      box-shadow:
+        0 0 18px rgba(124, 58, 237, 0.26),
+        0 0 16px rgba(255, 47, 174, 0.18),
+        inset 0 1px 0 rgba(255, 255, 255, 0.22),
+        inset 0 -10px 18px rgba(5, 5, 7, 0.22) !important;
+      backdrop-filter: blur(14px) saturate(1.18);
+    }
+
+    .badge.trend:not(.rank-one) .badge-icon,
+    .venue-shift-rank:not(.rank-one) .badge-icon {
+      color: #FFFFFF !important;
+      filter: drop-shadow(0 0 8px rgba(255, 47, 174, 0.72));
+    }
+
+    /* Keep #1 VIP, but make it feel more glass-lit than solid. */
+    .badge.trend.rank-one,
+    .dancer-card .badge.trend.rank-one,
+    .profile-modal .badge.trend.rank-one,
+    .venue-shift-rank.rank-one {
+      border-color: rgba(255, 231, 150, 0.66) !important;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.02) 42%),
+        radial-gradient(circle at 24% 20%, rgba(255, 238, 173, 0.38), transparent 0 38%),
+        linear-gradient(135deg, rgba(216, 169, 53, 0.66) 0%, rgba(255, 47, 174, 0.58) 100%) !important;
+      box-shadow:
+        0 0 24px rgba(255, 191, 64, 0.24),
+        0 0 30px rgba(255, 47, 174, 0.22),
+        inset 0 1px 0 rgba(255, 255, 255, 0.34),
+        inset 0 -12px 20px rgba(5, 5, 7, 0.2) !important;
+      backdrop-filter: blur(16px) saturate(1.25);
+    }
+
+    .dancer-card .profile-body h3 {
+      display: block !important;
+      font-size: clamp(17px, 4.35vw, 22px) !important;
+      line-height: 1.06 !important;
+    }
+
+    .dancer-card .ask-for-label {
+      display: none !important;
+    }
+
+    .dancer-card .ask-for-inline {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      max-width: 100%;
+      color: rgba(255, 255, 255, 0.72);
+      font-family: var(--font-name);
+      font-size: 0.82em;
+      font-weight: 650;
+      letter-spacing: 0;
+      white-space: nowrap;
+      text-shadow: 0 2px 12px rgba(0, 0, 0, 0.72);
+    }
+
+    .dancer-card .card-stage-name {
+      color: #FFFFFF;
+      font-size: 1.1em;
+      font-weight: 700;
+    }
+
+    .dancer-card .card-info-stack {
+      gap: 5px !important;
+    }
+
+    .card-schedule-text {
+      display: inline-flex;
+      align-items: baseline;
+      gap: 4px;
+      min-width: 0;
+      letter-spacing: -0.01em;
+      text-shadow: 0 0 12px currentColor;
+    }
+
+    .card-schedule-text .schedule-label {
+      font-weight: 900;
+    }
+
+    .card-schedule-text .schedule-time,
+    .card-schedule-text .schedule-separator {
+      font-weight: 760;
+      opacity: 0.84;
+    }
+
+    .card-schedule-text.tonight {
+      color: #FF5FC1 !important;
+    }
+
+    .card-schedule-text.upcoming {
+      color: #74D8FF !important;
+    }
+
+    .venue.venue-card {
+      border-color: rgba(124, 58, 237, 0.36) !important;
+      background:
+        radial-gradient(circle at 14% 50%, rgba(255, 47, 174, 0.1), transparent 0 28%),
+        radial-gradient(circle at 96% 18%, rgba(34, 199, 255, 0.07), transparent 0 28%),
+        linear-gradient(135deg, rgba(17, 17, 24, 0.98), rgba(5, 5, 7, 0.98)) !important;
+      box-shadow:
+        0 20px 54px rgba(0, 0, 0, 0.58),
+        0 0 22px rgba(124, 58, 237, 0.13),
+        inset 0 1px 0 rgba(255, 255, 255, 0.035) !important;
+    }
+
+    .venue.venue-card:hover,
+    .venue.venue-card:focus-visible {
+      border-color: rgba(255, 47, 174, 0.54) !important;
+      box-shadow:
+        0 26px 64px rgba(0, 0, 0, 0.66),
+        0 0 34px rgba(124, 58, 237, 0.28),
+        0 0 26px rgba(255, 47, 174, 0.18),
+        inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
+    }
+
+    .venue.venue-card .venue-art {
+      background:
+        radial-gradient(circle at 50% 50%, rgba(255, 47, 174, 0.22), transparent 0 24%),
+        radial-gradient(circle at 58% 48%, rgba(124, 58, 237, 0.38), transparent 0 44%),
+        linear-gradient(135deg, rgba(14, 14, 20, 0.98), rgba(5, 5, 7, 0.98)) !important;
+    }
+
+    .ghost,
+    .action-btn.secondary,
+    .menu-btn,
+    .legal-link,
+    .auth-tab:not(.active),
+    .tab:not(.active) {
+      border-color: rgba(124, 58, 237, 0.3) !important;
+      background: rgba(14, 14, 20, 0.72) !important;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.025) !important;
+    }
+
+    .ghost:hover,
+    .action-btn.secondary:hover,
+    .menu-btn:hover,
+    .legal-link:hover,
+    .auth-tab:not(.active):hover,
+    .tab:not(.active):hover {
+      border-color: rgba(255, 47, 174, 0.42) !important;
+      box-shadow:
+        0 0 18px rgba(124, 58, 237, 0.16),
+        inset 0 1px 0 rgba(255, 255, 255, 0.035) !important;
+    }
+
+    .tab.active,
+    .auth-tab.active {
+      box-shadow:
+        0 0 28px rgba(124, 58, 237, 0.42),
+        0 0 22px rgba(255, 47, 174, 0.24),
+        inset 0 1px 0 rgba(255, 255, 255, 0.18) !important;
+    }
+
+    #dancerDashboard .metric-card strong,
+    #dancerDashboard .stat strong {
+      color: #FF5FC1 !important;
+      text-shadow: 0 0 18px rgba(255, 47, 174, 0.26);
+    }
+
+    #customerDashboard .metric-card strong,
+    #customerDashboard .stat strong,
+    #customerDashboard [data-dashboard-jump] strong {
+      color: #C084FC !important;
+      text-shadow: 0 0 16px rgba(124, 58, 237, 0.2);
+    }
+
+    #customerDashboard .rule-note,
+    #customerDashboard .value-message {
+      border-left-color: #22C7FF !important;
+      box-shadow: inset 0 0 18px rgba(34, 199, 255, 0.05);
+    }
+    /* #1 profile glow: VIP warmth with Dancr violet/magenta energy. */

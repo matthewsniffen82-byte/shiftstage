@@ -1,0 +1,630 @@
+[
+  {
+    "file": "dashboard-types.ts",
+    "name": "DashboardRole"
+  },
+  {
+    "file": "dashboard-types.ts",
+    "name": "CustomerDashboardSection"
+  },
+  {
+    "file": "DancerDashboardPanels.tsx",
+    "name": "DancerNfcPanel"
+  },
+  {
+    "file": "DancerDashboardPanels.tsx",
+    "name": "DancerTvStudio"
+  },
+  {
+    "file": "DancerProfileEditor.tsx",
+    "name": "DancerProfileMediaUploads"
+  },
+  {
+    "file": "DancerDashboardPanels.tsx",
+    "name": "DancerShiftManager"
+  },
+  {
+    "file": "VenueDashboardPanels.tsx",
+    "name": "VenueNfcTagPanel"
+  },
+  {
+    "file": "VenueDashboardPanels.tsx",
+    "name": "VenueTeamPanel"
+  },
+  {
+    "file": "VenueDashboardPanels.tsx",
+    "name": "VenueTvPanel"
+  },
+  {
+    "file": "DashboardClient.tsx",
+    "name": "warmDashboardRoleTools"
+  },
+  {
+    "file": "DashboardShared.tsx",
+    "name": "PUBLIC_DISCOVERY_REFRESH_KEY"
+  },
+  {
+    "file": "VenueDashboardPanels.tsx",
+    "name": "notifyPublicVenuePublication"
+  },
+  {
+    "file": "dashboard-types.ts",
+    "name": "SavedImageSummary"
+  },
+  {
+    "file": "dashboard-types.ts",
+    "name": "SavedVenueSummary"
+  },
+  {
+    "file": "dashboard-types.ts",
+    "name": "SavedShiftSummary"
+  },
+  {
+    "file": "dashboard-types.ts",
+    "name": "SavedDancerSummary"
+  },
+  {
+    "file": "dashboard-types.ts",
+    "name": "CustomerGoingSignal"
+  },
+  {
+    "file": "dashboard-types.ts",
+    "name": "CustomerSavedState"
+  },
+  {
+    "file": "dashboard-types.ts",
+    "name": "CustomerDancerFollow"
+  },
+  {
+    "file": "dashboard-types.ts",
+    "name": "CustomerVenueFollow"
+  },
+  {
+    "file": "CustomerDashboardPanels.tsx",
+    "name": "customerDashboardCollator"
+  },
+  {
+    "file": "CustomerDashboardPanels.tsx",
+    "name": "customerFollowedDancerCity"
+  },
+  {
+    "file": "CustomerDashboardPanels.tsx",
+    "name": "groupFollowedDancersByCity"
+  },
+  {
+    "file": "CustomerDashboardPanels.tsx",
+    "name": "customerFollowedVenueCity"
+  },
+  {
+    "file": "CustomerDashboardPanels.tsx",
+    "name": "groupFollowedVenuesByCity"
+  },
+  {
+    "file": "dashboard-types.ts",
+    "name": "LoadState"
+  },
+  {
+    "file": "DashboardClient.tsx",
+    "name": "DashboardClient"
+  },
+  {
+    "file": "CustomerDashboardPanels.tsx",
+    "name": "AgentDashboardShortcut"
+  },
+  {
+    "file": "CustomerDashboardPanels.tsx",
+    "name": "CustomerWelcomeCard"
+  },
+  {
+    "file": "CustomerDashboardPanels.tsx",
+    "name": "CustomerDashboardNav"
+  },
+  {
+    "file": "DashboardShared.tsx",
+    "name": "openDashboardSection"
+  },
+  {
+    "file": "DashboardShared.tsx",
+    "name": "AccountSummaryPanel"
+  },
+  {
+    "file": "DashboardShared.tsx",
+    "name": "NotificationPanel"
+  },
+  {
+    "file": "DashboardShared.tsx",
+    "name": "SupportInboxPanel"
+  },
+  {
+    "file": "DashboardShared.tsx",
+    "name": "AccountControlsPanel"
+  },
+  {
+    "file": "CustomerDashboardPanels.tsx",
+    "name": "CustomerPanel"
+  },
+  {
+    "file": "CustomerDashboardPanels.tsx",
+    "name": "CustomerNightPanel"
+  },
+  {
+    "file": "CustomerDashboardPanels.tsx",
+    "name": "CustomerFollowedDancersPanel"
+  },
+  {
+    "file": "CustomerDashboardPanels.tsx",
+    "name": "CustomerFollowedClubsPanel"
+  },
+  {
+    "file": "CustomerDashboardPanels.tsx",
+    "name": "FollowedDancerGridCard"
+  },
+  {
+    "file": "CustomerDashboardPanels.tsx",
+    "name": "SavedVenueCard"
+  },
+  {
+    "file": "CustomerDashboardPanels.tsx",
+    "name": "SavedVenueLogo"
+  },
+  {
+    "file": "CustomerDashboardPanels.tsx",
+    "name": "CustomerDirectionsButton"
+  },
+  {
+    "file": "CustomerDashboardPanels.tsx",
+    "name": "SavedCardImage"
+  },
+  {
+    "file": "CustomerDashboardPanels.tsx",
+    "name": "CustomerSavedEmpty"
+  },
+  {
+    "file": "CustomerDashboardPanels.tsx",
+    "name": "CustomerDealPassPanel"
+  },
+  {
+    "file": "CustomerDashboardPanels.tsx",
+    "name": "savedClubDealAvailability"
+  },
+  {
+    "file": "CustomerDashboardPanels.tsx",
+    "name": "formatSavedDealTime"
+  },
+  {
+    "file": "CustomerDashboardPanels.tsx",
+    "name": "dealPassStatus"
+  },
+  {
+    "file": "CustomerDashboardPanels.tsx",
+    "name": "useCustomerMinuteClock"
+  },
+  {
+    "file": "CustomerDashboardPanels.tsx",
+    "name": "dealExpiryLabel"
+  },
+  {
+    "file": "CustomerDashboardPanels.tsx",
+    "name": "customerShiftLabel"
+  },
+  {
+    "file": "DashboardShared.tsx",
+    "name": "customerDancerHref"
+  },
+  {
+    "file": "DashboardShared.tsx",
+    "name": "customerVenueHref"
+  },
+  {
+    "file": "DashboardShared.tsx",
+    "name": "customerDirectionsHref"
+  },
+  {
+    "file": "DashboardShared.tsx",
+    "name": "customerInitials"
+  },
+  {
+    "file": "DashboardShared.tsx",
+    "name": "customerNotificationHref"
+  },
+  {
+    "file": "DashboardShared.tsx",
+    "name": "notificationCategory"
+  },
+  {
+    "file": "DashboardShared.tsx",
+    "name": "formatNotificationTimestamp"
+  },
+  {
+    "file": "DashboardShared.tsx",
+    "name": "DashboardSection"
+  },
+  {
+    "file": "DashboardShared.tsx",
+    "name": "alignOpenedDashboardSection"
+  },
+  {
+    "file": "DashboardShared.tsx",
+    "name": "DashboardLoadingState"
+  },
+  {
+    "file": "dashboard-types.ts",
+    "name": "VenueWorkspace"
+  },
+  {
+    "file": "VenueDashboardPanels.tsx",
+    "name": "venueWorkspaceForSection"
+  },
+  {
+    "file": "VenueDashboardPanels.tsx",
+    "name": "initialVenueWorkspace"
+  },
+  {
+    "file": "VenueDashboardPanels.tsx",
+    "name": "VenuePanel"
+  },
+  {
+    "file": "VenueDashboardPanels.tsx",
+    "name": "dealTypeLabel"
+  },
+  {
+    "file": "VenueDashboardPanels.tsx",
+    "name": "VenueFinanceSummary"
+  },
+  {
+    "file": "CustomerDashboardPanels.tsx",
+    "name": "CustomerPreferencesPanel"
+  },
+  {
+    "file": "CustomerDashboardPanels.tsx",
+    "name": "CustomerNotificationSwitch"
+  },
+  {
+    "file": "dashboard-types.ts",
+    "name": "DancerIdentityDraft"
+  },
+  {
+    "file": "dashboard-types.ts",
+    "name": "DancerPreviewVideo"
+  },
+  {
+    "file": "DashboardShared.tsx",
+    "name": "DANCER_PREVIEW_SOCIAL_PLATFORMS"
+  },
+  {
+    "file": "DashboardShared.tsx",
+    "name": "DANCER_PROFILE_EDITOR_SAVE_EVENT"
+  },
+  {
+    "file": "dashboard-types.ts",
+    "name": "DancerProfileEditorSaveRequest"
+  },
+  {
+    "file": "dashboard-types.ts",
+    "name": "DancerProfileEditorSectionId"
+  },
+  {
+    "file": "dashboard-types.ts",
+    "name": "DancerProfileSocialEditor"
+  },
+  {
+    "file": "dashboard-types.ts",
+    "name": "DancerProfileEditorSections"
+  },
+  {
+    "file": "dashboard-types.ts",
+    "name": "DancerProfileBuilderRequirement"
+  },
+  {
+    "file": "DashboardShared.tsx",
+    "name": "DANCER_PROFILE_EDITOR_SECTION_LABELS"
+  },
+  {
+    "file": "DashboardShared.tsx",
+    "name": "saveDancerProfileEditor"
+  },
+  {
+    "file": "DashboardShared.tsx",
+    "name": "AvatarUploadBusyContext"
+  },
+  {
+    "file": "DancerProfileEditor.tsx",
+    "name": "DancerProfilePreview"
+  },
+  {
+    "file": "DancerProfileEditor.tsx",
+    "name": "DancerOnboardingCommand"
+  },
+  {
+    "file": "DancerProfileEditor.tsx",
+    "name": "dancerPreviewSocialLinks"
+  },
+  {
+    "file": "DancerProfileEditor.tsx",
+    "name": "dancerProfileSetupBlocker"
+  },
+  {
+    "file": "DancerProfileEditor.tsx",
+    "name": "persistedStageNameAndCity"
+  },
+  {
+    "file": "DashboardShared.tsx",
+    "name": "persistedDancerStageName"
+  },
+  {
+    "file": "dashboard-types.ts",
+    "name": "DancerStepOneItemState"
+  },
+  {
+    "file": "DancerProfileEditor.tsx",
+    "name": "dancerStepOneStateLabel"
+  },
+  {
+    "file": "DancerProfileEditor.tsx",
+    "name": "DancerOnboardingProfileMediaWorkspace"
+  },
+  {
+    "file": "DancerDashboardPanels.tsx",
+    "name": "openDancerPayoutLinking"
+  },
+  {
+    "file": "DancerDashboardPanels.tsx",
+    "name": "dancerNeedsCommissionPayoutSetup"
+  },
+  {
+    "file": "DancerDashboardPanels.tsx",
+    "name": "DancerNatsSignupCallout"
+  },
+  {
+    "file": "DancerDashboardPanels.tsx",
+    "name": "DancerPanel"
+  },
+  {
+    "file": "DancerDashboardPanels.tsx",
+    "name": "DancerActivationConfirmation"
+  },
+  {
+    "file": "DancerDashboardPanels.tsx",
+    "name": "DancerVisibilityPanel"
+  },
+  {
+    "file": "DancerDashboardPanels.tsx",
+    "name": "DancerLockedAnalyticsPanel"
+  },
+  {
+    "file": "DancerDashboardPanels.tsx",
+    "name": "DancerPerformanceSummary"
+  },
+  {
+    "file": "DancerDashboardPanels.tsx",
+    "name": "DancerPerformanceDetail"
+  },
+  {
+    "file": "DancerDashboardPanels.tsx",
+    "name": "DancerDealPanel"
+  },
+  {
+    "file": "DancerDashboardPanels.tsx",
+    "name": "DancerPayoutPanel"
+  },
+  {
+    "file": "DancerDashboardPanels.tsx",
+    "name": "dancerFinanceVenueName"
+  },
+  {
+    "file": "DashboardShared.tsx",
+    "name": "downloadDashboardBlob"
+  },
+  {
+    "file": "DashboardShared.tsx",
+    "name": "formatFinanceDate"
+  },
+  {
+    "file": "DashboardShared.tsx",
+    "name": "formatCents"
+  },
+  {
+    "file": "DancerDashboardPanels.tsx",
+    "name": "DancerSetupPanel"
+  },
+  {
+    "file": "DancerAvatarPanel.tsx",
+    "name": "DancerAvatarPanel"
+  },
+  {
+    "file": "DancerShiftsPanel.tsx",
+    "name": "DancerShiftPanel"
+  },
+  {
+    "file": "DancerShiftsPanel.tsx",
+    "name": "canCheckInToShift"
+  },
+  {
+    "file": "DancerShiftsPanel.tsx",
+    "name": "canCheckOutOfShift"
+  },
+  {
+    "file": "DancerShiftsPanel.tsx",
+    "name": "isShiftCheckInWindowOpen"
+  },
+  {
+    "file": "DancerShiftsPanel.tsx",
+    "name": "dashboardShiftStatus"
+  },
+  {
+    "file": "DancerShiftsPanel.tsx",
+    "name": "venueName"
+  },
+  {
+    "file": "DancerShiftsPanel.tsx",
+    "name": "formatDashboardShift"
+  },
+  {
+    "file": "DancerShiftsPanel.tsx",
+    "name": "toDateTimeLocalValue"
+  },
+  {
+    "file": "DancerDashboardPanels.tsx",
+    "name": "DancerImpactPanel"
+  },
+  {
+    "file": "DancerDashboardPanels.tsx",
+    "name": "formatRankMove"
+  },
+  {
+    "file": "DancerDashboardPanels.tsx",
+    "name": "formatEventDate"
+  },
+  {
+    "file": "DancerDashboardPanels.tsx",
+    "name": "DancerSharePanel"
+  },
+  {
+    "file": "DancerDashboardPanels.tsx",
+    "name": "socialValuesFromProfile"
+  },
+  {
+    "file": "DancerDashboardPanels.tsx",
+    "name": "SocialLinkModal"
+  },
+  {
+    "file": "DashboardShared.tsx",
+    "name": "SOCIAL_PLATFORMS"
+  },
+  {
+    "file": "DancerDashboardPanels.tsx",
+    "name": "toSocialHandle"
+  },
+  {
+    "file": "DancerDashboardPanels.tsx",
+    "name": "toSocialUrl"
+  },
+  {
+    "file": "dashboard-types.ts",
+    "name": "DancerPhotoItem"
+  },
+  {
+    "file": "DashboardShared.tsx",
+    "name": "DANCER_PHOTOS_KEEP_OPEN_EVENT"
+  },
+  {
+    "file": "dashboard-types.ts",
+    "name": "DancerPhotoQueueItem"
+  },
+  {
+    "file": "DancerPhotoPanel.tsx",
+    "name": "DancerPhotoPanel"
+  },
+  {
+    "file": "DancerPhotoPanel.tsx",
+    "name": "dancerPhotoItemsFromProfile"
+  },
+  {
+    "file": "DancerPhotoPanel.tsx",
+    "name": "excludePendingDeletions"
+  },
+  {
+    "file": "DancerPhotoPanel.tsx",
+    "name": "nextGalleryPhotoSortOrder"
+  },
+  {
+    "file": "DancerPhotoPanel.tsx",
+    "name": "preserveConfirmedPhotoPreviews"
+  },
+  {
+    "file": "DancerPhotoPanel.tsx",
+    "name": "primaryPhotoIdFromProfile"
+  },
+  {
+    "file": "DancerPhotoPanel.tsx",
+    "name": "mergePhotoItems"
+  },
+  {
+    "file": "DancerPhotoPanel.tsx",
+    "name": "relabelPhotoItems"
+  },
+  {
+    "file": "DancerPhotoPanel.tsx",
+    "name": "orderPhotoItemsForDisplay"
+  },
+  {
+    "file": "DancerPhotoPanel.tsx",
+    "name": "normalizePhotoStatus"
+  },
+  {
+    "file": "DancerPhotoPanel.tsx",
+    "name": "photoStatusLabel"
+  },
+  {
+    "file": "DancerPhotoPanel.tsx",
+    "name": "photoStatusNote"
+  },
+  {
+    "file": "DancerPhotoPanel.tsx",
+    "name": "photoUploadStatusMessage"
+  },
+  {
+    "file": "DashboardShared.tsx",
+    "name": "InfoPanel"
+  },
+  {
+    "file": "DashboardShared.tsx",
+    "name": "Metric"
+  },
+  {
+    "file": "VenueDashboardPanels.tsx",
+    "name": "VenueAnalyticsMetric"
+  },
+  {
+    "file": "VenueDashboardPanels.tsx",
+    "name": "VenueDealReadOnlyPanel"
+  },
+  {
+    "file": "VenueDashboardPanels.tsx",
+    "name": "dealRequestStatusLabel"
+  },
+  {
+    "file": "VenueDashboardPanels.tsx",
+    "name": "readOptionalNumber"
+  },
+  {
+    "file": "VenueDashboardPanels.tsx",
+    "name": "formatPercent"
+  },
+  {
+    "file": "VenueDashboardPanels.tsx",
+    "name": "formatRelativeDashboardTime"
+  },
+  {
+    "file": "VenueDashboardPanels.tsx",
+    "name": "formatDashboardTime"
+  },
+  {
+    "file": "DashboardShared.tsx",
+    "name": "formatVenueReviewHours"
+  },
+  {
+    "file": "DashboardShared.tsx",
+    "name": "formatDashboardDate"
+  },
+  {
+    "file": "DashboardClient.tsx",
+    "name": "DashboardSignInRecovery"
+  },
+  {
+    "file": "DancerDashboardPanels.tsx",
+    "name": "checkInErrorMessage"
+  },
+  {
+    "file": "DashboardShared.tsx",
+    "name": "dashboardName"
+  },
+  {
+    "file": "DashboardShared.tsx",
+    "name": "formatDate"
+  },
+  {
+    "file": "DashboardStyles.tsx",
+    "name": "DashboardStyles"
+  }
+]

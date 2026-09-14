@@ -40,7 +40,7 @@ test("every account dashboard fully isolates the public shell and keeps its X as
   );
   assert.match(
     homeSource,
-    /const customerAuthOverlayOpen =\s*authPage\.classList\.contains\("show"\) &&\s*!authForm\.hidden;[\s\S]*?document\.body\.classList\.toggle\("customer-auth-overlay-open", customerAuthOverlayOpen\);/,
+    /const customerAuthOverlayOpen =\s*authPage\.classList\.contains\("show"\) &&\s*!document\.getElementById\("authForm"\)\.hidden;[\s\S]*?document\.body\.classList\.toggle\("customer-auth-overlay-open", customerAuthOverlayOpen\);/,
   );
   assert.match(
     homeSource,

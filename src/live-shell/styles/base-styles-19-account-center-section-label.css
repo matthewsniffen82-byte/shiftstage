@@ -1,0 +1,1198 @@
+
+    .account-center-section label {
+      color: var(--text-main);
+      font-size: 0.78rem;
+      font-weight: 900;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .account-center-section input {
+      width: 100%;
+      min-height: 42px;
+      padding: 12px 13px;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.055);
+      color: var(--text-main);
+      font: inherit;
+      font-weight: 800;
+      outline: none;
+    }
+
+    .account-center-section input:focus {
+      border-color: rgba(34, 199, 255, 0.42);
+      box-shadow: 0 0 0 3px rgba(34, 199, 255, 0.08);
+    }
+
+    .account-email-current {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 11px 12px;
+      border: 1px solid rgba(34, 199, 255, 0.18);
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.035);
+      box-shadow: inset 0 0 18px rgba(34, 199, 255, 0.045);
+    }
+
+    .account-email-current span {
+      color: #a9a0b8;
+      font-size: 0.72rem;
+      font-weight: 900;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .account-email-current strong {
+      min-width: 0;
+      color: var(--text-main);
+      font-size: 0.88rem;
+      font-weight: 900;
+      overflow-wrap: anywhere;
+      text-align: right;
+    }
+
+    .account-center-section .action-btn {
+      min-height: 42px;
+      margin-top: 2px;
+      padding-inline: 16px;
+    }
+
+    .account-center-status {
+      min-height: 18px;
+      margin: 0;
+      color: #8ee7ff;
+      font-size: 0.84rem;
+      font-weight: 900;
+      line-height: 1.35;
+    }
+
+    .account-center-status.is-error {
+      color: #ff8f9f;
+    }
+
+    .account-control-actions {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .account-control-actions .action-btn {
+      min-height: 42px;
+      padding-inline: 16px;
+    }
+
+    .account-control-actions .action-btn.danger {
+      border: 1px solid rgba(255, 104, 124, 0.44) !important;
+      background: rgba(90, 24, 36, 0.72) !important;
+      box-shadow: 0 0 18px rgba(255, 104, 124, 0.1) !important;
+      color: #fff !important;
+    }
+
+    .account-control-actions .action-btn.danger:hover {
+      border-color: rgba(255, 104, 124, 0.7) !important;
+      box-shadow: 0 0 24px rgba(255, 104, 124, 0.18) !important;
+    }
+
+    @media (max-width: 620px) {
+      .account-control-head {
+        display: grid;
+      }
+
+      .account-control-status {
+        width: fit-content;
+      }
+
+      .account-control-actions {
+        grid-template-columns: 1fr;
+      }
+
+      .account-center-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .account-email-current {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 4px;
+      }
+
+      .account-email-current strong {
+        text-align: left;
+      }
+    }
+    .dancer-impact-card {
+      position: relative;
+      overflow: hidden;
+      border-color: rgba(139, 92, 246, .32) !important;
+      background:
+        radial-gradient(circle at 12% 0%, rgba(236, 72, 153, .1), transparent 36%),
+        linear-gradient(180deg, rgba(17, 17, 24, .96), rgba(5, 5, 7, .98)) !important;
+    }
+
+    .dancer-impact-card::before {
+      content: "";
+      position: absolute;
+      inset: -42% auto -32% -18%;
+      width: 46%;
+      background: radial-gradient(circle, rgba(139, 92, 246, .22), transparent 62%);
+      pointer-events: none;
+    }
+
+    .dancer-impact-card > * {
+      position: relative;
+      z-index: 1;
+    }
+
+    .dancer-impact-number {
+      margin: 8px 0 2px;
+      color: #fff;
+      font-family: var(--font-display);
+      font-size: clamp(32px, 7vw, 48px);
+      font-weight: 900;
+      line-height: 1;
+      letter-spacing: -0.035em;
+    }
+
+    .dancer-impact-number span {
+      color: #b8b8c5;
+      font-size: .52em;
+      letter-spacing: 0;
+    }
+
+    .dancer-impact-subcopy {
+      margin: 0;
+      color: #b8b8c5;
+      font-weight: 750;
+      line-height: 1.35;
+    }
+
+    .compact-metrics .metric-card {
+      min-height: 64px;
+    }
+
+    #dancerDashboard .dancer-impact-card .value-message {
+      border-color: rgba(139, 92, 246, .22) !important;
+      background: rgba(255, 255, 255, .035) !important;
+      box-shadow: inset 0 0 18px rgba(139, 92, 246, .08) !important;
+    }
+
+    .advanced-analytics-card summary {
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      color: #fff;
+      font-weight: 900;
+      list-style: none;
+    }
+
+    .advanced-analytics-card summary::-webkit-details-marker {
+      display: none;
+    }
+
+    .advanced-analytics-card summary small {
+      color: #b8b8c5;
+      font-size: 12px;
+      font-weight: 750;
+      text-align: right;
+    }
+
+    .advanced-analytics-card[open] summary {
+      margin-bottom: 14px;
+    }
+
+    .dancer-analytics-section {
+      display: grid;
+      gap: 14px;
+    }
+
+    .dancer-analytics-section > summary {
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      list-style: none;
+    }
+
+    .dancer-analytics-section > summary::-webkit-details-marker {
+      display: none;
+    }
+
+    .dancer-analytics-section > summary span {
+      display: grid;
+      gap: 4px;
+      min-width: 0;
+    }
+
+    .dancer-analytics-section > summary strong {
+      color: #fff;
+      font-size: 20px;
+      line-height: 1.1;
+    }
+
+    .dancer-analytics-section > summary small {
+      color: #b8b8c5;
+      font-size: 12px;
+      font-weight: 750;
+      line-height: 1.3;
+    }
+
+    .dancer-analytics-section > summary::after {
+      content: "+";
+      flex: 0 0 auto;
+      width: 34px;
+      height: 34px;
+      display: grid;
+      place-items: center;
+      border: 1px solid rgba(139, 92, 246, .34);
+      border-radius: 999px;
+      color: #d8c8ff;
+      background: rgba(8, 8, 14, .82);
+      font-size: 20px;
+      font-weight: 900;
+      line-height: 1;
+    }
+
+    .dancer-analytics-section[open] > summary {
+      margin-bottom: 2px;
+    }
+
+    .dancer-analytics-section[open] > summary::after {
+      content: "x";
+    }
+
+    .dancer-analytics-body {
+      display: grid;
+      gap: 14px;
+    }
+
+    .dancer-analytics-body > .approved-analytics {
+      display: grid;
+      gap: 12px;
+      padding: 12px;
+      border: 1px solid rgba(139, 92, 246, .18);
+      border-radius: 12px;
+      background: rgba(8, 8, 14, .48);
+      box-shadow: inset 0 0 18px rgba(255, 255, 255, .018);
+    }
+
+    .dancer-analytics-body > .approved-analytics h3 {
+      margin: 0;
+      font-size: 18px;
+      line-height: 1.1;
+    }
+
+    @media (max-width: 520px) {
+      .advanced-analytics-card summary {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .advanced-analytics-card summary small {
+        text-align: left;
+      }
+
+      .dancer-analytics-section > summary {
+        align-items: flex-start;
+      }
+    }
+    /* Restored compact ranking pills: lightning + rank, no standalone flame marker. */
+    .badge.trend,
+    .dancer-card .badge.trend,
+    .profile-modal .badge.trend,
+    .profile-modal .modal-rank,
+    .venue-shift-rank {
+      align-items: center !important;
+      background:
+        linear-gradient(135deg, rgba(15, 12, 24, 0.78), rgba(67, 34, 93, 0.62)),
+        linear-gradient(135deg, rgba(124, 58, 237, 0.18), rgba(236, 72, 153, 0.16)) !important;
+      border: 1px solid rgba(236, 72, 153, 0.48) !important;
+      border-radius: 999px !important;
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.14),
+        0 0 15px rgba(139, 92, 246, 0.22),
+        0 0 10px rgba(236, 72, 153, 0.14) !important;
+      clip-path: none !important;
+      color: #fff !important;
+      display: inline-flex !important;
+      filter: none !important;
+      gap: 5px !important;
+      height: 34px !important;
+      line-height: 1 !important;
+      min-height: 34px !important;
+      min-width: 56px !important;
+      overflow: hidden !important;
+      padding: 0 12px !important;
+      place-items: initial !important;
+      text-shadow: 0 0 8px rgba(255, 255, 255, 0.16) !important;
+      width: auto !important;
+      -webkit-clip-path: none !important;
+    }
+
+    .badge.trend.rank-one,
+    .dancer-card .badge.trend.rank-one,
+    .profile-modal .badge.trend.rank-one,
+    .profile-modal .modal-rank.rank-one,
+    .venue-shift-rank.rank-one {
+      background:
+        linear-gradient(135deg, rgba(34, 24, 10, 0.78), rgba(255, 196, 64, 0.42), rgba(236, 72, 153, 0.32)) !important;
+      border-color: rgba(255, 213, 96, 0.68) !important;
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.22),
+        0 0 18px rgba(255, 205, 61, 0.26),
+        0 0 12px rgba(236, 72, 153, 0.14) !important;
+    }
+
+    .badge.trend::before,
+    .badge.trend::after,
+    .dancer-card .badge.trend::before,
+    .dancer-card .badge.trend::after,
+    .profile-modal .badge.trend::before,
+    .profile-modal .badge.trend::after,
+    .profile-modal .modal-rank::before,
+    .profile-modal .modal-rank::after,
+    .venue-shift-rank::before,
+    .venue-shift-rank::after {
+      content: none !important;
+      display: none !important;
+    }
+
+    .badge.trend .badge-icon,
+    .dancer-card .badge.trend .badge-icon,
+    .profile-modal .badge.trend .badge-icon,
+    .profile-modal .modal-rank .badge-icon,
+    .venue-shift-rank .badge-icon {
+      color: #ff7adf !important;
+      display: inline-flex !important;
+      height: 13px !important;
+      width: 13px !important;
+      filter: drop-shadow(0 0 7px rgba(236, 72, 153, 0.34)) !important;
+    }
+
+    .badge.trend .trend-rank-text,
+    .profile-modal .modal-rank .trend-rank-text,
+    .venue-shift-rank .trend-rank-text {
+      color: #fff;
+      font-family: var(--font-ui);
+      font-size: 0.88rem;
+      font-weight: 900;
+      letter-spacing: -0.02em;
+      line-height: 1;
+      text-shadow:
+        0 1px 4px rgba(0, 0, 0, 0.58),
+        0 0 8px rgba(255, 255, 255, 0.16);
+    }
+
+    .badge.trend.rank-one .badge-icon,
+    .profile-modal .modal-rank.rank-one .badge-icon,
+    .venue-shift-rank.rank-one .badge-icon {
+      color: #fff2a8 !important;
+      filter: drop-shadow(0 0 7px rgba(255, 205, 61, 0.38)) !important;
+    }
+
+    .badge.trend.full-trend,
+    .profile-modal .modal-rank {
+      height: 34px !important;
+      min-height: 34px !important;
+      min-width: 0 !important;
+      padding: 0 13px !important;
+      width: auto !important;
+    }
+
+    .badge.trend.full-trend .trend-rank-text,
+    .profile-modal .modal-rank .trend-rank-text {
+      font-size: 0.82rem;
+      letter-spacing: -0.01em;
+    }
+
+    .dancer-card .card-badges {
+      align-items: flex-start !important;
+      gap: 0 !important;
+    }
+
+    .badge.trend:hover,
+    .dancer-card:hover .badge.trend,
+    .profile-modal .modal-rank:hover,
+    .venue-shift-rank:hover {
+      filter: none !important;
+      transform: translateY(-1px) scale(1.035) !important;
+    }
+
+    @media (max-width: 520px) {
+      .badge.trend,
+      .dancer-card .badge.trend,
+      .venue-shift-rank {
+        height: 32px !important;
+        min-height: 32px !important;
+        min-width: 52px !important;
+        padding: 0 11px !important;
+        width: auto !important;
+      }
+
+      .badge.trend .trend-rank-text {
+        font-size: 0.84rem;
+      }
+    }
+
+    /* Final schedule color separation: verified stays cyan, upcoming shifts move to cooler periwinkle. */
+    .card-schedule-text.upcoming,
+    .profile-modal .modal-schedule-text.upcoming {
+      color: #A8B7FF !important;
+      text-shadow:
+        0 0 9px rgba(168, 183, 255, 0.38),
+        0 0 18px rgba(124, 58, 237, 0.16) !important;
+    }
+
+    .card-schedule-text.upcoming .schedule-label {
+      color: #A8B7FF !important;
+      text-shadow:
+        0 0 10px rgba(168, 183, 255, 0.40),
+        0 0 18px rgba(124, 58, 237, 0.16) !important;
+    }
+
+    .dancer-card .schedule-row.is-upcoming .venue-dot,
+    .dancer-card .schedule-row.is-upcoming .venue-dot svg,
+    .profile-modal .upcoming-time-row > .venue-dot,
+    .profile-modal .upcoming-time-row > .venue-dot svg {
+      color: #A8B7FF !important;
+      stroke: #A8B7FF !important;
+      filter: drop-shadow(0 0 7px rgba(168, 183, 255, 0.32)) !important;
+    }
+
+    /* Final hover polish: profile cards use the same deep violet luxury glow as venue cards. */
+    .dancer-card,
+    .dancer-card:not(.pending),
+    .dancer-card.trending-card {
+      border-color: rgba(139, 92, 246, 0.34) !important;
+      box-shadow:
+        0 18px 44px rgba(0, 0, 0, 0.48),
+        inset 0 0 0 1px rgba(139, 92, 246, 0.06),
+        0 0 18px rgba(139, 92, 246, 0.08) !important;
+    }
+
+    .dancer-card:hover,
+    .dancer-card:focus-visible,
+    .dancer-card.trending-card:hover,
+    .dancer-card.trending-card:focus-visible {
+      border-color: rgba(139, 92, 246, 0.72) !important;
+      box-shadow:
+        0 24px 58px rgba(0, 0, 0, 0.56),
+        inset 0 0 0 1px rgba(255, 255, 255, 0.035),
+        0 0 30px rgba(139, 92, 246, 0.26),
+        0 0 14px rgba(236, 72, 153, 0.07) !important;
+    }
+
+    .dancer-card.rank-one-card,
+    .dancer-card.rank-one-card.trending-card {
+      border-color: rgba(139, 92, 246, 0.40) !important;
+      box-shadow:
+        0 20px 48px rgba(0, 0, 0, 0.52),
+        inset 0 0 0 1px rgba(255, 213, 96, 0.08),
+        0 0 24px rgba(139, 92, 246, 0.12),
+        0 0 14px rgba(255, 213, 96, 0.06) !important;
+    }
+
+    .dancer-card.rank-one-card:hover,
+    .dancer-card.rank-one-card:focus-visible {
+      border-color: rgba(139, 92, 246, 0.78) !important;
+      box-shadow:
+        0 26px 62px rgba(0, 0, 0, 0.60),
+        inset 0 0 0 1px rgba(255, 213, 96, 0.12),
+        0 0 34px rgba(139, 92, 246, 0.30),
+        0 0 18px rgba(255, 213, 96, 0.10) !important;
+    }
+
+    /* Trending ranking badges are hidden visually while rank data stays available. */
+    .badge.trend,
+    .dancer-card .badge.trend,
+    .profile-modal .modal-rank,
+    .venue-shift-rank {
+      display: none !important;
+    }
+
+    /* Tighten the full-profile identity plate so it supports the photo instead of competing with it. */
+    .profile-modal .modal-identity {
+      max-width: min(250px, calc(100vw - 108px)) !important;
+      padding: clamp(10px, 2.2vw, 14px) clamp(12px, 2.8vw, 16px) !important;
+      border-radius: 16px !important;
+      gap: 8px !important;
+    }
+
+    .profile-modal .modal-identity h2 {
+      font-size: clamp(1.08rem, 3.5vw, 1.35rem) !important;
+      line-height: 1.04 !important;
+      gap: 6px !important;
+    }
+
+    .profile-modal .modal-identity .verified-mark {
+      width: 22px !important;
+      height: 22px !important;
+      min-width: 22px !important;
+      font-size: 0.82rem !important;
+    }
+
+    .profile-modal .modal-identity .pill-row {
+      gap: 6px !important;
+    }
+
+    .profile-modal #modalCity {
+      min-height: 28px !important;
+      padding: 0 11px !important;
+      font-size: 0.78rem !important;
+    }
+
+    @media (max-width: 520px) {
+      .profile-modal .modal-identity {
+        max-width: calc(100vw - 118px) !important;
+        padding: 9px 11px !important;
+        border-radius: 14px !important;
+      }
+
+      .profile-modal .modal-identity h2 {
+        font-size: 1.06rem !important;
+      }
+
+      .profile-modal #modalCity {
+        min-height: 26px !important;
+        padding-inline: 10px !important;
+        font-size: 0.74rem !important;
+      }
+    }
+
+    /* Keep the uploaded hero art fully visible instead of cropping the headline or dancer. */
+    .hero.reference-hero,
+    .hero.reference-hero.uploaded-hero-ready,
+    .hero.reference-hero:not(.uploaded-hero-ready) {
+      aspect-ratio: 1900 / 850 !important;
+      width: 100% !important;
+      min-height: 0 !important;
+      height: auto !important;
+      padding: 0 !important;
+      overflow: hidden !important;
+      background-image: none !important;
+      background-size: contain !important;
+      background-position: center center !important;
+      background-repeat: no-repeat !important;
+      background-color: #050507 !important;
+      border: 1px solid rgba(124, 58, 237, 0.42) !important;
+      border-radius: 16px !important;
+      background-clip: padding-box !important;
+      box-shadow:
+        0 18px 48px rgba(0, 0, 0, 0.46),
+        0 0 0 1px rgba(255, 255, 255, 0.018) inset,
+        0 0 28px rgba(139, 92, 246, 0.14) !important;
+    }
+
+    @media (max-width: 560px) {
+      .hero.reference-hero,
+      .hero.reference-hero.uploaded-hero-ready,
+      .hero.reference-hero:not(.uploaded-hero-ready) {
+        border-radius: 15px !important;
+      }
+    }
+
+    /* Final social row: official-color icon buttons without text labels. */
+    .profile-modal .social-tile .social-links {
+      display: flex !important;
+      align-items: center !important;
+      gap: 10px !important;
+      flex-wrap: wrap !important;
+    }
+
+    .profile-modal .social-tile .social-link {
+      width: 44px !important;
+      height: 44px !important;
+      min-width: 44px !important;
+      min-height: 44px !important;
+      padding: 0 !important;
+      display: inline-flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      border-radius: 999px !important;
+      background: rgba(5, 5, 7, 0.58) !important;
+      border: 1px solid rgba(124, 58, 237, 0.62) !important;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.045) !important;
+    }
+
+    .profile-modal .social-tile .social-link > span:not(.social-icon) {
+      display: none !important;
+    }
+
+    .profile-modal .social-tile .social-link .social-icon {
+      width: 19px !important;
+      height: 19px !important;
+      flex: 0 0 19px !important;
+      display: inline-flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      color: currentColor !important;
+      opacity: 1 !important;
+      visibility: visible !important;
+    }
+
+    .profile-modal .social-tile .social-link .social-icon svg {
+      width: 19px !important;
+      height: 19px !important;
+      display: block !important;
+      opacity: 1 !important;
+      visibility: visible !important;
+      fill: none !important;
+      stroke: currentColor !important;
+      stroke-width: 2.15 !important;
+      stroke-linecap: round !important;
+      stroke-linejoin: round !important;
+    }
+
+    .profile-modal .social-tile .social-link .social-icon.fill svg {
+      fill: currentColor !important;
+      stroke: none !important;
+    }
+
+    .profile-modal .social-tile .social-instagram { color: #E4405F !important; }
+    .profile-modal .social-tile .social-tiktok { color: #25F4EE !important; }
+    .profile-modal .social-tile .social-snapchat { color: #FFFC00 !important; }
+    .profile-modal .social-tile .social-onlyfans { color: #00AFF0 !important; }
+    .profile-modal .social-tile .social-x { color: rgba(255, 255, 255, 0.88) !important; }
+
+    .profile-modal .social-tile .social-link:hover,
+    .profile-modal .social-tile .social-link:focus-visible {
+      transform: translateY(-1px) !important;
+      border-color: rgba(167, 139, 250, 0.82) !important;
+      box-shadow:
+        0 0 20px rgba(124, 58, 237, 0.26),
+        inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
+    }
+
+    /* Full profile view stays photo-first: no trending badge or leftover badge shell. */
+    .profile-modal .modal-rank,
+    .profile-modal .badge.trend,
+    .profile-modal .compact-trend,
+    .profile-modal .full-trend,
+    .profile-modal .trend-badge,
+    .profile-modal .rank-badge,
+    .profile-modal [data-rank-badge],
+    .profile-modal [data-modal-rank] {
+      display: none !important;
+      opacity: 0 !important;
+      visibility: hidden !important;
+      pointer-events: none !important;
+    }
+
+    /* Final ranking marker: compact flame + rank on cards and full profile views. */
+    .badge.trend:not([hidden]),
+    .dancer-card .badge.trend:not([hidden]),
+    .profile-modal .modal-rank:not([hidden]),
+    .venue-shift-rank:not([hidden]) {
+      align-items: center !important;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.11), rgba(255, 255, 255, 0.02) 46%, rgba(5, 5, 7, 0.2)),
+        rgba(10, 8, 10, 0.68) !important;
+      border: 1px solid rgba(255, 122, 0, 0.58) !important;
+      border-radius: 999px !important;
+      box-shadow:
+        0 0 13px rgba(255, 122, 0, 0.34),
+        0 0 20px rgba(255, 107, 0, 0.16),
+        inset 0 1px 0 rgba(255, 255, 255, 0.16) !important;
+      clip-path: none !important;
+      -webkit-clip-path: none !important;
+      color: #fff !important;
+      display: inline-flex !important;
+      filter: none !important;
+      gap: 5px !important;
+      height: 30px !important;
+      justify-content: center !important;
+      line-height: 1 !important;
+      min-height: 30px !important;
+      min-width: 44px !important;
+      opacity: 1 !important;
+      overflow: hidden !important;
+      padding: 0 10px !important;
+      pointer-events: auto !important;
+      text-shadow: 0 1px 8px rgba(0, 0, 0, 0.68) !important;
+      transform: none !important;
+      visibility: visible !important;
+      width: auto !important;
+      backdrop-filter: blur(12px) saturate(1.16) !important;
+    }
+
+    .badge.trend.rank-one:not([hidden]),
+    .dancer-card .badge.trend.rank-one:not([hidden]),
+    .profile-modal .modal-rank.rank-one:not([hidden]),
+    .venue-shift-rank.rank-one:not([hidden]) {
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.035) 45%, rgba(36, 22, 4, 0.25)),
+        rgba(20, 13, 6, 0.74) !important;
+      border-color: rgba(255, 215, 106, 0.82) !important;
+      box-shadow:
+        0 0 20px rgba(255, 215, 106, 0.58),
+        0 0 32px rgba(255, 122, 0, 0.24),
+        inset 0 1px 0 rgba(255, 255, 255, 0.22) !important;
+    }
+
+    .badge.trend::before,
+    .badge.trend::after,
+    .venue-shift-rank::before,
+    .venue-shift-rank::after {
+      content: none !important;
+      display: none !important;
+    }
+
+    .trend-flame-emoji {
+      display: inline-block !important;
+      font-size: 0.92rem !important;
+      line-height: 1 !important;
+      transform: translateY(-0.5px) !important;
+      filter:
+        drop-shadow(0 0 5px rgba(255, 122, 0, 0.92))
+        drop-shadow(0 0 10px rgba(255, 107, 0, 0.42)) !important;
+    }
+
+    .rank-one .trend-flame-emoji {
+      filter:
+        drop-shadow(0 0 7px rgba(255, 225, 128, 0.94))
+        drop-shadow(0 0 14px rgba(255, 196, 64, 0.52)) !important;
+    }
+
+    .trend-rank-text {
+      color: #fff !important;
+      display: inline-block !important;
+      font-family: var(--font-ui) !important;
+      font-size: 0.86rem !important;
+      font-weight: 950 !important;
+      letter-spacing: -0.015em !important;
+      line-height: 1 !important;
+      text-shadow: 0 0 8px rgba(255, 255, 255, 0.16) !important;
+    }
+
+    .dancer-card .badge.trend.compact-trend {
+      left: 18px !important;
+      top: 18px !important;
+    }
+
+    .profile-modal .modal-rank:not([hidden]) {
+      left: 18px !important;
+      right: auto !important;
+      top: 118px !important;
+      z-index: 7 !important;
+    }
+
+    .profile-modal .modal-rank.full-trend:not([hidden]) {
+      gap: 7px !important;
+      height: 31px !important;
+      min-height: 31px !important;
+      padding: 0 12px !important;
+    }
+
+    @media (max-width: 520px) {
+      .badge.trend:not([hidden]),
+      .dancer-card .badge.trend:not([hidden]),
+      .profile-modal .modal-rank:not([hidden]),
+      .venue-shift-rank:not([hidden]) {
+        height: 28px !important;
+        min-height: 28px !important;
+        min-width: 40px !important;
+        padding: 0 9px !important;
+      }
+
+      .trend-flame-emoji {
+        font-size: 0.86rem !important;
+      }
+
+      .trend-rank-text {
+        font-size: 0.8rem !important;
+      }
+
+      .profile-modal .modal-rank:not([hidden]) {
+        left: 16px !important;
+        top: 104px !important;
+      }
+    }
+
+    /* Custom dancer profile photos from the approved dancer editor. */
+    .portrait.has-custom-photo {
+      background-image:
+        linear-gradient(180deg, rgba(5,5,7,.02) 0%, rgba(5,5,7,.1) 44%, rgba(5,5,7,.46) 68%, rgba(5,5,7,.96) 100%),
+        var(--custom-photo),
+        linear-gradient(135deg, #17101f, #07090e) !important;
+      background-size: cover, cover, cover !important;
+      background-repeat: no-repeat !important;
+      background-position: center, center top, center !important;
+    }
+
+    .profile-modal .modal-image.has-custom-photo {
+      background-image:
+        var(--custom-photo),
+        linear-gradient(135deg, #07070a, #141020) !important;
+      background-size: cover, cover !important;
+      background-repeat: no-repeat !important;
+      background-position: center center, center !important;
+    }
+
+    .profile-modal .thumb .portrait.has-custom-photo {
+      background-image:
+        var(--custom-photo),
+        linear-gradient(135deg, #07070a, #141020) !important;
+      background-size: cover, cover !important;
+      background-repeat: no-repeat !important;
+      background-position: center center, center !important;
+    }
+
+    /* Compact flame-only trending ranks. Final override for card and full-profile badges. */
+    .badge.trend.compact-trend,
+    .dancer-card .badge.trend.compact-trend,
+    .profile-modal .modal-rank.compact-trend:not([hidden]),
+    .venue-shift-rank.compact-trend {
+      width: 38px !important;
+      min-width: 38px !important;
+      height: 46px !important;
+      min-height: 46px !important;
+      padding: 0 !important;
+      border: 0 !important;
+      border-radius: 0 !important;
+      background: transparent !important;
+      box-shadow: none !important;
+      backdrop-filter: none !important;
+      display: inline-grid !important;
+      place-items: center !important;
+      overflow: visible !important;
+      line-height: 1 !important;
+    }
+
+    .badge.trend.compact-trend::before,
+    .badge.trend.compact-trend::after,
+    .dancer-card .badge.trend.compact-trend::before,
+    .dancer-card .badge.trend.compact-trend::after,
+    .profile-modal .modal-rank.compact-trend::before,
+    .profile-modal .modal-rank.compact-trend::after,
+    .venue-shift-rank.compact-trend::before,
+    .venue-shift-rank.compact-trend::after {
+      content: none !important;
+      display: none !important;
+    }
+
+    .dancer-card .card-badges {
+      top: 8px !important;
+      left: 8px !important;
+      right: auto !important;
+      gap: 6px !important;
+      align-items: flex-start !important;
+    }
+
+    .trend-flame-icon {
+      width: 38px;
+      height: 46px;
+      display: inline-grid;
+      place-items: center;
+      opacity: .94;
+      transform-origin: center;
+      transition: transform .18s ease, filter .18s ease, opacity .18s ease;
+    }
+
+    .trend-flame-icon svg {
+      width: 38px;
+      height: 46px;
+      display: block;
+      overflow: visible;
+      filter:
+        drop-shadow(0 0 7px rgba(255,122,0,.42))
+        drop-shadow(0 0 16px rgba(236,72,153,.14));
+    }
+
+    .trend-flame-outer {
+      fill: rgba(255,122,0,.82);
+    }
+
+    .trend-flame-core {
+      fill: rgba(255,186,92,.48);
+    }
+
+    .trend-flame-icon text {
+      font-family: "Space Grotesk", "Outfit", var(--font-ui);
+      font-size: 23px;
+      font-weight: 900;
+      fill: #fff;
+      paint-order: stroke;
+      stroke: rgba(5,5,7,.52);
+      stroke-width: 2.2px;
+      letter-spacing: 0;
+    }
+
+    .trend-flame-icon.is-double text {
+      font-size: 18px;
+    }
+
+    .rank-one .trend-flame-icon,
+    .rank-one-card .trend-flame-icon {
+      opacity: .98;
+    }
+
+    .rank-one .trend-flame-icon svg,
+    .rank-one-card .trend-flame-icon svg {
+      filter:
+        drop-shadow(0 0 9px rgba(255,209,102,.62))
+        drop-shadow(0 0 20px rgba(255,47,174,.18));
+    }
+
+    .rank-one .trend-flame-outer,
+    .rank-one-card .trend-flame-outer {
+      fill: rgba(255,196,57,.94);
+    }
+
+    .rank-one .trend-flame-core,
+    .rank-one-card .trend-flame-core {
+      fill: rgba(255,244,176,.62);
+    }
+
+    .dancer-card:hover .trend-flame-icon {
+      transform: translateY(-1px) scale(1.035);
+      opacity: 1;
+    }
+
+    .profile-modal .modal-rank.compact-trend:not([hidden]) {
+      left: 14px !important;
+      top: 118px !important;
+      right: auto !important;
+    }
+
+    /* Final full-profile tile consistency pass:
+       keep every profile state on the same card rhythm. */
+    .profile-modal .modal-grid {
+      align-items: stretch !important;
+      grid-auto-rows: minmax(88px, auto) !important;
+    }
+
+    .profile-modal .modal-grid > .info-tile:not(.social-tile) {
+      min-height: 88px !important;
+      padding: 14px 16px !important;
+      display: flex !important;
+      flex-direction: column !important;
+      justify-content: flex-start !important;
+      gap: 8px !important;
+      overflow: hidden !important;
+    }
+
+    .profile-modal .modal-grid > .info-tile:not(.social-tile) > strong {
+      margin: 0 !important;
+      font-size: clamp(0.74rem, 1.9vw, 0.86rem) !important;
+      line-height: 1.08 !important;
+      letter-spacing: 0.13em !important;
+    }
+
+    .profile-modal .modal-grid > .interest-tile,
+    .profile-modal .modal-grid > .info-tile:has(#modalFollowerCount) {
+      justify-content: flex-start !important;
+    }
+
+    .profile-modal .schedule-stack,
+    .profile-modal .info-tile .meta {
+      display: grid !important;
+      gap: 6px !important;
+      min-width: 0 !important;
+      line-height: 1.12 !important;
+    }
+
+    .profile-modal .detail-line,
+    .profile-modal .schedule-text-row {
+      display: grid !important;
+      grid-template-columns: 18px minmax(0, 1fr) !important;
+      align-items: center !important;
+      gap: 8px !important;
+      min-height: 20px !important;
+      margin: 0 !important;
+      min-width: 0 !important;
+      line-height: 1.12 !important;
+    }
+
+    .profile-modal .upcoming-venue-line,
+    .profile-modal .tonight-time-row,
+    .profile-modal .upcoming-time-row {
+      min-height: 20px !important;
+    }
+
+    .profile-modal .modal-schedule-text,
+    .profile-modal .modal-schedule-text.tonight,
+    .profile-modal .modal-schedule-text.upcoming {
+      display: inline !important;
+      min-width: 0 !important;
+      max-width: 100% !important;
+      font-size: clamp(0.9rem, 2.25vw, 1rem) !important;
+      line-height: 1.14 !important;
+      letter-spacing: 0 !important;
+      white-space: normal !important;
+      word-break: normal !important;
+      overflow-wrap: anywhere !important;
+    }
+
+    .profile-modal .modal-schedule-text.upcoming {
+      font-size: clamp(0.86rem, 2.05vw, 0.96rem) !important;
+      text-shadow:
+        0 0 8px rgba(168, 183, 255, 0.30),
+        0 0 14px rgba(124, 58, 237, 0.12) !important;
+    }
+
+    .profile-modal .metric-value,
+    .profile-modal .interest-count,
+    .profile-modal .metric-number {
+      font-size: clamp(1.2rem, 3.15vw, 1.55rem) !important;
+      line-height: 1.04 !important;
+    }
+
+    .profile-modal .interest-count .metric-label,
+    .profile-modal .metric-value .metric-label {
+      font-size: 0.76em !important;
+    }
+
+    @media (max-width: 560px) {
+      .profile-modal .modal-grid {
+        grid-auto-rows: minmax(78px, auto) !important;
+      }
+
+      .profile-modal .modal-grid > .info-tile:not(.social-tile) {
+        min-height: 78px !important;
+        padding: 11px 12px !important;
+        gap: 6px !important;
+      }
+
+      .profile-modal .modal-schedule-text,
+      .profile-modal .modal-schedule-text.tonight,
+      .profile-modal .modal-schedule-text.upcoming {
+        font-size: 0.9rem !important;
+      }
+
+      .profile-modal .modal-schedule-text.upcoming {
+        font-size: 0.86rem !important;
+      }
+    }
+    /* Mobile consistency pass: keep profile cards readable and uniform on real phones. */
+    .dancer-card .ask-for-card-label,
+    .dancer-card .card-venue-prefix {
+      display: none !important;
+    }
+
+    .dancer-card .profile-body {
+      gap: 4px !important;
+      padding: 0 12px 13px !important;
+    }
+
+    .dancer-card .profile-body h3 {
+      min-width: 0 !important;
+      margin: 0 !important;
+      line-height: 1.05 !important;
+    }
+
+    .dancer-card .card-stage-name {
+      display: inline-flex !important;
+      align-items: center !important;
+      gap: 6px !important;
+      max-width: 100% !important;
+      min-width: 0 !important;
+      font-size: clamp(1rem, 3.8vw, 1.16rem) !important;
+      line-height: 1.05 !important;
+      white-space: nowrap !important;
+      overflow: hidden !important;
+      text-overflow: ellipsis !important;
+    }
+
+    .dancer-card .card-stage-name .verified-check {
+      flex: 0 0 auto !important;
+    }
+
+    .dancer-card .card-venue-line {
+      display: grid !important;
+      grid-template-columns: 15px minmax(0, auto) auto !important;
+      align-items: center !important;
+      column-gap: 5px !important;
+      max-width: 100% !important;
+      min-width: 0 !important;
+      overflow: hidden !important;
+      white-space: nowrap !important;
+      font-size: clamp(.78rem, 3.2vw, .9rem) !important;
+      line-height: 1.15 !important;
+    }
+
+    .dancer-card .card-venue-name {
+      min-width: 0 !important;
+      overflow: hidden !important;
+      text-overflow: ellipsis !important;
+      white-space: nowrap !important;
+    }
+
+    .dancer-card .card-distance {
+      flex: 0 0 auto !important;
+      white-space: nowrap !important;
+    }
+
+    .dancer-card .profile-body > .schedule-row {
+      display: grid !important;
+      grid-template-columns: 15px minmax(0, 1fr) !important;
+      align-items: start !important;
+      column-gap: 5px !important;
+      margin-top: 4px !important;
+    }
+
+    .dancer-card .card-schedule-text {
+      max-width: 100% !important;
+      min-width: 0 !important;
+      overflow: visible !important;
+      text-overflow: clip !important;
+      white-space: normal !important;
+      font-size: clamp(.78rem, 3.15vw, .9rem) !important;
+      line-height: 1.14 !important;
+    }
+
+    .dancer-card .card-schedule-text .schedule-label,
+    .dancer-card .card-schedule-text .schedule-time {
+      white-space: nowrap !important;
+    }
+
+    .dancer-card .no-shifts-state {
+      display: grid !important;
+      grid-template-columns: 15px minmax(0, 1fr) !important;
+      align-items: center !important;
+      column-gap: 6px !important;
+      margin-top: 5px !important;
+      font-size: clamp(.78rem, 3.15vw, .9rem) !important;
+      white-space: nowrap !important;
+    }
+
+    .profile-modal .upcoming-venue-line {
+      gap: 7px !important;
+    }
+
+    .profile-modal .modal-grid {
+      align-items: stretch !important;
+      grid-auto-rows: minmax(82px, auto) !important;
+    }
+
+    .profile-modal .modal-grid > .info-tile:not(.social-tile) {
+      min-height: 82px !important;
+      padding: 12px 14px !important;
+    }
+
+    .profile-modal .modal-schedule-text,
+    .profile-modal .modal-schedule-text.tonight,
+    .profile-modal .modal-schedule-text.upcoming {
+      font-size: clamp(.86rem, 2.1vw, .98rem) !important;
+      line-height: 1.2 !important;
+      white-space: normal !important;
+      overflow-wrap: anywhere !important;
+    }
+
+    .profile-modal .social-tile .social-link .social-icon,
+    .profile-modal .social-tile .social-link .social-icon svg {
+      display: inline-flex !important;
+      opacity: 1 !important;
+      visibility: visible !important;
+      color: currentColor !important;
+    }
+
+    .profile-modal .social-tile .social-instagram { color: #E4405F !important; }
+    .profile-modal .social-tile .social-tiktok { color: #25F4EE !important; }
+    .profile-modal .social-tile .social-snapchat { color: #FFFC00 !important; }
+    .profile-modal .social-tile .social-onlyfans { color: #00AFF0 !important; }
+    .profile-modal .social-tile .social-x { color: #FFFFFF !important; }

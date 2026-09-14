@@ -1,0 +1,1195 @@
+    @media (min-width: 900px) {
+      .app {
+        width: min(100%, 1440px);
+      }
+
+      header {
+        padding: 16px 32px;
+      }
+
+      .topbar {
+        gap: 18px;
+      }
+
+      .brand {
+        display: flex;
+        order: 1;
+        flex: 0 0 auto;
+      }
+
+      .menu {
+        order: 2;
+        margin-left: auto;
+      }
+
+      main {
+        padding: 28px 34px 48px;
+      }
+
+      .stack {
+        gap: 18px;
+      }
+
+      .reference-hero {
+        min-height: 250px;
+        padding: 34px;
+      }
+
+      .reference-hero h2 {
+        max-width: 560px;
+        font-size: clamp(44px, 4.8vw, 68px);
+      }
+
+      .reference-hero p {
+        font-size: 17px;
+      }
+
+      .controls {
+        display: grid;
+        grid-template-columns: minmax(240px, 1fr) 160px minmax(220px, .9fr) 240px;
+        align-items: end;
+        gap: 14px;
+        padding: 18px;
+        border: 1px solid rgba(155,92,255,.24);
+        border-radius: 22px;
+        background: rgba(6,7,11,.76);
+        box-shadow: 0 18px 44px rgba(0,0,0,.34), 0 0 22px rgba(155,92,255,.08), inset 0 0 24px rgba(155,92,255,.035);
+      }
+
+      .controls .field {
+        gap: 8px;
+      }
+
+      .controls select {
+        min-height: 54px;
+        border-radius: 17px;
+        font-size: 18px;
+        font-weight: 800;
+      }
+
+      .location-btn {
+        grid-column: auto;
+        min-height: 54px;
+      }
+
+      .tabs {
+        display: flex;
+        padding-top: 2px;
+      }
+
+      .content-head {
+        margin-top: 0;
+        align-items: center;
+      }
+
+      #tabTitle {
+        font-size: 30px;
+      }
+
+      .count {
+        display: inline-flex;
+      }
+
+      .view-all {
+        position: static;
+        justify-self: end;
+        width: auto;
+        min-height: 42px;
+        padding: 0 20px;
+      }
+
+      .list.card-grid {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 20px;
+      }
+
+      .list.card-grid .dancer-card {
+        min-height: 360px;
+        aspect-ratio: 1 / 1.45;
+      }
+
+      .dancer-card .profile-body {
+        padding: 74px 18px 18px;
+      }
+
+      .dancer-card::after {
+        content: none;
+        display: none;
+      }
+
+      .dancer-card .profile-body h3 {
+        font-size: 22px;
+      }
+
+      .legal-links {
+        display: flex;
+      }
+    }
+
+    /* Final profile modal cleanup */
+    .profile-modal {
+      width: min(100%, 720px);
+      max-height: 94dvh;
+      border-radius: 24px 24px 0 0;
+      border-color: rgba(192,132,255,.2);
+      background: rgba(5,5,8,.96);
+      box-shadow: 0 -30px 110px rgba(0,0,0,.84), 0 0 40px rgba(155,92,255,.14);
+    }
+
+    .profile-modal .modal-top {
+      position: sticky;
+      top: 0;
+      z-index: 12;
+      height: 0;
+      padding: 0;
+      border: 0;
+      background: transparent;
+      box-shadow: none;
+    }
+
+    .profile-modal .close-btn {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      width: 46px;
+      min-height: 46px;
+      border-color: rgba(34,211,238,.32);
+      background: rgba(5,8,12,.72);
+      box-shadow: 0 12px 30px rgba(0,0,0,.42), 0 0 16px rgba(34,211,238,.12);
+    }
+
+    .modal-image {
+      margin-top: 0;
+      min-height: 480px;
+      height: min(68dvh, 620px);
+      border-radius: 24px 24px 0 0;
+      background-size: cover, cover, cover;
+      background-position: center, center top, center;
+      background-color: #050508;
+    }
+
+    .modal-image:after {
+      background:
+        radial-gradient(circle at 50% 0%, rgba(155,92,255,.1), transparent 0 30%),
+        linear-gradient(180deg, rgba(5,5,8,0) 34%, rgba(5,5,8,.2) 58%, rgba(5,5,8,.86) 100%);
+    }
+
+    .modal-identity {
+      top: 22px;
+      left: 18px;
+      max-width: calc(100% - 150px);
+      padding: 14px 16px;
+      border-color: rgba(255,255,255,.12);
+      background: rgba(8,8,10,.68);
+      box-shadow: 0 18px 44px rgba(0,0,0,.5), inset 0 0 16px rgba(255,255,255,.025);
+    }
+
+    .modal-identity h2 {
+      font-size: 24px;
+      line-height: 1;
+    }
+
+    .modal-rank {
+      top: 26px;
+      right: 74px;
+      z-index: 4;
+    }
+
+    .gallery {
+      padding: 12px;
+      background: rgba(5,5,8,.98);
+    }
+
+    .thumb {
+      min-height: 104px;
+      border-radius: 14px;
+    }
+
+    @media (max-width: 560px) {
+      .profile-modal {
+        width: 100%;
+        max-height: 96dvh;
+      }
+
+      .modal-image {
+        min-height: 430px;
+        height: 62dvh;
+      }
+
+      .modal-identity {
+        top: 16px;
+        left: 12px;
+        max-width: calc(100% - 106px);
+        padding: 12px;
+      }
+
+      .modal-identity h2 {
+        font-size: 21px;
+      }
+
+      .modal-rank {
+        top: 74px;
+        right: 12px;
+      }
+
+      .profile-modal .close-btn {
+        top: 12px;
+        right: 12px;
+        width: 42px;
+        min-height: 42px;
+      }
+
+      .gallery {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 8px;
+      }
+
+      .thumb {
+        min-height: 84px;
+      }
+    }
+
+    /* Match full profile glow to homepage profile cards */
+    .profile-modal {
+      border-color: rgba(192,132,255,.34);
+      box-shadow:
+        0 -30px 110px rgba(0,0,0,.84),
+        0 0 34px rgba(155,92,255,.22),
+        inset 0 0 0 1px rgba(255,255,255,.025);
+    }
+
+    .modal-image {
+      box-shadow:
+        inset 0 -80px 90px rgba(5,5,8,.62),
+        inset 0 0 0 1px rgba(192,132,255,.14);
+    }
+
+    .modal-identity,
+    .modal-body .info-tile {
+      border-color: rgba(192,132,255,.24);
+      box-shadow:
+        0 18px 44px rgba(0,0,0,.5),
+        0 0 18px rgba(155,92,255,.12),
+        inset 0 0 16px rgba(155,92,255,.035);
+    }
+
+    .thumb {
+      border-color: rgba(192,132,255,.18);
+      box-shadow: 0 12px 28px rgba(0,0,0,.38), inset 0 0 0 1px rgba(255,255,255,.02);
+    }
+
+    .thumb.active {
+      border-color: rgba(192,132,255,.7);
+      box-shadow:
+        0 10px 24px rgba(0,0,0,.36),
+        0 0 16px rgba(155,92,255,.28),
+        inset 0 0 0 1px rgba(255,255,255,.04);
+    }
+
+    .profile-modal .action-btn {
+      min-height: 52px;
+      color: #fff;
+      border-color: rgba(192,132,255,.46);
+      background: rgba(8,8,12,.82);
+      box-shadow: 0 0 18px rgba(155,92,255,.14), inset 0 0 14px rgba(155,92,255,.06);
+    }
+
+    .profile-modal .action-btn.secondary {
+      color: #f5f0ff;
+      background: rgba(8,8,12,.82);
+      box-shadow: 0 0 18px rgba(155,92,255,.14), inset 0 0 14px rgba(155,92,255,.06);
+    }
+
+    .profile-modal .going-btn {
+      min-height: 54px;
+      background: linear-gradient(135deg, #a855f7, #2f9bff);
+      box-shadow: 0 0 28px rgba(155,92,255,.34), 0 0 18px rgba(47,155,255,.18), inset 0 0 16px rgba(255,255,255,.12);
+    }
+
+    .profile-modal .gallery {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+      padding: 10px 12px 6px;
+    }
+
+    .profile-modal .thumb {
+      min-height: 0;
+      height: 82px;
+      aspect-ratio: 1.2 / 1;
+      border-radius: 12px;
+      overflow: hidden;
+      background: #07070a;
+    }
+
+    .profile-modal .thumb .portrait {
+      position: absolute;
+      inset: 0;
+      min-height: 0;
+      background-size: cover, cover, cover;
+      background-position: center, center top, center;
+    }
+
+    .profile-modal .thumb .portrait:after {
+      background: linear-gradient(180deg, rgba(5,5,8,0), rgba(5,5,8,.18));
+    }
+
+    .profile-modal .thumb.active {
+      border-color: rgba(192,132,255,.82);
+      box-shadow:
+        0 8px 20px rgba(0,0,0,.34),
+        0 0 16px rgba(155,92,255,.3),
+        inset 0 0 0 1px rgba(255,255,255,.04);
+    }
+
+    .profile-modal .modal-grid {
+      gap: 12px;
+    }
+
+    .profile-modal .info-tile {
+      min-height: 88px;
+      padding: 14px 16px;
+      border-radius: 18px;
+    }
+
+    .profile-modal .info-tile strong {
+      font-size: 15px;
+    }
+
+    .profile-modal .info-tile .meta {
+      font-size: 14px;
+      line-height: 1.35;
+    }
+
+    .profile-modal .interest-count {
+      color: #f5f5f5;
+      font-weight: 900;
+    }
+
+    .profile-modal .interest-count.muted {
+      color: var(--muted);
+    }
+
+    .profile-modal .interest-tile {
+      border-color: rgba(155,92,255,.36);
+      box-shadow: inset 0 0 16px rgba(155,92,255,.04), 0 0 22px rgba(155,92,255,.1);
+    }
+
+    .profile-modal .modal-actions {
+      gap: 12px;
+    }
+
+    .profile-modal .action-btn,
+    .profile-modal .action-btn.secondary,
+    .profile-modal .going-btn {
+      min-height: 46px;
+      color: #fff;
+      font-size: 16px;
+      font-weight: 900;
+    }
+
+    .profile-modal .going-btn {
+      min-height: 46px;
+    }
+
+    .venue-inline-link {
+      display: inline;
+      padding: 0;
+      color: #e5d2ff;
+      border: 0;
+      background: transparent;
+      font: inherit;
+      font-weight: 900;
+      text-decoration: underline;
+      text-decoration-thickness: 1.5px;
+      text-decoration-color: rgba(168,85,247,.68);
+      text-underline-offset: 4px;
+      cursor: pointer;
+      transition: color .18s ease, text-decoration-color .18s ease, text-shadow .18s ease;
+    }
+
+    .venue-inline-link:hover {
+      color: #f7efff;
+      text-decoration-color: rgba(216,180,254,.95);
+      text-shadow: 0 0 14px rgba(168,85,247,.44);
+    }
+
+    .venue-inline-link:focus-visible {
+      outline: 2px solid rgba(168,85,247,.72);
+      outline-offset: 3px;
+      border-radius: 6px;
+    }
+
+    .venue-dot {
+      width: 14px;
+      height: 14px;
+      flex: 0 0 14px;
+      display: inline-block;
+      margin-right: 5px;
+      vertical-align: -2px;
+      color: #a855f7;
+      filter: drop-shadow(0 0 7px rgba(168,85,247,.55));
+    }
+
+    .venue-dot svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+      stroke: currentColor;
+      stroke-width: 2.4;
+      fill: none;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .badge-icon {
+      width: 12px;
+      height: 12px;
+      flex: 0 0 12px;
+      display: inline-block;
+      margin-right: 5px;
+      color: currentColor;
+      filter: drop-shadow(0 0 6px currentColor);
+    }
+
+    .badge-icon svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+      stroke: currentColor;
+      stroke-width: 2.4;
+      fill: none;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    @media (max-width: 560px) {
+      .profile-modal .gallery {
+        gap: 7px;
+        padding: 9px 10px 4px;
+      }
+
+      .profile-modal .thumb {
+        height: 68px;
+        border-radius: 10px;
+      }
+
+      .profile-modal .info-tile {
+        min-height: 78px;
+        padding: 12px 13px;
+      }
+
+      .profile-modal .action-btn,
+      .profile-modal .action-btn.secondary,
+      .profile-modal .going-btn {
+        min-height: 44px;
+        font-size: 15px;
+      }
+    }
+
+    /* Full-screen compact profile view */
+    .modal-backdrop.show {
+      align-items: stretch;
+      overflow: hidden;
+    }
+
+    .profile-modal {
+      width: 100%;
+      height: 100dvh;
+      max-height: 100dvh;
+      border-radius: 0;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      border-inline: 0;
+      border-bottom: 0;
+    }
+
+    .modal-image {
+      flex: 0 0 auto;
+      height: clamp(340px, 50dvh, 470px);
+      min-height: 0;
+      border-radius: 0;
+      background-size: cover, contain, cover;
+      background-position: center, center top, center;
+      background-repeat: no-repeat;
+    }
+
+    .modal-identity {
+      top: 16px;
+      left: 16px;
+      padding: 10px 12px;
+      border-radius: 14px;
+      border-color: rgba(192,132,255,.18);
+      background: rgba(8,8,10,.38);
+      box-shadow: 0 12px 30px rgba(0,0,0,.36), inset 0 0 12px rgba(155,92,255,.025);
+      backdrop-filter: blur(18px);
+    }
+
+    .modal-identity h2 {
+      display: flex;
+      align-items: center;
+      font-size: 20px;
+      gap: 0;
+    }
+
+    .modal-identity .modal-status-hidden {
+      display: none;
+    }
+
+    .modal-identity .pill-row {
+      margin-top: 7px;
+    }
+
+    .modal-identity #modalCity {
+      min-height: 26px;
+      padding-inline: 10px;
+      color: #d8cff0;
+      border-color: rgba(192,132,255,.2);
+      background: rgba(8,8,12,.44);
+      box-shadow: inset 0 0 10px rgba(155,92,255,.035);
+    }
+
+    .modal-rank {
+      top: 20px;
+      right: 76px;
+    }
+
+    .profile-modal .close-btn {
+      top: 14px;
+      right: 14px;
+    }
+
+    .profile-modal .gallery {
+      flex: 0 0 auto;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 6px;
+      padding: 8px 14px 6px;
+    }
+
+    .profile-modal .thumb {
+      position: relative;
+      height: 56px;
+      min-height: 0;
+      border-radius: 10px;
+    }
+
+    .profile-modal .modal-body {
+      flex: 1 1 auto;
+      min-height: 0;
+      overflow: hidden;
+      padding: 8px 14px 12px;
+    }
+
+    .profile-modal .modal-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      align-items: start;
+    }
+
+    .profile-modal .info-tile {
+      min-height: 0;
+      padding: 11px 13px;
+      border-radius: 16px;
+    }
+
+    .profile-modal .modal-actions {
+      margin-top: 8px;
+      gap: 10px;
+    }
+
+    .profile-modal .action-btn,
+    .profile-modal .action-btn.secondary,
+    .profile-modal .going-btn {
+      min-height: 42px;
+      font-size: 15px;
+    }
+
+    .profile-modal .going-btn {
+      min-height: 44px;
+    }
+
+    .profile-modal .follow-primary {
+      color: #fff;
+      border: 1px solid rgba(192,132,255,.72);
+      background:
+        linear-gradient(135deg, rgba(155,92,255,.98), rgba(111,66,190,.94)),
+        #6f42be;
+      box-shadow:
+        0 0 26px rgba(155,92,255,.34),
+        0 14px 34px rgba(0,0,0,.36),
+        inset 0 0 18px rgba(255,255,255,.12);
+    }
+
+    .profile-modal .follow-primary:hover {
+      border-color: rgba(213,184,255,.9);
+      box-shadow:
+        0 0 34px rgba(155,92,255,.46),
+        0 16px 38px rgba(0,0,0,.42),
+        inset 0 0 20px rgba(255,255,255,.16);
+    }
+
+    .profile-modal .follow-primary.is-following {
+      color: #d8fbff;
+      border-color: rgba(103,232,249,.7);
+      background: rgba(8,62,72,.82);
+      box-shadow:
+        0 0 24px rgba(34,211,238,.24),
+        0 14px 34px rgba(0,0,0,.34),
+        inset 0 0 18px rgba(34,211,238,.1);
+    }
+
+    @media (min-width: 760px) {
+      .profile-modal {
+        width: min(100%, 820px);
+        margin: 0 auto;
+        border-inline: 1px solid rgba(192,132,255,.24);
+      }
+    }
+
+    @media (max-width: 560px) {
+      .modal-image {
+        height: clamp(330px, 48dvh, 430px);
+      }
+
+      .modal-identity {
+        top: 12px;
+        left: 10px;
+        max-width: calc(100% - 100px);
+      }
+
+      .modal-identity h2 {
+        font-size: 18px;
+      }
+
+      .modal-rank {
+        top: 62px;
+        right: 10px;
+      }
+
+      .profile-modal .gallery {
+        gap: 5px;
+        padding: 7px 10px 5px;
+      }
+
+      .profile-modal .thumb {
+        height: 48px;
+      }
+
+      .profile-modal .modal-grid {
+        gap: 8px;
+      }
+    }
+
+    /* Final modal compact polish */
+    .modal-image {
+      height: clamp(300px, 44dvh, 410px);
+      background-image:
+        linear-gradient(180deg, rgba(5,5,8,.03) 0%, rgba(5,5,8,.08) 36%, rgba(5,5,8,.82) 100%),
+        url("https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=1000&q=84") !important;
+      background-size: cover, cover !important;
+      background-position: center, center 28%;
+      background-color: #050508;
+    }
+
+    .modal-image.two {
+      background-image:
+        linear-gradient(180deg, rgba(5,5,8,.03) 0%, rgba(5,5,8,.08) 36%, rgba(5,5,8,.82) 100%),
+        url("https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91?auto=format&fit=crop&w=1000&q=84") !important;
+      background-position: center, center 36%;
+    }
+
+    .modal-image.three {
+      background-image:
+        linear-gradient(180deg, rgba(5,5,8,.03) 0%, rgba(5,5,8,.08) 36%, rgba(5,5,8,.82) 100%),
+        url("https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=1000&q=84") !important;
+      background-position: center, center 32%;
+    }
+
+    .modal-image:after {
+      background:
+        radial-gradient(circle at 50% 0%, rgba(155,92,255,.08), transparent 0 28%),
+        linear-gradient(180deg, rgba(5,5,8,0) 30%, rgba(5,5,8,.18) 55%, rgba(5,5,8,.9) 100%);
+    }
+
+    .modal-identity {
+      top: 14px;
+      left: 14px;
+      padding: 8px 10px;
+      gap: 6px;
+      border-radius: 13px;
+      max-width: calc(100% - 126px);
+      background: rgba(8,8,10,.34);
+    }
+
+    .modal-identity h2 {
+      font-size: 18px;
+    }
+
+    .modal-identity #modalCity {
+      min-height: 24px;
+      padding-inline: 9px;
+      font-size: 11px;
+    }
+
+    .modal-rank {
+      top: 18px;
+    }
+
+    .profile-modal .close-btn {
+      top: 12px;
+      right: 12px;
+    }
+
+    .profile-modal .gallery {
+      gap: 5px;
+      padding: 6px 14px 4px;
+    }
+
+    .profile-modal .thumb {
+      height: 46px;
+      border-radius: 9px;
+    }
+
+    .profile-modal .modal-body {
+      padding-top: 6px;
+    }
+
+    @media (min-width: 760px) {
+      .modal-image {
+        height: clamp(320px, 43dvh, 430px);
+      }
+
+      .profile-modal .gallery {
+        max-width: 620px;
+        width: 100%;
+        margin-inline: auto;
+      }
+    }
+
+    @media (max-width: 560px) {
+      .modal-image {
+        height: clamp(290px, 43dvh, 390px);
+      }
+
+      .modal-identity {
+        top: 10px;
+        left: 10px;
+        max-width: calc(100% - 96px);
+      }
+
+      .modal-rank {
+        top: 58px;
+        right: 10px;
+      }
+
+      .profile-modal .gallery {
+        gap: 4px;
+        padding-inline: 10px;
+      }
+
+      .profile-modal .thumb {
+        height: 42px;
+      }
+    }
+
+    /* Final profile card violet atmosphere */
+    .dancer-card,
+    .dancer-card:not(.pending),
+    .dancer-card.trending-card {
+      border-color: rgba(192,132,255,.34);
+      background: #07070a;
+      box-shadow:
+        0 24px 58px rgba(0,0,0,.58),
+        0 0 18px rgba(155,92,255,.14),
+        inset 0 0 0 1px rgba(255,255,255,.025);
+    }
+
+    .dancer-card.trending-card {
+      border-color: rgba(192,132,255,.38);
+      box-shadow:
+        0 24px 58px rgba(0,0,0,.58),
+        0 0 22px rgba(155,92,255,.18),
+        0 0 10px rgba(248,211,106,.08),
+        inset 0 0 0 1px rgba(255,255,255,.025);
+    }
+
+    .dancer-card:hover,
+    .dancer-card:focus-visible,
+    .dancer-card:active,
+    .dancer-card.trending-card:hover,
+    .dancer-card.trending-card:focus-visible,
+    .dancer-card.trending-card:active {
+      border-color: rgba(192,132,255,.72);
+      box-shadow:
+        0 28px 72px rgba(0,0,0,.68),
+        0 0 34px rgba(155,92,255,.32),
+        inset 0 0 0 1px rgba(255,255,255,.04);
+    }
+
+    .dancer-card.pending {
+      border-color: rgba(245,190,58,.44);
+      box-shadow:
+        0 24px 58px rgba(0,0,0,.58),
+        0 0 18px rgba(245,190,58,.12),
+        0 0 14px rgba(155,92,255,.08),
+        inset 0 0 0 1px rgba(255,255,255,.025);
+    }
+
+    .dancer-card.pending:hover,
+    .dancer-card.pending:focus-visible,
+    .dancer-card.pending:active {
+      border-color: rgba(245,190,58,.6);
+      box-shadow:
+        0 28px 72px rgba(0,0,0,.68),
+        0 0 24px rgba(245,190,58,.18),
+        0 0 26px rgba(155,92,255,.2),
+        inset 0 0 0 1px rgba(255,255,255,.035);
+    }
+
+    .dancer-card .portrait:after {
+      background:
+        radial-gradient(circle at 52% 0%, rgba(155,92,255,.16), transparent 0 30%),
+        radial-gradient(circle at 72% 68%, rgba(155,92,255,.16), transparent 0 26%),
+        linear-gradient(180deg, rgba(5,5,8,0) 32%, rgba(15,8,28,.24) 58%, rgba(5,5,8,.96) 100%);
+    }
+
+    .dancer-card .profile-body {
+      background:
+        linear-gradient(180deg, rgba(5,5,8,0), rgba(20,10,36,.46) 34%, rgba(5,5,8,.96) 100%);
+    }
+
+    .verified-mark {
+      color: #ffffff;
+      background: #a855f7;
+      box-shadow:
+        0 0 10px rgba(168,85,247,.62),
+        0 0 20px rgba(155,92,255,.32),
+        inset 0 0 8px rgba(255,255,255,.18);
+    }
+
+    /* Final layout rhythm polish */
+    .tabs {
+      margin-bottom: 2px;
+    }
+
+    .content-head {
+      margin-top: 8px;
+      padding: 4px 0 3px;
+    }
+
+    .list.card-grid {
+      gap: 14px;
+    }
+
+    @media (max-width: 560px) {
+      .content-head {
+        margin-top: 6px;
+      }
+
+      .list.card-grid {
+        gap: 12px;
+      }
+    }
+
+    @media (min-width: 900px) {
+      .content-head {
+        margin-top: 10px;
+      }
+
+      .list.card-grid {
+        gap: 22px;
+      }
+    }
+
+    /* Final portrait fit and thumbnail polish */
+    .list.card-grid .dancer-card {
+      aspect-ratio: 1 / 1.82;
+      min-height: 352px;
+    }
+
+    .dancer-card .portrait {
+      background-size: cover, auto 104%, cover;
+      background-position: center, center top, center;
+    }
+
+    .dancer-card .portrait.two {
+      background-size: cover, auto 102%, cover;
+      background-position: center, center top, center;
+    }
+
+    .dancer-card .portrait.three {
+      background-size: cover, auto 106%, cover;
+      background-position: center, center top, center;
+    }
+
+    .profile-modal .gallery {
+      grid-template-columns: repeat(4, 58px);
+      justify-content: center;
+      gap: 8px;
+      padding: 7px 10px 5px;
+    }
+
+    .profile-modal .thumb {
+      width: 58px;
+      height: 52px;
+      border-radius: 9px;
+      background: #07070a;
+    }
+
+    .profile-modal .thumb .portrait {
+      background-size: cover, auto 112%, cover;
+      background-position: center, center top, center;
+    }
+
+    .profile-modal .thumb.active {
+      border-color: rgba(192,132,255,.86);
+      box-shadow:
+        0 0 0 1px rgba(255,255,255,.035),
+        0 0 16px rgba(155,92,255,.34);
+    }
+
+    @media (max-width: 420px) {
+      .list.card-grid .dancer-card {
+        aspect-ratio: 1 / 1.9;
+        min-height: 338px;
+      }
+
+      .profile-modal .gallery {
+        grid-template-columns: repeat(4, 52px);
+        gap: 6px;
+      }
+
+      .profile-modal .thumb {
+        width: 52px;
+        height: 46px;
+      }
+    }
+
+    @media (min-width: 760px) {
+      .list.card-grid .dancer-card {
+        aspect-ratio: 1 / 1.72;
+        min-height: 390px;
+      }
+
+      .profile-modal .gallery {
+        grid-template-columns: repeat(4, 72px);
+        gap: 10px;
+      }
+
+      .profile-modal .thumb {
+        width: 72px;
+        height: 60px;
+      }
+    }
+
+    @media (min-width: 900px) {
+      .list.card-grid .dancer-card {
+        aspect-ratio: 1 / 1.58;
+        min-height: 382px;
+      }
+    }
+
+    /* Keep modal thumbnails outside the main photo frame */
+    .profile-modal .modal-image {
+      border-bottom: 1px solid rgba(192,132,255,.14);
+      box-shadow:
+        inset 0 0 0 1px rgba(192,132,255,.12);
+    }
+
+    .profile-modal .modal-image:after {
+      display: none;
+    }
+
+    .profile-modal .modal-image.one {
+      background-image: url("https://images.unsplash.com/photo-1496440737103-cd596325d314?auto=format&fit=crop&w=1000&q=84") !important;
+    }
+
+    .profile-modal .modal-image.two {
+      background-image: url("https://images.unsplash.com/photo-1509967419530-da38b4704bc6?auto=format&fit=crop&w=1000&q=84") !important;
+    }
+
+    .profile-modal .modal-image.three {
+      background-image: url("https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=1000&q=84") !important;
+    }
+
+    .profile-modal .schedule-stack {
+      display: grid;
+      gap: 7px;
+      margin-top: 6px;
+    }
+
+    .profile-modal .schedule-stack .pill-row {
+      justify-content: flex-start;
+      gap: 6px;
+      margin: 0;
+    }
+
+    .profile-modal .schedule-stack .detail-line {
+      gap: 6px;
+    }
+
+    .profile-modal .schedule-stack .meta,
+    .profile-modal .schedule-stack .venue-inline-link {
+      line-height: 1.2;
+    }
+
+    /* More tactile modal action buttons */
+    .profile-modal .modal-actions .action-btn {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      overflow: hidden;
+    }
+
+    .profile-modal .modal-actions .action-btn:not(.profile-action-icon-control):before {
+      content: "";
+      position: absolute;
+      inset: 1px;
+      border-radius: inherit;
+      background: linear-gradient(180deg, rgba(255,255,255,.16), rgba(255,255,255,0) 48%);
+      opacity: .32;
+      pointer-events: none;
+    }
+
+    .profile-modal .modal-actions .action-btn:hover:not(:disabled) {
+      transform: translateY(-1px);
+      box-shadow:
+        0 0 28px rgba(155,92,255,.32),
+        0 14px 34px rgba(0,0,0,.38),
+        inset 0 0 18px rgba(255,255,255,.12);
+    }
+
+    .action-icon {
+      width: 17px;
+      height: 17px;
+      display: inline-flex;
+      flex: 0 0 auto;
+      position: relative;
+      z-index: 1;
+      color: currentColor;
+    }
+
+    .action-icon svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+      stroke: currentColor;
+      stroke-width: 2.3;
+      fill: none;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .profile-modal .modal-actions .action-btn span:not(.action-icon) {
+      position: relative;
+      z-index: 1;
+    }
+
+    .share-panel {
+      display: grid;
+      gap: 12px;
+    }
+
+    .share-link-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .share-url {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      padding: 12px 13px;
+      border: 1px solid rgba(155,92,255,.24);
+      border-radius: 999px;
+      color: #d8ccf5;
+      background: rgba(7,7,10,.72);
+      box-shadow: inset 0 0 16px rgba(155,92,255,.04);
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .share-copy,
+    .share-open {
+      min-height: 40px;
+      border-radius: 999px;
+      border: 1px solid rgba(155,92,255,.44);
+      color: #fff;
+      background: rgba(25,18,36,.86);
+      font-weight: 900;
+      padding: 0 15px;
+      box-shadow: 0 0 18px rgba(155,92,255,.12), inset 0 0 12px rgba(155,92,255,.06);
+      cursor: pointer;
+      transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease;
+    }
+
+    .share-copy:hover,
+    .share-open:hover {
+      transform: translateY(-1px);
+      border-color: rgba(192,132,255,.76);
+      box-shadow: 0 0 24px rgba(155,92,255,.25), inset 0 0 14px rgba(155,92,255,.08);
+    }
+
+    .share-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .share-buttons .social-link,
+    .share-buttons .share-open {
+      min-height: 36px;
+    }
+
+    .share-note {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
+    .profile-modal .going-btn:disabled {
+      color: #bdb6cc;
+      border: 1px solid rgba(192,132,255,.2);
+      background: rgba(10,10,14,.68);
+      box-shadow: inset 0 0 16px rgba(155,92,255,.035);
+      opacity: 1;
+      cursor: default;
+    }
+
+    .profile-modal .going-btn:disabled:before {
+      opacity: .08;
+    }
+
+    /* Lighter glass identity plate on full profile photos */
+    .profile-modal .modal-identity {
+      padding: 7px 9px;
+      gap: 5px;
+      border-radius: 12px;
+      border-color: rgba(192,132,255,.14);
+      background: rgba(5,5,8,.24);
+      box-shadow:
+        0 10px 24px rgba(0,0,0,.28),
+        inset 0 0 10px rgba(155,92,255,.018);
+      backdrop-filter: blur(14px) saturate(120%);
+    }
+
+    .profile-modal .modal-identity h2 {
+      font-size: 17px;
+      line-height: 1;
+    }
+
+    .profile-modal .modal-identity .pill-row {
+      margin-top: 4px;
+    }
+
+    .profile-modal .modal-identity #modalCity {
+      min-height: 22px;
+      padding-inline: 8px;
+      font-size: 10.5px;
+      background: rgba(8,8,12,.36);
+    }

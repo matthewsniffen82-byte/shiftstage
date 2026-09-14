@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
+import { readFile } from "./helpers/dashboard-test-fs-promises.mjs";
 import test from "node:test";
 
 const [migration, liquorMigration, supportedOfferMigration, freeAdmissionMigration, dealPolicy, deals, venueDealActions, presets, venueDealRoute, adminDealRoute, adminClient, dealCard, discoveryRoute, tvSource, liveApp, venueDashboard] = await Promise.all([
@@ -105,6 +105,6 @@ test("all public surfaces expose the full offer list while preserving first-deal
   assert.match(tvSource, /deals: venueDeals/);
   assert.match(tvSource, /deal: null,[\s\S]*?deals: \[\]/);
   assert.match(liveApp, /activeDeals: Array\.isArray\(item\.activeDeals\)/);
-  assert.match(liveApp, /activeDealCount = Math\.max\(venue\.activeDeals\?\.length \|\| 0, 1\)/);
-  assert.match(liveApp, /hasMultipleActiveDeals = activeDealCount > 1/);
+  assert.match(liveApp, /deal: venue\.activeDeal,\s*deals: venue\.activeDeals/);
+  assert.match(liveApp, /data-club-deal-cta="\$\{encodeDealPass\(config\)\}"/);
 });

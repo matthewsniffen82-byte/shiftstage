@@ -1,0 +1,1196 @@
+
+        #profileBackdrop .schedule-upcoming > .profile-schedule-primary {
+          grid-column: 1 !important;
+          grid-row: 1 !important;
+          width: auto !important;
+          padding: 0 2px !important;
+          color: #7eeaff !important;
+          font-size: 10px !important;
+          font-weight: 900 !important;
+          letter-spacing: .065em !important;
+          line-height: 1.05 !important;
+          text-transform: uppercase !important;
+          white-space: nowrap !important;
+        }
+
+        #profileBackdrop .schedule-upcoming > .schedule-stack {
+          grid-column: 2 !important;
+          grid-row: 1 !important;
+          min-width: 0 !important;
+        }
+
+        #profileBackdrop .schedule-upcoming .profile-venue-destination.is-upcoming {
+          grid-template-columns: 18px minmax(0, 1fr) 16px !important;
+          align-items: center !important;
+          gap: 6px !important;
+          min-height: 40px !important;
+          padding: 3px 0 !important;
+          border: 0 !important;
+          background: transparent !important;
+        }
+
+        #profileBackdrop .schedule-upcoming .profile-venue-destination.is-upcoming > .venue-dot {
+          align-self: center !important;
+          width: 18px !important;
+          height: 18px !important;
+          border: 0 !important;
+          border-radius: 0 !important;
+          color: #7eeaff !important;
+          background: transparent !important;
+          box-shadow: none !important;
+        }
+
+        #profileBackdrop .schedule-upcoming .profile-venue-destination.is-upcoming > .venue-dot svg {
+          width: 18px !important;
+          height: 18px !important;
+          border: 0 !important;
+          border-radius: 0 !important;
+          background: transparent !important;
+          box-shadow: none !important;
+          filter: none !important;
+        }
+
+        #profileBackdrop .schedule-upcoming .profile-venue-destination.is-upcoming .profile-venue-copy {
+          align-self: center !important;
+        }
+
+        #profileBackdrop .schedule-upcoming .profile-venue-destination.is-upcoming .profile-venue-name {
+          display: block !important;
+          font-size: clamp(15px, 4.2vw, 18px) !important;
+          letter-spacing: -.015em !important;
+          line-height: 1.1 !important;
+        }
+
+        #profileBackdrop .profile-tonight-card.is-upcoming .profile-club-deal-copy small {
+          display: none !important;
+        }
+
+        /* Working Now is the canonical profile-state box. Upcoming and No
+           Schedule keep its row sizing, padding, dividers, and action rail;
+           only truthful state color and action availability change. */
+        #profileBackdrop #profileModal .modal-grid > .profile-tonight-card > :is(
+          .working-now-tile,
+          .schedule-upcoming,
+          .schedule-empty
+        ) {
+          grid-template-columns: max-content minmax(0, 1fr) !important;
+          align-items: center !important;
+          gap: 6px !important;
+          min-height: 52px !important;
+          padding: 4px 8px !important;
+          border: 0 !important;
+          border-radius: 0 !important;
+          box-shadow: none !important;
+        }
+
+        #profileBackdrop #profileModal .profile-tonight-deal {
+          min-height: 70px !important;
+          display: grid !important;
+          align-items: stretch !important;
+          box-sizing: border-box !important;
+        }
+
+        #profileBackdrop #profileModal .profile-tonight-deal > .profile-club-deal-tile {
+          min-height: 60px !important;
+          align-self: stretch !important;
+        }
+
+        #profileBackdrop #profileModal .profile-tonight-travel-actions.is-no-schedule {
+          grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        }
+
+        #profileBackdrop #profileModal .profile-tonight-travel-actions.is-no-schedule > button {
+          border-color: rgba(255, 255, 255, .08) !important;
+          color: rgba(169, 163, 175, .58) !important;
+          background: rgba(255, 255, 255, .025) !important;
+          box-shadow: none !important;
+          cursor: default !important;
+        }
+
+        /* Keep profile-level actions separate from the venue travel controls
+           that now live inside Tonight beside the relevant shift. */
+        #profileBackdrop .modal-actions {
+          grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+          column-gap: 4px !important;
+          row-gap: 0 !important;
+          padding-block: 2px 0 !important;
+        }
+
+        #profileBackdrop .modal-actions.is-no-live-shift {
+          grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+        }
+
+        #profileBackdrop .modal-actions .action-btn,
+        #profileBackdrop .modal-actions .profile-share-action {
+          min-height: 44px !important;
+          padding: 5px 6px !important;
+          border-radius: 11px !important;
+          font-size: 11px !important;
+        }
+
+        #profileBackdrop .modal-actions .profile-share-action {
+          grid-column: auto !important;
+        }
+
+        #profileBackdrop .modal-actions .going-btn {
+          grid-column: auto !important;
+          min-height: 44px !important;
+        }
+
+        #profileBackdrop .modal-actions .action-btn.is-unavailable:disabled {
+          border-color: rgba(148,137,166,.2) !important;
+          color: #958b9f !important;
+          background: rgba(255,255,255,.025) !important;
+          box-shadow: none !important;
+          cursor: default !important;
+          opacity: .7 !important;
+        }
+
+        #profileBackdrop .modal-actions .profile-action-requirement.is-unavailable {
+          color: #83798d !important;
+        }
+
+        body.dancr-button-system #profileBackdrop .modal-actions .action-btn.profile-action-icon-control {
+          min-height: 50px !important;
+          align-self: stretch !important;
+          display: flex !important;
+          flex-direction: column !important;
+          justify-content: flex-start !important;
+          gap: 1px !important;
+          padding: 2px !important;
+          border: 0 !important;
+          border-radius: 0 !important;
+          background: transparent !important;
+          box-shadow: none !important;
+        }
+
+        #profileBackdrop .modal-actions .profile-action-icon-control .profile-action-main {
+          flex-direction: column !important;
+          gap: 2px !important;
+          overflow: visible !important;
+        }
+
+        #profileBackdrop .modal-actions .profile-action-icon-control .profile-action-main > span:last-child {
+          max-width: 100% !important;
+          overflow: visible !important;
+          color: #ded8e7 !important;
+          font-size: 10px !important;
+          line-height: 1.05 !important;
+          text-overflow: clip !important;
+          white-space: nowrap !important;
+        }
+
+        #profileBackdrop .modal-actions .profile-action-icon-control .action-icon {
+          width: 24px !important;
+          height: 24px !important;
+          display: grid !important;
+          flex: 0 0 24px !important;
+          place-items: center !important;
+          padding: 0 !important;
+          border: 0 !important;
+          border-radius: 0 !important;
+          color: #d9d2e2 !important;
+          background: transparent !important;
+          box-shadow: none !important;
+        }
+
+        #profileBackdrop .modal-actions .profile-action-icon-control .action-icon > svg {
+          --profile-icon-offset-x: 0px;
+          --profile-icon-offset-y: 0px;
+          width: 24px !important;
+          height: 24px !important;
+          display: block !important;
+          transform: translate(var(--profile-icon-offset-x), var(--profile-icon-offset-y)) !important;
+          transform-origin: center !important;
+        }
+
+        #profileBackdrop .modal-actions .profile-action-icon-control .action-icon-personPlus > svg {
+          --profile-icon-offset-x: .5px;
+          --profile-icon-offset-y: -.5px;
+        }
+
+        #profileBackdrop .modal-actions .profile-action-icon-control .action-icon-bell > svg {
+          --profile-icon-offset-y: -1px;
+        }
+
+        #profileBackdrop .modal-actions .profile-action-icon-control .action-icon-clock > svg {
+          --profile-icon-offset-x: -.5px;
+        }
+
+        #profileBackdrop .modal-actions .profile-action-icon-control .action-icon[data-action-icon="personPlus"] > svg {
+          width: 26px !important;
+          height: 26px !important;
+        }
+
+        #profileBackdrop .modal-actions .profile-action-icon-control .action-icon[data-action-icon="bell"] > svg {
+          width: 22px !important;
+          height: 22px !important;
+        }
+
+        #profileBackdrop .modal-actions .profile-action-icon-control .action-icon[data-action-icon="clock"] > svg {
+          width: 24px !important;
+          height: 24px !important;
+        }
+
+        #profileBackdrop .modal-actions > .action-btn:not(.profile-action-icon-control):not(.profile-report-action) {
+          display: grid !important;
+          grid-template-rows: 18px 9px !important;
+          align-content: center !important;
+          justify-items: center !important;
+          row-gap: 1px !important;
+          column-gap: 0 !important;
+        }
+
+        #profileBackdrop .modal-actions > .action-btn:not(.profile-action-icon-control):not(.profile-report-action) > .profile-action-main {
+          grid-row: 1 !important;
+        }
+
+        #profileBackdrop .modal-actions > .action-btn:not(.profile-action-icon-control):not(.profile-report-action) > .profile-action-requirement {
+          grid-row: 2 !important;
+        }
+
+        #profileBackdrop .modal-actions > .action-btn:not(.profile-action-icon-control) .action-icon {
+          width: 15px !important;
+          height: 15px !important;
+          display: grid !important;
+          place-items: center !important;
+          flex: 0 0 15px !important;
+        }
+
+        #profileBackdrop .modal-actions > .action-btn:not(.profile-action-icon-control) .action-icon[data-action-icon="car"] > svg {
+          width: 16.25px !important;
+          height: 16.25px !important;
+        }
+
+        #profileBackdrop .modal-actions > .action-btn:not(.profile-action-icon-control) .action-icon:is([data-action-icon="pin"], [data-action-icon="share"]) > svg {
+          width: 13px !important;
+          height: 13px !important;
+        }
+
+        #profileBackdrop .modal-actions .profile-action-icon-control.going-btn:not(.is-unavailable) .action-icon {
+          color: #a78bfa !important;
+          background: transparent !important;
+          box-shadow: none !important;
+        }
+
+        #profileBackdrop .modal-actions .profile-action-icon-control:is(.is-following, .is-going) .action-icon {
+          color: #7cf0b4 !important;
+          background: transparent !important;
+          box-shadow: none !important;
+        }
+
+        #profileBackdrop .modal-actions .action-btn.profile-action-icon-control.is-unavailable:disabled {
+          color: #766e7f !important;
+          background: transparent !important;
+          opacity: 1 !important;
+        }
+
+        #profileBackdrop .modal-actions .profile-action-icon-control.is-unavailable .action-icon {
+          border: 0 !important;
+          color: #756d7d !important;
+          background: transparent !important;
+          box-shadow: none !important;
+        }
+
+        #profileBackdrop .modal-actions .profile-action-icon-control .profile-action-requirement {
+          max-width: 100% !important;
+          overflow: hidden !important;
+          color: #8e8498 !important;
+          font-size: 7px !important;
+          text-overflow: ellipsis !important;
+          white-space: nowrap !important;
+        }
+
+        #profileBackdrop .profile-report-action {
+          grid-column: 1 / -1 !important;
+          width: auto !important;
+          min-height: 14px !important;
+          justify-self: end !important;
+          margin-top: -1px !important;
+          padding: 0 2px !important;
+          border: 0 !important;
+          color: #7f7788 !important;
+          background: transparent !important;
+          box-shadow: none !important;
+          font: inherit;
+          font-size: 8px !important;
+          font-weight: 700 !important;
+          line-height: 1 !important;
+          opacity: .72;
+          text-decoration: none;
+          cursor: pointer;
+        }
+
+        #profileBackdrop .profile-report-action:is(:hover, :focus-visible) {
+          color: #d4ccd9 !important;
+          outline: none;
+          text-decoration-color: currentColor;
+        }
+
+        /* Every profile keeps the Club Deal slot. Only a genuinely active
+           offer receives the emerald treatment. */
+        #profileBackdrop #profileModal .profile-club-deal-tile {
+          grid-template-columns: minmax(0, 1fr) minmax(96px, 108px) !important;
+          gap: 10px !important;
+          min-height: 0 !important;
+          padding: 8px 9px !important;
+          border-color: rgba(255,255,255,.08) !important;
+          background: rgba(255,255,255,.025) !important;
+          background-image: none !important;
+          box-shadow: none !important;
+        }
+
+        #profileBackdrop #profileModal .profile-club-deal-tile.is-active {
+          border-color: rgba(77,236,157,.36) !important;
+          background:
+            radial-gradient(circle at 0 0, rgba(77,236,157,.11), transparent 58%),
+            rgba(6,20,17,.9) !important;
+          box-shadow: 0 0 18px rgba(77,236,157,.08) !important;
+        }
+
+        #profileBackdrop .profile-club-deal-copy {
+          gap: 4px !important;
+        }
+
+        #profileBackdrop .profile-club-deal-label {
+          color: #91889c !important;
+          font-size: 9px !important;
+          letter-spacing: .12em !important;
+          line-height: 1.1 !important;
+          text-transform: uppercase !important;
+        }
+
+        #profileBackdrop .profile-club-deal-tile.is-active .profile-club-deal-label {
+          color: #4dec9d !important;
+        }
+
+        #profileBackdrop .profile-club-deal-title {
+          font-size: 15px !important;
+          line-height: 1.15 !important;
+        }
+
+        #profileBackdrop .profile-club-deal-context {
+          overflow: hidden !important;
+          color: rgba(221,255,238,.72) !important;
+          font-size: 9px !important;
+          font-weight: 750 !important;
+          line-height: 1.15 !important;
+          text-overflow: ellipsis !important;
+          white-space: nowrap !important;
+        }
+
+        #profileBackdrop .profile-club-deal-copy small {
+          font-size: 10px !important;
+          line-height: 1.25 !important;
+        }
+
+        #profileBackdrop .profile-club-deal-qr-button {
+          width: 108px !important;
+          min-width: 96px !important;
+          max-width: 108px !important;
+          min-height: 48px !important;
+          grid-template-columns: 22px minmax(0, 1fr) !important;
+          place-items: center start !important;
+          gap: 6px !important;
+          padding: 7px 8px !important;
+          border-radius: 10px !important;
+        }
+
+        #profileBackdrop .profile-club-deal-qr-button .club-deal-qr-symbol {
+          width: 22px !important;
+          height: 22px !important;
+        }
+
+        #profileBackdrop .profile-club-deal-tile.is-active .profile-club-deal-qr-button {
+          border-color: var(--dancr-color-success-strong) !important;
+          color: var(--dancr-color-text-primary) !important;
+          background: color-mix(
+            in srgb,
+            var(--dancr-color-success) 64%,
+            var(--dancr-color-background)
+          ) !important;
+          background-image: none !important;
+          box-shadow:
+            0 8px 18px var(--dancr-color-black-soft),
+            0 0 14px var(--dancr-color-success-soft),
+            inset 0 1px 0 var(--dancr-color-white-medium) !important;
+        }
+
+        #profileBackdrop .profile-club-deal-tile.is-inactive .profile-club-deal-title {
+          color: #d9d3e0 !important;
+        }
+
+        #profileBackdrop #profileModal .profile-club-deal-tile.is-inactive {
+          grid-template-columns: minmax(0, 1fr) 76px !important;
+          gap: 8px !important;
+          padding: 6px 8px !important;
+        }
+
+        #profileBackdrop #profileModal .profile-club-deal-tile.is-inactive::before,
+        #profileBackdrop #profileModal .profile-club-deal-tile.is-inactive::after {
+          content: none !important;
+          display: none !important;
+          background: none !important;
+          box-shadow: none !important;
+        }
+
+        #profileBackdrop .profile-club-deal-tile.is-inactive .profile-club-deal-copy small {
+          color: #817889 !important;
+          overflow: hidden !important;
+          text-overflow: ellipsis !important;
+          white-space: nowrap !important;
+        }
+
+        #profileBackdrop .profile-club-deal-tile.is-inactive .profile-club-deal-qr-button {
+          width: 76px !important;
+          min-width: 76px !important;
+          max-width: 76px !important;
+          min-height: 38px !important;
+          grid-template-columns: minmax(0, 1fr) !important;
+          place-items: center !important;
+          border-color: rgba(255,255,255,.07) !important;
+          color: #716978 !important;
+          background: rgba(255,255,255,.02) !important;
+          background-image: none !important;
+          box-shadow: none !important;
+          opacity: 1 !important;
+        }
+
+        #profileBackdrop .profile-club-deal-tile.is-inactive .profile-club-deal-action-copy {
+          display: block !important;
+          width: 100% !important;
+          text-align: center !important;
+        }
+
+        #profileBackdrop .profile-club-deal-tile.is-inactive .profile-club-deal-action-copy strong {
+          font-size: 10px !important;
+          white-space: nowrap !important;
+        }
+
+        #profileBackdrop .profile-club-deal-action-copy {
+          text-align: left !important;
+        }
+
+        #profileBackdrop .profile-club-deal-action-copy strong {
+          font-size: 10px !important;
+        }
+
+        #profileBackdrop .profile-club-deal-action-copy small {
+          font-size: 8px !important;
+        }
+
+        @media (max-width: 520px) {
+          #profileBackdrop .modal-actions {
+            grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+          }
+
+          #profileBackdrop .modal-actions.is-no-live-shift {
+            grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+          }
+        }
+
+        @media (max-width: 340px) {
+          #profileBackdrop .working-now-tile > .profile-schedule-primary {
+            font-size: 9px !important;
+          }
+
+          #profileBackdrop .profile-club-deal-tile {
+            grid-template-columns: minmax(0, 1fr) 96px !important;
+          }
+
+          #profileBackdrop .profile-club-deal-qr-button {
+            width: 96px !important;
+            min-width: 96px !important;
+            max-width: 96px !important;
+          }
+        }
+
+        .feed-uber-ride {
+          min-height: 44px !important;
+          padding-inline: 9px !important;
+          border-radius: 12px !important;
+          font-size: 9px !important;
+        }
+
+        .venue-card-actions .venue-card-uber {
+          min-height: 48px !important;
+        }
+
+        .venue-card-actions.with-uber-ride {
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+
+        .home-dancer-grid-context-actions.with-uber-ride,
+        .home-venue-discovery-context-actions.with-uber-ride {
+          grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        }
+
+        .home-venue-discovery-context-actions .feed-uber-ride {
+          width: 100%;
+          min-width: 0;
+          height: 52px;
+          min-height: 52px !important;
+          max-height: 52px;
+        }
+
+        /* The utility header is hidden while account surfaces are open, so the
+           mobile login sheet should begin at the visible top of the viewport. */
+        @media (max-width: 720px) {
+          #authPage.show {
+            top: var(--dancr-auth-viewport-top, 0px);
+            bottom: auto;
+            min-height: 0;
+            height: var(--dancr-auth-viewport-height, 100dvh);
+            max-height: var(--dancr-auth-viewport-height, 100dvh);
+            overflow-y: auto;
+            overscroll-behavior-y: contain;
+            scroll-padding-top: max(80px, calc(68px + env(safe-area-inset-top, 0px)));
+            scroll-padding-bottom: max(20px, env(safe-area-inset-bottom, 0px));
+            -webkit-overflow-scrolling: touch;
+          }
+
+          #authPage > .page-inner {
+            min-height: 100%;
+            padding-top: max(10px, env(safe-area-inset-top, 0px));
+            padding-bottom: max(20px, env(safe-area-inset-bottom));
+          }
+
+          #authPage .auth-choice-card {
+            overflow: visible !important;
+          }
+
+          #authPage .auth-entry-tabs {
+            position: static;
+            top: auto;
+            z-index: auto;
+          }
+
+          #authPage #authForm:not([hidden]) #authSubmit {
+            position: static;
+            bottom: auto;
+            z-index: auto;
+          }
+
+          #authPage > .page-inner::after {
+            content: none;
+            display: none;
+            height: 0;
+          }
+        }
+
+        /* Unified public authentication: one sign-in, then a short role-specific signup. */
+        #authPage .auth-choice-card {
+          width: min(100%, 640px);
+          margin-inline: auto;
+          display: grid;
+          gap: 18px;
+          overflow: hidden;
+          border-radius: 28px;
+          background: linear-gradient(145deg, rgba(20, 20, 29, .93), rgba(4, 4, 9, .96));
+          backdrop-filter: blur(22px) saturate(135%);
+          -webkit-backdrop-filter: blur(22px) saturate(135%);
+        }
+
+        .auth-entry-tabs {
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 6px;
+          padding: 5px;
+          border: 1px solid rgba(161, 161, 185, .22);
+          border-radius: 18px;
+          background: rgba(5, 5, 10, .7);
+        }
+
+        .auth-entry-tab {
+          min-height: 48px;
+          box-sizing: border-box;
+          border: 1px solid transparent;
+          border-radius: 14px;
+          color: rgba(244, 244, 248, .66);
+          background: transparent;
+          font: inherit;
+          font-weight: 900;
+          cursor: pointer;
+        }
+
+        #authPage .auth-entry-tab.active {
+          color: #fff;
+          border-color: rgba(139, 92, 246, .56) !important;
+          background: linear-gradient(135deg, rgba(96, 52, 178, .28), rgba(55, 32, 103, .22)) !important;
+          box-shadow: 0 0 12px rgba(124, 58, 237, .16), inset 0 1px 0 rgba(255, 255, 255, .1) !important;
+        }
+
+        #authPage .auth-entry-tab.active:focus-visible {
+          box-shadow: 0 0 0 2px #050507, 0 0 0 4px rgba(167, 139, 250, .45), 0 0 12px rgba(124, 58, 237, .16) !important;
+        }
+
+        #authPage .auth-selected-role,
+        #authPage .customer-form-head,
+        #authPage .venue-auth-mode-copy {
+          display: grid;
+          gap: 5px;
+        }
+
+        #authPage .auth-selected-role strong,
+        #authPage .customer-form-head strong,
+        #authPage .venue-auth-mode-copy strong {
+          color: #fff;
+          font-size: clamp(20px, 5vw, 27px);
+          line-height: 1.08;
+        }
+
+        #authPage .auth-selected-role span,
+        #authPage .customer-form-head span,
+        #authPage .venue-auth-mode-copy span {
+          color: rgba(225, 225, 236, .7);
+          line-height: 1.45;
+        }
+
+        #authPage .auth-selected-role {
+          padding: 0 2px;
+          border: 0;
+          border-radius: 0;
+          background: transparent;
+          box-shadow: none;
+        }
+
+        #authPage .auth-role-grid {
+          display: grid;
+          grid-template-columns: 1fr;
+          gap: 10px;
+        }
+
+        #authPage .auth-role-grid[hidden] {
+          display: none !important;
+        }
+
+        #authPage .auth-account-choice {
+          width: 100%;
+          min-height: 86px;
+          display: grid;
+          grid-template-columns: 42px minmax(0, 1fr) auto;
+          align-items: center;
+          gap: 13px;
+          padding: 15px;
+          text-align: left;
+          color: #fff;
+          border: 1px solid rgba(162, 162, 186, .22);
+          border-radius: 18px;
+          background: rgba(33, 33, 43, .76);
+          cursor: pointer;
+        }
+
+        #authPage .auth-account-choice:hover,
+        #authPage .auth-account-choice:focus-visible {
+          border-color: rgba(120, 66, 255, .8);
+          background: rgba(43, 34, 68, .88);
+          outline: none;
+        }
+
+        .auth-account-choice-icon {
+          width: 42px;
+          aspect-ratio: 1;
+          display: grid;
+          place-items: center;
+          border-radius: 50%;
+          color: #b895ff;
+          border: 1px solid rgba(139, 92, 246, .46);
+          background: rgba(78, 35, 153, .24);
+          box-shadow: inset 0 1px 0 rgba(255, 255, 255, .06), 0 0 16px rgba(103, 47, 218, .12);
+        }
+
+        .auth-account-choice-icon svg {
+          width: 23px;
+          height: 23px;
+          fill: none;
+          stroke: currentColor;
+          stroke-width: 1.9;
+          stroke-linecap: round;
+          stroke-linejoin: round;
+        }
+
+        .auth-account-choice > span:nth-child(2) {
+          display: grid;
+          gap: 4px;
+        }
+
+        .auth-account-choice strong {
+          font-size: 18px;
+        }
+
+        .auth-account-choice small {
+          color: rgba(226, 226, 237, .68);
+          font-size: 13px;
+          line-height: 1.4;
+        }
+
+        .auth-account-choice-arrow {
+          color: #b79aff;
+          font-size: 30px;
+          line-height: 1;
+        }
+
+        #authPage .auth-form {
+          gap: 14px;
+        }
+
+        .auth-signup-note {
+          display: grid;
+          grid-template-columns: auto minmax(0, 1fr);
+          align-items: start;
+          gap: 10px;
+          padding: 11px 12px !important;
+          color: rgba(232, 230, 239, .82) !important;
+          border-color: rgba(255, 255, 255, .12) !important;
+          background: rgba(255, 255, 255, .035) !important;
+        }
+
+        .auth-signup-note[hidden] {
+          display: none !important;
+        }
+
+        .auth-signup-note-lock {
+          width: 28px;
+          height: 28px;
+          display: grid;
+          place-items: center;
+          flex: 0 0 auto;
+          border: 1px solid rgba(255, 255, 255, .12);
+          border-radius: 50%;
+          color: rgba(255, 255, 255, .72);
+          background: rgba(255, 255, 255, .045);
+        }
+
+        .auth-signup-note-lock svg {
+          width: 15px;
+          height: 15px;
+          fill: none;
+          stroke: currentColor;
+          stroke-width: 1.9;
+          stroke-linecap: round;
+          stroke-linejoin: round;
+        }
+
+        .auth-signup-note-copy {
+          padding-top: 2px;
+          line-height: 1.45;
+        }
+
+        .auth-back-to-types {
+          width: auto !important;
+          min-height: 44px;
+          justify-self: start;
+          padding: 0 2px !important;
+          border: 0 !important;
+          color: rgba(225, 225, 236, .76);
+          background: transparent !important;
+          box-shadow: none !important;
+          font: inherit;
+          font-size: 13px;
+          font-weight: 850;
+          cursor: pointer;
+        }
+
+        .dancer-signup-progress {
+          margin: 0 0 18px;
+          display: grid;
+          gap: 10px;
+        }
+
+        .dancer-signup-progress-copy {
+          display: flex;
+          align-items: baseline;
+          justify-content: space-between;
+          gap: 12px;
+        }
+
+        .dancer-signup-progress-copy span {
+          color: #b895ff;
+          font-size: 12px;
+          font-weight: 950;
+          letter-spacing: .08em;
+          text-transform: uppercase;
+        }
+
+        .dancer-signup-progress-copy strong {
+          color: #fff;
+          font-size: 14px;
+        }
+
+        .dancer-signup-progress-track {
+          display: grid;
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+          gap: 6px;
+        }
+
+        .dancer-signup-progress-track i {
+          height: 4px;
+          border-radius: 999px;
+          background: rgba(149, 143, 168, .2);
+        }
+
+        .dancer-signup-progress-track i.active {
+          background: linear-gradient(90deg, #6d28d9, #a855f7);
+          box-shadow: 0 0 12px rgba(139, 92, 246, .42);
+        }
+
+        #dancerSignupPage .dancer-signup-card {
+          width: min(100%, 640px);
+          margin-inline: auto;
+        }
+
+        @media (max-width: 480px) {
+          #authPage .page-inner,
+          #dancerSignupPage .page-inner {
+            padding-inline: 14px;
+          }
+
+          #authPage .auth-choice-card {
+            padding: 16px;
+            border-radius: 22px;
+          }
+
+          #dancerSignupPage .dancer-signup-card {
+            padding: 16px;
+            border-radius: 22px;
+          }
+        }
+
+        /* Keep recovery controls visually secondary to the primary auth action. */
+        #authPage .auth-help-row {
+          display: flex;
+          align-items: center;
+          justify-content: flex-start;
+          gap: 18px;
+        }
+
+        #authPage .auth-help-row .forgot-password-link {
+          width: auto !important;
+          min-height: 40px !important;
+          padding: 0 !important;
+          border: 0 !important;
+          border-radius: 0 !important;
+          color: rgba(215, 211, 226, .72) !important;
+          background: transparent !important;
+          box-shadow: none !important;
+          font-size: 12px !important;
+          text-align: left;
+        }
+
+        #authPage .auth-help-row .forgot-password-link:hover,
+        #authPage .auth-help-row .forgot-password-link:focus-visible,
+        #authPage .auth-back-to-types:hover,
+        #authPage .auth-back-to-types:focus-visible {
+          color: #fff !important;
+          text-decoration: underline;
+          text-underline-offset: 3px;
+          outline: none !important;
+          box-shadow: none !important;
+        }
+
+        #authPage #authSubmit {
+          border-color: rgba(167, 112, 255, .78) !important;
+          background: linear-gradient(135deg, #5b21b6 0%, #7c3aed 52%, #a855f7 100%) !important;
+          box-shadow: 0 0 0 1px rgba(255, 255, 255, .06) inset, 0 12px 28px rgba(91, 33, 182, .28), 0 0 24px rgba(139, 92, 246, .3) !important;
+        }
+
+        /* Dancer profile socials stay secondary to MyDancr actions and media.
+           Optional social rows collapse completely because their markup is
+           omitted when no approved links exist. */
+        #profileBackdrop #profileModal .modal-actions {
+          row-gap: 2px !important;
+        }
+
+        #profileBackdrop #profileModal .modal-actions .profile-report-action {
+          position: static !important;
+          right: auto !important;
+          bottom: auto !important;
+          grid-column: 1 / -1 !important;
+          width: auto !important;
+          min-height: 24px !important;
+          justify-self: end !important;
+          margin: 0 !important;
+          padding: 0 4px !important;
+          color: #8d8497 !important;
+          background: transparent !important;
+          box-shadow: none !important;
+          font-size: 10px !important;
+          opacity: .82 !important;
+        }
+
+        #profileBackdrop #profileModal .profile-activity-metrics {
+          margin: 0 0 26px !important;
+          padding: 0 !important;
+        }
+
+        #profileBackdrop #profileModal .profile-activity-metrics:has(+ .social-tile) {
+          margin-bottom: 9px !important;
+        }
+
+        #profileBackdrop #profileModal .profile-activity-metrics:has(+ .location-status-tile) {
+          margin-bottom: 0 !important;
+        }
+
+        #profileBackdrop #profileModal .profile-activity-metrics dd {
+          max-width: 100% !important;
+          overflow: hidden !important;
+          font-variant-numeric: tabular-nums !important;
+          text-overflow: ellipsis !important;
+          white-space: nowrap !important;
+        }
+
+        #profileBackdrop #profileModal .social-tile {
+          min-height: 0 !important;
+          margin: 0 0 6px !important;
+          padding: 0 !important;
+          border: 0 !important;
+          background: transparent !important;
+          box-shadow: none !important;
+        }
+
+        #profileBackdrop #profileModal .social-tile .social-links {
+          width: fit-content !important;
+          max-width: 100% !important;
+          display: flex !important;
+          flex-wrap: nowrap !important;
+          justify-content: center !important;
+          gap: 6px !important;
+          margin-inline: auto !important;
+          overflow: visible !important;
+        }
+
+        #profileBackdrop #profileModal .social-tile .social-link {
+          position: relative !important;
+          width: 44px !important;
+          height: 44px !important;
+          min-width: 44px !important;
+          min-height: 44px !important;
+          flex: 0 0 44px !important;
+          border: 0 !important;
+          border-radius: 50% !important;
+          background: transparent !important;
+          box-shadow: none !important;
+        }
+
+        #profileBackdrop #profileModal .social-tile .social-link::before {
+          content: "" !important;
+          position: absolute !important;
+          inset: 3px !important;
+          width: auto !important;
+          height: auto !important;
+          border: 1px solid rgba(226,232,240,.11) !important;
+          border-radius: 50% !important;
+          background: rgba(9,9,13,.86) !important;
+          box-shadow: none !important;
+          transform: none !important;
+        }
+
+        #profileBackdrop #profileModal .social-tile .social-link:hover::before {
+          border-color: rgba(226,232,240,.2) !important;
+          background: rgba(17,17,22,.92) !important;
+          box-shadow: none !important;
+        }
+
+        #profileBackdrop #profileModal .social-tile .social-link svg {
+          width: 14px !important;
+          height: 14px !important;
+        }
+
+        /* Public profile identity and social proof share one compact header.
+           The approved shift/deal card below remains an unchanged component. */
+        #profileBackdrop #profileModal .profile-modal-summary {
+          position: relative !important;
+          grid-template-columns: minmax(0, 1fr) !important;
+          align-items: center !important;
+          gap: 0 !important;
+          min-height: 66px !important;
+          margin-inline: -14px !important;
+          padding: max(7px, calc(env(safe-area-inset-top, 0px) + 4px)) 104px 7px 10px !important;
+        }
+
+        #profileBackdrop #profileModal .profile-modal-person {
+          min-width: 0;
+          display: grid;
+          grid-template-columns: 60px minmax(0, 1fr);
+          align-items: start;
+          gap: 4px;
+        }
+
+        #profileBackdrop #profileModal .profile-modal-avatar-column {
+          min-width: 0;
+          position: relative;
+          z-index: 5;
+          display: grid;
+          grid-template-rows: 48px 14px;
+          justify-items: center;
+          align-items: center;
+          gap: 4px;
+        }
+
+        #profileBackdrop #profileModal .profile-modal-avatar {
+          width: 48px !important;
+          height: 48px !important;
+        }
+
+        #profileBackdrop #profileModal .profile-modal-summary .modal-identity-stack {
+          min-width: 0 !important;
+          width: 100% !important;
+          max-width: none !important;
+          height: 48px !important;
+          display: grid !important;
+          grid-template-rows: 19px 29px !important;
+          align-content: center !important;
+          gap: 0 !important;
+        }
+
+        #profileBackdrop #profileModal .profile-modal-summary .modal-identity {
+          min-width: 0 !important;
+          display: grid !important;
+          align-content: start !important;
+          gap: 0 !important;
+          overflow: hidden !important;
+        }
+
+        #profileBackdrop #profileModal .profile-modal-summary .profile-modal-name-row,
+        #profileBackdrop #profileModal .profile-modal-summary .profile-modal-context {
+          min-width: 0 !important;
+          max-width: 100% !important;
+        }
+
+        #profileBackdrop #profileModal .profile-modal-summary .profile-modal-name-row {
+          display: flex !important;
+          align-items: center !important;
+          justify-content: flex-start !important;
+          gap: 5px !important;
+          box-sizing: border-box !important;
+          padding-inline-start: clamp(14px, 4vw, 18px) !important;
+        }
+
+        #profileBackdrop #profileModal .profile-modal-summary .modal-identity h2 {
+          font-size: clamp(17px, 4.8vw, 21px) !important;
+        }
+
+        #profileBackdrop #profileModal #modalCity {
+          width: 60px !important;
+          max-width: 60px !important;
+          min-height: 14px !important;
+          justify-content: center !important;
+          padding: 0 4px !important;
+          font-size: 8px !important;
+          line-height: 1 !important;
+          transform: translateY(3px) !important;
+        }
+
+        #profileBackdrop #profileModal .profile-modal-header-metrics {
+          min-width: 0;
+          position: relative;
+          z-index: 1;
+          width: calc(100% - 12px);
+          margin-left: -8px;
+          align-self: stretch;
+          transform: translateY(11px);
+        }
+
+        #profileBackdrop #profileModal .profile-modal-header-metrics .profile-activity-metrics {
+          width: 100% !important;
+          grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+          column-gap: 5px !important;
+          margin: 0 !important;
+          padding: 0 !important;
+        }
+
+        #profileBackdrop #profileModal .profile-modal-header-metrics .profile-activity-metrics > div {
+          min-width: 0 !important;
+          min-height: 29px !important;
+          display: grid !important;
+          grid-template: 17px 11px / minmax(0, 1fr) !important;
+          grid-auto-flow: row !important;
+          align-content: center !important;
+          justify-items: center !important;
+          gap: 1px !important;
+          padding: 0 3px !important;
+        }
+
+        #profileBackdrop #profileModal .profile-modal-header-metrics .profile-activity-metrics dd {
+          grid-column: 1 !important;
+          grid-row: 1 !important;
+          width: 100% !important;
+          max-width: 100% !important;
+          overflow: hidden !important;
+          font-size: clamp(17px, 4vw, 20px) !important;
+          font-variant-numeric: tabular-nums !important;
+          line-height: 1.05 !important;
+          text-align: center !important;
+          text-overflow: ellipsis !important;
+          white-space: nowrap !important;
+        }
+
+        #profileBackdrop #profileModal .profile-modal-header-metrics .profile-activity-metrics dt {
+          grid-column: 1 !important;
+          grid-row: 2 !important;
+          width: 100% !important;
+          max-width: 100% !important;
+          overflow: hidden !important;
+          font-size: clamp(9px, 2.15vw, 10px) !important;
+          line-height: 1.15 !important;
+          text-overflow: ellipsis !important;
+          white-space: nowrap !important;
+        }
+
+        #profileBackdrop #profileModal .profile-modal-header-controls {
+          position: absolute !important;
+          top: max(5px, calc(env(safe-area-inset-top, 0px) + 3px)) !important;
+          right: 5px !important;
+          width: 92px;
+          display: grid;
+          grid-template-columns: repeat(2, 44px);
+          align-items: center;
+          gap: 4px;
+          z-index: 4;
+        }
+
+        #profileBackdrop #profileModal #modalClose {
+          position: static !important;
+          inset: auto !important;
+          width: 36px !important;
+          min-width: 36px !important;
+          max-width: 36px !important;
+          height: 36px !important;
+          min-height: 36px !important;
+          max-height: 36px !important;
+          aspect-ratio: 1 / 1 !important;
+          justify-self: center !important;
+          display: inline-grid !important;
+          place-items: center !important;
+          padding: 0 !important;
+          border: 1px solid rgba(226,232,240,.22) !important;
+          border-radius: 50% !important;
+          color: rgba(255,255,255,.92) !important;
+          background: linear-gradient(145deg, rgba(49,47,59,.96), rgba(19,19,25,.94)) !important;
+          box-shadow: inset 0 1px 0 rgba(255,255,255,.08), 0 8px 18px rgba(0,0,0,.36) !important;
+          -webkit-backdrop-filter: blur(12px) saturate(120%) !important;
+          backdrop-filter: blur(12px) saturate(120%) !important;
+          line-height: 0 !important;
+        }
+
+        #profileBackdrop #profileModal #modalClose .icon {
+          width: 15px !important;
+          height: 15px !important;
+          display: block !important;
+          margin: 0 !important;
+          transform: none !important;
+          stroke-width: 1.85 !important;
+        }
+
+        #profileBackdrop #profileModal .modal-grid > .modal-actions {
+          order: 0;
+          margin-top: 0 !important;
+        }
+
+        #profileBackdrop #profileModal .modal-grid > .profile-tonight-card {
+          order: 1;
+        }
+
+        #profileBackdrop #profileModal .modal-grid > .location-status-tile {
+          order: 2;
+        }

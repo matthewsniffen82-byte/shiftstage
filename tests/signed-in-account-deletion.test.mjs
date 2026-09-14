@@ -1,4 +1,4 @@
-import fs from "node:fs";
+import fs from "./helpers/dashboard-test-fs.mjs";
 import test from "node:test";
 import assert from "node:assert/strict";
 

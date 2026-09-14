@@ -1,0 +1,1195 @@
+
+    .is-android .logo-image-button .mydancr-live-logo .violet-r {
+      color: #7c3aed !important;
+      text-shadow:
+        0 0 8px rgba(124, 58, 237, 0.92),
+        0 0 18px rgba(109, 40, 217, 0.62),
+        0 0 30px rgba(76, 29, 149, 0.38) !important;
+      filter: none !important;
+      -webkit-filter: none !important;
+    }
+
+    .is-samsung-browser .logo-image-button .mydancr-live-logo .violet-r {
+      color: #6d28d9 !important;
+      text-shadow:
+        0 0 8px rgba(109, 40, 217, 0.96),
+        0 0 20px rgba(91, 33, 214, 0.68),
+        0 0 32px rgba(76, 29, 149, 0.42) !important;
+    }
+
+    @media (max-width: 700px) {
+      .is-android .hero.reference-hero,
+      .is-android .hero.reference-hero.uploaded-hero-ready,
+      .is-android .hero.reference-hero:not(.uploaded-hero-ready) {
+        background-color: var(--matte-black) !important;
+        border-color: rgba(124, 58, 237, 0.58) !important;
+        filter: brightness(1.42) contrast(1.18) saturate(1.12) !important;
+        -webkit-filter: brightness(1.42) contrast(1.18) saturate(1.12) !important;
+        box-shadow:
+          0 20px 52px rgba(0, 0, 0, 0.48),
+          0 0 34px rgba(109, 40, 217, 0.24),
+          inset 0 0 0 1px rgba(255, 255, 255, 0.026) !important;
+      }
+
+      .is-samsung-browser .hero.reference-hero,
+      .is-samsung-browser .hero.reference-hero.uploaded-hero-ready,
+      .is-samsung-browser .hero.reference-hero:not(.uploaded-hero-ready) {
+        filter: brightness(1.58) contrast(1.22) saturate(1.16) !important;
+        -webkit-filter: brightness(1.58) contrast(1.22) saturate(1.16) !important;
+      }
+
+      .is-android .dancer-card .portrait,
+      .is-android .profile-modal .modal-image,
+      .is-android .profile-modal .thumb .portrait {
+        filter: brightness(1.36) contrast(1.13) saturate(1.1) !important;
+        -webkit-filter: brightness(1.36) contrast(1.13) saturate(1.1) !important;
+      }
+
+      .is-samsung-browser .dancer-card .portrait,
+      .is-samsung-browser .profile-modal .modal-image,
+      .is-samsung-browser .profile-modal .thumb .portrait {
+        filter: brightness(1.5) contrast(1.17) saturate(1.14) !important;
+        -webkit-filter: brightness(1.5) contrast(1.17) saturate(1.14) !important;
+      }
+
+      .is-android .dancer-card .portrait:after,
+      .is-android .profile-modal .modal-image:after {
+        background:
+          linear-gradient(180deg, rgba(5, 5, 7, 0) 36%, rgba(5, 5, 7, 0.1) 61%, rgba(5, 5, 7, 0.78) 100%) !important;
+        mix-blend-mode: normal !important;
+      }
+
+      .is-samsung-browser .dancer-card .portrait:after,
+      .is-samsung-browser .profile-modal .modal-image:after {
+        background:
+          linear-gradient(180deg, rgba(5, 5, 7, 0) 38%, rgba(5, 5, 7, 0.06) 62%, rgba(5, 5, 7, 0.68) 100%) !important;
+      }
+
+      .is-android .tab,
+      .is-android .menu-btn,
+      .is-android .location-btn,
+      .is-android .badge,
+      .is-android .pill {
+        -webkit-backdrop-filter: none !important;
+        backdrop-filter: none !important;
+      }
+
+      .is-android .tab.active,
+      .is-android .tab[aria-selected="true"],
+      .is-android .location-btn {
+        background: linear-gradient(135deg, #4c1d95 0%, #7c3aed 62%, #0ea5e9 100%) !important;
+        border-color: rgba(124, 58, 237, 0.76) !important;
+        box-shadow:
+          0 0 0 1px rgba(255, 255, 255, 0.04) inset,
+          0 0 24px rgba(124, 58, 237, 0.48),
+          0 0 16px rgba(14, 165, 233, 0.22) !important;
+      }
+
+      .is-android .verified-mark,
+      .is-android .verified-check,
+      .is-android .dancer-card .verified-mark,
+      .is-android .profile-modal .verified-mark {
+        width: 17px !important;
+        height: 17px !important;
+        opacity: 1 !important;
+        color: #031116 !important;
+        background: #22c7ff !important;
+        background-color: #22c7ff !important;
+        background-image: none !important;
+        border: 1px solid rgba(155, 240, 255, 0.88) !important;
+        filter: none !important;
+        -webkit-filter: none !important;
+        mix-blend-mode: normal !important;
+        text-shadow: none !important;
+        box-shadow:
+          0 0 0 1px rgba(3, 9, 12, 0.66),
+          0 0 14px rgba(34, 199, 255, 0.86),
+          inset 0 0 7px rgba(255, 255, 255, 0.38) !important;
+      }
+
+      .is-samsung-browser .verified-mark,
+      .is-samsung-browser .verified-check,
+      .is-samsung-browser .dancer-card .verified-mark,
+      .is-samsung-browser .profile-modal .verified-mark {
+        background: #31dfff !important;
+        background-color: #31dfff !important;
+        border-color: rgba(184, 248, 255, 0.92) !important;
+        box-shadow:
+          0 0 0 1px rgba(3, 9, 12, 0.66),
+          0 0 15px rgba(49, 223, 255, 0.88),
+          inset 0 0 7px rgba(255, 255, 255, 0.4) !important;
+      }
+    }
+
+    /* Root/body Android parity pass. These selectors are intentionally direct so
+       Chrome/Samsung cannot miss them if the class lands on either element. */
+    html.is-android,
+    body.is-android,
+    html.android-rendering,
+    body.android-rendering {
+      background: #050507 !important;
+      color: #ffffff !important;
+      -webkit-font-smoothing: antialiased !important;
+      text-rendering: geometricPrecision !important;
+      color-scheme: dark !important;
+    }
+
+    html.is-android .app,
+    body.is-android .app,
+    html.android-rendering .app,
+    body.android-rendering .app {
+      background: #050507 !important;
+      filter: none !important;
+      -webkit-filter: none !important;
+    }
+
+    html.is-android .brand-home.logo-image-button,
+    body.is-android .brand-home.logo-image-button,
+    html.android-rendering .brand-home.logo-image-button,
+    body.android-rendering .brand-home.logo-image-button {
+      background:
+        radial-gradient(circle at 82% 48%, rgba(124, 58, 237, 0.2) 0 22%, transparent 48%),
+        linear-gradient(180deg, #101017 0%, #050507 100%) !important;
+      border: 1px solid rgba(124, 58, 237, 0.72) !important;
+      box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.025) inset,
+        0 0 18px rgba(124, 58, 237, 0.34),
+        0 12px 30px rgba(0, 0, 0, 0.42) !important;
+      -webkit-backdrop-filter: none !important;
+      backdrop-filter: none !important;
+    }
+
+    html.is-android .logo-image-button .mydancr-live-logo,
+    body.is-android .logo-image-button .mydancr-live-logo,
+    html.android-rendering .logo-image-button .mydancr-live-logo,
+    body.android-rendering .logo-image-button .mydancr-live-logo {
+      color: #ffffff !important;
+      opacity: 1 !important;
+      filter: none !important;
+      -webkit-filter: none !important;
+      text-shadow:
+        0 0 7px rgba(255, 255, 255, 0.4),
+        0 0 16px rgba(255, 255, 255, 0.13) !important;
+    }
+
+    html.is-android .logo-image-button .mydancr-live-logo .violet-r,
+    body.is-android .logo-image-button .mydancr-live-logo .violet-r,
+    html.android-rendering .logo-image-button .mydancr-live-logo .violet-r,
+    body.android-rendering .logo-image-button .mydancr-live-logo .violet-r {
+      color: #7c3aed !important;
+      -webkit-text-fill-color: #7c3aed !important;
+      background: none !important;
+      filter: none !important;
+      -webkit-filter: none !important;
+      text-shadow:
+        0 0 7px rgba(124, 58, 237, 0.9),
+        0 0 18px rgba(109, 40, 217, 0.64),
+        0 0 30px rgba(76, 29, 149, 0.38) !important;
+    }
+
+    html.is-samsung-browser .logo-image-button .mydancr-live-logo .violet-r,
+    body.is-samsung-browser .logo-image-button .mydancr-live-logo .violet-r,
+    html.samsung-rendering .logo-image-button .mydancr-live-logo .violet-r,
+    body.samsung-rendering .logo-image-button .mydancr-live-logo .violet-r {
+      color: #7c3aed !important;
+      -webkit-text-fill-color: #7c3aed !important;
+      text-shadow:
+        0 0 9px rgba(124, 58, 237, 0.98),
+        0 0 20px rgba(109, 40, 217, 0.74),
+        0 0 34px rgba(76, 29, 149, 0.46) !important;
+    }
+
+    @media (max-width: 760px) {
+      html.is-android .hero.reference-hero,
+      body.is-android .hero.reference-hero,
+      html.android-rendering .hero.reference-hero,
+      body.android-rendering .hero.reference-hero {
+        filter: brightness(1.42) contrast(1.2) saturate(1.12) !important;
+        -webkit-filter: brightness(1.42) contrast(1.2) saturate(1.12) !important;
+      }
+
+      html.is-samsung-browser .hero.reference-hero,
+      body.is-samsung-browser .hero.reference-hero,
+      html.samsung-rendering .hero.reference-hero,
+      body.samsung-rendering .hero.reference-hero {
+        filter: brightness(1.62) contrast(1.24) saturate(1.16) !important;
+        -webkit-filter: brightness(1.62) contrast(1.24) saturate(1.16) !important;
+      }
+
+      html.is-android .dancer-card .portrait,
+      body.is-android .dancer-card .portrait,
+      html.android-rendering .dancer-card .portrait,
+      body.android-rendering .dancer-card .portrait,
+      html.is-android .profile-modal .modal-image,
+      body.is-android .profile-modal .modal-image {
+        filter: brightness(1.44) contrast(1.14) saturate(1.1) !important;
+        -webkit-filter: brightness(1.44) contrast(1.14) saturate(1.1) !important;
+      }
+
+      html.is-samsung-browser .dancer-card .portrait,
+      body.is-samsung-browser .dancer-card .portrait,
+      html.samsung-rendering .dancer-card .portrait,
+      body.samsung-rendering .dancer-card .portrait,
+      html.is-samsung-browser .profile-modal .modal-image,
+      body.is-samsung-browser .profile-modal .modal-image {
+        filter: brightness(1.62) contrast(1.18) saturate(1.15) !important;
+        -webkit-filter: brightness(1.62) contrast(1.18) saturate(1.15) !important;
+      }
+
+      html.is-android .dancer-card .portrait:after,
+      body.is-android .dancer-card .portrait:after,
+      html.android-rendering .dancer-card .portrait:after,
+      body.android-rendering .dancer-card .portrait:after {
+        background:
+          linear-gradient(180deg, rgba(5, 5, 7, 0) 38%, rgba(5, 5, 7, 0.08) 62%, rgba(5, 5, 7, 0.72) 100%) !important;
+        mix-blend-mode: normal !important;
+      }
+
+      html.is-samsung-browser .dancer-card .portrait:after,
+      body.is-samsung-browser .dancer-card .portrait:after,
+      html.samsung-rendering .dancer-card .portrait:after,
+      body.samsung-rendering .dancer-card .portrait:after {
+        background:
+          linear-gradient(180deg, rgba(5, 5, 7, 0) 40%, rgba(5, 5, 7, 0.04) 64%, rgba(5, 5, 7, 0.62) 100%) !important;
+      }
+    }
+
+    html.is-android .verified-mark,
+    body.is-android .verified-mark,
+    html.android-rendering .verified-mark,
+    body.android-rendering .verified-mark,
+    html.is-android .verified-check,
+    body.is-android .verified-check,
+    html.android-rendering .verified-check,
+    body.android-rendering .verified-check {
+      width: 17px !important;
+      height: 17px !important;
+      min-width: 17px !important;
+      opacity: 1 !important;
+      color: #031116 !important;
+      -webkit-text-fill-color: #031116 !important;
+      background: #22c7ff !important;
+      background-color: #22c7ff !important;
+      background-image: none !important;
+      border: 1px solid rgba(155, 240, 255, 0.88) !important;
+      filter: none !important;
+      -webkit-filter: none !important;
+      mix-blend-mode: normal !important;
+      text-shadow: none !important;
+      box-shadow:
+        0 0 0 1px rgba(3, 9, 12, 0.66),
+        0 0 14px rgba(34, 199, 255, 0.86),
+        inset 0 0 7px rgba(255, 255, 255, 0.38) !important;
+    }
+
+    html.is-samsung-browser .verified-mark,
+    body.is-samsung-browser .verified-mark,
+    html.samsung-rendering .verified-mark,
+    body.samsung-rendering .verified-mark,
+    html.is-samsung-browser .verified-check,
+    body.is-samsung-browser .verified-check,
+    html.samsung-rendering .verified-check,
+    body.samsung-rendering .verified-check {
+      background: #22c7ff !important;
+      background-color: #22c7ff !important;
+      color: #031116 !important;
+      -webkit-text-fill-color: #031116 !important;
+      border-color: rgba(155, 240, 255, 0.92) !important;
+      box-shadow:
+        0 0 0 1px rgba(3, 9, 12, 0.66),
+        0 0 16px rgba(34, 199, 255, 0.9),
+        inset 0 0 7px rgba(255, 255, 255, 0.42) !important;
+    }
+
+    /* Hero-only pop: restore the stronger mobile hero box without changing the rest of the UI. */
+    @media (max-width: 760px) {
+      .hero.reference-hero,
+      .hero.reference-hero.uploaded-hero-ready,
+      .hero.reference-hero:not(.uploaded-hero-ready) {
+        width: 100% !important;
+        min-height: 0 !important;
+        aspect-ratio: 1672 / 941 !important;
+        margin: 16px 0 14px !important;
+        border-radius: 24px !important;
+        border: 1px solid rgba(124, 58, 237, 0.76) !important;
+        background-color: #050507 !important;
+        background-size: 100% 100% !important;
+        background-position: center center !important;
+        background-repeat: no-repeat !important;
+        box-shadow:
+          0 0 0 1px rgba(255, 255, 255, 0.026) inset,
+          0 0 24px rgba(124, 58, 237, 0.28),
+          0 20px 48px rgba(0, 0, 0, 0.44) !important;
+        overflow: hidden !important;
+      }
+
+      .hero.reference-hero::before,
+      .hero.reference-hero::after,
+      .hero.reference-hero.uploaded-hero-ready::before,
+      .hero.reference-hero.uploaded-hero-ready::after,
+      .hero.reference-hero:not(.uploaded-hero-ready)::before,
+      .hero.reference-hero:not(.uploaded-hero-ready)::after,
+      .hero-copy {
+        content: none !important;
+        display: none !important;
+      }
+    }
+
+    @media (max-width: 390px) {
+      .hero.reference-hero,
+      .hero.reference-hero.uploaded-hero-ready,
+      .hero.reference-hero:not(.uploaded-hero-ready) {
+        border-radius: 21px !important;
+        margin-top: 14px !important;
+      }
+    }
+
+    .auth-join-now.dancer-join-now,
+    .auth-join-now.venue-join-now {
+      min-height: 52px;
+      width: 100%;
+      border-radius: 16px;
+      color: #ffffff;
+      font-size: 17px;
+      font-weight: 950;
+      letter-spacing: 0;
+      transform: translateZ(0);
+    }
+
+    .auth-join-now.dancer-join-now {
+      border-color: rgba(183, 77, 255, .74);
+      background:
+        linear-gradient(135deg, rgba(92, 38, 214, .98), rgba(183, 77, 255, .92));
+      box-shadow:
+        0 0 28px rgba(183, 77, 255, .4),
+        0 16px 36px rgba(92, 38, 214, .28),
+        inset 0 0 18px rgba(255, 255, 255, .12);
+      text-shadow: 0 2px 12px rgba(0, 0, 0, .46);
+    }
+
+    .auth-join-now.venue-join-now {
+      border-color: rgba(122, 82, 255, .78);
+      background:
+        linear-gradient(135deg, rgba(92, 38, 214, .98), rgba(38, 174, 220, .88));
+      box-shadow:
+        0 0 28px rgba(122, 82, 255, .42),
+        0 16px 36px rgba(38, 174, 220, .2),
+        inset 0 0 18px rgba(255, 255, 255, .12);
+      text-shadow: 0 2px 12px rgba(0, 0, 0, .46);
+    }
+
+    .customer-signup-benefits {
+      scroll-margin-top: 12px;
+      display: grid;
+      gap: 10px;
+      padding: 14px;
+      border: 1px solid rgba(53, 216, 255, .28);
+      border-radius: 16px;
+      background:
+        linear-gradient(135deg, rgba(53, 216, 255, .08), rgba(124, 58, 237, .12)),
+        rgba(5, 5, 9, .72);
+      box-shadow:
+        0 0 22px rgba(53, 216, 255, .1),
+        inset 0 0 18px rgba(255, 255, 255, .03);
+    }
+
+    .customer-signup-benefits[hidden] {
+      display: none;
+    }
+
+    .customer-signup-benefits h3 {
+      font-size: 18px;
+    }
+
+    .continue-signup {
+      justify-self: start;
+      min-height: 38px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 0 14px;
+      border: 1px solid rgba(53, 216, 255, .56);
+      border-radius: 999px;
+      background:
+        linear-gradient(135deg, rgba(6, 35, 60, .88), rgba(9, 77, 134, .68)),
+        rgba(5, 5, 9, .72);
+      color: #fff;
+      font: inherit;
+      font-size: 13px;
+      font-weight: 900;
+      box-shadow: 0 0 18px rgba(53, 216, 255, .16);
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .continue-signup span {
+      color: #8ff2ff;
+      font-size: 15px;
+      transform: translateY(-1px);
+    }
+
+    .continue-signup:hover,
+    .continue-signup:focus-visible {
+      outline: none;
+      border-color: rgba(53, 216, 255, .66);
+      box-shadow:
+        0 0 24px rgba(53, 216, 255, .16),
+        0 0 20px rgba(124, 58, 237, .18);
+    }
+
+    .customer-benefit-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .customer-benefit-tile {
+      display: grid;
+      gap: 5px;
+      min-width: 0;
+      padding: 12px;
+      border: 1px solid rgba(255, 255, 255, .1);
+      border-radius: 14px;
+      background: rgba(255, 255, 255, .045);
+      box-shadow: inset 0 0 16px rgba(255, 255, 255, .025);
+    }
+
+    .customer-benefit-tile strong {
+      color: #fff;
+      font-size: 13px;
+      line-height: 1.2;
+    }
+
+    .customer-benefit-tile span {
+      color: #bfb6cf;
+      font-size: 11.5px;
+      font-weight: 760;
+      line-height: 1.35;
+    }
+
+    .dancer-verification-flow,
+    .dancer-signup-note {
+      display: grid;
+      gap: 12px;
+      padding: 14px;
+      border: 1px solid rgba(183, 77, 255, .34);
+      border-radius: 16px;
+      background:
+        linear-gradient(135deg, rgba(124, 58, 237, .13), rgba(5, 5, 9, .76));
+      box-shadow:
+        0 0 22px rgba(183, 77, 255, .14),
+        inset 0 0 18px rgba(255, 255, 255, .03);
+    }
+
+    .dancer-verification-flow h3,
+    .dancer-signup-note h3 {
+      margin: 0;
+      font-size: 18px;
+      line-height: 1.1;
+    }
+
+    .dancer-verification-flow p,
+    .dancer-signup-note p {
+      font-size: 13px;
+      line-height: 1.4;
+      color: #cfc5de;
+    }
+
+    .dancer-step-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .dancer-step-list details {
+      border: 1px solid rgba(255, 255, 255, .1);
+      border-radius: 14px;
+      background: rgba(255, 255, 255, .045);
+      overflow: hidden;
+    }
+
+    .dancer-step-list summary {
+      display: grid;
+      grid-template-columns: 34px minmax(0, 1fr);
+      gap: 10px;
+      align-items: start;
+      padding: 11px;
+      cursor: pointer;
+      list-style: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .dancer-step-list summary::-webkit-details-marker {
+      display: none;
+    }
+
+    .dancer-step-list summary > span {
+      width: 28px;
+      height: 28px;
+      border-radius: 999px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-size: 12px;
+      font-weight: 950;
+      background: linear-gradient(135deg, #5b21b6, #b74dff);
+      box-shadow: 0 0 18px rgba(183, 77, 255, .28);
+    }
+
+    .dancer-step-list strong {
+      display: block;
+      color: #fff;
+      font-size: 13px;
+      line-height: 1.2;
+    }
+
+    .dancer-step-list small {
+      display: block;
+      margin-top: 3px;
+      color: #cfc5de;
+      font-size: 11.5px;
+      line-height: 1.35;
+      font-weight: 760;
+    }
+
+    .dancer-step-body {
+      display: grid;
+      gap: 10px;
+      padding: 0 11px 12px 55px;
+    }
+
+    .dancer-step-body .field {
+      margin: 0;
+    }
+
+    .step-note {
+      color: #cfc5de;
+      font-size: 11.5px;
+      line-height: 1.35;
+      font-weight: 760;
+    }
+
+    .step-action {
+      min-height: 40px;
+      border: 1px solid rgba(214, 174, 255, .72);
+      border-radius: 12px;
+      color: #fff;
+      font-weight: 950;
+      background: linear-gradient(135deg, #5b21b6, #b74dff);
+      box-shadow: 0 0 20px rgba(183, 77, 255, .24);
+      cursor: pointer;
+    }
+
+    .step-action:hover,
+    .step-action:focus-visible {
+      outline: none;
+      border-color: rgba(214, 174, 255, .96);
+      box-shadow: 0 0 28px rgba(183, 77, 255, .34);
+    }
+
+    @media (max-width: 560px) {
+      .customer-benefit-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .auth-join-now.dancer-join-now:hover,
+    .auth-join-now.dancer-join-now:focus-visible,
+    .auth-join-now.venue-join-now:hover,
+    .auth-join-now.venue-join-now:focus-visible {
+      border-color: rgba(214, 174, 255, .96);
+      box-shadow:
+        0 0 36px rgba(183, 77, 255, .54),
+        0 18px 40px rgba(92, 38, 214, .32),
+        inset 0 0 20px rgba(255, 255, 255, .16);
+    }
+
+    .venue-dashboard-grid,
+    .venue-offer-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.15fr) minmax(280px, .85fr);
+      gap: 18px;
+    }
+
+    #venueDashboard.claim-review-state .venue-summary,
+    #venueDashboard.claim-review-state .dashboard-stats,
+    #venueDashboard.claim-review-state .venue-dashboard-grid {
+      display: none !important;
+    }
+
+    .venue-claim-dashboard-state {
+      max-width: 680px;
+      margin: 18px auto;
+      display: grid;
+      gap: 12px;
+      padding: clamp(18px, 4vw, 28px);
+      border-color: rgba(168, 85, 247, .42);
+      background:
+        radial-gradient(circle at 88% 0%, rgba(53, 216, 255, .11), transparent 34%),
+        rgba(11, 9, 18, .94);
+    }
+
+    .venue-claim-dashboard-state[hidden] {
+      display: none !important;
+    }
+
+    .venue-claim-dashboard-state h3,
+    .venue-claim-dashboard-state p {
+      margin: 0;
+    }
+
+    .venue-claim-dashboard-state p {
+      color: #cfc5dc;
+      line-height: 1.5;
+    }
+
+    .venue-offer-card {
+      border: 1px solid rgba(125, 74, 255, .46);
+      border-radius: 22px;
+      padding: 18px;
+      background:
+        radial-gradient(circle at 18% 0%, rgba(125, 74, 255, .24), transparent 38%),
+        linear-gradient(145deg, rgba(17, 14, 28, .96), rgba(7, 7, 13, .98));
+      box-shadow:
+        0 0 28px rgba(125, 74, 255, .18),
+        inset 0 1px 0 rgba(255, 255, 255, .06);
+    }
+
+    .venue-offer-card h3,
+    .venue-offer-preview h3 {
+      margin: 0 0 8px;
+      font-size: 26px;
+      line-height: 1.05;
+    }
+
+    .venue-offer-card p,
+    .venue-offer-preview p {
+      color: rgba(255, 255, 255, .72);
+      margin: 0 0 14px;
+    }
+
+    .venue-detail .venue-offer-card {
+      padding: 16px;
+      border-radius: 20px;
+      width: 100%;
+      max-width: 100%;
+      min-width: 0;
+      box-sizing: border-box;
+    }
+
+    .venue-detail .venue-offer-grid {
+      grid-template-columns: 1fr;
+      align-items: stretch;
+      gap: 14px;
+      width: 100%;
+      max-width: 100%;
+      min-width: 0;
+    }
+
+    .venue-detail .venue-offer-grid > * {
+      min-width: 0;
+    }
+
+    .venue-detail .venue-offer-card .eyebrow,
+    .venue-detail .venue-offer-card h3,
+    .venue-detail .venue-offer-card p {
+      word-break: normal;
+      overflow-wrap: normal;
+    }
+
+    .venue-detail .venue-offer-card h3 {
+      font-size: 22px;
+    }
+
+    .venue-detail-club-deal-actions {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      align-items: stretch;
+      justify-items: center;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .venue-detail-club-deal-qr-state {
+      min-width: 0;
+      display: grid;
+      grid-template-columns: 68px minmax(0, 1fr);
+      align-items: center;
+      gap: 12px;
+      padding: 10px 12px 10px 10px;
+      border: 1px solid rgba(77, 255, 157, .42);
+      border-radius: 18px;
+      color: #ffffff;
+      background: linear-gradient(145deg, rgba(7, 92, 77, .3), rgba(5, 20, 17, .8));
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, .06);
+    }
+
+    button.venue-detail-club-deal-qr-state.is-available {
+      appearance: none;
+      font: inherit;
+      cursor: pointer;
+      transition: border-color .18s ease, background-color .18s ease, opacity .18s ease, transform .18s ease;
+    }
+
+    button.venue-detail-club-deal-qr-state.is-available:hover,
+    button.venue-detail-club-deal-qr-state.is-available:focus-visible {
+      outline: none;
+      transform: translateY(-1px);
+    }
+
+    button.venue-detail-club-deal-qr-state.is-available:focus-visible {
+      box-shadow: 0 0 0 3px rgba(52, 211, 153, .14);
+    }
+
+    button.venue-detail-club-deal-qr-state.is-available.is-loading,
+    button.venue-detail-club-deal-qr-state.is-available:disabled {
+      opacity: .72;
+      cursor: wait;
+      transform: none;
+    }
+
+    .venue-detail-club-deal-symbol {
+      box-sizing: border-box;
+      width: 68px;
+      height: 68px;
+      display: grid;
+      place-items: center;
+      padding: 9px;
+      border: 1px solid rgba(204, 255, 226, .56);
+      border-radius: 12px;
+      color: #c9ffe0;
+      background: rgba(3, 54, 37, .68);
+      box-shadow: 0 8px 22px rgba(0, 0, 0, .26), inset 0 1px 0 rgba(255, 255, 255, .1);
+    }
+
+    .venue-detail-club-deal-symbol svg {
+      width: 100%;
+      height: 100%;
+    }
+
+    .venue-detail-club-deal-qr-copy {
+      min-width: 0;
+      display: grid;
+      gap: 4px;
+    }
+
+    .venue-detail-club-deal-qr-copy strong {
+      font-size: .9rem;
+      line-height: 1.1;
+    }
+
+    .venue-detail-club-deal-qr-copy small {
+      color: rgba(226, 255, 238, .7);
+      font-size: .72rem;
+      font-weight: 780;
+      line-height: 1.25;
+    }
+
+    .venue-detail-club-deal-qr-state.is-unavailable {
+      max-width: 420px;
+      border-color: rgba(196, 181, 253, .24);
+      color: rgba(245, 245, 255, .76);
+      background: linear-gradient(145deg, rgba(33, 29, 47, .76), rgba(8, 8, 14, .72));
+    }
+
+    .venue-detail-club-deal-qr-state.is-unavailable .venue-detail-club-deal-symbol {
+      border-color: rgba(196, 181, 253, .26);
+      color: rgba(245, 245, 255, .5);
+      background: rgba(31, 27, 44, .72);
+    }
+
+    .venue-detail-club-deal-qr-state.is-unavailable .venue-detail-club-deal-qr-copy small {
+      color: rgba(221, 214, 254, .58);
+    }
+
+    .venue-detail .venue-club-deal-unavailable {
+      padding: 9px 10px;
+      border-color: rgba(139, 92, 246, .3);
+      background:
+        radial-gradient(circle at 12% 50%, rgba(139, 92, 246, .13), transparent 42%),
+        rgba(8, 8, 14, .86);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, .045), 0 10px 26px rgba(0, 0, 0, .26);
+    }
+
+    .venue-club-deal-unavailable .venue-detail-club-deal-qr-state {
+      max-width: none;
+      grid-template-columns: 58px minmax(0, 1fr);
+      gap: 11px;
+      padding: 7px 10px 7px 7px;
+      border: 0;
+      border-radius: 0;
+      background: transparent;
+      box-shadow: none;
+    }
+
+    .venue-detail .venue-hero-body {
+      gap: 9px;
+      padding: 12px 14px 14px;
+    }
+
+    .venue-detail .venue-quick-stats,
+    .venue-detail .venue-info {
+      gap: 7px;
+    }
+
+    .venue-detail .follow-venue-btn {
+      min-height: 52px !important;
+      color: rgba(245, 242, 250, .9) !important;
+      border-color: rgba(139, 92, 246, .3) !important;
+      background: rgba(15, 13, 22, .9) !important;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, .045), 0 8px 20px rgba(0, 0, 0, .28) !important;
+    }
+
+    .venue-detail .follow-venue-btn.is-following {
+      border-color: rgba(34, 199, 255, .34) !important;
+      background: linear-gradient(135deg, rgba(15, 18, 27, .94), rgba(20, 25, 39, .9)) !important;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, .05), 0 0 16px rgba(34, 199, 255, .1) !important;
+    }
+
+    .venue-club-deal-unavailable .venue-detail-club-deal-symbol {
+      width: 58px;
+      height: 58px;
+      padding: 8px;
+    }
+
+    .venue-club-deal-unavailable .venue-detail-club-deal-qr-copy {
+      gap: 2px;
+    }
+
+    .venue-club-deal-unavailable .venue-detail-club-deal-qr-copy .eyebrow {
+      margin: 0 0 1px;
+      color: #bfa5ff;
+      font-size: .64rem;
+      letter-spacing: .14em;
+    }
+
+    .venue-club-deal-unavailable .venue-detail-club-deal-qr-copy strong {
+      color: rgba(250, 248, 255, .88);
+      font-size: .96rem;
+    }
+
+    .venue-club-deal-unavailable .venue-detail-club-deal-qr-copy small {
+      color: rgba(221, 214, 254, .66);
+      font-size: .74rem;
+    }
+
+    .venue-profile-qr-card {
+      border-color: rgba(77, 255, 157, .48);
+      background:
+        radial-gradient(circle at 18% 0%, rgba(77, 255, 157, .18), transparent 38%),
+        linear-gradient(145deg, rgba(8, 28, 21, .96), rgba(5, 12, 10, .98));
+      box-shadow:
+        0 0 28px rgba(77, 255, 157, .14),
+        inset 0 1px 0 rgba(255, 255, 255, .06);
+    }
+
+    .venue-profile-qr-cta {
+      border-color: rgba(77, 255, 157, .72);
+      background: linear-gradient(135deg, #128b50, #075c4d);
+      box-shadow: 0 14px 36px rgba(10, 116, 78, .3), 0 0 22px rgba(77, 255, 157, .16);
+    }
+
+    .venue-profile-qr-cta > span {
+      color: #c7ffe0;
+    }
+
+    .venue-detail .venue-offer-qr {
+      min-height: 0;
+      padding: 12px;
+    }
+
+    .venue-detail .venue-offer-qr img {
+      width: min(156px, 58vw);
+    }
+
+    .venue-offer-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 14px 0;
+    }
+
+    .venue-offer-code {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 38px;
+      border-radius: 999px;
+      padding: 0 14px;
+      border: 1px solid rgba(53, 216, 255, .42);
+      background: rgba(53, 216, 255, .1);
+      color: #ffffff;
+      font-weight: 950;
+    }
+
+    .venue-offer-lock,
+    .venue-offer-qr {
+      display: grid;
+      place-items: center;
+      min-height: 188px;
+      border-radius: 20px;
+      border: 1px solid rgba(255, 255, 255, .1);
+      background: rgba(0, 0, 0, .34);
+      text-align: center;
+      padding: 16px;
+    }
+
+    .venue-offer-qr img {
+      width: min(180px, 72vw);
+      border-radius: 18px;
+      background: #ffffff;
+      padding: 10px;
+      box-shadow: 0 0 28px rgba(53, 216, 255, .28);
+    }
+
+    .deal-qr-trigger {
+      width: 100%;
+      appearance: none;
+      -webkit-appearance: none;
+      color: inherit;
+      font: inherit;
+      cursor: pointer;
+      transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease;
+    }
+
+    .profile-club-deal-tile {
+      border-color: rgba(77, 236, 157, .42) !important;
+      background: linear-gradient(135deg, rgba(7, 92, 77, .28), rgba(16, 128, 74, .12)) !important;
+    }
+
+    .profile-club-deal-cta {
+      min-width: 152px;
+      border-color: rgba(77, 236, 157, .7);
+      background: linear-gradient(135deg, #075c4d, #10804a);
+      box-shadow: 0 14px 36px rgba(6, 95, 70, .3), 0 0 22px rgba(77, 236, 157, .14);
+    }
+
+    @media (max-width: 520px) {
+      .profile-club-deal-cta {
+        min-width: 136px;
+        max-width: 148px;
+        min-height: 58px;
+        padding-inline: 11px;
+      }
+
+      .profile-club-deal-cta > strong {
+        font-size: .76rem;
+      }
+
+      .venue-detail-club-deal-actions {
+        grid-template-columns: 1fr;
+      }
+
+      .venue-detail-club-deal-qr-state {
+        grid-template-columns: 60px minmax(0, 1fr);
+        gap: 10px;
+        padding: 9px 10px 9px 9px;
+      }
+
+      .venue-detail-club-deal-symbol {
+        width: 60px;
+        height: 60px;
+        padding: 8px;
+      }
+
+      .venue-club-deal-unavailable .venue-detail-club-deal-qr-state {
+        grid-template-columns: 56px minmax(0, 1fr);
+        padding: 6px 9px 6px 6px;
+      }
+
+      .venue-club-deal-unavailable .venue-detail-club-deal-symbol {
+        width: 56px;
+        height: 56px;
+        padding: 8px;
+      }
+
+      .venue-address-tile {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 10px;
+      }
+
+      .venue-address-directions {
+        min-height: 40px;
+        padding-inline: 11px;
+      }
+    }
+
+    .deal-qr-trigger:hover,
+    .deal-qr-trigger:focus-visible {
+      transform: translateY(-1px);
+      border-color: rgba(53, 216, 255, .38);
+      box-shadow: 0 0 24px rgba(53, 216, 255, .14), inset 0 0 16px rgba(125, 74, 255, .08);
+      outline: none;
+    }
+
+    .profile-deal-qr.deal-qr-trigger {
+      border: 0;
+      background: transparent;
+      padding: 0;
+    }
+
+    .deal-pass-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 13000;
+      display: grid;
+      place-items: center;
+      padding:
+        max(18px, env(safe-area-inset-top))
+        18px
+        max(18px, env(safe-area-inset-bottom));
+      background:
+        radial-gradient(circle at 50% 32%, rgba(53, 216, 255, .08), transparent 32%),
+        rgba(2, 3, 6, .86);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 180ms ease;
+    }
+
+    .deal-pass-overlay.show {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .deal-pass-overlay[hidden],
+    .profile-qr-overlay[hidden] {
+      display: none !important;
+      visibility: hidden !important;
+      opacity: 0 !important;
+      pointer-events: none !important;
+    }
+
+    .deal-pass-overlay:not(.show),
+    .profile-qr-overlay:not(.show) {
+      visibility: hidden !important;
+      pointer-events: none !important;
+    }
+
+    .deal-pass-overlay.show,
+    .profile-qr-overlay.show {
+      visibility: visible !important;
+    }
+
+    .deal-pass-sheet {
+      position: relative;
+      width: min(420px, calc(100vw - 28px));
+      max-height: calc(100dvh - 36px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      scroll-padding-bottom: calc(112px + env(safe-area-inset-bottom));
+      padding: 24px 22px calc(112px + env(safe-area-inset-bottom));
+      border: 1px solid rgba(255, 255, 255, .14);
+      border-radius: 24px;
+      background:
+        linear-gradient(145deg, rgba(17, 18, 22, .96), rgba(5, 6, 8, .985)),
+        #050507;
+      box-shadow:
+        0 28px 80px rgba(0, 0, 0, .62),
+        0 0 0 1px rgba(255, 255, 255, .025),
+        inset 0 1px 0 rgba(255, 255, 255, .06);
+      pointer-events: auto;
+      text-align: center;
+    }
+
+    #dealPassOverlay .deal-pass-sheet {
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      box-sizing: border-box;
+      scroll-padding-bottom: 18px;
+      padding-bottom: 18px;
+    }
+
+    #dealPassOverlay .deal-pass-sheet > * {
+      flex: 0 0 auto;
+    }
+
+    .deal-pass-close {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      z-index: 2;
+      width: 36px;
+      height: 36px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, .14);
+      background: rgba(26, 27, 32, .84);
+      color: rgba(255, 255, 255, .82);
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+      pointer-events: auto;
+      touch-action: manipulation;
+    }
+
+    .deal-pass-kicker {
+      margin: 0 0 8px;
+      color: #35D8FF;
+      font-size: .74rem;
+      font-weight: 950;
+      letter-spacing: .18em;
+      text-transform: uppercase;
+    }
+
+    .deal-pass-title {
+      margin: 0;
+      padding-inline: 30px;
+      color: #fff;
+      font-size: clamp(1.3rem, 5vw, 1.78rem);
+      line-height: 1.05;
+      overflow-wrap: anywhere;
+      text-wrap: balance;
+    }
+
+    .deal-pass-copy {
+      margin: 8px auto 9px;
+      max-width: 360px;
+      color: rgba(248, 248, 252, .82);
+      font-size: .94rem;
+      line-height: 1.36;
+    }
+
+    .deal-pass-availability-status {
+      width: fit-content;
+      min-height: 28px;
+      display: inline-flex;
+      align-items: center;
+      margin: 0 auto 14px;
+      padding: 0 11px;
+      border: 1px solid rgba(126, 234, 255, .30);
+      border-radius: 999px;
+      color: #d9f9ff;
+      background: rgba(53, 216, 255, .07);
+      font-size: .68rem;
+      font-weight: 950;
+      letter-spacing: .02em;
+    }
+
+    .deal-pass-availability-status.is-ready {
+      border-color: rgba(74, 222, 128, .48);
+      color: #b7ffd1;
+      background: rgba(34, 197, 94, .1);
+    }
+
+    .deal-pass-offer {
+      display: grid;
+      gap: 9px;
+      margin-bottom: 14px;
+      padding: 14px;
+      border: 1px solid rgba(255, 255, 255, .10);
+      border-radius: 16px;
+      background: rgba(255, 255, 255, .035);
+      text-align: left;
+    }
+
+    .deal-pass-description {
+      margin: 0;
+      color: rgba(255, 255, 255, .90);
+      font-size: .9rem;
+      font-weight: 850;
+      line-height: 1.4;
+    }

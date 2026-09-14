@@ -1,0 +1,1194 @@
+
+    .profile-modal .modal-identity .verified-mark {
+      width: 18px;
+      height: 18px;
+      font-size: 11px;
+    }
+
+    .profile-modal .gallery {
+      position: relative;
+      z-index: 3;
+      margin-top: 0;
+      padding-block: 16px 8px;
+      background:
+        linear-gradient(180deg, rgba(5,5,8,.98), rgba(3,3,5,.98));
+      border-top: 1px solid rgba(192,132,255,.12);
+      border-bottom: 1px solid rgba(192,132,255,.1);
+      box-shadow: none;
+    }
+
+    /* Final profile card spacing polish */
+    .dancer-card .profile-body {
+      padding-bottom: 20px;
+    }
+
+    .dancer-card .profile-body > .pill-row {
+      margin-top: 1px;
+    }
+
+    @media (max-width: 420px) {
+      .dancer-card .profile-body {
+        padding-bottom: 18px;
+      }
+
+      .dancer-card .profile-body > .pill-row {
+        margin-top: 1px;
+      }
+    }
+
+    /* Premium venue listing cards */
+    .venue.venue-card {
+      min-height: 142px;
+      grid-template-columns: minmax(118px, 158px) 1fr;
+      overflow: hidden;
+      border-color: rgba(168,85,247,.24);
+      background:
+        radial-gradient(circle at 16% 50%, rgba(168,85,247,.14), transparent 0 34%),
+        linear-gradient(135deg, rgba(18,18,24,.96), rgba(7,7,10,.99));
+      box-shadow:
+        0 18px 48px rgba(0,0,0,.5),
+        0 0 24px rgba(168,85,247,.055),
+        inset 0 0 0 1px rgba(255,255,255,.025);
+      transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease;
+    }
+
+    .venue.venue-card:hover,
+    .venue.venue-card:focus-visible {
+      transform: translateY(-1px);
+      border-color: rgba(168,85,247,.48);
+      box-shadow:
+        0 24px 58px rgba(0,0,0,.58),
+        0 0 30px rgba(168,85,247,.18),
+        inset 0 0 0 1px rgba(255,255,255,.03);
+    }
+
+    .venue.venue-card .venue-art {
+      min-height: 100%;
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+      background:
+        radial-gradient(circle at 52% 50%, rgba(53,216,255,.2), transparent 0 23%),
+        radial-gradient(circle at 56% 50%, rgba(168,85,247,.22), transparent 0 44%),
+        linear-gradient(135deg, rgba(13,12,20,.98), rgba(4,4,7,.98));
+    }
+
+    .venue.venue-card .venue-art:before {
+      content: attr(data-initials);
+      width: 68px;
+      height: 68px;
+      display: grid;
+      place-items: center;
+      color: #f3eaff;
+      border: 1px solid rgba(168,85,247,.54);
+      border-radius: 18px;
+      background: rgba(8,8,12,.72);
+      box-shadow:
+        0 0 22px rgba(168,85,247,.22),
+        0 0 18px rgba(53,216,255,.08),
+        inset 0 0 14px rgba(168,85,247,.08);
+      font-family: var(--font-display);
+      font-size: 17px;
+      font-weight: 850;
+      letter-spacing: .06em;
+    }
+
+    .venue.venue-card .venue-art:after {
+      content: none;
+    }
+
+    .venue.venue-card .profile-body {
+      align-content: center;
+      gap: 14px;
+      padding: 20px;
+    }
+
+    .venue.venue-card h3 {
+      font-size: 21px;
+      line-height: 1.05;
+    }
+
+    .venue.venue-card .badge {
+      min-height: 32px;
+      padding-inline: 13px;
+      font-size: 12px;
+      box-shadow: 0 0 14px rgba(34,211,238,.12), inset 0 0 12px rgba(34,211,238,.05);
+    }
+
+    .venue.venue-card .pill {
+      min-height: 34px;
+      padding-inline: 14px;
+      color: #cfc7dc;
+      background: rgba(12,12,17,.58);
+      border-color: rgba(192,132,255,.16);
+      box-shadow: inset 0 0 10px rgba(155,92,255,.025);
+    }
+
+    .venue.venue-card .venue-shift-pill {
+      margin-left: auto;
+      text-decoration: none;
+      cursor: pointer;
+    }
+
+    .popular-clubs.is-hidden {
+      display: none;
+    }
+
+    @media (max-width: 520px) {
+      .venue.venue-card {
+        grid-template-columns: 96px 1fr;
+        min-height: 126px;
+      }
+
+      .venue.venue-card .profile-body {
+        gap: 10px;
+        padding: 15px 13px;
+      }
+
+      .venue.venue-card .venue-art:before {
+        width: 50px;
+        height: 50px;
+        border-radius: 14px;
+        font-size: 13px;
+      }
+
+      .venue.venue-card h3 {
+        font-size: 18px;
+      }
+
+      .venue.venue-card .row {
+        align-items: start;
+      }
+
+      .venue.venue-card .pill-row {
+        gap: 7px;
+      }
+
+      .venue.venue-card .venue-shift-pill {
+        margin-left: 0;
+      }
+
+      .venue.venue-card .pill {
+        min-height: 31px;
+        padding-inline: 11px;
+        font-size: 11px;
+      }
+    }
+
+    /* Slightly more compact profile browsing cards */
+    .list.card-grid .dancer-card {
+      aspect-ratio: 1 / 1.68;
+      min-height: 324px;
+    }
+
+    @media (max-width: 420px) {
+      .list.card-grid .dancer-card {
+        aspect-ratio: 1 / 1.74;
+        min-height: 310px;
+      }
+    }
+
+    @media (min-width: 760px) {
+      .list.card-grid .dancer-card {
+        aspect-ratio: 1 / 1.58;
+        min-height: 356px;
+      }
+    }
+
+    @media (min-width: 900px) {
+      .list.card-grid .dancer-card {
+        aspect-ratio: 1 / 1.48;
+        min-height: 352px;
+      }
+    }
+
+    /* Final controlled electric yellow for trending */
+    .badge.trend,
+    .dancer-card .badge.trend,
+    .profile-modal .badge.trend {
+      color: #FFE66D;
+      border-color: rgba(255,205,44,.5);
+      background:
+        linear-gradient(180deg, rgba(74,52,10,.48), rgba(18,12,4,.34));
+      box-shadow:
+        0 0 10px rgba(255,205,44,.14),
+        0 0 18px rgba(0,0,0,.34),
+        inset 0 0 12px rgba(255,232,106,.055);
+      text-shadow: 0 0 8px rgba(255,232,106,.28);
+      backdrop-filter: blur(14px) saturate(130%);
+    }
+
+    .badge.trend:hover,
+    .dancer-card .badge.trend:hover,
+    .profile-modal .badge.trend:hover {
+      border-color: rgba(255,232,106,.62);
+      background: linear-gradient(180deg, rgba(86,61,12,.54), rgba(18,12,4,.38));
+      box-shadow:
+        0 0 13px rgba(255,205,44,.2),
+        0 0 20px rgba(0,0,0,.36),
+        inset 0 0 14px rgba(255,232,106,.075);
+    }
+
+    .dancer-card .badge.trend.compact-trend {
+      min-width: 48px;
+      min-height: 30px;
+      padding-inline: 10px;
+      gap: 4px;
+      justify-content: center;
+      font-size: 13px;
+      letter-spacing: .01em;
+      color: #FFE66D;
+      border-color: rgba(255,205,44,.54);
+      background:
+        radial-gradient(circle at 88% 18%, rgba(155,92,255,.16), transparent 0 62%),
+        linear-gradient(135deg, rgba(76,53,10,.5), rgba(19,12,5,.4));
+      box-shadow:
+        0 0 12px rgba(255,205,44,.16),
+        0 0 18px rgba(0,0,0,.36),
+        inset 0 0 12px rgba(255,232,106,.06);
+      text-shadow: 0 0 9px rgba(255,232,106,.28);
+    }
+
+    .dancer-card .badge.trend.compact-trend .badge-icon {
+      width: 12px;
+      height: 12px;
+      flex-basis: 12px;
+      margin-right: 0;
+      color: #FFD83D;
+      filter:
+        drop-shadow(0 0 5px rgba(255,218,54,.55))
+        drop-shadow(0 0 10px rgba(255,186,24,.28));
+    }
+
+    .dancer-card .badge.trend.compact-trend:hover {
+      border-color: rgba(255,232,106,.68);
+      background:
+        radial-gradient(circle at 88% 18%, rgba(168,85,247,.18), transparent 0 62%),
+        linear-gradient(135deg, rgba(90,63,11,.56), rgba(22,13,4,.46));
+      box-shadow:
+        0 0 15px rgba(255,205,44,.22),
+        0 0 22px rgba(0,0,0,.38),
+        inset 0 0 14px rgba(255,232,106,.08);
+    }
+
+    .badge.featured,
+    .pill.featured {
+      color: rgba(255,232,106,.92);
+      border-color: rgba(255,218,54,.34);
+      background: rgba(58,43,8,.28);
+      box-shadow:
+        0 0 12px rgba(255,218,54,.12),
+        inset 0 0 12px rgba(255,232,106,.045);
+      backdrop-filter: blur(16px);
+    }
+
+    .badge.featured:hover,
+    .pill.featured:hover {
+      border-color: rgba(255,232,106,.48);
+      background: rgba(74,54,8,.38);
+      box-shadow:
+        0 0 16px rgba(255,218,54,.18),
+        inset 0 0 12px rgba(255,232,106,.07);
+    }
+
+    @media (max-width: 420px) {
+      .dancer-card .badge,
+      .dancer-card .pill {
+        padding-inline: 10px;
+      }
+
+      .badge-icon {
+        width: 11px;
+        height: 11px;
+        flex-basis: 11px;
+        margin-right: 4px;
+      }
+    }
+    /* Dancr hero light wall */
+    .reference-hero {
+      isolation: isolate;
+      overflow: hidden;
+      background:
+        linear-gradient(90deg, #030304 0%, rgba(5,4,12,.99) 30%, rgba(14,8,37,.94) 60%, rgba(34,13,105,.7) 84%, rgba(63,20,202,.58) 100%),
+        radial-gradient(ellipse at 106% 50%, rgba(117,42,255,.58), transparent 0 52%),
+        radial-gradient(ellipse at 86% 52%, rgba(67,39,185,.26), transparent 0 46%),
+        #030304;
+      background-position: right center;
+      background-size: cover;
+    }
+
+    .reference-hero:before {
+      content: "";
+      position: absolute;
+      right: calc(9.4% - 112px);
+      bottom: 0;
+      z-index: 0;
+      width: clamp(210px, 26vw, 310px);
+      height: clamp(220px, 28vw, 340px);
+      display: block;
+      background-image: url("data:image/svg+xml,%3Csvg width='220' height='250' viewBox='0 0 220 250' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23030306'%3E%3Ccircle cx='121' cy='35' r='17'/%3E%3Cpath d='M110 55c14-5 27 1 34 16 8 18 6 43-1 67-4 13-6 26-4 41l8 51c1 7-4 13-11 13-5 0-9-3-11-8l-20-62-24 58c-2 6-8 9-14 6-5-2-8-8-6-13l22-72c4-13 6-27 6-41 0-24 5-48 21-56Z'/%3E%3Cpath d='M137 71c13 16 24 33 34 52 3 5 1 12-4 15-5 3-12 1-15-4l-27-42 12-21Z'/%3E%3Cpath d='M112 70c-17 14-33 28-48 44-4 5-12 5-16 0-4-4-4-11 0-15l45-47 19 18Z'/%3E%3Cpath d='M151 126c12-11 23-23 34-36 3-4 10-5 14-1 4 4 5 10 1 14-10 14-23 28-37 40l-12-17Z'/%3E%3Cpath d='M70 108c-15 18-27 38-36 60-2 5-8 8-14 5-5-2-8-8-5-14 10-24 24-47 41-67l14 16Z'/%3E%3C/g%3E%3Cg fill='%238b5cf6' opacity='.32'%3E%3Ccircle cx='121' cy='35' r='17'/%3E%3Cpath d='M110 55c14-5 27 1 34 16 8 18 6 43-1 67-4 13-6 26-4 41l8 51c1 7-4 13-11 13-5 0-9-3-11-8l-20-62-24 58c-2 6-8 9-14 6-5-2-8-8-6-13l22-72c4-13 6-27 6-41 0-24 5-48 21-56Z'/%3E%3C/g%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right bottom;
+      background-size: contain;
+      filter:
+        drop-shadow(0 0 16px rgba(139,92,246,.24))
+        drop-shadow(0 0 34px rgba(91,33,255,.16));
+      opacity: .4;
+      mix-blend-mode: screen;
+      pointer-events: none;
+    }
+
+    .reference-hero:after {
+      content: "";
+      position: absolute;
+      top: -22%;
+      right: 9.4%;
+      bottom: -22%;
+      z-index: 0;
+      width: 4px;
+      border-radius: 999px;
+      background: linear-gradient(180deg, transparent 0%, rgba(210,142,255,.2) 12%, rgba(238,197,255,.96) 50%, rgba(163,87,255,.58) 82%, transparent 100%);
+      box-shadow:
+        0 0 8px rgba(225,170,255,.82),
+        0 0 22px rgba(155,92,246,.68),
+        0 0 58px rgba(91,33,255,.44),
+        28px 0 82px rgba(91,33,255,.38),
+        -42px 0 92px rgba(91,33,255,.2);
+      opacity: .9;
+      pointer-events: none;
+    }
+
+    .reference-hero .hero-copy {
+      position: relative;
+      z-index: 1;
+      max-width: 650px;
+      padding: 0;
+      border-radius: 0;
+      background: transparent;
+      box-shadow: none;
+    }
+
+    .reference-hero .hero-copy:before {
+      display: none;
+    }
+
+    .reference-hero .hero-copy:after {
+      display: none;
+    }
+
+    .reference-hero h2,
+    .reference-hero p {
+      position: relative;
+      z-index: 1;
+    }
+
+    @media (max-width: 560px) {
+      .reference-hero:before {
+        right: -12px;
+        bottom: 2px;
+        width: 176px;
+        height: 198px;
+        opacity: .34;
+      }
+
+      .reference-hero .hero-copy {
+        padding: 0;
+      }
+
+      .reference-hero .hero-copy:after {
+        right: -92px;
+        width: 12px;
+      }
+
+      .reference-hero .hero-copy:before {
+        left: -18px;
+        right: -102px;
+      }
+    }
+
+    /* Dancr header wordmark */
+    .dancr-home-logo {
+      position: relative;
+      min-width: 124px;
+      min-height: 46px;
+      padding: 6px 15px 8px;
+      border-radius: 14px;
+      background:
+        radial-gradient(circle at 100% 30%, rgba(139,92,246,.28), transparent 0 64%),
+        linear-gradient(90deg, rgba(2,2,5,.96), rgba(7,3,18,.82));
+      border: 1px solid rgba(139,92,246,.18);
+      box-shadow:
+        0 0 24px rgba(139,92,246,.12),
+        inset 0 0 24px rgba(139,92,246,.045);
+      transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease;
+    }
+
+    .dancr-home-logo:hover {
+      transform: translateY(-1px);
+      border-color: rgba(168,85,247,.46);
+      box-shadow:
+        0 0 22px rgba(139,92,246,.24),
+        0 0 52px rgba(91,33,255,.16),
+        inset 0 0 26px rgba(139,92,246,.07);
+    }
+
+    .dancr-wordmark {
+      display: inline-flex;
+      align-items: center;
+      gap: 0;
+      font-family: "Space Grotesk", "Manrope", sans-serif;
+      font-size: 34px;
+      font-weight: 700;
+      letter-spacing: -.075em;
+      line-height: 1;
+      text-transform: lowercase;
+    }
+
+    .wordmark-light {
+      color: #f8f7fb;
+      filter: drop-shadow(0 0 8px rgba(255,255,255,.12));
+    }
+
+    .wordmark-violet {
+      color: #9b5cff;
+      filter:
+        drop-shadow(0 0 8px rgba(139,92,246,.58))
+        drop-shadow(0 0 18px rgba(91,33,255,.28));
+    }
+
+    @media (max-width: 480px) {
+      .dancr-home-logo {
+        min-width: 96px;
+        min-height: 40px;
+        padding: 5px 11px 7px;
+      }
+
+      .dancr-wordmark {
+        font-size: 28px;
+      }
+    }
+
+    /* Tailored luxury radius system */
+    .app {
+      border-radius: 18px;
+    }
+
+    header {
+      border-radius: 18px 18px 0 0;
+    }
+
+    .reference-hero,
+    .controls,
+    .page-panel,
+    .auth-card,
+    .dashboard-wide,
+    .profile-modal {
+      border-radius: 16px;
+    }
+
+    .stat,
+    .metric-card,
+    .info-tile,
+    .venue.venue-card,
+    .admin-item,
+    .toggle-row,
+    .checkout-total,
+    .value-message,
+    .rule-note,
+    .stripe-hosted,
+    .lock-row {
+      border-radius: 14px;
+    }
+
+    .dancer-card {
+      border-radius: 22px;
+    }
+
+    .dancer-card .portrait,
+    .dancer-card .portrait:after {
+      border-radius: inherit;
+    }
+
+    .venue-main-photo,
+    .venue-hero,
+    .map-preview,
+    .club-mini {
+      border-radius: 14px;
+    }
+
+    .modal-image,
+    .profile-modal .modal-identity {
+      border-radius: 14px;
+    }
+
+    .profile-modal .thumb {
+      border-radius: 10px;
+    }
+
+    @media (min-width: 900px) {
+      .app {
+        border-radius: 20px;
+      }
+
+      header {
+        border-radius: 20px 20px 0 0;
+      }
+
+      .dancer-card {
+        border-radius: 22px;
+      }
+    }
+
+    /* Profile modal spacing polish */
+    .profile-modal .modal-body {
+      gap: 10px;
+      padding: 10px 10px 14px;
+    }
+
+    .profile-modal .modal-grid {
+      gap: 8px;
+      align-items: stretch;
+    }
+
+    .profile-modal .info-tile {
+      position: relative;
+      overflow: hidden;
+      min-height: 0;
+      padding: 12px 14px;
+      display: grid;
+      align-content: start;
+      gap: 7px;
+      border-color: rgba(192,132,255,.26);
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.045), transparent 72%),
+        linear-gradient(135deg, rgba(22,18,32,.9), rgba(8,8,12,.96));
+      box-shadow:
+        0 14px 34px rgba(0,0,0,.34),
+        inset 0 0 18px rgba(155,92,255,.04);
+    }
+
+    .profile-modal .info-tile:before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 12px;
+      bottom: 12px;
+      width: 2px;
+      border-radius: 999px;
+      background: rgba(168,85,247,.68);
+      box-shadow: 0 0 14px rgba(168,85,247,.44);
+    }
+
+    .profile-modal .info-tile strong {
+      margin-bottom: 0;
+      color: #b9a8d8;
+      font-size: 11px;
+      line-height: 1.1;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    .profile-modal .info-tile .meta {
+      display: grid;
+      gap: 5px;
+      color: #d8d1e6;
+      font-weight: 760;
+      line-height: 1.2;
+    }
+
+    .profile-modal .modal-identity-stack {
+      position: absolute;
+      top: 14px;
+      left: 14px;
+      z-index: 4;
+      display: grid;
+      justify-items: start;
+      gap: 6px;
+      max-width: calc(100% - 126px);
+    }
+
+    .profile-modal .modal-identity-stack .modal-identity {
+      position: static;
+      inset: auto;
+      max-width: 100%;
+    }
+
+    .profile-modal .modal-identity-stack .modal-rank {
+      position: static;
+      z-index: 1;
+      width: fit-content;
+      min-height: 23px;
+      padding-inline: 8px;
+      margin-left: 2px;
+      gap: 5px;
+      font-size: 10.5px;
+      line-height: 1;
+      max-width: 100%;
+    }
+
+    @media (max-width: 560px) {
+      .profile-modal .modal-identity-stack {
+        top: 10px;
+        left: 10px;
+        max-width: calc(100% - 96px);
+      }
+    }
+
+    .profile-modal .info-tile .meta.detail-line,
+    .profile-modal .schedule-stack .detail-line,
+    .profile-modal .schedule-stack .pill-row {
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      gap: 6px;
+      min-width: 0;
+    }
+
+    .profile-modal .schedule-stack {
+      gap: 9px;
+    }
+
+    .profile-modal .schedule-stack .venue-inline-link {
+      margin-left: 0;
+    }
+
+    .profile-modal .schedule-stack .pill {
+      max-width: calc(100% - 28px);
+    }
+
+    .profile-modal .detail-line {
+      color: #f1ecf7;
+      font-weight: 850;
+    }
+
+    .profile-modal .schedule-time {
+      color: #86efac;
+      font-weight: 900;
+      text-shadow: 0 0 14px rgba(34,197,94,.2);
+    }
+
+    .profile-modal .modal-schedule-text {
+      min-width: 0;
+      color: #d8d1e6;
+      font-size: 16px;
+      font-weight: 900;
+      line-height: 1.25;
+      letter-spacing: 0;
+      text-shadow: 0 0 13px currentColor, 0 2px 10px rgba(0,0,0,.58);
+    }
+
+    .profile-modal .modal-schedule-text.tonight {
+      color: #86efac;
+    }
+
+    .profile-modal .modal-schedule-text.upcoming {
+      color: #93c5fd;
+    }
+
+    .profile-modal .schedule-stack .schedule-text-row {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      min-width: 0;
+      margin-top: 3px;
+    }
+
+    .dancer-card .profile-body > .pill-row {
+      display: grid;
+      grid-template-columns: 16px minmax(0, 1fr);
+      align-items: center;
+      column-gap: 7px;
+      width: 100%;
+      max-width: 100%;
+    }
+
+    .dancer-card .profile-body > .pill-row .venue-dot {
+      justify-self: center;
+      margin-right: 0;
+    }
+
+    .dancer-card .profile-body > .pill-row .pill {
+      width: 100%;
+      max-width: 100%;
+      justify-content: center;
+      align-items: center;
+      gap: 5px;
+      padding-inline: 10px;
+      font-size: 12px;
+      line-height: 1;
+      white-space: nowrap;
+    }
+
+    .dancer-card .schedule-label,
+    .dancer-card .schedule-dot,
+    .dancer-card .schedule-time-text {
+      display: inline-flex;
+      align-items: center;
+      line-height: 1;
+    }
+
+    .dancer-card .schedule-dot {
+      opacity: .78;
+      transform: translateY(-.5px);
+    }
+
+    /* Premium venue profile polish */
+    .venue-detail .venue-hero {
+      overflow: hidden;
+      border-color: rgba(155,92,255,.24);
+      background:
+        radial-gradient(circle at 88% 0%, rgba(155,92,255,.16), transparent 34%),
+        linear-gradient(180deg, rgba(255,255,255,.035), transparent 70%),
+        rgba(10,10,14,.9);
+      box-shadow:
+        0 26px 72px rgba(0,0,0,.56),
+        0 0 34px rgba(155,92,255,.08),
+        inset 0 0 28px rgba(255,255,255,.026);
+    }
+
+    .venue-detail .venue-main-photo {
+      min-height: 254px;
+      border-radius: 14px 14px 0 0;
+      background:
+        radial-gradient(circle at 75% 30%, rgba(155,92,255,.22), transparent 0 34%),
+        linear-gradient(90deg, rgba(4,4,8,.96), rgba(11,7,21,.88) 54%, rgba(56,24,119,.46));
+      overflow: hidden;
+    }
+
+    .venue-detail .venue-main-photo:before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(90deg, transparent 0 70%, rgba(154,92,255,.5) 82%, rgba(154,92,255,.18) 100%),
+        repeating-linear-gradient(90deg, transparent 0 42px, rgba(255,255,255,.035) 43px, transparent 44px);
+      opacity: .64;
+    }
+
+    .venue-detail .venue-main-photo:after {
+      content: "";
+      position: absolute;
+      inset: auto 0 0;
+      height: 44%;
+      background: linear-gradient(180deg, transparent, rgba(4,4,6,.92));
+      pointer-events: none;
+    }
+
+    .venue-detail .venue-art {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      padding: 28px;
+      background:
+        radial-gradient(circle at 50% 52%, rgba(53,216,255,.16), transparent 0 24%),
+        linear-gradient(180deg, rgba(5,5,8,.04), rgba(5,5,8,.26));
+    }
+
+    .venue-detail .venue-art:after {
+      display: none;
+    }
+
+    .venue-sign {
+      position: relative;
+      z-index: 2;
+      display: grid;
+      gap: 8px;
+      justify-items: center;
+      width: min(78%, 430px);
+      padding: 22px 18px;
+      border: 1px solid rgba(155,92,255,.35);
+      border-radius: 18px;
+      background: rgba(3,3,6,.48);
+      box-shadow:
+        0 0 34px rgba(155,92,255,.18),
+        inset 0 0 24px rgba(255,255,255,.035);
+      backdrop-filter: blur(10px);
+    }
+
+    .venue-sign-name {
+      color: #f7f3ff;
+      font-size: clamp(28px, 8vw, 54px);
+      font-weight: 950;
+      line-height: .92;
+      text-align: center;
+      text-transform: uppercase;
+      letter-spacing: .02em;
+      text-shadow:
+        0 0 18px rgba(155,92,255,.42),
+        0 12px 28px rgba(0,0,0,.72);
+    }
+
+    .venue-sign-meta {
+      color: #cdbdff;
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: .16em;
+      text-transform: uppercase;
+    }
+
+    .venue-quick-stats {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+      margin-top: 4px;
+    }
+
+    .venue-quick-stat {
+      appearance: none;
+      display: block;
+      width: 100%;
+      min-height: 58px;
+      padding: 10px 12px;
+      border: 1px solid rgba(192,132,255,.16);
+      border-radius: 14px;
+      background: rgba(8,8,12,.68);
+      box-shadow: inset 0 0 14px rgba(255,255,255,.022);
+      color: inherit;
+      font: inherit;
+      text-align: left;
+      cursor: pointer;
+      transition: border-color .18s ease, box-shadow .18s ease, transform .18s ease;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+    }
+
+    .venue-quick-stat:hover,
+    .venue-quick-stat:focus-visible {
+      border-color: rgba(139,92,246,.58);
+      box-shadow:
+        inset 0 0 14px rgba(255,255,255,.032),
+        0 0 22px rgba(139,92,246,.18);
+      outline: none;
+      transform: translateY(-1px);
+    }
+
+    .venue-quick-stat strong {
+      display: block;
+      color: #f5f2ff;
+      font-size: 16px;
+      line-height: 1.05;
+    }
+
+    .venue-quick-stat span {
+      display: block;
+      margin-top: 4px;
+      color: #bdb2cf;
+      font-size: 11px;
+      font-weight: 800;
+    }
+
+    .venue-detail .section-title[id] {
+      scroll-margin-top: 88px;
+    }
+
+    .venue-detail .venue-info .info-tile {
+      border-color: rgba(192,132,255,.16);
+      background: rgba(10,10,14,.68);
+    }
+
+    .venue-detail .venue-hero-body > .row {
+      align-items: flex-start;
+      gap: 10px;
+    }
+
+    .venue-status-pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 34px;
+      padding: 0 12px;
+      border: 1px solid rgba(53,216,255,.28);
+      border-radius: 999px;
+      color: #8ef4ff;
+      background: rgba(53,216,255,.08);
+      font-size: 11px;
+      font-weight: 950;
+      white-space: nowrap;
+      box-shadow: 0 0 18px rgba(53,216,255,.1);
+    }
+
+    .venue-detail .venue-hero-body p {
+      color: #d2cadf;
+      line-height: 1.45;
+    }
+
+    .venue-detail .section-title {
+      margin-top: 8px;
+      padding-left: 10px;
+      border-left: 3px solid rgba(168,85,247,.68);
+      text-shadow: 0 0 18px rgba(168,85,247,.18);
+    }
+
+    .venue-detail .map-preview {
+      min-height: 132px;
+      border-color: rgba(155,92,255,.22);
+      background:
+        radial-gradient(circle at 50% 48%, rgba(155,92,255,.2), transparent 0 22%),
+        linear-gradient(90deg, transparent 0 26%, rgba(155,92,255,.12) 26% 27%, transparent 27% 62%, rgba(53,216,255,.1) 62% 63%, transparent 63%),
+        linear-gradient(0deg, transparent 0 32%, rgba(255,255,255,.06) 32% 33%, transparent 33% 68%, rgba(255,255,255,.055) 68% 69%, transparent 69%),
+        rgba(7,7,11,.92);
+    }
+
+    .venue-detail .map-preview:after {
+      width: 20px;
+      background: #9b5cff;
+      box-shadow: 0 0 24px rgba(155,92,255,.36);
+    }
+
+    .venue-shift-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .venue-shift-row {
+      display: grid;
+      grid-template-columns: 58px minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 12px;
+      width: 100%;
+      padding: 10px;
+      color: #f7f3ff;
+      text-align: left;
+      border: 1px solid rgba(192,132,255,.18);
+      border-radius: 16px;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.04), transparent 72%),
+        rgba(10,10,14,.72);
+      box-shadow: 0 18px 46px rgba(0,0,0,.34), inset 0 0 18px rgba(168,85,247,.035);
+      cursor: pointer;
+      transition: border-color .18s ease, box-shadow .18s ease, transform .18s ease;
+    }
+
+    .venue-shift-row:hover,
+    .venue-shift-row:focus-visible {
+      border-color: rgba(168,85,247,.52);
+      box-shadow: 0 22px 58px rgba(0,0,0,.44), 0 0 22px rgba(168,85,247,.14);
+      outline: none;
+      transform: translateY(-1px);
+    }
+
+    .venue-shift-avatar {
+      width: 58px;
+      height: 58px;
+      border-radius: 50%;
+      background-size: cover;
+      background-position: center top;
+      border: 0;
+      box-shadow: none;
+    }
+
+    .venue-shift-avatar.has-custom-photo {
+      background-image: var(--custom-photo);
+      background-position: var(--custom-photo-position, center);
+    }
+
+    .venue-shift-copy {
+      display: grid;
+      gap: 6px;
+      min-width: 0;
+    }
+
+    .venue-shift-copy strong {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      min-width: 0;
+      font-size: 17px;
+      line-height: 1.05;
+    }
+
+    .venue-shift-copy span {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      min-width: 0;
+      color: #9fd0ff;
+      font-size: 13px;
+      font-weight: 900;
+      line-height: 1.2;
+      text-shadow: 0 0 14px rgba(59,130,246,.18);
+    }
+
+    .venue-shift-rank {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      min-height: 30px;
+      padding: 0 10px;
+      color: #ffe17a;
+      font-size: 12px;
+      font-weight: 950;
+      border: 1px solid rgba(255,216,74,.42);
+      border-radius: 999px;
+      background: rgba(47,36,11,.42);
+      box-shadow: 0 0 16px rgba(255,216,74,.1), 0 0 22px rgba(139,92,246,.08);
+    }
+
+    .venue-directions-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 9px;
+      width: 100%;
+      min-height: 52px;
+      color: #fff;
+      font-weight: 950;
+      text-decoration: none;
+    }
+
+    @media (max-width: 560px) {
+      .venue-quick-stats {
+        grid-template-columns: 1fr;
+      }
+
+      .venue-detail .venue-main-photo {
+        min-height: 224px;
+      }
+
+      .venue-shift-row {
+        grid-template-columns: 50px minmax(0, 1fr);
+        gap: 10px;
+      }
+
+      .venue-detail .venue-hero-body > .row {
+        display: grid;
+        grid-template-columns: 1fr;
+      }
+
+      .venue-status-pill {
+        width: fit-content;
+        max-width: 100%;
+        white-space: normal;
+        text-align: left;
+      }
+
+      .venue-shift-avatar {
+        width: 50px;
+        height: 50px;
+      }
+
+      .venue-shift-rank {
+        grid-column: 2;
+        justify-self: start;
+      }
+    }
+
+    @media (max-width: 420px) {
+      .dancer-card .profile-body > .pill-row {
+        grid-template-columns: 15px minmax(0, 1fr);
+        column-gap: 6px;
+      }
+
+      .dancer-card .profile-body > .pill-row .pill {
+        padding-inline: 8px;
+        font-size: 11px;
+      }
+    }
+
+    .profile-modal .metric-value,
+    .profile-modal .interest-count {
+      color: #f8f7fb;
+      font-size: 16px;
+      font-weight: 950;
+      text-shadow: 0 0 16px rgba(168,85,247,.22);
+    }
+
+    .profile-modal .interest-count.muted,
+    .profile-modal .muted-value {
+      color: #aaa1b8;
+      font-size: 14px;
+      font-weight: 750;
+      text-shadow: none;
+    }
+
+    .profile-modal .interest-tile {
+      min-height: 0;
+    }
+
+    .profile-modal .social-tile {
+      padding-block: 13px;
+    }
+
+    .profile-modal .social-links {
+      gap: 8px;
+      margin-top: 2px;
+    }
+
+    .profile-modal .modal-actions {
+      gap: 10px;
+      margin-top: 8px;
+    }
+
+    .profile-modal .modal-actions .action-btn {
+      min-height: 46px;
+    }
+
+    .profile-modal .modal-actions .going-btn {
+      min-height: 48px;
+    }
+
+    @media (max-width: 420px) {
+      .profile-modal .modal-body {
+        padding-inline: 8px;
+      }
+
+      .profile-modal .info-tile {
+        padding: 11px 12px;
+      }
+
+      .profile-modal .modal-actions {
+        gap: 8px;
+      }
+    }
+    /* Cleaner full-profile identity cluster */
+    .profile-modal .modal-identity-stack {
+      top: 12px;
+      left: 12px;
+      gap: 5px;
+      max-width: calc(100% - 112px);
+    }
+
+    .profile-modal .modal-identity-stack .modal-identity {
+      width: fit-content;
+      min-width: 148px;
+      max-width: 100%;
+      overflow: visible;
+      padding: 7px 13px 8px 9px;
+      border-radius: 11px;
+      border-color: rgba(192,132,255,.16);
+      background: rgba(8,8,12,.28);
+      box-shadow:
+        0 10px 22px rgba(0,0,0,.24),
+        0 0 12px rgba(155,92,255,.08),
+        inset 0 0 10px rgba(255,255,255,.018);
+      backdrop-filter: blur(12px) saturate(118%);
+    }
+
+    .profile-modal .modal-identity-stack .modal-identity h2 {
+      display: flex;
+      align-items: center;
+      font-size: clamp(17px, 2.6vw, 20px);
+      line-height: 1;
+      gap: 6px;
+      letter-spacing: 0;
+      white-space: nowrap;
+    }
+
+    .profile-modal .modal-identity-stack .modal-identity .verified-mark {
+      flex: 0 0 auto;
+      margin-left: 0;
+    }
+
+    .profile-modal .modal-identity-stack .modal-identity .pill-row {
+      margin-top: 5px;
+    }
+
+    .profile-modal .modal-identity-stack .modal-identity #modalCity {
+      min-height: 23px;
+      padding: 0 9px;
+      font-size: 10.5px;
+      border-color: rgba(192,132,255,.18);
+      background: rgba(8,8,12,.42);
+      box-shadow: inset 0 0 8px rgba(155,92,255,.035);
+    }

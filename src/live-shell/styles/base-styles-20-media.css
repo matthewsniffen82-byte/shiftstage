@@ -1,0 +1,1093 @@
+
+    @media (max-width: 560px) {
+      .dancer-card .profile-body {
+        padding: 0 10px 12px !important;
+      }
+
+      .dancer-card .card-stage-name {
+        font-size: clamp(.96rem, 4.05vw, 1.08rem) !important;
+      }
+
+      .dancer-card .card-venue-line {
+        grid-template-columns: 14px minmax(0, auto) auto !important;
+        font-size: clamp(.74rem, 3.1vw, .84rem) !important;
+      }
+
+      .dancer-card .profile-body > .schedule-row {
+        grid-template-columns: 14px minmax(0, 1fr) !important;
+      }
+
+      .dancer-card .card-schedule-text,
+      .dancer-card .no-shifts-state {
+        font-size: clamp(.74rem, 3.05vw, .82rem) !important;
+      }
+
+      .profile-modal .modal-grid {
+        gap: 8px !important;
+        grid-auto-rows: minmax(74px, auto) !important;
+      }
+
+      .profile-modal .modal-grid > .info-tile:not(.social-tile) {
+        min-height: 74px !important;
+        padding: 10px 12px !important;
+      }
+
+      .profile-modal .modal-schedule-text,
+      .profile-modal .modal-schedule-text.tonight,
+      .profile-modal .modal-schedule-text.upcoming {
+        font-size: .84rem !important;
+      }
+    }
+    /* Premium black-card visual system pass
+       Keeps the current layout intact while making color, borders, and glow more restrained. */
+    :root {
+      --lux-bg: #050507;
+      --lux-surface: #0a0a0f;
+      --lux-panel: #0e0e14;
+      --lux-card: #111118;
+      --lux-border: rgba(255, 255, 255, 0.07);
+      --lux-violet-border: rgba(139, 92, 246, 0.18);
+      --lux-violet: #6d28d9;
+      --lux-violet-bright: #8b5cf6;
+      --lux-violet-glow: rgba(109, 40, 217, 0.2);
+      --lux-cyan: #22c7ff;
+      --lux-muted: rgba(184, 184, 197, 0.76);
+    }
+
+    html,
+    body {
+      background: var(--lux-bg) !important;
+      color: #fff;
+    }
+
+    body {
+      background:
+        radial-gradient(circle at 80% -10%, rgba(109, 40, 217, 0.09), transparent 34rem),
+        radial-gradient(circle at 0% 16%, rgba(124, 58, 237, 0.06), transparent 28rem),
+        var(--lux-bg) !important;
+    }
+
+    .shell,
+    .page,
+    .screen,
+    .dashboard-shell {
+      background: transparent !important;
+    }
+
+    .topbar,
+    .app-header,
+    header {
+      background:
+        linear-gradient(180deg, rgba(14, 14, 20, 0.95), rgba(5, 5, 7, 0.97)) !important;
+      border-color: rgba(255, 255, 255, 0.055) !important;
+      box-shadow: 0 1px 0 rgba(139, 92, 246, 0.08), 0 14px 36px rgba(0, 0, 0, 0.24) !important;
+    }
+
+    .brand,
+    .logo-home {
+      background:
+        linear-gradient(180deg, rgba(17, 17, 24, 0.92), rgba(8, 8, 12, 0.96)) !important;
+      border-color: rgba(139, 92, 246, 0.2) !important;
+      box-shadow:
+        inset 0 0 0 1px rgba(255, 255, 255, 0.025),
+        0 12px 30px rgba(0, 0, 0, 0.36),
+        0 0 16px rgba(109, 40, 217, 0.16) !important;
+    }
+
+    .login-button,
+    .header-actions button,
+    .menu-button {
+      background: rgba(8, 8, 12, 0.9) !important;
+      border-color: rgba(139, 92, 246, 0.22) !important;
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.025) !important;
+      color: rgba(255, 255, 255, 0.94) !important;
+    }
+
+    .login-button:hover,
+    .header-actions button:hover,
+    .menu-button:hover {
+      border-color: rgba(139, 92, 246, 0.4) !important;
+      box-shadow: 0 0 16px rgba(109, 40, 217, 0.16) !important;
+    }
+
+    .hero,
+    .hero.reference-hero {
+      border-color: rgba(139, 92, 246, 0.2) !important;
+      background-color: #07070b !important;
+      box-shadow:
+        inset 0 0 0 1px rgba(255, 255, 255, 0.022),
+        0 18px 46px rgba(0, 0, 0, 0.34) !important;
+    }
+
+    .controls-panel,
+    .dashboard-panel,
+    .auth-panel,
+    .profile-setup-card,
+    .profile-modal .modal-grid > .info-tile,
+    .profile-modal .social-tile,
+    .info-tile,
+    .metric-card,
+    .stat-card,
+    .customer-card,
+    .dancer-dashboard-card {
+      background:
+        linear-gradient(180deg, rgba(17, 17, 24, 0.94), rgba(8, 8, 12, 0.98)) !important;
+      border-color: var(--lux-border) !important;
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.025),
+        0 16px 38px rgba(0, 0, 0, 0.28) !important;
+    }
+
+    .card,
+    .dancer-card,
+    .venue-card,
+    .venue,
+    .venue-row,
+    .club-card {
+      background: linear-gradient(180deg, rgba(14, 14, 20, 0.92), rgba(5, 5, 7, 0.98)) !important;
+      border-color: rgba(139, 92, 246, 0.14) !important;
+      box-shadow:
+        inset 0 0 0 1px rgba(255, 255, 255, 0.018),
+        0 14px 34px rgba(0, 0, 0, 0.35) !important;
+    }
+
+    .card:hover,
+    .dancer-card:hover,
+    .venue-card:hover,
+    .venue:hover,
+    .venue-row:hover,
+    .club-card:hover {
+      border-color: rgba(139, 92, 246, 0.34) !important;
+      box-shadow:
+        inset 0 0 0 1px rgba(255, 255, 255, 0.025),
+        0 18px 42px rgba(0, 0, 0, 0.42),
+        0 0 18px rgba(109, 40, 217, 0.16) !important;
+    }
+
+    .section-label,
+    .info-tile h3,
+    .profile-modal .info-tile h3,
+    .social-tile h3,
+    .eyebrow,
+    .dashboard-section-title {
+      color: rgba(224, 214, 255, 0.78) !important;
+      letter-spacing: 0.15em !important;
+      text-shadow: none !important;
+    }
+
+    .info-tile .value,
+    .info-tile strong,
+    .metric-card strong,
+    .stat-card strong,
+    .profile-modal .info-tile strong {
+      color: rgba(255, 255, 255, 0.96) !important;
+      text-shadow: none !important;
+    }
+
+    .muted,
+    .caption,
+    .empty-state,
+    .inactive-state,
+    .no-shifts-state,
+    .profile-modal .info-tile p,
+    .profile-modal .info-tile span {
+      color: var(--lux-muted) !important;
+      text-shadow: none !important;
+    }
+
+    .no-shifts-state,
+    .empty-state {
+      font-size: 0.95rem !important;
+      letter-spacing: 0.035em !important;
+    }
+
+    .verified-check,
+    .verified-mark {
+      background: var(--lux-cyan) !important;
+      color: #031116 !important;
+      box-shadow: 0 0 12px rgba(34, 199, 255, 0.34) !important;
+    }
+
+    .tab-pill {
+      background: linear-gradient(180deg, rgba(19, 19, 26, 0.9), rgba(9, 9, 13, 0.96)) !important;
+      border-color: rgba(255, 255, 255, 0.075) !important;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.025) !important;
+    }
+
+    .tab-pill:hover {
+      border-color: rgba(139, 92, 246, 0.28) !important;
+      box-shadow: 0 0 14px rgba(109, 40, 217, 0.12) !important;
+    }
+
+    .tab-pill.active {
+      background: linear-gradient(135deg, #4c1d95, #6d28d9) !important;
+      border-color: rgba(167, 139, 250, 0.38) !important;
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.12),
+        0 0 18px rgba(109, 40, 217, 0.26) !important;
+    }
+
+    select,
+    input,
+    textarea,
+    .select-field,
+    .form-field {
+      background: #050507 !important;
+      border-color: var(--dancr-color-border, #334155) !important;
+      box-shadow: none !important;
+      color: #fff !important;
+    }
+
+    select:focus,
+    input:focus,
+    textarea:focus {
+      border-color: var(--dancr-color-brand-primary, #7c3aed) !important;
+      outline: 2px solid var(--dancr-color-brand-primary, #7c3aed) !important;
+      outline-offset: -2px !important;
+      box-shadow: none !important;
+    }
+
+    .select-field:focus-within,
+    .form-field:focus-within {
+      border-color: var(--dancr-color-brand-primary, #7c3aed) !important;
+      outline: 2px solid var(--dancr-color-brand-primary, #7c3aed) !important;
+      outline-offset: -2px !important;
+      box-shadow: none !important;
+    }
+
+    .locate-btn {
+      background: linear-gradient(135deg, #4c1d95 0%, #6d28d9 70%, rgba(34, 199, 255, 0.64) 100%) !important;
+      box-shadow: 0 0 18px rgba(109, 40, 217, 0.2) !important;
+    }
+
+    .action-btn,
+    .primary-action,
+    .follow-btn,
+    .going-btn,
+    .venue-page .primary-action {
+      background: linear-gradient(135deg, #4c1d95, #7c3aed) !important;
+      border-color: rgba(167, 139, 250, 0.28) !important;
+      box-shadow: 0 0 20px rgba(109, 40, 217, 0.24) !important;
+    }
+
+    .action-btn:hover,
+    .primary-action:hover,
+    .follow-btn:hover,
+    .going-btn:hover {
+      box-shadow: 0 0 24px rgba(109, 40, 217, 0.32) !important;
+    }
+
+    .notify-btn,
+    .secondary-action,
+    .outline-action,
+    .profile-modal .modal-actions button:not(.follow-btn):not(.going-btn) {
+      background: linear-gradient(180deg, rgba(10, 10, 15, 0.96), rgba(5, 5, 7, 0.98)) !important;
+      border-color: rgba(139, 92, 246, 0.22) !important;
+      box-shadow: none !important;
+      color: rgba(255, 255, 255, 0.92) !important;
+    }
+
+    .action-btn.is-active,
+    .action-btn.following,
+    .follow-btn.following,
+    .notify-btn.active,
+    .going-btn.is-active {
+      background: linear-gradient(180deg, rgba(20, 20, 27, 0.96), rgba(10, 10, 15, 0.98)) !important;
+      border-color: rgba(139, 92, 246, 0.26) !important;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.035) !important;
+      color: #fff !important;
+    }
+
+    .social-link,
+    .profile-modal .social-link,
+    .social-icon-button {
+      background: rgba(5, 5, 7, 0.9) !important;
+      border-color: rgba(139, 92, 246, 0.2) !important;
+      box-shadow: none !important;
+    }
+
+    .social-link:hover,
+    .profile-modal .social-link:hover,
+    .social-icon-button:hover {
+      border-color: rgba(139, 92, 246, 0.42) !important;
+      box-shadow: 0 0 14px rgba(109, 40, 217, 0.16) !important;
+    }
+
+    .card-schedule-text.tonight,
+    .modal-schedule-text.tonight,
+    .schedule-time.tonight {
+      text-shadow: 0 0 10px rgba(255, 79, 195, 0.32) !important;
+    }
+
+    .card-schedule-text.upcoming,
+    .modal-schedule-text.upcoming,
+    .schedule-time.upcoming {
+      text-shadow: 0 0 10px rgba(34, 199, 255, 0.24) !important;
+    }
+
+    .profile-modal .thumb.active,
+    .gallery-thumb.active,
+    .thumbnail.active {
+      border-color: rgba(139, 92, 246, 0.55) !important;
+      box-shadow: 0 0 16px rgba(139, 92, 246, 0.28) !important;
+    }
+
+    .modal,
+    .profile-modal,
+    .drawer,
+    .overlay-panel {
+      background: rgba(5, 5, 7, 0.92) !important;
+    }
+
+    .modal-card,
+    .profile-modal .modal-content,
+    .auth-modal,
+    .share-modal {
+      background: linear-gradient(180deg, rgba(12, 12, 18, 0.96), rgba(5, 5, 7, 0.98)) !important;
+      border-color: rgba(139, 92, 246, 0.18) !important;
+      box-shadow: 0 24px 64px rgba(0, 0, 0, 0.56) !important;
+    }
+
+    .badge:not(.trend),
+    .pill:not(.trend),
+    .status-pill {
+      background: rgba(12, 12, 18, 0.84) !important;
+      border-color: rgba(255, 255, 255, 0.08) !important;
+      box-shadow: none !important;
+    }
+
+    .dashboard-panel .locked,
+    .locked-analytics,
+    .pending-analytics {
+      border-color: rgba(255, 255, 255, 0.06) !important;
+      background: rgba(10, 10, 15, 0.72) !important;
+      box-shadow: none !important;
+    }
+
+    *::-webkit-scrollbar {
+      width: 3px;
+      height: 3px;
+    }
+
+    *::-webkit-scrollbar-track {
+      border: 0;
+      background: transparent;
+      box-shadow: none;
+    }
+
+    *::-webkit-scrollbar-thumb {
+      border: 0;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.18);
+      box-shadow: none;
+    }
+
+    *::-webkit-scrollbar-thumb:hover,
+    *::-webkit-scrollbar-thumb:active {
+      background: rgba(255, 255, 255, 0.32);
+      box-shadow: none;
+    }
+
+    #dancerDashboard {
+      scrollbar-color: rgba(255, 255, 255, 0.28) transparent;
+    }
+
+    #dancerDashboard::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    #dancerDashboard::-webkit-scrollbar-thumb {
+      border-color: transparent;
+      background: rgba(255, 255, 255, 0.28);
+      box-shadow: none;
+    }
+
+    #dancerDashboard::-webkit-scrollbar-thumb:hover,
+    #dancerDashboard::-webkit-scrollbar-thumb:active {
+      background: rgba(255, 255, 255, 0.42);
+      box-shadow: none;
+    }
+
+    /* Dancer dashboard control center: approved dancers manage everything in one place. */
+    #approvedDancerPanel .approved-tool-launcher {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      margin-bottom: 4px;
+    }
+
+    #approvedDancerPanel .approved-tool-launcher button {
+      min-height: 58px;
+      display: grid;
+      align-content: center;
+      gap: 4px;
+      padding: 12px 14px;
+      border: 1px solid rgba(34, 199, 255, 0.32);
+      border-radius: 12px;
+      color: #fff;
+      background:
+        linear-gradient(135deg, rgba(34, 199, 255, 0.13), rgba(168, 85, 247, 0.12)),
+        rgba(8, 8, 12, 0.86);
+      text-align: left;
+      box-shadow: inset 0 0 16px rgba(255,255,255,.025), 0 12px 26px rgba(0,0,0,.24);
+    }
+
+    #approvedDancerPanel .approved-tool-launcher strong {
+      font-size: 15px;
+      line-height: 1.1;
+    }
+
+    #approvedDancerPanel .approved-tool-launcher span {
+      color: rgba(218, 214, 230, 0.86);
+      font-size: 12px;
+      font-weight: 800;
+      line-height: 1.25;
+    }
+
+    #approvedDancerPanel .approved-tool-launcher button:hover,
+    #approvedDancerPanel .approved-tool-launcher button:focus-visible {
+      border-color: rgba(34, 199, 255, 0.58);
+      box-shadow: 0 0 20px rgba(34, 199, 255, 0.14), inset 0 0 18px rgba(255,255,255,.035);
+      transform: translateY(-1px);
+    }
+
+    #approvedDancerPanel .dancer-control-center {
+      display: grid;
+      gap: 0;
+    }
+
+    #approvedDancerPanel .dancer-control-summary {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      min-height: 76px;
+      padding: 16px 18px;
+      cursor: pointer;
+      list-style: none;
+      border: 1px solid rgba(139,92,246,.24);
+      border-radius: 18px;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.035), rgba(255,255,255,.012)),
+        rgba(7,7,10,.86);
+      box-shadow: inset 0 0 18px rgba(255,255,255,.018), 0 14px 34px rgba(0,0,0,.28);
+      transition: border-color .18s ease, box-shadow .18s ease, background .18s ease, transform .18s ease;
+    }
+
+    #approvedDancerPanel .dancer-control-summary::-webkit-details-marker {
+      display: none;
+    }
+
+    #approvedDancerPanel .dancer-control-summary > span:first-child {
+      display: grid;
+      gap: 5px;
+      min-width: 0;
+    }
+
+    #approvedDancerPanel .dancer-control-summary strong {
+      display: block;
+      color: #fff;
+      font-size: clamp(1.05rem, 2.8vw, 1.35rem);
+      line-height: 1.05;
+    }
+
+    #approvedDancerPanel .dancer-control-summary small {
+      display: block;
+      max-width: 56rem;
+      color: rgba(232,228,244,.74);
+      font-size: .9rem;
+      font-weight: 720;
+      line-height: 1.35;
+    }
+
+    #approvedDancerPanel .control-summary-chip {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 32px;
+      padding: 0 12px;
+      border: 1px solid rgba(34,199,255,.34);
+      border-radius: 999px;
+      background: rgba(34,199,255,.08);
+      color: #8ee7ff;
+      font-size: .78rem;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+
+    #approvedDancerPanel .dancer-control-summary:hover,
+    #approvedDancerPanel .dancer-control-center[open] .dancer-control-summary {
+      border-color: rgba(139,92,246,.44);
+      background:
+        linear-gradient(180deg, rgba(139,92,246,.07), rgba(255,255,255,.014)),
+        rgba(8,8,12,.92);
+      box-shadow: 0 0 24px rgba(139,92,246,.14), inset 0 0 18px rgba(255,255,255,.024);
+    }
+
+    #approvedDancerPanel .dancer-control-body {
+      display: grid;
+      gap: 14px;
+      padding-top: 16px;
+    }
+
+    #approvedDancerPanel .schedule-broadcast-note {
+      display: grid;
+      gap: 6px;
+      padding: 14px;
+      border: 1px solid rgba(139,92,246,.18);
+      border-radius: 14px;
+      background: linear-gradient(135deg, rgba(139,92,246,.08), rgba(5,5,7,.46));
+    }
+
+    #approvedDancerPanel .schedule-broadcast-note strong {
+      color: #fff;
+      font-size: .98rem;
+    }
+
+    #approvedDancerPanel .schedule-broadcast-note p {
+      margin: 0;
+      color: rgba(232,228,244,.72);
+      font-size: .88rem;
+      font-weight: 720;
+      line-height: 1.35;
+    }
+
+    /* Clean compact rank flames: no backing tile, smaller, softer, tucked into the corner. */
+    .badge.trend.compact-trend,
+    .dancer-card .badge.trend.compact-trend,
+    .profile-modal .modal-rank.compact-trend:not([hidden]),
+    .venue-shift-rank.compact-trend {
+      width: 30px !important;
+      min-width: 30px !important;
+      height: 36px !important;
+      min-height: 36px !important;
+      padding: 0 !important;
+      border: 0 !important;
+      border-radius: 0 !important;
+      background: transparent !important;
+      box-shadow: none !important;
+      filter: none !important;
+      backdrop-filter: none !important;
+      -webkit-backdrop-filter: none !important;
+      display: inline-grid !important;
+      place-items: center !important;
+      overflow: visible !important;
+    }
+
+    .badge.trend.compact-trend *,
+    .dancer-card .badge.trend.compact-trend *,
+    .profile-modal .modal-rank.compact-trend *,
+    .venue-shift-rank.compact-trend * {
+      background: transparent !important;
+      box-shadow: none !important;
+    }
+
+    .dancer-card .card-badges {
+      top: 10px !important;
+      left: 10px !important;
+      right: auto !important;
+    }
+
+    .trend-flame-icon {
+      width: 30px !important;
+      height: 36px !important;
+      display: inline-grid !important;
+      place-items: center !important;
+      opacity: .88 !important;
+      background: transparent !important;
+      transform-origin: center !important;
+      transition: transform .18s ease, opacity .18s ease;
+    }
+
+    .trend-flame-icon svg {
+      width: 30px !important;
+      height: 36px !important;
+      display: block !important;
+      overflow: visible !important;
+      background: transparent !important;
+      filter:
+        drop-shadow(0 0 5px rgba(255,122,0,.34))
+        drop-shadow(0 0 10px rgba(255,107,0,.18)) !important;
+    }
+
+    .trend-flame-outer {
+      fill: rgba(255,122,0,.72) !important;
+    }
+
+    .trend-flame-core {
+      fill: rgba(255,183,86,.34) !important;
+    }
+
+    .trend-flame-icon text {
+      font-size: 21px !important;
+      font-weight: 950 !important;
+      fill: rgba(255,255,255,.96) !important;
+      stroke: rgba(5,5,7,.58) !important;
+      stroke-width: 2px !important;
+      paint-order: stroke !important;
+      text-shadow: none !important;
+    }
+
+    .trend-flame-icon.is-double text {
+      font-size: 16px !important;
+    }
+
+    .rank-one .trend-flame-icon,
+    .rank-one-card .trend-flame-icon {
+      opacity: .96 !important;
+    }
+
+    .rank-one .trend-flame-icon svg,
+    .rank-one-card .trend-flame-icon svg {
+      filter:
+        drop-shadow(0 0 6px rgba(255,209,102,.46))
+        drop-shadow(0 0 13px rgba(255,196,57,.22)) !important;
+    }
+
+    .rank-one .trend-flame-outer,
+    .rank-one-card .trend-flame-outer {
+      fill: rgba(255,196,57,.84) !important;
+    }
+
+    .rank-one .trend-flame-core,
+    .rank-one-card .trend-flame-core {
+      fill: rgba(255,244,176,.48) !important;
+    }
+
+    .dancer-card:hover .trend-flame-icon {
+      transform: translateY(-1px) scale(1.04) !important;
+      opacity: 1 !important;
+    }
+
+    .profile-modal .modal-rank.compact-trend:not([hidden]) {
+      left: 12px !important;
+      top: 116px !important;
+      right: auto !important;
+    }
+
+    @media (max-width: 560px) {
+      #approvedDancerPanel .dancer-control-summary {
+        align-items: center;
+        gap: 10px;
+        min-height: 70px;
+        padding: 14px;
+      }
+
+      #approvedDancerPanel .control-summary-chip {
+        min-height: 28px;
+      }
+
+      .badge.trend.compact-trend,
+      .dancer-card .badge.trend.compact-trend,
+      .profile-modal .modal-rank.compact-trend:not([hidden]),
+      .venue-shift-rank.compact-trend {
+        width: 28px !important;
+        min-width: 28px !important;
+        height: 34px !important;
+        min-height: 34px !important;
+      }
+
+      .trend-flame-icon,
+      .trend-flame-icon svg {
+        width: 28px !important;
+        height: 34px !important;
+      }
+
+      .trend-flame-icon text {
+        font-size: 19px !important;
+      }
+
+      .trend-flame-icon.is-double text {
+        font-size: 15px !important;
+      }
+    }
+
+    /* Exact flame image for trending ranks: compact, clean, and tight on cards. */
+    .trend-flame-icon,
+    .badge.trend .trend-flame-icon,
+    .dancer-card .badge.trend .trend-flame-icon,
+    .profile-modal .badge.trend .trend-flame-icon,
+    .venue-shift-rank .trend-flame-icon {
+      width: 33px !important;
+      height: 40px !important;
+      min-width: 33px !important;
+      display: inline-grid !important;
+      place-items: center !important;
+      position: relative !important;
+      overflow: visible !important;
+      opacity: 1 !important;
+      background: transparent !important;
+      transform-origin: center !important;
+      filter: drop-shadow(0 0 7px rgba(124, 58, 237, 0.72)) !important;
+    }
+
+    .trend-flame-icon img,
+    .badge.trend .trend-flame-icon img,
+    .dancer-card .badge.trend .trend-flame-icon img,
+    .profile-modal .badge.trend .trend-flame-icon img,
+    .venue-shift-rank .trend-flame-icon img {
+      position: absolute !important;
+      inset: 0 !important;
+      width: 100% !important;
+      height: 100% !important;
+      display: block !important;
+      object-fit: contain !important;
+      object-position: center !important;
+      background: transparent !important;
+      filter: saturate(1.14) contrast(1.05) !important;
+      pointer-events: none !important;
+      user-select: none !important;
+    }
+
+    .trend-flame-icon::after,
+    .badge.trend .trend-flame-icon::after,
+    .dancer-card .badge.trend .trend-flame-icon::after,
+    .profile-modal .badge.trend .trend-flame-icon::after,
+    .venue-shift-rank .trend-flame-icon::after {
+      content: none !important;
+      display: none !important;
+    }
+
+    .trend-flame-number,
+    .badge.trend .trend-flame-number,
+    .dancer-card .badge.trend .trend-flame-number,
+    .profile-modal .badge.trend .trend-flame-number,
+    .venue-shift-rank .trend-flame-number {
+      position: relative !important;
+      z-index: 2 !important;
+      transform: translateY(3px) !important;
+      color: #030006 !important;
+      font-family: "Space Grotesk", "Outfit", var(--font-ui) !important;
+      font-size: 22px !important;
+      font-weight: 950 !important;
+      line-height: 1 !important;
+      letter-spacing: 0 !important;
+      text-shadow:
+        0 0 4px rgba(168, 85, 247, 0.72),
+        0 0 8px rgba(255, 255, 255, 0.28) !important;
+    }
+
+    .trend-flame-icon.is-double .trend-flame-number {
+      font-size: 17px !important;
+      transform: translateY(3px) scaleX(0.94) !important;
+    }
+
+    .compact-trend,
+    .dancer-card .compact-trend,
+    .profile-modal .compact-trend {
+      min-width: 40px !important;
+      min-height: 42px !important;
+      padding: 0 4px !important;
+      border-radius: 999px !important;
+    }
+
+    .profile-modal .modal-rank.compact-trend:not([hidden]) {
+      width: 42px !important;
+      min-width: 42px !important;
+      height: 48px !important;
+      padding: 0 !important;
+    }
+
+    @media (max-width: 560px) {
+      .trend-flame-icon,
+      .trend-flame-icon img {
+        width: 30px !important;
+        height: 36px !important;
+        min-width: 30px !important;
+      }
+
+      .trend-flame-number {
+        font-size: 20px !important;
+      }
+
+      .trend-flame-icon.is-double .trend-flame-number {
+        font-size: 15px !important;
+      }
+    }
+    /* Mobile destination fit. */
+    @media (max-width: 520px) {
+      .tabs {
+        gap: 7px !important;
+        overflow: visible !important;
+      }
+
+      .tabs .tab,
+      .tab {
+        min-width: 0 !important;
+        flex: 1 1 0 !important;
+        padding: 0 8px !important;
+        gap: 5px !important;
+        font-size: clamp(12px, 3.35vw, 14px) !important;
+        white-space: nowrap !important;
+        letter-spacing: 0 !important;
+      }
+
+      .tabs .tab > span:first-child {
+        min-width: 0 !important;
+        overflow: visible !important;
+        text-overflow: clip !important;
+      }
+
+      .tabs .tab-count,
+      .tab-count {
+        width: 24px !important;
+        height: 24px !important;
+        min-width: 24px !important;
+        font-size: 11px !important;
+      }
+    }
+
+    /* Tighten full-profile social links without shrinking tap comfort. */
+    .profile-modal .social-links-card {
+      padding-block: 16px !important;
+    }
+
+    .profile-modal .social-links-card .social-row,
+    .profile-modal .social-links-card .social-links {
+      gap: 12px !important;
+      margin-top: 12px !important;
+    }
+
+    .profile-modal .social-links-card .social-icon,
+    .profile-modal .social-links-card .social-pill {
+      width: 52px !important;
+      height: 52px !important;
+      min-width: 52px !important;
+    }
+
+    @media (max-width: 520px) {
+      .profile-modal .social-links-card {
+        padding: 14px 16px !important;
+      }
+
+      .profile-modal .social-links-card .social-row,
+      .profile-modal .social-links-card .social-links {
+        gap: 10px !important;
+        margin-top: 10px !important;
+      }
+
+      .profile-modal .social-links-card .social-icon,
+      .profile-modal .social-links-card .social-pill {
+        width: 48px !important;
+        height: 48px !important;
+        min-width: 48px !important;
+      }
+    }
+
+    #approvedDancerPanel .dancer-control-summary {
+      cursor: pointer;
+      user-select: none;
+    }
+
+    #approvedDancerPanel .dancer-control-summary::after {
+      content: "+";
+      flex: 0 0 auto;
+      width: 38px;
+      height: 38px;
+      min-height: 38px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 999px;
+      border: 1px solid rgba(139,92,246,.28);
+      color: #d7c8ff;
+      background: rgba(17,17,24,.78);
+      font-size: 22px;
+      font-weight: 900;
+      letter-spacing: .02em;
+      line-height: 1;
+    }
+
+    #approvedDancerPanel .dancer-control-center[open] .dancer-control-summary::after {
+      content: "x";
+      border-color: rgba(139,92,246,.42);
+      box-shadow: 0 0 18px rgba(139,92,246,.12);
+    }
+
+    #approvedDancerPanel .dancer-control-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+
+    #approvedDancerPanel .dancer-control-card {
+      min-width: 0;
+      padding: 14px;
+      border-radius: 16px;
+      border: 1px solid rgba(139,92,246,.16);
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.035), rgba(255,255,255,.01)),
+        rgba(10,10,14,.82);
+      box-shadow: inset 0 0 18px rgba(255,255,255,.02), 0 14px 34px rgba(0,0,0,.26);
+    }
+
+    #approvedDancerPanel .dancer-control-card-wide {
+      grid-column: 1 / -1;
+    }
+
+    #approvedDancerPanel .control-card-head {
+      display: grid;
+      gap: 6px;
+      margin-bottom: 12px;
+    }
+
+    #approvedDancerPanel .control-card-head strong {
+      color: #fff;
+      font-size: 17px;
+      line-height: 1.1;
+    }
+
+    #approvedDancerPanel .control-card-head p,
+    #approvedDancerPanel .control-result {
+      color: rgba(184,184,197,.9);
+      font-size: 13px;
+      line-height: 1.35;
+    }
+
+    #approvedDancerPanel .control-field-grid,
+    #approvedDancerPanel .social-control-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    #approvedDancerPanel .social-control-grid input:last-child {
+      grid-column: 1 / -1;
+    }
+
+    #approvedDancerPanel .social-edit-field,
+    #publicProfileForm .social-edit-field {
+      min-width: 0;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto auto;
+      gap: 7px;
+      align-items: end;
+    }
+
+    #approvedDancerPanel .social-edit-field label,
+    #publicProfileForm .social-edit-field label {
+      display: grid;
+      gap: 5px;
+      min-width: 0;
+      color: rgba(218,214,230,.84);
+      font-size: 12px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+    }
+
+    #approvedDancerPanel .social-edit-field input,
+    #publicProfileForm .social-edit-field input {
+      width: 100%;
+    }
+
+    #approvedDancerPanel .social-edit-field button,
+    #publicProfileForm .social-edit-field button {
+      min-height: 40px;
+      padding: 0 11px;
+      border-radius: 999px;
+      border: 1px solid rgba(139,92,246,.28);
+      color: #f5f0ff;
+      background: rgba(8,8,12,.78);
+      font-weight: 900;
+      cursor: pointer;
+    }
+
+    #approvedDancerPanel .social-edit-field button:hover,
+    #approvedDancerPanel .social-edit-field button:focus-visible,
+    #publicProfileForm .social-edit-field button:hover,
+    #publicProfileForm .social-edit-field button:focus-visible {
+      border-color: rgba(34,211,238,.58);
+      box-shadow: 0 0 16px rgba(34,211,238,.12);
+    }
+
+    #approvedDancerPanel .control-action-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 9px;
+    }
+
+    #approvedDancerPanel .control-action-row button {
+      min-height: 42px;
+      padding: 0 14px;
+      border-radius: 999px;
+      border: 1px solid rgba(139,92,246,.28);
+      color: #f5f0ff;
+      background: rgba(8,8,12,.78);
+      font-weight: 900;
+      box-shadow: inset 0 0 14px rgba(139,92,246,.06);
+      transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease, background .18s ease;
+    }
+
+    #approvedDancerPanel .control-action-row button:hover {
+      transform: translateY(-1px);
+      border-color: rgba(139,92,246,.52);
+      background: rgba(20,16,30,.9);
+      box-shadow: 0 0 20px rgba(139,92,246,.14), inset 0 0 16px rgba(139,92,246,.08);
+    }
+
+    #approvedDancerPanel .control-action-row button:disabled,
+    #publicProfileForm button:disabled {
+      opacity: .48;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    #approvedDancerPanel .control-action-row button.is-ready,
+    #publicProfileForm button.is-ready {
+      border-color: rgba(34,211,238,.75);
+      background: linear-gradient(135deg, rgba(6,182,212,.92), rgba(168,85,247,.9));
+      color: #fff;
+      box-shadow: 0 0 24px rgba(34,211,238,.24), 0 0 26px rgba(168,85,247,.18);
+    }
+
+    #approvedDancerPanel .control-result {
+      margin-top: 10px;
+    }
+
+    @media (max-width: 720px) {
+      #approvedDancerPanel .dancer-control-grid,
+      #approvedDancerPanel .control-field-grid,
+      #approvedDancerPanel .approved-tool-launcher,
+      #approvedDancerPanel .social-control-grid {
+        grid-template-columns: 1fr;
+      }
+
+      #approvedDancerPanel .social-control-grid input:last-child {
+        grid-column: auto;
+      }
+
+      #approvedDancerPanel .social-edit-field,
+      #publicProfileForm .social-edit-field {
+        grid-template-columns: minmax(0, 1fr);
+      }
+
+      #approvedDancerPanel .dancer-control-summary::after {
+        width: 34px;
+        height: 34px;
+        min-height: 34px;
+        font-size: 20px;
+      }
+    }
+
+    #approvedDancerPanel.post-shift-panel {
+      padding: 0 !important;
+      border: 0 !important;
+      background: transparent !important;
+      box-shadow: none !important;
+      backdrop-filter: none !important;
+    }
+
+    #approvedDancerPanel.post-shift-panel > summary,
+    #approvedDancerPanel .approved-tool-launcher {
+      display: none !important;
+    }
+
+    /* Mobile launch hardening: final overrides for narrow phones. */
+    html,
+    body {
+      max-width: 100%;
+      overflow-x: hidden;
+    }

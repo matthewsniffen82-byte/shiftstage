@@ -1,0 +1,1198 @@
+
+    .dancer-card:hover,
+    .dancer-card:focus-visible {
+      border-color: rgba(167, 139, 250, 0.70) !important;
+      box-shadow:
+        0 22px 58px rgba(0, 0, 0, 0.56),
+        0 0 32px rgba(124, 58, 237, 0.24),
+        0 0 12px rgba(34, 199, 255, 0.08) !important;
+    }
+
+    .card-schedule-text.tonight .schedule-label,
+    .profile-modal .modal-schedule-text.tonight,
+    .time-tonight {
+      color: #FF64C8 !important;
+      text-shadow:
+        0 0 9px rgba(255, 47, 174, 0.42),
+        0 0 18px rgba(124, 58, 237, 0.14) !important;
+    }
+
+    /* Final full-profile schedule glow polish */
+    .profile-modal .schedule-stack,
+    .profile-modal .info-tile .meta {
+      display: grid;
+      gap: 8px;
+      min-width: 0;
+    }
+
+    .profile-modal .detail-line,
+    .profile-modal .schedule-text-row {
+      display: flex !important;
+      align-items: center !important;
+      gap: 9px !important;
+      min-width: 0;
+      line-height: 1.18;
+    }
+
+    .profile-modal .modal-schedule-text {
+      display: inline-flex;
+      align-items: baseline;
+      max-width: 100%;
+      min-width: 0;
+      overflow-wrap: anywhere;
+      line-height: 1.16 !important;
+      font-weight: 900 !important;
+      letter-spacing: 0;
+    }
+
+    .profile-modal .modal-schedule-text.tonight {
+      color: #FF64C8 !important;
+      text-shadow:
+        0 0 12px rgba(255, 47, 174, 0.56),
+        0 0 24px rgba(236, 72, 153, 0.22) !important;
+    }
+
+    .profile-modal .modal-schedule-text.upcoming {
+      color: #8FDCFF !important;
+      text-shadow:
+        0 0 12px rgba(34, 199, 255, 0.48),
+        0 0 22px rgba(34, 199, 255, 0.18) !important;
+    }
+
+    .profile-modal .tonight-time-row > .venue-dot,
+    .profile-modal .tonight-time-row > .venue-dot svg {
+      color: #FF64C8 !important;
+      stroke: #FF64C8 !important;
+      filter: drop-shadow(0 0 7px rgba(255, 47, 174, 0.42)) !important;
+    }
+
+    .profile-modal .upcoming-time-row > .venue-dot,
+    .profile-modal .upcoming-time-row > .venue-dot svg {
+      color: #8FDCFF !important;
+      stroke: #8FDCFF !important;
+      filter: drop-shadow(0 0 7px rgba(34, 199, 255, 0.38)) !important;
+    }
+
+    .profile-modal .modal-schedule-text {
+      font-size: clamp(18px, 3.25vw, 25px) !important;
+    }
+
+    @media (max-width: 560px) {
+      .profile-modal .modal-schedule-text {
+        font-size: clamp(17px, 4.7vw, 22px) !important;
+      }
+    }
+
+    .profile-modal .upcoming-venue-line {
+      margin-bottom: 0 !important;
+    }
+
+    /* Keep every club destination visually attached to its schedule. */
+    #profileBackdrop .profile-venue-destination,
+    #approvedEditProfileDropdown.show .profile-modal .profile-venue-destination {
+      box-sizing: border-box !important;
+      display: grid !important;
+      grid-template-columns: 36px minmax(0, 1fr) 18px !important;
+      align-items: center !important;
+      gap: 11px !important;
+      width: 100% !important;
+      min-width: 0 !important;
+      min-height: 58px !important;
+      margin: 0 !important;
+      padding: 9px 12px !important;
+      border: 1px solid rgba(255, 255, 255, 0.12) !important;
+      border-radius: 14px !important;
+      color: #FFFFFF !important;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.025)) !important;
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.045),
+        0 10px 24px rgba(0, 0, 0, 0.18) !important;
+      font: inherit !important;
+      text-align: left !important;
+      cursor: pointer !important;
+      transition: border-color 180ms ease, background-color 180ms ease, box-shadow 180ms ease, transform 180ms ease !important;
+    }
+
+    #profileBackdrop .profile-venue-destination > .venue-dot,
+    #approvedEditProfileDropdown.show .profile-modal .profile-venue-destination > .venue-dot {
+      display: grid !important;
+      place-items: center !important;
+      width: 36px !important;
+      height: 36px !important;
+      margin: 0 !important;
+      border: 1px solid rgba(34, 199, 255, 0.22) !important;
+      border-radius: 11px !important;
+      color: #57D9FF !important;
+      background: rgba(34, 199, 255, 0.07) !important;
+      box-shadow: inset 0 0 14px rgba(34, 199, 255, 0.04) !important;
+    }
+
+    #profileBackdrop .profile-venue-destination > .venue-dot svg,
+    #approvedEditProfileDropdown.show .profile-modal .profile-venue-destination > .venue-dot svg {
+      width: 18px !important;
+      height: 18px !important;
+    }
+
+    #profileBackdrop .profile-venue-copy,
+    #approvedEditProfileDropdown.show .profile-modal .profile-venue-copy {
+      display: grid !important;
+      gap: 2px !important;
+      min-width: 0 !important;
+    }
+
+    #profileBackdrop .profile-venue-label,
+    #approvedEditProfileDropdown.show .profile-modal .profile-venue-label {
+      color: rgba(156, 163, 175, 0.86) !important;
+      font-size: 9px !important;
+      font-weight: 900 !important;
+      letter-spacing: 0.16em !important;
+      line-height: 1 !important;
+      text-transform: uppercase !important;
+    }
+
+    #profileBackdrop .profile-venue-name,
+    #approvedEditProfileDropdown.show .profile-modal .profile-venue-name {
+      min-width: 0 !important;
+      overflow: hidden !important;
+      color: #FFFFFF !important;
+      font-size: clamp(14px, 3.8vw, 17px) !important;
+      font-weight: 950 !important;
+      letter-spacing: -0.015em !important;
+      line-height: 1.15 !important;
+      text-overflow: ellipsis !important;
+      white-space: nowrap !important;
+    }
+
+    #profileBackdrop .profile-venue-cue,
+    #approvedEditProfileDropdown.show .profile-modal .profile-venue-cue {
+      display: grid !important;
+      place-items: center !important;
+      width: 18px !important;
+      height: 18px !important;
+      color: rgba(255, 255, 255, 0.56) !important;
+    }
+
+    #profileBackdrop .profile-venue-cue svg,
+    #approvedEditProfileDropdown.show .profile-modal .profile-venue-cue svg {
+      width: 16px !important;
+      height: 16px !important;
+      fill: none !important;
+      stroke: currentColor !important;
+      stroke-linecap: round !important;
+      stroke-linejoin: round !important;
+      stroke-width: 2.2 !important;
+    }
+
+    #profileBackdrop .profile-venue-destination:is(:hover, :focus-visible),
+    #approvedEditProfileDropdown.show .profile-modal .profile-venue-destination:is(:hover, :focus-visible) {
+      border-color: rgba(34, 199, 255, 0.38) !important;
+      background:
+        linear-gradient(180deg, rgba(34, 199, 255, 0.075), rgba(255, 255, 255, 0.025)) !important;
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.055),
+        0 0 0 2px rgba(34, 199, 255, 0.08),
+        0 12px 26px rgba(0, 0, 0, 0.22) !important;
+      outline: none !important;
+    }
+
+    #profileBackdrop .profile-venue-destination:active {
+      transform: translateY(1px) !important;
+    }
+
+    #profileBackdrop .profile-venue-destination.is-live,
+    #approvedEditProfileDropdown.show .profile-modal .profile-venue-destination.is-live {
+      border-color: rgba(77, 236, 157, 0.28) !important;
+      background:
+        linear-gradient(180deg, rgba(77, 236, 157, 0.075), rgba(255, 255, 255, 0.025)) !important;
+    }
+
+    #profileBackdrop .profile-venue-destination.is-live > .venue-dot,
+    #approvedEditProfileDropdown.show .profile-modal .profile-venue-destination.is-live > .venue-dot {
+      border-color: rgba(77, 236, 157, 0.28) !important;
+      color: #4DEC9D !important;
+      background: rgba(77, 236, 157, 0.08) !important;
+      box-shadow: inset 0 0 14px rgba(77, 236, 157, 0.05) !important;
+    }
+
+    #profileBackdrop .profile-venue-destination.is-live:is(:hover, :focus-visible),
+    #approvedEditProfileDropdown.show .profile-modal .profile-venue-destination.is-live:is(:hover, :focus-visible) {
+      border-color: rgba(77, 236, 157, 0.48) !important;
+      background:
+        linear-gradient(180deg, rgba(77, 236, 157, 0.11), rgba(255, 255, 255, 0.025)) !important;
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.055),
+        0 0 0 2px rgba(77, 236, 157, 0.08),
+        0 12px 26px rgba(0, 0, 0, 0.22) !important;
+    }
+
+    /* Restore the Dancr hero: one intentional right-side light beam, no flat lavender wash. */
+    .hero.reference-hero.uploaded-hero-ready {
+      position: relative !important;
+      isolation: isolate !important;
+      overflow: hidden !important;
+      background:
+        radial-gradient(ellipse at 92% 50%, rgba(124, 58, 237, 0.28), transparent 0 29%),
+        radial-gradient(ellipse at 82% 48%, rgba(236, 72, 153, 0.09), transparent 0 35%),
+        linear-gradient(100deg, #050507 0%, #07060d 50%, #120821 74%, #1f0b48 100%) !important;
+      border-color: rgba(139, 92, 246, 0.42) !important;
+      box-shadow:
+        0 22px 64px rgba(0, 0, 0, 0.54),
+        0 0 34px rgba(124, 58, 237, 0.18),
+        inset 0 0 0 1px rgba(255, 255, 255, 0.035),
+        inset -84px 0 130px rgba(124, 58, 237, 0.24) !important;
+    }
+
+    .hero.reference-hero::before {
+      content: "" !important;
+      display: block !important;
+      position: absolute !important;
+      top: -18% !important;
+      right: clamp(28px, 6vw, 52px) !important;
+      bottom: -18% !important;
+      left: auto !important;
+      z-index: 0 !important;
+      width: 4px !important;
+      height: auto !important;
+      border-radius: 999px !important;
+      pointer-events: none !important;
+      opacity: 0.98 !important;
+      background:
+        linear-gradient(180deg, transparent 0%, rgba(139, 92, 246, 0.42) 13%, rgba(255, 255, 255, 0.76) 50%, rgba(236, 72, 153, 0.38) 58%, rgba(139, 92, 246, 0.46) 88%, transparent 100%) !important;
+      box-shadow:
+        0 0 10px rgba(255, 255, 255, 0.34),
+        0 0 24px rgba(139, 92, 246, 0.58),
+        0 0 54px rgba(124, 58, 237, 0.38),
+        -38px 0 80px rgba(236, 72, 153, 0.10) !important;
+      filter: saturate(1.05) !important;
+      mix-blend-mode: screen !important;
+    }
+
+    .hero.reference-hero::after {
+      content: "" !important;
+      display: block !important;
+      position: absolute !important;
+      inset: 0 !important;
+      z-index: 0 !important;
+      width: auto !important;
+      height: auto !important;
+      border-radius: inherit !important;
+      pointer-events: none !important;
+      opacity: 0.54 !important;
+      background:
+        radial-gradient(ellipse at 92% 50%, rgba(139, 92, 246, 0.22), transparent 0 23%),
+        linear-gradient(90deg, transparent 0 72%, rgba(124, 58, 237, 0.12) 88%, rgba(124, 58, 237, 0.22) 100%) !important;
+      box-shadow: none !important;
+      filter: none !important;
+      mix-blend-mode: normal !important;
+    }
+
+    .hero.reference-hero .hero-copy {
+      position: relative !important;
+      z-index: 2 !important;
+    }
+
+    /* Main discovery tabs: premium hover glow and deeper electric-violet selected state. */
+    .tabs .tab,
+    .tab {
+      transition:
+        transform 180ms ease,
+        color 180ms ease,
+        border-color 180ms ease,
+        background 180ms ease,
+        box-shadow 180ms ease !important;
+    }
+
+    .tabs .tab:not(.active):hover,
+    .tab:not(.active):hover,
+    .tabs .tab:not(.active):focus-visible,
+    .tab:not(.active):focus-visible {
+      color: #FFFFFF !important;
+      border-color: rgba(139, 92, 246, 0.62) !important;
+      background:
+        linear-gradient(180deg, rgba(139, 92, 246, 0.10), rgba(139, 92, 246, 0.035)),
+        rgba(17, 17, 24, 0.92) !important;
+      box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.035) inset,
+        0 0 18px rgba(139, 92, 246, 0.22),
+        0 12px 28px rgba(0, 0, 0, 0.34) !important;
+      transform: translateY(-1px);
+    }
+
+    .tabs .tab.active,
+    .tab.active,
+    .tabs .tab[aria-selected="true"],
+    .tab[aria-selected="true"] {
+      color: #FFFFFF !important;
+      border-color: rgba(167, 139, 250, 0.72) !important;
+      background:
+        linear-gradient(135deg, #4C1D95 0%, #6D28D9 48%, #7C3AED 100%) !important;
+      box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.055) inset,
+        0 0 24px rgba(139, 92, 246, 0.42),
+        0 12px 30px rgba(0, 0, 0, 0.38) !important;
+    }
+
+    .tabs .tab.active:hover,
+    .tab.active:hover {
+      background:
+        linear-gradient(135deg, #5B21B6 0%, #7C3AED 54%, #8B5CF6 100%) !important;
+      box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.07) inset,
+        0 0 30px rgba(139, 92, 246, 0.52),
+        0 14px 34px rgba(0, 0, 0, 0.42) !important;
+    }
+
+    .venue-detail .follow-venue-btn {
+      color: #F7F5FF !important;
+      border: 1px solid rgba(139, 92, 246, 0.54) !important;
+      background:
+        linear-gradient(180deg, rgba(139, 92, 246, 0.13), rgba(34, 199, 255, 0.035)),
+        rgba(8, 8, 12, 0.9) !important;
+      box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.035) inset,
+        0 0 22px rgba(139, 92, 246, 0.18),
+        0 12px 30px rgba(0, 0, 0, 0.42) !important;
+    }
+
+    .venue-detail .follow-venue-btn.is-following {
+      border-color: rgba(34, 199, 255, 0.48) !important;
+      background:
+        linear-gradient(180deg, rgba(34, 199, 255, 0.12), rgba(139, 92, 246, 0.07)),
+        rgba(8, 8, 12, 0.92) !important;
+      box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.035) inset,
+        0 0 24px rgba(34, 199, 255, 0.16),
+        0 12px 30px rgba(0, 0, 0, 0.42) !important;
+    }
+
+    .venue-detail .venue-directions-btn {
+      color: #FFFFFF !important;
+      border: 1px solid rgba(34, 199, 255, 0.42) !important;
+      background:
+        linear-gradient(135deg, #5B21B6 0%, #7C3AED 48%, #22C7FF 100%) !important;
+      box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.08) inset,
+        0 0 30px rgba(139, 92, 246, 0.34),
+        0 0 28px rgba(34, 199, 255, 0.18),
+        0 16px 38px rgba(0, 0, 0, 0.46) !important;
+    }
+
+    .venue-detail .venue-directions-btn .venue-dot,
+    .venue-detail .venue-directions-btn .venue-dot svg {
+      color: #AEEBFF !important;
+      filter: drop-shadow(0 0 7px rgba(34, 199, 255, 0.65));
+    }
+
+    .venue-detail .venue-status-pill {
+      color: #F4ECFF !important;
+      border: 1px solid rgba(139, 92, 246, 0.52) !important;
+      background:
+        linear-gradient(180deg, rgba(139, 92, 246, 0.16), rgba(34, 199, 255, 0.045)),
+        rgba(8, 8, 12, 0.88) !important;
+      box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.035) inset,
+        0 0 18px rgba(139, 92, 246, 0.2) !important;
+    }
+
+    .venue-detail .venue-quick-stats {
+      grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+      gap: 10px !important;
+      margin-top: 6px !important;
+    }
+
+    .venue-detail .venue-quick-stat {
+      min-height: 78px !important;
+      padding: 13px 14px !important;
+      border-color: rgba(139, 92, 246, 0.32) !important;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0) 68%),
+        rgba(8, 8, 12, 0.86) !important;
+      box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.025) inset,
+        0 0 18px rgba(139, 92, 246, 0.12),
+        0 12px 30px rgba(0, 0, 0, 0.34) !important;
+    }
+
+    .venue-detail .venue-quick-stat strong {
+      color: #B58BFF !important;
+      text-shadow: 0 0 14px rgba(139, 92, 246, 0.35) !important;
+    }
+
+    .venue-detail .venue-quick-stat span {
+      color: #C7C1D4 !important;
+      letter-spacing: 0;
+      text-transform: none;
+    }
+
+    .venue-detail .venue-info .info-tile {
+      border-color: rgba(139, 92, 246, 0.24) !important;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0) 70%),
+        rgba(8, 8, 12, 0.84) !important;
+      box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.02) inset,
+        0 12px 30px rgba(0, 0, 0, 0.34) !important;
+    }
+
+    .venue-detail .map-preview {
+      border-color: rgba(34, 199, 255, 0.26) !important;
+      box-shadow:
+        0 0 0 1px rgba(139, 92, 246, 0.08) inset,
+        0 0 22px rgba(34, 199, 255, 0.1),
+        0 14px 34px rgba(0, 0, 0, 0.38) !important;
+    }
+
+    .venue-detail .mini-list .venue.venue-card {
+      min-height: 118px !important;
+      border-color: rgba(139, 92, 246, 0.54) !important;
+      background:
+        radial-gradient(circle at 76% 50%, rgba(124, 58, 237, 0.18), transparent 0 32%),
+        linear-gradient(135deg, rgba(18, 16, 28, 0.98), rgba(7, 7, 12, 0.98)) !important;
+      box-shadow:
+        0 18px 42px rgba(0, 0, 0, 0.52),
+        0 0 22px rgba(139, 92, 246, 0.18),
+        inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
+    }
+
+    .venue-detail .mini-list .venue.venue-card h3 {
+      color: #f8f5ff !important;
+      text-shadow: 0 0 13px rgba(255, 255, 255, 0.12) !important;
+    }
+
+    .venue-detail .mini-list .venue.venue-card .meta {
+      color: #bbb2c9 !important;
+    }
+
+    .venue-detail .mini-list .venue.venue-card .pill {
+      color: #ddd6ea !important;
+      border-color: rgba(139, 92, 246, 0.34) !important;
+      background: rgba(16, 14, 24, 0.82) !important;
+    }
+
+    .venue-detail .mini-list .venue.venue-card .venue-shift-pill {
+      color: #f3e8ff !important;
+      border-color: rgba(192, 132, 252, 0.42) !important;
+      background: rgba(124, 58, 237, 0.14) !important;
+    }
+
+    .venue-detail .mini-list .venue.venue-card .venue-art:before {
+      box-shadow:
+        0 0 20px rgba(124, 58, 237, 0.28),
+        0 0 12px rgba(255, 47, 174, 0.10),
+        inset 0 1px 0 rgba(255, 255, 255, 0.18) !important;
+    }
+
+    .venue-detail .mini-list .venue.venue-card {
+      display: grid !important;
+      grid-template-columns: minmax(0, 1fr) 96px !important;
+      align-items: center !important;
+      gap: 14px !important;
+      padding: 16px 18px !important;
+    }
+
+    .venue-detail .mini-list .venue.venue-card .profile-body {
+      grid-column: 1 !important;
+      grid-row: 1 !important;
+      min-width: 0 !important;
+      padding: 0 !important;
+      gap: 13px !important;
+    }
+
+    .venue-detail .mini-list .venue.venue-card .venue-art {
+      grid-column: 2 !important;
+      grid-row: 1 !important;
+      width: 86px !important;
+      min-width: 86px !important;
+      height: 86px !important;
+      min-height: 86px !important;
+      align-self: center !important;
+      border-radius: 22px !important;
+    }
+
+    .venue-detail .mini-list .venue.venue-card .row {
+      min-width: 0 !important;
+    }
+
+    .venue-detail .mini-list .venue.venue-card .row > div {
+      min-width: 0 !important;
+    }
+
+    .venue-detail .mini-list .venue.venue-card h3 {
+      max-width: 100% !important;
+      margin: 0 0 3px !important;
+      color: #f8f5ff !important;
+      font-size: clamp(20px, 4.9vw, 24px) !important;
+      line-height: 1.04 !important;
+      opacity: 1 !important;
+    }
+
+    .venue-detail .mini-list .venue.venue-card .meta {
+      color: #bfb7cb !important;
+      font-size: 14px !important;
+      line-height: 1.15 !important;
+      opacity: 0.92 !important;
+    }
+
+    .venue-detail .mini-list .venue.venue-card .pill-row {
+      display: flex !important;
+      flex-wrap: wrap !important;
+      justify-content: flex-start !important;
+      gap: 8px !important;
+    }
+
+    .venue-detail .mini-list .venue.venue-card .venue-shift-pill {
+      margin-left: 0 !important;
+    }
+
+    @media (max-width: 520px) {
+      .venue-detail .mini-list .venue.venue-card {
+        grid-template-columns: minmax(0, 1fr) 78px !important;
+        min-height: 128px !important;
+        gap: 12px !important;
+        padding: 15px 16px !important;
+      }
+
+      .venue-detail .mini-list .venue.venue-card .venue-art {
+        width: 70px !important;
+        min-width: 70px !important;
+        height: 70px !important;
+        min-height: 70px !important;
+        border-radius: 19px !important;
+      }
+
+      .venue-detail .mini-list .venue.venue-card h3 {
+        font-size: clamp(18px, 5.2vw, 21px) !important;
+        line-height: 1.05 !important;
+      }
+
+      .venue-detail .mini-list .venue.venue-card .pill {
+        min-height: 31px !important;
+        padding-inline: 12px !important;
+      }
+    }
+
+    @media (max-width: 460px) {
+      .venue-detail .venue-quick-stats {
+        gap: 7px !important;
+      }
+
+      .venue-detail .venue-quick-stat {
+        min-height: 68px !important;
+        padding: 10px 9px !important;
+      }
+
+      .venue-detail .venue-quick-stat span {
+        font-size: 10px !important;
+        line-height: 1.1 !important;
+      }
+    }
+    /* Final override: electric-gold trending badges with a distinct #1 VIP treatment. */
+    .badge.trend:not(.rank-one),
+    .dancer-card .badge.trend:not(.rank-one),
+    .profile-modal .badge.trend:not(.rank-one),
+    .profile-modal .modal-rank:not(.rank-one),
+    .venue-shift-rank:not(.rank-one) {
+      color: rgba(255, 251, 226, 0.96) !important;
+      border-color: rgba(255, 214, 84, 0.58) !important;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.035) 42%, rgba(5, 5, 7, 0.20)),
+        radial-gradient(circle at 22% 18%, rgba(255, 238, 148, 0.24), transparent 0 38%),
+        linear-gradient(135deg, rgba(255, 205, 64, 0.34), rgba(139, 92, 246, 0.16) 70%),
+        rgba(32, 24, 11, 0.85) !important;
+      box-shadow:
+        0 0 14px rgba(255, 209, 72, 0.28),
+        0 0 18px rgba(139, 92, 246, 0.16),
+        0 10px 24px rgba(0, 0, 0, 0.34),
+        inset 0 1px 0 rgba(255, 255, 255, 0.22),
+        inset 0 -10px 16px rgba(5, 5, 7, 0.26) !important;
+      text-shadow: 0 0 8px rgba(255, 222, 106, 0.34) !important;
+      backdrop-filter: blur(14px) saturate(1.16) !important;
+    }
+
+    .badge.trend:not(.rank-one) .badge-icon,
+    .dancer-card .badge.trend:not(.rank-one) .badge-icon,
+    .profile-modal .badge.trend:not(.rank-one) .badge-icon,
+    .profile-modal .modal-rank:not(.rank-one) .badge-icon,
+    .venue-shift-rank:not(.rank-one) .badge-icon {
+      color: #FFE66D !important;
+      filter:
+        drop-shadow(0 0 5px rgba(255, 230, 109, 0.78))
+        drop-shadow(0 0 9px rgba(139, 92, 246, 0.34)) !important;
+    }
+
+    .badge.trend:not(.rank-one):hover,
+    .dancer-card:hover .badge.trend:not(.rank-one),
+    .profile-modal .badge.trend:not(.rank-one):hover,
+    .venue-shift-rank:not(.rank-one):hover {
+      border-color: rgba(255, 224, 112, 0.74) !important;
+      box-shadow:
+        0 0 18px rgba(255, 209, 72, 0.36),
+        0 0 20px rgba(139, 92, 246, 0.22),
+        0 12px 26px rgba(0, 0, 0, 0.36),
+        inset 0 1px 0 rgba(255, 255, 255, 0.26),
+        inset 0 -10px 16px rgba(5, 5, 7, 0.22) !important;
+    }
+
+    .badge.trend.rank-one,
+    .dancer-card .badge.trend.rank-one,
+    .profile-modal .badge.trend.rank-one,
+    .profile-modal .modal-rank.rank-one,
+    .venue-shift-rank.rank-one {
+      color: #FFFFFF !important;
+      border-color: rgba(255, 228, 124, 0.82) !important;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.20), rgba(255, 255, 255, 0.05) 42%, rgba(5, 5, 7, 0.18)),
+        radial-gradient(circle at 24% 20%, rgba(255, 246, 184, 0.38), transparent 0 42%),
+        linear-gradient(135deg, rgba(255, 194, 64, 0.74), rgba(255, 47, 174, 0.50) 58%, rgba(139, 92, 246, 0.34)),
+        rgba(44, 28, 9, 0.86) !important;
+      box-shadow:
+        0 0 20px rgba(255, 210, 84, 0.42),
+        0 0 18px rgba(255, 47, 174, 0.20),
+        0 0 22px rgba(139, 92, 246, 0.18),
+        0 12px 28px rgba(0, 0, 0, 0.36),
+        inset 0 1px 0 rgba(255, 255, 255, 0.32),
+        inset 0 -12px 18px rgba(5, 5, 7, 0.18) !important;
+      text-shadow: 0 0 9px rgba(255, 255, 255, 0.30) !important;
+      backdrop-filter: blur(14px) saturate(1.2) !important;
+    }
+
+    .badge.trend.rank-one .badge-icon,
+    .dancer-card .badge.trend.rank-one .badge-icon,
+    .profile-modal .badge.trend.rank-one .badge-icon,
+    .profile-modal .modal-rank.rank-one .badge-icon,
+    .venue-shift-rank.rank-one .badge-icon {
+      color: #FFF3B0 !important;
+      background: rgba(5, 5, 7, 0.24) !important;
+      filter:
+        drop-shadow(0 0 6px rgba(255, 243, 176, 0.86))
+        drop-shadow(0 0 10px rgba(255, 47, 174, 0.44))
+        drop-shadow(0 0 12px rgba(139, 92, 246, 0.28)) !important;
+    }
+    /* Pressed feedback for primary discovery controls. */
+    .location-btn,
+    .tabs .tab,
+    .tab {
+      transition:
+        transform 160ms ease,
+        box-shadow 180ms ease,
+        border-color 180ms ease,
+        background 180ms ease,
+        filter 180ms ease !important;
+    }
+
+    .location-btn:active {
+      transform: translateY(1px) scale(0.992) !important;
+      border-color: rgba(34, 199, 255, 0.58) !important;
+      background:
+        linear-gradient(135deg, rgba(124, 58, 237, 0.94), rgba(139, 92, 246, 0.88) 58%, rgba(34, 199, 255, 0.70)) !important;
+      box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.07) inset,
+        0 0 24px rgba(139, 92, 246, 0.34),
+        0 0 18px rgba(34, 199, 255, 0.24) !important;
+      filter: saturate(1.1) brightness(1.04);
+    }
+
+    .tabs .tab:active,
+    .tab:active {
+      transform: translateY(1px) scale(0.985) !important;
+      border-color: rgba(139, 92, 246, 0.74) !important;
+      box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.05) inset,
+        0 0 22px rgba(139, 92, 246, 0.34),
+        0 0 12px rgba(236, 72, 153, 0.12) !important;
+      filter: saturate(1.08) brightness(1.04);
+    }
+
+    .tabs .tab.active:active,
+    .tab.active:active {
+      box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.08) inset,
+        0 0 28px rgba(139, 92, 246, 0.48),
+        0 0 14px rgba(236, 72, 153, 0.18) !important;
+    }
+    /* Violet balance pass: keep Dancr nightlife, restore more matte black. */
+    .hero.reference-hero.uploaded-hero-ready {
+      background:
+        radial-gradient(circle at 86% 48%, rgba(139, 92, 246, 0.28), transparent 30%),
+        linear-gradient(100deg, rgba(5, 5, 7, 0.98) 0%, rgba(8, 7, 13, 0.96) 48%, rgba(28, 14, 58, 0.72) 100%) !important;
+      border-color: rgba(139, 92, 246, 0.34) !important;
+      box-shadow:
+        inset 0 0 0 1px rgba(255, 255, 255, 0.025),
+        0 18px 52px rgba(0, 0, 0, 0.36),
+        0 0 30px rgba(139, 92, 246, 0.12) !important;
+    }
+
+    .hero.reference-hero::before {
+      left: auto !important;
+      right: 5.8% !important;
+      width: 14px !important;
+      opacity: 0.92 !important;
+      background:
+        linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.50), rgba(139, 92, 246, 0.92), rgba(236, 72, 153, 0.42), transparent) !important;
+      box-shadow:
+        0 0 18px rgba(139, 92, 246, 0.50),
+        0 0 34px rgba(124, 58, 237, 0.34),
+        0 0 46px rgba(236, 72, 153, 0.14) !important;
+      filter: blur(0.2px);
+    }
+
+    .hero.reference-hero::after {
+      opacity: 0.52 !important;
+      background:
+        radial-gradient(circle at 88% 46%, rgba(139, 92, 246, 0.22), transparent 32%),
+        linear-gradient(90deg, transparent 0%, rgba(139, 92, 246, 0.12) 66%, rgba(124, 58, 237, 0.28) 100%) !important;
+    }
+
+    .location-btn {
+      background:
+        linear-gradient(135deg, rgba(124, 58, 237, 0.92), rgba(139, 92, 246, 0.84) 72%, rgba(34, 199, 255, 0.58)) !important;
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.16),
+        0 14px 34px rgba(124, 58, 237, 0.22),
+        0 0 18px rgba(34, 199, 255, 0.12) !important;
+    }
+
+    .tabs .tab.active,
+    .tab.active {
+      background:
+        linear-gradient(135deg, rgba(124, 58, 237, 0.92), rgba(139, 92, 246, 0.84)) !important;
+      box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.08) inset,
+        0 12px 30px rgba(124, 58, 237, 0.30),
+        0 0 20px rgba(139, 92, 246, 0.20) !important;
+    }
+    /* Full profile tile normalization: same rhythm for tonight, upcoming, and no-shift states. */
+    .profile-modal .modal-grid {
+      align-items: stretch !important;
+    }
+
+    .profile-modal .modal-grid .info-tile {
+      min-height: 118px !important;
+      padding: 20px 22px !important;
+      display: flex !important;
+      flex-direction: column !important;
+      justify-content: flex-start !important;
+      gap: 10px !important;
+    }
+
+    .profile-modal .modal-grid .info-tile > strong {
+      margin: 0 0 4px !important;
+      font-size: clamp(0.86rem, 2.45vw, 1rem) !important;
+      line-height: 1.1 !important;
+      letter-spacing: 0.14em !important;
+    }
+
+    .profile-modal .schedule-stack,
+    .profile-modal .detail-line,
+    .profile-modal .schedule-text-row {
+      gap: 10px !important;
+      margin: 0 !important;
+      align-items: center !important;
+      line-height: 1.22 !important;
+    }
+
+    .profile-modal .schedule-stack {
+      gap: 9px !important;
+    }
+
+    .profile-modal .upcoming-venue-line,
+    .profile-modal .tonight-time-row,
+    .profile-modal .upcoming-time-row {
+      min-height: 24px !important;
+    }
+
+    .profile-modal .modal-schedule-text,
+    .profile-modal .modal-schedule-text.tonight,
+    .profile-modal .modal-schedule-text.upcoming {
+      display: inline !important;
+      max-width: 100% !important;
+      font-size: clamp(1.05rem, 3.2vw, 1.22rem) !important;
+      line-height: 1.2 !important;
+      letter-spacing: 0 !important;
+      white-space: normal !important;
+      word-break: normal !important;
+      overflow-wrap: anywhere !important;
+      text-shadow:
+        0 0 10px currentColor,
+        0 0 18px rgba(139, 92, 246, 0.16) !important;
+    }
+
+    .profile-modal .modal-schedule-text.upcoming {
+      color: #7ddfff !important;
+    }
+
+    .profile-modal .modal-schedule-text.tonight {
+      color: #ff5fc8 !important;
+    }
+
+    .profile-modal .interest-count,
+    .profile-modal .metric-value,
+    .profile-modal .metric-number {
+      font-size: clamp(1.3rem, 4vw, 1.82rem) !important;
+      line-height: 1.08 !important;
+    }
+
+    .profile-modal .interest-tile .meta,
+    .profile-modal .info-tile .meta {
+      line-height: 1.28 !important;
+    }
+
+    @media (max-width: 520px) {
+      .profile-modal .modal-grid .info-tile {
+        min-height: 104px !important;
+        padding: 17px 18px !important;
+        gap: 8px !important;
+      }
+
+      .profile-modal .modal-schedule-text,
+      .profile-modal .modal-schedule-text.tonight,
+      .profile-modal .modal-schedule-text.upcoming {
+        font-size: 1.02rem !important;
+      }
+    }
+    /* Profile card hierarchy: keep ASK FOR as a quiet supporting label. */
+    .dancer-card .ask-for-card-label {
+      color: rgba(255, 255, 255, 0.48) !important;
+      font-size: clamp(0.58rem, 1.45vw, 0.66rem) !important;
+      font-weight: 800 !important;
+      letter-spacing: 0.17em !important;
+      opacity: 0.86 !important;
+    }
+
+    .dancer-card .card-stage-name {
+      font-size: clamp(1.08rem, 3.05vw, 1.22rem) !important;
+      line-height: 1.05 !important;
+    }
+
+    .dancer-card .card-venue-line {
+      font-size: clamp(0.86rem, 2.35vw, 0.96rem) !important;
+      line-height: 1.2 !important;
+    }
+
+    .dancer-card .card-venue-name {
+      font-weight: 760 !important;
+    }
+
+    .dancer-card .card-distance,
+    .dancer-card .card-venue-prefix {
+      font-size: 0.92em !important;
+    }
+
+    .dancer-card .card-schedule-text {
+      font-size: clamp(0.88rem, 2.42vw, 0.98rem) !important;
+      line-height: 1.16 !important;
+    }
+    /* Venue action buttons: less magenta-heavy, stronger utility hierarchy. */
+    .venue-detail .follow-venue-btn,
+    .venue-detail .venue-directions-btn {
+      min-height: 58px !important;
+      border-radius: 999px !important;
+      display: inline-flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      gap: 10px !important;
+      font-size: clamp(0.98rem, 2.6vw, 1.08rem) !important;
+      line-height: 1 !important;
+      letter-spacing: 0 !important;
+      text-align: center !important;
+      transform: translateZ(0);
+    }
+
+    .venue-detail .follow-venue-btn {
+      color: #f7f3ff !important;
+      border: 1px solid rgba(139, 92, 246, 0.52) !important;
+      background:
+        linear-gradient(135deg, rgba(16, 14, 24, 0.96), rgba(37, 20, 68, 0.70)) !important;
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.07),
+        0 0 18px rgba(139, 92, 246, 0.16) !important;
+    }
+
+    .venue-detail .follow-venue-btn.is-following {
+      border-color: rgba(139, 92, 246, 0.70) !important;
+      background:
+        linear-gradient(135deg, rgba(22, 18, 34, 0.98), rgba(55, 26, 98, 0.74)) !important;
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.08),
+        0 0 24px rgba(139, 92, 246, 0.24) !important;
+    }
+
+    .venue-detail .venue-directions-btn {
+      color: #ffffff !important;
+      border: 1px solid rgba(34, 199, 255, 0.46) !important;
+      background:
+        linear-gradient(135deg, rgba(124, 58, 237, 0.92), rgba(139, 92, 246, 0.82) 62%, rgba(34, 199, 255, 0.66)) !important;
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.12),
+        0 16px 34px rgba(124, 58, 237, 0.22),
+        0 0 18px rgba(34, 199, 255, 0.16) !important;
+    }
+
+    .venue-detail .venue-directions-btn .venue-dot,
+    .venue-detail .venue-directions-btn .venue-dot svg {
+      color: #22c7ff !important;
+      width: 18px !important;
+      height: 18px !important;
+      flex: 0 0 auto !important;
+      filter: drop-shadow(0 0 8px rgba(34, 199, 255, 0.44)) !important;
+    }
+
+    .venue-detail .follow-venue-btn:hover,
+    .venue-detail .venue-directions-btn:hover {
+      transform: translateY(-1px) !important;
+      filter: brightness(1.04) saturate(1.05);
+    }
+    /* Final override: deep electric-violet glass trending badges, with #1 as the VIP rank. */
+    .badge.trend:not(.rank-one),
+    .dancer-card .badge.trend:not(.rank-one),
+    .profile-modal .badge.trend:not(.rank-one),
+    .venue-shift-rank:not(.rank-one) {
+      color: rgba(255,255,255,.94);
+      border: 1px solid rgba(139,92,246,.72);
+      background:
+        linear-gradient(135deg, rgba(22,14,38,.56), rgba(85,38,150,.46) 48%, rgba(124,58,237,.42)),
+        rgba(11,8,18,.58);
+      box-shadow:
+        0 0 0 1px rgba(255,255,255,.045) inset,
+        inset 0 1px 0 rgba(255,255,255,.24),
+        inset 0 -10px 20px rgba(5,5,7,.22),
+        0 0 17px rgba(139,92,246,.34),
+        0 10px 24px rgba(0,0,0,.42);
+      text-shadow: 0 1px 10px rgba(255,255,255,.24);
+      backdrop-filter: blur(16px) saturate(150%);
+    }
+
+    .badge.trend:not(.rank-one)::before,
+    .dancer-card .badge.trend:not(.rank-one)::before,
+    .profile-modal .badge.trend:not(.rank-one)::before {
+      content: "";
+      position: absolute;
+      inset: 1px 2px auto;
+      height: 42%;
+      border-radius: inherit;
+      background: linear-gradient(180deg, rgba(255,255,255,.22), transparent);
+      opacity: .72;
+      pointer-events: none;
+    }
+
+    .badge.trend:not(.rank-one) .badge-icon,
+    .dancer-card .badge.trend:not(.rank-one) .badge-icon,
+    .profile-modal .badge.trend:not(.rank-one) .badge-icon,
+    .venue-shift-rank:not(.rank-one) .badge-icon {
+      color: #f4eaff;
+      filter:
+        drop-shadow(0 0 5px rgba(236,72,153,.5))
+        drop-shadow(0 0 9px rgba(139,92,246,.44));
+    }
+
+    .badge.trend:not(.rank-one):hover,
+    .dancer-card:hover .badge.trend:not(.rank-one),
+    .profile-modal .badge.trend:not(.rank-one):hover {
+      border-color: rgba(190,148,255,.9);
+      background:
+        linear-gradient(135deg, rgba(31,18,54,.66), rgba(103,45,182,.54) 48%, rgba(139,92,246,.5)),
+        rgba(11,8,18,.64);
+      box-shadow:
+        0 0 0 1px rgba(255,255,255,.055) inset,
+        inset 0 1px 0 rgba(255,255,255,.28),
+        0 0 24px rgba(139,92,246,.48),
+        0 0 18px rgba(236,72,153,.18),
+        0 12px 28px rgba(0,0,0,.46);
+    }
+
+    .badge.trend.rank-one,
+    .dancer-card .badge.trend.rank-one,
+    .profile-modal .badge.trend.rank-one,
+    .venue-shift-rank.rank-one {
+      color: #fffaf0;
+      border: 1px solid rgba(255,216,109,.82);
+      background:
+        linear-gradient(135deg, rgba(58,36,10,.72), rgba(124,58,237,.55) 44%, rgba(236,72,153,.58) 72%, rgba(255,184,65,.68)),
+        rgba(14,9,18,.72);
+      box-shadow:
+        0 0 0 1px rgba(255,255,255,.07) inset,
+        inset 0 1px 0 rgba(255,255,255,.32),
+        inset 0 -10px 22px rgba(5,5,7,.2),
+        0 0 22px rgba(255,199,71,.38),
+        0 0 28px rgba(236,72,153,.28),
+        0 12px 30px rgba(0,0,0,.46);
+      text-shadow: 0 1px 10px rgba(0,0,0,.36);
+      backdrop-filter: blur(16px) saturate(160%);
+    }
+
+    .badge.trend.rank-one .badge-icon,
+    .dancer-card .badge.trend.rank-one .badge-icon,
+    .profile-modal .badge.trend.rank-one .badge-icon,
+    .venue-shift-rank.rank-one .badge-icon {
+      color: #fff7c4;
+      filter:
+        drop-shadow(0 0 5px rgba(255,231,126,.74))
+        drop-shadow(0 0 12px rgba(236,72,153,.44));
+    }
+
+    .badge.trend.rank-one:hover,
+    .dancer-card:hover .badge.trend.rank-one,
+    .profile-modal .badge.trend.rank-one:hover {
+      box-shadow:
+        0 0 0 1px rgba(255,255,255,.08) inset,
+        inset 0 1px 0 rgba(255,255,255,.34),
+        0 0 28px rgba(255,199,71,.48),
+        0 0 34px rgba(236,72,153,.34),
+        0 12px 30px rgba(0,0,0,.48);
+    }
+
+    /* Final flame-based ranking system: gold champion, orange trending. */
+    .badge.trend,
+    .dancer-card .badge.trend,
+    .profile-modal .badge.trend,
+    .venue-shift-rank {
+      color: #fff !important;
+      border: 1px solid rgba(255,122,0,.48) !important;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.03) 46%, rgba(5,5,7,.16)),
+        linear-gradient(135deg, rgba(5,5,7,.86), rgba(28,15,8,.78)) !important;
+      box-shadow:
+        0 0 0 1px rgba(255,255,255,.04) inset,
+        inset 0 1px 0 rgba(255,255,255,.14),
+        inset 0 -10px 18px rgba(5,5,7,.34),
+        0 0 14px rgba(255,122,0,.28),
+        0 10px 22px rgba(0,0,0,.38) !important;
+      text-shadow: 0 1px 8px rgba(0,0,0,.46) !important;
+      backdrop-filter: blur(14px) saturate(1.2) !important;
+    }
+
+    .badge.trend.compact-trend,
+    .dancer-card .badge.trend.compact-trend,
+    .venue-shift-rank {
+      min-width: 54px !important;
+      padding-inline: 13px !important;
+      gap: 7px !important;
+    }
+
+    .badge.trend.full-trend,
+    .profile-modal .badge.trend,
+    .profile-modal .modal-rank {
+      gap: 8px !important;
+      padding-inline: 15px !important;
+    }
+
+    .badge.trend:not(.rank-one) .badge-icon,
+    .dancer-card .badge.trend:not(.rank-one) .badge-icon,
+    .profile-modal .badge.trend:not(.rank-one) .badge-icon,
+    .venue-shift-rank:not(.rank-one) .badge-icon {
+      color: #ff7a00 !important;
+      filter:
+        drop-shadow(0 0 5px rgba(255,122,0,.88))
+        drop-shadow(0 0 12px rgba(255,107,0,.44)) !important;
+    }
+
+    .badge.trend .badge-icon svg,
+    .dancer-card .badge.trend .badge-icon svg,
+    .profile-modal .badge.trend .badge-icon svg,
+    .venue-shift-rank .badge-icon svg {
+      width: 13px !important;
+      height: 13px !important;
+      stroke-width: 2.45 !important;
+    }
+
+    .badge.trend.rank-one,
+    .dancer-card .badge.trend.rank-one,
+    .profile-modal .badge.trend.rank-one,
+    .venue-shift-rank.rank-one {
+      color: #fffaf0 !important;
+      border-color: rgba(255,215,106,.86) !important;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.18), rgba(255,255,255,.05) 48%, rgba(5,5,7,.14)),
+        radial-gradient(circle at 22% 18%, rgba(255,239,165,.34), transparent 0 38%),
+        linear-gradient(135deg, rgba(255,196,50,.40), rgba(58,33,8,.78) 48%, rgba(5,5,7,.82)) !important;
+      box-shadow:
+        0 0 0 1px rgba(255,255,255,.08) inset,
+        inset 0 1px 0 rgba(255,255,255,.24),
+        inset 0 -10px 20px rgba(5,5,7,.26),
+        0 0 18px rgba(255,209,84,.42),
+        0 0 28px rgba(255,122,0,.18),
+        0 10px 24px rgba(0,0,0,.42) !important;
+    }
+
+    .badge.trend.rank-one .badge-icon,
+    .dancer-card .badge.trend.rank-one .badge-icon,
+    .profile-modal .badge.trend.rank-one .badge-icon,
+    .venue-shift-rank.rank-one .badge-icon {
+      color: #ffd76a !important;
+      filter:
+        drop-shadow(0 0 6px rgba(255,222,119,.9))
+        drop-shadow(0 0 14px rgba(255,184,65,.42)) !important;
+    }
+
+    .badge.trend:not(.rank-one):hover,
+    .dancer-card:hover .badge.trend:not(.rank-one),
+    .profile-modal .badge.trend:not(.rank-one):hover,
+    .venue-shift-rank:not(.rank-one):hover {
+      border-color: rgba(255,140,0,.68) !important;
+      box-shadow:
+        0 0 0 1px rgba(255,255,255,.05) inset,
+        inset 0 1px 0 rgba(255,255,255,.18),
+        0 0 20px rgba(255,122,0,.38),
+        0 10px 24px rgba(0,0,0,.42) !important;
+    }
+
+    .badge.trend.rank-one:hover,
+    .dancer-card:hover .badge.trend.rank-one,
+    .profile-modal .badge.trend.rank-one:hover,
+    .venue-shift-rank.rank-one:hover {
+      box-shadow:
+        0 0 0 1px rgba(255,255,255,.09) inset,
+        inset 0 1px 0 rgba(255,255,255,.28),
+        0 0 24px rgba(255,215,106,.54),
+        0 0 34px rgba(255,122,0,.24),
+        0 12px 28px rgba(0,0,0,.46) !important;
+    }
+
+    .rankings-card {
+      position: relative;
+      overflow: hidden;
+    }
+
+    .rankings-card::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background:
+        radial-gradient(circle at 18% 0%, rgba(139,92,246,.2), transparent 34%),
+        radial-gradient(circle at 100% 18%, rgba(236,72,153,.12), transparent 28%);
+      opacity: .8;
+    }
+
+    .rankings-card > * {
+      position: relative;
+      z-index: 1;
+    }
+
+    .ranking-card-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 14px;
+    }
+
+    .ranking-card-head h3 {
+      margin: 3px 0 0;
+    }
+
+    .rank-trend-pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 34px;
+      padding: 8px 13px;
+      border: 1px solid rgba(139,92,246,.38);
+      border-radius: 999px;
+      background: rgba(139,92,246,.12);
+      color: #c4b5fd;
+      font-size: 12px;
+      font-weight: 900;
+      letter-spacing: .02em;
+      box-shadow: 0 0 18px rgba(139,92,246,.14);
+    }

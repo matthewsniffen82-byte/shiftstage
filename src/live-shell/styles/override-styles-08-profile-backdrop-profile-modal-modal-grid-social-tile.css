@@ -1,0 +1,138 @@
+
+        #profileBackdrop #profileModal .modal-grid > .social-tile {
+          order: 3;
+        }
+
+        @media (max-width: 520px) {
+          #profileBackdrop #profileModal .profile-modal-summary {
+            grid-template-columns: minmax(0, 1fr) !important;
+            gap: 0 !important;
+            min-height: 66px !important;
+            margin-inline: -12px !important;
+            padding: max(7px, calc(env(safe-area-inset-top, 0px) + 4px)) 102px 7px 10px !important;
+          }
+
+          #profileBackdrop #profileModal .profile-modal-person {
+            grid-template-columns: 60px minmax(0, 1fr);
+            gap: 4px;
+          }
+
+          #profileBackdrop #profileModal .profile-modal-avatar {
+            width: 48px !important;
+            height: 48px !important;
+          }
+
+          #profileBackdrop #profileModal .profile-modal-summary .modal-identity h2 {
+            font-size: clamp(17px, 4.8vw, 21px) !important;
+          }
+
+          #profileBackdrop #profileModal .profile-modal-header-controls { width: 92px; grid-template-columns: repeat(2, 44px); }
+
+          #profileBackdrop #profileModal #modalClose {
+            width: 36px !important;
+            min-width: 36px !important;
+            max-width: 36px !important;
+            height: 36px !important;
+            min-height: 36px !important;
+            max-height: 36px !important;
+          }
+        }
+
+        @media (max-width: 340px) {
+          #profileBackdrop #profileModal .profile-modal-summary {
+            grid-template-columns: minmax(0, 1fr) !important;
+            gap: 0 !important;
+            min-height: 64px !important;
+            padding-right: 102px !important;
+          }
+
+          #profileBackdrop #profileModal .profile-modal-person {
+            grid-template-columns: 56px minmax(0, 1fr);
+            gap: 5px;
+          }
+
+          #profileBackdrop #profileModal .profile-modal-avatar-column {
+            grid-template-rows: 46px 15px;
+            gap: 2px;
+          }
+
+          #profileBackdrop #profileModal .profile-modal-avatar {
+            width: 46px !important;
+            height: 46px !important;
+          }
+
+          #profileBackdrop #profileModal #modalCity {
+            width: 56px !important;
+            max-width: 56px !important;
+            font-size: 7px !important;
+          }
+
+          #profileBackdrop #profileModal .profile-modal-header-controls { width: 92px; grid-template-columns: repeat(2, 44px); }
+
+          #profileBackdrop #profileModal #modalClose {
+            width: 36px !important;
+            height: 36px !important;
+            min-height: 36px !important;
+          }
+
+          #profileBackdrop #profileModal .profile-modal-name-row {
+            display: grid !important;
+            grid-template-columns: minmax(0, 1fr) auto auto;
+            align-items: center !important;
+            gap: 3px !important;
+          }
+
+          #profileBackdrop #profileModal .profile-modal-verified {
+            width: 18px !important;
+            height: 18px !important;
+            flex-basis: 18px !important;
+            font-size: 10px !important;
+          }
+
+          #profileBackdrop #profileModal .profile-modal-header-metrics .profile-activity-metrics dt {
+            font-size: 8px !important;
+          }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          .uber-ride-link {
+            transition: none;
+          }
+        }
+
+        /* iPhone WebKit can composite transparent profile hit areas as faint
+           rectangular tiles. Keep those surfaces clear without changing the
+           selected action's icon color or halo. */
+        @supports (-webkit-touch-callout: none) {
+          body.dancr-button-system #profileBackdrop #profileModal :is(
+            .profile-modal-header-metrics,
+            .profile-activity-metrics,
+            .profile-activity-metrics > div,
+            .modal-actions,
+            .modal-actions > .action-btn.profile-action-icon-control,
+            .modal-actions > .action-btn.profile-action-icon-control .profile-action-main
+          ) {
+            border-color: transparent !important;
+            background: transparent !important;
+            background-color: transparent !important;
+            background-image: none !important;
+            box-shadow: none !important;
+            -webkit-backdrop-filter: none !important;
+            backdrop-filter: none !important;
+          }
+
+          body.dancr-button-system #profileBackdrop #profileModal
+            .modal-actions > .action-btn.profile-action-icon-control {
+            -webkit-appearance: none !important;
+            appearance: none !important;
+            -webkit-tap-highlight-color: transparent;
+          }
+        }
+
+        /* Keep the three guest actions centered beneath the profile summary. */
+        @media (max-width: 759px) {
+          #profileBackdrop #profileModal .modal-actions {
+            width: auto !important;
+            margin-inline: 12px !important;
+          }
+        }

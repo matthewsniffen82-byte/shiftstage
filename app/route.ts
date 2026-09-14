@@ -11,7 +11,7 @@ import {
 } from "../src/lib/security/root-content-security-policy.mjs";
 import { externalizeLiveShellAppScript } from "../src/lib/dancr/live-shell-script.mjs";
 import { versionStaticAssetReferences } from "../src/lib/dancr/static-asset-cache.mjs";
-import { inlineLiveShellStyles } from "../src/lib/dancr/live-shell-styles.mjs";
+import { externalizeLiveShellStyles } from "../src/lib/dancr/live-shell-styles.mjs";
 
 export const runtime = "nodejs";
 // The live shell is a checked-in production artifact. Rendering this route at
@@ -51,12 +51,7 @@ export async function GET() {
 
 async function renderLiveShell() {
   const htmlPath = path.join(process.cwd(), "outputs", "index.html");
-  const [html, compactStyles] = await Promise.all([
-    readFile(htmlPath, "utf8"),
-    process.env.NODE_ENV === "production"
-      ? readFile(path.join(process.cwd(), "public", "outputs", "live-shell.css"), "utf8")
-      : Promise.resolve(null),
-  ]);
+  const html = await readFile(htmlPath, "utf8");
   const normalizedHtml = html.replace(/\r\n?/g, "\n");
   const liveShellSha256 = createHash("sha256").update(normalizedHtml).digest("hex");
   const scriptVersion = process.env.NODE_ENV === "production" ? LIVE_SHELL_SCRIPT_SHA256 : liveShellSha256;
@@ -65,8 +60,8 @@ async function renderLiveShell() {
     `/live-shell.js?v=${scriptVersion}`,
   );
   // Development keeps live CSS edits visible without rebuilding the artifact.
-  const withCompactStyles = compactStyles
-    ? inlineLiveShellStyles(withExternalAppScript, compactStyles)
+  const withCompactStyles = process.env.NODE_ENV === "production"
+    ? externalizeLiveShellStyles(withExternalAppScript)
     : withExternalAppScript;
   const activeEditProfileMarker = `<script>${createActiveEditProfileScript(liveShellSha256)}</script>`;
   const withBase = withCompactStyles.replace("<head>", `<head><base href="/outputs/">${activeEditProfileMarker}`);

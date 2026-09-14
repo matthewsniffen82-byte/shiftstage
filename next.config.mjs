@@ -83,7 +83,6 @@ const nextConfig = {
   },
   serverExternalPackages: ["ffmpeg-static"],
   outputFileTracingIncludes: {
-    "/": ["./public/outputs/live-shell.css"],
     "/live-shell.js": ["./outputs/live-shell-app.js"],
     "/live-shell-feature.js": ["./outputs/live-shell-tv.js"],
     "/api/admin/tv/import": ["./node_modules/ffmpeg-static/ffmpeg*"],

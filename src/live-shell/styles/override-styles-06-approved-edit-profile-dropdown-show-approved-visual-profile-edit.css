@@ -1,0 +1,1195 @@
+
+        #approvedEditProfileDropdown.show #approvedVisualProfileEditor .modal-grid.is-editor-preview .profile-deal-copy {
+          min-width: 0 !important;
+          display: grid !important;
+          gap: 6px !important;
+        }
+
+        #approvedEditProfileDropdown.show #approvedVisualProfileEditor .modal-grid.is-editor-preview .profile-deal-main {
+          color: #f7f3ff !important;
+          font-size: 14px !important;
+          font-weight: 950 !important;
+          line-height: 1.18 !important;
+        }
+
+        #approvedEditProfileDropdown.show #approvedVisualProfileEditor .modal-grid.is-editor-preview .profile-deal-note {
+          display: block !important;
+          color: rgba(232,226,241,.7) !important;
+          font-size: 10px !important;
+          font-weight: 720 !important;
+          line-height: 1.35 !important;
+        }
+
+        #approvedEditProfileDropdown.show #approvedVisualProfileEditor .modal-grid.is-editor-preview .profile-deal-placeholder {
+          width: 68px !important;
+          min-width: 68px !important;
+          height: 68px !important;
+          padding: 8px !important;
+          border-color: rgba(139,92,246,.34) !important;
+          color: rgba(218,206,246,.72) !important;
+          background: linear-gradient(145deg, rgba(139,92,246,.11), rgba(53,216,255,.045)) !important;
+        }
+
+        @media (max-width: 560px) {
+          #approvedEditProfileDropdown.show #approvedVisualProfileEditor .modal-grid.is-editor-preview {
+            grid-template-columns: minmax(0, 1fr) !important;
+          }
+
+          #approvedEditProfileDropdown.show #approvedVisualProfileEditor .modal-grid.is-editor-preview > .info-tile {
+            grid-column: 1 / -1 !important;
+            padding: 14px 15px !important;
+          }
+
+          #approvedEditProfileDropdown.show #approvedVisualProfileEditor #approvedProfileVideoStatus {
+            width: auto !important;
+            margin-right: 62px !important;
+            padding: 10px 12px !important;
+            font-size: 11px !important;
+            line-height: 1.35 !important;
+          }
+        }
+
+        /* Keep Working Now details clean and active deal QR actions contained on every phone. */
+        #profileBackdrop .working-now-tile > strong,
+        #profileBackdrop .working-now-tile .modal-schedule-text.tonight,
+        #profileBackdrop .working-now-tile .tonight-time-row > .venue-dot {
+          color: #4dec9d !important;
+          text-shadow: 0 0 10px rgba(77, 236, 157, .24) !important;
+        }
+
+        #profileBackdrop .working-now-tile > strong,
+        #profileBackdrop .working-now-tile .detail-line,
+        #profileBackdrop .working-now-tile .venue-inline-link,
+        #profileBackdrop .profile-working-directions {
+          border: 0 !important;
+          border-radius: 0 !important;
+          background: transparent !important;
+          background-image: none !important;
+          box-shadow: none !important;
+        }
+
+        #profileBackdrop .working-now-tile > strong,
+        #profileBackdrop .working-now-tile .detail-line {
+          padding: 0 !important;
+        }
+
+        #profileBackdrop .working-now-tile .venue-inline-link,
+        #profileBackdrop .profile-working-directions {
+          width: auto !important;
+          min-width: 0 !important;
+          min-height: 44px !important;
+          padding: 0 !important;
+          display: inline-flex !important;
+          align-items: center !important;
+        }
+
+        #profileBackdrop .working-now-tile .venue-inline-link {
+          text-decoration: none !important;
+        }
+
+        #profileBackdrop .profile-club-deal-tile {
+          box-sizing: border-box !important;
+          width: 100% !important;
+          min-width: 0 !important;
+          max-width: 100% !important;
+          grid-template-columns: minmax(0, 1fr) minmax(96px, 112px) !important;
+          align-items: center !important;
+          gap: 16px !important;
+          overflow: hidden !important;
+        }
+
+        #profileBackdrop .profile-club-deal-label {
+          margin: 0 !important;
+          color: #4dec9d !important;
+          font-size: clamp(18px, 5vw, 23px) !important;
+          font-weight: 950 !important;
+          letter-spacing: -.015em !important;
+          line-height: 1.05 !important;
+          text-transform: none !important;
+          text-shadow: 0 0 14px rgba(77, 236, 157, .22) !important;
+        }
+
+        #profileBackdrop .profile-club-deal-qr-button {
+          box-sizing: border-box !important;
+          width: 100% !important;
+          min-width: 0 !important;
+          min-height: 112px !important;
+          display: grid !important;
+          place-items: center !important;
+          align-content: center !important;
+          gap: 8px !important;
+          justify-self: end !important;
+          padding: 12px 10px !important;
+          overflow: hidden !important;
+          border: 1px solid rgba(77, 236, 157, .72) !important;
+          border-radius: 14px !important;
+          color: #effff7 !important;
+          background:
+            radial-gradient(circle at 50% 0, rgba(126, 255, 190, .2), transparent 64%),
+            linear-gradient(145deg, rgba(8, 72, 55, .98), rgba(3, 31, 25, .98)) !important;
+          box-shadow:
+            inset 0 1px 0 rgba(255, 255, 255, .1),
+            0 0 24px rgba(77, 236, 157, .2) !important;
+          cursor: pointer !important;
+          transition: transform .16s ease, border-color .16s ease, box-shadow .16s ease !important;
+        }
+
+        #profileBackdrop .profile-club-deal-qr-button img {
+          display: block;
+          width: 100%;
+          height: 100%;
+          object-fit: contain;
+          border-radius: 8px;
+        }
+
+        #profileBackdrop .profile-club-deal-qr-button .club-deal-qr-symbol {
+          width: 42px;
+          height: 42px;
+          display: grid;
+          place-items: center;
+          color: #7effbd;
+          filter: drop-shadow(0 0 9px rgba(77, 236, 157, .38));
+        }
+
+        #profileBackdrop .profile-club-deal-qr-button .club-deal-qr-symbol svg {
+          width: 100%;
+          height: 100%;
+          fill: none;
+          stroke: currentColor;
+          stroke-width: 1.8;
+          stroke-linecap: round;
+          stroke-linejoin: round;
+        }
+
+        #profileBackdrop .profile-club-deal-action-copy {
+          min-width: 0;
+          display: grid;
+          gap: 2px;
+          text-align: center;
+        }
+
+        #profileBackdrop .profile-club-deal-action-copy strong {
+          color: #fff;
+          font-size: 12px;
+          font-weight: 950;
+          line-height: 1.08;
+        }
+
+        #profileBackdrop .profile-club-deal-action-copy small {
+          color: rgba(220, 255, 237, .78);
+          font-size: 9px;
+          font-weight: 850;
+          line-height: 1.12;
+        }
+
+        #profileBackdrop .profile-club-deal-qr-button:not(:disabled):is(:hover, :focus-visible) {
+          border-color: rgba(126, 255, 189, .96) !important;
+          box-shadow:
+            inset 0 1px 0 rgba(255, 255, 255, .14),
+            0 0 0 3px rgba(77, 236, 157, .15),
+            0 0 30px rgba(77, 236, 157, .3) !important;
+          outline: none !important;
+        }
+
+        #profileBackdrop .profile-club-deal-qr-button:not(:disabled):active {
+          transform: scale(.97);
+        }
+
+        #profileBackdrop .profile-club-deal-qr-button:disabled {
+          opacity: 1 !important;
+          cursor: progress !important;
+        }
+
+        #profileBackdrop .profile-club-deal-tile.profile-qr-unavailable {
+          border-color: rgba(148, 163, 184, .2) !important;
+          color: rgba(203, 196, 214, .76) !important;
+          background: rgba(17, 17, 24, .82) !important;
+          background-image: none !important;
+          box-shadow: none !important;
+        }
+
+        #profileBackdrop .profile-club-deal-tile.profile-qr-unavailable .profile-club-deal-label,
+        #profileBackdrop .profile-club-deal-tile.profile-qr-unavailable .profile-club-deal-copy small {
+          color: rgba(203, 196, 214, .76) !important;
+          text-shadow: none !important;
+        }
+
+        #profileBackdrop .profile-club-deal-qr-button.is-unavailable:disabled {
+          border-color: rgba(148, 163, 184, .18) !important;
+          color: rgba(203, 196, 214, .68) !important;
+          background: rgba(255, 255, 255, .035) !important;
+          background-image: none !important;
+          box-shadow: inset 0 1px 0 rgba(255, 255, 255, .03) !important;
+          cursor: default !important;
+        }
+
+        #profileBackdrop .profile-club-deal-qr-button.is-unavailable .club-deal-qr-symbol {
+          color: rgba(203, 196, 214, .58) !important;
+          filter: none !important;
+        }
+
+        #profileBackdrop .profile-club-deal-qr-button.is-unavailable .profile-club-deal-action-copy strong,
+        #profileBackdrop .profile-club-deal-qr-button.is-unavailable .profile-club-deal-action-copy small {
+          color: rgba(203, 196, 214, .7) !important;
+        }
+
+        #profileBackdrop .profile-club-deal-loading {
+          width: 24px;
+          height: 24px;
+          border: 3px solid rgba(5, 5, 5, .18);
+          border-top-color: #10804a;
+          border-radius: 50%;
+          animation: dancrQrLoading .8s linear infinite;
+        }
+
+        @keyframes dancrQrLoading {
+          to { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 720px) {
+          #profileBackdrop .profile-club-deal-tile {
+            box-sizing: border-box !important;
+            width: 100% !important;
+            min-width: 0 !important;
+            max-width: 100% !important;
+            grid-template-columns: minmax(0, 1fr) minmax(96px, 108px) !important;
+            gap: 14px !important;
+            padding: 15px 16px !important;
+            overflow: hidden !important;
+          }
+        }
+        /* One discovery-heading divider across every viewport. */
+        .content-head.discovery-section-head {
+          padding-bottom: 13px !important;
+          border-bottom: 1px solid rgba(255, 255, 255, .1);
+        }
+
+        .content-head.discovery-section-head + #results {
+          margin-top: -7px !important;
+        }
+
+        /* One compact discovery-heading hierarchy shared by Android and iPhone. */
+        @media (max-width: 720px) {
+          .content-head.discovery-section-head {
+            flex-wrap: wrap;
+            gap: 8px !important;
+            margin-top: 4px !important;
+            padding: 2px 0 13px !important;
+          }
+
+          .content-head.discovery-section-head #tabTitle {
+            flex: 1 1 auto;
+            min-width: 0;
+            font-family: var(--font-ui) !important;
+            font-size: clamp(22px, 5.8vw, 27px) !important;
+            font-weight: 900 !important;
+            line-height: 1.04 !important;
+            letter-spacing: -.025em !important;
+          }
+
+          .content-head.discovery-section-head .count {
+            min-height: 26px !important;
+            padding: 0 9px !important;
+            font-size: 11px !important;
+          }
+
+          .content-head.discovery-section-head + #results.home-dancer-grid > .home-dancer-grid-heading:first-child {
+            margin-top: 0;
+            padding: 7px 0 2px;
+          }
+
+          .home-dancer-grid-heading.is-upcoming strong {
+            color: #b9f6ff;
+            text-shadow: none;
+          }
+
+          /* Keep the active destination visible without reserving space for the
+             utility header after that header has scrolled out of view. */
+          .app {
+            overflow: visible !important;
+          }
+
+          .discovery-sticky-head {
+            position: sticky;
+            top: calc(18px + env(safe-area-inset-top, 0px));
+            z-index: 70;
+            scroll-margin-top: 0;
+            background: var(--lux-bg, var(--bg));
+            isolation: isolate;
+          }
+
+          .discovery-sticky-head + #results {
+            min-height: calc(100svh - 112px) !important;
+            align-content: start;
+          }
+
+          /* Compact dancer directories end with their final row. Full-height
+             discovery feeds keep the viewport floor above. */
+          .discovery-sticky-head + #results.home-dancer-grid.home-dancer-three-column {
+            min-height: 0 !important;
+          }
+        }
+
+        body.dashboard-overlay-open .discovery-sticky-head,
+        body.customer-auth-overlay-open .discovery-sticky-head,
+        body.dancer-auth-overlay-open .discovery-sticky-head,
+        body.venue-auth-overlay-open .discovery-sticky-head {
+          visibility: hidden !important;
+          pointer-events: none !important;
+        }
+
+        .uber-ride-link {
+          box-sizing: border-box;
+          min-height: 44px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: 7px;
+          border: 1px solid var(--dancr-color-brand-primary-medium) !important;
+          border-radius: 14px;
+          color: var(--dancr-color-text-primary) !important;
+          background:
+            linear-gradient(180deg, rgba(255,255,255,.08), transparent 52%),
+            linear-gradient(145deg, rgba(17,17,24,.82), rgba(5,5,7,.9)) !important;
+          -webkit-backdrop-filter: blur(16px) saturate(1.08);
+          backdrop-filter: blur(16px) saturate(1.08);
+          box-shadow:
+            inset 0 1px 0 rgba(255,255,255,.11),
+            0 10px 24px rgba(0,0,0,.28) !important;
+          font-family: var(--font-ui);
+          font-weight: 950;
+          line-height: 1;
+          text-align: center;
+          text-decoration: none !important;
+          touch-action: manipulation;
+          -webkit-tap-highlight-color: transparent;
+          transition: border-color .16s ease, background .16s ease, box-shadow .16s ease, transform .12s ease;
+        }
+
+        .uber-ride-link:focus-visible {
+          border-color: var(--dancr-color-brand-primary-strong) !important;
+          background:
+            linear-gradient(180deg, rgba(255,255,255,.1), transparent 52%),
+            color-mix(in srgb, var(--dancr-color-brand-primary) 16%, rgba(17,17,24,.88)) !important;
+          box-shadow:
+            inset 0 1px 0 rgba(255,255,255,.14),
+            0 12px 26px rgba(0,0,0,.3) !important;
+        }
+
+        @media (hover: hover) and (pointer: fine) {
+          .uber-ride-link:hover {
+            border-color: var(--dancr-color-brand-primary-strong) !important;
+            background:
+              linear-gradient(180deg, rgba(255,255,255,.1), transparent 52%),
+              color-mix(in srgb, var(--dancr-color-brand-primary) 16%, rgba(17,17,24,.88)) !important;
+            box-shadow:
+              inset 0 1px 0 rgba(255,255,255,.14),
+              0 12px 26px rgba(0,0,0,.3) !important;
+          }
+        }
+
+        .uber-ride-link:active {
+          transform: translateY(1px) scale(.99);
+          background:
+            linear-gradient(180deg, rgba(255,255,255,.11), transparent 52%),
+            color-mix(in srgb, var(--dancr-color-brand-primary) 24%, rgba(17,17,24,.88)) !important;
+        }
+
+        .uber-ride-link:focus-visible {
+          outline: 2px solid var(--dancr-color-brand-primary) !important;
+          outline-offset: 3px !important;
+        }
+
+        .venue-directions-btn.is-inactive-demo,
+        .venue-address-directions.is-inactive-demo,
+        .uber-ride-link.is-inactive-demo {
+          cursor: default !important;
+          opacity: 1 !important;
+          pointer-events: auto !important;
+          filter: none !important;
+          transform: none !important;
+        }
+
+        .venue-directions-btn.is-travel-unavailable,
+        .venue-address-directions.is-travel-unavailable,
+        .uber-ride-link.is-travel-unavailable {
+          cursor: not-allowed !important;
+          opacity: 1 !important;
+          pointer-events: auto !important;
+          filter: none !important;
+          border-color: rgba(226,232,240,.22) !important;
+          color: rgba(248,250,252,.72) !important;
+          background:
+            linear-gradient(180deg,rgba(255,255,255,.065),transparent 48%),
+            linear-gradient(145deg,rgba(25,26,31,.96),rgba(8,9,12,.96)) !important;
+          box-shadow: inset 0 1px 0 rgba(255,255,255,.07), 0 8px 18px rgba(0,0,0,.24) !important;
+          transform: none !important;
+        }
+
+        .venue-directions-btn.is-travel-unavailable svg,
+        .venue-address-directions.is-travel-unavailable svg,
+        .uber-ride-link.is-travel-unavailable svg {
+          color: rgba(248,250,252,.66) !important;
+          stroke: currentColor !important;
+          filter: none !important;
+        }
+
+        .uber-ride-link .action-icon {
+          width: 20px;
+          height: 20px;
+          flex: 0 0 20px;
+          color: var(--dancr-color-brand-core) !important;
+          filter: none !important;
+        }
+
+        .venue-detail-uber {
+          width: 100%;
+          min-height: 54px;
+          margin-top: 0;
+          padding-inline: 18px;
+          font-size: 14px;
+        }
+
+        #profileBackdrop .profile-uber-ride {
+          grid-column: 1 / -1;
+          width: 100%;
+          height: 44px;
+          min-height: 44px;
+          max-height: 44px;
+          justify-self: stretch;
+          padding: 0 15px;
+          overflow: hidden;
+          color: #fff !important;
+          font-size: 12px;
+          opacity: 1 !important;
+        }
+
+        #profileBackdrop .profile-uber-ride > span:last-child {
+          min-width: 0;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+          color: #fff !important;
+          opacity: 1 !important;
+        }
+
+        #profileBackdrop .profile-uber-ride .action-icon {
+          color: rgba(226, 232, 240, .82) !important;
+          opacity: 1 !important;
+          filter: none !important;
+        }
+
+        /* Compact the live profile essentials while keeping its tracked QR
+           large enough to scan and the fixed navigation clear of content. */
+        #profileBackdrop .modal-grid {
+          gap: 9px !important;
+        }
+
+        #profileBackdrop .modal-grid > .working-now-tile {
+          gap: 4px 10px !important;
+          padding: 9px 12px !important;
+        }
+
+        #profileBackdrop .working-now-tile > .meta {
+          grid-template-columns: minmax(0, 1fr) auto !important;
+          column-gap: 10px !important;
+          row-gap: 4px !important;
+          padding-top: 4px !important;
+        }
+
+        #profileBackdrop .working-now-tile .detail-line {
+          grid-column: 1 !important;
+          grid-row: 1 !important;
+          min-width: 0 !important;
+          min-height: 44px !important;
+        }
+
+        #profileBackdrop .working-now-tile .venue-inline-link {
+          min-width: 0 !important;
+          min-height: 36px !important;
+          overflow: hidden !important;
+          text-overflow: ellipsis !important;
+          white-space: nowrap !important;
+        }
+
+        #profileBackdrop .profile-working-directions {
+          grid-column: 2 !important;
+          grid-row: 1 !important;
+          width: auto !important;
+          min-height: 44px !important;
+          justify-content: flex-end !important;
+          justify-self: end !important;
+          white-space: nowrap !important;
+        }
+
+        #profileBackdrop .working-now-tile .profile-uber-ride {
+          grid-column: 1 / -1 !important;
+          grid-row: 2 !important;
+          margin-top: 0;
+        }
+
+        #profileBackdrop .schedule-upcoming .profile-uber-ride {
+          margin-top: 3px;
+        }
+
+        /* Working Now mirrors the upcoming schedule hierarchy while retaining
+           the live green status treatment and existing destinations. */
+        #profileBackdrop .modal-grid > .working-now-tile {
+          grid-template-columns: minmax(0, 1fr) !important;
+          align-items: stretch !important;
+          gap: 8px !important;
+          padding: 12px 14px !important;
+        }
+
+        #profileBackdrop .working-now-tile > strong,
+        #profileBackdrop .working-now-tile > .profile-schedule-primary,
+        #profileBackdrop .working-now-tile > .schedule-stack,
+        #profileBackdrop .working-now-tile > .profile-schedule-explanation,
+        #profileBackdrop .working-now-tile > .profile-uber-ride {
+          grid-column: 1 / -1 !important;
+          grid-row: auto !important;
+        }
+
+        #profileBackdrop .working-now-tile > .profile-schedule-primary {
+          width: auto !important;
+          padding: 0 !important;
+          border: 0 !important;
+          border-radius: 0 !important;
+          background: transparent !important;
+          box-shadow: none !important;
+          font-size: clamp(16px, 4.5vw, 20px) !important;
+          line-height: 1.12 !important;
+          text-align: left !important;
+          text-transform: none !important;
+        }
+
+        #profileBackdrop .working-now-tile > .profile-uber-ride {
+          width: 100% !important;
+          margin-top: 3px !important;
+        }
+
+        /* Keep Current Shift compact: the outer card supplies the primary
+           boundary, while the club row remains a quieter, tappable detail. */
+        #profileBackdrop .modal-grid > .working-now-tile {
+          gap: 6px !important;
+          padding: 10px 12px !important;
+        }
+
+        #profileBackdrop .working-now-tile .profile-venue-destination.is-live {
+          grid-template-columns: 32px minmax(0, 1fr) 16px !important;
+          gap: 9px !important;
+          min-height: 52px !important;
+          padding: 6px 9px !important;
+          border-color: rgba(77, 236, 157, .16) !important;
+          background: rgba(77, 236, 157, .045) !important;
+          background-image: none !important;
+          box-shadow: none !important;
+        }
+
+        #profileBackdrop .working-now-tile .profile-venue-destination.is-live > .venue-dot {
+          width: 32px !important;
+          height: 32px !important;
+          border: 0 !important;
+          border-radius: 10px !important;
+          background: rgba(77, 236, 157, .07) !important;
+          box-shadow: none !important;
+        }
+
+        #profileBackdrop .profile-uber-ride {
+          border-color: rgba(255, 255, 255, .14) !important;
+          color: rgba(248, 250, 252, .88) !important;
+          background: rgba(255, 255, 255, .045) !important;
+          background-image: none !important;
+          box-shadow: inset 0 1px 0 rgba(255, 255, 255, .045) !important;
+        }
+
+        #profileBackdrop .profile-uber-ride > span:last-child {
+          color: rgba(248, 250, 252, .88) !important;
+        }
+
+        #profileBackdrop .profile-uber-ride .action-icon {
+          color: rgba(226, 232, 240, .82) !important;
+          filter: none !important;
+        }
+
+        #profileBackdrop .profile-uber-ride:is(:hover, :focus-visible) {
+          border-color: rgba(226, 232, 240, .28) !important;
+          background: rgba(255, 255, 255, .075) !important;
+          background-image: none !important;
+          box-shadow: inset 0 1px 0 rgba(255, 255, 255, .06) !important;
+        }
+
+        #profileBackdrop .profile-club-deal-tile {
+          grid-template-columns: minmax(0, 1fr) 128px !important;
+          gap: 14px !important;
+          padding: 14px 15px !important;
+        }
+
+        #profileBackdrop .profile-club-deal-copy {
+          min-width: 0;
+          display: grid;
+          align-content: center;
+          gap: 7px;
+        }
+
+        #profileBackdrop .profile-club-deal-copy small {
+          color: rgba(248, 250, 252, .82);
+          font-size: 11px;
+          font-weight: 800;
+          line-height: 1.3;
+        }
+
+        #profileBackdrop .profile-club-deal-qr-button {
+          width: 128px !important;
+          min-width: 128px !important;
+          max-width: 128px !important;
+        }
+
+        @media (max-width: 340px) {
+          #profileBackdrop .profile-club-deal-tile {
+            grid-template-columns: minmax(0, 1fr) 112px !important;
+          }
+
+          #profileBackdrop .profile-club-deal-qr-button {
+            width: 112px !important;
+            min-width: 112px !important;
+            max-width: 112px !important;
+          }
+        }
+
+        #profileBackdrop #profileModal .modal-grid > .profile-tonight-card {
+          grid-column: 1 / -1;
+          position: relative;
+          isolation: isolate;
+          width: 100%;
+          min-width: 0;
+          overflow: hidden;
+          display: grid;
+          gap: 0;
+          border: 1px solid rgba(139, 92, 246, .24);
+          border-radius: 15px;
+          background: linear-gradient(145deg, rgba(13, 11, 21, .94), rgba(6, 7, 11, .98));
+          box-shadow: 0 12px 32px rgba(0, 0, 0, .26);
+        }
+
+        #profileBackdrop #profileModal .modal-grid > .profile-tonight-card.is-now::before {
+          position: absolute;
+          z-index: 5;
+          inset: 0;
+          content: "";
+          pointer-events: none;
+          border: 2px solid rgba(77, 236, 157, .32);
+          border-radius: inherit;
+          box-shadow: none;
+        }
+
+        #profileBackdrop #profileModal .modal-grid > .profile-tonight-card.is-now {
+          border-color: transparent;
+          background:
+            radial-gradient(circle at 94% 0%, rgba(77, 236, 157, .045), transparent 13rem),
+            rgba(7, 14, 13, .94);
+        }
+
+        #profileBackdrop #profileModal .modal-grid > .profile-tonight-card.is-upcoming::before {
+          position: absolute;
+          z-index: 5;
+          inset: 0;
+          content: "";
+          pointer-events: none;
+          border: 2px solid rgba(34, 211, 238, .55);
+          border-radius: inherit;
+          box-shadow: none;
+        }
+
+        #profileBackdrop #profileModal .modal-grid > .profile-tonight-card.is-upcoming {
+          border-color: transparent;
+          background:
+            radial-gradient(circle at 94% 0%, rgba(34, 211, 238, .045), transparent 13rem),
+            rgba(7, 12, 16, .94);
+        }
+
+        #profileBackdrop #profileModal .modal-grid > .profile-tonight-card.is-no-schedule::before {
+          position: absolute;
+          z-index: 5;
+          inset: 0;
+          content: "";
+          pointer-events: none;
+          border: 2px solid rgba(255, 255, 255, .13);
+          border-radius: inherit;
+          box-shadow: none;
+        }
+
+        #profileBackdrop #profileModal .modal-grid > .profile-tonight-card.is-no-schedule {
+          border-color: transparent;
+          background:
+            radial-gradient(circle at 94% 0%, rgba(255, 255, 255, .035), transparent 13rem),
+            rgba(9, 9, 13, .94);
+        }
+
+        #profileBackdrop #profileModal .modal-grid > .profile-tonight-card.has-club-deal {
+          border-color: transparent;
+          box-shadow: 0 12px 32px rgba(0, 0, 0, .3);
+        }
+
+        #profileBackdrop #profileModal .modal-grid > .profile-tonight-card.has-club-deal::before {
+          border-color: rgba(77, 236, 157, .38);
+          box-shadow: none;
+        }
+
+        #profileBackdrop #profileModal .profile-tonight-card > .profile-schedule-card {
+          width: 100% !important;
+          min-height: 0 !important;
+          margin: 0 !important;
+          padding: 10px 12px !important;
+          border: 0 !important;
+          border-radius: 0 !important;
+          background: transparent !important;
+          background-image: none !important;
+          box-shadow: none !important;
+        }
+
+        #profileBackdrop #profileModal .profile-tonight-card > .working-now-tile {
+          display: grid !important;
+          grid-template-columns: auto minmax(0, 1fr) !important;
+          align-items: center !important;
+          gap: 9px !important;
+          padding: 4px 8px !important;
+        }
+
+        #profileBackdrop #profileModal .profile-tonight-card > .schedule-empty {
+          min-height: 52px !important;
+          display: grid !important;
+          grid-template-columns: max-content minmax(0, 1fr) !important;
+          align-items: center !important;
+          gap: 6px !important;
+          padding: 4px 8px !important;
+        }
+
+        #profileBackdrop #profileModal .profile-tonight-travel-actions {
+          display: grid;
+          grid-template-columns: minmax(0, 1fr);
+          gap: 6px;
+          padding: 5px 8px 8px;
+          border-top: 1px solid rgba(255, 255, 255, .06);
+        }
+
+        #profileBackdrop #profileModal .profile-tonight-travel-actions:is(.is-working-now, .is-upcoming) {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        #profileBackdrop #profileModal .profile-tonight-travel-actions.is-upcoming.has-venue-deal-link {
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+
+        #profileBackdrop #profileModal .profile-tonight-travel-actions > :is(a, button) {
+          grid-column: auto !important;
+          width: 100% !important;
+          height: 44px !important;
+          min-height: 44px !important;
+          max-height: 44px !important;
+          margin: 0 !important;
+          padding: 4px 10px !important;
+          border: 1px solid rgba(255, 255, 255, .14) !important;
+          border-radius: 10px !important;
+          color: rgba(248, 250, 252, .94) !important;
+          background: rgba(255, 255, 255, .055) !important;
+          background-image: none !important;
+          box-shadow: inset 0 1px 0 rgba(255, 255, 255, .05) !important;
+          font-size: 11px !important;
+          opacity: 1 !important;
+        }
+
+        #profileBackdrop #profileModal .profile-tonight-travel-actions > .profile-primary-directions {
+          border-color: rgba(226, 232, 240, .18) !important;
+          background: rgba(255, 255, 255, .055) !important;
+        }
+
+        #profileBackdrop #profileModal .profile-tonight-travel-actions > .profile-upcoming-venue-deal {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: 6px;
+          border-color: rgba(34, 211, 238, .38) !important;
+          color: #7eeaff !important;
+          background: rgba(34, 211, 238, .1) !important;
+          font-weight: 900;
+          text-decoration: none;
+        }
+
+        #profileBackdrop #profileModal .profile-tonight-travel-actions > :is(.profile-primary-directions, .profile-uber-ride) :is(svg, .action-icon) {
+          color: rgba(226, 232, 240, .82) !important;
+          stroke: currentColor !important;
+        }
+
+        #profileBackdrop #profileModal .profile-tonight-travel-actions > :is(a, button) :is(svg, .action-icon, span) {
+          opacity: 1 !important;
+        }
+
+        #profileBackdrop #profileModal .profile-tonight-deal {
+          padding: 5px;
+          border-top: 1px solid rgba(255, 255, 255, .08);
+        }
+
+        #profileBackdrop #profileModal .profile-tonight-card.has-club-deal .profile-tonight-deal {
+          border-top-color: rgba(77, 236, 157, .18);
+        }
+
+        #profileBackdrop #profileModal .profile-tonight-card.is-upcoming .profile-tonight-deal {
+          border-top-color: rgba(126, 234, 255, .16);
+        }
+
+        #profileBackdrop #profileModal .profile-tonight-card.is-no-schedule .profile-tonight-deal {
+          border-top-color: rgba(255, 255, 255, .07);
+        }
+
+        #profileBackdrop #profileModal .profile-tonight-deal .profile-club-deal-tile {
+          width: 100% !important;
+          margin: 0 !important;
+          border: 0 !important;
+          border-radius: 0 !important;
+          background: transparent !important;
+          background-image: none !important;
+          box-shadow: none !important;
+        }
+
+        /* The full dancer profile is an action-first media library. Keep all
+           nightlife actions above a vertical, lazily populated gallery and
+           reserve scroll space below the media surface for the floating dock. */
+        #profileBackdrop .profile-modal {
+          --profile-bottom-nav-clearance: max(148px, calc(124px + env(safe-area-inset-bottom, 0px)));
+          scroll-padding-bottom: var(--profile-bottom-nav-clearance) !important;
+        }
+
+        #profileBackdrop #profileModal > .profile-scroll-spacer {
+          display: block;
+          flex: 0 0 var(--profile-bottom-nav-clearance);
+          min-height: var(--profile-bottom-nav-clearance);
+          width: 100%;
+          pointer-events: none;
+        }
+
+        #profileBackdrop .modal-body,
+        #profileBackdrop .modal-actions,
+        #profileBackdrop .modal-grid {
+          padding-bottom: 0 !important;
+        }
+
+        #profileBackdrop #profileModal .modal-grid {
+          align-content: start !important;
+          grid-auto-rows: max-content !important;
+        }
+
+        #profileBackdrop #profileModal .modal-body {
+          height: auto !important;
+          align-content: start !important;
+          padding-bottom: 0 !important;
+        }
+
+        /* No-shift profiles use the same compact two-column hierarchy as
+           current and upcoming shifts, with a deliberately neutral state. */
+        #profileBackdrop #profileModal .modal-grid > .profile-schedule-card.schedule-empty {
+          display: grid !important;
+          grid-template-columns: max-content minmax(0, 1fr) !important;
+          align-items: center !important;
+          gap: 6px !important;
+          min-height: 52px !important;
+          padding: 4px 8px !important;
+          border-color: rgba(255,255,255,.08) !important;
+          background: rgba(255,255,255,.025) !important;
+          box-shadow: none !important;
+        }
+
+        #profileBackdrop #profileModal .profile-schedule-card.schedule-empty .profile-empty-state {
+          color: #a9a3af !important;
+          font-size: 10px !important;
+          font-weight: 900 !important;
+          letter-spacing: .065em !important;
+          line-height: 1.05 !important;
+          text-transform: uppercase !important;
+          white-space: nowrap !important;
+        }
+
+        #profileBackdrop #profileModal .profile-schedule-card.schedule-empty .profile-empty-copy {
+          min-width: 0 !important;
+          display: grid !important;
+          gap: 2px !important;
+          overflow: hidden !important;
+        }
+
+        #profileBackdrop #profileModal .profile-schedule-card.schedule-empty .profile-empty-copy > strong {
+          overflow: hidden !important;
+          color: #f5f2f7 !important;
+          font-size: 14px !important;
+          font-weight: 950 !important;
+          line-height: 1.1 !important;
+          text-overflow: ellipsis !important;
+          white-space: nowrap !important;
+        }
+
+        #profileBackdrop #profileModal .profile-schedule-card.schedule-empty .profile-empty-copy > span {
+          overflow: hidden !important;
+          color: #82798c !important;
+          font-size: 10px !important;
+          font-weight: 750 !important;
+          line-height: 1.2 !important;
+          text-overflow: ellipsis !important;
+          white-space: nowrap !important;
+        }
+
+        #profileBackdrop .profile-modal-media {
+          gap: 3px !important;
+          margin: 12px 0 0 !important;
+          padding-bottom: 0 !important;
+        }
+
+        #profileBackdrop .profile-modal-media-tabs {
+          position: sticky !important;
+          top: 0 !important;
+          z-index: 25 !important;
+          width: 100% !important;
+          min-height: 40px !important;
+          grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+          justify-self: stretch !important;
+          gap: 0 !important;
+          padding: 0 !important;
+          border: 0 !important;
+          border-bottom: 1px solid rgba(255,255,255,.12) !important;
+          border-radius: 0 !important;
+          background: rgba(5,5,8,.92) !important;
+          box-shadow: 0 10px 18px rgba(0,0,0,.18) !important;
+          backdrop-filter: blur(16px);
+        }
+
+        body.dancr-button-system #profileBackdrop .profile-modal-media-tabs button {
+          min-height: 40px !important;
+          gap: 6px !important;
+          padding: 0 10px !important;
+          border: 0 !important;
+          border-radius: 0 !important;
+          color: #918a9a !important;
+          background: transparent !important;
+          box-shadow: none !important;
+        }
+
+        #profileBackdrop .profile-media-tab-icon {
+          width: 16px !important;
+          height: 16px !important;
+          flex-basis: 16px !important;
+        }
+
+        #profileBackdrop .profile-media-tab-count {
+          min-width: 20px !important;
+          height: 20px !important;
+          padding-inline: 5px !important;
+        }
+
+        body.dancr-button-system #profileBackdrop .profile-modal-media-tabs button.active {
+          color: #fff !important;
+          background: transparent !important;
+          box-shadow: inset 0 -2px 0 #f5f5f5 !important;
+        }
+
+        #profileBackdrop .gallery {
+          width: 100% !important;
+          min-height: 0 !important;
+          display: grid !important;
+          grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+          align-items: start !important;
+          justify-content: stretch !important;
+          gap: 3px !important;
+          margin: 0 !important;
+          padding: 0 !important;
+          overflow: visible !important;
+          overscroll-behavior: auto !important;
+          scroll-snap-type: none !important;
+          touch-action: pan-y !important;
+        }
+
+        #profileBackdrop .gallery .thumb {
+          width: 100% !important;
+          min-width: 0 !important;
+          max-width: none !important;
+          height: auto !important;
+          min-height: 0 !important;
+          aspect-ratio: 9 / 16 !important;
+          margin: 0 !important;
+          padding: 0 !important;
+          overflow: hidden !important;
+          scroll-snap-align: none !important;
+          border: 0 !important;
+          border-radius: 3px !important;
+        }
+
+        #profileBackdrop .gallery .profile-media-lazy-sentinel {
+          grid-column: 1 / -1 !important;
+          width: auto !important;
+          min-width: 0 !important;
+          height: 28px !important;
+          min-height: 28px !important;
+          align-self: auto !important;
+        }
+
+        #profileBackdrop .gallery .profile-media-lazy-sentinel::after {
+          top: 5px !important;
+          transform: translateX(-50%) !important;
+        }
+
+        @keyframes profile-media-lazy-spin {
+          to { transform: translateX(-50%) rotate(360deg); }
+        }
+
+        /* Current Shift is a single destination row, not a second dashboard
+           card. The whole club destination remains tappable. */
+        #profileBackdrop #profileModal .profile-tonight-card > .working-now-tile {
+          grid-template-columns: max-content minmax(0, 1fr) !important;
+          align-items: center !important;
+          gap: 6px !important;
+          min-height: 0 !important;
+          padding: 4px 8px !important;
+          border-color: rgba(77,236,157,.22) !important;
+          background: rgba(77,236,157,.045) !important;
+          background-image: none !important;
+          box-shadow: none !important;
+        }
+
+        #profileBackdrop #profileModal .working-now-tile::before,
+        #profileBackdrop #profileModal .working-now-tile::after {
+          content: none !important;
+          display: none !important;
+        }
+
+        #profileBackdrop .working-now-tile > strong,
+        #profileBackdrop .working-now-tile > .profile-schedule-explanation {
+          display: none !important;
+        }
+
+        #profileBackdrop .working-now-tile > .profile-schedule-primary {
+          grid-column: 1 !important;
+          grid-row: 1 !important;
+          width: auto !important;
+          padding: 0 2px !important;
+          color: #4dec9d !important;
+          font-size: 10px !important;
+          font-weight: 900 !important;
+          letter-spacing: .065em !important;
+          line-height: 1.05 !important;
+          text-transform: uppercase !important;
+          white-space: nowrap !important;
+        }
+
+        #profileBackdrop .working-now-tile > .schedule-stack {
+          grid-column: 2 !important;
+          grid-row: 1 !important;
+          min-width: 0 !important;
+        }
+
+        #profileBackdrop .working-now-tile .profile-venue-destination.is-live {
+          grid-template-columns: 18px minmax(0, 1fr) 16px !important;
+          align-items: center !important;
+          gap: 6px !important;
+          min-height: 40px !important;
+          padding: 3px 0 !important;
+          border: 0 !important;
+          background: transparent !important;
+        }
+
+        #profileBackdrop .working-now-tile .profile-venue-destination.is-live > .venue-dot {
+          align-self: center !important;
+          width: 18px !important;
+          height: 18px !important;
+          border: 0 !important;
+          border-radius: 0 !important;
+          background: transparent !important;
+          box-shadow: none !important;
+        }
+
+        #profileBackdrop .working-now-tile .profile-venue-destination.is-live > .venue-dot svg {
+          width: 18px !important;
+          height: 18px !important;
+          border: 0 !important;
+          border-radius: 0 !important;
+          background: transparent !important;
+          box-shadow: none !important;
+          filter: none !important;
+        }
+
+        #profileBackdrop .working-now-tile .profile-venue-destination.is-live .profile-venue-copy {
+          align-self: center !important;
+        }
+
+        #profileBackdrop .working-now-tile .profile-venue-destination.is-live .profile-venue-name {
+          display: block !important;
+          font-size: clamp(15px, 4.2vw, 18px) !important;
+          letter-spacing: -.015em !important;
+          line-height: 1.1 !important;
+        }
+
+        /* Scale the pin and club name together so short venue names occupy the
+           destination row while long names retain clear space for the cue. */
+        #profileBackdrop .working-now-tile .profile-venue-destination.is-live.is-short-name {
+          grid-template-columns: 22px minmax(0, 1fr) 16px !important;
+          gap: 8px !important;
+        }
+
+        #profileBackdrop .working-now-tile .profile-venue-destination.is-live.is-short-name > .venue-dot,
+        #profileBackdrop .working-now-tile .profile-venue-destination.is-live.is-short-name > .venue-dot svg {
+          width: 22px !important;
+          height: 22px !important;
+        }
+
+        #profileBackdrop .working-now-tile .profile-venue-destination.is-live.is-short-name .profile-venue-name {
+          font-size: clamp(18px, 5.4vw, 22px) !important;
+          letter-spacing: -.025em !important;
+        }
+
+        #profileBackdrop .working-now-tile .profile-venue-destination.is-live.is-medium-name {
+          grid-template-columns: 20px minmax(0, 1fr) 16px !important;
+          gap: 7px !important;
+        }
+
+        #profileBackdrop .working-now-tile .profile-venue-destination.is-live.is-medium-name > .venue-dot,
+        #profileBackdrop .working-now-tile .profile-venue-destination.is-live.is-medium-name > .venue-dot svg {
+          width: 20px !important;
+          height: 20px !important;
+        }
+
+        #profileBackdrop .working-now-tile .profile-venue-destination.is-live.is-medium-name .profile-venue-name {
+          font-size: clamp(16px, 4.8vw, 20px) !important;
+          letter-spacing: -.02em !important;
+        }
+
+        #profileBackdrop .working-now-tile .profile-venue-destination.is-live.is-long-name {
+          grid-template-columns: 16px minmax(0, 1fr) 16px !important;
+          gap: 5px !important;
+        }
+
+        #profileBackdrop .working-now-tile .profile-venue-destination.is-live.is-long-name > .venue-dot,
+        #profileBackdrop .working-now-tile .profile-venue-destination.is-live.is-long-name > .venue-dot svg {
+          width: 16px !important;
+          height: 16px !important;
+        }
+
+        #profileBackdrop .working-now-tile .profile-venue-destination.is-live.is-long-name .profile-venue-name {
+          font-size: clamp(14px, 3.8vw, 16px) !important;
+          letter-spacing: -.01em !important;
+        }
+
+        /* Upcoming uses the same compact Tonight hierarchy as Working Now,
+           with cyan reserved for the future-state signal. */
+        #profileBackdrop #profileModal .modal-grid > .schedule-upcoming {
+          grid-template-columns: max-content minmax(0, 1fr) !important;
+          align-items: center !important;
+          gap: 6px !important;
+          min-height: 0 !important;
+          padding: 4px 8px !important;
+          border-color: rgba(34, 211, 238, .28) !important;
+          background: rgba(34, 211, 238, .07) !important;
+          background-image: none !important;
+          box-shadow: none !important;
+        }
+
+        #profileBackdrop #profileModal .schedule-upcoming::before,
+        #profileBackdrop #profileModal .schedule-upcoming::after {
+          content: none !important;
+          display: none !important;
+        }

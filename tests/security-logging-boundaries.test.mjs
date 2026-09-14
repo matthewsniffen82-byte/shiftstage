@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import {readFileSync} from 'node:fs';
+import {readFileSync} from "./helpers/dashboard-test-fs.mjs";
 import test from 'node:test';
 import vm from 'node:vm';
 import {createHmac} from 'node:crypto';

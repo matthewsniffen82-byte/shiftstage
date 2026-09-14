@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
-import { inlineLiveShellStyles, extractLiveShellStyles } from "../src/lib/dancr/live-shell-styles.mjs";
+import { inlineLiveShellStyles, extractLiveShellStyles, externalizeLiveShellStyles, extractLiveShellOverrideStyles } from "../src/lib/dancr/live-shell-styles.mjs";
 import { createRootContentSecurityPolicy } from "../src/lib/security/root-content-security-policy.mjs";
 import postcss from "postcss";
 import { compactLiveShellStyles } from "../src/lib/dancr/compact-live-shell-styles.mjs";
@@ -27,12 +27,14 @@ test("stylesheet URL keeps the document base for relative asset references", () 
   assert.throws(() => extractLiveShellStyles("<style>body{color:red}</style>"), /could not be found/);
 });
 
-test("critical CSS stays inline and the deployment includes the build artifact", async () => {
+test("production uses versioned stylesheets at their original cascade positions", async () => {
   const source = await readFile(new URL("../app/route.ts", import.meta.url), "utf8");
-  assert.doesNotMatch(source, /rel=preload|externalizeLiveShellStyles/);
-  assert.match(source, /inlineLiveShellStyles\(withExternalAppScript, compactStyles\)/);
-  const config = await readFile(new URL("../next.config.mjs", import.meta.url), "utf8");
-  assert.match(config, /"\/": \["\.\/public\/outputs\/live-shell\.css"\]/);
+  assert.match(source, /externalizeLiveShellStyles\(withExternalAppScript\)/);
+  const result = externalizeLiveShellStyles(html);
+  assert.ok(result.indexOf('/outputs/live-shell.css') < result.indexOf('/dancr-brand-tokens.v1.css'));
+  assert.ok(result.indexOf('/outputs/live-shell-overrides.css') > result.indexOf('/dancr-brand-tokens.v1.css'));
+  assert.ok(result.length < html.length - 1_000_000);
+  assert.equal(createRootContentSecurityPolicy(result), createRootContentSecurityPolicy(html));
 });
 
 test("the build emits compact static CSS with a matching content version", async () => {
@@ -45,6 +47,9 @@ test("the build emits compact static CSS with a matching content version", async
     return result;
   }
   assert.deepEqual(signature(compact), signature(original));
+  const overrides = extractLiveShellOverrideStyles(html);
+  const compactOverrides = await readFile(new URL('../public/outputs/live-shell-overrides.css', import.meta.url), 'utf8');
+  assert.deepEqual(signature(compactOverrides), signature(overrides));
   assert.ok(compact.length < original.length);
   const url = new URL(versionedStaticAssetUrl("/outputs/live-shell.css"), "https://example.com");
   const headers = staticAssetCacheHeaders().filter(rule => rule.source === url.pathname);

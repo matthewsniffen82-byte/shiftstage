@@ -1,0 +1,1197 @@
+
+    .badge.trend:not(.rank-one) .badge-icon,
+    .venue-shift-rank:not(.rank-one) .badge-icon {
+      color: #FFFFFF !important;
+      filter:
+        drop-shadow(0 0 5px rgba(255, 255, 255, 0.70))
+        drop-shadow(0 0 9px rgba(236, 72, 153, 0.56)) !important;
+    }
+
+    .badge.trend.rank-one,
+    .dancer-card .badge.trend.rank-one,
+    .profile-modal .badge.trend.rank-one,
+    .venue-shift-rank.rank-one {
+      color: #FFFFFF !important;
+      border-color: rgba(255, 226, 126, 0.56) !important;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0.04) 44%, rgba(5, 5, 7, 0.16)),
+        linear-gradient(135deg, rgba(255, 184, 76, 0.40), rgba(236, 72, 153, 0.30) 58%, rgba(139, 92, 246, 0.22)) !important;
+      box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.04) inset,
+        0 0 16px rgba(255, 213, 96, 0.24),
+        0 0 22px rgba(236, 72, 153, 0.22),
+        0 12px 26px rgba(0, 0, 0, 0.32) !important;
+      backdrop-filter: blur(12px) saturate(1.18) !important;
+    }
+
+    .badge.trend.rank-one .badge-icon,
+    .venue-shift-rank.rank-one .badge-icon {
+      color: #FFF3B0 !important;
+      filter:
+        drop-shadow(0 0 6px rgba(255, 243, 176, 0.78))
+        drop-shadow(0 0 10px rgba(236, 72, 153, 0.54)) !important;
+    }
+
+    /* Electric blue is reserved for trust, location, directions, and utility cues. */
+    .card-venue-line a,
+    .profile-modal .detail-line a,
+    .profile-modal .schedule-text-row a,
+    .venue-shift-copy a,
+    .venue-link,
+    .venue-name-link {
+      color: #DDF8FF !important;
+      text-decoration-color: rgba(34, 199, 255, 0.72) !important;
+      text-shadow: 0 0 10px rgba(34, 199, 255, 0.22) !important;
+    }
+
+    .card-venue-line a:hover,
+    .profile-modal .detail-line a:hover,
+    .profile-modal .schedule-text-row a:hover,
+    .venue-shift-copy a:hover,
+    .venue-link:hover,
+    .venue-name-link:hover {
+      color: #22C7FF !important;
+      text-shadow: 0 0 14px rgba(34, 199, 255, 0.45) !important;
+    }
+
+    .venue-directions-btn,
+    .map-preview,
+    .venue-quick-stat {
+      border-color: rgba(34, 199, 255, 0.36) !important;
+      box-shadow:
+        0 0 0 1px rgba(34, 199, 255, 0.08) inset,
+        0 0 22px rgba(34, 199, 255, 0.10) !important;
+    }
+
+    .venue-directions-btn svg,
+    .map-preview svg,
+    .venue-quick-stat strong {
+      color: #22C7FF !important;
+      stroke: #22C7FF !important;
+      text-shadow: 0 0 12px rgba(34, 199, 255, 0.34) !important;
+    }
+
+    .customer-note,
+    .privacy-note,
+    .auth-choice-card.customer-choice,
+    #customerDashboard .customer-summary,
+    #customerDashboard .customer-notification-card {
+      border-color: rgba(34, 199, 255, 0.22) !important;
+      box-shadow:
+        0 0 0 1px rgba(34, 199, 255, 0.05) inset,
+        0 0 26px rgba(34, 199, 255, 0.06) !important;
+    }
+
+    #customerDashboard .section-title-row:before,
+    #customerDashboard .customer-summary:before,
+    .auth-choice-card.customer-choice:before {
+      background: linear-gradient(180deg, rgba(34, 199, 255, 0.80), rgba(139, 92, 246, 0.28)) !important;
+      box-shadow: 0 0 16px rgba(34, 199, 255, 0.28) !important;
+    }
+
+    #customerDashboard .stat strong,
+    #customerDashboard .metric-card strong,
+    #customerDashboard [data-dashboard-jump] strong,
+    .customer-free-note strong,
+    .auth-choice-card.customer-choice .eyebrow {
+      color: #22C7FF !important;
+      text-shadow: 0 0 14px rgba(34, 199, 255, 0.24) !important;
+    }
+
+    .profile-share-trigger,
+    .share-copy,
+    .search-toggle,
+    .utility-menu-item:hover {
+      border-color: rgba(34, 199, 255, 0.34) !important;
+      box-shadow:
+        0 0 0 1px rgba(34, 199, 255, 0.06) inset,
+        0 0 18px rgba(34, 199, 255, 0.10) !important;
+    }
+
+    .profile-share-trigger svg,
+    .share-copy svg,
+    .search-toggle svg {
+      color: #22C7FF !important;
+      stroke: #22C7FF !important;
+      filter: drop-shadow(0 0 8px rgba(34, 199, 255, 0.34)) !important;
+    }
+
+    /* Location pins stay blue, but quieter than verified checks and schedule status. */
+    .dancer-card .card-venue-line .venue-dot,
+    .profile-modal .detail-line:not(.schedule-time) .venue-dot,
+    .venue-shift-copy .venue-dot:first-child {
+      color: rgba(34, 199, 255, 0.82) !important;
+      filter: drop-shadow(0 0 5px rgba(34, 199, 255, 0.28)) !important;
+    }
+
+    /* Palette balance pass: less hot pink, more expensive black/violet. */
+    body {
+      background:
+        radial-gradient(circle at 70% 0%, rgba(124, 58, 237, 0.11), transparent 32rem),
+        radial-gradient(circle at 12% 18%, rgba(34, 199, 255, 0.045), transparent 24rem),
+        linear-gradient(180deg, #050507 0%, #07070B 48%, #050507 100%) !important;
+    }
+
+    .app,
+    .page-panel,
+    .modal,
+    .dashboard-wide,
+    .auth-card,
+    .customer-summary,
+    .customer-notification-card,
+    .info-tile,
+    .metric-card,
+    .venue-detail-card,
+    .venue-card,
+    .stat {
+      background-color: rgba(14, 14, 20, 0.88) !important;
+      box-shadow:
+        0 22px 54px rgba(0, 0, 0, 0.42),
+        0 0 0 1px rgba(139, 92, 246, 0.10) inset !important;
+    }
+
+    .reference-hero,
+    .hero,
+    .city-panel {
+      background:
+        radial-gradient(circle at 86% 48%, rgba(124, 58, 237, 0.26), transparent 30rem),
+        radial-gradient(circle at 94% 44%, rgba(236, 72, 153, 0.08), transparent 18rem),
+        linear-gradient(100deg, rgba(5, 5, 7, 0.98) 0%, rgba(8, 8, 14, 0.98) 44%, rgba(24, 12, 54, 0.86) 100%) !important;
+      border-color: rgba(139, 92, 246, 0.38) !important;
+      box-shadow:
+        0 18px 50px rgba(0, 0, 0, 0.38),
+        0 0 34px rgba(139, 92, 246, 0.14) !important;
+    }
+
+    .reference-hero:after,
+    .hero:after {
+      opacity: 0.72 !important;
+      filter: saturate(0.9) !important;
+    }
+
+    .tab.active,
+    .tab[aria-selected="true"],
+    .filter-pill.active {
+      background: linear-gradient(135deg, #7C3AED 0%, #9D4EDD 72%, #C026D3 100%) !important;
+      border-color: rgba(168, 85, 247, 0.74) !important;
+      box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.04) inset,
+        0 0 22px rgba(139, 92, 246, 0.38),
+        0 12px 28px rgba(0, 0, 0, 0.34) !important;
+    }
+
+    .location-btn {
+      background:
+        linear-gradient(135deg, rgba(124, 58, 237, 0.95), rgba(34, 199, 255, 0.82)) !important;
+      box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.05) inset,
+        0 0 22px rgba(124, 58, 237, 0.20),
+        0 0 18px rgba(34, 199, 255, 0.08) !important;
+    }
+
+    .action-btn:not(.secondary):not(.danger),
+    .follow-primary,
+    .going-btn {
+      background:
+        linear-gradient(135deg, #8B5CF6 0%, #B832D8 58%, #EC4899 100%) !important;
+      box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.05) inset,
+        0 0 24px rgba(139, 92, 246, 0.26),
+        0 0 16px rgba(236, 72, 153, 0.13) !important;
+    }
+
+    .action-btn.secondary,
+    .ghost,
+    .menu-btn,
+    .profile-share-trigger,
+    .social-link,
+    .share-copy {
+      background: rgba(8, 8, 14, 0.78) !important;
+      border-color: rgba(139, 92, 246, 0.44) !important;
+      box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.025) inset,
+        0 0 16px rgba(139, 92, 246, 0.10) !important;
+    }
+
+    .dancer-card,
+    .trending-card,
+    .rank-one-card {
+      border-color: rgba(139, 92, 246, 0.42) !important;
+      box-shadow:
+        0 20px 42px rgba(0, 0, 0, 0.48),
+        0 0 0 1px rgba(139, 92, 246, 0.08) inset,
+        0 0 22px rgba(139, 92, 246, 0.11) !important;
+    }
+
+    .dancer-card:hover,
+    .trending-card:hover {
+      box-shadow:
+        0 24px 54px rgba(0, 0, 0, 0.52),
+        0 0 0 1px rgba(139, 92, 246, 0.18) inset,
+        0 0 30px rgba(139, 92, 246, 0.22),
+        0 0 16px rgba(236, 72, 153, 0.10) !important;
+    }
+
+    .rank-one-card:hover {
+      box-shadow:
+        0 26px 58px rgba(0, 0, 0, 0.54),
+        0 0 0 1px rgba(255, 213, 96, 0.16) inset,
+        0 0 32px rgba(139, 92, 246, 0.22),
+        0 0 16px rgba(236, 72, 153, 0.10) !important;
+    }
+
+    .card-schedule-text.tonight,
+    .profile-modal .schedule-time.is-tonight,
+    .dancer-card .schedule-row.is-tonight .venue-dot,
+    .profile-modal .schedule-time .venue-dot {
+      color: #FF64C8 !important;
+      text-shadow: 0 0 12px rgba(255, 47, 174, 0.34) !important;
+    }
+
+    .badge.trend:not(.rank-one),
+    .venue-shift-rank:not(.rank-one) {
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.025) 44%, rgba(5, 5, 7, 0.18)),
+        linear-gradient(135deg, rgba(139, 92, 246, 0.34), rgba(236, 72, 153, 0.14)) !important;
+      box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.03) inset,
+        0 0 16px rgba(139, 92, 246, 0.23),
+        0 0 10px rgba(236, 72, 153, 0.12),
+        0 10px 24px rgba(0, 0, 0, 0.30) !important;
+    }
+
+    /* Header/home controls: violet-first, less pink-heavy. */
+    .topbar {
+      background:
+        linear-gradient(180deg, rgba(17, 17, 24, 0.94), rgba(9, 9, 14, 0.96)) !important;
+      border-color: rgba(139, 92, 246, 0.18) !important;
+      box-shadow: 0 14px 34px rgba(0, 0, 0, 0.36) !important;
+    }
+
+    .dancr-home-logo,
+    .brand-home {
+      background:
+        radial-gradient(circle at 74% 50%, rgba(139, 92, 246, 0.18), transparent 56%),
+        linear-gradient(180deg, rgba(17, 17, 24, 0.92), rgba(8, 8, 13, 0.96)) !important;
+      border-color: rgba(139, 92, 246, 0.46) !important;
+      box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.03) inset,
+        0 0 24px rgba(139, 92, 246, 0.18),
+        0 12px 28px rgba(0, 0, 0, 0.32) !important;
+    }
+
+    .dancr-wordmark .wordmark-violet {
+      color: #A855F7 !important;
+      text-shadow:
+        0 0 12px rgba(168, 85, 247, 0.48),
+        0 0 22px rgba(34, 199, 255, 0.08) !important;
+    }
+
+    .menu-btn {
+      background: rgba(8, 8, 14, 0.84) !important;
+      border-color: rgba(139, 92, 246, 0.50) !important;
+      box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.03) inset,
+        0 0 16px rgba(139, 92, 246, 0.15) !important;
+    }
+
+    .menu-btn:hover,
+    .menu-btn:focus-visible {
+      border-color: rgba(34, 199, 255, 0.44) !important;
+      box-shadow:
+        0 0 0 1px rgba(34, 199, 255, 0.05) inset,
+        0 0 20px rgba(34, 199, 255, 0.13),
+        0 0 18px rgba(139, 92, 246, 0.16) !important;
+    }
+
+    .reference-hero {
+      background:
+        radial-gradient(circle at 92% 48%, rgba(124, 58, 237, 0.38), transparent 30rem),
+        radial-gradient(circle at 80% 52%, rgba(34, 199, 255, 0.045), transparent 20rem),
+        linear-gradient(100deg, rgba(5, 5, 7, 0.99) 0%, rgba(8, 8, 14, 0.98) 48%, rgba(38, 17, 76, 0.88) 100%) !important;
+      border-color: rgba(139, 92, 246, 0.42) !important;
+    }
+
+    .reference-hero:before {
+      left: auto !important;
+      right: 6.4% !important;
+      width: 3px !important;
+      background:
+        linear-gradient(180deg, transparent 0%, rgba(139, 92, 246, 0.44) 12%, rgba(255, 255, 255, 0.72) 49%, rgba(139, 92, 246, 0.46) 88%, transparent 100%) !important;
+      box-shadow:
+        0 0 10px rgba(255, 255, 255, 0.26),
+        0 0 28px rgba(139, 92, 246, 0.44),
+        0 0 54px rgba(124, 58, 237, 0.28) !important;
+      opacity: 0.95 !important;
+    }
+
+    .reference-hero:after {
+      left: auto !important;
+      right: 0 !important;
+      width: 28% !important;
+      background:
+        radial-gradient(circle at 72% 48%, rgba(236, 72, 153, 0.08), transparent 18rem),
+        linear-gradient(90deg, transparent 0%, rgba(124, 58, 237, 0.18) 54%, rgba(124, 58, 237, 0.36) 100%) !important;
+      opacity: 0.74 !important;
+    }
+
+    .city-panel {
+      background:
+        radial-gradient(circle at 96% 0%, rgba(124, 58, 237, 0.12), transparent 22rem),
+        linear-gradient(180deg, rgba(17, 17, 24, 0.92), rgba(10, 10, 15, 0.96)) !important;
+      border-color: rgba(139, 92, 246, 0.42) !important;
+    }
+
+    .city-panel select,
+    .city-panel input,
+    select,
+    input {
+      border-color: rgba(139, 92, 246, 0.48) !important;
+      background: rgba(5, 5, 8, 0.86) !important;
+      box-shadow: 0 0 0 1px rgba(139, 92, 246, 0.05) inset !important;
+    }
+
+    .location-btn {
+      background: linear-gradient(135deg, #7C3AED 0%, #6D5DF7 58%, #22C7FF 100%) !important;
+    }
+
+    .tabs .tab.active,
+    .tab.active {
+      background: linear-gradient(135deg, #7C3AED 0%, #9D4EDD 76%, #C026D3 100%) !important;
+      box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.04) inset,
+        0 0 20px rgba(139, 92, 246, 0.36),
+        0 0 10px rgba(236, 72, 153, 0.08) !important;
+    }
+
+    /* Full profile palette cleanup: darker surfaces, violet structure, pink only for tonight/action energy. */
+    .profile-modal {
+      background:
+        radial-gradient(circle at 50% 0%, rgba(139, 92, 246, 0.08), transparent 28rem),
+        linear-gradient(180deg, rgba(5, 5, 7, 0.99), rgba(8, 8, 13, 0.99)) !important;
+    }
+
+    .profile-modal .modal-body {
+      background:
+        linear-gradient(180deg, rgba(5, 5, 7, 0.98), rgba(9, 9, 15, 0.98)) !important;
+    }
+
+    .profile-modal .modal-identity,
+    .profile-modal .modal-identity-stack .modal-identity {
+      background:
+        linear-gradient(180deg, rgba(17, 17, 24, 0.60), rgba(8, 8, 13, 0.72)) !important;
+      border-color: rgba(139, 92, 246, 0.28) !important;
+      box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.035) inset,
+        0 14px 32px rgba(0, 0, 0, 0.34),
+        0 0 18px rgba(139, 92, 246, 0.10) !important;
+      backdrop-filter: blur(13px) saturate(1.05) !important;
+    }
+
+    .profile-modal .badge.trend:not(.rank-one),
+    .profile-modal .modal-rank:not(.rank-one) {
+      color: rgba(255, 255, 255, 0.96) !important;
+      border-color: rgba(168, 85, 247, 0.58) !important;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.025) 44%, rgba(5, 5, 7, 0.24)),
+        linear-gradient(135deg, rgba(124, 58, 237, 0.42), rgba(236, 72, 153, 0.12)) !important;
+      box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.03) inset,
+        0 0 18px rgba(139, 92, 246, 0.28),
+        0 0 10px rgba(236, 72, 153, 0.10),
+        0 10px 24px rgba(0, 0, 0, 0.32) !important;
+    }
+
+    .profile-modal .badge.trend:not(.rank-one) .badge-icon,
+    .profile-modal .modal-rank:not(.rank-one) .badge-icon {
+      color: #FFFFFF !important;
+      filter: drop-shadow(0 0 7px rgba(236, 72, 153, 0.34)) !important;
+    }
+
+    .profile-modal .info-tile,
+    .profile-modal .social-tile {
+      background:
+        linear-gradient(180deg, rgba(17, 17, 24, 0.92), rgba(9, 9, 14, 0.96)) !important;
+      border-color: rgba(139, 92, 246, 0.38) !important;
+      box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.025) inset,
+        0 18px 36px rgba(0, 0, 0, 0.34),
+        0 0 18px rgba(139, 92, 246, 0.08) !important;
+    }
+
+    .profile-modal .info-tile:before,
+    .profile-modal .social-tile:before {
+      background: linear-gradient(180deg, rgba(139, 92, 246, 0.78), rgba(124, 58, 237, 0.26)) !important;
+      box-shadow: 0 0 16px rgba(139, 92, 246, 0.22) !important;
+    }
+
+    .profile-modal .info-tile strong,
+    .profile-modal .social-tile-head strong {
+      color: #D8C8FF !important;
+      letter-spacing: 0.08em !important;
+    }
+
+    .profile-modal .modal-schedule-text.tonight,
+    .profile-modal .schedule-time.is-tonight,
+    .profile-modal .time-tonight {
+      color: #FF64C8 !important;
+      text-shadow: 0 0 12px rgba(255, 47, 174, 0.26) !important;
+    }
+
+    .profile-modal .modal-schedule-text.upcoming {
+      color: #8FDCFF !important;
+      text-shadow: 0 0 12px rgba(34, 199, 255, 0.22) !important;
+    }
+
+    .profile-modal .follow-primary {
+      background: linear-gradient(135deg, #8B5CF6 0%, #9D4EDD 58%, #D946EF 100%) !important;
+      box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.05) inset,
+        0 0 24px rgba(139, 92, 246, 0.28),
+        0 0 12px rgba(236, 72, 153, 0.11) !important;
+    }
+
+    .profile-modal .going-btn:not(:disabled) {
+      background: linear-gradient(135deg, #7C3AED 0%, #A855F7 62%, #D946EF 100%) !important;
+      box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.05) inset,
+        0 0 26px rgba(139, 92, 246, 0.28),
+        0 0 14px rgba(236, 72, 153, 0.12) !important;
+    }
+
+    .profile-modal .action-btn.secondary,
+    .profile-modal #notifyBtn {
+      background: rgba(8, 8, 14, 0.84) !important;
+      border-color: rgba(139, 92, 246, 0.48) !important;
+      box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.03) inset,
+        0 0 18px rgba(139, 92, 246, 0.12) !important;
+    }
+
+    .profile-modal .follow-primary.is-following,
+    .profile-modal #notifyBtn.is-following {
+      background:
+        linear-gradient(180deg, rgba(17, 17, 24, 0.86), rgba(8, 8, 14, 0.92)) !important;
+      border-color: rgba(139, 92, 246, 0.58) !important;
+      box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.035) inset,
+        0 0 18px rgba(139, 92, 246, 0.16),
+        0 0 10px rgba(34, 199, 255, 0.08) !important;
+    }
+
+    .profile-modal .social-link {
+      background: rgba(8, 8, 14, 0.76) !important;
+      border-color: rgba(139, 92, 246, 0.42) !important;
+    }
+
+    .profile-modal .profile-share-trigger {
+      background: rgba(8, 8, 14, 0.82) !important;
+      border-color: rgba(34, 199, 255, 0.36) !important;
+      box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.025) inset,
+        0 0 14px rgba(34, 199, 255, 0.12) !important;
+    }
+
+    /* Hero beam cleanup: one signature beam, no second panel edge. */
+    .reference-hero:before {
+      content: none !important;
+      display: none !important;
+      background: none !important;
+    }
+
+    .reference-hero:after {
+      content: "" !important;
+      position: absolute !important;
+      inset: 0 !important;
+      z-index: 0 !important;
+      width: auto !important;
+      height: auto !important;
+      border-radius: inherit !important;
+      pointer-events: none !important;
+      opacity: 0.92 !important;
+      filter: saturate(1.02) !important;
+      background:
+        linear-gradient(90deg,
+          transparent 0%,
+          transparent calc(100% - 62px),
+          rgba(124, 58, 237, 0.12) calc(100% - 54px),
+          rgba(236, 72, 153, 0.16) calc(100% - 50px),
+          rgba(255, 255, 255, 0.58) calc(100% - 47px),
+          rgba(139, 92, 246, 0.72) calc(100% - 45px),
+          rgba(236, 72, 153, 0.16) calc(100% - 42px),
+          rgba(124, 58, 237, 0.14) calc(100% - 34px),
+          transparent calc(100% - 22px)
+        ),
+        radial-gradient(ellipse at calc(100% - 46px) 50%, rgba(139, 92, 246, 0.28), transparent 0 16rem),
+        radial-gradient(ellipse at calc(100% - 34px) 50%, rgba(236, 72, 153, 0.08), transparent 0 12rem) !important;
+      box-shadow: none !important;
+    }
+
+    /* Full profile schedule icon color follows the shift status. */
+    .profile-modal .detail-line.schedule-time > .venue-dot,
+    .profile-modal .detail-line.schedule-time > .venue-dot svg {
+      color: #FF64C8 !important;
+      stroke: #FF64C8 !important;
+      filter: drop-shadow(0 0 8px rgba(255, 47, 174, 0.34)) !important;
+    }
+
+    .profile-modal .schedule-text-row > .venue-dot,
+    .profile-modal .schedule-text-row > .venue-dot svg {
+      color: #8FDCFF !important;
+      stroke: #22C7FF !important;
+      filter: drop-shadow(0 0 8px rgba(34, 199, 255, 0.30)) !important;
+    }
+
+    .profile-modal .detail-line:not(.schedule-time) > .venue-dot,
+    .profile-modal .detail-line:not(.schedule-time) > .venue-dot svg {
+      color: #22C7FF !important;
+      stroke: #22C7FF !important;
+    }
+
+    /* Profile action states: clear before/after feedback without overusing pink. */
+    .profile-modal .follow-primary:not(.is-following) {
+      background: linear-gradient(135deg, #8B5CF6 0%, #B43BDA 62%, #EC4899 100%) !important;
+      border-color: rgba(236, 72, 153, 0.42) !important;
+      box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.05) inset,
+        0 0 24px rgba(139, 92, 246, 0.28),
+        0 0 18px rgba(236, 72, 153, 0.16) !important;
+    }
+
+    .profile-modal .follow-primary.is-following {
+      color: #F5F2FF !important;
+      background:
+        linear-gradient(180deg, rgba(17, 17, 24, 0.92), rgba(8, 8, 14, 0.98)) !important;
+      border-color: rgba(139, 92, 246, 0.72) !important;
+      box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.035) inset,
+        0 0 20px rgba(139, 92, 246, 0.18) !important;
+    }
+
+    .profile-modal #notifyBtn:not(.is-following) {
+      color: #F5F2FF !important;
+      background: rgba(8, 8, 14, 0.86) !important;
+      border-color: rgba(139, 92, 246, 0.44) !important;
+    }
+
+    .profile-modal #notifyBtn.is-following {
+      color: #F5F2FF !important;
+      border-color: rgba(139, 92, 246, 0.62) !important;
+      background:
+        linear-gradient(180deg, rgba(17, 17, 24, 0.94), rgba(8, 8, 14, 0.98)) !important;
+      box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.035) inset,
+        0 0 18px rgba(139, 92, 246, 0.16) !important;
+    }
+
+    .profile-modal .going-btn:not(:disabled) {
+      background: linear-gradient(135deg, #7C3AED 0%, #A855F7 58%, #C026D3 100%) !important;
+      border-color: rgba(168, 85, 247, 0.44) !important;
+      box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.05) inset,
+        0 0 26px rgba(139, 92, 246, 0.28),
+        0 0 12px rgba(236, 72, 153, 0.10) !important;
+    }
+
+    .profile-modal .going-btn.is-going {
+      background:
+        linear-gradient(135deg, rgba(124, 58, 237, 0.96), rgba(139, 92, 246, 0.92) 58%, rgba(34, 199, 255, 0.56)) !important;
+      border-color: rgba(34, 199, 255, 0.34) !important;
+      box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.055) inset,
+        0 0 24px rgba(139, 92, 246, 0.24),
+        0 0 12px rgba(34, 199, 255, 0.12) !important;
+    }
+
+    /* Icon language: blue means location/trust, pink means tonight, cyan means upcoming. */
+    .dancer-card .card-venue-line .venue-dot,
+    .dancer-card .card-venue-line .venue-dot svg,
+    .profile-modal .detail-line:not(.schedule-time) > .venue-dot,
+    .profile-modal .detail-line:not(.schedule-time) > .venue-dot svg,
+    .venue-shift-copy .venue-dot:first-child {
+      color: #22C7FF !important;
+      stroke: #22C7FF !important;
+      filter: drop-shadow(0 0 6px rgba(34, 199, 255, 0.18)) !important;
+      opacity: 0.92 !important;
+    }
+
+    .dancer-card .schedule-row.is-tonight .venue-dot,
+    .dancer-card .schedule-row.is-tonight .venue-dot svg,
+    .profile-modal .detail-line.schedule-time > .venue-dot,
+    .profile-modal .detail-line.schedule-time > .venue-dot svg {
+      color: #FF64C8 !important;
+      stroke: #FF64C8 !important;
+      filter: drop-shadow(0 0 7px rgba(255, 47, 174, 0.28)) !important;
+      opacity: 0.96 !important;
+    }
+
+    .dancer-card .schedule-row.is-upcoming .venue-dot,
+    .dancer-card .schedule-row.is-upcoming .venue-dot svg,
+    .profile-modal .schedule-text-row > .venue-dot,
+    .profile-modal .schedule-text-row > .venue-dot svg {
+      color: #8FDCFF !important;
+      stroke: #22C7FF !important;
+      filter: drop-shadow(0 0 7px rgba(34, 199, 255, 0.25)) !important;
+      opacity: 0.96 !important;
+    }
+
+    .profile-modal .interest-count,
+    .profile-modal .metric-value {
+      display: inline-flex;
+      align-items: baseline;
+      gap: 7px;
+      color: #FFFFFF !important;
+      line-height: 1.04;
+      white-space: nowrap;
+    }
+
+    .profile-modal .metric-number {
+      font-family: var(--font-display);
+      font-size: clamp(25px, 5vw, 32px);
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      color: #FFFFFF;
+      text-shadow: 0 0 14px rgba(124, 58, 237, 0.16);
+    }
+
+    .profile-modal .metric-label {
+      font-family: var(--font-body);
+      font-size: clamp(15px, 3.2vw, 18px);
+      font-weight: 800;
+      color: #D8D2E9;
+      letter-spacing: -0.01em;
+    }
+
+    .profile-modal .interest-tile,
+    .profile-modal .info-tile:has(#modalFollowerCount) {
+      min-height: 96px;
+      justify-content: center;
+    }
+
+    .dancer-card .card-venue-name,
+    .profile-modal .venue-inline-link {
+      transition: color 180ms ease, text-shadow 180ms ease, text-decoration-color 180ms ease;
+    }
+
+    .dancer-card:hover .card-venue-name,
+    .dancer-card:focus-within .card-venue-name,
+    .profile-modal .venue-inline-link:hover,
+    .profile-modal .venue-inline-link:focus-visible {
+      color: #FFFFFF !important;
+      text-shadow:
+        0 0 10px rgba(34, 199, 255, 0.22),
+        0 0 8px rgba(139, 92, 246, 0.16);
+      text-decoration-color: rgba(34, 199, 255, 0.72) !important;
+    }
+
+    /* Keep destination blue distinct from upcoming-time cyan. */
+    .dancer-card .card-venue-line .venue-dot,
+    .dancer-card .card-venue-line .venue-dot svg,
+    .profile-modal .detail-line:not(.schedule-time) > .venue-dot,
+    .profile-modal .detail-line:not(.schedule-time) > .venue-dot svg {
+      color: #28AFFF !important;
+      stroke: #28AFFF !important;
+      filter: drop-shadow(0 0 6px rgba(40, 175, 255, 0.22)) !important;
+    }
+
+    .dancer-card .schedule-row.is-upcoming .venue-dot,
+    .dancer-card .schedule-row.is-upcoming .venue-dot svg,
+    .profile-modal .schedule-text-row > .venue-dot,
+    .profile-modal .schedule-text-row > .venue-dot svg {
+      color: #8FDCFF !important;
+      stroke: #8FDCFF !important;
+      filter: drop-shadow(0 0 7px rgba(143, 220, 255, 0.26)) !important;
+    }
+
+    /* Venue cards: darker VIP surface with violet structure, less pink dominance. */
+    .venue.venue-card {
+      background:
+        linear-gradient(90deg, rgba(5, 5, 7, 0.98) 0%, rgba(10, 10, 16, 0.96) 32%, rgba(17, 17, 24, 0.94) 100%) !important;
+      border-color: rgba(124, 58, 237, 0.34) !important;
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.035),
+        0 18px 44px rgba(0, 0, 0, 0.36),
+        0 0 22px rgba(124, 58, 237, 0.08) !important;
+    }
+
+    .venue.venue-card:hover,
+    .venue.venue-card:focus-visible {
+      border-color: rgba(139, 92, 246, 0.72) !important;
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.045),
+        0 22px 54px rgba(0, 0, 0, 0.44),
+        0 0 30px rgba(139, 92, 246, 0.26),
+        0 0 16px rgba(255, 47, 174, 0.08) !important;
+      transform: translateY(-2px);
+    }
+
+    .venue.venue-card .venue-art {
+      background:
+        radial-gradient(circle at 50% 50%, rgba(139, 92, 246, 0.26), transparent 48%),
+        linear-gradient(180deg, rgba(5, 5, 7, 0.7), rgba(5, 5, 7, 0.98)) !important;
+    }
+
+    .venue.venue-card .venue-art:before {
+      background:
+        linear-gradient(135deg, rgba(124, 58, 237, 0.92), rgba(236, 72, 153, 0.62)) !important;
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.18),
+        0 0 24px rgba(139, 92, 246, 0.28) !important;
+    }
+
+    .venue.venue-card h3 {
+      text-shadow: 0 0 18px rgba(139, 92, 246, 0.12) !important;
+    }
+
+    .venue.venue-card .pill,
+    .venue.venue-card .venue-shift-pill {
+      background: rgba(17, 17, 24, 0.78) !important;
+      border-color: rgba(139, 92, 246, 0.32) !important;
+      color: #D8D2E9 !important;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04) !important;
+    }
+
+    .venue.venue-card .venue-shift-pill {
+      margin-left: auto;
+      border-color: rgba(34, 199, 255, 0.24) !important;
+    }
+
+    .dancer-card .card-venue-link {
+      cursor: pointer;
+      text-decoration: underline;
+      text-underline-offset: 3px;
+      text-decoration-thickness: 1px;
+      text-decoration-color: rgba(34, 199, 255, 0.42);
+      border-radius: 6px;
+      transition:
+        color 180ms ease,
+        background 180ms ease,
+        text-shadow 180ms ease,
+        text-decoration-color 180ms ease;
+    }
+
+    .dancer-card .card-venue-link:hover,
+    .dancer-card .card-venue-link:focus-visible {
+      color: #FFFFFF !important;
+      background: rgba(34, 199, 255, 0.08);
+      outline: none;
+      text-decoration-color: rgba(34, 199, 255, 0.92);
+      text-shadow:
+        0 0 11px rgba(34, 199, 255, 0.46),
+        0 0 16px rgba(139, 92, 246, 0.28);
+    }
+
+    .dancer-card {
+      border-color: rgba(139, 92, 246, 0.38) !important;
+      box-shadow:
+        0 18px 42px rgba(0, 0, 0, 0.5),
+        0 0 0 1px rgba(255, 255, 255, 0.015),
+        0 0 24px rgba(139, 92, 246, 0.12) !important;
+      transition:
+        border-color 220ms ease,
+        box-shadow 220ms ease,
+        transform 220ms ease,
+        filter 220ms ease !important;
+    }
+
+    .dancer-card.trending-card {
+      border-color: rgba(139, 92, 246, 0.42) !important;
+      box-shadow:
+        0 18px 42px rgba(0, 0, 0, 0.52),
+        0 0 0 1px rgba(255, 255, 255, 0.016),
+        0 0 25px rgba(139, 92, 246, 0.14),
+        0 0 16px rgba(236, 72, 153, 0.06) !important;
+    }
+
+    .dancer-card:hover,
+    .dancer-card:focus-visible {
+      border-color: rgba(236, 72, 153, 0.5) !important;
+      box-shadow:
+        0 24px 52px rgba(0, 0, 0, 0.58),
+        0 0 0 1px rgba(255, 255, 255, 0.025),
+        0 0 34px rgba(139, 92, 246, 0.28),
+        0 0 20px rgba(236, 72, 153, 0.14) !important;
+      transform: translateY(-2px);
+      filter: saturate(1.04);
+    }
+
+    .dancer-card.rank-one-card {
+      border-color: rgba(255, 205, 105, 0.36) !important;
+      box-shadow:
+        0 20px 48px rgba(0, 0, 0, 0.55),
+        0 0 0 1px rgba(255, 255, 255, 0.018),
+        0 0 26px rgba(139, 92, 246, 0.16),
+        0 0 18px rgba(236, 72, 153, 0.08),
+        0 0 18px rgba(255, 205, 105, 0.08) !important;
+    }
+
+    .dancer-card.rank-one-card:hover,
+    .dancer-card.rank-one-card:focus-visible {
+      border-color: rgba(255, 220, 135, 0.62) !important;
+      box-shadow:
+        0 26px 58px rgba(0, 0, 0, 0.62),
+        0 0 0 1px rgba(255, 255, 255, 0.026),
+        0 0 36px rgba(139, 92, 246, 0.3),
+        0 0 24px rgba(236, 72, 153, 0.18),
+        0 0 24px rgba(255, 205, 105, 0.16) !important;
+    }
+
+    .card-schedule-text .schedule-label {
+      opacity: 1 !important;
+      font-weight: 950 !important;
+    }
+
+    .card-schedule-text .schedule-separator {
+      opacity: 0.66 !important;
+      font-weight: 680 !important;
+    }
+
+    .card-schedule-text .schedule-time {
+      opacity: 0.74 !important;
+      font-weight: 720 !important;
+    }
+
+    .card-schedule-text.tonight .schedule-label {
+      color: #FF64C8 !important;
+      text-shadow: 0 0 14px rgba(255, 47, 174, 0.48) !important;
+    }
+
+    .card-schedule-text.upcoming .schedule-label {
+      color: #8FDCFF !important;
+      text-shadow: 0 0 13px rgba(34, 199, 255, 0.38) !important;
+    }
+
+    .popular-clubs {
+      margin-top: 22px !important;
+    }
+
+    .club-mini {
+      min-height: 128px !important;
+      border-color: rgba(124, 58, 237, 0.36) !important;
+      background:
+        radial-gradient(circle at 50% 28%, rgba(139, 92, 246, 0.18), transparent 0 34%),
+        linear-gradient(90deg, rgba(5, 5, 7, 0.98) 0%, rgba(10, 10, 16, 0.96) 42%, rgba(17, 17, 24, 0.94) 100%) !important;
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.035),
+        0 18px 44px rgba(0, 0, 0, 0.42),
+        0 0 22px rgba(124, 58, 237, 0.10) !important;
+    }
+
+    .club-mini:before {
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.03), transparent 38%),
+        radial-gradient(circle at 50% 31%, rgba(139, 92, 246, 0.13), transparent 0 30%) !important;
+    }
+
+    .club-mini:hover,
+    .club-mini:focus-visible {
+      border-color: rgba(139, 92, 246, 0.72) !important;
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.045),
+        0 22px 54px rgba(0, 0, 0, 0.5),
+        0 0 30px rgba(139, 92, 246, 0.26),
+        0 0 16px rgba(255, 47, 174, 0.08) !important;
+    }
+
+    .club-neon {
+      color: #F8F5FF !important;
+      text-shadow:
+        0 0 5px rgba(255, 255, 255, 0.28),
+        0 0 15px rgba(139, 92, 246, 0.62),
+        0 0 14px rgba(255, 47, 174, 0.16) !important;
+      filter: drop-shadow(0 0 9px rgba(139, 92, 246, 0.18)) !important;
+      opacity: 0.86 !important;
+    }
+
+    .club-mini strong {
+      text-shadow: 0 0 14px rgba(139, 92, 246, 0.12) !important;
+    }
+
+    .location-btn {
+      background:
+        linear-gradient(135deg, rgba(124, 58, 237, 0.96) 0%, rgba(139, 92, 246, 0.92) 70%, rgba(34, 199, 255, 0.46) 100%) !important;
+      border: 1px solid rgba(139, 92, 246, 0.52) !important;
+      box-shadow:
+        0 16px 34px rgba(0, 0, 0, 0.38),
+        0 0 24px rgba(139, 92, 246, 0.25),
+        0 0 14px rgba(34, 199, 255, 0.12),
+        inset 0 1px 0 rgba(255, 255, 255, 0.13) !important;
+    }
+
+    .location-btn:hover,
+    .location-btn:focus-visible {
+      background:
+        linear-gradient(135deg, rgba(139, 92, 246, 0.98) 0%, rgba(124, 58, 237, 0.94) 72%, rgba(34, 199, 255, 0.54) 100%) !important;
+      border-color: rgba(34, 199, 255, 0.40) !important;
+      box-shadow:
+        0 18px 42px rgba(0, 0, 0, 0.44),
+        0 0 30px rgba(139, 92, 246, 0.32),
+        0 0 18px rgba(34, 199, 255, 0.17),
+        inset 0 1px 0 rgba(255, 255, 255, 0.17) !important;
+    }
+
+    .location-btn .icon,
+    .location-btn svg {
+      color: #22C7FF !important;
+      stroke: #22C7FF !important;
+      filter: drop-shadow(0 0 8px rgba(34, 199, 255, 0.40)) !important;
+    }
+
+    .tabs .tab,
+    .tab {
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.026), rgba(255, 255, 255, 0.008)),
+        rgba(17, 17, 24, 0.90) !important;
+      border: 1px solid rgba(139, 92, 246, 0.25) !important;
+      color: rgba(245, 245, 245, 0.72) !important;
+      box-shadow:
+        0 10px 26px rgba(0, 0, 0, 0.30),
+        inset 0 1px 0 rgba(255, 255, 255, 0.035) !important;
+    }
+
+    .tabs .tab:hover,
+    .tab:hover {
+      color: #FFFFFF !important;
+      border-color: rgba(139, 92, 246, 0.48) !important;
+      box-shadow:
+        0 12px 30px rgba(0, 0, 0, 0.34),
+        0 0 16px rgba(139, 92, 246, 0.16),
+        inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
+    }
+
+    .tabs .tab.active,
+    .tab.active {
+      color: #FFFFFF !important;
+      border-color: rgba(139, 92, 246, 0.62) !important;
+      background:
+        linear-gradient(135deg, #7C3AED 0%, #9D4EDD 78%, #C026D3 100%) !important;
+      box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.05) inset,
+        0 0 22px rgba(139, 92, 246, 0.38),
+        0 0 12px rgba(236, 72, 153, 0.12),
+        0 12px 28px rgba(0, 0, 0, 0.34) !important;
+    }
+
+    .tabs .tab-count,
+    .tab-count {
+      color: rgba(255, 255, 255, 0.88) !important;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.05)) !important;
+      border-color: rgba(255, 255, 255, 0.16) !important;
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.08),
+        0 0 10px rgba(139, 92, 246, 0.10) !important;
+    }
+
+    .tabs .tab.active .tab-count,
+    .tab.active .tab-count {
+      color: #FFFFFF !important;
+      background: rgba(255, 255, 255, 0.16) !important;
+      border-color: rgba(255, 255, 255, 0.18) !important;
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.12),
+        0 0 12px rgba(255, 255, 255, 0.08) !important;
+    }
+
+    .badge.trend:not(.rank-one),
+    .dancer-card .badge.trend:not(.rank-one),
+    .profile-modal .badge.trend:not(.rank-one),
+    .venue-shift-rank:not(.rank-one),
+    .profile-modal .modal-rank:not(.rank-one) {
+      color: rgba(255, 255, 255, 0.96) !important;
+      border-color: rgba(139, 92, 246, 0.64) !important;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.024) 44%, rgba(5, 5, 7, 0.24)),
+        linear-gradient(135deg, rgba(124, 58, 237, 0.34), rgba(236, 72, 153, 0.10)),
+        rgba(8, 7, 16, 0.74) !important;
+      box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.028) inset,
+        0 0 14px rgba(139, 92, 246, 0.34),
+        0 0 8px rgba(236, 72, 153, 0.12),
+        0 10px 22px rgba(0, 0, 0, 0.32) !important;
+      text-shadow: 0 0 7px rgba(255, 255, 255, 0.18) !important;
+      backdrop-filter: blur(14px) saturate(1.08) !important;
+    }
+
+    .badge.trend:not(.rank-one) .badge-icon,
+    .dancer-card .badge.trend:not(.rank-one) .badge-icon,
+    .profile-modal .badge.trend:not(.rank-one) .badge-icon,
+    .venue-shift-rank:not(.rank-one) .badge-icon,
+    .profile-modal .modal-rank:not(.rank-one) .badge-icon {
+      color: #FFFFFF !important;
+      filter:
+        drop-shadow(0 0 5px rgba(255, 255, 255, 0.48))
+        drop-shadow(0 0 9px rgba(139, 92, 246, 0.66))
+        drop-shadow(0 0 6px rgba(236, 72, 153, 0.20)) !important;
+    }
+
+    .badge.trend:not(.rank-one):hover,
+    .dancer-card:hover .badge.trend:not(.rank-one),
+    .profile-modal .badge.trend:not(.rank-one):hover,
+    .venue-shift-rank:not(.rank-one):hover {
+      border-color: rgba(168, 85, 247, 0.72) !important;
+      box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.035) inset,
+        0 0 18px rgba(139, 92, 246, 0.44),
+        0 0 10px rgba(236, 72, 153, 0.16),
+        0 12px 24px rgba(0, 0, 0, 0.36) !important;
+    }
+
+    .badge.trend.rank-one,
+    .dancer-card .badge.trend.rank-one,
+    .profile-modal .badge.trend.rank-one,
+    .venue-shift-rank.rank-one {
+      color: #FFFFFF !important;
+      border-color: rgba(255, 216, 112, 0.58) !important;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0.04) 43%, rgba(5, 5, 7, 0.16)),
+        radial-gradient(circle at 22% 18%, rgba(255, 237, 168, 0.30), transparent 0 38%),
+        linear-gradient(135deg, rgba(124, 58, 237, 0.54) 0%, rgba(209, 143, 52, 0.44) 100%),
+        rgba(9, 7, 14, 0.70) !important;
+      box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.035) inset,
+        0 0 16px rgba(255, 216, 112, 0.24),
+        0 0 18px rgba(139, 92, 246, 0.28),
+        0 0 7px rgba(236, 72, 153, 0.10),
+        0 12px 26px rgba(0, 0, 0, 0.34) !important;
+      backdrop-filter: blur(14px) saturate(1.12) !important;
+    }
+
+    .badge.trend.rank-one .badge-icon,
+    .dancer-card .badge.trend.rank-one .badge-icon,
+    .profile-modal .badge.trend.rank-one .badge-icon,
+    .venue-shift-rank.rank-one .badge-icon {
+      color: #FFF3B0 !important;
+      background: rgba(7, 6, 12, 0.24) !important;
+      filter:
+        drop-shadow(0 0 5px rgba(255, 243, 176, 0.74))
+        drop-shadow(0 0 9px rgba(139, 92, 246, 0.48)) !important;
+    }
+    /* Final palette balance: violet-first, less pink, more premium-nightlife. */
+    .app-shell,
+    .panel,
+    .modal-card,
+    .dashboard-card,
+    .auth-card,
+    .info-tile,
+    .social-panel,
+    .venue-card,
+    .customer-stat,
+    .analytics-card {
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.028), rgba(255, 255, 255, 0.008)),
+        linear-gradient(180deg, rgba(17, 17, 24, 0.94), rgba(7, 7, 11, 0.98)) !important;
+      border-color: rgba(139, 92, 246, 0.26) !important;
+      box-shadow:
+        0 18px 46px rgba(0, 0, 0, 0.42),
+        inset 0 1px 0 rgba(255, 255, 255, 0.035) !important;
+    }
+
+    .hero {
+      background:
+        radial-gradient(ellipse at 88% 50%, rgba(139, 92, 246, 0.34), transparent 0 34%),
+        radial-gradient(ellipse at 77% 50%, rgba(124, 58, 237, 0.20), transparent 0 52%),
+        linear-gradient(100deg, rgba(5, 5, 7, 0.99) 0%, rgba(8, 8, 14, 0.98) 52%, rgba(43, 22, 86, 0.86) 100%) !important;
+      border-color: rgba(139, 92, 246, 0.38) !important;
+      box-shadow:
+        0 20px 54px rgba(0, 0, 0, 0.42),
+        0 0 42px rgba(124, 58, 237, 0.14) !important;
+    }
+
+    .hero::after {
+      background:
+        linear-gradient(180deg, transparent 0%, rgba(139, 92, 246, 0.54) 12%, rgba(255, 255, 255, 0.80) 49%, rgba(139, 92, 246, 0.58) 88%, transparent 100%) !important;
+      box-shadow:
+        0 0 18px rgba(139, 92, 246, 0.62),
+        0 0 46px rgba(124, 58, 237, 0.34) !important;
+    }
+
+    .primary-cta,
+    .location-btn,
+    .profile-modal .follow-primary:not(.is-following),
+    .profile-modal .going-btn:not(:disabled),
+    .action-btn.going-btn:not(:disabled) {
+      background:
+        linear-gradient(135deg, #7C3AED 0%, #8B5CF6 58%, #B43BDA 100%) !important;
+      box-shadow:
+        0 14px 30px rgba(124, 58, 237, 0.28),
+        0 0 24px rgba(139, 92, 246, 0.22),
+        inset 0 1px 0 rgba(255, 255, 255, 0.20) !important;
+    }
+
+    .profile-modal .follow-primary:not(.is-following):hover,
+    .profile-modal .going-btn:not(:disabled):hover,
+    .location-btn:hover,
+    .primary-cta:hover {
+      background:
+        linear-gradient(135deg, #8B5CF6 0%, #7C3AED 62%, #C026D3 100%) !important;
+      box-shadow:
+        0 16px 34px rgba(124, 58, 237, 0.36),
+        0 0 30px rgba(139, 92, 246, 0.30) !important;
+    }
+
+    .tabs .tab.active,
+    .tab.active,
+    .filter-pill.active {
+      background:
+        linear-gradient(135deg, #6D28D9 0%, #7C3AED 68%, #9333EA 100%) !important;
+      border-color: rgba(167, 139, 250, 0.72) !important;
+      box-shadow:
+        0 0 24px rgba(124, 58, 237, 0.34),
+        inset 0 1px 0 rgba(255, 255, 255, 0.16) !important;
+    }
+
+    .tabs .tab:not(.active),
+    .tab:not(.active),
+    .filter-pill:not(.active),
+    .secondary-btn,
+    .notify-btn,
+    .profile-modal .action-btn:not(.follow-primary):not(.going-btn) {
+      border-color: rgba(139, 92, 246, 0.30) !important;
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.035),
+        0 0 16px rgba(124, 58, 237, 0.06) !important;
+    }
+
+    .badge.trend:not(.rank-one),
+    .dancer-card .badge.trend:not(.rank-one),
+    .profile-modal .badge.trend:not(.rank-one) {
+      color: #FFFFFF !important;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.13), rgba(255, 255, 255, 0.026) 45%, rgba(5, 5, 7, 0.30)),
+        linear-gradient(135deg, rgba(109, 40, 217, 0.62), rgba(139, 92, 246, 0.38) 62%, rgba(236, 72, 153, 0.16)) !important;
+      border-color: rgba(167, 139, 250, 0.62) !important;
+      box-shadow:
+        0 0 13px rgba(124, 58, 237, 0.34),
+        0 0 2px rgba(255, 255, 255, 0.18) inset !important;
+    }
+
+    .badge.trend:not(.rank-one) .badge-icon,
+    .dancer-card .badge.trend:not(.rank-one) .badge-icon,
+    .profile-modal .badge.trend:not(.rank-one) .badge-icon {
+      color: #F5F3FF !important;
+      filter:
+        drop-shadow(0 0 5px rgba(139, 92, 246, 0.72))
+        drop-shadow(0 0 8px rgba(236, 72, 153, 0.24)) !important;
+    }
+
+    .badge.trend.rank-one,
+    .dancer-card .badge.trend.rank-one,
+    .profile-modal .badge.trend.rank-one {
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.04) 43%, rgba(5, 5, 7, 0.22)),
+        linear-gradient(135deg, rgba(245, 158, 11, 0.78) 0%, rgba(124, 58, 237, 0.62) 58%, rgba(236, 72, 153, 0.30) 100%) !important;
+      border-color: rgba(255, 213, 122, 0.70) !important;
+      box-shadow:
+        0 0 16px rgba(245, 158, 11, 0.30),
+        0 0 22px rgba(124, 58, 237, 0.24),
+        inset 0 1px 0 rgba(255, 255, 255, 0.24) !important;
+    }
+
+    .dancer-card {
+      border-color: rgba(139, 92, 246, 0.32) !important;
+      box-shadow:
+        0 18px 44px rgba(0, 0, 0, 0.48),
+        0 0 0 1px rgba(139, 92, 246, 0.08),
+        0 0 24px rgba(124, 58, 237, 0.08) !important;
+    }
