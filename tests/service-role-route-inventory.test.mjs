@@ -80,7 +80,8 @@ test("media route exceptions delegate to the checked delivery handler with an an
   }
   const handler = read('src/lib/dancr/media-delivery.ts');
   assert.match(handler, /if \(params.has\('preview'\) && !preview\) return unavailable\(\)/);
-  assert.match(handler, /if \(!preview\) \{[\s\S]*?deps.publicClient.from\('mydancr_tv_videos'\)[\s\S]*?if \(!visible.data\) return unavailable\(\)/);
+  // The behavior tests in media-delivery-authorization.test.mjs verify that
+  // both parallel checks must pass before Storage bytes can be downloaded.
   assert.match(handler, /const client = preview \? deps.admin : deps.publicClient/);
 });
 

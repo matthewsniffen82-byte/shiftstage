@@ -8,6 +8,8 @@ Dancr is a Next.js, Supabase, Vercel, and TypeScript application. Public discove
 
 Use Node.js 24 LTS, at least 24.18.1; the recommended local version is 24.21.0 (also in `.node-version`). Install the locked dependencies with `npx --yes npm@11.19.1 ci`.
 
+Before installing, confirm `node --version` reports the supported runtime and `npm --version` reports 11.19.1. Selecting npm through `npx` does not upgrade Node. On Windows, ensure your PowerShell profile places the supported toolchain before an older system installation; restart the terminal after changing it. The pinned npm must recognize `strict-allow-scripts=true` in `.npmrc` without an unknown-setting warning.
+
 The install hook downloads and verifies a pinned FFmpeg 8.1.2 binary for Windows x64 or Linux x64. GitHub release access and a system `tar` executable are required. The legacy `ffmpeg-static` downloader is disabled; its path wrapper remains for application compatibility. After restoring a dependency cache, use `npm run install:ffmpeg` to repair an outdated or missing binary. Development, tests and builds check the runtime and native binary before proceeding.
 
 To update FFmpeg, review the upstream release and binary distributor, update the archive and executable sizes/hashes in `scripts/lib/ffmpeg-release.mjs`, then run installation, real media regressions and the complete release gates. Preserve the input restrictions and license. Do not set FFmpeg path/download environment overrides. See [the dependency review](docs/security/2026-09-09/step-23-dependencies.md).

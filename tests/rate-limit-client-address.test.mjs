@@ -23,6 +23,7 @@ function fixture(stubs = {}) {
       process: { env: { SUPABASE_SERVICE_ROLE_KEY: "synthetic-test-key" } }, require(name) {
         if (name in stubs) return stubs[name];
         if (name === "server-only") return {};
+        if (name === "../api-error-policy.ts") return { PublicApiError };
         if (name.startsWith("node:") || name === "next/server") return require(name);
         if (name === "@/src/lib/api") return { PublicApiError, apiError(error, fallback) { const r = resolveApiError(error, fallback); return require("next/server").NextResponse.json(r.body, { status: r.status }); } };
         if (name === "@/src/lib/bounded-json-body") return { readBoundedJsonObject };
@@ -126,6 +127,75 @@ test("a backend failure cannot turn an atomic denial into a compatibility allowa
   }), error => error === failure);
   assert.equal(fallback, false);
 });
+
+for (const eventType of ["email_lookup", "password_reset"]) {
+  for (const missing of [
+    { code: "PGRST202", message: "Synthetic private schema-cache diagnostic" },
+    { code: "42883", message: "record_account_recovery_event does not exist: synthetic private diagnostic" },
+  ]) test(`${eventType}: missing atomic protection rejects a concurrent burst without compatibility writes (${missing.code})`, async () => {
+    const calls = [];
+    const query = { select() { return this; }, eq() { return this; },
+      async gte() { return { count: 0, error: null }; },
+      async insert() { calls.push("write"); return { error: null }; },
+    };
+    const client = { async rpc() { return { data: null, error: missing }; },
+      from() { calls.push("compatibility-read"); return query; },
+    };
+    const recovery = fixture().load("src/lib/dancr/account-recovery.ts");
+    const results = await Promise.allSettled(Array.from({ length: 20 }, () => recovery.enforceAccountRecoveryRateLimit(client, {
+      eventType, role: "customer", request: request({ "x-vercel-forwarded-for": trusted }), subject: "person@example.test",
+    })));
+    assert.equal(results.filter(result => result.status === "fulfilled").length, 0);
+    for (const result of results) {
+      assert.equal(result.reason instanceof PublicApiError, true);
+      assert.equal(result.reason.code, "UNAVAILABLE");
+      assert.equal(result.reason.status, 503);
+      assert.doesNotMatch(result.reason.message, /diagnostic|schema|record_account_recovery_event/);
+    }
+    assert.deepEqual(calls, []);
+  });
+
+  test(`${eventType}: healthy atomic decisions retain their limits and denials`, async () => {
+    const recovery = fixture().load("src/lib/dancr/account-recovery.ts");
+    const limits = eventType === "password_reset" ? [900, 8, 3] : [3600, 4, 2];
+    const args = { eventType, role: "customer", request: request({ "x-vercel-forwarded-for": trusted }), subject: "person@example.test" };
+    for (const allowed of [true, false]) {
+      const client = { async rpc(name, input) {
+        assert.equal(name, "record_account_recovery_event");
+        assert.deepEqual([input.p_window_seconds, input.p_ip_limit, input.p_subject_limit], limits);
+        return { data: allowed, error: null };
+      }, from() { assert.fail("Recovery must not use compatibility queries"); } };
+      if (allowed) await recovery.enforceAccountRecoveryRateLimit(client, args);
+      else await assert.rejects(recovery.enforceAccountRecoveryRateLimit(client, args), error =>
+        error instanceof recovery.AccountRecoveryRateLimitError && error.retryAfterSeconds === limits[0]);
+    }
+  });
+
+  test(`${eventType}: public route returns 503 before recovery messages or writes when protection is absent`, async () => {
+    const calls = [];
+    const client = { async rpc() { return { data: null, error: { code: "PGRST202", message: "synthetic private diagnostic" } }; },
+      from() { calls.push("write-or-compatibility-read"); throw new Error("Unexpected recovery side effect"); },
+    };
+    const { POST } = fixture({
+      "@/src/lib/supabase/admin": { createAdminSupabaseClient: () => client },
+      "@/src/lib/supabase/server": { createServerSupabaseClient: () => ({ auth: { async resetPasswordForEmail() { calls.push("reset-email"); throw new Error("Unexpected email"); } } }) },
+      "@/src/lib/dancr/notification-delivery": { async sendTransactionalEmail() { calls.push("transactional-email"); throw new Error("Unexpected email"); } },
+      "@/src/lib/security/safe-error-metadata": { safeErrorMetadata: () => ({}) },
+      "@supabase/supabase-js": { isAuthError: () => false },
+    }).load(eventType === "password_reset" ? "app/api/auth/route.ts" : "app/api/account-recovery/route.ts");
+    const body = eventType === "password_reset"
+      ? { mode: "reset_password", role: "customer", email: "person@example.test" }
+      : { role: "customer", accountName: "Synthetic Account", city: "Las Vegas", contactEmail: "person@example.test" };
+    const response = await POST(new Request("https://www.mydancr.com/api/recovery-test", {
+      method: "POST", headers: { "content-type": "application/json", "x-vercel-forwarded-for": trusted }, body: JSON.stringify(body),
+    }));
+    assert.equal(response.status, 503);
+    const result = await response.json();
+    assert.equal(result.code, "UNAVAILABLE");
+    assert.doesNotMatch(result.error, /diagnostic|schema|record_account_recovery_event/);
+    assert.deepEqual(calls, []);
+  });
+}
 
 test("unknown addresses and case variants cannot mint distinct general rate buckets", async () => {
   const calls = [], client = { async rpc(_name, args) { calls.push(args); return { data: { allowed: true }, error: null }; } };

@@ -2,6 +2,7 @@ import "server-only";
 
 import { createHmac } from "node:crypto";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { PublicApiError } from "../api-error-policy.ts";
 import { requestClientAddress } from "../security/request-client-address";
 import { enforcePublicRequestRateLimit, PublicRequestRateLimitError } from "./public-request-rate-limit";
 
@@ -69,13 +70,13 @@ export async function enforceAccountRecoveryRateLimit(client: SupabaseClient, in
   });
 
   if (error && isMissingRecoveryRateLimitFunction(error)) {
-    await enforceCompatibilityRateLimit(client, {
-      ...input,
-      ...limits,
-      requestIpHash,
-      subjectHash,
-    });
-    return;
+    // Separate counts and inserts cannot reserve a concurrent request budget.
+    // Stop before any recovery report or email when atomic admission is absent.
+    throw new PublicApiError(
+      "UNAVAILABLE",
+      "Account recovery protection is temporarily unavailable. Please try again shortly.",
+      503,
+    );
   }
   if (error) throw error;
   if (data !== true) throw new AccountRecoveryRateLimitError(limits.windowSeconds);

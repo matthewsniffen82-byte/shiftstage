@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { apiError } from "@/src/lib/api";
+import { apiError, PublicApiError } from "@/src/lib/api";
 import { readBoundedJsonObject } from "@/src/lib/bounded-json-body";
 import {
   AccountRecoveryRateLimitError,
@@ -122,6 +122,9 @@ export async function POST(request: Request) {
     }
     if (error instanceof AccountRecoveryInputError) {
       return NextResponse.json({ ok: false, error: error.message }, { status: 400 });
+    }
+    if (error instanceof PublicApiError) {
+      return apiError(error, "Unable to submit account recovery request.");
     }
     console.error(JSON.stringify({
       event: "account_recovery.email_lookup_request_failed",
