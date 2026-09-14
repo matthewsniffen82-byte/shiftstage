@@ -95,9 +95,17 @@ test('mobile preference never changes the poster or restores removed HLS playbac
   assert.equal(hls.fetched.length, 0);
 });
 
-test('Android phone TV uses the same mobile URL during homepage preload and feed adoption', () => {
+test('Android and iPhone TV use the same mobile URL during homepage preload and feed adoption', () => {
   const original = `https://app.example.test/api/media/dancer-video?id=${id}`;
-  for (const [agent, phone, expected] of [['Android Chrome', true, original + '&playback=mobile'], ['Android SamsungBrowser', true, original + '&playback=mobile'], ['iPhone Safari', true, original], ['Android', false, original], ['Windows Chrome', false, original]]) {
+  for (const [agent, phone, expected] of [
+    ['Android Chrome', true, original + '&playback=mobile'],
+    ['Android SamsungBrowser', true, original + '&playback=mobile'],
+    ['Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/605.1.15 Version/18.5 Mobile/15E148 Safari/604.1', true, original + '&playback=mobile'],
+    ['Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/605.1.15 CriOS/140.0.7339.101 Mobile/15E148 Safari/604.1', true, original + '&playback=mobile'],
+    ['iPhone Safari', false, original], ['Android', false, original],
+    ['iPad Safari', true, original], ['Macintosh Safari', true, original],
+    ['Windows Chrome', true, original], ['Windows Chrome', false, original],
+  ]) {
     const c = vm.createContext({ URL, navigator: { userAgent: agent }, window: { location: { href: 'https://app.example.test/', origin: 'https://app.example.test' }, matchMedia: () => ({ matches: phone }) } });
     vm.runInContext(source('homeTvPlaybackVideoUrl'), c);
     assert.equal(c.homeTvPlaybackVideoUrl({ videoUrl: original, mobilePlaybackAvailable: true }), expected);

@@ -62164,7 +62164,7 @@
 
     function homeTvPlaybackVideoUrl(item) {
       const original = String(item?.videoUrl || "").trim();
-      if (item?.mobilePlaybackAvailable !== true || !/Android/i.test(navigator.userAgent || "") || !window.matchMedia("(max-width: 760px)").matches) return original;
+      if (item?.mobilePlaybackAvailable !== true || !/Android|iPhone/i.test(navigator.userAgent || "") || !window.matchMedia("(max-width: 760px)").matches) return original;
       try {
         const url = new URL(original, window.location.href);
         if (url.origin !== window.location.origin || url.pathname !== "/api/media/dancer-video" || !url.searchParams.get("id")) return original;
