@@ -48,6 +48,7 @@
         state = entry;
         entry.expiryTimer = window.setTimeout(clear, ttl);
         const params = new URLSearchParams({ city, limit: "24" });
+        params.set("paging", "1");
         entry.promise = fetchJson(`/api/public/tv?${params.toString()}`, {
           retries: 0, cache: "no-store", signal: entry.controller.signal
         }).then((payload) => {
@@ -155,11 +156,17 @@
 
     async function loadHomeTvFeed(city, venueId = "", selectedVideoId = selectedHomeTvVideoId(), options = {}) {
       homeTvFeedAbort?.abort();
+      homeTvFeedPageAbort?.abort();
+      homeTvFeedPageAbort = null;
+      homeTvFeedNextCursor = null;
+      homeTvFeedPageError = false;
+      homeTvFeedLoopStarted = false;
       const controller = typeof AbortController === "function" ? new AbortController() : null;
       homeTvFeedAbort = controller;
       const requestId = ++homeTvFeedRequest;
       try {
         const params = new URLSearchParams({ city, limit: "24" });
+        params.set("paging", "1");
         if (venueId) params.set("venue", venueId);
         if (selectedVideoId) params.set("video", selectedVideoId);
         if (options.refresh) params.set("refresh", String(Date.now()));
@@ -169,10 +176,17 @@
           cache: options.refresh ? "no-store" : "default",
           signal: controller?.signal
         });
-        const [payload] = await Promise.all([
+        let [payload] = await Promise.all([
           prepared ? prepared.then((payload) => payload || requestPayload()) : requestPayload(),
           loadLiveShellFeature("tv")
         ]);
+        while (payload.ok && !payload.videos?.length && payload.nextCursor) {
+          if (controller?.signal.aborted || requestId !== homeTvFeedRequest) return;
+          if (params.get("cursor") === payload.nextCursor) throw new Error("TV page did not advance.");
+          params.set("cursor", payload.nextCursor);
+          params.delete("video");
+          payload = await requestPayload();
+        }
         if (!payload.ok) throw new Error(payload.error || "Unable to load MyDancr TV.");
         if (
           requestId !== homeTvFeedRequest ||
@@ -188,6 +202,7 @@
               (!venueId || item?.venue?.id === venueId)
             ))
           : [];
+        homeTvFeedNextCursor = payload.nextCursor || null;
         homeTvFeedStatus = "ready";
       } catch (error) {
         if (

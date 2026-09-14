@@ -358,6 +358,10 @@
     let homeTvFeedSelectedVideoId = "";
     let homeTvFeedStatus = "idle";
     let homeTvFeedVideos = [];
+    let homeTvFeedNextCursor = null;
+    let homeTvFeedPageAbort = null;
+    let homeTvFeedPageError = false;
+    let homeTvFeedLoopStarted = false;
     const homeTvLandingPreload = createHomeTvLandingPreloader();
     window.addEventListener("load", () => homeTvLandingPreload.schedule(), { once: true });
     const homeTvLandingConnection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;

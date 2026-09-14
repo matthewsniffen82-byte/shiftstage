@@ -1,6 +1,8 @@
 
 
     function deactivateHomeTvFeed(cancelPendingRequest = true) {
+      homeTvFeedPageAbort?.abort();
+      homeTvFeedPageAbort = null;
       if (cancelPendingRequest && homeTvFeedAbort) {
         homeTvFeedRequest += 1;
         homeTvFeedAbort.abort();
@@ -182,12 +184,13 @@
       const currentIndex = slides.indexOf(slide);
       const nextIndex = currentIndex + direction;
       if (currentIndex < 0 || nextIndex < 0 || nextIndex >= slides.length) {
-        showHomeTvFeedFeedback(slide, direction > 0 ? "Last video" : "First video");
+        showHomeTvFeedFeedback(slide, direction > 0 && homeTvFeedNextCursor
+          ? "Scroll down to load more videos" : direction > 0 ? "Last video" : "First video");
         return;
       }
       const nextSlide = slides[nextIndex];
       nextSlide.scrollIntoView({ block: "start", behavior: "smooth" });
-      activateHomeTvFeedVideo(String(nextSlide.dataset.videoId || ""));
+      activateHomeTvFeedVideo(String(nextSlide.dataset.playbackId || nextSlide.dataset.videoId || ""));
       nextSlide.querySelector("video")?.focus({ preventScroll: true });
     }
 
@@ -221,7 +224,7 @@
 
     function createHomeTvFeedVideo(item, index, slide, totalVideos) {
       const dancerName = String(item?.dancer?.stageName || "MyDancr TV").trim() || "MyDancr TV";
-      const videoId = String(item.id);
+      const videoId = String(slide.dataset.playbackId || item.id);
       const video = homeTvLandingPreload.takeVideo(item) || document.createElement("video");
       video.className = "home-tv-feed-video";
       video.dataset.videoUrl = homeTvPlaybackVideoUrl(item);
@@ -329,9 +332,9 @@
         if (
           video.duration > 0 &&
           video.currentTime / video.duration >= .95 &&
-          !homeTvFeedCompletedViews.has(videoId)
+          !homeTvFeedCompletedViews.has(String(item.id))
         ) {
-          homeTvFeedCompletedViews.add(videoId);
+          homeTvFeedCompletedViews.add(String(item.id));
           trackHomeTvFeedEvent(videoId, "completed");
         }
       });
@@ -684,7 +687,7 @@
     function renderHomeTvFeedSlide(slide, item, videoIndex, totalVideos) {
       const dancerName = String(item?.dancer?.stageName || "MyDancr TV").trim() || "MyDancr TV";
       const scheduleContext = homeTvFeedSchedule(item);
-      const previousVideoId = String(slide.dataset.videoId || "");
+      const previousVideoId = String(slide.dataset.playbackId || slide.dataset.videoId || "");
       if (previousVideoId) clearHomeTvFeedEngagedTimer(previousVideoId);
       slide.dataset.videoId = String(item.id);
       slide.classList.toggle("has-media-poster", Boolean(item?.posterUrl || item?.poster_url));
@@ -833,19 +836,149 @@
       const item = homeTvFeedVideos[index];
       if (!item || String(item.id) !== slide.dataset.videoId || !results.contains(slide)) return;
       delete slide.dataset.pendingVideoIndex;
-      renderHomeTvFeedSlide(slide, item, index, homeTvFeedVideos.length);
+      const userPaused = slide.dataset.userPaused;
+      // Only initial construction may autoplay before viewport ownership is set.
+      renderHomeTvFeedSlide(slide, item, Math.max(1, index), homeTvFeedVideos.length);
+      if (userPaused) slide.dataset.userPaused = userPaused;
     }
 
     function finishHomeTvFeedCards(feedKey) {
       const next = () => {
         if (activeTab !== "tv" || results.dataset.homeTvFeedKey !== feedKey || document.visibilityState === "hidden") return;
-        const slide = results.querySelector("[data-pending-video-index]");
+        const slides = [...results.querySelectorAll(".home-tv-feed-slide")];
+        const activeIndex = Math.max(0, slides.indexOf(homeTvFeedActiveSlide()));
+        const slide = slides.slice(Math.max(0, activeIndex - 4), activeIndex + 5)
+          .find((slide) => slide.dataset.pendingVideoIndex !== undefined);
         if (!slide) return;
         hydrateHomeTvFeedSlide(slide);
         // Yield between cards so playback, paint and swipe input can proceed.
         window.requestAnimationFrame(() => window.setTimeout(next, 0));
       };
       window.requestAnimationFrame(() => window.setTimeout(next, 0));
+    }
+
+    function createHomeTvFeedPlaceholder(index, copy = 0) {
+      const item = homeTvFeedVideos[index];
+      const slide = document.createElement("article");
+      slide.className = "home-tv-feed-slide is-paused is-media-loading";
+      slide.dataset.videoId = String(item.id);
+      slide.dataset.playbackId = copy ? `${item.id}~${copy}` : String(item.id);
+      slide.dataset.feedVideoIndex = String(index);
+      slide.dataset.pendingVideoIndex = String(index);
+      slide.setAttribute("aria-label", `${item.dancer.stageName} MyDancr TV video`);
+      return slide;
+    }
+
+    function maintainHomeTvFeedWindow() {
+      if (activeTab !== "tv" || homeTvFeedStatus !== "ready" || document.visibilityState === "hidden" || homeTvFeedCoveredByProfile()) return;
+      const activeSlide = homeTvFeedActiveSlide();
+      let slides = [...results.querySelectorAll(".home-tv-feed-slide")];
+      if (!activeSlide || !slides.length) return;
+      let index = slides.indexOf(activeSlide);
+      if (homeTvFeedNextCursor && index >= slides.length - 7) void loadNextHomeTvFeedPage();
+
+      if (!homeTvFeedNextCursor && homeTvFeedVideos.length > 1) {
+        // Short libraries need distinct playback instances on either side of a
+        // repeat boundary. Media IDs remain unchanged for likes/profile actions.
+        if (slides.length < 8) {
+          const count = homeTvFeedVideos.length;
+          const target = Math.ceil(8 / count) * count;
+          for (let position = slides.length; position < target; position++) {
+            const slide = createHomeTvFeedPlaceholder(position % count, Math.floor(position / count));
+            results.appendChild(slide);
+            homeTvFeedObserver?.observe(slide);
+          }
+          slides = [...results.querySelectorAll(".home-tv-feed-slide")];
+        }
+        // Move only distant cards; the active player and both buffered neighbors
+        // in each direction keep their elements and loaded media.
+        const before = activeSlide.getBoundingClientRect().top;
+        if (index >= slides.length - 3) {
+          homeTvFeedLoopStarted = true;
+          const moveCount = index - (slides.length - 4);
+          slides.slice(0, moveCount).forEach((slide) => results.appendChild(slide));
+        } else if (homeTvFeedLoopStarted && index < 3) {
+          slides.slice(-(3 - index)).reverse().forEach((slide) => results.prepend(slide));
+        }
+        const delta = activeSlide.getBoundingClientRect().top - before;
+        if (Math.abs(delta) > .5) {
+          const scroller = homeTvFeedIsImmersive() ? results : window;
+          scroller.scrollBy({ top: delta, left: 0, behavior: "instant" });
+        }
+      }
+
+      slides = [...results.querySelectorAll(".home-tv-feed-slide")];
+      index = slides.indexOf(activeSlide);
+      slides.forEach((slide, position) => {
+        if (Math.abs(position - index) <= 2) hydrateHomeTvFeedSlide(slide);
+        else if (Math.abs(position - index) > 4 && slide.dataset.pendingVideoIndex === undefined) {
+          const video = slide.querySelector("video");
+          if (video) releaseDeferredVideoSource(video);
+          clearHomeTvFeedEngagedTimer(String(slide.dataset.playbackId || slide.dataset.videoId));
+          slide.replaceChildren();
+          slide.dataset.pendingVideoIndex = slide.dataset.feedVideoIndex;
+        }
+      });
+      primeHomeTvFeedNeighbors(homeTvFeedActiveVideoId);
+      finishHomeTvFeedCards(results.dataset.homeTvFeedKey);
+    }
+
+    async function loadNextHomeTvFeedPage(retry = false) {
+      if (!homeTvFeedNextCursor || homeTvFeedPageAbort || (homeTvFeedPageError && !retry) || activeTab !== "tv") return;
+      const controller = new AbortController();
+      homeTvFeedPageAbort = controller;
+      homeTvFeedPageError = false;
+      const requestId = homeTvFeedRequest;
+      const city = homeTvFeedCity;
+      const venueId = homeTvFeedVenueId;
+      results.querySelector("[data-tv-page-retry]")?.remove();
+      try {
+        let added = [];
+        // A page can be empty after current visibility/shift checks. Continue
+        // the cursor instead of incorrectly treating that as the end of TV.
+        do {
+          const cursor = homeTvFeedNextCursor;
+          const params = new URLSearchParams({ city, limit: "24", paging: "1", cursor });
+          if (venueId) params.set("venue", venueId);
+          const payload = await fetchJson(`/api/public/tv?${params}`, {
+            retries: PUBLIC_DISCOVERY_REQUEST_RETRIES, signal: controller.signal
+          });
+          if (controller.signal.aborted || requestId !== homeTvFeedRequest || activeTab !== "tv") return;
+          if (!payload.ok) throw new Error("Unable to load more videos.");
+          if (payload.nextCursor === cursor) throw new Error("TV page did not advance.");
+          const known = new Set(homeTvFeedVideos.map((item) => item.id));
+          added = (Array.isArray(payload.videos) ? payload.videos : []).filter((item) => {
+            if (!item?.id || !item.videoUrl || !item.dancer?.stageName || known.has(item.id) ||
+                (venueId && item.venue?.id !== venueId)) return false;
+            known.add(item.id);
+            return true;
+          });
+          homeTvFeedNextCursor = payload.nextCursor || null;
+        } while (!added.length && homeTvFeedNextCursor);
+        const start = homeTvFeedVideos.length;
+        homeTvFeedVideos.push(...added);
+        added.forEach((item, offset) => {
+          const slide = createHomeTvFeedPlaceholder(start + offset);
+          results.appendChild(slide);
+          homeTvFeedObserver?.observe(slide);
+        });
+        results.dataset.homeTvFeedKey = `${city}:${venueId}:${homeTvFeedVideos.map((item) => item.id).join(",")}`;
+        void loadPublicMediaLikes(added.map((item) => ({ mediaType: "video", mediaId: item.id, likeCount: item.likeCount })));
+        renderHomeTvFeed(city);
+        maintainHomeTvFeedWindow();
+      } catch (error) {
+        if (controller.signal.aborted || requestId !== homeTvFeedRequest) return;
+        homeTvFeedPageError = true;
+        const retryButton = document.createElement("button");
+        retryButton.type = "button";
+        retryButton.className = "view-all";
+        retryButton.dataset.tvPageRetry = "true";
+        retryButton.textContent = "Unable to load more videos. Tap to retry";
+        retryButton.addEventListener("click", () => void loadNextHomeTvFeedPage(true));
+        results.appendChild(retryButton);
+      } finally {
+        if (homeTvFeedPageAbort === controller) homeTvFeedPageAbort = null;
+      }
     }
 
     function renderHomeTvFeed(city) {
@@ -927,17 +1060,17 @@
         return;
       }
       homeTvFeedObserver?.disconnect();
+      homeTvFeedLoopStarted = false;
       results.replaceChildren(
         ...homeTvFeedVideos.map((item, index) => {
-          if (index < 3) return createHomeTvFeedSlide(item, index, homeTvFeedVideos.length);
+          if (index < 3) {
+            const slide = createHomeTvFeedSlide(item, index, homeTvFeedVideos.length);
+            slide.dataset.feedVideoIndex = String(index);
+            return slide;
+          }
           // Retain every card's scroll/snap slot, but build only the first player
           // and its two upcoming neighbors before starting native playback.
-          const slide = document.createElement("article");
-          slide.className = "home-tv-feed-slide is-paused is-media-loading";
-          slide.dataset.videoId = String(item.id);
-          slide.dataset.pendingVideoIndex = String(index);
-          slide.setAttribute("aria-label", `Loading MyDancr TV video ${index + 1} of ${homeTvFeedVideos.length}`);
-          return slide;
+          return createHomeTvFeedPlaceholder(index);
         })
       );
       homeTvLandingPreload.clear();

@@ -45,6 +45,7 @@ function fixture(activeIndex, count = 3) {
     results: { querySelectorAll: () => slides },
     closeHomeTvFeedReportMenus() {}, attachDeferredVideoSource() {}, trackHomeTvFeedEvent() {},
     hydrateHomeTvFeedSlide() {},
+    maintainHomeTvFeedWindow() {},
     clearHomeTvFeedEngagedTimer() {}, syncHomeTvFeedSoundButtons() {},
     primeHomeTvFeedNeighbors: (id) => primed.push(id),
     scheduleHomeTvFeedEngagedView: (id) => engaged.push(id),
@@ -76,6 +77,20 @@ test("rapid reversals ignore stale playback completions and warm only the final 
   assert.ok(state.starts.every((start) => start.othersPlaying === 0));
   assert.deepEqual(state.primed, ["0"]);
   assert.deepEqual(state.engaged, ["0"]);
+});
+
+test("repeat instances share media metrics but only the selected instance can play", async () => {
+  const state = fixture(0);
+  state.slides[1].dataset.videoId = '0';
+  state.slides[1].dataset.playbackId = '0~1';
+  state.context.homeTvFeedImpressions.add('0');
+  let events = 0;
+  state.context.trackHomeTvFeedEvent = () => events++;
+  state.context.activateHomeTvFeedVideo('0~1');
+  await state.settle();
+  assert.deepEqual(state.videos.map(v => v.paused), [true, false, true]);
+  assert.equal(events, 0, 'a repeated card cannot create another first impression');
+  assert.deepEqual(state.engaged, ['0~1']);
 });
 
 test("scrolling to a manually paused clip preserves the pause without leaving another clip playing", async () => {

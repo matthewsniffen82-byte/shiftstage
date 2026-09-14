@@ -37,6 +37,7 @@ function fixture() {
     AbortController, URLSearchParams, HTMLVideoElement: Video, HTMLMediaElement: Video, Date: { now: () => now },
     activeTab: "dancers", citySelect: { value: "Vegas" }, userLocationOutsideMarkets: false,
     homeTvFeedStatus: "idle", homeTvFeedAbort: null, homeTvFeedRequest: 0,
+    homeTvFeedPageAbort: null,
     homeTvFeedCity: "Vegas", homeTvFeedVenueId: "", homeTvFeedSelectedVideoId: "", homeTvFeedVideos: [],
     PUBLIC_DISCOVERY_REQUEST_RETRIES: 1, pageSuspendedVideos: new Set(),
     navigator: { connection: { effectiveType: "4g", saveData: false } },

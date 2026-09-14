@@ -204,15 +204,34 @@ export async function getPublicMyDancrTvVideoCount(
   return Math.max(0, Number(count || 0));
 }
 
+type TvFeedPageOptions = FeedOptions & { page: { cursor?: string } };
+export type MyDancrTvFeedPage = { videos: MyDancrTvVideo[]; nextCursor: string | null };
+
+export function parseTvFeedCursor(value: string) {
+  const [publishedAt, id, extra] = value.split("|");
+  if (extra !== undefined || !id || !UUID_PATTERN.test(id) ||
+      !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,6})?(?:Z|[+-]\d{2}:\d{2})$/.test(publishedAt) ||
+      !Number.isFinite(Date.parse(publishedAt))) return null;
+  return { publishedAt, id };
+}
+
+export function getPublicMyDancrTvFeed(admin: AdminClient, options: TvFeedPageOptions): Promise<MyDancrTvFeedPage>;
+export function getPublicMyDancrTvFeed(admin: AdminClient, options?: FeedOptions): Promise<MyDancrTvVideo[]>;
 export async function getPublicMyDancrTvFeed(
   admin: AdminClient,
-  options: FeedOptions = {},
-): Promise<MyDancrTvVideo[]> {
+  options: FeedOptions | TvFeedPageOptions = {},
+): Promise<MyDancrTvVideo[] | MyDancrTvFeedPage> {
+  const page = "page" in options ? options.page : null;
+  const cursor = page?.cursor ? parseTvFeedCursor(page.cursor) : null;
+  if (page?.cursor && !cursor) throw new Error("Invalid TV cursor.");
+  const result = (videos: MyDancrTvVideo[], nextCursor: string | null = null) =>
+    page ? { videos, nextCursor } : videos;
   const now = new Date();
   const nowIso = now.toISOString();
   const city = normalizeTvCity(options.city);
   const filter = MYDANCR_TV_FILTERS.has(options.filter || "") ? options.filter || "for-you" : "for-you";
-  const queryLimit = Math.min(120, Math.max(20, (options.limit || 12) * 5));
+  const pageLimit = Math.min(24, Math.max(1, options.limit || 12));
+  const queryLimit = page ? pageLimit : Math.min(120, Math.max(20, (options.limit || 12) * 5));
   const selectedVideoId = options.selectedVideoId && UUID_PATTERN.test(options.selectedVideoId)
     ? options.selectedVideoId
     : "";
@@ -223,8 +242,8 @@ export async function getPublicMyDancrTvFeed(
     ? await getPublicTvVenueScope(admin, venueId, now.getTime())
     : null;
   const venueDancerIds = venueScope?.dancerIds || [];
-  if (venueId && !venueDancerIds.length) return [];
-  if (venueId && options.dancerId && !venueDancerIds.includes(options.dancerId)) return [];
+  if (venueId && !venueDancerIds.length) return result([]);
+  if (venueId && options.dancerId && !venueDancerIds.includes(options.dancerId)) return result([]);
   const preferredVenueId =
     !venueId && options.preferredVenueId && UUID_PATTERN.test(options.preferredVenueId)
       ? options.preferredVenueId
@@ -239,6 +258,8 @@ export async function getPublicMyDancrTvFeed(
     dancerId: options.dancerId,
     dancerIds: options.dancerId ? undefined : venueDancerIds,
     limit: queryLimit,
+    cursor,
+    paginated: Boolean(page),
   });
   const preferredVenueQuery = preferredVenueId &&
     preferredVenueDancerIds.length &&
@@ -277,6 +298,11 @@ export async function getPublicMyDancrTvFeed(
   const selectedRowCandidate = normalizeFeedRow(selectedResult.data, now.getTime());
   const preferredRows = (preferredVenueResult.data || []) as any[];
   const cityRows = (data || []) as any[];
+  // Advance by the raw database boundary, even when visibility/shift checks
+  // remove a whole page. Preserve timestamp precision and break ties by ID.
+  const lastRow = cityRows.at(-1);
+  const nextCursor = page && cityRows.length === queryLimit && lastRow
+    ? `${lastRow.published_at}|${lastRow.id}` : null;
   const mergedRowsById = new Map<string, any>();
   for (const row of [...preferredRows, ...cityRows]) {
     if (row?.id && !mergedRowsById.has(row.id)) mergedRowsById.set(row.id, row);
@@ -336,7 +362,8 @@ export async function getPublicMyDancrTvFeed(
   }) : venuePrioritized;
   const deduped = profileOrdered.slice(
     0,
-    Math.min(MYDANCR_TV_PROFILE_VIDEO_LIMIT, Math.max(1, options.limit || 12)),
+    page ? pageLimit + Number(Boolean(selectedRow))
+      : Math.min(MYDANCR_TV_PROFILE_VIDEO_LIMIT, Math.max(1, options.limit || 12)),
   );
   const activeVenueIds = deduped
     .filter((video) => video.shift?.isActive && video.venue)
@@ -345,7 +372,7 @@ export async function getPublicMyDancrTvFeed(
     signPublicVideos(admin, deduped),
     getActiveClubDealListsForVenues(admin, activeVenueIds),
   ]);
-  return signedVideos.map((video) => {
+  return result(signedVideos.map((video) => {
     const venueDeals = (video.shift?.isActive && video.venue ? deals.get(video.venue.id) || [] : []).map(toPublicClubDeal);
     const deal = venueDeals[0] || null;
     const dealAttributionTokens = video.shift && video.venue
@@ -365,7 +392,7 @@ export async function getPublicMyDancrTvFeed(
         ? dealAttributionTokens[deal.id]
         : null,
     };
-  });
+  }), nextCursor);
 }
 
 function publicTvRowsQuery(
@@ -376,6 +403,8 @@ function publicTvRowsQuery(
     dancerId?: string;
     dancerIds?: string[];
     limit: number;
+    cursor?: { publishedAt: string; id: string } | null;
+    paginated?: boolean;
   },
 ) {
   let query = admin
@@ -388,6 +417,15 @@ function publicTvRowsQuery(
     .limit(options.limit);
 
   if (options.city) query = query.ilike("dancer_profiles.city", options.city);
+  if (options.paginated) {
+    query = query.eq("dancer_profiles.status", "approved")
+      .eq("dancer_profiles.verification_status", "approved")
+      .eq("dancer_profiles.is_public", true).is("dancer_profiles.disabled_at", null);
+  }
+  if (options.cursor) {
+    const { publishedAt, id } = options.cursor;
+    query = query.or(`published_at.lt.${publishedAt},and(published_at.eq.${publishedAt},id.lt.${id})`);
+  }
   if (options.dancerId) {
     query = query
       .eq("dancer_id", options.dancerId)
@@ -396,7 +434,8 @@ function publicTvRowsQuery(
   } else if (options.dancerIds?.length) {
     query = query.in("dancer_id", options.dancerIds);
   }
-  return query.order("published_at", { ascending: false });
+  query = query.order("published_at", { ascending: false });
+  return options.paginated ? query.order("id", { ascending: false }) : query;
 }
 
 function normalizeTvCity(value: string | undefined) {

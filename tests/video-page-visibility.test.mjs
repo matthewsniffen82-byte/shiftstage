@@ -69,7 +69,8 @@ test("rapid backward jumps select a partially visible card and pause a feed outs
   const context = vm.createContext({
     homeTvFeedObserver: null, homeTvFeedActiveVideoId: "0", homeTvFeedIsImmersive: () => false,
     window: { IntersectionObserver: Observer }, IntersectionObserver: Observer,
-    results: { querySelectorAll: () => slides },
+    results: { querySelectorAll: () => slides, contains: slide => slides.includes(slide) },
+    homeTvFeedActiveSlide: () => slides[Number(context.homeTvFeedActiveVideoId)],
     activateHomeTvFeedVideo(id) {
       context.homeTvFeedActiveVideoId = id;
       delete slides[Number(id)].dataset.viewportPaused;
@@ -102,7 +103,8 @@ for (const manual of [false, true]) test(`the top video resumes after layout vis
   const context = vm.createContext({
     homeTvFeedObserver: null, homeTvFeedActiveVideoId: "0", homeTvFeedIsImmersive: () => false,
     window: { IntersectionObserver: Observer }, IntersectionObserver: Observer,
-    results: { querySelectorAll: () => slides },
+    results: { querySelectorAll: () => slides, contains: slide => slides.includes(slide) },
+    homeTvFeedActiveSlide: () => slides[Number(context.homeTvFeedActiveVideoId)],
     activateHomeTvFeedVideo(id) {
       starts.push(id); context.homeTvFeedActiveVideoId = id;
       delete slides[Number(id)].dataset.viewportPaused;
@@ -141,7 +143,8 @@ test("TV hands playback to the half-visible incoming card in both directions wit
   const context = vm.createContext({
     homeTvFeedObserver: null, homeTvFeedActiveVideoId: "0", homeTvFeedIsImmersive: () => false,
     window: { IntersectionObserver: Observer }, IntersectionObserver: Observer,
-    results: { querySelectorAll: () => slides },
+    results: { querySelectorAll: () => slides, contains: slide => slides.includes(slide) },
+    homeTvFeedActiveSlide: () => slides[Number(context.homeTvFeedActiveVideoId)],
     activateHomeTvFeedVideo(id) {
       starts.push(id); context.homeTvFeedActiveVideoId = id;
       videos.forEach((video, index) => { video.paused = index !== Number(id); });

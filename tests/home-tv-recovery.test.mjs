@@ -16,6 +16,7 @@ function element() {
     appendChild(child) { this.children.push(child); },
     replaceChildren(...children) { this.children = children; },
     querySelector: () => null,
+    querySelectorAll: () => [],
     addEventListener(name, listener) { this.listeners[name] = listener; },
     closest: () => null,
   };
@@ -31,7 +32,8 @@ function fixture() {
     discoveryLocationPhrase: city => `in ${city}`,
     setHomeTvFeedCount() {}, syncHomeTvPageSnapState() {}, settleHomeTvFeedLanding() {},
     syncHomeTvFeedSoundButtons() {}, loadPublicMediaLikes() {}, setupHomeTvFeedObserver() {},
-    createHomeTvFeedSlide: video => ({ video }),
+    homeTvFeedActiveSlide: () => null,
+    createHomeTvFeedSlide: video => ({ video, dataset: {} }),
   });
   context.document.createElement = element;
   context.window.location = { href: "https://www.mydancr.com/?city=Vegas&view=tv#results", replace: url => navigations.push(url) };

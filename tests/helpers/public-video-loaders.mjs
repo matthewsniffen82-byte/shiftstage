@@ -10,6 +10,7 @@ export function publicVideoLoaders() {
     homeTvFeedAbort: null, homeTvFeedRequest: 0, homeTvFeedCity: "Vegas", homeTvFeedVenueId: "", homeTvFeedSelectedVideoId: "",
     homeTvFeedStatus: "loading", homeTvFeedVideos: [], activeTab: "tv", citySelect: { value: "Vegas" },
     homeTvFeedObserver: null, homeTvFeedEngagedTimers: new Map(),
+    homeTvFeedPageAbort: null,
     document: { documentElement: { classList: { remove() {} } }, getElementById: () => null },
     results: { classList: { remove() {} }, dataset: {}, querySelectorAll: () => [] },
     homeTvFeedFullscreenElement: () => null, setHomeTvFeedFallbackFullscreen() {}, releaseDeferredVideoSource() {},

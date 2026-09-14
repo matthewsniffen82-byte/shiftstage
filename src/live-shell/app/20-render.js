@@ -200,6 +200,7 @@
     }
 
     function trackHomeTvFeedEvent(videoId, eventType) {
+      videoId = String(videoId || "").split("~")[0];
       if (!videoId || window.location.protocol === "file:") return Promise.resolve(false);
       const headers = { "Content-Type": "application/json", Accept: "application/json" };
       if (authSession?.accessToken) headers.Authorization = `Bearer ${authSession.accessToken}`;
@@ -368,11 +369,12 @@
 
     function scheduleHomeTvFeedEngagedView(videoId, video) {
       clearHomeTvFeedEngagedTimer(videoId);
-      if (homeTvFeedEngagedViews.has(videoId)) return;
+      const mediaId = String(videoId).split("~")[0];
+      if (homeTvFeedEngagedViews.has(mediaId)) return;
       const timer = window.setTimeout(() => {
         homeTvFeedEngagedTimers.delete(videoId);
         if (homeTvFeedActiveVideoId !== videoId || video.paused) return;
-        homeTvFeedEngagedViews.add(videoId);
+        homeTvFeedEngagedViews.add(mediaId);
         trackHomeTvFeedEvent(videoId, "engaged_view");
       }, 3000);
       homeTvFeedEngagedTimers.set(videoId, timer);
@@ -413,6 +415,8 @@
 
     function homeTvFeedActiveSlide() {
       return results.querySelector(
+        `.home-tv-feed-slide[data-playback-id="${CSS.escape(homeTvFeedActiveVideoId)}"]`
+      ) || results.querySelector(
         `.home-tv-feed-slide[data-video-id="${CSS.escape(homeTvFeedActiveVideoId)}"]`
       ) || results.querySelector(".home-tv-feed-slide");
     }
@@ -476,7 +480,7 @@
           }
           return;
         }
-        const videoId = String(slide.dataset.videoId || "");
+        const videoId = String(slide.dataset.playbackId || slide.dataset.videoId || "");
         delete slide.dataset.userPaused;
         if (videoId) activateHomeTvFeedVideo(videoId);
         homeTvFeedFullscreenReturnScrollY = window.scrollY || 0;
@@ -685,7 +689,7 @@
         if (slide?.getAttribute("aria-current") === "true" && slide.dataset.userPaused !== "true" &&
             slide.dataset.viewportInactive !== "true" &&
             !homeTvFeedCoveredByProfile()) {
-          activateHomeTvFeedVideo(String(slide.dataset.videoId || ""));
+          activateHomeTvFeedVideo(String(slide.dataset.playbackId || slide.dataset.videoId || ""));
         }
       });
     }
@@ -734,13 +738,13 @@
       closeHomeTvFeedReportMenus();
       homeTvFeedActiveVideoId = videoId;
       const slides = results.querySelectorAll(".home-tv-feed-slide");
-      const incomingIndex = [...slides].findIndex((slide) => String(slide.dataset.videoId || "") === videoId);
+      const incomingIndex = [...slides].findIndex((slide) => String(slide.dataset.playbackId || slide.dataset.videoId || "") === videoId);
       if (incomingIndex < 0) return;
       [...slides].slice(Math.max(0, incomingIndex - 2), incomingIndex + 3).forEach(hydrateHomeTvFeedSlide);
       // A backward swipe visits the incoming card first in DOM order. Stop the
       // outgoing player before any new play request can compete for decoding.
       slides.forEach((slide) => {
-        if (String(slide.dataset.videoId || "") === videoId) return;
+        if (String(slide.dataset.playbackId || slide.dataset.videoId || "") === videoId) return;
         const video = slide.querySelector("video");
         if (video && (!video.paused || video.autoplay || video.hasAttribute("autoplay"))) {
           video.autoplay = false;
@@ -749,7 +753,7 @@
         }
       });
       slides.forEach((slide) => {
-        const slideVideoId = String(slide.dataset.videoId || "");
+        const slideVideoId = String(slide.dataset.playbackId || slide.dataset.videoId || "");
         const video = slide.querySelector("video");
         const isActive = slideVideoId === videoId;
         if (!video) return;
@@ -768,8 +772,9 @@
           video.defaultMuted = homeTvFeedMuted;
           if (homeTvFeedMuted) video.setAttribute("muted", "");
           attachDeferredVideoSource(video, "auto");
-          if (!homeTvFeedImpressions.has(videoId)) {
-            homeTvFeedImpressions.add(videoId);
+          const mediaId = String(slide.dataset.videoId || videoId);
+          if (!homeTvFeedImpressions.has(mediaId)) {
+            homeTvFeedImpressions.add(mediaId);
             trackHomeTvFeedEvent(videoId, "impression");
           }
           if (slide.dataset.userPaused === "true") {
@@ -801,11 +806,12 @@
       });
       primeHomeTvFeedNeighbors(videoId);
       syncHomeTvFeedSoundButtons();
+      maintainHomeTvFeedWindow();
     }
 
     function primeHomeTvFeedNeighbors(videoId) {
       const slides = [...results.querySelectorAll(".home-tv-feed-slide")];
-      const activeIndex = slides.findIndex((slide) => String(slide.dataset.videoId || "") === videoId);
+      const activeIndex = slides.findIndex((slide) => String(slide.dataset.playbackId || slide.dataset.videoId || "") === videoId);
       if (activeIndex < 0) return;
       const activeVideo = slides[activeIndex].querySelector("video.home-tv-feed-video");
       const allowNextWarmup = document.visibilityState !== "hidden" && !homeTvFeedCoveredByProfile() &&
@@ -831,7 +837,7 @@
 
     function toggleHomeTvFeedPlayback(video) {
       const slide = video.closest(".home-tv-feed-slide");
-      const videoId = String(slide?.dataset.videoId || "");
+      const videoId = String(slide?.dataset.playbackId || slide?.dataset.videoId || "");
       if (!videoId) return;
       if (video.paused) {
         delete slide.dataset.userPaused;
@@ -946,9 +952,9 @@
       homeTvFeedObserver = null;
       const slides = [...results.querySelectorAll(".home-tv-feed-slide")];
       if (!slides.length) return;
-      const initialSlide = homeTvFeedIsImmersive() ? homeTvFeedActiveSlide() : slides[0];
+      const initialSlide = homeTvFeedActiveSlide() || slides[0];
       if (!("IntersectionObserver" in window)) {
-        activateHomeTvFeedVideo(String(initialSlide?.dataset.videoId || ""));
+        activateHomeTvFeedVideo(String(initialSlide?.dataset.playbackId || initialSlide?.dataset.videoId || ""));
         return;
       }
       const fullscreenRoot = homeTvFeedIsImmersive() ? results : null;
@@ -958,11 +964,11 @@
           visibleRatios.set(entry.target, entry.isIntersecting ? entry.intersectionRatio : 0);
           entry.target.dataset.viewportInactive = entry.isIntersecting ? "false" : "true";
         });
-        const activeSlide = slides.find((slide) => String(slide.dataset.videoId || "") === homeTvFeedActiveVideoId);
+        const activeSlide = homeTvFeedActiveSlide();
         const activeRatio = visibleRatios.get(activeSlide) || 0;
-        const visible = [...visibleRatios.entries()].filter(([, ratio]) => ratio > .25)
+        const visible = [...visibleRatios.entries()].filter(([slide, ratio]) => results.contains(slide) && ratio > .25)
           .sort((left, right) => right[1] - left[1])[0];
-        const visibleVideoId = String(visible?.[0].dataset.videoId || "");
+        const visibleVideoId = String(visible?.[0].dataset.playbackId || visible?.[0].dataset.videoId || "");
         // Start the incoming card while the swipe is still moving so its native
         // continuation request does not wait until the card is almost settled.
         if (visibleVideoId && (visible[1] >= .5 || activeRatio <= .25)) {
@@ -973,7 +979,7 @@
             activeSlide.dataset.viewportPaused === "true" && activeSlide.dataset.userPaused !== "true") {
           // The current card may return below the handoff threshold after the
           // initial layout or a scroll toward the header. Resume that same player.
-          activateHomeTvFeedVideo(String(activeSlide.dataset.videoId || ""));
+          activateHomeTvFeedVideo(String(activeSlide.dataset.playbackId || activeSlide.dataset.videoId || ""));
         } else if (activeSlide && activeRatio === 0) {
           const video = activeSlide.querySelector("video");
           if (video && activeSlide.dataset.userPaused !== "true") activeSlide.dataset.viewportPaused = "true";
@@ -992,5 +998,5 @@
         threshold: [0, .25, .5, .6, .72]
       });
       slides.forEach((slide) => homeTvFeedObserver.observe(slide));
-      activateHomeTvFeedVideo(String(initialSlide?.dataset.videoId || ""));
+      activateHomeTvFeedVideo(String(initialSlide?.dataset.playbackId || initialSlide?.dataset.videoId || ""));
     }
