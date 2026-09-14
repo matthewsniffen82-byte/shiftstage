@@ -4814,11 +4814,13 @@ body.dancr-button-system .public-profile-shell .profile-tonight-travel-actions >
   font-size: 10px !important;
 }
 
-/* Active offers need only the venue/status row and the three actions. */
+/* Active and upcoming offers share the venue/status row and the three actions. */
 body.dancr-button-system #profileBackdrop #profileModal .profile-tonight-card.has-club-deal:not(:has(.profile-club-deal-tile.is-error))
   :is(.profile-club-deal-qr-button, .profile-tonight-travel-actions > :is(a, button)),
 body.dancr-button-system .public-profile-shell .profile-tonight-card.has-club-deal
-  :is(.club-deal-profile-action, .profile-tonight-travel-actions > :is(a, button)) {
+  :is(.club-deal-profile-action, .profile-tonight-travel-actions > :is(a, button)),
+body.dancr-button-system #profileBackdrop #profileModal .profile-tonight-card.is-upcoming.has-venue-deal-link:not(:has(.profile-club-deal-tile.is-error)) .profile-tonight-travel-actions > :is(a, button),
+body.dancr-button-system .public-profile-shell .profile-tonight-card.is-upcoming.has-venue-deal-link .profile-tonight-travel-actions > :is(a, button) {
   grid-row: 2 !important;
 }
 
@@ -4837,14 +4839,30 @@ body.dancr-button-system .public-profile-shell .profile-tonight-travel-actions >
   grid-column: 3 !important;
 }
 
+/* Fit the upcoming offer prompt into the existing 36px header so its card
+ * matches Working Now without shrinking the action buttons. */
+body.dancr-button-system #profileBackdrop #profileModal .profile-tonight-card.has-venue-deal-link > .schedule-upcoming,
+body.dancr-button-system .public-profile-shell .profile-tonight-card.has-venue-deal-link > .profile-upcoming-card {
+  align-content: start !important;
+  padding-bottom: 12px !important;
+}
+
+body.dancr-button-system #profileBackdrop #profileModal .profile-tonight-card.has-venue-deal-link .schedule-upcoming .profile-venue-destination,
+body.dancr-button-system .public-profile-shell .profile-tonight-card.has-venue-deal-link .profile-upcoming-destination {
+  min-height: 24px !important;
+}
+
 /* Upcoming dancers can preview a venue's deal page, but cannot originate a
  * commission-bearing deal scan until they are verified as Working Now. */
 body.dancr-button-system #profileBackdrop #profileModal .profile-upcoming-offer-note,
 body.dancr-button-system .public-profile-shell .profile-upcoming-offer-note {
+  z-index: 1 !important;
   grid-column: 2 / -1 !important;
+  grid-row: 1 !important;
+  align-self: end !important;
   min-width: 0 !important;
   margin: 0 !important;
-  padding: 2px 0 !important;
+  padding: 0 !important;
   color: var(--dancr-color-info) !important;
   font-size: 10px !important;
   font-weight: 700 !important;
