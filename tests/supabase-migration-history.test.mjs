@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { mkdtemp, mkdir, readFile, rm, writeFile, rename } from "node:fs/promises";
+import { mkdtemp, cp, readFile, rm, writeFile, rename } from "node:fs/promises";
 import { spawnSync } from "node:child_process";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
@@ -88,17 +88,16 @@ test("the build-facing CLI returns failure for historical edits", async t => {
   const f = await fixture(t);
   const scripts = join(f.directory, "scripts");
   const migrations = join(f.directory, "supabase", "migrations");
-  await mkdir(scripts);
-  await mkdir(migrations, { recursive: true });
+  await cp(new URL("../scripts", import.meta.url), scripts, { recursive: true });
+  await cp(new URL("../supabase", import.meta.url), join(f.directory, "supabase"), { recursive: true });
   const script = join(scripts, "check-supabase-migrations.mjs");
   await writeFile(script, await readFile(new URL("../scripts/check-supabase-migrations.mjs", import.meta.url)));
-  await writeFile(join(f.directory, "supabase", "migration-history-baseline.json"), JSON.stringify(f.baseline));
-  await Promise.all(f.baseline.files.map(entry => writeFile(join(migrations, entry.file), f.sql)));
+
   const run = () => spawnSync(process.execPath, [script], { encoding: "utf8", timeout: 30_000 });
   const good = run();
   assert.equal(good.status, 0, good.stderr);
-  assert.equal(JSON.parse(good.stdout).replayReady, false);
-  await writeFile(join(migrations, f.baseline.files[0].file), "select 2;\n");
+  assert.equal(JSON.parse(good.stdout).baselineReplayReady, true);
+  await writeFile(join(migrations, "202606250001_initial_schema.sql"), "select 2;\n");
   const bad = run();
   assert.equal(bad.status, 1, bad.stderr);
   assert.match(JSON.parse(bad.stdout).errors.join("\n"), /Historical SQL changed/);

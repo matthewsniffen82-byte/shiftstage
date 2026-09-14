@@ -1,0 +1,17 @@
+{
+  "format": 1,
+  "project": "cwpsrrjhrkedwtyatntv",
+  "startedAt": "2026-09-14T04:33:58.944Z",
+  "completedAt": "2026-09-14T04:34:12.706Z",
+  "baselineSha256": "b7df6ff461c8d9d9d804c151fc019542878c6d7764cd88178b8279373f9bf149",
+  "catalogQuerySha256": "8f882e775d952e5294f2a2427b5998a3521672c8d35c0dd67897c37b0fb5c8b9",
+  "expectedCatalogSha256": "b9125a09429d3c64ea05bb6e98d5a6b2d6752cf3171f26f9066f17fab4a943f5",
+  "actualCatalogSha256": "b9125a09429d3c64ea05bb6e98d5a6b2d6752cf3171f26f9066f17fab4a943f5",
+  "rebuilt": true,
+  "equivalent": true,
+  "rollbackVerified": true,
+  "ledgerPreserved": true,
+  "recreatedRelations": 85,
+  "error": null,
+  "transactionCommitted": false
+}

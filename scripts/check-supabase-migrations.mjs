@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import { readFile, readdir } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
+import { schemaReplayPlan } from "./lib/schema-replay-plan.mjs";
 
 export function migrationDigest(sql) {
   return createHash("sha256").update(sql.replace(/\r\n?/g, "\n")).digest("hex");
@@ -68,9 +69,11 @@ if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1]
   try {
     const baseline = JSON.parse(await readFile(join(root, "supabase/migration-history-baseline.json"), "utf8"));
     const report = await verifyMigrationHistory(join(root, "supabase/migrations"), baseline);
+    const replay = report.ok ? await schemaReplayPlan(root) : { baselineReplayReady: false, forwardMigrationsRequireValidation: true };
     console.log(JSON.stringify({ ...report,
-      replayReady: false,
-      note: "Historical version collisions remain quarantined. This check never applies SQL or repairs a remote ledger. See docs/supabase-reliability/migration-safety.md." }, null, 2));
+      historicalReplayReady: false, ...replay,
+      replayReady: report.ok && replay.baselineReplayReady && !replay.forwardMigrationsRequireValidation,
+      note: "Use the isolated baseline replay plan for a fresh Supabase project. Historical files remain quarantined. This check never applies SQL or repairs a remote ledger." }, null, 2));
     if (!report.ok) process.exitCode = 1;
   } catch (error) {
     console.error(`Migration history check failed: ${error.message}`);
