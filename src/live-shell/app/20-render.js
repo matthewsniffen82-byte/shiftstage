@@ -423,9 +423,14 @@
 
     function alignHomeTvFeedFullscreenSlide(slide) {
       if (!slide || !homeTvFeedIsImmersive()) return;
+      const scrollTop = results.scrollTop;
       window.requestAnimationFrame(() => {
+        // Entering full screen schedules several layout callbacks. A swipe can
+        // move the viewport before its observer reports the new active card.
         if (!homeTvFeedIsImmersive()) return;
-        results.scrollTo({ top: slide.offsetTop, left: 0, behavior: "auto" });
+        if (slide === homeTvFeedActiveSlide() && results.scrollTop === scrollTop) {
+          results.scrollTo({ top: slide.offsetTop, left: 0, behavior: "instant" });
+        }
         window.requestAnimationFrame(setupHomeTvFeedObserver);
       });
     }
