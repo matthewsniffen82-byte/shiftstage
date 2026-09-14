@@ -1197,9 +1197,31 @@ export async function retryMyDancrTvAutomatedModeration(admin: AdminClient, vide
   if (!video) return null;
 
   const previous = videoWorkerState(video);
-  if (previous.attempt >= 3) return null;
   const queued = previous.attempt === 0 && previous.workerId === null;
   if (!queued && (previous.startedAt === null || Date.parse(previous.startedAt) >= Date.now() - VIDEO_WORKER_STALE_AFTER_MS)) return null;
+  if (previous.attempt >= 3) {
+    // A terminated final attempt cannot write its own failure. Return only the
+    // same expired worker to human review; never reclaim or publish its media.
+    const update = admin.from("mydancr_tv_videos").update({
+      status: "submitted",
+      moderation_decision: "review",
+      moderation_reason_codes: ["video_moderation_attempts_exhausted"],
+      moderation_details: { errorCode: "video_moderation_attempts_exhausted" },
+      moderation_completed_at: new Date().toISOString(),
+      review_notes: "Automatic processing was interrupted. Human review or an administrator retry is required.",
+      reviewed_by: null,
+      reviewed_at: null,
+      published_at: null,
+      expires_at: null,
+      venue_featured: false,
+    });
+    const { data, error: recoveryError } = await matchVideoWorkerSnapshot(update, video, "moderating")
+      .select("id, status, submitted_at, moderation_decision, moderation_reason_codes")
+      .maybeSingle();
+    if (recoveryError) throw recoveryError;
+    if (!data) return null;
+    return videoWorkerOutcome(data, null, video.id, "submitted");
+  }
   const startedAt = new Date().toISOString();
   const workerId = crypto.randomUUID();
   const attempt = previous.attempt + 1;
@@ -1648,6 +1670,7 @@ function videoModerationErrorCode(error: unknown) {
 }
 
 const RETRYABLE_VIDEO_MODERATION_REASON_CODES = new Set([
+  "video_moderation_attempts_exhausted",
   "video_moderation_not_configured",
   "video_moderation_timeout",
   "video_decode_failed",

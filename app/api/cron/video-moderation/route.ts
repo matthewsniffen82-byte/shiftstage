@@ -28,23 +28,24 @@ export async function GET(request: Request) {
     return await runWithServerJob(async () => {
     let query = admin
       .from("mydancr_tv_videos")
-      .select("id, status")
-      .lt("moderation_attempt_count", 3)
+      .select("id, status, moderation_attempt_count", { count: "exact" })
       .limit(MAX_JOBS_PER_RUN);
     query = demoAutoApprove
       ? query
-          .in("status", ["submitted", "moderating"])
+          .or("status.eq.moderating,and(status.eq.submitted,moderation_attempt_count.lt.3)")
           .order("submitted_at", { ascending: true, nullsFirst: false })
       : query
           .eq("status", "moderating")
           .lt("moderation_started_at", staleBefore)
           .order("moderation_started_at", { ascending: true });
-    const { data: videos, error } = await query;
+    const { data: videos, count: eligibleAtStart, error } = await query;
     if (error) throw error;
 
     const results = [];
     for (const video of videos || []) {
-      if (serverJobRemainingMs() < VIDEO_PROCESSING_JOB_TIMEOUT_MS) break;
+      const requiredMs = video.status === "moderating" && video.moderation_attempt_count >= 3
+        ? 15_000 : VIDEO_PROCESSING_JOB_TIMEOUT_MS;
+      if (serverJobRemainingMs() < requiredMs) break;
       try {
         const result = demoAutoApprove && video.status === "submitted"
           ? await autoApprovePendingMyDancrTvDemoVideo(admin, video.id)
@@ -67,7 +68,9 @@ export async function GET(request: Request) {
       }
     }
 
-    return NextResponse.json({ ok: true, processed: results.length, results });
+    const failed = results.filter(result => !result.ok && result.status !== "not_claimed").length;
+    console.info(JSON.stringify({ event: "mydancr_tv.recovery_completed", eligibleAtStart, processed: results.length, failed }));
+    return NextResponse.json({ ok: failed === 0, eligibleAtStart, processed: results.length, failed, results }, { status: failed ? 500 : 200 });
     }, VIDEO_PROCESSING_ROUTE_TIMEOUT_MS);
   } catch (error) {
     console.error(JSON.stringify({

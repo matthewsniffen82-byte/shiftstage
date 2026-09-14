@@ -23,13 +23,13 @@ export async function GET(request: Request) {
       const now = new Date().toISOString();
       const staleBefore = new Date(Date.now() - MODERATION_WORKER_STALE_MS).toISOString();
       const [retry, stale] = await Promise.all([
-        admin.from("image_moderation_records").select("*")
+        admin.from("image_moderation_records").select("*", { count: "exact" })
           .eq("decision", "review").is("review_decision", null)
           .in("status", ["moderation_retry", "error"])
           .gte("attempt_count", 0)
           .or(`next_attempt_at.is.null,next_attempt_at.lte.${now}`)
           .order("next_attempt_at", { ascending: true, nullsFirst: true }).limit(MAX_JOBS_PER_RUN),
-        admin.from("image_moderation_records").select("*")
+        admin.from("image_moderation_records").select("*", { count: "exact" })
           .eq("decision", "review").is("review_decision", null).eq("status", "moderating")
           .gte("attempt_count", 0)
           .lt("updated_at", staleBefore).or(`locked_at.is.null,locked_at.lt.${staleBefore}`)
@@ -60,7 +60,11 @@ export async function GET(request: Request) {
           results.push({ recordId: record.id, ok: false });
         }
       }
-      return NextResponse.json({ ok: true, processed: results.length, results });
+      const eligibleAtStart = Number.isSafeInteger(retry.count) && Number.isSafeInteger(stale.count)
+        ? retry.count + stale.count : null;
+      const failed = results.filter(result => !result.ok).length;
+      console.info("IMAGE_MODERATION_RECOVERY_COMPLETED", { eligibleAtStart, processed: results.length, failed });
+      return NextResponse.json({ ok: failed === 0, eligibleAtStart, processed: results.length, failed, results }, { status: failed ? 500 : 200 });
     }, 50_000);
   } catch (error) {
     console.error("IMAGE_MODERATION_RETRY_CRON_FAILED", safeErrorMetadata(error));

@@ -36,7 +36,7 @@ test("two queued workers race through native compare-and-set but only one starts
 
 for (const [name, values] of [
   ["an active worker", { moderation_attempt_count: 1, moderation_details: { workerId: foreignWorker } }],
-  ["the automatic attempt ceiling", { moderation_attempt_count: 3, moderation_started_at: new Date(workerInstant - 3600000).toISOString() }],
+  ["an active final attempt", { moderation_attempt_count: 3, moderation_details: { workerId: foreignWorker } }],
   ["an unbounded start timestamp", { moderation_attempt_count: 1, moderation_started_at: "infinity" }],
   ["a missing start for an already attempted job", { moderation_attempt_count: 1, moderation_started_at: null }],
 ]) test(`a stale cron selection cannot replace ${name}`, async () => {
@@ -45,6 +45,30 @@ for (const [name, values] of [
   await captureWorker(h.retry());
   assert.equal(h.providers.length, 0); assert.equal(h.watermarks.length, 0);
   assert.deepEqual(await workerSnapshot(db), expected);
+});
+
+test("an interrupted final attempt enters human review without another provider call and supports admin recovery", async () => {
+  await patchWorker(db, { moderation_attempt_count: 3, moderation_started_at: new Date(workerInstant - 3600000).toISOString(), moderation_details: { workerId: foreignWorker } });
+  const h = videoWorkerHarness(db);
+  assert.equal((await h.retry()).status, "submitted");
+  const row = (await workerSnapshot(db)).row;
+  assert.equal(row.moderation_decision, "review");
+  assert.deepEqual(row.moderation_reason_codes, ["video_moderation_attempts_exhausted"]);
+  assert.equal(row.moderation_attempt_count, 3);
+  assert.equal(row.published_at, null);
+  assert.equal(h.providers.length, 0);
+  assert.equal(h.watermarks.length, 0);
+  assert.equal((await h.retrySubmitted()).status, "approved");
+  assert.equal((await workerSnapshot(db)).row.moderation_attempt_count, 4);
+});
+
+test("two recovery workers cannot both transition the same exhausted attempt", async () => {
+  await patchWorker(db, { moderation_attempt_count: 4, moderation_started_at: new Date(workerInstant - 3600000).toISOString(), moderation_details: { workerId: foreignWorker } });
+  const h = videoWorkerHarness(db, { synchronizeInitialReads: 2 });
+  const results = await Promise.all([h.retry(), h.retry()]);
+  assert.equal(results.filter(result => result?.status === "submitted").length, 1);
+  assert.equal(results.filter(result => result === null).length, 1);
+  assert.equal(h.providers.length, 0);
 });
 
 for (const outcome of ["approved", "review", "rejected", "provider failure"]) {

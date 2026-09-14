@@ -373,6 +373,7 @@ function readableReason(value: string) {
 function canRetryAutomatedReview(video: AdminTvVideo) {
   return video.status === "submitted" && (video.moderationReasonCodes || []).some((reason) =>
     [
+      "video_moderation_attempts_exhausted",
       "video_moderation_not_configured",
       "video_moderation_timeout",
       "video_decode_failed",

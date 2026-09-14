@@ -12,7 +12,7 @@ function loadRoute(path, dependencies, globals = {}) {
   const compiled = ts.transpileModule(read(path), {
     compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
   }).outputText;
-  vm.runInNewContext(compiled, { exports, Error, Date, Math, console: { error() {} }, ...globals,
+  vm.runInNewContext(compiled, { exports, Error, Date, Math, console: { error() {}, info() {} }, ...globals,
     require(name) {
       assert.ok(name in dependencies, `Unexpected route dependency: ${name}`);
       return dependencies[name];

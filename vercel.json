@@ -5,11 +5,11 @@
   "crons": [
     {
       "path": "/api/cron/image-moderation",
-      "schedule": "0 9 * * *"
+      "schedule": "*/5 * * * *"
     },
     {
       "path": "/api/cron/video-moderation",
-      "schedule": "15 9 * * *"
+      "schedule": "2-59/5 * * * *"
     },
     {
       "path": "/api/cron/dmca-restoration",

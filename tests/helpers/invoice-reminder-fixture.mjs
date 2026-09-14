@@ -19,6 +19,8 @@ export async function reminderDatabase(){
  for(const foreign of [false,true])for(const c of schema.constraints.filter(c=>c.definition.startsWith('FOREIGN KEY')===foreign)){
   await db.exec('alter table public.'+quote(c.table)+' add constraint '+quote(c.name)+' '+c.definition);
  }
+ await db.exec('create role anon;create role authenticated;create role service_role');
+ await db.exec(readFileSync(new URL('../../supabase/migrations/20260914040900_select_due_invoice_reminders.sql',import.meta.url),'utf8'));
  return db;
 }
 export async function resetReminders(db,{status='open',due='2026-09-08T12:00:00Z'}={}){
@@ -31,7 +33,12 @@ export const reminderCount=async db=>(await db.query('select count(*)::int as n 
 
 export function reminderHarness(db,options={}){
  const calls=[],exports={};
- const client={from(table){
+ const client={async rpc(name,args){
+  assert.equal(name,'get_due_club_invoice_reminders');calls.push('list');
+  if(options.listError)return {data:null,error:options.listError};
+  try{return {data:(await db.query('select * from public.get_due_club_invoice_reminders($1,$2)',[args.p_now,args.p_limit])).rows,error:null};}
+  catch(error){return {data:null,error};}
+ },from(table){
   assert.ok(['club_invoices','club_invoice_reminders'].includes(table));
   const allowed=new Set(schema.columns.filter(c=>c.table===table).map(c=>c.name));
   let mutation=null,payload=null,selected=null,single=false,limit=null;

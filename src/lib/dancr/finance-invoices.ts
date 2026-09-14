@@ -105,13 +105,9 @@ export async function reconcileOpenClubInvoices(client: DancrClient) {
 
 export async function sendClubInvoiceReminders(client: DancrClient, now = new Date()) {
   const { data, error } = await (client as any)
-    .from("club_invoices")
-    .select("id, status, due_at, stripe_invoice_id, reminder_count")
-    .in("status", ["open", "overdue"])
-    .not("stripe_invoice_id", "is", null)
-    .order("due_at", { ascending: true })
-    .limit(250);
+    .rpc("get_due_club_invoice_reminders", { p_now: now.toISOString(), p_limit: 250 });
   if (error) throw error;
+  if (!Array.isArray(data)) throw new Error("Due invoice reminders could not be confirmed.");
 
   let sent = 0;
   for (const invoice of data || []) {
