@@ -4,6 +4,7 @@ import { createRequire } from "node:module";
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { cpus } from "node:os";
+import { receiveNetworkData, finishNetworkRequest, summarizeNetworkBytes } from './network-accounting.mjs';
 
 const require = createRequire(import.meta.url);
 const { chromium } = require(process.env.PERF_PLAYWRIGHT_MODULE || "playwright");
@@ -28,7 +29,7 @@ try {
   for (const profileName of selectedProfiles) for (const route of routes) for (let run = 1; run <= runs; run++) {
     const profile = profiles[profileName];
     if (!profile) throw new Error(`Unknown profile: ${profileName}`);
-    const context = await browser.newContext({ viewport: { width: profile.width, height: profile.height }, deviceScaleFactor: 2, isMobile: true, hasTouch: true, serviceWorkers: "block" });
+    const context = await browser.newContext({ viewport: { width: profile.width, height: profile.height }, deviceScaleFactor: 2, isMobile: true, hasTouch: true, serviceWorkers: "block", userAgent: 'Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Mobile Safari/537.36' });
     let suppressedWrites = 0;
     await context.route("**/api/**", request => {
       if (!["GET", "HEAD", "OPTIONS"].includes(request.request().method())) {
@@ -77,13 +78,13 @@ try {
     await cdp.send("Emulation.setCPUThrottlingRate", { rate: profile.cpu });
     await cdp.send("Performance.enable");
     const requests = new Map(), errors = [];
-    cdp.on("Network.requestWillBeSent", e => requests.set(e.requestId, { url: safeUrl(e.request.url), type: e.type, start: e.timestamp, bytes: 0 }));
+    cdp.on("Network.requestWillBeSent", e => requests.set(e.requestId, { url: safeUrl(e.request.url), type: e.type, start: e.timestamp, receivedBytes: 0, completed: false }));
     cdp.on("Network.responseReceived", e => {
       const item = requests.get(e.requestId);
       if (item) Object.assign(item, { status: e.response.status, ttfbMs: e.response.timing?.receiveHeadersEnd ?? null, cache: e.response.fromDiskCache, mime: e.response.mimeType, cacheControl: e.response.headers["cache-control"] || e.response.headers["Cache-Control"] || null, serverTiming: e.response.headers["server-timing"] || null, shellVersion: e.response.headers["x-dancr-live-shell-version"] || null });
     });
-    cdp.on("Network.dataReceived", e => { const item = requests.get(e.requestId); if (item) item.bytes += e.encodedDataLength; });
-    cdp.on("Network.loadingFinished", e => { const item = requests.get(e.requestId); if (item) Object.assign(item, { bytes: e.encodedDataLength, durationMs: (e.timestamp - item.start) * 1000 }); });
+    cdp.on("Network.dataReceived", e => receiveNetworkData(requests.get(e.requestId), e));
+    cdp.on("Network.loadingFinished", e => finishNetworkRequest(requests.get(e.requestId), e));
     cdp.on("Network.loadingFailed", e => { const item = requests.get(e.requestId); if (item) item.failure = e.errorText; });
     page.on("pageerror", error => errors.push(error.message));
     let navigationError = null;
@@ -130,11 +131,11 @@ try {
     const metric = (snapshot, name) => snapshot.metrics.find(m => m.name === name)?.value ?? null;
     const hostAfter = hostCpuSnapshot();
     const hostCpuBusyPercent = Math.round(1000 * (1 - (hostAfter.idle - hostBefore.idle) / Math.max(1, hostAfter.total - hostBefore.total))) / 10;
-    const result = { route, profile: profileName, customerFixture, run, browser: browser.version(), measuredAt: new Date().toISOString(), initial, final, initialTransferBytes: initialRequests.reduce((n, r) => n + r.bytes, 0), initialJsTransferBytes: initialRequests.filter(r => r.type === "Script").reduce((n, r) => n + r.bytes, 0), initialRequestCount: initialRequests.length, memory: { heapBefore: metric(before, "JSHeapUsedSize"), heapAfter: metric(after, "JSHeapUsedSize"), nodesBefore: metric(before, "Nodes"), nodesAfter: metric(after, "Nodes") }, errors, navigationError, suppressedWrites, requests: [...requests.values()] };
+    const result = { route, profile: profileName, customerFixture, run, browser: browser.version(), measuredAt: new Date().toISOString(), initial, final, initialNetwork: summarizeNetworkBytes(initialRequests), initialJsTransferBytes: summarizeNetworkBytes(initialRequests).completedJsTransferBytes, initialRequestCount: initialRequests.length, memory: { heapBefore: metric(before, "JSHeapUsedSize"), heapAfter: metric(after, "JSHeapUsedSize"), nodesBefore: metric(before, "Nodes"), nodesAfter: metric(after, "Nodes") }, errors, navigationError, suppressedWrites, requests: [...requests.values()] };
     results.push(result);
     result.hostCpuBusyPercent = hostCpuBusyPercent;
     await writeFile(path.join(output, "results.json"), JSON.stringify({ base, profiles, note: "Synthetic Chromium mobile lab, cold cache. Writes suppressed. INP is interaction proxy only; signed-out dashboard access is not authenticated dashboard performance.", results }, null, 2));
-    console.log(JSON.stringify({ route, profile: profileName, run, lcpMs: initial.lcp?.ms, fcpMs: initial.fcpMs, ttfbMs: initial.ttfbMs, cls: initial.cls, bytes: result.initialTransferBytes, requests: result.initialRequestCount, errors: errors.length, navigationError }));
+    console.log(JSON.stringify({ route, profile: profileName, run, lcpMs: initial.lcp?.ms, fcpMs: initial.fcpMs, ttfbMs: initial.ttfbMs, cls: initial.cls, network: result.initialNetwork, requests: result.initialRequestCount, errors: errors.length, navigationError }));
     if (run === 1) await page.screenshot({ path: path.join(output, `${profileName}-${results.length}.png`), fullPage: false, timeout: 15000 });
     await context.close();
   }

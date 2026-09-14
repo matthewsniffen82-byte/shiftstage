@@ -343,7 +343,7 @@ test("empty schedules are hidden while real city, venue, and shift context remai
 test("every uploaded video gets a vertically scrollable card with profile access, applause gestures, sharing, and reporting", () => {
   assert.match(
     homeSource,
-    /results\.replaceChildren\(\s*\.\.\.homeTvFeedVideos\.map\(\(item, index\) => \(\s*createHomeTvFeedSlide\(item, index, homeTvFeedVideos\.length\)/,
+    /results\.replaceChildren\(\s*\.\.\.homeTvFeedVideos\.map\(\(item, index\) => \{\s*if \(index < 3\) return createHomeTvFeedSlide\(item, index, homeTvFeedVideos\.length\)/,
   );
   assert.match(
     homeSource,
@@ -529,7 +529,7 @@ test("idle TV utility controls use frosted-clear glass while selected follows ke
     aestheticSource,
     /\.home-tv-feed-fullscreen\[aria-pressed="true"\] \{[\s\S]*?border-color: var\(--dancr-color-white-medium\) !important;[\s\S]*?background-color: var\(--dancr-color-black-medium\) !important;[\s\S]*?background-image: none !important;[\s\S]*?0 5px 16px var\(--dancr-color-black-medium\)/,
   );
-  assert.match(homeSource, /dancr-aesthetic\.v1\.css\?v=271/);
+  assert.match(homeSource, /outputs\/dancr-aesthetic\.css/);
 });
 
 test("TV action rail keeps every rail control visible without exposing the full-view close button", () => {
@@ -680,7 +680,7 @@ test("production TV cards use the neutral-first brand palette without changing m
 test("iPhone autoplay flags are applied before a TV card starts loading media", () => {
   assert.match(
     homeSource,
-    /const video = homeTvLandingPreload\.takeVideo\(item\) \|\| document\.createElement\("video"\)[\s\S]*?video\.dataset\.videoUrl = String\(item\.videoUrl \|\| ""\)\.trim\(\)[\s\S]*?video\.autoplay = index === 0[\s\S]*?video\.muted = homeTvFeedMuted[\s\S]*?video\.defaultMuted = homeTvFeedMuted[\s\S]*?video\.setAttribute\("playsinline", ""\)[\s\S]*?video\.setAttribute\("webkit-playsinline", ""\)[\s\S]*?video\.setAttribute\("muted", ""\)/,
+    /const video = homeTvLandingPreload\.takeVideo\(item\) \|\| document\.createElement\("video"\)[\s\S]*?video\.dataset\.videoUrl = homeTvPlaybackVideoUrl\(item\)[\s\S]*?video\.autoplay = index === 0[\s\S]*?video\.muted = homeTvFeedMuted[\s\S]*?video\.defaultMuted = homeTvFeedMuted[\s\S]*?video\.setAttribute\("playsinline", ""\)[\s\S]*?video\.setAttribute\("webkit-playsinline", ""\)[\s\S]*?video\.setAttribute\("muted", ""\)/,
   );
   assert.match(
     homeSource,

@@ -82,7 +82,7 @@ const VIDEO_WORKER_FIELDS = "moderation_attempt_count, moderation_started_at, mo
 const VIDEO_WORKER_STALE_AFTER_MS = 5 * 60 * 1000;
 const VIDEO_WORKER_ID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const PUBLIC_TV_SELECT =
-  `id, storage_path, duration_seconds, width, height, published_at, expires_at, like_count, distribution_scope, is_pinned, moderation_details, dancer_profiles!inner(id, slug, stage_name, city, status, verification_status${IDENTITY_PROFILE_FIELDS}, photo_review_status, approved_at, disabled_at, is_public)`;
+  `id, storage_path, duration_seconds, width, height, published_at, expires_at, like_count, distribution_scope, is_pinned, moderation_details, dancer_profiles!inner(id, slug, stage_name, city, avatar_storage_path, status, verification_status${IDENTITY_PROFILE_FIELDS}, photo_review_status, approved_at, disabled_at, is_public)`;
 const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -411,6 +411,7 @@ type NormalizedFeedRow = Omit<MyDancrTvVideo, "videoUrl"> & {
   storagePath: string;
   posterStoragePath: string | null;
   dancerPhotoPath: string | null;
+  dancerAvatarPath: string | null;
 };
 
 function normalizeFeedRow(row: any, _now: number): NormalizedFeedRow | null {
@@ -432,6 +433,7 @@ function normalizeFeedRow(row: any, _now: number): NormalizedFeedRow | null {
     expiresAt: row.expires_at || null,
     distributionScope: row.distribution_scope === "feed_only" ? "feed_only" : "profile_and_feed",
     dancerPhotoPath: null,
+    dancerAvatarPath: dancer.avatar_storage_path || null,
     dancer: {
       id: dancer.id,
       slug: dancer.slug,
@@ -591,29 +593,18 @@ async function signPublicVideos(
 ): Promise<MyDancrTvVideo[]> {
   if (!rows.length) return [];
   const dancerIds = [...new Set(rows.map((row) => row.dancer.id))];
-  const [
-    { data: photos, error: photoError },
-    { data: avatars, error: avatarError },
-  ] = await Promise.all([
-    admin
+  // The feed already joined each eligible profile. Reuse its avatar instead
+  // of issuing a second profile query after feed selection.
+  const { data: photos, error: photoError } = await admin
       .from("dancer_photos")
       .select("dancer_id, storage_path")
       .in("dancer_id", dancerIds)
       .eq("is_primary", true)
-      .eq("review_status", "approved"),
-    admin
-      .from("dancer_profiles")
-      .select("id, avatar_storage_path")
-      .in("id", dancerIds),
-  ]);
+      .eq("review_status", "approved");
   if (photoError) throw photoError;
-  if (avatarError) throw avatarError;
 
   const photoByDancer = new Map(
     (photos || []).map((photo: any) => [photo.dancer_id, photo.storage_path]),
-  );
-  const avatarByDancer = new Map(
-    (avatars || []).map((dancer: any) => [dancer.id, dancer.avatar_storage_path]),
   );
 
   return rows.map((row) => {
@@ -623,7 +614,7 @@ async function signPublicVideos(
     const primaryPhoto = photoPath
       ? responsivePublicImage(admin, "dancer-photos", photoPath)
       : null;
-    const avatarPath = avatarByDancer.get(row.dancer.id);
+    const avatarPath = row.dancerAvatarPath;
     const avatarPhoto = avatarPath
       ? responsivePublicImage(admin, "dancer-photos", avatarPath)
       : primaryPhoto;
@@ -631,6 +622,7 @@ async function signPublicVideos(
       storagePath: _storagePath,
       posterStoragePath: _posterStoragePath,
       dancerPhotoPath: _dancerPhotoPath,
+      dancerAvatarPath: _dancerAvatarPath,
       ...publicVideo
     } = row;
     return {

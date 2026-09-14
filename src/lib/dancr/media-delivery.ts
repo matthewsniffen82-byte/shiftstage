@@ -15,6 +15,7 @@ const unavailable = (status = 404) => new Response(null, { status, headers: HEAD
 
 type Dependencies = { publicClient: SupabaseClient; admin: SupabaseClient; storageUrl: string; serviceKey: string; fetch?: typeof fetch; photoCache?: PhotoDeliveryCache };
 export async function serveDancerMedia(request: Request, kind: 'photo' | 'video', deps: Dependencies) {
+  const started = performance.now();
   try {
     if (request.signal.aborted) return unavailable(503);
     const params = new URL(request.url).searchParams;
@@ -84,16 +85,23 @@ export async function serveDancerMedia(request: Request, kind: 'photo' | 'video'
     const upstreamUrl = new URL(`/storage/v1/${transform ? 'render/image/authenticated' : 'object/authenticated'}/${bucket}/${path.split('/').map(encodeURIComponent).join('/')}`,deps.storageUrl);
     if (transform) { upstreamUrl.searchParams.set('width',String(width)); upstreamUrl.searchParams.set('quality','80'); upstreamUrl.searchParams.set('resize','contain'); }
     // Reuse bytes only AFTER the current anonymous RLS checks and variant checks.
-    // Preview, ranged and video requests retain their existing streaming path.
-    const photoCache = kind === 'photo' && !preview && !range ? deps.photoCache : undefined;
+    // Posters are small images too. Preview, ranged and video-byte requests
+    // retain their existing streaming path; permission is never cached.
+    const photoCache = bucket === 'dancer-photos' && !preview && !range ? deps.photoCache : undefined;
     const cacheKey = upstreamUrl.href;
     const cached = photoCache?.get(cacheKey);
-    if (cached) return new Response(request.method === 'HEAD' ? null : cached.bytes, { headers: cached.headers });
+    const authorizationMs = (performance.now() - started).toFixed(1);
+    if (cached) {
+      const headers = new Headers(cached.headers);
+      headers.set('Server-Timing', `authorize;dur=${authorizationMs}, image_cache;desc="hit"`);
+      return new Response(request.method === 'HEAD' ? null : cached.bytes, { headers });
+    }
     const abort = new AbortController();
     const cancel = () => abort.abort();
     request.signal.addEventListener('abort',cancel,{once:true});
     const timeout = setTimeout(cancel, 60_000);
     let upstream: Response;
+    const storageStarted = performance.now();
     try {
       upstream = await (deps.fetch || fetch)(upstreamUrl, { method:request.method==='HEAD'?'HEAD':'GET', cache:'no-store', redirect:'error',
         signal:abort.signal, headers:{apikey:deps.serviceKey,authorization:`Bearer ${deps.serviceKey}`,...(range?{range}:{})} });
@@ -111,6 +119,7 @@ export async function serveDancerMedia(request: Request, kind: 'photo' | 'video'
     if (abort.signal.aborted) { await upstream.body?.cancel(); clearTimeout(timeout); request.signal.removeEventListener('abort',cancel); return unavailable(503); }
     if (![200,206].includes(upstream.status)) { await upstream.body?.cancel(); clearTimeout(timeout);request.signal.removeEventListener('abort',cancel);return unavailable(upstream.status===416?416:upstream.status>=500?503:404); }
     const headers = new Headers(HEADERS);
+    headers.set('Server-Timing', `authorize;dur=${authorizationMs}, storage;dur=${(performance.now() - storageStarted).toFixed(1)}, image_cache;desc="${photoCache ? 'miss' : 'bypass'}"`);
     for(const name of ['content-type','content-length','content-range','accept-ranges']) { const value=upstream.headers.get(name);if(value)headers.set(name,value); }
     const maximumBytes = bucket === 'dancer-photos' ? 10 * 1024 * 1024 : 75 * 1024 * 1024;
     const allowedType = bucket === 'dancer-photos' ? /^image\/(jpeg|png|webp)(?:;|$)/i : /^video\/(mp4|webm|quicktime)(?:;|$)/i;

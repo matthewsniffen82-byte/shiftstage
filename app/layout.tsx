@@ -10,10 +10,6 @@ import "../public/dancr-button-system.v1.css";
 import "../public/dancr-aesthetic.v1.css";
 import "../public/dancr-feedback.v1.css";
 import "../public/dancr-status-pages.v1.css";
-import "../public/profile-media-owner-controls.css";
-import "../public/profile-media-card-feed.css";
-import "../public/profile-photo-crop.css";
-import "../public/profile-actions-compact.css";
 import "../public/third-party-social-link-warning.css";
 
 export const metadata: Metadata = {
@@ -55,7 +51,6 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
       <Script src={versionedStaticAssetUrl("/mydancr-api-transport.js")} strategy="beforeInteractive" />
-      <Script src={versionedStaticAssetUrl("/profile-photo-crop.js")} strategy="beforeInteractive" />
       <body className="dancr-button-system" suppressHydrationWarning>
         <script
           dangerouslySetInnerHTML={{ __html: androidDeviceClassScript }}
@@ -64,6 +59,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <MyDancrPreviewBanner />
         {children}
         <GlobalMobileBottomNav />
+        {process.env.NODE_ENV === 'production' && <script defer src={versionedStaticAssetUrl('/mydancr-performance.js')} data-release={process.env.VERCEL_GIT_COMMIT_SHA} />}
         <script defer id="mydancr-third-party-social-link-warning" src={versionedStaticAssetUrl("/third-party-social-link-warning.js")} />
       </body>
     </html>

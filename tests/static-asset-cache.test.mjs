@@ -48,7 +48,7 @@ test("versioning the actual deployed shell leaves its inline CSP hashes unchange
   const shell = externalizeLiveShellAppScript(source, "/live-shell.js?v=current");
   const versioned = versionStaticAssetReferences(shell);
   assert.equal(createRootContentSecurityPolicy(versioned), createRootContentSecurityPolicy(shell));
-  for (const asset of ["/mydancr-api-transport.js", "/profile-photo-crop.js", "/dancr-aesthetic.v1.css"]) {
+  for (const asset of ["/mydancr-api-transport.js", "/profile-photo-crop.js", "/outputs/dancr-aesthetic.css"]) {
     assert.ok(versioned.includes(versionedStaticAssetUrl(asset)), asset);
   }
 });

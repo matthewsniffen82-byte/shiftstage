@@ -734,12 +734,15 @@
       closeHomeTvFeedReportMenus();
       homeTvFeedActiveVideoId = videoId;
       const slides = results.querySelectorAll(".home-tv-feed-slide");
+      const incomingIndex = [...slides].findIndex((slide) => String(slide.dataset.videoId || "") === videoId);
+      if (incomingIndex < 0) return;
+      [...slides].slice(Math.max(0, incomingIndex - 2), incomingIndex + 3).forEach(hydrateHomeTvFeedSlide);
       // A backward swipe visits the incoming card first in DOM order. Stop the
       // outgoing player before any new play request can compete for decoding.
       slides.forEach((slide) => {
         if (String(slide.dataset.videoId || "") === videoId) return;
         const video = slide.querySelector("video");
-        if (!video.paused || video.autoplay || video.hasAttribute("autoplay")) {
+        if (video && (!video.paused || video.autoplay || video.hasAttribute("autoplay"))) {
           video.autoplay = false;
           video.removeAttribute("autoplay");
           video.pause();
@@ -749,6 +752,7 @@
         const slideVideoId = String(slide.dataset.videoId || "");
         const video = slide.querySelector("video");
         const isActive = slideVideoId === videoId;
+        if (!video) return;
         // Only the incoming and outgoing cards change state during a swipe.
         if (!isActive && slide.getAttribute("aria-current") !== "true") return;
         slide.classList.toggle("is-active", isActive);

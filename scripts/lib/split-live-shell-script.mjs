@@ -32,8 +32,10 @@ export function splitLiveShellScript(source) {
       if (selected.has(statement)) continue;
       const visit = node => {
         if (ts.isIdentifier(node) && names.includes(node.text)) {
-          const allowed = node.text === "createHomeTvFeedSlide"
-            && ts.isFunctionDeclaration(statement) && statement.name.text === "renderHomeTvFeed";
+          const allowed = ts.isFunctionDeclaration(statement) && (
+            node.text === "createHomeTvFeedSlide" && statement.name.text === "renderHomeTvFeed"
+            || node.text === "renderHomeTvFeedSlide" && statement.name.text === "hydrateHomeTvFeedSlide"
+          );
           if (!allowed) throw new Error(`Unloaded ${feature} function referenced outside its boundary: ${node.text}`);
         }
         ts.forEachChild(node, visit);

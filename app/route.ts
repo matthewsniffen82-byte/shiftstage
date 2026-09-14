@@ -77,7 +77,11 @@ async function renderLiveShell() {
     '<section class="recovery-popover" id="passwordRecoveryCard"',
     `${ADMIN_AUTH_ENTRY_HTML}<section class="recovery-popover" id="passwordRecoveryCard"`,
   );
-  const withVersionedAssets = versionStaticAssetReferences(withAdminAuthEntry);
+  const release = process.env.VERCEL_GIT_COMMIT_SHA || '';
+  const withPerformance = process.env.NODE_ENV === 'production' && /^[a-f0-9]{40}$/.test(release)
+    ? withAdminAuthEntry.replace('</head>', `<script defer src="/mydancr-performance.js" data-release="${release}"></script></head>`)
+    : withAdminAuthEntry;
+  const withVersionedAssets = versionStaticAssetReferences(withPerformance);
   const contentSecurityPolicy = createRootContentSecurityPolicy(withVersionedAssets);
 
   return {

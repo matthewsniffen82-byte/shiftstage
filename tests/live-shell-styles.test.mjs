@@ -50,6 +50,10 @@ test("the build emits compact static CSS with a matching content version", async
   const overrides = extractLiveShellOverrideStyles(html);
   const compactOverrides = await readFile(new URL('../public/outputs/live-shell-overrides.css', import.meta.url), 'utf8');
   assert.deepEqual(signature(compactOverrides), signature(overrides));
+  const theme = await readFile(new URL('../public/dancr-aesthetic.v1.css', import.meta.url), 'utf8');
+  const compactTheme = await readFile(new URL('../public/outputs/dancr-aesthetic.css', import.meta.url), 'utf8');
+  assert.deepEqual(signature(compactTheme), signature(theme), 'same selectors, declarations, media queries and cascade');
+  assert.ok(compactTheme.length < theme.length * .95);
   assert.ok(compact.length < original.length);
   const url = new URL(versionedStaticAssetUrl("/outputs/live-shell.css"), "https://example.com");
   const headers = staticAssetCacheHeaders().filter(rule => rule.source === url.pathname);

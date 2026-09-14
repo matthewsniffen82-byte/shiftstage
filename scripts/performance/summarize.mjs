@@ -27,7 +27,10 @@ const pages = [...groups].map(([name, samples]) => {
     ttfbMs: median(samples.map(s => s.initial.ttfbMs)), cls: median(samples.map(s => s.initial.cls)),
     interactionProxyMs: median(samples.map(s => s.final.interactionMax)),
     initialJsTransferBytes: median(samples.map(s => s.initialJsTransferBytes)),
-    initialTransferBytes: median(samples.map(s => s.initialTransferBytes)), initialRequests: median(samples.map(s => s.initialRequestCount)),
+    initialCompletedNonMediaTransferBytes: median(samples.map(s => s.initialNetwork?.completedNonMediaTransferBytes)),
+    initialMediaReceivedBytes: median(samples.map(s => s.initialNetwork?.mediaReceivedBytes)),
+    initialCompletedMediaTransferBytes: median(samples.map(s => s.initialNetwork?.completedMediaTransferBytes)),
+    initialUnfinishedMediaRequests: median(samples.map(s => s.initialNetwork?.unfinishedMediaRequests)), initialRequests: median(samples.map(s => s.initialRequestCount)),
     domNodes: median(samples.map(s => s.initial.domNodes)),
     longestTaskMs: median(samples.map(s => Math.max(0, ...s.final.longTasks.map(t => t.duration)))),
     scrollFramesOver50msPercent: median(samples.map(s => 100 * s.final.frames.filter(ms => ms > 50).length / s.final.frames.length)),
@@ -42,6 +45,6 @@ const pages = [...groups].map(([name, samples]) => {
     shellVersions: [...new Set(requests.map(r => r.shellVersion).filter(Boolean))],
   };
 });
-const summary = { generatedAt: new Date().toISOString(), environment: "Chromium mobile lab; cold cache; synthetic throttling; API writes suppressed; not physical iPhone/Android or field Core Web Vitals", metricCaveats: "INP column is a sampled interaction proxy, not field INP. Video waiting includes initial buffering. Heap growth over a five-second scroll is not proof of a leak. Redirected routes report final-document paint timings and whole-journey request bytes. Null means not measured, never zero.", pages };
+const summary = { generatedAt: new Date().toISOString(), environment: "Chromium mobile lab; cold cache; synthetic throttling; API writes suppressed; not physical iPhone/Android or field Core Web Vitals", metricCaveats: "INP column is a sampled interaction proxy, not field INP. Video waiting includes initial buffering. Heap growth over a five-second scroll is not proof of a leak. Redirected routes report final-document paint timings and whole-journey request bytes. Completed non-media wire bytes and received media payload are separate measurements, never summed. Unfinished media has no reliable wire-byte total; old baseline byte totals are excluded. Null means not measured, never zero.", pages };
 await writeFile(process.env.PERF_SUMMARY || ".qa/performance-summary.json", JSON.stringify(summary, null, 2));
-for (const page of pages) console.log(JSON.stringify({ name: page.name, samples: page.samples, lcpMs: page.lcpMs, js: page.initialJsTransferBytes, bytes: page.initialTransferBytes, videoMs: page.videoFirstLoadToPlayMs, errors: page.errors.length }));
+for (const page of pages) console.log(JSON.stringify({ name: page.name, samples: page.samples, lcpMs: page.lcpMs, js: page.initialJsTransferBytes, nonMediaBytes: page.initialCompletedNonMediaTransferBytes, mediaReceivedBytes: page.initialMediaReceivedBytes, videoMs: page.videoFirstLoadToPlayMs, errors: page.errors.length }));

@@ -32,8 +32,9 @@ test('TV serializers reuse responsive avatar candidates without extra lookups or
   vm.runInContext(code, context);
   const videos = await context.signPublicVideos(client, ['avatar', 'primary', 'legacy', 'missing'].map(id => ({
     id, dancer: { id }, storagePath: 'private/video.mp4',
+    dancerAvatarPath: id === 'avatar' ? paths[0] : id === 'legacy' ? paths[2] : null,
   })));
-  assert.deepEqual(queries, ['dancer_photos', 'dancer_profiles']);
+  assert.deepEqual(queries, ['dancer_photos'], 'reuse the avatar from the original eligible-profile join');
   for (let index = 0; index < 3; index++) {
     const expected = responsivePublicImage(client, 'dancer-photos', paths[index]);
     assert.equal(videos[index].dancer.avatarPhotoUrl, expected.imageUrl);
@@ -43,6 +44,7 @@ test('TV serializers reuse responsive avatar candidates without extra lookups or
   assert.match(videos[0].dancer.avatarPhotoSrcSet, /width=160 160w/);
   assert.equal(videos[3].dancer.avatarPhotoSrcSet, null);
   assert.ok(videos.every(video => !('storagePath' in video)));
+  assert.ok(videos.every(video => !('dancerAvatarPath' in video)));
 });
 
 test('the live TV card declares responsive candidates before assigning its fallback URL', () => {

@@ -15,6 +15,7 @@ function element() {
     removeAttribute(name) { delete this.attributes[name]; },
     appendChild(child) { this.children.push(child); },
     replaceChildren(...children) { this.children = children; },
+    querySelector: () => null,
     addEventListener(name, listener) { this.listeners[name] = listener; },
     closest: () => null,
   };

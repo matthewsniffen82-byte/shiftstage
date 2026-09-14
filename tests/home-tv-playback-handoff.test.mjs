@@ -44,6 +44,7 @@ function fixture(activeIndex, count = 3) {
     homeTvFeedCoveredByProfile: () => false,
     results: { querySelectorAll: () => slides },
     closeHomeTvFeedReportMenus() {}, attachDeferredVideoSource() {}, trackHomeTvFeedEvent() {},
+    hydrateHomeTvFeedSlide() {},
     clearHomeTvFeedEngagedTimer() {}, syncHomeTvFeedSoundButtons() {},
     primeHomeTvFeedNeighbors: (id) => primed.push(id),
     scheduleHomeTvFeedEngagedView: (id) => engaged.push(id),

@@ -10,6 +10,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function GET(request: Request) {
+  const started = performance.now();
   try {
     const url = new URL(request.url);
     const requestedCity = (url.searchParams.get("city") || "").trim().slice(0, 80);
@@ -45,7 +46,7 @@ export async function GET(request: Request) {
         videos,
         requiresAccount: filter === "following" && !getBearerToken(request),
       },
-      { headers: { "Cache-Control": publicTvCacheControl(filter) } },
+      { headers: { "Cache-Control": publicTvCacheControl(filter), "Server-Timing": `tv;dur=${(performance.now() - started).toFixed(1)}` } },
     );
   } catch (error) {
     return apiError(error, "Unable to load MyDancr TV.");

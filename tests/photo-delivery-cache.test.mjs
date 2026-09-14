@@ -4,6 +4,7 @@ import { importMediaModule } from './helpers/server-media-module.mjs';
 const { serveDancerMedia } = await importMediaModule('media-delivery.ts');
 const { PhotoDeliveryCache, MAX_CACHED_PHOTO_BYTES } = await importMediaModule('photo-delivery-cache.ts');
 const { mediaPreviewToken } = await importMediaModule('media-delivery-url.ts');
+const { myDancrTvPosterStoragePath } = await importMediaModule('media-watermark.ts');
 process.env.DANCR_ACCOUNT_RECOVERY_SECRET = 'synthetic-photo-cache-secret';
 const path = 'owner/photo.r320-480.m900x1200.f50x50.jpg.w320.webp';
 const url = `https://app.example/api/media/dancer-photo?path=${path}`;
@@ -127,4 +128,44 @@ test('photo cache has fixed expiry, LRU eviction and byte/entry ceilings', () =>
   assert.ok(bounded.get('16', 1));
   bounded.set('too-large', new Uint8Array(MAX_CACHED_PHOTO_BYTES + 1), headers, 0);
   assert.equal(bounded.get('too-large', 1), null);
+});
+
+test('cached TV posters recheck public visibility, active ownership and current poster identity', async () => {
+  const id = '00000000-0000-4000-8000-000000000001';
+  const videoPath = 'owner/video.mp4';
+  let visible = true, active = true, validPoster = true, error = false, reads = 0, downloads = 0;
+  const client = isAdmin => ({ from() {
+    const query = new Proxy({ then(resolve) {
+      reads++;
+      resolve({ error: error ? { message: 'private' } : null, data: isAdmin ? {
+        storage_path: videoPath,
+        moderation_details: { posterStoragePath: validPoster ? myDancrTvPosterStoragePath(videoPath) : null },
+        dancer_profiles: { disabled_at: null, app_users: { account_state: active ? 'active' : 'disabled' } },
+      } : visible ? { id } : null });
+    } }, { get: (target, name) => target[name] || (() => query) });
+    return query;
+  } });
+  const deps = { publicClient: client(false), admin: client(true), storageUrl: 'https://storage.example', serviceKey: 'synthetic', photoCache: new PhotoDeliveryCache(),
+    fetch: async (upstream, options) => {
+      downloads++;
+      return new Response(bytes, { status: options.headers.range ? 206 : 200, headers: { 'content-type': upstream.pathname.includes('/dancer-photos/') ? 'image/jpeg' : 'video/mp4' } });
+    },
+  };
+  const get = (query = '&poster=1', options = {}) => serveDancerMedia(new Request(`https://app.example/api/media/dancer-video?id=${id}${query}`, options), 'video', deps);
+  const first = await get(); await first.arrayBuffer();
+  assert.match(first.headers.get('server-timing'), /image_cache;desc="miss"/);
+  const second = await get(); await second.arrayBuffer();
+  assert.match(second.headers.get('server-timing'), /authorize;dur=[\d.]+, image_cache;desc="hit"/);
+  assert.equal(downloads, 1); assert.equal(reads, 4);
+  visible = false; assert.equal((await get()).status, 404); visible = true;
+  active = false; assert.equal((await get()).status, 404); active = true;
+  validPoster = false; assert.equal((await get()).status, 404); validPoster = true;
+  error = true; assert.equal((await get()).status, 503); error = false;
+  assert.equal(downloads, 1);
+  await drain(await get('&poster=1', { headers: { range: 'bytes=0-2' } }));
+  await drain(await get('&poster=1&preview=' + mediaPreviewToken('video:' + id)));
+  for (let n = 0; n < 2; n++) await drain(await get(''));
+  assert.equal(downloads, 5, 'range, preview and MP4 bytes bypass the poster cache');
+  await drain(await get());
+  assert.equal(downloads, 5, 'bypasses do not replace the complete poster');
 });

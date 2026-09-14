@@ -23,7 +23,7 @@ function routeFixture({authError,queryError,rows=[]}={}){
  };
  vm.runInNewContext(ts.transpileModule(readFileSync(new URL('../app/api/public/tv/route.ts',import.meta.url),'utf8'),{
   compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}
- }).outputText,{exports,require:name=>{assert.ok(name in dependencies,name);return dependencies[name];},URL,Request,Response,Error});
+ }).outputText,{exports,require:name=>{assert.ok(name in dependencies,name);return dependencies[name];},URL,Request,Response,Error,performance});
  return {calls,GET:(filter='following',token='synthetic')=>exports.GET(new Request('https://mydancr.com/api/public/tv?filter='+filter,{headers:token?{authorization:'Bearer '+token}:{}}))};
 }
 
