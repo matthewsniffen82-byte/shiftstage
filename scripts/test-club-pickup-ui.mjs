@@ -55,7 +55,12 @@ window.__unmountPickupDashboard=()=>appRoot.unmount();
 if(mode==='dashboard')window.__renderPickupDashboard();else appRoot.render(component);`,root);
 const bundle=`var process={env:{NODE_ENV:'development'}};var modules={${Object.entries(modules).map(([id,m])=>`${JSON.stringify(id)}:[function(require,module,exports){${m.code}\n},${JSON.stringify(m.deps)}]`).join(',')}};var cache={};function run(id){if(cache[id])return cache[id].exports;const m=cache[id]={exports:{}};modules[id][0](name=>run(modules[id][1][name]),m,m.exports);return m.exports;}run(${entry});`;
 const css=['public/dancr-brand-tokens.v1.css','public/dancr-button-system.v1.css','public/dancr-aesthetic.v1.css','app/pickups/pickup.css','app/deals/transportation/[dealId]/transportation.css'].map(file=>readFileSync(resolve(root,file),'utf8')).join('\n');
-const server=createServer((req,res)=>{res.setHeader('content-type',req.url==='/bundle.js'?'text/javascript':'text/html');res.end(req.url==='/bundle.js'?bundle:`<!doctype html><meta name="viewport" content="width=device-width, initial-scale=1"><style>${css}</style><body class="dancr-button-system"><main class="pickup-page"><div id="app"></div></main><script src="/bundle.js"></script></body>`);});
+const pushAssets=['/mydancr-push-invitations.js','/mydancr-push-device.js','/mydancr-push-invitations.css'];
+const server=createServer((req,res)=>{
+  if(pushAssets.includes(req.url)){res.setHeader('content-type',req.url.endsWith('.css')?'text/css':'text/javascript');res.end(readFileSync(resolve(root,'public'+req.url)));return;}
+  res.setHeader('content-type',req.url==='/bundle.js'?'text/javascript':'text/html');
+  res.end(req.url==='/bundle.js'?bundle:`<!doctype html><meta name="viewport" content="width=device-width, initial-scale=1"><style>${css}</style><body class="dancr-button-system"><main class="pickup-page"><div id="app"></div></main><script src="/bundle.js"></script>${process.argv.includes('--push-only')?'<link rel="stylesheet" href="/mydancr-push-invitations.css"><script defer src="/mydancr-push-invitations.js" data-device-module="/mydancr-push-device.js"></script>':''}</body>`);
+});
 await new Promise(done=>server.listen(0,'127.0.0.1',done));
 const base=`http://127.0.0.1:${server.address().port}`, id=n=>`96000000-0000-4000-8000-${String(n).padStart(12,'0')}`;
 mkdirSync(resolve(root,'.next-club-pickup'),{recursive:true});
@@ -66,6 +71,64 @@ try {
       const context=await browser.newContext({...devices[device]});
       await context.addInitScript(()=>{if(!sessionStorage.getItem('syntheticGuest')&&!localStorage.getItem('dancrAuthSessionV1'))localStorage.setItem('dancrAuthSessionV1',JSON.stringify({accessToken:'synthetic-token',account:{id:'96000000-0000-4000-8000-000000000001',role:'customer'}}));});
       const page=await context.newPage(), errors=[]; page.on('pageerror',e=>{errors.push(e.message);console.error('Synthetic UI runtime error:',e.message);});
+      if(process.argv.includes('--push-only')) {
+        let role='customer';const writes=[];
+        await page.addInitScript(()=>{
+          window.__permissionRequests=0;window.__pushOptIn=false;
+          Object.defineProperty(window,'Notification',{configurable:true,value:{permission:'default',requestPermission:async()=>{window.__permissionRequests++;Notification.permission='granted';return 'granted';}}});
+          Object.defineProperty(navigator,'serviceWorker',{configurable:true,value:{getRegistration:async()=>({scope:location.origin+'/push/onesignal/',pushManager:{getSubscription:async()=>window.__pushOptIn?{unsubscribe:async()=>{window.__pushOptIn=false;}}:null}})}});
+          window.PushManager ||= function(){};
+        });
+        await page.route('**/api/notifications',route=>route.fulfill({json:{ok:true,pushUserId:id(1),notificationDelivery:{pushAvailable:true,pushAppId:'synthetic-app',pushExternalId:'synthetic-private-alias'}}}));
+        await page.route('**/api/customer/profile',route=>{writes.push(route.request().postDataJSON());return route.fulfill({json:{ok:true,profile:{notificationSettings:{pushEnabled:true}}}});});
+        await page.route('https://cdn.onesignal.com/**',route=>route.fulfill({contentType:'text/javascript',body:`
+          const subscription={optedIn:false,id:'',optIn:async()=>{subscription.optedIn=true;subscription.id='synthetic-subscription';window.__pushOptIn=true;},optOut:async()=>{window.__pushOptIn=false;},addEventListener(){},removeEventListener(){}};
+          const sdk={init:async()=>{},login:async()=>{},logout:async()=>{},Notifications:{isPushSupported:()=>true},User:{PushSubscription:subscription}};
+          window.OneSignalDeferred.forEach(callback=>callback(sdk));`}));
+        await page.route('**/api/pickups**',route=>{
+          const path=new URL(route.request().url()).pathname;
+          return route.fulfill({json:{ok:true,role,consented:true,request:{id:id(20),status:'requested',party_size:2,requested_at:new Date().toISOString(),expires_at:'2099-09-15T00:00:00Z',venue:{name:'Test Club'}},requests:[],phoneRequests:[],venues:[],messages:[],events:[],reports:[],evidence:[],...(path.endsWith('/settings')?{venues:[]}: {})}});
+        });
+        for(const nextRole of ['customer','venue']) {
+          role=nextRole;
+          await page.goto(base+'/?mode=dashboard');
+          await page.getByText('No active pickup requests.',{exact:true}).waitFor();
+          await page.evaluate(role=>localStorage.setItem('dancrAuthSessionV1',JSON.stringify({accessToken:'synthetic',account:{id:'96000000-0000-4000-8000-000000000001',role}})),role);
+          await page.goto(base+'/?mode=chat');
+          const control=page.getByRole('complementary',{name:'Pickup notifications'});
+          await control.getByRole('button',{name:'Enable pickup notifications',exact:true}).waitFor();
+          // Dismissing the automatic invitation must not hide the manual control.
+          const invitation=page.locator('.mydancr-push-invitation');
+          await invitation.waitFor();
+          await invitation.getByRole('button',{name:'Not now',exact:true}).click();
+          await control.getByRole('button',{name:'Enable pickup notifications',exact:true}).click();
+          await invitation.waitFor();
+          if(name==='iphone') {
+            await invitation.getByText(/Add MyDancr to your Home Screen/).waitFor();
+            assert.equal(await invitation.getByRole('button',{name:'Enable notifications',exact:true}).isDisabled(),true);
+            await invitation.getByRole('button',{name:'Close',exact:true}).click();
+            await page.evaluate(()=>{const original=window.matchMedia;window.matchMedia=query=>query==='(display-mode: standalone)'?{matches:true}:original(query);});
+            await control.getByRole('button',{name:'Enable pickup notifications',exact:true}).click();
+          }
+          assert.equal(await page.evaluate(()=>window.__permissionRequests),0);
+          await invitation.getByRole('button',{name:'Enable notifications',exact:true}).click();
+          await invitation.getByText('Notifications are enabled on this device.',{exact:true}).waitFor();
+          await control.getByRole('button',{name:'Manage pickup notifications',exact:true}).waitFor();
+          assert.equal(await page.evaluate(()=>window.__permissionRequests),1);
+          await invitation.getByRole('button',{name:'Done',exact:true}).click();
+          await control.getByRole('button',{name:'Manage pickup notifications',exact:true}).click();
+          await invitation.getByRole('button',{name:'Disable on this device',exact:true}).click();
+          await control.getByRole('button',{name:'Enable pickup notifications',exact:true}).waitFor();
+          await invitation.getByRole('button',{name:'Done',exact:true}).click();
+          await page.goto(base+'/?mode=inbox');await page.getByRole('button',{name:'Enable pickup notifications',exact:true}).waitFor();
+          await page.getByText('No pickup requests in this group.',{exact:true}).waitFor();
+          if(role==='venue'){await page.goto(base+'/?mode=dashboard');await page.getByRole('button',{name:'Enable pickup notifications',exact:true}).waitFor();await page.getByText('No active pickup requests.',{exact:true}).waitFor();}
+        }
+        assert.equal(writes.length,1,'only customer opt-in changes customer preferences');
+        assert.deepEqual(errors,[]);
+        console.log(JSON.stringify({browser:name,pickupPushControls:true,customerAndVenue:true,inbox:true,dashboard:true,dismissedInvitationRetry:true,explicitPermission:true,enabledState:true,disableDevice:true,iphoneHomeScreenGuidance:name==='iphone',runtimeErrors:errors}));
+        continue;
+      }
       if(process.argv.includes('--dashboard-only')) {
         let reads=0, unread=2, failed=false, releaseRead=null;
         const phones=[{id:id(300),venue_id:id(10),venue_name:'Test Club',name:'Earlier Phone Guest',location:'Synthetic lobby',party_size:2,requested_at:'2026-09-15T07:46:33Z'}];

@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { PICKUP_STATUS_LABELS, type PhonePickupRequest, type PickupRequest } from "@/src/lib/dancr/pickup-domain";
 import { requestPickupJson } from "../pickups/pickup-session";
+import PickupPushNotifications from "../pickups/PickupPushNotifications";
 
 export default function PickupDashboardPanel({ refreshKey }: { refreshKey?: string | null }) {
   const [requests, setRequests] = useState<PickupRequest[]>([]), [error, setError] = useState(""), [loaded, setLoaded] = useState(false);
@@ -31,6 +32,7 @@ export default function PickupDashboardPanel({ refreshKey }: { refreshKey?: stri
   }, [refreshKey]);
   return <div><p>Customer pickup chats and phone requests.</p>
     <Link className="primary-link" href="/pickups">Open Pickup Requests →</Link>
+    <PickupPushNotifications role="venue" />
     {error && <p role="alert">{error}</p>}{!loaded && !error && <p role="status">Loading pickup requests…</p>}
     {loaded && !error && !requests.length && !phoneRequests.length && <p>No active pickup requests.</p>}
     {requests.length > 0 && <><h3>Active pickup chats</h3><div className="notification-list">{requests.map(request => <Link className="notification-row" key={request.id} href={`/pickups/${request.id}`}>

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { PICKUP_STATUS_LABELS, PICKUP_TRANSPORT_NOTICE, type PhonePickupRequest, type PickupRequest, type PickupRole, type PickupVenue } from "@/src/lib/dancr/pickup-domain";
 import { PickupAccountGate, requestPickupJson, usePickupAccount } from "./pickup-session";
 import { guestPickupHref, savedGuestPickups } from "@/src/lib/dancr/pickup-guest-session";
+import PickupPushNotifications from "./PickupPushNotifications";
 
 export default function PickupInbox() {
   const account = usePickupAccount();
@@ -83,6 +84,7 @@ function Inbox({ role }: { role: PickupRole }) {
     <Link href={role === "admin" ? "/admin" : `/dashboard/${role}`}>‹ Dashboard</Link>
     <h1>{role === "admin" ? "Pickup monitoring" : "Pickup Requests"}</h1>
     <p>{role === "customer" ? "Your private conversations with venues. Open a club page to request pickup where available." : role === "venue" ? "Manage customer pickup requests as your venue. Your venue decides availability and controls transportation." : "Review conversations, arrival attribution and immutable event history."}</p>
+    {role !== "admin" && <PickupPushNotifications role={role} />}
     {role === "venue" && <details className="pickup-details"><summary>Club Pickup settings</summary><p>{PICKUP_TRANSPORT_NOTICE}</p>
       <p>Enable pickup chat if your venue can manage conversations here. Disabling chat stops new chat requests; phone requests and existing conversations remain available. Each manager must accept the chat notice before reading or sending messages.</p>
       {venues.map(venue => <div key={venue.id}><strong>{venue.name}</strong><p>{venue.club_pickup_enabled ? "Pickup chat enabled" : "Pickup chat disabled"}</p><button disabled={saving || (!venue.eligible && !venue.club_pickup_enabled)} onClick={() => void setEnabled(venue)}>{venue.club_pickup_enabled ? "Disable Club Pickup" : "Enable Club Pickup"}</button>{!venue.eligible && <p>Publish your verified venue page before enabling pickup.</p>}</div>)}

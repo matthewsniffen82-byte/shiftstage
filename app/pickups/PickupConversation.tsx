@@ -7,6 +7,7 @@ import { PICKUP_CHAT_NOTICE, PICKUP_CHAT_POLICY, PICKUP_CONSENT_VERSION, PICKUP_
   pickupClosed, pickupStatusActions, type PickupDetail, type PickupMessage, type PickupStatus } from "@/src/lib/dancr/pickup-domain";
 import { PickupAccountGate, requestPickupJson } from "./pickup-session";
 import { guestPickupHref, guestPickupKey, rememberGuestPickup } from "@/src/lib/dancr/pickup-guest-session";
+import PickupPushNotifications from "./PickupPushNotifications";
 
 export default function PickupConversation({ requestId }: { requestId: string }) {
   return <PickupAccountGate requestId={requestId}>{() => <Conversation requestId={requestId} />}</PickupAccountGate>;
@@ -141,11 +142,11 @@ function Conversation({ requestId }: { requestId: string }) {
   const r = detail.request, closed = pickupClosed(r.status) || Date.parse(r.expires_at) <= Date.now();
   const venueName = r.venue?.name || "Venue";
   return <section className="pickup-card pickup-conversation">
-    {detail.guest ? <p className="pickup-subtle">Keep this chat open for pickup updates. Push alerts are available for pickups requested while signed in.</p>
-      : detail.role !== "admin" && <button type="button" data-push-settings>Notification settings</button>}
     <header><Link href="/pickups">‹ Pickup requests</Link><h1>{venueName}</h1><p className="pickup-status">{PICKUP_STATUS_LABELS[r.status]}</p>
       <p className="pickup-subtle">{closed ? "Conversation closed · history remains available" : connected ? "Live conversation" : "Reconnecting · checking for updates"}</p>
     </header>
+    {detail.guest ? <p className="pickup-subtle">Keep this chat open for pickup updates. Push alerts are available for pickups requested while signed in.</p>
+      : detail.role !== "admin" && <PickupPushNotifications role={detail.role} />}
     {detail.guest && <p className="pickup-subtle">No sign-in needed. Keep this page open for replies.</p>}
     <details className="pickup-details"><summary>Pickup details · {r.party_size} {r.party_size === 1 ? "guest" : "guests"}</summary>
       <p>{r.pickup_location_text}</p>{r.pickup_location_details && <p>{r.pickup_location_details}</p>}{r.customer_notes && <p>{r.customer_notes}</p>}
