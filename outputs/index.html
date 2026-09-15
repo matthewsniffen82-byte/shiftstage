@@ -32071,6 +32071,48 @@
       opacity: 1 !important;
       filter: none !important;
     }
+.profile-social-share { min-width: 0; display: grid; gap: 12px; }
+.profile-social-share .profile-social-options { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; }
+.profile-social-share .profile-social-option {
+  appearance: none; -webkit-appearance: none; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 7px; min-width: 0; min-height: 66px;
+  margin: 0; padding: 9px 2px; border: 1px solid rgba(255,255,255,.2); border-radius: 12px;
+  background: rgba(255,255,255,.06); color: #f5f3ff; font: inherit; font-size: 10px;
+  font-weight: 650; line-height: 1.2; text-align: center; text-decoration: none; cursor: pointer;
+}
+.profile-social-share .profile-social-option:hover { background: rgba(139,92,246,.18); }
+/* Match anchors and buttons despite the global icon-button appearance rules. */
+body.dancr-button-system .profile-social-share .profile-social-option {
+  border: 1px solid rgba(255,255,255,.2) !important; border-radius: 12px !important;
+  background: rgba(255,255,255,.06) !important; box-shadow: none !important; font-weight: 700 !important;
+}
+body.dancr-button-system .profile-social-share .profile-social-option:hover { background: rgba(139,92,246,.18) !important; }
+.profile-social-share .profile-social-option:focus-visible,
+.profile-instagram-guide a:focus-visible { outline: 2px solid #b794ff; outline-offset: 2px; }
+.profile-social-share .profile-social-option svg {
+  display: block; width: 24px; height: 24px; fill: none; stroke: currentColor;
+  stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round;
+}
+.profile-social-share .profile-share-icon-fill svg,
+.profile-social-share svg.profile-share-icon-fill,
+.profile-social-share .social-icon.fill svg { fill: currentColor; stroke: none; }
+.profile-social-share .profile-instagram-guide { display: grid; gap: 10px; min-width: 0; }
+.profile-social-share .profile-instagram-guide[hidden] { display: none; }
+.profile-social-share .profile-instagram-guide p { margin: 0; color: #c9c4d5; font-size: 13px; line-height: 1.5; }
+.profile-social-share .profile-instagram-guide input {
+  width: 100%; min-width: 0; box-sizing: border-box; border: 1px solid rgba(255,255,255,.22);
+  border-radius: 8px; background: #0b0912; color: #f5f3ff; padding: 10px; font-size: 16px;
+}
+.profile-social-share .profile-instagram-guide a {
+  display: flex; align-items: center; justify-content: center; min-height: 44px; padding: 6px 12px;
+  border: 1px solid rgba(167,139,250,.5); border-radius: 10px; color: #f5f3ff;
+  background: rgba(139,92,246,.16); font-size: 14px; text-decoration: none;
+}
+.profile-share-choice-overlay .profile-qr-sheet { max-height: calc(100dvh - 28px); overflow-y: auto; }
+.profile-share-choice-overlay [data-profile-social-share] { margin-bottom: 12px; }
+@media (max-width: 350px) {
+  .profile-social-share .profile-social-options { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
   </style>
   <style>
 /* Keep the city readable in the combined dancer directory. */
@@ -48983,6 +49025,8 @@
 
     function socialIconMarkup(type) {
       const icons = {
+        facebook: '<span class="social-icon fill" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M14 21v-8h3l.5-4H14V7c0-1.2.4-2 2-2h2V1.5c-.4-.1-1.8-.2-3-.2-3 0-5 1.8-5 5.2V9H7v4h3v8Z"></path></svg></span>',
+        reddit: '<span class="social-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><ellipse cx="12" cy="14.5" rx="8" ry="5.5"></ellipse><path d="m12 9 1.3-6L18 4M4.4 11a2 2 0 1 0-1.1 3M19.6 11a2 2 0 1 1 1.1 3M8.5 16.5c1.8 1.5 5.2 1.5 7 0"></path><circle cx="20" cy="4" r="2"></circle><circle cx="8.5" cy="13.5" r=".8"></circle><circle cx="15.5" cy="13.5" r=".8"></circle></svg></span>',
         instagram: '<span class="social-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="5"></rect><circle cx="12" cy="12" r="3.4"></circle><path d="M17.2 6.8h.01"></path></svg></span>',
         tiktok: '<span class="social-icon fill" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M15.8 3c.3 2.5 1.8 4.1 4.2 4.4v3.2c-1.6 0-3-.5-4.2-1.4v6.1c0 3.3-2.3 5.7-5.5 5.7A5.2 5.2 0 0 1 5 15.8c0-3.1 2.4-5.4 5.5-5.4.4 0 .8 0 1.1.1v3.4a2.6 2.6 0 0 0-1.2-.3 2.1 2.1 0 0 0-2.1 2.2c0 1.3.9 2.2 2.1 2.2s2.1-.9 2.1-2.4V3h3.3Z"></path></svg></span>',
         snapchat: '<span class="social-icon fill" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 3.2c2.7 0 4.6 2 4.6 4.8v2.5c0 .6.5.9 1.1 1.1.6.2 1.2.4 1.2.9 0 .6-.7.9-1.5 1.1-.4.1-.5.4-.3.8.6 1.1 1.5 1.8 2.7 2.1.3.1.4.5.2.8-.8.7-1.8.8-2.5.8-.5 0-.8.2-1.1.6-.6.7-1.3 1.1-2.2 1.1-.7 0-1.2-.2-1.7-.5a1.1 1.1 0 0 0-1.1 0c-.5.3-1 .5-1.7.5-.9 0-1.6-.4-2.2-1.1-.3-.4-.6-.6-1.1-.6-.7 0-1.7-.1-2.5-.8-.2-.3-.1-.7.2-.8 1.2-.3 2.1-1 2.7-2.1.2-.4.1-.7-.3-.8-.8-.2-1.5-.5-1.5-1.1 0-.5.6-.7 1.2-.9.6-.2 1.1-.5 1.1-1.1V8c0-2.8 1.9-4.8 4.6-4.8Z"></path></svg></span>',
@@ -49001,6 +49045,14 @@
     ];
 
     const sharePlatforms = socialPlatforms.filter((platform) => platform.key !== "onlyfans");
+
+    const profileSocialSharePlatforms = [
+      { key: "x", label: "X" },
+      { key: "facebook", label: "Facebook" },
+      { key: "instagram", label: "Instagram" },
+      { key: "reddit", label: "Reddit" },
+      { key: "snapchat", label: "Snapchat" }
+    ];
 
     function cleanSocialHandle(value) {
       return cleanDisplayValue(value)
@@ -49473,6 +49525,7 @@
         window.clearTimeout(timeoutId);
       }
     }
+
 
     async function saveCustomerDealPass(pass) {
       if (!pass?.id) return false;
@@ -50346,15 +50399,17 @@
       setVenueShareButtonState(trigger, copied ? "confirmed" : "idle");
     }
 
-    function socialShareUrl(platformKey, profileName, city = selectedCity()) {
-      const url = profileShareUrl(profileName, city);
+    function socialShareUrl(platformKey, profileName, city = selectedCity(), assignedSlug = "") {
+      const url = profileShareUrl(profileName, city, assignedSlug);
       const text = profileShareText(profileName, city);
       const encodedUrl = encodeURIComponent(url);
       const encodedText = encodeURIComponent(text);
       if (platformKey === "x") return `https://x.com/intent/tweet?text=${encodedText}&url=${encodedUrl}`;
+      if (platformKey === "facebook") return `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`;
+      if (platformKey === "reddit") return `https://www.reddit.com/submit?url=${encodedUrl}&title=${encodedText}&type=LINK`;
       if (platformKey === "instagram") return "https://www.instagram.com/";
       if (platformKey === "tiktok") return "https://www.tiktok.com/upload";
-      if (platformKey === "snapchat") return `https://www.snapchat.com/scan?attachmentUrl=${encodedUrl}`;
+      if (platformKey === "snapchat") return `https://www.snapchat.com/share?link=${encodedUrl}`;
       return url;
     }
 
@@ -63749,6 +63804,21 @@
       return overlay;
     }
 
+    function profileSocialShareMarkup(profileName, city, assignedSlug) {
+      return `<div class="profile-social-share">
+        <div class="profile-social-options" role="group" aria-label="Share profile to social media">
+          ${profileSocialSharePlatforms.map(({ key, label }) => key === "instagram"
+            ? `<button class="profile-social-option" type="button" data-profile-instagram-share aria-label="Share to Instagram: copy profile link" aria-expanded="false">${socialIconMarkup(key)}<span>${label}</span></button>`
+            : `<a class="profile-social-option" href="${escapeHtml(socialShareUrl(key, profileName, city, assignedSlug))}" target="_blank" rel="noopener noreferrer" aria-label="Share to ${label} (opens in a new tab)">${socialIconMarkup(key)}<span>${label}</span></a>`).join("")}
+        </div>
+        <div class="profile-instagram-guide" hidden>
+          <p role="status"></p>
+          <input aria-label="Profile link for Instagram" value="${escapeHtml(profileShareUrl(profileName, city, assignedSlug))}" readonly>
+          <a href="https://www.instagram.com/" target="_blank" rel="noopener noreferrer">Open Instagram</a>
+        </div>
+      </div>`;
+    }
+
     function profileShareChoiceOverlay() {
       let overlay = document.getElementById("profileShareChoiceOverlay");
       if (overlay) return overlay;
@@ -63759,6 +63829,7 @@
             <p class="profile-qr-kicker">Share profile</p>
             <h3 class="profile-qr-title" id="profileShareChoiceTitle">Share this dancer profile</h3>
             <p class="profile-qr-subtitle" id="profileShareChoiceSubtitle">Share this public profile, copy its link, or show a QR code. Club Deals redeem only when you tap your phone at the club cashier.</p>
+            <div data-profile-social-share></div>
             <div class="profile-share-choice-actions">
               <button class="profile-qr-action primary" type="button" data-share-profile-choice>${actionButtonLabel("share", "Share profile")}</button>
               <button class="profile-qr-action" type="button" data-copy-profile-choice>Copy profile link</button>
@@ -63768,6 +63839,9 @@
         </div>
       `);
       overlay = document.getElementById("profileShareChoiceOverlay");
+      overlay.addEventListener("focusin", (event) => {
+        if (event.target.matches(".profile-instagram-guide input")) event.target.select();
+      });
       overlay.addEventListener("click", (event) => {
         if (event.target === overlay || event.target.closest("[data-close-profile-share-choice]")) {
           closeProfileShareChoice();
@@ -63776,6 +63850,22 @@
         const profileName = overlay.dataset.profileName || "";
         const city = overlay.dataset.shareCity || selectedCity();
         const assignedSlug = overlay.dataset.profileSlug || "";
+        const instagramButton = event.target.closest("[data-profile-instagram-share]");
+        if (instagramButton) {
+          const guide = overlay.querySelector(".profile-instagram-guide");
+          guide.hidden = false;
+          instagramButton.setAttribute("aria-expanded", "true");
+          const status = guide.querySelector("[role=status]");
+          status.textContent = "Copying your profile link…";
+          void copyText(profileShareUrl(profileName, city, assignedSlug), "Profile link copied").then((copied) => {
+            // The menu can reopen for another dancer while clipboard access is pending.
+            if (!guide.isConnected) return;
+            status.textContent = copied
+              ? "Link copied. Open Instagram and paste it into a message, your bio, or a Story link sticker."
+              : "Select and copy the link below, then paste it into Instagram.";
+          });
+          return;
+        }
         if (event.target.closest("[data-share-profile-choice]")) {
           closeProfileShareChoice({ restoreFocus: false });
           recordLiveEvent("profile_action", { dancerName: profileName, source: "share_opened" });
@@ -63807,6 +63897,7 @@
       overlay.profileShareTrigger = triggerButton || null;
       triggerButton?.setAttribute("aria-expanded", "true");
       document.getElementById("profileShareChoiceTitle").textContent = `${safeProfileName} on MyDancr`;
+      overlay.querySelector("[data-profile-social-share]").innerHTML = profileSocialShareMarkup(safeProfileName, overlay.dataset.shareCity, assignedSlug);
       document.getElementById("profileShareChoiceSubtitle").textContent =
         "Share this public profile, copy its link, or show a QR code. Club Deals redeem only when you tap your phone at the club cashier.";
       overlay.hidden = false;
@@ -64095,6 +64186,7 @@
       event.stopPropagation();
       toggleModalVideoPlayback();
     });
+
     modalVideoSound?.addEventListener("click", (event) => {
       event.preventDefault();
       event.stopPropagation();

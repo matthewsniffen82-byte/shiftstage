@@ -872,15 +872,17 @@
       setVenueShareButtonState(trigger, copied ? "confirmed" : "idle");
     }
 
-    function socialShareUrl(platformKey, profileName, city = selectedCity()) {
-      const url = profileShareUrl(profileName, city);
+    function socialShareUrl(platformKey, profileName, city = selectedCity(), assignedSlug = "") {
+      const url = profileShareUrl(profileName, city, assignedSlug);
       const text = profileShareText(profileName, city);
       const encodedUrl = encodeURIComponent(url);
       const encodedText = encodeURIComponent(text);
       if (platformKey === "x") return `https://x.com/intent/tweet?text=${encodedText}&url=${encodedUrl}`;
+      if (platformKey === "facebook") return `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`;
+      if (platformKey === "reddit") return `https://www.reddit.com/submit?url=${encodedUrl}&title=${encodedText}&type=LINK`;
       if (platformKey === "instagram") return "https://www.instagram.com/";
       if (platformKey === "tiktok") return "https://www.tiktok.com/upload";
-      if (platformKey === "snapchat") return `https://www.snapchat.com/scan?attachmentUrl=${encodedUrl}`;
+      if (platformKey === "snapchat") return `https://www.snapchat.com/share?link=${encodedUrl}`;
       return url;
     }
 

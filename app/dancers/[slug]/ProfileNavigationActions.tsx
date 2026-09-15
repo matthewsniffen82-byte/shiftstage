@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { recordPublicEngagementShare } from "@/src/lib/dancr/engagement-client";
+import { ProfileSocialShareActions } from "@/app/components/ProfileSocialShareActions";
 
 export function ProfileCloseButton({
   fallbackHref,
@@ -162,6 +163,7 @@ export function ProfileShareButton({ dancerId, stageName }: { dancerId: string; 
               Deal redemption happens only when you tap your phone at the club cashier.
             </p>
 
+            <ProfileSocialShareActions profileUrl={profileUrl()} stageName={stageName} />
             <div className="profile-share-dialog-actions">
               <button className="primary" onClick={shareProfile} type="button">
                 <ShareIcon />

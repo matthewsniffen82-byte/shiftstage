@@ -60,7 +60,8 @@
       "styles/base-styles-24-customer-quick-item-hover-customer-quick-item-focus-visible.css",
       "styles/base-styles-25-media.css",
       "styles/base-styles-26-approved-dancer-panel-dancer-control-center.css",
-      "styles/base-styles-27-profile-modal-social-tile-social-links.css"
+      "styles/base-styles-27-profile-modal-social-tile-social-links.css",
+      "styles/profile-social-sharing.css"
     ],
     "directory-styles": [
       "styles/directory-styles-01-theme.css"
