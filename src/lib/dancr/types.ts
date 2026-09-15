@@ -82,6 +82,7 @@ export type DancerAccountProfile = {
 
 export type VenueSummary = {
   id: string;
+  clubPickupEnabled?: boolean;
   slug: string;
   name: string;
   city: string;

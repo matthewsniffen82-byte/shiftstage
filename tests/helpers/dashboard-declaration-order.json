@@ -1,5 +1,9 @@
 [
   {
+    "name": "PickupDashboardPanel",
+    "file": "CustomerDashboardPanels.tsx"
+  },
+  {
     "file": "dashboard-types.ts",
     "name": "DashboardRole"
   },

@@ -46146,6 +46146,14 @@
       }
     }
 
+    function openPickupNotification(notification) {
+      const id = notification?.payload?.pickupRequestId;
+      if (notification?.payload?.kind !== "club_pickup" || typeof id !== "string" || !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id)) return false;
+      if (notification.id && !notification.readAt) markLiveNotificationRead(notification.id);
+      window.location.assign(`/pickups/${id}`);
+      return true;
+    }
+
     function handleNotificationCenterClick(event) {
       const button = event.target.closest("[data-notification-action]");
       if (button) {
@@ -46169,6 +46177,7 @@
       }
       const item = event.target.closest("[data-notification-id], [data-notification-index]");
       const notification = notificationFromNode(item);
+      if (openPickupNotification(notification)) { event.preventDefault(); event.stopPropagation(); return true; }
       if (openDancerReviewIssue(notification)) {
         event.preventDefault();
         event.stopPropagation();
@@ -46182,6 +46191,7 @@
       if (event.key !== "Enter" && event.key !== " ") return false;
       const item = event.target.closest("[data-notification-id], [data-notification-index]");
       const notification = notificationFromNode(item);
+      if (openPickupNotification(notification)) { event.preventDefault(); return true; }
       if (!isActionableDancerReviewNotification(notification)) return false;
       event.preventDefault();
       openDancerReviewIssue(notification);
@@ -46513,6 +46523,7 @@
       return Number.isFinite(number) ? number : fallback;
     }
 
+
     function realDancerDashboardMetrics(profile, city = selectedCity()) {
       const venue = profile?.venue || discoveryMarket(city)?.venues?.[0]?.name || "Local venues";
       const metrics = {
@@ -46661,6 +46672,7 @@
         phone: item.phone || "",
         website: item.website || "",
         hours: item.hoursLabel || "",
+        clubPickupEnabled: item.clubPickupEnabled === true,
         shifts: venueShiftCounts[item.name] || 0,
         distance: "",
         latitude: liveVenueCoordinate(item.latitude, -90, 90),
@@ -47509,6 +47521,7 @@
     function lockedMetricCards(labels) {
       return labels.map((label) => metricCardMarkup("Locked", label)).join("");
     }
+
 
     function rankLabel(rank) {
       return rank ? `#${rank}` : "Outside Top 10";
@@ -52903,6 +52916,7 @@
                 ${quickStats}
               </div>
               ${venueOfferMarkup(venue)}
+              ${venue.clubPickupEnabled === true && venue.id && !venue.isDashboardPreview ? `<a class="action-btn secondary" href="/pickups/new?venue=${encodeURIComponent(venue.id)}">Request Club Pickup</a>` : ""}
             </div>
           </article>
 
@@ -53389,6 +53403,7 @@
       if (report) report.dataset.reportDefaultLabel = "Report this profile photo";
       prepareContentReportButton(report, targetType, targetId, "Report this profile photo");
     }
+
 
     function syncProfilePhotoViewerWindow(activePhotoIndex) {
       if (!profilePhotoViewerImage) return;
@@ -64709,6 +64724,7 @@
       if (!indexedItem) return;
       closeCustomerQuickPanels();
       const notification = notificationFromNode(indexedItem);
+      if (openPickupNotification(notification)) return;
       if (openDancerReviewIssue(notification)) return;
       markLiveNotificationRead(indexedItem.dataset.quickNotificationId);
     });
@@ -65093,6 +65109,7 @@
         button.setAttribute("aria-label", isVisible ? "Show password" : "Hide password");
       });
     });
+
 
     document.getElementById("authForm").addEventListener("submit", async (event) => {
       event.preventDefault();

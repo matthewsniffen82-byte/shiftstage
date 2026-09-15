@@ -148,6 +148,7 @@
         phone: item.phone || "",
         website: item.website || "",
         hours: item.hoursLabel || "",
+        clubPickupEnabled: item.clubPickupEnabled === true,
         shifts: venueShiftCounts[item.name] || 0,
         distance: "",
         latitude: liveVenueCoordinate(item.latitude, -90, 90),

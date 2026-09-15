@@ -321,7 +321,7 @@ async function getApprovedDancerPhotos(client: DancrClient, dancerId: string) {
 export async function getVenueProfile(client: DancrClient, slug: string): Promise<VenueSummary | null> {
   const { data, error } = await client
     .from("venues")
-    .select("id, slug, name, city, state, address, latitude, longitude, opens_at, closes_at, cover_image_storage_path, logo_storage_path")
+    .select("id, slug, name, city, state, address, latitude, longitude, opens_at, closes_at, cover_image_storage_path, logo_storage_path, club_pickup_available")
     .eq("slug", slug)
     .eq("is_active", true)
     .eq("has_active_club_deal", true)
@@ -335,6 +335,7 @@ export async function getVenueProfile(client: DancrClient, slug: string): Promis
     id: data.id,
     slug: data.slug,
     name: data.name,
+    clubPickupEnabled: data.club_pickup_available === true,
     city: data.city,
     state: data.state,
     address: data.address,

@@ -25,6 +25,7 @@ function renderCustomerDashboard(initialState = {}, deviceSavedDeals = []) {
     if (name.endsWith('/customer-device-deals')) return deviceDeals;
     if (name === 'react/jsx-runtime') return require(name);
     if (name === 'next/link') return { default: ({ children, href }) => React.createElement('a', { href }, children) };
+    if (name === 'next/dynamic') return { default: () => () => null };
     return new Proxy(() => null, { get: (_target, key) => key === '__esModule' ? false : () => null });
   } });
   return renderToStaticMarkup(React.createElement(exports.default, { role: 'customer' })).replace(/<style>[\s\S]*?<\/style>/g, '');

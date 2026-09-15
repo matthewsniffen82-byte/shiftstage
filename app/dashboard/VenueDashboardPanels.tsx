@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
+const PickupDashboardPanel = dynamic(() => import("./PickupDashboardPanel"));
 import { CLUB_DEAL_OFFER_PRESETS } from "@/src/lib/dancr/club-deal-presets";
 import { VenueDashboardIcon } from "./VenueDashboardIdentity";
 import { type VenueDancerAffiliation } from "@/src/lib/dancr/venue-roster";
@@ -26,7 +27,7 @@ function notifyPublicVenuePublication() {
 
 
 function venueWorkspaceForSection(sectionId: string): VenueWorkspace | null {
-  if (["venue-working-now", "venue-dancer-roster", "venue-club-deals", "venue-deal-contract-ledger"].includes(sectionId)) return "tonight";
+  if (["venue-working-now", "venue-dancer-roster", "venue-club-deals", "venue-deal-contract-ledger", "venue-pickups"].includes(sectionId)) return "tonight";
   if (sectionId === "venue-tv") return "venue";
   if (["venue-overview", "venue-team", "venue-account", "venue-support"].includes(sectionId)) return "business";
   return null;
@@ -285,6 +286,7 @@ export function VenuePanel({
           <strong>{liveDealSummary}</strong>
           <p>{workingNow.length} working now · {upcomingShiftCount} upcoming {upcomingShiftCount === 1 ? "shift" : "shifts"}</p>
           <div className="venue-command-links">
+            {(venueRole === "owner" || venueRole === "manager") && <Link className="primary-link" href="/pickups">Pickup Requests</Link>}
             <a className="primary-link venue-current-deals-link" href="#venue-club-deals" onClick={(event) => openVenueSection(event, "venue-club-deals")}>
               {activeDealCount ? `View ${activeDealCount} current Club ${activeDealCount === 1 ? "Deal" : "Deals"}` : "View Club Deal status"}
             </a>
@@ -522,6 +524,10 @@ export function VenuePanel({
           </InfoPanel>
         </div>
       </DashboardSection>
+
+      {(venueRole === "owner" || venueRole === "manager") && activeWorkspace === "tonight" && <DashboardSection
+        title="Pickup Requests" eyebrow="Customer referrals" id="venue-pickups" description="Review active requests, reply as your venue, and manage Club Pickup availability."
+      ><PickupDashboardPanel /></DashboardSection>}
 
       <VenueTvPanel
         city={venueCity}

@@ -2,6 +2,7 @@
 
 import { createContext, useCallback, useEffect, useRef, useState, type MouseEvent, type ReactNode, type SyntheticEvent } from "react";
 import Link from "next/link";
+import { pickupNotificationHref } from "@/src/lib/dancr/pickup-links";
 import { homeDiscoveryHref } from "@/src/lib/dancr/navigation";
 import { isCurrentBrowserSession } from "@/src/lib/dancr/browser-session";
 import { fictionalVenueTravelAddress } from "@/src/lib/dancr/venue-branding";
@@ -220,7 +221,7 @@ export function NotificationPanel({
       <div className="notification-list">
         {notifications.slice(0, customerMode ? 10 : 6).map((notification) => {
           const notificationId = String(notification.id);
-          const destination = customerMode ? customerNotificationHref(notification, saved) : "";
+          const destination = pickupNotificationHref(notification.payload) || (customerMode ? customerNotificationHref(notification, saved) : "");
           const content = (
             <>
               <span className="notification-row-meta">
@@ -750,6 +751,8 @@ function customerNotificationHref(notification: Record<string, unknown>, saved?:
   const payload = notification.payload && typeof notification.payload === "object" && !Array.isArray(notification.payload)
     ? notification.payload as Record<string, unknown>
     : {};
+  const pickupHref = pickupNotificationHref(payload);
+  if (pickupHref) return pickupHref;
   if (payload.threadId || notification.type === "support_message") return "/dashboard/customer#customer-support";
 
   const dancerId = String(payload.dancerId || "");
@@ -779,6 +782,7 @@ function notificationCategory(notification: Record<string, unknown>) {
   const payload = notification.payload && typeof notification.payload === "object" && !Array.isArray(notification.payload)
     ? notification.payload as Record<string, unknown>
     : {};
+  if (payload.kind === "club_pickup") return "Club Pickup";
   if (payload.kind === "followed_club_deal_published") return "Club Deal";
   if (payload.kind === "followed_club_roster_addition") return "Club";
   if (type.includes("shift")) return "Schedule";

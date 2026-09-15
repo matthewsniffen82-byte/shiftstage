@@ -613,6 +613,7 @@
       if (!indexedItem) return;
       closeCustomerQuickPanels();
       const notification = notificationFromNode(indexedItem);
+      if (openPickupNotification(notification)) return;
       if (openDancerReviewIssue(notification)) return;
       markLiveNotificationRead(indexedItem.dataset.quickNotificationId);
     });

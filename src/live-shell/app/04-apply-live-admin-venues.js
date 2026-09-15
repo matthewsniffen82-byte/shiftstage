@@ -612,6 +612,14 @@
       }
     }
 
+    function openPickupNotification(notification) {
+      const id = notification?.payload?.pickupRequestId;
+      if (notification?.payload?.kind !== "club_pickup" || typeof id !== "string" || !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id)) return false;
+      if (notification.id && !notification.readAt) markLiveNotificationRead(notification.id);
+      window.location.assign(`/pickups/${id}`);
+      return true;
+    }
+
     function handleNotificationCenterClick(event) {
       const button = event.target.closest("[data-notification-action]");
       if (button) {
@@ -635,6 +643,7 @@
       }
       const item = event.target.closest("[data-notification-id], [data-notification-index]");
       const notification = notificationFromNode(item);
+      if (openPickupNotification(notification)) { event.preventDefault(); event.stopPropagation(); return true; }
       if (openDancerReviewIssue(notification)) {
         event.preventDefault();
         event.stopPropagation();
@@ -648,6 +657,7 @@
       if (event.key !== "Enter" && event.key !== " ") return false;
       const item = event.target.closest("[data-notification-id], [data-notification-index]");
       const notification = notificationFromNode(item);
+      if (openPickupNotification(notification)) { event.preventDefault(); return true; }
       if (!isActionableDancerReviewNotification(notification)) return false;
       event.preventDefault();
       openDancerReviewIssue(notification);

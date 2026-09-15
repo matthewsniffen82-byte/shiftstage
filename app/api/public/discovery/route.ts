@@ -39,7 +39,7 @@ export async function GET(request: Request) {
       let venueQuery = client
         .from("venues")
         .select(
-          "id, slug, name, city, state, address, latitude, longitude, opens_at, closes_at, cover_image_storage_path, logo_storage_path",
+          "id, slug, name, city, state, address, latitude, longitude, opens_at, closes_at, cover_image_storage_path, logo_storage_path, club_pickup_available",
         )
         .eq("is_active", true)
         .eq("has_active_club_deal", true)
@@ -70,6 +70,7 @@ export async function GET(request: Request) {
       const logoImage = responsivePublicImage(client, "venue-logo-images", venue.logo_storage_path);
       return {
         id: venue.id,
+        clubPickupEnabled: venue.club_pickup_available === true,
         slug: venue.slug,
         name: venue.name,
         city: venue.city,
