@@ -10,7 +10,7 @@ Club Pickup is private customer-to-verified-venue coordination. The venue decide
 4. Customer request form, consent, real-time text chat, structured status controls, reporting, private inbox and venue settings built under `/pickups`. Existing login flows return to the requested pickup page. Chats reconcile on reconnect and recover missed history. Long history is paginated. Local retries preserve IDs; account changes clear private content and close subscriptions.
 5. Eligible public venue CTA, customer/venue dashboard request previews, admin monitoring entry point and notification navigation added. A computed public availability boolean rechecks actual publication/owner state without exposing account or pickup data. Existing discovery queries carry this boolean with no additional browser requests. Admin inbox filters by venue/status/date; chat includes paginated event history, reports, attribution and append-only admin notes.
 6. Arrival attribution observes existing confirmed NFC deal redemptions. It requires the same signed-in customer, same venue, one unambiguous accepted request and an arrival within the request window. Anonymous, unconfirmed, suspicious, cancelled and ambiguous signals do not receive automatic attribution. Reversals append history and mark attribution disputed. Both participants can record independent reported arrivals. No new redemption, commission, invoice or financial charge is created.
-7. Focused security review complete: command authorization is rechecked after request locks, disputed arrival evidence survives completion, and read receipts advance when returning to the latest messages. Nine security/attribution PostgreSQL tests and both mobile browser emulations passed, including 60-message reconnect recovery. Final project-wide validation follows.
+7. Focused security review complete: command authorization is rechecked after request locks, disputed arrival evidence survives completion, and read receipts advance when returning to the latest messages. Nine security/attribution PostgreSQL tests and both mobile browser emulations passed, including 60-message reconnect recovery. Final project-wide validation and deployed smoke results are recorded below.
 
 ## Operations
 
@@ -70,6 +70,36 @@ Whole-project TypeScript (`tsc --noEmit --incremental false`) and `npm run lint`
 `npm run build` passed, including migration/source validation, compilation, type validation and the public-build security check (295 files). Postbuild confirmed that demo population was skipped. The final Android/iPhone synthetic component checks passed at 320/393/1280px with no runtime errors. The locally served production build passed the read-only Android smoke: all three pickup endpoints deny signed-out access with 401/no-store, gates show sign-in, missing venue fails closed, and discovery returns 17 venues/14 dancers without pickup details. The iPhone production-bundle smoke runs over deployed HTTPS because WebKit correctly upgrades the local production HTTP assets under the existing security policy.
 
 Final verification disabled pickup sign-in link prefetching, avoiding unnecessary background loading of the homepage/login shell. The public smoke script records the existing iPhone homepage `interactive-widget` unsupported-hint notice separately; it does not suppress other console or runtime errors.
+
+**Deployed verification:** application commit `6ae6689a` reached Vercel success. The read-only smoke passed on `https://www.mydancr.com` in Android Chrome and iPhone/WebKit emulation, including private 401/no-store API responses, signed-out inbox/conversation gates, unavailable venue behavior and the public homepage/discovery. No unexpected console errors or JavaScript runtime errors occurred. The runner waits for normal link prefetches before navigating to avoid test-induced cancellation noise. These checks do not submit a real pickup or send real-user notifications.
+
+All 17 pickup-specific automated tests passed. The full-suite exception remains the 18 independently reproduced pre-existing failures listed above; this release does not claim a fully green existing suite. No new dependencies or environment variables were added. No real venue was enabled during testing. Physical-device, cellular and two-real-account realtime acceptance should precede operational opt-in. Privacy retention/hold procedures, optional external push/email and unattended request escalation are follow-up work.
+
+## Migrations and pushed application commits
+
+All migrations below are applied and recorded in production; all listed commits were pushed to `origin/main` and individually reached Vercel success.
+
+| Migration | Purpose |
+| --- | --- |
+| `20260914190000_club_pickup_domain.sql` | Private tables, opt-in, constraints, indexes, immutable history |
+| `20260914191000_club_pickup_security_commands.sql` | RLS, session identity, consent, commands, notifications, realtime |
+| `20260914192000_club_pickup_inbox_queries.sql` | Scoped venue settings and unread queries |
+| `20260914193000_public_club_pickup_availability.sql` | Safe computed public availability |
+| `20260914194000_club_pickup_arrival_attribution.sql` | Existing NFC evidence matching and reversals |
+| `20260914195000_harden_pickup_transitions.sql` | Post-lock authorization and disputed-outcome protection |
+
+| Commit | Stage |
+| --- | --- |
+| `3d568bd1` | Domain and immutable history |
+| `c1c297e7` | Secure commands and consent |
+| `84bd7e50` | Authenticated API and bounded inbox queries |
+| `c9ce421f` | Mobile request workspace and chat |
+| `fd5fea04` | Venue/dashboard/admin/notification integration |
+| `ef8a45f7` | Verified NFC attribution |
+| `fb06c38d` | Focused hardening |
+| `6ae6689a` | Final validation and login prefetch correction |
+
+The final documentation/smoke-runner commit records this evidence without changing application behavior. Its exact deployment status is verified after push and reported in the delivery response.
 
 ## Release evidence
 

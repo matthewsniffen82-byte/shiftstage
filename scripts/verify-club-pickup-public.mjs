@@ -46,9 +46,13 @@ for (const [name, engine, device] of [['android', chromium, 'Pixel 5'], ['iphone
       assert.equal(await page.locator('.pickup-message').count(), 0);
       assert.match(await page.locator('meta[name="robots"]').getAttribute('content'), /noindex/);
       assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
+      await page.waitForLoadState('networkidle');
     }
     await page.goto(new URL('/pickups/new', base).href);
     await page.getByRole('heading', { name: 'Club Pickup unavailable', exact: true }).waitFor();
+    // Let ordinary Link prefetches finish before this script replaces the page;
+    // otherwise WebKit reports the test-induced cancellation as an RSC failure.
+    await page.waitForLoadState('networkidle');
     await page.goto(new URL('/?view=venues', base).href);
     await page.waitForFunction(() => document.body.innerText.includes('Clubs'));
     assert.deepEqual(errors, [], `${name} runtime/console errors`);
