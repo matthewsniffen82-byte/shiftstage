@@ -74,7 +74,8 @@ try {
         }
         if(url.pathname==='/api/pickups/settings'){await route.fulfill({json:{ok:true,venues:[{id:id(10),name:'Test Club',slug:'test-club',club_pickup_enabled:true,eligible:true}]}});return;}
         if(url.pathname==='/api/pickups'){await route.fulfill({json:{ok:true,role,requests:[{...request(),unread_count:1}],hasMore:false}});return;}
-        await route.fulfill({json:{ok:true,request:request(),role,consented,messages:consented?messages:[],hasOlderMessages:false,events:[],hasMoreEvents:false,reports:[],evidence:[]}});
+        const history=messages.filter(m=>!url.searchParams.has('before')||m.sequence<Number(url.searchParams.get('before')));
+        await route.fulfill({json:{ok:true,request:request(),role,consented,messages:consented?history.slice(-50):[],hasOlderMessages:history.length>50,events:[],hasMoreEvents:false,reports:[],evidence:[]}});
       });
       await page.goto(base+'/?mode=request');
       await page.getByRole('heading',{name:'Request Club Pickup'}).waitFor();
@@ -98,6 +99,10 @@ try {
         assert.ok((await page.getByRole('button',{name:'Send message',exact:true}).boundingBox()).height>=44);
       }
       await page.setViewportSize({width:393,height:850});await page.screenshot({path:resolve(root,`.next-club-pickup/chat-${name}.png`),fullPage:true});
+      for(let n=0;n<60;n++)messages.push({id:id(100+n),sequence:messages.length+1,sender_type:'venue',message_text:'Reconnect history '+n,created_at:'2026-09-14T19:03:00Z'});
+      await page.evaluate(()=>window.__realtimeRefresh());await page.getByText('Reconnect history 59',{exact:true}).waitFor();
+      await page.getByRole('button',{name:'Load older messages'}).click();await page.getByText('Pickup requested from the venue.',{exact:true}).waitFor();
+      assert.equal(await page.locator('.pickup-message').count(),messages.length,'long-disconnect history has no gaps');
       await page.getByLabel('Status',{exact:true}).selectOption('cancelled');await page.getByLabel('Reason',{exact:true}).fill('Plans changed');await page.getByRole('button',{name:'Confirm update'}).click();
       await page.getByText('Cancelled',{exact:true}).waitFor();assert.equal(await page.getByRole('button',{name:'Send message',exact:true}).count(),0);
       await page.getByRole('button',{name:'Report Conversation'}).click();await page.getByLabel('Details (optional)').fill('Synthetic report');await page.getByRole('button',{name:'Send report',exact:true}).click();await page.getByText('Your report was sent to MyDancr for review.').waitFor();

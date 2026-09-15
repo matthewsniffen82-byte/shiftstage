@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { pickupFixture,pickupId as id } from './helpers/pickup-fixture.mjs';
-const migrations=['20260914190000_club_pickup_domain.sql','20260914191000_club_pickup_security_commands.sql','20260914194000_club_pickup_arrival_attribution.sql'];
+const migrations=['20260914190000_club_pickup_domain.sql','20260914191000_club_pickup_security_commands.sql','20260914194000_club_pickup_arrival_attribution.sql','20260914195000_harden_pickup_transitions.sql'];
 async function fixture(){
   const f=await pickupFixture(migrations);
   await f.asUser(3);await f.db.query('select pickup_set_enabled($1,true)',[id(10)]);
@@ -24,6 +24,9 @@ test('trusted NFC redemption links one accepted customer referral without creati
     assert.equal((await f.db.query('select count(*)::int n from pickup_arrival_evidence')).rows[0].n,1);
     await f.db.exec("update qr_redemptions set status='voided',voided_at=now()");
     r=(await f.db.query('select * from pickup_requests')).rows[0];assert.equal(r.referral_outcome,'arrival_disputed');
+    await f.asUser(3);await f.db.query("select pickup_set_status($1,'completed','arrived')",[id(20)]);
+    assert.equal((await f.db.query('select referral_outcome from pickup_requests')).rows[0].referral_outcome,'arrival_disputed','completion cannot erase disputed evidence');
+    await f.db.exec('reset role');
     assert.equal((await f.db.query('select count(*)::int n from pickup_arrival_evidence')).rows[0].n,1,'historical evidence retained');
     assert.equal((await f.db.query("select count(*)::int n from pickup_events where event_type='arrival_verified'")).rows[0].n,1);
     assert.equal((await f.db.query('select count(*)::int n from qr_redemptions')).rows[0].n,1,'never creates another redemption');

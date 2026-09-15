@@ -2,7 +2,8 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { pickupFixture, pickupId as id } from './helpers/pickup-fixture.mjs';
 
-const migrations = ['20260914190000_club_pickup_domain.sql','20260914191000_club_pickup_security_commands.sql'];
+const migrations = ['20260914190000_club_pickup_domain.sql','20260914191000_club_pickup_security_commands.sql',
+  '20260914194000_club_pickup_arrival_attribution.sql','20260914195000_harden_pickup_transitions.sql'];
 async function fixture() {
   const f = await pickupFixture(migrations);
   await f.asUser(3);

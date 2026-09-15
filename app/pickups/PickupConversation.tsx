@@ -76,13 +76,19 @@ function Conversation({ requestId }: { requestId: string }) {
   }, [requestId, consented]);
   const lastSequence = detail?.messages.at(-1)?.sequence || 0;
   useEffect(() => {
-    if (!nearBottom.current || !consented) return;
+    if (!consented) return;
     const node = messagesRef.current;
-    if (node) node.scrollTop = node.scrollHeight;
-    if (lastSequence > latestRead.current && detail?.role !== "admin" && document.visibilityState === "visible") {
-      latestRead.current = lastSequence;
-      void requestPickupJson(path, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action: "read", sequence: lastSequence }) }).catch(() => { latestRead.current = 0; });
-    }
+    if (!node) return;
+    if (nearBottom.current) node.scrollTop = node.scrollHeight;
+    const markViewed = () => {
+      const atBottom = node.scrollHeight - node.scrollTop - node.clientHeight < 100;
+      if (atBottom && lastSequence > latestRead.current && detail?.role !== "admin" && document.visibilityState === "visible") {
+        latestRead.current = lastSequence;
+        void requestPickupJson(path, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action: "read", sequence: lastSequence }) }).catch(() => { latestRead.current = 0; });
+      }
+    };
+    markViewed(); node.addEventListener("scroll", markViewed, { passive: true }); document.addEventListener("visibilitychange", markViewed);
+    return () => { node.removeEventListener("scroll", markViewed); document.removeEventListener("visibilitychange", markViewed); };
   }, [lastSequence, consented, path, detail?.role]);
   async function act(body: Record<string, unknown>) {
     if (locked.current) return false;
