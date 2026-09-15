@@ -659,21 +659,6 @@
       return overlay;
     }
 
-    function profileSocialShareMarkup(profileName, city, assignedSlug) {
-      return `<div class="profile-social-share">
-        <div class="profile-social-options" role="group" aria-label="Share profile to social media">
-          ${profileSocialSharePlatforms.map(({ key, label }) => key === "instagram"
-            ? `<button class="profile-social-option" type="button" data-profile-instagram-share aria-label="Share to Instagram: copy profile link" aria-expanded="false">${socialIconMarkup(key)}<span>${label}</span></button>`
-            : `<a class="profile-social-option" href="${escapeHtml(socialShareUrl(key, profileName, city, assignedSlug))}" target="_blank" rel="noopener noreferrer" aria-label="Share to ${label} (opens in a new tab)">${socialIconMarkup(key)}<span>${label}</span></a>`).join("")}
-        </div>
-        <div class="profile-instagram-guide" hidden>
-          <p role="status"></p>
-          <input aria-label="Profile link for Instagram" value="${escapeHtml(profileShareUrl(profileName, city, assignedSlug))}" readonly>
-          <a href="https://www.instagram.com/" target="_blank" rel="noopener noreferrer">Open Instagram</a>
-        </div>
-      </div>`;
-    }
-
     function profileShareChoiceOverlay() {
       let overlay = document.getElementById("profileShareChoiceOverlay");
       if (overlay) return overlay;
@@ -684,7 +669,6 @@
             <p class="profile-qr-kicker">Share profile</p>
             <h3 class="profile-qr-title" id="profileShareChoiceTitle">Share this dancer profile</h3>
             <p class="profile-qr-subtitle" id="profileShareChoiceSubtitle">Share this public profile, copy its link, or show a QR code. Club Deals redeem only when you tap your phone at the club cashier.</p>
-            <div data-profile-social-share></div>
             <div class="profile-share-choice-actions">
               <button class="profile-qr-action primary" type="button" data-share-profile-choice>${actionButtonLabel("share", "Share profile")}</button>
               <button class="profile-qr-action" type="button" data-copy-profile-choice>Copy profile link</button>
@@ -694,9 +678,6 @@
         </div>
       `);
       overlay = document.getElementById("profileShareChoiceOverlay");
-      overlay.addEventListener("focusin", (event) => {
-        if (event.target.matches(".profile-instagram-guide input")) event.target.select();
-      });
       overlay.addEventListener("click", (event) => {
         if (event.target === overlay || event.target.closest("[data-close-profile-share-choice]")) {
           closeProfileShareChoice();
@@ -705,22 +686,6 @@
         const profileName = overlay.dataset.profileName || "";
         const city = overlay.dataset.shareCity || selectedCity();
         const assignedSlug = overlay.dataset.profileSlug || "";
-        const instagramButton = event.target.closest("[data-profile-instagram-share]");
-        if (instagramButton) {
-          const guide = overlay.querySelector(".profile-instagram-guide");
-          guide.hidden = false;
-          instagramButton.setAttribute("aria-expanded", "true");
-          const status = guide.querySelector("[role=status]");
-          status.textContent = "Copying your profile link…";
-          void copyText(profileShareUrl(profileName, city, assignedSlug), "Profile link copied").then((copied) => {
-            // The menu can reopen for another dancer while clipboard access is pending.
-            if (!guide.isConnected) return;
-            status.textContent = copied
-              ? "Link copied. Open Instagram and paste it into a message, your bio, or a Story link sticker."
-              : "Select and copy the link below, then paste it into Instagram.";
-          });
-          return;
-        }
         if (event.target.closest("[data-share-profile-choice]")) {
           closeProfileShareChoice({ restoreFocus: false });
           recordLiveEvent("profile_action", { dancerName: profileName, source: "share_opened" });
@@ -752,7 +717,6 @@
       overlay.profileShareTrigger = triggerButton || null;
       triggerButton?.setAttribute("aria-expanded", "true");
       document.getElementById("profileShareChoiceTitle").textContent = `${safeProfileName} on MyDancr`;
-      overlay.querySelector("[data-profile-social-share]").innerHTML = profileSocialShareMarkup(safeProfileName, overlay.dataset.shareCity, assignedSlug);
       document.getElementById("profileShareChoiceSubtitle").textContent =
         "Share this public profile, copy its link, or show a QR code. Club Deals redeem only when you tap your phone at the club cashier.";
       overlay.hidden = false;

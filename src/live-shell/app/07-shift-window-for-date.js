@@ -482,8 +482,6 @@
 
     function socialIconMarkup(type) {
       const icons = {
-        facebook: '<span class="social-icon fill" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M14 21v-8h3l.5-4H14V7c0-1.2.4-2 2-2h2V1.5c-.4-.1-1.8-.2-3-.2-3 0-5 1.8-5 5.2V9H7v4h3v8Z"></path></svg></span>',
-        reddit: '<span class="social-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><ellipse cx="12" cy="14.5" rx="8" ry="5.5"></ellipse><path d="m12 9 1.3-6L18 4M4.4 11a2 2 0 1 0-1.1 3M19.6 11a2 2 0 1 1 1.1 3M8.5 16.5c1.8 1.5 5.2 1.5 7 0"></path><circle cx="20" cy="4" r="2"></circle><circle cx="8.5" cy="13.5" r=".8"></circle><circle cx="15.5" cy="13.5" r=".8"></circle></svg></span>',
         instagram: '<span class="social-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="5"></rect><circle cx="12" cy="12" r="3.4"></circle><path d="M17.2 6.8h.01"></path></svg></span>',
         tiktok: '<span class="social-icon fill" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M15.8 3c.3 2.5 1.8 4.1 4.2 4.4v3.2c-1.6 0-3-.5-4.2-1.4v6.1c0 3.3-2.3 5.7-5.5 5.7A5.2 5.2 0 0 1 5 15.8c0-3.1 2.4-5.4 5.5-5.4.4 0 .8 0 1.1.1v3.4a2.6 2.6 0 0 0-1.2-.3 2.1 2.1 0 0 0-2.1 2.2c0 1.3.9 2.2 2.1 2.2s2.1-.9 2.1-2.4V3h3.3Z"></path></svg></span>',
         snapchat: '<span class="social-icon fill" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 3.2c2.7 0 4.6 2 4.6 4.8v2.5c0 .6.5.9 1.1 1.1.6.2 1.2.4 1.2.9 0 .6-.7.9-1.5 1.1-.4.1-.5.4-.3.8.6 1.1 1.5 1.8 2.7 2.1.3.1.4.5.2.8-.8.7-1.8.8-2.5.8-.5 0-.8.2-1.1.6-.6.7-1.3 1.1-2.2 1.1-.7 0-1.2-.2-1.7-.5a1.1 1.1 0 0 0-1.1 0c-.5.3-1 .5-1.7.5-.9 0-1.6-.4-2.2-1.1-.3-.4-.6-.6-1.1-.6-.7 0-1.7-.1-2.5-.8-.2-.3-.1-.7.2-.8 1.2-.3 2.1-1 2.7-2.1.2-.4.1-.7-.3-.8-.8-.2-1.5-.5-1.5-1.1 0-.5.6-.7 1.2-.9.6-.2 1.1-.5 1.1-1.1V8c0-2.8 1.9-4.8 4.6-4.8Z"></path></svg></span>',
@@ -502,14 +500,6 @@
     ];
 
     const sharePlatforms = socialPlatforms.filter((platform) => platform.key !== "onlyfans");
-
-    const profileSocialSharePlatforms = [
-      { key: "x", label: "X" },
-      { key: "facebook", label: "Facebook" },
-      { key: "instagram", label: "Instagram" },
-      { key: "reddit", label: "Reddit" },
-      { key: "snapchat", label: "Snapchat" }
-    ];
 
     function cleanSocialHandle(value) {
       return cleanDisplayValue(value)

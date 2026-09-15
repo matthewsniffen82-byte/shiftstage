@@ -4,7 +4,6 @@ import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { SocialPlatformIcon } from "@/app/dancers/[slug]/SocialLinks";
-import { ProfileSocialShareActions } from "@/app/components/ProfileSocialShareActions";
 import { payoutCopy } from "@/src/lib/dancr/payout-copy";
 import { effectiveDancerProfileStatus } from "@/src/lib/dancr/profile-approval";
 import { safeErrorMetadata } from "@/src/lib/security/safe-error-metadata";
@@ -1335,7 +1334,6 @@ function DancerSharePanel({ profile }: { profile?: LoadState["profile"] }) {
             </Link>
           </div>
           {status ? <p className="share-status" role="status" aria-live="polite">{status}</p> : null}
-          <ProfileSocialShareActions key={shareUrl} profileUrl={shareUrl} stageName={persistedDancerStageName(profile) || "Dancer"} />
         </div>
       ) : (
         <p>Save your stage name first to create a public profile link.</p>
