@@ -2,9 +2,27 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { PICKUP_STATUS_LABELS, PICKUP_TRANSPORT_NOTICE, type PhonePickupRequest, type PickupRequest, type PickupRole, type PickupVenue } from "@/src/lib/dancr/pickup-domain";
-import { PickupAccountGate, requestPickupJson } from "./pickup-session";
+import { PickupAccountGate, requestPickupJson, usePickupAccount } from "./pickup-session";
+import { guestPickupHref, savedGuestPickups } from "@/src/lib/dancr/pickup-guest-session";
 
-export default function PickupInbox() { return <PickupAccountGate>{role => <Inbox role={role} />}</PickupAccountGate>; }
+export default function PickupInbox() {
+  const account = usePickupAccount();
+  if (!account.ready) return <p role="status">Loading pickup requests…</p>;
+  return <><SavedGuestChats standalone={!account.identity} />{account.identity && <PickupAccountGate>{role => <Inbox role={role} />}</PickupAccountGate>}</>;
+}
+function SavedGuestChats({ standalone }: { standalone: boolean }) {
+  const links = savedGuestPickups();
+  if (!standalone && !links.length) return null;
+  return <section className="pickup-card">
+    {standalone && <Link href="/?view=venues">‹ Browse clubs</Link>}
+    {standalone ? <h1>Pickup Requests</h1> : <h2>Guest chats on this device</h2>}
+    <p>No sign-in needed. Open a saved chat below, or request pickup from a club with pickup chat enabled.</p>
+    {!links.length && <p>No guest chats are saved on this device. If you already requested pickup, open your private chat link.</p>}
+    <div className="pickup-list">{links.map(link => <Link prefetch={false} className="pickup-list-item" key={link.id} href={guestPickupHref(link.id, link.key)}>
+      <strong>{link.venue}</strong><span>Open pickup chat</span><time dateTime={new Date(link.savedAt).toISOString()}>{new Date(link.savedAt).toLocaleString()}</time>
+    </Link>)}</div>
+  </section>;
+}
 function Inbox({ role }: { role: PickupRole }) {
   const [requests, setRequests] = useState<PickupRequest[]>([]), [venues, setVenues] = useState<PickupVenue[]>([]);
   const [phoneRequests, setPhoneRequests] = useState<PhonePickupRequest[]>([]), [morePhone, setMorePhone] = useState(false);
@@ -94,7 +112,7 @@ function Inbox({ role }: { role: PickupRole }) {
     {phoneRequests.length > 0 && requests.length > 0 && <h2>Pickup chats</h2>}
     <div className="pickup-list">{requests.map(request => <Link key={request.id} className="pickup-list-item" href={`/pickups/${request.id}`}>
       <strong>{request.venue?.name || "Venue"}</strong><span>{PICKUP_STATUS_LABELS[request.status]}{Boolean(request.unread_count) && <b className="pickup-unread">{request.unread_count} unread</b>}</span>
-      <span>Guest {request.customer_user_id.slice(-6)} · {request.party_size} {request.party_size === 1 ? "guest" : "guests"}</span>
+      <span>Guest {(request.customer_user_id || request.id).slice(-6)} · {request.party_size} {request.party_size === 1 ? "guest" : "guests"}</span>
       <span>{request.pickup_location_text}</span><time dateTime={request.requested_at}>{new Date(request.requested_at).toLocaleString()}</time>
     </Link>)}</div>
     {more && <button disabled={loading} onClick={() => void loadMore()}>Load more requests</button>}

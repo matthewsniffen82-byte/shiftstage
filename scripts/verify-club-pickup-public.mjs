@@ -42,7 +42,8 @@ for (const [name, engine, device] of [['android', chromium, 'Pixel 5'], ['iphone
     for (const path of ['/pickups', `/pickups/${id}`]) {
       const response = await page.goto(new URL(path, base).href);
       assert.equal(response.status(), 200);
-      await page.getByRole('link', { name: 'Customer sign in', exact: true }).waitFor();
+      if(path==='/pickups')await page.getByRole('heading', { name: 'Pickup Requests', exact: true }).waitFor();
+      else await page.getByRole('link', { name: 'Saved pickup chats', exact: true }).waitFor();
       assert.equal(await page.locator('.pickup-message').count(), 0);
       assert.match(await page.locator('meta[name="robots"]').getAttribute('content'), /noindex/);
       assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);

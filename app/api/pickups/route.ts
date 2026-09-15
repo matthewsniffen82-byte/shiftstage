@@ -5,6 +5,7 @@ import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
 import { listPickups, pickupRpc } from "@/src/lib/dancr/pickup-server";
 import { pickupCreateArgs } from "@/src/lib/dancr/pickup-validation";
 import { listPhonePickupRequests } from "@/src/lib/dancr/pickup-phone-requests";
+import { createGuestPickup } from "@/src/lib/dancr/pickup-guest-server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -21,6 +22,11 @@ export async function GET(request: Request) {
 }
 export async function POST(request: Request) {
   try {
+    if (!request.headers.has("authorization")) {
+      const body = await readBoundedJsonObject(request, { maxBytes: 8192, invalidMessage: "Invalid pickup request.", tooLargeMessage: "Pickup request is too large." });
+      const id = await createGuestPickup(request, body);
+      return NextResponse.json({ ok: true, id, guest: true }, { headers });
+    }
     const context = await createRequestSupabaseContext(request, { role: "customer" });
     const body = await readBoundedJsonObject(request, { maxBytes: 8192, invalidMessage: "Invalid pickup request.", tooLargeMessage: "Pickup request is too large." });
     const id = await pickupRpc(context.client, "pickup_create_request", pickupCreateArgs(body));

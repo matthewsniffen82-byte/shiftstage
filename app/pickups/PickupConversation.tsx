@@ -5,9 +5,10 @@ import { readBrowserAuthSession } from "@/src/lib/dancr/browser-session";
 import { PICKUP_CHAT_NOTICE, PICKUP_CHAT_POLICY, PICKUP_CONSENT_VERSION, PICKUP_STATUS_LABELS, PICKUP_TRANSPORT_NOTICE,
   pickupClosed, pickupStatusActions, type PickupDetail, type PickupMessage, type PickupStatus } from "@/src/lib/dancr/pickup-domain";
 import { PickupAccountGate, requestPickupJson } from "./pickup-session";
+import { guestPickupHref, guestPickupKey, rememberGuestPickup } from "@/src/lib/dancr/pickup-guest-session";
 
 export default function PickupConversation({ requestId }: { requestId: string }) {
-  return <PickupAccountGate>{() => <Conversation requestId={requestId} />}</PickupAccountGate>;
+  return <PickupAccountGate requestId={requestId}>{() => <Conversation requestId={requestId} />}</PickupAccountGate>;
 }
 function mergeMessages(previous: PickupMessage[], incoming: PickupMessage[]) {
   return [...new Map([...previous, ...incoming].map(message => [message.id, message])).values()].sort((a, b) => a.sequence - b.sequence);
@@ -23,6 +24,7 @@ function Conversation({ requestId }: { requestId: string }) {
   const refreshRef = useRef<() => Promise<void>>(async () => {}), retry = useRef<{ id: string; text: string } | null>(null);
   const latestRead = useRef(0), olderLoaded = useRef(false);
   const path = `/api/pickups/${requestId}`;
+  const guest = Boolean(guestPickupKey(requestId));
   useEffect(() => {
     mounted.current = true;
     let cancelled = false, fetching = false, queued = false, controller: AbortController | null = null;
@@ -33,6 +35,10 @@ function Conversation({ requestId }: { requestId: string }) {
       try {
         const next: PickupDetail = await requestPickupJson(path, { signal: controller.signal });
         if (!cancelled) {
+          if (next.guest) {
+            rememberGuestPickup({ id: requestId, key: guestPickupKey(requestId), venue: next.request.venue?.name || "Club pickup", savedAt: Date.parse(next.request.requested_at) });
+            setConnected(true);
+          }
           setDetail(previous => {
             // A long disconnect can span more than one page. Start from the latest
             // contiguous page in that case so Load older can recover every message.
@@ -46,6 +52,7 @@ function Conversation({ requestId }: { requestId: string }) {
         }
       } catch (failure) {
         if (!cancelled) {
+          if (guest) setConnected(false);
           const status = (failure as { status?: number })?.status;
           if (status === 401 || status === 403 || status === 404) setDetail(null);
           setError(failure instanceof Error ? failure.message : "Unable to refresh pickup conversation.");
@@ -55,12 +62,12 @@ function Conversation({ requestId }: { requestId: string }) {
     refreshRef.current = refresh; void refresh();
     const resume = () => { if (document.visibilityState === "visible") void refresh(); };
     window.addEventListener("online", resume); document.addEventListener("visibilitychange", resume);
-    const timer = window.setInterval(resume, 15000);
+    const timer = window.setInterval(resume, guest ? 5000 : 15000);
     return () => { cancelled = true; mounted.current = false; controller?.abort(); window.clearInterval(timer); window.removeEventListener("online", resume); document.removeEventListener("visibilitychange", resume); };
-  }, [path]);
+  }, [path, guest, requestId]);
   const consented = detail?.consented === true;
   useEffect(() => {
-    if (!consented) return;
+    if (!consented || guest) return;
     let cancelled = false, subscription: Awaited<ReturnType<typeof import("@/src/lib/dancr/pickup-realtime").subscribePickup>> | null = null;
     let changeTimer: ReturnType<typeof setTimeout> | undefined;
     const reconcile = () => { clearTimeout(changeTimer); changeTimer = setTimeout(() => { if (!cancelled && document.visibilityState === "visible") void refreshRef.current(); }, 100); };
@@ -73,7 +80,7 @@ function Conversation({ requestId }: { requestId: string }) {
     }).catch(() => { if (!cancelled) setConnected(false); });
     const timer = window.setInterval(syncToken, 15000);
     return () => { cancelled = true; clearTimeout(changeTimer); window.clearInterval(timer); void subscription?.close(); };
-  }, [requestId, consented]);
+  }, [requestId, consented, guest]);
   const lastSequence = detail?.messages.at(-1)?.sequence || 0;
   useEffect(() => {
     if (!consented) return;
@@ -126,12 +133,13 @@ function Conversation({ requestId }: { requestId: string }) {
     <header><Link href="/pickups">‹ Pickup requests</Link><h1>{venueName}</h1><p className="pickup-status">{PICKUP_STATUS_LABELS[r.status]}</p>
       <p className="pickup-subtle">{closed ? "Conversation closed · history remains available" : connected ? "Live conversation" : "Reconnecting · checking for updates"}</p>
     </header>
+    {detail.guest && <p className="pickup-subtle">No sign-in needed. Keep this page open for replies.</p>}
     <details className="pickup-details"><summary>Pickup details · {r.party_size} {r.party_size === 1 ? "guest" : "guests"}</summary>
       <p>{r.pickup_location_text}</p>{r.pickup_location_details && <p>{r.pickup_location_details}</p>}{r.customer_notes && <p>{r.customer_notes}</p>}
       <p>Requested {pickupTime(r.requested_at)} · Expires {pickupTime(r.expires_at)}</p><p>{PICKUP_TRANSPORT_NOTICE}</p>
       {r.cancellation_reason && <p>Cancellation reason: {r.cancellation_reason}</p>}
     </details>
-    {detail.consented && detail.role !== "admin" && <section className="pickup-notice">
+    {detail.consented && detail.role !== "admin" && (!detail.guest || ["arrived", "completed"].includes(r.status)) && <section className="pickup-notice">
       <p>{r.referral_outcome === "arrival_verified" ? "Arrival verified by venue NFC deal redemption." : r.referral_outcome === "arrival_disputed" ? "The linked redemption was reversed. Arrival attribution is under review." : "Arrival confirmations are recorded separately from verified venue NFC deal redemption."}</p>
       {r.venue?.slug && <Link href={`/?venue=${encodeURIComponent(r.venue.slug)}`}>Open venue page &amp; Club Deals</Link>}
       {["arrived", "completed"].includes(r.status) && !detail.evidence.some(e => e.source === `${detail.role}_confirmation`) &&
@@ -152,6 +160,7 @@ function Conversation({ requestId }: { requestId: string }) {
         <textarea id="pickup-message" maxLength={2000} rows={2} value={text} onChange={event => setText(event.target.value)} disabled={busy} required />
         <button className="pickup-primary" type="submit" disabled={busy || !text.trim()}>{busy ? "Sending…" : "Send message"}</button>
       </form>}
+      {detail.guest && <GuestChatLink requestId={requestId} />}
       {!closed && detail.role !== "admin" && <section className="pickup-actions"><h2>Update pickup</h2>
         <label>Status<select aria-label="Status" value={statusChoice} disabled={busy} onChange={event => setStatusChoice(event.target.value as PickupStatus | "")}>
           <option value="">Choose an action</option>{pickupStatusActions(detail.role, r.status).map(status => <option key={status} value={status}>
@@ -174,12 +183,27 @@ function Conversation({ requestId }: { requestId: string }) {
     {detail.role === "admin" && <PickupAudit detail={detail} path={path} act={act} busy={busy} />}
   </section>;
 }
+function GuestChatLink({ requestId }: { requestId: string }) {
+  const [message, setMessage] = useState("");
+  const url = typeof window === "undefined" ? "" : window.location.origin + guestPickupHref(requestId);
+  return <section className="pickup-notice">
+    <p>Save your private link to return to this chat. Anyone with the link can open this conversation.</p>
+    <button type="button" onClick={async () => {
+      try { await navigator.clipboard.writeText(url); setMessage("Private chat link copied."); }
+      catch { setMessage("Open the private link below, then select and copy it."); }
+    }}>Copy private chat link</button>
+    {message && <p role="status">{message}</p>}
+    <details><summary>Your private chat link</summary><label>Private link<input aria-label="Private chat link" value={url} readOnly onFocus={event => event.currentTarget.select()} /></label>
+      <p className="pickup-subtle">Pickup requests close after 12 hours. Your private link can open the chat history for 30 days.</p>
+    </details>
+  </section>;
+}
 function PickupAudit({ detail, path, act, busy }: { detail: PickupDetail; path: string; act: (body: Record<string, unknown>) => Promise<boolean>; busy: boolean }) {
   const [older, setOlder] = useState<PickupDetail["events"]>([]), [hasMore, setHasMore] = useState(detail.hasMoreEvents), [loading, setLoading] = useState(false), [error, setError] = useState("");
-  return <section className="pickup-audit"><h2>Admin audit</h2><p>Customer: {detail.request.customer_user_id}<br />Venue: {detail.request.venue_id}<br />Request: {detail.request.id}</p>
+  return <section className="pickup-audit"><h2>Admin audit</h2><p>Customer: {detail.request.customer_user_id || "Guest (no account)"}<br />Venue: {detail.request.venue_id}<br />Request: {detail.request.id}</p>
     <p>Referral source: {detail.request.referral_source} · Outcome: {detail.request.referral_outcome}</p>
     <h3>Arrival evidence</h3>{detail.evidence.length ? detail.evidence.map(e => <p key={e.id}>{e.source} · {pickupTime(e.created_at)}{e.redemption_id && <> · Redemption {e.redemption_id}</>}</p>) : <p>No arrival evidence recorded.</p>}
-    <h3>Reports</h3>{detail.reports.length ? detail.reports.map(report => <article key={report.id}><strong>{report.reason}</strong><p>{report.details}</p><p>{report.reporter_user_id} · {pickupTime(report.created_at)}</p></article>) : <p>No conversation reports.</p>}
+    <h3>Reports</h3>{detail.reports.length ? detail.reports.map(report => <article key={report.id}><strong>{report.reason}</strong><p>{report.details}</p><p>{report.reporter_user_id || "Guest"} · {pickupTime(report.created_at)}</p></article>) : <p>No conversation reports.</p>}
     <h3>Event history</h3>{[...new Map([...detail.events, ...older].map(e => [e.id, e])).values()].map(event => <article key={event.id}><strong>{event.event_type}</strong><p>{pickupTime(event.created_at)} · {event.actor_user_id || "System"}</p><pre>{JSON.stringify(event.metadata, null, 2)}</pre></article>)}
     {hasMore && <button disabled={loading} onClick={async () => { setLoading(true); setError(""); try {
       const next: PickupDetail = await requestPickupJson(`${path}?eventOffset=${detail.events.length + older.length}`); setOlder(current => [...current, ...next.events]); setHasMore(next.hasMoreEvents);

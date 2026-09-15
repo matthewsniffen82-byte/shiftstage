@@ -55,7 +55,7 @@ export default function TransportationClient({ deal, venue, shuttleAvailable, pi
   const [addressCopyStatus, setAddressCopyStatus] = useState("");
   const [requestByPhone, setRequestByPhone] = useState(false);
   const account = usePickupAccount();
-  const useChat = pickupAvailable && account.ready && !!account.identity && account.role === "customer" && !requestByPhone;
+  const useChat = pickupAvailable && account.ready && (!account.identity || account.role === "customer") && !requestByPhone;
   const heading = useRef<HTMLHeadingElement>(null);
   const pending = useRef(false);
   const attemptedRequest = useRef<{ requestId: string; name: string; location: string; phone: string; email: string; partySize: number; handoffAccepted: boolean } | null>(null);

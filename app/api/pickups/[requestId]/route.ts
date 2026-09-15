@@ -4,6 +4,7 @@ import { readBoundedJsonObject } from "@/src/lib/bounded-json-body";
 import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
 import { getPickup, pickupRpc } from "@/src/lib/dancr/pickup-server";
 import { pickupCommand } from "@/src/lib/dancr/pickup-validation";
+import { getGuestPickup, commandGuestPickup } from "@/src/lib/dancr/pickup-guest-server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -11,6 +12,10 @@ type Params = { params: Promise<{ requestId: string }> };
 const headers = { "cache-control": "private, no-store" };
 export async function GET(request: Request, { params }: Params) {
   try {
+    if (!request.headers.has("authorization")) {
+      const result = await getGuestPickup(request, (await params).requestId);
+      return NextResponse.json({ ok: true, ...result }, { headers });
+    }
     const context = await createRequestSupabaseContext(request, { active: true });
     const result = await getPickup(context.client, (await params).requestId, new URL(request.url).searchParams);
     return NextResponse.json({ ok: true, ...result, session: context.session }, { headers });
@@ -18,6 +23,11 @@ export async function GET(request: Request, { params }: Params) {
 }
 export async function POST(request: Request, { params }: Params) {
   try {
+    if (!request.headers.has("authorization")) {
+      const body = await readBoundedJsonObject(request, { maxBytes: 12288, invalidMessage: "Invalid pickup action.", tooLargeMessage: "Pickup action is too large." });
+      await commandGuestPickup(request, (await params).requestId, body);
+      return NextResponse.json({ ok: true }, { headers });
+    }
     const context = await createRequestSupabaseContext(request, { active: true });
     const body = await readBoundedJsonObject(request, { maxBytes: 12288, invalidMessage: "Invalid pickup action.", tooLargeMessage: "Pickup action is too large." });
     const command = pickupCommand((await params).requestId, body);

@@ -27,7 +27,7 @@ export type PhonePickupRequest = {
   name: string; location: string; phone: string; email: string; party_size: number;
 };
 export type PickupRequest = {
-  id: string; customer_user_id: string; venue_id: string; status: PickupStatus; party_size: number;
+  id: string; customer_user_id: string | null; venue_id: string; status: PickupStatus; party_size: number;
   pickup_location_text: string; pickup_location_details: string; customer_notes: string;
   requested_at: string; expires_at: string; accepted_at: string | null; vehicle_dispatched_at: string | null;
   arrived_at: string | null; completed_at: string | null; cancelled_at: string | null;
@@ -37,8 +37,8 @@ export type PickupRequest = {
 export type PickupMessage = { id: string; sequence: number; sender_type: "customer" | "venue" | "system"; message_text: string; created_at: string };
 export type PickupEvent = { id: string; event_type: string; actor_user_id: string | null; metadata: Record<string, unknown>; created_at: string };
 export type PickupEvidence = { id: string; source: string; actor_user_id: string | null; redemption_id: string | null; created_at: string };
-export type PickupReport = { id: string; reporter_user_id: string; reason: string; details: string; created_at: string };
+export type PickupReport = { id: string; reporter_user_id: string | null; reason: string; details: string; created_at: string };
 export type PickupDetail = {
-  request: PickupRequest; role: PickupRole; consented: boolean; messages: PickupMessage[]; hasOlderMessages: boolean;
+  request: PickupRequest; role: PickupRole; guest?: boolean; consented: boolean; messages: PickupMessage[]; hasOlderMessages: boolean;
   events: PickupEvent[]; hasMoreEvents: boolean; reports: PickupReport[]; evidence: PickupEvidence[];
 };

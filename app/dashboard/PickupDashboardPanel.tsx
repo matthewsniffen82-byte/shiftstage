@@ -33,7 +33,7 @@ export default function PickupDashboardPanel() {
     </Link>)}</div></>}
     <div className="notification-list">{requests.map(request => <Link className="notification-row" key={request.id} href={`/pickups/${request.id}`}>
       <strong>{request.venue?.name || "Venue"} · {PICKUP_STATUS_LABELS[request.status]}</strong>
-      <span>Guest {request.customer_user_id.slice(-6)} · {request.party_size} guests · {request.pickup_location_text}</span>
+      <span>Guest {(request.customer_user_id || request.id).slice(-6)} · {request.party_size} guests · {request.pickup_location_text}</span>
       <time dateTime={request.requested_at}>{new Date(request.requested_at).toLocaleString()}</time>
       {Boolean(request.unread_count) && <b>{request.unread_count} unread</b>}
     </Link>)}</div>

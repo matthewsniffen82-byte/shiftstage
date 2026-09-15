@@ -47,7 +47,7 @@ const Dashboard=require('./app/dashboard/PickupDashboardPanel.tsx').default;
 const Transportation=require('./app/deals/transportation/[dealId]/TransportationClient.tsx').default;
 const mode=new URLSearchParams(location.search).get('mode');
 const venue={id:'96000000-0000-4000-8000-000000000010',name:'Test Club',slug:'test-club',club_pickup_enabled:true};
-const component=['ride','entry','ride-only','phone'].includes(mode)?React.createElement(Transportation,{venue,deal:mode==='ride-only'?undefined:{id:'96000000-0000-4000-8000-000000000040',venueId:venue.id},shuttleAvailable:true,pickupAvailable:mode!=='phone',initialTransportation:mode==='entry'?'':'club_shuttle',sourceType:'dancer_profile',dancerId:'96000000-0000-4000-8000-000000000006',attributionToken:'synthetic-attribution'}):mode==='request'?React.createElement(Form,{venue}):mode==='dashboard'?React.createElement(Dashboard):mode==='inbox'?React.createElement(Inbox):React.createElement(Chat,{requestId:'96000000-0000-4000-8000-000000000020'});
+const component=['ride','entry','ride-only','phone'].includes(mode)?React.createElement(Transportation,{venue,deal:mode==='ride-only'?undefined:{id:'96000000-0000-4000-8000-000000000040',venueId:venue.id},shuttleAvailable:true,pickupAvailable:mode!=='phone',initialTransportation:mode==='entry'?'':'club_shuttle',sourceType:'dancer_profile',dancerId:'96000000-0000-4000-8000-000000000006',attributionToken:'synthetic-attribution'}):mode==='request'?React.createElement(Form,{venue}):mode==='dashboard'?React.createElement(Dashboard):mode==='inbox'?React.createElement(Inbox):React.createElement(Chat,{requestId:new URLSearchParams(location.search).get('requestId')||'96000000-0000-4000-8000-000000000020'});
 createRoot(document.getElementById('app')).render(component);`,root);
 const bundle=`var process={env:{NODE_ENV:'development'}};var modules={${Object.entries(modules).map(([id,m])=>`${JSON.stringify(id)}:[function(require,module,exports){${m.code}\n},${JSON.stringify(m.deps)}]`).join(',')}};var cache={};function run(id){if(cache[id])return cache[id].exports;const m=cache[id]={exports:{}};modules[id][0](name=>run(modules[id][1][name]),m,m.exports);return m.exports;}run(${entry});`;
 const css=['public/dancr-brand-tokens.v1.css','public/dancr-button-system.v1.css','public/dancr-aesthetic.v1.css','app/pickups/pickup.css','app/deals/transportation/[dealId]/transportation.css'].map(file=>readFileSync(resolve(root,file),'utf8')).join('\n');
@@ -65,6 +65,7 @@ try {
       let role='customer',consented=true,status='requested',failNextSend=true,failNextRequest=false;const actions=[],messages=[{id:id(30),sequence:1,sender_type:'system',message_text:'Pickup requested from the venue.',created_at:'2026-09-14T19:00:00Z'}];
       let showChats=true;const phoneRequests=[];
       let failNextGuest=false;const guestSubmissions=[];
+      const guestKeys=new Map(), guestActions=[];
       await page.route('**/api/**/shuttle',async route=>{
         const req=route.request(), body=req.postDataJSON();guestSubmissions.push({url:req.url(),body});
         assert.equal(req.headers().authorization,undefined,'guest requests do not require an auth token');
@@ -76,8 +77,17 @@ try {
       const request=()=>({id:id(20),customer_user_id:id(1),venue_id:id(10),status,party_size:2,pickup_location_text:'Synthetic hotel lobby',pickup_location_details:'North entrance',customer_notes:'Blue jacket',requested_at:'2026-09-14T19:00:00Z',expires_at:'2099-09-14T19:00:00Z',referral_source:'mydancr',referral_outcome:'pending',venue:{name:'Test Club',slug:'test-club'}});
       await page.route('**/api/pickups**',async route=>{
         const req=route.request(), url=new URL(req.url());
+        const guestKey=req.headers()['x-pickup-guest-key'];
+        const conversationId=url.pathname.split('/').at(-1);
+        if(guestKey && url.pathname!=='/api/pickups' && guestKeys.get(conversationId)!==guestKey) {
+          await route.fulfill({status:403,json:{ok:false,error:'Private pickup link required.'}});return;
+        }
         if(req.method()==='POST') {
-          const body=req.postDataJSON();actions.push(body);
+          const body=req.postDataJSON();(guestKey?guestActions:actions).push({...body,...(guestKey?{guestKey}: {})});
+          if(guestKey) {
+            assert.match(guestKey,/^[a-f0-9]{64}$/);assert.equal(req.headers().authorization,undefined);
+            if(url.pathname==='/api/pickups')guestKeys.set(body.requestId,guestKey);
+          }
           if(!body.action && url.pathname==='/api/pickups' && failNextRequest){failNextRequest=false;await route.fulfill({status:503,json:{ok:false,error:'Synthetic request failure'}});return;}
           if(body.action==='message') {
             if(failNextSend){failNextSend=false;await route.fulfill({status:503,json:{ok:false,error:'Synthetic temporary failure'}});return;}
@@ -85,7 +95,7 @@ try {
           }
           if(body.action==='status')status=body.status;
           if(body.action==='consent')consented=true;
-          await route.fulfill({json:{ok:true,id:id(20)}});return;
+          await route.fulfill({json:{ok:true,id:guestKey?body.requestId||conversationId:id(20),guest:Boolean(guestKey)}});return;
         }
         if(url.pathname==='/api/pickups/settings'){await route.fulfill({json:{ok:true,venues:[{id:id(10),name:'Test Club',slug:'test-club',club_pickup_enabled:true,eligible:true}]}});return;}
         if(url.pathname==='/api/pickups'){
@@ -95,7 +105,7 @@ try {
             phoneRequests:phones.slice(phoneOffset,phoneOffset+1),hasMorePhoneRequests:phones.length>phoneOffset+1}});return;
         }
         const history=messages.filter(m=>!url.searchParams.has('before')||m.sequence<Number(url.searchParams.get('before')));
-        await route.fulfill({json:{ok:true,request:request(),role,consented,messages:consented?history.slice(-50):[],hasOlderMessages:history.length>50,events:[],hasMoreEvents:false,reports:[],evidence:[]}});
+        await route.fulfill({json:{ok:true,request:{...request(),...(guestKey?{id:conversationId,customer_user_id:null,requested_at:new Date().toISOString()}: {})},guest:Boolean(guestKey),role,consented,messages:consented?history.slice(-50):[],hasOlderMessages:history.length>50,events:[],hasMoreEvents:false,reports:[],evidence:[]}});
       });
       await page.goto(base+'/?mode=request');
       await page.getByRole('heading',{name:'Request Club Pickup'}).waitFor();
@@ -158,9 +168,58 @@ try {
       assert.equal(await page.getByRole('button',{name:'Request pickup & open chat',exact:true}).count(),0);
       // Guests can use every ride entry point even when the venue offers chat.
       await page.evaluate(()=>{sessionStorage.setItem('syntheticGuest','1');localStorage.removeItem('dancrAuthSessionV1');});
+      let guestDestination;
+      for(const mode of ['ride','entry','ride-only']) {
+        await page.goto(base+'/?mode='+mode);
+        if(mode==='entry')await page.getByLabel('Free club transport').click();
+        await page.getByRole('button',{name:'Request pickup & open chat',exact:true}).waitFor();
+        assert.equal(await page.getByRole('link',{name:'Customer sign in',exact:true}).count(),0);
+        await page.getByText('No sign-in needed.',{exact:true}).waitFor();
+        await page.getByLabel('Pickup location',{exact:true}).fill('Synthetic guest hotel lobby');
+        await page.getByLabel('Party size',{exact:true}).fill('2');
+        await page.getByLabel('Agree & Continue').check();
+        const start=guestActions.length;if(mode==='ride')failNextRequest=true;
+        await page.getByRole('button',{name:'Request pickup & open chat',exact:true}).click();
+        if(mode==='ride') {
+          await page.getByRole('alert').waitFor();
+          await page.getByRole('button',{name:'Request pickup & open chat',exact:true}).click();
+          assert.equal(guestActions[start].requestId,guestActions[start+1].requestId);
+          assert.equal(guestActions[start].guestKey,guestActions[start+1].guestKey);
+        }
+        await page.waitForFunction(()=>Boolean(window.__destination));
+        guestDestination=await page.evaluate(()=>window.__destination);
+        assert.match(guestDestination,/^\/pickups\/[0-9a-f-]{36}#pickupKey=[a-f0-9]{64}$/);
+        assert.equal(await page.evaluate(()=>localStorage.getItem('dancrAuthSessionV1')),null);
+      }
+      const guestUrl=new URL(guestDestination,base), guestId=guestUrl.pathname.split('/').at(-1);
+      guestUrl.searchParams.set('mode','chat');guestUrl.searchParams.set('requestId',guestId);
+      await page.goto(guestUrl.href);
+      await page.getByRole('button',{name:'Copy private chat link',exact:true}).waitFor();
+      await page.getByLabel('Message Test Club').fill('Guest chat without an account');
+      failNextSend=false;
+      await page.getByRole('button',{name:'Send message',exact:true}).click();
+      await page.getByText('Guest chat without an account',{exact:true}).waitFor();
+      messages.push({id:id(900),sequence:messages.length+1,sender_type:'venue',message_text:'Guest pickup reply',created_at:new Date().toISOString()});
+      await page.getByText('Guest pickup reply',{exact:true}).waitFor({timeout:10000});
+      assert.equal(await page.evaluate(()=>window.__subscriptions||0),0,'guest chat polls privately without an account websocket');
+      for(const width of [320,393,1280]) {
+        await page.setViewportSize({width,height:850});assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false,`${name} guest chat ${width} overflow`);
+      }
+      await page.setViewportSize({width:393,height:850});await page.screenshot({path:resolve(root,`.next-club-pickup/guest-chat-${name}.png`),fullPage:true});
+      await page.reload();await page.getByText('Guest chat without an account',{exact:true}).waitFor();
+      await page.goto(base+'/?mode=inbox');await page.getByRole('heading',{name:'Pickup Requests',exact:true}).waitFor();
+      assert.equal(await page.getByRole('link',{name:/Test Club Open pickup chat/}).count(),3);
+      // A fresh browser can open only the private fragment link, with no account or prior storage.
+      await page.evaluate(()=>localStorage.removeItem('mydancrGuestPickupsV1'));
+      await page.goto(guestUrl.href);await page.getByText('Guest chat without an account',{exact:true}).waitFor();
+      await page.evaluate(()=>localStorage.removeItem('mydancrGuestPickupsV1'));
+      guestUrl.hash='pickupKey='+'0'.repeat(64);
+      await page.goto(guestUrl.href);await page.getByRole('alert').waitFor();assert.equal(await page.locator('.pickup-message').count(),0);
+      messages.splice(1);failNextSend=true;
       for(const mode of ['ride','entry','ride-only']) {
         await page.goto(base+'/?mode='+mode);await page.evaluate(()=>localStorage.removeItem('mydancrPendingNfcDealV2'));
         if(mode==='entry')await page.getByLabel('Free club transport').click();
+        await page.getByRole('button',{name:'Request by phone instead',exact:true}).click();
         await page.getByRole('button',{name:'Send pickup request',exact:true}).waitFor();
         assert.equal(await page.getByRole('link',{name:'Customer sign in',exact:true}).count(),0);
         assert.equal(await page.getByRole('button',{name:'Request pickup & open chat',exact:true}).count(),0);
@@ -242,12 +301,12 @@ try {
       await page.getByRole('button',{name:'Load more phone requests',exact:true}).click();await page.getByText('Test Club · Second Phone Guest',{exact:true}).waitFor();
       assert.equal(await page.locator('article.pickup-list-item').count(),2);
       await page.evaluate(()=>localStorage.removeItem('dancrAuthSessionV1'));await page.clock.fastForward(1100);
-      await page.getByRole('link',{name:'Customer sign in'}).waitFor();assert.equal(await page.locator('article.pickup-list-item').count(),0);
+      await page.getByText('No sign-in needed. Open a saved chat below, or request pickup from a club with pickup chat enabled.',{exact:true}).waitFor();assert.equal(await page.locator('article.pickup-list-item').count(),0);
       await page.evaluate(()=>localStorage.setItem('dancrAuthSessionV1',JSON.stringify({accessToken:'synthetic-venue',account:{id:'96000000-0000-4000-8000-000000000003',role:'venue'}})));
       await page.goto(base+'/?mode=dashboard');await page.getByRole('heading',{name:'Recent phone pickup requests',exact:true}).waitFor();
       assert.equal(await page.getByText('No active pickup requests.',{exact:true}).count(),0);
       await page.goto(base+'/?mode=chat');await page.locator('.pickup-messages').waitFor();
-      await page.evaluate(()=>localStorage.removeItem('dancrAuthSessionV1'));await page.getByRole('link',{name:'Customer sign in'}).waitFor();
+      await page.evaluate(()=>localStorage.removeItem('dancrAuthSessionV1'));await page.getByRole('link',{name:'Saved pickup chats'}).waitFor();
       assert.equal(await page.locator('.pickup-message').count(),0);await page.waitForFunction(()=>window.__subscriptions===0);
       assert.deepEqual(errors,[]);console.log(JSON.stringify({browser:name,request:true,guestRide:true,guestRequestReachesVenueInbox:true,guestRetrySameRequestId:true,chat:true,retrySameMessageId:true,realtimeReconcile:true,consent:true,cancellation:true,report:true,venueStatus:true,settings:true,phoneInbox:true,phonePagination:true,phoneAutoRefresh:true,phoneDashboard:true,logoutClearsData:true,widths:[320,393,1280],runtimeErrors:errors}));
     }finally{await browser.close();}

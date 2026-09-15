@@ -1,5 +1,7 @@
 # Club Pickup delivery
 
+Guest access was added after the initial delivery below. See [Guest pickup chat](guest-pickup-chat.md) for the current signed-out request, private-link, and security behavior.
+
 Club Pickup is private customer-to-verified-venue coordination. The venue decides whether transportation is available and controls its own vehicles and personnel. MyDancr provides communications and customer-referral attribution; this feature creates no financial charges and no driver or dancer conversations.
 
 ## Delivery stages
