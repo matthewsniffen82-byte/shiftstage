@@ -4,6 +4,7 @@ import { readBoundedJsonObject } from "@/src/lib/bounded-json-body";
 import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
 import { listPickups, pickupRpc } from "@/src/lib/dancr/pickup-server";
 import { pickupCreateArgs } from "@/src/lib/dancr/pickup-validation";
+import { listPhonePickupRequests } from "@/src/lib/dancr/pickup-phone-requests";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -11,8 +12,11 @@ const headers = { "cache-control": "private, no-store" };
 export async function GET(request: Request) {
   try {
     const context = await createRequestSupabaseContext(request, { active: true });
-    const result = await listPickups(context.client, new URL(request.url).searchParams);
-    return NextResponse.json({ ok: true, ...result, session: context.session }, { headers });
+    const search = new URL(request.url).searchParams;
+    const result = await listPickups(context.client, search);
+    const phone = result.role === "customer" ? { phoneRequests: [], hasMorePhoneRequests: false }
+      : await listPhonePickupRequests(context.client, search);
+    return NextResponse.json({ ok: true, ...result, ...phone, session: context.session }, { headers });
   } catch (error) { const response = apiError(error, "Unable to load pickup requests."); response.headers.set("cache-control", headers["cache-control"]); return response; }
 }
 export async function POST(request: Request) {

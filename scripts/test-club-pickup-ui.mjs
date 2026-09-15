@@ -43,10 +43,11 @@ const React=require('react'),{createRoot}=require('react-dom/client');
 const Form=require('./app/pickups/PickupRequestForm.tsx').default;
 const Chat=require('./app/pickups/PickupConversation.tsx').default;
 const Inbox=require('./app/pickups/PickupInbox.tsx').default;
+const Dashboard=require('./app/dashboard/PickupDashboardPanel.tsx').default;
 const Transportation=require('./app/deals/transportation/[dealId]/TransportationClient.tsx').default;
 const mode=new URLSearchParams(location.search).get('mode');
 const venue={id:'96000000-0000-4000-8000-000000000010',name:'Test Club',slug:'test-club',club_pickup_enabled:true};
-const component=['ride','entry','ride-only','phone'].includes(mode)?React.createElement(Transportation,{venue,deal:mode==='ride-only'?undefined:{id:'96000000-0000-4000-8000-000000000040',venueId:venue.id},shuttleAvailable:true,pickupAvailable:mode!=='phone',initialTransportation:mode==='entry'?'':'club_shuttle',sourceType:'dancer_profile',dancerId:'96000000-0000-4000-8000-000000000006',attributionToken:'synthetic-attribution'}):mode==='request'?React.createElement(Form,{venue}):mode==='inbox'?React.createElement(Inbox):React.createElement(Chat,{requestId:'96000000-0000-4000-8000-000000000020'});
+const component=['ride','entry','ride-only','phone'].includes(mode)?React.createElement(Transportation,{venue,deal:mode==='ride-only'?undefined:{id:'96000000-0000-4000-8000-000000000040',venueId:venue.id},shuttleAvailable:true,pickupAvailable:mode!=='phone',initialTransportation:mode==='entry'?'':'club_shuttle',sourceType:'dancer_profile',dancerId:'96000000-0000-4000-8000-000000000006',attributionToken:'synthetic-attribution'}):mode==='request'?React.createElement(Form,{venue}):mode==='dashboard'?React.createElement(Dashboard):mode==='inbox'?React.createElement(Inbox):React.createElement(Chat,{requestId:'96000000-0000-4000-8000-000000000020'});
 createRoot(document.getElementById('app')).render(component);`,root);
 const bundle=`var process={env:{NODE_ENV:'development'}};var modules={${Object.entries(modules).map(([id,m])=>`${JSON.stringify(id)}:[function(require,module,exports){${m.code}\n},${JSON.stringify(m.deps)}]`).join(',')}};var cache={};function run(id){if(cache[id])return cache[id].exports;const m=cache[id]={exports:{}};modules[id][0](name=>run(modules[id][1][name]),m,m.exports);return m.exports;}run(${entry});`;
 const css=['public/dancr-brand-tokens.v1.css','public/dancr-button-system.v1.css','public/dancr-aesthetic.v1.css','app/pickups/pickup.css','app/deals/transportation/[dealId]/transportation.css'].map(file=>readFileSync(resolve(root,file),'utf8')).join('\n');
@@ -62,6 +63,7 @@ try {
       await context.addInitScript(()=>{if(!localStorage.getItem('dancrAuthSessionV1'))localStorage.setItem('dancrAuthSessionV1',JSON.stringify({accessToken:'synthetic-token',account:{id:'96000000-0000-4000-8000-000000000001',role:'customer'}}));});
       const page=await context.newPage(), errors=[]; page.on('pageerror',e=>{errors.push(e.message);console.error('Synthetic UI runtime error:',e.message);});
       let role='customer',consented=true,status='requested',failNextSend=true,failNextRequest=false;const actions=[],messages=[{id:id(30),sequence:1,sender_type:'system',message_text:'Pickup requested from the venue.',created_at:'2026-09-14T19:00:00Z'}];
+      let showChats=true;const phoneRequests=[];
       const request=()=>({id:id(20),customer_user_id:id(1),venue_id:id(10),status,party_size:2,pickup_location_text:'Synthetic hotel lobby',pickup_location_details:'North entrance',customer_notes:'Blue jacket',requested_at:'2026-09-14T19:00:00Z',expires_at:'2099-09-14T19:00:00Z',referral_source:'mydancr',referral_outcome:'pending',venue:{name:'Test Club',slug:'test-club'}});
       await page.route('**/api/pickups**',async route=>{
         const req=route.request(), url=new URL(req.url());
@@ -77,7 +79,12 @@ try {
           await route.fulfill({json:{ok:true,id:id(20)}});return;
         }
         if(url.pathname==='/api/pickups/settings'){await route.fulfill({json:{ok:true,venues:[{id:id(10),name:'Test Club',slug:'test-club',club_pickup_enabled:true,eligible:true}]}});return;}
-        if(url.pathname==='/api/pickups'){await route.fulfill({json:{ok:true,role,requests:[{...request(),unread_count:1}],hasMore:false}});return;}
+        if(url.pathname==='/api/pickups'){
+          const phoneOffset=Number(url.searchParams.get('phoneOffset')||0);
+          const phones=role==='venue'&&(url.searchParams.get('group')||'active')==='active'?phoneRequests:[];
+          await route.fulfill({json:{ok:true,role,requests:showChats?[{...request(),unread_count:1}]:[],hasMore:false,
+            phoneRequests:phones.slice(phoneOffset,phoneOffset+1),hasMorePhoneRequests:phones.length>phoneOffset+1}});return;
+        }
         const history=messages.filter(m=>!url.searchParams.has('before')||m.sequence<Number(url.searchParams.get('before')));
         await route.fulfill({json:{ok:true,request:request(),role,consented,messages:consented?history.slice(-50):[],hasOlderMessages:history.length>50,events:[],hasMoreEvents:false,reports:[],evidence:[]}});
       });
@@ -177,10 +184,35 @@ try {
       await page.getByLabel('Status',{exact:true}).selectOption('accepted');await page.getByRole('button',{name:'Confirm update'}).click();await page.getByText('Venue Accepted',{exact:true}).waitFor();
       await page.goto(base+'/?mode=inbox');await page.getByRole('heading',{name:'Pickup Requests'}).waitFor();await page.locator('.pickup-list-item').waitFor();
       await page.getByText('Club Pickup settings',{exact:true}).click();await page.getByRole('button',{name:'Disable Club Pickup'}).click();await page.getByRole('button',{name:'Enable Club Pickup'}).waitFor();
+      // Reproduce a venue with phone handoffs and no pickup chats.
+      showChats=false;
+      phoneRequests.push({id:id(300),venue_id:id(10),venue_name:'Test Club',name:'Synthetic Phone Guest',location:'Synthetic lobby',phone:'+17025550123',email:'guest@example.test',party_size:2,requested_at:'2026-09-15T07:46:33Z'});
+      await page.getByRole('button',{name:'Refresh requests',exact:true}).click();
+      await page.getByRole('heading',{name:'Phone pickup requests',exact:true}).waitFor();
+      assert.equal(await page.getByText('No pickup requests in this group.',{exact:true}).count(),0);
+      assert.equal(await page.getByRole('link',{name:'Call +17025550123',exact:true}).getAttribute('href'),'tel:+17025550123');
+      assert.equal(await page.getByRole('link',{name:'Email guest@example.test',exact:true}).getAttribute('href'),'mailto:guest%40example.test');
+      for(const width of [320,393,1280]) {
+        await page.setViewportSize({width,height:850});assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false,`${name} phone inbox ${width} overflow`);
+      }
+      await page.setViewportSize({width:393,height:850});await page.screenshot({path:resolve(root,`.next-club-pickup/phone-inbox-${name}.png`),fullPage:true});
+      await page.getByRole('button',{name:'Completed',exact:true}).click();await page.getByText('No pickup requests in this group.',{exact:true}).waitFor();
+      assert.equal(await page.getByRole('link',{name:'Call +17025550123',exact:true}).count(),0);
+      await page.getByRole('button',{name:'Active',exact:true}).click();await page.getByRole('link',{name:'Call +17025550123',exact:true}).waitFor();
+      await page.clock.install();
+      phoneRequests.push({...phoneRequests[0],id:id(301),name:'Second Phone Guest'});
+      await page.clock.fastForward(31000);await page.getByRole('button',{name:'Load more phone requests',exact:true}).waitFor();
+      await page.getByRole('button',{name:'Load more phone requests',exact:true}).click();await page.getByText('Test Club · Second Phone Guest',{exact:true}).waitFor();
+      assert.equal(await page.locator('article.pickup-list-item').count(),2);
+      await page.evaluate(()=>localStorage.removeItem('dancrAuthSessionV1'));await page.clock.fastForward(1100);
+      await page.getByRole('link',{name:'Customer sign in'}).waitFor();assert.equal(await page.locator('article.pickup-list-item').count(),0);
+      await page.evaluate(()=>localStorage.setItem('dancrAuthSessionV1',JSON.stringify({accessToken:'synthetic-venue',account:{id:'96000000-0000-4000-8000-000000000003',role:'venue'}})));
+      await page.goto(base+'/?mode=dashboard');await page.getByRole('heading',{name:'Recent phone pickup requests',exact:true}).waitFor();
+      assert.equal(await page.getByText('No active pickup requests.',{exact:true}).count(),0);
       await page.goto(base+'/?mode=chat');await page.locator('.pickup-messages').waitFor();
       await page.evaluate(()=>localStorage.removeItem('dancrAuthSessionV1'));await page.getByRole('link',{name:'Customer sign in'}).waitFor();
       assert.equal(await page.locator('.pickup-message').count(),0);await page.waitForFunction(()=>window.__subscriptions===0);
-      assert.deepEqual(errors,[]);console.log(JSON.stringify({browser:name,request:true,chat:true,retrySameMessageId:true,realtimeReconcile:true,consent:true,cancellation:true,report:true,venueStatus:true,settings:true,logoutClearsData:true,widths:[320,393,1280],runtimeErrors:errors}));
+      assert.deepEqual(errors,[]);console.log(JSON.stringify({browser:name,request:true,chat:true,retrySameMessageId:true,realtimeReconcile:true,consent:true,cancellation:true,report:true,venueStatus:true,settings:true,phoneInbox:true,phonePagination:true,phoneAutoRefresh:true,phoneDashboard:true,logoutClearsData:true,widths:[320,393,1280],runtimeErrors:errors}));
     }finally{await browser.close();}
   }
 }finally{await new Promise(done=>server.close(done));}

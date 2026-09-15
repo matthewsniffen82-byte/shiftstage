@@ -22,6 +22,10 @@ export function pickupStatusActions(role: PickupRole, status: PickupStatus): Pic
   return next[status] || [];
 }
 export type PickupVenue = { id: string; name: string; slug: string; club_pickup_enabled: boolean; eligible?: boolean };
+export type PhonePickupRequest = {
+  id: string; venue_id: string; venue_name: string; requested_at: string;
+  name: string; location: string; phone: string; email: string; party_size: number;
+};
 export type PickupRequest = {
   id: string; customer_user_id: string; venue_id: string; status: PickupStatus; party_size: number;
   pickup_location_text: string; pickup_location_details: string; customer_notes: string;

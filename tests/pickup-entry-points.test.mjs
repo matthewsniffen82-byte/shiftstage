@@ -20,6 +20,7 @@ test('public availability requires opt-in, publication and an active venue owner
 });
 test('pickup notification links only accept canonical private request IDs and ignore supplied external URLs',()=>{
   assert.equal(pickupNotificationHref({kind:'club_pickup',pickupRequestId:id(20),url:'https://attacker.invalid'}),'/pickups/'+id(20));
+  assert.equal(pickupNotificationHref({kind:'club_shuttle_request',url:'https://attacker.invalid'}),'/pickups');
   for(const value of [null,[],{}, {kind:'club_pickup',pickupRequestId:'//attacker.invalid'},{kind:'support_message',pickupRequestId:id(20)}])assert.equal(pickupNotificationHref(value),'');
 });
 test('venue CTA is hidden unless explicitly enabled and dashboard previews never initiate pickup',()=>{
