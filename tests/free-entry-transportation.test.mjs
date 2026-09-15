@@ -41,6 +41,7 @@ function client(props = {}, options = {}) {
   const { default: Component } = load("../app/deals/transportation/[dealId]/TransportationClient.tsx", {
     react: hooks, "next/link": { default: "a" },
     "@/src/lib/dancr/club-deal-transportation": transportation,
+    "@/app/pickups/PickupRequestForm": { default: "pickup-form" }, "@/app/pickups/pickup.css": {},
     "@/app/components/NfcIcon": { default: () => null }, "./transportation.css": {},
   }, {
     navigator: { clipboard: options.clipboardUnavailable ? undefined : { writeText: async value => {
@@ -50,7 +51,7 @@ function client(props = {}, options = {}) {
     localStorage: { getItem: name => stored.get(name) || null, removeItem: name => stored.delete(name), setItem(name, value) { if (failStorage) throw new Error("Blocked"); stored.set(name, value); } },
     crypto: { randomUUID: () => "33333333-3333-4333-8333-333333333333" },
     FormData: class { constructor(fields) { this.fields = fields; } get(name) { return this.fields[name] ?? null; } },
-    AbortSignal,
+    AbortSignal, URLSearchParams,
     fetch: async (url, init) => {
       requests.push({ url, body: JSON.parse(init.body) });
       return { ok: options.accepted !== false, status: options.accepted === false ? 503 : 200,
@@ -234,6 +235,34 @@ test("both entry points use the same pickup handoff and admission selection", as
   }
 });
 
+test("enabled pickup chat receives the ride context and saves admission only after request creation", () => {
+  for (const initialTransportation of ["", "club_shuttle"]) {
+    const f = client({ pickupAvailable: true, initialTransportation, sourceType: "dancer_profile", dancerId: "dancer", attributionToken: "signed-token" });
+    if (!initialTransportation) f.select("club_shuttle");
+    const form = nodes(f.render()).find(node => node.type === "pickup-form");
+    assert.ok(form); assert.equal(form.props.venue.id, venue.id);
+    assert.equal(nodes(f.render()).some(node => node.type === "form"), false, "no legacy shuttle form");
+    const returnTo = new URL(form.props.returnTo, "https://example.test");
+    assert.equal(returnTo.pathname, `/rides/${venue.id}`);
+    assert.equal(returnTo.searchParams.get("dealId"), deal.id);
+    assert.equal(returnTo.searchParams.get("sourceType"), "dancer_profile");
+    assert.equal(returnTo.searchParams.get("attributionToken"), "signed-token");
+    assert.equal(f.stored.has(key), false);
+    f.blockStorage(true); assert.equal(form.props.saveAdmission("pickup-id"), false);
+    assert.equal(f.stored.has(key), false);
+    f.blockStorage(false); assert.equal(form.props.saveAdmission("pickup-id"), true);
+    const saved = JSON.parse(f.stored.get(key));
+    assert.equal(saved.venueId, venue.id); assert.equal(saved.dealId, deal.id);
+    assert.equal(saved.transportation, "club_shuttle"); assert.equal(saved.pickupRequestId, "pickup-id");
+    assert.equal(saved.shuttleRequestId, null); assert.equal(saved.attributionToken, "signed-token");
+    assert.equal(saved.dancerId, "dancer"); assert.equal(saved.expiresAt - saved.savedAt, 12 * 60 * 60 * 1000);
+    assert.equal(f.requests.length, 0);
+  }
+  const rideOnly = client({ pickupAvailable: true, deal: undefined });
+  assert.equal(nodes(rideOnly.render()).find(node => node.type === "pickup-form").props.saveAdmission, undefined);
+  assert.equal(rideOnly.stored.has(key), false);
+});
+
 test("rideshares cannot prepare entry and selecting one clears a previous selection for this venue", async () => {
   const f = client(); f.stored.set(key, JSON.stringify({ venueId: venue.id, dealId: deal.id, transportation: "self_drive" }));
   f.select("rideshare_taxi"); await f.submit();
@@ -276,7 +305,7 @@ test("ride page resolves an active venue deal and preserves the exact attributed
   const api = load("../app/rides/[venueId]/page.tsx", {
     "next/navigation": { notFound() { throw new Error("NOT_FOUND"); } },
     "@/src/lib/supabase/admin": { createAdminSupabaseClient: () => ({ from() { return {
-      select() { return this; }, eq(...args) { filters.push(args); return this; }, not(...args) { filters.push(args); return this; }, maybeSingle: async () => ({ data: venue }),
+      select() { return this; }, eq(...args) { filters.push(args); return this; }, not(...args) { filters.push(args); return this; }, maybeSingle: async () => ({ data: { ...venue, club_pickup_available: true } }),
     }; } }) },
     "@/src/lib/dancr/deals": {
       getActiveClubDealForVenue: async (_, id) => { calls.push(id); return deal; },
@@ -289,6 +318,7 @@ test("ride page resolves an active venue deal and preserves the exact attributed
   });
   const run = query => api.default({ params: Promise.resolve({ venueId: venue.id }), searchParams: Promise.resolve(query) });
   const direct = await run({}); assert.equal(direct.props.deal.id, deal.id); assert.equal(direct.props.initialTransportation, "club_shuttle");
+  assert.equal(direct.props.pickupAvailable, true);
   assert.equal(direct.props.venue.address, venue.address);
   const attributed = await run({ dealId: deal.id, sourceType: "dancer_profile", dancerId: "dancer", attributionToken: "signed-token" });
   assert.deepEqual(calls[1], [venue.id, deal.id]); assert.equal(attributed.props.attributionToken, "signed-token");
@@ -301,12 +331,12 @@ test("ride page resolves an active venue deal and preserves the exact attributed
 });
 
 test("free-entry page supplies the public destination while retaining venue publication filters", async () => {
-  const filters = [], selections = [];
+  const filters = [], selections = []; let pickupAvailable = false;
   const api = load("../app/deals/transportation/[dealId]/page.tsx", {
     "next/navigation": { notFound() { throw new Error("NOT_FOUND"); } },
     "@/src/lib/supabase/admin": { createAdminSupabaseClient: () => ({ from() { return {
       select(value) { selections.push(value); return this; }, eq(...args) { filters.push(args); return this; }, not(...args) { filters.push(args); return this; },
-      maybeSingle: async () => ({data:{...venue,address:"123 Test Rd",owner_user_id:"private-owner",phone:"private-phone"}}),
+      maybeSingle: async () => ({data:{...venue,address:"123 Test Rd",owner_user_id:"private-owner",phone:"private-phone",club_pickup_available:pickupAvailable}}),
     }; } }) },
     "@/src/lib/dancr/deals": { getActiveClubDealById: async () => deal },
     "@/src/lib/dancr/public-club-deal": { toPublicClubDeal: value => value },
@@ -315,9 +345,13 @@ test("free-entry page supplies the public destination while retaining venue publ
     "./TransportationClient": { default: "transportation" },
   });
   const result = await api.default({params:Promise.resolve({dealId:deal.id}),searchParams:Promise.resolve({})});
+  assert.equal(result.props.pickupAvailable, false);
+  pickupAvailable = true;
+  assert.equal((await api.default({params:Promise.resolve({dealId:deal.id}),searchParams:Promise.resolve({})})).props.pickupAvailable, true);
   assert.equal(result.props.venue.address, venue.address);
   assert.deepEqual(Object.keys(result.props.venue).sort(), ["address","id","name","slug"]);
   assert.match(selections[0], /address, city, state/);
+  assert.match(selections[0], /club_pickup_available/);
   assert.ok(filters.some(([key,value]) => key === "is_active" && value === true));
   assert.ok(filters.some(([key,value]) => key === "page_review_status" && value === "published"));
   assert.ok(filters.some(([key,operator,value]) => key === "published_at" && operator === "is" && value === null));

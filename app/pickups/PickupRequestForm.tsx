@@ -1,17 +1,27 @@
 "use client";
-import { useRef, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { PICKUP_CHAT_NOTICE, PICKUP_CHAT_POLICY, PICKUP_CONSENT_VERSION, PICKUP_TRANSPORT_NOTICE, type PickupVenue } from "@/src/lib/dancr/pickup-domain";
 import { PickupAccountGate, requestPickupJson } from "./pickup-session";
 
-export default function PickupRequestForm({ venue }: { venue: PickupVenue }) {
-  return <PickupAccountGate customerOnly>{() => <RequestForm venue={venue} />}</PickupAccountGate>;
+type RequestProps = { venue: PickupVenue; embedded?: boolean; returnTo?: string; saveAdmission?: (requestId: string) => boolean; onBusyChange?: (busy: boolean) => void };
+export default function PickupRequestForm(props: RequestProps) {
+  return <PickupAccountGate customerOnly returnTo={props.returnTo}>{() => <RequestForm {...props} />}</PickupAccountGate>;
 }
-function RequestForm({ venue }: { venue: PickupVenue }) {
+function RequestForm({ venue, embedded = false, saveAdmission, onBusyChange }: RequestProps) {
   const router = useRouter();
   const [busy, setBusy] = useState(false), [error, setError] = useState("");
+  const [createdId, setCreatedId] = useState("");
   const pending = useRef<{ id: string; fingerprint: string } | null>(null), locked = useRef(false);
+  useEffect(() => {
+    onBusyChange?.(busy);
+    return () => onBusyChange?.(false);
+  }, [busy, onBusyChange]);
+  function openConversation(id: string) {
+    if (saveAdmission && !saveAdmission(id)) { setBusy(false); return; }
+    router.replace(`/pickups/${id}`);
+  }
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault(); if (locked.current) return;
     const data = new FormData(event.currentTarget);
@@ -23,12 +33,20 @@ function RequestForm({ venue }: { venue: PickupVenue }) {
     locked.current = true; setBusy(true); setError("");
     try {
       const result = await requestPickupJson("/api/pickups", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ ...fields, requestId: pending.current.id }) });
-      router.replace(`/pickups/${result.id}`);
+      setCreatedId(result.id);
+      openConversation(result.id);
     } catch (failure) { setError(failure instanceof Error ? failure.message : "Unable to request pickup. Retry to check the same request."); locked.current = false; setBusy(false); }
   }
+  if (createdId) return <section className="pickup-card" aria-live="polite">
+    <h2>Pickup requested</h2><p>Your ride still needs venue confirmation. Message {venue.name} and follow pickup updates in your chat.</p>
+    {!busy && <><p role="alert">Your request was sent, but your free-entry selection could not be saved. Allow site storage and retry, or open your chat now.</p>
+      <button className="pickup-primary" onClick={() => openConversation(createdId)}>Save free entry and open chat</button></>}
+    <Link className="pickup-primary" href={`/pickups/${createdId}`}>Message {venue.name}</Link>
+  </section>;
   return <section className="pickup-card">
-    <Link href={`/?venue=${encodeURIComponent(venue.slug)}`}>‹ {venue.name}</Link>
-    <h1>Request Club Pickup</h1><p>Send your pickup request directly to {venue.name}. The venue will confirm whether pickup is available.</p>
+    {!embedded && <><Link href={`/?venue=${encodeURIComponent(venue.slug)}`}>‹ {venue.name}</Link><h1>Request Club Pickup</h1></>}
+    <p>Send your pickup request directly to {venue.name}. Your chat opens after you submit, so you can message the venue and follow pickup updates. Your ride is confirmed only when the venue accepts.</p>
+    {saveAdmission && <p>We’ll also save your free-entry selection for 12 hours. Have staff verify your arrival in club transport, then tap the MyDancr sticker at the cashier.</p>}
     <form className="pickup-form" onSubmit={submit}>
       <fieldset disabled={busy}><legend className="pickup-visually-hidden">Pickup details</legend>
         <label>Pickup location<input name="location" required minLength={3} maxLength={300} autoComplete="off" placeholder="Hotel or meeting location" /></label>
@@ -39,7 +57,7 @@ function RequestForm({ venue }: { venue: PickupVenue }) {
         <section className="pickup-notice" aria-labelledby="pickup-consent-title"><h2 id="pickup-consent-title">MyDancr Pickup Chat</h2><p>{PICKUP_CHAT_NOTICE}</p><p>{PICKUP_CHAT_POLICY}</p>
           <label className="pickup-check"><input name="consent" type="checkbox" required />Agree &amp; Continue</label>
         </section>
-        <button className="pickup-primary" type="submit">{busy ? "Sending request…" : "Request Pickup From Venue"}</button>
+        <button className="pickup-primary" type="submit">{busy ? "Sending request…" : embedded ? "Request pickup & open chat" : "Request Pickup From Venue"}</button>
       </fieldset>
       {error && <p role="alert">{error}</p>}
     </form>

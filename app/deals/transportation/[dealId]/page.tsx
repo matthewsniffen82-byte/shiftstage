@@ -17,7 +17,7 @@ export default async function TransportationPage({ params, searchParams }: {
   const admin = createAdminSupabaseClient();
   const deal = await getActiveClubDealById(admin, dealId);
   if (!deal) notFound();
-  const { data: venue, error } = await admin.from("venues").select("name, slug, phone, owner_user_id, address, city, state")
+  const { data: venue, error } = await admin.from("venues").select("name, slug, phone, owner_user_id, address, city, state, club_pickup_available")
     .eq("id", deal.venueId).eq("is_active", true).eq("page_review_status", "published")
     .not("published_at", "is", null).maybeSingle();
   if (error) throw error;
@@ -26,6 +26,7 @@ export default async function TransportationPage({ params, searchParams }: {
   const query = await searchParams;
   const read = (key: string, max: number) => typeof query[key] === "string" ? query[key].slice(0, max) : "";
   return <TransportationClient deal={toPublicClubDeal(deal)} venue={{ id: deal.venueId, name: venue.name, slug: venue.slug, address: formatPublicVenueAddress(venue) }} shuttleAvailable={shuttleAvailable}
+    pickupAvailable={venue.club_pickup_available === true}
     sourceType={query.sourceType === "dancer_profile" ? "dancer_profile" : "club_page"}
     dancerId={read("dancerId", 36)} attributionToken={read("attributionToken", 2048)} />;
 }

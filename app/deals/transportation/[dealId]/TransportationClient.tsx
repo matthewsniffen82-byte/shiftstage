@@ -5,6 +5,8 @@ import { useEffect, useRef, useState } from "react";
 import type { PublicClubDeal, DealSourceType } from "@/src/lib/dancr/types";
 import { AUTONOMOUS_ADMISSION_OPTIONS, CLUB_TRANSPORTATION_TERMS, normalizeShuttlePhone, type EligibleClubTransportation } from "@/src/lib/dancr/club-deal-transportation";
 import NfcIcon from "@/app/components/NfcIcon";
+import PickupRequestForm from "@/app/pickups/PickupRequestForm";
+import "@/app/pickups/pickup.css";
 import "./transportation.css";
 
 function formatContactPhoneInput(event: React.SyntheticEvent<HTMLInputElement>) {
@@ -34,9 +36,10 @@ function formatContactPhoneInput(event: React.SyntheticEvent<HTMLInputElement>) 
   if (start !== null && end !== null) input.setSelectionRange(positionAfterDigits(start), positionAfterDigits(end), direction);
 }
 
-export default function TransportationClient({ deal, venue, shuttleAvailable, initialTransportation = "", sourceType = "club_page", dancerId = "", attributionToken = "" }: {
+export default function TransportationClient({ deal, venue, shuttleAvailable, pickupAvailable = false, initialTransportation = "", sourceType = "club_page", dancerId = "", attributionToken = "" }: {
   deal?: PublicClubDeal; venue: { id: string; name: string; slug: string; address?: string | null };
   shuttleAvailable: boolean;
+  pickupAvailable?: boolean;
   initialTransportation?: "" | "club_shuttle";
   sourceType?: DealSourceType; dancerId?: string; attributionToken?: string;
 }) {
@@ -52,6 +55,7 @@ export default function TransportationClient({ deal, venue, shuttleAvailable, in
   const heading = useRef<HTMLHeadingElement>(null);
   const pending = useRef(false);
   const attemptedRequest = useRef<{ requestId: string; name: string; location: string; phone: string; email: string; partySize: number; handoffAccepted: boolean } | null>(null);
+  const pickupReturnQuery = new URLSearchParams(deal ? { dealId: deal.id, sourceType, dancerId, attributionToken } : {});
 
   useEffect(() => {
     heading.current?.focus();
@@ -78,7 +82,7 @@ export default function TransportationClient({ deal, venue, shuttleAvailable, in
     }
   }
 
-  function prepareCashier(transportation: EligibleClubTransportation, shuttleRequestId?: string) {
+  function prepareCashier(transportation: EligibleClubTransportation, shuttleRequestId?: string, pickupRequestId?: string) {
     if (!deal) return true;
     const savedAt = Date.now();
     try {
@@ -87,6 +91,7 @@ export default function TransportationClient({ deal, venue, shuttleAvailable, in
         dancerId: sourceType === "dancer_profile" ? dancerId || null : null,
         attributionToken: sourceType === "dancer_profile" ? attributionToken || null : null,
         transportation, shuttleRequestId: shuttleRequestId || null,
+        ...(pickupRequestId ? { pickupRequestId } : {}),
         savedAt, expiresAt: savedAt + 12 * 60 * 60 * 1000,
       }));
       setStorageError(false);
@@ -145,7 +150,7 @@ export default function TransportationClient({ deal, venue, shuttleAvailable, in
       <p className="club-transport-venue">{venue.name}</p>
       {deal ? <p className="club-transport-terms">{CLUB_TRANSPORTATION_TERMS}</p> : <p className="club-transport-terms">Free entry is currently unavailable. You can still request a free ride.</p>}
       {complete ? <div aria-live="polite">
-        {choice === "club_shuttle" ? <><p><strong>Awaiting club confirmation.</strong></p><p>{message}</p><p>The club will contact you to arrange your pickup. Your ride is not booked yet.</p></> : autonomousArrival ? <>
+        {choice === "club_shuttle" ? <><p><strong>Awaiting club confirmation.</strong></p><p>{message}</p><p>This club coordinates pickup by phone. Pickup chat is not enabled. Your ride is not booked yet.</p></> : autonomousArrival ? <>
           <p>You confirmed you will arrive by Waymo, Zoox, or Cybercab.</p>
           <section className="club-transport-booking" aria-labelledby="club-transport-booking-heading">
             <h2 id="club-transport-booking-heading">Book your ride</h2>
@@ -165,7 +170,11 @@ export default function TransportationClient({ deal, venue, shuttleAvailable, in
         {storageError ? <><p role="alert">Your shuttle request was sent. Allow site storage, then save your deal selection for the cashier. This does not send another shuttle request.</p><button className="club-transport-submit" type="button" onClick={() => prepareCashier("club_shuttle", attemptedRequest.current?.requestId)}>Save deal for cashier</button></> : <p className="club-transport-note">Your deal selection stays ready for 12 hours. Admission is subject to the club’s capacity, age requirements, dress code, and house rules.</p>}</> : null}
       </div> : <>
         {deal && choice === "club_shuttle" ? <button className="club-transport-change" type="button" disabled={busy || !!attemptedRequest.current} onClick={() => { setChoice(""); setError(""); }}>‹ Change transportation</button> : null}
-        <form onSubmit={submit}>
+        {showingShuttleForm && pickupAvailable ? <div className="pickup-page club-transport-pickup">
+          <PickupRequestForm venue={{ ...venue, club_pickup_enabled: true }} embedded onBusyChange={setBusy}
+            returnTo={`/rides/${encodeURIComponent(venue.id)}?${pickupReturnQuery}`}
+            saveAdmission={deal ? requestId => prepareCashier("club_shuttle", undefined, requestId) : undefined} />
+        </div> : <form onSubmit={submit}>
           {deal && choice !== "club_shuttle" ? <fieldset className="club-transport-options" disabled={busy || !!attemptedRequest.current}>
             <legend>How will you arrive?</legend>
             <label className={choice === "self_drive" ? "selected" : ""}><input required type="radio" name="transportation" value="self_drive" checked={choice === "self_drive"} onChange={() => { setChoice("self_drive"); setError(""); }} /><span><strong>Private car</strong><small>Free entry. No rideshares or taxis.</small></span></label>
@@ -175,7 +184,7 @@ export default function TransportationClient({ deal, venue, shuttleAvailable, in
           </fieldset> : null}
           {choice === "rideshare_taxi" ? <div className="club-transport-ineligible" role="status"><strong>This arrival method does not qualify for free entry.</strong><p>Choose free club transport to qualify when you arrive in the club’s vehicle.</p><button className="club-transport-submit" type="button" onClick={() => { setChoice("club_shuttle"); setError(""); }}>Request free club transport</button></div> : null}
           {choice === "club_shuttle" ? <>
-            <div className="club-transport-handoff"><strong>Pickup requires club confirmation</strong><p>MyDancr sends your request to the club. The club arranges your ride and contacts you to confirm availability, pickup location, and timing.</p></div>
+            <div className="club-transport-handoff"><strong>Pickup requires club confirmation</strong><p>MyDancr sends your request to the club. The club arranges your ride and contacts you to confirm availability, pickup location, and timing.</p><p>This club coordinates pickup by phone. Pickup chat is not enabled.</p></div>
             {!shuttleAvailable ? <p role="status">Shuttle requests are currently unavailable at this club.</p> : null}
             <div className="club-transport-fields">
               <label>Name<input name="name" autoComplete="name" required minLength={2} maxLength={100} readOnly={busy || !!attemptedRequest.current} /></label>
@@ -188,7 +197,7 @@ export default function TransportationClient({ deal, venue, shuttleAvailable, in
           </> : null}
           {error ? <p role="alert" className="club-transport-error">{error}</p> : null}
           {choice !== "rideshare_taxi" ? <button className="club-transport-submit" type="submit" disabled={!choice || busy || (choice === "club_shuttle" && !shuttleAvailable)} aria-busy={busy}>{busy ? "Sending to the club…" : attemptedRequest.current ? "Retry shuttle request" : choice === "club_shuttle" ? "Send pickup request" : "Continue to free entry"}</button> : null}
-        </form>
+        </form>}
         {deal ? <p className="club-transport-note">One free general admission per guest. Capacity, age requirements, dress code, and house rules apply.</p> : null}
       </>}
       {deal ? <p className="club-transport-note">Staff must verify your arrival method before granting free entry.</p> : null}

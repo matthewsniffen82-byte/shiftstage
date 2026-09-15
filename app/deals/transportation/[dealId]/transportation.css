@@ -40,4 +40,6 @@
 .club-transport-address{display:grid;gap:6px;font-size:12px;color:#c9bbd7}
 .club-transport-address textarea{box-sizing:border-box;width:100%;min-width:0;padding:10px;border:1px solid #564164;border-radius:10px;background:#0d0b12;color:#fff;font:16px/1.45 Arial,sans-serif;resize:vertical}
 .club-transport-card :focus-visible{outline:2px solid #d4b0ff;outline-offset:4px}
+.club-transport-pickup.pickup-page{min-height:0;padding:0;background:transparent}
+.club-transport-pickup>.pickup-card,.club-transport-pickup>div>.pickup-card{padding:0;border:0;background:transparent;border-radius:0}
 @media(max-width:480px){.club-transport-page{padding:12px 8px;align-items:start}.club-transport-card{padding:16px;border-radius:18px}.club-transport-card h1{font-size:28px}}
