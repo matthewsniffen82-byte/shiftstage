@@ -7,6 +7,33 @@ import { AUTONOMOUS_ADMISSION_OPTIONS, CLUB_TRANSPORTATION_TERMS, normalizeShutt
 import NfcIcon from "@/app/components/NfcIcon";
 import "./transportation.css";
 
+function formatContactPhoneInput(event: React.SyntheticEvent<HTMLInputElement>) {
+  if ((event.nativeEvent as InputEvent).isComposing) return;
+  const input = event.currentTarget, previous = input.value;
+  // Preserve international numbers, extensions and extra digits for validation.
+  if (/[^\d\s()+.-]/.test(previous) || (previous.trim().startsWith("+") && !previous.trim().startsWith("+1"))) return;
+  const digits = previous.replace(/\D/g, "");
+  const hasCountryCode = previous.trim().startsWith("+1") || (digits.length === 11 && digits.startsWith("1"));
+  const national = hasCountryCode ? digits.slice(1) : digits;
+  if (national.length > 10) return;
+  const number = national.length <= 3 ? national : `(${national.slice(0, 3)}) ${national.slice(3, 6)}${national.length > 6 ? "-" + national.slice(6) : ""}`;
+  const prefix = hasCountryCode ? (previous.trim().startsWith("+") ? "+1" : "1") : "";
+  const formatted = [prefix, number].filter(Boolean).join(" ");
+  if (formatted === previous) return;
+  const start = input.selectionStart, end = input.selectionEnd, direction = input.selectionDirection || "none";
+  const positionAfterDigits = (position: number) => {
+    const count = previous.slice(0, position).replace(/\D/g, "").length;
+    if (!count) return formatted.startsWith("(") ? 1 : Math.min(position, formatted.startsWith("+") ? 1 : 0);
+    let seen = 0;
+    for (let index = 0; index < formatted.length; index++) {
+      if (/\d/.test(formatted[index]) && ++seen === count) return index + 1;
+    }
+    return formatted.length;
+  };
+  input.value = formatted;
+  if (start !== null && end !== null) input.setSelectionRange(positionAfterDigits(start), positionAfterDigits(end), direction);
+}
+
 export default function TransportationClient({ deal, venue, shuttleAvailable, initialTransportation = "", sourceType = "club_page", dancerId = "", attributionToken = "" }: {
   deal?: PublicClubDeal; venue: { id: string; name: string; slug: string; address?: string | null };
   shuttleAvailable: boolean;
@@ -154,7 +181,7 @@ export default function TransportationClient({ deal, venue, shuttleAvailable, in
               <label>Name<input name="name" autoComplete="name" required minLength={2} maxLength={100} readOnly={busy || !!attemptedRequest.current} /></label>
               <label>Pickup location<input name="location" autoComplete="street-address" placeholder="Hotel/address, city, and pickup entrance" required minLength={5} maxLength={300} readOnly={busy || !!attemptedRequest.current} /></label>
               <label>Guests<input name="partySize" type="number" inputMode="numeric" required min={1} max={100} step={1} defaultValue={1} readOnly={busy || !!attemptedRequest.current} /></label>
-              <label>Phone<input name="phone" type="tel" autoComplete="tel" placeholder="(555) 555-0123" required maxLength={40} readOnly={busy || !!attemptedRequest.current} /></label>
+              <label>Phone<input name="phone" type="tel" autoComplete="tel" placeholder="(555) 555-0123" onChange={formatContactPhoneInput} onCompositionEnd={formatContactPhoneInput} required maxLength={40} readOnly={busy || !!attemptedRequest.current} /></label>
               <label>Email<input name="email" type="email" autoComplete="email" placeholder="you@example.com" required maxLength={254} readOnly={busy || !!attemptedRequest.current} /></label>
               <label className="club-transport-consent"><input name="handoffAccepted" type="checkbox" required onClick={event => { if (busy || attemptedRequest.current) event.preventDefault(); }} /><span>I agree to let MyDancr share my details with {venue.name} so the club can contact me to arrange my free shuttle.</span></label>
             </div>

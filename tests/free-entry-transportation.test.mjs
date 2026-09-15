@@ -63,9 +63,9 @@ function client(props = {}, options = {}) {
     stored, requests, copies, render,
     html: () => renderToStaticMarkup(render()),
     select(value) { nodes(tree).find(node => node.type === "input" && node.props.value === value).props.onChange(); render(); },
-    async submit() {
+    async submit(phone = "7025550123") {
       await nodes(tree).find(node => node.type === "form").props.onSubmit({ preventDefault() {}, currentTarget: {
-        name: "Test Guest", location: "Test Hotel, north entrance", phone: "7025550123", email: "guest@example.test", partySize: "2", handoffAccepted: "on",
+        name: "Test Guest", location: "Test Hotel, north entrance", phone, email: "guest@example.test", partySize: "2", handoffAccepted: "on",
       } }); render();
     },
     click(label) { nodes(tree).find(node => node.type === "button" && node.props.children === label).props.onClick(); render(); },
@@ -73,6 +73,48 @@ function client(props = {}, options = {}) {
     blockStorage(value) { failStorage = value; },
   };
 }
+
+test("shuttle phone formats typed and pasted numbers without changing the submitted contact", async () => {
+  for (const props of [{}, { deal: undefined }]) {
+    const f = client({ ...props, initialTransportation: "club_shuttle" });
+    const phone = nodes(f.render()).find(node => node.type === "input" && node.props.name === "phone");
+    for (const [value, expected] of [
+      ["", ""], ["7", "7"], ["702", "702"], ["7025", "(702) 5"], ["702555", "(702) 555"],
+      ["7025550", "(702) 555-0"], ["7025550123", "(702) 555-0123"], ["702-555-0123", "(702) 555-0123"],
+      ["17025550123", "1 (702) 555-0123"], ["+1 (702) 555-0123", "+1 (702) 555-0123"],
+      ["+44 7700 900123", "+44 7700 900123"], ["702555012345", "702555012345"], ["7025550123 ext 42", "7025550123 ext 42"],
+    ]) {
+      const input = { value, selectionStart: value.length, selectionEnd: value.length, selectionDirection: "none",
+        setSelectionRange(start, end) { this.selectionStart = start; this.selectionEnd = end; } };
+      phone.props.onChange({ currentTarget: input, nativeEvent: {} });
+      assert.equal(input.value, expected); assert.equal(input.selectionStart, expected.length);
+    }
+    await f.submit("(702) 555-0123");
+    assert.equal(f.requests.length, 1); assert.equal(f.requests[0].body.phone, "+17025550123");
+  }
+});
+
+test("shuttle phone keeps the editing selection and allows deletion through formatting", () => {
+  const f = client({ initialTransportation: "club_shuttle" });
+  const phone = nodes(f.render()).find(node => node.type === "input" && node.props.name === "phone");
+  for (const [value, start, end, expected, expectedStart, expectedEnd] of [
+    ["(702) 5550123", 9, 9, "(702) 555-0123", 9, 9],
+    ["(702) 550123", 8, 8, "(702) 550-123", 8, 8],
+    ["702) 555-0123", 0, 0, "(702) 555-0123", 1, 1],
+    ["(02) 555-0123", 1, 1, "(025) 550-123", 1, 1],
+    ["7025550123", 3, 6, "(702) 555-0123", 4, 9],
+  ]) {
+    const input = { value, selectionStart: start, selectionEnd: end, selectionDirection: "backward",
+      setSelectionRange(nextStart, nextEnd, direction) { this.selectionStart = nextStart; this.selectionEnd = nextEnd; this.selectionDirection = direction; } };
+    phone.props.onChange({ currentTarget: input, nativeEvent: {} });
+    assert.equal(input.value, expected); assert.equal(input.selectionStart, expectedStart); assert.equal(input.selectionEnd, expectedEnd); assert.equal(input.selectionDirection, "backward");
+  }
+  const input = { value: "7025", selectionStart: 4, selectionEnd: 4, setSelectionRange() {} };
+  phone.props.onChange({ currentTarget: input, nativeEvent: { isComposing: true } });
+  assert.equal(input.value, "7025");
+  phone.props.onCompositionEnd({ currentTarget: input, nativeEvent: {} });
+  assert.equal(input.value, "(702) 5");
+});
 
 test("private-car arrival prepares free entry without sending a ride request", async () => {
   const f = client(); assert.match(f.html(), /Other rideshare or taxi/);
