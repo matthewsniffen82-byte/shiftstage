@@ -15,7 +15,7 @@ export async function requestPickupJson(path: string, options: DashboardJsonRequ
   if (!identity || identity !== pickupSessionIdentity()) throw new Error("Your account changed. Sign in again to continue.");
   return result;
 }
-export function PickupAccountGate({ children, customerOnly = false, returnTo }: { children: (role: PickupRole) => ReactNode; customerOnly?: boolean; returnTo?: string }) {
+export function usePickupAccount() {
   const [session, setSession] = useState<{ ready: boolean; identity: string; role?: string }>({ ready: false, identity: "" });
   useEffect(() => {
     const sync = () => {
@@ -27,10 +27,14 @@ export function PickupAccountGate({ children, customerOnly = false, returnTo }: 
     const timer = window.setInterval(sync, 1000);
     return () => { window.removeEventListener("storage", storage); window.removeEventListener("focus", sync); window.clearInterval(timer); };
   }, []);
+  return session;
+}
+export function PickupAccountGate({ children, customerOnly = false, returnTo }: { children: (role: PickupRole) => ReactNode; customerOnly?: boolean; returnTo?: string }) {
+  const session = usePickupAccount();
   if (!session.ready) return <p role="status">Checking your account…</p>;
   if (!session.identity) {
     const destination = encodeURIComponent(returnTo || window.location.pathname + window.location.search);
-    return <section className="pickup-card"><h1>Club Pickup</h1><p>Sign in to request pickup or open your private venue conversation.</p>
+    return <section className="pickup-card"><h1>Club Pickup</h1><p>Sign in to open your private venue conversations.</p>
       <Link prefetch={false} className="pickup-primary" href={`/?auth=login&role=customer&return_to=${destination}`}>Customer sign in</Link>
       {!customerOnly && <Link prefetch={false} className="pickup-button" href={`/?venueAccess=1&return_to=${destination}`}>Venue sign in</Link>}</section>;
   }

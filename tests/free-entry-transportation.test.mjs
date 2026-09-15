@@ -42,6 +42,7 @@ function client(props = {}, options = {}) {
     react: hooks, "next/link": { default: "a" },
     "@/src/lib/dancr/club-deal-transportation": transportation,
     "@/app/pickups/PickupRequestForm": { default: "pickup-form" }, "@/app/pickups/pickup.css": {},
+    "@/app/pickups/pickup-session": { usePickupAccount: () => options.account || { ready: true, identity: "synthetic-customer", role: "customer" } },
     "@/app/components/NfcIcon": { default: () => null }, "./transportation.css": {},
   }, {
     navigator: { clipboard: options.clipboardUnavailable ? undefined : { writeText: async value => {
@@ -261,6 +262,59 @@ test("enabled pickup chat receives the ride context and saves admission only aft
   const rideOnly = client({ pickupAvailable: true, deal: undefined });
   assert.equal(nodes(rideOnly.render()).find(node => node.type === "pickup-form").props.saveAdmission, undefined);
   assert.equal(rideOnly.stored.has(key), false);
+});
+
+test("guests request rides without signing in even when pickup chat is enabled, preserving guest contact and admission", async () => {
+  for (const account of [{ ready: true, identity: "" }, { ready: true, identity: "venue-user", role: "venue" }]) {
+    for (const rideOnly of [false, true]) {
+      const f = client({ pickupAvailable: true, initialTransportation: "club_shuttle", ...(rideOnly ? { deal: undefined } : {}),
+        sourceType: "dancer_profile", dancerId: "dancer", attributionToken: "signed-token" }, { account });
+      assert.match(f.html(), /No sign-in needed/);
+      assert.equal(nodes(f.render()).some(node => node.type === "pickup-form"), false);
+      assert.ok(nodes(f.render()).some(node => node.type === "input" && node.props.name === "phone"));
+      await f.submit();
+      assert.equal(f.requests.length, 1);
+      assert.equal(f.requests[0].url, rideOnly ? `/api/venues/${venue.id}/shuttle` : `/api/deals/${deal.id}/shuttle`);
+      assert.equal(f.requests[0].body.phone, "+17025550123");
+      assert.equal(f.requests[0].body.handoffAccepted, true);
+      assert.match(f.html(), /Awaiting club confirmation/);
+      assert.doesNotMatch(f.html(), /Pickup chat is not enabled/);
+      const saved = JSON.parse(f.stored.get(key) || "null");
+      if (rideOnly) assert.equal(saved, null);
+      else { assert.equal(saved.shuttleRequestId, f.requests[0].body.requestId); assert.equal(saved.attributionToken, "signed-token"); }
+    }
+  }
+});
+
+test("ride fields wait for local session initialization so typing cannot select the wrong form", () => {
+  const account = { ready: false, identity: "" };
+  const f = client({ pickupAvailable: true, initialTransportation: "club_shuttle" }, { account });
+  assert.match(f.html(), /Loading pickup form/);
+  assert.equal(nodes(f.render()).some(node => node.type === "input"), false);
+  account.ready = true;
+  assert.match(f.html(), /No sign-in needed/);
+  assert.ok(nodes(f.render()).some(node => node.type === "input" && node.props.name === "phone"));
+});
+
+test("customers can choose the public phone form without leaving their account", async () => {
+  const f = client({ pickupAvailable: true, initialTransportation: "club_shuttle" });
+  assert.ok(nodes(f.render()).some(node => node.type === "pickup-form"));
+  f.click("Request by phone instead");
+  assert.equal(nodes(f.render()).some(node => node.type === "pickup-form"), false);
+  await f.submit(); assert.equal(f.requests.length, 1);
+});
+
+test("direct Club Pickup links open the guest-capable ride page for an eligible venue", async () => {
+  for (const enabled of [true, false]) {
+    const page = load("../app/pickups/new/page.tsx", {
+      "next/link": { default: "a" }, "next/navigation": { redirect: url => { throw { destination: url }; } },
+      "@/src/lib/supabase/admin": { createAdminSupabaseClient: () => ({}) },
+      "@/src/lib/dancr/pickup-eligibility": { getPickupVenue: async (_, selected) => selected === venue.id ? { ...venue, club_pickup_enabled: enabled } : null },
+    });
+    await assert.rejects(page.default({ searchParams: Promise.resolve({ venue: venue.id }) }), error => error.destination === `/rides/${venue.id}`);
+    const unavailable = await page.default({ searchParams: Promise.resolve({ venue: "missing" }) });
+    assert.match(renderToStaticMarkup(unavailable), /Club Pickup unavailable/);
+  }
 });
 
 test("rideshares cannot prepare entry and selecting one clears a previous selection for this venue", async () => {

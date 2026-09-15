@@ -6,6 +6,7 @@ import type { PublicClubDeal, DealSourceType } from "@/src/lib/dancr/types";
 import { AUTONOMOUS_ADMISSION_OPTIONS, CLUB_TRANSPORTATION_TERMS, normalizeShuttlePhone, type EligibleClubTransportation } from "@/src/lib/dancr/club-deal-transportation";
 import NfcIcon from "@/app/components/NfcIcon";
 import PickupRequestForm from "@/app/pickups/PickupRequestForm";
+import { usePickupAccount } from "@/app/pickups/pickup-session";
 import "@/app/pickups/pickup.css";
 import "./transportation.css";
 
@@ -52,6 +53,9 @@ export default function TransportationClient({ deal, venue, shuttleAvailable, pi
   const [message, setMessage] = useState("");
   const [storageError, setStorageError] = useState(false);
   const [addressCopyStatus, setAddressCopyStatus] = useState("");
+  const [requestByPhone, setRequestByPhone] = useState(false);
+  const account = usePickupAccount();
+  const useChat = pickupAvailable && account.ready && !!account.identity && account.role === "customer" && !requestByPhone;
   const heading = useRef<HTMLHeadingElement>(null);
   const pending = useRef(false);
   const attemptedRequest = useRef<{ requestId: string; name: string; location: string; phone: string; email: string; partySize: number; handoffAccepted: boolean } | null>(null);
@@ -150,7 +154,7 @@ export default function TransportationClient({ deal, venue, shuttleAvailable, pi
       <p className="club-transport-venue">{venue.name}</p>
       {deal ? <p className="club-transport-terms">{CLUB_TRANSPORTATION_TERMS}</p> : <p className="club-transport-terms">Free entry is currently unavailable. You can still request a free ride.</p>}
       {complete ? <div aria-live="polite">
-        {choice === "club_shuttle" ? <><p><strong>Awaiting club confirmation.</strong></p><p>{message}</p><p>This club coordinates pickup by phone. Pickup chat is not enabled. Your ride is not booked yet.</p></> : autonomousArrival ? <>
+        {choice === "club_shuttle" ? <><p><strong>Awaiting club confirmation.</strong></p><p>{message}</p><p>The club will follow up using your contact details. Your ride is not booked yet.</p></> : autonomousArrival ? <>
           <p>You confirmed you will arrive by Waymo, Zoox, or Cybercab.</p>
           <section className="club-transport-booking" aria-labelledby="club-transport-booking-heading">
             <h2 id="club-transport-booking-heading">Book your ride</h2>
@@ -170,11 +174,12 @@ export default function TransportationClient({ deal, venue, shuttleAvailable, pi
         {storageError ? <><p role="alert">Your shuttle request was sent. Allow site storage, then save your deal selection for the cashier. This does not send another shuttle request.</p><button className="club-transport-submit" type="button" onClick={() => prepareCashier("club_shuttle", attemptedRequest.current?.requestId)}>Save deal for cashier</button></> : <p className="club-transport-note">Your deal selection stays ready for 12 hours. Admission is subject to the club’s capacity, age requirements, dress code, and house rules.</p>}</> : null}
       </div> : <>
         {deal && choice === "club_shuttle" ? <button className="club-transport-change" type="button" disabled={busy || !!attemptedRequest.current} onClick={() => { setChoice(""); setError(""); }}>‹ Change transportation</button> : null}
-        {showingShuttleForm && pickupAvailable ? <div className="pickup-page club-transport-pickup">
+        {showingShuttleForm && !account.ready ? <p role="status">Loading pickup form…</p> : showingShuttleForm && useChat ? <div className="pickup-page club-transport-pickup">
           <PickupRequestForm venue={{ ...venue, club_pickup_enabled: true }} embedded onBusyChange={setBusy}
             returnTo={`/rides/${encodeURIComponent(venue.id)}?${pickupReturnQuery}`}
             saveAdmission={deal ? requestId => prepareCashier("club_shuttle", undefined, requestId) : undefined} />
-        </div> : <form onSubmit={submit}>
+          <button type="button" disabled={busy} onClick={() => setRequestByPhone(true)}>Request by phone instead</button>
+        </div> : <form onSubmit={submit} onInput={() => { if (showingShuttleForm) setRequestByPhone(true); }}>
           {deal && choice !== "club_shuttle" ? <fieldset className="club-transport-options" disabled={busy || !!attemptedRequest.current}>
             <legend>How will you arrive?</legend>
             <label className={choice === "self_drive" ? "selected" : ""}><input required type="radio" name="transportation" value="self_drive" checked={choice === "self_drive"} onChange={() => { setChoice("self_drive"); setError(""); }} /><span><strong>Private car</strong><small>Free entry. No rideshares or taxis.</small></span></label>
@@ -184,7 +189,7 @@ export default function TransportationClient({ deal, venue, shuttleAvailable, pi
           </fieldset> : null}
           {choice === "rideshare_taxi" ? <div className="club-transport-ineligible" role="status"><strong>This arrival method does not qualify for free entry.</strong><p>Choose free club transport to qualify when you arrive in the club’s vehicle.</p><button className="club-transport-submit" type="button" onClick={() => { setChoice("club_shuttle"); setError(""); }}>Request free club transport</button></div> : null}
           {choice === "club_shuttle" ? <>
-            <div className="club-transport-handoff"><strong>Pickup requires club confirmation</strong><p>MyDancr sends your request to the club. The club arranges your ride and contacts you to confirm availability, pickup location, and timing.</p><p>This club coordinates pickup by phone. Pickup chat is not enabled.</p></div>
+            <div className="club-transport-handoff"><strong>No sign-in needed</strong><p>MyDancr sends your request to the club. The club arranges your ride and contacts you by phone to confirm availability, pickup location, and timing.</p><p>Your ride is confirmed only when the club accepts.</p></div>
             {!shuttleAvailable ? <p role="status">Shuttle requests are currently unavailable at this club.</p> : null}
             <div className="club-transport-fields">
               <label>Name<input name="name" autoComplete="name" required minLength={2} maxLength={100} readOnly={busy || !!attemptedRequest.current} /></label>

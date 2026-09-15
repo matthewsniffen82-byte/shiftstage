@@ -60,10 +60,19 @@ try {
     const browser=await engine.launch({headless:true,...(name==='android'?{channel:'msedge'}:{})});
     try {
       const context=await browser.newContext({...devices[device]});
-      await context.addInitScript(()=>{if(!localStorage.getItem('dancrAuthSessionV1'))localStorage.setItem('dancrAuthSessionV1',JSON.stringify({accessToken:'synthetic-token',account:{id:'96000000-0000-4000-8000-000000000001',role:'customer'}}));});
+      await context.addInitScript(()=>{if(!sessionStorage.getItem('syntheticGuest')&&!localStorage.getItem('dancrAuthSessionV1'))localStorage.setItem('dancrAuthSessionV1',JSON.stringify({accessToken:'synthetic-token',account:{id:'96000000-0000-4000-8000-000000000001',role:'customer'}}));});
       const page=await context.newPage(), errors=[]; page.on('pageerror',e=>{errors.push(e.message);console.error('Synthetic UI runtime error:',e.message);});
       let role='customer',consented=true,status='requested',failNextSend=true,failNextRequest=false;const actions=[],messages=[{id:id(30),sequence:1,sender_type:'system',message_text:'Pickup requested from the venue.',created_at:'2026-09-14T19:00:00Z'}];
       let showChats=true;const phoneRequests=[];
+      let failNextGuest=false;const guestSubmissions=[];
+      await page.route('**/api/**/shuttle',async route=>{
+        const req=route.request(), body=req.postDataJSON();guestSubmissions.push({url:req.url(),body});
+        assert.equal(req.headers().authorization,undefined,'guest requests do not require an auth token');
+        if(failNextGuest){failNextGuest=false;await route.fulfill({status:503,json:{ok:false,error:'Synthetic temporary failure'}});return;}
+        if(!phoneRequests.some(request=>request.id===body.requestId))phoneRequests.unshift({id:body.requestId,venue_id:id(10),venue_name:'Test Club',
+          name:body.name,location:body.location,phone:body.phone,email:body.email,party_size:body.partySize,requested_at:'2026-09-15T07:46:33Z'});
+        await route.fulfill({json:{ok:true,requestId:body.requestId,message:'The club will contact you to confirm your pickup.'}});
+      });
       const request=()=>({id:id(20),customer_user_id:id(1),venue_id:id(10),status,party_size:2,pickup_location_text:'Synthetic hotel lobby',pickup_location_details:'North entrance',customer_notes:'Blue jacket',requested_at:'2026-09-14T19:00:00Z',expires_at:'2099-09-14T19:00:00Z',referral_source:'mydancr',referral_outcome:'pending',venue:{name:'Test Club',slug:'test-club'}});
       await page.route('**/api/pickups**',async route=>{
         const req=route.request(), url=new URL(req.url());
@@ -145,16 +154,42 @@ try {
       await page.evaluate(()=>{Storage.prototype.setItem=window.__originalSetItem;});
       await page.getByRole('button',{name:'Save free entry and open chat',exact:true}).click();
       await page.waitForFunction(()=>Boolean(window.__destination));assert.equal(actions.length,sentBeforeRecovery);
-      await page.goto(base+'/?mode=phone');await page.getByText('This club coordinates pickup by phone. Pickup chat is not enabled.',{exact:true}).waitFor();
+      await page.goto(base+'/?mode=phone');await page.getByText('No sign-in needed',{exact:true}).waitFor();
       assert.equal(await page.getByRole('button',{name:'Request pickup & open chat',exact:true}).count(),0);
-      // Signing in from the free-entry chooser returns directly to the attributed ride.
-      await page.goto(base+'/?mode=entry');await page.getByLabel('Free club transport').click();
-      await page.evaluate(()=>localStorage.removeItem('dancrAuthSessionV1'));
-      const login=page.getByRole('link',{name:'Customer sign in',exact:true});await login.waitFor();
-      const continuation=new URL(new URL(await login.getAttribute('href'),base).searchParams.get('return_to'),base);
-      assert.equal(continuation.pathname,'/rides/'+id(10));assert.equal(continuation.searchParams.get('dealId'),id(40));
-      assert.equal(continuation.searchParams.get('attributionToken'),'synthetic-attribution');
-      assert.equal(await page.getByRole('button',{name:'Request pickup & open chat',exact:true}).count(),0);
+      // Guests can use every ride entry point even when the venue offers chat.
+      await page.evaluate(()=>{sessionStorage.setItem('syntheticGuest','1');localStorage.removeItem('dancrAuthSessionV1');});
+      for(const mode of ['ride','entry','ride-only']) {
+        await page.goto(base+'/?mode='+mode);await page.evaluate(()=>localStorage.removeItem('mydancrPendingNfcDealV2'));
+        if(mode==='entry')await page.getByLabel('Free club transport').click();
+        await page.getByText('No sign-in needed',{exact:true}).waitFor();
+        assert.equal(await page.getByRole('link',{name:'Customer sign in',exact:true}).count(),0);
+        assert.equal(await page.getByRole('button',{name:'Request pickup & open chat',exact:true}).count(),0);
+        await page.getByLabel('Name',{exact:true}).fill('Synthetic Guest Ride');
+        await page.getByLabel('Pickup location',{exact:true}).fill('Synthetic guest hotel lobby');
+        await page.getByLabel('Guests',{exact:true}).fill('2');
+        await page.getByLabel('Phone',{exact:true}).fill('7025550123');
+        await page.getByLabel('Email',{exact:true}).fill('guest@example.test');
+        await page.locator('input[name=handoffAccepted]').check();
+        for(const width of [320,393,1280]) {
+          await page.setViewportSize({width,height:850});assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false,`${name} guest ${mode} ${width} overflow`);
+        }
+        await page.setViewportSize({width:393,height:850});
+        if(mode==='ride')await page.screenshot({path:resolve(root,`.next-club-pickup/guest-ride-${name}.png`),fullPage:true});
+        const start=guestSubmissions.length;if(mode==='ride')failNextGuest=true;
+        await page.getByRole('button',{name:'Send pickup request',exact:true}).click();
+        if(mode==='ride') {
+          await page.getByRole('alert').waitFor();assert.equal(await page.evaluate(()=>localStorage.getItem('mydancrPendingNfcDealV2')),null);
+          await page.getByRole('button',{name:'Retry shuttle request',exact:true}).click();
+        }
+        await page.getByRole('heading',{name:'Pickup requested',exact:true}).waitFor();
+        assert.equal(await page.evaluate(()=>localStorage.getItem('dancrAuthSessionV1')),null);
+        const sent=guestSubmissions.at(-1);assert.equal(sent.body.phone,'+17025550123');assert.equal(sent.body.handoffAccepted,true);
+        assert.equal(new URL(sent.url).pathname,mode==='ride-only'?`/api/venues/${id(10)}/shuttle`:`/api/deals/${id(40)}/shuttle`);
+        if(mode==='ride')assert.equal(guestSubmissions[start].body.requestId,sent.body.requestId);
+        const saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('mydancrPendingNfcDealV2')));
+        if(mode==='ride-only')assert.equal(saved,null);
+        else {assert.equal(saved.shuttleRequestId,sent.body.requestId);assert.equal(saved.attributionToken,'synthetic-attribution');assert.equal(saved.pickupRequestId,undefined);}
+      }
       await page.evaluate(()=>localStorage.setItem('dancrAuthSessionV1',JSON.stringify({accessToken:'synthetic-token',account:{id:'96000000-0000-4000-8000-000000000001',role:'customer'}})));
       await page.goto(base+'/?mode=chat');await page.getByText('Pickup requested from the venue.',{exact:true}).waitFor();
       await page.getByLabel('Message Test Club').fill('<img src=x onerror=alert(1)> Synthetic message');
@@ -182,7 +217,9 @@ try {
       await page.getByRole('button',{name:'Agree & Continue',exact:true}).waitFor();assert.equal(await page.locator('.pickup-message').count(),0);
       await page.getByRole('button',{name:'Agree & Continue',exact:true}).click();await page.getByLabel('Message customer').waitFor();
       await page.getByLabel('Status',{exact:true}).selectOption('accepted');await page.getByRole('button',{name:'Confirm update'}).click();await page.getByText('Venue Accepted',{exact:true}).waitFor();
-      await page.goto(base+'/?mode=inbox');await page.getByRole('heading',{name:'Pickup Requests'}).waitFor();await page.locator('.pickup-list-item').waitFor();
+      await page.goto(base+'/?mode=inbox');await page.getByRole('heading',{name:'Pickup Requests',exact:true}).waitFor();await page.locator('.pickup-list-item').first().waitFor();
+      await page.getByText('Test Club · Synthetic Guest Ride',{exact:true}).waitFor();
+      phoneRequests.length=0;
       await page.getByText('Club Pickup settings',{exact:true}).click();await page.getByRole('button',{name:'Disable Club Pickup'}).click();await page.getByRole('button',{name:'Enable Club Pickup'}).waitFor();
       // Reproduce a venue with phone handoffs and no pickup chats.
       showChats=false;
@@ -212,7 +249,7 @@ try {
       await page.goto(base+'/?mode=chat');await page.locator('.pickup-messages').waitFor();
       await page.evaluate(()=>localStorage.removeItem('dancrAuthSessionV1'));await page.getByRole('link',{name:'Customer sign in'}).waitFor();
       assert.equal(await page.locator('.pickup-message').count(),0);await page.waitForFunction(()=>window.__subscriptions===0);
-      assert.deepEqual(errors,[]);console.log(JSON.stringify({browser:name,request:true,chat:true,retrySameMessageId:true,realtimeReconcile:true,consent:true,cancellation:true,report:true,venueStatus:true,settings:true,phoneInbox:true,phonePagination:true,phoneAutoRefresh:true,phoneDashboard:true,logoutClearsData:true,widths:[320,393,1280],runtimeErrors:errors}));
+      assert.deepEqual(errors,[]);console.log(JSON.stringify({browser:name,request:true,guestRide:true,guestRequestReachesVenueInbox:true,guestRetrySameRequestId:true,chat:true,retrySameMessageId:true,realtimeReconcile:true,consent:true,cancellation:true,report:true,venueStatus:true,settings:true,phoneInbox:true,phonePagination:true,phoneAutoRefresh:true,phoneDashboard:true,logoutClearsData:true,widths:[320,393,1280],runtimeErrors:errors}));
     }finally{await browser.close();}
   }
 }finally{await new Promise(done=>server.close(done));}
