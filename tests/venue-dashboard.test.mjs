@@ -131,6 +131,18 @@ test("working-now actions are neutral when empty and emerald only for a live ros
   assert.doesNotMatch(venuePanel, /className="is-primary"/);
 });
 
+test("venue pickup chats are visible without expanding a section and the inbox is reachable from every tab", () => {
+  const venuePanel = dashboard.match(/function VenuePanel\([\s\S]*?(?=\nfunction dealTypeLabel)/)?.[0] || "";
+  const command = venuePanel.slice(venuePanel.indexOf('<section className="venue-command-panel"'), venuePanel.indexOf('<nav className="venue-workspace-tabs"'));
+  assert.match(command, /venueRole === "owner" \|\| venueRole === "manager"/);
+  assert.match(command, /href="\/pickups">Pickup Requests & messages/);
+  const pickupSection = venuePanel.match(/<section\s+className="info-panel venue-dashboard-section"[\s\S]*?id="venue-pickups"[\s\S]*?<\/section>/)?.[0];
+  assert.ok(pickupSection, "pickup content must not be hidden inside a collapsed details element");
+  assert.match(pickupSection, /hidden=\{activeWorkspace !== "tonight"\}/);
+  assert.match(pickupSection, /<PickupDashboardPanel[^>]+refreshKey=\{refreshedAt\}/);
+  assert.ok(venuePanel.indexOf('id="venue-pickups"') < venuePanel.indexOf('id="venue-club-deals"'));
+});
+
 test("venue Club Deals are read-only and venue write routes enforce the contract boundary", () => {
   const venuePanel = dashboard.match(/function VenuePanel\([\s\S]*?(?=\nfunction dealTypeLabel)/)?.[0] || "";
   assert.match(venuePanel, /<VenueDealReadOnlyPanel/);

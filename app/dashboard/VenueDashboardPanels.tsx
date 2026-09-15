@@ -251,6 +251,9 @@ export function VenuePanel({
             <button type="button" disabled={isRefreshing} onClick={onRefresh}>{isRefreshing ? "Refreshing…" : "Refresh"}</button>
           </div>
         </div>
+        {(venueRole === "owner" || venueRole === "manager") && <div className="venue-command-links">
+          <Link className="primary-link" href="/pickups">Pickup Requests & messages →</Link>
+        </div>}
       </section>
 
       <nav className="venue-workspace-tabs" aria-label="Venue workspace" role="tablist">
@@ -292,7 +295,6 @@ export function VenuePanel({
           <strong>{liveDealSummary}</strong>
           <p>{workingNow.length} working now · {upcomingShiftCount} upcoming {upcomingShiftCount === 1 ? "shift" : "shifts"}</p>
           <div className="venue-command-links">
-            {(venueRole === "owner" || venueRole === "manager") && <Link className="primary-link" href="/pickups">Pickup Requests</Link>}
             <a className="primary-link venue-current-deals-link" href="#venue-club-deals" onClick={(event) => openVenueSection(event, "venue-club-deals")}>
               {activeDealCount ? `View ${activeDealCount} current Club ${activeDealCount === 1 ? "Deal" : "Deals"}` : "View Club Deal status"}
             </a>
@@ -302,6 +304,17 @@ export function VenuePanel({
           </div>
           {refreshStatus ? <small className="venue-refresh-status" role="status">{refreshStatus}</small> : null}
       </section>
+
+      {(venueRole === "owner" || venueRole === "manager") && <section
+        className="info-panel venue-dashboard-section"
+        hidden={activeWorkspace !== "tonight"}
+        id="venue-pickups"
+        aria-labelledby="venue-pickups-heading"
+      >
+        <span className="eyebrow">Customer referrals</span>
+        <h2 id="venue-pickups-heading">Pickup Requests</h2>
+        <PickupDashboardPanel key={`${account?.id}:${connectedVenueId}`} refreshKey={refreshedAt} />
+      </section>}
 
       <section
         aria-labelledby="venue-workspace-venue-tab"
@@ -530,10 +543,6 @@ export function VenuePanel({
           </InfoPanel>
         </div>
       </DashboardSection>
-
-      {(venueRole === "owner" || venueRole === "manager") && activeWorkspace === "tonight" && <DashboardSection
-        title="Pickup Requests" eyebrow="Customer referrals" id="venue-pickups" description="Review active requests, reply as your venue, and manage Club Pickup availability."
-      ><PickupDashboardPanel /></DashboardSection>}
 
       <VenueTvPanel
         city={venueCity}

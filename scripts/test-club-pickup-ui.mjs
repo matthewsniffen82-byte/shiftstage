@@ -44,11 +44,15 @@ const Form=require('./app/pickups/PickupRequestForm.tsx').default;
 const Chat=require('./app/pickups/PickupConversation.tsx').default;
 const Inbox=require('./app/pickups/PickupInbox.tsx').default;
 const Dashboard=require('./app/dashboard/PickupDashboardPanel.tsx').default;
+const {DashboardStyles}=require('./app/dashboard/DashboardStyles.tsx');
 const Transportation=require('./app/deals/transportation/[dealId]/TransportationClient.tsx').default;
 const mode=new URLSearchParams(location.search).get('mode');
 const venue={id:'96000000-0000-4000-8000-000000000010',name:'Test Club',slug:'test-club',club_pickup_enabled:true};
 const component=['ride','entry','ride-only','phone'].includes(mode)?React.createElement(Transportation,{venue,deal:mode==='ride-only'?undefined:{id:'96000000-0000-4000-8000-000000000040',venueId:venue.id},shuttleAvailable:true,pickupAvailable:mode!=='phone',initialTransportation:mode==='entry'?'':'club_shuttle',sourceType:'dancer_profile',dancerId:'96000000-0000-4000-8000-000000000006',attributionToken:'synthetic-attribution'}):mode==='request'?React.createElement(Form,{venue}):mode==='dashboard'?React.createElement(Dashboard):mode==='inbox'?React.createElement(Inbox):React.createElement(Chat,{requestId:new URLSearchParams(location.search).get('requestId')||'96000000-0000-4000-8000-000000000020'});
-createRoot(document.getElementById('app')).render(component);`,root);
+const appRoot=createRoot(document.getElementById('app'));
+window.__renderPickupDashboard=refreshKey=>appRoot.render(React.createElement('section',{className:'dashboard-shell dashboard-shell-venue'},React.createElement(DashboardStyles),React.createElement('section',{className:'info-panel'},React.createElement(Dashboard,{refreshKey}))));
+window.__unmountPickupDashboard=()=>appRoot.unmount();
+if(mode==='dashboard')window.__renderPickupDashboard();else appRoot.render(component);`,root);
 const bundle=`var process={env:{NODE_ENV:'development'}};var modules={${Object.entries(modules).map(([id,m])=>`${JSON.stringify(id)}:[function(require,module,exports){${m.code}\n},${JSON.stringify(m.deps)}]`).join(',')}};var cache={};function run(id){if(cache[id])return cache[id].exports;const m=cache[id]={exports:{}};modules[id][0](name=>run(modules[id][1][name]),m,m.exports);return m.exports;}run(${entry});`;
 const css=['public/dancr-brand-tokens.v1.css','public/dancr-button-system.v1.css','public/dancr-aesthetic.v1.css','app/pickups/pickup.css','app/deals/transportation/[dealId]/transportation.css'].map(file=>readFileSync(resolve(root,file),'utf8')).join('\n');
 const server=createServer((req,res)=>{res.setHeader('content-type',req.url==='/bundle.js'?'text/javascript':'text/html');res.end(req.url==='/bundle.js'?bundle:`<!doctype html><meta name="viewport" content="width=device-width, initial-scale=1"><style>${css}</style><body class="dancr-button-system"><main class="pickup-page"><div id="app"></div></main><script src="/bundle.js"></script></body>`);});
@@ -62,6 +66,52 @@ try {
       const context=await browser.newContext({...devices[device]});
       await context.addInitScript(()=>{if(!sessionStorage.getItem('syntheticGuest')&&!localStorage.getItem('dancrAuthSessionV1'))localStorage.setItem('dancrAuthSessionV1',JSON.stringify({accessToken:'synthetic-token',account:{id:'96000000-0000-4000-8000-000000000001',role:'customer'}}));});
       const page=await context.newPage(), errors=[]; page.on('pageerror',e=>{errors.push(e.message);console.error('Synthetic UI runtime error:',e.message);});
+      if(process.argv.includes('--dashboard-only')) {
+        let reads=0, unread=2, failed=false, releaseRead=null;
+        const phones=[{id:id(300),venue_id:id(10),venue_name:'Test Club',name:'Earlier Phone Guest',location:'Synthetic lobby',party_size:2,requested_at:'2026-09-15T07:46:33Z'}];
+        await page.route('**/api/pickups?group=active',async route=>{
+          reads++;
+          if(releaseRead)await new Promise(done=>{releaseRead=done;});
+          await route.fulfill({status:failed?503:200,json:failed?{ok:false,error:'Synthetic unavailable'}:{ok:true,requests:[{
+            id:id(20),customer_user_id:null,venue_id:id(10),status:'requested',party_size:5,pickup_location_text:'Synthetic guest hotel',
+            requested_at:'2026-09-15T18:20:49Z',venue:{name:'Test Club',slug:'test-club'},unread_count:unread,
+          }],phoneRequests:phones}});
+        });
+        await page.goto(base+'/?mode=dashboard');
+        const chat=page.getByRole('link',{name:/Open chat & reply/});
+        await chat.getByText('2 unread',{exact:true}).waitFor();
+        assert.equal(await chat.getAttribute('href'),'/pickups/'+id(20));
+        assert.match(await chat.textContent(),/Guest 000020 · 5 guests/);
+        assert.equal(await page.locator('.notification-row').first().getAttribute('href'),'/pickups/'+id(20));
+        assert.equal(await page.getByRole('heading',{name:'Recent phone pickup requests'}).isVisible(),true);
+        for(const width of [320,393,1280]) {
+          await page.setViewportSize({width,height:850});
+          assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false,`${name} pickup dashboard ${width} overflow`);
+        }
+        // Focus/online/visibility events must resume promptly without overlapping reads.
+        const before=reads;unread=3;releaseRead=()=>{};
+        await page.evaluate(()=>window.dispatchEvent(new Event('focus')));
+        for(let attempt=0;reads===before&&attempt<500;attempt++)await new Promise(done=>setTimeout(done,10));
+        await page.evaluate(()=>{window.dispatchEvent(new Event('online'));document.dispatchEvent(new Event('visibilitychange'));});
+        assert.equal(reads,before+1);const finish=releaseRead;releaseRead=null;finish();
+        await chat.getByText('3 unread',{exact:true}).waitFor();
+        const visibleReads=reads;
+        await page.evaluate(()=>{Object.defineProperty(document,'visibilityState',{configurable:true,value:'hidden'});window.dispatchEvent(new Event('focus'));document.dispatchEvent(new Event('visibilitychange'));});
+        assert.equal(reads,visibleReads);
+        unread=4;
+        await page.evaluate(()=>{delete document.visibilityState;document.dispatchEvent(new Event('visibilitychange'));});
+        await chat.getByText('4 unread',{exact:true}).waitFor();
+        failed=true;await page.evaluate(()=>window.dispatchEvent(new Event('online')));await page.getByRole('alert').waitFor();
+        assert.equal(await chat.count(),0,'failed access must not leave private pickup rows visible');
+        failed=false;await page.evaluate(()=>window.dispatchEvent(new Event('online')));await chat.waitFor();
+        unread=5;await page.evaluate(()=>window.__renderPickupDashboard('manual-refresh'));await chat.getByText('5 unread',{exact:true}).waitFor();
+        await page.evaluate(()=>window.__unmountPickupDashboard());const unmountedReads=reads;
+        await page.evaluate(()=>{window.dispatchEvent(new Event('focus'));window.dispatchEvent(new Event('online'));document.dispatchEvent(new Event('visibilitychange'));});
+        assert.equal(reads,unmountedReads,'refresh listeners removed on unmount');
+        assert.deepEqual(errors,[]);
+        console.log(JSON.stringify({browser:name,guestPickupDashboard:true,chatsBeforePhoneRequests:true,unreadCounts:true,focusRefresh:true,visibilityRefresh:true,reconnectRefresh:true,deduplicatedReads:true,errorRecovery:true,manualRefresh:true,cleanup:true,runtimeErrors:errors}));
+        continue;
+      }
       let role='customer',consented=true,status='requested',failNextSend=true,failNextRequest=false;const actions=[],messages=[{id:id(30),sequence:1,sender_type:'system',message_text:'Pickup requested from the venue.',created_at:'2026-09-14T19:00:00Z'}];
       let showChats=true;const phoneRequests=[];
       let failNextGuest=false;const guestSubmissions=[];
