@@ -478,7 +478,24 @@
       syncCustomerDealQuickCta();
     }
 
+    function renderGuestPickupNav() {
+      const link = document.getElementById("guestPickupNav");
+      if (!link) return;
+      link.hidden = true;
+      if (authSession?.accessToken) return;
+      try {
+        // Match the saved-link format and lifetime in pickup-guest-session.ts.
+        const saved = JSON.parse(localStorage.getItem("mydancrGuestPickupsV1") || "[]");
+        const cutoff = Date.now() - 30 * 86400000;
+        link.hidden = !Array.isArray(saved) || !saved.some(item => item
+          && typeof item.id === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(item.id)
+          && typeof item.key === "string" && /^[a-f0-9]{64}$/.test(item.key)
+          && typeof item.venue === "string" && Number.isFinite(item.savedAt) && item.savedAt > cutoff);
+      } catch { /* Storage may be blocked or contain an invalid saved link. */ }
+    }
+
     function renderCustomerQuickActions() {
+      renderGuestPickupNav();
       syncDeviceSavedDealPasses();
       if (!customerQuickActions) return;
       const showNotifications = isCustomerSession() || isDancerSession() || isVenueSession();

@@ -714,10 +714,14 @@
     }
     window.setInterval(() => { void refreshVisibleHomeDiscovery(); }, HOME_DISCOVERY_REFRESH_MS);
     document.addEventListener("visibilitychange", () => {
-      if (document.visibilityState === "visible") void refreshVisibleHomeDiscovery({ bypassCache: true });
+      if (document.visibilityState === "visible") {
+        renderCustomerQuickActions();
+        void refreshVisibleHomeDiscovery({ bypassCache: true });
+      }
     });
     window.addEventListener("focus", () => {
       if (refreshBrowserAccountView()) return;
+      renderCustomerQuickActions();
       void refreshVisibleHomeDiscovery({ bypassCache: true });
     });
     window.addEventListener("storage", (event) => {
@@ -725,7 +729,7 @@
         void refreshVisibleHomeDiscovery({ bypassCache: true });
         return;
       }
-      if (!event.key?.startsWith("dancrSavedDealPassesV3:") && event.key !== "dancrAuthSessionV1" && event.key !== null) return;
+      if (!event.key?.startsWith("dancrSavedDealPassesV3:") && event.key !== "mydancrGuestPickupsV1" && event.key !== "dancrAuthSessionV1" && event.key !== null) return;
       if (event.key === "dancrAuthSessionV1" || event.key === null) {
         if (refreshBrowserAccountView()) return;
         synchronizeAuthSession();

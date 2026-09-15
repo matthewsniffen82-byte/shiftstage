@@ -814,6 +814,37 @@
       }
     }
 
+    header .guest-pickup-nav {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex: 0 0 auto;
+      gap: 7px;
+      min-height: 44px;
+      padding: 8px 12px;
+      border: 1px solid rgba(167, 139, 250, 0.32);
+      border-radius: 12px;
+      color: #ede9fe;
+      background: rgba(91, 33, 182, 0.16);
+      font-size: 13px;
+      font-weight: 700;
+      line-height: 1.2;
+      text-align: center;
+      text-decoration: none;
+      box-sizing: border-box;
+    }
+
+    header .guest-pickup-nav[hidden] { display: none; }
+    header .guest-pickup-nav svg { width: 18px; height: 18px; flex-shrink: 0; }
+    header .guest-pickup-nav:hover { background: rgba(91, 33, 182, 0.3); }
+    header .guest-pickup-nav:focus-visible { outline: 2px solid #c4b5fd; outline-offset: 3px; }
+
+    @media (max-width: 720px) {
+      header .guest-pickup-nav { width: 64px; padding: 5px; font-size: 12px; }
+      header .guest-pickup-nav svg,
+      header .guest-pickup-nav-prefix { display: none; }
+    }
+
     .customer-deal-quick-count {
       color: #04120a !important;
       background: #49f58b !important;

@@ -31788,6 +31788,37 @@
       }
     }
 
+    header .guest-pickup-nav {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex: 0 0 auto;
+      gap: 7px;
+      min-height: 44px;
+      padding: 8px 12px;
+      border: 1px solid rgba(167, 139, 250, 0.32);
+      border-radius: 12px;
+      color: #ede9fe;
+      background: rgba(91, 33, 182, 0.16);
+      font-size: 13px;
+      font-weight: 700;
+      line-height: 1.2;
+      text-align: center;
+      text-decoration: none;
+      box-sizing: border-box;
+    }
+
+    header .guest-pickup-nav[hidden] { display: none; }
+    header .guest-pickup-nav svg { width: 18px; height: 18px; flex-shrink: 0; }
+    header .guest-pickup-nav:hover { background: rgba(91, 33, 182, 0.3); }
+    header .guest-pickup-nav:focus-visible { outline: 2px solid #c4b5fd; outline-offset: 3px; }
+
+    @media (max-width: 720px) {
+      header .guest-pickup-nav { width: 64px; padding: 5px; font-size: 12px; }
+      header .guest-pickup-nav svg,
+      header .guest-pickup-nav-prefix { display: none; }
+    }
+
     .customer-deal-quick-count {
       color: #04120a !important;
       background: #49f58b !important;
@@ -32100,6 +32131,10 @@
           <span class="mydancr-live-logo" aria-hidden="true">mydanc<span class="violet-r">r</span></span>
         </button>
         <div class="menu" aria-label="Menu">
+          <a class="guest-pickup-nav" id="guestPickupNav" href="/pickups" aria-label="Your pickup chats" title="Open pickup chats saved on this browser" hidden>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11.5a8.5 8.5 0 0 1-8.5 8.5 9 9 0 0 1-4-.9L3 21l1.9-5.5a9 9 0 0 1-.9-4A8.5 8.5 0 0 1 12.5 3H13a8.5 8.5 0 0 1 8 8v.5Z"/></svg>
+            <span><span class="guest-pickup-nav-prefix">Your </span>Pickup chats</span>
+          </a>
           <div class="customer-quick-actions" id="customerQuickActions" hidden>
             <button class="customer-quick-btn" id="customerNotificationQuickBtn" type="button" aria-label="Open notifications" title="Notifications" aria-expanded="false" aria-controls="customerNotificationsQuickPanel">
               <span id="customerNotificationQuickCount" class="customer-quick-count" hidden>0</span>
@@ -46014,7 +46049,24 @@
       syncCustomerDealQuickCta();
     }
 
+    function renderGuestPickupNav() {
+      const link = document.getElementById("guestPickupNav");
+      if (!link) return;
+      link.hidden = true;
+      if (authSession?.accessToken) return;
+      try {
+        // Match the saved-link format and lifetime in pickup-guest-session.ts.
+        const saved = JSON.parse(localStorage.getItem("mydancrGuestPickupsV1") || "[]");
+        const cutoff = Date.now() - 30 * 86400000;
+        link.hidden = !Array.isArray(saved) || !saved.some(item => item
+          && typeof item.id === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(item.id)
+          && typeof item.key === "string" && /^[a-f0-9]{64}$/.test(item.key)
+          && typeof item.venue === "string" && Number.isFinite(item.savedAt) && item.savedAt > cutoff);
+      } catch { /* Storage may be blocked or contain an invalid saved link. */ }
+    }
+
     function renderCustomerQuickActions() {
+      renderGuestPickupNav();
       syncDeviceSavedDealPasses();
       if (!customerQuickActions) return;
       const showNotifications = isCustomerSession() || isDancerSession() || isVenueSession();
@@ -67605,10 +67657,14 @@
     }
     window.setInterval(() => { void refreshVisibleHomeDiscovery(); }, HOME_DISCOVERY_REFRESH_MS);
     document.addEventListener("visibilitychange", () => {
-      if (document.visibilityState === "visible") void refreshVisibleHomeDiscovery({ bypassCache: true });
+      if (document.visibilityState === "visible") {
+        renderCustomerQuickActions();
+        void refreshVisibleHomeDiscovery({ bypassCache: true });
+      }
     });
     window.addEventListener("focus", () => {
       if (refreshBrowserAccountView()) return;
+      renderCustomerQuickActions();
       void refreshVisibleHomeDiscovery({ bypassCache: true });
     });
     window.addEventListener("storage", (event) => {
@@ -67616,7 +67672,7 @@
         void refreshVisibleHomeDiscovery({ bypassCache: true });
         return;
       }
-      if (!event.key?.startsWith("dancrSavedDealPassesV3:") && event.key !== "dancrAuthSessionV1" && event.key !== null) return;
+      if (!event.key?.startsWith("dancrSavedDealPassesV3:") && event.key !== "mydancrGuestPickupsV1" && event.key !== "dancrAuthSessionV1" && event.key !== null) return;
       if (event.key === "dancrAuthSessionV1" || event.key === null) {
         if (refreshBrowserAccountView()) return;
         synchronizeAuthSession();
