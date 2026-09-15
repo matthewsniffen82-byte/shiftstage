@@ -22,6 +22,9 @@ export function pickupCreateArgs(body: Record<string, unknown>) {
 export function pickupCommand(id: string, body: Record<string, unknown>) {
   const p_id = pickupUuid(id);
   switch (body.action) {
+    case "confirm_arrival":
+      allowedKeys(body, ["action"]);
+      return { name: "pickup_confirm_arrival", args: { p_id } };
     case "consent":
       allowedKeys(body, ["action", "version"]);
       return { name: "pickup_accept_consent", args: { p_id, p_version: text(body, "version", 50, 1) } };

@@ -13,7 +13,7 @@ export async function pickupFixture(migrations = ['20260914190000_club_pickup_do
       is_active boolean default true,page_review_status text default 'published',published_at timestamptz default now());
     create table public.venue_team_members(venue_id uuid references venues(id),user_id uuid references app_users(id),role text,status text);
     create table public.qr_redemptions(id uuid primary key,customer_id uuid references app_users(id),venue_id uuid references venues(id),
-      status text,redeemed_at timestamptz,nfc_tag_id uuid);
+      status text,redeemed_at timestamptz,nfc_tag_id uuid,confirmed_at timestamptz,club_deal_id uuid,suspicious boolean default false,voided_at timestamptz);
     create table public.notifications(id uuid primary key default gen_random_uuid(),recipient_id uuid references app_users(id),
       notification_type text,channel text,title text,body text,payload jsonb,read_at timestamptz,sent_at timestamptz,created_at timestamptz default now());
     alter default privileges in schema public grant all on tables to anon,authenticated,service_role;
