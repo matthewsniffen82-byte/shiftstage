@@ -3,14 +3,13 @@ export const CLUB_ARRIVAL_VERIFICATION = "Club staff must verify that you arrive
 export const CLUB_SHUTTLE_HANDOFF = "MyDancr sends your request to the club. The club handles transportation and will contact you to confirm availability, pickup location, and timing. Submitting a request does not confirm a ride.";
 
 export const AUTONOMOUS_ADMISSION_OPTIONS = [
-  { value: "waymo", label: "Waymo" },
-  { value: "zoox", label: "Zoox" },
-  { value: "cybercab", label: "Cybercab" },
+  { value: "autonomous_cab", label: "Waymo / Zoox / Cybercab" },
 ] as const;
-export type EligibleClubTransportation = "self_drive" | "club_shuttle" | (typeof AUTONOMOUS_ADMISSION_OPTIONS)[number]["value"];
+// Keep existing selections valid until their normal expiry.
+export type EligibleClubTransportation = "self_drive" | "club_shuttle" | "waymo" | "zoox" | "cybercab" | (typeof AUTONOMOUS_ADMISSION_OPTIONS)[number]["value"];
 
 export function isEligibleClubTransportation(value: unknown): value is EligibleClubTransportation {
-  return value === "self_drive" || value === "club_shuttle" || AUTONOMOUS_ADMISSION_OPTIONS.some(option => option.value === value);
+  return value === "self_drive" || value === "club_shuttle" || value === "waymo" || value === "zoox" || value === "cybercab" || AUTONOMOUS_ADMISSION_OPTIONS.some(option => option.value === value);
 }
 
 export function normalizeClubTransportationTerms(terms: string | null | undefined) {

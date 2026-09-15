@@ -49546,7 +49546,7 @@
       try {
         const intent = JSON.parse(localStorage.getItem("mydancrPendingNfcDealV2") || "null");
         if (!intent || intent.venueId !== pass?.venueId || intent.dealId !== pass?.dealId) return null;
-        if (!["self_drive", "club_shuttle", "waymo", "zoox", "cybercab"].includes(intent.transportation)) return null;
+        if (!["self_drive", "club_shuttle", "autonomous_cab", "waymo", "zoox", "cybercab"].includes(intent.transportation)) return null;
         const passSource = pass?.sourceType || "club_page";
         if ((intent.sourceType || "club_page") !== passSource) return null;
         if (passSource === "dancer_profile" && String(intent.dancerId || "") !== String(pass?.dancerId || "")) return null;

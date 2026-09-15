@@ -32,7 +32,7 @@ function readers(value) {
 }
 
 test("every eligible arrival survives cashier, offer-card and saved-pass readers", () => {
-  for (const transportation of ["self_drive", "club_shuttle", "waymo", "zoox", "cybercab"]) {
+  for (const transportation of ["self_drive", "club_shuttle", "autonomous_cab", "waymo", "zoox", "cybercab"]) {
     const r = readers({ ...intent, transportation });
     assert.equal(r.cashier("registered-tag").transportation, transportation);
     assert.equal(r.cashier("registered-tag").attributionToken, "signed-token");
@@ -53,7 +53,7 @@ test("unrecognized and excluded transportation never becomes a ready deal", () =
 });
 
 test("autonomous arrival preserves expiry, offer matching and dancer attribution boundaries", () => {
-  for (const transportation of ["waymo", "zoox", "cybercab"]) {
+  for (const transportation of ["autonomous_cab", "waymo", "zoox", "cybercab"]) {
     const expired = readers({ ...intent, transportation, savedAt: now - ttl - 1000, expiresAt: now - 1000 });
     assert.equal(expired.cashier("registered-tag"), null);
     assert.equal(expired.card(intent).expired, true);
