@@ -3,7 +3,7 @@ export const CLUB_DEAL_OFFER_PRESETS = Object.freeze([
     key: "free_admission",
     title: "Free admission",
     description: "Receive one complimentary general-admission entry after cashier confirmation.",
-    terms: "Free admission when you arrive in a private car or club-provided transport. Arrivals by Uber, Lyft, other rideshares, or taxi do not qualify. One redemption per guest. Offer applies to standard general admission only and remains subject to venue capacity, age requirements, dress code, and house rules.",
+    terms: "Free admission when you arrive in a private car, club-provided transport, Waymo, Zoox, or Cybercab. Uber, Lyft, and other rideshares or taxis do not qualify. Waymo, Zoox, and Cybercab ride fares are not included. One redemption per guest. Offer applies to standard general admission only and remains subject to venue capacity, age requirements, dress code, and house rules.",
   }),
 ]);
 

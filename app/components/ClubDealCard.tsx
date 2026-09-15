@@ -3,7 +3,7 @@
 import { useEffect, useId, useRef, useState } from "react";
 import type { PublicClubDeal, DealSourceType } from "@/src/lib/dancr/types";
 import { customerFacingDealDescription, customerFacingDealTerms } from "@/src/lib/dancr/deal-copy";
-import { clubDealTransportationTerms } from "@/src/lib/dancr/club-deal-transportation";
+import { clubDealTransportationTerms, isEligibleClubTransportation, type EligibleClubTransportation } from "@/src/lib/dancr/club-deal-transportation";
 import {
   hasSignedInCustomerDealAccount,
   loadCustomerDealSavedState,
@@ -555,7 +555,7 @@ function dealTypeLabel(value: PublicClubDeal["offerType"]) {
 }
 
 type PendingDealSelection = {
-  transportation?: "self_drive" | "club_shuttle";
+  transportation?: EligibleClubTransportation;
   venueId: string;
   dealId: string;
   sourceType: DealSourceType;
@@ -576,7 +576,7 @@ function readPendingDealSelection(input: {
   try {
     const value = JSON.parse(window.localStorage.getItem(DEAL_INTENT_KEY) || "null") as Partial<PendingDealSelection> | null;
     if (!value || value.venueId !== input.venueId || value.dealId !== input.dealId) return null;
-    if (value.transportation !== "self_drive" && value.transportation !== "club_shuttle") return null;
+    if (!isEligibleClubTransportation(value.transportation)) return null;
     if ((value.sourceType || "club_page") !== input.sourceType) return null;
     if (input.sourceType === "dancer_profile" && String(value.dancerId || "") !== String(input.dancerId || "")) return null;
     const savedAt = Number(value.savedAt || 0);

@@ -9,7 +9,7 @@ import {
   readBrowserAuthSession,
 } from "@/src/lib/dancr/browser-session";
 import { customerFacingDealDescription, customerFacingDealTerms } from "@/src/lib/dancr/deal-copy";
-import { CLUB_ARRIVAL_VERIFICATION, CLUB_TRANSPORTATION_TERMS } from "@/src/lib/dancr/club-deal-transportation";
+import { CLUB_ARRIVAL_VERIFICATION, CLUB_TRANSPORTATION_TERMS, isEligibleClubTransportation, type EligibleClubTransportation } from "@/src/lib/dancr/club-deal-transportation";
 
 const TAP_SESSION_KEY = "mydancrNfcTapSessionV1";
 const DEAL_INTENT_KEY = "mydancrPendingNfcDealV2";
@@ -22,7 +22,7 @@ type TagState = {
 };
 
 type PendingDealIntent = {
-  transportation: "self_drive" | "club_shuttle";
+  transportation: EligibleClubTransportation;
   venueId: string;
   dealId: string;
   sourceType: "club_page" | "dancer_profile";
@@ -345,7 +345,7 @@ function readPendingDealIntent(routeToken: string): PendingDealIntent | null {
     const value = JSON.parse(window.localStorage.getItem(DEAL_INTENT_KEY) || "null");
     if (!value || typeof value !== "object" || Date.now() - Number(value.savedAt || 0) > 12 * 60 * 60 * 1000) return null;
     if (typeof value.venueId !== "string" || typeof value.dealId !== "string") return null;
-    if (value.transportation !== "self_drive" && value.transportation !== "club_shuttle") return null;
+    if (!isEligibleClubTransportation(value.transportation)) return null;
     if (Number(value.expiresAt || 0) > 0 && Date.now() >= Number(value.expiresAt)) return null;
     return value as PendingDealIntent;
   } catch {

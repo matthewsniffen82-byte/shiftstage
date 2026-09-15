@@ -1,9 +1,26 @@
-export const CLUB_TRANSPORTATION_TERMS = "Free admission when you arrive in a private car or club-provided transport. Arrivals by Uber, Lyft, other rideshares, or taxi do not qualify.";
-export const CLUB_ARRIVAL_VERIFICATION = "Club staff must verify that you arrived in a private car or club-provided transport before admitting you for free.";
+export const CLUB_TRANSPORTATION_TERMS = "Free admission when you arrive in a private car, club-provided transport, Waymo, Zoox, or Cybercab. Uber, Lyft, and other rideshares or taxis do not qualify. Waymo, Zoox, and Cybercab ride fares are not included.";
+export const CLUB_ARRIVAL_VERIFICATION = "Club staff must verify that you arrived in a private car, club-provided transport, Waymo, Zoox, or Cybercab before admitting you for free.";
 export const CLUB_SHUTTLE_HANDOFF = "MyDancr sends your request to the club. The club handles transportation and will contact you to confirm availability, pickup location, and timing. Submitting a request does not confirm a ride.";
 
+export const AUTONOMOUS_ADMISSION_OPTIONS = [
+  { value: "waymo", label: "Waymo" },
+  { value: "zoox", label: "Zoox" },
+  { value: "cybercab", label: "Cybercab" },
+] as const;
+export type EligibleClubTransportation = "self_drive" | "club_shuttle" | (typeof AUTONOMOUS_ADMISSION_OPTIONS)[number]["value"];
+
+export function isEligibleClubTransportation(value: unknown): value is EligibleClubTransportation {
+  return value === "self_drive" || value === "club_shuttle" || AUTONOMOUS_ADMISSION_OPTIONS.some(option => option.value === value);
+}
+
+export function normalizeClubTransportationTerms(terms: string | null | undefined) {
+  return String(terms || "")
+    .replaceAll("Free admission requires arrival in your own car or other private car that is not an Uber or taxi, or use of the club's free shuttle service.", CLUB_TRANSPORTATION_TERMS)
+    .replaceAll("Free admission when you arrive in a private car or club-provided transport. Arrivals by Uber, Lyft, other rideshares, or taxi do not qualify.", CLUB_TRANSPORTATION_TERMS);
+}
+
 export function clubDealTransportationTerms(terms: string | null | undefined) {
-  const additional = String(terms || "").replace("Free admission requires arrival in your own car or other private car that is not an Uber or taxi, or use of the club's free shuttle service.", "").trim();
+  const additional = normalizeClubTransportationTerms(terms).trim();
   return additional.includes(CLUB_TRANSPORTATION_TERMS) ? additional : [CLUB_TRANSPORTATION_TERMS, additional].filter(Boolean).join(" ");
 }
 

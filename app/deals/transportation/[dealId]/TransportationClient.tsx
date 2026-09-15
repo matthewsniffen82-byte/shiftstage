@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import type { PublicClubDeal, DealSourceType } from "@/src/lib/dancr/types";
-import { normalizeShuttlePhone } from "@/src/lib/dancr/club-deal-transportation";
+import { AUTONOMOUS_ADMISSION_OPTIONS, CLUB_TRANSPORTATION_TERMS, normalizeShuttlePhone, type EligibleClubTransportation } from "@/src/lib/dancr/club-deal-transportation";
 import NfcIcon from "@/app/components/NfcIcon";
 import "./transportation.css";
 
@@ -13,7 +13,8 @@ export default function TransportationClient({ deal, venue, shuttleAvailable, in
   initialTransportation?: "" | "club_shuttle";
   sourceType?: DealSourceType; dancerId?: string; attributionToken?: string;
 }) {
-  const [choice, setChoice] = useState<"" | "self_drive" | "club_shuttle" | "rideshare_taxi">(deal ? initialTransportation : "club_shuttle");
+  const [choice, setChoice] = useState<"" | EligibleClubTransportation | "rideshare_taxi">(deal ? initialTransportation : "club_shuttle");
+  const autonomousArrival = AUTONOMOUS_ADMISSION_OPTIONS.find(option => option.value === choice);
   const showingShuttleForm = choice === "club_shuttle";
   const [busy, setBusy] = useState(false);
   const [complete, setComplete] = useState(false);
@@ -35,11 +36,11 @@ export default function TransportationClient({ deal, venue, shuttleAvailable, in
       const saved = JSON.parse(localStorage.getItem("mydancrPendingNfcDealV2") || "null");
       if (saved?.venueId === venue.id) localStorage.removeItem("mydancrPendingNfcDealV2");
     } catch {
-      setError("Your previous admission selection could not be cleared. Allow site storage and select your arrival method again. Rideshare and taxi arrivals do not qualify for free admission.");
+      setError("Your previous admission selection could not be cleared. Allow site storage and select your arrival method again. Other rideshares and taxis do not qualify for free admission.");
     }
   }
 
-  function prepareCashier(transportation: "self_drive" | "club_shuttle", shuttleRequestId?: string) {
+  function prepareCashier(transportation: EligibleClubTransportation, shuttleRequestId?: string) {
     if (!deal) return true;
     const savedAt = Date.now();
     try {
@@ -59,7 +60,7 @@ export default function TransportationClient({ deal, venue, shuttleAvailable, in
     event.preventDefault();
     if (!choice || choice === "rideshare_taxi" || pending.current || complete || (choice === "club_shuttle" && !shuttleAvailable)) return;
     setError("");
-    if (choice === "self_drive") {
+    if (choice !== "club_shuttle") {
       if (!prepareCashier(choice)) {
         setError("Your transportation choice could not be saved. Allow site storage, then try again.");
         return;
@@ -104,9 +105,9 @@ export default function TransportationClient({ deal, venue, shuttleAvailable, in
       <Link className="club-transport-back" href={`/venues/${encodeURIComponent(venue.slug)}`}>‹ {venue.name}</Link>
       <h1 ref={heading} tabIndex={-1}>{complete ? choice === "club_shuttle" ? "Pickup requested" : "Ready for your cashier tap" : choice === "club_shuttle" ? deal ? "Free Ride + Entry" : "Request a free ride" : "Free Entry"}</h1>
       <p className="club-transport-venue">{venue.name}</p>
-      {deal ? <p className="club-transport-terms">Free entry with a private car or club transport. Uber, Lyft, other rideshares, and taxis don’t qualify.</p> : <p className="club-transport-terms">Free entry is currently unavailable. You can still request a free ride.</p>}
+      {deal ? <p className="club-transport-terms">{CLUB_TRANSPORTATION_TERMS}</p> : <p className="club-transport-terms">Free entry is currently unavailable. You can still request a free ride.</p>}
       {complete ? <div aria-live="polite">
-        {choice === "club_shuttle" ? <><p><strong>Awaiting club confirmation.</strong></p><p>{message}</p><p>The club will contact you to arrange your pickup. Your ride is not booked yet.</p></> : <p>You confirmed you will arrive in a private car. Uber, Lyft, other rideshares, and taxis do not qualify.</p>}
+        {choice === "club_shuttle" ? <><p><strong>Awaiting club confirmation.</strong></p><p>{message}</p><p>The club will contact you to arrange your pickup. Your ride is not booked yet.</p></> : autonomousArrival ? <p>You confirmed you will arrive by {autonomousArrival.label}. Book and pay for your ride separately.</p> : <p>You confirmed you will arrive in a private car.</p>}
         {deal ? <><div className="club-transport-ready"><NfcIcon /><p>Have staff verify your arrival method, then unlock your phone and tap the MyDancr sticker at the cashier for free entry.</p></div>
         {storageError ? <><p role="alert">Your shuttle request was sent. Allow site storage, then save your deal selection for the cashier. This does not send another shuttle request.</p><button className="club-transport-submit" type="button" onClick={() => prepareCashier("club_shuttle", attemptedRequest.current?.requestId)}>Save deal for cashier</button></> : <p className="club-transport-note">Your deal selection stays ready for 12 hours. Admission is subject to the club’s capacity, age requirements, dress code, and house rules.</p>}</> : null}
       </div> : <>
@@ -116,7 +117,8 @@ export default function TransportationClient({ deal, venue, shuttleAvailable, in
             <legend>How will you arrive?</legend>
             <label className={choice === "self_drive" ? "selected" : ""}><input required type="radio" name="transportation" value="self_drive" checked={choice === "self_drive"} onChange={() => { setChoice("self_drive"); setError(""); }} /><span><strong>Private car</strong><small>Free entry. No rideshares or taxis.</small></span></label>
             <label><input required type="radio" name="transportation" value="club_shuttle" checked={false} onChange={() => { setChoice("club_shuttle"); setError(""); }} /><span><strong>Free club transport</strong><small>Free pickup + entry when you arrive in club transport.</small></span></label>
-            <label className={choice === "rideshare_taxi" ? "selected" : ""}><input required type="radio" name="transportation" value="rideshare_taxi" checked={choice === "rideshare_taxi"} onChange={chooseRideshare} /><span><strong>Rideshare or taxi</strong><small>Free entry isn’t included.</small></span></label>
+            {AUTONOMOUS_ADMISSION_OPTIONS.map(option => <label key={option.value} className={choice === option.value ? "selected" : ""}><input required type="radio" name="transportation" value={option.value} checked={choice === option.value} onChange={() => { setChoice(option.value); setError(""); }} /><span><strong>{option.label}</strong><small>Free entry. Ride fare not included.</small></span></label>)}
+            <label className={choice === "rideshare_taxi" ? "selected" : ""}><input required type="radio" name="transportation" value="rideshare_taxi" checked={choice === "rideshare_taxi"} onChange={chooseRideshare} /><span><strong>Other rideshare or taxi</strong><small>Uber, Lyft, and other taxis: free entry isn’t included.</small></span></label>
           </fieldset> : null}
           {choice === "rideshare_taxi" ? <div className="club-transport-ineligible" role="status"><strong>This arrival method does not qualify for free entry.</strong><p>Choose free club transport to qualify when you arrive in the club’s vehicle.</p><button className="club-transport-submit" type="button" onClick={() => { setChoice("club_shuttle"); setError(""); }}>Request free club transport</button></div> : null}
           {choice === "club_shuttle" ? <>
@@ -132,7 +134,7 @@ export default function TransportationClient({ deal, venue, shuttleAvailable, in
             </div>
           </> : null}
           {error ? <p role="alert" className="club-transport-error">{error}</p> : null}
-          {choice !== "rideshare_taxi" ? <button className="club-transport-submit" type="submit" disabled={!choice || busy || (choice === "club_shuttle" && !shuttleAvailable)} aria-busy={busy}>{busy ? "Sending to the club…" : attemptedRequest.current ? "Retry shuttle request" : choice === "club_shuttle" ? "Send pickup request" : "Confirm private-car arrival"}</button> : null}
+          {choice !== "rideshare_taxi" ? <button className="club-transport-submit" type="submit" disabled={!choice || busy || (choice === "club_shuttle" && !shuttleAvailable)} aria-busy={busy}>{busy ? "Sending to the club…" : attemptedRequest.current ? "Retry shuttle request" : choice === "club_shuttle" ? "Send pickup request" : autonomousArrival ? `Confirm ${autonomousArrival.label} arrival` : "Confirm private-car arrival"}</button> : null}
         </form>
         {deal ? <p className="club-transport-note">One free general admission per guest. Capacity, age requirements, dress code, and house rules apply.</p> : null}
       </>}

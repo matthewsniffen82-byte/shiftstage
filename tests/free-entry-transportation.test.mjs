@@ -69,13 +69,53 @@ function client(props = {}, options = {}) {
 }
 
 test("private-car arrival prepares free entry without sending a ride request", async () => {
-  const f = client(); assert.match(f.html(), /Rideshare or taxi/);
+  const f = client(); assert.match(f.html(), /Other rideshare or taxi/);
   f.select("self_drive"); await f.submit();
   assert.equal(f.requests.length, 0);
   const selection = JSON.parse(f.stored.get(key));
   assert.equal(selection.dealId, deal.id); assert.equal(selection.transportation, "self_drive");
   assert.equal(selection.expiresAt - selection.savedAt, 12 * 60 * 60 * 1000);
   assert.match(f.html(), /staff verify your arrival method/);
+});
+
+test("Waymo, Zoox and Cybercab prepare attributed admission without booking or notifying a ride", async () => {
+  for (const { value, label } of transportation.AUTONOMOUS_ADMISSION_OPTIONS) {
+    const f = client({ sourceType: "dancer_profile", dancerId: "dancer", attributionToken: "signed-token", shuttleAvailable: false });
+    f.select(value);
+    assert.match(f.html(), new RegExp(`Confirm ${label} arrival`));
+    await f.submit();
+    assert.equal(f.requests.length, 0);
+    const selection = JSON.parse(f.stored.get(key));
+    assert.equal(selection.transportation, value);
+    assert.equal(selection.venueId, venue.id);
+    assert.equal(selection.dealId, deal.id);
+    assert.equal(selection.sourceType, "dancer_profile");
+    assert.equal(selection.dancerId, "dancer");
+    assert.equal(selection.attributionToken, "signed-token");
+    assert.equal(selection.expiresAt - selection.savedAt, 12 * 60 * 60 * 1000);
+    assert.equal(selection.shuttleRequestId, null);
+    assert.match(f.html(), new RegExp(`arrive by ${label}`));
+    assert.match(f.html(), /Book and pay for your ride separately/);
+    assert.match(f.html(), /staff verify your arrival method/);
+  }
+});
+
+test("autonomous arrival requires successful local storage and can retry without a ride request", async () => {
+  const f = client(); f.select("waymo"); f.blockStorage(true); await f.submit();
+  assert.equal(f.stored.has(key), false);
+  assert.doesNotMatch(f.html(), /Ready for your cashier tap/);
+  assert.match(f.html(), /transportation choice could not be saved/);
+  f.blockStorage(false); await f.submit();
+  assert.equal(JSON.parse(f.stored.get(key)).transportation, "waymo");
+  assert.equal(f.requests.length, 0);
+});
+
+test("changing an autonomous arrival to an ineligible rideshare clears admission", async () => {
+  const f = client(); f.select("zoox"); await f.submit();
+  const revisit = client(); revisit.stored.set(key, f.stored.get(key));
+  revisit.select("rideshare_taxi"); await revisit.submit();
+  assert.equal(revisit.stored.has(key), false);
+  assert.equal(revisit.requests.length, 0);
 });
 
 test("both entry points use the same pickup handoff and admission selection", async () => {
@@ -127,6 +167,7 @@ test("blocked storage can recover the admission selection without repeating a se
 
 test("ride-only fallback never advertises or prepares unavailable admission", async () => {
   const f = client({ deal: undefined }); assert.match(f.html(), /Free entry is currently unavailable/);
+  assert.doesNotMatch(f.html(), /Waymo|Zoox|Cybercab|name="transportation"/);
   await f.submit(); assert.equal(f.requests[0].url, `/api/venues/${venue.id}/shuttle`);
   assert.equal(f.stored.has(key), false);
 });
