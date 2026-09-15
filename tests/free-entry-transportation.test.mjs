@@ -85,7 +85,7 @@ test("one combined Waymo, Zoox and Cybercab option prepares admission without bo
     assert.equal(nodes(f.render()).filter(node => node.type === "input" && node.props.name === "transportation").length, 4);
     assert.doesNotMatch(f.html(), /value="(?:waymo|zoox|cybercab)"/);
     f.select(value);
-    assert.match(f.html(), /Confirm arrival/);
+    assert.match(f.html(), /Continue to free entry/);
     await f.submit();
     assert.equal(f.requests.length, 0);
     const selection = JSON.parse(f.stored.get(key));

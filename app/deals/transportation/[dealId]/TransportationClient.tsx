@@ -134,7 +134,7 @@ export default function TransportationClient({ deal, venue, shuttleAvailable, in
             </div>
           </> : null}
           {error ? <p role="alert" className="club-transport-error">{error}</p> : null}
-          {choice !== "rideshare_taxi" ? <button className="club-transport-submit" type="submit" disabled={!choice || busy || (choice === "club_shuttle" && !shuttleAvailable)} aria-busy={busy}>{busy ? "Sending to the club…" : attemptedRequest.current ? "Retry shuttle request" : choice === "club_shuttle" ? "Send pickup request" : autonomousArrival ? "Confirm arrival" : "Confirm private-car arrival"}</button> : null}
+          {choice !== "rideshare_taxi" ? <button className="club-transport-submit" type="submit" disabled={!choice || busy || (choice === "club_shuttle" && !shuttleAvailable)} aria-busy={busy}>{busy ? "Sending to the club…" : attemptedRequest.current ? "Retry shuttle request" : choice === "club_shuttle" ? "Send pickup request" : "Continue to free entry"}</button> : null}
         </form>
         {deal ? <p className="club-transport-note">One free general admission per guest. Capacity, age requirements, dress code, and house rules apply.</p> : null}
       </>}
