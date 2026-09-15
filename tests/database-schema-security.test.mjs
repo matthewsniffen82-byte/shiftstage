@@ -20,6 +20,13 @@ test("every retained public application table enables row-level security", () =>
     migrations,
     /alter\s+table\s+(?:if\s+exists\s+)?(?:public\.)?([a-z_][a-z0-9_]*)\s+enable\s+row\s+level\s+security/gi,
   );
+  // Also recognize literal foreach lists whose first statement enables RLS.
+  // Pickup's domain migration uses this form; its PostgreSQL tests verify the
+  // resulting pg_class flags and direct-client isolation after execution.
+  for (const loop of migrations.matchAll(/foreach\s+(\w+)\s+in\s+array\s+array\[([^\]]+)\]\s+loop\s+execute\s+format\('alter table public\.%I enable row level security',\s*\1\);/gi)) {
+    assert.match(loop[2], /^\s*'[a-z_][a-z0-9_]*'(?:\s*,\s*'[a-z_][a-z0-9_]*')*\s*$/i);
+    for (const table of loop[2].matchAll(/'([a-z_][a-z0-9_]*)'/gi)) protectedTables.add(table[1].toLowerCase());
+  }
   const dropped = captures(
     migrations,
     /drop\s+table\s+(?:if\s+exists\s+)?(?:public\.)?([a-z_][a-z0-9_]*)/gi,

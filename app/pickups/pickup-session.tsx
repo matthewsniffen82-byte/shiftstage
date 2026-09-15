@@ -31,8 +31,8 @@ export function PickupAccountGate({ children, customerOnly = false }: { children
   if (!session.identity) {
     const returnTo = encodeURIComponent(window.location.pathname + window.location.search);
     return <section className="pickup-card"><h1>Club Pickup</h1><p>Sign in to request pickup or open your private venue conversation.</p>
-      <Link className="pickup-primary" href={`/?auth=login&role=customer&return_to=${returnTo}`}>Customer sign in</Link>
-      {!customerOnly && <Link className="pickup-button" href={`/?venueAccess=1&return_to=${returnTo}`}>Venue sign in</Link>}</section>;
+      <Link prefetch={false} className="pickup-primary" href={`/?auth=login&role=customer&return_to=${returnTo}`}>Customer sign in</Link>
+      {!customerOnly && <Link prefetch={false} className="pickup-button" href={`/?venueAccess=1&return_to=${returnTo}`}>Venue sign in</Link>}</section>;
   }
   if (!session.role || !(customerOnly ? ["customer"] : ["customer", "venue", "admin"]).includes(session.role)) return <section className="pickup-card"><h1>Club Pickup</h1><p>This feature is for customers and authorized venue managers. Dancer accounts cannot access pickup conversations.</p><Link href="/">Back to MyDancr</Link></section>;
   return <div key={session.identity}>{children(session.role as PickupRole)}</div>;

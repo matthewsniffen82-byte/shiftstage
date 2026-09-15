@@ -18,7 +18,7 @@ function addSource(key,code,base) {
   modules[index]={code,deps}; return index;
 }
 function load(name,base) {
-  if(name==='next/link') return mock(name,"module.exports=({children,href,...props})=>require('react').createElement('a',{...props,href},children)");
+  if(name==='next/link') return mock(name,"module.exports=({children,href,prefetch:_prefetch,...props})=>require('react').createElement('a',{...props,href},children)");
   if(name==='next/navigation') return mock(name,"exports.useRouter=()=>({replace:url=>window.__destination=url})");
   if(name.endsWith('/dashboard-session')) return mock('dashboard-session',`exports.requestDashboardJson=async(path,options={})=>{
     const response=await fetch(path,options);const data=await response.json();if(!response.ok)throw Object.assign(new Error(data.error),{status:response.status});return data;};`);
