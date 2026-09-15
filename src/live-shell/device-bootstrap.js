@@ -10,6 +10,8 @@
         const initialParams = new URLSearchParams(window.location.search);
         if (initialParams.get("venue_preview") === "1" && initialParams.get("venue")) {
           root.classList.add("venue-preview-bootstrap");
+        } else if (initialParams.get("venue")) {
+          root.classList.add("venue-profile-bootstrap");
         }
       } catch {
         // The normal application shell remains available when URL parsing is unavailable.

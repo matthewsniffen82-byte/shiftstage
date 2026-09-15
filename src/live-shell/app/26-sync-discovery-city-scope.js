@@ -483,17 +483,18 @@
       citySelect.value = city;
       activeTab = venueSlug ? "venues" : "dancers";
       document.querySelectorAll(".tab").forEach((item) => item.classList.toggle("active", item.dataset.tab === activeTab));
-      render();
       if (venueSlug) {
         const venue = resolveVenueByName(venueSlug, city);
-        if (venue) {
-          setTimeout(() => {
-            openVenueFromName(venue.slug || venue.name);
-            scrollToSharedVenueSection();
-          }, 120);
+        if (venue && !venue.hidden) {
+          openVenueFromName(venue.slug || venue.name);
+          scrollToSharedVenueSection();
+        } else {
+          render();
+          if (liveMarketState[city] !== "error") showToast("Club profile not found");
         }
         return;
       }
+      render();
       const approvedProfiles = discoveryMarket(city).dancers.filter(isApprovedPublicProfile);
       const profile = approvedProfiles.find((item) => item.slug === profileSlug)
         || approvedProfiles.find((item) => slugify(item.name) === profileSlug);
@@ -754,5 +755,9 @@
     const restoredAuthResume = restoreAuthConfirmationResume();
     if (!restoredAuthResume && !handleVenueDancerVerificationDeepLink() && !handleAdminDashboardDeepLink() && !handleVenueDashboardDeepLink() && !handleDancerDashboardDeepLink() && !handleVenueAccessDeepLink() && !handleAccountAccessDeepLink()) {
       if (initialVenuePreviewRequest) void initialVenuePreviewRequest;
-      else void initialDiscoveryRequest.finally(() => openSharedProfileFromUrl());
+      else void initialDiscoveryRequest.finally(() => openSharedProfileFromUrl()).finally(() => {
+        document.documentElement.classList.remove("venue-profile-bootstrap");
+      });
+    } else {
+      document.documentElement.classList.remove("venue-profile-bootstrap");
     }

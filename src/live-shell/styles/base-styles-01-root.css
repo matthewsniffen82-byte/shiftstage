@@ -37,10 +37,12 @@
         linear-gradient(180deg, #030304 0%, #060509 46%, #030304 100%);
     }
 
+    html.venue-profile-bootstrap body > *,
     html.venue-preview-bootstrap body > * {
       visibility: hidden !important;
     }
 
+    html.venue-profile-bootstrap body::before,
     html.venue-preview-bootstrap body::before {
       content: "Loading private venue preview";
       position: fixed;
@@ -57,6 +59,11 @@
       text-align: center;
     }
 
+    html.venue-profile-bootstrap body::before {
+      content: "Loading club profile";
+    }
+
+    html.venue-profile-bootstrap body::after,
     html.venue-preview-bootstrap body::after {
       content: "";
       position: fixed;
@@ -77,6 +84,7 @@
     }
 
     @media (prefers-reduced-motion: reduce) {
+      html.venue-profile-bootstrap body::after,
       html.venue-preview-bootstrap body::after { animation: none; }
     }
 
