@@ -57,6 +57,7 @@ export default function TransportationClient({ deal, venue, shuttleAvailable, pi
   const [requestByPhone, setRequestByPhone] = useState(false);
   const account = usePickupAccount();
   const useChat = pickupAvailable && account.ready && (!account.identity || account.role === "customer") && !requestByPhone;
+  const compactPickup = showingShuttleForm && useChat && !complete;
   const heading = useRef<HTMLHeadingElement>(null);
   const pending = useRef(false);
   const attemptedRequest = useRef<{ requestId: string; name: string; location: string; phone: string; email: string; partySize: number; handoffAccepted: boolean } | null>(null);
@@ -153,8 +154,8 @@ export default function TransportationClient({ deal, venue, shuttleAvailable, pi
     <section className="club-transport-card">
       <Link className="club-transport-back" href={`/venues/${encodeURIComponent(venue.slug)}`}>‹ {venue.name}</Link>
       <h1 ref={heading} tabIndex={-1}>{complete ? choice === "club_shuttle" ? "Pickup requested" : "Ready for your cashier tap" : choice === "club_shuttle" ? deal ? "Free Ride + Entry" : "Request a free ride" : "Free Entry"}</h1>
-      <p className="club-transport-venue">{venue.name}</p>
-      {deal ? <p className="club-transport-terms">{CLUB_TRANSPORTATION_TERMS}</p> : <p className="club-transport-terms">Free entry is currently unavailable. You can still request a free ride.</p>}
+      {!compactPickup && <p className="club-transport-venue">{venue.name}</p>}
+      {deal ? <p className="club-transport-terms">{compactPickup ? "Free admission with club transport." : CLUB_TRANSPORTATION_TERMS}</p> : <p className="club-transport-terms">Free entry is currently unavailable. You can still request a free ride.</p>}
       {complete ? <div aria-live="polite">
         {choice === "club_shuttle" ? <><p><strong>Awaiting club confirmation.</strong></p><p>{message}</p><p>The club will follow up using your contact details. Your ride is not booked yet.</p></> : autonomousArrival ? <>
           <p>You confirmed you will arrive by Waymo, Zoox, or Cybercab.</p>
@@ -180,7 +181,7 @@ export default function TransportationClient({ deal, venue, shuttleAvailable, pi
           <PickupRequestForm venue={{ ...venue, club_pickup_enabled: true }} embedded onBusyChange={setBusy}
             returnTo={`/rides/${encodeURIComponent(venue.id)}?${pickupReturnQuery}`}
             saveAdmission={deal ? requestId => prepareCashier("club_shuttle", undefined, requestId) : undefined} />
-          <button type="button" disabled={busy} onClick={() => setRequestByPhone(true)}>Request by phone instead</button>
+          <button className="pickup-phone-alternative" type="button" disabled={busy} onClick={() => setRequestByPhone(true)}>Request by phone instead</button>
         </div> : <form onSubmit={submit} onInput={() => { if (showingShuttleForm) setRequestByPhone(true); }}>
           {deal && choice !== "club_shuttle" ? <fieldset className="club-transport-options" disabled={busy || !!attemptedRequest.current}>
             <legend>How will you arrive?</legend>
@@ -205,9 +206,9 @@ export default function TransportationClient({ deal, venue, shuttleAvailable, pi
           {error ? <p role="alert" className="club-transport-error">{error}</p> : null}
           {choice !== "rideshare_taxi" ? <button className="club-transport-submit" type="submit" disabled={!choice || busy || (choice === "club_shuttle" && !shuttleAvailable)} aria-busy={busy}>{busy ? "Sending to the club…" : attemptedRequest.current ? "Retry shuttle request" : choice === "club_shuttle" ? "Send pickup request" : "Continue to free entry"}</button> : null}
         </form>}
-        {deal ? <p className="club-transport-note">One free general admission per guest. Capacity, age requirements, dress code, and house rules apply.</p> : null}
+        {deal && !compactPickup ? <p className="club-transport-note">One free general admission per guest. Capacity, age requirements, dress code, and house rules apply.</p> : null}
       </>}
-      {deal ? <p className="club-transport-note">Staff must verify your arrival method before granting free entry.</p> : null}
+      {deal && !compactPickup ? <p className="club-transport-note">Staff must verify your arrival method before granting free entry.</p> : null}
     </section>
   </main>;
 }

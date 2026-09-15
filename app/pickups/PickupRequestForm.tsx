@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { PICKUP_CHAT_NOTICE, PICKUP_CHAT_POLICY, PICKUP_CONSENT_VERSION, PICKUP_TRANSPORT_NOTICE, type PickupVenue } from "@/src/lib/dancr/pickup-domain";
+import { CLUB_TRANSPORTATION_TERMS } from "@/src/lib/dancr/club-deal-transportation";
 import { PickupAccountGate, pickupSessionIdentity, requestPickupJson } from "./pickup-session";
 import { guestPickupHref, newGuestPickupKey, rememberGuestPickup } from "@/src/lib/dancr/pickup-guest-session";
 
@@ -50,22 +51,37 @@ function RequestForm({ venue, embedded = false, saveAdmission, onBusyChange }: R
       <button className="pickup-primary" onClick={() => openConversation(createdId)}>Save free entry and open chat</button></>}
     <Link prefetch={false} className="pickup-primary" href={guestPickupHref(createdId, pending.current?.key || "")}>Message {venue.name}</Link>
   </section>;
-  return <section className="pickup-card">
+  return <section className="pickup-card pickup-request">
     {!embedded && <><Link href={`/?venue=${encodeURIComponent(venue.slug)}`}>‹ {venue.name}</Link><h1>Request Club Pickup</h1></>}
-    <p>Send your pickup request directly to {venue.name}. Your chat opens after you submit, so you can message the venue and follow pickup updates. Your ride is confirmed only when the venue accepts.</p>
-    {!pickupSessionIdentity() && <p className="pickup-notice"><strong>No sign-in needed.</strong> Chat here with the club after submitting. Save your private chat link to return on another device.</p>}
-    {saveAdmission && <p>We’ll also save your free-entry selection for 12 hours. Have staff verify your arrival in club transport, then tap the MyDancr sticker at the cashier.</p>}
+    <p className="pickup-request-intro">Your ride needs club confirmation. Chat opens after you send.{!pickupSessionIdentity() && <> <strong>No sign-in needed.</strong></>}</p>
     <form className="pickup-form" onSubmit={submit}>
       <fieldset disabled={busy}><legend className="pickup-visually-hidden">Pickup details</legend>
-        <label>Pickup location<input name="location" required minLength={3} maxLength={300} autoComplete="off" placeholder="Hotel or meeting location" /></label>
-        <label>Meeting details <small>(optional)</small><input name="locationDetails" maxLength={500} autoComplete="off" placeholder="Lobby or pickup entrance" /></label>
-        <label>Party size<input name="partySize" type="number" inputMode="numeric" required min={1} max={30} defaultValue={1} /></label>
-        <label>Short note <small>(optional)</small><textarea name="notes" maxLength={1000} rows={3} /></label>
-        <p className="pickup-notice">{PICKUP_TRANSPORT_NOTICE}</p>
-        <section className="pickup-notice" aria-labelledby="pickup-consent-title"><h2 id="pickup-consent-title">MyDancr Pickup Chat</h2><p>{PICKUP_CHAT_NOTICE}</p><p>{PICKUP_CHAT_POLICY}</p>
-          <label className="pickup-check"><input name="consent" type="checkbox" required />Agree &amp; Continue</label>
+        <div className="pickup-request-fields">
+          <label>Pickup location<input name="location" required minLength={3} maxLength={300} autoComplete="off" placeholder="Hotel or address" /></label>
+          <label>Party size<input name="partySize" type="number" inputMode="numeric" required min={1} max={30} defaultValue={1} /></label>
+        </div>
+        <details className="pickup-request-options">
+          <summary>Add pickup details <span>(optional)</span></summary>
+          <div>
+            <label><span>Meeting spot <small>(optional)</small></span><input name="locationDetails" maxLength={500} autoComplete="off" placeholder="Lobby or pickup entrance" /></label>
+            <label><span>Note to the club <small>(optional)</small></span><textarea name="notes" maxLength={1000} rows={2} /></label>
+          </div>
+        </details>
+        <section className="pickup-request-consent" aria-label="Pickup chat consent">
+          <p id="pickup-consent-summary">Pickup chat only. MyDancr stores messages and may monitor or review them.</p>
+          <details className="pickup-request-terms">
+            <summary>Pickup &amp; chat terms</summary>
+            <p>{PICKUP_TRANSPORT_NOTICE}</p><p>{PICKUP_CHAT_NOTICE}</p><p>{PICKUP_CHAT_POLICY}</p>
+            {!pickupSessionIdentity() && <p>Save your private chat link to return on another device.</p>}
+            {saveAdmission && <>
+              <p>Free entry is saved for 12 hours. On arrival, have staff verify your club transport, then tap the MyDancr sticker at the cashier.</p>
+              <p>{CLUB_TRANSPORTATION_TERMS}</p>
+              <p>One free general admission per guest. Capacity, age requirements, dress code, and house rules apply.</p>
+            </>}
+          </details>
+          <label className="pickup-check"><input name="consent" type="checkbox" required aria-describedby="pickup-consent-summary" /><span>I agree to the pickup &amp; chat terms.</span></label>
         </section>
-        <button className="pickup-primary" type="submit">{busy ? "Sending request…" : embedded ? "Request pickup & open chat" : "Request Pickup From Venue"}</button>
+        <button className="pickup-primary" type="submit">{busy ? "Sending request…" : "Request pickup"}</button>
       </fieldset>
       {error && <p role="alert">{error}</p>}
     </form>

@@ -111,15 +111,29 @@ try {
       await page.getByRole('heading',{name:'Request Club Pickup'}).waitFor();
       await page.getByLabel('Pickup location',{exact:true}).fill('Synthetic hotel lobby');
       await page.getByLabel('Party size',{exact:true}).fill('2');
-      await page.getByLabel('Agree & Continue').check();
-      await page.getByRole('button',{name:'Request Pickup From Venue'}).click();
+      assert.equal(await page.locator('input[name=locationDetails]').isVisible(),false);
+      assert.equal(await page.locator('.pickup-request-terms').getAttribute('open'),null);
+      await page.getByRole('button',{name:'Request pickup',exact:true}).click();
+      assert.equal(actions.length,0,'consent is required even while the full terms are collapsed');
+      await page.getByText('Add pickup details',{exact:false}).click();
+      await page.getByLabel('Meeting spot (optional)',{exact:true}).fill('North entrance');
+      await page.getByLabel('Note to the club (optional)',{exact:true}).fill('Blue jacket');
+      await page.getByText('Add pickup details',{exact:false}).click();
+      await page.locator('.pickup-request-terms summary').focus();
+      await page.keyboard.press('Enter');
+      assert.equal(await page.getByText('Messages in this pickup conversation',{exact:false}).isVisible(),true);
+      assert.equal(await page.getByText('Transportation, if available',{exact:false}).isVisible(),true);
+      await page.keyboard.press('Enter');
+      await page.getByLabel('I agree to the pickup & chat terms.').check();
+      await page.getByRole('button',{name:'Request pickup'}).click();
       await page.waitForFunction(()=>Boolean(window.__destination));
       assert.equal(actions[0].consentVersion,'pickup-chat-v1');assert.equal(actions[0].location,'Synthetic hotel lobby');assert.equal(actions[0].partySize,2);
+      assert.equal(actions[0].locationDetails,'North entrance');assert.equal(actions[0].notes,'Blue jacket');
       for(const mode of ['ride','entry','ride-only']) {
         await page.goto(base+'/?mode='+mode);
         await page.evaluate(()=>localStorage.removeItem('mydancrPendingNfcDealV2'));
         if(mode==='entry')await page.getByLabel('Free club transport').click();
-        await page.getByRole('button',{name:'Request pickup & open chat',exact:true}).waitFor();
+        await page.getByRole('button',{name:'Request pickup',exact:true}).waitFor();
         assert.equal(await page.locator('input[name=phone]').count(),0);
         for(const width of [320,393,1280]) {
           await page.setViewportSize({width,height:850});
@@ -129,14 +143,14 @@ try {
         if(mode==='ride')await page.screenshot({path:resolve(root,`.next-club-pickup/ride-${name}.png`),fullPage:true});
         await page.getByLabel('Pickup location',{exact:true}).fill('Synthetic hotel lobby');
         await page.getByLabel('Party size',{exact:true}).fill('2');
-        await page.getByLabel('Agree & Continue').check();
+        await page.getByLabel('I agree to the pickup & chat terms.').check();
         const start=actions.length;
         if(mode==='ride')failNextRequest=true;
-        await page.getByRole('button',{name:'Request pickup & open chat',exact:true}).click();
+        await page.getByRole('button',{name:'Request pickup',exact:true}).click();
         if(mode==='ride') {
           await page.getByRole('alert').waitFor();
           assert.equal(await page.evaluate(()=>localStorage.getItem('mydancrPendingNfcDealV2')),null);
-          await page.getByRole('button',{name:'Request pickup & open chat',exact:true}).click();
+          await page.getByRole('button',{name:'Request pickup',exact:true}).click();
           await page.waitForFunction(()=>Boolean(window.__destination));
           assert.equal(actions[start].requestId,actions[start+1].requestId);
         }
@@ -154,9 +168,9 @@ try {
       // A saved request remains accessible when local admission storage fails.
       await page.goto(base+'/?mode=ride');
       await page.getByLabel('Pickup location',{exact:true}).fill('Synthetic hotel lobby');
-      await page.getByLabel('Agree & Continue').check();
+      await page.getByLabel('I agree to the pickup & chat terms.').check();
       await page.evaluate(()=>{window.__originalSetItem=Storage.prototype.setItem;Storage.prototype.setItem=function(key,value){if(key==='mydancrPendingNfcDealV2')throw new Error('Synthetic storage failure');window.__originalSetItem.call(this,key,value)};});
-      await page.getByRole('button',{name:'Request pickup & open chat',exact:true}).click();
+      await page.getByRole('button',{name:'Request pickup',exact:true}).click();
       await page.getByRole('button',{name:'Save free entry and open chat',exact:true}).waitFor();
       assert.equal(await page.getByRole('link',{name:'Message Test Club',exact:true}).getAttribute('href'),'/pickups/'+id(20));
       assert.equal(await page.evaluate(()=>window.__destination),undefined);
@@ -165,24 +179,33 @@ try {
       await page.getByRole('button',{name:'Save free entry and open chat',exact:true}).click();
       await page.waitForFunction(()=>Boolean(window.__destination));assert.equal(actions.length,sentBeforeRecovery);
       await page.goto(base+'/?mode=phone');await page.getByRole('button',{name:'Send pickup request',exact:true}).waitFor();
-      assert.equal(await page.getByRole('button',{name:'Request pickup & open chat',exact:true}).count(),0);
+      assert.equal(await page.getByRole('button',{name:'Request pickup',exact:true}).count(),0);
       // Guests can use every ride entry point even when the venue offers chat.
       await page.evaluate(()=>{sessionStorage.setItem('syntheticGuest','1');localStorage.removeItem('dancrAuthSessionV1');});
       let guestDestination;
       for(const mode of ['ride','entry','ride-only']) {
         await page.goto(base+'/?mode='+mode);
         if(mode==='entry')await page.getByLabel('Free club transport').click();
-        await page.getByRole('button',{name:'Request pickup & open chat',exact:true}).waitFor();
+        await page.getByRole('button',{name:'Request pickup',exact:true}).waitFor();
         assert.equal(await page.getByRole('link',{name:'Customer sign in',exact:true}).count(),0);
         await page.getByText('No sign-in needed.',{exact:true}).waitFor();
+        if(mode==='ride') {
+          await page.setViewportSize({width:393,height:850});
+          await page.screenshot({path:resolve(root,`.next-club-pickup/compact-guest-ride-${name}.png`),fullPage:true});
+          console.log(JSON.stringify({browser:name,compactPickupHeight:await page.locator('.club-transport-card').evaluate(card=>Math.round(card.getBoundingClientRect().height))}));
+          await page.locator('.pickup-request-terms summary').click();
+          assert.equal(await page.getByText('Free entry is saved for 12 hours.',{exact:false}).isVisible(),true);
+          assert.equal(await page.getByText('One free general admission per guest.',{exact:false}).isVisible(),true);
+          await page.locator('.pickup-request-terms summary').click();
+        }
         await page.getByLabel('Pickup location',{exact:true}).fill('Synthetic guest hotel lobby');
         await page.getByLabel('Party size',{exact:true}).fill('2');
-        await page.getByLabel('Agree & Continue').check();
+        await page.getByLabel('I agree to the pickup & chat terms.').check();
         const start=guestActions.length;if(mode==='ride')failNextRequest=true;
-        await page.getByRole('button',{name:'Request pickup & open chat',exact:true}).click();
+        await page.getByRole('button',{name:'Request pickup',exact:true}).click();
         if(mode==='ride') {
           await page.getByRole('alert').waitFor();
-          await page.getByRole('button',{name:'Request pickup & open chat',exact:true}).click();
+          await page.getByRole('button',{name:'Request pickup',exact:true}).click();
           assert.equal(guestActions[start].requestId,guestActions[start+1].requestId);
           assert.equal(guestActions[start].guestKey,guestActions[start+1].guestKey);
         }
@@ -222,7 +245,7 @@ try {
         await page.getByRole('button',{name:'Request by phone instead',exact:true}).click();
         await page.getByRole('button',{name:'Send pickup request',exact:true}).waitFor();
         assert.equal(await page.getByRole('link',{name:'Customer sign in',exact:true}).count(),0);
-        assert.equal(await page.getByRole('button',{name:'Request pickup & open chat',exact:true}).count(),0);
+        assert.equal(await page.getByRole('button',{name:'Request pickup',exact:true}).count(),0);
         await page.getByLabel('Name',{exact:true}).fill('Synthetic Guest Ride');
         await page.getByLabel('Pickup location',{exact:true}).fill('Synthetic guest hotel lobby');
         await page.getByLabel('Guests',{exact:true}).fill('2');
