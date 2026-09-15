@@ -154,14 +154,14 @@ try {
       await page.evaluate(()=>{Storage.prototype.setItem=window.__originalSetItem;});
       await page.getByRole('button',{name:'Save free entry and open chat',exact:true}).click();
       await page.waitForFunction(()=>Boolean(window.__destination));assert.equal(actions.length,sentBeforeRecovery);
-      await page.goto(base+'/?mode=phone');await page.getByText('No sign-in needed',{exact:true}).waitFor();
+      await page.goto(base+'/?mode=phone');await page.getByRole('button',{name:'Send pickup request',exact:true}).waitFor();
       assert.equal(await page.getByRole('button',{name:'Request pickup & open chat',exact:true}).count(),0);
       // Guests can use every ride entry point even when the venue offers chat.
       await page.evaluate(()=>{sessionStorage.setItem('syntheticGuest','1');localStorage.removeItem('dancrAuthSessionV1');});
       for(const mode of ['ride','entry','ride-only']) {
         await page.goto(base+'/?mode='+mode);await page.evaluate(()=>localStorage.removeItem('mydancrPendingNfcDealV2'));
         if(mode==='entry')await page.getByLabel('Free club transport').click();
-        await page.getByText('No sign-in needed',{exact:true}).waitFor();
+        await page.getByRole('button',{name:'Send pickup request',exact:true}).waitFor();
         assert.equal(await page.getByRole('link',{name:'Customer sign in',exact:true}).count(),0);
         assert.equal(await page.getByRole('button',{name:'Request pickup & open chat',exact:true}).count(),0);
         await page.getByLabel('Name',{exact:true}).fill('Synthetic Guest Ride');

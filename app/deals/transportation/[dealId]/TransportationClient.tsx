@@ -189,7 +189,7 @@ export default function TransportationClient({ deal, venue, shuttleAvailable, pi
           </fieldset> : null}
           {choice === "rideshare_taxi" ? <div className="club-transport-ineligible" role="status"><strong>This arrival method does not qualify for free entry.</strong><p>Choose free club transport to qualify when you arrive in the club’s vehicle.</p><button className="club-transport-submit" type="button" onClick={() => { setChoice("club_shuttle"); setError(""); }}>Request free club transport</button></div> : null}
           {choice === "club_shuttle" ? <>
-            <div className="club-transport-handoff"><strong>No sign-in needed</strong><p>MyDancr sends your request to the club. The club arranges your ride and contacts you by phone to confirm availability, pickup location, and timing.</p><p>Your ride is confirmed only when the club accepts.</p></div>
+            <div className="club-transport-handoff"><p>MyDancr sends your request to the club. The club arranges your ride and contacts you by phone to confirm availability, pickup location, and timing.</p><p>Your ride is confirmed only when the club accepts.</p></div>
             {!shuttleAvailable ? <p role="status">Shuttle requests are currently unavailable at this club.</p> : null}
             <div className="club-transport-fields">
               <label>Name<input name="name" autoComplete="name" required minLength={2} maxLength={100} readOnly={busy || !!attemptedRequest.current} /></label>

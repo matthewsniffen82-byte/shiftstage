@@ -269,7 +269,6 @@ test("guests request rides without signing in even when pickup chat is enabled, 
     for (const rideOnly of [false, true]) {
       const f = client({ pickupAvailable: true, initialTransportation: "club_shuttle", ...(rideOnly ? { deal: undefined } : {}),
         sourceType: "dancer_profile", dancerId: "dancer", attributionToken: "signed-token" }, { account });
-      assert.match(f.html(), /No sign-in needed/);
       assert.equal(nodes(f.render()).some(node => node.type === "pickup-form"), false);
       assert.ok(nodes(f.render()).some(node => node.type === "input" && node.props.name === "phone"));
       await f.submit();
@@ -292,7 +291,6 @@ test("ride fields wait for local session initialization so typing cannot select 
   assert.match(f.html(), /Loading pickup form/);
   assert.equal(nodes(f.render()).some(node => node.type === "input"), false);
   account.ready = true;
-  assert.match(f.html(), /No sign-in needed/);
   assert.ok(nodes(f.render()).some(node => node.type === "input" && node.props.name === "phone"));
 });
 
