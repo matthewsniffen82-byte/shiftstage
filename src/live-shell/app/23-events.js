@@ -235,6 +235,7 @@
         });
         if (!data) throw new Error("Sign in required.");
         const { following } = applyConfirmedProfileFollow(profile, city, data);
+        if (following) window.dispatchEvent(new CustomEvent("mydancr:push-invitation", { detail: { moment: "customer-follow" } }));
         if (following && actionButton.dataset.homeTvVideoId) {
           trackHomeTvFeedEvent(actionButton.dataset.homeTvVideoId, "follow");
         }
@@ -243,7 +244,7 @@
           city,
           source: following ? "follow_added" : "follow_removed"
         });
-        showToast(following ? "Following profile. Notifications on." : "Unfollowed profile");
+        showToast(following ? "Following profile. Updates appear in Alerts." : "Unfollowed profile");
         if (customerDashboard.classList.contains("show")) renderDashboard();
       } catch (error) {
         showToast(error.message || "Could not save follow");

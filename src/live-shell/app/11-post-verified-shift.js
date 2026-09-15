@@ -114,6 +114,7 @@
             applyDisplayShift(postedProfile, city);
           }
           document.getElementById("shiftPostResult").textContent = `${noticeText} Live shift saved.`;
+          window.dispatchEvent(new CustomEvent("mydancr:push-invitation", { detail: { moment: "dancer-shift" } }));
           renderDancerManagement();
         }).catch((error) => showToast(error.message || "Could not save live shift"));
       }

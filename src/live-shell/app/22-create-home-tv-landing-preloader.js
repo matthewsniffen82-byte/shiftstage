@@ -548,6 +548,7 @@
           const following = result.following === true;
           followedVenuesByCity[city] = savedVenues.filter((name) => name !== venueName);
           if (following) followedVenuesByCity[city].push(venueName);
+          if (following) window.dispatchEvent(new CustomEvent("mydancr:push-invitation", { detail: { moment: "customer-follow" } }));
           customerSavedStateVersion += 1;
           render();
           if (customerDashboard.classList.contains("show")) renderDashboard();

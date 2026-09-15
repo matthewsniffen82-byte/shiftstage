@@ -210,6 +210,7 @@ export function NotificationPanel({
         <div>
           {customerMode ? <span>Updates that matter</span> : null}
           <h2>{customerMode ? "Alerts" : "Notifications"}</h2>
+          {!customerMode && <button type="button" data-push-settings>Notification settings</button>}
         </div>
         <div className="notification-toolbar">
           <span className="notification-unread-pill">{unreadCount} unread</span>

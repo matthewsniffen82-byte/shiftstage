@@ -1,4 +1,5 @@
 "use client";
+import { offerPushNotifications } from "@/src/lib/dancr/push-invitation";
 
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import Link from "next/link";
@@ -92,6 +93,10 @@ export function VenuePanel({
   const [isPublishingVenue, setIsPublishingVenue] = useState(false);
   const [reviewNotes, setReviewNotes] = useState("");
   const [notificationRevision, setNotificationRevision] = useState(0);
+  const connectedVenueId = profile?.id;
+  useEffect(() => {
+    if (connectedVenueId) offerPushNotifications("venue-dashboard");
+  }, [connectedVenueId]);
   const [activeWorkspace, setActiveWorkspace] = useState<VenueWorkspace>(() => {
     const sectionId = typeof window === "undefined" ? "" : window.location.hash.replace(/^#/, "");
     return venueWorkspaceForSection(sectionId) || initialVenueWorkspace(profile?.isActive === true);
@@ -138,6 +143,7 @@ export function VenuePanel({
       if (decision === "approved") {
         notifyPublicVenuePublication();
         setNotificationRevision((current) => current + 1);
+        offerPushNotifications("venue-live");
       }
       if (decision === "changes_requested") setReviewNotes("");
       setPublicationStatus(data.message || "Venue page review saved.");

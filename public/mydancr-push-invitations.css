@@ -1,0 +1,9 @@
+.mydancr-push-invitation{position:fixed;z-index:2147483000;right:20px;bottom:calc(86px + env(safe-area-inset-bottom,0px));box-sizing:border-box;width:min(370px,calc(100vw - 32px));max-height:calc(100dvh - 140px);overflow:auto;padding:20px;border:1px solid #574370;border-radius:18px;background:#17121f;color:#fff;box-shadow:0 12px 48px #0008;font:14px/1.5 Arial,sans-serif;text-align:left}
+.mydancr-push-invitation h2{margin:0 0 8px;color:#fff;font-size:19px;line-height:1.25}
+.mydancr-push-invitation p{margin:0 0 14px;color:#ded6e8}
+.mydancr-push-invitation-actions{display:flex;flex-wrap:wrap;gap:8px}
+.mydancr-push-invitation button{min-height:44px;padding:10px 14px;border:1px solid #655777;border-radius:10px;background:transparent;color:#fff;font:inherit;cursor:pointer}
+.mydancr-push-invitation button:first-child{background:#7135ba;border-color:#9158d1;font-weight:700}
+.mydancr-push-invitation button:disabled{opacity:.6;cursor:default}
+.mydancr-push-invitation button:focus-visible{outline:3px solid #d7b9ff;outline-offset:3px}
+@media(max-width:480px){.mydancr-push-invitation{right:16px;padding:16px}}

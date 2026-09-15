@@ -20,8 +20,10 @@ function fixture({ following = false, count = 2 } = {}) {
   };
   const metric = { textContent: String(count) };
   const label = { textContent: "Followers" };
-  const notices = [], requests = [];
+  const notices = [], requests = [], invitations = [];
   const context = vm.createContext({
+    window: { dispatchEvent: event => invitations.push(event.detail.moment) },
+    CustomEvent: class { constructor(type, { detail }) { this.type = type; this.detail = detail; } },
     profile, following, notifications: following, customerSavedStateVersion: 0,
     selectedCity: () => "Las Vegas", citySelect: { value: "Las Vegas" },
     document: { getElementById: id => ({ followBtn: button, modalFollowerCount: metric, modalFollowerLabel: label })[id], querySelectorAll: () => [] },
@@ -39,7 +41,7 @@ function fixture({ following = false, count = 2 } = {}) {
   });
   vm.runInContext(section("    function firstRealMetric(", "    function shiftRecipientCounts(") +
     section("    function confirmedFollowerCount(", "    async function saveProfileGoing("), context);
-  return { context, profile, button, metric, label, attributes, notices, requests, resolve, reject };
+  return { context, profile, button, metric, label, attributes, notices, requests, invitations, resolve, reject };
 }
 
 for (const action of ["saveProfileFollow", "saveProfileNotifications"]) {
@@ -66,11 +68,13 @@ for (const following of [false, true]) {
     const f = fixture({ following, count: following ? 2 : 1 });
     const before = f.metric.textContent;
     const pending = f.context.saveProfileFollow(f.button);
+    assert.equal(f.invitations.length, 0);
     assert.equal(f.metric.textContent, before);
     assert.equal(f.button.innerHTML, following ? "Following" : "Follow");
     f.resolve({ following: !following, notificationsEnabled: !following, followerCount: following ? 1 : 2, notificationCount: following ? 1 : 2 });
     await pending;
     assert.equal(f.metric.textContent, following ? "1" : "2");
+    assert.deepEqual(f.invitations, following ? [] : ["customer-follow"]);
     assert.equal(f.label.textContent, following ? "Follower" : "Followers");
     assert.equal(f.button.innerHTML, following ? "Follow" : "Following");
 

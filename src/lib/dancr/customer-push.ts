@@ -12,9 +12,10 @@ type PushSdk = {
   Notifications: { isPushSupported(): boolean; permission: boolean; requestPermission(): Promise<void> };
   User: { PushSubscription: { id?: string; optedIn: boolean; optIn(): Promise<void>; optOut(): Promise<void>; addEventListener(event: "change", listener: () => void): void; removeEventListener(event: "change", listener: () => void): void } };
 };
-type PushWindow = Window & { OneSignalDeferred?: Array<(sdk: PushSdk) => void> };
-let sdkPromise: Promise<PushSdk> | undefined;
-let currentSdk: PushSdk | undefined;
+type PushWindow = Window & {
+  OneSignalDeferred?: Array<(sdk: PushSdk) => void>;
+  mydancrPushSdk?: { promise?: Promise<PushSdk>; sdk?: PushSdk };
+};
 const PUSH_SCOPE = "/push/onesignal/";
 const PUSH_DEVICE_KEY = "mydancr:push-account";
 
@@ -47,9 +48,10 @@ export async function customerPushDeviceEnabled(userId: string) {
 }
 
 function loadPushSdk(appId: string) {
-  if (sdkPromise) return sdkPromise;
-  sdkPromise = new Promise<PushSdk>((resolve, reject) => {
-    const pushWindow = window as PushWindow;
+  const pushWindow = window as PushWindow;
+  const state = pushWindow.mydancrPushSdk ||= {};
+  if (state.promise) return state.promise;
+  state.promise = new Promise<PushSdk>((resolve, reject) => {
     pushWindow.OneSignalDeferred ||= [];
     pushWindow.OneSignalDeferred.push(async sdk => {
       try {
@@ -57,7 +59,7 @@ function loadPushSdk(appId: string) {
           autoResubscribe: false, notifyButton: { enable: false }, welcomeNotification: { disable: true },
           promptOptions: { slidedown: { prompts: [] } },
         });
-        currentSdk = sdk;
+        state.sdk = sdk;
         resolve(sdk);
       } catch { reject(new Error("Unable to connect push notifications. Please try again.")); }
     });
@@ -69,8 +71,8 @@ function loadPushSdk(appId: string) {
       script.onerror = () => { script.remove(); reject(new Error("Unable to load push notifications. Please try again.")); };
       document.head.appendChild(script);
     }
-  }).catch(error => { sdkPromise = undefined; throw error; });
-  return sdkPromise;
+  }).catch(error => { state.promise = undefined; throw error; });
+  return state.promise;
 }
 
 export async function enableCustomerPush(delivery: CustomerNotificationDelivery, userId: string, assertCurrent: () => void) {
@@ -105,6 +107,7 @@ export async function enableCustomerPush(delivery: CustomerNotificationDelivery,
 
 export async function disableCustomerPush() {
   if (typeof window === "undefined") return;
+  const currentSdk = (window as PushWindow).mydancrPushSdk?.sdk;
   try { localStorage.removeItem(PUSH_DEVICE_KEY); } catch { /* Storage may be blocked. */ }
   const unsubscribe = async () => {
     if ("serviceWorker" in navigator) {

@@ -1,4 +1,5 @@
 "use client";
+import { offerPushNotifications } from "@/src/lib/dancr/push-invitation";
 
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import DancerVenuePicker from "./DancerVenuePicker";
@@ -104,7 +105,7 @@ export default function DancerShiftManager() {
       return;
     }
     const saved = await saveRequest("POST", { venueId, shiftDate }, "Upcoming date posted.");
-    if (saved && mountedRef.current) setShiftDate("");
+    if (saved && mountedRef.current) { setShiftDate(""); offerPushNotifications("dancer-shift"); }
   }
 
   async function saveEdit(shiftId: string) {

@@ -32,7 +32,7 @@ function nodes(node) {
 
 function client(props = {}, options = {}) {
   const slots = []; let cursor = 0, tree, failStorage = false;
-  const stored = new Map(); const requests = [], copies = [];
+  const stored = new Map(); const requests = [], copies = [], invitations = [];
   const hooks = {
     useState(initial) { const index = cursor++; if (!(index in slots)) slots[index] = initial; return [slots[index], next => { slots[index] = next; }]; },
     useRef(initial) { const index = cursor++; if (!(index in slots)) slots[index] = { current: initial }; return slots[index]; },
@@ -40,6 +40,7 @@ function client(props = {}, options = {}) {
   };
   const { default: Component } = load("../app/deals/transportation/[dealId]/TransportationClient.tsx", {
     react: hooks, "next/link": { default: "a" },
+    "@/src/lib/dancr/push-invitation": { offerPushNotifications: moment => invitations.push(moment) },
     "@/src/lib/dancr/club-deal-transportation": transportation,
     "@/app/pickups/PickupRequestForm": { default: "pickup-form" }, "@/app/pickups/pickup.css": {},
     "@/app/pickups/pickup-session": { usePickupAccount: () => options.account || { ready: true, identity: "synthetic-customer", role: "customer" } },
@@ -62,7 +63,7 @@ function client(props = {}, options = {}) {
   const render = () => { cursor = 0; tree = Component({ deal, venue, shuttleAvailable: true, ...props }); return tree; };
   render();
   return {
-    stored, requests, copies, render,
+    stored, requests, copies, invitations, render,
     html: () => renderToStaticMarkup(render()),
     select(value) { nodes(tree).find(node => node.type === "input" && node.props.value === value).props.onChange(); render(); },
     async submit(phone = "7025550123") {
@@ -226,6 +227,7 @@ test("both entry points use the same pickup handoff and admission selection", as
     assert.match(f.html(), /name="location"/); assert.match(f.html(), /Lyft/);
     await f.submit();
     assert.equal(f.requests[0].url, `/api/deals/${deal.id}/shuttle`);
+    assert.deepEqual(f.invitations, ["customer-pickup-phone"]);
     assert.equal(f.requests[0].body.email, "guest@example.test");
     const selection = JSON.parse(f.stored.get(key));
     assert.equal(selection.dealId, deal.id); assert.equal(selection.transportation, "club_shuttle");
@@ -264,11 +266,15 @@ test("enabled pickup chat receives the ride context and saves admission only aft
   assert.equal(rideOnly.stored.has(key), false);
 });
 
-test("guests request rides without signing in even when pickup chat is enabled, preserving guest contact and admission", async () => {
+test("guest phone fallback and professional pickup requests preserve contact and admission", async () => {
   for (const account of [{ ready: true, identity: "" }, { ready: true, identity: "venue-user", role: "venue" }]) {
     for (const rideOnly of [false, true]) {
       const f = client({ pickupAvailable: true, initialTransportation: "club_shuttle", ...(rideOnly ? { deal: undefined } : {}),
         sourceType: "dancer_profile", dancerId: "dancer", attributionToken: "signed-token" }, { account });
+      if (!account.identity) {
+        assert.ok(nodes(f.render()).some(node => node.type === "pickup-form"));
+        f.click("Request by phone instead");
+      }
       assert.equal(nodes(f.render()).some(node => node.type === "pickup-form"), false);
       assert.ok(nodes(f.render()).some(node => node.type === "input" && node.props.name === "phone"));
       await f.submit();
@@ -291,7 +297,7 @@ test("ride fields wait for local session initialization so typing cannot select 
   assert.match(f.html(), /Loading pickup form/);
   assert.equal(nodes(f.render()).some(node => node.type === "input"), false);
   account.ready = true;
-  assert.ok(nodes(f.render()).some(node => node.type === "input" && node.props.name === "phone"));
+  assert.ok(nodes(f.render()).some(node => node.type === "pickup-form"));
 });
 
 test("customers can choose the public phone form without leaving their account", async () => {

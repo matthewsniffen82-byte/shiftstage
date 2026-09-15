@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import { readFile, writeFile } from "node:fs/promises";
 import { staticAssetPaths } from "../src/lib/dancr/static-asset-paths.mjs";
+import "./generate-push-device.mjs";
 
 const versions = {};
 for (const asset of staticAssetPaths) {

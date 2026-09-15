@@ -41560,6 +41560,7 @@
               <h3 class="section-title">Notification center</h3>
               <button class="ghost" type="button" data-notification-action="mark-all">Mark all read</button>
             </div>
+            <button class="ghost" type="button" data-push-settings>Notification settings</button>
             <div class="rank-notification-list" id="dancerNotificationList">Notifications will appear here.</div>
             <button class="notification-clear-btn" type="button" data-notification-action="clear-all">Clear notifications</button>
           </div>
@@ -42278,6 +42279,7 @@
           <h3 class="section-title">Alerts</h3>
           <p class="customer-card-copy">Choose your updates and email or push delivery in Alerts.</p>
           <div class="toggle-list" id="notificationSettings"></div>
+          <button class="ghost" type="button" data-push-settings>Push notification settings</button>
           <div class="section-title-row">
             <h3 class="section-title">Notification center</h3>
             <button class="ghost" type="button" data-notification-action="mark-all">Mark all read</button>
@@ -52523,6 +52525,7 @@
             applyDisplayShift(postedProfile, city);
           }
           document.getElementById("shiftPostResult").textContent = `${noticeText} Live shift saved.`;
+          window.dispatchEvent(new CustomEvent("mydancr:push-invitation", { detail: { moment: "dancer-shift" } }));
           renderDancerManagement();
         }).catch((error) => showToast(error.message || "Could not save live shift"));
       }
@@ -56230,6 +56233,7 @@
       syncOverlayScrollLock();
       loadLiveNotifications();
       await processPendingVenueDancerVerification();
+      if (dashboard.profile) window.dispatchEvent(new CustomEvent("mydancr:push-invitation", { detail: { moment: "venue-dashboard" } }));
       return dashboard;
     }
 
@@ -56248,6 +56252,7 @@
       venueDashboard.setAttribute("aria-hidden", "true");
       syncOverlayScrollLock();
     }
+
 
     function activeSupportRole() {
       if (isVenueSession()) return "venue";
@@ -57506,6 +57511,7 @@
         profileSubmitNoticeTone = "success";
         renderDancerSetup();
         showToast("Profile saved. Payout setup is optional before the club tap.");
+        if (isDancerSession()) window.dispatchEvent(new CustomEvent("mydancr:push-invitation", { detail: { moment: "dancer-review" } }));
         void loadDancerVenueVerification();
       } catch (error) {
         const message = error.message || "Could not submit for review";
@@ -58090,6 +58096,7 @@
         showToast(error.message || "Unable to submit the payout account");
       }
     }
+
 
     function renderDancerSetup() {
       keepAvatarOriginSetupStepOpen();
@@ -63653,6 +63660,7 @@
           const following = result.following === true;
           followedVenuesByCity[city] = savedVenues.filter((name) => name !== venueName);
           if (following) followedVenuesByCity[city].push(venueName);
+          if (following) window.dispatchEvent(new CustomEvent("mydancr:push-invitation", { detail: { moment: "customer-follow" } }));
           customerSavedStateVersion += 1;
           render();
           if (customerDashboard.classList.contains("show")) renderDashboard();
@@ -64110,6 +64118,7 @@
       event.stopPropagation();
       toggleModalVideoPlayback();
     });
+
     modalVideoSound?.addEventListener("click", (event) => {
       event.preventDefault();
       event.stopPropagation();
@@ -64346,6 +64355,7 @@
         });
         if (!data) throw new Error("Sign in required.");
         const { following } = applyConfirmedProfileFollow(profile, city, data);
+        if (following) window.dispatchEvent(new CustomEvent("mydancr:push-invitation", { detail: { moment: "customer-follow" } }));
         if (following && actionButton.dataset.homeTvVideoId) {
           trackHomeTvFeedEvent(actionButton.dataset.homeTvVideoId, "follow");
         }
@@ -64354,7 +64364,7 @@
           city,
           source: following ? "follow_added" : "follow_removed"
         });
-        showToast(following ? "Following profile. Notifications on." : "Unfollowed profile");
+        showToast(following ? "Following profile. Updates appear in Alerts." : "Unfollowed profile");
         if (customerDashboard.classList.contains("show")) renderDashboard();
       } catch (error) {
         showToast(error.message || "Could not save follow");

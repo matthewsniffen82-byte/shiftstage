@@ -1,4 +1,5 @@
 "use client";
+import { offerPushNotifications } from "@/src/lib/dancr/push-invitation";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -39,6 +40,7 @@ function RequestForm({ venue, embedded = false, saveAdmission, onBusyChange }: R
       if (key) rememberGuestPickup({ id, key, venue: venue.name, savedAt: Date.now() });
       const result = await requestPickupJson("/api/pickups", { method: "POST", headers: { "content-type": "application/json", ...(key ? { "x-pickup-guest-key": key } : {}) }, body: JSON.stringify({ ...fields, requestId: id }) });
       setCreatedId(result.id);
+      offerPushNotifications("customer-pickup");
       openConversation(result.id);
     } catch (failure) { setError(failure instanceof Error ? failure.message : "Unable to request pickup. Retry to check the same request."); locked.current = false; setBusy(false); }
   }

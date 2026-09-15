@@ -71,6 +71,18 @@ test("shuttle SMS constructs a generic dashboard alert even if a caller supplies
   assert.doesNotMatch(f.calls[0].contents.en, /Guest Sample|Private Hotel|guest@example.test/);
 });
 
+test("pickup chat alerts use an authenticated deep link and stable deduplication key without chat content", async () => {
+  const f = deliveryFixture("customer");
+  await f.deliverNotificationRows(f.client, [{ recipient_id: ownId, deliveryId: ownId,
+    notification_type: "support_message", title: "New pickup message", body: "Private hotel and phone",
+    payload: { kind: "club_pickup", pickupRequestId: otherId, guestKey: "private-return-secret", message: "Private chat text" },
+  }], { email: false });
+  assert.equal(f.calls[0].url, `https://example.test/pickups/${otherId}`);
+  assert.equal(f.calls[0].idempotency_key, ownId);
+  assert.deepEqual(f.calls[0].data, { kind: "club_pickup" });
+  assert.doesNotMatch(JSON.stringify(f.calls), /Private hotel|private-return-secret|Private chat text/);
+});
+
 function notificationRoute(authenticated = true) {
   return compile("app/api/notifications/route.ts", {
     "next/server": { NextResponse: { json: (value, init) => Response.json(value, init) } },

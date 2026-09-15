@@ -55,7 +55,8 @@ test('routes distinguish guest capability access from account access without fal
     const record = name => async () => { calls.push(name); return name === 'getGuestPickup' ? { role: 'customer', messages: [] } : id(20); };
     const fakeError = error => Response.json({ ok: false, error: error.message }, { status: error.status || 401 });
     vm.runInNewContext(compile(file), { exports, URL, require(name) {
-      if (name === 'next/server') return { NextResponse: { json: Response.json } };
+      if (name === 'next/server') return { NextResponse: { json: Response.json }, after: () => {} };
+      if (name.endsWith('/pickup-push-delivery')) return { deliverPickupPush: async () => {} };
       if (name.endsWith('/api')) return { apiError: fakeError };
       if (name.endsWith('/bounded-json-body')) return { readBoundedJsonObject: request => request.json() };
       if (name.endsWith('/supabase/request')) return { createRequestSupabaseContext: async () => { calls.push('auth'); throw new Error('Sign in required.'); } };

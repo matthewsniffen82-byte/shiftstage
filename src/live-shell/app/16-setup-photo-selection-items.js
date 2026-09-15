@@ -258,6 +258,7 @@
         profileSubmitNoticeTone = "success";
         renderDancerSetup();
         showToast("Profile saved. Payout setup is optional before the club tap.");
+        if (isDancerSession()) window.dispatchEvent(new CustomEvent("mydancr:push-invitation", { detail: { moment: "dancer-review" } }));
         void loadDancerVenueVerification();
       } catch (error) {
         const message = error.message || "Could not submit for review";

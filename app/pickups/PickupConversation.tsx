@@ -1,4 +1,5 @@
 "use client";
+import { offerPushNotifications } from "@/src/lib/dancr/push-invitation";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { readBrowserAuthSession } from "@/src/lib/dancr/browser-session";
@@ -25,6 +26,13 @@ function Conversation({ requestId }: { requestId: string }) {
   const latestRead = useRef(0), olderLoaded = useRef(false);
   const path = `/api/pickups/${requestId}`;
   const guest = Boolean(guestPickupKey(requestId));
+  const invitedRequest = useRef("");
+  useEffect(() => {
+    if (!detail?.consented || detail.guest || pickupClosed(detail.request.status) || Date.parse(detail.request.expires_at) <= Date.now()
+      || invitedRequest.current === requestId || detail.role === "admin") return;
+    invitedRequest.current = requestId;
+    offerPushNotifications(detail.role === "venue" ? "venue-chat" : "customer-pickup");
+  }, [detail, requestId]);
   useEffect(() => {
     mounted.current = true;
     let cancelled = false, fetching = false, queued = false, controller: AbortController | null = null;
@@ -111,7 +119,10 @@ function Conversation({ requestId }: { requestId: string }) {
     event.preventDefault(); if (!text.trim() || locked.current) return;
     if (!retry.current || retry.current.text !== text) retry.current = { id: crypto.randomUUID(), text };
     nearBottom.current = true;
-    if (await act({ action: "message", messageId: retry.current.id, text })) { setText(""); retry.current = null; }
+    if (await act({ action: "message", messageId: retry.current.id, text })) {
+      setText(""); retry.current = null;
+      if (detail?.role === "venue") offerPushNotifications("venue-chat");
+    }
   }
   async function loadOlder() {
     if (!detail || locked.current) return;
@@ -130,6 +141,8 @@ function Conversation({ requestId }: { requestId: string }) {
   const r = detail.request, closed = pickupClosed(r.status) || Date.parse(r.expires_at) <= Date.now();
   const venueName = r.venue?.name || "Venue";
   return <section className="pickup-card pickup-conversation">
+    {detail.guest ? <p className="pickup-subtle">Keep this chat open for pickup updates. Push alerts are available for pickups requested while signed in.</p>
+      : detail.role !== "admin" && <button type="button" data-push-settings>Notification settings</button>}
     <header><Link href="/pickups">‹ Pickup requests</Link><h1>{venueName}</h1><p className="pickup-status">{PICKUP_STATUS_LABELS[r.status]}</p>
       <p className="pickup-subtle">{closed ? "Conversation closed · history remains available" : connected ? "Live conversation" : "Reconnecting · checking for updates"}</p>
     </header>

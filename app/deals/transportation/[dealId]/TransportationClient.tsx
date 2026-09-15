@@ -1,4 +1,5 @@
 "use client";
+import { offerPushNotifications } from "@/src/lib/dancr/push-invitation";
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
@@ -142,6 +143,7 @@ export default function TransportationClient({ deal, venue, shuttleAvailable, pi
       setMessage(result.message);
       prepareCashier("club_shuttle", result.requestId);
       setComplete(true);
+      offerPushNotifications("customer-pickup-phone");
     } catch (reason) {
       setError(reason instanceof Error && reason.name !== "TimeoutError" ? reason.message : "The connection timed out. Retry to check the same request without sending duplicate alerts.");
     } finally { pending.current = false; setBusy(false); }

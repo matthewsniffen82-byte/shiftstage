@@ -1035,6 +1035,22 @@ export function CustomerPreferencesPanel({
   const [pushSupportMessage, setPushSupportMessage] = useState("");
   const delivery = (profile?.notificationDelivery || {}) as CustomerNotificationDelivery;
   const userId = String(profile?.userId || "");
+  useEffect(() => {
+    let active = true;
+    const sync = (event: Event) => {
+      const detail = (event as CustomEvent).detail;
+      if (detail?.userId !== userId || readSession()?.account?.id !== userId) return;
+      void customerPushDeviceEnabled(userId).then(enabled => {
+        if (active && readSession()?.account?.id === userId) setPushDeviceEnabled(enabled);
+      });
+      if (detail.profile) {
+        setSettings(customerNotificationSettings(detail.profile.notificationSettings));
+        onProfileChange?.(detail.profile);
+      }
+    };
+    window.addEventListener("mydancr:push-changed", sync);
+    return () => { active = false; window.removeEventListener("mydancr:push-changed", sync); };
+  }, [userId, onProfileChange]);
   const mountedRef = useRef(false);
   const actionSequenceRef = useRef(0);
   const actionAbortRef = useRef<AbortController | null>(null);

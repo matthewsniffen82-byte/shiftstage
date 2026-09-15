@@ -26,7 +26,7 @@ export async function GET(request: Request) {
     const unreadOnly = new URL(request.url).searchParams.get("unread") === "true";
     const notifications = await getUserNotifications(client, user.id, unreadOnly);
 
-    return NextResponse.json({ ok: true, notifications, notificationDelivery: notificationPushDelivery(user.id) }, {
+    return NextResponse.json({ ok: true, notifications, pushUserId: user.id, notificationDelivery: notificationPushDelivery(user.id) }, {
       headers: { "cache-control": "private, no-store" },
     });
   } catch (error) {

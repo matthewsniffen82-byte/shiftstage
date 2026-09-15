@@ -974,6 +974,7 @@
       syncOverlayScrollLock();
       loadLiveNotifications();
       await processPendingVenueDancerVerification();
+      if (dashboard.profile) window.dispatchEvent(new CustomEvent("mydancr:push-invitation", { detail: { moment: "venue-dashboard" } }));
       return dashboard;
     }
 

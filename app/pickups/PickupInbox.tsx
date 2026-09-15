@@ -1,4 +1,5 @@
 "use client";
+import { offerPushNotifications } from "@/src/lib/dancr/push-invitation";
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { PICKUP_STATUS_LABELS, PICKUP_TRANSPORT_NOTICE, type PhonePickupRequest, type PickupRequest, type PickupRole, type PickupVenue } from "@/src/lib/dancr/pickup-domain";
@@ -74,6 +75,7 @@ function Inbox({ role }: { role: PickupRole }) {
     try {
       await requestPickupJson("/api/pickups/settings", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ venueId: venue.id, enabled: !venue.club_pickup_enabled }) });
       if (mounted.current) setVenues(current => current.map(item => item.id === venue.id ? { ...item, club_pickup_enabled: !venue.club_pickup_enabled } : item));
+      if (mounted.current && !venue.club_pickup_enabled) offerPushNotifications("venue-pickup");
     } catch (failure) { if (mounted.current) setSettingsError(failure instanceof Error ? failure.message : "Unable to update pickup setting."); }
     finally { settingsLock.current = false; if (mounted.current) setSaving(false); }
   }
