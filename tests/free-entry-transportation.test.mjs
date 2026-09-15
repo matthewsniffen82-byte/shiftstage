@@ -6,8 +6,9 @@ import ts from "typescript";
 import * as jsx from "react/jsx-runtime";
 import { renderToStaticMarkup } from "react-dom/server";
 import * as transportation from "../src/lib/dancr/club-deal-transportation.ts";
+import { formatPublicVenueAddress } from "../src/lib/dancr/uber.ts";
 
-const venue = { id: "11111111-1111-4111-8111-111111111111", name: "Test Club", slug: "test-club" };
+const venue = { id: "11111111-1111-4111-8111-111111111111", name: "Test Club", slug: "test-club", address: "123 Test Rd, Las Vegas, NV", city: "Las Vegas", state: "NV" };
 const deal = { id: "22222222-2222-4222-8222-222222222222", venueId: venue.id, dealTitle: "Free admission", isActive: true };
 const key = "mydancrPendingNfcDealV2";
 
@@ -31,7 +32,7 @@ function nodes(node) {
 
 function client(props = {}, options = {}) {
   const slots = []; let cursor = 0, tree, failStorage = false;
-  const stored = new Map(); const requests = [];
+  const stored = new Map(); const requests = [], copies = [];
   const hooks = {
     useState(initial) { const index = cursor++; if (!(index in slots)) slots[index] = initial; return [slots[index], next => { slots[index] = next; }]; },
     useRef(initial) { const index = cursor++; if (!(index in slots)) slots[index] = { current: initial }; return slots[index]; },
@@ -42,6 +43,10 @@ function client(props = {}, options = {}) {
     "@/src/lib/dancr/club-deal-transportation": transportation,
     "@/app/components/NfcIcon": { default: () => null }, "./transportation.css": {},
   }, {
+    navigator: { clipboard: options.clipboardUnavailable ? undefined : { writeText: async value => {
+      if (options.clipboardDenied) throw new Error("Denied");
+      copies.push(value);
+    } } },
     localStorage: { getItem: name => stored.get(name) || null, removeItem: name => stored.delete(name), setItem(name, value) { if (failStorage) throw new Error("Blocked"); stored.set(name, value); } },
     crypto: { randomUUID: () => "33333333-3333-4333-8333-333333333333" },
     FormData: class { constructor(fields) { this.fields = fields; } get(name) { return this.fields[name] ?? null; } },
@@ -55,7 +60,7 @@ function client(props = {}, options = {}) {
   const render = () => { cursor = 0; tree = Component({ deal, venue, shuttleAvailable: true, ...props }); return tree; };
   render();
   return {
-    stored, requests, render,
+    stored, requests, copies, render,
     html: () => renderToStaticMarkup(render()),
     select(value) { nodes(tree).find(node => node.type === "input" && node.props.value === value).props.onChange(); render(); },
     async submit() {
@@ -64,6 +69,7 @@ function client(props = {}, options = {}) {
       } }); render();
     },
     click(label) { nodes(tree).find(node => node.type === "button" && node.props.children === label).props.onClick(); render(); },
+    async clickAsync(label) { await nodes(tree).find(node => node.type === "button" && node.props.children === label).props.onClick(); render(); },
     blockStorage(value) { failStorage = value; },
   };
 }
@@ -98,9 +104,57 @@ test("one combined Waymo, Zoox and Cybercab option prepares admission without bo
     assert.equal(selection.expiresAt - selection.savedAt, 12 * 60 * 60 * 1000);
     assert.equal(selection.shuttleRequestId, null);
     assert.match(f.html(), /arrive by Waymo, Zoox, or Cybercab/);
-    assert.match(f.html(), /Book and pay for your ride separately/);
+    assert.match(f.html(), /Book your ride separately; ride fare isn’t included/);
     assert.match(f.html(), /staff verify your arrival method/);
   }
+});
+
+test("provider links appear only after autonomous admission is saved and never book or notify a ride", async () => {
+  const f = client();
+  assert.doesNotMatch(f.html(), /club-transport-booking-links/);
+  f.select("autonomous_cab");
+  assert.doesNotMatch(f.html(), /club-transport-booking-links/);
+  f.blockStorage(true); await f.submit();
+  assert.doesNotMatch(f.html(), /club-transport-booking-links/);
+  f.blockStorage(false); await f.submit();
+  const links = nodes(f.render()).filter(node => node.type === "a" && node.props.className === "club-transport-provider-button");
+  assert.deepEqual(links.map(node => node.props.href), ["https://waymo.com/rides/", "https://zoox.com/how-to-ride", "https://www.tesla.com/support/robotaxi"]);
+  for (const link of links) {
+    assert.equal(link.props.target, "_blank");
+    assert.equal(link.props.rel, "noopener noreferrer");
+    assert.equal(new URL(link.props.href).search, "");
+  }
+  assert.match(f.html(), /Check availability/);
+  assert.match(f.html(), /a Cybercab isn’t guaranteed/);
+  assert.equal(f.requests.length, 0);
+  assert.equal(JSON.parse(f.stored.get(key)).transportation, "autonomous_cab");
+  for (const choice of ["self_drive", "club_shuttle"]) {
+    const other = client(); other.select(choice); await other.submit();
+    assert.doesNotMatch(other.html(), /club-transport-booking-links/);
+  }
+});
+
+test("copy club address has an accurate clipboard result and a manual fallback", async () => {
+  for (const options of [{}, {clipboardDenied:true}, {clipboardUnavailable:true}]) {
+    const f = client({}, options); f.select("autonomous_cab"); await f.submit();
+    const selection = f.stored.get(key);
+    await f.clickAsync("Copy club address");
+    const manual = options.clipboardDenied || options.clipboardUnavailable;
+    assert.deepEqual(f.copies, manual ? [] : [venue.address]);
+    assert.match(f.html(), manual ? /Select and copy the club address above/ : /Club address copied/);
+    const input = nodes(f.render()).find(node => node.type === "textarea");
+    assert.equal(input.props.value, venue.address);
+    assert.equal(input.props.readOnly, true);
+    let selected = false;
+    input.props.onFocus({currentTarget:{select(){selected=true;}}});
+    assert.equal(selected, true);
+    assert.equal(f.stored.get(key), selection);
+    assert.equal(f.requests.length, 0);
+  }
+  const missing = client({venue:{...venue,address:null}});
+  missing.select("autonomous_cab"); await missing.submit();
+  assert.match(missing.html(), /Club address unavailable/);
+  assert.doesNotMatch(missing.html(), /Copy club address/);
 });
 
 test("autonomous arrival requires successful local storage and can retry without a ride request", async () => {
@@ -187,11 +241,13 @@ test("ride page resolves an active venue deal and preserves the exact attributed
       getActiveClubDealByIdForVenue: async (_, id, requested) => { calls.push([id, requested]); return requested === deal.id ? deal : null; },
     },
     "@/src/lib/dancr/public-club-deal": { toPublicClubDeal: value => value },
+    "@/src/lib/dancr/uber": { formatPublicVenueAddress },
     "@/src/lib/dancr/club-shuttle-requests": { getClubShuttleRecipientIds: async () => ["owner"] },
     "@/app/deals/transportation/[dealId]/TransportationClient": { default: "transportation" },
   });
   const run = query => api.default({ params: Promise.resolve({ venueId: venue.id }), searchParams: Promise.resolve(query) });
   const direct = await run({}); assert.equal(direct.props.deal.id, deal.id); assert.equal(direct.props.initialTransportation, "club_shuttle");
+  assert.equal(direct.props.venue.address, venue.address);
   const attributed = await run({ dealId: deal.id, sourceType: "dancer_profile", dancerId: "dancer", attributionToken: "signed-token" });
   assert.deepEqual(calls[1], [venue.id, deal.id]); assert.equal(attributed.props.attributionToken, "signed-token");
   assert.equal(attributed.props.sourceType, "dancer_profile");
@@ -200,4 +256,27 @@ test("ride page resolves an active venue deal and preserves the exact attributed
   await assert.rejects(run({ dealId: venue.id }), /NOT_FOUND/);
   await assert.rejects(run({ dealId: "invalid" }), /NOT_FOUND/);
   assert.equal((await run({ sourceType: "dancer_profile", attributionToken: "injected" })).props.sourceType, "club_page");
+});
+
+test("free-entry page supplies the public destination while retaining venue publication filters", async () => {
+  const filters = [], selections = [];
+  const api = load("../app/deals/transportation/[dealId]/page.tsx", {
+    "next/navigation": { notFound() { throw new Error("NOT_FOUND"); } },
+    "@/src/lib/supabase/admin": { createAdminSupabaseClient: () => ({ from() { return {
+      select(value) { selections.push(value); return this; }, eq(...args) { filters.push(args); return this; }, not(...args) { filters.push(args); return this; },
+      maybeSingle: async () => ({data:{...venue,address:"123 Test Rd",owner_user_id:"private-owner",phone:"private-phone"}}),
+    }; } }) },
+    "@/src/lib/dancr/deals": { getActiveClubDealById: async () => deal },
+    "@/src/lib/dancr/public-club-deal": { toPublicClubDeal: value => value },
+    "@/src/lib/dancr/club-shuttle-requests": { getClubShuttleRecipientIds: async () => ["owner"] },
+    "@/src/lib/dancr/uber": { formatPublicVenueAddress },
+    "./TransportationClient": { default: "transportation" },
+  });
+  const result = await api.default({params:Promise.resolve({dealId:deal.id}),searchParams:Promise.resolve({})});
+  assert.equal(result.props.venue.address, venue.address);
+  assert.deepEqual(Object.keys(result.props.venue).sort(), ["address","id","name","slug"]);
+  assert.match(selections[0], /address, city, state/);
+  assert.ok(filters.some(([key,value]) => key === "is_active" && value === true));
+  assert.ok(filters.some(([key,value]) => key === "page_review_status" && value === "published"));
+  assert.ok(filters.some(([key,operator,value]) => key === "published_at" && operator === "is" && value === null));
 });

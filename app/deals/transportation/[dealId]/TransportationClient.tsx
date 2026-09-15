@@ -8,7 +8,7 @@ import NfcIcon from "@/app/components/NfcIcon";
 import "./transportation.css";
 
 export default function TransportationClient({ deal, venue, shuttleAvailable, initialTransportation = "", sourceType = "club_page", dancerId = "", attributionToken = "" }: {
-  deal?: PublicClubDeal; venue: { id: string; name: string; slug: string };
+  deal?: PublicClubDeal; venue: { id: string; name: string; slug: string; address?: string | null };
   shuttleAvailable: boolean;
   initialTransportation?: "" | "club_shuttle";
   sourceType?: DealSourceType; dancerId?: string; attributionToken?: string;
@@ -21,6 +21,7 @@ export default function TransportationClient({ deal, venue, shuttleAvailable, in
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const [storageError, setStorageError] = useState(false);
+  const [addressCopyStatus, setAddressCopyStatus] = useState("");
   const heading = useRef<HTMLHeadingElement>(null);
   const pending = useRef(false);
   const attemptedRequest = useRef<{ requestId: string; name: string; location: string; phone: string; email: string; partySize: number; handoffAccepted: boolean } | null>(null);
@@ -28,6 +29,16 @@ export default function TransportationClient({ deal, venue, shuttleAvailable, in
   useEffect(() => {
     heading.current?.focus();
   }, [showingShuttleForm, complete]);
+
+  async function copyClubAddress() {
+    if (!venue.address) return;
+    try {
+      await navigator.clipboard.writeText(venue.address);
+      setAddressCopyStatus("Club address copied.");
+    } catch {
+      setAddressCopyStatus("Select and copy the club address above.");
+    }
+  }
 
   function chooseRideshare() {
     setChoice("rideshare_taxi");
@@ -107,7 +118,22 @@ export default function TransportationClient({ deal, venue, shuttleAvailable, in
       <p className="club-transport-venue">{venue.name}</p>
       {deal ? <p className="club-transport-terms">{CLUB_TRANSPORTATION_TERMS}</p> : <p className="club-transport-terms">Free entry is currently unavailable. You can still request a free ride.</p>}
       {complete ? <div aria-live="polite">
-        {choice === "club_shuttle" ? <><p><strong>Awaiting club confirmation.</strong></p><p>{message}</p><p>The club will contact you to arrange your pickup. Your ride is not booked yet.</p></> : autonomousArrival ? <p>You confirmed you will arrive by Waymo, Zoox, or Cybercab. Book and pay for your ride separately.</p> : <p>You confirmed you will arrive in a private car.</p>}
+        {choice === "club_shuttle" ? <><p><strong>Awaiting club confirmation.</strong></p><p>{message}</p><p>The club will contact you to arrange your pickup. Your ride is not booked yet.</p></> : autonomousArrival ? <>
+          <p>You confirmed you will arrive by Waymo, Zoox, or Cybercab.</p>
+          <section className="club-transport-booking" aria-labelledby="club-transport-booking-heading">
+            <h2 id="club-transport-booking-heading">Book your ride</h2>
+            <p>Free admission. Book your ride separately; ride fare isn’t included.</p>
+            {venue.address ? <label className="club-transport-address">Club address<textarea aria-label="Club address" value={venue.address} readOnly rows={2} onFocus={event => event.currentTarget.select()} /></label> : <p className="club-transport-note">Club address unavailable. Check with the club before booking.</p>}
+            <div className="club-transport-booking-links">
+              <a className="club-transport-provider-button" href="https://waymo.com/rides/" target="_blank" rel="noopener noreferrer">Open Waymo</a>
+              <a className="club-transport-provider-button" href="https://zoox.com/how-to-ride" target="_blank" rel="noopener noreferrer">Open Zoox</a>
+              <a className="club-transport-provider-button" href="https://www.tesla.com/support/robotaxi" target="_blank" rel="noopener noreferrer"><span>Tesla Robotaxi<small>Check availability</small></span></a>
+              {venue.address ? <button className="club-transport-provider-button" type="button" onClick={copyClubAddress}>Copy club address</button> : null}
+            </div>
+            {addressCopyStatus ? <p className="club-transport-note" role="status">{addressCopyStatus}</p> : null}
+            <p className="club-transport-note">Check service coverage and pickup/drop-off locations in the provider’s app. Tesla assigns the vehicle; a Cybercab isn’t guaranteed.</p>
+          </section>
+        </> : <p>You confirmed you will arrive in a private car.</p>}
         {deal ? <><div className="club-transport-ready"><NfcIcon /><p>Have staff verify your arrival method, then unlock your phone and tap the MyDancr sticker at the cashier for free entry.</p></div>
         {storageError ? <><p role="alert">Your shuttle request was sent. Allow site storage, then save your deal selection for the cashier. This does not send another shuttle request.</p><button className="club-transport-submit" type="button" onClick={() => prepareCashier("club_shuttle", attemptedRequest.current?.requestId)}>Save deal for cashier</button></> : <p className="club-transport-note">Your deal selection stays ready for 12 hours. Admission is subject to the club’s capacity, age requirements, dress code, and house rules.</p>}</> : null}
       </div> : <>
