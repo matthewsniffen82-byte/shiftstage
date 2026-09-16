@@ -410,13 +410,15 @@ export async function PATCH(request: Request) {
       tooLargeMessage: "Dancer profile request is too large.",
     });
     validateProfilePhotoDeletionInput(body);
-    const { profile, error: profileError, supportsIsPublic } = await loadProfileForSave(client, user.id);
+    // Owner and identity columns are private to the server. Resolve the profile
+    // only with the user verified by the dancer account check above.
+    const db = createAdminSupabaseClient() as any;
+    const { profile, error: profileError, supportsIsPublic } = await loadProfileForSave(db, user.id);
 
     if (profileError) throw profileError;
     if (!profile) {
       return withProfileSaveVersion(NextResponse.json({ ok: false, error: "Dancer profile not found." }, { status: 404 }));
     }
-    const db = createAdminSupabaseClient() as any;
     await validateProfilePhotoSnapshot(db, profile.id, body);
     const protectedFieldsBefore = publicProfileState(profile);
     console.log("PROTECTED_FIELDS_BEFORE_SAVE", {

@@ -30,14 +30,15 @@ test("the public photo bucket no longer accepts direct dancer writes", () => {
   assert.doesNotMatch(dancerLibrary, /export async function uploadDancerPhoto/);
 });
 
-test("profile writes authorize ownership before using the server mutation client", () => {
-  const authIndex = profileRoute.indexOf('createRequestSupabaseContext(request, { role: "dancer" })');
-  const ownershipIndex = profileRoute.indexOf("loadProfileForSave(client, user.id)");
+test("profile writes authorize dancer access and resolve the private owner before mutation", () => {
+  const patchIndex = profileRoute.indexOf("export async function PATCH");
+  const authIndex = profileRoute.indexOf('createRequestSupabaseContext(request, { role: "dancer" })', patchIndex);
+  const ownershipIndex = profileRoute.indexOf("loadProfileForSave(db, user.id)", authIndex);
   const privilegedIndex = profileRoute.indexOf("const db = createAdminSupabaseClient()", authIndex);
   const updateIndex = profileRoute.indexOf('.from("dancer_profiles")', privilegedIndex);
 
-  assert.ok(authIndex >= 0);
-  assert.ok(ownershipIndex > authIndex);
-  assert.ok(privilegedIndex > ownershipIndex);
-  assert.ok(updateIndex > privilegedIndex);
+  assert.ok(authIndex > patchIndex);
+  assert.ok(privilegedIndex > authIndex);
+  assert.ok(ownershipIndex > privilegedIndex);
+  assert.ok(updateIndex > ownershipIndex);
 });
