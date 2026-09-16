@@ -1,6 +1,7 @@
 {
   "name": "mydancr",
   "short_name": "mydancr",
+  "id": "/",
   "description": "Choose your city. See who's working now.",
   "start_url": "/",
   "scope": "/",
@@ -10,6 +11,18 @@
   "theme_color": "#050507",
   "orientation": "portrait",
   "icons": [
+    {
+      "src": "/mydancr-icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/mydancr-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
     {
       "src": "/mydancr-icon.svg",
       "sizes": "any",

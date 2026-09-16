@@ -41,7 +41,7 @@ function load(respond, { configured = true, smsConfigured = false, signal = new 
     console: { warn: (...args) => logs.push(args) },
     AbortSignal: { timeout: ms => { budgets.push(ms); return signal; } },
     fetch: async (url, init) => {
-      assert.ok(["https://api.resend.com/emails", "https://onesignal.com/api/v1/notifications", "https://api.onesignal.com/notifications"].includes(url));
+      assert.ok(["https://api.resend.com/emails", "https://api.onesignal.com/notifications"].includes(url));
       assert.equal(init.method, "POST"); assert.equal(init.redirect, "error"); assert.equal(init.cache, "no-store");
       calls.push({ url, init });
       return respond(url, init);

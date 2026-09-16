@@ -29,7 +29,9 @@ function deliveryFixture(role) {
     "./customer-notification-delivery": capability,
     "./customer-notification-preferences": preferences,
     "./public-app-url": { publicAppUrl: () => "https://example.test" },
-  }, { fetch: async (_url, init) => {
+  }, { fetch: async (url, init) => {
+    assert.equal(url, "https://api.onesignal.com/notifications");
+    assert.equal(init.headers.Authorization, `Key ${env.ONESIGNAL_REST_API_KEY}`);
     calls.push(JSON.parse(init.body));
     return Response.json({ id: "11111111-1111-4111-8111-111111111111" });
   } });
@@ -44,7 +46,8 @@ for (const role of ["customer", "dancer", "venue", "admin"]) {
     const f = deliveryFixture(role);
     const result = await f.deliverNotificationRows(f.client, [{ recipient_id: ownId, notification_type: "support_message", title: "Support", body: "Synthetic private reply" }], { email: false });
     assert.equal(result.push, 1);
-    const alias = f.calls[0].include_external_user_ids[0];
+    const alias = f.calls[0].include_aliases.external_id[0];
+    assert.equal(f.calls[0].target_channel, "push");
     assert.equal(alias, capability.customerPushExternalId(ownId));
     assert.notEqual(alias, ownId);
     assert.notEqual(alias, capability.customerPushExternalId(otherId));

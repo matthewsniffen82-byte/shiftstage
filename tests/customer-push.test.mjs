@@ -5,7 +5,7 @@ import vm from "node:vm";
 import ts from "typescript";
 
 const source = readFileSync(new URL("../src/lib/dancr/customer-push.ts", import.meta.url), "utf8");
-function fixture({ permission = "granted", delayedId = false, userAgent = "Edge" } = {}) {
+function fixture({ permission = "granted", delayedId = false, userAgent = "Edge", standalone = false, safariStandalone = false, platform = "", maxTouchPoints = 0 } = {}) {
   const events = [], stored = new Map(), listeners = new Set();
   const subscription = {
     optedIn: false, id: undefined,
@@ -27,13 +27,13 @@ function fixture({ permission = "granted", delayedId = false, userAgent = "Edge"
   };
   const Notification = { permission: "default", async requestPermission() { events.push("permission"); Notification.permission = permission; return permission; } };
   const localStorage = { getItem: key => stored.get(key) ?? null, setItem: (key, value) => stored.set(key, value), removeItem: key => stored.delete(key) };
-  const navigator = { userAgent, serviceWorker: {
+  const navigator = { userAgent, platform, maxTouchPoints, standalone: safariStandalone, serviceWorker: {
     async getRegistration(scope) {
       assert.equal(scope, "/push/onesignal/");
       return { scope: "https://mydancr.com/push/onesignal/", pushManager: { async getSubscription() { return { async unsubscribe() { events.push("unsubscribe"); } }; } } };
     },
   } };
-  const window = { Notification, PushManager: {}, navigator, localStorage, isSecureContext: true, matchMedia: () => ({ matches: false }), setTimeout, clearTimeout };
+  const window = { Notification, PushManager: {}, navigator, localStorage, isSecureContext: true, matchMedia: () => ({ matches: standalone }), setTimeout, clearTimeout };
   const exports = {};
   vm.runInNewContext(ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText, {
     exports, window, navigator, Notification, localStorage,
@@ -86,6 +86,26 @@ test("a changed session cannot enroll after the permission prompt completes", as
   await assert.rejects(f.enableCustomerPush(delivery, "customer", () => { throw new Error("Session changed"); }), /Session changed/);
   assert.deepEqual(f.events, ["permission"]);
   assert.equal(f.stored.size, 0);
+});
+
+for (const device of [
+  { userAgent: "Android Chrome" },
+  { userAgent: "iPhone", standalone: true },
+  { userAgent: "iPhone", safariStandalone: true },
+  { userAgent: "Macintosh", platform: "MacIntel", maxTouchPoints: 5, standalone: true },
+]) test(`supported mobile device enrolls only after explicit permission: ${JSON.stringify(device)}`, async () => {
+  const f = fixture(device);
+  assert.equal(f.customerPushSupportMessage(), "");
+  await f.enableCustomerPush(delivery, "customer", () => {});
+  assert.equal(f.events[0], "permission");
+  assert.equal(await f.customerPushDeviceEnabled("customer"), true);
+});
+
+test("iPad desktop browsing gets Home Screen installation steps before requesting permission", async () => {
+  const f = fixture({ userAgent: "Macintosh", platform: "MacIntel", maxTouchPoints: 5 });
+  assert.match(f.customerPushSupportMessage(), /Safari.*Share.*Add to Home Screen.*16\.4/);
+  await assert.rejects(f.enableCustomerPush(delivery, "customer", () => {}), /Home Screen/);
+  assert.deepEqual(f.events, []);
 });
 
 test("native sign-out cleanup works after a refresh without loading a third-party SDK", async () => {

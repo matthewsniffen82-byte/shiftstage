@@ -160,7 +160,7 @@ for (const [key, kind] of Object.entries(kinds)) test(key + " opt-out prevents t
   assert.equal(f.requests.length, 0);
   const otherKind = Object.values(kinds).find(value => value !== kind);
   assert.deepEqual(plain(await f.deliverNotificationRows(f.client, [row(otherKind)])), { email: 1, push: 1 });
-  assert.equal(f.requests[0].body.include_external_user_ids[0], capability.customerPushExternalId("customer-one"));
+  assert.equal(f.requests[0].body.include_aliases.external_id[0], capability.customerPushExternalId("customer-one"));
   assert.equal(f.requests[0].body.url, "https://mydancr.com/dashboard/customer#customer-alerts");
 });
 
@@ -182,7 +182,7 @@ test("delivery respects independent channels, master pause, defaults and unavail
 test("customer choices do not suppress transactional email or other account roles", async () => {
   const f = deliveryFixture({ followAlertsEnabled: false }, { error: new Error("unavailable") });
   assert.deepEqual(plain(await f.deliverNotificationRows(f.client, [row("support_reply", "dancer-one")])), { email: 1, push: 1 });
-  assert.equal(f.requests[0].body.include_external_user_ids[0], capability.notificationPushExternalId("dancer-one"));
+  assert.equal(f.requests[0].body.include_aliases.external_id[0], capability.notificationPushExternalId("dancer-one"));
   assert.equal((await f.sendTransactionalEmail({ to: "customer@example.com", subject: "Password changed", text: "Test" })).delivered, true);
 });
 

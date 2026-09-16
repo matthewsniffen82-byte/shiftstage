@@ -30,7 +30,9 @@ After authorized pickup creation, messages, and status changes, the server forwa
 
 Customer external IDs are account-specific HMAC aliases derived on the server, not public customer UUIDs. Rotating the OneSignal REST key changes these aliases; customers must enable push again on their devices afterward. Signing out unsubscribes this browser without changing the account's preference on other devices.
 
-On iOS/iPadOS, customers may need to add MyDancr to the Home Screen and open the installed app before enabling web push. Browser/site permission blocks are explained in the interface.
+Android browsers with web push support can enable notifications directly from the signed-in app. iPhone/iPad requires iOS/iPadOS 16.4 or later: in Safari, use Share → Add to Home Screen, open that icon, sign in, and tap Enable notifications. The interface explains these steps before enrollment. Desktop-mode iPads and Safari's standalone indicator are recognized. Guest chats do not enroll for push.
+
+The manifest supplies PNG icons at 192px and 512px; both the discovery shell and Next pages use a 180px Apple touch icon. Run `node scripts/generate-app-icons.mjs` after changing the existing SVG artwork, then regenerate the static asset versions. Push sends use the OneSignal notifications API with `Key` authentication, `include_aliases.external_id`, and `target_channel: push`.
 
 ## Verification
 

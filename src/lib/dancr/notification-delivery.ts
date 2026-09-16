@@ -136,16 +136,16 @@ async function deliverPushNotifications(rows: NotificationDeliveryRow[]) {
   for (const row of rows) {
     const shuttleRequest = (row.payload as Record<string, unknown> | null)?.kind === "club_shuttle_request";
     const pickupChat = (row.payload as Record<string, unknown> | null)?.kind === "club_pickup";
-    const response = await requestDeliveryProvider("onesignal", "https://onesignal.com/api/v1/notifications", {
+    const response = await requestDeliveryProvider("onesignal", "https://api.onesignal.com/notifications", {
       method: "POST",
       headers: {
-        "Authorization": `Basic ${apiKey}`,
+        "Authorization": `Key ${apiKey}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
         app_id: appId,
-        include_external_user_ids: [row.recipient_id],
-        channel_for_external_user_ids: "push",
+        include_aliases: { external_id: [row.recipient_id] },
+        target_channel: "push",
         headings: { en: row.title },
         // Pickup/contact details belong in the authenticated inbox, not a lock
         // screen or a provider payload accessible outside the application.

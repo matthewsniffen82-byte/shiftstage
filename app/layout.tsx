@@ -20,7 +20,7 @@ export const metadata: Metadata = {
   manifest: "/manifest.webmanifest",
   icons: {
     icon: versionedStaticAssetUrl("/mydancr-icon.svg"),
-    apple: versionedStaticAssetUrl("/mydancr-icon.svg"),
+    apple: { url: versionedStaticAssetUrl("/mydancr-icon-180.png"), sizes: "180x180", type: "image/png" },
   },
   metadataBase: new URL("https://www.mydancr.com"),
   openGraph: {
