@@ -25,6 +25,7 @@ type Recipient = {
 };
 
 export async function deliverNotificationRows(client: DancrClient, rows: NotificationDeliveryRow[], options: { email?: boolean; push?: boolean } = {}) {
+  rows = rows.filter(row => (row.payload as Record<string, unknown> | null)?.kind !== "club_pickup");
   if (!rows.length) return { push: 0, email: 0 };
 
   const recipients = await getRecipients(client, rows.map((row) => row.recipient_id));
@@ -135,7 +136,6 @@ async function deliverPushNotifications(rows: NotificationDeliveryRow[]) {
   let delivered = 0;
   for (const row of rows) {
     const shuttleRequest = (row.payload as Record<string, unknown> | null)?.kind === "club_shuttle_request";
-    const pickupChat = (row.payload as Record<string, unknown> | null)?.kind === "club_pickup";
     const response = await requestDeliveryProvider("onesignal", "https://api.onesignal.com/notifications", {
       method: "POST",
       headers: {
@@ -149,8 +149,8 @@ async function deliverPushNotifications(rows: NotificationDeliveryRow[]) {
         headings: { en: row.title },
         // Pickup/contact details belong in the authenticated inbox, not a lock
         // screen or a provider payload accessible outside the application.
-        contents: { en: shuttleRequest ? "New free shuttle request. Open your venue dashboard to contact the guest and confirm pickup." : pickupChat ? "Open your private pickup conversation for details." : row.body },
-        data: shuttleRequest ? { kind: "club_shuttle_request" } : pickupChat ? { kind: "club_pickup" } : row.payload || {},
+        contents: { en: shuttleRequest ? "New free shuttle request. Open your venue dashboard to contact the guest and confirm pickup." : row.body },
+        data: shuttleRequest ? { kind: "club_shuttle_request" } : row.payload || {},
         ...(row.deliveryId ? { idempotency_key: row.deliveryId } : {}),
         ...(notificationActionUrl(row) ? { url: notificationActionUrl(row) } : {}),
       }),
@@ -291,10 +291,6 @@ function notificationActionUrl(row: NotificationDeliveryRow) {
   const baseUrl = publicAppUrl();
   if (!baseUrl) return "";
   if (payload.kind === "club_shuttle_request") return `${baseUrl}/dashboard/venue`;
-  if (payload.kind === "club_pickup" && typeof payload.pickupRequestId === "string"
-    && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(payload.pickupRequestId)) {
-    return `${baseUrl}/pickups/${payload.pickupRequestId}`;
-  }
   if (followAlertKey(payload.kind)) return `${baseUrl}/dashboard/customer#customer-alerts`;
 
   if (row.notification_type === "dmca_status" && payload.caseId) {

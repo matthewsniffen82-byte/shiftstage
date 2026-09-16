@@ -1,5 +1,7 @@
 # Club Pickup focused security review
 
+> Historical documentation: pickup chat has been retired. See [Pickup contact forms](pickup-contact-forms.md) for the replacement and database shutdown.
+
 The initial account-only review below is supplemented by [Guest pickup chat](guest-pickup-chat.md), which documents scoped guest capabilities and their validation.
 
 Scope: the new pickup database, API, request/chat/inbox components, dashboard links, realtime lifecycle and NFC referral observer. Existing financial calculations, driver/transportation dispatch, dancer features and unrelated security policies were not changed.

@@ -252,7 +252,7 @@ export function VenuePanel({
           </div>
         </div>
         {(venueRole === "owner" || venueRole === "manager") && <div className="venue-command-links">
-          <Link className="primary-link" href="/pickups">Pickup Requests & messages →</Link>
+          <Link className="primary-link" href="/pickups">Pickup Requests →</Link>
         </div>}
       </section>
 

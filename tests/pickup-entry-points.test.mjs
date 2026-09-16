@@ -19,11 +19,11 @@ test('public availability requires opt-in, publication and an active venue owner
   }finally{await db.close();}
 });
 test('pickup notification links only accept canonical private request IDs and ignore supplied external URLs',()=>{
-  assert.equal(pickupNotificationHref({kind:'club_pickup',pickupRequestId:id(20),url:'https://attacker.invalid'}),'/pickups/'+id(20));
+  assert.equal(pickupNotificationHref({kind:'club_pickup',pickupRequestId:id(20),url:'https://attacker.invalid'}),'');
   assert.equal(pickupNotificationHref({kind:'club_shuttle_request',url:'https://attacker.invalid'}),'/pickups');
   for(const value of [null,[],{}, {kind:'club_pickup',pickupRequestId:'//attacker.invalid'},{kind:'support_message',pickupRequestId:id(20)}])assert.equal(pickupNotificationHref(value),'');
 });
-test('venue CTA is hidden unless explicitly enabled and dashboard previews never initiate pickup',()=>{
+test('venue detail never offers retired pickup chat, including stale enabled flags',()=>{
   const source=readFileSync(new URL('../src/live-shell/app/11-post-verified-shift.js',import.meta.url),'utf8');
   const declaration=source.match(/function venueDetailPage\(venue\) \{[\s\S]*?\n    \}/)?.[0];assert.ok(declaration);
   const context=vm.createContext({citySelect:{value:'Test City'},venueDetails:v=>({...v,city:'Test City'}),venueOperatingStatus:()=>({state:'unknown'}),
@@ -32,6 +32,6 @@ test('venue CTA is hidden unless explicitly enabled and dashboard previews never
     venueDirectionsMarkup:()=>'<button>Directions</button>',actionButtonLabel:(_,text)=>text,encodeURIComponent});
   vm.runInContext(declaration,context);
   for(const enabled of [undefined,false,'true'])assert.doesNotMatch(context.venueDetailPage({id:id(10),name:'Test Club',clubPickupEnabled:enabled}),/Request Club Pickup/);
-  assert.match(context.venueDetailPage({id:id(10),name:'Test Club',clubPickupEnabled:true}),new RegExp('/pickups/new\\?venue='+id(10)));
+  assert.doesNotMatch(context.venueDetailPage({id:id(10),name:'Test Club',clubPickupEnabled:true}),/Request Club Pickup|\/pickups\/new/);
   assert.doesNotMatch(context.venueDetailPage({id:id(10),name:'Test Club',clubPickupEnabled:true,isDashboardPreview:true}),/Request Club Pickup/);
 });

@@ -704,6 +704,7 @@
     const initialVenuePreviewRequest = initialVenuePreviewRequested
       ? Promise.resolve(initialDiscoveryRequest).finally(() => openSharedProfileFromUrl())
       : null;
+    try { localStorage.removeItem("mydancrGuestPickupsV1"); localStorage.removeItem("mydancrGuestPickupReadV1"); } catch { /* Storage may be unavailable. */ }
     render();
     if (initialHomeDestinationRequested) {
       focusHomeResults();
@@ -713,9 +714,6 @@
       await loadLiveDiscovery(citySelect.value, { force: true, cacheBust: bypassCache, background: true });
     }
     window.setInterval(() => { void refreshVisibleHomeDiscovery(); }, HOME_DISCOVERY_REFRESH_MS);
-    window.setInterval(() => { renderGuestPickupNav(); }, 15000);
-    window.addEventListener("mydancr:guest-pickup-read", () => renderGuestPickupNav(true));
-    window.addEventListener("online", () => renderGuestPickupNav(true));
     document.addEventListener("visibilitychange", () => {
       if (document.visibilityState === "visible") {
         renderCustomerQuickActions();
@@ -728,12 +726,11 @@
       void refreshVisibleHomeDiscovery({ bypassCache: true });
     });
     window.addEventListener("storage", (event) => {
-      if (event.key === "mydancrGuestPickupReadV1") { renderGuestPickupNav(true); return; }
       if (event.key === PUBLIC_DISCOVERY_REFRESH_KEY && event.newValue) {
         void refreshVisibleHomeDiscovery({ bypassCache: true });
         return;
       }
-      if (!event.key?.startsWith("dancrSavedDealPassesV3:") && event.key !== "mydancrGuestPickupsV1" && event.key !== "dancrAuthSessionV1" && event.key !== null) return;
+      if (!event.key?.startsWith("dancrSavedDealPassesV3:") && event.key !== "dancrAuthSessionV1" && event.key !== null) return;
       if (event.key === "dancrAuthSessionV1" || event.key === null) {
         if (refreshBrowserAccountView()) return;
         synchronizeAuthSession();

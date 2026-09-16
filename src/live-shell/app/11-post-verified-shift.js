@@ -508,7 +508,6 @@
                 ${quickStats}
               </div>
               ${venueOfferMarkup(venue)}
-              ${venue.clubPickupEnabled === true && venue.id && !venue.isDashboardPreview ? `<a class="action-btn secondary" href="/pickups/new?venue=${encodeURIComponent(venue.id)}">Request Club Pickup</a>` : ""}
             </div>
           </article>
 

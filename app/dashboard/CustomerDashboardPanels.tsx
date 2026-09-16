@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
-const PickupDashboardPanel = dynamic(() => import("./PickupDashboardPanel"));
 import { homeDiscoveryHref } from "@/src/lib/dancr/navigation";
 import { verifiedVenueLogoUrl } from "@/src/lib/dancr/venue-branding";
 import { CUSTOMER_FOLLOW_ALERTS, customerNotificationSettings, type CustomerNotificationKey } from "@/src/lib/dancr/customer-notification-preferences";
@@ -172,7 +171,6 @@ export function CustomerDashboardNav({ saved }: { saved?: CustomerSavedState | n
         ))}
       </div>
       <div className="customer-dashboard-utility-links" aria-label="Customer dashboard utilities">
-        <Link href="/pickups">Pickup Requests</Link>
         <a href="#customer-alerts" onClick={(event) => openDashboardSection(event, "customer-alerts")}><CustomerDashboardIcon section="customer-alerts" />Alerts</a>
         <a href="#customer-account" onClick={(event) => openDashboardSection(event, "customer-account")}><CustomerDashboardIcon section="customer-account" />Account</a>
       </div>
@@ -378,7 +376,6 @@ export function CustomerPanel({
   return (
     <>
       {actionStatus ? <p className="customer-action-status" role="status">{actionStatus}</p> : null}
-      <DashboardSection title="Pickup Requests" id="customer-pickups" description="Your private pickup conversations with venues."><PickupDashboardPanel /></DashboardSection>
       {!accountSavedUnavailable ? <>
       <DashboardSection
         count={saved?.follows?.length}

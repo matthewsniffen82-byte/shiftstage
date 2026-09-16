@@ -112,7 +112,7 @@ test('pickup API includes phone receipts only for authenticated venue/admin role
         if (role === 'signed-out' || role === 'disabled') throw { status: role === 'signed-out' ? 401 : 403 };
         return { client: 'authenticated-client', session: { accessToken: 'synthetic-token' } };
       } };
-      if (name.endsWith('/pickup-server')) return { listPickups: async client => { assert.equal(client, 'authenticated-client'); return { role, requests: [], hasMore: false }; } };
+      if (name.endsWith('/pickup-server')) return { pickupAccountRole: async client => { assert.equal(client, 'authenticated-client'); return role; } };
       if (name.endsWith('/pickup-phone-requests')) return { listPhonePickupRequests: async client => {
         assert.equal(client, 'authenticated-client'); phoneReads++;
         if (role === 'read-error') throw { status: 503 };

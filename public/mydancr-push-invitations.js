@@ -7,14 +7,10 @@
   const sessionKey = "dancrAuthSessionV1", historyPrefix = "mydancr:push-invitations:v1:";
   const moments = {
     "customer-follow": ["customer", "Keep up with your favorites", "Get notified when dancers you follow are working and when your favorite clubs post deals."],
-    "customer-pickup": ["customer", "Stay updated on your pickup", "Enable notifications for venue replies and pickup status updates, even when you leave this chat."],
-    "customer-pickup-phone": ["customer", "Keep up with MyDancr", "The club will contact you by phone about this pickup. Enable notifications for updates from dancers and clubs you follow."],
     "dancer-review": ["dancer", "Know when your profile is ready", "Get notified when your profile is approved or needs an update."],
     "dancer-shift": ["dancer", "Keep up with your dancer account", "Get profile updates and important account alerts while you’re away from MyDancr."],
     "venue-dashboard": ["venue", "Keep your venue up to date", "Get notified when your venue page is ready for review and when requests need your attention."],
     "venue-live": ["venue", "Your venue is live", "Enable notifications for customer pickup requests and important venue updates."],
-    "venue-pickup": ["venue", "Know when customers need a ride", "Enable notifications for new pickup requests and customer messages."],
-    "venue-chat": ["venue", "Don’t miss a customer’s reply", "Enable notifications when customers message you about their pickup, even when you leave this chat."],
     settings: ["", "Push notifications", "Manage notifications on this device."],
   };
   const memory = new Map();
@@ -37,7 +33,7 @@
   function eligible(moment, id) {
     if (moment === "settings") return true;
     const saved = history(id);
-    const cooldown = /pickup|chat/.test(moment) ? 10 * 60_000 : 24 * 60 * 60_000;
+    const cooldown = 24 * 60 * 60_000;
     return !saved[moment] && !(saved.dismissedAt && Date.now() - saved.dismissedAt < cooldown);
   }
   function close() {

@@ -971,9 +971,9 @@ export default function AdminClient() {
                     onThreadsChange={(supportThreads) => setState((current) => ({ ...current, supportThreads }))}
                   />
                 </Panel>
-                <Panel title="Pickup monitoring" badge="Audit & moderation">
-                  <p>Review customer-to-venue conversations, reports, status history and referral arrival evidence. Filter by venue, status or date. Original messages and events cannot be edited.</p>
-                  <Link className="primary-link" href="/pickups">Open pickup monitoring →</Link>
+                <Panel title="Pickup requests" badge="Club contact forms">
+                  <p>Review contact forms sent to venue managers for pickup coordination.</p>
+                  <Link className="primary-link" href="/pickups">Open pickup requests →</Link>
                 </Panel>
                 <Panel title="Copyright / DMCA" badge={`${adminCountLabel(state.operations?.attention.dmca)} open`}>
                   <AdminDmcaPanel />

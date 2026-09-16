@@ -5,12 +5,12 @@ import type { PickupVenue } from "./pickup-domain";
 
 export async function getPickupVenue(client: SupabaseClient, venueId: string): Promise<PickupVenue | null> {
   pickupUuid(venueId);
-  const { data, error } = await client.from("venues").select("id,name,slug,club_pickup_enabled,owner_user_id")
+  const { data, error } = await client.from("venues").select("id,name,slug,owner_user_id")
     .eq("id", venueId).eq("is_active", true).eq("page_review_status", "published").not("published_at", "is", null).maybeSingle();
   if (error) throw error;
   if (!data?.owner_user_id) return null;
   const { data: owner, error: ownerError } = await client.from("app_users").select("id")
     .eq("id", data.owner_user_id).eq("role", "venue").eq("account_state", "active").maybeSingle();
   if (ownerError) throw ownerError;
-  return owner ? { id: data.id, name: data.name, slug: data.slug, club_pickup_enabled: data.club_pickup_enabled } : null;
+  return owner ? { id: data.id, name: data.name, slug: data.slug } : null;
 }

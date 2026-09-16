@@ -7,6 +7,7 @@ export async function getUserNotifications(client: DancrClient, userId: string, 
     .from("notifications")
     .select("id, notification_type, channel, title, body, payload, read_at, sent_at, created_at")
     .eq("recipient_id", userId)
+    .or("payload->>kind.is.null,payload->>kind.neq.club_pickup")
     .order("created_at", { ascending: false })
     .limit(50);
 

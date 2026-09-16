@@ -53,10 +53,9 @@ test("page entry loads no device module, configuration or permission prompt", ()
   const f = fixture(); assert.equal(f.nodes.length, 0); assert.equal(f.calls.length, 0);
 });
 for (const [role, moment, words] of [
-  ["customer", "customer-follow", /favorites/], ["customer", "customer-pickup", /pickup/],
+  ["customer", "customer-follow", /favorites/],
   ["dancer", "dancer-review", /profile/], ["dancer", "dancer-shift", /account/],
   ["venue", "venue-dashboard", /venue/], ["venue", "venue-live", /live/],
-  ["venue", "venue-pickup", /ride/], ["venue", "venue-chat", /reply/],
 ]) test(`${moment} offers context without requesting browser permission`, async () => {
   const f = fixture({ role }); await f.offer(moment);
   assert.match(f.card().children[0].textContent, words);
@@ -65,7 +64,7 @@ for (const [role, moment, words] of [
   assert.ok(!f.calls.includes("permission"));
 });
 test("only an explicit tap enrolls; customer preference saves after subscription confirmation", async () => {
-  const f = fixture(); await f.offer("customer-pickup");
+  const f = fixture(); await f.offer("customer-follow");
   await f.buttons()[0].onclick();
   assert.ok(f.calls.indexOf("permission") < f.calls.indexOf("subscription"));
   const save = f.calls.findIndex(call => call.url === "/api/customer/profile");
@@ -75,47 +74,41 @@ test("only an explicit tap enrolls; customer preference saves after subscription
   assert.match(f.card().children[1].textContent, /enabled on this device/);
 });
 test("professionals enroll without changing customer preferences", async () => {
-  const f = fixture({ role: "venue" }); await f.offer("venue-chat"); await f.buttons()[0].onclick();
+  const f = fixture({ role: "venue" }); await f.offer("venue-dashboard"); await f.buttons()[0].onclick();
   assert.ok(f.calls.includes("subscription"));
   assert.ok(!f.calls.some(call => call.url === "/api/customer/profile"));
 });
-test("dismissals survive reload; a later pickup can offer again without nagging", async () => {
+test("dismissals survive reload and removed chat moments do not offer enrollment", async () => {
   const f = fixture(); await f.offer("customer-follow"); f.buttons()[1].onclick();
-  await f.offer("customer-follow"); assert.equal(f.nodes.length, 0);
-  await f.offer("customer-pickup"); assert.equal(f.nodes.length, 0);
-  f.advance(11); await f.offer("customer-pickup"); assert.equal(f.nodes.length, 1);
-  f.buttons()[1].onclick();
   delete f.window.mydancrPushInvitationsInstalled; f.run();
-  f.advance(1500); await f.offer("customer-follow"); await f.offer("customer-pickup");
-  assert.equal(f.nodes.length, 0);
-});
-test("venue chat offers again later after dismissal during setup", async () => {
-  const f = fixture({ role: "venue" }); await f.offer("venue-dashboard"); f.buttons()[1].onclick();
-  f.advance(11); await f.offer("venue-chat"); assert.equal(f.nodes.length, 1);
+  f.advance(1500); await f.offer("customer-follow"); assert.equal(f.nodes.length, 0);
+  for (const moment of ["customer-pickup", "customer-pickup-phone", "venue-chat", "venue-pickup"]) {
+    await f.offer(moment); assert.equal(f.nodes.length, 0);
+  }
 });
 for (const options of [{ enabled: true }, { configured: false }, { support: "Push is unsupported." }, { permission: "denied" }, { role: "admin" }]) {
   test(`unavailable, already enabled and excluded accounts do not receive automatic invitations: ${JSON.stringify(options)}`, async () => {
-    const f = fixture(options); await f.offer("customer-pickup"); assert.equal(f.nodes.length, 0);
+    const f = fixture(options); await f.offer("customer-follow"); assert.equal(f.nodes.length, 0);
     assert.ok(!f.calls.includes("permission"));
   });
 }
 test("guests and wrong roles never enroll under another account", async () => {
-  const f = fixture({ role: "dancer" }); await f.offer("customer-pickup"); assert.equal(f.nodes.length, 0);
+  const f = fixture({ role: "dancer" }); await f.offer("customer-follow"); assert.equal(f.nodes.length, 0);
   f.stored.delete("dancrAuthSessionV1"); await f.offer("dancer-review"); assert.equal(f.calls.length, 0);
 });
 test("iPhone installation guidance has no working permission button", async () => {
   const f = fixture({ support: "Add MyDancr to your Home Screen, then open it there to enable push." });
-  await f.offer("customer-pickup"); assert.match(f.card().children[1].textContent, /Home Screen/);
+  await f.offer("customer-follow"); assert.match(f.card().children[1].textContent, /Home Screen/);
   assert.equal(f.buttons()[0].disabled, true);
 });
 test("a changed account closes a pending invitation without permission or preference writes", async () => {
-  const f = fixture(); await f.offer("customer-pickup");
+  const f = fixture(); await f.offer("customer-follow");
   f.stored.set("dancrAuthSessionV1", JSON.stringify({ accessToken: "other", account: { id: "account-two", role: "customer" } }));
   await f.buttons()[0].onclick(); assert.equal(f.nodes.length, 0);
   assert.ok(!f.calls.includes("permission"));
 });
 for (const options of [{ failSave: true }, { failEnroll: true }]) test(`failed enrollment rolls back device registration: ${JSON.stringify(options)}`, async () => {
-  const f = fixture(options); await f.offer("customer-pickup"); await f.buttons()[0].onclick();
+  const f = fixture(options); await f.offer("customer-follow"); await f.buttons()[0].onclick();
   assert.ok(f.calls.includes("unsubscribe")); assert.equal(f.buttons()[0].hidden, false);
   assert.doesNotMatch(f.card().children[1].textContent, /enabled on this device/);
 });

@@ -1,5 +1,7 @@
 # Guest pickup chat
 
+> Historical documentation: pickup chat has been retired. See [Pickup contact forms](pickup-contact-forms.md) for the replacement and database shutdown.
+
 Customers can request and use pickup chat without signing in. At a club with pickup chat enabled, **Request pickup** sends the request and opens chat for guests and signed-in customers. Phone follow-up remains available through **Request by phone instead** and at clubs without pickup chat enabled.
 
 The compact form shows pickup location and party size first. **Add pickup details (optional)** expands the meeting spot and note fields. A short notice explains message storage and review beside the required consent checkbox; **Pickup & chat terms** expands the full existing transport and chat notices, plus admission rules when entry is included. The form states that the club still needs to confirm the ride.

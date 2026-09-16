@@ -1,5 +1,7 @@
 # Club Deal transportation
 
+> Pickup now uses the contact form for all customers. The chat flow described in earlier delivery notes below has been retired; see [Pickup contact forms](pickup-contact-forms.md).
+
 New Club Deals use free general admission. Public offer buttons say “Free Entry,” and pickup buttons say “Free Ride + Entry.” On Clubs feed cards, these are the two leading actions, with Free Entry highlighted; Directions appears alongside Club Page, Share, and Favorite below them.
 
 The venue detail offer card also shows both options side by side, with the private-car/club-transport eligibility rule directly underneath. Free Entry preserves the complete offer chooser; Free Ride + Entry opens the pickup form with that venue’s active deal attached. The bottom Location section has a full-width Directions button above Follow and Share, with no duplicate pickup action.

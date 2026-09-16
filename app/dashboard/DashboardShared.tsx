@@ -783,7 +783,6 @@ function notificationCategory(notification: Record<string, unknown>) {
   const payload = notification.payload && typeof notification.payload === "object" && !Array.isArray(notification.payload)
     ? notification.payload as Record<string, unknown>
     : {};
-  if (payload.kind === "club_pickup") return "Club Pickup";
   if (payload.kind === "followed_club_deal_published") return "Club Deal";
   if (payload.kind === "followed_club_roster_addition") return "Club";
   if (type.includes("shift")) return "Schedule";
