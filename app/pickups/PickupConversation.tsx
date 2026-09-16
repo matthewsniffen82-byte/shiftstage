@@ -6,7 +6,7 @@ import { readBrowserAuthSession } from "@/src/lib/dancr/browser-session";
 import { PICKUP_CHAT_NOTICE, PICKUP_CHAT_POLICY, PICKUP_CONSENT_VERSION, PICKUP_STATUS_LABELS, PICKUP_TRANSPORT_NOTICE,
   pickupClosed, pickupStatusActions, type PickupDetail, type PickupMessage, type PickupStatus } from "@/src/lib/dancr/pickup-domain";
 import { PickupAccountGate, requestPickupJson } from "./pickup-session";
-import { guestPickupHref, guestPickupKey, notifyGuestPickupRead, rememberGuestPickup } from "@/src/lib/dancr/pickup-guest-session";
+import { guestPickupKey, notifyGuestPickupRead, rememberGuestPickup } from "@/src/lib/dancr/pickup-guest-session";
 import PickupPushNotifications from "./PickupPushNotifications";
 
 export default function PickupConversation({ requestId }: { requestId: string }) {
@@ -175,7 +175,6 @@ function Conversation({ requestId }: { requestId: string }) {
         <textarea id="pickup-message" maxLength={2000} rows={2} value={text} onChange={event => setText(event.target.value)} disabled={busy} required />
         <button className="pickup-primary" type="submit" disabled={busy || !text.trim()}>{busy ? "Sending…" : "Send message"}</button>
       </form>}
-      {detail.guest && <GuestChatLink requestId={requestId} />}
       {!closed && detail.role !== "admin" && <section className="pickup-actions"><h2>Update pickup</h2>
         <label>Status<select aria-label="Status" value={statusChoice} disabled={busy} onChange={event => setStatusChoice(event.target.value as PickupStatus | "")}>
           <option value="">Choose an action</option>{pickupStatusActions(detail.role, r.status).map(status => <option key={status} value={status}>
@@ -196,21 +195,6 @@ function Conversation({ requestId }: { requestId: string }) {
         <label>Details <small>(optional)</small><textarea name="details" maxLength={1000} rows={3} /></label><button disabled={busy} type="submit">Send report</button></form>}
     </section>}
     {detail.role === "admin" && <PickupAudit detail={detail} path={path} act={act} busy={busy} />}
-  </section>;
-}
-function GuestChatLink({ requestId }: { requestId: string }) {
-  const [message, setMessage] = useState("");
-  const url = typeof window === "undefined" ? "" : window.location.origin + guestPickupHref(requestId);
-  return <section className="pickup-notice">
-    <p>Save your private link to return to this chat. Anyone with the link can open this conversation.</p>
-    <button type="button" onClick={async () => {
-      try { await navigator.clipboard.writeText(url); setMessage("Private chat link copied."); }
-      catch { setMessage("Open the private link below, then select and copy it."); }
-    }}>Copy private chat link</button>
-    {message && <p role="status">{message}</p>}
-    <details><summary>Your private chat link</summary><label>Private link<input aria-label="Private chat link" value={url} readOnly onFocus={event => event.currentTarget.select()} /></label>
-      <p className="pickup-subtle">Pickup requests close after 12 hours. Your private link can open the chat history for 30 days.</p>
-    </details>
   </section>;
 }
 function PickupAudit({ detail, path, act, busy }: { detail: PickupDetail; path: string; act: (body: Record<string, unknown>) => Promise<boolean>; busy: boolean }) {

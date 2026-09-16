@@ -330,7 +330,8 @@ try {
       const guestUrl=new URL(guestDestination,base), guestId=guestUrl.pathname.split('/').at(-1);
       guestUrl.searchParams.set('mode','chat');guestUrl.searchParams.set('requestId',guestId);
       await page.goto(guestUrl.href);
-      await page.getByRole('button',{name:'Copy private chat link',exact:true}).waitFor();
+      await page.getByLabel('Message Test Club').waitFor();
+      assert.equal(await page.getByRole('button',{name:'Copy private chat link',exact:true}).count(),0);
       await page.getByLabel('Message Test Club').fill('Guest chat without an account');
       failNextSend=false;
       await page.getByRole('button',{name:'Send message',exact:true}).click();

@@ -7,10 +7,10 @@ The compact form shows pickup location and party size first. **Add pickup detail
 ## Guest experience
 
 - The request records the chat notice consent and opens the conversation immediately. Guests can message the club, receive replies, cancel, report, and confirm arrival through customer actions.
-- A cryptographically random private link identifies one conversation. It is saved on the device and can be copied from the chat. `/pickups` lists the guest links saved on that device. A copied link works on another device without an account.
+- A cryptographically random private link identifies one conversation. It is saved automatically in the browser. `/pickups` lists the guest links saved on that device; customers return through the homepage navigation without a save-link box inside the conversation. A private URL copied from the browser address bar still works on another device without an account.
 - Signed-out visitors with a saved guest chat see **Your Pickup chats** beside **Login / Join** in the homepage header (**Pickup chats** on mobile). It opens `/pickups` and refreshes when returning to the homepage or when saved chats change in another tab. The shortcut stays hidden if no valid, unexpired links are saved in this browser.
 - A numeric badge totals unread venue replies across those saved chats. It checks every 15 seconds while the homepage is visible and refreshes when another tab records a successful read. Opening the homepage or pickup inbox does not mark messages read. The badge hides at zero (or if its count cannot be refreshed); the chat shortcut remains available. Totals above 99 display **99+**, with the exact total in the accessible label and tooltip.
-- Requests close after the existing 12-hour coordination window. Private guest access expires 30 days after creation. Clearing device storage requires reopening the saved private link; blocked storage still allows the current page to display and copy its link.
+- Requests close after the existing 12-hour coordination window. Private guest access expires 30 days after creation. Clearing device storage requires reopening the private link; blocked storage still allows the current page to use the link in its address bar.
 - Guest conversations check for replies every five seconds while visible and refresh when connectivity or page visibility returns. Keep the page open for replies. Account conversations retain their existing realtime subscription.
 
 ## Access and data
