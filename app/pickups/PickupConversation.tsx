@@ -9,7 +9,6 @@ import { PickupAccountGate, requestPickupJson } from "./pickup-session";
 import { guestPickupKey, notifyGuestPickupRead, rememberGuestPickup } from "@/src/lib/dancr/pickup-guest-session";
 import PickupPushNotifications from "./PickupPushNotifications";
 import PickupVenueIdentity from "./PickupVenueIdentity";
-import PickupProgress from "./PickupProgress";
 
 export default function PickupConversation({ requestId }: { requestId: string }) {
   return <PickupAccountGate requestId={requestId}>{() => <Conversation requestId={requestId} />}</PickupAccountGate>;
@@ -148,8 +147,9 @@ function Conversation({ requestId }: { requestId: string }) {
   return <section className="pickup-card pickup-conversation">
     <header><Link href="/pickups">‹ Pickup chats</Link>
       <PickupVenueIdentity key={`${r.venue_id}:${r.venue?.slug}`} id={r.venue_id} name={venueName} slug={r.venue?.slug} />
-      <PickupProgress request={r} />
-      {!closed && <p className="pickup-subtle pickup-connection">{connected ? (detail.guest ? "Checking for replies automatically" : "Live conversation") : "Reconnecting · checking for updates"}</p>}
+      <p className="pickup-subtle pickup-connection" role={closed ? "status" : undefined}>{closed
+        ? <>Chat closed · <strong>{pickupClosed(r.status) ? PICKUP_STATUS_LABELS[r.status] : "Expired"}</strong>. History remains available.</>
+        : connected ? (detail.guest ? "Checking for replies automatically" : "Live conversation") : "Reconnecting · checking for updates"}</p>
     </header>
     {detail.guest ? <p className="pickup-subtle pickup-saved-hint">{savedOnDevice ? <>Saved in this browser. Return through <Link href="/pickups">Pickup chats</Link> on the homepage.</> : "Your browser couldn’t save this chat. Keep this page open or bookmark its address to return."}</p>
       : detail.role !== "admin" && <PickupPushNotifications role={detail.role} />}
@@ -174,7 +174,8 @@ function Conversation({ requestId }: { requestId: string }) {
         <textarea id="pickup-message" placeholder="Type your message…" maxLength={2000} rows={2} value={text} onChange={event => setText(event.target.value)} disabled={busy} required />
         <button className="pickup-primary" type="submit" disabled={busy || !text.trim()}>{busy ? "Sending…" : "Send message"}</button>
       </form>}
-      {!closed && detail.role !== "admin" && pickupStatusActions(detail.role, r.status).length > 0 && <details className="pickup-details pickup-manage" open={detail.role === "venue" || undefined}><summary>Update pickup</summary><div className="pickup-actions">
+      {!closed && detail.role !== "admin" && pickupStatusActions(detail.role, r.status).length > 0 && <details className="pickup-details pickup-manage"><summary>Update pickup</summary><div className="pickup-actions">
+        <p className="pickup-subtle">Recorded status: <strong>{PICKUP_STATUS_LABELS[r.status]}</strong></p>
         <label>Status<select aria-label="Status" value={statusChoice} disabled={busy} onChange={event => setStatusChoice(event.target.value as PickupStatus | "")}>
           <option value="">Choose an action</option>{pickupStatusActions(detail.role, r.status).map(status => <option key={status} value={status}>
             {status === "cancelled" ? (detail.role === "venue" && r.status === "requested" ? "Decline request" : "Cancel request") : status === "arrived" ? (detail.role === "customer" ? "I have arrived" : "Confirm customer arrived") : PICKUP_STATUS_LABELS[status]}</option>)}

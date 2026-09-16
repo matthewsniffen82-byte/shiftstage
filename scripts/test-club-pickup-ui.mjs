@@ -339,7 +339,7 @@ try {
       await page.goto(guestUrl.href);
       await page.getByLabel('Message Test Club').waitFor();
       await page.waitForFunction(()=>document.querySelector('.pickup-venue-image img')?.naturalWidth>0);
-      assert.match(await page.locator('.pickup-progress [aria-current=step]').textContent(),/Requested/);
+      assert.equal(await page.getByRole('region',{name:'Pickup progress'}).count(),0);
       assert.equal(await page.getByLabel('Status',{exact:true}).isVisible(),false,'customer status controls are collapsed below chat');
       assert.equal(await page.getByRole('link',{name:'View club'}).getAttribute('href'),'/?venue=test-club');
       assert.equal(await page.getByRole('button',{name:'Copy private chat link',exact:true}).count(),0);
@@ -432,6 +432,8 @@ try {
       await page.evaluate(()=>localStorage.setItem('dancrAuthSessionV1',JSON.stringify({accessToken:'synthetic-venue',account:{id:'96000000-0000-4000-8000-000000000003',role:'venue'}})));
       await page.getByRole('button',{name:'Agree & Continue',exact:true}).waitFor();assert.equal(await page.locator('.pickup-message').count(),0);
       await page.getByRole('button',{name:'Agree & Continue',exact:true}).click();await page.getByLabel('Message customer').waitFor();
+      assert.equal(await page.getByLabel('Status',{exact:true}).isVisible(),false,'venue chat does not require maintaining ride stages');
+      await page.locator('.pickup-manage summary').click();
       await page.getByLabel('Status',{exact:true}).selectOption('accepted');await page.getByRole('button',{name:'Confirm update'}).click();await page.getByText('Venue Accepted',{exact:true}).waitFor();
       await page.goto(base+'/?mode=inbox');await page.getByRole('heading',{name:'Pickup Requests',exact:true}).waitFor();await page.locator('.pickup-list-item').first().waitFor();
       await page.getByText('Test Club · Synthetic Guest Ride',{exact:true}).waitFor();
