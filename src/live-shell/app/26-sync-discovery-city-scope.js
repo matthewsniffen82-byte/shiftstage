@@ -713,6 +713,9 @@
       await loadLiveDiscovery(citySelect.value, { force: true, cacheBust: bypassCache, background: true });
     }
     window.setInterval(() => { void refreshVisibleHomeDiscovery(); }, HOME_DISCOVERY_REFRESH_MS);
+    window.setInterval(() => { renderGuestPickupNav(); }, 15000);
+    window.addEventListener("mydancr:guest-pickup-read", () => renderGuestPickupNav(true));
+    window.addEventListener("online", () => renderGuestPickupNav(true));
     document.addEventListener("visibilitychange", () => {
       if (document.visibilityState === "visible") {
         renderCustomerQuickActions();
@@ -725,6 +728,7 @@
       void refreshVisibleHomeDiscovery({ bypassCache: true });
     });
     window.addEventListener("storage", (event) => {
+      if (event.key === "mydancrGuestPickupReadV1") { renderGuestPickupNav(true); return; }
       if (event.key === PUBLIC_DISCOVERY_REFRESH_KEY && event.newValue) {
         void refreshVisibleHomeDiscovery({ bypassCache: true });
         return;

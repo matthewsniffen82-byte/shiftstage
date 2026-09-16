@@ -6,7 +6,7 @@ import { readBrowserAuthSession } from "@/src/lib/dancr/browser-session";
 import { PICKUP_CHAT_NOTICE, PICKUP_CHAT_POLICY, PICKUP_CONSENT_VERSION, PICKUP_STATUS_LABELS, PICKUP_TRANSPORT_NOTICE,
   pickupClosed, pickupStatusActions, type PickupDetail, type PickupMessage, type PickupStatus } from "@/src/lib/dancr/pickup-domain";
 import { PickupAccountGate, requestPickupJson } from "./pickup-session";
-import { guestPickupHref, guestPickupKey, rememberGuestPickup } from "@/src/lib/dancr/pickup-guest-session";
+import { guestPickupHref, guestPickupKey, notifyGuestPickupRead, rememberGuestPickup } from "@/src/lib/dancr/pickup-guest-session";
 import PickupPushNotifications from "./PickupPushNotifications";
 
 export default function PickupConversation({ requestId }: { requestId: string }) {
@@ -100,12 +100,13 @@ function Conversation({ requestId }: { requestId: string }) {
       const atBottom = node.scrollHeight - node.scrollTop - node.clientHeight < 100;
       if (atBottom && lastSequence > latestRead.current && detail?.role !== "admin" && document.visibilityState === "visible") {
         latestRead.current = lastSequence;
-        void requestPickupJson(path, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action: "read", sequence: lastSequence }) }).catch(() => { latestRead.current = 0; });
+        void requestPickupJson(path, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action: "read", sequence: lastSequence }) })
+          .then(() => { if (guest) notifyGuestPickupRead(); }).catch(() => { latestRead.current = 0; });
       }
     };
     markViewed(); node.addEventListener("scroll", markViewed, { passive: true }); document.addEventListener("visibilitychange", markViewed);
     return () => { node.removeEventListener("scroll", markViewed); document.removeEventListener("visibilitychange", markViewed); };
-  }, [lastSequence, consented, path, detail?.role]);
+  }, [lastSequence, consented, path, detail?.role, guest]);
   async function act(body: Record<string, unknown>) {
     if (locked.current) return false;
     locked.current = true; setBusy(true); setError(""); setNotice("");

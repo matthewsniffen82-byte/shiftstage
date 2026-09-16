@@ -41,6 +41,28 @@ export async function getGuestPickup(request: Request, id: string) {
   return guestRpc("pickup_guest_get", { p_id, p_key_hash, p_before: before === null ? null : Number(before) });
 }
 
+export async function guestPickupUnreadCount(body: Record<string, unknown>) {
+  if (Object.keys(body).some(key => key !== "links") || !Array.isArray(body.links) || body.links.length > 50) {
+    throw new PublicApiError("INVALID_REQUEST", "Invalid saved pickup chats.", 400);
+  }
+  const ids = new Set<string>();
+  const links = body.links.map(value => {
+    if (!value || typeof value !== "object" || Array.isArray(value)
+      || Object.keys(value).some(key => key !== "id" && key !== "key")
+      || typeof value.key !== "string" || !/^[a-f0-9]{64}$/.test(value.key)) {
+      throw new PublicApiError("INVALID_REQUEST", "Invalid saved pickup chats.", 400);
+    }
+    const id = pickupUuid(value.id).toLowerCase();
+    if (ids.has(id)) throw new PublicApiError("INVALID_REQUEST", "Duplicate pickup chat.", 400);
+    ids.add(id);
+    return { id, key_hash: createHash("sha256").update(value.key).digest("hex") };
+  });
+  if (!links.length) return 0;
+  const count = Number(await guestRpc("pickup_guest_unread_count", { p_links: links }));
+  if (!Number.isSafeInteger(count) || count < 0) throw new PublicApiError("UNAVAILABLE", "Pickup message count is unavailable.", 503);
+  return count;
+}
+
 export async function commandGuestPickup(request: Request, id: string, body: Record<string, unknown>) {
   const p_key_hash = pickupGuestKeyHash(request), command = pickupCommand(id, body);
   if (command.name === "pickup_admin_note") throw new PublicApiError("FORBIDDEN", "This pickup action is unavailable.", 403);

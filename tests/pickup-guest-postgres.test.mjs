@@ -4,7 +4,8 @@ import { pickupFixture, pickupId as id } from './helpers/pickup-fixture.mjs';
 
 const migrations = ['20260914190000_club_pickup_domain.sql', '20260914191000_club_pickup_security_commands.sql',
   '20260914192000_club_pickup_inbox_queries.sql', '20260914194000_club_pickup_arrival_attribution.sql',
-  '20260914195000_harden_pickup_transitions.sql', '20260915180000_guest_pickup_chat.sql'];
+  '20260914195000_harden_pickup_transitions.sql', '20260915180000_guest_pickup_chat.sql',
+  '20260916010000_guest_pickup_unread_count.sql'];
 const key = n => n.toString(16).padStart(64, '0');
 async function fixture() {
   const f = await pickupFixture(migrations);
@@ -123,5 +124,41 @@ test('guest status commands preserve venue authority, arrival evidence, closure 
     await db.query("update pickup_guest_access set access_expires_at=now()-interval '1 second' where pickup_request_id=$1", [id(21)]);
     await assert.rejects(f.get(21), e => e.code === '42501');
     await assert.rejects(f.command('pickup_mark_read', { p_sequence: 1 }, 21), e => e.code === '42501');
+  } finally { await db.close(); }
+});
+
+test('guest unread totals count every unread venue reply across valid private links without marking anything read', async () => {
+  const f = await fixture(); const { db, asUser } = f;
+  const links = [{ id: id(20), key_hash: key(20) }, { id: id(21), key_hash: key(21) }];
+  const count = async (input = links) => {
+    await f.service();
+    return Number((await db.query('select pickup_guest_unread_count($1) count', [JSON.stringify(input)])).rows[0].count);
+  };
+  try {
+    await f.create(); await f.create(21);
+    await f.command('pickup_send_message', { p_message_id: id(30), p_text: 'My hotel' });
+    assert.equal(await count(), 0, 'guest messages and system updates are not new venue replies');
+    await db.exec('reset role');
+    await db.query("insert into pickup_messages(pickup_request_id,sender_user_id,sender_type,message_text) select $1,$2,'venue','Venue reply '||n from generate_series(1,55) n", [id(20), id(3)]);
+    await db.query("insert into pickup_messages(pickup_request_id,sender_user_id,sender_type,message_text) values($1,$2,'venue','Other pickup reply')", [id(21), id(3)]);
+    assert.equal(await count(), 56, 'counts beyond the 50-message conversation page');
+    assert.equal(await count(), 56, 'checking a badge never marks a reply read');
+    assert.equal(await count([...links, links[0]]), 56, 'duplicate capabilities cannot inflate the total');
+    assert.equal(await count([{ id: id(20), key_hash: key(21) }]), 0, 'another chat key grants no access');
+    assert.equal(await count([{ id: id(99), key_hash: key(20) }]), 0, 'unknown chats reveal no count');
+    const detail = await f.get();
+    await f.command('pickup_mark_read', { p_sequence: detail.messages.at(-1).sequence });
+    assert.equal(await count(), 1, 'reading one chat clears only that conversation');
+    await db.exec('reset role');
+    await db.query("update pickup_guest_access set access_expires_at=now()-interval '1 second' where pickup_request_id=$1", [id(21)]);
+    assert.equal(await count(), 0, 'expired keys are excluded without breaking valid saved chats');
+    assert.equal(await count([]), 0);
+    for (const invalid of [null, {}, [null], [{}], [{ id: 'bad', key_hash: key(20) }], Array(51).fill(links[0])]) {
+      await assert.rejects(count(invalid), error => error.code === '22023');
+    }
+    for (const [user,role] of [[null,'anon'],[1,'authenticated']]) {
+      await asUser(user,role);
+      await assert.rejects(db.query('select pickup_guest_unread_count($1)', [JSON.stringify(links)]), error => error.code === '42501');
+    }
   } finally { await db.close(); }
 });

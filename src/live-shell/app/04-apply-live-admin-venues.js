@@ -478,20 +478,72 @@
       syncCustomerDealQuickCta();
     }
 
-    function renderGuestPickupNav() {
-      const link = document.getElementById("guestPickupNav");
-      if (!link) return;
-      link.hidden = true;
-      if (authSession?.accessToken) return;
+    let guestPickupUnreadState = { signature: "", links: [], count: null, checkedAt: 0, controller: null };
+
+    function savedGuestPickupNavLinks() {
       try {
         // Match the saved-link format and lifetime in pickup-guest-session.ts.
         const saved = JSON.parse(localStorage.getItem("mydancrGuestPickupsV1") || "[]");
         const cutoff = Date.now() - 30 * 86400000;
-        link.hidden = !Array.isArray(saved) || !saved.some(item => item
+        if (!Array.isArray(saved)) return [];
+        const links = saved.filter(item => item
           && typeof item.id === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(item.id)
           && typeof item.key === "string" && /^[a-f0-9]{64}$/.test(item.key)
           && typeof item.venue === "string" && Number.isFinite(item.savedAt) && item.savedAt > cutoff);
+        return [...new Map(links.map(item => [item.id.toLowerCase(), { id: item.id.toLowerCase(), key: item.key }])).values()].slice(0, 50);
       } catch { /* Storage may be blocked or contain an invalid saved link. */ }
+      return [];
+    }
+
+    function renderGuestPickupUnreadCount() {
+      const link = document.getElementById("guestPickupNav"), badge = document.getElementById("guestPickupUnreadCount");
+      if (!link || !badge) return;
+      const count = guestPickupUnreadState.count;
+      badge.hidden = !(count > 0);
+      badge.textContent = count > 99 ? "99+" : count > 0 ? String(count) : "";
+      link.setAttribute("aria-label", count > 0 ? `Your pickup chats, ${count} unread venue ${count === 1 ? "message" : "messages"}` : "Your pickup chats");
+      link.title = count === null ? "Open pickup chats saved on this browser" : count > 0
+        ? `${count} unread venue ${count === 1 ? "message" : "messages"}` : "No unread venue messages";
+    }
+
+    async function refreshGuestPickupUnreadCount() {
+      const state = guestPickupUnreadState;
+      if (authSession?.accessToken || !state.links.length || state.controller || document.visibilityState !== "visible"
+        || Date.now() - state.checkedAt < 10000) return;
+      state.checkedAt = Date.now();
+      const controller = new AbortController(); state.controller = controller;
+      const timeout = setTimeout(() => controller.abort(), 8000);
+      try {
+        const response = await fetch("/api/pickups/guest-unread", {
+          method: "POST", credentials: "omit", cache: "no-store", headers: { "content-type": "application/json" },
+          body: JSON.stringify({ links: state.links }), signal: controller.signal,
+        });
+        if (!response.ok) throw new Error("Pickup message count unavailable.");
+        const result = await response.json();
+        if (!result.ok || !Number.isSafeInteger(result.unreadCount) || result.unreadCount < 0) throw new Error("Invalid pickup message count.");
+        if (state !== guestPickupUnreadState || controller.signal.aborted || authSession?.accessToken) return;
+        state.count = result.unreadCount;
+        renderGuestPickupUnreadCount();
+      } catch {
+        if (state === guestPickupUnreadState) { state.count = null; renderGuestPickupUnreadCount(); }
+      } finally {
+        clearTimeout(timeout);
+        if (state.controller === controller) state.controller = null;
+      }
+    }
+
+    function renderGuestPickupNav(force = false) {
+      const link = document.getElementById("guestPickupNav");
+      if (!link) return;
+      const links = authSession?.accessToken ? [] : savedGuestPickupNavLinks();
+      const signature = JSON.stringify(links);
+      if (signature !== guestPickupUnreadState.signature || force === true) {
+        guestPickupUnreadState.controller?.abort();
+        guestPickupUnreadState = { signature, links, count: null, checkedAt: 0, controller: null };
+      }
+      link.hidden = !links.length;
+      renderGuestPickupUnreadCount();
+      void refreshGuestPickupUnreadCount();
     }
 
     function renderCustomerQuickActions() {

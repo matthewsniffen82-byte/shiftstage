@@ -31789,6 +31789,7 @@
     }
 
     header .guest-pickup-nav {
+      position: relative;
       display: inline-flex;
       align-items: center;
       justify-content: center;
@@ -31812,6 +31813,25 @@
     header .guest-pickup-nav svg { width: 18px; height: 18px; flex-shrink: 0; }
     header .guest-pickup-nav:hover { background: rgba(91, 33, 182, 0.3); }
     header .guest-pickup-nav:focus-visible { outline: 2px solid #c4b5fd; outline-offset: 3px; }
+    header .guest-pickup-unread {
+      position: absolute;
+      top: -7px;
+      right: -5px;
+      display: grid;
+      place-items: center;
+      min-width: 21px;
+      height: 21px;
+      padding: 0 5px;
+      border: 2px solid #09090d;
+      border-radius: 999px;
+      color: #fff;
+      background: #7c3aed;
+      font-size: 11px;
+      font-weight: 800;
+      line-height: 1;
+      box-sizing: border-box;
+    }
+    header .guest-pickup-unread[hidden] { display: none; }
 
     @media (max-width: 720px) {
       header .guest-pickup-nav { width: 64px; padding: 5px; font-size: 12px; }
@@ -32134,6 +32154,7 @@
           <a class="guest-pickup-nav" id="guestPickupNav" href="/pickups" aria-label="Your pickup chats" title="Open pickup chats saved on this browser" hidden>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11.5a8.5 8.5 0 0 1-8.5 8.5 9 9 0 0 1-4-.9L3 21l1.9-5.5a9 9 0 0 1-.9-4A8.5 8.5 0 0 1 12.5 3H13a8.5 8.5 0 0 1 8 8v.5Z"/></svg>
             <span><span class="guest-pickup-nav-prefix">Your </span>Pickup chats</span>
+            <span class="guest-pickup-unread" id="guestPickupUnreadCount" aria-hidden="true" hidden></span>
           </a>
           <div class="customer-quick-actions" id="customerQuickActions" hidden>
             <button class="customer-quick-btn" id="customerNotificationQuickBtn" type="button" aria-label="Open notifications" title="Notifications" aria-expanded="false" aria-controls="customerNotificationsQuickPanel">
@@ -46049,20 +46070,72 @@
       syncCustomerDealQuickCta();
     }
 
-    function renderGuestPickupNav() {
-      const link = document.getElementById("guestPickupNav");
-      if (!link) return;
-      link.hidden = true;
-      if (authSession?.accessToken) return;
+    let guestPickupUnreadState = { signature: "", links: [], count: null, checkedAt: 0, controller: null };
+
+    function savedGuestPickupNavLinks() {
       try {
         // Match the saved-link format and lifetime in pickup-guest-session.ts.
         const saved = JSON.parse(localStorage.getItem("mydancrGuestPickupsV1") || "[]");
         const cutoff = Date.now() - 30 * 86400000;
-        link.hidden = !Array.isArray(saved) || !saved.some(item => item
+        if (!Array.isArray(saved)) return [];
+        const links = saved.filter(item => item
           && typeof item.id === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(item.id)
           && typeof item.key === "string" && /^[a-f0-9]{64}$/.test(item.key)
           && typeof item.venue === "string" && Number.isFinite(item.savedAt) && item.savedAt > cutoff);
+        return [...new Map(links.map(item => [item.id.toLowerCase(), { id: item.id.toLowerCase(), key: item.key }])).values()].slice(0, 50);
       } catch { /* Storage may be blocked or contain an invalid saved link. */ }
+      return [];
+    }
+
+    function renderGuestPickupUnreadCount() {
+      const link = document.getElementById("guestPickupNav"), badge = document.getElementById("guestPickupUnreadCount");
+      if (!link || !badge) return;
+      const count = guestPickupUnreadState.count;
+      badge.hidden = !(count > 0);
+      badge.textContent = count > 99 ? "99+" : count > 0 ? String(count) : "";
+      link.setAttribute("aria-label", count > 0 ? `Your pickup chats, ${count} unread venue ${count === 1 ? "message" : "messages"}` : "Your pickup chats");
+      link.title = count === null ? "Open pickup chats saved on this browser" : count > 0
+        ? `${count} unread venue ${count === 1 ? "message" : "messages"}` : "No unread venue messages";
+    }
+
+    async function refreshGuestPickupUnreadCount() {
+      const state = guestPickupUnreadState;
+      if (authSession?.accessToken || !state.links.length || state.controller || document.visibilityState !== "visible"
+        || Date.now() - state.checkedAt < 10000) return;
+      state.checkedAt = Date.now();
+      const controller = new AbortController(); state.controller = controller;
+      const timeout = setTimeout(() => controller.abort(), 8000);
+      try {
+        const response = await fetch("/api/pickups/guest-unread", {
+          method: "POST", credentials: "omit", cache: "no-store", headers: { "content-type": "application/json" },
+          body: JSON.stringify({ links: state.links }), signal: controller.signal,
+        });
+        if (!response.ok) throw new Error("Pickup message count unavailable.");
+        const result = await response.json();
+        if (!result.ok || !Number.isSafeInteger(result.unreadCount) || result.unreadCount < 0) throw new Error("Invalid pickup message count.");
+        if (state !== guestPickupUnreadState || controller.signal.aborted || authSession?.accessToken) return;
+        state.count = result.unreadCount;
+        renderGuestPickupUnreadCount();
+      } catch {
+        if (state === guestPickupUnreadState) { state.count = null; renderGuestPickupUnreadCount(); }
+      } finally {
+        clearTimeout(timeout);
+        if (state.controller === controller) state.controller = null;
+      }
+    }
+
+    function renderGuestPickupNav(force = false) {
+      const link = document.getElementById("guestPickupNav");
+      if (!link) return;
+      const links = authSession?.accessToken ? [] : savedGuestPickupNavLinks();
+      const signature = JSON.stringify(links);
+      if (signature !== guestPickupUnreadState.signature || force === true) {
+        guestPickupUnreadState.controller?.abort();
+        guestPickupUnreadState = { signature, links, count: null, checkedAt: 0, controller: null };
+      }
+      link.hidden = !links.length;
+      renderGuestPickupUnreadCount();
+      void refreshGuestPickupUnreadCount();
     }
 
     function renderCustomerQuickActions() {
@@ -67656,6 +67729,9 @@
       await loadLiveDiscovery(citySelect.value, { force: true, cacheBust: bypassCache, background: true });
     }
     window.setInterval(() => { void refreshVisibleHomeDiscovery(); }, HOME_DISCOVERY_REFRESH_MS);
+    window.setInterval(() => { renderGuestPickupNav(); }, 15000);
+    window.addEventListener("mydancr:guest-pickup-read", () => renderGuestPickupNav(true));
+    window.addEventListener("online", () => renderGuestPickupNav(true));
     document.addEventListener("visibilitychange", () => {
       if (document.visibilityState === "visible") {
         renderCustomerQuickActions();
@@ -67668,6 +67744,7 @@
       void refreshVisibleHomeDiscovery({ bypassCache: true });
     });
     window.addEventListener("storage", (event) => {
+      if (event.key === "mydancrGuestPickupReadV1") { renderGuestPickupNav(true); return; }
       if (event.key === PUBLIC_DISCOVERY_REFRESH_KEY && event.newValue) {
         void refreshVisibleHomeDiscovery({ bypassCache: true });
         return;

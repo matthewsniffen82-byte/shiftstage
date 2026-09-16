@@ -45,3 +45,8 @@ export function guestPickupHref(id: string, key = guestPickupKey(id)) {
 export function newGuestPickupKey() {
   return Array.from(crypto.getRandomValues(new Uint8Array(32)), value => value.toString(16).padStart(2, "0")).join("");
 }
+
+export function notifyGuestPickupRead() {
+  try { localStorage.setItem("mydancrGuestPickupReadV1", String(Date.now())); } catch { /* Other tabs refresh by polling. */ }
+  window.dispatchEvent(new Event("mydancr:guest-pickup-read"));
+}

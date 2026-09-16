@@ -815,6 +815,7 @@
     }
 
     header .guest-pickup-nav {
+      position: relative;
       display: inline-flex;
       align-items: center;
       justify-content: center;
@@ -838,6 +839,25 @@
     header .guest-pickup-nav svg { width: 18px; height: 18px; flex-shrink: 0; }
     header .guest-pickup-nav:hover { background: rgba(91, 33, 182, 0.3); }
     header .guest-pickup-nav:focus-visible { outline: 2px solid #c4b5fd; outline-offset: 3px; }
+    header .guest-pickup-unread {
+      position: absolute;
+      top: -7px;
+      right: -5px;
+      display: grid;
+      place-items: center;
+      min-width: 21px;
+      height: 21px;
+      padding: 0 5px;
+      border: 2px solid #09090d;
+      border-radius: 999px;
+      color: #fff;
+      background: #7c3aed;
+      font-size: 11px;
+      font-weight: 800;
+      line-height: 1;
+      box-sizing: border-box;
+    }
+    header .guest-pickup-unread[hidden] { display: none; }
 
     @media (max-width: 720px) {
       header .guest-pickup-nav { width: 64px; padding: 5px; font-size: 12px; }
