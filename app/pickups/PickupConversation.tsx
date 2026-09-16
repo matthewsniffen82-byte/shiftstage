@@ -151,7 +151,10 @@ function Conversation({ requestId }: { requestId: string }) {
         ? <>Chat closed · <strong>{pickupClosed(r.status) ? PICKUP_STATUS_LABELS[r.status] : "Expired"}</strong>. History remains available.</>
         : connected ? (detail.guest ? "Checking for replies automatically" : "Live conversation") : "Reconnecting · checking for updates"}</p>
     </header>
-    {detail.guest ? <p className="pickup-subtle pickup-saved-hint">{savedOnDevice ? <>Saved in this browser. Return through <Link href="/pickups">Pickup chats</Link> on the homepage.</> : "Your browser couldn’t save this chat. Keep this page open or bookmark its address to return."}</p>
+    {!closed && detail.role === "customer" && <p className="pickup-subtle pickup-saved-hint">Keep an eye on this chat for replies from <strong>{venueName}</strong>. Keep this page open while you arrange and confirm your pickup.</p>}
+    {detail.guest ? <p className="pickup-subtle pickup-saved-hint">{savedOnDevice ? <>Saved in this browser. {readBrowserAuthSession()?.accessToken
+      ? <>Open <Link href="/pickups">Pickup chats</Link> to return to this conversation.</>
+      : <><Link href="/pickups">Pickup chats</Link> in the homepage’s top navigation shows the number of new messages from clubs. Use it to return to your chat.</>}</> : "Your browser couldn’t save this chat. Keep this page open or bookmark its address to return."}</p>
       : detail.role !== "admin" && <PickupPushNotifications role={detail.role} />}
     <details className="pickup-details"><summary>Pickup details · {r.party_size} {r.party_size === 1 ? "guest" : "guests"}</summary>
       <p>{r.pickup_location_text}</p>{r.pickup_location_details && <p>{r.pickup_location_details}</p>}{r.customer_notes && <p>{r.customer_notes}</p>}

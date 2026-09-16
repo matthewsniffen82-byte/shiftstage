@@ -13,6 +13,7 @@ The compact form shows pickup location and party size first. **Add pickup detail
 - A numeric badge totals unread venue replies across those saved chats. It checks every 15 seconds while the homepage is visible and refreshes when another tab records a successful read. Opening the homepage or pickup inbox does not mark messages read. The badge hides at zero (or if its count cannot be refreshed); the chat shortcut remains available. Totals above 99 display **99+**, with the exact total in the accessible label and tooltip.
 - Requests close after the existing 12-hour coordination window. Private guest access expires 30 days after creation. Clearing device storage requires reopening the private link; blocked storage still allows the current page to use the link in its address bar.
 - Guest conversations check for replies every five seconds while visible and refresh when connectivity or page visibility returns. Keep the page open for replies. Account conversations retain their existing realtime subscription.
+- Active customer chats remind users to watch for club replies and arrange confirmation in the chat. For signed-out guests whose chat was saved, the reminder explains that **Pickup chats** in the homepage's top navigation displays the number of new club messages and reopens their chats. Blocked storage keeps the existing bookmark/open-page fallback; signed-in guests receive the direct pickup-chat link without promising a signed-out navigation badge.
 
 ## Access and data
 
