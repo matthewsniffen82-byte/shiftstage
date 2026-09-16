@@ -34,17 +34,20 @@
 @media(hover:hover){.pickup-saved-chat:hover{border-color:var(--dancr-color-brand-primary-strong);background:var(--dancr-color-brand-primary-soft)}}
 .pickup-empty-chats{padding:20px 0 4px;border-top:1px solid var(--dancr-color-border-subtle)}
 .pickup-empty-chats p{color:var(--dancr-color-text-secondary)}
-.pickup-conversation .pickup-subtle{color:var(--dancr-color-text-secondary)}
+.pickup-conversation{color-scheme:only dark}
+.pickup-conversation .pickup-subtle{color:var(--dancr-color-text-primary)}
 .pickup-conversation .pickup-saved-hint{font-size:13px;line-height:1.6;margin:8px 0 12px}
 .pickup-saved-hint a{display:inline;min-height:0;margin:0;font-weight:700;color:var(--dancr-color-brand-core);text-underline-offset:3px}
 .pickup-conversation .pickup-message{width:fit-content;padding:10px 12px;margin-bottom:10px}
+.pickup-conversation .pickup-message-customer{background:color-mix(in srgb,var(--dancr-color-brand-primary) 45%,var(--dancr-color-surface));border-color:color-mix(in srgb,var(--dancr-color-brand-primary) 65%,var(--dancr-color-brand-core))}
+.pickup-conversation .pickup-message-venue{background:color-mix(in srgb,var(--dancr-color-info) 22%,var(--dancr-color-surface));border-color:color-mix(in srgb,var(--dancr-color-info) 60%,var(--dancr-color-border))}
 .pickup-message-meta{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:4px 16px}
 .pickup-message-meta strong{color:var(--dancr-color-text-primary)}
-.pickup-message-meta time{font-size:12px;color:var(--dancr-color-text-secondary)}
-.pickup-conversation .pickup-message p{margin:7px 0 0;font-size:15px;line-height:1.5}
+.pickup-message-meta time{font-size:13px;font-weight:500;color:var(--dancr-color-text-primary)}
+.pickup-conversation .pickup-message p{margin:7px 0 0;font-size:15px;line-height:1.5;color:var(--dancr-color-text-primary)}
 .pickup-conversation .pickup-message-system{width:100%;padding:8px 12px}
 .pickup-message-system .pickup-message-meta{justify-content:center}
-.pickup-conversation .pickup-message-system p{font-size:13px;color:var(--dancr-color-text-secondary)}
+.pickup-conversation .pickup-message-system p{font-size:13px;color:var(--dancr-color-text-primary)}
 .pickup-composer textarea::placeholder{color:var(--dancr-color-text-muted);opacity:1}
 
 /* Venue identity and progress share the discovery palette. */
@@ -68,6 +71,6 @@
 .pickup-progress li[data-state=done] .pickup-progress-marker{border-color:var(--dancr-color-success-medium);background:var(--dancr-color-success-soft);color:var(--dancr-color-live)}
 .pickup-progress li[data-state=current]{border-color:var(--dancr-color-brand-primary);color:var(--dancr-color-brand-core);font-weight:700}
 .pickup-progress li[data-state=current] .pickup-progress-marker{border-color:var(--dancr-color-brand-primary);background:var(--dancr-color-brand-primary);color:var(--dancr-color-text-primary)}
-.pickup-conversation .pickup-connection{font-size:12px;margin:10px 0 0;color:var(--dancr-color-text-muted)}
+.pickup-conversation .pickup-connection{font-size:12px;margin:10px 0 0;color:var(--dancr-color-text-primary)}
 .pickup-manage{margin-top:16px;border-top:1px solid var(--dancr-color-border-subtle)}
 .pickup-page .pickup-report>button{min-height:44px;padding:8px 0;border-color:transparent!important;background:transparent!important;box-shadow:none!important;backdrop-filter:none!important;color:var(--dancr-color-text-secondary)!important;font-size:12px}
