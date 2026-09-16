@@ -4,11 +4,6 @@ import { isActiveNfcPresence } from "./shift-presence";
 import { dancerHasActiveVenueAffiliation } from "./venue-affiliations";
 import { requireVenueAccess } from "./venue-access";
 import { isLiquorRelatedClubDeal } from "./deal-policy";
-import {
-  commissionTierForSuccessfulRedemption,
-  QR_COMMISSION_POLICY_VERSION,
-} from "./commission-policy";
-
 type DancrClient = SupabaseClient;
 
 export const CLUB_DEAL_COLUMNS =
@@ -177,10 +172,11 @@ export async function getDancerDealMetrics(client: DancrClient, userId: string, 
   if (profileError) throw profileError;
   if (!profile) return null;
 
+  const monthStart = `${new Date().toISOString().slice(0, 7)}-01T00:00:00.000Z`;
   const [
     { data: redemptions, error: redemptionError },
-    { data: commissions, error: commissionError },
     { data: lifecycle, error: lifecycleError },
+    { count: successfulRedemptionsThisMonth, error: monthlyCountError },
   ] = await Promise.all([
     db
       .from("qr_redemptions")
@@ -190,46 +186,23 @@ export async function getDancerDealMetrics(client: DancrClient, userId: string, 
       .order("generated_at", { ascending: false })
       .limit(100),
     db
-      .from("commission_events")
-      .select(
-        "id, status, amount_cents, payout_type, gross_commission_cents, dancer_share_bps, platform_amount_cents, successful_redemption_number, commission_month, policy_version, created_at, club_deals(deal_title), venues(name)",
-      )
-      .eq("dancer_id", profile.id)
-      .order("created_at", { ascending: false })
-      .limit(100),
-    db
       .from("qr_redemption_events")
       .select("event_type, qr_redemptions!inner(dancer_id, source_type)")
       .eq("qr_redemptions.dancer_id", profile.id)
       .eq("qr_redemptions.source_type", "dancer_profile")
       .limit(500),
+    db
+      .from("qr_redemptions")
+      .select("id", { count: "exact", head: true })
+      .eq("dancer_id", profile.id)
+      .eq("source_type", "dancer_profile")
+      .eq("status", "redeemed")
+      .gte("redeemed_at", monthStart),
   ]);
 
   if (redemptionError) throw redemptionError;
-  if (commissionError) throw commissionError;
   if (lifecycleError) throw lifecycleError;
-
-  const commissionTotal = (statuses: string[]) =>
-    (commissions || [])
-      .filter((item: any) => statuses.includes(item.status))
-      .reduce((sum: number, item: any) => sum + Number(item.amount_cents || 0), 0);
-
-  const currentMonth = new Date().toISOString().slice(0, 7);
-  const currentMonthCommissions = (commissions || []).filter(
-    (item: any) => String(item.commission_month || "").slice(0, 7) === currentMonth
-      && item.status !== "reversed",
-  );
-  const successfulRedemptionsThisMonth = currentMonthCommissions.reduce(
-    (highest: number, item: any) => Math.max(highest, Number(item.successful_redemption_number || 0)),
-    0,
-  );
-  const currentDancerSharePercent =
-    commissionTierForSuccessfulRedemption(successfulRedemptionsThisMonth).dancerShareBps / 100;
-  const nextTierAt = successfulRedemptionsThisMonth < 10
-    ? 10
-    : successfulRedemptionsThisMonth < 25
-      ? 25
-      : null;
+  if (monthlyCountError) throw monthlyCountError;
 
   return {
     tokensGenerated: redemptions?.length || 0,
@@ -238,22 +211,8 @@ export async function getDancerDealMetrics(client: DancrClient, userId: string, 
     qrShares: (lifecycle || []).filter((item: any) => item.event_type === "shared").length,
     redeemed: (redemptions || []).filter((item: any) => item.status === "redeemed").length,
     expiredOrVoided: (redemptions || []).filter((item: any) => item.status === "expired" || item.status === "voided").length,
-    pendingCommissions: (commissions || []).filter((item: any) => item.status === "pending").length,
-    payableCommissions: (commissions || []).filter((item: any) => item.status === "available").length,
-    paidCommissions: (commissions || []).filter((item: any) => item.status === "paid").length,
-    rejectedCommissions: (commissions || []).filter((item: any) => item.status === "reversed").length,
-    pendingCommissionCents: commissionTotal(["pending"]),
-    payableCommissionCents: commissionTotal(["available"]),
-    paidCommissionCents: commissionTotal(["paid"]),
-    earnedCommissionCents: commissionTotal(["available", "payout_processing", "paid"]),
-    totalCommissionCents: commissionTotal(["pending", "available", "payout_processing", "paid"]),
-    successfulRedemptionsThisMonth,
-    currentDancerSharePercent,
-    nextTierAt,
-    redemptionsUntilNextTier: nextTierAt === null ? 0 : Math.max(0, nextTierAt - successfulRedemptionsThisMonth),
-    commissionPolicyVersion: QR_COMMISSION_POLICY_VERSION,
+    successfulRedemptionsThisMonth: successfulRedemptionsThisMonth || 0,
     recentRedemptions: redemptions || [],
-    recentCommissions: commissions || [],
   };
 }
 

@@ -17,7 +17,7 @@ test("finance reads use one dedicated reporting boundary", () => {
     assert.match(reporting, new RegExp(`export async function ${operation}`));
     assert.doesNotMatch(finance, new RegExp(`export async function ${operation}`));
   }
-  for (const consumer of [adminRoute, venueRoute, dancerRoute, venueDashboard, dancerDashboard]) {
+  for (const consumer of [adminRoute, venueRoute, dancerRoute, venueDashboard]) {
     assert.match(consumer, /from "@\/src\/lib\/dancr\/finance-reporting"/);
   }
 });
@@ -35,16 +35,14 @@ test("admin reporting preserves receivable, payout, and ledger summaries", () =>
 test("role reporting preserves venue authorization and dancer balance safeguards", () => {
   assert.match(reporting, /requireVenueAccess\(client, userId, "view_finance"\)/);
   assert.match(reporting, /await getDancerForUser\(client, userId\)/);
-  assert.match(reporting, /from "\.\/finance-earning-lifecycle"/);
-  assert.match(reporting, /await releasePendingDancerEarnings\(client\)/);
   assert.doesNotMatch(reporting, /rpc\("release_pending_dancer_earnings"/);
   assert.match(reporting, /rpc\("get_dancer_earnings_summary"/);
   assert.match(reporting, /Number\.isSafeInteger\(parsed\)/);
   assert.match(reporting, /pendingClubPaymentCents: pendingCents/);
 });
 
-test("live payout visibility remains gated by environment and provider configuration", () => {
-  assert.match(reporting, /getPayoutRuntimeConfig\(\)\.enabledByEnvironment/);
-  assert.match(reporting, /isPayoutProviderConfigured\(configuredProvider\)/);
-  assert.match(reporting, /settingsResult\.data\?\.payouts_enabled/);
+test("dancer history reads do not initialize provider integration or mutate earnings", () => {
+  assert.doesNotMatch(reporting, /getNatsRuntimeConfig|affiliatePortalUrl|releasePendingDancerEarnings/);
+  assert.doesNotMatch(dancerDashboard, /getDancerFinance/);
+  assert.match(reporting, /programStatus: "ended"/);
 });

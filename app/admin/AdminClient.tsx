@@ -1080,16 +1080,6 @@ function FinanceManager({
   const earnings = Array.isArray(finance?.earnings) ? finance.earnings as Array<Record<string, unknown>> : [];
   const earningsByVenue = Array.isArray(finance?.earningsByVenue) ? finance.earningsByVenue as Array<Record<string, unknown>> : [];
   const earningsByDancer = Array.isArray(finance?.earningsByDancer) ? finance.earningsByDancer as Array<Record<string, unknown>> : [];
-  const payoutSettings = (finance?.settings || {}) as Record<string, unknown>;
-  const nats = (finance?.nats || {}) as Record<string, unknown>;
-  const natsAccounts = Array.isArray(nats.accounts) ? nats.accounts as Array<Record<string, unknown>> : [];
-  const natsExports = Array.isArray(nats.exports) ? nats.exports as Array<Record<string, unknown>> : [];
-  const natsSelected = nats.selected === true;
-  const [provider, setProvider] = useState("stripe");
-  const [payoutMode, setPayoutMode] = useState("manual_cashout");
-  const [holdDays, setHoldDays] = useState("7");
-  const [minimumPayout, setMinimumPayout] = useState("20.00");
-  const [payoutsEnabled, setPayoutsEnabled] = useState(false);
   useEffect(() => {
     mountedRef.current = true;
     return () => {
@@ -1099,13 +1089,6 @@ function FinanceManager({
       actionInFlightRef.current = false;
     };
   }, []);
-  useEffect(() => {
-    setProvider(asText(payoutSettings.payment_provider) || "stripe");
-    setPayoutMode(asText(payoutSettings.payout_mode) || "manual_cashout");
-    setHoldDays(String(payoutSettings.earnings_hold_days ?? 7));
-    setMinimumPayout((Number(payoutSettings.minimum_payout_cents || 2000) / 100).toFixed(2));
-    setPayoutsEnabled(payoutSettings.payouts_enabled === true);
-  }, [payoutSettings.payment_provider, payoutSettings.payout_mode, payoutSettings.earnings_hold_days, payoutSettings.minimum_payout_cents, payoutSettings.payouts_enabled]);
   const openInvoices = invoices.filter((invoice) => ["open", "overdue"].includes(asText(invoice.status)));
 
   function beginFinanceAction() {
@@ -1131,11 +1114,11 @@ function FinanceManager({
     if (mountedRef.current && request.requestId === actionSequenceRef.current) setIsRunning(false);
   }
 
-  async function runAction(action: "run_automation" | "process_payouts") {
+  async function runAction(action: "run_automation") {
     const request = beginFinanceAction();
     if (!request) return;
     setIsRunning(true);
-    setStatus(action === "run_automation" ? "Reconciling club invoices and dancer payouts..." : "Processing payable dancer commissions...");
+    setStatus("Reconciling club invoices and sales-agent commissions...");
     try {
       const data = await requestAdminJson("/api/admin/finance", {
         method: "POST",
@@ -1191,30 +1174,6 @@ function FinanceManager({
     }
   }
 
-  async function savePayoutSettings(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const minimumPayoutCents = adminPayoutDollarsToCents(minimumPayout);
-    if (minimumPayoutCents === null) return setStatus("Enter a valid minimum payout between $0.01 and $100,000.00.");
-    const request = beginFinanceAction();
-    if (!request) return;
-    setIsRunning(true);
-    setStatus("Saving audited payout settings...");
-    try {
-      const data = await requestAdminJson("/api/admin/finance", {
-        method: "POST",
-        signal: request.controller.signal,
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ action: "update_payout_settings", payoutsEnabled, paymentProvider: provider, payoutMode, earningsHoldDays: Number(holdDays), minimumPayoutCents }),
-        fallbackMessage: "Unable to save payout settings.",
-      });
-      if (!isCurrentFinanceAction(request)) return;
-      setStatus(applyFinanceMutationResponse(data, onFinanceChange, "Payout settings saved and audited."));
-    } catch (error) {
-      if (!isCurrentFinanceAction(request)) return;
-      setStatus(error instanceof Error ? error.message : "Unable to save payout settings.");
-    } finally { finishFinanceAction(request); }
-  }
-
   async function manageEarning(earningId: string, earningAction: "hold" | "release" | "reverse") {
     const reason = window.prompt(`Required audit reason to ${earningAction} this earning:`)?.trim();
     if (!reason) return;
@@ -1233,65 +1192,11 @@ function FinanceManager({
     finally { finishFinanceAction(request); }
   }
 
-  async function retryPayout(payoutId: string) {
-    const reason = window.prompt("Required audit reason to retry this failed payout:")?.trim();
-    if (!reason) return;
-    const request = beginFinanceAction();
-    if (!request) return;
-    setIsRunning(true);
-    try {
-      const data = await requestAdminJson("/api/admin/finance", {
-        method: "POST", signal: request.controller.signal, headers: { "content-type": "application/json" },
-        body: JSON.stringify({ action: "retry_payout", payoutId, reason }),
-        fallbackMessage: "Unable to retry payout.",
-      });
-      if (!isCurrentFinanceAction(request)) return;
-      setStatus(applyFinanceMutationResponse(data, onFinanceChange, "Safe payout retry reserved for processing."));
-    } catch (error) { if (isCurrentFinanceAction(request)) setStatus(error instanceof Error ? error.message : "Unable to retry payout."); }
-    finally { finishFinanceAction(request); }
-  }
-
-  async function manageNats(action: "verify_nats_affiliate" | "disable_nats_affiliate" | "retry_nats_export" | "reconcile_nats_export", targetId: string, resolution?: "confirmed_exported" | "confirmed_not_exported") {
-    const promptLabel = action === "verify_nats_affiliate"
-      ? "Confirm you matched this login ID to the correct dancer in the payout portal. Enter an audit note:"
-      : action === "reconcile_nats_export"
-        ? "Confirm you checked the dancer's commission invoices in the payout portal. Enter an audit note:"
-        : "Enter the required audit reason:";
-    const reason = window.prompt(promptLabel)?.trim();
-    if (!reason) return;
-    const request = beginFinanceAction();
-    if (!request) return;
-    setIsRunning(true);
-    setStatus("Updating commission records...");
-    try {
-      const data = await requestAdminJson("/api/admin/finance", {
-        method: "POST",
-        signal: request.controller.signal,
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({
-          action,
-          ...(action.includes("affiliate") ? { dancerId: targetId } : { exportId: targetId }),
-          ...(resolution ? { resolution } : {}),
-          reason,
-        }),
-        fallbackMessage: "Unable to update commission records.",
-      });
-      if (!isCurrentFinanceAction(request)) return;
-      const message = applyFinanceMutationResponse(data, onFinanceChange, "Commission records updated.");
-      setStatus(message);
-      onActionConfirmed(message);
-    } catch (error) {
-      if (!isCurrentFinanceAction(request)) return;
-      setStatus(error instanceof Error ? error.message : "Unable to update commission records.");
-    } finally {
-      finishFinanceAction(request);
-    }
-  }
   return (
     <section className="operations-center" aria-labelledby="finance-operations-heading">
       <Panel title="QR finance operations">
-        <span className="eyebrow">Receivables and payouts</span>
-        <h2 id="finance-operations-heading">Commission settlement</h2>
+        <span className="eyebrow">Receivables and financial history</span>
+        <h2 id="finance-operations-heading">Venue finance</h2>
         <div className="operations-metrics">
           <Metric label="Club receivables" value={formatAdminCents(Number(metrics.outstandingReceivablesCents || 0))} />
           <Metric label="Overdue" value={formatAdminCents(Number(metrics.overdueReceivablesCents || 0))} />
@@ -1304,67 +1209,15 @@ function FinanceManager({
           <Metric label="MyDancr net revenue" value={formatAdminCents(Number(metrics.myDancrNetRevenueCents || 0))} />
           <Metric label="Open invoices" value={String(metrics.openInvoiceCount || 0)} />
           <Metric label="Failed payouts" value={String(metrics.failedPayoutCount || 0)} />
-          <Metric label="Payout accounts to verify" value={String(metrics.natsPendingAccountCount || 0)} />
-          <Metric label="Commission records queued" value={String(metrics.natsPendingExportCount || 0)} />
-          <Metric label="Commission records to review" value={String(metrics.natsReconciliationCount || 0)} />
-          <Metric label="Sent to payout provider" value={formatAdminCents(Number(metrics.natsExportedCents || 0))} />
         </div>
         <div className="admin-action-row">
           <button disabled={isRunning} type="button" onClick={() => runAction("run_automation")}>Run full reconciliation</button>
-          <button disabled={isRunning} type="button" onClick={() => runAction(natsSelected ? "run_automation" : "process_payouts")}>{natsSelected ? "Sync commission records" : "Process payable dancers"}</button>
         </div>
         {status ? <p role="status">{status}</p> : null}
       </Panel>
 
-      {natsSelected ? <Panel title="Commission payouts" badge={nats.configured === true ? "API ready" : "Credentials required"}>
-        <p>MyDancr remains authoritative for phone tap verification and exact commission amounts. Verify each dancer&apos;s login ID in the payout provider&apos;s admin portal before activating the account.</p>
-        {nats.affiliatePortalUrl ? <p><a href={asText(nats.affiliatePortalUrl)} target="_blank" rel="noreferrer">Open payout portal</a></p> : null}
-        <div className="admin-list">
-          {natsAccounts.map((account) => <article key={asText(account.dancer_id)}>
-            <strong>{asText(readFirst(account.dancer_profiles)?.stage_name) || "Dancer"} · login ID {String(account.login_id || "")}</strong>
-            <p>{asText(account.username) || "No username supplied"} · {asText(account.status)}</p>
-            <p>Requested {formatDate(account.requested_at)}</p>
-            {account.verification_note ? <p>Audit note: {asText(account.verification_note)}</p> : null}
-            <div className="admin-action-row">
-              {account.status === "requested" ? <button disabled={isRunning || nats.configured !== true} type="button" onClick={() => manageNats("verify_nats_affiliate", asText(account.dancer_id))}>Verify and activate</button> : null}
-              {account.status !== "disabled" ? <button disabled={isRunning} type="button" onClick={() => manageNats("disable_nats_affiliate", asText(account.dancer_id))}>Disable link</button> : null}
-            </div>
-          </article>)}
-          {!natsAccounts.length ? <p className="empty">No dancers have submitted a payout account for verification.</p> : null}
-        </div>
-
-        <h3>Commission records sent for payout</h3>
-        <div className="admin-list">
-          {natsExports.slice(0, 100).map((item) => <article key={asText(item.id)}>
-            <strong>{asText(readFirst(item.dancer_profiles)?.stage_name) || "Dancer"} · {formatAdminCents(Number(item.amount_cents || 0))}</strong>
-            <p>{asText(item.status).replaceAll("_", " ")} · attempt {String(item.attempt_count || 0)} · {formatDate(item.created_at)}</p>
-            {item.last_error ? <p role="alert">{payoutCopy(asText(item.last_error))}</p> : null}
-            <div className="admin-action-row">
-              {item.status === "failed" ? <button disabled={isRunning || nats.configured !== true} type="button" onClick={() => manageNats("retry_nats_export", asText(item.id))}>Retry definite rejection</button> : null}
-              {item.status === "reconciliation_required" ? <>
-                <button disabled={isRunning} type="button" onClick={() => manageNats("reconcile_nats_export", asText(item.id), "confirmed_exported")}>Confirmed in payout portal</button>
-                <button disabled={isRunning || nats.configured !== true} type="button" onClick={() => manageNats("reconcile_nats_export", asText(item.id), "confirmed_not_exported")}>Confirmed not exported</button>
-              </> : null}
-            </div>
-          </article>)}
-          {!natsExports.length ? <p className="empty">No commission records are waiting to be sent for payout.</p> : null}
-        </div>
-      </Panel> : null}
-
-      <Panel title="Payout controls" badge={payoutSettings.livePayoutsEnabled === true ? "Live enabled" : "Money movement off"}>
-        <form onSubmit={savePayoutSettings}>
-          <label>Provider<select value={provider} onChange={(event) => setProvider(event.target.value)}><option value="stripe">Stripe</option><option value="adyen">Adyen</option><option value="other">Other approved provider</option></select></label>
-          <label>Payout mode<select value={payoutMode} onChange={(event) => setPayoutMode(event.target.value)}><option value="manual_cashout">Manual cash out</option><option value="scheduled">Scheduled</option><option value="both">Both</option></select></label>
-          <label>Earnings hold days<input inputMode="numeric" min="0" max="90" value={holdDays} onChange={(event) => setHoldDays(event.target.value)} /></label>
-          <label>Minimum payout<input inputMode="decimal" min="0.01" max="100000" step="0.01" type="number" value={minimumPayout} onChange={(event) => setMinimumPayout(event.target.value)} /></label>
-          <label><input type="checkbox" checked={payoutsEnabled} onChange={(event) => setPayoutsEnabled(event.target.checked)} /> Enable payouts in admin</label>
-          <p>Live money movement also requires the server-only PAYOUTS_ENABLED flag. Admin settings cannot bypass that hard stop.</p>
-          {payoutSettings.providerConfigured !== true ? <p role="alert">The selected provider does not have complete server-side onboarding and payout credentials.</p> : null}
-          <button disabled={isRunning} type="submit">Save payout settings</button>
-        </form>
-      </Panel>
-
-      <Panel title="Dancer earnings ledger" badge={`${earnings.length} inspected`}>
+      <Panel title="Historical dancer earnings" badge={`${earnings.length} inspected`}>
+        <p>The dancer commission program has ended. Existing records are retained for accounting and audit review.</p>
         <div className="operations-layout">
           <div className="operations-list"><strong>Earnings by venue</strong>{earningsByVenue.slice(0, 10).map((group) => <div key={asText(group.name)}><span><strong>{asText(group.name)}</strong><small>{String(group.count || 0)} entries</small></span><em>{formatAdminCents(Number(group.amountCents || 0))}</em></div>)}</div>
           <div className="operations-list"><strong>Earnings by dancer</strong>{earningsByDancer.slice(0, 10).map((group) => <div key={asText(group.name)}><span><strong>{asText(group.name)}</strong><small>{String(group.count || 0)} entries</small></span><em>{formatAdminCents(Number(group.amountCents || 0))}</em></div>)}</div>
@@ -1440,7 +1293,7 @@ function FinanceManager({
         </form>
       </Panel>
 
-      <Panel title="Dancer payout batches" badge={`${payouts.length} tracked`}>
+      <Panel title="Historical dancer payouts" badge={`${payouts.length} tracked`}>
         <div className="admin-list">
           {payouts.slice(0, 50).map((payout) => (
             <article key={asText(payout.id)}>
@@ -1448,7 +1301,6 @@ function FinanceManager({
               <p>{asText(payout.status)} · {asText(payout.payment_provider) || "provider pending"} · {formatDate(payout.paid_at || payout.created_at)}</p>
               {payout.provider_reference_id ? <p>Provider reference: <code>{asText(payout.provider_reference_id)}</code></p> : null}
               {payout.failure_message ? <p role="alert">{asText(payout.failure_message)}</p> : null}
-              {payout.status === "failed" ? <button disabled={isRunning} type="button" onClick={() => retryPayout(asText(payout.id))}>Retry safely</button> : null}
             </article>
           ))}
           {!payouts.length ? <p className="empty">No dancer payout batches have been created yet.</p> : null}
@@ -2599,7 +2451,7 @@ function DealActivityManager({
                   <strong>MyDancr → Dancer</strong>
                   <span>MyDancr owes dancer: {formatAdminCents(Number(commission.amount_cents || 0))}</span>
                   <span>Dancer payout: {commissionState.replaceAll("_", " ")}</span>
-                  {commissionState === "available" ? <span>Eligible earnings are paid only through the audited Finance payout workflow.</span> : null}
+                  {commissionState === "available" ? <span>Historical earning retained for accounting review.</span> : null}
                 </section>
               ) : null}
               {item.suspicious ? <span>Flagged suspicious</span> : null}
@@ -4629,7 +4481,6 @@ function DancerDirectory({
   const [statusFilter, setStatusFilter] = useState("all");
   const [scheduleFilter, setScheduleFilter] = useState("all");
   const [moderationFilter, setModerationFilter] = useState("all");
-  const [commissionFilter, setCommissionFilter] = useState("all");
   const [sourceFilter, setSourceFilter] = useState("all");
   const [cityFilter, setCityFilter] = useState("");
   const [venueFilter, setVenueFilter] = useState("");
@@ -4690,7 +4541,7 @@ function DancerDirectory({
 
   useEffect(() => {
     setPage(1);
-  }, [debouncedQuery, statusFilter, scheduleFilter, moderationFilter, commissionFilter, sourceFilter, cityFilter, venueFilter, sort]);
+  }, [debouncedQuery, statusFilter, scheduleFilter, moderationFilter, sourceFilter, cityFilter, venueFilter, sort]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -4699,7 +4550,6 @@ function DancerDirectory({
       status: statusFilter,
       schedule: scheduleFilter,
       moderation: moderationFilter,
-      commission: commissionFilter,
       source: sourceFilter,
       city: cityFilter,
       venueId: venueFilter,
@@ -4729,7 +4579,7 @@ function DancerDirectory({
         if (!controller.signal.aborted) setIsLoadingRoster(false);
       });
     return () => controller.abort();
-  }, [debouncedQuery, statusFilter, scheduleFilter, moderationFilter, commissionFilter, sourceFilter, cityFilter, venueFilter, sort, page, refreshVersion]);
+  }, [debouncedQuery, statusFilter, scheduleFilter, moderationFilter, sourceFilter, cityFilter, venueFilter, sort, page, refreshVersion]);
 
   async function openProfile(item: Record<string, unknown>) {
     const dancerId = asText(item.id);
@@ -4883,12 +4733,11 @@ function DancerDirectory({
         <RosterSelect label="Profile state" value={statusFilter} onChange={setStatusFilter} options={[["all", "All profiles"], ["needs_action", "Needs action"], ["draft", "Draft"], ["pending_review", "Pending"], ["approved", "Live"], ["rejected", "Rejected"], ["disabled", "Disabled / archived"]]} />
         <RosterSelect label="Schedule" value={scheduleFilter} onChange={setScheduleFilter} options={[["all", "Any schedule"], ["working_now", "Working now"], ["upcoming", "Upcoming"], ["no_schedule", "No schedule"]]} />
         <RosterSelect label="Moderation" value={moderationFilter} onChange={setModerationFilter} options={[["all", "Any moderation"], ["pending", "Pending review"], ["clear", "No pending review"]]} />
-        <RosterSelect label="Commission" value={commissionFilter} onChange={setCommissionFilter} options={[["all", "Any commission state"], ["active", "Payout account active"], ["not_active", "Payout account not active"]]} />
         <RosterSelect label="Source" value={sourceFilter} onChange={setSourceFilter} options={[["all", "Demo and standard"], ["demo", "Demo assignments"], ["standard", "Standard profiles"]]} />
         <RosterSelect label="City" value={cityFilter} onChange={setCityFilter} options={[["", "All cities"], ...(roster?.filters.cities || []).map((city) => [city, city] as [string, string])]} />
         <RosterSelect label="Club" value={venueFilter} onChange={setVenueFilter} options={[["", "All clubs"], ...(roster?.filters.venues || []).map((venue) => [venue.id, `${venue.name} · ${venue.city}`] as [string, string])]} />
         <RosterSelect label="Sort" value={sort} onChange={setSort} options={[["updated", "Recently active"], ["created", "Newest profiles"], ["name", "Stage name"], ["status", "Profile state"]]} />
-        <button className="secondary-action dancer-roster-clear" type="button" onClick={() => { setQuery(""); setStatusFilter("all"); setScheduleFilter("all"); setModerationFilter("all"); setCommissionFilter("all"); setSourceFilter("all"); setCityFilter(""); setVenueFilter(""); setSort("updated"); }}>Clear filters</button>
+        <button className="secondary-action dancer-roster-clear" type="button" onClick={() => { setQuery(""); setStatusFilter("all"); setScheduleFilter("all"); setModerationFilter("all"); setSourceFilter("all"); setCityFilter(""); setVenueFilter(""); setSort("updated"); }}>Clear filters</button>
       </div>
       {status ? <p className="dancer-roster-status" role={status.startsWith("Unable") ? "alert" : "status"}>{status}</p> : null}
       {isLoadingRoster ? <p className="empty">Loading dancer roster…</p> : null}
@@ -4907,7 +4756,6 @@ function DancerDirectory({
             <div className="dancer-roster-data">
               <span><small>Media</small><strong>{item.media.approved} approved · {item.media.pending} pending</strong></span>
               <span><small>Affiliations</small><strong>{item.affiliationCount}</strong></span>
-              <span><small>Commission</small><strong>{labelize(item.commissionStatus)}</strong></span>
               <span><small>Last activity</small><strong>{formatDate(item.lastActivityAt)}</strong></span>
             </div>
             <div className="dancer-directory-actions">
@@ -4937,7 +4785,7 @@ function DancerDirectory({
             {profile ? (
               <>
               <nav className="admin-dancer-tabs" aria-label="Dancer management sections">
-                {[["overview", "Overview"], ["media", "Profile & media"], ["affiliations", "Clubs & shifts"], ["commissions", "Club Deals & commissions"], ["analytics", "Analytics & reports"], ["history", "History"]].map(([id, label]) => <button type="button" key={id} className={detailTab === id ? "active" : ""} disabled={controlsBusy} onClick={() => setDetailTab(id)}>{label}</button>)}
+                {[["overview", "Overview"], ["media", "Profile & media"], ["affiliations", "Clubs & shifts"], ["commissions", "Financial history"], ["analytics", "Analytics & reports"], ["history", "History"]].map(([id, label]) => <button type="button" key={id} className={detailTab === id ? "active" : ""} disabled={controlsBusy} onClick={() => setDetailTab(id)}>{label}</button>)}
               </nav>
               <AdminDancerFullProfile
                 profile={profile}
@@ -5003,7 +4851,6 @@ function AdminDancerFullProfile({
   const reports = asRecordArray(operations.reports);
   const accountHistory = asRecordArray(operations.accountHistory || operations.account_history);
   const analytics = asRecordObject(operations.analytics);
-  const natsAccount = asRecordObject(operations.natsAccount || operations.nats_account);
 
   return (
     <div className="admin-full-profile">
@@ -5139,8 +4986,7 @@ function AdminDancerFullProfile({
       </> : null}
 
       {activeTab === "all" || activeTab === "commissions" ? <>
-        <section className="submission-section"><h3>Payout eligibility</h3><div className="submission-grid"><SubmissionValue label="Link status" value={natsAccount.status || "Not linked"} /><SubmissionValue label="Username" value={natsAccount.username || "Not supplied"} /><SubmissionValue label="Activated" value={formatDate(natsAccount.activated_at || natsAccount.activatedAt)} /><SubmissionValue label="Last error" value={payoutCopy(asText(natsAccount.last_error || natsAccount.lastError || "None"))} /></div></section>
-        <section className="submission-section"><h3>Commission activity ({commissions.length})</h3>{commissions.length ? <div className="submission-files">{commissions.map((item, index) => <div className="submission-link" key={asText(item.id) || index}><strong>{formatMoneyFromCents(item.amount_cents || item.amountCents)} · {labelize(asText(item.status))}</strong><small>{formatDate(item.paid_at || item.paidAt || item.payable_at || item.payableAt || item.created_at || item.createdAt)}</small></div>)}</div> : <p className="submission-empty">No attributed commission activity.</p>}</section>
+        <section className="submission-section"><h3>Historical commission activity ({commissions.length})</h3>{commissions.length ? <div className="submission-files">{commissions.map((item, index) => <div className="submission-link" key={asText(item.id) || index}><strong>{formatMoneyFromCents(item.amount_cents || item.amountCents)} · {labelize(asText(item.status))}</strong><small>{formatDate(item.paid_at || item.paidAt || item.payable_at || item.payableAt || item.created_at || item.createdAt)}</small></div>)}</div> : <p className="submission-empty">No attributed commission activity.</p>}</section>
       </> : null}
 
       {activeTab === "all" || activeTab === "analytics" ? <>

@@ -23,7 +23,7 @@ test("initial dancers use the canonical premium dashboard shell and loading stat
   assert.match(dashboard, /linear-gradient\(145deg, #111116, #09090d/);
 });
 
-test("the setup command center exposes the real three-step NFC production flow", () => {
+test("the setup command center exposes the real two-step NFC production flow", () => {
   assert.match(onboardingCommand, /label: "Create profile"/);
   assert.doesNotMatch(onboardingCommand, /Create & review profile|Review your full profile|Create, review, and submit/);
   assert.doesNotMatch(dashboard, /Preview & continue/);
@@ -44,18 +44,9 @@ test("onboarding transitions reject duplicate, conflicting, and stale actions", 
   assert.match(onboardingCommand, /const profileSubmissionSequenceRef = useRef\(0\);/);
   assert.match(onboardingCommand, /const profileSubmissionAbortRef = useRef<AbortController \| null>\(null\);/);
   assert.match(onboardingCommand, /const profileSubmissionInFlightRef = useRef\(false\);/);
-  assert.match(onboardingCommand, /const payoutLinkSequenceRef = useRef\(0\);/);
-  assert.match(onboardingCommand, /const payoutLinkAbortRef = useRef<AbortController \| null>\(null\);/);
-  assert.match(onboardingCommand, /const payoutLinkInFlightRef = useRef\(false\);/);
   assert.match(onboardingCommand, /if \(!mountedRef\.current \|\| profileSubmissionInFlightRef\.current\) return null;/);
-  assert.match(onboardingCommand, /if \(!mountedRef\.current \|\| payoutLinkInFlightRef\.current\) return null;/);
-  assert.equal((onboardingCommand.match(/signal: controller\.signal/g) || []).length, 2);
+  assert.equal((onboardingCommand.match(/signal: controller\.signal/g) || []).length, 1);
   assert.match(onboardingCommand, /if \(!isCurrentProfileSubmissionAction\(requestId, controller\)\) return;/);
-  assert.match(onboardingCommand, /if \(!isCurrentPayoutLinkAction\(requestId, controller\)\) return;/);
-  assert.match(onboardingCommand, /\["requested", "active"\]\.includes\(String\(data\.account\?\.status \|\| ""\)\)/);
-  assert.match(onboardingCommand, /function skipPayoutSetup\(\) \{\s*if \(payoutLinkInFlightRef\.current\) return;/);
-  assert.match(onboardingCommand, /className="dancer-onboarding-secondary" disabled=\{isPayoutWorking\}/);
-  assert.match(onboardingCommand, /mountedRef\.current = false;[\s\S]*?profileSubmissionAbortRef\.current\?\.abort\(\);[\s\S]*?payoutLinkAbortRef\.current\?\.abort\(\);/);
 });
 
 test("initial onboarding nests every production workspace directly under its step button", () => {
@@ -210,34 +201,17 @@ test("profile setup editors use the compact shared modal shell without changing 
   assert.match(dashboard, /hasExistingLink \? "Save changes" : "Save"/);
 });
 
-test("optional payout onboarding uses plain language and names the provider only in setup", () => {
-  assert.match(dashboard, /<span className="eyebrow">Optional<\/span>[\s\S]*?<h3>Commission payouts<\/h3>/);
-  assert.match(dashboard, /Club Deals stay on your profile\. Commissions start only after your payout account is verified\. Earlier redemptions do not earn commissions or back pay\./);
-  assert.match(dashboard, /Payout account login ID <span>from your payout portal<\/span>/);
-  assert.doesNotMatch(dashboard, /Connect your NATS account|NATS account linked|Create or open NATS account/);
-  assert.doesNotMatch(dashboard, /Recommended · never required for activation/);
-  assert.doesNotMatch(dashboard, /This choice never blocks your dressing-room NFC tap/);
-  assert.doesNotMatch(dashboard, /NATS enrollment is not active yet/);
-  assert.doesNotMatch(dashboard, /NATS enrollment is safely paused/);
+test("dancer onboarding no longer offers payout enrollment", () => {
+  assert.doesNotMatch(onboardingCommand, /payout|nats|commission/i);
+  assert.equal((onboardingCommand.match(/label: /g) || []).length, 2);
+  assert.match(onboardingCommand, /setExpandedStepId\("dancer-onboarding-nfc"\)/);
+  assert.match(onboardingCommand, /profileSubmissionAbortRef\.current\?\.abort\(\)/);
 });
 
-test("approved dancers who skipped payout setup get a plain-language call to action", () => {
-  const setupState = dashboard.match(/function dancerNeedsCommissionPayoutSetup\([\s\S]*?(?=\nfunction DancerNatsSignupCallout)/)?.[0] || "";
-  const callout = dashboard.match(/function DancerNatsSignupCallout\([\s\S]*?(?=\nfunction DancerPanel)/)?.[0] || "";
-  assert.match(setupState, /\["requested", "active"\]\.includes\(accountStatus\)/);
-  assert.doesNotMatch(callout, /platform\.selected !== true \|\|/);
-  assert.match(callout, /Start earning commissions/);
-  assert.match(callout, /Enroll and get verified to earn commissions on future Club Deal redemptions/);
-  assert.match(callout, /portalUrl \|\| supportRequestUrl/);
-  assert.match(callout, /mailto:support@mydancr\.com\?subject=Commission%20payout%20account%20setup/);
-  assert.match(callout, /Sign up for commission payouts/);
-  assert.match(callout, /I already have an account/);
-  assert.doesNotMatch(callout, />Get NATS<|>I already have NATS<|Get NATS to receive payouts/);
-  assert.match(callout, /openDancerPayoutLinking/);
-  assert.match(dashboard, /badge=\{needsCommissionPayoutSetup \? "Optional payout setup" : undefined\}[\s\S]*?id="dancer-performance"[\s\S]*?<DancerNatsSignupCallout finance=\{finance\} \/>/);
-  assert.match(dashboard, /id="dancer-payout-detail"/);
-  assert.match(dashboard, /\.dancer-nats-signup-callout \{ grid-column: 1 \/ -1;[\s\S]*?\.dancer-nats-signup-actions > a, \.dancer-nats-signup-actions > button/);
-  assert.match(dashboard, /#dancer-performance \.venue-dashboard-section-badge \{[^}]*color: #fde68a/);
+test("approved dancers retain analytics without commission promotions", () => {
+  assert.doesNotMatch(dashboard, /function DancerNatsSignupCallout|function DancerPayoutPanel|Sign up for commission payouts/);
+  assert.match(dashboard, /title="Club Deal activity"/);
+  assert.match(dashboard, /<DancerPerformanceSummary analytics=\{analytics\} deals=\{deals\}/);
 });
 
 test("step one uses accessible live-profile add targets that preserve the active editor", () => {
@@ -292,7 +266,7 @@ test("approved dancer dashboard sections arrive collapsed with a clear tool hier
   assert.match(dashboard, /description="Visibility and connected clubs\."\s+emphasis="summary"\s+id="dancer-overview"/);
   assert.match(dashboard, /description="Edit your profile or share it\."\s+emphasis="primary"\s+id="dancer-profile-media"/);
   assert.match(dashboard, /description="Working Now and upcoming dates\."\s+emphasis="primary"\s+id="dancer-schedule"/);
-  assert.match(dashboard, /description="Views, commissions, and payouts\."\s+emphasis="secondary"\s+id="dancer-performance"/);
+  assert.match(dashboard, /description="Views, Club Deals, and guest activity\."\s+emphasis="secondary"\s+id="dancer-performance"/);
   assert.doesNotMatch(dashboard, /id="dancer-sharing-billing"|title="Share profile"/);
   assert.doesNotMatch(dashboard, /eyebrow="Dancer workspace"/);
   assert.match(dashboard, /\.dashboard-shell\.dashboard-shell-dancer \.venue-dashboard-section\.dashboard-section-primary \{[^}]*box-shadow: inset 3px 0 0/);

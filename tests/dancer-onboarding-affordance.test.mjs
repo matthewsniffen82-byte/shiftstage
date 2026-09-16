@@ -6,20 +6,18 @@ const dashboard = await readFile(new URL("../app/dashboard/DashboardClient.tsx",
 const onboarding = dashboard.match(/function DancerOnboardingCommand[\s\S]*?function DancerAvatarPanel/)?.[0] || "";
 
 test("onboarding rows expose explicit controls from the existing authoritative state", () => {
-  assert.match(onboarding, /const controlLabel = step\.locked[\s\S]*?"Locked"[\s\S]*?"Complete"[\s\S]*?"Continue" : "Start"[\s\S]*?"Continue" : "Set up"[\s\S]*?"Verify"/);
-  assert.match(onboarding, /const displayComplete = step\.complete && \(!isPayoutStep \|\| natsAccountStatus === "active"\)/);
+  assert.match(onboarding, /const controlLabel = step\.locked[\s\S]*?"Locked"[\s\S]*?"Complete"[\s\S]*?"Continue" : "Start"[\s\S]*?"Verify"/);
+  assert.match(onboarding, /const displayComplete = step\.complete/);
   assert.match(onboarding, /disabled=\{step\.locked\}/);
   assert.match(onboarding, /className="dancer-onboarding-step-control-icon"[\s\S]*?<rect x="5" y="10"/);
   assert.doesNotMatch(onboarding, /dancer-onboarding-step-toggle/);
   assert.doesNotMatch(onboarding, /dancer-onboarding-step-state/);
 });
 
-test("optional payouts stay visibly optional without entering the title or progression rules", () => {
-  assert.match(onboarding, /label: "Commission payouts"/);
-  assert.match(onboarding, /optional: true/);
-  assert.match(onboarding, /step\.optional \? <em>Optional<\/em> : null/);
-  assert.match(onboarding, /const payoutStepComplete = payoutSubmitted \|\| payoutSkipped/);
-  assert.match(onboarding, /isPayoutStep && payoutSkipped \? "is-deferred"/);
+test("profile setup proceeds directly to club verification", () => {
+  assert.match(onboarding, /label: "Create profile"/);
+  assert.match(onboarding, /label: "Dressing-room tap"/);
+  assert.doesNotMatch(onboarding, /isPayoutStep|payoutSkipped|Commission payouts/);
 });
 
 test("onboarding cards are compact while the fixed navigation retains safe scrolling clearance", () => {

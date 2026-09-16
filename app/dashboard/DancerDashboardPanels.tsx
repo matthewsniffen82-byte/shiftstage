@@ -4,14 +4,13 @@ import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { SocialPlatformIcon } from "@/app/dancers/[slug]/SocialLinks";
-import { payoutCopy } from "@/src/lib/dancr/payout-copy";
 import { effectiveDancerProfileStatus } from "@/src/lib/dancr/profile-approval";
 import { safeErrorMetadata } from "@/src/lib/security/safe-error-metadata";
 import type { SocialPlatform } from "@/src/lib/dancr/types";
 import { DancerDashboardIcon } from "./DancerDashboardIdentity";
-import { readSession, requestDancerFinanceJson, requestDancerFinanceStatement, requestDancerProfileJson, requestDancerProfileVisibilityJson } from "./dashboard-session";
+import { readSession, requestDancerProfileJson, requestDancerProfileVisibilityJson } from "./dashboard-session";
 import type { LoadState, DancerPhotoItem, DancerProfileSocialEditor, DancerProfileEditorSections, DancerIdentityDraft, DancerProfileEditorSaveRequest } from "./dashboard-types";
-import { persistedDancerStageName, saveDancerProfileEditor, DashboardSection, formatCents, Metric, downloadDashboardBlob, formatFinanceDate, DANCER_PROFILE_EDITOR_SAVE_EVENT, SOCIAL_PLATFORMS } from "./DashboardShared";
+import { persistedDancerStageName, saveDancerProfileEditor, DashboardSection, Metric, DANCER_PROFILE_EDITOR_SAVE_EVENT, SOCIAL_PLATFORMS } from "./DashboardShared";
 import { dancerPhotoItemsFromProfile, DancerPhotoPanel } from "./DancerPhotoPanel";
 import { DancerAvatarPanel } from "./DancerAvatarPanel";
 import { DancerProfilePreview, DancerOnboardingCommand, DancerOnboardingProfileMediaWorkspace } from "./DancerProfileEditor";
@@ -24,54 +23,11 @@ const DancerTvStudio = dynamic(() => import("./DancerTvStudio"));
 const DancerShiftManager = dynamic(() => import("./DancerShiftManager"));
 
 
-function openDancerPayoutLinking() {
-  const performanceSection = document.getElementById("dancer-performance") as HTMLDetailsElement | null;
-  const payoutSection = document.getElementById("dancer-payout-detail") as HTMLDetailsElement | null;
-  if (performanceSection) performanceSection.open = true;
-  if (payoutSection) payoutSection.open = true;
-  window.requestAnimationFrame(() => {
-    const behavior = window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth";
-    (payoutSection || performanceSection)?.scrollIntoView({ behavior, block: "start" });
-  });
-}
-
-
-function dancerNeedsCommissionPayoutSetup(finance?: LoadState["finance"]) {
-  const account = (finance?.natsAffiliateAccount || null) as Record<string, unknown> | null;
-  const accountStatus = String(account?.status || "").toLowerCase();
-  return !["requested", "active"].includes(accountStatus);
-}
-
-
-function DancerNatsSignupCallout({ finance }: { finance?: LoadState["finance"] }) {
-  const platform = (finance?.commissionPlatform || {}) as Record<string, unknown>;
-  if (!dancerNeedsCommissionPayoutSetup(finance)) return null;
-  const portalUrl = typeof platform.affiliatePortalUrl === "string" ? platform.affiliatePortalUrl : "";
-  const supportRequestUrl = "mailto:support@mydancr.com?subject=Commission%20payout%20account%20setup";
-  return (
-    <aside className="dancer-nats-signup-callout" aria-labelledby="dancer-nats-signup-heading">
-      <span className="dancer-nats-signup-copy">
-        <span className="eyebrow">Club Deal commissions</span>
-        <strong id="dancer-nats-signup-heading">Start earning commissions</strong>
-        <small>Enroll and get verified to earn commissions on future Club Deal redemptions. Earlier redemptions do not earn back pay.</small>
-      </span>
-      <span className="dancer-nats-signup-actions">
-        <a href={portalUrl || supportRequestUrl} rel={portalUrl ? "noreferrer" : undefined} target={portalUrl ? "_blank" : undefined}>Sign up for commission payouts</a>
-        {platform.selected === true
-          ? <button onClick={openDancerPayoutLinking} type="button">I already have an account</button>
-          : <a className="secondary" href={`${supportRequestUrl}&body=I%20already%20have%20a%20payout%20account%20and%20need%20to%20link%20it%20to%20MyDancr.`}>I already have an account</a>}
-      </span>
-    </aside>
-  );
-}
-
-
 export function DancerPanel({
   accountState,
   affiliations,
   analytics,
   deals,
-  finance,
   nfc,
   onProfileChange,
   profile,
@@ -83,7 +39,6 @@ export function DancerPanel({
   affiliations: Array<Record<string, unknown>>;
   analytics?: LoadState["analytics"];
   deals?: LoadState["deals"];
-  finance?: LoadState["finance"];
   nfc?: LoadState["nfc"];
   onProfileChange?: (profile: Record<string, unknown>) => void;
   profile?: LoadState["profile"];
@@ -94,7 +49,6 @@ export function DancerPanel({
   const effectiveStatus = effectiveDancerProfileStatus(profile, accountState);
   const isApproved = effectiveStatus === "approved";
   const isPublic = isApproved && profile?.is_public !== false && profile?.isPublic !== false;
-  const needsCommissionPayoutSetup = dancerNeedsCommissionPayoutSetup(finance);
   const isVenueApproved = Boolean(profile?.venue_approved_at || profile?.venueApprovedAt)
     || affiliations.some((item) => item.status === "active");
   const [deletedPhotoIds, setDeletedPhotoIds] = useState<string[]>([]);
@@ -252,7 +206,6 @@ export function DancerPanel({
       {!isApproved ? (
         <DancerOnboardingCommand
           effectiveStatus={effectiveStatus}
-          finance={finance}
           isVenueApproved={isVenueApproved}
           onProfileChange={onProfileChange}
           profile={profile}
@@ -308,32 +261,22 @@ export function DancerPanel({
       ) : null}
       {isApproved ? (
         <DashboardSection
-          badge={needsCommissionPayoutSetup ? "Optional payout setup" : undefined}
-          description="Views, commissions, and payouts."
+          description="Views, Club Deals, and guest activity."
           emphasis="secondary"
           id="dancer-performance"
           icon={<DancerDashboardIcon section="performance" />}
           toggleAffordance="chevron"
-          title="Performance & rewards"
+          title="Performance"
         >
           <div className="dancer-performance-workspace">
-            <DancerNatsSignupCallout finance={finance} />
-            <DancerPerformanceSummary analytics={analytics} deals={deals} finance={finance} />
+            <DancerPerformanceSummary analytics={analytics} deals={deals} />
             <div className="dancer-performance-details">
               <DancerPerformanceDetail
                 badge={`${String(deals?.successfulRedemptionsThisMonth || 0)} this month`}
-                description="Commissions, tier progress, and verified activity."
-                title="Club Deal rewards"
+                description="Deal saves, shares, and verified redemptions."
+                title="Club Deal activity"
               >
                 <DancerDealPanel deals={deals} />
-              </DancerPerformanceDetail>
-              <DancerPerformanceDetail
-                badge={formatCents(Number(((finance?.balances || {}) as Record<string, unknown>).availableCents || 0))}
-                description="Balances, payout setup, and history."
-                id="dancer-payout-detail"
-                title="Earnings & payouts"
-              >
-                <DancerPayoutPanel finance={finance} />
               </DancerPerformanceDetail>
               <DancerPerformanceDetail
                 badge={formatRankMove(weeklyReport)}
@@ -551,20 +494,17 @@ function DancerLockedAnalyticsPanel() {
 function DancerPerformanceSummary({
   analytics,
   deals,
-  finance,
 }: {
   analytics?: LoadState["analytics"];
   deals?: LoadState["deals"];
-  finance?: LoadState["finance"];
 }) {
-  const balances = (finance?.balances || {}) as Record<string, unknown>;
 
   return (
-    <section className="dancer-performance-summary" aria-label="Performance and rewards summary">
+    <section className="dancer-performance-summary" aria-label="Performance summary">
       <Metric label="Current rank" value={String(analytics?.currentRank || "Unranked")} />
       <Metric label="30-day views" value={String(analytics?.profileViews30Days || 0)} />
       <Metric label="Club Deals this month" value={String(deals?.successfulRedemptionsThisMonth || 0)} />
-      <Metric label="Available balance" value={formatCents(Number(balances.availableCents || 0))} />
+      <Metric label="Deal saves" value={String(deals?.qrSaves || 0)} />
     </section>
   );
 }
@@ -600,312 +540,17 @@ function DancerPerformanceDetail({
 
 
 function DancerDealPanel({ deals }: { deals?: LoadState["deals"] }) {
-  const earnedCommissionCents = Number(deals?.earnedCommissionCents || 0);
-  const payableCommissionCents = Number(deals?.payableCommissionCents || 0);
-  const successfulThisMonth = Number(deals?.successfulRedemptionsThisMonth || 0);
-  const currentShare = Number(deals?.currentDancerSharePercent || 30);
-  const nextTierAt = deals?.nextTierAt === null ? null : Number(deals?.nextTierAt || 10);
-
   return (
-    <article className="info-panel deal-panel" aria-label="Club Deal reward details">
+    <article className="info-panel deal-panel" aria-label="Club Deal activity details">
       <div className="deal-metrics">
-        <Metric label="MyDancr rewards earned" value={formatCents(earnedCommissionCents)} />
-        <Metric label="Ready for MyDancr payout" value={formatCents(payableCommissionCents)} />
-        <Metric label="Successful this month" value={String(successfulThisMonth)} />
-        <Metric label="Current dancer share" value={`${currentShare}%`} />
+        <Metric label="Successful this month" value={String(deals?.successfulRedemptionsThisMonth || 0)} />
+        <Metric label="Cashier opens" value={String(deals?.qrOpens || 0)} />
+        <Metric label="Saved / shared intent" value={String(deals?.qrSaves || 0) + " / " + String(deals?.qrShares || 0)} />
+        <Metric label="Redeemed deals" value={String(deals?.redeemed || 0)} />
       </div>
-      <p className="dancer-performance-progress">
-        {nextTierAt === null
-          ? "Top 50% dancer tier reached"
-          : `${String(deals?.redemptionsUntilNextTier || 0)} more successful redemptions to unlock the ${nextTierAt === 10 ? "40%" : "50%"} tier.`}
-      </p>
-      <details className="dancer-performance-explainer">
-        <summary>More Club Deal activity</summary>
-        <div className="deal-metrics">
-          <Metric label="Saved / shared intent" value={`${String(deals?.qrSaves || 0)} / ${String(deals?.qrShares || 0)}`} />
-          <Metric label="Cashier opens" value={String(deals?.qrOpens || 0)} />
-          <Metric label="Available / paid" value={`${String(deals?.payableCommissions || 0)} / ${String(deals?.paidCommissions || 0)}`} />
-          <Metric label="Reversed" value={String(deals?.rejectedCommissions || 0)} />
-        </div>
-      </details>
-      <details className="dancer-performance-explainer">
-        <summary>View commission tiers</summary>
-        <div className="commission-tier-table">
-          <div><span>1–9 monthly</span><b>30% dancer</b><b>70% MyDancr</b></div>
-          <div><span>10–24 monthly</span><b>40% dancer</b><b>60% MyDancr</b></div>
-          <div><span>25+ monthly</span><b>50% dancer</b><b>50% MyDancr</b></div>
-        </div>
-      </details>
-      <details className="dancer-performance-explainer">
-        <summary>How Club Deal rewards work</summary>
-        <p>Your dancer credit follows a verified check-in to the guest&apos;s cashier tap. Club Deals remain visible before payout setup is complete. Only redemptions after your payout account is verified earn dancer commissions; earlier redemptions are not saved for back pay.</p>
-      </details>
+      <p>Club Deals stay visible on your profile. Guest activity and verified cashier-tap redemptions appear here.</p>
     </article>
   );
-}
-
-
-function DancerPayoutPanel({ finance }: { finance?: LoadState["finance"] }) {
-  const [status, setStatus] = useState("");
-  const [historyFilter, setHistoryFilter] = useState("all");
-  const [historyView, setHistoryView] = useState<"earnings" | "payouts">("earnings");
-  const [isWorking, setIsWorking] = useState(false);
-  const [localFinance, setLocalFinance] = useState(finance);
-  const mountedRef = useRef(false);
-  const actionSequenceRef = useRef(0);
-  const actionAbortRef = useRef<AbortController | null>(null);
-  const actionInFlightRef = useRef(false);
-  useEffect(() => setLocalFinance(finance), [finance]);
-  const currentFinance = localFinance || finance;
-  const payouts = Array.isArray(currentFinance?.payouts) ? currentFinance.payouts as Array<Record<string, unknown>> : [];
-  const earnings = Array.isArray(currentFinance?.earnings) ? currentFinance.earnings as Array<Record<string, unknown>> : [];
-  const balances = (currentFinance?.balances || {}) as Record<string, unknown>;
-  const payoutAccount = (currentFinance?.payoutAccount || null) as Record<string, unknown> | null;
-  const settings = (currentFinance?.settings || {}) as Record<string, unknown>;
-  const commissionPlatform = (currentFinance?.commissionPlatform || {}) as Record<string, unknown>;
-  const natsAffiliateAccount = (currentFinance?.natsAffiliateAccount || null) as Record<string, unknown> | null;
-  const natsExports = Array.isArray(currentFinance?.natsExports) ? currentFinance.natsExports as Array<Record<string, unknown>> : [];
-  const natsSelected = commissionPlatform.selected === true;
-  const natsConfigured = commissionPlatform.configured === true;
-  const natsActive = natsAffiliateAccount?.status === "active";
-  const natsPortalUrl = typeof commissionPlatform.affiliatePortalUrl === "string" ? commissionPlatform.affiliatePortalUrl : "";
-  const [natsLoginId, setNatsLoginId] = useState("");
-  const [natsUsername, setNatsUsername] = useState("");
-  const visibleEarnings = historyFilter === "all" ? earnings : earnings.filter((earning) => String(earning.status) === historyFilter);
-  const payoutsEnabled = settings.payoutsEnabled === true;
-  const setupComplete = payoutAccount?.onboarding_status === "complete"
-    && payoutAccount?.payout_eligibility === "eligible"
-    && payoutAccount?.verification_status === "verified";
-  const currentMonth = new Date().toISOString().slice(0, 7);
-
-  useEffect(() => {
-    const result = new URLSearchParams(window.location.search).get("finance");
-    if (result === "connected") setStatus("Payout account connected and verified.");
-    if (result === "review") setStatus("Payout account connected. The payout provider is reviewing eligibility.");
-    if (result === "setup_error") setStatus("Payout setup could not be completed. Please try again.");
-  }, []);
-
-  useEffect(() => {
-    mountedRef.current = true;
-    return () => {
-      mountedRef.current = false;
-      actionSequenceRef.current += 1;
-      actionAbortRef.current?.abort();
-      actionAbortRef.current = null;
-      actionInFlightRef.current = false;
-    };
-  }, []);
-
-  function beginDancerPayoutAction(pendingStatus: string) {
-    if (!mountedRef.current || actionInFlightRef.current) return null;
-    actionInFlightRef.current = true;
-    const requestId = ++actionSequenceRef.current;
-    actionAbortRef.current?.abort();
-    const controller = new AbortController();
-    actionAbortRef.current = controller;
-    setIsWorking(true);
-    setStatus(pendingStatus);
-    return { requestId, controller };
-  }
-
-  function isCurrentDancerPayoutAction(requestId: number, controller: AbortController) {
-    return mountedRef.current && !controller.signal.aborted && requestId === actionSequenceRef.current;
-  }
-
-  function finishDancerPayoutAction(requestId: number) {
-    if (requestId !== actionSequenceRef.current) return;
-    actionAbortRef.current = null;
-    actionInFlightRef.current = false;
-    if (mountedRef.current) setIsWorking(false);
-  }
-
-  async function payoutAction(action: "connect_onboarding" | "cash_out") {
-    const session = readSession();
-    if (!session?.accessToken) return setStatus("Sign in required.");
-    const pending = beginDancerPayoutAction(action === "cash_out" ? "Checking available earnings..." : "Opening secure payout setup...");
-    if (!pending) return;
-    const { requestId, controller } = pending;
-    try {
-      const data = await requestDancerFinanceJson({
-        method: "POST",
-        headers: {
-          "content-type": "application/json",
-          "idempotency-key": crypto.randomUUID(),
-        },
-        body: JSON.stringify({ action }),
-        fallbackMessage: "Unable to update payouts.",
-        signal: controller.signal,
-      });
-      if (!isCurrentDancerPayoutAction(requestId, controller)) return;
-      if (data.onboarding?.url) window.location.assign(data.onboarding.url);
-      if (data.finance) setLocalFinance(data.finance);
-      if (action === "cash_out") setStatus("Cash-out request reserved. Status will update after verified provider confirmation.");
-    } catch (error) {
-      if (isCurrentDancerPayoutAction(requestId, controller)) setStatus(error instanceof Error ? error.message : "Unable to update payouts.");
-    } finally {
-      finishDancerPayoutAction(requestId);
-    }
-  }
-
-  async function requestNatsLink(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const session = readSession();
-    if (!session?.accessToken) return setStatus("Sign in required.");
-    const pending = beginDancerPayoutAction("Submitting your payout account for verification...");
-    if (!pending) return;
-    const { requestId, controller } = pending;
-    try {
-      const data = await requestDancerFinanceJson({
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ action: "request_nats_link", loginId: natsLoginId, username: natsUsername }),
-        fallbackMessage: "Unable to link the payout account.",
-        signal: controller.signal,
-      });
-      if (!isCurrentDancerPayoutAction(requestId, controller)) return;
-      if (data.finance) setLocalFinance(data.finance);
-      setStatus("Payout account submitted. MyDancr will activate it after matching the provider record.");
-    } catch (error) {
-      if (isCurrentDancerPayoutAction(requestId, controller)) setStatus(error instanceof Error ? error.message : "Unable to link the payout account.");
-    } finally {
-      finishDancerPayoutAction(requestId);
-    }
-  }
-
-  async function downloadStatement() {
-    const pending = beginDancerPayoutAction("Preparing statement...");
-    if (!pending) return;
-    const { requestId, controller } = pending;
-    try {
-      const statement = await requestDancerFinanceStatement(currentMonth, { signal: controller.signal });
-      if (!isCurrentDancerPayoutAction(requestId, controller)) return;
-      await downloadDashboardBlob(
-        statement,
-        `mydancr-${currentMonth}-dancer-commission-statement.csv`,
-      );
-      if (isCurrentDancerPayoutAction(requestId, controller)) setStatus("Statement downloaded.");
-    } catch (error) {
-      if (isCurrentDancerPayoutAction(requestId, controller)) {
-        setStatus(error instanceof Error ? error.message : "Unable to download statement.");
-      }
-    } finally {
-      finishDancerPayoutAction(requestId);
-    }
-  }
-
-  return (
-    <article className="info-panel deal-panel dancer-earnings-panel" aria-labelledby="dancer-payout-heading">
-      <div className="venue-deal-heading">
-        <div>
-          <span className="eyebrow">Commission payouts</span>
-          <h2 id="dancer-payout-heading">Payout account</h2>
-        </div>
-        <strong className={`deal-state ${(natsSelected ? natsActive : payoutsEnabled) ? "active" : ""}`}>
-          {natsSelected ? (natsActive ? "Account connected" : natsAffiliateAccount?.status === "requested" ? "Verification pending" : "Setup required") : payoutsEnabled ? "Payouts available" : "Approval pending"}
-        </strong>
-      </div>
-      <div className="deal-metrics earnings-balance-grid">
-        <Metric label="Available balance" value={formatCents(Number(balances.availableCents || 0))} />
-        <Metric label="Pending earnings" value={formatCents(Number(balances.pendingCents || 0))} />
-        <Metric label="Payout processing" value={formatCents(Number(balances.processingCents || 0))} />
-        <Metric label="Lifetime earnings" value={formatCents(Number(balances.lifetimeCents || 0))} />
-      </div>
-      {natsSelected ? (
-        <>
-          {natsPortalUrl ? <div className="earnings-actions"><a className="button-link" href={natsPortalUrl} target="_blank" rel="noreferrer">{natsActive ? "Open payout account" : "Create or open payout account"}</a></div> : null}
-          {!natsActive ? <form className="account-form" onSubmit={requestNatsLink}>
-            <label>Payout account login ID <span>from your payout portal</span><input required inputMode="numeric" pattern="[1-9][0-9]*" value={natsLoginId} onChange={(event) => setNatsLoginId(event.target.value)} /></label>
-            <label>Payout account username <span>optional</span><input autoCapitalize="none" maxLength={80} value={natsUsername} onChange={(event) => setNatsUsername(event.target.value)} /></label>
-            <button disabled={isWorking || !natsConfigured} type="submit">Submit payout account for verification</button>
-          </form> : null}
-          {!natsConfigured ? <p className="earnings-notice">Payout setup is temporarily unavailable. Club Deal commissions require a verified payout account at the time of redemption. Earlier redemptions do not earn back pay.</p> : null}
-          {natsAffiliateAccount?.last_error ? <p role="alert">{payoutCopy(String(natsAffiliateAccount.last_error))}</p> : null}
-        </>
-      ) : (
-        <>
-          <div className="earnings-actions">
-            <button disabled={isWorking || !payoutsEnabled} type="button" onClick={() => payoutAction("connect_onboarding")}>Set Up Payouts</button>
-            <button disabled={isWorking || !payoutsEnabled || Number(balances.availableCents || 0) < Number(settings.minimumPayoutCents || 0)} type="button" onClick={() => payoutAction(setupComplete ? "cash_out" : "connect_onboarding")}>
-              {setupComplete ? "Cash Out" : "Cash Out · Set up first"}
-            </button>
-          </div>
-          {!payoutsEnabled ? <p className="earnings-notice">Earnings tracking is active. Real payout setup and money movement remain off until provider and legal approval.</p> : null}
-          {payoutAccount?.last_error ? <p role="alert">{String(payoutAccount.last_error)}</p> : null}
-        </>
-      )}
-
-      <details className="dancer-performance-explainer">
-        <summary>How payouts work</summary>
-        <div className="dancer-performance-explainer-copy">
-          <p>{natsSelected
-            ? "Club Deal commissions start when your payout account is verified. MyDancr calculates your tiered commission on eligible redemptions from that point forward. Earlier redemptions are not held for back pay. Manage payments and tax forms in your payout portal."
-            : "Club Deals stay visible on your profile, but dancer commissions require a verified payout account at redemption. Earlier redemptions do not earn commissions or back pay."}</p>
-          <p>{natsSelected
-            ? "No guest personal information is included."
-            : "The approved payout provider securely handles identity, account details, and money movement. MyDancr stores only the provider account reference and payout status."}</p>
-        </div>
-      </details>
-
-      <section className="earnings-history" aria-label="Rewards history">
-        <div className="earnings-history-tabs" role="tablist" aria-label="Rewards history views">
-          <button aria-selected={historyView === "earnings"} className={historyView === "earnings" ? "active" : ""} role="tab" type="button" onClick={() => setHistoryView("earnings")}>Earnings history</button>
-          <button aria-selected={historyView === "payouts"} className={historyView === "payouts" ? "active" : ""} role="tab" type="button" onClick={() => setHistoryView("payouts")}>Payout history</button>
-        </div>
-        {historyView === "earnings" ? (
-          <>
-            <div className="earnings-filters" role="group" aria-label="Filter earnings history">
-              {["all", "pending", "available", "paid"].map((filter) => (
-                <button className={historyFilter === filter ? "active" : ""} key={filter} type="button" onClick={() => setHistoryFilter(filter)}>
-                  {filter[0].toUpperCase() + filter.slice(1)}
-                </button>
-              ))}
-            </div>
-            <div className="commission-tier-table">
-              {visibleEarnings.slice(0, 50).map((earning) => (
-                <div key={String(earning.id)}>
-                  <span>{dancerFinanceVenueName(earning.venues)} · {String(earning.earning_type || "earning").replaceAll("_", " ")}</span>
-                  <b>{formatCents(Number(earning.amount_cents || 0))}</b>
-                  <span>{formatFinanceDate(earning.created_at)} · {String(earning.status)}</span>
-                </div>
-              ))}
-              {!visibleEarnings.length ? <p>No earnings match this filter.</p> : null}
-            </div>
-          </>
-        ) : natsSelected ? (
-          natsExports.length ? <div className="commission-tier-table" aria-label="Recent payout transfers">
-            {natsExports.slice(0, 50).map((item) => <div key={String(item.id)}>
-              <span>Commission {formatFinanceDate(item.created_at)}</span>
-              <b>{formatCents(Number(item.amount_cents || 0))}</b>
-              <span>{String(item.status || "pending").replaceAll("_", " ")}</span>
-              {item.last_error ? <span role="alert">{payoutCopy(String(item.last_error))}</span> : null}
-            </div>)}
-          </div> : <p>No payout transfers yet.</p>
-        ) : payouts.length ? (
-          <div className="commission-tier-table" aria-label="Recent dancer payouts">
-            {payouts.slice(0, 50).map((payout) => (
-              <div key={String(payout.id)}>
-                <span>Requested {formatFinanceDate(payout.requested_at || payout.created_at)}</span>
-                <b>{formatCents(Number(payout.amount_cents || 0))}</b>
-                <span>{String(payout.status)} · {String(payout.payment_provider || "provider")}</span>
-                {payout.processing_at ? <span>Processing {formatFinanceDate(payout.processing_at)}</span> : null}
-                {payout.paid_at ? <span>Paid {formatFinanceDate(payout.paid_at)}</span> : null}
-                {payout.provider_reference_id ? <span>Reference {String(payout.provider_reference_id)}</span> : null}
-                {payout.failure_message ? <span role="alert">{String(payout.failure_message)}</span> : null}
-              </div>
-            ))}
-          </div>
-        ) : <p>No payout requests yet.</p>}
-        <button className="earnings-statement-button" disabled={isWorking} type="button" onClick={downloadStatement}>Download monthly statement</button>
-      </section>
-      {status ? <p role="status">{status}</p> : null}
-    </article>
-  );
-}
-
-
-function dancerFinanceVenueName(value: unknown) {
-  const venue = Array.isArray(value) ? value[0] : value;
-  return venue && typeof venue === "object" && "name" in venue ? String((venue as { name?: unknown }).name || "Venue") : "Venue";
 }
 
 

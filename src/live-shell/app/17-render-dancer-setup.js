@@ -8,7 +8,6 @@
       const nextStep = nextIncompleteStep();
       const nextLabels = {
         profile: "Create, review, and submit profile",
-        payout: "Commission payouts (optional)",
         approval: "Venue affiliation"
       };
       const dancerName = activeDancerName();
@@ -22,7 +21,6 @@
       const approvalStateLabel = rejected ? "Rejected" : optionalProfileFixes ? "Approved with fixes needed" : approved ? "Approved" : reviewSubmitted ? "Submitted" : readyForReview ? "Ready" : "Pending";
       const billingSummary = dancerBillingSummary(approved);
       const dashboardMetrics = mergeLiveDancerDashboardMetrics(null, liveDancerAnalytics, activeProfile, city);
-      renderDancerPayoutSetupNotice(approved);
       renderNotificationCenters();
       renderSupportInbox("dancer");
       dancerDashboard.classList.toggle("is-approved", approved);
@@ -64,7 +62,7 @@
         : approved
           ? "Your public profile is live. Keep your schedule current, share your profile, and track the guests Dancr sends you."
         : reviewSubmitted
-          ? "Your profile is private and ready. Set up commission payouts now or do it later, then tap the club's official dressing-room sticker."
+          ? "Your profile is private and ready. Tap the club's official dressing-room sticker to activate it."
           : "Create your profile and upload media. Every picture and video is automatically safety-moderated before the venue affiliation step.";
       document.getElementById("dancerApprovalProgress").textContent = `${completedSteps}/${steps.length}`;
       document.getElementById("dancerApprovalNext").textContent = rejected
@@ -74,7 +72,7 @@
         : approved
           ? "Ready to post shifts"
         : reviewSubmitted
-          ? (dancerPayoutStepComplete() ? "Waiting for dressing-room tap" : "Payout setup optional")
+          ? "Waiting for dressing-room tap"
           : `Next: ${nextLabels[nextStep] || "Approval"}`;
       const approvalExpand = document.getElementById("dancerApprovalExpand");
       if (approvalExpand) {
@@ -117,7 +115,7 @@
           approvalStatusPrimary.textContent = "Profile submitted and private. Tap the official dressing-room sticker at the venue where you work.";
           approvalStatusSecondary.textContent = "The dressing-room tap authorizes only your venue access. MyDancr separately reviews profile photos, videos, and public information for safety.";
         } else if (readyForReview) {
-          approvalStatusPrimary.textContent = "Ready to preview. Review your public profile and submit it in Step 2.";
+          approvalStatusPrimary.textContent = "Ready to preview. Review and submit your profile, then complete the dressing-room tap.";
           approvalStatusSecondary.textContent = "Your profile remains private until the dressing-room tap and profile/media review are complete.";
         } else {
           approvalStatusPrimary.textContent = "Complete your profile, avatar, and moderated media in Step 1.";
@@ -161,13 +159,11 @@
         const weeklyRankText = weeklyStartRank || weeklyEndRank ? `${rankLabel(weeklyStartRank)} -> ${rankLabel(weeklyEndRank)}` : "No rank yet";
         const qrOpens = liveDancerDeals?.qrOpens || 0;
         const qrRedeemed = liveDancerDeals?.redeemed || 0;
-        const earnedCommissionCents = liveDancerDeals?.earnedCommissionCents || 0;
-        const pendingCommissionCents = liveDancerDeals?.pendingCommissionCents || 0;
         const hasTrafficData = dashboardMetrics.profileViews30 || dashboardMetrics.scheduleViews30 || dashboardMetrics.directionRequests30 || highIntentActions || totalSocialClicks;
 
         document.getElementById("dancerValueMessage").innerHTML = hasTrafficData
           ? `We sent <strong>${compactNumber(dashboardMetrics.profileViews30)}</strong> people to your profile, <strong>${compactNumber(dashboardMetrics.scheduleViews30)}</strong> viewed your schedule, and <strong>${compactNumber(dashboardMetrics.directionRequests30)}</strong> requested directions to <strong>${escapeHtml(dashboardMetrics.venue)}</strong> this month.`
-          : "No live analytics yet. Real profile views, schedule views, followers, social clicks, notifications, direction requests, and Club Deal commissions will appear here after guests interact with your profile.";
+          : "No live analytics yet. Real profile views, schedule views, followers, social clicks, notifications, direction requests, and Club Deal activity will appear here after guests interact with your profile.";
         document.getElementById("dancerRankMetrics").innerHTML = [
           metricCardMarkup(rankLabel(dashboardMetrics.currentRank), `${city} rank`),
           metricCardMarkup(rankMovementText(dashboardMetrics.rankChangeYesterday), "Rank change this week"),
@@ -211,19 +207,12 @@
             .slice(0, 2)
             .map((club) => metricCardMarkup(compactNumber(club.avgViews), `${club.name} avg views`))
         ].join("");
-        document.getElementById("dancerCommissionSummary").textContent =
-          qrOpens || qrRedeemed || earnedCommissionCents || pendingCommissionCents
-            ? `Cashier taps generated ${compactNumber(qrRedeemed)} redeemed deal${qrRedeemed === 1 ? "" : "s"}, ${moneyFromCents(earnedCommissionCents)} earned, and ${moneyFromCents(pendingCommissionCents)} pending.`
-            : "Club Deal commission tracking is ready. Earnings appear when guests choose your attributed deal and tap the cashier sticker.";
-        document.getElementById("dancerCommissionMetrics").innerHTML = [
-          metricCardMarkup(moneyFromCents(earnedCommissionCents), "Earned commissions"),
-          metricCardMarkup(moneyFromCents(pendingCommissionCents), "Pending commissions"),
+        document.getElementById("dancerDealSummary").textContent =
+          qrRedeemed ? "Cashier taps generated " + compactNumber(qrRedeemed) + " redeemed deals." : "Verified Club Deal activity appears here after guests interact with your profile.";
+        document.getElementById("dancerDealMetrics").innerHTML = [
           metricCardMarkup(compactNumber(qrOpens), "Attributed deal opens"),
           metricCardMarkup(compactNumber(qrRedeemed), "Cashier-tap redemptions")
         ].join("");
-        document.getElementById("dancerCommissionActivity").innerHTML = liveDancerDeals?.recentCommissions?.length
-          ? liveDancerDeals.recentCommissions.slice(0, 4).map(dancerCommissionActivityMarkup).join("")
-          : `<article class="rank-event stable"><span class="rank-event-icon">$</span><span><strong>No Club Deal commission activity yet</strong><p>When guests choose your attributed deal and tap the cashier sticker, the commission and venue will show here.</p></span></article>`;
         document.getElementById("dancerSocialSummary").textContent = totalSocialClicks
           ? `${bestSocial.name} is your top-performing link this month.`
           : "No social link clicks yet. Instagram, TikTok, Snapchat, OnlyFans, and X clicks will appear here.";
@@ -258,7 +247,7 @@
           : `<article class="rank-event stable"><span class="rank-event-icon">!</span><span><strong>No ranking milestones yet</strong><p>Real ranking alerts will appear after your profile earns Top 10, moves up 3+ spots, or reaches #1.</p></span></article>`;
       } else if (approved) {
         document.getElementById("dancerValueMessage").textContent =
-          "No live analytics yet. Real profile views, schedule views, followers, social clicks, notifications, direction requests, and Club Deal commissions will appear here after guests interact with your profile.";
+          "No live analytics yet. Real profile views, schedule views, followers, social clicks, notifications, direction requests, and Club Deal activity will appear here after guests interact with your profile.";
         document.getElementById("dancerRankMetrics").innerHTML = [
           metricCardMarkup("No rank yet", `${city} rank`),
           metricCardMarkup("No change", "Rank change this week"),
@@ -293,21 +282,12 @@
         ].join("");
         const qrOpens = liveDancerDeals?.qrOpens || 0;
         const qrRedeemed = liveDancerDeals?.redeemed || 0;
-        const earnedCommissionCents = liveDancerDeals?.earnedCommissionCents || 0;
-        const pendingCommissionCents = liveDancerDeals?.pendingCommissionCents || 0;
-        document.getElementById("dancerCommissionSummary").textContent =
-          qrOpens || qrRedeemed || earnedCommissionCents || pendingCommissionCents
-            ? `Cashier taps generated ${compactNumber(qrRedeemed)} redeemed deal${qrRedeemed === 1 ? "" : "s"}, ${moneyFromCents(earnedCommissionCents)} earned, and ${moneyFromCents(pendingCommissionCents)} pending.`
-            : "Club Deal commission tracking is ready. Earnings appear here when guests select your attributed deal and tap the cashier sticker.";
-        document.getElementById("dancerCommissionMetrics").innerHTML = [
-          metricCardMarkup(moneyFromCents(earnedCommissionCents), "Earned commissions"),
-          metricCardMarkup(moneyFromCents(pendingCommissionCents), "Pending commissions"),
+        document.getElementById("dancerDealSummary").textContent =
+          qrRedeemed ? "Cashier taps generated " + compactNumber(qrRedeemed) + " redeemed deals." : "Verified Club Deal activity appears here after guests interact with your profile.";
+        document.getElementById("dancerDealMetrics").innerHTML = [
           metricCardMarkup(compactNumber(qrOpens), "Attributed deal opens"),
-          metricCardMarkup(compactNumber(qrRedeemed), "Redeemed QR deals")
+          metricCardMarkup(compactNumber(qrRedeemed), "Cashier-tap redemptions")
         ].join("");
-        document.getElementById("dancerCommissionActivity").innerHTML = liveDancerDeals?.recentCommissions?.length
-          ? liveDancerDeals.recentCommissions.slice(0, 4).map(dancerCommissionActivityMarkup).join("")
-          : `<article class="rank-event stable"><span class="rank-event-icon">$</span><span><strong>No Club Deal commission activity yet</strong><p>When guests select your attributed deal and redeem it with the cashier sticker, the commission and venue will show here.</p></span></article>`;
         document.getElementById("dancerSocialSummary").textContent = "No social link clicks yet. Instagram, TikTok, Snapchat, OnlyFans, and X clicks will appear here.";
         document.getElementById("dancerSocialMetrics").innerHTML = [
           metricCardMarkup("0", "Total social clicks"),
@@ -369,15 +349,8 @@
           "Direction requests",
           "Average views by club"
         ]);
-        document.getElementById("dancerCommissionSummary").textContent = "Club Deals stay visible. Dancer commissions start with redemptions after your payout account is verified; earlier redemptions do not earn back pay.";
-        document.getElementById("dancerCommissionMetrics").innerHTML = lockedMetricCards([
-          "Earned commissions",
-          "Pending commissions",
-          "Attributed deal opens",
-          "Cashier-tap redemptions"
-        ]);
-        document.getElementById("dancerCommissionActivity").innerHTML =
-          `<article class="rank-event stable"><span class="rank-event-icon">$</span><span><strong>Club Deal commissions locked</strong><p>Commission activity appears here after approval and cashier-tap redemptions.</p></span></article>`;
+        document.getElementById("dancerDealSummary").textContent = "Club Deal activity unlocks after profile approval.";
+        document.getElementById("dancerDealMetrics").innerHTML = lockedMetricCards(["Attributed deal opens", "Cashier-tap redemptions"]);
         document.getElementById("dancerSocialSummary").textContent = "Social growth unlocks after approval across Instagram, Snapchat, TikTok, OnlyFans, and X.";
         document.getElementById("dancerSocialMetrics").innerHTML = lockedMetricCards([
           "Total social clicks",
@@ -524,11 +497,10 @@
       `;
       const approvalBody = `
         <div class="info-tile"><strong>Approve venue access</strong><div class="meta">Log in to your MyDancr dancer account first. No particular page needs to be open. Unlock your phone and tap the club's MyDancr dressing-room sticker. Open the link if prompted, and log in there if asked.</div></div>
-        <div class="rule-note">This Step 3 tap approves the submitted profile and authorizes the venue. Payout setup is optional and never blocks this tap, check-in, or Working Now.</div>
+        <div class="rule-note">This Step 2 tap approves the submitted profile and authorizes the venue for check-in and Working Now.</div>
       `;
       document.getElementById("setupChecklist").innerHTML = [
         setupStepMarkup("profile", "Create & review profile", `${profileBody}${reviewBody}`),
-        setupStepMarkup("payout", "Set up commission payouts (optional)", dancerPayoutSetupBodyMarkup()),
         setupStepMarkup("approval", "Confirm venue affiliation", approvalBody)
       ].join("");
       if (!approvedProfileVideoWorkspace && !approvedProfileVideoLoading && approvedProfileVideoStatusTone !== "error") void loadApprovedProfileVideos();

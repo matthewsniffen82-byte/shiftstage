@@ -196,27 +196,6 @@
       openUnifiedDashboard("customer");
     }
 
-    function dancerPayoutSetupStorageKey() {
-      const userKey = authSession?.user?.id || normalizeAccountEmail(authSession?.account?.email) || "dancer";
-      return `mydancr:dancer-payout-setup-later:${userKey}`;
-    }
-
-    function dancerPayoutSetupSkipped() {
-      try {
-        return localStorage.getItem(dancerPayoutSetupStorageKey()) === "true";
-      } catch (error) {
-        return false;
-      }
-    }
-
-    function dancerNatsAccountStatus() {
-      return String(liveDancerFinance?.natsAffiliateAccount?.status || "").toLowerCase();
-    }
-
-    function dancerPayoutStepComplete() {
-      return ["requested", "active"].includes(dancerNatsAccountStatus()) || dancerPayoutSetupSkipped();
-    }
-
     function dancerProfileMediaReady() {
       const profile = activeDancerProfile();
       const avatarSaved = Boolean(profile?.avatarStoragePath || profile?.avatar_storage_path);
@@ -224,25 +203,23 @@
     }
 
     function setupOrder() {
-      return ["profile", "payout", "approval"];
+      return ["profile", "approval"];
     }
 
     function isSavedSetupStepComplete(step) {
       if (step === "profile") return dancerProfileMediaReady() && Boolean(dancerSetup.review);
-      if (step === "payout") return dancerPayoutStepComplete();
       return Boolean(dancerSetup[step]);
     }
 
     function firstUnsavedSetupRequirement(step) {
       const index = setupOrder().indexOf(step);
       if (index < 0) return null;
-      return setupOrder().slice(0, index).find((requiredStep) => requiredStep !== "payout" && !isSavedSetupStepComplete(requiredStep)) || null;
+      return setupOrder().slice(0, index).find((requiredStep) => !isSavedSetupStepComplete(requiredStep)) || null;
     }
 
     function setupStepDisplayName(step) {
       const labels = {
         profile: "profile, media, and submission",
-        payout: "optional commission payouts",
         approval: "venue affiliation"
       };
       return labels[step] || "previous step";

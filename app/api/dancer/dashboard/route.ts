@@ -4,7 +4,6 @@ import { getAccountByUserId } from "@/src/lib/dancr/auth";
 import { broadcastFollowedClubRosterAddition } from "@/src/lib/dancr/customer-follow-notifications";
 import { getDancerDealMetrics } from "@/src/lib/dancr/deals";
 import { getOwnDancerDashboardAnalytics } from "@/src/lib/dancr/dancer";
-import { getDancerFinance } from "@/src/lib/dancr/finance-reporting";
 import { finalizePendingDancerNfcEnrollment, getDancerNfcDashboardState } from "@/src/lib/dancr/nfc";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
@@ -37,10 +36,9 @@ export async function GET(request: Request) {
         console.warn("CUSTOMER_ROSTER_NOTIFICATION_FAILED", safeErrorMetadata(notificationError));
       });
     }
-    const [analytics, deals, finance, nfc] = await Promise.all([
+    const [analytics, deals, nfc] = await Promise.all([
       getOwnDancerDashboardAnalytics(client, user.id, admin),
       getDancerDealMetrics(client, user.id, admin),
-      getDancerFinance(admin, user.id),
       getDancerNfcDashboardState(admin, user.id),
     ]);
 
@@ -48,7 +46,6 @@ export async function GET(request: Request) {
       ok: true,
       analytics,
       deals,
-      finance,
       nfc: {
         ...nfc,
         enrollment: nfc.enrollment || nfcEnrollment || null,

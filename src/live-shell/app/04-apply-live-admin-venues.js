@@ -900,7 +900,7 @@
         renderDancerSetupWhenEditorIdle();
       } catch (error) {
         liveDancerDeals = null;
-        reportOptionalDancerLoadError(error, "Could not load Club Deal commissions", options);
+        reportOptionalDancerLoadError(error, "Could not load Club Deal activity", options);
       }
     }
 
@@ -925,18 +925,6 @@
       } catch (error) {
         liveDancerBilling = null;
         reportOptionalDancerLoadError(error, "Could not load billing status", options);
-      }
-    }
-
-    async function loadLiveDancerFinance(options = {}) {
-      if (!isDancerSession()) return;
-      try {
-        const data = await getAuthenticatedJson("/api/dancer/finance");
-        liveDancerFinance = data.finance || null;
-        renderDancerSetupWhenEditorIdle();
-      } catch (error) {
-        liveDancerFinance = null;
-        reportOptionalDancerLoadError(error, "Could not load payout setup", options);
       }
     }
 

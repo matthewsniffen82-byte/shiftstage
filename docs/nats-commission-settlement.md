@@ -1,5 +1,15 @@
 # NATS commission settlement
 
+## Current policy — September 15, 2026
+
+The dancer commission program has ended. Dancer onboarding, account linking, commission accrual, exports and payout initiation are retired. NATS remains available only for the separate sales-agent program. Do not change the shared NATS environment variables to retire dancers; doing so would also affect agents.
+
+`20260915210000_retire_dancer_commissions.sql` removes the dancer allocation from future cashier redemptions, blocks new dancer earnings/enrollment/exports/payout batches, and revokes application access to dancer dispatch RPCs. It preserves every existing financial record, cashier attribution, venue referral fee and sales-agent allocation. Historical earnings and statements remain available for authorized accounting review; the retirement does not cancel any previously earned obligation or automatically move money.
+
+The application returns HTTP 410 for retired dancer payout actions, including requests from old browser tabs. New dancer signup has two steps: create the profile, then complete the dressing-room tap. The notes below describe the historical program and must not be used to re-enable it.
+
+## Historical implementation
+
 MyDancr remains the authoritative system for club receivables, cashier-NFC attribution, dancer tiers, agent hierarchy, and commission amounts. NATS is the independent affiliate account, tax-compliance, settlement, and payout-audit layer for dancers and sales agents.
 
 Clubs are never NATS payees. Clubs owe MyDancr the agreed referral fee. A verified cashier NFC redemption creates the receivable and immutable dancer/agent allocation. Agent earnings stay `pending_venue_payment` until the corresponding club invoice is paid; only then can they enter the NATS export queue.

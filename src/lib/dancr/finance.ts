@@ -1,6 +1,6 @@
 export {
   runClubInvoiceAutomation,
-  runDancerPayoutAutomation,
+  runAgentCommissionAutomation,
   runQrFinanceAutomation,
   type FinanceRunResult,
 } from "./finance-automation";

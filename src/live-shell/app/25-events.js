@@ -292,19 +292,6 @@
         submitDancerProfileForReview(submitReviewButton);
         return;
       }
-      const payoutSubmitButton = event.target.closest("[data-dancer-payout-submit]");
-      if (payoutSubmitButton) {
-        submitDancerNatsAccount(payoutSubmitButton);
-        return;
-      }
-      if (event.target.closest("[data-dancer-payout-skip]")) {
-        skipDancerPayoutSetup();
-        return;
-      }
-      if (event.target.closest("[data-dancer-payout-continue]")) {
-        continueDancerOnboardingToNfc("Payout setup recorded. Continue with the official club tap.");
-        return;
-      }
       const previewProfileButton = event.target.closest("[data-preview-profile]");
       if (previewProfileButton) {
         openDancerProfilePreview();

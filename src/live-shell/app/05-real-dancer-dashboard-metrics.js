@@ -940,13 +940,6 @@
       return row?.name || row?.deal_title || fallback;
     }
 
-    function dancerCommissionActivityMarkup(item) {
-      const deal = escapeHtml(readJoinedName(item?.club_deals, "Profile QR deal"));
-      const venue = escapeHtml(readJoinedName(item?.venues, "Venue"));
-      const amount = moneyFromCents(item?.amount_cents);
-      const status = escapeHtml(String(item?.status || "pending").replace(/_/g, " "));
-      return `<article class="rank-event stable"><span class="rank-event-icon">$</span><span><strong>${amount} ${status}</strong><p>${deal} at ${venue}</p></span></article>`;
-    }
 
     function metricPhraseMarkup(value) {
       const text = String(value || "");

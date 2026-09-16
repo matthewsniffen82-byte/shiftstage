@@ -15,7 +15,7 @@ function load(path,dependencies={}){
   require(name){if(Object.hasOwn(dependencies,name))return dependencies[name];return new Proxy({},{get(_t,key){if(key==='__esModule')return false;return()=>assert.fail('Unexpected dependency '+name+'.'+String(key));}});},
  });return exports;
 }
-function clients({ownerError,missing=false,stopPrivate,profileFields='id'}={}){
+function clients({ownerError,missing=false,stopPrivate,profileFields='id',monthlyCount=0,monthlyError=null}={}){
  const ownerCalls=[],privateCalls=[];
  const server={from(table){assert.equal(table,'dancer_profiles','Only the own-profile lookup may use the server');const call={table,methods:[]};ownerCalls.push(call);const q={
   select(fields){assert.equal(fields,profileFields);call.methods.push(['select',fields]);return q;},
@@ -23,13 +23,28 @@ function clients({ownerError,missing=false,stopPrivate,profileFields='id'}={}){
   async maybeSingle(){return {data:missing?null:{id:dancer},error:ownerError||null};},
  };return q;}};
  const request={from(table){assert.notEqual(table,'dancer_profiles','The request role cannot filter the private account identifier');if(stopPrivate)throw stopPrivate;const call={table,methods:[]};privateCalls.push(call);const q=new Proxy({},{get(_t,key){
-  if(key==='then')return(ok,bad)=>Promise.resolve({data:call.methods.some(([m])=>m==='maybeSingle')?null:[],count:0,error:null}).then(ok,bad);
+  if(key==='then')return(ok,bad)=>{const monthly=table==='qr_redemptions'&&call.methods.some(([m,,options])=>m==='select'&&options?.head===true);return Promise.resolve({data:call.methods.some(([m])=>m==='maybeSingle')?null:[],count:monthly?monthlyCount:0,error:monthly?monthlyError:null}).then(ok,bad);};
   return(...args)=>{assert.ok(!['insert','upsert','update','delete'].includes(key),'Read workflows must not mutate records');call.methods.push([key,...args]);return q;};
  }});return q;}};
  return {server,request,ownerCalls,privateCalls};
 }
 const library=load('src/lib/dancr/dancer.ts'),deals=load('src/lib/dancr/deals.ts',{'./commission-policy':commissionPolicy});
 const readers=['getOwnDancerDashboardAnalytics','getOwnDancerWeeklyReport','getDancerRankingEvents','getOwnDancerApprovalReviews'];
+test('monthly Club Deal activity remains accurate beyond the recent list without commission records',async()=>{
+ const h=clients({monthlyCount:142});
+ const result=await deals.getDancerDealMetrics(h.request,owner,h.server);
+ assert.equal(result.successfulRedemptionsThisMonth,142);
+ assert.equal(result.recentRedemptions.length,0);
+ assert.ok(h.privateCalls.every(call=>call.table!=='commission_events'));
+ const monthly=h.privateCalls.find(call=>call.methods.some(([m,,options])=>m==='select'&&options?.head===true));
+ assert.ok(monthly.methods.some(([m,field,value])=>m==='eq'&&field==='status'&&value==='redeemed'));
+ assert.ok(monthly.methods.some(([m,field,value])=>m==='gte'&&field==='redeemed_at'&&value.endsWith('-01T00:00:00.000Z')));
+ assert.ok(!monthly.methods.some(([m])=>m==='limit'));
+});
+test('monthly Club Deal count errors are surfaced instead of reporting zero',async()=>{
+ const error={code:'08006'},h=clients({monthlyError:error});
+ await assert.rejects(deals.getDancerDealMetrics(h.request,owner,h.server),e=>e===error);
+});
 for(const name of [...readers,'getDancerDealMetrics']){
  const fn=name==='getDancerDealMetrics'?deals[name]:library[name];
  test(name+' resolves only the authenticated owner through the server and retains request-role data reads',async()=>{

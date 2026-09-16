@@ -117,7 +117,7 @@
     function reviewStepLabel(step) {
       if (step === "profile") return "Step 1 profile";
       if (step === "photos") return "Step 1 photos";
-      return "Step 3 venue tap";
+      return "Step 2 venue tap";
     }
 
     function hasRejectedDancerReviews() {

@@ -568,7 +568,6 @@ export default function DashboardClient({
                 accountState={state.account?.accountState}
                 analytics={state.analytics}
                 deals={state.deals}
-                finance={state.finance}
                 affiliations={state.affiliations || []}
                 nfc={state.nfc}
                 profile={state.profile}

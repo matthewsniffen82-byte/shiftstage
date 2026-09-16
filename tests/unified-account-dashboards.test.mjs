@@ -658,20 +658,8 @@ test("dancer payout actions use the refresh-aware role boundary", async () => {
   assert.doesNotMatch(dashboard, /fetch\("\/api\/dancer\/finance"/);
 });
 
-test("dancer payout mutations prevent duplicate and stale money actions", () => {
-  const payoutPanel = dashboard.match(/function DancerPayoutPanel[\s\S]*?async function downloadDashboardBlob/)?.[0] || "";
-  assert.match(payoutPanel, /const mountedRef = useRef\(false\);/);
-  assert.match(payoutPanel, /const actionSequenceRef = useRef\(0\);/);
-  assert.match(payoutPanel, /const actionAbortRef = useRef<AbortController \| null>\(null\);/);
-  assert.match(payoutPanel, /const actionInFlightRef = useRef\(false\);/);
-  assert.match(payoutPanel, /if \(!mountedRef\.current \|\| actionInFlightRef\.current\) return null;/);
-  assert.equal((payoutPanel.match(/signal: controller\.signal/g) || []).length, 3);
-  assert.equal((payoutPanel.match(/if \(!isCurrentDancerPayoutAction\(requestId, controller\)\) return;/g) || []).length, 3);
-  assert.match(payoutPanel, /mountedRef\.current = false;[\s\S]*?actionSequenceRef\.current \+= 1;[\s\S]*?actionAbortRef\.current\?\.abort\(\)/);
-  assert.match(payoutPanel, /beginDancerPayoutAction\(action === "cash_out"[\s\S]*?"idempotency-key": crypto\.randomUUID\(\)/);
-  assert.match(payoutPanel, /if \(!isCurrentDancerPayoutAction\(requestId, controller\)\) return;[\s\S]*?window\.location\.assign\(data\.onboarding\.url\)/);
-  assert.match(payoutPanel, /disabled=\{isWorking \|\| !natsConfigured\}/);
-  assert.match(payoutPanel, /disabled=\{isWorking \|\| !payoutsEnabled\}/);
+test("the retired dancer payout panel exposes no money actions", () => {
+  assert.doesNotMatch(dashboard, /function DancerPayoutPanel|action: "request_nats_link"/);
 });
 
 test("dancer and venue statements refresh their role-aware sessions before downloading", async () => {
@@ -778,12 +766,10 @@ test("dancer and venue statements refresh their role-aware sessions before downl
 
   assert.match(dashboardSession, /function requestDancerFinanceStatement/);
   assert.match(dashboardSession, /function requestVenueFinanceStatement/);
-  assert.match(dashboard, /requestDancerFinanceStatement/);
   assert.match(dashboard, /requestVenueFinanceStatement/);
   assert.doesNotMatch(dashboard, /function downloadDashboardFile|fetch\(path, \{ headers: \{ authorization/);
 
   const venueFinance = dashboard.match(/function VenueFinanceSummary[\s\S]*?(?=\nfunction CustomerPreferencesPanel)/)?.[0] || "";
-  const payoutPanel = dashboard.match(/function DancerPayoutPanel[\s\S]*?async function downloadDashboardBlob/)?.[0] || "";
   assert.match(dashboardSession, /signal\?: AbortSignal/);
   assert.match(dashboardSession, /const signalOptions = options\.signal \? \{ signal: options\.signal \} : \{\}/);
   assert.match(venueFinance, /const downloadInFlightRef = useRef\(false\);/);
@@ -791,9 +777,6 @@ test("dancer and venue statements refresh their role-aware sessions before downl
   assert.match(venueFinance, /requestVenueFinanceStatement\(currentMonth, \{ signal: controller\.signal \}\)/);
   assert.match(venueFinance, /disabled=\{isDownloading\}/);
   assert.match(venueFinance, /mountedRef\.current = false;[\s\S]*?downloadSequenceRef\.current \+= 1;[\s\S]*?downloadAbortRef\.current\?\.abort\(\)/);
-  assert.match(payoutPanel, /beginDancerPayoutAction\("Preparing statement\.\.\."\)/);
-  assert.match(payoutPanel, /requestDancerFinanceStatement\(currentMonth, \{ signal: controller\.signal \}\)/);
-  assert.match(payoutPanel, /className="earnings-statement-button" disabled=\{isWorking\}/);
 });
 
 test("dancer and venue affiliation actions share role-aware refresh boundaries", async () => {

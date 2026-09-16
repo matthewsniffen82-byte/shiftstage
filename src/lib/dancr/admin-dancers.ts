@@ -15,7 +15,6 @@ export const ADMIN_DANCER_STATUSES = [
 ] as const;
 export const ADMIN_DANCER_SCHEDULES = ["all", "working_now", "upcoming", "no_schedule"] as const;
 export const ADMIN_DANCER_MODERATION = ["all", "pending", "clear"] as const;
-export const ADMIN_DANCER_COMMISSIONS = ["all", "active", "not_active"] as const;
 export const ADMIN_DANCER_SOURCES = ["all", "demo", "standard"] as const;
 export const ADMIN_DANCER_SORTS = ["updated", "created", "name", "status"] as const;
 
@@ -24,7 +23,6 @@ export type AdminDancerRosterQuery = {
   status: typeof ADMIN_DANCER_STATUSES[number];
   schedule: typeof ADMIN_DANCER_SCHEDULES[number];
   moderation: typeof ADMIN_DANCER_MODERATION[number];
-  commission: typeof ADMIN_DANCER_COMMISSIONS[number];
   source: typeof ADMIN_DANCER_SOURCES[number];
   city: string;
   venueId: string;
@@ -50,7 +48,6 @@ export type AdminDancerRosterItem = {
   schedule: { state: "working_now" | "upcoming" | "no_schedule"; startsAt: string | null; endsAt: string | null; source: string | null };
   venue: { id: string; name: string; slug: string } | null;
   affiliationCount: number;
-  commissionStatus: "active" | "requested" | "disabled" | "not_linked";
   openReports: number;
   isDemo: boolean;
   createdAt: string;
@@ -77,7 +74,6 @@ export function parseAdminDancerRosterQuery(url: string): AdminDancerRosterQuery
     status: enumValue(params.get("status"), ADMIN_DANCER_STATUSES, "all"),
     schedule: enumValue(params.get("schedule"), ADMIN_DANCER_SCHEDULES, "all"),
     moderation: enumValue(params.get("moderation"), ADMIN_DANCER_MODERATION, "all"),
-    commission: enumValue(params.get("commission"), ADMIN_DANCER_COMMISSIONS, "all"),
     source: enumValue(params.get("source"), ADMIN_DANCER_SOURCES, "all"),
     city: cleanText(params.get("city"), 80),
     venueId: cleanUuid(params.get("venueId")),
@@ -93,25 +89,22 @@ export async function getAdminDancerRoster(
 ): Promise<AdminDancerRosterResult> {
   const db = client as any;
   const now = new Date().toISOString();
-  const [futureShiftResult, affiliationResult, videoResult, affiliateResult, cityResult, venueResult] = await Promise.all([
+  const [futureShiftResult, affiliationResult, videoResult, cityResult, venueResult] = await Promise.all([
     db.from("shifts").select("dancer_id, venue_id, starts_at, ends_at, status, shift_source, updated_at").eq("status", "posted").gt("ends_at", now),
     db.from("venue_dancer_affiliations").select("dancer_id, venue_id, status, updated_at").eq("status", "active"),
     db.from("mydancr_tv_videos").select("dancer_id, status, updated_at"),
-    db.from("nats_affiliate_accounts").select("dancer_id, status, updated_at"),
     db.from("dancer_profiles").select("city").order("city", { ascending: true }).limit(5000),
     db.from("venues").select("id, name, city").eq("is_active", true).order("city").order("name"),
   ]);
   throwIfError(futureShiftResult.error);
   throwIfError(affiliationResult.error);
   throwIfError(videoResult.error);
-  throwIfError(affiliateResult.error);
   throwIfError(cityResult.error);
   throwIfError(venueResult.error);
 
   const futureShifts = futureShiftResult.data || [];
   const affiliations = affiliationResult.data || [];
   const videos = videoResult.data || [];
-  const affiliates = affiliateResult.data || [];
   let requiredIds: Set<string> | null = null;
   const excludedIds = new Set<string>();
 
@@ -134,12 +127,6 @@ export async function getAdminDancerRoster(
     );
     requiredIds = intersectRequired(requiredIds, venueIds);
   }
-
-  const activeAffiliateIds = new Set<string>(
-    affiliates.filter((row: any) => row.status === "active").map((row: any) => row.dancer_id),
-  );
-  if (input.commission === "active") requiredIds = intersectRequired(requiredIds, activeAffiliateIds);
-  if (input.commission === "not_active") activeAffiliateIds.forEach((id) => excludedIds.add(id));
 
   const demoIds = new Set<string>(
     futureShifts.filter((row: any) => row.shift_source === "demo_locked").map((row: any) => row.dancer_id),
@@ -200,7 +187,7 @@ export async function getAdminDancerRoster(
   throwIfError(error);
 
   const pageProfiles = profiles || [];
-  const items = await hydrateRosterItems(client, pageProfiles, futureShifts, affiliations, videos, affiliates, demoIds);
+  const items = await hydrateRosterItems(client, pageProfiles, futureShifts, affiliations, videos, demoIds);
   const total = Number(count || 0);
   return {
     items,
@@ -215,11 +202,10 @@ export async function getAdminDancerRoster(
 export async function getAdminDancerOperationalDetail(client: DancrClient, dancerId: string) {
   const db = client as any;
   const now = new Date().toISOString();
-  const [affiliations, shifts, videos, affiliate, commissions, reports, actions, followers, views, directions] = await Promise.all([
+  const [affiliations, shifts, videos, commissions, reports, actions, followers, views, directions] = await Promise.all([
     db.from("venue_dancer_affiliations").select("id, status, approved_at, revoked_at, revoke_reason, venue_id, venues(id, name, slug, city)").eq("dancer_id", dancerId).order("updated_at", { ascending: false }),
     db.from("shifts").select("id, venue_id, starts_at, ends_at, status, shift_source, checked_in_at, checked_out_at, venues(id, name, slug)").eq("dancer_id", dancerId).order("starts_at", { ascending: false }).limit(50),
     db.from("mydancr_tv_videos").select("id, status, venue_id, duration_seconds, published_at, created_at, updated_at").eq("dancer_id", dancerId).order("created_at", { ascending: false }).limit(50),
-    db.from("nats_affiliate_accounts").select("status, username, requested_at, activated_at, disabled_at, last_error").eq("dancer_id", dancerId).maybeSingle(),
     db.from("commission_events").select("id, status, amount_cents, currency, created_at, payable_at, paid_at").eq("dancer_id", dancerId).order("created_at", { ascending: false }).limit(50),
     db.from("content_reports").select("id, reason, details, status, created_at, reviewed_at").eq("target_id", dancerId).order("created_at", { ascending: false }).limit(50),
     db.from("admin_actions").select("id, action, notes, created_at, admin_id").eq("target_id", dancerId).order("created_at", { ascending: false }).limit(50),
@@ -228,13 +214,11 @@ export async function getAdminDancerOperationalDetail(client: DancrClient, dance
     db.from("direction_requests").select("id", { count: "exact", head: true }).eq("dancer_id", dancerId),
   ]);
   [affiliations, shifts, videos, commissions, reports, actions, followers, views, directions].forEach((result) => throwIfError(result.error));
-  if (affiliate.error && affiliate.error.code !== "PGRST116") throw affiliate.error;
 
   return {
     affiliations: affiliations.data || [],
     shifts: shifts.data || [],
     videos: videos.data || [],
-    natsAccount: affiliate.data || null,
     commissions: commissions.data || [],
     reports: reports.data || [],
     accountHistory: actions.data || [],
@@ -267,7 +251,7 @@ export async function updateAdminDancerLifecycle(
   return state;
 }
 
-async function hydrateRosterItems(client: DancrClient, profiles: any[], futureShifts: any[], allAffiliations: any[], allVideos: any[], allAffiliates: any[], demoIds: Set<string>) {
+async function hydrateRosterItems(client: DancrClient, profiles: any[], futureShifts: any[], allAffiliations: any[], allVideos: any[], demoIds: Set<string>) {
   if (!profiles.length) return [];
   const db = client as any;
   const ids = profiles.map((row) => row.id);
@@ -297,7 +281,6 @@ async function hydrateRosterItems(client: DancrClient, profiles: any[], futureSh
     const venueId = next?.venue_id || affiliation?.venue_id || "";
     const venue = venueById.get(venueId) as any;
     const dancerVideos = allVideos.filter((row) => row.dancer_id === profile.id);
-    const affiliate = allAffiliates.find((row) => row.dancer_id === profile.id);
     const avatarPath = profile.avatar_storage_path || photosForDancer.find((row: any) => row.is_primary)?.storage_path || photosForDancer[0]?.storage_path;
     const avatar = responsivePublicImage(client as any, "dancer-photos", avatarPath, { preview: true });
     const activityDates = [profile.updated_at, account?.updated_at, next?.updated_at, affiliation?.updated_at, ...dancerVideos.map((row) => row.updated_at)].filter(Boolean).sort().reverse();
@@ -323,7 +306,6 @@ async function hydrateRosterItems(client: DancrClient, profiles: any[], futureSh
       schedule: { state: working ? "working_now" : next ? "upcoming" : "no_schedule", startsAt: next?.starts_at || null, endsAt: next?.ends_at || null, source: next?.shift_source || null },
       venue: venue ? { id: venue.id, name: venue.name, slug: venue.slug } : null,
       affiliationCount: affiliations.length,
-      commissionStatus: affiliate?.status || "not_linked",
       openReports: (reports.data || []).filter((row: any) => row.target_id === profile.id).length,
       isDemo: demoIds.has(profile.id),
       createdAt: profile.created_at,

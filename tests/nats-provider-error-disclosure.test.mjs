@@ -19,7 +19,7 @@ function module(name, dependencies, globals = {}) {
   return exports;
 }
 
-function harness({agent=false, status=200, payload={result:'Successfully added manual invoice'}, contentType='application/json', networkFailure=false, bodyFailure=false, completion='success', failureWrite=false, selected=true, configured=true, loginId=123, sequence=null, responseFactory=null, signal=null}={}) {
+function harness({agent=true, status=200, payload={result:'Successfully added manual invoice'}, contentType='application/json', networkFailure=false, bodyFailure=false, completion='success', failureWrite=false, selected=true, configured=true, loginId=123, sequence=null, responseFactory=null, signal=null}={}) {
   const requests = [], calls = [];
   const nats = module('nats.ts', {'server-only':{}}, {
     ...(signal ? {AbortSignal:{timeout: milliseconds => { assert.equal(milliseconds, 15_000); return signal; }}} : {}),
@@ -131,7 +131,7 @@ const cases = [
   ['malformed response', {payload:'<html>'+privateText+'</html>'}, 'reconciliation_required'],
   ['untrusted content type', {status:400,payload:{error:privateText},contentType:'application/json; note='+privateText}, 'failed'],
 ];
-for (const agent of [false, true]) {
+for (const agent of [true]) {
   for (const [name, options, status] of cases) for (const failureWrite of [false, true]) {
     test((agent?'agent':'dancer')+' export diagnostics: '+name+' failure receipt '+!failureWrite, async () => {
       const h = harness({agent,...options,failureWrite}), result = await h.run();

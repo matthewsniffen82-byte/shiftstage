@@ -457,7 +457,6 @@
       profile: false,
       photos: false,
       review: false,
-      payout: false,
       approval: false,
       shift: false
     };
@@ -510,7 +509,6 @@
     let liveDancerDeals = null;
     let liveDancerWeeklyReport = null;
     let liveDancerBilling = null;
-    let liveDancerFinance = null;
     let liveDancerRankingEvents = [];
     let liveDancerReviews = [];
     let liveAdminSubscriptions = [];

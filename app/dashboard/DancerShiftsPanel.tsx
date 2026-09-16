@@ -150,7 +150,7 @@ function DancerShiftPanel() {
     setEditVenueId(String(shift.venue_id || ""));
     setEditStartsAt(toDateTimeLocalValue(shift.starts_at));
     setEditEndsAt(toDateTimeLocalValue(shift.ends_at));
-    setStatus("Edit the shift hours, then save. Exact times stay private and are used for check-in and commission eligibility.");
+    setStatus("Edit the shift hours, then save. Exact times stay private and are used for check-in.");
   }
 
   function stopEditingShift() {
@@ -253,7 +253,7 @@ function DancerShiftPanel() {
         signal: controller.signal,
       });
       if (!isCurrentShiftAction(requestId, controller)) return;
-      setCheckInStatus("Club check-in ended. Club Deal commission tracking is stopped.");
+      setCheckInStatus("Club check-in ended. Your Working Now status has ended.");
       setCheckInTone("success");
       setStatus("Checked out. This shift is no longer Working Now.");
       await loadShifts();

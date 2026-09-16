@@ -24,7 +24,7 @@ test("admin finance transport authenticates before delegating one parsed request
 
 test("admin finance mutations use the refresh-aware role-isolated request boundary", () => {
   assert.match(adminClient, /requestAdminJson,/);
-  assert.equal((adminClient.match(/requestAdminJson\("\/api\/admin\/finance"/g) || []).length, 6);
+  assert.equal((adminClient.match(/requestAdminJson\("\/api\/admin\/finance"/g) || []).length, 3);
   assert.doesNotMatch(adminClient, /fetch\("\/api\/admin\/finance"/);
   assert.doesNotMatch(adminClient, /authorization: `Bearer \$\{token\}`[^\n]*[\s\S]{0,140}record_manual_payment/);
   assert.match(route, /NextResponse\.json\(\{ ok: true, finance, session: session \|\| null \}\)/);
@@ -40,8 +40,8 @@ test("admin finance mutations are abortable and serialized across every command"
   assert.match(manager, /if \(!mountedRef\.current \|\| actionInFlightRef\.current\) return null;/);
   assert.match(manager, /function isCurrentFinanceAction/);
   assert.match(manager, /function finishFinanceAction/);
-  assert.equal((manager.match(/signal: request\.controller\.signal/g) || []).length, 6);
-  assert.equal((manager.match(/const request = beginFinanceAction\(\)/g) || []).length, 6);
+  assert.equal((manager.match(/signal: request\.controller\.signal/g) || []).length, 3);
+  assert.equal((manager.match(/const request = beginFinanceAction\(\)/g) || []).length, 3);
 });
 
 test("the dispatcher preserves every supported production finance action", () => {
@@ -85,21 +85,15 @@ test("the dispatcher preserves validation limits and explicit client errors", ()
 
 test("successful writes refresh finance without letting a failed read misreport the mutation", () => {
   assert.match(dispatch, /from "\.\/finance-admin-result"/);
-  assert.equal((dispatch.match(/successfulFinanceMutation\(\(\) => getAdminFinanceOverview\(client\)/g) || []).length, 10);
+  assert.equal((dispatch.match(/successfulFinanceMutation\(\(\) => getAdminFinanceOverview\(client\)/g) || []).length, 3);
   assert.match(result, /financeRefreshRequired: true/);
   assert.match(result, /ADMIN_FINANCE_POST_WRITE_REFRESH_FAILED/);
   assert.doesNotMatch(dispatch, /finance: await getAdminFinanceOverview\(client\)/);
   assert.match(adminClient, /function applyFinanceMutationResponse/);
   assert.match(adminClient, /data\.financeRefreshRequired === true/);
   assert.match(adminClient, /finance && typeof finance === "object" && !Array\.isArray\(finance\)/);
-  assert.equal((adminClient.match(/applyFinanceMutationResponse\(data, onFinanceChange/g) || []).length, 6);
+  assert.equal((adminClient.match(/applyFinanceMutationResponse\(data, onFinanceChange/g) || []).length, 3);
   assert.match(dispatch, /recordManualClubInvoicePayment\(client, command\)/);
-  assert.match(dispatch, /updatePayoutSettings\(client, adminUserId, command\)/);
   assert.match(dispatch, /manageDancerEarning\(client, adminUserId, command\)/);
-  assert.match(dispatch, /retryDancerPayout\(client, adminUserId, command\)/);
-  assert.match(dispatch, /verifyNatsAffiliateLink\(client, adminUserId, command\.dancerId, command\.reason\)/);
-  assert.match(dispatch, /disableNatsAffiliateLink\(client, adminUserId, command\.dancerId, command\.reason\)/);
-  assert.match(dispatch, /retryFailedNatsCommissionExport\(client, adminUserId, command\.exportId, command\.reason\)/);
-  assert.match(dispatch, /reconcileNatsCommissionExport\(client, adminUserId, command\.exportId, command\.resolution, command\.reason\)/);
   assert.doesNotMatch(dispatch, /bitsafe|yoursafe|reconcileBitsafe/i);
 });

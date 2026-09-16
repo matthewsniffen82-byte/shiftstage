@@ -1,7 +1,7 @@
 [
   {
     "name": "PickupDashboardPanel",
-    "file": "CustomerDashboardPanels.tsx"
+    "file": "VenueDashboardPanels.tsx"
   },
   {
     "file": "dashboard-types.ts",
@@ -369,18 +369,6 @@
   },
   {
     "file": "DancerDashboardPanels.tsx",
-    "name": "openDancerPayoutLinking"
-  },
-  {
-    "file": "DancerDashboardPanels.tsx",
-    "name": "dancerNeedsCommissionPayoutSetup"
-  },
-  {
-    "file": "DancerDashboardPanels.tsx",
-    "name": "DancerNatsSignupCallout"
-  },
-  {
-    "file": "DancerDashboardPanels.tsx",
     "name": "DancerPanel"
   },
   {
@@ -406,14 +394,6 @@
   {
     "file": "DancerDashboardPanels.tsx",
     "name": "DancerDealPanel"
-  },
-  {
-    "file": "DancerDashboardPanels.tsx",
-    "name": "DancerPayoutPanel"
-  },
-  {
-    "file": "DancerDashboardPanels.tsx",
-    "name": "dancerFinanceVenueName"
   },
   {
     "file": "DashboardShared.tsx",

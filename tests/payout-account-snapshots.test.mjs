@@ -134,43 +134,12 @@ for(const change of [undefined,{updated_at:'invalid'},{dancer_id:otherId},{payme
     assert.deepEqual(await row(db),before);assert.equal(writes(h).length,0);
   });
 }
-test('owner refresh reads current provider state and preserves the captured account identity',async()=>{
-  const h=harness(db,{current:account(false)});
-  await h.refresh();assert.equal((await row(db)).payout_eligibility,'restricted');
-  assert.equal(writes(h).length,1);
-});
-test('owner refresh cannot overwrite a newer webhook result',async()=>{
-  const h=harness(db,{retrieve:async()=>{await db.query("update public.dancer_payout_accounts set payout_eligibility='restricted',updated_at='2030-01-01' where dancer_id=$1",[dancerId]);return account(true);}});
-  await assert.rejects(h.refresh());
-  assert.equal((await row(db)).payout_eligibility,'restricted');
-});
-test('initial onboarding creates one account and then its link',async()=>{
-  await reset(db,{seed:false});
-  const h=harness(db);
-  assert.equal((await h.onboard()).url,'https://connect.example.test/synthetic');
-  assert.equal(h.calls.filter(c=>c.kind==='provider-create').length,1);
-  assert.equal(h.calls.filter(c=>c.kind==='provider-link').length,1);
-});
-test('onboarding preserves an account created by an overlapping webhook and works on explicit retry',async()=>{
-  await reset(db,{seed:false});
-  const h=harness(db,{create:async()=>{await insertCurrent(db);return account(true);}});
-  await assert.rejects(h.onboard());
-  assert.equal((await row(db)).payout_eligibility,'restricted');
-  assert.equal(h.calls.filter(c=>c.kind==='provider-link').length,0);
-  assert.equal((await h.onboard()).url,'https://connect.example.test/synthetic');
-  assert.equal(h.calls.filter(c=>c.kind==='provider-create').length,1);
-  assert.equal((await row(db)).payout_eligibility,'restricted');
-});
-test('refresh with no stored account performs no provider request',async()=>{
-  await reset(db,{seed:false});
-  const h=harness(db);
-  assert.equal(await h.refresh(),null);assert.equal(writes(h).length,0);
-  assert.equal(h.calls.some(c=>c.kind==='provider-read'),false);
-});
-for(const options of [{enabled:false},{nats:true}]){
-  test('existing payout activation gate '+JSON.stringify(options)+' remains closed',async()=>{
-    const before=await row(db),h=harness(db,options);
-    await assert.rejects(h.onboard());assert.equal(await h.refresh(),null);
-    assert.deepEqual(await row(db),before);assert.equal(h.calls.length,0);
+for (const options of [{}, {enabled:false}, {nats:true}]) {
+  test('retired owner payout actions preserve stored history ' + JSON.stringify(options), async () => {
+    const before = await row(db), h = harness(db, options);
+    await assert.rejects(h.onboard(), /program has ended/);
+    assert.equal(await h.refresh(), null);
+    assert.deepEqual(await row(db), before);
+    assert.equal(h.calls.length, 0);
   });
 }

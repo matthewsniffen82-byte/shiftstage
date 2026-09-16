@@ -62,16 +62,13 @@ test("the NATS ledger is private, non-deletable, and reversal aware", () => {
   assert.match(migration, /when status = 'exported' then 'reconciliation_required' else 'canceled'/);
 });
 
-test("selecting NATS disables MyDancr direct payouts and exposes verified account operations", () => {
-  assert.match(payoutProcessing, /if \(getNatsRuntimeConfig\(\)\.selected\)[\s\S]*settlementProvider: "nats"/);
-  assert.equal((payoutActions.match(/getNatsRuntimeConfig\(\)\.selected/g) || []).length, 3);
-  assert.match(dancerRoute, /body\.action === "request_nats_link"/);
+test("dancer commission integration is retired without changing the agent adapter", () => {
+  assert.match(payoutProcessing, /disabled: true/);
+  assert.match(payoutActions, /program has ended/);
+  assert.match(dancerRoute, /status: 410/);
   assert.match(dancerRoute, /requireActiveDancer\(client, user\.id\)/);
-  assert.match(dancerRoute, /requestNatsAffiliateLink\(createAdminSupabaseClient\(\), user\.id/);
-  assert.match(dancerDashboard, /Submit payout account for verification/);
-  assert.match(dancerDashboard, />Payout history<\/button>/);
-  assert.match(dancerDashboard, /Manage payments and tax forms in your payout portal/);
-  assert.match(adminDashboard, /Verify and activate/);
-  assert.match(adminDashboard, /Confirmed in payout portal/);
-  assert.match(adminDashboard, /Confirmed not exported/);
+  assert.doesNotMatch(dancerDashboard, /Submit payout account for verification|function DancerPayoutPanel/);
+  assert.doesNotMatch(adminDashboard, /verify_nats_affiliate|retry_nats_export/);
+  assert.doesNotMatch(sync, /function syncNatsCommissions|claim_nats_commission_exports/);
+  assert.match(sync, /function syncNatsAgentCommissions/);
 });

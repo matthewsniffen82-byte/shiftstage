@@ -336,7 +336,6 @@
       liveDancerDeals = null;
       liveDancerWeeklyReport = null;
       liveDancerBilling = null;
-      liveDancerFinance = null;
       liveDancerRankingEvents = [];
       liveDancerReviews = [];
       liveCustomerProfile = null;
@@ -507,7 +506,6 @@
       loadLiveDancerDeals();
       loadLiveDancerWeeklyReport();
       loadLiveDancerBilling();
-      loadLiveDancerFinance();
       loadLiveDancerRankingEvents();
       loadLiveDancerReviews();
       loadLiveNotifications();
@@ -573,7 +571,7 @@
       const venues = Array.isArray(state.venues) ? state.venues : [];
       const dancerCity = String(state.dancer?.city || "your city");
       const affiliations = (Array.isArray(state.affiliations) ? state.affiliations : []).filter((item) => item.status === "active");
-      document.getElementById("dancerVenueVerificationEyebrow").textContent = onboardingRequired ? "Step 3 · Dressing-room tap" : "Venue access";
+      document.getElementById("dancerVenueVerificationEyebrow").textContent = onboardingRequired ? "Step 2 · Dressing-room tap" : "Venue access";
       document.getElementById("dancerVenueVerificationTitle").textContent = onboardingRequired ? "Verify your first venue" : "Manage where you work";
       document.getElementById("dancerVenueVerificationDescription").textContent = onboardingRequired
         ? "At the club, tap its official MyDancr dressing-room sticker. The tap approves venue access; MyDancr reviews profile content separately."

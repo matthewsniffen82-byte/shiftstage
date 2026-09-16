@@ -5,8 +5,7 @@ import {
   reconcileOpenClubInvoices,
   sendClubInvoiceReminders,
 } from "./finance-invoices";
-import { processDancerPayouts } from "./finance-payout-processing";
-import { syncNatsAgentCommissions, syncNatsCommissions } from "./nats-commission-sync";
+import { syncNatsAgentCommissions } from "./nats-commission-sync";
 import { getNatsRuntimeConfig } from "./nats";
 
 type DancrClient = SupabaseClient;
@@ -19,7 +18,7 @@ type ClubInvoiceAutomationResult = {
   errors: string[];
 };
 
-type DancerPayoutAutomationResult = {
+type AgentCommissionAutomationResult = {
   payoutsCreated: number;
   payoutsFailed: number;
   natsExportsCreated: number;
@@ -28,7 +27,7 @@ type DancerPayoutAutomationResult = {
   errors: string[];
 };
 
-export type FinanceRunResult = ClubInvoiceAutomationResult & DancerPayoutAutomationResult;
+export type FinanceRunResult = ClubInvoiceAutomationResult & AgentCommissionAutomationResult;
 
 export async function runClubInvoiceAutomation(client: DancrClient): Promise<ClubInvoiceAutomationResult> {
   const result: ClubInvoiceAutomationResult = {
@@ -57,8 +56,8 @@ export async function runClubInvoiceAutomation(client: DancrClient): Promise<Clu
   return result;
 }
 
-export async function runDancerPayoutAutomation(client: DancrClient): Promise<DancerPayoutAutomationResult> {
-  const result: DancerPayoutAutomationResult = {
+export async function runAgentCommissionAutomation(client: DancrClient): Promise<AgentCommissionAutomationResult> {
+  const result: AgentCommissionAutomationResult = {
     payoutsCreated: 0,
     payoutsFailed: 0,
     natsExportsCreated: 0,
@@ -69,19 +68,11 @@ export async function runDancerPayoutAutomation(client: DancrClient): Promise<Da
 
   await captureFinanceStep(result, async () => {
     if (getNatsRuntimeConfig().selected) {
-      const [dancerExports, agentExports] = await Promise.all([
-        syncNatsCommissions(client),
-        syncNatsAgentCommissions(client),
-      ]);
-      result.natsExportsCreated = dancerExports.exported + agentExports.exported;
-      result.natsExportsFailed = dancerExports.failed + agentExports.failed;
-      result.natsReconciliationRequired = dancerExports.reconciliationRequired + agentExports.reconciliationRequired;
-      result.errors.push(...dancerExports.errors, ...agentExports.errors);
-    } else {
-      const payouts = await processDancerPayouts(client);
-      result.payoutsCreated = payouts.created;
-      result.payoutsFailed = payouts.failed;
-      result.errors.push(...payouts.errors);
+      const agentExports = await syncNatsAgentCommissions(client);
+      result.natsExportsCreated = agentExports.exported;
+      result.natsExportsFailed = agentExports.failed;
+      result.natsReconciliationRequired = agentExports.reconciliationRequired;
+      result.errors.push(...agentExports.errors);
     }
   });
 
@@ -90,7 +81,7 @@ export async function runDancerPayoutAutomation(client: DancrClient): Promise<Da
 
 export async function runQrFinanceAutomation(client: DancrClient): Promise<FinanceRunResult> {
   const invoices = await runClubInvoiceAutomation(client);
-  const payouts = await runDancerPayoutAutomation(client);
+  const payouts = await runAgentCommissionAutomation(client);
   return {
     invoicesCreated: invoices.invoicesCreated,
     invoicesOpened: invoices.invoicesOpened,

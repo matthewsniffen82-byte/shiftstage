@@ -1,56 +1,48 @@
-import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
-import test from "node:test";
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import vm from 'node:vm';
+import test from 'node:test';
+import ts from 'typescript';
+import { createDancerConnectOnboarding, requestDancerCashOut, refreshDancerConnectAccount } from '../src/lib/dancr/dancer-payout-actions.ts';
 
-const [actions, store, finance, reporting, route] = await Promise.all([
-  readFile(new URL("../src/lib/dancr/dancer-payout-actions.ts", import.meta.url), "utf8"),
-  readFile(new URL("../src/lib/dancr/payout-account-store.ts", import.meta.url), "utf8"),
-  readFile(new URL("../src/lib/dancr/finance.ts", import.meta.url), "utf8"),
-  readFile(new URL("../src/lib/dancr/finance-reporting.ts", import.meta.url), "utf8"),
-  readFile(new URL("../app/api/dancer/finance/route.ts", import.meta.url), "utf8"),
-]);
-
-test("dancer payout enrollment and cash-out writes use one dedicated action boundary", () => {
-  assert.match(route, /from "@\/src\/lib\/dancr\/dancer-payout-actions"/);
-  assert.match(route, /from "@\/src\/lib\/dancr\/finance-reporting"/);
-  for (const action of [
-    "createDancerConnectOnboarding",
-    "refreshDancerConnectAccount",
-    "requestDancerCashOut",
-  ]) {
-    assert.match(actions, new RegExp(`export async function ${action}`));
-    assert.doesNotMatch(finance, new RegExp(`export async function ${action}`));
-  }
+const noClient = new Proxy({}, { get() { throw new Error('Unexpected financial operation'); } });
+test('retired dancer actions never contact a payout provider or financial database', async () => {
+  await assert.rejects(createDancerConnectOnboarding(noClient, 'user', 'https://example.test', 'https://example.test'), /program has ended/);
+  await assert.rejects(requestDancerCashOut(noClient, 'user', 'key'), /program has ended/);
+  assert.equal(await refreshDancerConnectAccount(noClient, 'user'), null);
 });
 
-test("payout account state and effective settings have one shared persistence boundary", () => {
-  for (const operation of [
-    "getDancerForUser",
-    "getDancerPayoutAccount",
-    "upsertDancerPayoutAccount",
-    "getEffectivePayoutSettings",
-  ]) {
-    assert.match(store, new RegExp(`export async function ${operation}`));
-    assert.doesNotMatch(finance, new RegExp(`(?:async function|export async function) ${operation}`));
-  }
-  assert.match(reporting, /from "\.\/payout-account-store"/);
-  assert.match(actions, /from "\.\/payout-account-store"/);
-  assert.match(actions, /from "\.\/finance-reporting"/);
+const source = readFileSync(new URL('../app/api/dancer/finance/route.ts', import.meta.url), 'utf8');
+function routeFor(account, authenticated = true) {
+  const dependencies = {
+    'next/server': { NextResponse: { json: Response.json } },
+    '@/src/lib/api': { apiError: () => Response.json({ ok: false }, { status: 401 }) },
+    '@/src/lib/dancr/auth': { getAccountByUserId: async () => account },
+    '@/src/lib/supabase/request': { createRequestSupabaseContext: async () => { if (!authenticated) throw Error('Sign in required'); return { client: noClient, user: { id: 'user' } }; } },
+    '@/src/lib/supabase/admin': { createAdminSupabaseClient() { throw Error('Unexpected admin access'); } },
+    '@/src/lib/dancr/finance-reporting': { getDancerFinance() { throw Error('Unexpected archive access'); } },
+  };
+  const exports = {};
+  vm.runInNewContext(ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText, {
+    exports, URL, require(name) { assert.ok(dependencies[name], name); return dependencies[name]; },
+  });
+  return exports;
+}
+for (const action of ['request_nats_link', 'connect_onboarding', 'cash_out']) test(action + ' returns 410 after dancer authorization without starting money movement', async () => {
+  const route = routeFor({ role: 'dancer', accountState: 'active' });
+  const response = await route.POST(new Request('https://example.test/api/dancer/finance', { method: 'POST', body: JSON.stringify({ action, loginId: '100' }) }));
+  assert.equal(response.status, 410);
+  assert.match((await response.json()).error, /program has ended/);
 });
-
-test("dancer cash-out retains payout guards, balance validation, and the production procedure", () => {
-  assert.match(actions, /if \(!settings\.payoutsEnabled\)/);
-  assert.match(actions, /settings\.payoutMode !== "manual_cashout" && settings\.payoutMode !== "both"/);
-  assert.match(actions, /preview\.balances\.availableCents/);
-  assert.match(actions, /settings\.minimumPayoutCents/);
-  assert.match(actions, /rpc\("request_dancer_payout"/);
-  assert.match(actions, /p_request_key: requestKey/);
-  assert.match(actions, /p_is_test: false/);
+for (const role of ['customer', 'venue', 'agent', 'admin']) test(role + ' cannot use the retired dancer endpoint', async () => {
+  const response = await routeFor({ role, accountState: 'active' }).POST(new Request('https://example.test', { method: 'POST' }));
+  assert.equal(response.status, 403);
 });
-
-test("dancer onboarding retains provider gating without a Bitsafe-specific branch", () => {
-  assert.match(actions, /provider\.createConnectedAccount/);
-  assert.match(actions, /provider\.createOnboardingLink/);
-  assert.match(actions, /retrieveConnectedAccount\(providerAccountId\)/);
-  assert.doesNotMatch(actions, /bitsafe/i);
+test('historical statement authorization remains available only to an active dancer', async () => {
+  const response = await routeFor({ role: 'dancer', accountState: 'active' }).GET(new Request('https://example.test/api/dancer/finance?access=1'));
+  assert.equal(response.status, 200);
+  assert.deepEqual((await response.json()).access, { active: true });
+});
+test('signed-out users are denied before retirement actions', async () => {
+  assert.equal((await routeFor(null, false).POST(new Request('https://example.test', { method: 'POST' }))).status, 401);
 });

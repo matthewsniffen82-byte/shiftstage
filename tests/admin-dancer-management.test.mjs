@@ -26,7 +26,7 @@ test("the roster supports operational search and bounded server filters", () => 
   assert.match(rosterService, /ADMIN_DANCER_STATUSES[\s\S]*?"needs_action"[\s\S]*?"disabled"/);
   assert.match(rosterService, /ADMIN_DANCER_SCHEDULES[\s\S]*?"working_now"[\s\S]*?"upcoming"[\s\S]*?"no_schedule"/);
   assert.match(rosterService, /ADMIN_DANCER_MODERATION[\s\S]*?"pending"[\s\S]*?"clear"/);
-  assert.match(rosterService, /ADMIN_DANCER_COMMISSIONS[\s\S]*?"active"[\s\S]*?"not_active"/);
+  assert.doesNotMatch(rosterService, /ADMIN_DANCER_COMMISSIONS|commissionStatus/);
   assert.match(rosterService, /ADMIN_DANCER_SOURCES[\s\S]*?"demo"[\s\S]*?"standard"/);
   assert.match(rosterService, /\["uploading", "moderating", "submitted"\]/);
   assert.match(rosterService, /stage_name\.ilike[\s\S]*?email\.ilike/);
@@ -39,7 +39,7 @@ test("admin dancer detail combines profile, media, operations, reports, and hist
   assert.match(detailRoute, /profile: \{ \.\.\.profile, operations \}/);
   assert.match(rosterService, /venue_dancer_affiliations/);
   assert.match(rosterService, /mydancr_tv_videos/);
-  assert.match(rosterService, /nats_affiliate_accounts/);
+  assert.doesNotMatch(rosterService, /nats_affiliate_accounts/);
   assert.match(rosterService, /commission_events/);
   assert.match(rosterService, /content_reports/);
   assert.match(rosterService, /admin_actions/);
@@ -64,7 +64,7 @@ test("the dashboard exposes a compact responsive roster and operational detail t
   assert.match(adminDashboard, /Disabled \/ archived/);
   assert.match(adminDashboard, /Profile & media/);
   assert.match(adminDashboard, /Clubs & shifts/);
-  assert.match(adminDashboard, /Club Deals & commissions/);
+  assert.match(adminDashboard, /Financial history/);
   assert.match(adminDashboard, /Analytics & reports/);
   assert.match(adminDashboard, /Admin account history/);
   assert.match(adminDashboard, /Disable profile/);

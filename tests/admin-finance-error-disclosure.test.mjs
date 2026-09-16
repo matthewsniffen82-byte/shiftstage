@@ -51,7 +51,7 @@ function harness(job,{errors=[privateMessage],refreshFails=false,customer=false,
     return {status:response.status,body:await response.json()};
   }};
 }
-for(const job of jobs)for(const refreshFails of [false,true])for(const errors of [[privateMessage],[privateMessage,{message:privateMessage,details:privateMessage}],[]])test(job[0]+' conceals '+errors.length+' aggregate errors with refresh '+String(!refreshFails),async()=>{
+for(const job of jobs.slice(0,1))for(const refreshFails of [false,true])for(const errors of [[privateMessage],[privateMessage,{message:privateMessage,details:privateMessage}],[]])test(job[0]+' conceals '+errors.length+' aggregate errors with refresh '+String(!refreshFails),async()=>{
   const h=harness(job,{errors,refreshFails}),r=await h.send();
   assert.equal(r.status,200);assert.equal(r.body.ok,true);assert.equal(r.body.session,null);
   const {errors:messages,...counts}=r.body.result;
@@ -69,8 +69,10 @@ for(const [option,status] of [['noAuth',401],['customer',403]])test('finance err
 test('invalid finance commands never reach automation or reporting',async()=>{
   const h=harness(jobs[0]),r=await h.send({action:'unsupported'});assert.equal(r.status,400);assert.deepEqual(h.calls,[]);
 });
-test('confirming an already exported invoice does not dispatch it again',async()=>{
-  const h=harness(jobs[4]),r=await h.send({resolution:'confirmed_exported'});assert.equal(r.status,200);assert.equal(r.body.result,null);
-  assert.deepEqual(h.calls.map(c=>c.name),['reconcile','refresh']);
-  assert.equal(h.calls[0].args[2],'confirmed_exported');
+for (const job of jobs.slice(1)) test(job[0] + ' is retired without dispatch or financial mutation', async () => {
+  const h = harness(job), r = await h.send();
+  assert.equal(r.status, 410);
+  assert.equal(r.body.ok, false);
+  assert.match(r.body.error, /program has ended/);
+  assert.deepEqual(h.calls, []);
 });

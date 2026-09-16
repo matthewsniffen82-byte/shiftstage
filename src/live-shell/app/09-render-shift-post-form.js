@@ -178,7 +178,6 @@
               <span><small>Hours Worked</small>${displayText(summary.hoursWorked)}</span>
               <span><small>Profile Views</small>${Number(summary.profileViews || 0).toLocaleString()}</span>
               <span><small>Cashier Redemptions</small>${Number(summary.qrCodeScans || 0).toLocaleString()}</span>
-              <span><small>Estimated Commissions</small>${displayText(summary.estimatedCommissions || "$0")}</span>
               <span><small>New Followers</small>${Number(summary.newFollowers || 0).toLocaleString()}</span>
             </div>
           </div>
@@ -253,7 +252,7 @@
           const data = await patchAuthenticatedJson("/api/dancer/shifts/check-in", { shiftId: profile.shiftId, action: "end" });
           if (data?.shift) applyShiftState(profile, data.shift);
           stopShiftLocationRefresh();
-          setCheckInStatus("Shift ended. Club Deal commission tracking is stopped.", "success");
+          setCheckInStatus("Shift ended. Your Working Now status has ended.", "success");
           actionSucceeded = true;
           if (!options.silent) showToast("Shift ended");
         } else {

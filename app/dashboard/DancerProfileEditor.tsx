@@ -8,7 +8,7 @@ import { SocialLinks, SocialPlatformIcon } from "@/app/dancers/[slug]/SocialLink
 import { effectiveDancerProfileStatus } from "@/src/lib/dancr/profile-approval";
 import type { SocialPlatform } from "@/src/lib/dancr/types";
 import { DANCER_PROFILE_VIDEOS_CHANGED_EVENT } from "./dancer-profile-media-sync";
-import { readSession, requestDancerFinanceJson, requestDancerProfileJson, requestDancerTvVideosJson } from "./dashboard-session";
+import { readSession, requestDancerProfileJson, requestDancerTvVideosJson } from "./dashboard-session";
 import type { DancerProfileBuilderRequirement, DancerProfileEditorSections, LoadState, DancerProfileEditorSectionId, DancerPreviewVideo, DancerPhotoItem, DancerStepOneItemState, DancerIdentityDraft, DancerProfileSocialEditor } from "./dashboard-types";
 import { persistedDancerStageName, DANCER_PROFILE_EDITOR_SECTION_LABELS, DANCER_PHOTOS_KEEP_OPEN_EVENT, saveDancerProfileEditor, SOCIAL_PLATFORMS, AvatarUploadBusyContext, DANCER_PREVIEW_SOCIAL_PLATFORMS } from "./DashboardShared";
 import { relabelPhotoItems, dancerPhotoItemsFromProfile } from "./DancerPhotoPanel";
@@ -546,7 +546,6 @@ export function DancerProfilePreview({
 
 export function DancerOnboardingCommand({
   effectiveStatus,
-  finance,
   isVenueApproved,
   onProfileChange,
   profile,
@@ -554,7 +553,6 @@ export function DancerOnboardingCommand({
   venueVerificationContent,
 }: {
   effectiveStatus: string;
-  finance?: LoadState["finance"];
   isVenueApproved: boolean;
   onProfileChange?: (profile: Record<string, unknown>) => void;
   profile?: LoadState["profile"];
@@ -563,19 +561,11 @@ export function DancerOnboardingCommand({
 }) {
   const [status, setStatus] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isPayoutWorking, setIsPayoutWorking] = useState(false);
-  const [payoutSkipped, setPayoutSkipped] = useState(false);
-  const [payoutStatus, setPayoutStatus] = useState("");
-  const [natsLoginId, setNatsLoginId] = useState("");
-  const [natsUsername, setNatsUsername] = useState("");
   const [expandedStepId, setExpandedStepId] = useState<string | null>(null);
   const mountedRef = useRef(false);
   const profileSubmissionSequenceRef = useRef(0);
   const profileSubmissionAbortRef = useRef<AbortController | null>(null);
   const profileSubmissionInFlightRef = useRef(false);
-  const payoutLinkSequenceRef = useRef(0);
-  const payoutLinkAbortRef = useRef<AbortController | null>(null);
-  const payoutLinkInFlightRef = useRef(false);
   const persistedStageName = persistedDancerStageName(profile);
   const persistedCity = String(profile?.city || "").trim();
   const avatarUrl = String(profile?.avatarPhotoUrl || "").trim();
@@ -598,15 +588,6 @@ export function DancerOnboardingCommand({
     && approvedPhotos.length,
   );
   const submitted = effectiveStatus === "pending_review" || effectiveStatus === "approved";
-  const commissionPlatform = (finance?.commissionPlatform || {}) as Record<string, unknown>;
-  const natsAffiliateAccount = (finance?.natsAffiliateAccount || null) as Record<string, unknown> | null;
-  const natsSelected = commissionPlatform.selected === true;
-  const natsConfigured = commissionPlatform.configured === true;
-  const natsPortalUrl = typeof commissionPlatform.affiliatePortalUrl === "string" ? commissionPlatform.affiliatePortalUrl : "";
-  const natsAccountStatus = String(natsAffiliateAccount?.status || "");
-  const payoutSubmitted = natsAccountStatus === "requested" || natsAccountStatus === "active";
-  const payoutStepComplete = payoutSubmitted || payoutSkipped;
-  const payoutSkipKey = `mydancr:dancer-payout-setup-later:${String(profile?.id || "profile")}`;
   const setupDetail = profileReady
     ? "Identity, avatar, and at least one profile picture are approved. Other media can finish review separately."
     : dancerProfileSetupBlocker({ persistedStageName, persistedCity, avatarUrl, pendingAvatar, approvedPhotos, pendingPhotos, rejectedPhotos });
@@ -619,29 +600,13 @@ export function DancerOnboardingCommand({
       locked: false,
     },
     {
-      id: "dancer-onboarding-payouts",
-      label: "Commission payouts",
-      complete: payoutStepComplete,
-      detail: natsAccountStatus === "active"
-        ? "Your payout account is connected."
-        : natsAccountStatus === "requested"
-          ? "Payout account verification is pending."
-          : payoutSkipped
-            ? "Set up later from Earnings."
-            : submitted
-              ? "Connect your payout account now or set it up later."
-              : "Available after you submit your profile.",
-      locked: !submitted,
-      optional: true,
-    },
-    {
       id: "dancer-onboarding-nfc",
       label: "Dressing-room tap",
       complete: isVenueApproved,
       detail: isVenueApproved ? "Your venue is verified." : submitted ? "At the club, tap its official dressing-room sticker." : "Unlocks after profile submission.",
       locked: !submitted && !isVenueApproved,
     },
-  ], [isVenueApproved, natsAccountStatus, payoutSkipped, payoutStepComplete, profileReady, setupDetail, submitted]);
+  ], [isVenueApproved, profileReady, setupDetail, submitted]);
   const firstIncomplete = steps.find((step) => !step.complete) || steps[steps.length - 1];
   const visibleExpandedStepId = expandedStepId || "";
   const storageKey = `mydancr:dancer-onboarding-step:${String(profile?.id || "profile")}`;
@@ -654,16 +619,8 @@ export function DancerOnboardingCommand({
       profileSubmissionAbortRef.current?.abort();
       profileSubmissionAbortRef.current = null;
       profileSubmissionInFlightRef.current = false;
-      payoutLinkSequenceRef.current += 1;
-      payoutLinkAbortRef.current?.abort();
-      payoutLinkAbortRef.current = null;
-      payoutLinkInFlightRef.current = false;
     };
   }, []);
-
-  useEffect(() => {
-    setPayoutSkipped(window.localStorage.getItem(payoutSkipKey) === "true");
-  }, [payoutSkipKey]);
 
   useEffect(() => {
     if (!profile?.id) return;
@@ -733,27 +690,6 @@ export function DancerOnboardingCommand({
     return mountedRef.current;
   }
 
-  function beginPayoutLinkAction() {
-    if (!mountedRef.current || payoutLinkInFlightRef.current) return null;
-    payoutLinkInFlightRef.current = true;
-    const requestId = ++payoutLinkSequenceRef.current;
-    payoutLinkAbortRef.current?.abort();
-    const controller = new AbortController();
-    payoutLinkAbortRef.current = controller;
-    return { requestId, controller };
-  }
-
-  function isCurrentPayoutLinkAction(requestId: number, controller: AbortController) {
-    return mountedRef.current && !controller.signal.aborted && requestId === payoutLinkSequenceRef.current;
-  }
-
-  function finishPayoutLinkAction(requestId: number) {
-    if (requestId !== payoutLinkSequenceRef.current) return false;
-    payoutLinkAbortRef.current = null;
-    payoutLinkInFlightRef.current = false;
-    return mountedRef.current;
-  }
-
   async function submitProfile() {
     if (!profileReady) return;
     const session = readSession();
@@ -781,14 +717,14 @@ export function DancerOnboardingCommand({
         throw new Error("Club verification was not unlocked. Please try again.");
       }
       onProfileChange?.(data.profile);
-      window.localStorage.setItem(storageKey, "dancer-onboarding-payouts");
-      setExpandedStepId("dancer-onboarding-payouts");
-      setStatus("Profile submitted. Choose whether to set up payouts, then continue to the club tap.");
+      window.localStorage.setItem(storageKey, "dancer-onboarding-nfc");
+      setExpandedStepId("dancer-onboarding-nfc");
+      setStatus("Profile submitted. Tap the club's official dressing-room sticker to activate your profile.");
       offerPushNotifications("dancer-review");
       window.requestAnimationFrame(() => {
         if (!isCurrentProfileSubmissionAction(requestId, controller)) return;
-        document.getElementById("dancer-onboarding-payouts")?.scrollIntoView({ behavior: "smooth", block: "start" });
-        document.getElementById("dancer-onboarding-payouts-button")?.focus({ preventScroll: true });
+        document.getElementById("dancer-onboarding-nfc")?.scrollIntoView({ behavior: "smooth", block: "start" });
+        document.getElementById("dancer-onboarding-nfc-button")?.focus({ preventScroll: true });
       });
     } catch (error) {
       if (isCurrentProfileSubmissionAction(requestId, controller)) {
@@ -796,56 +732,6 @@ export function DancerOnboardingCommand({
       }
     } finally {
       if (finishProfileSubmissionAction(requestId)) setIsSubmitting(false);
-    }
-  }
-
-  function continueToNfc(message: string) {
-    window.localStorage.setItem(storageKey, "dancer-onboarding-nfc");
-    setExpandedStepId("dancer-onboarding-nfc");
-    setPayoutStatus(message);
-    window.requestAnimationFrame(() => {
-      document.getElementById("dancer-onboarding-nfc")?.scrollIntoView({ behavior: "smooth", block: "start" });
-      document.getElementById("dancer-onboarding-nfc-button")?.focus({ preventScroll: true });
-    });
-  }
-
-  function skipPayoutSetup() {
-    if (payoutLinkInFlightRef.current) return;
-    window.localStorage.setItem(payoutSkipKey, "true");
-    setPayoutSkipped(true);
-    continueToNfc("Payout setup saved for later.");
-  }
-
-  async function requestOnboardingNatsLink(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const session = readSession();
-    if (!session?.accessToken) return setPayoutStatus("Sign in again to set up payouts.");
-    const action = beginPayoutLinkAction();
-    if (!action) return;
-    const { requestId, controller } = action;
-    setIsPayoutWorking(true);
-    setPayoutStatus("Submitting your payout account for verification...");
-    try {
-      const data = await requestDancerFinanceJson({
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ action: "request_nats_link", loginId: natsLoginId, username: natsUsername }),
-        fallbackMessage: "Unable to link the payout account.",
-        signal: controller.signal,
-      });
-      if (!isCurrentPayoutLinkAction(requestId, controller)) return;
-      if (!["requested", "active"].includes(String(data.account?.status || ""))) {
-        throw new Error("Payout account verification was not confirmed. Please try again.");
-      }
-      window.localStorage.removeItem(payoutSkipKey);
-      setPayoutSkipped(false);
-      continueToNfc("Payout account submitted for verification. You can complete the club tap now.");
-    } catch (error) {
-      if (isCurrentPayoutLinkAction(requestId, controller)) {
-        setPayoutStatus(error instanceof Error ? error.message : "Unable to link the payout account.");
-      }
-    } finally {
-      if (finishPayoutLinkAction(requestId)) setIsPayoutWorking(false);
     }
   }
 
@@ -867,22 +753,19 @@ export function DancerOnboardingCommand({
       <ol className="dancer-onboarding-steps" aria-label="Dancer profile approval progress">
         {steps.map((step, index) => {
           const open = visibleExpandedStepId === step.id;
-          const isPayoutStep = step.id === "dancer-onboarding-payouts";
-          const displayComplete = step.complete && (!isPayoutStep || natsAccountStatus === "active");
+          const displayComplete = step.complete;
           const controlLabel = step.locked
             ? "Locked"
             : displayComplete
               ? "Complete"
               : step.id === "dancer-profile-media"
                 ? profileStarted ? "Continue" : "Start"
-                : isPayoutStep
-                  ? natsSelected || natsAccountStatus === "requested" ? "Continue" : "Set up"
-                  : "Verify";
+                : "Verify";
           const controlTone = step.locked ? "locked" : displayComplete ? "complete" : "action";
           const panelId = `${step.id}-panel`;
           return (
             <li
-              className={`${displayComplete ? "is-complete" : step.id === firstIncomplete.id ? "is-current" : ""} ${open ? "is-open" : ""} ${step.locked ? "is-locked" : ""} ${isPayoutStep && payoutSkipped ? "is-deferred" : ""}`.trim()}
+              className={`${displayComplete ? "is-complete" : step.id === firstIncomplete.id ? "is-current" : ""} ${open ? "is-open" : ""} ${step.locked ? "is-locked" : ""}`.trim()}
               id={step.id}
               key={step.id}
             >
@@ -901,7 +784,6 @@ export function DancerOnboardingCommand({
                 <span className="dancer-onboarding-step-copy">
                   <span className="dancer-onboarding-step-title">
                     <strong>{step.label}</strong>
-                    {step.optional ? <em>Optional</em> : null}
                   </span>
                   <small>{step.detail}</small>
                 </span>
@@ -939,7 +821,7 @@ export function DancerOnboardingCommand({
                       {submitted ? (
                         <div className="dancer-onboarding-complete-note" role="status">
                           <strong>✓ Step 1 complete</strong>
-                          <span>Your profile is ready. Set up payouts now or later, then complete the dressing-room tap.</span>
+                          <span>Your profile is ready. Complete the dressing-room tap to activate it.</span>
                         </div>
                       ) : (
                         <button className="dancer-onboarding-primary" id="dancer-onboarding-profile-review-button" aria-describedby="dancer-onboarding-profile-review-status" aria-busy={isSubmitting} type="button" disabled={isSubmitting || !profileReady} onClick={() => void submitProfile()}>
@@ -951,30 +833,6 @@ export function DancerOnboardingCommand({
                       </p>
                     </div>
                   </>
-                ) : null}
-                {step.id === "dancer-onboarding-payouts" ? (
-                  <div className="dancer-onboarding-payout-workspace">
-                    <article className="dancer-onboarding-payout-card">
-                      <span className="eyebrow">Optional</span>
-                      <h3>Commission payouts</h3>
-                      <p>Club Deals stay on your profile. Commissions start only after your payout account is verified. Earlier redemptions do not earn commissions or back pay.</p>
-                      {natsAccountStatus === "active" ? <strong className="dancer-onboarding-payout-state is-active">✓ Payout account connected</strong> : null}
-                      {natsAccountStatus === "requested" ? <strong className="dancer-onboarding-payout-state">Verification pending</strong> : null}
-                      {natsPortalUrl ? <a className="dancer-onboarding-preview-open" href={natsPortalUrl} rel="noreferrer" target="_blank">Create or open payout account</a> : null}
-                      {natsSelected && !payoutSubmitted ? (
-                        <form className="account-form dancer-onboarding-payout-form" onSubmit={requestOnboardingNatsLink}>
-                          <label>Payout account login ID <span>from your payout portal</span><input required inputMode="numeric" pattern="[1-9][0-9]*" value={natsLoginId} onChange={(event) => setNatsLoginId(event.target.value)} /></label>
-                          <label>Payout account username <span>optional</span><input autoCapitalize="none" maxLength={80} value={natsUsername} onChange={(event) => setNatsUsername(event.target.value)} /></label>
-                          <button disabled={isPayoutWorking || !natsConfigured} type="submit">{isPayoutWorking ? "Submitting..." : "Submit payout account"}</button>
-                        </form>
-                      ) : null}
-                    </article>
-                    <div className="dancer-onboarding-payout-actions">
-                      {payoutSubmitted ? <button className="dancer-onboarding-primary" type="button" onClick={() => continueToNfc("Payout setup recorded. Continue with the official club tap.")}>Continue to club tap</button> : null}
-                      <button className="dancer-onboarding-secondary" disabled={isPayoutWorking} type="button" onClick={skipPayoutSetup}>Do this later</button>
-                    </div>
-                    {payoutStatus ? <p className="dancer-onboarding-announcement" role="status" aria-live="polite">{payoutStatus}</p> : null}
-                  </div>
                 ) : null}
                 {step.id === "dancer-onboarding-nfc" ? venueVerificationContent : null}
               </div>

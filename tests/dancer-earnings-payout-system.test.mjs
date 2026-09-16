@@ -41,7 +41,7 @@ test("hold release reversal and post-payment recovery preserve accounting histor
   assert.match(paidRecoveryMigration, /'automatic_debit_attempted',false/);
 });
 
-test("cash out locks ledger rows and prevents concurrent or duplicate payment", () => {
+test("historical cash-out reservations retain their accounting safeguards after retirement", () => {
   assert.match(migration, /request_dancer_payout/);
   assert.match(migration, /for update/);
   assert.match(migration, /dancer_payout_batches_one_active_uidx/);
@@ -52,17 +52,13 @@ test("cash out locks ledger rows and prevents concurrent or duplicate payment", 
   assert.match(migration, /where id = any\(v_earning_ids\)/);
   assert.match(read("supabase/migrations/202608040001_qr_finance_operations.sql"), /unique \(payout_batch_id, commission_event_id\)/);
   assert.match(migration, /Only a processing payout can be marked paid/);
-  assert.match(financePayoutProcessing, /const dispatchKey = `mydancr-payout-\$\{batch\.id\}`/);
-  assert.match(financePayoutProcessing, /idempotencyKey: dispatchKey/);
-  assert.match(financePayoutProcessing, /rpc\("claim_dancer_payout_dispatch"/);
-  assert.match(financePayoutProcessing, /flag_dancer_payout_dispatch_review/);
+  assert.doesNotMatch(financePayoutProcessing, /claim_dancer_payout_dispatch|createPayout|releasePendingDancerEarnings/);
   assert.match(financeReporting, /get_dancer_earnings_summary/);
   assert.match(financeReporting, /get_admin_dancer_financial_summary/);
-  assert.match(financePayoutProcessing, /eq\("status", "requested"\)/);
   assert.match(migration, /reservation_released', false/);
 });
 
-test("provider selection is abstract and live money movement has a server hard stop", () => {
+test("historical provider support remains but dancer money movement is unconditionally disabled", () => {
   assert.match(provider, /export interface PayoutProvider/);
   assert.match(provider, /"stripe", "adyen", "other"/);
   assert.doesNotMatch(provider, /bitsafe|yoursafe/i);
@@ -70,7 +66,7 @@ test("provider selection is abstract and live money movement has a server hard s
   assert.match(provider, /isPayoutProviderConfigured/);
   assert.match(payoutAccountStore, /runtime\.enabledByEnvironment && database\.payouts_enabled/);
   assert.match(payoutAccountStore, /database\.payouts_enabled && providerConfigured/);
-  assert.match(financePayoutProcessing, /if \(!settings\.payoutsEnabled\)/);
+  assert.match(financePayoutProcessing, /created: 0, failed: 0, disabled: true/);
   assert.match(migration, /unique \(dancer_id, payment_provider\)/);
   assert.match(payoutAccountStore, /onConflict: "dancer_id,payment_provider"/);
 });
@@ -110,13 +106,14 @@ test("RLS limits dancer financial records and excludes venues and customers", ()
   assert.match(migration, /to service_role/);
 });
 
-test("dancer and admin interfaces expose production earnings controls", () => {
-  const dashboard = read("app/dashboard/DashboardClient.tsx");
+test("dancer payout controls are removed while admins retain audited financial history", () => {
+  const dashboard = read("app/dashboard/DancerDashboardPanels.tsx");
   const admin = read("app/admin/AdminClient.tsx");
   for (const label of ["Available balance", "Pending earnings", "Payout processing", "Lifetime earnings", "Cash Out", "Set Up Payouts", "Earnings history", "Payout history"]) {
-    assert.match(dashboard, new RegExp(label));
+    assert.doesNotMatch(dashboard, new RegExp(label));
   }
-  assert.match(admin, /Payout controls/);
-  assert.match(admin, /Dancer earnings ledger/);
+  assert.doesNotMatch(admin, /Payout controls|Process payable dancers|Verify and activate/);
+  assert.match(admin, /Historical dancer earnings/);
+  assert.match(admin, /Historical dancer payouts/);
   assert.match(admin, /Required audit reason/);
 });

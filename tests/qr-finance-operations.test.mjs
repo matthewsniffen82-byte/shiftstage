@@ -77,7 +77,7 @@ test("finance APIs enforce role authorization and expose authenticated statement
   assert.match(adminDispatch, /run_automation/);
   assert.match(venue, /requireActiveVenueAccount/);
   assert.match(dancer, /account\.role !== "dancer" \|\| account\.accountState !== "active"/);
-  assert.match(dancer, /createDancerConnectOnboarding/);
+  assert.match(dancer, /status: 410/);
   assert.match(venueStatement, /content-type": "text\/csv; charset=utf-8"/);
   assert.match(dancerStatement, /content-type": "text\/csv; charset=utf-8"/);
   assert.match(venueStatement, /\^\\d\{4\}-\(0\[1-9\]\|1\[0-2\]\)\$/);
@@ -116,12 +116,11 @@ test("daily automation and every production finance dashboard are wired", () => 
   assert.match(adminUi, /Run full reconciliation/);
   assert.match(adminUi, /Record bank, ACH, or check payment/);
   assert.match(dashboard, /Club invoices/);
-  assert.match(dashboard, /Commission payouts/);
-  assert.match(dashboard, /Available balance/);
-  assert.match(dashboard, /Real payout setup and money movement remain off until provider and legal approval/);
+  assert.doesNotMatch(dashboard, /Commission payouts/);
+  assert.match(dashboard, /Club Deal activity/);
   assert.match(dashboard, /Download monthly statement/);
   assert.match(venueDashboard, /getVenueFinance/);
-  assert.match(dancerDashboard, /getDancerFinance/);
+  assert.doesNotMatch(dancerDashboard, /getDancerFinance/);
 });
 
 test("QR finance work remains isolated from ride functionality", () => {

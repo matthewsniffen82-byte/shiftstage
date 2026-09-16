@@ -20,7 +20,7 @@ function between(source, start, end) {
 test("scheduled finance work uses one dedicated automation boundary", () => {
   for (const task of [
     "runClubInvoiceAutomation",
-    "runDancerPayoutAutomation",
+    "runAgentCommissionAutomation",
     "runQrFinanceAutomation",
   ]) {
     assert.match(automation, new RegExp(`export async function ${task}`));
@@ -35,7 +35,7 @@ test("club invoice automation remains an independently callable ordered task", (
   const task = between(
     automation,
     "export async function runClubInvoiceAutomation",
-    "export async function runDancerPayoutAutomation",
+    "export async function runAgentCommissionAutomation",
   );
   const orderedActions = [
     "createMonthlyClubInvoiceDrafts",
@@ -50,18 +50,10 @@ test("club invoice automation remains an independently callable ordered task", (
   assert.equal((task.match(/await captureFinanceStep/g) || []).length, 4);
 });
 
-test("dancer payout automation remains an independently callable guarded task", () => {
-  const task = between(
-    automation,
-    "export async function runDancerPayoutAutomation",
-    "export async function runQrFinanceAutomation",
-  );
-  assert.match(task, /await processDancerPayouts\(client\)/);
-  assert.match(task, /result\.payoutsCreated = payouts\.created/);
-  assert.match(task, /result\.payoutsFailed = payouts\.failed/);
-  assert.match(task, /result\.errors\.push\(\.\.\.payouts\.errors\)/);
-  assert.doesNotMatch(task, /createMonthlyClubInvoiceDrafts/);
-  assert.equal((task.match(/await captureFinanceStep/g) || []).length, 1);
+test("only sales-agent commissions are dispatched automatically", () => {
+  assert.match(automation, /await syncNatsAgentCommissions\(client\)/);
+  assert.doesNotMatch(automation, /syncNatsCommissions|processDancerPayouts/);
+  assert.match(automation, /payoutsCreated: 0/);
 });
 
 test("full reconciliation preserves task order, response fields, and bounded error collection", () => {
@@ -70,7 +62,7 @@ test("full reconciliation preserves task order, response fields, and bounded err
     "export async function runQrFinanceAutomation",
     "async function captureFinanceStep",
   );
-  assert.ok(task.indexOf("runClubInvoiceAutomation") < task.indexOf("runDancerPayoutAutomation"));
+  assert.ok(task.indexOf("runClubInvoiceAutomation") < task.indexOf("runAgentCommissionAutomation"));
   for (const field of [
     "invoicesCreated",
     "invoicesOpened",

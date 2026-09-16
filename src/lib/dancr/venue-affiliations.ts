@@ -321,7 +321,7 @@ export async function approveDancerVenueVerification(
     title: "Venue affiliation approved",
     body: profileActivated
       ? `${String(data.venueName)} approved your venue affiliation. Your profile is now live and you can check in there for Working Now.`
-      : `${String(data.venueName)} approved your venue affiliation. You can now check in there for Working Now and eligible Club Deal commissions.`,
+      : `${String(data.venueName)} approved your venue affiliation. You can now check in there for Working Now and Club Deal attribution.`,
     payload: {
       affiliationId: data.id,
       venueId: data.venueId,
@@ -409,7 +409,7 @@ export async function revokeDancerVenueAffiliation(
       recipient_id: String(data.dancerUserId),
       notification_type: "venue_affiliation_status" as const,
       title: `${String(data.venueName)} verification ended`,
-      body: `Your verified venue affiliation with ${String(data.venueName)} was removed. Active check-ins and commission tracking there have stopped. Your profile media remains available.`,
+      body: `Your verified venue affiliation with ${String(data.venueName)} was removed. Active check-ins there have stopped. Your profile media remains available.`,
       payload: {
         affiliationId: data.id,
         venueId: data.venueId,
