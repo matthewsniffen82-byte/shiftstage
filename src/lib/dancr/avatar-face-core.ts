@@ -7,6 +7,14 @@ export type AvatarSquareCrop = {
   size: number;
 };
 
+// Normalized coordinates within the selected square candidate, from 0 to 1.
+export type AvatarFaceBounds = {
+  left: number;
+  top: number;
+  right: number;
+  bottom: number;
+};
+
 export type AvatarCandidateSelection = {
   clearFace: boolean;
   fullyVisible: boolean;
@@ -106,6 +114,44 @@ export function parseAvatarCandidateSelection(
     throw new AvatarFaceRequiredError();
   }
   return selection;
+}
+
+export function computeFaceCenteredAvatarCrop(
+  sourceWidth: number,
+  sourceHeight: number,
+  candidate: AvatarSquareCrop,
+  faceBounds: AvatarFaceBounds,
+): AvatarSquareCrop {
+  const width = positiveDimension(sourceWidth);
+  const height = positiveDimension(sourceHeight);
+  if (!width || !height || !computeAvatarCandidateCrops(width, height).some(crop =>
+    crop.position === candidate.position && crop.left === candidate.left
+    && crop.top === candidate.top && crop.size === candidate.size
+  )) throw new AvatarFaceDetectionUnavailableError();
+  const face = parseFaceBounds(faceBounds);
+  const faceWidth = (face.right - face.left) * candidate.size;
+  const faceHeight = (face.bottom - face.top) * candidate.size;
+  const centerX = candidate.left + (face.left + face.right) * candidate.size / 2;
+  const centerY = candidate.top + (face.top + face.bottom) * candidate.size / 2;
+  // Frame the head, with space for hair and chin inside the circular mask.
+  // A full-width square alone can leave a small face at the top of a body photo.
+  const size = Math.min(width, height, Math.max(1, Math.ceil(Math.max(faceWidth, faceHeight) * 1.8)));
+  return {
+    position: candidate.position,
+    left: Math.max(0, Math.min(width - size, Math.round(centerX - size / 2))),
+    top: Math.max(0, Math.min(height - size, Math.round(centerY - size / 2))),
+    size,
+  };
+}
+
+function parseFaceBounds(value: unknown): AvatarFaceBounds {
+  if (!value || typeof value !== "object") throw new AvatarFaceDetectionUnavailableError();
+  const bounds = value as AvatarFaceBounds;
+  const { left, top, right, bottom } = bounds;
+  if ([left, top, right, bottom].some(coordinate =>
+    typeof coordinate !== "number" || !Number.isFinite(coordinate) || coordinate < 0 || coordinate > 1
+  ) || right <= left || bottom <= top) throw new AvatarFaceDetectionUnavailableError();
+  return { left, top, right, bottom };
 }
 
 function cleanCandidatePosition(value: unknown): AvatarCandidateSelection["selectedCandidate"] {

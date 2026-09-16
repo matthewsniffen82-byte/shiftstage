@@ -4,7 +4,9 @@ import test from "node:test";
 
 const {
   AvatarFaceRequiredError,
+  AvatarFaceDetectionUnavailableError,
   computeAvatarCandidateCrops,
+  computeFaceCenteredAvatarCrop,
   parseAvatarCandidateSelection,
 } = await import(new URL("../src/lib/dancr/avatar-face-core.ts", import.meta.url));
 
@@ -83,12 +85,63 @@ test("square uploads produce one candidate without duplicate analysis", () => {
   ]);
 });
 
+test("body photos receive a tighter face-centered crop with circular headroom", () => {
+  for (const [width, height, position] of [[1000, 1600, "start"], [1600, 1000, "end"], [1000, 1000, "start"]]) {
+    const candidate = computeAvatarCandidateCrops(width, height).find(crop => crop.position === position);
+    const face = { left: 0.4, top: 0.2, right: 0.6, bottom: 0.4 };
+    const crop = computeFaceCenteredAvatarCrop(width, height, candidate, face);
+    assert.equal(crop.size, 360);
+    assert.ok(Math.abs((candidate.left + 500 - crop.left) / crop.size - 0.5) < 0.005);
+    assert.ok(Math.abs((candidate.top + 300 - crop.top) / crop.size - 0.5) < 0.005);
+    for (const x of [face.left, face.right]) for (const y of [face.top, face.bottom]) {
+      const dx = candidate.left + x * candidate.size - crop.left - crop.size / 2;
+      const dy = candidate.top + y * candidate.size - crop.top - crop.size / 2;
+      assert.ok(Math.hypot(dx, dy) < crop.size * 0.45, "the full face must fit inside the avatar circle");
+    }
+  }
+});
+
+test("portrait candidate offsets map the face back into the original image", () => {
+  const candidate = computeAvatarCandidateCrops(1000, 2000)[1];
+  const crop = computeFaceCenteredAvatarCrop(1000, 2000, candidate, { left: 0.4, top: 0.2, right: 0.6, bottom: 0.4 });
+  assert.deepEqual(crop, { position: "middle", left: 320, top: 620, size: 360 });
+});
+
+test("face crops stay inside the source at every edge and for close-up portraits", () => {
+  const candidate = computeAvatarCandidateCrops(900, 900)[0];
+  for (const face of [
+    { left: 0, top: 0, right: 0.2, bottom: 0.3 },
+    { left: 0.8, top: 0.7, right: 1, bottom: 1 },
+    { left: 0.1, top: 0.05, right: 0.9, bottom: 0.95 },
+  ]) {
+    const crop = computeFaceCenteredAvatarCrop(900, 900, candidate, face);
+    assert.ok(crop.left >= 0 && crop.top >= 0 && crop.size > 0);
+    assert.ok(crop.left + crop.size <= 900 && crop.top + crop.size <= 900);
+    assert.ok(crop.left <= face.left * 900 && crop.top <= face.top * 900);
+    assert.ok(crop.left + crop.size >= face.right * 900 && crop.top + crop.size >= face.bottom * 900);
+  }
+});
+
+test("missing, malformed, or unbounded face coordinates never publish an arbitrary crop", () => {
+  for (const faceBounds of [undefined, null, {},
+    { left: "0.4", top: 0.2, right: 0.6, bottom: 0.4 },
+    { left: 0.4, top: -0.2, right: 0.6, bottom: 0.4 },
+    { left: 0.4, top: 0.2, right: 1.6, bottom: 0.4 },
+    { left: 0.6, top: 0.2, right: 0.4, bottom: 0.4 },
+    { left: 0.4, top: 0.2, right: 0.6, bottom: NaN },
+  ]) {
+    assert.throws(() => computeFaceCenteredAvatarCrop(1000, 1000,
+      computeAvatarCandidateCrops(1000, 1000)[0], faceBounds), AvatarFaceDetectionUnavailableError);
+  }
+});
+
 test("avatar uploads compare real square crops and publish the selected physical crop", () => {
   assert.match(avatarFaceSource, /openai\.responses\.create\(/);
   assert.match(avatarFaceSource, /Candidate \$\{candidate\.position\}/);
   assert.match(avatarFaceSource, /type: "input_image"/);
   assert.match(avatarFaceSource, /type: "json_schema"/);
   assert.match(avatarFaceSource, /selectedCandidate/);
+  assert.match(avatarFaceSource, /computeFaceCenteredAvatarCrop\(sourceWidth, sourceHeight, candidate, face\)/);
   assert.match(avatarFaceSource, /\.extract\(\{ left: crop\.left, top: crop\.top, width: crop\.size, height: crop\.size \}\)/);
   assert.match(avatarFaceSource, /width !== height/);
   assert.match(moderationSource, /const publicationImage = isAvatar[\s\S]*?prepareFaceCenteredAvatar\(image\)/);

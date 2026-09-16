@@ -7,12 +7,14 @@ import {
   AvatarFaceDetectionUnavailableError,
   AvatarFaceRequiredError,
   computeAvatarCandidateCrops,
+  computeFaceCenteredAvatarCrop,
   isAvatarFaceRequiredError,
   parseAvatarCandidateSelection,
   type AvatarCandidatePosition,
   type AvatarCandidateSelection,
 } from "./avatar-face-core.ts";
 import type { ValidatedDancrImage } from "./image-validation.ts";
+import { locateAvatarFace } from "./avatar-face-detector.ts";
 
 export {
   AvatarFaceDetectionUnavailableError,
@@ -70,8 +72,12 @@ export async function prepareFaceCenteredAvatar(
     })),
   );
   const selection = await selectPrimaryAvatarCandidate(candidateImages);
-  const crop = crops.find((item) => item.position === selection.selectedCandidate);
-  if (!crop) throw new AvatarFaceRequiredError();
+  const candidate = crops.find((item) => item.position === selection.selectedCandidate);
+  if (!candidate) throw new AvatarFaceRequiredError();
+  const selectedImage = candidateImages.find((item) => item.position === selection.selectedCandidate);
+  const face = selectedImage ? await locateAvatarFace(selectedImage.buffer) : null;
+  // Keep the verified square if a tilted or obscured face cannot be localized.
+  const crop = face ? computeFaceCenteredAvatarCrop(sourceWidth, sourceHeight, candidate, face) : candidate;
 
   const outputSize = Math.min(crop.size, AVATAR_OUTPUT_MAX_DIMENSION);
   const cropped = await sharp(normalized.data, {
