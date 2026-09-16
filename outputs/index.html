@@ -26646,7 +26646,7 @@
       }
     }
 
-    /* Both admission states share a compact frame; expanded terms can grow. */
+    /* Keep the preview compact; confirmation and expanded terms fit their content. */
     #dealPassOverlay { padding: max(8px, env(safe-area-inset-top)) 8px max(8px, env(safe-area-inset-bottom)); }
     #dealPassOverlay .deal-pass-sheet {
       width: min(400px, calc(100vw - 28px));
@@ -26668,6 +26668,7 @@
       font-family: var(--font-ui);
       text-align: left;
     }
+    #dealPassOverlay .deal-pass-sheet[data-deal-state="ready"] { height: auto; }
     #dealPassOverlay .deal-pass-sheet:not([data-deal-state="ready"]):has([data-toggle-deal-pass-terms][aria-expanded="true"]) { height: auto; min-height: min(300px, calc(100dvh - 32px)); }
     #dealPassOverlay .deal-pass-sheet > * { flex: 0 0 auto; }
     #dealPassOverlay .deal-pass-close { top: 10px; right: 10px; width: 44px; height: 44px; padding: 11px; border: 0 !important; border-radius: 50% !important; color: #aaa4b6 !important; background: transparent !important; box-shadow: none !important; }
