@@ -320,7 +320,7 @@
               profile.avatarPhotoFocalY ?? profile.mainPhotoFocalY
             )}" alt="" aria-hidden="true" loading="${options.eager ? "eager" : "lazy"}" decoding="async" draggable="false" data-image-state="loading">`
           : escapeHtml(String(profile.name || "").trim().charAt(0).toUpperCase());
-        return `<span class="${classPrefix}-lineup-avatar" data-dancer-avatar data-working-now="true" role="img" aria-label="${escapeHtml(profile.name)}, working now"><span data-dancer-avatar-border aria-hidden="true">${avatarPhoto}</span><span data-working-now-indicator aria-hidden="true">NOW</span></span>`;
+        return `<button type="button" class="${classPrefix}-lineup-avatar venue-lineup-profile" data-venue-dancer-profile data-grid-profile-action="${escapeOptionValue(profileReferenceValue(profile))}" data-dancer-id="${escapeOptionValue(profile.id || "")}" data-dancer-avatar data-working-now="true" aria-label="Open ${escapeHtml(profile.name)}, working now"><span data-dancer-avatar-border aria-hidden="true">${avatarPhoto}</span><span data-working-now-indicator aria-hidden="true">NOW</span></button>`;
       }).join("");
       const remainingMarkup = !options.mobile && remaining > 0
         ? `<span class="${classPrefix}-lineup-count" aria-label="${remaining} more dancers working now">+${remaining}</span>`
@@ -376,14 +376,13 @@
         className: "venue-card-uber feed-uber-ride"
       });
       return `
-        <article class="card venue venue-card" aria-label="${safeName} club details" style="--venue-accent:${venueAccent(venue.name)}">
+        <article class="card venue venue-card" data-analytics-venue-id="${escapeOptionValue(venue.isDashboardPreview ? "" : venue.id || "")}" data-analytics-source="venue_scroll_card" aria-label="${safeName} club details" style="--venue-accent:${venueAccent(venue.name)}">
           <a class="venue-card-link" href="${venueHref}" data-open-venue-profile="${venueValue}" aria-label="Open ${safeName}'s full club profile">
             <div class="venue-art is-venue-logo-artwork${logoMarkup ? " has-venue-logo" : ""}">
               <span class="venue-card-kicker">MyDancr club</span>
               ${logoMarkup || `<span class="venue-card-mark">${escapeHtml(initials)}</span>`}
             </div>
             <div class="profile-body">
-              ${venueLineupMarkup(venue, city, { profiles: workingNow })}
               <h3>${safeName}</h3>
               <div class="meta">${escapeHtml(details.city)}${details.state ? `, ${escapeHtml(details.state)}` : ""} · ${escapeHtml(details.distanceLabel)}</div>
               <div class="pill-row">
@@ -392,6 +391,7 @@
               </div>
             </div>
           </a>
+          ${venueLineupMarkup(venue, city, { profiles: workingNow })}
           <button class="venue-card-follow ${followsVenue ? "is-active" : ""}" type="button" data-venue-follow="${venueValue}" data-account-action="venue-follow" aria-label="${followsVenue ? `Unfollow ${safeName}` : `Follow ${safeName}`}" aria-pressed="${followsVenue}">${actionIconMarkup("heart")}</button>
           <div class="venue-card-actions${rideMarkup ? " with-uber-ride" : ""}" aria-label="${safeName} quick actions">
             ${venueCardQrMarkup(venue)}
@@ -472,7 +472,7 @@
       if (venue.id && !venue.isDashboardPreview) recordVenuePageEvent({ venueId: venue.id, eventType: "page_view", source: "venue_page" });
 
       return `
-        <div class="venue-detail" role="dialog" aria-modal="true" aria-labelledby="venueDetailName">
+        <div data-analytics-venue-id="${escapeOptionValue(venue.isDashboardPreview ? "" : venue.id || "")}" data-analytics-source="venue_detail" class="venue-detail" role="dialog" aria-modal="true" aria-labelledby="venueDetailName">
           <article class="venue-hero">
             <div class="venue-hero-brand-row">
               <div class="venue-main-photo${visual.attrs.className}"${visual.attrs.style} data-venue-visual-source="${visual.source}">

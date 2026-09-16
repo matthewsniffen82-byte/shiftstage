@@ -9,6 +9,7 @@ import { enforceDealGenerationRateLimit } from "./deal-redemption-actions";
 import { PublicRequestRateLimitError } from "./public-request-rate-limit";
 import { createAdminSupabaseClient } from "../supabase/admin";
 import { createRequestSupabaseContext, getBearerToken } from "../supabase/request";
+import { readVenueVideo } from "./venue-video-attribution";
 
 export const ADMISSION_TOKEN_PATTERN = /^[A-Za-z0-9_-]{43}$/;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -41,11 +42,12 @@ export async function createAdmissionPass(request: Request, body: Record<string,
     attributionToken: typeof body.attributionToken === "string" ? body.attributionToken : "",
     venueId: deal.venueId, dealId,
   });
-  const { data, error } = await (admin as any).rpc("issue_admission_pass", {
+  const { data, error } = await (admin as any).rpc("issue_video_admission_pass", {
     p_token: randomBytes(32).toString("base64url"), p_deal_id: dealId,
     p_session_id: sessionId, p_customer_id: customerId,
     p_source: attribution.sourceType, p_dancer_id: attribution.dancerId,
     p_shift_id: attribution.shiftId, p_arrival_method: body.transportation,
+    p_video_id: readVenueVideo(request, deal.venueId, process.env.DANCR_PUBLIC_RATE_LIMIT_SECRET),
   });
   if (error) throw error;
   if (!data?.token || !ADMISSION_TOKEN_PATTERN.test(data.token)) throw new Error("Admission pass receipt missing.");

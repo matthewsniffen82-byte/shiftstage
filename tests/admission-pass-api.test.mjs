@@ -7,6 +7,7 @@ import test from 'node:test';
 import ts from 'typescript';
 import {PublicApiError,resolveApiError} from '../src/lib/api-error-policy.ts';
 import {readBoundedJsonObject} from '../src/lib/bounded-json-body.ts';
+import * as videoAttribution from '../src/lib/dancr/venue-video-attribution.ts';
 import * as transportation from '../src/lib/dancr/club-deal-transportation.ts';
 const require=createRequire(import.meta.url),NextResponse=require('next/server').NextResponse;
 const dealId='11111111-1111-4111-8111-111111111111',customerId='22222222-2222-4222-8222-222222222222',cookieId='33333333-3333-4333-8333-333333333333',token='x'.repeat(43);
@@ -18,7 +19,7 @@ function fixture(options={}){
  const context=async(_request,access)=>{calls.push({access});if(options.noAuth)throw new PublicApiError('UNAUTHORIZED','Sign in.',401);return {user:{id:customerId},client:user,session:{access_token:'new-access'}};};
  const limit=async()=>{calls.push('limit');if(options.limited)throw new RateError('Slow down.');};
  const api=load('src/lib/dancr/admission-passes.ts',{
-  'server-only':{},'node:crypto':{randomBytes,randomUUID},'next/server':{NextResponse},'../api-error-policy':{PublicApiError},
+  './venue-video-attribution':videoAttribution,'server-only':{},'node:crypto':{randomBytes,randomUUID},'next/server':{NextResponse},'../api-error-policy':{PublicApiError},
   './deal-redemption-attribution':{DealRedemptionAttributionError:AttributionError,async resolveDealRedemptionAttribution(_client,input){calls.push({attribution:input});if(input.sourceType==='dancer_profile')throw new AttributionError('Invalid source.');return {sourceType:'club_page',dancerId:null,shiftId:null};}},
   './deals':{async getActiveClubDealById(){return options.inactive?null:{id:dealId,venueId:dealId};}},
   './club-deal-transportation':transportation,'./deal-redemption-actions':{enforceDealGenerationRateLimit:limit},'./public-request-rate-limit':{PublicRequestRateLimitError:RateError},
@@ -34,19 +35,19 @@ function fixture(options={}){
 }
 test('issuance ignores forged customer/session/venue IDs and sets a private secure guest cookie',async()=>{
  const f=fixture(),response=await f.issue({customerId:'victim',sessionId:'victim',venueId:'other'},{cookie:'mydancrAdmissionSession='+cookieId});
- assert.equal(response.status,200);const call=f.calls.find(c=>c.name==='issue_admission_pass');
+ assert.equal(response.status,200);const call=f.calls.find(c=>c.name==='issue_video_admission_pass');
  assert.equal(call.args.p_customer_id,null);assert.equal(call.args.p_session_id,cookieId);assert.equal(call.args.p_deal_id,dealId);assert.equal('p_venue_id' in call.args,false);
  assert.match(call.args.p_token,/^[A-Za-z0-9_-]{43}$/);assert.match(response.headers.get('set-cookie'),/HttpOnly/);assert.match(response.headers.get('set-cookie'),/Secure/);assert.match(response.headers.get('cache-control'),/no-store/);
  assert.equal((await response.json()).passUrl,'/deals/pass/'+token);
 });
 test('signed-in passes use only authenticated customer identity',async()=>{
  const f=fixture();await f.issue({customerId:'victim'},{authorization:'Bearer test'});
- assert.equal(f.calls.find(c=>c.name==='issue_admission_pass').args.p_customer_id,customerId);
+ assert.equal(f.calls.find(c=>c.name==='issue_video_admission_pass').args.p_customer_id,customerId);
  assert.equal(f.calls.find(c=>c.access).access.role,'customer');
 });
 test('invalid arrival, inactive offers, unverified source and rate denial never issue passes',async()=>{
  for(const[options,body]of [[{}, {transportation:'rideshare_taxi'}],[{inactive:true},{}],[{}, {sourceType:'dancer_profile',dancerId:'forged'}],[{limited:true},{}],[{noAuth:true},{}]]){
-  const f=fixture(options);await assert.rejects(f.issue(body,options.noAuth?{authorization:'Bearer invalid'}:{}));assert.equal(f.calls.some(c=>c.name==='issue_admission_pass'),false);
+  const f=fixture(options);await assert.rejects(f.issue(body,options.noAuth?{authorization:'Bearer invalid'}:{}));assert.equal(f.calls.some(c=>c.name==='issue_video_admission_pass'),false);
  }
 });
 test('staff redemption uses the user RPC and ignores forged ownership and verification strings',async()=>{

@@ -19,10 +19,9 @@ import { requireStorageUploadReceipt } from "./storage-upload-receipt";
 import {
   getActiveClubDealsForVenue,
   getVenueDealsForAccount,
-  getVenueDealRevenueMetrics,
 } from "./deals";
 import { isActiveNfcPresence } from "./shift-presence";
-import { canVenue, getVenueAccess, requireVenueAccess } from "./venue-access";
+import { getVenueAccess, requireVenueAccess } from "./venue-access";
 import { getTonightWindow } from "./schedule";
 import type {
   ClubDeal,
@@ -498,9 +497,8 @@ export async function getVenueDashboard(
   deal: ClubDeal | null;
   deals: ClubDeal[];
   publication: VenuePublicationState;
-  dealRevenue: Awaited<ReturnType<typeof getVenueDealRevenueMetrics>> | null;
 }> {
-  const access = await requireVenueAccess(client, userId, "view_dashboard");
+  await requireVenueAccess(client, userId, "view_dashboard");
   const profile = await requireVenueForAccount(client, userId);
   const now = new Date();
   const range = venueAnalyticsRange(profile.timezone, period, now);
@@ -509,40 +507,39 @@ export async function getVenueDashboard(
   const [
     totalFollowers,
     followersGained,
-    directions,
     pageViews,
     pageViewsToday,
     dressingRoomNfcTaps,
     cashierNfcAttempts,
-    admissionMetrics,
     upcomingShiftCount,
     goingSignals,
     previousPageViews,
-    previousDirections,
     workingNow,
     venueDeal,
-    dealRevenue,
+    valueReport,
   ] = await Promise.all([
     countByVenue(client, "venue_follows", profile.id),
     countByVenueBetween(client, "venue_follows", profile.id, "created_at", range.start, range.end),
-    countByVenueBetween(client, "direction_requests", profile.id, "requested_at", range.start, range.end),
     countVenueEvents(client, profile.id, "page_view", range.start, range.end),
     countVenueEvents(client, profile.id, "page_view", new Date(tonight.startsAt), now),
     countVenueNfcTaps(client, profile.id, "dressing_room", range.start, range.end),
     countVenueNfcTaps(client, profile.id, "cashier", range.start, range.end),
-    getVenueAdmissionMetrics(client, profile.id, range.start, range.end),
     countUpcomingShifts(client, profile.id, now),
     countVenueGoingSignals(client, profile.id, range.start, range.end),
     countVenueEvents(client, profile.id, "page_view", range.previousStart, range.start),
-    countByVenueBetween(client, "direction_requests", profile.id, "requested_at", range.previousStart, range.start),
     getWorkingDancers(client, profile.id, now),
     getVenueDealsForAccount(client, userId),
-    canVenue(access, "view_finance") ? getVenueDealRevenueMetrics(client, profile.id) : null,
+    client.rpc("get_venue_subscription_analytics", { p_venue_id: profile.id, p_since: range.start.toISOString(), p_until: range.end.toISOString() }),
   ]);
 
+  if (valueReport.error) throw valueReport.error;
+  const admissionMetrics = { claims: valueReport.data.current.claims, redemptions: valueReport.data.current.admissions, cohortRedemptions: valueReport.data.current.cohortRedemptions, previousRedemptions: valueReport.data.previous.admissions };
+  const directions = valueReport.data.current.directions;
+  const previousDirections = valueReport.data.previous.directions;
   return {
     profile,
     analytics: {
+      valueReport: valueReport.data,
       period,
       periodLabel: range.label,
       periodStart: range.start.toISOString(),
@@ -576,18 +573,10 @@ export async function getVenueDashboard(
     deal: venueDeal?.deals[0] || null,
     deals: venueDeal?.deals || [],
     publication: getVenuePublicationState(profile, venueDeal?.deals || []),
-    dealRevenue,
   };
 }
 
 export type VenueAnalyticsPeriod = "tonight" | "7d" | "30d";
-
-async function getVenueAdmissionMetrics(client: DancrClient, venueId: string, since: Date, until: Date) {
-  const { data, error } = await (client as any).rpc("get_venue_admission_metrics", { p_venue_id: venueId, p_since: since.toISOString(), p_until: until.toISOString() });
-  if (error) throw error;
-  if (!data || !["claims", "cohortRedemptions", "redemptions", "previousRedemptions"].every(key => Number.isSafeInteger(data[key]) && data[key] >= 0)) throw new Error("Unable to load admission totals.");
-  return data as { claims: number; cohortRedemptions: number; redemptions: number; previousRedemptions: number };
-}
 
 export function readVenueAnalyticsPeriod(value: string | null | undefined): VenueAnalyticsPeriod {
   return value === "tonight" || value === "7d" || value === "30d" ? value : "30d";

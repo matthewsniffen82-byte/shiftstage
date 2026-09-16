@@ -272,10 +272,6 @@
     "name": "dealTypeLabel"
   },
   {
-    "file": "VenueDashboardPanels.tsx",
-    "name": "VenueFinanceSummary"
-  },
-  {
     "file": "CustomerDashboardPanels.tsx",
     "name": "CustomerPreferencesPanel"
   },
@@ -557,10 +553,6 @@
   },
   {
     "file": "VenueDashboardPanels.tsx",
-    "name": "VenueAnalyticsMetric"
-  },
-  {
-    "file": "VenueDashboardPanels.tsx",
     "name": "VenueDealReadOnlyPanel"
   },
   {
@@ -570,10 +562,6 @@
   {
     "file": "VenueDashboardPanels.tsx",
     "name": "readOptionalNumber"
-  },
-  {
-    "file": "VenueDashboardPanels.tsx",
-    "name": "formatPercent"
   },
   {
     "file": "VenueDashboardPanels.tsx",

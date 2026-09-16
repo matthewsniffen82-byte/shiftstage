@@ -1,8 +1,6 @@
 import { NextResponse } from "next/server";
 import { apiError } from "@/src/lib/api";
 import { requireActiveVenueAccount } from "@/src/lib/dancr/auth";
-import { getVenueFinance } from "@/src/lib/dancr/finance-reporting";
-import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
 
 export const runtime = "nodejs";
@@ -22,7 +20,8 @@ export async function GET(request: Request) {
     }
     return NextResponse.json({
       ok: true,
-      finance: await getVenueFinance(createAdminSupabaseClient(), user.id),
+      billingModel: "subscription",
+      finance: null,
       session: authContext.session || null,
     });
   } catch (error) {

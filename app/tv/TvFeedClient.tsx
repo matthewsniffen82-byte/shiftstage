@@ -123,7 +123,7 @@ export default function TvFeedClient({
 
   const trackEvent = useCallback((videoId: string, eventType: string) => {
     const token = readBrowserAccessToken();
-    fetch(`/api/public/tv/${videoId}/events`, {
+    return fetch(`/api/public/tv/${videoId}/events`, {
       method: "POST",
       headers: {
         "content-type": "application/json",
@@ -828,7 +828,12 @@ export default function TvFeedClient({
                           className="tv-card-venue-line"
                           href={venueLiveProfileHref(video)}
                           aria-label={`Open ${video.venue.name} club profile`}
-                          onClick={() => trackEvent(video.id, "venue_click")}
+                          onClick={async event => {
+                            if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) { void trackEvent(video.id, "venue_click"); return; }
+                            event.preventDefault();
+                            await Promise.race([trackEvent(video.id, "venue_click"), new Promise(resolve => setTimeout(resolve, 1200))]);
+                            window.location.assign(venueLiveProfileHref(video));
+                          }}
                         >
                           <svg viewBox="0 0 24 24" aria-hidden="true">
                             <path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z" />

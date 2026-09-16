@@ -135,7 +135,7 @@ test("venue pickup chats are visible without expanding a section and the inbox i
   const venuePanel = dashboard.match(/function VenuePanel\([\s\S]*?(?=\nfunction dealTypeLabel)/)?.[0] || "";
   const command = venuePanel.slice(venuePanel.indexOf('<section className="venue-command-panel"'), venuePanel.indexOf('<nav className="venue-workspace-tabs"'));
   assert.match(command, /venueRole === "owner" \|\| venueRole === "manager"/);
-  assert.match(command, /href="\/pickups">Pickup Requests & messages/);
+  assert.match(command, /href="\/pickups">Pickup Requests/);
   const pickupSection = venuePanel.match(/<section\s+className="info-panel venue-dashboard-section"[\s\S]*?id="venue-pickups"[\s\S]*?<\/section>/)?.[0];
   assert.ok(pickupSection, "pickup content must not be hidden inside a collapsed details element");
   assert.match(pickupSection, /hidden=\{activeWorkspace !== "tonight"\}/);
@@ -153,26 +153,26 @@ test("venue Club Deals are read-only and venue write routes enforce the contract
   assert.doesNotMatch(venueDealRoute, /updateVenueDealForAccount|deleteVenueDealForAccount/);
 });
 
-test("venue dashboards expose the complete MyDancr-managed contract ledger", () => {
+test("venue dashboards expose Club Deals without legacy referral billing", () => {
   const venueDealPanel = dashboard.match(/function VenueDealReadOnlyPanel\([\s\S]*?(?=\nfunction readOptionalNumber)/)?.[0] || "";
   assert.match(venueDealPanel, /MyDancr managed/);
   assert.match(venueDealPanel, /Your Club Deals/);
   assert.match(venueDealPanel, /official offers currently attached to your venue/);
   assert.match(venueDealPanel, /Live deals appear first and are marked in green/);
   assert.match(venueDealPanel, /displayedDeals = \[\.\.\.liveDeals/);
-  assert.match(venueDealPanel, /Historical referral agreement/);
-  assert.match(venueDealPanel, /Agreement ID/);
+  assert.doesNotMatch(venueDealPanel, /Historical referral agreement/);
+  assert.doesNotMatch(venueDealPanel, /Agreement ID/);
   assert.match(venueDealPanel, /Redemption status/);
   assert.match(venueDealPanel, /displayedDeals\.map/);
   assert.match(venueDealPanel, /Guest terms/);
-  assert.match(venueDealPanel, /Historical fee/);
+  assert.doesNotMatch(venueDealPanel, /Historical fee/);
   assert.doesNotMatch(venueDealPanel, /Display order/);
-  assert.match(venueDealPanel, /Agreement history/);
-  assert.match(venueDealPanel, /Monthly activity & billing/);
-  assert.match(venueDealPanel, /Confirmed redemptions/);
-  assert.match(venueDealPanel, /Amount due/);
+  assert.doesNotMatch(venueDealPanel, /Agreement history/);
+  assert.doesNotMatch(venueDealPanel, /Monthly activity & billing/);
+  assert.doesNotMatch(venueDealPanel, /Confirmed redemptions/);
+  assert.doesNotMatch(venueDealPanel, /Amount due/);
   assert.doesNotMatch(venueDealPanel, /Redemption intents|Saved \/ opened/);
-  assert.match(venueDealPanel, /VenueFinanceSummary/);
+  assert.doesNotMatch(venueDealPanel, /VenueFinanceSummary/);
   assert.doesNotMatch(venueDealPanel, /Publish Club Deal|Pause Deal|Request fee change|Edit live deal/);
 });
 
@@ -193,7 +193,7 @@ test("venue publication status hides internal requirements while retaining the r
   assert.match(venuePanel, /Ready to review/);
   assert.match(venuePanel, /Changes in progress/);
   assert.match(dashboard, /id="venue-deal-contract-ledger"/);
-  assert.match(venuePanel, /Review every live or inactive deal, guest terms, agreed fees, and monthly activity/);
+  assert.match(venuePanel, /Review every live or inactive deal and its guest terms/);
 });
 
 test("MyDancr supplies tap stickers while venue owners receive read-only inventory", () => {
@@ -227,8 +227,8 @@ test("venue-facing NFC language explains the physical actions in plain language"
   assert.match(nfcPanel, /Working now <b>\{workingCount\}<\/b>/);
   assert.match(venuePanel, /title="Affiliated dancers"/);
   assert.match(nfcPanel, /<summary>Dancer &amp; legacy stickers/);
-  assert.match(venuePanel, /Dancer check-ins/);
-  assert.match(venuePanel, /Passes claimed/);
+  assert.match(venuePanel, /VenueValueAnalytics/);
+  assert.match(venuePanel, /analytics.valueReport/);
   assert.doesNotMatch(venuePanel, /NFC-authorized check-ins|Assigned NFC access|NFC Deal visibility|Dressing-room taps|Cashier tap attempts/);
   assert.match(venueDealPanel, /Scan the guest’s admission QR with your phone camera/);
   assert.doesNotMatch(venueDealPanel, /cashier NFC stickers/);

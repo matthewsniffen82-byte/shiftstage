@@ -444,7 +444,12 @@
               item?.dancer?.city || citySelect.value
             );
             venue.setAttribute("aria-label", `Open ${venueName} club profile`);
-            venue.addEventListener("click", () => trackHomeTvFeedEvent(videoId, "venue_click"));
+            venue.addEventListener("click", async event => {
+              if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) { void trackHomeTvFeedEvent(videoId, "venue_click"); return; }
+              event.preventDefault();
+              await Promise.race([trackHomeTvFeedEvent(videoId, "venue_click"), new Promise(resolve => setTimeout(resolve, 1200))]);
+              window.location.assign(venue.href);
+            });
           }
           venue.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z"></path><circle cx="12" cy="10" r="2.5"></circle></svg>';
           const venueLabel = document.createElement("span");

@@ -1,9 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import {
-  createMonthlyClubInvoiceDrafts,
-  publishClubInvoiceDrafts,
   reconcileOpenClubInvoices,
-  sendClubInvoiceReminders,
 } from "./finance-invoices";
 import { syncNatsAgentCommissions } from "./nats-commission-sync";
 import { getNatsRuntimeConfig } from "./nats";
@@ -38,19 +35,10 @@ export async function runClubInvoiceAutomation(client: DancrClient): Promise<Clu
     errors: [],
   };
 
-  await captureFinanceStep(result, async () => {
-    result.invoicesCreated = await createMonthlyClubInvoiceDrafts(client);
-  });
-  await captureFinanceStep(result, async () => {
-    const publication = await publishClubInvoiceDrafts(client);
-    result.invoicesOpened = publication.opened;
-    result.errors.push(...publication.errors);
-  });
+  // Subscription venues must not receive new legacy referral invoices or
+  // collection reminders. Preserve reconciliation of existing payment records.
   await captureFinanceStep(result, async () => {
     result.invoicesReconciled = await reconcileOpenClubInvoices(client);
-  });
-  await captureFinanceStep(result, async () => {
-    result.remindersSent = await sendClubInvoiceReminders(client);
   });
 
   return result;

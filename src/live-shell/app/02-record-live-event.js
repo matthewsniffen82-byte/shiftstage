@@ -115,7 +115,7 @@
         }
       }
       const href = `/rides/${encodeURIComponent(venue.id)}${query.size ? `?${query}` : ""}`;
-      return `<a class="${classes}" href="${escapeHtml(href)}" data-free-ride-link aria-label="${escapeHtml(label)}. Free admission with club-provided transport. Request pickup; the club will contact you to confirm.">${actionButtonLabel("car", escapeHtml(visibleLabel))}</a>`;
+      return `<a class="${classes}" href="${escapeHtml(href)}" data-free-ride-link data-venue-id="${escapeOptionValue(venue.id)}"${dealConfig?.dancerId ? ` data-dancer-id="${escapeOptionValue(dealConfig.dancerId)}"` : ""} aria-label="${escapeHtml(label)}. Free admission with club-provided transport. Request pickup; the club will contact you to confirm.">${actionButtonLabel("car", escapeHtml(visibleLabel))}</a>`;
     }
 
     document.addEventListener("click", (event) => {

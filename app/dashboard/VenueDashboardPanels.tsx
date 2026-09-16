@@ -8,10 +8,13 @@ const PickupDashboardPanel = dynamic(() => import("./PickupDashboardPanel"));
 import { CLUB_DEAL_OFFER_PRESETS } from "@/src/lib/dancr/club-deal-presets";
 import { VenueDashboardIcon } from "./VenueDashboardIdentity";
 import { type VenueDancerAffiliation } from "@/src/lib/dancr/venue-roster";
-import { requestDashboardJson, requestVenueFinanceStatement, type DashboardSessionAccount } from "./dashboard-session";
-import { PUBLIC_DISCOVERY_REFRESH_KEY, formatVenueReviewHours, formatCents, Metric, DashboardSection, InfoPanel, NotificationPanel, SupportInboxPanel, AccountControlsPanel, downloadDashboardBlob, formatFinanceDate, formatDashboardDate } from "./DashboardShared";
+import { requestDashboardJson, type DashboardSessionAccount } from "./dashboard-session";
+import { PUBLIC_DISCOVERY_REFRESH_KEY, formatVenueReviewHours, Metric, DashboardSection, InfoPanel, NotificationPanel, SupportInboxPanel, AccountControlsPanel, formatDashboardDate } from "./DashboardShared";
 import type { VenueWorkspace, LoadState } from "./dashboard-types";
 const VenueNfcTagPanel = dynamic(() => import("./VenueNfcTagPanel"));
+
+import VenueValueAnalytics from "./VenueValueAnalytics";
+import type { VenueValueReport } from "@/src/lib/dancr/venue-analytics";
 
 const VenueTeamPanel = dynamic(() => import("./VenueTeamPanel"));
 
@@ -46,13 +49,10 @@ export function VenuePanel({
   deal,
   venueDeals,
   dealRequests,
-  dealRevenue,
-  finance,
   profile,
   workingNow,
   initialAffiliations,
   venueAccess,
-  referralFee,
   refreshedAt,
   supportThreads,
   analyticsPeriod,
@@ -70,13 +70,10 @@ export function VenuePanel({
   deal?: LoadState["deal"];
   venueDeals: Array<Record<string, unknown>>;
   dealRequests: Array<Record<string, unknown>>;
-  dealRevenue?: LoadState["dealRevenue"];
-  finance?: LoadState["finance"];
   profile?: LoadState["profile"];
   workingNow: Array<Record<string, unknown>>;
   initialAffiliations: Array<Record<string, unknown>>;
   venueAccess?: LoadState["venueAccess"];
-  referralFee?: LoadState["referralFee"];
   refreshedAt?: string | null;
   supportThreads: Array<Record<string, unknown>>;
   analyticsPeriod: "tonight" | "7d" | "30d";
@@ -202,7 +199,6 @@ export function VenuePanel({
   const dashboardDeals = venueDeals.length ? venueDeals : deal ? [deal] : [];
   const activeDealCount = dashboardDeals.filter((venueDeal) => venueDeal.isActive === true).length;
   const venueReviewDeal = dashboardDeals.find((venueDeal) => venueDeal.isActive === true) || dashboardDeals[0];
-  const venueReviewReferralFee = referralFee?.current as Record<string, unknown> | null | undefined;
   const venueReviewHours = formatVenueReviewHours(profile?.opensAt, profile?.closesAt);
   const venueReviewLocation = [profile?.city, profile?.state].map((value) => String(value || "").trim()).filter(Boolean).join(", ") || "Location not provided";
   const venueReviewAddress = String(profile?.address || "").trim() || venueReviewLocation;
@@ -394,12 +390,12 @@ export function VenuePanel({
             </div>
             <div className="venue-review-package-section">
               <span className="venue-review-commercial-heading">
-                <strong>Club Deal and MyDancr fee</strong>
+                <strong>Club Deal and subscription</strong>
                 <small>These are read-only. Request a correction before approving if they do not match the agreement.</small>
               </span>
               <dl>
                 <div><dt>Customer offer</dt><dd>{String(venueReviewDeal?.dealTitle || "Club Deal not provided")}</dd></div>
-                <div><dt>MyDancr fee</dt><dd>{venueReviewReferralFee ? `${formatCents(Number(venueReviewReferralFee.feeCents || 0))} per confirmed customer` : "Agreement pending"}</dd></div>
+                <div><dt>Billing model</dt><dd>Venue subscription · no per-customer charge</dd></div>
                 <div><dt>Guest terms</dt><dd>{String(venueReviewDeal?.dealTerms || "Standard venue capacity, age, dress code, and house rules apply.")}</dd></div>
               </dl>
             </div>
@@ -451,7 +447,7 @@ export function VenuePanel({
 
       <DashboardSection
         badge={`${activeDealCount} live · ${dashboardDeals.length} total`}
-        description="Review every live or inactive deal, guest terms, agreed fees, and monthly activity."
+        description="Review every live or inactive deal and its guest terms."
         eyebrow="Current offers"
         hidden={activeWorkspace !== "tonight"}
         id="venue-club-deals"
@@ -462,10 +458,7 @@ export function VenuePanel({
         <VenueDealReadOnlyPanel
           deals={dashboardDeals}
           dealRequests={dealRequests}
-          finance={finance}
           isVenuePublished={isPublished}
-          referralFee={referralFee}
-          revenue={dealRevenue}
           venueCity={venueCity}
           venueSlug={venueSlug}
           canRequestDeals={permissions.includes("request_deals") || venueRole === "owner" || venueRole === "manager"}
@@ -522,27 +515,14 @@ export function VenuePanel({
             </button>
           ))}
         </div>
-        <div className="venue-dashboard-inner-grid venue-dashboard-overview-grid">
-          <InfoPanel title="Audience">
-            <VenueAnalyticsMetric label="Page views" value={Number(analytics?.pageViews || 0)} change={readOptionalNumber(analytics?.pageViewsChangePercent)} />
-            <Metric label="Venue followers" value={String(analytics?.totalFollowers || 0)} />
-            <Metric label="New followers" value={String(analytics?.followersGained || 0)} />
-          </InfoPanel>
-          <InfoPanel title="Guest intent">
-            <VenueAnalyticsMetric label="Direction requests" value={Number(analytics?.directions || 0)} change={readOptionalNumber(analytics?.directionsChangePercent)} />
-            <Metric label="View → directions" value={formatPercent(analytics?.directionConversionPercent)} />
-            <Metric label="Going signals" value={String(analytics?.goingSignals || 0)} />
-          </InfoPanel>
-          <InfoPanel title="Live operations">
-            <Metric label="Working now" value={String(analytics?.activeDancersNow || 0)} />
-            <Metric label="Upcoming shifts" value={String(analytics?.upcomingShiftCount || 0)} />
-            <Metric label="Dancer check-ins" value={String(analytics?.dressingRoomNfcTaps || 0)} />
-            <Metric label="Passes claimed" value={String(analytics?.admissionPassesClaimed || 0)} />
-            <VenueAnalyticsMetric label="Verified admissions" value={Number(analytics?.cashierNfcRedemptions || 0)} change={readOptionalNumber(analytics?.redemptionsChangePercent)} />
-            <Metric label="Claim → admission" value={formatPercent(analytics?.claimToAdmissionPercent)} />
-            <small>Conversion counts redeemed passes claimed during this period. Each pass admits one guest.</small>
-          </InfoPanel>
-        </div>
+        {analytics?.valueReport ? <VenueValueAnalytics
+          report={analytics.valueReport as VenueValueReport}
+          periodStart={String(analytics.periodStart)}
+          periodEnd={String(analytics.periodEnd)}
+          timezone={String(profile?.timezone || "America/Los_Angeles")}
+          totalFollowers={Number(analytics.totalFollowers || 0)}
+          conversion={readOptionalNumber(analytics.claimToAdmissionPercent)}
+        /> : <p role="status">Analytics are unavailable. Refresh to try again.</p>}
       </DashboardSection>
 
       <VenueTvPanel
@@ -602,131 +582,10 @@ function dealTypeLabel(value: string) {
 }
 
 
-function VenueFinanceSummary({ finance }: { finance?: LoadState["finance"] }) {
-  const [status, setStatus] = useState("");
-  const [isDownloading, setIsDownloading] = useState(false);
-  const mountedRef = useRef(false);
-  const downloadSequenceRef = useRef(0);
-  const downloadAbortRef = useRef<AbortController | null>(null);
-  const downloadInFlightRef = useRef(false);
-  const invoices = Array.isArray(finance?.invoices) ? finance.invoices as Array<Record<string, unknown>> : [];
-  const openInvoices = invoices.filter((invoice) => ["open", "overdue"].includes(String(invoice.status)));
-  const outstandingCents = openInvoices.reduce(
-    (total, invoice) => total + Math.max(0, Number(invoice.amount_due_cents || 0) - Number(invoice.amount_paid_cents || 0)),
-    0,
-  );
-  const currentMonth = new Date().toISOString().slice(0, 7);
-
-  useEffect(() => {
-    mountedRef.current = true;
-    return () => {
-      mountedRef.current = false;
-      downloadSequenceRef.current += 1;
-      downloadAbortRef.current?.abort();
-      downloadAbortRef.current = null;
-      downloadInFlightRef.current = false;
-    };
-  }, []);
-
-  function beginStatementDownload() {
-    if (!mountedRef.current || downloadInFlightRef.current) return null;
-    downloadInFlightRef.current = true;
-    const requestId = ++downloadSequenceRef.current;
-    downloadAbortRef.current?.abort();
-    const controller = new AbortController();
-    downloadAbortRef.current = controller;
-    return { requestId, controller };
-  }
-
-  function isCurrentStatementDownload(requestId: number, controller: AbortController) {
-    return mountedRef.current && !controller.signal.aborted && requestId === downloadSequenceRef.current;
-  }
-
-  function finishStatementDownload(requestId: number) {
-    if (requestId !== downloadSequenceRef.current) return false;
-    downloadAbortRef.current = null;
-    downloadInFlightRef.current = false;
-    return mountedRef.current;
-  }
-
-  async function downloadStatement() {
-    const action = beginStatementDownload();
-    if (!action) return;
-    const { requestId, controller } = action;
-    setIsDownloading(true);
-    setStatus("Preparing statement...");
-    try {
-      const statement = await requestVenueFinanceStatement(currentMonth, { signal: controller.signal });
-      if (!isCurrentStatementDownload(requestId, controller)) return;
-      await downloadDashboardBlob(
-        statement,
-        `mydancr-${currentMonth}-club-statement.csv`,
-      );
-      if (isCurrentStatementDownload(requestId, controller)) setStatus("Statement downloaded.");
-    } catch (error) {
-      if (isCurrentStatementDownload(requestId, controller)) {
-        setStatus(error instanceof Error ? error.message : "Unable to download statement.");
-      }
-    } finally {
-      if (finishStatementDownload(requestId)) setIsDownloading(false);
-    }
-  }
-
-  return (
-    <section className="finance-summary" aria-labelledby="venue-finance-heading">
-      <div className="venue-deal-heading">
-        <div>
-          <span className="eyebrow">Settlement</span>
-          <h3 id="venue-finance-heading">Club invoices</h3>
-        </div>
-        <strong className={openInvoices.some((invoice) => String(invoice.status) === "overdue") ? "deal-state" : "deal-state active"}>
-          {openInvoices.some((invoice) => String(invoice.status) === "overdue") ? "Payment overdue" : `${openInvoices.length} open`}
-        </strong>
-      </div>
-      <div className="deal-metrics">
-        <Metric label="Outstanding" value={formatCents(outstandingCents)} />
-        <Metric label="Payment terms" value={`${String((finance?.account as Record<string, unknown> | undefined)?.payment_terms_days || 15)} days`} />
-      </div>
-      {openInvoices.length ? (
-        <div className="commission-tier-table" aria-label="Open Club Deal commission invoices">
-          {openInvoices.slice(0, 6).map((invoice) => (
-            <div key={String(invoice.id)}>
-              <span>{String(invoice.period_start).slice(0, 7)} · {String(invoice.status)}</span>
-              <b>{formatCents(Number(invoice.amount_due_cents || 0) - Number(invoice.amount_paid_cents || 0))}</b>
-              <span>Due {formatFinanceDate(invoice.due_at)}</span>
-              {invoice.hosted_invoice_url ? <a href={String(invoice.hosted_invoice_url)} rel="noreferrer" target="_blank">Pay securely</a> : null}
-              {invoice.invoice_pdf_url ? <a href={String(invoice.invoice_pdf_url)} rel="noreferrer" target="_blank">PDF</a> : null}
-            </div>
-          ))}
-        </div>
-      ) : <p>No open club invoices.</p>}
-      <button type="button" disabled={isDownloading} onClick={downloadStatement}>Download monthly statement</button>
-      {status ? <p role="status">{status}</p> : null}
-    </section>
-  );
-}
-
-
-function VenueAnalyticsMetric({ label, value, change }: { label: string; value: number; change: number | null }) {
-  return (
-    <div className="metric venue-analytics-metric">
-      <span>{label}</span>
-      <strong>{value}</strong>
-      <small className={change === null ? "" : change >= 0 ? "positive" : "negative"}>
-        {change === null ? "No prior-period baseline" : `${change >= 0 ? "+" : ""}${change}% vs prior period`}
-      </small>
-    </div>
-  );
-}
-
-
 function VenueDealReadOnlyPanel({
   deals,
   dealRequests,
-  finance,
   isVenuePublished,
-  referralFee,
-  revenue,
   venueCity,
   venueSlug,
   canRequestDeals,
@@ -734,10 +593,7 @@ function VenueDealReadOnlyPanel({
 }: {
   deals: Array<Record<string, unknown>>;
   dealRequests: Array<Record<string, unknown>>;
-  finance?: LoadState["finance"];
   isVenuePublished: boolean;
-  referralFee?: LoadState["referralFee"];
-  revenue?: LoadState["dealRevenue"];
   venueCity: string;
   venueSlug: string;
   canRequestDeals: boolean;
@@ -758,16 +614,6 @@ function VenueDealReadOnlyPanel({
   const requestInFlightRef = useRef(false);
   const liveDeals = deals.filter((deal) => deal.isActive === true);
   const displayedDeals = [...liveDeals, ...deals.filter((deal) => deal.isActive !== true)];
-  const currentFee = referralFee?.current && typeof referralFee.current === "object"
-    ? referralFee.current as Record<string, unknown>
-    : null;
-  const scheduledFees = Array.isArray(referralFee?.scheduled)
-    ? referralFee.scheduled as Array<Record<string, unknown>>
-    : [];
-  const feeHistory = Array.isArray(referralFee?.history)
-    ? referralFee.history as Array<Record<string, unknown>>
-    : [];
-
   useEffect(() => {
     mountedRef.current = true;
     return () => {
@@ -842,17 +688,7 @@ function VenueDealReadOnlyPanel({
         </strong>
       </header>
 
-      <section className="venue-contract-summary" aria-label="Admission passes and historical agreement">
-        <div>
-          <span>Historical referral agreement</span>
-          <strong>{currentFee ? `${formatCents(Number(currentFee.feeCents || 0))} historical rate` : "Agreement pending"}</strong>
-          <small>{currentFee ? `Effective ${formatDashboardDate(String(currentFee.effectiveFrom || ""))}` : "MyDancr records this after the venue agreement is signed."}</small>
-        </div>
-        <div>
-          <span>Agreement ID</span>
-          <strong>{currentFee ? String(currentFee.agreementReference || "Recorded by MyDancr") : "Not recorded"}</strong>
-          <small>{scheduledFees.length ? `${scheduledFees.length} scheduled fee update${scheduledFees.length === 1 ? "" : "s"}` : "No scheduled fee changes"}</small>
-        </div>
+      <section className="venue-contract-summary" aria-label="Admission passes">
         <div>
           <span>Redemption status</span>
           <strong>{liveDeals.length ? "Enabled" : "Not active"}</strong>
@@ -870,7 +706,6 @@ function VenueDealReadOnlyPanel({
             <p>{String(deal.dealDescription || "No public description recorded.")}</p>
             <dl>
               <div><dt>Offer type</dt><dd>{dealTypeLabel(String(deal.offerType || "admission"))}</dd></div>
-              <div><dt>Historical fee</dt><dd>{Number(deal.payoutAmountCents || 0) > 0 ? `${formatCents(Number(deal.payoutAmountCents || 0))} (prior model)` : "Pending"}</dd></div>
               <div><dt>Redemption status</dt><dd>{deal.isActive === true ? "Enabled" : "Not active"}</dd></div>
             </dl>
             <div className="venue-contract-deal-terms">
@@ -988,33 +823,6 @@ function VenueDealReadOnlyPanel({
         ) : null}
       </section>
 
-      <details className="venue-contract-history">
-        <summary>Agreement history</summary>
-        <div>
-          {feeHistory.map((term) => (
-            <section key={String(term.id)}>
-              <strong>{formatCents(Number(term.feeCents || 0))} per confirmed guest</strong>
-              <span>{String(term.agreementReference || "MyDancr agreement")}</span>
-              <small>{formatDashboardDate(String(term.effectiveFrom || ""))}{term.effectiveUntil ? ` – ${formatDashboardDate(String(term.effectiveUntil))}` : " onward"}</small>
-            </section>
-          ))}
-          {!feeHistory.length ? <p>No agreement history has been recorded.</p> : null}
-        </div>
-      </details>
-
-      <details className="venue-deal-performance" open>
-        <summary><span><strong>Monthly activity & billing</strong><small>Confirmed redemptions, fees, and invoices</small></span></summary>
-        <div className="venue-deal-performance-body">
-          <div className="deal-metrics venue-deal-metrics">
-            <Metric label="Confirmed redemptions" value={String(revenue?.confirmedCashierTapsThisMonth || 0)} />
-            <Metric label="From dancer profiles" value={String(revenue?.dancerAttributedRedemptionsThisMonth || 0)} />
-            <Metric label="Direct visits" value={String(revenue?.directVenueRedemptionsThisMonth || 0)} />
-            <Metric label="Fees this month" value={formatCents(Number(revenue?.myDancrFeesCentsThisMonth || 0))} />
-            <Metric label="Amount due" value={formatCents(Number(revenue?.pendingVenuePaymentCents || 0))} />
-          </div>
-          <VenueFinanceSummary finance={finance} />
-        </div>
-      </details>
     </article>
   );
 }
@@ -1036,10 +844,6 @@ function readOptionalNumber(value: unknown) {
 }
 
 
-function formatPercent(value: unknown) {
-  const number = readOptionalNumber(value);
-  return number === null ? "—" : `${number}%`;
-}
 
 
 function formatRelativeDashboardTime(value: string) {

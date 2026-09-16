@@ -68,9 +68,9 @@ test('failure-state persistence errors are themselves reported safely',async()=>
  const result=await h.run();assert.equal(result.opened,0);assert.equal(result.errors.length,1);
  assert.doesNotMatch(result.errors.join(' '),/synthetic secret|private connection/);
 });
-test('publication counts and failures reach the existing automation response together',async()=>{
+test('subscription automation does not publish referral invoices',async()=>{
  const result=await publicationAutomation({opened:2,errors:['One invoice needs review.']});
- assert.equal(result.invoicesOpened,2);assert.deepEqual(Array.from(result.errors),['One invoice needs review.']);
+ assert.equal(result.invoicesOpened,0);assert.equal(result.invoicesCreated,0);assert.equal(result.remindersSent,0);assert.deepEqual(Array.from(result.errors),[]);
 });
 for(const status of ['void','uncollectible'])test('an existing '+status+' provider invoice is reconciled without counting it as opened',async()=>{
  await db.query('update club_invoices set stripe_invoice_id=$1 where id=$2',['in_synthetic',invoiceId]);

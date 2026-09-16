@@ -8,6 +8,7 @@
     "application": [
       "app/01-user-agent.js",
       "app/02-record-live-event.js",
+      "app/02-venue-interactions.js",
       "app/03-submit-password-recovery-form.js",
       "app/04-apply-live-admin-venues.js",
       "app/05-real-dancer-dashboard-metrics.js",

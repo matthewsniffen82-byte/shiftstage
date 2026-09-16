@@ -270,7 +270,7 @@
         ? `${safeName} logo`
         : `${safeName} monogram`;
       return `
-        <article class="venue home-discovery-feed-slide home-venue-discovery-slide${workingNow.length ? " has-live-lineup" : ""}" data-discovery-key="${venueValue}" aria-label="${accessibilityLabel}">
+        <article data-analytics-venue-id="${escapeOptionValue(venue.isDashboardPreview ? "" : venue.id || "")}" data-analytics-source="venue_scroll_card" class="venue home-discovery-feed-slide home-venue-discovery-slide${workingNow.length ? " has-live-lineup" : ""}" data-discovery-key="${venueValue}" aria-label="${accessibilityLabel}">
           <div class="home-venue-discovery-art is-venue-logo-artwork${logoMarkup ? " has-venue-logo" : ""}" role="img" aria-label="${visualLabel}">
             ${logoMarkup || `<span class="home-venue-discovery-monogram">${escapeHtml(initials)}</span>`}
           </div>

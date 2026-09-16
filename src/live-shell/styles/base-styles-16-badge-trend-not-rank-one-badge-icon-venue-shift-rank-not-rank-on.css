@@ -1195,3 +1195,6 @@
         0 0 0 1px rgba(139, 92, 246, 0.08),
         0 0 24px rgba(124, 58, 237, 0.08) !important;
     }
+    button.venue-lineup-profile { padding: 0; cursor: pointer; color: inherit; font: inherit; background: transparent; }
+    button.venue-lineup-profile:focus-visible { outline: 2px solid #c4a2ff; outline-offset: 3px; }
+    .venue-card > .venue-card-lineup { margin: 0 14px 12px; }

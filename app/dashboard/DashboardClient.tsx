@@ -617,13 +617,10 @@ export default function DashboardClient({
                   deal={state.deal}
                    venueDeals={state.venueDeals || []}
                    dealRequests={state.dealRequests || []}
-                  dealRevenue={state.dealRevenue}
-                  finance={state.finance}
                   profile={state.profile}
                   workingNow={state.workingNow || []}
                   initialAffiliations={state.affiliations || []}
                   venueAccess={state.venueAccess || null}
-                  referralFee={state.referralFee || null}
                   refreshedAt={state.refreshedAt || null}
                   supportThreads={state.supportThreads || []}
                   analyticsPeriod={analyticsPeriod}

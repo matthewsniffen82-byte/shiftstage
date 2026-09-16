@@ -31,23 +31,16 @@ test("scheduled finance work uses one dedicated automation boundary", () => {
   assert.match(adminDispatch, /from "\.\/finance-automation"/);
 });
 
-test("club invoice automation remains an independently callable ordered task", () => {
+test("subscription venues reconcile history without new referral invoices or reminders", () => {
   const task = between(
     automation,
     "export async function runClubInvoiceAutomation",
     "export async function runAgentCommissionAutomation",
   );
-  const orderedActions = [
-    "createMonthlyClubInvoiceDrafts",
-    "publishClubInvoiceDrafts",
-    "reconcileOpenClubInvoices",
-    "sendClubInvoiceReminders",
-  ];
-  for (let index = 1; index < orderedActions.length; index += 1) {
-    assert.ok(task.indexOf(orderedActions[index - 1]) < task.indexOf(orderedActions[index]));
-  }
+  assert.match(task, /await reconcileOpenClubInvoices\(client\)/);
+  assert.doesNotMatch(task, /createMonthlyClubInvoiceDrafts|publishClubInvoiceDrafts|sendClubInvoiceReminders/);
   assert.doesNotMatch(task, /processDancerPayouts/);
-  assert.equal((task.match(/await captureFinanceStep/g) || []).length, 4);
+  assert.equal((task.match(/await captureFinanceStep/g) || []).length, 1);
 });
 
 test("only sales-agent commissions are dispatched automatically", () => {

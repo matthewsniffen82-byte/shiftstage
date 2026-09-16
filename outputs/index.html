@@ -19180,6 +19180,9 @@
         0 0 0 1px rgba(139, 92, 246, 0.08),
         0 0 24px rgba(124, 58, 237, 0.08) !important;
     }
+    button.venue-lineup-profile { padding: 0; cursor: pointer; color: inherit; font: inherit; background: transparent; }
+    button.venue-lineup-profile:focus-visible { outline: 2px solid #c4a2ff; outline-offset: 3px; }
+    .venue-card > .venue-card-lineup { margin: 0 14px 12px; }
 
     .dancer-card:hover,
     .dancer-card:focus-visible {
@@ -43666,7 +43669,7 @@
         }
       }
       const href = `/rides/${encodeURIComponent(venue.id)}${query.size ? `?${query}` : ""}`;
-      return `<a class="${classes}" href="${escapeHtml(href)}" data-free-ride-link aria-label="${escapeHtml(label)}. Free admission with club-provided transport. Request pickup; the club will contact you to confirm.">${actionButtonLabel("car", escapeHtml(visibleLabel))}</a>`;
+      return `<a class="${classes}" href="${escapeHtml(href)}" data-free-ride-link data-venue-id="${escapeOptionValue(venue.id)}"${dealConfig?.dancerId ? ` data-dancer-id="${escapeOptionValue(dealConfig.dancerId)}"` : ""} aria-label="${escapeHtml(label)}. Free admission with club-provided transport. Request pickup; the club will contact you to confirm.">${actionButtonLabel("car", escapeHtml(visibleLabel))}</a>`;
     }
 
     document.addEventListener("click", (event) => {
@@ -44546,7 +44549,73 @@
         passwordRecoveryStatus.hidden = true;
       }
       openRecoveryPopover(passwordRecoveryCard, sourceButton, "passwordRecoveryEmail");
+    }    function recordVenueInteraction({ venueId, dancerId = null, eventType, source }) {
+      if (!venueId || window.location.protocol === "file:") return;
+      try {
+        const payload = JSON.stringify({ eventId: crypto.randomUUID(), venueId, dancerId: dancerId || null, eventType, source, sessionId: trendEventStore.viewerId });
+        fetch("/api/public/venue-interactions", { method: "POST", headers: { "Content-Type": "application/json" }, body: payload, keepalive: true }).catch(() => {});
+      } catch {}
     }
+
+    function venueInteractionContext(target) {
+      const root = target?.closest?.("[data-analytics-venue-id]");
+      const profileRoot = target?.closest?.("#profileModal, .dancer-card");
+      const configNode = target?.closest?.("[data-club-deal-cta], [data-deal-pass], [data-profile-club-deal-config]");
+      const config = configNode ? decodeDealPass(configNode.dataset.clubDealCta || configNode.dataset.dealPass || configNode.dataset.profileClubDealConfig) : null;
+      const venueReference = target?.dataset?.analyticsVenueId || target?.dataset?.venueId || target?.dataset?.openVenueProfile || target?.dataset?.openVenue || target?.dataset?.cardVenue || target?.dataset?.shareVenue || target?.dataset?.venueFollow || config?.venueId || config?.venue?.id || config?.deal?.venueId || root?.dataset.analyticsVenueId;
+      const venue = resolveVenueByName(venueReference);
+      const profileReference = target?.dataset?.dancerId || config?.dancerId || profileRoot?.dataset.analyticsDancerId || profileRoot?.dataset.profileReference || profileRoot?.dataset.profile;
+      const profile = profileReference ? findProfile(profileReference) : null;
+      return { venueId: venue?.isDashboardPreview ? null : venue?.id, dancerId: profile?.id || null, source: root?.dataset.analyticsSource || (profileRoot ? "dancer_profile" : "venue_detail") };
+    }
+
+    document.addEventListener("click", event => {
+      const target = event.target.closest?.("a, button, .dancer-card, .venue-shift-row");
+      if (!target || target.disabled || target.getAttribute("aria-disabled") === "true") return;
+      let eventType = "";
+      if (target.matches("[data-open-venue-profile], [data-open-venue], [data-card-venue]")) eventType = "club_page";
+      else if (target.matches("[data-venue-dancer-profile]")) eventType = "dancer_profile";
+      else if (target.matches(".venue-directions-btn, .venue-address-directions")) eventType = "directions";
+      else if (target.matches("[data-club-deal-cta], [data-profile-club-deal-config], [data-deal-pass]")) eventType = "free_entry";
+      else if (target.matches("[data-free-ride-link]")) eventType = "transport";
+      else if (target.matches("[data-venue-follow]")) eventType = target.getAttribute("aria-pressed") === "true" ? "unfollow" : "follow";
+      else if (target.matches("[data-share-venue]")) eventType = "share";
+      else if (target.matches('a[href^="tel:"]')) eventType = "phone";
+      const root = target.closest("[data-analytics-venue-id]");
+      const dancerCard = target.closest(".dancer-card, .venue-shift-row");
+      if (!eventType && root && dancerCard && (target === dancerCard || target.matches("[data-grid-profile-action]"))) {
+        const profile = findProfile(dancerCard.dataset.profileReference || dancerCard.dataset.profile);
+        recordVenueInteraction({ venueId: root.dataset.analyticsVenueId, dancerId: profile?.id, eventType: "dancer_profile", source: root.dataset.analyticsSource });
+        return;
+      }
+      if (eventType) recordVenueInteraction({ ...venueInteractionContext(target), eventType });
+    }, true);
+
+    // Count visible cards, not markup generated below the fold. Re-rendering the
+    // same card during this page visit does not create another impression.
+    const seenVenueCards = new Set();
+    const venueCardObserver = typeof IntersectionObserver === "function" ? new IntersectionObserver(entries => {
+      for (const entry of entries) {
+        if (!entry.isIntersecting || entry.intersectionRatio < 0.5 || document.visibilityState !== "visible") continue;
+        const venueId = entry.target.dataset.analyticsVenueId;
+        if (venueId && !seenVenueCards.has(venueId)) {
+          seenVenueCards.add(venueId);
+          recordVenueInteraction({ venueId, eventType: "card_impression", source: "venue_scroll_card" });
+        }
+        venueCardObserver.unobserve(entry.target);
+      }
+    }, { threshold: 0.5 }) : null;
+    function observeVenueCards(root) {
+      if (!venueCardObserver || !root?.querySelectorAll) return;
+      const selector = '[data-analytics-source="venue_scroll_card"]';
+      if (root.matches?.(selector)) venueCardObserver.observe(root);
+      root.querySelectorAll(selector).forEach(card => venueCardObserver.observe(card));
+    }
+    if (venueCardObserver) {
+      observeVenueCards(document);
+      new MutationObserver(records => records.forEach(record => record.addedNodes.forEach(observeVenueCards))).observe(document.body, { childList: true, subtree: true });
+    }
+
 
     async function submitPasswordRecoveryForm(event) {
       event.preventDefault();
@@ -50332,6 +50401,7 @@
         showToast("Club profile unavailable");
         return;
       }
+      const analyticsContext = venueInteractionContext(trigger);
       setVenueShareButtonState(trigger, "sharing");
       const url = venueShareUrl(venue, city);
       const shareData = {
@@ -50343,6 +50413,7 @@
         try {
           await navigator.share(shareData);
           setVenueShareButtonState(trigger, "confirmed");
+          recordVenueInteraction({ ...analyticsContext, venueId: venue.id, eventType: "share_completed" });
           showToast("Club profile shared");
           return;
         } catch (error) {
@@ -50352,6 +50423,7 @@
         }
       }
       const copied = await copyText(url, "Club link copied");
+      if (copied) recordVenueInteraction({ ...analyticsContext, venueId: venue.id, eventType: "share_completed" });
       setVenueShareButtonState(trigger, copied ? "confirmed" : "idle");
     }
 
@@ -52724,7 +52796,7 @@
               profile.avatarPhotoFocalY ?? profile.mainPhotoFocalY
             )}" alt="" aria-hidden="true" loading="${options.eager ? "eager" : "lazy"}" decoding="async" draggable="false" data-image-state="loading">`
           : escapeHtml(String(profile.name || "").trim().charAt(0).toUpperCase());
-        return `<span class="${classPrefix}-lineup-avatar" data-dancer-avatar data-working-now="true" role="img" aria-label="${escapeHtml(profile.name)}, working now"><span data-dancer-avatar-border aria-hidden="true">${avatarPhoto}</span><span data-working-now-indicator aria-hidden="true">NOW</span></span>`;
+        return `<button type="button" class="${classPrefix}-lineup-avatar venue-lineup-profile" data-venue-dancer-profile data-grid-profile-action="${escapeOptionValue(profileReferenceValue(profile))}" data-dancer-id="${escapeOptionValue(profile.id || "")}" data-dancer-avatar data-working-now="true" aria-label="Open ${escapeHtml(profile.name)}, working now"><span data-dancer-avatar-border aria-hidden="true">${avatarPhoto}</span><span data-working-now-indicator aria-hidden="true">NOW</span></button>`;
       }).join("");
       const remainingMarkup = !options.mobile && remaining > 0
         ? `<span class="${classPrefix}-lineup-count" aria-label="${remaining} more dancers working now">+${remaining}</span>`
@@ -52780,14 +52852,13 @@
         className: "venue-card-uber feed-uber-ride"
       });
       return `
-        <article class="card venue venue-card" aria-label="${safeName} club details" style="--venue-accent:${venueAccent(venue.name)}">
+        <article class="card venue venue-card" data-analytics-venue-id="${escapeOptionValue(venue.isDashboardPreview ? "" : venue.id || "")}" data-analytics-source="venue_scroll_card" aria-label="${safeName} club details" style="--venue-accent:${venueAccent(venue.name)}">
           <a class="venue-card-link" href="${venueHref}" data-open-venue-profile="${venueValue}" aria-label="Open ${safeName}'s full club profile">
             <div class="venue-art is-venue-logo-artwork${logoMarkup ? " has-venue-logo" : ""}">
               <span class="venue-card-kicker">MyDancr club</span>
               ${logoMarkup || `<span class="venue-card-mark">${escapeHtml(initials)}</span>`}
             </div>
             <div class="profile-body">
-              ${venueLineupMarkup(venue, city, { profiles: workingNow })}
               <h3>${safeName}</h3>
               <div class="meta">${escapeHtml(details.city)}${details.state ? `, ${escapeHtml(details.state)}` : ""} · ${escapeHtml(details.distanceLabel)}</div>
               <div class="pill-row">
@@ -52796,6 +52867,7 @@
               </div>
             </div>
           </a>
+          ${venueLineupMarkup(venue, city, { profiles: workingNow })}
           <button class="venue-card-follow ${followsVenue ? "is-active" : ""}" type="button" data-venue-follow="${venueValue}" data-account-action="venue-follow" aria-label="${followsVenue ? `Unfollow ${safeName}` : `Follow ${safeName}`}" aria-pressed="${followsVenue}">${actionIconMarkup("heart")}</button>
           <div class="venue-card-actions${rideMarkup ? " with-uber-ride" : ""}" aria-label="${safeName} quick actions">
             ${venueCardQrMarkup(venue)}
@@ -52876,7 +52948,7 @@
       if (venue.id && !venue.isDashboardPreview) recordVenuePageEvent({ venueId: venue.id, eventType: "page_view", source: "venue_page" });
 
       return `
-        <div class="venue-detail" role="dialog" aria-modal="true" aria-labelledby="venueDetailName">
+        <div data-analytics-venue-id="${escapeOptionValue(venue.isDashboardPreview ? "" : venue.id || "")}" data-analytics-source="venue_detail" class="venue-detail" role="dialog" aria-modal="true" aria-labelledby="venueDetailName">
           <article class="venue-hero">
             <div class="venue-hero-brand-row">
               <div class="venue-main-photo${visual.attrs.className}"${visual.attrs.style} data-venue-visual-source="${visual.source}">
@@ -54272,6 +54344,7 @@
       const isPrivatePreview = Boolean(options.preview);
       const profile = findProfile(profileReference, { includePending: isPrivatePreview });
       if (!profile) return;
+      profileModal.dataset.analyticsDancerId = isPrivatePreview ? "" : String(profile.id || "");
       city = profileDiscoveryCity(profile, city);
       profileModalReturnContext = captureProfileReturnContext(options.returnTo || "");
       profileModalReturnTarget = profileModalReturnContext?.surface || "";
@@ -60213,7 +60286,7 @@
         ? `${safeName} logo`
         : `${safeName} monogram`;
       return `
-        <article class="venue home-discovery-feed-slide home-venue-discovery-slide${workingNow.length ? " has-live-lineup" : ""}" data-discovery-key="${venueValue}" aria-label="${accessibilityLabel}">
+        <article data-analytics-venue-id="${escapeOptionValue(venue.isDashboardPreview ? "" : venue.id || "")}" data-analytics-source="venue_scroll_card" class="venue home-discovery-feed-slide home-venue-discovery-slide${workingNow.length ? " has-live-lineup" : ""}" data-discovery-key="${venueValue}" aria-label="${accessibilityLabel}">
           <div class="home-venue-discovery-art is-venue-logo-artwork${logoMarkup ? " has-venue-logo" : ""}" role="img" aria-label="${visualLabel}">
             ${logoMarkup || `<span class="home-venue-discovery-monogram">${escapeHtml(initials)}</span>`}
           </div>
@@ -62326,7 +62399,12 @@
               item?.dancer?.city || citySelect.value
             );
             venue.setAttribute("aria-label", `Open ${venueName} club profile`);
-            venue.addEventListener("click", () => trackHomeTvFeedEvent(videoId, "venue_click"));
+            venue.addEventListener("click", async event => {
+              if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) { void trackHomeTvFeedEvent(videoId, "venue_click"); return; }
+              event.preventDefault();
+              await Promise.race([trackHomeTvFeedEvent(videoId, "venue_click"), new Promise(resolve => setTimeout(resolve, 1200))]);
+              window.location.assign(venue.href);
+            });
           }
           venue.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z"></path><circle cx="12" cy="10" r="2.5"></circle></svg>';
           const venueLabel = document.createElement("span");
@@ -62967,6 +63045,7 @@
       finishHomeTvFeedCards(feedKey);
       settleHomeTvFeedLanding({ complete: true });
     }
+
 
     // Prepare only the first two paused players once the visible directory is
     // ready. A short-lived, page-local result keeps the server's shuffled order

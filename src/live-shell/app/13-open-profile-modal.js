@@ -5,6 +5,7 @@
       const isPrivatePreview = Boolean(options.preview);
       const profile = findProfile(profileReference, { includePending: isPrivatePreview });
       if (!profile) return;
+      profileModal.dataset.analyticsDancerId = isPrivatePreview ? "" : String(profile.id || "");
       city = profileDiscoveryCity(profile, city);
       profileModalReturnContext = captureProfileReturnContext(options.returnTo || "");
       profileModalReturnTarget = profileModalReturnContext?.surface || "";

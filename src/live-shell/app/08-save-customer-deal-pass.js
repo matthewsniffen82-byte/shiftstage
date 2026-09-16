@@ -852,6 +852,7 @@
         showToast("Club profile unavailable");
         return;
       }
+      const analyticsContext = venueInteractionContext(trigger);
       setVenueShareButtonState(trigger, "sharing");
       const url = venueShareUrl(venue, city);
       const shareData = {
@@ -863,6 +864,7 @@
         try {
           await navigator.share(shareData);
           setVenueShareButtonState(trigger, "confirmed");
+          recordVenueInteraction({ ...analyticsContext, venueId: venue.id, eventType: "share_completed" });
           showToast("Club profile shared");
           return;
         } catch (error) {
@@ -872,6 +874,7 @@
         }
       }
       const copied = await copyText(url, "Club link copied");
+      if (copied) recordVenueInteraction({ ...analyticsContext, venueId: venue.id, eventType: "share_completed" });
       setVenueShareButtonState(trigger, copied ? "confirmed" : "idle");
     }
 
