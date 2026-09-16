@@ -148,11 +148,12 @@ test("a browser reminder alone does not sign a dancer in", async () => {
   assert.deepEqual(route.calls, []);
 });
 
-test("cashier redemption ignores dancer browser binding and never changes it", async () => {
+test("retired cashier redemption never changes the dancer browser binding", async () => {
   const route = fixture({ userId: userB, type: "cashier", signedIn: false });
   const result = await route.POST(request(cookieA, { sessionId }), context);
-  assert.equal(result.status, 200);
-  assert.deepEqual(route.calls, ["cashier"]);
+  assert.equal(result.status, 410);
+  assert.equal((await result.json()).replacement, "admission_pass");
+  assert.deepEqual(route.calls, []);
   assert.equal(result.headers.get("set-cookie"), null);
 });
 
@@ -165,19 +166,4 @@ test("sticker discovery returns only the browser-link flag without disclosing ac
     assert.match(result.headers.get("cache-control"), /private, no-store/);
     assert.equal(result.headers.get("set-cookie"), null);
   }
-});
-
-test("recognized browsers cannot create a second dancer account through the auth endpoint", async () => {
-  const source = readFileSync(new URL("../app/api/auth/route.ts", import.meta.url), "utf8");
-  const deps = Object.fromEntries([...source.matchAll(/from "([^"]+)"/g)].map((match) => [match[1], {}]));
-  delete deps["node:crypto"];
-  delete deps["next/server"];
-  Object.assign(deps, {
-    "@/src/lib/bounded-json-body": { readBoundedJsonObject: (req) => req.json() },
-    "@/src/lib/dancr/nfc-browser-account": marker,
-  });
-  const route = load("app/api/auth/route.ts", deps);
-  const result = await route.POST(request(cookieA, { mode: "signup", role: "dancer" }));
-  assert.equal(result.status, 409);
-  assert.equal((await result.json()).code, "NFC_BROWSER_ACCOUNT_CONFLICT");
 });

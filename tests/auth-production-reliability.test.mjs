@@ -27,21 +27,27 @@ const policy = compile(readFileSync(new URL("../src/lib/api-error-policy.ts", im
   "./dancr/payout-copy.ts": compile(readFileSync(new URL("../src/lib/dancr/payout-copy.ts", import.meta.url), "utf8")),
 });
 const passwordPolicy = compile(readFileSync(new URL("../src/lib/dancr/password-policy.ts", import.meta.url), "utf8"));
+const nfcBrowserAccount = compile(readFileSync(new URL("../src/lib/dancr/nfc-browser-account.ts", import.meta.url), "utf8"), {
+  "server-only": {},
+  "@/src/lib/server-env": { getServerEnv: () => "test-only-signing-key" },
+});
+const rememberedDancerCookie = `${nfcBrowserAccount.NFC_BROWSER_ACCOUNT_COOKIE}=${nfcBrowserAccount.createNfcBrowserAccountToken("11111111-1111-4111-8111-111111111111")}`;
 const api = { PublicApiError: policy.PublicApiError, apiError(error, fallback) {
   const result = policy.resolveApiError(error, fallback);
   return Response.json(result.body, { status: result.status });
 } };
 const account = { id: "user-one", role: "customer", accountState: "active" };
 const session = { access_token: "access", refresh_token: "refresh", expires_at: 2000000000 };
-const jsonRequest = (method, body) => new Request("https://mydancr.com/api/auth", {
-  method, headers: { "content-type": "application/json" }, body: JSON.stringify(body),
+const jsonRequest = (method, body, headers = {}) => new Request("https://mydancr.com/api/auth", {
+  method, headers: { "content-type": "application/json", ...headers }, body: JSON.stringify(body),
 });
 
 function authFixture(providerError = null, { role = "customer", authSession = session, adminClient = {}, reconcileNewPrivilegedAccount, provisionError } = {}) {
   const calls = [];
   const provisions = [];
+  const rateLimits = [];
   const result = { data: { user: { id: account.id }, session: authSession }, error: providerError };
-  return { calls, provisions, ...compile(authSource, {
+  return { calls, provisions, rateLimits, ...compile(authSource, {
     "@/src/lib/dancr/password-policy": passwordPolicy,
     "@/src/lib/api": api,
     "@supabase/supabase-js": { isAuthError: error => isAuthError(error) || Boolean(error?.provider) },
@@ -56,13 +62,57 @@ function authFixture(providerError = null, { role = "customer", authSession = se
     "@/src/lib/dancr/auth": { getAccountByUserId: async () => ({ ...account, role }) },
     "@/src/lib/dancr/account-profile-recovery": { recoverVerifiedPublicAccount: async (_admin, _user, existing) => existing },
     "@/src/lib/dancr/account-provisioning": { provisionAppAccount: async (_admin, input) => { provisions.push(input); if (provisionError) throw provisionError; } },
-    "@/src/lib/dancr/nfc-browser-account": { readNfcBrowserAccountToken: () => null },
+    "@/src/lib/dancr/nfc-browser-account": nfcBrowserAccount,
     "@/src/lib/dancr/account-recovery": { AccountRecoveryRateLimitError: class extends Error {} },
-    "@/src/lib/dancr/public-request-rate-limit": { PublicRequestRateLimitError: class extends Error {}, enforcePublicRequestRateLimit: async () => {} },
+    "@/src/lib/dancr/public-request-rate-limit": { PublicRequestRateLimitError: class extends Error {}, enforcePublicRequestRateLimit: async (_admin, input) => { rateLimits.push(input); } },
     "@/src/lib/dancr/public-app-url": { publicAppUrl: () => "https://mydancr.com" },
     "@/src/lib/security/safe-error-metadata": { safeErrorMetadata: () => ({}) },
   }) };
 }
+
+test("a remembered NFC dancer does not block signup for a different email", async () => {
+  const f = authFixture(null, { role: "dancer", authSession: null });
+  const response = await f.POST(jsonRequest("POST", {
+    mode: "signup", role: "dancer", email: "new-dancer@example.com", password: "Unique1!password",
+  }, { cookie: rememberedDancerCookie }));
+  assert.equal(response.status, 200);
+  const body = await response.json();
+  assert.equal(body.ok, true);
+  assert.equal(body.requiresEmailConfirmation, true);
+  assert.equal(body.session, null);
+  assert.equal(f.calls.length, 1);
+  assert.equal(f.calls[0].email, "new-dancer@example.com");
+  assert.equal(f.provisions.length, 1);
+  assert.equal(f.provisions[0].email, "new-dancer@example.com");
+  assert.equal(f.provisions[0].role, "dancer");
+  assert.equal(f.rateLimits.length, 1);
+  assert.equal(f.rateLimits[0].namespace, "auth_signup");
+  assert.equal(f.rateLimits[0].subject, "new-dancer@example.com");
+  assert.equal(response.headers.get("set-cookie"), null, "signup does not replace the NFC reminder");
+});
+
+test("signup with a remembered dancer still rejects a password that fails local validation", async () => {
+  const f = authFixture(null, { role: "dancer" });
+  const response = await f.POST(jsonRequest("POST", {
+    mode: "signup", role: "dancer", email: "new-dancer@example.com", password: "short",
+  }, { cookie: rememberedDancerCookie }));
+  assert.equal(response.status, 400);
+  assert.equal((await response.json()).ok, false);
+  assert.equal(f.calls.length, 0);
+  assert.equal(f.provisions.length, 0);
+});
+
+test("signup with a remembered dancer still respects the provider's existing-email rejection", async () => {
+  const f = authFixture(new AuthApiError("User already registered", 422, "user_already_exists"), { role: "dancer" });
+  const response = await f.POST(jsonRequest("POST", {
+    mode: "signup", role: "dancer", email: "existing-dancer@example.com", password: "Unique1!password",
+  }, { cookie: rememberedDancerCookie }));
+  assert.equal(response.status, 400);
+  assert.equal((await response.json()).ok, false);
+  assert.equal(f.calls.length, 1);
+  assert.equal(f.provisions.length, 0);
+  assert.equal(response.headers.get("set-cookie"), null);
+});
 
 function privilegedSignupFixture(options = {}) {
   const events = [];
