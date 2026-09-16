@@ -19,6 +19,7 @@ before(async()=>{
  await pg.exec("create or replace function public.is_admin() returns boolean language sql stable security definer as $$select exists(select 1 from app_users where id=auth.uid() and role='admin')$$;create or replace function public.is_current_venue_owner(venue_id uuid) returns boolean language sql stable security definer as $$select exists(select 1 from venues where id=venue_id and owner_user_id=auth.uid())$$;grant select on qr_redemptions to authenticated;alter table qr_redemptions enable row level security;create policy fixture_dancer_reads on qr_redemptions for select to authenticated using(dancer_id=auth.uid());");
  await pg.exec('grant execute on function public.is_admin(),public.is_current_venue_owner(uuid) to authenticated');
  await pg.exec(migration);
+ await pg.exec(readFileSync(new URL('../supabase/migrations/20260916050000_allow_passes_for_published_unclaimed_venues.sql',import.meta.url),'utf8'));
 });
 after(async()=>pg?.close());
 async function as(n){await pg.exec('reset role');await pg.query("select set_config('request.jwt.claim.sub',$1,false)",[n?id(n):'']);await pg.exec('set role authenticated');}
@@ -35,6 +36,49 @@ test('claim is unredeemed, private, expiring, and repeated claims reuse the toke
  assert.equal(r.status,'generated');assert.equal(r.nfc_tag_id,null);assert.equal(r.arrival_method,'self_drive');assert.equal(r.admission_pass_version,1);
  assert.equal(new Date(r.expires_at)-new Date(r.generated_at)<12*3600000+5000,true);
  await as(5);await assert.rejects(pg.query('select issue_admission_pass($1,$2,$3,null,$4,null,null,$5)',[a.token,id(1),id(101),'club_page','self_drive']),e=>e.code==='42501');
+});
+
+test('published venues can issue passes before an owner account is linked; redemption still requires authorized staff',async()=>{
+ await pg.exec('reset role');
+ await pg.query('update venues set owner_user_id=null where id=$1',[id(4)]);
+ await pg.query("insert into club_deals(id,venue_id,deal_title,offer_type,is_active) values($1,$1,'Free admission','admission',true)",[id(4)]);
+ try {
+  const pass=await issue({deal:4,session:104});
+  assert.equal((await issue({deal:4,session:104})).token,pass.token);
+  // A public offer is not permission to mark a guest as admitted.
+  for(const actor of [null,1,3,4,5,6])await assert.rejects(redeem(pass.token,actor),e=>e.code==='42501');
+  await pg.exec('reset role');
+  assert.equal((await pg.query('select status from qr_redemptions where redemption_token=$1',[pass.token])).rows[0].status,'generated');
+  await pg.query('update venues set owner_user_id=$1 where id=$1',[id(4)]);
+  assert.equal((await redeem(pass.token,4)).status,'redeemed');
+ } finally {
+  await pg.exec('reset role');await pg.query('update venues set owner_user_id=$1 where id=$1',[id(4)]);
+ }
+});
+
+test('pass issuance rejects unpublished, inactive and suspended-owner venues and inactive offers',async()=>{
+ const unavailable=e=>e.code==='22023'&&e.message==='This venue is unavailable.';
+ try {
+  await pg.exec('reset role');await pg.query('update venues set owner_user_id=null,is_active=false where id=$1',[id(4)]);
+  await assert.rejects(issue({deal:4}),unavailable);
+  await pg.exec('reset role');await pg.query("update venues set is_active=true,page_review_status='admin_draft' where id=$1",[id(4)]);
+  await assert.rejects(issue({deal:4}),unavailable);
+  await pg.exec('reset role');await pg.query("update venues set page_review_status='published',published_at=null where id=$1",[id(4)]);
+  await assert.rejects(issue({deal:4}),unavailable);
+  await pg.exec('reset role');await pg.query('update venues set owner_user_id=$1,published_at=now() where id=$1',[id(4)]);
+  await pg.query("update app_users set account_state='suspended' where id=$1",[id(4)]);
+  await assert.rejects(issue({deal:4}),unavailable);
+  await pg.exec('reset role');await pg.query("update app_users set account_state='active',role='customer' where id=$1",[id(4)]);
+  await assert.rejects(issue({deal:4}),unavailable);
+  await pg.exec('reset role');await pg.query("update app_users set role='venue' where id=$1",[id(4)]);
+  await pg.query('update club_deals set is_active=false where id=$1',[id(4)]);
+  await assert.rejects(issue({deal:4}),e=>e.code==='22023'&&e.message==='This offer is no longer available.');
+ } finally {
+  await pg.exec('reset role');
+  await pg.query("update venues set owner_user_id=$1,is_active=true,page_review_status='published',published_at=now() where id=$1",[id(4)]);
+  await pg.query("update app_users set account_state='active',role='venue' where id=$1",[id(4)]);
+  await pg.query('update club_deals set is_active=true where id=$1',[id(4)]);
+ }
 });
 test('only current authorized venue owner, manager and staff can admit guests',async()=>{
  const p=await issue();for(const actor of [null,2,3,4,5,8])await assert.rejects(redeem(p.token,actor),e=>e.code==='42501');
