@@ -18,5 +18,6 @@ test("NFC tap requests preserve the strict session and tag boundaries", () => {
   assert.match(route, /UUID_PATTERN\.test\(sessionId\)/);
   assert.match(route, /resolveNfcTag\(admin, token\)/);
   assert.match(route, /account\?\.role !== "dancer"/);
-  assert.match(route, /completeCashierDealRedemption\(admin, \{/);
+  assert.doesNotMatch(route, /completeCashierDealRedemption/);
+  assert.match(route, /status: 410/);
 });

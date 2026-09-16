@@ -1,20 +1,15 @@
-import { NextResponse } from "next/server";
+import { apiError } from "@/src/lib/api";
+import { readBoundedJsonObject } from "@/src/lib/bounded-json-body";
+import { admissionError, createAdmissionPass } from "@/src/lib/dancr/admission-passes";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-/**
- * Legacy QR issuance endpoint. New redemptions are created and confirmed only
- * by a physical cashier NFC tap through /api/nfc/[token]. Keeping this route
- * explicit prevents older clients from silently issuing unredeemable passes.
- */
-export async function POST() {
-  return NextResponse.json(
-    {
-      ok: false,
-      error: "Club Deal QR passes have been retired. Choose a deal in MyDancr, then tap the venue's cashier sticker.",
-      replacement: "cashier_nfc",
-    },
-    { status: 410, headers: { "cache-control": "private, no-store, max-age=0" } },
-  );
+export async function POST(request: Request) {
+  try {
+    const body = await readBoundedJsonObject(request, { maxBytes: 4096, invalidMessage: "Invalid admission request.", tooLargeMessage: "Admission request is too large." });
+    return await createAdmissionPass(request, body);
+  } catch (error) {
+    return admissionError(error) || apiError(error, "Unable to generate your admission pass.");
+  }
 }

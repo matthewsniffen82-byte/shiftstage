@@ -2,6 +2,22 @@ export const CLUB_TRANSPORTATION_TERMS = "Free admission when you arrive in a pr
 export const CLUB_ARRIVAL_VERIFICATION = "Club staff must verify that you arrived in a private car, club-provided transport, Waymo, Zoox, or Cybercab before admitting you for free.";
 export const CLUB_SHUTTLE_HANDOFF = "MyDancr sends your request to the club. The club handles transportation and will contact you to confirm availability, pickup location, and timing. Submitting a request does not confirm a ride.";
 
+export function clubArrivalLabel(value: string | null | undefined) {
+  return value === "self_drive" ? "Private car" : value === "club_shuttle" ? "Club-provided transport"
+    : ["autonomous_cab", "waymo", "zoox", "cybercab"].includes(value || "") ? "Waymo / Zoox / Cybercab" : "Not specified";
+}
+
+export function admissionOfferHours(deal: { validDays?: string[]; validStartTime?: string | null; validEndTime?: string | null } | null) {
+  if (!deal) return "";
+  const clock = (value: string) => {
+    const [hour, minute] = value.split(":").map(Number);
+    return `${hour % 12 || 12}:${String(minute).padStart(2, "0")} ${hour < 12 ? "AM" : "PM"}`;
+  };
+  const { validStartTime: start, validEndTime: end } = deal;
+  const hours = start && end && start === end ? "All day" : start && end ? `${clock(start)}–${clock(end)}` : start ? `From ${clock(start)}` : end ? `Before ${clock(end)}` : "";
+  return [deal.validDays?.join(", "), hours].filter(Boolean).join(" · ");
+}
+
 export const AUTONOMOUS_ADMISSION_OPTIONS = [
   { value: "autonomous_cab", label: "Waymo / Zoox / Cybercab" },
 ] as const;

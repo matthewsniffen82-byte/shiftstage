@@ -41545,9 +41545,9 @@
           </div>
         </details>
         <details class="auth-card dashboard-collapse approved-analytics" id="dancerDealSection">
-          <summary><span class="dashboard-collapse-title"><strong>Club Deal activity</strong><span>Expand to see cashier-tap redemptions attributed to your profile.</span></span><span class="dashboard-summary-count" id="dancerQrSummaryCount">0</span></summary>
+          <summary><span class="dashboard-collapse-title"><strong>Club Deal activity</strong><span>Expand to see verified admissions attributed to your profile.</span></span><span class="dashboard-summary-count" id="dancerQrSummaryCount">0</span></summary>
           <div class="dashboard-collapse-body">
-            <p class="value-message" id="dancerDealSummary">Club Deal activity appears after guests choose your attributed deal and tap the club cashier sticker.</p>
+            <p class="value-message" id="dancerDealSummary">Club Deal activity appears after guests claim your attributed admission pass and staff confirms entry.</p>
             <div class="metric-grid" id="dancerDealMetrics" aria-label="Club Deal activity metrics"></div>
           </div>
         </details>
@@ -46001,7 +46001,7 @@
             <button class="customer-quick-item has-qr" type="button" data-deal-pass="${encodeDealPass(pass)}">
               <span class="customer-quick-deal-copy">
                 <strong>${displayText(pass.title)}</strong>
-                <span>${displayText(pass.venueName)} · cashier tap</span>
+                <span>${displayText(pass.venueName)} · admission pass</span>
               </span>
               ${clubDealQrSymbolMarkup("saved-deal-nfc-symbol")}
             </button>
@@ -49282,8 +49282,8 @@
         dealId: deal.id,
         attributionToken: sourceType === "dancer_profile" ? attributionToken : "",
         details: sourceType === "dancer_profile"
-          ? `Tap the cashier sticker while this dancer is verified at ${venueName}; her attribution will be validated at redemption.`
-          : `Tap the cashier sticker at ${venueName} to redeem this offer.`,
+          ? `Get an admission pass for ${venueName}; the dancer profile source is recorded securely.`
+          : `Show your admission pass to staff at ${venueName}.`,
         url: venueExperienceHref({ slug: venueSlug, name: venueName }),
         nfcIntent: true,
         preparedAt: Date.now()
@@ -49412,7 +49412,7 @@
         ? `Published while ${pass.dancerName} is working now`
         : `Published by ${pass.venueName}`;
       return `
-        <button class="${className} deal-qr-trigger" type="button" data-deal-pass="${encodeDealPass(pass)}" aria-label="Prepare ${escapeHtml(pass.venueName)} Club Deal for a cashier tap">
+        <button class="${className} deal-qr-trigger" type="button" data-deal-pass="${encodeDealPass(pass)}" aria-label="Prepare ${escapeHtml(pass.venueName)} admission pass">
           ${clubDealQrSymbolMarkup("saved-deal-nfc-symbol")}
           <span class="meta">${escapeHtml(sourceLabel)}</span>
         </button>
@@ -49546,6 +49546,7 @@
     function pendingNfcDealIntentForPass(pass) {
       try {
         const intent = JSON.parse(localStorage.getItem("mydancrPendingNfcDealV2") || "null");
+        if (intent?.admissionPassVersion !== 1 || !/^\/deals\/pass\/[A-Za-z0-9_-]{43}$/.test(intent.passUrl || "")) return null;
         if (!intent || intent.venueId !== pass?.venueId || intent.dealId !== pass?.dealId) return null;
         if (!["self_drive", "club_shuttle", "autonomous_cab", "waymo", "zoox", "cybercab"].includes(intent.transportation)) return null;
         const passSource = pass?.sourceType || "club_page";
@@ -49560,6 +49561,8 @@
     }
 
     function selectDealPassForNfc(pass) {
+      const ready = pendingNfcDealIntentForPass(pass);
+      if (ready && !ready.expired) { window.location.assign(ready.passUrl); return { ok: true, intent: ready }; }
       const query = new URLSearchParams({
         sourceType: pass.sourceType || "club_page",
         dancerId: pass.sourceType === "dancer_profile" ? pass.dancerId || "" : "",
@@ -49573,7 +49576,7 @@
       if (!pass?.url) return;
       const shareData = {
         title: `${pass.venueName} Club Deal`,
-        text: `${pass.title} from ${pass.venueName}. Choose Use this deal, then unlock your phone at the cashier and tap the venue's registered MyDancr cashier sticker.`,
+        text: `${pass.title} from ${pass.venueName}. Choose your arrival method and get a pass to show door staff.`,
         url: pass.url
       };
       try {
@@ -49654,7 +49657,7 @@
             <div class="deal-pass-ready-content" data-deal-pass-ready role="status" hidden>
               <div class="deal-pass-ready-instructions">
                 <div class="deal-pass-nfc-symbol" aria-hidden="true">${clubDealQrSymbolMarkup("deal-pass-ready-nfc-icon")}</div>
-                <p>When you reach the cashier, unlock your phone and hold it near the MyDancr sticker.</p>
+                <p>Show your admission pass to door staff for scanning.</p>
               </div>
               <div class="deal-pass-ready-footer">
                 <p class="deal-pass-ready-close-note">You can close MyDancr now.</p>
@@ -49879,8 +49882,8 @@
       sheet.dataset.dealState = state;
       availableContent.hidden = state === "ready";
       readyContent.hidden = state !== "ready";
-      primaryDock.hidden = state === "ready";
-      titleElement.textContent = state === "ready" ? "Ready for your cashier tap" : pass.title;
+      primaryDock.hidden = false;
+      titleElement.textContent = state === "ready" ? "Your admission pass is ready" : pass.title;
       document.getElementById("dealPassCopy").textContent = state === "ready"
         ? `${pass.title} · ${pass.venueName || "Club"}`
         : dealPassPresentation(pass).copy;
@@ -49892,15 +49895,15 @@
         const readyUntil = formatNfcIntentExpiry(intent.expiresAt);
         status.textContent = "";
         status.hidden = true;
-        selectButton.textContent = "Ready for your cashier tap";
-        selectButton.disabled = true;
+        selectButton.textContent = "Show admission pass";
+        selectButton.disabled = false;
         selectButton.setAttribute("aria-pressed", "true");
         selectButton.classList.add("is-ready");
         readyUntilElement.textContent = readyUntil ? `Ready until ${readyUntil}` : "";
         readyUntilElement.hidden = !readyUntil;
       } else {
         status.textContent = state === "preview" ? "" : override?.message || (state === "expired"
-          ? "Your previous selection expired. Select this deal again before tapping at the cashier."
+          ? "Your pass expired. Choose this deal again to get a new pass."
           : "Unable to prepare this deal. Try again.");
         selectButton.textContent = state === "error" ? "Try again"
           : String(pass.title).toLowerCase() === "free admission" ? "Use free admission" : "Use this deal";
@@ -50039,7 +50042,7 @@
         offerButton.classList.add("is-loading");
         offerButton.setAttribute("aria-busy", "true");
         overlay.setAttribute("aria-busy", "true");
-        status.textContent = "Preparing this deal for the cashier tap…";
+        status.textContent = "Preparing your admission offer…";
         status.hidden = false;
         try {
           const pass = await createRevenueDealPass(selection);
@@ -50073,13 +50076,13 @@
       const venueName = String(config?.venueName || "this club").trim() || "this club";
       const status = document.getElementById("clubDealHubStatus");
       document.getElementById("clubDealHubTitle").textContent = `Club Deals at ${venueName}`;
-      document.getElementById("clubDealHubCopy").textContent = `${offers.length} live ${offers.length === 1 ? "offer" : "offers"}. Choose one to preview. Use this deal does not redeem it. At the cashier, unlock your phone and tap the venue’s registered MyDancr cashier sticker.`;
+      document.getElementById("clubDealHubCopy").textContent = `${offers.length} live ${offers.length === 1 ? "offer" : "offers"}. Choose one to preview. Choose your arrival method to get an admission pass. Staff scans it at the door.`;
       status.textContent = "";
       status.hidden = true;
       overlay.removeAttribute("aria-busy");
       document.getElementById("clubDealHubList").innerHTML = offers.map((deal) => {
         const selection = clubDealSelectionConfig(config, deal);
-        return `<button class="club-deal-hub-offer" type="button" data-club-deal-offer="${encodeDealPass(selection)}" aria-pressed="false"><span>${clubDealOfferTypeLabel(deal.offerType)}</span><strong>${escapeHtml(deal.dealTitle || "Club Deal")}</strong><small>${escapeHtml(customerFacingDealDescription(deal.dealDescription) || "Club offer")}</small><em>Tap your phone at the cashier to redeem</em></button>`;
+        return `<button class="club-deal-hub-offer" type="button" data-club-deal-offer="${encodeDealPass(selection)}" aria-pressed="false"><span>${clubDealOfferTypeLabel(deal.offerType)}</span><strong>${escapeHtml(deal.dealTitle || "Club Deal")}</strong><small>${escapeHtml(customerFacingDealDescription(deal.dealDescription) || "Club offer")}</small><em>Show your pass to door staff</em></button>`;
       }).join("");
       overlay.hidden = false;
       overlay.classList.add("show");
@@ -58160,7 +58163,7 @@
           qrRedeemed ? "Cashier taps generated " + compactNumber(qrRedeemed) + " redeemed deals." : "Verified Club Deal activity appears here after guests interact with your profile.";
         document.getElementById("dancerDealMetrics").innerHTML = [
           metricCardMarkup(compactNumber(qrOpens), "Attributed deal opens"),
-          metricCardMarkup(compactNumber(qrRedeemed), "Cashier-tap redemptions")
+          metricCardMarkup(compactNumber(qrRedeemed), "Verified admissions")
         ].join("");
         document.getElementById("dancerSocialSummary").textContent = totalSocialClicks
           ? `${bestSocial.name} is your top-performing link this month.`
@@ -58235,7 +58238,7 @@
           qrRedeemed ? "Cashier taps generated " + compactNumber(qrRedeemed) + " redeemed deals." : "Verified Club Deal activity appears here after guests interact with your profile.";
         document.getElementById("dancerDealMetrics").innerHTML = [
           metricCardMarkup(compactNumber(qrOpens), "Attributed deal opens"),
-          metricCardMarkup(compactNumber(qrRedeemed), "Cashier-tap redemptions")
+          metricCardMarkup(compactNumber(qrRedeemed), "Verified admissions")
         ].join("");
         document.getElementById("dancerSocialSummary").textContent = "No social link clicks yet. Instagram, TikTok, Snapchat, OnlyFans, and X clicks will appear here.";
         document.getElementById("dancerSocialMetrics").innerHTML = [
@@ -58299,7 +58302,7 @@
           "Average views by club"
         ]);
         document.getElementById("dancerDealSummary").textContent = "Club Deal activity unlocks after profile approval.";
-        document.getElementById("dancerDealMetrics").innerHTML = lockedMetricCards(["Attributed deal opens", "Cashier-tap redemptions"]);
+        document.getElementById("dancerDealMetrics").innerHTML = lockedMetricCards(["Attributed deal opens", "Verified admissions"]);
         document.getElementById("dancerSocialSummary").textContent = "Social growth unlocks after approval across Instagram, Snapchat, TikTok, OnlyFans, and X.";
         document.getElementById("dancerSocialMetrics").innerHTML = lockedMetricCards([
           "Total social clicks",
@@ -62349,7 +62352,7 @@
       return {
         key: "not-available-now",
         label: "Not available now",
-        detail: "A verified current check-in is required before dancer attribution can be carried to a cashier-tap redemption."
+        detail: "A verified current check-in is required before dancer attribution can be carried to an admission pass."
       };
     }
 
@@ -63605,7 +63608,7 @@
             <button class="profile-qr-close" type="button" data-close-profile-share-choice aria-label="Close profile sharing">${actionIconMarkup("close")}</button>
             <p class="profile-qr-kicker">Share profile</p>
             <h3 class="profile-qr-title" id="profileShareChoiceTitle">Share this dancer profile</h3>
-            <p class="profile-qr-subtitle" id="profileShareChoiceSubtitle">Share this public profile, copy its link, or show a QR code. Club Deals redeem only when you tap your phone at the club cashier.</p>
+            <p class="profile-qr-subtitle" id="profileShareChoiceSubtitle">Share this public profile, copy its link, or show a QR code. Show your Club Deal admission pass to venue staff for scanning.</p>
             <div class="profile-share-choice-actions">
               <button class="profile-qr-action primary" type="button" data-share-profile-choice>${actionButtonLabel("share", "Share profile")}</button>
               <button class="profile-qr-action" type="button" data-copy-profile-choice>Copy profile link</button>
@@ -63655,7 +63658,7 @@
       triggerButton?.setAttribute("aria-expanded", "true");
       document.getElementById("profileShareChoiceTitle").textContent = `${safeProfileName} on MyDancr`;
       document.getElementById("profileShareChoiceSubtitle").textContent =
-        "Share this public profile, copy its link, or show a QR code. Club Deals redeem only when you tap your phone at the club cashier.";
+        "Share this public profile, copy its link, or show a QR code. Show your Club Deal admission pass to venue staff for scanning.";
       overlay.hidden = false;
       overlay.classList.add("show");
       overlay.setAttribute("aria-hidden", "false");

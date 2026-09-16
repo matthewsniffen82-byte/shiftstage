@@ -29,7 +29,7 @@ export default function DealClaimClient({ deal }: { campaignToken: string; deal:
       `}</style>
       <section className="deal-claim-card" aria-live="polite">
         <div className="nfc-mark" aria-hidden="true"><NfcIcon /></div>
-        <span>MyDancr cashier tap</span>
+        <span>MyDancr admission pass</span>
         <h1>{deal.dealTitle}</h1>
         <p>{status}</p>
         <Link href={homeDiscoveryHref("venues")}>Browse current Club Deals</Link>

@@ -353,12 +353,12 @@ export default function VenueNfcTagPanel({
       </section>
       {status ? <p role="status">{status}</p> : null}
       <details className="venue-roster-stickers">
-        <summary>Check-in &amp; redemption stickers <span>{tags.length} assigned</span></summary>
+        <summary>Dancer &amp; legacy stickers <span>{tags.length} assigned</span></summary>
       {tags.length ? <div className="nfc-tag-list" aria-label="Assigned sticker inventory">
         {tags.map((tag) => (
           <section key={tag.id} className={`nfc-tag-row ${tag.status}`}>
             <div>
-              <span>{tag.type === "dressing_room" ? "Dancer check-in" : "Guest redemption"}</span>
+              <span>{tag.type === "dressing_room" ? "Dancer check-in" : "Legacy cashier sticker · opens venue page"}</span>
               <strong>{tag.label}</strong>
               <small>{tag.scanCount} phone {tag.scanCount === 1 ? "read" : "reads"} · {tag.tapCount} completed {tag.tapCount === 1 ? "action" : "actions"}{tag.lastScannedAt ? ` · Last used ${formatDate(tag.lastScannedAt)}` : " · Not used yet"}</small>
             </div>

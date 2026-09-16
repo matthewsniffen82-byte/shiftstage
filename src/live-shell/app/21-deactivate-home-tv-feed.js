@@ -499,7 +499,7 @@
       return {
         key: "not-available-now",
         label: "Not available now",
-        detail: "A verified current check-in is required before dancer attribution can be carried to a cashier-tap redemption."
+        detail: "A verified current check-in is required before dancer attribution can be carried to an admission pass."
       };
     }
 

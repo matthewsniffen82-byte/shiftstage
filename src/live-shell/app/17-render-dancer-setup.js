@@ -211,7 +211,7 @@
           qrRedeemed ? "Cashier taps generated " + compactNumber(qrRedeemed) + " redeemed deals." : "Verified Club Deal activity appears here after guests interact with your profile.";
         document.getElementById("dancerDealMetrics").innerHTML = [
           metricCardMarkup(compactNumber(qrOpens), "Attributed deal opens"),
-          metricCardMarkup(compactNumber(qrRedeemed), "Cashier-tap redemptions")
+          metricCardMarkup(compactNumber(qrRedeemed), "Verified admissions")
         ].join("");
         document.getElementById("dancerSocialSummary").textContent = totalSocialClicks
           ? `${bestSocial.name} is your top-performing link this month.`
@@ -286,7 +286,7 @@
           qrRedeemed ? "Cashier taps generated " + compactNumber(qrRedeemed) + " redeemed deals." : "Verified Club Deal activity appears here after guests interact with your profile.";
         document.getElementById("dancerDealMetrics").innerHTML = [
           metricCardMarkup(compactNumber(qrOpens), "Attributed deal opens"),
-          metricCardMarkup(compactNumber(qrRedeemed), "Cashier-tap redemptions")
+          metricCardMarkup(compactNumber(qrRedeemed), "Verified admissions")
         ].join("");
         document.getElementById("dancerSocialSummary").textContent = "No social link clicks yet. Instagram, TikTok, Snapchat, OnlyFans, and X clicks will appear here.";
         document.getElementById("dancerSocialMetrics").innerHTML = [
@@ -350,7 +350,7 @@
           "Average views by club"
         ]);
         document.getElementById("dancerDealSummary").textContent = "Club Deal activity unlocks after profile approval.";
-        document.getElementById("dancerDealMetrics").innerHTML = lockedMetricCards(["Attributed deal opens", "Cashier-tap redemptions"]);
+        document.getElementById("dancerDealMetrics").innerHTML = lockedMetricCards(["Attributed deal opens", "Verified admissions"]);
         document.getElementById("dancerSocialSummary").textContent = "Social growth unlocks after approval across Instagram, Snapchat, TikTok, OnlyFans, and X.";
         document.getElementById("dancerSocialMetrics").innerHTML = lockedMetricCards([
           "Total social clicks",

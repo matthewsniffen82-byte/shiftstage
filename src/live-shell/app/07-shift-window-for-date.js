@@ -790,8 +790,8 @@
         dealId: deal.id,
         attributionToken: sourceType === "dancer_profile" ? attributionToken : "",
         details: sourceType === "dancer_profile"
-          ? `Tap the cashier sticker while this dancer is verified at ${venueName}; her attribution will be validated at redemption.`
-          : `Tap the cashier sticker at ${venueName} to redeem this offer.`,
+          ? `Get an admission pass for ${venueName}; the dancer profile source is recorded securely.`
+          : `Show your admission pass to staff at ${venueName}.`,
         url: venueExperienceHref({ slug: venueSlug, name: venueName }),
         nfcIntent: true,
         preparedAt: Date.now()
@@ -920,7 +920,7 @@
         ? `Published while ${pass.dancerName} is working now`
         : `Published by ${pass.venueName}`;
       return `
-        <button class="${className} deal-qr-trigger" type="button" data-deal-pass="${encodeDealPass(pass)}" aria-label="Prepare ${escapeHtml(pass.venueName)} Club Deal for a cashier tap">
+        <button class="${className} deal-qr-trigger" type="button" data-deal-pass="${encodeDealPass(pass)}" aria-label="Prepare ${escapeHtml(pass.venueName)} admission pass">
           ${clubDealQrSymbolMarkup("saved-deal-nfc-symbol")}
           <span class="meta">${escapeHtml(sourceLabel)}</span>
         </button>

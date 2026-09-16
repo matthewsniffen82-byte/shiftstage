@@ -548,7 +548,7 @@ function DancerDealPanel({ deals }: { deals?: LoadState["deals"] }) {
         <Metric label="Saved / shared intent" value={String(deals?.qrSaves || 0) + " / " + String(deals?.qrShares || 0)} />
         <Metric label="Redeemed deals" value={String(deals?.redeemed || 0)} />
       </div>
-      <p>Club Deals stay visible on your profile. Guest activity and verified cashier-tap redemptions appear here.</p>
+      <p>Club Deals stay visible on your profile. Guest activity and verified admissions appear here.</p>
     </article>
   );
 }

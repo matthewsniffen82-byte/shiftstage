@@ -537,9 +537,10 @@ export function VenuePanel({
             <Metric label="Working now" value={String(analytics?.activeDancersNow || 0)} />
             <Metric label="Upcoming shifts" value={String(analytics?.upcomingShiftCount || 0)} />
             <Metric label="Dancer check-ins" value={String(analytics?.dressingRoomNfcTaps || 0)} />
-            <Metric label="Guest redemption attempts" value={String(analytics?.cashierNfcAttempts || 0)} />
-            <VenueAnalyticsMetric label="Deal redemptions" value={Number(analytics?.cashierNfcRedemptions || 0)} change={readOptionalNumber(analytics?.redemptionsChangePercent)} />
-            <Metric label="Attempt → redemption" value={formatPercent(analytics?.redemptionConversionPercent)} />
+            <Metric label="Passes claimed" value={String(analytics?.admissionPassesClaimed || 0)} />
+            <VenueAnalyticsMetric label="Verified admissions" value={Number(analytics?.cashierNfcRedemptions || 0)} change={readOptionalNumber(analytics?.redemptionsChangePercent)} />
+            <Metric label="Claim → admission" value={formatPercent(analytics?.claimToAdmissionPercent)} />
+            <small>Conversion counts redeemed passes claimed during this period. Each pass admits one guest.</small>
           </InfoPanel>
         </div>
       </DashboardSection>
@@ -841,10 +842,10 @@ function VenueDealReadOnlyPanel({
         </strong>
       </header>
 
-      <section className="venue-contract-summary" aria-label="Current MyDancr agreement">
+      <section className="venue-contract-summary" aria-label="Admission passes and historical agreement">
         <div>
-          <span>Fee per confirmed guest</span>
-          <strong>{currentFee ? `${formatCents(Number(currentFee.feeCents || 0))} per confirmed guest` : "Agreement pending"}</strong>
+          <span>Historical referral agreement</span>
+          <strong>{currentFee ? `${formatCents(Number(currentFee.feeCents || 0))} historical rate` : "Agreement pending"}</strong>
           <small>{currentFee ? `Effective ${formatDashboardDate(String(currentFee.effectiveFrom || ""))}` : "MyDancr records this after the venue agreement is signed."}</small>
         </div>
         <div>
@@ -855,7 +856,7 @@ function VenueDealReadOnlyPanel({
         <div>
           <span>Redemption status</span>
           <strong>{liveDeals.length ? "Enabled" : "Not active"}</strong>
-          <small>Guests redeem by holding their phone near the MyDancr redemption sticker at checkout. MyDancr supplies and manages these stickers.</small>
+          <small>Scan the guest’s admission QR with your phone camera while signed in to this venue. Verify arrival eligibility, then select “Admit guest & redeem pass.” New passes record visits without a per-guest charge.</small>
         </div>
       </section>
 
@@ -869,7 +870,7 @@ function VenueDealReadOnlyPanel({
             <p>{String(deal.dealDescription || "No public description recorded.")}</p>
             <dl>
               <div><dt>Offer type</dt><dd>{dealTypeLabel(String(deal.offerType || "admission"))}</dd></div>
-              <div><dt>Fee per guest</dt><dd>{Number(deal.payoutAmountCents || 0) > 0 ? `${formatCents(Number(deal.payoutAmountCents || 0))} per confirmed guest` : "Pending"}</dd></div>
+              <div><dt>Historical fee</dt><dd>{Number(deal.payoutAmountCents || 0) > 0 ? `${formatCents(Number(deal.payoutAmountCents || 0))} (prior model)` : "Pending"}</dd></div>
               <div><dt>Redemption status</dt><dd>{deal.isActive === true ? "Enabled" : "Not active"}</dd></div>
             </dl>
             <div className="venue-contract-deal-terms">
@@ -881,7 +882,7 @@ function VenueDealReadOnlyPanel({
         {!deals.length ? (
           <section className="venue-contract-empty">
             <strong>MyDancr has not published a Club Deal yet.</strong>
-            <p>After the deal and agreed fee are recorded, the offer and its terms will appear here automatically.</p>
+            <p>After MyDancr publishes your deal, the offer and its terms will appear here automatically.</p>
           </section>
         ) : null}
       </div>

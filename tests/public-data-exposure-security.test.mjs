@@ -73,7 +73,7 @@ test("public list inputs and public profile identifiers are bounded before datab
   assert.match(dancersRoute, /requestedScope === "tonight" \? "tonight" : "all"/);
 });
 
-test("the retired scanner response contains customer copy but no attribution or lifecycle internals", () => {
+test("the admission scanner response contains customer copy but no attribution or lifecycle internals", () => {
   const scannerFunction = dealsService.slice(
     dealsService.indexOf("export async function getRedemptionForScanner"),
     dealsService.indexOf("export async function getDancerDealMetrics"),
@@ -85,19 +85,19 @@ test("the retired scanner response contains customer copy but no attribution or 
   );
 
   assert.match(scannerSelect, /status[\s\S]*source_type[\s\S]*expires_at/);
-  assert.match(scannerSelect, /venues\(name, city, state\)/);
-  assert.match(scannerSelect, /club_deals\(deal_title, deal_description, deal_terms, is_active, offer_type, booking_url\)/);
+  assert.match(scannerSelect, /venues\(name, city, state, timezone\)/);
+  assert.match(scannerSelect, /club_deals\(deal_title, deal_description, deal_terms, is_active, offer_type, booking_url, valid_days, valid_start_time, valid_end_time\)/);
   assert.doesNotMatch(
     scannerSelect,
-    /\bid\b|redemption_token|dancer_id|shift_id|venue_id|generated_at|redeemed_at|saved_at|shared_at|first_scanned_at|confirmed_at|redeemed_by_club_user|payout_|currency/,
+    /\bid\b|redemption_token|dancer_id|shift_id|venue_id|generated_at|saved_at|shared_at|first_scanned_at|confirmed_at|redeemed_by_club_user|payout_|currency/,
   );
   assert.match(scannerSelect, /\baudit\b/, "the server may read the immutable issued-deal snapshot");
   assert.match(normalizer, /status: row\.status/);
-  assert.match(normalizer, /venue: venue \? \{ name: venue\.name, city: venue\.city, state: venue\.state \}/);
+  assert.match(normalizer, /venue: venue \? \{ name: venue\.name, city: venue\.city, state: venue\.state, timezone: venue\.timezone \}/);
   assert.match(normalizer, /dealTitle:[\s\S]*dealDescription:[\s\S]*dealTerms:/);
   assert.doesNotMatch(
     normalizer,
-    /redemptionToken|dancerId|shiftId|venueId|generatedAt|redeemedAt|savedAt|sharedAt|firstScannedAt|confirmedAt|redeemedByClubUser|referralCommissionCents|currency|audit\s*:/,
+    /redemptionToken|dancerId|shiftId|venueId|generatedAt|savedAt|sharedAt|firstScannedAt|confirmedAt|redeemedByClubUser|referralCommissionCents|currency|audit\s*:/,
   );
   assert.doesNotMatch(scannerClient, /Referral commission|referralCommissionCents|formatMoney/);
 });

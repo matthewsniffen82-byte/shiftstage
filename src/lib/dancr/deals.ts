@@ -149,9 +149,12 @@ export async function getRedemptionForScanner(client: DancrClient, token: string
       status,
       source_type,
       expires_at,
+      redeemed_at,
+      admission_pass_version,
+      arrival_method,
       audit,
-      venues(name, city, state),
-      club_deals(deal_title, deal_description, deal_terms, is_active, offer_type, booking_url)
+      venues(name, city, state, timezone),
+      club_deals(deal_title, deal_description, deal_terms, is_active, offer_type, booking_url, valid_days, valid_start_time, valid_end_time)
     `,
     )
     .eq("redemption_token", token)
@@ -162,7 +165,9 @@ export async function getRedemptionForScanner(client: DancrClient, token: string
 }
 
 export async function getDancerDealMetrics(client: DancrClient, userId: string, ownerClient: DancrClient) {
-  const db = client as any;
+  // Resolve the authenticated dancer first; return only scoped activity fields,
+  // never the bearer pass token, guest identity or private audit details.
+  const db = ownerClient as any;
   const { data: profile, error: profileError } = await (ownerClient as any)
     .from("dancer_profiles")
     .select("id")
@@ -430,7 +435,10 @@ function normalizeScannerRedemption(row: any) {
     status: row.status,
     sourceType: row.source_type,
     expiresAt: row.expires_at,
-    venue: venue ? { name: venue.name, city: venue.city, state: venue.state } : null,
+    redeemedAt: row.redeemed_at || null,
+    isAdmissionPass: row.admission_pass_version === 1,
+    arrivalMethod: row.arrival_method || null,
+    venue: venue ? { name: venue.name, city: venue.city, state: venue.state, timezone: venue.timezone } : null,
     deal: deal
       ? {
           dealTitle: dealSnapshot ? dealSnapshot.dealTitle : deal.deal_title,
@@ -439,6 +447,9 @@ function normalizeScannerRedemption(row: any) {
           offerType: dealSnapshot ? dealSnapshot.offerType : deal.offer_type || "admission",
           bookingUrl: dealSnapshot ? dealSnapshot.bookingUrl : deal.booking_url ?? null,
           isActive: deal.is_active,
+          validDays: deal.valid_days || [],
+          validStartTime: deal.valid_start_time || null,
+          validEndTime: deal.valid_end_time || null,
         }
       : null,
   };

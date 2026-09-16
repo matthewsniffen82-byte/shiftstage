@@ -1,10 +1,13 @@
 import Link from "next/link";
-import NfcIcon from "@/app/components/NfcIcon";
+import QRCode from "qrcode";
+import AdmissionPassClient from "./AdmissionPassClient";
+import { publicAppUrl } from "@/src/lib/dancr/public-app-url";
 import { notFound } from "next/navigation";
 import { getRedemptionForScanner } from "@/src/lib/dancr/deals";
-import { customerFacingDealTerms } from "@/src/lib/dancr/deal-copy";
 import { homeDiscoveryHref } from "@/src/lib/dancr/navigation";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
+
+export const metadata = { robots: { index: false, follow: false }, referrer: "no-referrer" as const };
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -21,9 +24,7 @@ export default async function ClubDealPassPage({ params }: PageProps) {
   const redemption = await getRedemptionForScanner(admin, token);
   if (!redemption?.deal || !redemption.venue) notFound();
 
-  const isExpired = new Date(redemption.expiresAt).getTime() <= Date.now();
-  const isAvailable = false;
-  const dealTerms = customerFacingDealTerms(redemption.deal.dealTerms);
+  const qrImage = await QRCode.toDataURL(new URL(`/deals/redeem/${token}`, publicAppUrl()).toString(), { width: 640, margin: 4, errorCorrectionLevel: "M" });
 
   return (
     <main className="deal-pass-page">
@@ -32,27 +33,9 @@ export default async function ClubDealPassPage({ params }: PageProps) {
         <Link href="/">Mydancr</Link>
         <Link href={homeDiscoveryHref("venues")}>Clubs</Link>
       </nav>
-      <section className={isAvailable ? "deal-pass-card" : "deal-pass-card unavailable"}>
-        <span className="eyebrow">Legacy Club Deal pass</span>
-        <h1>{redemption.deal.dealTitle}</h1>
-        <p>{redemption.venue.name}</p>
-        <>
-          <div className="nfc-retired" aria-hidden="true"><NfcIcon /></div>
-          <strong>{legacyPassMessage(redemption.status, isExpired)}</strong>
-          <small>MyDancr Club Deals now redeem through the club&apos;s physical cashier sticker. Choose a current offer in MyDancr before tapping.</small>
-          {dealTerms ? <small>{dealTerms}</small> : null}
-          <Link className="deal-pass-continue" href={homeDiscoveryHref("venues")}>Find a current Club Deal</Link>
-        </>
-      </section>
+      <AdmissionPassClient token={token} initialRedemption={redemption} qrImage={qrImage} />
     </main>
   );
-}
-
-function legacyPassMessage(status: string, isExpired: boolean) {
-  if (status === "redeemed") return "This Club Deal has already been redeemed.";
-  if (status === "voided") return "This Club Deal is no longer valid.";
-  if (isExpired || status === "expired") return "This Club Deal has expired.";
-  return "This older QR pass cannot be redeemed. Choose a current deal and tap at the cashier instead.";
 }
 
 function DealPassStyles() {
@@ -67,6 +50,8 @@ function DealPassStyles() {
       .eyebrow { color: #7eeaff; font-size: 11px; font-weight: 950; letter-spacing: .16em; text-transform: uppercase; }
       h1 { margin: 0; font-size: clamp(32px, 8vw, 52px); line-height: .95; }
       p { margin: 0; color: #cfc5de; font-size: 18px; font-weight: 850; }
+      .admission-qr { max-width: 100%; height: auto; border-radius: 12px; background: white; }
+      .admission-method { font-size: 15px; }
       .nfc-retired { width: 132px; aspect-ratio: 1; display: grid; place-items: center; border: 1px solid rgba(126,234,255,.35); border-radius: 50%; color: #fff; background: radial-gradient(circle, rgba(109,40,217,.55), rgba(9,7,17,.95)); box-shadow: 0 0 36px rgba(126,234,255,.16); font-size: 30px; font-weight: 950; letter-spacing: -8px; transform: rotate(-18deg); }
       strong { font-size: 18px; }
       small { max-width: 42ch; color: #b9accd; font-size: 13px; line-height: 1.45; }

@@ -160,12 +160,12 @@ test("venue dashboards expose the complete MyDancr-managed contract ledger", () 
   assert.match(venueDealPanel, /official offers currently attached to your venue/);
   assert.match(venueDealPanel, /Live deals appear first and are marked in green/);
   assert.match(venueDealPanel, /displayedDeals = \[\.\.\.liveDeals/);
-  assert.match(venueDealPanel, /Fee per confirmed guest/);
+  assert.match(venueDealPanel, /Historical referral agreement/);
   assert.match(venueDealPanel, /Agreement ID/);
   assert.match(venueDealPanel, /Redemption status/);
   assert.match(venueDealPanel, /displayedDeals\.map/);
   assert.match(venueDealPanel, /Guest terms/);
-  assert.match(venueDealPanel, /Fee per guest/);
+  assert.match(venueDealPanel, /Historical fee/);
   assert.doesNotMatch(venueDealPanel, /Display order/);
   assert.match(venueDealPanel, /Agreement history/);
   assert.match(venueDealPanel, /Monthly activity & billing/);
@@ -209,7 +209,7 @@ test("MyDancr supplies tap stickers while venue owners receive read-only invento
   assert.match(nfcPanel, /Assigned sticker inventory/);
   assert.match(nfcPanel, /Approved dancer roster/);
   assert.match(nfcPanel, /Dancer check-in/);
-  assert.match(nfcPanel, /Guest redemption/);
+  assert.match(nfcPanel, /Legacy cashier sticker/);
   assert.doesNotMatch(nfcPanel, /Assigned NFC stickers|NFC-authorized dancer roster|NFC verified|NFC workflow/);
   assert.doesNotMatch(nfcPanel, /MyDancr supplied hardware|Phone-tap sticker workflow|Installation only/);
   assert.doesNotMatch(nfcPanel, /Create programming URL/);
@@ -226,11 +226,11 @@ test("venue-facing NFC language explains the physical actions in plain language"
   assert.match(nfcPanel, /All affiliated <b>\{activeAffiliations.length\}<\/b>/);
   assert.match(nfcPanel, /Working now <b>\{workingCount\}<\/b>/);
   assert.match(venuePanel, /title="Affiliated dancers"/);
-  assert.match(nfcPanel, /<summary>Check-in &amp; redemption stickers/);
+  assert.match(nfcPanel, /<summary>Dancer &amp; legacy stickers/);
   assert.match(venuePanel, /Dancer check-ins/);
-  assert.match(venuePanel, /Guest redemption attempts/);
+  assert.match(venuePanel, /Passes claimed/);
   assert.doesNotMatch(venuePanel, /NFC-authorized check-ins|Assigned NFC access|NFC Deal visibility|Dressing-room taps|Cashier tap attempts/);
-  assert.match(venueDealPanel, /Guests redeem by holding their phone near the MyDancr redemption sticker at checkout/);
+  assert.match(venueDealPanel, /Scan the guest’s admission QR with your phone camera/);
   assert.doesNotMatch(venueDealPanel, /cashier NFC stickers/);
 });
 

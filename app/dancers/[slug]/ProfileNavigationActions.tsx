@@ -159,7 +159,7 @@ export function ProfileShareButton({ dancerId, stageName }: { dancerId: string; 
             <h2 id="profile-share-dialog-title">{stageName} on MyDancr</h2>
             <p>
               Send the public profile directly or copy its secure link. Club
-              Deal redemption happens only when you tap your phone at the club cashier.
+              Club staff scans your admission pass and confirms entry at the door.
             </p>
 
             <div className="profile-share-dialog-actions">

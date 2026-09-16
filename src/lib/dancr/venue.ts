@@ -514,12 +514,11 @@ export async function getVenueDashboard(
     pageViewsToday,
     dressingRoomNfcTaps,
     cashierNfcAttempts,
-    cashierNfcRedemptions,
+    admissionMetrics,
     upcomingShiftCount,
     goingSignals,
     previousPageViews,
     previousDirections,
-    previousRedemptions,
     workingNow,
     venueDeal,
     dealRevenue,
@@ -531,12 +530,11 @@ export async function getVenueDashboard(
     countVenueEvents(client, profile.id, "page_view", new Date(tonight.startsAt), now),
     countVenueNfcTaps(client, profile.id, "dressing_room", range.start, range.end),
     countVenueNfcTaps(client, profile.id, "cashier", range.start, range.end),
-    countVenueNfcTaps(client, profile.id, "cashier", range.start, range.end, "deal_redeemed"),
+    getVenueAdmissionMetrics(client, profile.id, range.start, range.end),
     countUpcomingShifts(client, profile.id, now),
     countVenueGoingSignals(client, profile.id, range.start, range.end),
     countVenueEvents(client, profile.id, "page_view", range.previousStart, range.start),
     countByVenueBetween(client, "direction_requests", profile.id, "requested_at", range.previousStart, range.start),
-    countVenueNfcTaps(client, profile.id, "cashier", range.previousStart, range.start, "deal_redeemed"),
     getWorkingDancers(client, profile.id, now),
     getVenueDealsForAccount(client, userId),
     canVenue(access, "view_finance") ? getVenueDealRevenueMetrics(client, profile.id) : null,
@@ -555,7 +553,7 @@ export async function getVenueDashboard(
       pageViews30Days: pageViews,
       pageViewsToday,
       dressingRoomNfcTaps30Days: dressingRoomNfcTaps,
-      cashierNfcRedemptions30Days: cashierNfcRedemptions,
+      cashierNfcRedemptions30Days: admissionMetrics.redemptions,
       upcomingShiftCount,
       activeDancersNow: workingNow.length,
       goingSignals30Days: goingSignals,
@@ -565,12 +563,14 @@ export async function getVenueDashboard(
       goingSignals,
       dressingRoomNfcTaps,
       cashierNfcAttempts,
-      cashierNfcRedemptions,
+      cashierNfcRedemptions: admissionMetrics.redemptions,
+      admissionPassesClaimed: admissionMetrics.claims,
+      claimToAdmissionPercent: conversionPercent(admissionMetrics.cohortRedemptions, admissionMetrics.claims),
       pageViewsChangePercent: percentChange(pageViews, previousPageViews),
       directionsChangePercent: percentChange(directions, previousDirections),
-      redemptionsChangePercent: percentChange(cashierNfcRedemptions, previousRedemptions),
+      redemptionsChangePercent: percentChange(admissionMetrics.redemptions, admissionMetrics.previousRedemptions),
       directionConversionPercent: conversionPercent(directions, pageViews),
-      redemptionConversionPercent: conversionPercent(cashierNfcRedemptions, cashierNfcAttempts),
+      redemptionConversionPercent: conversionPercent(admissionMetrics.cohortRedemptions, admissionMetrics.claims),
     },
     workingNow,
     deal: venueDeal?.deals[0] || null,
@@ -581,6 +581,13 @@ export async function getVenueDashboard(
 }
 
 export type VenueAnalyticsPeriod = "tonight" | "7d" | "30d";
+
+async function getVenueAdmissionMetrics(client: DancrClient, venueId: string, since: Date, until: Date) {
+  const { data, error } = await (client as any).rpc("get_venue_admission_metrics", { p_venue_id: venueId, p_since: since.toISOString(), p_until: until.toISOString() });
+  if (error) throw error;
+  if (!data || !["claims", "cohortRedemptions", "redemptions", "previousRedemptions"].every(key => Number.isSafeInteger(data[key]) && data[key] >= 0)) throw new Error("Unable to load admission totals.");
+  return data as { claims: number; cohortRedemptions: number; redemptions: number; previousRedemptions: number };
+}
 
 export function readVenueAnalyticsPeriod(value: string | null | undefined): VenueAnalyticsPeriod {
   return value === "tonight" || value === "7d" || value === "30d" ? value : "30d";

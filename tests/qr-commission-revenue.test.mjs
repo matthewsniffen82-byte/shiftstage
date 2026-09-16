@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { readFile } from "./helpers/dashboard-test-fs-promises.mjs";
 import test from "node:test";
 
@@ -85,7 +86,7 @@ test("dancer attribution is locked to a verified shift when the cashier NFC tap 
   assert.match(attribution, /createHmac\("sha256"/);
   assert.match(attribution, /timingSafeEqual/);
   assert.match(attribution, /dancerId[\s\S]*?venueId[\s\S]*?dealId[\s\S]*?shiftId[\s\S]*?expiresAt/);
-  assert.match(generationRoute, /completeCashierDealRedemption\(admin/);
+  assert.doesNotMatch(generationRoute, /completeCashierDealRedemption/);
   assert.match(cashierRedemption, /resolveDealRedemptionAttribution\(client/);
   assert.doesNotMatch(generationRoute, /verifyDancerDealAttributionToken|getVerifiedActiveCheckInAtVenue/);
   assert.match(redemptionAttribution, /verifyDancerDealAttributionToken\(attributionToken\)/);
@@ -145,18 +146,13 @@ test("venue cashier-tap totals use finalized revenue events across both attribut
   assert.doesNotMatch(venueDashboard, /revenue\?\.postedVenueQrScansThisMonth/);
 });
 
-test("only the active cashier NFC transaction can atomically create revenue and commission", () => {
-  assert.match(redemptionRoute, /export async function POST\(\)[\s\S]*?status: 410/);
-  assert.doesNotMatch(redemptionRoute, /createRequestSupabaseContext|redeemDealToken/);
-  assert.match(generationRoute, /completeCashierDealRedemption\(admin/);
-  assert.match(cashierRedemption, /issueAndConfirmDealRedemptionFromNfc\(client/);
-  assert.match(scaleCommissionMigration, /create or replace function public\.confirm_deal_redemption_from_nfc/);
-  assert.match(scaleCommissionMigration, /where id = p_tag_id for update/);
-  assert.match(scaleCommissionMigration, /venue\.owner_user_id[\s\S]*?account\.role = 'venue'[\s\S]*?account\.account_state = 'active'/);
-  assert.match(scaleCommissionMigration, /update public\.qr_redemptions[\s\S]*?insert into public\.deal_revenue_events[\s\S]*?insert into public\.commission_events/);
-  assert.match(scaleCommissionMigration, /pg_advisory_xact_lock\(hashtext\(v_redemption\.dancer_id::text\), hashtext\(v_month::text\)\)/);
-  assert.match(migration, /unique index if not exists deal_revenue_events_dancer_success_number_idx/);
-  assert.match(migration, /grant execute on function public\.confirm_deal_redemption\(text, jsonb\) to authenticated/);
+test("admission passes use authenticated staff confirmation without invoking legacy billing", () => {
+  assert.match(redemptionRoute, /createRequestSupabaseContext\(request, \{ role: "venue" \}\)/);
+  assert.match(redemptionRoute, /rpc\("confirm_admission_pass"/);
+  assert.doesNotMatch(generationRoute, /completeCashierDealRedemption/);
+  const admission=readFileSync(new URL("../supabase/migrations/20260916040000_staff_verified_admission_passes.sql",import.meta.url),"utf8");
+  assert.match(admission,/revoke all on function public.confirm_deal_redemption_from_nfc/);
+  assert.doesNotMatch(admission,/insert into public\.(deal_revenue_events|commission_events|agent_commission_events)/);
 });
 
 test("venue QR revenue goes entirely to MyDancr while dancer-profile revenue uses the monthly scale", () => {
@@ -180,7 +176,7 @@ test("MyDancr publishes offers against a signed referral agreement for venue vis
   assert.match(migration, /where payout_amount_cents <= 0/);
   assert.match(migration, /is_active = false/);
   const venueLedger = venueDashboard.match(/function VenueDealReadOnlyPanel[\s\S]*?(?=function readOptionalNumber)/)?.[0] || "";
-  assert.match(venueLedger, /Fee per confirmed guest/);
+  assert.match(venueLedger, /Historical referral agreement/);
   assert.match(venueLedger, /official offers currently attached to your venue/);
   assert.match(venueLedger, /Redemption status/);
   assert.doesNotMatch(venueLedger, /Request fee change|Publish Club Deal/);

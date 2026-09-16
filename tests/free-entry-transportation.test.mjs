@@ -40,6 +40,7 @@ function client(props = {}, options = {}) {
   };
   const { default: Component } = load("../app/deals/transportation/[dealId]/TransportationClient.tsx", {
     react: hooks, "next/link": { default: "a" },
+    "@/src/lib/dancr/browser-session": { readBrowserAuthSession: () => null, persistRefreshedBrowserAuthSession() {} },
     "@/src/lib/dancr/push-invitation": { offerPushNotifications: moment => invitations.push(moment) },
     "@/src/lib/dancr/club-deal-transportation": transportation,
     "@/app/components/NfcIcon": { default: () => null }, "./transportation.css": {},
@@ -54,6 +55,7 @@ function client(props = {}, options = {}) {
     AbortSignal, URLSearchParams,
     fetch: async (url, init) => {
       requests.push({ url, body: JSON.parse(init.body) });
+      if (url === "/api/deals/redemptions") return { ok: !options.passFailure, json: async () => options.passFailure ? { error: "Try again" } : { ok: true, passUrl: "/deals/pass/" + "p".repeat(43), expiresAt: new Date(Date.now() + 12*3600000).toISOString() } };
       return { ok: options.accepted !== false, status: options.accepted === false ? 503 : 200,
         json: async () => options.accepted === false ? { error: "Unavailable" } : { ok: true, requestId: "33333333-3333-4333-8333-333333333333", message: "The club will contact you." } };
     },
@@ -91,7 +93,7 @@ test("shuttle phone formats typed and pasted numbers without changing the submit
       assert.equal(input.value, expected); assert.equal(input.selectionStart, expected.length);
     }
     await f.submit("(702) 555-0123");
-    assert.equal(f.requests.length, 1); assert.equal(f.requests[0].body.phone, "+17025550123");
+    assert.equal(f.requests.length, props.deal === undefined && Object.hasOwn(props,"deal") ? 1 : 2); assert.equal(f.requests[0].body.phone, "+17025550123");
   }
 });
 
@@ -120,11 +122,12 @@ test("shuttle phone keeps the editing selection and allows deletion through form
 test("private-car arrival prepares free entry without sending a ride request", async () => {
   const f = client(); assert.match(f.html(), /Other rideshare or taxi/);
   f.select("self_drive"); await f.submit();
-  assert.equal(f.requests.length, 0);
+  assert.equal(f.requests.length, 1); assert.equal(f.requests[0].url, "/api/deals/redemptions");
   const selection = JSON.parse(f.stored.get(key));
   assert.equal(selection.dealId, deal.id); assert.equal(selection.transportation, "self_drive");
-  assert.equal(selection.expiresAt - selection.savedAt, 12 * 60 * 60 * 1000);
-  assert.match(f.html(), /staff verify your arrival method/);
+  assert.ok(Math.abs(selection.expiresAt - selection.savedAt - 12*3600000) < 1000);
+    assert.equal(selection.admissionPassVersion, 1); assert.match(selection.passUrl, /^\/deals\/pass\//);
+  assert.match(f.html(), /Staff verifies your arrival method/);
 });
 
 test("one combined Waymo, Zoox and Cybercab option prepares admission without booking or notifying a ride", async () => {
@@ -134,21 +137,22 @@ test("one combined Waymo, Zoox and Cybercab option prepares admission without bo
     assert.equal(nodes(f.render()).filter(node => node.type === "input" && node.props.name === "transportation").length, 4);
     assert.doesNotMatch(f.html(), /value="(?:waymo|zoox|cybercab)"/);
     f.select(value);
-    assert.match(f.html(), /Continue to free entry/);
+    assert.match(f.html(), /Get free admission pass/);
     await f.submit();
-    assert.equal(f.requests.length, 0);
+    assert.equal(f.requests.length, 1); assert.equal(f.requests[0].url, "/api/deals/redemptions");
     const selection = JSON.parse(f.stored.get(key));
     assert.equal(selection.transportation, value);
     assert.equal(selection.venueId, venue.id);
     assert.equal(selection.dealId, deal.id);
     assert.equal(selection.sourceType, "dancer_profile");
     assert.equal(selection.dancerId, "dancer");
-    assert.equal(selection.attributionToken, "signed-token");
-    assert.equal(selection.expiresAt - selection.savedAt, 12 * 60 * 60 * 1000);
-    assert.equal(selection.shuttleRequestId, null);
+    assert.equal(f.requests.at(-1).body.attributionToken, "signed-token");
+    assert.ok(Math.abs(selection.expiresAt - selection.savedAt - 12*3600000) < 1000);
+    assert.equal(selection.admissionPassVersion, 1); assert.match(selection.passUrl, /^\/deals\/pass\//);
+    assert.equal(selection.shuttleRequestId, undefined);
     assert.match(f.html(), /arrive by Waymo, Zoox, or Cybercab/);
     assert.match(f.html(), /Book your ride separately; ride fare isn’t included/);
-    assert.match(f.html(), /staff verify your arrival method/);
+    assert.match(f.html(), /Staff verifies your arrival method/);
   }
 });
 
@@ -157,9 +161,7 @@ test("provider links appear only after autonomous admission is saved and never b
   assert.doesNotMatch(f.html(), /club-transport-booking-links/);
   f.select("autonomous_cab");
   assert.doesNotMatch(f.html(), /club-transport-booking-links/);
-  f.blockStorage(true); await f.submit();
-  assert.doesNotMatch(f.html(), /club-transport-booking-links/);
-  f.blockStorage(false); await f.submit();
+  await f.submit();
   const links = nodes(f.render()).filter(node => node.type === "a" && node.props.className === "club-transport-provider-button");
   assert.deepEqual(links.map(node => node.props.href), ["https://waymo.com/rides/", "https://zoox.com/how-to-ride", "https://www.tesla.com/support/robotaxi"]);
   for (const link of links) {
@@ -169,7 +171,7 @@ test("provider links appear only after autonomous admission is saved and never b
   }
   assert.match(f.html(), /Check availability/);
   assert.match(f.html(), /a Cybercab isn’t guaranteed/);
-  assert.equal(f.requests.length, 0);
+  assert.equal(f.requests.length, 1); assert.equal(f.requests[0].url, "/api/deals/redemptions");
   assert.equal(JSON.parse(f.stored.get(key)).transportation, "autonomous_cab");
   for (const choice of ["self_drive", "club_shuttle"]) {
     const other = client(); other.select(choice); await other.submit();
@@ -192,7 +194,7 @@ test("copy club address has an accurate clipboard result and a manual fallback",
     input.props.onFocus({currentTarget:{select(){selected=true;}}});
     assert.equal(selected, true);
     assert.equal(f.stored.get(key), selection);
-    assert.equal(f.requests.length, 0);
+    assert.equal(f.requests.length, 1); assert.equal(f.requests[0].url, "/api/deals/redemptions");
   }
   const missing = client({venue:{...venue,address:null}});
   missing.select("autonomous_cab"); await missing.submit();
@@ -200,14 +202,21 @@ test("copy club address has an accurate clipboard result and a manual fallback",
   assert.doesNotMatch(missing.html(), /Copy club address/);
 });
 
-test("autonomous arrival requires successful local storage and can retry without a ride request", async () => {
+test("blocked local storage does not lose a successfully issued admission pass", async () => {
   const f = client(); f.select("autonomous_cab"); f.blockStorage(true); await f.submit();
   assert.equal(f.stored.has(key), false);
-  assert.doesNotMatch(f.html(), /Ready for your cashier tap/);
-  assert.match(f.html(), /transportation choice could not be saved/);
-  f.blockStorage(false); await f.submit();
-  assert.equal(JSON.parse(f.stored.get(key)).transportation, "autonomous_cab");
-  assert.equal(f.requests.length, 0);
+  assert.match(f.html(), /Show admission pass/);
+  assert.match(f.html(), /href="\/deals\/pass\/p{43}"/);
+  assert.equal(f.requests.length, 1);
+});
+
+test("retrying pass generation never sends the accepted pickup request again", async () => {
+  const options = {passFailure:true}, f=client({initialTransportation:"club_shuttle"},options);
+  await f.submit(); assert.match(f.html(),/Your pickup request will not be sent again/);
+  options.passFailure=false; await f.clickAsync("Get admission pass");
+  assert.equal(f.requests.filter(r=>r.url.endsWith("/shuttle")).length,1);
+  assert.equal(f.requests.filter(r=>r.url==="/api/deals/redemptions").length,2);
+  assert.match(f.html(),/Show admission pass/);
 });
 
 test("changing an autonomous arrival to an ineligible rideshare clears admission", async () => {
@@ -229,8 +238,8 @@ test("both entry points use the same pickup handoff and admission selection", as
     assert.equal(f.requests[0].body.email, "guest@example.test");
     const selection = JSON.parse(f.stored.get(key));
     assert.equal(selection.dealId, deal.id); assert.equal(selection.transportation, "club_shuttle");
-    assert.equal(selection.shuttleRequestId, f.requests[0].body.requestId);
-    assert.equal(selection.attributionToken, "signed-token"); assert.equal(selection.dancerId, "dancer");
+    assert.equal(f.requests.filter(r=>r.url.endsWith("/shuttle")).length,1);
+    assert.equal(f.requests.at(-1).body.attributionToken, "signed-token"); assert.equal(selection.dancerId, "dancer");
     assert.equal("email" in selection, false); assert.equal("phone" in selection, false);
     assert.match(f.html(), /Awaiting club confirmation/); assert.match(f.html(), /ride is not booked yet/);
   }
@@ -243,11 +252,11 @@ test("all customers use the public contact form immediately, without chat or acc
       assert.match(f.html(),/No sign-in needed/);
       assert.doesNotMatch(f.html(),/chat|Loading pickup form|Request by phone instead/i);
       for (const field of ["name","location","partySize","phone","email","handoffAccepted"]) assert.ok(nodes(f.render()).some(node=>node.type==="input"&&node.props.name===field));
-      await f.submit(); assert.equal(f.requests.length,1);
+      await f.submit(); assert.equal(f.requests.length,rideOnly?1:2);
       assert.equal(f.requests[0].url,rideOnly?"/api/venues/"+venue.id+"/shuttle":"/api/deals/"+deal.id+"/shuttle");
       assert.equal(f.requests[0].body.phone,"+17025550123"); assert.equal(f.requests[0].body.handoffAccepted,true);
       const saved=JSON.parse(f.stored.get(key)||"null");
-      if(rideOnly)assert.equal(saved,null);else {assert.equal(saved.shuttleRequestId,f.requests[0].body.requestId);assert.equal(saved.attributionToken,"signed-token");assert.equal(saved.pickupRequestId,undefined);}
+      if(rideOnly)assert.equal(saved,null);else {assert.equal(saved.admissionPassVersion,1);assert.equal(f.requests[1].body.attributionToken,"signed-token");assert.equal(saved.pickupRequestId,undefined);}
     }
   }
 });

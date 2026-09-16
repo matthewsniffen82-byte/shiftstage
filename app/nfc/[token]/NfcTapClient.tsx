@@ -95,6 +95,10 @@ export function NfcTapClient({ token }: { token: string }) {
         const data = await response.json();
         if (controller.signal.aborted) return;
         if (!response.ok || !data.ok) throw new Error(data.error || "This tap sticker is unavailable.");
+        if (data.tag.type === "cashier") {
+          window.location.replace(`/venues/${encodeURIComponent(data.venue.slug)}`);
+          return;
+        }
         setState(data);
         const pendingDealId = pendingIntent && pendingIntent.venueId === data.venue.id ? pendingIntent.dealId : "";
         const preferred = pendingDealId

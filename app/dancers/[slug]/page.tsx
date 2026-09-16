@@ -269,7 +269,7 @@ export default async function DancerPublicPage({ params, searchParams }: PagePro
             <div className="profile-tonight-deal">
               <div
                 className="profile-active-deal has-club-deal"
-                aria-label="Active Club Deal for cashier tap"
+                aria-label="Active Club Deal admission pass"
               >
                 <ClubDealCard
                   deal={toPublicClubDeal(activeDeal)}

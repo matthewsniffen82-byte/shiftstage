@@ -59,26 +59,12 @@ function fixture(options = {}) {
   } };
 }
 
-for (const authorized of [false, true]) test(`cashier response minimizes private finance data with bearer=${authorized}`, async () => {
-  const f = fixture();
-  const response = await f.post({}, authorized ? { authorization: "Bearer synthetic-customer" } : {});
-  assert.equal(response.status, 200);
-  const body = await response.json();
-  assert.deepEqual(body.confirmation, { status: "redeemed", dealTitle: "Admission offer", venueName: "Synthetic venue" });
-  assert.equal(body.ok, true); assert.equal(body.action, "deal_redemption");
-  assert.deepEqual(body.deal, f.deal);
-  assert.equal(body.message, "Admission offer redeemed at Synthetic venue.");
-  assert.match(response.headers.get("cache-control"), /private, no-store/);
-  assert.deepEqual(f.confirmation, privateConfirmation, "Internal result remains intact for server audit/finance");
-});
-
-test("customer-supplied ownership, role, fee and confirmation properties never enter financial input", async () => {
-  const f = fixture();
-  const response = await f.post({ venueId: "other-venue", userId: "other-user", role: "admin", customerId: "victim", nfcTagId: "other-tag", grossCommissionCents: 0, confirmation: { status: "redeemed" } });
-  assert.equal(response.status, 200);
-  const input = f.calls.find(call => call.input).input;
-  assert.equal(input.venueId, "synthetic-venue"); assert.equal(input.nfcTagId, "synthetic-tag");
-  assert.deepEqual(Object.keys(input).sort(), ["attributionToken", "dancerId", "dealId", "nfcTagId", "request", "sessionId", "sourceType", "venueId"]);
+for (const authorized of [false,true]) test('retired cashier cannot redeem or create fees; signed in='+authorized,async()=>{
+  const f=fixture(),response=await f.post({venueId:"victim",role:"admin",grossCommissionCents:0},authorized?{authorization:"Bearer synthetic-customer"}:{});
+  assert.equal(response.status,410);const body=await response.json();
+  assert.equal(body.ok,false);assert.equal(body.confirmation,undefined);
+  assert.deepEqual(f.calls,["limit","tag"]);
+  assert.doesNotMatch(JSON.stringify(body),/private-revenue|private@example|grossCommission|private-audit/);
 });
 
 for (const [label, options, body, expected, expectedCalls] of [
@@ -89,15 +75,4 @@ for (const [label, options, body, expected, expectedCalls] of [
   const f = fixture(options), response = await f.post(body);
   assert.equal(response.status, expected); assert.deepEqual(f.calls, expectedCalls);
   assert.equal((await response.json()).confirmation, undefined);
-});
-
-test("unavailable deals retain the domain denial without a success receipt", async () => {
-  const f = fixture({ rejected: true }), response = await f.post();
-  assert.equal(response.status, 404); assert.equal((await response.json()).confirmation, undefined);
-});
-
-test("unexpected nested confirmation status cannot carry private data into the response", async () => {
-  const f = fixture({ confirmation: { ...privateConfirmation, status: { audit: "private-audit" } } });
-  const response = await f.post();
-  assert.deepEqual((await response.json()).confirmation, { status: null, dealTitle: "Admission offer", venueName: "Synthetic venue" });
 });

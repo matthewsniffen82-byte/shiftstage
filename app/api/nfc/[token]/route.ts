@@ -4,14 +4,9 @@ import { apiError } from "@/src/lib/api";
 import { resolveApiError } from "@/src/lib/api-error-policy";
 import { readBoundedJsonObject } from "@/src/lib/bounded-json-body";
 import {
-  CashierDealRedemptionError,
-  completeCashierDealRedemption,
-} from "@/src/lib/dancr/cashier-deal-redemption";
-import {
   broadcastFollowedClubRosterAddition,
   broadcastFollowedDancerWorkingNow,
 } from "@/src/lib/dancr/customer-follow-notifications";
-import { DealRedemptionAttributionError } from "@/src/lib/dancr/deal-redemption-attribution";
 import { getActiveClubDealsForVenue } from "@/src/lib/dancr/deals";
 import {
   enforcePublicRequestRateLimit,
@@ -170,46 +165,12 @@ export async function POST(request: Request, context: RouteContext) {
       }), rememberedAccountToken);
     }
 
-    const dealId = typeof body.dealId === "string" ? body.dealId.trim() : "";
-    const sourceType = body.sourceType === "dancer_profile" ? "dancer_profile" : "club_page";
-    const dancerId = typeof body.dancerId === "string" ? body.dancerId.trim() : null;
-    const attributionToken = typeof body.attributionToken === "string" ? body.attributionToken.trim() : "";
-    const redemption = await completeCashierDealRedemption(admin, {
-      venueId: tag.venueId,
-      nfcTagId: tag.id,
-      dealId,
-      sourceType,
-      dancerId,
-      attributionToken,
-      sessionId,
-      request,
-    });
-    console.info("CLUB_DEAL_NFC_REDEEMED", {
-      venueId: tag.venueId,
-      tagId: tag.id,
-      dealId: redemption.deal.id,
-      redemptionId: redemption.confirmation?.redemptionId,
-      sourceType: redemption.sourceType,
-    });
-    return noStore({
-      ok: true,
-      action: "deal_redemption",
-      deal: toPublicClubDeal(redemption.deal),
-      // The privileged transaction also returns private finance and payout fields.
-      confirmation: {
-        status: redemption.confirmation?.status === "redeemed" ? "redeemed" : null,
-        dealTitle: redemption.deal.dealTitle,
-        venueName: tag.venue.name,
-      },
-      message: `${redemption.deal.dealTitle} redeemed at ${tag.venue.name}.`,
-    });
+    return NextResponse.json({ ok: false, error: "Admission now uses a pass scanned by venue staff. Open the club page to get your pass.", replacement: "admission_pass", venueUrl: `/venues/${encodeURIComponent(tag.venue.slug)}` }, { status: 410, headers: { "cache-control": "private, no-store" } });
   } catch (error) {
     const limited = nfcRateLimitResponse(error);
     if (limited) return limited;
     const message = safeErrorMessage(error);
-    const status = error instanceof CashierDealRedemptionError || error instanceof DealRedemptionAttributionError
-      ? error.status
-      : /sign in|active dancer|different venue|inactive/i.test(message)
+    const status = /sign in|active dancer|different venue|inactive/i.test(message)
         ? 403
         : /already/i.test(message)
           ? 409

@@ -669,7 +669,7 @@
             <button class="profile-qr-close" type="button" data-close-profile-share-choice aria-label="Close profile sharing">${actionIconMarkup("close")}</button>
             <p class="profile-qr-kicker">Share profile</p>
             <h3 class="profile-qr-title" id="profileShareChoiceTitle">Share this dancer profile</h3>
-            <p class="profile-qr-subtitle" id="profileShareChoiceSubtitle">Share this public profile, copy its link, or show a QR code. Club Deals redeem only when you tap your phone at the club cashier.</p>
+            <p class="profile-qr-subtitle" id="profileShareChoiceSubtitle">Share this public profile, copy its link, or show a QR code. Show your Club Deal admission pass to venue staff for scanning.</p>
             <div class="profile-share-choice-actions">
               <button class="profile-qr-action primary" type="button" data-share-profile-choice>${actionButtonLabel("share", "Share profile")}</button>
               <button class="profile-qr-action" type="button" data-copy-profile-choice>Copy profile link</button>
@@ -719,7 +719,7 @@
       triggerButton?.setAttribute("aria-expanded", "true");
       document.getElementById("profileShareChoiceTitle").textContent = `${safeProfileName} on MyDancr`;
       document.getElementById("profileShareChoiceSubtitle").textContent =
-        "Share this public profile, copy its link, or show a QR code. Club Deals redeem only when you tap your phone at the club cashier.";
+        "Share this public profile, copy its link, or show a QR code. Show your Club Deal admission pass to venue staff for scanning.";
       overlay.hidden = false;
       overlay.classList.add("show");
       overlay.setAttribute("aria-hidden", "false");

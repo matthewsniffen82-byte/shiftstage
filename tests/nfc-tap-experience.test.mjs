@@ -147,25 +147,18 @@ test("the NFC confirmation lands once without recentering or horizontal overflow
   assert.match(client, /\.nfc-card\{[^}]*overflow-anchor:none/);
 });
 
-test("cashier NFC preserves the selected Club Deal and current-shift attribution", () => {
-  assert.match(baseMigration, /confirm_deal_redemption_from_nfc/);
-  assert.match(baseMigration, /previous\.redeemed_at >= v_now - interval '24 hours'/);
-  assert.match(baseMigration, /'source', 'cashier_nfc_tap'/);
-  assert.match(tapRoute, /completeCashierDealRedemption/);
+test("cashier NFC redirects to the venue while admission keeps signed source attribution", () => {
+  assert.doesNotMatch(tapRoute, /completeCashierDealRedemption/);
+  assert.match(tapRoute, /status: 410/);
   assert.match(redemptionAttribution, /verifyDancerDealAttributionToken/);
   assert.match(redemptionAttribution, /getVerifiedActiveCheckInAtVenue/);
-  assert.match(dealCard, /mydancrPendingNfcDealV2/);
-  assert.match(client, /readPendingDealIntent/);
-  assert.match(client, /shouldSubmitCashierTap/);
-  assert.match(client, /pendingIntent\.dealId === selectedDealId/);
-  assert.match(client, /This registered cashier tap is completing the redemption automatically/);
-  assert.doesNotMatch(client, /Redeem this Club Deal/);
-  assert.match(retiredDealQr, /status: 410/);
+  assert.match(client, /data\.tag\.type === "cashier"/);
+  assert.match(retiredDealQr, /createAdmissionPass/);
 });
 
-test("Club Deal activation persists the pending tap and keeps instructions concise", () => {
+test("Club Deal activation persists the pass and keeps instructions concise", () => {
   assert.match(dealCard, /Use free admission/);
-  assert.match(dealCard, /When you reach the cashier, unlock your phone and hold it near the MyDancr sticker/);
+  assert.match(dealCard, /Show your admission pass/);
   assert.match(dealCard, /window\.location\.assign\(`/);
   assert.match(dealCard, /const dialogContent = intentState === "ready" \?/);
   assert.match(dealCard, /Saved to your account\./);

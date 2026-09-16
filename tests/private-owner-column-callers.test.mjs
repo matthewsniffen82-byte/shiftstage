@@ -17,7 +17,7 @@ function load(path,dependencies={}){
 }
 function clients({ownerError,missing=false,stopPrivate,profileFields='id',monthlyCount=0,monthlyError=null}={}){
  const ownerCalls=[],privateCalls=[];
- const server={from(table){assert.equal(table,'dancer_profiles','Only the own-profile lookup may use the server');const call={table,methods:[]};ownerCalls.push(call);const q={
+ const server={from(table){if(table==='qr_redemptions'||table==='qr_redemption_events')return request.from(table);assert.equal(table,'dancer_profiles','Only the own-profile lookup may use the server');const call={table,methods:[]};ownerCalls.push(call);const q={
   select(fields){assert.equal(fields,profileFields);call.methods.push(['select',fields]);return q;},
   eq(field,value){assert.equal(field,'user_id');assert.equal(value,owner);call.methods.push(['eq',field,value]);return q;},
   async maybeSingle(){return {data:missing?null:{id:dancer},error:ownerError||null};},
@@ -50,6 +50,7 @@ for(const name of [...readers,'getDancerDealMetrics']){
  test(name+' resolves only the authenticated owner through the server and retains request-role data reads',async()=>{
   const h=clients();await fn(h.request,owner,h.server);
   assert.deepEqual(copy(h.ownerCalls),[{table:'dancer_profiles',methods:[['select','id'],['eq','user_id',owner]]}]);assert.ok(h.privateCalls.length>0);
+  if(name==='getDancerDealMetrics')assert.ok(h.privateCalls.every(c=>c.methods.filter(([m])=>m==='select').every(([,fields])=>!/(redemption_token|session_id|customer_id|audit)/.test(fields))));
   assert.ok(h.privateCalls.every(call=>call.methods.some(([m,field,value])=>(m==='eq'&&['dancer_id','qr_redemptions.dancer_id','shifts.dancer_id'].includes(field)&&value===dancer)||(m==='contains'&&field==='payload'&&value.dancerId===dancer))));
  });
  test(name+' stops on failed owner resolution without a private data query or fallback',async()=>{

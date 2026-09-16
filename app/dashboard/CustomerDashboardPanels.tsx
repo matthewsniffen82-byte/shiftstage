@@ -884,10 +884,10 @@ function CustomerDealPassPanel({
             <strong>{activeDeals.length} active</strong>
           </summary>
           <div>
-            <section className="customer-nfc-guide" aria-label="How cashier tap redemption works">
-              <div><b>1</b><span><strong>Choose the exact deal</strong><small>Open an offer from a venue or a Working Now dancer before reaching the cashier.</small></span></div>
-              <div><b>2</b><span><strong>Tap at the cashier</strong><small>Keep the deal open and tap the official MyDancr cashier sticker with this signed-in phone.</small></span></div>
-              <div><b>3</b><span><strong>Wait for confirmation</strong><small>The on-screen confirmation records the redemption and the correct dancer attribution.</small></span></div>
+            <section className="customer-nfc-guide" aria-label="How admission passes work">
+              <div><b>1</b><span><strong>Choose the exact deal</strong><small>Open an offer from a venue or a Working Now dancer and choose your arrival method.</small></span></div>
+              <div><b>2</b><span><strong>Show your pass</strong><small>Open your admission pass and show the QR code to club staff.</small></span></div>
+              <div><b>3</b><span><strong>Wait for confirmation</strong><small>Staff verifies your arrival method and scans the pass to confirm one admission.</small></span></div>
             </section>
             <div className="saved-deal-list">
               {activeDeals.map((item) => (
@@ -906,7 +906,7 @@ function CustomerDealPassPanel({
               {!activeDeals.length ? (
                 <div className="customer-empty-state compact">
                   <strong>No active Club Deals</strong>
-                  <p>Choose a Club Deal first, then tap the club&apos;s official cashier sticker. There is no QR code to scan.</p>
+                  <p>Choose a Club Deal and generate your admission pass before arriving.</p>
                 </div>
               ) : null}
               {pastDeals.length ? (

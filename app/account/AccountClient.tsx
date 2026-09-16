@@ -571,7 +571,7 @@ export default function AccountClient() {
                 <div className="customer-benefit-grid">
                   <div className="customer-benefit-tile">
                     <strong>Tap-to-use Club Deals</strong>
-                    <span>Choose an offer, then redeem it by tapping the venue&apos;s cashier sticker.</span>
+                    <span>Choose an offer, generate your admission pass, and show it to club staff.</span>
                   </div>
                   <div className="customer-benefit-tile">
                     <strong>Private follows</strong>

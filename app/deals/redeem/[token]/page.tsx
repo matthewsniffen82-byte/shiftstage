@@ -6,6 +6,7 @@ import { RedeemDealClient } from "./RedeemDealClient";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+export const metadata = { robots: { index: false, follow: false }, referrer: "no-referrer" as const };
 
 type PageProps = {
   params: Promise<{ token: string }>;
@@ -31,6 +32,7 @@ export default async function RedeemDealPage({ params }: PageProps) {
 function RedeemStyles() {
   return (
     <style>{`
+      .redeem-shell, .scanner-card { box-sizing: border-box; }
       body { margin: 0; background: #050507; color: #f7f2ff; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
       .redeem-shell { min-height: 100vh; display: grid; align-content: center; gap: 24px; padding: 22px; background: radial-gradient(circle at 70% 0%, rgba(139,92,246,.22), transparent 24rem), linear-gradient(180deg, #090911, #050507 62%); }
       nav, .scanner-card { width: min(520px, 100%); margin: 0 auto; }
@@ -46,6 +48,8 @@ function RedeemStyles() {
       dd { margin: 0; color: #fff; font-weight: 900; text-align: right; }
       button { min-height: 48px; border: 0; border-radius: 8px; background: linear-gradient(135deg, #7c3aed, #22c7ff); color: #fff; font-weight: 950; font: inherit; cursor: pointer; }
       button:disabled { opacity: .62; cursor: default; }
+      .arrival-verification { display:flex; align-items:flex-start; gap:12px; line-height:1.5; padding:12px 0; }
+      .arrival-verification input { width:22px; height:22px; flex-shrink:0; }
       .venue-sign-in { min-height: 48px; display: inline-flex; align-items: center; justify-content: center; border: 1px solid rgba(148,229,255,.42); border-radius: 8px; color: #94e5ff; background: rgba(148,229,255,.08); font-weight: 950; text-decoration: none; }
       em { color: #94e5ff; font-style: normal; font-weight: 850; }
     `}</style>

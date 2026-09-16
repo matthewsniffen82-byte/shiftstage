@@ -9,7 +9,6 @@ import {
   loadCustomerDealSavedState,
   setCustomerDealSavedInAccount,
 } from "@/src/lib/dancr/customer-deal-saves-client";
-import NfcIcon from "@/app/components/NfcIcon";
 import { deviceSavedDealsStorageKey, DEVICE_SAVED_DEALS_CHANGED_EVENT } from "@/src/lib/dancr/customer-device-deals";
 
 const DEAL_INTENT_KEY = "mydancrPendingNfcDealV2";
@@ -52,6 +51,7 @@ export function ClubDealCard({
 }: ClubDealCardProps) {
   const [status, setStatus] = useState("");
   const [intentState, setIntentState] = useState<"preview" | "ready" | "expired" | "error">("preview");
+  const [admissionPassUrl, setAdmissionPassUrl] = useState("");
   const [intentExpiresAt, setIntentExpiresAt] = useState(0);
   const [savedOnDevice, setSavedOnDevice] = useState(false);
   const [savePending, setSavePending] = useState(false);
@@ -78,9 +78,10 @@ export function ClubDealCard({
     const selection = readPendingDealSelection({ venueId, dealId: activeDeal.id, sourceType, dancerId });
     setIntentState(selection?.expired ? "expired" : selection ? "ready" : "preview");
     setIntentExpiresAt(selection?.expiresAt || 0);
+    setAdmissionPassUrl(selection?.passUrl || "");
     setSavedOnDevice(isDealSavedOnDevice(venueId, activeDeal.id));
     setStatus(selection?.expired
-      ? "Your previous selection expired. Select this deal again before tapping at the cashier."
+      ? "Your pass expired. Choose this deal again to get a new pass."
       : "");
   }, [activeDeal.id, dancerId, sourceType, venueId, venueName]);
 
@@ -179,6 +180,7 @@ export function ClubDealCard({
   }
 
   function selectForNfcTap() {
+    if (admissionPassUrl && intentState === "ready") { window.location.assign(admissionPassUrl); return; }
     const query = new URLSearchParams({
       sourceType,
       dancerId: sourceType === "dancer_profile" ? dancerId || "" : "",
@@ -337,9 +339,9 @@ export function ClubDealCard({
         <h2>{activeDeal.dealTitle}</h2>
         {displayDescription && !compact ? <p>{displayDescription}</p> : null}
         {displayTerms && !compact ? <small>{displayTerms}</small> : null}
-        {!compact ? <small>Availability is verified when you tap at the cashier.</small> : null}
+        {!compact ? <small>Staff verifies your pass and admission eligibility at the door.</small> : null}
         {dancerNote ? (
-          <small>Dancer credit is carried securely to the cashier tap while this dancer remains verified at the club.</small>
+          <small>Your dancer profile source is recorded securely with this pass.</small>
         ) : null}
       </div>
       <div className="club-deal-action">
@@ -349,7 +351,7 @@ export function ClubDealCard({
           data-club-deal-state={intentState === "ready" ? "ready" : "checkout"}
           onClick={(event) => openDealDialog(event.currentTarget)}
         >
-          {intentState === "ready" ? "Ready for your cashier tap" : actionLabel}
+          {intentState === "ready" ? "Your admission pass is ready" : actionLabel}
         </button>
       </div>
     </>
@@ -359,16 +361,16 @@ export function ClubDealCard({
   const dialogContent = intentState === "ready" ? (
     <>
       <header className="club-deal-ready-header" role="status" tabIndex={-1}>
-        <h2>Ready for your cashier tap</h2>
+        <h2>Your admission pass is ready</h2>
         <p>{activeDeal.dealTitle} · {venueName || "Club"}</p>
       </header>
       <div className="club-deal-ready-content">
         <div className="club-deal-ready-instructions">
-          <div className="club-deal-nfc-symbol" aria-hidden="true"><NfcIcon /></div>
-          <p>When you reach the cashier, unlock your phone and hold it near the MyDancr sticker.</p>
+          <div className="club-deal-nfc-symbol" aria-hidden="true"><span aria-hidden="true">▦</span></div>
+          <p>Show your admission pass to door staff for scanning.</p>
         </div>
         <div className="club-deal-ready-footer">
-          <p className="club-deal-ready-close-note">You can close MyDancr now.</p>
+          <a className="club-deal-checkout-action" href={admissionPassUrl}>Show admission pass</a>
           {intentExpiresAt ? <p className="club-deal-ready-until">Ready until {formatNfcExpiry(intentExpiresAt)}</p> : null}
         </div>
       </div>
@@ -382,7 +384,7 @@ export function ClubDealCard({
       <div className="club-deal-preview-content">
         {validityLabel ? <p className="club-deal-validity">{validityLabel}</p> : null}
         <div className="club-deal-preview-panel">
-          <div className="club-deal-nfc-symbol" aria-hidden="true"><NfcIcon /></div>
+          <div className="club-deal-nfc-symbol" aria-hidden="true"><span aria-hidden="true">▦</span></div>
           <p className="club-deal-preview-instruction">Tap &ldquo;{intentState === "error" ? "Try again" : useLabel}&rdquo;, then choose your transportation.</p>
           {status ? <em className={`deal-nfc-status ${intentState}`} role="status" aria-live="polite">{status}</em> : null}
           {displayDescription || displayTerms ? (
@@ -555,6 +557,8 @@ function dealTypeLabel(value: PublicClubDeal["offerType"]) {
 }
 
 type PendingDealSelection = {
+  admissionPassVersion?: number;
+  passUrl?: string;
   transportation?: EligibleClubTransportation;
   venueId: string;
   dealId: string;
@@ -576,12 +580,13 @@ function readPendingDealSelection(input: {
   try {
     const value = JSON.parse(window.localStorage.getItem(DEAL_INTENT_KEY) || "null") as Partial<PendingDealSelection> | null;
     if (!value || value.venueId !== input.venueId || value.dealId !== input.dealId) return null;
-    if (!isEligibleClubTransportation(value.transportation)) return null;
+    if (!isEligibleClubTransportation(value.transportation) || value.admissionPassVersion !== 1 || !/^\/deals\/pass\/[A-Za-z0-9_-]{43}$/.test(value.passUrl || "")) return null;
     if ((value.sourceType || "club_page") !== input.sourceType) return null;
     if (input.sourceType === "dancer_profile" && String(value.dancerId || "") !== String(input.dancerId || "")) return null;
     const savedAt = Number(value.savedAt || 0);
     const expiresAt = Number(value.expiresAt || savedAt + DEAL_INTENT_TTL_MS);
     return {
+      admissionPassVersion: 1, passUrl: value.passUrl,
       venueId: input.venueId,
       dealId: input.dealId,
       sourceType: input.sourceType,

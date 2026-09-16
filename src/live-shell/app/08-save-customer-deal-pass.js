@@ -81,6 +81,7 @@
     function pendingNfcDealIntentForPass(pass) {
       try {
         const intent = JSON.parse(localStorage.getItem("mydancrPendingNfcDealV2") || "null");
+        if (intent?.admissionPassVersion !== 1 || !/^\/deals\/pass\/[A-Za-z0-9_-]{43}$/.test(intent.passUrl || "")) return null;
         if (!intent || intent.venueId !== pass?.venueId || intent.dealId !== pass?.dealId) return null;
         if (!["self_drive", "club_shuttle", "autonomous_cab", "waymo", "zoox", "cybercab"].includes(intent.transportation)) return null;
         const passSource = pass?.sourceType || "club_page";
@@ -95,6 +96,8 @@
     }
 
     function selectDealPassForNfc(pass) {
+      const ready = pendingNfcDealIntentForPass(pass);
+      if (ready && !ready.expired) { window.location.assign(ready.passUrl); return { ok: true, intent: ready }; }
       const query = new URLSearchParams({
         sourceType: pass.sourceType || "club_page",
         dancerId: pass.sourceType === "dancer_profile" ? pass.dancerId || "" : "",
@@ -108,7 +111,7 @@
       if (!pass?.url) return;
       const shareData = {
         title: `${pass.venueName} Club Deal`,
-        text: `${pass.title} from ${pass.venueName}. Choose Use this deal, then unlock your phone at the cashier and tap the venue's registered MyDancr cashier sticker.`,
+        text: `${pass.title} from ${pass.venueName}. Choose your arrival method and get a pass to show door staff.`,
         url: pass.url
       };
       try {
@@ -189,7 +192,7 @@
             <div class="deal-pass-ready-content" data-deal-pass-ready role="status" hidden>
               <div class="deal-pass-ready-instructions">
                 <div class="deal-pass-nfc-symbol" aria-hidden="true">${clubDealQrSymbolMarkup("deal-pass-ready-nfc-icon")}</div>
-                <p>When you reach the cashier, unlock your phone and hold it near the MyDancr sticker.</p>
+                <p>Show your admission pass to door staff for scanning.</p>
               </div>
               <div class="deal-pass-ready-footer">
                 <p class="deal-pass-ready-close-note">You can close MyDancr now.</p>
@@ -414,8 +417,8 @@
       sheet.dataset.dealState = state;
       availableContent.hidden = state === "ready";
       readyContent.hidden = state !== "ready";
-      primaryDock.hidden = state === "ready";
-      titleElement.textContent = state === "ready" ? "Ready for your cashier tap" : pass.title;
+      primaryDock.hidden = false;
+      titleElement.textContent = state === "ready" ? "Your admission pass is ready" : pass.title;
       document.getElementById("dealPassCopy").textContent = state === "ready"
         ? `${pass.title} · ${pass.venueName || "Club"}`
         : dealPassPresentation(pass).copy;
@@ -427,15 +430,15 @@
         const readyUntil = formatNfcIntentExpiry(intent.expiresAt);
         status.textContent = "";
         status.hidden = true;
-        selectButton.textContent = "Ready for your cashier tap";
-        selectButton.disabled = true;
+        selectButton.textContent = "Show admission pass";
+        selectButton.disabled = false;
         selectButton.setAttribute("aria-pressed", "true");
         selectButton.classList.add("is-ready");
         readyUntilElement.textContent = readyUntil ? `Ready until ${readyUntil}` : "";
         readyUntilElement.hidden = !readyUntil;
       } else {
         status.textContent = state === "preview" ? "" : override?.message || (state === "expired"
-          ? "Your previous selection expired. Select this deal again before tapping at the cashier."
+          ? "Your pass expired. Choose this deal again to get a new pass."
           : "Unable to prepare this deal. Try again.");
         selectButton.textContent = state === "error" ? "Try again"
           : String(pass.title).toLowerCase() === "free admission" ? "Use free admission" : "Use this deal";
@@ -574,7 +577,7 @@
         offerButton.classList.add("is-loading");
         offerButton.setAttribute("aria-busy", "true");
         overlay.setAttribute("aria-busy", "true");
-        status.textContent = "Preparing this deal for the cashier tap…";
+        status.textContent = "Preparing your admission offer…";
         status.hidden = false;
         try {
           const pass = await createRevenueDealPass(selection);
@@ -608,13 +611,13 @@
       const venueName = String(config?.venueName || "this club").trim() || "this club";
       const status = document.getElementById("clubDealHubStatus");
       document.getElementById("clubDealHubTitle").textContent = `Club Deals at ${venueName}`;
-      document.getElementById("clubDealHubCopy").textContent = `${offers.length} live ${offers.length === 1 ? "offer" : "offers"}. Choose one to preview. Use this deal does not redeem it. At the cashier, unlock your phone and tap the venue’s registered MyDancr cashier sticker.`;
+      document.getElementById("clubDealHubCopy").textContent = `${offers.length} live ${offers.length === 1 ? "offer" : "offers"}. Choose one to preview. Choose your arrival method to get an admission pass. Staff scans it at the door.`;
       status.textContent = "";
       status.hidden = true;
       overlay.removeAttribute("aria-busy");
       document.getElementById("clubDealHubList").innerHTML = offers.map((deal) => {
         const selection = clubDealSelectionConfig(config, deal);
-        return `<button class="club-deal-hub-offer" type="button" data-club-deal-offer="${encodeDealPass(selection)}" aria-pressed="false"><span>${clubDealOfferTypeLabel(deal.offerType)}</span><strong>${escapeHtml(deal.dealTitle || "Club Deal")}</strong><small>${escapeHtml(customerFacingDealDescription(deal.dealDescription) || "Club offer")}</small><em>Tap your phone at the cashier to redeem</em></button>`;
+        return `<button class="club-deal-hub-offer" type="button" data-club-deal-offer="${encodeDealPass(selection)}" aria-pressed="false"><span>${clubDealOfferTypeLabel(deal.offerType)}</span><strong>${escapeHtml(deal.dealTitle || "Club Deal")}</strong><small>${escapeHtml(customerFacingDealDescription(deal.dealDescription) || "Club offer")}</small><em>Show your pass to door staff</em></button>`;
       }).join("");
       overlay.hidden = false;
       overlay.classList.add("show");

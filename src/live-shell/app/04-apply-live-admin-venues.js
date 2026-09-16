@@ -469,7 +469,7 @@
             <button class="customer-quick-item has-qr" type="button" data-deal-pass="${encodeDealPass(pass)}">
               <span class="customer-quick-deal-copy">
                 <strong>${displayText(pass.title)}</strong>
-                <span>${displayText(pass.venueName)} · cashier tap</span>
+                <span>${displayText(pass.venueName)} · admission pass</span>
               </span>
               ${clubDealQrSymbolMarkup("saved-deal-nfc-symbol")}
             </button>

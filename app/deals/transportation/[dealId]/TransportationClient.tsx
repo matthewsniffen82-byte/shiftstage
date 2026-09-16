@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import type { PublicClubDeal, DealSourceType } from "@/src/lib/dancr/types";
 import { AUTONOMOUS_ADMISSION_OPTIONS, CLUB_TRANSPORTATION_TERMS, normalizeShuttlePhone, type EligibleClubTransportation } from "@/src/lib/dancr/club-deal-transportation";
-import NfcIcon from "@/app/components/NfcIcon";
+import { readBrowserAuthSession, persistRefreshedBrowserAuthSession } from "@/src/lib/dancr/browser-session";
 import "./transportation.css";
 
 function formatContactPhoneInput(event: React.SyntheticEvent<HTMLInputElement>) {
@@ -47,7 +47,8 @@ export default function TransportationClient({ deal, venue, shuttleAvailable, in
   const [complete, setComplete] = useState(false);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
-  const [storageError, setStorageError] = useState(false);
+  const [passUrl, setPassUrl] = useState("");
+  const [passError, setPassError] = useState("");
   const [addressCopyStatus, setAddressCopyStatus] = useState("");
   const heading = useRef<HTMLHeadingElement>(null);
   const pending = useRef(false);
@@ -78,20 +79,33 @@ export default function TransportationClient({ deal, venue, shuttleAvailable, in
     }
   }
 
-  function prepareCashier(transportation: EligibleClubTransportation, shuttleRequestId?: string) {
-    if (!deal) return true;
-    const savedAt = Date.now();
-    try {
-      localStorage.setItem("mydancrPendingNfcDealV2", JSON.stringify({
-        venueId: deal.venueId, dealId: deal.id, sourceType,
-        dancerId: sourceType === "dancer_profile" ? dancerId || null : null,
-        attributionToken: sourceType === "dancer_profile" ? attributionToken || null : null,
-        transportation, shuttleRequestId: shuttleRequestId || null,
-        savedAt, expiresAt: savedAt + 12 * 60 * 60 * 1000,
-      }));
-      setStorageError(false);
-      return true;
-    } catch { setStorageError(true); return false; }
+  async function prepareAdmissionPass(transportation: EligibleClubTransportation) {
+    if (!deal) return;
+    setPassError("");
+    const browserAuth = readBrowserAuthSession();
+    const auth = browserAuth?.account?.role === "customer" ? browserAuth : null;
+    const headers: Record<string, string> = { "Content-Type": "application/json" };
+    if (auth?.accessToken) headers.authorization = `Bearer ${auth.accessToken}`;
+    if (auth?.refreshToken) headers["x-dancr-refresh-token"] = auth.refreshToken;
+    const response = await fetch("/api/deals/redemptions", { method: "POST", credentials: "same-origin", headers,
+      body: JSON.stringify({ dealId: deal.id, sourceType, dancerId, attributionToken, transportation }), signal: AbortSignal.timeout(20000) });
+    const result = await response.json();
+    if (!response.ok || !result.ok) throw new Error(result.error || "Unable to generate your admission pass.");
+    if (!/^\/deals\/pass\/[A-Za-z0-9_-]{43}$/.test(result.passUrl || "")) throw new Error("Invalid pass receipt.");
+    if (auth) persistRefreshedBrowserAuthSession(result.session, auth);
+    setPassUrl(result.passUrl);
+    try { localStorage.setItem("mydancrPendingNfcDealV2", JSON.stringify({
+      admissionPassVersion: 1, passUrl: result.passUrl, venueId: venue.id, dealId: deal.id, sourceType, dancerId, transportation,
+      savedAt: Date.now(), expiresAt: Date.parse(result.expiresAt),
+    })); } catch { /* The pass link remains available without local storage. */ }
+  }
+
+  async function retryPass() {
+    if (pending.current || !choice || choice === "rideshare_taxi") return;
+    pending.current = true; setBusy(true);
+    try { await prepareAdmissionPass(choice); }
+    catch (reason) { setPassError(reason instanceof Error ? reason.message : "Unable to generate your pass."); }
+    finally { pending.current = false; setBusy(false); }
   }
 
   async function submit(event: React.FormEvent<HTMLFormElement>) {
@@ -99,11 +113,10 @@ export default function TransportationClient({ deal, venue, shuttleAvailable, in
     if (!choice || choice === "rideshare_taxi" || pending.current || complete || (choice === "club_shuttle" && !shuttleAvailable)) return;
     setError("");
     if (choice !== "club_shuttle") {
-      if (!prepareCashier(choice)) {
-        setError("Your transportation choice could not be saved. Allow site storage, then try again.");
-        return;
-      }
-      setComplete(true);
+      pending.current = true; setBusy(true);
+      try { await prepareAdmissionPass(choice); setComplete(true); }
+      catch (reason) { setError(reason instanceof Error ? reason.message : "Unable to generate your pass."); }
+      finally { pending.current = false; setBusy(false); }
       return;
     }
     const fields = new FormData(event.currentTarget);
@@ -131,7 +144,8 @@ export default function TransportationClient({ deal, venue, shuttleAvailable, in
         throw new Error(result.error || "Unable to send your request.");
       }
       setMessage(result.message);
-      prepareCashier("club_shuttle", result.requestId);
+      try { await prepareAdmissionPass("club_shuttle"); }
+      catch (reason) { setPassError(reason instanceof Error ? reason.message : "Your pickup request was sent, but your pass could not be generated."); }
       setComplete(true);
     } catch (reason) {
       setError(reason instanceof Error && reason.name !== "TimeoutError" ? reason.message : "The connection timed out. Retry to check the same request without sending duplicate alerts.");
@@ -141,7 +155,7 @@ export default function TransportationClient({ deal, venue, shuttleAvailable, in
   return <main className="club-transport-page">
     <section className="club-transport-card">
       <Link className="club-transport-back" href={`/venues/${encodeURIComponent(venue.slug)}`}>‹ {venue.name}</Link>
-      <h1 ref={heading} tabIndex={-1}>{complete ? choice === "club_shuttle" ? "Pickup requested" : "Ready for your cashier tap" : choice === "club_shuttle" ? deal ? "Free Ride + Entry" : "Request a free ride" : "Free Entry"}</h1>
+      <h1 ref={heading} tabIndex={-1}>{complete ? choice === "club_shuttle" ? "Pickup requested" : "Your admission pass is ready" : choice === "club_shuttle" ? deal ? "Free Ride + Entry" : "Request a free ride" : "Free Entry"}</h1>
       <p className="club-transport-venue">{venue.name}</p>
       {deal ? <p className="club-transport-terms">{CLUB_TRANSPORTATION_TERMS}</p> : <p className="club-transport-terms">Free entry is currently unavailable. You can still request a free ride.</p>}
       {complete ? <div aria-live="polite">
@@ -161,8 +175,12 @@ export default function TransportationClient({ deal, venue, shuttleAvailable, in
             <p className="club-transport-note">Check service coverage and pickup/drop-off locations in the provider’s app. Tesla assigns the vehicle; a Cybercab isn’t guaranteed.</p>
           </section>
         </> : <p>You confirmed you will arrive in a private car.</p>}
-        {deal ? <><div className="club-transport-ready"><NfcIcon /><p>Have staff verify your arrival method, then unlock your phone and tap the MyDancr sticker at the cashier for free entry.</p></div>
-        {storageError ? <><p role="alert">Your shuttle request was sent. Allow site storage, then save your deal selection for the cashier. This does not send another shuttle request.</p><button className="club-transport-submit" type="button" onClick={() => prepareCashier("club_shuttle", attemptedRequest.current?.requestId)}>Save deal for cashier</button></> : <p className="club-transport-note">Your deal selection stays ready for 12 hours. Admission is subject to the club’s capacity, age requirements, dress code, and house rules.</p>}</> : null}
+        {deal ? <div className="club-transport-ready">
+          <p>Show your admission pass to door staff. Staff verifies your arrival method and scans the pass for free entry.</p>
+          {passUrl ? <Link className="club-transport-submit" href={passUrl}>Show admission pass</Link> : <button className="club-transport-submit" type="button" disabled={busy} onClick={retryPass}>{busy ? "Generating pass…" : "Get admission pass"}</button>}
+          {passError ? <p role="alert">{passError} Your pickup request will not be sent again.</p> : null}
+          <p className="club-transport-note">One admission per pass. Each guest needs their own pass. Keep your pass link to reopen it at the door.</p>
+        </div> : null}
       </div> : <>
         {deal && choice === "club_shuttle" ? <button className="club-transport-change" type="button" disabled={busy || !!attemptedRequest.current} onClick={() => { setChoice(""); setError(""); }}>‹ Change transportation</button> : null}
         <form onSubmit={submit}>
@@ -187,7 +205,7 @@ export default function TransportationClient({ deal, venue, shuttleAvailable, in
             </div>
           </> : null}
           {error ? <p role="alert" className="club-transport-error">{error}</p> : null}
-          {choice !== "rideshare_taxi" ? <button className="club-transport-submit" type="submit" disabled={!choice || busy || (choice === "club_shuttle" && !shuttleAvailable)} aria-busy={busy}>{busy ? "Sending to the club…" : attemptedRequest.current ? "Retry shuttle request" : choice === "club_shuttle" ? "Send pickup request" : "Continue to free entry"}</button> : null}
+          {choice !== "rideshare_taxi" ? <button className="club-transport-submit" type="submit" disabled={!choice || busy || (choice === "club_shuttle" && !shuttleAvailable)} aria-busy={busy}>{busy ? (choice === "club_shuttle" ? "Sending to the club…" : "Generating pass…") : attemptedRequest.current ? "Retry shuttle request" : choice === "club_shuttle" ? "Send pickup request" : "Get free admission pass"}</button> : null}
         </form>
         {deal ? <p className="club-transport-note">One free general admission per guest. Capacity, age requirements, dress code, and house rules apply.</p> : null}
       </>}

@@ -162,6 +162,8 @@ export type VenueDashboardAnalytics = {
   dressingRoomNfcTaps: number;
   cashierNfcAttempts: number;
   cashierNfcRedemptions: number;
+  admissionPassesClaimed: number;
+  claimToAdmissionPercent: number | null;
   pageViewsChangePercent: number | null;
   directionsChangePercent: number | null;
   redemptionsChangePercent: number | null;

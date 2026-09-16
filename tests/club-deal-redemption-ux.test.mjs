@@ -6,7 +6,7 @@ const dealCard = readFileSync(new URL("../app/components/ClubDealCard.tsx", impo
 const liveApp = readFileSync(new URL("../outputs/index.html", import.meta.url), "utf8");
 const nfcClient = readFileSync(new URL("../app/nfc/[token]/NfcTapClient.tsx", import.meta.url), "utf8");
 const nfcRoute = readFileSync(new URL("../app/api/nfc/[token]/route.ts", import.meta.url), "utf8");
-const cashierRedemption = readFileSync(new URL("../src/lib/dancr/cashier-deal-redemption.ts", import.meta.url), "utf8");
+const scanner = readFileSync(new URL("../app/deals/redeem/[token]/RedeemDealClient.tsx", import.meta.url), "utf8");
 
 const liveOverlay = liveApp.match(
   /function dealPassOverlay\(\) \{[\s\S]*?(?=\n    function closeDealPassOverlay)/,
@@ -46,9 +46,9 @@ test("optional deal fields collapse and complete terms remain keyboard accessibl
   assert.doesNotMatch(liveOverlay, />N\/A<|Not available/);
 });
 
-test("preview and pending cashier taps are distinct from successful redemption", () => {
+test("preview and claimed passes are distinct from successful redemption", () => {
   for (const source of [dealCard, liveOverlay]) {
-    assert.match(source, /Ready for your cashier tap/);
+    assert.match(source, /Show your admission pass|Your admission pass is ready/);
     assert.doesNotMatch(source, /Ready at Cashier ✓/);
     assert.match(source, /Use free admission/);
     assert.match(source, /Use this deal/);
@@ -66,18 +66,14 @@ test("preview and pending cashier taps are distinct from successful redemption",
   assert.doesNotMatch(liveOverlay, /state === "ready"[^\n]*Redeemed/);
 });
 
-test("only the existing cashier NFC response advances the authoritative UI to Redeemed", () => {
-  assert.match(nfcClient, /pendingIntent\?\.venueId === state\.venue\.id/);
-  assert.match(nfcClient, /pendingIntent\.dealId === selectedDealId/);
-  assert.match(nfcClient, /await fetch\(`\/api\/nfc\/\$\{encodeURIComponent\(token\)\}`/);
-  assert.match(nfcClient, /if \(!response\.ok \|\| !data\.ok\) throw new Error/);
-  assert.match(nfcClient, /setPhase\("redeemed"\)/);
-  assert.match(nfcClient, /if \(state\.tag\.type === "cashier"\) clearPendingDealIntent\(\)/);
-  assert.match(nfcClient, /function clearPendingDealIntent\(\)[\s\S]*?window\.localStorage\.removeItem\(DEAL_INTENT_KEY\)/);
-  assert.match(nfcRoute, /completeCashierDealRedemption\(admin, \{/);
-  assert.match(nfcRoute, /venueId: tag\.venueId/);
-  assert.match(cashierRedemption, /getActiveClubDealByIdForVenue\(client, input\.venueId, dealId\)/);
-  assert.match(cashierRedemption, /issueAndConfirmDealRedemptionFromNfc\(client, \{/);
+test("only authenticated staff confirmation records a redeemed admission", () => {
+  assert.doesNotMatch(nfcRoute, /completeCashierDealRedemption/);
+  assert.match(nfcRoute, /status: 410/);
+  assert.match(nfcClient, /data\.tag\.type === "cashier"/);
+  assert.match(scanner, /expectedRole: "venue"/);
+  assert.match(scanner, /body: JSON.stringify\(\{ arrivalVerified \}\)/);
+  assert.match(scanner, /!venueAccessToken \|\| !arrivalVerified/);
+  assert.match(scanner, /setRedemption\(data.redemption\)/);
 });
 
 test("mobile redemption presentation is compact, touch-safe, and overflow-safe", () => {
@@ -99,7 +95,7 @@ test("terms stay readable and Save and Share remain directly visible in the prev
   }
   assert.doesNotMatch(dealCard, /club-deal-redemption-steps/);
   assert.doesNotMatch(liveOverlay, /class="deal-pass-steps"/);
-  assert.match(liveOverlay, /primaryDock\.hidden = state === "ready"/);
+  assert.match(liveOverlay, /primaryDock\.hidden = false/);
   assert.match(liveOverlay, /<div class="deal-pass-actions">\s*<button[^>]*data-save-deal-pass[^>]*>Save<\/button>\s*<button[^>]*data-share-deal-pass>Share<\/button>/);
   assert.match(dealCard, /<div className="club-deal-share-actions">/);
   assert.doesNotMatch(dealCard, /club-deal-more/);
