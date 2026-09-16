@@ -10,7 +10,7 @@ import { defaultClubDealOfferPreset } from "../src/lib/dancr/club-deal-presets.t
 const key = "mydancrPendingNfcDealV2";
 const ttl = 12 * 60 * 60 * 1000;
 const now = Date.now();
-const intent = { venueId: "venue", dealId: "deal", sourceType: "dancer_profile", dancerId: "dancer", attributionToken: "signed-token", savedAt: now, expiresAt: now + ttl };
+const intent = { admissionPassVersion: 1, passUrl: "/deals/pass/" + "p".repeat(43), venueId: "venue", dealId: "deal", sourceType: "dancer_profile", dancerId: "dancer", attributionToken: "signed-token", savedAt: now, expiresAt: now + ttl };
 const shellPath = "../src/live-shell/app/08-save-customer-deal-pass.js";
 
 function functionSource(path, name) {

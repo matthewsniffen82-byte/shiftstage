@@ -42,3 +42,8 @@
 .club-transport-card :focus-visible{outline:2px solid #d4b0ff;outline-offset:4px}
 .club-transport-card .club-transport-change{min-height:44px;padding:8px 0;border:0!important;background:transparent!important;box-shadow:none!important;color:#d8c6ee;font-size:13px;font-weight:400!important;text-decoration:underline!important;text-underline-offset:3px}
 @media(max-width:480px){.club-transport-page{padding:12px 8px;align-items:start}.club-transport-card{padding:16px;border-radius:18px}.club-transport-card h1{font-size:28px}}
+@media(max-width:720px){
+  /* Reserve the dock clearance inside this page so the final note stays above it. */
+  body:has(> .club-transport-page){padding-bottom:0!important}
+  .club-transport-page{min-height:calc(100dvh - var(--mydancr-preview-banner-offset,0px));padding-bottom:calc(104px + env(safe-area-inset-bottom,0px));align-items:start}
+}

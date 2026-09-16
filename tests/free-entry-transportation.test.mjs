@@ -137,7 +137,7 @@ test("one combined Waymo, Zoox and Cybercab option prepares admission without bo
     assert.equal(nodes(f.render()).filter(node => node.type === "input" && node.props.name === "transportation").length, 4);
     assert.doesNotMatch(f.html(), /value="(?:waymo|zoox|cybercab)"/);
     f.select(value);
-    assert.match(f.html(), /Get free admission pass/);
+    assert.match(f.html(), /Get free entry pass/);
     await f.submit();
     assert.equal(f.requests.length, 1); assert.equal(f.requests[0].url, "/api/deals/redemptions");
     const selection = JSON.parse(f.stored.get(key));
@@ -231,7 +231,7 @@ test("both entry points use the same pickup handoff and admission selection", as
   for (const initialTransportation of ["", "club_shuttle"]) {
     const f = client({ initialTransportation, sourceType: "dancer_profile", dancerId: "dancer", attributionToken: "signed-token" });
     if (!initialTransportation) f.select("club_shuttle");
-    assert.match(f.html(), /name="location"/); assert.match(f.html(), /Lyft/);
+    assert.match(f.html(), /name="location"/); assert.match(f.html(), /Your ride is confirmed only when the club accepts/);
     await f.submit();
     assert.equal(f.requests[0].url, `/api/deals/${deal.id}/shuttle`);
     assert.deepEqual(f.invitations, []);
