@@ -20,13 +20,12 @@ test("venue deal writes are denied while admin writes use the dedicated authoriz
   assert.doesNotMatch(queries, /export async function deleteVenueDealForAccount/);
 });
 
-test("admin publishing preserves referral, offer, and payout policy enforcement", () => {
+test("admin publishing preserves offer policy without per-guest fees", () => {
   assert.match(actions, /clubDealOfferPresetForTitle\(input\.dealTitle\)/);
   assert.match(actions, /assertLiquorFreeClubDeal/);
-  assert.match(actions, /getVenueReferralFeeState\(client, venueId\)/);
-  assert.match(actions, /input\.isActive && !referralFee/);
-  assert.match(actions, /payout_amount_cents: referralFee\?\.feeCents \|\| 0/);
-  assert.match(actions, /commission_policy: QR_COMMISSION_POLICY_VERSION/);
+  assert.doesNotMatch(actions, /getVenueReferralFeeState/);
+  assert.match(actions, /payout_amount_cents: 0/);
+  assert.match(actions, /billing_model: "subscription"/);
 });
 
 test("admin deal changes retain issued-pass snapshots and venue-scoped writes", () => {

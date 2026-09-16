@@ -14,15 +14,6 @@ type CountResult = {
   warning?: QueryWarning;
 };
 
-type RevenueSummary = {
-  grossCommissionCents: number;
-  platformCommissionCents: number;
-  dancerCommissionCents: number;
-  pendingVenuePaymentCents: number;
-  payableCents: number;
-  settledCents: number;
-};
-
 export type AdminOperationsCenter = {
   checkedAt: string;
   attention: {
@@ -38,7 +29,7 @@ export type AdminOperationsCenter = {
     overdue: number;
     total: number;
   };
-  counts: { clubs: number | null; dancers: number | null; tapStickers: number | null; openInvoices: number | null };
+  counts: { clubs: number | null; dancers: number | null; tapStickers: number | null };
   live: {
     checkedInDancers: Array<Record<string, unknown>>;
     activeVenueCount: number;
@@ -46,16 +37,6 @@ export type AdminOperationsCenter = {
     qrRedeemedToday: number;
     suspiciousQrToday: number;
     missedCheckIns: Array<Record<string, unknown>>;
-  };
-  revenue: {
-    grossCommissionCents: number;
-    platformCommissionCents: number;
-    dancerCommissionCents: number;
-    pendingVenuePaymentCents: number;
-    payableCents: number;
-    settledCents: number;
-    conversionRate: number;
-    recent: Array<Record<string, unknown>>;
   };
   analytics: {
     totalAccounts: number;
@@ -113,14 +94,6 @@ export async function getAdminOperationsCenter(client: DancrClient): Promise<Adm
       .lt("shift_date", checkedAt.slice(0, 10))
       .order("starts_at", { ascending: true })
       .limit(20)),
-    safeRows("Revenue health", () => db.from("deal_revenue_events")
-      .select("id, status, source_type, currency, gross_commission_cents, dancer_commission_cents, platform_commission_cents, venue_payment_received_at, dancer_paid_at, created_at, venues(id, name, slug), club_deals(id, title), dancer_profiles(id, stage_name, slug)")
-      .order("created_at", { ascending: false })
-      .limit(100)),
-    safeRows("Dancer payout health", () => db.from("commission_events")
-      .select("id, status, amount_cents, paid_at, created_at")
-      .order("created_at", { ascending: false })
-      .limit(1000)),
     safeCount("Accounts", () => db.from("app_users").select("id", { count: "exact", head: true }).neq("account_state", "deleted")),
     safeCount("Active dancers", () => db.from("dancer_profiles").select("id", { count: "exact", head: true }).eq("status", "approved")),
     safeCount("New accounts", () => db.from("app_users").select("id", { count: "exact", head: true }).gte("created_at", sevenDaysAgo)),
@@ -141,18 +114,16 @@ export async function getAdminOperationsCenter(client: DancrClient): Promise<Adm
     safeCount("All clubs", () => db.from("venues").select("id", { count: "exact", head: true })),
     safeCount("All dancers", () => db.from("dancer_profiles").select("id", { count: "exact", head: true })),
     safeCount("Tap sticker inventory", () => db.from("nfc_tags").select("id", { count: "exact", head: true })),
-    safeCount("Open club invoices", () => db.from("club_invoices").select("id", { count: "exact", head: true }).in("status", ["open", "overdue"])),
   ]);
 
   const [
     dancerProfiles, photos, videos, socialLinks, reports, dmca, support, venues,
     overdueProfiles, overdueSupport, overdueReports, overdueVideos,
     checkedInDancers, activeVenueCount, qrGeneratedToday, qrRedeemedToday, suspiciousQrToday,
-    missedCheckIns, revenueRows, commissionRows, totalAccounts, activeDancers, newAccounts7d, profileViews7d,
-    profileViews30d, directionRequests7d, newFollows7d, publishedVideos30d, activity, accounts, clubRequests, allClubs, allDancers, tapStickers, openInvoices,
+    missedCheckIns, totalAccounts, activeDancers, newAccounts7d, profileViews7d,
+    profileViews30d, directionRequests7d, newFollows7d, publishedVideos30d, activity, accounts, clubRequests, allClubs, allDancers, tapStickers,
   ] = results;
 
-  const revenue = summarizeRevenue(revenueRows.rows || [], commissionRows.rows || []);
   const overdue = count(overdueProfiles) + count(overdueSupport) + count(overdueReports) + count(overdueVideos);
   const attentionCounts = {
     dancerProfiles: count(dancerProfiles),
@@ -178,7 +149,6 @@ export async function getAdminOperationsCenter(client: DancrClient): Promise<Adm
       clubs: allClubs.warning ? null : count(allClubs),
       dancers: allDancers.warning ? null : count(allDancers),
       tapStickers: tapStickers.warning ? null : count(tapStickers),
-      openInvoices: openInvoices.warning ? null : count(openInvoices),
     },
     live: {
       checkedInDancers: (checkedInDancers.rows || []).filter((shift) =>
@@ -189,13 +159,6 @@ export async function getAdminOperationsCenter(client: DancrClient): Promise<Adm
       qrRedeemedToday: count(qrRedeemedToday),
       suspiciousQrToday: count(suspiciousQrToday),
       missedCheckIns: missedCheckIns.rows || [],
-    },
-    revenue: {
-      ...revenue,
-      conversionRate: count(qrGeneratedToday) > 0
-        ? Math.round((count(qrRedeemedToday) / count(qrGeneratedToday)) * 1000) / 10
-        : 0,
-      recent: (revenueRows.rows || []).slice(0, 12),
     },
     analytics: {
       totalAccounts: count(totalAccounts),
@@ -238,34 +201,6 @@ async function safeRows(section: string, query: () => PromiseLike<any>): Promise
 
 function count(result: { count?: number }) {
   return Number(result.count || 0);
-}
-
-function summarizeRevenue(
-  rows: Array<Record<string, unknown>>,
-  commissions: Array<Record<string, unknown>>,
-): RevenueSummary {
-  const summary = rows.reduce<RevenueSummary>((current, row) => {
-    const gross = Number(row.gross_commission_cents || 0);
-    const dancer = Number(row.dancer_commission_cents || 0);
-    const platform = Number(row.platform_commission_cents || 0);
-    current.grossCommissionCents += gross;
-    current.dancerCommissionCents += dancer;
-    current.platformCommissionCents += platform;
-    if (row.status === "pending_venue_payment") current.pendingVenuePaymentCents += gross;
-    if (row.status === "settled") current.settledCents += gross;
-    return current;
-  }, {
-    grossCommissionCents: 0,
-    platformCommissionCents: 0,
-    dancerCommissionCents: 0,
-    pendingVenuePaymentCents: 0,
-    payableCents: 0,
-    settledCents: 0,
-  });
-  summary.payableCents = commissions
-    .filter((row) => row.status === "available")
-    .reduce((total, row) => total + Number(row.amount_cents || 0), 0);
-  return summary;
 }
 
 function logOperationalQueryFailure(section: string, error: unknown) {

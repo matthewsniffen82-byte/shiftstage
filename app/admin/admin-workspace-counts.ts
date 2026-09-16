@@ -10,7 +10,7 @@ export function adminWorkspaceCounts(operations?: AdminOperationsCenter | null) 
     approvals: { value: unavailable(approvalSections) ? null : approvals, label: "to review" },
     people: { value: unavailable(["Accounts"]) ? null : operations?.analytics.totalAccounts, label: "accounts" },
     clubs: { value: operations?.counts?.clubs, label: "clubs" },
-    money: { value: operations?.counts?.openInvoices, label: "open invoices" },
+    money: { value: operations?.counts?.clubs, label: "venues" },
     more: { value: unavailable(["Support inbox", "Copyright cases"]) ? null : (attention?.support || 0) + (attention?.dmca || 0), label: "open cases" },
   };
 }

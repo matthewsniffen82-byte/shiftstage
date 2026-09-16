@@ -22,6 +22,7 @@ import AdminDmcaPanel from "./AdminDmcaPanel";
 import AdminNfcInventoryPanel from "./AdminNfcInventoryPanel";
 import AdminPilotAnalytics from "./AdminPilotAnalytics";
 import AdminSalesAgentPanel from "./AdminSalesAgentPanel";
+import AdminVenueSubscriptions from "./AdminVenueSubscriptions";
 import AdminTvPanel from "./AdminTvPanel";
 import { AdminDashboardIcon } from "./AdminDashboardIcon";
 import "./admin-dashboard.css";
@@ -50,8 +51,6 @@ type AdminState = {
   supportThreads?: Array<Record<string, unknown>>;
   imageModeration?: Array<Record<string, unknown>>;
   operations?: AdminOperationsCenter | null;
-  finance?: Record<string, unknown> | null;
-  referralFees?: Record<string, unknown> | null;
   authRequired?: boolean;
   warnings?: string[];
   error?: string;
@@ -81,7 +80,7 @@ const ADMIN_WORKSPACES: Array<{ id: AdminWorkspace; label: string }> = [
   { id: "approvals", label: "Approvals" },
   { id: "people", label: "People" },
   { id: "clubs", label: "Clubs" },
-  { id: "money", label: "Money" },
+  { id: "money", label: "Subscriptions" },
   { id: "more", label: "More" },
 ];
 
@@ -141,26 +140,10 @@ function adminSectionsForWorkspace(workspace: AdminWorkspace): AdminDataSection[
         path: "/api/admin/deals",
         apply: (data) => ({ deals: data.activity || [], clubDeals: data.clubDeals || [], dealRequests: data.dealRequests || [] }),
       },
-      {
-        label: "Referral fee agreements",
-        path: "/api/admin/referral-fees",
-        apply: (data) => ({ referralFees: data.referralFees }),
-      },
     ];
   }
   if (workspace === "money") {
     return [
-      { label: "QR finance", path: "/api/admin/finance", apply: (data) => ({ finance: data.finance }) },
-      {
-        label: "Referral fee agreements",
-        path: "/api/admin/referral-fees",
-        apply: (data) => ({ referralFees: data.referralFees }),
-      },
-      {
-        label: "Deal activity",
-        path: "/api/admin/deals",
-        apply: (data) => ({ deals: data.activity || [], clubDeals: data.clubDeals || [], dealRequests: data.dealRequests || [] }),
-      },
       {
         label: "Venues",
         path: "/api/admin/venues",
@@ -548,8 +531,6 @@ export default function AdminClient() {
         authRequired: false,
         monitoring: null,
         operations: null,
-        finance: null,
-        referralFees: null,
         queue: [],
         dancerTotal: 0,
         venues: [],
@@ -638,7 +619,7 @@ export default function AdminClient() {
       ? state.error || "Admin sign in required."
       : dashboardWarnings.length
         ? `${dashboardWarnings.length} dashboard ${dashboardWarnings.length === 1 ? "section is" : "sections are"} temporarily unavailable. All other admin tools are ready.`
-        : "Live approvals, revenue, accounts, activity, and platform health.";
+        : "Live approvals, venue subscriptions, accounts, activity, and platform health.";
 
   return (
     <main className="admin-shell dashboard-shell-admin">
@@ -910,16 +891,17 @@ export default function AdminClient() {
                   <VenueManager
                     clubDeals={state.clubDeals || []}
                     dealRequests={state.dealRequests || []}
-                    referralFees={state.referralFees || null}
                     onClubDealsChange={(clubDeals) => setState(current => ({ ...current, clubDeals }))}
                     onDealRequestsChange={(dealRequests) => setState(current => ({ ...current, dealRequests }))}
-                    onReferralFeesChange={(referralFees) => setState(current => ({ ...current, referralFees }))}
                     onActionConfirmed={confirmAdminAction}
                     venues={state.venues || []}
                     claimCodes={state.venueClaimCodes || []}
                     onVenuesChange={(venues) => setState((current) => ({ ...current, venues }))}
                     onClaimCodesChange={(venueClaimCodes) => setState((current) => ({ ...current, venueClaimCodes }))}
                   />
+                </Panel>
+                <Panel title="Deal attribution" badge={`${state.deals?.length || 0} records`}>
+                  <DealActivityManager activity={state.deals || []} onActivityChange={(deals) => setState(current => ({ ...current, deals }))} />
                 </Panel>
                 <Panel title="Tap sticker inventory" badge={`${adminCountLabel(state.operations?.counts?.tapStickers)} stickers`}>
                   <AdminNfcInventoryPanel />
@@ -931,29 +913,11 @@ export default function AdminClient() {
           {workspace === "money" && loadedWorkspaces.money ? (
             <>
               <WorkspaceHeader
-                eyebrow="Financial operations"
-                title="Money"
-                description="Review referral fees, club receivables, dancer commissions, settlements, reversals, and payout status."
+                eyebrow="Venue billing"
+                title="Subscriptions"
+                description="Venues pay a subscription for MyDancr. Review the venue roster and billing availability here."
               />
-              <FinanceManager
-                finance={state.finance || null}
-                onFinanceChange={(finance) => setState((current) => ({ ...current, finance }))}
-                onActionConfirmed={confirmAdminAction}
-              />
-              <ReferralFeeManager
-                venues={state.venues || []}
-                referralFees={state.referralFees || null}
-                onReferralFeesChange={(referralFees) => setState((current) => ({ ...current, referralFees }))}
-                onActionConfirmed={confirmAdminAction}
-              />
-              <section className="admin-grid">
-                <Panel title="Deal attribution" badge={`${state.deals?.length || 0} redemptions`}>
-                  <DealActivityManager
-                    activity={state.deals || []}
-                    onActivityChange={(deals) => setState((current) => ({ ...current, deals }))}
-                  />
-                </Panel>
-              </section>
+              <AdminVenueSubscriptions venues={state.warnings?.some(warning => warning.startsWith("Venues:")) ? undefined : state.venues} />
             </>
           ) : null}
 
@@ -1042,274 +1006,6 @@ function AdminWorkspaceLoadingState({ workspace }: { workspace: AdminWorkspace }
   );
 }
 
-function applyFinanceMutationResponse(
-  data: Record<string, unknown>,
-  onFinanceChange: (finance: Record<string, unknown>) => void,
-  successMessage: string,
-) {
-  const finance = data.finance;
-  if (finance && typeof finance === "object" && !Array.isArray(finance)) {
-    onFinanceChange(finance as Record<string, unknown>);
-  }
-  return data.financeRefreshRequired === true
-    ? `${successMessage} Refresh dashboard totals to display the latest balances.`
-    : successMessage;
-}
-
-function FinanceManager({
-  finance,
-  onFinanceChange,
-  onActionConfirmed,
-}: {
-  finance: Record<string, unknown> | null;
-  onFinanceChange: (finance: Record<string, unknown>) => void;
-  onActionConfirmed: (message: string) => void;
-}) {
-  const [isRunning, setIsRunning] = useState(false);
-  const [status, setStatus] = useState("");
-  const [invoiceId, setInvoiceId] = useState("");
-  const [paymentTotal, setPaymentTotal] = useState("");
-  const [paymentReference, setPaymentReference] = useState("");
-  const mountedRef = useRef(false);
-  const actionSequenceRef = useRef(0);
-  const actionAbortRef = useRef<AbortController | null>(null);
-  const actionInFlightRef = useRef(false);
-  const metrics = (finance?.metrics || {}) as Record<string, unknown>;
-  const invoices = Array.isArray(finance?.invoices) ? finance.invoices as Array<Record<string, unknown>> : [];
-  const payouts = Array.isArray(finance?.payouts) ? finance.payouts as Array<Record<string, unknown>> : [];
-  const earnings = Array.isArray(finance?.earnings) ? finance.earnings as Array<Record<string, unknown>> : [];
-  const earningsByVenue = Array.isArray(finance?.earningsByVenue) ? finance.earningsByVenue as Array<Record<string, unknown>> : [];
-  const earningsByDancer = Array.isArray(finance?.earningsByDancer) ? finance.earningsByDancer as Array<Record<string, unknown>> : [];
-  useEffect(() => {
-    mountedRef.current = true;
-    return () => {
-      mountedRef.current = false;
-      actionSequenceRef.current += 1;
-      actionAbortRef.current?.abort();
-      actionInFlightRef.current = false;
-    };
-  }, []);
-  const openInvoices = invoices.filter((invoice) => ["open", "overdue"].includes(asText(invoice.status)));
-
-  function beginFinanceAction() {
-    if (!mountedRef.current || actionInFlightRef.current) return null;
-    actionInFlightRef.current = true;
-    const requestId = actionSequenceRef.current + 1;
-    actionSequenceRef.current = requestId;
-    actionAbortRef.current?.abort();
-    const controller = new AbortController();
-    actionAbortRef.current = controller;
-    return { controller, requestId };
-  }
-
-  function isCurrentFinanceAction(request: { controller: AbortController; requestId: number }) {
-    return mountedRef.current
-      && !request.controller.signal.aborted
-      && request.requestId === actionSequenceRef.current;
-  }
-
-  function finishFinanceAction(request: { controller: AbortController; requestId: number }) {
-    if (actionAbortRef.current === request.controller) actionAbortRef.current = null;
-    if (request.requestId === actionSequenceRef.current) actionInFlightRef.current = false;
-    if (mountedRef.current && request.requestId === actionSequenceRef.current) setIsRunning(false);
-  }
-
-  async function runAction(action: "run_automation") {
-    const request = beginFinanceAction();
-    if (!request) return;
-    setIsRunning(true);
-    setStatus("Reconciling club invoices and sales-agent commissions...");
-    try {
-      const data = await requestAdminJson("/api/admin/finance", {
-        method: "POST",
-        signal: request.controller.signal,
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ action }),
-        fallbackMessage: "Finance operation failed.",
-      });
-      if (!isCurrentFinanceAction(request)) return;
-      const errors = Array.isArray(data.result?.errors) ? data.result.errors.length : 0;
-      const baseMessage = errors ? `Finance run completed with ${errors} item requiring attention.` : "Finance reconciliation completed.";
-      const message = applyFinanceMutationResponse(data, onFinanceChange, baseMessage);
-      setStatus(message);
-      onActionConfirmed(message);
-    } catch (error) {
-      if (!isCurrentFinanceAction(request)) return;
-      setStatus(error instanceof Error ? error.message : "Finance operation failed.");
-    } finally {
-      finishFinanceAction(request);
-    }
-  }
-
-  async function recordPayment(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const totalPaidCents = Math.round(Number(paymentTotal) * 100);
-    if (!invoiceId || !Number.isInteger(totalPaidCents) || totalPaidCents <= 0 || !paymentReference.trim()) {
-      return setStatus("Choose an invoice and enter the cumulative paid total plus a bank or check reference.");
-    }
-    const request = beginFinanceAction();
-    if (!request) return;
-    setIsRunning(true);
-    setStatus("Reconciling external payment...");
-    try {
-      const data = await requestAdminJson("/api/admin/finance", {
-        method: "POST",
-        signal: request.controller.signal,
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ action: "record_manual_payment", invoiceId, totalPaidCents, reference: paymentReference.trim() }),
-        fallbackMessage: "Unable to record payment.",
-      });
-      if (!isCurrentFinanceAction(request)) return;
-      const message = applyFinanceMutationResponse(data, onFinanceChange, "External club payment reconciled.");
-      setInvoiceId("");
-      setPaymentTotal("");
-      setPaymentReference("");
-      setStatus(message);
-      onActionConfirmed(message);
-    } catch (error) {
-      if (!isCurrentFinanceAction(request)) return;
-      setStatus(error instanceof Error ? error.message : "Unable to record payment.");
-    } finally {
-      finishFinanceAction(request);
-    }
-  }
-
-  async function manageEarning(earningId: string, earningAction: "hold" | "release" | "reverse") {
-    const reason = window.prompt(`Required audit reason to ${earningAction} this earning:`)?.trim();
-    if (!reason) return;
-    const request = beginFinanceAction();
-    if (!request) return;
-    setIsRunning(true);
-    try {
-      const data = await requestAdminJson("/api/admin/finance", {
-        method: "POST", signal: request.controller.signal, headers: { "content-type": "application/json" },
-        body: JSON.stringify({ action: "manage_earning", earningId, earningAction, reason }),
-        fallbackMessage: "Unable to update earning.",
-      });
-      if (!isCurrentFinanceAction(request)) return;
-      setStatus(applyFinanceMutationResponse(data, onFinanceChange, `Earning ${earningAction} action recorded.`));
-    } catch (error) { if (isCurrentFinanceAction(request)) setStatus(error instanceof Error ? error.message : "Unable to update earning."); }
-    finally { finishFinanceAction(request); }
-  }
-
-  return (
-    <section className="operations-center" aria-labelledby="finance-operations-heading">
-      <Panel title="QR finance operations">
-        <span className="eyebrow">Receivables and financial history</span>
-        <h2 id="finance-operations-heading">Venue finance</h2>
-        <div className="operations-metrics">
-          <Metric label="Club receivables" value={formatAdminCents(Number(metrics.outstandingReceivablesCents || 0))} />
-          <Metric label="Overdue" value={formatAdminCents(Number(metrics.overdueReceivablesCents || 0))} />
-          <Metric label="Club payments received" value={formatAdminCents(Number(metrics.paidClubRevenueCents || 0))} />
-          <Metric label="Dancer pending" value={formatAdminCents(Number(metrics.dancerPendingCents || 0))} />
-          <Metric label="Dancer available" value={formatAdminCents(Number(metrics.dancerAvailableCents || 0))} />
-          <Metric label="Payout processing" value={formatAdminCents(Number(metrics.dancerProcessingCents || 0))} />
-          <Metric label="Dancer paid" value={formatAdminCents(Number(metrics.dancerPaidCents || 0))} />
-          <Metric label="Reversed earnings" value={formatAdminCents(Number(metrics.reversedEarningsCents || 0))} />
-          <Metric label="MyDancr net revenue" value={formatAdminCents(Number(metrics.myDancrNetRevenueCents || 0))} />
-          <Metric label="Open invoices" value={String(metrics.openInvoiceCount || 0)} />
-          <Metric label="Failed payouts" value={String(metrics.failedPayoutCount || 0)} />
-        </div>
-        <div className="admin-action-row">
-          <button disabled={isRunning} type="button" onClick={() => runAction("run_automation")}>Run full reconciliation</button>
-        </div>
-        {status ? <p role="status">{status}</p> : null}
-      </Panel>
-
-      <Panel title="Historical dancer earnings" badge={`${earnings.length} inspected`}>
-        <p>The dancer commission program has ended. Existing records are retained for accounting and audit review.</p>
-        <div className="operations-layout">
-          <div className="operations-list"><strong>Earnings by venue</strong>{earningsByVenue.slice(0, 10).map((group) => <div key={asText(group.name)}><span><strong>{asText(group.name)}</strong><small>{String(group.count || 0)} entries</small></span><em>{formatAdminCents(Number(group.amountCents || 0))}</em></div>)}</div>
-          <div className="operations-list"><strong>Earnings by dancer</strong>{earningsByDancer.slice(0, 10).map((group) => <div key={asText(group.name)}><span><strong>{asText(group.name)}</strong><small>{String(group.count || 0)} entries</small></span><em>{formatAdminCents(Number(group.amountCents || 0))}</em></div>)}</div>
-        </div>
-        <div className="admin-list">
-          {earnings.slice(0, 100).map((earning) => (
-            <article key={asText(earning.id)}>
-              <strong>{asText(readFirst(earning.dancer_profiles)?.stage_name) || "Dancer"} · {formatAdminCents(Number(earning.amount_cents || 0))}</strong>
-              <p>{asText(readFirst(earning.venues)?.name) || "Venue"} · {asText(earning.earning_type).replaceAll("_", " ")} · {asText(earning.status)}</p>
-              <p>{formatDate(earning.created_at)}</p>
-              {earning.hold_reason ? <p>Held: {asText(earning.hold_reason)}</p> : null}
-              {earning.reversal_reason ? <p>Reversed: {asText(earning.reversal_reason)}</p> : null}
-              {earning.review_flag ? <p role="alert">Review flag: {asText(earning.review_flag)}</p> : null}
-              <details>
-                <summary>Inspect originating event</summary>
-                <p>Earning ID: <code>{asText(earning.id)}</code></p>
-                <p>Redemption ID: <code>{asText(earning.qr_redemption_id) || "Not applicable"}</code></p>
-                <p>Club Deal: {asText(readFirst(earning.club_deals)?.deal_title) || "Not applicable"}</p>
-                <p>Test record: {earning.is_test === true ? "Yes" : "No"}</p>
-              </details>
-              {["pending", "available"].includes(asText(earning.status)) ? <div className="admin-action-row">
-                {earning.held_at ? <button disabled={isRunning} type="button" onClick={() => manageEarning(asText(earning.id), "release")}>Release eligible</button> : <button disabled={isRunning} type="button" onClick={() => manageEarning(asText(earning.id), "hold")}>Hold</button>}
-                <button disabled={isRunning} type="button" onClick={() => manageEarning(asText(earning.id), "reverse")}>Reverse</button>
-              </div> : null}
-            </article>
-          ))}
-          {!earnings.length ? <p className="empty">No dancer earnings have been recorded.</p> : null}
-        </div>
-      </Panel>
-
-      <Panel title="Club invoices" badge={`${openInvoices.length} open`}>
-        <div className="admin-list">
-          {invoices.slice(0, 50).map((invoice) => {
-            const venue = readFirst(invoice.venues);
-            return (
-              <article key={asText(invoice.id)}>
-                <strong>{asText(venue?.name) || "Venue"} · {asText(invoice.period_start).slice(0, 7)}</strong>
-                <p>{asText(invoice.status)} · {formatAdminCents(Number(invoice.amount_paid_cents || 0))} paid of {formatAdminCents(Number(invoice.amount_due_cents || 0))} · due {formatDate(invoice.due_at)}</p>
-                {invoice.last_error ? <p role="alert">{asText(invoice.last_error)}</p> : null}
-                <div className="admin-action-row">
-                  {invoice.hosted_invoice_url ? <a href={asText(invoice.hosted_invoice_url)} target="_blank" rel="noreferrer">Hosted invoice</a> : null}
-                  {invoice.invoice_pdf_url ? <a href={asText(invoice.invoice_pdf_url)} target="_blank" rel="noreferrer">Invoice PDF</a> : null}
-                </div>
-              </article>
-            );
-          })}
-          {!invoices.length ? <p className="empty">No monthly club invoices have been generated yet.</p> : null}
-        </div>
-      </Panel>
-
-      <Panel title="Record bank, ACH, or check payment">
-        <form onSubmit={recordPayment}>
-          <label>
-            Open invoice
-            <select required value={invoiceId} onChange={(event) => setInvoiceId(event.target.value)}>
-              <option value="">Choose invoice</option>
-              {openInvoices.map((invoice) => (
-                <option key={asText(invoice.id)} value={asText(invoice.id)}>
-                  {asText(readFirst(invoice.venues)?.name) || "Venue"} · {asText(invoice.period_start).slice(0, 7)} · {formatAdminCents(Number(invoice.amount_due_cents || 0))}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label>
-            Cumulative amount paid
-            <input required inputMode="decimal" value={paymentTotal} onChange={(event) => setPaymentTotal(event.target.value)} placeholder="250.00" />
-          </label>
-          <label>
-            Bank, ACH, or check reference
-            <input required maxLength={160} value={paymentReference} onChange={(event) => setPaymentReference(event.target.value)} />
-          </label>
-          <button disabled={isRunning} type="submit">Reconcile payment</button>
-        </form>
-      </Panel>
-
-      <Panel title="Historical dancer payouts" badge={`${payouts.length} tracked`}>
-        <div className="admin-list">
-          {payouts.slice(0, 50).map((payout) => (
-            <article key={asText(payout.id)}>
-              <strong>{asText(readFirst(payout.dancer_profiles)?.stage_name) || "Dancer"} · {formatAdminCents(Number(payout.amount_cents || 0))}</strong>
-              <p>{asText(payout.status)} · {asText(payout.payment_provider) || "provider pending"} · {formatDate(payout.paid_at || payout.created_at)}</p>
-              {payout.provider_reference_id ? <p>Provider reference: <code>{asText(payout.provider_reference_id)}</code></p> : null}
-              {payout.failure_message ? <p role="alert">{asText(payout.failure_message)}</p> : null}
-            </article>
-          ))}
-          {!payouts.length ? <p className="empty">No dancer payout batches have been created yet.</p> : null}
-        </div>
-      </Panel>
-    </section>
-  );
-}
-
 function useAdminCommercialEditorState(dirty: boolean, busy: boolean, onChange?: (state: { dirty: boolean; busy: boolean }) => void) {
   const callback = useRef(onChange);
   callback.current = onChange;
@@ -1322,7 +1018,6 @@ function AdminClubDealManager({
   venues,
   clubDeals,
   dealRequests,
-  referralFees,
   onClubDealsChange,
   onDealRequestsChange,
   onActionConfirmed,
@@ -1332,7 +1027,6 @@ function AdminClubDealManager({
   venues: Array<Record<string, unknown>>;
   clubDeals: Array<Record<string, unknown>>;
   dealRequests: Array<Record<string, unknown>>;
-  referralFees: Record<string, unknown> | null;
   onClubDealsChange: (clubDeals: Array<Record<string, unknown>>) => void;
   onDealRequestsChange: (dealRequests: Array<Record<string, unknown>>) => void;
   onActionConfirmed: (message: string) => void;
@@ -1357,8 +1051,6 @@ function AdminClubDealManager({
   const venueDeals = clubDeals
     .filter((deal) => asText(deal.venueId) === venueId)
     .sort((left, right) => Number(left.sortOrder || 0) - Number(right.sortOrder || 0));
-  const terms = asRecordArray(referralFees?.terms);
-  const currentTerm = currentAdminReferralTerm(terms.filter((term) => asText(term.venueId) === venueId));
   const openDealRequests = dealRequests.filter((request) => (!scopedVenueId || asText(request.venueId) === scopedVenueId) && (request.status === "pending" || request.status === "under_review"));
 
   useEffect(() => {
@@ -1430,7 +1122,7 @@ function AdminClubDealManager({
     setDealTerms(linkedDeal ? asText(linkedDeal.dealTerms) || requestedPreset.terms : requestedPreset.terms);
     setSortOrder(linkedDeal ? String(Number(linkedDeal.sortOrder || 0)) : String(clubDeals.filter((deal) => asText(deal.venueId) === nextVenueId).length * 10));
     setIsActive(linkedDeal?.isActive === true);
-    setStatus("Request loaded. Confirm the Deal Order and referral fee before publishing.");
+    setStatus("Request loaded. Review the guest offer before publishing.");
   }
 
   function chooseOffer(nextTitle: string) {
@@ -1443,7 +1135,6 @@ function AdminClubDealManager({
   async function saveDeal(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!venueId) return setStatus("Choose the contracted venue first.");
-    if (isActive && !currentTerm) return setStatus("Record the signed referral fee agreement before publishing this Club Deal.");
     const request = beginDealAction();
     if (!request) return;
     setIsSaving(true);
@@ -1629,11 +1320,6 @@ function AdminClubDealManager({
             Publication state
             <span><input type="checkbox" checked={isActive} disabled={isSaving} onChange={(event) => setIsActive(event.target.checked)} /> Live on MyDancr</span>
           </label>
-          <div className="admin-club-deal-agreement wide">
-            <span>Signed referral fee</span>
-            <strong>{currentTerm ? `${formatAdminCents(Number(currentTerm.feeCents || 0))} per verified guest` : "Agreement required before publishing"}</strong>
-            <small>{currentTerm ? `${asText(currentTerm.agreementReference)} · effective ${formatDate(currentTerm.effectiveFrom)}` : "Record the signed fee in Referral fee agreements above."}</small>
-          </div>
           {requestId ? <p className="admin-club-deal-request-link wide">This draft is linked to venue request {requestId}. Publishing it will approve the request automatically.</p> : null}
           <div className="admin-club-deal-actions wide">
             <button disabled={isSaving} type="submit">{isSaving ? "Saving…" : isActive ? "Publish contract deal" : "Save unpublished deal"}</button>
@@ -1647,7 +1333,7 @@ function AdminClubDealManager({
             <div className={`admin-club-deal-item${asText(deal.id) === dealId ? " selected" : ""}`} key={asText(deal.id)}>
               <button className="admin-club-deal-edit" type="button" disabled={isSaving} onClick={() => editDeal(deal)} aria-label={`Edit ${asText(deal.dealTitle) || "Club Deal"}`}>
                 <span><strong>{asText(deal.dealTitle) || "Club Deal"}</strong><small>{deal.isActive === true ? "Live" : "Unpublished"}</small></span>
-                <em>{formatAdminCents(Number(deal.payoutAmountCents || 0))} / verified guest</em>
+                <em>Included with venue subscription</em>
               </button>
               <button className="danger-action" type="button" disabled={isSaving} onClick={() => void removeDeal(deal)}>Remove deal</button>
             </div>
@@ -1655,249 +1341,6 @@ function AdminClubDealManager({
           {venueId && !venueDeals.length ? <p className="empty">No contract Club Deals have been entered for this venue.</p> : null}
         </div>
       </Panel>
-    </section>
-  );
-}
-
-function ReferralFeeManager({
-  scopedVenueId,
-  onEditorStateChange,
-  venues,
-  referralFees,
-  onReferralFeesChange,
-  onActionConfirmed,
-}: {
-  scopedVenueId?: string;
-  onEditorStateChange?: (state: { dirty: boolean; busy: boolean }) => void;
-  venues: Array<Record<string, unknown>>;
-  referralFees: Record<string, unknown> | null;
-  onReferralFeesChange: (referralFees: Record<string, unknown>) => void;
-  onActionConfirmed: (message: string) => void;
-}) {
-  const terms = asRecordArray(referralFees?.terms).filter(term => !scopedVenueId || asText(term.venueId) === scopedVenueId);
-  const requests = asRecordArray(referralFees?.requests).filter(request => !scopedVenueId || asText(request.venueId) === scopedVenueId);
-  const pendingRequests = requests.filter((request) => asText(request.status) === "pending");
-  const [venueId, setVenueId] = useState(scopedVenueId || "");
-  const [isDirty, setIsDirty] = useState(false);
-  const [fee, setFee] = useState("");
-  const [effectiveImmediately, setEffectiveImmediately] = useState(true);
-  const [effectiveFrom, setEffectiveFrom] = useState("");
-  const [agreementReference, setAgreementReference] = useState("");
-  const [decisionNote, setDecisionNote] = useState("");
-  const [reviewRequestId, setReviewRequestId] = useState("");
-  const [requestNotes, setRequestNotes] = useState<Record<string, string>>({});
-  const [status, setStatus] = useState("");
-  const [isSaving, setIsSaving] = useState(false);
-  useAdminCommercialEditorState(isDirty, isSaving, onEditorStateChange);
-  const mountedRef = useRef(false);
-  const actionSequenceRef = useRef(0);
-  const actionAbortRef = useRef<AbortController | null>(null);
-  const actionInFlightRef = useRef(false);
-  const selectedVenue = venues.find((venue) => asText(venue.id) === venueId);
-  const selectedTerms = terms.filter((term) => asText(term.venueId) === venueId);
-  const currentTerm = currentAdminReferralTerm(selectedTerms);
-
-  useEffect(() => {
-    mountedRef.current = true;
-    return () => {
-      mountedRef.current = false;
-      actionSequenceRef.current += 1;
-      actionAbortRef.current?.abort();
-      actionInFlightRef.current = false;
-    };
-  }, []);
-
-  function beginReferralAction() {
-    if (!mountedRef.current || actionInFlightRef.current) return null;
-    actionInFlightRef.current = true;
-    const requestId = actionSequenceRef.current + 1;
-    actionSequenceRef.current = requestId;
-    actionAbortRef.current?.abort();
-    const controller = new AbortController();
-    actionAbortRef.current = controller;
-    return { controller, requestId };
-  }
-
-  function isCurrentReferralAction(request: { controller: AbortController; requestId: number }) {
-    return mountedRef.current && !request.controller.signal.aborted && request.requestId === actionSequenceRef.current;
-  }
-
-  function finishReferralAction(request: { controller: AbortController; requestId: number }) {
-    if (actionAbortRef.current === request.controller) actionAbortRef.current = null;
-    if (request.requestId === actionSequenceRef.current) actionInFlightRef.current = false;
-    if (mountedRef.current && request.requestId === actionSequenceRef.current) setIsSaving(false);
-  }
-
-  function beginRequestApproval(request: Record<string, unknown>) {
-    setIsDirty(true);
-    const requestedVenueId = asText(request.venueId);
-    setVenueId(requestedVenueId);
-    setFee((Number(request.requestedFeeCents || 0) / 100).toFixed(2));
-    setReviewRequestId(asText(request.id));
-    setDecisionNote(requestNotes[asText(request.id)] || "Approved after MyDancr agreement review.");
-    setStatus("Complete the agreement reference and effective date, then approve this request.");
-    window.requestAnimationFrame(() => document.getElementById(`admin-referral-fee-form-${scopedVenueId || "all"}`)?.scrollIntoView({ behavior: "smooth", block: "start" }));
-  }
-
-  async function saveAgreement(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const feeCents = adminDollarsToCents(fee);
-    if (!venueId || feeCents === null || agreementReference.trim().length < 3 || (!effectiveImmediately && !Number.isFinite(Date.parse(effectiveFrom)))) {
-      return setStatus("Choose a venue and enter a valid fee, effective date, and agreement reference.");
-    }
-    const request = beginReferralAction();
-    if (!request) return;
-    setIsSaving(true);
-    setStatus(reviewRequestId ? "Approving fee request and recording agreement…" : "Recording referral fee agreement…");
-    try {
-      const data = await requestAdminJson("/api/admin/referral-fees", {
-        method: "POST",
-        signal: request.controller.signal,
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({
-          action: reviewRequestId ? "approve_request" : "set_fee",
-          requestId: reviewRequestId || null,
-          venueId,
-          feeCents,
-          effectiveFrom: effectiveImmediately ? "now" : new Date(effectiveFrom).toISOString(),
-          agreementReference,
-          decisionNote,
-        }),
-        fallbackMessage: "Unable to save the referral fee agreement.",
-      });
-      if (!isCurrentReferralAction(request)) return;
-      setIsDirty(false);
-      onReferralFeesChange(data.referralFees);
-      const message = reviewRequestId ? "Venue fee request approved and agreement recorded." : "Referral fee agreement recorded.";
-      setStatus(message);
-      setReviewRequestId("");
-      setDecisionNote("");
-      onActionConfirmed(message);
-    } catch (error) {
-      if (!isCurrentReferralAction(request)) return;
-      setStatus(error instanceof Error ? error.message : "Unable to save the referral fee agreement.");
-    } finally {
-      finishReferralAction(request);
-    }
-  }
-
-  async function rejectRequest(request: Record<string, unknown>) {
-    const requestId = asText(request.id);
-    const note = (requestNotes[requestId] || "").trim();
-    if (note.length < 3) return setStatus("Add a decision note before rejecting a fee request.");
-    const actionRequest = beginReferralAction();
-    if (!actionRequest) return;
-    setIsSaving(true);
-    setStatus("Rejecting fee request…");
-    try {
-      const data = await requestAdminJson("/api/admin/referral-fees", {
-        method: "POST",
-        signal: actionRequest.controller.signal,
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ action: "reject_request", requestId, decisionNote: note }),
-        fallbackMessage: "Unable to reject the fee request.",
-      });
-      if (!isCurrentReferralAction(actionRequest)) return;
-      onReferralFeesChange(data.referralFees);
-      setStatus("Venue fee request rejected with an audit note.");
-      onActionConfirmed("Venue fee request rejected.");
-    } catch (error) {
-      if (!isCurrentReferralAction(actionRequest)) return;
-      setStatus(error instanceof Error ? error.message : "Unable to reject the fee request.");
-    } finally {
-      finishReferralAction(actionRequest);
-    }
-  }
-
-  return (
-    <section className="operations-center referral-fee-manager" aria-labelledby={`referral-fee-manager-heading-${scopedVenueId || "all"}`}>
-      <Panel title="Referral fee agreements" badge={scopedVenueId ? currentTerm ? "Recorded" : "Needed" : `${pendingRequests.length} requests`} defaultOpen={Boolean(scopedVenueId)}>
-        <span className="eyebrow">MyDancr controlled</span>
-        <h2 id={`referral-fee-manager-heading-${scopedVenueId || "all"}`}>Venue referral terms</h2>
-        <p>Only MyDancr admins can record the fee charged for each verified individual phone tap redemption. Venue managers receive a complete read-only view of the signed amount and history.</p>
-        <form id={`admin-referral-fee-form-${scopedVenueId || "all"}`} className="referral-fee-form" onSubmit={saveAgreement} onChangeCapture={() => setIsDirty(true)}>
-          <label>
-            Venue
-            <select required value={venueId} disabled={isSaving || Boolean(scopedVenueId)} onChange={(event) => { setVenueId(event.target.value); setReviewRequestId(""); }}>
-              <option value="">Choose venue</option>
-              {venues.map((venue) => <option key={asText(venue.id)} value={asText(venue.id)}>{asText(venue.name)} · {asText(venue.city)}</option>)}
-            </select>
-          </label>
-          <label>
-            Fee per verified guest
-            <input required inputMode="decimal" placeholder="20.00" value={fee} disabled={isSaving} onChange={(event) => setFee(event.target.value)} />
-          </label>
-          <label>
-            <input type="checkbox" checked={effectiveImmediately} disabled={isSaving} onChange={(event) => setEffectiveImmediately(event.target.checked)} />
-            Effective immediately when saved
-          </label>
-          {!effectiveImmediately && <label>
-            Effective date and time
-            <input required type="datetime-local" value={effectiveFrom} disabled={isSaving} onChange={(event) => setEffectiveFrom(event.target.value)} />
-          </label>}
-          <label>
-            Signed agreement reference
-            <input required minLength={3} maxLength={160} placeholder="Agreement or amendment ID" value={agreementReference} disabled={isSaving} onChange={(event) => setAgreementReference(event.target.value)} />
-          </label>
-          <label className="wide">
-            Internal decision note (optional)
-            <textarea maxLength={500} rows={2} value={decisionNote} disabled={isSaving} onChange={(event) => setDecisionNote(event.target.value)} />
-          </label>
-          <button disabled={isSaving} type="submit">{isSaving ? "Saving…" : reviewRequestId ? "Approve request & set fee" : "Set referral fee"}</button>
-          {reviewRequestId ? <button className="secondary-action" type="button" disabled={isSaving} onClick={() => { setReviewRequestId(""); setDecisionNote(""); }}>Cancel request review</button> : null}
-        </form>
-        {selectedVenue ? (
-          <div className="referral-fee-current">
-            <strong>{asText(selectedVenue.name)}</strong>
-            <span>{currentTerm ? `${formatAdminCents(Number(currentTerm.feeCents || 0))} per verified guest` : "No active agreement"}</span>
-            <small>{currentTerm ? `Effective ${formatDate(currentTerm.effectiveFrom)} · ${asText(currentTerm.agreementReference)}` : "Club Deals cannot be published until an agreement is recorded."}</small>
-          </div>
-        ) : null}
-        {status ? <p role="status">{status}</p> : null}
-      </Panel>
-
-      {!scopedVenueId || pendingRequests.length ? <Panel title="Venue fee change requests" badge={`${pendingRequests.length} pending`}>
-        <div className="referral-fee-request-list">
-          {pendingRequests.map((request) => {
-            const requestId = asText(request.id);
-            const venue = venues.find((item) => asText(item.id) === asText(request.venueId));
-            return (
-              <article key={requestId}>
-                <strong>{asText(venue?.name) || "Venue"} · {formatAdminCents(Number(request.requestedFeeCents || 0))}</strong>
-                <p>{asText(request.reason)}</p>
-                <small>Requested {formatDate(request.createdAt)}</small>
-                <label>
-                  Decision note
-                  <textarea maxLength={500} rows={2} value={requestNotes[requestId] || ""} disabled={isSaving} onChange={(event) => setRequestNotes((current) => ({ ...current, [requestId]: event.target.value }))} />
-                </label>
-                <div className="admin-action-row">
-                  <button disabled={isSaving} type="button" onClick={() => beginRequestApproval(request)}>Review & approve</button>
-                  <button className="danger-action" disabled={isSaving} type="button" onClick={() => void rejectRequest(request)}>Reject</button>
-                </div>
-              </article>
-            );
-          })}
-          {!pendingRequests.length ? <p className="empty">No venue fee change requests are waiting.</p> : null}
-        </div>
-      </Panel> : null}
-
-      {!scopedVenueId || terms.length ? <Panel title="Agreement history" badge={`${terms.length} terms`}>
-        <div className="referral-fee-history">
-          {terms.slice(0, 100).map((term) => {
-            const venue = venues.find((item) => asText(item.id) === asText(term.venueId));
-            const state = adminReferralTermState(term);
-            return (
-              <article key={asText(term.id)}>
-                <strong>{asText(venue?.name) || "Venue"} · {formatAdminCents(Number(term.feeCents || 0))}</strong>
-                <span className={`account-state ${state === "Active" ? "active" : ""}`}>{state}</span>
-                <p>{asText(term.agreementReference)}</p>
-                <small>{formatDate(term.effectiveFrom)}{term.effectiveUntil ? ` → ${formatDate(term.effectiveUntil)}` : " onward"}</small>
-              </article>
-            );
-          })}
-          {!terms.length ? <p className="empty">No referral fee agreements have been recorded.</p> : null}
-        </div>
-      </Panel> : null}
     </section>
   );
 }
@@ -1986,21 +1429,15 @@ function OperationsOverview({
             </div>
           ) : null}
           <div className="quick-links">
-            <button type="button" onClick={() => onOpenWorkspace("money")}>Review deal activity</button>
+            <button type="button" onClick={() => onOpenWorkspace("clubs")}>Review deal activity</button>
             <button type="button" onClick={() => onOpenWorkspace("people")}>Open people</button>
           </div>
         </Panel>
 
-        <Panel title="Revenue & deal health" badge={`${operations.revenue.conversionRate}% conversion`}>
-          <div className="operations-metric-grid">
-            <Metric label="Gross commission" value={formatAdminCents(operations.revenue.grossCommissionCents)} />
-            <Metric label="Platform share" value={formatAdminCents(operations.revenue.platformCommissionCents)} />
-            <Metric label="Dancer share" value={formatAdminCents(operations.revenue.dancerCommissionCents)} />
-            <Metric label="Awaiting venue payment" value={formatAdminCents(operations.revenue.pendingVenuePaymentCents)} />
-            <Metric label="Payable to dancers" value={formatAdminCents(operations.revenue.payableCents)} />
-            <Metric label="Settled" value={formatAdminCents(operations.revenue.settledCents)} />
-          </div>
-          <button className="panel-link-button" type="button" onClick={() => onOpenWorkspace("money")}>Open money workspace</button>
+        <Panel title="Venue subscriptions" badge="Subscription only">
+          <p>Venue subscriptions are the MyDancr billing model. Club Deals and verified admissions are included.</p>
+          <p>Subscription amounts and payment status are unavailable until venue billing records are connected.</p>
+          <button className="panel-link-button" type="button" onClick={() => onOpenWorkspace("money")}>View venue subscriptions</button>
         </Panel>
 
         <Panel title="Growth & engagement" badge={`${operations.analytics.totalAccounts} accounts`}>
@@ -2202,12 +1639,10 @@ function DealActivityManager({
   const [dealId, setDealId] = useState("");
   const [sourceType, setSourceType] = useState("");
   const [status, setStatus] = useState("");
-  const [commissionStatus, setCommissionStatus] = useState("");
   const [suspicious, setSuspicious] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isMutating, setIsMutating] = useState(false);
   const [message, setMessage] = useState("");
-  const [paymentReferences, setPaymentReferences] = useState<Record<string, string>>({});
   const mountedRef = useRef(false);
   const loadSequenceRef = useRef(0);
   const loadAbortRef = useRef<AbortController | null>(null);
@@ -2264,7 +1699,6 @@ function DealActivityManager({
     if (dealId) params.set("dealId", dealId);
     if (sourceType) params.set("sourceType", sourceType);
     if (status) params.set("status", status);
-    if (commissionStatus) params.set("commissionStatus", commissionStatus);
     if (suspicious) params.set("suspicious", suspicious);
 
     try {
@@ -2309,43 +1743,6 @@ function DealActivityManager({
     }
   }
 
-  async function settleVenueBalance(eventId: string) {
-    const referenceKey = `venue_payment_received:${eventId}`;
-    const externalReference = String(paymentReferences[referenceKey] || "").trim();
-    if (externalReference.length < 3) {
-      setMessage("Enter the real invoice, payment, or payout reference first.");
-      return;
-    }
-
-    const request = beginDealActivityAction();
-    if (!request) return;
-    setIsMutating(true);
-    setMessage("Recording venue payment...");
-    try {
-      await requestAdminJson("/api/admin/deals", {
-        method: "PATCH",
-        signal: request.controller.signal,
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({
-          action: "venue_payment_received",
-          externalReference,
-          revenueEventId: eventId,
-        }),
-        fallbackMessage: "Unable to record settlement.",
-      });
-      if (!isCurrentDealActivityAction(request)) return;
-      await loadFiltered();
-      if (!isCurrentDealActivityAction(request)) return;
-      setPaymentReferences((current) => ({ ...current, [referenceKey]: "" }));
-      setMessage("Venue payment recorded.");
-    } catch (error) {
-      if (!isCurrentDealActivityAction(request)) return;
-      setMessage(error instanceof Error ? error.message : "Unable to record settlement.");
-    } finally {
-      finishDealActivityAction(request);
-    }
-  }
-
   return (
     <div className="deal-activity-manager">
       <div className="deal-filters">
@@ -2380,18 +1777,6 @@ function DealActivityManager({
           </select>
         </label>
         <label>
-          Commission
-          <select value={commissionStatus} disabled={controlsBusy} onChange={(event) => setCommissionStatus(event.target.value)}>
-            <option value="">All commissions</option>
-            <option value="pending">Pending</option>
-            <option value="available">Available</option>
-            <option value="payout_processing">Payout processing</option>
-            <option value="paid">Paid</option>
-            <option value="reversed">Reversed</option>
-            <option value="failed">Failed</option>
-          </select>
-        </label>
-        <label>
           Suspicious
           <select value={suspicious} disabled={controlsBusy} onChange={(event) => setSuspicious(event.target.value)}>
             <option value="">All activity</option>
@@ -2405,55 +1790,10 @@ function DealActivityManager({
       {message ? <p>{message}</p> : null}
       <div className="deal-activity-list">
         {activity.slice(0, 8).map((item) => {
-          const revenue = readFirst(item.deal_revenue_events);
-          const commission = readFirst(item.commission_events);
-          const revenueEventId = String(revenue?.id || "");
-          const revenueStatus = String(revenue?.status || "");
-          const commissionState = String(commission?.status || "");
-          const venueReferenceKey = `venue_payment_received:${revenueEventId}`;
           return (
             <div className="deal-activity-row" key={String(item.id)}>
               <strong>{previewDealName(item)}</strong>
               <span>{String(item.source_type || "source")} / {String(item.status || "status")}</span>
-              <em>{previewCommission(item)}</em>
-              {revenue ? (
-                <section className="deal-settlement-ledger" aria-label="Venue receivable">
-                  <strong>Venue → MyDancr</strong>
-                  <span>
-                    Venue owes MyDancr: {formatAdminCents(Number(revenue.gross_commission_cents || 0))}
-                  </span>
-                  <span>Venue payment: {revenueStatus === "settled" ? "paid" : revenueStatus.replaceAll("_", " ")}</span>
-                  {revenueStatus === "pending_venue_payment" ? (
-                    <div className="deal-settlement-action">
-                      <input
-                        aria-label="Venue payment reference"
-                        placeholder="Venue invoice/payment reference"
-                        value={paymentReferences[venueReferenceKey] || ""}
-                        disabled={isMutating}
-                        onChange={(event) => setPaymentReferences((current) => ({
-                          ...current,
-                          [venueReferenceKey]: event.target.value,
-                        }))}
-                      />
-                      <button
-                        type="button"
-                        disabled={isMutating}
-                        onClick={() => settleVenueBalance(revenueEventId)}
-                      >
-                        Record venue payment
-                      </button>
-                    </div>
-                  ) : null}
-                </section>
-              ) : null}
-              {commission ? (
-                <section className="deal-settlement-ledger" aria-label="Dancer payout">
-                  <strong>MyDancr → Dancer</strong>
-                  <span>MyDancr owes dancer: {formatAdminCents(Number(commission.amount_cents || 0))}</span>
-                  <span>Dancer payout: {commissionState.replaceAll("_", " ")}</span>
-                  {commissionState === "available" ? <span>Historical earning retained for accounting review.</span> : null}
-                </section>
-              ) : null}
               {item.suspicious ? <span>Flagged suspicious</span> : null}
               {item.status === "generated" ? (
                 <button type="button" disabled={isMutating} onClick={() => voidRedemption(String(item.id))}>
@@ -3250,8 +2590,8 @@ function VenueSignupRequestQueue({
                 <div className="venue-request-private-workspace">
                   <strong>{request.referringAgentId ? "Approval confirms the agent referral" : "Approval creates a private venue workspace"}</strong>
                   <small>{request.referringAgentId
-                    ? `Confirm that ${asText(request.referringAgentName) || "the listed sales agent"} introduced this club. Approval creates an immutable commission attribution and the private venue workspace.`
-                    : "The venue manager receives a one-time signup code and completes the venue page. MyDancr records and publishes contract Club Deals and referral fees from the signed deal order."}</small>
+                    ? `Confirm that ${asText(request.referringAgentName) || "the listed sales agent"} introduced this club. Approval records the agent attribution and creates the private venue workspace.`
+                    : "The venue manager receives a one-time signup code and completes the venue page. MyDancr reviews and publishes Club Deals included with the venue subscription."}</small>
                 </div>
                 <label>
                   Review notes
@@ -3284,7 +2624,7 @@ function VenueSignupRequestQueue({
 }
 
 function VenueManager({
-  clubDeals, dealRequests, referralFees, onClubDealsChange, onDealRequestsChange, onReferralFeesChange, onActionConfirmed,
+  clubDeals, dealRequests, onClubDealsChange, onDealRequestsChange, onActionConfirmed,
   venues,
   claimCodes,
   onVenuesChange,
@@ -3292,10 +2632,8 @@ function VenueManager({
 }: {
   clubDeals: Array<Record<string, unknown>>;
   dealRequests: Array<Record<string, unknown>>;
-  referralFees: Record<string, unknown> | null;
   onClubDealsChange: (deals: Array<Record<string, unknown>>) => void;
   onDealRequestsChange: (requests: Array<Record<string, unknown>>) => void;
-  onReferralFeesChange: (fees: Record<string, unknown>) => void;
   onActionConfirmed: (message: string) => void;
   venues: Array<Record<string, unknown>>;
   claimCodes: Array<Record<string, unknown>>;
@@ -3583,14 +2921,13 @@ function VenueManager({
           const connectedManager = Boolean(asText(venue.owner_user_id || venue.ownerUserId));
           const isActive = venue.is_active !== false;
           const reviewStatus = asText(venue.page_review_status) || (isActive ? "published" : "admin_draft");
-          const commercialDirty = commercialStates[venueId + ":fee"]?.dirty || commercialStates[venueId + ":deal"]?.dirty;
-          const commercialBusy = commercialStates[venueId + ":fee"]?.busy || commercialStates[venueId + ":deal"]?.busy;
+          const commercialDirty = commercialStates[venueId + ":deal"]?.dirty;
+          const commercialBusy = commercialStates[venueId + ":deal"]?.busy;
           const requirements = [
             { label: "Venue details", complete: Boolean(asText(venue.name) && asText(venue.address) && availableCity && asText(venue.state)) },
             { label: "Public phone", complete: Boolean(asText(venue.phone)) },
             { label: "Venue hours", complete: Boolean(asText(venue.opens_at) && asText(venue.closes_at)) },
             { label: "Venue logo", complete: Boolean(asText(venue.logo_image_url)) },
-            { label: "Signed referral fee agreement", complete: Boolean(currentAdminReferralTerm(asRecordArray(referralFees?.terms).filter(term => asText(term.venueId) === venueId))) },
             { label: "Active Club Deal", complete: clubDeals.some(deal => asText(deal.venueId) === venueId && deal.isActive === true) },
           ];
           const isReady = requirements.every((requirement) => requirement.complete);
@@ -3686,10 +3023,7 @@ function VenueManager({
                   })}
                 </div>
                 {openedVenues[venueId] ? <section className="venue-commercial-setup" aria-label={`${asText(venue.name)} Club Deal and contract`}>
-                  <ReferralFeeManager scopedVenueId={venueId} venues={[venue]} referralFees={referralFees}
-                    onReferralFeesChange={onReferralFeesChange} onActionConfirmed={onActionConfirmed}
-                    onEditorStateChange={state => setCommercialStates(current => ({ ...current, [venueId + ":fee"]: state }))} />
-                  <AdminClubDealManager scopedVenueId={venueId} venues={[venue]} clubDeals={clubDeals} dealRequests={dealRequests} referralFees={referralFees}
+                  <AdminClubDealManager scopedVenueId={venueId} venues={[venue]} clubDeals={clubDeals} dealRequests={dealRequests}
                     onClubDealsChange={onClubDealsChange} onDealRequestsChange={onDealRequestsChange} onActionConfirmed={onActionConfirmed}
                     onEditorStateChange={state => setCommercialStates(current => ({ ...current, [venueId + ":deal"]: state }))} />
                 </section> : null}
@@ -4785,7 +4119,7 @@ function DancerDirectory({
             {profile ? (
               <>
               <nav className="admin-dancer-tabs" aria-label="Dancer management sections">
-                {[["overview", "Overview"], ["media", "Profile & media"], ["affiliations", "Clubs & shifts"], ["commissions", "Financial history"], ["analytics", "Analytics & reports"], ["history", "History"]].map(([id, label]) => <button type="button" key={id} className={detailTab === id ? "active" : ""} disabled={controlsBusy} onClick={() => setDetailTab(id)}>{label}</button>)}
+                {[["overview", "Overview"], ["media", "Profile & media"], ["affiliations", "Clubs & shifts"], ["analytics", "Analytics & reports"], ["history", "History"]].map(([id, label]) => <button type="button" key={id} className={detailTab === id ? "active" : ""} disabled={controlsBusy} onClick={() => setDetailTab(id)}>{label}</button>)}
               </nav>
               <AdminDancerFullProfile
                 profile={profile}
@@ -4847,7 +4181,6 @@ function AdminDancerFullProfile({
   const affiliations = asRecordArray(operations.affiliations);
   const shifts = asRecordArray(operations.shifts);
   const videos = asRecordArray(operations.videos);
-  const commissions = asRecordArray(operations.commissions);
   const reports = asRecordArray(operations.reports);
   const accountHistory = asRecordArray(operations.accountHistory || operations.account_history);
   const analytics = asRecordObject(operations.analytics);
@@ -4985,12 +4318,9 @@ function AdminDancerFullProfile({
         <section className="submission-section"><h3>Shift history ({shifts.length})</h3>{shifts.length ? <div className="submission-files">{shifts.map((item, index) => { const venue = asRecordObject(item.venues); return <div className="submission-link" key={asText(item.id) || index}><strong>{asText(venue.name) || "Club"} · {labelize(asText(item.status))}</strong><small>{formatDate(item.starts_at || item.startsAt)} to {formatDate(item.ends_at || item.endsAt)}</small><small>{labelize(asText(item.shift_source || item.shiftSource) || "scheduled")}</small></div>; })}</div> : <p className="submission-empty">No posted or historical shifts.</p>}</section>
       </> : null}
 
-      {activeTab === "all" || activeTab === "commissions" ? <>
-        <section className="submission-section"><h3>Historical commission activity ({commissions.length})</h3>{commissions.length ? <div className="submission-files">{commissions.map((item, index) => <div className="submission-link" key={asText(item.id) || index}><strong>{formatMoneyFromCents(item.amount_cents || item.amountCents)} · {labelize(asText(item.status))}</strong><small>{formatDate(item.paid_at || item.paidAt || item.payable_at || item.payableAt || item.created_at || item.createdAt)}</small></div>)}</div> : <p className="submission-empty">No attributed commission activity.</p>}</section>
-      </> : null}
 
       {activeTab === "all" || activeTab === "analytics" ? <>
-        <section className="submission-section"><h3>Customer activity</h3><div className="submission-grid"><SubmissionValue label="Followers" value={analytics.followers} /><SubmissionValue label="Profile views" value={analytics.profileViews || analytics.profile_views} /><SubmissionValue label="Direction requests" value={analytics.directionRequests || analytics.direction_requests} /><SubmissionValue label="Active shifts" value={analytics.activeShifts || analytics.active_shifts} /><SubmissionValue label="Recorded commissions" value={formatMoneyFromCents(analytics.totalCommissionCents || analytics.total_commission_cents)} /></div></section>
+        <section className="submission-section"><h3>Customer activity</h3><div className="submission-grid"><SubmissionValue label="Followers" value={analytics.followers} /><SubmissionValue label="Profile views" value={analytics.profileViews || analytics.profile_views} /><SubmissionValue label="Direction requests" value={analytics.directionRequests || analytics.direction_requests} /><SubmissionValue label="Active shifts" value={analytics.activeShifts || analytics.active_shifts} /></div></section>
         <section className="submission-section"><h3>Reports ({reports.length})</h3>{reports.length ? <div className="submission-files">{reports.map((item, index) => <div className="submission-link" key={asText(item.id) || index}><strong>{asText(item.reason) || "Report"} · {labelize(asText(item.status))}</strong><small>{asText(item.details) || "No additional details"}</small><small>{formatDate(item.created_at || item.createdAt)}</small></div>)}</div> : <p className="submission-empty">No reports against this profile.</p>}</section>
       </> : null}
 
@@ -5140,50 +4470,6 @@ function previewDealName(item: Record<string, unknown>) {
   const venueName = venue ? String(venue.name || "Venue") : "Venue";
   const dancerName = dancer ? ` / ${String(dancer.stage_name || "Dancer")}` : "";
   return `${dealTitle} at ${venueName}${dancerName}`;
-}
-
-function previewCommission(item: Record<string, unknown>) {
-  const commission = readFirst(item.commission_events);
-  if (!commission) return "No dancer commission";
-  return `Commission: ${String(commission.status || "pending")}`;
-}
-
-function adminDollarsToCents(value: string) {
-  const normalized = value.trim();
-  if (!/^\d{1,4}(?:\.\d{1,2})?$/.test(normalized)) return null;
-  const cents = Math.round(Number(normalized) * 100);
-  return cents >= 100 && cents <= 100_000 ? cents : null;
-}
-
-function adminPayoutDollarsToCents(value: string) {
-  const match = /^(\d{1,6})(?:\.(\d{1,2}))?$/.exec(value.trim());
-  if (!match) return null;
-  const cents = Number.parseInt(match[1], 10) * 100 + Number.parseInt((match[2] || "").padEnd(2, "0") || "0", 10);
-  return Number.isSafeInteger(cents) && cents >= 1 && cents <= 10_000_000 ? cents : null;
-}
-
-function currentAdminReferralTerm(terms: Array<Record<string, unknown>>) {
-  const now = Date.now();
-  return terms.find((term) => (
-    !term.supersededAt
-    && Date.parse(asText(term.effectiveFrom)) <= now
-    && (!term.effectiveUntil || Date.parse(asText(term.effectiveUntil)) > now)
-  )) || null;
-}
-
-function adminReferralTermState(term: Record<string, unknown>) {
-  if (term.supersededAt) return "Superseded";
-  const now = Date.now();
-  if (Date.parse(asText(term.effectiveFrom)) > now) return "Scheduled";
-  if (term.effectiveUntil && Date.parse(asText(term.effectiveUntil)) <= now) return "Expired";
-  return "Active";
-}
-
-function formatAdminCents(value: number) {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-  }).format(Math.max(0, value) / 100);
 }
 
 function readFirst(value: unknown): Record<string, unknown> | null {
@@ -5650,7 +4936,7 @@ function AdminStyles() {
       .admin-workspace-loading span:not(.dashboard-sr-only) { display: block; min-height: 62px; border-radius: 10px; background: linear-gradient(100deg, rgba(255,255,255,.045) 20%, rgba(139,92,246,.12) 45%, rgba(255,255,255,.045) 70%); background-size: 240% 100%; animation: adminDashboardLoadingPulse 1.25s ease-in-out infinite; }
       .admin-workspace-loading header span { min-height: 15px; width: 58%; }
       .admin-workspace-loading header span.wide { min-height: 28px; width: 34%; }
-      .admin-club-deal-manager .admin-panel-body > p, .referral-fee-manager .admin-panel-body > p { color: #b9accd; line-height: 1.5; }
+      .admin-club-deal-manager .admin-panel-body > p { color: #b9accd; line-height: 1.5; }
       .admin-club-deal-form { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 10px; padding: 12px; border: 1px solid rgba(124,58,237,.32); border-radius: 10px; background: rgba(124,58,237,.045); }
       .admin-deal-request-inbox { display: grid; gap: 8px; padding: 12px; border: 1px solid rgba(34,211,238,.24); border-radius: 10px; background: rgba(34,211,238,.035); }
       .admin-deal-request-inbox > div { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
@@ -5681,21 +4967,6 @@ function AdminStyles() {
       .admin-club-deal-edit small { color: #6ee7b7; }
       .admin-club-deal-edit em { color: #94a3b8; font-size: 11px; font-style: normal; }
       .admin-club-deal-item > .danger-action { min-height: 44px; }
-      .referral-fee-form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; padding: 12px; border: 1px solid rgba(148,229,255,.2); border-radius: 10px; background: rgba(148,229,255,.035); }
-      .referral-fee-form label, .referral-fee-request-list label { display: grid; gap: 6px; color: #d8cfeb; font-size: 12px; font-weight: 850; }
-      .referral-fee-form label.wide { grid-column: 1 / -1; }
-      .referral-fee-form input, .referral-fee-form select, .referral-fee-form textarea, .referral-fee-request-list textarea { width: 100%; min-height: 42px; padding: 9px 10px; border: 1px solid rgba(255,255,255,.14); border-radius: 8px; color: #fff; background: #15151c; font: inherit; }
-      .referral-fee-current { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 4px 12px; padding: 12px; border: 1px solid rgba(50,255,164,.24); border-radius: 9px; background: rgba(50,255,164,.055); }
-      .referral-fee-current strong { color: #fff; }
-      .referral-fee-current span { color: #8dffc4; font-weight: 950; }
-      .referral-fee-current small { grid-column: 1 / -1; color: #b9accd; }
-      .referral-fee-request-list, .referral-fee-history { display: grid; gap: 9px; }
-      .referral-fee-request-list article, .referral-fee-history article { display: grid; gap: 7px; padding: 12px; border: 1px solid rgba(255,255,255,.09); border-radius: 9px; background: rgba(255,255,255,.035); }
-      .referral-fee-request-list strong, .referral-fee-history strong { color: #fff; }
-      .referral-fee-request-list p, .referral-fee-history p { color: #d8cfeb; font-size: 13px; }
-      .referral-fee-request-list small, .referral-fee-history small { color: #9c90b3; font-size: 11px; }
-      .referral-fee-history article { grid-template-columns: minmax(0,1fr) auto; }
-      .referral-fee-history p, .referral-fee-history small { grid-column: 1 / -1; }
       .operations-status-line, .workspace-lead > header { display: flex; align-items: flex-end; justify-content: space-between; gap: 14px; padding: 8px 2px 2px; }
       .workspace-lead > header { display: grid; justify-content: stretch; }
       .operations-status-line > div, .workspace-lead > header { gap: 7px; }
@@ -5763,10 +5034,8 @@ function AdminStyles() {
         .venue-request-details dl > div { grid-template-columns: 1fr; gap: 2px; }
         .venue-request-actions { grid-template-columns: 1fr; }
         .deal-settlement-action { grid-template-columns: 1fr; }
-        .admin-club-deal-form, .referral-fee-form, .referral-fee-current, .referral-fee-history article, .admin-deal-request-inbox article { grid-template-columns: 1fr; }
+        .admin-club-deal-form, .admin-deal-request-inbox article { grid-template-columns: 1fr; }
         .admin-club-deal-form .wide { grid-column: 1; }
-        .referral-fee-form label.wide, .referral-fee-current small, .referral-fee-history p, .referral-fee-history small { grid-column: 1; }
-        .referral-fee-form > button { width: 100%; }
         .admin-shell { padding-left: 8px; padding-right: 8px; overflow-x: hidden; }
         .admin-head, .admin-grid, .admin-panel, .approval-row, .submission-detail, .submission-section, .submission-review-card, .submitted-social-review, .submitted-social-review-list, .submitted-social-icons { width: 100%; max-width: 100%; min-width: 0; overflow-x: hidden; }
         .admin-panel, .approval-row, .submission-detail { padding: 10px; }

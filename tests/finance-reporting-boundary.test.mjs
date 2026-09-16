@@ -17,8 +17,9 @@ test("finance reads use one dedicated reporting boundary", () => {
     assert.match(reporting, new RegExp(`export async function ${operation}`));
     assert.doesNotMatch(finance, new RegExp(`export async function ${operation}`));
   }
-  for (const consumer of [adminRoute, venueRoute, dancerRoute, venueDashboard]) {
-    assert.match(consumer, /from "@\/src\/lib\/dancr\/finance-reporting"/);
+  assert.match(dancerRoute, /from "@\/src\/lib\/dancr\/finance-reporting"/);
+  for (const consumer of [adminRoute, venueRoute, venueDashboard]) {
+    assert.doesNotMatch(consumer, /from "@\/src\/lib\/dancr\/finance-reporting"/);
   }
 });
 

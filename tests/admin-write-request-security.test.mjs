@@ -28,6 +28,11 @@ const sources = await Promise.all(routePaths.map((path) => readFile(new URL(path
 
 test("admin content and operations writes stream-bound their JSON bodies", () => {
   for (const [index, source] of sources.entries()) {
+    if (/export const POST = retiredReferralBilling/.test(source)) {
+      assert.match(source, /status: 410/);
+      assert.doesNotMatch(source, /request\.(json|text|arrayBuffer)\(/);
+      continue;
+    }
     assert.match(source, /readBoundedJsonObject\(request, \{/, routePaths[index]);
     assert.doesNotMatch(source, /request\.json\(/, routePaths[index]);
   }
@@ -35,6 +40,10 @@ test("admin content and operations writes stream-bound their JSON bodies", () =>
 
 test("admin content and operations writes authorize before consuming their bodies", () => {
   for (const [index, source] of sources.entries()) {
+    if (/export const POST = retiredReferralBilling/.test(source)) {
+      assert.ok(source.indexOf("requireAdmin(") < source.indexOf("status: 410"));
+      continue;
+    }
     assert.ok(source.indexOf("requireAdmin(") < source.indexOf("readBoundedJsonObject(request"), routePaths[index]);
   }
 });

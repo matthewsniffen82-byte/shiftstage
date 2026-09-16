@@ -3,7 +3,6 @@ import { apiError } from "@/src/lib/api";
 import { readBoundedJsonObject } from "@/src/lib/bounded-json-body";
 import { requireAdmin, resetManagedVenuePageReview } from "@/src/lib/dancr/admin";
 import {
-  settleDealRevenueEvent,
   voidDealRedemption,
 } from "@/src/lib/dancr/deal-admin-actions";
 import { getAdminDealActivity } from "@/src/lib/dancr/deals";
@@ -38,7 +37,6 @@ export async function GET(request: Request) {
         dealId: params.get("dealId"),
         sourceType: params.get("sourceType"),
         status: params.get("status"),
-        commissionStatus: params.get("commissionStatus"),
         suspicious: params.get("suspicious"),
       }),
       getAdminVenueDealCatalog(admin),
@@ -153,28 +151,8 @@ export async function PATCH(request: Request) {
     await requireAdmin(client, user.id);
 
     const body = await readDealAdminBody(request);
-    const settlementAction = body?.action === "venue_payment_received" ? body.action : null;
-    if (settlementAction === "venue_payment_received") {
-      const revenueEventId = typeof body?.revenueEventId === "string" ? body.revenueEventId.trim() : "";
-      const externalReference = typeof body?.externalReference === "string" ? body.externalReference.trim() : "";
-      if (!revenueEventId || !externalReference) {
-        return NextResponse.json(
-          { ok: false, error: "Revenue event and external payment reference are required." },
-          { status: 400 },
-        );
-      }
-      const revenueEvent = await settleDealRevenueEvent(
-        client,
-        revenueEventId,
-        "venue_payment_received",
-        externalReference,
-      );
-      console.info("DEAL_REVENUE_SETTLEMENT_RECORDED", {
-        adminUserId: user.id,
-        revenueEventId,
-        action: settlementAction,
-      });
-      return NextResponse.json({ ok: true, revenueEvent, session: session || null });
+    if (body.action === "venue_payment_received") {
+      return NextResponse.json({ ok: false, error: "Venue billing is subscription only. Per-guest payment collection has been retired.", session: session || null }, { status: 410 });
     }
 
     const redemptionId = typeof body?.redemptionId === "string" ? body.redemptionId.trim() : "";

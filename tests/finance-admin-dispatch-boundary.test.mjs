@@ -10,38 +10,11 @@ const [adminClient, dispatch, input, result, route] = await Promise.all([
   readFile(new URL("../app/api/admin/finance/route.ts", import.meta.url), "utf8"),
 ]);
 
-test("admin finance transport authenticates before delegating one parsed request", () => {
+test("retired admin finance transport authorizes without dispatching financial actions", () => {
   assert.match(route, /await requireAdmin\(client, user\.id\)/);
-  assert.equal((route.match(/const \{ client, session, user \} = await createRequestSupabaseContext\(request\)/g) || []).length, 2);
-  assert.match(route, /const body = await readBoundedJsonObject\(request, \{/);
-  assert.match(route, /MAX_FINANCE_ADMIN_BODY_BYTES = 16_384/);
-  assert.doesNotMatch(route, /request\.json\(/);
-  assert.match(route, /dispatchAdminFinanceAction\(admin, user\.id, body\)/);
-  assert.match(route, /NextResponse\.json\(\{ \.\.\.result\.body, session: session \|\| null \}, \{ status: result\.status \}\)/);
-  assert.doesNotMatch(route, /body\.action ===/);
-  assert.doesNotMatch(route, /recordManualClubInvoicePayment|processDancerPayouts|runQrFinanceAutomation/);
-});
-
-test("admin finance mutations use the refresh-aware role-isolated request boundary", () => {
-  assert.match(adminClient, /requestAdminJson,/);
-  assert.equal((adminClient.match(/requestAdminJson\("\/api\/admin\/finance"/g) || []).length, 3);
-  assert.doesNotMatch(adminClient, /fetch\("\/api\/admin\/finance"/);
-  assert.doesNotMatch(adminClient, /authorization: `Bearer \$\{token\}`[^\n]*[\s\S]{0,140}record_manual_payment/);
-  assert.match(route, /NextResponse\.json\(\{ ok: true, finance, session: session \|\| null \}\)/);
-});
-
-test("admin finance mutations are abortable and serialized across every command", () => {
-  const manager = adminClient.match(/function FinanceManager[\s\S]*?(?=function AdminClubDealManager)/)?.[0] || "";
-  assert.match(manager, /const mountedRef = useRef\(false\);/);
-  assert.match(manager, /const actionSequenceRef = useRef\(0\);/);
-  assert.match(manager, /const actionAbortRef = useRef<AbortController \| null>\(null\);/);
-  assert.match(manager, /const actionInFlightRef = useRef\(false\);/);
-  assert.match(manager, /function beginFinanceAction\(\)/);
-  assert.match(manager, /if \(!mountedRef\.current \|\| actionInFlightRef\.current\) return null;/);
-  assert.match(manager, /function isCurrentFinanceAction/);
-  assert.match(manager, /function finishFinanceAction/);
-  assert.equal((manager.match(/signal: request\.controller\.signal/g) || []).length, 3);
-  assert.equal((manager.match(/const request = beginFinanceAction\(\)/g) || []).length, 3);
+  assert.match(route, /status: 410/);
+  assert.doesNotMatch(route, /dispatchAdminFinanceAction|request\.json|createAdminSupabaseClient/);
+  assert.doesNotMatch(adminClient, /FinanceManager|applyFinanceMutationResponse|\/api\/admin\/finance/);
 });
 
 test("the dispatcher preserves every supported production finance action", () => {
@@ -89,10 +62,6 @@ test("successful writes refresh finance without letting a failed read misreport 
   assert.match(result, /financeRefreshRequired: true/);
   assert.match(result, /ADMIN_FINANCE_POST_WRITE_REFRESH_FAILED/);
   assert.doesNotMatch(dispatch, /finance: await getAdminFinanceOverview\(client\)/);
-  assert.match(adminClient, /function applyFinanceMutationResponse/);
-  assert.match(adminClient, /data\.financeRefreshRequired === true/);
-  assert.match(adminClient, /finance && typeof finance === "object" && !Array\.isArray\(finance\)/);
-  assert.equal((adminClient.match(/applyFinanceMutationResponse\(data, onFinanceChange/g) || []).length, 3);
   assert.match(dispatch, /recordManualClubInvoicePayment\(client, command\)/);
   assert.match(dispatch, /manageDancerEarning\(client, adminUserId, command\)/);
   assert.doesNotMatch(dispatch, /bitsafe|yoursafe|reconcileBitsafe/i);

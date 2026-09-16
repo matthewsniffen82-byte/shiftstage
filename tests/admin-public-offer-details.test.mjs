@@ -20,7 +20,7 @@ const service = compile('../src/lib/dancr/venue-deal-actions.ts', {
   './club-deal-presets': presets,
   './deal-policy': policy,
   './deals': deals,
-  './referral-fees': { getVenueReferralFeeState: async () => ({current:null}) },
+  './customer-follow-notifications': { broadcastFollowedClubDealPublished: async () => {} },
 });
 const venueId = '11111111-1111-4111-8111-111111111111';
 const dealId = '22222222-2222-4222-8222-222222222222';
@@ -52,6 +52,17 @@ test('admin offer wording survives create, update, and a fresh catalog read', as
 test('older callers without public details still receive the selected offer default', async () => {
   const result = await service.upsertAdminVenueDeal(database(),{...input,dealDescription:''});
   assert.equal(result.deal.dealDescription,presets.CLUB_DEAL_OFFER_PRESETS[0].description);
+});
+
+test('publishing and editing an active Club Deal need no fee agreement and carry zero per-guest charges', async () => {
+  const db = database();
+  const published = await service.upsertAdminVenueDeal(db, {...input,isActive:true});
+  assert.equal(published.deal.isActive,true);
+  assert.equal(published.deal.payoutAmountCents,0);
+  assert.equal(published.deal.redemptionRules.billing_model,'subscription');
+  const updated = await service.upsertAdminVenueDeal(db, {...input,dealId,isActive:true});
+  assert.equal(updated.deal.payoutAmountCents,0);
+  assert.equal(updated.deal.isActive,true);
 });
 test('custom public wording retains length, plain text, and existing deal policy checks', async () => {
   for (const [dealDescription,pattern] of [

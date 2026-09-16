@@ -28,57 +28,27 @@ test("MyDancr owns effective-dated venue fee agreements with immutable history",
   assert.doesNotMatch(migration, /Venue owners (?:insert|update|manage) .*referral fee terms/i);
 });
 
-test("only an active MyDancr admin can atomically set, schedule, and audit a fee", () => {
-  assert.match(adminRoute, /requireAdmin\(client, user\.id\)/);
-  assert.equal((adminRoute.match(/const \{ client, session, user \} = await createRequestSupabaseContext\(request\)/g) || []).length, 2);
-  assert.equal((adminRoute.match(/session: session \|\| null/g) || []).length, 3);
-  assert.equal((adminClient.match(/requestAdminJson\("\/api\/admin\/referral-fees"/g) || []).length, 2);
-  assert.doesNotMatch(adminClient, /fetch\("\/api\/admin\/referral-fees"/);
-  assert.match(service, /set_admin_venue_referral_fee/);
-  assert.match(migration, /account\.role = 'admin'/);
-  assert.match(migration, /account\.account_state = 'active'/);
-  assert.match(migration, /where venue\.id = p_venue_id[\s\S]*?for update/);
-  assert.match(migration, /insert into public\.admin_actions/);
-  assert.match(rejectionMigration, /reject_admin_venue_referral_fee_request/);
-  assert.match(rejectionMigration, /insert into public\.admin_actions/);
-  assert.match(migration, /set_referral_fee[\s\S]*?approve_referral_fee_change/);
-  assert.match(adminClient, /Signed agreement reference/);
-  assert.match(adminClient, /Effective date and time/);
-  assert.match(adminClient, /Agreement history/);
+test("the retired admin fee endpoint stays authenticated and cannot change agreements", () => {
+  assert.match(adminRoute, /await requireAdmin\(client, user\.id\)/);
+  assert.match(adminRoute, /status: 410/);
+  assert.doesNotMatch(adminRoute, /setAdminVenueReferralFee|rejectAdminVenueReferralFeeRequest|createAdminSupabaseClient/);
+  assert.doesNotMatch(adminClient, /ReferralFeeManager|\/api\/admin\/referral-fees/);
 });
 
-test("admin referral-fee writes are abortable and serialized", () => {
-  const manager = adminClient.match(/function ReferralFeeManager[\s\S]*?(?=function OperationsOverview)/)?.[0] || "";
-  assert.match(manager, /function beginReferralAction\(\)/);
-  assert.match(manager, /function isCurrentReferralAction/);
-  assert.match(manager, /function finishReferralAction/);
-  assert.equal((manager.match(/const request = beginReferralAction\(\)/g) || []).length, 1);
-  assert.equal((manager.match(/const actionRequest = beginReferralAction\(\)/g) || []).length, 1);
-  assert.equal((manager.match(/signal: request\.controller\.signal/g) || []).length, 1);
-  assert.equal((manager.match(/signal: actionRequest\.controller\.signal/g) || []).length, 1);
+test("admin deal setup has no referral-fee prerequisite", () => {
+  assert.doesNotMatch(adminClient, /Signed referral fee|Set referral fee|onReferralFeesChange/);
 });
 
-test("venues receive the complete fee agreement as read-only contract information", () => {
-  assert.match(venueRoute, /read-only in the venue workspace/);
-  assert.match(venueRoute, /status: 403/);
-  assert.match(dashboardRoute, /getVenueReferralFeeState/);
-  const venueLedger = dashboard.match(/function VenueDealReadOnlyPanel[\s\S]*?(?=function readOptionalNumber)/)?.[0] || "";
-  assert.match(venueLedger, /Fee per confirmed guest/);
-  assert.match(venueLedger, /Agreement ID/);
-  assert.match(venueLedger, /Agreement history/);
-  assert.doesNotMatch(venueLedger, /Request fee change|awaiting MyDancr review/);
+test("venue fee endpoint and dashboard reflect subscription-only billing", () => {
+  assert.match(venueRoute, /status: 410/);
+  assert.doesNotMatch(dashboardRoute, /getVenueReferralFeeState/);
   assert.doesNotMatch(dealRoute, /body\?\.referralCommissionCents/);
 });
 
-test("admin deal publishing consumes the active agreement instead of venue-submitted money", () => {
-  assert.match(venueDealActions, /getVenueReferralFeeState\(client, venueId\)/);
-  assert.match(venueDealActions, /input\.isActive && !referralFee/);
-  assert.match(venueDealActions, /payout_amount_cents: referralFee\?\.feeCents \|\| 0/);
-  assert.match(venueDealActions, /currency: referralFee\?\.currency \|\| "usd"/);
-  assert.doesNotMatch(venueDealActions, /input\.referralCommissionCents/);
-  assert.match(adminClient, /Record the signed referral fee agreement before publishing/);
-  assert.match(uncontractedDealsMigration, /set is_active = false/);
-  assert.match(uncontractedDealsMigration, /not exists[\s\S]*?venue_referral_fee_terms/);
+test("admin deal publishing records subscription billing with zero per-guest charges", () => {
+  assert.doesNotMatch(venueDealActions, /getVenueReferralFeeState|input\.referralCommissionCents/);
+  assert.match(venueDealActions, /payout_amount_cents: 0/);
+  assert.match(venueDealActions, /billing_model: "subscription"/);
 });
 
 test("each verified individual NFC redemption snapshots the active venue term", () => {

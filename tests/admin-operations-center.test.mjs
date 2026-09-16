@@ -26,14 +26,12 @@ test("operations center is backed by production queues and audit records", () =>
     "support_threads",
     "shifts",
     "qr_redemptions",
-    "deal_revenue_events",
     "admin_actions",
     "app_users",
   ]) {
     assert.match(operations, new RegExp(`from\\(\\"${table}\\"\\)`));
   }
-  assert.match(operations, /pendingVenuePaymentCents/);
-  assert.match(operations, /conversionRate/);
+  assert.doesNotMatch(operations, /deal_revenue_events|commission_events|club_invoices/);
   assert.match(operations, /warnings/);
   assert.doesNotMatch(operations, /mock|sample data|placeholder/i);
 });
@@ -49,11 +47,11 @@ test("admin UI provides the complete mobile operations workspace", () => {
   assert.match(client, /<AdminWorkspaceLoadingState workspace=\{workspace\}/);
   assert.match(client, /title="People"/);
   assert.match(client, /title="Clubs"/);
-  assert.match(client, /title="Money"/);
+  assert.match(client, /title="Subscriptions"/);
   assert.match(client, /title="More"/);
   assert.match(client, /What needs attention now/);
   assert.match(client, /Live operations/);
-  assert.match(client, /Revenue & deal health/);
+  assert.match(client, /Venue subscriptions/);
   assert.match(client, /Growth & engagement/);
   assert.match(client, /Recent admin activity/);
   assert.match(client, /Dancers, guests, venues & admins/);

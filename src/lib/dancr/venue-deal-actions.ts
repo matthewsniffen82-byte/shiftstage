@@ -1,7 +1,6 @@
 import { clubDealTransportationTerms } from "./club-deal-transportation";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { clubDealOfferPresetForTitle } from "./club-deal-presets";
-import { QR_COMMISSION_POLICY_VERSION } from "./commission-policy";
 import { broadcastFollowedClubDealPublished } from "./customer-follow-notifications";
 import { assertLiquorFreeClubDeal } from "./deal-policy";
 import {
@@ -10,7 +9,6 @@ import {
   readIssuedDealSnapshot,
   toClubDeal,
 } from "./deals";
-import { getVenueReferralFeeState } from "./referral-fees";
 import type { ClubDeal, ClubDealOfferType } from "./types";
 import { requireVenueAccess } from "./venue-access";
 import { safeErrorMetadata } from "../security/safe-error-metadata";
@@ -64,10 +62,6 @@ export async function upsertAdminVenueDeal(
   if (!venue) throw new Error("Venue not found.");
 
   const fields = validatedDealFields(input);
-  const referralFee = (await getVenueReferralFeeState(client, venueId)).current;
-  if (input.isActive && !referralFee) {
-    throw new Error("Record the signed MyDancr referral fee agreement before publishing this Club Deal.");
-  }
 
   const existingDeal = dealId ? await getAdminVenueDeal(client, venueId, dealId) : null;
   if (dealId && !existingDeal) throw new Error("Club Deal not found for this venue.");
@@ -85,13 +79,12 @@ export async function upsertAdminVenueDeal(
       one_per_guest: true,
       authenticated_venue_confirmation_required: true,
       attribution_policy: "locked_at_issue",
-      commission_policy: QR_COMMISSION_POLICY_VERSION,
+      billing_model: "subscription",
       managed_by: "mydancr",
-      agreement_reference: referralFee?.agreementReference || null,
     },
     payout_type: "flat",
-    payout_amount_cents: referralFee?.feeCents || 0,
-    currency: referralFee?.currency || "usd",
+    payout_amount_cents: 0,
+    currency: "usd",
     offer_type: fields.offerType,
     booking_url: null,
     sort_order: fields.sortOrder,
@@ -178,10 +171,6 @@ export async function updateVenueDealForAccount(
   if (!Number.isSafeInteger(sortOrder) || sortOrder < 0 || sortOrder > 1000) {
     throw new Error("Offer order must be between 0 and 1000.");
   }
-  const referralFee = (await getVenueReferralFeeState(client, owned.venueId)).current;
-  if (input.isActive && !referralFee) {
-    throw new Error("A MyDancr referral fee agreement is required before publishing a Club Deal.");
-  }
 
   const row = {
     venue_id: owned.venueId,
@@ -193,11 +182,11 @@ export async function updateVenueDealForAccount(
       one_per_guest: true,
       authenticated_venue_confirmation_required: true,
       attribution_policy: "locked_at_issue",
-      commission_policy: QR_COMMISSION_POLICY_VERSION,
+      billing_model: "subscription",
     },
     payout_type: "flat",
-    payout_amount_cents: referralFee?.feeCents || 0,
-    currency: referralFee?.currency || "usd",
+    payout_amount_cents: 0,
+    currency: "usd",
     offer_type: offerType,
     booking_url: null,
     sort_order: sortOrder,

@@ -183,7 +183,6 @@
       }
       const attention = operations.attention || {};
       const live = operations.live || {};
-      const revenue = operations.revenue || {};
       const items = [
         ["Needs attention", attention.total || 0],
         ["Overdue", attention.overdue || 0],
@@ -192,7 +191,7 @@
         ["QR today", live.qrGeneratedToday || 0],
         ["QR redeemed", live.qrRedeemedToday || 0],
         ["Suspicious QR", live.suspiciousQrToday || 0],
-        ["Deal conversion", `${Number(revenue.conversionRate || 0).toFixed(1)}%`]
+        ["Deal conversion", `${Number(live.qrGeneratedToday ? (live.qrRedeemedToday || 0) / live.qrGeneratedToday * 100 : 0).toFixed(1)}%`]
       ];
       host.innerHTML = items.map(([label, value]) => `
         <div class="stat"><strong>${displayText(value)}</strong><span>${displayText(label)}</span></div>

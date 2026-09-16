@@ -363,9 +363,7 @@ export async function getAdminDealActivity(client: DancrClient, filters: Record<
       suspicious,
       venues(id, name),
       dancer_profiles(id, stage_name),
-      club_deals(id, deal_title),
-      commission_events(id, status, amount_cents, dancer_share_bps, gross_commission_cents, platform_amount_cents, payable_at, paid_at, audit),
-      deal_revenue_events(id, status, gross_commission_cents, venue_payment_reference, venue_payment_received_at)
+      club_deals(id, deal_title)
     `,
     )
     .order("generated_at", { ascending: false })
@@ -381,15 +379,7 @@ export async function getAdminDealActivity(client: DancrClient, filters: Record<
   const { data, error } = await query;
   if (error) throw error;
 
-  let activity = data || [];
-  if (filters.commissionStatus) {
-    activity = activity.filter((item: any) => {
-      const commission = readJoinedFirst(item.commission_events);
-      return commission?.status === filters.commissionStatus;
-    });
-  }
-
-  return activity;
+  return data || [];
 }
 
 export function toClubDeal(row: any): ClubDeal {

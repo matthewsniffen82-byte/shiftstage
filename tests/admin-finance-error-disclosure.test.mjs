@@ -51,28 +51,16 @@ function harness(job,{errors=[privateMessage],refreshFails=false,customer=false,
     return {status:response.status,body:await response.json()};
   }};
 }
-for(const job of jobs.slice(0,1))for(const refreshFails of [false,true])for(const errors of [[privateMessage],[privateMessage,{message:privateMessage,details:privateMessage}],[]])test(job[0]+' conceals '+errors.length+' aggregate errors with refresh '+String(!refreshFails),async()=>{
-  const h=harness(job,{errors,refreshFails}),r=await h.send();
-  assert.equal(r.status,200);assert.equal(r.body.ok,true);assert.equal(r.body.session,null);
-  const {errors:messages,...counts}=r.body.result;
-  assert.deepEqual(counts,job[2]);assert.equal(messages.length,errors.length);
-  for(const message of messages)assert.match(message,/Check current invoice and payout states before retrying/);
-  assert.doesNotMatch(JSON.stringify([r.body,h.logs]),/finance-canary|Synthetic private|\/srv\/config/);
-  assert.deepEqual(h.calls.map(c=>c.name),[...job[1],'refresh']);
-  assert.deepEqual(h.summary.errors,errors,'Sanitizing responses does not mutate the internal outcome');
-  if(refreshFails){assert.equal(r.body.financeRefreshRequired,true);assert.equal('finance' in r.body,false);assert.equal(h.logs.length,1);assert.equal(h.logs[0][1].code,'08006');}
-  else{assert.deepEqual(r.body.finance,h.finance);assert.equal('financeRefreshRequired' in r.body,false);}
-});
 for(const [option,status] of [['noAuth',401],['customer',403]])test('finance error handling preserves '+option+' denial before all actions',async()=>{
   const h=harness(jobs[0],{[option]:true}),r=await h.send();assert.equal(r.status,status);assert.deepEqual(h.calls,[]);
 });
 test('invalid finance commands never reach automation or reporting',async()=>{
-  const h=harness(jobs[0]),r=await h.send({action:'unsupported'});assert.equal(r.status,400);assert.deepEqual(h.calls,[]);
+  const h=harness(jobs[0]),r=await h.send({action:'unsupported'});assert.equal(r.status,410);assert.deepEqual(h.calls,[]);
 });
-for (const job of jobs.slice(1)) test(job[0] + ' is retired without dispatch or financial mutation', async () => {
+for (const job of jobs) test(job[0] + ' is retired without dispatch or financial mutation', async () => {
   const h = harness(job), r = await h.send();
   assert.equal(r.status, 410);
   assert.equal(r.body.ok, false);
-  assert.match(r.body.error, /program has ended/);
+  assert.match(r.body.error, /subscription only/);
   assert.deepEqual(h.calls, []);
 });
