@@ -91,11 +91,24 @@
       }
     }
 
+    function updateDancerPasswordRequirements() {
+      const input = document.getElementById("dancerPassword");
+      const requirements = document.getElementById("dancerPasswordRequirements");
+      if (!input || !requirements) return;
+      const password = input.value;
+      const met = [password.length >= 6, /[A-Z]/.test(password), /[0-9]/.test(password), /[\p{P}\p{S}]/u.test(password)];
+      requirements.querySelectorAll("li").forEach((item, index) => {
+        item.classList.toggle("is-met", met[index]);
+        item.setAttribute("aria-label", `${item.textContent.trim()}: ${met[index] ? "met" : "not yet met"}`);
+      });
+    }
+
     function clearDancerSignupFields() {
       ["dancerLegalName", "dancerStageName", "dancerEmail", "dancerPassword"].forEach((id) => {
         const input = document.getElementById(id);
         if (input) input.value = "";
       });
+      updateDancerPasswordRequirements();
       const dancerCity = document.getElementById("dancerCity");
       if (dancerCity) dancerCity.value = "";
       pendingDancerSignupCity = "";

@@ -4180,6 +4180,14 @@
       box-shadow: inset 0 0 16px rgba(0,0,0,.28);
     }
 
+    #dancerPasswordRequirements li.is-met {
+      color: #4ade80;
+    }
+
+    #dancerPasswordRequirements li.is-met::marker {
+      content: "\2713  ";
+    }
+
     .password-wrap {
       position: relative;
       display: flex;
@@ -55327,11 +55335,24 @@
       }
     }
 
+    function updateDancerPasswordRequirements() {
+      const input = document.getElementById("dancerPassword");
+      const requirements = document.getElementById("dancerPasswordRequirements");
+      if (!input || !requirements) return;
+      const password = input.value;
+      const met = [password.length >= 6, /[A-Z]/.test(password), /[0-9]/.test(password), /[\p{P}\p{S}]/u.test(password)];
+      requirements.querySelectorAll("li").forEach((item, index) => {
+        item.classList.toggle("is-met", met[index]);
+        item.setAttribute("aria-label", `${item.textContent.trim()}: ${met[index] ? "met" : "not yet met"}`);
+      });
+    }
+
     function clearDancerSignupFields() {
       ["dancerLegalName", "dancerStageName", "dancerEmail", "dancerPassword"].forEach((id) => {
         const input = document.getElementById(id);
         if (input) input.value = "";
       });
+      updateDancerPasswordRequirements();
       const dancerCity = document.getElementById("dancerCity");
       if (dancerCity) dancerCity.value = "";
       pendingDancerSignupCity = "";
@@ -64934,6 +64955,17 @@
         statusId: "adminLiveStatus"
       });
     });
+
+    const dancerSignupPassword = document.getElementById("dancerPassword");
+    ["input", "change", "focus"].forEach((eventName) => {
+      dancerSignupPassword?.addEventListener(eventName, updateDancerPasswordRequirements);
+    });
+    dancerSignupPassword?.form?.addEventListener("reset", () => {
+      // The reset event fires before the browser restores the input's value.
+      window.setTimeout(updateDancerPasswordRequirements, 0);
+    });
+    window.addEventListener("pageshow", updateDancerPasswordRequirements);
+    updateDancerPasswordRequirements();
 
     document.querySelectorAll("[data-password-toggle]").forEach((button) => {
       button.addEventListener("click", () => {

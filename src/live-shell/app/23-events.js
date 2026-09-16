@@ -988,6 +988,17 @@
       });
     });
 
+    const dancerSignupPassword = document.getElementById("dancerPassword");
+    ["input", "change", "focus"].forEach((eventName) => {
+      dancerSignupPassword?.addEventListener(eventName, updateDancerPasswordRequirements);
+    });
+    dancerSignupPassword?.form?.addEventListener("reset", () => {
+      // The reset event fires before the browser restores the input's value.
+      window.setTimeout(updateDancerPasswordRequirements, 0);
+    });
+    window.addEventListener("pageshow", updateDancerPasswordRequirements);
+    updateDancerPasswordRequirements();
+
     document.querySelectorAll("[data-password-toggle]").forEach((button) => {
       button.addEventListener("click", () => {
         const input = document.getElementById(button.dataset.passwordToggle);
