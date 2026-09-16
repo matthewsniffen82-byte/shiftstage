@@ -7,7 +7,7 @@ export const staticAssetVersions = {
   "/mobile-social-strip.css": "b1a1f47e8eda7853",
   "/mydancr-api-transport.js": "636f003f2c75ed9f",
   "/mydancr-push-device.js": "c7b92c0d314d4614",
-  "/mydancr-push-invitations.js": "d74457de5f48f11f",
+  "/mydancr-push-invitations.js": "3c2c36d9c7c83d0a",
   "/mydancr-push-invitations.css": "08800760580e4e42",
   "/mydancr-performance.js": "210984b837afd43a",
   "/mydancr-icon.svg": "4d4c3f9efbc0e491",

@@ -90,7 +90,9 @@
       card.setAttribute("aria-label", "Notification invitation");
       const heading = document.createElement("h2"), message = document.createElement("p");
       heading.textContent = copy[1];
-      message.textContent = enabled ? "Notifications are enabled on this device." : !delivery.pushAvailable ? "Push notifications are not available yet." : support || copy[2];
+      message.textContent = !delivery.pushAvailable
+        ? "Push alerts are currently unavailable. " + (enabled ? "You can still turn off notifications on this device." : "Check MyDancr for new messages and updates.")
+        : enabled ? "Notifications are enabled on this device." : support || copy[2];
       message.setAttribute("role", "status");
       const actions = document.createElement("div"); actions.className = "mydancr-push-invitation-actions";
       const enable = document.createElement("button"), dismiss = document.createElement("button");
@@ -132,7 +134,8 @@
           } else close();
         } finally { if (current === active) dismiss.disabled = false; }
       };
-      actions.append(enable, dismiss); card.append(heading, message, actions);
+      if (enabled || delivery.pushAvailable) actions.append(enable);
+      actions.append(dismiss); card.append(heading, message, actions);
       document.body.append(card);
       current = { card, id };
       remember(id, historyMoment);

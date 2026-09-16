@@ -124,6 +124,26 @@ test("manual settings remain available after dismissal and can disable this devi
   assert.equal(f.buttons()[0].textContent, "Disable on this device"); await f.buttons()[0].onclick();
   assert.ok(f.calls.includes("unsubscribe"));
 });
+
+test("unconfigured manual settings explain the fallback without offering enrollment", async () => {
+  const f = fixture({ configured: false }); await f.offer("settings");
+  assert.match(f.card().children[1].textContent, /currently unavailable.*Check MyDancr/);
+  assert.equal(f.buttons().length, 1);
+  assert.equal(f.buttons()[0].textContent, "Close");
+  assert.ok(!f.calls.includes("permission"));
+  f.buttons()[0].onclick();
+  assert.equal(f.nodes.length, 0);
+});
+
+test("a subscribed device can still opt out while the provider is unavailable", async () => {
+  const f = fixture({ role: "venue", configured: false, enabled: true }); await f.offer("settings");
+  assert.match(f.card().children[1].textContent, /currently unavailable.*turn off/);
+  assert.doesNotMatch(f.card().children[1].textContent, /are enabled/);
+  assert.equal(f.buttons()[0].textContent, "Disable on this device");
+  await f.buttons()[0].onclick();
+  assert.ok(f.calls.includes("unsubscribe"));
+  assert.ok(!f.calls.includes("permission"));
+});
 test("the discovery module is generated from the same enrollment implementation as the dashboards", () => {
   const input = readFileSync(new URL("../src/lib/dancr/customer-push.ts", import.meta.url), "utf8");
   const expected = "// Generated from src/lib/dancr/customer-push.ts. Do not edit.\n" + ts.transpileModule(input, {

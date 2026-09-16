@@ -72,14 +72,16 @@ try {
       await context.addInitScript(()=>{if(!sessionStorage.getItem('syntheticGuest')&&!localStorage.getItem('dancrAuthSessionV1'))localStorage.setItem('dancrAuthSessionV1',JSON.stringify({accessToken:'synthetic-token',account:{id:'96000000-0000-4000-8000-000000000001',role:'customer'}}));});
       const page=await context.newPage(), errors=[]; page.on('pageerror',e=>{errors.push(e.message);console.error('Synthetic UI runtime error:',e.message);});
       if(process.argv.includes('--push-only')) {
-        let role='customer';const writes=[];
+        let role='customer', configured=true, notificationFailure=false, notificationUser=id(1);const writes=[];
         await page.addInitScript(()=>{
           window.__permissionRequests=0;window.__pushOptIn=false;
           Object.defineProperty(window,'Notification',{configurable:true,value:{permission:'default',requestPermission:async()=>{window.__permissionRequests++;Notification.permission='granted';return 'granted';}}});
           Object.defineProperty(navigator,'serviceWorker',{configurable:true,value:{getRegistration:async()=>({scope:location.origin+'/push/onesignal/',pushManager:{getSubscription:async()=>window.__pushOptIn?{unsubscribe:async()=>{window.__pushOptIn=false;}}:null}})}});
           window.PushManager ||= function(){};
         });
-        await page.route('**/api/notifications',route=>route.fulfill({json:{ok:true,pushUserId:id(1),notificationDelivery:{pushAvailable:true,pushAppId:'synthetic-app',pushExternalId:'synthetic-private-alias'}}}));
+        await page.route('**/api/notifications',route=>route.fulfill(notificationFailure
+          ? {status:503,json:{ok:false,error:'Synthetic notification outage'}}
+          : {json:{ok:true,pushUserId:notificationUser,notificationDelivery:{pushAvailable:configured,...(configured?{pushAppId:'synthetic-app',pushExternalId:'synthetic-private-alias'}:{})}}}));
         await page.route('**/api/customer/profile',route=>{writes.push(route.request().postDataJSON());return route.fulfill({json:{ok:true,profile:{notificationSettings:{pushEnabled:true}}}});});
         await page.route('https://cdn.onesignal.com/**',route=>route.fulfill({contentType:'text/javascript',body:`
           const subscription={optedIn:false,id:'',optIn:async()=>{subscription.optedIn=true;subscription.id='synthetic-subscription';window.__pushOptIn=true;},optOut:async()=>{window.__pushOptIn=false;},addEventListener(){},removeEventListener(){}};
@@ -90,12 +92,33 @@ try {
           return route.fulfill({json:{ok:true,role,consented:true,request:{id:id(20),status:'requested',party_size:2,requested_at:new Date().toISOString(),expires_at:'2099-09-15T00:00:00Z',venue:{name:'Test Club'}},requests:[],phoneRequests:[],venues:[],messages:[],events:[],reports:[],evidence:[],...(path.endsWith('/settings')?{venues:[]}: {})}});
         });
         for(const nextRole of ['customer','venue']) {
-          role=nextRole;
+          role=nextRole;configured=false;
           await page.goto(base+'/?mode=dashboard');
           await page.getByText('No active pickup requests.',{exact:true}).waitFor();
           await page.evaluate(role=>localStorage.setItem('dancrAuthSessionV1',JSON.stringify({accessToken:'synthetic',account:{id:'96000000-0000-4000-8000-000000000001',role}})),role);
           await page.goto(base+'/?mode=chat');
           const control=page.getByRole('complementary',{name:'Pickup notifications'});
+          await control.getByText('Push alerts are currently unavailable. Keep checking Pickup chats for new messages.',{exact:true}).waitFor();
+          assert.equal(await control.getByRole('button',{name:'Enable pickup notifications',exact:true}).count(),0);
+          assert.equal(await page.locator('.mydancr-push-invitation').count(),0);
+          assert.equal(await page.evaluate(()=>window.__permissionRequests),0);
+          await page.screenshot({path:resolve(root,`.next-club-pickup/${name}-${role}-push-unavailable.png`),fullPage:true});
+          // Manual settings cannot offer a dead-end enrollment either.
+          await page.evaluate(()=>window.dispatchEvent(new CustomEvent('mydancr:push-invitation',{detail:{moment:'settings'}})));
+          await page.locator('.mydancr-push-invitation').getByText(/currently unavailable.*Check MyDancr/).waitFor();
+          assert.equal(await page.locator('.mydancr-push-invitation').getByRole('button',{name:'Enable notifications',exact:true}).count(),0);
+          await page.locator('.mydancr-push-invitation').getByRole('button',{name:'Close',exact:true}).click();
+          await page.evaluate(()=>{for(const key of Object.keys(localStorage))if(key.startsWith('mydancr:push-invitations:'))localStorage.removeItem(key);});
+          await page.goto(base+'/?mode=inbox');
+          await control.getByText(/Push alerts are currently unavailable/).waitFor();
+          assert.equal(await control.getByRole('button').count(),0);
+          if(role==='venue'){
+            await page.goto(base+'/?mode=dashboard');
+            await control.getByText(/Push alerts are currently unavailable/).waitFor();
+            assert.equal(await control.getByRole('button').count(),0);
+          }
+          configured=true;
+          await page.goto(base+'/?mode=chat');
           await control.getByRole('button',{name:'Enable pickup notifications',exact:true}).waitFor();
           // Dismissing the automatic invitation must not hide the manual control.
           const invitation=page.locator('.mydancr-push-invitation');
@@ -116,17 +139,35 @@ try {
           await control.getByRole('button',{name:'Manage pickup notifications',exact:true}).waitFor();
           assert.equal(await page.evaluate(()=>window.__permissionRequests),1);
           await invitation.getByRole('button',{name:'Done',exact:true}).click();
+          configured=false;
+          await page.evaluate(()=>window.dispatchEvent(new Event('focus')));
+          await control.getByText(/Push alerts are currently unavailable/).waitFor();
           await control.getByRole('button',{name:'Manage pickup notifications',exact:true}).click();
+          await invitation.getByText(/currently unavailable.*turn off notifications/).waitFor();
           await invitation.getByRole('button',{name:'Disable on this device',exact:true}).click();
-          await control.getByRole('button',{name:'Enable pickup notifications',exact:true}).waitFor();
+          await invitation.getByText('Notifications are off on this device.',{exact:true}).waitFor();
+          await control.getByRole('button',{name:'Manage pickup notifications',exact:true}).waitFor({state:'hidden'});
+          await control.getByText(/Push alerts are currently unavailable/).waitFor();
+          assert.equal(await control.getByRole('button').count(),0);
           await invitation.getByRole('button',{name:'Done',exact:true}).click();
+          configured=true;notificationFailure=true;
+          await page.evaluate(()=>window.dispatchEvent(new Event('focus')));
+          await control.getByText(/Unable to check push availability/).waitFor();
+          assert.equal(await control.getByRole('button',{name:'Enable pickup notifications',exact:true}).count(),0);
+          notificationFailure=false;notificationUser=id(2);
+          await control.getByRole('button',{name:'Retry notification check',exact:true}).click();
+          await control.getByText(/Unable to check push availability/).waitFor();
+          assert.equal(await control.getByRole('button',{name:'Enable pickup notifications',exact:true}).count(),0);
+          notificationUser=id(1);
+          await control.getByRole('button',{name:'Retry notification check',exact:true}).click();
+          await control.getByRole('button',{name:'Enable pickup notifications',exact:true}).waitFor();
           await page.goto(base+'/?mode=inbox');await page.getByRole('button',{name:'Enable pickup notifications',exact:true}).waitFor();
           await page.getByText('No pickup requests in this group.',{exact:true}).waitFor();
           if(role==='venue'){await page.goto(base+'/?mode=dashboard');await page.getByRole('button',{name:'Enable pickup notifications',exact:true}).waitFor();await page.getByText('No active pickup requests.',{exact:true}).waitFor();}
         }
         assert.equal(writes.length,1,'only customer opt-in changes customer preferences');
         assert.deepEqual(errors,[]);
-        console.log(JSON.stringify({browser:name,pickupPushControls:true,customerAndVenue:true,inbox:true,dashboard:true,dismissedInvitationRetry:true,explicitPermission:true,enabledState:true,disableDevice:true,iphoneHomeScreenGuidance:name==='iphone',runtimeErrors:errors}));
+        console.log(JSON.stringify({browser:name,pickupPushControls:true,customerAndVenue:true,inbox:true,dashboard:true,unavailableProvider:true,failedCheckRetry:true,accountMismatch:true,dismissedInvitationRetry:true,explicitPermission:true,enabledState:true,disableWhileUnavailable:true,iphoneHomeScreenGuidance:name==='iphone',runtimeErrors:errors}));
         continue;
       }
       if(process.argv.includes('--dashboard-only')) {
