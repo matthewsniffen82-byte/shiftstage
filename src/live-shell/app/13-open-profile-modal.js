@@ -801,6 +801,7 @@
       if (dealPassOverlayOpen) document.body.classList.add("deal-pass-overlay-open");
       document.body.classList.toggle("overlay-open", overlayOpen);
       if (!dealPassOverlayOpen) document.body.classList.remove("deal-pass-overlay-open");
+      document.documentElement.classList.toggle("deal-pass-overlay-open", dealPassOverlayOpen);
       document.body.classList.toggle("dashboard-overlay-open", dashboardOverlayOpen);
       document.body.classList.toggle("account-creation-overlay-open", accountCreationOverlayOpen);
       document.body.classList.toggle("customer-auth-overlay-open", customerAuthOverlayOpen);

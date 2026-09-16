@@ -181,6 +181,12 @@
       overflow: hidden;
     }
 
+    /* The root has its own mobile scroll container; a body-only lock leaves it scrollable. */
+    html.deal-pass-overlay-open {
+      overflow: hidden;
+      overscroll-behavior: none;
+    }
+
     body.overlay-open.deal-pass-overlay-open {
       height: auto;
       min-height: 100vh;
@@ -55061,6 +55067,7 @@
       if (dealPassOverlayOpen) document.body.classList.add("deal-pass-overlay-open");
       document.body.classList.toggle("overlay-open", overlayOpen);
       if (!dealPassOverlayOpen) document.body.classList.remove("deal-pass-overlay-open");
+      document.documentElement.classList.toggle("deal-pass-overlay-open", dealPassOverlayOpen);
       document.body.classList.toggle("dashboard-overlay-open", dashboardOverlayOpen);
       document.body.classList.toggle("account-creation-overlay-open", accountCreationOverlayOpen);
       document.body.classList.toggle("customer-auth-overlay-open", customerAuthOverlayOpen);

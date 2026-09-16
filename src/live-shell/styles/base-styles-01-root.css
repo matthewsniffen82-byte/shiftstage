@@ -93,6 +93,12 @@
       overflow: hidden;
     }
 
+    /* The root has its own mobile scroll container; a body-only lock leaves it scrollable. */
+    html.deal-pass-overlay-open {
+      overflow: hidden;
+      overscroll-behavior: none;
+    }
+
     body.overlay-open.deal-pass-overlay-open {
       height: auto;
       min-height: 100vh;

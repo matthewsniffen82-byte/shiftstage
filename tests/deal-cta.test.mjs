@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFile } from "./helpers/dashboard-test-fs-promises.mjs";
 import test from "node:test";
 
-const [deals, dealRedemptionActions, tapRoute, cashierRedemption, redemptionAttribution, dealCard, passPage, venuePage, venueDirectory, dancerPage, tvSource, tvClient, discoveryRoute, customerDashboard, liveApp, retiredPassRoute, retiredVenueQrRoute, dealCopy, demoDeals, atomicNfcMigration] = await Promise.all([
+const [deals, dealRedemptionActions, tapRoute, cashierRedemption, redemptionAttribution, dealCard, passPage, venuePage, venueDirectory, dancerPage, tvSource, tvClient, discoveryRoute, customerDashboard, liveApp, admissionPassRoute, retiredVenueQrRoute, dealCopy, demoDeals, atomicNfcMigration] = await Promise.all([
   readFile(new URL("../src/lib/dancr/deals.ts", import.meta.url), "utf8"),
   readFile(new URL("../src/lib/dancr/deal-redemption-actions.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/api/nfc/[token]/route.ts", import.meta.url), "utf8"),
@@ -25,9 +25,9 @@ const [deals, dealRedemptionActions, tapRoute, cashierRedemption, redemptionAttr
   readFile(new URL("../supabase/migrations/202608190001_phase_zero_atomic_nfc_redemption.sql", import.meta.url), "utf8"),
 ]);
 
-test("dancer-attributed cashier taps require a verified current shift and preserve locked attribution", () => {
+test("legacy attribution helpers remain shift-verified while guest cashier redemption stays retired", () => {
   assert.match(deals, /export async function getVerifiedActiveCheckInAtVenue/);
-  assert.match(tapRoute, /completeCashierDealRedemption/);
+  assert.doesNotMatch(tapRoute, /completeCashierDealRedemption/);
   assert.match(cashierRedemption, /resolveDealRedemptionAttribution/);
   assert.doesNotMatch(tapRoute, /verifyDancerDealAttributionToken|getVerifiedActiveCheckInAtVenue/);
   assert.match(redemptionAttribution, /verifyDancerDealAttributionToken/);
@@ -38,7 +38,7 @@ test("dancer-attributed cashier taps require a verified current shift and preser
   assert.match(cashierRedemption, /campaignSource: "venue_nfc"/);
 });
 
-test("Club Deal selection snapshots customer-facing terms before atomic NFC confirmation", () => {
+test("legacy deal snapshots remain readable and pass pages render the current admission flow", () => {
   assert.match(cashierRedemption, /dealTitle: deal\.dealTitle/);
   assert.match(cashierRedemption, /dealDescription: deal\.dealDescription/);
   assert.match(cashierRedemption, /dealTerms: deal\.dealTerms/);
@@ -55,7 +55,7 @@ test("Club Deal selection snapshots customer-facing terms before atomic NFC conf
   assert.match(deals, /readIssuedDealSnapshot/);
   assert.match(deals, /dealSnapshot \? dealSnapshot\.dealTitle/);
   assert.match(deals, /dealSnapshot \? dealSnapshot\.dealTerms/);
-  assert.match(passPage, /Legacy Club Deal pass/);
+  assert.match(passPage, /<AdmissionPassClient token=\{token\} initialRedemption=\{redemption\} qrImage=\{qrImage\}/);
 });
 
 test("venue pages, venue cards, dancer profiles, and TV expose real active Club Deals", () => {
@@ -82,7 +82,7 @@ test("venue and dancer cards consistently label Club Deal states while TV render
   assert.doesNotMatch(liveApp, /actionButtonLabel\("qr", "NFC(?: Deal)?"\)|home-tv-feed-deal-count">NFC/);
 });
 
-test("customers explicitly select an exact offer and dancer token until the physical cashier tap", () => {
+test("customers explicitly select an exact offer and dancer token before choosing transportation", () => {
   assert.match(dealCard, /mydancrPendingNfcDealV2/);
   assert.match(dealCard, /dealId: activeDeal\.id/);
   assert.match(dealCard, /sourceType/);
@@ -93,9 +93,10 @@ test("customers explicitly select an exact offer and dancer token until the phys
   assert.doesNotMatch(dealCard, /QRCode\.toDataURL|import QRCode/);
 });
 
-test("Club Deal checkout uses a short cashier instruction across both public experiences", () => {
+test("Club Deal checkout explains transportation and staff scanning across both public experiences", () => {
   for (const source of [dealCard, liveApp]) {
-    assert.match(source, /When you reach the cashier, unlock your phone and hold it near the MyDancr sticker/);
+    assert.match(source, /then choose your transportation/);
+    assert.match(source, /Show your admission pass to door staff for scanning/);
     assert.match(source, /Use free admission/);
     assert.doesNotMatch(source, /<strong>Tap &ldquo;Use this deal&rdquo;<\/strong>/);
     assert.doesNotMatch(source, /Only this venue’s registered cashier sticker can complete redemption/);
@@ -106,18 +107,20 @@ test("Club Deal checkout uses a short cashier instruction across both public exp
   assert.doesNotMatch(demoDeals, /terms: .*Cashier NFC confirmation is required/);
 });
 
-test("selected Club Deals show a pending tap without a misleading success button", () => {
+test("prepared Club Deals link to the admission pass without claiming successful redemption", () => {
   for (const source of [dealCard, liveApp]) {
-    assert.match(source, /Ready for your cashier tap/);
-    assert.match(source, /When you reach the cashier, unlock your phone and hold it near the MyDancr sticker/);
+    assert.match(source, /Your admission pass is ready/);
+    assert.match(source, /Show your admission pass to door staff for scanning/);
     assert.doesNotMatch(source, /Ready at Cashier ✓/);
   }
   const readyMarkup = dealCard.match(/const dialogContent = intentState === "ready" \?([\s\S]*?)\) : \(/)?.[1] || "";
   assert.match(readyMarkup, /club-deal-ready-instructions/);
+  assert.match(readyMarkup, /href=\{admissionPassUrl\}>Show admission pass/);
   assert.doesNotMatch(readyMarkup, /<button|club-deal-primary-dock/);
   assert.match(liveApp, /availableContent\.hidden = state === "ready"/);
   assert.match(liveApp, /readyContent\.hidden = state !== "ready"/);
-  assert.match(liveApp, /primaryDock\.hidden = state === "ready"/);
+  assert.match(liveApp, /primaryDock\.hidden = false/);
+  assert.match(liveApp, /selectButton\.textContent = "Show admission pass"/);
 });
 
 test("mobile Club Deal checkout fits the complete cashier flow into the phone viewport", () => {
@@ -149,10 +152,11 @@ test("multiple live non-alcohol offers stay selectable without external liquor b
   assert.doesNotMatch(dealCard, /bottle_service|activeDeal\.bookingUrl|Continue to club booking/);
 });
 
-test("the canonical live shell uses cashier NFC instead of generating customer QR images", () => {
+test("the canonical live shell directs guests to the issued admission pass for staff scanning", () => {
   assert.match(liveApp, /mydancrPendingNfcDealV2/);
-  assert.match(liveApp, /Ready for your cashier tap/);
-  assert.match(liveApp, /When you reach the cashier, unlock your phone and hold it near the MyDancr sticker/);
+  assert.match(liveApp, /Your admission pass is ready/);
+  assert.match(liveApp, /Show your admission pass to door staff for scanning/);
+  assert.match(liveApp, /window\.location\.assign\(ready\.passUrl\)/);
   assert.doesNotMatch(liveApp, /fetch\("\/api\/deals\/redemptions",\s*\{\s*method:\s*"POST"/);
   assert.doesNotMatch(liveApp, /<img src="\$\{pass\.qrImageUrl\}"/);
 });
@@ -177,9 +181,9 @@ test("signed-in customer dashboards retain saved Club Deal state without owning 
   assert.doesNotMatch(liveApp, /Saved Club Deals will appear here after you choose an offer/);
 });
 
-test("legacy QR issuance endpoints are explicitly retired instead of silently accepting writes", () => {
-  assert.match(retiredPassRoute, /status: 410/);
-  assert.match(retiredPassRoute, /cashier sticker/);
+test("guest issuance creates admission passes while the legacy venue QR endpoint stays retired", () => {
+  assert.match(admissionPassRoute, /return await createAdmissionPass\(request, body\)/);
+  assert.match(admissionPassRoute, /readBoundedJsonObject/);
   assert.match(retiredVenueQrRoute, /status: 410/);
   assert.match(retiredVenueQrRoute, /tap stickers/);
 });
