@@ -5,7 +5,6 @@ import { MAX_DANCER_PROFILE_PHOTOS } from "@/src/lib/dancr/media-limits";
 import { mediaReviewLabel } from "@/src/lib/dancr/media-review-label";
 import DancerMediaPinButton from "./DancerMediaPinButton";
 import { requestDancerMediaPin } from "./dashboard-session";
-import { cropProfilePhoto } from "./profile-photo-crop";
 import { readSession, requestDancerPhotosJson, requestDancerProfileJson } from "./dashboard-session";
 import type { LoadState, DancerPhotoItem, DancerPhotoQueueItem } from "./dashboard-types";
 import { DANCER_PHOTOS_KEEP_OPEN_EVENT } from "./DashboardShared";
@@ -86,7 +85,7 @@ export function DancerPhotoPanel({
       const previewUrl = URL.createObjectURL(nextFile);
       queuedPreviewUrlsRef.current.add(previewUrl);
       const validType = nextFile.type.startsWith("image/");
-      const validSize = nextFile.size <= 25 * 1024 * 1024;
+      const validSize = nextFile.size > 0 && nextFile.size <= 25 * 1024 * 1024;
       return {
         id: `${nextFile.name}:${nextFile.size}:${nextFile.lastModified}:${crypto.randomUUID()}`,
         file: nextFile,
@@ -94,12 +93,12 @@ export function DancerPhotoPanel({
         source,
         stage: validType && validSize ? "queued" : "failed",
         progress: 0,
-        error: !validType ? "Choose a JPEG, PNG, WebP, HEIC, or HEIF image." : !validSize ? "Photos must be 25 MB or smaller." : undefined,
+        error: !validType ? "Choose a JPEG, PNG, WebP, HEIC, or HEIF image." : !nextFile.size ? "That photo is empty. Choose another photo." : !validSize ? "Photos must be 25 MB or smaller." : undefined,
       } satisfies DancerPhotoQueueItem;
     });
     const omitted = files.length - selectedFiles.length;
     setQueuedPhotos((current) => [...current, ...additions]);
-    setStatus(`${additions.length} ${additions.length === 1 ? "photo" : "photos"} selected. Crop each photo before it uploads${omitted ? `. ${omitted} exceeded the available profile slots.` : "."}`);
+    setStatus(`${additions.length} ${additions.length === 1 ? "photo" : "photos"} selected.${omitted ? ` ${omitted} exceeded the available profile slots.` : ""}`);
     const uploadable = additions.filter((item) => !item.error);
     if (uploadable.length) void uploadPhotoBatch(uploadable);
   }
@@ -189,28 +188,14 @@ export function DancerPhotoPanel({
     try {
       for (let index = 0; index < batch.length; index += 1) {
         if (!isCurrentPhotoAction(requestId, controller)) return;
-        let item = batch[index];
+        const item = batch[index];
         let uploadSortOrder = item.uploadSortOrder;
         setUploadingQueueItemId(item.id);
-        updateQueuedPhoto(item.id, { stage: "cropping", progress: 5, error: undefined });
-        setStatus(`Crop photo ${index + 1} of ${batch.length} to fit the card.`);
+        updateQueuedPhoto(item.id, { stage: "uploading", progress: 5, error: undefined });
+        setStatus(`Uploading photo ${index + 1} of ${batch.length}...`);
         try {
           if (workingPhotos.length >= MAX_DANCER_PROFILE_PHOTOS) {
             throw new Error("No profile photo slot is available for this photo.");
-          }
-          const cropped = await cropProfilePhoto(item.file, controller.signal);
-          if (!isCurrentPhotoAction(requestId, controller)) return;
-          if (!cropped) {
-            failedItems.push(...batch.slice(index).map((remaining) => ({ ...remaining, stage: "failed" as const, progress: 0, error: "Crop canceled. Retry when you are ready to frame this photo." })));
-            break;
-          }
-          if (cropped !== item.file) {
-            const previewUrl = URL.createObjectURL(cropped);
-            queuedPreviewUrlsRef.current.add(previewUrl);
-            queuedPreviewUrlsRef.current.delete(item.previewUrl);
-            URL.revokeObjectURL(item.previewUrl);
-            item = { ...item, file: cropped, previewUrl };
-            updateQueuedPhoto(item.id, { file: cropped, previewUrl });
           }
           if (!deletionsPersisted) {
             await persistQueuedPhotoDeletions(controller.signal);
@@ -476,7 +461,7 @@ export function DancerPhotoPanel({
               <div className="photo-preview" style={{ backgroundImage: `url(${item.previewUrl})` }} />
               <span>
                 <strong>{`Selected photo ${index + 1}`}</strong>
-                <small>{item.stage === "cropping" ? "Framing photo" : item.stage === "uploading" ? "Uploading" : item.stage === "checking" ? "Checking" : item.error?.startsWith("Crop canceled") ? "Crop canceled" : item.error ? "Upload failed" : "Waiting to upload"}</small>
+                <small>{item.stage === "uploading" ? "Uploading" : item.stage === "checking" ? "Checking" : item.error ? "Upload failed" : "Waiting to upload"}</small>
                 {item.stage !== "failed" ? <progress aria-label={`Photo ${index + 1} upload progress`} max="100" value={item.progress} /> : null}
                 {item.error ? <em>{item.error}</em> : null}
                 <span className="photo-queue-actions">

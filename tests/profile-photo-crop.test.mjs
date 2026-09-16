@@ -39,12 +39,12 @@ test("crop preview measures the existing TV card CSS instead of inventing anothe
   assert.match(fs.readFileSync("app/dashboard/profile-photo-crop.ts", "utf8"), /versionedStaticAssetUrl\("\/profile-photo-crop\.js"\)/);
 });
 
-test("crop is confirmed before the dashboard sends the actual moderated photo", () => {
+test("dashboard photos upload directly without opening the manual crop editor", () => {
   const batch = dashboard.split("  async function uploadPhotoBatch(")[1].split("  async function pinPhoto(")[0];
-  assert.ok(batch.indexOf("await cropProfilePhoto(item.file, controller.signal)") < batch.indexOf("persistQueuedPhotoDeletions(controller.signal)"));
-  assert.ok(batch.indexOf("await cropProfilePhoto(item.file, controller.signal)") < batch.indexOf('formData.set("file", item.file)'));
-  assert.match(batch, /item = \{ \.\.\.item, file: cropped, previewUrl \}/);
-  assert.match(batch, /if \(!cropped\) \{[^]*?batch\.slice\(index\)[^]*?break;/);
+  assert.doesNotMatch(batch, /cropProfilePhoto|cropped|Crop canceled/);
+  assert.match(batch, /formData\.set\("file", item\.file\)/);
+  assert.ok(batch.indexOf("persistQueuedPhotoDeletions(controller.signal)") < batch.indexOf('formData.set("file", item.file)'));
+  assert.match(batch, /await requestDancerPhotosJson\(/);
   assert.match(batch, /const uploadKey = `\$\{item\.id\}:gallery`/);
 });
 

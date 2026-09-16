@@ -211,7 +211,7 @@ export type DancerPhotoQueueItem = {
   file: File;
   previewUrl: string;
   source: "gallery" | "camera";
-  stage: "queued" | "cropping" | "uploading" | "checking" | "failed";
+  stage: "queued" | "uploading" | "checking" | "failed";
   progress: number;
   uploadSortOrder?: number;
   error?: string;

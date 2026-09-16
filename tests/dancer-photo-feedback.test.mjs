@@ -16,14 +16,14 @@ const approved = (id = "saved", sort = 1, primary = false) => ({ id, imageUrl: `
 const pending = (id = "review", sort = 1) => ({ id, previewUrl: `/${id}.jpg`, sort_order: sort });
 
 // Exercise the real upload handlers, state updates, and profile mapping without uploading user data.
-function photoHarness({ uploadOnly = false, profile = {}, crop = async file => file, pin = async (_kind, id, pinned) => ({ id, isPinned: pinned }), post = async () => ({ decision: "review", moderationRecordId: "review", photo: { id: "review", sortOrder: 1 } }), read = async () => ({ profile: { dancer_photos: [approved()] } }) } = {}) {
+function photoHarness({ uploadOnly = false, profile = {}, pin = async (_kind, id, pinned) => ({ id, isPinned: pinned }), post = async () => ({ decision: "review", moderationRecordId: "review", photo: { id: "review", sortOrder: 1 } }), read = async () => ({ profile: { dancer_photos: [approved()] } }) } = {}) {
   const slots = [], posts = [], reads = [], profiles = [], pins = [], crops = [];
   let cursor = 0, effects = [], dirty = true, tree;
   const exports = {};
   runInNewContext(code, {
     exports, ...mediaReview, MAX_DANCER_PROFILE_PHOTOS: 30, DancerMediaPinButton: "MediaPinButton",
     requestDancerMediaPin: (...args) => { pins.push(args); return pin(...args); },
-    cropProfilePhoto: (...args) => { crops.push(args); return crop(...args); },
+    cropProfilePhoto: (...args) => { crops.push(args); throw new Error("Uploads must not open the manual crop editor."); },
     require: () => ({ jsx: (type, props) => ({ type, props }), jsxs: (type, props) => ({ type, props }) }),
     useState(initial) {
       const index = cursor++;
@@ -65,8 +65,9 @@ function photoHarness({ uploadOnly = false, profile = {}, crop = async file => f
     get statuses() { return this.cards.map(card => nodes(card).find(node => node.type === "small").props.children); },
     get notes() { return nodes().filter(node => node.type === "em").map(node => node.props.children); },
     get buttons() { return nodes().filter(node => node.type === "button"); },
-    select(files = [new File(["fixture"], "solo.jpg", { type: "image/jpeg" })]) {
-      nodes().find(node => node.props?.["aria-label"] === "Choose profile photos from your library").props.onChange({ target: { files, value: "" } });
+    select(files = [new File(["fixture"], "solo.jpg", { type: "image/jpeg" })], source = "gallery") {
+      const label = source === "camera" ? "Take a new profile photo" : "Choose profile photos from your library";
+      nodes().find(node => node.props?.["aria-label"] === label).props.onChange({ target: { files, value: "" } });
       render();
     },
     updateProfile(next) { profile = next; dirty = true; render(); },
@@ -74,24 +75,52 @@ function photoHarness({ uploadOnly = false, profile = {}, crop = async file => f
   };
 }
 
-test("canceling the crop stops the batch without uploading or discarding selected photos", async () => {
-  const ui = photoHarness({ crop: async () => null });
+test("selecting several photos uploads the batch without opening a crop popup", async () => {
+  const ui = photoHarness();
   ui.select([new File(["first"], "first.jpg", { type: "image/jpeg" }), new File(["second"], "second.jpg", { type: "image/jpeg" })]);
   await ui.settle();
-  assert.equal(ui.crops.length, 1);
-  assert.equal(ui.posts.length, 0);
-  assert.equal(ui.reads.length, 0);
-  assert.equal(ui.cards.length, 2);
-  assert.equal(ui.buttons.filter(button => button.props.children === "Retry").length, 2);
+  assert.equal(ui.crops.length, 0);
+  assert.equal(ui.posts.length, 2);
+  assert.equal(ui.reads.length, 1);
+  assert.deepEqual(await Promise.all(ui.posts.map(post => post.body.get("file").text())), ["first", "second"]);
+  assert.equal(ui.buttons.filter(button => button.props.children === "Retry").length, 0);
 });
 
-test("the confirmed crop bytes are uploaded, not the unframed original", async () => {
-  const cropped = new File(["confirmed-crop"], "solo-card.jpg", { type: "image/jpeg" });
-  const ui = photoHarness({ crop: async () => cropped });
+test("camera and library photos go directly to the moderated upload with their original bytes", async () => {
+  for (const source of ["camera", "gallery"]) {
+    const ui = photoHarness();
+    ui.select([new File(["original-photo"], "solo.jpg", { type: "image/jpeg" })], source);
+    await ui.settle();
+    assert.equal(ui.crops.length, 0);
+    assert.equal(ui.posts.length, 1);
+    assert.equal(await ui.posts[0].body.get("file").text(), "original-photo");
+    assert.equal(ui.posts[0].body.get("file").name, "solo.jpg");
+  }
+});
+
+test("failed uploads retry the same original photo without a crop dialog or new upload key", async () => {
+  let attempts = 0;
+  const ui = photoHarness({ post: async () => {
+    if (++attempts === 1) throw new Error("Connection lost.");
+    return { decision: "approved", photo: approved() };
+  } });
   ui.select(); await ui.settle();
-  assert.equal(ui.crops.length, 1);
-  assert.equal(await ui.posts[0].body.get("file").text(), "confirmed-crop");
-  assert.equal(ui.posts[0].body.get("file").name, "solo-card.jpg");
+  ui.buttons.find(button => button.props.children === "Retry").props.onClick();
+  await ui.settle();
+  assert.equal(ui.crops.length, 0);
+  assert.equal(ui.posts.length, 2);
+  assert.equal(ui.posts[0].headers["idempotency-key"], ui.posts[1].headers["idempotency-key"]);
+  assert.equal(await ui.posts[1].body.get("file").text(), "fixture");
+  assert.deepEqual(ui.statuses, ["Approved"]);
+});
+
+test("empty or unsupported files remain in the upload card without opening a popup or uploading", async () => {
+  const ui = photoHarness();
+  ui.select([new File([], "empty.jpg", { type: "image/jpeg" }), new File(["text"], "note.txt", { type: "text/plain" })]);
+  await ui.settle();
+  assert.equal(ui.crops.length, 0);
+  assert.equal(ui.posts.length, 0);
+  assert.deepEqual(ui.statuses, ["Upload failed", "Upload failed"]);
 });
 
 test("fresh approval replaces a locally checking photo even when the review and saved photo have different IDs", async () => {
