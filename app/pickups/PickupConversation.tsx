@@ -21,6 +21,7 @@ export function pickupTime(value: string) {
 function Conversation({ requestId }: { requestId: string }) {
   const [detail, setDetail] = useState<PickupDetail | null>(null), [error, setError] = useState(""), [busy, setBusy] = useState(false);
   const [text, setText] = useState(""), [connected, setConnected] = useState(false), [reportOpen, setReportOpen] = useState(false), [notice, setNotice] = useState("");
+  const [savedOnDevice, setSavedOnDevice] = useState(false);
   const [statusChoice, setStatusChoice] = useState<PickupStatus | "">(""), [reason, setReason] = useState("");
   const messagesRef = useRef<HTMLDivElement>(null), nearBottom = useRef(true), locked = useRef(false), mounted = useRef(false);
   const refreshRef = useRef<() => Promise<void>>(async () => {}), retry = useRef<{ id: string; text: string } | null>(null);
@@ -45,7 +46,7 @@ function Conversation({ requestId }: { requestId: string }) {
         const next: PickupDetail = await requestPickupJson(path, { signal: controller.signal });
         if (!cancelled) {
           if (next.guest) {
-            rememberGuestPickup({ id: requestId, key: guestPickupKey(requestId), venue: next.request.venue?.name || "Club pickup", savedAt: Date.parse(next.request.requested_at) });
+            setSavedOnDevice(rememberGuestPickup({ id: requestId, key: guestPickupKey(requestId), venue: next.request.venue?.name || "Club pickup", savedAt: Date.parse(next.request.requested_at) }));
             setConnected(true);
           }
           setDetail(previous => {
@@ -139,16 +140,15 @@ function Conversation({ requestId }: { requestId: string }) {
     } catch (failure) { if (mounted.current) setError(failure instanceof Error ? failure.message : "Unable to load older messages."); }
     finally { locked.current = false; if (mounted.current) setBusy(false); }
   }
-  if (!detail) return <section className="pickup-card"><Link href="/pickups">‹ Pickup requests</Link><h1>Club Pickup</h1>{error ? <><p role="alert">{error}</p><button onClick={() => void refreshRef.current()}>Retry</button></> : <p role="status">Loading your conversation…</p>}</section>;
+  if (!detail) return <section className="pickup-card"><Link href="/pickups">‹ Pickup chats</Link><h1>Club Pickup</h1>{error ? <><p role="alert">{error}</p><button onClick={() => void refreshRef.current()}>Retry</button></> : <p role="status">Loading your conversation…</p>}</section>;
   const r = detail.request, closed = pickupClosed(r.status) || Date.parse(r.expires_at) <= Date.now();
   const venueName = r.venue?.name || "Venue";
   return <section className="pickup-card pickup-conversation">
-    <header><Link href="/pickups">‹ Pickup requests</Link><h1>{venueName}</h1><p className="pickup-status">{PICKUP_STATUS_LABELS[r.status]}</p>
-      <p className="pickup-subtle">{closed ? "Conversation closed · history remains available" : connected ? "Live conversation" : "Reconnecting · checking for updates"}</p>
+    <header><Link href="/pickups">‹ Pickup chats</Link><h1>{venueName}</h1><p className="pickup-status">{PICKUP_STATUS_LABELS[r.status]}</p>
+      <p className="pickup-subtle">{closed ? "Conversation closed · history remains available" : connected ? (detail.guest ? "Checking for replies automatically" : "Live conversation") : "Reconnecting · checking for updates"}</p>
     </header>
-    {detail.guest ? <p className="pickup-subtle">Keep this chat open for pickup updates. Push alerts are available for pickups requested while signed in.</p>
+    {detail.guest ? <p className="pickup-subtle pickup-saved-hint">{savedOnDevice ? <>Saved in this browser. Return through <Link href="/pickups">Pickup chats</Link> on the homepage.</> : "Your browser couldn’t save this chat. Keep this page open or bookmark its address to return."}</p>
       : detail.role !== "admin" && <PickupPushNotifications role={detail.role} />}
-    {detail.guest && <p className="pickup-subtle">No sign-in needed. Keep this page open for replies.</p>}
     <details className="pickup-details"><summary>Pickup details · {r.party_size} {r.party_size === 1 ? "guest" : "guests"}</summary>
       <p>{r.pickup_location_text}</p>{r.pickup_location_details && <p>{r.pickup_location_details}</p>}{r.customer_notes && <p>{r.customer_notes}</p>}
       <p>Requested {pickupTime(r.requested_at)} · Expires {pickupTime(r.expires_at)}</p><p>{PICKUP_TRANSPORT_NOTICE}</p>
@@ -166,13 +166,14 @@ function Conversation({ requestId }: { requestId: string }) {
       <div className="pickup-messages" ref={messagesRef} aria-label="Pickup messages" onScroll={() => { const node = messagesRef.current; if (node) nearBottom.current = node.scrollHeight - node.scrollTop - node.clientHeight < 100; }}>
         {detail.hasOlderMessages && <button disabled={busy} onClick={() => void loadOlder()}>Load older messages</button>}
         {detail.messages.map(message => <article key={message.id} className={`pickup-message pickup-message-${message.sender_type}`}>
-          <strong>{message.sender_type === "system" ? "Pickup update" : message.sender_type === "venue" ? venueName : detail.role === "customer" ? "You" : "Customer"}</strong>
-          <p>{message.message_text}</p><time dateTime={message.created_at}>{pickupTime(message.created_at)}</time>
+          <div className="pickup-message-meta"><strong>{message.sender_type === "system" ? "Pickup update" : message.sender_type === "venue" ? venueName : detail.role === "customer" ? "You" : "Customer"}</strong>
+            <time dateTime={message.created_at}>{pickupTime(message.created_at)}</time></div>
+          <p>{message.message_text}</p>
         </article>)}
       </div>
       {!closed && detail.role !== "admin" && <form className="pickup-composer" onSubmit={send}>
         <label htmlFor="pickup-message">Message {detail.role === "customer" ? venueName : "customer"}</label>
-        <textarea id="pickup-message" maxLength={2000} rows={2} value={text} onChange={event => setText(event.target.value)} disabled={busy} required />
+        <textarea id="pickup-message" placeholder="Type your message…" maxLength={2000} rows={2} value={text} onChange={event => setText(event.target.value)} disabled={busy} required />
         <button className="pickup-primary" type="submit" disabled={busy || !text.trim()}>{busy ? "Sending…" : "Send message"}</button>
       </form>}
       {!closed && detail.role !== "admin" && <section className="pickup-actions"><h2>Update pickup</h2>

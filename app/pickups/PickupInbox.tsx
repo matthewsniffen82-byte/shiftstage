@@ -15,14 +15,20 @@ export default function PickupInbox() {
 function SavedGuestChats({ standalone }: { standalone: boolean }) {
   const links = savedGuestPickups();
   if (!standalone && !links.length) return null;
-  return <section className="pickup-card">
+  return <section className="pickup-card pickup-saved-chats">
     {standalone && <Link href="/?view=venues">‹ Browse clubs</Link>}
-    {standalone ? <h1>Pickup Requests</h1> : <h2>Guest chats on this device</h2>}
-    <p>No sign-in needed. Open a saved chat below, or request pickup from a club with pickup chat enabled.</p>
-    {!links.length && <p>No guest chats are saved on this device. If you already requested pickup, open your private chat link.</p>}
-    <div className="pickup-list">{links.map(link => <Link prefetch={false} className="pickup-list-item" key={link.id} href={guestPickupHref(link.id, link.key)}>
-      <strong>{link.venue}</strong><span>Open pickup chat</span><time dateTime={new Date(link.savedAt).toISOString()}>{new Date(link.savedAt).toLocaleString()}</time>
-    </Link>)}</div>
+    {standalone ? <h1>Pickup chats</h1> : <h2>Guest chats on this device</h2>}
+    <p className="pickup-saved-intro">Your chats are saved in this browser. No sign-in needed.</p>
+    {links.length ? <>
+      <p className="pickup-saved-count">{links.length} saved {links.length === 1 ? "chat" : "chats"} · Newest first</p>
+      <div className="pickup-list">{links.map(link => <Link prefetch={false} className="pickup-list-item pickup-saved-chat" key={link.id} href={guestPickupHref(link.id, link.key)}>
+        <span className="pickup-chat-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M20 11.5a8 8 0 0 1-8 8 9 9 0 0 1-3.5-.7L4 20l1.2-4.5a9 9 0 0 1-.7-3.5 8 8 0 0 1 8-8H13a7 7 0 0 1 7 7z" /><path d="M8.5 10h7M8.5 13.5h4" /></svg></span>
+        <span className="pickup-saved-chat-copy"><strong>{link.venue}</strong>
+          <time dateTime={new Date(link.savedAt).toISOString()}>Requested {new Date(link.savedAt).toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}</time>
+          <span className="pickup-chat-open">Open chat <span aria-hidden="true">→</span></span>
+        </span>
+      </Link>)}</div>
+    </> : <div className="pickup-empty-chats"><h2>No saved chats yet</h2><p>Choose a club with pickup chat enabled to start a conversation.</p><Link className="pickup-button" href="/?view=venues">Find a club</Link></div>}
   </section>;
 }
 function Inbox({ role }: { role: PickupRole }) {

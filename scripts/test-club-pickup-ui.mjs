@@ -344,8 +344,12 @@ try {
       }
       await page.setViewportSize({width:393,height:850});await page.screenshot({path:resolve(root,`.next-club-pickup/guest-chat-${name}.png`),fullPage:true});
       await page.reload();await page.getByText('Guest chat without an account',{exact:true}).waitFor();
-      await page.goto(base+'/?mode=inbox');await page.getByRole('heading',{name:'Pickup Requests',exact:true}).waitFor();
-      assert.equal(await page.getByRole('link',{name:/Test Club Open pickup chat/}).count(),3);
+      await page.goto(base+'/?mode=inbox');await page.getByRole('heading',{name:'Pickup chats',exact:true}).waitFor();
+      assert.equal(await page.getByRole('link',{name:/Test Club Requested .*Open chat/}).count(),3);
+      for(const width of [320,393,1280]) {
+        await page.setViewportSize({width,height:850});assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false,`${name} saved chats ${width} overflow`);
+      }
+      await page.setViewportSize({width:393,height:850});await page.screenshot({path:resolve(root,`.next-club-pickup/saved-chats-${name}.png`),fullPage:true});
       // A fresh browser can open only the private fragment link, with no account or prior storage.
       await page.evaluate(()=>localStorage.removeItem('mydancrGuestPickupsV1'));
       await page.goto(guestUrl.href);await page.getByText('Guest chat without an account',{exact:true}).waitFor();
@@ -438,7 +442,7 @@ try {
       await page.getByRole('button',{name:'Load more phone requests',exact:true}).click();await page.getByText('Test Club · Second Phone Guest',{exact:true}).waitFor();
       assert.equal(await page.locator('article.pickup-list-item').count(),2);
       await page.evaluate(()=>localStorage.removeItem('dancrAuthSessionV1'));await page.clock.fastForward(1100);
-      await page.getByText('No sign-in needed. Open a saved chat below, or request pickup from a club with pickup chat enabled.',{exact:true}).waitFor();assert.equal(await page.locator('article.pickup-list-item').count(),0);
+      await page.getByText('Your chats are saved in this browser. No sign-in needed.',{exact:true}).waitFor();assert.equal(await page.locator('article.pickup-list-item').count(),0);
       await page.evaluate(()=>localStorage.setItem('dancrAuthSessionV1',JSON.stringify({accessToken:'synthetic-venue',account:{id:'96000000-0000-4000-8000-000000000003',role:'venue'}})));
       await page.goto(base+'/?mode=dashboard');await page.getByRole('heading',{name:'Recent phone pickup requests',exact:true}).waitFor();
       assert.equal(await page.getByText('No active pickup requests.',{exact:true}).count(),0);
