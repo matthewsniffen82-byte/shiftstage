@@ -191,7 +191,7 @@ test("profile setup editors use the compact shared modal shell without changing 
 
   assert.match(dashboard, /\.dancer-profile-builder-panel\.dancer-profile-editor-modal,[\s\S]*?width:100%; max-height:min\(88dvh,720px,calc\(100dvh - var\(--mydancr-preview-banner-offset,0px\) - 16px\)\);/);
   assert.match(dashboard, /\.dancer-profile-editor-modal-actions \{[^}]*grid-template-columns:minmax\(0,1fr\) minmax\(132px,190px\)/);
-  assert.match(dashboard, /activeEditorSection === "identity" \? "Save" : "Done"/);
+  assert.match(dashboard, /isIdentityEditor \? "Save" : "Done"/);
   assert.match(dashboard, /\.dancer-profile-preview-overlay\.is-editor \.dancer-profile-editor-footer \{ bottom:max\(8px,env\(safe-area-inset-bottom\)\); width:calc\(100% - 16px\);/);
   assert.doesNotMatch(dashboard, /editorTitle/);
   assert.match(dashboard, /disabled=\{isEditorSaving \|\| isPhotoDeleting \|\| !requirementsComplete\}/);
@@ -230,7 +230,8 @@ test("step one uses accessible live-profile add targets that preserve the active
   assert.match(dashboard, /"Add city"/);
   assert.match(dashboard, /<DancerProfileMediaUploads[\s\S]*?onOpen=\{\(section\) => \{[\s\S]*?openEditorSection\(section\);/);
   assert.match(dashboard, /aria-label="Add social links"/);
-  assert.match(dashboard, /onClick=\{\(\) => openEditorSection\("identity"\)\}/);
+  assert.match(dashboard, /data-profile-editor-trigger="stageName" onClick=\{\(\) => openEditorSection\("stageName"\)\}/);
+  assert.match(dashboard, /data-profile-editor-trigger="city" onClick=\{\(\) => openEditorSection\("city"\)\}/);
   assert.match(dashboard, /onClick=\{\(\) => openEditorSection\("avatar"\)\}/);
   assert.match(dashboard, /photos: photoContent,[\s\S]*?videos: videoContent/);
   assert.match(dashboard, /onClick=\{\(\) => openSocialEditor\(platform\.key\)\}/);

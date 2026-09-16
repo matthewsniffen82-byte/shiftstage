@@ -108,8 +108,9 @@ export function DancerPanel({
     onProfileChange?.(data.profile);
   }, [onProfileChange]);
 
-  const identityContent = (
+  const identityContent = (field?: keyof DancerIdentityDraft) => (
     <DancerSetupPanel
+      field={field}
       deletedPhotoIds={deletedPhotoIds}
       deletedPhotoStoragePaths={deletedPhotoStoragePaths}
       onDeletedPhotoIdsSaved={() => {
@@ -145,7 +146,9 @@ export function DancerPanel({
   );
   const videoContent = <DancerTvStudio embedded uploadOnly />;
   const profileEditorSections: DancerProfileEditorSections = {
-    identity: identityContent,
+    identity: identityContent(),
+    stageName: identityContent("stageName"),
+    city: identityContent("city"),
     avatar: avatarContent,
     photos: photoContent,
     videos: videoContent,
@@ -557,6 +560,7 @@ function DancerDealPanel({ deals }: { deals?: LoadState["deals"] }) {
 function DancerSetupPanel({
   deletedPhotoIds = [],
   deletedPhotoStoragePaths = [],
+  field,
   onDeletedPhotoIdsSaved,
   onDraftChange,
   onProfileChange,
@@ -565,6 +569,7 @@ function DancerSetupPanel({
 }: {
   deletedPhotoIds?: string[];
   deletedPhotoStoragePaths?: string[];
+  field?: keyof DancerIdentityDraft;
   onDeletedPhotoIdsSaved?: () => void;
   onDraftChange?: (draft: DancerIdentityDraft) => void;
   onProfileChange?: (profile: Record<string, unknown>) => void;
@@ -769,8 +774,8 @@ function DancerSetupPanel({
 
     try {
       const payload = {
-        stageName,
-        city,
+        ...(field !== "city" ? { stageName } : {}),
+        ...(field !== "stageName" ? { city } : {}),
         deletedPhotoIds: idsToDelete,
         deletedPhotoStoragePaths: storagePathsToDelete,
       };
@@ -810,8 +815,21 @@ function DancerSetupPanel({
       if (unconfirmedDeletedIds.length) throw new Error("PROFILE_PHOTO_DELETE_COUNT_MISMATCH");
 
       if (data.profile) onProfileChange?.(data.profile);
-      draftDirtyRef.current = false;
-      window.localStorage.removeItem(draftKey);
+      const savedIdentity = {
+        stageName: persistedDancerStageName(data.profile),
+        city: String(data.profile?.city || "").trim(),
+      };
+      // Saving one field must not discard an unfinished draft in the other.
+      const nextDraft = {
+        stageName: field === "city" ? stageName : savedIdentity.stageName,
+        city: field === "stageName" ? city : savedIdentity.city,
+      };
+      draftDirtyRef.current = nextDraft.stageName !== savedIdentity.stageName || nextDraft.city !== savedIdentity.city;
+      if (draftDirtyRef.current) window.localStorage.setItem(draftKey, JSON.stringify(nextDraft));
+      else window.localStorage.removeItem(draftKey);
+      setStageName(nextDraft.stageName);
+      setCity(nextDraft.city);
+      onDraftChange?.(nextDraft);
       deletedPhotoIdsRef.current = [];
       deletedPhotoStoragePathsRef.current = [];
       onDeletedPhotoIdsSaved?.();
@@ -840,7 +858,7 @@ function DancerSetupPanel({
     <article className="info-panel setup-panel dancer-profile-identity-editor">
       {unifiedSave ? null : <h2>Setup</h2>}
       <form className="dancer-profile-identity-form" onSubmit={saveProfile}>
-        <label>
+        {field !== "city" ? <label>
           Stage name
           <input className="dancer-stage-name-input" type="text" value={stageName} minLength={2} maxLength={40} autoComplete="nickname" placeholder="Enter stage name" onChange={(event) => {
             draftDirtyRef.current = true;
@@ -848,8 +866,8 @@ function DancerSetupPanel({
             setSaveStatus("idle");
             setStatus("");
           }} required />
-        </label>
-        <label>
+        </label> : null}
+        {field !== "stageName" ? <label>
           City
           <select value={city} disabled={cityOptionsStatus !== "ready"} onChange={(event) => {
             draftDirtyRef.current = true;
@@ -863,10 +881,10 @@ function DancerSetupPanel({
             {cityOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
           </select>
           <small>{cityOptionsStatus === "error" ? "The live city list could not be loaded. Try again before saving." : "Choose from active MyDancr venue markets."}</small>
-        </label>
+        </label> : null}
         {unifiedSave ? null : (
           <div className="dancer-profile-form-actions">
-            <button className="dancer-profile-save-action primary-action" type="submit" disabled={saveStatus === "saving" || cityOptionsStatus !== "ready"}>
+            <button className="dancer-profile-save-action primary-action" type="submit" disabled={saveStatus === "saving" || (field !== "stageName" && cityOptionsStatus !== "ready")}>
               {saveStatus === "saving" ? "Saving..." : saveStatus === "saved" ? "Saved" : "Save profile"}
             </button>
             <button aria-label="Reload saved profile" className="dancer-profile-reload-action" type="button" onClick={hardResetProfile} disabled={isResetting || saveStatus === "saving"}>

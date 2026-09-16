@@ -91,6 +91,7 @@ export function DancerProfilePreview({
   const headerImage = isEditor ? avatarUrl : previewImage;
   const completedRequirements = builderRequirements?.filter((requirement) => requirement.complete).length || 0;
   const requirementsComplete = !builderRequirements?.length || completedRequirements === builderRequirements.length;
+  const isIdentityEditor = activeEditorSection === "identity" || activeEditorSection === "stageName" || activeEditorSection === "city";
   const closeActiveEditor = useCallback(() => {
     if (avatarUploadingRef.current) return;
     const platform = activeSocialPlatform;
@@ -342,7 +343,7 @@ export function DancerProfilePreview({
 
   async function finishActiveEditor() {
     if (!activeEditorSection || isSectionSaving || isAvatarUploading) return;
-    if (activeEditorSection !== "identity") {
+    if (!isIdentityEditor) {
       closeActiveEditor();
       return;
     }
@@ -427,7 +428,7 @@ export function DancerProfilePreview({
               <div className="profile-titlebar-identity">
                 <div>
                   {isEditor ? (
-                    <button aria-label={name?.trim() || persistedName ? `Edit stage name: ${name?.trim() || persistedName}` : "Add stage name"} className="dancer-profile-builder-identity" data-profile-editor-trigger="identity" onClick={() => openEditorSection("identity")} type="button">
+                    <button aria-label={name?.trim() || persistedName ? `Edit stage name: ${name?.trim() || persistedName}` : "Add stage name"} className="dancer-profile-builder-identity" data-profile-editor-trigger="stageName" onClick={() => openEditorSection("stageName")} type="button">
                       <span className="dancer-profile-builder-field-copy"><small>Stage name</small><span className="dancer-profile-builder-name" id="dancer-profile-preview-heading">{name?.trim() || persistedName || "Tap to add"}</span></span>
                       <svg aria-hidden="true" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6" /></svg>
                     </button>
@@ -435,7 +436,7 @@ export function DancerProfilePreview({
                 </div>
                 <div className="profile-titlebar-context">
                   {isEditor ? (
-                    <button aria-label={city?.trim() || persistedCity ? `Edit city: ${city?.trim() || persistedCity}` : "Add city"} className="dancer-profile-builder-city" data-profile-editor-trigger="identity" onClick={() => openEditorSection("identity")} type="button">
+                    <button aria-label={city?.trim() || persistedCity ? `Edit city: ${city?.trim() || persistedCity}` : "Add city"} className="dancer-profile-builder-city" data-profile-editor-trigger="city" onClick={() => openEditorSection("city")} type="button">
                       <span className="dancer-profile-builder-field-copy"><small>City</small><span>{city?.trim() || persistedCity || "Choose city"}</span></span>
                       <svg aria-hidden="true" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6" /></svg>
                     </button>
@@ -517,11 +518,11 @@ export function DancerProfilePreview({
                     <button aria-label={`Close ${activeEditorLabel} editor`} disabled={isSectionSaving || isAvatarUploading} onClick={closeActiveEditor} type="button"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18" /></svg></button>
                   </header>
                   <div className="dancer-profile-editor-modal-body"><AvatarUploadBusyContext.Provider value={reportAvatarBusy}>{activeEditorContent}</AvatarUploadBusyContext.Provider></div>
-                  {(["identity", "avatar", "photos", "videos"] as DancerProfileEditorSectionId[]).includes(activeEditorSection) ? (
+                  {(["identity", "stageName", "city", "avatar", "photos", "videos"] as DancerProfileEditorSectionId[]).includes(activeEditorSection) ? (
                     <footer className="dancer-profile-editor-modal-actions">
                       {sectionStatus ? <p role="status" aria-live="polite">{sectionStatus}</p> : <span />}
                       <button disabled={isSectionSaving || isAvatarUploading} onClick={() => void finishActiveEditor()} type="button">
-                        {isAvatarUploading ? "Please wait..." : isSectionSaving ? "Saving..." : activeEditorSection === "identity" ? "Save" : "Done"}
+                        {isAvatarUploading ? "Please wait..." : isSectionSaving ? "Saving..." : isIdentityEditor ? "Save" : "Done"}
                       </button>
                     </footer>
                   ) : null}
@@ -918,7 +919,7 @@ export function DancerOnboardingProfileMediaWorkspace({
   avatarContent: ReactNode;
   continueToReview: () => void;
   draftIdentity: DancerIdentityDraft;
-  identityContent: ReactNode;
+  identityContent: (field?: keyof DancerIdentityDraft) => ReactNode;
   photoContent: ReactNode;
   onProfileChange?: (profile: Record<string, unknown>) => void;
   profile?: LoadState["profile"];
@@ -986,7 +987,9 @@ export function DancerOnboardingProfileMediaWorkspace({
     { complete: photoState === "complete", label: "Profile photo", section: "photos", status: photoDetail },
   ];
   const editorSections: DancerProfileEditorSections = {
-    identity: identityContent,
+    identity: identityContent(),
+    stageName: identityContent("stageName"),
+    city: identityContent("city"),
     avatar: avatarContent,
     photos: photoContent,
     videos: videoContent,

@@ -906,6 +906,8 @@ export const DANCER_PROFILE_EDITOR_SAVE_EVENT = "mydancr:dancer-profile-editor-s
 
 export const DANCER_PROFILE_EDITOR_SECTION_LABELS: Record<DancerProfileEditorSectionId, string> = {
   identity: "Stage name & city",
+  stageName: "Stage name",
+  city: "City",
   avatar: "Upload avatar",
   photos: "Add photos",
   videos: "Add videos",

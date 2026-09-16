@@ -426,6 +426,9 @@ export async function PATCH(request: Request) {
     const update: Record<string, string | boolean> = {};
     if (Object.prototype.hasOwnProperty.call(body, "stageName")) {
       update.stage_name = normalizeDancerStageName(body.stageName);
+      // Record the explicit name choice even when city is saved separately.
+      // Publishing still requires both identity fields and the existing reviews.
+      update.identity_saved_at = new Date().toISOString();
     }
     if (typeof body.city === "string") {
       try {
@@ -434,9 +437,6 @@ export async function PATCH(request: Request) {
         if (error instanceof DancerSignupCityInputError) throw new ProfileInputError(error.message);
         throw error;
       }
-    }
-    if (Object.prototype.hasOwnProperty.call(body, "stageName") && typeof body.city === "string") {
-      update.identity_saved_at = new Date().toISOString();
     }
     if (typeof body.isPublic === "boolean") {
       if (!supportsIsPublic) {

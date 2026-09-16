@@ -167,7 +167,7 @@ export type DancerProfileEditorSaveRequest = {
 };
 
 
-export type DancerProfileEditorSectionId = "identity" | "avatar" | "photos" | "videos" | "socials";
+export type DancerProfileEditorSectionId = "identity" | "stageName" | "city" | "avatar" | "photos" | "videos" | "socials";
 
 
 export type DancerProfileSocialEditor = (
