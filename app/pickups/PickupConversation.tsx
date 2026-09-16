@@ -8,6 +8,8 @@ import { PICKUP_CHAT_NOTICE, PICKUP_CHAT_POLICY, PICKUP_CONSENT_VERSION, PICKUP_
 import { PickupAccountGate, requestPickupJson } from "./pickup-session";
 import { guestPickupKey, notifyGuestPickupRead, rememberGuestPickup } from "@/src/lib/dancr/pickup-guest-session";
 import PickupPushNotifications from "./PickupPushNotifications";
+import PickupVenueIdentity from "./PickupVenueIdentity";
+import PickupProgress from "./PickupProgress";
 
 export default function PickupConversation({ requestId }: { requestId: string }) {
   return <PickupAccountGate requestId={requestId}>{() => <Conversation requestId={requestId} />}</PickupAccountGate>;
@@ -144,8 +146,10 @@ function Conversation({ requestId }: { requestId: string }) {
   const r = detail.request, closed = pickupClosed(r.status) || Date.parse(r.expires_at) <= Date.now();
   const venueName = r.venue?.name || "Venue";
   return <section className="pickup-card pickup-conversation">
-    <header><Link href="/pickups">‹ Pickup chats</Link><h1>{venueName}</h1><p className="pickup-status">{PICKUP_STATUS_LABELS[r.status]}</p>
-      <p className="pickup-subtle">{closed ? "Conversation closed · history remains available" : connected ? (detail.guest ? "Checking for replies automatically" : "Live conversation") : "Reconnecting · checking for updates"}</p>
+    <header><Link href="/pickups">‹ Pickup chats</Link>
+      <PickupVenueIdentity key={`${r.venue_id}:${r.venue?.slug}`} id={r.venue_id} name={venueName} slug={r.venue?.slug} />
+      <PickupProgress request={r} />
+      {!closed && <p className="pickup-subtle pickup-connection">{connected ? (detail.guest ? "Checking for replies automatically" : "Live conversation") : "Reconnecting · checking for updates"}</p>}
     </header>
     {detail.guest ? <p className="pickup-subtle pickup-saved-hint">{savedOnDevice ? <>Saved in this browser. Return through <Link href="/pickups">Pickup chats</Link> on the homepage.</> : "Your browser couldn’t save this chat. Keep this page open or bookmark its address to return."}</p>
       : detail.role !== "admin" && <PickupPushNotifications role={detail.role} />}
@@ -154,12 +158,6 @@ function Conversation({ requestId }: { requestId: string }) {
       <p>Requested {pickupTime(r.requested_at)} · Expires {pickupTime(r.expires_at)}</p><p>{PICKUP_TRANSPORT_NOTICE}</p>
       {r.cancellation_reason && <p>Cancellation reason: {r.cancellation_reason}</p>}
     </details>
-    {detail.consented && detail.role !== "admin" && (!detail.guest || ["arrived", "completed"].includes(r.status)) && <section className="pickup-notice">
-      <p>{r.referral_outcome === "arrival_verified" ? "Arrival verified by venue NFC deal redemption." : r.referral_outcome === "arrival_disputed" ? "The linked redemption was reversed. Arrival attribution is under review." : "Arrival confirmations are recorded separately from verified venue NFC deal redemption."}</p>
-      {r.venue?.slug && <Link href={`/?venue=${encodeURIComponent(r.venue.slug)}`}>Open venue page &amp; Club Deals</Link>}
-      {["arrived", "completed"].includes(r.status) && !detail.evidence.some(e => e.source === `${detail.role}_confirmation`) &&
-        <button disabled={busy} onClick={() => void act({ action: "confirm_arrival" })}>{detail.role === "customer" ? "Confirm I arrived" : "Confirm customer arrived"}</button>}
-    </section>}
     {error && <p role="alert">{error}</p>}{notice && <p role="status">{notice}</p>}
     {!detail.consented ? <section className="pickup-notice"><h2>MyDancr Pickup Chat</h2><p>{PICKUP_CHAT_NOTICE}</p><p>{PICKUP_CHAT_POLICY}</p>
       <button className="pickup-primary" disabled={busy} onClick={() => void act({ action: "consent", version: PICKUP_CONSENT_VERSION })}>Agree &amp; Continue</button></section> : <>
@@ -176,7 +174,7 @@ function Conversation({ requestId }: { requestId: string }) {
         <textarea id="pickup-message" placeholder="Type your message…" maxLength={2000} rows={2} value={text} onChange={event => setText(event.target.value)} disabled={busy} required />
         <button className="pickup-primary" type="submit" disabled={busy || !text.trim()}>{busy ? "Sending…" : "Send message"}</button>
       </form>}
-      {!closed && detail.role !== "admin" && <section className="pickup-actions"><h2>Update pickup</h2>
+      {!closed && detail.role !== "admin" && pickupStatusActions(detail.role, r.status).length > 0 && <details className="pickup-details pickup-manage" open={detail.role === "venue" || undefined}><summary>Update pickup</summary><div className="pickup-actions">
         <label>Status<select aria-label="Status" value={statusChoice} disabled={busy} onChange={event => setStatusChoice(event.target.value as PickupStatus | "")}>
           <option value="">Choose an action</option>{pickupStatusActions(detail.role, r.status).map(status => <option key={status} value={status}>
             {status === "cancelled" ? (detail.role === "venue" && r.status === "requested" ? "Decline request" : "Cancel request") : status === "arrived" ? (detail.role === "customer" ? "I have arrived" : "Confirm customer arrived") : PICKUP_STATUS_LABELS[status]}</option>)}
@@ -185,7 +183,13 @@ function Conversation({ requestId }: { requestId: string }) {
         <button disabled={busy || !statusChoice || (statusChoice === "cancelled" && reason.trim().length < 3)} onClick={async () => {
           if (await act({ action: "status", status: statusChoice, expectedStatus: r.status, reason })) { setStatusChoice(""); setReason(""); }
         }}>Confirm update</button>
-      </section>}
+      </div></details>}
+      {detail.role !== "admin" && (!detail.guest || ["arrived", "completed"].includes(r.status)) && <details className="pickup-details" open={["arrived", "completed"].includes(r.status) || undefined}><summary>Arrival confirmation</summary>
+        <p>{r.referral_outcome === "arrival_verified" ? "Arrival verified by venue NFC deal redemption." : r.referral_outcome === "arrival_disputed" ? "The linked redemption was reversed. Arrival attribution is under review." : "Arrival confirmations are recorded separately from verified venue NFC deal redemption."}</p>
+        {r.venue?.slug && <Link href={`/?venue=${encodeURIComponent(r.venue.slug)}`}>Open venue page &amp; Club Deals</Link>}
+        {["arrived", "completed"].includes(r.status) && !detail.evidence.some(e => e.source === `${detail.role}_confirmation`) &&
+          <button disabled={busy} onClick={() => void act({ action: "confirm_arrival" })}>{detail.role === "customer" ? "Confirm I arrived" : "Confirm customer arrived"}</button>}
+      </details>}
       <details className="pickup-details"><summary>Chat notice &amp; policies</summary><p>{PICKUP_CHAT_NOTICE}</p><p>{PICKUP_CHAT_POLICY}</p><p>For immediate danger, contact emergency services. This chat is not an emergency service.</p></details>
     </>}
     {detail.role !== "admin" && <section className="pickup-report"><button onClick={() => setReportOpen(!reportOpen)} aria-expanded={reportOpen}>Report Conversation</button>

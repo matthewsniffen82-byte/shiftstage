@@ -175,6 +175,13 @@ try {
         console.log(JSON.stringify({browser:name,guestPickupDashboard:true,chatsBeforePhoneRequests:true,unreadCounts:true,focusRefresh:true,visibilityRefresh:true,reconnectRefresh:true,deduplicatedReads:true,errorRecovery:true,manualRefresh:true,cleanup:true,runtimeErrors:errors}));
         continue;
       }
+      let artwork='logo';
+      await page.route('**/api/public/venues/test-club',route=>{
+        assert.equal(route.request().headers()['x-pickup-guest-key'],undefined);
+        assert.equal(route.request().headers().authorization,undefined);
+        return route.fulfill({json:{ok:true,venue:{id:id(10),logoImageUrl:artwork==='logo'?'/synthetic-venue.svg':null,coverImageUrl:artwork==='cover'?'/synthetic-venue.svg':null}}});
+      });
+      await page.route('**/synthetic-venue.svg',route=>route.fulfill({contentType:'image/svg+xml',body:'<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64"><rect width="64" height="64" fill="#111118"/><text x="32" y="39" text-anchor="middle" font-size="22" fill="#f5f3ff">TC</text></svg>'}));
       let role='customer',consented=true,status='requested',failNextSend=true,failNextRequest=false;const actions=[],messages=[{id:id(30),sequence:1,sender_type:'system',message_text:'Pickup requested from the venue.',created_at:'2026-09-14T19:00:00Z'}];
       let showChats=true;const phoneRequests=[];
       let failNextGuest=false;const guestSubmissions=[];
@@ -331,6 +338,10 @@ try {
       guestUrl.searchParams.set('mode','chat');guestUrl.searchParams.set('requestId',guestId);
       await page.goto(guestUrl.href);
       await page.getByLabel('Message Test Club').waitFor();
+      await page.waitForFunction(()=>document.querySelector('.pickup-venue-image img')?.naturalWidth>0);
+      assert.match(await page.locator('.pickup-progress [aria-current=step]').textContent(),/Requested/);
+      assert.equal(await page.getByLabel('Status',{exact:true}).isVisible(),false,'customer status controls are collapsed below chat');
+      assert.equal(await page.getByRole('link',{name:'View club'}).getAttribute('href'),'/?venue=test-club');
       assert.equal(await page.getByRole('button',{name:'Copy private chat link',exact:true}).count(),0);
       await page.getByLabel('Message Test Club').fill('Guest chat without an account');
       failNextSend=false;
@@ -344,6 +355,10 @@ try {
       }
       await page.setViewportSize({width:393,height:850});await page.screenshot({path:resolve(root,`.next-club-pickup/guest-chat-${name}.png`),fullPage:true});
       await page.reload();await page.getByText('Guest chat without an account',{exact:true}).waitFor();
+      artwork='cover';await page.reload();await page.locator('.pickup-venue-image.is-cover img').waitFor();
+      artwork='none';await page.reload();await page.getByLabel('Message Test Club').waitFor();
+      assert.equal(await page.locator('.pickup-venue-image').textContent(),'TC','missing artwork falls back to venue initials');
+      artwork='logo';
       await page.goto(base+'/?mode=inbox');await page.getByRole('heading',{name:'Pickup chats',exact:true}).waitFor();
       assert.equal(await page.getByRole('link',{name:/Test Club Requested .*Open chat/}).count(),3);
       for(const width of [320,393,1280]) {
@@ -409,6 +424,7 @@ try {
       await page.evaluate(()=>window.__realtimeRefresh());await page.getByText('Reconnect history 59',{exact:true}).waitFor();
       await page.getByRole('button',{name:'Load older messages'}).click();await page.getByText('Pickup requested from the venue.',{exact:true}).waitFor();
       assert.equal(await page.locator('.pickup-message').count(),messages.length,'long-disconnect history has no gaps');
+      await page.locator('.pickup-manage summary').click();
       await page.getByLabel('Status',{exact:true}).selectOption('cancelled');await page.getByLabel('Reason',{exact:true}).fill('Plans changed');await page.getByRole('button',{name:'Confirm update'}).click();
       await page.getByText('Cancelled',{exact:true}).waitFor();assert.equal(await page.getByRole('button',{name:'Send message',exact:true}).count(),0);
       await page.getByRole('button',{name:'Report Conversation'}).click();await page.getByLabel('Details (optional)').fill('Synthetic report');await page.getByRole('button',{name:'Send report',exact:true}).click();await page.getByText('Your report was sent to MyDancr for review.').waitFor();
