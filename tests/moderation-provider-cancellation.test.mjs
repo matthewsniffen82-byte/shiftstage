@@ -54,22 +54,26 @@ function load(file, functions, timer, client, audioStream = { destroy() {} }) {
   const math = Object.create(Math);
   math.random = () => 0;
   return compile(selected.join("\n") + "\nexport { " + functions.join(", ") + " };", {
-    ...timer, Math: math, withTimeout: helper, safeErrorMetadata: () => ({}),
+    ...timer, Math: math, withTimeout: helper, withOpenAIRequestDeadline: helper, safeErrorMetadata: () => ({}),
     DANCR_IMAGE_MODERATION_MODEL: "omni-moderation-latest",
     VIDEO_TRANSCRIPTION_MODEL: "whisper-1", VIDEO_POLICY_MODEL: "gpt-4.1-mini",
     VIDEO_POLICY_REASON_CODES: ["safe_adult_promotional_content"],
     DANCR_MEDIA_IDENTITY_MODEL: "gpt-4o-mini", MEDIA_IDENTITY_TIMEOUT_MS: 30_000,
+    PHOTO_CONTENT_MODEL: "gpt-4o-mini", PHOTO_CONTENT_TIMEOUT_MS: 25_000,
     OPENAI_TIMEOUT_MS: 30_000, FRAME_MODERATION_TIMEOUT_MS: 12_000,
     FRAME_MODERATION_RETRY_DELAYS_MS: [350], openAITextDiagnostics: new WeakMap(),
     createReadStream: () => audioStream, createOpenAIClient: async () => client,
     getServerEnv: () => "synthetic-only", openAIRequestFailureDetails: () => ({}),
     parseDancerMediaIdentityAnalysis: value => value,
+    parseDancerPhotoContentAnalysis: value => value,
   });
 }
 
 const videoFunctions = ["moderateFrame", "withVideoProviderRetry", "isRetryableVideoProviderError",
   "providerErrorStatus", "providerErrorCode", "delay", "transcribeAudio", "moderateText", "classifyVideoPolicy"];
 const cases = [
+  ["photo content policy", "photo-content-policy.ts", ["analyzeDancerPhotoContent"], 1,
+    f => f.analyzeDancerPhotoContent({ buffer: Buffer.from("fixture"), contentType: "image/jpeg" })],
   ["video frame", "video-moderation.ts", videoFunctions, 2, (f, c) => f.moderateFrame(c, Buffer.from("fixture"), 0)],
   ["video transcript", "video-moderation.ts", videoFunctions, 1, (f, c) => f.transcribeAudio(c, "synthetic")],
   ["video text", "video-moderation.ts", videoFunctions, 1, (f, c) => f.moderateText(c, "fixture")],

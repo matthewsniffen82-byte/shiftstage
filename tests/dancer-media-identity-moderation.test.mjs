@@ -142,10 +142,11 @@ test("video uploads enforce one matching dancer across distributed frames", () =
     tvSource,
     /MODERATION_IDENTITY_PROFILE_FIELDS = `\$\{IDENTITY_PROFILE_FIELDS\}, avatar_storage_path`/,
   );
-  assert.doesNotMatch(
-    tvSource,
-    /PUBLIC_TV_SELECT[\s\S]{0,300}avatar_storage_path/,
-  );
+  // The feed needs the approved avatar to render its public image, but must
+  // keep the moderation-only profile field bundle out of its selection.
+  const publicSelection = tvSource.match(/const PUBLIC_TV_SELECT =\s*`([^`]+)`;/)?.[1];
+  assert.ok(publicSelection);
+  assert.doesNotMatch(publicSelection, /MODERATION_IDENTITY_PROFILE_FIELDS/);
   assert.match(tvSource, /throw new DancerIdentityReferenceRequiredError\(\)/);
   assert.match(
     tvSource,

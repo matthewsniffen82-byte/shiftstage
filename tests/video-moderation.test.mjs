@@ -178,7 +178,7 @@ test("temporary demo mode auto-approves without removing the AI moderation path"
   );
   assert.match(
     retryRoute,
-    /isVideoDemoAutoApproveMode[\s\S]*?\.in\("status", \["submitted", "moderating"\]\)[\s\S]*?autoApprovePendingMyDancrTvDemoVideo/,
+    /isVideoDemoAutoApproveMode[\s\S]*?\.or\("status.eq.moderating,and\(status.eq.submitted,moderation_attempt_count.lt.3\)"\)[\s\S]*?autoApprovePendingMyDancrTvDemoVideo/,
   );
   assert.match(
     tvSource,
@@ -197,7 +197,7 @@ test("video moderation decisions are durable, recoverable, and visible to dancer
   assert.match(retryRoute, /\.eq\("status", "moderating"\)/);
   assert.match(retryRoute, /retryMyDancrTvAutomatedModeration/);
   assert.deepEqual(JSON.parse(vercelConfig).crons.filter(({ path }) => path === "/api/cron/video-moderation"), [
-    { path: "/api/cron/video-moderation", schedule: "15 9 * * *" },
+    { path: "/api/cron/video-moderation", schedule: "2-59/5 * * * *" },
   ]);
   assert.match(studio, /Automated review:/);
   assert.match(studio, /video frames checked/);

@@ -20,6 +20,11 @@ import { validateAndPrepareDancrImage, type ValidatedDancrImage } from "./image-
 import { MAX_DANCER_PROFILE_PHOTOS } from "./media-limits";
 import { resolvePhotoPublicationIntent } from "./photo-publication-intent";
 import {
+  analyzeDancerPhotoContent,
+  applyDancerPhotoContentPolicy,
+  dancerPhotoContentCategoryFlags,
+} from "./photo-content-policy";
+import {
   analyzeDancerMediaIdentity,
   combineDancerMediaModeration,
   dancerMediaIdentityCategoryFlags,
@@ -174,20 +179,22 @@ export async function moderateAndStoreDancerPhoto(client: DancrClient, admin: Da
   let errorCode: string | null = null;
 
   try {
-    const [providerResult, identityAnalysis] = await Promise.all([
+    const [providerResult, identityAnalysis, contentAnalysis] = await Promise.all([
       moderateImageWithOpenAI(admin, tempPath),
       analyzeDancerMediaIdentity({
         targetImages: [image.buffer],
         mediaType: "photo",
         referenceImage: identityReference,
       }),
+      analyzeDancerPhotoContent(image),
     ]);
     categoryFlags = {
       ...(providerResult.categories || {}),
       ...dancerMediaIdentityCategoryFlags(identityAnalysis),
+      ...dancerPhotoContentCategoryFlags(contentAnalysis),
     };
     evaluation = combineDancerMediaModeration(
-      evaluateDancrImageModeration(providerResult),
+      applyDancerPhotoContentPolicy(evaluateDancrImageModeration(providerResult), contentAnalysis),
       evaluateDancerMediaIdentity(identityAnalysis, {
         referenceRequired: identityReferenceRequired,
       }),
@@ -355,20 +362,22 @@ export async function processImageModerationRetryRecord(admin: DancrClient, reco
     const identityReference = referencePath
       ? await loadApprovedDancerIdentityReference(admin, referencePath)
       : null;
-    const [providerResult, identityAnalysis] = await Promise.all([
+    const [providerResult, identityAnalysis, contentAnalysis] = await Promise.all([
       moderateImageWithOpenAI(admin, tempPath),
       analyzeDancerMediaIdentity({
         targetImages: [downloadedImage.buffer],
         mediaType: "photo",
         referenceImage: identityReference,
       }),
+      analyzeDancerPhotoContent(downloadedImage),
     ]);
     categoryFlags = {
       ...(providerResult.categories || {}),
       ...dancerMediaIdentityCategoryFlags(identityAnalysis),
+      ...dancerPhotoContentCategoryFlags(contentAnalysis),
     };
     const evaluation = combineDancerMediaModeration(
-      evaluateDancrImageModeration(providerResult),
+      applyDancerPhotoContentPolicy(evaluateDancrImageModeration(providerResult), contentAnalysis),
       evaluateDancerMediaIdentity(identityAnalysis, {
         referenceRequired: !isAvatar || Boolean(identityReference),
       }),
@@ -1142,6 +1151,9 @@ function galleryPublicationResponse(
 
 function photoRejectionMessage(reasonCodes: string[]) {
   const reasons = new Set((reasonCodes || []).map(String));
+  if (reasons.has("nudity_rejected") || reasons.has("explicit_sexual_content_rejected")) {
+    return "Nudity and sexual activity are not allowed. Choose a photo with intimate areas covered.";
+  }
   if (reasons.has("multiple_people_detected")) {
     return "Only you can appear in a profile photo. Choose a photo with no other people visible.";
   }
