@@ -211,6 +211,7 @@ export type DancerCard = {
   galleryPhotoSrcSets?: Array<string | null>;
   galleryPhotoIds?: string[];
   galleryPhotoLikeCounts?: number[];
+  galleryPhotoPins?: boolean[];
   socialLinks?: SocialLink[];
   currentRank: number | null;
   venueName: string | null;

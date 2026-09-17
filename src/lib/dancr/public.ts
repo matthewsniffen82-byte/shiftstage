@@ -470,6 +470,7 @@ function buildDancerCard(
       ),
       galleryPhotoIds: approvedPhotos.map((photo) => photo.id),
       galleryPhotoLikeCounts: approvedPhotos.map((photo) => photo.likeCount),
+      galleryPhotoPins: approvedPhotos.map((photo) => photo.isPinned),
       socialLinks: approvedSocialLinks(row),
       currentRank: score?.rank || null,
       venueName: venue?.name || null,
@@ -602,6 +603,7 @@ function approvedDancerPhotoSources(client: DancrClient, row: any) {
       ...image,
       id: String(photo.id || ""),
       likeCount: safeMetricCount(photo.like_count),
+      isPinned: photo.is_pinned === true,
     }] : [];
   });
 }

@@ -828,6 +828,7 @@ export function DancerPhotoCarousel({
       >
         {visibleItems.map((item, index) => (
           <div className="profile-media-grid-cell" key={`${item.kind}-${item.id}`}>
+            {item.kind === "photo" && item.isPinned ? <svg className="dancer-photo-pin-indicator" role="img" aria-label="Pinned photo" viewBox="0 0 24 24"><path d="m16 3 5 5-4 1-3 5-4-4 5-3 1-4Z" /><path d="m9 9 6 6M12 12l-7 7" /></svg> : null}
             <button
               aria-label={`Open ${stageName} ${item.kind} ${index + 1} of ${activeItems.length}`}
               className={`profile-media-grid-item is-${item.kind}`}

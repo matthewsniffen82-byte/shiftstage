@@ -848,6 +848,7 @@
         galleryPhotoSrcSets: Array.isArray(item.galleryPhotoSrcSets) ? item.galleryPhotoSrcSets : [],
         galleryPhotoIds: Array.isArray(item.galleryPhotoIds) ? item.galleryPhotoIds : [],
         galleryPhotoLikeCounts: Array.isArray(item.galleryPhotoLikeCounts) ? item.galleryPhotoLikeCounts : [],
+        galleryPhotoPins: Array.isArray(item.galleryPhotoPins) ? item.galleryPhotoPins : [],
         socialLinks,
         socials,
         shiftLabel: item.shiftLabel || "",

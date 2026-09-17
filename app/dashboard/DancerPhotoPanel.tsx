@@ -485,6 +485,7 @@ export function DancerPhotoPanel({
             <div className={`photo-saved-preview is-${photo.status}`} key={photo.id}>
               <div className="photo-saved-frame">
                 {photo.imageUrl ? <img alt={photo.label} loading="lazy" src={photo.imageUrl} /> : <span aria-hidden="true">▧</span>}
+                {photo.isPinned ? <svg className="dancer-photo-pin-indicator" role="img" aria-label="Pinned photo" viewBox="0 0 24 24"><path d="m16 3 5 5-4 1-3 5-4-4 5-3 1-4Z" /><path d="m9 9 6 6M12 12l-7 7" /></svg> : null}
                 <DancerMediaPinButton label={photo.label.toLowerCase()} available={photo.status === "approved"} pinned={photo.isPinned} busy={pinningPhotoId === photo.id} disabled={photoActionBusy} onClick={() => void pinPhoto(photo)} />
                 <button
                   aria-label={`${deletingPhotoIds.has(photo.id) ? "Deleting" : "Delete"} ${photo.label.toLowerCase()}`}

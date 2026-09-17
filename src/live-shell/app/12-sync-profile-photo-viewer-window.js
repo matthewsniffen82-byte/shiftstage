@@ -325,7 +325,8 @@
       if (submittedPhoto?.id) {
         return {
           mediaId: String(submittedPhoto.id),
-          likeCount: safePublicMediaLikeCount(submittedPhoto.likeCount || submittedPhoto.like_count)
+          likeCount: safePublicMediaLikeCount(submittedPhoto.likeCount || submittedPhoto.like_count),
+          isPinned: submittedPhoto.isPinned === true || submittedPhoto.is_pinned === true
         };
       }
       const galleryIndex = (profile?.galleryPhotoUrls || []).findIndex(
@@ -333,7 +334,8 @@
       );
       return galleryIndex >= 0 ? {
         mediaId: String(profile?.galleryPhotoIds?.[galleryIndex] || ""),
-        likeCount: safePublicMediaLikeCount(profile?.galleryPhotoLikeCounts?.[galleryIndex])
+        likeCount: safePublicMediaLikeCount(profile?.galleryPhotoLikeCounts?.[galleryIndex]),
+        isPinned: profile?.galleryPhotoPins?.[galleryIndex] === true
       } : { mediaId: "", likeCount: 0 };
     }
 
@@ -363,6 +365,7 @@
           index: offset,
           id: like.mediaId,
           likeCount: like.likeCount,
+          isPinned: like.isPinned === true,
           photoClass: portraitClass(baseIndex + offset),
           photoUrl,
           photoSrcSet: profilePhotoSrcSet(profile, photoUrl)
@@ -377,8 +380,9 @@
         ? `<img class="portrait ${escapeHtml(item.photoClass)} has-custom-photo" ${photoAttrs} sizes="(max-width: 720px) calc((100vw - 6px) / 3), 250px" width="360" height="504" alt="" aria-hidden="true" loading="${total <= PROFILE_MEDIA_PAGE_SIZE || galleryIndex < 6 ? "eager" : "lazy"}" fetchpriority="${galleryIndex < 3 ? "high" : "auto"}" decoding="async" draggable="false" data-image-state="loading">`
         : `<span class="portrait ${escapeHtml(item.photoClass)}"></span>`;
       return `
-        <button class="thumb ${galleryIndex === 0 ? "active" : ""}" type="button" data-profile-photo-index="${galleryIndex}" data-photo="${escapeHtml(item.photoClass)}" data-photo-url="${displayText(item.photoUrl)}" aria-label="Open gallery photo ${galleryIndex + 1} of ${total} in scrolling cards" aria-pressed="${galleryIndex === 0 ? "true" : "false"}">
+        <button class="thumb ${galleryIndex === 0 ? "active" : ""}" type="button" data-profile-photo-index="${galleryIndex}" data-photo="${escapeHtml(item.photoClass)}" data-photo-url="${displayText(item.photoUrl)}" aria-label="Open gallery photo ${galleryIndex + 1} of ${total} in scrolling cards${item.isPinned ? ", pinned" : ""}" aria-pressed="${galleryIndex === 0 ? "true" : "false"}">
           ${photoMarkup}
+          ${item.isPinned ? '<svg class="dancer-photo-pin-indicator" aria-hidden="true" viewBox="0 0 24 24"><path d="m16 3 5 5-4 1-3 5-4-4 5-3 1-4Z" /><path d="m9 9 6 6M12 12l-7 7" /></svg>' : ""}
         </button>
       `;
     }
