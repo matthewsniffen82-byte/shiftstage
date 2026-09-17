@@ -227,6 +227,11 @@
       return liveNotifications.filter(isVisibleAfterNotificationClear);
     }
 
+    function visibleNavigationNotifications() {
+      return visibleLiveNotifications().filter((notification) => !isDancerSession()
+        || (notification.type !== "approval_status" && notification.type !== "tv_video_status"));
+    }
+
     function notificationCenterMarkup() {
       if (liveNotificationsState === "loading") {
         return '<div class="locked" role="status">Loading notifications…</div>';
@@ -417,9 +422,9 @@
 
     function customerQuickNotificationItems() {
       const notifications = visibleLiveNotifications();
-      return notifications.slice(0, 5).map((notification, index) => ({
+      return visibleNavigationNotifications().slice(0, 5).map((notification) => ({
         id: notification.id,
-        index,
+        index: notifications.indexOf(notification),
         unread: !notification.readAt,
         title: notification.title || "Dancr notification",
         detail: `${notification.body || "You have a new update."}${formatBillingDate(notification.sentAt || notification.createdAt) ? ` · ${formatBillingDate(notification.sentAt || notification.createdAt)}` : ""}`
@@ -440,7 +445,7 @@
         return;
       }
       const items = customerQuickNotificationItems();
-      const unreadCount = visibleLiveNotifications().filter((notification) => !notification.readAt).length;
+      const unreadCount = visibleNavigationNotifications().filter((notification) => !notification.readAt).length;
       const count = unreadCount;
       customerNotificationQuickCount.hidden = count <= 0;
       customerNotificationQuickCount.textContent = String(Math.min(count, 9));

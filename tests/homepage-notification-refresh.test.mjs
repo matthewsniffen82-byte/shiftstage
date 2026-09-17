@@ -31,7 +31,7 @@ function fixture() {
   });
   for (const name of ["isCustomerSession", "isDancerSession", "isVenueSession", "notificationClearStorageKey",
     "getAuthenticatedJson", "loadLiveNotifications", "closeCustomerQuickPanels", "toggleCustomerQuickPanel",
-    "renderCustomerQuickNotifications", "notificationCenterMarkup"]) {
+    "visibleNavigationNotifications", "renderCustomerQuickNotifications", "notificationCenterMarkup"]) {
     vm.runInContext(declaration(name), context);
   }
   return { context, requests, toasts, respond: fn => { respond = fn; } };
