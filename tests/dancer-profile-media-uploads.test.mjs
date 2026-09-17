@@ -147,7 +147,7 @@ test("each photo and video preview has a separate accessible Delete button", () 
   for (const button of buttons(tree)) assert.equal(buttons(button).length, 1, "delete and preview buttons must never be nested");
 });
 
-function deletionHarness({ section = "photos", confirm = () => true, remove = async () => ({ ok: true }), refresh = async () => ({ profile: { avatarPhotoUrl: "/avatar.jpg", dancer_photos: [], pending_photo_reviews: [] } }) } = {}) {
+function deletionHarness({ section = "photos", items, confirm = () => true, remove = async () => ({ ok: true }) } = {}) {
   const slots = [], effects = [], requests = [], changes = [], busy = [], announcements = [];
   let cursor = 0, dirty = true, tree;
   const hooks = { ...React,
@@ -161,14 +161,14 @@ function deletionHarness({ section = "photos", confirm = () => true, remove = as
   };
   const Module = loadUploads({ hooks, confirm, announce: () => announcements.push(true), api: {
     requestDancerPhotosJson: options => { requests.push(options); return remove(options); },
-    requestDancerProfileJson: options => { requests.push(options); return refresh(options); },
+    requestDancerProfileJson: options => { requests.push(options); throw new Error("Deletion must not wait for a profile refresh."); },
     requestDancerTvVideoJson: (videoId, options) => { requests.push({ ...options, videoId }); return remove(options); },
   } }).default;
   const cleanups = [];
   function renderState() {
     if (!dirty) return;
     dirty = false; cursor = 0;
-    tree = Module({ ...defaultProps, [section]: [{ id: section === "photos" ? "photo-id" : "video-id", imageUrl: "/preview.jpg", status: "pending" }], onPhotoDeleted: (...args) => changes.push(args), onVideoDeleted: (...args) => changes.push(args), onDeleteBusyChange: value => busy.push(value) });
+    tree = Module({ ...defaultProps, [section]: items || [{ id: section === "photos" ? "photo-id" : "video-id", imageUrl: "/preview.jpg", status: "pending" }], onPhotoDeleted: (...args) => changes.push(args), onVideoDeleted: (...args) => changes.push(args), onDeleteBusyChange: value => busy.push(value) });
     effects.splice(0).forEach(effect => cleanups.push(effect()));
   }
   renderState();
@@ -178,11 +178,12 @@ function deletionHarness({ section = "photos", confirm = () => true, remove = as
     get deleteButton() { return buttons(tree).find(button => button.props.className === "profile-upload-delete"); },
     get html() { return renderToStaticMarkup(tree).replace(/<style>[\s\S]*?<\/style>/g, ""); },
     async settle() { await new Promise(resolve => setImmediate(resolve)); renderState(); },
+    rerender() { dirty = true; renderState(); },
     unmount() { cleanups.forEach(cleanup => cleanup?.()); },
   };
 }
 
-test("preview deletion confirms once, blocks duplicate clicks, and updates counts without deleting the avatar", async () => {
+test("photo deletion removes the preview immediately, blocks duplicates, and confirms without a profile refresh", async () => {
   let release, confirmations = 0;
   const ui = deletionHarness({ confirm: () => { confirmations++; return true; }, remove: () => new Promise(resolve => { release = resolve; }) });
   const button = ui.deleteButton;
@@ -192,14 +193,19 @@ test("preview deletion confirms once, blocks duplicate clicks, and updates count
   assert.deepEqual(ui.busy, [true]);
   assert.deepEqual(JSON.parse(ui.requests[0].body), { photoId: "photo-id" });
   assert.equal(ui.requests[0].method, "DELETE");
-  assert.equal(ui.deleteButton.props.disabled, true);
-  assert.match(ui.html, /aria-label="Deleting photo 1" aria-busy="true"/);
+  assert.equal(ui.deleteButton, undefined);
+  assert.match(ui.html, /0 added/);
+  assert.match(ui.html, /Deleting photo…/);
+  assert.doesNotMatch(ui.html, /Photo deleted\./);
+  assert.equal(ui.changes.length, 0, "do not mutate the saved profile before confirmation");
+  ui.rerender();
+  assert.equal(ui.deleteButton, undefined, "stale parent photos must not restore a pending deletion");
   release({ ok: true }); await ui.settle();
   assert.equal(ui.deleteButton, undefined);
   assert.match(ui.html, /0 added/);
   assert.match(ui.html, /Photo deleted\./);
-  assert.equal(ui.changes.length, 2);
-  assert.equal(ui.changes[1][1].avatarPhotoUrl, "/avatar.jpg");
+  assert.deepEqual(ui.changes, [["photo-id"]]);
+  assert.equal(ui.requests.length, 1);
   assert.deepEqual(ui.busy, [true, false]);
 });
 
@@ -218,21 +224,44 @@ test("canceling preview deletion makes no request", async () => {
   assert.ok(ui.deleteButton);
 });
 
-test("failed preview deletion keeps the picture and exposes a usable error", async () => {
-  const ui = deletionHarness({ remove: async () => { throw new Error("Connection lost. Try again."); } });
+test("failed preview deletion restores the picture and exposes a usable error", async () => {
+  let reject;
+  const ui = deletionHarness({ remove: () => new Promise((_, fail) => { reject = fail; }) });
   ui.deleteButton.props.onClick(); await ui.settle();
+  assert.equal(ui.deleteButton, undefined);
+  reject(new Error("Connection lost. Try again.")); await ui.settle();
   assert.equal(ui.changes.length, 0);
   assert.equal(ui.deleteButton.props.disabled, false);
   assert.match(ui.html, /1 added/);
   assert.match(ui.html, /Connection lost\. Try again\./);
+  assert.deepEqual(ui.busy, [true, false]);
+  assert.doesNotMatch(ui.html, /Photo deleted\./);
 });
 
-test("a failed refresh never restores a confirmed deleted preview or sends another delete", async () => {
-  const ui = deletionHarness({ refresh: async () => { throw new Error("Offline"); } });
+test("remaining thumbnails stay enabled while a photo deletion is pending", async () => {
+  let release;
+  const ui = deletionHarness({ items: [
+    { id: "first", imageUrl: "/first.jpg", status: "approved" },
+    { id: "second", imageUrl: "/second.jpg", status: "approved" },
+  ], remove: () => new Promise(resolve => { release = resolve; }) });
   ui.deleteButton.props.onClick(); await ui.settle();
+  assert.match(ui.html, /1 added/);
+  assert.doesNotMatch(ui.html, /src="\/first.jpg"/);
+  const preview = ui.controls.find(control => control.props["aria-label"] === "View photo 1: Approved");
+  assert.equal(preview.props.disabled, false);
+  assert.equal(ui.deleteButton.props.disabled, true, "conflicting mutations wait for confirmation");
+  release({ ok: true }); await ui.settle();
+  assert.equal(ui.deleteButton.props.disabled, false);
+});
+
+test("stale parent photos never restore a confirmed deleted preview", async () => {
+  const ui = deletionHarness();
+  ui.deleteButton.props.onClick(); await ui.settle();
+  ui.rerender();
   assert.equal(ui.deleteButton, undefined);
   assert.equal(ui.changes.length, 1);
-  assert.match(ui.html, /Photo deleted\. Reload your profile/);
+  assert.match(ui.html, /Photo deleted\./);
+  assert.equal(ui.requests.length, 1);
   assert.equal(ui.requests.filter(request => request.method === "DELETE").length, 1);
 });
 

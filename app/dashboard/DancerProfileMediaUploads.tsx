@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { requestDancerPhotosJson, requestDancerProfileJson, requestDancerTvVideoJson, requestDancerMediaPin } from "./dashboard-session";
+import { requestDancerPhotosJson, requestDancerTvVideoJson, requestDancerMediaPin } from "./dashboard-session";
 import { announceDancerProfileVideosChanged } from "./dancer-profile-media-sync";
 import DancerVideoThumbnail from "./DancerVideoThumbnail";
 import DancerMediaPinButton from "./DancerMediaPinButton";
@@ -41,7 +41,7 @@ export default function DancerProfileMediaUploads({
   isVideoLoading: boolean;
   videoError: string;
   onOpen: (section: "photos" | "videos") => void;
-  onPhotoDeleted: (photoId: string, profile?: Record<string, unknown>) => void;
+  onPhotoDeleted: (photoId: string) => void;
   onVideoDeleted: (videoId: string) => void;
   onDeleteBusyChange?: (busy: boolean) => void;
   onMediaPinned?: (mediaType: "photo" | "video", mediaId: string, pinned: boolean) => void;
@@ -72,8 +72,9 @@ export default function DancerProfileMediaUploads({
     onDeleteBusyChange?.(true);
     const isCurrent = () => deleteRequestRef.current === controller && !controller.signal.aborted;
     setDeletingPhotoId(photoId);
-    setPhotoStatus("");
-    let deleted = false;
+    // Hide immediately, but only update the saved profile after confirmation.
+    setDeletedPhotoIds((current) => new Set(current).add(photoId));
+    setPhotoStatus("Deleting photo…");
     try {
       await requestDancerPhotosJson({
         method: "DELETE",
@@ -83,24 +84,17 @@ export default function DancerProfileMediaUploads({
         signal: controller.signal,
       });
       if (!isCurrent()) return;
-      deleted = true;
-      setDeletedPhotoIds((current) => new Set(current).add(photoId));
       onPhotoDeleted(photoId);
       setPhotoStatus("Photo deleted.");
-      const data = await requestDancerProfileJson({
-        cache: "no-store",
-        fallbackMessage: "Unable to refresh your photos.",
-        signal: controller.signal,
-      });
-      if (!isCurrent()) return;
-      if (!data.profile) throw new Error("Unable to refresh your photos.");
-      const rows = [...(data.profile.dancer_photos || []), ...(data.profile.pending_photo_reviews || [])];
-      if (rows.some((photo: { id?: string }) => photo.id === photoId)) throw new Error("Unable to verify the refreshed photos.");
-      onPhotoDeleted(photoId, data.profile);
     } catch (error) {
-      if (isCurrent()) setPhotoStatus(deleted
-        ? "Photo deleted. Reload your profile to refresh the remaining photos."
-        : error instanceof Error ? error.message : "Unable to delete photo. Try again.");
+      if (isCurrent()) {
+        setDeletedPhotoIds((current) => {
+          const next = new Set(current);
+          next.delete(photoId);
+          return next;
+        });
+        setPhotoStatus(error instanceof Error ? error.message : "Unable to delete photo. Try again.");
+      }
     } finally {
       if (isCurrent()) {
         deleteRequestRef.current = null;
@@ -193,7 +187,7 @@ export default function DancerProfileMediaUploads({
                 {items.map((item, index) => (
                   <li key={item.id}>
                     <div className="profile-upload-preview">
-                      <button aria-label={`${isPhoto ? "View" : "Play"} ${label.toLowerCase()} ${index + 1}: ${profileUploadStatus(item.status, item.moderationStatus)}`} disabled={isDeleting} onClick={() => setActivePreview({ kind: isPhoto ? "photo" : "video", id: item.id, label: `${label} ${index + 1}` })} type="button">
+                      <button aria-label={`${isPhoto ? "View" : "Play"} ${label.toLowerCase()} ${index + 1}: ${profileUploadStatus(item.status, item.moderationStatus)}`} disabled={Boolean(deletingVideoId || pinningId)} onClick={() => setActivePreview({ kind: isPhoto ? "photo" : "video", id: item.id, label: `${label} ${index + 1}` })} type="button">
                         <span className="profile-upload-thumbnail">
                           {isPhoto
                             ? item.imageUrl ? <img alt="" loading="lazy" src={item.imageUrl} /> : <span aria-hidden="true">▧</span>

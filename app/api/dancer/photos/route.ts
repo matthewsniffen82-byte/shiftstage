@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { after, NextResponse } from "next/server";
 import { apiError } from "@/src/lib/api";
 import { readBoundedFormData } from "@/src/lib/bounded-form-data";
 import { readBoundedJsonObject } from "@/src/lib/bounded-json-body";
@@ -82,7 +82,8 @@ export async function DELETE(request: Request) {
       return NextResponse.json({ ok: false, error: "Valid photo id is required." }, { status: 400 });
     }
 
-    const photo = await deleteOwnDancerPhoto(client, user.id, photoId, createAdminSupabaseClient());
+    // Confirm metadata deletion first; Vercel keeps file cleanup alive after the response.
+    const photo = await deleteOwnDancerPhoto(client, user.id, photoId, createAdminSupabaseClient(), after);
     return NextResponse.json({ ok: true, photo, session });
   } catch (error) {
     return apiError(error, "Unable to delete dancer photo.");

@@ -69,11 +69,11 @@ function harness(kind,outcome='retired'){
   safeErrorMetadata:()=>({code:'synthetic'}),...runtime.cleanup,...runtime.responsive,...runtime.watermark};
  const dancer=load('src/lib/dancr/dancer.ts',dependencies,'refreshOwnPhotoReviewStatus=async()=>{};');
  const administrator=load('src/lib/dancr/admin.ts',dependencies,'logAdminAction=async()=>{};');
- const run=()=>kind==='owner'||kind==='pending'?dancer.deleteOwnDancerPhoto(client,owner,kind==='pending'?reviewId:photoId,client)
+ const run=(scheduleCleanup)=>kind==='owner'||kind==='pending'?dancer.deleteOwnDancerPhoto(client,owner,kind==='pending'?reviewId:photoId,client,scheduleCleanup)
   :kind==='avatar'?dancer.deleteOwnDancerAvatar(client,owner,client)
   :kind==='admin-photo'?administrator.deleteAdminDancerPhoto(client,{dancerId:profile,targetId:photoId,adminId:owner})
   :administrator.deleteAdminDancerProfile(client,{dancerId:profile,adminId:owner});
- return {run,events,files};
+ return {run,events,files,rows};
 }
 for(const kind of ['owner','pending','avatar','admin-photo','admin-profile'])for(const outcome of ['retired','retained','error','malformed'])test(kind+' cleanup uses the guarded boundary after metadata and handles '+outcome,async()=>{
  const h=harness(kind,outcome),result=await h.run();
@@ -84,4 +84,23 @@ for(const kind of ['owner','pending','avatar','admin-photo','admin-profile'])for
   assert.equal(h.events.filter(e=>e.kind==='storage').length,0);assert.equal(h.files.size,3);
   if(kind.startsWith('admin'))assert.ok(result.warnings.includes('Gallery file cleanup retained for review.'));
  }
+});
+
+for(const kind of ['owner','pending']) test(kind+' photo deletion confirms metadata before deferred file cleanup',async()=>{
+ const h=harness(kind),jobs=[];
+ const result=await h.run(job=>jobs.push(job));
+ assert.ok(result.deletedIds.includes(kind==='owner'?photoId:reviewId));
+ assert.equal(h.rows[kind==='owner'?'dancer_photos':'image_moderation_records'].length,0);
+ assert.equal(jobs.length,1);
+ assert.equal(h.events.filter(e=>e.kind==='storage'||e.kind==='rpc').length,0);
+ assert.equal(h.files.size,3);
+ await jobs[0]();
+ assert.equal(h.files.size,0);
+ assert.equal(h.events.filter(e=>e.kind==='rpc'&&e.name==='claim_gallery_storage_retirement').length,1);
+});
+
+test('photo DELETE registers deferred cleanup with the response lifetime',()=>{
+ const route=readFileSync(new URL('../app/api/dancer/photos/route.ts',import.meta.url),'utf8');
+ assert.match(route,/import \{ after, NextResponse \} from "next\/server"/);
+ assert.match(route,/await deleteOwnDancerPhoto\(client, user.id, photoId, createAdminSupabaseClient\(\), after\)/);
 });

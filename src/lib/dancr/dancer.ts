@@ -11,7 +11,13 @@ import { ensureDancerPrimaryPhoto } from "./primary-photo";
 
 type DancrClient = SupabaseClient;
 
-export async function deleteOwnDancerPhoto(client: DancrClient, userId: string, photoId: string, adminClient: DancrClient = client) {
+export async function deleteOwnDancerPhoto(
+  client: DancrClient,
+  userId: string,
+  photoId: string,
+  adminClient: DancrClient = client,
+  scheduleStorageCleanup?: (cleanup: () => Promise<void>) => void,
+) {
   const profile = await getOwnDancerProfile(adminClient, userId);
   const { data: photo, error: photoError } = await client
     .from("dancer_photos")
@@ -58,7 +64,9 @@ export async function deleteOwnDancerPhoto(client: DancrClient, userId: string, 
     });
 
     if (photo.storage_path) {
-      await tryRetireGalleryStorageFiles(adminClient, profile.id, photo.storage_path);
+      const cleanup = async () => { await tryRetireGalleryStorageFiles(adminClient, profile.id, photo.storage_path); };
+      if (scheduleStorageCleanup) scheduleStorageCleanup(cleanup);
+      else await cleanup();
     }
 
     // A concurrent request may have promoted this photo after our initial read.
@@ -128,13 +136,15 @@ export async function deleteOwnDancerPhoto(client: DancrClient, userId: string, 
 
   const temporaryPath = String(moderationRecord.temporary_storage_path || "");
   const finalPath = String(moderationRecord.final_storage_path || "");
-  if (temporaryPath) {
-    await adminClient.storage.from("dancr-image-moderation-temp").remove([temporaryPath]).catch(() => null);
-    await adminClient.storage.from("dancr-image-moderation-review").remove([temporaryPath]).catch(() => null);
-  }
-  if (finalPath) {
-    await tryRetireGalleryStorageFiles(adminClient, profile.id, finalPath);
-  }
+  const cleanup = async () => {
+    if (temporaryPath) {
+      await adminClient.storage.from("dancr-image-moderation-temp").remove([temporaryPath]).catch(() => null);
+      await adminClient.storage.from("dancr-image-moderation-review").remove([temporaryPath]).catch(() => null);
+    }
+    if (finalPath) await tryRetireGalleryStorageFiles(adminClient, profile.id, finalPath);
+  };
+  if (scheduleStorageCleanup) scheduleStorageCleanup(cleanup);
+  else await cleanup();
 
   await refreshOwnPhotoReviewStatus(adminClient, userId, profile.id);
   const remainingIds = await getOwnPhotoIds(adminClient, profile.id);

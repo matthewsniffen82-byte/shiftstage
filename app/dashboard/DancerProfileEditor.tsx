@@ -379,7 +379,7 @@ export function DancerProfilePreview({
       }}
       onDeleteBusyChange={reportPhotoDeleteBusy}
       onVideoDeleted={(videoId) => setUploadedVideos((current) => current.filter((video) => video.id !== videoId))}
-      onPhotoDeleted={(photoId, refreshedProfile) => onProfileChange?.(refreshedProfile || {
+      onPhotoDeleted={(photoId) => onProfileChange?.({
         ...profile,
         dancer_photos: (Array.isArray(profile?.dancer_photos) ? profile.dancer_photos : []).filter((photo: any) => photo.id !== photoId),
         pending_photo_reviews: (Array.isArray(profile?.pending_photo_reviews) ? profile.pending_photo_reviews : []).filter((photo: any) => photo.id !== photoId),
@@ -398,6 +398,7 @@ export function DancerProfilePreview({
           aria-labelledby={isEditor ? undefined : "dancer-profile-preview-heading"}
           aria-modal="true"
           className={`dancer-profile-preview-overlay${isEditor ? " is-editor" : ""}`}
+          data-photo-deleting={isPhotoDeleting}
           ref={overlayRef}
           role="dialog"
         >

@@ -1393,6 +1393,7 @@ export function DashboardStyles() {
       .dancer-profile-editor-footer p { margin:0; color:#b9accd; font-size:11px; line-height:1.4; }
       .dancer-profile-editor-footer button { min-width:230px; min-height:48px; padding:0 18px; border:1px solid rgba(126,234,255,.5); border-radius:13px; color:#fff; background:linear-gradient(135deg,#7c2be8,#087fae); box-shadow:0 10px 28px rgba(79,30,174,.3); font:inherit; font-size:13px; font-weight:950; cursor:pointer; }
       .dancer-profile-editor-footer button:disabled { opacity:.62; cursor:wait; }
+      .dancer-profile-preview-overlay[data-photo-deleting="true"] button:disabled { opacity:1 !important; filter:none !important; cursor:wait !important; }
       .dancer-onboarding-primary { width: 100%; min-height: 52px; border: 1px solid rgba(196,122,255,.72); border-radius: 14px; color: #fff; background: linear-gradient(135deg, #8b20ef, #6d19d6); box-shadow: 0 10px 25px rgba(117,28,215,.2); font: inherit; font-weight: 950; cursor: pointer; }
       .dancer-onboarding-primary:disabled { opacity: .58; cursor: wait; }
       .dancer-onboarding-steps button:focus-visible, .dancer-onboarding-primary:focus-visible, .dancer-avatar-panel button:focus-visible, .dancer-avatar-panel input:focus-visible { outline: 2px solid #7eeaff; outline-offset: -3px; }
