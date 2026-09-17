@@ -1,6 +1,10 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
+import vm from "node:vm";
+import ts from "typescript";
+import { DANCER_MEDIA_CONTENT_RULES, DANCER_MEDIA_POLICY_REASON_CODES } from "../src/lib/dancr/media-content-rules.ts";
+import { withOpenAIRequestDeadline } from "../src/lib/openai-request.ts";
 import { evaluateDancrImageModeration } from "../src/lib/dancr/moderation-policy.ts";
 import {
   getDistributedVideoFrameSampling,
@@ -79,10 +83,7 @@ test("video moderation checks server-decoded frames, caption, and spoken audio",
   assert.match(videoModeration, /openai\.moderations\.create\([\s\S]*?input/);
   assert.match(videoModeration, /openai\.audio\.transcriptions\.create/);
   assert.match(videoModeration, /response_format:[\s\S]*?type: "json_schema"/);
-  assert.match(videoModeration, /contact_or_payment_overlay/);
-  assert.match(videoModeration, /sexual_services_or_solicitation/);
-  assert.match(videoModeration, /drug_use_or_sales/);
-  assert.match(videoModeration, /nonconsensual_or_coercive_content/);
+  assert.match(videoModeration, /DANCER_MEDIA_POLICY_REASON_CODES as VIDEO_POLICY_REASON_CODES/);
   assert.match(videoModeration, /analyzeDancerMediaIdentity/);
   assert.doesNotMatch(videoModeration, /identityReferenceMatch|dancerAvatarStoragePath/);
   assert.match(videoModeration, /singlePersonOnly/);
@@ -91,6 +92,31 @@ test("video moderation checks server-decoded frames, caption, and spoken audio",
   assert.match(videoModeration, /policyDecision\.confidence >= VIDEO_POLICY_REJECT_CONFIDENCE \? "rejected" : "review"/);
   assert.match(videoModeration, /policyDecision\.confidence >= VIDEO_POLICY_APPROVE_CONFIDENCE \? "approved" : "review"/);
   assert.match(videoModeration, /await rm\(workspace, \{ recursive: true, force: true \}\)/);
+});
+
+test("video classifier receives the same full policy as photos, including covered thongs and cleavage", async () => {
+  const ast = ts.createSourceFile('video-moderation.ts', videoModeration, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
+  const selected = ast.statements.filter(node => ts.isFunctionDeclaration(node)
+    && ['classifyVideoPolicy', 'uniqueReasonCodes'].includes(node.name?.text)).map(node => node.getText(ast));
+  const exports = {};
+  vm.runInNewContext(ts.transpileModule(selected.join('\n') + '\nexport { classifyVideoPolicy };', {
+    compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
+  }).outputText, {
+    exports, Buffer, DANCER_MEDIA_CONTENT_RULES, VIDEO_POLICY_REASON_CODES: DANCER_MEDIA_POLICY_REASON_CODES,
+    VIDEO_POLICY_MODEL: 'synthetic', OPENAI_TIMEOUT_MS: 1000, withTimeout: withOpenAIRequestDeadline,
+  });
+  const client = { chat: { completions: { create: async (request, options) => {
+    const rules = request.messages[0].content;
+    for (const instruction of DANCER_MEDIA_CONTENT_RULES) assert.ok(rules.includes(instruction));
+    assert.match(rules, /Thongs and cleavage are explicitly allowed when nipples\/areolas, genitals, and anus are covered/);
+    assert.match(rules, /Exposed buttocks from a thong/);
+    assert.match(request.messages[1].content[0].text, /Caption: fixture caption/);
+    assert.match(request.messages[1].content[0].text, /Audio transcript: fixture transcript/);
+    assert.ok(options.signal instanceof AbortSignal);
+    return { choices: [{ message: { content: JSON.stringify({ decision: 'approved', reason_codes: ['safe_adult_promotional_content'], confidence: 0.99 }) } }] };
+  } } } };
+  const result = await exports.classifyVideoPolicy(client, [Buffer.from('frame')], 'fixture caption', 'fixture transcript');
+  assert.equal(result.decision, 'approved');
 });
 
 test("video moderation distributes frames through the full decoded timeline", () => {

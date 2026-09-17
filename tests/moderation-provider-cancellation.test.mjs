@@ -5,6 +5,7 @@ import vm from "node:vm";
 import ts from "typescript";
 import OpenAI from "openai";
 import { PassThrough } from "node:stream";
+import { DANCER_MEDIA_CONTENT_RULES, DANCER_MEDIA_POLICY_REASON_CODES } from "../src/lib/dancr/media-content-rules.ts";
 
 const root = new URL("../", import.meta.url);
 const source = path => readFileSync(new URL(path, root), "utf8");
@@ -58,8 +59,9 @@ function load(file, functions, timer, client, audioStream = { destroy() {} }) {
     DANCR_IMAGE_MODERATION_MODEL: "omni-moderation-latest",
     VIDEO_TRANSCRIPTION_MODEL: "whisper-1", VIDEO_POLICY_MODEL: "gpt-4.1-mini",
     VIDEO_POLICY_REASON_CODES: ["safe_adult_promotional_content"],
+    DANCER_MEDIA_CONTENT_RULES, DANCER_MEDIA_POLICY_REASON_CODES,
     DANCR_MEDIA_IDENTITY_MODEL: "gpt-4o-mini", MEDIA_IDENTITY_TIMEOUT_MS: 30_000,
-    PHOTO_CONTENT_MODEL: "gpt-4o-mini", PHOTO_CONTENT_TIMEOUT_MS: 25_000,
+    PHOTO_CONTENT_MODEL: "gpt-4.1-mini", PHOTO_CONTENT_TIMEOUT_MS: 25_000,
     OPENAI_TIMEOUT_MS: 30_000, FRAME_MODERATION_TIMEOUT_MS: 12_000,
     FRAME_MODERATION_RETRY_DELAYS_MS: [350], openAITextDiagnostics: new WeakMap(),
     createReadStream: () => audioStream, createOpenAIClient: async () => client,

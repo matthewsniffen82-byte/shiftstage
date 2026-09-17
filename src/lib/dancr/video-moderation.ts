@@ -16,6 +16,10 @@ import { runVideoReviewChecks } from "./video-review-checks";
 import { assertAllowedVideoContainer } from "./video-upload-policy";
 import { LOCAL_VIDEO_INPUT_OPTIONS } from "./local-video-input.ts";
 import {
+  DANCER_MEDIA_CONTENT_RULES,
+  DANCER_MEDIA_POLICY_REASON_CODES as VIDEO_POLICY_REASON_CODES,
+} from "./media-content-rules.ts";
+import {
   DANCR_IMAGE_MODERATION_MODEL,
   evaluateDancrImageModeration,
   type DancrImageModerationDecision,
@@ -74,22 +78,6 @@ const FRAME_MODERATION_RETRY_DELAYS_MS = [350] as const;
 // content. High-risk provider categories below still reject independently.
 const VIDEO_POLICY_APPROVE_CONFIDENCE = 0.75;
 const VIDEO_POLICY_REJECT_CONFIDENCE = 0.95;
-
-const VIDEO_POLICY_REASON_CODES = [
-  "explicit_nudity_or_sex_act",
-  "minor_or_age_uncertain",
-  "sexual_services_or_solicitation",
-  "contact_or_payment_overlay",
-  "violence_gore_or_weapon_threat",
-  "drug_use_or_sales",
-  "self_harm",
-  "hate_harassment_or_threat",
-  "nonconsensual_or_coercive_content",
-  "impersonation_or_deceptive_media",
-  "copyright_or_consent_uncertain",
-  "unreadable_or_obscured_content",
-  "safe_adult_promotional_content",
-] as const;
 
 export async function moderateStoredMyDancrTvVideo(
   admin: AdminClient,
@@ -446,10 +434,7 @@ async function classifyVideoPolicy(
           role: "system",
           content: [
             "You enforce the MyDancr TV public video policy for an adults-only dancer and nightlife discovery service.",
-            "APPROVE lawful adult promotional dancing, stage performances, club scenes, lingerie, bikinis, and revealing outfits when there is no nudity, sexual act, solicitation, or other prohibited content.",
-            "REJECT explicit nudity or sex acts; any confirmed minor; sexual services or solicitation; phone numbers, email addresses, payment handles, external social handles, or QR/contact overlays; drug use or sales; graphic violence, threatening weapons, self-harm, hate or threats; coercion, trafficking, nonconsensual intimate content; or clearly deceptive impersonation/deepfake content.",
-            "Choose REVIEW when age is uncertain, content is obscured or unreadable, rights/consent are uncertain, a venue or ordinary brand mark might be confused with prohibited contact information, or confidence is not high enough to reject or approve.",
-            "A normal venue name or logo is allowed. Do not reject solely because an adult performer wears a revealing outfit.",
+            ...DANCER_MEDIA_CONTENT_RULES,
           ].join("\n"),
         },
         { role: "user", content },

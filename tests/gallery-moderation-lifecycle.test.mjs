@@ -24,7 +24,8 @@ vm.runInNewContext(ts.transpileModule(readFileSync(new URL('../src/lib/dancr/sto
 const version='2020-01-01T00:00:00Z';
 const claimedVersion='2020-01-01T00:00:01.001Z';
 const legacyRetryClaim=process.env.MYDANCR_AVATAR_SOURCE_BASELINE==='1'||process.env.MYDANCR_PRIVATE_UPLOAD_BASELINE==='1';
-function scenario({decision='review',concurrentDecision='',providerError=false,providerFailure=null,providerMessage='provider_timeout',providerStatus=0,faceRejection=false,avatar=false,attemptCount=1,stateResponseLoss='',retry=false,uploadBucket='',uploadFailure='',receiptKind='valid',contentAnalysis={nudity:'absent',sexualActivity:'absent',confidence:0.99},contentError=false,identityAnalysis={personCount:1,personCountConfidence:0.99,singlePersonOnly:true,referenceMatch:'match',confidence:0.99}}={}) {
+const clearContent={nudity:'absent',sexualActivity:'absent',decision:'approved',reasonCodes:['safe_adult_promotional_content'],confidence:0.99};
+function scenario({decision='review',concurrentDecision='',providerError=false,providerFailure=null,providerMessage='provider_timeout',providerStatus=0,faceRejection=false,avatar=false,attemptCount=1,stateResponseLoss='',retry=false,uploadBucket='',uploadFailure='',receiptKind='valid',contentAnalysis=clearContent,contentError=false,identityAnalysis={personCount:1,personCountConfidence:0.99,singlePersonOnly:true,referenceMatch:'match',confidence:0.99}}={}) {
   const events=[],files=new Set(),record=retry?{
     id:'record',user_id:'owner',upload_context:avatar?'profile_avatar':'profile_gallery:1',temporary_storage_path:'owner/profile/temp.jpg',
     decision:'review',status:'moderating',updated_at:legacyRetryClaim?version:claimedVersion,locked_at:claimedVersion,attempt_count:attemptCount+(legacyRetryClaim?0:1),avatar_expected_path:'avatar',avatar_expected_updated_at:version,
@@ -142,7 +143,7 @@ for(const avatar of [false,true])for(const retry of [false,true]){
     });
   }
   test(context+' rejects nudity even when generic moderation would approve',async()=>{
-    const s=scenario({avatar,retry,decision:'approved',contentAnalysis:{nudity:'present',sexualActivity:'absent',confidence:0.99}});
+    const s=scenario({avatar,retry,decision:'approved',contentAnalysis:{...clearContent,nudity:'present'}});
     const result=await s.run();
     assert.equal(result.decision,'rejected');assert.equal(s.record.status,'rejected');
     assert.ok(result.reasonCodes.includes('nudity_rejected'));assert.match(result.message,/Nudity and sexual activity are not allowed/);
@@ -150,7 +151,7 @@ for(const avatar of [false,true])for(const retry of [false,true]){
     assert.ok(s.events.includes('content-check'));assert.equal(s.events.includes('public-upload'),false);
   });
   test(context+' holds uncertain clothing coverage privately for review',async()=>{
-    const s=scenario({avatar,retry,decision:'approved',contentAnalysis:{nudity:'uncertain',sexualActivity:'absent',confidence:0.7}});
+    const s=scenario({avatar,retry,decision:'approved',contentAnalysis:{...clearContent,nudity:'uncertain',confidence:0.7}});
     const result=await s.run();
     assert.equal(result.decision,'review');assert.equal(s.record.status,'pending_review');
     assert.ok(s.files.has(s.record.temporary_storage_path));assert.equal(s.events.includes('public-upload'),false);
@@ -160,6 +161,28 @@ for(const avatar of [false,true])for(const retry of [false,true]){
     const result=await s.run();
     assert.equal(result.decision,retry?'moderation_retry':'moderation_error');
     assert.ok(s.files.has(s.record.temporary_storage_path));assert.equal(s.events.includes('public-upload'),false);
+  });
+  for(const reason of ['contact_or_payment_overlay','sexual_services_or_solicitation','drug_use_or_sales','impersonation_or_deceptive_media']){
+    test(context+' rejects '+reason+' before any public upload',async()=>{
+      const s=scenario({avatar,retry,decision:'approved',contentAnalysis:{...clearContent,decision:'rejected',reasonCodes:[reason]}});
+      const result=await s.run();
+      assert.equal(result.decision,'rejected');assert.equal(s.record.status,'rejected');
+      assert.ok(result.reasonCodes.includes('photo_policy_'+reason));
+      assert.equal(s.record.category_flags['photo_policy_'+reason],true);
+      assert.equal(s.events.includes('public-upload'),false);
+      if(reason==='contact_or_payment_overlay')assert.match(result.message,/phone numbers, email addresses, payment handles, external social handles, and QR\/contact overlays/);
+    });
+  }
+  test(context+' holds an ambiguous venue logo/contact overlay privately',async()=>{
+    const s=scenario({avatar,retry,decision:'approved',contentAnalysis:{...clearContent,decision:'review',reasonCodes:['contact_or_payment_overlay']}});
+    const result=await s.run();
+    assert.equal(result.decision,'review');assert.equal(s.record.status,'pending_review');
+    assert.ok(s.files.has(s.record.temporary_storage_path));assert.equal(s.events.includes('public-upload'),false);
+  });
+  test(context+' cannot publish a legacy response missing the additional policy checks',async()=>{
+    const s=scenario({avatar,retry,decision:'approved',contentAnalysis:{nudity:'absent',sexualActivity:'absent',confidence:0.99}});
+    const result=await s.run();
+    assert.notEqual(result.decision,'approved');assert.equal(s.events.includes('public-upload'),false);
   });
 }
 
