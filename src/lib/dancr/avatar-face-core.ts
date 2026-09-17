@@ -129,17 +129,16 @@ export function computeFaceCenteredAvatarCrop(
     && crop.top === candidate.top && crop.size === candidate.size
   )) throw new AvatarFaceDetectionUnavailableError();
   const face = parseFaceBounds(faceBounds);
-  const faceWidth = (face.right - face.left) * candidate.size;
   const faceHeight = (face.bottom - face.top) * candidate.size;
   const centerX = candidate.left + (face.left + face.right) * candidate.size / 2;
   const centerY = candidate.top + (face.top + face.bottom) * candidate.size / 2;
-  // Frame the head, with space for hair and chin inside the circular mask.
-  // A full-width square alone can leave a small face at the top of a body photo.
-  const size = Math.min(width, height, Math.max(1, Math.ceil(Math.max(faceWidth, faceHeight) * 1.8)));
+  // Keep the widest available square instead of zooming into the detected face.
+  // Bias the frame upward for hair; showing the body is fine in the avatar.
+  const size = Math.min(width, height);
   return {
     position: candidate.position,
     left: Math.max(0, Math.min(width - size, Math.round(centerX - size / 2))),
-    top: Math.max(0, Math.min(height - size, Math.round(centerY - size / 2))),
+    top: Math.max(0, Math.min(height - size, Math.round(centerY - size / 2 - faceHeight * 0.15))),
     size,
   };
 }

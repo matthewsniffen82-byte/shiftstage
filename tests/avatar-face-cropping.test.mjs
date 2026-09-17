@@ -85,14 +85,14 @@ test("square uploads produce one candidate without duplicate analysis", () => {
   ]);
 });
 
-test("body photos receive a tighter face-centered crop with circular headroom", () => {
+test("body photos retain the full available width instead of zooming into the face", () => {
   for (const [width, height, position] of [[1000, 1600, "start"], [1600, 1000, "end"], [1000, 1000, "start"]]) {
     const candidate = computeAvatarCandidateCrops(width, height).find(crop => crop.position === position);
     const face = { left: 0.4, top: 0.2, right: 0.6, bottom: 0.4 };
     const crop = computeFaceCenteredAvatarCrop(width, height, candidate, face);
-    assert.equal(crop.size, 360);
+    assert.equal(crop.size, Math.min(width, height), "preserve the wider body-visible framing");
     assert.ok(Math.abs((candidate.left + 500 - crop.left) / crop.size - 0.5) < 0.005);
-    assert.ok(Math.abs((candidate.top + 300 - crop.top) / crop.size - 0.5) < 0.005);
+    assert.equal(crop.top, 0, "preserve the top of a portrait when the head is near the source edge");
     for (const x of [face.left, face.right]) for (const y of [face.top, face.bottom]) {
       const dx = candidate.left + x * candidate.size - crop.left - crop.size / 2;
       const dy = candidate.top + y * candidate.size - crop.top - crop.size / 2;
@@ -101,10 +101,23 @@ test("body photos receive a tighter face-centered crop with circular headroom", 
   }
 });
 
+test("the circular avatar preserves the crown when a portrait starts close to the head", () => {
+  const candidate = computeAvatarCandidateCrops(1000, 1250)[0];
+  const face = { left: 0.36, top: 0.12, right: 0.6, bottom: 0.35 };
+  const crop = computeFaceCenteredAvatarCrop(1000, 1250, candidate, face);
+  // A rounded crown extends well above and beyond the detected face bounds.
+  const headOutline = [[450, 20], [510, 20], [380, 55], [580, 55], [330, 110], [630, 110], [360, 350], [600, 350]];
+  for (const [x, y] of headOutline) {
+    const dx = x - crop.left - crop.size / 2;
+    const dy = y - crop.top - crop.size / 2;
+    assert.ok(Math.hypot(dx, dy) < crop.size * 0.49, "the crown and sides of the head must clear the circular edge");
+  }
+});
+
 test("portrait candidate offsets map the face back into the original image", () => {
   const candidate = computeAvatarCandidateCrops(1000, 2000)[1];
   const crop = computeFaceCenteredAvatarCrop(1000, 2000, candidate, { left: 0.4, top: 0.2, right: 0.6, bottom: 0.4 });
-  assert.deepEqual(crop, { position: "middle", left: 320, top: 620, size: 360 });
+  assert.deepEqual(crop, { position: "middle", left: 0, top: 270, size: 1000 });
 });
 
 test("face crops stay inside the source at every edge and for close-up portraits", () => {

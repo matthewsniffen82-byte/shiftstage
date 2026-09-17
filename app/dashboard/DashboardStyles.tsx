@@ -1127,7 +1127,7 @@ export function DashboardStyles() {
       .dancer-activation-confirmation > button svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; }
       @keyframes dancer-onboarding-panel-in { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
       .dancer-avatar-preview { overflow: hidden; display: grid; place-items: center; border: 2px solid #f8fbff; border-radius: 50%; color: #fff; background: #17171d; font-weight: 950; }
-      .dancer-avatar-preview img { width: 100%; height: 100%; object-fit: cover; }
+      .dancer-avatar-preview img { width: 100%; height: 100%; object-fit: cover; object-position: center top; }
       .dancer-onboarding-preview-open { width: 100%; min-height: 46px; border: 1px solid rgba(126,234,255,.34); border-radius: 12px; color: #fff; background: linear-gradient(135deg, rgba(109,40,217,.8), rgba(11,148,201,.58)); font: inherit; font-size: 13px; font-weight: 950; cursor: pointer; }
       .dancer-onboarding-preview-open:disabled { opacity: .48; cursor: not-allowed; }
       .dancer-profile-preview-overlay { position: fixed; z-index: 1498; inset: var(--mydancr-preview-banner-offset,0px) 0 0; width: 100%; max-width: 100%; min-width: 0; box-sizing: border-box; overflow-x: hidden; overflow-y: auto; overscroll-behavior-x: none; overscroll-behavior-y: contain; color: #f7f2ff; background: #050507; scrollbar-width: thin; scrollbar-color: rgba(255,255,255,.28) transparent; }

@@ -123,7 +123,7 @@ async function selectPrimaryAvatarCandidate(
     {
       type: "input_text",
       text:
-        "Each following image is a real square crop from the same upload and is labeled start, middle, or end. Select the one crop that most clearly shows the main foreground subject's complete real face, including both eyes, full nose, full mouth, chin, and outer face, with the face closest to the center. Hair may extend outside. Ignore faces in posters, screens, reflections, and background people. Do not infer hidden features. Choose none unless a complete recognizable face is visibly present.",
+        "Each following image is a real square crop from the same upload and is labeled start, middle, or end. Select the one crop that most clearly shows the main foreground subject's complete real face, including both eyes, full nose, full mouth, chin, and outer face. Prefer the crop that preserves the entire top of the head and hair, even if more of the body is visible or the face is above center. Ignore faces in posters, screens, reflections, and background people. Do not infer hidden features. Choose none unless a complete recognizable face is visibly present.",
     },
   ];
   for (const candidate of candidates) {

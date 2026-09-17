@@ -29,19 +29,20 @@ test("localization also finds a small face near the top of a full-body photo", a
   assert.ok(face.top < 0.06 && face.bottom < 0.16);
 });
 
-test("approved avatars physically crop around the detected face before being stored", async () => {
+test("approved avatars preserve the wider portrait framing before being stored", async () => {
   const sample = await avatarSample();
+  const originalFace = await detector.locateAvatarFace(sample.buffer);
+  assert.ok(originalFace);
   const avatar = await avatarRuntime().prepareFaceCenteredAvatar(sample);
-  assert.ok(avatar.width < 150, "remove the lower torso from this 223px-wide fixture");
+  assert.equal(avatar.width, Math.min(sample.width, sample.height), "keep the body visible without zooming into the face");
   assert.equal(avatar.width, avatar.height);
   assert.equal(avatar.contentType, "image/jpeg");
   assert.equal(avatar.sha256, createHash("sha256").update(avatar.buffer).digest("hex"));
   const face = await detector.locateAvatarFace(avatar.buffer);
   assert.ok(face);
-  const centerX = (face.left + face.right) / 2;
-  const centerY = (face.top + face.bottom) / 2;
-  assert.ok(Math.abs(centerX - 0.5) < 0.05, "face is horizontally centered");
-  assert.ok(centerY > 0.3 && centerY < 0.55, "face moves toward the center with headroom");
+  assert.ok(Math.abs(face.top - originalFace.top) < 0.02, "preserve the source headroom near the top edge");
+  assert.ok(Math.abs((face.right - face.left) - (originalFace.right - originalFace.left)) < 0.02,
+    "keep the face at its original scale within the square");
 });
 
 test("an unlocalized verified face retains its original square instead of a guessed crop", async () => {
