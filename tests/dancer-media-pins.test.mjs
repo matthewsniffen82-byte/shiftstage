@@ -87,7 +87,7 @@ test("public video pin ordering is applied only to a dancer gallery before its l
     { id: "new-pin", isPinned: true, publishedAt: "2026-09-05" },
   ];
   const order = (dancerId, selectedVideoId = "") => vm.runInNewContext(`${part}\ndeduped.map(video => video.id)`, {
-    venuePrioritized: videos, options: { dancerId, limit: 2 }, selectedVideoId, MYDANCR_TV_PROFILE_VIDEO_LIMIT: 50,
+    venuePrioritized: videos, options: { dancerId, limit: 2 }, selectedVideoId, page: null, MYDANCR_TV_PROFILE_VIDEO_LIMIT: 50,
   }).join(",");
   assert.equal(order("dancer"), "new-pin,old-pin");
   assert.equal(order(undefined), "new,old-pin");

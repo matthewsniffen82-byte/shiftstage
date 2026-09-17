@@ -115,6 +115,25 @@ test("outside taps and moving keyboard focus away dismiss the options without pi
   assert.deepEqual(m.calls, []);
 });
 
+test("a tap that temporarily clears focus keeps the pin action available until click", () => {
+  const m = pinFixture();
+  m.toggle(true);
+  // Touch browsers can blur the summary without focusing the tapped button.
+  m.tree.props.onBlur({ currentTarget: m.root, relatedTarget: null });
+  assert.equal(m.root.open, true, "the action must stay visible through pointerup/click");
+  m.action.props.onClick();
+  assert.deepEqual(m.calls, ["focus", "pin"]);
+  assert.equal(m.root.open, false);
+});
+
+test("moving focus within the options keeps the menu open", () => {
+  const m = pinFixture();
+  m.toggle(true);
+  m.tree.props.onBlur({ currentTarget: m.root, relatedTarget: m.root });
+  assert.equal(m.root.open, true);
+  assert.deepEqual(m.calls, []);
+});
+
 test("public photo and video ordering still respects pins saved from the dashboard", () => {
   const context = vm.createContext({});
   vm.runInContext(compile(orderSource), context);

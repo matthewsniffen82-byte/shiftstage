@@ -43,7 +43,9 @@ export default function DancerMediaPinButton({ label, pinned = false, busy = fal
     onClick={event => event.stopPropagation()}
     onKeyDown={event => event.stopPropagation()}
     onBlur={event => {
-      if (!event.currentTarget.contains(event.relatedTarget)) event.currentTarget.open = false;
+      // A touch click can clear focus before the action receives its click.
+      // Outside pointerdown already dismisses taps away from this menu.
+      if (event.relatedTarget && !event.currentTarget.contains(event.relatedTarget)) event.currentTarget.open = false;
     }}
     onToggle={event => {
       event.stopPropagation();

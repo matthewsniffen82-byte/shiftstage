@@ -92,7 +92,8 @@ test("active and onboarding editors use management previews but the guest previe
     assert.ok(!nodes.some(node => node.type === "DancerProfileActionsPreview" || node.type === "VenueQrUnavailable"));
     assert.ok(!nodes.some(node => /profile-tonight|profile-overview|profile-metrics/.test(node.props?.className || "")));
     assert.ok(nodes.some(node => node.props?.["data-profile-editor-trigger"] === "avatar"));
-    assert.ok(nodes.some(node => node.props?.["data-profile-editor-trigger"] === "identity"));
+    assert.ok(nodes.some(node => node.props?.["data-profile-editor-trigger"] === "stageName"));
+    assert.ok(nodes.some(node => node.props?.["data-profile-editor-trigger"] === "city"));
     assert.ok(nodes.some(node => node.props?.className?.includes("dancer-profile-builder-socials")));
   }
   const nodes = elements(fixture({ open: true, editor: false }).render());
