@@ -55,7 +55,7 @@ test("MyDancr admins receive, review, link, and publish requested deals", () => 
   assert.match(adminRoute, /reviewVenueClubDealRequest/);
   assert.match(adminRoute, /upsert_contract_deal/);
   assert.match(adminRoute, /status: result\.deal\.isActive \? "approved" : "under_review"/);
-  const manager = adminClient.match(/function AdminClubDealManager[\s\S]*?(?=function ReferralFeeManager)/)?.[0] || "";
+  const manager = adminClient.match(/function AdminClubDealManager[\s\S]*?(?=\nfunction |$)/)?.[0] || "";
   assert.match(manager, /Venue deal requests/);
   assert.match(manager, /Prepare deal/);
   assert.match(manager, /review_deal_request/);

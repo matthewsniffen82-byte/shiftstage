@@ -459,9 +459,8 @@ export function VenuePanel({
         </section>
 
         <DashboardSection
-          badge={`${activeDealCount} live · ${dashboardDeals.length} total`}
-          description="Review every live or inactive deal and its guest terms."
-          eyebrow="Current offers"
+          badge={`${activeDealCount} live${dashboardDeals.length > activeDealCount ? ` · ${dashboardDeals.length - activeDealCount} inactive` : ""}`}
+          description="Managed by MyDancr. Request changes below."
           hidden={activeWorkspace !== "venue"}
           id="venue-club-deals"
           icon={<VenueDashboardIcon section="deals" />}
@@ -652,58 +651,48 @@ function VenueDealReadOnlyPanel({
   }
 
   return (
-    <article className="info-panel venue-deal-readonly" id="venue-deal-contract-ledger" tabIndex={-1}>
-      <header className="venue-deal-readonly-heading">
-        <div>
-          <span className="eyebrow">Current Club Deals · MyDancr managed</span>
-          <h2>Your Club Deals</h2>
-          <p>These are the official offers currently attached to your venue. Live deals appear first and are marked in green. Request changes anytime.</p>
-        </div>
-        <strong className={liveDeals.length ? "deal-state active" : "deal-state"}>
-          {liveDeals.length ? `${liveDeals.length} live` : "No live deals"}
-        </strong>
-      </header>
-
-      <section className="venue-contract-summary" aria-label="Admission passes">
-        <div>
-          <span>Redemption status</span>
-          <strong>{liveDeals.length ? "Enabled" : "Not active"}</strong>
-          <small>Scan the guest’s admission QR with your phone camera while signed in to this venue. Verify arrival eligibility, then select “Admit guest & redeem pass.” New passes record visits without a per-guest charge.</small>
-        </div>
-      </section>
-
+    <article className="venue-deal-readonly" id="venue-deal-contract-ledger" tabIndex={-1}>
       <div className="venue-contract-deal-list" aria-label="All Club Deals">
         {displayedDeals.map((deal) => (
           <section className={deal.isActive === true ? "is-live" : ""} key={String(deal.id)}>
             <div className="venue-contract-deal-title">
-              <span>{deal.isActive === true ? "Live Club Deal" : "Not published"}</span>
-              <strong>{String(deal.dealTitle || "Club Deal")}</strong>
+              <h3>{String(deal.dealTitle || "Club Deal")}</h3>
+              <span className="venue-contract-deal-state">{deal.isActive === true ? "Live" : "Inactive"}</span>
             </div>
             <p>{String(deal.dealDescription || "No public description recorded.")}</p>
-            <dl>
-              <div><dt>Offer type</dt><dd>{dealTypeLabel(String(deal.offerType || "admission"))}</dd></div>
-              <div><dt>Redemption status</dt><dd>{deal.isActive === true ? "Enabled" : "Not active"}</dd></div>
-            </dl>
-            <div className="venue-contract-deal-terms">
-              <span>Guest terms</span>
+            <details className="venue-contract-deal-terms">
+              <summary>Guest terms</summary>
               <p>{String(deal.dealTerms || "Standard venue capacity, age, dress code, and house rules apply.")}</p>
-            </div>
+              <small>Offer type: {dealTypeLabel(String(deal.offerType || "admission"))}</small>
+            </details>
           </section>
         ))}
         {!deals.length ? (
           <section className="venue-contract-empty">
-            <strong>MyDancr has not published a Club Deal yet.</strong>
-            <p>After MyDancr publishes your deal, the offer and its terms will appear here automatically.</p>
+            <strong>No Club Deals yet</strong>
+            <p>Request a deal below for MyDancr to review.</p>
           </section>
         ) : null}
       </div>
+
+      {liveDeals.length > 0 ? (
+        <details className="venue-deal-redemption-guide">
+          <summary>How to redeem a guest pass</summary>
+          <ol>
+            <li>Sign in to this venue and scan the guest’s admission QR with your phone camera.</li>
+            <li>Check the guest meets the arrival requirements in the deal’s terms.</li>
+            <li>Select “Admit guest &amp; redeem pass.”</li>
+          </ol>
+          <p>New passes record visits without a per-guest charge.</p>
+        </details>
+      ) : null}
 
       {liveDeals.length && isVenuePublished && venueSlug ? (
         <Link
           className="venue-contract-preview"
           href={`/?city=${encodeURIComponent(venueCity || "Las Vegas")}&venue=${encodeURIComponent(venueSlug)}`}
         >
-          Open live Club Deals
+          View guest offer
         </Link>
       ) : liveDeals.length ? (
         <p className="venue-contract-preview-note">The Club Deal is recorded. The live preview becomes available after MyDancr publishes the venue page.</p>
@@ -711,37 +700,39 @@ function VenueDealReadOnlyPanel({
 
       <section className="venue-deal-request-center" aria-labelledby="venue-deal-request-heading">
         <div>
-          <span className="eyebrow">Deal request</span>
-          <h3 id="venue-deal-request-heading">Request a deal change</h3>
-          <p>Ask MyDancr to add or remove a Club Deal.</p>
+          <h3 id="venue-deal-request-heading">Manage deals</h3>
         </div>
-        {canRequestDeals ? (
-          <button
-            disabled={isRequesting}
-            type="button"
-            onClick={() => {
-              setIsRequestOpen((current) => requestType === "add" ? !current : true);
-              setRequestType("add");
+        <div className="venue-deal-request-actions">
+          {canRequestDeals ? (
+            <button
+              aria-controls="venue-deal-request-form"
+              aria-expanded={isRequestOpen && requestType === "add"}
+              disabled={isRequesting}
+              type="button"
+              onClick={() => {
+                setIsRequestOpen((current) => requestType === "add" ? !current : true);
+                setRequestType("add");
+                setRequestStatus("");
+                setRequestStatusTone("idle");
+                setConfirmedRequestId("");
+              }}
+            >
+              {isRequestOpen && requestType === "add" ? "Close request" : "Request a new deal"}
+            </button>
+          ) : <small>Only venue owners and managers can request deal changes.</small>}
+          {canRequestDeals && deals.length > 0 ? (
+            <button type="button" aria-controls="venue-deal-request-form" aria-expanded={isRequestOpen && requestType === "remove"} disabled={isRequesting} onClick={() => {
+              setIsRequestOpen((current) => requestType === "remove" ? !current : true);
+              setRequestType("remove");
+              setTargetDealId(String(displayedDeals[0].id));
               setRequestStatus("");
               setRequestStatusTone("idle");
               setConfirmedRequestId("");
-            }}
-          >
-            {isRequestOpen && requestType === "add" ? "Close request" : "Request a new deal"}
-          </button>
-        ) : <small>Only venue owners and managers can request deal changes.</small>}
-        {canRequestDeals && deals.length > 0 ? (
-          <button type="button" disabled={isRequesting} onClick={() => {
-            setIsRequestOpen((current) => requestType === "remove" ? !current : true);
-            setRequestType("remove");
-            setTargetDealId(String(displayedDeals[0].id));
-            setRequestStatus("");
-            setRequestStatusTone("idle");
-            setConfirmedRequestId("");
-          }}>{isRequestOpen && requestType === "remove" ? "Close removal request" : "Request deal removal"}</button>
-        ) : null}
+            }}>{isRequestOpen && requestType === "remove" ? "Close removal request" : "Request deal removal"}</button>
+          ) : null}
+        </div>
         {isRequestOpen && canRequestDeals ? (
-          <form onSubmit={submitDealRequest}>
+          <form id="venue-deal-request-form" onSubmit={submitDealRequest}>
             {requestType === "remove" ? <>
               <label>Deal to remove
                 <select value={targetDealId} required disabled={isRequesting} onChange={(event) => setTargetDealId(event.target.value)}>
