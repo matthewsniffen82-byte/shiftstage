@@ -84,7 +84,7 @@ test("video moderation checks server-decoded frames, caption, and spoken audio",
   assert.match(videoModeration, /drug_use_or_sales/);
   assert.match(videoModeration, /nonconsensual_or_coercive_content/);
   assert.match(videoModeration, /analyzeDancerMediaIdentity/);
-  assert.match(videoModeration, /identityReferenceMatch/);
+  assert.doesNotMatch(videoModeration, /identityReferenceMatch|dancerAvatarStoragePath/);
   assert.match(videoModeration, /singlePersonOnly/);
   assert.match(videoModeration, /const VIDEO_POLICY_APPROVE_CONFIDENCE = 0\.75/);
   assert.match(videoModeration, /const VIDEO_POLICY_REJECT_CONFIDENCE = 0\.95/);

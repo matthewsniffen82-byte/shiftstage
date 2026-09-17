@@ -9,7 +9,7 @@ import { evaluateDancrImageModeration } from '../src/lib/dancr/moderation-policy
 import { runVideoReviewChecks } from '../src/lib/dancr/video-review-checks.ts';
 import { mediaIdentityRuntime } from './helpers/media-identity-runtime.mjs';
 
-const solo = { personCount: 1, personCountConfidence: 0.99, singlePersonOnly: true, referenceMatch: 'match', confidence: 0.99 };
+const solo = { personCount: 1, personCountConfidence: 0.99, singlePersonOnly: true };
 
 for (const mediaType of ['photo', 'video']) {
   test(mediaType + ' checks the entire target media in high detail with an independent person-count confidence', async () => {
@@ -19,12 +19,13 @@ for (const mediaType of ['photo', 'video']) {
       const content = request.input[0].content;
       const images = content.filter(item => item.type === 'input_image');
       assert.deepEqual(Array.from(images, item => Buffer.from(item.image_url.split(',')[1], 'base64').toString()),
-        [reference, ...targets].map(buffer => buffer.toString()));
+        targets.map(buffer => buffer.toString()));
       assert.ok(images.every(item => item.detail === 'high'));
-      assert.ok(request.text.format.schema.required.includes('personCountConfidence'));
+      assert.deepEqual(Array.from(request.text.format.schema.required), ['personCount', 'personCountConfidence', 'singlePersonOnly']);
+      assert.match(request.instructions, /Do not compare appearance with an avatar or verify identity/);
       assert.match(content[0].text, /A different person appearing later still makes personCount greater than one/);
       assert.match(content[0].text, /Count partially visible people even when their face is hidden/);
-      assert.match(content[0].text, /do not double-count the same person's mirror reflection/);
+      assert.match(content[0].text, /Do not double-count the same person's mirror reflection/);
       assert.ok(options.signal instanceof AbortSignal);
       return { status: 'completed', output_text: JSON.stringify(solo) };
     } });
@@ -51,7 +52,6 @@ function videoRuntime(identityAnalysis) {
     getServerEnv: () => 'synthetic', createOpenAIClient: async () => ({}),
     mkdtemp: async () => 'synthetic-workspace', tmpdir: () => 'synthetic-temp',
     writeFile: async () => {}, rm: async () => {},
-    loadApprovedDancerIdentityReference: async () => Buffer.from('approved-avatar'),
     downloadVideo: async () => Buffer.from('video'), assertAllowedVideoContainer() {},
     probeVideoDurationSeconds: async () => 30, extractVideoFrames: async () => frames,
     extractOptionalAudio: async () => null,
@@ -61,18 +61,20 @@ function videoRuntime(identityAnalysis) {
     classifyVideoPolicy: async () => ({ decision: 'approved', reasonCodes: [], confidence: 0.99 }),
     analyzeDancerMediaIdentity: async input => {
       assert.equal(input.mediaType, 'video');assert.equal(input.targetImages, frames);
+      assert.equal('referenceImage' in input, false);
       return identityAnalysis;
     },
     DANCR_IMAGE_MODERATION_MODEL: 'synthetic', VIDEO_POLICY_MODEL: 'synthetic', DANCR_MEDIA_IDENTITY_MODEL: 'synthetic',
     VIDEO_POLICY_APPROVE_CONFIDENCE: 0.75, VIDEO_POLICY_REJECT_CONFIDENCE: 0.95,
   });
   return () => exports.moderateStoredMyDancrTvVideo({}, {
-    videoId: 'synthetic', storagePath: 'synthetic.mp4', storageMime: 'video/mp4', caption: '', dancerAvatarStoragePath: 'avatar',
+    videoId: 'synthetic', storagePath: 'synthetic.mp4', storageMime: 'video/mp4', caption: '',
   });
 }
 
 for (const [name, analysis, expected] of [
   ['one confirmed dancer', solo, 'approved'],
+  ['one person without an avatar match', { ...solo, referenceMatch: 'mismatch', confidence: 0.1 }, 'approved'],
   ['another person anywhere in the sampled frames', { ...solo, personCount: 2, singlePersonOnly: false }, 'rejected'],
   ['multiple people with an uncertain identity match', { ...solo, personCount: 3, singlePersonOnly: false, confidence: 0.4 }, 'rejected'],
   ['uncertain background person despite matching main dancer', { ...solo, personCountConfidence: 0.6 }, 'review'],

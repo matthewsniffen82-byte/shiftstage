@@ -91,7 +91,6 @@ function scenario({decision='review',concurrentDecision='',providerError=false,p
     isProfileAvatarUploadContext:()=>avatar,
     profilePhotoSlotFromUploadContext:()=>({isPrimary:false,sortOrder:1}),
     profilePhotoUploadContext:()=> 'profile_gallery:1',
-    loadApprovedDancerIdentityReference:async()=>Buffer.from('reference'),
     prepareFaceCenteredAvatar:async image=>({...image,buffer:Buffer.from('cropped-avatar')}),
     createDancerAvatarReview:async(_admin,input)=>{
       Object.assign(record,{id:'record',user_id:input.userId,upload_context:'profile_avatar',temporary_storage_path:input.temporaryStoragePath,
@@ -99,6 +98,7 @@ function scenario({decision='review',concurrentDecision='',providerError=false,p
       return {id:record.id,updated_at:version};
     },
     analyzeDancerMediaIdentity:async input=>{
+      assert.equal('referenceImage' in input,false);
       assert.equal(input.targetImages[0].toString(),'synthetic','count people in the original photo, including outside the avatar crop');
       return identityAnalysis;
     },
@@ -297,4 +297,13 @@ for (const avatar of [false, true]) for (const attemptCount of [1, 3]) {
       assert.doesNotMatch(JSON.stringify({record:s.record, result}), /synthetic-private-token|owner@example|srv\/private|query\.sql/);
     });
   }
+}
+
+for (const avatar of [false, true]) for (const retry of [false, true]) {
+  test((avatar ? 'avatar' : 'gallery') + (retry ? ' retry' : ' upload') + ' reaches approved publication without an avatar match', async () => {
+    const s = scenario({ avatar, retry, decision: 'approved', identityAnalysis: { personCount: 1, personCountConfidence: 0.99, singlePersonOnly: true, referenceMatch: 'mismatch', confidence: 0.1 } });
+    await assert.rejects(s.run(), { status: 409 }); // The fixture deliberately conflicts at the publication RPC.
+    assert.ok(s.events.includes('content-check'));
+    assert.ok(s.events.includes('public-upload'), 'a missing or mismatched reference must not prevent approved publication');
+  });
 }

@@ -4,7 +4,6 @@ import { readBoundedFormData } from "@/src/lib/bounded-form-data";
 import { readBoundedJsonObject } from "@/src/lib/bounded-json-body";
 import { deleteOwnDancerPhoto } from "@/src/lib/dancr/dancer";
 import { moderateAndStoreDancerPhoto } from "@/src/lib/dancr/image-moderation";
-import { isDancerIdentityReferenceRequiredError } from "@/src/lib/dancr/media-identity";
 import { MAX_DANCR_RAW_UPLOAD_BYTES } from "@/src/lib/dancr/image-validation";
 import {
   DancerMediaRateLimitError,
@@ -62,9 +61,6 @@ export async function POST(request: Request) {
       );
     }
     const message = error instanceof Error ? error.message : "";
-    if (isDancerIdentityReferenceRequiredError(error)) {
-      return apiError(error, "Upload an approved avatar before adding profile photos.", 422);
-    }
     if (message.startsWith("Image moderation ")) {
       return apiError(error, "Unable to upload dancer photo.", 503);
     }

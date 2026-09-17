@@ -28,9 +28,7 @@ import {
   analyzeDancerMediaIdentity,
   combineDancerMediaModeration,
   dancerMediaIdentityCategoryFlags,
-  DancerIdentityReferenceRequiredError,
   evaluateDancerMediaIdentity,
-  loadApprovedDancerIdentityReference,
 } from "./media-identity";
 import {
   DANCR_IMAGE_MODERATION_MODEL,
@@ -120,13 +118,6 @@ export async function moderateAndStoreDancerPhoto(client: DancrClient, admin: Da
         input.sortOrder,
         Boolean(input.replaceExisting),
       );
-  const identityReference = profile.avatar_storage_path
-    ? await loadApprovedDancerIdentityReference(admin, profile.avatar_storage_path)
-    : null;
-  if (!isAvatar && !identityReference) {
-    throw new DancerIdentityReferenceRequiredError();
-  }
-  const identityReferenceRequired = !isAvatar || Boolean(identityReference);
   const publicationImage = isAvatar
     ? await prepareFaceCenteredAvatar(image)
     : image;
@@ -184,7 +175,6 @@ export async function moderateAndStoreDancerPhoto(client: DancrClient, admin: Da
       analyzeDancerMediaIdentity({
         targetImages: [image.buffer],
         mediaType: "photo",
-        referenceImage: identityReference,
       }),
       analyzeDancerPhotoContent(image),
     ]);
@@ -195,9 +185,7 @@ export async function moderateAndStoreDancerPhoto(client: DancrClient, admin: Da
     };
     evaluation = combineDancerMediaModeration(
       applyDancerPhotoContentPolicy(evaluateDancrImageModeration(providerResult), contentAnalysis),
-      evaluateDancerMediaIdentity(identityAnalysis, {
-        referenceRequired: identityReferenceRequired,
-      }),
+      evaluateDancerMediaIdentity(identityAnalysis),
     );
     logModeration("decision_evaluated", {
       recordId: record.id,
@@ -206,8 +194,7 @@ export async function moderateAndStoreDancerPhoto(client: DancrClient, admin: Da
       categoryScores: providerResult.category_scores || providerResult.categoryScores || {},
       personCount: identityAnalysis.personCount,
       singlePersonOnly: identityAnalysis.singlePersonOnly,
-      referenceMatch: identityAnalysis.referenceMatch,
-      identityConfidence: identityAnalysis.confidence,
+      personCountConfidence: identityAnalysis.personCountConfidence,
       decision: evaluation.decision === "review" ? "pending_review" : evaluation.decision,
     });
   } catch (error) {
@@ -358,16 +345,12 @@ export async function processImageModerationRetryRecord(admin: DancrClient, reco
   try {
     const downloaded = await downloadPrivateObject(admin, MODERATION_TEMP_BUCKET, tempPath);
     const downloadedImage = moderationImageFromPrivateObject(downloaded);
-    const referencePath = isAvatar ? avatarRetryReference(record, profile) : profile.avatar_storage_path;
-    const identityReference = referencePath
-      ? await loadApprovedDancerIdentityReference(admin, referencePath)
-      : null;
+    if (isAvatar) avatarRetryReference(record, profile);
     const [providerResult, identityAnalysis, contentAnalysis] = await Promise.all([
       moderateImageWithOpenAI(admin, tempPath),
       analyzeDancerMediaIdentity({
         targetImages: [downloadedImage.buffer],
         mediaType: "photo",
-        referenceImage: identityReference,
       }),
       analyzeDancerPhotoContent(downloadedImage),
     ]);
@@ -378,9 +361,7 @@ export async function processImageModerationRetryRecord(admin: DancrClient, reco
     };
     const evaluation = combineDancerMediaModeration(
       applyDancerPhotoContentPolicy(evaluateDancrImageModeration(providerResult), contentAnalysis),
-      evaluateDancerMediaIdentity(identityAnalysis, {
-        referenceRequired: !isAvatar || Boolean(identityReference),
-      }),
+      evaluateDancerMediaIdentity(identityAnalysis),
     );
     logModeration("retry_decision_evaluated", {
       recordId: record.id,
@@ -388,8 +369,7 @@ export async function processImageModerationRetryRecord(admin: DancrClient, reco
       flagged: Boolean(providerResult.flagged),
       personCount: identityAnalysis.personCount,
       singlePersonOnly: identityAnalysis.singlePersonOnly,
-      referenceMatch: identityAnalysis.referenceMatch,
-      identityConfidence: identityAnalysis.confidence,
+      personCountConfidence: identityAnalysis.personCountConfidence,
       decision: evaluation.decision === "review" ? "pending_review" : evaluation.decision,
     });
 
@@ -1157,14 +1137,8 @@ function photoRejectionMessage(reasonCodes: string[]) {
   if (reasons.has("multiple_people_detected")) {
     return "Only you can appear in a profile photo. Choose a photo with no other people visible.";
   }
-  if (reasons.has("dancer_identity_mismatch")) {
-    return "The person in this photo must match your approved avatar. Choose a photo of yourself.";
-  }
   if (reasons.has("dancer_not_visible")) {
     return "A clear photo of you is required. Choose a photo where you are visible.";
-  }
-  if (reasons.has("dancer_identity_reference_required")) {
-    return "Upload an approved avatar before adding profile photos.";
   }
   return "This photo does not meet Dancr's photo guidelines. Please upload a different image.";
 }

@@ -28,7 +28,6 @@ import {
   analyzeDancerMediaIdentity,
   DANCR_MEDIA_IDENTITY_MODEL,
   evaluateDancerMediaIdentity,
-  loadApprovedDancerIdentityReference,
 } from "./media-identity";
 
 type AdminClient = SupabaseClient<any, any, any>;
@@ -53,7 +52,6 @@ export type MyDancrTvModerationResult = {
     policyConfidence: number;
     identityDecision: DancrImageModerationDecision;
     identityConfidence: number;
-    identityReferenceMatch: "match" | "mismatch" | "uncertain" | "not_provided";
     personCount: number;
     personCountConfidence: number;
     singlePersonOnly: boolean;
@@ -100,7 +98,6 @@ export async function moderateStoredMyDancrTvVideo(
     storagePath: string;
     storageMime: string;
     caption: string;
-    dancerAvatarStoragePath: string;
   },
 ): Promise<MyDancrTvModerationResult> {
   const apiKey = getServerEnv("OPENAI_API_KEY");
@@ -110,10 +107,6 @@ export async function moderateStoredMyDancrTvVideo(
   const videoPath = path.join(workspace, `source.${extension}`);
 
   try {
-    const identityReference = await loadApprovedDancerIdentityReference(
-      admin,
-      input.dancerAvatarStoragePath,
-    );
     const videoBuffer = await downloadVideo(admin, input.storagePath);
     assertAllowedVideoContainer(videoBuffer, input.storageMime);
     await writeFile(videoPath, videoBuffer);
@@ -128,12 +121,9 @@ export async function moderateStoredMyDancrTvVideo(
       identity: () => analyzeDancerMediaIdentity({
         targetImages: frames,
         mediaType: "video",
-        referenceImage: identityReference,
       }),
     });
-    const identityEvaluation = evaluateDancerMediaIdentity(identityAnalysis, {
-      referenceRequired: true,
-    });
+    const identityEvaluation = evaluateDancerMediaIdentity(identityAnalysis);
     const frameEvaluations = frameResults.map((result) => evaluateDancrImageModeration(result));
     const textEvaluation = evaluateDancrImageModeration(textResult);
     const evaluations = [...frameEvaluations, textEvaluation];
@@ -163,8 +153,7 @@ export async function moderateStoredMyDancrTvVideo(
         policyDecision: policyDecision.decision,
         policyConfidence: policyDecision.confidence,
         identityDecision: identityEvaluation.decision,
-        identityConfidence: identityAnalysis.confidence,
-        identityReferenceMatch: identityAnalysis.referenceMatch,
+        identityConfidence: identityAnalysis.personCountConfidence,
         personCount: identityAnalysis.personCount,
         personCountConfidence: identityAnalysis.personCountConfidence,
         singlePersonOnly: identityAnalysis.singlePersonOnly,
@@ -183,7 +172,6 @@ export async function moderateStoredMyDancrTvVideo(
       providerFlagged: result.providerFlagged,
       identityDecision: result.details.identityDecision,
       identityConfidence: result.details.identityConfidence,
-      identityReferenceMatch: result.details.identityReferenceMatch,
       personCount: result.details.personCount,
       personCountConfidence: result.details.personCountConfidence,
       singlePersonOnly: result.details.singlePersonOnly,
