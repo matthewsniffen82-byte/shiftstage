@@ -74,7 +74,8 @@ export function DancerPhotoPanel({
   function queuePhotos(files: File[], source: DancerPhotoQueueItem["source"]) {
     if (actionInFlightRef.current) return;
     window.dispatchEvent(new Event(DANCER_PHOTOS_KEEP_OPEN_EVENT));
-    const availableProfileSlots = Math.max(0, MAX_DANCER_PROFILE_PHOTOS - photos.length - queuedPhotos.length);
+    const waitingCount = queuedPhotos.filter((item) => item.stage !== "complete").length;
+    const availableProfileSlots = Math.max(0, MAX_DANCER_PROFILE_PHOTOS - photos.length - waitingCount);
     const selectedFiles = files.slice(0, availableProfileSlots);
     if (!selectedFiles.length) {
       setStatus("Your profile picture library is full. Delete or replace a picture first.");
@@ -230,7 +231,8 @@ export function DancerPhotoPanel({
             imageUrl: approved ? String(data.photo?.imageUrl || item.previewUrl) : item.previewUrl,
             label: "Photo",
             status: uploadStatus,
-            note: photoStatusNote(uploadStatus),
+            moderationStatus: String(data.decision || ""),
+            note: uploadStatus === "rejected" && typeof data.message === "string" ? data.message : photoStatusNote(uploadStatus),
             storagePath: String(data.photo?.storage_path || ""),
             isPrimary: Boolean(data.photo?.isPrimary || data.photo?.is_primary),
             sortOrder: Number(data.photo?.sortOrder ?? data.photo?.sort_order ?? uploadSortOrder),
@@ -238,25 +240,22 @@ export function DancerPhotoPanel({
           if (uploadStatus === "rejected") {
             rejectedCount += 1;
             rejectedItemIds.add(item.id);
-            queuedPreviewUrlsRef.current.delete(item.previewUrl);
-            URL.revokeObjectURL(item.previewUrl);
           } else {
             acceptedCount += 1;
             acceptedItemIds.add(item.id);
             workingPhotos = relabelPhotoItems(mergePhotoItems(workingPhotos, [uploadedPhoto]));
             setPhotos(workingPhotos);
-            if (approved && data.photo?.imageUrl) {
-              queuedPreviewUrlsRef.current.delete(item.previewUrl);
-              URL.revokeObjectURL(item.previewUrl);
-            }
           }
+          updateQueuedPhoto(item.id, { stage: "complete", progress: 100, result: uploadedPhoto });
         } catch (error) {
           if (!isCurrentPhotoAction(requestId, controller)) return;
           const message = error instanceof Error ? error.message : "Unable to upload photo.";
           const friendlyMessage = message.includes("valid JPEG, PNG, or WebP") || message.includes("HEIC or HEIF")
             ? "That photo could not be converted. Choose another photo or set your phone camera to Most Compatible."
             : message;
-          failedItems.push({ ...item, uploadSortOrder, stage: "failed", progress: 0, error: friendlyMessage });
+          const failedItem = { ...item, uploadSortOrder, stage: "failed" as const, progress: 0, error: friendlyMessage };
+          failedItems.push(failedItem);
+          updateQueuedPhoto(item.id, failedItem);
         }
       }
 
@@ -278,11 +277,6 @@ export function DancerPhotoPanel({
       }
 
       if (!isCurrentPhotoAction(requestId, controller)) return;
-      const processedIds = new Set(batch.map((item) => item.id));
-      setQueuedPhotos((current) => [
-        ...current.filter((item) => !processedIds.has(item.id)),
-        ...failedItems,
-      ]);
       if (galleryPhotoInputRef.current) galleryPhotoInputRef.current.value = "";
       if (cameraPhotoInputRef.current) cameraPhotoInputRef.current.value = "";
       const summary = [
@@ -297,7 +291,7 @@ export function DancerPhotoPanel({
         const failedById = new Map(failedItems.map((item) => [item.id, item]));
         const batchIds = new Set(batch.map((item) => item.id));
         setQueuedPhotos((current) => current.flatMap((item) => {
-          if (rejectedItemIds.has(item.id) || acceptedItemIds.has(item.id)) return [];
+          if (rejectedItemIds.has(item.id) || acceptedItemIds.has(item.id)) return [item];
           if (!batchIds.has(item.id)) return [item];
           return [failedById.get(item.id) || { ...item, stage: "failed", progress: 0, error: message }];
         }));
@@ -397,6 +391,9 @@ export function DancerPhotoPanel({
   }
 
   const photoActionBusy = isUploading || Boolean(pinningPhotoId) || deletingPhotoIds.size > 0;
+  // The uploader owns its session history; closing the modal unmounts it.
+  // The full manager already displays accepted photos in its saved library.
+  const visibleQueuedPhotos = queuedPhotos.filter((item) => uploadOnly || item.stage !== "complete" || item.result?.status === "rejected");
 
   return (
     <article aria-label="Profile photo manager" className="info-panel upload-panel">
@@ -454,23 +451,27 @@ export function DancerPhotoPanel({
         </div>
         {status ? <p className="photo-upload-status" role="status" aria-live="polite">{status}</p> : null}
       </div>
-      {queuedPhotos.length ? (
-        <div className="photo-upload-queue" aria-label="Photos ready to upload">
-          {queuedPhotos.map((item, index) => (
-            <div className={`photo-review-card is-pending ${uploadingQueueItemId === item.id ? "is-uploading" : ""}`.trim()} key={item.id}>
-              <div className="photo-preview" style={{ backgroundImage: `url(${item.previewUrl})` }} />
-              <span>
-                <strong>{`Selected photo ${index + 1}`}</strong>
-                <small>{item.stage === "uploading" ? "Uploading" : item.stage === "checking" ? "Checking" : item.error ? "Upload failed" : "Waiting to upload"}</small>
-                {item.stage !== "failed" ? <progress aria-label={`Photo ${index + 1} upload progress`} max="100" value={item.progress} /> : null}
-                {item.error ? <em>{item.error}</em> : null}
-                <span className="photo-queue-actions">
-                  {item.error ? <button className="photo-retry-button" disabled={photoActionBusy} onClick={() => void uploadPhotoBatch([{ ...item, stage: "queued", progress: 0, error: undefined }])} type="button">Retry</button> : null}
-                  <button className="photo-delete-button" disabled={photoActionBusy} onClick={() => removeQueuedPhoto(item.id)} type="button">Remove</button>
+      {visibleQueuedPhotos.length ? (
+        <div className="photo-upload-queue" aria-label="Photos from this upload session">
+          {visibleQueuedPhotos.map((item, index) => {
+            const result = item.result && (photos.find((photo) => photo.id === item.result?.id) || item.result);
+            return (
+              <div className={`photo-review-card is-${result?.status || "pending"} ${uploadingQueueItemId === item.id && item.stage !== "complete" ? "is-uploading" : ""}`.trim()} key={item.id}>
+                <div className="photo-preview" style={{ backgroundImage: `url(${item.previewUrl})` }} />
+                <span>
+                  <strong>{`Selected photo ${index + 1}`}</strong>
+                  <small>{result ? photoStatusLabel(result.status, result.moderationStatus) : item.stage === "uploading" ? "Uploading" : item.stage === "checking" ? "Checking" : item.error ? "Upload failed" : "Waiting to upload"}</small>
+                  {item.stage !== "failed" && item.stage !== "complete" ? <progress aria-label={`Photo ${index + 1} upload progress`} max="100" value={item.progress} /> : null}
+                  {result?.note ? <em>{result.note}</em> : null}
+                  {item.error ? <em>{item.error}</em> : null}
+                  {!result ? <span className="photo-queue-actions">
+                    {item.error ? <button className="photo-retry-button" disabled={photoActionBusy} onClick={() => void uploadPhotoBatch([{ ...item, stage: "queued", progress: 0, error: undefined }])} type="button">Retry</button> : null}
+                    <button className="photo-delete-button" disabled={photoActionBusy} onClick={() => removeQueuedPhoto(item.id)} type="button">Remove</button>
+                  </span> : null}
                 </span>
-              </span>
-            </div>
-          ))}
+              </div>
+            );
+          })}
         </div>
       ) : null}
       {!uploadOnly && photos.length ? (
