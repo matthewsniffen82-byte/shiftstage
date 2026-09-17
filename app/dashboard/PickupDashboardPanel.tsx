@@ -27,15 +27,17 @@ export default function PickupDashboardPanel({ refreshKey }: { refreshKey?: stri
       document.removeEventListener("visibilitychange", refresh);
     };
   }, [refreshKey]);
-  return <div><p>Contact these guests directly to arrange and confirm pickup.</p>
-    <Link className="primary-link" href="/pickups">Open Pickup Requests →</Link>
+  const requestRow = (request: PhonePickupRequest) => <Link className="notification-row" key={request.id} href="/pickups">
+    <strong>{request.name}</strong>
+    <span>{request.venue_name}</span>
+    <span>{request.party_size} {request.party_size === 1 ? "guest" : "guests"} · {request.location}</span>
+    <time dateTime={request.requested_at}>{new Date(request.requested_at).toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}</time>
+  </Link>;
+  return <div className="venue-pickup-preview"><p>Contact guests to arrange pickup. Newest requests first.</p>
     {error && <p role="alert">{error}</p>}{!loaded && !error && <p role="status">Loading pickup requests…</p>}
     {loaded && !error && !requests.length && <p>No pickup requests yet.</p>}
-    <div className="notification-list">{requests.map(request => <Link className="notification-row" key={request.id} href="/pickups">
-      <strong>{request.venue_name} · {request.name}</strong>
-      <span>{request.party_size} guests · {request.location}</span>
-      <span>Open pickup requests for guest contact details.</span>
-      <time dateTime={request.requested_at}>{new Date(request.requested_at).toLocaleString()}</time>
-    </Link>)}</div>
+    <div className="notification-list">{requests.slice(0, 3).map(requestRow)}</div>
+    {requests.length > 3 && <details><summary>Earlier requests</summary><div className="notification-list">{requests.slice(3).map(requestRow)}</div></details>}
+    <Link className="primary-link" href="/pickups">View all pickup requests →</Link>
   </div>;
 }

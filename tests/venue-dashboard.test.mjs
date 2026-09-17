@@ -92,31 +92,34 @@ test("the primary venue dashboard opens the shared routed workspace immediately"
   assert.doesNotMatch(startVenueSession, /openVenueDashboard\(\)/);
 });
 
-test("venue operations prioritize tonight, Club Deals, phone-tap stickers, and then reporting", () => {
+test("venue dashboard prioritizes pickups and results while preserving management tools", () => {
   const venuePanel = dashboard.match(/function VenuePanel\([\s\S]*?(?=\nfunction dealTypeLabel)/)?.[0] || "";
   assert.match(venuePanel, /Tonight/);
   assert.match(venuePanel, /title="Current Club Deals"/);
   assert.match(venuePanel, /venue-current-deals-link[\s\S]*?openVenueSection\(event, "venue-club-deals"\)/);
   assert.match(venuePanel, /View \$\{activeDealCount\} current Club/);
   assert.match(venuePanel, /VenueNfcTagPanel/);
-  assert.match(venuePanel, /Analytics & performance/);
+  assert.match(venuePanel, /id="venue-results-heading">Results/);
   assert.ok(venuePanel.indexOf('title="Current Club Deals"') < venuePanel.indexOf('title="Affiliated dancers"'));
   assert.ok(venuePanel.indexOf('title="Current Club Deals"') < venuePanel.indexOf("VenueNfcTagPanel"));
-  assert.ok(venuePanel.indexOf("Tonight") < venuePanel.indexOf("Analytics & performance"));
+  assert.ok(venuePanel.indexOf('id="venue-pickups"') < venuePanel.indexOf('id="venue-overview"'));
+  assert.ok(venuePanel.indexOf('id="venue-overview"') < venuePanel.indexOf('title="Current Club Deals"'));
 });
 
 test("venue owners navigate one simplified state-aware workspace without losing any controls", () => {
   const venuePanel = dashboard.match(/function VenuePanel\([\s\S]*?(?=\nfunction dealTypeLabel)/)?.[0] || "";
-  assert.match(venuePanel, /role="tablist"[\s\S]*?\["tonight", "Tonight"[\s\S]*?\["venue", "Venue page"[\s\S]*?\["business", "Business"/);
-  assert.match(venuePanel, /"Roster · deals · check-in"[\s\S]*?"Preview · review · MyDancr TV"[\s\S]*?"Analytics · team · account"/);
-  assert.match(venuePanel, /aria-label=\{`\$\{label\}\. \$\{contents\}\. \$\{status\}\.`\}/);
-  assert.match(venuePanel, /className="venue-workspace-tab-status">[\s\S]*?workspace === "tonight" \? status\.split/);
+  assert.match(venuePanel, /role="tablist"[\s\S]*?\["tonight", "Pickup requests"[\s\S]*?\["business", "Results"[\s\S]*?\["venue", "Manage venue"/);
+  assert.match(venuePanel, /aria-controls=\{`venue-workspace-\$\{workspace\}`\}/);
+  assert.match(venuePanel, /tabIndex=\{activeWorkspace === workspace \? 0 : -1\}/);
+  assert.doesNotMatch(venuePanel, /venue-workspace-tab-status/);
   assert.match(venuePanel, /function moveVenueWorkspaceFocus[\s\S]*?"ArrowLeft"[\s\S]*?"ArrowRight"[\s\S]*?"Home"[\s\S]*?"End"/);
   assert.match(dashboard, /function initialVenueWorkspace[\s\S]*?return isPublished \? "tonight" : "venue";/);
-  assert.match(dashboard, /function venueWorkspaceForSection[\s\S]*?"venue-working-now"[\s\S]*?"venue-tv"[\s\S]*?"venue-overview"/);
-  assert.match(venuePanel, /hidden=\{activeWorkspace !== "tonight"\}[\s\S]*?title="Affiliated dancers"/);
+  assert.match(dashboard, /sectionId === "venue-pickups"\) return "tonight"/);
+  assert.match(dashboard, /sectionId === "venue-overview"\) return "business"/);
+  assert.match(dashboard, /\["venue-working-now"[\s\S]*?"venue-team", "venue-account", "venue-support"\]\.includes\(sectionId\)\) return "venue"/);
+  assert.match(venuePanel, /hidden=\{activeWorkspace !== "venue"\}[\s\S]*?title="Affiliated dancers"/);
   assert.match(venuePanel, /<VenueTvPanel\s+city=\{venueCity\}\s+hidden=\{activeWorkspace !== "venue"\}\s+venueId=/);
-  assert.match(venuePanel, /hidden=\{activeWorkspace !== "business"\}[\s\S]*?title="Analytics & performance"/);
+  assert.match(venuePanel, /hidden=\{activeWorkspace !== "business"\}[\s\S]*?id="venue-overview"/);
   assert.match(venuePanel, /title="Account & support"/);
   assert.doesNotMatch(venuePanel, /venue-dashboard-shortcuts/);
 });
@@ -131,14 +134,15 @@ test("working-now actions are neutral when empty and emerald only for a live ros
   assert.doesNotMatch(venuePanel, /className="is-primary"/);
 });
 
-test("venue pickup chats are visible without expanding a section and the inbox is reachable from every tab", () => {
+test("venue pickup requests are visible without expanding a section and the inbox is reachable from every tab", () => {
   const venuePanel = dashboard.match(/function VenuePanel\([\s\S]*?(?=\nfunction dealTypeLabel)/)?.[0] || "";
   const command = venuePanel.slice(venuePanel.indexOf('<section className="venue-command-panel"'), venuePanel.indexOf('<nav className="venue-workspace-tabs"'));
   assert.match(command, /venueRole === "owner" \|\| venueRole === "manager"/);
   assert.match(command, /href="\/pickups">Pickup Requests/);
   const pickupSection = venuePanel.match(/<section\s+className="info-panel venue-dashboard-section"[\s\S]*?id="venue-pickups"[\s\S]*?<\/section>/)?.[0];
   assert.ok(pickupSection, "pickup content must not be hidden inside a collapsed details element");
-  assert.match(pickupSection, /hidden=\{activeWorkspace !== "tonight"\}/);
+  assert.match(venuePanel, /hidden=\{activeWorkspace !== "tonight"\}[\s\S]*?id="venue-workspace-tonight"[\s\S]*?id="venue-pickups"/);
+  assert.match(pickupSection, /venueRole === "owner" \|\| venueRole === "manager"/);
   assert.match(pickupSection, /<PickupDashboardPanel[^>]+refreshKey=\{refreshedAt\}/);
   assert.ok(venuePanel.indexOf('id="venue-pickups"') < venuePanel.indexOf('id="venue-club-deals"'));
 });

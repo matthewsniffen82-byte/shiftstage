@@ -31,9 +31,9 @@ function notifyPublicVenuePublication() {
 
 
 function venueWorkspaceForSection(sectionId: string): VenueWorkspace | null {
-  if (["venue-working-now", "venue-dancer-roster", "venue-club-deals", "venue-deal-contract-ledger", "venue-pickups"].includes(sectionId)) return "tonight";
-  if (sectionId === "venue-tv") return "venue";
-  if (["venue-overview", "venue-team", "venue-account", "venue-support"].includes(sectionId)) return "business";
+  if (sectionId === "venue-pickups") return "tonight";
+  if (sectionId === "venue-overview") return "business";
+  if (["venue-working-now", "venue-dancer-roster", "venue-club-deals", "venue-deal-contract-ledger", "venue-tv", "venue-team", "venue-account", "venue-support"].includes(sectionId)) return "venue";
   return null;
 }
 
@@ -165,7 +165,7 @@ export function VenuePanel({
   function moveVenueWorkspaceFocus(event: React.KeyboardEvent<HTMLButtonElement>, workspace: VenueWorkspace) {
     if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
     event.preventDefault();
-    const workspaces: VenueWorkspace[] = ["tonight", "venue", "business"];
+    const workspaces: VenueWorkspace[] = ["tonight", "business", "venue"];
     const currentIndex = workspaces.indexOf(workspace);
     const nextIndex = event.key === "Home"
       ? 0
@@ -222,25 +222,14 @@ export function VenuePanel({
   const venueCustomerPreviewHref = isAwaitingVenueReview && venueSlug
     ? `/?city=${encodeURIComponent(venueCity)}&venue=${encodeURIComponent(venueSlug)}&venue_preview=1`
     : "";
-  const venuePageTabStatus = isPublished
-    ? "Live page"
-    : isPausedForDeals ? "Hidden · no active deal"
-    : pageReviewStatus === "venue_review"
-      ? "Ready to review"
-      : pageReviewStatus === "changes_requested"
-        ? "Changes in progress"
-        : pageReviewStatus === "venue_approved"
-          ? "Approved"
-          : "In preparation";
-
   return (
     <>
       <section className="venue-command-panel" aria-labelledby="venue-command-heading">
         <div className="venue-command-status">
           <span className={isPublished ? "venue-live-pill" : "venue-live-pill is-draft"}>{isPublished ? "LIVE" : isPausedForDeals ? "HIDDEN" : "PRIVATE DRAFT"}</span>
           <div>
-          <h2 id="venue-command-heading">{isApprovedPage ? `Tonight at ${venueName}` : `Private page for ${venueName}`}</h2>
-            <p>{isPausedForDeals ? "Your venue is hidden until it has an active Club Deal. Your dancer roster is saved." : isPublished ? `Run the floor, deals, and dancer roster for ${venueCity} from one live workspace.` : "MyDancr prepares the venue page. Your team reviews it and approves it to make it live."}</p>
+            <h2 id="venue-command-heading">{venueName}</h2>
+            {!isPublished && <p>{isPausedForDeals ? "Your venue is hidden until it has an active Club Deal. Your dancer roster is saved." : isAwaitingVenueReview ? "Ready to review in Manage venue." : pageReviewStatus === "changes_requested" ? "Changes in progress. MyDancr will notify you when your page is ready." : "MyDancr prepares the venue page. Your team reviews it and approves it to make it live."}</p>}
           </div>
           <div className="venue-refresh-control">
             <small>{refreshedAt ? `Updated ${formatRelativeDashboardTime(refreshedAt)}` : "Live data loading"}</small>
@@ -254,13 +243,12 @@ export function VenuePanel({
 
       <nav className="venue-workspace-tabs" aria-label="Venue workspace" role="tablist">
         {([
-          ["tonight", "Tonight", "Roster · deals · check-in", `${workingNow.length} working now · ${activeDealCount} live ${activeDealCount === 1 ? "deal" : "deals"}`],
-          ["venue", "Venue page", "Preview · review · MyDancr TV", venuePageTabStatus],
-          ["business", "Business", "Analytics · team · account", "Management tools"],
-        ] as const).map(([workspace, label, contents, status]) => (
+          ["tonight", "Pickup requests"],
+          ["business", "Results"],
+          ["venue", "Manage venue"],
+        ] as const).map(([workspace, label]) => (
           <button
             aria-controls={`venue-workspace-${workspace}`}
-            aria-label={`${label}. ${contents}. ${status}.`}
             aria-selected={activeWorkspace === workspace}
             className={activeWorkspace === workspace ? "active" : ""}
             id={`venue-workspace-${workspace}-tab`}
@@ -268,308 +256,296 @@ export function VenuePanel({
             onKeyDown={(event) => moveVenueWorkspaceFocus(event, workspace)}
             onClick={() => selectVenueWorkspace(workspace)}
             role="tab"
+            tabIndex={activeWorkspace === workspace ? 0 : -1}
             type="button"
           >
-            <span className="venue-workspace-tab-icon"><VenueDashboardIcon section={workspace} /></span>
             <strong>{label}</strong>
-            <small>{contents}</small>
-            <span className="venue-workspace-tab-status">
-              {workspace === "tonight" ? status.split(" · ").map((line) => <span key={line}>{line}</span>) : status}
-            </span>
           </button>
         ))}
       </nav>
+      {refreshStatus ? <small className="venue-refresh-status" role="status">{refreshStatus}</small> : null}
 
       <section
-        aria-labelledby="venue-workspace-tonight-tab"
-        className="venue-command-primary venue-workspace-summary"
+        className="venue-dashboard-section"
         hidden={activeWorkspace !== "tonight"}
         id="venue-workspace-tonight"
         role="tabpanel"
+        aria-labelledby="venue-workspace-tonight-tab"
       >
-          <span className="eyebrow">Tonight at a glance</span>
-          <strong>{liveDealSummary}</strong>
-          <p>{workingNow.length} working now · {upcomingShiftCount} upcoming {upcomingShiftCount === 1 ? "shift" : "shifts"}</p>
-          <div className="venue-command-links">
-            <a className="primary-link venue-current-deals-link" href="#venue-club-deals" onClick={(event) => openVenueSection(event, "venue-club-deals")}>
-              {activeDealCount ? `View ${activeDealCount} current Club ${activeDealCount === 1 ? "Deal" : "Deals"}` : "View Club Deal status"}
-            </a>
-            <a className={`primary-link venue-working-now-link${workingNow.length ? " is-live" : ""}`} href="#venue-working-now" onClick={(event) => openVenueSection(event, "venue-working-now")}>
-              {workingNow.length ? `View ${workingNow.length} working now` : "Open working-now roster"}
-            </a>
-          </div>
-          {refreshStatus ? <small className="venue-refresh-status" role="status">{refreshStatus}</small> : null}
+        <section className="info-panel venue-dashboard-section" id="venue-pickups" aria-labelledby="venue-pickups-heading">
+          <h2 id="venue-pickups-heading">Pickup requests</h2>
+          {(venueRole === "owner" || venueRole === "manager")
+            ? <PickupDashboardPanel key={`${account?.id}:${connectedVenueId}`} refreshKey={refreshedAt} />
+            : <p>Pickup requests are available to your venue owner and managers.</p>}
+        </section>
       </section>
-
-      {(venueRole === "owner" || venueRole === "manager") && <section
-        className="info-panel venue-dashboard-section"
-        hidden={activeWorkspace !== "tonight"}
-        id="venue-pickups"
-        aria-labelledby="venue-pickups-heading"
-      >
-        <span className="eyebrow">Customer referrals</span>
-        <h2 id="venue-pickups-heading">Pickup Requests</h2>
-        <PickupDashboardPanel key={`${account?.id}:${connectedVenueId}`} refreshKey={refreshedAt} />
-      </section>}
-
-      <section
-        aria-labelledby="venue-workspace-venue-tab"
-        className={`venue-publication-panel${isPublished ? " is-published" : ""}`}
-        hidden={activeWorkspace !== "venue"}
-        id="venue-workspace-venue"
-        role="tabpanel"
-      >
-        <div>
-          <span className="eyebrow">{isPublished ? "Public venue" : "Venue page review"}</span>
-          <h2 id="venue-publication-heading">
-            {isPublished
-              ? "Your venue is live on MyDancr"
-              : isPausedForDeals ? "Your venue is hidden until a deal is active"
-              : pageReviewStatus === "venue_review"
-                ? "Review your prepared venue page"
-                : pageReviewStatus === "changes_requested"
-                  ? "MyDancr is working on your changes"
-                  : pageReviewStatus === "venue_approved"
-                    ? "Approved page ready to finish"
-                    : "MyDancr is preparing your venue page"}
-          </h2>
-          <p>
-            {isPublished
-              ? "Guests can find this venue, its current Club Deals, and affiliated dancers."
-              : isPausedForDeals ? "Your page approval and dancer affiliations are saved. Your venue and its dancer schedules return automatically when an active Club Deal is available. Dancer profiles and TV videos stay live."
-              : pageReviewStatus === "venue_review"
-                ? "Review the official venue information and commercial terms below. Preview and approval controls are at the bottom."
-                : pageReviewStatus === "changes_requested"
-                  ? "Your requested changes were sent. MyDancr will update the page and return it for another review."
-                  : pageReviewStatus === "venue_approved"
-                    ? "This page was approved under the previous workflow. MyDancr is completing its publication."
-                    : "MyDancr is completing your private venue page. You will be notified when it is ready to review."}
-          </p>
-        </div>
-        {isPublished && venueSlug ? (
-          <div className="venue-publication-actions">
-            <Link href={`/venues/${encodeURIComponent(venueSlug)}`}>Open live venue page</Link>
-          </div>
-        ) : null}
-        {isAwaitingVenueReview ? (
-          <section className="venue-review-package" aria-label="Venue information and commercial approval package">
-            <header className="venue-review-package-heading">
-              <span className="venue-review-logo" aria-label={`${venueName} official logo`}>
-                {profile?.logoImageUrl ? (
-                  <img
-                    alt={`${venueName} official logo`}
-                    className="venue-review-logo-image"
-                    onLoad={(event) => {
-                      const image = event.currentTarget;
-                      const ratio = image.naturalWidth > 0 && image.naturalHeight > 0
-                        ? image.naturalWidth / image.naturalHeight
-                        : 0;
-                      image.classList.toggle("is-compact-logo-source", ratio >= 0.78 && ratio <= 1.28);
-                    }}
-                    src={String(profile.logoImageUrl)}
-                    srcSet={profile.logoImageSrcSet ? String(profile.logoImageSrcSet) : undefined}
-                    sizes="72px"
-                  />
-                ) : venueReviewInitials}
-              </span>
-              <span>
-                <span className="eyebrow">Venue approval package</span>
-                <strong>{venueName}</strong>
-                <small>Review the facts and agreed terms. MyDancr controls how the venue card and customer page are presented.</small>
-              </span>
-            </header>
-            <div className="venue-review-package-section">
-              <strong>Official venue information</strong>
-              <dl>
-                <div><dt>Venue name</dt><dd>{venueName}</dd></div>
-                <div><dt>Location</dt><dd>{venueReviewAddress}</dd></div>
-                <div><dt>Phone</dt><dd>{String(profile?.phone || "Not provided")}</dd></div>
-                <div><dt>Website</dt><dd>{String(profile?.website || "Not provided")}</dd></div>
-                <div><dt>Hours</dt><dd>{venueReviewHours || "Not provided"}</dd></div>
-              </dl>
-            </div>
-            <div className="venue-review-package-section">
-              <span className="venue-review-commercial-heading">
-                <strong>Club Deal and subscription</strong>
-                <small>These are read-only. Request a correction before approving if they do not match the agreement.</small>
-              </span>
-              <dl>
-                <div><dt>Customer offer</dt><dd>{String(venueReviewDeal?.dealTitle || "Club Deal not provided")}</dd></div>
-                <div><dt>Billing model</dt><dd>Venue subscription · no per-customer charge</dd></div>
-                <div><dt>Guest terms</dt><dd>{String(venueReviewDeal?.dealTerms || "Standard venue capacity, age, dress code, and house rules apply.")}</dd></div>
-              </dl>
-            </div>
-          </section>
-        ) : null}
-        {isAwaitingVenueReview ? (
-          <div className="venue-review-request">
-            <label htmlFor="venue-page-review-notes">Need changes?</label>
-            <textarea
-              id="venue-page-review-notes"
-              maxLength={1000}
-              placeholder="Tell MyDancr exactly what should be corrected before you approve the page."
-              value={reviewNotes}
-              onChange={(event) => setReviewNotes(event.target.value)}
-            />
-            <button className="secondary" type="button" disabled={isPublishingVenue || reviewNotes.trim().length < 10} onClick={() => void submitVenueReview("changes_requested")}>Request changes</button>
-          </div>
-        ) : null}
-        {isAwaitingVenueReview ? (
-          <section className="venue-review-completion" aria-labelledby="venue-review-completion-heading">
-            <span className="eyebrow">Final review step</span>
-            <h3 id="venue-review-completion-heading">Preview, then approve</h3>
-            <p>Preview the customer experience using the information above. If everything is correct, approve the venue page to make it live.</p>
-            <div className="venue-publication-actions">
-              {venueCustomerPreviewHref ? (
-                <a className="venue-preview-action" href={venueCustomerPreviewHref} rel="noopener noreferrer" target="_blank">
-                  <svg aria-hidden="true" viewBox="0 0 24 24">
-                    <path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z" />
-                    <circle cx="12" cy="12" r="2.75" />
-                  </svg>
-                  Preview customer experience
-                </a>
-              ) : null}
-              <button className="primary" type="button" disabled={isPublishingVenue} onClick={() => void submitVenueReview("approved")}>
-                {isPublishingVenue ? "Making venue live..." : "Approve & make live"}
-              </button>
-            </div>
-          </section>
-        ) : null}
-        {publicationStatus ? <p role="status">{publicationStatus}</p> : null}
-      </section>
-
-      <section className="venue-dashboard-metrics venue-tonight-metrics" aria-label="Tonight at a glance" hidden={activeWorkspace !== "tonight"}>
-        <Metric label="Working now" value={String(workingNow.length)} />
-        <Metric label="Upcoming shifts" value={String(upcomingShiftCount)} />
-        <Metric label="Live Club Deals" value={String(activeDealCount)} />
-        <Metric label="Verified roster" value={String(nfcAuthorizedDancerCount)} />
-      </section>
-
-      <DashboardSection
-        badge={`${activeDealCount} live · ${dashboardDeals.length} total`}
-        description="Review every live or inactive deal and its guest terms."
-        eyebrow="Current offers"
-        hidden={activeWorkspace !== "tonight"}
-        id="venue-club-deals"
-        icon={<VenueDashboardIcon section="deals" />}
-        toggleAffordance="chevron"
-        title="Current Club Deals"
-      >
-        <VenueDealReadOnlyPanel
-          deals={dashboardDeals}
-          dealRequests={dealRequests}
-          isVenuePublished={isPublished}
-          venueCity={venueCity}
-          venueSlug={venueSlug}
-          canRequestDeals={permissions.includes("request_deals") || venueRole === "owner" || venueRole === "manager"}
-          onDealRequestsChange={onDealRequestsChange}
-        />
-      </DashboardSection>
-
-      <DashboardSection
-        description="Search your approved dancer roster, view profiles, see who's working now, and remove venue access."
-        eyebrow="Venue roster"
-        hidden={activeWorkspace !== "tonight"}
-        id="venue-dancer-roster"
-        icon={<VenueDashboardIcon section="roster" />}
-        toggleAffordance="chevron"
-        title="Affiliated dancers"
-        badge={`${nfcAuthorizedDancerCount} affiliated`}
-      >
-        <VenueNfcTagPanel
-          initialAffiliations={initialAffiliations}
-          workingNow={workingNow}
-          workingOnly={rosterWorkingOnly}
-          onWorkingOnlyChange={setRosterWorkingOnly}
-          onAccessRemoved={onAccessRemoved}
-          canManageRoster={canManageRoster}
-          canRequestSupport={canRequestNfcSupport}
-        />
-      </DashboardSection>
 
       <section
         aria-labelledby="venue-workspace-business-tab"
-        className="venue-workspace-business-summary"
+        className="venue-dashboard-section venue-results-panel"
         hidden={activeWorkspace !== "business"}
         id="venue-workspace-business"
         role="tabpanel"
       >
-        <span className="eyebrow">Business controls</span>
-        <h2>Performance, team, and account</h2>
-        <p>Review results and manage the people and account settings behind the venue.</p>
+        <section className="info-panel" id="venue-overview" aria-labelledby="venue-results-heading">
+          <h2 id="venue-results-heading">Results</h2>
+          <div className="venue-analytics-period" role="group" aria-label="Analytics period">
+            {(["tonight", "7d", "30d"] as const).map((period) => (
+              <button className={analyticsPeriod === period ? "active" : ""} aria-pressed={analyticsPeriod === period} type="button" key={period} onClick={() => onAnalyticsPeriodChange(period)}>
+                {period === "tonight" ? "Tonight" : period === "7d" ? "7 days" : "30 days"}
+              </button>
+            ))}
+          </div>
+          {analytics?.valueReport ? <VenueValueAnalytics
+            report={analytics.valueReport as VenueValueReport}
+            periodStart={String(analytics.periodStart)}
+            periodEnd={String(analytics.periodEnd)}
+            timezone={String(profile?.timezone || "America/Los_Angeles")}
+            totalFollowers={Number(analytics.totalFollowers || 0)}
+            conversion={readOptionalNumber(analytics.claimToAdmissionPercent)}
+          /> : <p role="status">Analytics are unavailable. Refresh to try again.</p>}
+        </section>
       </section>
 
-      <DashboardSection
-        description="Guest reach, intent, live activity, and Club Deal visibility."
-        eyebrow="Live performance"
-        hidden={activeWorkspace !== "business"}
-        id="venue-overview"
-        icon={<VenueDashboardIcon section="analytics" />}
-        toggleAffordance="chevron"
-        title="Analytics & performance"
-      >
-        <div className="venue-analytics-period" role="group" aria-label="Analytics period">
-          {(["tonight", "7d", "30d"] as const).map((period) => (
-            <button className={analyticsPeriod === period ? "active" : ""} type="button" key={period} onClick={() => onAnalyticsPeriodChange(period)}>
-              {period === "tonight" ? "Tonight" : period === "7d" ? "7 days" : "30 days"}
-            </button>
-          ))}
-        </div>
-        {analytics?.valueReport ? <VenueValueAnalytics
-          report={analytics.valueReport as VenueValueReport}
-          periodStart={String(analytics.periodStart)}
-          periodEnd={String(analytics.periodEnd)}
-          timezone={String(profile?.timezone || "America/Los_Angeles")}
-          totalFollowers={Number(analytics.totalFollowers || 0)}
-          conversion={readOptionalNumber(analytics.claimToAdmissionPercent)}
-        /> : <p role="status">Analytics are unavailable. Refresh to try again.</p>}
-      </DashboardSection>
+      <section className="venue-manage-panel venue-dashboard-section" hidden={activeWorkspace !== "venue"} id="venue-workspace-venue" role="tabpanel" aria-labelledby="venue-workspace-venue-tab">
 
-      <VenueTvPanel
-        city={venueCity}
-        hidden={activeWorkspace !== "venue"}
-        venueId={String(profile?.id || "")}
-      />
-
-      {canViewTeam ? (
-        <DashboardSection
-          description="Invite managers and staff with the minimum access they need, then review an auditable history of venue changes."
-          eyebrow="Security"
-          hidden={activeWorkspace !== "business"}
-          id="venue-team"
-          icon={<VenueDashboardIcon section="team" />}
-          toggleAffordance="chevron"
-          title="Team & activity"
+        <section
+          aria-label="Venue activity"
+          className="venue-command-primary venue-workspace-summary"
+          hidden={activeWorkspace !== "venue"}
         >
-          <VenueTeamPanel initialAccess={venueAccess as { role: "owner" | "manager" | "staff"; permissions: string[] } | null} />
-        </DashboardSection>
-      ) : null}
+            <span className="eyebrow">Tonight at a glance</span>
+            <strong>{liveDealSummary}</strong>
+            <p>{workingNow.length} working now · {upcomingShiftCount} upcoming {upcomingShiftCount === 1 ? "shift" : "shifts"}</p>
+            <div className="venue-command-links">
+              <a className="primary-link venue-current-deals-link" href="#venue-club-deals" onClick={(event) => openVenueSection(event, "venue-club-deals")}>
+                {activeDealCount ? `View ${activeDealCount} current Club ${activeDealCount === 1 ? "Deal" : "Deals"}` : "View Club Deal status"}
+              </a>
+              <a className={`primary-link venue-working-now-link${workingNow.length ? " is-live" : ""}`} href="#venue-working-now" onClick={(event) => openVenueSection(event, "venue-working-now")}>
+                {workingNow.length ? `View ${workingNow.length} working now` : "Open working-now roster"}
+              </a>
+            </div>
+        </section>
 
-      <DashboardSection
-        description="Notifications, support messages, and account controls."
-        eyebrow="Venue workspace"
-        hidden={activeWorkspace !== "business"}
-        id="venue-account"
-        icon={<VenueDashboardIcon section="account" />}
-        toggleAffordance="chevron"
-        title="Account & support"
-      >
-        <div className="venue-dashboard-inner-grid venue-dashboard-account-grid">
-          <InfoPanel title="Account">
-            <Metric label="Status" value={String(account?.accountState || "active")} />
-            <Metric label="Email" value={String(account?.email || "Private")} />
-            <Metric label="Role" value={String(account?.role || "venue")} />
-          </InfoPanel>
-          <NotificationPanel refreshKey={notificationRevision} />
-          <SupportInboxPanel initialThreads={supportThreads} panelId="venue-support" />
-          <AccountControlsPanel
-            accountRole="venue"
-            accountState={String(account?.accountState || "active")}
-            venueAccessRole={venueRole}
-            venueName={venueName}
+        <section
+          aria-labelledby="venue-publication-heading"
+          className={`venue-publication-panel${isPublished ? " is-published" : ""}`}
+          hidden={activeWorkspace !== "venue"}
+        >
+          <div>
+            <span className="eyebrow">{isPublished ? "Public venue" : "Venue page review"}</span>
+            <h2 id="venue-publication-heading">
+              {isPublished
+                ? "Your venue is live on MyDancr"
+                : isPausedForDeals ? "Your venue is hidden until a deal is active"
+                : pageReviewStatus === "venue_review"
+                  ? "Review your prepared venue page"
+                  : pageReviewStatus === "changes_requested"
+                    ? "MyDancr is working on your changes"
+                    : pageReviewStatus === "venue_approved"
+                      ? "Approved page ready to finish"
+                      : "MyDancr is preparing your venue page"}
+            </h2>
+            <p>
+              {isPublished
+                ? "Guests can find this venue, its current Club Deals, and affiliated dancers."
+                : isPausedForDeals ? "Your page approval and dancer affiliations are saved. Your venue and its dancer schedules return automatically when an active Club Deal is available. Dancer profiles and TV videos stay live."
+                : pageReviewStatus === "venue_review"
+                  ? "Review the official venue information and commercial terms below. Preview and approval controls are at the bottom."
+                  : pageReviewStatus === "changes_requested"
+                    ? "Your requested changes were sent. MyDancr will update the page and return it for another review."
+                    : pageReviewStatus === "venue_approved"
+                      ? "This page was approved under the previous workflow. MyDancr is completing its publication."
+                      : "MyDancr is completing your private venue page. You will be notified when it is ready to review."}
+            </p>
+          </div>
+          {isPublished && venueSlug ? (
+            <div className="venue-publication-actions">
+              <Link href={`/venues/${encodeURIComponent(venueSlug)}`}>Open live venue page</Link>
+            </div>
+          ) : null}
+          {isAwaitingVenueReview ? (
+            <section className="venue-review-package" aria-label="Venue information and commercial approval package">
+              <header className="venue-review-package-heading">
+                <span className="venue-review-logo" aria-label={`${venueName} official logo`}>
+                  {profile?.logoImageUrl ? (
+                    <img
+                      alt={`${venueName} official logo`}
+                      className="venue-review-logo-image"
+                      onLoad={(event) => {
+                        const image = event.currentTarget;
+                        const ratio = image.naturalWidth > 0 && image.naturalHeight > 0
+                          ? image.naturalWidth / image.naturalHeight
+                          : 0;
+                        image.classList.toggle("is-compact-logo-source", ratio >= 0.78 && ratio <= 1.28);
+                      }}
+                      src={String(profile.logoImageUrl)}
+                      srcSet={profile.logoImageSrcSet ? String(profile.logoImageSrcSet) : undefined}
+                      sizes="72px"
+                    />
+                  ) : venueReviewInitials}
+                </span>
+                <span>
+                  <span className="eyebrow">Venue approval package</span>
+                  <strong>{venueName}</strong>
+                  <small>Review the facts and agreed terms. MyDancr controls how the venue card and customer page are presented.</small>
+                </span>
+              </header>
+              <div className="venue-review-package-section">
+                <strong>Official venue information</strong>
+                <dl>
+                  <div><dt>Venue name</dt><dd>{venueName}</dd></div>
+                  <div><dt>Location</dt><dd>{venueReviewAddress}</dd></div>
+                  <div><dt>Phone</dt><dd>{String(profile?.phone || "Not provided")}</dd></div>
+                  <div><dt>Website</dt><dd>{String(profile?.website || "Not provided")}</dd></div>
+                  <div><dt>Hours</dt><dd>{venueReviewHours || "Not provided"}</dd></div>
+                </dl>
+              </div>
+              <div className="venue-review-package-section">
+                <span className="venue-review-commercial-heading">
+                  <strong>Club Deal and subscription</strong>
+                  <small>These are read-only. Request a correction before approving if they do not match the agreement.</small>
+                </span>
+                <dl>
+                  <div><dt>Customer offer</dt><dd>{String(venueReviewDeal?.dealTitle || "Club Deal not provided")}</dd></div>
+                  <div><dt>Billing model</dt><dd>Venue subscription · no per-customer charge</dd></div>
+                  <div><dt>Guest terms</dt><dd>{String(venueReviewDeal?.dealTerms || "Standard venue capacity, age, dress code, and house rules apply.")}</dd></div>
+                </dl>
+              </div>
+            </section>
+          ) : null}
+          {isAwaitingVenueReview ? (
+            <div className="venue-review-request">
+              <label htmlFor="venue-page-review-notes">Need changes?</label>
+              <textarea
+                id="venue-page-review-notes"
+                maxLength={1000}
+                placeholder="Tell MyDancr exactly what should be corrected before you approve the page."
+                value={reviewNotes}
+                onChange={(event) => setReviewNotes(event.target.value)}
+              />
+              <button className="secondary" type="button" disabled={isPublishingVenue || reviewNotes.trim().length < 10} onClick={() => void submitVenueReview("changes_requested")}>Request changes</button>
+            </div>
+          ) : null}
+          {isAwaitingVenueReview ? (
+            <section className="venue-review-completion" aria-labelledby="venue-review-completion-heading">
+              <span className="eyebrow">Final review step</span>
+              <h3 id="venue-review-completion-heading">Preview, then approve</h3>
+              <p>Preview the customer experience using the information above. If everything is correct, approve the venue page to make it live.</p>
+              <div className="venue-publication-actions">
+                {venueCustomerPreviewHref ? (
+                  <a className="venue-preview-action" href={venueCustomerPreviewHref} rel="noopener noreferrer" target="_blank">
+                    <svg aria-hidden="true" viewBox="0 0 24 24">
+                      <path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z" />
+                      <circle cx="12" cy="12" r="2.75" />
+                    </svg>
+                    Preview customer experience
+                  </a>
+                ) : null}
+                <button className="primary" type="button" disabled={isPublishingVenue} onClick={() => void submitVenueReview("approved")}>
+                  {isPublishingVenue ? "Making venue live..." : "Approve & make live"}
+                </button>
+              </div>
+            </section>
+          ) : null}
+          {publicationStatus ? <p role="status">{publicationStatus}</p> : null}
+        </section>
+
+        <section className="venue-dashboard-metrics venue-tonight-metrics" aria-label="Tonight at a glance" hidden={activeWorkspace !== "venue"}>
+          <Metric label="Working now" value={String(workingNow.length)} />
+          <Metric label="Upcoming shifts" value={String(upcomingShiftCount)} />
+          <Metric label="Live Club Deals" value={String(activeDealCount)} />
+          <Metric label="Verified roster" value={String(nfcAuthorizedDancerCount)} />
+        </section>
+
+        <DashboardSection
+          badge={`${activeDealCount} live · ${dashboardDeals.length} total`}
+          description="Review every live or inactive deal and its guest terms."
+          eyebrow="Current offers"
+          hidden={activeWorkspace !== "venue"}
+          id="venue-club-deals"
+          icon={<VenueDashboardIcon section="deals" />}
+          toggleAffordance="chevron"
+          title="Current Club Deals"
+        >
+          <VenueDealReadOnlyPanel
+            deals={dashboardDeals}
+            dealRequests={dealRequests}
+            isVenuePublished={isPublished}
+            venueCity={venueCity}
+            venueSlug={venueSlug}
+            canRequestDeals={permissions.includes("request_deals") || venueRole === "owner" || venueRole === "manager"}
+            onDealRequestsChange={onDealRequestsChange}
           />
-        </div>
-      </DashboardSection>
+        </DashboardSection>
+
+        <DashboardSection
+          description="Search your approved dancer roster, view profiles, see who's working now, and remove venue access."
+          eyebrow="Venue roster"
+          hidden={activeWorkspace !== "venue"}
+          id="venue-dancer-roster"
+          icon={<VenueDashboardIcon section="roster" />}
+          toggleAffordance="chevron"
+          title="Affiliated dancers"
+          badge={`${nfcAuthorizedDancerCount} affiliated`}
+        >
+          <VenueNfcTagPanel
+            initialAffiliations={initialAffiliations}
+            workingNow={workingNow}
+            workingOnly={rosterWorkingOnly}
+            onWorkingOnlyChange={setRosterWorkingOnly}
+            onAccessRemoved={onAccessRemoved}
+            canManageRoster={canManageRoster}
+            canRequestSupport={canRequestNfcSupport}
+          />
+        </DashboardSection>
+
+        <VenueTvPanel
+          city={venueCity}
+          hidden={activeWorkspace !== "venue"}
+          venueId={String(profile?.id || "")}
+        />
+
+        {canViewTeam ? (
+          <DashboardSection
+            description="Manage staff access and review changes."
+            eyebrow="Security"
+            hidden={activeWorkspace !== "venue"}
+            id="venue-team"
+            icon={<VenueDashboardIcon section="team" />}
+            toggleAffordance="chevron"
+            title="Team & activity"
+          >
+            <VenueTeamPanel initialAccess={venueAccess as { role: "owner" | "manager" | "staff"; permissions: string[] } | null} />
+          </DashboardSection>
+        ) : null}
+
+        <DashboardSection
+          description="Notifications, support messages, and account controls."
+          eyebrow="Venue workspace"
+          hidden={activeWorkspace !== "venue"}
+          id="venue-account"
+          icon={<VenueDashboardIcon section="account" />}
+          toggleAffordance="chevron"
+          title="Account & support"
+        >
+          <div className="venue-dashboard-inner-grid venue-dashboard-account-grid">
+            <InfoPanel title="Account">
+              <Metric label="Status" value={String(account?.accountState || "active")} />
+              <Metric label="Email" value={String(account?.email || "Private")} />
+              <Metric label="Role" value={String(account?.role || "venue")} />
+            </InfoPanel>
+            <NotificationPanel refreshKey={notificationRevision} />
+            <SupportInboxPanel initialThreads={supportThreads} panelId="venue-support" />
+            <AccountControlsPanel
+              accountRole="venue"
+              accountState={String(account?.accountState || "active")}
+              venueAccessRole={venueRole}
+              venueName={venueName}
+            />
+          </div>
+        </DashboardSection>
+      </section>
 
     </>
   );

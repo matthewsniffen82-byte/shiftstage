@@ -81,12 +81,12 @@ test("venue dashboard uses one state-aware three-destination workspace", () => {
   assert.ok(tonightIndex > tabsIndex);
   assert.ok(metricsIndex > tonightIndex);
   assert.ok(managementIndex > metricsIndex);
-  assert.match(venuePanel, /\["tonight", "Tonight"[\s\S]*?\["venue", "Venue page"[\s\S]*?\["business", "Business"/);
-  assert.match(venuePanel, /"Roster · deals · check-in"[\s\S]*?"Preview · review · MyDancr TV"[\s\S]*?"Analytics · team · account"/);
+  assert.match(venuePanel, /\["tonight", "Pickup requests"[\s\S]*?\["business", "Results"[\s\S]*?\["venue", "Manage venue"/);
+  assert.doesNotMatch(venuePanel, /Roster · deals · check-in|Preview · review · MyDancr TV|Analytics · team · account/);
   assert.match(venuePanel, /role="tablist"[\s\S]*?aria-selected=\{activeWorkspace === workspace\}/);
   assert.match(venuePanel, /initialVenueWorkspace\(profile\?\.isActive === true\)/);
   assert.match(routedDashboards, /return isPublished \? "tonight" : "venue";/);
-  assert.match(venuePanel, /hidden=\{activeWorkspace !== "tonight"\}[\s\S]*?id="venue-dancer-roster"/);
+  assert.match(venuePanel, /hidden=\{activeWorkspace !== "venue"\}[\s\S]*?id="venue-dancer-roster"/);
   assert.match(venuePanel, /<VenueTvPanel[\s\S]*?hidden=\{activeWorkspace !== "venue"\}/);
   assert.match(venuePanel, /hidden=\{activeWorkspace !== "business"\}[\s\S]*?id="venue-overview"/);
   assert.match(venuePanel, /className=\{`primary-link venue-working-now-link\$\{workingNow\.length \? " is-live" : ""\}`\} href="#venue-working-now"[\s\S]*?Open working-now roster/);

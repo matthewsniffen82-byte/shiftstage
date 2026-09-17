@@ -75,11 +75,11 @@ body .dashboard-shell.dashboard-shell-venue :is(.venue-command-status p, .venue-
 body .dashboard-shell.dashboard-shell-venue .venue-live-pill { min-height: 26px; padding: 5px 8px; border: 1px solid #73d4a426; border-radius: 8px; color: #9cdec0; background: #65d7a20c; box-shadow: none; font-size: 9px; font-weight: 600; }
 body .dashboard-shell.dashboard-shell-venue .venue-live-pill.is-draft { border-color: #c5a4f533; color: #dac9ee; background: #b794e60e; }
 body .dashboard-shell.dashboard-shell-venue .venue-workspace-tabs { gap: 8px; padding: 9px; border: 1px solid var(--venue-workspace-line); border-radius: 20px; background: #111016f5; box-shadow: 0 8px 22px #0003; }
-body.dancr-button-system .dashboard-shell.dashboard-shell-venue .venue-workspace-tabs button { min-height: 104px; padding: 12px; gap: 6px; border: 1px solid #cfb8ed14; border-radius: 12px; background: #ffffff03 !important; box-shadow: none !important; }
+body.dancr-button-system .dashboard-shell.dashboard-shell-venue .venue-workspace-tabs button { min-height: 56px; padding: 12px; gap: 6px; border: 1px solid #cfb8ed14; border-radius: 12px; background: #ffffff03 !important; box-shadow: none !important; }
 body.dancr-button-system .dashboard-shell.dashboard-shell-venue .venue-workspace-tabs button.active { border-color: #c5a4f560; background: linear-gradient(135deg, #30243e, #211b2b) !important; box-shadow: inset 0 1px 0 #ffffff08 !important; }
 body .dashboard-shell.dashboard-shell-venue .venue-workspace-tab-icon { display: flex; justify-content: center; color: #c5b4df; }
 body .dashboard-shell.dashboard-shell-venue .venue-workspace-tab-icon svg { width: 21px; height: 21px; }
-body .dashboard-shell.dashboard-shell-venue .venue-workspace-tabs strong { color: #f0eaf7; font-size: 13px; font-weight: 600; }
+body .dashboard-shell.dashboard-shell-venue .venue-workspace-tabs strong { color: #f0eaf7; font-size: 13px; font-weight: 600; white-space: normal; overflow: visible; line-height: 1.3; }
 body .dashboard-shell.dashboard-shell-venue .venue-workspace-tabs small { min-height: 0; color: #aaa4b6; font-size: 10px; font-weight: 400; line-height: 1.5; }
 body .dashboard-shell.dashboard-shell-venue .venue-workspace-tab-status { color: #c5b4df; font-size: 10px; font-weight: 500; line-height: 1.5; }
 body .dashboard-shell.dashboard-shell-venue .venue-dashboard-section-copy .eyebrow { color: #b4a6c8; font-size: 9px; font-weight: 500; letter-spacing: .1em; }
@@ -96,7 +96,7 @@ body .dashboard-shell.dashboard-shell-venue select:focus-visible { outline: 2px 
 @media (max-width: 620px) {
   body .dashboard-shell.dashboard-shell-venue :is(.venue-command-panel, .venue-workspace-summary, .venue-workspace-business-summary, .venue-publication-panel) { padding: 14px; }
   body .dashboard-shell.dashboard-shell-venue .venue-workspace-tabs { gap: 5px; padding: 6px; }
-  body.dancr-button-system .dashboard-shell.dashboard-shell-venue .venue-workspace-tabs button { min-height: 106px; padding: 10px 5px; }
+  body.dancr-button-system .dashboard-shell.dashboard-shell-venue .venue-workspace-tabs button { min-height: 56px; padding: 10px 5px; }
   body .dashboard-shell.dashboard-shell-venue .venue-workspace-tabs small { font-size: 9px; }
   body .dashboard-shell.dashboard-shell-venue .venue-workspace-tab-status { font-size: 9px; }
   body .dashboard-shell.dashboard-shell-venue .venue-dashboard-section[data-section-icon] > summary { grid-template-columns: 34px minmax(0, 1fr) 16px; }
@@ -112,13 +112,20 @@ body .dashboard-shell.dashboard-shell-venue .info-panel h2 { font-size: 19px !im
 body .dashboard-shell.dashboard-shell-venue .venue-dashboard-overview-grid .metric { padding: 12px; }
 /* Keep wide tables from setting the minimum width of the analytics grid item. */
 .venue-value-analytics{min-width:0}
-.venue-value-metrics,.venue-value-supporting{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:16px 0}
+.venue-value-metrics,.venue-value-supporting{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:12px 0}
 .venue-value-analytics .metric{min-width:0;padding:16px;border:1px solid rgba(255,255,255,.12);border-radius:14px;background:rgba(255,255,255,.025)}
 .venue-value-analytics .metric small{display:block;font-size:12px;line-height:1.5;color:#b8b6c7}
 .venue-value-metrics .metric strong{font-size:30px;color:#d3b5ff}
 .venue-value-note{color:#b8b6c7;font-size:12px;line-height:1.6}
-.venue-value-analytics details{border-top:1px solid rgba(255,255,255,.12);padding:20px 0}
-.venue-value-analytics summary{font-weight:700;cursor:pointer;font-size:16px}
+.venue-value-analytics details{min-width:0;border-top:1px solid rgba(255,255,255,.12);padding:4px 0}
+.venue-value-analytics summary,.venue-pickup-preview summary{font-weight:600;cursor:pointer;font-size:14px;min-height:44px;padding:12px 0;line-height:1.45}
+.venue-value-analytics .venue-value-info summary{font-size:12px;color:#b8b6c7}
+.venue-value-dates{margin:0;color:#b8b6c7;font-size:13px;line-height:1.5}
+.venue-manage-panel{display:grid;gap:12px;min-width:0}
+.venue-results-panel,.venue-results-panel > .info-panel{min-width:0}
+.venue-pickup-preview .notification-row{gap:4px;overflow-wrap:anywhere}
+.venue-pickup-preview p,.venue-pickup-preview time{font-size:12px;color:#b8b6c7;line-height:1.5}
+.venue-pickup-preview > .primary-link{display:inline-flex;align-items:center;min-height:44px;margin-top:8px;font-size:14px}
 .venue-value-analytics details p,.venue-value-subscription p{font-size:13px;line-height:1.6;color:#c5c2d0}
 .venue-value-analytics select{background:#191622;color:inherit;border:1px solid #534969;border-radius:8px;padding:8px;margin:8px}
 .venue-value-table{overflow-x:auto;max-width:100%;margin-top:12px}

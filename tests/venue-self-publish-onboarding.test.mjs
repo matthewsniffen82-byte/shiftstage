@@ -103,10 +103,9 @@ test("only MyDancr can prepare and send a page before venue-controlled publicati
   assert.match(adminService, /Complete the MyDancr venue page first/);
   assert.match(adminService, /The connected venue manager must approve this exact page/);
   assert.match(adminService, /approve it to make it live/);
-  assert.match(adminService, /getVenueReferralFeeState\(client, venueId\)/);
-  assert.match(adminService, /The package includes \$\{deals\[0\]\?\.dealTitle/);
-  assert.match(adminService, /a MyDancr fee of \$\{formatAdminFee\(referralFee\?\.feeCents \|\| 0\)\} per confirmed customer/);
-  assert.match(adminService, /referralFeeCents: referralFee\?\.feeCents \|\| null/);
+  assert.match(adminService, /\$\{deals\[0\]\?\.dealTitle[\s\S]*?is included with the venue subscription/);
+  assert.match(adminService, /billingModel: "subscription"/);
+  assert.doesNotMatch(adminService, /a MyDancr fee of .* per confirmed customer/);
 });
 
 test("admins can prepare all page fields and official venue images", () => {
@@ -176,9 +175,9 @@ test("the venue dashboard presents a read-only review and approval experience", 
   assert.match(dashboard, /Venue approval package/);
   assert.match(dashboard, /Official venue information/);
   assert.match(dashboard, /MyDancr controls how the venue card and customer page are presented/);
-  assert.match(dashboard, /Club Deal and MyDancr fee/);
+  assert.match(dashboard, /Club Deal and subscription/);
   assert.match(dashboard, /Customer offer/);
-  assert.match(dashboard, /per confirmed customer/);
+  assert.match(dashboard, /Venue subscription · no per-customer charge/);
   assert.match(dashboard, /These are read-only\. Request a correction before approving/);
   assert.match(dashboard, /profile\?\.logoImageUrl/);
   assert.match(dashboard, /venue-review-logo-image/);
