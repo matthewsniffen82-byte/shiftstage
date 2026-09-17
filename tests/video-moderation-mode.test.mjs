@@ -13,9 +13,12 @@ const [modeSource, envExample, readme] = await Promise.all([
   readFile(new URL("../README.md", import.meta.url), "utf8"),
 ]);
 
-test("video moderation defaults to AI and requires an explicit demo bypass", () => {
+test("video moderation defaults to AI and requires an explicit development demo bypass", () => {
   const original = process.env.DANCR_VIDEO_MODERATION_MODE;
+  const nodeEnv = process.env.NODE_ENV, vercelEnv = process.env.VERCEL_ENV;
   try {
+    process.env.NODE_ENV = "development";
+    delete process.env.VERCEL_ENV;
     delete process.env.DANCR_VIDEO_MODERATION_MODE;
     assert.equal(getVideoModerationMode(), "ai");
     assert.equal(isVideoDemoAutoApproveMode(), false);
@@ -29,6 +32,10 @@ test("video moderation defaults to AI and requires an explicit demo bypass", () 
   } finally {
     if (original === undefined) delete process.env.DANCR_VIDEO_MODERATION_MODE;
     else process.env.DANCR_VIDEO_MODERATION_MODE = original;
+    if (nodeEnv === undefined) delete process.env.NODE_ENV;
+    else process.env.NODE_ENV = nodeEnv;
+    if (vercelEnv === undefined) delete process.env.VERCEL_ENV;
+    else process.env.VERCEL_ENV = vercelEnv;
   }
 
   assert.match(modeSource, /VIDEO_MODERATION_MODES = \["ai", "demo_auto_approve"\]/);
@@ -39,6 +46,22 @@ test("video moderation defaults to AI and requires an explicit demo bypass", () 
     modeSource,
     /isVideoDemoAutoApproveMode[\s\S]*?getVideoModerationMode\(\) === "demo_auto_approve"/,
   );
+});
+
+test("production uploads cannot skip safety or person-count checks through a stale demo setting", () => {
+  const originals = Object.fromEntries(["NODE_ENV", "VERCEL_ENV", "DANCR_VIDEO_MODERATION_MODE"].map(key => [key, process.env[key]]));
+  try {
+    process.env.DANCR_VIDEO_MODERATION_MODE = "demo_auto_approve";
+    for (const [nodeEnv, vercelEnv] of [["production", "preview"], ["development", "production"], ["production", "production"]]) {
+      process.env.NODE_ENV = nodeEnv;process.env.VERCEL_ENV = vercelEnv;
+      assert.equal(getVideoModerationMode(), "ai");
+      assert.equal(isVideoDemoAutoApproveMode(), false);
+    }
+  } finally {
+    for (const [key, value] of Object.entries(originals)) {
+      if (value === undefined) delete process.env[key];else process.env[key] = value;
+    }
+  }
 });
 
 test("demo approval values publish immediately and preserve an explicit audit trail", () => {

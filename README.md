@@ -153,7 +153,7 @@ Rollback by reverting the code and disabling the `/api/dancer/photos` route depl
 `DANCR_VIDEO_MODERATION_MODE` is server-only and accepts two values:
 
 - `ai` is the default and runs the complete automated video moderation pipeline, with human review when the automated result is uncertain or unavailable.
-- `demo_auto_approve` is a temporary demo-population mode. It skips AI and manual moderation, records the bypass in the video's moderation audit fields, and immediately publishes a valid upload.
+- `demo_auto_approve` is a temporary demo-population mode for local development only. It skips AI and manual moderation, records the bypass in the video's moderation audit fields, and immediately publishes a valid upload. Production builds and Vercel production deployments always enforce `ai`, even if this demo setting is configured, so real uploads cannot skip safety or single-person checks.
 
 Demo mode does not bypass authentication, dancer-profile eligibility, supported video type, file-size and duration limits, portrait/square dimensions, consent and rights confirmations, storage verification, or MyDancr watermark processing. A watermark failure is logged and recorded but does not send the demo upload to manual review.
 

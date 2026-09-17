@@ -18,11 +18,12 @@ const [identitySource, imageModeration, videoModeration, tvSource, dashboard, st
 
 function analysis({
   personCount = 1,
+  personCountConfidence = 0.99,
   singlePersonOnly = personCount === 1,
   referenceMatch = "match",
   confidence = 0.95,
 } = {}) {
-  return { personCount, singlePersonOnly, referenceMatch, confidence };
+  return { personCount, personCountConfidence, singlePersonOnly, referenceMatch, confidence };
 }
 
 test("single-person identity evaluation fails closed for photos and videos", () => {
@@ -82,20 +83,23 @@ test("identity response parsing distrusts inconsistent model fields", () => {
   assert.deepEqual(
     parseDancerMediaIdentityAnalysis({
       personCount: 2,
+      personCountConfidence: 0.99,
       singlePersonOnly: true,
       referenceMatch: "match",
-      confidence: 4,
+      confidence: 0.95,
     }, true),
     {
       personCount: 2,
+      personCountConfidence: 0.99,
       singlePersonOnly: false,
       referenceMatch: "match",
-      confidence: 1,
+      confidence: 0.95,
     },
   );
   assert.equal(
     parseDancerMediaIdentityAnalysis({
       personCount: 1,
+      personCountConfidence: 0.99,
       singlePersonOnly: true,
       referenceMatch: "match",
       confidence: 0.9,
@@ -106,6 +110,25 @@ test("identity response parsing distrusts inconsistent model fields", () => {
     () => parseDancerMediaIdentityAnalysis({ personCount: "many" }, true),
     /invalid person count/,
   );
+});
+
+test("person count must be independently certain even when the dancer clearly matches", () => {
+  for (const personCountConfidence of [undefined, NaN, Infinity, -1, 0.89, 2]) {
+    const value = { ...analysis({ confidence: 1 }), personCountConfidence };
+    const result = evaluateDancerMediaIdentity(value, { referenceRequired: true });
+    assert.equal(result.decision, "review");
+    assert.deepEqual(result.reasonCodes, ["person_count_uncertain"]);
+  }
+  assert.equal(evaluateDancerMediaIdentity(analysis({ personCount: 2, confidence: 0.2 }), { referenceRequired: true }).decision, "rejected");
+  assert.equal(evaluateDancerMediaIdentity(analysis({ singlePersonOnly: false }), { referenceRequired: false }).decision, "review");
+});
+
+test("malformed model counts and confidences cannot become a confident single person", () => {
+  for (const invalid of [
+    { personCount: true }, { personCount: "1" }, { personCount: null }, { personCount: -1 }, { personCount: 1.5 },
+    { singlePersonOnly: "true" }, { personCountConfidence: undefined }, { personCountConfidence: "0.99" },
+    { personCountConfidence: NaN }, { personCountConfidence: 4 }, { confidence: 4 }, { confidence: "0.99" },
+  ]) assert.throws(() => parseDancerMediaIdentityAnalysis({ ...analysis(), ...invalid }, true));
 });
 
 test("photo uploads count people and compare against the approved avatar", () => {

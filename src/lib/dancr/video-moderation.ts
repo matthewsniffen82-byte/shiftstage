@@ -55,6 +55,7 @@ export type MyDancrTvModerationResult = {
     identityConfidence: number;
     identityReferenceMatch: "match" | "mismatch" | "uncertain" | "not_provided";
     personCount: number;
+    personCountConfidence: number;
     singlePersonOnly: boolean;
     audioChecked: boolean;
     videoDurationSeconds: number;
@@ -165,6 +166,7 @@ export async function moderateStoredMyDancrTvVideo(
         identityConfidence: identityAnalysis.confidence,
         identityReferenceMatch: identityAnalysis.referenceMatch,
         personCount: identityAnalysis.personCount,
+        personCountConfidence: identityAnalysis.personCountConfidence,
         singlePersonOnly: identityAnalysis.singlePersonOnly,
         audioChecked: Boolean(audioPath),
         videoDurationSeconds: Number(videoDurationSeconds.toFixed(3)),
@@ -183,6 +185,7 @@ export async function moderateStoredMyDancrTvVideo(
       identityConfidence: result.details.identityConfidence,
       identityReferenceMatch: result.details.identityReferenceMatch,
       personCount: result.details.personCount,
+      personCountConfidence: result.details.personCountConfidence,
       singlePersonOnly: result.details.singlePersonOnly,
       audioChecked: result.details.audioChecked,
       videoDurationSeconds: result.details.videoDurationSeconds,

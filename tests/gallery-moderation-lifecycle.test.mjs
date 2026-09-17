@@ -10,6 +10,7 @@ import { PublicApiError } from '../src/lib/api-error-policy.ts';
 import { loadGalleryGateway } from './helpers/gallery-publication-fixture.mjs';
 import * as serverJobs from '../src/lib/server-job.ts';
 import * as photoContentPolicy from '../src/lib/dancr/photo-content-policy-core.ts';
+import * as mediaIdentity from '../src/lib/dancr/media-identity-core.ts';
 
 const source=process.env.MYDANCR_AVATAR_SOURCE_BASELINE==='1'
   ?execFileSync('git',['show','4ff0ceb3999cfa2b7c516baddcb3e0da197e4567:src/lib/dancr/image-moderation.ts'],{encoding:'utf8',windowsHide:true})
@@ -23,7 +24,7 @@ vm.runInNewContext(ts.transpileModule(readFileSync(new URL('../src/lib/dancr/sto
 const version='2020-01-01T00:00:00Z';
 const claimedVersion='2020-01-01T00:00:01.001Z';
 const legacyRetryClaim=process.env.MYDANCR_AVATAR_SOURCE_BASELINE==='1'||process.env.MYDANCR_PRIVATE_UPLOAD_BASELINE==='1';
-function scenario({decision='review',concurrentDecision='',providerError=false,providerFailure=null,providerMessage='provider_timeout',providerStatus=0,faceRejection=false,avatar=false,attemptCount=1,stateResponseLoss='',retry=false,uploadBucket='',uploadFailure='',receiptKind='valid',contentAnalysis={nudity:'absent',sexualActivity:'absent',confidence:0.99},contentError=false}={}) {
+function scenario({decision='review',concurrentDecision='',providerError=false,providerFailure=null,providerMessage='provider_timeout',providerStatus=0,faceRejection=false,avatar=false,attemptCount=1,stateResponseLoss='',retry=false,uploadBucket='',uploadFailure='',receiptKind='valid',contentAnalysis={nudity:'absent',sexualActivity:'absent',confidence:0.99},contentError=false,identityAnalysis={personCount:1,personCountConfidence:0.99,singlePersonOnly:true,referenceMatch:'match',confidence:0.99}}={}) {
   const events=[],files=new Set(),record=retry?{
     id:'record',user_id:'owner',upload_context:avatar?'profile_avatar':'profile_gallery:1',temporary_storage_path:'owner/profile/temp.jpg',
     decision:'review',status:'moderating',updated_at:legacyRetryClaim?version:claimedVersion,locked_at:claimedVersion,attempt_count:attemptCount+(legacyRetryClaim?0:1),avatar_expected_path:'avatar',avatar_expected_updated_at:version,
@@ -83,7 +84,7 @@ function scenario({decision='review',concurrentDecision='',providerError=false,p
   };
   const evaluation={decision,reasonCodes:[],categoryScores:{},providerFlagged:false};
   const deps={
-    createHash,randomUUID,PublicApiError,...serverJobs,...loadGalleryGateway(),...loadAvatarGateway(),...storageReceipt,...photoContentPolicy,
+    createHash,randomUUID,PublicApiError,...serverJobs,...loadGalleryGateway(),...loadAvatarGateway(),...storageReceipt,...photoContentPolicy,...mediaIdentity,
     validateAndPrepareDancrImage:async()=>({sha256:'synthetic',storageFileName:'image.jpg',buffer:Buffer.from('synthetic'),contentType:'image/jpeg'}),
     resolvePhotoPublicationIntent:async()=>({mode:'add',replacementPhotoId:null}),
     MAX_DANCER_PROFILE_PHOTOS:50,ACTIVE_IMAGE_MODERATION_STATUSES:[],
@@ -97,14 +98,17 @@ function scenario({decision='review',concurrentDecision='',providerError=false,p
         decision:'review',status:'moderating',updated_at:version});
       return {id:record.id,updated_at:version};
     },
-    analyzeDancerMediaIdentity:async()=>({}),dancerMediaIdentityCategoryFlags:()=>({}),
+    analyzeDancerMediaIdentity:async input=>{
+      assert.equal(input.targetImages[0].toString(),'synthetic','count people in the original photo, including outside the avatar crop');
+      return identityAnalysis;
+    },
     analyzeDancerPhotoContent:async image=>{
       assert.equal(image.buffer.toString(),'synthetic','check the entire original photo, never just the avatar crop');
       events.push('content-check');
       if(contentError)throw new Error('provider_timeout: photo content review');
       return contentAnalysis;
     },
-    evaluateDancrImageModeration:()=>evaluation,evaluateDancerMediaIdentity:()=>({}),combineDancerMediaModeration:safety=>safety,
+    evaluateDancrImageModeration:()=>evaluation,
     safeErrorMetadata:()=>({code:'synthetic'}),isAvatarFaceRequiredError:()=>faceRejection,
     uploadResponsiveImage:async()=>{events.push('public-upload');return {storagePath:'owner/profile/public.jpg'};},
   };
@@ -127,6 +131,16 @@ function scenario({decision='review',concurrentDecision='',providerError=false,p
 
 for(const avatar of [false,true])for(const retry of [false,true]){
   const context=(avatar?'avatar':'gallery')+(retry?' retry':' first upload');
+  for(const [personCount,personCountConfidence,expected] of [[2,0.99,'rejected'],[1,0.7,'review'],[0,0.99,'rejected']]){
+    test(context+' blocks count '+personCount+' with certainty '+personCountConfidence,async()=>{
+      const s=scenario({avatar,retry,decision:'approved',identityAnalysis:{personCount,personCountConfidence,singlePersonOnly:personCount===1,referenceMatch:'match',confidence:0.99}});
+      const result=await s.run();
+      assert.equal(result.decision,expected);assert.equal(s.events.includes('public-upload'),false);
+      assert.equal(s.record.category_scores.dancer_identity_person_count,personCount);
+      assert.equal(s.record.category_scores.dancer_identity_person_count_confidence,personCountConfidence);
+      if(personCount===2)assert.ok(result.reasonCodes.includes('multiple_people_detected'));
+    });
+  }
   test(context+' rejects nudity even when generic moderation would approve',async()=>{
     const s=scenario({avatar,retry,decision:'approved',contentAnalysis:{nudity:'present',sexualActivity:'absent',confidence:0.99}});
     const result=await s.run();

@@ -8,6 +8,9 @@ export function getVideoModerationMode(): VideoModerationMode {
   const configured = process.env.DANCR_VIDEO_MODERATION_MODE?.trim().toLowerCase();
   if (!configured) return "ai";
   if (VIDEO_MODERATION_MODES.includes(configured as VideoModerationMode)) {
+    // Real uploads must always pass safety and single-person checks, even if
+    // an old demo setting is still configured on a production deployment.
+    if (process.env.NODE_ENV === "production" || process.env.VERCEL_ENV === "production") return "ai";
     return configured as VideoModerationMode;
   }
   throw new Error(

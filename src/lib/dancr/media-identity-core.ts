@@ -5,6 +5,7 @@ import type {
 
 const MEDIA_IDENTITY_APPROVE_CONFIDENCE = 0.82;
 const MEDIA_IDENTITY_REJECT_CONFIDENCE = 0.9;
+const PERSON_COUNT_REQUIRED_CONFIDENCE = 0.9;
 
 export type DancerMediaIdentityReferenceMatch =
   | "match"
@@ -14,6 +15,7 @@ export type DancerMediaIdentityReferenceMatch =
 
 export type DancerMediaIdentityAnalysis = {
   personCount: number;
+  personCountConfidence: number;
   singlePersonOnly: boolean;
   referenceMatch: DancerMediaIdentityReferenceMatch;
   confidence: number;
@@ -48,9 +50,19 @@ export function parseDancerMediaIdentityAnalysis(
     throw new Error("Dancer media identity review returned an incomplete response.");
   }
   const candidate = value as Record<string, unknown>;
-  const rawCount = Number(candidate.personCount);
-  if (!Number.isInteger(rawCount) || rawCount < 0 || rawCount > 20) {
+  const rawCount = candidate.personCount;
+  if (typeof rawCount !== "number" || !Number.isInteger(rawCount) || rawCount < 0 || rawCount > 20) {
     throw new Error("Dancer media identity review returned an invalid person count.");
+  }
+  if (typeof candidate.singlePersonOnly !== "boolean") {
+    throw new Error("Dancer media identity review returned an incomplete person count.");
+  }
+  const confidence = candidate.confidence;
+  const personCountConfidence = candidate.personCountConfidence;
+  for (const value of [confidence, personCountConfidence]) {
+    if (typeof value !== "number" || !Number.isFinite(value) || value < 0 || value > 1) {
+      throw new Error("Dancer media identity review returned invalid confidence.");
+    }
   }
   const allowedMatches = new Set<DancerMediaIdentityReferenceMatch>([
     "match",
@@ -64,14 +76,12 @@ export function parseDancerMediaIdentityAnalysis(
       ? suppliedMatch
       : "uncertain"
     : "not_provided";
-  const confidence = Number(candidate.confidence);
   return {
     personCount: rawCount,
+    personCountConfidence: personCountConfidence as number,
     singlePersonOnly: candidate.singlePersonOnly === true && rawCount === 1,
     referenceMatch,
-    confidence: Number.isFinite(confidence)
-      ? Math.max(0, Math.min(1, confidence))
-      : 0,
+    confidence: confidence as number,
   };
 }
 
@@ -79,23 +89,21 @@ export function evaluateDancerMediaIdentity(
   analysis: DancerMediaIdentityAnalysis,
   options: { referenceRequired: boolean },
 ): DancerMediaIdentityEvaluation {
-  if (analysis.personCount === 0) {
-    return identityEvaluation(
-      analysis.confidence >= MEDIA_IDENTITY_REJECT_CONFIDENCE ? "rejected" : "review",
-      analysis.confidence >= MEDIA_IDENTITY_REJECT_CONFIDENCE
-        ? "dancer_not_visible"
-        : "dancer_visibility_uncertain",
-      analysis,
-    );
+  // Recognizing the main dancer is not enough: the entire media must have a
+  // separately confident count of exactly one person before it can publish.
+  if (!Number.isInteger(analysis.personCount) || analysis.personCount < 0 || analysis.personCount > 20
+    || !Number.isFinite(analysis.personCountConfidence)
+    || analysis.personCountConfidence < PERSON_COUNT_REQUIRED_CONFIDENCE || analysis.personCountConfidence > 1) {
+    return identityEvaluation("review", "person_count_uncertain", analysis);
   }
-  if (analysis.personCount > 1 || !analysis.singlePersonOnly) {
-    return identityEvaluation(
-      analysis.confidence >= MEDIA_IDENTITY_APPROVE_CONFIDENCE ? "rejected" : "review",
-      analysis.confidence >= MEDIA_IDENTITY_APPROVE_CONFIDENCE
-        ? "multiple_people_detected"
-        : "person_count_uncertain",
-      analysis,
-    );
+  if (analysis.personCount === 0) {
+    return identityEvaluation("rejected", "dancer_not_visible", analysis);
+  }
+  if (analysis.personCount > 1) {
+    return identityEvaluation("rejected", "multiple_people_detected", analysis);
+  }
+  if (analysis.singlePersonOnly !== true) {
+    return identityEvaluation("review", "person_count_uncertain", analysis);
   }
   if (!options.referenceRequired) {
     return identityEvaluation(
@@ -135,6 +143,7 @@ export function combineDancerMediaModeration(
       ...safety.categoryScores,
       dancer_identity_confidence: identity.analysis.confidence,
       dancer_identity_person_count: identity.analysis.personCount,
+      dancer_identity_person_count_confidence: identity.analysis.personCountConfidence,
     },
     providerFlagged: safety.providerFlagged,
   };

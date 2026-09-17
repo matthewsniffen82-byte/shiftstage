@@ -48,6 +48,9 @@ export async function analyzeDancerMediaIdentity(input: {
         "Count every distinct visibly depicted person in the target media, including partial or background people and recognizable people on screens, posters, or photos.",
         "Do not count the approved-avatar reference itself, and do not double-count the same person's mirror reflection or the same person across video frames.",
         "singlePersonOnly may be true only when exactly one distinct person appears anywhere in the target media.",
+        "The one-person rule applies to the entire original photo and to all supplied video frames together, not just the main subject or one person per frame. A different person appearing later still makes personCount greater than one.",
+        "Count partially visible people even when their face is hidden. Do not ignore bystanders, cropped bodies, or background people because the foreground dancer is clear.",
+        "personCountConfidence measures certainty that every distinct person has been counted, separately from identity-match confidence. If blur, occlusion, or a possible background person makes the count uncertain, set singlePersonOnly to false and personCountConfidence below 0.9.",
         referenceProvided
           ? "Compare the sole target person with the approved avatar. Return match only when visible facial appearance is clearly consistent; use uncertain when the face is obscured or evidence is insufficient."
           : "No reference is provided for this first avatar. Return not_provided for referenceMatch.",
@@ -71,7 +74,7 @@ export async function analyzeDancerMediaIdentity(input: {
     content.push({
       type: "input_image",
       image_url: `data:image/jpeg;base64,${image.toString("base64")}`,
-      detail: input.mediaType === "photo" ? "high" : "low",
+      detail: "high",
     });
   });
 
@@ -92,9 +95,10 @@ export async function analyzeDancerMediaIdentity(input: {
           schema: {
             type: "object",
             additionalProperties: false,
-            required: ["personCount", "singlePersonOnly", "referenceMatch", "confidence"],
+            required: ["personCount", "personCountConfidence", "singlePersonOnly", "referenceMatch", "confidence"],
             properties: {
               personCount: { type: "integer", minimum: 0, maximum: 20 },
+              personCountConfidence: { type: "number", minimum: 0, maximum: 1 },
               singlePersonOnly: { type: "boolean" },
               referenceMatch: {
                 type: "string",
@@ -109,7 +113,7 @@ export async function analyzeDancerMediaIdentity(input: {
     MEDIA_IDENTITY_TIMEOUT_MS,
     "Dancer media identity review timed out.",
   );
-  if (!response.output_text) {
+  if (response.status !== "completed" || !response.output_text) {
     throw new Error("Dancer media identity review returned an incomplete response.");
   }
   return parseDancerMediaIdentityAnalysis(
