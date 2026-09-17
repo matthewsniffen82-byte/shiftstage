@@ -110,6 +110,8 @@ body .dashboard-shell.dashboard-shell-venue .venue-dashboard-overview-grid { ali
 body .dashboard-shell.dashboard-shell-venue .venue-dashboard-overview-grid > .info-panel { align-content: start; gap: 12px; }
 body .dashboard-shell.dashboard-shell-venue .info-panel h2 { font-size: 19px !important; font-weight: 600 !important; line-height: 1.3 !important; }
 body .dashboard-shell.dashboard-shell-venue .venue-dashboard-overview-grid .metric { padding: 12px; }
+/* Keep wide tables from setting the minimum width of the analytics grid item. */
+.venue-value-analytics{min-width:0}
 .venue-value-metrics,.venue-value-supporting{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:16px 0}
 .venue-value-analytics .metric{min-width:0;padding:16px;border:1px solid rgba(255,255,255,.12);border-radius:14px;background:rgba(255,255,255,.025)}
 .venue-value-analytics .metric small{display:block;font-size:12px;line-height:1.5;color:#b8b6c7}
