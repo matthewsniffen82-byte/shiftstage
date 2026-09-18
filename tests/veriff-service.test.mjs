@@ -17,10 +17,10 @@ const approved = { status: 'success', verification: { id: sessionId, vendorData:
 const created = { status: 'success', verification: { id: sessionId, vendorData: attempt.attempt_id, status: 'created', url: 'https://saas.veriff.com/v/secret-token' } };
 const testConfig = { apiKey: 'secret-test-key', sharedSecret: 'secret-test-secret', integrationId };
 
-function fixture({ reservation = attempt, current = attempt, provider = approved, saveError = null, env = {}, configured = true, providerError = false, responseHeaders = {} } = {}) {
+function fixture({ reservation = attempt, current = attempt, provider = approved, saveError = null, env = {}, configured = true, providerError = false, responseHeaders = {}, reservationError = null } = {}) {
   const calls = [], writes = [];
   const admin = {
-    async rpc(name, args) { calls.push({ rpc: name, args }); return { data: reservation, error: null }; },
+    async rpc(name, args) { calls.push({ rpc: name, args }); return { data: reservation, error: reservationError }; },
     from(table) {
       const filters = []; let mutation;
       const query = { select() { return this; }, eq(column, value) { filters.push([column, value]); return this; }, or(value) { filters.push(['or', value]); return this; },
@@ -118,4 +118,11 @@ test('normal dancer access reads the saved Veriff approval without calling the p
   const f = fixture({ current: { ...attempt, status: 'verified', verified_at: '2026-01-01T00:00:00Z' }, providerError: true });
   assert.equal((await f.get()).status, 'verified'); assert.equal(f.calls.filter(call => call.url).length, 0);
   assert.ok(f.calls.find(call => call.read).filters.some(([key, value]) => key === 'provider' && value === 'veriff'));
+});
+
+test('unfinished profile setup cannot create a paid verification session', async () => {
+  const f = fixture({ reservationError: { code: '42501', message: 'AGE_PROFILE_SETUP_REQUIRED' } });
+  await assert.rejects(f.start(), error => error.status === 409 && /submit your dancer profile/.test(error.message));
+  assert.equal(f.calls.filter(call => call.url).length, 0);
+  assert.equal(f.writes.length, 0);
 });

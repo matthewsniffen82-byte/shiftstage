@@ -60,6 +60,7 @@ export async function startDancerAgeVerification(admin: SupabaseClient, userId: 
   const config = veriffConfig();
   if (!config) throw unavailable();
   const { data: attempt, error } = await admin.rpc("reserve_dancer_age_verification", { p_user_id: userId, p_integration_id: config.integrationId });
+  if (error?.message?.includes("AGE_PROFILE_SETUP_REQUIRED")) throw new PublicApiError("FORBIDDEN", "Finish and submit your dancer profile before starting age verification.", 409);
   if (error?.message?.includes("AGE_VERIFICATION_RETRY_LIMIT")) throw new PublicApiError("FORBIDDEN", "You have reached today's verification limit. Please try again tomorrow or contact support.", 429);
   if (error || !attempt?.attempt_id || attempt.provider !== "veriff") throw unavailable();
   if (attempt.status === "verified") return { status: attempt.status, url: null };

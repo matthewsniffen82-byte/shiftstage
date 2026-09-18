@@ -18,6 +18,8 @@ export async function recordDancerTap(client: SupabaseClient, input: {
     p_tag_id: input.tagId, p_dancer_user_id: input.dancerUserId, p_session_id: input.sessionId, p_audit: input.audit,
   })).catch(() => { throw unconfirmed(); });
   if (error) {
+    if (error.code === "42501" && error.message === "AGE_PROFILE_SETUP_REQUIRED") throw new PublicApiError("FORBIDDEN", "Finish and submit your dancer profile, then verify your age before your first club tap.", 403);
+    if (error.code === "42501" && error.message === "AGE_VERIFICATION_REQUIRED_BEFORE_TAP") throw new PublicApiError("FORBIDDEN", "Verify you are 18 or older in your dancer dashboard, then tap the club's sticker again.", 403);
     if (error.code === "42501") throw new PublicApiError("FORBIDDEN", "This tap is unavailable. Check that your dancer account and the club's sticker are active.", 403);
     if (error.code === "P0002") throw new PublicApiError("NOT_FOUND", "This tap is no longer available. Refresh your dashboard.", 404);
     if (error.code === "40001") throw new PublicApiError("CONFLICT", "Your check-in changed. Refresh your dashboard before tapping again.", 409);

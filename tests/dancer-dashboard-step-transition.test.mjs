@@ -10,11 +10,11 @@ const [dashboardClient, dashboardSession, nfcPanel, profileRoute, profileLiveNot
   readFile(new URL("../supabase/migrations/202608140002_dancer_profile_live_notification.sql", import.meta.url), "utf8"),
 ]);
 
-test("Step 2 completes only after the server confirms the submitted profile state", () => {
+test("profile submission opens age verification and tap access waits for a confirmed age result", () => {
   assert.match(dashboardClient, /const submitted = effectiveStatus === "pending_review" \|\| effectiveStatus === "approved"/);
   assert.match(dashboardClient, /confirmedStatus !== "pending_review" && confirmedStatus !== "approved"/);
-  assert.match(dashboardClient, /onProfileChange\?\.\(data\.profile\)[\s\S]*?setExpandedStepId\("dancer-onboarding-nfc"\)/);
-  assert.match(dashboardClient, /locked: !submitted && !isVenueApproved/);
+  assert.match(dashboardClient, /onProfileChange\?\.\(data\.profile\)[\s\S]*?const nextStep = ageAccessAllowed \? "dancer-onboarding-nfc" : "dancer-onboarding-age"/);
+  assert.match(dashboardClient, /locked: !submitted \|\| !ageAccessAllowed/);
 });
 
 test("profile submission uses the server-authorized client and verifies the persisted transition", () => {

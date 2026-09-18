@@ -92,7 +92,7 @@ export async function POST(request: Request, context: RouteContext) {
     if (!tag) return inactiveTag();
 
     if (tag.type === "dressing_room") {
-      const authContext = await createRequestSupabaseContext(request);
+      const authContext = await createRequestSupabaseContext(request, { role: "dancer" });
       const { client, user } = authContext;
       const { data: account, error } = await client
         .from("app_users")

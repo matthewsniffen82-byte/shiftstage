@@ -9,7 +9,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { veriffHostedUrl } from '../src/lib/dancr/veriff-url.ts';
 const require = createRequire(import.meta.url);
 const code = ts.transpileModule(readFileSync(new URL('../app/dashboard/DancerAgeVerificationGate.tsx', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX } }).outputText;
-function render(verification) {
+function render(verification, props = {}) {
   const exports = {}; let state = 0;
   vm.runInNewContext(code, { exports, require(name) {
     if (name === 'react/jsx-runtime') return require(name);
@@ -18,7 +18,7 @@ function render(verification) {
     if (name === '@/src/lib/dancr/veriff-url') return { veriffHostedUrl };
     throw new Error(name);
   } });
-  return renderToStaticMarkup(exports.default({ children: React.createElement('div', null, 'PRIVATE_DANCER_TOOLS') }));
+  return renderToStaticMarkup(exports.default({ children: React.createElement('div', null, 'PRIVATE_DANCER_TOOLS'), ...props }));
 }
 test('loading, failed, pending, and unconfigured required checks do not render dancer tools', () => {
   for (const verification of [null, ...['not_started', 'pending', 'in_review', 'declined'].map(status => ({ required: true, configured: true, status })), { required: true, configured: false, status: 'not_started' }]) {
@@ -34,4 +34,14 @@ test('verification starts only after acknowledgement and in-review sessions do n
   assert.match(html, /Veriff checks your ID and selfie/); assert.ok(!html.includes('Didit'));
   const review = render({ required: true, configured: true, status: 'in_review' });
   assert.ok(!review.includes('button primary')); assert.ok(review.includes('Check verification status'));
+});
+
+test('age verification starts after profile submission and before the club tap', () => {
+  const state = { required: true, configured: true, status: 'not_started' };
+  const before = render(state, { profileSubmitted: false });
+  assert.match(before, /Finish and submit your dancer profile first/);
+  assert.ok(!before.includes('button primary'));
+  const after = render(state, { profileSubmitted: true });
+  assert.match(after, /before your first club tap/);
+  assert.ok(after.includes('button primary'));
 });

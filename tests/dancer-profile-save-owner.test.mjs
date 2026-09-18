@@ -69,7 +69,7 @@ function fixture(options = {}) {
       },
     },
     "@/src/lib/supabase/request": { async createRequestSupabaseContext(request, access) {
-      assert.deepEqual(copy(access), { role: "dancer" });
+      assert.deepEqual(copy(access), { role: "dancer", allowProfileSetup: true });
       const context = await auth.createContext(request, access);
       calls.push({ authorized: context.user.id });
       // Private owner/identity columns are unavailable to authenticated browser roles.

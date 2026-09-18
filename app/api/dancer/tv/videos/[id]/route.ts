@@ -31,7 +31,7 @@ export async function PATCH(request: Request, { params }: RouteProps) {
     if (!UUID_PATTERN.test(id)) {
       return NextResponse.json({ ok: false, error: "Invalid MyDancr TV video." }, { status: 400 });
     }
-    const { user } = await createRequestSupabaseContext(request, { role: "dancer" });
+    const { user } = await createRequestSupabaseContext(request, { role: "dancer", allowProfileSetup: true });
     const admin = createAdminSupabaseClient();
     await enforceDancerMediaRequestRateLimit(admin, {
       media: "video",

@@ -12,6 +12,7 @@ import { readSession, requestDancerProfileJson, requestDancerTvVideosJson } from
 import type { DancerProfileBuilderRequirement, DancerProfileEditorSections, LoadState, DancerProfileEditorSectionId, DancerPreviewVideo, DancerPhotoItem, DancerStepOneItemState, DancerIdentityDraft, DancerProfileSocialEditor } from "./dashboard-types";
 import { persistedDancerStageName, DANCER_PROFILE_EDITOR_SECTION_LABELS, DANCER_PHOTOS_KEEP_OPEN_EVENT, saveDancerProfileEditor, SOCIAL_PLATFORMS, AvatarUploadBusyContext, DANCER_PREVIEW_SOCIAL_PLATFORMS } from "./DashboardShared";
 import { relabelPhotoItems, dancerPhotoItemsFromProfile } from "./DancerPhotoPanel";
+import DancerAgeVerificationGate, { type DancerAgeVerification } from "./DancerAgeVerificationGate";
 const DancerProfileMediaUploads = dynamic(() => import("./DancerProfileMediaUploads"));
 
 
@@ -564,6 +565,7 @@ export function DancerOnboardingCommand({
   const [status, setStatus] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [expandedStepId, setExpandedStepId] = useState<string | null>(null);
+  const [ageVerification, setAgeVerification] = useState<DancerAgeVerification | null>(null);
   const mountedRef = useRef(false);
   const profileSubmissionSequenceRef = useRef(0);
   const profileSubmissionAbortRef = useRef<AbortController | null>(null);
@@ -590,6 +592,8 @@ export function DancerOnboardingCommand({
     && approvedPhotos.length,
   );
   const submitted = effectiveStatus === "pending_review" || effectiveStatus === "approved";
+  const ageVerified = ageVerification?.status === "verified";
+  const ageAccessAllowed = ageVerified || ageVerification?.required === false;
   const setupDetail = profileReady
     ? "Identity, avatar, and at least one profile picture are approved. Other media can finish review separately."
     : dancerProfileSetupBlocker({ persistedStageName, persistedCity, avatarUrl, pendingAvatar, approvedPhotos, pendingPhotos, rejectedPhotos });
@@ -602,13 +606,23 @@ export function DancerOnboardingCommand({
       locked: false,
     },
     {
+      id: "dancer-onboarding-age",
+      label: "Verify age · 18+",
+      complete: ageAccessAllowed,
+      detail: ageVerified ? "Your age is verified. You're ready for your first club tap."
+        : !submitted ? "Unlocks after profile submission."
+        : ageVerification?.required === false ? "Age verification is not required for your account yet."
+        : "Verify with Veriff before your first club tap.",
+      locked: !submitted,
+    },
+    {
       id: "dancer-onboarding-nfc",
       label: "Dressing-room tap",
       complete: isVenueApproved,
-      detail: isVenueApproved ? "Your venue is verified." : submitted ? "At the club, tap its official dressing-room sticker." : "Unlocks after profile submission.",
-      locked: !submitted && !isVenueApproved,
+      detail: isVenueApproved ? "Your venue is verified." : submitted && ageAccessAllowed ? "At the club, tap its official dressing-room sticker." : "Unlocks after profile setup and age verification.",
+      locked: !submitted || !ageAccessAllowed,
     },
-  ], [isVenueApproved, profileReady, setupDetail, submitted]);
+  ], [ageAccessAllowed, ageVerification?.required, ageVerified, isVenueApproved, profileReady, setupDetail, submitted]);
   const firstIncomplete = steps.find((step) => !step.complete) || steps[steps.length - 1];
   const visibleExpandedStepId = expandedStepId || "";
   const storageKey = `mydancr:dancer-onboarding-step:${String(profile?.id || "profile")}`;
@@ -627,6 +641,9 @@ export function DancerOnboardingCommand({
   useEffect(() => {
     if (!profile?.id) return;
     window.localStorage.removeItem(storageKey);
+    if (new URLSearchParams(window.location.search).get("age-verification") === "returned") {
+      setExpandedStepId("dancer-onboarding-age");
+    }
   }, [profile?.id, storageKey]);
 
   useEffect(() => {
@@ -719,14 +736,15 @@ export function DancerOnboardingCommand({
         throw new Error("Club verification was not unlocked. Please try again.");
       }
       onProfileChange?.(data.profile);
-      window.localStorage.setItem(storageKey, "dancer-onboarding-nfc");
-      setExpandedStepId("dancer-onboarding-nfc");
-      setStatus("Profile submitted. Tap the club's official dressing-room sticker to activate your profile.");
+      const nextStep = ageAccessAllowed ? "dancer-onboarding-nfc" : "dancer-onboarding-age";
+      window.localStorage.setItem(storageKey, nextStep);
+      setExpandedStepId(nextStep);
+      setStatus(ageAccessAllowed ? "Profile submitted. You're ready for your first club tap." : "Profile submitted. Verify you are 18 or older, then tap the club's official dressing-room sticker to activate your profile.");
       offerPushNotifications("dancer-review");
       window.requestAnimationFrame(() => {
         if (!isCurrentProfileSubmissionAction(requestId, controller)) return;
-        document.getElementById("dancer-onboarding-nfc")?.scrollIntoView({ behavior: "smooth", block: "start" });
-        document.getElementById("dancer-onboarding-nfc-button")?.focus({ preventScroll: true });
+        document.getElementById(nextStep)?.scrollIntoView({ behavior: "smooth", block: "start" });
+        document.getElementById(`${nextStep}-button`)?.focus({ preventScroll: true });
       });
     } catch (error) {
       if (isCurrentProfileSubmissionAction(requestId, controller)) {
@@ -743,7 +761,7 @@ export function DancerOnboardingCommand({
         <span>
           <span className="eyebrow">Setup checklist</span>
           <h2 id="dancer-onboarding-heading">Profile setup</h2>
-          <p>Create your profile, then activate it with your first club tap.</p>
+        <p>Create your profile, verify you are 18 or older, then activate it with your first club tap.</p>
         </span>
         <div className="dancer-onboarding-progress">
           <div className="dancer-onboarding-progress-track" role="progressbar" aria-label="Profile setup progress" aria-valuemin={0} aria-valuemax={steps.length} aria-valuenow={steps.filter((step) => step.complete).length}>
@@ -823,11 +841,11 @@ export function DancerOnboardingCommand({
                       {submitted ? (
                         <div className="dancer-onboarding-complete-note" role="status">
                           <strong>✓ Step 1 complete</strong>
-                          <span>Your profile is ready. Complete the dressing-room tap to activate it.</span>
+                          <span>Your profile is ready. Complete age verification, then the dressing-room tap to activate it.</span>
                         </div>
                       ) : (
                         <button className="dancer-onboarding-primary" id="dancer-onboarding-profile-review-button" aria-describedby="dancer-onboarding-profile-review-status" aria-busy={isSubmitting} type="button" disabled={isSubmitting || !profileReady} onClick={() => void submitProfile()}>
-                          {isSubmitting ? "Preparing..." : "Continue to club verification"}
+                          {isSubmitting ? "Preparing..." : "Continue to age verification"}
                         </button>
                       )}
                       <p className="dancer-onboarding-announcement" id="dancer-onboarding-profile-review-status" role="status" aria-live="polite">
@@ -836,7 +854,16 @@ export function DancerOnboardingCommand({
                     </div>
                   </>
                 ) : null}
-                {step.id === "dancer-onboarding-nfc" ? venueVerificationContent : null}
+                {step.id === "dancer-onboarding-age" ? (
+                  <DancerAgeVerificationGate profileSubmitted={submitted} onVerificationChange={setAgeVerification}>
+                    {submitted && ageAccessAllowed ? <div className="dancer-onboarding-complete-note" role="status">
+                      <strong>{ageVerified ? "✓ Age verified" : "Ready for your club tap"}</strong>
+                      <span>Tap the club’s official dressing-room sticker to activate your profile.</span>
+                      <button className="dancer-onboarding-primary" type="button" onClick={() => openStep("dancer-onboarding-nfc")}>Continue to dressing-room tap</button>
+                    </div> : null}
+                  </DancerAgeVerificationGate>
+                ) : null}
+                {step.id === "dancer-onboarding-nfc" && submitted && ageAccessAllowed ? venueVerificationContent : null}
               </div>
             </li>
           );

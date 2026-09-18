@@ -22,7 +22,7 @@ const MAX_AVATAR_UPLOAD_BODY_BYTES = MAX_DANCR_RAW_UPLOAD_BYTES + 64 * 1024;
 
 export async function POST(request: Request) {
   try {
-    const { client, user } = await createRequestSupabaseContext(request, { role: "dancer" });
+    const { client, user } = await createRequestSupabaseContext(request, { role: "dancer", allowProfileSetup: true });
     const admin = createAdminSupabaseClient();
     await enforceDancerMediaRequestRateLimit(admin, {
       media: "image",

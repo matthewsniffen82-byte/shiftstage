@@ -200,7 +200,7 @@ export function DancerPanel({
   );
 
   return (
-    <DancerAgeVerificationGate>
+    <>
       <DancerActivationConfirmation
         affiliations={affiliations}
         isLive={isPublic}
@@ -231,69 +231,67 @@ export function DancerPanel({
         />
       ) : null}
       {isApproved ? (
-        <DashboardSection
-          description="Visibility and connected clubs."
-          emphasis="summary"
-          id="dancer-overview"
-          icon={<DancerDashboardIcon section="status" />}
-          toggleAffordance="chevron"
-          title="Profile status"
-        >
-          <div className="venue-dashboard-inner-grid dancer-overview-grid">
-            <DancerVisibilityPanel profile={profile} onProfileChange={onProfileChange} />
-            <DancerNfcPanel
-              compactAuthorized
-              initialAffiliations={affiliations}
-              initialNfcState={nfc || null}
-              onAuthorizationChange={refreshDancerProfile}
-            />
-          </div>
-        </DashboardSection>
-      ) : null}
-      {isApproved ? profileMediaSection : null}
-      {isApproved ? (
-        <DashboardSection
-          description="Working Now and upcoming dates."
-          emphasis="primary"
-          id="dancer-schedule"
-          icon={<DancerDashboardIcon section="schedule" />}
-          toggleAffordance="chevron"
-          title="Schedule"
-        >
-          <DancerShiftManager />
-        </DashboardSection>
-      ) : null}
-      {isApproved ? (
-        <DashboardSection
-          description="Views, Club Deals, and guest activity."
-          emphasis="secondary"
-          id="dancer-performance"
-          icon={<DancerDashboardIcon section="performance" />}
-          toggleAffordance="chevron"
-          title="Performance"
-        >
-          <div className="dancer-performance-workspace">
-            <DancerPerformanceSummary analytics={analytics} deals={deals} />
-            <div className="dancer-performance-details">
-              <DancerPerformanceDetail
-                badge={`${String(deals?.successfulRedemptionsThisMonth || 0)} this month`}
-                description="Deal saves, shares, and verified redemptions."
-                title="Club Deal activity"
-              >
-                <DancerDealPanel deals={deals} />
-              </DancerPerformanceDetail>
-              <DancerPerformanceDetail
-                badge={formatRankMove(weeklyReport)}
-                description="Follower growth and ranking milestones."
-                title="Weekly results"
-              >
-                <DancerImpactPanel events={rankingEvents} report={weeklyReport} />
-              </DancerPerformanceDetail>
+        <DancerAgeVerificationGate>
+          <DashboardSection
+            description="Visibility and connected clubs."
+            emphasis="summary"
+            id="dancer-overview"
+            icon={<DancerDashboardIcon section="status" />}
+            toggleAffordance="chevron"
+            title="Profile status"
+          >
+            <div className="venue-dashboard-inner-grid dancer-overview-grid">
+              <DancerVisibilityPanel profile={profile} onProfileChange={onProfileChange} />
+              <DancerNfcPanel
+                compactAuthorized
+                initialAffiliations={affiliations}
+                initialNfcState={nfc || null}
+                onAuthorizationChange={refreshDancerProfile}
+              />
             </div>
-          </div>
-        </DashboardSection>
+          </DashboardSection>
+          {profileMediaSection}
+          <DashboardSection
+            description="Working Now and upcoming dates."
+            emphasis="primary"
+            id="dancer-schedule"
+            icon={<DancerDashboardIcon section="schedule" />}
+            toggleAffordance="chevron"
+            title="Schedule"
+          >
+            <DancerShiftManager />
+          </DashboardSection>
+          <DashboardSection
+            description="Views, Club Deals, and guest activity."
+            emphasis="secondary"
+            id="dancer-performance"
+            icon={<DancerDashboardIcon section="performance" />}
+            toggleAffordance="chevron"
+            title="Performance"
+          >
+            <div className="dancer-performance-workspace">
+              <DancerPerformanceSummary analytics={analytics} deals={deals} />
+              <div className="dancer-performance-details">
+                <DancerPerformanceDetail
+                  badge={`${String(deals?.successfulRedemptionsThisMonth || 0)} this month`}
+                  description="Deal saves, shares, and verified redemptions."
+                  title="Club Deal activity"
+                >
+                  <DancerDealPanel deals={deals} />
+                </DancerPerformanceDetail>
+                <DancerPerformanceDetail
+                  badge={formatRankMove(weeklyReport)}
+                  description="Follower growth and ranking milestones."
+                  title="Weekly results"
+                >
+                  <DancerImpactPanel events={rankingEvents} report={weeklyReport} />
+                </DancerPerformanceDetail>
+              </div>
+            </div>
+          </DashboardSection>
+        </DancerAgeVerificationGate>
       ) : null}
-    </DancerAgeVerificationGate>
+    </>
   );
 }
 

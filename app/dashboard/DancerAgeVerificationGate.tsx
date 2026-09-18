@@ -4,10 +4,14 @@ import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { requestDashboardJson } from "./dashboard-session";
 import { veriffHostedUrl } from "@/src/lib/dancr/veriff-url";
 
-type Verification = { required: boolean; configured: boolean; status: string; verifiedAt: string | null };
+export type DancerAgeVerification = { required: boolean; configured: boolean; status: string; verifiedAt: string | null };
 
-export default function DancerAgeVerificationGate({ children }: { children: ReactNode }) {
-  const [verification, setVerification] = useState<Verification | null>(null);
+export default function DancerAgeVerificationGate({ children, profileSubmitted = true, onVerificationChange }: {
+  children: ReactNode;
+  profileSubmitted?: boolean;
+  onVerificationChange?: (verification: DancerAgeVerification) => void;
+}) {
+  const [verification, setVerification] = useState<DancerAgeVerification | null>(null);
   const [busy, setBusy] = useState(false);
   const [consent, setConsent] = useState(false);
   const [error, setError] = useState("");
@@ -18,10 +22,9 @@ export default function DancerAgeVerificationGate({ children }: { children: Reac
     });
     if (!signal?.aborted) {
       setVerification(data.verification);
-      // Reload the dashboard once so a saved first club tap can now finalize.
-      if (refresh && data.verification?.status === "verified") window.location.replace("/dashboard/dancer");
+      onVerificationChange?.(data.verification);
     }
-  }, []);
+  }, [onVerificationChange]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -33,7 +36,7 @@ export default function DancerAgeVerificationGate({ children }: { children: Reac
   }, [load]);
 
   async function act(start: boolean) {
-    if (busy || (start && !consent)) return;
+    if (busy || (start && (!consent || !profileSubmitted))) return;
     setBusy(true);
     setError("");
     try {
@@ -62,11 +65,12 @@ export default function DancerAgeVerificationGate({ children }: { children: Reac
       <span className="dancer-age-eyebrow">Dancer account · 18+ only</span>
       <h2 id="dancer-age-heading">Verify your age</h2>
       <p>{!verification ? "Checking your verification status…"
+        : !profileSubmitted ? "Finish and submit your dancer profile first, then verify you are 18 or older before your first club tap."
         : !verification.configured ? "Age verification is being connected. Please check back shortly. Account settings and support remain available."
         : reviewing ? "Your verification needs review. Check your status again later or contact MyDancr support."
         : verification.status === "declined" ? "Your verification was not approved. You must be 18 or older to use dancer features. You can retry with a valid ID or contact support."
-        : "Confirm you are 18 or older before setting up your dancer profile. You'll need a government-issued photo ID and a live selfie."}</p>
-      {verification?.configured && !reviewing && <>
+        : "Your profile is set up. Confirm you are 18 or older before your first club tap. You'll need a government-issued photo ID and a live selfie."}</p>
+      {profileSubmitted && verification?.configured && !reviewing && <>
         <p>Veriff checks your ID and selfie. MyDancr keeps the verification result and reference, without storing your ID images, selfie, or date of birth.</p>
         <label className="dancer-age-consent"><input type="checkbox" checked={consent} onChange={event => setConsent(event.target.checked)} disabled={busy} />
           <span>I understand that I’ll continue to Veriff for ID and selfie verification. I’ll review its privacy notice and consent choices before submitting.</span>

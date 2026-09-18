@@ -23,12 +23,13 @@ test("initial dancers use the canonical premium dashboard shell and loading stat
   assert.match(dashboard, /linear-gradient\(145deg, #111116, #09090d/);
 });
 
-test("the setup command center exposes the real two-step NFC production flow", () => {
+test("the setup command center exposes the profile, age verification, and NFC production flow", () => {
   assert.match(onboardingCommand, /label: "Create profile"/);
   assert.doesNotMatch(onboardingCommand, /Create & review profile|Review your full profile|Create, review, and submit/);
   assert.doesNotMatch(dashboard, /Preview & continue/);
   assert.match(dashboard, /Dressing-room tap/);
-  assert.match(dashboard, /Continue to club verification/);
+  assert.match(dashboard, /Continue to age verification/);
+  assert.match(onboardingCommand, /label: "Verify age · 18\+"/);
   assert.match(onboardingCommand, /status \|\| \(!profileReady && !submitted \? setupDetail : ""\)/);
   assert.doesNotMatch(dashboard, /Submit profile for review|Submit completed profile|final approval/);
   assert.match(dashboard, /submitForReview: true/);
@@ -72,7 +73,7 @@ test("initial onboarding nests every production workspace directly under its ste
   assert.doesNotMatch(dashboard, /<article className="dancer-onboarding-preview" aria-label="Guest profile preview">/);
   assert.doesNotMatch(dashboard, /className="dancer-onboarding-preview-card"/);
   assert.doesNotMatch(dashboard, /step\.id === "dancer-onboarding-preview"/);
-  assert.match(dashboard, /step\.id === "dancer-onboarding-nfc" \? venueVerificationContent : null/);
+  assert.match(dashboard, /step\.id === "dancer-onboarding-nfc" && submitted && ageAccessAllowed \? venueVerificationContent : null/);
 });
 
 test("draft identity and social form values survive refreshes without bypassing explicit saves", () => {
@@ -203,8 +204,8 @@ test("profile setup editors use the compact shared modal shell without changing 
 
 test("dancer onboarding no longer offers payout enrollment", () => {
   assert.doesNotMatch(onboardingCommand, /payout|nats|commission/i);
-  assert.equal((onboardingCommand.match(/label: /g) || []).length, 2);
-  assert.match(onboardingCommand, /setExpandedStepId\("dancer-onboarding-nfc"\)/);
+  assert.equal((onboardingCommand.match(/label: /g) || []).length, 3);
+  assert.match(onboardingCommand, /setExpandedStepId\(nextStep\)/);
   assert.match(onboardingCommand, /profileSubmissionAbortRef\.current\?\.abort\(\)/);
 });
 
@@ -426,7 +427,7 @@ test("the mobile full-profile preview keeps the three-column media grid above na
 test("pre-approval tools remain hidden while help and account recovery stay available", () => {
   assert.match(dashboard, /\{isApproved \? \([\s\S]*?id="dancer-schedule"/);
   assert.match(dashboard, /\{isApproved \? \([\s\S]*?id="dancer-performance"/);
-  assert.match(dashboard, /\{isApproved \? profileMediaSection : null\}/);
+  assert.match(dashboard, /\{isApproved \? \([\s\S]*?<DancerAgeVerificationGate>[\s\S]*?\{profileMediaSection\}/);
   assert.match(dashboard, /"Help & Account"/);
   assert.match(dashboard, /DashboardSignInRecovery/);
   assert.match(dashboard, /body: JSON\.stringify\(\{ mode: "login", role/);

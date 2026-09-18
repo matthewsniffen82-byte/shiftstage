@@ -403,7 +403,7 @@ export async function PATCH(request: Request) {
 
   try {
     setSaveStage("authenticate");
-    const { client, user } = await createRequestSupabaseContext(request, { role: "dancer" });
+    const { client, user } = await createRequestSupabaseContext(request, { role: "dancer", allowProfileSetup: true });
     const body = await readBoundedJsonObject(request, {
       maxBytes: MAX_DANCER_PROFILE_BODY_BYTES,
       invalidMessage: "Invalid dancer profile request.",

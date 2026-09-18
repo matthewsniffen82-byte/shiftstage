@@ -35,3 +35,10 @@ test('verification itself and read/delete actions remain accessible, other roles
   await assert.rejects(fixture({ role: 'customer' }).run('POST', { role: 'dancer', allowAgeVerification: true }), error => error.status === 403);
   const customer = fixture({ role: 'customer' }); await customer.run('POST', { role: 'customer' }); assert.equal(customer.calls.length, 0);
 });
+
+test('profile setup is available before verification but still requires an active dancer account', async () => {
+  const f = fixture({ error: { code: 'verification-outage' } });
+  for (const method of ['POST', 'PATCH']) await f.run(method, { role: 'dancer', allowProfileSetup: true });
+  assert.equal(f.calls.length, 0);
+  await assert.rejects(fixture({ role: 'customer' }).run('PATCH', { role: 'dancer', allowProfileSetup: true }), error => error.status === 403);
+});

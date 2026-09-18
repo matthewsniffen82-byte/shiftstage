@@ -8,7 +8,7 @@ const MAX_REFRESH_TOKEN_LENGTH = 4_096;
 const AUTH_TOKEN_PATTERN = /^[A-Za-z0-9._~-]+$/;
 
 // These requirements are supplied by route code, never by request payloads or JWT metadata.
-export type RequestAccountAccess = { role: "customer" | "dancer" | "venue" | "admin"; allowAgeVerification?: true } | { active: true };
+export type RequestAccountAccess = { role: "customer" | "dancer" | "venue" | "admin"; allowAgeVerification?: true; allowProfileSetup?: true } | { active: true };
 
 export type RequestSupabaseContext = {
   client: SupabaseClient;
@@ -99,7 +99,7 @@ async function requireRequestAccountAccess(client: SupabaseClient, userId: strin
   if (!data || data.id !== userId || data.account_state !== "active" || ("role" in access && data.role !== access.role)) {
     throw new PublicApiError("FORBIDDEN", "This account cannot access this feature.", 403);
   }
-  if ("role" in access && access.role === "dancer" && !access.allowAgeVerification && !["GET", "HEAD", "DELETE"].includes(method)) {
+  if ("role" in access && access.role === "dancer" && !access.allowAgeVerification && !access.allowProfileSetup && !["GET", "HEAD", "DELETE"].includes(method)) {
     const result = await client.rpc("dancer_age_verification_access");
     if (result.error || typeof result.data?.required !== "boolean" || typeof result.data?.verified !== "boolean") {
       throw new PublicApiError("UNAVAILABLE", "We couldn't confirm your age-verification status. Please try again.", 503);

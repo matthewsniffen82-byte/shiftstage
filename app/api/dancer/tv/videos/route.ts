@@ -28,7 +28,7 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const { user } = await createRequestSupabaseContext(request, { role: "dancer" });
+    const { user } = await createRequestSupabaseContext(request, { role: "dancer", allowProfileSetup: true });
     const admin = createAdminSupabaseClient();
     await enforceDancerMediaRequestRateLimit(admin, {
       media: "video",
