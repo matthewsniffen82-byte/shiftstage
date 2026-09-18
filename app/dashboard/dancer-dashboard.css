@@ -77,3 +77,16 @@ body .dashboard-shell.dashboard-shell-dancer .venue-dashboard-section[data-secti
 @media (prefers-reduced-motion: reduce) {
   body .dashboard-shell.dashboard-shell-dancer .venue-dashboard-section-toggle { transition: none; }
 }
+
+.dancer-age-verification { max-width: 680px; margin: 20px auto; padding: clamp(22px, 5vw, 36px); border: 1px solid rgba(183, 146, 255, .28); border-radius: 24px; background: #14101d; color: #f5f2fb; font-family: Inter, ui-sans-serif, system-ui, sans-serif; }
+.dancer-age-eyebrow { color: #cfb5fa; font-size: 12px; font-weight: 750; letter-spacing: .06em; }
+.dancer-age-verification h2 { margin: 12px 0; font-size: clamp(26px, 5vw, 34px); }
+.dancer-age-verification p { line-height: 1.6; color: #d0c8db; }
+.dancer-age-consent { display: flex; align-items: flex-start; gap: 12px; margin: 22px 0; line-height: 1.5; font-size: 14px; }
+.dancer-age-consent input { width: 20px; height: 20px; flex: 0 0 20px; margin-top: 2px; accent-color: #ad83ed; }
+.dancer-age-verification .button { display: inline-flex; justify-content: center; align-items: center; min-height: 46px; padding: 12px 18px; margin: 6px 10px 6px 0; border-radius: 12px; border: 1px solid #6d548c; background: #292033; color: #fff; font: inherit; font-size: 14px; font-weight: 700; cursor: pointer; }
+.dancer-age-verification .button.primary { background: #9a6bdd; color: #10091c; border-color: #9a6bdd; }
+.dancer-age-verification .button:disabled { opacity: .5; cursor: default; }
+.dancer-age-verification .button:focus-visible, .dancer-age-consent input:focus-visible { outline: 3px solid #dcc6ff; outline-offset: 4px; }
+.dancer-age-verification [role="alert"] { color: #ffc8cf; }
+.dancer-age-verification .dancer-age-note { font-size: 12px; margin-bottom: 0; }

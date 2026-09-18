@@ -8,7 +8,7 @@ const MAX_REFRESH_TOKEN_LENGTH = 4_096;
 const AUTH_TOKEN_PATTERN = /^[A-Za-z0-9._~-]+$/;
 
 // These requirements are supplied by route code, never by request payloads or JWT metadata.
-export type RequestAccountAccess = { role: "customer" | "dancer" | "venue" | "admin" } | { active: true };
+export type RequestAccountAccess = { role: "customer" | "dancer" | "venue" | "admin"; allowAgeVerification?: true } | { active: true };
 
 export type RequestSupabaseContext = {
   client: SupabaseClient;
@@ -61,7 +61,7 @@ export async function createRequestSupabaseContext(request: Request, access?: Re
 
     const { data, error } = await client.auth.getUser(sessionData.session.access_token);
     if (error || !data.user) throw requestAuthenticationError(error);
-    await requireRequestAccountAccess(client, data.user.id, access);
+    await requireRequestAccountAccess(client, data.user.id, access, request.method);
 
     return {
       client,
@@ -86,18 +86,27 @@ export async function createRequestSupabaseContext(request: Request, access?: Re
 
   const { data, error } = await client.auth.getUser(token);
   if (error || !data.user) throw requestAuthenticationError(error);
-  await requireRequestAccountAccess(client, data.user.id, access);
+  await requireRequestAccountAccess(client, data.user.id, access, request.method);
 
   return { client, user: data.user };
 }
 
-async function requireRequestAccountAccess(client: SupabaseClient, userId: string, access?: RequestAccountAccess) {
+async function requireRequestAccountAccess(client: SupabaseClient, userId: string, access?: RequestAccountAccess, method = "GET") {
   if (!access) return;
   const { data, error } = await client.from("app_users")
     .select("id, role, account_state").eq("id", userId).maybeSingle();
   if (error) throw new PublicApiError("UNAVAILABLE", "We couldn't verify your account access. Please try again.", 503);
   if (!data || data.id !== userId || data.account_state !== "active" || ("role" in access && data.role !== access.role)) {
     throw new PublicApiError("FORBIDDEN", "This account cannot access this feature.", 403);
+  }
+  if ("role" in access && access.role === "dancer" && !access.allowAgeVerification && !["GET", "HEAD", "DELETE"].includes(method)) {
+    const result = await client.rpc("dancer_age_verification_access");
+    if (result.error || typeof result.data?.required !== "boolean" || typeof result.data?.verified !== "boolean") {
+      throw new PublicApiError("UNAVAILABLE", "We couldn't confirm your age-verification status. Please try again.", 503);
+    }
+    if (result.data.required && !result.data.verified) {
+      throw new PublicApiError("FORBIDDEN", "Verify you are 18 or older in your dancer dashboard before continuing.", 403);
+    }
   }
 }
 

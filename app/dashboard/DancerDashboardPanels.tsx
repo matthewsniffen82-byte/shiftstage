@@ -13,6 +13,7 @@ import type { LoadState, DancerPhotoItem, DancerProfileSocialEditor, DancerProfi
 import { persistedDancerStageName, saveDancerProfileEditor, DashboardSection, Metric, DANCER_PROFILE_EDITOR_SAVE_EVENT, SOCIAL_PLATFORMS } from "./DashboardShared";
 import { dancerPhotoItemsFromProfile, DancerPhotoPanel } from "./DancerPhotoPanel";
 import { DancerAvatarPanel } from "./DancerAvatarPanel";
+import DancerAgeVerificationGate from "./DancerAgeVerificationGate";
 import { DancerProfilePreview, DancerOnboardingCommand, DancerOnboardingProfileMediaWorkspace } from "./DancerProfileEditor";
 // Keep role-specific tools out of every customer's initial JavaScript. Editors
 // load when mounted; the visible role's core tools warm while its data loads.
@@ -199,7 +200,7 @@ export function DancerPanel({
   );
 
   return (
-    <>
+    <DancerAgeVerificationGate>
       <DancerActivationConfirmation
         affiliations={affiliations}
         isLive={isPublic}
@@ -292,7 +293,7 @@ export function DancerPanel({
           </div>
         </DashboardSection>
       ) : null}
-    </>
+    </DancerAgeVerificationGate>
   );
 }
 

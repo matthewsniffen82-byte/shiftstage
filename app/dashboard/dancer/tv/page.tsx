@@ -1,5 +1,7 @@
 import Link from "next/link";
 import DancerTvStudio from "../../DancerTvStudio";
+import DancerAgeVerificationGate from "../../DancerAgeVerificationGate";
+import "../../dancer-dashboard.css";
 import { homeDiscoveryHref } from "@/src/lib/dancr/navigation";
 
 export const runtime = "nodejs";
@@ -15,7 +17,7 @@ export default function DancerMyDancrTvStudioPage() {
           <Link href={homeDiscoveryHref("tv")}>MyDancr TV</Link>
         </div>
       </nav>
-      <DancerTvStudio />
+      <DancerAgeVerificationGate><DancerTvStudio /></DancerAgeVerificationGate>
       <style>{`
         .tv-studio-page-nav { position: relative; z-index: 2; display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 18px clamp(14px, 4vw, 54px) 0; background: #050507; font-family: Inter, ui-sans-serif, system-ui, sans-serif; }
         .tv-studio-page-nav > a { color: #fff; font-weight: 950; text-decoration: none; }
