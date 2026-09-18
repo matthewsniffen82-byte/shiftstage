@@ -1,0 +1,31 @@
+# Veriff dancer age verification
+
+Dancer accounts use Veriff's hosted ID-and-selfie flow. The server requires an approved decision and a document date of birth proving age 18+. Customers and venues do not use this flow; club approval remains separate.
+
+## Activation
+
+1. Apply only `20260917210000_dancer_veriff_age_verification.sql` after the existing `20260917190000` migration, following `docs/supabase-reliability/migration-safety.md`. Never edit/replay the historical migration or push the whole migration directory. Vercel does not apply SQL. The migration preserves enforcement's current setting, tags historical rows with their original provider, and reserves new sessions for Veriff.
+2. Sign in at `https://station.veriff.com`. Confirm Veriff accepts the MyDancr business, choose the desired plan (Plus includes specialist review), and create/select a **live ID Verification integration with document + selfie, face match and liveness required**. Configure minimum age 18 and ensure document-only, age-estimation-only, and test integrations cannot serve this flow. Review provider retention/deletion settings and privacy/consent presentation.
+3. Copy server-only `VERIFF_API_KEY`, `VERIFF_SHARED_SECRET`, `VERIFF_INTEGRATION_ID`, and the exact origin `VERIFF_BASE_URL` from the integration's API Keys page into Vercel Production. Set `VERIFF_ENVIRONMENT=live` only after confirming live status in Veriff. The shared secret is shown once; never paste it into chat or source control. `NEXT_PUBLIC_SITE_URL` must be the canonical HTTPS production origin. Redeploy after changing environment variables. Remove unused Didit variables if present.
+4. Set the integration's **Webhook decisions URL** to `https://www.mydancr.com/api/veriff/webhook`. Event webhooks are unnecessary. The integration's shared secret signs both API responses and decision webhooks. The server supplies `/dashboard/dancer?age-verification=returned` as the browser callback; that callback never grants approval itself.
+5. While enforcement remains off, complete a consenting adult's live verification. Confirm the hosted return, a successful signed webhook, and a saved `provider='veriff', status='verified'` row. Confirm the live integration actually requests a government photo ID and selfie. Use synthetic unit tests or a separate test environment/database for negative cases. Never put test credentials in Production. Veriff test integrations can issue signed simulated approvals; a signature alone cannot distinguish them from live checks.
+6. Once the live flow is proven, call service-only `public.activate_dancer_age_verification()`. All new and existing dancers must verify. Unverified public profiles are hidden; verified dancers still need club approval and can restore their visibility themselves.
+
+The code and migration do not purchase a subscription or activate enforcement. Do not describe verification as live until the above steps are complete. Missing configuration fails closed when enforcement is enabled.
+
+## Reliability and privacy
+
+- Ordinary access reads the saved result from MyDancr's database. Veriff downtime delays new checks/status reconciliation, but does not erase existing approvals. No automatic secondary provider is configured.
+- HTTPS calls and redirects use exact allowlisted Veriff hosts, including both current and legacy regional domains. Outgoing requests are HMAC-signed; API responses and webhooks require a valid raw-body SHA-256 HMAC and matching API key. If supplied, the integration header must also match. There is no Didit webhook endpoint after this release.
+- Session IDs, integration IDs, and opaque server-generated attempt references bind each decision to its dancer. Browser input never supplies approved status or DOB. Pending sessions are reused, resubmission uses the same session, and session creation is capped at three starts per 24 hours.
+- An approved decision requires code 9001, approved status, matching session/reference, a recognized government photo-document type, a valid provider attempt ID/decision time, and an actual adult document DOB. Veriff's standard decision does not expose separate liveness/face-match outcomes: requiring those checks is a **live integration configuration requirement**, verified before activation.
+- Webhooks trigger retrieval of the current signed decision, so replaying an old approved webhook cannot restore an old approval. Unknown/superseded sessions are ignored. Concurrent updates are conditional on the original record/attempt and read timestamp. An unavailable decision leaves saved results intact. Revocation hides public profiles.
+- Webhook retrieval has a 3-second provider timeout. Failed processing returns non-200 for Veriff's retry mechanism; the dancer can also request status refresh if delivery is delayed. Veriff expects acknowledgement within five seconds, so monitor delivery during the live pilot.
+- The private database stores provider/account/attempt/session/integration references, pending hosted URL, statuses, timestamps and attempt counters. No ID images, selfies, DOB, age, raw provider payload or credentials are stored/logged. Veriff retains its own data under the provider agreement; MyDancr's data minimization does not delete provider copies.
+- The historical `workflow_id` column is renamed `provider_integration_id`; the historical SQL file is intentionally preserved. Old-provider records cannot authorize Veriff-gated dancer features. Account settings/support/deletion remain available.
+
+## Validation and references
+
+Run `node --test tests/veriff-*.test.mjs` and relevant dancer-dashboard/request/account regressions, focused ESLint, scoped TypeScript, and the migration guard. Tests use synthetic identities and mocked provider calls, with real PostgreSQL-compatible role/trigger tests; they do not prove a live integration or purchase a plan.
+
+Official docs: [session creation](https://devdocs.veriff.com/apidocs/v1sessions), [decision retrieval](https://devdocs.veriff.com/apidocs/v1sessionsiddecision-1), [HMAC](https://devdocs.veriff.com/docs/hmac-authentication-and-endpoint-security), [webhooks](https://devdocs.veriff.com/docs/webhooks-guide), [domain migration](https://status.veriff.com/).

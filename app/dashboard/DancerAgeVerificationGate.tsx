@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { requestDashboardJson } from "./dashboard-session";
+import { veriffHostedUrl } from "@/src/lib/dancr/veriff-url";
 
 type Verification = { required: boolean; configured: boolean; status: string; verifiedAt: string | null };
 
@@ -41,9 +42,9 @@ export default function DancerAgeVerificationGate({ children }: { children: Reac
           method: "POST", expectedRole: "dancer", timeoutMs: 25_000, fallbackMessage: "Unable to start verification.",
         });
         if (data.url) {
-          const url = new URL(data.url);
-          if (url.protocol !== "https:" || url.hostname !== "verify.didit.me" || url.username || url.password || url.port) throw new Error("Unable to open verification.");
-          window.location.assign(url.href);
+          const url = veriffHostedUrl(data.url);
+          if (!url) throw new Error("Unable to open verification.");
+          window.location.assign(url);
           return;
         }
         await load();
@@ -62,13 +63,13 @@ export default function DancerAgeVerificationGate({ children }: { children: Reac
       <h2 id="dancer-age-heading">Verify your age</h2>
       <p>{!verification ? "Checking your verification status…"
         : !verification.configured ? "Age verification is being connected. Please check back shortly. Account settings and support remain available."
-        : reviewing ? "Your verification needs review. Check your status again after Didit finishes reviewing it."
+        : reviewing ? "Your verification needs review. Check your status again later or contact MyDancr support."
         : verification.status === "declined" ? "Your verification was not approved. You must be 18 or older to use dancer features. You can retry with a valid ID or contact support."
         : "Confirm you are 18 or older before setting up your dancer profile. You'll need a government-issued photo ID and a live selfie."}</p>
       {verification?.configured && !reviewing && <>
-        <p>Didit checks your ID and selfie. MyDancr keeps the verification result and reference, without storing your ID images, selfie, or date of birth.</p>
+        <p>Veriff checks your ID and selfie. MyDancr keeps the verification result and reference, without storing your ID images, selfie, or date of birth.</p>
         <label className="dancer-age-consent"><input type="checkbox" checked={consent} onChange={event => setConsent(event.target.checked)} disabled={busy} />
-          <span>I understand that I’ll continue to Didit for ID and selfie verification. I’ll review its privacy notice and consent choices before submitting.</span>
+          <span>I understand that I’ll continue to Veriff for ID and selfie verification. I’ll review its privacy notice and consent choices before submitting.</span>
         </label>
         <button type="button" className="button primary" disabled={busy || !consent} onClick={() => void act(true)}>
           {busy ? "Please wait…" : verification.status === "pending" ? "Continue verification" : "Verify I'm 18+"}

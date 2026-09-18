@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { apiError } from "@/src/lib/api";
-import { getDancerAgeVerification, refreshDancerAgeVerification, startDancerAgeVerification } from "@/src/lib/dancr/didit";
+import { getDancerAgeVerification, refreshDancerAgeVerification, startDancerAgeVerification } from "@/src/lib/dancr/veriff";
 import { enforcePublicRequestRateLimit, PublicRequestRateLimitError } from "@/src/lib/dancr/public-request-rate-limit";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { createRequestSupabaseContext } from "@/src/lib/supabase/request";

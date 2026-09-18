@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { apiError } from "@/src/lib/api";
 import { getAccountByUserId } from "@/src/lib/dancr/auth";
-import { getDancerAgeVerification } from "@/src/lib/dancr/didit";
+import { getDancerAgeVerification } from "@/src/lib/dancr/veriff";
 import { broadcastFollowedClubRosterAddition } from "@/src/lib/dancr/customer-follow-notifications";
 import { getDancerDealMetrics } from "@/src/lib/dancr/deals";
 import { getOwnDancerDashboardAnalytics } from "@/src/lib/dancr/dancer";
