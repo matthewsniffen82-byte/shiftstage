@@ -62,25 +62,31 @@ export default function DancerAgeVerificationGate({ children, profileSubmitted =
   const reviewing = verification?.status === "in_review";
   return <>
     <section className="dancer-age-verification" aria-labelledby="dancer-age-heading" aria-busy={busy}>
-      <span className="dancer-age-eyebrow">Dancer account · 18+ only</span>
-      <h2 id="dancer-age-heading">Verify your age</h2>
+      <span className="dancer-age-eyebrow">Dancer account</span>
+      <h2 id="dancer-age-heading">Verify you’re 18+</h2>
       <p>{!verification ? "Checking your verification status…"
         : !profileSubmitted ? "Finish and submit your dancer profile first, then verify you are 18 or older before your first club tap."
         : !verification.configured ? "Age verification is being connected. Please check back shortly. Account settings and support remain available."
         : reviewing ? "Your verification needs review. Check your status again later or contact MyDancr support."
         : verification.status === "declined" ? "Your verification was not approved. You must be 18 or older to use dancer features. You can retry with a valid ID or contact support."
-        : "Your profile is set up. Confirm you are 18 or older before your first club tap. You'll need a government-issued photo ID and a live selfie."}</p>
+        : "Have your photo ID ready. Veriff will ask for ID photos and a live selfie—allow a few minutes."}</p>
       {profileSubmitted && verification?.configured && !reviewing && <>
-        <p>Veriff checks your ID and selfie. MyDancr keeps the verification result and reference, without storing your ID images, selfie, or date of birth.</p>
+        <p>MyDancr saves your verification result, not your ID photos, selfie, or date of birth.</p>
+        <p>Complete this step before your first club tap.</p>
         <label className="dancer-age-consent"><input type="checkbox" checked={consent} onChange={event => setConsent(event.target.checked)} disabled={busy} />
-          <span>I understand that I’ll continue to Veriff for ID and selfie verification. I’ll review its privacy notice and consent choices before submitting.</span>
+          <span>I understand I’ll continue to Veriff for ID and selfie verification.</span>
         </label>
         <button type="button" className="button primary" disabled={busy || !consent} onClick={() => void act(true)}>
-          {busy ? "Please wait…" : verification.status === "pending" ? "Continue verification" : "Verify I'm 18+"}
+          {busy ? "Please wait…" : "Continue to Veriff"}
         </button>
       </>}
       <button type="button" className="button secondary" disabled={busy} onClick={() => void act(false)}>Check verification status</button>
       {error && <p role="alert">{error}</p>}
+      <p className="dancer-age-links">
+        <a href="https://www.veriff.com/privacy-notice" target="_blank" rel="noopener noreferrer" aria-label="Veriff privacy notice (opens in a new tab)">Privacy notice</a>
+        {" · "}
+        <a href="/dashboard/dancer#dancer-support">Get help</a>
+      </p>
       <p className="dancer-age-note">Age verification does not replace your club’s approval.</p>
     </section>
     {verification && !verification.required ? children : null}

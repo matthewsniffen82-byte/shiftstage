@@ -22,7 +22,7 @@ function render(verification, props = {}) {
 }
 test('loading, failed, pending, and unconfigured required checks do not render dancer tools', () => {
   for (const verification of [null, ...['not_started', 'pending', 'in_review', 'declined'].map(status => ({ required: true, configured: true, status })), { required: true, configured: false, status: 'not_started' }]) {
-    const html = render(verification); assert.ok(!html.includes('PRIVATE_DANCER_TOOLS')); assert.ok(html.includes('Verify your age'));
+    const html = render(verification); assert.ok(!html.includes('PRIVATE_DANCER_TOOLS')); assert.ok(html.includes('Verify you’re 18+'));
   }
 });
 test('verified adults and the explicitly inactive rollout retain access', () => {
@@ -31,7 +31,7 @@ test('verified adults and the explicitly inactive rollout retain access', () => 
 test('verification starts only after acknowledgement and in-review sessions do not offer another paid attempt', () => {
   const html = render({ required: true, configured: true, status: 'not_started' });
   assert.match(html, /type="checkbox"/); assert.match(html, /class="button primary" disabled=""/);
-  assert.match(html, /Veriff checks your ID and selfie/); assert.ok(!html.includes('Didit'));
+  assert.match(html, /Veriff will ask for ID photos and a live selfie/); assert.ok(!html.includes('Didit'));
   const review = render({ required: true, configured: true, status: 'in_review' });
   assert.ok(!review.includes('button primary')); assert.ok(review.includes('Check verification status'));
 });

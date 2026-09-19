@@ -87,6 +87,8 @@ body .dashboard-shell.dashboard-shell-dancer .venue-dashboard-section[data-secti
 .dancer-age-verification .button { display: inline-flex; justify-content: center; align-items: center; min-height: 46px; padding: 12px 18px; margin: 6px 10px 6px 0; border-radius: 12px; border: 1px solid #6d548c; background: #292033; color: #fff; font: inherit; font-size: 14px; font-weight: 700; cursor: pointer; }
 .dancer-age-verification .button.primary { background: #9a6bdd; color: #10091c; border-color: #9a6bdd; }
 .dancer-age-verification .button:disabled { opacity: .5; cursor: default; }
-.dancer-age-verification .button:focus-visible, .dancer-age-consent input:focus-visible { outline: 3px solid #dcc6ff; outline-offset: 4px; }
+.dancer-age-verification .button:focus-visible, .dancer-age-consent input:focus-visible, .dancer-age-links a:focus-visible { outline: 3px solid #dcc6ff; outline-offset: 4px; }
 .dancer-age-verification [role="alert"] { color: #ffc8cf; }
+.dancer-age-links { font-size: 14px; }
+.dancer-age-links a { color: #cfb5fa; text-decoration: underline; text-underline-offset: 3px; }
 .dancer-age-verification .dancer-age-note { font-size: 12px; margin-bottom: 0; }
