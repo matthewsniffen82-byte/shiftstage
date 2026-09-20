@@ -62,6 +62,7 @@ export async function createRequestSupabaseContext(request: Request, access?: Re
     const { data, error } = await client.auth.getUser(sessionData.session.access_token);
     if (error || !data.user) throw requestAuthenticationError(error);
     await requireRequestAccountAccess(client, data.user.id, access, request.method);
+    await requireDancerAgreementAccess(client, request, access);
 
     return {
       client,
@@ -87,8 +88,23 @@ export async function createRequestSupabaseContext(request: Request, access?: Re
   const { data, error } = await client.auth.getUser(token);
   if (error || !data.user) throw requestAuthenticationError(error);
   await requireRequestAccountAccess(client, data.user.id, access, request.method);
+  await requireDancerAgreementAccess(client, request, access);
 
   return { client, user: data.user };
+}
+
+async function requireDancerAgreementAccess(client: SupabaseClient, request: Request, access?: RequestAccountAccess) {
+  const path = new URL(request.url).pathname.replace(/\/+$/, "");
+  // Account recovery, deletion, support, and the acceptance endpoint remain available.
+  if (path === "/api/dancer/agreement") return;
+  if (!path.startsWith("/api/dancer/") && !(access && "role" in access && access.role === "dancer")) return;
+  const { data, error } = await client.rpc("dancer_agreement_access");
+  if (error || typeof data?.required !== "boolean" || typeof data?.accepted !== "boolean") {
+    throw new PublicApiError("UNAVAILABLE", "We couldn't verify your Dancer Agreement acceptance. Please try again.", 503);
+  }
+  if (data.required && !data.accepted) {
+    throw new PublicApiError("FORBIDDEN", "Read and accept the Dancer Agreement in your dancer dashboard before continuing.", 403);
+  }
 }
 
 async function requireRequestAccountAccess(client: SupabaseClient, userId: string, access?: RequestAccountAccess, method = "GET") {

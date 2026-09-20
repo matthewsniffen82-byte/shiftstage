@@ -27,6 +27,10 @@ const policy = compile(readFileSync(new URL("../src/lib/api-error-policy.ts", im
   "./dancr/payout-copy.ts": compile(readFileSync(new URL("../src/lib/dancr/payout-copy.ts", import.meta.url), "utf8")),
 });
 const passwordPolicy = compile(readFileSync(new URL("../src/lib/dancr/password-policy.ts", import.meta.url), "utf8"));
+const agreementVersion = compile(readFileSync(new URL("../src/lib/dancr/dancer-agreement-version.ts", import.meta.url), "utf8"));
+const dancerAgreement = compile(readFileSync(new URL("../src/lib/dancr/dancer-agreement.ts", import.meta.url), "utf8"), {
+  "../api-error-policy": policy, "./dancer-agreement-version": agreementVersion,
+});
 const nfcBrowserAccount = compile(readFileSync(new URL("../src/lib/dancr/nfc-browser-account.ts", import.meta.url), "utf8"), {
   "server-only": {},
   "@/src/lib/server-env": { getServerEnv: () => "test-only-signing-key" },
@@ -39,7 +43,10 @@ const api = { PublicApiError: policy.PublicApiError, apiError(error, fallback) {
 const account = { id: "user-one", role: "customer", accountState: "active" };
 const session = { access_token: "access", refresh_token: "refresh", expires_at: 2000000000 };
 const jsonRequest = (method, body, headers = {}) => new Request("https://mydancr.com/api/auth", {
-  method, headers: { "content-type": "application/json", ...headers }, body: JSON.stringify(body),
+  method, headers: { "content-type": "application/json", ...headers }, body: JSON.stringify({
+    ...(body.mode === "signup" && body.role === "dancer" ? { agreementAccepted: true, agreementVersion: agreementVersion.DANCER_AGREEMENT_VERSION } : {}),
+    ...body,
+  }),
 });
 
 function authFixture(providerError = null, { role = "customer", authSession = session, adminClient = {}, reconcileNewPrivilegedAccount, provisionError } = {}) {
@@ -49,6 +56,13 @@ function authFixture(providerError = null, { role = "customer", authSession = se
   const result = { data: { user: { id: account.id }, session: authSession }, error: providerError };
   return { calls, provisions, rateLimits, ...compile(authSource, {
     "@/src/lib/dancr/password-policy": passwordPolicy,
+    "@/src/lib/dancr/dancer-agreement": {
+      ...dancerAgreement,
+      prepareDancerAgreementSignup: async (_admin, _email, input) => {
+        dancerAgreement.validateDancerAgreementAcceptance(input);
+        return "11111111-1111-4111-8111-111111111111";
+      },
+    },
     "@/src/lib/api": api,
     "@supabase/supabase-js": { isAuthError: error => isAuthError(error) || Boolean(error?.provider) },
     "@/src/lib/bounded-json-body": { readBoundedJsonObject: r => r.json() },
@@ -70,6 +84,22 @@ function authFixture(providerError = null, { role = "customer", authSession = se
   }) };
 }
 
+for (const agreementAccepted of [undefined, false, "true", 1]) test(`dancer signup rejects non-affirmative acceptance ${agreementAccepted}`, async () => {
+  const f = authFixture(null, { role: "dancer" });
+  const response = await f.POST(jsonRequest("POST", { mode: "signup", role: "dancer", email: "signup@example.test", password: "Unique1!password", agreementAccepted }));
+  assert.equal(response.status, 400);
+  assert.match((await response.json()).error, /accept the Dancer Agreement/);
+  assert.equal(f.calls.length, 0);
+  assert.equal(f.provisions.length, 0);
+});
+
+test("dancer signup rejects stale agreement versions before identity creation", async () => {
+  const f = authFixture(null, { role: "dancer" });
+  const response = await f.POST(jsonRequest("POST", { mode: "signup", role: "dancer", email: "signup@example.test", password: "Unique1!password", agreementVersion: "old-version" }));
+  assert.equal(response.status, 409);
+  assert.equal(f.calls.length, 0);
+});
+
 test("a remembered NFC dancer does not block signup for a different email", async () => {
   const f = authFixture(null, { role: "dancer", authSession: null });
   const response = await f.POST(jsonRequest("POST", {
@@ -82,6 +112,7 @@ test("a remembered NFC dancer does not block signup for a different email", asyn
   assert.equal(body.session, null);
   assert.equal(f.calls.length, 1);
   assert.equal(f.calls[0].email, "new-dancer@example.com");
+  assert.equal(f.calls[0].options.data.dancer_agreement_intent, "11111111-1111-4111-8111-111111111111");
   assert.equal(f.provisions.length, 1);
   assert.equal(f.provisions[0].email, "new-dancer@example.com");
   assert.equal(f.provisions[0].role, "dancer");
@@ -285,12 +316,13 @@ test("dancer signup displays the password rejection and lets the user correct it
     removeAttribute: name => attributes.delete(name),
   };
   const email = { value: "signup@example.com" }, password = { value: "Test1!password" };
+  const agreement = { checked: true, dataset: { agreementVersion: agreementVersion.DANCER_AGREEMENT_VERSION } };
   const form = { addEventListener: (_event, handler) => { submitHandler = handler; } };
   const rejected = authFixture(new AuthWeakPasswordError("private-provider-details", 422, ["pwned"]), { role: "dancer" });
   const accepted = authFixture(null, { role: "dancer", authSession: null });
   vm.runInNewContext(`${sessionGuard}\n${requestAuth}\n${friendlyError}\n${signupHandler}`, {
     localStorage: { getItem: () => null },
-    document: { getElementById: id => ({ dancerSignupForm: form, dancerEmail: email, dancerPassword: password })[id] },
+    document: { getElementById: id => ({ dancerSignupForm: form, dancerEmail: email, dancerPassword: password, dancerAgreementAccepted: agreement })[id] },
     fetch: async (_url, options) => {
       const body = JSON.parse(options.body);
       sentPasswords.push(body.password);

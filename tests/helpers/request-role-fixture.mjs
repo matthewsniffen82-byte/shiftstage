@@ -5,7 +5,7 @@ import { PublicApiError } from "../../src/lib/api-error-policy.ts";
 
 const source = readFileSync(new URL("../../src/lib/supabase/request.ts", import.meta.url), "utf8");
 const code = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText;
-export function requestRoleFixture({ role = "dancer", state = "active", missing = false, accountError = null, authError = null } = {}) {
+export function requestRoleFixture({ role = "dancer", state = "active", missing = false, accountError = null, authError = null, agreementAccepted = true, agreementError = null, agreementData } = {}) {
   const calls = [];
   const user = { id: "verified-owner", user_metadata: { role: "admin", account_state: "active" }, app_metadata: { role: "admin" } };
   const row = missing ? null : { id: user.id, role, account_state: state };
@@ -19,9 +19,14 @@ export function requestRoleFixture({ role = "dancer", state = "active", missing 
       eq(key, value) { calls.push(["eq", key, value]); if (key === "id") id = value; return this; },
       async maybeSingle() { return { data: id === user.id ? row : null, error: accountError }; },
     };
+  }, async rpc(name) {
+    calls.push(["rpc", name]);
+    if (name === "dancer_agreement_access") return { data: agreementData ?? { required: role === "dancer" && state === "active", accepted: agreementAccepted }, error: agreementError };
+    if (name === "dancer_age_verification_access") return { data: { required: false, verified: false }, error: null };
+    throw new Error(name);
   } };
   const exports = {};
-  vm.runInNewContext(code, { exports, Error, require(name) {
+  vm.runInNewContext(code, { exports, Error, URL, require(name) {
     if (name === "@supabase/supabase-js") return { createClient: () => client };
     if (name === "../env.ts") return { getPublicEnv: () => ({ supabaseUrl: "https://example.test", supabaseAnonKey: "public-fixture" }) };
     if (name === "../api-error-policy.ts") return { PublicApiError };

@@ -24,7 +24,7 @@ function fixture(failureAt, error) {
     },
   } };
   const exports = {};
-  vm.runInNewContext(code, { exports, Error, require: (name) => {
+  vm.runInNewContext(code, { exports, Error, URL, require: (name) => {
     if (name === "@supabase/supabase-js") return { createClient: () => client };
     if (name === "../env.ts") return { getPublicEnv: () => ({ supabaseUrl: "https://example.test", supabaseAnonKey: "public-test-key" }) };
     if (name === "../api-error-policy.ts") return { PublicApiError };

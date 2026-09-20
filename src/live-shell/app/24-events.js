@@ -312,6 +312,12 @@
 
     document.getElementById("dancerSignupForm").addEventListener("submit", async (event) => {
       event.preventDefault();
+      const agreement = document.getElementById("dancerAgreementAccepted");
+      if (!agreement?.checked) {
+        setDancerSignupStatus("Read and accept the Dancer Agreement before creating your account.");
+        agreement?.focus();
+        return;
+      }
       const submit = event.submitter || event.currentTarget.querySelector('button[type="submit"]');
       const originalText = submit.textContent;
       let confirmationSent = false;
@@ -325,6 +331,8 @@
           mode: "signup",
           role: "dancer",
           email,
+          agreementAccepted: agreement.checked === true,
+          agreementVersion: agreement.dataset.agreementVersion,
           password: document.getElementById("dancerPassword").value,
           emailRedirectTo: saveAuthResume("dancer")
         });

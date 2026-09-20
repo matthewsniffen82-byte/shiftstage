@@ -7,6 +7,7 @@ import { provisionAppAccount } from "@/src/lib/dancr/account-provisioning";
 import { reconcileNewPrivilegedAccount } from "@/src/lib/dancr/new-privileged-account";
 import { recoverVerifiedPublicAccount, type VerifiedAccountIdentity } from "@/src/lib/dancr/account-profile-recovery";
 import { getAccountByUserId } from "@/src/lib/dancr/auth";
+import { prepareDancerAgreementSignup, validateDancerAgreementAcceptance } from "@/src/lib/dancr/dancer-agreement";
 import { getVenueForAccount } from "@/src/lib/dancr/venue";
 import { getVenueRequestForManager } from "@/src/lib/dancr/venue-request-account";
 import {
@@ -98,6 +99,7 @@ export async function POST(request: Request) {
     const role = readRole(body.role);
     requestedMode = mode;
     requestedRole = role;
+    if (mode === "signup" && role === "dancer") validateDancerAgreementAcceptance(body);
     // NFC browser reminders apply to dressing-room taps, not account creation.
     const credential = readAuthCredential(body, role);
     const email = credential.email;
@@ -218,6 +220,9 @@ export async function POST(request: Request) {
 
     const city = role === "dancer" ? "" : readOptional(body.city) || "Las Vegas";
     const submittedStageName = "";
+    const agreementIntent = role === "dancer"
+      ? await prepareDancerAgreementSignup(createAdminSupabaseClient(), email, body)
+      : null;
     const displayName =
       role === "customer"
         ? customerDisplayName(email)
@@ -229,6 +234,7 @@ export async function POST(request: Request) {
             role,
             display_name: displayName,
             stage_name: submittedStageName || null,
+            dancer_agreement_intent: agreementIntent,
           };
 
     const { data, error } = await client.auth.signUp({
