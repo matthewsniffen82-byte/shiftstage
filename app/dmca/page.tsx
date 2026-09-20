@@ -117,7 +117,7 @@ function DmcaStyles() {
       .dmca-hero p { max-width: 760px; margin: 0; color: #c6bbd7; font-size: 17px; line-height: 1.55; }
       .dmca-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-bottom: 16px; }
       .dmca-card { display: grid; gap: 14px; padding: 22px; border: 1px solid rgba(139,92,246,.28); border-radius: 18px; background: linear-gradient(145deg, rgba(18,15,29,.94), rgba(7,7,11,.96)); box-shadow: 0 24px 60px rgba(0,0,0,.28); }
-      .dmca-card h2 { margin: 0; font-size: 22px; }
+      .dmca-card > h2 { margin: 0; font-size: 22px; scroll-margin-top: 80px; }
       .dmca-card p, .dmca-card li { color: #c6bbd7; line-height: 1.55; }
       .dmca-card ol { display: grid; gap: 10px; margin: 0; padding-left: 22px; }
       .dmca-contact { display: grid; gap: 10px; margin: 0; }
@@ -126,7 +126,7 @@ function DmcaStyles() {
       .dmca-contact dd { display: grid; gap: 3px; margin: 0; color: #fff; overflow-wrap: anywhere; }
       .dmca-note { margin: 0; font-size: 13px; }
       .dmca-policy { margin-bottom: 16px; }
-      .dmca-policy p { margin: 0; }
+      .dmca-policy > p { margin: 0; }
       .dmca-form { display: grid; gap: 18px; }
       .dmca-form fieldset { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin: 0; padding: 0; border: 0; }
       .dmca-form legend { grid-column: 1 / -1; width: 100%; margin-bottom: 4px; color: #8ceaff; font-size: 13px; font-weight: 950; letter-spacing: .12em; text-transform: uppercase; }

@@ -13,7 +13,7 @@
 .legal-contents nav { display: grid; gap: 12px; padding-top: 20px; font-size: 14px; line-height: 1.5; }
 .legal-document-content { color: #d3ccdf; font-size: 16px; line-height: 1.8; overflow-wrap: anywhere; }
 .legal-document-content p { margin: 0 0 20px; white-space: pre-line; }
-.legal-document-content h2 { margin: 36px 0 16px; color: #fff; font-size: 21px; line-height: 1.5; scroll-margin-top: 30px; }
+.legal-document-content h2 { margin: 36px 0 16px; color: #fff; font-size: 21px; line-height: 1.5; scroll-margin-top: 80px; }
 .legal-document-content .legal-toc-entry { margin-bottom: 8px; }
 .legal-document-content .legal-bullet { padding-left: 16px; text-indent: -16px; margin-bottom: 10px; }
 .legal-table-scroll { max-width: 100%; overflow-x: auto; margin-bottom: 24px; }
