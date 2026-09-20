@@ -78,7 +78,9 @@
               <nav class="utility-menu-legal" aria-label="Legal and support">
                 <span class="utility-menu-section-label">Legal &amp; support</span>
                 <button class="utility-menu-item" data-legal-page="termsPage" type="button">Terms</button>
-                <button class="utility-menu-item" data-legal-page="privacyPage" type="button">Privacy</button>
+                <a class="utility-menu-item" href="/privacy">Privacy</a>
+                <a class="utility-menu-item" href="/privacy/california">California Privacy</a>
+                <a class="utility-menu-item" href="/dancer-agreement">Dancer Agreement</a>
                 <button class="utility-menu-item" data-legal-page="guidelinesPage" type="button">Guidelines</button>
                 <a class="utility-menu-item" href="/dmca">Copyright / DMCA</a>
                 <button class="utility-menu-item" id="contactAdminBtn" type="button">Contact</button>
@@ -324,39 +326,7 @@
         <div class="auth-card">
           <h3>Trust and review</h3>
           <p>Dancer profiles, photos, shifts, venues, and reports are subject to review. Accounts, content, venues, or shifts that break the rules may be removed.</p>
-        </div>
-      </div>
-    </section>
-
-    <section class="page-panel legal-page" id="privacyPage" aria-hidden="true">
-      <div class="page-inner">
-        <div class="page-head">
-          <div>
-            <span class="eyebrow">Legal</span>
-            <h2>Privacy Policy</h2>
-          </div>
-          <button class="close-btn legal-close" aria-label="Close Privacy Policy">
-            <svg class="icon" viewBox="0 0 24 24"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
-          </button>
-        </div>
-        <div class="auth-card">
-          <h3>Data we use</h3>
-          <p>We use account details, city settings, follows, notifications, profile submissions, shift posts, venue details, safety reports, and information submitted in copyright notices or counter-notices to operate the app.</p>
-          <p>When dancer age verification is enabled, Veriff processes a government-issued ID and live selfie to confirm that the dancer is 18 or older. Veriff presents its privacy notice and consent choices in the verification flow. MyDancr processes the result and keeps a verification reference, status, and timestamps; it does not store the ID images, selfie, or date of birth. Age verification is separate from club approval.</p>
-        </div>
-        <div class="auth-card">
-          <h3>Why we use it</h3>
-          <ul class="rule-list">
-            <li>Show verified schedules, profiles, venues, and directions.</li>
-            <li>Send notifications about followed dancers and posted shifts.</li>
-            <li>Review dancer verification, photos, venues, and reports.</li>
-            <li>Protect against fake profiles, harassment, illegal services, and rule-breaking content.</li>
-            <li>Process copyright notices, notify uploaders, forward legally required counter-notice information, and respond to court filings.</li>
-          </ul>
-        </div>
-        <div class="auth-card">
-          <h3>Private by default</h3>
-          <p>Guest profiles are not public. Dancr has no private messaging, no public follows, and no public going list.</p>
+          <p>Dancer accounts are governed by the <a href="/dancer-agreement">Dancer Agreement</a>. Read our <a href="/privacy">Privacy Policy</a>, <a href="/privacy/california">California Privacy Notice</a>, and <a href="/dmca">Copyright / DMCA policy</a>.</p>
         </div>
       </div>
     </section>
@@ -507,7 +477,7 @@
               <span class="auth-signup-note-lock" aria-hidden="true">
                 <svg viewBox="0 0 24 24"><rect x="5" y="10" width="14" height="10" rx="2"></rect><path d="M8 10V7a4 4 0 0 1 8 0v3"></path></svg>
               </span>
-              <span class="auth-signup-note-copy">Your guest account and activity aren’t shown publicly. We’ll email you a confirmation link.</span>
+              <span class="auth-signup-note-copy">Your guest account and activity aren’t shown publicly. We’ll email you a confirmation link. <a href="/privacy" target="_blank" rel="noopener">Privacy Policy</a></span>
             </div>
             <button class="action-btn" id="authSubmit" type="submit">Sign in</button>
             <button class="auth-back-to-types" id="customerBackToTypes" type="button" hidden>← Back to account types</button>
@@ -793,6 +763,7 @@
               </ul>
             </div>
             <div class="rule-note">Free account. Your profile becomes public after setup and verification.</div>
+            <p class="rule-note">Read the <a href="/dancer-agreement" target="_blank" rel="noopener">Dancer Agreement</a> and <a href="/privacy" target="_blank" rel="noopener">Privacy Policy</a> before creating your account.</p>
             <button class="action-btn" type="submit">Create dancer account</button>
             <div class="rule-note auth-status" id="dancerSignupStatus" role="status" aria-live="polite" hidden></div>
           </form>

@@ -3,6 +3,8 @@ import Link from "next/link";
 import DmcaNoticeForm from "./DmcaNoticeForm";
 import { getPublicDmcaAgent } from "@/src/lib/dancr/dmca";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
+import { LegalDocumentBody } from "../components/LegalDocument";
+import dmcaDocument from "@/src/content/legal/dmca.json";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -36,6 +38,7 @@ export default async function DmcaPage() {
           Use this page to submit a copyright removal notice for material hosted on MyDancr.
           Knowingly making a material misrepresentation may create legal liability.
         </p>
+        <p><a href="#dmca-document-title">Read the full Digital Millennium Copyright Act policy</a></p>
       </header>
 
       <section className="dmca-grid">
@@ -80,10 +83,17 @@ export default async function DmcaPage() {
 
       <DmcaNoticeForm />
 
+      <section className="dmca-card dmca-policy" aria-labelledby="dmca-document-title" style={{ marginTop: 24 }}>
+        <h2 id="dmca-document-title">{dmcaDocument.title}</h2>
+        <LegalDocumentBody document={dmcaDocument} />
+      </section>
+
       <footer className="dmca-footer">
         <Link href="/">Home</Link>
         <span>·</span>
         <a href={`mailto:${agent.email}`}>Copyright contact</a>
+        <span>·</span>
+        <Link href="/privacy">Privacy Policy</Link>
       </footer>
     </main>
   );
@@ -135,7 +145,7 @@ function DmcaStyles() {
       .dmca-case-result { display: grid; gap: 8px; padding: 16px; border: 1px solid rgba(50,255,164,.3); border-radius: 12px; background: rgba(50,255,164,.08); }
       .dmca-case-result strong { color: #8dffc4; }
       .dmca-case-result code { color: #fff; overflow-wrap: anywhere; }
-      .dmca-footer { display: flex; justify-content: center; gap: 10px; padding-top: 28px; color: #756c87; }
+      .dmca-footer { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; padding-top: 28px; color: #756c87; }
       .dmca-honeypot { position: absolute !important; left: -10000px !important; width: 1px !important; height: 1px !important; overflow: hidden !important; }
       @media (max-width: 700px) {
         .dmca-shell { padding: 18px 12px 40px; }
