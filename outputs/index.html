@@ -41333,10 +41333,7 @@
               </ul>
             </div>
             <div class="rule-note">Free account. Your profile becomes public after setup and verification.</div>
-            <label class="dancer-signup-agreement" style="display:flex;align-items:flex-start;gap:12px;line-height:1.6">
-              <input id="dancerAgreementAccepted" type="checkbox" required data-agreement-version="2026-09-17-v4" style="width:22px;height:22px;min-height:22px;flex:0 0 22px;margin:2px 0 0;accent-color:#8b5cf6">
-              <span>I agree to the <a href="/dancer-agreement" target="_blank" rel="noopener" style="text-decoration:underline">Dancer Agreement</a>.</span>
-            </label>
+            <p class="rule-note">Confirm your email, build your private profile, then review and accept the Dancer Agreement before submitting your profile.</p>
             <p class="rule-note">See how your information is handled in our <a href="/privacy" target="_blank" rel="noopener" style="text-decoration:underline">Privacy Policy</a>.</p>
             <button class="action-btn" type="submit">Create dancer account</button>
             <div class="rule-note auth-status" id="dancerSignupStatus" role="status" aria-live="polite" hidden></div>
@@ -55415,8 +55412,6 @@
     }
 
     function clearDancerSignupFields() {
-      const agreement = document.getElementById("dancerAgreementAccepted");
-      if (agreement) agreement.checked = false;
       ["dancerLegalName", "dancerStageName", "dancerEmail", "dancerPassword"].forEach((id) => {
         const input = document.getElementById(id);
         if (input) input.value = "";
@@ -57506,6 +57501,10 @@
     }
 
     async function submitDancerProfileForReview(button) {
+      if (isDancerSession()) {
+        openUnifiedDashboard("dancer", "dancer-profile-media");
+        return;
+      }
       const setupProfile = activeDancerProfile();
       const avatarSaved = Boolean(setupProfile?.avatarStoragePath || setupProfile?.avatar_storage_path);
       if (!dancerSetup.profile || !dancerSetup.photos || !avatarSaved) {
@@ -65366,12 +65365,6 @@
 
     document.getElementById("dancerSignupForm").addEventListener("submit", async (event) => {
       event.preventDefault();
-      const agreement = document.getElementById("dancerAgreementAccepted");
-      if (!agreement?.checked) {
-        setDancerSignupStatus("Read and accept the Dancer Agreement before creating your account.");
-        agreement?.focus();
-        return;
-      }
       const submit = event.submitter || event.currentTarget.querySelector('button[type="submit"]');
       const originalText = submit.textContent;
       let confirmationSent = false;
@@ -65385,8 +65378,6 @@
           mode: "signup",
           role: "dancer",
           email,
-          agreementAccepted: agreement.checked === true,
-          agreementVersion: agreement.dataset.agreementVersion,
           password: document.getElementById("dancerPassword").value,
           emailRedirectTo: saveAuthResume("dancer")
         });

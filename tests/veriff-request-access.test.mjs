@@ -9,10 +9,10 @@ function fixture({ required = true, verified = false, error = null, role = 'danc
   const calls = [], client = {
     auth: { getUser: async () => ({ data: { user: { id: 'user' } }, error: null }) },
     from() { return { select() { return this; }, eq() { return this; }, maybeSingle: async () => ({ data: { id: 'user', role, account_state: 'active' }, error: null }) }; },
-    rpc: async name => { calls.push(name); return { data: { required, verified }, error }; },
+    rpc: async name => { if (name === 'dancer_agreement_access') return { data: { required: true, accepted: true }, error: null }; calls.push(name); return { data: { required, verified }, error }; },
   };
   const exports = {};
-  vm.runInNewContext(code, { exports, Error, require(name) {
+  vm.runInNewContext(code, { exports, Error, URL, require(name) {
     if (name === '@supabase/supabase-js') return { createClient: () => client };
     if (name === '../env.ts') return { getPublicEnv: () => ({ supabaseUrl: 'https://test.invalid', supabaseAnonKey: 'test' }) };
     if (name === '../api-error-policy.ts') return { PublicApiError };

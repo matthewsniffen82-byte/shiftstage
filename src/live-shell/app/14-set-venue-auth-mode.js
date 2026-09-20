@@ -104,8 +104,6 @@
     }
 
     function clearDancerSignupFields() {
-      const agreement = document.getElementById("dancerAgreementAccepted");
-      if (agreement) agreement.checked = false;
       ["dancerLegalName", "dancerStageName", "dancerEmail", "dancerPassword"].forEach((id) => {
         const input = document.getElementById(id);
         if (input) input.value = "";

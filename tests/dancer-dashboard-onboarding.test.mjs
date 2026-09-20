@@ -28,7 +28,7 @@ test("the setup command center exposes the profile, age verification, and NFC pr
   assert.doesNotMatch(onboardingCommand, /Create & review profile|Review your full profile|Create, review, and submit/);
   assert.doesNotMatch(dashboard, /Preview & continue/);
   assert.match(dashboard, /Dressing-room tap/);
-  assert.match(dashboard, /Continue to age verification/);
+  assert.match(dashboard, /DancerProfileAgreementReview/);
   assert.match(onboardingCommand, /label: "Verify age · 18\+"/);
   assert.match(onboardingCommand, /status \|\| \(!profileReady && !submitted \? setupDetail : ""\)/);
   assert.doesNotMatch(dashboard, /Submit profile for review|Submit completed profile|final approval/);
@@ -67,9 +67,9 @@ test("initial onboarding nests every production workspace directly under its ste
   assert.match(dashboard, /className="dancer-onboarding-step-panel"/);
   assert.match(dashboard, /step\.id === "dancer-profile-media" \? \(/);
   assert.match(dashboard, /id="dancer-onboarding-profile-review"/);
-  assert.doesNotMatch(onboardingCommand, /<DancerProfilePreview|Preview your profile|buttonLabel="Preview profile"/);
+  assert.match(onboardingCommand, /<DancerProfilePreview[^>]*buttonLabel="Preview profile"/);
   assert.match(onboardingCommand, /const nextAction = document\.getElementById\("dancer-onboarding-profile-review-button"\) \|\| document\.getElementById\("dancer-onboarding-profile-review"\)/);
-  assert.match(onboardingCommand, /disabled=\{isSubmitting \|\| !profileReady\} onClick=\{\(\) => void submitProfile\(\)\}/);
+  assert.match(onboardingCommand, /profileReady \? \([\s\S]*?<DancerProfileAgreementReview[^>]*busy=\{isSubmitting\} onSubmit=\{submitProfile\}/);
   assert.doesNotMatch(dashboard, /<article className="dancer-onboarding-preview" aria-label="Guest profile preview">/);
   assert.doesNotMatch(dashboard, /className="dancer-onboarding-preview-card"/);
   assert.doesNotMatch(dashboard, /step\.id === "dancer-onboarding-preview"/);

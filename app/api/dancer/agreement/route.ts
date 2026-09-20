@@ -4,6 +4,7 @@ import { readBoundedJsonObject } from "@/src/lib/bounded-json-body";
 import { getAccountByUserId } from "@/src/lib/dancr/auth";
 import { acceptDancerAgreement, getDancerAgreementAccess } from "@/src/lib/dancr/dancer-agreement";
 import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
+import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -16,7 +17,12 @@ export async function GET(request: Request) {
       throw new PublicApiError("FORBIDDEN", "Sign in with your dancer account to continue.", 403);
     }
     const agreement = await getDancerAgreementAccess(client);
-    return NextResponse.json({ ok: true, agreement, session }, { headers: { "cache-control": "no-store" } });
+    const { data: profile, error } = await createAdminSupabaseClient().from("dancer_profiles")
+      .select("status, verification_status, is_public").eq("user_id", user.id).maybeSingle();
+    if (error) throw new PublicApiError("UNAVAILABLE", "Unable to check your profile setup status.", 503);
+    const profileSetupAllowed = Boolean(profile?.is_public === false && ["draft", "rejected"].includes(profile.status)
+      && profile.verification_status !== "approved");
+    return NextResponse.json({ ok: true, agreement, profileSetupAllowed, session }, { headers: { "cache-control": "no-store" } });
   } catch (error) { return apiError(error, "Unable to check the Dancer Agreement."); }
 }
 

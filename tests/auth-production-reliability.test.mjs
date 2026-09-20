@@ -44,7 +44,6 @@ const account = { id: "user-one", role: "customer", accountState: "active" };
 const session = { access_token: "access", refresh_token: "refresh", expires_at: 2000000000 };
 const jsonRequest = (method, body, headers = {}) => new Request("https://mydancr.com/api/auth", {
   method, headers: { "content-type": "application/json", ...headers }, body: JSON.stringify({
-    ...(body.mode === "signup" && body.role === "dancer" ? { agreementAccepted: true, agreementVersion: agreementVersion.DANCER_AGREEMENT_VERSION } : {}),
     ...body,
   }),
 });
@@ -84,20 +83,20 @@ function authFixture(providerError = null, { role = "customer", authSession = se
   }) };
 }
 
-for (const agreementAccepted of [undefined, false, "true", 1]) test(`dancer signup rejects non-affirmative acceptance ${agreementAccepted}`, async () => {
+for (const agreementAccepted of [undefined, false, true, "true", 1]) test(`dancer signup defers agreement acceptance regardless of legacy input ${agreementAccepted}`, async () => {
   const f = authFixture(null, { role: "dancer" });
   const response = await f.POST(jsonRequest("POST", { mode: "signup", role: "dancer", email: "signup@example.test", password: "Unique1!password", agreementAccepted }));
-  assert.equal(response.status, 400);
-  assert.match((await response.json()).error, /accept the Dancer Agreement/);
-  assert.equal(f.calls.length, 0);
-  assert.equal(f.provisions.length, 0);
+  assert.equal(response.status, 200);
+  assert.equal(f.calls.length, 1);
+  assert.equal(f.provisions.length, 1);
+  assert.equal(f.calls[0].options.data.dancer_agreement_intent, undefined);
 });
 
-test("dancer signup rejects stale agreement versions before identity creation", async () => {
+test("legacy signup agreement versions do not create an acceptance receipt", async () => {
   const f = authFixture(null, { role: "dancer" });
   const response = await f.POST(jsonRequest("POST", { mode: "signup", role: "dancer", email: "signup@example.test", password: "Unique1!password", agreementVersion: "old-version" }));
-  assert.equal(response.status, 409);
-  assert.equal(f.calls.length, 0);
+  assert.equal(response.status, 200);
+  assert.equal(f.calls[0].options.data.dancer_agreement_intent, undefined);
 });
 
 test("a remembered NFC dancer does not block signup for a different email", async () => {
@@ -112,7 +111,7 @@ test("a remembered NFC dancer does not block signup for a different email", asyn
   assert.equal(body.session, null);
   assert.equal(f.calls.length, 1);
   assert.equal(f.calls[0].email, "new-dancer@example.com");
-  assert.equal(f.calls[0].options.data.dancer_agreement_intent, "11111111-1111-4111-8111-111111111111");
+  assert.equal(f.calls[0].options.data.dancer_agreement_intent, undefined);
   assert.equal(f.provisions.length, 1);
   assert.equal(f.provisions[0].email, "new-dancer@example.com");
   assert.equal(f.provisions[0].role, "dancer");

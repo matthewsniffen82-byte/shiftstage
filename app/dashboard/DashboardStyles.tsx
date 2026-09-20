@@ -1101,6 +1101,20 @@ export function DashboardStyles() {
       .dancer-step-one-footer.is-ready { border-color: rgba(76,223,166,.3); background: rgba(25,140,101,.07); }
       .dancer-onboarding-preview-workspace { display: grid; gap: 12px; }
       .dancer-onboarding-profile-review { margin-top: 0; padding-top: 16px; border-top: 1px solid rgba(255,255,255,.09); scroll-margin-top: calc(var(--mydancr-preview-banner-offset, 0px) + 14px); }
+      .dancer-profile-agreement-review { display:grid; gap:12px; }
+      .dancer-profile-agreement-review h3, .dancer-profile-agreement-review p { margin:0; }
+      .dancer-profile-agreement-review p { color:#c4bfcc; font-size:13px; line-height:1.5; }
+      .dancer-profile-agreement-review form { display:grid; gap:16px; }
+      .dancer-profile-agreement-check { display:flex; align-items:flex-start; gap:12px; color:#eee9f5; font-size:14px; line-height:1.6; }
+      .dancer-profile-agreement-check input { width:22px; height:22px; min-height:22px; flex:0 0 22px; margin:2px 0 0; accent-color:#8b5cf6; }
+      .dancer-profile-agreement-check a { color:#d3baff; text-decoration:underline; text-underline-offset:3px; }
+      .dancer-profile-agreement-review .dancer-onboarding-primary { width:100%; min-height:48px; }
+      .dancer-onboarding-review-identity { display:flex; align-items:center; gap:12px; }
+      .dancer-onboarding-review-identity > img { width:64px; height:64px; border-radius:50%; object-fit:cover; }
+      .dancer-onboarding-review-identity > span { display:grid; gap:4px; }
+      .dancer-onboarding-review-identity small { color:#c4bfcc; }
+      .dancer-onboarding-review-photos { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; }
+      .dancer-onboarding-review-photos img { width:100%; aspect-ratio:3/4; object-fit:cover; border-radius:10px; }
       .dancer-onboarding-profile-review > .dancer-onboarding-announcement { min-height:0; margin:0; color:#c4bfcc; font-size:12px; font-weight:500; line-height:1.45; }
       .dancer-onboarding-profile-review > .dancer-onboarding-announcement:empty { display:none; }
       body.dancr-button-system .dancer-profile-editor-launch-card .dancer-profile-editor-launch-button { min-height:48px !important; padding:10px 14px; border-radius:12px !important; border-color:rgba(196,181,253,.3) !important; color:#fff !important; background:#19161f !important; box-shadow:none !important; font-size:14px; line-height:1.25; }

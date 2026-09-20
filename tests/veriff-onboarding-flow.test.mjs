@@ -21,6 +21,8 @@ function render(effectiveStatus, verification) {
     dancerPhotoItemsFromProfile: () => [{ status: 'approved' }],
     dancerProfileSetupBlocker: () => 'Finish your profile',
     DancerAgeVerificationGate: ({ profileSubmitted, children }) => React.createElement('div', { 'data-profile-submitted': profileSubmitted }, children),
+    DancerProfileAgreementReview: ({ children }) => React.createElement('div', null, 'PROFILE_AGREEMENT_REVIEW', children),
+    DancerProfilePreview: () => React.createElement('button', null, 'Preview profile'),
   });
   return renderToStaticMarkup(exports.DancerOnboardingCommand({
     effectiveStatus, isVenueApproved: false, profile: { id: 'synthetic', stageName: 'Synthetic dancer', city: 'Las Vegas', avatarPhotoUrl: '/synthetic' },

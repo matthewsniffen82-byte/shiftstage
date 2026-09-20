@@ -1,6 +1,8 @@
 # Veriff dancer age verification
 
-Dancer accounts use Veriff's hosted ID-and-selfie flow. The server requires an approved decision and a document date of birth proving age 18+. Customers and venues do not use this flow; club approval remains separate. Dancers finish and submit their private profile first, verify their age second, then take their first dressing-room tap to activate the profile. Verification cannot be started for a draft profile.
+Dancer accounts use Veriff's hosted ID-and-selfie flow. The server requires an approved decision and a document date of birth proving age 18+. Customers and venues do not use this flow; club affiliation remains separate. Dancers create an account and confirm email, then build their private profile. Once the avatar and at least one profile photo are approved, the final review shows a profile preview and an unchecked Dancer Agreement checkbox. “Submit profile and continue” saves the current agreement acceptance before submitting the profile. Dancers verify their age next, then take their first dressing-room tap to activate the profile. Verification cannot be started for a draft profile. Existing acceptance is reused; future shift taps do not repeat onboarding.
+
+Private profile setup and media removal remain available before agreement acceptance. Publication, starting verification, NFC taps, and automatic completion of a saved tap still require acceptance. A failed agreement save leaves the profile unsubmitted. Acceptance persists if a later submission attempt fails, so retries do not ask for it again. The age-verification rollout switch remains independent of this agreement flow.
 
 ## Activation
 

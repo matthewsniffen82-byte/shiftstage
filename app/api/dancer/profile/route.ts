@@ -6,6 +6,7 @@ import { enqueueDancerContentReviews } from "@/src/lib/dancr/content-reviews";
 import { saveDancerSocialLinks } from "@/src/lib/dancr/social-saves";
 import { ACTIVE_IMAGE_MODERATION_STATUSES } from "@/src/lib/dancr/image-moderation-status";
 import { transitionDancerPublication } from "@/src/lib/dancr/profile-publication";
+import { acceptDancerProfileSubmissionAgreement, requireDancerAgreementAcceptance } from "@/src/lib/dancr/dancer-agreement";
 import {
   PROFILE_AVATAR_CONTEXT,
   profilePhotoSlotFromUploadContext,
@@ -410,6 +411,7 @@ export async function PATCH(request: Request) {
       tooLargeMessage: "Dancer profile request is too large.",
     });
     validateProfilePhotoDeletionInput(body);
+    if (typeof body.isPublic === "boolean") await requireDancerAgreementAcceptance(client);
     // Owner and identity columns are private to the server. Resolve the profile
     // only with the user verified by the dancer account check above.
     const db = createAdminSupabaseClient() as any;
@@ -543,8 +545,9 @@ export async function PATCH(request: Request) {
         city: String(cleanProfilePayload.city || profile.city || ""),
         identitySavedAt: String(cleanProfilePayload.identity_saved_at || profile.identity_saved_at || ""),
         status: profile.status,
-      });
+      }, client, body);
     } else if (body.submitForReview === true) {
+      await requireDancerAgreementAcceptance(client);
       await submitPendingApprovedContentForReview(db, profile.id, user.id);
     }
 
@@ -761,6 +764,8 @@ async function submitProfileForReview(
   userId: string,
   dancerId: string,
   profile: { stageName?: string; city?: string; identitySavedAt?: string; status?: string },
+  client: Parameters<typeof acceptDancerProfileSubmissionAgreement>[0],
+  input: Record<string, unknown>,
 ) {
   if (!profile.identitySavedAt?.trim() || !profile.stageName?.trim() || !profile.city?.trim()) {
     throw new Error("Save stage name and city before publishing your profile.");
@@ -789,6 +794,7 @@ async function submitProfileForReview(
     throw new Error("At least one profile picture must pass moderation before submitting your profile.");
   }
 
+  await acceptDancerProfileSubmissionAgreement(client, input);
   const submittedProfile = await transitionDancerPublication(
     db,
     dancerId,

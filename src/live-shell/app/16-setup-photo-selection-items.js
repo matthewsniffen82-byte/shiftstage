@@ -211,6 +211,10 @@
     }
 
     async function submitDancerProfileForReview(button) {
+      if (isDancerSession()) {
+        openUnifiedDashboard("dancer", "dancer-profile-media");
+        return;
+      }
       const setupProfile = activeDancerProfile();
       const avatarSaved = Boolean(setupProfile?.avatarStoragePath || setupProfile?.avatar_storage_path);
       if (!dancerSetup.profile || !dancerSetup.photos || !avatarSaved) {

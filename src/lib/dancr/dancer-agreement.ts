@@ -31,6 +31,21 @@ export async function getDancerAgreementAccess(client: SupabaseClient) {
   return readDancerAgreementAccess(result.data);
 }
 
+export async function requireDancerAgreementAcceptance(client: SupabaseClient) {
+  const agreement = await getDancerAgreementAccess(client);
+  if (!agreement.accepted) {
+    throw new PublicApiError("FORBIDDEN", "Review and accept the Dancer Agreement before continuing.", 403);
+  }
+  return agreement;
+}
+
+// Called only after the profile's required identity and approved media checks.
+// Existing receipts survive retries; checking a box never publishes a profile.
+export async function acceptDancerProfileSubmissionAgreement(client: SupabaseClient, input: Record<string, unknown>) {
+  const agreement = await getDancerAgreementAccess(client);
+  return agreement.accepted ? agreement : acceptDancerAgreement(client, input);
+}
+
 export async function prepareDancerAgreementSignup(admin: SupabaseClient, email: string, input: Record<string, unknown>) {
   validateDancerAgreementAcceptance(input);
   const result = await admin.rpc("prepare_dancer_agreement_signup", {

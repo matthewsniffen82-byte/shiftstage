@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { DANCER_AGREEMENT_HREF, DANCER_AGREEMENT_VERSION, type DancerAgreementAccess } from "@/src/lib/dancr/dancer-agreement-version";
 import { readSession, requestDashboardJson } from "./dashboard-session";
 import "./dancer-agreement-gate.css";
@@ -12,6 +13,8 @@ export default function DancerAgreementGate({ children }: { children: ReactNode 
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [attempt, setAttempt] = useState(0);
+  const [profileSetupAllowed, setProfileSetupAllowed] = useState(false);
+  const pathname = usePathname();
   const requestRef = useRef<AbortController | null>(null);
   const inFlightRef = useRef(false);
 
@@ -27,12 +30,16 @@ export default function DancerAgreementGate({ children }: { children: ReactNode 
     inFlightRef.current = false;
     setBusy(false);
     setAgreement(null);
+    setProfileSetupAllowed(false);
     setChecked(false);
     setError("");
     void requestDashboardJson("/api/dancer/agreement", {
       cache: "no-store", signal: controller.signal, timeoutMs: 15000,
     }).then(data => {
-      if (!controller.signal.aborted && guard()) setAgreement(data.agreement);
+      if (!controller.signal.aborted && guard()) {
+        setAgreement(data.agreement);
+        setProfileSetupAllowed(data.profileSetupAllowed === true);
+      }
     }).catch(failure => {
       if (!controller.signal.aborted && guard()) setError(failure instanceof Error ? failure.message : "Unable to check your agreement. Please try again.");
     });
@@ -43,16 +50,23 @@ export default function DancerAgreementGate({ children }: { children: ReactNode 
         setAttempt(value => value + 1);
       }
     };
+    const refreshAcceptance = () => {
+      void requestDashboardJson("/api/dancer/agreement", { cache: "no-store", signal: controller.signal, timeoutMs: 15000 })
+        .then(data => { if (!controller.signal.aborted && guard()) setAgreement(data.agreement); })
+        .catch(() => { /* A later navigation retries the authoritative check. */ });
+    };
     window.addEventListener("storage", checkAccount);
     window.addEventListener("pageshow", checkAccount);
     window.addEventListener("focus", checkAccount);
+    window.addEventListener("mydancr:dancer-agreement-saved", refreshAcceptance);
     return () => {
       controller.abort(); requestRef.current?.abort();
       window.removeEventListener("storage", checkAccount);
       window.removeEventListener("pageshow", checkAccount);
       window.removeEventListener("focus", checkAccount);
+      window.removeEventListener("mydancr:dancer-agreement-saved", refreshAcceptance);
     };
-  }, [attempt]);
+  }, [attempt, pathname]);
 
   async function accept(event: FormEvent) {
     event.preventDefault();
@@ -78,13 +92,14 @@ export default function DancerAgreementGate({ children }: { children: ReactNode 
     }
   }
 
-  if (agreement?.version === DANCER_AGREEMENT_VERSION && (agreement.required === false || agreement.accepted === true)) return <>{children}</>;
+  if (agreement?.version === DANCER_AGREEMENT_VERSION && (agreement.required === false || agreement.accepted === true
+    || (profileSetupAllowed && pathname === "/dashboard/dancer"))) return <>{children}</>;
 
   return <main className="dancer-agreement-gate">
     <nav><Link href="/">mydancr</Link><Link href="/account">Account settings</Link></nav>
     <section aria-labelledby="agreement-heading" aria-busy={busy}>
       <span className="dancer-agreement-eyebrow">Dancer account</span>
-      <h1 id="agreement-heading">Review your Dancer Agreement</h1>
+      <h1 id="agreement-heading">{agreement ? "Review your Dancer Agreement" : "Loading your dashboard"}</h1>
       {!agreement ? <p role="status">{error ? "Your agreement status could not be confirmed." : "Checking your agreement status…"}</p> : <>
         <p>Please read and accept the Dancer Agreement before continuing to your dancer dashboard, profile, videos, or club features.</p>
         <p><a href={DANCER_AGREEMENT_HREF} target="_blank" rel="noopener">Read the Dancer Agreement (opens in a new tab)</a></p>

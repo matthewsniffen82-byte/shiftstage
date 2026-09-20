@@ -11,12 +11,13 @@ import * as version from "../src/lib/dancr/dancer-agreement-version.ts";
 const require = createRequire(import.meta.url);
 const source = readFileSync(new URL("../app/dashboard/DancerAgreementGate.tsx", import.meta.url), "utf8");
 const code = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX } }).outputText;
-function render(agreement, checked = false, busy = false) {
+function render(agreement, checked = false, busy = false, profileSetupAllowed = false, pathname = "/dashboard/dancer") {
   const exports = {}; let state = 0;
   vm.runInNewContext(code, { exports, require(name) {
     if (name === "react/jsx-runtime") return require(name);
-    if (name === "react") return { ...React, useState: initial => [[agreement, checked, busy][state++] ?? initial, () => {}], useEffect() {}, useRef: initial => ({ current: initial }) };
+    if (name === "react") return { ...React, useState: initial => [[agreement, checked, busy, "", 0, profileSetupAllowed][state++] ?? initial, () => {}], useEffect() {}, useRef: initial => ({ current: initial }) };
     if (name === "next/link") return { default: props => React.createElement("a", props) };
+    if (name === "next/navigation") return { usePathname: () => pathname };
     if (name === "@/src/lib/dancr/dancer-agreement-version") return version;
     if (name === "./dashboard-session" || name.endsWith(".css")) return {};
     throw new Error(name);
@@ -44,14 +45,18 @@ test("gate starts unchecked, links readable terms, and requires an explicit choi
   assert.doesNotMatch(render(agreement, true), /type="submit" disabled=""/);
   assert.match(render(agreement, true, true), /type="submit" disabled=""/);
 });
-test("live signup starts unchecked and submits the same reviewed version", async () => {
+test("private drafts enter profile setup without a sign-in agreement popup, but feature pages remain gated", () => {
+  const agreement = { required: true, accepted: false, version: version.DANCER_AGREEMENT_VERSION };
+  assert.ok(render(agreement, false, false, true).includes("PRIVATE_DANCER_TOOLS"));
+  assert.ok(!render(agreement, false, false, true, "/dashboard/dancer/tv").includes("PRIVATE_DANCER_TOOLS"));
+  assert.match(render(null), /Loading your dashboard/);
+  assert.doesNotMatch(render(null), /Review your Dancer Agreement/);
+});
+
+test("live signup creates the account without recording agreement acceptance", async () => {
   const html = readFileSync(new URL("../outputs/index.html", import.meta.url), "utf8");
-  const checkbox = html.match(/<input id="dancerAgreementAccepted"[^>]*>/)?.[0];
-  assert.ok(checkbox); assert.match(checkbox, /type="checkbox" required/); assert.doesNotMatch(checkbox, /\schecked(?:\s|=|>)/);
-  assert.ok(checkbox.includes(`data-agreement-version="${version.DANCER_AGREEMENT_VERSION}"`));
+  assert.doesNotMatch(html, /id="dancerAgreementAccepted"/);
   const handler = html.match(/document\.getElementById\("dancerSignupForm"\)\.addEventListener\("submit"[\s\S]*?\n    \}\);/)[0];
-  let onSubmit, requested = false, focused = false;
-  vm.runInNewContext(handler, { document: { getElementById(id) { return id === "dancerSignupForm" ? { addEventListener: (_name, fn) => { onSubmit = fn; } } : { checked: false, focus() { focused = true; } }; } }, setDancerSignupStatus() {}, requestAuth() { requested = true; } });
-  await onSubmit({ preventDefault() {} });
-  assert.equal(requested, false); assert.equal(focused, true);
+  assert.doesNotMatch(handler, /agreementAccepted|agreementVersion/);
+  assert.match(handler, /mode: "signup"/);
 });

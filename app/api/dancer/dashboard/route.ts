@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { apiError } from "@/src/lib/api";
 import { getAccountByUserId } from "@/src/lib/dancr/auth";
 import { getDancerAgeVerification } from "@/src/lib/dancr/veriff";
+import { getDancerAgreementAccess } from "@/src/lib/dancr/dancer-agreement";
 import { broadcastFollowedClubRosterAddition } from "@/src/lib/dancr/customer-follow-notifications";
 import { getDancerDealMetrics } from "@/src/lib/dancr/deals";
 import { getOwnDancerDashboardAnalytics } from "@/src/lib/dancr/dancer";
@@ -22,7 +23,8 @@ export async function GET(request: Request) {
     }
     const admin = createAdminSupabaseClient();
     const ageVerification = await getDancerAgeVerification(admin, user.id);
-    const nfcEnrollment = ageVerification.required && ageVerification.status !== "verified" ? null : await finalizePendingDancerNfcEnrollment(admin, {
+    const agreement = await getDancerAgreementAccess(client);
+    const nfcEnrollment = !agreement.accepted || (ageVerification.required && ageVerification.status !== "verified") ? null : await finalizePendingDancerNfcEnrollment(admin, {
       dancerUserId: user.id,
       request,
     });
