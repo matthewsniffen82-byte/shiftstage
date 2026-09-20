@@ -156,7 +156,6 @@ export default function TransportationClient({ deal, venue, shuttleAvailable, in
     <section className="club-transport-card">
       <Link className="club-transport-back" href={`/venues/${encodeURIComponent(venue.slug)}`}>‹ {venue.name} details</Link>
       <h1 ref={heading} tabIndex={-1}>{complete ? choice === "club_shuttle" ? "Pickup requested" : "Your admission pass is ready" : choice === "club_shuttle" ? deal ? "Free Ride + Entry" : "Request a free ride" : "Free Entry"}</h1>
-      <p className="club-transport-venue">{venue.name}</p>
       {!deal ? <p className="club-transport-terms">Free entry is currently unavailable. You can still request a free ride.</p> : null}
       {complete ? <div aria-live="polite">
         {choice === "club_shuttle" ? <><p><strong>Awaiting club confirmation.</strong></p><p>{message}</p><p>The club will follow up using your contact details. Your ride is not booked yet.</p></> : autonomousArrival ? <>

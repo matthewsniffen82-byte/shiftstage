@@ -2,7 +2,6 @@
 .club-transport-card{box-sizing:border-box;width:min(100%,480px);padding:24px;border:1px solid #392b48;border-radius:24px;background:#15111d;box-shadow:0 24px 80px #0006;overflow-wrap:anywhere}
 .club-transport-card h1{font-size:30px;line-height:1.15;letter-spacing:-.7px;margin:8px 0}
 .club-transport-card p{font-size:14px;line-height:1.45}
-.club-transport-venue{color:#c6b4da;margin-top:0}
 .club-transport-back{display:inline-flex;align-items:center;min-height:44px;color:#d8c6ee;text-decoration:none;font-size:14px}
 .club-transport-change{display:inline-flex;align-items:center;min-height:44px;padding:0;border:0;background:transparent;color:#d8c6ee;font:inherit;font-size:14px;cursor:pointer}
 .club-transport-change:disabled{opacity:.5;cursor:default}
