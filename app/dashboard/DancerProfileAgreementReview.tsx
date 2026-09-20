@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState, type FormEvent, type ReactNode } from "react";
-import { DANCER_AGREEMENT_HREF, DANCER_AGREEMENT_VERSION, type DancerAgreementAccess } from "@/src/lib/dancr/dancer-agreement-version";
+import { DANCER_AGREEMENT_VERSION, type DancerAgreementAccess } from "@/src/lib/dancr/dancer-agreement-version";
+import DancerAgreementLink from "@/app/components/DancerAgreementLink";
 import { readSession, requestDashboardJson } from "./dashboard-session";
 
 export type DancerProfileAgreementInput = { agreementAccepted: boolean; agreementVersion: string };
@@ -54,7 +55,7 @@ export default function DancerProfileAgreementReview({ profileId, busy, children
       {agreement?.accepted ? <p>Your Dancer Agreement acceptance is saved.</p> : agreement ? (
         <label className="dancer-profile-agreement-check">
           <input type="checkbox" required checked={checked} disabled={busy} onChange={event => setChecked(event.target.checked)} />
-          <span>By checking this box, I agree to the <a href={DANCER_AGREEMENT_HREF} target="_blank" rel="noopener">Dancer Agreement</a>.</span>
+          <span>By checking this box, I agree to the <DancerAgreementLink />.</span>
         </label>
       ) : null}
       {error && <p role="alert">{error}</p>}

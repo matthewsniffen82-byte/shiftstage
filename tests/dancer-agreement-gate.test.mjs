@@ -7,8 +7,10 @@ import ts from "typescript";
 import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import * as version from "../src/lib/dancr/dancer-agreement-version.ts";
+import { loadAgreementComponent } from "./helpers/dancer-agreement-ui.mjs";
 
 const require = createRequire(import.meta.url);
+const agreementLink = loadAgreementComponent("DancerAgreementLink.tsx");
 const source = readFileSync(new URL("../app/dashboard/DancerAgreementGate.tsx", import.meta.url), "utf8");
 const code = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX } }).outputText;
 function render(agreement, checked = false, busy = false, profileSetupAllowed = false, pathname = "/dashboard/dancer") {
@@ -19,6 +21,7 @@ function render(agreement, checked = false, busy = false, profileSetupAllowed = 
     if (name === "next/link") return { default: props => React.createElement("a", props) };
     if (name === "next/navigation") return { usePathname: () => pathname };
     if (name === "@/src/lib/dancr/dancer-agreement-version") return version;
+    if (name === "@/app/components/DancerAgreementLink") return agreementLink;
     if (name === "./dashboard-session" || name.endsWith(".css")) return {};
     throw new Error(name);
   } });
@@ -40,7 +43,7 @@ test("gate starts unchecked, links readable terms, and requires an explicit choi
   assert.match(html, /type="checkbox" required=""/);
   assert.doesNotMatch(html, /checked=""/);
   assert.match(html, /type="submit" disabled=""/);
-  assert.match(html, /href="\/dancer-agreement" target="_blank"/);
+  assert.match(html, /href="\/dancer-agreement" aria-haspopup="dialog"/);
   assert.match(html, /href="\/account"/);
   assert.doesNotMatch(render(agreement, true), /type="submit" disabled=""/);
   assert.match(render(agreement, true, true), /type="submit" disabled=""/);

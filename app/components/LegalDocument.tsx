@@ -2,17 +2,17 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import "./legal-document.css";
 
-type DocumentContent = {
+export type DocumentContent = {
   title: string;
   downloadHref: string;
   html: string;
   contents: { id: string; title: string }[];
 };
 
-export function LegalDocumentBody({ document }: { document: DocumentContent }) {
+export function LegalDocumentBody({ document, showDownload = true }: { document: DocumentContent; showDownload?: boolean }) {
   return (
     <>
-      <p className="legal-download"><a href={document.downloadHref} download>Download original Word document</a></p>
+      {showDownload ? <p className="legal-download"><a href={document.downloadHref} download>Download original Word document</a></p> : null}
       <details className="legal-contents">
         <summary>On this page</summary>
         <nav aria-label={`${document.title} sections`}>
@@ -25,7 +25,7 @@ export function LegalDocumentBody({ document }: { document: DocumentContent }) {
   );
 }
 
-export default function LegalDocument({ document, children }: { document: DocumentContent; children?: ReactNode }) {
+export default function LegalDocument({ document, children, showDownload = true }: { document: DocumentContent; children?: ReactNode; showDownload?: boolean }) {
   return (
     <main className="legal-document-shell">
       <nav className="legal-document-nav" aria-label="Legal navigation">
@@ -34,7 +34,7 @@ export default function LegalDocument({ document, children }: { document: Docume
       </nav>
       <header className="legal-document-header"><span>Legal</span><h1>{document.title}</h1></header>
       {children ? <aside className="legal-related">{children}</aside> : null}
-      <article aria-label={document.title}><LegalDocumentBody document={document} /></article>
+      <article aria-label={document.title}><LegalDocumentBody document={document} showDownload={showDownload} /></article>
       <footer className="legal-document-footer">
         <Link href="/privacy">Privacy Policy</Link>
         <Link href="/privacy/california">California Privacy Notice</Link>

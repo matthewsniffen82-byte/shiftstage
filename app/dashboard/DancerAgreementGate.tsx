@@ -3,7 +3,8 @@
 import { useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { DANCER_AGREEMENT_HREF, DANCER_AGREEMENT_VERSION, type DancerAgreementAccess } from "@/src/lib/dancr/dancer-agreement-version";
+import { DANCER_AGREEMENT_VERSION, type DancerAgreementAccess } from "@/src/lib/dancr/dancer-agreement-version";
+import DancerAgreementLink from "@/app/components/DancerAgreementLink";
 import { readSession, requestDashboardJson } from "./dashboard-session";
 import "./dancer-agreement-gate.css";
 
@@ -102,11 +103,11 @@ export default function DancerAgreementGate({ children }: { children: ReactNode 
       <h1 id="agreement-heading">{agreement ? "Review your Dancer Agreement" : "Loading your dashboard"}</h1>
       {!agreement ? <p role="status">{error ? "Your agreement status could not be confirmed." : "Checking your agreement status…"}</p> : <>
         <p>Please read and accept the Dancer Agreement before continuing to your dancer dashboard, profile, videos, or club features.</p>
-        <p><a href={DANCER_AGREEMENT_HREF} target="_blank" rel="noopener">Read the Dancer Agreement (opens in a new tab)</a></p>
+        <p><DancerAgreementLink>Read the Dancer Agreement</DancerAgreementLink></p>
         <form onSubmit={accept}>
           <label className="dancer-agreement-check">
             <input type="checkbox" required checked={checked} disabled={busy} onChange={event => setChecked(event.target.checked)} />
-            <span>I agree to the <a href={DANCER_AGREEMENT_HREF} target="_blank" rel="noopener">Dancer Agreement</a>.</span>
+            <span>I agree to the <DancerAgreementLink />.</span>
           </label>
           <button type="submit" disabled={!checked || busy}>{busy ? "Saving acceptance…" : "Accept and continue"}</button>
         </form>

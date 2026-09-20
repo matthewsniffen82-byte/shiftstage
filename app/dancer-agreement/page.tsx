@@ -9,5 +9,5 @@ export const metadata: Metadata = {
 };
 
 export default function DancerAgreementPage() {
-  return <LegalDocument document={document}>Read the related <Link href="/privacy">Privacy Policy</Link> and <Link href="/dmca">Copyright / DMCA policy</Link>.</LegalDocument>;
+  return <LegalDocument document={document} showDownload={false}>Read the related <Link href="/privacy">Privacy Policy</Link> and <Link href="/dmca">Copyright / DMCA policy</Link>.</LegalDocument>;
 }

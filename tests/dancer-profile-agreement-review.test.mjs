@@ -8,8 +8,10 @@ import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import * as version from "../src/lib/dancr/dancer-agreement-version.ts";
 import { PublicApiError } from "../src/lib/api-error-policy.ts";
+import { loadAgreementComponent } from "./helpers/dancer-agreement-ui.mjs";
 
 const require = createRequire(import.meta.url);
+const agreementLink = loadAgreementComponent("DancerAgreementLink.tsx");
 const compile = source => ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX } }).outputText;
 const uiCode = compile(readFileSync(new URL("../app/dashboard/DancerProfileAgreementReview.tsx", import.meta.url), "utf8"));
 const serviceCode = compile(readFileSync(new URL("../src/lib/dancr/dancer-agreement.ts", import.meta.url), "utf8"));
@@ -26,6 +28,7 @@ function ui({ accepted = false, fail = false, stale = false } = {}) {
       return [slots[i], value => { slots[i] = typeof value === "function" ? value(slots[i]) : value; }];
     } };
     if (name === "@/src/lib/dancr/dancer-agreement-version") return version;
+    if (name === "@/app/components/DancerAgreementLink") return agreementLink;
     if (name === "./dashboard-session") return {
       readSession: () => ({ account: { id: "synthetic-owner" } }),
       requestDashboardJson: async () => { if (fail) throw new Error("Temporarily unavailable"); return { agreement: { ...receipt(accepted), ...(stale ? { version: "old" } : {}) } }; },
@@ -40,7 +43,7 @@ test("final review starts unchecked and submits the exact version only after an 
   const f = ui(); await f.load();
   let tree = f.render(); const html = renderToStaticMarkup(tree);
   assert.match(html, /By checking this box, I agree to the/);
-  assert.match(html, /href="\/dancer-agreement" target="_blank"/);
+  assert.match(html, /href="\/dancer-agreement" aria-haspopup="dialog"/);
   assert.match(html, /type="checkbox" required=""/);
   assert.doesNotMatch(html, /checked=""/);
   assert.match(html, /type="submit" disabled=""/);

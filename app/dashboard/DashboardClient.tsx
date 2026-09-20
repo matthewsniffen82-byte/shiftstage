@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { DashboardCloseButton } from "@/app/components/DashboardCloseButton";
+import DancerAgreementLink from "@/app/components/DancerAgreementLink";
 import { homeDiscoveryHref } from "@/src/lib/dancr/navigation";
 import { captureBrowserAuthSessionGuard } from "@/src/lib/dancr/browser-session";
 import { effectiveDancerProfileStatus } from "@/src/lib/dancr/profile-approval";
@@ -596,7 +597,7 @@ export default function DashboardClient({
                   {dancerProfileStatus === "approved" ? <InfoPanel title="Dancer Agreement">
                     <p>Review the terms for your dancer account.</p>
                     <div className="action-row">
-                      <Link className="secondary-action" href="/dancer-agreement" target="_blank" rel="noopener" aria-label="Read Dancer Agreement (opens in a new tab)">Read Dancer Agreement</Link>
+                      <DancerAgreementLink className="secondary-action">Read Dancer Agreement</DancerAgreementLink>
                     </div>
                   </InfoPanel> : null}
                   <AccountControlsPanel accountRole="dancer" accountState={String(state.account?.accountState || "active")} />
