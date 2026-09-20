@@ -154,7 +154,7 @@ export default function TransportationClient({ deal, venue, shuttleAvailable, in
 
   return <main className="club-transport-page">
     <section className="club-transport-card">
-      <Link className="club-transport-back" href={`/venues/${encodeURIComponent(venue.slug)}`}>‹ {venue.name}</Link>
+      <Link className="club-transport-back" href={`/venues/${encodeURIComponent(venue.slug)}`}>‹ {venue.name} details</Link>
       <h1 ref={heading} tabIndex={-1}>{complete ? choice === "club_shuttle" ? "Pickup requested" : "Your admission pass is ready" : choice === "club_shuttle" ? deal ? "Free Ride + Entry" : "Request a free ride" : "Free Entry"}</h1>
       <p className="club-transport-venue">{venue.name}</p>
       {!deal ? <p className="club-transport-terms">Free entry is currently unavailable. You can still request a free ride.</p> : null}

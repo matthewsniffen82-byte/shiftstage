@@ -154,7 +154,7 @@ test("venue detail offers expose free entry and the matching pickup link while r
   const escapeHtml = (value) => String(value).replaceAll("&", "&amp;").replaceAll('"', "&quot;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
   const rideLabelSource = liveApp.match(/function rideActionLabel\(source, venueName\) \{[\s\S]*?(?=\n    function uberRideLinkMarkup)/)?.[0] || "";
   const rideLinkSource = liveApp.match(/function uberRideLinkMarkup\([\s\S]*?(?=\n    document.addEventListener)/)?.[0] || "";
-  const rideMarkup = new Function("escapeHtml", "actionButtonLabel", `${rideLabelSource}; ${rideLinkSource}; return uberRideLinkMarkup;`)(escapeHtml, (_, label) => `<span>${label}</span>`);
+  const rideMarkup = new Function("escapeHtml", "escapeOptionValue", "actionButtonLabel", `${rideLabelSource}; ${rideLinkSource}; return uberRideLinkMarkup;`)(escapeHtml, escapeHtml, (_, label) => `<span>${label}</span>`);
   const venueOfferMarkup = new Function(
     "encodeDealPass",
     "escapeHtml",
@@ -317,7 +317,7 @@ test("venue scroll cards remain separate from the deeper venue detail hierarchy"
 test("venue profiles stay full-screen with X dismissal and the shared floating navigation", () => {
   assert.match(
     liveApp,
-    /<div class="venue-detail" role="dialog" aria-modal="true" aria-labelledby="venueDetailName">/,
+    /<div\b[^>]*\bclass="venue-detail" role="dialog" aria-modal="true" aria-labelledby="venueDetailName">/,
   );
   assert.match(
     liveApp,
