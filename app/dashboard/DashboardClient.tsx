@@ -593,6 +593,12 @@ export default function DashboardClient({
                   />
                   <NotificationPanel />
                   <SupportInboxPanel initialThreads={state.supportThreads || []} panelId="dancer-support" />
+                  <InfoPanel title="Dancer Agreement">
+                    <p>Review the terms for your dancer account.</p>
+                    <div className="action-row">
+                      <Link className="secondary-action" href="/dancer-agreement" target="_blank" rel="noopener" aria-label="Read Dancer Agreement (opens in a new tab)">Read Dancer Agreement</Link>
+                    </div>
+                  </InfoPanel>
                   <AccountControlsPanel accountRole="dancer" accountState={String(state.account?.accountState || "active")} />
                 </div>
               </DashboardSection>

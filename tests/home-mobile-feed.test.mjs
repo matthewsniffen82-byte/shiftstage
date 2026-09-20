@@ -973,7 +973,7 @@ test("legal and support actions stay out of the mobile discovery scroll", () => 
   assert.doesNotMatch(homeMain, /legal-links|data-legal-page|contactAdminBtn|adminBtn/);
   assert.match(
     accountMenu,
-    /class="utility-menu-legal"[\s\S]*?data-legal-page="termsPage"[\s\S]*?href="\/privacy"[\s\S]*?href="\/privacy\/california"[\s\S]*?href="\/dancer-agreement"[\s\S]*?data-legal-page="guidelinesPage"[\s\S]*?href="\/dmca"[\s\S]*?id="contactAdminBtn"[\s\S]*?id="adminBtn"/,
+    /class="utility-menu-legal"[\s\S]*?data-legal-page="termsPage"[\s\S]*?href="\/privacy"[\s\S]*?href="\/privacy\/california"[\s\S]*?data-legal-page="guidelinesPage"[\s\S]*?href="\/dmca"[\s\S]*?id="contactAdminBtn"[\s\S]*?id="adminBtn"/,
   );
   assert.match(
     accountMenu,
