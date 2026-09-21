@@ -1,15 +1,12 @@
     header .utility-menu { display: flex; align-items: center; gap: 8px; }
     #guestMenuBtn { flex: 0 0 44px; width: 44px; height: 44px; border-color: rgba(255,255,255,.16); }
     #guestMenuBtn[hidden], #homeScreenInstallBtn[hidden] { display: none; }
-    #guestMenuBtn svg, .home-screen-install-action svg {
+    #guestMenuBtn svg {
       width: 22px; height: 22px; flex: 0 0 22px;
       fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round;
     }
     #guestMenuBtn.active { border-color: #a78bfa; background: #231734; }
-    #homeScreenInstallBtn {
-      display: flex; align-items: center; gap: 10px; min-height: 62px; padding: 12px;
-      line-height: 1.4; color: #f8fafc; border-color: rgba(167,139,250,.45); background: #20152f;
-    }
+    #homeScreenInstallBtn { display: flex; align-items: center; min-height: 44px; }
     #homeScreenInstallBtn:disabled { opacity: .65; cursor: wait; }
     .home-screen-install-dialog {
       box-sizing: border-box; width: min(440px, calc(100vw - 32px));
