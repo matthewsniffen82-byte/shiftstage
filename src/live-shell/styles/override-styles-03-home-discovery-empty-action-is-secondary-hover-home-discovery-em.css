@@ -454,6 +454,25 @@
               bottom: 14px;
             }
           }
+          @media (display-mode: standalone) {
+            /* Installed iPhone and Android apps have no browser toolbar to
+               provide clearance. Fit each snapped card between our notice
+               and dock, including the device's status and gesture areas. */
+            html.home-tv-page-snap {
+              --home-tv-installed-top: calc(var(--mydancr-preview-banner-offset, env(safe-area-inset-top, 0px)) + 12px);
+              --home-tv-installed-dock-bottom: max(14px, calc(8px + env(safe-area-inset-bottom, 0px)));
+              --home-tv-installed-bottom: calc(72px + var(--home-tv-installed-dock-bottom) + 12px);
+              scroll-padding-top: var(--home-tv-installed-top);
+              scroll-padding-bottom: var(--home-tv-installed-bottom);
+            }
+            html.home-tv-page-snap #results.home-tv-feed {
+              --dancr-scroll-card-height: min(1040px, max(1px, calc(100vh - var(--home-tv-installed-top) - var(--home-tv-installed-bottom))));
+              --dancr-scroll-card-height: min(1040px, max(1px, calc(100svh - var(--home-tv-installed-top) - var(--home-tv-installed-bottom))));
+            }
+            html.home-tv-page-snap #discoveryTabs {
+              bottom: var(--home-tv-installed-dock-bottom);
+            }
+          }
           #discoveryTabs.is-introducing {
             animation: mobile-nav-dock-intro 680ms cubic-bezier(.16,1,.3,1) both;
           }

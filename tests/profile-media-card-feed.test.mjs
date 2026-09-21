@@ -6,7 +6,7 @@ import vm from "node:vm";
 const live = fs.readFileSync("outputs/index.html", "utf8");
 const carousel = fs.readFileSync("app/dancers/[slug]/DancerPhotoCarousel.tsx", "utf8");
 const css = fs.readFileSync("public/profile-media-card-feed.css", "utf8");
-const layout = fs.readFileSync("app/layout.tsx", "utf8");
+const layout = fs.readFileSync("app/dancers/layout.tsx", "utf8");
 const functionSource = (name) => {
   const source = live.match(new RegExp("    function " + name + "\\([^]*?\\n    \\}"))?.[0];
   assert.ok(source, name + " must exist");
@@ -20,7 +20,7 @@ vm.runInContext([
 
 test("both profile entry points share TV video sizing and screen-filling photo card styles", () => {
   assert.match(live, /href="\/profile-media-card-feed\.css\?v=\d+"/);
-  assert.match(layout, /import "\.\.\/public\/profile-media-card-feed\.css"/);
+  assert.match(layout, /import "\.\.\/\.\.\/public\/profile-media-card-feed\.css"/);
   assert.match(live, /class="profile-photo-viewer profile-media-card-feed"/);
   assert.match(live, /class="profile-tv-viewer profile-media-card-feed"/);
   assert.match(carousel, /profile-media-viewer profile-media-card-feed/);

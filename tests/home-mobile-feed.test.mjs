@@ -78,7 +78,7 @@ test("the Home TV button renders a larger mobile snap-scroll feed without leavin
   );
   assert.match(
     homeSource,
-    /results\.replaceChildren\(\s*\.\.\.homeTvFeedVideos\.map\(\(item, index\) => \(\s*createHomeTvFeedSlide\(item, index, homeTvFeedVideos\.length\)/,
+    /results\.replaceChildren\(\s*\.\.\.homeTvFeedVideos\.map\(\(item, index\) => \{\s*if \(index < 3\) \{\s*const slide = createHomeTvFeedSlide\(item, index, homeTvFeedVideos\.length\)/,
   );
   assert.doesNotMatch(homeSource, /groupHomeTvFeedVideos/);
   assert.match(
@@ -812,7 +812,7 @@ test("mobile discovery cards use neutral edges while TV is completely borderless
   assert.doesNotMatch(dancerShellOverride, /width: calc\(100% - 8px\)/);
 });
 
-test("Working Now dancer grid cards expose a functional cashier-tap Club Deal action", () => {
+test("Working Now dancer grid cards expose a functional admission-pass Club Deal action", () => {
   assert.match(
     homeSource,
     /function dancerProfileClubDealConfig\(profile\)[\s\S]*?!isWorkingTonight\(profile\)[\s\S]*?!profile\.venueId[\s\S]*?!profile\.activeDeal\?\.id[\s\S]*?return null;/,
@@ -831,9 +831,9 @@ test("Working Now dancer grid cards expose a functional cashier-tap Club Deal ac
   );
   assert.match(homeSource, /mydancrPendingNfcDealV2/);
   assert.match(homeSource, /data-select-deal-pass aria-pressed="false">Use this deal/);
-  assert.match(homeSource, /primaryDock\.hidden = state === "ready"/);
-  assert.match(homeSource, /When you reach the cashier, unlock your phone and hold it near the MyDancr sticker\./);
-  assert.match(homeSource, /titleElement\.textContent = state === "ready" \? "Ready for your cashier tap" : pass\.title/);
+  assert.match(homeSource, /primaryDock\.hidden = false/);
+  assert.match(homeSource, /selectButton\.textContent = "Show admission pass"/);
+  assert.match(homeSource, /titleElement\.textContent = state === "ready" \? "Your admission pass is ready" : pass\.title/);
   assert.match(homeSource, /\.deal-pass-primary-dock \{[^}]*position: static;[^}]*width: 100%;[^}]*margin-top: 10px;[^}]*transform: none;/);
   assert.doesNotMatch(homeSource, /Preview only—select this deal before tapping the cashier NFC sticker/);
   assert.match(
