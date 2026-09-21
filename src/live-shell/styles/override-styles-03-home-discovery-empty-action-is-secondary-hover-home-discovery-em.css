@@ -95,7 +95,8 @@
             z-index: 120 !important;
             width: 100% !important;
             max-width: 100% !important;
-            padding: calc(4px + env(safe-area-inset-top)) 12px 4px !important;
+            /* The body already clears the demo notice and top safe area. */
+            padding: 4px 12px !important;
             border: 0 !important;
             border-radius: 0 !important;
             background: transparent !important;

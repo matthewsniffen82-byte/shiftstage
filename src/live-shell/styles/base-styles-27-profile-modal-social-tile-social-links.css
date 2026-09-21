@@ -613,7 +613,8 @@
     /* Canonical mobile utility header: compact, neutral glass with violet reserved for interaction. */
     @media (max-width: 720px) {
       header {
-        padding: calc(4px + env(safe-area-inset-top)) 12px 4px !important;
+        /* The body already clears the demo notice and top safe area. */
+        padding: 4px 12px !important;
         border: 0 !important;
         border-radius: 0 !important;
         background: transparent !important;

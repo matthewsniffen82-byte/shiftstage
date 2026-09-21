@@ -243,11 +243,11 @@ test("profile actions keep profile controls separate from Tonight travel actions
   assert.doesNotMatch(liveActionsMarkup, /id="notifyBtn"|"Alerts On"|"Notify"/);
   assert.match(liveApp, /data-profile-share-menu="\$\{escapeHtml\(profile\.name\)\}"/);
   assert.doesNotMatch(liveApp, /data-show-profile-share-qr/);
-  assert.match(liveApp, /Club Deals redeem only when you tap your phone at the club cashier/);
+  assert.match(liveApp, /Share this verified schedule\. Guest profiles stay private\./);
   assert.doesNotMatch(profileNavigationActions, /import QRCode from "qrcode"/);
   assert.match(
     profileNavigationActions,
-    /Deal redemption happens only when you tap your phone at the club cashier/,
+    /Club staff scans your admission pass and confirms entry at the door\./,
   );
   assert.match(
     profileNavigationActions,

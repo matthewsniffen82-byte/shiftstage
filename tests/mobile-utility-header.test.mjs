@@ -23,7 +23,7 @@ test("mobile utility header is rounded, compact, and aligned with the page", () 
   assert.ok(mobileHeader, "canonical mobile utility header CSS must exist");
   assert.match(
     mobileHeader,
-    /header \{[\s\S]*?padding: calc\(4px \+ env\(safe-area-inset-top\)\) 12px 4px !important;[\s\S]*?background: transparent !important;[\s\S]*?backdrop-filter: none !important;/,
+    /header \{[\s\S]*?padding: 4px 12px !important;[\s\S]*?background: transparent !important;[\s\S]*?backdrop-filter: none !important;/,
   );
   assert.match(
     mobileHeader,
@@ -32,7 +32,7 @@ test("mobile utility header is rounded, compact, and aligned with the page", () 
   assert.match(mobileHeader, /main\.stack \{\s*padding-top: 8px !important;/);
   assert.match(
     lateMobileHeader,
-    /header \{[\s\S]*?padding: calc\(4px \+ env\(safe-area-inset-top\)\) 12px 4px !important;[\s\S]*?background: transparent !important;[\s\S]*?backdrop-filter: none !important;/,
+    /header \{[\s\S]*?padding: 4px 12px !important;[\s\S]*?background: transparent !important;[\s\S]*?backdrop-filter: none !important;/,
   );
   assert.match(
     lateMobileHeader,

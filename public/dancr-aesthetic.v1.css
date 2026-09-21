@@ -11702,7 +11702,8 @@ body.dancr-button-system :is(
 @media (max-width: 759px) {
   body.dancr-button-system #profileBackdrop #profileModal .profile-modal-summary {
     min-height: 102px !important;
-    padding: max(7px, calc(env(safe-area-inset-top, 0px) + 4px)) 12px 7px !important;
+    /* The backdrop starts below the demo notice, including the top safe area. */
+    padding: 7px 12px !important;
   }
 
   body.dancr-button-system #profileBackdrop #profileModal .profile-modal-person {
@@ -11839,7 +11840,7 @@ body.dancr-button-system :is(
   }
 
   body.dancr-button-system #profileBackdrop #profileModal .profile-modal-header-controls {
-    top: max(3px, calc(env(safe-area-inset-top, 0px) + 1px)) !important;
+    top: 3px !important;
   }
 }
 
