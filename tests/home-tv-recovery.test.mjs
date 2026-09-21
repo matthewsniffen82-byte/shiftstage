@@ -134,16 +134,14 @@ test("recovered unchanged videos replace a prior loading or error message", () =
 
 const workerSource = readFileSync(new URL("../public/sw.js", import.meta.url), "utf8");
 for (const cache of ["default", "no-store", "no-cache", "reload"]) {
-  test(`the service worker preserves a public request's ${cache} cache mode`, async () => {
-    let fetchHandler, forwarded, response;
+  test(`the service worker leaves a public request's ${cache} cache mode to the browser`, () => {
+    let fetchHandler;
     vm.runInNewContext(workerSource, {
       URL,
       self: { location: { origin: "https://www.mydancr.com" }, addEventListener: (name, fn) => { if (name === "fetch") fetchHandler = fn; } },
-      fetch: async (_request, options) => { forwarded = options.cache; return new Response("ok"); },
+      fetch: () => assert.fail("Public requests must use the browser's native loading path"),
     });
-    fetchHandler({ request: { method: "GET", url: "https://www.mydancr.com/api/public/tv", mode: "cors", cache }, respondWith: pending => { response = pending; } });
-    await response;
-    assert.equal(forwarded, cache);
+    fetchHandler({ request: { method: "GET", url: "https://www.mydancr.com/api/public/tv", mode: "cors", cache }, respondWith: () => assert.fail("Public requests must not be intercepted") });
   });
 }
 

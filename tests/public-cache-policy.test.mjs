@@ -73,9 +73,9 @@ test("the shell and versioned static assets can be reused by browser back naviga
   assert.match(source.staticAssetCache, /public, max-age=31536000, immutable/);
   assert.match(source.staticAssetPaths, /"\/outputs\/dancr-hero\.webp"/);
   assert.match(source.staticAssetCache, /"\/venue-logos\/:path\*"/);
-  assert.match(source.serviceWorker, /const isPublicNavigation = event\.request\.mode === "navigate"/);
+  assert.match(source.serviceWorker, /event\.request\.mode !== "navigate"\) return/);
   assert.match(source.serviceWorker, /requestUrl\.pathname === "\/"/);
-  assert.match(source.serviceWorker, /event\.request\.mode === "navigate" && !isPublicNavigation \? "no-store" : event\.request\.cache/);
+  assert.match(source.serviceWorker, /if \(isPublicNavigation\) return;\s*event\.respondWith\(fetch\(event\.request, \{ cache: "no-store" \}\)\)/);
 });
 
 test("approved media keeps cacheable bytes while private originals stay uncached", () => {

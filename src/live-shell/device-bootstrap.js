@@ -1,5 +1,13 @@
 
     (() => {
+      // The Home Screen launch can paint with system fonts while the optional
+      // remote stylesheet loads. Attach the handler here to retain strict CSP.
+      const webFonts = document.getElementById("homeWebFonts");
+      if (webFonts) {
+        const applyWebFonts = () => { webFonts.media = "all"; };
+        webFonts.addEventListener("load", applyWebFonts, { once: true });
+        if (webFonts.sheet) applyWebFonts();
+      }
       const ua = navigator.userAgent || "";
       const platform = (navigator.userAgentData && navigator.userAgentData.platform) || "";
       const isAndroid = /Android/i.test(ua) || /Linux.*Mobile/i.test(ua) || /Android/i.test(platform);

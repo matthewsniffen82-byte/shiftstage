@@ -22,6 +22,29 @@ const normalized = html.replace(/\r\n?/g, "\n");
 const original = extractLiveShellAppScript(normalized);
 const sourceVersion = createHash("sha256").update(normalized).digest("hex");
 
+test("optional web fonts apply after loading without holding app startup", async () => {
+  assert.match(normalized, /<link id="homeWebFonts"[^>]+rel="stylesheet" media="print">/);
+  const bootstrap = await readFile(new URL("../src/live-shell/device-bootstrap.js", import.meta.url), "utf8");
+  for (const cached of [false, true]) {
+    let onLoad;
+    const fonts = { media: "print", sheet: cached ? {} : null, addEventListener(name, callback) { assert.equal(name, "load"); onLoad = callback; } };
+    const context = {
+      URLSearchParams, navigator: { userAgent: "iPhone" },
+      window: { location: { search: "" }, addEventListener() {} },
+      document: {
+        readyState: "loading", addEventListener() {},
+        getElementById: id => id === "homeWebFonts" ? fonts : null,
+        documentElement: { classList: { add() {} }, style: { setProperty() {} } },
+      },
+    };
+    vm.runInNewContext(bootstrap, context);
+    assert.equal(typeof context.window.__dancrApplyDeviceClasses, "function", "device setup runs before remote fonts resolve");
+    assert.equal(fonts.media, cached ? "all" : "print");
+    onLoad();
+    assert.equal(fonts.media, "all");
+  }
+});
+
 test("cold loads discover the app before styles without blocking on its helpers", () => {
   const url = `/live-shell.js?v=${LIVE_SHELL_SCRIPT_SHA256}`;
   const page = externalizeLiveShellAppScript(normalized, url);

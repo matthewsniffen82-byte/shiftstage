@@ -967,7 +967,6 @@
       window.addEventListener("load", () => {
         navigator.serviceWorker
           .register("/sw.js?v=safe-public-cache-v2", { updateViaCache: "none" })
-          .then((registration) => registration.update())
           .catch(() => {});
       });
     }

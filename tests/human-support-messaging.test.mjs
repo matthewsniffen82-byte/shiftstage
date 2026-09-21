@@ -60,15 +60,15 @@ test("live support interfaces use the production API and the venue dashboard exp
   assert.doesNotMatch(liveAppSource, /supportStorageKey|readStoredSupportThreads|writeStoredSupportThreads|localSupportThread/);
 });
 
-test("existing installed sessions refresh onto the current production shell", () => {
+test("installed sessions update without reloading the page during launch", () => {
   assert.match(liveAppSource, /register\("\/sw\.js\?v=safe-public-cache-v2", \{ updateViaCache: "none" \}\)/);
-  assert.match(liveAppSource, /registration\.update\(\)/);
-  assert.match(serviceWorkerSource, /dancr-sw-release: safe-public-cache-v2/);
+  assert.doesNotMatch(liveAppSource, /registration\.update\(\)/);
+  assert.match(serviceWorkerSource, /dancr-sw-release: nonblocking-launch-v3/);
   assert.match(serviceWorkerSource, /self\.skipWaiting\(\)/);
   assert.match(serviceWorkerSource, /self\.clients\.claim\(\)/);
-  assert.match(serviceWorkerSource, /client\.navigate\(client\.url\)/);
+  assert.doesNotMatch(serviceWorkerSource, /client\.navigate|clients\.matchAll/);
   assert.match(serviceWorkerSource, /caches\.delete\(cacheName\)/);
-  assert.match(serviceWorkerSource, /event\.request\.mode === "navigate" && !isPublicNavigation \? "no-store" : event\.request\.cache/);
+  assert.match(serviceWorkerSource, /if \(isPublicNavigation\) return;\s*event\.respondWith\(fetch\(event\.request, \{ cache: "no-store" \}\)\)/);
   assert.match(liveRouteSource, /export const dynamic = "force-dynamic"/);
   assert.match(liveRouteSource, /public, max-age=30, s-maxage=60, stale-while-revalidate=300/);
 });
