@@ -5,13 +5,9 @@
       <stop offset="0.4" stop-color="#7C3AED" stop-opacity="0.24"/>
       <stop offset="1" stop-color="#050507" stop-opacity="0"/>
     </radialGradient>
-    <linearGradient id="violet" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#7C3AED"/>
-      <stop offset="1" stop-color="#5B21B6"/>
-    </linearGradient>
   </defs>
   <rect width="512" height="512" rx="112" fill="#050507"/>
   <rect x="36" y="36" width="440" height="440" rx="94" fill="url(#glow)"/>
-  <rect x="40" y="40" width="432" height="432" rx="90" fill="none" stroke="#7C3AED" stroke-width="10"/>
-  <text x="256" y="284" text-anchor="middle" fill="#F8FAFC" font-family="Arial, Helvetica, sans-serif" font-size="84" font-weight="900" letter-spacing="-4">mydanc<tspan fill="url(#violet)">r</tspan></text>
+  <rect id="tile-frame" x="40" y="40" width="432" height="432" rx="90" fill="none" stroke="#7C3AED" stroke-width="10"/>
+  <text x="256" y="282" text-anchor="middle" fill="#F8FAFC" font-family="Arial, Helvetica, sans-serif" font-size="76" font-weight="900" letter-spacing="-3">mydancr</text>
 </svg>

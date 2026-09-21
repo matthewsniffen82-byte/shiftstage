@@ -14,6 +14,8 @@ export const staticAssetPaths = [
   "/mydancr-icon-180.png",
   "/mydancr-icon-192.png",
   "/mydancr-icon-512.png",
+  "/mydancr-icon-maskable-192.png",
+  "/mydancr-icon-maskable-512.png",
   "/outputs/dancr-hero.png",
   "/outputs/dancr-hero.webp",
   "/outputs/live-shell.css",
