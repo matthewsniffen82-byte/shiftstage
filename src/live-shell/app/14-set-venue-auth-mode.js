@@ -302,6 +302,7 @@
       deleteAccountBtn.hidden = !loggedIn || !["customer", "dancer", "venue"].includes(sessionRole);
       deleteAccountBtn.dataset.accountRole = sessionRole || "";
       accountBtn.hidden = false;
+      guestMenuBtn.hidden = loggedIn;
       accountBtn.classList.toggle("account-icon-btn", loggedIn);
       accountBtn.innerHTML = loggedIn ? accountIconMarkup() : "Login / Join";
       accountBtn.setAttribute("aria-label", loggedIn ? "Account menu" : "Login or join");
@@ -330,13 +331,17 @@
       moreMenuPanel.hidden = true;
       accountBtn.classList.remove("active");
       accountBtn.setAttribute("aria-expanded", "false");
+      guestMenuBtn.classList.remove("active");
+      guestMenuBtn.setAttribute("aria-expanded", "false");
     }
 
     function toggleUtilityMenu() {
       const willOpen = moreMenuPanel.hidden;
       moreMenuPanel.hidden = !willOpen;
-      accountBtn.classList.toggle("active", willOpen);
-      accountBtn.setAttribute("aria-expanded", String(willOpen));
+      accountBtn.classList.toggle("active", willOpen && guestMenuBtn.hidden);
+      accountBtn.setAttribute("aria-expanded", String(willOpen && guestMenuBtn.hidden));
+      guestMenuBtn.classList.toggle("active", willOpen);
+      guestMenuBtn.setAttribute("aria-expanded", String(willOpen));
     }
 
     function logoutAccount({ message = "Logged out" } = {}) {

@@ -315,6 +315,7 @@
     let activeContentReport = null;
     const dashboardBtn = document.getElementById("dashboardBtn");
     const accountBtn = document.getElementById("accountBtn");
+    const guestMenuBtn = document.getElementById("guestMenuBtn");
     const accountTooltip = document.getElementById("accountTooltip");
     const logoutBtn = document.getElementById("logoutBtn");
     const deleteAccountBtn = document.getElementById("deleteAccountBtn");

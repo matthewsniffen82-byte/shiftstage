@@ -584,6 +584,11 @@
       toggleUtilityMenu();
     });
 
+    guestMenuBtn.addEventListener("click", () => {
+      closeCustomerQuickPanels();
+      toggleUtilityMenu();
+    });
+
     accountTooltip.addEventListener("click", (event) => {
       event.stopPropagation();
       dismissAccountTooltip();

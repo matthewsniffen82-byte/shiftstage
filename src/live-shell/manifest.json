@@ -3,7 +3,8 @@
   "template": "shell.html",
   "includes": {
     "device-bootstrap": [
-      "device-bootstrap.js"
+      "device-bootstrap.js",
+      "install-bootstrap.js"
     ],
     "application": [
       "app/01-user-agent.js",
@@ -32,7 +33,8 @@
       "app/23-events.js",
       "app/24-events.js",
       "app/25-events.js",
-      "app/26-sync-discovery-city-scope.js"
+      "app/26-sync-discovery-city-scope.js",
+      "app/27-home-screen-install.js"
     ],
     "base-styles": [
       "styles/base-styles-01-root.css",
@@ -74,7 +76,8 @@
       "styles/override-styles-05-profile-backdrop-modal-media-video-preview-profile-backdrop-moda.css",
       "styles/override-styles-06-approved-edit-profile-dropdown-show-approved-visual-profile-edit.css",
       "styles/override-styles-07-profile-backdrop-schedule-upcoming-profile-schedule-primary.css",
-      "styles/override-styles-08-profile-backdrop-profile-modal-modal-grid-social-tile.css"
+      "styles/override-styles-08-profile-backdrop-profile-modal-modal-grid-social-tile.css",
+      "styles/home-screen-install.css"
     ]
   }
 }
