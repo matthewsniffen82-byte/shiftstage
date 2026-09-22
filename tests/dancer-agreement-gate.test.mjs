@@ -13,11 +13,11 @@ const require = createRequire(import.meta.url);
 const agreementLink = loadAgreementComponent("DancerAgreementLink.tsx");
 const source = readFileSync(new URL("../app/dashboard/DancerAgreementGate.tsx", import.meta.url), "utf8");
 const code = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX } }).outputText;
-function render(agreement, checked = false, busy = false, profileSetupAllowed = false, pathname = "/dashboard/dancer") {
+function render(agreement, checked = false, busy = false, profileSetupAllowed = false, pathname = "/dashboard/dancer", error = "") {
   const exports = {}; let state = 0;
   vm.runInNewContext(code, { exports, require(name) {
     if (name === "react/jsx-runtime") return require(name);
-    if (name === "react") return { ...React, useState: initial => [[agreement, checked, busy, "", 0, profileSetupAllowed][state++] ?? initial, () => {}], useEffect() {}, useRef: initial => ({ current: initial }) };
+    if (name === "react") return { ...React, useState: initial => [[agreement, checked, busy, error, 0, profileSetupAllowed][state++] ?? initial, () => {}], useEffect() {}, useRef: initial => ({ current: initial }) };
     if (name === "next/link") return { default: props => React.createElement("a", props) };
     if (name === "next/navigation") return { usePathname: () => pathname };
     if (name === "@/src/lib/dancr/dancer-agreement-version") return version;
@@ -37,6 +37,22 @@ test("accepted dancers and paused-account management can proceed", () => {
     assert.ok(render({ ...agreement, version: version.DANCER_AGREEMENT_VERSION }).includes("PRIVATE_DANCER_TOOLS"));
   }
 });
+test("agreement checks announce loading without showing an intermediate dashboard card", () => {
+  const html = render(null);
+  assert.match(html, /aria-busy="true"/);
+  assert.match(html, /class="dancer-agreement-loading-status" role="status">Loading dancer dashboard/);
+  assert.doesNotMatch(html, /<nav|<section|<h1|Checking your agreement status|Loading your dashboard|PRIVATE_DANCER_TOOLS/);
+});
+
+test("failed agreement checks still show an error and a retry action", () => {
+  const html = render(null, false, false, false, "/dashboard/dancer", "Unable to check your agreement. Please try again.");
+  assert.match(html, /<h1[^>]*>Unable to open your dashboard<\/h1>/);
+  assert.match(html, /role="alert">Unable to check your agreement/);
+  assert.match(html, /<button type="button">Try again<\/button>/);
+  assert.match(html, /Contact support/);
+  assert.doesNotMatch(html, /aria-busy="true"|Loading your dashboard|PRIVATE_DANCER_TOOLS/);
+});
+
 test("gate starts unchecked, links readable terms, and requires an explicit choice before submission", () => {
   const agreement = { required: true, accepted: false, version: version.DANCER_AGREEMENT_VERSION };
   const html = render(agreement);
@@ -52,7 +68,6 @@ test("private drafts enter profile setup without a sign-in agreement popup, but 
   const agreement = { required: true, accepted: false, version: version.DANCER_AGREEMENT_VERSION };
   assert.ok(render(agreement, false, false, true).includes("PRIVATE_DANCER_TOOLS"));
   assert.ok(!render(agreement, false, false, true, "/dashboard/dancer/tv").includes("PRIVATE_DANCER_TOOLS"));
-  assert.match(render(null), /Loading your dashboard/);
   assert.doesNotMatch(render(null), /Review your Dancer Agreement/);
 });
 

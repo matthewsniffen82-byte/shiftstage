@@ -96,12 +96,18 @@ export default function DancerAgreementGate({ children }: { children: ReactNode 
   if (agreement?.version === DANCER_AGREEMENT_VERSION && (agreement.required === false || agreement.accepted === true
     || (profileSetupAllowed && pathname === "/dashboard/dancer"))) return <>{children}</>;
 
+  if (!agreement && !error) {
+    return <main className="dancer-agreement-gate" aria-busy="true">
+      <span className="dancer-agreement-loading-status" role="status">Loading dancer dashboard</span>
+    </main>;
+  }
+
   return <main className="dancer-agreement-gate">
     <nav><Link href="/">mydancr</Link><Link href="/account">Account settings</Link></nav>
     <section aria-labelledby="agreement-heading" aria-busy={busy}>
       <span className="dancer-agreement-eyebrow">Dancer account</span>
-      <h1 id="agreement-heading">{agreement ? "Review your Dancer Agreement" : "Loading your dashboard"}</h1>
-      {!agreement ? <p role="status">{error ? "Your agreement status could not be confirmed." : "Checking your agreement status…"}</p> : <>
+      <h1 id="agreement-heading">{agreement ? "Review your Dancer Agreement" : "Unable to open your dashboard"}</h1>
+      {!agreement ? <p>Your agreement status could not be confirmed.</p> : <>
         <p>Please read and accept the Dancer Agreement before continuing to your dancer dashboard, profile, videos, or club features.</p>
         <p><DancerAgreementLink>Read the Dancer Agreement</DancerAgreementLink></p>
         <form onSubmit={accept}>
