@@ -29,7 +29,11 @@ test("every Next page receives the shared consolidated mobile navigation", () =>
   );
   assert.match(
     navigationSource,
-    /className="global-mobile-bottom-nav"[\s\S]*?grid-template-columns: repeat\(3, minmax\(0, 1fr\)\)/,
+    /className="global-mobile-bottom-nav"/,
+  );
+  assert.match(
+    navigationSource,
+    /grid-template-columns: repeat\(3, minmax\(0, 1fr\)\)/,
   );
   assert.match(
     navigationSource,

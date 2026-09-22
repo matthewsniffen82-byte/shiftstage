@@ -40,7 +40,7 @@ const destinations = [
     label: "Dancers",
     view: "dancers",
     icon: (
-      <svg viewBox="0 0 24 24" aria-hidden="true">
+      <svg width={28} height={28} viewBox="0 0 24 24" aria-hidden="true">
         <circle cx="12" cy="8" r="3.2" />
         <path d="M5.5 20c.6-4.1 2.8-6.2 6.5-6.2s5.9 2.1 6.5 6.2" />
       </svg>
@@ -51,7 +51,7 @@ const destinations = [
     label: "TV",
     view: "tv",
     icon: (
-      <svg className="mydancr-tv-mark" viewBox="0 0 24 24" aria-hidden="true">
+      <svg className="mydancr-tv-mark" width={28} height={28} viewBox="0 0 24 24" aria-hidden="true">
         <path className="mydancr-tv-play" d="m8.5 7.25 8 4.75-8 4.75v-9.5Z" />
         <path className="mydancr-tv-r" d="M17.05 8.35V4.35m0 1.45c.72-.95 1.62-1.25 2.7-.91" />
       </svg>
@@ -62,7 +62,7 @@ const destinations = [
     label: "Clubs",
     view: "venues",
     icon: (
-      <svg viewBox="0 0 24 24" aria-hidden="true">
+      <svg width={28} height={28} viewBox="0 0 24 24" aria-hidden="true">
         <path d="M5 20V7l7-3 7 3v13" />
         <path d="M3 20h18" />
         <path d="M9 10h6M9 14h6" />
@@ -352,39 +352,8 @@ export function GlobalMobileBottomNav() {
 
   return (
     <>
-      <div
-        aria-hidden="true"
-        className="global-mobile-swipe-indicator"
-        ref={swipeIndicator}
-      >
-        <span data-mobile-swipe-arrow />
-        <strong data-mobile-swipe-label />
-      </div>
-      <nav
-        aria-label="Mobile primary navigation"
-        className="global-mobile-bottom-nav"
-        ref={navigation}
-      >
-        {destinations.map((destination) => {
-          const active = isActiveDestination(pathname, destination.id);
-          const href = homeDiscoveryHref(destination.view, city);
-          return (
-            <a
-              aria-current={active ? "page" : undefined}
-              className={`${active ? "active " : ""}${destination.id}-destination`}
-              href={href}
-              key={destination.id}
-            >
-              <span className="global-mobile-nav-icon">
-                <span className="mobile-nav-selection-halo" aria-hidden="true" />
-                {destination.icon}
-              </span>
-              <span>{destination.label}</span>
-            </a>
-          );
-        })}
-      </nav>
-      <style jsx global>{`
+      {/* Keep the dock styled in the server HTML before hydration. */}
+      <style>{`
         .global-mobile-bottom-nav {
           display: none;
         }
@@ -791,6 +760,38 @@ export function GlobalMobileBottomNav() {
           }
         }
       `}</style>
+      <div
+        aria-hidden="true"
+        className="global-mobile-swipe-indicator"
+        ref={swipeIndicator}
+      >
+        <span data-mobile-swipe-arrow />
+        <strong data-mobile-swipe-label />
+      </div>
+      <nav
+        aria-label="Mobile primary navigation"
+        className="global-mobile-bottom-nav"
+        ref={navigation}
+      >
+        {destinations.map((destination) => {
+          const active = isActiveDestination(pathname, destination.id);
+          const href = homeDiscoveryHref(destination.view, city);
+          return (
+            <a
+              aria-current={active ? "page" : undefined}
+              className={`${active ? "active " : ""}${destination.id}-destination`}
+              href={href}
+              key={destination.id}
+            >
+              <span className="global-mobile-nav-icon">
+                <span className="mobile-nav-selection-halo" aria-hidden="true" />
+                {destination.icon}
+              </span>
+              <span>{destination.label}</span>
+            </a>
+          );
+        })}
+      </nav>
     </>
   );
 }
