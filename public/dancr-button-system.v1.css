@@ -552,6 +552,48 @@
   }
 }
 
+/* Utility dropdown links stay quiet beside the outlined install action. */
+.dancr-button-system .utility-menu-panel #homeScreenInstallBtn,
+.dancr-button-system .utility-menu-panel .utility-menu-support .utility-menu-item {
+  box-sizing: border-box !important;
+  min-height: 44px !important;
+  padding: 10px 12px;
+  border: 1px solid transparent !important;
+  border-radius: 10px !important;
+  color: var(--dancr-color-text-secondary) !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+  font-family: var(--font-ui) !important;
+  font-weight: 600 !important;
+  letter-spacing: 0 !important;
+  transform: none !important;
+  filter: none !important;
+}
+
+.dancr-button-system .utility-menu-panel #homeScreenInstallBtn {
+  border-color: var(--dancr-color-white-medium) !important;
+  color: var(--dancr-color-text-primary) !important;
+}
+
+.dancr-button-system .utility-menu-panel #homeScreenInstallBtn:hover,
+.dancr-button-system .utility-menu-panel .utility-menu-support .utility-menu-item:hover {
+  color: var(--dancr-color-text-primary) !important;
+  background: var(--dancr-color-surface-subtle) !important;
+}
+
+.dancr-button-system .utility-menu-panel #homeScreenInstallBtn:active,
+.dancr-button-system .utility-menu-panel .utility-menu-support .utility-menu-item:active {
+  background: var(--dancr-color-white-soft) !important;
+}
+
+.dancr-button-system .utility-menu-panel #homeScreenInstallBtn:focus-visible,
+.dancr-button-system .utility-menu-panel .utility-menu-support .utility-menu-item:focus-visible {
+  outline: 2px solid var(--dancr-color-avatar-ring-violet) !important;
+  outline-offset: 2px;
+}
+
 /* Mobile touch controls use one explicit compositor path. Safari otherwise
  * applies the prefixed glass filter more heavily than mobile Chromium, making
  * the same video and profile controls look thicker on iPhone. Navigation keeps
