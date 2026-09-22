@@ -1,0 +1,38 @@
+{
+  "sourceImageSha256": "46458d4f290739d50820204bb5e6385328833fb2d7a23a94e81ea4d106d23fe4",
+  "headers": [
+    "Name",
+    "Value",
+    "Domain",
+    "Size",
+    "Notes",
+    "Lifetime"
+  ],
+  "rows": [
+    [
+      "dancr_going_visitor",
+      "Unique anonymous visitor token (variable)",
+      "www.mydancr.com",
+      "Variable / not recorded",
+      "Identifies an anonymous visitor's Going selection, permits reversal, and helps prevent duplicate attendance counts.",
+      "365 days"
+    ],
+    [
+      "dancr_media_like_visitor",
+      "Unique anonymous visitor token (variable)",
+      "www.mydancr.com",
+      "Variable / not recorded",
+      "Remembers anonymous media likes/unlikes and identifies/deduplicates share engagement and related notifications.",
+      "365 days"
+    ],
+    [
+      "__cf_bm",
+      "Cloudflare-generated security value (variable)",
+      "supabase.co",
+      "Variable / not recorded",
+      "Cloudflare bot-management/security cookie protecting the Supabase service used to deliver MyDancr media.",
+      "Approx. 30 minutes"
+    ]
+  ],
+  "note": "Note: Cookie values are generated dynamically and were not retained during the technical audit. Exact byte sizes were also not recorded. The audit identified these three cookie names from deployed application setters or live HTTP responses."
+}

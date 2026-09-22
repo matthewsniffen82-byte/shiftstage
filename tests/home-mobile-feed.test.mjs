@@ -965,7 +965,7 @@ test("bottom navigation keeps every destination on one uniform baseline", () => 
   assert.doesNotMatch(homeSource, /#discoveryTabs \.tab\[data-tab="trending"\]/);
 });
 
-test("support actions stay in the account menu and removed documents are absent", () => {
+test("published policies and support actions stay in the account menu", () => {
   const homeMain = homeSource.match(/<main class="stack">[\s\S]*?<\/main>/)?.[0] || "";
   const accountMenu = homeSource.match(
     /<div class="utility-menu-panel" id="moreMenuPanel"[\s\S]*?<\/nav>[\s\S]*?<\/div>/,
@@ -973,14 +973,14 @@ test("support actions stay in the account menu and removed documents are absent"
   assert.doesNotMatch(homeMain, /legal-links|data-legal-page|contactAdminBtn|adminBtn/);
   assert.match(
     accountMenu,
-    /class="utility-menu-support" aria-label="Support"[\s\S]*?id="contactAdminBtn"[\s\S]*?id="adminBtn"/,
+    /class="utility-menu-support" aria-label="Legal and support"[\s\S]*?href="\/privacy"[\s\S]*?href="\/privacy\/california"[\s\S]*?href="\/dmca"[\s\S]*?id="contactAdminBtn"[\s\S]*?id="adminBtn"/,
   );
   assert.match(
     accountMenu,
     /class="utility-menu-item utility-menu-dashboard" id="dashboardBtn"[\s\S]*?<nav class="utility-menu-support"[\s\S]*?<div class="utility-menu-session-end" id="sessionMenuEnd" hidden>[\s\S]*?class="utility-menu-item utility-menu-logout" id="logoutBtn"/,
   );
-  assert.doesNotMatch(homeSource, /termsPage|guidelinesPage|refundPage|data-legal-page|href="\/(?:privacy(?:\/california)?|dmca)"/);
-  assert.doesNotMatch(homeSource, /Terms of Service|Community Guidelines|Refund Policy|Legal &amp; support/);
+  assert.doesNotMatch(homeSource, /termsPage|guidelinesPage|refundPage|data-legal-page/);
+  assert.doesNotMatch(homeSource, /Terms of Service|Community Guidelines|Refund Policy/);
   assert.match(
     homeSource,
     /\.utility-menu-panel \{[\s\S]*?max-height: calc\(100dvh - 84px\)[\s\S]*?overflow-y: auto/,

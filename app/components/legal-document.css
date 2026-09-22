@@ -13,14 +13,15 @@
 .legal-contents nav { display: grid; gap: 12px; padding-top: 20px; font-size: 14px; line-height: 1.5; }
 .legal-document-content { color: #d3ccdf; font-size: 16px; line-height: 1.8; overflow-wrap: anywhere; }
 .legal-document-content p { margin: 0 0 20px; white-space: pre-line; }
-.legal-document-content h2 { margin: 36px 0 16px; color: #fff; font-size: 21px; line-height: 1.5; scroll-margin-top: 80px; }
+.legal-document-content h2 { margin: 36px 0 16px; color: #fff; font-size: 21px; line-height: 1.5; scroll-margin-top: calc(var(--mydancr-preview-banner-offset, 46px) + 16px); }
 .legal-document-content .legal-toc-entry { margin-bottom: 8px; }
 .legal-document-content .legal-bullet { padding-left: 16px; text-indent: -16px; margin-bottom: 10px; }
 .legal-table-scroll { max-width: 100%; overflow-x: auto; margin-bottom: 24px; }
 .legal-document-content table { width: 100%; min-width: 620px; border-collapse: collapse; font-size: 14px; line-height: 1.65; }
+.legal-document-content table.legal-cookie-table { min-width: 900px; }
 .legal-document-content th, .legal-document-content td { padding: 14px; border: 1px solid #51475f; text-align: left; vertical-align: top; }
 .legal-document-content th { color: #fff; background: #211a30; }
-.legal-document-content td:last-child { white-space: nowrap; }
+.legal-document-content th:last-child, .legal-document-content td:last-child, .legal-document-content th:last-child p, .legal-document-content td:last-child p { white-space: nowrap; }
 .legal-document-content td p, .legal-document-content th p { margin: 0; }
 .legal-document-content tr:nth-child(even) td { background: #15121e; }
 .legal-document-footer { display: flex; flex-wrap: wrap; gap: 16px 24px; margin-top: 48px; padding-top: 24px; border-top: 1px solid #48405b; font-size: 14px; line-height: 1.6; }

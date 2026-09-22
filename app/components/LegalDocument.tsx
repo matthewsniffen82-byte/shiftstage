@@ -36,7 +36,10 @@ export default function LegalDocument({ document, children, showDownload = true 
       {children ? <aside className="legal-related">{children}</aside> : null}
       <article aria-label={document.title}><LegalDocumentBody document={document} showDownload={showDownload} /></article>
       <footer className="legal-document-footer">
+        <Link href="/privacy">Privacy Policy</Link>
+        <Link href="/privacy/california">California Privacy Notice</Link>
         <Link href="/dancer-agreement">Dancer Agreement</Link>
+        <Link href="/dmca">Copyright / DMCA</Link>
       </footer>
     </main>
   );

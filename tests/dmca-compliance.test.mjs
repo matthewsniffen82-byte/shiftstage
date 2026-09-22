@@ -129,10 +129,10 @@ test("eligible counter-notices restore content and rescind strikes unless a cour
   ]);
 });
 
-test("admin copyright controls remain available without links to the removed public policy", () => {
+test("admin copyright controls remain available and the public policy is linked", () => {
   assert.match(adminPanel, /Registered with the U\.S\. Copyright Office/);
   assert.match(adminPanel, /Registration renewal date/);
   assert.match(adminClient, /<AdminDmcaPanel \/>/);
-  assert.doesNotMatch(liveShell, /href="\/dmca"/);
+  assert.match(liveShell, /href="\/dmca"/);
   assert.doesNotMatch(adminPanel, /href="\/dmca"/);
 });

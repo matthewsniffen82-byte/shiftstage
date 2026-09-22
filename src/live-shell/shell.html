@@ -79,8 +79,11 @@
             <div class="utility-menu-panel" id="moreMenuPanel" hidden>
               <button class="utility-menu-item" id="homeScreenInstallBtn" type="button" aria-label="Add MyDancr to Home Screen" aria-haspopup="dialog" aria-controls="homeScreenInstallDialog" hidden>Add to Home Screen</button>
               <button class="utility-menu-item utility-menu-dashboard" id="dashboardBtn" type="button" hidden>Dashboard</button>
-              <nav class="utility-menu-support" aria-label="Support">
-                <span class="utility-menu-section-label">Support</span>
+              <nav class="utility-menu-support" aria-label="Legal and support">
+                <span class="utility-menu-section-label">Legal &amp; support</span>
+                <a class="utility-menu-item" href="/privacy">Privacy Policy</a>
+                <a class="utility-menu-item" href="/privacy/california">California Privacy</a>
+                <a class="utility-menu-item" href="/dmca">Copyright / DMCA</a>
                 <button class="utility-menu-item" id="contactAdminBtn" type="button">Contact</button>
                 <button class="utility-menu-item admin-utility-menu-item" id="adminBtn" type="button">Platform admin</button>
               </nav>
@@ -380,7 +383,7 @@
               <span class="auth-signup-note-lock" aria-hidden="true">
                 <svg viewBox="0 0 24 24"><rect x="5" y="10" width="14" height="10" rx="2"></rect><path d="M8 10V7a4 4 0 0 1 8 0v3"></path></svg>
               </span>
-              <span class="auth-signup-note-copy">Your guest account and activity aren’t shown publicly. We’ll email you a confirmation link.</span>
+              <span class="auth-signup-note-copy">Your guest account and activity aren’t shown publicly. We’ll email you a confirmation link. <a href="/privacy" target="_blank" rel="noopener">Privacy Policy</a></span>
             </div>
             <button class="action-btn" id="authSubmit" type="submit">Sign in</button>
             <button class="auth-back-to-types" id="customerBackToTypes" type="button" hidden>← Back to account types</button>
@@ -442,6 +445,7 @@
               <li>At least 1 special character (for example, ! @ # $)</li>
             </ul>
             <button class="ghost auth-join-now venue-join-now" id="venueJoinNowBtn" type="submit" hidden>Create venue account</button>
+            <p class="rule-note"><a href="/privacy" target="_blank" rel="noopener">Privacy Policy</a></p>
             <button class="auth-back-to-types" id="venueBackToTypes" type="button">← Back to account types</button>
             <div class="rule-note auth-status" id="venueAuthStatus" role="status" aria-live="polite" aria-atomic="true" hidden></div>
           </form>
@@ -551,7 +555,7 @@
               <span>I confirm that I am authorized to request manager access for this club and that the business details above are accurate.</span>
             </label>
             <button class="action-btn venue-request-submit" id="venueRequestSubmit" type="submit">Send club request</button>
-            <div class="venue-request-privacy">MyDancr uses these details only to verify the business and contact you about club access.</div>
+            <div class="venue-request-privacy">MyDancr uses these details only to verify the business and contact you about club access. <a href="/privacy" target="_blank" rel="noopener">Privacy Policy</a></div>
             <a class="venue-request-back" href="/venue/confirm-email">Need another confirmation email?</a>
             <button class="venue-request-back" id="venueRequestBackBtn" type="button">Have an access code? Continue</button>
             <button class="auth-back-to-types" id="venueRequestBackToTypes" type="button">← Back to account types</button>
@@ -667,6 +671,7 @@
             </div>
             <div class="rule-note">Free account. Your profile becomes public after setup and verification.</div>
             <p class="rule-note">Confirm your email, build your private profile, then review and accept the Dancer Agreement before submitting your profile.</p>
+            <p class="rule-note">See how your information is handled in our <a href="/privacy" target="_blank" rel="noopener" style="text-decoration:underline">Privacy Policy</a>.</p>
             <button class="action-btn" type="submit">Create dancer account</button>
             <div class="rule-note auth-status" id="dancerSignupStatus" role="status" aria-live="polite" hidden></div>
           </form>
