@@ -212,7 +212,6 @@ export default function AdminDmcaPanel() {
       <div className="dmca-admin-summary">
         <strong>{cases.length} cases shown</strong>
         <button type="button" disabled={isLoading || Boolean(workingId)} onClick={() => void load({ refreshAgent: false, clearStatus: false })}>Refresh cases</button>
-        <a href="/dmca" target="_blank" rel="noreferrer">Open public copyright page</a>
       </div>
       {!agent.registeredWithCopyrightOffice ? (
         <p className="dmca-agent-warning">

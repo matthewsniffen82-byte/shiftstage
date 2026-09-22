@@ -16,7 +16,7 @@ export default async function DmcaCounterPage({ params }: PageProps) {
       <CounterStyles />
       <nav>
         <Link className="brand" href="/">mydancr</Link>
-        <Link href="/dmca">Copyright policy</Link>
+        <Link href="/">Back to MyDancr</Link>
       </nav>
       <header>
         <span>Copyright case</span>

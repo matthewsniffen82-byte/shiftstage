@@ -522,7 +522,7 @@
       box-shadow: inset 0 1px 0 rgba(255,255,255,.24), 0 12px 28px rgba(124,58,237,.34), 0 0 24px rgba(34,199,255,.18);
     }
 
-    .utility-menu-legal {
+    .utility-menu-support {
       display: grid;
       gap: 6px;
       margin-top: 2px;
@@ -539,13 +539,13 @@
       text-transform: uppercase;
     }
 
-    .utility-menu-legal .utility-menu-item {
+    .utility-menu-support .utility-menu-item {
       display: flex;
       align-items: center;
       text-decoration: none;
     }
 
-    .utility-menu-legal .admin-utility-menu-item {
+    .utility-menu-support .admin-utility-menu-item {
       color: rgba(168,161,186,.82);
       background: rgba(7,7,10,.64);
     }
@@ -32186,13 +32186,8 @@
             <div class="utility-menu-panel" id="moreMenuPanel" hidden>
               <button class="utility-menu-item" id="homeScreenInstallBtn" type="button" aria-label="Add MyDancr to Home Screen" aria-haspopup="dialog" aria-controls="homeScreenInstallDialog" hidden>Add to Home Screen</button>
               <button class="utility-menu-item utility-menu-dashboard" id="dashboardBtn" type="button" hidden>Dashboard</button>
-              <nav class="utility-menu-legal" aria-label="Legal and support">
-                <span class="utility-menu-section-label">Legal &amp; support</span>
-                <button class="utility-menu-item" data-legal-page="termsPage" type="button">Terms</button>
-                <a class="utility-menu-item" href="/privacy">Privacy</a>
-                <a class="utility-menu-item" href="/privacy/california">California Privacy</a>
-                <button class="utility-menu-item" data-legal-page="guidelinesPage" type="button">Guidelines</button>
-                <a class="utility-menu-item" href="/dmca">Copyright / DMCA</a>
+              <nav class="utility-menu-support" aria-label="Support">
+                <span class="utility-menu-section-label">Support</span>
                 <button class="utility-menu-item" id="contactAdminBtn" type="button">Contact</button>
                 <button class="utility-menu-item admin-utility-menu-item" id="adminBtn" type="button">Platform admin</button>
               </nav>
@@ -40965,101 +40960,6 @@
 
     </main>
 
-    <section class="page-panel legal-page" id="termsPage" aria-hidden="true">
-      <div class="page-inner">
-        <div class="page-head">
-          <div>
-            <span class="eyebrow">Legal</span>
-            <h2>Terms of Service</h2>
-          </div>
-          <button class="close-btn legal-close" aria-label="Close Terms of Service">
-            <svg class="icon" viewBox="0 0 24 24"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
-          </button>
-        </div>
-        <div class="auth-card">
-          <h3>Schedule discovery only</h3>
-          <p>Dancr is for verified schedules, follows, notifications, social profile links, and directions. It is not dating, messaging, escorting, or direct solicitation.</p>
-          <ul class="rule-list">
-            <li>18+ only.</li>
-            <li>No escorting or illegal services.</li>
-            <li>No direct sexual solicitation.</li>
-            <li>No fake profiles or impersonation.</li>
-            <li>No harassment, threats, or abuse.</li>
-            <li>Only upload content and music you own or are authorized to use. Repeat copyright infringement may suspend or terminate an account.</li>
-            <li>No private messaging.</li>
-            <li>Schedule discovery only.</li>
-          </ul>
-        </div>
-        <div class="auth-card">
-          <h3>Trust and review</h3>
-          <p>Dancer profiles, photos, shifts, venues, and reports are subject to review. Accounts, content, venues, or shifts that break the rules may be removed.</p>
-          <p>Dancer accounts are governed by the <a href="/dancer-agreement">Dancer Agreement</a>. Read our <a href="/privacy">Privacy Policy</a>, <a href="/privacy/california">California Privacy Notice</a>, and <a href="/dmca">Copyright / DMCA policy</a>.</p>
-        </div>
-      </div>
-    </section>
-
-    <section class="page-panel legal-page" id="guidelinesPage" aria-hidden="true">
-      <div class="page-inner">
-        <div class="page-head">
-          <div>
-            <span class="eyebrow">Safety</span>
-            <h2>Community Guidelines</h2>
-          </div>
-          <button class="close-btn legal-close" aria-label="Close Community Guidelines">
-            <svg class="icon" viewBox="0 0 24 24"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
-          </button>
-        </div>
-        <div class="auth-card">
-          <h3>House rules</h3>
-          <ul class="rule-list">
-            <li>18+ only.</li>
-            <li>No escorting.</li>
-            <li>No illegal services.</li>
-            <li>No direct sexual solicitation.</li>
-            <li>No fake profiles.</li>
-            <li>No harassment.</li>
-            <li>No private messaging.</li>
-            <li>Schedule discovery only.</li>
-          </ul>
-        </div>
-        <div class="auth-card">
-          <h3>Review standards</h3>
-          <p>Dancer profiles, ID/selfie checks, photos, venues, and reports are reviewed for trust and safety. Rule-breaking content may be removed.</p>
-        </div>
-        <div class="auth-card">
-          <h3>Billing and refunds</h3>
-          <p>Refund details stay with the legal terms instead of the bottom footer.</p>
-          <button class="action-btn secondary" data-legal-page="refundPage" type="button">Open refund policy</button>
-        </div>
-      </div>
-    </section>
-
-    <section class="page-panel legal-page" id="refundPage" aria-hidden="true">
-      <div class="page-inner">
-        <div class="page-head">
-          <div>
-            <span class="eyebrow">Legal</span>
-            <h2>Refund Policy</h2>
-          </div>
-          <button class="close-btn legal-close" aria-label="Close Refund Policy">
-            <svg class="icon" viewBox="0 0 24 24"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
-          </button>
-        </div>
-        <div class="auth-card">
-          <h3>Dancer profile access</h3>
-          <p>Dancer profile access is free right now. No monthly subscription is due.</p>
-        </div>
-        <div class="auth-card">
-          <h3>Approval before activation</h3>
-          <p>Public profiles unlock only after platform approval. Rejected profiles stay private and are not published.</p>
-        </div>
-        <div class="auth-card">
-          <h3>Billing control</h3>
-          <p>Dancers can manage recurring subscriptions through the Stripe billing portal. Refund requests are reviewed for billing errors, duplicate charges, or account actions caused by platform review.</p>
-        </div>
-      </div>
-    </section>
-
     <section class="page-panel" id="authPage" aria-hidden="true">
       <div class="page-inner">
         <div class="page-head">
@@ -41144,7 +41044,7 @@
               <span class="auth-signup-note-lock" aria-hidden="true">
                 <svg viewBox="0 0 24 24"><rect x="5" y="10" width="14" height="10" rx="2"></rect><path d="M8 10V7a4 4 0 0 1 8 0v3"></path></svg>
               </span>
-              <span class="auth-signup-note-copy">Your guest account and activity aren’t shown publicly. We’ll email you a confirmation link. <a href="/privacy" target="_blank" rel="noopener">Privacy Policy</a></span>
+              <span class="auth-signup-note-copy">Your guest account and activity aren’t shown publicly. We’ll email you a confirmation link.</span>
             </div>
             <button class="action-btn" id="authSubmit" type="submit">Sign in</button>
             <button class="auth-back-to-types" id="customerBackToTypes" type="button" hidden>← Back to account types</button>
@@ -41431,7 +41331,6 @@
             </div>
             <div class="rule-note">Free account. Your profile becomes public after setup and verification.</div>
             <p class="rule-note">Confirm your email, build your private profile, then review and accept the Dancer Agreement before submitting your profile.</p>
-            <p class="rule-note">See how your information is handled in our <a href="/privacy" target="_blank" rel="noopener" style="text-decoration:underline">Privacy Policy</a>.</p>
             <button class="action-btn" type="submit">Create dancer account</button>
             <div class="rule-note auth-status" id="dancerSignupStatus" role="status" aria-live="polite" hidden></div>
           </form>
@@ -55664,22 +55563,6 @@
       syncOverlayScrollLock();
     }
 
-    function openLegalPage(pageId) {
-      const page = document.getElementById(pageId);
-      if (!page) return;
-      page.classList.add("show");
-      page.setAttribute("aria-hidden", "false");
-      syncOverlayScrollLock();
-    }
-
-    function closeLegalPage(button) {
-      const page = button.closest(".legal-page");
-      if (!page) return;
-      page.classList.remove("show");
-      page.setAttribute("aria-hidden", "true");
-      syncOverlayScrollLock();
-    }
-
     function openDancerSignupPage() {
       closeAuthPage();
       clearDancerSignupFields();
@@ -64717,17 +64600,6 @@
       contentReportForm?.requestSubmit();
     });
     contentReportForm?.addEventListener("submit", submitContentReportDialog);
-
-    document.querySelectorAll("[data-legal-page]").forEach((button) => {
-      button.addEventListener("click", () => {
-        closeUtilityMenu();
-        openLegalPage(button.dataset.legalPage);
-      });
-    });
-
-    document.querySelectorAll(".legal-close").forEach((button) => {
-      button.addEventListener("click", () => closeLegalPage(button));
-    });
 
     accountBtn.addEventListener("click", () => {
       const loggedIn = isCustomerLoggedIn || isDancerLoggedIn || isVenueLoggedIn;

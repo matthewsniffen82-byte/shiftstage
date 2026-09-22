@@ -246,22 +246,6 @@
       syncOverlayScrollLock();
     }
 
-    function openLegalPage(pageId) {
-      const page = document.getElementById(pageId);
-      if (!page) return;
-      page.classList.add("show");
-      page.setAttribute("aria-hidden", "false");
-      syncOverlayScrollLock();
-    }
-
-    function closeLegalPage(button) {
-      const page = button.closest(".legal-page");
-      if (!page) return;
-      page.classList.remove("show");
-      page.setAttribute("aria-hidden", "true");
-      syncOverlayScrollLock();
-    }
-
     function openDancerSignupPage() {
       closeAuthPage();
       clearDancerSignupFields();

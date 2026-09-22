@@ -111,7 +111,6 @@ export default function DancerAgreementGate({ children }: { children: ReactNode 
           </label>
           <button type="submit" disabled={!checked || busy}>{busy ? "Saving acceptance…" : "Accept and continue"}</button>
         </form>
-        <p className="dancer-agreement-note">See how your information is handled in our <Link href="/privacy">Privacy Policy</Link>.</p>
       </>}
       {error && <p role="alert">{error}</p>}
       {error && !agreement && <button type="button" onClick={() => setAttempt(value => value + 1)}>Try again</button>}

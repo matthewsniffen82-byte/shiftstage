@@ -2,12 +2,11 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-const [migration, directionsRoute, eventsRoute, reportsRoute, dmcaPage] = await Promise.all([
+const [migration, directionsRoute, eventsRoute, reportsRoute] = await Promise.all([
   read("../supabase/migrations/202608300001_harden_direct_browser_rls.sql"),
   read("../app/api/customer/directions/route.ts"),
   read("../app/api/events/route.ts"),
   read("../app/api/reports/route.ts"),
-  read("../app/dmca/page.tsx"),
 ]);
 
 test("browser roles cannot bypass server analytics and report boundaries", () => {
@@ -48,10 +47,9 @@ test("authenticated customer directions use the server client after identity val
   assert.doesNotMatch(directionsRoute, /recordDirectionRequest\(client,/);
 });
 
-test("public DMCA contact rendering no longer requires anonymous table access", () => {
+test("DMCA contact settings remain inaccessible to anonymous table access", () => {
   assert.match(migration, /revoke select on table public\.dmca_agent_settings from anon;/);
   assert.match(migration, /drop policy if exists "public reads dmca agent settings"/);
-  assert.match(dmcaPage, /getPublicDmcaAgent\(createAdminSupabaseClient\(\)\)/);
 });
 
 function read(relativePath) {

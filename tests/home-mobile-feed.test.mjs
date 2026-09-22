@@ -965,7 +965,7 @@ test("bottom navigation keeps every destination on one uniform baseline", () => 
   assert.doesNotMatch(homeSource, /#discoveryTabs \.tab\[data-tab="trending"\]/);
 });
 
-test("legal and support actions stay out of the mobile discovery scroll", () => {
+test("support actions stay in the account menu and removed documents are absent", () => {
   const homeMain = homeSource.match(/<main class="stack">[\s\S]*?<\/main>/)?.[0] || "";
   const accountMenu = homeSource.match(
     /<div class="utility-menu-panel" id="moreMenuPanel"[\s\S]*?<\/nav>[\s\S]*?<\/div>/,
@@ -973,12 +973,14 @@ test("legal and support actions stay out of the mobile discovery scroll", () => 
   assert.doesNotMatch(homeMain, /legal-links|data-legal-page|contactAdminBtn|adminBtn/);
   assert.match(
     accountMenu,
-    /class="utility-menu-legal"[\s\S]*?data-legal-page="termsPage"[\s\S]*?href="\/privacy"[\s\S]*?href="\/privacy\/california"[\s\S]*?data-legal-page="guidelinesPage"[\s\S]*?href="\/dmca"[\s\S]*?id="contactAdminBtn"[\s\S]*?id="adminBtn"/,
+    /class="utility-menu-support" aria-label="Support"[\s\S]*?id="contactAdminBtn"[\s\S]*?id="adminBtn"/,
   );
   assert.match(
     accountMenu,
-    /class="utility-menu-item utility-menu-dashboard" id="dashboardBtn"[\s\S]*?<nav class="utility-menu-legal"[\s\S]*?<div class="utility-menu-session-end" id="sessionMenuEnd" hidden>[\s\S]*?class="utility-menu-item utility-menu-logout" id="logoutBtn"/,
+    /class="utility-menu-item utility-menu-dashboard" id="dashboardBtn"[\s\S]*?<nav class="utility-menu-support"[\s\S]*?<div class="utility-menu-session-end" id="sessionMenuEnd" hidden>[\s\S]*?class="utility-menu-item utility-menu-logout" id="logoutBtn"/,
   );
+  assert.doesNotMatch(homeSource, /termsPage|guidelinesPage|refundPage|data-legal-page|href="\/(?:privacy(?:\/california)?|dmca)"/);
+  assert.doesNotMatch(homeSource, /Terms of Service|Community Guidelines|Refund Policy|Legal &amp; support/);
   assert.match(
     homeSource,
     /\.utility-menu-panel \{[\s\S]*?max-height: calc\(100dvh - 84px\)[\s\S]*?overflow-y: auto/,

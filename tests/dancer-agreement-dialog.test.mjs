@@ -10,7 +10,7 @@ test("the direct agreement page keeps readable terms without an original-documen
   const Page = loadAgreementComponent("../dancer-agreement/page.tsx").default;
   const html = renderToStaticMarkup(React.createElement(Page));
   assert.match(html, /MISCELLANEOUS/);
-  assert.match(html, /href="\/privacy"/);
+  assert.doesNotMatch(html, /href="\/(?:privacy(?:\/california)?|dmca)"/);
   assert.doesNotMatch(html, /Download original|download=|\.docx/);
 });
 

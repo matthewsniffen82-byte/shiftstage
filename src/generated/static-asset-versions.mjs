@@ -18,7 +18,7 @@ export const staticAssetVersions = {
   "/mydancr-icon-maskable-512.png": "b5324616e07e4880",
   "/outputs/dancr-hero.png": "d16974879eb78003",
   "/outputs/dancr-hero.webp": "04a290c3af4ad444",
-  "/outputs/live-shell.css": "5f229ddcfce41827",
+  "/outputs/live-shell.css": "dcc700369183193b",
   "/outputs/dancr-aesthetic.css": "f1348c53fdbbc436",
   "/outputs/live-shell-overrides.css": "b0e0bbc56ea6997c",
   "/outputs/mydancr-logo-current.png": "e7f5af001692cb08",

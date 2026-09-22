@@ -9,7 +9,6 @@ const [
   counterRoute,
   adminRoute,
   restorationRoute,
-  dmcaPage,
   noticeForm,
   counterForm,
   adminPanel,
@@ -23,7 +22,6 @@ const [
   readFile(new URL("../app/api/dmca/cases/[id]/route.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/api/admin/dmca/route.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/api/cron/dmca-restoration/route.ts", import.meta.url), "utf8"),
-  readFile(new URL("../app/dmca/page.tsx", import.meta.url), "utf8"),
   readFile(new URL("../app/dmca/DmcaNoticeForm.tsx", import.meta.url), "utf8"),
   readFile(new URL("../app/dmca/counter/[id]/DmcaCounterForm.tsx", import.meta.url), "utf8"),
   readFile(new URL("../app/admin/AdminDmcaPanel.tsx", import.meta.url), "utf8"),
@@ -131,13 +129,10 @@ test("eligible counter-notices restore content and rescind strikes unless a cour
   ]);
 });
 
-test("copyright contact, public policy, and admin registration controls are visible", () => {
-  assert.match(dmcaPage, /Repeat-infringer policy/);
-  assert.match(dmcaPage, /three active strikes are suspended/);
-  assert.match(dmcaPage, /Copyright contact/);
+test("admin copyright controls remain available without links to the removed public policy", () => {
   assert.match(adminPanel, /Registered with the U\.S\. Copyright Office/);
   assert.match(adminPanel, /Registration renewal date/);
   assert.match(adminClient, /<AdminDmcaPanel \/>/);
-  assert.match(liveShell, /href="\/dmca">Copyright \/ DMCA/);
-  assert.match(liveShell, /Only upload content and music you own or are authorized to use/);
+  assert.doesNotMatch(liveShell, /href="\/dmca"/);
+  assert.doesNotMatch(adminPanel, /href="\/dmca"/);
 });

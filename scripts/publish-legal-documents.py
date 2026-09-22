@@ -16,10 +16,7 @@ ROOT = Path(__file__).resolve().parents[1]
 NS = {"w": "http://schemas.openxmlformats.org/wordprocessingml/2006/main"}
 W = "{" + NS["w"] + "}"
 DOCUMENTS = [
-    ("dmca", "Digital Millennium Copyright Act", "MyDancr_Digital Millennium Copyright Act.09.06.26.docx"),
     ("dancer-agreement", "Dancer Agreement", "MyDancr_DancerAgreement.09.17.26v.4.docx"),
-    ("privacy", "Privacy Policy", "MyDancr_Privacy_Policy.09.06.26.docx"),
-    ("california-privacy", "Privacy Notice for California Residents", "MyDancr_Privacy_Policy_Cal_Amendment.09.06.26.docx"),
 ]
 SUBHEADINGS = {
     "Infringement Notification", "Counter Notification",

@@ -562,17 +562,6 @@
     });
     contentReportForm?.addEventListener("submit", submitContentReportDialog);
 
-    document.querySelectorAll("[data-legal-page]").forEach((button) => {
-      button.addEventListener("click", () => {
-        closeUtilityMenu();
-        openLegalPage(button.dataset.legalPage);
-      });
-    });
-
-    document.querySelectorAll(".legal-close").forEach((button) => {
-      button.addEventListener("click", () => closeLegalPage(button));
-    });
-
     accountBtn.addEventListener("click", () => {
       const loggedIn = isCustomerLoggedIn || isDancerLoggedIn || isVenueLoggedIn;
       if (!loggedIn) {

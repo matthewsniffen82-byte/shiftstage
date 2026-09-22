@@ -399,7 +399,7 @@
       box-shadow: inset 0 1px 0 rgba(255,255,255,.24), 0 12px 28px rgba(124,58,237,.34), 0 0 24px rgba(34,199,255,.18);
     }
 
-    .utility-menu-legal {
+    .utility-menu-support {
       display: grid;
       gap: 6px;
       margin-top: 2px;
@@ -416,13 +416,13 @@
       text-transform: uppercase;
     }
 
-    .utility-menu-legal .utility-menu-item {
+    .utility-menu-support .utility-menu-item {
       display: flex;
       align-items: center;
       text-decoration: none;
     }
 
-    .utility-menu-legal .admin-utility-menu-item {
+    .utility-menu-support .admin-utility-menu-item {
       color: rgba(168,161,186,.82);
       background: rgba(7,7,10,.64);
     }
