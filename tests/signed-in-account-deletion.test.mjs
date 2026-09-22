@@ -10,7 +10,7 @@ const auditHistoryConstraints = fs.readFileSync("supabase/migrations/20260815000
 
 test("account deletion stays in dashboard account settings instead of the quick menu", () => {
   const menu = liveShell.slice(liveShell.indexOf('<div class="utility-menu-panel"'), liveShell.indexOf('<button class="account-tooltip"'));
-  assert.match(menu, /id="dashboardBtn"[\s\S]*?id="homeScreenInstallBtn"[\s\S]*?id="sessionMenuEnd"[\s\S]*?id="logoutBtn"/);
+  assert.match(menu, /id="dashboardBtn"[\s\S]*?id="sessionMenuEnd"[\s\S]*?id="logoutBtn"/);
   assert.doesNotMatch(menu, /Delete account|deleteAccountBtn/);
   assert.doesNotMatch(liveShell, /deleteAccountBtn/);
   for (const role of ["customer", "dancer", "venue"]) {

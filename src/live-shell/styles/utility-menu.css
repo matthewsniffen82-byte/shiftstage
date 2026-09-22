@@ -1,0 +1,11 @@
+    header .utility-menu { display: flex; align-items: center; gap: 8px; }
+    #guestMenuBtn { flex: 0 0 44px; width: 44px; height: 44px; border-color: rgba(255,255,255,.16); }
+    #guestMenuBtn[hidden] { display: none; }
+    #guestMenuBtn svg {
+      width: 22px; height: 22px; flex: 0 0 22px;
+      fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round;
+    }
+    #guestMenuBtn.active { border-color: #a78bfa; background: #231734; }
+    #guestMenuBtn:focus-visible {
+      outline: 2px solid #c4b5fd; outline-offset: 3px;
+    }
