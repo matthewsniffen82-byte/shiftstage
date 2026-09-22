@@ -77,7 +77,8 @@
       "styles/override-styles-06-approved-edit-profile-dropdown-show-approved-visual-profile-edit.css",
       "styles/override-styles-07-profile-backdrop-schedule-upcoming-profile-schedule-primary.css",
       "styles/override-styles-08-profile-backdrop-profile-modal-modal-grid-social-tile.css",
-      "styles/home-screen-install.css"
+      "styles/home-screen-install.css",
+      "styles/public-contact.css"
     ]
   }
 }

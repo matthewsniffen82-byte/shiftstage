@@ -528,6 +528,13 @@
       if (event.target === adminPreviewPopover) closeAdminPreview();
     });
     publicContactClose?.addEventListener("click", closePublicContactForm);
+    publicContactPopover?.addEventListener("cancel", (event) => {
+      event.preventDefault();
+      closePublicContactForm();
+    });
+    window.addEventListener("resize", syncPublicContactViewport, { passive: true });
+    window.visualViewport?.addEventListener("resize", syncPublicContactViewport, { passive: true });
+    window.visualViewport?.addEventListener("scroll", syncPublicContactViewport, { passive: true });
     publicContactPopover?.addEventListener("click", (event) => {
       if (event.target === publicContactPopover) closePublicContactForm();
     });

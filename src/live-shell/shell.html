@@ -1846,34 +1846,44 @@
       </section>
     </div>
 
-    <div class="admin-preview-popover" id="publicContactPopover" role="dialog" aria-modal="true" aria-labelledby="publicContactTitle" hidden>
-      <section class="admin-preview-sheet">
-        <button class="close-btn admin-preview-close" id="publicContactClose" type="button" aria-label="Close contact form">
-          <svg class="icon" viewBox="0 0 24 24"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
-        </button>
-        <h3 id="publicContactTitle">Contact Admin</h3>
+    <dialog id="publicContactPopover" aria-labelledby="publicContactTitle" aria-describedby="publicContactIntro" hidden>
+      <section class="public-contact-sheet">
+        <div class="public-contact-heading">
+          <div>
+            <h2 id="publicContactTitle">Contact support</h2>
+            <p id="publicContactIntro">Send a message to the MyDancr team.</p>
+          </div>
+          <button class="close-btn" id="publicContactClose" type="button" aria-label="Close contact form" autofocus>
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
+          </button>
+        </div>
         <form class="auth-form support-contact-form" id="publicContactForm">
-          <div class="field">
-            <label for="publicContactName">Name</label>
-            <input id="publicContactName" name="name" type="text" autocomplete="name" placeholder="Your name">
+          <div class="public-contact-fields">
+            <div class="field">
+              <label for="publicContactName">Name <span>Optional</span></label>
+              <input id="publicContactName" name="name" type="text" autocomplete="name" placeholder="Your name">
+            </div>
+            <div class="field">
+              <label for="publicContactEmail">Email <span>Optional</span></label>
+              <input id="publicContactEmail" name="email" type="email" autocomplete="email" aria-describedby="publicContactHelp" placeholder="you@example.com">
+            </div>
+            <div class="field">
+              <label for="publicContactSubject">Subject</label>
+              <input id="publicContactSubject" name="subject" type="text" required placeholder="How can we help?">
+            </div>
+            <div class="field">
+              <label for="publicContactMessage">Message</label>
+              <textarea id="publicContactMessage" name="message" rows="3" required placeholder="Tell us a little more…"></textarea>
+            </div>
           </div>
-          <div class="field">
-            <label for="publicContactEmail">Email</label>
-            <input id="publicContactEmail" name="email" type="email" autocomplete="email" placeholder="you@example.com">
+          <div class="public-contact-actions">
+            <button class="action-btn" type="submit">Send message</button>
+            <p id="publicContactHelp">No sign-in needed. Add your email if you'd like a reply.</p>
+            <p id="publicContactStatus" role="status" aria-live="polite" aria-atomic="true"></p>
           </div>
-          <div class="field">
-            <label for="publicContactSubject">Subject</label>
-            <input id="publicContactSubject" name="subject" type="text" required placeholder="What do you need help with?">
-          </div>
-          <div class="field">
-            <label for="publicContactMessage">Message</label>
-            <textarea id="publicContactMessage" name="message" rows="4" required placeholder="Write your message to admin"></textarea>
-          </div>
-          <button class="action-btn" type="submit">Send to admin</button>
-          <div class="rule-note" id="publicContactStatus">You can send this without signing in. Add an email if you want admin to reply.</div>
         </form>
       </section>
-    </div>
+    </dialog>
 
     <dialog class="home-screen-install-dialog" id="homeScreenInstallDialog" aria-labelledby="homeScreenInstallTitle" aria-describedby="homeScreenInstallIntro">
       <div class="home-screen-install-heading">

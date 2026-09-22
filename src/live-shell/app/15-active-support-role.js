@@ -24,16 +24,24 @@
     async function submitPublicContactForm(event) {
       event.preventDefault();
       if (!publicContactForm || !publicContactStatus) return;
+      const submitButton = publicContactForm.querySelector('button[type="submit"]');
+      if (submitButton?.disabled) return;
       const formData = new FormData(publicContactForm);
       const name = String(formData.get("name") || "").trim();
       const email = String(formData.get("email") || "").trim();
       const subject = String(formData.get("subject") || "").trim();
       const message = String(formData.get("message") || "").trim();
       if (!subject || !message) {
+        publicContactStatus.dataset.state = "error";
         publicContactStatus.textContent = "Add a subject and message before sending.";
         return;
       }
-      publicContactStatus.textContent = "Sending message to admin...";
+      if (submitButton) {
+        submitButton.disabled = true;
+        submitButton.textContent = "Sending…";
+      }
+      delete publicContactStatus.dataset.state;
+      publicContactStatus.textContent = "Sending your message…";
       try {
         const details = [
           "Footer contact message",
@@ -54,11 +62,17 @@
         if (data?.report) {
           liveAdminReports = [data.report, ...liveAdminReports.filter((item) => item.id !== data.report.id)];
         }
-        publicContactStatus.textContent = "Sent to admin. Thank you.";
+        publicContactStatus.dataset.state = "success";
+        publicContactStatus.textContent = "Message sent. Thanks for getting in touch.";
         publicContactForm.reset();
-        showToast("Message sent to admin");
       } catch (error) {
+        publicContactStatus.dataset.state = "error";
         publicContactStatus.textContent = error?.message || "Unable to send message right now.";
+      } finally {
+        if (submitButton) {
+          submitButton.disabled = false;
+          submitButton.textContent = "Send message";
+        }
       }
     }
 

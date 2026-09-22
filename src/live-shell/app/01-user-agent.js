@@ -778,15 +778,41 @@
     function openPublicContactForm() {
       if (!publicContactPopover) return;
       if (publicContactStatus) {
-        publicContactStatus.textContent = "You can send this without signing in. Add an email if you want admin to reply.";
+        publicContactStatus.textContent = "";
+        delete publicContactStatus.dataset.state;
       }
       publicContactPopover.hidden = false;
-      setTimeout(() => document.getElementById("publicContactSubject")?.focus({ preventScroll: true }), 120);
+      publicContactPopover.showModal();
+      document.body.classList.add("public-contact-open");
+      syncPublicContactViewport();
+      publicContactForm?.querySelector(".public-contact-fields")?.scrollTo({ top: 0 });
+      publicContactClose?.focus({ preventScroll: true });
+    }
+
+    function syncPublicContactViewport() {
+      if (!publicContactPopover?.open) return;
+      const viewport = window.visualViewport;
+      const height = viewport?.height || window.innerHeight;
+      publicContactPopover.style.setProperty("--contact-viewport-height", `${height}px`);
+      publicContactPopover.style.setProperty("--contact-viewport-top", `${viewport?.offsetTop || 0}px`);
+      publicContactPopover.classList.toggle("is-compact", height < 500);
+      const focusedField = document.activeElement;
+      if (publicContactForm?.contains(focusedField) && focusedField.matches("input, textarea")) {
+        requestAnimationFrame(() => {
+          if (publicContactPopover.open && document.activeElement === focusedField) {
+            focusedField.scrollIntoView({ block: "nearest", inline: "nearest" });
+          }
+        });
+      }
     }
 
     function closePublicContactForm() {
       if (!publicContactPopover) return;
+      publicContactPopover.close();
       publicContactPopover.hidden = true;
+      document.body.classList.remove("public-contact-open");
+      const returnTarget = guestMenuBtn && !guestMenuBtn.hidden ? guestMenuBtn : accountBtn;
+      returnTarget?.focus({ preventScroll: true });
     }
 
     let accountRequiredReturnTarget = null;
