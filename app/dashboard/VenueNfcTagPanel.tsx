@@ -2,9 +2,10 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { filterVenueAffiliations, isAffiliatedDancerWorkingNow, type VenueDancerAffiliation as DancerAffiliation } from "@/src/lib/dancr/venue-roster";
+import { filterVenueAffiliations, findAffiliatedDancerCheckIn, isAffiliatedDancerWorkingNow, type VenueDancerAffiliation as DancerAffiliation } from "@/src/lib/dancr/venue-roster";
 import {
   readDashboardAccessToken,
+  requestDashboardJson,
   requestVenueDancerVerificationsJson,
   requestVenueNfcSupportJson,
   requestVenueNfcTagsJson,
@@ -43,22 +44,27 @@ export default function VenueNfcTagPanel({
   workingOnly,
   onWorkingOnlyChange,
   canManageRoster = false,
+  canEndCheckIns = false,
   canRequestSupport = false,
   onAccessRemoved,
+  onCheckInEnded,
 }: {
   initialAffiliations?: Array<Record<string, unknown>>;
   workingNow?: Array<Record<string, unknown>>;
   workingOnly: boolean;
   onWorkingOnlyChange: (workingOnly: boolean) => void;
   canManageRoster?: boolean;
+  canEndCheckIns?: boolean;
   canRequestSupport?: boolean;
   onAccessRemoved?: (affiliation: DancerAffiliation) => void;
+  onCheckInEnded?: (shiftId: string) => void;
 }) {
   const [tags, setTags] = useState<NfcTag[]>([]);
   const [affiliations, setAffiliations] = useState<DancerAffiliation[]>(initialAffiliations as DancerAffiliation[]);
   const [status, setStatus] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [endingShiftId, setEndingShiftId] = useState("");
   const [search, setSearch] = useState("");
   const [visibleCount, setVisibleCount] = useState(50);
   const [testingTagId, setTestingTagId] = useState("");
@@ -263,6 +269,45 @@ export default function VenueNfcTagPanel({
     finally { savingRef.current = false; if (mountedRef.current) setIsSaving(false); }
   }
 
+  async function endCheckIn(affiliation: DancerAffiliation, shift: Record<string, unknown>) {
+    if (!canEndCheckIns || savingRef.current || !shift.shiftId || shift.shiftSource === "demo_locked") return;
+    const shiftId = String(shift.shiftId);
+    const dancerName = affiliation.dancer?.stageName || "this dancer";
+    if (!window.confirm(`End ${dancerName}'s check-in? Working Now will stop. Their club approval, account, and media stay intact.`)) return;
+    if (!readDashboardAccessToken("venue")) return setStatus("Sign in required.");
+    if (!mountedRef.current) return;
+    const requestId = ++actionSequenceRef.current;
+    actionAbortRef.current?.abort();
+    const controller = new AbortController();
+    actionAbortRef.current = controller;
+    savingRef.current = true;
+    loadSequenceRef.current += 1;
+    loadAbortRef.current?.abort();
+    loadAbortRef.current = null;
+    loadInFlightRef.current = null;
+    setIsLoading(false); setIsSaving(true); setEndingShiftId(shiftId); setStatus("");
+    try {
+      const data = await requestDashboardJson("/api/venue/check-ins", {
+        method: "DELETE", expectedRole: "venue", headers: { "content-type": "application/json" },
+        body: JSON.stringify({ shiftId }), signal: controller.signal,
+        fallbackMessage: "Unable to end this check-in. Refresh and try again.",
+      });
+      if (!mountedRef.current || controller.signal.aborted || requestId !== actionSequenceRef.current) return;
+      if (data.shiftId !== shiftId || !Number.isFinite(Date.parse(data.checkedOutAt || ""))) throw new Error("Check-in end could not be confirmed. Refresh and try again.");
+      onCheckInEnded?.(shiftId);
+      setStatus(`${dancerName}'s Working Now check-in ended. Their club approval and account are unchanged.`);
+    } catch (error) {
+      if (mountedRef.current && !controller.signal.aborted && requestId === actionSequenceRef.current) {
+        setStatus(error instanceof Error ? error.message : "Unable to end this check-in.");
+      }
+    } finally {
+      if (requestId === actionSequenceRef.current) {
+        actionAbortRef.current = null; savingRef.current = false;
+        if (mountedRef.current) { setIsSaving(false); setEndingShiftId(""); }
+      }
+    }
+  }
+
   function startTapTest(tag: NfcTag) {
     testBaselineRef.current = tag.scanCount;
     setTestStatus(`Ready to test ${tag.label}. Hold an unlocked phone near the physical sticker within 60 seconds.`);
@@ -335,7 +380,9 @@ export default function VenueNfcTagPanel({
           <button type="button" aria-pressed={workingOnly} onClick={() => { onWorkingOnlyChange(true); setVisibleCount(50); }}>Working now <b>{workingCount}</b></button>
         </div>
         <p className="venue-roster-results" role="status">{isLoading && !activeAffiliations.length ? "Loading dancers…" : `${matchingAffiliations.length} ${matchingAffiliations.length === 1 ? "dancer" : "dancers"}${search.trim() ? " matching your search" : workingOnly ? " working now" : " affiliated"}`}</p>
-        {matchingAffiliations.slice(0, visibleCount).map((affiliation) => (
+        {matchingAffiliations.slice(0, visibleCount).map((affiliation) => {
+          const checkIn = findAffiliatedDancerCheckIn(affiliation, workingNow);
+          return (
           <div className="venue-nfc-dancer" key={affiliation.id}>
             <span className="venue-nfc-dancer-identity">
               <span className="venue-nfc-dancer-avatar" data-dancer-avatar="" aria-hidden="true">
@@ -348,11 +395,18 @@ export default function VenueNfcTagPanel({
               <span className="venue-nfc-dancer-copy">
                 <strong>{affiliation.dancer?.stageName || "Dancer"}</strong>
                 {affiliation.dancer?.city ? <small>{affiliation.dancer.city}</small> : null}
-                <small className={isAffiliatedDancerWorkingNow(affiliation, workingNow) ? "venue-roster-working" : ""}>{isAffiliatedDancerWorkingNow(affiliation, workingNow) ? "● Working now" : "Not working now"}</small>
+                <small className={checkIn ? "venue-roster-working" : ""}>{checkIn ? "● Working now" : "Not working now"}</small>
               </span>
             </span>
             <div className="venue-roster-actions">
               {affiliation.dancer?.slug ? <Link href={`/dancers/${encodeURIComponent(affiliation.dancer.slug)}`} aria-label={`View ${affiliation.dancer.stageName || "dancer"} profile`}>View profile</Link> : null}
+              {canEndCheckIns && checkIn?.shiftId ? (
+                <button className="venue-end-checkin" type="button" disabled={isSaving || checkIn.shiftSource === "demo_locked"}
+                  aria-label={`End ${affiliation.dancer?.stageName || "dancer"} check-in`}
+                  onClick={() => { void endCheckIn(affiliation, checkIn); }}>
+                  {checkIn.shiftSource === "demo_locked" ? "Demo managed" : endingShiftId === checkIn.shiftId ? "Ending…" : "End check-in"}
+                </button>
+              ) : null}
               {canManageRoster ? (
                 <button className="venue-nfc-remove-access" type="button" disabled={isSaving}
                   aria-label={`Remove ${affiliation.dancer?.stageName || "dancer"} access`} onClick={() => removeAccess(affiliation)}>
@@ -361,7 +415,8 @@ export default function VenueNfcTagPanel({
               ) : null}
             </div>
           </div>
-        ))}
+          );
+        })}
         {!isLoading && !matchingAffiliations.length ? <p>{search.trim() ? "No affiliated dancers match your search." : workingOnly ? "No affiliated dancers are working now." : "No dancers have used this venue's dancer check-in sticker yet."}</p> : null}
         {matchingAffiliations.length > visibleCount ? <button type="button" onClick={() => setVisibleCount((count) => count + 50)}>Show more dancers ({matchingAffiliations.length - visibleCount} remaining)</button> : null}
       </section>

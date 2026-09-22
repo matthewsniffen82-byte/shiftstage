@@ -18,11 +18,18 @@ export function isAffiliatedDancerWorkingNow(
   affiliation: VenueDancerAffiliation,
   workingNow: Array<Record<string, unknown>>,
 ) {
+  return Boolean(findAffiliatedDancerCheckIn(affiliation, workingNow));
+}
+
+export function findAffiliatedDancerCheckIn(
+  affiliation: VenueDancerAffiliation,
+  workingNow: Array<Record<string, unknown>>,
+) {
   const dancerId = affiliation.dancerId || affiliation.dancer?.id;
-  return workingNow.some((shift) => {
+  return workingNow.find((shift) => {
     if (dancerId && shift.dancerId) return shift.dancerId === dancerId;
     return Boolean(affiliation.dancer?.slug && shift.dancerSlug === affiliation.dancer.slug);
-  });
+  }) || null;
 }
 
 export function filterVenueAffiliations(

@@ -62,6 +62,7 @@ export function VenuePanel({
   onAnalyticsPeriodChange,
   onRefresh,
   onAccessRemoved,
+  onCheckInEnded,
   onProfileChange,
   onPublicationChange,
   onDealRequestsChange,
@@ -83,6 +84,7 @@ export function VenuePanel({
   onAnalyticsPeriodChange: (period: "tonight" | "7d" | "30d") => void;
   onRefresh: () => void;
   onAccessRemoved: (affiliation: VenueDancerAffiliation) => void;
+  onCheckInEnded: (shiftId: string) => void;
   onProfileChange: (profile: Record<string, unknown>) => void;
   onPublicationChange: (publication: Record<string, unknown>) => void;
   onDealRequestsChange: (dealRequests: Array<Record<string, unknown>>) => void;
@@ -478,7 +480,7 @@ export function VenuePanel({
         </DashboardSection>
 
         <DashboardSection
-          description="Search your approved dancer roster, view profiles, see who's working now, and remove venue access."
+          description="See who's working now, end check-ins, and manage your approved roster."
           eyebrow="Venue roster"
           hidden={activeWorkspace !== "venue"}
           id="venue-dancer-roster"
@@ -493,7 +495,9 @@ export function VenuePanel({
             workingOnly={rosterWorkingOnly}
             onWorkingOnlyChange={setRosterWorkingOnly}
             onAccessRemoved={onAccessRemoved}
+            onCheckInEnded={onCheckInEnded}
             canManageRoster={canManageRoster}
+            canEndCheckIns={permissions.includes("end_checkins")}
             canRequestSupport={canRequestNfcSupport}
           />
         </DashboardSection>
