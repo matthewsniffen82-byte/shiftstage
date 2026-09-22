@@ -1,0 +1,41 @@
+{
+  "name": "mydancr",
+  "short_name": "mydancr",
+  "id": "/",
+  "description": "Choose your city. See who's working now.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "browser",
+  "display_override": [
+    "browser"
+  ],
+  "background_color": "#050507",
+  "theme_color": "#050507",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/mydancr-icon-192.png?v=b0063c2fdaec7ee6",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/mydancr-icon-512.png?v=1a7f5576cee92f32",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/mydancr-icon-maskable-192.png?v=695f76af75cc11f7",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/mydancr-icon-maskable-512.png?v=b5324616e07e4880",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

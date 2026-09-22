@@ -24,3 +24,7 @@ const manifestPath = new URL("../public/manifest.webmanifest", import.meta.url);
 const manifest = JSON.parse(await readFile(manifestPath, "utf8"));
 manifest.icons = icons;
 await writeFile(manifestPath, JSON.stringify(manifest, null, 2) + "\n");
+// Samsung Internet uses a browser bookmark, avoiding its outdated WebAPK installer.
+await writeFile(new URL("../public/manifest-shortcut.webmanifest", import.meta.url), JSON.stringify({
+  ...manifest, display: "browser", display_override: ["browser"],
+}, null, 2) + "\n");

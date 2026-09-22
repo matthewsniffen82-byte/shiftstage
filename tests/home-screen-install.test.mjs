@@ -32,7 +32,10 @@ function fixture({ ua = "Android Chrome", platform = "Linux", touchPoints = 1, s
   const context = vm.createContext({
     Event, window,
     navigator: { userAgent: ua, platform, maxTouchPoints: touchPoints, standalone: appleStandalone },
-    document: { getElementById: element, createElement: () => new Element() },
+    document: {
+      getElementById: element, createElement: () => new Element(),
+      querySelectorAll: () => [element("mobile-web-app-capable"), element("apple-mobile-web-app-capable")],
+    },
     guestMenuBtn: element("guestMenuBtn"), accountBtn: element("accountBtn"),
     closeUtilityMenu: () => { menuClosed++; },
   });
@@ -111,14 +114,46 @@ test("iPhone and desktop-mode iPad get the Safari steps without requiring a nati
   }
 });
 
-test("Samsung Internet receives its own menu steps", async () => {
+test("Samsung Internet offers a browser shortcut without opening its native installer", async () => {
   const f = fixture({ ua: "Android SamsungBrowser/29.0 Chrome" });
+  const native = nativePrompt(f, "accepted");
+  assert.equal(native.event.defaultPrevented, true);
   f.start();
   await f.click();
-  assert.match(f.instructions(), /Samsung Internet menu.*Add page to, then Home screen/);
+  assert.equal(native.calls, 0);
+  assert.equal(f.element("homeScreenInstallDialog").open, true);
+  assert.equal(f.element("homeScreenInstallBtn").hidden, false);
+  assert.match(f.instructions(), /Samsung Internet menu.*Add page to, then Home screen.*tap Add/);
+  assert.equal(f.element("homeScreenManifest").href, "/manifest-shortcut.webmanifest");
+  assert.equal(f.element("mobile-web-app-capable").content, "no");
+  assert.equal(f.element("apple-mobile-web-app-capable").content, "no");
+  assert.match(f.element("homeScreenInstallHelp").textContent, /Keep Play Protect enabled/);
   f.element("guestMenuBtn").hidden = true;
   f.element("homeScreenInstallClose").dispatchEvent(new Event("click"));
   assert.equal(f.element("accountBtn").focused, true);
+});
+
+test("Samsung desktop mode and a stale native prompt still use shortcut instructions", async () => {
+  const f = fixture({ ua: "X11 Linux x86_64 SamsungBrowser/29.0 Chrome" });
+  f.start();
+  assert.equal(f.element("homeScreenInstallBtn").hidden, false);
+  const native = nativePrompt(f, "accepted");
+  f.window.__dancrHomeScreenInstall.promptEvent = native.event;
+  await f.click();
+  assert.equal(native.calls, 0);
+  assert.match(f.instructions(), /Samsung Internet menu/);
+  assert.equal(f.element("homeScreenInstallBtn").hidden, false);
+});
+
+test("only Samsung uses browser mode while other phones retain their standalone app manifest", async () => {
+  const original = JSON.parse(await readFile(new URL("../public/manifest.webmanifest", import.meta.url), "utf8"));
+  const shortcut = JSON.parse(await readFile(new URL("../public/manifest-shortcut.webmanifest", import.meta.url), "utf8"));
+  assert.deepEqual(shortcut, { ...original, display: "browser", display_override: ["browser"] });
+  for (const ua of ["Android Chrome", "iPhone Safari"]) {
+    const f = fixture({ ua });
+    assert.equal(f.element("homeScreenManifest").href, "/manifest.webmanifest");
+    assert.notEqual(f.element("mobile-web-app-capable").content, "no");
+  }
 });
 
 test("standalone launches hide the action on Android and iPhone", () => {
