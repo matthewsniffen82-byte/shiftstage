@@ -4,6 +4,7 @@ import { shiftSchema } from "./shift-temporal-database.mjs";
 
 const read = name => readFileSync(new URL(`../../supabase/migrations/${name}.sql`, import.meta.url), "utf8");
 export const clubDepartureMigration = read("20260922020000_preserve_dancers_when_clubs_leave");
+export const dancerRetapMigration = read("20260922030000_allow_dancer_reconnection_by_tap");
 const quote = value => `"${value.replaceAll('"', '""')}"`;
 
 export async function createClubDepartureDatabase({ migrate = true } = {}) {
@@ -30,7 +31,7 @@ export async function createClubDepartureDatabase({ migrate = true } = {}) {
     for (const fn of shiftSchema.functions) if (fn.name !== "is_admin") await db.exec(fn.definition);
     for (const trigger of shiftSchema.triggers) await db.exec(trigger.definition);
     await db.exec("grant all on public.shifts,public.nfc_tags,public.dancer_nfc_enrollments,public.venue_dancer_affiliations,public.venue_dancer_verification_tokens,public.venue_dancer_affiliation_events to service_role");
-    if (migrate) await db.exec(clubDepartureMigration);
+    if (migrate) { await db.exec(clubDepartureMigration); await db.exec(dancerRetapMigration); }
     return db;
   } catch (error) { await db.close(); throw error; }
 }

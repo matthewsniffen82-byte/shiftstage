@@ -2,7 +2,6 @@ export type VenueDancerAffiliation = {
   id: string;
   dancerId?: string;
   status: string;
-  reentryBlocked?: boolean;
   approvedAt?: string | null;
   dancer?: {
     id?: string;

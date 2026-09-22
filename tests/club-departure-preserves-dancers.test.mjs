@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { before, after, test } from "node:test";
-import { createClubDepartureDatabase, clubDepartureMigration } from "./helpers/club-departure-database.mjs";
+import { createClubDepartureDatabase, clubDepartureMigration, dancerRetapMigration } from "./helpers/club-departure-database.mjs";
 import { seedAccountLifecycle, accountLifecycleId as id, asAccountLifecycleRole } from "./helpers/account-lifecycle-database.mjs";
 
 let db, serial = 20000;
@@ -38,7 +38,7 @@ test("club departure removes club links and check-ins while retaining dancer ide
   assert.equal(receipt.dancerAccountsPreserved, true);
   assert.deepEqual(await dancerIdentity(f), before);
   assert.equal((await db.query("select status from public.venue_dancer_affiliations where id=$1", [f.otherAffiliationId])).rows[0].status, "active");
-  assert.deepEqual((await db.query("select status,reentry_blocked from public.venue_dancer_affiliations where id=$1", [f.affiliationId])).rows[0], { status: "revoked", reentry_blocked: true });
+  assert.deepEqual((await db.query("select status,reentry_blocked from public.venue_dancer_affiliations where id=$1", [f.affiliationId])).rows[0], { status: "revoked", reentry_blocked: false });
   assert.equal((await db.query("select status from public.shifts where id=$1", [f.shiftId])).rows[0].status, "cancelled");
   assert.equal((await db.query("select is_active from public.venues where id=$1", [f.owner.venueId])).rows[0].is_active, false);
   assert.equal((await db.query("select status from public.nfc_tags where id=$1", [f.tagId])).rows[0].status, "revoked");
@@ -48,18 +48,19 @@ test("club departure removes club links and check-ins while retaining dancer ide
   await assert.rejects(db.query("update public.venue_dancer_affiliations set status='active',revoked_at=null,revoked_by_user_id=null where id=$1", [f.affiliationId]), error => error.code === "42501");
 });
 
-test("roster removal ends presence, preserves even the last-club dancer account, and requires club permission plus a new tap", async () => {
+test("roster removal preserves the account and a fresh NFC affiliation upsert reconnects without club approval", async () => {
   const f = await fixture(), before = await dancerIdentity(f);
   await rpc("revoke_dancer_venue_affiliation", [f.affiliationId, f.owner.userId, "Dancer left the club."]);
   await rpc("revoke_dancer_venue_affiliation", [f.otherAffiliationId, f.other.userId, "Dancer left the club."]);
   assert.deepEqual(await dancerIdentity(f), before);
   assert.equal((await db.query("select venue_approved_venue_id from public.dancer_profiles where id=$1", [f.dancer.dancerId])).rows[0].venue_approved_venue_id, null);
-  await assert.rejects(db.query("update public.venue_dancer_affiliations set status='active',revoked_at=null,revoked_by_user_id=null where id=$1", [f.affiliationId]), error => error.code === "42501");
-  await assert.rejects(rpc("allow_dancer_venue_retap", [f.dancer.userId, f.affiliationId]), error => error.code === "42501");
-  await assert.rejects(rpc("allow_dancer_venue_retap", [f.other.userId, f.affiliationId]), error => error.code === "42501");
-  await rpc("allow_dancer_venue_retap", [f.owner.userId, f.affiliationId]);
-  assert.equal((await db.query("select status from public.venue_dancer_affiliations where id=$1", [f.affiliationId])).rows[0].status, "revoked");
-  await db.query("update public.venue_dancer_affiliations set status='active',revoked_at=null,revoked_by_user_id=null where id=$1", [f.affiliationId]);
+  assert.deepEqual((await db.query("select status,reentry_blocked from public.venue_dancer_affiliations where id=$1", [f.affiliationId])).rows[0], { status: "revoked", reentry_blocked: false });
+  assert.equal((await db.query("select status from public.shifts where id=$1", [f.shiftId])).rows[0].status, "cancelled");
+  // Exercise the insert-on-conflict transition used by the NFC service.
+  await asAccountLifecycleRole(db, "service_role", null, () => db.query("insert into public.venue_dancer_affiliations(venue_id,dancer_id,approved_by_user_id,status)values($1,$2,$3,'active')on conflict(venue_id,dancer_id)do update set status='active',approved_at=now(),revoked_at=null,revoked_by_user_id=null,revoke_reason=null returning id", [f.owner.venueId, f.dancer.dancerId, f.owner.userId]));
+  assert.equal((await db.query("select status from public.venue_dancer_affiliations where id=$1", [f.affiliationId])).rows[0].status, "active");
+  assert.equal((await db.query("select status from public.venue_dancer_affiliations where id=$1", [f.otherAffiliationId])).rows[0].status, "revoked");
+  assert.equal((await db.query("select status from public.shifts where id=$1", [f.shiftId])).rows[0].status, "cancelled", "reconnection does not reopen the old session");
   assert.deepEqual(await dancerIdentity(f), before);
 });
 
@@ -74,13 +75,30 @@ test("other clubs, dancers, staff, and managers cannot withdraw a club; an admin
   assert.equal((await rpc("end_venue_participation", [admin.userId, f.owner.venueId])).dancerAccountsPreserved, true);
 });
 
-test("untrusted callers cannot execute departure or grant themselves reentry", async () => {
+test("untrusted callers cannot execute club departure and the permission RPC is retired", async () => {
   const f = await fixture();
   for (const role of ["anon", "authenticated"]) {
-    for (const [name, args] of [["end_venue_participation", [f.owner.userId, f.owner.venueId]], ["allow_dancer_venue_retap", [f.owner.userId, f.affiliationId]]]) {
-      await assert.rejects(asAccountLifecycleRole(db, role, f.owner.userId, () => rpc(name, args)), error => error.code === "42501");
-    }
+    await assert.rejects(asAccountLifecycleRole(db, role, f.owner.userId, () => rpc("end_venue_participation", [f.owner.userId, f.owner.venueId])), error => error.code === "42501");
   }
+  assert.equal((await db.query("select to_regprocedure('public.allow_dancer_venue_retap(uuid,uuid)') permission_rpc")).rows[0].permission_rpc, null);
+});
+
+test("existing permission holds are cleared without restoring any roster membership or changing accounts", async () => {
+  const beforeDb = await createClubDepartureDatabase({ migrate: false });
+  try {
+    const owner = await seedAccountLifecycle(beforeDb, { n: 100, role: "venue" });
+    const dancer = await seedAccountLifecycle(beforeDb, { n: 1000, role: "dancer" });
+    await beforeDb.query("insert into public.venue_dancer_affiliations(venue_id,dancer_id,approved_by_user_id,status,revoked_by_user_id,revoked_at)values($1,$2,$3,'revoked',$3,now())", [owner.venueId, dancer.dancerId, owner.userId]);
+    await beforeDb.exec(clubDepartureMigration);
+    assert.equal((await beforeDb.query("select reentry_blocked from public.venue_dancer_affiliations")).rows[0].reentry_blocked, true);
+    const accounts = (await beforeDb.query("select * from public.app_users order by id")).rows;
+    const profiles = (await beforeDb.query("select * from public.dancer_profiles order by id")).rows;
+    await beforeDb.exec(dancerRetapMigration);
+    assert.deepEqual((await beforeDb.query("select status,reentry_blocked from public.venue_dancer_affiliations")).rows, [{status:"revoked",reentry_blocked:false}]);
+    assert.deepEqual((await beforeDb.query("select * from public.app_users order by id")).rows, accounts);
+    assert.deepEqual((await beforeDb.query("select * from public.dancer_profiles order by id")).rows, profiles);
+    assert.equal((await beforeDb.query("select count(*)::int n from public.shifts")).rows[0].n, 0);
+  } finally { await beforeDb.close(); }
 });
 
 test("a failed check-in cancellation rolls back the entire club departure", async () => {
