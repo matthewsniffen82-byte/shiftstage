@@ -1015,7 +1015,7 @@ export function DashboardStyles() {
       .dancer-onboarding-step-control-chevron, .dancer-onboarding-step-control-icon { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
       .dancer-onboarding-step-control-chevron { transition: transform .18s ease; }
       .dancer-onboarding-step-control-chevron.is-open { transform: rotate(90deg); }
-      .dancer-onboarding-step-control.is-locked { width: 36px; padding: 0; border-color: transparent; color: #8e8996; background: transparent; }
+      .dancer-onboarding-step-control.is-locked { width: 36px; padding: 0; border-color: transparent; color: #aaa4b6; background: transparent; }
       .dancer-onboarding-step-control.is-complete { border-color: rgba(76,223,166,.3); color: #70efbd; background: rgba(25,140,101,.1); }
       .dancer-onboarding-steps .is-current .dancer-onboarding-step-control.is-action { border-color: #9864ed; background: #6d28d9; color: #fff; }
       .dancer-onboarding-steps .is-current .dancer-onboarding-step-marker { border-color: #9864ed; background: #6d28d9; color: #fff; }
@@ -1025,13 +1025,16 @@ export function DashboardStyles() {
       .dancer-onboarding-steps .is-complete { border-color: rgba(76,223,166,.28); }
       .dancer-onboarding-steps .is-complete > button { background: rgba(25,140,101,.07); }
       .dancer-onboarding-steps .is-complete .dancer-onboarding-step-marker { border-color: rgba(76,223,166,.42); color: #70efbd; background: rgba(25,140,101,.13); }
-      .dancer-onboarding-steps .is-locked > button { cursor: not-allowed; }
+      .dancer-onboarding-steps > .is-locked { border-color: rgba(211,196,238,.14); background: #111116; }
+      .dancer-onboarding-steps .is-locked > button { background: #111116; box-shadow: none; cursor: not-allowed; }
       .dancer-onboarding-steps .is-locked > button:disabled { opacity: 1 !important; filter: none !important; }
-      .dancer-onboarding-steps .is-locked .dancer-onboarding-step-copy strong { color: #d5d2da; }
-      .dancer-onboarding-steps .is-locked .dancer-onboarding-step-copy small { color: #b5afbf; }
+      .dancer-onboarding-steps .is-locked .dancer-onboarding-step-marker { border-color: #383440; color: #aaa4b6; background: #19181f; }
+      .dancer-onboarding-steps .is-locked .dancer-onboarding-step-copy strong { color: #dedbe5; }
+      .dancer-onboarding-steps .is-locked .dancer-onboarding-step-copy small { color: #bcb6c8; }
       body.dancr-button-system .dancer-onboarding-steps > li > button { padding: 13px 12px; border: 0 !important; border-radius: 14px !important; background: #141119 !important; box-shadow: none !important; -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
       body.dancr-button-system .dancer-onboarding-steps > .is-current > button { background: linear-gradient(110deg,#26173c,#18111f) !important; }
       body.dancr-button-system .dancer-onboarding-steps > .is-complete > button { background: #101d19 !important; }
+      body.dancr-button-system .dancer-onboarding-steps > .is-locked > button { background: #111116 !important; }
       body.dancr-button-system .dancer-onboarding-steps > .is-open > button { border-radius: 14px 14px 0 0 !important; }
       .dancer-onboarding-steps .is-deferred { border-color: rgba(126,234,255,.14); }
       .dancer-onboarding-steps .is-open > button { border-radius: 14px 14px 0 0; }
