@@ -6,10 +6,6 @@
 .legal-document-header { margin-bottom: 24px; }
 .legal-document-header > span { color: #9de8ff; font-size: 12px; font-weight: 800; letter-spacing: .15em; text-transform: uppercase; }
 .legal-document-header h1 { margin: 12px 0 0; font-size: clamp(32px, 6vw, 52px); line-height: 1.12; letter-spacing: -.035em; overflow-wrap: anywhere; }
-.legal-document-list { display: grid; gap: 12px; margin: 0; padding: 0; list-style: none; }
-.legal-document-list a { box-sizing: border-box; display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 64px; padding: 18px 20px; border: 1px solid #48405b; border-radius: 12px; background: #15121e; color: #f5f2fa; font-size: 16px; font-weight: 750; line-height: 1.5; text-decoration: none; }
-.legal-document-list a:hover { border-color: #9de8ff; background: #211a30; }
-.legal-document-list a > span { color: #9de8ff; font-size: 24px; line-height: 1; }
 .legal-related { margin: 0 0 24px; padding: 16px 20px; border: 1px solid #48405b; border-radius: 12px; background: #15121e; line-height: 1.65; }
 .legal-download { margin: 0 0 24px; line-height: 1.6; }
 .legal-contents { margin: 0 0 32px; padding: 16px 20px; border: 1px solid #48405b; border-radius: 12px; }
