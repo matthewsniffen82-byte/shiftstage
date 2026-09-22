@@ -613,7 +613,7 @@ export function DancerOnboardingCommand({
       detail: ageVerified ? "Your age is verified. You're ready for your first club tap."
         : !submitted ? "Unlocks after profile submission."
         : ageVerification?.required === false ? "Age verification is not required for your account yet."
-        : "Verify with Veriff before your first club tap.",
+        : "Verify with Ondato before your first club tap.",
       locked: !submitted,
     },
     {

@@ -57,9 +57,9 @@ test("every service-role API route has an explicit reviewed trust boundary", () 
       return !/webhooks\.constructEvent\(/.test(source);
     }
 
-    if (routePath === "app/api/veriff/webhook/route.ts") {
+    if (routePath === "app/api/ondato/webhook/route.ts") {
       return !guardPrecedesServiceClient(source, "if (!event) return NextResponse.json({ ok: false }, { status: 401 })")
-        || !source.includes("verifyVeriffPayload(raw, request.headers, config)");
+        || !source.includes("verifyOndatoPayload(raw, request.headers, config)");
     }
 
     if (routePath.startsWith("app/api/public/") || publicServiceRoleRoutes.has(routePath)) {

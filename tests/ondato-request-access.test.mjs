@@ -21,7 +21,7 @@ function fixture({ required = true, verified = false, error = null, role = 'danc
   } });
   return { calls, run: (method = 'POST', access = { role: 'dancer' }) => exports.createRequestSupabaseContext(new Request('https://mydancr.test/api/dancer/profile', { method, headers: { authorization: 'Bearer synthetic-token' } }), access) };
 }
-test('unverified dancers cannot mutate features, including when the Veriff result lookup fails', async () => {
+test('unverified dancers cannot mutate features, including when the Ondato result lookup fails', async () => {
   await assert.rejects(fixture().run(), error => error.status === 403);
   await assert.rejects(fixture({ error: { code: 'failure' } }).run(), error => error.status === 503);
   await assert.rejects(fixture({ required: undefined, verified: null }).run(), error => error.status === 503);

@@ -137,7 +137,7 @@ test("loading the dashboard cannot finalize an old tap before agreement and requ
       "next/server": { NextResponse: { json: value => value } },
       "@/src/lib/api": { apiError: error => { throw error; } },
       "@/src/lib/dancr/auth": { getAccountByUserId: async () => ({ role: "dancer", accountState: "active" }) },
-      "@/src/lib/dancr/veriff": { getDancerAgeVerification: async () => ({ required, status: verified ? "verified" : "not_started" }) },
+      "@/src/lib/dancr/ondato": { getDancerAgeVerification: async () => ({ required, status: verified ? "verified" : "not_started" }) },
       "@/src/lib/dancr/dancer-agreement": { getDancerAgreementAccess: async () => receipt(accepted) },
       "@/src/lib/dancr/customer-follow-notifications": {},
       "@/src/lib/dancr/deals": { getDancerDealMetrics: async () => ({}) },

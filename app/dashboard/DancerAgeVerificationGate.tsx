@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { requestDashboardJson } from "./dashboard-session";
-import { veriffHostedUrl } from "@/src/lib/dancr/veriff-url";
+import { ondatoHostedUrl } from "@/src/lib/dancr/ondato-url";
 
 export type DancerAgeVerification = { required: boolean; configured: boolean; status: string; verifiedAt: string | null };
 
@@ -45,7 +45,7 @@ export default function DancerAgeVerificationGate({ children, profileSubmitted =
           method: "POST", expectedRole: "dancer", timeoutMs: 25_000, fallbackMessage: "Unable to start verification.",
         });
         if (data.url) {
-          const url = veriffHostedUrl(data.url);
+          const url = ondatoHostedUrl(data.url);
           if (!url) throw new Error("Unable to open verification.");
           window.location.assign(url);
           return;
@@ -69,21 +69,21 @@ export default function DancerAgeVerificationGate({ children, profileSubmitted =
         : !verification.configured ? "Age verification is being connected. Please check back shortly. Account settings and support remain available."
         : reviewing ? "Your verification needs review. Check your status again later or contact MyDancr support."
         : verification.status === "declined" ? "Your verification was not approved. You must be 18 or older to use dancer features. You can retry with a valid ID or contact support."
-        : "Have your photo ID ready. Veriff will ask for ID photos and a live selfie—allow a few minutes."}</p>
+        : "Have your photo ID ready. Ondato will ask for ID photos and a live selfie—allow a few minutes."}</p>
       {profileSubmitted && verification?.configured && !reviewing && <>
         <p>MyDancr saves your verification result, not your ID photos, selfie, or date of birth.</p>
         <p>Complete this step before your first club tap.</p>
         <label className="dancer-age-consent"><input type="checkbox" checked={consent} onChange={event => setConsent(event.target.checked)} disabled={busy} />
-          <span>I understand I’ll continue to Veriff for ID and selfie verification.</span>
+          <span>I understand I’ll continue to Ondato for ID and selfie verification.</span>
         </label>
         <button type="button" className="button primary" disabled={busy || !consent} onClick={() => void act(true)}>
-          {busy ? "Please wait…" : "Continue to Veriff"}
+          {busy ? "Please wait…" : "Continue to Ondato"}
         </button>
       </>}
       <button type="button" className="button secondary" disabled={busy} onClick={() => void act(false)}>Check verification status</button>
       {error && <p role="alert">{error}</p>}
       <p className="dancer-age-links">
-        <a href="https://www.veriff.com/privacy-notice" target="_blank" rel="noopener noreferrer" aria-label="Veriff privacy notice (opens in a new tab)">Privacy notice</a>
+        <a href="https://ondato.com/privacy-policy/" target="_blank" rel="noopener noreferrer" aria-label="Ondato privacy notice (opens in a new tab)">Privacy notice</a>
         {" · "}
         <a href="/dashboard/dancer#dancer-support">Get help</a>
       </p>

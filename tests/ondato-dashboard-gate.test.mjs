@@ -6,7 +6,7 @@ import vm from 'node:vm';
 import ts from 'typescript';
 import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { veriffHostedUrl } from '../src/lib/dancr/veriff-url.ts';
+import { ondatoHostedUrl } from '../src/lib/dancr/ondato-url.ts';
 const require = createRequire(import.meta.url);
 const code = ts.transpileModule(readFileSync(new URL('../app/dashboard/DancerAgeVerificationGate.tsx', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX } }).outputText;
 function render(verification, props = {}) {
@@ -15,7 +15,7 @@ function render(verification, props = {}) {
     if (name === 'react/jsx-runtime') return require(name);
     if (name === 'react') return { ...React, useState: initial => [state++ === 0 ? verification : initial, () => {}], useEffect() {}, useCallback: fn => fn };
     if (name === './dashboard-session') return { requestDashboardJson() { throw new Error('No network while rendering'); } };
-    if (name === '@/src/lib/dancr/veriff-url') return { veriffHostedUrl };
+    if (name === '@/src/lib/dancr/ondato-url') return { ondatoHostedUrl };
     throw new Error(name);
   } });
   return renderToStaticMarkup(exports.default({ children: React.createElement('div', null, 'PRIVATE_DANCER_TOOLS'), ...props }));
@@ -31,7 +31,7 @@ test('verified adults and the explicitly inactive rollout retain access', () => 
 test('verification starts only after acknowledgement and in-review sessions do not offer another paid attempt', () => {
   const html = render({ required: true, configured: true, status: 'not_started' });
   assert.match(html, /type="checkbox"/); assert.match(html, /class="button primary" disabled=""/);
-  assert.match(html, /Veriff will ask for ID photos and a live selfie/); assert.ok(!html.includes('Didit'));
+  assert.match(html, /Ondato will ask for ID photos and a live selfie/); assert.ok(!html.includes('Didit'));
   const review = render({ required: true, configured: true, status: 'in_review' });
   assert.ok(!review.includes('button primary')); assert.ok(review.includes('Check verification status'));
 });
