@@ -21,13 +21,12 @@ test("both sides of venue affiliation use bounded authenticated request bodies",
 });
 
 test("dancer shift creation, editing, and ending use bounded authenticated bodies", () => {
-  assert.match(shifts, /const MAX_SHIFT_BODY_BYTES = 4_096/);
-  assert.match(shifts, /readShiftBody\(request\)/);
-  assert.match(shifts, /maxBytes: MAX_SHIFT_BODY_BYTES/);
-  assert.match(shifts, /UUID_PATTERN\.test\(candidate\)/);
-  assert.match(shifts, /const timezone = venue\.timezone/);
-  assert.doesNotMatch(shifts, /body\.timezone/);
-  assert.doesNotMatch(shifts, /request\.json\(/);
+  assert.match(shifts, /createRequestSupabaseContext\(request, \{ role: "dancer" \}\)/);
+  assert.match(shifts, /code: "upcoming_shifts_retired"/);
+  assert.match(shifts, /status: 410/);
+  assert.match(shifts, /export const POST = retiredSchedule/);
+  assert.match(shifts, /export const PATCH = retiredSchedule/);
+  assert.doesNotMatch(shifts, /request\.json\(|createScheduledDancerShift|broadcastFollowedDancerUpcomingShift/);
 
   assert.match(shiftActions, /const MAX_SHIFT_ACTION_BODY_BYTES = 2_048/);
   assert.match(shiftActions, /readShiftActionBody\(request\)/);

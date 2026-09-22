@@ -46,13 +46,6 @@
 
     function homeTvFeedSchedule(item) {
       if (item.shift?.isActive) return { label: "Working Now", className: "is-now" };
-      if (item.shift) {
-        const dateLabel = formatProfileTvShift(item.shift.startsAt, item.shift.timezone);
-        return {
-          label: dateLabel ? `Upcoming · ${dateLabel}` : "Upcoming",
-          className: "is-upcoming"
-        };
-      }
       return null;
     }
 
@@ -356,8 +349,8 @@
         item?.dancer?.avatarPhotoFocalX ?? item?.dancer?.primaryPhotoFocalX,
         item?.dancer?.avatarPhotoFocalY ?? item?.dancer?.primaryPhotoFocalY
       );
-      const venueName = String(item?.venue?.name || "").trim();
-      const venueSlug = String(item?.venue?.slug || "").trim();
+      const venueName = item?.shift?.isActive ? String(item?.venue?.name || "").trim() : "";
+      const venueSlug = item?.shift?.isActive ? String(item?.venue?.slug || "").trim() : "";
       const profileHref = dancerSlug
         ? `/?city=${encodeURIComponent(dancerCity)}&profile=${encodeURIComponent(dancerSlug)}`
         : "#";
@@ -391,7 +384,6 @@
       dancerPhoto.setAttribute("aria-hidden", "true");
       const dancerIsWorkingNow = Boolean(item?.shift?.isActive);
       if (dancerIsWorkingNow) dancerPhoto.setAttribute("data-working-now", "true");
-      if (item?.shift && !dancerIsWorkingNow) dancerPhoto.setAttribute("data-upcoming", "true");
       const dancerPhotoBorder = document.createElement("span");
       dancerPhotoBorder.setAttribute("data-dancer-avatar-border", "");
       dancerPhotoBorder.textContent = dancerName.charAt(0).toLocaleUpperCase();
@@ -1044,7 +1036,7 @@
         homeTvLandingPreload.clear();
         setHomeTvFeedCount("0 videos", venueFilter);
         renderHomeTvFeedMessage(venueFilter
-          ? `No approved MyDancr TV videos are available from dancers affiliated with, working now at, or scheduled at ${venueFilter.name}.`
+          ? `No approved MyDancr TV videos are available from dancers working now at ${venueFilter.name}.`
           : `No approved MyDancr TV videos are available ${discoveryLocationPhrase(city)} yet.`);
         settleHomeTvFeedLanding({ complete: true });
         return;

@@ -75,11 +75,7 @@ export default async function DancerPublicPage({ params, searchParams }: PagePro
       ? [{ id: "primary", imageUrl: heroPhoto, isPrimary: true, sortOrder: 0 }]
       : [];
   const activeShift = profile.upcomingShifts.find((shift) => isActiveNow(shift));
-  const upcomingShifts = profile.upcomingShifts.filter(
-    (shift) => shift.id !== activeShift?.id,
-  );
-  const hasUpcomingShift = !activeShift && upcomingShifts.length > 0;
-  const actionShift = activeShift || upcomingShifts[0] || null;
+  const actionShift = activeShift || null;
   let secondaryUnavailable = false;
   const optionalFailure = () => {
     if (!secondaryUnavailable) console.warn("PUBLIC_PROFILE_SECONDARY_CONTENT_UNAVAILABLE");
@@ -124,17 +120,16 @@ export default async function DancerPublicPage({ params, searchParams }: PagePro
       <main className="public-profile-shell">
         <ProfileViewTracker
           dancerId={profile.id}
-          hasSchedule={profile.upcomingShifts.length > 0}
+          hasSchedule={Boolean(activeShift)}
         />
         <PublicProfileStyles />
 
         <header className="profile-titlebar">
           <div className="profile-titlebar-person">
             <div
-              aria-label={`${profile.stageName} profile photo${activeShift ? ", working now" : hasUpcomingShift ? ", upcoming shift posted" : ""}`}
+              aria-label={`${profile.stageName} profile photo${activeShift ? ", working now" : ""}`}
               className={`profile-titlebar-avatar${avatarPhoto ? " has-photo" : ""}`}
               data-dancer-avatar=""
-              data-upcoming={hasUpcomingShift ? "true" : undefined}
               data-working-now={activeShift ? "true" : undefined}
               role="img"
             >
@@ -206,9 +201,9 @@ export default async function DancerPublicPage({ params, searchParams }: PagePro
 
         <section
           aria-label="Tonight"
-          className={`profile-tonight-card${activeShift ? " is-now" : ""}${!activeShift && upcomingShifts.length ? " is-upcoming" : ""}${!activeShift && !upcomingShifts.length ? " is-no-schedule" : ""}${activeDeal ? " has-club-deal" : ""}${!activeShift && actionShift ? " has-venue-deal-link" : ""}`}
-          data-profile-deal-state={activeDeal ? "available" : actionShift ? "available-after-check-in" : "none"}
-          data-profile-shift-state={activeShift ? "now" : actionShift ? "upcoming" : "no-schedule"}
+          className={`profile-tonight-card${activeShift ? " is-now" : " is-no-schedule"}${activeDeal ? " has-club-deal" : ""}`}
+          data-profile-deal-state={activeDeal ? "available" : "none"}
+          data-profile-shift-state={activeShift ? "now" : "no-schedule"}
         >
           {activeShift ? (
           <div
@@ -229,36 +224,9 @@ export default async function DancerPublicPage({ params, searchParams }: PagePro
               </Link>
             </div>
           </div>
-          ) : upcomingShifts.length ? (
-          <div
-            className="profile-shift-card profile-upcoming-card is-upcoming"
-            aria-labelledby="profile-schedule-title"
-          >
-            <div className="profile-upcoming-list">
-              {upcomingShifts.map((shift, index) => (
-                <Link
-                  className="profile-upcoming-destination"
-                  href={`/venues/${encodeURIComponent(shift.venueSlug)}`}
-                  key={shift.id}
-                >
-                  <span
-                    className="profile-upcoming-state"
-                    id={index === 0 ? "profile-schedule-title" : undefined}
-                  >
-                    Upcoming · {formatShiftDate(shift.shiftDate || shift.startsAt, shift.timezone)}
-                  </span>
-                  <span className="profile-upcoming-copy">
-                    <VenuePinIcon />
-                    <strong>{shift.venueName}</strong>
-                  </span>
-                  <span aria-hidden="true" className="profile-upcoming-cue">›</span>
-                </Link>
-              ))}
-            </div>
-          </div>
           ) : (
           <div className="profile-shift-card profile-schedule-empty is-empty" aria-label="Schedule status">
-            <span className="profile-empty-state">No shift posted</span>
+            <span className="profile-empty-state">Not working now</span>
             <span className="profile-empty-copy">
               <em>Follow {profile.stageName} for updates</em>
             </span>
@@ -295,9 +263,6 @@ export default async function DancerPublicPage({ params, searchParams }: PagePro
             </div>
           ) : null}
 
-          {actionVenue && !activeShift && actionShift ? (
-            <p className="profile-upcoming-offer-note">Going tonight?</p>
-          ) : null}
 
           {actionVenue ? (
             <div
@@ -313,17 +278,6 @@ export default async function DancerPublicPage({ params, searchParams }: PagePro
                 source="dancer_profile"
                 venue={{ ...actionVenue, isActive: true, isPublic: true }}
               />
-              {!activeShift && actionShift ? (
-                <Link
-                  aria-label={`View free entry on ${actionShift.venueName}'s venue page`}
-                  className="profile-upcoming-venue-deal"
-                  data-upcoming-venue-deal="venue-page"
-                  href={`/venues/${encodeURIComponent(actionShift.venueSlug)}`}
-                >
-                  <span>Free Entry</span>
-                  <span aria-hidden="true">›</span>
-                </Link>
-              ) : null}
             </div>
           ) : null}
         </section>
@@ -355,23 +309,11 @@ export default async function DancerPublicPage({ params, searchParams }: PagePro
             <SocialLinks dancerId={profile.id} links={profile.socialLinks} showHeading={false} />
           ) : null}
           stageName={profile.stageName}
-          viewerStatus={activeShift
-            ? "Working Now"
-            : actionShift
-              ? `Upcoming · ${formatShiftDate(actionShift.shiftDate || actionShift.startsAt, actionShift.timezone)}`
-              : "No shift posted"}
+          viewerStatus={activeShift ? "Working Now" : "Not working now"}
         />
 
       </main>
     </DancerFollowStateProvider>
-  );
-}
-
-function formatShiftDate(startsAt: string, timeZone?: string | null) {
-  return formatDateValue(
-    startsAt,
-    { weekday: "short", month: "short", day: "numeric" },
-    timeZone,
   );
 }
 

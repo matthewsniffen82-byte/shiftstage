@@ -1036,16 +1036,16 @@
           <div class="post-shift-head">
             <span class="eyebrow">Shift posting</span>
             <h3>Shift Manager</h3>
-            <p>Tap the dressing-room sticker to go Working Now. Upcoming schedules contain only the venue and date.</p>
+            <p>Tap the dressing-room sticker to go Working Now. Your club appears publicly only during your check-in.</p>
           </div>
-          <div class="post-shift-value-row" aria-label="Post shift benefits">
+          <div hidden class="post-shift-value-row" aria-label="Post shift benefits">
             <div><strong>Broadcast</strong><span>followers notified</span></div>
             <div><strong>Profile</strong><span>schedule updates live</span></div>
             <div><strong>Venue page</strong><span>shift appears there</span></div>
           </div>
           <div class="info-tile share-tile" id="dancerSharePanel"></div>
           <div class="shift-verification-panel" id="shiftVerificationPanel" hidden></div>
-          <form class="auth-form" id="shiftPostForm">
+          <form class="auth-form" id="shiftPostForm" hidden inert>
             <div class="field">
               <label for="shiftClub">Approved club</label>
               <select class="dancer-schedule-control" id="shiftClub" disabled><option value="">Loading approved clubs…</option></select>
@@ -1076,7 +1076,7 @@
           <button class="action-btn post-shift-submit" type="submit" disabled>Post another shift + notify followers</button>
           </form>
           <div class="rule-note" id="shiftPostResult" hidden>Schedule sent to followers and notify-only guests.</div>
-          <div class="schedule-broadcast-note">
+          <div class="schedule-broadcast-note" hidden>
             <span class="eyebrow">Schedule broadcast</span>
             <strong>Broadcast confirmation appears here after posting.</strong>
             <p>Dancr shows how many followers and notify-only guests received the shift alert, so dancers can see the value immediately.</p>
@@ -1086,7 +1086,7 @@
               <div class="manager-head">
                 <span class="eyebrow">Manage shifts</span>
                 <h4>Posted shifts</h4>
-                <p>See every posted shift here. Edit or delete any shift; public cards only show Working Now or the closest upcoming shift.</p>
+                <p>Manage your current check-in from the dancer dashboard.</p>
               </div>
               <div class="shift-manager-list" id="dancerShiftManager"></div>
             </section>

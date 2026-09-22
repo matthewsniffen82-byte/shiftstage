@@ -131,43 +131,15 @@
           label: "Working now"
         };
       }
-      if (profile.scheduled) {
-        return {
-          className: "is-upcoming",
-          label: displayPublicShiftTime(profile.time, profile)
-        };
-      }
+
       return {
         className: "is-no-shift",
-        label: "No upcoming shift posted"
+        label: "Not working now"
       };
     }
 
     function homeDancerGridScheduleLabel(profile, city = selectedCity()) {
-      city = profileDiscoveryCity(profile, city);
-      if (isWorkingTonight(profile, city)) return "Working now";
-      if (!profile?.scheduled) return "No upcoming shift posted";
-
-      if (profile.shiftStartsAt) {
-        const start = new Date(profile.shiftStartsAt);
-        if (!Number.isNaN(start.getTime())) {
-          const dateLabel = new Intl.DateTimeFormat("en-US", {
-            month: "short",
-            day: "numeric",
-            timeZone: cityTimeZone(city)
-          }).format(start);
-          return `Upcoming · ${dateLabel}`;
-        }
-      }
-
-      const compactDate = compactUpcomingDateLabel(profile, city);
-      const match = compactDate.match(/^(\d{1,2})\/(\d{1,2})$/);
-      if (match) {
-        const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-        const monthName = monthNames[Number(match[1]) - 1];
-        if (monthName) return `Upcoming · ${monthName} ${Number(match[2])}`;
-      }
-      return "Upcoming";
+      return isWorkingTonight(profile, profileDiscoveryCity(profile, city)) ? "Working now" : "Not working now";
     }
 
     function homeDiscoveryFeedLiveQrData(profile) {
@@ -370,7 +342,7 @@
         : `<div class="home-dancer-grid-photo" aria-hidden="true">${escapeHtml(String(profile.name).trim().charAt(0))}</div>`;
       const venueName = String(profile.venue || "").trim();
       const hasPublishedVenue = Boolean(
-        profile.scheduled &&
+        isWorkingTonight(profile, city) &&
         venueName &&
         venueName.toLowerCase() !== "venue pending"
       );
@@ -415,20 +387,18 @@
     function dancerDirectoryFilterMarkup(profiles, city) {
       const counts = {
         all: profiles.length,
-        now: profiles.filter((profile) => isWorkingTonight(profile, city)).length,
-        upcoming: profiles.filter((profile) => profile.scheduled && !isWorkingTonight(profile, city)).length
+        now: profiles.filter((profile) => isWorkingTonight(profile, city)).length
       };
       const filters = [
         { id: "all", label: "All" },
-        { id: "now", label: "Now" },
-        { id: "upcoming", label: "Upcoming" }
+        { id: "now", label: "Now" }
       ];
       return `
         <div class="dancer-directory-filters" role="tablist" aria-label="Filter dancers">
           ${filters.map((filter) => {
             const active = dancerDirectoryFilter === filter.id;
             const empty = counts[filter.id] === 0;
-            const statusDot = filter.id === "now" || filter.id === "upcoming"
+            const statusDot = filter.id === "now"
               ? '<span class="dancer-directory-filter-status" aria-hidden="true"></span>'
               : "";
             return `<button class="dancer-directory-filter ${active ? "is-active" : ""}${empty ? " is-empty" : ""}" type="button" role="tab" data-dancer-directory-filter="${filter.id}" aria-controls="results" aria-selected="${active}" aria-pressed="${active}">${statusDot}<span class="dancer-directory-filter-label">${filter.label}</span><span class="dancer-directory-filter-count">${counts[filter.id]}</span></button>`;
@@ -442,22 +412,9 @@
       if (dancerDirectoryFilter === "now") {
         return [{ label: "Working Now", className: "is-now", profiles: groups.workingNow }];
       }
-      if (dancerDirectoryFilter === "upcoming") {
-        return [{
-          label: "Upcoming",
-          className: "is-upcoming",
-          profiles: profiles
-            .filter((profile) => profile.scheduled && !isWorkingTonight(profile, city))
-            .sort((a, b) => (
-              upcomingSortValue(a, city) - upcomingSortValue(b, city) ||
-              dailyRotationScore(a, city) - dailyRotationScore(b, city)
-            ))
-        }];
-      }
       return [
         { label: "Working Now", className: "is-now", profiles: groups.workingNow },
-        { label: "Upcoming", className: "is-upcoming", profiles: groups.upcoming },
-        { label: "No Schedule", className: "is-open", profiles: groups.noSchedule }
+        { label: "Not working now", className: "is-open", profiles: [...groups.noSchedule, ...groups.upcoming] }
       ];
     }
 

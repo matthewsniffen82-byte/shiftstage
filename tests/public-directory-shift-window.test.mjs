@@ -106,14 +106,14 @@ function fixture(shifts, { profiles = [profile], queryError = null, elapsedDurin
 }
 
 const scenarios = [
-  { name: "long history retains the next date", rows: [scheduled("next")], chosen: "next", tonight: false },
+  { name: "upcoming dates never create a public club association", rows: [scheduled("next")], chosen: null, tonight: false },
   { name: "active NFC wins over many eligible scheduled dates", rows: [...Array.from({ length: 70 }, (_, i) => scheduled(`scheduled-${i}`, -120_000 + i, { ends_at: iso(86_400_000) })), live("live")], chosen: "live", tonight: true },
   { name: "active scheduled presence keeps priority", rows: [scheduled("next"), live("active-scheduled", { shift_source: "scheduled" })], chosen: "active-scheduled", tonight: true },
-  { name: "checked-out presence is excluded before selection", rows: [live("out", { checked_out_at: iso(-1) }), scheduled("next")], chosen: "next", tonight: false },
-  { name: "expired presence is excluded before selection", rows: [live("expired", { location_verification_expires_at: iso(0) }), scheduled("next")], chosen: "next", tonight: false },
-  { name: "cancelled presence is excluded before selection", rows: [live("cancelled", { status: "cancelled" }), scheduled("next")], chosen: "next", tonight: false },
-  { name: "an inactive venue cannot consume the selected window", rows: [live("hidden", { venues: { ...venue, is_active: false } }), scheduled("next")], chosen: "next", tonight: false },
-  { name: "a venue without a live deal cannot consume the selected window", rows: [live("no-deal", { venues: { ...venue, has_active_club_deal: false } }), scheduled("next")], chosen: "next", tonight: false },
+  { name: "checked-out presence is excluded before selection", rows: [live("out", { checked_out_at: iso(-1) }), scheduled("next")], chosen: null, tonight: false },
+  { name: "expired presence is excluded before selection", rows: [live("expired", { location_verification_expires_at: iso(0) }), scheduled("next")], chosen: null, tonight: false },
+  { name: "cancelled presence is excluded before selection", rows: [live("cancelled", { status: "cancelled" }), scheduled("next")], chosen: null, tonight: false },
+  { name: "an inactive venue cannot consume the selected window", rows: [live("hidden", { venues: { ...venue, is_active: false } }), scheduled("next")], chosen: null, tonight: false },
+  { name: "a venue without a live deal cannot consume the selected window", rows: [live("no-deal", { venues: { ...venue, has_active_club_deal: false } }), scheduled("next")], chosen: null, tonight: false },
 ];
 for (const scenario of scenarios) test(scenario.name, async () => {
   const f = fixture([...history(), ...scenario.rows]);
@@ -153,16 +153,16 @@ test("query uncertainty fails without a legacy request or metrics call", async (
 test("presence that expires in transit is not displayed as active", async () => {
   const f = fixture([live("expiring", { location_verification_expires_at: iso(100) }), scheduled("next")], { elapsedDuringFetch: 101 });
   const result = await f.get();
-  assert.equal(result.dancers[0].shiftId, "next"); assert.equal(result.tonightDancers.length, 0);
+  assert.equal(result.dancers[0].shiftId, null); assert.equal(result.tonightDancers.length, 0);
 });
-test("both optional aliases have their own bounds and one captured clock", async () => {
+test("only the current-presence alias is requested with finite expiry and a bound", async () => {
   const f = fixture([]); await f.get(); const query = f.queries[0];
-  assert.equal(query["live_shifts.limit"], "50"); assert.equal(query["scheduled_shifts.limit"], "50");
+  assert.equal(query["live_shifts.limit"], "50"); assert.equal(query["scheduled_shifts.limit"], undefined);
   assert.equal(query["live_shifts.order"], "starts_at.asc,id.asc");
-  assert.equal(query["scheduled_shifts.order"], "starts_at.asc,id.asc");
+  assert.equal(query["scheduled_shifts.order"], undefined);
   assert.deepEqual(f.queryParameters[0].getAll("live_shifts.location_verification_expires_at"), ["gt." + iso(0), "lt.infinity"]);
-  assert.deepEqual(f.queryParameters[0].getAll("scheduled_shifts.ends_at"), ["gte." + iso(0), "lt.infinity"]);
-  assert.match(query.select, /live_shifts:shifts\(/); assert.match(query.select, /scheduled_shifts:shifts\(/);
+  assert.deepEqual(f.queryParameters[0].getAll("scheduled_shifts.ends_at"), []);
+  assert.match(query.select, /live_shifts:shifts\(/); assert.doesNotMatch(query.select, /scheduled_shifts:shifts\(/);
   assert.match(query.select, /venues!inner\(/);
 });
 
@@ -173,9 +173,9 @@ test("another live candidate survives an earlier presence expiring in transit", 
   assert.equal(result.tonightDancers[0].shiftId, "valid");
 });
 
-test("another scheduled candidate survives an earlier end passing in transit", async () => {
+test("scheduled candidates remain hidden after an earlier end passes in transit", async () => {
   const f = fixture([scheduled("ending", -120000, { ends_at: iso(100) }), scheduled("next")], { elapsedDuringFetch: 101 });
-  assert.equal((await f.get()).dancers[0].shiftId, "next");
+  assert.equal((await f.get()).dancers[0].shiftId, null);
 });
 
 test("non-finite PostgreSQL timestamps cannot fill a window ahead of eligible dates", async () => {
@@ -184,7 +184,7 @@ test("non-finite PostgreSQL timestamps cannot fill a window ahead of eligible da
   }));
   const f = fixture([...nonfinite, live("valid"), scheduled("next")]);
   assert.equal((await f.get()).dancers[0].shiftId, "valid");
-  assert.equal(f.transfers[0].children[0], 2);
+  assert.equal(f.transfers[0].children[0], 1);
 });
 
 test("exhausted in-transit candidates are hidden without unbounded followup queries", async () => {
@@ -232,7 +232,7 @@ test("native PostgreSQL excludes infinite expiry/end before taking a directory w
       check (ends_at > starts_at));
       insert into synthetic_dates select i, '2026-09-12 08:00:00Z'::timestamptz + i * interval '1 second', 'infinity', 'infinity' from generate_series(1,60) i;
       insert into synthetic_dates values (100, '2026-09-12 09:30:00Z', '2026-09-12 12:00:00Z', '2026-09-12 12:00:00Z');`);
-    for (const [alias, column] of [["live_shifts", "location_verification_expires_at"], ["scheduled_shifts", "ends_at"]]) {
+    for (const [alias, column] of [["live_shifts", "location_verification_expires_at"]]) {
       const filters = f.queryParameters[0].getAll(`${alias}.${column}`);
       const parameters = [], clauses = [];
       for (const filter of filters) {

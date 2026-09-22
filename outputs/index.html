@@ -41859,16 +41859,16 @@
           <div class="post-shift-head">
             <span class="eyebrow">Shift posting</span>
             <h3>Shift Manager</h3>
-            <p>Tap the dressing-room sticker to go Working Now. Upcoming schedules contain only the venue and date.</p>
+            <p>Tap the dressing-room sticker to go Working Now. Your club appears publicly only during your check-in.</p>
           </div>
-          <div class="post-shift-value-row" aria-label="Post shift benefits">
+          <div hidden class="post-shift-value-row" aria-label="Post shift benefits">
             <div><strong>Broadcast</strong><span>followers notified</span></div>
             <div><strong>Profile</strong><span>schedule updates live</span></div>
             <div><strong>Venue page</strong><span>shift appears there</span></div>
           </div>
           <div class="info-tile share-tile" id="dancerSharePanel"></div>
           <div class="shift-verification-panel" id="shiftVerificationPanel" hidden></div>
-          <form class="auth-form" id="shiftPostForm">
+          <form class="auth-form" id="shiftPostForm" hidden inert>
             <div class="field">
               <label for="shiftClub">Approved club</label>
               <select class="dancer-schedule-control" id="shiftClub" disabled><option value="">Loading approved clubs…</option></select>
@@ -41899,7 +41899,7 @@
           <button class="action-btn post-shift-submit" type="submit" disabled>Post another shift + notify followers</button>
           </form>
           <div class="rule-note" id="shiftPostResult" hidden>Schedule sent to followers and notify-only guests.</div>
-          <div class="schedule-broadcast-note">
+          <div class="schedule-broadcast-note" hidden>
             <span class="eyebrow">Schedule broadcast</span>
             <strong>Broadcast confirmation appears here after posting.</strong>
             <p>Dancr shows how many followers and notify-only guests received the shift alert, so dancers can see the value immediately.</p>
@@ -41909,7 +41909,7 @@
               <div class="manager-head">
                 <span class="eyebrow">Manage shifts</span>
                 <h4>Posted shifts</h4>
-                <p>See every posted shift here. Edit or delete any shift; public cards only show Working Now or the closest upcoming shift.</p>
+                <p>Manage your current check-in from the dancer dashboard.</p>
               </div>
               <div class="shift-manager-list" id="dancerShiftManager"></div>
             </section>
@@ -45600,8 +45600,8 @@
         slug: item.slug,
         name: item.stageName,
         city: String(item.city || "").trim(),
-        venueSlug: item.venueSlug || "",
-        venueId: item.venueId || "",
+        venueSlug: isTonight ? item.venueSlug || "" : "",
+        venueId: isTonight ? item.venueId || "" : "",
         venueQrCodeUrl: item.venueQrCodeUrl || "",
         venueQrCodeLabel: item.venueQrCodeLabel || "",
         activeDeals: Array.isArray(item.activeDeals) ? item.activeDeals : item.activeDeal ? [item.activeDeal] : [],
@@ -45610,11 +45610,11 @@
         dealAttributionToken: item.dealAttributionToken || "",
         shiftId: item.shiftId || "",
         status: item.verified ? "Verified" : "Pending",
-        venue: item.venueName || "Venue pending",
+        venue: isTonight ? item.venueName || "" : "",
         time: item.shiftLabel || "Schedule pending",
         tonight: isTonight,
         liveTonight: isTonight,
-        scheduled: Boolean(item.shiftLabel || item.shiftStartsAt || item.venueName),
+        scheduled: isTonight,
         trend: item.currentRank || null,
         trendRank: item.currentRank || null,
         distance: formatLiveDistance(item.distanceMiles),
@@ -48219,21 +48219,11 @@
 
     function displayShiftForProfile(profile, city = activeDancerCity()) {
       const now = Date.now();
-      const shifts = profilePostedShifts(profile)
-        .filter((shift) => !shift.checkedOutAt && (!shift.shiftEndsAt || new Date(shift.shiftEndsAt).getTime() >= now))
-        .sort((left, right) => new Date(left.shiftStartsAt || 0).getTime() - new Date(right.shiftStartsAt || 0).getTime());
-      const live = shifts.find((shift) => {
-        const startsAt = new Date(shift.shiftStartsAt || 0).getTime();
-        const endsAt = new Date(shift.shiftEndsAt || 0).getTime();
-        const expiresAt = Date.parse(shift.locationVerificationExpiresAt || "");
-        const checkedIn = shift.locationStatus === "club_confirmed" || (
-          shift.locationStatus === "location_confirmed" &&
-          Number.isFinite(expiresAt) &&
-          expiresAt > now
-        );
-        return checkedIn && startsAt <= now && endsAt >= now;
-      });
-      return live || shifts.find((shift) => new Date(shift.shiftEndsAt || 0).getTime() >= now) || null;
+      return profilePostedShifts(profile).find(shift =>
+        shift.checkedInAt && !shift.checkedOutAt && shift.locationStatus === "club_confirmed" &&
+        Number.isFinite(Date.parse(shift.locationVerificationExpiresAt || "")) &&
+        Date.parse(shift.locationVerificationExpiresAt) > now
+      ) || null;
     }
 
     function applyDisplayShift(profile, city = activeDancerCity()) {
@@ -48243,7 +48233,11 @@
           scheduled: false,
           tonight: false,
           venue: "",
-          time: "No upcoming shifts",
+          venueId: "",
+          venueSlug: "",
+          activeDeal: null,
+          activeDeals: [],
+          time: "Not working now",
           shiftDate: "",
           shiftStart: "",
           shiftEnd: "",
@@ -52648,124 +52642,7 @@
     }
 
     function postVerifiedShift() {
-      if (!dancerSetup.approval) {
-        showToast("Post shift locked until approval");
-        return;
-      }
-      const city = activeDancerCity();
-      const market = discoveryMarket(city);
-      const venueId = document.getElementById("shiftClub").value;
-      const approvedVenue = approvedDancerShiftVenues().find((venue) => venue.id === venueId);
-      if (!approvedVenue) {
-        showToast("A venue manager must approve your affiliation before you can post a shift there.");
-        return;
-      }
-      const venueName = approvedVenue.name;
-      const venue = market.venues.find((item) => item.id === venueId || item.name === venueName) || approvedVenue;
-      const dateValue = document.getElementById("shiftDate").value;
-      const notes = displayText(document.getElementById("shiftNotes").value.trim());
-      const repeat = document.getElementById("shiftRepeat").value;
-      const name = cleanDisplayValue(activeDancerName());
-      const time = "";
-      const existing = market.dancers.find((profile) => profile.name === name);
-      const wasScheduled = Boolean(existing?.scheduled);
-      const range = shiftIsoRange(dateValue, "00:01", "23:59");
-      const localShiftId = editingShiftId || `local-shift-${Date.now()}`;
-      const existingShift = editingShiftId && existing
-        ? profilePostedShifts(existing).find((shift) => String(shift.shiftId) === String(editingShiftId))
-        : null;
-      shiftCheckInMessage = "Upcoming date posted. Tap the dressing-room sticker when you arrive to go Working Now.";
-      shiftCheckInTone = "";
-      shiftCheckInCode = "";
-      const shiftData = {
-        name,
-        status: "Verified",
-        venue: venueName,
-        time,
-        tonight: isTonightDate(dateValue, city),
-        scheduled: true,
-        trend: existing?.trend || 9,
-        distance: venue?.distance || "2.4 mi",
-        shiftDate: dateValue,
-        shiftStart: "",
-        shiftEnd: "",
-        shiftStartsAt: range.startsAt,
-        shiftEndsAt: range.endsAt,
-        shiftTimeZone: timeZoneByCity[city] || "America/Los_Angeles",
-        shiftLabel: formatDateLabel(dateValue, city),
-        shiftId: localShiftId,
-        locationStatus: existingShift?.locationStatus || "self_reported",
-        checkedInAt: existingShift?.checkedInAt || "",
-        checkedOutAt: existingShift?.checkedOutAt || "",
-        checkinDistanceFeet: existingShift?.checkinDistanceFeet ?? null,
-        workingStatus: existingShift?.workingStatus || "self_reported",
-        commissionTrackingStartedAt: existingShift?.commissionTrackingStartedAt || "",
-        commissionTrackingStoppedAt: existingShift?.commissionTrackingStoppedAt || "",
-        endedAt: existingShift?.endedAt || "",
-        endedReason: existingShift?.endedReason || "",
-        shiftSummary: existingShift?.shiftSummary || null,
-        repeat,
-        notes,
-        socials: existing?.socials || { ...dancerSignupSocials }
-      };
-      const postedShift = { ...shiftData };
-      saveLocalPostedShift(city, name, postedShift);
-      let postedProfile = existing;
-      if (existing) {
-        Object.assign(existing, shiftData);
-        const shifts = profilePostedShifts(existing).filter((shift) => String(shift.shiftId) !== String(localShiftId));
-        existing.postedShifts = editingShiftId ? [...shifts, postedShift] : [...shifts, postedShift];
-        postedProfile = existing;
-      } else {
-        postedProfile = { ...shiftData, postedShifts: [postedShift] };
-        market.dancers.push(postedProfile);
-        market.stats.dancers += 1;
-      }
-      applyDisplayShift(postedProfile, city);
-      if (!wasScheduled) {
-        if (venue) venue.shifts += 1;
-        market.stats.shifts += 1;
-      }
-      dancerSetup.shift = true;
-      citySelect.value = city;
-      selectedVenueName = null;
-      if (!followedByCity[city].includes(name)) followedByCity[city].push(name);
-      const noticeText = shiftNotificationMessage(postedProfile || shiftData, city, dateValue);
-      const noticeCounts = shiftRecipientCounts(postedProfile || shiftData, city);
-      lastPostedShift = { city, name, venue: venueName, dateValue, noticeText, noticeCounts };
-      document.getElementById("shiftPostResult").hidden = false;
-      document.getElementById("shiftPostResult").textContent = noticeText;
-      render();
-      renderDancerManagement();
-      if (customerDashboard.classList.contains("show")) renderDashboard();
-      showToast(noticeText);
-      if (approvedVenue.id) {
-        const payload = {
-          venueId: approvedVenue.id,
-          shiftDate: dateValue
-        };
-        const request = editingShiftId
-          ? patchAuthenticatedJson("/api/dancer/shifts", { ...payload, shiftId: editingShiftId, status: "posted" })
-          : postAuthenticatedJson("/api/dancer/shifts", payload);
-        request.then((data) => {
-          if (!data) return;
-          const postedProfile = market.dancers.find((profile) => profile.name === name);
-          if (postedProfile && data.shiftId) {
-            const shifts = profilePostedShifts(postedProfile);
-            const savedShift = shifts.find((shift) => String(shift.shiftId) === String(localShiftId));
-            if (savedShift) {
-              removeLocalPostedShift(city, name, localShiftId);
-              savedShift.shiftId = data.shiftId;
-              saveLocalPostedShift(city, name, savedShift);
-            }
-            applyDisplayShift(postedProfile, city);
-          }
-          document.getElementById("shiftPostResult").textContent = `${noticeText} Live shift saved.`;
-          window.dispatchEvent(new CustomEvent("mydancr:push-invitation", { detail: { moment: "dancer-shift" } }));
-          renderDancerManagement();
-        }).catch((error) => showToast(error.message || "Could not save live shift"));
-      }
-      editingShiftId = null;
+      openUnifiedDashboard("dancer", "dancer-schedule");
     }
 
     function venueDetails(venue, city) {
@@ -53076,21 +52953,12 @@
       const tonight = localProfiles
         .filter((profile) => isWorkingTonight(profile))
         .sort((a, b) => shiftStartMinutes(a.time) - shiftStartMinutes(b.time));
-      const upcoming = localProfiles
-        .filter((profile) => !isWorkingTonight(profile, city) && profile.scheduled)
-        .sort((a, b) => upcomingSortValue(a, city) - upcomingSortValue(b, city));
-      const noSchedule = localProfiles
-        .filter((profile) => !isWorkingTonight(profile, city) && !profile.scheduled)
-        .sort((a, b) => dailyRotationScore(a, city) - dailyRotationScore(b, city));
       const followsVenue = isFollowingVenue(city, venue.name);
       const venueValue = escapeOptionValue(venue.id || venue.name);
       const quickStats = [
         tonight.length
           ? `<button class="venue-quick-stat is-working" type="button" data-venue-jump="venue-working-now" aria-label="${tonight.length} ${tonight.length === 1 ? "dancer" : "dancers"} working now"><strong>${tonight.length}</strong><span>working now</span></button>`
           : `<span class="venue-quick-stat is-working is-empty" role="status" aria-label="No dancers working now"><strong>0</strong><span>working now</span></span>`,
-        upcoming.length
-          ? `<button class="venue-quick-stat is-upcoming" type="button" data-venue-jump="venue-upcoming-shifts" aria-label="${upcoming.length} upcoming ${upcoming.length === 1 ? "shift" : "shifts"}"><strong>${upcoming.length}</strong><span>upcoming</span></button>`
-          : `<span class="venue-quick-stat is-upcoming is-empty" role="status" aria-label="No upcoming shifts"><strong>0</strong><span>upcoming</span></span>`
       ].join("");
       const activitySections = [
         `
@@ -53100,21 +52968,7 @@
               ? venueDancerGridMarkup(tonight, city, `Working now at ${details.name}`)
               : `<div class="venue-activity-empty is-compact"><span class="venue-activity-empty-icon">${actionIconMarkup("clock")}</span><span><strong>No dancers working now</strong><small>Follow this club for updates.</small></span></div>`}
           </section>
-        `,
         `
-          <section class="venue-activity-section is-upcoming" aria-labelledby="venue-upcoming-shifts">
-            <h3 class="section-title" id="venue-upcoming-shifts" aria-label="${upcoming.length} upcoming ${upcoming.length === 1 ? "shift" : "shifts"} at ${escapeHtml(details.name)}"><span>Upcoming · ${upcoming.length}</span></h3>
-            ${upcoming.length
-              ? venueDancerGridMarkup(upcoming, city, `Upcoming at ${details.name}`)
-              : `<div class="venue-activity-empty is-compact"><span class="venue-activity-empty-icon">${actionIconMarkup("calendar")}</span><span><strong>No upcoming schedules</strong><small>No upcoming dancer dates are posted for this club.</small></span></div>`}
-          </section>
-        `,
-        noSchedule.length ? `
-          <section class="venue-activity-section is-open" aria-labelledby="venue-no-shift-posted">
-            <h3 class="section-title" id="venue-no-shift-posted" aria-label="${noSchedule.length} ${noSchedule.length === 1 ? "dancer has" : "dancers have"} no shift posted at ${escapeHtml(details.name)}"><span>No Shift Posted</span><span class="venue-activity-count" aria-hidden="true">${noSchedule.length}</span></h3>
-            ${venueDancerGridMarkup(noSchedule, city, `No shift posted at ${details.name}`)}
-          </section>
-        ` : ""
       ].filter(Boolean).join("");
       if (venue.id && !venue.isDashboardPreview) recordVenuePageEvent({ venueId: venue.id, eventType: "page_view", source: "venue_page" });
 
@@ -54216,24 +54070,12 @@
           </div>
         `;
       }
-      if (profile.scheduled) {
-        const upcomingDateLabel = compactUpcomingDateLabel(profile) || "Date posted";
-        return `
-          <div class="info-tile profile-schedule-card profile-shift-card schedule-upcoming">
-            <div class="profile-schedule-primary">Upcoming · ${escapeHtml(upcomingDateLabel)}</div>
-            <div class="schedule-stack">
-              ${profileVenueDestinationMarkup(profile, { upcoming: true })}
-            </div>
-          </div>
-          ${shiftNotesMarkup(profile)}
-        `;
-      }
       const emptyScheduleCopy = isEditorPreview
-        ? "Post a shift from your dashboard to show guests when and where you're working."
+        ? "Tap a club’s dressing-room sticker to show guests where you are working now."
         : `Follow ${escapeHtml(profile.name)} for updates`;
       return `
         <div class="info-tile profile-schedule-card profile-shift-card schedule-empty" aria-label="Schedule status">
-          <span class="profile-empty-state">No shift posted</span>
+          <span class="profile-empty-state">Not working now</span>
           <span class="profile-empty-copy">
             <span>${emptyScheduleCopy}</span>
           </span>
@@ -54552,7 +54394,7 @@
       const modalTrendRank = profileWithTrend.trendRank;
       const status = shiftStatus(profile);
       const modalIsWorkingNow = isWorkingTonight(profile, city);
-      const modalHasUpcomingShift = Boolean(profile.scheduled) && !modalIsWorkingNow;
+      const modalHasUpcomingShift = false;
       const basePhoto = portraitClass(profileIndex);
       const visiblePhotoUrls = uploadedProfilePhotoUrls(profile, isPrivatePreview);
       const basePhotoUrl = visiblePhotoUrls[0] || (isPrivatePreview ? customPhotoUrl(profile, 0) : "");
@@ -60327,43 +60169,15 @@
           label: "Working now"
         };
       }
-      if (profile.scheduled) {
-        return {
-          className: "is-upcoming",
-          label: displayPublicShiftTime(profile.time, profile)
-        };
-      }
+
       return {
         className: "is-no-shift",
-        label: "No upcoming shift posted"
+        label: "Not working now"
       };
     }
 
     function homeDancerGridScheduleLabel(profile, city = selectedCity()) {
-      city = profileDiscoveryCity(profile, city);
-      if (isWorkingTonight(profile, city)) return "Working now";
-      if (!profile?.scheduled) return "No upcoming shift posted";
-
-      if (profile.shiftStartsAt) {
-        const start = new Date(profile.shiftStartsAt);
-        if (!Number.isNaN(start.getTime())) {
-          const dateLabel = new Intl.DateTimeFormat("en-US", {
-            month: "short",
-            day: "numeric",
-            timeZone: cityTimeZone(city)
-          }).format(start);
-          return `Upcoming · ${dateLabel}`;
-        }
-      }
-
-      const compactDate = compactUpcomingDateLabel(profile, city);
-      const match = compactDate.match(/^(\d{1,2})\/(\d{1,2})$/);
-      if (match) {
-        const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-        const monthName = monthNames[Number(match[1]) - 1];
-        if (monthName) return `Upcoming · ${monthName} ${Number(match[2])}`;
-      }
-      return "Upcoming";
+      return isWorkingTonight(profile, profileDiscoveryCity(profile, city)) ? "Working now" : "Not working now";
     }
 
     function homeDiscoveryFeedLiveQrData(profile) {
@@ -60566,7 +60380,7 @@
         : `<div class="home-dancer-grid-photo" aria-hidden="true">${escapeHtml(String(profile.name).trim().charAt(0))}</div>`;
       const venueName = String(profile.venue || "").trim();
       const hasPublishedVenue = Boolean(
-        profile.scheduled &&
+        isWorkingTonight(profile, city) &&
         venueName &&
         venueName.toLowerCase() !== "venue pending"
       );
@@ -60611,20 +60425,18 @@
     function dancerDirectoryFilterMarkup(profiles, city) {
       const counts = {
         all: profiles.length,
-        now: profiles.filter((profile) => isWorkingTonight(profile, city)).length,
-        upcoming: profiles.filter((profile) => profile.scheduled && !isWorkingTonight(profile, city)).length
+        now: profiles.filter((profile) => isWorkingTonight(profile, city)).length
       };
       const filters = [
         { id: "all", label: "All" },
-        { id: "now", label: "Now" },
-        { id: "upcoming", label: "Upcoming" }
+        { id: "now", label: "Now" }
       ];
       return `
         <div class="dancer-directory-filters" role="tablist" aria-label="Filter dancers">
           ${filters.map((filter) => {
             const active = dancerDirectoryFilter === filter.id;
             const empty = counts[filter.id] === 0;
-            const statusDot = filter.id === "now" || filter.id === "upcoming"
+            const statusDot = filter.id === "now"
               ? '<span class="dancer-directory-filter-status" aria-hidden="true"></span>'
               : "";
             return `<button class="dancer-directory-filter ${active ? "is-active" : ""}${empty ? " is-empty" : ""}" type="button" role="tab" data-dancer-directory-filter="${filter.id}" aria-controls="results" aria-selected="${active}" aria-pressed="${active}">${statusDot}<span class="dancer-directory-filter-label">${filter.label}</span><span class="dancer-directory-filter-count">${counts[filter.id]}</span></button>`;
@@ -60638,22 +60450,9 @@
       if (dancerDirectoryFilter === "now") {
         return [{ label: "Working Now", className: "is-now", profiles: groups.workingNow }];
       }
-      if (dancerDirectoryFilter === "upcoming") {
-        return [{
-          label: "Upcoming",
-          className: "is-upcoming",
-          profiles: profiles
-            .filter((profile) => profile.scheduled && !isWorkingTonight(profile, city))
-            .sort((a, b) => (
-              upcomingSortValue(a, city) - upcomingSortValue(b, city) ||
-              dailyRotationScore(a, city) - dailyRotationScore(b, city)
-            ))
-        }];
-      }
       return [
         { label: "Working Now", className: "is-now", profiles: groups.workingNow },
-        { label: "Upcoming", className: "is-upcoming", profiles: groups.upcoming },
-        { label: "No Schedule", className: "is-open", profiles: groups.noSchedule }
+        { label: "Not working now", className: "is-open", profiles: [...groups.noSchedule, ...groups.upcoming] }
       ];
     }
 
@@ -62181,13 +61980,6 @@
 
     function homeTvFeedSchedule(item) {
       if (item.shift?.isActive) return { label: "Working Now", className: "is-now" };
-      if (item.shift) {
-        const dateLabel = formatProfileTvShift(item.shift.startsAt, item.shift.timezone);
-        return {
-          label: dateLabel ? `Upcoming · ${dateLabel}` : "Upcoming",
-          className: "is-upcoming"
-        };
-      }
       return null;
     }
 
@@ -62491,8 +62283,8 @@
         item?.dancer?.avatarPhotoFocalX ?? item?.dancer?.primaryPhotoFocalX,
         item?.dancer?.avatarPhotoFocalY ?? item?.dancer?.primaryPhotoFocalY
       );
-      const venueName = String(item?.venue?.name || "").trim();
-      const venueSlug = String(item?.venue?.slug || "").trim();
+      const venueName = item?.shift?.isActive ? String(item?.venue?.name || "").trim() : "";
+      const venueSlug = item?.shift?.isActive ? String(item?.venue?.slug || "").trim() : "";
       const profileHref = dancerSlug
         ? `/?city=${encodeURIComponent(dancerCity)}&profile=${encodeURIComponent(dancerSlug)}`
         : "#";
@@ -62526,7 +62318,6 @@
       dancerPhoto.setAttribute("aria-hidden", "true");
       const dancerIsWorkingNow = Boolean(item?.shift?.isActive);
       if (dancerIsWorkingNow) dancerPhoto.setAttribute("data-working-now", "true");
-      if (item?.shift && !dancerIsWorkingNow) dancerPhoto.setAttribute("data-upcoming", "true");
       const dancerPhotoBorder = document.createElement("span");
       dancerPhotoBorder.setAttribute("data-dancer-avatar-border", "");
       dancerPhotoBorder.textContent = dancerName.charAt(0).toLocaleUpperCase();
@@ -63179,7 +62970,7 @@
         homeTvLandingPreload.clear();
         setHomeTvFeedCount("0 videos", venueFilter);
         renderHomeTvFeedMessage(venueFilter
-          ? `No approved MyDancr TV videos are available from dancers affiliated with, working now at, or scheduled at ${venueFilter.name}.`
+          ? `No approved MyDancr TV videos are available from dancers working now at ${venueFilter.name}.`
           : `No approved MyDancr TV videos are available ${discoveryLocationPhrase(city)} yet.`);
         settleHomeTvFeedLanding({ complete: true });
         return;
@@ -63617,7 +63408,7 @@
       if (dancerFilterButton) {
         event.preventDefault();
         const nextFilter = dancerFilterButton.dataset.dancerDirectoryFilter;
-        if (!["all", "now", "trending", "upcoming"].includes(nextFilter)) return;
+        if (!["all", "now", "trending"].includes(nextFilter)) return;
         dancerDirectoryFilter = nextFilter;
         syncHomeDestinationLocation("dancers");
         render();
@@ -66659,7 +66450,7 @@
 
     const homeBottomTv = document.getElementById("homeBottomTv");
     const homeDestinationOrder = ["dancers", "tv", "venues"];
-    const dancerDirectoryFilters = ["all", "now", "upcoming"];
+    const dancerDirectoryFilters = ["all", "now"];
 
     function dancerDirectoryFilterFromLocation() {
       const params = new URLSearchParams(window.location.search);

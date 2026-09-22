@@ -573,24 +573,12 @@
           </div>
         `;
       }
-      if (profile.scheduled) {
-        const upcomingDateLabel = compactUpcomingDateLabel(profile) || "Date posted";
-        return `
-          <div class="info-tile profile-schedule-card profile-shift-card schedule-upcoming">
-            <div class="profile-schedule-primary">Upcoming · ${escapeHtml(upcomingDateLabel)}</div>
-            <div class="schedule-stack">
-              ${profileVenueDestinationMarkup(profile, { upcoming: true })}
-            </div>
-          </div>
-          ${shiftNotesMarkup(profile)}
-        `;
-      }
       const emptyScheduleCopy = isEditorPreview
-        ? "Post a shift from your dashboard to show guests when and where you're working."
+        ? "Tap a club’s dressing-room sticker to show guests where you are working now."
         : `Follow ${escapeHtml(profile.name)} for updates`;
       return `
         <div class="info-tile profile-schedule-card profile-shift-card schedule-empty" aria-label="Schedule status">
-          <span class="profile-empty-state">No shift posted</span>
+          <span class="profile-empty-state">Not working now</span>
           <span class="profile-empty-copy">
             <span>${emptyScheduleCopy}</span>
           </span>

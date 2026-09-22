@@ -105,11 +105,11 @@ async function rejectsMissingVisibility(fixture) {
 }
 
 for (const legacy of [false, true]) {
-  test(`historical rows cannot hide an upcoming date; missing visibility fails closed=${legacy}`, async () => {
+  test(`upcoming dates stay hidden alongside historical rows; missing visibility fails closed=${legacy}`, async () => {
     const f = fixture([...history(), scheduled("next", 86_400_000)], { legacy });
     if (legacy) return rejectsMissingVisibility(f);
     const result = await f.get();
-    assert.deepEqual(Array.from(result.upcomingShifts, row => row.id), ["next"]);
+    assert.deepEqual(Array.from(result.upcomingShifts, row => row.id), []);
     assert.equal(f.queries.length, 1);
     for (const query of f.queries) {
       assert.equal(query["shifts.limit"], "50");
@@ -125,7 +125,7 @@ for (const legacy of [false, true]) {
     if (legacy) return rejectsMissingVisibility(f);
     const result = await f.get();
     assert.equal(result.shiftId, "live");
-    assert.deepEqual(Array.from(result.upcomingShifts, row => row.id), ["live", "next"]);
+    assert.deepEqual(Array.from(result.upcomingShifts, row => row.id), ["live"]);
   });
 
   test(`unpublished, checked-out and inactive-venue rows cannot consume the window; missing visibility fails closed=${legacy}`, async () => {
@@ -134,7 +134,7 @@ for (const legacy of [false, true]) {
       { venues: { ...venue, is_active: false } }, { venues: { ...venue, has_active_club_deal: false } },
       { venues: null }, { shift_source: "nfc", location_status: "club_confirmed", checked_in_at: iso(-60_000), location_verification_expires_at: iso(-1) },
     ].flatMap((overrides, group) => Array.from({ length: 55 }, (_, i) => scheduled(`excluded-${group}-${i}`, 10_000, overrides)));
-    const f = fixture([...excluded, scheduled("visible", 86_400_000)], { legacy });
+    const f = fixture([...excluded, scheduled("visible", -60_000, { checked_in_at: iso(-60_000), location_status: "club_confirmed", location_verification_expires_at: iso(3_600_000) })], { legacy });
     if (legacy) return rejectsMissingVisibility(f);
     const result = await f.get();
     assert.deepEqual(Array.from(result.upcomingShifts, row => row.id), ["visible"]);
@@ -147,8 +147,8 @@ test("a public dancer without visible dates still has a profile", async () => {
   assert.equal(result.upcomingShifts.length, 0);
 });
 
-test("earliest dates and stable identifiers define the bounded window", async () => {
-  const rows = Array.from({ length: 80 }, (_, i) => scheduled(`date-${String(i).padStart(3, "0")}`, Math.floor(i / 2) * 60_000 + 3_600_000)).reverse();
+test("check-in starts and stable identifiers define the bounded window", async () => {
+  const rows = Array.from({ length: 80 }, (_, i) => scheduled(`date-${String(i).padStart(3, "0")}`, Math.floor(i / 2) * 60_000 - 3_600_000, { checked_in_at: iso(-60_000), location_status: "club_confirmed", location_verification_expires_at: iso(3_600_000) })).reverse();
   const result = await fixture(rows).get();
   assert.equal(result.upcomingShifts.length, 50);
   assert.equal(result.upcomingShifts[0].id, "date-000");

@@ -642,7 +642,7 @@
 
     const homeBottomTv = document.getElementById("homeBottomTv");
     const homeDestinationOrder = ["dancers", "tv", "venues"];
-    const dancerDirectoryFilters = ["all", "now", "upcoming"];
+    const dancerDirectoryFilters = ["all", "now"];
 
     function dancerDirectoryFilterFromLocation() {
       const params = new URLSearchParams(window.location.search);

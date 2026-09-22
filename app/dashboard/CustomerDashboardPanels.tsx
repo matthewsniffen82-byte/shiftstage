@@ -645,7 +645,7 @@ function FollowedDancerGridCard({
   const shift = dancer.nextShift;
   const shiftLabel = shift ? customerShiftLabel(shift) : "";
   const isWorkingNow = shiftLabel === "Working now";
-  const statusLabel = isWorkingNow ? "Working now" : shift ? "Upcoming" : "No schedule";
+  const statusLabel = isWorkingNow ? "Working now" : "Not working now";
   const statusTone = isWorkingNow ? "working" : shift ? "upcoming" : "quiet";
   const dancerName = String(dancer.stageName || "Dancer");
 
@@ -725,10 +725,6 @@ function SavedVenueCard({
         <div className="customer-club-activity" aria-label={`Dancers at ${venue.name || "this club"}`}>
           <Link className={`customer-club-activity-stat is-now${venue.activity?.workingNowCount ? " has-dancers" : ""}`} href={`${customerVenueHref(venue)}#venue-working-now`}>
             <i aria-hidden="true" /><strong>{venue.activity?.workingNowCount ?? "—"}</strong><span>Now</span>
-          </Link>
-          <Link className="customer-club-activity-stat is-upcoming" href={`${customerVenueHref(venue)}#venue-upcoming-shifts`}>
-            <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="16" rx="3" /><path d="M8 3v4m8-4v4M4 11h16" /></svg>
-            <strong>{venue.activity?.upcomingDancerCount ?? "—"}</strong><span>Upcoming</span>
           </Link>
         </div>
         {!venue.activity ? <small className="customer-club-activity-unavailable">Dancer counts unavailable. Open the club page for updates.</small> : null}

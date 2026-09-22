@@ -515,17 +515,14 @@ async function getPublicTvVenueScope(
     .eq("venues.is_active", true)
     .eq("venues.has_active_club_deal", true)
     .is("checked_out_at", null)
-    .gte("ends_at", new Date(now).toISOString())
+    .gt("location_verification_expires_at", new Date(now).toISOString())
     .order("starts_at", { ascending: true })
     .limit(240);
 
   if (shiftResult.error) throw shiftResult.error;
   const shiftDancerIds = (shiftResult.data || []).flatMap((shift) => {
-    const start = new Date(shift.starts_at).getTime();
-    const end = new Date(shift.ends_at).getTime();
     const active = isConfirmedActiveTvShift(shift, now);
-    const scheduled = shift.shift_source === "scheduled" && Number.isFinite(start) && Number.isFinite(end) && end >= now;
-    return active || scheduled ? [String(shift.dancer_id || "")] : [];
+    return active ? [String(shift.dancer_id || "")] : [];
   }).filter(Boolean);
   const candidateDancerIds = [...new Set(shiftDancerIds)];
   const resolvedContexts = await getPublicTvShiftContexts(admin, candidateDancerIds, now);
@@ -556,7 +553,7 @@ async function getPublicTvShiftContexts(
     .eq("venues.is_active", true)
     .eq("venues.has_active_club_deal", true)
     .is("checked_out_at", null)
-    .gte("ends_at", new Date(now).toISOString())
+    .gt("location_verification_expires_at", new Date(now).toISOString())
     .order("starts_at", { ascending: true })
     .limit(Math.min(240, uniqueDancerIds.length * 12));
 
@@ -568,11 +565,8 @@ async function getPublicTvShiftContexts(
   const contexts = new Map<string, PublicTvShiftContext>();
   for (const row of data || []) {
     const venue = one(row.venues);
-    const start = new Date(row.starts_at).getTime();
-    const end = new Date(row.ends_at).getTime();
     const isActive = isConfirmedActiveTvShift(row, now);
-    const isScheduled = row.shift_source === "scheduled" && Number.isFinite(start) && Number.isFinite(end) && end >= now;
-    if (!venue || !isPublicVenueRow(venue) || (!isActive && !isScheduled)) continue;
+    if (!venue || !isPublicVenueRow(venue) || !isActive) continue;
 
     const candidate: PublicTvShiftContext = {
       venue: {

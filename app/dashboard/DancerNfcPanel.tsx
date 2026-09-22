@@ -144,7 +144,7 @@ export default function DancerNfcPanel({
         <p>Log in to your MyDancr dancer account first. No particular page needs to be open.</p>
         <p>Unlock your phone and tap the club&apos;s dressing-room sticker. Open the link if prompted, and log in there if asked.</p>
         <p>Working Now lasts 6 hours, followed by a 6-hour cooldown at all clubs. Tapping again does not extend it.</p>
-        <p>Upcoming dates do not check you in. Only an active MyDancr dressing-room sticker can connect you to a club.</p>
+        <p>Your club appears publicly only while you are checked in. Only an active MyDancr dressing-room sticker can connect you to a club.</p>
         {!isPublic && !authorized ? <p>Finish profile setup and get your avatar and at least one profile photo approved before activation.</p> : null}
       </div>
     </details>

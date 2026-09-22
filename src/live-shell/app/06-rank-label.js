@@ -464,21 +464,11 @@
 
     function displayShiftForProfile(profile, city = activeDancerCity()) {
       const now = Date.now();
-      const shifts = profilePostedShifts(profile)
-        .filter((shift) => !shift.checkedOutAt && (!shift.shiftEndsAt || new Date(shift.shiftEndsAt).getTime() >= now))
-        .sort((left, right) => new Date(left.shiftStartsAt || 0).getTime() - new Date(right.shiftStartsAt || 0).getTime());
-      const live = shifts.find((shift) => {
-        const startsAt = new Date(shift.shiftStartsAt || 0).getTime();
-        const endsAt = new Date(shift.shiftEndsAt || 0).getTime();
-        const expiresAt = Date.parse(shift.locationVerificationExpiresAt || "");
-        const checkedIn = shift.locationStatus === "club_confirmed" || (
-          shift.locationStatus === "location_confirmed" &&
-          Number.isFinite(expiresAt) &&
-          expiresAt > now
-        );
-        return checkedIn && startsAt <= now && endsAt >= now;
-      });
-      return live || shifts.find((shift) => new Date(shift.shiftEndsAt || 0).getTime() >= now) || null;
+      return profilePostedShifts(profile).find(shift =>
+        shift.checkedInAt && !shift.checkedOutAt && shift.locationStatus === "club_confirmed" &&
+        Number.isFinite(Date.parse(shift.locationVerificationExpiresAt || "")) &&
+        Date.parse(shift.locationVerificationExpiresAt) > now
+      ) || null;
     }
 
     function applyDisplayShift(profile, city = activeDancerCity()) {
@@ -488,7 +478,11 @@
           scheduled: false,
           tonight: false,
           venue: "",
-          time: "No upcoming shifts",
+          venueId: "",
+          venueSlug: "",
+          activeDeal: null,
+          activeDeals: [],
+          time: "Not working now",
           shiftDate: "",
           shiftStart: "",
           shiftEnd: "",

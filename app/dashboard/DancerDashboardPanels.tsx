@@ -252,12 +252,12 @@ export function DancerPanel({
           </DashboardSection>
           {profileMediaSection}
           <DashboardSection
-            description="Working Now and upcoming dates."
+            description="Your current club check-in."
             emphasis="primary"
             id="dancer-schedule"
             icon={<DancerDashboardIcon section="schedule" />}
             toggleAffordance="chevron"
-            title="Schedule"
+            title="Working Now"
           >
             <DancerShiftManager />
           </DashboardSection>

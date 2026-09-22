@@ -17,6 +17,7 @@ import VenueValueAnalytics from "./VenueValueAnalytics";
 import type { VenueValueReport } from "@/src/lib/dancr/venue-analytics";
 
 const VenueTeamPanel = dynamic(() => import("./VenueTeamPanel"));
+const VenueParticipationPanel = dynamic(() => import("./VenueParticipationPanel"));
 
 const VenueTvPanel = dynamic(() => import("./VenueTvPanel"));
 
@@ -203,7 +204,6 @@ export function VenuePanel({
   const venueReviewLocation = [profile?.city, profile?.state].map((value) => String(value || "").trim()).filter(Boolean).join(", ") || "Location not provided";
   const venueReviewAddress = String(profile?.address || "").trim() || venueReviewLocation;
   const venueReviewInitials = venueName.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part.slice(0, 1)).join("").toUpperCase() || "V";
-  const upcomingShiftCount = Number(analytics?.upcomingShiftCount || 0);
   const activeAffiliations = initialAffiliations.filter((affiliation) => affiliation.status === "active");
   const nfcAuthorizedDancerCount = activeAffiliations.length;
   const liveDealSummary = activeDealCount
@@ -316,7 +316,7 @@ export function VenuePanel({
         >
             <span className="eyebrow">Tonight at a glance</span>
             <strong>{liveDealSummary}</strong>
-            <p>{workingNow.length} working now · {upcomingShiftCount} upcoming {upcomingShiftCount === 1 ? "shift" : "shifts"}</p>
+            <p>{workingNow.length} working now</p>
             <div className="venue-command-links">
               <a className="primary-link venue-current-deals-link" href="#venue-club-deals" onClick={(event) => openVenueSection(event, "venue-club-deals")}>
                 {activeDealCount ? `View ${activeDealCount} current Club ${activeDealCount === 1 ? "Deal" : "Deals"}` : "View Club Deal status"}
@@ -453,7 +453,6 @@ export function VenuePanel({
 
         <section className="venue-dashboard-metrics venue-tonight-metrics" aria-label="Tonight at a glance" hidden={activeWorkspace !== "venue"}>
           <Metric label="Working now" value={String(workingNow.length)} />
-          <Metric label="Upcoming shifts" value={String(upcomingShiftCount)} />
           <Metric label="Live Club Deals" value={String(activeDealCount)} />
           <Metric label="Verified roster" value={String(nfcAuthorizedDancerCount)} />
         </section>
@@ -542,6 +541,8 @@ export function VenuePanel({
               venueAccessRole={venueRole}
               venueName={venueName}
             />
+            {venueRole === "owner" && profile?.id ? <VenueParticipationPanel key={String(profile.id)} venueId={String(profile.id)} venueName={venueName}
+              onEnded={() => { notifyPublicVenuePublication(); onRefresh(); }} /> : null}
           </div>
         </DashboardSection>
       </section>

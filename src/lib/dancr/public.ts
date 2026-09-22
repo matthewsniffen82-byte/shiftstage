@@ -82,8 +82,7 @@ async function getApprovedDancerRowsByCity(client: DancrClient, city: string): P
         trending_scores(rank),
         dancer_photos(id, storage_path, is_primary, review_status, sort_order, like_count, is_pinned),
         social_links(id, platform, handle, url, is_active),
-        live_shifts:shifts(${shiftFields}),
-        scheduled_shifts:shifts(${shiftFields})
+        live_shifts:shifts(${shiftFields})
       `,
     ), cityName))
     .eq("is_public", true)
@@ -101,34 +100,22 @@ async function getApprovedDancerRowsByCity(client: DancrClient, city: string): P
     .lt("live_shifts.location_verification_expires_at", "infinity")
     .eq("live_shifts.venues.is_active", true)
     .eq("live_shifts.venues.has_active_club_deal", true)
-    .eq("scheduled_shifts.status", "posted")
-    .eq("scheduled_shifts.shift_source", "scheduled")
-    .is("scheduled_shifts.checked_out_at", null)
-    .gte("scheduled_shifts.ends_at", now)
-    .lt("scheduled_shifts.ends_at", "infinity")
-    .eq("scheduled_shifts.venues.is_active", true)
-    .eq("scheduled_shifts.venues.has_active_club_deal", true)
     .order("stage_name", { ascending: true })
     .order("id", { ascending: true })
     .order("starts_at", { referencedTable: "live_shifts", ascending: true })
     .order("id", { referencedTable: "live_shifts", ascending: true })
-    .order("starts_at", { referencedTable: "scheduled_shifts", ascending: true })
-    .order("id", { referencedTable: "scheduled_shifts", ascending: true })
     .limit(PUBLIC_PROFILE_SHIFT_LIMIT, { referencedTable: "live_shifts" })
-    .limit(PUBLIC_PROFILE_SHIFT_LIMIT, { referencedTable: "scheduled_shifts" })
     .limit(isAllMyDancrCities(cityName) ? PUBLIC_DANCER_DIRECTORY_LIMIT * 4 : PUBLIC_DANCER_DIRECTORY_LIMIT);
 
   const data: any[] | null = current.data as any[] | null;
   const error: any = current.error;
   if (error) throw error;
 
-  // Separate windows preserve live priority over scheduled dates. Retain
-  // fallback candidates if an earlier date expires while the response travels.
-  // The card builder rechecks visibility; an exhausted window stays hidden.
+  // Only a current check-in can associate a dancer with a public club.
   const selected = (value: any) => Array.isArray(value) ? value.slice(0, PUBLIC_PROFILE_SHIFT_LIMIT) : value && typeof value === "object" ? [value] : [];
-  const rows = (data || []).filter(isApprovedPublicDancerRow).map(({ live_shifts, scheduled_shifts, ...row }) => ({
+  const rows = (data || []).filter(isApprovedPublicDancerRow).map(({ live_shifts, ...row }) => ({
     ...row,
-    shifts: [...selected(live_shifts), ...selected(scheduled_shifts)],
+    shifts: selected(live_shifts),
   }));
   console.log("PUBLIC_DANCERS_QUERY_RESULT", {
     rawCount: data?.length || 0,
@@ -196,7 +183,7 @@ export async function getDancerProfile(client: DancrClient, slug: string, resolv
   const now = new Date().toISOString();
   // Filter visible dates before the window so historical rows cannot hide them.
   // Active NFC presence remains valid independently of a scheduled end time.
-  const visibleShiftWindow = `and(shift_source.eq.scheduled,ends_at.gte.${now}),and(checked_in_at.not.is.null,location_status.eq.club_confirmed,location_verification_expires_at.gt.${now})`;
+  const visibleShiftWindow = `and(checked_in_at.not.is.null,location_status.eq.club_confirmed,location_verification_expires_at.gt.${now})`;
   const current = await applyPublicApprovalFilters(client
     .from("dancer_profiles")
     .select(
@@ -349,20 +336,8 @@ export async function getVenueProfile(client: DancrClient, slug: string): Promis
   };
 }
 
-export async function getUpcomingShiftsForDancer(client: DancrClient, dancerId: string): Promise<ShiftSummary[]> {
-  const { data, error } = await client
-    .from("shifts")
-    .select("id, shift_date, shift_source, starts_at, ends_at, timezone, status, location_status, checked_in_at, checked_out_at, location_verification_expires_at, venue_id, venues(id, name, slug, timezone, is_active, has_active_club_deal)")
-    .eq("dancer_id", dancerId)
-    .eq("status", "posted")
-    .eq("shift_source", "scheduled")
-    .gte("ends_at", new Date().toISOString())
-    .order("starts_at", { ascending: true })
-    .limit(PUBLIC_PROFILE_SHIFT_LIMIT);
-
-  if (error) throw error;
-
-  return (data || []).filter((shift: any) => isShiftPubliclyVisible(shift)).map(toShiftSummary);
+export async function getUpcomingShiftsForDancer(_client: DancrClient, _dancerId: string): Promise<ShiftSummary[]> {
+  return [];
 }
 
 async function countDancerFollowers(client: DancrClient, dancerId: string): Promise<number> {
@@ -431,8 +406,7 @@ function buildDancerCard(
     )
     .sort((left: any, right: any) => new Date(left.starts_at).getTime() - new Date(right.starts_at).getTime());
   const liveShift = visibleShifts.find((item: any) => isActiveNfcPresence(item, now));
-  const upcomingShift = visibleShifts.find((item: any) => item.shift_source === "scheduled" && new Date(item.ends_at).getTime() >= now);
-  const shift = liveShift || upcomingShift || null;
+  const shift = liveShift || null;
   const venue = Array.isArray(shift?.venues) ? shift.venues[0] : shift?.venues;
   const score = Array.isArray(row.trending_scores) ? row.trending_scores[0] : row.trending_scores;
   const approvedPhotos = approvedDancerPhotoSources(client, row);
@@ -674,8 +648,7 @@ export function isShiftPubliclyVisible(shift: any, now = Date.now()) {
   if (shift.status !== "posted") return false;
   if (!isPublicVenueRow(shift.venues)) return false;
   if (shift.checked_out_at) return false;
-  if (isActiveNfcPresence(shift, now)) return true;
-  return shift.shift_source === "scheduled" && new Date(shift.ends_at).getTime() >= now;
+  return isActiveNfcPresence(shift, now);
 }
 
 function publicLocationStatus(shift: any): "self_reported" | "location_confirmed" | "club_confirmed" {

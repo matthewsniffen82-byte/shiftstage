@@ -1,8 +1,6 @@
 "use client";
-import { offerPushNotifications } from "@/src/lib/dancr/push-invitation";
 
-import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
-import DancerVenuePicker from "./DancerVenuePicker";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   isActiveNfcPresence,
   isNfcPresenceNearExpiry,
@@ -16,22 +14,15 @@ import {
   requestDancerShiftsJson,
 } from "./dashboard-session";
 
-type VenueOption = { id: string; name: string; timezone?: string };
 type ShiftRow = Record<string, any>;
 
 export default function DancerShiftManager() {
-  const [venues, setVenues] = useState<VenueOption[]>([]);
   const [shifts, setShifts] = useState<ShiftRow[]>([]);
-  const [venueId, setVenueId] = useState("");
-  const [shiftDate, setShiftDate] = useState("");
   const [status, setStatus] = useState("");
   const [saving, setSaving] = useState(false);
   const [endConfirmationOpen, setEndConfirmationOpen] = useState(false);
   const [workingNowStatus, setWorkingNowStatus] = useState("");
   const [workingNowStatusKind, setWorkingNowStatusKind] = useState<"" | "error" | "success">("");
-  const [editingId, setEditingId] = useState("");
-  const [editVenueId, setEditVenueId] = useState("");
-  const [editDate, setEditDate] = useState("");
   const mountedRef = useRef(false);
   const loadSequenceRef = useRef(0);
   const loadAbortRef = useRef<AbortController | null>(null);
@@ -50,12 +41,7 @@ export default function DancerShiftManager() {
         signal: controller.signal,
       });
       if (!mountedRef.current || requestId !== loadSequenceRef.current) return false;
-      const nextVenues = Array.isArray(data.venues) ? data.venues : [];
-      setVenues(nextVenues);
       setShifts(Array.isArray(data.shifts) ? data.shifts : []);
-      setVenueId((current) => nextVenues.some((venue: VenueOption) => venue.id === current)
-        ? current
-        : String(nextVenues[0]?.id || ""));
       return true;
     } catch (error) {
       if (!mountedRef.current || requestId !== loadSequenceRef.current || (error instanceof DOMException && error.name === "AbortError")) return false;
@@ -78,6 +64,15 @@ export default function DancerShiftManager() {
     };
   }, [load]);
 
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      if (document.visibilityState === "visible" && !actionPendingRef.current) {
+        void load().catch(() => { /* Keep the current status until the next refresh. */ });
+      }
+    }, 30_000);
+    return () => window.clearInterval(timer);
+  }, [load]);
+
   const activeShift = useMemo(
     () => shifts.find((shift) => isActiveNfcPresence(shift)) || null,
     [shifts],
@@ -91,36 +86,6 @@ export default function DancerShiftManager() {
     [shifts],
   );
   const cooldownShift = latestNfcShift && isNfcTapCooldownActive(latestNfcShift) ? latestNfcShift : null;
-  const postedDates = useMemo(
-    () => shifts
-      .filter((shift) => shift.shift_source !== "nfc_presence" && ["posted", "cancelled"].includes(String(shift.status)))
-      .sort((left, right) => String(right.shift_date || "").localeCompare(String(left.shift_date || ""))),
-    [shifts],
-  );
-
-  async function postDate(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (!venueId || !shiftDate) {
-      setStatus("Choose a venue and date.");
-      return;
-    }
-    const saved = await saveRequest("POST", { venueId, shiftDate }, "Upcoming date posted.");
-    if (saved && mountedRef.current) { setShiftDate(""); offerPushNotifications("dancer-shift"); }
-  }
-
-  async function saveEdit(shiftId: string) {
-    if (!editVenueId || !editDate) {
-      setStatus("Choose a venue and date before saving.");
-      return;
-    }
-    const saved = await saveRequest("PATCH", { shiftId, venueId: editVenueId, shiftDate: editDate }, "Upcoming date updated.");
-    if (saved && mountedRef.current) setEditingId("");
-  }
-
-  async function cancelDate(shiftId: string) {
-    await saveRequest("PATCH", { shiftId, status: "cancelled" }, "Upcoming date cancelled.");
-  }
-
   async function endWorkingNow() {
     if (!activeShift?.id || actionPendingRef.current) return;
     actionPendingRef.current = true;
@@ -144,7 +109,7 @@ export default function DancerShiftManager() {
       try {
         await load();
       } catch {
-        if (mountedRef.current) setWorkingNowStatus("Working Now ended. Refresh the dashboard to update the schedule card.");
+        if (mountedRef.current) setWorkingNowStatus("Working Now ended. Refresh the dashboard to update your check-in status.");
       }
     } catch (error) {
       if (mountedRef.current) {
@@ -159,40 +124,8 @@ export default function DancerShiftManager() {
     }
   }
 
-  async function saveRequest(method: "POST" | "PATCH" | "DELETE", body: Record<string, unknown>, success: string) {
-    if (!mountedRef.current || actionPendingRef.current) return false;
-    actionPendingRef.current = true;
-    setSaving(true);
-    setStatus("");
-    loadSequenceRef.current += 1;
-    loadAbortRef.current?.abort();
-    loadAbortRef.current = null;
-    try {
-      await requestDancerShiftsJson({
-        method,
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify(body),
-        fallbackMessage: "Unable to save changes.",
-      });
-      if (!mountedRef.current) return false;
-      setStatus(success);
-      try {
-        await load();
-      } catch {
-        if (mountedRef.current) setStatus(`${success} Refresh the dashboard to update the schedule.`);
-      }
-      return true;
-    } catch (error) {
-      if (mountedRef.current) setStatus(error instanceof Error ? error.message : "Unable to save changes.");
-      return false;
-    } finally {
-      actionPendingRef.current = false;
-      if (mountedRef.current) setSaving(false);
-    }
-  }
-
   return (
-    <article className="info-panel shift-panel" aria-label="Schedule management">
+    <article className="info-panel shift-panel" aria-label="Working Now management">
       <section className={`shift-checkin-card${activeShift ? " ready" : ""}`} aria-live="polite">
         {activeShift ? (
           <>
@@ -264,57 +197,7 @@ export default function DancerShiftManager() {
         <p>No phone location is collected.</p>
       </details>
 
-      <form onSubmit={postDate}>
-        <h3>Post an upcoming date</h3>
-        <DancerVenuePicker venues={venues} value={venueId} onChange={setVenueId} disabled={saving} />
-        <label>
-          Upcoming date
-          <input className="dancer-schedule-control" type="date" min={todayDate()} value={shiftDate} onChange={(event) => setShiftDate(event.target.value)} disabled={saving} required />
-        </label>
-        <button type="submit" disabled={saving || !venues.length}>{saving ? "Posting..." : "Post upcoming date"}</button>
-        <p>Posting a date does not check you in.</p>
-        {!venues.length ? <p>Tap a club&apos;s dressing-room sticker to add it to your approved venues.</p> : null}
-        {status ? <p role="status">{status}</p> : null}
-      </form>
-
-      <div className="shift-list-head">
-        <strong>Upcoming dates</strong>
-      </div>
-      <div className="shift-list">
-        {postedDates.map((shift) => (
-          <div className="dashboard-shift" key={String(shift.id)}>
-            {editingId === String(shift.id) ? (
-              <>
-                <DancerVenuePicker venues={venues} value={editVenueId} onChange={setEditVenueId} disabled={saving} />
-                <label>
-                  Upcoming date
-                  <input className="dancer-schedule-control" type="date" min={todayDate()} value={editDate} onChange={(event) => setEditDate(event.target.value)} disabled={saving} required />
-                </label>
-                <div className="shift-actions">
-                  <button type="button" disabled={saving} onClick={() => void saveEdit(String(shift.id))}>{saving ? "Saving..." : "Save date"}</button>
-                  <button type="button" disabled={saving} onClick={() => setEditingId("")}>Done</button>
-                </div>
-              </>
-            ) : (
-              <>
-                <span><strong>{venueName(shift)}</strong><small>{formatShiftDate(shift.shift_date || shift.starts_at)}</small></span>
-                <em>{shift.status === "cancelled" ? "Cancelled" : "Upcoming"}</em>
-                {shift.status !== "cancelled" ? (
-                  <div className="shift-actions">
-                    <button type="button" disabled={saving} onClick={() => {
-                      setEditingId(String(shift.id));
-                      setEditVenueId(String(shift.venue_id || ""));
-                      setEditDate(String(shift.shift_date || ""));
-                    }}>Edit</button>
-                    <button type="button" disabled={saving} onClick={() => void cancelDate(String(shift.id))}>Delete date</button>
-                  </div>
-                ) : null}
-              </>
-            )}
-          </div>
-        ))}
-        {!postedDates.length ? <p>No upcoming dates posted.</p> : null}
-      </div>
+      {status ? <p role="status">{status}</p> : null}
     </article>
   );
 }
@@ -322,17 +205,6 @@ export default function DancerShiftManager() {
 function venueName(shift: ShiftRow) {
   const venue = Array.isArray(shift.venues) ? shift.venues[0] : shift.venues;
   return String(venue?.name || "Venue");
-}
-
-function todayDate() {
-  const now = new Date();
-  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
-}
-
-function formatShiftDate(value: string) {
-  if (!value) return "Date pending";
-  const date = /^\d{4}-\d{2}-\d{2}$/.test(value) ? new Date(`${value}T12:00:00`) : new Date(value);
-  return new Intl.DateTimeFormat("en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric" }).format(date);
 }
 
 function formatTime(value: string | null | undefined) {

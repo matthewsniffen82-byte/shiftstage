@@ -409,7 +409,7 @@ export async function revokeDancerVenueAffiliation(
       recipient_id: String(data.dancerUserId),
       notification_type: "venue_affiliation_status" as const,
       title: `${String(data.venueName)} verification ended`,
-      body: `Your verified venue affiliation with ${String(data.venueName)} was removed. Active check-ins there have stopped. Your profile media remains available.`,
+      body: `Your affiliation with ${String(data.venueName)} was removed. Club check-ins and scheduled appearances have ended. Your account and profile media remain available. Ask the club to allow a new tap before reconnecting.`,
       payload: {
         affiliationId: data.id,
         venueId: data.venueId,
@@ -599,6 +599,7 @@ const AFFILIATION_COLUMNS = `
   approved_at,
   revoked_at,
   revoke_reason,
+  reentry_blocked,
   updated_at,
   venues!inner(id, slug, name, city, state),
   dancer_profiles!inner(id, user_id, stage_name, slug, city, avatar_storage_path)
@@ -616,6 +617,7 @@ function mapAffiliation(client: DancrClient, row: any) {
     approvedAt: row.approved_at,
     revokedAt: row.revoked_at || null,
     revokeReason: row.revoke_reason || null,
+    reentryBlocked: row.reentry_blocked === true,
     updatedAt: row.updated_at,
     venue: venue ? mapVenue(venue) : null,
     dancer: dancer

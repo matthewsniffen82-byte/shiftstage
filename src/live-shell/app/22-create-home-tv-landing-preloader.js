@@ -390,7 +390,7 @@
       if (dancerFilterButton) {
         event.preventDefault();
         const nextFilter = dancerFilterButton.dataset.dancerDirectoryFilter;
-        if (!["all", "now", "trending", "upcoming"].includes(nextFilter)) return;
+        if (!["all", "now", "trending"].includes(nextFilter)) return;
         dancerDirectoryFilter = nextFilter;
         syncHomeDestinationLocation("dancers");
         render();

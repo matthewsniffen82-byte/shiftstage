@@ -38,7 +38,7 @@
       const modalTrendRank = profileWithTrend.trendRank;
       const status = shiftStatus(profile);
       const modalIsWorkingNow = isWorkingTonight(profile, city);
-      const modalHasUpcomingShift = Boolean(profile.scheduled) && !modalIsWorkingNow;
+      const modalHasUpcomingShift = false;
       const basePhoto = portraitClass(profileIndex);
       const visiblePhotoUrls = uploadedProfilePhotoUrls(profile, isPrivatePreview);
       const basePhotoUrl = visiblePhotoUrls[0] || (isPrivatePreview ? customPhotoUrl(profile, 0) : "");
