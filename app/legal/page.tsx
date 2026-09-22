@@ -29,7 +29,7 @@ export default function LegalPage() {
               <span className="legal-hub-icon" aria-hidden="true">
                 <svg viewBox="0 0 24 24"><path d="m12 3 8 3v6c0 5-8 9-8 9s-8-4-8-9V6l8-3Z" /><path d="m8.5 12 2.5 2.5 4.5-5" /></svg>
               </span>
-              <span className="legal-hub-copy"><strong>Privacy Policy</strong><span>How your information is used</span></span>
+              <span className="legal-hub-copy"><strong>Privacy Policy</strong></span>
               <svg className="legal-hub-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6" /></svg>
             </Link>
           </li>
@@ -38,7 +38,7 @@ export default function LegalPage() {
               <span className="legal-hub-icon" aria-hidden="true">
                 <svg viewBox="0 0 24 24"><path d="M14 3H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8l-5-5Z" /><path d="M14 3v5h5M9 12h6M9 16h6" /></svg>
               </span>
-              <span className="legal-hub-copy"><strong>California Privacy</strong><span>Rights for California residents</span></span>
+              <span className="legal-hub-copy"><strong>California Privacy</strong></span>
               <svg className="legal-hub-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6" /></svg>
             </Link>
           </li>
@@ -47,7 +47,7 @@ export default function LegalPage() {
               <span className="legal-hub-icon" aria-hidden="true">
                 <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" /><path d="M15 9a4 4 0 1 0 0 6" /></svg>
               </span>
-              <span className="legal-hub-copy"><strong>Copyright / DMCA</strong><span>Copyright notices and requests</span></span>
+              <span className="legal-hub-copy"><strong>Copyright / DMCA</strong></span>
               <svg className="legal-hub-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6" /></svg>
             </Link>
           </li>
