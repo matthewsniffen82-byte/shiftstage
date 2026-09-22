@@ -225,7 +225,11 @@ export function DancerProfilePreview({
       body.style.width = previous.width;
       body.style.overflow = previous.overflow;
       window.scrollTo({ top: scrollY, behavior: "auto" });
-      window.requestAnimationFrame(() => trigger?.focus({ preventScroll: true }));
+      window.requestAnimationFrame(() => {
+        if (!document.activeElement || document.activeElement === document.body) {
+          trigger?.focus({ preventScroll: true });
+        }
+      });
     };
   }, [closeActiveEditor, closePreview, isOpen]);
 
@@ -560,7 +564,7 @@ export function DancerOnboardingCommand({
   isVenueApproved: boolean;
   onProfileChange?: (profile: Record<string, unknown>) => void;
   profile?: LoadState["profile"];
-  profileMediaContent: (controls: { continueToReview: () => void; profileReady: boolean }) => ReactNode;
+  profileMediaContent: (controls: { continueToAgreement: () => void; profileReady: boolean }) => ReactNode;
   venueVerificationContent: ReactNode;
 }) {
   const [status, setStatus] = useState("");
@@ -603,7 +607,7 @@ export function DancerOnboardingCommand({
       id: "dancer-profile-media",
       label: "Create profile",
       complete: submitted,
-      detail: submitted ? "Profile submitted. Continue with verification." : profileReady ? "Ready to review and submit." : setupDetail,
+      detail: submitted ? "Profile submitted. Continue with verification." : profileReady ? "Profile ready. Continue to the next step." : setupDetail,
       locked: false,
     },
     {
@@ -679,12 +683,13 @@ export function DancerOnboardingCommand({
     openStep(id);
   }
 
-  function continueToProfileReview() {
+  function continueToProfileAgreement() {
     setExpandedStepId("dancer-profile-media");
     window.localStorage.setItem(storageKey, "dancer-profile-media");
     window.requestAnimationFrame(() => {
-      document.getElementById("dancer-onboarding-profile-review")?.scrollIntoView({ behavior: "smooth", block: "start" });
-      const nextAction = document.getElementById("dancer-onboarding-profile-review-button") || document.getElementById("dancer-onboarding-profile-review");
+      document.getElementById("dancer-onboarding-agreement")?.scrollIntoView({ behavior: "smooth", block: "start" });
+      const nextAction = document.querySelector<HTMLElement>('#dancer-onboarding-agreement input[type="checkbox"]:not(:disabled), #dancer-onboarding-agreement button[type="submit"]:not(:disabled)')
+        || document.getElementById("dancer-onboarding-agreement");
       nextAction?.focus({ preventScroll: true });
     });
   }
@@ -836,28 +841,19 @@ export function DancerOnboardingCommand({
                 {step.id === "dancer-profile-media" ? (
                   <>
                     {profileMediaContent({
-                      continueToReview: continueToProfileReview,
+                      continueToAgreement: continueToProfileAgreement,
                       profileReady,
                     })}
-                    <div className="dancer-onboarding-preview-workspace dancer-onboarding-profile-review" id="dancer-onboarding-profile-review" tabIndex={-1}>
+                    <div className="dancer-onboarding-agreement" id="dancer-onboarding-agreement" tabIndex={-1}>
                       {submitted ? (
                         <div className="dancer-onboarding-complete-note" role="status">
                           <strong>✓ Step 1 complete</strong>
                           <span>Your profile is ready. Complete age verification, then the dressing-room tap to activate it.</span>
                         </div>
                       ) : profileReady ? (
-                        <DancerProfileAgreementReview key={String(profile?.id)} profileId={String(profile?.id)} busy={isSubmitting} onSubmit={submitProfile}>
-                          <div className="dancer-onboarding-review-identity">
-                            <img src={avatarUrl} alt={`${persistedStageName}'s avatar`} width={64} height={64} />
-                            <span><strong>{persistedStageName}</strong><small>{persistedCity}</small></span>
-                          </div>
-                          <div className="dancer-onboarding-review-photos" aria-label="Approved profile photos">
-                            {approvedPhotos.slice(0, 3).map(photo => <img key={photo.id} src={photo.imageUrl} alt={photo.label || "Approved profile photo"} loading="lazy" />)}
-                          </div>
-                          <DancerProfilePreview buttonClassName="dancer-onboarding-preview-trigger" buttonLabel="Preview profile" profile={profile} />
-                        </DancerProfileAgreementReview>
+                        <DancerProfileAgreementReview key={String(profile?.id)} profileId={String(profile?.id)} busy={isSubmitting} onSubmit={submitProfile} />
                       ) : null}
-                      <p className="dancer-onboarding-announcement" id="dancer-onboarding-profile-review-status" role="status" aria-live="polite">
+                      <p className="dancer-onboarding-announcement" id="dancer-onboarding-agreement-status" role="status" aria-live="polite">
                         {status || (!profileReady && !submitted ? setupDetail : "")}
                       </p>
                     </div>
@@ -943,7 +939,7 @@ function dancerStepOneStateLabel(state: DancerStepOneItemState) {
 
 export function DancerOnboardingProfileMediaWorkspace({
   avatarContent,
-  continueToReview,
+  continueToAgreement,
   draftIdentity,
   identityContent,
   photoContent,
@@ -954,7 +950,7 @@ export function DancerOnboardingProfileMediaWorkspace({
   videoContent,
 }: {
   avatarContent: ReactNode;
-  continueToReview: () => void;
+  continueToAgreement: () => void;
   draftIdentity: DancerIdentityDraft;
   identityContent: (field?: keyof DancerIdentityDraft) => ReactNode;
   photoContent: ReactNode;
@@ -1008,10 +1004,10 @@ export function DancerOnboardingProfileMediaWorkspace({
   useEffect(() => {
     if (!continueAfterSave || !profileReady) return;
     setContinueAfterSave(false);
-    continueToReview();
-  }, [continueAfterSave, continueToReview, profileReady]);
+    continueToAgreement();
+  }, [continueAfterSave, continueToAgreement, profileReady]);
 
-  async function saveAndContinue() {
+  async function saveProfile() {
     if (!readyAfterSave) return false;
     const saved = await saveDancerProfileEditor();
     if (saved) setContinueAfterSave(true);
@@ -1042,14 +1038,14 @@ export function DancerOnboardingProfileMediaWorkspace({
       <DancerProfilePreview
         builderRequirements={builderRequirements}
         buttonClassName="dancer-profile-editor-launch-button"
-        buttonLabel={profileReady ? "Edit profile" : "Set up profile"}
+        buttonLabel="Edit profile"
         city={draftIdentity.city}
         editorSections={editorSections}
         name={draftIdentity.stageName}
-        onEditorSave={saveAndContinue}
+        onEditorSave={saveProfile}
         onProfileChange={onProfileChange}
         profile={profile}
-        saveLabel="Save & continue"
+        saveLabel="Save profile"
       />
     </article>
   );

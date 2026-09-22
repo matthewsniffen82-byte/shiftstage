@@ -1102,30 +1102,21 @@ export function DashboardStyles() {
       .dancer-step-one-footer strong { color: #fff; font-size: 13px; }
       .dancer-step-one-footer small { color: var(--mydancr-dashboard-muted); font-size: 10px; }
       .dancer-step-one-footer.is-ready { border-color: rgba(76,223,166,.3); background: rgba(25,140,101,.07); }
-      .dancer-onboarding-preview-workspace { display: grid; gap: 12px; }
-      .dancer-onboarding-profile-review { margin-top: 0; padding-top: 16px; border-top: 1px solid rgba(255,255,255,.09); scroll-margin-top: calc(var(--mydancr-preview-banner-offset, 0px) + 14px); }
-      .dancer-profile-agreement-review { display:grid; gap:12px; }
-      .dancer-profile-agreement-review h3, .dancer-profile-agreement-review p { margin:0; }
-      .dancer-profile-agreement-review p { color:#c4bfcc; font-size:13px; line-height:1.5; }
-      .dancer-profile-agreement-review form { display:grid; gap:16px; }
+      .dancer-onboarding-agreement { display:grid; gap:12px; padding-top:16px; scroll-margin-top:calc(var(--mydancr-preview-banner-offset, 0px) + 14px); }
+      .dancer-profile-agreement p { margin:0; color:#c4bfcc; font-size:13px; line-height:1.5; }
+      .dancer-profile-agreement form { display:grid; gap:16px; }
       .dancer-profile-agreement-check { display:flex; align-items:flex-start; gap:12px; color:#eee9f5; font-size:14px; line-height:1.6; }
       .dancer-profile-agreement-check input { width:22px; height:22px; min-height:22px; flex:0 0 22px; margin:2px 0 0; accent-color:#8b5cf6; }
       .dancer-profile-agreement-check a { color:#d3baff; text-decoration:underline; text-underline-offset:3px; }
-      .dancer-profile-agreement-review .dancer-onboarding-primary { width:100%; min-height:48px; }
-      .dancer-onboarding-review-identity { display:flex; align-items:center; gap:12px; }
-      .dancer-onboarding-review-identity > img { width:64px; height:64px; border-radius:50%; object-fit:cover; }
-      .dancer-onboarding-review-identity > span { display:grid; gap:4px; }
-      .dancer-onboarding-review-identity small { color:#c4bfcc; }
-      .dancer-onboarding-review-photos { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; }
-      .dancer-onboarding-review-photos img { width:100%; aspect-ratio:3/4; object-fit:cover; border-radius:10px; }
-      .dancer-onboarding-profile-review > .dancer-onboarding-announcement { min-height:0; margin:0; color:#c4bfcc; font-size:12px; font-weight:500; line-height:1.45; }
-      .dancer-onboarding-profile-review > .dancer-onboarding-announcement:empty { display:none; }
+      .dancer-profile-agreement .dancer-onboarding-primary { width:100%; min-height:48px; }
+      .dancer-onboarding-agreement > .dancer-onboarding-announcement { min-height:0; margin:0; color:#c4bfcc; font-size:12px; font-weight:500; line-height:1.45; }
+      .dancer-onboarding-agreement > .dancer-onboarding-announcement:empty { display:none; }
       body.dancr-button-system .dancer-profile-editor-launch-card .dancer-profile-editor-launch-button { min-height:48px !important; padding:10px 14px; border-radius:12px !important; border-color:rgba(196,181,253,.3) !important; color:#fff !important; background:#19161f !important; box-shadow:none !important; font-size:14px; line-height:1.25; }
       body.dancr-button-system .dancer-profile-editor-launch-card[data-ready="false"] .dancer-profile-editor-launch-button,
-      body.dancr-button-system .dancer-onboarding-profile-review > .dancer-onboarding-primary:not(:disabled) { border-color:#9b68f6 !important; color:#fff !important; background:#7c3aed !important; box-shadow:none !important; }
-      body.dancr-button-system .dancer-onboarding-profile-review > .dancer-onboarding-primary { min-height:48px !important; padding:10px 14px; border-radius:12px !important; font-size:14px; line-height:1.25; }
-      body.dancr-button-system .dancer-onboarding-profile-review > .dancer-onboarding-primary:disabled { border-color:rgba(196,181,253,.12) !important; color:#96929f !important; background:#141219 !important; box-shadow:none !important; opacity:1 !important; cursor:not-allowed; }
-      body.dancr-button-system .dancer-onboarding-profile-review > .dancer-onboarding-primary:disabled[aria-busy="true"] { cursor:wait; }
+      body.dancr-button-system .dancer-profile-agreement .dancer-onboarding-primary:not(:disabled) { border-color:#9b68f6 !important; color:#fff !important; background:#7c3aed !important; box-shadow:none !important; }
+      body.dancr-button-system .dancer-profile-agreement .dancer-onboarding-primary { min-height:48px !important; padding:10px 14px; border-radius:12px !important; font-size:14px; line-height:1.25; }
+      body.dancr-button-system .dancer-profile-agreement .dancer-onboarding-primary:disabled { border-color:rgba(196,181,253,.12) !important; color:#96929f !important; background:#141219 !important; box-shadow:none !important; opacity:1 !important; cursor:not-allowed; }
+      body.dancr-button-system .dancer-profile-agreement .dancer-onboarding-primary:disabled[aria-busy="true"] { cursor:wait; }
       .dancer-onboarding-complete-note { display: grid; gap: 4px; padding: 13px; border: 1px solid rgba(76,223,166,.28); border-radius: 12px; color: #70efbd; background: rgba(25,140,101,.09); }
       .dancer-onboarding-complete-note span { color: var(--mydancr-dashboard-muted); font-size: 11px; line-height: 1.4; }
       .dancer-activation-confirmation { grid-column: 1 / -1; position: relative; display: grid; grid-template-columns: 52px minmax(0,1fr) 42px; align-items: start; gap: 14px; padding: 18px; border: 1px solid rgba(96,255,188,.28); border-radius: var(--mydancr-dashboard-radius); background: radial-gradient(circle at 0 0,rgba(42,205,137,.14),transparent 25rem),#0a0d0c; box-shadow: 0 18px 42px rgba(0,0,0,.32); }

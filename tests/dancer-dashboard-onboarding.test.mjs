@@ -57,7 +57,7 @@ test("initial onboarding nests every production workspace directly under its ste
   const checklist = panel.indexOf("<DancerOnboardingCommand");
 
   assert.ok(checklist >= 0, "setup checklist should render");
-  assert.match(panel, /profileMediaContent=\{\(\{ continueToReview, profileReady \}\) => \(/);
+  assert.match(panel, /profileMediaContent=\{\(\{ continueToAgreement, profileReady \}\) => \(/);
   assert.match(panel, /<DancerOnboardingProfileMediaWorkspace/);
   assert.match(panel, /venueVerificationContent=\{<DancerNfcPanel/);
   assert.doesNotMatch(panel, /\{!isApproved \? profileMediaSection : null\}/);
@@ -66,9 +66,9 @@ test("initial onboarding nests every production workspace directly under its ste
   assert.match(dashboard, /<h2 id="dancer-onboarding-heading">Profile setup<\/h2>/);
   assert.match(dashboard, /className="dancer-onboarding-step-panel"/);
   assert.match(dashboard, /step\.id === "dancer-profile-media" \? \(/);
-  assert.match(dashboard, /id="dancer-onboarding-profile-review"/);
-  assert.match(onboardingCommand, /<DancerProfilePreview[^>]*buttonLabel="Preview profile"/);
-  assert.match(onboardingCommand, /const nextAction = document\.getElementById\("dancer-onboarding-profile-review-button"\) \|\| document\.getElementById\("dancer-onboarding-profile-review"\)/);
+  assert.match(dashboard, /id="dancer-onboarding-agreement"/);
+  assert.doesNotMatch(onboardingCommand, /<DancerProfilePreview|dancer-onboarding-review-identity|dancer-onboarding-review-photos/);
+  assert.match(onboardingCommand, /const nextAction = document\.querySelector<HTMLElement>\('#dancer-onboarding-agreement input\[type="checkbox"\]/);
   assert.match(onboardingCommand, /profileReady \? \([\s\S]*?<DancerProfileAgreementReview[^>]*busy=\{isSubmitting\} onSubmit=\{submitProfile\}/);
   assert.doesNotMatch(dashboard, /<article className="dancer-onboarding-preview" aria-label="Guest profile preview">/);
   assert.doesNotMatch(dashboard, /className="dancer-onboarding-preview-card"/);
@@ -164,11 +164,12 @@ test("step one guides dancers through required work in the live profile layout",
   assert.match(dashboard, /socials: socialContent/);
   assert.match(dashboard, /Profile details/);
   assert.doesNotMatch(dashboard, /required items ready|Choose from your device or open your camera\. At least one approved photo is required\./);
-  assert.match(dashboard, /buttonLabel=\{profileReady \? "Edit profile" : "Set up profile"\}/);
-  assert.match(dashboard, /saveLabel="Save & continue"/);
-  assert.match(dashboard, /if \(!continueAfterSave \|\| !profileReady\) return;[\s\S]*?continueToReview\(\)/);
-  assert.match(dashboard, /continueToReview: continueToProfileReview/);
-  assert.match(dashboard, /document\.getElementById\("dancer-onboarding-profile-review"\)\?\.scrollIntoView/);
+  assert.match(dashboard, /buttonLabel="Edit profile"/);
+  assert.match(dashboard, /saveLabel="Save profile"/);
+  assert.doesNotMatch(dashboard, /Set up profile|Save & continue/);
+  assert.match(dashboard, /if \(!continueAfterSave \|\| !profileReady\) return;[\s\S]*?continueToAgreement\(\)/);
+  assert.match(dashboard, /continueToAgreement: continueToProfileAgreement/);
+  assert.match(dashboard, /document\.getElementById\("dancer-onboarding-agreement"\)\?\.scrollIntoView/);
 });
 
 test("profile setup editors use the compact shared modal shell without changing the save boundary", () => {

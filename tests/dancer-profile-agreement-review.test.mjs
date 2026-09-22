@@ -35,11 +35,11 @@ function ui({ accepted = false, fail = false, stale = false } = {}) {
     };
     throw new Error(name);
   } });
-  const render = (busy = false) => { cursor = 0; return exports.default({ profileId: "synthetic-profile", busy, children: React.createElement("button", { type: "button" }, "Preview profile"), onSubmit: async input => { submissions.push(input); } }); };
+  const render = (busy = false) => { cursor = 0; return exports.default({ profileId: "synthetic-profile", busy, onSubmit: async input => { submissions.push(input); } }); };
   return { render, submissions, async load() { render(); const cleanup = effects.shift()(); await new Promise(resolve => setImmediate(resolve)); return cleanup; } };
 }
 
-test("final review starts unchecked and submits the exact version only after an explicit choice", async () => {
+test("agreement starts unchecked and continues only after an explicit choice, without a profile review or preview", async () => {
   const f = ui(); await f.load();
   let tree = f.render(); const html = renderToStaticMarkup(tree);
   assert.match(html, /By checking this box, I agree to the/);
@@ -47,6 +47,8 @@ test("final review starts unchecked and submits the exact version only after an 
   assert.match(html, /type="checkbox" required=""/);
   assert.doesNotMatch(html, /checked=""/);
   assert.match(html, /type="submit" disabled=""/);
+  assert.match(html, />Submit profile and continue<\/button>/);
+  assert.doesNotMatch(html, /<h3|Review your profile|Preview profile/);
   await walk(tree).find(node => node.type === "form").props.onSubmit({ preventDefault() {} });
   assert.equal(f.submissions.length, 0);
   walk(tree).find(node => node.type === "input").props.onChange({ target: { checked: true } });

@@ -213,10 +213,10 @@ export function DancerPanel({
           isVenueApproved={isVenueApproved}
           onProfileChange={onProfileChange}
           profile={profile}
-          profileMediaContent={({ continueToReview, profileReady }) => (
+          profileMediaContent={({ continueToAgreement, profileReady }) => (
             <DancerOnboardingProfileMediaWorkspace
               avatarContent={avatarContent}
-              continueToReview={continueToReview}
+              continueToAgreement={continueToAgreement}
               draftIdentity={draftIdentity}
               identityContent={identityContent}
               photoContent={photoContent}

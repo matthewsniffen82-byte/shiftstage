@@ -1,16 +1,15 @@
 "use client";
 
-import { useEffect, useState, type FormEvent, type ReactNode } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { DANCER_AGREEMENT_VERSION, type DancerAgreementAccess } from "@/src/lib/dancr/dancer-agreement-version";
 import DancerAgreementLink from "@/app/components/DancerAgreementLink";
 import { readSession, requestDashboardJson } from "./dashboard-session";
 
 export type DancerProfileAgreementInput = { agreementAccepted: boolean; agreementVersion: string };
 
-export default function DancerProfileAgreementReview({ profileId, busy, children, onSubmit }: {
+export default function DancerProfileAgreementReview({ profileId, busy, onSubmit }: {
   profileId: string;
   busy: boolean;
-  children: ReactNode;
   onSubmit: (input: DancerProfileAgreementInput) => Promise<void>;
 }) {
   const [agreement, setAgreement] = useState<DancerAgreementAccess | null>(null);
@@ -46,10 +45,7 @@ export default function DancerProfileAgreementReview({ profileId, busy, children
     await onSubmit({ agreementAccepted: checked, agreementVersion: DANCER_AGREEMENT_VERSION });
   }
 
-  return <div className="dancer-profile-agreement-review">
-    <h3>Review your profile</h3>
-    <p>Your profile stays private until verification and your first dressing-room tap are complete.</p>
-    {children}
+  return <div className="dancer-profile-agreement">
     <form onSubmit={event => void submit(event)}>
       {!agreement && !error && <p role="status">Checking your agreement status…</p>}
       {agreement?.accepted ? <p>Your Dancer Agreement acceptance is saved.</p> : agreement ? (
@@ -60,7 +56,7 @@ export default function DancerProfileAgreementReview({ profileId, busy, children
       ) : null}
       {error && <p role="alert">{error}</p>}
       {error && <button type="button" disabled={busy} onClick={() => setAttempt(value => value + 1)}>Try again</button>}
-      <button className="dancer-onboarding-primary" id="dancer-onboarding-profile-review-button" aria-describedby="dancer-onboarding-profile-review-status" aria-busy={busy} type="submit" disabled={busy || !agreement || (!agreement.accepted && !checked)}>
+      <button className="dancer-onboarding-primary" id="dancer-onboarding-agreement-button" aria-describedby="dancer-onboarding-agreement-status" aria-busy={busy} type="submit" disabled={busy || !agreement || (!agreement.accepted && !checked)}>
         {busy ? "Submitting profile…" : "Submit profile and continue"}
       </button>
     </form>
