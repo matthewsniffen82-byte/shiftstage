@@ -991,6 +991,11 @@ export function DashboardStyles() {
       .dancer-profile-editor-launch-card > span { min-width:0; display:grid; gap:5px; }
       .dancer-profile-editor-launch-card > span > strong { color:#fff; font-size:18px; line-height:1.15; }
       .dancer-profile-editor-launch-card > span > small { max-width:56ch; color:#c4bfcc; font-size:12px; line-height:1.45; }
+      .dancer-profile-setup-heading { display:flex; flex-wrap:wrap; align-items:center; gap:8px 10px; }
+      .dancer-profile-setup-heading > strong { color:#fff; font-size:18px; line-height:1.15; }
+      .dancer-profile-save-indicator { display:inline-flex; align-items:center; gap:4px; color:#70efbd; font-size:11px; font-weight:700; line-height:1.4; }
+      .dancer-profile-save-indicator:empty { display:none; }
+      .dancer-profile-save-indicator.is-unsaved { color:#f2ce83; }
       .dancer-profile-editor-launch-button { min-width:170px; min-height:46px; padding:0 16px; border:1px solid rgba(126,234,255,.42); border-radius:999px; color:#fff; background:linear-gradient(135deg,#6d28d9,#0b94c9); box-shadow:0 10px 24px rgba(61,27,143,.28); font:inherit; font-size:12px; font-weight:950; cursor:pointer; }
       .dancer-onboarding-command-head { display: grid; gap: 14px; }
       .dancer-onboarding-command-head > span { display: grid; gap: 7px; }

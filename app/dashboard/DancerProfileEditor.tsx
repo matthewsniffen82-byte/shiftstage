@@ -994,6 +994,23 @@ export function DancerOnboardingProfileMediaWorkspace({
     rejectedPhotos.length ? `${rejectedPhotos.length} needs replacement` : "",
   ].filter(Boolean).join(" · ");
   const [continueAfterSave, setContinueAfterSave] = useState(false);
+  const [hasStoredDraft, setHasStoredDraft] = useState<boolean | null>(null);
+  const refreshDraftStatus = useCallback(() => {
+    try {
+      const profileId = String(profile?.id || "profile");
+      setHasStoredDraft(Boolean(
+        window.localStorage.getItem(`mydancr:dancer-profile-draft:${profileId}`)
+        || window.localStorage.getItem(`mydancr:dancer-social-draft:${profileId}`),
+      ));
+    } catch {
+      setHasStoredDraft(false);
+    }
+  }, [profile?.id]);
+  useEffect(() => {
+    refreshDraftStatus();
+  }, [draftIdentity, profile, refreshDraftStatus]);
+  const hasUnsavedChanges = draftChanged || hasStoredDraft === true;
+  const profileIsSaved = profileReady && hasStoredDraft === false && !hasUnsavedChanges;
   const readyAfterSave = Boolean(
     draftIdentity.stageName.trim()
     && draftIdentity.city.trim()
@@ -1010,7 +1027,10 @@ export function DancerOnboardingProfileMediaWorkspace({
   async function saveProfile() {
     if (!readyAfterSave) return false;
     const saved = await saveDancerProfileEditor();
-    if (saved) setContinueAfterSave(true);
+    if (saved) {
+      refreshDraftStatus();
+      setContinueAfterSave(true);
+    }
     return saved;
   }
 
@@ -1032,7 +1052,12 @@ export function DancerOnboardingProfileMediaWorkspace({
   return (
     <article className="dancer-profile-editor-launch-card" data-ready={profileReady} aria-labelledby="dancer-profile-setup-launch-heading">
       <span>
-        <strong id="dancer-profile-setup-launch-heading">Profile details</strong>
+        <span className="dancer-profile-setup-heading">
+          <strong id="dancer-profile-setup-launch-heading">Profile details</strong>
+          <span className={`dancer-profile-save-indicator${hasUnsavedChanges ? " is-unsaved" : ""}`} role="status" aria-live="polite" aria-atomic="true">
+            {hasUnsavedChanges ? "Unsaved changes" : profileIsSaved ? <><span aria-hidden="true">✓</span> Profile saved</> : null}
+          </span>
+        </span>
         <small>Stage name, city, avatar and at least 1 solo photo.</small>
       </span>
       <DancerProfilePreview
@@ -1042,6 +1067,7 @@ export function DancerOnboardingProfileMediaWorkspace({
         city={draftIdentity.city}
         editorSections={editorSections}
         name={draftIdentity.stageName}
+        onClose={refreshDraftStatus}
         onEditorSave={saveProfile}
         onProfileChange={onProfileChange}
         profile={profile}
