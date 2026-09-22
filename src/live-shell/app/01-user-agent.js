@@ -318,7 +318,6 @@
     const guestMenuBtn = document.getElementById("guestMenuBtn");
     const accountTooltip = document.getElementById("accountTooltip");
     const logoutBtn = document.getElementById("logoutBtn");
-    const deleteAccountBtn = document.getElementById("deleteAccountBtn");
     const sessionMenuEnd = document.getElementById("sessionMenuEnd");
     const adminBtn = document.getElementById("adminBtn");
     const contactAdminBtn = document.getElementById("contactAdminBtn");

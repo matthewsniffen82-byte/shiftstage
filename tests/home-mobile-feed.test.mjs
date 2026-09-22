@@ -1002,7 +1002,7 @@ test("the account menu groups published policies behind one Legal and Privacy li
   );
   assert.match(
     homeSource,
-    /\.utility-menu-session-end \{[\s\S]*?border-top: 1px solid rgba\(251,113,133,.18\)[\s\S]*?\.utility-menu-logout \{[\s\S]*?color: #fecdd3[\s\S]*?background: rgba\(69,10,24,.34\)/,
+    /\.utility-menu-session-end \{[\s\S]*?border-top: 1px solid rgba\(255,255,255,.1\)/,
   );
   assert.match(
     homeSource,

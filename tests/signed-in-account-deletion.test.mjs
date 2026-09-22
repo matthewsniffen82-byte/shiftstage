@@ -8,22 +8,22 @@ const dashboardClient = fs.readFileSync("app/dashboard/DashboardClient.tsx", "ut
 const deletionConstraints = fs.readFileSync("supabase/migrations/202608150002_allow_account_login_deletion.sql", "utf8");
 const auditHistoryConstraints = fs.readFileSync("supabase/migrations/202608150003_preserve_deleted_account_audit_history.sql", "utf8");
 
-test("every supported signed-in role gets a persistent account-menu deletion control", () => {
-  assert.match(
-    liveShell,
-    /id="sessionMenuEnd"[\s\S]*?id="logoutBtn"[\s\S]*?id="deleteAccountBtn"[^>]*>Delete account<\/button>/,
-  );
-  assert.match(
-    liveShell,
-    /function updateAccountHeader\(\)[\s\S]*?deleteAccountBtn\.hidden = !loggedIn \|\| !\["customer", "dancer", "venue"\]\.includes\(sessionRole\)[\s\S]*?deleteAccountBtn\.dataset\.accountRole = sessionRole \|\| ""/,
-  );
+test("account deletion stays in dashboard account settings instead of the quick menu", () => {
+  const menu = liveShell.slice(liveShell.indexOf('<div class="utility-menu-panel"'), liveShell.indexOf('<button class="account-tooltip"'));
+  assert.match(menu, /id="dashboardBtn"[\s\S]*?id="homeScreenInstallBtn"[\s\S]*?id="sessionMenuEnd"[\s\S]*?id="logoutBtn"/);
+  assert.doesNotMatch(menu, /Delete account|deleteAccountBtn/);
+  assert.doesNotMatch(liveShell, /deleteAccountBtn/);
+  for (const role of ["customer", "dancer", "venue"]) {
+    assert.match(dashboardClient, new RegExp('id="' + role + '-account"[\\s\\S]*?<AccountControlsPanel'));
+  }
 });
 
-test("the global deletion control requires confirmation and calls the authenticated production deletion flow", () => {
+test("account settings require explicit confirmation before calling the authenticated deletion flow", () => {
   assert.match(
-    liveShell,
-    /deleteAccountBtn\.addEventListener\("click", async \(\) => \{[\s\S]*?authSession\?\.accessToken[\s\S]*?window\.confirm\(`[\s\S]*?This cannot be undone\.`\)[\s\S]*?await deleteLiveAccount\(role, deleteAccountBtn\)/,
+    dashboardClient,
+    /async function deleteAccount\(\)[\s\S]*?deleteConfirmation !== "DELETE"[\s\S]*?session\?\.accessToken[\s\S]*?await requestAccountJson\(\{[\s\S]*?method: "DELETE"/,
   );
+  assert.match(dashboardClient, /disabled=\{isWorking \|\| deleteConfirmation !== "DELETE"\}/);
   assert.match(
     liveShell,
     /async function deleteLiveAccount\(role, button\)[\s\S]*?const deletionSession = authSession[\s\S]*?logoutAccount\(\{ message: "Deleting account…" \}\)[\s\S]*?deleteAuthenticatedJson\("\/api\/account", deletionSession\)[\s\S]*?markPublicDiscoveryForRefresh\(\)[\s\S]*?finalizeDeletedAccount\(role\)/,

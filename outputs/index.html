@@ -555,47 +555,11 @@
       gap: 6px;
       margin-top: 2px;
       padding-top: 8px;
-      border-top: 1px solid rgba(251,113,133,.18);
+      border-top: 1px solid rgba(255,255,255,.1);
     }
 
     .utility-menu-session-end[hidden] {
       display: none;
-    }
-
-    .utility-menu-logout {
-      min-height: 42px;
-      border-color: rgba(251,113,133,.42);
-      color: #fecdd3;
-      background: rgba(69,10,24,.34);
-      box-shadow: inset 0 0 14px rgba(251,113,133,.035);
-    }
-
-    .utility-menu-logout:hover {
-      border-color: rgba(251,113,133,.7);
-      color: #fff1f2;
-      background: rgba(100,18,38,.52);
-      box-shadow: inset 0 0 16px rgba(251,113,133,.07);
-    }
-
-    .utility-menu-delete-account {
-      min-height: 42px;
-      border-color: rgba(248,113,113,.56);
-      color: #fff1f2;
-      background: rgba(127,29,29,.48);
-      box-shadow: inset 0 0 16px rgba(248,113,113,.06);
-    }
-
-    .utility-menu-delete-account:hover {
-      border-color: rgba(252,165,165,.82);
-      color: #fff;
-      background: rgba(153,27,27,.66);
-      box-shadow: 0 0 16px rgba(248,113,113,.12), inset 0 0 18px rgba(248,113,113,.08);
-    }
-
-    .utility-menu-delete-account:disabled {
-      opacity: .6;
-      cursor: wait;
-      transform: none;
     }
 
     @keyframes utilityMenuIn {
@@ -32184,8 +32148,8 @@
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"></path></svg>
             </button>
             <div class="utility-menu-panel" id="moreMenuPanel" hidden>
-              <button class="utility-menu-item" id="homeScreenInstallBtn" type="button" aria-label="Add MyDancr to Home Screen" aria-haspopup="dialog" aria-controls="homeScreenInstallDialog" hidden>Add to Home Screen</button>
               <button class="utility-menu-item utility-menu-dashboard" id="dashboardBtn" type="button" hidden>Dashboard</button>
+              <button class="utility-menu-item" id="homeScreenInstallBtn" type="button" aria-label="Add MyDancr to Home Screen" aria-haspopup="dialog" aria-controls="homeScreenInstallDialog" hidden>Add to Home Screen</button>
               <nav class="utility-menu-support" aria-label="Legal and support">
                 <span class="utility-menu-section-label">Support</span>
                 <button class="utility-menu-item" id="contactAdminBtn" type="button">Contact</button>
@@ -32194,7 +32158,6 @@
               </nav>
               <div class="utility-menu-session-end" id="sessionMenuEnd" hidden>
                 <button class="utility-menu-item utility-menu-logout" id="logoutBtn" type="button">Logout</button>
-                <button class="utility-menu-item utility-menu-delete-account danger-button" id="deleteAccountBtn" type="button">Delete account</button>
               </div>
             </div>
             <button class="account-tooltip" id="accountTooltip" type="button" hidden>Manage your account here.</button>
@@ -43116,7 +43079,6 @@
     const guestMenuBtn = document.getElementById("guestMenuBtn");
     const accountTooltip = document.getElementById("accountTooltip");
     const logoutBtn = document.getElementById("logoutBtn");
-    const deleteAccountBtn = document.getElementById("deleteAccountBtn");
     const sessionMenuEnd = document.getElementById("sessionMenuEnd");
     const adminBtn = document.getElementById("adminBtn");
     const contactAdminBtn = document.getElementById("contactAdminBtn");
@@ -55871,8 +55833,6 @@
       dashboardBtn.setAttribute("aria-label", loggedIn ? `Open ${role.toLowerCase()} dashboard` : "Open dashboard");
       adminBtn.hidden = loggedIn && sessionRole !== "admin";
       sessionMenuEnd.hidden = !loggedIn;
-      deleteAccountBtn.hidden = !loggedIn || !["customer", "dancer", "venue"].includes(sessionRole);
-      deleteAccountBtn.dataset.accountRole = sessionRole || "";
       accountBtn.hidden = false;
       guestMenuBtn.hidden = loggedIn;
       accountBtn.classList.toggle("account-icon-btn", loggedIn);
@@ -64969,18 +64929,6 @@
     logoutBtn.addEventListener("click", () => {
       closeUtilityMenu();
       logoutAccount();
-    });
-    deleteAccountBtn.addEventListener("click", async () => {
-      const role = deleteAccountBtn.dataset.accountRole;
-      closeUtilityMenu();
-      if (!authSession?.accessToken || !["customer", "dancer", "venue"].includes(role)) {
-        showToast("Sign in required");
-        updateAccountHeader();
-        return;
-      }
-      const confirmed = window.confirm(`Permanently delete your ${accountRoleLabel(role).toLowerCase()}? Your account and sign-in will be removed. This cannot be undone.`);
-      if (!confirmed) return;
-      await deleteLiveAccount(role, deleteAccountBtn);
     });
     document.getElementById("authClose").addEventListener("click", closeAuthPage);
     document.getElementById("dancerSignupClose").addEventListener("click", closeDancerSignupPage);

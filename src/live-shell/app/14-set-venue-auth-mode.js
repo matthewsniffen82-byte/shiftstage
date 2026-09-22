@@ -283,8 +283,6 @@
       dashboardBtn.setAttribute("aria-label", loggedIn ? `Open ${role.toLowerCase()} dashboard` : "Open dashboard");
       adminBtn.hidden = loggedIn && sessionRole !== "admin";
       sessionMenuEnd.hidden = !loggedIn;
-      deleteAccountBtn.hidden = !loggedIn || !["customer", "dancer", "venue"].includes(sessionRole);
-      deleteAccountBtn.dataset.accountRole = sessionRole || "";
       accountBtn.hidden = false;
       guestMenuBtn.hidden = loggedIn;
       accountBtn.classList.toggle("account-icon-btn", loggedIn);

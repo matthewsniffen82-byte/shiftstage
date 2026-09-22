@@ -645,18 +645,6 @@
       closeUtilityMenu();
       logoutAccount();
     });
-    deleteAccountBtn.addEventListener("click", async () => {
-      const role = deleteAccountBtn.dataset.accountRole;
-      closeUtilityMenu();
-      if (!authSession?.accessToken || !["customer", "dancer", "venue"].includes(role)) {
-        showToast("Sign in required");
-        updateAccountHeader();
-        return;
-      }
-      const confirmed = window.confirm(`Permanently delete your ${accountRoleLabel(role).toLowerCase()}? Your account and sign-in will be removed. This cannot be undone.`);
-      if (!confirmed) return;
-      await deleteLiveAccount(role, deleteAccountBtn);
-    });
     document.getElementById("authClose").addEventListener("click", closeAuthPage);
     document.getElementById("dancerSignupClose").addEventListener("click", closeDancerSignupPage);
     document.getElementById("stripeClose").addEventListener("click", closeStripeCheckoutPage);
