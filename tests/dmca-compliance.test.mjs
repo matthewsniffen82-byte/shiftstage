@@ -129,10 +129,12 @@ test("eligible counter-notices restore content and rescind strikes unless a cour
   ]);
 });
 
-test("admin copyright controls remain available and the public policy is linked", () => {
+test("admin copyright controls remain available and the legal hub links the public policy", async () => {
   assert.match(adminPanel, /Registered with the U\.S\. Copyright Office/);
   assert.match(adminPanel, /Registration renewal date/);
   assert.match(adminClient, /<AdminDmcaPanel \/>/);
-  assert.match(liveShell, /href="\/dmca"/);
+  assert.match(liveShell, /href="\/legal"/);
+  const legalPage = await readFile(new URL("../app/legal/page.tsx", import.meta.url), "utf8");
+  assert.match(legalPage, /href="\/dmca"/);
   assert.doesNotMatch(adminPanel, /href="\/dmca"/);
 });

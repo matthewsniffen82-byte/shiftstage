@@ -965,7 +965,7 @@ test("bottom navigation keeps every destination on one uniform baseline", () => 
   assert.doesNotMatch(homeSource, /#discoveryTabs \.tab\[data-tab="trending"\]/);
 });
 
-test("published policies and support actions stay in the account menu", () => {
+test("the account menu groups published policies behind one Legal and Privacy link", () => {
   const homeMain = homeSource.match(/<main class="stack">[\s\S]*?<\/main>/)?.[0] || "";
   const accountMenu = homeSource.match(
     /<div class="utility-menu-panel" id="moreMenuPanel"[\s\S]*?<\/nav>[\s\S]*?<\/div>/,
@@ -973,8 +973,11 @@ test("published policies and support actions stay in the account menu", () => {
   assert.doesNotMatch(homeMain, /legal-links|data-legal-page|contactAdminBtn|adminBtn/);
   assert.match(
     accountMenu,
-    /class="utility-menu-support" aria-label="Legal and support"[\s\S]*?href="\/privacy"[\s\S]*?href="\/privacy\/california"[\s\S]*?href="\/dmca"[\s\S]*?id="contactAdminBtn"[\s\S]*?id="adminBtn"/,
+    /class="utility-menu-support" aria-label="Legal and support"[\s\S]*?id="contactAdminBtn"[\s\S]*?id="adminBtn"[\s\S]*?href="\/legal">Legal &amp; Privacy<\/a>/,
   );
+  assert.equal((accountMenu.match(/href="\/legal"/g) || []).length, 1);
+  assert.doesNotMatch(accountMenu, /href="\/(?:privacy(?:\/california)?|dmca)"/);
+  assert.doesNotMatch(homeMain, /href="\/legal"/);
   assert.match(
     accountMenu,
     /class="utility-menu-item utility-menu-dashboard" id="dashboardBtn"[\s\S]*?<nav class="utility-menu-support"[\s\S]*?<div class="utility-menu-session-end" id="sessionMenuEnd" hidden>[\s\S]*?class="utility-menu-item utility-menu-logout" id="logoutBtn"/,
