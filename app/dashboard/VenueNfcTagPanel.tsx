@@ -475,6 +475,7 @@ export default function VenueNfcTagPanel({
         .venue-roster-filters b{font-variant-numeric:tabular-nums;color:#c4b5fd}
         .venue-roster-results{font-size:12px}
         .venue-roster-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+        .venue-roster-actions .venue-end-checkin{min-height:36px;padding:0 10px;font-size:11px;white-space:nowrap}
         .venue-roster-actions a{display:inline-flex;align-items:center;min-height:36px;padding:0 10px;border:1px solid rgba(167,139,250,.3);border-radius:10px;color:#ddd6fe;font-size:12px;font-weight:750;text-decoration:none}
         .venue-nfc-dancer-copy .venue-roster-working{color:#6ee7b7;font-weight:750}
         .venue-roster-stickers{min-width:0;border-top:1px solid rgba(255,255,255,.1);padding-top:14px}
