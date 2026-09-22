@@ -211,7 +211,7 @@ export default function VenueNfcTagPanel({
   async function removeAccess(affiliation: DancerAffiliation) {
     if (!canManageRoster || savingRef.current) return;
     const dancerName = affiliation.dancer?.stageName || "this dancer";
-    if (!window.confirm(`Remove ${dancerName} from this club? Their check-in and club appearances will end. Their account and media stay intact. A new dressing-room tap can reconnect them.`)) return;
+    if (!window.confirm(`Remove ${dancerName} from this club? Their check-in and club appearances will end. Their account and media stay intact. Your club must allow a new tap before they can reconnect.`)) return;
     if (!readDashboardAccessToken("venue")) return setStatus("Sign in required.");
     if (!mountedRef.current) return;
     const requestId = ++actionSequenceRef.current;
@@ -234,9 +234,9 @@ export default function VenueNfcTagPanel({
         signal: controller.signal,
       });
       if (!mountedRef.current || controller.signal.aborted || requestId !== actionSequenceRef.current) return;
-      setAffiliations((current) => current.map((item) => item.id === affiliation.id ? { ...item, status: "revoked" } : item));
+      setAffiliations((current) => current.map((item) => item.id === affiliation.id ? { ...item, status: "revoked", reentryBlocked: true } : item));
       onAccessRemoved?.(affiliation);
-      setStatus(`${dancerName}'s club connection ended. Their account is preserved. A new dressing-room tap can reconnect them.`);
+      setStatus(`${dancerName}'s club connection ended. Their account is preserved. Your club must allow a new tap before they can reconnect.`);
     } catch (error) {
       if (!mountedRef.current || controller.signal.aborted || requestId !== actionSequenceRef.current) return;
       setStatus(error instanceof Error ? error.message : "Unable to remove check-in access.");
@@ -247,6 +247,20 @@ export default function VenueNfcTagPanel({
         if (mountedRef.current) setIsSaving(false);
       }
     }
+  }
+
+  async function allowNewTap(affiliation: DancerAffiliation) {
+    if (!canManageRoster || savingRef.current) return;
+    if (!window.confirm(`Allow ${affiliation.dancer?.stageName || "this dancer"} to reconnect using a new dressing-room tap?`)) return;
+    savingRef.current = true; setIsSaving(true);
+    try {
+      await requestVenueDancerVerificationsJson("", { method: "PATCH", headers: { "content-type": "application/json" },
+        body: JSON.stringify({ affiliationId: affiliation.id, action: "allow_new_tap" }), fallbackMessage: "Unable to allow a new tap." });
+      if (!mountedRef.current) return;
+      setAffiliations(current => current.map(item => item.id === affiliation.id ? { ...item, reentryBlocked: false } : item));
+      setStatus("A new tap is allowed. The dancer must tap the club’s dressing-room sticker to reconnect.");
+    } catch (error) { if (mountedRef.current) setStatus(error instanceof Error ? error.message : "Unable to allow a new tap."); }
+    finally { savingRef.current = false; if (mountedRef.current) setIsSaving(false); }
   }
 
   function startTapTest(tag: NfcTag) {
@@ -351,6 +365,14 @@ export default function VenueNfcTagPanel({
         {!isLoading && !matchingAffiliations.length ? <p>{search.trim() ? "No affiliated dancers match your search." : workingOnly ? "No affiliated dancers are working now." : "No dancers have used this venue's dancer check-in sticker yet."}</p> : null}
         {matchingAffiliations.length > visibleCount ? <button type="button" onClick={() => setVisibleCount((count) => count + 50)}>Show more dancers ({matchingAffiliations.length - visibleCount} remaining)</button> : null}
       </section>
+      {canManageRoster && affiliations.some(item => item.status === "revoked" && item.reentryBlocked) ? <details>
+        <summary>Removed dancers</summary>
+        <p>Only allow a new tap when the dancer has your club’s permission to return.</p>
+        {affiliations.filter(item => item.status === "revoked" && item.reentryBlocked).map(item => <div className="venue-nfc-dancer" key={item.id}>
+          <span>{item.dancer?.stageName || "Dancer"}</span>
+          <button type="button" disabled={isSaving} onClick={() => void allowNewTap(item)}>Allow new tap</button>
+        </div>)}
+      </details> : null}
       {status ? <p role="status">{status}</p> : null}
       <details className="venue-roster-stickers">
         <summary>Dancer &amp; legacy stickers <span>{tags.length} assigned</span></summary>

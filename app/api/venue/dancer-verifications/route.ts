@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { apiError } from "@/src/lib/api";
+import { PublicApiError } from "@/src/lib/api-error-policy";
 import { readBoundedJsonObject } from "@/src/lib/bounded-json-body";
 import { requireActiveVenueAccount } from "@/src/lib/dancr/auth";
 import {
@@ -78,6 +79,31 @@ export async function DELETE(request: Request) {
   } catch (error) {
     return affiliationApiError(error, "Unable to remove dancer verification.");
   }
+}
+
+export async function PATCH(request: Request) {
+  try {
+    const { client, user } = await createRequestSupabaseContext(request);
+    await requireActiveVenueAccount(client, user.id);
+    const admin = createAdminSupabaseClient();
+    const access = await requireVenueAccess(admin, user.id, "manage_roster");
+    const body = await readBoundedJsonObject(request, { maxBytes: MAX_AFFILIATION_BODY_BYTES, invalidMessage: "Invalid dancer access request.", tooLargeMessage: "Dancer access request is too large." });
+    if (body.action !== "allow_new_tap" || typeof body.affiliationId !== "string" || !/^[0-9a-f-]{36}$/i.test(body.affiliationId)) {
+      throw new PublicApiError("INVALID_REQUEST", "Choose a removed dancer.", 400);
+    }
+    const { data: current, error: readError } = await admin.from("venue_dancer_affiliations").select("venue_id").eq("id", body.affiliationId).maybeSingle();
+    if (readError) throw readError;
+    if (current?.venue_id !== access.venueId) throw new PublicApiError("FORBIDDEN", "This dancer is not associated with your club.", 403);
+    const { data, error } = await admin.rpc("allow_dancer_venue_retap", { p_actor_user_id: user.id, p_affiliation_id: body.affiliationId });
+    if (error) throw new PublicApiError("FORBIDDEN", "Unable to allow a new tap. Check that your club is active and refresh.", 403);
+    if (data?.id !== body.affiliationId || data.venueId !== access.venueId || data.requiresNewTap !== true) {
+      throw new PublicApiError("UNAVAILABLE", "New tap permission could not be confirmed. Refresh before trying again.", 503);
+    }
+    await recordVenueActivity(admin, { venueId: access.venueId, actorUserId: user.id, actorRole: access.role,
+      action: "roster.new_tap_allowed", targetType: "venue_dancer_affiliation", targetId: body.affiliationId,
+      summary: "The club allowed a removed dancer to establish access with a new dressing-room tap." });
+    return noStoreJson({ ok: true, ...data });
+  } catch (error) { return affiliationApiError(error, "Unable to allow a new dancer tap."); }
 }
 
 function noStoreJson(body: Record<string, unknown>, status = 200) {
