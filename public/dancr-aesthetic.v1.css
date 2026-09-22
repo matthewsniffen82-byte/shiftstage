@@ -8657,7 +8657,7 @@ body.dancer-directory-active > .app main.stack > section.stack
   > #results.home-dancer-grid .dancer-directory-filters {
   box-sizing: border-box;
   width: 100%;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 2px !important;
   margin: 0 0 2px !important;
   padding: 0;

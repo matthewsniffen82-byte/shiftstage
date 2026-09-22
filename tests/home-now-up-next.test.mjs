@@ -42,7 +42,7 @@ test("the Dancers directory groups every profile once as Working Now, Upcoming, 
   assert.doesNotMatch(groupedSource, /groups\.trending|trendingDirectoryProfiles/);
 });
 
-test("the consolidated Dancers destination exposes only All, Now, and Upcoming filters", () => {
+test("the consolidated Dancers destination exposes full-width All and Now filters", () => {
   assert.match(
     homeSource,
     /class="tab active" data-tab="dancers" data-tab-label="Dancers" aria-current="page">Dancers<\/button>/,
@@ -53,10 +53,10 @@ test("the consolidated Dancers destination exposes only All, Now, and Upcoming f
   assert.match(homeSource, /`\$\{workingNowCount\} working now`/);
   assert.match(
     homeSource,
-    /filters = \[[\s\S]*id: "all", label: "All"[\s\S]*id: "now", label: "Now"[\s\S]*id: "upcoming", label: "Upcoming"/,
+    /filters = \[\s*\{ id: "all", label: "All" \},\s*\{ id: "now", label: "Now" \}\s*\]/,
   );
   assert.doesNotMatch(homeSource, /id: "trending", label: "Trending"/);
-  assert.match(homeSource, /\.dancer-directory-filters \{[\s\S]*?grid-template-columns: repeat\(3, minmax\(0, 1fr\)\)/);
+  assert.match(homeSource, /\.dancer-directory-filters \{[\s\S]*?grid-template-columns: repeat\(2, minmax\(0, 1fr\)\)/);
   assert.match(
     homeSource,
     /role="tab"[\s\S]*?data-dancer-directory-filter="\$\{filter\.id\}"[\s\S]*?aria-selected="\$\{active\}"[\s\S]*?aria-pressed="\$\{active\}"/,
