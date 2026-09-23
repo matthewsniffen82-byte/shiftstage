@@ -1,6 +1,6 @@
 # Dancer Agreement acceptance
 
-The required checkbox uses agreement version `2026-09-17-v4`, published at `/dancer-agreement`. The original document, rendered text, hashes, and exact consent wording are retained through the document assets and `dancer_agreement_versions` snapshot.
+The required checkbox uses agreement version `2026-09-22-v5`, published at `/dancer-agreement`. The original document, rendered text, hashes, and exact consent wording are retained through the document assets and `dancer_agreement_versions` snapshot. Migration `20260923020000_publish_dancer_agreement_v5.sql` archives this revision and makes it current without changing earlier snapshots or acceptance receipts.
 
 New dancer signup requires explicit acceptance of the current version. The server creates an email-bound, single-use intent; an Auth INSERT trigger saves the receipt for the new identity in the same transaction. Duplicate signup and later edits to user metadata cannot accept for an existing identity. Unused intents expire after one hour and are removed by subsequent signup requests.
 

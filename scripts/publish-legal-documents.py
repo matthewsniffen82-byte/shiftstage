@@ -18,10 +18,10 @@ ROOT = Path(__file__).resolve().parents[1]
 NS = {"w": "http://schemas.openxmlformats.org/wordprocessingml/2006/main"}
 W = "{" + NS["w"] + "}"
 DOCUMENTS = [
-    ("dancer-agreement", "Dancer Agreement", "MyDancr_DancerAgreement.09.17.26v.4.docx"),
-    ("privacy", "Privacy Policy", "MyDancr_Privacy_Policy.09.06.26.docx"),
+    ("dancer-agreement", "Dancer Agreement", "MyDancr_DancerAgreement.09.22.26v.5.docx"),
+    ("privacy", "Privacy Policy", "MyDancr_Privacy_Policy.Final.docx"),
     ("california-privacy", "Privacy Notice for California Residents", "MyDancr_Privacy_Policy_Cal_Amendment.09.06.26.docx"),
-    ("dmca", "Digital Millennium Copyright Act", "MyDancr_Digital Millennium Copyright Act.09.06.26.doc"),
+    ("dmca", "Digital Millennium Copyright Act", "MyDancr_Digital Millennium Copyright Act.Final.docx"),
 ]
 SUBHEADINGS = {
     "Infringement Notification", "Counter Notification",
@@ -162,11 +162,20 @@ def convert(slug, title, filename):
         text = final_text(block).strip()
         if not text or (index == 0 and text == title):
             continue
-        # Both placeholder replacements were confirmed by the document owner.
+        # Keep the owner-approved website values; source downloads stay untouched.
         if slug == "privacy" and text == "Last updated: September __, 2026":
-            text = "Last updated: September 21, 2026"
+            text = "Last updated: September 22, 2026"
         if slug == "privacy":
             text = text.replace("XXXXXXXXXX", "MyDancr LLC")
+        # These source headings share a Word paragraph with the preceding prose.
+        trailing_heading = {
+            "privacy": "4. DO WE USE COOKIES AND OTHER TRACKING TECHNOLOGIES?",
+            "dancer-agreement": "ADVERTISEMENTS.",
+        }.get(slug)
+        if trailing_heading and text != trailing_heading and text.endswith(trailing_heading):
+            text = text[:-len(trailing_heading)].rstrip()
+        else:
+            trailing_heading = None
         number = re.match(r"^(\d+)\.\s*[A-Z]", text)
         if slug == "privacy" and 18 <= index <= 30:
             html.append(f'<p class="legal-toc-entry"><a href="#privacy-topic-{number[1]}">{inline(text)}</a></p>')
@@ -180,6 +189,8 @@ def convert(slug, title, filename):
         else:
             css = ' class="legal-bullet"' if text.startswith("•") else ""
             html.append(f"<p{css}>{inline(text)}</p>")
+        if trailing_heading:
+            html.append(heading(trailing_heading, "privacy-topic-4" if slug == "privacy" else None))
     target = ROOT / "src" / "content" / "legal" / f"{slug}.json"
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text(json.dumps({
