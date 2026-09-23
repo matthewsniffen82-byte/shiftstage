@@ -42849,9 +42849,6 @@
       </section>
       <div class="profile-photo-viewer profile-media-card-feed" id="profilePhotoViewer" role="dialog" aria-modal="true" aria-label="Profile photo" hidden>
         <div class="profile-photo-viewer-shell">
-          <button class="close-btn profile-photo-viewer-close" id="profilePhotoViewerClose" type="button" aria-label="Close profile photos">
-            <svg class="icon" viewBox="0 0 24 24"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
-          </button>
           <div class="profile-photo-viewer-stage">
             <div class="profile-photo-viewer-image" id="profilePhotoViewerImage" role="group" tabindex="0" aria-label="Dancer photos. Scroll up or down to change photos."></div>
             <button class="profile-photo-viewer-previous" id="profilePhotoViewerPrevious" type="button" aria-label="Previous dancer photo">↑</button>
@@ -43207,7 +43204,6 @@
     const modalProfileMetrics = document.getElementById("modalProfileMetrics");
     const profilePhotoViewer = document.getElementById("profilePhotoViewer");
     const profilePhotoViewerImage = document.getElementById("profilePhotoViewerImage");
-    const profilePhotoViewerClose = document.getElementById("profilePhotoViewerClose");
     const profilePhotoViewerLike = document.getElementById("profilePhotoViewerLike");
     const profilePhotoViewerShare = document.getElementById("profilePhotoViewerShare");
     const profilePhotoViewerReport = document.getElementById("profilePhotoViewerReport");
@@ -53727,11 +53723,23 @@
         const heading = document.createElement("div");
         heading.className = "profile-media-card-heading";
         header.appendChild(heading);
-        const close = overlay.querySelector(".profile-photo-viewer-close, .profile-tv-viewer-close");
-        if (close) header.appendChild(close);
       }
       header.querySelector(".profile-media-card-heading").textContent = overlay.dataset.profileMediaHeading || "Profile media";
       host.prepend(header);
+    }
+
+    function appendProfileMediaBackButton(slide, onBack) {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "profile-media-card-back";
+      button.setAttribute("aria-label", "Back to dancer profile");
+      button.innerHTML = '<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M19 12H5m7-7-7 7 7 7"></path></svg>';
+      button.addEventListener("click", (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        onBack();
+      });
+      slide.appendChild(button);
     }
 
     function syncProfilePhotoViewerImage() {
@@ -53760,6 +53768,7 @@
         image.setAttribute("role", "img");
         image.setAttribute("aria-label", `${profileName} photo ${index + 1} of ${items.length}`);
         slide.appendChild(image);
+        appendProfileMediaBackButton(slide, closeProfilePhotoViewer);
         profilePhotoViewerImage.appendChild(slide);
         mountProfilePhotoCardControls(slide, item, index, items.length, profileName);
         const thumb = modalGallery.querySelector(`[data-profile-photo-index="${index}"] img`);
@@ -53925,7 +53934,7 @@
       if (profilePhotoViewerStatus) profilePhotoViewerStatus.textContent = "";
       window.requestAnimationFrame(() => {
         scrollProfilePhotoViewerTo(initialIndex, { instant: true });
-        profilePhotoViewerImage.focus({ preventScroll: true });
+        profilePhotoViewerImage.querySelector(`[data-profile-photo-viewer-index="${initialIndex}"] .profile-media-card-back`)?.focus({ preventScroll: true });
       });
     }
 
@@ -54670,6 +54679,7 @@
       return true;
     }
 
+
     function openProfileModal(profileReference, options = {}) {
       let city = citySelect.value;
       const isPrivatePreview = Boolean(options.preview);
@@ -54825,7 +54835,6 @@
       document.body.insertAdjacentHTML("beforeend", `
         <div class="profile-tv-viewer profile-media-card-feed" id="profileTvViewer" role="dialog" aria-modal="true" aria-label="MyDancr TV video" aria-hidden="true" hidden>
           <div class="profile-tv-viewer-shell">
-            <button class="profile-tv-viewer-close" type="button" data-close-profile-tv aria-label="Close profile videos">${actionIconMarkup("close")}</button>
             <div class="profile-tv-viewer-stage" id="profileTvViewerStage" aria-label="Dancer videos. Scroll up or down to change videos."></div>
             <span class="profile-tv-playback-feedback" id="profileTvPlaybackFeedback" aria-hidden="true"></span>
             <button class="profile-tv-viewer-previous" type="button" data-previous-profile-tv aria-label="Previous dancer video">↑</button>
@@ -54853,7 +54862,7 @@
       overlay.addEventListener("click", (event) => {
         const target = event.target instanceof Element ? event.target : null;
         if (!target) return;
-        if (target === overlay || target.closest("[data-close-profile-tv]")) {
+        if (target === overlay) {
           closeProfileTvViewer();
           return;
         }
@@ -54973,6 +54982,7 @@
         poster.decoding = "async";
         if (video.poster) poster.src = video.poster;
         slide.appendChild(poster);
+        appendProfileMediaBackButton(slide, closeProfileTvViewer);
         stage.appendChild(slide);
       });
       mountProfileMediaCardHeader(overlay, stage);
@@ -55157,7 +55167,7 @@
       document.body.classList.add("profile-tv-viewer-open");
       settleProfileTvViewerOpening(overlay, initialIndex);
       window.requestAnimationFrame(() => renderProfileTvViewerItem(initialIndex, { instant: true }));
-      overlay.querySelector("[data-close-profile-tv]")?.focus({ preventScroll: true });
+      overlay.querySelector(`[data-profile-tv-viewer-index="${initialIndex}"] .profile-media-card-back`)?.focus({ preventScroll: true });
       syncOverlayScrollLock();
     }
 
@@ -64768,15 +64778,6 @@
       event.stopPropagation();
       closeProfileModal();
     });
-    profilePhotoViewerClose?.addEventListener("click", (event) => {
-      event.preventDefault();
-      event.stopPropagation();
-      closeProfilePhotoViewer();
-    });
-    profilePhotoViewerClose?.addEventListener("pointerdown", (event) => {
-      event.preventDefault();
-      event.stopPropagation();
-    }, { passive: false });
     profilePhotoViewerShare?.addEventListener("click", (event) => {
       event.preventDefault();
       event.stopPropagation();

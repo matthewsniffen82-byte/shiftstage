@@ -155,7 +155,6 @@
       document.body.insertAdjacentHTML("beforeend", `
         <div class="profile-tv-viewer profile-media-card-feed" id="profileTvViewer" role="dialog" aria-modal="true" aria-label="MyDancr TV video" aria-hidden="true" hidden>
           <div class="profile-tv-viewer-shell">
-            <button class="profile-tv-viewer-close" type="button" data-close-profile-tv aria-label="Close profile videos">${actionIconMarkup("close")}</button>
             <div class="profile-tv-viewer-stage" id="profileTvViewerStage" aria-label="Dancer videos. Scroll up or down to change videos."></div>
             <span class="profile-tv-playback-feedback" id="profileTvPlaybackFeedback" aria-hidden="true"></span>
             <button class="profile-tv-viewer-previous" type="button" data-previous-profile-tv aria-label="Previous dancer video">↑</button>
@@ -183,7 +182,7 @@
       overlay.addEventListener("click", (event) => {
         const target = event.target instanceof Element ? event.target : null;
         if (!target) return;
-        if (target === overlay || target.closest("[data-close-profile-tv]")) {
+        if (target === overlay) {
           closeProfileTvViewer();
           return;
         }
@@ -303,6 +302,7 @@
         poster.decoding = "async";
         if (video.poster) poster.src = video.poster;
         slide.appendChild(poster);
+        appendProfileMediaBackButton(slide, closeProfileTvViewer);
         stage.appendChild(slide);
       });
       mountProfileMediaCardHeader(overlay, stage);
@@ -487,7 +487,7 @@
       document.body.classList.add("profile-tv-viewer-open");
       settleProfileTvViewerOpening(overlay, initialIndex);
       window.requestAnimationFrame(() => renderProfileTvViewerItem(initialIndex, { instant: true }));
-      overlay.querySelector("[data-close-profile-tv]")?.focus({ preventScroll: true });
+      overlay.querySelector(`[data-profile-tv-viewer-index="${initialIndex}"] .profile-media-card-back`)?.focus({ preventScroll: true });
       syncOverlayScrollLock();
     }
 

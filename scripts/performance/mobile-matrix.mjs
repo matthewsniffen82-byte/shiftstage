@@ -54,8 +54,8 @@ for (const config of cases.filter(config => !process.env.PERF_MATRIX_CASES || pr
   page.on("requestfailed", request => row.failedRequests.push({ path: new URL(request.url()).pathname, failure: request.failure()?.errorText, lastCompletedPhase: row.phases.at(-1) }));
   try {
     await page.goto(`${base}/dancers/${encodeURIComponent(slug)}?media=video&mediaIndex=0`, { waitUntil: "load", timeout: 90000 });
-    await page.locator(".profile-media-viewer-close").waitFor();
-    row.closeControl = await page.locator(".profile-media-viewer-close").evaluate(button => {
+    await page.locator('.profile-media-viewer-slide[aria-current="true"] .profile-media-card-back').waitFor();
+    row.closeControl = await page.locator('.profile-media-viewer-slide[aria-current="true"] .profile-media-card-back').evaluate(button => {
       const box = button.getBoundingClientRect(), banner = document.querySelector(".mydancr-preview-banner")?.getBoundingClientRect();
       const hit = document.elementFromPoint(box.x + box.width / 2, box.y + box.height / 2);
       return { top: box.top, bottom: box.bottom, bannerBottom: banner?.bottom, hit: hit?.className, receivesPointer: button === hit || button.contains(hit) };
@@ -63,7 +63,7 @@ for (const config of cases.filter(config => !process.env.PERF_MATRIX_CASES || pr
     await page.waitForFunction(() => [...document.querySelectorAll(".profile-media-viewer video")].some(v => !v.paused && v.currentTime > .1), null, { timeout: 45000 });
     row.phases.push("profile-video-playing");
     const closeStarted = performance.now();
-    if (row.closeControl.receivesPointer) await page.locator(".profile-media-viewer-close").tap();
+    if (row.closeControl.receivesPointer) await page.locator('.profile-media-viewer-slide[aria-current="true"] .profile-media-card-back').tap();
     else { if (enforce) throw new Error("Profile close is covered"); await page.keyboard.press("Escape"); }
     await page.locator(".profile-media-viewer").waitFor({ state: "detached" });
     row.touchCloseMs = row.closeControl.receivesPointer ? performance.now() - closeStarted : null;

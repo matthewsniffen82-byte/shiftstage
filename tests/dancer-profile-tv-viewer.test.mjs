@@ -132,7 +132,8 @@ test("dancer profile viewers reuse translucent TV glass with anonymous media lik
     liveApp,
     /\.profile-tv-viewer-close \{[^}]*background-color: rgba\(5,5,10,\.5\);[^}]*backdrop-filter: blur\(14px\) saturate\(1\.12\);/,
   );
-  assert.match(liveApp, /data-close-profile-tv aria-label="Close profile videos">\$\{actionIconMarkup\("close"\)\}<\/button>/);
+  assert.match(liveApp, /appendProfileMediaBackButton\(slide, closeProfileTvViewer\)/);
+  assert.doesNotMatch(liveApp, /data-close-profile-tv aria-label="Close profile videos"/);
   assert.match(
     liveApp,
     /\.profile-tv-viewer-actions button \{[^}]*background-color: rgba\(5,5,10,\.5\);[^}]*backdrop-filter: blur\(14px\) saturate\(1\.12\);/,

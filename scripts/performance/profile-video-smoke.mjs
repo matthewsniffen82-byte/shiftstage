@@ -48,7 +48,7 @@ try {
   await visibility("hidden");
   await visibility("visible");
   assert.ok((await capture("manual-pause-preserved")).every(video => video.paused));
-  await page.locator(".profile-media-viewer-close").tap();
+  await page.locator('.profile-media-viewer-slide[aria-current="true"] .profile-media-card-back').tap();
   await page.locator(".profile-media-viewer").waitFor({ state: "detached" });
   assert.equal((await capture("closed")).length, 0);
   const releasedPlayer = await page.evaluate(() => ({ connected: window.__originalPlayer.isConnected, paused: window.__originalPlayer.paused, source: window.__originalPlayer.hasAttribute("src") }));

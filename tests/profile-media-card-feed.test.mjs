@@ -189,6 +189,40 @@ test("profile photos and videos use edge-to-edge fill with centered cropping", (
   assert.match(css, /background: #000 !important/);
 });
 
+test("each media card has a back arrow that closes only its own viewer", () => {
+  const backContext = vm.createContext({
+    document: {
+      createElement: () => ({
+        attributes: {}, listeners: {},
+        setAttribute(name, value) { this.attributes[name] = value; },
+        addEventListener(name, handler) { this.listeners[name] = handler; },
+      }),
+    },
+  });
+  vm.runInContext(functionSource("appendProfileMediaBackButton"), backContext);
+  let photosClosed = 0;
+  let videosClosed = 0;
+  const photo = { appendChild(button) { this.back = button; } };
+  const video = { appendChild(button) { this.back = button; } };
+  backContext.appendProfileMediaBackButton(photo, () => { photosClosed += 1; });
+  backContext.appendProfileMediaBackButton(video, () => { videosClosed += 1; });
+  for (const [card, expected] of [[photo, [1, 0]], [video, [1, 1]]]) {
+    let prevented = false;
+    let stopped = false;
+    card.back.listeners.click({ preventDefault() { prevented = true; }, stopPropagation() { stopped = true; } });
+    assert.deepEqual([photosClosed, videosClosed], expected);
+    assert.ok(prevented && stopped, "back must not trigger video playback or a parent profile action");
+    assert.equal(card.back.attributes["aria-label"], "Back to dancer profile");
+    assert.equal(card.back.type, "button");
+  }
+  assert.match(functionSource("renderProfilePhotoViewerSlides"), /appendProfileMediaBackButton\(slide, closeProfilePhotoViewer\)/);
+  assert.match(functionSource("renderProfileTvViewerSlides"), /appendProfileMediaBackButton\(slide, closeProfileTvViewer\)/);
+  assert.match(carousel, /viewerItems\.map[^]*?className="profile-media-card-back"[^]*?onClick=\{closeViewer\}/);
+  assert.doesNotMatch(carousel, /className="profile-media-viewer-close"/);
+  assert.doesNotMatch(live, /<button[^>]*class="[^"]*profile-(?:photo|tv)-viewer-close/);
+  assert.doesNotMatch(functionSource("mountProfileMediaCardHeader"), /appendChild\(close\)/);
+});
+
 test("all profile media controls use the regular TV translucent glass material", () => {
   const aesthetic = fs.readFileSync("public/dancr-aesthetic.v1.css", "utf8");
   for (const material of [

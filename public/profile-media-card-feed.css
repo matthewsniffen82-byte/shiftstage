@@ -29,7 +29,7 @@
   height: var(--profile-media-card-header);
   display: flex;
   align-items: center;
-  padding: env(safe-area-inset-top, 0px) 76px 0 13px;
+  padding: env(safe-area-inset-top, 0px) 13px 0;
   background: #000;
 }
 
@@ -86,17 +86,50 @@
   margin-bottom: 0 !important;
 }
 
-.profile-media-card-feed .profile-media-card-header :is(.profile-photo-viewer-close, .profile-tv-viewer-close, .profile-media-viewer-close) {
+/* A quiet, easy-to-tap way back on every individual photo and video. */
+body.dancr-button-system :is(#profilePhotoViewer, #profileTvViewer, .profile-media-viewer).profile-media-card-feed .profile-media-card-back {
   position: absolute !important;
-  z-index: 91 !important;
+  z-index: 5;
   top: calc(16px + env(safe-area-inset-top, 0px)) !important;
-  right: 9px !important;
-  width: 46px !important;
-  min-width: 46px !important;
-  max-width: 46px !important;
-  height: 46px !important;
-  min-height: 46px !important;
-  max-height: 46px !important;
+  left: max(12px, env(safe-area-inset-left, 0px)) !important;
+  width: 44px !important;
+  min-width: 44px !important;
+  max-width: 44px !important;
+  height: 44px !important;
+  min-height: 44px !important;
+  max-height: 44px !important;
+  display: grid;
+  place-items: center;
+  padding: 0 !important;
+  border: 1px solid rgba(255, 255, 255, .14) !important;
+  border-radius: 50% !important;
+  color: #fff !important;
+  background: rgba(8, 8, 12, .3) !important;
+  box-shadow: none !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+  backdrop-filter: blur(8px) !important;
+  cursor: pointer;
+}
+
+body.dancr-button-system :is(#profilePhotoViewer, #profileTvViewer, .profile-media-viewer).profile-media-card-feed .profile-media-card-back:is(:hover, :focus-visible) {
+  background: rgba(8, 8, 12, .55) !important;
+  border-color: rgba(255, 255, 255, .4) !important;
+}
+
+.profile-media-card-feed .profile-media-card-back:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 3px;
+}
+
+.profile-media-card-feed .profile-media-card-back svg {
+  display: block;
+  width: 22px;
+  height: 22px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 /* Photos and videos fill their cards without added side bars. */
@@ -181,15 +214,12 @@
 /* Match the regular TV action material in every profile entry point. The
  * existing overlay/control IDs keep this layer above global utility styles. */
 body.dancr-button-system :is(#profilePhotoViewer, #profileTvViewer, .profile-media-viewer).profile-media-card-feed :is(
-  #profilePhotoViewerClose,
   .profile-photo-viewer-previous,
   .profile-photo-viewer-next,
   .profile-photo-viewer-actions > button,
-  .profile-tv-viewer-close,
   .profile-tv-viewer-previous,
   .profile-tv-viewer-next,
   .profile-tv-viewer-actions > button,
-  .profile-media-viewer-close,
   .profile-media-viewer-previous,
   .profile-media-viewer-next,
   .profile-media-viewer-actions > button
@@ -210,15 +240,12 @@ body.dancr-button-system :is(#profilePhotoViewer, #profileTvViewer, .profile-med
 }
 
 body.dancr-button-system :is(#profilePhotoViewer, #profileTvViewer, .profile-media-viewer).profile-media-card-feed :is(
-  #profilePhotoViewerClose,
   .profile-photo-viewer-previous,
   .profile-photo-viewer-next,
   .profile-photo-viewer-actions > button,
-  .profile-tv-viewer-close,
   .profile-tv-viewer-previous,
   .profile-tv-viewer-next,
   .profile-tv-viewer-actions > button,
-  .profile-media-viewer-close,
   .profile-media-viewer-previous,
   .profile-media-viewer-next,
   .profile-media-viewer-actions > button

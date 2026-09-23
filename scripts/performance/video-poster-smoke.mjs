@@ -111,7 +111,7 @@ try {
   assert.equal(await page.locator('.home-tv-feed-video').evaluateAll(videos=>videos.filter(v=>!v.paused).length),0);
   frames.push(...await page.evaluate(()=>window.__posterFrames));
   assert.ok((await page.evaluate(()=>window.__posterOverlap)).every(n=>n<=1));
-  await page.locator('[data-close-profile-tv]').click();
+  await page.locator('.profile-tv-viewer-slide:has(#profileTvViewerVideo) .profile-media-card-back').click();
   await page.locator('#modalClose').click();
   await page.waitForTimeout(1000);
   await page.goto(base+'/dancers/lvdegen11?media=video&mediaIndex=0',{waitUntil:'load',timeout:60000});

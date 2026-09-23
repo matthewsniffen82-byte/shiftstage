@@ -156,7 +156,7 @@ export function DancerPhotoCarousel({
   const [reportedTargets, setReportedTargets] = useState<string[]>([]);
   const [playbackFeedback, setPlaybackFeedback] = useState<PlaybackFeedback | null>(null);
   const deepLinkHandled = useRef(false);
-  const closeButton = useRef<HTMLButtonElement | null>(null);
+  const backButton = useRef<HTMLButtonElement | null>(null);
   const viewerFeed = useRef<HTMLDivElement | null>(null);
   const viewerTrigger = useRef<HTMLButtonElement | null>(null);
   const pendingViewerIndex = useRef(0);
@@ -297,7 +297,7 @@ export function DancerPhotoCarousel({
     document.body.style.overflow = "hidden";
     const focusFrame = window.requestAnimationFrame(() => {
       scrollViewerToIndex(viewerOpeningIndex.current ?? pendingViewerIndex.current, { instant: true });
-      closeButton.current?.focus({ preventScroll: true });
+      backButton.current?.focus({ preventScroll: true });
     });
     return () => {
       window.cancelAnimationFrame(focusFrame);
@@ -915,15 +915,6 @@ export function DancerPhotoCarousel({
               <div className="profile-media-card-heading">
                 {stageName} · {viewer.kind === "photo" ? "Photos" : "Videos"}
               </div>
-              <button
-                aria-label="Close profile media"
-                className="profile-media-viewer-close"
-                onClick={closeViewer}
-                ref={closeButton}
-                type="button"
-              >
-                ×
-              </button>
             </div>
             {viewerItems.map((item, index) => (
               <section
@@ -937,6 +928,17 @@ export function DancerPhotoCarousel({
                 } as CSSProperties : undefined}
                 key={`${item.kind}-viewer-${item.id}-${index}`}
               >
+                <button
+                  aria-label="Back to dancer profile"
+                  className="profile-media-card-back"
+                  onClick={closeViewer}
+                  ref={index === viewerIndex ? backButton : undefined}
+                  type="button"
+                >
+                  <svg aria-hidden="true" viewBox="0 0 24 24">
+                    <path d="M19 12H5m7-7-7 7 7 7" />
+                  </svg>
+                </button>
                 {item.kind === "photo" ? (
                   // The top card stays selected while two following cards can be visible.
                   // Load both neighbors eagerly, keeping the rest of the gallery deferred.

@@ -430,15 +430,6 @@
       event.stopPropagation();
       closeProfileModal();
     });
-    profilePhotoViewerClose?.addEventListener("click", (event) => {
-      event.preventDefault();
-      event.stopPropagation();
-      closeProfilePhotoViewer();
-    });
-    profilePhotoViewerClose?.addEventListener("pointerdown", (event) => {
-      event.preventDefault();
-      event.stopPropagation();
-    }, { passive: false });
     profilePhotoViewerShare?.addEventListener("click", (event) => {
       event.preventDefault();
       event.stopPropagation();

@@ -86,7 +86,7 @@ try {
   await page.locator('#modalGallery [data-profile-tv-index]').first().click();
   await page.waitForFunction(() => [...document.querySelectorAll('.profile-tv-viewer-video')].some(video => !video.paused && video.currentTime > .1), null, { timeout: 30000 });
   assert.equal((await capture('profile-video-playing')).profilePlaying, 1);
-  await page.locator('[data-close-profile-tv]').click();
+  await page.locator('.profile-tv-viewer-slide:has(#profileTvViewerVideo) .profile-media-card-back').click();
   await page.waitForTimeout(400);
   await capture('profile-video-closed-full-profile-still-open');
   await page.locator('#modalClose').click();

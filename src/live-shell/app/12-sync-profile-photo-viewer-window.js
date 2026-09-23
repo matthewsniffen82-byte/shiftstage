@@ -114,7 +114,7 @@
       if (profilePhotoViewerStatus) profilePhotoViewerStatus.textContent = "";
       window.requestAnimationFrame(() => {
         scrollProfilePhotoViewerTo(initialIndex, { instant: true });
-        profilePhotoViewerImage.focus({ preventScroll: true });
+        profilePhotoViewerImage.querySelector(`[data-profile-photo-viewer-index="${initialIndex}"] .profile-media-card-back`)?.focus({ preventScroll: true });
       });
     }
 

@@ -136,7 +136,7 @@ try {
     await page.evaluate(() => { delete document.visibilityState; delete window.__visibility; });
     await settleReads();
     if (surface === 'feed') await page.locator('[data-tab="dancers"]').first().click();
-    else await page.locator('.profile-media-viewer-close').click();
+    else await page.locator('.profile-media-viewer-slide[aria-current="true"] .profile-media-card-back').click();
     assert.ok((await snapshot(surface, 'closed')).every(video => !video.source && video.paused));
     await settleReads();
     starts.push(...await page.evaluate(() => window.__videoStarts));

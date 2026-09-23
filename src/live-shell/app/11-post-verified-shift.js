@@ -772,11 +772,23 @@
         const heading = document.createElement("div");
         heading.className = "profile-media-card-heading";
         header.appendChild(heading);
-        const close = overlay.querySelector(".profile-photo-viewer-close, .profile-tv-viewer-close");
-        if (close) header.appendChild(close);
       }
       header.querySelector(".profile-media-card-heading").textContent = overlay.dataset.profileMediaHeading || "Profile media";
       host.prepend(header);
+    }
+
+    function appendProfileMediaBackButton(slide, onBack) {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "profile-media-card-back";
+      button.setAttribute("aria-label", "Back to dancer profile");
+      button.innerHTML = '<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M19 12H5m7-7-7 7 7 7"></path></svg>';
+      button.addEventListener("click", (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        onBack();
+      });
+      slide.appendChild(button);
     }
 
     function syncProfilePhotoViewerImage() {
@@ -805,6 +817,7 @@
         image.setAttribute("role", "img");
         image.setAttribute("aria-label", `${profileName} photo ${index + 1} of ${items.length}`);
         slide.appendChild(image);
+        appendProfileMediaBackButton(slide, closeProfilePhotoViewer);
         profilePhotoViewerImage.appendChild(slide);
         mountProfilePhotoCardControls(slide, item, index, items.length, profileName);
         const thumb = modalGallery.querySelector(`[data-profile-photo-index="${index}"] img`);

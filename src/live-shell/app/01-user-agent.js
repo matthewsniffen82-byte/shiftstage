@@ -222,7 +222,6 @@
     const modalProfileMetrics = document.getElementById("modalProfileMetrics");
     const profilePhotoViewer = document.getElementById("profilePhotoViewer");
     const profilePhotoViewerImage = document.getElementById("profilePhotoViewerImage");
-    const profilePhotoViewerClose = document.getElementById("profilePhotoViewerClose");
     const profilePhotoViewerLike = document.getElementById("profilePhotoViewerLike");
     const profilePhotoViewerShare = document.getElementById("profilePhotoViewerShare");
     const profilePhotoViewerReport = document.getElementById("profilePhotoViewerReport");
