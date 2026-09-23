@@ -242,7 +242,7 @@
         /* Keep the late-rendered discovery shell aligned with the canonical mobile utility header. */
         @media (max-width: 720px) {
           .content-head,
-          #results:not(.home-dancer-grid) {
+          #results:not(.home-dancer-grid):not(.home-venue-discovery-feed) {
             transform: translate3d(0, 0, 0);
             transition: transform 170ms cubic-bezier(.22, .74, .26, 1), opacity 170ms ease;
           }
@@ -255,6 +255,14 @@
             transition: opacity 170ms ease;
             will-change: auto;
           }
+          /* Keep the tall club list in normal flow during bottom-nav landing.
+             Fading/translating the entire list while scrolling forces mobile
+             browsers to repaint its artwork when the entrance animation ends. */
+          #results.home-venue-discovery-feed {
+            transform: none;
+            transition: none;
+            will-change: auto;
+          }
           body.home-destination-swipe-active .content-head,
           body.home-destination-swipe-active #results {
             opacity: .97;
@@ -264,7 +272,7 @@
           }
 
           body.home-destination-transitioning .content-head,
-          body.home-destination-transitioning #results:not(.home-dancer-grid) {
+          body.home-destination-transitioning #results:not(.home-dancer-grid):not(.home-venue-discovery-feed) {
             animation: homeDestinationEnter 220ms cubic-bezier(.22, .74, .26, 1) both;
           }
 

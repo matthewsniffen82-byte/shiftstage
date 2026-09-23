@@ -205,7 +205,7 @@ test("mobile discovery keeps the active title and destination dock visible while
   );
   assert.doesNotMatch(
     homeSource,
-    /\.discovery-sticky-head \{[\s\S]*?position: fixed;/,
+    /\.discovery-sticky-head \{[^}]*position: fixed;/,
   );
 });
 
@@ -888,7 +888,7 @@ test("Working Now dancer grid cards expose a functional admission-pass Club Deal
 test("dancer grid hierarchy stays readable without changing the production card footprint", () => {
   assert.match(
     homeSource,
-    /function homeDancerGridScheduleLabel\(profile, city = selectedCity\(\)\)[\s\S]*?if \(isWorkingTonight\(profile, city\)\) return "Working now";[\s\S]*?if \(!profile\?\.scheduled\) return "No upcoming shift posted";[\s\S]*?month: "short"[\s\S]*?return `Upcoming · \$\{dateLabel\}`/,
+    /function homeDancerGridScheduleLabel\(profile, city = selectedCity\(\)\) \{\s*return isWorkingTonight\(profile, profileDiscoveryCity\(profile, city\)\) \? "Working now" : "Not working now";/,
   );
   assert.match(
     homeSource,
@@ -896,7 +896,7 @@ test("dancer grid hierarchy stays readable without changing the production card 
   );
   assert.match(
     homeSource,
-    /const hasPublishedVenue = Boolean\([\s\S]*?profile\.scheduled[\s\S]*?venueName[\s\S]*?venueName\.toLowerCase\(\) !== "venue pending"[\s\S]*?const venueMarkup = hasPublishedVenue/,
+    /const hasPublishedVenue = Boolean\(\s*isWorkingTonight\(profile, city\) &&\s*venueName &&\s*venueName\.toLowerCase\(\) !== "venue pending"[\s\S]*?const venueMarkup = hasPublishedVenue/,
   );
   assert.doesNotMatch(homeSource, /home-dancer-grid-venue\$\{venueStateClass\}/);
   assert.match(

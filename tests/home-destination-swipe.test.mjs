@@ -94,8 +94,9 @@ test("the current discovery content follows the finger and settles smoothly", ()
   );
   assert.match(
     homeSource,
-    /body\.home-destination-transitioning \.content-head,[\s\S]*?#results:not\(\.home-dancer-grid\)[\s\S]*?animation: homeDestinationEnter 220ms[\s\S]*?#results\.home-dancer-grid[\s\S]*?animation: homeDestinationFade 180ms/,
+    /body\.home-destination-transitioning \.content-head,[\s\S]*?#results:not\(\.home-dancer-grid\):not\(\.home-venue-discovery-feed\)[\s\S]*?animation: homeDestinationEnter 220ms[\s\S]*?#results\.home-dancer-grid[\s\S]*?animation: homeDestinationFade 180ms/,
   );
+  assert.match(homeSource, /#results\.home-venue-discovery-feed \{\s*transform: none;\s*transition: none;\s*will-change: auto;/);
   assert.match(
     homeSource,
     /function startHomeDestinationTransition\(direction\)[\s\S]*?prefers-reduced-motion: reduce[\s\S]*?direction > 0 \? 12 : -12[\s\S]*?home-destination-transitioning[\s\S]*?240/,
