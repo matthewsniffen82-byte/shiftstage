@@ -350,11 +350,11 @@ test("dancer signup displays the password rejection and lets the user correct it
   assert.equal(cooldownCalls, 1);
 });
 
-function passwordFixture({ revokeFails = false, revokeThrows = false, emailThrows = false, lookupFails = false } = {}) {
+function passwordFixture({ providerError = null, revokeFails = false, revokeThrows = false, emailThrows = false, lookupFails = false } = {}) {
   const calls = [];
   const client = { auth: {
-    updateUser: async payload => { calls.push({ update: payload }); return { error: null }; },
-    signOut: async () => { calls.push("revoke"); if (revokeThrows) throw new Error("network"); return { error: revokeFails ? new Error("network") : null }; },
+    updateUser: async payload => { calls.push({ update: payload }); return { error: providerError }; },
+    signOut: async options => { assert.equal(options.scope, "others"); calls.push("revoke"); if (revokeThrows) throw new Error("network"); return { error: revokeFails ? new Error("network") : null }; },
   } };
   const route = compile(accountSource, {
     "@/src/lib/dancr/password-policy": passwordPolicy,
@@ -383,6 +383,44 @@ for (const options of [{}, { revokeFails: true }, { revokeThrows: true }, { emai
     assert.match(body.message, /could not confirm/);
     assert.match(f.calls.find(x => x.email).email.text, /could not confirm/);
   }
+});
+
+for (const options of [{}, { revokeFails: true }, { revokeThrows: true }, { emailThrows: true }]) test(`reusing the current password completes the normal update flow ${JSON.stringify(options)}`, async () => {
+  const changed = passwordFixture(options);
+  const reused = passwordFixture({
+    ...options,
+    providerError: new AuthApiError("New password should be different from the old password.", 422, "same_password"),
+  });
+  const payload = { password: "  Current1!password  " };
+  const changedResponse = await changed.PATCH(jsonRequest("PATCH", payload));
+  const reusedResponse = await reused.PATCH(jsonRequest("PATCH", payload));
+  assert.equal(reusedResponse.status, 200);
+  assert.deepEqual(await reusedResponse.json(), await changedResponse.json());
+  assert.deepEqual(JSON.parse(JSON.stringify(reused.calls)), JSON.parse(JSON.stringify(changed.calls)));
+  assert.equal(reused.calls.filter(call => call.update).length, 1);
+  assert.equal(reused.calls.find(call => call.update).update.password, payload.password);
+  assert.equal(reused.calls.filter(call => call === "revoke").length, 1);
+  assert.equal(reused.calls.filter(call => call.email).length, 1);
+});
+
+for (const [code, status, expectedStatus] of [
+  ["weak_password", 422, 400],
+  ["reauthentication_needed", 401, 400],
+  ["unexpected_failure", 503, 503],
+  ["over_request_rate_limit", 429, 503],
+  [undefined, 422, 400],
+]) test(`password update still rejects other provider errors (${code ?? "no code"})`, async () => {
+  const f = passwordFixture({
+    providerError: new AuthApiError("New password should be different from the old password.", status, code),
+  });
+  const response = await f.PATCH(jsonRequest("PATCH", { password: "Current1!password" }));
+  assert.equal(response.status, expectedStatus);
+  const body = await response.json();
+  assert.equal(body.ok, false);
+  assert.doesNotMatch(body.error, /different from the old password/);
+  assert.equal(f.calls.filter(call => call.update).length, 1);
+  assert.equal(f.calls.includes("revoke"), false);
+  assert.equal(f.calls.some(call => call.email), false);
 });
 
 test("required account lookup failure happens before changing a password", async () => {

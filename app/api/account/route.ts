@@ -79,7 +79,8 @@ export async function PATCH(request: Request) {
       const account = await getAccountByUserId(client, user.id);
       const { error } = await client.auth.updateUser({ password });
 
-      if (error) {
+      // A confirmed match already satisfies the requested password; finish the normal update flow.
+      if (error && error.code !== "same_password") {
         console.warn("ACCOUNT_PASSWORD_UPDATE_REJECTED", safeErrorMetadata(error));
         if (isTemporaryCredentialError(error)) return credentialUnavailableResponse();
         return NextResponse.json({ ok: false, error: "Unable to update password. Check the password and try again." }, { status: 400 });
