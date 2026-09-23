@@ -2631,7 +2631,8 @@ body.dancr-button-system :is(
   [class*="delete"],
   [class*="remove"],
   [class*="reject"],
-  [data-club-deal-cta]
+  [data-club-deal-cta],
+  [data-action-state="success"]
 ) {
   border-color: var(--dancr-color-brand-primary-strong) !important;
   color: var(--dancr-color-text-primary) !important;
@@ -12820,3 +12821,4 @@ body.dancr-button-system > .app main.stack > section.stack
   outline: 2px solid var(--dancr-color-text-primary) !important;
   outline-offset: 3px !important;
 }
+

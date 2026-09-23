@@ -883,8 +883,8 @@ function DancerSetupPanel({
         </label> : null}
         {unifiedSave ? null : (
           <div className="dancer-profile-form-actions">
-            <button className="dancer-profile-save-action primary-action" type="submit" disabled={saveStatus === "saving" || (field !== "stageName" && cityOptionsStatus !== "ready")}>
-              {saveStatus === "saving" ? "Saving..." : saveStatus === "saved" ? "Saved" : "Save profile"}
+            <button className="dancer-profile-save-action primary-action" data-action-state={saveStatus === "saved" ? "success" : saveStatus} aria-busy={saveStatus === "saving"} type="submit" disabled={saveStatus === "saving" || (field !== "stageName" && cityOptionsStatus !== "ready")}>
+              {saveStatus === "saving" ? "Saving…" : saveStatus === "saved" ? "✓ Saved" : "Save profile"}
             </button>
             <button aria-label="Reload saved profile" className="dancer-profile-reload-action" type="button" onClick={hardResetProfile} disabled={isResetting || saveStatus === "saving"}>
               {isResetting ? "Reloading..." : "Reload saved"}
@@ -1030,6 +1030,7 @@ function SocialLinkModal({
   const [socials, setSocials] = useState<Record<string, string>>({});
   const [status, setStatus] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  const [socialSaved, setSocialSaved] = useState(false);
   const draftHydratedRef = useRef(false);
   const draftDirtyRef = useRef(false);
   const savePendingRef = useRef(false);
@@ -1120,6 +1121,7 @@ function SocialLinkModal({
 
     const action = beginSocialAction();
     if (!action) return false;
+    setSocialSaved(false);
     const { requestId, controller } = action;
     setIsSaving(true);
     setStatus("");
@@ -1145,6 +1147,7 @@ function SocialLinkModal({
       if (data.profile) onProfileChange?.(data.profile);
       draftDirtyRef.current = false;
       window.localStorage.removeItem(draftKey);
+      setSocialSaved(true);
       setStatus("Social links saved.");
       return true;
     } catch (error) {
@@ -1174,8 +1177,8 @@ function SocialLinkModal({
   }
 
   async function saveSelectedSocial(event: React.FormEvent<HTMLFormElement>) {
-    const saved = await saveSocials(event);
-    if (saved) onClose();
+    if (socialSaved) { event.preventDefault(); return; }
+    await saveSocials(event);
   }
 
   async function removeSelectedSocial() {
@@ -1229,23 +1232,25 @@ function SocialLinkModal({
                 autoCorrect="off"
                 id={`dancer-social-${selectedPlatform.key}`}
                 inputMode="url"
+                disabled={isSaving}
                 placeholder={selectedPlatform.placeholder}
                 spellCheck={false}
                 value={socials[selectedPlatform.key] || ""}
                 onChange={(event) => {
                   draftDirtyRef.current = true;
+                  setSocialSaved(false);
                   setSocials((current) => ({ ...current, [selectedPlatform.key]: event.target.value }));
                   setStatus("");
                 }}
               />
             </label>
             {status || isSaving ? (
-              <p className={`dancer-form-save-state ${status ? "is-unsaved" : "is-saved"}`} role="status" aria-live="polite">
+              <p className={`dancer-form-save-state ${socialSaved ? "is-saved" : "is-unsaved"}`} data-action-state={isSaving ? "saving" : socialSaved ? "success" : "error"} role={socialSaved || isSaving ? "status" : "alert"} aria-live="polite">
                 {status || "Saving changes..."}
               </p>
             ) : null}
-            <button className="dancer-social-link-save" type="submit" disabled={isSaving}>
-              {isSaving ? "Saving..." : hasExistingLink ? "Save changes" : "Save"}
+            <button className="dancer-social-link-save" type="submit" aria-busy={isSaving} data-action-state={isSaving ? "saving" : socialSaved ? "success" : "idle"} disabled={isSaving || socialSaved}>
+              {isSaving ? "Saving…" : socialSaved ? "✓ Saved" : hasExistingLink ? "Save changes" : "Save"}
             </button>
             {hasExistingLink ? (
               <button className="dancer-social-link-remove" disabled={isSaving} onClick={() => void removeSelectedSocial()} type="button">

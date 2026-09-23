@@ -1024,6 +1024,8 @@ export function CustomerPreferencesPanel({
   const [status, setStatus] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [savingKey, setSavingKey] = useState("");
+  const [savedKey, setSavedKey] = useState("");
+  const [feedbackState, setFeedbackState] = useState<"idle" | "success" | "error">("idle");
   const [pushDeviceEnabled, setPushDeviceEnabled] = useState(false);
   const [pushSupportMessage, setPushSupportMessage] = useState("");
   const delivery = (profile?.notificationDelivery || {}) as CustomerNotificationDelivery;
@@ -1110,6 +1112,8 @@ export function CustomerPreferencesPanel({
     setSettings({ ...settings, [key]: nextEnabled });
     setIsSaving(true);
     setSavingKey(key);
+    setSavedKey("");
+    setFeedbackState("idle");
     setStatus("");
     try {
       if (key === "pushEnabled" && nextEnabled) {
@@ -1139,11 +1143,16 @@ export function CustomerPreferencesPanel({
         if (!nextEnabled) await disableCustomerPush();
         if (isCurrentPreferencesAction(requestId, controller)) setPushDeviceEnabled(nextEnabled);
       }
-      if (isCurrentPreferencesAction(requestId, controller)) setStatus("Notification preferences saved.");
+      if (isCurrentPreferencesAction(requestId, controller)) {
+        setSavedKey(key);
+        setFeedbackState("success");
+        setStatus("✓ Notification preferences saved.");
+      }
     } catch (error) {
       if (key === "pushEnabled" && nextEnabled && readSession()?.account?.id === userId) await disableCustomerPush();
       if (isCurrentPreferencesAction(requestId, controller)) {
         setSettings(previousSettings);
+        setFeedbackState("error");
         setStatus(error instanceof Error ? error.message : "Unable to update notifications.");
       }
     } finally {
@@ -1161,14 +1170,14 @@ export function CustomerPreferencesPanel({
       </div>
       <div className="customer-preference-row customer-preference-master">
         <span><strong>Follow alerts</strong><small>Pause or resume all four alert types.</small></span>
-        <CustomerNotificationSwitch label="Follow alerts" checked={settings.followAlertsEnabled} disabled={isSaving} busy={savingKey === "followAlertsEnabled"} onChange={() => void savePreference("followAlertsEnabled", !settings.followAlertsEnabled)} />
+        <CustomerNotificationSwitch label="Follow alerts" checked={settings.followAlertsEnabled} disabled={isSaving} busy={savingKey === "followAlertsEnabled"} saved={savedKey === "followAlertsEnabled"} onChange={() => void savePreference("followAlertsEnabled", !settings.followAlertsEnabled)} />
       </div>
       {!settings.followAlertsEnabled ? <p className="customer-alert-preferences-copy">Follow alerts are paused. Your individual choices are kept below.</p> : null}
       <div className="customer-preference-list" aria-label="Alert types">
         {CUSTOMER_FOLLOW_ALERTS.map((alert) => (
           <div className="customer-preference-row" key={alert.key}>
             <span><strong>{alert.title}</strong><small>{alert.description}</small></span>
-            <CustomerNotificationSwitch label={alert.title} checked={settings[alert.key]} disabled={isSaving} busy={savingKey === alert.key} onChange={() => void savePreference(alert.key, !settings[alert.key])} />
+            <CustomerNotificationSwitch label={alert.title} checked={settings[alert.key]} disabled={isSaving} busy={savingKey === alert.key} saved={savedKey === alert.key} onChange={() => void savePreference(alert.key, !settings[alert.key])} />
           </div>
         ))}
       </div>
@@ -1176,22 +1185,22 @@ export function CustomerPreferencesPanel({
       <div className="customer-preference-list">
         <div className="customer-preference-row">
           <span><strong>Email</strong><small>{delivery.emailAvailable ? "Send alerts to your account email." : "Email alerts are not available yet."}</small></span>
-          <CustomerNotificationSwitch label="Email notifications" checked={settings.emailEnabled} disabled={isSaving || (!delivery.emailAvailable && !settings.emailEnabled)} busy={savingKey === "emailEnabled"} onChange={() => void savePreference("emailEnabled", !settings.emailEnabled)} />
+          <CustomerNotificationSwitch label="Email notifications" checked={settings.emailEnabled} disabled={isSaving || (!delivery.emailAvailable && !settings.emailEnabled)} busy={savingKey === "emailEnabled"} saved={savedKey === "emailEnabled"} onChange={() => void savePreference("emailEnabled", !settings.emailEnabled)} />
         </div>
         <div className="customer-preference-row">
           <span><strong>Push notifications</strong><small>{!delivery.pushAvailable ? "Push notifications are not available yet." : pushSupportMessage || (pushDeviceEnabled ? "Enabled on this device." : "Allow alerts from your browser, even when MyDancr is closed.")}</small></span>
-          <CustomerNotificationSwitch label="Push notifications" checked={settings.pushEnabled} disabled={isSaving || ((!delivery.pushAvailable || Boolean(pushSupportMessage)) && !settings.pushEnabled)} busy={savingKey === "pushEnabled"} onChange={() => void savePreference("pushEnabled", !settings.pushEnabled)} />
+          <CustomerNotificationSwitch label="Push notifications" checked={settings.pushEnabled} disabled={isSaving || ((!delivery.pushAvailable || Boolean(pushSupportMessage)) && !settings.pushEnabled)} busy={savingKey === "pushEnabled"} saved={savedKey === "pushEnabled"} onChange={() => void savePreference("pushEnabled", !settings.pushEnabled)} />
         </div>
         {settings.pushEnabled && !pushDeviceEnabled && delivery.pushAvailable && !pushSupportMessage ? <button className="customer-push-device-button" type="button" disabled={isSaving} onClick={() => void savePreference("pushEnabled", true)}>Enable push on this device</button> : null}
       </div>
-      <p className="customer-alert-status" role="status" aria-live="polite">{isSaving ? "Saving your preference…" : status || "Changes save automatically."}</p>
+      <p className="customer-alert-status" data-action-state={isSaving ? "saving" : feedbackState} role={feedbackState === "error" ? "alert" : "status"} aria-live="polite">{isSaving ? "Saving your preference…" : status || "Changes save automatically."}</p>
     </article>
   );
 }
 
 
-function CustomerNotificationSwitch({ label, checked, disabled, busy, onChange }: { label: string; checked: boolean; disabled: boolean; busy: boolean; onChange: () => void }) {
-  return <button className="customer-notification-switch" type="button" role="switch" aria-label={label} aria-checked={checked} aria-busy={busy || undefined} disabled={disabled} onClick={onChange}>
-    <span className="customer-switch-track" aria-hidden="true"><i /></span><span className="customer-switch-state" aria-hidden="true">{checked ? "On" : "Off"}</span>
+function CustomerNotificationSwitch({ label, checked, disabled, busy, saved, onChange }: { label: string; checked: boolean; disabled: boolean; busy: boolean; saved: boolean; onChange: () => void }) {
+  return <button className="customer-notification-switch" data-action-state={busy ? "saving" : saved ? "success" : "idle"} type="button" role="switch" aria-label={label} aria-checked={checked} aria-busy={busy || undefined} disabled={disabled} onClick={onChange}>
+    <span className="customer-switch-track" aria-hidden="true"><i /></span><span className="customer-switch-state" aria-hidden="true">{busy ? "Saving…" : saved ? "✓ Saved" : checked ? "On" : "Off"}</span>
   </button>;
 }

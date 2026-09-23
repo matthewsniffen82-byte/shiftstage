@@ -60,3 +60,14 @@ for (const outcome of ['resolve','reject']) test(`late recovery ${outcome} canno
   f.pending[1].resolve({ok:true,message:'Current request.'}); await current;
   assert.equal(f.node('status').textContent,'Current request.');
 });
+
+test('a delayed mobile change event cannot clear an in-flight recovery request', async()=>{
+  const f=fixture(), request=f.submit();
+  f.reset({type:'change'});
+  assert.equal(f.node('card').dataset.state,'sending');
+  assert.equal(f.node('loginRecoverySubmit').disabled,true);
+  f.pending[0].resolve({ok:true,message:'Current request.'}); await request;
+  assert.equal(f.node('card').dataset.state,'success');
+  f.reset({type:'input'});
+  assert.equal(f.node('card').dataset.state,'idle');
+});

@@ -23,7 +23,9 @@
       loginRecoveryStatus.hidden = !message;
     }
 
-    function resetLoginRecoveryFeedback() {
+    function resetLoginRecoveryFeedback(event) {
+      // Mobile browsers may deliver the field change after submission begins.
+      if (event && loginRecoveryCard.dataset.state === "sending") return;
       loginRecoveryRequestVersion += 1;
       setLoginRecoveryState();
     }

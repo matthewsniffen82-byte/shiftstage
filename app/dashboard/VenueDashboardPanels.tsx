@@ -712,6 +712,7 @@ function VenueDealReadOnlyPanel({
             <button
               aria-controls="venue-deal-request-form"
               aria-expanded={isRequestOpen && requestType === "add"}
+              data-action-state={requestStatusTone === "success" && requestType === "add" ? "success" : "idle"}
               disabled={isRequesting}
               type="button"
               onClick={() => {
@@ -722,18 +723,18 @@ function VenueDealReadOnlyPanel({
                 setConfirmedRequestId("");
               }}
             >
-              {isRequestOpen && requestType === "add" ? "Close request" : "Request a new deal"}
+              {requestStatusTone === "success" && requestType === "add" ? "✓ Request sent" : isRequestOpen && requestType === "add" ? "Close request" : "Request a new deal"}
             </button>
           ) : <small>Only venue owners and managers can request deal changes.</small>}
           {canRequestDeals && deals.length > 0 ? (
-            <button type="button" aria-controls="venue-deal-request-form" aria-expanded={isRequestOpen && requestType === "remove"} disabled={isRequesting} onClick={() => {
+            <button type="button" aria-controls="venue-deal-request-form" aria-expanded={isRequestOpen && requestType === "remove"} data-action-state={requestStatusTone === "success" && requestType === "remove" ? "success" : "idle"} disabled={isRequesting} onClick={() => {
               setIsRequestOpen((current) => requestType === "remove" ? !current : true);
               setRequestType("remove");
               setTargetDealId(String(displayedDeals[0].id));
               setRequestStatus("");
               setRequestStatusTone("idle");
               setConfirmedRequestId("");
-            }}>{isRequestOpen && requestType === "remove" ? "Close removal request" : "Request deal removal"}</button>
+            }}>{requestStatusTone === "success" && requestType === "remove" ? "✓ Request sent" : isRequestOpen && requestType === "remove" ? "Close removal request" : "Request deal removal"}</button>
           ) : null}
         </div>
         {isRequestOpen && canRequestDeals ? (
@@ -748,7 +749,7 @@ function VenueDealReadOnlyPanel({
               <p>{liveDeals.length === 1 && String(liveDeals[0].id) === targetDealId ? "Removing your last active deal hides your venue and its dancer schedules from the site. Dancer profiles and TV videos stay live, and affiliations are saved. Your venue returns when a deal is active again." : "MyDancr reviews the removal request. Your current deals stay unchanged until approval."}</p>
             </> : <label>
               Requested offer
-              <select value={requestedOfferKey} onChange={(event) => setRequestedOfferKey(event.target.value)}>
+              <select value={requestedOfferKey} disabled={isRequesting} onChange={(event) => setRequestedOfferKey(event.target.value)}>
                 {CLUB_DEAL_OFFER_PRESETS.map((offer) => <option value={offer.key} key={offer.key}>{offer.title}</option>)}
               </select>
             </label>}
@@ -756,13 +757,14 @@ function VenueDealReadOnlyPanel({
               Notes (optional)
               <textarea
                 maxLength={1000}
+                disabled={isRequesting}
                 onChange={(event) => setRequestNotes(event.target.value)}
                 placeholder={requestType === "remove" ? "Reason for removal or other details" : "Dates, hours, exclusions, or other details"}
                 rows={4}
                 value={requestNotes}
               />
             </label>
-            <button className="primary" disabled={isRequesting} type="submit">{isRequesting ? "Sending…" : requestType === "remove" ? "Send removal request to MyDancr" : "Send request to MyDancr"}</button>
+            <button className="primary" disabled={isRequesting} aria-busy={isRequesting} type="submit">{isRequesting ? "Sending…" : requestType === "remove" ? "Send removal request to MyDancr" : "Send request to MyDancr"}</button>
           </form>
         ) : null}
         {requestStatus ? (

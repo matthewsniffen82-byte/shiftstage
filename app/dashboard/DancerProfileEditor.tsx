@@ -395,8 +395,8 @@ export function DancerProfilePreview({
 
   return (
     <>
-      <button className={buttonClassName} disabled={isPhotoDeleting} onClick={openPreview} ref={triggerRef} type="button">
-        {buttonLabel}
+      <button className={buttonClassName} data-action-state={editorStatus === "Profile saved." ? "success" : "idle"} disabled={isPhotoDeleting} onClick={openPreview} ref={triggerRef} type="button">
+        {editorStatus === "Profile saved." ? "✓ Profile saved" : buttonLabel}
       </button>
       {isOpen ? (
         <div
@@ -539,7 +539,7 @@ export function DancerProfilePreview({
             {isEditor && onEditorSave ? (
               <footer className="dancer-profile-editor-footer">
                 <p role="status" aria-live="polite">{editorStatus || (builderRequirements?.length ? `Profile essentials: ${completedRequirements}/${builderRequirements.length} complete` : "Save changes when finished")}</p>
-                <button disabled={isEditorSaving || isPhotoDeleting || !requirementsComplete} onClick={() => void saveEditor()} type="button">
+                <button aria-busy={isEditorSaving} disabled={isEditorSaving || isPhotoDeleting || !requirementsComplete} onClick={() => void saveEditor()} type="button">
                   {isPhotoDeleting ? "Deleting photo..." : isEditorSaving ? "Saving..." : saveLabel}
                 </button>
               </footer>

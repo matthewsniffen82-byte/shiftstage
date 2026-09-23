@@ -75,3 +75,18 @@ body.dancr-button-system .account-shell .account-panel .segmented button.active 
   body.dancr-button-system #authPage .venue-request-grid { grid-template-columns: minmax(0,1fr); }
   body.dancr-button-system #authPage .venue-request-section { padding: 14px !important; }
 }
+
+/* Only server-confirmed actions opt in to the shared completion appearance. */
+body.dancr-button-system :is(.dashboard-shell, .dancer-profile-preview-overlay, #dancer-profile-builder-panel) button[data-action-state="success"] {
+  color: #a7f3d0 !important; border-color: rgba(110,231,183,.38) !important;
+  background: #14372d !important; box-shadow: none !important; opacity: 1 !important;
+}
+body.dancr-button-system [data-action-state="saving"] { cursor: progress; }
+body.dancr-button-system .dashboard-shell p[data-action-state="success"],
+body.dancr-button-system .dancer-social-link-modal p[data-action-state="success"] { color: #a7f3d0 !important; }
+body.dancr-button-system .dashboard-shell p[data-action-state="error"],
+body.dancr-button-system .dancer-social-link-modal p[data-action-state="error"] { color: #fecdd3 !important; }
+body.dancr-button-system .customer-notification-switch .customer-switch-state { min-width: 52px; font-size: 11px; }
+body.dancr-button-system :is(.dashboard-shell, .dancer-profile-preview-overlay, #dancer-profile-builder-panel) button[data-action-state="success"]::before,
+body.dancr-button-system :is(.dashboard-shell, .dancer-profile-preview-overlay, #dancer-profile-builder-panel) button[data-action-state="success"]::after { background: none !important; box-shadow: none !important; }
+body.dancr-button-system .dashboard-shell .customer-settings-panel button.customer-notification-switch { width: 108px !important; min-width: 108px !important; }
