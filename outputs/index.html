@@ -50746,7 +50746,6 @@
                   <strong>Free Entry</strong>
                   <span aria-hidden="true">›</span>
                 </button>
-                ${uberRideLinkMarkup({ venue, source: "venue_page", className: "venue-detail-entry-ride", dealConfig: config })}
               </div>
             </div>
           </article>
@@ -53060,16 +53059,6 @@
         const isNotified = isNotificationOn(citySelect.value, profile.name);
         const isGoing = !!goingTonightSavedByProfile[profile.name];
         const canMarkGoing = Boolean(workingTonight && profile.shiftId);
-        const feedVenue = workingTonight ? resolveVenueByName(profile.venue, citySelect.value) : null;
-        const rideMarkup = feedVenue
-          ? uberRideLinkMarkup({
-              venue: feedVenue,
-              source: "tonight_feed",
-              className: "feed-card-action feed-uber-ride",
-              dancerId: profile.id || "",
-              city: citySelect.value
-            })
-          : "";
         const goingActionMarkup = canMarkGoing
           ? `<button class="feed-card-action ${isGoing ? "is-active" : ""}" type="button" data-feed-action="going" data-profile="${escapeHtml(profile.name)}" data-shift-state="tonight" aria-pressed="${isGoing}">${homeFeedGoingActionMarkup(profile, isGoing)}</button>`
           : "";
@@ -53082,7 +53071,6 @@
               <button class="feed-card-action ${isFollowed ? "is-active" : ""}" type="button" data-feed-action="follow" data-profile="${escapeHtml(profile.name)}" aria-pressed="${isFollowed}">${actionButtonLabel(isFollowed ? "check" : "personPlus", isFollowed ? "Following" : "Follow")}</button>
               <button class="feed-card-action ${isNotified ? "is-active" : ""}" type="button" data-feed-action="notify" data-profile="${escapeHtml(profile.name)}" aria-pressed="${isNotified}">${actionButtonLabel(isNotified ? "check" : "bell", isNotified ? "Notifications On" : "Notify")}</button>
               ${goingActionMarkup}
-              ${rideMarkup}
             </div>
           </article>
         `;
@@ -53212,11 +53200,6 @@
         className: "venue-card-directions venue-directions-btn",
         city
       });
-      const rideMarkup = uberRideLinkMarkup({
-        venue,
-        source: "tonight_feed",
-        className: "venue-card-uber feed-uber-ride"
-      });
       return `
         <article class="card venue venue-card" data-analytics-venue-id="${escapeOptionValue(venue.isDashboardPreview ? "" : venue.id || "")}" data-analytics-source="venue_scroll_card" aria-label="${safeName} club details" style="--venue-accent:${venueAccent(venue.name)}">
           <a class="venue-card-link" href="${venueHref}" data-open-venue-profile="${venueValue}" aria-label="Open ${safeName}'s full club profile">
@@ -53235,10 +53218,9 @@
           </a>
           ${venueLineupMarkup(venue, city, { profiles: workingNow })}
           <button class="venue-card-follow ${followsVenue ? "is-active" : ""}" type="button" data-venue-follow="${venueValue}" data-account-action="venue-follow" aria-label="${followsVenue ? `Unfollow ${safeName}` : `Follow ${safeName}`}" aria-pressed="${followsVenue}">${actionIconMarkup("heart")}</button>
-          <div class="venue-card-actions${rideMarkup ? " with-uber-ride" : ""}" aria-label="${safeName} quick actions">
+          <div class="venue-card-actions" aria-label="${safeName} quick actions">
             ${venueCardQrMarkup(venue)}
             ${directionsMarkup}
-            ${rideMarkup}
           </div>
         </article>
       `;
@@ -54434,22 +54416,6 @@
       `;
     }
 
-    function dancerProfileUberRideMarkup(profile, options = {}) {
-      const city = options.city || selectedCity();
-      if (options.preview || !profile?.scheduled) return "";
-      const venue = resolveVenueByName(profile.venue, city);
-      if (!venue) return "";
-      return uberRideLinkMarkup({
-        venue,
-        source: "dancer_profile",
-        className: "profile-uber-ride",
-        dealConfig: dancerProfileClubDealConfig(profile),
-        dancerId: profile.id || "",
-        city,
-        displayLabel: "Free Entry + Pickup"
-      });
-    }
-
     function dancerProfileDirectionsMarkup(profile, options = {}) {
       const city = options.city || selectedCity();
       if (options.preview || !profile?.scheduled) return "";
@@ -54485,11 +54451,10 @@
       if (options.preview) return "";
       if (!profile?.scheduled) return "";
       const directionsMarkup = dancerProfileDirectionsMarkup(profile, { city });
-      const rideMarkup = dancerProfileUberRideMarkup(profile, { city });
       // Upcoming profiles may point customers to the venue, but they never
       // receive a deal trigger or dancer-attribution token.
       const venueDealMarkup = dancerProfileUpcomingVenueDealMarkup(profile, { city });
-      const actions = [directionsMarkup, rideMarkup, venueDealMarkup].filter(Boolean);
+      const actions = [directionsMarkup, venueDealMarkup].filter(Boolean);
       if (!actions.length) return "";
       const statusClass = isWorkingTonight(profile, city) ? "is-working-now" : "is-upcoming";
       const dealLinkClass = venueDealMarkup ? " has-venue-deal-link" : "";
@@ -60601,11 +60566,6 @@
         className: "home-discovery-feed-directions venue-directions-btn venue-card-secondary-action venue-card-directions-action",
         city
       });
-      const rideMarkup = uberRideLinkMarkup({
-        venue,
-        source: "tonight_feed",
-        className: "feed-card-action feed-uber-ride home-venue-discovery-uber venue-card-primary-action venue-card-ride-action"
-      });
       const workingLabel = `${workingNow.length} working now`;
       const accessibilityLabel = workingNow.length ? `${safeName}, ${escapeHtml(workingLabel)}` : safeName;
       const visualLabel = logoMarkup
@@ -60622,9 +60582,8 @@
             <span class="home-venue-discovery-meta">${operatingStatusMarkup}${hoursMarkup}</span>
             <div class="home-venue-discovery-lineup-slot">${lineupMarkup}</div>
           </div>
-          <div class="home-venue-discovery-context-actions venue-card-primary-actions${rideMarkup ? " with-uber-ride" : ""}" aria-label="${safeName} primary actions">
+          <div class="home-venue-discovery-context-actions venue-card-primary-actions" aria-label="${safeName} primary actions">
             ${railQrMarkup}
-            ${rideMarkup}
           </div>
           <div class="home-dancer-grid-action-rail home-venue-discovery-action-rail venue-card-secondary-actions" aria-label="${safeName} secondary actions">
             <button class="feed-card-action home-venue-discovery-profile-action venue-card-secondary-action venue-card-page-action" type="button" data-open-venue-profile="${venueValue}" aria-label="Open ${safeName}'s full club profile" title="View club">${actionButtonLabel("clubProfile", "Club Page")}</button>
@@ -60660,20 +60619,10 @@
             city
           })
         : "";
-      const rideMarkup = isLive && venue
-        ? uberRideLinkMarkup({
-            venue,
-            source: "tonight_feed",
-            className: "feed-card-action feed-uber-ride home-dancer-grid-uber",
-            dealConfig: dancerProfileClubDealConfig(profile),
-            dancerId: profile.id || "",
-            city
-          })
-        : "";
       const goingMarkup = canMarkGoing
         ? `<button class="feed-card-action ${isGoing ? "is-active" : ""}" type="button" data-feed-action="going" data-profile="${profileValue}" data-shift-state="tonight" aria-pressed="${isGoing}">${homeFeedGoingActionMarkup(profile, isGoing)}</button>`
         : "";
-      const contextActions = `${venueActionMarkup}${directionsMarkup}${goingMarkup}${rideMarkup}`;
+      const contextActions = `${venueActionMarkup}${directionsMarkup}${goingMarkup}`;
       return `
         <div class="home-dancer-grid-actions" aria-label="${safeName} actions">
           <div class="home-dancer-grid-action-rail">
@@ -60683,7 +60632,7 @@
             <button class="feed-card-action ${isFollowed ? "is-active" : ""}" type="button" data-feed-action="follow" data-profile="${profileValue}" aria-pressed="${isFollowed}">${actionButtonLabel(isFollowed ? "check" : "personPlus", isFollowed ? "Following" : "Follow")}</button>
             <button class="feed-card-action ${isNotified ? "is-active" : ""}" type="button" data-feed-action="notify" data-profile="${profileValue}" aria-pressed="${isNotified}">${actionButtonLabel(isNotified ? "check" : "bell", isNotified ? "On" : "Notify")}</button>
           </div>
-          ${contextActions ? `<div class="home-dancer-grid-context-actions${rideMarkup ? " with-uber-ride" : ""}">${contextActions}</div>` : ""}
+          ${contextActions ? `<div class="home-dancer-grid-context-actions">${contextActions}</div>` : ""}
         </div>
       `;
     }

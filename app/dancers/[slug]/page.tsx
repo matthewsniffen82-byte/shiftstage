@@ -2,7 +2,6 @@ import { toPublicClubDeal } from "@/src/lib/dancr/public-club-deal";
 import Link from "next/link";
 import { notFound, permanentRedirect } from "next/navigation";
 import { ClubDealCard } from "@/app/components/ClubDealCard";
-import { UberRideButton } from "@/app/components/UberRideButton";
 import { createDancerDealAttributionToken } from "@/src/lib/dancr/deal-attribution";
 import { getActiveClubDealsForVenue } from "@/src/lib/dancr/deals";
 import { imageFocalPointCss } from "@/src/lib/dancr/image-focal-point";
@@ -270,14 +269,6 @@ export default async function DancerPublicPage({ params, searchParams }: PagePro
               className={`profile-tonight-travel-actions${activeShift ? " is-working-now" : " is-upcoming has-venue-deal-link"}`}
             >
               <DancerDirectionsButton dancerId={profile.id} venue={actionVenue} />
-              <UberRideButton
-                compact
-                dancerId={profile.id}
-                dealId={activeDeal?.id}
-                attributionToken={dancerAttributionEligible ? dealAttributionToken : null}
-                source="dancer_profile"
-                venue={{ ...actionVenue, isActive: true, isPublic: true }}
-              />
             </div>
           ) : null}
         </section>

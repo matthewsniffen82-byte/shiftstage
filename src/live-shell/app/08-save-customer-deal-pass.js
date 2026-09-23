@@ -717,7 +717,6 @@
                   <strong>Free Entry</strong>
                   <span aria-hidden="true">›</span>
                 </button>
-                ${uberRideLinkMarkup({ venue, source: "venue_page", className: "venue-detail-entry-ride", dealConfig: config })}
               </div>
             </div>
           </article>

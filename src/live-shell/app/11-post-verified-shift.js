@@ -101,16 +101,6 @@
         const isNotified = isNotificationOn(citySelect.value, profile.name);
         const isGoing = !!goingTonightSavedByProfile[profile.name];
         const canMarkGoing = Boolean(workingTonight && profile.shiftId);
-        const feedVenue = workingTonight ? resolveVenueByName(profile.venue, citySelect.value) : null;
-        const rideMarkup = feedVenue
-          ? uberRideLinkMarkup({
-              venue: feedVenue,
-              source: "tonight_feed",
-              className: "feed-card-action feed-uber-ride",
-              dancerId: profile.id || "",
-              city: citySelect.value
-            })
-          : "";
         const goingActionMarkup = canMarkGoing
           ? `<button class="feed-card-action ${isGoing ? "is-active" : ""}" type="button" data-feed-action="going" data-profile="${escapeHtml(profile.name)}" data-shift-state="tonight" aria-pressed="${isGoing}">${homeFeedGoingActionMarkup(profile, isGoing)}</button>`
           : "";
@@ -123,7 +113,6 @@
               <button class="feed-card-action ${isFollowed ? "is-active" : ""}" type="button" data-feed-action="follow" data-profile="${escapeHtml(profile.name)}" aria-pressed="${isFollowed}">${actionButtonLabel(isFollowed ? "check" : "personPlus", isFollowed ? "Following" : "Follow")}</button>
               <button class="feed-card-action ${isNotified ? "is-active" : ""}" type="button" data-feed-action="notify" data-profile="${escapeHtml(profile.name)}" aria-pressed="${isNotified}">${actionButtonLabel(isNotified ? "check" : "bell", isNotified ? "Notifications On" : "Notify")}</button>
               ${goingActionMarkup}
-              ${rideMarkup}
             </div>
           </article>
         `;
@@ -253,11 +242,6 @@
         className: "venue-card-directions venue-directions-btn",
         city
       });
-      const rideMarkup = uberRideLinkMarkup({
-        venue,
-        source: "tonight_feed",
-        className: "venue-card-uber feed-uber-ride"
-      });
       return `
         <article class="card venue venue-card" data-analytics-venue-id="${escapeOptionValue(venue.isDashboardPreview ? "" : venue.id || "")}" data-analytics-source="venue_scroll_card" aria-label="${safeName} club details" style="--venue-accent:${venueAccent(venue.name)}">
           <a class="venue-card-link" href="${venueHref}" data-open-venue-profile="${venueValue}" aria-label="Open ${safeName}'s full club profile">
@@ -276,10 +260,9 @@
           </a>
           ${venueLineupMarkup(venue, city, { profiles: workingNow })}
           <button class="venue-card-follow ${followsVenue ? "is-active" : ""}" type="button" data-venue-follow="${venueValue}" data-account-action="venue-follow" aria-label="${followsVenue ? `Unfollow ${safeName}` : `Follow ${safeName}`}" aria-pressed="${followsVenue}">${actionIconMarkup("heart")}</button>
-          <div class="venue-card-actions${rideMarkup ? " with-uber-ride" : ""}" aria-label="${safeName} quick actions">
+          <div class="venue-card-actions" aria-label="${safeName} quick actions">
             ${venueCardQrMarkup(venue)}
             ${directionsMarkup}
-            ${rideMarkup}
           </div>
         </article>
       `;

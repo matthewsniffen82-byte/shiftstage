@@ -4558,7 +4558,7 @@ body.dancr-button-system #profileBackdrop .profile-activity-metrics dt {
 body.dancr-button-system #profileBackdrop #profileModal .profile-tonight-card,
 body.dancr-button-system .public-profile-shell .profile-tonight-card {
   display: grid !important;
-  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  grid-template-columns: minmax(0, 1fr) !important;
   column-gap: 4px !important;
   row-gap: 2px !important;
   padding: 4px 6px !important;
@@ -4568,7 +4568,7 @@ body.dancr-button-system #profileBackdrop #profileModal .profile-tonight-card.ha
 body.dancr-button-system .public-profile-shell .profile-tonight-card.has-club-deal,
 body.dancr-button-system #profileBackdrop #profileModal .profile-tonight-card.has-venue-deal-link,
 body.dancr-button-system .public-profile-shell .profile-tonight-card.has-venue-deal-link {
-  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
 }
 
 body.dancr-button-system #profileBackdrop #profileModal .profile-tonight-card.is-no-schedule,
@@ -4770,8 +4770,12 @@ body.dancr-button-system .public-profile-shell .profile-deal-availability-line {
 
 body.dancr-button-system #profileBackdrop #profileModal .profile-club-deal-qr-button,
 body.dancr-button-system .public-profile-shell .club-deal-profile-action {
-  grid-column: 3 !important;
+  grid-column: 2 !important;
   grid-row: 3 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 6px !important;
   width: 100% !important;
   min-width: 0 !important;
   max-width: none !important;
@@ -4812,7 +4816,7 @@ body.dancr-button-system .public-profile-shell .profile-tonight-travel-actions >
   font-size: 10px !important;
 }
 
-/* Active and upcoming offers share the venue/status row and the three actions. */
+/* Active and upcoming offers share the venue/status row, Directions and Free Entry. */
 body.dancr-button-system #profileBackdrop #profileModal .profile-tonight-card.has-club-deal:not(:has(.profile-club-deal-tile.is-error))
   :is(.profile-club-deal-qr-button, .profile-tonight-travel-actions > :is(a, button)),
 body.dancr-button-system .public-profile-shell .profile-tonight-card.has-club-deal
@@ -7535,7 +7539,7 @@ body.dancr-button-system #results.venue-profile-overlay .venue-detail
 body.dancr-button-system #results.venue-profile-overlay .venue-detail
   .venue-detail-club-deal-actions {
   display: grid !important;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 1fr);
   gap: 8px;
   min-width: 0;
 }
@@ -10882,7 +10886,7 @@ body.dancr-button-system > .app main.stack > section.stack
     height: 48px !important;
     min-height: 48px !important;
     max-height: 48px !important;
-    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    grid-template-columns: minmax(0, 1fr) !important;
     gap: 10px !important;
     margin: 0 12px !important;
     padding: 2px 0 !important;

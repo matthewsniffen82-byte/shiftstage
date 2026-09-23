@@ -70,7 +70,7 @@ test('profile video outages render a recoverable partial page; primary lookup fa
 
 test('the shell displays unavailable counts without presenting them as zero',()=>{
   const shell=read('outputs/index.html');
-  const start=shell.indexOf('function profileActivityMetricsMarkup('),end=shell.indexOf('function dancerProfileUberRideMarkup(',start);
+  const start=shell.indexOf('function profileActivityMetricsMarkup('),end=shell.indexOf('\n    function ',start);
   const context={followerNumber:()=>0,tonightInterestCount:()=>0,profileViewsToday:()=>0,selectedCity:()=> 'Las Vegas'};
   vm.createContext(context);vm.runInContext(shell.slice(start,end)+';this.render=profileActivityMetricsMarkup;',context);
   const html=context.render({metricsUnavailable:true});

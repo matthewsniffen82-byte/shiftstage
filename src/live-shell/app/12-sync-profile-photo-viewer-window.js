@@ -606,22 +606,6 @@
       `;
     }
 
-    function dancerProfileUberRideMarkup(profile, options = {}) {
-      const city = options.city || selectedCity();
-      if (options.preview || !profile?.scheduled) return "";
-      const venue = resolveVenueByName(profile.venue, city);
-      if (!venue) return "";
-      return uberRideLinkMarkup({
-        venue,
-        source: "dancer_profile",
-        className: "profile-uber-ride",
-        dealConfig: dancerProfileClubDealConfig(profile),
-        dancerId: profile.id || "",
-        city,
-        displayLabel: "Free Entry + Pickup"
-      });
-    }
-
     function dancerProfileDirectionsMarkup(profile, options = {}) {
       const city = options.city || selectedCity();
       if (options.preview || !profile?.scheduled) return "";
@@ -657,11 +641,10 @@
       if (options.preview) return "";
       if (!profile?.scheduled) return "";
       const directionsMarkup = dancerProfileDirectionsMarkup(profile, { city });
-      const rideMarkup = dancerProfileUberRideMarkup(profile, { city });
       // Upcoming profiles may point customers to the venue, but they never
       // receive a deal trigger or dancer-attribution token.
       const venueDealMarkup = dancerProfileUpcomingVenueDealMarkup(profile, { city });
-      const actions = [directionsMarkup, rideMarkup, venueDealMarkup].filter(Boolean);
+      const actions = [directionsMarkup, venueDealMarkup].filter(Boolean);
       if (!actions.length) return "";
       const statusClass = isWorkingTonight(profile, city) ? "is-working-now" : "is-upcoming";
       const dealLinkClass = venueDealMarkup ? " has-venue-deal-link" : "";

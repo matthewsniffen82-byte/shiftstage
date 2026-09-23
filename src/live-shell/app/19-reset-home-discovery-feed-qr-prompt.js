@@ -231,11 +231,6 @@
         className: "home-discovery-feed-directions venue-directions-btn venue-card-secondary-action venue-card-directions-action",
         city
       });
-      const rideMarkup = uberRideLinkMarkup({
-        venue,
-        source: "tonight_feed",
-        className: "feed-card-action feed-uber-ride home-venue-discovery-uber venue-card-primary-action venue-card-ride-action"
-      });
       const workingLabel = `${workingNow.length} working now`;
       const accessibilityLabel = workingNow.length ? `${safeName}, ${escapeHtml(workingLabel)}` : safeName;
       const visualLabel = logoMarkup
@@ -252,9 +247,8 @@
             <span class="home-venue-discovery-meta">${operatingStatusMarkup}${hoursMarkup}</span>
             <div class="home-venue-discovery-lineup-slot">${lineupMarkup}</div>
           </div>
-          <div class="home-venue-discovery-context-actions venue-card-primary-actions${rideMarkup ? " with-uber-ride" : ""}" aria-label="${safeName} primary actions">
+          <div class="home-venue-discovery-context-actions venue-card-primary-actions" aria-label="${safeName} primary actions">
             ${railQrMarkup}
-            ${rideMarkup}
           </div>
           <div class="home-dancer-grid-action-rail home-venue-discovery-action-rail venue-card-secondary-actions" aria-label="${safeName} secondary actions">
             <button class="feed-card-action home-venue-discovery-profile-action venue-card-secondary-action venue-card-page-action" type="button" data-open-venue-profile="${venueValue}" aria-label="Open ${safeName}'s full club profile" title="View club">${actionButtonLabel("clubProfile", "Club Page")}</button>
@@ -290,20 +284,10 @@
             city
           })
         : "";
-      const rideMarkup = isLive && venue
-        ? uberRideLinkMarkup({
-            venue,
-            source: "tonight_feed",
-            className: "feed-card-action feed-uber-ride home-dancer-grid-uber",
-            dealConfig: dancerProfileClubDealConfig(profile),
-            dancerId: profile.id || "",
-            city
-          })
-        : "";
       const goingMarkup = canMarkGoing
         ? `<button class="feed-card-action ${isGoing ? "is-active" : ""}" type="button" data-feed-action="going" data-profile="${profileValue}" data-shift-state="tonight" aria-pressed="${isGoing}">${homeFeedGoingActionMarkup(profile, isGoing)}</button>`
         : "";
-      const contextActions = `${venueActionMarkup}${directionsMarkup}${goingMarkup}${rideMarkup}`;
+      const contextActions = `${venueActionMarkup}${directionsMarkup}${goingMarkup}`;
       return `
         <div class="home-dancer-grid-actions" aria-label="${safeName} actions">
           <div class="home-dancer-grid-action-rail">
@@ -313,7 +297,7 @@
             <button class="feed-card-action ${isFollowed ? "is-active" : ""}" type="button" data-feed-action="follow" data-profile="${profileValue}" aria-pressed="${isFollowed}">${actionButtonLabel(isFollowed ? "check" : "personPlus", isFollowed ? "Following" : "Follow")}</button>
             <button class="feed-card-action ${isNotified ? "is-active" : ""}" type="button" data-feed-action="notify" data-profile="${profileValue}" aria-pressed="${isNotified}">${actionButtonLabel(isNotified ? "check" : "bell", isNotified ? "On" : "Notify")}</button>
           </div>
-          ${contextActions ? `<div class="home-dancer-grid-context-actions${rideMarkup ? " with-uber-ride" : ""}">${contextActions}</div>` : ""}
+          ${contextActions ? `<div class="home-dancer-grid-context-actions">${contextActions}</div>` : ""}
         </div>
       `;
     }
