@@ -13,7 +13,7 @@ export function ondatoConfig() {
   const applicationId = process.env.ONDATO_APPLICATION_ID?.trim();
   const site = process.env.NEXT_PUBLIC_SITE_URL?.trim();
   // Ondato's production hosts also serve testing projects. Confirm a live
-  // document + selfie/face-match/passive-liveness setup before setting this flag.
+  // document + selfie/face-match/active-liveness setup before setting this flag.
   if (!clientId || !clientSecret || !webhookSecret || !isOndatoId(setupId) || !isOndatoId(applicationId)
     || !site || process.env.ONDATO_ENVIRONMENT !== "live") return null;
   try {
@@ -119,10 +119,15 @@ export async function reconcileOndatoSession(admin: SupabaseClient, sessionId: s
   const identity = await request("idvapi", `/v1/identity-verifications/${sessionId}`);
   if (identity.id !== sessionId || identity.externalReferenceId !== attempt.attempt_id
     || identity.applicationId !== config.applicationId || jsonObject(identity.setup).id !== config.setupId) throw unavailable();
-  const kycId = jsonObject(jsonObject(identity.step).kycIdentification).id;
+  const kycStep = jsonObject(jsonObject(identity.step).kycIdentification);
+  const kycId = kycStep.id;
   const identification = isOndatoId(kycId) ? await request("kycid", `/v1/identifications/${kycId}`) : null;
+  // Read the setup attached to this identification, not the project's current
+  // configuration. Rejections/expiry must still reconcile during setup outages.
+  const identificationSetup = identification?.status === "Approved" && identity.status === "Completed" && kycStep.isSuccess === true
+    ? await request("kycid", `/v1/identifications/${kycId}/setup`) : null;
   let status;
-  try { status = evaluateOndatoDecision(identity, identification, { sessionId, attemptId: attempt.attempt_id, setupId: config.setupId, applicationId: config.applicationId }); }
+  try { status = evaluateOndatoDecision(identity, identification, identificationSetup, { sessionId, attemptId: attempt.attempt_id, setupId: config.setupId, applicationId: config.applicationId }); }
   catch { throw unavailable(); }
   const { error: saveError } = await admin.from("dancer_age_verifications").update({
     status, checked_at: checkedAt,

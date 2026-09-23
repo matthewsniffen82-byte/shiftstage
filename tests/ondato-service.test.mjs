@@ -6,12 +6,12 @@ import ts from 'typescript';
 import { PublicApiError } from '../src/lib/api-error-policy.ts';
 import * as policy from '../src/lib/dancr/ondato-policy.ts';
 import * as urls from '../src/lib/dancr/ondato-url.ts';
-import { ids, identity, identification } from './helpers/ondato-fixture.mjs';
+import { ids, identity, identification, identificationSetup } from './helpers/ondato-fixture.mjs';
 const code = ts.transpileModule(readFileSync(new URL('../src/lib/dancr/ondato.ts', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText;
 const sessionId=ids.sessionId;
 const hosted='https://idv.ondato.com/?id='+sessionId;
 const attempt={user_id:'owner',attempt_id:ids.attemptId,provider:'ondato',provider_integration_id:ids.setupId,session_id:sessionId,status:'creating',reserved:true};
-function fixture({ reservation = attempt, current = attempt, idv = identity(), kyc = identification(), created = { id: ids.sessionId }, saveError = null, env = {}, configured = true, providerError = false, token = { access_token: "server-only-access-token", token_type: "Bearer" }, reservationError = null } = {}) {
+function fixture({ reservation = attempt, current = attempt, idv = identity(), kyc = identification(), setup = identificationSetup(), setupError = false, created = { id: ids.sessionId }, saveError = null, env = {}, configured = true, providerError = false, token = { access_token: "server-only-access-token", token_type: "Bearer" }, reservationError = null } = {}) {
   const calls = [], writes = [];
   const admin = {
     async rpc(name, args) { calls.push({ rpc: name, args }); return { data: reservation, error: reservationError }; },
@@ -36,8 +36,9 @@ function fixture({ reservation = attempt, current = attempt, idv = identity(), k
     async fetch(url, options) {
       calls.push({ url, options });
       if (providerError) throw new Error('provider error containing sensitive information');
+      if (setupError && url.endsWith('/setup')) return new Response('unavailable', { status: 503 });
       const payload = url.endsWith('/connect/token') ? token : options.method === 'POST' ? created
-        : url.includes('/setup-localisations') ? null : url.includes('kycid.') ? kyc : idv;
+        : url.includes('/setup-localisations') ? null : url.endsWith('/setup') ? setup : url.includes('kycid.') ? kyc : idv;
       return new Response(payload === null ? null : JSON.stringify(payload), { status: payload === null ? 204 : 200 });
     },
     require(name) {
@@ -82,9 +83,13 @@ test('test projects, missing config, previous providers, wrong setups, malformed
   await assert.rejects(fixture({reservationError:{message:'AGE_PROFILE_SETUP_REQUIRED'}}).start(),e=>e.status===409);
   await assert.rejects(fixture({reservationError:{message:'AGE_VERIFICATION_RETRY_LIMIT'}}).start(),e=>e.status===429);
 });
-test('authoritative IDV and KYC retrieval saves only a conditional minimal status',async()=>{
+test('authoritative IDV, KYC and identification setup retrieval saves only a conditional minimal status',async()=>{
   const f=fixture();await f.reconcile();
-  assert.deepEqual(f.calls.filter(x=>x.url).map(x=>x.url),['https://id.ondato.com/connect/token',`https://idvapi.ondato.com/v1/identity-verifications/${ids.sessionId}`,`https://kycid.ondato.com/v1/identifications/${ids.kycId}`]);
+  const requests=f.calls.filter(x=>x.url);
+  assert.deepEqual(requests.map(x=>x.url),['https://id.ondato.com/connect/token',`https://idvapi.ondato.com/v1/identity-verifications/${ids.sessionId}`,`https://kycid.ondato.com/v1/identifications/${ids.kycId}`,`https://kycid.ondato.com/v1/identifications/${ids.kycId}/setup`]);
+  assert.equal(requests[3].options.headers.authorization,'Bearer server-only-access-token');
+  assert.equal(requests[3].options.signal,requests[1].options.signal);
+  assert.equal(requests[3].options.cache,'no-store');
   assert.equal(f.writes[0].mutation.status,'verified');
   assert.deepEqual(Object.keys(f.writes[0].mutation).sort(),['checked_at','status','verification_url','verified_at']);
   for(const [key,value] of [['session_id',ids.sessionId],['provider','ondato'],['attempt_id',ids.attemptId]]) assert.ok(f.writes[0].filters.some(([k,v])=>k===key&&v===value));
@@ -97,8 +102,21 @@ test('duplicate approvals preserve the first verification timestamp so saved phy
 test('unknown sessions, mismatched results and unavailable provider responses never overwrite saved approvals',async()=>{
   const absent=fixture({current:null});await absent.reconcile();assert.equal(absent.calls.filter(x=>x.url).length,0);assert.equal(absent.writes.length,0);
   for(const options of [{idv:{...identity(),externalReferenceId:ids.kycId}},{kyc:{...identification(),applicationId:ids.kycId}},
-    {current:{...attempt,provider_integration_id:ids.kycId}},{providerError:true}]){
+    {current:{...attempt,provider_integration_id:ids.kycId}},{providerError:true},{setupError:true},
+    {setup:{...identificationSetup(),versionId:ids.setupId}},{setup:{...identificationSetup(),applicationId:ids.sessionId}}]){
     const f=fixture(options);await assert.rejects(f.reconcile(),e=>e.status===503);assert.equal(f.writes.length,0);
+  }
+});
+
+test('missing or passive-only setups cannot approve; unfinished and rejected checks do not need setup retrieval',async()=>{
+  for(const setup of [null,{}, {...identificationSetup(),face:{enabled:true,activeLivenessEnabled:false,passiveLivenessEnabled:true}}]){
+    const f=fixture({setup});await f.reconcile();assert.equal(f.writes[0].mutation.status,'in_review');assert.equal(f.writes[0].mutation.verified_at,null);
+  }
+  for(const [patch,expected] of [[{kyc:{...identification(),status:'Rejected'}},'declined'],
+    [{idv:{...identity(),status:'Expired'}},'expired'],[{idv:{...identity(),status:'InProgress'}},'in_review'],
+    [{idv:{...identity(),step:{kycIdentification:{id:ids.kycId,isSuccess:null}}}},'in_review']]){
+    const f=fixture({...patch,setupError:true});await f.reconcile();assert.equal(f.writes[0].mutation.status,expected);
+    assert.equal(f.calls.filter(x=>x.url?.endsWith('/setup')).length,0);
   }
 });
 test('a current rejection revokes approval; ordinary access uses the saved result without provider calls',async()=>{

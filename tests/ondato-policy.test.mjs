@@ -2,39 +2,80 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { evaluateOndatoDecision, isAdultDateOfBirth, verifyOndatoPayload } from '../src/lib/dancr/ondato-policy.ts';
 import { ondatoHostedUrl } from '../src/lib/dancr/ondato-url.ts';
-import { ids, identity, identification, signature } from './helpers/ondato-fixture.mjs';
+import { ids, identity, identification, identificationSetup, signature } from './helpers/ondato-fixture.mjs';
 const now = new Date('2026-09-22T12:00:00Z');
 
-test('only adult government ID with completed face match and liveness grants approval', () => {
-  assert.equal(evaluateOndatoDecision(identity(), identification(), ids, now), 'verified');
+test('only adult government ID with completed face match and an approved active-liveness flow grants approval', () => {
+  assert.equal(evaluateOndatoDecision(identity(), identification(), identificationSetup(), ids, now), 'verified');
   for (const patch of [{ status: 'Awaiting' }, { status: 'Rejected' }, { document: null },
     { document: { type: 'ProofOfAddress', dateOfBirth: '1990-01-01' } },
     { document: { type: 'Passport', dateOfBirth: '2010-01-01', age: 99 } },
     { completedUtc: null }, { completedUtc: '2099-01-01' }, { rules: [] }, { face: { ageEstimation: 30 }, document: {} }]) {
-    assert.notEqual(evaluateOndatoDecision(identity(), { ...identification(), ...patch }, ids, now), 'verified');
+    assert.notEqual(evaluateOndatoDecision(identity(), { ...identification(), ...patch }, identificationSetup(), ids, now), 'verified');
   }
-  for (let index=0; index<4; index++) for (const status of ['Fail','Unavailable']) {
+  for (let index=0; index<3; index++) for (const status of ['Fail','Unavailable']) {
     const kyc = identification(); kyc.rules[index].status=status;
-    assert.notEqual(evaluateOndatoDecision(identity(), kyc, ids, now), 'verified');
+    assert.notEqual(evaluateOndatoDecision(identity(), kyc, identificationSetup(), ids, now), 'verified');
   }
-  assert.notEqual(evaluateOndatoDecision({ ...identity(), status:'InProgress' }, identification(), ids, now),'verified');
-  assert.notEqual(evaluateOndatoDecision({ ...identity(), step:{kycIdentification:{id:ids.kycId,isSuccess:false}} }, identification(), ids, now),'verified');
+  assert.notEqual(evaluateOndatoDecision({ ...identity(), status:'InProgress' }, identification(), identificationSetup(), ids, now),'verified');
+  for (const isSuccess of [false, null, undefined, 'true', 1]) {
+    assert.equal(evaluateOndatoDecision({ ...identity(), step:{kycIdentification:{id:ids.kycId,isSuccess}} }, identification(), identificationSetup(), ids, now),'in_review');
+  }
+});
+
+test('active liveness requires the identification setup; passive success or enrollment alone cannot substitute', () => {
+  const kyc = { ...identification(), face: { enrollmentId: 'synthetic-enrollment', ageEstimation: 30 } };
+  kyc.rules.push({ name: 'SuccessfulPassiveLivenessCheck', status: 'Success' });
+  for (const setup of [null, {}, { ...identificationSetup(), isDisabled: true },
+    { ...identificationSetup(), document: { enabled: false } }, { ...identificationSetup(), document: null },
+    { ...identificationSetup(), face: null },
+    ...[false, null, undefined, 'true'].map(activeLivenessEnabled => ({ ...identificationSetup(), face: { enabled: true, activeLivenessEnabled, passiveLivenessEnabled: true } })),
+    { ...identificationSetup(), face: { enabled: false, activeLivenessEnabled: true } }]) {
+    assert.equal(evaluateOndatoDecision(identity(), kyc, setup, ids, now), 'in_review');
+  }
+  for (const setup of [{ ...identificationSetup(), id: undefined }, { ...identificationSetup(), versionId: 'invalid' }, { ...identificationSetup(), applicationId: null }]) {
+    assert.equal(evaluateOndatoDecision(identity(), kyc, setup, ids, now), 'in_review');
+  }
+  for (const setup of [null, {}, { id: ids.kycSetupId }, { id: ids.kycSetupId, versionId: 'invalid' }]) {
+    assert.equal(evaluateOndatoDecision(identity(), { ...kyc, setup }, identificationSetup(), ids, now), 'in_review');
+  }
+});
+
+test('setup application, KYC setup ID and exact version must match', () => {
+  for (const patch of [{ applicationId: ids.sessionId }, { id: ids.setupId }, { versionId: ids.kycId }]) {
+    assert.throws(() => evaluateOndatoDecision(identity(), identification(), { ...identificationSetup(), ...patch }, ids, now), /MISMATCH/);
+  }
+});
+
+test('active-only checks do not require a passive result, but never ignore a failed rule', () => {
+  const kyc = identification();
+  kyc.rules.push({ name: 'SuccessfulPassiveLivenessCheck', status: 'Unavailable' });
+  assert.equal(evaluateOndatoDecision(identity(), kyc, identificationSetup(), ids, now), 'verified');
+  for (const name of ['SuccessfulPassiveLivenessCheck', 'DocumentAndActiveLivenessAgeComparisonValid', 'SelfieHasFace']) {
+    const failed = identification(); failed.rules.push({ name, status: 'Fail' });
+    assert.equal(evaluateOndatoDecision(identity(), failed, identificationSetup(), ids, now), 'in_review');
+  }
+  const both = identificationSetup(); both.face.passiveLivenessEnabled = true;
+  assert.equal(evaluateOndatoDecision(identity(), identification(), both, ids, now), 'in_review');
+  assert.equal(evaluateOndatoDecision(identity(), kyc, both, ids, now), 'in_review');
+  kyc.rules.at(-1).status = 'Success';
+  assert.equal(evaluateOndatoDecision(identity(), kyc, both, ids, now), 'verified');
 });
 
 test('account, project, setup, session and KYC identity must all match', () => {
   for(const patch of [{id:ids.kycId},{applicationId:ids.kycId},{externalReferenceId:ids.kycId},{setup:{id:ids.kycId}}]) {
-    assert.throws(()=>evaluateOndatoDecision({...identity(),...patch},identification(),ids,now),/MISMATCH/);
+    assert.throws(()=>evaluateOndatoDecision({...identity(),...patch},identification(),identificationSetup(),ids,now),/MISMATCH/);
   }
   for(const patch of [{id:ids.sessionId},{identityVerificationId:ids.kycId},{applicationId:ids.kycId},{externalReferenceId:ids.kycId}]) {
-    assert.throws(()=>evaluateOndatoDecision(identity(),{...identification(),...patch},ids,now),/MISMATCH/);
+    assert.throws(()=>evaluateOndatoDecision(identity(),{...identification(),...patch},identificationSetup(),ids,now),/MISMATCH/);
   }
 });
 
 test('incomplete, expired and rejected sessions never approve',()=>{
-  for(const status of ['Expired','Aborted']) assert.equal(evaluateOndatoDecision({...identity(),status},null,ids,now),'expired');
-  for(const status of ['Pending','InProgress']) assert.equal(evaluateOndatoDecision({...identity(),status,step:{}},null,ids,now),'pending');
-  assert.equal(evaluateOndatoDecision({...identity(),status:'Suspended',step:{}},null,ids,now),'in_review');
-  assert.equal(evaluateOndatoDecision(identity(),{...identification(),status:'Rejected'},ids,now),'declined');
+  for(const status of ['Expired','Aborted']) assert.equal(evaluateOndatoDecision({...identity(),status},null,null,ids,now),'expired');
+  for(const status of ['Pending','InProgress']) assert.equal(evaluateOndatoDecision({...identity(),status,step:{}},null,null,ids,now),'pending');
+  assert.equal(evaluateOndatoDecision({...identity(),status:'Suspended',step:{}},null,null,ids,now),'in_review');
+  assert.equal(evaluateOndatoDecision(identity(),{...identification(),status:'Rejected'},null,ids,now),'declined');
 });
 
 test('birthday boundary, leap days, malformed and future dates are handled conservatively',()=>{

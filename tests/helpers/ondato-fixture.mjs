@@ -5,15 +5,22 @@ export const ids = {
   setupId: '33333333-3333-4333-8333-333333333333',
   applicationId: '44444444-4444-4444-8444-444444444444',
   kycId: '55555555-5555-4555-8555-555555555555',
+  kycSetupId: '66666666-6666-4666-8666-666666666666',
+  kycSetupVersionId: '77777777-7777-4777-8777-777777777777',
 };
 export const identity = () => ({ id: ids.sessionId, applicationId: ids.applicationId,
   externalReferenceId: ids.attemptId, setup: { id: ids.setupId }, status: 'Completed',
   step: { kycIdentification: { id: ids.kycId, isSuccess: true } } });
 export const identification = () => ({ id: ids.kycId, identityVerificationId: ids.sessionId,
   applicationId: ids.applicationId, externalReferenceId: ids.attemptId, status: 'Approved',
+  setup: { id: ids.kycSetupId, versionId: ids.kycSetupVersionId },
   completedUtc: '2026-01-01T00:00:00Z', document: { type: 'Passport', dateOfBirth: '1990-01-01' },
-  rules: ['SelfieHasFace', 'DocumentHasFace', 'SelfieAndDocumentFacesMatch', 'SuccessfulPassiveLivenessCheck']
+  rules: ['SelfieHasFace', 'DocumentHasFace', 'SelfieAndDocumentFacesMatch']
     .map(name => ({ name, status: 'Success' })),
+});
+export const identificationSetup = () => ({
+  id: ids.kycSetupId, versionId: ids.kycSetupVersionId, applicationId: ids.applicationId, isDisabled: false,
+  document: { enabled: true }, face: { enabled: true, activeLivenessEnabled: true, passiveLivenessEnabled: false },
 });
 export const signature = (raw, secret, timestamp = Math.floor(Date.now()/1000)) =>
   `t=${timestamp}, s=${createHmac('sha256',secret).update(`${timestamp}.${raw}`).digest('hex')}`;

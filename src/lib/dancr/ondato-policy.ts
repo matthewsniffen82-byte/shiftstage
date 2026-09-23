@@ -31,7 +31,7 @@ export function isAdultDateOfBirth(value: unknown, now = new Date()): boolean {
   return age >= 18 && age <= 120;
 }
 
-export function evaluateOndatoDecision(identity: unknown, identification: unknown, expected: {
+export function evaluateOndatoDecision(identity: unknown, identification: unknown, identificationSetup: unknown, expected: {
   sessionId: string; attemptId: string; setupId: string; applicationId: string;
 }, now = new Date()): AgeVerificationStatus {
   const idv = jsonObject(identity);
@@ -48,16 +48,31 @@ export function evaluateOndatoDecision(identity: unknown, identification: unknow
     throw new Error("ONDATO_DECISION_MISMATCH");
   }
   if (kyc.status === "Rejected") return "declined";
-  if (idv.status !== "Completed" || kyc.status !== "Approved" || step.isSuccess === false) return "in_review";
+  if (idv.status !== "Completed" || kyc.status !== "Approved" || step.isSuccess !== true) return "in_review";
   const document = jsonObject(kyc.document);
   if (!["Passport", "IdCard", "DriverLicense", "ResidencePermit"].includes(String(document.type))
     || typeof kyc.completedUtc !== "string" || !Number.isFinite(Date.parse(kyc.completedUtc))
     || Date.parse(kyc.completedUtc) > now.getTime() + 300_000) return "in_review";
   if (!isAdultDateOfBirth(document.dateOfBirth, now)) return "declined";
+  const setup = jsonObject(identificationSetup);
+  const reference = jsonObject(kyc.setup);
+  if (!isOndatoId(reference.id) || !isOndatoId(reference.versionId)
+    || !isOndatoId(setup.id) || !isOndatoId(setup.versionId) || !isOndatoId(setup.applicationId)) return "in_review";
+  if (setup.id !== reference.id || setup.versionId !== reference.versionId || setup.applicationId !== expected.applicationId) {
+    throw new Error("ONDATO_DECISION_MISMATCH");
+  }
+  const face = jsonObject(setup.face);
+  // Ondato's hosted flow performs active liveness before KYC approval; its API
+  // has no SuccessfulActiveLivenessCheck rule. Require the successful KYC step
+  // AND its exact setup version with active liveness enabled. Enrollment IDs,
+  // age estimates and a completed browser redirect are not success evidence.
+  if (setup.isDisabled !== false || jsonObject(setup.document).enabled !== true
+    || face.enabled !== true || face.activeLivenessEnabled !== true) return "in_review";
   const rules = Array.isArray(kyc.rules) ? kyc.rules.map(jsonObject) : [];
-  // Require the configured document + passive-liveness flow, never age estimation alone.
-  if (rules.some(rule => rule.status === "Fail") || ![
-    "SelfieHasFace", "DocumentHasFace", "SelfieAndDocumentFacesMatch", "SuccessfulPassiveLivenessCheck",
-  ].every(name => rules.some(rule => rule.name === name && rule.status === "Success"))) return "in_review";
+  const requiredRules = ["SelfieHasFace", "DocumentHasFace", "SelfieAndDocumentFacesMatch"];
+  // If Ondato also enables passive liveness, require its result as well.
+  if (face.passiveLivenessEnabled === true) requiredRules.push("SuccessfulPassiveLivenessCheck");
+  if (rules.some(rule => rule.status === "Fail")
+    || !requiredRules.every(name => rules.some(rule => rule.name === name && rule.status === "Success"))) return "in_review";
   return "verified";
 }
