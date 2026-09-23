@@ -12837,13 +12837,17 @@ body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-she
   }
 }
 
-/* Club discovery utilities share one quiet material, with violet for Saved. */
+/* Button and link utilities share explicit appearance and background layers.
+ * Keep these dark surfaces consistent when the browser applies Auto Dark. */
 html body.dancr-button-system > .app main.stack > section.stack
   > #results.home-venue-discovery-feed > .home-venue-discovery-slide
   .venue-card-secondary-actions.home-venue-discovery-action-rail > .venue-card-secondary-action:not(.is-active):not([aria-pressed="true"]):not(:disabled):not([aria-disabled="true"]) {
   border: 1px solid #34343c !important;
   color: #f1f5f9 !important;
-  background: #15151b !important;
+  background: #15151b linear-gradient(#15151b, #15151b) !important;
+  color-scheme: only light !important;
+  -webkit-appearance: none !important;
+  appearance: none !important;
   box-shadow: none !important;
   filter: none !important;
   -webkit-backdrop-filter: none !important;
@@ -12863,7 +12867,7 @@ html body.dancr-button-system > .app main.stack > section.stack
     > #results.home-venue-discovery-feed > .home-venue-discovery-slide
     .venue-card-secondary-actions.home-venue-discovery-action-rail > .venue-card-secondary-action:not(.is-active):not([aria-pressed="true"]):not(:disabled):not([aria-disabled="true"]):hover {
     border-color: #66586f !important;
-    background: #231b2e !important;
+    background: #231b2e linear-gradient(#231b2e, #231b2e) !important;
   }
 }
 
@@ -12871,7 +12875,10 @@ html body.dancr-button-system > .app main.stack > section.stack
   > #results.home-venue-discovery-feed > .home-venue-discovery-slide
   .venue-card-secondary-actions.home-venue-discovery-action-rail > .venue-card-favorite-action[aria-pressed="true"]:not(:disabled):not([aria-disabled="true"]) {
   border-color: var(--dancr-color-avatar-ring-violet) !important;
-  background: #2d1f4b !important;
+  background: #2d1f4b linear-gradient(#2d1f4b, #2d1f4b) !important;
+  color-scheme: only light !important;
+  -webkit-appearance: none !important;
+  appearance: none !important;
   box-shadow: 0 0 10px rgba(139, 92, 246, .14) !important;
 }
 
