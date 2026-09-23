@@ -46,11 +46,12 @@ test("guest signup clearly explains private visibility and email confirmation", 
   assert.match(liveApp, /saveAuthResume\("customer", "\/dashboard\/customer\?confirmed=1"\)/);
 });
 
-test("the auth mode toggle stays visually secondary to the submit action", () => {
-  assert.match(liveApp, /#authPage \.auth-entry-tab\.active \{[\s\S]*?border-color: rgba\(139, 92, 246, \.56\) !important;/);
-  assert.match(liveApp, /#authPage \.auth-entry-tab\.active \{[\s\S]*?background: linear-gradient\(135deg, rgba\(96, 52, 178, \.28\), rgba\(55, 32, 103, \.22\)\) !important;/);
-  assert.match(liveApp, /#authPage \.auth-entry-tab\.active:focus-visible \{[\s\S]*?rgba\(167, 139, 250, \.45\)/);
-  assert.match(liveApp, /#authPage #authSubmit \{[\s\S]*?linear-gradient\(135deg, #5b21b6 0%, #7c3aed 52%, #a855f7 100%\)/);
+test("the selected auth tab is highlighted while the submit action uses the primary brand color", () => {
+  assert.match(liveApp, /#authPage \.auth-entry-tab \{[^}]*background: transparent !important;/);
+  assert.match(liveApp, /#authPage \.auth-entry-tab\.active \{[^}]*border-color: rgba\(196, 181, 253, \.4\) !important;/);
+  assert.match(liveApp, /#authPage \.auth-entry-tab\.active \{[^}]*background: linear-gradient\(135deg, #51278b, #35204f\) !important;/);
+  assert.match(liveApp, /#authPage :is\(button, a, input, select, textarea\):focus-visible \{[^}]*outline: 2px solid #c4b5fd !important;/);
+  assert.match(liveApp, /#authPage #authSubmit \{[^}]*linear-gradient\(110deg, var\(--dancr-color-brand-primary\), #6d28d9\)/);
 });
 
 test("unified sign-in opens the dashboard returned by the production account", () => {

@@ -579,71 +579,117 @@
         }
 
         /* Unified public authentication: one sign-in, then a short role-specific signup. */
-        #authPage .auth-choice-card {
-          width: min(100%, 640px);
-          margin-inline: auto;
-          display: grid;
+        #authPage > .page-inner {
+          width: min(100%, 500px);
           gap: 18px;
-          overflow: hidden;
-          border-radius: 28px;
-          background: linear-gradient(145deg, rgba(20, 20, 29, .93), rgba(4, 4, 9, .96));
-          backdrop-filter: blur(22px) saturate(135%);
-          -webkit-backdrop-filter: blur(22px) saturate(135%);
         }
 
-        .auth-entry-tabs {
+        #authPage .page-head {
+          padding: 8px 2px 14px;
+          border-color: rgba(196, 181, 253, .12) !important;
+        }
+
+        #authPage .page-head .eyebrow {
+          color: #c4b5fd !important;
+          font-size: 10px;
+          font-weight: 650;
+          letter-spacing: .16em;
+        }
+
+        #authPageTitle {
+          margin-top: 6px;
+          font-size: clamp(23px, 5.8vw, 28px);
+          font-weight: 700;
+          line-height: 1.2;
+          letter-spacing: -.035em;
+        }
+
+        #authPage #authClose {
+          width: 44px;
+          height: 44px;
+          flex: 0 0 44px;
+          border-color: rgba(203, 213, 225, .16) !important;
+          color: var(--dancr-color-text-secondary) !important;
+          background: rgba(255, 255, 255, .035) !important;
+          box-shadow: none !important;
+        }
+
+        #authPage .auth-choice-card {
+          width: 100%;
+          margin-inline: auto;
+          display: grid;
+          gap: 24px;
+          padding: 24px;
+          overflow: hidden;
+          border-color: rgba(196, 181, 253, .2) !important;
+          border-radius: 24px;
+          background: radial-gradient(ellipse at top left, rgba(124, 58, 237, .09), transparent 60%), #111118 !important;
+          box-shadow: 0 18px 48px rgba(0, 0, 0, .28), inset 0 1px 0 rgba(255, 255, 255, .04) !important;
+        }
+
+        #authPage .auth-entry-tabs {
           display: grid;
           grid-template-columns: repeat(2, minmax(0, 1fr));
           gap: 6px;
           padding: 5px;
-          border: 1px solid rgba(161, 161, 185, .22);
-          border-radius: 18px;
-          background: rgba(5, 5, 10, .7);
+          border: 1px solid rgba(196, 181, 253, .12);
+          border-radius: 15px;
+          background: #0b0b12;
         }
 
-        .auth-entry-tab {
-          min-height: 48px;
+        #authPage .auth-entry-tab {
+          min-height: 44px !important;
           box-sizing: border-box;
-          border: 1px solid transparent;
-          border-radius: 14px;
-          color: rgba(244, 244, 248, .66);
-          background: transparent;
+          padding: 10px 8px;
+          border: 1px solid transparent !important;
+          border-radius: 11px !important;
+          color: var(--dancr-color-text-secondary) !important;
+          background: transparent !important;
+          box-shadow: none !important;
           font: inherit;
-          font-weight: 900;
+          font-size: clamp(12px, 3.4vw, 14px);
+          font-weight: 650 !important;
+          white-space: nowrap;
           cursor: pointer;
         }
 
         #authPage .auth-entry-tab.active {
-          color: #fff;
-          border-color: rgba(139, 92, 246, .56) !important;
-          background: linear-gradient(135deg, rgba(96, 52, 178, .28), rgba(55, 32, 103, .22)) !important;
-          box-shadow: 0 0 12px rgba(124, 58, 237, .16), inset 0 1px 0 rgba(255, 255, 255, .1) !important;
+          color: #fff !important;
+          border-color: rgba(196, 181, 253, .4) !important;
+          background: linear-gradient(135deg, #51278b, #35204f) !important;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, .2), inset 0 1px 0 rgba(255, 255, 255, .1) !important;
         }
 
-        #authPage .auth-entry-tab.active:focus-visible {
-          box-shadow: 0 0 0 2px #050507, 0 0 0 4px rgba(167, 139, 250, .45), 0 0 12px rgba(124, 58, 237, .16) !important;
+        #authPage :is(button, a, input, select, textarea):focus-visible {
+          outline: 2px solid #c4b5fd !important;
+          outline-offset: 3px !important;
         }
 
         #authPage .auth-selected-role,
         #authPage .customer-form-head,
         #authPage .venue-auth-mode-copy {
           display: grid;
-          gap: 5px;
+          gap: 8px;
         }
 
         #authPage .auth-selected-role strong,
         #authPage .customer-form-head strong,
         #authPage .venue-auth-mode-copy strong {
           color: #fff;
-          font-size: clamp(20px, 5vw, 27px);
-          line-height: 1.08;
+          font-size: clamp(19px, 4.8vw, 22px);
+          font-weight: 650;
+          letter-spacing: -.025em;
+          line-height: 1.3;
         }
 
         #authPage .auth-selected-role span,
         #authPage .customer-form-head span,
         #authPage .venue-auth-mode-copy span {
-          color: rgba(225, 225, 236, .7);
-          line-height: 1.45;
+          color: var(--dancr-color-text-secondary);
+          font-size: 13px;
+          font-weight: 400;
+          line-height: 1.6;
+          text-align: left;
         }
 
         #authPage .auth-selected-role {
@@ -666,37 +712,38 @@
 
         #authPage .auth-account-choice {
           width: 100%;
-          min-height: 86px;
+          min-height: 96px;
           display: grid;
           grid-template-columns: 42px minmax(0, 1fr) auto;
           align-items: center;
-          gap: 13px;
-          padding: 15px;
+          gap: 12px;
+          padding: 16px 14px;
           text-align: left;
           color: #fff;
-          border: 1px solid rgba(162, 162, 186, .22);
-          border-radius: 18px;
-          background: rgba(33, 33, 43, .76);
+          border: 1px solid rgba(196, 181, 253, .2) !important;
+          border-radius: 16px !important;
+          background: linear-gradient(125deg, rgba(124, 58, 237, .065), transparent 70%), #16151f !important;
+          box-shadow: inset 0 1px 0 rgba(255, 255, 255, .025) !important;
           cursor: pointer;
         }
 
         #authPage .auth-account-choice:hover,
         #authPage .auth-account-choice:focus-visible {
-          border-color: rgba(120, 66, 255, .8);
-          background: rgba(43, 34, 68, .88);
-          outline: none;
+          border-color: rgba(196, 181, 253, .6) !important;
+          background: #21192f !important;
+          box-shadow: inset 0 1px 0 rgba(255, 255, 255, .04) !important;
         }
 
-        .auth-account-choice-icon {
+        #authPage .auth-account-choice-icon {
           width: 42px;
           aspect-ratio: 1;
           display: grid;
           place-items: center;
-          border-radius: 50%;
-          color: #b895ff;
-          border: 1px solid rgba(139, 92, 246, .46);
-          background: rgba(78, 35, 153, .24);
-          box-shadow: inset 0 1px 0 rgba(255, 255, 255, .06), 0 0 16px rgba(103, 47, 218, .12);
+          border-radius: 13px;
+          color: #c4b5fd;
+          border: 1px solid rgba(196, 181, 253, .22);
+          background: var(--dancr-color-brand-primary-soft);
+          box-shadow: none;
         }
 
         .auth-account-choice-icon svg {
@@ -714,25 +761,83 @@
           gap: 4px;
         }
 
-        .auth-account-choice strong {
-          font-size: 18px;
+        #authPage .auth-account-choice strong {
+          font-size: 17px;
+          font-weight: 650;
+          line-height: 1.3;
+          letter-spacing: -.015em;
         }
 
-        .auth-account-choice small {
-          color: rgba(226, 226, 237, .68);
-          font-size: 13px;
-          line-height: 1.4;
+        #authPage .auth-account-choice small {
+          color: var(--dancr-color-text-secondary) !important;
+          font-size: 12px;
+          font-weight: 400;
+          line-height: 1.5;
         }
 
-        .auth-account-choice-arrow {
-          color: #b79aff;
-          font-size: 30px;
+        #authPage .auth-account-choice-arrow {
+          color: #c4b5fd;
+          font-size: 24px;
+          font-weight: 400;
           line-height: 1;
         }
 
         #authPage .auth-form {
-          gap: 14px;
+          gap: 16px;
         }
+
+        #authPage .field { gap: 8px; }
+        #authPage .field label {
+          color: var(--dancr-color-text-secondary) !important;
+          font-size: 12px;
+          font-weight: 600;
+          text-transform: none;
+          letter-spacing: .015em;
+        }
+
+        #authPage .field :is(input, select, textarea) {
+          min-height: 50px;
+          padding: 12px 14px;
+          border-color: rgba(203, 213, 225, .23) !important;
+          border-radius: 12px;
+          color: var(--dancr-color-text-primary) !important;
+          background: #0d0d14 !important;
+          font-size: 16px;
+          font-weight: 400;
+          line-height: 1.5;
+        }
+        #authPage .field input::placeholder { color: var(--dancr-color-text-muted); opacity: 1; }
+        #authPage .field .password-wrap input { padding-right: 54px; }
+        #authPage .password-toggle {
+          width: 44px;
+          height: 44px;
+          min-height: 44px !important;
+          right: 3px;
+          border-color: transparent !important;
+          border-radius: 9px !important;
+          color: var(--dancr-color-text-secondary) !important;
+          background: transparent !important;
+          box-shadow: none !important;
+        }
+        #authPage .password-toggle:is(:hover, [aria-pressed="true"]) {
+          color: #ddd6fe !important;
+          background: var(--dancr-color-brand-primary-soft) !important;
+        }
+
+        #authPage .auth-admin-entry {
+          border-color: rgba(203, 213, 225, .12);
+          border-radius: 12px;
+          background: transparent;
+          box-shadow: none;
+        }
+        #authPage .auth-admin-entry-mark {
+          border: 1px solid rgba(196, 181, 253, .18);
+          border-radius: 9px;
+          color: #c4b5fd;
+          background: rgba(124, 58, 237, .08);
+        }
+        #authPage .auth-admin-entry-copy strong { font-size: 13px; font-weight: 600; }
+        #authPage .auth-admin-entry-copy small { font-size: 11px; color: var(--dancr-color-text-muted); font-weight: 400; }
 
         .auth-signup-note {
           display: grid;
@@ -846,7 +951,7 @@
           }
 
           #authPage .auth-choice-card {
-            padding: 16px;
+            padding: 20px;
             border-radius: 22px;
           }
 
@@ -858,23 +963,24 @@
 
         /* Keep recovery controls visually secondary to the primary auth action. */
         #authPage .auth-help-row {
-          display: flex;
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
           align-items: center;
-          justify-content: flex-start;
-          gap: 18px;
+          gap: 8px;
         }
 
         #authPage .auth-help-row .forgot-password-link {
-          width: auto !important;
-          min-height: 40px !important;
-          padding: 0 !important;
-          border: 0 !important;
-          border-radius: 0 !important;
-          color: rgba(215, 211, 226, .72) !important;
-          background: transparent !important;
+          width: 100% !important;
+          min-height: 44px !important;
+          padding: 8px 4px !important;
+          border: 1px solid rgba(196, 181, 253, .14) !important;
+          border-radius: 10px !important;
+          color: #c4b5fd !important;
+          background: rgba(124, 58, 237, .04) !important;
           box-shadow: none !important;
           font-size: 12px !important;
-          text-align: left;
+          font-weight: 500 !important;
+          text-align: center;
         }
 
         #authPage .auth-help-row .forgot-password-link:hover,
@@ -884,14 +990,18 @@
           color: #fff !important;
           text-decoration: underline;
           text-underline-offset: 3px;
-          outline: none !important;
           box-shadow: none !important;
         }
 
         #authPage #authSubmit {
-          border-color: rgba(167, 112, 255, .78) !important;
-          background: linear-gradient(135deg, #5b21b6 0%, #7c3aed 52%, #a855f7 100%) !important;
-          box-shadow: 0 0 0 1px rgba(255, 255, 255, .06) inset, 0 12px 28px rgba(91, 33, 182, .28), 0 0 24px rgba(139, 92, 246, .3) !important;
+          min-height: 50px !important;
+          padding: 12px 16px;
+          border-radius: 12px !important;
+          border-color: rgba(196, 181, 253, .45) !important;
+          background: linear-gradient(110deg, var(--dancr-color-brand-primary), #6d28d9) !important;
+          box-shadow: inset 0 1px 0 rgba(255, 255, 255, .16), 0 6px 18px rgba(124, 58, 237, .2) !important;
+          font-size: 15px;
+          font-weight: 700 !important;
         }
 
         /* Dancer profile socials stay secondary to MyDancr actions and media.
