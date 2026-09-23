@@ -6693,9 +6693,9 @@ body.dancr-button-system #results.venue-profile-overlay .venue-detail
 body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-detail-logo-shell {
   box-sizing: border-box;
   width: calc(100% - clamp(82px, 22vw, 112px)) !important;
-  height: calc(100% - 6px) !important;
+  height: 100% !important;
   max-width: 420px !important;
-  max-height: 74px !important;
+  max-height: 80px !important;
   overflow: visible !important;
   border: 0 !important;
   border-radius: 0 !important;
