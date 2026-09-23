@@ -345,7 +345,6 @@
           </article>
 
           <div class="venue-detail-exploration">
-            ${activitySections}
             <section class="venue-info venue-location-section" aria-labelledby="venue-location-heading">
               <h3 class="venue-detail-section-heading" id="venue-location-heading">Location</h3>
               ${details.address ? `<div class="venue-address-line"><span>${escapeHtml(details.address)}</span></div>` : ""}
@@ -363,6 +362,7 @@
                 </div>
               </div>
             </section>
+            ${activitySections}
           </div>
         </div>
       `;
