@@ -1,5 +1,6 @@
 "use client";
 import { PasswordRequirements } from "@/app/components/PasswordRequirements";
+import { PasswordField } from "@/app/components/PasswordField";
 
 import Link from "next/link";
 import { useEffect, useRef, useState, type FormEvent } from "react";
@@ -128,7 +129,7 @@ export default function VenueTeamInviteClient({ token }: { token: string }) {
             </div>
             <form onSubmit={submit}>
               <label>Email<input value={invitation.email} readOnly type="email" /></label>
-              <label>Password<input value={password} disabled={isWorking} onChange={(event) => setPassword(event.target.value)} minLength={mode === "signup" ? 6 : undefined} required type="password" autoComplete={mode === "signup" ? "new-password" : "current-password"} /></label>
+              <PasswordField key={mode} label="Password" value={password} disabled={isWorking} onChange={(event) => setPassword(event.target.value)} minLength={mode === "signup" ? 6 : undefined} required autoComplete={mode === "signup" ? "new-password" : "current-password"} />
               {mode === "signup" ? <PasswordRequirements /> : null}
               <button className="venue-team-primary" disabled={isWorking} type="submit">
                 {isWorking ? "Please wait…" : mode === "signup" ? "Create account and join" : "Sign in and join"}

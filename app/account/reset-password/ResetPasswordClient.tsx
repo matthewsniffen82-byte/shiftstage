@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { passwordValidationMessage } from "@/src/lib/dancr/password-policy";
 import { PasswordRequirements } from "@/app/components/PasswordRequirements";
+import { PasswordField } from "@/app/components/PasswordField";
 import {
   readBrowserAuthSession,
   persistRefreshedBrowserAuthSession,
@@ -139,9 +140,9 @@ export default function ResetPasswordClient() {
         </> : null}
         {phase === "ready" ? <form onSubmit={submit}>
           <p>Choose a new password to finish resetting your account.</p>
-          <label>New password<input type="password" autoComplete="new-password" minLength={6} maxLength={1024} required value={password} onChange={(event) => setPassword(event.target.value)} disabled={saving} /></label>
+          <PasswordField label="New password" autoComplete="new-password" minLength={6} maxLength={1024} required value={password} onChange={(event) => setPassword(event.target.value)} disabled={saving} />
           <PasswordRequirements />
-          <label>Confirm new password<input type="password" autoComplete="new-password" minLength={6} maxLength={1024} required value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} disabled={saving} /></label>
+          <PasswordField label="Confirm new password" autoComplete="new-password" minLength={6} maxLength={1024} required value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} disabled={saving} />
           {error ? <p className="reset-error" role="alert">{error}</p> : null}
           <button type="submit" disabled={saving}>{saving ? "Updating password…" : "Update password"}</button>
         </form> : null}

@@ -78,6 +78,7 @@ function formFixture({ succeeds = true, storedSession = session, search = "", ge
   const component = compile(formSource, {
     "@/src/lib/dancr/password-policy": passwordPolicy,
     "@/app/components/PasswordRequirements": { PasswordRequirements: () => null },
+    "@/app/components/PasswordField": { PasswordField: () => null },
     react: {
       useState: (initial) => { const slot = index++; if (!(slot in states)) states[slot] = initial; return [states[slot], (value) => { states[slot] = value; }]; },
       useRef: (initial) => refs[refIndex++] ||= { current: initial },

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { DashboardCloseButton } from "@/app/components/DashboardCloseButton";
+import { PasswordField } from "@/app/components/PasswordField";
 import DancerAgreementLink from "@/app/components/DancerAgreementLink";
 import { homeDiscoveryHref } from "@/src/lib/dancr/navigation";
 import { captureBrowserAuthSessionGuard } from "@/src/lib/dancr/browser-session";
@@ -761,17 +762,14 @@ function DashboardSignInRecovery({
           value={email}
         />
       </label>
-      <label>
-        Password
-        <input
-          autoComplete="current-password"
-          disabled={isSubmitting}
-          onChange={(event) => setPassword(event.target.value)}
-          required
-          type="password"
-          value={password}
-        />
-      </label>
+      <PasswordField
+        label="Password"
+        autoComplete="current-password"
+        disabled={isSubmitting}
+        onChange={(event) => setPassword(event.target.value)}
+        required
+        value={password}
+      />
       <button className="primary-link" disabled={isSubmitting} type="submit">
         {isSubmitting ? "Signing in..." : `Sign in to ${role} dashboard`}
       </button>
