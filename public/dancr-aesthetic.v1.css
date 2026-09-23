@@ -12030,13 +12030,6 @@ html body.dancr-button-system > .app main.stack > section.stack
     color: #f1f5f9 !important;
   }
 
-  html body.dancr-button-system > .app main.stack > section.stack
-    > #results.home-venue-discovery-feed > .home-venue-discovery-slide
-    .venue-card-secondary-actions > .venue-card-secondary-action:is(.venue-card-page-action, .venue-card-share-action, .venue-card-favorite-action):not(.is-active):not([aria-pressed="true"]):not(:disabled):not([aria-disabled="true"]) {
-    color: #f1f5f9 !important;
-    border-color: rgba(226, 232, 240, 0.1) !important;
-    background: #25252b !important;
-  }
 }
 
 /* Venue details use matched utilities with a distinct saved follow state. */
@@ -12844,27 +12837,74 @@ body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-she
   }
 }
 
-body.dancr-button-system > .app main.stack > section.stack
+/* Club discovery utilities share one quiet material, with violet for Saved. */
+html body.dancr-button-system > .app main.stack > section.stack
   > #results.home-venue-discovery-feed > .home-venue-discovery-slide
-  .venue-card-secondary-actions > .venue-card-directions-action {
-  border-color: var(--dancr-color-border-strong) !important;
-  background: var(--dancr-color-surface-raised) !important;
+  .venue-card-secondary-actions.home-venue-discovery-action-rail > .venue-card-secondary-action:not(.is-active):not([aria-pressed="true"]):not(:disabled):not([aria-disabled="true"]) {
+  border: 1px solid #34343c !important;
+  color: #f1f5f9 !important;
+  background: #15151b !important;
   box-shadow: none !important;
+  filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
 }
 
-body.dancr-button-system > .app main.stack > section.stack
+html body.dancr-button-system > .app main.stack > section.stack
   > #results.home-venue-discovery-feed > .home-venue-discovery-slide
-  .venue-card-secondary-actions > .venue-card-directions-action :is(.action-icon, svg) {
-  color: var(--dancr-color-text-secondary) !important;
+  .venue-card-secondary-actions.home-venue-discovery-action-rail > .venue-card-secondary-action :is(.action-icon, svg) {
+  color: #b7b3c0 !important;
   stroke: currentColor !important;
   filter: none !important;
 }
 
-body.dancr-button-system > .app main.stack > section.stack
+@media (hover: hover) {
+  html body.dancr-button-system > .app main.stack > section.stack
+    > #results.home-venue-discovery-feed > .home-venue-discovery-slide
+    .venue-card-secondary-actions.home-venue-discovery-action-rail > .venue-card-secondary-action:not(.is-active):not([aria-pressed="true"]):not(:disabled):not([aria-disabled="true"]):hover {
+    border-color: #66586f !important;
+    background: #231b2e !important;
+  }
+}
+
+html body.dancr-button-system > .app main.stack > section.stack
   > #results.home-venue-discovery-feed > .home-venue-discovery-slide
-  .venue-card-secondary-actions > .venue-card-directions-action:focus-visible {
-  outline: 2px solid var(--dancr-color-text-primary) !important;
-  outline-offset: 3px !important;
+  .venue-card-secondary-actions.home-venue-discovery-action-rail > .venue-card-favorite-action[aria-pressed="true"]:not(:disabled):not([aria-disabled="true"]) {
+  border-color: var(--dancr-color-avatar-ring-violet) !important;
+  background: #2d1f4b !important;
+  box-shadow: 0 0 10px rgba(139, 92, 246, .14) !important;
+}
+
+html body.dancr-button-system > .app main.stack > section.stack
+  > #results.home-venue-discovery-feed > .home-venue-discovery-slide
+  .venue-card-secondary-actions.home-venue-discovery-action-rail > .venue-card-favorite-action[aria-pressed="true"] :is(.action-icon, svg) {
+  color: #c4b5fd !important;
+}
+
+html body.dancr-button-system > .app main.stack > section.stack
+  > #results.home-venue-discovery-feed > .home-venue-discovery-slide
+  .venue-card-secondary-actions.home-venue-discovery-action-rail > .venue-card-secondary-action:focus-visible {
+  outline: 2px solid #c4b5fd !important;
+  outline-offset: 2px !important;
+}
+
+/* Reduce the card halo and live-avatar bloom while retaining the green ring. */
+html body.dancr-button-system > .app main.stack > section.stack
+  > #results.home-venue-discovery-feed > .home-venue-discovery-slide {
+  box-shadow: 0 6px 16px rgba(0, 0, 0, .3),
+    inset 0 1px 0 rgba(255, 255, 255, .035) !important;
+}
+
+html body.dancr-button-system > .app main.stack > section.stack
+  > #results.home-venue-discovery-feed > .home-venue-discovery-slide
+  .home-venue-discovery-lineup-avatar[data-working-now="true"] > [data-dancer-avatar-border] {
+  box-shadow: 0 0 6px rgba(52, 227, 164, .16) !important;
+}
+
+html body.dancr-button-system > .app main.stack > section.stack
+  > #results.home-venue-discovery-feed > .home-venue-discovery-slide
+  .home-venue-discovery-lineup-avatar[data-working-now="true"] > [data-working-now-indicator] {
+  box-shadow: none !important;
 }
 
 /* Neutral profile travel actions; enabled pickup links use the violet override. */
