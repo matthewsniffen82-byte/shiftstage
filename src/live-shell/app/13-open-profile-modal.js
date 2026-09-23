@@ -305,6 +305,7 @@
         slide.appendChild(poster);
         stage.appendChild(slide);
       });
+      mountProfileMediaCardHeader(overlay, stage);
     }
 
     function syncProfileTvVideoLoading(overlay, activeIndex) {

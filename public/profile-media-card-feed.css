@@ -23,26 +23,10 @@
   height: calc(100dvh - var(--mydancr-preview-banner-offset, 0px)) !important;
 }
 
-/* Keep the exit outside the scrolling cards, including when opening a later item. */
-.profile-media-viewer.profile-media-card-feed,
-.profile-media-card-feed > :is(.profile-photo-viewer-shell, .profile-tv-viewer-shell) {
-  display: grid !important;
-  grid-template-rows: var(--profile-media-card-header) minmax(0, 1fr);
-  grid-template-columns: minmax(0, 1fr);
-}
-
-.profile-media-card-feed .profile-photo-viewer-frame {
-  min-height: 0;
-  overflow: hidden;
-}
-
 .profile-media-card-feed .profile-media-card-header {
   position: relative;
   box-sizing: border-box;
-  width: 100%;
-  max-width: 730px;
   height: var(--profile-media-card-header);
-  margin-inline: auto;
   display: flex;
   align-items: center;
   padding: env(safe-area-inset-top, 0px) 76px 0 13px;

@@ -27,7 +27,7 @@ export const staticAssetVersions = {
   "/outputs/mydancr-logo.png": "4b6b66793bf7a63d",
   "/profile-media-owner-controls.css": "23f95b3a66febb0a",
   "/profile-actions-compact.css": "60d0677c52b1668b",
-  "/profile-media-card-feed.css": "5179632212998c26",
+  "/profile-media-card-feed.css": "246d8a5c29a1752a",
   "/profile-photo-crop.css": "31341ca79743b0d4",
   "/profile-photo-crop.js": "9dbc79ecef457968",
   "/profile-video-progress-line.js": "7ec0a8f3dd91c802",

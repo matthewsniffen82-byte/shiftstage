@@ -905,26 +905,26 @@ export function DancerPhotoCarousel({
           data-profile-media-heading={`${stageName} · ${viewer.kind === "photo" ? "Photos" : "Videos"}`}
           role="dialog"
         >
-          <div className="profile-media-card-header">
-            <div className="profile-media-card-heading">
-              {stageName} · {viewer.kind === "photo" ? "Photos" : "Videos"}
-            </div>
-            <button
-              aria-label="Close profile media"
-              className="profile-media-viewer-close"
-              onClick={closeViewer}
-              ref={closeButton}
-              type="button"
-            >
-              ×
-            </button>
-          </div>
           <div
             className="profile-media-viewer-stage"
             data-profile-media-scroll-feed
             onScroll={handleViewerScroll}
             ref={viewerFeed}
           >
+            <div className="profile-media-card-header">
+              <div className="profile-media-card-heading">
+                {stageName} · {viewer.kind === "photo" ? "Photos" : "Videos"}
+              </div>
+              <button
+                aria-label="Close profile media"
+                className="profile-media-viewer-close"
+                onClick={closeViewer}
+                ref={closeButton}
+                type="button"
+              >
+                ×
+              </button>
+            </div>
             {viewerItems.map((item, index) => (
               <section
                 aria-label={`${stageName} ${item.kind} ${index + 1} of ${viewerItems.length}`}
