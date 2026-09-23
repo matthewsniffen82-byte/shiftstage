@@ -137,8 +137,14 @@ export default function CustomerAccountPanel({ account, accountRole = "customer"
         .customer-credential-form h3 { margin: 0; font-size: 17px; }
         .customer-credential-form > p { margin: 0; color: #aaa4b8; font-size: 13px; line-height: 1.5; }
         .customer-credential-form label { display: grid; gap: 8px; font-size: 13px; color: #e3ddea; }
+        .customer-credential-field { display: grid; gap: 8px; min-width: 0; }
         .customer-credential-form input { box-sizing: border-box; width: 100%; min-width: 0; min-height: 48px; padding: 12px; border: 1px solid rgba(179,125,255,.25); border-radius: 10px; background: #0b0911; color: #fff; font-size: 16px; }
         .customer-credential-form input:focus-visible, .customer-credential-options button:focus-visible { outline: 2px solid #c4a0ff; outline-offset: 2px; }
+        .customer-password-control { position: relative; min-width: 0; }
+        .customer-credential-form .customer-password-control input { padding-right: 56px; }
+        body.dancr-button-system .customer-password-control button.customer-password-toggle { position: absolute; right: 4px; top: 50%; transform: translateY(-50%); display: grid !important; place-items: center; width: 44px !important; min-width: 44px !important; height: 44px !important; min-height: 44px !important; margin: 0 !important; padding: 0 !important; border: 0 !important; border-radius: 8px !important; background: transparent !important; box-shadow: none !important; color: #c6a5fb !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
+        .customer-password-toggle svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+        .customer-password-toggle:focus-visible { outline: 2px solid #c4a0ff; outline-offset: -2px; }
         .customer-credential-form-actions { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 9px; }
         body.dancr-button-system .customer-credential-form-actions > button { min-width: 0 !important; min-height: 46px !important; padding: 10px 12px !important; border-radius: 10px !important; font-size: 13px !important; }
         .customer-credential-feedback { margin: 16px 0 0; color: #b6e6cf; font-size: 13px; line-height: 1.5; overflow-wrap: anywhere; }
@@ -152,16 +158,43 @@ function CredentialForm({ credential, busy, onSubmit, onCancel }: {
   credential: Credential; busy: boolean; onSubmit: (event: FormEvent<HTMLFormElement>) => void; onCancel: () => void;
 }) {
   const input = useRef<HTMLInputElement>(null);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmation, setShowConfirmation] = useState(false);
+  const [password, setPassword] = useState("");
   useEffect(() => { input.current?.focus({ preventScroll: true }); }, []);
   return <form id="customer-credential-form" className="customer-credential-form" aria-label={`Change ${credential}`} aria-busy={busy} onSubmit={onSubmit}>
     <h3>Change {credential}</h3>
     <p>{credential === "email" ? "Confirm the links sent to both your current and new email addresses. Keep using your current email until both are confirmed." : "Changing your password signs out your other sessions."}</p>
-    <label>{credential === "email" ? "New email address" : "New password"}<input ref={input} name={credential} type={credential === "email" ? "email" : "password"} autoComplete={credential === "email" ? "email" : "new-password"} autoCapitalize="none" spellCheck={false} required minLength={credential === "password" ? 6 : undefined} maxLength={credential === "email" ? 254 : 1024} disabled={busy} /></label>
-    {credential === "password" ? <PasswordRequirements /> : null}
-    {credential === "password" ? <label>Confirm new password<input name="confirmPassword" type="password" autoComplete="new-password" required minLength={6} maxLength={1024} disabled={busy} /></label> : null}
+    <div className="customer-credential-field">
+      <label htmlFor="customer-new-credential">{credential === "email" ? "New email address" : "New password"}</label>
+      <div className={credential === "password" ? "customer-password-control" : undefined}>
+        <input id="customer-new-credential" ref={input} name={credential} type={credential === "email" ? "email" : showPassword ? "text" : "password"} autoComplete={credential === "email" ? "email" : "new-password"} autoCapitalize="none" spellCheck={false} required minLength={credential === "password" ? 6 : undefined} maxLength={credential === "email" ? 254 : 1024} disabled={busy} onChange={credential === "password" ? event => setPassword(event.target.value) : undefined} />
+        {credential === "password" ? <PasswordVisibilityButton visible={showPassword} label="new password" controls="customer-new-credential" disabled={busy} onClick={() => setShowPassword(value => !value)} /> : null}
+      </div>
+    </div>
+    {credential === "password" ? <PasswordRequirements password={password} /> : null}
+    {credential === "password" ? <div className="customer-credential-field">
+      <label htmlFor="customer-confirm-password">Confirm new password</label>
+      <div className="customer-password-control">
+        <input id="customer-confirm-password" name="confirmPassword" type={showConfirmation ? "text" : "password"} autoComplete="new-password" autoCapitalize="none" spellCheck={false} required minLength={6} maxLength={1024} disabled={busy} />
+        <PasswordVisibilityButton visible={showConfirmation} label="password confirmation" controls="customer-confirm-password" disabled={busy} onClick={() => setShowConfirmation(value => !value)} />
+      </div>
+    </div> : null}
     <div className="customer-credential-form-actions">
       <button className="primary-link" type="submit" disabled={busy}>{busy ? "Please wait…" : credential === "email" ? "Confirm email change" : "Update password"}</button>
       <button type="button" disabled={busy} onClick={onCancel}>Cancel</button>
     </div>
   </form>;
+}
+
+function PasswordVisibilityButton({ visible, label, controls, disabled, onClick }: {
+  visible: boolean; label: string; controls: string; disabled: boolean; onClick: () => void;
+}) {
+  return <button type="button" className="customer-password-toggle" aria-label={`${visible ? "Hide" : "Show"} ${label}`} aria-pressed={visible} aria-controls={controls} disabled={disabled} onClick={onClick}>
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z" />
+      <circle cx="12" cy="12" r="3" />
+      {visible ? <path d="m3 3 18 18" /> : null}
+    </svg>
+  </button>;
 }
