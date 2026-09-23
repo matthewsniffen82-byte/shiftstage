@@ -1,5 +1,6 @@
 // Only public, checked-in assets belong here. Never include API or user media URLs.
 export const staticAssetPaths = [
+  "/dancr-account-forms.v1.css",
   "/dancr-aesthetic.v1.css",
   "/dancr-brand-tokens.v1.css",
   "/dancr-button-system.v1.css",

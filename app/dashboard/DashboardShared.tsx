@@ -623,7 +623,7 @@ export function AccountControlsPanel({
   }
 
   return (
-    <article className="info-panel account-controls-panel">
+    <article className="info-panel account-controls-panel account-form-surface">
       <div className="account-controls-heading">
         <span className="account-security-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 3 4.5 6v5.2c0 4.5 3.2 7.8 7.5 9.8 4.3-2 7.5-5.3 7.5-9.8V6L12 3Z" /><path d="m8.5 12 2.3 2.3 4.7-4.6" /></svg></span>
         <h2>{accountHeading}</h2>

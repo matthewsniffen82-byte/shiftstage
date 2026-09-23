@@ -1001,6 +1001,7 @@
       const trigger = document.getElementById(popover.dataset.triggerId || "");
       popover.hidden = true;
       if (popover === passwordRecoveryCard) resetPasswordRecoveryFeedback();
+      if (popover === loginRecoveryCard) resetLoginRecoveryFeedback();
       popover.dataset.triggerId = "";
       if (trigger) trigger.setAttribute("aria-expanded", "false");
       if (restoreFocus) trigger?.focus({ preventScroll: true });

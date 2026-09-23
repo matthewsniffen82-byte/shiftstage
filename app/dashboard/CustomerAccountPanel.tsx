@@ -16,6 +16,7 @@ export default function CustomerAccountPanel({ account, accountRole = "customer"
   const [editing, setEditing] = useState<Credential | null>(null);
   const [feedback, setFeedback] = useState<Feedback>(null);
   const [busy, setBusy] = useState(false);
+  const [completedCredential, setCompletedCredential] = useState<Credential | null>(null);
   const pending = useRef<AbortController | null>(null);
   const emailButton = useRef<HTMLButtonElement>(null);
   const passwordButton = useRef<HTMLButtonElement>(null);
@@ -25,6 +26,7 @@ export default function CustomerAccountPanel({ account, accountRole = "customer"
     setEditing(null);
     setFeedback(null);
     setBusy(false);
+    setCompletedCredential(null);
     returnFocus.current = null;
     return () => { pending.current?.abort(); pending.current = null; };
   }, [account.id]);
@@ -43,6 +45,7 @@ export default function CustomerAccountPanel({ account, accountRole = "customer"
   function openForm(credential: Credential) {
     if (pending.current) return;
     setFeedback(null);
+    setCompletedCredential(null);
     setEditing(current => current === credential ? null : credential);
   }
 
@@ -91,6 +94,7 @@ export default function CustomerAccountPanel({ account, accountRole = "customer"
       if (!isCurrent()) return;
       if (data.account?.id === accountId) onAccountChange(data.account);
       setFeedback({ error: false, message: data.message || (credential === "email" ? "Check both your current and new email inboxes and confirm both links." : "Your password has been updated.") });
+      setCompletedCredential(credential);
       closeForm(credential);
     } catch (error) {
       if (!isCurrent()) return;
@@ -103,7 +107,7 @@ export default function CustomerAccountPanel({ account, accountRole = "customer"
   }
 
   return (
-    <article className="info-panel customer-account-details">
+    <article className="info-panel customer-account-details account-form-surface">
       <div className="customer-account-details-heading">
         <h2>Sign-in details</h2>
         <span className="account-status-pill">{(account.accountState || "active").replaceAll("_", " ")}</span>
@@ -111,9 +115,9 @@ export default function CustomerAccountPanel({ account, accountRole = "customer"
       <div className="customer-account-email"><span>Email address</span><strong>{account.email || "Private"}</strong></div>
       <div className="customer-credential-options">
         {(["email", "password"] as const).map(credential => (
-          <button key={credential} ref={credential === "email" ? emailButton : passwordButton} type="button" className="customer-credential-option" aria-expanded={editing === credential} aria-controls={editing === credential ? "customer-credential-form" : undefined} disabled={busy} onClick={() => openForm(credential)}>
+          <button key={credential} ref={credential === "email" ? emailButton : passwordButton} type="button" className={`customer-credential-option${completedCredential === credential ? " is-complete" : ""}`} aria-expanded={editing === credential} aria-controls={editing === credential ? "customer-credential-form" : undefined} disabled={busy} onClick={() => openForm(credential)}>
             <svg className="customer-credential-icon" viewBox="0 0 24 24" aria-hidden="true">{credential === "email" ? <><rect x="3" y="5" width="18" height="14" rx="3" /><path d="m4 7 8 6 8-6" /></> : <><rect x="5" y="10" width="14" height="11" rx="3" /><path d="M8 10V7a4 4 0 0 1 8 0v3m-4 5v2" /></>}</svg>
-            <span>Change {credential}</span>
+            <span>{completedCredential === credential ? credential === "email" ? "✓ Check your email" : "✓ Password updated" : `Change ${credential}`}</span>
             <svg className="customer-credential-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d={editing === credential ? "m6 15 6-6 6 6" : "m9 6 6 6-6 6"} /></svg>
           </button>
         ))}
@@ -181,7 +185,7 @@ function CredentialForm({ credential, busy, onSubmit, onCancel }: {
       </div>
     </div> : null}
     <div className="customer-credential-form-actions">
-      <button className="primary-link" type="submit" disabled={busy}>{busy ? "Please wait…" : credential === "email" ? "Confirm email change" : "Update password"}</button>
+      <button className="primary-link account-form-primary" type="submit" disabled={busy} aria-busy={busy}>{busy ? credential === "email" ? "Sending confirmation…" : "Updating password…" : credential === "email" ? "Confirm email change" : "Update password"}</button>
       <button type="button" disabled={busy} onClick={onCancel}>Cancel</button>
     </div>
   </form>;

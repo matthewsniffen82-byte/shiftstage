@@ -43,6 +43,7 @@ function fixture(role = 'customer') {
   return {
     account, requests, updates, render, find, form,
     open(credential) { find(render(), node => node.type === 'button' && node.key === credential).props.onClick(); },
+    label(credential) { return find(find(render(), node => node.type === 'button' && node.key === credential), node => node.type === 'span').props.children; },
     submit(fields) { return form().props.onSubmit({ preventDefault() {}, currentTarget: fields }); },
     feedback() { return find(render(), node => ['alert', 'status'].includes(node.props?.role))?.props.children || ''; },
     respondWith(fn) { respond = fn; },
@@ -64,6 +65,7 @@ test('email change rejects the current address and only submits the normalized n
   assert.equal(f.requests[0].expectedRole, role);
   assert.equal(f.updates[0].email, 'original@example.com');
   assert.match(f.feedback(), /confirm the change/);
+  assert.equal(f.label('email'), '✓ Check your email');
   assert.equal(f.form(), null);
 });
 
@@ -79,6 +81,9 @@ test('password changes require matching values and never submit confirmation or 
   assert.equal(f.requests[0].expectedRole, role);
   assert.equal(f.form(), null);
   assert.ok(!JSON.stringify(f.updates).includes('New1!secure-password'));
+  assert.equal(f.label('password'), '✓ Password updated');
+  f.open('password');
+  assert.equal(f.label('password'), 'Change password');
 });
 
 test('a pending change prevents duplicate requests and waits for server confirmation', async () => {
@@ -91,6 +96,7 @@ test('a pending change prevents duplicate requests and waits for server confirma
   assert.equal(f.requests.length, 1);
   assert.equal(f.form().props.busy, true);
   assert.equal(f.updates.length, 0);
+  assert.equal(f.label('email'), 'Change email');
   assert.equal(f.feedback(), '');
   resolve({ account: f.account, message: 'Check your email.' });
   await pending;

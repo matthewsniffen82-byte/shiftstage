@@ -32258,6 +32258,7 @@
   <link href="/dancr-button-system.v1.css" rel="stylesheet">
   <link href="/outputs/dancr-aesthetic.css" rel="stylesheet">
   <link href="/dancr-feedback.v1.css?v=2" rel="stylesheet">
+  <link href="/dancr-account-forms.v1.css" rel="stylesheet">
   <link href="/profile-media-owner-controls.css?v=3" rel="stylesheet">
   <link href="/profile-media-card-feed.css?v=10" rel="stylesheet">
   <link href="/profile-photo-crop.css?v=1" rel="stylesheet">
@@ -41674,7 +41675,7 @@
             </div>
           </section>
           <section class="recovery-popover" id="loginRecoveryCard" role="dialog" aria-modal="true" aria-labelledby="loginRecoveryTitle" hidden>
-            <div class="recovery-popover-surface" id="loginRecoverySurface">
+            <div class="recovery-popover-surface account-form-surface" id="loginRecoverySurface">
               <div class="login-recovery-head">
                 <div><span class="eyebrow">Email recovery</span><h3 id="loginRecoveryTitle">Find your sign-in email</h3></div>
                 <button class="login-recovery-close" id="loginRecoveryClose" type="button" aria-label="Close email recovery">×</button>
@@ -41705,14 +41706,12 @@
                 </div>
                 <div class="field">
                   <label for="loginRecoveryDetails">Other details that can help verify the account</label>
-                  <textarea id="loginRecoveryDetails" rows="4" maxlength="1000" placeholder="Approximate signup date, profile details, or venues you remember"></textarea>
+                  <textarea id="loginRecoveryDetails" rows="3" maxlength="1000" placeholder="Approximate signup date, profile details, or venues you remember"></textarea>
                 </div>
-                <p class="login-recovery-security">Never send a password, reset code, government ID, or payment information. Support verifies ownership before providing access.</p>
-                <div class="login-recovery-actions">
-                  <button class="action-btn" id="loginRecoverySubmit" type="submit">Send recovery request</button>
-                  <button class="ghost" id="loginRecoveryBack" type="button">Back to sign in</button>
-                </div>
-                <div class="rule-note auth-status" id="loginRecoveryStatus" role="status" aria-live="polite" aria-atomic="true" hidden></div>
+                <p class="account-form-security">Never send a password, reset code, government ID, or payment information. Support verifies ownership before providing access.</p>
+                <button class="action-btn account-form-primary" id="loginRecoverySubmit" type="submit">Send recovery request</button>
+                <div class="auth-status" id="loginRecoveryStatus" role="status" aria-live="polite" aria-atomic="true" hidden></div>
+                <button class="ghost account-form-back" id="loginRecoveryBack" type="button">← Back to sign in</button>
               </form>
             </div>
           </section>
@@ -44994,6 +44993,7 @@
       const trigger = document.getElementById(popover.dataset.triggerId || "");
       popover.hidden = true;
       if (popover === passwordRecoveryCard) resetPasswordRecoveryFeedback();
+      if (popover === loginRecoveryCard) resetLoginRecoveryFeedback();
       popover.dataset.triggerId = "";
       if (trigger) trigger.setAttribute("aria-expanded", "false");
       if (restoreFocus) trigger?.focus({ preventScroll: true });
@@ -45099,6 +45099,24 @@
       });
     }
 
+    let loginRecoveryRequestVersion = 0;
+
+    function setLoginRecoveryState(state = "idle", message = "") {
+      const submit = document.getElementById("loginRecoverySubmit");
+      loginRecoveryCard.dataset.state = state;
+      submit.disabled = state === "sending" || state === "success";
+      submit.setAttribute("aria-busy", String(state === "sending"));
+      submit.textContent = state === "sending" ? "Sending request…" : state === "success" ? "✓ Recovery request sent" : "Send recovery request";
+      loginRecoveryForm.querySelectorAll("input, select, textarea").forEach((field) => { field.disabled = state === "sending"; });
+      loginRecoveryStatus.textContent = message;
+      loginRecoveryStatus.hidden = !message;
+    }
+
+    function resetLoginRecoveryFeedback() {
+      loginRecoveryRequestVersion += 1;
+      setLoginRecoveryState();
+    }
+
     function sendLoginRecoveryHelp({ role, emailInputId, buttonId }) {
       const accountEmail = document.getElementById(emailInputId)?.value?.trim() || "";
       const sourceButton = document.getElementById(buttonId);
@@ -45113,10 +45131,7 @@
       if (contactInput && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(accountEmail)) contactInput.value = accountEmail;
       if (nameLabel) nameLabel.textContent = role === "dancer" ? "Stage name" : role === "venue" ? "Venue name" : "Name used on the account";
       if (title) title.textContent = role === "venue" ? "Find your venue sign-in email" : "Find your sign-in email";
-      if (loginRecoveryStatus) {
-        loginRecoveryStatus.textContent = "";
-        loginRecoveryStatus.hidden = true;
-      }
+      resetLoginRecoveryFeedback();
       openRecoveryPopover(loginRecoveryCard, sourceButton, "loginRecoveryAccountName");
     }
 
@@ -45127,10 +45142,9 @@
     async function submitLoginRecoveryForm(event) {
       event.preventDefault();
       const submit = document.getElementById("loginRecoverySubmit");
-      submit.disabled = true;
-      submit.textContent = "Sending securely...";
-      loginRecoveryStatus.textContent = "Submitting your recovery request...";
-      loginRecoveryStatus.hidden = false;
+      if (submit.disabled) return;
+      const requestVersion = loginRecoveryRequestVersion;
+      setLoginRecoveryState("sending");
       try {
         const response = await fetch("/api/account-recovery", {
           method: "POST",
@@ -45144,15 +45158,12 @@
           })
         });
         const data = await response.json().catch(() => ({}));
-        if (!response.ok || data.ok === false) throw new Error(data.error || "Unable to submit account recovery request.");
-        loginRecoveryStatus.textContent = `${data.message} Reference: ${data.reference}.`;
-        document.getElementById("loginRecoveryDetails").value = "";
-        showToast("Account recovery request sent");
+        if (requestVersion !== loginRecoveryRequestVersion) return;
+        if (!response.ok || data.ok !== true) throw new Error(data.error || "Unable to submit account recovery request.");
+        setLoginRecoveryState("success", `${data.message || "Support will review your request and contact you at the email you provided."}${data.reference ? ` Reference: ${data.reference}.` : ""}`);
       } catch (error) {
-        loginRecoveryStatus.textContent = error?.message || "Unable to submit account recovery request.";
-      } finally {
-        submit.disabled = false;
-        submit.textContent = "Send recovery request";
+        if (requestVersion !== loginRecoveryRequestVersion) return;
+        setLoginRecoveryState("error", error?.message || "Unable to submit account recovery request.");
       }
     }
 
@@ -46088,6 +46099,7 @@
         ownerUserId: item.owner_user_id || null
       };
     }
+
 
     function applyLiveAdminVenues(venues) {
       (venues || []).forEach((item) => {
@@ -65268,6 +65280,8 @@
     passwordRecoveryClose?.addEventListener("click", () => closeRecoveryPopover(passwordRecoveryCard));
     passwordRecoveryBack?.addEventListener("click", () => closeRecoveryPopover(passwordRecoveryCard));
     loginRecoveryForm?.addEventListener("submit", submitLoginRecoveryForm);
+    loginRecoveryForm?.addEventListener("input", resetLoginRecoveryFeedback);
+    loginRecoveryForm?.addEventListener("change", resetLoginRecoveryFeedback);
     loginRecoveryClose?.addEventListener("click", closeLoginRecovery);
     loginRecoveryBack?.addEventListener("click", closeLoginRecovery);
     document.getElementById("loginRecoveryRole")?.addEventListener("change", (event) => {

@@ -935,6 +935,8 @@
     passwordRecoveryClose?.addEventListener("click", () => closeRecoveryPopover(passwordRecoveryCard));
     passwordRecoveryBack?.addEventListener("click", () => closeRecoveryPopover(passwordRecoveryCard));
     loginRecoveryForm?.addEventListener("submit", submitLoginRecoveryForm);
+    loginRecoveryForm?.addEventListener("input", resetLoginRecoveryFeedback);
+    loginRecoveryForm?.addEventListener("change", resetLoginRecoveryFeedback);
     loginRecoveryClose?.addEventListener("click", closeLoginRecovery);
     loginRecoveryBack?.addEventListener("click", closeLoginRecovery);
     document.getElementById("loginRecoveryRole")?.addEventListener("change", (event) => {

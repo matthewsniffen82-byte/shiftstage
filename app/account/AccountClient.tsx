@@ -52,6 +52,7 @@ export default function AccountClient() {
   const [recoveryContactEmail, setRecoveryContactEmail] = useState("");
   const [recoveryDetails, setRecoveryDetails] = useState("");
   const [recoveryStatus, setRecoveryStatus] = useState("");
+  const [recoveryOutcome, setRecoveryOutcome] = useState<"idle" | "success" | "error">("idle");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [existingSessionRole, setExistingSessionRole] = useState<BrowserSessionRole | null>(null);
@@ -219,6 +220,7 @@ export default function AccountClient() {
     setRecoveryContactEmail("");
     setRecoveryDetails("");
     setRecoveryStatus("");
+    setRecoveryOutcome("idle");
   }, []);
 
   useEffect(() => {
@@ -237,6 +239,7 @@ export default function AccountClient() {
     });
     setStatus("");
     setRecoveryStatus("");
+    setRecoveryOutcome("idle");
     if (view === "email") {
       setRecoveryContactEmail(EMAIL_PATTERN.test(email.trim()) ? email.trim() : "");
       setRecoveryCity(city || "Las Vegas");
@@ -365,11 +368,12 @@ export default function AccountClient() {
   }
 
   async function sendPasswordReset() {
-    if (!mountedRef.current || passwordResetInFlightRef.current) return;
+    if (!mountedRef.current || passwordResetInFlightRef.current || recoveryOutcome === "success") return;
     setRecoveryStatus("");
+    setRecoveryOutcome("error");
 
-    if (!email.trim()) {
-      setRecoveryStatus("Enter the email used for your account.");
+    if (!EMAIL_PATTERN.test(email.trim())) {
+      setRecoveryStatus("Enter a valid email address for your account.");
       return;
     }
 
@@ -398,6 +402,7 @@ export default function AccountClient() {
       const data = await response.json();
       if (!mountedRef.current || controller.signal.aborted) return;
       if (!response.ok || !data.ok) throw new Error(friendlyAuthErrorMessage(data.error, "Unable to send reset email."));
+      setRecoveryOutcome("success");
       setRecoveryStatus("If that email has a MyDancr account, we sent a secure reset link. Check the newest email and your spam folder.");
     } catch (error) {
       if (!mountedRef.current || controller.signal.aborted) return;
@@ -412,7 +417,8 @@ export default function AccountClient() {
   }
 
   async function submitLoginRecovery() {
-    if (!mountedRef.current || loginRecoveryInFlightRef.current) return;
+    if (!mountedRef.current || loginRecoveryInFlightRef.current || recoveryOutcome === "success") return;
+    setRecoveryOutcome("error");
     const controller = new AbortController();
     loginRecoveryAbortRef.current?.abort();
     loginRecoveryAbortRef.current = controller;
@@ -435,8 +441,8 @@ export default function AccountClient() {
       const data = await response.json();
       if (!mountedRef.current || controller.signal.aborted) return;
       if (!response.ok || !data.ok) throw new Error(data.error || "Unable to submit account recovery request.");
-      setRecoveryStatus(`${data.message} Reference: ${data.reference}.`);
-      setRecoveryDetails("");
+      setRecoveryOutcome("success");
+      setRecoveryStatus(`${data.message || "Support will review your request and contact you at the email you provided."}${data.reference ? ` Reference: ${data.reference}.` : ""}`);
     } catch (error) {
       if (!mountedRef.current || controller.signal.aborted) return;
       setRecoveryStatus(error instanceof Error ? error.message : "Unable to submit account recovery request.");
@@ -680,7 +686,7 @@ export default function AccountClient() {
         </form>
         {mode === "login" && recoveryView === "password" ? (
           <section className="recovery-popover" role="dialog" aria-modal="true" aria-labelledby="password-recovery-title" onKeyDown={keepFocusInRecovery} onClick={(event) => { if (event.target === event.currentTarget) closeRecovery(); }}>
-            <div className="recovery-popover-surface" style={{ "--recovery-shift-x": recoveryOrigin.x, "--recovery-shift-y": recoveryOrigin.y } as CSSProperties}>
+            <div className="recovery-popover-surface account-form-surface" data-state={recoveryOutcome} onChangeCapture={() => { setRecoveryOutcome("idle"); setRecoveryStatus(""); }} style={{ "--recovery-shift-x": recoveryOrigin.x, "--recovery-shift-y": recoveryOrigin.y } as CSSProperties}>
               <div className="login-recovery-head">
                 <div>
                   <span className="eyebrow">Password recovery</span>
@@ -691,19 +697,19 @@ export default function AccountClient() {
               <p>Enter the email used for this account. MyDancr will send a secure reset link if the email matches an account.</p>
               <label>
                 Account email
-                <input ref={passwordRecoveryEmailRef} type="email" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} maxLength={254} required />
+                <input ref={passwordRecoveryEmailRef} type="email" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} maxLength={254} readOnly={isResettingPassword} required />
               </label>
-              <button className="recovery-submit" type="button" onClick={sendPasswordReset} disabled={isResettingPassword}>
-                {isResettingPassword ? "Sending reset link..." : "Send reset link"}
+              <button className="recovery-submit account-form-primary" type="button" onClick={sendPasswordReset} aria-busy={isResettingPassword} disabled={isResettingPassword || recoveryOutcome === "success"}>
+                {isResettingPassword ? "Sending reset link…" : recoveryOutcome === "success" ? "✓ Reset link requested" : "Send reset link"}
               </button>
-              <button className="recovery-cancel" type="button" onClick={closeRecovery}>Back to sign in</button>
               {recoveryStatus ? <p className="recovery-status" role="status" aria-live="polite" aria-atomic="true">{recoveryStatus}</p> : null}
+              <button className="recovery-cancel account-form-back" type="button" onClick={closeRecovery}>← Back to sign in</button>
             </div>
           </section>
         ) : null}
         {mode === "login" && recoveryView === "email" ? (
           <section className="recovery-popover" role="dialog" aria-modal="true" aria-labelledby="login-recovery-title" onKeyDown={keepFocusInRecovery} onClick={(event) => { if (event.target === event.currentTarget) closeRecovery(); }}>
-            <div className="recovery-popover-surface" style={{ "--recovery-shift-x": recoveryOrigin.x, "--recovery-shift-y": recoveryOrigin.y } as CSSProperties}>
+            <div className="recovery-popover-surface account-form-surface" data-state={recoveryOutcome} onChangeCapture={() => { setRecoveryOutcome("idle"); setRecoveryStatus(""); }} style={{ "--recovery-shift-x": recoveryOrigin.x, "--recovery-shift-y": recoveryOrigin.y } as CSSProperties}>
               <div className="login-recovery-head">
                 <div>
                   <span className="eyebrow">Email recovery</span>
@@ -712,6 +718,7 @@ export default function AccountClient() {
                 <button className="recovery-close" type="button" aria-label="Close email recovery" onClick={closeRecovery}>×</button>
               </div>
               <p>MyDancr will not display possible account emails. Give support enough information to verify that the account belongs to you.</p>
+              <fieldset className="account-form-fields" disabled={isSendingLoginHelp}>
               <div className="login-recovery-grid">
                 <label>
                   {role === "dancer" ? "Stage name" : "Name used on the account"}
@@ -728,16 +735,15 @@ export default function AccountClient() {
               </label>
               <label>
                 Other details that can help verify the account
-                <textarea value={recoveryDetails} onChange={(event) => setRecoveryDetails(event.target.value)} maxLength={1000} rows={4} placeholder="Approximate signup date, profile details, or venues you remember" />
+                <textarea value={recoveryDetails} onChange={(event) => setRecoveryDetails(event.target.value)} maxLength={1000} rows={3} placeholder="Approximate signup date, profile details, or venues you remember" />
               </label>
-              <p className="recovery-security">Never send a password, reset code, government ID, or payment information. Support verifies ownership before providing access.</p>
-              <div className="login-recovery-actions">
-                <button className="recovery-submit" type="button" onClick={submitLoginRecovery} disabled={isSendingLoginHelp}>
-                  {isSendingLoginHelp ? "Sending securely..." : "Send recovery request"}
-                </button>
-                <button className="recovery-cancel" type="button" onClick={closeRecovery}>Back to sign in</button>
-              </div>
+              </fieldset>
+              <p className="account-form-security">Never send a password, reset code, government ID, or payment information. Support verifies ownership before providing access.</p>
+              <button className="recovery-submit account-form-primary" type="button" onClick={submitLoginRecovery} aria-busy={isSendingLoginHelp} disabled={isSendingLoginHelp || recoveryOutcome === "success"}>
+                {isSendingLoginHelp ? "Sending request…" : recoveryOutcome === "success" ? "✓ Recovery request sent" : "Send recovery request"}
+              </button>
               {recoveryStatus ? <p className="recovery-status" role="status" aria-live="polite" aria-atomic="true">{recoveryStatus}</p> : null}
+              <button className="recovery-cancel account-form-back" type="button" onClick={closeRecovery}>← Back to sign in</button>
             </div>
           </section>
         ) : null}

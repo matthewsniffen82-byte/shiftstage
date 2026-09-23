@@ -34,6 +34,7 @@
   <link href="/dancr-button-system.v1.css" rel="stylesheet">
   <link href="/outputs/dancr-aesthetic.css" rel="stylesheet">
   <link href="/dancr-feedback.v1.css?v=2" rel="stylesheet">
+  <link href="/dancr-account-forms.v1.css" rel="stylesheet">
   <link href="/profile-media-owner-controls.css?v=3" rel="stylesheet">
   <link href="/profile-media-card-feed.css?v=10" rel="stylesheet">
   <link href="/profile-photo-crop.css?v=1" rel="stylesheet">
@@ -578,7 +579,7 @@
             </div>
           </section>
           <section class="recovery-popover" id="loginRecoveryCard" role="dialog" aria-modal="true" aria-labelledby="loginRecoveryTitle" hidden>
-            <div class="recovery-popover-surface" id="loginRecoverySurface">
+            <div class="recovery-popover-surface account-form-surface" id="loginRecoverySurface">
               <div class="login-recovery-head">
                 <div><span class="eyebrow">Email recovery</span><h3 id="loginRecoveryTitle">Find your sign-in email</h3></div>
                 <button class="login-recovery-close" id="loginRecoveryClose" type="button" aria-label="Close email recovery">×</button>
@@ -609,14 +610,12 @@
                 </div>
                 <div class="field">
                   <label for="loginRecoveryDetails">Other details that can help verify the account</label>
-                  <textarea id="loginRecoveryDetails" rows="4" maxlength="1000" placeholder="Approximate signup date, profile details, or venues you remember"></textarea>
+                  <textarea id="loginRecoveryDetails" rows="3" maxlength="1000" placeholder="Approximate signup date, profile details, or venues you remember"></textarea>
                 </div>
-                <p class="login-recovery-security">Never send a password, reset code, government ID, or payment information. Support verifies ownership before providing access.</p>
-                <div class="login-recovery-actions">
-                  <button class="action-btn" id="loginRecoverySubmit" type="submit">Send recovery request</button>
-                  <button class="ghost" id="loginRecoveryBack" type="button">Back to sign in</button>
-                </div>
-                <div class="rule-note auth-status" id="loginRecoveryStatus" role="status" aria-live="polite" aria-atomic="true" hidden></div>
+                <p class="account-form-security">Never send a password, reset code, government ID, or payment information. Support verifies ownership before providing access.</p>
+                <button class="action-btn account-form-primary" id="loginRecoverySubmit" type="submit">Send recovery request</button>
+                <div class="auth-status" id="loginRecoveryStatus" role="status" aria-live="polite" aria-atomic="true" hidden></div>
+                <button class="ghost account-form-back" id="loginRecoveryBack" type="button">← Back to sign in</button>
               </form>
             </div>
           </section>

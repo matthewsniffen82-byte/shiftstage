@@ -10,6 +10,24 @@
       });
     }
 
+    let loginRecoveryRequestVersion = 0;
+
+    function setLoginRecoveryState(state = "idle", message = "") {
+      const submit = document.getElementById("loginRecoverySubmit");
+      loginRecoveryCard.dataset.state = state;
+      submit.disabled = state === "sending" || state === "success";
+      submit.setAttribute("aria-busy", String(state === "sending"));
+      submit.textContent = state === "sending" ? "Sending request…" : state === "success" ? "✓ Recovery request sent" : "Send recovery request";
+      loginRecoveryForm.querySelectorAll("input, select, textarea").forEach((field) => { field.disabled = state === "sending"; });
+      loginRecoveryStatus.textContent = message;
+      loginRecoveryStatus.hidden = !message;
+    }
+
+    function resetLoginRecoveryFeedback() {
+      loginRecoveryRequestVersion += 1;
+      setLoginRecoveryState();
+    }
+
     function sendLoginRecoveryHelp({ role, emailInputId, buttonId }) {
       const accountEmail = document.getElementById(emailInputId)?.value?.trim() || "";
       const sourceButton = document.getElementById(buttonId);
@@ -24,10 +42,7 @@
       if (contactInput && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(accountEmail)) contactInput.value = accountEmail;
       if (nameLabel) nameLabel.textContent = role === "dancer" ? "Stage name" : role === "venue" ? "Venue name" : "Name used on the account";
       if (title) title.textContent = role === "venue" ? "Find your venue sign-in email" : "Find your sign-in email";
-      if (loginRecoveryStatus) {
-        loginRecoveryStatus.textContent = "";
-        loginRecoveryStatus.hidden = true;
-      }
+      resetLoginRecoveryFeedback();
       openRecoveryPopover(loginRecoveryCard, sourceButton, "loginRecoveryAccountName");
     }
 
@@ -38,10 +53,9 @@
     async function submitLoginRecoveryForm(event) {
       event.preventDefault();
       const submit = document.getElementById("loginRecoverySubmit");
-      submit.disabled = true;
-      submit.textContent = "Sending securely...";
-      loginRecoveryStatus.textContent = "Submitting your recovery request...";
-      loginRecoveryStatus.hidden = false;
+      if (submit.disabled) return;
+      const requestVersion = loginRecoveryRequestVersion;
+      setLoginRecoveryState("sending");
       try {
         const response = await fetch("/api/account-recovery", {
           method: "POST",
@@ -55,15 +69,12 @@
           })
         });
         const data = await response.json().catch(() => ({}));
-        if (!response.ok || data.ok === false) throw new Error(data.error || "Unable to submit account recovery request.");
-        loginRecoveryStatus.textContent = `${data.message} Reference: ${data.reference}.`;
-        document.getElementById("loginRecoveryDetails").value = "";
-        showToast("Account recovery request sent");
+        if (requestVersion !== loginRecoveryRequestVersion) return;
+        if (!response.ok || data.ok !== true) throw new Error(data.error || "Unable to submit account recovery request.");
+        setLoginRecoveryState("success", `${data.message || "Support will review your request and contact you at the email you provided."}${data.reference ? ` Reference: ${data.reference}.` : ""}`);
       } catch (error) {
-        loginRecoveryStatus.textContent = error?.message || "Unable to submit account recovery request.";
-      } finally {
-        submit.disabled = false;
-        submit.textContent = "Send recovery request";
+        if (requestVersion !== loginRecoveryRequestVersion) return;
+        setLoginRecoveryState("error", error?.message || "Unable to submit account recovery request.");
       }
     }
 

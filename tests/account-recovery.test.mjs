@@ -75,8 +75,8 @@ test("standalone account actions prevent duplicate and stale submissions", () =>
   assert.match(accountPage, /const loginRecoveryAbortRef = useRef<AbortController \| null>\(null\);/);
   assert.match(accountPage, /const loginRecoveryInFlightRef = useRef\(false\);/);
   assert.match(accountPage, /if \(!mountedRef\.current \|\| authInFlightRef\.current\) return;/);
-  assert.match(accountPage, /if \(!mountedRef\.current \|\| passwordResetInFlightRef\.current\) return;/);
-  assert.match(accountPage, /if \(!mountedRef\.current \|\| loginRecoveryInFlightRef\.current\) return;/);
+  assert.match(accountPage, /if \(!mountedRef\.current \|\| passwordResetInFlightRef\.current \|\| recoveryOutcome === "success"\) return;/);
+  assert.match(accountPage, /if \(!mountedRef\.current \|\| loginRecoveryInFlightRef\.current \|\| recoveryOutcome === "success"\) return;/);
   assert.equal((accountPage.match(/signal: controller\.signal/g) || []).length, 4);
   assert.match(accountPage, /authAbortRef\.current\?\.abort\(\);/);
   assert.match(accountPage, /passwordResetAbortRef\.current\?\.abort\(\);/);

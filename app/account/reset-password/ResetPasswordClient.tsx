@@ -121,7 +121,7 @@ export default function ResetPasswordClient() {
 
   return (
     <main className="reset-page">
-      <section className="reset-card">
+      <section className="reset-card account-form-surface" data-state={phase === "complete" ? "success" : phase}>
         <p className="reset-brand">MyDancr</p>
         <span className={`dancr-status-mark${phase === "complete" ? " is-success" : ""}`} aria-hidden="true">
           <svg viewBox="0 0 24 24">
@@ -132,24 +132,24 @@ export default function ResetPasswordClient() {
         {phase === "loading" ? <p role="status">Checking your reset link…</p> : null}
         {phase === "unavailable" ? <>
           <p role="alert">We couldn&apos;t check your reset session right now. Please check your connection and try again.</p>
-          <button type="button" onClick={() => setAttempt(attempt + 1)}>Try again</button>
+          <button className="account-form-primary" type="button" onClick={() => setAttempt(attempt + 1)}>Try again</button>
         </> : null}
         {phase === "expired" ? <>
           <p role="alert">This reset link is unavailable or has expired. Request a new email using Forgot password.</p>
-          <a href="/account?mode=login">Request a new reset link</a>
+          <a className="account-form-primary" href="/account?mode=login">Request a new reset link</a>
         </> : null}
         {phase === "ready" ? <form onSubmit={submit}>
           <p>Choose a new password to finish resetting your account.</p>
           <PasswordField label="New password" autoComplete="new-password" minLength={6} maxLength={1024} required value={password} onChange={(event) => setPassword(event.target.value)} disabled={saving} />
-          <PasswordRequirements />
+          <PasswordRequirements password={password} />
           <PasswordField label="Confirm new password" autoComplete="new-password" minLength={6} maxLength={1024} required value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} disabled={saving} />
           {error ? <p className="reset-error" role="alert">{error}</p> : null}
-          <button type="submit" disabled={saving}>{saving ? "Updating password…" : "Update password"}</button>
+          <button className="account-form-primary" type="submit" aria-busy={saving} disabled={saving}>{saving ? "Updating password…" : "Update password"}</button>
         </form> : null}
         {phase === "complete" ? <>
-          <p role="status">Your new password has been saved.</p>
+          <p className="account-form-confirmation" role="status">Your new password has been saved.</p>
           {completionWarning ? <p role="alert">{completionWarning}</p> : null}
-          <a href={destination}>Continue to your account</a>
+          <a className="account-form-primary" href={destination}>Continue to your account</a>
         </> : null}
       </section>
       <style>{`
