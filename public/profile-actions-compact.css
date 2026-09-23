@@ -246,11 +246,11 @@ body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-she
 body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell, .dancer-profile-preview-overlay, #results.venue-profile-overlay .venue-detail) :is(.modal-actions, .live-actions, .venue-secondary-actions).profile-actions-compact :is(#followBtn, #goingBtn, .profile-action-icon-control) {
   appearance: none !important;
   -webkit-appearance: none !important;
-  --profile-action-border: #34343c;
-  --profile-action-background: #15151b;
+  --profile-action-border: var(--profile-utility-border, #34343c);
+  --profile-action-background: var(--profile-utility-background, #15151b);
   --profile-action-shadow: none;
   border: 0 !important;
-  border-radius: 8px !important;
+  border-radius: var(--profile-utility-radius, 8px) !important;
   color: #FFFFFF !important;
   background: none !important;
   box-shadow: none !important;
@@ -304,22 +304,22 @@ body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-she
 
 @media (hover: hover) {
   body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell, .dancer-profile-preview-overlay, #results.venue-profile-overlay .venue-detail) :is(.modal-actions, .live-actions, .venue-secondary-actions).profile-actions-compact :is(#followBtn, #goingBtn, .profile-action-icon-control):hover:where(:not(:disabled)) {
-    --profile-action-background: #303030;
-    --profile-action-border: #666666;
+    --profile-action-background: var(--profile-utility-hover-background, #303030);
+    --profile-action-border: var(--profile-utility-hover-border, #666666);
   }
 }
 
 /* Inactive Follow and I'm Going use a quiet violet outline with no glow.
  * Keep share and unavailable actions on their existing neutral material. */
 body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell, .dancer-profile-preview-overlay, #results.venue-profile-overlay .venue-detail) :is(.modal-actions, .live-actions, .venue-secondary-actions).profile-actions-compact :is(#followBtn, #goingBtn, .profile-action-icon-control)[aria-pressed]:not(:disabled):not([aria-disabled="true"]) {
-  --profile-action-border: #51415f;
-  --profile-action-background: #17131e;
+  --profile-action-border: var(--profile-utility-border, #51415f);
+  --profile-action-background: var(--profile-utility-background, #17131e);
 }
 
 @media (hover: hover) {
   body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell, .dancer-profile-preview-overlay, #results.venue-profile-overlay .venue-detail) :is(.modal-actions, .live-actions, .venue-secondary-actions).profile-actions-compact :is(#followBtn, #goingBtn, .profile-action-icon-control)[aria-pressed]:not(:disabled):not([aria-disabled="true"]):hover {
-    --profile-action-border: #8e72b5;
-    --profile-action-background: #231b2e;
+    --profile-action-border: var(--profile-utility-hover-border, #8e72b5);
+    --profile-action-background: var(--profile-utility-hover-background, #231b2e);
   }
 }
 

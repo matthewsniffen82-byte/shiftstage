@@ -20,10 +20,10 @@ test("selected actions use hero violet without changing their state or accessibl
 });
 
 test("profile actions reserve violet for available actions and retain neutral utility materials", () => {
-  assert.match(css, /--profile-action-border: #34343c/);
-  assert.match(css, /border-radius: 8px !important/);
+  assert.match(css, /--profile-action-border: var\(--profile-utility-border, #34343c\)/);
+  assert.match(css, /border-radius: var\(--profile-utility-radius, 8px\) !important/);
   assert.match(css, /color: #FFFFFF !important/);
-  assert.match(css, /--profile-action-background: #15151b/);
+  assert.match(css, /--profile-action-background: var\(--profile-utility-background, #15151b\)/);
   assert.match(css, /appearance: none !important/);
   assert.match(css, /outline: 2px solid #c4b5fd !important/);
   assert.match(css, /\[aria-pressed\]:not\(:disabled\):not\(\[aria-disabled="true"\]\)/);

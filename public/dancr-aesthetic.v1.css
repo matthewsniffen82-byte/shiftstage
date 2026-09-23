@@ -12745,8 +12745,7 @@ body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-she
 body.dancr-button-system :is(
   #profileBackdrop #profileModal .profile-tonight-travel-actions > :is(.profile-primary-directions, .profile-directions-button, .profile-uber-ride),
   .public-profile-shell .profile-tonight-travel-actions > a[target="_blank"],
-  #results.home-venue-discovery-feed .home-venue-discovery-context-actions > :is(.home-discovery-feed-directions, .home-venue-discovery-uber),
-  #results.venue-profile-overlay .venue-detail .venue-primary-actions > :is(.venue-address-directions, .venue-detail-uber)
+  #results.home-venue-discovery-feed .home-venue-discovery-context-actions > :is(.home-discovery-feed-directions, .home-venue-discovery-uber)
 )[href]:not(:disabled):not([aria-disabled="true"]):not(.is-travel-unavailable):not(.is-inactive-demo) {
   border-color: #626a78 !important;
   color: #fff !important;
@@ -12761,8 +12760,7 @@ body.dancr-button-system :is(
 body.dancr-button-system :is(
   #profileBackdrop #profileModal .profile-tonight-travel-actions > :is(.profile-primary-directions, .profile-directions-button, .profile-uber-ride),
   .public-profile-shell .profile-tonight-travel-actions > a[target="_blank"],
-  #results.home-venue-discovery-feed .home-venue-discovery-context-actions > :is(.home-discovery-feed-directions, .home-venue-discovery-uber),
-  #results.venue-profile-overlay .venue-detail .venue-primary-actions > :is(.venue-address-directions, .venue-detail-uber)
+  #results.home-venue-discovery-feed .home-venue-discovery-context-actions > :is(.home-discovery-feed-directions, .home-venue-discovery-uber)
 )[href]:not(:disabled):not([aria-disabled="true"]):not(.is-travel-unavailable):not(.is-inactive-demo) :is(.action-icon, svg) {
   color: #f0f3f8 !important;
   stroke: currentColor !important;
@@ -12773,8 +12771,7 @@ body.dancr-button-system :is(
   body.dancr-button-system :is(
   #profileBackdrop #profileModal .profile-tonight-travel-actions > :is(.profile-primary-directions, .profile-directions-button, .profile-uber-ride),
   .public-profile-shell .profile-tonight-travel-actions > a[target="_blank"],
-  #results.home-venue-discovery-feed .home-venue-discovery-context-actions > :is(.home-discovery-feed-directions, .home-venue-discovery-uber),
-  #results.venue-profile-overlay .venue-detail .venue-primary-actions > :is(.venue-address-directions, .venue-detail-uber)
+  #results.home-venue-discovery-feed .home-venue-discovery-context-actions > :is(.home-discovery-feed-directions, .home-venue-discovery-uber)
 )[href]:not(:disabled):not([aria-disabled="true"]):not(.is-travel-unavailable):not(.is-inactive-demo):hover {
     background: #323741 !important;
     border-color: #8993a3 !important;
@@ -12784,8 +12781,7 @@ body.dancr-button-system :is(
 body.dancr-button-system :is(
   #profileBackdrop #profileModal .profile-tonight-travel-actions > :is(.profile-primary-directions, .profile-directions-button, .profile-uber-ride),
   .public-profile-shell .profile-tonight-travel-actions > a[target="_blank"],
-  #results.home-venue-discovery-feed .home-venue-discovery-context-actions > :is(.home-discovery-feed-directions, .home-venue-discovery-uber),
-  #results.venue-profile-overlay .venue-detail .venue-primary-actions > :is(.venue-address-directions, .venue-detail-uber)
+  #results.home-venue-discovery-feed .home-venue-discovery-context-actions > :is(.home-discovery-feed-directions, .home-venue-discovery-uber)
 )[href]:not(:disabled):not([aria-disabled="true"]):not(.is-travel-unavailable):not(.is-inactive-demo):active {
   background: #3b424f !important;
   border-color: #a8b3c5 !important;
@@ -12795,8 +12791,7 @@ body.dancr-button-system :is(
 body.dancr-button-system :is(
   #profileBackdrop #profileModal .profile-tonight-travel-actions > :is(.profile-primary-directions, .profile-directions-button, .profile-uber-ride),
   .public-profile-shell .profile-tonight-travel-actions > a[target="_blank"],
-  #results.home-venue-discovery-feed .home-venue-discovery-context-actions > :is(.home-discovery-feed-directions, .home-venue-discovery-uber),
-  #results.venue-profile-overlay .venue-detail .venue-primary-actions > :is(.venue-address-directions, .venue-detail-uber)
+  #results.home-venue-discovery-feed .home-venue-discovery-context-actions > :is(.home-discovery-feed-directions, .home-venue-discovery-uber)
 )[href]:not(:disabled):not([aria-disabled="true"]):not(.is-travel-unavailable):not(.is-inactive-demo):focus-visible {
   outline: 2px solid #fff !important;
   outline-offset: 3px !important;
@@ -12806,8 +12801,7 @@ body.dancr-button-system :is(
   body.dancr-button-system :is(
   #profileBackdrop #profileModal .profile-tonight-travel-actions > :is(.profile-primary-directions, .profile-directions-button, .profile-uber-ride),
   .public-profile-shell .profile-tonight-travel-actions > a[target="_blank"],
-  #results.home-venue-discovery-feed .home-venue-discovery-context-actions > :is(.home-discovery-feed-directions, .home-venue-discovery-uber),
-  #results.venue-profile-overlay .venue-detail .venue-primary-actions > :is(.venue-address-directions, .venue-detail-uber)
+  #results.home-venue-discovery-feed .home-venue-discovery-context-actions > :is(.home-discovery-feed-directions, .home-venue-discovery-uber)
 )[href]:not(:disabled):not([aria-disabled="true"]):not(.is-travel-unavailable):not(.is-inactive-demo) {
     transition: none !important;
   }
@@ -13167,8 +13161,6 @@ body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-she
   text-transform: none !important;
 }
 
-body.dancr-button-system #results.venue-profile-overlay .venue-detail
-  .venue-offer-card.venue-deal-preview.is-active-club-deal,
 body.dancr-button-system .public-profile-shell
   :is(.club-deal-card:has(.club-deal-checkout-action), .club-deal-launcher[data-club-deal-state="available"]) {
   border-color: var(--dancr-color-brand-primary-strong) !important;
@@ -13179,9 +13171,79 @@ body.dancr-button-system .public-profile-shell
     inset 0 1px 0 var(--dancr-color-white-soft) !important;
 }
 
+/* Club profiles keep the deal button prominent within a quiet frame. */
+body.dancr-button-system #results.venue-profile-overlay .venue-detail
+  .venue-offer-card.venue-deal-preview.is-active-club-deal {
+  border-color: #34303e !important;
+  background: #09080d !important;
+  box-shadow: none !important;
+}
+
 body.dancr-button-system #results.venue-profile-overlay .venue-detail
   .venue-offer-card.venue-deal-preview.is-active-club-deal::before {
-  background: var(--dancr-color-avatar-ring-violet);
+  content: none;
+  display: none;
+}
+
+body.dancr-button-system #results.venue-profile-overlay .venue-detail
+  :is(.venue-identity-meta, .venue-identity-meta .meta, .venue-identity-distance) {
+  color: #dcd9e3 !important;
+  opacity: 1;
+}
+
+body.dancr-button-system #results.venue-profile-overlay .venue-detail
+  .venue-operating-summary :is(.venue-status-kicker, .venue-status-pill) {
+  color: #b9b5c4 !important;
+}
+
+/* The compact Follow/Share faces inherit the same material as Directions.
+ * These variables are scoped to the location actions, away from dancer rows. */
+body.dancr-button-system #results.venue-profile-overlay .venue-detail
+  .venue-location-section .venue-action-stack {
+  --profile-utility-background: #050507 linear-gradient(#050507, #050507);
+  --profile-utility-border: #34343c;
+  --profile-utility-radius: 12px;
+  --profile-utility-hover-background: #15151b linear-gradient(#15151b, #15151b);
+  --profile-utility-hover-border: #666666;
+}
+
+body.dancr-button-system #results.venue-profile-overlay .venue-detail
+  .venue-location-section .venue-secondary-actions.profile-actions-compact {
+  --profile-action-height: 48px !important;
+  --profile-action-face-inset: 0px !important;
+}
+
+html body.dancr-button-system #results.venue-profile-overlay .venue-detail
+  .venue-location-section .venue-primary-actions > .venue-address-directions {
+  box-sizing: border-box !important;
+  height: 48px !important;
+  min-height: 48px !important;
+  max-height: 48px !important;
+  border-radius: var(--profile-utility-radius) !important;
+  box-shadow: none !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+
+html body.dancr-button-system #results.venue-profile-overlay .venue-detail
+  .venue-location-section .venue-primary-actions > .venue-address-directions[href]:not([aria-disabled="true"]) {
+  border: 1px solid var(--profile-utility-border) !important;
+  color: #fff !important;
+  background: var(--profile-utility-background) !important;
+}
+
+@media (hover: hover) {
+  html body.dancr-button-system #results.venue-profile-overlay .venue-detail
+    .venue-location-section .venue-primary-actions > .venue-address-directions[href]:not([aria-disabled="true"]):hover {
+    border-color: var(--profile-utility-hover-border) !important;
+    background: var(--profile-utility-hover-background) !important;
+  }
+}
+
+html body.dancr-button-system #results.venue-profile-overlay .venue-detail
+  .venue-location-section .venue-primary-actions > .venue-address-directions:focus-visible {
+  outline: 2px solid #c4b5fd !important;
+  outline-offset: 2px !important;
 }
 
 body.dancr-button-system :is(
