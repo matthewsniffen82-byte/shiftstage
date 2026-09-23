@@ -12997,6 +12997,138 @@ body.dancr-button-system .dashboard-shell .dancer-onboarding-steps button:focus-
   outline-color: #c4b5fd;
 }
 
+/* Directory branding stays in the heading, name gradient, and interaction edge.
+ * Keep the portraits unfiltered and the live/offline status colors unchanged. */
+body.dancr-button-system.dancer-directory-active #tabTitle::after {
+  content: "";
+  display: block;
+  width: 42px;
+  height: 2px;
+  margin-top: 8px;
+  border-radius: 2px;
+  background: var(--dancr-color-avatar-ring-violet);
+  box-shadow: 0 0 8px var(--dancr-color-brand-primary-medium);
+}
+
+body.dancr-button-system #results.home-dancer-grid.home-dancer-three-column .home-dancer-grid-copy {
+  background: linear-gradient(180deg, transparent, rgba(19, 12, 31, .94) 48%, rgba(11, 8, 18, .98)) !important;
+}
+
+body.dancr-button-system #results.home-dancer-grid .home-dancer-grid-link::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  border: 2px solid transparent;
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+body.dancr-button-system #results.home-dancer-grid .home-dancer-grid-link:is(:active, :focus-visible)::after {
+  border-color: var(--dancr-color-avatar-ring-violet);
+}
+
+body.dancr-button-system #results.home-dancer-grid .home-dancer-grid-link:focus-visible {
+  outline: 0 !important;
+  box-shadow: none !important;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  body.dancr-button-system #results.home-dancer-grid .home-dancer-grid-link:hover::after {
+    border-color: var(--dancr-color-avatar-ring-violet);
+  }
+}
+
+/* Club offers use violet for the action. Working Now cards and Active Tonight
+ * badges retain their green availability signal; unavailable offers stay neutral. */
+body.dancr-button-system #results.venue-profile-overlay .venue-detail
+  .venue-offer-card.venue-deal-preview.is-active-club-deal,
+body.dancr-button-system .public-profile-shell
+  :is(.club-deal-card:has(.club-deal-checkout-action), .club-deal-launcher[data-club-deal-state="available"]) {
+  border-color: var(--dancr-color-brand-primary-strong) !important;
+  background: radial-gradient(circle at 94% 0%, var(--dancr-color-brand-primary-soft), transparent 13rem),
+    var(--dancr-color-surface-subtle) !important;
+  box-shadow: 0 8px 22px var(--dancr-color-black-soft),
+    0 0 14px var(--dancr-color-brand-primary-soft),
+    inset 0 1px 0 var(--dancr-color-white-soft) !important;
+}
+
+body.dancr-button-system #results.venue-profile-overlay .venue-detail
+  .venue-offer-card.venue-deal-preview.is-active-club-deal::before {
+  background: var(--dancr-color-avatar-ring-violet);
+}
+
+body.dancr-button-system #results.venue-profile-overlay .venue-detail
+  .venue-deal-preview.is-active-club-deal .venue-detail-entry-ride {
+  border-color: var(--dancr-color-brand-primary-medium) !important;
+  background: var(--dancr-color-surface-subtle) !important;
+  box-shadow: none !important;
+}
+
+body.dancr-button-system #results.venue-profile-overlay .venue-detail
+  .venue-deal-preview.is-active-club-deal .venue-detail-entry-ride:focus-visible {
+  outline: 2px solid #c4b5fd !important;
+  outline-offset: 3px !important;
+}
+
+body.dancr-button-system :is(
+  #profileBackdrop #profileModal,
+  .public-profile-shell,
+  #results.venue-profile-overlay .venue-detail,
+  #results.home-tv-feed,
+  #results.home-venue-discovery-feed > .home-venue-discovery-slide
+) :is(
+  .profile-club-deal-tile.is-active:not(.is-error) .profile-club-deal-qr-button,
+  .club-deal-profile-action[data-club-deal-state="available"],
+  .club-deal-sticky[data-club-deal-state="available"],
+  .club-deal-launcher-action,
+  .venue-detail-club-deal-cta,
+  .venue-detail-club-deal-qr-state.is-available,
+  .home-card-qr-rail-action.is-available,
+  .home-tv-feed-deal-action.is-available,
+  .venue-card-deal-action
+) {
+  border-color: var(--dancr-color-avatar-ring-violet) !important;
+  color: var(--dancr-color-text-primary) !important;
+  background: linear-gradient(135deg, var(--dancr-color-brand-primary), var(--dancr-color-brand-primary-deep)) !important;
+  box-shadow: 0 5px 14px var(--dancr-color-black-soft),
+    0 0 12px var(--dancr-color-brand-primary-medium),
+    inset 0 1px 0 var(--dancr-color-white-soft) !important;
+  text-shadow: none !important;
+}
+
+body.dancr-button-system :is(
+  #profileBackdrop #profileModal,
+  .public-profile-shell,
+  #results.venue-profile-overlay .venue-detail,
+  #results.home-tv-feed,
+  #results.home-venue-discovery-feed > .home-venue-discovery-slide
+) :is(
+  .profile-club-deal-tile.is-active:not(.is-error) .profile-club-deal-qr-button,
+  .club-deal-profile-action[data-club-deal-state="available"],
+  .club-deal-sticky[data-club-deal-state="available"],
+  .club-deal-launcher[data-club-deal-state="available"],
+  .venue-detail-club-deal-cta,
+  .venue-detail-club-deal-qr-state.is-available,
+  .home-card-qr-rail-action.is-available,
+  .home-tv-feed-deal-action.is-available,
+  .venue-card-deal-action
+):focus-visible {
+  outline: 2px solid #c4b5fd !important;
+  outline-offset: 3px !important;
+}
+
+body.dancr-button-system :is(
+  #profileBackdrop #profileModal,
+  .public-profile-shell,
+  #results.venue-profile-overlay .venue-detail,
+  #results.home-tv-feed,
+  #results.home-venue-discovery-feed > .home-venue-discovery-slide
+) :is(.home-card-qr-rail-action, .home-tv-feed-deal-action).is-available .action-icon {
+  color: var(--dancr-color-text-primary) !important;
+  filter: none !important;
+}
+
 @media (max-width: 720px) {
   body.dancr-button-system .public-profile-shell .profile-media-grid > .profile-media-grid-cell {
     scroll-margin-bottom: calc(112px + env(safe-area-inset-bottom, 0px));
