@@ -240,7 +240,7 @@ test("venue profile hierarchy stays compact and carries the restrained venue bra
   assert.doesNotMatch(accessibleVenueNameRule, /display:\s*none|visibility:\s*hidden/);
   assert.match(refinement, /\.venue-identity-meta \{[\s\S]*?display: flex;[\s\S]*?flex-wrap: wrap;/);
   assert.match(refinement, /\.venue-identity-location \{[\s\S]*?display: inline-flex;[\s\S]*?gap: 5px;/);
-  assert.match(refinement, /\.venue-status-grid \{[\s\S]*?position: relative;[\s\S]*?grid-template-columns: repeat\(3, minmax\(0, 1fr\)\);[\s\S]*?gap: 0;[\s\S]*?border: 0;[\s\S]*?background: var\(--dancr-color-surface-subtle\);[\s\S]*?isolation: isolate;/);
+  assert.match(refinement, /\.venue-status-grid \{[\s\S]*?position: relative;[\s\S]*?grid-template-columns: repeat\(2, minmax\(0, 1fr\)\);[\s\S]*?gap: 0;[\s\S]*?border: 0;[\s\S]*?background: var\(--dancr-color-surface-subtle\);[\s\S]*?isolation: isolate;/);
   assert.doesNotMatch(refinement, /\.venue-status-grid::after/);
   assert.match(refinement, /:is\(\.venue-operating-summary, \.venue-quick-stat\) \{[\s\S]*?min-height: 70px !important;[\s\S]*?grid-template-rows: 12px 21px 12px;[\s\S]*?gap: 4px !important;[\s\S]*?padding: 9px 8px !important;/);
   assert.match(refinement, /\.venue-quick-stat \{[\s\S]*?min-height: 70px !important;[\s\S]*?padding: 9px 8px !important;[\s\S]*?-webkit-appearance: none;[\s\S]*?-webkit-tap-highlight-color: transparent;/);
