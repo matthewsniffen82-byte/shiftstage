@@ -11,6 +11,7 @@ import "../public/dancr-aesthetic.v1.css";
 import "../public/dancr-feedback.v1.css";
 import "../public/dancr-status-pages.v1.css";
 import "../public/dancr-account-forms.v1.css";
+import "../public/dancr-ui-consistency.v1.css";
 import "../public/third-party-social-link-warning.css";
 import "../public/mydancr-push-invitations.css";
 
