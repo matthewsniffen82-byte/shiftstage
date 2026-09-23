@@ -900,15 +900,44 @@
       return data;
     }
 
+    let passwordRecoveryRequestVersion = 0;
+
+    function setPasswordRecoveryState(state = "idle", message = "") {
+      const button = document.getElementById("passwordRecoverySubmit");
+      const label = document.getElementById("passwordRecoverySubmitLabel");
+      const emailInput = document.getElementById("passwordRecoveryEmail");
+      const title = document.getElementById("passwordRecoveryStatusTitle");
+      const detail = document.getElementById("passwordRecoveryStatusMessage");
+      if (passwordRecoveryCard) passwordRecoveryCard.dataset.state = state;
+      if (button) {
+        button.disabled = state === "sending" || state === "success";
+        button.setAttribute("aria-busy", String(state === "sending"));
+      }
+      if (label) label.textContent = state === "sending" ? "Sending reset link…" : state === "success" ? "Reset link requested" : "Send reset link";
+      if (emailInput) emailInput.readOnly = state === "sending";
+      if (title) title.hidden = state !== "success";
+      if (detail) detail.textContent = message;
+      if (passwordRecoveryStatus) passwordRecoveryStatus.hidden = !message;
+    }
+
+    function resetPasswordRecoveryFeedback() {
+      passwordRecoveryRequestVersion += 1;
+      setPasswordRecoveryState();
+    }
+
     async function sendPasswordReset({ role, emailInputId, buttonId, statusId = "" }) {
       const email = document.getElementById(emailInputId)?.value?.trim() || "";
       const button = document.getElementById(buttonId);
       const status = statusId ? document.getElementById(statusId) : null;
       const previousText = button?.textContent || "Forgot password?";
+      const isRecoveryDialog = buttonId === "passwordRecoverySubmit";
+      const requestVersion = passwordRecoveryRequestVersion;
+      if (button?.disabled) return;
 
       if (!email) {
         const message = "Enter the email used for your account.";
-        if (status) {
+        if (isRecoveryDialog) setPasswordRecoveryState("error", message);
+        else if (status) {
           status.textContent = message;
           status.hidden = false;
         }
@@ -916,7 +945,8 @@
         return;
       }
 
-      if (button) {
+      if (isRecoveryDialog) setPasswordRecoveryState("sending");
+      else if (button) {
         button.disabled = true;
         button.textContent = "Sending reset email...";
       }
@@ -933,21 +963,25 @@
           email,
           emailRedirectTo: savePasswordResetResume(role, email, returnTo)
         });
-        const message = "If that email has a MyDancr account, we sent a secure reset link. Check the newest email and your spam folder.";
-        if (status) {
+        if (isRecoveryDialog && requestVersion !== passwordRecoveryRequestVersion) return;
+        const message = "If an account matches this email, a reset link is on its way. Check your spam folder too.";
+        if (isRecoveryDialog) setPasswordRecoveryState("success", message);
+        else if (status) {
           status.textContent = message;
           status.hidden = false;
         }
-        showToast(message);
+        if (!isRecoveryDialog) showToast(message);
       } catch (error) {
+        if (isRecoveryDialog && requestVersion !== passwordRecoveryRequestVersion) return;
         const message = friendlyAuthErrorMessage(error.message, "Unable to send reset email.");
-        if (status) {
+        if (isRecoveryDialog) setPasswordRecoveryState("error", message);
+        else if (status) {
           status.textContent = message;
           status.hidden = false;
         }
-        showToast(message);
+        if (!isRecoveryDialog) showToast(message);
       } finally {
-        if (button) {
+        if (button && !isRecoveryDialog) {
           button.disabled = false;
           button.textContent = previousText;
         }
@@ -966,6 +1000,7 @@
       if (!popover || popover.hidden) return;
       const trigger = document.getElementById(popover.dataset.triggerId || "");
       popover.hidden = true;
+      if (popover === passwordRecoveryCard) resetPasswordRecoveryFeedback();
       popover.dataset.triggerId = "";
       if (trigger) trigger.setAttribute("aria-expanded", "false");
       if (restoreFocus) trigger?.focus({ preventScroll: true });
@@ -990,9 +1025,6 @@
       const roleInput = document.getElementById("passwordRecoveryRole");
       if (roleInput) roleInput.value = role;
       if (emailInput) emailInput.value = accountEmail;
-      if (passwordRecoveryStatus) {
-        passwordRecoveryStatus.textContent = "";
-        passwordRecoveryStatus.hidden = true;
-      }
+      resetPasswordRecoveryFeedback();
       openRecoveryPopover(passwordRecoveryCard, sourceButton, "passwordRecoveryEmail");
     }

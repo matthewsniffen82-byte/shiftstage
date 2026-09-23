@@ -704,6 +704,169 @@
     .password-recovery-form .action-btn,
     .password-recovery-form .ghost { width: 100%; }
 
+    #passwordRecoverySurface {
+      width: min(100%, 440px);
+      gap: 18px;
+      padding: clamp(22px, 5vw, 30px);
+      border-color: rgba(196, 181, 253, .22);
+      border-radius: 24px;
+      background: radial-gradient(ellipse at top left, rgba(124, 58, 237, .13), transparent 65%), #111118;
+      box-shadow: 0 24px 80px rgba(0, 0, 0, .55), inset 0 1px 0 rgba(255, 255, 255, .05);
+    }
+
+    #passwordRecoveryCard .password-recovery-topline {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    #passwordRecoveryCard .password-recovery-icon {
+      display: grid;
+      place-items: center;
+      width: 48px;
+      height: 48px;
+      border: 1px solid rgba(167, 139, 250, .3);
+      border-radius: 15px;
+      color: #c4b5fd;
+      background: rgba(124, 58, 237, .14);
+    }
+
+    #passwordRecoveryCard .password-recovery-icon svg { width: 25px; height: 25px; }
+
+    #passwordRecoveryClose {
+      display: grid;
+      place-items: center;
+      width: 44px;
+      height: 44px;
+      padding: 0;
+      border-color: transparent !important;
+      background: transparent !important;
+      box-shadow: none !important;
+      color: #cbd5e1 !important;
+      font-size: 26px;
+      line-height: 1;
+    }
+
+    #passwordRecoveryCard .eyebrow {
+      color: #c4b5fd;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: .14em;
+    }
+
+    #passwordRecoveryTitle {
+      margin: 7px 0 0;
+      color: #f8fafc;
+      font-size: clamp(22px, 5.8vw, 26px);
+      font-weight: 750;
+      line-height: 1.2;
+      letter-spacing: -.035em;
+    }
+
+    #passwordRecoveryDescription {
+      margin: -6px 0 2px;
+      color: #cbd5e1;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    #passwordRecoveryForm { gap: 12px; }
+    #passwordRecoveryForm .field { gap: 8px; margin: 0 0 6px; }
+    #passwordRecoveryForm label { color: #e2e8f0; font-size: 13px; font-weight: 600; letter-spacing: 0; text-transform: none; }
+    #passwordRecoveryEmail {
+      width: 100%;
+      min-width: 0;
+      min-height: 52px;
+      box-sizing: border-box;
+      padding: 13px 14px;
+      border: 1px solid rgba(203, 213, 225, .28);
+      border-radius: 12px;
+      color: #f8fafc;
+      background: #0d0d14;
+      font-size: 16px;
+      font-weight: 500;
+      line-height: 1.4;
+    }
+    #passwordRecoveryEmail::placeholder { color: #94a3b8; opacity: 1; }
+    #passwordRecoveryCard :is(input, button):focus-visible {
+      outline: 2px solid #c4b5fd !important;
+      outline-offset: 3px;
+    }
+
+    #passwordRecoverySubmit {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 9px;
+      min-height: 50px !important;
+      padding: 12px 16px;
+      border-color: rgba(196, 181, 253, .35) !important;
+      border-radius: 12px !important;
+      background: linear-gradient(110deg, #6d28d9, #7c3aed) !important;
+      box-shadow: 0 4px 16px rgba(124, 58, 237, .18) !important;
+      color: #fff !important;
+      font-size: 15px;
+      font-weight: 700 !important;
+    }
+    #passwordRecoveryCard .password-recovery-check { display: none; width: 20px; height: 20px; }
+    #passwordRecoveryCard[data-state="sending"] #passwordRecoverySubmit { opacity: 1 !important; cursor: wait; }
+    #passwordRecoveryCard[data-state="sending"] #passwordRecoverySubmit::before {
+      content: "";
+      width: 15px;
+      height: 15px;
+      border: 2px solid rgba(255, 255, 255, .35);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: password-recovery-spin 800ms linear infinite;
+    }
+    @keyframes password-recovery-spin { to { transform: rotate(360deg); } }
+    @media (prefers-reduced-motion: reduce) {
+      #passwordRecoveryCard[data-state="sending"] #passwordRecoverySubmit::before { animation: none; }
+    }
+    #passwordRecoveryCard[data-state="success"] #passwordRecoverySubmit {
+      border-color: rgba(110, 231, 183, .38) !important;
+      color: #a7f3d0 !important;
+      background: #14372d !important;
+      box-shadow: none !important;
+      opacity: 1 !important;
+      filter: none !important;
+      cursor: default;
+    }
+    #passwordRecoveryCard[data-state="success"] .password-recovery-check { display: block; }
+
+    #passwordRecoveryStatus {
+      display: grid;
+      gap: 5px;
+      padding: 14px 16px;
+      border: 1px solid rgba(110, 231, 183, .22);
+      border-radius: 12px;
+      color: #d1e9df;
+      background: rgba(16, 185, 129, .07);
+      font-size: 13px;
+      line-height: 1.6;
+      overflow-wrap: anywhere;
+    }
+    #passwordRecoveryStatus[hidden], #passwordRecoveryStatusTitle[hidden] { display: none; }
+    #passwordRecoveryStatusTitle { color: #a7f3d0; font-size: 14px; font-weight: 700; }
+    #passwordRecoveryCard[data-state="error"] #passwordRecoveryStatus {
+      border-color: rgba(251, 113, 133, .3);
+      color: #fecdd3;
+      background: rgba(251, 113, 133, .08);
+    }
+    #passwordRecoveryBack {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-color: transparent !important;
+      color: #cbd5e1 !important;
+      background: transparent !important;
+      box-shadow: none !important;
+      font-size: 13px;
+      font-weight: 600 !important;
+    }
+
     @media (max-width: 520px) {
       .login-recovery-grid { grid-template-columns: 1fr; }
     }

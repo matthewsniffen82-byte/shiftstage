@@ -931,6 +931,7 @@
     });
 
     passwordRecoveryForm?.addEventListener("submit", submitPasswordRecoveryForm);
+    document.getElementById("passwordRecoveryEmail")?.addEventListener("input", resetPasswordRecoveryFeedback);
     passwordRecoveryClose?.addEventListener("click", () => closeRecoveryPopover(passwordRecoveryCard));
     passwordRecoveryBack?.addEventListener("click", () => closeRecoveryPopover(passwordRecoveryCard));
     loginRecoveryForm?.addEventListener("submit", submitLoginRecoveryForm);

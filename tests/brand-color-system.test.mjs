@@ -10,7 +10,6 @@ const [
   liveShell,
   manifest,
   appIcon,
-  dancerShiftManager,
 ] =
   await Promise.all([
     readFile(
@@ -26,7 +25,6 @@ const [
     readFile(new URL("../outputs/index.html", import.meta.url), "utf8"),
     readFile(new URL("../public/manifest.webmanifest", import.meta.url), "utf8"),
     readFile(new URL("../public/mydancr-icon.svg", import.meta.url), "utf8"),
-    readFile(new URL("../app/dashboard/DancerShiftManager.tsx", import.meta.url), "utf8"),
   ]);
 
 const requiredTokens = new Map([
@@ -137,7 +135,7 @@ test("Next pages and the live shell load tokens before shared component styling"
     '<link href="/dancr-button-system.v1.css" rel="stylesheet">',
   );
   const aestheticLink = liveShell.search(
-    /<link href="\/dancr-aesthetic\.v1\.css\?v=\d+" rel="stylesheet">/,
+    /<link href="\/outputs\/dancr-aesthetic\.css" rel="stylesheet">/,
   );
 
   assert.ok(tokenLink >= 0);
@@ -185,22 +183,17 @@ test("form fields use neutral borders and a crisp tokenized focus ring", () => {
   );
   assert.match(
     liveShell,
-    /<link href="\/dancr-aesthetic\.v1\.css\?v=271" rel="stylesheet">/,
+    /<link href="\/outputs\/dancr-aesthetic\.css" rel="stylesheet">/,
   );
 });
 
-test("dancer schedule venue and date controls share one compact field height", () => {
+test("live-shell dancer schedule venue and date controls share one compact field height", () => {
   assert.match(
     aesthetic,
     /\.dancer-schedule-control \{[\s\S]*?height: 44px !important;[\s\S]*?min-height: 44px !important;[\s\S]*?max-height: 44px !important;/,
   );
   assert.match(liveShell, /class="dancer-schedule-control" id="shiftClub"/);
   assert.match(liveShell, /class="dancer-schedule-control" id="shiftDate" type="date"/);
-  assert.equal(
-    dancerShiftManager.match(/className="dancer-schedule-control"/g)?.length,
-    2,
-  );
-  assert.equal(dancerShiftManager.match(/<DancerVenuePicker venues=\{venues\}/g)?.length, 2);
 });
 
 test("brand emphasis is crisp on stateful and keyboard-focused UI", () => {

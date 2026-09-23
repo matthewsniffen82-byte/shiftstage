@@ -4375,6 +4375,169 @@
     .password-recovery-form .action-btn,
     .password-recovery-form .ghost { width: 100%; }
 
+    #passwordRecoverySurface {
+      width: min(100%, 440px);
+      gap: 18px;
+      padding: clamp(22px, 5vw, 30px);
+      border-color: rgba(196, 181, 253, .22);
+      border-radius: 24px;
+      background: radial-gradient(ellipse at top left, rgba(124, 58, 237, .13), transparent 65%), #111118;
+      box-shadow: 0 24px 80px rgba(0, 0, 0, .55), inset 0 1px 0 rgba(255, 255, 255, .05);
+    }
+
+    #passwordRecoveryCard .password-recovery-topline {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    #passwordRecoveryCard .password-recovery-icon {
+      display: grid;
+      place-items: center;
+      width: 48px;
+      height: 48px;
+      border: 1px solid rgba(167, 139, 250, .3);
+      border-radius: 15px;
+      color: #c4b5fd;
+      background: rgba(124, 58, 237, .14);
+    }
+
+    #passwordRecoveryCard .password-recovery-icon svg { width: 25px; height: 25px; }
+
+    #passwordRecoveryClose {
+      display: grid;
+      place-items: center;
+      width: 44px;
+      height: 44px;
+      padding: 0;
+      border-color: transparent !important;
+      background: transparent !important;
+      box-shadow: none !important;
+      color: #cbd5e1 !important;
+      font-size: 26px;
+      line-height: 1;
+    }
+
+    #passwordRecoveryCard .eyebrow {
+      color: #c4b5fd;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: .14em;
+    }
+
+    #passwordRecoveryTitle {
+      margin: 7px 0 0;
+      color: #f8fafc;
+      font-size: clamp(22px, 5.8vw, 26px);
+      font-weight: 750;
+      line-height: 1.2;
+      letter-spacing: -.035em;
+    }
+
+    #passwordRecoveryDescription {
+      margin: -6px 0 2px;
+      color: #cbd5e1;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    #passwordRecoveryForm { gap: 12px; }
+    #passwordRecoveryForm .field { gap: 8px; margin: 0 0 6px; }
+    #passwordRecoveryForm label { color: #e2e8f0; font-size: 13px; font-weight: 600; letter-spacing: 0; text-transform: none; }
+    #passwordRecoveryEmail {
+      width: 100%;
+      min-width: 0;
+      min-height: 52px;
+      box-sizing: border-box;
+      padding: 13px 14px;
+      border: 1px solid rgba(203, 213, 225, .28);
+      border-radius: 12px;
+      color: #f8fafc;
+      background: #0d0d14;
+      font-size: 16px;
+      font-weight: 500;
+      line-height: 1.4;
+    }
+    #passwordRecoveryEmail::placeholder { color: #94a3b8; opacity: 1; }
+    #passwordRecoveryCard :is(input, button):focus-visible {
+      outline: 2px solid #c4b5fd !important;
+      outline-offset: 3px;
+    }
+
+    #passwordRecoverySubmit {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 9px;
+      min-height: 50px !important;
+      padding: 12px 16px;
+      border-color: rgba(196, 181, 253, .35) !important;
+      border-radius: 12px !important;
+      background: linear-gradient(110deg, #6d28d9, #7c3aed) !important;
+      box-shadow: 0 4px 16px rgba(124, 58, 237, .18) !important;
+      color: #fff !important;
+      font-size: 15px;
+      font-weight: 700 !important;
+    }
+    #passwordRecoveryCard .password-recovery-check { display: none; width: 20px; height: 20px; }
+    #passwordRecoveryCard[data-state="sending"] #passwordRecoverySubmit { opacity: 1 !important; cursor: wait; }
+    #passwordRecoveryCard[data-state="sending"] #passwordRecoverySubmit::before {
+      content: "";
+      width: 15px;
+      height: 15px;
+      border: 2px solid rgba(255, 255, 255, .35);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: password-recovery-spin 800ms linear infinite;
+    }
+    @keyframes password-recovery-spin { to { transform: rotate(360deg); } }
+    @media (prefers-reduced-motion: reduce) {
+      #passwordRecoveryCard[data-state="sending"] #passwordRecoverySubmit::before { animation: none; }
+    }
+    #passwordRecoveryCard[data-state="success"] #passwordRecoverySubmit {
+      border-color: rgba(110, 231, 183, .38) !important;
+      color: #a7f3d0 !important;
+      background: #14372d !important;
+      box-shadow: none !important;
+      opacity: 1 !important;
+      filter: none !important;
+      cursor: default;
+    }
+    #passwordRecoveryCard[data-state="success"] .password-recovery-check { display: block; }
+
+    #passwordRecoveryStatus {
+      display: grid;
+      gap: 5px;
+      padding: 14px 16px;
+      border: 1px solid rgba(110, 231, 183, .22);
+      border-radius: 12px;
+      color: #d1e9df;
+      background: rgba(16, 185, 129, .07);
+      font-size: 13px;
+      line-height: 1.6;
+      overflow-wrap: anywhere;
+    }
+    #passwordRecoveryStatus[hidden], #passwordRecoveryStatusTitle[hidden] { display: none; }
+    #passwordRecoveryStatusTitle { color: #a7f3d0; font-size: 14px; font-weight: 700; }
+    #passwordRecoveryCard[data-state="error"] #passwordRecoveryStatus {
+      border-color: rgba(251, 113, 133, .3);
+      color: #fecdd3;
+      background: rgba(251, 113, 133, .08);
+    }
+    #passwordRecoveryBack {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-color: transparent !important;
+      color: #cbd5e1 !important;
+      background: transparent !important;
+      box-shadow: none !important;
+      font-size: 13px;
+      font-weight: 600 !important;
+    }
+
     @media (max-width: 520px) {
       .login-recovery-grid { grid-template-columns: 1fr; }
     }
@@ -41380,22 +41543,23 @@
             <button class="auth-back-to-types" id="venueRequestBackToTypes" type="button">← Back to account types</button>
             <div class="rule-note auth-status" id="venueRequestStatus" role="status" aria-live="polite" aria-atomic="true" hidden></div>
           </form>
-          <section class="recovery-popover" id="passwordRecoveryCard" role="dialog" aria-modal="true" aria-labelledby="passwordRecoveryTitle" hidden>
+          <section class="recovery-popover" id="passwordRecoveryCard" role="dialog" aria-modal="true" aria-labelledby="passwordRecoveryTitle" aria-describedby="passwordRecoveryDescription" data-state="idle" hidden>
             <div class="recovery-popover-surface" id="passwordRecoverySurface">
-              <div class="login-recovery-head">
-                <div><span class="eyebrow">Password recovery</span><h3 id="passwordRecoveryTitle">Reset your password</h3></div>
+              <div class="password-recovery-topline">
+                <span class="password-recovery-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="m4 7 8 6 8-6"/></svg></span>
                 <button class="login-recovery-close" id="passwordRecoveryClose" type="button" aria-label="Close password recovery">×</button>
               </div>
-              <p class="login-recovery-copy">Enter the email used for this account. MyDancr will send a secure reset link if the email matches an account.</p>
+              <div class="password-recovery-heading"><span class="eyebrow">Password recovery</span><h3 id="passwordRecoveryTitle">Reset your password</h3></div>
+              <p class="login-recovery-copy" id="passwordRecoveryDescription">Enter your account email and we’ll help you get back in with a secure reset link.</p>
               <form class="password-recovery-form" id="passwordRecoveryForm">
                 <input id="passwordRecoveryRole" type="hidden" value="customer">
                 <div class="field">
-                  <label for="passwordRecoveryEmail">Account email</label>
-                  <input id="passwordRecoveryEmail" type="email" maxlength="254" autocomplete="email" placeholder="you@example.com" required>
+                  <label for="passwordRecoveryEmail">Email address</label>
+                  <input id="passwordRecoveryEmail" type="email" maxlength="254" autocomplete="email" autocapitalize="none" spellcheck="false" placeholder="you@example.com" required>
                 </div>
-                <button class="action-btn" id="passwordRecoverySubmit" type="submit">Send reset link</button>
-                <button class="ghost" id="passwordRecoveryBack" type="button">Back to sign in</button>
-                <div class="rule-note auth-status" id="passwordRecoveryStatus" role="status" aria-live="polite" aria-atomic="true" hidden></div>
+                <button class="action-btn" id="passwordRecoverySubmit" type="submit"><svg class="password-recovery-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="m5 12 4 4L19 6"/></svg><span id="passwordRecoverySubmitLabel">Send reset link</span></button>
+                <div class="password-recovery-status" id="passwordRecoveryStatus" role="status" aria-live="polite" aria-atomic="true" hidden><strong id="passwordRecoveryStatusTitle" hidden>Check your inbox</strong><span id="passwordRecoveryStatusMessage"></span></div>
+                <button class="ghost" id="passwordRecoveryBack" type="button"><span aria-hidden="true">←</span> Back to sign in</button>
               </form>
             </div>
           </section>
@@ -44619,15 +44783,44 @@
       return data;
     }
 
+    let passwordRecoveryRequestVersion = 0;
+
+    function setPasswordRecoveryState(state = "idle", message = "") {
+      const button = document.getElementById("passwordRecoverySubmit");
+      const label = document.getElementById("passwordRecoverySubmitLabel");
+      const emailInput = document.getElementById("passwordRecoveryEmail");
+      const title = document.getElementById("passwordRecoveryStatusTitle");
+      const detail = document.getElementById("passwordRecoveryStatusMessage");
+      if (passwordRecoveryCard) passwordRecoveryCard.dataset.state = state;
+      if (button) {
+        button.disabled = state === "sending" || state === "success";
+        button.setAttribute("aria-busy", String(state === "sending"));
+      }
+      if (label) label.textContent = state === "sending" ? "Sending reset link…" : state === "success" ? "Reset link requested" : "Send reset link";
+      if (emailInput) emailInput.readOnly = state === "sending";
+      if (title) title.hidden = state !== "success";
+      if (detail) detail.textContent = message;
+      if (passwordRecoveryStatus) passwordRecoveryStatus.hidden = !message;
+    }
+
+    function resetPasswordRecoveryFeedback() {
+      passwordRecoveryRequestVersion += 1;
+      setPasswordRecoveryState();
+    }
+
     async function sendPasswordReset({ role, emailInputId, buttonId, statusId = "" }) {
       const email = document.getElementById(emailInputId)?.value?.trim() || "";
       const button = document.getElementById(buttonId);
       const status = statusId ? document.getElementById(statusId) : null;
       const previousText = button?.textContent || "Forgot password?";
+      const isRecoveryDialog = buttonId === "passwordRecoverySubmit";
+      const requestVersion = passwordRecoveryRequestVersion;
+      if (button?.disabled) return;
 
       if (!email) {
         const message = "Enter the email used for your account.";
-        if (status) {
+        if (isRecoveryDialog) setPasswordRecoveryState("error", message);
+        else if (status) {
           status.textContent = message;
           status.hidden = false;
         }
@@ -44635,7 +44828,8 @@
         return;
       }
 
-      if (button) {
+      if (isRecoveryDialog) setPasswordRecoveryState("sending");
+      else if (button) {
         button.disabled = true;
         button.textContent = "Sending reset email...";
       }
@@ -44652,21 +44846,25 @@
           email,
           emailRedirectTo: savePasswordResetResume(role, email, returnTo)
         });
-        const message = "If that email has a MyDancr account, we sent a secure reset link. Check the newest email and your spam folder.";
-        if (status) {
+        if (isRecoveryDialog && requestVersion !== passwordRecoveryRequestVersion) return;
+        const message = "If an account matches this email, a reset link is on its way. Check your spam folder too.";
+        if (isRecoveryDialog) setPasswordRecoveryState("success", message);
+        else if (status) {
           status.textContent = message;
           status.hidden = false;
         }
-        showToast(message);
+        if (!isRecoveryDialog) showToast(message);
       } catch (error) {
+        if (isRecoveryDialog && requestVersion !== passwordRecoveryRequestVersion) return;
         const message = friendlyAuthErrorMessage(error.message, "Unable to send reset email.");
-        if (status) {
+        if (isRecoveryDialog) setPasswordRecoveryState("error", message);
+        else if (status) {
           status.textContent = message;
           status.hidden = false;
         }
-        showToast(message);
+        if (!isRecoveryDialog) showToast(message);
       } finally {
-        if (button) {
+        if (button && !isRecoveryDialog) {
           button.disabled = false;
           button.textContent = previousText;
         }
@@ -44685,6 +44883,7 @@
       if (!popover || popover.hidden) return;
       const trigger = document.getElementById(popover.dataset.triggerId || "");
       popover.hidden = true;
+      if (popover === passwordRecoveryCard) resetPasswordRecoveryFeedback();
       popover.dataset.triggerId = "";
       if (trigger) trigger.setAttribute("aria-expanded", "false");
       if (restoreFocus) trigger?.focus({ preventScroll: true });
@@ -44709,12 +44908,10 @@
       const roleInput = document.getElementById("passwordRecoveryRole");
       if (roleInput) roleInput.value = role;
       if (emailInput) emailInput.value = accountEmail;
-      if (passwordRecoveryStatus) {
-        passwordRecoveryStatus.textContent = "";
-        passwordRecoveryStatus.hidden = true;
-      }
+      resetPasswordRecoveryFeedback();
       openRecoveryPopover(passwordRecoveryCard, sourceButton, "passwordRecoveryEmail");
-    }    function recordVenueInteraction({ venueId, dancerId = null, eventType, source }) {
+    }
+    function recordVenueInteraction({ venueId, dancerId = null, eventType, source }) {
       if (!venueId || window.location.protocol === "file:") return;
       try {
         const payload = JSON.stringify({ eventId: crypto.randomUUID(), venueId, dancerId: dancerId || null, eventType, source, sessionId: trendEventStore.viewerId });
@@ -64957,6 +65154,7 @@
     });
 
     passwordRecoveryForm?.addEventListener("submit", submitPasswordRecoveryForm);
+    document.getElementById("passwordRecoveryEmail")?.addEventListener("input", resetPasswordRecoveryFeedback);
     passwordRecoveryClose?.addEventListener("click", () => closeRecoveryPopover(passwordRecoveryCard));
     passwordRecoveryBack?.addEventListener("click", () => closeRecoveryPopover(passwordRecoveryCard));
     loginRecoveryForm?.addEventListener("submit", submitLoginRecoveryForm);
