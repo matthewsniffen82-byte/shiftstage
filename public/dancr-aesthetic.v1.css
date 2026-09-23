@@ -12816,34 +12816,27 @@ body.dancr-button-system :is(
   }
 }
 
-/* Upcoming pickup actions keep their cyan state; active offers use green. */
-body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell)
-  .profile-tonight-travel-actions.is-upcoming {
-  --profile-pickup-accent: var(--dancr-color-info);
-  --profile-pickup-border: var(--dancr-color-info-strong);
-}
-
-/* Club-card and dancer-profile pickup actions share the offer's outline. Use the same
- * action scope as the travel material above so its neutral overrides do not win. */
-body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell, #results.home-venue-discovery-feed)
-  :is(.home-venue-discovery-slide .venue-card-primary-actions > .venue-card-ride-action, .profile-tonight-travel-actions > a[href^="/rides/"])[href]:not([aria-disabled="true"]):not(.is-travel-unavailable):not(.is-inactive-demo) {
-  border-color: var(--profile-pickup-border, var(--dancr-color-success-strong)) !important;
-  background: color-mix(in srgb, var(--profile-pickup-accent, var(--dancr-color-success)) 6%, var(--dancr-color-surface-raised)) !important;
+/* Every enabled Free Ride + Entry / Free Entry + Pickup action shares a visible
+ * violet outline, including profile, club-detail, and discovery cards. */
+body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell, #results)
+  :is(.home-venue-discovery-slide .venue-card-primary-actions > .venue-card-ride-action, .profile-tonight-travel-actions > a[href^="/rides/"], a.uber-ride-link[href^="/rides/"])[href]:not(:disabled):not([aria-disabled="true"]):not(.is-travel-unavailable):not(.is-inactive-demo) {
+  border-color: var(--dancr-color-avatar-ring-violet) !important;
+  background: color-mix(in srgb, var(--dancr-color-brand-primary) 6%, var(--dancr-color-surface-raised)) !important;
   box-shadow: none !important;
 }
 
-body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell, #results.home-venue-discovery-feed)
-  :is(.home-venue-discovery-slide .venue-card-primary-actions > .venue-card-ride-action, .profile-tonight-travel-actions > a[href^="/rides/"])[href]:not([aria-disabled="true"]):not(.is-travel-unavailable):not(.is-inactive-demo):is(:focus-visible, :active) {
-  border-color: var(--profile-pickup-accent, var(--dancr-color-success)) !important;
-  background: color-mix(in srgb, var(--profile-pickup-accent, var(--dancr-color-success)) 12%, var(--dancr-color-surface-raised)) !important;
-  outline-color: var(--profile-pickup-accent, var(--dancr-color-success)) !important;
+body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell, #results)
+  :is(.home-venue-discovery-slide .venue-card-primary-actions > .venue-card-ride-action, .profile-tonight-travel-actions > a[href^="/rides/"], a.uber-ride-link[href^="/rides/"])[href]:not(:disabled):not([aria-disabled="true"]):not(.is-travel-unavailable):not(.is-inactive-demo):is(:focus-visible, :active) {
+  border-color: #c4b5fd !important;
+  background: color-mix(in srgb, var(--dancr-color-brand-primary) 12%, var(--dancr-color-surface-raised)) !important;
+  outline-color: #c4b5fd !important;
 }
 
 @media (hover: hover) and (pointer: fine) {
-  body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell, #results.home-venue-discovery-feed)
-    :is(.home-venue-discovery-slide .venue-card-primary-actions > .venue-card-ride-action, .profile-tonight-travel-actions > a[href^="/rides/"])[href]:not([aria-disabled="true"]):not(.is-travel-unavailable):not(.is-inactive-demo):hover {
-    border-color: var(--profile-pickup-accent, var(--dancr-color-success)) !important;
-    background: color-mix(in srgb, var(--profile-pickup-accent, var(--dancr-color-success)) 12%, var(--dancr-color-surface-raised)) !important;
+  body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell, #results)
+    :is(.home-venue-discovery-slide .venue-card-primary-actions > .venue-card-ride-action, .profile-tonight-travel-actions > a[href^="/rides/"], a.uber-ride-link[href^="/rides/"])[href]:not(:disabled):not([aria-disabled="true"]):not(.is-travel-unavailable):not(.is-inactive-demo):hover {
+    border-color: #c4b5fd !important;
+    background: color-mix(in srgb, var(--dancr-color-brand-primary) 12%, var(--dancr-color-surface-raised)) !important;
   }
 }
 
@@ -12870,7 +12863,7 @@ body.dancr-button-system > .app main.stack > section.stack
   outline-offset: 3px !important;
 }
 
-/* Profile travel actions sit quietly inside the green Working Now card. */
+/* Neutral profile travel actions; enabled pickup links use the violet override. */
 body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell)
   .profile-tonight-card .profile-tonight-travel-actions > :is(a, button)[href]:not(:disabled):not([aria-disabled="true"]):not(.is-travel-unavailable):not(.is-inactive-demo) {
   border-color: #34343c !important;
@@ -12997,21 +12990,16 @@ body.dancr-button-system .dashboard-shell .dancer-onboarding-steps button:focus-
   outline-color: #c4b5fd;
 }
 
-/* Directory branding stays in the heading, name gradient, and interaction edge.
- * Keep the portraits unfiltered and the live/offline status colors unchanged. */
-body.dancr-button-system.dancer-directory-active #tabTitle::after {
-  content: "";
-  display: block;
-  width: 42px;
-  height: 2px;
-  margin-top: 8px;
-  border-radius: 2px;
-  background: var(--dancr-color-avatar-ring-violet);
-  box-shadow: 0 0 8px var(--dancr-color-brand-primary-medium);
+/* Give every directory card a visible violet base on touch screens, without
+ * filtering portraits or changing the green/silver availability signals. */
+body.dancr-button-system.dancer-directory-active > .app main.stack > section.stack
+  > .content-head.discovery-section-head > #tabCount {
+  padding-inline: 0 !important;
 }
 
 body.dancr-button-system #results.home-dancer-grid.home-dancer-three-column .home-dancer-grid-copy {
-  background: linear-gradient(180deg, transparent, rgba(19, 12, 31, .94) 48%, rgba(11, 8, 18, .98)) !important;
+  background: linear-gradient(180deg, transparent, rgba(46, 22, 75, .94) 48%, rgba(21, 11, 37, .98)) !important;
+  box-shadow: inset 0 -2px 0 var(--dancr-color-avatar-ring-violet);
 }
 
 body.dancr-button-system #results.home-dancer-grid .home-dancer-grid-link::after {
@@ -13039,8 +13027,20 @@ body.dancr-button-system #results.home-dancer-grid .home-dancer-grid-link:focus-
   }
 }
 
-/* Club offers use violet for the action. Working Now cards and Active Tonight
- * badges retain their green availability signal; unavailable offers stay neutral. */
+/* Offer framing uses violet; availability labels and badges retain green. */
+body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell)
+  .profile-tonight-card:is(.is-now, .has-club-deal) {
+  background: radial-gradient(circle at 94% 0%, var(--dancr-color-brand-primary-soft), transparent 13rem),
+    var(--dancr-color-surface-subtle) !important;
+  box-shadow: 0 8px 22px var(--dancr-color-black-soft),
+    0 0 14px var(--dancr-color-brand-primary-soft) !important;
+}
+
+body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell)
+  .profile-tonight-card:is(.is-now, .has-club-deal)::before {
+  border-color: var(--dancr-color-brand-primary-strong) !important;
+}
+
 body.dancr-button-system #results.venue-profile-overlay .venue-detail
   .venue-offer-card.venue-deal-preview.is-active-club-deal,
 body.dancr-button-system .public-profile-shell
@@ -13056,19 +13056,6 @@ body.dancr-button-system .public-profile-shell
 body.dancr-button-system #results.venue-profile-overlay .venue-detail
   .venue-offer-card.venue-deal-preview.is-active-club-deal::before {
   background: var(--dancr-color-avatar-ring-violet);
-}
-
-body.dancr-button-system #results.venue-profile-overlay .venue-detail
-  .venue-deal-preview.is-active-club-deal .venue-detail-entry-ride {
-  border-color: var(--dancr-color-brand-primary-medium) !important;
-  background: var(--dancr-color-surface-subtle) !important;
-  box-shadow: none !important;
-}
-
-body.dancr-button-system #results.venue-profile-overlay .venue-detail
-  .venue-deal-preview.is-active-club-deal .venue-detail-entry-ride:focus-visible {
-  outline: 2px solid #c4b5fd !important;
-  outline-offset: 3px !important;
 }
 
 body.dancr-button-system :is(

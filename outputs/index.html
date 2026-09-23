@@ -61332,9 +61332,9 @@
       } else {
         tabTitle.textContent = selectedVenue ? `${selectedVenue.name}` : titles[activeTab];
       }
-      const resultCount = activeTab === "dancers"
-        ? dancerDirectorySections(allItems, city).reduce((total, section) => total + section.profiles.length, 0)
-        : allItems.length;
+      // The heading describes the whole city/club scope. Status tabs carry
+      // their own counts and must not change this total when selected.
+      const resultCount = allItems.length;
       const resultCountLabel = activeTab === "venues"
         ? `${resultCount} club${resultCount === 1 ? "" : "s"}`
         : `${resultCount} dancer${resultCount === 1 ? "" : "s"}`;

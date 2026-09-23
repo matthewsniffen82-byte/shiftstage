@@ -5,7 +5,7 @@
   justify-content: center;
   gap: 9px;
   box-sizing: border-box;
-  border: 1px solid var(--dancr-color-brand-primary-medium, rgba(124, 58, 237, 0.34));
+  border: 1px solid var(--dancr-color-avatar-ring-violet, #8b5cf6);
   border-radius: 14px;
   color: var(--dancr-color-text-primary, #f8fafc);
   background:
@@ -93,7 +93,7 @@
   max-height: 48px;
   padding: 0 16px;
   overflow: hidden;
-  border-color: rgba(226, 232, 240, 0.18);
+  border-color: var(--dancr-color-avatar-ring-violet, #8b5cf6);
   color: rgba(248, 250, 252, 0.88) !important;
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.065), transparent 52%),
@@ -126,7 +126,7 @@
   }
 
   .dancerProfile:hover {
-    border-color: rgba(226, 232, 240, 0.28);
+    border-color: #c4b5fd;
     background:
       linear-gradient(180deg, rgba(255, 255, 255, 0.085), transparent 52%),
       rgba(18, 19, 23, 0.9);
