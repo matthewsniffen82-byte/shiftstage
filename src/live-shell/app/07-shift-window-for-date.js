@@ -838,7 +838,7 @@
       if (offers.length > 1) {
         qrButton.dataset.clubDealCta = encodedConfig;
         qrButton.setAttribute("aria-label", `View free entry at ${config.venueName || "this club"}`);
-        qrButton.innerHTML = `${clubDealQrSymbolMarkup("profile-club-deal-hub-symbol")}<span class="profile-club-deal-action-copy"><strong>Free Entry</strong></span>`;
+        qrButton.innerHTML = `<span class="profile-club-deal-action-copy"><strong>Free Entry</strong></span><span class="profile-free-entry-cue" aria-hidden="true">&#8250;</span>`;
         qrButton.disabled = false;
         tile.classList.add("is-ready", "has-multiple-offers");
         return;
@@ -852,7 +852,7 @@
         qrButton.dataset.dealPass = encodeDealPass(pass);
         qrButton.removeAttribute("data-save-deal-pass-on-open");
         qrButton.setAttribute("aria-label", `View free entry at ${config.venueName || "this club"}`);
-        qrButton.innerHTML = `${clubDealQrSymbolMarkup("profile-club-deal-nfc-symbol")}<span class="profile-club-deal-action-copy"><strong>Free Entry</strong></span>`;
+        qrButton.innerHTML = `<span class="profile-club-deal-action-copy"><strong>Free Entry</strong></span><span class="profile-free-entry-cue" aria-hidden="true">&#8250;</span>`;
         qrButton.disabled = false;
         tile.classList.add("is-ready");
         recordVenuePageEvent({

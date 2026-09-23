@@ -309,16 +309,15 @@ body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-she
   }
 }
 
-/* Inactive Follow and I'm Going use a quiet violet outline with no glow.
- * Keep share and unavailable actions on their existing neutral material. */
+/* Inactive profile actions share the club utilities' neutral border. */
 body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell, .dancer-profile-preview-overlay, #results.venue-profile-overlay .venue-detail) :is(.modal-actions, .live-actions, .venue-secondary-actions).profile-actions-compact :is(#followBtn, #goingBtn, .profile-action-icon-control)[aria-pressed]:not(:disabled):not([aria-disabled="true"]) {
-  --profile-action-border: var(--profile-utility-border, #51415f);
+  --profile-action-border: var(--profile-utility-border, #34343c);
   --profile-action-background: var(--profile-utility-background, #17131e);
 }
 
 @media (hover: hover) {
   body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell, .dancer-profile-preview-overlay, #results.venue-profile-overlay .venue-detail) :is(.modal-actions, .live-actions, .venue-secondary-actions).profile-actions-compact :is(#followBtn, #goingBtn, .profile-action-icon-control)[aria-pressed]:not(:disabled):not([aria-disabled="true"]):hover {
-    --profile-action-border: var(--profile-utility-hover-border, #8e72b5);
+    --profile-action-border: var(--profile-utility-hover-border, #666666);
     --profile-action-background: var(--profile-utility-hover-background, #231b2e);
   }
 }

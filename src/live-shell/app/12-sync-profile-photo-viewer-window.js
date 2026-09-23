@@ -640,6 +640,8 @@
       const city = options.city || selectedCity();
       if (options.preview) return "";
       if (!profile?.scheduled) return "";
+      // Working Now links to the club page, where guests can get directions.
+      if (isWorkingTonight(profile, city)) return "";
       const directionsMarkup = dancerProfileDirectionsMarkup(profile, { city });
       // Upcoming profiles may point customers to the venue, but they never
       // receive a deal trigger or dancer-attribution token.

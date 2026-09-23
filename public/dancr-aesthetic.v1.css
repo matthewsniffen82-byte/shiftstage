@@ -13125,27 +13125,20 @@ body.dancr-button-system #results.home-dancer-grid .home-dancer-grid-link:focus-
   }
 }
 
-/* Match the dancer venue box to the supplied club detail reference. */
+/* Working Now keeps one full-width Free Entry action beneath the club link. */
 body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell)
   .profile-tonight-card:is(.is-now, .has-club-deal) {
+  grid-template-columns: minmax(0, 1fr) !important;
   padding: 8px 10px !important;
   gap: 8px !important;
-  border: 1px solid var(--dancr-color-brand-primary-strong) !important;
+  border: 1px solid #34303e !important;
   border-radius: 15px !important;
 }
 
 body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell)
   .profile-tonight-card:is(.is-now, .has-club-deal)::before {
-  content: "" !important;
-  position: absolute !important;
-  z-index: 1 !important;
-  inset: 12px auto 12px 0 !important;
-  width: 2px !important;
-  border: 0 !important;
-  border-radius: 999px !important;
-  background: var(--dancr-color-avatar-ring-violet) !important;
-  box-shadow: none !important;
-  pointer-events: none !important;
+  content: none !important;
+  display: none !important;
 }
 
 body.dancr-button-system #profileBackdrop #profileModal
@@ -13173,6 +13166,27 @@ body.dancr-button-system .public-profile-shell .profile-working-card .profile-li
   white-space: nowrap !important;
 }
 
+body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell)
+  .profile-tonight-card:is(.is-now, .has-club-deal)
+  :is(.profile-club-deal-qr-button, .club-deal-profile-action) {
+  grid-column: 1 / -1 !important;
+  box-sizing: border-box !important;
+  height: 48px !important;
+  min-height: 48px !important;
+  max-height: 48px !important;
+  padding: 8px 11px !important;
+  border-radius: 13px !important;
+}
+
+body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell)
+  .profile-tonight-card :is(.profile-club-deal-qr-button, .club-deal-profile-action) > span[aria-hidden="true"] {
+  color: inherit !important;
+  opacity: 1 !important;
+  font-size: 20px !important;
+  font-weight: 800 !important;
+  line-height: .8 !important;
+}
+
 /* The venue row is one link; its chevron is a neutral navigation cue. */
 body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell)
   .profile-tonight-card :is(.profile-venue-cue, .profile-venue-cue > svg, .profile-working-cue, .profile-upcoming-cue) {
@@ -13195,8 +13209,6 @@ body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-she
   text-transform: none !important;
 }
 
-body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell)
-  .profile-tonight-card:is(.is-now, .has-club-deal),
 body.dancr-button-system .public-profile-shell
   :is(.club-deal-card:has(.club-deal-checkout-action), .club-deal-launcher[data-club-deal-state="available"]) {
   border-color: var(--dancr-color-brand-primary-strong) !important;
@@ -13207,7 +13219,9 @@ body.dancr-button-system .public-profile-shell
     inset 0 1px 0 var(--dancr-color-white-soft) !important;
 }
 
-/* Club profiles keep the deal button prominent within a quiet frame. */
+/* Dancer and club profiles use the same quiet frame for Free Entry. */
+body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell)
+  .profile-tonight-card:is(.is-now, .has-club-deal),
 body.dancr-button-system #results.venue-profile-overlay .venue-detail
   .venue-offer-card.venue-deal-preview.is-active-club-deal {
   border-color: #34303e !important;

@@ -263,7 +263,7 @@ export default async function DancerPublicPage({ params, searchParams }: PagePro
           ) : null}
 
 
-          {actionVenue ? (
+          {!activeShift && actionVenue ? (
             <div
               aria-label="Venue travel actions"
               className={`profile-tonight-travel-actions${activeShift ? " is-working-now" : " is-upcoming has-venue-deal-link"}`}

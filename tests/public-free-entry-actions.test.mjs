@@ -25,7 +25,7 @@ test("club details offer one Free Entry action and preserve the club's offer con
   assert.equal(ctx.venueOfferMarkup({ ...venue, activeDeal: null }), "");
 });
 
-test("profile travel keeps Directions without a duplicate ride action beside Free Entry", () => {
+test("working profiles use the club link for directions while upcoming travel stays available", () => {
   const ctx = vm.createContext({
     selectedCity: () => "Las Vegas", resolveVenueByName: () => venue,
     isWorkingTonight: profile => profile.working,
@@ -35,9 +35,7 @@ test("profile travel keeps Directions without a duplicate ride action beside Fre
   vm.runInContext(["dancerProfileDirectionsMarkup", "dancerProfileUpcomingVenueDealMarkup", "dancerProfileTonightTravelActionsMarkup"].map(extract).join("\n"), ctx);
   const profile = { scheduled: true, working: true, venue: venue.name };
   const working = ctx.dancerProfileTonightTravelActionsMarkup(profile);
-  assert.equal((working.match(/<a\b/g) || []).length, 1);
-  assert.match(working, />Directions</);
-  assert.doesNotMatch(working, /\/rides\/|Pickup|Free Ride/);
+  assert.equal(working, "");
   const upcoming = ctx.dancerProfileTonightTravelActionsMarkup({ ...profile, working: false });
   assert.equal((upcoming.match(/<a\b/g) || []).length, 2);
   assert.match(upcoming, />Free Entry</);
