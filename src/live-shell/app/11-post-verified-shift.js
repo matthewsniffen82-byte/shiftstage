@@ -762,8 +762,8 @@
       });
     }
 
-    function mountProfileMediaCardHeader(overlay, scroller = null) {
-      const host = scroller || overlay.querySelector(".profile-photo-viewer-shell, .profile-tv-viewer-shell");
+    function mountProfileMediaCardHeader(overlay) {
+      const host = overlay.querySelector(".profile-photo-viewer-shell, .profile-tv-viewer-shell");
       if (!host) return;
       let header = overlay.querySelector(".profile-media-card-header");
       if (!header) {
@@ -810,7 +810,6 @@
         const thumb = modalGallery.querySelector(`[data-profile-photo-index="${index}"] img`);
         if (thumb?.naturalWidth && thumb?.naturalHeight) sizeProfilePhotoCard(slide, thumb.naturalWidth, thumb.naturalHeight);
       });
-      mountProfileMediaCardHeader(profilePhotoViewer, profilePhotoViewerImage);
       return items.length;
     }
 

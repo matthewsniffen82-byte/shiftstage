@@ -170,15 +170,18 @@ test("photo windows load the lower card before the previous card fully leaves th
   }
 });
 
-test("one in-flow header scrolls away, with no header padding repeated on later cards", () => {
+test("the exit header stays outside the scroll feed on both profile entry points", () => {
   assert.match(css, /\.profile-media-card-header \{[^}]*position: relative;[^}]*height: var\(--profile-media-card-header\)/);
-  assert.doesNotMatch(css, /position: (?:fixed|sticky)/);
+  assert.match(css, /\.profile-media-viewer\.profile-media-card-feed,[^}]*\.profile-photo-viewer-shell, \.profile-tv-viewer-shell[^}]*display: grid !important;[^}]*grid-template-rows: var\(--profile-media-card-header\) minmax\(0, 1fr\)/);
   assert.match(css, /padding: 0 5px 24px !important/);
   assert.match(css, /scroll-padding: 0 !important/);
-  assert.match(carousel, /data-profile-media-scroll-feed[^]*?<div className="profile-media-card-header">[^]*?viewerItems\.map/);
+  assert.match(carousel, /<div className="profile-media-card-header">[^]*?ref=\{closeButton\}[^]*?data-profile-media-scroll-feed[^]*?viewerItems\.map/);
+  assert.doesNotMatch(carousel, /data-profile-media-scroll-feed[^]*?<div className="profile-media-card-header">/);
   for (const name of ["renderProfilePhotoViewerSlides", "renderProfileTvViewerSlides"]) {
-    assert.match(functionSource(name), /mountProfileMediaCardHeader[^]*?innerHTML = ""[^]*?mountProfileMediaCardHeader/);
+    assert.match(functionSource(name), /mountProfileMediaCardHeader\([^,]+\);[^]*?innerHTML = ""/);
+    assert.doesNotMatch(functionSource(name), /mountProfileMediaCardHeader\([^)]*,/);
   }
+  assert.match(functionSource("mountProfileMediaCardHeader"), /const host = overlay\.querySelector\("\.profile-photo-viewer-shell, \.profile-tv-viewer-shell"\)/);
   assert.match(functionSource("mountProfileMediaCardHeader"), /host\.prepend\(header\)/);
 });
 
