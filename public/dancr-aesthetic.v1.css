@@ -13125,18 +13125,52 @@ body.dancr-button-system #results.home-dancer-grid .home-dancer-grid-link:focus-
   }
 }
 
-/* Quiet violet framing leaves the strongest highlight on Free Entry. */
+/* Match the dancer venue box to the supplied club detail reference. */
 body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell)
   .profile-tonight-card:is(.is-now, .has-club-deal) {
-  background: radial-gradient(circle at 94% 0%, var(--dancr-color-brand-primary-soft), transparent 13rem),
-    var(--dancr-color-surface-subtle) !important;
-  box-shadow: 0 8px 22px var(--dancr-color-black-soft) !important;
+  padding: 8px 10px !important;
+  gap: 8px !important;
+  border: 1px solid var(--dancr-color-brand-primary-strong) !important;
+  border-radius: 15px !important;
 }
 
 body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell)
   .profile-tonight-card:is(.is-now, .has-club-deal)::before {
-  border: 1px solid #57406e !important;
+  content: "" !important;
+  position: absolute !important;
+  z-index: 1 !important;
+  inset: 12px auto 12px 0 !important;
+  width: 2px !important;
+  border: 0 !important;
+  border-radius: 999px !important;
+  background: var(--dancr-color-avatar-ring-violet) !important;
   box-shadow: none !important;
+  pointer-events: none !important;
+}
+
+body.dancr-button-system #profileBackdrop #profileModal
+  .profile-tonight-card:is(.is-now, .has-club-deal) .profile-club-deal-tile::before {
+  content: none !important;
+  display: none !important;
+}
+
+body.dancr-button-system #profileBackdrop #profileModal .working-now-tile > .profile-schedule-primary,
+body.dancr-button-system .public-profile-shell .profile-working-card .profile-live-state {
+  display: inline-flex !important;
+  min-height: 24px !important;
+  align-items: center !important;
+  padding: 4px 9px !important;
+  border: 1px solid var(--dancr-color-success-medium) !important;
+  border-radius: 999px !important;
+  color: var(--dancr-color-success) !important;
+  background: var(--dancr-color-success-soft) !important;
+  box-shadow: none !important;
+  font-size: 9px !important;
+  font-weight: 900 !important;
+  line-height: 1.1 !important;
+  letter-spacing: .08em !important;
+  text-transform: uppercase !important;
+  white-space: nowrap !important;
 }
 
 /* The venue row is one link; its chevron is a neutral navigation cue. */
@@ -13161,6 +13195,8 @@ body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-she
   text-transform: none !important;
 }
 
+body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell)
+  .profile-tonight-card:is(.is-now, .has-club-deal),
 body.dancr-button-system .public-profile-shell
   :is(.club-deal-card:has(.club-deal-checkout-action), .club-deal-launcher[data-club-deal-state="available"]) {
   border-color: var(--dancr-color-brand-primary-strong) !important;
