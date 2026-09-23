@@ -5455,7 +5455,7 @@ body.dancr-button-system .public-profile-shell .profile-media-tabs button {
 
 /* An available media type stays visibly interactive even while it is not the
  * current selection. Empty/disabled media types keep their separate reduced
- * opacity. The active media tab uses a neutral white underline. */
+ * opacity. The active media tab uses the hero's violet underline. */
 body.dancr-button-system #profileBackdrop #profileModal .profile-modal-media-tabs button:not(.active):not(:disabled),
 body.dancr-button-system .public-profile-shell .profile-media-tabs button:not(.active):not(:disabled),
 body.dancr-button-system #profileBackdrop #profileModal .profile-modal-media-tabs button:not(.active):not(:disabled) :is(.profile-media-tab-label, .profile-media-tab-count),
@@ -5484,8 +5484,8 @@ body.dancr-button-system .public-profile-shell .profile-media-tabs button.active
 }
 
 /* Production TV-card branding keeps the moving media as the visual hero.
- * Card framing, idle utilities, playback controls, and progress stay neutral;
- * the beam violet is reserved for profile identity, selection, and keyboard focus.
+ * Card framing, idle utilities, and playback controls stay neutral;
+ * beam violet connects identity, selection, playback progress, and keyboard focus.
  * Verification stays neutral while schedule states retain their semantic
  * production colors. */
 body.dancr-button-system :is(
@@ -5881,8 +5881,7 @@ body.dancr-button-system :is(
   box-shadow: var(--dancr-focus-ring) !important;
 }
 
-/* A liked TV video keeps the same neutral glass circle in every touch, hover,
- * and focus state. Only its heart glyph carries the red liked signal. */
+/* Base liked state; the shared hero-accent layer below adds its selected circle. */
 body.dancr-button-system .home-tv-feed-like-action[aria-pressed="true"],
 body.dancr-button-system .home-tv-feed-like-action[aria-pressed="true"]:hover,
 body.dancr-button-system .home-tv-feed-like-action[aria-pressed="true"]:focus,
@@ -12378,7 +12377,7 @@ body.dancr-button-system #profileBackdrop #profileModal .profile-modal-city-icon
   stroke: #b8bbc4 !important;
 }
 
-/* The selected media tab and its underline share the same bright white. */
+/* Bright labels sit above a violet selection line that echoes the hero. */
 body.dancr-button-system #profileBackdrop #profileModal .profile-modal-media-tabs button.active,
 body.dancr-button-system .public-profile-shell .profile-media-tabs button.active {
   color: #fff !important;
@@ -12403,7 +12402,7 @@ body.dancr-button-system .public-profile-shell .profile-media-socials .social-li
   height: 15px !important;
 }
 
-/* An SVG image preserves the white selection line when mobile website dark mode
+/* An SVG image preserves the violet selection line when mobile website dark mode
  * recolors CSS backgrounds and borders at paint time. */
 body.dancr-button-system #profileBackdrop #profileModal .profile-modal-media-tabs button.active::after,
 body.dancr-button-system .public-profile-shell .profile-media-tabs button.active::after {
@@ -12413,8 +12412,8 @@ body.dancr-button-system .public-profile-shell .profile-media-tabs button.active
   height: 2px !important;
   border: 0 !important;
   border-radius: 0 !important;
-  background: transparent url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='2' height='2'%3E%3Cpath fill='%23fff' d='M0 0h2v2H0z'/%3E%3C/svg%3E") center / 100% 100% no-repeat !important;
-  box-shadow: none !important;
+  background: transparent url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='2' height='2'%3E%3Cpath fill='%238b5cf6' d='M0 0h2v2H0z'/%3E%3C/svg%3E") center / 100% 100% no-repeat !important;
+  box-shadow: 0 -2px 12px var(--dancr-color-brand-primary-medium) !important;
   opacity: 1 !important;
   filter: none !important;
   transform: none !important;
@@ -12924,6 +12923,78 @@ body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-she
  * the same clearance as the modal's existing nonshrinking gallery spacer. */
 body.dancr-button-system #profileBackdrop #profileModal #modalGallery > .thumb {
   scroll-margin-bottom: var(--profile-bottom-nav-clearance);
+}
+
+/* Carry the hero violet into identity and interaction without recoloring
+ * availability, deals, completed setup steps, or disabled controls. */
+body.dancr-button-system #profileBackdrop #profileModal .profile-modal-summary,
+body.dancr-button-system .public-profile-shell .profile-titlebar {
+  background: radial-gradient(ellipse at 32% 0%, var(--dancr-color-brand-primary-soft), transparent 74%),
+    var(--dancr-color-background) !important;
+}
+
+body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-hero-brand-row {
+  background: radial-gradient(ellipse at 50% 0%, var(--dancr-color-brand-primary-soft), transparent 76%) !important;
+}
+
+body.dancr-button-system #results.home-tv-feed
+  .home-tv-feed-action:is(.home-tv-feed-follow-action, .home-tv-feed-like-action, .home-tv-feed-overflow-action):is(.is-active, [aria-pressed="true"], [aria-expanded="true"]) {
+  border-color: var(--dancr-color-avatar-ring-violet) !important;
+  color: var(--dancr-color-text-primary) !important;
+  background-color: var(--dancr-color-brand-primary-deep) !important;
+  background-image: linear-gradient(145deg, var(--dancr-color-brand-primary-strong), transparent) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .18), 0 0 12px var(--dancr-color-brand-primary-soft) !important;
+}
+
+body.dancr-button-system #results.home-tv-feed .home-tv-feed-like-action[aria-pressed="true"] svg {
+  color: #ede9fe !important;
+  fill: currentColor !important;
+  stroke: currentColor !important;
+}
+
+body.dancr-button-system #results.home-tv-feed .home-tv-feed-action:not(.home-tv-feed-deal-action):focus-visible {
+  outline: 2px solid #c4b5fd !important;
+  outline-offset: 3px !important;
+}
+
+/* The transparent seek target keeps its full hit area; focus is drawn on the
+ * visible canvas so keyboard users can locate the playback slider. */
+body.dancr-button-system .home-tv-feed-slide:has(.home-tv-feed-scrubber:focus-visible) .home-tv-feed-progress {
+  outline: 2px solid #c4b5fd !important;
+  outline-offset: 3px !important;
+}
+
+body.dancr-button-system .dashboard-shell .venue-dashboard-section[data-section-icon] .dancer-dashboard-section-icon {
+  border-color: var(--dancr-color-brand-primary-medium);
+  color: #c4b5fd;
+  background: var(--dancr-color-brand-primary-soft);
+}
+
+body.dancr-button-system .dashboard-shell .venue-dashboard-section[data-section-icon][open] > summary {
+  background: linear-gradient(100deg, var(--dancr-color-brand-primary-soft), transparent 80%) !important;
+  box-shadow: inset 3px 0 0 var(--dancr-color-avatar-ring-violet) !important;
+}
+
+body.dancr-button-system .dashboard-shell .venue-dashboard-section[data-section-icon][open] .dancer-dashboard-section-icon {
+  border-color: var(--dancr-color-brand-primary-strong);
+  color: #ede9fe;
+  box-shadow: 0 0 12px var(--dancr-color-brand-primary-soft);
+}
+
+body.dancr-button-system .dashboard-shell .dancer-onboarding-steps > .is-current > button {
+  background: linear-gradient(110deg, var(--dancr-color-brand-primary-soft), #18111f) !important;
+  box-shadow: inset 3px 0 0 var(--dancr-color-avatar-ring-violet) !important;
+}
+
+body.dancr-button-system .dashboard-shell .dancer-onboarding-steps .is-current
+  :is(.dancer-onboarding-step-marker, .dancer-onboarding-step-control.is-action) {
+  border-color: var(--dancr-color-avatar-ring-violet);
+  background: linear-gradient(145deg, var(--dancr-color-brand-primary), var(--dancr-color-brand-primary-deep));
+  color: #fff;
+}
+
+body.dancr-button-system .dashboard-shell .dancer-onboarding-steps button:focus-visible {
+  outline-color: #c4b5fd;
 }
 
 @media (max-width: 720px) {

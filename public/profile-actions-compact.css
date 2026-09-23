@@ -297,7 +297,7 @@ body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-she
 }
 
 body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell, .dancer-profile-preview-overlay, #results.venue-profile-overlay .venue-detail) :is(.modal-actions, .live-actions, .venue-secondary-actions).profile-actions-compact :is(#followBtn, #goingBtn, .profile-action-icon-control):focus-visible {
-  outline: 2px solid #FFFFFF !important;
+  outline: 2px solid #c4b5fd !important;
   outline-offset: 2px !important;
 }
 
@@ -308,10 +308,24 @@ body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-she
   }
 }
 
+/* Available Follow and I'm Going actions share the hero's violet outline.
+ * Keep share and unavailable actions on their existing neutral material. */
+body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell, .dancer-profile-preview-overlay, #results.venue-profile-overlay .venue-detail) :is(.modal-actions, .live-actions, .venue-secondary-actions).profile-actions-compact :is(#followBtn, #goingBtn, .profile-action-icon-control)[aria-pressed]:not(:disabled):not([aria-disabled="true"]) {
+  --profile-action-border: var(--dancr-color-avatar-ring-violet);
+  --profile-action-background: #1c142b;
+}
+
+@media (hover: hover) {
+  body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell, .dancer-profile-preview-overlay, #results.venue-profile-overlay .venue-detail) :is(.modal-actions, .live-actions, .venue-secondary-actions).profile-actions-compact :is(#followBtn, #goingBtn, .profile-action-icon-control)[aria-pressed]:not(:disabled):not([aria-disabled="true"]):hover {
+    --profile-action-border: #c4b5fd;
+    --profile-action-background: #302047;
+  }
+}
+
 /* Existing aria-pressed states are the single source of selected styling. */
 body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell, .dancer-profile-preview-overlay, #results.venue-profile-overlay .venue-detail) :is(.modal-actions, .live-actions, .venue-secondary-actions).profile-actions-compact :is(#followBtn, #goingBtn, .profile-action-icon-control)[aria-pressed="true"] {
-  --profile-action-border: #818181;
-  --profile-action-background: #383838;
+  --profile-action-border: var(--dancr-color-avatar-ring-violet) !important;
+  --profile-action-background: linear-gradient(145deg, var(--dancr-color-brand-primary), var(--dancr-color-brand-primary-deep)) !important;
 }
 
 body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell, .dancer-profile-preview-overlay, #results.venue-profile-overlay .venue-detail) :is(.modal-actions, .live-actions, .venue-secondary-actions).profile-actions-compact :is(#followBtn, #goingBtn, .profile-action-icon-control)[aria-pressed="true"] :is(.action-icon, .profile-action-icon-frame) > svg {

@@ -8,8 +8,9 @@ const css = read("public/profile-actions-compact.css");
 const live = read("outputs/index.html");
 const actions = read("app/dancers/[slug]/DancerProfileActions.tsx");
 
-test("selected actions stay neutral without changing their state or accessible labels", () => {
-  assert.match(css, /\[aria-pressed="true"\] \{\s*--profile-action-border: #818181/);
+test("selected actions use hero violet without changing their state or accessible labels", () => {
+  assert.match(css, /\[aria-pressed="true"\] \{\s*--profile-action-border: var\(--dancr-color-avatar-ring-violet\) !important/);
+  assert.match(css, /--profile-action-background: linear-gradient\(145deg, var\(--dancr-color-brand-primary\), var\(--dancr-color-brand-primary-deep\)\) !important/);
   assert.match(css, /\[aria-pressed="true"\][^{}]+> svg \{\s*color: #FFFFFF !important/);
   assert.match(actions, /saved\.following \? "Following" : "Follow"/);
   assert.match(actions, /isGoing \? "Going" : "I’m Going"/);
@@ -18,14 +19,15 @@ test("selected actions stay neutral without changing their state or accessible l
   assert.match(live, /aria-label="Share \$\{escapeHtml\(profile\.name\)\} profile"/);
 });
 
-test("profile actions use restrained charcoal materials without green, gradients, or glow", () => {
+test("profile actions reserve violet for available actions and retain neutral utility materials", () => {
   assert.match(css, /--profile-action-border: #34343c/);
   assert.match(css, /border-radius: 8px !important/);
   assert.match(css, /color: #FFFFFF !important/);
   assert.match(css, /--profile-action-background: #15151b/);
   assert.match(css, /appearance: none !important/);
-  assert.match(css, /outline: 2px solid #FFFFFF !important/);
-  assert.doesNotMatch(css, /linear-gradient|radial-gradient|drop-shadow|#4dec9d|#22c55e/i);
+  assert.match(css, /outline: 2px solid #c4b5fd !important/);
+  assert.match(css, /\[aria-pressed\]:not\(:disabled\):not\(\[aria-disabled="true"\]\)/);
+  assert.doesNotMatch(css, /radial-gradient|drop-shadow|#4dec9d|#22c55e/i);
 });
 
 test("compact action layout is shared by live, routed, and dashboard-preview profiles", () => {

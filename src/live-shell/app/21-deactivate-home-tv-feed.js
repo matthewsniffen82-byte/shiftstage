@@ -84,7 +84,7 @@
           ? Math.min(pixelWidth, Math.max(scale, Math.round(pixelWidth * ratio)))
           : 0;
         if (playedWidth > 0) {
-          context.fillStyle = "#f8f8fa";
+          context.fillStyle = "#8b5cf6";
           context.fillRect(0, 0, playedWidth, pixelHeight);
         }
       }

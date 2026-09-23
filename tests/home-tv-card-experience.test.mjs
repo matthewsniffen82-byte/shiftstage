@@ -90,7 +90,7 @@ test("the homepage TV card uses a resilient, readable media-first presentation",
   );
   assert.match(
     homeSource,
-    /function syncHomeTvFeedProgress\(video, slide\)[\s\S]*?progress instanceof HTMLCanvasElement[\s\S]*?progress\.getContext\("2d"\)[\s\S]*?context\.fillStyle = "rgba\(255, 255, 255, 0\.18\)"[\s\S]*?context\.fillStyle = "#f8f8fa"[\s\S]*?scrubber\.setAttribute\("aria-valuemax", String\(duration \|\| 1\)\)[\s\S]*?scrubber\.setAttribute\("aria-valuenow", String\(currentTime\)\)/,
+    /function syncHomeTvFeedProgress\(video, slide\)[\s\S]*?progress instanceof HTMLCanvasElement[\s\S]*?progress\.getContext\("2d"\)[\s\S]*?context\.fillStyle = "rgba\(255, 255, 255, 0\.18\)"[\s\S]*?context\.fillStyle = "#8b5cf6"[\s\S]*?scrubber\.setAttribute\("aria-valuemax", String\(duration \|\| 1\)\)[\s\S]*?scrubber\.setAttribute\("aria-valuenow", String\(currentTime\)\)/,
   );
   assert.doesNotMatch(homeSource, /\.home-tv-feed-progress > span|progress\.appendChild\(document\.createElement\("span"\)\)/);
   assert.doesNotMatch(homeSource, /scrubber\.type = "range"|createElement\("input"\)[\s\S]{0,300}?home-tv-feed-scrubber/);
