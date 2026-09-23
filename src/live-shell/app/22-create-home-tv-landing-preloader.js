@@ -390,7 +390,7 @@
       if (dancerFilterButton) {
         event.preventDefault();
         const nextFilter = dancerFilterButton.dataset.dancerDirectoryFilter;
-        if (!["all", "now", "trending"].includes(nextFilter)) return;
+        if (!dancerDirectoryFilters.includes(nextFilter)) return;
         dancerDirectoryFilter = nextFilter;
         syncHomeDestinationLocation("dancers");
         render();
@@ -455,7 +455,7 @@
       }
       const showDancersButton = event.target.closest("[data-show-dancers]");
       if (showDancersButton) {
-        activateHomeDestination("dancers", { dancerFilter: "all", scroll: false });
+        activateHomeDestination("dancers", { dancerFilter: "now", scroll: false });
         document.querySelector('.tab[data-tab="dancers"]')?.focus({ preventScroll: true });
         return;
       }

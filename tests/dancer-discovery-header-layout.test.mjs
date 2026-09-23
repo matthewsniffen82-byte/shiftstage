@@ -15,9 +15,9 @@ test("dancer discovery reuses canonical state and shared discovery-control dimen
 });
 
 test("directory heading, dynamic total, and segmented filters are compact and accessible", () => {
-  assert.match(liveShell, /href="\/dancr-aesthetic\.v1\.css\?v=271"/);
+  assert.match(liveShell, /href="\/outputs\/dancr-aesthetic\.css"/);
   assert.match(liveShell, /: `\$\{resultCount\} dancer\$\{resultCount === 1 \? "" : "s"\}`/);
-  assert.match(liveShell, /class="dancer-directory-filters" role="tablist" aria-label="Filter dancers"/);
+  assert.match(liveShell, /class="dancer-directory-filters[^\n]+role="tablist" aria-label="Filter dancers"/);
   assert.match(liveShell, /role="tab"[\s\S]*?aria-controls="results"[\s\S]*?aria-selected="\$\{active\}"/);
   assert.match(liveShell, /dancer-directory-filter-count">\$\{counts\[filter\.id\]\}<\/span>/);
   assert.match(aesthetic, /#tabTitle \{[\s\S]*?font-size: clamp\(20px, 5\.35vw, 24px\)/);
@@ -46,24 +46,24 @@ test("discovery controls, summary, heading, tabs, and cards share one master gut
 
 test("segmented dancer filters use semantic active colors and neutral inactive states", () => {
   assert.match(aesthetic, /data-dancer-directory-filter="now"\]\.is-active:not\(\.is-empty\)[\s\S]*?var\(--dancr-color-live\)/);
-  assert.match(aesthetic, /data-dancer-directory-filter="upcoming"\]\.is-active[\s\S]*?var\(--dancr-color-info\)/);
-  assert.match(liveShell, /filter\.id === "now" \|\| filter\.id === "upcoming"[\s\S]*?dancer-directory-filter-status/);
+
+  assert.match(liveShell, /filter\.id === "now"[\s\S]*?dancer-directory-filter-status/);
   assert.match(
     aesthetic,
-    /data-dancer-directory-filter="upcoming"\]\.is-active[\s\S]*?> \.dancer-directory-filter-status \{[\s\S]*?display: block;[\s\S]*?width: 6px;[\s\S]*?height: 6px;[\s\S]*?flex-basis: 6px;[\s\S]*?background: var\(--dancr-color-info\)[\s\S]*?box-shadow: 0 0 8px var\(--dancr-color-info-soft\)/,
+    /data-dancer-directory-filter="now"\]\.is-active:not\(\.is-empty\)[\s\S]*?> \.dancer-directory-filter-status \{[\s\S]*?display: block;[\s\S]*?width: 6px;[\s\S]*?height: 6px;[\s\S]*?flex-basis: 6px;[\s\S]*?background: var\(--dancr-color-live\)[\s\S]*?box-shadow: 0 0 8px var\(--dancr-color-live-soft\)/,
   );
   assert.match(aesthetic, /\.dancer-directory-filter:not\(\.is-active\) \{[\s\S]*?var\(--dancr-color-surface-raised\)/);
   assert.doesNotMatch(liveShell, /data-dancer-directory-filter="now"\]:not\(\.is-empty\):not\(\.is-active\) span \{[\s\S]*?#4dec9d/);
 });
 
-test("existing city, radius, club, Working Now, Upcoming, and filter result logic remains canonical", () => {
+test("existing city, radius, club, Working Now, Not Working Now, and filter result logic remains canonical", () => {
   assert.match(liveShell, /const radiusLabel = distanceSelect\?\.value \|\| "25 mi"/);
   assert.match(liveShell, /const venueLabel = venueName === "all" \? "All clubs" : resolveVenueByName\(venueName, city\)\?\.name \|\| venueName/);
   assert.match(liveShell, /const workingNowCount = getItems\(city, "tonight"\)\.length/);
   assert.match(liveShell, /now: profiles\.filter\(\(profile\) => isWorkingTonight\(profile, city\)\)\.length/);
-  assert.match(liveShell, /upcoming: profiles\.filter\(\(profile\) => profile\.scheduled && !isWorkingTonight\(profile, city\)\)\.length/);
-  assert.match(liveShell, /if \(dancerDirectoryFilter === "now"\)[\s\S]*?groups\.workingNow/);
-  assert.match(liveShell, /if \(dancerDirectoryFilter === "upcoming"\)[\s\S]*?upcomingSortValue\(a, city\)[\s\S]*?dailyRotationScore\(a, city\)/);
+  assert.match(liveShell, /not_now: profiles\.filter\(\(profile\) => !isWorkingTonight\(profile, city\)\)\.length/);
+  assert.match(liveShell, /if \(dancerDirectoryFilter === "now" \|\| selectedVenueFilter\(\) !== "all"\)[\s\S]*?groups\.workingNow/);
+  assert.match(liveShell, /label: "Not Working Now", className: "is-open", profiles: groups\.notWorkingNow/);
 });
 
 test("directory tabs reserve a stable border so every selected state has an outline", () => {
@@ -77,7 +77,7 @@ test("directory tabs reserve a stable border so every selected state has an outl
   );
   assert.match(
     aesthetic,
-    /data-dancer-directory-filter="upcoming"\]\.is-active \{[\s\S]*?border-color: var\(--dancr-color-info-strong\) !important;/,
+    /\.dancer-directory-filter\.is-active \{[\s\S]*?border-color: var\(--dancr-color-brand-primary-strong\) !important;/,
   );
 });
 

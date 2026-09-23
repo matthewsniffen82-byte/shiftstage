@@ -11,7 +11,7 @@ test("the Now dancer filter contains only approved dancers with confirmed active
   );
   assert.match(
     homeSource,
-    /if \(dancerDirectoryFilter === "now"\)[\s\S]*?profiles: groups\.workingNow/,
+    /if \(dancerDirectoryFilter === "now" \|\| selectedVenueFilter\(\) !== "all"\)[\s\S]*?profiles: groups\.workingNow/,
   );
   assert.doesNotMatch(
     homeSource,
@@ -19,14 +19,14 @@ test("the Now dancer filter contains only approved dancers with confirmed active
   );
 });
 
-test("the Dancers directory groups every profile once as Working Now, Upcoming, or No Shift", () => {
+test("the Dancers directory groups every profile once as Working Now or Not Working Now", () => {
   assert.match(
     homeSource,
-    /function dancerDirectoryGroups\(profiles, city = selectedCity\(\)\) \{[\s\S]*const workingNow = profiles[\s\S]*const upcoming = profiles[\s\S]*profile\.scheduled[\s\S]*const noSchedule = profiles[\s\S]*!profile\.scheduled[\s\S]*return \{ workingNow, upcoming, noSchedule \}/,
+    /function dancerDirectoryGroups\(profiles, city = selectedCity\(\)\) \{[\s\S]*const workingNow = profiles[\s\S]*const notWorkingNow = profiles[\s\S]*!isWorkingTonight\(profile, city\)[\s\S]*return \{ workingNow, notWorkingNow \}/,
   );
   assert.match(
     homeSource,
-    /function dancerDirectoryProfiles\(profiles, city = selectedCity\(\)\) \{[\s\S]*return \[\.\.\.groups\.workingNow, \.\.\.groups\.upcoming, \.\.\.groups\.noSchedule\]/,
+    /function dancerDirectoryProfiles\(profiles, city = selectedCity\(\)\) \{[\s\S]*return \[\.\.\.groups\.workingNow, \.\.\.groups\.notWorkingNow\]/,
   );
   assert.match(
     homeSource,
@@ -34,7 +34,7 @@ test("the Dancers directory groups every profile once as Working Now, Upcoming, 
   );
   assert.match(
     homeSource,
-    /function dancerDirectorySections\(profiles, city\)[\s\S]*label: "Working Now"[\s\S]*label: "Upcoming"[\s\S]*label: "No Schedule"/,
+    /function dancerDirectorySections\(profiles, city\)[\s\S]*label: "Working Now"[\s\S]*label: "Not Working Now"/,
   );
   const groupedSource = homeSource.match(
     /function dancerDirectoryGroups\(profiles, city = selectedCity\(\)\)[\s\S]*?(?=\n    function dancerDirectoryProfiles)/,
@@ -42,7 +42,7 @@ test("the Dancers directory groups every profile once as Working Now, Upcoming, 
   assert.doesNotMatch(groupedSource, /groups\.trending|trendingDirectoryProfiles/);
 });
 
-test("the consolidated Dancers destination exposes full-width All and Now filters", () => {
+test("the consolidated Dancers destination exposes equal-width Working Now and Not Working Now filters", () => {
   assert.match(
     homeSource,
     /class="tab active" data-tab="dancers" data-tab-label="Dancers" aria-current="page">Dancers<\/button>/,
@@ -53,7 +53,7 @@ test("the consolidated Dancers destination exposes full-width All and Now filter
   assert.match(homeSource, /`\$\{workingNowCount\} working now`/);
   assert.match(
     homeSource,
-    /filters = \[\s*\{ id: "all", label: "All" \},\s*\{ id: "now", label: "Now" \}\s*\]/,
+    /filters = clubSelected \? \[[^\n]+\] : \[\s*\{ id: "now", label: "Working Now" \},\s*\{ id: "not_now", label: "Not Working Now" \}\s*\]/,
   );
   assert.doesNotMatch(homeSource, /id: "trending", label: "Trending"/);
   assert.match(homeSource, /\.dancer-directory-filters \{[\s\S]*?grid-template-columns: repeat\(2, minmax\(0, 1fr\)\)/);
@@ -69,7 +69,7 @@ test("the consolidated Dancers destination exposes full-width All and Now filter
   assert.match(homeSource, /No dancers are working now \$\{locationPhrase\}\./);
   assert.doesNotMatch(homeSource, /No dancers are trending in \$\{city\} yet\./);
   assert.match(homeSource, /data-dancer-directory-filter="\$\{filter\.id\}"/);
-  assert.match(homeSource, /No approved dancer profiles \$\{scope\}\./);
+  assert.match(homeSource, /No dancers are off shift \$\{locationPhrase\}\./);
 });
 
 test("visible homepages refresh public discovery without retaining deleted venues", () => {

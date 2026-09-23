@@ -43332,7 +43332,7 @@
     const customerBrowseDancers = document.getElementById("customerBrowseDancers");
     const homeFeedReturnHomeBtn = document.getElementById("homeFeedReturnHomeBtn");
     let activeTab = "dancers";
-    let dancerDirectoryFilter = "all";
+    let dancerDirectoryFilter = "now";
     let homeTvLaunchRequest = 0;
     let homeTvLaunchScope = "";
     let homeTvFeedRequest = 0;
@@ -49336,28 +49336,16 @@
           shiftStartMinutes(a.time) - shiftStartMinutes(b.time) ||
           dailyRotationScore(a, city) - dailyRotationScore(b, city)
         ));
-      const upcoming = profiles
-        .filter((profile) => (
-          profile.scheduled &&
-          !isWorkingTonight(profile, city)
-        ))
-        .sort((a, b) => (
-          upcomingSortValue(a, city) - upcomingSortValue(b, city) ||
-          dailyRotationScore(a, city) - dailyRotationScore(b, city)
-        ));
-      const noSchedule = profiles
-        .filter((profile) => (
-          !profile.scheduled &&
-          !isWorkingTonight(profile, city)
-        ))
+      const notWorkingNow = profiles
+        .filter((profile) => !isWorkingTonight(profile, city))
         .sort((a, b) => dailyRotationScore(a, city) - dailyRotationScore(b, city));
-      if (city === ALL_CITIES) return { workingNow: interleaveDancerCities(workingNow), upcoming: interleaveDancerCities(upcoming), noSchedule: interleaveDancerCities(noSchedule) };
-      return { workingNow, upcoming, noSchedule };
+      if (city === ALL_CITIES) return { workingNow: interleaveDancerCities(workingNow), notWorkingNow: interleaveDancerCities(notWorkingNow) };
+      return { workingNow, notWorkingNow };
     }
 
     function dancerDirectoryProfiles(profiles, city = selectedCity()) {
       const groups = dancerDirectoryGroups(profiles, city);
-      return [...groups.workingNow, ...groups.upcoming, ...groups.noSchedule];
+      return [...groups.workingNow, ...groups.notWorkingNow];
     }
 
     function daysFromToday(date, city = selectedCity()) {
@@ -50032,6 +50020,7 @@
         window.clearTimeout(timeoutId);
       }
     }
+
 
     async function saveCustomerDealPass(pass) {
       if (!pass?.id) return false;
@@ -60743,15 +60732,16 @@
 
     function dancerDirectoryFilterMarkup(profiles, city) {
       const counts = {
-        all: profiles.length,
-        now: profiles.filter((profile) => isWorkingTonight(profile, city)).length
+        now: profiles.filter((profile) => isWorkingTonight(profile, city)).length,
+        not_now: profiles.filter((profile) => !isWorkingTonight(profile, city)).length
       };
-      const filters = [
-        { id: "all", label: "All" },
-        { id: "now", label: "Now" }
+      const clubSelected = selectedVenueFilter() !== "all";
+      const filters = clubSelected ? [{ id: "now", label: "Working Now" }] : [
+        { id: "now", label: "Working Now" },
+        { id: "not_now", label: "Not Working Now" }
       ];
       return `
-        <div class="dancer-directory-filters" role="tablist" aria-label="Filter dancers">
+        <div class="dancer-directory-filters${clubSelected ? " is-club-specific" : ""}" role="tablist" aria-label="Filter dancers">
           ${filters.map((filter) => {
             const active = dancerDirectoryFilter === filter.id;
             const empty = counts[filter.id] === 0;
@@ -60766,12 +60756,11 @@
 
     function dancerDirectorySections(profiles, city) {
       const groups = dancerDirectoryGroups(profiles, city);
-      if (dancerDirectoryFilter === "now") {
+      if (dancerDirectoryFilter === "now" || selectedVenueFilter() !== "all") {
         return [{ label: "Working Now", className: "is-now", profiles: groups.workingNow }];
       }
       return [
-        { label: "Working Now", className: "is-now", profiles: groups.workingNow },
-        { label: "Not working now", className: "is-open", profiles: [...groups.noSchedule, ...groups.upcoming] }
+        { label: "Not Working Now", className: "is-open", profiles: groups.notWorkingNow }
       ];
     }
 
@@ -60839,7 +60828,10 @@
     function renderHomeDancerGrid(city, profiles) {
       const sections = dancerDirectorySections(profiles, city);
       const visibleCount = sections.reduce((total, section) => total + section.profiles.length, 0);
-      const locationPhrase = discoveryLocationPhrase(city);
+      const venueFilter = selectedVenueFilter();
+      const locationPhrase = venueFilter === "all"
+        ? discoveryLocationPhrase(city)
+        : `at ${resolveVenueByName(venueFilter, city)?.name || venueFilter}`;
       let imageOffset = 0;
       const sectionMarkup = sections.map((section) => {
         const markup = homeDancerGridSectionMarkup(
@@ -60849,19 +60841,19 @@
           city,
           true,
           imageOffset,
-          dancerDirectoryFilter !== "all"
+          true
         );
         imageOffset += section.profiles.length;
         return markup;
       }).join("");
       const emptyLabels = {
         now: `No dancers are working now ${locationPhrase}.`,
-        upcoming: `No dancers have an upcoming shift ${locationPhrase}.`
+        not_now: `No dancers are off shift ${locationPhrase}.`
       };
       results.classList.add("card-grid", "home-dancer-grid");
       results.classList.add("home-dancer-three-column");
-      results.classList.toggle("home-dancer-filtered-view", dancerDirectoryFilter !== "all");
-      results.setAttribute("aria-label", `Approved dancers ${locationPhrase}, grouped by live status and schedule`);
+      results.classList.add("home-dancer-filtered-view");
+      results.setAttribute("aria-label", `Approved dancers ${locationPhrase}, filtered by working status`);
       const gridMarkup = `
         ${dancerDirectoryFilterMarkup(profiles, city)}
         ${sectionMarkup}
@@ -61246,6 +61238,7 @@
       if (shouldUseInlineLayout) focusHomeResults();
     }
 
+
     function render() {
       syncDiscoveryCityScope();
       const city = citySelect.value;
@@ -61253,6 +61246,10 @@
       document.body.classList.toggle("dancer-directory-active", activeTab === "dancers");
       syncCityPickerSelection(city);
       populateVenueSelect(city);
+      if (activeTab === "dancers" && selectedVenueFilter() !== "all" && dancerDirectoryFilter !== "now") {
+        dancerDirectoryFilter = "now";
+        syncHomeDestinationLocation("dancers");
+      }
       const tvVenueFilter = selectedHomeTvVenueFilter(city);
       const tvLaunchScope = `${city}:${tvVenueFilter?.id || ""}`;
       if (homeTvLaunchScope !== tvLaunchScope) {
@@ -61365,16 +61362,6 @@
             <strong id="homeDiscoveryErrorTitle">Live ${contentLabel} could not load.</strong>
             <p>Check your connection and try again. MyDancr will request the latest live results.</p>
             <button class="home-discovery-empty-action" type="button" data-retry-live-discovery="${escapeHtml(city)}">Try again</button>
-          </section>
-        `;
-        return;
-      }
-      if (activeTab === "dancers" && !items.length) {
-        const scope = venueFilter === "all" ? `in ${city}` : `at ${venueFilterLabel}`;
-        results.innerHTML = `
-          <section class="home-discovery-empty" aria-labelledby="homeDancersEmptyTitle">
-            <strong id="homeDancersEmptyTitle">No approved dancer profiles ${scope}.</strong>
-            <p>Profiles appear here as soon as they are approved for public discovery.</p>
           </section>
         `;
         return;
@@ -62290,7 +62277,7 @@
 
     function returnToHomeDiscoveryMain() {
       if (profileBackdrop.classList.contains("show")) return false;
-      activateHomeDestination("dancers", { dancerFilter: "all", scroll: false });
+      activateHomeDestination("dancers", { dancerFilter: "now", scroll: false });
       window.requestAnimationFrame(() => {
         window.scrollTo({ top: 0, left: 0, behavior: "smooth" });
       });
@@ -63727,7 +63714,7 @@
       if (dancerFilterButton) {
         event.preventDefault();
         const nextFilter = dancerFilterButton.dataset.dancerDirectoryFilter;
-        if (!["all", "now", "trending"].includes(nextFilter)) return;
+        if (!dancerDirectoryFilters.includes(nextFilter)) return;
         dancerDirectoryFilter = nextFilter;
         syncHomeDestinationLocation("dancers");
         render();
@@ -63792,7 +63779,7 @@
       }
       const showDancersButton = event.target.closest("[data-show-dancers]");
       if (showDancersButton) {
-        activateHomeDestination("dancers", { dancerFilter: "all", scroll: false });
+        activateHomeDestination("dancers", { dancerFilter: "now", scroll: false });
         document.querySelector('.tab[data-tab="dancers"]')?.focus({ preventScroll: true });
         return;
       }
@@ -66772,15 +66759,13 @@
 
     const homeBottomTv = document.getElementById("homeBottomTv");
     const homeDestinationOrder = ["dancers", "tv", "venues"];
-    const dancerDirectoryFilters = ["all", "now"];
+    const dancerDirectoryFilters = ["now", "not_now"];
 
     function dancerDirectoryFilterFromLocation() {
       const params = new URLSearchParams(window.location.search);
       const requestedFilter = params.get("dancer_filter");
       if (dancerDirectoryFilters.includes(requestedFilter)) return requestedFilter;
-      const requestedView = params.get("view");
-      if (requestedView === "tonight") return "now";
-      return "all";
+      return "now";
     }
 
     function homeDestinationFromLocation() {
@@ -66799,7 +66784,7 @@
       const url = new URL(window.location.href);
       url.searchParams.set("city", citySelect.value);
       url.searchParams.set("view", nextTab);
-      if (nextTab === "dancers" && dancerDirectoryFilter !== "all") {
+      if (nextTab === "dancers") {
         url.searchParams.set("dancer_filter", dancerDirectoryFilter);
       } else {
         url.searchParams.delete("dancer_filter");
@@ -66844,7 +66829,7 @@
         dancerDirectoryFilter = dancerDirectoryFilters.includes(options.dancerFilter)
           ? options.dancerFilter
           : leavingAnotherDestination
-            ? "all"
+            ? "now"
             : dancerDirectoryFilter;
       }
       if (profileBackdrop.classList.contains("show")) closeProfileModal();
@@ -67106,6 +67091,7 @@
         : "";
       return `<button class="venue-picker-option city-picker-option" type="button" role="option" data-city-picker-value="${safeCity}" aria-selected="${selected}"><span class="venue-picker-radio" aria-hidden="true"></span><span class="venue-picker-option-name">${safeCity}</span>${statsLabel ? `<span class="city-picker-stats">${escapeHtml(statsLabel)}</span>` : ""}</button>`;
     }
+
 
     function syncDiscoveryCityScope() {
       const allowsAllCities = activeTab === "dancers" || activeTab === "tv" || activeTab === "venues";

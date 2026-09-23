@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { readFile } from "./helpers/dashboard-test-fs-promises.mjs";
 import test from "node:test";
+import vm from "node:vm";
 
 const legacyRouteFiles = {
   tonight: "../app/tonight/page.tsx",
@@ -119,7 +120,7 @@ test("canonical homepage deep links select and retain the requested destination"
   );
   assert.match(
     homeSource,
-    /function dancerDirectoryFilterFromLocation\(\)[\s\S]*?requestedView === "tonight"\) return "now"[\s\S]*?return "all"/,
+    /function dancerDirectoryFilterFromLocation\(\)[\s\S]*?dancerDirectoryFilters\.includes\(requestedFilter\)\) return requestedFilter;\s*return "now"/,
   );
   assert.doesNotMatch(
     homeSource,
@@ -139,6 +140,33 @@ test("canonical homepage deep links select and retain the requested destination"
   );
   assert.match(
     homeSource,
-    /function returnToHomeDiscoveryMain\(\)[\s\S]*?clearHomeDestinationLocation\(\)[\s\S]*?render\(\)/,
+    /function returnToHomeDiscoveryMain\(\)[\s\S]*?activateHomeDestination\("dancers", \{ dancerFilter: "now", scroll: false \}\)/,
   );
+});
+
+test("working status deep links round-trip and retired filters default to Working Now", () => {
+  const state = {
+    URL, URLSearchParams, document: { title: "Dancers" }, citySelect: { value: "Las Vegas" },
+    window: { location: {}, history: { replaceState(_state, _title, path) { state.savedPath = path; } } },
+  };
+  vm.createContext(state);
+  const constants = homeSource.match(/const homeDestinationOrder = [^;]+;\s*const dancerDirectoryFilters = [^;]+;/)[0];
+  const functions = ["dancerDirectoryFilterFromLocation", "syncHomeDestinationLocation"].map(name =>
+    homeSource.match(new RegExp(`    function ${name}\\([^\\n]*\\) \\{[\\s\\S]*?(?=\\n    function )`))[0]).join("\n");
+  vm.runInContext(constants + functions, state);
+  for (const [search, expected] of [
+    ["", "now"], ["?view=tonight", "now"], ["?view=trending", "now"],
+    ["?dancer_filter=all", "now"], ["?dancer_filter=upcoming", "now"],
+    ["?dancer_filter=invalid", "now"], ["?dancer_filter=now", "now"], ["?dancer_filter=not_now", "not_now"],
+  ]) {
+    state.window.location = new URL("https://example.test/" + search);
+    assert.equal(state.dancerDirectoryFilterFromLocation(), expected);
+    state.dancerDirectoryFilter = expected;
+    state.syncHomeDestinationLocation("dancers");
+    assert.equal(new URL(state.savedPath, "https://example.test").searchParams.get("dancer_filter"), expected);
+    state.window.location = new URL(state.savedPath, "https://example.test");
+    assert.equal(state.dancerDirectoryFilterFromLocation(), expected);
+  }
+  state.syncHomeDestinationLocation("venues");
+  assert.equal(new URL(state.savedPath, "https://example.test").searchParams.has("dancer_filter"), false);
 });

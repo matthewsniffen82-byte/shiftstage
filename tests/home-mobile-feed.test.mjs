@@ -102,14 +102,14 @@ test("the Home TV button renders a larger mobile snap-scroll feed without leavin
 });
 
 test("the homepage selects Dancers on first load and keeps destination navigation authoritative", () => {
-  assert.match(homeSource, /let activeTab = "dancers";[\s\S]*?let dancerDirectoryFilter = "all";[\s\S]*?let homeDiscoveryFeedOpen = false;/);
+  assert.match(homeSource, /let activeTab = "dancers";[\s\S]*?let dancerDirectoryFilter = "now";[\s\S]*?let homeDiscoveryFeedOpen = false;/);
   assert.match(
     homeSource,
     /<button class="tab active" data-tab="dancers" data-tab-label="Dancers" aria-current="page">Dancers<\/button>/,
   );
   assert.match(
     homeSource,
-    /function returnToHomeDiscoveryMain\(\) \{\s*if \(profileBackdrop\.classList\.contains\("show"\)\) return false;[\s\S]*?activateHomeDestination\("dancers", \{ dancerFilter: "all", scroll: false \}\);[\s\S]*?window\.scrollTo\(\{ top: 0, left: 0, behavior: "smooth" \}\)/,
+    /function returnToHomeDiscoveryMain\(\) \{\s*if \(profileBackdrop\.classList\.contains\("show"\)\) return false;[\s\S]*?activateHomeDestination\("dancers", \{ dancerFilter: "now", scroll: false \}\);[\s\S]*?window\.scrollTo\(\{ top: 0, left: 0, behavior: "smooth" \}\)/,
   );
   assert.match(
     homeSource,
@@ -224,7 +224,7 @@ test("Dancers uses grouped grid browsing while Venues retains its inline feed", 
   );
   assert.match(
     homeSource,
-    /function dancerDirectorySections\(profiles, city\)[\s\S]*?label: "Working Now"[\s\S]*?label: "Upcoming"[\s\S]*?label: "No Schedule"/,
+    /function dancerDirectorySections\(profiles, city\)[\s\S]*?label: "Working Now"[\s\S]*?label: "Not Working Now"/,
   );
 });
 

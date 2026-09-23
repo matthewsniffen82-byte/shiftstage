@@ -642,15 +642,13 @@
 
     const homeBottomTv = document.getElementById("homeBottomTv");
     const homeDestinationOrder = ["dancers", "tv", "venues"];
-    const dancerDirectoryFilters = ["all", "now"];
+    const dancerDirectoryFilters = ["now", "not_now"];
 
     function dancerDirectoryFilterFromLocation() {
       const params = new URLSearchParams(window.location.search);
       const requestedFilter = params.get("dancer_filter");
       if (dancerDirectoryFilters.includes(requestedFilter)) return requestedFilter;
-      const requestedView = params.get("view");
-      if (requestedView === "tonight") return "now";
-      return "all";
+      return "now";
     }
 
     function homeDestinationFromLocation() {
@@ -669,7 +667,7 @@
       const url = new URL(window.location.href);
       url.searchParams.set("city", citySelect.value);
       url.searchParams.set("view", nextTab);
-      if (nextTab === "dancers" && dancerDirectoryFilter !== "all") {
+      if (nextTab === "dancers") {
         url.searchParams.set("dancer_filter", dancerDirectoryFilter);
       } else {
         url.searchParams.delete("dancer_filter");
@@ -714,7 +712,7 @@
         dancerDirectoryFilter = dancerDirectoryFilters.includes(options.dancerFilter)
           ? options.dancerFilter
           : leavingAnotherDestination
-            ? "all"
+            ? "now"
             : dancerDirectoryFilter;
       }
       if (profileBackdrop.classList.contains("show")) closeProfileModal();

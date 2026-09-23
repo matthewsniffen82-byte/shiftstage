@@ -276,28 +276,16 @@
           shiftStartMinutes(a.time) - shiftStartMinutes(b.time) ||
           dailyRotationScore(a, city) - dailyRotationScore(b, city)
         ));
-      const upcoming = profiles
-        .filter((profile) => (
-          profile.scheduled &&
-          !isWorkingTonight(profile, city)
-        ))
-        .sort((a, b) => (
-          upcomingSortValue(a, city) - upcomingSortValue(b, city) ||
-          dailyRotationScore(a, city) - dailyRotationScore(b, city)
-        ));
-      const noSchedule = profiles
-        .filter((profile) => (
-          !profile.scheduled &&
-          !isWorkingTonight(profile, city)
-        ))
+      const notWorkingNow = profiles
+        .filter((profile) => !isWorkingTonight(profile, city))
         .sort((a, b) => dailyRotationScore(a, city) - dailyRotationScore(b, city));
-      if (city === ALL_CITIES) return { workingNow: interleaveDancerCities(workingNow), upcoming: interleaveDancerCities(upcoming), noSchedule: interleaveDancerCities(noSchedule) };
-      return { workingNow, upcoming, noSchedule };
+      if (city === ALL_CITIES) return { workingNow: interleaveDancerCities(workingNow), notWorkingNow: interleaveDancerCities(notWorkingNow) };
+      return { workingNow, notWorkingNow };
     }
 
     function dancerDirectoryProfiles(profiles, city = selectedCity()) {
       const groups = dancerDirectoryGroups(profiles, city);
-      return [...groups.workingNow, ...groups.upcoming, ...groups.noSchedule];
+      return [...groups.workingNow, ...groups.notWorkingNow];
     }
 
     function daysFromToday(date, city = selectedCity()) {

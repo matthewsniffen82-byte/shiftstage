@@ -348,7 +348,7 @@
     const customerBrowseDancers = document.getElementById("customerBrowseDancers");
     const homeFeedReturnHomeBtn = document.getElementById("homeFeedReturnHomeBtn");
     let activeTab = "dancers";
-    let dancerDirectoryFilter = "all";
+    let dancerDirectoryFilter = "now";
     let homeTvLaunchRequest = 0;
     let homeTvLaunchScope = "";
     let homeTvFeedRequest = 0;

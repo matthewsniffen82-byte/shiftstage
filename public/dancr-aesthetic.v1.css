@@ -8667,6 +8667,11 @@ body.dancer-directory-active > .app main.stack > section.stack
 }
 
 body.dancer-directory-active > .app main.stack > section.stack
+  > #results.home-dancer-grid .dancer-directory-filters.is-club-specific {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+body.dancer-directory-active > .app main.stack > section.stack
   > #results.home-dancer-grid .dancer-directory-filter {
   box-sizing: border-box;
   min-height: 48px !important;
@@ -8708,7 +8713,15 @@ body.dancer-directory-active > .app main.stack > section.stack
 }
 
 body.dancer-directory-active > .app main.stack > section.stack
+  > #results.home-dancer-grid .dancer-directory-filter-label {
+  font-size: 1em !important;
+  white-space: nowrap;
+}
+
+body.dancer-directory-active > .app main.stack > section.stack
   > #results.home-dancer-grid .dancer-directory-filter-count {
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
   color: var(--dancr-color-text-muted) !important;
   font-size: 0.86em !important;
 }

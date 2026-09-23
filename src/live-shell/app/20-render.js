@@ -7,6 +7,10 @@
       document.body.classList.toggle("dancer-directory-active", activeTab === "dancers");
       syncCityPickerSelection(city);
       populateVenueSelect(city);
+      if (activeTab === "dancers" && selectedVenueFilter() !== "all" && dancerDirectoryFilter !== "now") {
+        dancerDirectoryFilter = "now";
+        syncHomeDestinationLocation("dancers");
+      }
       const tvVenueFilter = selectedHomeTvVenueFilter(city);
       const tvLaunchScope = `${city}:${tvVenueFilter?.id || ""}`;
       if (homeTvLaunchScope !== tvLaunchScope) {
@@ -119,16 +123,6 @@
             <strong id="homeDiscoveryErrorTitle">Live ${contentLabel} could not load.</strong>
             <p>Check your connection and try again. MyDancr will request the latest live results.</p>
             <button class="home-discovery-empty-action" type="button" data-retry-live-discovery="${escapeHtml(city)}">Try again</button>
-          </section>
-        `;
-        return;
-      }
-      if (activeTab === "dancers" && !items.length) {
-        const scope = venueFilter === "all" ? `in ${city}` : `at ${venueFilterLabel}`;
-        results.innerHTML = `
-          <section class="home-discovery-empty" aria-labelledby="homeDancersEmptyTitle">
-            <strong id="homeDancersEmptyTitle">No approved dancer profiles ${scope}.</strong>
-            <p>Profiles appear here as soon as they are approved for public discovery.</p>
           </section>
         `;
         return;

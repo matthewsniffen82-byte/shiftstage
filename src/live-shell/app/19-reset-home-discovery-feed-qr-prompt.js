@@ -386,15 +386,16 @@
 
     function dancerDirectoryFilterMarkup(profiles, city) {
       const counts = {
-        all: profiles.length,
-        now: profiles.filter((profile) => isWorkingTonight(profile, city)).length
+        now: profiles.filter((profile) => isWorkingTonight(profile, city)).length,
+        not_now: profiles.filter((profile) => !isWorkingTonight(profile, city)).length
       };
-      const filters = [
-        { id: "all", label: "All" },
-        { id: "now", label: "Now" }
+      const clubSelected = selectedVenueFilter() !== "all";
+      const filters = clubSelected ? [{ id: "now", label: "Working Now" }] : [
+        { id: "now", label: "Working Now" },
+        { id: "not_now", label: "Not Working Now" }
       ];
       return `
-        <div class="dancer-directory-filters" role="tablist" aria-label="Filter dancers">
+        <div class="dancer-directory-filters${clubSelected ? " is-club-specific" : ""}" role="tablist" aria-label="Filter dancers">
           ${filters.map((filter) => {
             const active = dancerDirectoryFilter === filter.id;
             const empty = counts[filter.id] === 0;
@@ -409,12 +410,11 @@
 
     function dancerDirectorySections(profiles, city) {
       const groups = dancerDirectoryGroups(profiles, city);
-      if (dancerDirectoryFilter === "now") {
+      if (dancerDirectoryFilter === "now" || selectedVenueFilter() !== "all") {
         return [{ label: "Working Now", className: "is-now", profiles: groups.workingNow }];
       }
       return [
-        { label: "Working Now", className: "is-now", profiles: groups.workingNow },
-        { label: "Not working now", className: "is-open", profiles: [...groups.noSchedule, ...groups.upcoming] }
+        { label: "Not Working Now", className: "is-open", profiles: groups.notWorkingNow }
       ];
     }
 
@@ -482,7 +482,10 @@
     function renderHomeDancerGrid(city, profiles) {
       const sections = dancerDirectorySections(profiles, city);
       const visibleCount = sections.reduce((total, section) => total + section.profiles.length, 0);
-      const locationPhrase = discoveryLocationPhrase(city);
+      const venueFilter = selectedVenueFilter();
+      const locationPhrase = venueFilter === "all"
+        ? discoveryLocationPhrase(city)
+        : `at ${resolveVenueByName(venueFilter, city)?.name || venueFilter}`;
       let imageOffset = 0;
       const sectionMarkup = sections.map((section) => {
         const markup = homeDancerGridSectionMarkup(
@@ -492,19 +495,19 @@
           city,
           true,
           imageOffset,
-          dancerDirectoryFilter !== "all"
+          true
         );
         imageOffset += section.profiles.length;
         return markup;
       }).join("");
       const emptyLabels = {
         now: `No dancers are working now ${locationPhrase}.`,
-        upcoming: `No dancers have an upcoming shift ${locationPhrase}.`
+        not_now: `No dancers are off shift ${locationPhrase}.`
       };
       results.classList.add("card-grid", "home-dancer-grid");
       results.classList.add("home-dancer-three-column");
-      results.classList.toggle("home-dancer-filtered-view", dancerDirectoryFilter !== "all");
-      results.setAttribute("aria-label", `Approved dancers ${locationPhrase}, grouped by live status and schedule`);
+      results.classList.add("home-dancer-filtered-view");
+      results.setAttribute("aria-label", `Approved dancers ${locationPhrase}, filtered by working status`);
       const gridMarkup = `
         ${dancerDirectoryFilterMarkup(profiles, city)}
         ${sectionMarkup}

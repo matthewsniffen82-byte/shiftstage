@@ -37,7 +37,7 @@
 
     function returnToHomeDiscoveryMain() {
       if (profileBackdrop.classList.contains("show")) return false;
-      activateHomeDestination("dancers", { dancerFilter: "all", scroll: false });
+      activateHomeDestination("dancers", { dancerFilter: "now", scroll: false });
       window.requestAnimationFrame(() => {
         window.scrollTo({ top: 0, left: 0, behavior: "smooth" });
       });

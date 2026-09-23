@@ -103,12 +103,12 @@ test('dancer mapping retains cities and grouping mixes cities without duplicates
   assert.equal(mapped.city, 'Miami');
   const rows = ['Las Vegas', 'Las Vegas', 'Las Vegas', 'Miami', 'Atlanta'].map((city, order) => ({ id: order, city, order }));
   const groups = ctx.dancerDirectoryGroups(rows, 'All cities');
-  assert.deepEqual(Array.from(groups.noSchedule, row => row.city), ['Las Vegas', 'Miami', 'Atlanta', 'Las Vegas', 'Las Vegas']);
-  assert.equal(new Set(groups.noSchedule.map(row => row.id)).size, rows.length);
-  assert.equal(ctx.dancerDirectoryGroups([], 'All cities').noSchedule.length, 0);
+  assert.deepEqual(Array.from(groups.notWorkingNow, row => row.city), ['Las Vegas', 'Miami', 'Atlanta', 'Las Vegas', 'Las Vegas']);
+  assert.equal(new Set(groups.notWorkingNow.map(row => row.id)).size, rows.length);
+  assert.equal(ctx.dancerDirectoryGroups([], 'All cities').notWorkingNow.length, 0);
 });
 
-test('combined cards use the dancer city at a date boundary and retain profile identity', () => {
+test('combined cards hide retired future schedules and retain profile identity', () => {
   const vegas = { id: 'vegas', slug: 'luna-vegas', name: 'Luna', city: 'Las Vegas', scheduled: true, shiftStartsAt: '2026-09-08T05:00:00Z' };
   const miami = { ...vegas, id: 'miami', slug: 'luna-miami', city: 'Miami' };
   const ctx = context({ allCitiesMarket: { dancers: [vegas, miami], venues: [] },
@@ -116,8 +116,8 @@ test('combined cards use the dancer city at a date boundary and retain profile i
     cityTimeZone: city => city === 'Miami' ? 'America/New_York' : 'America/Los_Angeles',
   });
   vm.runInContext(fn('discoveryMarket') + fn('profileDiscoveryCity') + fn('homeDancerGridScheduleLabel') + fn('findProfile'), ctx);
-  assert.equal(ctx.homeDancerGridScheduleLabel(vegas, 'All cities'), 'Upcoming · Sep 7');
-  assert.equal(ctx.homeDancerGridScheduleLabel(miami, 'All cities'), 'Upcoming · Sep 8');
+  assert.equal(ctx.homeDancerGridScheduleLabel(vegas, 'All cities'), 'Not working now');
+  assert.equal(ctx.homeDancerGridScheduleLabel(miami, 'All cities'), 'Not working now');
   assert.equal(ctx.findProfile('luna-miami').id, 'miami');
   assert.equal(ctx.findProfile('luna-vegas').id, 'vegas');
   assert.equal(ctx.citySelect.value, 'All cities');
