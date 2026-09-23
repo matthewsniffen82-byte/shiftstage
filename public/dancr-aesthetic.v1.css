@@ -12895,6 +12895,59 @@ html body.dancr-button-system > .app main.stack > section.stack
   outline-offset: 2px !important;
 }
 
+/* Android utilities use a black face above native button painting.
+ * iPhone styling and the existing button actions stay unchanged. */
+html:is(.is-android, .android-rendering) body.dancr-button-system > .app main.stack > section.stack
+  > #results.home-venue-discovery-feed > .home-venue-discovery-slide
+  .venue-card-secondary-actions.home-venue-discovery-action-rail > button.venue-card-secondary-action {
+  --venue-utility-face: #050507;
+  --venue-utility-edge: #34343c;
+  --venue-utility-shadow: none;
+  position: relative !important;
+  isolation: isolate !important;
+}
+
+html:is(.is-android, .android-rendering) body.dancr-button-system > .app main.stack > section.stack
+  > #results.home-venue-discovery-feed > .home-venue-discovery-slide
+  .venue-card-secondary-actions.home-venue-discovery-action-rail > button.venue-card-secondary-action::before {
+  content: "" !important;
+  position: absolute !important;
+  inset: -1px !important;
+  display: block !important;
+  border: 1px solid var(--venue-utility-edge) !important;
+  border-radius: inherit !important;
+  background: linear-gradient(var(--venue-utility-face), var(--venue-utility-face)) !important;
+  box-shadow: var(--venue-utility-shadow) !important;
+  opacity: 1 !important;
+  transform: none !important;
+  filter: none !important;
+  z-index: -1;
+  pointer-events: none !important;
+}
+
+@media (hover: hover) {
+  html:is(.is-android, .android-rendering) body.dancr-button-system > .app main.stack > section.stack
+    > #results.home-venue-discovery-feed > .home-venue-discovery-slide
+    .venue-card-secondary-actions.home-venue-discovery-action-rail > button.venue-card-secondary-action:hover {
+    --venue-utility-face: #231b2e;
+    --venue-utility-edge: #66586f;
+  }
+}
+
+html:is(.is-android, .android-rendering) body.dancr-button-system > .app main.stack > section.stack
+  > #results.home-venue-discovery-feed > .home-venue-discovery-slide
+  .venue-card-secondary-actions.home-venue-discovery-action-rail > button.venue-card-favorite-action[aria-pressed="true"] {
+  --venue-utility-face: #2d1f4b;
+  --venue-utility-edge: var(--dancr-color-avatar-ring-violet);
+  --venue-utility-shadow: 0 0 10px rgba(139, 92, 246, .14);
+}
+
+html:is(.is-android, .android-rendering) body.dancr-button-system > .app main.stack > section.stack
+  > #results.home-venue-discovery-feed > .home-venue-discovery-slide
+  .venue-card-secondary-actions.home-venue-discovery-action-rail > .venue-card-directions-action:not(.is-active):not([aria-pressed="true"]):not(:disabled):not([aria-disabled="true"]) {
+  background: #050507 linear-gradient(#050507, #050507) !important;
+}
+
 /* Reduce the card halo and live-avatar bloom while retaining the green ring. */
 html body.dancr-button-system > .app main.stack > section.stack
   > #results.home-venue-discovery-feed > .home-venue-discovery-slide {
