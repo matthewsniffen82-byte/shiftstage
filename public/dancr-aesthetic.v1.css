@@ -13447,6 +13447,9 @@ body.dancer-directory-active.dancr-button-system > .app main.stack > section.sta
 }
 
 /* Draw the same black surface above native button painting on both platforms. */
+html body.dancr-button-system > .app main.stack > .home-discovery-controls
+  :is(#citySelectPanel, #homeAdvancedFilters)
+  :is(.city-picker-option, #distanceSelectButton, #venueSelectButton, #locationBtn, #homeFilterReset),
 html body.dancer-directory-active.dancr-button-system > .app main.stack > .home-discovery-controls
   :is(#citySelectButton, #homeFilterToggle),
 html body.dancer-directory-active.dancr-button-system > .app main.stack > section.stack
@@ -13468,6 +13471,9 @@ html body.dancer-directory-active.dancr-button-system > .app main.stack > sectio
   -webkit-appearance: none !important;
 }
 
+html body.dancr-button-system > .app main.stack > .home-discovery-controls
+  :is(#citySelectPanel, #homeAdvancedFilters)
+  :is(.city-picker-option, #distanceSelectButton, #venueSelectButton, #locationBtn, #homeFilterReset)::before,
 html body.dancer-directory-active.dancr-button-system > .app main.stack > .home-discovery-controls
   :is(#citySelectButton, #homeFilterToggle)::before,
 html body.dancer-directory-active.dancr-button-system > .app main.stack > section.stack
@@ -13487,6 +13493,9 @@ html body.dancer-directory-active.dancr-button-system > .app main.stack > sectio
   pointer-events: none !important;
 }
 
+html body.dancr-button-system > .app main.stack > .home-discovery-controls
+  :is(#citySelectPanel, #homeAdvancedFilters)
+  :is(.city-picker-option[aria-selected="true"], #distanceSelectButton[aria-expanded="true"], #venueSelectButton[aria-expanded="true"]),
 html body.dancer-directory-active.dancr-button-system > .app main.stack > .home-discovery-controls
   :is(#citySelectButton[aria-expanded="true"], #homeFilterToggle:is(.is-open, .has-active-filters)) {
   --discovery-control-face: #160e24;
@@ -13516,6 +13525,9 @@ html body.dancer-directory-active.dancr-button-system > .app main.stack > sectio
   box-shadow: none !important;
 }
 
+html body.dancr-button-system > .app main.stack > .home-discovery-controls
+  :is(#citySelectPanel, #homeAdvancedFilters)
+  :is(.city-picker-option, #distanceSelectButton, #venueSelectButton, #locationBtn, #homeFilterReset):focus-visible,
 html body.dancer-directory-active.dancr-button-system > .app main.stack > .home-discovery-controls
   :is(#citySelectButton, #homeFilterToggle):focus-visible,
 html body.dancer-directory-active.dancr-button-system > .app main.stack > section.stack
@@ -13529,4 +13541,47 @@ body.dancer-directory-active.dancr-button-system > .app main.stack > section.sta
   min-height: 30px !important;
   padding-top: 8px !important;
   margin-block: 4px 6px !important;
+}
+
+/* Expanded discovery panels use the same quiet surfaces as their triggers. */
+html body.dancr-button-system > .app main.stack > .home-discovery-controls
+  :is(.city-picker-inline, .home-advanced-filters).is-open {
+  padding: 8px !important;
+  gap: 6px !important;
+  border: 1px solid #34343c !important;
+  border-radius: 12px !important;
+  background: #050507 !important;
+  box-shadow: none !important;
+}
+
+html body.dancr-button-system > .app main.stack > .home-discovery-controls
+  .city-picker-options {
+  gap: 4px !important;
+}
+
+html body.dancr-button-system > .app main.stack > .home-discovery-controls
+  .city-picker-stats {
+  color: #aaa6b3;
+}
+
+html body.dancr-button-system > .app main.stack > .home-discovery-controls
+  :is(.city-picker-chevron, .venue-picker-chevron) {
+  width: 17px;
+  height: 17px;
+  stroke: #aaa6b3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+html body.dancr-button-system > .app main.stack > .home-discovery-controls
+  #locationBtn.location-btn {
+  clip-path: none !important;
+  -webkit-clip-path: none !important;
+}
+
+html body.dancr-button-system > .app main.stack > .home-discovery-controls
+  #locationBtn.location-btn .icon {
+  color: #aaa6b3 !important;
+  stroke: currentColor !important;
+  filter: none !important;
 }
