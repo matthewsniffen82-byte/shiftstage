@@ -32,7 +32,9 @@ test("compact action layout is shared by live, routed, and dashboard-preview pro
   assert.match(live, /class="modal-actions profile-actions-compact /);
   assert.match(actions, /live-actions profile-actions-compact is-no-live-shift dancer-profile-preview-actions/);
   assert.match(actions, /live-actions profile-actions-compact\$\{hasLiveActions/);
-  assert.match(read("app/layout.tsx"), /import "\.\.\/public\/profile-actions-compact\.css"/);
+  for (const layout of ["app/dancers/layout.tsx", "app/dashboard/layout.tsx"]) {
+    assert.match(read(layout), /import "\.\.\/\.\.\/public\/profile-actions-compact\.css"/);
+  }
   assert.match(live, /<link href="\/profile-actions-compact\.css" rel="stylesheet">/);
   assert.match(read("src/lib/dancr/static-asset-paths.mjs"), /"\/profile-actions-compact\.css"/);
 });

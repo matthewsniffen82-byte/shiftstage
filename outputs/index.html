@@ -50857,10 +50857,13 @@
       button.disabled = isSharing;
       button.classList.toggle("is-confirmed", isConfirmed);
       button.setAttribute("aria-live", "polite");
-      button.innerHTML = actionButtonLabel(
+      button.setAttribute("aria-busy", String(isSharing));
+      if (!button.dataset.shareDefaultLabel) button.dataset.shareDefaultLabel = button.getAttribute("aria-label") || "Share club profile";
+      button.setAttribute("aria-label", isSharing ? "Sharing club profile" : isConfirmed ? "Club profile shared" : button.dataset.shareDefaultLabel);
+      button.innerHTML = `<span class="profile-action-main">${actionButtonLabel(
         isConfirmed ? "check" : "share",
         isSharing ? "Sharing..." : isConfirmed ? "Shared" : "Share"
-      );
+      )}</span>`;
       const resetTimer = Number(button.dataset.shareResetTimer || 0);
       if (resetTimer) window.clearTimeout(resetTimer);
       delete button.dataset.shareResetTimer;
@@ -53332,12 +53335,12 @@
                 <div class="venue-location-actions venue-primary-actions" aria-label="Venue travel actions">
                   ${venueDirectionsMarkup({ venue, className: "venue-address-directions", city })}
                 </div>
-                <div class="venue-secondary-actions" aria-label="Venue profile actions">
-                  <button class="action-btn secondary follow-venue-btn ${followsVenue ? "is-following" : ""}" type="button" data-venue-follow="${venueValue}" data-account-action="venue-follow" aria-pressed="${followsVenue}">
-                    ${actionButtonLabel("heart", followsVenue ? "Following" : "Follow")}
+                <div class="venue-secondary-actions profile-actions-compact" aria-label="Venue profile actions">
+                  <button class="action-btn secondary follow-venue-btn profile-action-icon-control ${followsVenue ? "is-following" : ""}" type="button" data-venue-follow="${venueValue}" data-account-action="venue-follow" aria-pressed="${followsVenue}">
+                    <span class="profile-action-main">${actionButtonLabel(followsVenue ? "check" : "personPlus", followsVenue ? "Following" : "Follow")}</span>
                   </button>
-                  <button class="action-btn secondary venue-detail-share" type="button" data-share-venue="${venueValue}" data-share-city="${escapeOptionValue(city)}" aria-label="Share ${escapeHtml(details.name)} club profile">
-                    ${actionButtonLabel("share", "Share")}
+                  <button class="action-btn secondary venue-detail-share profile-action-icon-control profile-share-action" type="button" data-share-venue="${venueValue}" data-share-city="${escapeOptionValue(city)}" aria-label="Share ${escapeHtml(details.name)} club profile">
+                    <span class="profile-action-main">${actionButtonLabel("share", "Share")}</span>
                   </button>
                 </div>
               </div>
