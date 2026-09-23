@@ -286,9 +286,6 @@
       const city = venue.city || citySelect.value;
       const details = venueDetails(venue, city);
       const operatingStatus = venueOperatingStatus(details.hours, city);
-      const operatingSummaryLabel = operatingStatus.state === "unknown"
-        ? "Not posted"
-        : operatingStatus.label;
       const visual = venueVisualAttrs(venue);
       const logoMarkup = venueLogoMarkup(venue, "venue-detail-logo");
       const localProfiles = venueDancers(city, venue.name);
@@ -297,11 +294,6 @@
         .sort((a, b) => shiftStartMinutes(a.time) - shiftStartMinutes(b.time));
       const followsVenue = isFollowingVenue(city, venue.name);
       const venueValue = escapeOptionValue(venue.id || venue.name);
-      const quickStats = [
-        tonight.length
-          ? `<button class="venue-quick-stat is-working" type="button" data-venue-jump="venue-working-now" aria-label="${tonight.length} ${tonight.length === 1 ? "dancer" : "dancers"} working now"><strong>${tonight.length}</strong><span>working now</span></button>`
-          : `<span class="venue-quick-stat is-working is-empty" role="status" aria-label="No dancers working now"><strong>0</strong><span>working now</span></span>`,
-      ].join("");
       const activitySections = [
         `
           <section class="venue-activity-section is-working" aria-labelledby="venue-working-now">
@@ -342,14 +334,12 @@
                   </div>
                 </div>
               </div>
-              <div class="venue-status-grid" aria-label="Tonight at ${escapeHtml(details.name)}">
-                <span class="venue-operating-summary">
-                  <span class="venue-status-kicker">Hours</span>
-                  <strong class="venue-operating-status is-${operatingStatus.state}">${escapeHtml(operatingSummaryLabel)}</strong>
-                  ${operatingStatus.hoursLabel ? `<span class="venue-status-pill">${escapeHtml(operatingStatus.hoursLabel)}</span>` : ""}
-                </span>
-                ${quickStats}
-              </div>
+              ${operatingStatus.state !== "unknown" ? `
+                <div class="venue-profile-hours" aria-label="Opening hours">
+                  <strong>${escapeHtml(operatingStatus.label)}</strong>
+                  <span>Hours · ${escapeHtml(operatingStatus.hoursLabel)}</span>
+                </div>
+              ` : ""}
               ${venueOfferMarkup(venue)}
             </div>
           </article>

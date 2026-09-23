@@ -6629,8 +6629,8 @@ body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-her
 body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-main-photo {
   position: relative !important;
   isolation: isolate;
-  min-height: clamp(88px, 20vw, 104px) !important;
-  height: clamp(88px, 20vw, 104px) !important;
+  min-height: clamp(64px, 18vw, 80px) !important;
+  height: clamp(64px, 18vw, 80px) !important;
   border: 0 !important;
   border-radius: 0 !important;
   box-shadow: none !important;
@@ -6654,6 +6654,27 @@ body.dancr-button-system #results.venue-profile-overlay .venue-detail
   width: 100%;
 }
 
+/* Clubs without uploaded artwork keep their name inside the compact stage. */
+body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-art {
+  padding: 4px;
+}
+
+body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-sign.venue-sign {
+  width: 100% !important;
+  padding: 0;
+  border: 0;
+  background: transparent !important;
+}
+
+body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-sign-name {
+  font-size: clamp(14px, 4vw, 20px);
+  line-height: 1.2;
+}
+
+body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-sign-meta {
+  display: none;
+}
+
 /* The logo stage shares the card surface, including its exposed top/bottom
  * inset on iPhone. Approved cover photos retain their own background. */
 body.dancr-button-system #results.venue-profile-overlay .venue-detail
@@ -6674,7 +6695,7 @@ body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-det
   width: calc(100% - clamp(82px, 22vw, 112px)) !important;
   height: calc(100% - 6px) !important;
   max-width: 420px !important;
-  max-height: 96px !important;
+  max-height: 74px !important;
   overflow: visible !important;
   border: 0 !important;
   border-radius: 0 !important;
@@ -6798,6 +6819,22 @@ body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-ide
   align-items: center;
   gap: 3px 7px;
   color: var(--dancr-color-text-secondary) !important;
+}
+
+/* Only published hours earn a row; the live dancer count sits above its grid. */
+body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-profile-hours {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 3px 8px;
+  color: var(--dancr-color-text-secondary);
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-profile-hours strong {
+  color: var(--dancr-color-text-primary);
+  font-weight: 650;
 }
 
 body.dancr-button-system #results.venue-profile-overlay .venue-detail
@@ -7036,7 +7073,18 @@ body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-act
   min-width: 0;
   display: grid;
   grid-column: 1 / -1;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 48px;
   gap: 6px;
+}
+
+body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-action-stack > .venue-primary-actions {
+  grid-column: 1;
+  min-width: 0;
+}
+
+body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-action-stack > .venue-secondary-actions {
+  grid-column: 2 / -1;
+  min-width: 0;
 }
 
 body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-location-actions {
@@ -7434,24 +7482,12 @@ body.dancr-button-system #results.venue-profile-overlay .venue-detail
   position: relative !important;
   width: 100% !important;
   min-width: 0 !important;
-  overflow: hidden !important;
-  padding: 8px 10px !important;
-  border: 1px solid color-mix(
-    in srgb,
-    var(--dancr-color-success) 28%,
-    var(--dancr-color-border-subtle)
-  ) !important;
-  border-radius: 15px !important;
-  background:
-    radial-gradient(circle at 94% 0%, var(--dancr-color-success-soft), transparent 13rem),
-    color-mix(
-      in srgb,
-      var(--dancr-color-success) 5%,
-      var(--dancr-color-surface-subtle)
-    ) !important;
-  box-shadow:
-    0 10px 26px var(--dancr-color-black-soft),
-    inset 0 1px 0 var(--dancr-color-white-soft) !important;
+  overflow: visible !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
 }
 
 body.dancr-button-system #results.venue-profile-overlay .venue-detail
@@ -7731,7 +7767,7 @@ body.dancr-button-system #results.venue-profile-overlay .venue-detail
 body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-detail-exploration {
   min-width: 0;
   display: grid;
-  gap: 16px;
+  gap: 12px;
   padding: 10px 12px 16px;
 }
 
@@ -13226,11 +13262,9 @@ body.dancr-button-system .public-profile-shell
     inset 0 1px 0 var(--dancr-color-white-soft) !important;
 }
 
-/* Dancer and club profiles use the same quiet frame for Free Entry. */
+/* Dancer profiles retain a quiet frame around their live venue and Free Entry. */
 body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell)
-  .profile-tonight-card:is(.is-now, .has-club-deal),
-body.dancr-button-system #results.venue-profile-overlay .venue-detail
-  .venue-offer-card.venue-deal-preview.is-active-club-deal {
+  .profile-tonight-card:is(.is-now, .has-club-deal) {
   border-color: #34303e !important;
   background: #09080d !important;
   box-shadow: none !important;
@@ -13276,6 +13310,10 @@ html body.dancr-button-system #results.venue-profile-overlay .venue-detail
   height: 48px !important;
   min-height: 48px !important;
   max-height: 48px !important;
+  min-width: 0 !important;
+  gap: 5px !important;
+  padding-inline: 5px !important;
+  font-size: 12px !important;
   border-radius: var(--profile-utility-radius) !important;
   box-shadow: none !important;
   -webkit-backdrop-filter: none !important;
