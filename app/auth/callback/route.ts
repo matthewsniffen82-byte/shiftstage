@@ -164,6 +164,13 @@ function callbackHtml(
       <p>Your email is verified. Complete the required dancer profile steps before your profile can go live.</p>
       <a id="dancerConfirmationContinue" href="${escapeHtml(redirectPath)}">Complete your profile</a>
     </main>
+    <main id="emailChangePending" class="dancr-status-card" hidden>
+      <p class="eyebrow">Email change</p>
+      <span class="dancr-status-mark" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="3" /><path d="m4 7 8 6 8-6" /></svg></span>
+      <h1>Check your other inbox</h1>
+      <p>Your email change still needs confirmation. Open the links sent to both your current and new email addresses. Your dashboard will keep showing your current email until both are confirmed.</p>
+      <a href="/?auth=login">Continue to sign in</a>
+    </main>
     <main id="confirmationError" class="dancr-status-card" hidden>
       <p class="eyebrow">MyDancr</p>
       <span class="dancr-status-mark" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8" /><path d="M12 8v4m0 4h.01" /></svg></span>
@@ -192,6 +199,12 @@ function callbackHtml(
       const redirectTo = ${redirectJson};
       const showDancerConfirmation = ${dancerConfirmationJson};
       const fragmentParams = new URLSearchParams(window.location.hash ? window.location.hash.slice(1) : "");
+      const queryParams = new URLSearchParams(window.location.search);
+      const pendingEmailMessage = "Confirmation link accepted. Please proceed to confirm link sent to the other email";
+      // The provider's first-link redirect is guidance only, never a verified session.
+      const emailChangePending = ${JSON.stringify(Boolean(callbackSession?.emailChangePending))}
+        || fragmentParams.get("message") === pendingEmailMessage
+        || queryParams.get("message") === pendingEmailMessage;
       const isPasswordReset = ${JSON.stringify(passwordReset)} || fragmentParams.get("type") === "recovery";
       const redirectUrl = new URL(redirectTo, window.location.origin);
       const serverUnavailable = ${JSON.stringify(unavailable)};
@@ -247,6 +260,12 @@ function callbackHtml(
       async function completeCallback() {
         if (window.location.hash || window.location.search) {
           window.history.replaceState({}, document.title, window.location.pathname);
+        }
+        if (emailChangePending && !isPasswordReset && !serverSession?.accessToken && !fragmentParams.get("access_token")) {
+          document.title = "Confirm email change | MyDancr";
+          document.getElementById("openingDancr").hidden = true;
+          document.getElementById("emailChangePending").hidden = false;
+          return;
         }
         let startingBrowserSession;
         try {
@@ -360,6 +379,9 @@ function escapeHtml(value: string) {
 async function readCallbackSession(request: Request) {
   const url = new URL(request.url);
   const authData = await confirmSupabaseCallback(url);
+  if (authData?.emailChangePending) {
+    return { accessToken: undefined, refreshToken: undefined, expiresAt: undefined, account: null, emailChangePending: true };
+  }
   if (!authData?.user) return null;
 
   try {
@@ -385,6 +407,7 @@ async function readCallbackSession(request: Request) {
       refreshToken: authData.session?.refresh_token,
       expiresAt: authData.session?.expires_at,
       account,
+      emailChangePending: false,
     };
   } catch (error) {
     console.error("AUTH_CALLBACK_ACCOUNT_SYNC_FAILED", {
@@ -395,11 +418,12 @@ async function readCallbackSession(request: Request) {
       refreshToken: authData.session?.refresh_token,
       expiresAt: authData.session?.expires_at,
       account: null,
+      emailChangePending: false,
     };
   }
 }
 
-async function confirmSupabaseCallback(url: URL): Promise<{ session: CallbackSession; user: CallbackUser } | null> {
+async function confirmSupabaseCallback(url: URL): Promise<{ session: CallbackSession; user: CallbackUser | null; emailChangePending?: boolean } | null> {
   const code = url.searchParams.get("code");
   const tokenHash = url.searchParams.get("token_hash");
   if (!code && !tokenHash) return null;
@@ -417,6 +441,9 @@ async function confirmSupabaseCallback(url: URL): Promise<{ session: CallbackSes
     type: readOtpType(url.searchParams.get("type")),
   });
   if (isTemporaryCallbackError(error)) throw error;
+  if (!error && url.searchParams.get("type") === "email_change" && !data.session && !data.user?.id) {
+    return { session: null, user: null, emailChangePending: true };
+  }
   if (error || !data.user) return null;
 
   return { session: data.session, user: data.user };

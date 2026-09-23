@@ -67,7 +67,7 @@ export async function PATCH(request: Request) {
         ok: true,
         account,
         session,
-        message: "Check your new email address to confirm the change.",
+        message: "Check both your current and new email inboxes and confirm both links. Your sign-in email will change after both confirmations.",
       });
     }
 

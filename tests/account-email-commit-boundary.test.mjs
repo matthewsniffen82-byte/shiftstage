@@ -92,7 +92,7 @@ test("confirmed provider acceptance does not depend on another account read", as
   assert.equal(result.status, 200);
   assert.deepEqual(result.body, {
     ok: true, account: originalAccount, session: originalSession,
-    message: "Check your new email address to confirm the change.",
+    message: "Check both your current and new email inboxes and confirm both links. Your sign-in email will change after both confirmations.",
   });
   assert.equal(f.updates.length, 1);
   assert.deepEqual(f.events, ["account", "provider"]);

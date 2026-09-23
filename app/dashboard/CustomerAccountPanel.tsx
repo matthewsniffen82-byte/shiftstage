@@ -90,7 +90,7 @@ export default function CustomerAccountPanel({ account, accountRole = "customer"
       });
       if (!isCurrent()) return;
       if (data.account?.id === accountId) onAccountChange(data.account);
-      setFeedback({ error: false, message: data.message || (credential === "email" ? "Check your email for confirmation instructions." : "Your password has been updated.") });
+      setFeedback({ error: false, message: data.message || (credential === "email" ? "Check both your current and new email inboxes and confirm both links." : "Your password has been updated.") });
       closeForm(credential);
     } catch (error) {
       if (!isCurrent()) return;
@@ -155,7 +155,7 @@ function CredentialForm({ credential, busy, onSubmit, onCancel }: {
   useEffect(() => { input.current?.focus({ preventScroll: true }); }, []);
   return <form id="customer-credential-form" className="customer-credential-form" aria-label={`Change ${credential}`} aria-busy={busy} onSubmit={onSubmit}>
     <h3>Change {credential}</h3>
-    <p>{credential === "email" ? "We’ll email confirmation instructions. Keep using your current email until the change is confirmed." : "Changing your password signs out your other sessions."}</p>
+    <p>{credential === "email" ? "Confirm the links sent to both your current and new email addresses. Keep using your current email until both are confirmed." : "Changing your password signs out your other sessions."}</p>
     <label>{credential === "email" ? "New email address" : "New password"}<input ref={input} name={credential} type={credential === "email" ? "email" : "password"} autoComplete={credential === "email" ? "email" : "new-password"} autoCapitalize="none" spellCheck={false} required minLength={credential === "password" ? 6 : undefined} maxLength={credential === "email" ? 254 : 1024} disabled={busy} /></label>
     {credential === "password" ? <PasswordRequirements /> : null}
     {credential === "password" ? <label>Confirm new password<input name="confirmPassword" type="password" autoComplete="new-password" required minLength={6} maxLength={1024} disabled={busy} /></label> : null}
