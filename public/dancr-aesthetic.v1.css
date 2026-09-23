@@ -8516,10 +8516,10 @@ body.dancer-directory-active.dancr-button-system > .app main.stack > .home-disco
 }
 
 /* Expanded filters stay compact so discovery content remains the visual
- * priority. Violet indicates filter state; cyan remains exclusive to
- * Upcoming. The active control uses one border instead of a second glow. */
+ * priority. Violet fill indicates open or applied filters. Pointer focus can
+ * remain after closing; keyboard focus gets its own visible outline. */
 body.dancr-button-system > .app main.stack > .home-discovery-controls
-  .home-filter-toggle:is(.is-open, .has-active-filters, :focus, :focus-visible) {
+  .home-filter-toggle:is(.is-open, .has-active-filters) {
   border-color: var(--dancr-color-brand-primary-strong) !important;
   outline: 0 !important;
   background: color-mix(
@@ -8527,6 +8527,13 @@ body.dancr-button-system > .app main.stack > .home-discovery-controls
     var(--dancr-color-brand-primary) 10%,
     var(--dancr-color-surface-raised)
   ) !important;
+  box-shadow: none !important;
+}
+
+body.dancr-button-system > .app main.stack > .home-discovery-controls
+  .home-filter-toggle:focus-visible {
+  outline: 2px solid var(--dancr-color-text-primary) !important;
+  outline-offset: 3px !important;
   box-shadow: none !important;
 }
 
