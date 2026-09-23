@@ -6,6 +6,7 @@ import vm from 'node:vm';
 import ts from 'typescript';
 import { evaluateDancerMediaIdentity } from '../src/lib/dancr/media-identity-core.ts';
 import { evaluateDancrImageModeration } from '../src/lib/dancr/moderation-policy.ts';
+import { evaluateMediaBranding } from '../src/lib/dancr/media-branding-policy.ts';
 import { runVideoReviewChecks } from '../src/lib/dancr/video-review-checks.ts';
 import { mediaIdentityRuntime } from './helpers/media-identity-runtime.mjs';
 
@@ -55,10 +56,10 @@ function videoRuntime(identityAnalysis) {
     downloadVideo: async () => Buffer.from('video'), assertAllowedVideoContainer() {},
     probeVideoDurationSeconds: async () => 30, extractVideoFrames: async () => frames,
     extractOptionalAudio: async () => null,
-    runVideoReviewChecks, evaluateDancerMediaIdentity, evaluateDancrImageModeration,
+    runVideoReviewChecks, evaluateDancerMediaIdentity, evaluateDancrImageModeration, evaluateMediaBranding,
     moderateFrames: async () => frames.map(() => ({ flagged: false })),
     moderateText: async () => ({ flagged: false }),
-    classifyVideoPolicy: async () => ({ decision: 'approved', reasonCodes: [], confidence: 0.99 }),
+    classifyVideoPolicy: async () => ({ decision: 'approved', reasonCodes: [], confidence: 0.99, branding: 'absent', brandingConfidence: 0.99 }),
     analyzeDancerMediaIdentity: async input => {
       assert.equal(input.mediaType, 'video');assert.equal(input.targetImages, frames);
       assert.equal('referenceImage' in input, false);

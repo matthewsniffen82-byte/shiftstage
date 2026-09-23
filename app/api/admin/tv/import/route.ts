@@ -14,7 +14,6 @@ import {
   MYDANCR_TV_PROFILE_VIDEO_LIMIT,
   publishPlatformMyDancrTvUpload,
   retryMyDancrTvAutomatedModeration,
-  reviewMyDancrTvVideo,
 } from "@/src/lib/dancr/tv";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
@@ -209,11 +208,7 @@ async function finalizeImport(body: any, adminId: string) {
       if (!data || data.id !== row.id) throw invalid("This import video is no longer available.", 409);
       return data;
     };
-    let finalized = await loadCurrentVideo();
-    if (finalized.status === "submitted") {
-      await reviewMyDancrTvVideo(admin, adminId, row.id, "approved", "Approved for publication by the platform media owner.");
-      finalized = await loadCurrentVideo();
-    }
+    const finalized = await loadCurrentVideo();
     const receipt = await recordImportFinalization(admin, { adminId, videoId: row.id, batchId, snapshot: finalized });
     console.info(JSON.stringify({ event: "mydancr_tv.platform_import_finalized", adminId, batchId,
       videoId: receipt.videoId, status: receipt.status, auditId: receipt.auditId, alreadyRecorded: receipt.alreadyRecorded }));

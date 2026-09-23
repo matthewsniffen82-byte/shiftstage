@@ -2055,6 +2055,7 @@ function ImageModerationQueue({
                 </details>
                 {String(record.decision) === "review" ? (
                   <>
+                    <p>Reject any clear branding or logo, including clothing, backgrounds, and watermarks. Approve a questionable mark only after confirming it is not branding.</p>
                     <textarea
                       value={notesById[recordId] || ""}
                       disabled={controlsBusy}
@@ -2759,6 +2760,10 @@ function VenueManager({
       if (!isCurrentVenueAction(action)) return;
       if (!data.venue) throw new Error(`Unable to upload venue ${kind}.`);
       mergeVenue(venueId, data.venue);
+      if (data.pendingReview) {
+        setVenueStatus(venueId, asText(data.message));
+        return;
+      }
       setVenueStatus(venueId, venue.is_active !== false ? `Venue ${kind} updated on the live page.` : `Venue ${kind} uploaded. Any prior approval was reset because the page changed.`);
     } catch (error) {
       if (!isCurrentVenueAction(action)) return;

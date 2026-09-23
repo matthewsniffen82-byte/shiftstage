@@ -15,6 +15,7 @@ import { getServerEnv } from "../server-env";
 import { runVideoReviewChecks } from "./video-review-checks";
 import { assertAllowedVideoContainer } from "./video-upload-policy";
 import { LOCAL_VIDEO_INPUT_OPTIONS } from "./local-video-input.ts";
+import { evaluateMediaBranding, parseMediaBrandingAnalysis, type MediaBrandingAnalysis } from "./media-branding-policy.ts";
 import {
   DANCER_MEDIA_CONTENT_RULES,
   DANCER_MEDIA_POLICY_REASON_CODES as VIDEO_POLICY_REASON_CODES,
@@ -36,7 +37,7 @@ import {
 
 type AdminClient = SupabaseClient<any, any, any>;
 
-type VideoPolicyDecision = {
+type VideoPolicyDecision = MediaBrandingAnalysis & {
   decision: DancrImageModerationDecision;
   reasonCodes: string[];
   confidence: number;
@@ -54,6 +55,9 @@ export type MyDancrTvModerationResult = {
     textDecision: DancrImageModerationDecision;
     policyDecision: DancrImageModerationDecision;
     policyConfidence: number;
+    branding: MediaBrandingAnalysis["branding"];
+    brandingConfidence: number;
+    brandingDecision: DancrImageModerationDecision;
     identityDecision: DancrImageModerationDecision;
     identityConfidence: number;
     personCount: number;
@@ -117,7 +121,8 @@ export async function moderateStoredMyDancrTvVideo(
     const evaluations = [...frameEvaluations, textEvaluation];
     const providerDecision = strongestDecision(evaluations.map((evaluation) => evaluation.decision));
     const safetyDecision = combineVideoDecisions(providerDecision, policyDecision);
-    const decision = strongestDecision([safetyDecision, identityEvaluation.decision]);
+    const brandingEvaluation = evaluateMediaBranding(policyDecision);
+    const decision = strongestDecision([safetyDecision, identityEvaluation.decision, brandingEvaluation.decision]);
     const reasonCodes = uniqueReasonCodes([
       ...evaluations.flatMap((evaluation, index) =>
         evaluation.reasonCodes.map((reason) =>
@@ -126,12 +131,13 @@ export async function moderateStoredMyDancrTvVideo(
       ),
       ...policyDecision.reasonCodes.map((reason) => `policy_${reason}`),
       ...identityEvaluation.reasonCodes,
+      brandingEvaluation.reasonCode,
     ]);
 
     const result = {
       decision,
       reasonCodes,
-      categoryScores: maximumCategoryScores(evaluations.map((evaluation) => evaluation.categoryScores)),
+      categoryScores: { ...maximumCategoryScores(evaluations.map((evaluation) => evaluation.categoryScores)), branding_confidence: policyDecision.brandingConfidence },
       providerFlagged: evaluations.some((evaluation) => evaluation.providerFlagged),
       frameCount: frames.length,
       moderationModel: `${DANCR_IMAGE_MODERATION_MODEL}+${VIDEO_POLICY_MODEL}+${DANCR_MEDIA_IDENTITY_MODEL}`,
@@ -140,6 +146,9 @@ export async function moderateStoredMyDancrTvVideo(
         textDecision: textEvaluation.decision,
         policyDecision: policyDecision.decision,
         policyConfidence: policyDecision.confidence,
+        branding: policyDecision.branding,
+        brandingConfidence: policyDecision.brandingConfidence,
+        brandingDecision: brandingEvaluation.decision,
         identityDecision: identityEvaluation.decision,
         identityConfidence: identityAnalysis.personCountConfidence,
         personCount: identityAnalysis.personCount,
@@ -180,6 +189,11 @@ function combineVideoDecisions(
 ): DancrImageModerationDecision {
   if (providerDecision === "rejected") return "rejected";
   if (policyDecision.decision === "rejected") {
+    // Questionable branding must not become a rejection merely because the
+    // model assigned high confidence to its overall policy decision.
+    if (policyDecision.reasonCodes.every(reason => ["visible_branding_or_logo", "branding_or_logo_uncertain"].includes(reason))) {
+      return evaluateMediaBranding(policyDecision).decision === "rejected" ? "rejected" : "review";
+    }
     return policyDecision.confidence >= VIDEO_POLICY_REJECT_CONFIDENCE ? "rejected" : "review";
   }
   if (providerDecision === "review" || policyDecision.decision === "review") return "review";
@@ -397,7 +411,7 @@ async function classifyVideoPolicy(
       type: "image_url",
       image_url: {
         url: `data:image/jpeg;base64,${frame.toString("base64")}`,
-        detail: "low",
+        detail: "high",
       },
     })),
   ];
@@ -415,8 +429,10 @@ async function classifyVideoPolicy(
           schema: {
             type: "object",
             additionalProperties: false,
-            required: ["decision", "reason_codes", "confidence"],
+            required: ["decision", "reason_codes", "confidence", "branding", "brandingConfidence"],
             properties: {
+              branding: { type: "string", enum: ["absent", "present", "uncertain"] },
+              brandingConfidence: { type: "number", minimum: 0, maximum: 1 },
               decision: { type: "string", enum: ["approved", "review", "rejected"] },
               reason_codes: {
                 type: "array",
@@ -455,6 +471,7 @@ async function classifyVideoPolicy(
   );
   if (!reasonCodes.length) throw new Error("Video policy review returned no reason.");
   return {
+    ...parseMediaBrandingAnalysis(parsed),
     decision: parsed.decision,
     reasonCodes,
     confidence: Math.max(0, Math.min(1, Number(parsed.confidence) || 0)),

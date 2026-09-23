@@ -24,7 +24,7 @@ vm.runInNewContext(ts.transpileModule(readFileSync(new URL('../src/lib/dancr/sto
 const version='2020-01-01T00:00:00Z';
 const claimedVersion='2020-01-01T00:00:01.001Z';
 const legacyRetryClaim=process.env.MYDANCR_AVATAR_SOURCE_BASELINE==='1'||process.env.MYDANCR_PRIVATE_UPLOAD_BASELINE==='1';
-const clearContent={nudity:'absent',sexualActivity:'absent',decision:'approved',reasonCodes:['safe_adult_promotional_content'],confidence:0.99};
+const clearContent={branding:"absent",brandingConfidence:0.99,nudity:'absent',sexualActivity:'absent',decision:'approved',reasonCodes:['safe_adult_promotional_content'],confidence:0.99};
 function scenario({decision='review',concurrentDecision='',providerError=false,providerFailure=null,providerMessage='provider_timeout',providerStatus=0,faceRejection=false,avatar=false,attemptCount=1,stateResponseLoss='',retry=false,uploadBucket='',uploadFailure='',receiptKind='valid',contentAnalysis=clearContent,contentError=false,identityAnalysis={personCount:1,personCountConfidence:0.99,singlePersonOnly:true,referenceMatch:'match',confidence:0.99}}={}) {
   const events=[],files=new Set(),record=retry?{
     id:'record',user_id:'owner',upload_context:avatar?'profile_avatar':'profile_gallery:1',temporary_storage_path:'owner/profile/temp.jpg',
@@ -149,6 +149,15 @@ for(const avatar of [false,true])for(const retry of [false,true]){
     assert.ok(result.reasonCodes.includes('nudity_rejected'));assert.match(result.message,/Nudity and sexual activity are not allowed/);
     assert.equal(s.record.category_flags.photo_nudity,true);
     assert.ok(s.events.includes('content-check'));assert.equal(s.events.includes('public-upload'),false);
+  });
+  for(const branding of ['present','uncertain'])test(context+' keeps '+branding+' branding off the public site despite an overall approval',async()=>{
+    const s=scenario({avatar,retry,decision:'approved',contentAnalysis:{...clearContent,branding}});
+    const result=await s.run();
+    assert.equal(result.decision,branding==='present'?'rejected':'review');
+    assert.equal(s.record.status,branding==='present'?'rejected':'pending_review');
+    assert.equal(s.events.includes('public-upload'),false);
+    if(branding==='uncertain')assert.ok(s.files.has(s.record.temporary_storage_path));
+    else assert.match(result.message,/Visible branding and logos are not allowed/);
   });
   test(context+' holds uncertain clothing coverage privately for review',async()=>{
     const s=scenario({avatar,retry,decision:'approved',contentAnalysis:{...clearContent,nudity:'uncertain',confidence:0.7}});

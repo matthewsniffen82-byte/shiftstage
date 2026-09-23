@@ -280,6 +280,7 @@ export default function AdminTvPanel() {
               {video.dancer ? <Link href={`/dancers/${video.dancer.slug}`}>Open dancer profile</Link> : null}
               {video.status === "submitted" ? (
                 <>
+                  <p>Review the full video. Reject any clear branding or logo, including clothing, backgrounds, and watermarks.</p>
                   <label>
                     Review notes
                     <textarea

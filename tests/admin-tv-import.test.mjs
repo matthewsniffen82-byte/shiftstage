@@ -28,11 +28,12 @@ test("platform TV imports require an active admin and attribute work to the call
   assert.match(route, /recordImportFinalization/);
 });
 
-test("platform TV imports use the production upload and watermark pipeline with owner-authorized publication", () => {
+test("platform TV imports use AI moderation and cannot automatically approve human-review results", () => {
   assert.match(route, /createMyDancrTvUpload/);
   assert.match(route, /publishPlatformMyDancrTvUpload/);
-  assert.match(tv, /platform_owner_approval/);
-  assert.match(tv, /bypassedAutomatedModeration: true/);
+  assert.match(tv, /return submitMyDancrTvUpload\(admin, video.submitted_by, video.id\)/);
+  assert.doesNotMatch(tv, /bypassedAutomatedModeration: true/);
+  assert.doesNotMatch(route, /reviewMyDancrTvVideo/);
   assert.match(tv, /watermarkStoredVideo/);
 });
 

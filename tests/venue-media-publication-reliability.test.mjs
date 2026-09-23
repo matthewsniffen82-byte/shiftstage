@@ -5,6 +5,7 @@ import vm from 'node:vm';
 import test,{before,beforeEach,after} from 'node:test';
 import ts from 'typescript';
 import {createVenueMediaDatabase,seedVenueMediaDatabase,venueMediaId as id,venueMediaSnapshot} from './helpers/venue-media-database.mjs';
+import {PublicApiError} from '../src/lib/api-error-policy.ts';
 
 const source=process.env.MYDANCR_REMAINING_RECEIPT_BASELINE==='1'
  ?execFileSync('git',['show','e2ede1d11aa33c9a2fc8d7592e2b89a51d405661:src/lib/dancr/venue.ts'],{encoding:'utf8',windowsHide:true})
@@ -44,11 +45,13 @@ function harness(kind,options={}){
  },storage:{from(bucket){return {async upload(path){calls.push({kind:'upload',bucket,path});if(options.uploadError)return {data:null,error:new Error('Synthetic upload failure')};files.add(bucket+'/'+path);if(options.uploadThrow)throw new Error('Synthetic lost upload reply');const receipts={valid:{path,fullPath:bucket+'/'+path},legacy:{path},null:null,undefined:undefined,empty:{},array:[],boolean:false,foreignPath:{path:'different/path'},foreignBucket:{path,fullPath:'different/'+path}};return {data:receipts[options.uploadReceiptKind||'valid'],error:null};},remove:paths=>remove(bucket,paths),getPublicUrl(path){if(wrote&&options.mappingFailure)throw new Error('Synthetic URL mapping failure');return {data:{publicUrl:'https://example.invalid/'+bucket+'/'+path}};}}}}};
  const image={width:900,height:900,buffer:Buffer.from('synthetic'),contentType:'image/webp',storageFileName:'new.webp'};
  const dependencies={
+  '../api':{PublicApiError},
   './venue-access':{getVenueAccess:async()=>options.denyAccess?null:{venueId},requireVenueAccess:async(_client,actor,permission)=>{assert.equal(permission,'manage_profile');if(options.denyAccess||actor!==owner)throw new Error('Access denied');return {venueId};}},
   './image-validation':{validateAndPrepareDancrImage:async()=>options.image||image,normalizeDancrVenueLogoImage:async value=>value},
   './image-moderation':{MODERATION_TEMP_BUCKET:tempBucket,moderateImageWithOpenAI:async()=>{providerCalls.push('moderate');return {};}},
   './storage-upload-receipt':storageReceipt,
   './moderation-policy':{evaluateDancrImageModeration:()=>({decision:options.moderation||'approved',reasonCodes:[]})},
+  './venue-media-review':{evaluateVenueImage:async(_image,safety)=>{await safety();return {decision:options.moderation||'approved',reasonCodes:[]};},queueVenueMediaReview:async()=>{calls.push({kind:'queueReview'});}},
   './responsive-image':{
    uploadResponsiveImage:async(_client,bucket,directory,_image,_cache,config)=>{assert.equal(directory,venueId);assert.equal(config.archiveOriginal,true);assert.equal(config.watermark,kind==='cover');calls.push({kind:'publishUpload',bucket});files.add(bucket+'/'+newPath);files.add('original/'+bucket+'/'+newPath);return {storagePath:newPath};},
    removeResponsiveImage:(_client,bucket,path)=>remove(bucket,[path]),
@@ -58,6 +61,20 @@ function harness(kind,options={}){
  };
  const exports={};vm.runInNewContext(compiled,{exports,require:name=>dependencies[name]||{},console:{info:(...value)=>messages.push(value),warn:()=>{}},Buffer,Date});
  return {calls,files,messages,providerCalls,run:()=>kind==='qr'?exports[spec.fn](client,owner,new Blob(['synthetic']),options.label):exports[spec.fn](client,id(3),venueId,new Blob(['synthetic'])),deleteRun:()=>exports[kind==='cover'?'deleteVenueCoverImageByAdmin':'deleteVenueLogoImageByAdmin'](client,venueId),retainedNew:()=>{assert.ok(files.has(spec.bucket+'/'+newPath));if(kind!=='qr')assert.ok(files.has('original/'+spec.bucket+'/'+newPath));},retainedOld:()=>assert.ok(files.has(spec.bucket+'/'+oldPath)),noRetirement:()=>assert.ok(calls.filter(c=>c.kind==='remove').every(c=>c.bucket===tempBucket))};
+}
+
+for(const kind of ['cover','logo']){
+ test(kind+' questionable branding queues private review and preserves the public image',async()=>{
+  const previous=await venueMediaSnapshot(db),h=harness(kind,{moderation:'review'}),result=await h.run();
+  assert.equal(result.mediaReviewPending,true);assert.deepEqual(await venueMediaSnapshot(db),previous);
+  assert.equal(h.calls.filter(c=>c.kind==='queueReview').length,1);
+  assert.equal(h.calls.some(c=>['update','publishUpload'].includes(c.kind)),false);h.retainedOld();
+ });
+ test(kind+' clear branding blocks publication with a useful error',async()=>{
+  const previous=await venueMediaSnapshot(db),h=harness(kind,{moderation:'rejected'});
+  await assert.rejects(h.run(),error=>error.status===400&&/branding, logos/.test(error.message));
+  assert.deepEqual(await venueMediaSnapshot(db),previous);assert.equal(h.calls.some(c=>['queueReview','update','publishUpload'].includes(c.kind)),false);
+ });
 }
 
 for(const [kind,spec]of Object.entries(kinds)){

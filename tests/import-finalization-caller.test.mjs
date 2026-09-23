@@ -80,8 +80,16 @@ test('receipt replay works without recovery permission once its batch marker is 
 test('a foreign batch without explicit recovery is denied before processing or RPC',async()=>{
  const h=harness(),before=await importSnapshot(pg),result=await h.post({recoverPreparedVideo:false});assert.equal(result.response.status,400);assert.equal(h.calls.length,0);assert.equal(h.publication.length,0);assert.deepEqual(await importSnapshot(pg),before);
 });
-for(const [start,kind]of [['uploading','publish'],['moderating','retry'],['submitted','review']])test(start+' reloads the actual stored result after '+kind,async()=>{
+for(const [start,kind]of [['uploading','publish'],['moderating','retry']])test(start+' reloads the actual stored result after '+kind,async()=>{
  await pg.query('update public.mydancr_tv_videos set status=$1 where id=$2',[start,id(20)]);const h=harness({returnedStatus:'submitted'}),result=await h.post();assert.equal(result.response.status,200);assert.equal(result.body.video.status,'approved');assert.deepEqual(h.publication,[kind]);assert.equal(h.calls.length,1);assert.equal(h.calls[0].p_expected.status,'approved');
+});
+
+for(const start of ['uploading','moderating','submitted'])test(start+' preserves a human-review result without automatic approval',async()=>{
+ await pg.query('update public.mydancr_tv_videos set status=$1 where id=$2',[start,id(20)]);
+ const h=harness({storedStatus:'submitted'}),result=await h.post();
+ assert.equal(result.response.status,200);assert.equal(result.body.video.status,'submitted');
+ assert.equal(h.publication.includes('review'),false);
+ assert.equal((await importSnapshot(pg)).mydancr_tv_videos[0].status,'submitted');
 });
 test('an outdated submitted snapshot does not approve a now-hidden video',async()=>{
  await pg.query("update public.mydancr_tv_videos set status='hidden' where id=$1",[id(20)]);const h=harness({initialStaleStatus:'submitted'}),result=await h.post();assert.equal(result.response.status,200);assert.equal(result.body.video.status,'hidden');assert.equal(h.publication.length,0);

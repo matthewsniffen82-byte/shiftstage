@@ -38,8 +38,10 @@ export async function analyzeDancerPhotoContent(image: Pick<ValidatedDancrImage,
         type: "json_schema", name: "dancer_photo_content_review", strict: true,
         schema: {
           type: "object", additionalProperties: false,
-          required: ["nudity", "sexualActivity", "decision", "reasonCodes", "confidence"],
+          required: ["nudity", "sexualActivity", "decision", "reasonCodes", "confidence", "branding", "brandingConfidence"],
           properties: {
+            branding: { type: "string", enum: ["absent", "present", "uncertain"] },
+            brandingConfidence: { type: "number", minimum: 0, maximum: 1 },
             nudity: { type: "string", enum: ["absent", "present", "uncertain"] },
             sexualActivity: { type: "string", enum: ["absent", "present", "uncertain"] },
             decision: { type: "string", enum: ["approved", "review", "rejected"] },

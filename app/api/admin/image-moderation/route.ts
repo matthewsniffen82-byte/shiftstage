@@ -19,6 +19,7 @@ import {
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
 import { safeErrorMetadata } from "@/src/lib/security/safe-error-metadata";
+import { approveVenueMediaReview } from "@/src/lib/dancr/venue-media-review";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -116,6 +117,9 @@ async function withSignedThumbnail(admin: any, record: any) {
 }
 
 async function approveReviewRecord(admin: any, record: any, reviewerId: string, notes: string) {
+  if (["venue_cover", "venue_logo"].includes(record.upload_context)) {
+    return approveVenueMediaReview(admin, record, reviewerId, notes);
+  }
   const profile = await profileForModerationRecord(admin, record);
   const isAvatar = isProfileAvatarUploadContext(record.upload_context);
   const expectedUpdatedAt = galleryReviewVersion(record.updated_at);
@@ -221,6 +225,8 @@ async function rejectReviewRecord(admin: any, record: any, reviewerId: string, n
 }
 
 function moderationStorageBucket(record: any) {
+  if (record.decision === "approved" && record.upload_context === "venue_cover") return "venue-cover-images";
+  if (record.decision === "approved" && record.upload_context === "venue_logo") return "venue-logo-images";
   if (record.decision === "approved" && record.final_storage_path) return APPROVED_PHOTO_BUCKET;
   if (["pending", "moderating", "moderation_retry", "moderation_error", "error"].includes(record.status)) return MODERATION_TEMP_BUCKET;
   return MODERATION_REVIEW_BUCKET;

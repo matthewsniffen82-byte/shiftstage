@@ -6,6 +6,7 @@ import ts from "typescript";
 import { DANCER_MEDIA_CONTENT_RULES, DANCER_MEDIA_POLICY_REASON_CODES } from "../src/lib/dancr/media-content-rules.ts";
 import { withOpenAIRequestDeadline } from "../src/lib/openai-request.ts";
 import { evaluateDancrImageModeration } from "../src/lib/dancr/moderation-policy.ts";
+import { parseMediaBrandingAnalysis } from "../src/lib/dancr/media-branding-policy.ts";
 import {
   getDistributedVideoFrameSampling,
   parseFfmpegDuration,
@@ -102,7 +103,7 @@ test("video classifier receives the same full policy as photos, including covere
   vm.runInNewContext(ts.transpileModule(selected.join('\n') + '\nexport { classifyVideoPolicy };', {
     compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
   }).outputText, {
-    exports, Buffer, DANCER_MEDIA_CONTENT_RULES, VIDEO_POLICY_REASON_CODES: DANCER_MEDIA_POLICY_REASON_CODES,
+    exports, Buffer, parseMediaBrandingAnalysis, DANCER_MEDIA_CONTENT_RULES, VIDEO_POLICY_REASON_CODES: DANCER_MEDIA_POLICY_REASON_CODES,
     VIDEO_POLICY_MODEL: 'synthetic', OPENAI_TIMEOUT_MS: 1000, withTimeout: withOpenAIRequestDeadline,
   });
   const client = { chat: { completions: { create: async (request, options) => {
@@ -113,7 +114,10 @@ test("video classifier receives the same full policy as photos, including covere
     assert.match(request.messages[1].content[0].text, /Caption: fixture caption/);
     assert.match(request.messages[1].content[0].text, /Audio transcript: fixture transcript/);
     assert.ok(options.signal instanceof AbortSignal);
-    return { choices: [{ message: { content: JSON.stringify({ decision: 'approved', reason_codes: ['safe_adult_promotional_content'], confidence: 0.99 }) } }] };
+    assert.equal(request.messages[1].content[1].image_url.detail, 'high');
+    assert.ok(request.response_format.json_schema.schema.required.includes('branding'));
+    assert.ok(request.response_format.json_schema.schema.required.includes('brandingConfidence'));
+    return { choices: [{ message: { content: JSON.stringify({ branding: 'absent', brandingConfidence: 0.99, decision: 'approved', reason_codes: ['safe_adult_promotional_content'], confidence: 0.99 }) } }] };
   } } } };
   const result = await exports.classifyVideoPolicy(client, [Buffer.from('frame')], 'fixture caption', 'fixture transcript');
   assert.equal(result.decision, 'approved');

@@ -1040,68 +1040,9 @@ export async function publishPlatformMyDancrTvUpload(
     throw new Error("The uploaded video type could not be verified.");
   }
 
-  const verified = await inspectStoredMyDancrTvVideo(admin, {
-    bucket: MYDANCR_TV_BUCKET,
-    expectedBytes: Number(video.file_size_bytes),
-    maxBytes: MYDANCR_TV_MAX_BYTES,
-    maxDurationSeconds: MYDANCR_TV_MAX_DURATION_SECONDS,
-    mimeType: video.storage_mime,
-    storagePath: video.storage_path,
-  });
-
-  const { posterStoragePath, mobilePlayback } = await watermarkStoredVideo(admin, {
-    publicBucket: MYDANCR_TV_BUCKET,
-    storagePath: video.storage_path,
-    storageMime: video.storage_mime === "video/webm" ? "video/webm" : "video/mp4",
-    width: verified.width,
-    height: verified.height,
-  });
-
-  const publishedAt = new Date().toISOString();
-  const expiresAt = myDancrTvExpiry();
-  const { data: published, error: updateError } = await admin
-    .from("mydancr_tv_videos")
-    .update({
-      status: "approved",
-      submitted_at: publishedAt,
-      reviewed_by: adminId,
-      reviewed_at: publishedAt,
-      published_at: publishedAt,
-      expires_at: expiresAt,
-      moderation_decision: "approved",
-      moderation_reason_codes: ["platform_owner_approved"],
-      moderation_category_scores: {},
-      moderation_provider_flagged: false,
-      moderation_frame_count: 0,
-      moderation_model: "platform_owner_approval",
-      moderation_details: {
-        mode: "platform_owner_approval",
-        bypassedAutomatedModeration: true,
-        posterStoragePath,
-        mobilePlayback,
-      },
-      moderation_attempt_count: 0,
-      moderation_started_at: publishedAt,
-      moderation_completed_at: publishedAt,
-      duration_seconds: verified.durationSeconds,
-      file_size_bytes: verified.fileSizeBytes,
-      width: verified.width,
-      height: verified.height,
-    })
-    .eq("id", video.id)
-    .eq("submitted_by", video.submitted_by)
-    .eq("status", "uploading")
-    .select("id, status, distribution_scope, submitted_at, reviewed_at, published_at")
-    .single();
-  if (updateError) throw updateError;
-
-  console.info(JSON.stringify({
-    event: "mydancr_tv.platform_video_published",
-    videoId: video.id,
-    adminId,
-    distributionScope: video.distribution_scope,
-  }));
-  return published;
+  // Platform imports use the same AI checks and private human-review queue as dancer uploads.
+  console.info(JSON.stringify({ event: "mydancr_tv.platform_video_submitted", videoId: video.id, adminId }));
+  return submitMyDancrTvUpload(admin, video.submitted_by, video.id);
 }
 
 export async function submitMyDancrTvUpload(
@@ -1644,6 +1585,12 @@ function videoModerationReviewNotes(
   reasonCodes: string[],
 ) {
   const reasons = new Set(reasonCodes.map(String));
+  if (reasons.has("visible_branding_or_logo")) {
+    return "Visible branding and logos are not allowed. Choose a video without brand names, logos, or watermarks, including on clothing and in the background.";
+  }
+  if (reasons.has("branding_or_logo_uncertain")) {
+    return "Possible branding or a logo needs human review. This video will stay private until reviewed.";
+  }
   if (reasons.has("multiple_people_detected")) {
     return "Only you can appear in a profile video. Choose a video with no other people visible.";
   }

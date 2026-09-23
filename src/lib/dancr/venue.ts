@@ -1,4 +1,5 @@
 import { changeVenuePublication } from "./venue-publication";
+import { PublicApiError } from "../api";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import {
   MODERATION_TEMP_BUCKET,
@@ -8,7 +9,7 @@ import {
   normalizeDancrVenueLogoImage,
   validateAndPrepareDancrImage,
 } from "./image-validation";
-import { evaluateDancrImageModeration } from "./moderation-policy";
+import { evaluateVenueImage, queueVenueMediaReview } from "./venue-media-review";
 import {
   removeResponsiveImage,
   responsivePublicImage,
@@ -159,7 +160,7 @@ export async function uploadVenueCoverImageByAdmin(
   adminId: string,
   venueId: string,
   file: Blob,
-): Promise<VenueOwnerProfile> {
+): Promise<VenueOwnerProfile & { mediaReviewPending?: boolean }> {
   const venue = await getVenueById(client, venueId);
   const image = await validateAndPrepareDancrImage(file);
   if (image.width < 720 || image.height < 720) {
@@ -184,20 +185,18 @@ export async function uploadVenueCoverImageByAdmin(
     if (tempUploadError) throw tempUploadError;
     requireStorageUploadReceipt(tempUploaded, MODERATION_TEMP_BUCKET, tempPath);
 
-    const evaluation = evaluateDancrImageModeration(
-      await moderateImageWithOpenAI(client, tempPath),
-    );
+    const evaluation = await evaluateVenueImage(image, () => moderateImageWithOpenAI(client, tempPath));
+    if (evaluation.decision === "review") {
+      await queueVenueMediaReview(client, { adminId, venue, kind: "cover", image, path: tempPath, evaluation });
+      return { ...venue, mediaReviewPending: true };
+    }
     if (evaluation.decision !== "approved") {
       console.warn("VENUE_COVER_MODERATION_BLOCKED", {
         venueId: venue.id,
         decision: evaluation.decision,
         reasonCodes: evaluation.reasonCodes,
       });
-      throw new Error(
-        evaluation.decision === "rejected"
-          ? "This image does not meet the venue cover safety requirements."
-          : "This image could not be published automatically. Choose a different venue image.",
-      );
+      throw new PublicApiError("INVALID_REQUEST", "This image was blocked. Clear branding, logos, and unsafe content are not allowed.", 400);
     }
 
     const uploadedImage = await uploadResponsiveImage(
@@ -308,7 +307,7 @@ export async function uploadVenueLogoImageByAdmin(
   adminId: string,
   venueId: string,
   file: Blob,
-): Promise<VenueOwnerProfile> {
+): Promise<VenueOwnerProfile & { mediaReviewPending?: boolean }> {
   const venue = await getVenueById(client, venueId);
   const validatedImage = await validateAndPrepareDancrImage(file);
   if (validatedImage.width < 512 || validatedImage.height < 512) {
@@ -332,15 +331,13 @@ export async function uploadVenueLogoImageByAdmin(
     if (tempUploadError) throw tempUploadError;
     requireStorageUploadReceipt(tempUploaded, MODERATION_TEMP_BUCKET, tempPath);
 
-    const evaluation = evaluateDancrImageModeration(
-      await moderateImageWithOpenAI(client, tempPath),
-    );
+    const evaluation = await evaluateVenueImage(validatedImage, () => moderateImageWithOpenAI(client, tempPath));
+    if (evaluation.decision === "review") {
+      await queueVenueMediaReview(client, { adminId, venue, kind: "logo", image: validatedImage, path: tempPath, evaluation });
+      return { ...venue, mediaReviewPending: true };
+    }
     if (evaluation.decision !== "approved") {
-      throw new Error(
-        evaluation.decision === "rejected"
-          ? "This image does not meet the venue logo safety requirements."
-          : "This logo could not be published automatically. Choose a different image.",
-      );
+      throw new PublicApiError("INVALID_REQUEST", "This image was blocked. Clear branding, logos, and unsafe content are not allowed.", 400);
     }
 
     const uploadedImage = await uploadResponsiveImage(

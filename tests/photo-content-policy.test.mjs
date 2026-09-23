@@ -5,7 +5,7 @@ import { applyDancerPhotoContentPolicy, parseDancerPhotoContentAnalysis, dancerP
 import { DANCER_MEDIA_CONTENT_RULES, DANCER_MEDIA_POLICY_REASON_CODES } from '../src/lib/dancr/media-content-rules.ts';
 import { photoContentRuntime } from './helpers/photo-content-runtime.mjs';
 
-const clear = { nudity: 'absent', sexualActivity: 'absent', decision: 'approved', reasonCodes: ['safe_adult_promotional_content'], confidence: 0.99 };
+const clear = {branding:"absent",brandingConfidence:0.99, nudity: 'absent', sexualActivity: 'absent', decision: 'approved', reasonCodes: ['safe_adult_promotional_content'], confidence: 0.99 };
 const image = { buffer: Buffer.from('complete original photo'), contentType: 'image/jpeg' };
 const generic = (sexual = 0.75) => evaluateDancrImageModeration({
   flagged: sexual > 0.5, categories: { sexual: sexual > 0.5 }, category_scores: { sexual },
@@ -97,7 +97,7 @@ test('the analyzer sends the complete image with strict output and cancellable r
     for (const instruction of DANCER_MEDIA_CONTENT_RULES) assert.ok(rules.includes(instruction));
     assert.match(rules, /Thongs and cleavage are explicitly allowed when nipples\/areolas, genitals, and anus are covered/);
     assert.match(rules, /phone numbers, email addresses, payment handles, external social handles, or QR\/contact overlays/);
-    assert.deepEqual(Array.from(request.text.format.schema.required), ['nudity', 'sexualActivity', 'decision', 'reasonCodes', 'confidence']);
+    assert.deepEqual(Array.from(request.text.format.schema.required), ['nudity', 'sexualActivity', 'decision', 'reasonCodes', 'confidence', 'branding', 'brandingConfidence']);
     assert.deepEqual(Array.from(request.text.format.schema.properties.reasonCodes.items.enum), Array.from(DANCER_MEDIA_POLICY_REASON_CODES));
     return { status: 'completed', output_text: JSON.stringify(clear) };
   } });

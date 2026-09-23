@@ -1131,6 +1131,9 @@ function galleryPublicationResponse(
 
 function photoRejectionMessage(reasonCodes: string[]) {
   const reasons = new Set((reasonCodes || []).map(String));
+  if (reasons.has("visible_branding_or_logo")) {
+    return "Visible branding and logos are not allowed. Choose a photo without brand names, logos, or watermarks, including on clothing and in the background.";
+  }
   if (reasons.has("nudity_rejected") || reasons.has("explicit_sexual_content_rejected") || reasons.has("photo_policy_explicit_nudity_or_sex_act")) {
     return "Nudity and sexual activity are not allowed. Choose a photo with intimate areas covered.";
   }
