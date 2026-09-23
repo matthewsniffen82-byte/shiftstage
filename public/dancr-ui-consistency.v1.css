@@ -90,3 +90,69 @@ body.dancr-button-system .customer-notification-switch .customer-switch-state { 
 body.dancr-button-system :is(.dashboard-shell, .dancer-profile-preview-overlay, #dancer-profile-builder-panel) button[data-action-state="success"]::before,
 body.dancr-button-system :is(.dashboard-shell, .dancer-profile-preview-overlay, #dancer-profile-builder-panel) button[data-action-state="success"]::after { background: none !important; box-shadow: none !important; }
 body.dancr-button-system .dashboard-shell .customer-settings-panel button.customer-notification-switch { width: 108px !important; min-width: 108px !important; }
+
+/* Dashboards share surfaces and typography while retaining their role-specific grids. */
+body.dancr-button-system .dashboard-shell:is(.dashboard-shell-customer,.dashboard-shell-dancer,.dashboard-shell-venue) {
+  --mydancr-dashboard-gap: 18px;
+  --mydancr-dashboard-panel: #111118;
+  --mydancr-dashboard-panel-raised: #16161f;
+  --mydancr-dashboard-border: rgba(196,181,253,.18);
+  --mydancr-dashboard-radius: 18px;
+  --mydancr-dashboard-muted: #b8b5c6;
+}
+body.dancr-button-system .dashboard-shell:is(.dashboard-shell-customer,.dashboard-shell-dancer,.dashboard-shell-venue) .dashboard-head {
+  gap: 16px; margin-bottom: 18px; padding: 20px !important;
+  border: 1px solid var(--mydancr-dashboard-border) !important; border-radius: 24px !important;
+  background: radial-gradient(ellipse at top left,rgba(124,58,237,.09),transparent 65%),#111118 !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.04) !important;
+}
+body.dancr-button-system .dashboard-shell:is(.dashboard-shell-customer,.dashboard-shell-dancer,.dashboard-shell-venue) .dashboard-head h1 {
+  font-size: clamp(22px,5vw,28px) !important; font-weight: 650 !important;
+  line-height: 1.2 !important; letter-spacing: -.025em !important;
+}
+body.dancr-button-system .dashboard-shell:is(.dashboard-shell-customer,.dashboard-shell-dancer,.dashboard-shell-venue) .dashboard-head :is(.eyebrow,p) { color: #c4b5fd; }
+body.dancr-button-system .dashboard-shell:is(.dashboard-shell-customer,.dashboard-shell-dancer,.dashboard-shell-venue) .eyebrow { font-size: 11px; font-weight: 600; letter-spacing: .1em; }
+body.dancr-button-system .dashboard-shell:is(.dashboard-shell-customer,.dashboard-shell-dancer,.dashboard-shell-venue) :is(.info-panel,.venue-dashboard-section,.venue-command-panel) {
+  border-color: var(--mydancr-dashboard-border) !important;
+  border-radius: var(--mydancr-dashboard-radius) !important;
+  background: var(--mydancr-dashboard-panel) !important; box-shadow: none !important;
+}
+body.dancr-button-system .dashboard-shell:is(.dashboard-shell-customer,.dashboard-shell-dancer,.dashboard-shell-venue) :is(.info-panel,.venue-command-panel) { padding: 18px; gap: 16px; }
+body.dancr-button-system .dashboard-shell:is(.dashboard-shell-customer,.dashboard-shell-dancer,.dashboard-shell-venue) :is(.info-panel > h2,.venue-command-status h2,.customer-section-heading h2) {
+  color: #f8fafc; font-size: 20px !important; font-weight: 650 !important; line-height: 1.3 !important; letter-spacing: -.02em;
+}
+body.dancr-button-system .dashboard-shell:is(.dashboard-shell-customer,.dashboard-shell-dancer,.dashboard-shell-venue) .venue-dashboard-section > summary { min-height: 80px; padding: 18px; gap: 12px; }
+body.dancr-button-system .dashboard-shell:is(.dashboard-shell-customer,.dashboard-shell-dancer,.dashboard-shell-venue) .venue-dashboard-section[open] > summary { background: rgba(124,58,237,.07); border-bottom-color: var(--mydancr-dashboard-border); }
+body.dancr-button-system .dashboard-shell:is(.dashboard-shell-customer,.dashboard-shell-dancer,.dashboard-shell-venue) .venue-dashboard-section-copy { gap: 6px; }
+body.dancr-button-system .dashboard-shell:is(.dashboard-shell-customer,.dashboard-shell-dancer,.dashboard-shell-venue) .venue-dashboard-section-copy > strong { font-size: 18px !important; font-weight: 650 !important; line-height: 1.3 !important; letter-spacing: -.015em; }
+body.dancr-button-system .dashboard-shell:is(.dashboard-shell-customer,.dashboard-shell-dancer,.dashboard-shell-venue) .venue-dashboard-section-copy > span:last-child { color: var(--mydancr-dashboard-muted); font-size: 13px !important; font-weight: 400 !important; line-height: 1.5 !important; }
+body.dancr-button-system .dashboard-shell:is(.dashboard-shell-customer,.dashboard-shell-dancer,.dashboard-shell-venue) .venue-dashboard-section-body { gap: 18px; padding: 16px; }
+body.dancr-button-system .dashboard-shell:is(.dashboard-shell-customer,.dashboard-shell-dancer,.dashboard-shell-venue) :is(.venue-dashboard-section-body,.venue-dashboard-inner-grid,.customer-settings-grid) > .info-panel {
+  border-color: transparent !important; background: var(--mydancr-dashboard-panel-raised) !important; border-radius: 14px !important;
+}
+body.dancr-button-system .dashboard-shell:is(.dashboard-shell-customer,.dashboard-shell-dancer,.dashboard-shell-venue) .venue-dashboard-section-toggle { width: 32px; height: 32px; border-color: rgba(196,181,253,.22); color: #ddd6fe; background: #252033; }
+body.dancr-button-system .dashboard-shell:is(.dashboard-shell-customer,.dashboard-shell-dancer,.dashboard-shell-venue) .venue-dashboard-section-badge { padding: 6px 10px; border-color: rgba(196,181,253,.22); color: #ddd6fe; background: #252033; font-size: 11px; font-weight: 600; }
+body.dancr-button-system .dashboard-shell:is(.dashboard-shell-customer,.dashboard-shell-dancer,.dashboard-shell-venue) :is(.customer-dashboard-nav,.venue-workspace-tabs) {
+  padding: 6px; gap: 6px; border: 1px solid var(--mydancr-dashboard-border) !important;
+  border-radius: 18px; background: #111118 !important; box-shadow: none !important;
+}
+body.dancr-button-system .dashboard-shell:is(.dashboard-shell-customer,.dashboard-shell-dancer,.dashboard-shell-venue) :is(.customer-dashboard-nav a,.venue-workspace-tabs button) {
+  border: 1px solid transparent; border-radius: 12px; color: #e2deed !important;
+  background: #1b1b26 !important; box-shadow: none !important; font-size: 13px; font-weight: 600;
+}
+body.dancr-button-system .dashboard-shell:is(.dashboard-shell-customer,.dashboard-shell-dancer,.dashboard-shell-venue) .customer-dashboard-utility-links a { min-height: 44px; }
+body.dancr-button-system .dashboard-shell:is(.dashboard-shell-customer,.dashboard-shell-dancer,.dashboard-shell-venue) .venue-workspace-tabs button { min-height: 64px; }
+body.dancr-button-system .dashboard-shell:is(.dashboard-shell-customer,.dashboard-shell-dancer,.dashboard-shell-venue) .venue-workspace-tabs strong { font-size: 13px; font-weight: 600; line-height: 1.35; white-space: normal; }
+body.dancr-button-system .dashboard-shell:is(.dashboard-shell-customer,.dashboard-shell-dancer,.dashboard-shell-venue) :is(.customer-dashboard-nav a,.venue-workspace-tabs button):is(:hover,:focus-visible) { border-color: #a78bfa; background: #292037 !important; }
+body.dancr-button-system .dashboard-shell:is(.dashboard-shell-customer,.dashboard-shell-dancer,.dashboard-shell-venue) .venue-workspace-tabs button.active[aria-selected="true"] {
+  color: #fff !important; border-color: rgba(196,181,253,.45) !important;
+  background: linear-gradient(110deg,#7c3aed,#6d28d9) !important; box-shadow: inset 0 1px 0 rgba(255,255,255,.14) !important;
+}
+body.dancr-button-system .dashboard-shell:is(.dashboard-shell-customer,.dashboard-shell-dancer,.dashboard-shell-venue) :is(.customer-dashboard-nav a,.venue-workspace-tabs button,.venue-dashboard-section > summary):focus-visible { outline: 2px solid #c4b5fd; outline-offset: 3px; }
+@media (max-width: 620px) {
+  body.dancr-button-system .dashboard-shell:is(.dashboard-shell-customer,.dashboard-shell-dancer,.dashboard-shell-venue) .dashboard-head { padding: 16px !important; }
+  body.dancr-button-system .dashboard-shell:is(.dashboard-shell-customer,.dashboard-shell-dancer,.dashboard-shell-venue) .venue-dashboard-section > summary { padding: 16px; }
+  body.dancr-button-system .dashboard-shell:is(.dashboard-shell-customer,.dashboard-shell-dancer,.dashboard-shell-venue) .venue-dashboard-section-body { padding: 12px; }
+  body.dancr-button-system .dashboard-shell:is(.dashboard-shell-customer,.dashboard-shell-dancer,.dashboard-shell-venue) :is(.info-panel,.venue-command-panel) { padding: 16px; }
+}
+body.dancr-button-system .dashboard-shell > .dashboard-grid { gap: var(--mydancr-dashboard-gap) !important; }
