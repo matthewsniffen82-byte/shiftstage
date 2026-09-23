@@ -126,6 +126,7 @@
 
       resetProfileModalScroll();
       profileBackdrop.classList.add("show");
+      void refreshOpenProfileWorkingAlert();
       profileBackdrop.setAttribute("aria-hidden", "false");
       focusProfileModalStart();
       syncOverlayScrollLock();

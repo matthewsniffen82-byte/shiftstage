@@ -17,6 +17,7 @@ import {
   DancerGoingCount,
   DancerProfileActions,
   DancerReportControl,
+  DancerWorkingAlertHint,
 } from "./DancerProfileActions";
 import { DancerDirectionsButton } from "./DancerDirectionsButton";
 import { DancerPhotoCarousel } from "./DancerPhotoCarousel";
@@ -224,11 +225,9 @@ export default async function DancerPublicPage({ params, searchParams }: PagePro
             </div>
           </div>
           ) : (
-          <div className="profile-shift-card profile-schedule-empty is-empty" aria-label="Schedule status">
+          <div className="profile-shift-card profile-schedule-empty is-empty has-working-alert" aria-label="Schedule status">
             <span className="profile-empty-state">Not working now</span>
-            <span className="profile-empty-copy">
-              <em>Follow {profile.stageName} for updates</em>
-            </span>
+            <DancerWorkingAlertHint stageName={profile.stageName} />
           </div>
           )}
 

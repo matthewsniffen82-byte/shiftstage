@@ -14,7 +14,9 @@ import {
 import { createPortal } from "react-dom";
 import Link from "next/link";
 import { PublicReportReasonDialog, type PublicReportReason } from "@/app/components/PublicReportReasonDialog";
-import { readBrowserAccessToken } from "@/src/lib/dancr/browser-session";
+import { readBrowserAccessToken, readBrowserAuthSession } from "@/src/lib/dancr/browser-session";
+import { customerWorkingNowAlertsEnabled } from "@/src/lib/dancr/customer-push";
+import { offerPushNotifications } from "@/src/lib/dancr/push-invitation";
 import { currentDashboardAuthHeaders, persistResponseSession } from "@/app/dashboard/dashboard-session";
 
 type ShiftAction = {
@@ -32,6 +34,8 @@ type SavedState = {
 type AccountAction = "follow";
 
 type DancerFollowState = {
+  followedBy: string;
+  setFollowedBy: (userId: string) => void;
   followerCount: number | null;
   setFollowerCount: (count: number) => void;
   notificationCount: number | null;
@@ -54,6 +58,7 @@ export function DancerFollowStateProvider({
   initialGoingCount: number;
   metricsUnavailable?: boolean;
 }>) {
+  const [followedBy, setFollowedBy] = useState("");
   const [followerCount, setFollowerCount] = useState<number | null>(metricsUnavailable ? null : Math.max(0, initialFollowerCount));
   const [notificationCount, setNotificationCount] = useState<number | null>(
     metricsUnavailable ? null : Math.max(0, initialNotificationCount),
@@ -70,6 +75,8 @@ export function DancerFollowStateProvider({
   }, []);
   const value = useMemo(
     () => ({
+      followedBy,
+      setFollowedBy,
       followerCount,
       setFollowerCount: setConfirmedFollowerCount,
       notificationCount,
@@ -78,6 +85,7 @@ export function DancerFollowStateProvider({
       setGoingCount: setConfirmedGoingCount,
     }),
     [
+      followedBy,
       followerCount,
       setConfirmedFollowerCount,
       notificationCount,
@@ -108,6 +116,56 @@ export function DancerFollowerMetric() {
 export function DancerGoingCount() {
   const { goingCount } = useDancerFollowState();
   return <>{goingCount === null ? "—" : new Intl.NumberFormat("en-US").format(goingCount)}</>;
+}
+
+export function DancerWorkingAlertHint({ stageName }: { stageName: string }) {
+  const { followedBy } = useDancerFollowState();
+  const [state, setState] = useState({ following: false, enabled: false });
+  useEffect(() => {
+    let currentRequest: AbortController | null = null;
+    async function refresh() {
+      currentRequest?.abort();
+      const controller = new AbortController();
+      currentRequest = controller;
+      const session = readBrowserAuthSession();
+      const userId = String(session?.account?.id || "");
+      const following = Boolean(session?.accessToken && session.account?.role === "customer" && userId && followedBy === userId);
+      setState({ following, enabled: false });
+      if (!following) return;
+      try {
+        const headers = currentDashboardAuthHeaders("customer");
+        const response = await fetch("/api/customer/profile", {
+          headers: headers || {}, cache: "no-store", signal: controller.signal,
+        });
+        const data = await response.json();
+        if (!response.ok || !data.ok || controller.signal.aborted) return;
+        const enabled = await customerWorkingNowAlertsEnabled(data.profile, userId);
+        if (controller.signal.aborted || readBrowserAuthSession()?.account?.id !== userId) return;
+        persistResponseSession(data, headers);
+        setState({ following: true, enabled });
+      } catch { /* Keep the settings link when delivery cannot be confirmed. */ }
+    }
+    void refresh();
+    window.addEventListener("mydancr:push-changed", refresh);
+    window.addEventListener("focus", refresh);
+    window.addEventListener("storage", refresh);
+    return () => {
+      currentRequest?.abort();
+      window.removeEventListener("mydancr:push-changed", refresh);
+      window.removeEventListener("focus", refresh);
+      window.removeEventListener("storage", refresh);
+    };
+  }, [followedBy]);
+  return (
+    <span className="profile-empty-copy profile-working-alert" aria-live="polite">
+      <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4" /></svg>
+      <span>{!state.following
+        ? `Follow to get notified when ${stageName} is working.`
+        : state.enabled ? `You’ll be notified when ${stageName} is working.`
+          : <Link href="/dashboard/customer#customer-alerts">Enable notifications</Link>}
+      </span>
+    </span>
+  );
 }
 
 function DancerProfileActionPreviewIcon({
@@ -297,6 +355,7 @@ export function DancerProfileActions({
   shareControl?: ReactNode;
 }) {
   const {
+    setFollowedBy,
     setFollowerCount,
     setNotificationCount,
     setGoingCount,
@@ -373,6 +432,7 @@ export function DancerProfileActions({
     }
 
     const savedRequestHeaders = currentDashboardAuthHeaders("customer") || {};
+    const followedAccountId = String(readBrowserAuthSession()?.account?.id || "");
     fetch("/api/customer/saved", {
       headers: savedRequestHeaders,
       cache: "no-store",
@@ -386,6 +446,9 @@ export function DancerProfileActions({
         const follows = data.saved?.follows || [];
         const goingSignals = data.saved?.goingSignals || [];
         const follow = follows.find((item: any) => item.dancerId === dancerId);
+
+        if (readBrowserAuthSession()?.account?.id !== followedAccountId) return;
+        setFollowedBy(follow ? followedAccountId : "");
 
         setSaved({
           following: Boolean(follow),
@@ -401,7 +464,7 @@ export function DancerProfileActions({
       });
 
     return () => controller.abort();
-  }, [actionShiftId, dancerId, setGoingCount]);
+  }, [actionShiftId, dancerId, setGoingCount, setFollowedBy]);
 
   useEffect(() => {
     if (!accountRequiredAction) return;
@@ -431,6 +494,7 @@ export function DancerProfileActions({
     followAbortRef.current = controller;
     followInFlightRef.current = true;
     const previousFollowing = saved.following;
+    const followedAccountId = String(readBrowserAuthSession()?.account?.id || "");
     const requestedFollowing = !previousFollowing;
     setFollowSaving(true);
 
@@ -453,6 +517,9 @@ export function DancerProfileActions({
       }));
       setFollowerCount(confirmedFollowerCount);
       setNotificationCount(confirmedNotificationCount);
+      if (readBrowserAuthSession()?.account?.id !== followedAccountId) return;
+      setFollowedBy(following ? followedAccountId : "");
+      if (following) offerPushNotifications("customer-follow");
     } catch {
       // postAction displays the production API error beside the controls.
     } finally {

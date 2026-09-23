@@ -13359,3 +13359,52 @@ body.dancr-button-system :is(
     scroll-margin-bottom: calc(112px + env(safe-area-inset-bottom, 0px));
   }
 }
+
+/* Explain follow alerts below the offline status without truncating names. */
+body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell)
+  .profile-tonight-card.is-no-schedule > .has-working-alert {
+  grid-template-columns: minmax(0, 1fr) !important;
+  gap: 6px !important;
+  padding: 8px 6px !important;
+}
+
+body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell)
+  .profile-tonight-card.is-no-schedule .has-working-alert .profile-working-alert {
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  color: #b8b4c0 !important;
+}
+
+body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell)
+  .profile-tonight-card.is-no-schedule .has-working-alert .profile-working-alert > span {
+  overflow: visible !important;
+  color: inherit !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  line-height: 1.4 !important;
+  white-space: normal !important;
+  overflow-wrap: anywhere;
+}
+
+body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell)
+  .has-working-alert .profile-working-alert svg {
+  flex: 0 0 16px;
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell)
+  .has-working-alert .profile-working-alert a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: #eeeaf4;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}

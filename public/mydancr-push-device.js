@@ -35,6 +35,20 @@ export async function customerPushDeviceEnabled(userId) {
         return false;
     }
 }
+// A follow alone does not confirm delivery outside the app. Check the saved
+// alert preferences and an available email or enrolled push channel first.
+export async function customerWorkingNowAlertsEnabled(profile, userId) {
+    if (!userId || profile?.userId !== userId)
+        return false;
+    const settings = profile.notificationSettings || {};
+    const delivery = profile.notificationDelivery || {};
+    if (settings.followAlertsEnabled === false || settings.workingNow === false)
+        return false;
+    if (settings.emailEnabled === true && delivery.emailAvailable === true)
+        return true;
+    return settings.pushEnabled === true && delivery.pushAvailable === true
+        && await customerPushDeviceEnabled(userId);
+}
 function loadPushSdk(appId) {
     const pushWindow = window;
     const state = pushWindow.mydancrPushSdk ||= {};

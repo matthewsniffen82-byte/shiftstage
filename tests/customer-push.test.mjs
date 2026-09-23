@@ -48,6 +48,23 @@ function fixture({ permission = "granted", delayedId = false, userAgent = "Edge"
 }
 const delivery = { pushAvailable: true, pushAppId: "public-app", pushExternalId: "opaque-own-customer-alias" };
 
+test("Working Now confirmation requires saved alert preferences and a usable delivery channel", async () => {
+  const f = fixture();
+  const profile = { userId: "customer", notificationSettings: { pushEnabled: true }, notificationDelivery: delivery };
+  assert.equal(await f.customerWorkingNowAlertsEnabled(profile, "customer"), false);
+  await f.enableCustomerPush(delivery, "customer", () => {});
+  assert.equal(await f.customerWorkingNowAlertsEnabled(profile, "customer"), true);
+  assert.equal(await f.customerWorkingNowAlertsEnabled(profile, "someone-else"), false);
+  for (const patch of [{ followAlertsEnabled: false }, { workingNow: false }, { pushEnabled: false }]) {
+    assert.equal(await f.customerWorkingNowAlertsEnabled({ ...profile, notificationSettings: { ...profile.notificationSettings, ...patch } }, "customer"), false);
+  }
+  assert.equal(await f.customerWorkingNowAlertsEnabled({ ...profile, notificationDelivery: {} }, "customer"), false);
+  f.Notification.permission = "denied";
+  assert.equal(await f.customerWorkingNowAlertsEnabled(profile, "customer"), false);
+  assert.equal(await f.customerWorkingNowAlertsEnabled({ ...profile, notificationSettings: { emailEnabled: true }, notificationDelivery: { emailAvailable: true } }, "customer"), true);
+  assert.equal(await f.customerWorkingNowAlertsEnabled(null, "customer"), false);
+});
+
 test("push enrollment requests consent before SDK loading and confirms the subscription before success", async () => {
   const f = fixture({ delayedId: true });
   await f.enableCustomerPush(delivery, "customer", () => {});

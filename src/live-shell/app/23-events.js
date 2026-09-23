@@ -164,6 +164,7 @@
     }
 
     function syncOpenProfileFollowButton() {
+      void refreshOpenProfileWorkingAlert();
       const followButton = document.getElementById("followBtn");
       if (!followButton) return;
       const following = isFollowingProfile(selectedCity(), followButton.dataset.profile);

@@ -4,6 +4,7 @@ import test from "node:test";
 import vm from "node:vm";
 import ts from "typescript";
 import { currentDashboardAuthHeaders, persistResponseSession } from "../app/dashboard/dashboard-session.ts";
+import { readBrowserAuthSession } from "../src/lib/dancr/browser-session.ts";
 
 const home = readFileSync(new URL("../outputs/index.html", import.meta.url), "utf8");
 const profile = readFileSync(new URL("../app/dancers/[slug]/DancerProfileActions.tsx", import.meta.url), "utf8");
@@ -115,6 +116,8 @@ for (const following of [true, false]) {
       selectedCity: () => city,
       document: { getElementById: (id) => id === "followBtn" ? button : null },
       profileActionButtonMarkup: (icon, label) => `${icon}:${label}`,
+      alertRefreshes: 0,
+      refreshOpenProfileWorkingAlert() { context.alertRefreshes += 1; },
       clearLiveProfileActionCollections() { context.followedByCity[city] = []; context.followedDancerIds.clear(); },
       enableProfileNotifications() {}, disableProfileNotifications() {},
     });
@@ -126,6 +129,7 @@ for (const following of [true, false]) {
       dancer: { id: dancer.id, slug: dancer.slug, stageName: dancer.name, city }, notificationsEnabled: true,
     })) });
     assert.equal(button.attributes["aria-pressed"], String(following));
+    assert.equal(context.alertRefreshes, 1, "Hydrated follows also refresh the Working Now alert hint.");
     assert.equal(classes.has("is-following"), following);
     assert.equal(button.innerHTML, following ? "check:Following" : "personPlus:Follow");
     assert.equal(dancers[1].followerCount, 12, "Loading preferences must not alter public follower counts.");
@@ -214,14 +218,15 @@ for (const following of [true, false]) {
 
 test("full dancer profiles use refreshed credentials for successive follows and after a hard refresh", async (t) => {
   const originalWindow = globalThis.window;
-  let stored = JSON.stringify({ accessToken: "access-0", refreshToken: "refresh-0", account: { role: "customer" } });
+  let stored = JSON.stringify({ accessToken: "access-0", refreshToken: "refresh-0", account: { id: "customer-1", role: "customer" } });
   globalThis.window = { localStorage: { getItem: () => stored, setItem: (_key, value) => { stored = value; } } };
   t.after(() => { globalThis.window = originalWindow; });
   let generation = 0;
   const follows = [];
   const context = createDiscoveryContext({
     token: "stale-render-token", mountedRef: { current: true },
-    currentDashboardAuthHeaders, persistResponseSession,
+    currentDashboardAuthHeaders, persistResponseSession, readBrowserAuthSession,
+    setFollowedBy(userId) { context.followedBy = userId; },
     setStatus() {}, setToken() {}, setAccountRequiredAction() {},
     fetch: async (_path, options) => {
       assert.equal(options.headers.authorization, `Bearer access-${generation}`);
@@ -245,13 +250,17 @@ test("full dancer profiles use refreshed credentials for successive follows and 
   const load = between(profile, '    const savedRequestHeaders =', "    return () => controller.abort();");
   await vm.runInContext(ts.transpileModule(load, { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText, context);
   assert.equal(context.restored.following, true);
+  assert.equal(context.followedBy, "customer-1");
   assert.equal(context.restored.notificationsEnabled, true);
   assert.equal(generation, 4);
   assert.equal(JSON.parse(stored).refreshToken, "refresh-4");
 });
 
 function createDiscoveryContext(values) {
-  const context = vm.createContext({ ALL_CITIES: "All cities", allCitiesMarket: { dancers: [], venues: [] }, ...values });
+  const context = vm.createContext({
+    window: { dispatchEvent() {} }, CustomEvent: class { constructor(type, options) { this.type = type; this.detail = options?.detail; } },
+    ALL_CITIES: "All cities", allCitiesMarket: { dancers: [], venues: [] }, ...values,
+  });
   const start = home.indexOf("    function discoveryMarket(");
   const end = home.indexOf("    const citySelect =", start);
   vm.runInContext(home.slice(start, end), context);

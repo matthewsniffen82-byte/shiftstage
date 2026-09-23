@@ -54384,17 +54384,48 @@
         `;
       }
       const emptyScheduleCopy = isEditorPreview
-        ? "Tap a club’s dressing-room sticker to show guests where you are working now."
-        : `Follow ${escapeHtml(profile.name)} for updates`;
+        ? "<span>Tap a club’s dressing-room sticker to show guests where you are working now.</span>"
+        : `${actionIconMarkup("bell")}<span data-profile-working-alert="${escapeOptionValue(profile.id || profile.name)}">Follow to get notified when ${escapeHtml(profile.name)} is working.</span>`;
       return `
-        <div class="info-tile profile-schedule-card profile-shift-card schedule-empty" aria-label="Schedule status">
+        <div class="info-tile profile-schedule-card profile-shift-card schedule-empty${isEditorPreview ? "" : " has-working-alert"}" aria-label="Schedule status">
           <span class="profile-empty-state">Not working now</span>
-          <span class="profile-empty-copy">
-            <span>${emptyScheduleCopy}</span>
+          <span class="profile-empty-copy${isEditorPreview ? "" : " profile-working-alert"}" aria-live="polite">
+            ${emptyScheduleCopy}
           </span>
         </div>
       `;
     }
+
+    async function refreshOpenProfileWorkingAlert() {
+      const hint = profileModal?.querySelector("[data-profile-working-alert]");
+      if (!hint) return;
+      const profile = findProfile(hint.dataset.profileWorkingAlert);
+      if (!profile) return;
+      const request = {};
+      hint.workingAlertRequest = request;
+      synchronizeAuthSession();
+      const userId = isCustomerSession() ? authSession?.account?.id : "";
+      const following = userId && isFollowingProfile(profile.city || selectedCity(), profile.name);
+      if (!following) {
+        hint.textContent = `Follow to get notified when ${profile.name} is working.`;
+        return;
+      }
+      hint.innerHTML = '<a href="/dashboard/customer#customer-alerts">Enable notifications</a>';
+      try {
+        const moduleUrl = document.querySelector("script[data-device-module]")?.dataset.deviceModule;
+        if (!moduleUrl) return;
+        const [device, data] = await Promise.all([
+          import(moduleUrl), getAuthenticatedJson("/api/customer/profile")
+        ]);
+        const enabled = await device.customerWorkingNowAlertsEnabled(data.profile, userId);
+        if (!hint.isConnected || hint.workingAlertRequest !== request || synchronizeAuthSession()?.account?.id !== userId) return;
+        if (enabled) hint.textContent = `You’ll be notified when ${profile.name} is working.`;
+      } catch { /* Keep the settings link when delivery cannot be confirmed. */ }
+    }
+
+    window.addEventListener("mydancr:push-changed", () => { void refreshOpenProfileWorkingAlert(); });
+    window.addEventListener("focus", () => { void refreshOpenProfileWorkingAlert(); });
+    window.addEventListener("storage", () => { void refreshOpenProfileWorkingAlert(); });
 
     function profileActivityMetricsMarkup(profile, city = selectedCity()) {
       const followerCount = followerNumber(profile, city);
@@ -54781,6 +54812,7 @@
 
       resetProfileModalScroll();
       profileBackdrop.classList.add("show");
+      void refreshOpenProfileWorkingAlert();
       profileBackdrop.setAttribute("aria-hidden", "false");
       focusProfileModalStart();
       syncOverlayScrollLock();
@@ -64471,6 +64503,7 @@
     }
 
     function syncOpenProfileFollowButton() {
+      void refreshOpenProfileWorkingAlert();
       const followButton = document.getElementById("followBtn");
       if (!followButton) return;
       const following = isFollowingProfile(selectedCity(), followButton.dataset.profile);
