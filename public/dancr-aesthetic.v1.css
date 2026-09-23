@@ -13031,18 +13031,40 @@ body.dancr-button-system #results.home-dancer-grid .home-dancer-grid-link:focus-
   }
 }
 
-/* Offer framing uses violet; availability labels and badges retain green. */
+/* Quiet violet framing leaves the strongest highlight on Free Entry. */
 body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell)
   .profile-tonight-card:is(.is-now, .has-club-deal) {
   background: radial-gradient(circle at 94% 0%, var(--dancr-color-brand-primary-soft), transparent 13rem),
     var(--dancr-color-surface-subtle) !important;
-  box-shadow: 0 8px 22px var(--dancr-color-black-soft),
-    0 0 14px var(--dancr-color-brand-primary-soft) !important;
+  box-shadow: 0 8px 22px var(--dancr-color-black-soft) !important;
 }
 
 body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell)
   .profile-tonight-card:is(.is-now, .has-club-deal)::before {
-  border-color: var(--dancr-color-brand-primary-strong) !important;
+  border: 1px solid #57406e !important;
+  box-shadow: none !important;
+}
+
+/* The venue row is one link; its chevron is a neutral navigation cue. */
+body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell)
+  .profile-tonight-card :is(.profile-venue-cue, .profile-venue-cue > svg, .profile-working-cue, .profile-upcoming-cue) {
+  color: #a39aaa !important;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  filter: none !important;
+}
+
+/* Match the two action labels, including the nested live-shell deal copy. */
+body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell)
+  .profile-tonight-card :is(.profile-tonight-travel-actions > :is(a, button), .profile-club-deal-qr-button, .club-deal-profile-action),
+body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell)
+  .profile-tonight-card .profile-club-deal-action-copy strong {
+  font-size: 12px !important;
+  font-weight: 650 !important;
+  line-height: 1.3 !important;
+  letter-spacing: normal !important;
+  text-transform: none !important;
 }
 
 body.dancr-button-system #results.venue-profile-overlay .venue-detail
