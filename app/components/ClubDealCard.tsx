@@ -2,7 +2,7 @@
 
 import { useEffect, useId, useRef, useState } from "react";
 import type { PublicClubDeal, DealSourceType } from "@/src/lib/dancr/types";
-import { customerFacingDealDescription, customerFacingDealTerms } from "@/src/lib/dancr/deal-copy";
+import { customerFacingDealDescription, customerFacingDealTerms, customerFacingDealTitle } from "@/src/lib/dancr/deal-copy";
 import { clubDealTransportationTerms, isEligibleClubTransportation, type EligibleClubTransportation } from "@/src/lib/dancr/club-deal-transportation";
 import {
   hasSignedInCustomerDealAccount,
@@ -71,7 +71,8 @@ export function ClubDealCard({
   const activeDeal = offerDeals.find((offer) => offer.id === selectedDealId) || offerDeals[0] || deal;
   const displayDescription = customerFacingDealDescription(activeDeal.dealDescription);
   const displayTerms = customerFacingDealTerms(clubDealTransportationTerms(activeDeal.dealTerms));
-  const useLabel = activeDeal.dealTitle.toLowerCase() === "free admission" ? "Use free admission" : "Use this deal";
+  const displayTitle = customerFacingDealTitle(activeDeal.dealTitle);
+  const useLabel = displayTitle === "Free Entry" ? "Use Free Entry" : "Use this deal";
   const actionLabel = ctaLabel || "Free Entry";
 
   useEffect(() => {
@@ -307,7 +308,7 @@ export function ClubDealCard({
     const url = window.location.href;
     const shareData = {
       title: `${venueName || "Club"} Club Deal`,
-      text: `${activeDeal.dealTitle} at ${venueName || "the club"}.`,
+      text: `${displayTitle} at ${venueName || "the club"}.`,
       url,
     };
     try {
@@ -336,7 +337,7 @@ export function ClubDealCard({
     <>
       <div className="club-deal-copy">
         <span className="eyebrow">{`${dealTypeLabel(activeDeal.offerType)} · Club Deal`}</span>
-        <h2>{activeDeal.dealTitle}</h2>
+        <h2>{displayTitle}</h2>
         {displayDescription && !compact ? <p>{displayDescription}</p> : null}
         {displayTerms && !compact ? <small>{displayTerms}</small> : null}
         {!compact ? <small>Staff verifies your pass and admission eligibility at the door.</small> : null}
@@ -362,7 +363,7 @@ export function ClubDealCard({
     <>
       <header className="club-deal-ready-header" role="status" tabIndex={-1}>
         <h2>Your admission pass is ready</h2>
-        <p>{activeDeal.dealTitle} · {venueName || "Club"}</p>
+        <p>{displayTitle} · {venueName || "Club"}</p>
       </header>
       <div className="club-deal-ready-content">
         <div className="club-deal-ready-instructions">
@@ -378,7 +379,7 @@ export function ClubDealCard({
   ) : (
     <>
       <header className="club-deal-dialog-header">
-        <h2>{activeDeal.dealTitle}</h2>
+        <h2>{displayTitle}</h2>
         <p>Valid at {venueName || "this club"}</p>
       </header>
       <div className="club-deal-preview-content">
@@ -440,11 +441,11 @@ export function ClubDealCard({
       {presentation === "profileCompact" ? (
         <div className="club-deal-profile-compact" data-club-deal-state="available">
           <span className="club-deal-profile-copy">
-            <strong>{activeDeal.dealTitle}</strong>
+            <strong>{displayTitle}</strong>
             <small>Active Club Deal</small>
           </span>
           <button
-            aria-label={`${actionLabel} for ${activeDeal.dealTitle}`}
+            aria-label={`${actionLabel} for ${displayTitle}`}
             className="club-deal-profile-action club-deal-active-action"
             data-club-deal-state="available"
             onClick={(event) => {
@@ -467,7 +468,7 @@ export function ClubDealCard({
         >
           <span className="club-deal-launcher-copy">
             <small>Active Club Deal</small>
-            <strong>{activeDeal.dealTitle}</strong>
+            <strong>{displayTitle}</strong>
             {contextLabel ? <em className="club-deal-launcher-context">{contextLabel}</em> : null}
           </span>
           <strong className="club-deal-launcher-action">{actionLabel}</strong>
@@ -490,7 +491,7 @@ export function ClubDealCard({
             openDealDialog(event.currentTarget);
           }}
         >
-          <span>{deal.dealTitle}</span>
+          <span>{customerFacingDealTitle(deal.dealTitle)}</span>
           <strong>Free Entry</strong>
         </button>
       ) : null}
@@ -534,7 +535,7 @@ export function ClubDealCard({
                       }}
                     >
                       <span>{dealTypeLabel(offer.offerType)}</span>
-                      <strong>{offer.dealTitle}</strong>
+                      <strong>{customerFacingDealTitle(offer.dealTitle)}</strong>
                       <small>{customerFacingDealDescription(offer.dealDescription) || "Club offer"}</small>
                     </button>
                   ))}

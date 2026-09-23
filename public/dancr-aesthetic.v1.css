@@ -13623,3 +13623,51 @@ html body.dancr-button-system > .app main.stack > .home-discovery-controls
   stroke: currentColor !important;
   filter: none !important;
 }
+
+/* Offer previews share the quiet black surfaces used by discovery controls. */
+body.dancr-button-system :is(#dealPassOverlay .deal-pass-sheet, .club-deal-dialog) {
+  border: 1px solid #34343c !important;
+  background: #08080c !important;
+  box-shadow: 0 24px 72px #0008 !important;
+}
+body.dancr-button-system :is(#dealPassOverlay .deal-pass-preview-panel, .club-deal-dialog .club-deal-preview-panel) {
+  border-color: #34343c !important;
+  border-radius: 12px !important;
+  background: #050507 !important;
+}
+body.dancr-button-system :is(#dealPassCopy, .club-deal-dialog-header p, .club-deal-ready-header p) { color: #c8c4cf !important; }
+body.dancr-button-system :is(#dealPassOverlay .deal-pass-preview-instruction, .club-deal-dialog .club-deal-preview-instruction) { color: #e4e0eb !important; }
+html body.dancr-button-system :is(#dealPassOverlay .deal-pass-actions .deal-pass-action, .club-deal-dialog .club-deal-share-actions button) {
+  --offer-control-face: #050507;
+  --offer-control-edge: #34343c;
+  position: relative !important;
+  isolation: isolate;
+  min-height: 44px !important;
+  border: 0 !important;
+  border-radius: 12px !important;
+  background: none !important;
+  box-shadow: none !important;
+  color: #e4e0eb !important;
+  appearance: none;
+  -webkit-appearance: none;
+}
+html body.dancr-button-system :is(#dealPassOverlay .deal-pass-actions .deal-pass-action, .club-deal-dialog .club-deal-share-actions button)::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border: 1px solid var(--offer-control-edge);
+  border-radius: inherit;
+  background: linear-gradient(var(--offer-control-face), var(--offer-control-face));
+  pointer-events: none;
+  z-index: -1;
+}
+html body.dancr-button-system :is(#dealPassOverlay .deal-pass-actions .deal-pass-action.is-saved, .club-deal-dialog .club-deal-share-actions button.saved) {
+  --offer-control-face: #160e24;
+  --offer-control-edge: #745696;
+}
+body.dancr-button-system :is(#dealPassOverlay .deal-pass-primary-dock .deal-pass-action.primary, .club-deal-dialog .club-deal-checkout-action) {
+  border: 1px solid #8153c5 !important;
+  border-radius: 12px !important;
+  background: linear-gradient(120deg, #6429c7, #45159e) !important;
+  box-shadow: inset 0 1px 0 #ffffff0d !important;
+}

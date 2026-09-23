@@ -157,7 +157,7 @@ test("cashier NFC redirects to the venue while admission keeps signed source att
 });
 
 test("Club Deal activation persists the pass and keeps instructions concise", () => {
-  assert.match(dealCard, /Use free admission/);
+  assert.match(dealCard, /Use Free Entry/);
   assert.match(dealCard, /Show your admission pass/);
   assert.match(dealCard, /window\.location\.assign\(`/);
   assert.match(dealCard, /const dialogContent = intentState === "ready" \?/);

@@ -833,7 +833,7 @@ test("Working Now dancer grid cards expose a functional admission-pass Club Deal
   assert.match(homeSource, /data-select-deal-pass aria-pressed="false">Use this deal/);
   assert.match(homeSource, /primaryDock\.hidden = false/);
   assert.match(homeSource, /selectButton\.textContent = "Show admission pass"/);
-  assert.match(homeSource, /titleElement\.textContent = state === "ready" \? "Your admission pass is ready" : pass\.title/);
+  assert.match(homeSource, /titleElement\.textContent = state === "ready" \? "Your admission pass is ready" : customerFacingDealTitle\(pass\.title\)/);
   assert.match(homeSource, /\.deal-pass-primary-dock \{[^}]*position: static;[^}]*width: 100%;[^}]*margin-top: 10px;[^}]*transform: none;/);
   assert.doesNotMatch(homeSource, /Preview only—select this deal before tapping the cashier NFC sticker/);
   assert.match(

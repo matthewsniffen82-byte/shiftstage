@@ -13,13 +13,13 @@ const liveOverlay = liveApp.match(
 )?.[0] || "";
 
 test("cashier redemption UI renders existing deal data without offer-specific hardcoding", () => {
-  assert.match(dealCard, /<h2>\{activeDeal\.dealTitle\}<\/h2>/);
+  assert.match(dealCard, /<h2>\{displayTitle\}<\/h2>/);
   assert.match(dealCard, /Valid at \{venueName \|\| "this club"\}/);
   assert.match(dealCard, /displayDescription \? <p>\{displayDescription\}<\/p> : null/);
   assert.match(dealCard, /displayTerms \? <p>\{displayTerms\}<\/p> : null/);
   assert.match(dealCard, /const validityLabel = dealAvailabilityLabel\(activeDeal\)/);
 
-  assert.match(liveOverlay, /document\.getElementById\("dealPassTitle"\)\.textContent = pass\.title/);
+  assert.match(liveOverlay, /document\.getElementById\("dealPassTitle"\)\.textContent = customerFacingDealTitle\(pass\.title\)/);
   assert.match(liveOverlay, /document\.getElementById\("dealPassCopy"\)\.textContent = presentation\.copy/);
   assert.match(liveOverlay, /descriptionElement\.textContent = description/);
   assert.match(liveOverlay, /termsElement\.textContent = terms/);
@@ -50,7 +50,7 @@ test("preview and claimed passes are distinct from successful redemption", () =>
   for (const source of [dealCard, liveOverlay]) {
     assert.match(source, /Show your admission pass|Your admission pass is ready/);
     assert.doesNotMatch(source, /Ready at Cashier ✓/);
-    assert.match(source, /Use free admission/);
+    assert.match(source, /Use Free Entry/);
     assert.match(source, /Use this deal/);
     assert.doesNotMatch(source, /Available now · Not selected/);
   }

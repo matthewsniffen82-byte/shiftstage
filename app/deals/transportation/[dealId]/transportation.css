@@ -1,46 +1,118 @@
-.club-transport-page{min-height:100dvh;padding:32px 16px;box-sizing:border-box;display:grid;place-items:center;background:radial-gradient(ellipse at 50% 0, #281243,transparent 55%),#09080d;color:#f4effb;font-family:Arial,sans-serif}
-.club-transport-card{box-sizing:border-box;width:min(100%,480px);padding:24px;border:1px solid #392b48;border-radius:24px;background:#15111d;box-shadow:0 24px 80px #0006;overflow-wrap:anywhere}
-.club-transport-card h1{font-size:30px;line-height:1.15;letter-spacing:-.7px;margin:8px 0}
-.club-transport-card p{font-size:14px;line-height:1.45}
-.club-transport-back{display:inline-flex;align-items:center;min-height:44px;color:#d8c6ee;text-decoration:none;font-size:14px}
-.club-transport-change{display:inline-flex;align-items:center;min-height:44px;padding:0;border:0;background:transparent;color:#d8c6ee;font:inherit;font-size:14px;cursor:pointer}
-.club-transport-change:disabled{opacity:.5;cursor:default}
-.club-transport-terms{color:#e1d7ed}
-.club-transport-options{border:0;padding:0;margin:16px 0 0;display:grid;gap:8px;min-width:0}
-.club-transport-options legend{font-size:15px;font-weight:600;margin-bottom:10px}
-.club-transport-options label{display:flex;align-items:center;gap:12px;border:1px solid #473654;border-radius:14px;padding:12px;cursor:pointer;min-height:48px;box-sizing:border-box}
-.club-transport-options label.selected{border-color:#b98beb;background:#30203e}
-.club-transport-options label:has(input:disabled){opacity:.55;cursor:default}
-.club-transport-options strong,.club-transport-options small{display:block;font-size:14px;line-height:1.4}
-.club-transport-options small{font-size:12px;color:#c9bbd7;margin-top:5px}
-.club-transport-card input[type=radio],.club-transport-card input[type=checkbox]{width:20px;height:20px;accent-color:#ad77ed;flex-shrink:0}
-.club-transport-handoff{padding:12px;background:#251d30;border-radius:12px;margin:12px 0 16px;font-size:14px}
-.club-transport-handoff p{margin:6px 0 0;color:#d8cbe5}
-.club-transport-fields{display:grid;gap:12px}
-.club-transport-fields label{display:grid;gap:6px;font-size:13px;color:#e1d6eb}
-.club-transport-fields input:not([type=checkbox]){box-sizing:border-box;width:100%;min-width:0;min-height:48px;background:#0d0b12;border:1px solid #564164;color:#fff;border-radius:10px;padding:12px;font-size:16px}
-.club-transport-fields input::placeholder{color:#a798b6;font-size:13px}
-.club-transport-fields .club-transport-consent{display:flex;align-items:flex-start;gap:10px;line-height:1.5}
-.club-transport-consent input{margin:0}
-.club-transport-submit{box-sizing:border-box;display:flex;justify-content:center;align-items:center;width:100%;min-height:50px;margin-top:16px;padding:12px 16px;border:1px solid #bc92ed;border-radius:12px;background:#8049bc;color:#fff;font:600 15px Arial,sans-serif;text-decoration:none;cursor:pointer}
-.club-transport-submit:disabled{opacity:.5;cursor:default}
-.club-transport-card .club-transport-note{font-size:12px;color:#b9aaca;margin:12px 0 0}
-.club-transport-error{color:#ffc8d0}
-.club-transport-ineligible{margin-top:18px;padding:16px;border:1px solid #97704b;border-radius:12px;background:#302319;color:#ffe4c7;font-size:14px;line-height:1.5}
-.club-transport-ineligible .club-transport-submit{margin-top:12px}
-.club-transport-ready{display:grid;gap:14px;padding:16px;border:1px solid #493259;border-radius:14px;margin-top:22px}
-.club-transport-ready svg{width:42px;flex-shrink:0;color:#cfa4fb}
-.club-transport-ready p{margin:0}
-.club-transport-booking{margin-top:18px;padding:14px;border:1px solid #493259;border-radius:14px;background:#251d30}
-.club-transport-booking h2{font-size:17px;line-height:1.3;margin:0}
-.club-transport-booking-links{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:12px}
-.club-transport-booking .club-transport-provider-button{display:flex;align-items:center;justify-content:center;box-sizing:border-box;min-width:0;min-height:52px;padding:10px 8px;font:600 13px Arial,sans-serif;text-align:center;text-decoration:none;line-height:1.35;cursor:pointer}
-.club-transport-provider-button small{display:block;margin-top:3px;font-size:11px;font-weight:400}
-.club-transport-address{display:grid;gap:6px;font-size:12px;color:#c9bbd7}
-.club-transport-address textarea{box-sizing:border-box;width:100%;min-width:0;padding:10px;border:1px solid #564164;border-radius:10px;background:#0d0b12;color:#fff;font:16px/1.45 Arial,sans-serif;resize:vertical}
-.club-transport-card :focus-visible{outline:2px solid #d4b0ff;outline-offset:4px}
-.club-transport-card .club-transport-change{min-height:44px;padding:8px 0;border:0!important;background:transparent!important;box-shadow:none!important;color:#d8c6ee;font-size:13px;font-weight:400!important;text-decoration:underline!important;text-underline-offset:3px}
-@media(max-width:480px){.club-transport-page{padding:12px 8px;align-items:start}.club-transport-card{padding:16px;border-radius:18px}.club-transport-card h1{font-size:28px}}
+/* Free-entry and pickup screens share the discovery controls' neutral surfaces. */
+.club-transport-page {
+  min-height: 100dvh;
+  padding: 32px 16px;
+  box-sizing: border-box;
+  display: grid;
+  place-items: center;
+  background: #050507;
+  color: #f4f2f8;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+.club-transport-page .club-transport-card {
+  box-sizing: border-box;
+  width: min(100%, 480px);
+  padding: 24px;
+  border: 1px solid #34343c;
+  border-radius: 20px;
+  background: #08080c;
+  box-shadow: 0 20px 60px #0005;
+  overflow-wrap: anywhere;
+}
+.club-transport-card h1 { font-size: 28px; line-height: 1.15; letter-spacing: -.7px; margin: 8px 0 16px; }
+/* This programmatically focused heading announces screen changes without a touch outline. */
+.club-transport-card h1[tabindex="-1"]:focus { outline: none; }
+.club-transport-card p { font-size: 14px; line-height: 1.5; color: #c8c4cf; }
+.club-transport-back { display: inline-flex; align-items: center; min-height: 44px; color: #c8c4cf; text-decoration: none; font-size: 14px; }
+body.dancr-button-system .club-transport-card .club-transport-change {
+  display: inline-flex; align-items: center; min-height: 44px; padding: 4px 0;
+  border: 0 !important; background: transparent !important; box-shadow: none !important;
+  color: #d8d3e1 !important; font: inherit; font-size: 13px; font-weight: 500 !important;
+  text-decoration: underline !important; text-underline-offset: 3px; cursor: pointer;
+}
+.club-transport-change:disabled { opacity: .5; cursor: default; }
+.club-transport-terms { color: #c8c4cf; }
+.club-transport-options { border: 0; padding: 0; margin: 16px 0 0; display: grid; gap: 8px; min-width: 0; }
+.club-transport-options legend { font-size: 15px; font-weight: 600; margin-bottom: 10px; }
+.club-transport-options label {
+  display: flex; align-items: center; gap: 12px; box-sizing: border-box; min-height: 64px;
+  padding: 10px 12px; border: 1px solid #34343c; border-radius: 12px;
+  background: linear-gradient(#050507, #050507); cursor: pointer;
+}
+.club-transport-options label.selected { border-color: #745696; background: #160e24; }
+.club-transport-options label:has(input:disabled) { opacity: .55; cursor: default; }
+.club-transport-options strong, .club-transport-options small { display: block; font-size: 14px; line-height: 1.4; }
+.club-transport-options small { font-size: 12px; color: #b9b5c3; margin-top: 3px; }
+body.dancr-button-system .club-transport-card :is(input[type=radio], input[type=checkbox]) {
+  appearance: none; -webkit-appearance: none; box-sizing: border-box;
+  width: 20px; height: 20px; min-width: 20px; margin: 0; flex-shrink: 0;
+  border: 1.5px solid #77727f; background: linear-gradient(#050507, #050507); cursor: pointer;
+}
+.club-transport-card input[type=radio] { border-radius: 50%; }
+.club-transport-card input[type=checkbox] { border-radius: 5px; }
+body.dancr-button-system .club-transport-card input[type=radio]:checked {
+  border-color: #b697eb; background: radial-gradient(circle, #b697eb 0 5px, #160e24 5.5px);
+}
+body.dancr-button-system .club-transport-card input[type=checkbox]:checked {
+  border-color: #a88ad7;
+  background: #6e3db0 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='m4 10 4 4 8-8' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / 18px 18px no-repeat;
+}
+.club-transport-handoff { padding: 12px; border: 1px solid #34343c; background: #0c0c11; border-radius: 12px; margin: 8px 0 16px; }
+.club-transport-handoff p { margin: 0; }
+.club-transport-handoff p + p { margin-top: 8px; }
+.club-transport-handoff strong { color: #f4f2f8; }
+.club-transport-fields { display: grid; gap: 12px; }
+.club-transport-fields label { display: grid; gap: 6px; font-size: 13px; color: #dedbe5; }
+body.dancr-button-system .club-transport-card :is(.club-transport-fields input:not([type=checkbox]), .club-transport-address textarea) {
+  box-sizing: border-box; width: 100%; min-width: 0; min-height: 48px; padding: 12px;
+  border: 1px solid #34343c !important; border-radius: 10px;
+  background: linear-gradient(#050507, #050507) !important; color: #fff; line-height: 1.4;
+  font-family: inherit; font-size: 16px; box-shadow: none !important;
+}
+.club-transport-fields input::placeholder { color: #aaa6b3; font-size: 13px; opacity: 1; }
+.club-transport-fields .club-transport-consent { display: flex; align-items: flex-start; gap: 10px; min-height: 44px; padding-block: 4px; line-height: 1.5; cursor: pointer; }
+.club-transport-consent input { margin-top: 1px !important; }
+body.dancr-button-system .club-transport-card .club-transport-submit {
+  box-sizing: border-box; display: flex; justify-content: center; align-items: center; width: 100%;
+  min-height: 48px; margin-top: 16px; padding: 12px 16px; gap: 4px;
+  border: 1px solid #8153c5 !important; border-radius: 12px !important;
+  background: linear-gradient(120deg, #6429c7, #45159e) !important; color: #fff !important;
+  box-shadow: inset 0 1px 0 #ffffff0d !important; font: inherit; font-weight: 650 !important; font-size: 15px;
+  text-decoration: none; cursor: pointer;
+}
+.club-transport-submit:disabled { opacity: .5; cursor: default; }
+.club-transport-card .club-transport-note { font-size: 12px; color: #b9b5c3; margin: 12px 0 0; }
+.club-transport-card .club-transport-error { color: #ffc8d0; }
+.club-transport-ineligible { margin-top: 16px; padding: 14px; border: 1px solid #97704b; border-radius: 12px; background: #211910; color: #ffe4c7; font-size: 14px; line-height: 1.5; }
+.club-transport-ineligible .club-transport-submit { margin-top: 12px; }
+.club-transport-ready { display: grid; gap: 12px; padding: 14px; border: 1px solid #34343c; border-radius: 12px; margin-top: 18px; }
+.club-transport-ready p { margin: 0; }
+.club-transport-booking { margin-top: 16px; padding: 14px; border: 1px solid #34343c; border-radius: 12px; background: #0c0c11; }
+.club-transport-booking h2 { font-size: 17px; line-height: 1.3; margin: 0; }
+.club-transport-booking-links { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-top: 12px; }
+body.dancr-button-system .club-transport-card .club-transport-provider-button {
+  display: flex; align-items: center; justify-content: center; box-sizing: border-box; min-width: 0; min-height: 48px;
+  padding: 10px 8px; border: 1px solid #34343c !important; border-radius: 10px !important;
+  background: linear-gradient(#050507, #050507) !important; box-shadow: none !important;
+  color: #eeeaf4; font: inherit; font-size: 13px; font-weight: 600; text-align: center; text-decoration: none; line-height: 1.35; cursor: pointer;
+}
+.club-transport-provider-button small { display: block; margin-top: 3px; font-size: 11px; font-weight: 400; }
+.club-transport-address { display: grid; gap: 6px; font-size: 12px; color: #c8c4cf; }
+.club-transport-address textarea { resize: vertical; }
+.club-transport-confirmation > p { margin: 10px 0 0; }
+.club-transport-confirmation strong { color: #e7e4ed; }
+body.dancr-button-system .club-transport-card .club-transport-submit.is-confirmed {
+  opacity: 1 !important; filter: none !important; margin-top: 0; border-color: #32634a !important; background: linear-gradient(#0a1711, #0a1711) !important;
+  color: #a7e3bf !important; cursor: default;
+}
+body.dancr-button-system .club-transport-card :is(input, textarea, button, a):focus-visible {
+  outline: 2px solid #c4b5fd !important; outline-offset: 3px !important;
+}
+@media(max-width:480px) {
+  .club-transport-page { padding: 12px 8px; align-items: start; }
+  .club-transport-page .club-transport-card { padding: 16px; border-radius: 18px; }
+  .club-transport-card h1 { font-size: 26px; }
+}
 @media(max-width:720px){
   /* Reserve the dock clearance inside this page so the final note stays above it. */
   body:has(> .club-transport-page){padding-bottom:0!important}

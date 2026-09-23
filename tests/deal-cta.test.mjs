@@ -97,7 +97,7 @@ test("Club Deal checkout explains transportation and staff scanning across both 
   for (const source of [dealCard, liveApp]) {
     assert.match(source, /then choose your transportation/);
     assert.match(source, /Show your admission pass to door staff for scanning/);
-    assert.match(source, /Use free admission/);
+    assert.match(source, /Use Free Entry/);
     assert.doesNotMatch(source, /<strong>Tap &ldquo;Use this deal&rdquo;<\/strong>/);
     assert.doesNotMatch(source, /Only this venue’s registered cashier sticker can complete redemption/);
   }

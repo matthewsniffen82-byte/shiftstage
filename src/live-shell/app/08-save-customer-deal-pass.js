@@ -346,6 +346,11 @@
       });
     }
 
+    function customerFacingDealTitle(value) {
+      const title = String(value || "").trim();
+      return /^free (?:admission|entry)$/i.test(title) ? "Free Entry" : title;
+    }
+
     function customerFacingDealTerms(value) {
       return phoneTapCopy(String(value || "")
         .replaceAll("Free admission requires arrival in your own car or other private car that is not an Uber or taxi, or use of the club's free shuttle service.", "Free admission when you arrive in a private car, club-provided transport, Waymo, Zoox, or Cybercab. Uber, Lyft, and other rideshares or taxis do not qualify. Waymo, Zoox, and Cybercab ride fares are not included.")
@@ -418,9 +423,9 @@
       availableContent.hidden = state === "ready";
       readyContent.hidden = state !== "ready";
       primaryDock.hidden = false;
-      titleElement.textContent = state === "ready" ? "Your admission pass is ready" : pass.title;
+      titleElement.textContent = state === "ready" ? "Your admission pass is ready" : customerFacingDealTitle(pass.title);
       document.getElementById("dealPassCopy").textContent = state === "ready"
-        ? `${pass.title} · ${pass.venueName || "Club"}`
+        ? `${customerFacingDealTitle(pass.title)} · ${pass.venueName || "Club"}`
         : dealPassPresentation(pass).copy;
       status.hidden = state === "preview";
       status.classList.toggle("is-ready", state === "ready");
@@ -441,7 +446,7 @@
           ? "Your pass expired. Choose this deal again to get a new pass."
           : "Unable to prepare this deal. Try again.");
         selectButton.textContent = state === "error" ? "Try again"
-          : String(pass.title).toLowerCase() === "free admission" ? "Use free admission" : "Use this deal";
+          : customerFacingDealTitle(pass.title) === "Free Entry" ? "Use Free Entry" : "Use this deal";
         document.getElementById("dealPassPreviewInstruction").textContent = `Tap “${selectButton.textContent}”, then choose your transportation.`;
         selectButton.disabled = false;
         selectButton.setAttribute("aria-pressed", "false");
@@ -465,7 +470,7 @@
       const presentation = dealPassPresentation(pass);
       overlay.hidden = false;
       overlay.dataset.dealPass = encodeDealPass(pass);
-      document.getElementById("dealPassTitle").textContent = pass.title;
+      document.getElementById("dealPassTitle").textContent = customerFacingDealTitle(pass.title);
       document.getElementById("dealPassCopy").textContent = presentation.copy;
       const description = customerFacingDealDescription(pass.description);
       const descriptionElement = document.getElementById("dealPassDescription");

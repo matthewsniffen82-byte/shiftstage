@@ -31,7 +31,7 @@ function nodes(node) {
 }
 
 function client(props = {}, options = {}) {
-  const slots = []; let cursor = 0, tree, failStorage = false;
+  const slots = []; let cursor = 0, tree, failStorage = false, requestSequence = 0;
   const stored = new Map(); const requests = [], copies = [], invitations = [];
   const hooks = {
     useState(initial) { const index = cursor++; if (!(index in slots)) slots[index] = initial; return [slots[index], next => { slots[index] = next; }]; },
@@ -50,12 +50,12 @@ function client(props = {}, options = {}) {
       copies.push(value);
     } } },
     localStorage: { getItem: name => stored.get(name) || null, removeItem: name => stored.delete(name), setItem(name, value) { if (failStorage) throw new Error("Blocked"); stored.set(name, value); } },
-    crypto: { randomUUID: () => "33333333-3333-4333-8333-333333333333" },
+    crypto: { randomUUID: () => "33333333-3333-4333-8333-" + String(++requestSequence).padStart(12, "0") },
     FormData: class { constructor(fields) { this.fields = fields; } get(name) { return this.fields[name] ?? null; } },
     AbortSignal, URLSearchParams,
     fetch: async (url, init) => {
       requests.push({ url, body: JSON.parse(init.body) });
-      if (url === "/api/deals/redemptions") return { ok: !options.passFailure, json: async () => options.passFailure ? { error: "Try again" } : { ok: true, passUrl: "/deals/pass/" + "p".repeat(43), expiresAt: new Date(Date.now() + 12*3600000).toISOString() } };
+      if (url === "/api/deals/redemptions") { await options.beforePass?.(); return { ok: !options.passFailure, json: async () => options.passFailure ? { error: "Try again" } : { ok: true, passUrl: "/deals/pass/" + "p".repeat(43), expiresAt: new Date(Date.now() + 12*3600000).toISOString() } }; }
       return { ok: options.accepted !== false, status: options.accepted === false ? 503 : 200,
         json: async () => options.accepted === false ? { error: "Unavailable" } : { ok: true, requestId: "33333333-3333-4333-8333-333333333333", message: "The club will contact you." } };
     },
@@ -321,4 +321,39 @@ test("free-entry page supplies the public destination while retaining venue publ
   assert.ok(filters.some(([key,value]) => key === "is_active" && value === true));
   assert.ok(filters.some(([key,value]) => key === "page_review_status" && value === "published"));
   assert.ok(filters.some(([key,operator,value]) => key === "published_at" && operator === "is" && value === null));
+});
+
+test("accepted pickup shows its persistent confirmation while the pass is still pending", async () => {
+  let releasePass;
+  const f = client({ initialTransportation: "club_shuttle" }, {
+    beforePass: () => new Promise(resolve => { releasePass = resolve; }),
+  });
+  const submission = f.submit();
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(typeof releasePass, "function");
+  const confirmation = nodes(f.render()).find(node => node.type === "button" && node.props.className?.includes("is-confirmed"));
+  assert.ok(confirmation);
+  assert.equal(confirmation.props.disabled, true);
+  assert.match(f.html(), /Request sent/);
+  assert.match(f.html(), /Awaiting club confirmation/);
+  assert.match(f.html(), /Your ride is not booked yet/);
+  assert.doesNotMatch(f.html(), /<form|Send pickup request/);
+  assert.match(f.html(), /Generating pass/);
+  releasePass(); await submission;
+  assert.match(f.html(), /Request sent/);
+  assert.match(f.html(), /Show admission pass/);
+  assert.equal(f.requests.filter(request => request.url.endsWith("/shuttle")).length, 1);
+});
+
+test("a rejected pickup stays retryable and never shows request-sent confirmation", async () => {
+  const options = { accepted: false };
+  const f = client({ initialTransportation: "club_shuttle" }, options);
+  await f.submit();
+  assert.doesNotMatch(f.html(), /Request sent|Awaiting club confirmation/);
+  assert.match(f.html(), /Unavailable/);
+  assert.match(f.html(), /Retry shuttle request/);
+  options.accepted = true; await f.submit();
+  assert.match(f.html(), /Request sent/);
+  assert.match(f.html(), /Awaiting club confirmation/);
+  assert.equal(f.requests[0].body.requestId, f.requests[1].body.requestId);
 });
