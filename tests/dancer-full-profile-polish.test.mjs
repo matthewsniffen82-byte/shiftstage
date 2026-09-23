@@ -184,7 +184,7 @@ test("profile socials stay secondary, responsive, and absent when no links exist
 
   assert.match(
     compactProfileBlock,
-    /#profileBackdrop #profileModal \.profile-media-socials,[\s\S]*?\.public-profile-shell \.profile-media-socials \{[\s\S]*?place-items: center !important;[\s\S]*?margin: 0 !important;[\s\S]*?padding: 10px 0 !important;[\s\S]*?border: 0 !important;[\s\S]*?background: transparent !important;[\s\S]*?box-shadow: none !important;/,
+    /#profileBackdrop #profileModal \.profile-media-socials,[\s\S]*?\.public-profile-shell \.profile-media-socials \{[\s\S]*?place-items: center !important;[\s\S]*?margin: 0 !important;[\s\S]*?padding: 2px 0 !important;[\s\S]*?border: 0 !important;[\s\S]*?background: transparent !important;[\s\S]*?box-shadow: none !important;/,
   );
   assert.match(
     compactProfileBlock,
@@ -200,7 +200,7 @@ test("profile socials stay secondary, responsive, and absent when no links exist
   );
   assert.match(
     compactProfileBlock,
-    /\.profile-media-socials \.social-list a::before \{[\s\S]*?inset: 6px !important;[\s\S]*?border: 1px solid rgba\(226, 232, 240, \.22\) !important;[\s\S]*?background: rgba\(9, 9, 13, \.86\) !important;[\s\S]*?box-shadow: none !important;/,
+    /\.profile-media-socials \.social-list a::before \{[\s\S]*?inset: 6px !important;[\s\S]*?border: 1px solid transparent !important;[\s\S]*?background: transparent !important;[\s\S]*?box-shadow: none !important;/,
   );
   assert.match(
     compactProfileBlock,

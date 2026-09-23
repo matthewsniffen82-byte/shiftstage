@@ -31,7 +31,7 @@ export function UberRideButton({ venue, source, compact = false, dancerId, dealI
 
   const venueName = String(venue.name || "this club").trim() || "this club";
   const label = rideActionLabel(source, venueName);
-  const visibleLabel = compact ? "Free Ride + Entry" : label;
+  const visibleLabel = source === "dancer_profile" && compact ? "Free Entry + Pickup" : compact ? "Free Ride + Entry" : label;
   const query = new URLSearchParams();
   if (dealId) {
     query.set("dealId", dealId);
@@ -61,7 +61,7 @@ export function UberRideButton({ venue, source, compact = false, dancerId, dealI
 }
 
 function rideActionLabel(source: UberRideSource, venueName: string) {
-  return source === "dancer_profile" ? `Free Ride + Entry at ${venueName}` : "Free Ride + Entry";
+  return source === "dancer_profile" ? `Free Entry + Pickup at ${venueName}` : "Free Ride + Entry";
 }
 
 function RideIcon() {

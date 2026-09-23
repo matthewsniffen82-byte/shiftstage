@@ -618,7 +618,7 @@
         dealConfig: dancerProfileClubDealConfig(profile),
         dancerId: profile.id || "",
         city,
-        displayLabel: "Free Ride + Entry"
+        displayLabel: "Free Entry + Pickup"
       });
     }
 

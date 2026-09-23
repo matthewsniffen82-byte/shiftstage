@@ -188,8 +188,8 @@ const [componentSource, componentStyles, dancerPageSource, eventRouteSource, liv
 
 test("the reusable control opens the free shuttle form with a destination-aware dancer CTA", () => {
   assert.match(componentSource, /function rideActionLabel\(source: UberRideSource, venueName: string\)/);
-  assert.match(componentSource, /source === "dancer_profile" \? `Free Ride \+ Entry at \$\{venueName\}` : "Free Ride \+ Entry"/);
-  assert.match(componentSource, /const visibleLabel = compact \? "Free Ride \+ Entry" : label/);
+  assert.match(componentSource, /source === "dancer_profile" \? `Free Entry \+ Pickup at \$\{venueName\}` : "Free Ride \+ Entry"/);
+  assert.match(componentSource, /const visibleLabel = source === "dancer_profile" && compact \? "Free Entry \+ Pickup" : compact \? "Free Ride \+ Entry" : label/);
   assert.doesNotMatch(componentSource, /"Request Uber"|`Ride to \$\{venueName\}`/);
   assert.match(componentSource, /const href = `\/rides\/\$\{encodeURIComponent\(venue.id\)\}/);
   assert.match(componentSource, /href=\{href\}/);
@@ -199,7 +199,7 @@ test("the reusable control opens the free shuttle form with a destination-aware 
 test("the reusable control hides private, unpublished, and invalid destinations", () => {
   assert.match(componentSource, /venue\.isActive === false \|\| venue\.isPublic === false/);
   assert.match(componentSource, /if \(!venue.id\) return null/);
-  assert.match(dancerPageSource, /const actionShift = activeShift \|\| upcomingShifts\[0\] \|\| null[\s\S]*?getVenueProfile\(client, actionShift\.venueSlug\)/);
+  assert.match(dancerPageSource, /const actionShift = activeShift \|\| null[\s\S]*?getVenueProfile\(client, actionShift\.venueSlug\)/);
   assert.match(dancerPageSource, /profile-tonight-travel-actions[\s\S]*?<DancerDirectionsButton[\s\S]*?<UberRideButton/);
   assert.match(dancerPageSource, /source="dancer_profile"/);
 });
@@ -215,7 +215,7 @@ test("clicking the reusable free ride control isolates card navigation without r
 test("eligible live-shell dancer and venue cards expose compact ride links without parent navigation", () => {
   assert.match(liveShellSource, /const fallback = "https:\/\/m\.uber\.com\/looking"/);
   assert.match(liveShellSource, /url\.searchParams\.set\("drop\[0\]", JSON\.stringify\(dropoff\)\)/);
-  assert.match(liveShellSource, /function rideActionLabel\(source, venueName\)[\s\S]*?source === "dancer_profile" \? `Free Ride \+ Entry at \$\{safeVenueName\}` : "Free Ride \+ Entry"/);
+  assert.match(liveShellSource, /function rideActionLabel\(source, venueName\)[\s\S]*?source === "dancer_profile" \? `Free Entry \+ Pickup at \$\{safeVenueName\}` : "Free Ride \+ Entry"/);
   assert.match(liveShellSource, /function homeDancerGridActionsMarkup[\s\S]*?source: "tonight_feed"[\s\S]*?home-dancer-grid-uber/);
   assert.match(liveShellSource, /function homeVenueDiscoveryFeedSlide[\s\S]*?source: "tonight_feed"[\s\S]*?home-venue-discovery-uber/);
   assert.doesNotMatch(liveShellSource, /label: "(?:Uber|Request Uber)"|label: `Ride to \$\{venue\.name\}`/);

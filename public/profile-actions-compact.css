@@ -246,8 +246,8 @@ body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-she
 body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell, .dancer-profile-preview-overlay, #results.venue-profile-overlay .venue-detail) :is(.modal-actions, .live-actions, .venue-secondary-actions).profile-actions-compact :is(#followBtn, #goingBtn, .profile-action-icon-control) {
   appearance: none !important;
   -webkit-appearance: none !important;
-  --profile-action-border: #525252;
-  --profile-action-background: #242424;
+  --profile-action-border: #34343c;
+  --profile-action-background: #15151b;
   border: 0 !important;
   border-radius: 8px !important;
   color: #FFFFFF !important;

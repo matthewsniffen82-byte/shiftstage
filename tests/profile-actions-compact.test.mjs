@@ -19,10 +19,10 @@ test("selected actions stay neutral without changing their state or accessible l
 });
 
 test("profile actions use restrained charcoal materials without green, gradients, or glow", () => {
-  assert.match(css, /--profile-action-border: #525252/);
+  assert.match(css, /--profile-action-border: #34343c/);
   assert.match(css, /border-radius: 8px !important/);
   assert.match(css, /color: #FFFFFF !important/);
-  assert.match(css, /--profile-action-background: #242424/);
+  assert.match(css, /--profile-action-background: #15151b/);
   assert.match(css, /appearance: none !important/);
   assert.match(css, /outline: 2px solid #FFFFFF !important/);
   assert.doesNotMatch(css, /linear-gradient|radial-gradient|drop-shadow|#4dec9d|#22c55e/i);

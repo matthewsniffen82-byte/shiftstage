@@ -94,7 +94,7 @@
 
     function rideActionLabel(source, venueName) {
       const safeVenueName = String(venueName || "this club").trim() || "this club";
-      return source === "dancer_profile" ? `Free Ride + Entry at ${safeVenueName}` : "Free Ride + Entry";
+      return source === "dancer_profile" ? `Free Entry + Pickup at ${safeVenueName}` : "Free Ride + Entry";
     }
 
     function uberRideLinkMarkup({ venue, source, className = "", displayLabel = "", dealConfig = null }) {

@@ -3985,15 +3985,15 @@ body.dancr-button-system .public-profile-shell .profile-tonight-travel-actions >
   color: rgba(248,250,252,.94) !important;
   background: rgba(255,255,255,.055) !important;
   background-image: none !important;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.05) !important;
+  box-shadow: none !important;
   font-size: 11px !important;
   opacity: 1 !important;
 }
 
 body.dancr-button-system #profileBackdrop #profileModal .profile-tonight-travel-actions > :is(.profile-primary-directions, .profile-directions-button),
 body.dancr-button-system .public-profile-shell .profile-tonight-travel-actions > :is(.profile-primary-directions, .profile-directions-button) {
-  border-color: rgba(142,226,248,.24) !important;
-  background: rgba(142,226,248,.07) !important;
+  border-color: rgba(255,255,255,.14) !important;
+  background: rgba(255,255,255,.055) !important;
 }
 
 body.dancr-button-system #profileBackdrop #profileModal .profile-tonight-travel-actions > :is(a, button) :is(svg, .action-icon, span),
@@ -4795,10 +4795,7 @@ body.dancr-button-system .public-profile-shell .club-deal-profile-action[data-cl
     var(--dancr-color-background)
   ) !important;
   background-image: none !important;
-  box-shadow:
-    0 8px 18px var(--dancr-color-black-soft),
-    0 0 14px var(--dancr-color-success-soft),
-    inset 0 1px 0 var(--dancr-color-white-medium) !important;
+  box-shadow: none !important;
   text-shadow: none !important;
 }
 
@@ -5291,7 +5288,7 @@ body.dancr-button-system .public-profile-shell .profile-media-socials {
   display: grid !important;
   place-items: center !important;
   margin: 0 !important;
-  padding: 10px 0 !important;
+  padding: 2px 0 !important;
   border: 0 !important;
   border-radius: 0 !important;
   background: transparent !important;
@@ -5350,9 +5347,9 @@ body.dancr-button-system .public-profile-shell .profile-media-socials .social-li
   inset: 6px !important;
   width: auto !important;
   height: auto !important;
-  border: 1px solid rgba(226, 232, 240, .22) !important;
+  border: 1px solid transparent !important;
   border-radius: 50% !important;
-  background: rgba(9, 9, 13, .86) !important;
+  background: transparent !important;
   box-shadow: none !important;
   transform: none !important;
 }
@@ -5400,22 +5397,23 @@ body.dancr-button-system .public-profile-shell .profile-media-section {
   position: relative !important;
   isolation: isolate !important;
   display: grid !important;
-  gap: 3px !important;
+  gap: 0 !important;
   margin-top: 0 !important;
   padding-bottom: 0 !important;
   overflow: clip !important;
-  border-radius: 18px !important;
-  background: var(--dancr-color-surface-translucent) !important;
-  box-shadow: 0 12px 28px rgba(0, 0, 0, .22) !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
 }
 
 body.dancr-button-system #profileBackdrop #profileModal .profile-modal-media {
-  margin: 12px 0 0 !important;
+  margin: 8px 0 0 !important;
   padding-bottom: 0 !important;
 }
 
 body.dancr-button-system .public-profile-shell .profile-media-section {
-  margin-top: 12px !important;
+  margin-top: 8px !important;
 }
 
 /* A viewport viewer must escape the media card's stacking layer to receive touch. */
@@ -5425,13 +5423,8 @@ body.dancr-button-system .public-profile-shell .profile-media-section[data-profi
 
 body.dancr-button-system #profileBackdrop #profileModal .profile-modal-media::after,
 body.dancr-button-system .public-profile-shell .profile-media-section::after {
-  content: "" !important;
-  position: absolute !important;
-  z-index: 40 !important;
-  inset: 0 !important;
-  border: 1px solid rgba(180, 169, 196, .38) !important;
-  border-radius: inherit !important;
-  pointer-events: none !important;
+  content: none !important;
+  display: none !important;
 }
 
 body.dancr-button-system #profileBackdrop #profileModal .modal-grid > .profile-tonight-card,
@@ -11486,13 +11479,10 @@ body.dancr-button-system #profileBackdrop #profileModal .profile-modal-name-anch
   }
 }
 
-/* Club Deal actions use one emerald language with two intentional glow levels.
- * Primary profile/detail actions carry the full signal; compact discovery and
- * TV controls retain the same hue with a quieter halo. Geometry is unchanged. */
+/* Club detail actions retain the full emerald signal. Profile admission stays
+ * quieter inside its green Working Now card; discovery and TV keep a soft halo. */
 body.dancr-button-system :is(
   #results.venue-profile-overlay .venue-detail .venue-detail-club-deal-cta,
-  #profileBackdrop #profileModal .profile-club-deal-tile.is-active .profile-club-deal-qr-button,
-  .public-profile-shell .club-deal-profile-action[data-club-deal-state="available"],
   .public-profile-shell .club-deal-launcher.club-deal-active-action,
   .public-profile-shell .club-deal-sticky.club-deal-active-action
 ) {
@@ -12867,3 +12857,63 @@ body.dancr-button-system > .app main.stack > section.stack
   outline-offset: 3px !important;
 }
 
+/* Profile travel actions sit quietly inside the green Working Now card. */
+body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell)
+  .profile-tonight-card .profile-tonight-travel-actions > :is(a, button)[href]:not(:disabled):not([aria-disabled="true"]):not(.is-travel-unavailable):not(.is-inactive-demo) {
+  border-color: #34343c !important;
+  background: #15151b !important;
+  box-shadow: none !important;
+}
+
+@media (hover: hover) {
+  body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell)
+    .profile-tonight-card .profile-tonight-travel-actions > :is(a, button)[href]:not(:disabled):not([aria-disabled="true"]):not(.is-travel-unavailable):not(.is-inactive-demo):hover {
+    border-color: #666666 !important;
+    background: #303030 !important;
+  }
+}
+
+@media (max-width: 520px) {
+  body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell)
+    .profile-tonight-card .profile-tonight-travel-actions > :is(a, button) {
+    gap: 4px !important;
+    padding-inline: 4px !important;
+    font-size: 11px !important;
+    font-weight: 650 !important;
+  }
+
+  body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell)
+    .profile-tonight-card .profile-tonight-travel-actions > :is(a, button) :is(.action-icon, svg) {
+    width: 16px !important;
+    min-width: 16px !important;
+    max-width: 16px !important;
+    height: 16px !important;
+    min-height: 16px !important;
+    max-height: 16px !important;
+    flex-basis: 16px !important;
+  }
+
+  body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell)
+    .profile-tonight-card .profile-tonight-travel-actions > a[href^="/rides/"] > span:not(.action-icon) {
+    line-height: 1.2 !important;
+    text-wrap: balance;
+  }
+
+  body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell)
+    .profile-tonight-card :is(.profile-club-deal-qr-button, .club-deal-profile-action) {
+    gap: 4px !important;
+    padding-inline: 4px !important;
+  }
+}
+
+/* Keep keyboard-focused thumbnails above the fixed mobile navigation, using
+ * the same clearance as the modal's existing nonshrinking gallery spacer. */
+body.dancr-button-system #profileBackdrop #profileModal #modalGallery > .thumb {
+  scroll-margin-bottom: var(--profile-bottom-nav-clearance);
+}
+
+@media (max-width: 720px) {
+  body.dancr-button-system .public-profile-shell .profile-media-grid > .profile-media-grid-cell {
+    scroll-margin-bottom: calc(112px + env(safe-area-inset-bottom, 0px));
+  }
+}
