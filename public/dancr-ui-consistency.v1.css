@@ -217,3 +217,10 @@ body.dancr-button-system :is(#profileBackdrop #profileModal,.public-profile-shel
   :is(.profile-tonight-travel-actions,.venue-primary-actions) :is(a,button):focus-visible {
   outline: 2px solid #c4b5fd !important; outline-offset: 3px !important;
 }
+
+/* Avoid an inline text baseline lifting the header share icon above center. */
+body.dancr-button-system header #dancerProfileShareQuickBtn > [data-quick-icon="share"] {
+  display: grid;
+  place-items: center;
+  line-height: 0;
+}
