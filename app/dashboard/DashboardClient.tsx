@@ -587,11 +587,7 @@ export default function DashboardClient({
                 toggleAffordance="chevron"
               >
                 <div className="venue-dashboard-inner-grid venue-dashboard-account-grid">
-                  <AccountSummaryPanel
-                    accountState={String(state.account?.accountState || "active")}
-                    email={String(state.account?.email || "Private")}
-                    role={String(state.account?.role || role)}
-                  />
+                  <CustomerAccountPanel account={state.account || {}} accountRole="dancer" onAccountChange={updateAccountDetails} />
                   <NotificationPanel />
                   <SupportInboxPanel initialThreads={state.supportThreads || []} panelId="dancer-support" />
                   {dancerProfileStatus === "approved" ? <InfoPanel title="Dancer Agreement">

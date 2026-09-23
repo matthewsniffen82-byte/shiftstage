@@ -43,6 +43,12 @@ test("accepted dancers retain feature access and database failures fail closed",
   }
 });
 
+test("account credential updates are available before dancer agreement acceptance", async () => {
+  const f = requestRoleFixture({ agreementAccepted: false });
+  assert.equal((await f.createContext(request("/api/account", "PATCH"))).user.id, "verified-owner");
+  assert.equal(f.calls.some(c => c[0] === "rpc"), false);
+});
+
 test("private profile reads and removal stay available without accepting or publishing", async () => {
   for (const path of ["/api/dancer/profile", "/api/dancer/dashboard", "/api/dancer/tv/videos", "/api/dancer/age-verification"]) {
     assert.ok(await requestRoleFixture({ agreementAccepted: false }).createContext(request(path)));

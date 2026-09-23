@@ -8,8 +8,9 @@ import { readSession, requestAccountJson, type DashboardSessionAccount } from ".
 type Credential = "email" | "password";
 type Feedback = { error: boolean; message: string } | null;
 
-export default function CustomerAccountPanel({ account, onAccountChange }: {
+export default function CustomerAccountPanel({ account, accountRole = "customer", onAccountChange }: {
   account: DashboardSessionAccount;
+  accountRole?: "customer" | "dancer";
   onAccountChange: (account: DashboardSessionAccount) => void;
 }) {
   const [editing, setEditing] = useState<Credential | null>(null);
@@ -81,7 +82,7 @@ export default function CustomerAccountPanel({ account, onAccountChange }: {
     const isCurrent = () => pending.current === controller && !controller.signal.aborted && readSession()?.account?.id === accountId;
     try {
       const data = await requestAccountJson({
-        method: "PATCH", expectedRole: "customer", timeoutMs: 30_000,
+        method: "PATCH", expectedRole: accountRole, timeoutMs: 30_000,
         headers: { "content-type": "application/json" },
         body: JSON.stringify(credential === "email" ? { email } : { password: value }),
         signal: controller.signal,

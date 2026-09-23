@@ -53,7 +53,8 @@ export async function PATCH(request: Request) {
       // Resolve required response context before accepting the email change.
       const account = await getAccountByUserId(client, user.id);
       const origin = publicAppUrl();
-      const emailRedirectTo = `${origin}/auth/callback?role=customer&return_to=${encodeURIComponent("/dashboard/customer")}`;
+      const accountRole = account?.role === "dancer" ? "dancer" : "customer";
+      const emailRedirectTo = `${origin}/auth/callback?role=${accountRole}&return_to=${encodeURIComponent(`/dashboard/${accountRole}`)}`;
       const { error } = await client.auth.updateUser({ email }, { emailRedirectTo });
 
       if (error) {

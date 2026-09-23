@@ -102,6 +102,16 @@ test("confirmed provider acceptance does not depend on another account read", as
   });
 });
 
+test("dancer email confirmation returns to the dancer dashboard using the verified account role", async () => {
+  const account = { ...originalAccount, role: "dancer" };
+  const f = fixture({ account });
+  const result = await f.patch({ email: "new@example.invalid", role: "customer", return_to: "https://attacker.invalid" });
+  assert.equal(result.status, 200);
+  assert.deepEqual(result.body.account, account);
+  assert.equal(f.updates.length, 1);
+  assert.equal(f.updates[0].options.emailRedirectTo, "https://www.mydancr.com/auth/callback?role=dancer&return_to=%2Fdashboard%2Fdancer");
+});
+
 test("a missing optional account preserves the accepted confirmation response", async () => {
   const f = fixture({ account: null });
   const result = await f.patch({ email: "new@example.invalid" });

@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import test from 'node:test';
+import test, { describe } from 'node:test';
 import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import vm from 'node:vm';
@@ -10,9 +10,9 @@ const source = readFileSync(new URL('../app/dashboard/CustomerAccountPanel.tsx',
 const code = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX } }).outputText;
 const passwordPolicy = {};
 vm.runInNewContext(ts.transpileModule(readFileSync(new URL('../src/lib/dancr/password-policy.ts', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText, { exports: passwordPolicy });
-function fixture() {
+function fixture(role = 'customer') {
   const slots = [], cleanups = [], requests = [], updates = [];
-  const account = { id: 'customer-one', role: 'customer', email: 'original@example.com', accountState: 'active' };
+  const account = { id: `${role}-one`, role, email: 'original@example.com', accountState: 'active' };
   let index = 0, session = { account }, respond = async () => ({ account, message: 'Confirmed by server.' });
   const hooks = {
     useState(initial) { const slot = index++; if (!(slot in slots)) slots[slot] = initial; return [slots[slot], next => { slots[slot] = typeof next === 'function' ? next(slots[slot]) : next; }]; },
@@ -32,7 +32,7 @@ function fixture() {
       throw new Error('Unexpected import: ' + name);
     },
   });
-  const render = () => { index = 0; return exports.default({ account, onAccountChange: next => updates.push(next) }); };
+  const render = () => { index = 0; return exports.default({ account, ...(role === 'dancer' ? { accountRole: role } : {}), onAccountChange: next => updates.push(next) }); };
   const find = (node, match) => {
     if (!node || typeof node !== 'object') return null;
     if (match(node)) return node;
@@ -46,13 +46,14 @@ function fixture() {
     submit(fields) { return form().props.onSubmit({ preventDefault() {}, currentTarget: fields }); },
     feedback() { return find(render(), node => ['alert', 'status'].includes(node.props?.role))?.props.children || ''; },
     respondWith(fn) { respond = fn; },
-    switchAccount() { session = { account: { id: 'customer-two', role: 'customer' } }; },
+    switchAccount() { session = { account: { id: `${role}-two`, role } }; },
     unmount() { for (const cleanup of cleanups) cleanup?.(); },
   };
 }
 
+for (const role of ['customer', 'dancer']) describe(`${role} sign-in details`, () => {
 test('email change rejects the current address and only submits the normalized new email', async () => {
-  const f = fixture();
+  const f = fixture(role);
   f.open('email');
   await f.submit({ email: ' ORIGINAL@example.com ' });
   assert.equal(f.requests.length, 0);
@@ -60,14 +61,14 @@ test('email change rejects the current address and only submits the normalized n
   f.respondWith(async () => ({ account: f.account, message: 'Check your new email address to confirm the change.' }));
   await f.submit({ email: ' NEW@example.com ', password: 'must-not-be-sent' });
   assert.deepEqual(JSON.parse(f.requests[0].body), { email: 'new@example.com' });
-  assert.equal(f.requests[0].expectedRole, 'customer');
+  assert.equal(f.requests[0].expectedRole, role);
   assert.equal(f.updates[0].email, 'original@example.com');
   assert.match(f.feedback(), /confirm the change/);
   assert.equal(f.form(), null);
 });
 
 test('password changes require matching values and never submit confirmation or account identifiers', async () => {
-  const f = fixture();
+  const f = fixture(role);
   f.open('password');
   await f.submit({ password: 'short', confirmPassword: 'short' });
   await f.submit({ password: 'New1!secure-password', confirmPassword: 'mismatch' });
@@ -75,12 +76,13 @@ test('password changes require matching values and never submit confirmation or 
   assert.match(f.feedback(), /don’t match/);
   await f.submit({ password: 'New1!secure-password', confirmPassword: 'New1!secure-password', email: 'ignored@example.com' });
   assert.deepEqual(JSON.parse(f.requests[0].body), { password: 'New1!secure-password' });
+  assert.equal(f.requests[0].expectedRole, role);
   assert.equal(f.form(), null);
   assert.ok(!JSON.stringify(f.updates).includes('New1!secure-password'));
 });
 
 test('a pending change prevents duplicate requests and waits for server confirmation', async () => {
-  const f = fixture();
+  const f = fixture(role);
   let resolve;
   f.respondWith(() => new Promise(done => { resolve = done; }));
   f.open('email');
@@ -96,7 +98,7 @@ test('a pending change prevents duplicate requests and waits for server confirma
 });
 
 test('provider failure keeps the form available without reporting a successful change', async () => {
-  const f = fixture();
+  const f = fixture(role);
   f.respondWith(async () => { throw new Error('Unable to update email.'); });
   f.open('email');
   await f.submit({ email: 'new@example.com' });
@@ -106,7 +108,7 @@ test('provider failure keeps the form available without reporting a successful c
 });
 
 test('changing accounts prevents credential submissions from the previous dashboard', async () => {
-  const f = fixture();
+  const f = fixture(role);
   f.open('email');
   f.switchAccount();
   await f.submit({ email: 'new@example.com' });
@@ -115,7 +117,7 @@ test('changing accounts prevents credential submissions from the previous dashbo
 });
 
 for (const action of ['switchAccount', 'unmount']) test(`a late credential response is ignored after ${action}`, async () => {
-  const f = fixture();
+  const f = fixture(role);
   let resolve;
   f.respondWith(() => new Promise(done => { resolve = done; }));
   f.open('password');
@@ -126,4 +128,5 @@ for (const action of ['switchAccount', 'unmount']) test(`a late credential respo
   assert.equal(f.updates.length, 0);
   assert.equal(f.feedback(), '');
   if (action === 'unmount') assert.equal(f.requests[0].signal.aborted, true);
+});
 });

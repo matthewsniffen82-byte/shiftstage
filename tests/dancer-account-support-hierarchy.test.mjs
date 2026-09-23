@@ -4,14 +4,12 @@ import test from "node:test";
 
 const dashboard = await readFile(new URL("../app/dashboard/DashboardClient.tsx", import.meta.url), "utf8");
 
-test("dancer account details use a compact semantic summary instead of stacked metrics", () => {
+test("dancer account details expose the sign-in editor inside Help & Account", () => {
   const dancerAccountSection = dashboard.match(/id="dancer-account"[\s\S]*?id="venue-account"/)?.[0] || "";
-  const accountSummary = dashboard.match(/function AccountSummaryPanel[\s\S]*?function NotificationPanel/)?.[0] || "";
 
-  assert.match(dancerAccountSection, /<AccountSummaryPanel[\s\S]*?accountState=[\s\S]*?email=[\s\S]*?role=/);
+  assert.match(dancerAccountSection, /<CustomerAccountPanel account=\{state\.account \|\| \{\}\} accountRole="dancer" onAccountChange=\{updateAccountDetails\} \/>/);
   assert.doesNotMatch(dancerAccountSection, /<Metric label="(?:Status|Email|Role)"/);
-  assert.match(accountSummary, /accountState === "active" \? "account-status-pill is-active" : "account-status-pill"/);
-  assert.match(accountSummary, /<dl className="account-summary-list">[\s\S]*?<dt>Email<\/dt>[\s\S]*?<dt>Role<\/dt>/);
+  assert.ok(dancerAccountSection.indexOf("<CustomerAccountPanel") < dancerAccountSection.indexOf('dancerProfileStatus === "approved"'));
 });
 
 test("notifications read like a compact inbox with quiet bulk actions", () => {
