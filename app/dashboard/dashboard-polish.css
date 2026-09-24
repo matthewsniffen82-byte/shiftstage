@@ -1,0 +1,87 @@
+/* Shared dashboard finish; roles join this scope as their layout is refined. */
+body.dancr-button-system main.dashboard-shell:is(.dashboard-shell-venue) {
+  --dashboard-neutral-border: #ffffff26;
+  --dashboard-readable-muted: #b8b6c2;
+  --venue-workspace-line: var(--dashboard-neutral-border);
+  --mydancr-dashboard-muted: var(--dashboard-readable-muted);
+  --mydancr-dashboard-panel: #08080b;
+  --mydancr-dashboard-panel-raised: #0b0b0f;
+  --mydancr-dashboard-border: var(--dashboard-neutral-border);
+  --mydancr-dashboard-radius: 18px;
+  background: #050507;
+}
+body.dancr-button-system main.dashboard-shell:is(.dashboard-shell-venue) :is(.dashboard-head, .venue-command-panel, .venue-publication-panel, .venue-workspace-summary, .venue-workspace-tabs, .venue-dashboard-section[data-section-icon]) {
+  border-color: var(--dashboard-neutral-border);
+  border-radius: 18px;
+  background: #08080b !important;
+  box-shadow: none;
+}
+body.dancr-button-system main.dashboard-shell:is(.dashboard-shell-venue) .dashboard-head { padding: 18px; }
+body.dancr-button-system main.dashboard-shell:is(.dashboard-shell-venue) .dashboard-head .eyebrow { color: var(--dashboard-readable-muted); font-size: 11px; }
+body.dancr-button-system main.dashboard-shell:is(.dashboard-shell-venue) .dashboard-head h1 { font-size: clamp(22px, 5.5vw, 30px) !important; }
+body.dancr-button-system main.dashboard-shell:is(.dashboard-shell-venue) .dashboard-close {
+  width: 44px !important; min-width: 44px !important; max-width: 44px !important;
+  height: 44px !important; min-height: 44px !important; max-height: 44px !important;
+  border-color: var(--dashboard-neutral-border) !important;
+  background: #060608 !important; box-shadow: none !important;
+}
+body.dancr-button-system main.dashboard-shell:is(.dashboard-shell-venue) .venue-dashboard-section[data-section-icon] > summary { min-height: 78px; }
+body.dancr-button-system main.dashboard-shell:is(.dashboard-shell-venue) .venue-dashboard-section[data-section-icon] .venue-dashboard-section-copy > span:last-child {
+  color: var(--dashboard-readable-muted); font-size: 13px; line-height: 1.5;
+}
+body.dancr-button-system main.dashboard-shell:is(.dashboard-shell-venue) .venue-dashboard-section[data-section-icon] .dancer-dashboard-section-icon {
+  color: #c5c3cd; border-color: var(--dashboard-neutral-border); background: #ffffff04;
+}
+body.dancr-button-system main.dashboard-shell:is(.dashboard-shell-venue) .venue-dashboard-section[data-section-icon][open] { border-color: #a78bfa55; }
+body.dancr-button-system main.dashboard-shell:is(.dashboard-shell-venue) .venue-dashboard-section[data-section-icon][open] > summary { background: #a78bfa06; }
+body.dancr-button-system main.dashboard-shell:is(.dashboard-shell-venue) :is(.venue-command-status p, .info-panel > p, .venue-publication-panel p, .venue-refresh-control small) {
+  color: var(--dashboard-readable-muted); font-size: 13px; line-height: 1.5;
+}
+body.dancr-button-system main.dashboard-shell:is(.dashboard-shell-venue) :is(.venue-workspace-tabs button, .venue-deal-request-actions button, .venue-refresh-control button) {
+  min-height: 44px; border-color: var(--dashboard-neutral-border) !important;
+  border-radius: 12px; color: #f4f3f7; background: #060608 !important; box-shadow: none !important;
+}
+body.dancr-button-system main.dashboard-shell:is(.dashboard-shell-venue) .venue-workspace-tabs button.active[aria-selected="true"] {
+  border-color: #a78bfa80 !important; background: #201333 !important;
+}
+body.dancr-button-system main.dashboard-shell:is(.dashboard-shell-venue) .dashboard-primary-action {
+  box-sizing: border-box; min-height: 48px; width: 100%; padding: 12px 16px;
+  border: 1px solid #a78bfa80; border-radius: 12px; color: #fff;
+  background: linear-gradient(135deg, #6d28d9, #4c1d95) !important; box-shadow: none !important;
+  font-size: 15px; font-weight: 650; text-align: center;
+}
+body .dashboard-shell .dashboard-group-heading {
+  margin: 16px 2px 0; color: #c3c1cc; font-size: 14px; font-weight: 600; line-height: 1.4;
+}
+body .dashboard-shell .dashboard-group-heading:first-child { margin-top: 0; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-venue .venue-manage-panel { display: grid; gap: 12px; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-venue .venue-pickup-preview { display: grid; gap: 16px; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-venue .venue-pickup-preview > p { font-size: 14px; color: #b8b6c2; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-venue .venue-pickup-row {
+  padding: 16px; gap: 6px; border: 1px solid var(--dashboard-neutral-border); border-radius: 14px;
+  background: #08080b !important; color: #f4f3f7; text-decoration: none; box-shadow: none;
+}
+body.dancr-button-system main.dashboard-shell.dashboard-shell-venue .venue-pickup-row.is-latest { border-color: #a78bfa60; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-venue .venue-pickup-row-heading { display: flex; justify-content: space-between; gap: 12px; align-items: center; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-venue .venue-pickup-row-heading strong { color: #f4f3f7; font-size: 16px; overflow-wrap: anywhere; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-venue .venue-pickup-row-heading small { color: #c4b5fd; font-size: 12px; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-venue .venue-pickup-row :is(span, time) { font-size: 13px; color: #b8b6c2; }
+body .dashboard-shell .dashboard-empty-state { display: grid; gap: 5px; padding: 20px; border: 1px dashed #ffffff26; border-radius: 14px; }
+body .dashboard-shell .dashboard-empty-state p { color: #b8b6c2; font-size: 14px; }
+
+body.dancr-button-system main.dashboard-shell.dashboard-shell-venue .venue-manage-panel {
+  padding: 0; border: 0; background: transparent !important; box-shadow: none;
+}
+body.dancr-button-system main.dashboard-shell.dashboard-shell-venue :is(.venue-workspace-summary a, .venue-publication-panel a) {
+  min-height: 44px; border: 1px solid var(--dashboard-neutral-border) !important;
+  border-radius: 12px; color: #f4f3f7 !important; background: #060608 !important; box-shadow: none !important;
+}
+body.dancr-button-system main.dashboard-shell.dashboard-shell-venue .venue-dashboard-metrics {
+  grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1px; overflow: hidden;
+  border: 1px solid var(--dashboard-neutral-border); border-radius: 14px; background: #ffffff1a;
+}
+body.dancr-button-system main.dashboard-shell.dashboard-shell-venue .venue-dashboard-metrics .metric {
+  min-width: 0; border: 0 !important; border-radius: 0 !important; padding: 14px 8px; background: #08080b !important;
+}
+body.dancr-button-system main.dashboard-shell.dashboard-shell-venue .venue-dashboard-metrics .metric span { font-size: 12px; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-venue #venue-pickups { background: #08080b; border-color: var(--dashboard-neutral-border); }

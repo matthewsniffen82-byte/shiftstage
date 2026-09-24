@@ -238,9 +238,6 @@ export function VenuePanel({
             <button type="button" disabled={isRefreshing} onClick={onRefresh}>{isRefreshing ? "Refreshing…" : "Refresh"}</button>
           </div>
         </div>
-        {(venueRole === "owner" || venueRole === "manager") && <div className="venue-command-links">
-          <Link className="primary-link" href="/pickups">Pickup Requests →</Link>
-        </div>}
       </section>
 
       <nav className="venue-workspace-tabs" aria-label="Venue workspace" role="tablist">
@@ -310,6 +307,7 @@ export function VenuePanel({
       </section>
 
       <section className="venue-manage-panel venue-dashboard-section" hidden={activeWorkspace !== "venue"} id="venue-workspace-venue" role="tabpanel" aria-labelledby="venue-workspace-venue-tab">
+        <h2 className="dashboard-group-heading">Club page &amp; offers</h2>
 
         <section
           aria-label="Venue activity"
@@ -453,12 +451,6 @@ export function VenuePanel({
           {publicationStatus ? <p role="status">{publicationStatus}</p> : null}
         </section>
 
-        <section className="venue-dashboard-metrics venue-tonight-metrics" aria-label="Tonight at a glance" hidden={activeWorkspace !== "venue"}>
-          <Metric label="Working now" value={String(workingNow.length)} />
-          <Metric label="Live Club Deals" value={String(activeDealCount)} />
-          <Metric label="Verified roster" value={String(nfcAuthorizedDancerCount)} />
-        </section>
-
         <DashboardSection
           badge={`${activeDealCount} live${dashboardDeals.length > activeDealCount ? ` · ${dashboardDeals.length - activeDealCount} inactive` : ""}`}
           description="Managed by MyDancr. Request changes below."
@@ -478,6 +470,13 @@ export function VenuePanel({
             onDealRequestsChange={onDealRequestsChange}
           />
         </DashboardSection>
+
+        <h2 className="dashboard-group-heading">Dancers &amp; activity</h2>
+        <section className="venue-dashboard-metrics venue-tonight-metrics" aria-label="Tonight at a glance" hidden={activeWorkspace !== "venue"}>
+          <Metric label="Working now" value={String(workingNow.length)} />
+          <Metric label="Live Club Deals" value={String(activeDealCount)} />
+          <Metric label="Verified roster" value={String(nfcAuthorizedDancerCount)} />
+        </section>
 
         <DashboardSection
           description="See who's working now, end check-ins, and manage your approved roster."
@@ -508,6 +507,7 @@ export function VenuePanel({
           venueId={String(profile?.id || "")}
         />
 
+        <h2 className="dashboard-group-heading">Team &amp; account</h2>
         {canViewTeam ? (
           <DashboardSection
             description="Manage staff access and review changes."

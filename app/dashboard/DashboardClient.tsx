@@ -13,6 +13,7 @@ import "./dancer-dashboard.css";
 import { CustomerDashboardAvatar, CustomerDashboardIcon } from "./CustomerDashboardIdentity";
 import "./customer-dashboard.css";
 import "./venue-dashboard.css";
+import "./dashboard-polish.css";
 import { VenueDashboardIcon } from "./VenueDashboardIdentity";
 import { isAffiliatedDancerWorkingNow } from "@/src/lib/dancr/venue-roster";
 import { loadCustomerDashboard } from "./customer-dashboard-loader";

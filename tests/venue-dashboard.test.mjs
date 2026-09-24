@@ -134,11 +134,11 @@ test("working-now actions are neutral when empty and emerald only for a live ros
   assert.doesNotMatch(venuePanel, /className="is-primary"/);
 });
 
-test("venue pickup requests are visible without expanding a section and the inbox is reachable from every tab", () => {
+test("venue pickup requests have one inbox entry point and remain visible without expanding a section", () => {
   const venuePanel = dashboard.match(/function VenuePanel\([\s\S]*?(?=\nfunction dealTypeLabel)/)?.[0] || "";
   const command = venuePanel.slice(venuePanel.indexOf('<section className="venue-command-panel"'), venuePanel.indexOf('<nav className="venue-workspace-tabs"'));
-  assert.match(command, /venueRole === "owner" \|\| venueRole === "manager"/);
-  assert.match(command, /href="\/pickups">Pickup Requests/);
+  assert.doesNotMatch(command, /href="\/pickups"/);
+  assert.match(venuePanel, /\["tonight", "Pickup requests"\]/);
   const pickupSection = venuePanel.match(/<section\s+className="info-panel venue-dashboard-section"[\s\S]*?id="venue-pickups"[\s\S]*?<\/section>/)?.[0];
   assert.ok(pickupSection, "pickup content must not be hidden inside a collapsed details element");
   assert.match(venuePanel, /hidden=\{activeWorkspace !== "tonight"\}[\s\S]*?id="venue-workspace-tonight"[\s\S]*?id="venue-pickups"/);
