@@ -149,7 +149,7 @@ test("venue lineups show only dancers working now as compact avatar stacks", () 
   assert.match(lineupHelper, /aria-label="\$\{remaining\} more dancers working now">\+\$\{remaining\}/);
   assert.match(lineupHelper, /role="group" aria-label="\$\{liveLabel\}"/);
   assert.doesNotMatch(lineupHelper, /on the lineup/);
-  assert.match(lineupHelper, /const mobileCountLabel = remaining > 0 \? `\+\$\{remaining\}` : String\(liveProfiles\.length\)/);
+  assert.match(lineupHelper, /const mobileCountLabel = String\(liveProfiles\.length\)/);
   assert.match(lineupHelper, /<strong>\$\{mobileCountLabel\}<\/strong><span>NOW<\/span>/);
   assert.match(venueSlide, /venueLineupMarkup\(venue, city, \{ mobile: true, profiles: workingNow, eager: index < 2 \}\)/);
   assert.match(venueSlide, /home-venue-discovery-slide\$\{workingNow\.length \? " has-live-lineup" : ""\}/);

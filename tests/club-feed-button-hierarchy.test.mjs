@@ -117,7 +117,7 @@ test("the mobile lineup explains working-now avatars without changing venue acti
   assert.match(lineup, /aria-label="\$\{remaining\} more dancers working now">\+\$\{remaining\}/);
   assert.match(lineup, /classPrefix = options\.mobile \? "home-venue-discovery" : "venue-card"/);
   assert.match(lineup, /\$\{classPrefix\}-lineup-label/);
-  assert.match(lineup, /const mobileCountLabel = remaining > 0 \? `\+\$\{remaining\}` : String\(liveProfiles\.length\)/);
+  assert.match(lineup, /const mobileCountLabel = String\(liveProfiles\.length\)/);
   assert.match(lineup, /<strong>\$\{mobileCountLabel\}<\/strong><span>NOW<\/span>/);
   assert.match(lineup, /aria-label="\$\{liveLabel\}"/);
 });

@@ -53164,7 +53164,7 @@
         ? `<span class="${classPrefix}-lineup-count" aria-label="${remaining} more dancers working now">+${remaining}</span>`
         : "";
       const liveLabel = `${liveProfiles.length} ${liveProfiles.length === 1 ? "dancer" : "dancers"} working now`;
-      const mobileCountLabel = remaining > 0 ? `+${remaining}` : String(liveProfiles.length);
+      const mobileCountLabel = String(liveProfiles.length);
       const mobileLiveCount = options.mobile
         ? `<span class="${classPrefix}-lineup-label" aria-hidden="true"><strong>${mobileCountLabel}</strong><span>NOW</span></span>`
         : "";
