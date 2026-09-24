@@ -523,8 +523,7 @@ export function VenuePanel({
         ) : null}
 
         <DashboardSection
-          description="Notifications, support messages, and account controls."
-          eyebrow="Venue workspace"
+          description="Account details, notifications, and help."
           hidden={activeWorkspace !== "venue"}
           id="venue-account"
           icon={<VenueDashboardIcon section="account" />}
@@ -532,11 +531,18 @@ export function VenuePanel({
           title="Account & support"
         >
           <div className="venue-dashboard-inner-grid venue-dashboard-account-grid">
-            <InfoPanel title="Account">
-              <Metric label="Status" value={String(account?.accountState || "active")} />
-              <Metric label="Email" value={String(account?.email || "Private")} />
-              <Metric label="Role" value={String(account?.role || "venue")} />
-            </InfoPanel>
+            <article className="info-panel venue-account-summary">
+              <div className="venue-account-summary-heading">
+                <h2>Account details</h2>
+                <span className={`venue-account-status${(account?.accountState || "active") === "active" ? " is-active" : ""}`} aria-label={`Account status: ${account?.accountState || "active"}`}>
+                  {String(account?.accountState || "active")}
+                </span>
+              </div>
+              <dl>
+                <div><dt>Email</dt><dd>{String(account?.email || "Private")}</dd></div>
+                <div><dt>Role</dt><dd className="venue-account-role">{String(account?.role || "venue")}</dd></div>
+              </dl>
+            </article>
             <NotificationPanel refreshKey={notificationRevision} />
             <SupportInboxPanel initialThreads={supportThreads} panelId="venue-support" />
             <AccountControlsPanel
