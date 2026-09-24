@@ -12437,11 +12437,13 @@ body.dancr-button-system .public-profile-shell .profile-media-tabs button.active
   pointer-events: none !important;
 }
 
-/* Profile and dashboard exits use a 32px face inside a 44px tap target.
+/* Profile, account and dashboard exits use a 32px face inside a 44px tap target.
  * Draw the thin SVG outline separately from the fill for a clear edge.
  * Keep the target unscaled so the smaller circle stays easy to press. */
 body.dancr-button-system :is(
   #profileBackdrop #profileModal #modalClose,
+  #authClose,
+  #dancerSignupClose,
   #results.venue-profile-overlay .venue-detail .venue-detail-close,
   .public-profile-shell .public-profile-close,
   .dashboard-close,
@@ -12505,6 +12507,8 @@ body.dancr-button-system :is(
 
 body.dancr-button-system :is(
   #profileBackdrop #profileModal #modalClose,
+  #authClose,
+  #dancerSignupClose,
   #results.venue-profile-overlay .venue-detail .venue-detail-close,
   .public-profile-shell .public-profile-close,
   .dashboard-close,
@@ -12550,6 +12554,8 @@ body.dancr-button-system :is(
 
 body.dancr-button-system :is(
   #profileBackdrop #profileModal #modalClose,
+  #authClose,
+  #dancerSignupClose,
   #results.venue-profile-overlay .venue-detail .venue-detail-close,
   .public-profile-shell .public-profile-close,
   .dashboard-close,
@@ -12585,6 +12591,8 @@ body.dancr-button-system :is(
 
 body.dancr-button-system :is(
   #profileBackdrop #profileModal #modalClose,
+  #authClose,
+  #dancerSignupClose,
   #results.venue-profile-overlay .venue-detail .venue-detail-close,
   .public-profile-shell .public-profile-close,
   .dashboard-close,
@@ -12620,6 +12628,8 @@ body.dancr-button-system :is(
 
 body.dancr-button-system :is(
   #profileBackdrop #profileModal #modalClose,
+  #authClose,
+  #dancerSignupClose,
   #results.venue-profile-overlay .venue-detail .venue-detail-close,
   .public-profile-shell .public-profile-close,
   .dashboard-close,

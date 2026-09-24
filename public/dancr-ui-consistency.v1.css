@@ -81,10 +81,6 @@ body.dancr-button-system .account-shell .account-panel .segmented button.active 
 body.dancr-button-system :is(#authPage, #dancerSignupPage) > .page-inner { width: min(100%, 500px); gap: 10px; }
 body.dancr-button-system :is(#authPage, #dancerSignupPage) .page-head { margin: 0; padding: 6px 2px; gap: 12px; border: 0 !important; }
 body.dancr-button-system :is(#authPage, #dancerSignupPage) .page-head h2 { margin: 4px 0 0; line-height: 1.25; }
-body.dancr-button-system :is(#authPage, #dancerSignupPage) .page-head .close-btn {
-  width: 44px; height: 44px; flex: 0 0 44px;
-  border: 0 !important; color: #b8bac6 !important; background: transparent !important; box-shadow: none !important;
-}
 body.dancr-button-system #authPage .auth-choice-card { gap: 14px; }
 body.dancr-button-system #authPage .auth-entry-tabs { padding: 3px; border-color: var(--dancr-form-border); background: #08080c; }
 body.dancr-button-system #authPage .auth-entry-tab.active { background: linear-gradient(#160e24, #160e24) !important; border-color: #745696 !important; box-shadow: none !important; }
