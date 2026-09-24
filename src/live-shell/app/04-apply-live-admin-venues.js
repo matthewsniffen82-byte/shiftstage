@@ -457,7 +457,7 @@
       customerNotificationsQuickList.innerHTML = items.length
         ? items.map((item) => `
             <button class="customer-quick-item" type="button" ${item.id ? `data-quick-notification-id="${item.id}"` : ""} ${Number.isFinite(item.index) ? `data-notification-index="${item.index}"` : ""}>
-              <strong class="customer-notification-title">${displayText(item.title)}${item.unread ? '<span class="customer-notification-unread" role="img" aria-label="Unread"></span>' : ""}</strong>
+              <strong class="customer-notification-title"><span class="customer-notification-label">${displayText(item.title)}</span>${item.unread ? '<span class="customer-notification-unread" role="img" aria-label="Unread"></span>' : ""}</strong>
               <span class="customer-notification-message">${displayText(item.detail)}</span>
               ${item.date ? `<span class="customer-notification-date">${displayText(item.date)}</span>` : ""}
             </button>

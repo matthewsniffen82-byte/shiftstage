@@ -32289,15 +32289,14 @@
             <div class="customer-quick-panel" id="customerNotificationsQuickPanel" role="region" aria-labelledby="customerNotificationsQuickTitle" hidden>
               <div class="customer-notification-heading">
                 <h3 id="customerNotificationsQuickTitle">Notifications</h3>
-                <button class="customer-notification-close" type="button" data-notification-action="close" aria-label="Close notifications">
-                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"></path></svg>
-                </button>
+                <div class="customer-notification-header-actions">
+                  <button class="customer-quick-clear" type="button" data-notification-action="clear-all" aria-label="Clear all notifications">Clear all</button>
+                  <button class="customer-notification-close" type="button" data-notification-action="close" aria-label="Close notifications">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"></path></svg>
+                  </button>
+                </div>
               </div>
-              <p>Your recent updates.</p>
               <div class="customer-quick-list" id="customerNotificationsQuickList"></div>
-              <div class="customer-notification-footer">
-                <button class="customer-quick-clear" type="button" data-notification-action="clear-all" aria-label="Clear all notifications">Clear all</button>
-              </div>
             </div>
             <div class="customer-quick-panel" id="customerDealsQuickPanel" hidden>
               <h3>Saved Club Deals</h3>
@@ -46572,7 +46571,7 @@
       customerNotificationsQuickList.innerHTML = items.length
         ? items.map((item) => `
             <button class="customer-quick-item" type="button" ${item.id ? `data-quick-notification-id="${item.id}"` : ""} ${Number.isFinite(item.index) ? `data-notification-index="${item.index}"` : ""}>
-              <strong class="customer-notification-title">${displayText(item.title)}${item.unread ? '<span class="customer-notification-unread" role="img" aria-label="Unread"></span>' : ""}</strong>
+              <strong class="customer-notification-title"><span class="customer-notification-label">${displayText(item.title)}</span>${item.unread ? '<span class="customer-notification-unread" role="img" aria-label="Unread"></span>' : ""}</strong>
               <span class="customer-notification-message">${displayText(item.detail)}</span>
               ${item.date ? `<span class="customer-notification-date">${displayText(item.date)}</span>` : ""}
             </button>
