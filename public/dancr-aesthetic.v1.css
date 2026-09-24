@@ -13059,7 +13059,7 @@ body.dancr-button-system #results.home-tv-feed
 }
 
 body.dancr-button-system #results.home-tv-feed .home-tv-feed-like-action[aria-pressed="true"] svg {
-  color: #ede9fe !important;
+  color: #ff304f !important;
   fill: currentColor !important;
   stroke: currentColor !important;
 }
