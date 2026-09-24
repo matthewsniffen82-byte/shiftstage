@@ -460,6 +460,10 @@
       return `${actionIconMarkup(icon)}<span>${label}</span>`;
     }
 
+    function freeEntryButtonLabel() {
+      return '<span class="free-entry-label">Free Entry</span><span class="free-entry-cue" aria-hidden="true">›</span>';
+    }
+
     function homeFeedGoingActionMarkup(profile, active) {
       const count = Math.max(0, Number(tonightInterestCount(profile)) || 0);
       const countMarkup = count > 0
@@ -838,7 +842,7 @@
       if (offers.length > 1) {
         qrButton.dataset.clubDealCta = encodedConfig;
         qrButton.setAttribute("aria-label", `View free entry at ${config.venueName || "this club"}`);
-        qrButton.innerHTML = `<span class="profile-club-deal-action-copy"><strong>Free Entry</strong></span><span class="profile-free-entry-cue" aria-hidden="true">&#8250;</span>`;
+        qrButton.innerHTML = freeEntryButtonLabel();
         qrButton.disabled = false;
         tile.classList.add("is-ready", "has-multiple-offers");
         return;
@@ -852,7 +856,7 @@
         qrButton.dataset.dealPass = encodeDealPass(pass);
         qrButton.removeAttribute("data-save-deal-pass-on-open");
         qrButton.setAttribute("aria-label", `View free entry at ${config.venueName || "this club"}`);
-        qrButton.innerHTML = `<span class="profile-club-deal-action-copy"><strong>Free Entry</strong></span><span class="profile-free-entry-cue" aria-hidden="true">&#8250;</span>`;
+        qrButton.innerHTML = freeEntryButtonLabel();
         qrButton.disabled = false;
         tile.classList.add("is-ready");
         recordVenuePageEvent({

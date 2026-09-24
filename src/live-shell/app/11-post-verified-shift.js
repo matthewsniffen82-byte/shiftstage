@@ -217,7 +217,7 @@
           sourceType: "club_page"
         };
         const offerCount = venue.activeDeals?.length || 1;
-        return `<button class="venue-card-deal-action" type="button" data-club-deal-cta="${encodeDealPass(config)}" aria-label="View free entry">${actionButtonLabel("qr", "Free Entry")}</button>`;
+        return `<button class="venue-card-deal-action free-entry-cta" type="button" data-club-deal-cta="${encodeDealPass(config)}" aria-label="View free entry">${freeEntryButtonLabel()}</button>`;
       }
       return "";
     }

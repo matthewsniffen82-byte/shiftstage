@@ -718,9 +718,8 @@
                 </div>
               </div>
               <div class="venue-detail-club-deal-actions">
-                <button class="venue-detail-club-deal-cta" type="button" data-club-deal-state="available" data-club-deal-cta="${encodeDealPass(config)}" aria-label="View free entry at ${escapeHtml(venue.name || "this club")}">
-                  <strong>Free Entry</strong>
-                  <span aria-hidden="true">›</span>
+                <button class="venue-detail-club-deal-cta free-entry-cta" type="button" data-club-deal-state="available" data-club-deal-cta="${encodeDealPass(config)}" aria-label="View free entry at ${escapeHtml(venue.name || "this club")}">
+                  ${freeEntryButtonLabel()}
                 </button>
               </div>
             </div>
@@ -799,7 +798,7 @@
               <b class="profile-club-deal-title">${escapeHtml(dealTitle)}</b>
               <strong class="profile-club-deal-label">Active Club Deal</strong>
             </div>
-            <button class="profile-club-deal-qr-button" type="button" aria-label="Loading active Club Deal" disabled>
+            <button class="profile-club-deal-qr-button free-entry-cta" type="button" aria-label="Loading active Club Deal" disabled>
               <span class="profile-club-deal-loading" aria-hidden="true"></span>
               <span class="profile-club-deal-offer-count" hidden>${offerCount}</span>
             </button>

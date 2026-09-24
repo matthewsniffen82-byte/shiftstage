@@ -203,9 +203,9 @@ body.dancr-button-system :is(#contentReportCancel,.public-report-reason-options 
   body.dancr-button-system .content-report-form-actions { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); }
 }
 
-/* Equivalent travel and deal actions share comfortable targets on both profiles. */
+/* Travel actions keep their roomy targets; Free Entry has its own compact style. */
 body.dancr-button-system :is(#profileBackdrop #profileModal,.public-profile-shell,#results.venue-profile-overlay .venue-detail)
-  :is(.profile-tonight-travel-actions > :is(.profile-primary-directions,.profile-directions-button,.profile-uber-ride,a[target="_blank"]),.venue-primary-actions > :is(.venue-address-directions,.venue-detail-uber),.club-deal-profile-action,.profile-club-deal-qr-button,.venue-detail-club-deal-cta,.venue-detail-entry-ride) {
+  :is(.profile-tonight-travel-actions > :is(.profile-primary-directions,.profile-directions-button,.profile-uber-ride,a[target="_blank"]),.venue-primary-actions > :is(.venue-address-directions,.venue-detail-uber),.club-deal-profile-action,.profile-club-deal-qr-button,.venue-detail-club-deal-cta,.venue-detail-entry-ride):not(.free-entry-cta) {
   box-sizing: border-box; min-height: 48px !important; border-radius: 12px !important;
   font-size: 12px !important; font-weight: 650 !important; line-height: 1.3 !important;
 }

@@ -49527,6 +49527,10 @@
       return `${actionIconMarkup(icon)}<span>${label}</span>`;
     }
 
+    function freeEntryButtonLabel() {
+      return '<span class="free-entry-label">Free Entry</span><span class="free-entry-cue" aria-hidden="true">›</span>';
+    }
+
     function homeFeedGoingActionMarkup(profile, active) {
       const count = Math.max(0, Number(tonightInterestCount(profile)) || 0);
       const countMarkup = count > 0
@@ -49905,7 +49909,7 @@
       if (offers.length > 1) {
         qrButton.dataset.clubDealCta = encodedConfig;
         qrButton.setAttribute("aria-label", `View free entry at ${config.venueName || "this club"}`);
-        qrButton.innerHTML = `<span class="profile-club-deal-action-copy"><strong>Free Entry</strong></span><span class="profile-free-entry-cue" aria-hidden="true">&#8250;</span>`;
+        qrButton.innerHTML = freeEntryButtonLabel();
         qrButton.disabled = false;
         tile.classList.add("is-ready", "has-multiple-offers");
         return;
@@ -49919,7 +49923,7 @@
         qrButton.dataset.dealPass = encodeDealPass(pass);
         qrButton.removeAttribute("data-save-deal-pass-on-open");
         qrButton.setAttribute("aria-label", `View free entry at ${config.venueName || "this club"}`);
-        qrButton.innerHTML = `<span class="profile-club-deal-action-copy"><strong>Free Entry</strong></span><span class="profile-free-entry-cue" aria-hidden="true">&#8250;</span>`;
+        qrButton.innerHTML = freeEntryButtonLabel();
         qrButton.disabled = false;
         tile.classList.add("is-ready");
         recordVenuePageEvent({
@@ -50747,9 +50751,8 @@
                 </div>
               </div>
               <div class="venue-detail-club-deal-actions">
-                <button class="venue-detail-club-deal-cta" type="button" data-club-deal-state="available" data-club-deal-cta="${encodeDealPass(config)}" aria-label="View free entry at ${escapeHtml(venue.name || "this club")}">
-                  <strong>Free Entry</strong>
-                  <span aria-hidden="true">›</span>
+                <button class="venue-detail-club-deal-cta free-entry-cta" type="button" data-club-deal-state="available" data-club-deal-cta="${encodeDealPass(config)}" aria-label="View free entry at ${escapeHtml(venue.name || "this club")}">
+                  ${freeEntryButtonLabel()}
                 </button>
               </div>
             </div>
@@ -50828,7 +50831,7 @@
               <b class="profile-club-deal-title">${escapeHtml(dealTitle)}</b>
               <strong class="profile-club-deal-label">Active Club Deal</strong>
             </div>
-            <button class="profile-club-deal-qr-button" type="button" aria-label="Loading active Club Deal" disabled>
+            <button class="profile-club-deal-qr-button free-entry-cta" type="button" aria-label="Loading active Club Deal" disabled>
               <span class="profile-club-deal-loading" aria-hidden="true"></span>
               <span class="profile-club-deal-offer-count" hidden>${offerCount}</span>
             </button>
@@ -53180,7 +53183,7 @@
           sourceType: "club_page"
         };
         const offerCount = venue.activeDeals?.length || 1;
-        return `<button class="venue-card-deal-action" type="button" data-club-deal-cta="${encodeDealPass(config)}" aria-label="View free entry">${actionButtonLabel("qr", "Free Entry")}</button>`;
+        return `<button class="venue-card-deal-action free-entry-cta" type="button" data-club-deal-cta="${encodeDealPass(config)}" aria-label="View free entry">${freeEntryButtonLabel()}</button>`;
       }
       return "";
     }
@@ -60564,9 +60567,9 @@
           sourceType: "club_page"
         };
         const offerCount = venue.activeDeals?.length || 1;
-        return `<button class="feed-card-action home-card-qr-rail-action home-venue-discovery-rail-qr is-available venue-card-primary-action venue-card-deals-action" type="button" data-card-action-slot="qr" data-club-deal-state="available" data-club-deal-cta="${encodeDealPass(config)}" data-feed-venue-qr aria-label="View free entry at ${venueName}">${actionButtonLabel("qr", "Free Entry")}</button>`;
+        return `<button class="feed-card-action home-card-qr-rail-action home-venue-discovery-rail-qr is-available venue-card-primary-action venue-card-deals-action free-entry-cta" type="button" data-card-action-slot="qr" data-club-deal-state="available" data-club-deal-cta="${encodeDealPass(config)}" data-feed-venue-qr aria-label="View free entry at ${venueName}">${freeEntryButtonLabel()}</button>`;
       }
-      return `<button class="feed-card-action home-card-qr-rail-action home-venue-discovery-rail-qr is-unavailable venue-card-primary-action venue-card-deals-action" type="button" data-card-action-slot="qr" data-club-deal-state="unavailable" data-card-qr-label="Free entry unavailable" data-card-qr-message="Free entry is currently unavailable at this club. Check back later." aria-expanded="false" aria-label="Check free entry availability at ${venueName}">${actionButtonLabel("qr", "Free Entry")}</button>`;
+      return `<button class="feed-card-action home-card-qr-rail-action home-venue-discovery-rail-qr is-unavailable venue-card-primary-action venue-card-deals-action free-entry-cta" type="button" data-card-action-slot="qr" data-club-deal-state="unavailable" data-card-qr-label="Free entry unavailable" data-card-qr-message="Free entry is currently unavailable at this club. Check back later." aria-expanded="false" aria-label="Check free entry availability at ${venueName}">${freeEntryButtonLabel()}</button>`;
     }
 
     function homeVenueDiscoveryFeedSlide(venue, index, total, city) {

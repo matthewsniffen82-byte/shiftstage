@@ -14,7 +14,7 @@ const venue = { id: "club-1", name: "Test Club", slug: "test-club", activeDeal: 
 test("club details offer one Free Entry action and preserve the club's offer configuration", () => {
   let config;
   const ctx = vm.createContext({ escapeHtml: String, encodeDealPass(value) { config = value; return "encoded-offer"; } });
-  vm.runInContext(extract("venueOfferMarkup"), ctx);
+  vm.runInContext(["freeEntryButtonLabel", "venueOfferMarkup"].map(extract).join("\n"), ctx);
   const markup = ctx.venueOfferMarkup(venue);
   assert.equal((markup.match(/<button\b/g) || []).length, 1);
   assert.match(markup, />Free Entry</);

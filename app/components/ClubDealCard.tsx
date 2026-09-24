@@ -446,15 +446,15 @@ export function ClubDealCard({
           </span>
           <button
             aria-label={`${actionLabel} for ${displayTitle}`}
-            className="club-deal-profile-action club-deal-active-action"
+            className="club-deal-profile-action club-deal-active-action free-entry-cta"
             data-club-deal-state="available"
             onClick={(event) => {
               openDealDialog(event.currentTarget);
             }}
             type="button"
           >
-            <span>{actionLabel}</span>
-            <span aria-hidden="true">›</span>
+            <span className="free-entry-label">{actionLabel}</span>
+            <span className="free-entry-cue" aria-hidden="true">›</span>
           </button>
         </div>
       ) : presentation === "launcher" ? (

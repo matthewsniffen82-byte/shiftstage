@@ -201,9 +201,9 @@
           sourceType: "club_page"
         };
         const offerCount = venue.activeDeals?.length || 1;
-        return `<button class="feed-card-action home-card-qr-rail-action home-venue-discovery-rail-qr is-available venue-card-primary-action venue-card-deals-action" type="button" data-card-action-slot="qr" data-club-deal-state="available" data-club-deal-cta="${encodeDealPass(config)}" data-feed-venue-qr aria-label="View free entry at ${venueName}">${actionButtonLabel("qr", "Free Entry")}</button>`;
+        return `<button class="feed-card-action home-card-qr-rail-action home-venue-discovery-rail-qr is-available venue-card-primary-action venue-card-deals-action free-entry-cta" type="button" data-card-action-slot="qr" data-club-deal-state="available" data-club-deal-cta="${encodeDealPass(config)}" data-feed-venue-qr aria-label="View free entry at ${venueName}">${freeEntryButtonLabel()}</button>`;
       }
-      return `<button class="feed-card-action home-card-qr-rail-action home-venue-discovery-rail-qr is-unavailable venue-card-primary-action venue-card-deals-action" type="button" data-card-action-slot="qr" data-club-deal-state="unavailable" data-card-qr-label="Free entry unavailable" data-card-qr-message="Free entry is currently unavailable at this club. Check back later." aria-expanded="false" aria-label="Check free entry availability at ${venueName}">${actionButtonLabel("qr", "Free Entry")}</button>`;
+      return `<button class="feed-card-action home-card-qr-rail-action home-venue-discovery-rail-qr is-unavailable venue-card-primary-action venue-card-deals-action free-entry-cta" type="button" data-card-action-slot="qr" data-club-deal-state="unavailable" data-card-qr-label="Free entry unavailable" data-card-qr-message="Free entry is currently unavailable at this club. Check back later." aria-expanded="false" aria-label="Check free entry availability at ${venueName}">${freeEntryButtonLabel()}</button>`;
     }
 
     function homeVenueDiscoveryFeedSlide(venue, index, total, city) {
