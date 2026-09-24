@@ -78,17 +78,107 @@ body .dashboard-shell.dashboard-shell-dancer .venue-dashboard-section[data-secti
   body .dashboard-shell.dashboard-shell-dancer .venue-dashboard-section-toggle { transition: none; }
 }
 
-.dancer-age-verification { max-width: 680px; margin: 20px auto; padding: clamp(22px, 5vw, 36px); border: 1px solid rgba(183, 146, 255, .28); border-radius: 24px; background: #14101d; color: #f5f2fb; font-family: Inter, ui-sans-serif, system-ui, sans-serif; }
-.dancer-age-eyebrow { color: #cfb5fa; font-size: 12px; font-weight: 750; letter-spacing: .06em; }
-.dancer-age-verification h2 { margin: 12px 0; font-size: clamp(26px, 5vw, 34px); }
-.dancer-age-verification p { line-height: 1.6; color: #d0c8db; }
-.dancer-age-consent { display: flex; align-items: flex-start; gap: 12px; margin: 22px 0; line-height: 1.5; font-size: 14px; }
-.dancer-age-consent input { width: 20px; height: 20px; flex: 0 0 20px; margin-top: 2px; accent-color: #ad83ed; }
-.dancer-age-verification .button { display: inline-flex; justify-content: center; align-items: center; min-height: 46px; padding: 12px 18px; margin: 6px 10px 6px 0; border-radius: 12px; border: 1px solid #6d548c; background: #292033; color: #fff; font: inherit; font-size: 14px; font-weight: 700; cursor: pointer; }
-.dancer-age-verification .button.primary { background: #9a6bdd; color: #10091c; border-color: #9a6bdd; }
-.dancer-age-verification .button:disabled { opacity: .5; cursor: default; }
-.dancer-age-verification .button:focus-visible, .dancer-age-consent input:focus-visible, .dancer-age-links a:focus-visible { outline: 3px solid #dcc6ff; outline-offset: 4px; }
-.dancer-age-verification [role="alert"] { color: #ffc8cf; }
-.dancer-age-links { font-size: 14px; }
-.dancer-age-links a { color: #cfb5fa; text-decoration: underline; text-underline-offset: 3px; }
-.dancer-age-verification .dancer-age-note { font-size: 12px; margin-bottom: 0; }
+/* Keep verification aligned with recovery and account form spacing. */
+body.dancr-button-system .dancer-age-verification {
+  box-sizing: border-box;
+  display: grid;
+  gap: 16px;
+  width: 100%;
+  max-width: 680px;
+  min-width: 0;
+  margin: 16px auto;
+  padding: clamp(20px, 5vw, 28px);
+  border: 1px solid #34343c !important;
+  border-radius: 24px !important;
+  background: #111118 !important;
+  box-shadow: none !important;
+  color: #f5f3f8;
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+}
+body.dancr-button-system .dancer-age-heading { display: grid; gap: 6px; }
+body.dancr-button-system .dancer-age-eyebrow { color: #c4b5fd; font-size: 10px; font-weight: 650; letter-spacing: .14em; }
+body.dancr-button-system .dancer-age-verification h2 { margin: 0; color: #f5f3f8 !important; font-size: 22px !important; font-weight: 650 !important; line-height: 1.25 !important; letter-spacing: -.025em !important; }
+body.dancr-button-system .dancer-age-verification p { margin: 0; color: #c8c4cf; font-size: 13px; font-weight: 400; line-height: 1.6; }
+body.dancr-button-system .dancer-age-verification .dancer-age-timing { margin-top: -8px; color: #b8b6c2; }
+body.dancr-button-system .dancer-age-verification .dancer-age-privacy { padding: 12px 14px; border: 1px solid #34343c; border-radius: 12px; background: #0d0d14; color: #c8c4cf; font-size: 12px; }
+body.dancr-button-system .dancer-age-verification .dancer-age-consent {
+  display: flex !important;
+  align-items: flex-start;
+  gap: 10px;
+  min-width: 0;
+  min-height: 44px;
+  margin: 0;
+  padding: 4px 0;
+  color: #e4e0eb !important;
+  font-size: 13px !important;
+  font-weight: 400 !important;
+  line-height: 1.5 !important;
+  text-transform: none !important;
+  letter-spacing: normal !important;
+  cursor: pointer;
+}
+body.dancr-button-system .dancer-age-consent input {
+  box-sizing: border-box;
+  width: 20px !important;
+  min-width: 20px !important;
+  max-width: 20px !important;
+  height: 20px !important;
+  min-height: 20px !important;
+  flex: 0 0 20px;
+  margin: 0;
+  padding: 0 !important;
+  accent-color: #a78bfa;
+}
+body.dancr-button-system .dancer-age-actions { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; }
+html body.dancr-button-system .dancer-age-verification .button {
+  --age-button-face: #050507;
+  --age-button-edge: #34343c;
+  position: relative;
+  isolation: isolate;
+  box-sizing: border-box;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  width: 100% !important;
+  min-width: 0;
+  min-height: 50px !important;
+  height: auto !important;
+  max-height: none !important;
+  margin: 0 !important;
+  padding: 12px 16px !important;
+  border: 0 !important;
+  border-radius: 12px !important;
+  color: #f5f3f8 !important;
+  background: none !important;
+  box-shadow: none !important;
+  font: 650 14px/1.4 Inter, ui-sans-serif, system-ui, sans-serif !important;
+  text-align: center;
+  white-space: normal;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+}
+html body.dancr-button-system .dancer-age-verification .button::before {
+  content: "" !important;
+  display: block !important;
+  position: absolute !important;
+  inset: 0 !important;
+  border: 1px solid var(--age-button-edge) !important;
+  border-radius: inherit !important;
+  background: var(--age-button-gradient, linear-gradient(var(--age-button-face), var(--age-button-face))) !important;
+  box-shadow: none !important;
+  opacity: 1 !important;
+  transform: none !important;
+  filter: none !important;
+  z-index: -1;
+  pointer-events: none !important;
+}
+html body.dancr-button-system .dancer-age-verification .button::after { content: none !important; }
+html body.dancr-button-system .dancer-age-verification .button.primary:not(:disabled) { --age-button-gradient: linear-gradient(110deg, #7c3aed, #6d28d9); --age-button-edge: #a78bfa80; }
+html body.dancr-button-system .dancer-age-verification .button:disabled { color: #aaa6b3 !important; opacity: .65 !important; cursor: default; }
+body.dancr-button-system .dancer-age-verification :is(.button, input, a):focus-visible { outline: 2px solid #c4b5fd !important; outline-offset: 3px; }
+body.dancr-button-system .dancer-age-verification [role="alert"] { padding: 12px 14px; border: 1px solid #fb71854d; border-radius: 12px; background: #fb718514; color: #fecdd3; }
+body.dancr-button-system .dancer-age-footer { display: grid; gap: 4px; }
+body.dancr-button-system .dancer-age-verification .dancer-age-links { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; font-size: 12px; }
+body.dancr-button-system .dancer-age-links a { display: inline-flex; align-items: center; min-height: 32px; color: #aaa6b3 !important; text-decoration: underline; text-underline-offset: 3px; }
+body.dancr-button-system .dancer-age-verification .dancer-age-note { color: #aaa6b3; font-size: 12px; }

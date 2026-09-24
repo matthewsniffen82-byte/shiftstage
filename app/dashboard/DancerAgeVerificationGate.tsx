@@ -60,34 +60,41 @@ export default function DancerAgeVerificationGate({ children, profileSubmitted =
   if (verification && !verification.required && !verification.configured) return <>{children}</>;
   if (verification?.status === "verified") return <>{children}</>;
   const reviewing = verification?.status === "in_review";
+  const canStart = profileSubmitted && verification?.configured && !reviewing;
   return <>
     <section className="dancer-age-verification" aria-labelledby="dancer-age-heading" aria-busy={busy}>
-      <span className="dancer-age-eyebrow">Dancer account</span>
-      <h2 id="dancer-age-heading">Verify you’re 18+</h2>
-      <p>{!verification ? "Checking your verification status…"
+      <div className="dancer-age-heading">
+        <span className="dancer-age-eyebrow">Dancer account</span>
+        <h2 id="dancer-age-heading">Verify you’re 18+</h2>
+      </div>
+      <p className="dancer-age-intro">{!verification ? "Checking your verification status…"
         : !profileSubmitted ? "Finish and submit your dancer profile first, then verify you are 18 or older before your first club tap."
         : !verification.configured ? "Age verification is being connected. Please check back shortly. Account settings and support remain available."
         : reviewing ? "Your verification needs review. Check your status again later or contact MyDancr support."
         : verification.status === "declined" ? "Your verification was not approved. You must be 18 or older to use dancer features. You can retry with a valid ID or contact support."
-        : "Have your photo ID ready. Ondato will ask for ID photos and a live selfie—allow a few minutes."}</p>
-      {profileSubmitted && verification?.configured && !reviewing && <>
-        <p>MyDancr saves your verification result, not your ID photos, selfie, or date of birth.</p>
-        <p>Complete this step before your first club tap.</p>
+        : "Have your photo ID ready. Ondato will ask for ID photos and a live selfie."}</p>
+      {canStart && <>
+        <p className="dancer-age-timing">Allow a few minutes. Complete this step before your first club tap.</p>
+        <p className="dancer-age-privacy">MyDancr saves your verification result, not your ID photos, selfie, or date of birth.</p>
         <label className="dancer-age-consent"><input type="checkbox" checked={consent} onChange={event => setConsent(event.target.checked)} disabled={busy} />
           <span>I understand I’ll continue to Ondato for ID and selfie verification.</span>
         </label>
-        <button type="button" className="button primary" disabled={busy || !consent} onClick={() => void act(true)}>
-          {busy ? "Please wait…" : "Continue to Ondato"}
-        </button>
       </>}
-      <button type="button" className="button secondary" disabled={busy} onClick={() => void act(false)}>Check verification status</button>
+      <div className="dancer-age-actions">
+        {canStart && <button type="button" className="button primary" disabled={busy || !consent} onClick={() => void act(true)}>
+          {busy ? "Please wait…" : "Continue to Ondato"}
+        </button>}
+        <button type="button" className="button secondary" disabled={busy} onClick={() => void act(false)}>Check verification status</button>
+      </div>
       {error && <p role="alert">{error}</p>}
-      <p className="dancer-age-links">
-        <a href="https://ondato.com/privacy-policy/" target="_blank" rel="noopener noreferrer" aria-label="Ondato privacy notice (opens in a new tab)">Privacy notice</a>
-        {" · "}
-        <a href="/dashboard/dancer#dancer-support">Get help</a>
-      </p>
-      <p className="dancer-age-note">Age verification does not replace your club’s approval.</p>
+      <div className="dancer-age-footer">
+        <p className="dancer-age-links">
+          <a href="https://ondato.com/privacy-policy/" target="_blank" rel="noopener noreferrer" aria-label="Ondato privacy notice (opens in a new tab)">Privacy notice</a>
+          <span aria-hidden="true">·</span>
+          <a href="/dashboard/dancer#dancer-support">Get help</a>
+        </p>
+        <p className="dancer-age-note">Age verification does not replace your club’s approval.</p>
+      </div>
     </section>
     {verification && !verification.required ? children : null}
   </>;
