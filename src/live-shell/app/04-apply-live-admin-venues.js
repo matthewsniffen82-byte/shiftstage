@@ -427,7 +427,8 @@
         index: notifications.indexOf(notification),
         unread: !notification.readAt,
         title: notification.title || "Dancr notification",
-        detail: `${notification.body || "You have a new update."}${formatBillingDate(notification.sentAt || notification.createdAt) ? ` · ${formatBillingDate(notification.sentAt || notification.createdAt)}` : ""}`
+        detail: notification.body || "You have a new update.",
+        date: formatBillingDate(notification.sentAt || notification.createdAt)
       }));
     }
 
@@ -456,8 +457,9 @@
       customerNotificationsQuickList.innerHTML = items.length
         ? items.map((item) => `
             <button class="customer-quick-item" type="button" ${item.id ? `data-quick-notification-id="${item.id}"` : ""} ${Number.isFinite(item.index) ? `data-notification-index="${item.index}"` : ""}>
-              <strong>${displayText(item.title)}</strong>
-              <span>${displayText(item.detail)}</span>
+              <strong class="customer-notification-title"><span class="customer-notification-label">${displayText(item.title)}</span>${item.unread ? '<span class="customer-notification-unread" role="img" aria-label="Unread"></span>' : ""}</strong>
+              <span class="customer-notification-message">${displayText(item.detail)}</span>
+              ${item.date ? `<span class="customer-notification-date">${displayText(item.date)}</span>` : ""}
             </button>
           `).join("")
         : `<div class="customer-quick-empty" role="status">${isDancerSession()
@@ -631,6 +633,11 @@
         event.stopPropagation();
         event.stopImmediatePropagation();
         const action = button.dataset.notificationAction;
+        if (action === "close") {
+          closeCustomerQuickPanels();
+          customerNotificationQuickBtn.focus({ preventScroll: true });
+          return true;
+        }
         if (action === "mark-all") {
           markAllLiveNotificationsRead();
           return true;

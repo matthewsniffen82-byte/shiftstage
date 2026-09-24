@@ -62,11 +62,17 @@
               <span data-quick-icon="qr"></span>
               <span id="customerDealQuickCta" class="customer-deal-quick-cta" role="status" aria-live="polite" hidden>New deal saved · Open</span>
             </button>
-            <div class="customer-quick-panel" id="customerNotificationsQuickPanel" hidden>
-              <h3>Notifications</h3>
-              <p>Recent alerts from the settings you turned on.</p>
+            <div class="customer-quick-panel" id="customerNotificationsQuickPanel" role="region" aria-labelledby="customerNotificationsQuickTitle" hidden>
+              <div class="customer-notification-heading">
+                <h3 id="customerNotificationsQuickTitle">Notifications</h3>
+                <div class="customer-notification-header-actions">
+                  <button class="customer-quick-clear" type="button" data-notification-action="clear-all" aria-label="Clear all notifications">Clear all</button>
+                  <button class="customer-notification-close" type="button" data-notification-action="close" aria-label="Close notifications">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"></path></svg>
+                  </button>
+                </div>
+              </div>
               <div class="customer-quick-list" id="customerNotificationsQuickList"></div>
-              <button class="customer-quick-clear" type="button" data-notification-action="clear-all">Clear notifications</button>
             </div>
             <div class="customer-quick-panel" id="customerDealsQuickPanel" hidden>
               <h3>Saved Club Deals</h3>

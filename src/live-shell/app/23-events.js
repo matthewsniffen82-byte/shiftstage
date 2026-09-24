@@ -616,6 +616,14 @@
       if (handleNotificationCenterClick(event)) return;
     });
 
+    customerQuickActions.addEventListener("keydown", (event) => {
+      if (event.key !== "Escape" || customerNotificationsQuickPanel.hidden) return;
+      event.preventDefault();
+      event.stopPropagation();
+      closeCustomerQuickPanels();
+      customerNotificationQuickBtn.focus({ preventScroll: true });
+    });
+
     document.addEventListener("click", (event) => {
       if (!event.target.closest(".utility-menu")) closeUtilityMenu();
       if (!event.target.closest(".customer-quick-actions")) closeCustomerQuickPanels();
