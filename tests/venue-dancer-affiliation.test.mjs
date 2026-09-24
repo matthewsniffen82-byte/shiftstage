@@ -59,9 +59,9 @@ test("dancers see tap guidance while venues keep their approved roster", () => {
   assert.doesNotMatch(dashboard, /clearVenueVerificationQuery|parseVenueVerificationToken|formatVerificationExpiry|formatVerificationDate/);
   assert.doesNotMatch(dashboard, /requestDancerVenueVerificationJson|requestVenueDancerVerificationsJson/);
   assert.match(dancerPanel, /Your first tap activates your completed profile and checks you in at that club/);
-  assert.match(dancerPanel, /Working Now lasts 6 hours/);
-  assert.match(dancerPanel, /6-hour cooldown at all clubs/);
-  assert.match(venuePanel, /Approved dancer roster/);
+  assert.match(dancerPanel, /Working Now lasts <strong>6 hours<\/strong>/);
+  assert.match(dancerPanel, /6-hour cooldown<\/strong> across all clubs/);
+  assert.match(venuePanel, /Dancer roster/);
   assert.doesNotMatch(venuePanel, /MyDancr supplies these tap-to-use stickers|Installation only/);
 });
 

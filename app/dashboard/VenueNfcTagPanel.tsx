@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { filterVenueAffiliations, findAffiliatedDancerCheckIn, isAffiliatedDancerWorkingNow, type VenueDancerAffiliation as DancerAffiliation } from "@/src/lib/dancr/venue-roster";
+import { getVenueRosterEntries, type VenueDancerAffiliation as DancerAffiliation } from "@/src/lib/dancr/venue-roster";
 import {
   readDashboardAccessToken,
   requestDashboardJson,
@@ -269,7 +269,7 @@ export default function VenueNfcTagPanel({
     finally { savingRef.current = false; if (mountedRef.current) setIsSaving(false); }
   }
 
-  async function endCheckIn(affiliation: DancerAffiliation, shift: Record<string, unknown>) {
+  async function endCheckIn(affiliation: Pick<DancerAffiliation, "dancer">, shift: Record<string, unknown>) {
     if (!canEndCheckIns || savingRef.current || !shift.shiftId || shift.shiftSource === "demo_locked") return;
     const shiftId = String(shift.shiftId);
     const dancerName = affiliation.dancer?.stageName || "this dancer";
@@ -361,53 +361,53 @@ export default function VenueNfcTagPanel({
   }
 
   const activeAffiliations = affiliations.filter((item) => item.status === "active");
-  const workingCount = activeAffiliations.filter((item) => isAffiliatedDancerWorkingNow(item, workingNow)).length;
-  const matchingAffiliations = filterVenueAffiliations(affiliations, workingNow, search, workingOnly);
+  const workingCount = workingNow.length;
+  const rosterEntries = getVenueRosterEntries(affiliations, workingNow, search, workingOnly);
+  const isRosterLoading = isLoading && !workingOnly && !activeAffiliations.length;
 
   return (
     <article className="info-panel venue-nfc-panel" id="venue-nfc-tags">
-      <section className="venue-nfc-roster" aria-label="Verified dancer roster">
+      <section className="venue-nfc-roster" aria-label="Dancer roster">
         <div className="venue-nfc-roster-head">
-          <span><strong>Approved dancer roster</strong><small>Search dancers, view profiles, and manage venue access.</small></span>
+          <span><strong>Dancer roster</strong><small>View current check-ins and manage affiliated dancers.</small></span>
           <b>{isLoading && !activeAffiliations.length ? "…" : `${activeAffiliations.length} affiliated`}</b>
         </div>
         <label className="venue-roster-search">
-          Search affiliated dancers
+          Search dancers
           <input type="search" value={search} placeholder="Stage name" onChange={(event) => { setSearch(event.target.value); setVisibleCount(50); }} />
         </label>
         <div className="venue-roster-filters" role="group" aria-label="Filter affiliated dancers">
           <button type="button" aria-pressed={!workingOnly} onClick={() => { onWorkingOnlyChange(false); setVisibleCount(50); }}>All affiliated <b>{activeAffiliations.length}</b></button>
           <button type="button" aria-pressed={workingOnly} onClick={() => { onWorkingOnlyChange(true); setVisibleCount(50); }}>Working now <b>{workingCount}</b></button>
         </div>
-        <p className="venue-roster-results" role="status">{isLoading && !activeAffiliations.length ? "Loading dancers…" : `${matchingAffiliations.length} ${matchingAffiliations.length === 1 ? "dancer" : "dancers"}${search.trim() ? " matching your search" : workingOnly ? " working now" : " affiliated"}`}</p>
-        {matchingAffiliations.slice(0, visibleCount).map((affiliation) => {
-          const checkIn = findAffiliatedDancerCheckIn(affiliation, workingNow);
+        <p className="venue-roster-results" role="status">{isRosterLoading ? "Loading dancers…" : `${rosterEntries.length} ${rosterEntries.length === 1 ? "dancer" : "dancers"}${search.trim() ? " matching your search" : workingOnly ? " working now" : " affiliated"}`}</p>
+        {rosterEntries.slice(0, visibleCount).map(({ id, affiliation, dancer, checkIn }) => {
           return (
-          <div className="venue-nfc-dancer" key={affiliation.id}>
+          <div className="venue-nfc-dancer" key={id}>
             <span className="venue-nfc-dancer-identity">
               <span className="venue-nfc-dancer-avatar" data-dancer-avatar="" aria-hidden="true">
                 <span data-dancer-avatar-border="">
-                  {affiliation.dancer?.avatarUrl ? (
-                    <img src={affiliation.dancer.avatarUrl} srcSet={affiliation.dancer.avatarSrcSet || undefined} sizes="48px" alt="" loading="lazy" decoding="async" />
-                  ) : (affiliation.dancer?.stageName || "D").slice(0, 1).toUpperCase()}
+                  {dancer?.avatarUrl ? (
+                    <img src={dancer.avatarUrl} srcSet={dancer.avatarSrcSet || undefined} sizes="48px" alt="" loading="lazy" decoding="async" />
+                  ) : (dancer?.stageName || "D").slice(0, 1).toUpperCase()}
                 </span>
               </span>
               <span className="venue-nfc-dancer-copy">
-                <strong>{affiliation.dancer?.stageName || "Dancer"}</strong>
-                {affiliation.dancer?.city ? <small>{affiliation.dancer.city}</small> : null}
+                <strong>{dancer?.stageName || "Dancer"}</strong>
+                {dancer?.city ? <small>{dancer.city}</small> : null}
                 <small className={checkIn ? "venue-roster-working" : ""}>{checkIn ? "● Working now" : "Not working now"}</small>
               </span>
             </span>
             <div className="venue-roster-actions">
-              {affiliation.dancer?.slug ? <Link href={`/dancers/${encodeURIComponent(affiliation.dancer.slug)}`} aria-label={`View ${affiliation.dancer.stageName || "dancer"} profile`}>View profile</Link> : null}
+              {dancer?.slug ? <Link href={`/dancers/${encodeURIComponent(dancer.slug)}`} aria-label={`View ${dancer.stageName || "dancer"} profile`}>View profile</Link> : null}
               {canEndCheckIns && checkIn?.shiftId ? (
                 <button className="venue-end-checkin" type="button" disabled={isSaving || checkIn.shiftSource === "demo_locked"}
-                  aria-label={`End ${affiliation.dancer?.stageName || "dancer"} check-in`}
-                  onClick={() => { void endCheckIn(affiliation, checkIn); }}>
+                  aria-label={`End ${dancer?.stageName || "dancer"} check-in`}
+                  onClick={() => { void endCheckIn({ dancer }, checkIn); }}>
                   {checkIn.shiftSource === "demo_locked" ? "Demo managed" : endingShiftId === checkIn.shiftId ? "Ending…" : "End check-in"}
                 </button>
               ) : null}
-              {canManageRoster ? (
+              {canManageRoster && affiliation ? (
                 <button className="venue-nfc-remove-access" type="button" disabled={isSaving}
                   aria-label={`Remove ${affiliation.dancer?.stageName || "dancer"} access`} onClick={() => removeAccess(affiliation)}>
                   Remove access
@@ -417,8 +417,8 @@ export default function VenueNfcTagPanel({
           </div>
           );
         })}
-        {!isLoading && !matchingAffiliations.length ? <p>{search.trim() ? "No affiliated dancers match your search." : workingOnly ? "No affiliated dancers are working now." : "No dancers have used this venue's dancer check-in sticker yet."}</p> : null}
-        {matchingAffiliations.length > visibleCount ? <button type="button" onClick={() => setVisibleCount((count) => count + 50)}>Show more dancers ({matchingAffiliations.length - visibleCount} remaining)</button> : null}
+        {!isRosterLoading && !rosterEntries.length ? <p>{search.trim() ? "No dancers match your search." : workingOnly ? "No dancers are working now." : "No dancers have used this venue's dancer check-in sticker yet."}</p> : null}
+        {rosterEntries.length > visibleCount ? <button type="button" onClick={() => setVisibleCount((count) => count + 50)}>Show more dancers ({rosterEntries.length - visibleCount} remaining)</button> : null}
       </section>
       {canManageRoster && affiliations.some(item => item.status === "revoked" && item.reentryBlocked) ? <details>
         <summary>Removed dancers</summary>

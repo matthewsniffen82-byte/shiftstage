@@ -485,7 +485,7 @@ export function VenuePanel({
           id="venue-dancer-roster"
           icon={<VenueDashboardIcon section="roster" />}
           toggleAffordance="chevron"
-          title="Affiliated dancers"
+          title="Dancers & check-ins"
           badge={`${nfcAuthorizedDancerCount} affiliated`}
         >
           <VenueNfcTagPanel

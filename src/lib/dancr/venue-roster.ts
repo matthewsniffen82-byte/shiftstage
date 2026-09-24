@@ -46,3 +46,47 @@ export function filterVenueAffiliations(
     return terms.every((term) => stageName.includes(term));
   });
 }
+
+export type VenueRosterEntry = {
+  id: string;
+  affiliation: VenueDancerAffiliation | null;
+  dancer: VenueDancerAffiliation["dancer"];
+  checkIn: Record<string, unknown> | null;
+};
+
+export function getVenueRosterEntries(
+  affiliations: VenueDancerAffiliation[],
+  workingNow: Array<Record<string, unknown>>,
+  search: string,
+  workingOnly: boolean,
+): VenueRosterEntry[] {
+  if (!workingOnly) {
+    return filterVenueAffiliations(affiliations, workingNow, search, false).map((affiliation) => ({
+      id: affiliation.id,
+      affiliation,
+      dancer: affiliation.dancer,
+      checkIn: findAffiliatedDancerCheckIn(affiliation, workingNow),
+    }));
+  }
+
+  // Presence and affiliation are separate records. Demo and older check-ins
+  // can be present without an affiliation; never drop them from Working Now
+  // or manufacture access-management permissions for them.
+  const activeAffiliations = affiliations.filter((affiliation) => affiliation.status === "active");
+  const terms = search.trim().toLocaleLowerCase().split(/\s+/).filter(Boolean);
+  return workingNow.map((checkIn, index): VenueRosterEntry => {
+    const affiliation = activeAffiliations.find((item) => isAffiliatedDancerWorkingNow(item, [checkIn])) || null;
+    return {
+      id: `check-in:${checkIn.shiftId || index}`,
+      affiliation,
+      dancer: affiliation?.dancer || {
+        id: String(checkIn.dancerId || ""),
+        stageName: String(checkIn.stageName || "Dancer"),
+        slug: String(checkIn.dancerSlug || ""),
+        avatarUrl: typeof checkIn.avatarUrl === "string" ? checkIn.avatarUrl : null,
+        avatarSrcSet: typeof checkIn.avatarSrcSet === "string" ? checkIn.avatarSrcSet : null,
+      },
+      checkIn,
+    };
+  }).filter(({ dancer }) => terms.every((term) => (dancer?.stageName || "").toLocaleLowerCase().includes(term)));
+}

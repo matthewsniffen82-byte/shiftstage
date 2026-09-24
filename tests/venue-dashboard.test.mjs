@@ -100,7 +100,7 @@ test("venue dashboard prioritizes pickups and results while preserving managemen
   assert.match(venuePanel, /View \$\{activeDealCount\} current Club/);
   assert.match(venuePanel, /VenueNfcTagPanel/);
   assert.match(venuePanel, /id="venue-results-heading">Results/);
-  assert.ok(venuePanel.indexOf('title="Current Club Deals"') < venuePanel.indexOf('title="Affiliated dancers"'));
+  assert.ok(venuePanel.indexOf('title="Current Club Deals"') < venuePanel.indexOf('title="Dancers & check-ins"'));
   assert.ok(venuePanel.indexOf('title="Current Club Deals"') < venuePanel.indexOf("VenueNfcTagPanel"));
   assert.ok(venuePanel.indexOf('id="venue-pickups"') < venuePanel.indexOf('id="venue-overview"'));
   assert.ok(venuePanel.indexOf('id="venue-overview"') < venuePanel.indexOf('title="Current Club Deals"'));
@@ -117,7 +117,7 @@ test("venue owners navigate one simplified state-aware workspace without losing 
   assert.match(dashboard, /sectionId === "venue-pickups"\) return "tonight"/);
   assert.match(dashboard, /sectionId === "venue-overview"\) return "business"/);
   assert.match(dashboard, /\["venue-working-now"[\s\S]*?"venue-team", "venue-account", "venue-support"\]\.includes\(sectionId\)\) return "venue"/);
-  assert.match(venuePanel, /hidden=\{activeWorkspace !== "venue"\}[\s\S]*?title="Affiliated dancers"/);
+  assert.match(venuePanel, /hidden=\{activeWorkspace !== "venue"\}[\s\S]*?title="Dancers & check-ins"/);
   assert.match(venuePanel, /<VenueTvPanel\s+city=\{venueCity\}\s+hidden=\{activeWorkspace !== "venue"\}\s+venueId=/);
   assert.match(venuePanel, /hidden=\{activeWorkspace !== "business"\}[\s\S]*?id="venue-overview"/);
   assert.match(venuePanel, /title="Account & support"/);
@@ -209,7 +209,7 @@ test("MyDancr supplies tap stickers while venue owners receive read-only invento
   assert.match(nfcPanel, /scanCount > testBaselineRef\.current/);
   assert.match(nfcPanel, /phone[\s\S]*?completed/);
   assert.match(nfcPanel, /Assigned sticker inventory/);
-  assert.match(nfcPanel, /Approved dancer roster/);
+  assert.match(nfcPanel, /Dancer roster/);
   assert.match(nfcPanel, /Dancer check-in/);
   assert.match(nfcPanel, /Legacy cashier sticker/);
   assert.doesNotMatch(nfcPanel, /Assigned NFC stickers|NFC-authorized dancer roster|NFC verified|NFC workflow/);
@@ -227,7 +227,7 @@ test("venue-facing NFC language explains the physical actions in plain language"
   assert.match(venuePanel, /if \(sectionId === "venue-working-now"\) setRosterWorkingOnly\(true\)/);
   assert.match(nfcPanel, /All affiliated <b>\{activeAffiliations.length\}<\/b>/);
   assert.match(nfcPanel, /Working now <b>\{workingCount\}<\/b>/);
-  assert.match(venuePanel, /title="Affiliated dancers"/);
+  assert.match(venuePanel, /title="Dancers & check-ins"/);
   assert.match(nfcPanel, /<summary>Dancer &amp; legacy stickers/);
   assert.match(venuePanel, /VenueValueAnalytics/);
   assert.match(venuePanel, /analytics.valueReport/);
@@ -239,9 +239,9 @@ test("venue-facing NFC language explains the physical actions in plain language"
 
 test("venue roster rows pair each dancer avatar with compact confirmed access removal", () => {
   assert.match(nfcPanel, /className="venue-nfc-dancer-identity"/);
-  assert.match(nfcPanel, /affiliation\.dancer\?\.avatarUrl/);
+  assert.match(nfcPanel, /dancer\?\.avatarUrl/);
   assert.match(nfcPanel, /data-dancer-avatar=""[\s\S]*?data-dancer-avatar-border=""/);
-  assert.match(nfcPanel, /srcSet=\{affiliation\.dancer\.avatarSrcSet \|\| undefined\}/);
+  assert.match(nfcPanel, /srcSet=\{dancer\.avatarSrcSet \|\| undefined\}/);
   assert.match(nfcPanel, /className="venue-nfc-remove-access"/);
   assert.match(nfcPanel, /window\.confirm\(`Remove \$\{dancerName\}/);
   assert.match(nfcPanel, /\.venue-nfc-dancer\{display:grid;grid-template-columns:minmax\(0,1fr\) auto/);

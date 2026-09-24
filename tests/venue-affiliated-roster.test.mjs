@@ -34,6 +34,36 @@ test("working-now filtering uses current presence rather than active affiliation
   assert.equal(roster.isAffiliatedDancerWorkingNow({ id: "empty", status: "active" }, [{}]), false);
 });
 
+test("Working Now includes every current check-in even when the approved roster has different dancers", () => {
+  const present = [
+    { shiftId: "live", dancerId: "four", dancerSlug: "nova", stageName: "Nova", shiftSource: "nfc_presence" },
+    { shiftId: "demo", dancerId: "five", dancerSlug: "luna", stageName: "Luna", shiftSource: "demo_locked" },
+  ];
+  const rows = roster.getVenueRosterEntries(affiliations, present, "", true);
+  assert.equal(rows.length, present.length, "the list and dashboard use the same presence count");
+  assert.deepEqual(Array.from(rows, row => row.dancer.stageName), ["Nova", "Luna"]);
+  assert.deepEqual(Array.from(rows, row => row.checkIn), present);
+  assert.ok(rows.every(row => row.affiliation === null), "presence does not create affiliation or removal permission");
+  assert.deepEqual(ids(roster.getVenueRosterEntries(affiliations, present, "", false)), ["a", "b"]);
+  assert.deepEqual(ids(roster.getVenueRosterEntries(affiliations, present, " LuNA ", true)), ["check-in:demo"]);
+  assert.equal(roster.getVenueRosterEntries(affiliations, present, "missing", true).length, 0);
+  assert.equal(roster.getVenueRosterEntries(affiliations, [], "", true).length, 0);
+});
+
+test("working rows only attach matching active affiliations and preserve the exact checkout target", () => {
+  const present = [
+    { shiftId: "active", dancerId: "two", dancerSlug: "ivy", stageName: "Ivy" },
+    { shiftId: "revoked", dancerId: "three", dancerSlug: "former", stageName: "Former" },
+    { shiftId: "other-id", dancerId: "different", dancerSlug: "bella", stageName: "Different dancer" },
+  ];
+  const rows = roster.getVenueRosterEntries(affiliations, present, "", true);
+  assert.equal(rows[0].affiliation, affiliations[1]);
+  assert.equal(rows[1].affiliation, null);
+  assert.equal(rows[2].affiliation, null, "matching slugs must not override different dancer IDs");
+  assert.deepEqual(Array.from(rows, row => row.checkIn.shiftId), ["active", "revoked", "other-id"]);
+  assert.deepEqual(ids(roster.getVenueRosterEntries([], present, "", true)), ["check-in:active", "check-in:revoked", "check-in:other-id"]);
+});
+
 const panel = read("../app/dashboard/VenueNfcTagPanel.tsx");
 const removal = compile(panel.slice(panel.indexOf("  async function removeAccess("), panel.indexOf("  function startTapTest(")));
 function removalFixture({ canManageRoster = true, confirmed = true } = {}) {
