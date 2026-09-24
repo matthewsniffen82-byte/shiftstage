@@ -158,7 +158,7 @@ export function ProfileShareButton({ dancerId, stageName }: { dancerId: string; 
             <span>Share profile</span>
             <h2 id="profile-share-dialog-title">{stageName} on MyDancr</h2>
             <p>
-              Send the public profile directly or copy its secure link. Club
+              Send the public profile directly or copy its secure link.
               Club staff scans your admission pass and confirms entry at the door.
             </p>
 

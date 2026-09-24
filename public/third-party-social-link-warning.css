@@ -3,14 +3,16 @@
 }
 
 #mydancrThirdPartySocialWarning {
+  box-sizing: border-box;
   position: fixed;
   inset: 0;
   z-index: 2147483000;
   display: grid;
   align-items: end;
   justify-items: center;
-  padding: 18px 14px max(18px, env(safe-area-inset-bottom));
+  padding: 16px 16px max(16px, env(safe-area-inset-bottom));
   color: #f8f7ff;
+  color-scheme: dark;
   font-family: inherit;
 }
 
@@ -23,52 +25,39 @@
 }
 
 .mydancr-third-party-social-dialog {
+  box-sizing: border-box;
   position: relative;
-  width: min(100%, 470px);
+  width: min(100%, 400px);
+  min-width: 0;
+  max-height: calc(100dvh - 16px - max(16px, env(safe-area-inset-bottom)));
   display: grid;
-  gap: 16px;
-  padding: 22px;
-  overflow: hidden;
-  border: 1px solid rgba(129, 82, 255, 0.54);
-  border-radius: 24px;
-  background:
-    radial-gradient(circle at 86% 0%, rgba(95, 40, 218, 0.22), transparent 40%),
-    linear-gradient(160deg, rgba(18, 17, 27, 0.985), rgba(5, 5, 9, 0.99));
-  box-shadow:
-    0 24px 80px rgba(0, 0, 0, 0.66),
-    0 0 42px rgba(90, 35, 222, 0.2),
-    inset 0 1px 0 rgba(255, 255, 255, 0.07);
+  gap: 12px;
+  padding: 16px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border: 1px solid #34343c;
+  border-radius: 18px;
+  background: #08080b;
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.5);
   isolation: isolate;
   animation: mydancr-third-party-social-enter 180ms ease-out both;
-}
-
-.mydancr-third-party-social-dialog::before {
-  content: "";
-  position: absolute;
-  inset: 0 auto 0 0;
-  width: 3px;
-  background: linear-gradient(180deg, #8b5cf6, #5b21d8 56%, rgba(91, 33, 216, 0));
-  box-shadow: 0 0 18px rgba(124, 58, 237, 0.72);
 }
 
 .mydancr-third-party-social-eyebrow {
   width: fit-content;
   margin: 0;
-  padding: 6px 10px;
-  border: 1px solid rgba(139, 92, 246, 0.34);
-  border-radius: 999px;
-  color: #c4b5fd;
-  background: rgba(91, 33, 216, 0.14);
+  padding: 0;
+  color: #b8b5c6;
   font-size: 11px;
-  font-weight: 900;
-  letter-spacing: 0.14em;
-  line-height: 1;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  line-height: 1.3;
   text-transform: uppercase;
 }
 
 .mydancr-third-party-social-copy {
   display: grid;
-  gap: 9px;
+  gap: 8px;
 }
 
 .mydancr-third-party-social-copy h2,
@@ -78,91 +67,118 @@
 
 .mydancr-third-party-social-copy h2 {
   color: #ffffff;
-  font-size: clamp(24px, 7vw, 31px);
-  font-weight: 950;
-  letter-spacing: -0.035em;
-  line-height: 1.04;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.3;
 }
 
 .mydancr-third-party-social-copy p {
-  color: rgba(235, 233, 245, 0.75);
-  font-size: 15px;
-  font-weight: 650;
-  line-height: 1.52;
+  color: #b8b5c6;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.45;
 }
 
 .mydancr-third-party-social-destination {
-  display: grid;
-  gap: 5px;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
   min-width: 0;
-  padding: 13px 15px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 15px;
-  background: rgba(255, 255, 255, 0.045);
+  padding: 10px 12px;
+  border: 1px solid #34343c;
+  border-radius: 12px;
+  background: linear-gradient(#060608, #060608);
 }
 
 .mydancr-third-party-social-destination span {
-  color: rgba(206, 202, 220, 0.6);
-  font-size: 10px;
-  font-weight: 900;
-  letter-spacing: 0.14em;
-  line-height: 1;
-  text-transform: uppercase;
+  color: #b8b5c6;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.4;
 }
 
 .mydancr-third-party-social-destination strong {
   min-width: 0;
   overflow-wrap: anywhere;
   color: #ffffff;
-  font-size: 16px;
-  font-weight: 850;
-  line-height: 1.25;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.4;
+  text-align: right;
 }
 
 .mydancr-third-party-social-actions {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 10px;
+  gap: 8px;
 }
 
 #mydancrThirdPartySocialWarning .mydancr-third-party-social-actions button {
   width: 100%;
-  min-height: 52px;
+  min-width: 0;
+  min-height: 46px !important;
   margin: 0;
-  padding: 12px 16px;
-  border-radius: 15px;
+  padding: 11px 12px !important;
+  border-radius: 12px !important;
+  -webkit-appearance: none !important;
+  appearance: none !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+  filter: none !important;
   font: inherit;
-  font-size: 15px;
-  font-weight: 900;
-  line-height: 1.1;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  line-height: 1.4 !important;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
 }
 
 #mydancrThirdPartySocialWarning .mydancr-third-party-social-actions button:focus-visible {
-  outline: 3px solid rgba(191, 219, 254, 0.9);
+  outline: 2px solid #c4b5fd;
   outline-offset: 3px;
 }
 
 #mydancrThirdPartySocialWarning .mydancr-third-party-social-stay {
-  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+  --social-stay-face: #060608;
+  position: relative;
+  isolation: isolate;
+  border: 1px solid #34343c !important;
   color: #f4f2fb !important;
-  background: rgba(42, 41, 51, 0.92) !important;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
+  background: var(--social-stay-face) linear-gradient(var(--social-stay-face), var(--social-stay-face)) !important;
+  box-shadow: none !important;
+}
+
+/* The separate face keeps Android's native button paint from turning gray. */
+#mydancrThirdPartySocialWarning .mydancr-third-party-social-stay::before {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  z-index: -1;
+  pointer-events: none;
+  border: inherit;
+  border-radius: inherit;
+  background: linear-gradient(var(--social-stay-face), var(--social-stay-face));
+}
+
+#mydancrThirdPartySocialWarning .mydancr-third-party-social-stay:is(:hover, :focus-visible) {
+  --social-stay-face: #100a1b;
+  border-color: #745696 !important;
 }
 
 #mydancrThirdPartySocialWarning .mydancr-third-party-social-continue {
-  border: 1px solid rgba(167, 139, 250, 0.82) !important;
+  border: 1px solid #745696 !important;
   color: #ffffff !important;
   background: linear-gradient(135deg, #6d28d9, #4c1d95) !important;
-  box-shadow: 0 9px 24px rgba(76, 29, 149, 0.36), inset 0 1px 0 rgba(255, 255, 255, 0.15) !important;
+  box-shadow: none !important;
 }
 
 .mydancr-third-party-social-note {
-  margin: -2px 0 0;
-  color: rgba(207, 203, 220, 0.54);
-  font-size: 11px;
-  font-weight: 650;
+  margin: 0;
+  color: #a7a3b4;
+  font-size: 12px;
+  font-weight: 400;
   line-height: 1.4;
   text-align: center;
 }

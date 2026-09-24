@@ -337,3 +337,66 @@ body.dancr-button-system :is(#contentReportPopover.is-quick-reason,.public-repor
 }
 body.dancr-button-system #contentReportPopover.is-quick-reason .content-report-form { margin: 0; gap: 0; }
 body.dancr-button-system #contentReportPopover.is-quick-reason .content-report-status:empty { display: none; }
+
+/* Profile sharing sizes to its content, without the QR viewer's footer space. */
+body.dancr-button-system :is(#profileShareChoiceOverlay,.profile-share-dialog-backdrop) {
+  box-sizing: border-box; padding: 16px; color-scheme: dark;
+}
+body.dancr-button-system :is(#profileShareChoiceOverlay .profile-qr-sheet,.profile-share-dialog) {
+  box-sizing: border-box; width: min(400px,100%); min-width: 0; min-height: 0;
+  max-height: calc(100dvh - 32px); overflow-y: auto; overscroll-behavior: contain;
+  display: grid; gap: 8px; padding: 16px; scroll-padding: 16px;
+  border: 1px solid #34343c; border-radius: 18px; text-align: left;
+  background: #08080b; box-shadow: 0 18px 48px rgba(0,0,0,.5);
+}
+body.dancr-button-system :is(#profileShareChoiceOverlay .profile-qr-kicker,.profile-share-dialog > span:first-of-type) {
+  margin: 0; padding-right: 44px; color: #b8b5c6; font-size: 11px;
+  font-weight: 600; line-height: 1.3; letter-spacing: .06em;
+}
+body.dancr-button-system :is(#profileShareChoiceOverlay .profile-qr-title,.profile-share-dialog h2) {
+  margin: 0; padding-right: 44px; color: #f8fafc; font-size: 18px;
+  font-weight: 700; line-height: 1.3; letter-spacing: -.02em; overflow-wrap: anywhere;
+}
+body.dancr-button-system :is(#profileShareChoiceOverlay .profile-qr-subtitle,.profile-share-dialog > p) {
+  max-width: none; margin: 4px 0; color: #b8b5c6;
+  font-size: 14px; font-weight: 400; line-height: 1.45;
+}
+body.dancr-button-system :is(#profileShareChoiceOverlay .profile-share-choice-actions,.profile-share-dialog-actions) { gap: 8px; margin-top: 4px; }
+body.dancr-button-system :is(#profileShareChoiceOverlay .profile-qr-action,.profile-share-dialog-actions > button) {
+  --profile-share-face: #060608; --profile-share-edge: #34343c;
+  position: relative; isolation: isolate; box-sizing: border-box;
+  width: 100%; min-width: 0; min-height: 46px !important;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 11px 12px !important; border: 1px solid var(--profile-share-edge) !important; border-radius: 12px !important;
+  color: #f8fafc !important; font-size: 14px !important; font-weight: 600 !important; line-height: 1.4 !important;
+  background: var(--profile-share-face) linear-gradient(var(--profile-share-face),var(--profile-share-face)) !important;
+  box-shadow: none !important; filter: none !important; transform: none !important;
+  -webkit-appearance: none !important; appearance: none !important;
+  -webkit-backdrop-filter: none !important; backdrop-filter: none !important;
+}
+body.dancr-button-system :is(#profileShareChoiceOverlay .profile-qr-action,.profile-share-dialog-actions > button)::before {
+  content: ""; position: absolute; inset: -1px; z-index: -1; pointer-events: none;
+  border: 1px solid var(--profile-share-edge); border-radius: inherit;
+  background: linear-gradient(var(--profile-share-face),var(--profile-share-face));
+}
+body.dancr-button-system :is(#profileShareChoiceOverlay .profile-qr-action,.profile-share-dialog-actions > button):is(:hover,:focus-visible) {
+  --profile-share-face: #100a1b; --profile-share-edge: #745696;
+}
+body.dancr-button-system :is(#profileShareChoiceOverlay .profile-qr-close,.profile-share-dialog-close) {
+  position: absolute; top: 10px; right: 10px; isolation: isolate;
+  box-sizing: border-box; width: 44px !important; height: 44px !important; min-height: 44px !important;
+  display: grid !important; place-items: center; padding: 0 !important;
+  border: 0 !important; border-radius: 50% !important; color: #f8fafc !important;
+  font-weight: 400 !important;
+  background: transparent !important; box-shadow: none !important; transform: none !important;
+  -webkit-appearance: none !important; appearance: none !important;
+  -webkit-backdrop-filter: none !important; backdrop-filter: none !important;
+}
+body.dancr-button-system :is(#profileShareChoiceOverlay .profile-qr-close,.profile-share-dialog-close)::before {
+  content: ""; position: absolute; inset: 6px; z-index: -1; pointer-events: none;
+  border: 1px solid #9a9ca9; border-radius: 50%; background: linear-gradient(#060608,#060608);
+}
+body.dancr-button-system #profileShareChoiceOverlay .profile-qr-close .icon { width: 20px; height: 20px; }
+body.dancr-button-system :is(#profileShareChoiceOverlay,.profile-share-dialog) button:focus-visible { outline: 2px solid #c4b5fd !important; outline-offset: 3px !important; }
+body.dancr-button-system .profile-share-dialog-status { color: #b8b5c6; font-size: 12px; font-weight: 400; }
+body.dancr-button-system .profile-share-dialog-status:empty { display: none; }
