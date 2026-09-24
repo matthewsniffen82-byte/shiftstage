@@ -36,6 +36,7 @@ function fixture(storage = new Map()) {
     customerNotificationQuickBtn: element(),
     isDancerSession: () => false, isVenueSession: () => false,
     displayText: String, formatBillingDate: () => "",
+    actionIconMarkup: () => '<span aria-hidden="true"></span>',
     followedProfiles: () => { throw new Error("Saved profiles must not regenerate notification rows"); },
     followedVenues: () => { throw new Error("Saved clubs must not regenerate notification rows"); },
     notificationCenterMarkup: () => context.liveNotifications.length ? "notifications" : "empty",

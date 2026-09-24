@@ -11,6 +11,7 @@ import {
   useState,
 } from "react";
 import { ClubDealCard } from "@/app/components/ClubDealCard";
+import NotificationIcon from "@/app/components/NotificationIcon";
 import { MediaLikeButton } from "@/app/components/MediaLikeButton";
 import {
   readBrowserAccessToken,
@@ -34,6 +35,7 @@ const FILTERS = [
 
 type TvSource = "tv_feed" | "shared_link";
 type TvNotification = {
+  icon?: string;
   id: string;
   title: string;
   body: string;
@@ -607,7 +609,7 @@ export default function TvFeedClient({
                       key={notification.id}
                       onClick={() => markNotificationRead(notification.id)}
                     >
-                      <strong>{notification.title}</strong>
+                      <strong style={{ display: "flex", alignItems: "center", gap: 8 }}><NotificationIcon notification={notification} />{notification.title}</strong>
                       <span>{notification.body}</span>
                     </button>
                   ))}
@@ -925,6 +927,7 @@ function normalizeNotifications(value: unknown): TvNotification[] {
     if (!id) return [];
     return [{
       id,
+      icon: typeof notification.icon === "string" ? notification.icon : undefined,
       title: typeof notification.title === "string" && notification.title.trim()
         ? notification.title.trim()
         : "Notification",

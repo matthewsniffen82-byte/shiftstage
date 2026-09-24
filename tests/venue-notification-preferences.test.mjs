@@ -6,6 +6,7 @@ import vm from "node:vm";
 import ts from "typescript";
 import * as preferences from "../src/lib/dancr/venue-notification-preferences.ts";
 import * as customerPreferences from "../src/lib/dancr/customer-notification-preferences.ts";
+import * as notificationIcons from "../src/lib/dancr/notification-icon.ts";
 
 const require = createRequire(import.meta.url);
 const plain = value => JSON.parse(JSON.stringify(value));
@@ -140,7 +141,7 @@ test("delivery respects per-recipient category and channel preferences and fails
 });
 
 test("muted inbox rows cannot hide an older allowed alert behind the page limit", async () => {
-  const service = compile("src/lib/dancr/notifications.ts");
+  const service = compile("src/lib/dancr/notifications.ts", { "./notification-icon": notificationIcons });
   const muted = Array.from({ length: 55 }, (_, id) => ({ id: String(id), notification_type: "shift_posted", payload: {} }));
   const rows = [...muted, { id: "visible", notification_type: "support_message", payload: {} }];
   const reads = [];

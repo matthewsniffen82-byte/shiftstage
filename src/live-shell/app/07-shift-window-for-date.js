@@ -430,6 +430,7 @@
         venue: '<svg viewBox="0 0 24 24"><path d="M4 20V8.5L12 4l8 4.5V20"></path><path d="M8 20v-5h8v5"></path><path d="M8 10h.01M12 10h.01M16 10h.01"></path></svg>',
         clubProfile: '<svg viewBox="0 0 24 24"><path d="M5 20V9l7-4 7 4v11"></path><path d="M9 20v-6h6v6"></path></svg>',
         bell: '<svg viewBox="0 0 24 24"><path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 7h18s-3 0-3-7Z"></path><path d="M10 20a2 2 0 0 0 4 0"></path></svg>',
+        message: '<svg viewBox="0 0 24 24"><path d="M5 4h14a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H9l-6 3V6a2 2 0 0 1 2-2Z"></path><path d="M7 9h10M7 13h7"></path></svg>',
         clock: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"></circle><path d="M12 7.5v5l3.2 2"></path></svg>',
         calendar: '<svg viewBox="0 0 24 24"><rect x="3.5" y="5.5" width="17" height="15" rx="2"></rect><path d="M7.5 3v5M16.5 3v5M3.5 10h17"></path></svg>',
         pin: '<svg viewBox="0 0 24 24"><path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z"></path><circle cx="12" cy="10" r="2.5"></circle></svg>',

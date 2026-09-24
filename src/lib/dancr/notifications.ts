@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { notificationIconName } from "./notification-icon";
 
 type DancrClient = SupabaseClient;
 
@@ -28,6 +29,7 @@ export async function getUserNotifications(client: DancrClient, userId: string, 
   return visible.slice(0, 50).map((notification: any) => ({
     id: notification.id,
     type: notification.notification_type,
+    icon: notificationIconName(notification),
     channel: notification.channel,
     title: notification.title,
     body: notification.body,

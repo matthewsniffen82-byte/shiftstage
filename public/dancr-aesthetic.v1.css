@@ -13810,18 +13810,31 @@ html body.dancr-button-system #customerNotificationsQuickPanel .customer-notific
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: 8px;
   min-width: 0;
   color: #f5f3f8 !important;
   font: 750 14px/1.35 var(--font-ui) !important;
 }
 html body.dancr-button-system #customerNotificationsQuickPanel .customer-notification-label {
+  flex: 1 1 auto;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   color: inherit;
   font: inherit;
+}
+html body.dancr-button-system #customerNotificationsQuickPanel .customer-notification-title > .action-icon {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 20px;
+  width: 20px !important;
+  height: 20px !important;
+  color: #b99af0 !important;
+}
+html body.dancr-button-system #customerNotificationsQuickPanel .customer-notification-title > .action-icon svg {
+  width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round;
 }
 html body.dancr-button-system #customerNotificationsQuickPanel .customer-notification-message {
   position: absolute;

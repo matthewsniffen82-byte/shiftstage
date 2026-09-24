@@ -252,7 +252,7 @@
         const notificationIndex = notifications.indexOf(notification);
         return `
           <article class="rank-event ${unread ? "top-ten" : "stable"}" ${notificationId ? `data-notification-id="${notificationId}"` : ""} data-notification-index="${notificationIndex}" ${actionable ? 'role="button" tabindex="0" title="Open the issue to fix"' : ""}>
-            <span class="rank-event-icon">${unread ? "!" : "OK"}</span>
+            <span class="rank-event-icon" aria-hidden="true">${actionIconMarkup(notification.icon || "bell")}</span>
             <span>
               <strong>${displayText(notification.title || "Dancr notification")}</strong>
               <p>${displayText(notification.body || "You have a new update.")}${date ? ` · ${date}` : ""}</p>
@@ -427,6 +427,7 @@
         index: notifications.indexOf(notification),
         unread: !notification.readAt,
         title: notification.title || "Dancr notification",
+        icon: notification.icon || "bell",
         detail: notification.body || "You have a new update.",
         date: formatBillingDate(notification.sentAt || notification.createdAt)
       }));
@@ -457,7 +458,7 @@
       customerNotificationsQuickList.innerHTML = items.length
         ? items.map((item) => `
             <button class="customer-quick-item" type="button" ${item.id ? `data-quick-notification-id="${item.id}"` : ""} ${Number.isFinite(item.index) ? `data-notification-index="${item.index}"` : ""}>
-              <strong class="customer-notification-title"><span class="customer-notification-label">${displayText(item.title)}</span>${item.unread ? '<span class="customer-notification-unread" role="img" aria-label="Unread"></span>' : ""}</strong>
+              <strong class="customer-notification-title">${actionIconMarkup(item.icon)}<span class="customer-notification-label">${displayText(item.title)}</span>${item.unread ? '<span class="customer-notification-unread" role="img" aria-label="Unread"></span>' : ""}</strong>
               <span class="customer-notification-message">${displayText(item.detail)}</span>
               ${item.date ? `<span class="customer-notification-date">${displayText(item.date)}</span>` : ""}
             </button>

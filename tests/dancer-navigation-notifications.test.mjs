@@ -22,7 +22,7 @@ function fixture(role, notifications) {
     customerNotificationsQuickList: list, customerNotificationQuickCount: badge,
     customerNotificationQuickBtn: button, displayText: String, formatBillingDate: () => "",
   });
-  for (const name of ["visibleNavigationNotifications", "customerQuickNotificationItems",
+  for (const name of ["actionIconMarkup", "visibleNavigationNotifications", "customerQuickNotificationItems",
     "renderCustomerQuickNotifications", "notificationFromNode"]) {
     vm.runInContext(declaration(name), context);
   }

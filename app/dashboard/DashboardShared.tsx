@@ -2,6 +2,7 @@
 
 import { createContext, useCallback, useEffect, useRef, useState, type MouseEvent, type ReactNode, type SyntheticEvent } from "react";
 import Link from "next/link";
+import NotificationIcon from "@/app/components/NotificationIcon";
 import { pickupNotificationHref } from "@/src/lib/dancr/pickup-links";
 import { homeDiscoveryHref } from "@/src/lib/dancr/navigation";
 import { isCurrentBrowserSession } from "@/src/lib/dancr/browser-session";
@@ -243,7 +244,7 @@ export function NotificationPanel({
                 <b>{notificationCategory(notification)}</b>
                 <time dateTime={String(notification.createdAt || "")}>{formatNotificationTimestamp(notification.createdAt)}</time>
               </span>
-              <strong>{String(notification.title || "Notification")}</strong>
+              <strong style={{ display: "flex", alignItems: "center", gap: 8 }}><NotificationIcon notification={notification} /><span>{String(notification.title || "Notification")}</span></strong>
               <span>{String(notification.body || "")}</span>
               {destination ? <em>Open details →</em> : null}
             </>
