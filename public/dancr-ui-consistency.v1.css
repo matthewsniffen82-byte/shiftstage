@@ -400,3 +400,12 @@ body.dancr-button-system #profileShareChoiceOverlay .profile-qr-close .icon { wi
 body.dancr-button-system :is(#profileShareChoiceOverlay,.profile-share-dialog) button:focus-visible { outline: 2px solid #c4b5fd !important; outline-offset: 3px !important; }
 body.dancr-button-system .profile-share-dialog-status { color: #b8b5c6; font-size: 12px; font-weight: 400; }
 body.dancr-button-system .profile-share-dialog-status:empty { display: none; }
+
+/* Discovery controls share a quiet violet accent across all three feeds. */
+body.dancr-button-system #citySelectButton > .city-picker-trigger-icon,
+body.dancr-button-system #homeFilterToggle > .home-filter-toggle-icon {
+  color: #a78bfa !important;
+  stroke: currentColor !important;
+  filter: none !important;
+  box-shadow: none !important;
+}
