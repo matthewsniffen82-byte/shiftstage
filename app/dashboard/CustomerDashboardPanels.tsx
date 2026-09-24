@@ -163,7 +163,7 @@ export function CustomerDashboardNav({ saved }: { saved?: CustomerSavedState | n
     <nav className="customer-dashboard-nav" aria-label="Customer dashboard sections">
       <div className="customer-dashboard-primary-links">
         {links.map((link) => (
-          <a href={`#${link.id}`} key={link.id} onClick={(event) => openDashboardSection(event, link.id)}>
+          <a href={`#${link.id}`} key={link.id} data-has-plans={link.id === "customer-going" && goingCount > 0 ? true : undefined} onClick={(event) => openDashboardSection(event, link.id)}>
             <span className="customer-shortcut-icon"><CustomerDashboardIcon section={link.id} /></span>
             <span>{link.label}</span>
             <strong>{link.count}</strong>
@@ -373,14 +373,33 @@ export function CustomerPanel({
     }
   }
 
+  const goingSection = !accountSavedUnavailable ? <DashboardSection
+    count={goingCount}
+    defaultOpen={goingCount > 0}
+    description="Your plans and directions."
+    id="customer-going"
+    icon={<CustomerDashboardIcon section="customer-going" />}
+    toggleAffordance="chevron"
+    title="I’m Going"
+  >
+    <CustomerNightPanel
+      isLoading={isLoading}
+      onCancelGoing={cancelGoing}
+      onDirections={openDirections}
+      pendingAction={pendingAction}
+      signals={saved?.goingSignals || []}
+    />
+  </DashboardSection> : null;
+
   return (
     <>
       {actionStatus ? <p className="customer-action-status" role="status">{actionStatus}</p> : null}
+      {goingCount > 0 ? goingSection : null}
       {!accountSavedUnavailable ? <>
       <DashboardSection
         count={saved?.follows?.length}
-        defaultOpen
-        description="Dancers you follow, sorted by city. Tap a card to open the profile."
+        defaultOpen={goingCount === 0}
+        description="Your followed dancers, grouped by city."
         id="customer-followed-dancers"
         icon={<CustomerDashboardIcon section="customer-followed-dancers" />}
         toggleAffordance="chevron"
@@ -395,7 +414,7 @@ export function CustomerPanel({
       </DashboardSection>
       <DashboardSection
         count={saved?.venueFollows?.length}
-        description="Your saved clubs, with dancer activity and quick directions."
+        description="Your clubs, activity, and directions."
         id="customer-followed-clubs"
         icon={<CustomerDashboardIcon section="customer-followed-clubs" />}
         toggleAffordance="chevron"
@@ -412,7 +431,7 @@ export function CustomerPanel({
       </> : null}
       <DashboardSection
         count={saved?.dealSaves?.length}
-        description="Offers you bookmarked privately for later."
+        description="Offers saved privately for later."
         id="customer-saved-deals"
         icon={<CustomerDashboardIcon section="customer-saved-deals" />}
         toggleAffordance="chevron"
@@ -427,22 +446,7 @@ export function CustomerPanel({
           accountSavedUnavailable={accountSavedUnavailable}
         />}
       </DashboardSection>
-      {!accountSavedUnavailable ? <DashboardSection
-        count={goingCount}
-        description="Your plans, with shift details and directions."
-        id="customer-going"
-        icon={<CustomerDashboardIcon section="customer-going" />}
-        toggleAffordance="chevron"
-        title="I’m Going"
-      >
-        <CustomerNightPanel
-          isLoading={isLoading}
-          onCancelGoing={cancelGoing}
-          onDirections={openDirections}
-          pendingAction={pendingAction}
-          signals={saved?.goingSignals || []}
-        />
-      </DashboardSection> : null}
+      {goingCount === 0 ? goingSection : null}
     </>
   );
 }

@@ -56,7 +56,9 @@ test("I’m Going and followed profile sections use live customer records and pr
   assert.match(dashboard, /function CustomerNightPanel[\s\S]*?<div className="customer-night-panel"[\s\S]*?<div className="customer-night-list">/);
   assert.doesNotMatch(dashboard, /Plans you confirmed|Dancer shifts you chose|info-panel customer-night-panel/);
   assert.match(dashboard, /No followed dancers yet[\s\S]*?No favorite clubs yet/);
-  assert.match(dashboard, /id="customer-followed-dancers"[\s\S]*?id="customer-followed-clubs"[\s\S]*?id="customer-saved-deals"[\s\S]*?id="customer-going"/);
+  for (const id of ["customer-followed-dancers", "customer-followed-clubs", "customer-saved-deals", "customer-going"]) {
+    assert.ok(dashboard.includes(`id="${id}"`));
+  }
 });
 
 test("followed dancers and clubs are grouped by city without location-based distance UI", () => {
@@ -99,7 +101,7 @@ test("followed dancer tiles keep the profile link separate from their unfollow b
   assert.doesNotMatch(card, /customer-card-actions|Directions|Alerts on|Alerts off/);
   assert.match(card, /<\/Link>\s*<button[\s\S]*?className="customer-dancer-unfollow"[\s\S]*?aria-label=\{`Unfollow \$\{dancerName\}`\}[\s\S]*?disabled=\{pending\}[\s\S]*?onClick=\{onUnfollow\}/);
   assert.match(card, /unfollowing \? "Unfollowing…" : "Unfollow"/);
-  assert.match(dashboard, /description="Dancers you follow, sorted by city\. Tap a card to open the profile\."/);
+  assert.match(dashboard, /description="Your followed dancers, grouped by city\."/);
 });
 
 test("fictional club direction controls navigate to the shared MyDancr destination", () => {
@@ -138,9 +140,9 @@ test("Club Deal wallet and alerts expose real status, expiry, history, and direc
   assert.match(dashboard, /formatNotificationTimestamp\(notification\.createdAt\)/);
   assert.match(dashboard, /destination \? \([\s\S]*?<Link[\s\S]*?onClick=\{\(\) => void markRead\(notificationId\)\}/);
   assert.match(dashboard, /No alerts yet[\s\S]*?Browse dancers/);
-  assert.match(dashboard, /How cashier tap redemption works/);
-  assert.match(dashboard, /Choose the exact deal[\s\S]*?Tap at the cashier[\s\S]*?Wait for confirmation/);
-  assert.match(dashboard, /There is no QR code to scan/);
+  assert.match(dashboard, /How admission passes work/);
+  assert.match(dashboard, /Choose the exact deal[\s\S]*?Show your pass[\s\S]*?Wait for confirmation/);
+  assert.match(dashboard, /show the QR code to club staff/);
 });
 
 test("new guest confirmation explains private account benefits once", () => {

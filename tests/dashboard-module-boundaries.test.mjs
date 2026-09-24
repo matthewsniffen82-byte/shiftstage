@@ -69,6 +69,28 @@ test('session recovery still hides protected content through the new module grap
   assert.match(html, /role=customer/);
   assert.doesNotMatch(html, /Followed Dancers/);
 });
+
+for (const scenario of ['active', 'cancelled', 'empty']) test('guest dashboard prioritizes only active plans: ' + scenario, async () => {
+  const goingSignals = scenario === 'empty' ? [] : [{
+    shiftId: 'test-shift',
+    shift: {
+      id: 'test-shift', status: scenario === 'cancelled' ? 'cancelled' : 'posted',
+      startsAt: new Date(Date.now() - 60_000).toISOString(),
+      endsAt: new Date(Date.now() + 3_600_000).toISOString(),
+      dancer: { id: 'test-dancer', stageName: 'Sample dancer' },
+      venue: { id: 'test-club', name: 'Sample club' },
+    },
+  }];
+  const html = await renderDashboard('customer', {
+    account: { role: 'customer', displayName: 'Sample guest' },
+    saved: { follows: [], venueFollows: [], dealSaves: [], goingSignals },
+  }, false);
+  const firstSection = html.match(/<details[^>]+id="([^"]+)"[^>]*>/)?.[0] || '';
+  assert.match(firstSection, scenario === 'active' ? /id="customer-going"/ : /id="customer-followed-dancers"/);
+  assert.match(firstSection, /open=""/);
+  assert.equal((html.match(/id="customer-going"/g) || []).length, 1);
+  assert.equal(html.includes('data-has-plans="true"'), scenario === 'active');
+});
 for (const role of ['dancer', 'venue']) test(role + ' panels render after their dynamic modules resolve', async () => {
   const html = await renderDashboard(role, { account: { role, displayName: 'Module test' }, profile: { stageName: 'Module test', city: 'Las Vegas' } }, false);
   assert.ok(html.includes(role === 'dancer' ? 'Profile setup' : 'Club Deals'));
