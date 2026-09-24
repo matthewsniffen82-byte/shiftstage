@@ -19,6 +19,7 @@ import { isAffiliatedDancerWorkingNow } from "@/src/lib/dancr/venue-roster";
 import { loadCustomerDashboard } from "./customer-dashboard-loader";
 import { loadDancerDashboard } from "./dancer-dashboard-loader";
 import CustomerAccountPanel from "./CustomerAccountPanel";
+import DancerNotificationSettings from "./DancerNotificationSettings";
 import { DEVICE_SAVED_DEALS_KEY, DEVICE_SAVED_DEALS_CHANGED_EVENT, mergeCustomerSavedClubDeals, readDeviceSavedClubDeals, type DeviceSavedClubDeal } from "@/src/lib/dancr/customer-device-deals";
 import { DASHBOARD_SESSION_KEY as SESSION_KEY, DashboardDataRequestError, dashboardLoadErrorMessage, persistDashboardSession, readSession, requestAccountJson, requestDashboardJson, requestOptionalDashboardJson, requestVenueDashboardJson, storedSessionAccount, storedSessionIsFresh, type DashboardSessionAccount } from "./dashboard-session";
 import type { DashboardRole, CustomerDashboardSection, LoadState, CustomerSavedState } from "./dashboard-types";
@@ -587,6 +588,7 @@ export default function DashboardClient({
                 <div className="venue-dashboard-inner-grid venue-dashboard-account-grid">
                   <CustomerAccountPanel account={state.account || {}} accountRole="dancer" onAccountChange={updateAccountDetails} />
                   <NotificationPanel dancerMode />
+                  <DancerNotificationSettings />
                   <SupportInboxPanel initialThreads={state.supportThreads || []} panelId="dancer-support" />
                   {dancerProfileStatus === "approved" ? <article className="info-panel dancer-agreement-panel">
                     <h2>Dancer Agreement</h2>

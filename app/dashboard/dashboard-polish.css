@@ -179,10 +179,11 @@ body.dancr-button-system main.dashboard-shell.dashboard-shell-dancer #dancer-acc
 body.dancr-button-system main.dashboard-shell.dashboard-shell-dancer #dancer-account .notification-title-row h2 { margin: 0; font-size: 18px; line-height: 1.3; }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-dancer #dancer-account .notification-toolbar { justify-content: flex-start; flex-wrap: nowrap; gap: 4px !important; }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-dancer #dancer-account .notification-unread-pill { min-height: 24px; margin-right: auto; padding: 0 8px; font-size: 10px; }
-body.dancr-button-system main.dashboard-shell.dashboard-shell-dancer #dancer-account .notification-panel :is(.notification-settings-button, .notification-mark-read-button, .notification-clear-button, .dancer-notification-settings > button) {
+body.dancr-button-system main.dashboard-shell.dashboard-shell-dancer #dancer-account :is(.notification-settings-button, .notification-mark-read-button, .notification-clear-button, .dancer-preferences-action) {
   box-sizing: border-box; min-height: 44px; margin: 0; padding: 8px 8px; border: 1px solid var(--dashboard-neutral-border) !important;
   border-radius: 10px !important; color: #f4f3f7; background: #ffffff04 !important; box-shadow: none !important; font-size: 12px; font-weight: 600 !important; line-height: 1.3;
 }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-dancer #dancer-account .notification-settings-button { display: inline-flex; align-items: center; justify-content: center; text-decoration: none; }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-dancer #dancer-account .notification-panel :is(.notification-mark-read-button, .notification-clear-button) { border-color: transparent !important; background: transparent !important; }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-dancer #dancer-account .notification-list { gap: 6px; }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-dancer #dancer-account .notification-row {
@@ -196,16 +197,44 @@ body.dancr-button-system main.dashboard-shell.dashboard-shell-dancer #dancer-acc
 body.dancr-button-system main.dashboard-shell.dashboard-shell-dancer #dancer-account .notification-row > span:not(.notification-row-meta) { color: #b8b6c2; font-size: 12px; line-height: 1.4; }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-dancer #dancer-account .notification-panel .customer-empty-state { padding: 12px; gap: 4px; }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-dancer #dancer-account .notification-panel .customer-empty-state p { margin: 0; font-size: 12px; line-height: 1.4; }
-body.dancr-button-system main.dashboard-shell.dashboard-shell-dancer #dancer-account .dancer-notification-settings { display: grid; gap: 10px; padding: 10px; border: 1px solid var(--dashboard-neutral-border); border-radius: 12px; }
-body.dancr-button-system main.dashboard-shell.dashboard-shell-dancer #dancer-account .dancer-notification-settings p { margin: 0; color: #b8b6c2; font-size: 12px; line-height: 1.5; }
-body.dancr-button-system main.dashboard-shell.dashboard-shell-dancer #dancer-account .dancer-notification-options { display: grid; }
-body.dancr-button-system main.dashboard-shell.dashboard-shell-dancer #dancer-account .dancer-notification-options label { min-height: 44px; display: flex; align-items: center; justify-content: space-between; gap: 8px; color: #f4f3f7; font-size: 13px; font-weight: 500 !important; letter-spacing: normal !important; text-transform: none !important; cursor: pointer; }
-body.dancr-button-system main.dashboard-shell.dashboard-shell-dancer #dancer-account .dancer-notification-options input { appearance: none; box-sizing: border-box; flex: 0 0 auto; width: 36px; height: 22px; margin: 0; padding: 0; border: 1px solid #ffffff40; border-radius: 999px; background: #29262f; cursor: pointer; }
-body.dancr-button-system main.dashboard-shell.dashboard-shell-dancer #dancer-account .dancer-notification-options input::before { content: ""; display: block; width: 16px; height: 16px; margin: 2px; border-radius: 50%; background: #f4f3f7; }
-body.dancr-button-system main.dashboard-shell.dashboard-shell-dancer #dancer-account .dancer-notification-options input:checked { border-color: #a78bfa !important; background: #6d28d9 !important; }
-body.dancr-button-system main.dashboard-shell.dashboard-shell-dancer #dancer-account .dancer-notification-options input:checked::before { transform: translateX(14px); }
-body.dancr-button-system main.dashboard-shell.dashboard-shell-dancer #dancer-account .dancer-notification-options input:disabled { opacity: .6; cursor: wait; }
-body.dancr-button-system main.dashboard-shell.dashboard-shell-dancer #dancer-account .dancer-notification-options input:focus-visible { outline: 2px solid #c4b5fd; outline-offset: 3px; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-dancer #dancer-account .dancer-notification-settings {
+  display: grid; grid-column: 1 / -1; gap: 16px; min-width: 0; scroll-margin-block: 90px; text-align: left;
+}
+body.dancr-button-system main.dashboard-shell.dashboard-shell-dancer #dancer-account .dancer-notification-settings h2 { margin: 0; font-size: 18px; line-height: 1.3; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-dancer #dancer-account .dancer-notification-settings p { margin: 0; color: #b8b6c2; font-size: 13px; line-height: 1.5; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-dancer #dancer-account :is(.dancer-preferences-heading, .dancer-preferences-delivery) { display: grid; gap: 8px; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-dancer #dancer-account .dancer-notification-options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-dancer #dancer-account .dancer-preference-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px; min-width: 0; padding: 14px;
+  border: 1px solid var(--dashboard-neutral-border); border-radius: 14px; background: #0b0b0f;
+}
+body.dancr-button-system main.dashboard-shell.dashboard-shell-dancer #dancer-account .dancer-preference-row > span { display: grid; gap: 5px; min-width: 0; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-dancer #dancer-account .dancer-preference-row strong { color: #f4f3f7; font-size: 14px; font-weight: 650; line-height: 1.35; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-dancer #dancer-account .dancer-preference-row small { color: #b8b6c2; font-size: 12px; line-height: 1.5; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-dancer #dancer-account .dancer-notification-switch {
+  display: inline-flex !important; flex: 0 0 86px; align-items: center; justify-content: flex-start; gap: 7px; width: 86px; min-width: 0 !important;
+  min-height: 44px; margin: 0 !important; padding: 0 !important; border: 0 !important; border-radius: 8px !important;
+  color: #f4f3f7 !important; background: transparent !important; background-image: none !important; box-shadow: none !important;
+  font-size: 11px; font-weight: 650 !important; cursor: pointer; transform: none !important;
+}
+body.dancr-button-system main.dashboard-shell.dashboard-shell-dancer #dancer-account .dancer-switch-track {
+  box-sizing: border-box; display: block; flex: 0 0 42px; width: 42px; height: 26px; padding: 3px;
+  border: 1px solid #ffffff40; border-radius: 999px; background: #29262f;
+}
+body.dancr-button-system main.dashboard-shell.dashboard-shell-dancer #dancer-account .dancer-switch-track > i { display: block; width: 18px; height: 18px; border-radius: 50%; background: #fff; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-dancer #dancer-account .dancer-notification-switch[aria-checked="true"] .dancer-switch-track { border-color: #a78bfa; background: #6d28d9; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-dancer #dancer-account .dancer-notification-switch[aria-checked="true"] .dancer-switch-track > i { transform: translateX(16px); }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-dancer #dancer-account .dancer-switch-state { white-space: nowrap; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-dancer #dancer-account .dancer-notification-switch:disabled { opacity: .6; cursor: wait; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-dancer #dancer-account :is(.dancer-notification-settings, .dancer-notification-switch, .notification-settings-button, .dancer-preferences-action):focus-visible { outline: 2px solid #c4b5fd; outline-offset: 3px; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-dancer #dancer-account .dancer-preferences-delivery { padding-top: 16px; border-top: 1px solid var(--dashboard-neutral-border); }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-dancer #dancer-account .dancer-preferences-delivery h3 { margin: 0; color: #f4f3f7; font-size: 15px; line-height: 1.4; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-dancer #dancer-account .dancer-preferences-action { justify-self: start; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-dancer #dancer-account .dancer-notification-settings .dancer-preferences-essential { font-size: 12px; }
+@media (max-width: 760px) {
+  body.dancr-button-system main.dashboard-shell.dashboard-shell-dancer #dancer-account .dancer-notification-options { grid-template-columns: minmax(0, 1fr); }
+  body.dancr-button-system main.dashboard-shell.dashboard-shell-dancer #dancer-account .dancer-preference-row { padding: 12px; gap: 8px; }
+}
 
 body.dancr-button-system main.dashboard-shell.dashboard-shell-customer .customer-dashboard-nav {
   border-color: var(--dashboard-neutral-border) !important; background: #08080b !important;

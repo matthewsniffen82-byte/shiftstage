@@ -29,6 +29,20 @@ test("activity defaults on and each preference mutes only its own alert type", (
   for (const target of ["profile", "photo", "video"]) assert.equal(preferences.dancerEngagementAlertEnabled(preferences.dancerNotificationMetadataPatch({ shares: false }), "share", target), false);
 });
 
+test("pausing all activity preserves individual choices and suppresses every activity type", () => {
+  const choices = preferences.dancerNotificationMetadataPatch({ photoLikes: false, shares: false });
+  const paused = { ...choices, ...preferences.dancerNotificationMetadataPatch({ activityAlertsEnabled: false }) };
+  assert.equal(preferences.dancerNotificationSettings(paused).followers, true);
+  assert.equal(preferences.dancerNotificationSettings(paused).photoLikes, false);
+  for (const [, engagement, target] of cases) {
+    assert.equal(preferences.dancerEngagementAlertEnabled(paused, engagement, target), false);
+  }
+  const resumed = { ...paused, ...preferences.dancerNotificationMetadataPatch({ activityAlertsEnabled: true }) };
+  assert.equal(preferences.dancerEngagementAlertEnabled(resumed, "follow", "profile"), true);
+  assert.equal(preferences.dancerEngagementAlertEnabled(resumed, "like", "photo"), false);
+  assert.equal(preferences.dancerEngagementAlertEnabled(resumed, "share", "video"), false);
+});
+
 test("settings reject empty, malformed, unknown and non-boolean patches", () => {
   for (const value of [null, [], {}, "off", { role: "admin" }, { emailEnabled: true }, { followers: "false" }, { shares: 0 }]) {
     assert.throws(() => preferences.dancerNotificationMetadataPatch(value));
@@ -84,7 +98,7 @@ test("denied, invalid and failed saves cannot report a preference as saved", asy
 
 test("muted activity never creates an inbox row; enabled activity retains deduplication", async () => {
   const helper = compile("src/lib/dancr/engagement-notifications.ts", { "./dancer-notification-preferences": preferences });
-  for (const [key, engagementType, targetType] of cases) {
+  for (const [key, engagementType, targetType] of [...cases, ...cases.map(([, engagement, target]) => ["activityAlertsEnabled", engagement, target])]) {
     const inserted = [];
     let metadata = preferences.dancerNotificationMetadataPatch({ [key]: false });
     const client = { auth: { admin: { getUserById: async id => { assert.equal(id, "recipient"); return { data: { user: { user_metadata: metadata } }, error: null }; } } },

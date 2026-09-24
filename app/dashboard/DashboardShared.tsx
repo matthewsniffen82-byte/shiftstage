@@ -10,7 +10,6 @@ import { disableCustomerPush } from "@/src/lib/dancr/customer-push";
 import type { SocialPlatform } from "@/src/lib/dancr/types";
 import { clearDashboardSession, readSession, requestAccountJson, requestDashboardJson, revokeDashboardSession } from "./dashboard-session";
 import type { LoadState, DashboardRole, SavedDancerSummary, SavedVenueSummary, CustomerSavedState, CustomerGoingSignal, SavedShiftSummary, DancerProfileEditorSectionId, DancerProfileEditorSaveRequest } from "./dashboard-types";
-import DancerNotificationSettings from "./DancerNotificationSettings";
 export const PUBLIC_DISCOVERY_REFRESH_KEY = "mydancrPublicDiscoveryRefreshV1";
 
 
@@ -77,7 +76,6 @@ export function NotificationPanel({
   const [notifications, setNotifications] = useState<Array<Record<string, unknown>>>([]);
   useEffect(() => { onCountChange?.(notifications.length); }, [notifications.length, onCountChange]);
   const [status, setStatus] = useState("");
-  const [settingsOpen, setSettingsOpen] = useState(false);
   const mountedRef = useRef(false);
   const loadSequenceRef = useRef(0);
   const loadAbortRef = useRef<AbortController | null>(null);
@@ -216,7 +214,7 @@ export function NotificationPanel({
           <h2>{customerMode ? "Alerts" : "Notifications"}</h2>
           {!customerMode && !dancerMode && <button type="button" data-push-settings>Notification settings</button>}
         </div>
-        {dancerMode ? <button className="notification-settings-button" type="button" aria-label="Notification settings" aria-expanded={settingsOpen} aria-controls="dancer-notification-settings" onClick={() => setSettingsOpen(value => !value)}>Settings</button> : null}
+        {dancerMode ? <a className="notification-settings-button" href="#dancer-notification-settings" onClick={event => openDashboardSection(event, "dancer-notification-settings")}>Preferences</a> : null}
         {!dancerMode ? <div className="notification-toolbar">
           <span className="notification-unread-pill">{unreadCount} unread</span>
           <button className="notification-mark-read-button" type="button" onClick={markAllRead} disabled={!unreadCount}>
@@ -224,7 +222,6 @@ export function NotificationPanel({
           </button>
         </div> : null}
       </div>
-      {dancerMode && settingsOpen ? <DancerNotificationSettings /> : null}
       {dancerMode ? (
         <div className="notification-toolbar">
           <span className="notification-unread-pill">{unreadCount} unread</span>

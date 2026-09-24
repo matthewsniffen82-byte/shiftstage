@@ -45,7 +45,7 @@ export default function DancerNotificationSettings() {
       if (!mounted.current || controller.signal.aborted) return;
       if (data.userId !== userId.current || readSession()?.account?.id !== userId.current || data.settings?.[key] !== next) throw new Error("Your preference could not be confirmed. Please try again.");
       setSettings(data.settings);
-      setStatus("Saved.");
+      setStatus("Preferences saved.");
     } catch (error) {
       if (mounted.current && !controller.signal.aborted) setStatus(error instanceof Error ? error.message : "Unable to save notification settings.");
     } finally {
@@ -54,16 +54,44 @@ export default function DancerNotificationSettings() {
     }
   }
 
-  return <section className="dancer-notification-settings" id="dancer-notification-settings" aria-label="Notification settings">
-    <p>Choose which new activity appears in your inbox.</p>
-    {settings ? <div className="dancer-notification-options">
-      {DANCER_ACTIVITY_ALERTS.map(({ key, label }) => <label key={key}>
-        <span>{label}</span>
-        <input type="checkbox" role="switch" checked={settings[key]} disabled={saving !== null} aria-busy={saving === key} onChange={() => void save(key)} />
-      </label>)}
-    </div> : status ? <button type="button" onClick={() => setAttempt(value => value + 1)}>Try again</button> : <p role="status">Loading settings…</p>}
-    <p>Profile reviews, account updates, and support replies stay on. Existing notifications stay in your inbox.</p>
-    <button type="button" data-push-settings>Push notifications on this device</button>
+  return <article className="info-panel dancer-notification-settings" id="dancer-notification-settings" aria-labelledby="dancer-notification-preferences-heading" tabIndex={-1}>
+    <div className="dancer-preferences-heading">
+      <h2 id="dancer-notification-preferences-heading">Notification preferences</h2>
+      <p>Choose the activity updates you want.</p>
+    </div>
+    {settings ? <>
+      <div className="dancer-preference-row dancer-preference-master">
+        <span><strong>Activity alerts</strong><small id="dancer-notify-activityAlertsEnabled-description">Pause or resume all five activity types.</small></span>
+        <DancerNotificationSwitch label="Activity alerts" preferenceKey="activityAlertsEnabled" checked={settings.activityAlertsEnabled} disabled={saving !== null} busy={saving === "activityAlertsEnabled"} onChange={() => void save("activityAlertsEnabled")} />
+      </div>
+      {!settings.activityAlertsEnabled ? <p className="dancer-preferences-paused">Activity alerts are paused. Your choices below are saved.</p> : null}
+      <div className="dancer-notification-options" aria-label="Activity types">
+        {DANCER_ACTIVITY_ALERTS.map(({ key, label, description }) => <div className="dancer-preference-row" key={key}>
+          <span><strong>{label}</strong><small id={`dancer-notify-${key}-description`}>{description}</small></span>
+          <DancerNotificationSwitch label={label} preferenceKey={key} checked={settings[key]} disabled={saving !== null} busy={saving === key} onChange={() => void save(key)} />
+        </div>)}
+      </div>
+    </> : status ? <button className="dancer-preferences-action" type="button" onClick={() => setAttempt(value => value + 1)}>Try again</button> : <p role="status">Loading preferences…</p>}
+    <div className="dancer-preferences-delivery">
+      <h3>Phone notifications</h3>
+      <p>Manage push notifications on this device.</p>
+      <button className="dancer-preferences-action" type="button" data-push-settings>Manage phone notifications</button>
+    </div>
+    <p className="dancer-preferences-essential">Club access, review decisions, account updates, and support replies stay on.</p>
     {status ? <p role="status">{status}</p> : null}
-  </section>;
+  </article>;
+}
+
+function DancerNotificationSwitch({ label, preferenceKey, checked, disabled, busy, onChange }: {
+  label: string;
+  preferenceKey: DancerNotificationKey;
+  checked: boolean;
+  disabled: boolean;
+  busy: boolean;
+  onChange: () => void;
+}) {
+  return <button className="dancer-notification-switch" type="button" role="switch" aria-label={label} aria-describedby={`dancer-notify-${preferenceKey}-description`} aria-checked={checked} aria-busy={busy || undefined} disabled={disabled} onClick={onChange}>
+    <span className="dancer-switch-track" aria-hidden="true"><i /></span>
+    <span className="dancer-switch-state" aria-hidden="true">{busy ? "Saving…" : checked ? "On" : "Off"}</span>
+  </button>;
 }
