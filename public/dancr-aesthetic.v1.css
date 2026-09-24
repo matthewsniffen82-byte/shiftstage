@@ -8657,13 +8657,6 @@ body.dancer-directory-active > .app main.stack > .home-live-summary {
   font-size: 11px !important;
 }
 
-/* Status totals live in the tabs; keep loading and error messages available. */
-body.dancer-directory-active > .app main.stack
-  > .home-live-summary:has(#homeLiveWorking:is(.is-active, .is-empty))
-  > :is(#homeLiveWorking, .home-live-summary-divider) {
-  display: none !important;
-}
-
 body.dancer-directory-active > .app main.stack > section.stack {
   gap: 5px !important;
 }
