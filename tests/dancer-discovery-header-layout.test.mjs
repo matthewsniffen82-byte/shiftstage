@@ -26,7 +26,7 @@ test("directory heading, dynamic total, and segmented filters are compact and ac
   assert.match(aesthetic, /\.dancer-directory-filter \{[\s\S]*?min-height: 48px !important/);
   assert.match(
     aesthetic,
-    /#results\.home-dancer-grid > \.home-dancer-grid-heading \{\s*display: flex !important/,
+    /#results\.home-dancer-grid > \.home-dancer-grid-heading \{\s*display: none !important/,
   );
 });
 

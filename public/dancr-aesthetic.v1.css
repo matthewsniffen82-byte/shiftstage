@@ -8657,6 +8657,13 @@ body.dancer-directory-active > .app main.stack > .home-live-summary {
   font-size: 11px !important;
 }
 
+/* Status totals live in the tabs; keep loading and error messages available. */
+body.dancer-directory-active > .app main.stack
+  > .home-live-summary:has(#homeLiveWorking:is(.is-active, .is-empty))
+  > :is(#homeLiveWorking, .home-live-summary-divider) {
+  display: none !important;
+}
+
 body.dancer-directory-active > .app main.stack > section.stack {
   gap: 5px !important;
 }
@@ -8816,34 +8823,10 @@ body.dancer-directory-active > .app main.stack > section.stack
   box-shadow: 0 0 8px var(--dancr-color-info-soft) !important;
 }
 
-/* Every tab shows the status label and count above its matching cards. */
+/* The selected tab already labels and counts the cards below it. */
 body.dancer-directory-active > .app main.stack > section.stack
   > #results.home-dancer-grid > .home-dancer-grid-heading {
-  display: flex !important;
-  min-height: 24px;
-  gap: 8px;
-  /* Including the grid's 2px gap and 1px divider: 24px above, 12px below. */
-  margin: 10px 0 10px !important;
-  padding: 11px 0 0 !important;
-  border-top: 1px solid var(--dancr-color-border-subtle);
-}
-
-body.dancer-directory-active > .app main.stack > section.stack
-  > #results.home-dancer-grid > .home-dancer-grid-heading > strong {
-  font-size: 16px !important;
-  font-weight: 650;
-  line-height: 24px;
-}
-
-body.dancer-directory-active > .app main.stack > section.stack
-  > #results.home-dancer-grid > .home-dancer-grid-heading > span {
-  box-sizing: border-box;
-  min-width: 24px;
-  height: 24px;
-  padding-inline: 6px;
-  font-size: 11px;
-  font-weight: 600;
-  font-variant-numeric: tabular-nums;
+  display: none !important;
 }
 
 @media (max-width: 360px) {
@@ -13572,13 +13555,6 @@ html body.dancer-directory-active.dancr-button-system > .app main.stack > sectio
   > #results.home-dancer-grid .dancer-directory-filter:focus-visible {
   outline: 2px solid #c4b5fd !important;
   outline-offset: 2px !important;
-}
-
-body.dancer-directory-active.dancr-button-system > .app main.stack > section.stack
-  > #results.home-dancer-grid > .home-dancer-grid-heading {
-  min-height: 30px !important;
-  padding-top: 8px !important;
-  margin-block: 4px 6px !important;
 }
 
 /* Expanded discovery panels use the same quiet surfaces as their triggers. */
