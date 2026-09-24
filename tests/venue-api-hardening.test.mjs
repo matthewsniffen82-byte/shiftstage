@@ -24,6 +24,7 @@ async function findRouteFiles(directoryUrl, relativeDirectory = "") {
 
 const expectedRoutes = [
   "access-code/preview/route.ts",
+  "check-ins/route.ts",
   "claims/route.ts",
   "cover-image/route.ts",
   "dancer-verifications/route.ts",
@@ -36,6 +37,7 @@ const expectedRoutes = [
   "logo-image/route.ts",
   "nfc-support/route.ts",
   "nfc-tags/route.ts",
+  "participation/route.ts",
   "profile/route.ts",
   "publication/route.ts",
   "qr-code/route.ts",

@@ -21,7 +21,10 @@ export default function VenueTeamPanel({ initialAccess }: { initialAccess?: Acce
   const [status, setStatus] = useState("Loading venue team access…");
   const [isLoading, setIsLoading] = useState(true);
   const [isWorking, setIsWorking] = useState(false);
+  const [isInviting, setIsInviting] = useState(false);
+  const [inviteError, setInviteError] = useState(false);
   const [invitationUrl, setInvitationUrl] = useState("");
+  const [emailDelivered, setEmailDelivered] = useState<boolean | null>(null);
   const mountedRef = useRef(false);
   const loadSequenceRef = useRef(0);
   const loadAbortRef = useRef<AbortController | null>(null);
@@ -58,7 +61,8 @@ export default function VenueTeamPanel({ initialAccess }: { initialAccess?: Acce
       if (clearStatus) setStatus("");
     } catch (error) {
       if (!mountedRef.current || requestId !== loadSequenceRef.current || (error instanceof DOMException && error.name === "AbortError")) return;
-      setStatus(error instanceof Error ? error.message : "Unable to load venue team access.");
+      if (clearStatus) setStatus(error instanceof Error ? error.message : "Unable to load venue team access.");
+      else setStatus((current) => `${current} The team list could not refresh. Refresh the page to see the latest changes.`.trim());
     } finally {
       if (mountedRef.current && requestId === loadSequenceRef.current) {
         setIsLoading(false);
@@ -94,6 +98,7 @@ export default function VenueTeamPanel({ initialAccess }: { initialAccess?: Acce
     loadAbortRef.current = null;
     setIsLoading(false);
     setIsWorking(true);
+    setInviteError(false);
     return { requestId, controller };
   }
 
@@ -110,11 +115,18 @@ export default function VenueTeamPanel({ initialAccess }: { initialAccess?: Acce
 
   async function invite(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!readDashboardAccessToken("venue")) return setStatus("Sign in required.");
+    if (!readDashboardAccessToken("venue")) {
+      setInviteError(true);
+      return setStatus("Sign in required.");
+    }
     const action = beginAction();
     if (!action) return;
     const { requestId, controller } = action;
+    setIsInviting(true);
+    setInviteError(false);
+    setStatus("Sending invitation…");
     setInvitationUrl("");
+    setEmailDelivered(null);
     try {
       const data = await requestVenueTeamJson({
         method: "POST",
@@ -126,11 +138,16 @@ export default function VenueTeamPanel({ initialAccess }: { initialAccess?: Acce
       if (!isCurrentAction(requestId, controller)) return;
       setEmail("");
       setInvitationUrl(data.invitationUrl || "");
+      setEmailDelivered(data.emailDelivered === true);
       setStatus(data.message || "Invitation created.");
       await load(false);
     } catch (error) {
-      if (isCurrentAction(requestId, controller)) setStatus(error instanceof Error ? error.message : "Unable to invite this team member.");
+      if (isCurrentAction(requestId, controller)) {
+        setInviteError(true);
+        setStatus(error instanceof Error ? error.message : "Unable to invite this team member.");
+      }
     } finally {
+      if (isCurrentAction(requestId, controller)) setIsInviting(false);
       finishAction(requestId);
     }
   }
@@ -203,15 +220,17 @@ export default function VenueTeamPanel({ initialAccess }: { initialAccess?: Acce
         {access ? <b>{access.role}</b> : null}
       </div>
       {isOwner ? (
-        <form className="venue-team-invite-form" onSubmit={invite}>
-          <label>Team member email<input type="email" value={email} maxLength={320} required onChange={(event) => setEmail(event.target.value)} /></label>
-          <label>Access level<select value={role} onChange={(event) => setRole(event.target.value as typeof role)}><option value="manager">Manager</option><option value="staff">Staff</option></select></label>
-          <button type="submit" disabled={isWorking}>Invite team member</button>
+        <form className="venue-team-invite-form" onSubmit={invite} aria-busy={isInviting}>
+          <label>Team member email<input type="email" value={email} maxLength={320} required disabled={isInviting} aria-describedby="venue-team-invite-help" onChange={(event) => setEmail(event.target.value)} /></label>
+          <label>Access level<select value={role} disabled={isInviting} onChange={(event) => setRole(event.target.value as typeof role)}><option value="manager">Manager</option><option value="staff">Staff</option></select></label>
+          <button type="submit" disabled={isWorking}>{isInviting ? "Sending invitation…" : "Invite team member"}</button>
+          <small id="venue-team-invite-help" className="venue-team-invite-help">Use an email that isn’t already registered to a guest or dancer account.</small>
         </form>
       ) : (
         <p className="venue-team-permission-note">Only the venue owner can invite people or change team access.</p>
       )}
-      {invitationUrl ? <div className="venue-team-invite-link"><span>Invitation is ready even if email delivery is delayed.</span><div><a href={invitationUrl} rel="noreferrer" target="_blank">Open secure link</a><button type="button" onClick={() => void copyInvitation()}>Copy secure link</button></div></div> : null}
+      {status ? <p className={`venue-team-feedback${inviteError ? " is-error" : ""}`} role={inviteError ? "alert" : "status"}>{status}</p> : null}
+      {invitationUrl ? <div className="venue-team-invite-link"><span>{emailDelivered ? "You can also share the secure invitation link directly." : "The invitation is saved. Share this link with the team member to continue."}</span><div><a href={invitationUrl} rel="noreferrer" target="_blank">Open secure link</a><button type="button" onClick={() => void copyInvitation()}>Copy secure link</button></div></div> : null}
       <section className="venue-team-list" aria-label="Active venue team">
         <div className="venue-team-subhead"><strong>Active team</strong><span>{isLoading && !members.length ? "…" : members.filter((member) => member.status === "active").length + 1}</span></div>
         <div className="venue-team-member owner"><span><strong>Venue owner</strong><small>Full access</small></span><b>Owner</b></div>
@@ -234,8 +253,8 @@ export default function VenueTeamPanel({ initialAccess }: { initialAccess?: Acce
         {activity.map((item) => <div key={item.id}><span><strong>{item.summary}</strong><small>{item.actorName} · {item.actorRole}</small></span><time dateTime={item.createdAt}>{formatDate(item.createdAt)}</time></div>)}
         {!isLoading && !activity.length ? <p>No venue team changes have been recorded yet.</p> : null}
       </section>
-      {status ? <p role="status">{status}</p> : null}
       <style>{`
+        .venue-team-invite-help{grid-column:1 / -1;color:#94a3b8;font-size:12px;line-height:1.5}.venue-team-panel .venue-team-feedback{margin:0;padding:12px;border:1px solid rgba(167,139,250,.35);border-radius:10px;color:#ddd6fe;background:rgba(124,58,237,.08);font-size:13px;line-height:1.5;overflow-wrap:anywhere}.venue-team-panel .venue-team-feedback.is-error{border-color:rgba(248,113,113,.4);color:#fecaca;background:rgba(127,29,29,.12)}
         .venue-team-panel{display:grid;gap:16px}.venue-team-heading,.venue-team-subhead,.venue-team-member,.venue-activity-list>div{display:flex;align-items:center;justify-content:space-between;gap:12px}.venue-team-heading h2{margin:4px 0}.venue-team-heading>b,.venue-team-subhead>span{padding:6px 9px;border:1px solid #334155;border-radius:999px;color:#cbd5e1;background:#050507;font-size:10px;text-transform:capitalize}.venue-team-invite-form{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(150px,.7fr) auto;gap:10px;align-items:end}.venue-team-invite-form label{display:grid;gap:6px;color:#cbd5e1;font-size:11px;font-weight:850}.venue-team-invite-form input,.venue-team-invite-form select,.venue-team-member select{min-height:44px;padding:0 11px;border:1px solid #334155;border-radius:9px;color:#f8fafc;background:#050507;font:inherit}.venue-team-panel button{min-height:42px;padding:0 13px;border:1px solid rgba(124,58,237,.55);border-radius:9px;color:#fff;background:#7c3aed;font:inherit;font-weight:850;cursor:pointer}.venue-team-panel button:disabled{opacity:.6;cursor:wait}.venue-team-panel button:focus-visible,.venue-team-panel input:focus-visible,.venue-team-panel select:focus-visible,.venue-team-invite-link a:focus-visible{outline:2px solid #7c3aed;outline-offset:2px}.venue-team-invite-link,.venue-team-permission-note{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px;border:1px solid rgba(16,185,129,.28);border-radius:10px;color:#a7f3d0;background:rgba(16,185,129,.06)}.venue-team-invite-link>div{display:flex;flex-wrap:wrap;gap:8px}.venue-team-invite-link a{min-height:40px;display:inline-flex;align-items:center;padding:0 12px;border:1px solid #334155;border-radius:9px;color:#f8fafc;background:#111118;text-decoration:none;font-size:12px;font-weight:850}.venue-team-list,.venue-activity-list{display:grid;gap:8px;padding-top:14px;border-top:1px solid #334155}.venue-team-subhead{margin-bottom:2px}.venue-team-member,.venue-activity-list>div{padding:11px 12px;border:1px solid rgba(255,255,255,.09);border-radius:10px;background:#0b0b10}.venue-team-member>span,.venue-activity-list>div>span{min-width:0;display:grid;gap:3px}.venue-team-member small,.venue-activity-list small,.venue-activity-list time{color:#94a3b8;font-size:11px}.venue-team-member>b{text-transform:capitalize;color:#cbd5e1}.venue-team-member.owner{border-color:rgba(124,58,237,.26)}.venue-team-remove{border-color:rgba(239,68,68,.35)!important;color:#fecaca!important;background:rgba(239,68,68,.09)!important}.venue-activity-list time{flex:0 0 auto;text-align:right}.venue-activity-list>p{color:#94a3b8}@media(max-width:760px){.venue-team-invite-form{grid-template-columns:1fr}.venue-team-member{align-items:flex-start;flex-wrap:wrap}.venue-team-member>span{width:100%}.venue-team-invite-link{align-items:flex-start;flex-direction:column}.venue-activity-list>div{align-items:flex-start;flex-direction:column}.venue-activity-list time{text-align:left}}
       `}</style>
     </article>

@@ -1,5 +1,6 @@
 import crypto from "node:crypto";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { PublicApiError } from "../api-error-policy";
 import type { Json } from "./types";
 import { requireVenueAccess, type VenueTeamRole } from "./venue-access";
 import { safeErrorMetadata } from "../security/safe-error-metadata";
@@ -62,7 +63,7 @@ export async function createVenueTeamInvitation(
     .maybeSingle();
   if (ownerAccountError) throw ownerAccountError;
   if (String(ownerAccount?.email || "").toLowerCase() === email) {
-    throw new Error("The venue owner already has full access.");
+    throw new PublicApiError("CONFLICT", "The venue owner already has full access.", 409);
   }
 
   const { data: existingAccount, error: accountError } = await (client as any)
@@ -71,8 +72,11 @@ export async function createVenueTeamInvitation(
     .ilike("email", email)
     .maybeSingle();
   if (accountError) throw accountError;
-  if (existingAccount && (existingAccount.role !== "venue" || existingAccount.account_state !== "active")) {
-    throw new Error("That email belongs to a different MyDancr account type.");
+  if (existingAccount && existingAccount.role !== "venue") {
+    throw new PublicApiError("CONFLICT", "That email is already used for another MyDancr account type. Use a different email for venue team access.", 409);
+  }
+  if (existingAccount && existingAccount.account_state !== "active") {
+    throw new PublicApiError("CONFLICT", "That account is not active. Ask the team member to restore their account before inviting them.", 409);
   }
 
   const { data: existingMember, error: existingMemberError } = existingAccount
@@ -86,11 +90,11 @@ export async function createVenueTeamInvitation(
     : { data: null, error: null };
   if (existingMemberError) throw existingMemberError;
   if (existingMember?.status === "active") {
-    const existingVenue = firstJoined(existingMember.venues);
-    throw new Error(
+    throw new PublicApiError("CONFLICT",
       existingMember.venue_id === access.venueId
         ? "That person already has venue team access."
-        : `That person already belongs to ${String(existingVenue?.name || "another venue")} on MyDancr.`,
+        : "That person already belongs to another venue team on MyDancr.",
+      409,
     );
   }
 
@@ -344,7 +348,7 @@ function mapInvitation(row: any) {
 
 function normalizeEmail(value: unknown) {
   const email = typeof value === "string" ? value.trim().toLowerCase() : "";
-  if (!EMAIL_PATTERN.test(email) || email.length > 320) throw new Error("Enter a valid staff email address.");
+  if (!EMAIL_PATTERN.test(email) || email.length > 320) throw new PublicApiError("INVALID_REQUEST", "Enter a valid team member email address.", 400);
   return email;
 }
 

@@ -77,7 +77,7 @@ export async function POST(request: Request) {
       emailDelivered: delivery.delivered,
       message: delivery.delivered
         ? "Invitation sent."
-        : "Invitation created. Copy and send the secure link to the team member.",
+        : "Invitation created, but the email could not be sent. Copy and send the secure link to the team member.",
       session: session || null,
     });
   } catch (error) {
