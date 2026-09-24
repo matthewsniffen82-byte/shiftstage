@@ -788,6 +788,8 @@
         status.textContent = "QR code unavailable. Try again or copy your link.";
         retry.hidden = false;
       };
+      // Reset a failed image so Safari retries the same QR URL.
+      image.removeAttribute("src");
       image.src = qrCodeUrl(overlay.dataset.qrUrl);
     }
 
