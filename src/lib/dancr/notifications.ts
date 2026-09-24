@@ -2,21 +2,30 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 
 type DancrClient = SupabaseClient;
 
-export async function getUserNotifications(client: DancrClient, userId: string, unreadOnly = false) {
-  let query = (client as any)
-    .from("notifications")
-    .select("id, notification_type, channel, title, body, payload, read_at, sent_at, created_at")
-    .eq("recipient_id", userId)
-    .or("payload->>kind.is.null,payload->>kind.neq.club_pickup")
-    .order("created_at", { ascending: false })
-    .limit(50);
+export async function getUserNotifications(client: DancrClient, userId: string, unreadOnly = false, include?: (row: { notification_type: string; payload: unknown }) => boolean) {
+  const visible: any[] = [];
+  let offset = 0;
+  // Filter before the visible limit so muted categories cannot crowd out alerts.
+  while (visible.length < 50) {
+    let query = (client as any)
+      .from("notifications")
+      .select("id, notification_type, channel, title, body, payload, read_at, sent_at, created_at")
+      .eq("recipient_id", userId)
+      .or("payload->>kind.is.null,payload->>kind.neq.club_pickup")
+      .order("created_at", { ascending: false })
+      .order("id", { ascending: false });
+    query = include ? query.range(offset, offset + 49) : query.limit(50);
 
-  if (unreadOnly) query = query.is("read_at", null);
+    if (unreadOnly) query = query.is("read_at", null);
 
-  const { data, error } = await query;
-  if (error) throw error;
+    const { data, error } = await query;
+    if (error) throw error;
+    visible.push(...(data || []).filter((row: any) => !include || include(row)));
+    if (!include || !data || data.length < 50) break;
+    offset += 50;
+  }
 
-  return (data || []).map((notification: any) => ({
+  return visible.slice(0, 50).map((notification: any) => ({
     id: notification.id,
     type: notification.notification_type,
     channel: notification.channel,

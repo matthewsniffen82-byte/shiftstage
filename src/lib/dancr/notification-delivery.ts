@@ -5,6 +5,7 @@ import { publicAppUrl } from "./public-app-url";
 import type { Json, NotificationType } from "./types";
 import { customerNotificationSettings, customerFollowAlertEnabled, followAlertKey } from "./customer-notification-preferences";
 import { notificationPushExternalId } from "./customer-notification-delivery";
+import { venueNotificationCategory, venueNotificationEnabled } from "./venue-notification-preferences";
 
 type DancrClient = SupabaseClient;
 const DELIVERY_PROVIDER_TIMEOUT_MS = 10_000;
@@ -32,6 +33,14 @@ export async function deliverNotificationRows(client: DancrClient, rows: Notific
   const recipientById = new Map(recipients.map(recipient => [recipient.id, recipient]));
   const customerIds = recipients.filter(recipient => recipient.role === "customer").map(recipient => recipient.id);
   const settingsById = new Map<string, unknown>();
+  const venueSettingsById = new Map<string, unknown>();
+  // Use freshly stored preferences, not caller-supplied roles or cached JWT metadata.
+  for (const recipient of recipients.filter(recipient => recipient.role === "venue")) {
+    try {
+      const { data, error } = await client.auth.admin.getUserById(recipient.id);
+      if (!error && data.user) venueSettingsById.set(recipient.id, data.user.user_metadata);
+    } catch { /* Optional delivery fails closed when preferences cannot be read. */ }
+  }
   if (customerIds.length) {
     const { data, error } = await client.from("customer_profiles").select("user_id, notification_settings").in("user_id", customerIds);
     if (error) {
@@ -43,6 +52,11 @@ export async function deliverNotificationRows(client: DancrClient, rows: Notific
   const allowed = (row: NotificationDeliveryRow, channel: "emailEnabled" | "pushEnabled") => {
     const recipient = recipientById.get(row.recipient_id);
     if (!recipient) return false;
+    if (recipient.role === "venue") {
+      if (!venueNotificationCategory(row)) return true;
+      if (!venueSettingsById.has(recipient.id)) return false;
+      return venueNotificationEnabled(venueSettingsById.get(recipient.id), row, channel);
+    }
     if (recipient.role !== "customer") return true;
     const settings = settingsById.get(recipient.id);
     const key = followAlertKey((row.payload as Record<string, unknown> | null)?.kind);

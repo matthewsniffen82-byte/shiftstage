@@ -35,6 +35,7 @@ function fixture({ role = "customer", configured = true, enabled = false, suppor
     fetch: async (url, init) => {
       calls.push({ url, ...init });
       if (url === "/api/notifications") return Response.json({ ok: true, pushUserId: "account-one", notificationDelivery: { pushAvailable: configured } });
+      if (url === "/api/venue/notification-settings") return Response.json(failSave ? { ok: false, error: "Save failed" } : { ok: true, userId: "account-one", settings: { pushEnabled: true } }, { status: failSave ? 503 : 200 });
       return Response.json(failSave ? { ok: false, error: "Save failed" } : { ok: true, profile: { userId: "account-one", notificationSettings: { pushEnabled: true } } }, { status: failSave ? 503 : 200 });
     },
   };
@@ -77,6 +78,16 @@ test("professionals enroll without changing customer preferences", async () => {
   const f = fixture({ role: "venue" }); await f.offer("venue-dashboard"); await f.buttons()[0].onclick();
   assert.ok(f.calls.includes("subscription"));
   assert.ok(!f.calls.some(call => call.url === "/api/customer/profile"));
+  const saved = f.calls.find(call => call.url === "/api/venue/notification-settings");
+  assert.deepEqual(JSON.parse(saved.body), { settings: { pushEnabled: true } });
+  assert.equal(f.buttons()[0].hidden, true);
+});
+
+test("venue push enrollment rolls back when its preference cannot be saved", async () => {
+  const f = fixture({ role: "venue", failSave: true }); await f.offer("venue-dashboard"); await f.buttons()[0].onclick();
+  assert.ok(f.calls.includes("unsubscribe"));
+  assert.equal(f.buttons()[0].hidden, false);
+  assert.doesNotMatch(f.card().children[1].textContent, /enabled on this device/);
 });
 test("dismissals survive reload and removed chat moments do not offer enrollment", async () => {
   const f = fixture(); await f.offer("customer-follow"); f.buttons()[1].onclick();

@@ -116,6 +116,9 @@
               const saved = await request("/api/customer/profile", id, { notificationSettings: { pushEnabled: true } });
               if (saved.profile?.notificationSettings?.pushEnabled !== true) throw new Error("Your notification preference was not confirmed. Please try again.");
               profile = saved.profile;
+            } else if (auth.account.role === "venue") {
+              const saved = await request("/api/venue/notification-settings", id, { settings: { pushEnabled: true } });
+              if (saved.userId !== auth.account.id || saved.settings?.pushEnabled !== true) throw new Error("Your notification preference was not confirmed. Please try again.");
             }
             assertAccount(id);
             message.textContent = "Notifications are enabled on this device.";

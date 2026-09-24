@@ -37,6 +37,7 @@ const expectedRoutes = [
   "logo-image/route.ts",
   "nfc-support/route.ts",
   "nfc-tags/route.ts",
+  "notification-settings/route.ts",
   "participation/route.ts",
   "profile/route.ts",
   "publication/route.ts",
@@ -122,12 +123,12 @@ test("the public venue entry points remain narrowly scoped and abuse resistant",
 });
 
 test("every remaining venue API authenticates, authorizes, and sanitizes failures", () => {
-  const authorizationBoundary = /requireActiveVenueAccount|requireVenueAccess|getVenueReferralFeeStateForAccount|requestVenueReferralFeeChange|getVenueTeamState|createVenueTeamInvitation|updateVenueTeamMember|revokeVenueTeamInvitation/;
+  const authorizationBoundary = /requireActiveVenueAccount|requireVenueAccess|getVenueReferralFeeStateForAccount|requestVenueReferralFeeChange|getVenueTeamState|createVenueTeamInvitation|updateVenueTeamMember|revokeVenueTeamInvitation|createRequestSupabaseContext\(request, \{ role: "venue" \}\)/;
 
   for (const [relativePath, source] of routeSources) {
     if (retiredRoutes.has(relativePath) || reviewedPublicRoutes.has(relativePath)) continue;
 
-    assert.match(source, /createRequestSupabaseContext\(request\)/, relativePath);
+    assert.match(source, /createRequestSupabaseContext\(request(?:, \{ role: "venue" \})?\)/, relativePath);
     assert.match(source, authorizationBoundary, relativePath);
     assert.match(source, /apiError\(/, relativePath);
   }

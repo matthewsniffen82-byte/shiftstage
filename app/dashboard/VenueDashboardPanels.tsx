@@ -1,5 +1,6 @@
 "use client";
 import { offerPushNotifications } from "@/src/lib/dancr/push-invitation";
+import VenueNotificationSettings from "./VenueNotificationSettings";
 
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import Link from "next/link";
@@ -543,7 +544,8 @@ export function VenuePanel({
                 <div><dt>Role</dt><dd className="venue-account-role">{String(account?.role || "venue")}</dd></div>
               </dl>
             </article>
-            <NotificationPanel refreshKey={notificationRevision} />
+            <NotificationPanel refreshKey={notificationRevision} preferencesHref="#venue-notification-settings" />
+            <VenueNotificationSettings onSaved={() => setNotificationRevision(value => value + 1)} />
             <SupportInboxPanel initialThreads={supportThreads} panelId="venue-support" />
             <AccountControlsPanel
               accountRole="venue"

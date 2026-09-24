@@ -14,6 +14,8 @@ import {
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
 import { notificationPushDelivery } from "@/src/lib/dancr/customer-notification-delivery";
+import { getAccountByUserId } from "@/src/lib/dancr/auth";
+import { venueNotificationEnabled } from "@/src/lib/dancr/venue-notification-preferences";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -24,7 +26,9 @@ export async function GET(request: Request) {
   try {
     const { client, user } = await createRequestSupabaseContext(request, { active: true });
     const unreadOnly = new URL(request.url).searchParams.get("unread") === "true";
-    const notifications = await getUserNotifications(client, user.id, unreadOnly);
+    const account = await getAccountByUserId(client, user.id);
+    const notifications = await getUserNotifications(client, user.id, unreadOnly,
+      account?.role === "venue" ? row => venueNotificationEnabled(user.user_metadata, row) : undefined);
 
     return NextResponse.json({ ok: true, notifications, pushUserId: user.id, notificationDelivery: notificationPushDelivery(user.id) }, {
       headers: { "cache-control": "private, no-store" },

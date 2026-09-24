@@ -5,6 +5,7 @@ import { createRequire } from "node:module";
 import vm from "node:vm";
 import ts from "typescript";
 import * as preferences from "../src/lib/dancr/customer-notification-preferences.ts";
+import * as venuePreferences from "../src/lib/dancr/venue-notification-preferences.ts";
 import { PublicApiError, resolveApiError } from "../src/lib/api-error-policy.ts";
 
 const require = createRequire(import.meta.url);
@@ -28,6 +29,7 @@ function deliveryFixture(role) {
   const service = compile("src/lib/dancr/notification-delivery.ts", {
     "./customer-notification-delivery": capability,
     "./customer-notification-preferences": preferences,
+    "./venue-notification-preferences": venuePreferences,
     "./public-app-url": { publicAppUrl: () => "https://example.test" },
   }, { fetch: async (url, init) => {
     assert.equal(url, "https://api.onesignal.com/notifications");
@@ -35,7 +37,7 @@ function deliveryFixture(role) {
     calls.push(JSON.parse(init.body));
     return Response.json({ id: "11111111-1111-4111-8111-111111111111" });
   } });
-  const client = { from(table) {
+  const client = { auth: { admin: { getUserById: async () => ({ data: { user: { user_metadata: venuePreferences.venueNotificationMetadataPatch({ pushEnabled: true }) } }, error: null }) } }, from(table) {
     const data = table === "app_users" ? [{ id: ownId, role }] : [{ user_id: ownId, notification_settings: { pushEnabled: true } }];
     return { select() { return this; }, in() { return this; }, eq() { return this; }, then(resolve) { return Promise.resolve({ data, error: null }).then(resolve); } };
   } };
@@ -92,6 +94,8 @@ function notificationRoute(authenticated = true) {
       return { client: {}, user: { id: ownId } };
     } },
     "@/src/lib/dancr/customer-notification-delivery": capability,
+    "@/src/lib/dancr/auth": { getAccountByUserId: async () => ({ id: ownId, role: "venue" }) },
+    "@/src/lib/dancr/venue-notification-preferences": venuePreferences,
     "@/src/lib/dancr/notifications": { getUserNotifications: async (_client, id) => { assert.equal(id, ownId); return []; } },
     "@/src/lib/api": { apiError: (error, fallback) => { const result = resolveApiError(error, fallback); return Response.json(result.body, { status: result.status }); } },
   });

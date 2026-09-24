@@ -64,6 +64,7 @@ export function NotificationPanel({
   dancerMode = false,
   panelId,
   refreshKey = 0,
+  preferencesHref,
   onCountChange,
 }: {
   saved?: LoadState["saved"];
@@ -71,6 +72,7 @@ export function NotificationPanel({
   dancerMode?: boolean;
   panelId?: string;
   refreshKey?: number;
+  preferencesHref?: string;
   onCountChange?: (count: number) => void;
 } = {}) {
   const [notifications, setNotifications] = useState<Array<Record<string, unknown>>>([]);
@@ -212,7 +214,7 @@ export function NotificationPanel({
         <div>
           {customerMode ? <span>Updates that matter</span> : null}
           <h2>{customerMode ? "Alerts" : "Notifications"}</h2>
-          {!customerMode && !dancerMode && <button type="button" data-push-settings>Notification settings</button>}
+          {!customerMode && !dancerMode && (preferencesHref ? <a className="notification-settings-button" href={preferencesHref} onClick={event => openDashboardSection(event, preferencesHref.slice(1))}>Notification preferences</a> : <button type="button" data-push-settings>Notification settings</button>)}
         </div>
         {dancerMode ? <a className="notification-settings-button" href="#dancer-notification-settings" onClick={event => openDashboardSection(event, "dancer-notification-settings")}>Preferences</a> : null}
         {!dancerMode ? <div className="notification-toolbar">
