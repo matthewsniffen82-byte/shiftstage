@@ -281,3 +281,46 @@ body.dancr-button-system header #dancerProfileShareQuickBtn > [data-quick-icon="
   place-items: center;
   line-height: 0;
 }
+
+/* One compact report card for live discovery and standalone profiles/media. */
+body.dancr-button-system :is(#contentReportPopover.is-quick-reason,.public-report-reason-gate) {
+  padding: 16px; color-scheme: dark;
+}
+body.dancr-button-system :is(#contentReportPopover.is-quick-reason,.public-report-reason-gate)
+  :is(.content-report-sheet,.public-report-reason-dialog) {
+  box-sizing: border-box; width: min(400px,100%); min-width: 0;
+  max-height: calc(100dvh - 32px); overflow-y: auto; overscroll-behavior: contain;
+  gap: 0 !important; padding: 16px !important;
+  border: 1px solid #34343c !important; border-radius: 18px !important;
+  background: #08080b !important; box-shadow: 0 18px 48px rgba(0,0,0,.5) !important;
+}
+body.dancr-button-system :is(#contentReportPopover.is-quick-reason,.public-report-reason-gate)
+  :is(.content-report-header,.public-report-reason-header) {
+  min-height: 44px; align-items: center; gap: 8px; margin: 0 0 12px; padding: 0 !important;
+}
+body.dancr-button-system :is(#contentReportPopover.is-quick-reason,.public-report-reason-gate)
+  :is(.content-report-header h3,.public-report-reason-header h2) {
+  margin: 0; padding: 0 !important; color: #f8fafc !important;
+  font-size: 18px !important; font-weight: 700 !important; line-height: 1.3 !important;
+  letter-spacing: -.02em !important; text-transform: none !important;
+}
+body.dancr-button-system :is(#contentReportPopover.is-quick-reason,.public-report-reason-gate)
+  :is(.content-report-quick-options,.public-report-reason-options) { gap: 8px; }
+body.dancr-button-system :is(#contentReportPopover.is-quick-reason,.public-report-reason-gate)
+  :is(.content-report-quick-option,.public-report-reason-options > button) {
+  box-sizing: border-box; width: 100%; min-width: 0; min-height: 46px !important;
+  padding: 11px 12px !important; border: 1px solid #34343c !important; border-radius: 12px !important;
+  color: #f8fafc !important; background: #060608 !important; box-shadow: none !important;
+  font-size: 14px !important; font-weight: 600 !important; line-height: 1.4 !important;
+  text-align: left; white-space: normal;
+}
+body.dancr-button-system :is(#contentReportPopover.is-quick-reason,.public-report-reason-gate)
+  :is(.content-report-quick-option,.public-report-reason-options > button):enabled:is(:hover,:focus-visible) {
+  border-color: #745696 !important; background: #100a1b !important;
+}
+body.dancr-button-system :is(#contentReportPopover.is-quick-reason,.public-report-reason-gate)
+  :is(.content-report-status,.profile-report-error):not(:empty) {
+  margin: 12px 0 0; padding: 10px 12px; line-height: 1.4;
+}
+body.dancr-button-system #contentReportPopover.is-quick-reason .content-report-form { margin: 0; gap: 0; }
+body.dancr-button-system #contentReportPopover.is-quick-reason .content-report-status:empty { display: none; }

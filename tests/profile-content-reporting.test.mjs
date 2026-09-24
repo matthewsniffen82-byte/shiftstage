@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
+import vm from "node:vm";
 
 const [reportsRoute, carousel, profileActions, profilePage, reportDialog, liveShell] = await Promise.all([
   readFile(new URL("../app/api/reports/route.ts", import.meta.url), "utf8"),
@@ -88,4 +89,37 @@ test("report controls prevent repeat submissions in the current browser session"
   assert.match(liveShell, /reportedContentTargets\.add\(report\.reportKey\)/);
   assert.match(liveShell, /button\.disabled = !normalizedType \|\| !isReportableContentId\(normalizedId\) \|\| reported/);
   assert.match(carousel, /reportedTargets\.includes\(target\.key\)/);
+});
+
+test("each quick report reason survives the native select before form submission", () => {
+  const selectMarkup = liveShell.match(/<select id="contentReportReason"[\s\S]*?<\/select>/)?.[0];
+  const options = [...selectMarkup.matchAll(/<option(?: value="([^"]*)")?>([^<]*)<\/option>/g)]
+    .map(([, value, text]) => ({ value: value ?? text }));
+  let selected = "", onClick;
+  const submitted = [];
+  // Native selects clear an assigned value unless a matching option exists.
+  const select = {
+    options,
+    add(option) { options.push(option); },
+    get value() { return selected; },
+    set value(value) { selected = options.some((option) => option.value === value) ? value : ""; },
+  };
+  const handler = liveShell.match(/contentReportQuickOptions\?\.addEventListener\("click", \(event\) => \{[\s\S]*?\n    \}\);/)?.[0];
+  assert.ok(handler);
+  vm.runInNewContext(handler, {
+    contentReportQuickOptions: { addEventListener(_event, callback) { onClick = callback; } },
+    contentReportReason: select,
+    contentReportDetails: { value: "" },
+    contentReportForm: { requestSubmit() { assert.notEqual(select.value, ""); submitted.push(select.value); } },
+    Option: class { constructor(text, value) { this.text = text; this.value = value; } },
+  });
+  const reasons = [...liveShell.matchAll(/data-content-report-reason="([^"]+)"/g)].map(([, reason]) => reason);
+  assert.equal(reasons.length, 4);
+  for (const reason of [...reasons, ...reasons]) {
+    onClick({ target: { closest: () => ({ dataset: { contentReportReason: reason }, disabled: false }) } });
+  }
+  assert.deepEqual(submitted, [...reasons, ...reasons]);
+  for (const reason of reasons) assert.equal(options.filter((option) => option.value === reason).length, 1);
+  onClick({ target: { closest: () => ({ dataset: { contentReportReason: reasons[0] }, disabled: true }) } });
+  assert.equal(submitted.length, 8);
 });

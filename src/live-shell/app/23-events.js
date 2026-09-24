@@ -555,7 +555,12 @@
     contentReportQuickOptions?.addEventListener("click", (event) => {
       const option = event.target.closest("[data-content-report-reason]");
       if (!option || option.disabled) return;
-      contentReportReason.value = option.dataset.contentReportReason || "";
+      const reason = option.dataset.contentReportReason || "";
+      // A select drops values absent from its options, preventing submission.
+      if (reason && !Array.from(contentReportReason.options).some((item) => item.value === reason)) {
+        contentReportReason.add(new Option(reason, reason));
+      }
+      contentReportReason.value = reason;
       contentReportDetails.value = "";
       contentReportForm?.requestSubmit();
     });
