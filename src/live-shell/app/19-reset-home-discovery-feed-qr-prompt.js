@@ -382,9 +382,7 @@
           ${filters.map((filter) => {
             const active = dancerDirectoryFilter === filter.id;
             const empty = counts[filter.id] === 0;
-            const statusDot = filter.id === "now"
-              ? '<span class="dancer-directory-filter-status" aria-hidden="true"></span>'
-              : "";
+            const statusDot = '<span class="dancer-directory-filter-status" aria-hidden="true"></span>';
             return `<button class="dancer-directory-filter ${active ? "is-active" : ""}${empty ? " is-empty" : ""}" type="button" role="tab" data-dancer-directory-filter="${filter.id}" aria-controls="results" aria-selected="${active}" aria-pressed="${active}">${statusDot}<span class="dancer-directory-filter-label">${filter.label}</span><span class="dancer-directory-filter-count">${counts[filter.id]}</span></button>`;
           }).join("")}
         </div>

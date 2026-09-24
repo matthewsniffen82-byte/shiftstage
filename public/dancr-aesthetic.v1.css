@@ -13620,6 +13620,16 @@ html body.dancer-directory-active.dancr-button-system > .app main.stack > sectio
   box-shadow: none !important;
 }
 
+html body.dancer-directory-active.dancr-button-system > .app main.stack > section.stack
+  > #results.home-dancer-grid .dancer-directory-filter[data-dancer-directory-filter="not_now"][aria-selected="true"]
+  > .dancer-directory-filter-status {
+  display: block;
+  width: 6px;
+  height: 6px;
+  flex-basis: 6px;
+  background: #a78bfa !important;
+}
+
 html body.dancr-button-system > .app main.stack > .home-discovery-controls
   :is(#citySelectPanel, #homeAdvancedFilters)
   :is(.city-picker-option, #distanceSelectButton, #venueSelectButton, #locationBtn, #homeFilterReset):focus-visible,
