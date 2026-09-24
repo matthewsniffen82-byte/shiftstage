@@ -570,14 +570,10 @@ export default function DashboardClient({
               ) : <DancerPanel
                 accountState={state.account?.accountState}
                 analytics={state.analytics}
-                deals={state.deals}
                 affiliations={state.affiliations || []}
                 nfc={state.nfc}
                 profile={state.profile}
                 onProfileChange={updateProfile}
-                rankingEvents={state.rankingEvents}
-                reviews={state.reviews}
-                weeklyReport={state.weeklyReport}
               />}
               <DashboardSection
                 description="Messages, notifications, and account settings."

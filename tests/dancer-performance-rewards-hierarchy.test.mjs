@@ -1,34 +1,26 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "./helpers/dashboard-test-fs.mjs";
+import { readFileSync } from "node:fs";
 import test from "node:test";
 
-const dashboard = readFileSync(new URL("../app/dashboard/DashboardClient.tsx", import.meta.url), "utf8");
+const panels = readFileSync(new URL("../app/dashboard/DancerDashboardPanels.tsx", import.meta.url), "utf8");
+const analytics = readFileSync(new URL("../app/dashboard/DancerAnalyticsPanel.tsx", import.meta.url), "utf8");
+const styles = readFileSync(new URL("../app/dashboard/DashboardStyles.tsx", import.meta.url), "utf8");
+const loader = readFileSync(new URL("../app/dashboard/dancer-dashboard-loader.ts", import.meta.url), "utf8");
+const route = readFileSync(new URL("../app/api/dancer/dashboard/route.ts", import.meta.url), "utf8");
 
-test("performance and rewards starts with four decision-ready metrics", () => {
-  for (const label of ["Current rank", "30-day views", "Club Deals this month", "Available balance"]) {
-    assert.match(dashboard, new RegExp(`label="${label}"`));
-  }
-  assert.match(dashboard, /className="dancer-performance-summary"/);
+test("dancer analytics replace the retired deal and weekly panels", () => {
+  assert.match(panels, /title="Analytics"/);
+  assert.match(panels, /<DancerAnalyticsPanel initialAnalytics=\{analytics\} \/>/);
+  assert.doesNotMatch(panels, /Club Deal activity|Cashier opens|Redeemed deals|Weekly results|Unranked|No ranking milestones/);
+  assert.match(route, /requestedPeriod === null \? getDancerDealMetrics\(client, user.id, admin\) : Promise.resolve\(null\)/);
+  assert.match(loader, /\/api\/dancer\/dashboard\?period=7d/);
+  assert.doesNotMatch(loader, /\/api\/dancer\/(weekly-report|ranking-events)/);
 });
 
-test("reward areas are collapsed and grouped under clear summaries", () => {
-  for (const title of ["Club Deal rewards", "Earnings & payouts", "Weekly results"]) {
-    assert.match(dashboard, new RegExp(`title="${title}"`));
-  }
-  assert.match(dashboard, /<details className="dancer-performance-detail" id=\{id\}>/);
-  assert.doesNotMatch(dashboard, /<details className="dancer-performance-detail" open/);
-});
-
-test("secondary commission and payout explanations stay available on demand", () => {
-  for (const disclosure of ["More Club Deal activity", "View commission tiers", "How Club Deal rewards work", "How payouts work"]) {
-    assert.match(dashboard, new RegExp(`<summary>${disclosure}</summary>`));
-  }
-  assert.match(dashboard, /role="tablist" aria-label="Rewards history views"/);
-  assert.match(dashboard, /setHistoryView\("earnings"\)/);
-  assert.match(dashboard, /setHistoryView\("payouts"\)/);
-});
-
-test("weekly results use one compact summary and mobile metrics use a two-column grid", () => {
-  assert.match(dashboard, /className="weekly-result-summary"/);
-  assert.match(dashboard, /\.dancer-performance-summary \{ grid-template-columns: repeat\(2, minmax\(0, 1fr\)\); \}/);
+test("analytics offer four engagement cards and two compact detail sections", () => {
+  for (const label of ["Profile views", "New followers", "Content likes", "Social link taps"]) assert.ok(analytics.includes('label="' + label + '"'));
+  assert.match(analytics, /Your audience/);
+  assert.match(analytics, /Top content/);
+  assert.doesNotMatch(analytics, /<details/);
+  assert.match(styles, /\.dancer-analytics-metrics \{ grid-template-columns: repeat\(2, minmax\(0, 1fr\)\); \}/);
 });

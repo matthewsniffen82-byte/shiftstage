@@ -376,22 +376,6 @@
     "name": "DancerVisibilityPanel"
   },
   {
-    "file": "DancerDashboardPanels.tsx",
-    "name": "DancerLockedAnalyticsPanel"
-  },
-  {
-    "file": "DancerDashboardPanels.tsx",
-    "name": "DancerPerformanceSummary"
-  },
-  {
-    "file": "DancerDashboardPanels.tsx",
-    "name": "DancerPerformanceDetail"
-  },
-  {
-    "file": "DancerDashboardPanels.tsx",
-    "name": "DancerDealPanel"
-  },
-  {
     "file": "DashboardShared.tsx",
     "name": "downloadDashboardBlob"
   },
@@ -442,18 +426,6 @@
   {
     "file": "DancerShiftsPanel.tsx",
     "name": "toDateTimeLocalValue"
-  },
-  {
-    "file": "DancerDashboardPanels.tsx",
-    "name": "DancerImpactPanel"
-  },
-  {
-    "file": "DancerDashboardPanels.tsx",
-    "name": "formatRankMove"
-  },
-  {
-    "file": "DancerDashboardPanels.tsx",
-    "name": "formatEventDate"
   },
   {
     "file": "DancerDashboardPanels.tsx",

@@ -212,8 +212,9 @@ test("dancer onboarding no longer offers payout enrollment", () => {
 
 test("approved dancers retain analytics without commission promotions", () => {
   assert.doesNotMatch(dashboard, /function DancerNatsSignupCallout|function DancerPayoutPanel|Sign up for commission payouts/);
-  assert.match(dashboard, /title="Club Deal activity"/);
-  assert.match(dashboard, /<DancerPerformanceSummary analytics=\{analytics\} deals=\{deals\}/);
+  assert.match(dashboard, /title="Analytics"/);
+  assert.match(dashboard, /<DancerAnalyticsPanel initialAnalytics=\{analytics\}/);
+  assert.doesNotMatch(dashboard, /title="Club Deal activity"|title="Weekly results"/);
 });
 
 test("step one uses accessible live-profile add targets that preserve the active editor", () => {
@@ -269,7 +270,7 @@ test("approved dancers see their current check-in before collapsed profile tools
   assert.match(dashboard, /description="Visibility and connected clubs\."\s+emphasis="summary"\s+id="dancer-overview"/);
   assert.match(dashboard, /description="Edit your profile or share it\."\s+emphasis="primary"\s+id="dancer-profile-media"/);
   assert.match(dashboard, /<DancerAgeVerificationGate>\s*<DashboardSection\s+defaultOpen\s+description="Your current club check-in\."\s+emphasis="primary"\s+id="dancer-schedule"/);
-  assert.match(dashboard, /description="Views, Club Deals, and guest activity\."\s+emphasis="secondary"\s+id="dancer-performance"/);
+  assert.match(dashboard, /description="Views, followers, and engagement\."\s+emphasis="secondary"\s+id="dancer-performance"/);
   assert.doesNotMatch(dashboard, /id="dancer-sharing-billing"|title="Share profile"/);
   assert.doesNotMatch(dashboard, /eyebrow="Dancer workspace"/);
   assert.match(dashboard, /\.dashboard-shell\.dashboard-shell-dancer \.venue-dashboard-section\.dashboard-section-primary \{[^}]*box-shadow: inset 3px 0 0/);

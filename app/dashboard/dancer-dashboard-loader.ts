@@ -6,7 +6,7 @@ import {
   storedSessionIsFresh,
 } from "./dashboard-session.ts";
 
-type DancerPanel = "ready" | "supportThreads" | "reviews" | "weeklyReport" | "rankingEvents" | "agentAccess";
+type DancerPanel = "ready" | "supportThreads" | "reviews" | "agentAccess";
 
 export async function loadDancerDashboard(
   signal: AbortSignal,
@@ -24,7 +24,7 @@ export async function loadDancerDashboard(
   const loadProfile = async () => {
     // Finalize any saved first tap before reading the profile. Otherwise an
     // activated dancer could briefly be sent back through onboarding.
-    const secondary = await requestDashboardJson("/api/dancer/dashboard", {
+    const secondary = await requestDashboardJson("/api/dancer/dashboard?period=7d", {
       cache: "no-store", signal, timeoutMs: 15000,
     });
     if (signal.aborted) return null;
@@ -65,11 +65,9 @@ export async function loadDancerDashboard(
       if (result.profile) update("ready", { account, ...result.profile });
     }),
     // These results can arrive independently of the dashboard's identity,
-    // activation and payout state. They must not delay opening its controls.
+    // activation state. They must not delay opening its controls.
     optional("/api/support", "supportThreads", "threads"),
     optional("/api/dancer/reviews", "reviews", "reviews"),
-    optional("/api/dancer/weekly-report", "weeklyReport", "report"),
-    optional("/api/dancer/ranking-events", "rankingEvents", "events"),
     optional("/api/agent/commissions?access=1", "agentAccess", "access"),
   ]);
 }

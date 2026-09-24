@@ -251,6 +251,39 @@ export function DashboardStyles() {
       .visibility-status { margin: 0; }
       .upload-panel, .verification-panel, .shift-panel, .billing-panel, .customer-settings-panel, .account-controls-panel, .notification-panel, .socials-panel, .share-panel, .impact-panel, .support-panel, .visibility-panel, .venue-working-panel, .venue-verification-panel { grid-column: span 3; }
       .dancer-performance-workspace { display: grid; gap: 14px; }
+      .dancer-analytics { display: grid; gap: 16px; min-width: 0; }
+      .dancer-analytics p { margin: 0; color: var(--mydancr-dashboard-muted); font-size: 13px; line-height: 1.5; }
+      .dancer-analytics-toolbar { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
+      .dancer-analytics-period { display: flex; gap: 4px; padding: 4px; border: 1px solid var(--mydancr-dashboard-border); border-radius: 12px; background: #050507; }
+      .dancer-analytics-period button, .dancer-analytics-error button { min-height: 40px; padding: 8px 14px; border: 1px solid transparent; border-radius: 8px; color: var(--mydancr-dashboard-muted); background: transparent; font: inherit; font-size: 12px; font-weight: 800; cursor: pointer; }
+      body.dancr-button-system main.dashboard-shell.dashboard-shell-dancer .dancer-analytics-period button[aria-pressed="true"], .dancer-analytics-error button { color: #fff !important; border-color: #a78bfa !important; background: #6d28d9 !important; }
+      .dancer-analytics button:focus-visible { outline: 2px solid #94e5ff; outline-offset: 2px; }
+      .dancer-analytics-rank { color: #c4b5fd; font-size: 12px; font-weight: 800; }
+      .dancer-analytics-metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+      .dancer-analytics-metric { display: grid; align-content: start; gap: 7px; min-width: 0; padding: 14px; border: 1px solid var(--mydancr-dashboard-border); border-radius: 12px; background: var(--mydancr-dashboard-panel-raised); }
+      .dancer-analytics-metric > span { color: var(--mydancr-dashboard-muted); font-size: 12px; font-weight: 750; }
+      .dancer-analytics-metric > strong { color: #fff; font-size: 26px; line-height: 1.15; overflow-wrap: anywhere; font-variant-numeric: tabular-nums; }
+      .dancer-analytics-metric > small { color: var(--mydancr-dashboard-muted); font-size: 10px; line-height: 1.4; }
+      .dancer-analytics-metric > small.positive { color: #6ee7b7; }
+      .dancer-analytics-metric > small.negative { color: #fca5a5; }
+      .dancer-analytics-audience, .dancer-analytics-content { min-width: 0; padding-top: 16px; border-top: 1px solid var(--mydancr-dashboard-border); }
+      .dancer-analytics h3 { display: flex; align-items: baseline; flex-wrap: wrap; gap: 8px; margin: 0 0 12px; color: #fff; font-size: 16px; }
+      .dancer-analytics h3 small { color: var(--mydancr-dashboard-muted); font-size: 11px; font-weight: 500; }
+      .dancer-analytics-audience dl { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin: 0; }
+      .dancer-analytics-audience dl > div { display: grid; gap: 6px; }
+      .dancer-analytics-audience dt { color: var(--mydancr-dashboard-muted); font-size: 12px; }
+      .dancer-analytics-audience dd { margin: 0; color: #fff; font-size: 20px; font-weight: 800; overflow-wrap: anywhere; }
+      .dancer-analytics-content ul { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
+      .dancer-analytics-content li { display: flex; align-items: center; gap: 12px; min-width: 0; }
+      .dancer-analytics-thumbnail { display: grid; place-items: center; flex: 0 0 44px; height: 54px; overflow: hidden; border-radius: 7px; color: #c4b5fd; background: rgba(124,58,237,.16); }
+      .dancer-analytics-thumbnail img { width: 44px; height: 54px; object-fit: cover; }
+      .dancer-analytics-content-copy { display: grid; gap: 5px; min-width: 0; }
+      .dancer-analytics-content-copy strong { overflow: hidden; color: #fff; font-size: 13px; text-overflow: ellipsis; white-space: nowrap; }
+      .dancer-analytics-content-copy small { color: var(--mydancr-dashboard-muted); font-size: 12px; }
+      @media (max-width: 860px) {
+        .dancer-analytics-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .dancer-analytics-metric { padding: 12px; }
+      }
       .dancer-nats-signup-callout { grid-column: 1 / -1; display: grid; grid-template-columns: minmax(0,1fr) auto; align-items: center; gap: 16px; padding: 17px 18px; border: 1px solid rgba(148,229,255,.26); border-radius: var(--mydancr-dashboard-radius); background: linear-gradient(145deg,rgba(12,33,42,.68),#09090d 72%); box-shadow: inset 3px 0 0 rgba(148,229,255,.58); }
       .dancer-nats-signup-copy { min-width: 0; display: grid; gap: 5px; }
       .dancer-nats-signup-copy .eyebrow { color: #94e5ff; }

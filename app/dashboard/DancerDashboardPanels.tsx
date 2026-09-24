@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type MouseEvent, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type MouseEvent } from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { SocialPlatformIcon } from "@/app/dancers/[slug]/SocialLinks";
@@ -11,10 +11,11 @@ import type { SocialPlatform } from "@/src/lib/dancr/types";
 import { DancerDashboardIcon } from "./DancerDashboardIdentity";
 import { readSession, requestDancerProfileJson, requestDancerProfileVisibilityJson } from "./dashboard-session";
 import type { LoadState, DancerPhotoItem, DancerProfileSocialEditor, DancerProfileEditorSections, DancerIdentityDraft, DancerProfileEditorSaveRequest } from "./dashboard-types";
-import { persistedDancerStageName, saveDancerProfileEditor, DashboardSection, Metric, DANCER_PROFILE_EDITOR_SAVE_EVENT, SOCIAL_PLATFORMS } from "./DashboardShared";
+import { persistedDancerStageName, saveDancerProfileEditor, DashboardSection, DANCER_PROFILE_EDITOR_SAVE_EVENT, SOCIAL_PLATFORMS } from "./DashboardShared";
 import { dancerPhotoItemsFromProfile, DancerPhotoPanel } from "./DancerPhotoPanel";
 import { DancerAvatarPanel } from "./DancerAvatarPanel";
 import DancerAgeVerificationGate from "./DancerAgeVerificationGate";
+import { DancerAnalyticsPanel } from "./DancerAnalyticsPanel";
 import { DancerProfilePreview, DancerOnboardingCommand, DancerOnboardingProfileMediaWorkspace } from "./DancerProfileEditor";
 // Keep role-specific tools out of every customer's initial JavaScript. Editors
 // load when mounted; the visible role's core tools warm while its data loads.
@@ -29,24 +30,16 @@ export function DancerPanel({
   accountState,
   affiliations,
   analytics,
-  deals,
   nfc,
   onProfileChange,
   profile,
-  rankingEvents,
-  reviews,
-  weeklyReport,
 }: {
   accountState?: string;
   affiliations: Array<Record<string, unknown>>;
   analytics?: LoadState["analytics"];
-  deals?: LoadState["deals"];
   nfc?: LoadState["nfc"];
   onProfileChange?: (profile: Record<string, unknown>) => void;
   profile?: LoadState["profile"];
-  rankingEvents?: LoadState["rankingEvents"];
-  reviews?: LoadState["reviews"];
-  weeklyReport?: LoadState["weeklyReport"];
 }) {
   const effectiveStatus = effectiveDancerProfileStatus(profile, accountState);
   const isApproved = effectiveStatus === "approved";
@@ -264,32 +257,14 @@ export function DancerPanel({
           </DashboardSection>
           {profileMediaSection}
           <DashboardSection
-            description="Views, Club Deals, and guest activity."
+            description="Views, followers, and engagement."
             emphasis="secondary"
             id="dancer-performance"
             icon={<DancerDashboardIcon section="performance" />}
             toggleAffordance="chevron"
-            title="Performance"
+            title="Analytics"
           >
-            <div className="dancer-performance-workspace">
-              <DancerPerformanceSummary analytics={analytics} deals={deals} />
-              <div className="dancer-performance-details">
-                <DancerPerformanceDetail
-                  badge={`${String(deals?.successfulRedemptionsThisMonth || 0)} this month`}
-                  description="Deal saves, shares, and verified redemptions."
-                  title="Club Deal activity"
-                >
-                  <DancerDealPanel deals={deals} />
-                </DancerPerformanceDetail>
-                <DancerPerformanceDetail
-                  badge={formatRankMove(weeklyReport)}
-                  description="Follower growth and ranking milestones."
-                  title="Weekly results"
-                >
-                  <DancerImpactPanel events={rankingEvents} report={weeklyReport} />
-                </DancerPerformanceDetail>
-              </div>
-            </div>
+            <DancerAnalyticsPanel initialAnalytics={analytics} />
           </DashboardSection>
         </DancerAgeVerificationGate>
       ) : null}
@@ -475,88 +450,6 @@ function DancerVisibilityPanel({
         {isSaving ? "Saving…" : <><span>{isPublic ? "Go incognito" : "Make profile public"}</span>{hasSaved ? <small className="dashboard-button-confirmation">✓ Saved</small> : null}</>}
       </button>
       {status ? <p className="visibility-status" role="status" aria-live="polite">{status}</p> : null}
-    </article>
-  );
-}
-
-
-function DancerLockedAnalyticsPanel() {
-  return (
-    <article className="info-panel locked-analytics-panel">
-      <div className="locked-analytics-head">
-        <h2>Analytics</h2>
-        <span>Locked</span>
-      </div>
-      <p>Locked until profile approval.</p>
-      <small>Once your profile is approved, you&apos;ll see profile views, attributed deal redemptions, followers, and shift activity here.</small>
-      <div className="locked-preview-list" aria-label="Analytics preview">
-        <span>Profile views</span>
-        <span>Deal redemptions</span>
-        <span>Followers</span>
-      </div>
-    </article>
-  );
-}
-
-
-function DancerPerformanceSummary({
-  analytics,
-  deals,
-}: {
-  analytics?: LoadState["analytics"];
-  deals?: LoadState["deals"];
-}) {
-
-  return (
-    <section className="dancer-performance-summary" aria-label="Performance summary">
-      <Metric label="Current rank" value={String(analytics?.currentRank || "Unranked")} />
-      <Metric label="30-day views" value={String(analytics?.profileViews30Days || 0)} />
-      <Metric label="Club Deals this month" value={String(deals?.successfulRedemptionsThisMonth || 0)} />
-      <Metric label="Deal saves" value={String(deals?.qrSaves || 0)} />
-    </section>
-  );
-}
-
-
-function DancerPerformanceDetail({
-  badge,
-  children,
-  description,
-  id,
-  title,
-}: {
-  badge: string;
-  children: ReactNode;
-  description: string;
-  id?: string;
-  title: string;
-}) {
-  return (
-    <details className="dancer-performance-detail" id={id}>
-      <summary>
-        <span>
-          <strong>{title}</strong>
-          <small>{description}</small>
-        </span>
-        <b>{badge}</b>
-        <i aria-hidden="true">+</i>
-      </summary>
-      <div className="dancer-performance-detail-body">{children}</div>
-    </details>
-  );
-}
-
-
-function DancerDealPanel({ deals }: { deals?: LoadState["deals"] }) {
-  return (
-    <article className="info-panel deal-panel" aria-label="Club Deal activity details">
-      <div className="deal-metrics">
-        <Metric label="Successful this month" value={String(deals?.successfulRedemptionsThisMonth || 0)} />
-        <Metric label="Cashier opens" value={String(deals?.qrOpens || 0)} />
-        <Metric label="Saved / shared intent" value={String(deals?.qrSaves || 0) + " / " + String(deals?.qrShares || 0)} />
-        <Metric label="Redeemed deals" value={String(deals?.redeemed || 0)} />
-      </div>
-      <p>Club Deals stay visible on your profile. Guest activity and verified admissions appear here.</p>
     </article>
   );
 }
@@ -905,54 +798,6 @@ function DancerSetupPanel({
       </form>
     </article>
   );
-}
-
-
-function DancerImpactPanel({
-  events,
-  report,
-}: {
-  events?: LoadState["rankingEvents"];
-  report?: LoadState["weeklyReport"];
-}) {
-  return (
-    <article className="info-panel impact-panel" aria-label="Weekly result details">
-      <div className="weekly-result-summary">
-        <span>
-          <strong>{String(report?.followersGained || 0)} new followers</strong>
-          <small>This week</small>
-        </span>
-        <b>{String(report?.profileViews || 0)} views · {String(report?.goingSignals || 0)} Going signals</b>
-      </div>
-      <div className="event-list">
-        {(events || []).slice(0, 5).map((event) => (
-          <div className="event-row" key={String(event.id)}>
-            <strong>{String(event.message || "Ranking update")}</strong>
-            <span>{formatEventDate(String(event.createdAt || ""))}</span>
-          </div>
-        ))}
-        {!events?.length ? <p>No ranking milestones yet.</p> : null}
-      </div>
-    </article>
-  );
-}
-
-
-function formatRankMove(report?: LoadState["weeklyReport"]) {
-  if (!report) return "Pending";
-  const start = report.startRank ? `#${report.startRank}` : "Unranked";
-  const current = report.currentRank ? `#${report.currentRank}` : "Unranked";
-  return `${start} to ${current}`;
-}
-
-
-function formatEventDate(value: string) {
-  if (!value) return "Recent";
-  return new Intl.DateTimeFormat("en-US", {
-    month: "short",
-    day: "numeric",
-    hour: "numeric",
-  }).format(new Date(value));
 }
 
 

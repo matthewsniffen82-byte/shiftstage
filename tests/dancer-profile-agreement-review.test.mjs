@@ -149,7 +149,7 @@ test("loading the dashboard cannot finalize an old tap before agreement and requ
       "@/src/lib/supabase/request": { createRequestSupabaseContext: async () => ({ client: {}, user: { id: "verified-owner" } }) },
       "@/src/lib/security/safe-error-metadata": {},
     };
-    vm.runInNewContext(compile(source), { exports, require: name => dependencies[name] });
+    vm.runInNewContext(compile(source), { exports, require: name => dependencies[name], URL });
     assert.equal((await exports.GET(new Request("https://mydancr.test/api/dancer/dashboard"))).ok, true);
     assert.equal(finalized, expected);
   }

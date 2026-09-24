@@ -22,7 +22,7 @@ test("the real dashboard opens before background reports, support and referral a
   const background = deferred(), ready = deferred(), updates = [];
   globalThis.fetch = async path => {
     if (path === "/api/account") return response({ account: { role: "dancer" } });
-    if (path === "/api/dancer/dashboard") return response({ nfc: { activated: true }, finance: { connected: true } });
+    if (path === "/api/dancer/dashboard?period=7d") return response({ nfc: { activated: true }, finance: { connected: true } });
     if (path === "/api/dancer/profile") return response({ profile: { stage_name: "Stacy", status: "approved" } });
     await background.promise;
     return response({ threads: [{ id: "support-1" }], report: { rank: 2 }, events: [{ id: "event-1" }], reviews: [{ id: "review-1" }], access: { active: true } });
@@ -38,9 +38,9 @@ test("the real dashboard opens before background reports, support and referral a
   assert.equal(updates[0].data.finance.connected, true);
   background.resolve();
   await loading;
-  assert.equal(updates.length, 6);
+  assert.equal(updates.length, 4);
   assert.equal(updates.find(update => update.panel === "supportThreads").data[0].id, "support-1");
-  assert.equal(updates.find(update => update.panel === "weeklyReport").data.rank, 2);
+  assert.ok(!updates.some(update => update.panel === "weeklyReport" || update.panel === "rankingEvents"));
 });
 
 test("first-tap activation finishes before fetching the profile, and account verification gates display", async t => {
@@ -49,12 +49,12 @@ test("first-tap activation finishes before fetching the profile, and account ver
   globalThis.fetch = async path => {
     paths.push(path);
     if (path === "/api/account") { await account.promise; return response({ account: { role: "dancer" } }); }
-    if (path === "/api/dancer/dashboard") await activation.promise;
+    if (path === "/api/dancer/dashboard?period=7d") await activation.promise;
     return response(path === "/api/dancer/profile" ? { profile: { status: "approved" } } : {});
   };
   const loading = loadDancerDashboard(new AbortController().signal, (panel, data) => updates.push({ panel, data }));
   await settle();
-  assert.ok(paths.includes("/api/account") && paths.includes("/api/dancer/dashboard"));
+  assert.ok(paths.includes("/api/account") && paths.includes("/api/dancer/dashboard?period=7d"));
   assert.ok(!paths.includes("/api/dancer/profile"));
   activation.resolve();
   await settle();
@@ -81,7 +81,7 @@ test("an expiring session refreshes before any dancer panels start", async t => 
   assert.ok(paths.includes("/api/dancer/profile"));
 });
 
-for (const failedPath of ["/api/account", "/api/dancer/dashboard", "/api/dancer/profile"]) {
+for (const failedPath of ["/api/account", "/api/dancer/dashboard?period=7d", "/api/dancer/profile"]) {
   test(`a failed ${failedPath} never presents an incomplete or approved dashboard`, async t => {
     setup(t);
     const controller = new AbortController(), updates = [];
@@ -110,7 +110,7 @@ test("closing during loading discards late responses", async t => {
 test("background failures cannot block a valid dashboard", async t => {
   setup(t);
   const updates = [];
-  globalThis.fetch = async path => ["/api/account", "/api/dancer/dashboard", "/api/dancer/profile"].includes(path)
+  globalThis.fetch = async path => ["/api/account", "/api/dancer/dashboard?period=7d", "/api/dancer/profile"].includes(path)
     ? response({ profile: { stage_name: "Stacy" } })
     : new Response(JSON.stringify({ ok: false }), { status: 503 });
   await loadDancerDashboard(new AbortController().signal, panel => updates.push(panel));
@@ -141,7 +141,7 @@ for (const result of ["denied", "stale-success"]) test(`paused controls do not w
   const gate = deferred(), updates = [];
   globalThis.fetch = async path => {
     if (path === "/api/account") return response({ account: pausedAccount });
-    if (path === "/api/dancer/dashboard") {
+    if (path === "/api/dancer/dashboard?period=7d") {
       await gate.promise;
       return result === "denied" ? dancerDenied() : response({ finance: { connected: true } });
     }
