@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { isPublicDancerProfileEligible } from "./profile-approval";
+import { dancerEngagementAlertEnabled } from "./dancer-notification-preferences";
 
 type DancrClient = SupabaseClient;
 export type EngagementTargetType = "profile" | "photo" | "video";
@@ -71,6 +72,15 @@ export async function createDancerEngagementNotification(
     input.targetId,
     input.dedupeSubject,
   ].join(":"));
+  const preferenceResult = await client.auth.admin.getUserById(recipient.recipientId).catch(() => null);
+  if (!preferenceResult?.data.user || preferenceResult.error) {
+    // Do not notify against an unknown preference, or fail a completed like/follow.
+    console.warn("DANCER_NOTIFICATION_PREFERENCES_UNAVAILABLE");
+    return { created: false, notificationId };
+  }
+  if (!dancerEngagementAlertEnabled(preferenceResult.data.user.user_metadata, input.engagementType, input.targetType)) {
+    return { created: false, notificationId };
+  }
   const href = input.targetType === "profile"
     ? `/dancers/${encodeURIComponent(recipient.dancerSlug)}`
     : `/dancers/${encodeURIComponent(recipient.dancerSlug)}?media=${input.targetType}&mediaId=${encodeURIComponent(input.targetId)}`;
