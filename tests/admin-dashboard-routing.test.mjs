@@ -79,13 +79,7 @@ test("Login / Join visibly links to separate platform admin access", () => {
     homeRoute,
     /id=\"platformAdminAuthLink\" href=\"\/admin\" aria-label=\"Open Platform admin sign in or signup\"/,
   );
-  assert.match(
-    homeRoute,
-    /<strong>Platform admin<\/strong><small>Private admin access<\/small>/,
-  );
-  assert.match(homeRoute, /#authPage \.auth-admin-entry\{[^}]*min-height:54px;[^}]*grid-template-columns:30px minmax\(0,1fr\) auto;[^}]*padding:9px 12px/);
-  assert.match(homeRoute, /#authPage \.auth-admin-entry-mark\{[^}]*width:30px;/);
-  assert.match(homeRoute, /#authPage \.auth-admin-entry-copy strong\{font-size:15px;/);
+  assert.match(homeRoute, /aria-label="Open Platform admin sign in or signup">Platform admin<\/a>/);
   assert.match(homeRoute, /#authPage\.venue-request-succeeded \.auth-admin-entry\{display:none\}/);
   assert.match(
     homeRoute,

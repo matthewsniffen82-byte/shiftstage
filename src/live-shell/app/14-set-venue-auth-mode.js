@@ -129,10 +129,9 @@
       signInTab.setAttribute("aria-selected", String(!isCreate));
       createTab.setAttribute("aria-selected", String(isCreate));
       document.getElementById("authPageTitle").textContent = isCreate ? "Choose your account" : "Sign in to MyDancr";
-      document.getElementById("authRoleTitle").textContent = isCreate ? "What are you joining as?" : "One sign-in for every account";
       document.getElementById("authRoleSubtitle").textContent = isCreate
         ? "Pick the account that matches how you use MyDancr."
-        : "Use the email and password for your guest, dancer, or venue account.";
+        : "Sign in with your guest, dancer, or club account.";
       document.querySelector(".auth-selected-role").hidden = isCreate;
       document.getElementById("authOverview").hidden = !isCreate;
       document.getElementById("authForm").hidden = isCreate;
@@ -386,6 +385,8 @@
       document.getElementById("customerBackToTypes").hidden = !isSignup;
       const forgotButton = document.getElementById("customerForgotPasswordBtn");
       if (forgotButton) forgotButton.hidden = mode !== "login";
+      const helpRow = forgotButton?.closest(".auth-help-row");
+      if (helpRow) helpRow.hidden = isSignup;
       const forgotLoginButton = document.getElementById("customerForgotLoginBtn");
       if (forgotLoginButton) forgotLoginButton.hidden = mode !== "login";
       const submit = document.getElementById("authSubmit");

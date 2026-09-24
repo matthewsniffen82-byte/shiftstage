@@ -1,18 +1,19 @@
 /* Account entry: shared geometry for guest, dancer and club forms. */
 body.dancr-button-system :is(#authPage, #dancerSignupPage, .account-shell) {
   --dancr-form-height: 50px;
-  --dancr-form-border: rgba(196, 181, 253, .2);
+  --dancr-form-border: #34343c;
 }
 body.dancr-button-system :is(#authPage .auth-choice-card, #dancerSignupPage .dancer-signup-card, .account-shell .account-panel) {
   box-sizing: border-box;
   min-width: 0;
-  padding: clamp(20px, 5vw, 28px) !important;
+  padding: clamp(16px, 4vw, 20px) !important;
   border: 1px solid var(--dancr-form-border) !important;
   border-radius: 24px !important;
-  background: radial-gradient(ellipse at top left, rgba(124,58,237,.09), transparent 65%), #111118 !important;
-  box-shadow: 0 18px 48px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.04) !important;
+  background: #08080c !important;
+  box-shadow: none !important;
 }
-body.dancr-button-system :is(#authPage, #dancerSignupPage, .account-shell .account-panel) :is(.auth-form, .venue-request-grid, .field) { gap: 16px; min-width: 0; }
+body.dancr-button-system :is(#authPage, #dancerSignupPage, .account-shell .account-panel) :is(.auth-form, .venue-request-grid) { gap: 14px; min-width: 0; }
+body.dancr-button-system :is(#authPage, #dancerSignupPage, .account-shell .account-panel) :is(.field, label) { gap: 6px; min-width: 0; }
 body.dancr-button-system :is(#authPage, #dancerSignupPage, .account-shell .account-panel) :is(label, .field > label) {
   color: #cbd5e1 !important;
   font-size: 12px !important;
@@ -26,10 +27,10 @@ body.dancr-button-system :is(#authPage, #dancerSignupPage, .account-shell .accou
   width: 100%; min-width: 0;
   min-height: var(--dancr-form-height) !important;
   padding: 12px 14px !important;
-  border: 1px solid rgba(203,213,225,.23) !important;
+  border: 1px solid var(--dancr-form-border) !important;
   border-radius: 12px !important;
   color: #f8fafc !important;
-  background: #0d0d14 !important;
+  background: linear-gradient(#08080c, #08080c) !important;
   box-shadow: none !important;
   font-size: 16px !important;
   font-weight: 400 !important;
@@ -39,7 +40,7 @@ body.dancr-button-system :is(#authPage, #dancerSignupPage, .account-shell .accou
 body.dancr-button-system :is(#authPage, #dancerSignupPage, .account-shell .account-panel) :is(.password-toggle, .password-control button) {
   width: 44px !important; min-width: 44px !important; height: 44px !important; min-height: 44px !important;
   padding: 0 !important; border: 0 !important; border-radius: 8px !important;
-  color: #c4b5fd !important; background: transparent !important; box-shadow: none !important;
+  color: #b8bac6 !important; background: transparent !important; box-shadow: none !important;
 }
 body.dancr-button-system :is(#authPage, #dancerSignupPage, .account-shell .account-panel) :is(input, select, textarea, button, a):focus-visible {
   outline: 2px solid #c4b5fd !important; outline-offset: 3px !important;
@@ -51,30 +52,86 @@ body.dancr-button-system :is(#authPage, #dancerSignupPage, .account-shell .accou
   border-radius: 12px !important;
   background: linear-gradient(110deg, #7c3aed, #6d28d9) !important;
   color: #fff !important;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.16), 0 6px 18px rgba(124,58,237,.2) !important;
+  box-shadow: none !important;
   font-size: 14px !important; font-weight: 700 !important;
 }
-body.dancr-button-system :is(#authPage, #dancerSignupPage) .page-head h2 { font-size: 24px !important; font-weight: 650 !important; letter-spacing: -.025em; }
+body.dancr-button-system :is(#authPage, #dancerSignupPage) .page-head h2 { font-size: 22px !important; font-weight: 650 !important; letter-spacing: -.025em; }
 body.dancr-button-system :is(#authPage, #dancerSignupPage) :is(.field-note, .rule-note, .venue-request-privacy, .venue-request-section > p) {
-  font-size: 13px !important; font-weight: 400 !important; line-height: 1.6 !important;
+  color: #b8bac6; font-size: 13px !important; font-weight: 400 !important; line-height: 1.5 !important; margin-block: 0;
 }
 body.dancr-button-system #authPage :is(.venue-request-intro, .venue-request-section) {
-  padding: 16px !important; border: 1px solid var(--dancr-form-border) !important;
-  border-radius: 16px !important; background: #0d0d14 !important; box-shadow: none !important;
+  padding: 12px !important; border: 1px solid var(--dancr-form-border) !important;
+  border-radius: 16px !important; background: linear-gradient(#08080c, #08080c) !important; box-shadow: none !important;
 }
 body.dancr-button-system #authPage :is(.venue-request-section-head strong, .venue-auth-mode-copy strong, .venue-request-intro strong) { font-size: 16px !important; font-weight: 650 !important; line-height: 1.4 !important; }
-body.dancr-button-system #authPage :is(.venue-request-section-head > span, .venue-request-intro > span, .venue-auth-mode-copy > span) { color: #cbd5e1 !important; font-size: 13px !important; font-weight: 400 !important; line-height: 1.6 !important; }
+body.dancr-button-system #authPage :is(.venue-request-section-head > span, .venue-request-intro > span, .venue-auth-mode-copy > span) { color: #b8bac6 !important; font-size: 13px !important; font-weight: 400 !important; line-height: 1.5 !important; margin-block: 0; }
 body.dancr-button-system #authPage .venue-request-consent { align-items: start; }
 body.dancr-button-system #authPage .venue-request-consent input { accent-color: #8b5cf6; }
-body.dancr-button-system #dancerSignupPage .dancer-signup-progress { padding: 16px; border: 1px solid var(--dancr-form-border); border-radius: 16px; background: #0d0d14; }
+body.dancr-button-system #dancerSignupPage .dancer-signup-progress { margin: 0; padding: 0 0 12px; border: 0; border-bottom: 1px solid var(--dancr-form-border); border-radius: 0; background: transparent; }
 body.dancr-button-system #dancerSignupPage .dancer-signup-progress-copy :is(span, strong) { font-size: 13px; font-weight: 600; color: #ddd6fe; }
 body.dancr-button-system #dancerSignupPage .dancer-signup-progress-track i.active { background: #8b5cf6; box-shadow: none; }
-body.dancr-button-system .account-shell .account-panel .segmented button { min-height: 48px !important; border-radius: 12px !important; font-size: 14px !important; font-weight: 600 !important; }
+body.dancr-button-system .account-shell .account-panel .segmented button { min-height: 44px !important; border-radius: 12px !important; font-size: 14px !important; font-weight: 600 !important; }
 body.dancr-button-system .account-shell .account-panel .segmented button.active { border: 1px solid rgba(196,181,253,.4) !important; background: linear-gradient(135deg,#51278b,#35204f) !important; box-shadow: none !important; }
 @media (max-width: 520px) {
   body.dancr-button-system #authPage .venue-request-grid { grid-template-columns: minmax(0,1fr); }
-  body.dancr-button-system #authPage .venue-request-section { padding: 14px !important; }
+  body.dancr-button-system #authPage .venue-request-section { padding: 12px !important; }
 }
+
+/* Compact public entry, with full-size fields and quiet secondary actions. */
+body.dancr-button-system :is(#authPage, #dancerSignupPage) > .page-inner { width: min(100%, 500px); gap: 10px; }
+body.dancr-button-system :is(#authPage, #dancerSignupPage) .page-head { margin: 0; padding: 6px 2px; gap: 12px; border: 0 !important; }
+body.dancr-button-system :is(#authPage, #dancerSignupPage) .page-head h2 { margin: 4px 0 0; line-height: 1.25; }
+body.dancr-button-system :is(#authPage, #dancerSignupPage) .page-head .close-btn {
+  width: 44px; height: 44px; flex: 0 0 44px;
+  border: 0 !important; color: #b8bac6 !important; background: transparent !important; box-shadow: none !important;
+}
+body.dancr-button-system #authPage .auth-choice-card { gap: 14px; }
+body.dancr-button-system #authPage .auth-entry-tabs { padding: 3px; border-color: var(--dancr-form-border); background: #08080c; }
+body.dancr-button-system #authPage .auth-entry-tab.active { background: linear-gradient(#160e24, #160e24) !important; border-color: #745696 !important; box-shadow: none !important; }
+body.dancr-button-system #authPage .auth-selected-role span { color: #b8bac6; line-height: 1.5; }
+body.dancr-button-system #authPage .auth-account-choice {
+  min-height: 76px; padding: 12px; gap: 10px; grid-template-columns: 32px minmax(0, 1fr) auto;
+  border-color: var(--dancr-form-border) !important; background: linear-gradient(#08080c, #08080c) !important; box-shadow: none !important;
+}
+body.dancr-button-system #authPage .auth-account-choice:is(:hover, :focus-visible) { border-color: #745696 !important; }
+body.dancr-button-system #authPage .auth-account-choice-icon { width: 32px; border: 0; border-radius: 0; background: transparent; }
+body.dancr-button-system #authPage .auth-account-choice strong { font-size: 15px; }
+body.dancr-button-system #authPage .auth-account-choice small { color: #b8bac6 !important; }
+body.dancr-button-system #authPage .auth-account-choice-arrow { color: #b8bac6; }
+body.dancr-button-system :is(#authPage .auth-help-row, .account-shell .auth-help-row) {
+  display: flex; flex-wrap: wrap; justify-content: center; gap: 0 16px; margin-block: -8px;
+}
+body.dancr-button-system :is(#authPage .auth-help-row .forgot-password-link, .account-shell .forgot-password) {
+  width: auto !important; min-height: 44px !important; padding: 4px 0 !important; border: 0 !important;
+  border-radius: 4px !important; color: #b8bac6 !important; background: transparent !important; box-shadow: none !important;
+  font-size: 12px !important; font-weight: 500 !important;
+}
+body.dancr-button-system :is(#authPage .auth-help-row .forgot-password-link, .account-shell .forgot-password):is(:hover, :focus-visible) {
+  color: #fff !important; text-decoration: underline; text-underline-offset: 3px;
+}
+body.dancr-button-system #authPage :is(.auth-back-to-types, .venue-request-back) {
+  min-height: 44px; margin: 0; padding: 4px 2px !important; color: #b8bac6 !important; font-size: 12px !important; font-weight: 500 !important;
+}
+body.dancr-button-system #authPage :is(.venue-request-intro, .venue-request-section, .venue-signup-step, .venue-account-fields) { gap: 12px; }
+body.dancr-button-system #authPage :is(.venue-request-section-head, .venue-signup-step-head) { gap: 4px; }
+body.dancr-button-system #authPage .venue-signup-step { padding: 12px; border-color: var(--dancr-form-border); background: #08080c; box-shadow: none; }
+body.dancr-button-system #authPage .venue-code-verify { width: 100%; min-height: 50px !important; padding: 12px 16px !important; border-radius: 12px !important; border-color: #745696 !important; background: linear-gradient(110deg, #7c3aed, #6d28d9) !important; box-shadow: none !important; }
+
+body.dancr-button-system #authPage:not(.venue-request-succeeded) .venue-request-back {
+  display: inline-flex; align-items: center; justify-content: center; border: 0 !important; background: transparent !important; box-shadow: none !important;
+}
+body.dancr-button-system #authPage:not(.venue-request-succeeded) .venue-request-back:is(:hover, :focus-visible) { color: #fff !important; text-decoration: underline; text-underline-offset: 3px; }
+body.dancr-button-system #authPage .auth-help-row[hidden] { display: none !important; }
+body.dancr-button-system :is(#authPage, #dancerSignupPage) .auth-signup-guidance { display: grid; gap: 8px; }
+body.dancr-button-system :is(#authPage, #dancerSignupPage) .auth-signup-guidance p {
+  margin: 0; padding: 0; border: 0; color: #b8bac6; background: transparent; font-size: 12px; font-weight: 400; line-height: 1.5;
+}
+body.dancr-button-system :is(#authPage, #dancerSignupPage) .auth-signup-guidance a {
+  justify-self: start; display: inline-flex; align-items: center; min-height: 44px; margin-block: -8px;
+  color: #b8bac6; font-size: 12px; text-decoration: underline; text-underline-offset: 3px;
+}
+body.dancr-button-system #authPage .auth-signup-note { border-color: var(--dancr-form-border) !important; background: linear-gradient(#08080c, #08080c) !important; }
+body.dancr-button-system #authPage .auth-signup-note-copy { font-weight: 400; }
 
 /* Only server-confirmed actions opt in to the shared completion appearance. */
 body.dancr-button-system :is(.dashboard-shell, .dancer-profile-preview-overlay, #dancer-profile-builder-panel) button[data-action-state="success"] {

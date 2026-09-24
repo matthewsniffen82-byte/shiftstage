@@ -40521,21 +40521,6 @@
           background: var(--dancr-color-brand-primary-soft) !important;
         }
 
-        #authPage .auth-admin-entry {
-          border-color: rgba(203, 213, 225, .12);
-          border-radius: 12px;
-          background: transparent;
-          box-shadow: none;
-        }
-        #authPage .auth-admin-entry-mark {
-          border: 1px solid rgba(196, 181, 253, .18);
-          border-radius: 9px;
-          color: #c4b5fd;
-          background: rgba(124, 58, 237, .08);
-        }
-        #authPage .auth-admin-entry-copy strong { font-size: 13px; font-weight: 600; }
-        #authPage .auth-admin-entry-copy small { font-size: 11px; color: var(--dancr-color-text-muted); font-weight: 400; }
-
         .auth-signup-note {
           display: grid;
           grid-template-columns: auto minmax(0, 1fr);
@@ -40696,7 +40681,7 @@
           border-radius: 12px !important;
           border-color: rgba(196, 181, 253, .45) !important;
           background: linear-gradient(110deg, var(--dancr-color-brand-primary), #6d28d9) !important;
-          box-shadow: inset 0 1px 0 rgba(255, 255, 255, .16), 0 6px 18px rgba(124, 58, 237, .2) !important;
+          box-shadow: none !important;
           font-size: 15px;
           font-weight: 700 !important;
         }
@@ -41413,7 +41398,7 @@
         <div class="page-head">
           <div>
             <span class="eyebrow">Login / Join</span>
-            <h2 id="authPageTitle">Sign in to Mydancr</h2>
+            <h2 id="authPageTitle">Sign in to MyDancr</h2>
           </div>
           <button class="close-btn" id="authClose" aria-label="Close auth">
             <svg class="icon" viewBox="0 0 24 24"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
@@ -41425,8 +41410,7 @@
             <button class="auth-entry-tab" id="authCreateTab" type="button" role="tab" aria-selected="false">Create account</button>
           </div>
           <div class="auth-form-head auth-selected-role">
-            <strong id="authRoleTitle">One sign-in for every account</strong>
-            <span id="authRoleSubtitle">Use the email and password for your guest, dancer, or venue account.</span>
+            <span id="authRoleSubtitle">Sign in with your guest, dancer, or club account.</span>
           </div>
           <div class="role-options auth-role-grid" id="authOverview" aria-label="Choose account type" hidden>
             <button class="role-option account-option auth-account-choice" id="customerSignupBtn" type="button">
@@ -41559,13 +41543,9 @@
             <div class="rule-note auth-status" id="venueAuthStatus" role="status" aria-live="polite" aria-atomic="true" hidden></div>
           </form>
           <form class="auth-form venue-request-form" id="venueRequestForm" data-auth-view="venue-request" novalidate hidden>
-            <div class="venue-auth-mode-copy">
-              <strong>Request to list your club</strong>
-              <span>Submit your club details and create your manager login. Confirm your email, then wait for club approval.</span>
-            </div>
-            <div class="venue-request-intro">
-              <strong>Create your login, confirm your email, then get approved.</strong>
-              <span>Your club stays private until an approved manager finishes the page and chooses to publish it.</span>
+            <div class="auth-signup-guidance">
+              <p>Submit your club details and create your manager login. Confirm your email, then wait for club approval.</p>
+              <p>Your club stays private until an approved manager finishes the page and chooses to publish it.</p>
             </div>
             <section class="venue-request-section" aria-labelledby="venueRequestVenueHeading">
               <div class="venue-request-section-head">
@@ -41777,9 +41757,11 @@
                 <li>At least 1 special character (for example, ! @ # $)</li>
               </ul>
             </div>
-            <div class="rule-note">Free account. Your profile becomes public after setup and verification.</div>
-            <p class="rule-note">Confirm your email, build your private profile, then review and accept the Dancer Agreement before submitting your profile.</p>
-            <p class="rule-note">See how your information is handled in our <a href="/privacy" target="_blank" rel="noopener" style="text-decoration:underline">Privacy Policy</a>.</p>
+            <div class="auth-signup-guidance">
+              <p>Free account. Your profile becomes public after setup and verification.</p>
+              <p>Confirm your email, build your private profile, then review and accept the Dancer Agreement before submitting your profile.</p>
+              <a href="/privacy" target="_blank" rel="noopener">Privacy Policy</a>
+            </div>
             <button class="action-btn" type="submit">Create dancer account</button>
             <div class="rule-note auth-status" id="dancerSignupStatus" role="status" aria-live="polite" hidden></div>
           </form>
@@ -55819,10 +55801,9 @@
       signInTab.setAttribute("aria-selected", String(!isCreate));
       createTab.setAttribute("aria-selected", String(isCreate));
       document.getElementById("authPageTitle").textContent = isCreate ? "Choose your account" : "Sign in to MyDancr";
-      document.getElementById("authRoleTitle").textContent = isCreate ? "What are you joining as?" : "One sign-in for every account";
       document.getElementById("authRoleSubtitle").textContent = isCreate
         ? "Pick the account that matches how you use MyDancr."
-        : "Use the email and password for your guest, dancer, or venue account.";
+        : "Sign in with your guest, dancer, or club account.";
       document.querySelector(".auth-selected-role").hidden = isCreate;
       document.getElementById("authOverview").hidden = !isCreate;
       document.getElementById("authForm").hidden = isCreate;
@@ -56076,6 +56057,8 @@
       document.getElementById("customerBackToTypes").hidden = !isSignup;
       const forgotButton = document.getElementById("customerForgotPasswordBtn");
       if (forgotButton) forgotButton.hidden = mode !== "login";
+      const helpRow = forgotButton?.closest(".auth-help-row");
+      if (helpRow) helpRow.hidden = isSignup;
       const forgotLoginButton = document.getElementById("customerForgotLoginBtn");
       if (forgotLoginButton) forgotLoginButton.hidden = mode !== "login";
       const submit = document.getElementById("authSubmit");
