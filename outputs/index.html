@@ -53304,26 +53304,26 @@
                 </div>
               ` : ""}
               ${venueOfferMarkup(venue)}
+              <section class="venue-info venue-location-section" aria-label="Club location">
+                ${details.address ? `<div class="venue-address-line"><span>${escapeHtml(details.address)}</span></div>` : ""}
+                <div class="venue-action-stack" aria-label="Venue actions">
+                  <div class="venue-location-actions venue-primary-actions" aria-label="Venue travel actions">
+                    ${venueDirectionsMarkup({ venue, className: "venue-address-directions", city })}
+                  </div>
+                  <div class="venue-secondary-actions profile-actions-compact" aria-label="Venue profile actions">
+                    <button class="action-btn secondary follow-venue-btn profile-action-icon-control ${followsVenue ? "is-following" : ""}" type="button" data-venue-follow="${venueValue}" data-account-action="venue-follow" aria-pressed="${followsVenue}">
+                      <span class="profile-action-main">${actionButtonLabel(followsVenue ? "check" : "personPlus", followsVenue ? "Following" : "Follow")}</span>
+                    </button>
+                    <button class="action-btn secondary venue-detail-share profile-action-icon-control profile-share-action" type="button" data-share-venue="${venueValue}" data-share-city="${escapeOptionValue(city)}" aria-label="Share ${escapeHtml(details.name)} club profile">
+                      <span class="profile-action-main">${actionButtonLabel("share", "Share")}</span>
+                    </button>
+                  </div>
+                </div>
+              </section>
             </div>
           </article>
 
           <div class="venue-detail-exploration">
-            <section class="venue-info venue-location-section" aria-label="Club location">
-              ${details.address ? `<div class="venue-address-line"><span>${escapeHtml(details.address)}</span></div>` : ""}
-              <div class="venue-action-stack" aria-label="Venue actions">
-                <div class="venue-location-actions venue-primary-actions" aria-label="Venue travel actions">
-                  ${venueDirectionsMarkup({ venue, className: "venue-address-directions", city })}
-                </div>
-                <div class="venue-secondary-actions profile-actions-compact" aria-label="Venue profile actions">
-                  <button class="action-btn secondary follow-venue-btn profile-action-icon-control ${followsVenue ? "is-following" : ""}" type="button" data-venue-follow="${venueValue}" data-account-action="venue-follow" aria-pressed="${followsVenue}">
-                    <span class="profile-action-main">${actionButtonLabel(followsVenue ? "check" : "personPlus", followsVenue ? "Following" : "Follow")}</span>
-                  </button>
-                  <button class="action-btn secondary venue-detail-share profile-action-icon-control profile-share-action" type="button" data-share-venue="${venueValue}" data-share-city="${escapeOptionValue(city)}" aria-label="Share ${escapeHtml(details.name)} club profile">
-                    <span class="profile-action-main">${actionButtonLabel("share", "Share")}</span>
-                  </button>
-                </div>
-              </div>
-            </section>
             ${activitySections}
           </div>
         </div>
