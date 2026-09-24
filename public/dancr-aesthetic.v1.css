@@ -13471,7 +13471,7 @@ body.dancer-directory-active.dancr-button-system > .app main.stack > section.sta
 html body.dancr-button-system > .app main.stack > .home-discovery-controls
   :is(#citySelectPanel, #homeAdvancedFilters)
   :is(.city-picker-option, #distanceSelectButton, #venueSelectButton, #locationBtn, #homeFilterReset),
-html body.dancer-directory-active.dancr-button-system > .app main.stack > .home-discovery-controls
+html body.dancr-button-system > .app main.stack > .home-discovery-controls
   :is(#citySelectButton, #homeFilterToggle),
 html body.dancer-directory-active.dancr-button-system > .app main.stack > section.stack
   > #results.home-dancer-grid .dancer-directory-filters > button.dancer-directory-filter[role="tab"][aria-selected] {
@@ -13495,7 +13495,7 @@ html body.dancer-directory-active.dancr-button-system > .app main.stack > sectio
 html body.dancr-button-system > .app main.stack > .home-discovery-controls
   :is(#citySelectPanel, #homeAdvancedFilters)
   :is(.city-picker-option, #distanceSelectButton, #venueSelectButton, #locationBtn, #homeFilterReset)::before,
-html body.dancer-directory-active.dancr-button-system > .app main.stack > .home-discovery-controls
+html body.dancr-button-system > .app main.stack > .home-discovery-controls
   :is(#citySelectButton, #homeFilterToggle)::before,
 html body.dancer-directory-active.dancr-button-system > .app main.stack > section.stack
   > #results.home-dancer-grid .dancer-directory-filters > button.dancer-directory-filter[role="tab"][aria-selected]::before {
@@ -13517,7 +13517,7 @@ html body.dancer-directory-active.dancr-button-system > .app main.stack > sectio
 html body.dancr-button-system > .app main.stack > .home-discovery-controls
   :is(#citySelectPanel, #homeAdvancedFilters)
   :is(.city-picker-option[aria-selected="true"], #distanceSelectButton[aria-expanded="true"], #venueSelectButton[aria-expanded="true"]),
-html body.dancer-directory-active.dancr-button-system > .app main.stack > .home-discovery-controls
+html body.dancr-button-system > .app main.stack > .home-discovery-controls
   :is(#citySelectButton[aria-expanded="true"], #homeFilterToggle:is(.is-open, .has-active-filters)) {
   --discovery-control-face: #160e24;
   --discovery-control-edge: #745696;
@@ -13549,7 +13549,7 @@ html body.dancer-directory-active.dancr-button-system > .app main.stack > sectio
 html body.dancr-button-system > .app main.stack > .home-discovery-controls
   :is(#citySelectPanel, #homeAdvancedFilters)
   :is(.city-picker-option, #distanceSelectButton, #venueSelectButton, #locationBtn, #homeFilterReset):focus-visible,
-html body.dancer-directory-active.dancr-button-system > .app main.stack > .home-discovery-controls
+html body.dancr-button-system > .app main.stack > .home-discovery-controls
   :is(#citySelectButton, #homeFilterToggle):focus-visible,
 html body.dancer-directory-active.dancr-button-system > .app main.stack > section.stack
   > #results.home-dancer-grid .dancer-directory-filter:focus-visible {
