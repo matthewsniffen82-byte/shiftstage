@@ -13610,6 +13610,12 @@ html body.dancer-directory-active.dancr-button-system > .app main.stack > sectio
 }
 
 html body.dancer-directory-active.dancr-button-system > .app main.stack > section.stack
+  > #results.home-dancer-grid .dancer-directory-filters > button.dancer-directory-filter[data-dancer-directory-filter="not_now"][aria-selected="true"] {
+  --discovery-control-face: #160e24;
+  --discovery-control-edge: #745696;
+}
+
+html body.dancer-directory-active.dancr-button-system > .app main.stack > section.stack
   > #results.home-dancer-grid .dancer-directory-filters > button.dancer-directory-filter[data-dancer-directory-filter="now"][aria-selected="true"]:not(.is-empty) {
   --discovery-control-face: #0a1711;
   --discovery-control-edge: #32634a;
