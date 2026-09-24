@@ -75,6 +75,7 @@ export function DancerProfilePreview({
   const scrollRef = useRef(0);
   const onCloseRef = useRef(onClose);
   const activeEditorSectionRef = useRef<DancerProfileEditorSectionId | null>(null);
+  const activeSocialPlatformRef = useRef<SocialPlatform | null>(null);
   const persistedName = persistedDancerStageName(profile);
   const persistedCity = String(profile?.city || "").trim();
   const avatarUrl = String(profile?.avatarPhotoUrl || "").trim();
@@ -96,7 +97,7 @@ export function DancerProfilePreview({
   const isIdentityEditor = activeEditorSection === "identity" || activeEditorSection === "stageName" || activeEditorSection === "city";
   const closeActiveEditor = useCallback(() => {
     if (avatarUploadingRef.current) return;
-    const platform = activeSocialPlatform;
+    const platform = activeSocialPlatformRef.current;
     const section = activeEditorSectionRef.current;
     setActiveEditorSection(null);
     setActiveSocialPlatform(null);
@@ -110,7 +111,7 @@ export function DancerProfilePreview({
         document.querySelector<HTMLElement>(`[data-profile-editor-trigger="${section}"]`)?.focus({ preventScroll: true });
       });
     }
-  }, [activeSocialPlatform]);
+  }, []);
   const activeEditorContent = activeEditorSection && activeEditorSection !== "socials"
     ? editorSections?.[activeEditorSection]
     : null;
@@ -122,6 +123,7 @@ export function DancerProfilePreview({
     : "";
   onCloseRef.current = onClose;
   activeEditorSectionRef.current = activeEditorSection;
+  activeSocialPlatformRef.current = activeSocialPlatform;
 
   const closePreview = useCallback(() => {
     if (avatarUploadingRef.current || photoDeletingRef.current) return;

@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
+import vm from "node:vm";
 
 const liveApp = await readFile(new URL("../outputs/index.html", import.meta.url), "utf8");
 
@@ -20,16 +21,25 @@ test("the phone editor uses a full-width, compact schedule and Club Deal hierarc
   assert.match(liveApp, /#approvedProfileVideoStatus \{[\s\S]*?margin-right: 62px !important;/);
 });
 
-test("upcoming schedule guidance stays compact without reserving a no-shift deal slot", () => {
-  assert.match(liveApp, /profile-shift-card schedule-upcoming/);
-  assert.match(liveApp, /Upcoming · \$\{escapeHtml\(upcomingDateLabel\)\}/);
-  assert.match(liveApp, /function profileDealTileMarkup\(profile\)[\s\S]*?if \(state\.key === "available"\)[\s\S]*?profile-club-deal-tile is-inactive/);
-  assert.match(liveApp, /label: "Going tonight\? View free entry"[\s\S]*?Open \$\{profile\?\.venue \|\| "the venue"\}'s page to view its Club Deals\./);
-  assert.match(liveApp, /function dancerProfileUpcomingVenueDealMarkup[\s\S]*?data-upcoming-venue-deal="venue-page"/);
-  assert.match(liveApp, /label: "No active club deal"[\s\S]*?Deals activate after a verified club check-in\./);
-  assert.doesNotMatch(liveApp, /Unlocks after you verify you're working and the venue has an active offer\./);
-  assert.doesNotMatch(liveApp, /This is the dancer's next posted shift\. Follow or turn on notifications for schedule updates\./);
-  assert.match(liveApp, /const emptyScheduleCopy = isEditorPreview[\s\S]*?`Follow \$\{escapeHtml\(profile\.name\)\} for updates`;/);
-  assert.match(liveApp, /class="profile-empty-state">No shift posted<\/span>[\s\S]*?<span>\$\{emptyScheduleCopy\}<\/span>/);
+test("non-working guidance distinguishes the editor from guest discovery without reserving a deal slot", () => {
+  const source = liveApp.slice(liveApp.indexOf("    function shiftsMarkup("), liveApp.indexOf("    async function refreshOpenProfileWorkingAlert("));
+  const render = vm.runInNewContext(`${source}; shiftsMarkup`, {
+    selectedCity: () => "Las Vegas",
+    isWorkingTonight: profile => Boolean(profile.working),
+    actionIconMarkup: () => "<svg></svg>",
+    escapeHtml: value => value,
+    escapeOptionValue: value => value,
+    profileVenueDestinationMarkup: () => "<button>Club details</button>",
+  });
+  const dancer = { id: "sample", name: "Sample", working: false, scheduled: false };
+  const editor = render(dancer, {}, { preview: true });
+  const guest = render(dancer, {}, { preview: false });
+  assert.match(editor, /Not working now/);
+  assert.match(editor, /Tap a club’s dressing-room sticker/);
+  assert.doesNotMatch(editor, /data-profile-working-alert|profile-club-deal-tile/);
+  assert.match(guest, /Follow to get notified when Sample is working/);
+  assert.match(guest, /data-profile-working-alert="sample"/);
+  assert.doesNotMatch(guest, /profile-club-deal-tile/);
+  assert.match(render({ ...dancer, working: true, scheduled: true }, {}, { preview: true }), /Working Now/);
   assert.match(liveApp, /const dealMarkup = profile\?\.scheduled[\s\S]*?: "";/);
 });
