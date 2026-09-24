@@ -20,12 +20,6 @@ export default function VenueValueAnalytics({ report, periodStart, periodEnd, ti
   return <div className="venue-value-analytics">
     <p className="venue-value-dates">{dateRange}</p>
     <div className="venue-value-metrics">{primary.map(([key, label]) => metric(key, label, key === "directions"))}</div>
-    <details className="venue-value-info"><summary><span aria-hidden="true">ⓘ</span> About these numbers</summary>
-      <p>QR scan results count confirmed admission-pass redemptions. Opening or scanning a pass alone does not count as an admission. Pickup requests and directions show customer interest, not confirmed arrivals.</p>
-      <p>Compared with the preceding period of the same length. “Partial tracking” means tracking started too recently for a complete comparison.</p>
-      <p>{formatDate(periodStart)} – {formatDate(periodEnd)} · {timezone}</p>
-    </details>
-    <details className="venue-value-details"><summary>View detailed analytics</summary>
     <div className="venue-value-supporting">
       {metric("going", "I’m Going signals")}{metric("visitors", "Unique venue visitors")}{metric("followers", "New followers")}
       {metric("passengers", "Requested passengers")}{metric("impressions", "Venue-card impressions", true)}
@@ -33,25 +27,24 @@ export default function VenueValueAnalytics({ report, periodStart, periodEnd, ti
       <div className="metric"><span>Claim → admission</span><strong>{conversion === null ? "—" : `${conversion}%`}</strong><small>Passes claimed during this period</small></div>
     </div>
     <p className="venue-value-note">Going signals are saved intentions, not arrivals. Unique visitors are tracked browsers, not an exact count of people. New followers are follows from this period that remain active.</p>
-    <details><summary>Customer interactions</summary>
+    <section className="venue-value-breakdown" aria-labelledby="venue-interactions-heading"><h3 id="venue-interactions-heading">Customer interactions</h3>
       <p>Button tracking began {formatDate(since)}. Earlier clicks are unavailable. Repeat clicks count as actions; each action is recorded once.</p>
       <label>Source <select value={source} onChange={event => setSource(event.target.value)}><option value="all">All locations</option>{Object.entries(sources).map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select></label>
       <div className="venue-value-table"><table><caption>Button activity by location</caption><thead><tr><th>Action</th><th>Location</th><th>Actions</th><th>Unique browsers</th></tr></thead><tbody>{rows.map(row => <tr key={`${row.event_type}:${row.source}`}><th>{labels[row.event_type] || row.event_type}</th><td>{sources[row.source] || row.source}</td><td>{number(row.total)}</td><td>{number(row.visitors)}</td></tr>)}</tbody></table></div>
       {!rows.length && <p>No recorded button activity for this period and location.</p>}
-    </details>
-    <details><summary>Dancers generating venue activity</summary>
+    </section>
+    <section className="venue-value-breakdown" aria-labelledby="venue-dancer-activity-heading"><h3 id="venue-dancer-activity-heading">Dancers generating venue activity</h3>
       <p>Only actions tied to this venue receive credit. These are breakdowns of the venue totals, not additional customers.</p>
       <div className="venue-value-table"><table><caption>Activity attributed to each dancer</caption><thead><tr><th>Dancer</th><th>Profile opens from venue</th><th>Club opens</th><th>Directions</th><th>Offer clicks</th><th>Transport clicks</th><th>Going</th><th>Claims</th><th>Admissions</th></tr></thead><tbody>{report.dancers.map(row => <tr key={row.id}><th>{row.name}</th>{["dancer_profile", "club_page", "directions", "free_entry", "transport", "going", "claims", "admissions"].map(key => <td key={key}>{number(row.metrics[key] || 0)}</td>)}</tr>)}</tbody></table></div>
       {!report.dancers.length && <p>No dancer-attributed activity in this period.</p>}
-    </details>
-    <details><summary>MyDancr TV · venue-linked videos</summary>
+    </section>
+    <section className="venue-value-breakdown" aria-labelledby="venue-video-activity-heading"><h3 id="venue-video-activity-heading">MyDancr TV · venue-linked videos</h3>
       <p>Videos with a confirmed tag for this venue, including previously published videos. A dancer’s club affiliation alone does not include their other videos. Counts use the selected period.</p>
       <div className="venue-value-table"><table><caption>Performance of videos linked to this venue</caption><thead><tr><th>Video / dancer</th><th>Impressions</th><th>Engaged views</th><th>Completions</th><th>Completion rate</th><th>Shares</th><th>Club clicks</th><th>Dancer clicks</th><th>Going actions</th></tr></thead><tbody>{report.videos.map(row => <tr key={row.id}><th>{row.caption}<small>{row.dancer}</small></th>{["impression", "engaged_view", "completed"].map(key => <td key={key}>{number(row.metrics[key] || 0)}</td>)}<td>{row.metrics.impression ? `${Math.round((row.metrics.completed || 0) / row.metrics.impression * 100)}%` : "—"}</td>{["share", "venue_click", "profile_click", "going"].map(key => <td key={key}>{number(row.metrics[key] || 0)}</td>)}</tr>)}</tbody></table></div>
       {!report.videos.length && <p>No published videos are explicitly linked to this venue.</p>}
       <div className="venue-value-table"><table><caption>Venue outcomes following a video’s Club Page click</caption><thead><tr><th>Video</th><th>Directions</th><th>Offer clicks</th><th>Transport clicks</th><th>Passes claimed</th><th>Verified admissions</th></tr></thead><tbody>{report.videos.map(row => <tr key={row.id}><th>{row.caption}</th>{["directions", "free_entry", "transport", "claims", "admissions"].map(key => <td key={key}>{number(row.metrics[key] || 0)}</td>)}</tr>)}</tbody></table></div>
       <p className="venue-value-note">Video events are deduplicated per browser and day. Outcome attribution starts with an explicit Club Page click and lasts 30 minutes in that browser, for this venue only. A new pass keeps its video attribution through admission. This tracking began {formatDate(since)}.</p>
-    </details>
+    </section>
     <div className="venue-value-subscription"><strong>Subscription value</strong><p>Your venue uses subscription billing. Customer activity does not create referral fees or per-guest payments to MyDancr.</p><p>Cost per verified admission: unavailable until subscription cost for the matching reporting period is connected.</p></div>
-    </details>
   </div>;
 }

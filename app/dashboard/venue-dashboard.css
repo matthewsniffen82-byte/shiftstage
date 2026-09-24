@@ -117,16 +117,16 @@ body .dashboard-shell.dashboard-shell-venue .venue-dashboard-overview-grid .metr
 .venue-value-analytics .metric small{display:block;font-size:12px;line-height:1.5;color:#b8b6c7}
 .venue-value-metrics .metric strong{font-size:30px;color:#d3b5ff}
 .venue-value-note{color:#b8b6c7;font-size:12px;line-height:1.6}
-.venue-value-analytics details{min-width:0;border-top:1px solid rgba(255,255,255,.12);padding:4px 0}
-.venue-value-analytics summary,.venue-pickup-preview summary{font-weight:600;cursor:pointer;font-size:14px;min-height:44px;padding:12px 0;line-height:1.45}
-.venue-value-analytics .venue-value-info summary{font-size:12px;color:#b8b6c7}
+.venue-value-breakdown{min-width:0;border-top:1px solid rgba(255,255,255,.12);padding:4px 0}
+.venue-value-breakdown h3{margin:0;padding:12px 0;font-size:14px;font-weight:600;line-height:1.45}
+.venue-pickup-preview summary{font-weight:600;cursor:pointer;font-size:14px;min-height:44px;padding:12px 0;line-height:1.45}
 .venue-value-dates{margin:0;color:#b8b6c7;font-size:13px;line-height:1.5}
 .venue-manage-panel{display:grid;gap:12px;min-width:0}
 .venue-results-panel,.venue-results-panel > .info-panel{min-width:0}
 .venue-pickup-preview .notification-row{gap:4px;overflow-wrap:anywhere}
 .venue-pickup-preview p,.venue-pickup-preview time{font-size:12px;color:#b8b6c7;line-height:1.5}
 .venue-pickup-preview > .primary-link{display:inline-flex;align-items:center;min-height:44px;margin-top:8px;font-size:14px}
-.venue-value-analytics details p,.venue-value-subscription p{font-size:13px;line-height:1.6;color:#c5c2d0}
+.venue-value-breakdown p,.venue-value-subscription p{font-size:13px;line-height:1.6;color:#c5c2d0}
 .venue-value-analytics select{background:#191622;color:inherit;border:1px solid #534969;border-radius:8px;padding:8px;margin:8px}
 .venue-value-table{overflow-x:auto;max-width:100%;margin-top:12px}
 .venue-value-table table{width:100%;border-collapse:collapse;font-size:13px;text-align:left}
