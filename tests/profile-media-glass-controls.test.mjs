@@ -8,7 +8,7 @@ const [liveShell, aestheticCss] = await Promise.all([
 ]);
 
 const profileMediaGlass = aestheticCss.match(
-  /\/\* Profile photo and video overlays share one visibly translucent glass[\s\S]*$/,
+  /\/\* Profile photo and video overlays share one visibly translucent glass[\s\S]*?(?=\/\* A filled red heart)/,
 )?.[0] || "";
 
 test("profile photo overlay controls use circular translucent glass", () => {

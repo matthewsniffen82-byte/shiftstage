@@ -358,7 +358,7 @@ export function TvVideoStrip({
             <div className="tv-video-viewer-footer">
               <div>
                 <strong>{activeVideo.dancer.stageName}</strong>
-                <span>{tvProfileShiftLabel(activeVideo).label} · Video {activeIndex + 1} of {videos.length}</span>
+                <span>{tvProfileShiftLabel(activeVideo).label} · {activeIndex + 1}/{videos.length}</span>
               </div>
               <div className="tv-video-viewer-actions">
                 {(() => {

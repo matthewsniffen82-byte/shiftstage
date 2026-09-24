@@ -289,6 +289,45 @@ body.dancr-button-system :is(#profilePhotoViewer, #profileTvViewer, .profile-med
   pointer-events: auto;
 }
 
+/* Keep identity and position readable without covering the photo or video. */
+.profile-media-card-feed :is(.profile-photo-viewer-copy, .profile-tv-viewer-copy, .profile-media-viewer-copy) {
+  position: absolute;
+  right: 70px;
+  bottom: max(22px, calc(env(safe-area-inset-bottom, 0px) + 14px));
+  left: max(16px, env(safe-area-inset-left, 0px));
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+  color: #fff;
+  text-shadow: 0 1px 3px #000, 0 2px 8px rgba(0, 0, 0, .92);
+}
+
+.profile-media-card-feed :is(.profile-photo-viewer-copy, .profile-tv-viewer-copy, .profile-media-viewer-copy) strong {
+  overflow: hidden;
+  color: #fff;
+  font-size: 16px;
+  line-height: 1.3;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.profile-media-card-feed .profile-media-viewer-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 3px 10px;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.profile-media-card-feed .profile-media-viewer-meta .profile-media-position {
+  color: rgba(255, 255, 255, .85);
+  font-size: 12px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
 .profile-media-card-feed :is(.profile-photo-viewer-status, #profileTvViewerStatus, .profile-media-viewer-share-status) {
   position: absolute !important;
   right: 56px !important;

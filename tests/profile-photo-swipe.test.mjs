@@ -62,7 +62,7 @@ test("live profile grid photos open an accessible card collection without fullsc
   assert.match(liveApp, /id="profilePhotoViewerImage"[^>]*role="group"[^>]*tabindex="0"[^>]*aria-label="Dancer photos\. Scroll up or down to change photos\."/);
   assert.doesNotMatch(liveApp, /id="profilePhotoViewerName"/);
   assert.doesNotMatch(liveApp, /id="profilePhotoViewerPosition"/);
-  assert.doesNotMatch(liveApp, /class="profile-photo-viewer-copy"/);
+  assert.match(liveApp, /class="profile-photo-viewer-copy"/);
   assert.match(liveApp, /id="profilePhotoViewerPrevious"[^>]*aria-label="Previous dancer photo"/);
   assert.match(liveApp, /id="profilePhotoViewerNext"[^>]*aria-label="Next dancer photo"/);
   assert.doesNotMatch(liveApp, /profilePhotoScheduleLabel|Swipe up or down · Photo/);
@@ -247,6 +247,8 @@ test("the standalone profile uses a vertical profile-scoped media card feed", ()
   );
   assert.match(publicPhotoCarousel, /flushSync\(\(\) => setViewer\(\{ kind, index \}\)\);[\s\S]*?settleViewerAtIndex\(index\)/);
   assert.doesNotMatch(publicPhotoCarousel, /requestFullscreen|webkitRequestFullscreen|viewerHasFullscreen/);
-  assert.match(publicPhotoCarousel, /item\.kind === "video"[\s\S]*?\{viewerStatus\} · Scroll up or down · Video/);
+  assert.match(publicPhotoCarousel, /item\.kind === "video" \? <span>\{viewerStatus\}<\/span> : null/);
+  assert.match(publicPhotoCarousel, /className="profile-media-position">\{index \+ 1\}\/\{viewerItems\.length\}/);
+  assert.doesNotMatch(publicPhotoCarousel, /Scroll up or down · Video/);
   assert.doesNotMatch(publicPhotoCarousel, /viewer\.kind === "photo" \? \(\s*<div className="profile-media-viewer-copy"/);
 });

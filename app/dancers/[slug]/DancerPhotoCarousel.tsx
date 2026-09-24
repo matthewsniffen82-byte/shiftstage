@@ -687,14 +687,13 @@ export function DancerPhotoCarousel({
           ↓
         </button>
         <div className="profile-media-viewer-footer">
-          {item.kind === "video" ? (
-            <div className="profile-media-viewer-copy">
-              <strong>{stageName}</strong>
-              <span>
-                {viewerStatus} · Scroll up or down · Video {index + 1} of {viewerItems.length}
-              </span>
+          <div className="profile-media-viewer-copy">
+            <strong>{stageName}</strong>
+            <div className="profile-media-viewer-meta">
+              {item.kind === "video" ? <span>{viewerStatus}</span> : null}
+              <span className="profile-media-position">{index + 1}/{viewerItems.length}</span>
             </div>
-          ) : null}
+          </div>
           <div className="profile-media-viewer-actions">
             {item.kind === "video" ? (
               <button

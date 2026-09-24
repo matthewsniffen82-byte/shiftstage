@@ -812,6 +812,8 @@
       });
       const status = slide.querySelector(".profile-photo-viewer-status");
       if (status) status.textContent = "";
+      slide.querySelector(".profile-photo-viewer-copy strong").textContent = profileName;
+      slide.querySelector(".profile-media-position").textContent = `${index + 1}/${total}`;
       const bind = (selector, handler) => {
         const button = slide.querySelector(selector);
         button?.addEventListener("click", (event) => {

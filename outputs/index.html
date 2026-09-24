@@ -42852,6 +42852,10 @@
             <button class="profile-photo-viewer-next" id="profilePhotoViewerNext" type="button" aria-label="Next dancer photo">↓</button>
           </div>
           <div class="profile-photo-viewer-footer">
+            <div class="profile-photo-viewer-copy">
+              <strong></strong>
+              <div class="profile-media-viewer-meta"><span class="profile-media-position"></span></div>
+            </div>
             <div class="profile-photo-viewer-actions">
               <button class="profile-photo-viewer-like" id="profilePhotoViewerLike" type="button" aria-label="Like this profile photo" aria-pressed="false">
                 <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.8 8.6c0 5.3-8.8 10.4-8.8 10.4S3.2 13.9 3.2 8.6A4.6 4.6 0 0 1 12 6.7a4.6 4.6 0 0 1 8.8 1.9Z"></path></svg>
@@ -53776,6 +53780,8 @@
       });
       const status = slide.querySelector(".profile-photo-viewer-status");
       if (status) status.textContent = "";
+      slide.querySelector(".profile-photo-viewer-copy strong").textContent = profileName;
+      slide.querySelector(".profile-media-position").textContent = `${index + 1}/${total}`;
       const bind = (selector, handler) => {
         const button = slide.querySelector(selector);
         button?.addEventListener("click", (event) => {
@@ -54848,7 +54854,10 @@
             <div class="profile-tv-viewer-footer">
               <div class="profile-tv-viewer-copy">
                 <strong id="profileTvViewerName"></strong>
-                <span id="profileTvViewerSchedule"></span>
+                <div class="profile-media-viewer-meta">
+                  <span id="profileTvViewerSchedule"></span>
+                  <span class="profile-media-position" id="profileTvViewerPosition"></span>
+                </div>
               </div>
               <div class="profile-tv-viewer-actions">
                 <button class="profile-tv-viewer-like" type="button" data-like-profile-tv aria-label="Like this profile video" aria-pressed="false">${actionIconMarkup("heart")}<span data-media-like-count>0</span></button>
@@ -55067,7 +55076,8 @@
       overlay.dataset.videoIndex = String(nextIndex);
       mountProfileMediaCardControls(overlay, stage?.querySelector(`[data-profile-tv-viewer-index="${nextIndex}"]`));
       if (currentIndex !== nextIndex) delete overlay.dataset.loadedVideoIndex;
-      document.getElementById("profileTvViewerSchedule").textContent = `${scheduleLabel} · Scroll up or down · Video ${nextIndex + 1} of ${videos.length}`;
+      document.getElementById("profileTvViewerSchedule").textContent = scheduleLabel;
+      document.getElementById("profileTvViewerPosition").textContent = `${nextIndex + 1}/${videos.length}`;
       document.getElementById("profileTvViewerStatus").textContent = "";
       preparePublicMediaLikeButton(
         overlay.querySelector("[data-like-profile-tv]"),

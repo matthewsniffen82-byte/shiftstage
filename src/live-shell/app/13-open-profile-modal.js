@@ -165,7 +165,10 @@
             <div class="profile-tv-viewer-footer">
               <div class="profile-tv-viewer-copy">
                 <strong id="profileTvViewerName"></strong>
-                <span id="profileTvViewerSchedule"></span>
+                <div class="profile-media-viewer-meta">
+                  <span id="profileTvViewerSchedule"></span>
+                  <span class="profile-media-position" id="profileTvViewerPosition"></span>
+                </div>
               </div>
               <div class="profile-tv-viewer-actions">
                 <button class="profile-tv-viewer-like" type="button" data-like-profile-tv aria-label="Like this profile video" aria-pressed="false">${actionIconMarkup("heart")}<span data-media-like-count>0</span></button>
@@ -384,7 +387,8 @@
       overlay.dataset.videoIndex = String(nextIndex);
       mountProfileMediaCardControls(overlay, stage?.querySelector(`[data-profile-tv-viewer-index="${nextIndex}"]`));
       if (currentIndex !== nextIndex) delete overlay.dataset.loadedVideoIndex;
-      document.getElementById("profileTvViewerSchedule").textContent = `${scheduleLabel} · Scroll up or down · Video ${nextIndex + 1} of ${videos.length}`;
+      document.getElementById("profileTvViewerSchedule").textContent = scheduleLabel;
+      document.getElementById("profileTvViewerPosition").textContent = `${nextIndex + 1}/${videos.length}`;
       document.getElementById("profileTvViewerStatus").textContent = "";
       preparePublicMediaLikeButton(
         overlay.querySelector("[data-like-profile-tv]"),
