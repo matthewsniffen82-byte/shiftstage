@@ -336,3 +336,122 @@ body.dancr-button-system main.dashboard-shell-venue #venue-account .venue-partic
 @media (max-width: 520px) {
   body.dancr-button-system main.dashboard-shell-venue #venue-account .account-action-row > .account-action-button { width: 100% !important; }
 }
+
+/* Customer dashboard: less nested padding, compact shortcuts and open sections. */
+body.dancr-button-system main.dashboard-shell.dashboard-shell-customer .dashboard-head { padding: 14px; margin-bottom: 12px; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-customer .dashboard-head-row { grid-template-columns: 40px minmax(0, 1fr) 44px; gap: 10px; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-customer .customer-dashboard-avatar { width: 40px; height: 40px; font-size: 17px; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-customer .dashboard-head-copy { gap: 3px; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-customer > .customer-dashboard-grid { gap: 10px !important; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-customer .customer-dashboard-nav { padding: 8px; gap: 6px; border-radius: 14px; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-customer :is(.customer-dashboard-primary-links, .customer-dashboard-utility-links) { gap: 6px; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-customer .customer-dashboard-primary-links a {
+  min-width: 0; min-height: 56px; grid-template-columns: 18px minmax(0, 1fr) auto; grid-template-rows: auto; gap: 7px; align-items: center; padding: 8px; border-radius: 10px;
+}
+body.dancr-button-system main.dashboard-shell.dashboard-shell-customer .customer-shortcut-icon svg { width: 18px; height: 18px; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-customer .customer-dashboard-primary-links a > span:not(.customer-shortcut-icon) { grid-column: 2; grid-row: 1; font-size: 12px; line-height: 1.3; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-customer .customer-dashboard-primary-links a > strong { grid-column: 3; grid-row: 1; min-width: 22px; height: 22px; padding-inline: 5px; font-size: 11px; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-customer .customer-dashboard-utility-links a { min-height: 44px; padding: 6px 10px; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-customer :is(.customer-dashboard-nav a, .customer-card-actions a, .customer-card-actions button, .customer-credential-option) { background: linear-gradient(#060608, #060608) !important; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-customer .customer-dashboard-nav a[data-has-plans] { background: linear-gradient(#201333, #201333) !important; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-customer .venue-dashboard-section[data-section-icon] { border-radius: 14px; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-customer .venue-dashboard-section[data-section-icon] > summary { min-height: 70px; grid-template-columns: 30px minmax(0, 1fr) auto 16px; gap: 8px; padding: 10px 12px; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-customer .venue-dashboard-section[data-section-icon] .dancer-dashboard-section-icon { width: 30px; height: 30px; border-radius: 9px; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-customer .venue-dashboard-section-copy { gap: 2px; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-customer .venue-dashboard-section[data-section-icon] .venue-dashboard-section-copy > strong { font-size: 16px; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-customer .venue-dashboard-section[data-section-icon] .venue-dashboard-section-copy > span:last-child { font-size: 12px; line-height: 1.4; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-customer .venue-dashboard-section[data-section-icon] > .venue-dashboard-section-body { padding: 10px; gap: 10px; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-customer :is(.customer-settings-grid, .customer-saved-panel, .customer-followed-city-list, .customer-night-list, .customer-favorite-club-grid) { gap: 10px !important; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-customer .info-panel { min-width: 0; gap: 10px; padding: 12px !important; border: 1px solid #34343c !important; border-radius: 12px !important; background: #08080b !important; box-shadow: none !important; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-customer .info-panel :is(h2, h3) { margin: 0; font-size: 17px !important; font-weight: 600 !important; line-height: 1.3; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-customer .info-panel :is(p, small) { font-size: 12px; line-height: 1.5; overflow-wrap: anywhere; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-customer .customer-followed-city-heading { margin-bottom: 8px; padding-bottom: 6px; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-customer .customer-followed-city-heading h3 { font-size: 15px; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-customer .customer-empty-state { gap: 5px; padding: 12px; border-radius: 10px; background: #08080b; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-customer .customer-empty-state :is(strong, p) { margin: 0; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-customer :is(.customer-card-actions a, .customer-card-actions button, .customer-empty-state a) { box-sizing: border-box; min-height: 44px !important; padding: 7px 10px !important; border-radius: 10px !important; font-size: 12px !important; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-customer .customer-night-card { border-radius: 12px; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-customer .customer-night-identity { grid-template-columns: 72px minmax(0, 1fr); gap: 10px; padding: 12px; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-customer .customer-night-portrait { height: 96px; border-radius: 10px; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-customer .customer-night-copy { gap: 3px; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-customer .customer-night-copy h3 { margin: 0; font-size: 18px; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-customer .customer-night-date { margin-top: 3px; font-size: 12px; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-customer .customer-night-controls { padding: 0 12px 2px; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-customer .customer-favorite-club-card { border-color: #34343c !important; border-radius: 12px !important; background: #08080b !important; box-shadow: none !important; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-customer .customer-favorite-club-header { grid-template-columns: 96px minmax(0, 1fr) 44px; padding: 10px 10px 0; gap: 10px; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-customer .customer-favorite-club-brand { height: 56px; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-customer .customer-favorite-club-logo > img { max-height: 54px; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-customer .customer-club-favorite { width: 44px !important; min-width: 44px !important; height: 44px !important; min-height: 44px !important; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-customer .customer-favorite-club-identity strong { font-size: 16px; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-customer .customer-favorite-club-copy { padding: 10px; gap: 8px; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-customer .saved-deal-panel { padding: 0 !important; border: 0 !important; background: transparent !important; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-customer .saved-deal-privacy-note { margin: 0; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-customer :is(.saved-deal-bookmark, .saved-deal-item) { min-height: 56px; padding: 10px; gap: 8px; border-color: #34343c !important; border-radius: 10px !important; background: #08080b !important; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-customer .saved-deal-list { margin-top: 0; gap: 8px; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-customer .customer-deal-activity { margin-top: 6px; padding-top: 4px; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-customer :is(.customer-deal-activity, .past-deal-history) > summary { min-height: 44px; font-size: 13px; font-weight: 600; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-customer .customer-nfc-guide { gap: 8px; margin-block: 8px; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-customer .customer-nfc-guide > div { padding: 10px; }
+
+/* Alerts, preferences, sign-in details and support share the compact controls. */
+body.dancr-button-system main.dashboard-shell.dashboard-shell-customer :is(.notification-title-row, .notification-toolbar) { gap: 6px !important; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-customer .notification-title-row > div:first-child > span { display: none; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-customer .notification-unread-pill { min-height: 24px; padding: 0 8px; font-size: 10px; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-customer .notification-row { padding: 10px; gap: 4px; border-radius: 10px !important; background: linear-gradient(#08080b, #08080b) !important; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-customer .notification-row > strong { font-size: 13px; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-customer .notification-row > span:not(.notification-row-meta) { font-size: 12px; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-customer .notification-row-meta { flex-wrap: wrap; gap: 4px 8px; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-customer .notification-row-meta :is(b, time) { font-size: 10px; font-weight: 500; letter-spacing: 0; text-transform: none; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-customer :is(.notification-mark-read-button, .notification-clear-button, .account-action-button, .support-panel button, .customer-credential-option, .customer-credential-form-actions button) {
+  box-sizing: border-box; min-height: 44px !important; padding: 8px 12px !important; border: 1px solid #34343c !important; border-radius: 10px !important; color: #f4f3f7 !important; background: linear-gradient(#060608, #060608) !important; box-shadow: none !important; font-size: 12px !important; font-weight: 600 !important; line-height: 1.3;
+}
+body.dancr-button-system main.dashboard-shell.dashboard-shell-customer .notification-panel :is(.notification-mark-read-button, .notification-clear-button) { padding-inline: 4px !important; border-color: transparent !important; background: transparent !important; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-customer .customer-preference-list { gap: 0 10px; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-customer .customer-preference-row { grid-template-columns: minmax(0, 1fr) 64px; padding: 8px 0; gap: 8px; border: 0; border-bottom: 1px solid #ffffff18; border-radius: 0; background: transparent; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-customer .customer-settings-panel button.customer-notification-switch { flex-direction: column; width: 64px !important; min-width: 64px !important; min-height: 44px !important; gap: 2px !important; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-customer .customer-switch-track { width: 36px; height: 20px; flex: 0 0 20px; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-customer .customer-switch-track i { width: 14px; height: 14px; top: 2px; left: 2px; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-customer .customer-notification-switch[aria-checked="true"] .customer-switch-track i { transform: translateX(16px); }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-customer .customer-switch-state { width: 60px; font-size: 10px; line-height: 1.2; text-align: center; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-customer .customer-preference-row > span { gap: 3px; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-customer .customer-preference-row strong { font-size: 13px; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-customer .customer-preference-master { padding: 8px 10px; border: 1px solid #74569666; border-radius: 10px; background: #100c17; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-customer .customer-delivery-heading { padding-top: 0; border: 0; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-customer .customer-delivery-heading h3 { font-size: 15px !important; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-customer .customer-notification-preferences :is(.customer-alert-preferences-heading, .customer-delivery-heading) p { margin-top: 4px; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-customer .customer-account-details { grid-column: 1 / -1; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-customer .customer-account-email { gap: 3px; padding: 8px 0 0; border: 0; border-top: 1px solid #ffffff18; border-radius: 0; background: transparent; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-customer .customer-account-email > strong { font-size: 14px; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-customer .customer-credential-options { gap: 6px; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-customer button.customer-credential-option[aria-expanded="true"] { border-color: #745696 !important; background: linear-gradient(#201333, #201333) !important; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-customer button.customer-credential-option.is-complete { border-color: #315642 !important; color: #a7f3d0 !important; background: linear-gradient(#09160f, #09160f) !important; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-customer .customer-credential-form { gap: 10px; margin-top: 2px; padding-top: 12px; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-customer :is(.customer-credential-form label, .support-panel label, .account-delete-confirmation label) { gap: 6px; color: #c5c3cd !important; font-size: 12px !important; font-weight: 500 !important; letter-spacing: 0 !important; text-transform: none !important; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-customer :is(.customer-credential-form input, .support-panel input, .support-panel textarea, .account-delete-confirmation input) {
+  box-sizing: border-box; min-width: 0; width: 100%; min-height: 46px; padding: 10px 12px; border: 1px solid #34343c !important; border-radius: 10px !important; color: #f4f3f7 !important; background: linear-gradient(#060608, #060608) !important; box-shadow: none !important; font-size: 16px !important; line-height: 1.5;
+}
+body.dancr-button-system main.dashboard-shell.dashboard-shell-customer .customer-password-control input { padding-right: 56px; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-customer :is(.support-send-button:not(.is-sent), .customer-credential-form-actions button.account-form-primary) { border-color: #745696 !important; background: linear-gradient(110deg, #7c3aed, #6d28d9) !important; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-customer .support-panel .support-send-button.is-sent { border-color: #315642 !important; color: #a7f3d0 !important; background: linear-gradient(#09160f, #09160f) !important; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-customer :is(.support-panel form, .support-thread-list) { gap: 10px; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-customer .support-thread { gap: 0; padding: 10px; border: 1px solid #34343c !important; border-radius: 10px !important; background: #060608 !important; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-customer .support-thread > :not(summary) { margin-top: 10px; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-customer .support-thread summary { min-height: 44px; display: flex; align-items: center; justify-content: space-between; gap: 8px; list-style: none; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-customer .support-thread summary::-webkit-details-marker { display: none; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-customer .support-thread summary::after { content: "›"; flex: 0 0 auto; color: #b8b6c2; font-size: 22px; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-customer .support-thread[open] summary::after { transform: rotate(90deg); }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-customer .support-thread summary strong { font-size: 13px; font-weight: 600; overflow-wrap: anywhere; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-customer .support-message { padding: 10px; background: #08080b; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-customer .support-message.from-admin { border-color: #74569666; background: #100c17; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-customer .support-message strong { font-size: 12px; font-weight: 600; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-customer .support-message small { font-size: 10px; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-customer .account-controls-heading { grid-template-columns: 28px minmax(0, 1fr); gap: 8px !important; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-customer :is(.account-security-icon, .account-action-icon) { width: 28px; height: 28px; border-radius: 8px; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-customer .account-action-row { gap: 10px; padding: 12px 0; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-customer .account-action-details { grid-template-columns: 28px minmax(0, 1fr); gap: 8px; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-customer .account-action-details strong { font-size: 13px; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-customer .account-action-button { margin: 0 !important; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-customer .account-controls-panel button.danger-button { color: #efb0ba !important; border-color: #70434c !important; background: linear-gradient(#170b10, #170b10) !important; }
+@media (max-width: 520px) {
+  body.dancr-button-system main.dashboard-shell.dashboard-shell-customer .account-action-row > .account-action-button { width: 100% !important; }
+}
