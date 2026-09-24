@@ -5885,7 +5885,7 @@ body.dancr-button-system :is(
   box-shadow: var(--dancr-focus-ring) !important;
 }
 
-/* Base liked state; the shared hero-accent layer below adds its selected circle. */
+/* Likes keep a neutral circle; only the heart uses the selected-state color. */
 body.dancr-button-system .home-tv-feed-like-action[aria-pressed="true"],
 body.dancr-button-system .home-tv-feed-like-action[aria-pressed="true"]:hover,
 body.dancr-button-system .home-tv-feed-like-action[aria-pressed="true"]:focus,
@@ -13050,7 +13050,7 @@ body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-her
 }
 
 body.dancr-button-system #results.home-tv-feed
-  .home-tv-feed-action:is(.home-tv-feed-follow-action, .home-tv-feed-like-action, .home-tv-feed-overflow-action):is(.is-active, [aria-pressed="true"], [aria-expanded="true"]) {
+  .home-tv-feed-action:is(.home-tv-feed-follow-action, .home-tv-feed-overflow-action):is(.is-active, [aria-pressed="true"], [aria-expanded="true"]) {
   border-color: var(--dancr-color-avatar-ring-violet) !important;
   color: var(--dancr-color-text-primary) !important;
   background-color: var(--dancr-color-brand-primary-deep) !important;

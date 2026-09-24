@@ -325,8 +325,8 @@ test("empty schedules are hidden while real city, venue, and shift context remai
     homeSource.match(
       /function homeTvFeedSchedule\(item\) \{[\s\S]*?(?=\n    function createHomeTvFeedMediaFallback)/,
     )?.[0] || "";
-  assert.match(scheduleFunction, /"Working Now"/);
-  assert.match(scheduleFunction, /dateLabel \? `Upcoming · \$\{dateLabel\}` : "Upcoming"/);
+  assert.match(scheduleFunction, /if \(item\.shift\?\.isActive\) return \{ label: "Working Now", className: "is-now" \}/);
+  assert.doesNotMatch(scheduleFunction, /Upcoming/);
   assert.match(scheduleFunction, /return null/);
   assert.doesNotMatch(scheduleFunction, /No shift posted/);
   const shiftDateFormatter = homeSource.match(
@@ -343,7 +343,7 @@ test("empty schedules are hidden while real city, venue, and shift context remai
 test("every uploaded video gets a vertically scrollable card with profile access, applause gestures, sharing, and reporting", () => {
   assert.match(
     homeSource,
-    /results\.replaceChildren\(\s*\.\.\.homeTvFeedVideos\.map\(\(item, index\) => \{\s*if \(index < 3\) return createHomeTvFeedSlide\(item, index, homeTvFeedVideos\.length\)/,
+    /results\.replaceChildren\(\s*\.\.\.homeTvFeedVideos\.map\(\(item, index\) => \{\s*if \(index < 3\) \{\s*const slide = createHomeTvFeedSlide\(item, index, homeTvFeedVideos\.length\);\s*slide\.dataset\.feedVideoIndex = String\(index\);\s*return slide;/,
   );
   assert.match(
     homeSource,
