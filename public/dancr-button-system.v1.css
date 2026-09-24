@@ -594,15 +594,21 @@
 }
 
 .dancr-button-system .utility-menu-panel .utility-menu-dashboard {
-  border-color: var(--dancr-color-brand-primary) !important;
-  background: var(--dancr-color-brand-primary) !important;
+  border-color: #6b4d89 !important;
+  color: #fff !important;
+  background: linear-gradient(#241337, #241337) !important;
+  box-shadow: none !important;
   font-weight: 700 !important;
+}
+
+.dancr-button-system .utility-menu-panel .utility-menu-dashboard::after {
+  color: #fff;
 }
 
 .dancr-button-system .utility-menu-panel .utility-menu-dashboard:hover,
 .dancr-button-system .utility-menu-panel .utility-menu-dashboard:active {
-  border-color: var(--dancr-color-brand-primary-strong) !important;
-  background: var(--dancr-color-brand-primary-deep) !important;
+  border-color: #8b69ab !important;
+  background: linear-gradient(#301a46, #301a46) !important;
 }
 
 /* Mobile touch controls use one explicit compositor path. Safari otherwise
