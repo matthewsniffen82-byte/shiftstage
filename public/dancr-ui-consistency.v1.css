@@ -308,15 +308,28 @@ body.dancr-button-system :is(#contentReportPopover.is-quick-reason,.public-repor
   :is(.content-report-quick-options,.public-report-reason-options) { gap: 8px; }
 body.dancr-button-system :is(#contentReportPopover.is-quick-reason,.public-report-reason-gate)
   :is(.content-report-quick-option,.public-report-reason-options > button) {
+  --dancr-report-face: #060608; --dancr-report-edge: #34343c;
+  position: relative; isolation: isolate;
+  -webkit-appearance: none !important; appearance: none !important;
   box-sizing: border-box; width: 100%; min-width: 0; min-height: 46px !important;
-  padding: 11px 12px !important; border: 1px solid #34343c !important; border-radius: 12px !important;
-  color: #f8fafc !important; background: #060608 !important; box-shadow: none !important;
+  padding: 11px 12px !important; border: 1px solid var(--dancr-report-edge) !important; border-radius: 12px !important;
+  color: #f8fafc !important;
+  background: var(--dancr-report-face) linear-gradient(var(--dancr-report-face),var(--dancr-report-face)) !important;
+  box-shadow: none !important; filter: none !important;
+  -webkit-backdrop-filter: none !important; backdrop-filter: none !important;
   font-size: 14px !important; font-weight: 600 !important; line-height: 1.4 !important;
   text-align: left; white-space: normal;
 }
+/* Match venue utilities: paint the face above Android's native button fill. */
+body.dancr-button-system :is(#contentReportPopover.is-quick-reason,.public-report-reason-gate)
+  :is(.content-report-quick-option,.public-report-reason-options > button)::before {
+  content: ""; position: absolute; inset: -1px; z-index: -1; pointer-events: none;
+  border: 1px solid var(--dancr-report-edge); border-radius: inherit;
+  background: linear-gradient(var(--dancr-report-face),var(--dancr-report-face));
+}
 body.dancr-button-system :is(#contentReportPopover.is-quick-reason,.public-report-reason-gate)
   :is(.content-report-quick-option,.public-report-reason-options > button):enabled:is(:hover,:focus-visible) {
-  border-color: #745696 !important; background: #100a1b !important;
+  --dancr-report-face: #100a1b; --dancr-report-edge: #745696;
 }
 body.dancr-button-system :is(#contentReportPopover.is-quick-reason,.public-report-reason-gate)
   :is(.content-report-status,.profile-report-error):not(:empty) {
