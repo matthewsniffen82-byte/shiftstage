@@ -96,7 +96,7 @@ test("onboarding arrives fully collapsed and exposes accessible controls", () =>
   const panel = dashboard.slice(panelStart, panelEnd);
 
   assert.ok(panelStart >= 0 && panelEnd > panelStart, "dancer dashboard panel should be present");
-  assert.doesNotMatch(panel, /<DashboardSection\s+defaultOpen/);
+  assert.doesNotMatch(onboardingCommand, /<DashboardSection\s+defaultOpen/);
   assert.match(dashboard, /const \[expandedStepId, setExpandedStepId\] = useState<string \| null>\(null\)/);
   assert.match(dashboard, /mydancr:dancer-onboarding-step/);
   assert.match(dashboard, /const visibleExpandedStepId = expandedStepId \|\| ""/);
@@ -264,11 +264,11 @@ test("onboarding and active profile editors share the compact uploader with the 
   assert.doesNotMatch(dashboard, /isOnboardingEditor|showDashboardMedia/);
 });
 
-test("approved dancer dashboard sections arrive collapsed with a clear tool hierarchy", () => {
+test("approved dancers see their current check-in before collapsed profile tools", () => {
   assert.doesNotMatch(dashboard, /\{isApproved \? \(\s*<DashboardSection\s+defaultOpen[\s\S]{0,500}?id="dancer-overview"/);
   assert.match(dashboard, /description="Visibility and connected clubs\."\s+emphasis="summary"\s+id="dancer-overview"/);
   assert.match(dashboard, /description="Edit your profile or share it\."\s+emphasis="primary"\s+id="dancer-profile-media"/);
-  assert.match(dashboard, /description="Working Now and upcoming dates\."\s+emphasis="primary"\s+id="dancer-schedule"/);
+  assert.match(dashboard, /<DancerAgeVerificationGate>\s*<DashboardSection\s+defaultOpen\s+description="Your current club check-in\."\s+emphasis="primary"\s+id="dancer-schedule"/);
   assert.match(dashboard, /description="Views, Club Deals, and guest activity\."\s+emphasis="secondary"\s+id="dancer-performance"/);
   assert.doesNotMatch(dashboard, /id="dancer-sharing-billing"|title="Share profile"/);
   assert.doesNotMatch(dashboard, /eyebrow="Dancer workspace"/);

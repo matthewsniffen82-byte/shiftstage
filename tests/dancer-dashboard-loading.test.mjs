@@ -76,6 +76,7 @@ test("the paused page exposes account controls without onboarding or active danc
     } };
     if (name === "react/jsx-runtime") return require(name);
     if (name === "next/dynamic") return { default: () => () => null };
+    if (name === "./CustomerAccountPanel") return { default: ({ account }) => React.createElement("article", null, account.email) };
     return new Proxy(() => null, { get: (_target, key) => key === "__esModule" ? false : () => null });
   } });
   const html = renderToStaticMarkup(React.createElement(exports.default, { role: "dancer" })).replace(/<style>[\s\S]*?<\/style>/g, "");

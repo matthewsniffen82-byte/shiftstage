@@ -18,6 +18,7 @@ type ShiftRow = Record<string, any>;
 
 export default function DancerShiftManager() {
   const [shifts, setShifts] = useState<ShiftRow[]>([]);
+  const [hasLoaded, setHasLoaded] = useState(false);
   const [status, setStatus] = useState("");
   const [saving, setSaving] = useState(false);
   const [endConfirmationOpen, setEndConfirmationOpen] = useState(false);
@@ -42,6 +43,8 @@ export default function DancerShiftManager() {
       });
       if (!mountedRef.current || requestId !== loadSequenceRef.current) return false;
       setShifts(Array.isArray(data.shifts) ? data.shifts : []);
+      setHasLoaded(true);
+      setStatus("");
       return true;
     } catch (error) {
       if (!mountedRef.current || requestId !== loadSequenceRef.current || (error instanceof DOMException && error.name === "AbortError")) return false;
@@ -127,7 +130,9 @@ export default function DancerShiftManager() {
   return (
     <article className="info-panel shift-panel" aria-label="Working Now management">
       <section className={`shift-checkin-card${activeShift ? " ready" : ""}`} aria-live="polite">
-        {activeShift ? (
+        {!hasLoaded ? (
+          <span role="status"><strong>{status ? "Check-in unavailable" : "Loading check-in…"}</strong><small>{status ? "Your current status could not be loaded." : "Checking your current club."}</small></span>
+        ) : activeShift ? (
           <>
             <span>
               <strong>Working Now at {venueName(activeShift)}</strong>

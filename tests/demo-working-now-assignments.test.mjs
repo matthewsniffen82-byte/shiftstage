@@ -54,7 +54,9 @@ test("locked demo assignments cannot create verified Club Deal attribution", () 
 });
 
 test("dancers cannot edit, end, or delete centrally managed demo assignments", () => {
-  assert.match(shiftRoute, /existingShift\.shift_source === "demo_locked"/);
+  assert.match(shiftRoute, /export const PATCH = retiredSchedule/);
+  assert.match(shiftRoute, /export const DELETE = retiredSchedule/);
+  assert.match(shiftRoute, /code: "upcoming_shifts_retired"[\s\S]*?status: 410/);
   assert.equal((checkInRoute.match(/shift\.shift_source === "demo_locked"/g) || []).length, 2);
   assert.match(checkInRoute, /demo_assignment_locked/);
   assert.match(shiftManager, /const demoManagedActiveShift = activeShift\?\.shift_source === "demo_locked"/);

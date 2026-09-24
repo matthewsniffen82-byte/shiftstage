@@ -233,6 +233,17 @@ export function DancerPanel({
       {isApproved ? (
         <DancerAgeVerificationGate>
           <DashboardSection
+            defaultOpen
+            description="Your current club check-in."
+            emphasis="primary"
+            id="dancer-schedule"
+            icon={<DancerDashboardIcon section="schedule" />}
+            toggleAffordance="chevron"
+            title="Working Now"
+          >
+            <DancerShiftManager />
+          </DashboardSection>
+          <DashboardSection
             description="Visibility and connected clubs."
             emphasis="summary"
             id="dancer-overview"
@@ -251,16 +262,6 @@ export function DancerPanel({
             </div>
           </DashboardSection>
           {profileMediaSection}
-          <DashboardSection
-            description="Your current club check-in."
-            emphasis="primary"
-            id="dancer-schedule"
-            icon={<DancerDashboardIcon section="schedule" />}
-            toggleAffordance="chevron"
-            title="Working Now"
-          >
-            <DancerShiftManager />
-          </DashboardSection>
           <DashboardSection
             description="Views, Club Deals, and guest activity."
             emphasis="secondary"
@@ -383,6 +384,7 @@ function DancerVisibilityPanel({
   const [isPublic, setIsPublic] = useState(initialVisible);
   const [status, setStatus] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  const [hasSaved, setHasSaved] = useState(false);
   const mountedRef = useRef(false);
   const visibilitySequenceRef = useRef(0);
   const visibilityAbortRef = useRef<AbortController | null>(null);
@@ -418,6 +420,7 @@ function DancerVisibilityPanel({
     visibilityAbortRef.current = controller;
     const nextPublic = !isPublic;
     setIsSaving(true);
+    setHasSaved(false);
     setStatus(nextPublic ? "Reactivating your public profile..." : "Hiding your profile from the site...");
     try {
       const data = await requestDancerProfileVisibilityJson({
@@ -435,6 +438,7 @@ function DancerVisibilityPanel({
       }
       if (data.profile) onProfileChange?.({ ...(profile || {}), ...data.profile });
       setIsPublic(savedPublic);
+      setHasSaved(true);
       setStatus(
         savedPublic
           ? "Your profile is back on and visible to guests."
@@ -465,8 +469,8 @@ function DancerVisibilityPanel({
         <p>{isPublic ? "Guests can find your approved profile across MyDancr." : "Your profile is hidden from guests; your dashboard and tools stay available."}</p>
         <p>Incognito hides your profile and schedule as pages refresh. Previously loaded content and shared media may remain visible.</p>
       </div>
-      <button className="visibility-toggle" type="button" onClick={toggleVisibility} disabled={isSaving}>
-        {isSaving ? "Verifying..." : isPublic ? "Go incognito" : "Make profile public"}
+      <button className="visibility-toggle" data-action-state={isSaving ? "saving" : hasSaved ? "success" : "idle"} type="button" onClick={toggleVisibility} disabled={isSaving}>
+        {isSaving ? "Saving…" : <><span>{isPublic ? "Go incognito" : "Make profile public"}</span>{hasSaved ? <small className="dashboard-button-confirmation">✓ Saved</small> : null}</>}
       </button>
       {status ? <p className="visibility-status" role="status" aria-live="polite">{status}</p> : null}
     </article>
