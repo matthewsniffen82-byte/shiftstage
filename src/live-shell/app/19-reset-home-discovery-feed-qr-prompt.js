@@ -253,8 +253,7 @@
           <div class="home-dancer-grid-action-rail home-venue-discovery-action-rail venue-card-secondary-actions" aria-label="${safeName} secondary actions">
             <button class="feed-card-action home-venue-discovery-profile-action venue-card-secondary-action venue-card-page-action" type="button" data-open-venue-profile="${venueValue}" aria-label="Open ${safeName}'s full club profile" title="View club">${actionButtonLabel("clubProfile", "Club Page")}</button>
             ${directionsMarkup}
-            <button class="feed-card-action home-dancer-grid-share venue-card-secondary-action venue-card-share-action" type="button" data-share-venue="${venueValue}" data-share-city="${escapeOptionValue(city)}" aria-label="Share ${safeName}'s club profile" title="Share">${actionButtonLabel("share", "Share")}</button>
-            <button class="feed-card-action venue-card-secondary-action venue-card-favorite-action ${followsVenue ? "is-active" : ""}" type="button" data-venue-follow="${venueValue}" data-account-action="venue-follow" aria-label="${followsVenue ? `Unfollow ${safeName}` : `Follow ${safeName}`}" title="${followsVenue ? "Saved" : "Favorite"}" aria-pressed="${followsVenue}">${actionButtonLabel("heart", followsVenue ? "Saved" : "Favorite")}</button>
+            <button class="feed-card-action venue-card-secondary-action venue-card-favorite-action ${followsVenue ? "is-active" : ""}" type="button" data-venue-follow="${venueValue}" data-account-action="venue-follow" aria-label="${followsVenue ? `Unfollow ${safeName}` : `Follow ${safeName}`}" title="${followsVenue ? "Following" : "Follow"}" aria-pressed="${followsVenue}">${actionButtonLabel(followsVenue ? "check" : "personPlus", followsVenue ? "Following" : "Follow")}</button>
           </div>
         </article>
       `;

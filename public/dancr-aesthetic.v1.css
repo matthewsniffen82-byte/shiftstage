@@ -11056,7 +11056,7 @@ body.dancr-button-system > .app main.stack > section.stack
     height: 56px !important;
     min-height: 56px !important;
     max-height: 56px !important;
-    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
     align-items: center !important;
     gap: 8px !important;
     padding: 3px 12px 7px !important;
@@ -11248,7 +11248,7 @@ body.dancr-button-system > .app main.stack > section.stack
   body.dancr-button-system > .app main.stack > section.stack
     > #results.home-venue-discovery-feed > .home-venue-discovery-slide
     .venue-card-secondary-actions {
-    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
     gap: 6px !important;
     padding-inline: 9px !important;
   }
