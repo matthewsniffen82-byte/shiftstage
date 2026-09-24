@@ -130,7 +130,7 @@ export default function VenueTeamInviteClient({ token }: { token: string }) {
             <form onSubmit={submit}>
               <label>Email<input value={invitation.email} readOnly type="email" /></label>
               <PasswordField key={mode} label="Password" value={password} disabled={isWorking} onChange={(event) => setPassword(event.target.value)} minLength={mode === "signup" ? 6 : undefined} required autoComplete={mode === "signup" ? "new-password" : "current-password"} />
-              {mode === "signup" ? <PasswordRequirements /> : null}
+              {mode === "signup" ? <PasswordRequirements password={password} /> : null}
               <button className="venue-team-primary" disabled={isWorking} type="submit">
                 {isWorking ? "Please wait…" : mode === "signup" ? "Create account and join" : "Sign in and join"}
               </button>

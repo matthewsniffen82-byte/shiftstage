@@ -696,7 +696,7 @@ export default function AdminClient() {
               </button>
             </span>
           </label>
-          {mode === "signup" ? <PasswordRequirements /> : null}
+          {mode === "signup" ? <PasswordRequirements password={password} /> : null}
           {mode === "signup" ? (
             <label>
               Admin code

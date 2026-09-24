@@ -637,7 +637,7 @@ export default function AccountClient() {
               </button>
             </span>
           </label>
-          {mode === "signup" ? <PasswordRequirements /> : null}
+          {mode === "signup" ? <PasswordRequirements password={password} /> : null}
           {mode === "signup" && role === "customer" ? (
             <label>
               Confirm password
