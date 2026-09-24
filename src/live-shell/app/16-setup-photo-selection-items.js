@@ -556,8 +556,8 @@
         status.classList.toggle("show", approved);
         status.classList.toggle("is-incognito", isHidden);
         status.textContent = isHidden
-          ? "Guests cannot discover your profile, schedule, or venue details. Turn it back on whenever you are ready."
-          : "Guests can discover your profile, schedules, and venue directions.";
+          ? "Your content is hidden from the site and stays saved."
+          : "Your profile is public.";
       }
     }
 

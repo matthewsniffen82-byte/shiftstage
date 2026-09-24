@@ -478,7 +478,7 @@ function CustomerNightPanel({
           const dancer = shift.dancer;
           const venue = shift.venue;
           return (
-            <article className="customer-night-card" key={item.shiftId}>
+            <article className="customer-night-card" key={item.shiftId} data-public-dancer-id={dancer.id}>
               <div className="customer-night-identity">
                 <div className="customer-night-portrait">
                   <SavedCardImage image={dancer} name={String(dancer.stageName || "Dancer")} sizes="112px" />
@@ -654,7 +654,7 @@ function FollowedDancerGridCard({
   const dancerName = String(dancer.stageName || "Dancer");
 
   return (
-    <article className="customer-followed-dancer-card">
+    <article className="customer-followed-dancer-card" data-public-dancer-id={dancer.id}>
     <Link
       aria-label={`Open ${dancerName} profile`}
       className="customer-followed-dancer-tile"

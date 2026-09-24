@@ -105,7 +105,7 @@
           ? `<button class="feed-card-action ${isGoing ? "is-active" : ""}" type="button" data-feed-action="going" data-profile="${escapeHtml(profile.name)}" data-shift-state="tonight" aria-pressed="${isGoing}">${homeFeedGoingActionMarkup(profile, isGoing)}</button>`
           : "";
         return `
-          <article class="card dancer-card home-feed-card ${isTrending ? "trending-card" : ""} ${profile.trendRank === 1 ? "rank-one-card" : ""}" data-profile="${escapeHtml(profile.name)}">
+          <article data-public-dancer-id="${escapeOptionValue(profile.id || "")}" class="card dancer-card home-feed-card ${isTrending ? "trending-card" : ""} ${profile.trendRank === 1 ? "rank-one-card" : ""}" data-profile="${escapeHtml(profile.name)}">
             <a class="dancer-card-link" href="${escapeHtml(profileHref)}" aria-label="Open ${escapeHtml(profile.name)} profile">
               ${profileCardBody}
             </a>
@@ -118,7 +118,7 @@
         `;
       }
       return `
-        <a class="card dancer-card ${isPending ? "pending" : ""} ${isTrending ? "trending-card" : ""} ${profile.trendRank === 1 ? "rank-one-card" : ""}" href="${escapeHtml(profileHref)}" data-profile="${escapeHtml(profile.name)}" aria-label="${escapeHtml(profile.name)} profile">
+        <a data-public-dancer-id="${escapeOptionValue(isPending ? "" : profile.id || "")}" class="card dancer-card ${isPending ? "pending" : ""} ${isTrending ? "trending-card" : ""} ${profile.trendRank === 1 ? "rank-one-card" : ""}" href="${escapeHtml(profileHref)}" data-profile="${escapeHtml(profile.name)}" aria-label="${escapeHtml(profile.name)} profile">
           ${profileCardBody}
         </a>
       `;
@@ -192,7 +192,7 @@
               profile.avatarPhotoFocalY ?? profile.mainPhotoFocalY
             )}" alt="" aria-hidden="true" loading="${options.eager ? "eager" : "lazy"}" decoding="async" draggable="false" data-image-state="loading">`
           : escapeHtml(String(profile.name || "").trim().charAt(0).toUpperCase());
-        return `<button type="button" class="${classPrefix}-lineup-avatar venue-lineup-profile" data-venue-dancer-profile data-grid-profile-action="${escapeOptionValue(profileReferenceValue(profile))}" data-dancer-id="${escapeOptionValue(profile.id || "")}" data-dancer-avatar data-working-now="true" aria-label="Open ${escapeHtml(profile.name)}, working now"><span data-dancer-avatar-border aria-hidden="true">${avatarPhoto}</span><span data-working-now-indicator aria-hidden="true">NOW</span></button>`;
+        return `<button type="button" class="${classPrefix}-lineup-avatar venue-lineup-profile" data-public-dancer-id="${escapeOptionValue(profile.id || "")}" data-venue-dancer-profile data-grid-profile-action="${escapeOptionValue(profileReferenceValue(profile))}" data-dancer-id="${escapeOptionValue(profile.id || "")}" data-dancer-avatar data-working-now="true" aria-label="Open ${escapeHtml(profile.name)}, working now"><span data-dancer-avatar-border aria-hidden="true">${avatarPhoto}</span><span data-working-now-indicator aria-hidden="true">NOW</span></button>`;
       }).join("");
       const remainingMarkup = !options.mobile && remaining > 0
         ? `<span class="${classPrefix}-lineup-count" aria-label="${remaining} more dancers working now">+${remaining}</span>`

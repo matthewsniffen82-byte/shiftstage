@@ -20,6 +20,15 @@ test('verified published media does not depend on venue affiliation; private sta
   // No parallel transactions on a single database connection.
   const visible=async(role,user)=>{const results=[];for(const sql of ['select id from dancer_profiles where id=$1','select id from dancer_photos where dancer_id=$1'])results.push((await asIdentity(db,role,user,()=>db.query(sql,[ids.owner]))).rows.length);return results;};
   for(const [role,user]of outsiders)assert.deepEqual(await visible(role,user),[1,1]);
+  // Incognito is reversible publication state, not media deletion or a new review.
+  const savedPhotos = (await db.query('select * from dancer_photos where dancer_id=$1 order by id',[ids.owner])).rows;
+  const savedProfile = (await db.query('select * from dancer_profiles where id=$1',[ids.owner])).rows;
+  await db.query('update dancer_profiles set is_public=false where id=$1',[ids.owner]);
+  for(const [role,user]of outsiders)assert.deepEqual(await visible(role,user),[0,0]);
+  await db.query('update dancer_profiles set is_public=true where id=$1',[ids.owner]);
+  for(const [role,user]of outsiders)assert.deepEqual(await visible(role,user),[1,1]);
+  assert.deepEqual((await db.query('select * from dancer_photos where dancer_id=$1 order by id',[ids.owner])).rows,savedPhotos);
+  assert.deepEqual((await db.query('select * from dancer_profiles where id=$1',[ids.owner])).rows,savedProfile);
   for(const state of ["is_public=false","disabled_at=now()","status='pending_review'","verification_status='pending'"]){
    await db.query(`update dancer_profiles set status='approved',verification_status='approved',is_public=true,disabled_at=null where id=$1`,[ids.owner]);
    await db.query(`update dancer_profiles set ${state} where id=$1`,[ids.owner]);

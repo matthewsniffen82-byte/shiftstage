@@ -5,6 +5,7 @@ import Link from "next/link";
 import dynamic from "next/dynamic";
 import { SocialPlatformIcon } from "@/app/dancers/[slug]/SocialLinks";
 import { effectiveDancerProfileStatus } from "@/src/lib/dancr/profile-approval";
+import { publishDancerVisibility } from "@/src/lib/dancr/publish-dancer-visibility";
 import { safeErrorMetadata } from "@/src/lib/security/safe-error-metadata";
 import type { SocialPlatform } from "@/src/lib/dancr/types";
 import { DancerDashboardIcon } from "./DancerDashboardIdentity";
@@ -436,13 +437,14 @@ function DancerVisibilityPanel({
       if (data.visibility?.verified !== true || data.visibility?.publicProfileVisible !== nextPublic) {
         throw new Error("Public profile visibility could not be verified. Try again.");
       }
+      publishDancerVisibility(String(data.profile.id), savedPublic);
       if (data.profile) onProfileChange?.({ ...(profile || {}), ...data.profile });
       setIsPublic(savedPublic);
       setHasSaved(true);
       setStatus(
         savedPublic
-          ? "Your profile is back on and visible to guests."
-          : "Incognito is on. Your profile and schedule will disappear as pages refresh. Previously loaded content and shared media may remain visible.",
+          ? "Incognito is off. Your content is visible again."
+          : "Incognito is on. Your content is hidden from the site and stays saved.",
       );
     } catch (error) {
       if (mountedRef.current && !controller.signal.aborted && requestId === visibilitySequenceRef.current) {
@@ -466,8 +468,8 @@ function DancerVisibilityPanel({
           <span aria-hidden="true">·</span>
           <b>{isPublic ? "Visible" : "Hidden"}</b>
         </div>
-        <p>{isPublic ? "Guests can find your approved profile across MyDancr." : "Your profile is hidden from guests; your dashboard and tools stay available."}</p>
-        <p>Incognito hides your profile and schedule as pages refresh. Previously loaded content and shared media may remain visible.</p>
+        <p>{isPublic ? "Your profile is public." : "Your content is hidden from the site and stays saved."}</p>
+        <p>Incognito temporarily hides your profile and all your content. Turn it off to show everything again.</p>
       </div>
       <button className="visibility-toggle" data-action-state={isSaving ? "saving" : hasSaved ? "success" : "idle"} type="button" onClick={toggleVisibility} disabled={isSaving}>
         {isSaving ? "Saving…" : <><span>{isPublic ? "Go incognito" : "Make profile public"}</span>{hasSaved ? <small className="dashboard-button-confirmation">✓ Saved</small> : null}</>}

@@ -100,6 +100,8 @@
         : Number(modalImage?.dataset.activePhotoIndex || 0));
       profilePhotoViewer.style.zIndex = "1600";
       profilePhotoViewer.hidden = false;
+      profilePhotoViewer.dataset.publicDancerId = profileModal.dataset.publicDancerId || "";
+      profilePhotoViewer.removeAttribute("data-public-visibility-hidden");
       profilePhotoViewer.dataset.profileMediaHeading = `${modalName.textContent.trim() || "Dancer"} · Photos`;
       renderProfilePhotoViewerSlides();
       void loadPublicMediaLikes(items.map((item) => ({

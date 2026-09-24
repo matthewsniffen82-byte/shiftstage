@@ -57,19 +57,16 @@ test("phone-location check-in is retired and cannot activate a dancer", () => {
   assert.doesNotMatch(checkInRoute, /checked_in_at:/);
 });
 
-test("upcoming schedules accept only an approved venue and venue-local date", () => {
-  assert.match(shiftsRoute, /requestedShiftDate/);
-  assert.match(shiftsRoute, /getScheduleDateWindow/);
-  assert.match(shiftsRoute, /createScheduledDancerShift/);
-  assert.match(lifecycle, /shift_date: input\.shiftDate/);
-  assert.match(lifecycle, /shift_source: "scheduled"/);
-  assert.match(lifecycle, /status: "posted"/);
+test("retired schedule posts cannot bypass physical check-ins", () => {
+  assert.match(shiftsRoute, /upcoming_shifts_retired/);
+  assert.match(shiftsRoute, /status: 410/);
+  assert.match(shiftsRoute, /export const POST = retiredSchedule/);
+  assert.match(shiftsRoute, /export const PATCH = retiredSchedule/);
+  assert.match(shiftsRoute, /export const DELETE = retiredSchedule/);
   assert.doesNotMatch(shiftsRoute, /body\.workingStatus|body\.locationStatus|body\.checkedInAt/);
-  assert.match(shiftsRoute, /Check out before editing or cancelling an active shift/);
   assert.match(shiftsRoute, /reconcileExpiredDancerShifts/);
-  assert.match(publicService, /\.eq\("shift_source", "scheduled"\)[\s\S]*?\.gte\("ends_at", new Date\(\)\.toISOString\(\)\)/);
-  assert.match(publicVenueRoute, /\.eq\("shift_source", "scheduled"\)/);
-  assert.match(publicVenueRoute, /shiftLabel: formatPublicShiftStart\(shift\.shift_date \|\| shift\.starts_at\)/);
+  assert.match(publicService, /function isShiftPubliclyVisible[\s\S]*?isActiveNfcPresence\(shift, now\)/);
+  assert.match(publicVenueRoute, /upcomingShifts: \[\]/);
 });
 
 test("database activation is atomic, affiliation-gated, non-extendable, and globally cooled down", () => {
@@ -93,15 +90,14 @@ test("database activation is atomic, affiliation-gated, non-extendable, and glob
 });
 
 test("dancer controls explain the physical tap and never request phone coordinates", () => {
-  assert.match(shiftManager, /<details className="dancer-schedule-help">[\s\S]*?<summary>How check-ins work<\/summary>[\s\S]*?Log in to your MyDancr dancer account first[\s\S]*?No particular page needs to be open[\s\S]*?Unlock your phone and tap the club&apos;s dressing-room sticker/);
-  assert.match(shiftManager, /Open the link if prompted, and log in there if asked/);
-  assert.match(shiftManager, /Posting a date does not check you in\./);
+  assert.match(shiftManager, /<details className="dancer-schedule-help">[\s\S]*?<summary>How check-ins work<\/summary>[\s\S]*?Unlock your phone and tap the club&apos;s dressing-room sticker/);
+  assert.match(shiftManager, /Open the link and sign in if prompted/);
+  assert.match(shiftManager, /Tap the club&apos;s dressing-room sticker to show Working Now/);
   assert.doesNotMatch(shiftManager, /setTapReady|Tap at dressing room to go Working Now/);
-  assert.match(shiftManager, /Working Now lasts 6 hours/);
-  assert.match(shiftManager, /Tapping again does not extend it/);
-  assert.match(shiftManager, /6-hour cooldown at all clubs/);
-  assert.match(shiftManager, /Upcoming date/);
-  assert.match(shiftManager, /No phone location is collected/);
+  assert.match(shiftManager, /Working Now lasts <strong>6 hours<\/strong>/);
+  assert.match(shiftManager, /Tapping again won&apos;t extend it/);
+  assert.match(shiftManager, /6-hour cooldown<\/strong> across all clubs/);
+  assert.match(shiftManager, /Your current club appears publicly only while you&apos;re checked in/);
   assert.doesNotMatch(shiftManager, /navigator\.geolocation|latitude|longitude|accuracy/);
 
   const verificationHandler = liveShell.match(

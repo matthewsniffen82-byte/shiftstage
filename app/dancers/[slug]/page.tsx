@@ -117,7 +117,7 @@ export default async function DancerPublicPage({ params, searchParams }: PagePro
       metricsUnavailable={profile.metricsUnavailable}
       key={profile.id}
     >
-      <main className="public-profile-shell">
+      <main className="public-profile-shell" data-public-dancer-id={profile.id} data-public-profile-page>
         <ProfileViewTracker
           dancerId={profile.id}
           hasSchedule={Boolean(activeShift)}

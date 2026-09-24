@@ -141,10 +141,11 @@ export default function DancerNfcPanel({
     <details className="dancer-nfc-details">
       <summary>How check-ins work</summary>
       <div>
-        <p>Log in to your MyDancr dancer account first. No particular page needs to be open.</p>
-        <p>Unlock your phone and tap the club&apos;s dressing-room sticker. Open the link if prompted, and log in there if asked.</p>
-        <p>Working Now lasts 6 hours, followed by a 6-hour cooldown at all clubs. Tapping again does not extend it.</p>
-        <p>Your club appears publicly only while you are checked in. Only an active MyDancr dressing-room sticker can connect you to a club.</p>
+        <ul>
+          <li>Unlock your phone and tap the club&apos;s dressing-room sticker. Open the link and sign in if prompted.</li>
+          <li>Working Now lasts <strong>6 hours</strong>, followed by a <strong>6-hour cooldown</strong> across all clubs. Tapping again won&apos;t extend it.</li>
+          <li>Your current club appears publicly only while you&apos;re checked in.</li>
+        </ul>
         {!isPublic && !authorized ? <p>Finish profile setup and get your avatar and at least one profile photo approved before activation.</p> : null}
       </div>
     </details>
@@ -163,7 +164,7 @@ export default function DancerNfcPanel({
           <span className="dancer-nfc-compact-action">Manage</span>
         </summary>
         <div className="dancer-nfc-compact-body">
-          <p>Log in to your MyDancr dancer account, then tap a club&apos;s dressing-room sticker to connect and show Working Now there. You can then post upcoming dates at that club.</p>
+          <p>Tap a club&apos;s dressing-room sticker to check in.</p>
           {affiliationRoster}
           {checkInDetails}
           <button className="dancer-nfc-refresh" type="button" disabled={Boolean(pendingId)} onClick={refresh}>
@@ -187,11 +188,11 @@ export default function DancerNfcPanel({
           </div>
         </div>
         {authorized ? (
-          <p className="dancer-nfc-intro">You&apos;re activated. Log in to your MyDancr dancer account before each tap. No particular page needs to be open.</p>
+          <p className="dancer-nfc-intro">Tap a club&apos;s dressing-room sticker to check in.</p>
         ) : pendingEnrollment ? (
           <p className="dancer-nfc-intro">Your tap at {enrollment?.venue?.name || "the club"} is saved. Finish your profile and required photo approvals to activate.</p>
         ) : (
-          <p className="dancer-nfc-intro">Finish your profile and log in to your MyDancr dancer account. Then unlock your phone and tap the club&apos;s MyDancr dressing-room sticker. No particular page needs to be open.</p>
+          <p className="dancer-nfc-intro">Finish your profile, then tap the club&apos;s dressing-room sticker to activate.</p>
         )}
 
         <ol className="dancer-nfc-guide">
@@ -219,7 +220,7 @@ const DANCER_NFC_STYLE = [
   ".dancer-nfc-icon svg{width:28px;height:28px;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}",
   ".dancer-nfc-content{min-width:0}.dancer-nfc-heading{display:flex;align-items:center;gap:12px}.dashboard-shell .dancer-nfc-heading h2{margin:3px 0 0;font-size:21px;line-height:1.2}.dashboard-shell .dancer-nfc-heading .eyebrow{font-size:10px;letter-spacing:.12em;color:#bca7da}.dashboard-shell .dancer-nfc-panel p.dancer-nfc-intro{margin:16px 0;font-size:14px;line-height:1.5;color:#d0c8db}",
   ".dashboard-shell .dancer-nfc-guide{display:grid;gap:15px;margin:18px 0;padding:0;list-style:none;counter-reset:tap-step}.dashboard-shell .dancer-nfc-guide>li{position:relative;display:grid;gap:3px;padding:0 0 0 34px;border:0;background:none;box-shadow:none;counter-increment:tap-step}.dancer-nfc-guide>li:before{content:counter(tap-step);position:absolute;left:0;top:0;width:23px;height:23px;display:grid;place-items:center;border:1px solid #7e57ff66;border-radius:50%;color:#d4c2ff;font-size:11px;font-weight:700}.dancer-nfc-guide strong{font-size:14px;line-height:1.4;color:#fff}.dancer-nfc-guide span{font-size:13px;line-height:1.5;color:#c4b9d2}",
-  ".dashboard-shell details.dancer-nfc-details{margin:16px 0;padding:0;border:0;border-top:1px solid #ffffff14;border-radius:0;background:none;box-shadow:none}.dancer-nfc-details>summary{display:flex;align-items:center;gap:8px;min-height:44px;padding:8px 0;color:#c9b6e7;font-size:12px;font-weight:600;cursor:pointer;list-style:none}.dancer-nfc-details>summary::-webkit-details-marker{display:none}.dancer-nfc-details>summary:after{content:'+';margin-left:auto;font-size:18px}.dancer-nfc-details[open]>summary:after{content:'−'}.dancer-nfc-details>summary:focus-visible{outline:2px solid #c9b6e7;outline-offset:2px}.dashboard-shell .dancer-nfc-details p{margin:0 0 10px;font-size:12px;line-height:1.5;color:#b9accd}",
+  ".dashboard-shell details.dancer-nfc-details{margin:16px 0;padding:0;border:0;border-top:1px solid #ffffff14;border-radius:0;background:none;box-shadow:none}.dancer-nfc-details>summary{display:flex;align-items:center;gap:8px;min-height:44px;padding:8px 0;color:#c9b6e7;font-size:12px;font-weight:600;cursor:pointer;list-style:none}.dancer-nfc-details>summary::-webkit-details-marker{display:none}.dancer-nfc-details>summary:after{content:'+';margin-left:auto;font-size:18px}.dancer-nfc-details[open]>summary:after{content:'−'}.dancer-nfc-details>summary:focus-visible{outline:2px solid #c9b6e7;outline-offset:2px}.dashboard-shell .dancer-nfc-details ul{margin:0;padding-left:18px}.dashboard-shell .dancer-nfc-details li,.dashboard-shell .dancer-nfc-details p{margin:0 0 10px;font-size:12px;line-height:1.5;color:#b9accd}",
   ".dancer-nfc-panel p,.dancer-nfc-panel small,.dancer-nfc-notes{color:#b9accd;line-height:1.45}.dancer-nfc-roster{display:grid;gap:7px;margin:14px 0}.dancer-nfc-roster section{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 12px;border:1px solid rgba(69,255,165,.18);border-radius:11px;background:rgba(34,201,129,.06)}",
   ".dancer-nfc-roster span{display:grid;gap:2px}.dancer-nfc-roster small{font-size:11px}.dancer-nfc-roster button,.dancer-nfc-refresh{min-height:38px;padding:0 12px;border:1px solid rgba(255,255,255,.15);border-radius:9px;color:#fff;background:rgba(255,255,255,.06);font:inherit;font-weight:800;cursor:pointer}",
   ".dancer-nfc-status{font-size:12px}.dancer-nfc-refresh{margin:0 0 10px}.dancer-nfc-panel small{display:block}.dashboard-shell .dancer-nfc-panel .dancer-nfc-refresh{width:100%;min-height:44px;margin:0;font-size:13px}",

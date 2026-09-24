@@ -149,6 +149,7 @@ const past = () => new Date(Date.now() - 60000).toISOString();
 const scheduled = extra => ({ id: "shift", dancer_id: "dancer", status: "posted", shift_source: "scheduled", starts_at: future(), ends_at: future(), venues: venue, ...extra });
 const presence = extra => scheduled({ shift_source: "nfc_presence", checked_in_at: past(), checked_out_at: null, location_status: "club_confirmed", location_verification_expires_at: future(), ...extra });
 const hiddenShifts = [
+  ["schedule without a check-in", scheduled],
   ["checked-out presence", () => presence({ checked_out_at: past() })],
   ["expired presence", () => presence({ location_verification_expires_at: past() })],
   ["unconfirmed presence", () => presence({ location_status: "self_reported" })],
@@ -163,7 +164,7 @@ for (const [name, makeShift] of hiddenShifts) test(`saved next-shift cards exclu
   const rows = await customerService.getSavedDancerSchedules(client, ["dancer"]);
   assert.equal(rows.size, 0);
 });
-for (const [name, makeShift] of [["published schedule", scheduled], ["active NFC presence", presence]]) test(`saved next-shift cards retain ${name}`, async () => {
+for (const [name, makeShift] of [["active NFC presence", presence]]) test(`saved next-shift cards retain ${name}`, async () => {
   const client = clientFixture(() => ({ data: [makeShift()], error: null }));
   const rows = await customerService.getSavedDancerSchedules(client, ["dancer"]);
   assert.equal(rows.get("dancer").id, "shift");assert.equal(rows.get("dancer").venue.id, "venue");

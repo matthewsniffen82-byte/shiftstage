@@ -692,6 +692,7 @@ export default function TvFeedClient({
             className="tv-slide"
             data-tv-slide
             data-video-id={video.id}
+            data-public-dancer-id={video.dancer.id}
             data-tv-slide-key={video.id}
             key={video.id}
           >

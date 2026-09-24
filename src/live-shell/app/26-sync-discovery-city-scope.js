@@ -714,6 +714,18 @@
       await loadLiveDiscovery(citySelect.value, { force: true, cacheBust: bypassCache, background: true });
     }
     window.setInterval(() => { void refreshVisibleHomeDiscovery(); }, HOME_DISCOVERY_REFRESH_MS);
+    window.addEventListener("mydancr:public-visibility", (event) => {
+      const hiddenIds = event.detail?.hiddenIds || [];
+      if (hiddenIds.includes(profileModal.dataset.publicDancerId)) {
+        closeProfilePhotoViewer();
+        closeProfileTvViewer();
+        closeProfileModal();
+      }
+      void refreshVisibleHomeDiscovery({ bypassCache: true });
+      if (activeTab === "tv" && (event.detail?.restoredIds || []).length) {
+        void loadHomeTvFeed(homeTvFeedCity, homeTvFeedVenueId, homeTvFeedSelectedVideoId, { refresh: true });
+      }
+    });
     document.addEventListener("visibilitychange", () => {
       if (document.visibilityState === "visible") {
         renderCustomerQuickActions();

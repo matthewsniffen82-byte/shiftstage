@@ -3,6 +3,7 @@
 <html lang="en">
 <head>
   <script src="/mydancr-api-transport.js?v=1"></script>
+  <script defer src="/dancer-content-visibility.js?v=1"></script>
   <script src="/profile-photo-crop.js?v=1"></script>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
@@ -1160,7 +1161,7 @@
           <span class="eyebrow" id="dancerVenueVerificationEyebrow">Venue affiliation</span>
           <h3 id="dancerVenueVerificationTitle">Manage where you work</h3>
           <p id="dancerVenueVerificationDescription">At the club, tap its official MyDancr dressing-room sticker to approve venue access and check in a current posted shift.</p>
-          <p>Log in to your MyDancr dancer account first. No particular page needs to be open. Unlock your phone and tap the club's dressing-room sticker. Open the link if prompted, and log in there if asked.</p>
+          <p>Unlock your phone and tap the club's dressing-room sticker. Open the link and sign in if prompted.</p>
           <div class="venue-affiliation-controls">
             <label for="dancerVenueVerificationVenue">
               Venue
@@ -1190,7 +1191,7 @@
             <div class="dancer-visibility-control">
               <div>
                 <strong id="dancerVisibilityTitle">Your profile is live</strong>
-                <p class="dancer-incognito-status show" id="dancerIncognitoStatus" role="status" aria-live="polite">Guests can discover your profile, schedules, and venue directions.</p>
+                <p class="dancer-incognito-status show" id="dancerIncognitoStatus" role="status" aria-live="polite">Your profile is public.</p>
               </div>
               <button type="button" data-dancer-control-action="toggle-incognito" id="dancerIncognitoToggle">
                 <strong>Go incognito</strong>
@@ -1198,7 +1199,7 @@
               </button>
             </div>
           </div>
-          <p class="rule-note">Incognito hides your profile and schedule as pages refresh. Previously loaded content and shared media may remain visible.</p>
+          <p class="rule-note">Incognito temporarily hides your profile and all your content. Turn it off to show everything again.</p>
         </details>
         <details class="auth-card dashboard-collapse" id="dancerBillingSection" hidden>
           <summary><span class="dashboard-collapse-title"><strong>Payment authorization</strong><span>Expand to view subscription status and manage Stripe billing when billing is active.</span></span></summary>

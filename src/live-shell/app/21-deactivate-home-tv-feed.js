@@ -687,6 +687,7 @@
       const previousVideoId = String(slide.dataset.playbackId || slide.dataset.videoId || "");
       if (previousVideoId) clearHomeTvFeedEngagedTimer(previousVideoId);
       slide.dataset.videoId = String(item.id);
+      slide.dataset.publicDancerId = String(item.dancer?.id || "");
       slide.classList.toggle("has-media-poster", Boolean(item?.posterUrl || item?.poster_url));
       delete slide.dataset.userPaused;
       slide.classList.remove("is-media-unavailable", "is-applauding", "is-autoplay-blocked");
@@ -859,6 +860,7 @@
       const slide = document.createElement("article");
       slide.className = "home-tv-feed-slide is-paused is-media-loading";
       slide.dataset.videoId = String(item.id);
+      slide.dataset.publicDancerId = String(item.dancer?.id || "");
       slide.dataset.playbackId = copy ? `${item.id}~${copy}` : String(item.id);
       slide.dataset.feedVideoIndex = String(index);
       slide.dataset.pendingVideoIndex = String(index);

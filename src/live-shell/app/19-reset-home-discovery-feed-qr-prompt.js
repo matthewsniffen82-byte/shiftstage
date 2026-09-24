@@ -341,7 +341,7 @@
           ? "is-upcoming"
           : "is-open";
       return `
-        <article class="dancer-card home-dancer-grid-card ${groupClass}${compactDirectory ? " is-compact-directory" : ""}" data-profile="${profileValue}" data-profile-reference="${profileReference}" data-grid-group="${groupClass}" aria-label="${safeName}, ${escapeHtml(scheduleLabel)}">
+        <article data-public-dancer-id="${escapeOptionValue(profile.id || "")}" class="dancer-card home-dancer-grid-card ${groupClass}${compactDirectory ? " is-compact-directory" : ""}" data-profile="${profileValue}" data-profile-reference="${profileReference}" data-grid-group="${groupClass}" aria-label="${safeName}, ${escapeHtml(scheduleLabel)}">
           <a class="home-dancer-grid-link" href="${profileHref}" aria-label="Open ${safeName}'s full profile">
             ${photoMarkup}
             <span class="home-dancer-grid-copy">
@@ -554,7 +554,7 @@
         ? `<span class="home-discovery-feed-going-count">${tonightInterestCount(profile).toLocaleString()} going</span>`
         : "";
       return `
-        <article class="dancer-card home-discovery-feed-slide" data-discovery-key="${profileReference}" data-profile="${profileValue}" data-profile-reference="${profileReference}" aria-label="${safeName}, ${escapeHtml(status.label)}">
+        <article data-public-dancer-id="${escapeOptionValue(profile.id || "")}" class="dancer-card home-discovery-feed-slide" data-discovery-key="${profileReference}" data-profile="${profileValue}" data-profile-reference="${profileReference}" aria-label="${safeName}, ${escapeHtml(status.label)}">
           ${portraitMarkup}
           <div class="home-discovery-feed-shade" aria-hidden="true"></div>
           <a class="home-discovery-feed-open-profile" href="${profileHref}" aria-label="Open ${safeName}'s full profile"></a>

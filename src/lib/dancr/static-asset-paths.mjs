@@ -8,6 +8,7 @@ export const staticAssetPaths = [
   "/dancr-feedback.v1.css",
   "/mobile-social-strip.css",
   "/mydancr-api-transport.js",
+  "/dancer-content-visibility.js",
   "/mydancr-push-device.js",
   "/mydancr-push-invitations.js",
   "/mydancr-push-invitations.css",

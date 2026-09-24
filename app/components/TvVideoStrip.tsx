@@ -226,6 +226,7 @@ export function TvVideoStrip({
             <button
               aria-label={`Open ${video.dancer.stageName} MyDancr TV ${videoPosition} full screen, ${schedule.label}, ${formatVideoDuration(video.durationSeconds)}`}
               className="tv-strip-card"
+              data-public-dancer-id={video.dancer.id}
               key={video.id}
               ref={(element) => {
                 previewCards.current[video.id] = element;
@@ -263,6 +264,7 @@ export function TvVideoStrip({
       {activeVideo ? (
         <div
           className="tv-video-viewer"
+          data-public-dancer-id={activeVideo.dancer.id}
           role="dialog"
           aria-modal="true"
           aria-label={`${activeVideo.dancer.stageName} MyDancr TV video`}

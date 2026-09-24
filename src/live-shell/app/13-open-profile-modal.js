@@ -6,6 +6,8 @@
       const profile = findProfile(profileReference, { includePending: isPrivatePreview });
       if (!profile) return;
       profileModal.dataset.analyticsDancerId = isPrivatePreview ? "" : String(profile.id || "");
+      profileModal.dataset.publicDancerId = isPrivatePreview ? "" : String(profile.id || "");
+      profileModal.removeAttribute("data-public-visibility-hidden");
       city = profileDiscoveryCity(profile, city);
       profileModalReturnContext = captureProfileReturnContext(options.returnTo || "");
       profileModalReturnTarget = profileModalReturnContext?.surface || "";
@@ -458,6 +460,8 @@
 
     function openProfileTvViewer(item, profileName, videos, requestedIndex = null) {
       const overlay = profileTvViewer();
+      overlay.dataset.publicDancerId = profileModal.dataset.publicDancerId || "";
+      overlay.removeAttribute("data-public-visibility-hidden");
       overlay.profileTvVideos = Array.isArray(videos) ? videos : [item];
       const parsedRequestedIndex = Number(requestedIndex);
       const matchingItemIndex = overlay.profileTvVideos.indexOf(item);

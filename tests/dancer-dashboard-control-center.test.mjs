@@ -76,7 +76,7 @@ test("profile visibility is separated from daily actions and hiding requires con
 
 test("approved dashboard suppresses irrelevant billing, approval, and generic moderation status", () => {
   assert.match(page, /id="dancerBillingSection" hidden/);
-  assert.match(page, /billingSection\.hidden = !Boolean\(liveDancerBilling\?\.subscription\?\.hasStripeSubscription\)/);
+  assert.match(page, /billingSection\.hidden = !liveDancerBilling\?\.subscription\?\.hasStripeSubscription/);
   assert.match(page, /approvalStatusSection\.hidden = approved && !optionalProfileFixes && !rejected/);
   assert.doesNotMatch(page, /Complete your public details, post shifts, and track how Dancr sends customers to you\. Photos and videos publish only after separate media moderation\./);
 });
