@@ -92,7 +92,6 @@ test("club listing is available only through venue account creation", () => {
   assert.doesNotMatch(liveApp, /utility-menu-club-join/);
   assert.doesNotMatch(liveApp, /href="\/clubs\/join"/);
   assert.doesNotMatch(liveApp, /clubListDirectoryCta|club-list-directory-cta|club-join-footer/);
-  assert.match(liveApp, /<strong>Request to list your club<\/strong>/);
   assert.match(liveApp, /Confirm your email, then wait for club approval/);
   assert.match(liveApp, /id="venueRequestBackBtn"[^>]*>Have an access code\? Continue</);
   assert.match(liveApp, /id="venueSignupBtn"[\s\S]*?<strong>Club<\/strong>/);

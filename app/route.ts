@@ -21,17 +21,13 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 const ADMIN_AUTH_ENTRY_STYLES = `<style>
-#authPage .auth-admin-entry{width:100%;min-height:54px;display:grid;grid-template-columns:30px minmax(0,1fr) auto;align-items:center;gap:9px;padding:9px 12px;color:#f8fafc;text-decoration:none;border:1px solid rgba(255,255,255,.12);border-radius:15px;background:rgba(24,24,32,.72);box-shadow:inset 0 1px 0 rgba(255,255,255,.035)}
-#authPage .auth-admin-entry:hover,#authPage .auth-admin-entry:focus-visible{border-color:rgba(124,58,237,.8);background:rgba(43,34,68,.88);outline:0;box-shadow:0 0 0 3px rgba(124,58,237,.2),inset 0 1px 0 rgba(255,255,255,.06)}
-#authPage .auth-admin-entry-mark{width:30px;aspect-ratio:1;display:grid;place-items:center;border-radius:50%;color:#fff;background:rgba(91,33,218,.8);font-size:7px;font-weight:950;letter-spacing:.03em}
-#authPage .auth-admin-entry-copy{min-width:0;display:grid;gap:1px}
-#authPage .auth-admin-entry-copy strong{font-size:15px;line-height:1.15}
-#authPage .auth-admin-entry-copy small{color:rgba(226,226,237,.62);font-size:10px;line-height:1.2}
-#authPage .auth-admin-entry-arrow{color:#c4b5fd;font-size:20px;line-height:1}
+#authPage .auth-admin-entry{justify-self:center;display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:0 8px;color:#aeb0bc;font-size:12px;font-weight:500;text-decoration:none;border:0;border-radius:8px;background:transparent;box-shadow:none}
+#authPage .auth-admin-entry:hover{color:#fff;text-decoration:underline;text-underline-offset:3px}
+#authPage .auth-admin-entry:focus-visible{outline:2px solid #c4b5fd;outline-offset:3px}
 #authPage.venue-request-succeeded .auth-admin-entry{display:none}
 </style>`;
 
-const ADMIN_AUTH_ENTRY_HTML = `<a class="auth-admin-entry" id="platformAdminAuthLink" href="/admin" aria-label="Open Platform admin sign in or signup"><span class="auth-admin-entry-mark" aria-hidden="true">ADMIN</span><span class="auth-admin-entry-copy"><strong>Platform admin</strong><small>Private admin access</small></span><span class="auth-admin-entry-arrow" aria-hidden="true">›</span></a>`;
+const ADMIN_AUTH_ENTRY_HTML = `<a class="auth-admin-entry" id="platformAdminAuthLink" href="/admin" aria-label="Open Platform admin sign in or signup">Platform admin</a>`;
 
 let productionShell: ReturnType<typeof renderLiveShell> | undefined;
 
