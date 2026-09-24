@@ -32286,11 +32286,18 @@
               <span data-quick-icon="qr"></span>
               <span id="customerDealQuickCta" class="customer-deal-quick-cta" role="status" aria-live="polite" hidden>New deal saved · Open</span>
             </button>
-            <div class="customer-quick-panel" id="customerNotificationsQuickPanel" hidden>
-              <h3>Notifications</h3>
-              <p>Recent alerts from the settings you turned on.</p>
+            <div class="customer-quick-panel" id="customerNotificationsQuickPanel" role="region" aria-labelledby="customerNotificationsQuickTitle" hidden>
+              <div class="customer-notification-heading">
+                <h3 id="customerNotificationsQuickTitle">Notifications</h3>
+                <button class="customer-notification-close" type="button" data-notification-action="close" aria-label="Close notifications">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"></path></svg>
+                </button>
+              </div>
+              <p>Your recent updates.</p>
               <div class="customer-quick-list" id="customerNotificationsQuickList"></div>
-              <button class="customer-quick-clear" type="button" data-notification-action="clear-all">Clear notifications</button>
+              <div class="customer-notification-footer">
+                <button class="customer-quick-clear" type="button" data-notification-action="clear-all" aria-label="Clear all notifications">Clear all</button>
+              </div>
             </div>
             <div class="customer-quick-panel" id="customerDealsQuickPanel" hidden>
               <h3>Saved Club Deals</h3>
@@ -46535,7 +46542,8 @@
         index: notifications.indexOf(notification),
         unread: !notification.readAt,
         title: notification.title || "Dancr notification",
-        detail: `${notification.body || "You have a new update."}${formatBillingDate(notification.sentAt || notification.createdAt) ? ` · ${formatBillingDate(notification.sentAt || notification.createdAt)}` : ""}`
+        detail: notification.body || "You have a new update.",
+        date: formatBillingDate(notification.sentAt || notification.createdAt)
       }));
     }
 
@@ -46564,8 +46572,9 @@
       customerNotificationsQuickList.innerHTML = items.length
         ? items.map((item) => `
             <button class="customer-quick-item" type="button" ${item.id ? `data-quick-notification-id="${item.id}"` : ""} ${Number.isFinite(item.index) ? `data-notification-index="${item.index}"` : ""}>
-              <strong>${displayText(item.title)}</strong>
-              <span>${displayText(item.detail)}</span>
+              <strong class="customer-notification-title">${displayText(item.title)}${item.unread ? '<span class="customer-notification-unread" role="img" aria-label="Unread"></span>' : ""}</strong>
+              <span class="customer-notification-message">${displayText(item.detail)}</span>
+              ${item.date ? `<span class="customer-notification-date">${displayText(item.date)}</span>` : ""}
             </button>
           `).join("")
         : `<div class="customer-quick-empty" role="status">${isDancerSession()
@@ -46739,6 +46748,11 @@
         event.stopPropagation();
         event.stopImmediatePropagation();
         const action = button.dataset.notificationAction;
+        if (action === "close") {
+          closeCustomerQuickPanels();
+          customerNotificationQuickBtn.focus({ preventScroll: true });
+          return true;
+        }
         if (action === "mark-all") {
           markAllLiveNotificationsRead();
           return true;
@@ -64949,6 +64963,14 @@
 
     customerNotificationsQuickPanel.addEventListener("click", (event) => {
       if (handleNotificationCenterClick(event)) return;
+    });
+
+    customerQuickActions.addEventListener("keydown", (event) => {
+      if (event.key !== "Escape" || customerNotificationsQuickPanel.hidden) return;
+      event.preventDefault();
+      event.stopPropagation();
+      closeCustomerQuickPanels();
+      customerNotificationQuickBtn.focus({ preventScroll: true });
     });
 
     document.addEventListener("click", (event) => {

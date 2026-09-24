@@ -2,7 +2,7 @@
 export const staticAssetVersions = {
   "/dancr-account-forms.v1.css": "d1eeca79e59c905a",
   "/dancr-ui-consistency.v1.css": "9cc17d4c1ec223e7",
-  "/dancr-aesthetic.v1.css": "83e6e00e16163182",
+  "/dancr-aesthetic.v1.css": "0e7708b26db254b1",
   "/dancr-brand-tokens.v1.css": "2a718f138858ab5a",
   "/dancr-button-system.v1.css": "9636087cb6647a28",
   "/dancr-feedback.v1.css": "b1d66c256717c88e",
@@ -21,7 +21,7 @@ export const staticAssetVersions = {
   "/outputs/dancr-hero.png": "d16974879eb78003",
   "/outputs/dancr-hero.webp": "04a290c3af4ad444",
   "/outputs/live-shell.css": "960d1c6917279460",
-  "/outputs/dancr-aesthetic.css": "c7cb863da9a80025",
+  "/outputs/dancr-aesthetic.css": "833d144cf6b975b2",
   "/outputs/live-shell-overrides.css": "a639247e57ba9ecd",
   "/outputs/mydancr-logo-current.png": "e7f5af001692cb08",
   "/outputs/mydancr-logo.png": "4b6b66793bf7a63d",
