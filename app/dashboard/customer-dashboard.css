@@ -58,6 +58,9 @@ body .dashboard-shell.dashboard-shell-customer .venue-dashboard-section[data-sec
 body .dashboard-shell.dashboard-shell-customer .venue-dashboard-section[data-section-icon] > .venue-dashboard-section-body { padding: 18px; background: #09090d; }
 body .dashboard-shell.dashboard-shell-customer :is(a, button, summary, input, textarea):focus-visible { outline: 2px solid #c5a4f5 !important; outline-offset: 3px; }
 body .dashboard-shell.dashboard-shell-customer .venue-dashboard-section > summary:focus-visible { outline-offset: -3px; }
+/* Section links focus the panel; keep its focus cue on the header. */
+body .dashboard-shell.dashboard-shell-customer .venue-dashboard-section[tabindex="-1"]:focus { outline: none; }
+body .dashboard-shell.dashboard-shell-customer .venue-dashboard-section[tabindex="-1"]:focus-visible > summary { outline: 2px solid #c5a4f5; outline-offset: -3px; }
 
 /* Open sections keep the same compact proportions and readable materials. */
 body .dashboard-shell.dashboard-shell-customer :is(.venue-dashboard-section-body > .info-panel, .venue-dashboard-inner-grid > .info-panel, .customer-saved-card, .customer-night-card, .customer-preference-row, .saved-deal-bookmark, .notification-row) { border-color: #cfb8ed24; background: #141119; box-shadow: inset 0 1px 0 #ffffff04; }
