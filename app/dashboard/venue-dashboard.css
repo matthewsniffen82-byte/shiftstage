@@ -136,4 +136,11 @@ body .dashboard-shell.dashboard-shell-venue .venue-dashboard-overview-grid .metr
 .venue-value-table tbody th{min-width:150px;max-width:260px;overflow-wrap:anywhere}
 .venue-value-table th small{display:block;font-weight:400;color:#b8b6c7;margin-top:6px}
 .venue-value-subscription{border:1px solid #4a3a63;border-radius:12px;padding:16px;margin-top:12px}
+.venue-value-breakdown .venue-value-empty{margin:4px 0 12px}
+.venue-value-methodology{margin-top:12px;border:1px solid #c5a4f533;border-radius:12px;background:#b794e608}
+.venue-value-methodology > summary{min-height:44px;padding:12px 14px;color:#dac9ee;font-size:13px;font-weight:600;cursor:pointer}
+.venue-value-methodology > summary:focus-visible{outline:2px solid #c5a4f5;outline-offset:-3px;border-radius:12px}
+.venue-value-methodology > ul{display:grid;gap:12px;margin:0;padding:0 18px 16px 32px;color:#b8b6c7;font-size:13px;line-height:1.6}
+.venue-value-methodology li > strong{color:#e1d9eb}
+.venue-value-billing{margin:12px 0 0;color:#b8b6c7;font-size:12px;line-height:1.5}
 @media(max-width:640px){.venue-value-metrics,.venue-value-supporting{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.venue-value-analytics .metric{padding:12px}.venue-value-metrics .metric strong{font-size:26px}}
