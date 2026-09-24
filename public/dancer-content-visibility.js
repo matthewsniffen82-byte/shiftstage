@@ -92,7 +92,7 @@
         let visible = new Set();
         let confirmed = false;
         try {
-          const response = await fetch(`/api/public/dancers/visibility?ids=${batch.join(",")}`, {
+          const response = await fetch(`/api/public/dancer-visibility?ids=${batch.join(",")}`, {
             cache: "no-store", credentials: "omit", signal: controller.signal,
           });
           const data = await response.json();

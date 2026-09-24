@@ -6,7 +6,7 @@ import { publicDancerVisibility } from '../src/lib/dancr/public-dancer-visibilit
 
 const id = '10000000-0000-4000-8000-000000000001';
 const other = '10000000-0000-4000-8000-000000000002';
-const request = ids => new Request(`https://example.test/api/public/dancers/visibility?ids=${ids}`);
+const request = ids => new Request(`https://example.test/api/public/dancer-visibility?ids=${ids}`);
 function client(result) {
   const calls = [];
   const query = new Proxy({}, { get(_target, name) {
