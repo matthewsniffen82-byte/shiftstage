@@ -3,6 +3,7 @@ import { apiError } from "@/src/lib/api";
 import { readBoundedJsonObject } from "@/src/lib/bounded-json-body";
 import { sendTransactionalEmail } from "@/src/lib/dancr/notification-delivery";
 import { publicAppUrl } from "@/src/lib/dancr/public-app-url";
+import { VENUE_TEAM_OWNER_ACCESS_NOTE, VENUE_TEAM_ROLE_DESCRIPTIONS } from "@/src/lib/dancr/venue-team-role-descriptions";
 import {
   createVenueTeamInvitation,
   getVenueTeamState,
@@ -39,6 +40,7 @@ export async function POST(request: Request) {
       expiresInDays: 7,
     });
     const invitationUrl = new URL(`/venue-team/invite/${encodeURIComponent(result.token)}`, publicAppUrl()).toString();
+    const roleDescription = VENUE_TEAM_ROLE_DESCRIPTIONS[result.invitation.role];
     let delivery: { delivered: boolean; reason?: string } = {
       delivered: false,
       reason: "Email delivery was unavailable.",
@@ -49,6 +51,11 @@ export async function POST(request: Request) {
         subject: `Join ${result.access.venueName} on MyDancr`,
         text: [
           `You have been invited to join ${result.access.venueName} as ${result.invitation.role}.`,
+          "",
+          `${roleDescription.label} access at ${result.access.venueName}:`,
+          `Can view: ${roleDescription.view}`,
+          `Can do: ${roleDescription.actions}`,
+          VENUE_TEAM_OWNER_ACCESS_NOTE,
           "",
           `Accept the secure invitation: ${invitationUrl}`,
           "",

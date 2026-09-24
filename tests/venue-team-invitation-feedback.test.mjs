@@ -66,6 +66,7 @@ function fixture({ account = null, member = null, authorized = true, delivery = 
       emails.push(input); if (deliveryThrows) throw new Error("private delivery details"); return delivery;
     } },
     "@/src/lib/dancr/public-app-url": { publicAppUrl: () => "https://www.mydancr.com" },
+    "@/src/lib/dancr/venue-team-role-descriptions": compile(read("../src/lib/dancr/venue-team-role-descriptions.ts"), {}),
     "@/src/lib/dancr/venue-team": service,
     "@/src/lib/supabase/admin": { createAdminSupabaseClient: () => client },
     "@/src/lib/supabase/request": { createRequestSupabaseContext: async () => ({ user: { id: "authenticated-owner" } }) },

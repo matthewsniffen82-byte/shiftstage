@@ -80,7 +80,7 @@ test("venue dashboard live operations refresh real data and expose honest workin
   assert.match(dashboard, /hours === 1 \? "hr" : "hrs"/);
   assert.match(dashboard, /VenueTeamPanel/);
   assert.match(dashboardRoute, /readVenueAnalyticsPeriod/);
-  assert.match(dashboardRoute, /canVenue\(access, "view_finance"\)/);
+  assert.doesNotMatch(dashboardRoute, /getVenueFinance/);
   assert.match(dashboardRoute, /refreshedAt: new Date\(\)\.toISOString\(\)/);
 });
 
