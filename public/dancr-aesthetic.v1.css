@@ -13424,7 +13424,8 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
 /* Match iOS admission buttons to the deeper violet in the Android reference. */
 @supports (-webkit-touch-callout: none) {
   html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell, #results)
-    .free-entry-cta:not(.is-unavailable) {
+    .free-entry-cta:not(.is-unavailable),
+  html body.dancr-button-system #results.home-tv-feed .home-tv-feed-deal-action.is-available {
     --free-entry-border: #5636a5;
     --free-entry-background: linear-gradient(135deg, #240293, #1b0165);
     --free-entry-shadow: 0 5px 14px var(--dancr-color-black-soft),
