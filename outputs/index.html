@@ -43003,6 +43003,15 @@
           });
         }, { rootMargin: "300px" })
       : null;
+    // Small lineup portraits need a head start before the next club card arrives.
+    // Keep the shorter loading window for larger gallery photos and venue logos.
+    const stableLineupVisibility = typeof IntersectionObserver === "function"
+      ? new IntersectionObserver((entries) => {
+          entries.forEach(({ target, isIntersecting }) => {
+            if (isIntersecting) watchStableImage(target);
+          });
+        }, { rootMargin: "1200px 0px" })
+      : null;
 
     function stableImageRequest(image) {
       let state = stableImageRequests.get(image);
@@ -43060,10 +43069,12 @@
       if (!failed && image.naturalWidth > 0) {
         image.dataset.imageState = "ready";
         stableImageVisibility?.unobserve(image);
+        stableLineupVisibility?.unobserve(image);
         if (image.matches(".home-venue-discovery-logo, .venue-card-logo, .venue-detail-logo")) fitVenueLogoImage(image);
       } else if (!retryStableImage(image)) {
         image.dataset.imageState = "error";
         stableImageVisibility?.unobserve(image);
+        stableLineupVisibility?.unobserve(image);
       }
     }
 
@@ -43092,9 +43103,10 @@
       if (root instanceof HTMLImageElement && root.dataset.imageState === "loading") images.push(root);
       images.forEach((image) => {
         if (stableImageRequest(image).timer !== null) return;
+        const visibility = image.matches(".venue-lineup-avatar-photo") ? stableLineupVisibility : stableImageVisibility;
         if (image.complete) settleStableImage(image);
-        else if (image.loading !== "lazy" || !stableImageVisibility) watchStableImage(image);
-        else stableImageVisibility.observe(image);
+        else if (image.loading !== "lazy" || !visibility) watchStableImage(image);
+        else visibility.observe(image);
       });
     }
 
@@ -45848,7 +45860,7 @@
       } : { className: "", style: "" };
     }
 
-    function nativeResponsivePhotoAttrs(url, srcSet = "") {
+    function nativeResponsivePhotoAttrs(url, srcSet = "", fallbackWidth = 320) {
       const sources = String(srcSet || "")
         .split(",")
         .map((entry) => entry.trim().match(/^(\S+)\s+(\d+)w$/))
@@ -45856,7 +45868,7 @@
         .map((match) => ({ url: safeExternalHref(match[1]), width: Number(match[2]) }))
         .filter((source) => source.url && Number.isFinite(source.width))
         .sort((left, right) => left.width - right.width);
-      const fallbackUrl = sources.find((source) => source.width >= 320)?.url || sources[sources.length - 1]?.url || safeExternalHref(url);
+      const fallbackUrl = sources.find((source) => source.width >= fallbackWidth)?.url || sources[sources.length - 1]?.url || safeExternalHref(url);
       if (!fallbackUrl) return "";
       const safeSrcSet = sources
         .map((source) => `${escapeOptionValue(source.url)} ${source.width}w`)
@@ -53152,14 +53164,16 @@
         const avatarUrl = publicAvatarPhotoUrl(profile);
         const nativePhotoAttrs = nativeResponsivePhotoAttrs(
           avatarUrl,
-          publicAvatarPhotoSrcSet(profile)
+          publicAvatarPhotoSrcSet(profile),
+          96
         );
+        const avatarInitial = `<span class="venue-lineup-avatar-initial">${escapeHtml(String(profile.name || "").trim().charAt(0).toUpperCase())}</span>`;
         const avatarPhoto = avatarUrl && nativePhotoAttrs
           ? `<img class="venue-lineup-avatar-photo" ${nativePhotoAttrs} sizes="32px" width="64" height="64" style="object-position: ${avatarPhotoPosition(
               profile.avatarPhotoFocalX ?? profile.mainPhotoFocalX,
               profile.avatarPhotoFocalY ?? profile.mainPhotoFocalY
-            )}" alt="" aria-hidden="true" loading="${options.eager ? "eager" : "lazy"}" decoding="async" draggable="false" data-image-state="loading">`
-          : escapeHtml(String(profile.name || "").trim().charAt(0).toUpperCase());
+            )}" alt="" aria-hidden="true" loading="${options.eager ? "eager" : "lazy"}" fetchpriority="${options.eager ? "high" : "auto"}" decoding="async" draggable="false" data-image-state="loading">${avatarInitial}`
+          : avatarInitial;
         return `<button type="button" class="${classPrefix}-lineup-avatar venue-lineup-profile" data-public-dancer-id="${escapeOptionValue(profile.id || "")}" data-venue-dancer-profile data-grid-profile-action="${escapeOptionValue(profileReferenceValue(profile))}" data-dancer-id="${escapeOptionValue(profile.id || "")}" data-dancer-avatar data-working-now="true" aria-label="Open ${escapeHtml(profile.name)}, working now"><span data-dancer-avatar-border aria-hidden="true">${avatarPhoto}</span><span data-working-now-indicator aria-hidden="true">NOW</span></button>`;
       }).join("");
       const remainingMarkup = !options.mobile && remaining > 0

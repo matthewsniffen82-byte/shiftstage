@@ -60,7 +60,7 @@ test("the border wrapper cannot change avatar size, spacing, shadows, badges, or
 test("every production circular avatar contains the new border wrapper", () => {
   assert.match(liveShell, /class="profile-modal-avatar" id="modalProfileAvatar" data-dancer-avatar[\s\S]*?id="modalProfileAvatarBorder" data-dancer-avatar-border/);
   assert.match(liveShell, /class="approved-avatar-preview\$\{avatarPreviewAttrs\.className\}"\$\{avatarPreviewAttrs\.style\} data-dancer-avatar[\s\S]*?<span data-dancer-avatar-border/);
-  assert.match(liveShell, /class="\$\{classPrefix\}-lineup-avatar" data-dancer-avatar[^`]+data-dancer-avatar-border/);
+  assert.match(liveShell, /class="\$\{classPrefix\}-lineup-avatar venue-lineup-profile"[^`]+data-dancer-avatar[^`]+data-dancer-avatar-border/);
   assert.match(liveShell, /dancerPhoto\.setAttribute\("data-dancer-avatar", ""\)[\s\S]*?dancerPhotoBorder\.setAttribute\("data-dancer-avatar-border", ""\)/);
   assert.match(liveShell, /modalProfileAvatarBorder\.textContent = avatarPhotoUrl/);
   assert.match(publicProfile, /data-dancer-avatar=""[\s\S]*?data-dancer-avatar-border=""/);
@@ -94,10 +94,11 @@ test("upcoming avatars use a cyan ring without being promoted to Working Now", (
     wrapperRules,
     /\[data-upcoming="true"\][\s\S]*?> \[data-dancer-avatar-border\] > :is\(img, \.tv-profile-photo-image\) \{[\s\S]*?inset: 0 !important;[\s\S]*?width: 100% !important;[\s\S]*?height: 100% !important;[\s\S]*?background-color: var\(--dancr-color-avatar-ring-upcoming\) !important;/,
   );
-  assert.match(publicProfile, /data-upcoming=\{hasUpcomingShift \? "true" : undefined\}/);
+  assert.doesNotMatch(publicProfile, /data-upcoming=/, "public profiles use confirmed active presence for their status ring");
   assert.match(tvFeed, /data-upcoming=\{video\.shift && !video\.shift\.isActive \? "true" : undefined\}/);
   assert.match(liveShell, /modalProfileAvatar\.dataset\.upcoming = String\(modalHasUpcomingShift\)/);
-  assert.match(homeTvAvatarBuilder, /if \(item\?\.shift && !dancerIsWorkingNow\) dancerPhoto\.setAttribute\("data-upcoming", "true"\)/);
+  assert.match(homeTvAvatarBuilder, /const dancerIsWorkingNow = Boolean\(item\?\.shift\?\.isActive\)/);
+  assert.doesNotMatch(homeTvAvatarBuilder, /setAttribute\("data-upcoming"/);
   assert.doesNotMatch(homeTvAvatarBuilder, /data-working-now-indicator|workingNowIndicator|textContent = "NOW"/);
 });
 
@@ -125,7 +126,7 @@ test("working-now avatars keep one complete live-teal ring with NOW reserved for
   assert.match(publicProfile, /data-working-now=\{activeShift \? "true" : undefined\}/);
   assert.match(tvFeed, /data-working-now=\{video\.shift\?\.isActive \? "true" : undefined\}/);
   assert.match(liveShell, /modalProfileAvatar\.dataset\.workingNow = String\(modalIsWorkingNow\)/);
-  assert.match(liveShell, /data-dancer-avatar data-working-now="true" role="img" aria-label="\$\{escapeHtml\(profile\.name\)\}, working now"/);
+  assert.match(liveShell, /<button type="button" class="\$\{classPrefix\}-lineup-avatar[^`]+data-dancer-avatar data-working-now="true" aria-label="Open \$\{escapeHtml\(profile\.name\)\}, working now"/);
   assert.match(publicProfile, /data-working-now-indicator="">NOW<\/span>/);
   assert.doesNotMatch(tvFeed, /data-working-now-indicator/);
   assert.match(profileSummary, /data-working-now-indicator aria-hidden="true">NOW<\/span>/);
@@ -160,7 +161,7 @@ test("venue-card lineup avatars use one stable circular paint layer while scroll
   assert.ok(lineupBuilder);
   assert.match(lineupBuilder, /nativeResponsivePhotoAttrs\(/);
   assert.match(lineupBuilder, /class="venue-lineup-avatar-photo"/);
-  assert.match(lineupBuilder, /loading="\$\{options\.eager \? "eager" : "lazy"\}" decoding="async"/);
+  assert.match(lineupBuilder, /loading="\$\{options\.eager \? "eager" : "lazy"\}" fetchpriority="\$\{options\.eager \? "high" : "auto"\}" decoding="async"/);
   assert.doesNotMatch(lineupBuilder, /customAvatarPhotoAttrs\(/);
   assert.match(
     aesthetic,

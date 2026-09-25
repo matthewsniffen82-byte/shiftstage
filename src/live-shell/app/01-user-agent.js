@@ -20,6 +20,15 @@
           });
         }, { rootMargin: "300px" })
       : null;
+    // Small lineup portraits need a head start before the next club card arrives.
+    // Keep the shorter loading window for larger gallery photos and venue logos.
+    const stableLineupVisibility = typeof IntersectionObserver === "function"
+      ? new IntersectionObserver((entries) => {
+          entries.forEach(({ target, isIntersecting }) => {
+            if (isIntersecting) watchStableImage(target);
+          });
+        }, { rootMargin: "1200px 0px" })
+      : null;
 
     function stableImageRequest(image) {
       let state = stableImageRequests.get(image);
@@ -77,10 +86,12 @@
       if (!failed && image.naturalWidth > 0) {
         image.dataset.imageState = "ready";
         stableImageVisibility?.unobserve(image);
+        stableLineupVisibility?.unobserve(image);
         if (image.matches(".home-venue-discovery-logo, .venue-card-logo, .venue-detail-logo")) fitVenueLogoImage(image);
       } else if (!retryStableImage(image)) {
         image.dataset.imageState = "error";
         stableImageVisibility?.unobserve(image);
+        stableLineupVisibility?.unobserve(image);
       }
     }
 
@@ -109,9 +120,10 @@
       if (root instanceof HTMLImageElement && root.dataset.imageState === "loading") images.push(root);
       images.forEach((image) => {
         if (stableImageRequest(image).timer !== null) return;
+        const visibility = image.matches(".venue-lineup-avatar-photo") ? stableLineupVisibility : stableImageVisibility;
         if (image.complete) settleStableImage(image);
-        else if (image.loading !== "lazy" || !stableImageVisibility) watchStableImage(image);
-        else stableImageVisibility.observe(image);
+        else if (image.loading !== "lazy" || !visibility) watchStableImage(image);
+        else visibility.observe(image);
       });
     }
 

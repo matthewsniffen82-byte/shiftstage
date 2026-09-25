@@ -761,7 +761,7 @@
       } : { className: "", style: "" };
     }
 
-    function nativeResponsivePhotoAttrs(url, srcSet = "") {
+    function nativeResponsivePhotoAttrs(url, srcSet = "", fallbackWidth = 320) {
       const sources = String(srcSet || "")
         .split(",")
         .map((entry) => entry.trim().match(/^(\S+)\s+(\d+)w$/))
@@ -769,7 +769,7 @@
         .map((match) => ({ url: safeExternalHref(match[1]), width: Number(match[2]) }))
         .filter((source) => source.url && Number.isFinite(source.width))
         .sort((left, right) => left.width - right.width);
-      const fallbackUrl = sources.find((source) => source.width >= 320)?.url || sources[sources.length - 1]?.url || safeExternalHref(url);
+      const fallbackUrl = sources.find((source) => source.width >= fallbackWidth)?.url || sources[sources.length - 1]?.url || safeExternalHref(url);
       if (!fallbackUrl) return "";
       const safeSrcSet = sources
         .map((source) => `${escapeOptionValue(source.url)} ${source.width}w`)

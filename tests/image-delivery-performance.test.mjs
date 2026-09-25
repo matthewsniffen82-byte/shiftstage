@@ -44,6 +44,37 @@ test("thumbnail candidates do not downgrade CSS portraits or native fallback ima
   for (const candidate of previous.slice(10, -1).split(", ")) assert.ok(current.includes(candidate));
   assert.match(context.nativeResponsivePhotoAttrs("https://images.example/master", added), /^src="https:\/\/images.example\/320"/);
   assert.match(context.nativeResponsivePhotoAttrs("https://images.example/master", "https://images.example/96 96w, https://images.example/240 240w"), /^src="https:\/\/images.example\/240"/);
+  assert.match(context.nativeResponsivePhotoAttrs("https://images.example/master", added, 96), /^src="https:\/\/images.example\/96"/, "lineup fallback stays thumbnail-sized when srcset is unavailable");
+});
+
+test("club lineup requests stay thumbnail-sized and bounded even with fifty working dancers", () => {
+  const source = shell.match(/function venueLineupMarkup\([^]*?(?=\n    function venueCardQrMarkup)/)?.[0];
+  const escape = value => String(value).replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll('"', "&quot;");
+  const context = vm.createContext({
+    isWorkingTonight: () => true, shiftStartMinutes: () => 0,
+    publicAvatarPhotoUrl: profile => profile.photo,
+    publicAvatarPhotoSrcSet: () => "",
+    nativeResponsivePhotoAttrs: (url, srcSet, width) => {
+      assert.equal(width, 96);
+      return url ? `src="${url}"` : "";
+    },
+    escapeHtml: escape, escapeOptionValue: escape,
+    avatarPhotoPosition: () => "50% 50%", profileReferenceValue: profile => profile.id,
+  });
+  vm.runInContext(source, context);
+  const profiles = Array.from({ length: 50 }, (_, index) => ({ id: String(index), name: index ? `Dancer ${index}` : "<Dancer", photo: "https://images.example/avatar" }));
+  const firstCard = context.venueLineupMarkup({}, "Las Vegas", { profiles, mobile: true, eager: true });
+  assert.equal((firstCard.match(/<img /g) || []).length, 3);
+  assert.equal((firstCard.match(/loading="eager" fetchpriority="high"/g) || []).length, 3);
+  assert.match(firstCard, /aria-label="50 dancers working now"/);
+  assert.match(firstCard, /venue-lineup-avatar-initial">&lt;<\/span>/);
+  assert.match(firstCard, /data-venue-dancer-profile/);
+  const laterCard = context.venueLineupMarkup({}, "Las Vegas", { profiles });
+  assert.equal((laterCard.match(/loading="lazy" fetchpriority="auto"/g) || []).length, 4);
+  assert.match(laterCard, />\+46<\/span>/);
+  const withoutPhoto = context.venueLineupMarkup({}, "Las Vegas", { profiles: [{ id: "1", name: " Star ", photo: "" }] });
+  assert.doesNotMatch(withoutPhoto, /<img /);
+  assert.match(withoutPhoto, /venue-lineup-avatar-initial">S<\/span>/);
 });
 
 test("small profile galleries load together while large galleries prioritize their first two rows", () => {

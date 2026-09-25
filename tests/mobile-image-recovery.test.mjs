@@ -11,6 +11,7 @@ function harness() {
   const timers = new Map();
   const handlers = new Map();
   const observed = new Set();
+  const observers = [];
   let tick = 0;
   let intersection;
   let insertion;
@@ -47,8 +48,8 @@ function harness() {
       clearTimeout(id) { timers.delete(id); },
     },
     IntersectionObserver: class {
-      constructor(fn) { intersection = fn; }
-      observe(image) { observed.add(image); }
+      constructor(fn, options) { intersection = fn; this.options = options; observers.push(this); }
+      observe(image) { observed.add(image); this.lastImage = image; }
       unobserve(image) { observed.delete(image); }
     },
     MutationObserver: class {
@@ -59,7 +60,7 @@ function harness() {
   });
   vm.runInContext(bootstrap, ctx);
   return {
-    ctx, Image, timers, observed,
+    ctx, Image, timers, observed, observers,
     load(image) { image.complete = true; image.naturalWidth = 640; handlers.get("load")({ target: image }); },
     fail(image) { image.complete = true; image.naturalWidth = 0; handlers.get("error")({ target: image }); },
     insert(image) { insertion([{ addedNodes: [image] }]); },
@@ -119,6 +120,25 @@ test("cached images inserted after their load event are revealed immediately", (
   assert.equal(image.dataset.imageState, "ready");
   assert.equal(image.requests.length, 0);
   assert.equal(h.timers.size, 0);
+});
+
+test("club lineup thumbnails start ahead of the card without eagerly loading distant portraits", () => {
+  const h = harness();
+  const avatar = new h.Image();
+  avatar.loading = "lazy";
+  avatar.matches = selector => selector === ".venue-lineup-avatar-photo";
+  h.insert(avatar);
+  const photo = new h.Image();
+  photo.loading = "lazy";
+  h.insert(photo);
+  assert.equal(h.observers.find(observer => observer.lastImage === avatar).options.rootMargin, "1200px 0px");
+  assert.equal(h.observers.find(observer => observer.lastImage === photo).options.rootMargin, "300px");
+  assert.equal(h.timers.size, 0, "offscreen requests stay deferred");
+  h.visible(avatar);
+  assert.equal(avatar.loading, "eager");
+  assert.equal(photo.loading, "lazy");
+  h.load(avatar);
+  assert.equal(h.observed.has(avatar), false);
 });
 
 test("unavailable images have bounded retries and removed cards stop requesting", () => {

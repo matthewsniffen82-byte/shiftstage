@@ -48,7 +48,7 @@ test("admin-managed venue cover uploads are validated and moderated before confi
   assert.match(venueService, /validateAndPrepareDancrImage\(file\)/);
   assert.match(venueService, /image\.width < 720 \|\| image\.height < 720/);
   assert.match(venueService, /MODERATION_TEMP_BUCKET/);
-  assert.match(venueService, /evaluateDancrImageModeration\([\s\S]*?moderateImageWithOpenAI/);
+  assert.match(venueService, /evaluateVenueImage\(image, \(\) => moderateImageWithOpenAI\(client, tempPath\)\)/);
   assert.match(venueService, /evaluation\.decision !== "approved"/);
   assert.match(venueService, /const COVER_BUCKET = "venue-cover-images"/);
   assert.match(venueService, /cover_image_storage_path: finalPath/);

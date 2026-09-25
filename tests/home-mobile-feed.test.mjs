@@ -344,7 +344,7 @@ test("Dancers reuses unchanged grid cards and starts every directory photo immed
   );
   assert.match(
     homeSource,
-    /function nativeResponsivePhotoAttrs\(url, srcSet = ""\) \{[\s\S]*?safeExternalHref\(match\[1\]\)[\s\S]*?sort\(\(left, right\) => left\.width - right\.width\)[\s\S]*?srcset="\$\{safeSrcSet\}"/,
+    /function nativeResponsivePhotoAttrs\(url, srcSet = "", fallbackWidth = 320\) \{[\s\S]*?safeExternalHref\(match\[1\]\)[\s\S]*?sort\(\(left, right\) => left\.width - right\.width\)[\s\S]*?srcset="\$\{safeSrcSet\}"/,
   );
   assert.match(
     homeSource,
@@ -603,7 +603,7 @@ test("venue inline cards use production venue, schedule, revenue, and customer a
   );
   assert.match(
     homeSource,
-    /function homeVenueDiscoveryQrMarkup\(venue\)[\s\S]*?venue\?\.id && venue\.activeDeal\?\.id[\s\S]*?data-card-action-slot="qr"[\s\S]*?data-club-deal-state="available"[\s\S]*?data-club-deal-cta[\s\S]*?actionButtonLabel\("qr", "Free Entry"\)[\s\S]*?data-club-deal-state="unavailable"[\s\S]*?data-card-qr-label="Free entry unavailable"[\s\S]*?actionButtonLabel\("qr", "Free Entry"\)/,
+    /function homeVenueDiscoveryQrMarkup\(venue\)[\s\S]*?venue\?\.id && venue\.activeDeal\?\.id[\s\S]*?data-card-action-slot="qr"[\s\S]*?data-club-deal-state="available"[\s\S]*?data-club-deal-cta[\s\S]*?freeEntryButtonLabel\(\)[\s\S]*?data-club-deal-state="unavailable"[\s\S]*?data-card-qr-label="Free entry unavailable"[\s\S]*?freeEntryButtonLabel\(\)/,
   );
   const venueQrHelper = homeSource.match(
     /function homeVenueDiscoveryQrMarkup\(venue\) \{[\s\S]*?(?=\n    function homeVenueDiscoveryFeedSlide)/,
@@ -623,7 +623,7 @@ test("venue inline cards use production venue, schedule, revenue, and customer a
   assert.doesNotMatch(venueSlide, /activeDealCount|dealIndicatorMarkup|home-venue-discovery-deal-indicator/);
   assert.match(
     venueSlide,
-    /home-venue-discovery-location[\s\S]*?home-venue-discovery-context-actions[\s\S]*?\$\{railQrMarkup\}[\s\S]*?\$\{rideMarkup\}[\s\S]*?home-venue-discovery-action-rail[\s\S]*?data-open-venue-profile="\$\{venueValue\}"[\s\S]*?actionButtonLabel\("clubProfile", "Club Page"\)[\s\S]*?\$\{directionsMarkup\}[\s\S]*?data-share-venue="\$\{venueValue\}"[\s\S]*?actionButtonLabel\("share", "Share"\)[\s\S]*?data-venue-follow="\$\{venueValue\}"/,
+    /home-venue-discovery-location[\s\S]*?home-venue-discovery-context-actions[\s\S]*?\$\{railQrMarkup\}[\s\S]*?home-venue-discovery-action-rail[\s\S]*?data-open-venue-profile="\$\{venueValue\}"[\s\S]*?actionButtonLabel\("clubProfile", "Club Page"\)[\s\S]*?\$\{directionsMarkup\}[\s\S]*?data-venue-follow="\$\{venueValue\}"/,
   );
   assert.doesNotMatch(venueSlide, /home-venue-discovery-name-row|home-venue-discovery-name/);
   assert.doesNotMatch(venueSlide, /home-venue-discovery-profile-cta/);

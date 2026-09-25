@@ -184,14 +184,16 @@
         const avatarUrl = publicAvatarPhotoUrl(profile);
         const nativePhotoAttrs = nativeResponsivePhotoAttrs(
           avatarUrl,
-          publicAvatarPhotoSrcSet(profile)
+          publicAvatarPhotoSrcSet(profile),
+          96
         );
+        const avatarInitial = `<span class="venue-lineup-avatar-initial">${escapeHtml(String(profile.name || "").trim().charAt(0).toUpperCase())}</span>`;
         const avatarPhoto = avatarUrl && nativePhotoAttrs
           ? `<img class="venue-lineup-avatar-photo" ${nativePhotoAttrs} sizes="32px" width="64" height="64" style="object-position: ${avatarPhotoPosition(
               profile.avatarPhotoFocalX ?? profile.mainPhotoFocalX,
               profile.avatarPhotoFocalY ?? profile.mainPhotoFocalY
-            )}" alt="" aria-hidden="true" loading="${options.eager ? "eager" : "lazy"}" decoding="async" draggable="false" data-image-state="loading">`
-          : escapeHtml(String(profile.name || "").trim().charAt(0).toUpperCase());
+            )}" alt="" aria-hidden="true" loading="${options.eager ? "eager" : "lazy"}" fetchpriority="${options.eager ? "high" : "auto"}" decoding="async" draggable="false" data-image-state="loading">${avatarInitial}`
+          : avatarInitial;
         return `<button type="button" class="${classPrefix}-lineup-avatar venue-lineup-profile" data-public-dancer-id="${escapeOptionValue(profile.id || "")}" data-venue-dancer-profile data-grid-profile-action="${escapeOptionValue(profileReferenceValue(profile))}" data-dancer-id="${escapeOptionValue(profile.id || "")}" data-dancer-avatar data-working-now="true" aria-label="Open ${escapeHtml(profile.name)}, working now"><span data-dancer-avatar-border aria-hidden="true">${avatarPhoto}</span><span data-working-now-indicator aria-hidden="true">NOW</span></button>`;
       }).join("");
       const remainingMarkup = !options.mobile && remaining > 0
