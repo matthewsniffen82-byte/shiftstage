@@ -13339,12 +13339,12 @@ body.dancr-button-system :is(
   .home-tv-feed-deal-action.is-available,
   .venue-card-deal-action
 ) {
-  border-color: var(--dancr-color-avatar-ring-violet) !important;
+  border-color: var(--free-entry-border, var(--dancr-color-avatar-ring-violet)) !important;
   color: var(--dancr-color-text-primary) !important;
-  background: linear-gradient(135deg, var(--dancr-color-brand-primary), var(--dancr-color-brand-primary-deep)) !important;
-  box-shadow: 0 5px 14px var(--dancr-color-black-soft),
+  background: var(--free-entry-background, linear-gradient(135deg, var(--dancr-color-brand-primary), var(--dancr-color-brand-primary-deep))) !important;
+  box-shadow: var(--free-entry-shadow, 0 5px 14px var(--dancr-color-black-soft),
     0 0 12px var(--dancr-color-brand-primary-medium),
-    inset 0 1px 0 var(--dancr-color-white-soft) !important;
+    inset 0 1px 0 var(--dancr-color-white-soft)) !important;
   text-shadow: none !important;
 }
 
@@ -13413,12 +13413,24 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
 
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell, #results)
   .free-entry-cta:not(.is-unavailable) {
-  border-color: var(--dancr-color-avatar-ring-violet) !important;
+  border-color: var(--free-entry-border, var(--dancr-color-avatar-ring-violet)) !important;
   color: var(--dancr-color-text-primary) !important;
-  background: linear-gradient(135deg, var(--dancr-color-brand-primary), var(--dancr-color-brand-primary-deep)) !important;
-  box-shadow: 0 5px 14px var(--dancr-color-black-soft),
+  background: var(--free-entry-background, linear-gradient(135deg, var(--dancr-color-brand-primary), var(--dancr-color-brand-primary-deep))) !important;
+  box-shadow: var(--free-entry-shadow, 0 5px 14px var(--dancr-color-black-soft),
     0 0 12px var(--dancr-color-brand-primary-medium),
-    inset 0 1px 0 var(--dancr-color-white-soft) !important;
+    inset 0 1px 0 var(--dancr-color-white-soft)) !important;
+}
+
+/* Match iOS admission buttons to the deeper violet in the Android reference. */
+@supports (-webkit-touch-callout: none) {
+  html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell, #results)
+    .free-entry-cta:not(.is-unavailable) {
+    --free-entry-border: #5636a5;
+    --free-entry-background: linear-gradient(135deg, #240293, #1b0165);
+    --free-entry-shadow: 0 5px 14px var(--dancr-color-black-soft),
+      0 0 12px rgba(91, 48, 174, .28),
+      inset 0 1px 0 rgba(248, 250, 252, .05);
+  }
 }
 
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell, #results)
