@@ -5371,11 +5371,11 @@ body.dancr-button-system .public-profile-shell .profile-media-socials .social-li
   height: 17px !important;
 }
 
-/* Keep profile socials quiet and consistent, including their hover state. */
+/* Keep active profile socials bright and consistent, including their hover state. */
 body.dancr-button-system #profileBackdrop #profileModal .profile-media-socials .social-link,
 body.dancr-button-system #profileBackdrop #profileModal .profile-media-socials .social-icon,
 body.dancr-button-system .public-profile-shell .profile-media-socials .social-list a {
-  color: #d4d4d8 !important;
+  color: #fff !important;
   filter: none !important;
 }
 
