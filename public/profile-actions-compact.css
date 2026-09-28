@@ -137,6 +137,10 @@ body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-she
   --profile-utility-radius: 12px;
   --profile-utility-hover-background: #1e1e26;
   --profile-utility-hover-border: #454550;
+  --profile-action-icon-color: #a78bfa;
+  --profile-action-selected-border: #745696;
+  --profile-action-selected-background: #1b122b linear-gradient(#1b122b, #1b122b);
+  --profile-action-selected-shadow: none;
   gap: 8px !important;
 }
 
@@ -309,6 +313,11 @@ body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-she
   text-shadow: none !important;
 }
 
+/* Enabled dancer icons carry the accent while labels retain their text color. */
+body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell, .dancer-profile-preview-overlay, #results.venue-profile-overlay .venue-detail) :is(.modal-actions, .live-actions, .venue-secondary-actions).profile-actions-compact :is(#followBtn, #goingBtn, .profile-action-icon-control):where(:not(:disabled):not([aria-disabled="true"])) :is(.action-icon, .profile-action-icon-frame) > svg {
+  color: var(--profile-action-icon-color, inherit) !important;
+}
+
 body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell, .dancer-profile-preview-overlay, #results.venue-profile-overlay .venue-detail) :is(.modal-actions, .live-actions, .venue-secondary-actions).profile-actions-compact :is(#followBtn, #goingBtn, .profile-action-icon-control):focus-visible {
   outline: 2px solid #c4b5fd !important;
   outline-offset: 2px !important;
@@ -336,13 +345,13 @@ body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-she
 
 /* Existing aria-pressed states are the single source of selected styling. */
 body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell, .dancer-profile-preview-overlay, #results.venue-profile-overlay .venue-detail) :is(.modal-actions, .live-actions, .venue-secondary-actions).profile-actions-compact :is(#followBtn, #goingBtn, .profile-action-icon-control)[aria-pressed="true"] {
-  --profile-action-border: var(--dancr-color-avatar-ring-violet) !important;
-  --profile-action-background: linear-gradient(145deg, var(--dancr-color-brand-primary), var(--dancr-color-brand-primary-deep)) !important;
-  --profile-action-shadow: 0 0 12px rgba(139, 92, 246, .2);
+  --profile-action-border: var(--profile-action-selected-border, var(--dancr-color-avatar-ring-violet)) !important;
+  --profile-action-background: var(--profile-action-selected-background, linear-gradient(145deg, var(--dancr-color-brand-primary), var(--dancr-color-brand-primary-deep))) !important;
+  --profile-action-shadow: var(--profile-action-selected-shadow, 0 0 12px rgba(139, 92, 246, .2));
 }
 
 body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell, .dancer-profile-preview-overlay, #results.venue-profile-overlay .venue-detail) :is(.modal-actions, .live-actions, .venue-secondary-actions).profile-actions-compact :is(#followBtn, #goingBtn, .profile-action-icon-control)[aria-pressed="true"] :is(.action-icon, .profile-action-icon-frame) > svg {
-  color: #FFFFFF !important;
+  color: var(--profile-action-icon-color, #FFFFFF) !important;
 }
 
 body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell, .dancer-profile-preview-overlay, #results.venue-profile-overlay .venue-detail) :is(.modal-actions, .live-actions, .venue-secondary-actions).profile-actions-compact :is(#followBtn, #goingBtn, .profile-action-icon-control):active:not(:disabled) {
