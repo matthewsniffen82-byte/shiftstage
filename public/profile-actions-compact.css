@@ -137,9 +137,8 @@ body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-she
   --profile-utility-radius: 12px;
   --profile-utility-hover-background: #1e1e26;
   --profile-utility-hover-border: #454550;
-  --profile-action-icon-color: #a78bfa;
-  --profile-action-selected-border: #745696;
-  --profile-action-selected-background: #1b122b linear-gradient(#1b122b, #1b122b);
+  --profile-action-selected-border: #666670;
+  --profile-action-selected-background: #24242c linear-gradient(#24242c, #24242c);
   --profile-action-selected-shadow: none;
   gap: 8px !important;
 }
@@ -313,11 +312,6 @@ body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-she
   text-shadow: none !important;
 }
 
-/* Enabled dancer icons carry the accent while labels retain their text color. */
-body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell, .dancer-profile-preview-overlay, #results.venue-profile-overlay .venue-detail) :is(.modal-actions, .live-actions, .venue-secondary-actions).profile-actions-compact :is(#followBtn, #goingBtn, .profile-action-icon-control):where(:not(:disabled):not([aria-disabled="true"])) :is(.action-icon, .profile-action-icon-frame) > svg {
-  color: var(--profile-action-icon-color, inherit) !important;
-}
-
 body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell, .dancer-profile-preview-overlay, #results.venue-profile-overlay .venue-detail) :is(.modal-actions, .live-actions, .venue-secondary-actions).profile-actions-compact :is(#followBtn, #goingBtn, .profile-action-icon-control):focus-visible {
   outline: 2px solid #c4b5fd !important;
   outline-offset: 2px !important;
@@ -351,7 +345,7 @@ body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-she
 }
 
 body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell, .dancer-profile-preview-overlay, #results.venue-profile-overlay .venue-detail) :is(.modal-actions, .live-actions, .venue-secondary-actions).profile-actions-compact :is(#followBtn, #goingBtn, .profile-action-icon-control)[aria-pressed="true"] :is(.action-icon, .profile-action-icon-frame) > svg {
-  color: var(--profile-action-icon-color, #FFFFFF) !important;
+  color: #FFFFFF !important;
 }
 
 body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell, .dancer-profile-preview-overlay, #results.venue-profile-overlay .venue-detail) :is(.modal-actions, .live-actions, .venue-secondary-actions).profile-actions-compact :is(#followBtn, #goingBtn, .profile-action-icon-control):active:not(:disabled) {
