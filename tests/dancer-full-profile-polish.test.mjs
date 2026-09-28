@@ -208,7 +208,7 @@ test("profile socials stay secondary, responsive, and absent when no links exist
   );
   assert.match(
     compactProfileBlock,
-    /\.social-instagram,[\s\S]*?\.social-link-instagram \{[\s\S]*?color: #e4405f !important;[\s\S]*?\.social-tiktok,[\s\S]*?color: #25f4ee !important;[\s\S]*?\.social-snapchat,[\s\S]*?color: #fffc00 !important;[\s\S]*?\.social-onlyfans,[\s\S]*?color: #00aff0 !important;/,
+    /#profileBackdrop #profileModal \.profile-media-socials \.social-link,\s*body\.dancr-button-system #profileBackdrop #profileModal \.profile-media-socials \.social-icon,\s*body\.dancr-button-system \.public-profile-shell \.profile-media-socials \.social-list a \{\s*color: #d4d4d8 !important;\s*filter: none !important;/,
   );
   assert.match(
     compactProfileBlock,

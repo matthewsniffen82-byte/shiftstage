@@ -5371,29 +5371,12 @@ body.dancr-button-system .public-profile-shell .profile-media-socials .social-li
   height: 17px !important;
 }
 
-body.dancr-button-system #profileBackdrop #profileModal .social-tile .social-instagram,
-body.dancr-button-system .public-profile-shell .social-link-instagram {
-  color: #e4405f !important;
-}
-
-body.dancr-button-system #profileBackdrop #profileModal .social-tile .social-tiktok,
-body.dancr-button-system .public-profile-shell .social-link-tiktok {
-  color: #25f4ee !important;
-}
-
-body.dancr-button-system #profileBackdrop #profileModal .social-tile .social-snapchat,
-body.dancr-button-system .public-profile-shell .social-link-snapchat {
-  color: #fffc00 !important;
-}
-
-body.dancr-button-system #profileBackdrop #profileModal .social-tile .social-onlyfans,
-body.dancr-button-system .public-profile-shell .social-link-onlyfans {
-  color: #00aff0 !important;
-}
-
-body.dancr-button-system #profileBackdrop #profileModal .social-tile .social-x,
-body.dancr-button-system .public-profile-shell .social-link-x {
-  color: #f4f4f6 !important;
+/* Keep profile socials quiet and consistent, including their hover state. */
+body.dancr-button-system #profileBackdrop #profileModal .profile-media-socials .social-link,
+body.dancr-button-system #profileBackdrop #profileModal .profile-media-socials .social-icon,
+body.dancr-button-system .public-profile-shell .profile-media-socials .social-list a {
+  color: #d4d4d8 !important;
+  filter: none !important;
 }
 
 body.dancr-button-system #profileBackdrop #profileModal .profile-modal-media,
