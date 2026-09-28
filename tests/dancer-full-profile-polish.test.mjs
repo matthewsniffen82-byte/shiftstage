@@ -192,7 +192,7 @@ test("profile socials stay secondary, responsive, and absent when no links exist
   );
   assert.match(
     compactProfileBlock,
-    /#profileBackdrop #profileModal \.profile-media-socials \.social-link svg,[\s\S]*?\.public-profile-shell \.profile-media-socials \.social-list a svg \{[\s\S]*?width: 17px !important;[\s\S]*?height: 17px !important;/,
+    /#profileBackdrop #profileModal \.profile-media-socials \.social-link svg,[\s\S]*?\.public-profile-shell \.profile-media-socials \.social-list a svg \{[\s\S]*?width: 20px !important;[\s\S]*?height: 20px !important;/,
   );
   assert.match(
     compactProfileBlock,
