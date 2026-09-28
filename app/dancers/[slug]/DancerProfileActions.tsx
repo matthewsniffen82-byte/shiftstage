@@ -349,10 +349,14 @@ export function DancerProfileActions({
   dancerId,
   shifts,
   shareControl,
+  children,
+  hasClubDeal = false,
 }: {
   dancerId: string;
   shifts: ShiftAction[];
   shareControl?: ReactNode;
+  children?: ReactNode;
+  hasClubDeal?: boolean;
 }) {
   const {
     setFollowedBy,
@@ -629,20 +633,6 @@ export function DancerProfileActions({
             <span>{saved.following ? "Following" : "Follow"}</span>
           </span>
         </button>
-        <button
-          aria-disabled={!actionShift ? "true" : undefined}
-          aria-label={actionShift ? (isGoing ? "Remove this shift from your plans" : "Add this shift to your plans") : "I’m Going unavailable until a shift is posted"}
-          aria-pressed={actionShift ? isGoing : undefined}
-          className={`${actionShift ? "profile-action-available" : "profile-action-secondary"} profile-action-going profile-action-icon-control${isGoing ? " is-going" : ""}${!actionShift ? " profile-action-unavailable" : ""}`}
-          disabled={actionShift ? !savedLoaded || goingSaving : true}
-          onClick={() => actionShift && updateGoing(actionShift.id)}
-          type="button"
-        >
-          <span className="profile-action-main">
-            <DancerProfileActionPreviewIcon type={isGoing ? "check" : "clock"} />
-            <span>{isGoing ? "Going" : "I’m Going"}</span>
-          </span>
-        </button>
         {shareControl ? (
           <div className="profile-action-share-slot">{shareControl}</div>
         ) : (
@@ -652,6 +642,30 @@ export function DancerProfileActions({
         )}
         {status ? <span className="profile-action-status" role="status">{status}</span> : null}
       </div>
+      <section
+        aria-label="Tonight"
+        className={`profile-tonight-card${hasLiveActions ? " is-now" : " is-no-schedule"}${hasClubDeal ? " has-club-deal" : ""}`}
+        data-profile-deal-state={hasClubDeal ? "available" : "none"}
+        data-profile-shift-state={hasLiveActions ? "now" : "no-schedule"}
+      >
+        {children}
+        <div className="live-actions profile-actions-compact profile-venue-actions" aria-label="Plan your visit" aria-busy={goingSaving}>
+          <button
+            aria-disabled={!actionShift ? "true" : undefined}
+            aria-label={actionShift ? (isGoing ? "Remove this shift from your plans" : "Add this shift to your plans") : "I’m Going unavailable until a shift is posted"}
+            aria-pressed={actionShift ? isGoing : undefined}
+            className={`${actionShift ? "profile-action-available" : "profile-action-secondary"} profile-action-going profile-action-icon-control${isGoing ? " is-going" : ""}${!actionShift ? " profile-action-unavailable" : ""}`}
+            disabled={actionShift ? !savedLoaded || goingSaving : true}
+            onClick={() => actionShift && updateGoing(actionShift.id)}
+            type="button"
+          >
+            <span className="profile-action-main">
+              <DancerProfileActionPreviewIcon type={isGoing ? "check" : "clock"} />
+              <span>{isGoing ? "Going" : "I’m Going"}</span>
+            </span>
+          </button>
+        </div>
+      </section>
       {accountRequiredAction ? (
         <div
           className="profile-account-gate"

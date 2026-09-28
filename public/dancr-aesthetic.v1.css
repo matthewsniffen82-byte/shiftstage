@@ -5322,7 +5322,7 @@ body.dancr-button-system .public-profile-shell .profile-media-socials .social-li
   justify-content: center !important;
   justify-self: center !important;
   align-self: center !important;
-  gap: 0 !important;
+  gap: 4px !important;
   margin-inline: auto !important;
   overflow: visible !important;
 }
@@ -5387,11 +5387,13 @@ body.dancr-button-system .public-profile-shell .profile-media-socials .social-li
 body.dancr-button-system #profileBackdrop #profileModal .profile-media-socials .social-instagram,
 body.dancr-button-system .public-profile-shell .profile-media-socials .social-link-instagram {
   --profile-social-glyph: "\e900";
+  --profile-social-glyph-size: 22px;
 }
 
 body.dancr-button-system #profileBackdrop #profileModal .profile-media-socials .social-tiktok,
 body.dancr-button-system .public-profile-shell .profile-media-socials .social-link-tiktok {
   --profile-social-glyph: "\e901";
+  --profile-social-glyph-size: 22px;
 }
 
 body.dancr-button-system #profileBackdrop #profileModal .profile-media-socials .social-snapchat,
@@ -5402,7 +5404,7 @@ body.dancr-button-system .public-profile-shell .profile-media-socials .social-li
 body.dancr-button-system #profileBackdrop #profileModal .profile-media-socials .social-onlyfans,
 body.dancr-button-system .public-profile-shell .profile-media-socials .social-link-onlyfans {
   --profile-social-glyph: "\e903";
-  --profile-social-glyph-size: 26px;
+  --profile-social-glyph-size: 24px;
 }
 
 body.dancr-button-system #profileBackdrop #profileModal .profile-media-socials .social-x,

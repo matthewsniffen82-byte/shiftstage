@@ -191,19 +191,13 @@ export default async function DancerPublicPage({ params, searchParams }: PagePro
 
         <DancerProfileActions
           dancerId={profile.id}
+          hasClubDeal={Boolean(activeDeal)}
           shareControl={<ProfileShareButton dancerId={profile.id} stageName={profile.stageName} />}
           shifts={profile.upcomingShifts.map((shift) => ({
             id: shift.id,
             label: shortShiftLabel(shift.shiftDate || shift.startsAt, shift.timezone),
             isActive: isActiveNow(shift),
           }))}
-        />
-
-        <section
-          aria-label="Tonight"
-          className={`profile-tonight-card${activeShift ? " is-now" : " is-no-schedule"}${activeDeal ? " has-club-deal" : ""}`}
-          data-profile-deal-state={activeDeal ? "available" : "none"}
-          data-profile-shift-state={activeShift ? "now" : "no-schedule"}
         >
           {activeShift ? (
           <div
@@ -270,7 +264,7 @@ export default async function DancerPublicPage({ params, searchParams }: PagePro
               <DancerDirectionsButton dancerId={profile.id} venue={actionVenue} />
             </div>
           ) : null}
-        </section>
+        </DancerProfileActions>
 
         <DancerPhotoCarousel
           dancerId={profile.id}

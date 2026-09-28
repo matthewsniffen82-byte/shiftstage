@@ -129,7 +129,7 @@ body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-she
 }
 
 /* Dancer actions use full-height faces so Share is visibly square, with the
- * same quiet fill, rounded corners, and spacing across all three controls. */
+ * same quiet fill and rounded corners for Follow, Share, and venue attendance. */
 body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell, .dancer-profile-preview-overlay) :is(.modal-actions, .live-actions).profile-actions-compact {
   --profile-action-face-inset: 0px;
   --profile-utility-background: #15151b;
@@ -141,6 +141,38 @@ body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-she
   --profile-action-selected-background: #24242c linear-gradient(#24242c, #24242c);
   --profile-action-selected-shadow: none;
   gap: 8px !important;
+}
+
+/* Attendance belongs with the venue. Beside an available offer it shares one
+ * compact row, leaving Free Entry as the wider primary action. */
+body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell)
+  .profile-tonight-card > .profile-venue-actions.profile-actions-compact {
+  grid-column: 1 / -1 !important;
+  grid-row: 3 !important;
+  align-self: center !important;
+  width: 100% !important;
+  min-height: 44px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell)
+  .profile-tonight-card.has-club-deal:has(> .profile-venue-actions) {
+  grid-template-columns: minmax(0, 1fr) minmax(104px, .65fr) !important;
+  column-gap: 8px !important;
+}
+
+body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell)
+  .profile-tonight-card.has-club-deal:has(> .profile-venue-actions)
+  :is(.profile-club-deal-qr-button, .club-deal-profile-action) {
+  grid-column: 1 !important;
+  grid-row: 2 !important;
+}
+
+body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell)
+  .profile-tonight-card.has-club-deal > .profile-venue-actions.profile-actions-compact {
+  grid-column: 2 !important;
+  grid-row: 2 !important;
 }
 
 body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell, .dancer-profile-preview-overlay, #results.venue-profile-overlay .venue-detail) :is(.modal-actions, .live-actions, .venue-secondary-actions).profile-actions-compact > button.profile-action-icon-control {

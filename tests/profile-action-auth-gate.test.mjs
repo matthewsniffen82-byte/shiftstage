@@ -294,7 +294,7 @@ test("the live mobile profile separates profile actions from venue travel action
   assert.doesNotMatch(homeSource, /data-profile-more-menu|data-profile-more-actions|data-profile-schedule-action/);
   assert.match(
     homeSource,
-    /function liveProfileModalActionsMarkup\(profile, status\)[\s\S]*?const canMarkGoing = Boolean\(profile\?\.scheduled && profile\.shiftId\)[\s\S]*?const goingButton = canMarkGoing[\s\S]*?data-shift-state="unavailable"/,
+    /function liveProfileGoingActionsMarkup\(profile\)[\s\S]*?const canMarkGoing = Boolean\(profile\?\.scheduled && profile\.shiftId\)[\s\S]*?const goingButton = canMarkGoing[\s\S]*?data-shift-state="unavailable"/,
   );
   assert.match(
     homeSource,

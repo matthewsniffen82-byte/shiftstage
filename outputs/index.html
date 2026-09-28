@@ -54547,6 +54547,7 @@
           <section class="${tonightClasses}" data-profile-shift-state="${shiftState}" data-profile-deal-state="${escapeHtml(dealState.key)}" aria-label="Tonight">
             ${shiftsMarkup(profile, status, { preview: Boolean(options.preview), city })}
             ${dealMarkup ? `<div class="profile-tonight-deal">${dealMarkup}</div>` : ""}
+            ${options.preview ? "" : liveProfileGoingActionsMarkup(profile)}
             ${travelActionsMarkup}
           </section>
           ${profileLocationStatusTile(profile, city)}
@@ -54559,20 +54560,23 @@
       return `<span class="profile-action-main">${actionButtonLabel(icon, label)}</span>`;
     }
 
-    function liveProfileModalActionsMarkup(profile, status) {
-      const city = selectedCity();
-      const isFollowed = isFollowingProfile(city, profile.name);
+    function liveProfileGoingActionsMarkup(profile) {
       const isGoingTonight = !!goingTonightSavedByProfile[profile.name];
-      const isWorkingNow = isWorkingTonight(profile, city);
       const canMarkGoing = Boolean(profile?.scheduled && profile.shiftId);
       const goingCopy = { idle: "I'm Going", active: "Going" };
       const goingButton = canMarkGoing
         ? `<button class="action-btn going-btn profile-action-icon-control is-available-action ${isGoingTonight ? "is-going" : ""}" id="goingBtn" type="button" data-profile="${escapeHtml(profile.name)}" data-shift-state="posted" aria-label="${isGoingTonight ? "Remove this shift from your plans" : "Add this shift to your plans"}" aria-pressed="${isGoingTonight}">${profileActionButtonMarkup(isGoingTonight ? "check" : "clock", isGoingTonight ? goingCopy.active : goingCopy.idle)}</button>`
         : `<button class="action-btn going-btn profile-action-icon-control secondary is-unavailable" id="goingBtn" type="button" data-profile="${escapeHtml(profile.name)}" data-shift-state="unavailable" aria-disabled="true" disabled>${profileActionButtonMarkup("clock", goingCopy.idle)}</button>`;
+      return `<div class="modal-actions profile-actions-compact profile-venue-actions" aria-label="Plan your visit">${goingButton}</div>`;
+    }
+
+    function liveProfileModalActionsMarkup(profile, status) {
+      const city = selectedCity();
+      const isFollowed = isFollowingProfile(city, profile.name);
+      const isWorkingNow = isWorkingTonight(profile, city);
       return `
         <div class="modal-actions profile-actions-compact ${isWorkingNow ? "is-working-now" : profile?.scheduled ? "is-upcoming-shift" : "is-no-live-shift"}" aria-label="Guest actions">
           <button class="action-btn follow-primary profile-action-icon-control ${isFollowed ? "is-following" : ""}" id="followBtn" data-profile="${escapeOptionValue(profile.id || profile.name)}" aria-pressed="${isFollowed}">${profileActionButtonMarkup(isFollowed ? "check" : "personPlus", isFollowed ? "Following" : "Follow")}</button>
-          ${goingButton}
           <button class="action-btn secondary profile-share-action profile-action-icon-control" type="button" data-profile-share-menu="${escapeHtml(profile.name)}" data-share-city="${escapeHtml(city)}" aria-haspopup="dialog" aria-label="Share ${escapeHtml(profile.name)} profile">${profileActionButtonMarkup("share", "Share")}</button>
         </div>
       `;

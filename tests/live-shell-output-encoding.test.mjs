@@ -28,6 +28,7 @@ const fixtures = [
   ["adminProfileRow", value => [value, { name: value, status: "Verified", scheduled: true, venue: value, photoStatus: "Approved" }], { normalizeSubmittedSocials: () => [], displayShiftTime: () => "8pm" }],
   ["adminSubscriptionRow", value => [{ dancer: { stageName: value, city: value }, stripeSubscriptionId: value }], { subscriptionStatusLabel: () => "Active", formatBillingDate: () => "", isLiveSubscriptionActive: () => true }],
   ["liveProfileModalActionsMarkup", value => [{ name: value, scheduled: true, shiftId: "synthetic" }, {}], { selectedCity: () => "Test city", isFollowingProfile: () => false, goingTonightSavedByProfile: {}, isWorkingTonight: () => false, escapeOptionValue: value => String(value).replaceAll('"', "&quot;"), profileActionButtonMarkup: () => "Action" }],
+  ["liveProfileGoingActionsMarkup", value => [{ name: value, scheduled: true, shiftId: "synthetic" }], { goingTonightSavedByProfile: {}, profileActionButtonMarkup: () => "Action" }],
 ];
 for (const [name, args, globals] of fixtures) for (const payload of payloads) test(`${name} renders ${payload.startsWith("N") ? "quoted names" : payload.startsWith("<") ? "markup" : "punctuation"} as text`, () => {
   const markup = render(name, args(payload), globals);

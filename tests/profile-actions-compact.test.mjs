@@ -8,9 +8,12 @@ const css = read("public/profile-actions-compact.css");
 const live = read("outputs/index.html");
 const actions = read("app/dancers/[slug]/DancerProfileActions.tsx");
 
-test("selected actions use hero violet without changing their state or accessible labels", () => {
-  assert.match(css, /\[aria-pressed="true"\] \{\s*--profile-action-border: var\(--dancr-color-avatar-ring-violet\) !important/);
-  assert.match(css, /--profile-action-background: linear-gradient\(145deg, var\(--dancr-color-brand-primary\), var\(--dancr-color-brand-primary-deep\)\) !important/);
+test("dancer selected actions stay neutral without changing their state or accessible labels", () => {
+  assert.match(css, /--profile-action-selected-border: #666670/);
+  assert.match(css, /--profile-action-selected-background: #24242c linear-gradient\(#24242c, #24242c\)/);
+  assert.match(css, /--profile-action-selected-shadow: none/);
+  assert.match(css, /\[aria-pressed="true"\] \{\s*--profile-action-border: var\(--profile-action-selected-border,/);
+  assert.match(css, /--profile-action-background: var\(--profile-action-selected-background,/);
   assert.match(css, /\[aria-pressed="true"\][^{}]+> svg \{\s*color: #FFFFFF !important/);
   assert.match(actions, /saved\.following \? "Following" : "Follow"/);
   assert.match(actions, /isGoing \? "Going" : "I’m Going"/);
@@ -19,7 +22,7 @@ test("selected actions use hero violet without changing their state or accessibl
   assert.match(live, /aria-label="Share \$\{escapeHtml\(profile\.name\)\} profile"/);
 });
 
-test("profile actions reserve violet for available actions and retain neutral utility materials", () => {
+test("profile actions retain neutral utility materials and visible keyboard focus", () => {
   assert.match(css, /--profile-action-border: var\(--profile-utility-border, #34343c\)/);
   assert.match(css, /border-radius: var\(--profile-utility-radius, 8px\) !important/);
   assert.match(css, /color: #FFFFFF !important/);
@@ -51,5 +54,5 @@ test("layout keeps inline icons, equal primary widths, and a same-height square 
   assert.match(css, /flex-direction: row !important/);
   assert.match(css, /gap: 6px !important/);
   assert.match(css, /clip-path: inset\(50%\) !important/);
-  assert.doesNotMatch(css, /\.profile-tonight|\.club-deal|\.profile-metrics/);
+  assert.doesNotMatch(css, /\.profile-metrics/);
 });
