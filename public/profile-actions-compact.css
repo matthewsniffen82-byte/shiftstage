@@ -128,6 +128,18 @@ body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-she
   box-sizing: border-box !important;
 }
 
+/* Dancer actions use full-height faces so Share is visibly square, with the
+ * same quiet fill, rounded corners, and spacing across all three controls. */
+body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell, .dancer-profile-preview-overlay) :is(.modal-actions, .live-actions).profile-actions-compact {
+  --profile-action-face-inset: 0px;
+  --profile-utility-background: #15151b;
+  --profile-utility-border: #2b2b34;
+  --profile-utility-radius: 12px;
+  --profile-utility-hover-background: #1e1e26;
+  --profile-utility-hover-border: #454550;
+  gap: 8px !important;
+}
+
 body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell, .dancer-profile-preview-overlay, #results.venue-profile-overlay .venue-detail) :is(.modal-actions, .live-actions, .venue-secondary-actions).profile-actions-compact > button.profile-action-icon-control {
   flex: 1 1 0 !important;
 }
@@ -264,7 +276,7 @@ body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-she
   transition: color 120ms ease;
 }
 
-/* Inset only the visible face to 38px; the real button keeps its 44px hit area. */
+/* Keep the visible face within its hit area; dancer rows use the full height. */
 body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell, .dancer-profile-preview-overlay, #results.venue-profile-overlay .venue-detail) :is(.modal-actions, .live-actions, .venue-secondary-actions).profile-actions-compact :is(#followBtn, #goingBtn, .profile-action-icon-control)::before {
   content: "" !important;
   display: block !important;
