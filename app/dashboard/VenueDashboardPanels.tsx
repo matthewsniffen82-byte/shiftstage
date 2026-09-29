@@ -35,7 +35,8 @@ function notifyPublicVenuePublication() {
 function venueWorkspaceForSection(sectionId: string): VenueWorkspace | null {
   if (sectionId === "venue-pickups") return "tonight";
   if (sectionId === "venue-overview") return "business";
-  if (["venue-working-now", "venue-dancer-roster", "table-requests", "venue-notification-settings", "venue-club-deals", "venue-deal-contract-ledger", "venue-tv", "venue-team", "venue-account", "venue-support"].includes(sectionId)) return "venue";
+  if (["venue-working-now", "venue-dancer-roster", "table-requests"].includes(sectionId)) return "roster";
+  if (["venue-notification-settings", "venue-club-deals", "venue-deal-contract-ledger", "venue-tv", "venue-team", "venue-account", "venue-support"].includes(sectionId)) return "venue";
   return null;
 }
 
@@ -103,22 +104,34 @@ export function VenuePanel({
   const [rosterWorkingOnly, setRosterWorkingOnly] = useState(() => typeof window !== "undefined" && window.location.hash === "#venue-working-now");
   useEffect(() => {
     let frame = 0;
-    const openRequestWorkspace = () => {
+    const openLinkedWorkspace = () => {
       const sectionId = window.location.hash.slice(1);
-      if (!["table-requests", "venue-notification-settings"].includes(sectionId)) return;
-      setActiveWorkspace("venue");
-      if (sectionId === "venue-notification-settings") frame = window.requestAnimationFrame(() => {
-        const panel = document.getElementById(sectionId);
+      const workspace = venueWorkspaceForSection(sectionId);
+      if (!workspace) return;
+      setActiveWorkspace(workspace);
+      if (sectionId === "venue-working-now") setRosterWorkingOnly(true);
+      // The inbox opens itself once its request data has loaded.
+      if (sectionId === "table-requests") return;
+      window.cancelAnimationFrame(frame);
+      frame = window.requestAnimationFrame(() => {
+        if (window.location.hash.slice(1) !== sectionId) return;
+        const panel = document.getElementById(sectionId === "venue-working-now" ? "venue-dancer-roster" : sectionId);
         if (!panel) return;
+        if (panel instanceof HTMLDetailsElement) panel.open = true;
         for (let parent = panel.parentElement; parent; parent = parent.parentElement) {
           if (parent instanceof HTMLDetailsElement) parent.open = true;
+        }
+        if (sectionId === "venue-working-now") {
+          const roster = panel.querySelector<HTMLDetailsElement>("details.venue-nfc-roster");
+          if (roster) roster.open = true;
         }
         panel.scrollIntoView({ block: "start" });
         panel.focus({ preventScroll: true });
       });
     };
-    window.addEventListener("hashchange", openRequestWorkspace);
-    return () => { window.cancelAnimationFrame(frame); window.removeEventListener("hashchange", openRequestWorkspace); };
+    openLinkedWorkspace();
+    window.addEventListener("hashchange", openLinkedWorkspace);
+    return () => { window.cancelAnimationFrame(frame); window.removeEventListener("hashchange", openLinkedWorkspace); };
   }, []);
   const mountedRef = useRef(false);
   const publicationSequenceRef = useRef(0);
@@ -186,7 +199,7 @@ export function VenuePanel({
   function moveVenueWorkspaceFocus(event: React.KeyboardEvent<HTMLButtonElement>, workspace: VenueWorkspace) {
     if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
     event.preventDefault();
-    const workspaces: VenueWorkspace[] = ["tonight", "business", "venue"];
+    const workspaces: VenueWorkspace[] = ["tonight", "roster", "business", "venue"];
     const currentIndex = workspaces.indexOf(workspace);
     const nextIndex = event.key === "Home"
       ? 0
@@ -256,7 +269,6 @@ export function VenuePanel({
             {!isPublished && <p>{isPausedForDeals ? "Your venue is hidden until it has an active Club Deal. Your dancer roster is saved." : isAwaitingVenueReview ? "Ready to review in Manage venue." : pageReviewStatus === "changes_requested" ? "Changes in progress. MyDancr will notify you when your page is ready." : "MyDancr prepares the venue page. Your team reviews it and approves it to make it live."}</p>}
           </div>
           <div className="venue-refresh-control">
-            <a href="#venue-dancer-roster" onClick={(event) => openVenueSection(event, "venue-dancer-roster")}>Dancer roster &amp; tables</a>
             <small>{refreshedAt ? `Updated ${formatRelativeDashboardTime(refreshedAt)}` : "Live data loading"}</small>
             <button type="button" disabled={isRefreshing} onClick={onRefresh}>{isRefreshing ? "Refreshing…" : "Refresh"}</button>
           </div>
@@ -266,6 +278,7 @@ export function VenuePanel({
       <nav className="venue-workspace-tabs" aria-label="Venue workspace" role="tablist">
         {([
           ["tonight", "Pickup requests"],
+          ["roster", "Dancers & tables"],
           ["business", "Results"],
           ["venue", "Manage venue"],
         ] as const).map(([workspace, label]) => (
@@ -300,6 +313,37 @@ export function VenuePanel({
             ? <PickupDashboardPanel key={`${account?.id}:${connectedVenueId}`} refreshKey={refreshedAt} />
             : <p>Pickup requests are available to your venue owner and managers.</p>}
         </section>
+      </section>
+
+      <section className="venue-roster-panel venue-dashboard-section" hidden={activeWorkspace !== "roster"} id="venue-workspace-roster" role="tabpanel" aria-labelledby="venue-workspace-roster-tab">
+        <section className="venue-dashboard-metrics venue-tonight-metrics" aria-label="Tonight at a glance" hidden={activeWorkspace !== "roster"}>
+          <Metric label="Working now" value={String(workingNow.length)} />
+          <Metric label="Live Club Deals" value={String(activeDealCount)} />
+          <Metric label="Verified roster" value={String(nfcAuthorizedDancerCount)} />
+        </section>
+
+        <DashboardSection
+          description="Internal and External dancers, affiliations, table requests, and QR codes in one place. NFC controls working status."
+          defaultOpen
+          eyebrow="Venue roster"
+          hidden={activeWorkspace !== "roster"}
+          id="venue-dancer-roster"
+          icon={<VenueDashboardIcon section="roster" />}
+          toggleAffordance="chevron"
+          title="Dancers & tables"
+          badge={`${nfcAuthorizedDancerCount} affiliated`}
+        >
+          <VenueNfcTagPanel
+            initialAffiliations={initialAffiliations}
+            workingNow={workingNow}
+            timeZone={String(profile?.timezone || "America/Los_Angeles")}
+            workingOnly={rosterWorkingOnly}
+            onWorkingOnlyChange={setRosterWorkingOnly}
+            onAccessRemoved={onAccessRemoved}
+            canManageRoster={canManageRoster}
+            canRequestSupport={canRequestNfcSupport}
+          />
+        </DashboardSection>
       </section>
 
       <section
@@ -491,35 +535,6 @@ export function VenuePanel({
             venueSlug={venueSlug}
             canRequestDeals={permissions.includes("request_deals") || venueRole === "owner" || venueRole === "manager"}
             onDealRequestsChange={onDealRequestsChange}
-          />
-        </DashboardSection>
-
-        <h2 className="dashboard-group-heading">Dancers &amp; activity</h2>
-        <section className="venue-dashboard-metrics venue-tonight-metrics" aria-label="Tonight at a glance" hidden={activeWorkspace !== "venue"}>
-          <Metric label="Working now" value={String(workingNow.length)} />
-          <Metric label="Live Club Deals" value={String(activeDealCount)} />
-          <Metric label="Verified roster" value={String(nfcAuthorizedDancerCount)} />
-        </section>
-
-        <DashboardSection
-          description="Internal and External dancers, affiliations, table requests, and QR codes in one place. NFC controls working status."
-          eyebrow="Venue roster"
-          hidden={activeWorkspace !== "venue"}
-          id="venue-dancer-roster"
-          icon={<VenueDashboardIcon section="roster" />}
-          toggleAffordance="chevron"
-          title="Dancers & tables"
-          badge={`${nfcAuthorizedDancerCount} affiliated`}
-        >
-          <VenueNfcTagPanel
-            initialAffiliations={initialAffiliations}
-            workingNow={workingNow}
-            timeZone={String(profile?.timezone || "America/Los_Angeles")}
-            workingOnly={rosterWorkingOnly}
-            onWorkingOnlyChange={setRosterWorkingOnly}
-            onAccessRemoved={onAccessRemoved}
-            canManageRoster={canManageRoster}
-            canRequestSupport={canRequestNfcSupport}
           />
         </DashboardSection>
 

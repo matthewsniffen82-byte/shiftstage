@@ -145,7 +145,7 @@ export type LoadState = {
 };
 
 
-export type VenueWorkspace = "tonight" | "venue" | "business";
+export type VenueWorkspace = "tonight" | "roster" | "venue" | "business";
 
 
 export type DancerIdentityDraft = { stageName: string; city: string };

@@ -16,10 +16,10 @@ body.dancr-button-system main.dashboard-shell.dashboard-shell-venue :is(.venue-c
 body.dancr-button-system main.dashboard-shell.dashboard-shell-venue .venue-command-status { grid-template-columns: auto minmax(0, 1fr); padding: 0; gap: 6px 8px; }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-venue .venue-command-status h2 { overflow-wrap: anywhere; }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-venue .venue-refresh-control { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 6px 10px; width: 100%; }
-body.dancr-button-system main.dashboard-shell.dashboard-shell-venue .venue-refresh-control > a { display: inline-flex; align-items: center; min-height: 44px; margin-right: auto; color: #c5c3cd; font-size: 12px; line-height: 1.4; text-underline-offset: 3px; }
-body.dancr-button-system main.dashboard-shell.dashboard-shell-venue .venue-refresh-control > small { font-size: 11px; }
-body.dancr-button-system main.dashboard-shell.dashboard-shell-venue .venue-workspace-tabs { gap: 6px; padding: 0; border: 0; border-radius: 10px; background: transparent; box-shadow: none; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-venue .venue-refresh-control > small { margin-right: auto; font-size: 11px; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-venue .venue-workspace-tabs { grid-template-columns: repeat(4, minmax(0, 1fr)); grid-auto-rows: 1fr; gap: 6px; padding: 0; border: 0; border-radius: 10px; background: transparent; box-shadow: none; }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-venue .venue-workspace-tabs strong { font-size: 12px; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-venue .venue-roster-panel:not([hidden]) { display: grid; min-width: 0; gap: 10px; }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-venue .venue-analytics-period { gap: 6px; }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-venue .venue-dashboard-section[data-section-icon] { border-color: #34343c; background: #08080b; box-shadow: none; }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-venue .venue-dashboard-section[data-section-icon] > summary { min-height: 64px; padding: 10px 12px; gap: 4px 8px; }
@@ -86,7 +86,7 @@ body.dancr-button-system main.dashboard-shell.dashboard-shell-venue :is(button, 
 
 /* Consistent fields, including native selects on iOS. */
 body.dancr-button-system main.dashboard-shell.dashboard-shell-venue :is(input:not([type="checkbox"], [type="radio"], [type="file"]), select, textarea),
-body.dancr-button-system main.dashboard-shell.dashboard-shell-venue #venue-workspace-venue :is(input:not([type="checkbox"], [type="radio"], [type="file"]), select, textarea) {
+body.dancr-button-system main.dashboard-shell.dashboard-shell-venue :is(#venue-workspace-venue, #venue-workspace-roster) :is(input:not([type="checkbox"], [type="radio"], [type="file"]), select, textarea) {
   box-sizing: border-box;
   width: 100%;
   min-width: 0;
@@ -102,15 +102,15 @@ body.dancr-button-system main.dashboard-shell.dashboard-shell-venue #venue-works
   line-height: 1.4 !important;
 }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-venue select:not([multiple]),
-body.dancr-button-system main.dashboard-shell.dashboard-shell-venue #venue-workspace-venue select:not([multiple]) {
+body.dancr-button-system main.dashboard-shell.dashboard-shell-venue :is(#venue-workspace-venue, #venue-workspace-roster) select:not([multiple]) {
   appearance: none;
   -webkit-appearance: none;
   padding-right: 34px !important;
   background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='m5 8 5 5 5-5' fill='none' stroke='%23b8b5c2' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") right 10px center / 16px 16px no-repeat, linear-gradient(#060608, #060608) !important;
 }
-body.dancr-button-system main.dashboard-shell.dashboard-shell-venue #venue-workspace-venue textarea { min-height: 88px !important; resize: vertical; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-venue :is(#venue-workspace-venue, #venue-workspace-roster) textarea { min-height: 88px !important; resize: vertical; }
 /* Shared public-form selectors contain IDs, so management forms need an equally scoped override. */
-body.dancr-button-system main.dashboard-shell.dashboard-shell-venue .venue-manage-panel#venue-workspace-venue form button[type="submit"]:not(.secondary, .danger, .is-sent, [data-action-state="success"]) {
+body.dancr-button-system main.dashboard-shell.dashboard-shell-venue .venue-dashboard-section:is(#venue-workspace-venue, #venue-workspace-roster) form button[type="submit"]:not(.secondary, .danger, .is-sent, [data-action-state="success"]) {
   min-height: 44px !important;
   padding: 8px 12px !important;
   border: 0 !important;
@@ -173,12 +173,9 @@ body.dancr-button-system main.dashboard-shell.dashboard-shell-venue .venue-tv-ti
 body.dancr-button-system main.dashboard-shell.dashboard-shell-venue .venue-tv-title > a { min-height: 44px; color: #c5c3cd; font-size: 12px; }
 
 @media (max-width: 620px) {
+  body.dancr-button-system main.dashboard-shell.dashboard-shell-venue .venue-workspace-tabs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   body.dancr-button-system main.dashboard-shell.dashboard-shell-venue .venue-dashboard-section[data-section-icon] > summary { grid-template-columns: 30px minmax(0, 1fr) 16px; }
   body.dancr-button-system main.dashboard-shell.dashboard-shell-venue .venue-roster-actions { padding-left: 0; }
   body.dancr-button-system main.dashboard-shell.dashboard-shell-venue .venue-roster-actions > * { flex: 1 1 0; }
   body.dancr-button-system main.dashboard-shell.dashboard-shell-venue .venue-roster-actions .ir-profile-control > button { width: 100%; }
-}
-@media (max-width: 380px) {
-  body.dancr-button-system main.dashboard-shell.dashboard-shell-venue .venue-refresh-control > a { flex-basis: 100%; }
-  body.dancr-button-system main.dashboard-shell.dashboard-shell-venue .venue-refresh-control > small { margin-right: auto; }
 }
