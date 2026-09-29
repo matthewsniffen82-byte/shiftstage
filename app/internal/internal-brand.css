@@ -1,0 +1,30 @@
+/* Match the homepage's compact wordmark, using its Manrope font and violet r.
+   Override the staff header's badge styles only inside the wordmark. */
+body .ir-shell .ir-brand .mydancr-live-logo,
+body .ir-shell .ir-brand .mydancr-live-logo .violet-r {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  font-family: var(--font-mydancr-wordmark), Manrope, Inter, ui-sans-serif, system-ui, sans-serif;
+  font-size: 20px;
+  font-weight: 950;
+  letter-spacing: -.07em;
+  line-height: .9;
+  text-transform: lowercase;
+}
+body .ir-shell .ir-brand .mydancr-live-logo {
+  display: inline-block;
+  color: #fff;
+  white-space: nowrap;
+  text-shadow: 0 0 8px rgba(255, 255, 255, .18);
+  transform: translateY(-1px);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: geometricPrecision;
+}
+body .ir-shell .ir-brand .mydancr-live-logo .violet-r {
+  color: var(--dancr-color-brand-primary);
+  -webkit-text-fill-color: var(--dancr-color-brand-primary);
+  text-shadow: 0 0 8px var(--dancr-color-brand-primary-medium), 0 0 16px var(--dancr-color-brand-glow-soft);
+}
