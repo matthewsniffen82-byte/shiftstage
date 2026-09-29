@@ -2,7 +2,6 @@
 
 import {
   type CSSProperties,
-  type ReactNode,
   type SyntheticEvent,
   useCallback,
   useEffect,
@@ -46,7 +45,6 @@ type DancerPhotoCarouselProps = {
     publishedAt?: string;
   }>;
   stageName: string;
-  socialContent?: ReactNode;
   viewerStatus?: string;
   prioritizeInitialPhotos?: boolean;
 };
@@ -106,7 +104,6 @@ export function DancerPhotoCarousel({
   photos,
   videos = [],
   stageName,
-  socialContent,
   viewerStatus = "No shift posted",
   prioritizeInitialPhotos = false,
 }: DancerPhotoCarouselProps) {
@@ -766,11 +763,6 @@ export function DancerPhotoCarousel({
       data-dancer-media-tabs
       data-profile-media-open={Boolean(viewer && activeViewerItem)}
     >
-      {socialContent ? (
-        <div className="profile-media-socials" aria-label="External profiles">
-          {socialContent}
-        </div>
-      ) : null}
       <div
         aria-label={`${stageName} media type`}
         className="profile-media-tabs"

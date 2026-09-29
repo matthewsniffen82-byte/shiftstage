@@ -289,10 +289,6 @@
   },
   {
     "file": "DashboardShared.tsx",
-    "name": "DANCER_PREVIEW_SOCIAL_PLATFORMS"
-  },
-  {
-    "file": "DashboardShared.tsx",
     "name": "DANCER_PROFILE_EDITOR_SAVE_EVENT"
   },
   {
@@ -302,10 +298,6 @@
   {
     "file": "dashboard-types.ts",
     "name": "DancerProfileEditorSectionId"
-  },
-  {
-    "file": "dashboard-types.ts",
-    "name": "DancerProfileSocialEditor"
   },
   {
     "file": "dashboard-types.ts",
@@ -334,10 +326,6 @@
   {
     "file": "DancerProfileEditor.tsx",
     "name": "DancerOnboardingCommand"
-  },
-  {
-    "file": "DancerProfileEditor.tsx",
-    "name": "dancerPreviewSocialLinks"
   },
   {
     "file": "DancerProfileEditor.tsx",
@@ -430,26 +418,6 @@
   {
     "file": "DancerDashboardPanels.tsx",
     "name": "DancerSharePanel"
-  },
-  {
-    "file": "DancerDashboardPanels.tsx",
-    "name": "socialValuesFromProfile"
-  },
-  {
-    "file": "DancerDashboardPanels.tsx",
-    "name": "SocialLinkModal"
-  },
-  {
-    "file": "DashboardShared.tsx",
-    "name": "SOCIAL_PLATFORMS"
-  },
-  {
-    "file": "DancerDashboardPanels.tsx",
-    "name": "toSocialHandle"
-  },
-  {
-    "file": "DancerDashboardPanels.tsx",
-    "name": "toSocialUrl"
   },
   {
     "file": "dashboard-types.ts",

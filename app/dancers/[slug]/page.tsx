@@ -26,7 +26,6 @@ import {
   ProfileShareButton,
 } from "./ProfileNavigationActions";
 import { ProfileViewTracker } from "./ProfileViewTracker";
-import { SocialLinks } from "./SocialLinks";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -289,9 +288,6 @@ export default async function DancerPublicPage({ params, searchParams }: PagePro
             isPinned: video.isPinned,
             publishedAt: video.publishedAt,
           }))}
-          socialContent={profile.socialLinks.length ? (
-            <SocialLinks dancerId={profile.id} links={profile.socialLinks} showHeading={false} />
-          ) : null}
           stageName={profile.stageName}
           viewerStatus={activeShift ? "Working Now" : "Not working now"}
         />

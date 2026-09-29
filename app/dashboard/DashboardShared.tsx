@@ -8,7 +8,6 @@ import { homeDiscoveryHref } from "@/src/lib/dancr/navigation";
 import { isCurrentBrowserSession } from "@/src/lib/dancr/browser-session";
 import { fictionalVenueTravelAddress } from "@/src/lib/dancr/venue-branding";
 import { disableCustomerPush } from "@/src/lib/dancr/customer-push";
-import type { SocialPlatform } from "@/src/lib/dancr/types";
 import { clearDashboardSession, readSession, requestAccountJson, requestDashboardJson, revokeDashboardSession } from "./dashboard-session";
 import type { LoadState, DashboardRole, SavedDancerSummary, SavedVenueSummary, CustomerSavedState, CustomerGoingSignal, SavedShiftSummary, DancerProfileEditorSectionId, DancerProfileEditorSaveRequest } from "./dashboard-types";
 export const PUBLIC_DISCOVERY_REFRESH_KEY = "mydancrPublicDiscoveryRefreshV1";
@@ -914,7 +913,6 @@ export function DashboardLoadingState({ role }: { role: DashboardRole }) {
 }
 
 
-export const DANCER_PREVIEW_SOCIAL_PLATFORMS = new Set<SocialPlatform>(["instagram", "tiktok", "snapchat", "x", "onlyfans"]);
 
 export const DANCER_PROFILE_EDITOR_SAVE_EVENT = "mydancr:dancer-profile-editor-save";
 
@@ -926,7 +924,6 @@ export const DANCER_PROFILE_EDITOR_SECTION_LABELS: Record<DancerProfileEditorSec
   avatar: "Upload avatar",
   photos: "Add photos",
   videos: "Add videos",
-  socials: "Socials",
 };
 
 
@@ -977,15 +974,6 @@ export function formatFinanceDate(value: unknown) {
 export function formatCents(value: number) {
   return `$${(value / 100).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
-
-
-export const SOCIAL_PLATFORMS: ReadonlyArray<{ key: SocialPlatform; label: string; placeholder: string }> = [
-  { key: "instagram", label: "Instagram", placeholder: "Username or profile URL" },
-  { key: "tiktok", label: "TikTok", placeholder: "Username or profile URL" },
-  { key: "snapchat", label: "Snapchat", placeholder: "Username or profile URL" },
-  { key: "x", label: "X", placeholder: "Username or profile URL" },
-  { key: "onlyfans", label: "OnlyFans", placeholder: "Username or profile URL" },
-];
 
 
 export const DANCER_PHOTOS_KEEP_OPEN_EVENT = "mydancr:dancer-photos-keep-open";

@@ -76,17 +76,17 @@ test("initial onboarding nests every production workspace directly under its ste
   assert.match(dashboard, /step\.id === "dancer-onboarding-nfc" && submitted && ageAccessAllowed \? venueVerificationContent : null/);
 });
 
-test("draft identity and social form values survive refreshes without bypassing explicit saves", () => {
+test("draft identity form values survive refreshes without bypassing explicit saves", () => {
   assert.match(dashboard, /function persistedDancerStageName/);
   assert.match(dashboard, /profile\?\.identity_saved_at \|\| profile\?\.identitySavedAt/);
   assert.match(dashboard, /if \(!identitySavedAt\) return ""/);
   assert.match(dashboard, /const savedStageName = persistedDancerStageName\(profile\)/);
   assert.match(dashboard, /mydancr:dancer-profile-draft/);
-  assert.match(dashboard, /mydancr:dancer-social-draft/);
+  assert.doesNotMatch(dashboard, /mydancr:dancer-social-draft/);
   assert.match(dashboard, /window\.localStorage\.setItem\(draftKey/);
   assert.match(dashboard, /window\.localStorage\.removeItem\(draftKey\)/);
   assert.match(dashboard, /<form className="dancer-profile-identity-form" onSubmit=\{saveProfile\}>/);
-  assert.match(dashboard, /<form className="dancer-social-link-form" onSubmit=\{\(event\) => void saveSelectedSocial\(event\)\}>/);
+  assert.doesNotMatch(dashboard, /<form className="dancer-social-link-form" onSubmit=\{\(event\) => void saveSelectedSocial\(event\)\}>/);
   assert.match(dashboard, /draftDirtyRef\.current/);
 });
 
@@ -161,7 +161,7 @@ test("step one guides dancers through required work in the live profile layout",
   assert.match(dashboard, /label: "Profile photo", section: "photos"/);
   assert.match(dashboard, /`Profile essentials: \$\{completedRequirements\}\/\$\{builderRequirements\.length\} complete`/);
   assert.match(dashboard, /videos: videoContent/);
-  assert.match(dashboard, /socials: socialContent/);
+  assert.doesNotMatch(dashboard, /socials: socialContent/);
   assert.match(dashboard, /Profile details/);
   assert.doesNotMatch(dashboard, /required items ready|Choose from your device or open your camera\. At least one approved photo is required\./);
   assert.match(dashboard, /buttonLabel="Edit profile"/);
@@ -198,9 +198,9 @@ test("profile setup editors use the compact shared modal shell without changing 
   assert.doesNotMatch(dashboard, /editorTitle/);
   assert.match(dashboard, /disabled=\{isEditorSaving \|\| isPhotoDeleting \|\| !requirementsComplete\}/);
   assert.match(dashboard, /<DancerSetupPanel[\s\S]*?unifiedSave/);
-  assert.match(dashboard, /<SocialLinkModal[\s\S]*?platform=\{platform\}[\s\S]*?profile=\{profile\}[\s\S]*?unifiedSave/);
+  assert.doesNotMatch(dashboard, /<SocialLinkModal[\s\S]*?platform=\{platform\}[\s\S]*?profile=\{profile\}[\s\S]*?unifiedSave/);
   assert.match(dashboard, /\{unifiedSave \? null : \([\s\S]*?Save profile/);
-  assert.match(dashboard, /hasExistingLink \? "Save changes" : "Save"/);
+  assert.doesNotMatch(dashboard, /hasExistingLink \? "Save changes" : "Save"/);
 });
 
 test("dancer onboarding no longer offers payout enrollment", () => {
@@ -232,23 +232,23 @@ test("step one uses accessible live-profile add targets that preserve the active
   assert.match(dashboard, /"Add stage name"/);
   assert.match(dashboard, /"Add city"/);
   assert.match(dashboard, /<DancerProfileMediaUploads[\s\S]*?onOpen=\{\(section\) => \{[\s\S]*?openEditorSection\(section\);/);
-  assert.match(dashboard, /aria-label="Add social links"/);
+  assert.doesNotMatch(dashboard, /aria-label="Add social links"/);
   assert.match(dashboard, /data-profile-editor-trigger="stageName" onClick=\{\(\) => openEditorSection\("stageName"\)\}/);
   assert.match(dashboard, /data-profile-editor-trigger="city" onClick=\{\(\) => openEditorSection\("city"\)\}/);
   assert.match(dashboard, /onClick=\{\(\) => openEditorSection\("avatar"\)\}/);
   assert.match(dashboard, /photos: photoContent,[\s\S]*?videos: videoContent/);
-  assert.match(dashboard, /onClick=\{\(\) => openSocialEditor\(platform\.key\)\}/);
-  assert.match(dashboard, /SOCIAL_PLATFORMS\.map\(\(platform\) =>/);
-  assert.match(dashboard, /className="social-links-control"[\s\S]*?<h2 id="dancer-profile-builder-social-heading">Social Links<\/h2>/);
-  assert.match(dashboard, /Optional\. Add whichever profiles you want, or skip this for now\./);
-  assert.match(dashboard, /className=\{`social-link social-link-\$\{platform\.key\} dancer-profile-builder-social-platform/);
-  assert.match(dashboard, /<SocialPlatformIcon platform=\{platform\.key\} \/>[\s\S]*?<span aria-hidden="true">\{hasLink \? "✓" : "\+"\}<\/span>/);
+  assert.doesNotMatch(dashboard, /onClick=\{\(\) => openSocialEditor\(platform\.key\)\}/);
+  assert.doesNotMatch(dashboard, /SOCIAL_PLATFORMS\.map\(\(platform\) =>/);
+  assert.doesNotMatch(dashboard, /className="social-links-control"[\s\S]*?<h2 id="dancer-profile-builder-social-heading">Social Links<\/h2>/);
+  assert.doesNotMatch(dashboard, /Optional\. Add whichever profiles you want, or skip this for now\./);
+  assert.doesNotMatch(dashboard, /className=\{`social-link social-link-\$\{platform\.key\} dancer-profile-builder-social-platform/);
+  assert.doesNotMatch(dashboard, /<SocialPlatformIcon platform=\{platform\.key\} \/>[\s\S]*?<span aria-hidden="true">\{hasLink \? "✓" : "\+"\}<\/span>/);
   assert.match(dashboard, /\.dancer-profile-builder-social-platform\.is-added/);
   assert.match(dashboard, /\.dancer-profile-builder-social-platform > svg \{ position:relative; z-index:1; \}/);
-  assert.match(dashboard, /socialEditorContent = activeSocialPlatform[\s\S]*?editorSections\?\.socials\?\.\(activeSocialPlatform, \{ onClose: closeActiveEditor \}\)/);
-  assert.match(dashboard, /activeEditorSection === "socials" && socialEditorContent \? socialEditorContent : null/);
+  assert.doesNotMatch(dashboard, /socialEditorContent = activeSocialPlatform[\s\S]*?editorSections\?\.socials\?\.\(activeSocialPlatform, \{ onClose: closeActiveEditor \}\)/);
+  assert.doesNotMatch(dashboard, /activeEditorSection === "socials" && socialEditorContent \? socialEditorContent : null/);
   assert.match(dashboard, /\.dancer-profile-builder-panel\[hidden\] \{ display:none; \}/);
-  assert.match(dashboard, /className="dancer-social-link-form"[\s\S]*?Profile link or username/);
+  assert.doesNotMatch(dashboard, /className="dancer-social-link-form"[\s\S]*?Profile link or username/);
   assert.match(dashboard, /\.dancer-profile-preview-overlay \.social-list :is\(a,button\) \{ width: 48px;[^}]*height: 48px;[^}]*justify-content: center;/);
   assert.match(dashboard, /body\.dancr-button-system \.public-profile-shell \.dancer-profile-builder-social-platform \{[^}]*width:48px !important;[^}]*height:48px !important;/);
   assert.match(dashboard, /dancerStepOneStateLabel/);
@@ -393,8 +393,8 @@ test("the full profile preview renders approved media and restores the dashboard
   assert.doesNotMatch(dashboard, /readJson\("\/api\/dancer\/tv\/videos"/);
   assert.match(dashboard, /uploadedVideos\.filter\(\(video\) => video\.status === "approved" && video\.videoUrl\)/);
   assert.match(dashboard, /videos=\{videos\}/);
-  assert.match(dashboard, /const socialLinks = dancerPreviewSocialLinks\(profile\)/);
-  assert.match(dashboard, /<SocialLinks[\s\S]*heading="Socials"[\s\S]*links=\{socialLinks\}[\s\S]*showConnectLabel=\{false\}[\s\S]*trackClicks=\{false\}/);
+  assert.doesNotMatch(dashboard, /const socialLinks = dancerPreviewSocialLinks\(profile\)/);
+  assert.doesNotMatch(dashboard, /<SocialLinks[\s\S]*heading="Socials"[\s\S]*links=\{socialLinks\}[\s\S]*showConnectLabel=\{false\}[\s\S]*trackClicks=\{false\}/);
   assert.match(dashboard, /aria-label=\{isEditor \? "Close profile editor" : "Close profile preview"\}/);
   assert.match(dashboard, /scrollRef\.current = window\.scrollY/);
   assert.match(dashboard, /window\.scrollTo\(\{ top: scrollY, behavior: "auto" \}\)/);
@@ -412,7 +412,7 @@ test("approved dancers launch the same focused profile editor as onboarding", ()
   assert.match(workspace, /buttonLabel="Edit profile"[\s\S]*editorSections=\{profileEditorSections\}[\s\S]*isApproved[\s\S]*isPublic=\{isPublic\}/);
   assert.match(workspace, /saveLabel="Save & return to dashboard"/);
   assert.match(workspace, /document\.getElementById\("dancer-profile-media"\)[\s\S]*?section\.open = false/);
-  assert.match(sections, /identity: identityContent[\s\S]*?avatar: avatarContent[\s\S]*?photos: photoContent[\s\S]*?videos: videoContent[\s\S]*?socials: socialContent/);
+  assert.match(sections, /identity: identityContent[\s\S]*?avatar: avatarContent[\s\S]*?photos: photoContent[\s\S]*?videos: videoContent/);
   assert.doesNotMatch(workspace, /showDashboardMedia|DancerProfileMediaUploads/);
   assert.doesNotMatch(dashboard, /<VenueQrUnavailable|<DancerProfileActionsPreview|dancer-profile-builder-tonight|className="profile-overview"|className="profile-metrics"/);
   assert.match(workspace, /<details className="dancer-profile-share-tools">[\s\S]*<DancerSharePanel profile=\{profile\} \/>/);

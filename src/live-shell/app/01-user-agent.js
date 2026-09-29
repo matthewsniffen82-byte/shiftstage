@@ -546,7 +546,6 @@
     let activeApprovedVisualPhotoTarget = "";
     let pendingApprovedPhotoAutoSubmit = false;
     let approvedPhotoEditMode = false;
-    let approvedSocialEditMode = false;
     let approvedProfileSaveConfirmed = false;
     let activeApprovedToolDropdown = "";
     let approvedProfileVideoWorkspace = null;

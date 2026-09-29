@@ -75,12 +75,20 @@ test("edits remain unsaved after a failed save and clear only when persisted val
   assert.match(f.status(f.hydrate()), /Profile saved/);
 });
 
-test("stored identity and social drafts survive a reload and refresh when the editor closes", () => {
-  for (const storedDraft of ["profile", "social"]) {
+test("stored identity drafts survive a reload and refresh when the editor closes", () => {
+  for (const storedDraft of ["profile"]) {
     const f = fixture({ storedDraft });
     assert.match(f.status(f.hydrate()), /Unsaved changes/);
     f.storage.clear();
     f.editor(f.render()).onClose();
     assert.match(f.status(f.render()), /Profile saved/);
   }
+});
+
+
+test("retired social drafts cannot block onboarding or mark the profile unsaved", () => {
+  const f = fixture({ storedDraft: "social" });
+  assert.match(f.status(f.hydrate()), /Profile saved/);
+  assert.doesNotMatch(f.status(f.render()), /Unsaved changes/);
+  assert.equal(f.editor(f.render()).editorSections.socials, undefined);
 });

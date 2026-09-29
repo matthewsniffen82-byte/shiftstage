@@ -791,7 +791,7 @@
               </button>
               <div class="approved-tool-dropdown-head">
                 <strong>Edit profile</strong>
-                <span>Update public profile fields, resubmit rejected photos or social links, and preview your profile.</span>
+                <span>Update public profile fields, resubmit rejected photos, and preview your profile.</span>
               </div>
               <div id="approvedProfileFixList"></div>
               <div id="approvedVisualProfileEditor"></div>
@@ -905,7 +905,7 @@
           </div>
         </details>
         <details class="auth-card dashboard-collapse post-shift-panel" id="approvedDancerPanel" hidden>
-          <summary><span class="dashboard-collapse-title"><strong>Dancer tools</strong><span>Expand to edit profile details, replace photos, manage social links, post shifts, and share your profile.</span></span></summary>
+          <summary><span class="dashboard-collapse-title"><strong>Dancer tools</strong><span>Expand to edit profile details, replace photos, post shifts, and share your profile.</span></span></summary>
           <div class="dashboard-collapse-body">
           <div class="approved-tool-launcher" aria-label="Approved dancer tools">
             <button type="button" data-dancer-control-action="edit-profile">
@@ -987,41 +987,6 @@
                     <button type="button" data-dancer-control-action="main-photo">Main photo</button>
                     <button type="button" data-dancer-control-action="gallery-photo">Gallery photos</button>
                     <input id="approvedPhotoUploadInput" type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif" hidden>
-                  </div>
-                </section>
-
-                <section class="dancer-control-card">
-                  <div class="control-card-head">
-                    <span class="eyebrow">Social links</span>
-                    <strong>Connect socials</strong>
-                    <p>Add Instagram, TikTok, Snapchat, OnlyFans, and X links to the public profile.</p>
-                  </div>
-                  <div class="social-control-grid">
-                    <div class="social-edit-field">
-                      <label for="approvedControlInstagram">Instagram<input id="approvedControlInstagram" type="text" placeholder="Username or profile URL" aria-label="Instagram handle"></label>
-                      <button type="button" data-social-focus="approvedControlInstagram">Edit</button>
-                      <button type="button" data-social-clear="approvedControlInstagram">Clear</button>
-                    </div>
-                    <div class="social-edit-field">
-                      <label for="approvedControlTiktok">TikTok<input id="approvedControlTiktok" type="text" placeholder="Username or profile URL" aria-label="TikTok handle"></label>
-                      <button type="button" data-social-focus="approvedControlTiktok">Edit</button>
-                      <button type="button" data-social-clear="approvedControlTiktok">Clear</button>
-                    </div>
-                    <div class="social-edit-field">
-                      <label for="approvedControlSnapchat">Snapchat<input id="approvedControlSnapchat" type="text" placeholder="Username or profile URL" aria-label="Snapchat handle"></label>
-                      <button type="button" data-social-focus="approvedControlSnapchat">Edit</button>
-                      <button type="button" data-social-clear="approvedControlSnapchat">Clear</button>
-                    </div>
-                    <div class="social-edit-field">
-                      <label for="approvedControlOnlyfans">OnlyFans<input id="approvedControlOnlyfans" type="text" placeholder="Username or profile URL" aria-label="OnlyFans link"></label>
-                      <button type="button" data-social-focus="approvedControlOnlyfans">Edit</button>
-                      <button type="button" data-social-clear="approvedControlOnlyfans">Clear</button>
-                    </div>
-                    <div class="social-edit-field">
-                      <label for="approvedControlX">X<input id="approvedControlX" type="text" placeholder="Username or profile URL" aria-label="X handle"></label>
-                      <button type="button" data-social-focus="approvedControlX">Edit</button>
-                      <button type="button" data-social-clear="approvedControlX">Clear</button>
-                    </div>
                   </div>
                 </section>
 
@@ -1118,33 +1083,6 @@
                   </div>
                 </div>
                 <div id="approvedProfilePhotoReview"></div>
-                <div class="profile-edit-grid" data-fix-anchor="profile-socials">
-                  <div class="field social-edit-field">
-                    <label for="profileInstagram">Instagram<input id="profileInstagram" data-fix-anchor="profile-instagram" type="text" placeholder="Username or profile URL"></label>
-                    <button type="button" data-social-focus="profileInstagram">Edit</button>
-                    <button type="button" data-social-clear="profileInstagram">Clear</button>
-                  </div>
-                  <div class="field social-edit-field">
-                    <label for="profileTiktok">TikTok<input id="profileTiktok" data-fix-anchor="profile-tiktok" type="text" placeholder="Username or profile URL"></label>
-                    <button type="button" data-social-focus="profileTiktok">Edit</button>
-                    <button type="button" data-social-clear="profileTiktok">Clear</button>
-                  </div>
-                  <div class="field social-edit-field">
-                    <label for="profileSnapchat">Snapchat<input id="profileSnapchat" data-fix-anchor="profile-snapchat" type="text" placeholder="Username or profile URL"></label>
-                    <button type="button" data-social-focus="profileSnapchat">Edit</button>
-                    <button type="button" data-social-clear="profileSnapchat">Clear</button>
-                  </div>
-                  <div class="field social-edit-field">
-                    <label for="profileOnlyfans">OnlyFans<input id="profileOnlyfans" data-fix-anchor="profile-onlyfans" type="text" placeholder="Username or profile URL"></label>
-                    <button type="button" data-social-focus="profileOnlyfans">Edit</button>
-                    <button type="button" data-social-clear="profileOnlyfans">Clear</button>
-                  </div>
-                  <div class="field social-edit-field">
-                    <label for="profileX">X<input id="profileX" data-fix-anchor="profile-x" type="text" placeholder="Username or profile URL"></label>
-                    <button type="button" data-social-focus="profileX">Edit</button>
-                    <button type="button" data-social-clear="profileX">Clear</button>
-                  </div>
-                </div>
                 <button class="action-btn secondary" type="button" data-dancer-control-action="save-profile">Save Profile</button>
               </form>
               <div class="rule-note" id="profileEditResult" hidden>Changes submitted for admin approval.</div>

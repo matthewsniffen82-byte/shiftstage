@@ -43,11 +43,11 @@ const renderSocialLinks = new Function(
 
 test("zero-social profiles reserve no social DOM or layout space", () => {
   assert.match(socialLinks, /if \(!links\.length\) return null;/);
-  assert.match(
+  assert.doesNotMatch(
     profilePage,
     /socialContent=\{profile\.socialLinks\.length \? \([\s\S]*?<SocialLinks dancerId=\{profile\.id\} links=\{profile\.socialLinks\} showHeading=\{false\} \/>[\s\S]*?: null\}/,
   );
-  assert.match(profileMedia, /\{socialContent \? \([\s\S]*?className="profile-media-socials"[\s\S]*?: null\}/);
+  assert.doesNotMatch(profileMedia, /\{socialContent \? \([\s\S]*?className="profile-media-socials"[\s\S]*?: null\}/);
   assert.equal(renderSocialLinks({ socials: {} }), "");
   assert.equal(renderSocialLinks({ socials: {} }, { preview: true }), "");
   assert.doesNotMatch(socialFunctionSource, /No profiles posted|social placeholder|empty social/i);
@@ -94,7 +94,7 @@ test("all schedule states share the same compact header, three actions, status, 
   assert.ok(actionsIndex > -1 && statusIndex > actionsIndex);
   assert.ok(mediaSocialIndex > -1 && mediaTabsIndex > mediaSocialIndex);
   assert.doesNotMatch(liveGrid, /\$\{socialMarkup\}/);
-  assert.match(liveApp, /modalMediaSocials\.innerHTML = liveSocialMarkup;[\s\S]*?modalMediaSocials\.hidden = !liveSocialMarkup;/);
+  assert.match(liveApp, /modalMediaSocials\.replaceChildren\(\);[\s\S]*?modalMediaSocials\.hidden = true;/);
   assert.doesNotMatch(liveGrid, /profileActivityMetricsMarkup/);
   assert.match(liveApp, /modalProfileMetrics\.innerHTML = profileActivityMetricsMarkup\(profile, city\)/);
   assert.match(liveActions, /Follow[\s\S]*?\$\{goingButton\}[\s\S]*?Share/);

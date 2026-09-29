@@ -137,11 +137,6 @@ test("approved videos refresh into the builder and video cards render a visible 
   assert.match(mediaSync, /video\.currentTime = Math\.min\(0\.15, Math\.max\(0\.05, video\.duration \/ 100\)\)/);
 });
 
-test("saved social platforms use a populated state instead of retaining an add badge", () => {
-  assert.match(dashboard, /hasLink \? "Edit" : "Add"/);
-  assert.match(dashboard, /\{hasLink \? "✓" : "\+"\}/);
-  assert.match(dashboard, /dancer-profile-builder-social-platform\.is-added/);
-});
 
 test("the three-item counter remains the authoritative profile essentials counter", () => {
   assert.match(dashboard, /label: "Stage name & city", section: "identity"/);

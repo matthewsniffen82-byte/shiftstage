@@ -58,7 +58,7 @@
       document.getElementById("dancerApprovalCopy").textContent = rejected
           ? "Your profile was rejected, but anything already approved stays approved. Fix or resend the red items below, then resubmit for review."
         : optionalProfileFixes
-          ? "Your required verification is approved. Only pictures and/or social links need fixes. You can replace them and submit again, or leave them blank."
+          ? "Your required verification is approved. Only pictures need fixes. You can replace them and submit again, or leave them blank."
         : approved
           ? "Your public profile is live. Keep your schedule current, share your profile, and track the guests Dancr sends you."
         : reviewSubmitted
@@ -106,8 +106,8 @@
           approvalStatusPrimary.textContent = "Rejected. Fix or resend the red items in the review notes below.";
           approvalStatusSecondary.textContent = "Approved items stay approved. After you fix the rejected items, press Resubmit for review.";
         } else if (optionalProfileFixes) {
-          approvalStatusPrimary.textContent = "Approved with fixes needed. Social links and/or pictures need fixes only.";
-          approvalStatusSecondary.textContent = "Replace the rejected item and submit again, or leave that social/photo blank.";
+          approvalStatusPrimary.textContent = "Approved with fixes needed. Pictures need fixes only.";
+          approvalStatusSecondary.textContent = "Replace the rejected item and submit again, or remove that photo.";
         } else if (approved) {
           approvalStatusPrimary.textContent = "Venue affiliation confirmed. Your public profile, gallery, and shift posting are unlocked.";
           approvalStatusSecondary.textContent = "Keep your schedule updated so guests can find you when you are working.";
@@ -460,27 +460,13 @@
         </section>
         ${approvedProfileVideoManagerMarkup()}
       `;
-      const profileSocialBody = `
-        <section class="setup-profile-editor-section">
-          <div class="setup-profile-editor-head">
-            <strong>Social links</strong>
-            <p>Add the same optional links that appear in Edit Profile. Uploading media will not clear these fields.</p>
-          </div>
-          <div class="auth-form">
-            <div class="field"><label for="setupInstagram">Optional Instagram</label><input id="setupInstagram" form="setupProfileForm" data-setup-social="instagram" type="text" value="${escapeHtml(dancerSignupSocials.instagram)}" placeholder="Username or profile URL"></div>
-            <div class="field"><label for="setupTiktok">Optional TikTok</label><input id="setupTiktok" form="setupProfileForm" data-setup-social="tiktok" type="text" value="${escapeHtml(dancerSignupSocials.tiktok)}" placeholder="Username or profile URL"></div>
-            <div class="field"><label for="setupSnapchat">Optional Snapchat</label><input id="setupSnapchat" form="setupProfileForm" data-setup-social="snapchat" type="text" value="${escapeHtml(dancerSignupSocials.snapchat)}" placeholder="username or snapchat.com/add/username"></div>
-            <div class="field"><label for="setupOnlyfans">Optional OnlyFans</label><input id="setupOnlyfans" form="setupProfileForm" data-setup-social="onlyfans" type="text" value="${escapeHtml(dancerSignupSocials.onlyfans)}" placeholder="Username or profile URL"></div>
-            <div class="field"><label for="setupX">Optional X</label><input id="setupX" form="setupProfileForm" data-setup-social="x" type="text" value="${escapeHtml(dancerSignupSocials.x)}" placeholder="Username or profile URL"></div>
-            <div class="rule-note">Enter a username or full profile URL. MyDancr turns it into a clickable account link after approval. Allowed: Instagram, TikTok, Snapchat, OnlyFans, and X. No escorting, illegal services, or direct solicitation links.</div>
-          </div>
+      const profileSaveBody = `
           <div class="setup-profile-editor-actions">
             <button class="action-btn" type="submit" form="setupProfileForm" data-setup-profile-save ${dancerSignupCitiesState === "ready" ? "" : "disabled"}>Save profile</button>
             <div class="rule-note" id="setupProfileSaveStatus" role="status" aria-live="polite" hidden></div>
           </div>
-        </section>
       `;
-      const profileBody = `<div class="setup-profile-editor" data-setup-profile-editor>${profileIdentityBody}${photosBody}${profileSocialBody}</div>`;
+      const profileBody = `<div class="setup-profile-editor" data-setup-profile-editor>${profileIdentityBody}${photosBody}${profileSaveBody}</div>`;
       const reviewBody = `
         <section class="setup-profile-editor-section setup-profile-review-section">
           <div class="setup-profile-editor-head">

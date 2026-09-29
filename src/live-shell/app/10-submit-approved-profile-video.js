@@ -139,34 +139,14 @@
         mainPhoto.status === "approved" ? "is-live" : "",
         mainPhoto.status === "approved" && mainPhoto.target === "main" ? "is-main" : ""
       ].filter(Boolean).join(" ");
-      const submittedSocials = normalizeSubmittedSocials(profile);
-      const socials = socialPlatforms.map((platform) => {
-        const submitted = submittedSocials.find((item) => item.platform === platform.key);
-        const currentValue = approvedProfileFieldValue(`profile${platform.key.charAt(0).toUpperCase()}${platform.key.slice(1)}`, `approvedControl${platform.key.charAt(0).toUpperCase()}${platform.key.slice(1)}`);
-        const status = normalizedReviewStatus(submitted?.reviewStatus || (submitted ? "pending" : ""));
-        const deleted = (profile?.deletedSocialPlatforms || []).includes(platform.key);
-        const previewValue = normalizeSocialInput(platform.key, currentValue) || currentValue;
-        return {
-          ...platform,
-          value: deleted ? "" : previewValue,
-          status,
-          notes: submitted?.reviewNotes || "",
-          deleted
-        };
-      });
       const shareName = displayText(profile?.name || activeDancerName());
       const shareCity = displayText(activeDancerCity());
       const socialUtilityButtons = `
-        <div class="profile-utility-actions approved-social-tools" aria-label="Profile social tools">
+        <div class="profile-utility-actions approved-social-tools" aria-label="Profile sharing">
           <button class="profile-share-trigger" type="button" data-readonly-profile-tool="share" data-profile-share-menu="${shareName}" data-share-city="${shareCity}" aria-haspopup="dialog" aria-label="Share profile" title="Share profile - not editable">
             ${actionIconMarkup("share")}
           </button>
         </div>
-      `;
-      const socialEditButton = `
-        <button class="approved-social-edit-btn ${approvedSocialEditMode ? "is-active" : ""}" type="button" data-approved-social-edit-toggle aria-label="${approvedSocialEditMode ? "Done editing social links" : "Edit social links"}" aria-pressed="${approvedSocialEditMode ? "true" : "false"}">
-          <svg class="icon" viewBox="0 0 24 24"><path d="M12 20h9"></path><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5Z"></path></svg>
-        </button>
       `;
       const photoEditButton = `
         <button class="approved-photo-edit-badge ${approvedPhotoEditMode ? "is-active" : ""}" type="button" data-approved-photo-edit-toggle aria-label="${approvedPhotoEditMode ? "Done editing photos" : "Edit photos"}" aria-pressed="${approvedPhotoEditMode ? "true" : "false"}">
@@ -200,32 +180,11 @@
         : dedicatedAvatarPath
           ? "Live in dancer avatar circles across MyDancr."
           : "Your main photo is used until you upload a dedicated avatar.";
-      const visibleSocials = socials.filter((social) => !social.deleted && social.value);
-      const approvedEditableSocialMarkup = `
-        <div class="info-tile social-tile ${approvedSocialEditMode ? "is-social-editing" : ""}">
-          <div class="social-tile-head">
-            <strong>Social links</strong>
-            ${socialUtilityButtons}
-          </div>
-          ${visibleSocials.length ? `
-          <div class="social-links">
-            ${visibleSocials.map((social) => `
-              <span class="social-edit-item" data-fix-anchor="${displayText(`profile-${social.key}`)}">
-                  <a class="social-link social-${displayText(social.key)} ${social.status === "rejected" ? "is-rejected" : social.status === "pending" ? "is-pending" : ""}" href="${displayText(safeExternalHref(social.value) || "#")}" target="_blank" rel="noreferrer" aria-label="${displayText(social.label)}" data-social-url="${displayText(social.value)}" title="${displayText(social.status === "rejected" ? `Not approved: ${social.notes || "No reason added."}` : social.status === "pending" ? "Pending admin approval" : social.label)}">
-                  ${socialIconMarkup(social.key)}
-                </a>
-              </span>
-            `).join("")}
-          </div>
-          ` : '<div class="meta">No social links posted</div>'}
-          ${socialEditButton}
-        </div>
-      `;
       return `
         <div class="approved-visual-profile">
           <div class="approved-edit-help">
             <strong>Edit your public profile</strong>
-            <span>Update your stage name and face avatar first. For gallery pictures, tap the pencil and then tap a picture to replace or delete it. Blank social links stay hidden from preview and live profile.</span>
+            <span>Update your stage name and face avatar first. For gallery pictures, tap the pencil and then tap a picture to replace or delete it.</span>
           </div>
           <section class="profile-modal">
             <section class="approved-profile-identity-editor" aria-labelledby="approvedIdentityEditorTitle">
@@ -288,7 +247,8 @@
               </div>
               <div class="meta" id="approvedPhotoUploadStatus" aria-live="polite">Choose a photo button to upload a new picture.</div>
               ${approvedProfileVideoManagerMarkup()}
-              ${profileModalGridMarkup(profile, { preview: true, city: activeDancerCity(), socialMarkup: approvedEditableSocialMarkup })}
+              ${profileModalGridMarkup(profile, { preview: true, city: activeDancerCity() })}
+              ${socialUtilityButtons}
               <div class="modal-actions">
                 <button class="approved-visual-save action-btn secondary ${approvedProfileSaveConfirmed ? "is-saved" : ""}" type="button" data-dancer-control-action="save-profile">
                   ${approvedProfileSaveConfirmed ? actionButtonLabel("check", "Saved Profile") : actionButtonLabel("save", "Save Profile")}
@@ -381,7 +341,7 @@
     function openApprovedVisualEditPopover(kind, data = {}) {
       const popover = document.getElementById("approvedEditItemPopover");
       const card = document.getElementById("approvedEditItemCard");
-      if (!popover || !card) return;
+      if (!popover || !card || kind !== "photo") return;
       popover.classList.toggle("is-social", kind !== "photo");
       document.body.classList.toggle("social-edit-popover-open", kind !== "photo");
       popover.style.removeProperty("--approved-social-popover-top");
@@ -399,31 +359,6 @@
             <button class="approved-visual-delete" type="button" data-approved-visual-photo-delete data-photo-id="${displayText(data.photoId || "")}" data-photo-target="${displayText(data.target || "gallery")}" data-photo-label="${displayText(data.label || "Profile photo")}" data-photo-url="${displayText(data.photoUrl || "")}" data-photo-storage-path="${displayText(data.storagePath || "")}">${pending ? "Remove upload" : "Delete picture"}</button>
           </div>
         `;
-      } else {
-        const submittedSocials = normalizeSubmittedSocials(activeDancerProfile());
-        card.innerHTML = `
-          <div class="row"><div><strong>Social links</strong><div class="meta">Add accepted social profile links below. Leave a box blank to hide that social icon from edit preview and the live profile.</div></div><button class="close-btn" type="button" data-approved-edit-close aria-label="Close"><svg class="icon" viewBox="0 0 24 24"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg></button></div>
-          <div class="approved-social-form-grid">
-            ${socialPlatforms.map((platform) => {
-              const inputId = `profile${platform.key.charAt(0).toUpperCase()}${platform.key.slice(1)}`;
-              const value = approvedProfileFieldValue(inputId, `approvedControl${platform.key.charAt(0).toUpperCase()}${platform.key.slice(1)}`);
-              const submitted = submittedSocials.find((item) => item.platform === platform.key);
-              const rejected = normalizedReviewStatus(submitted?.reviewStatus) === "rejected";
-              return `
-                <div class="field">
-                  <label for="approvedSocialInput-${displayText(platform.key)}">${displayText(platform.label)}</label>
-                  <input id="approvedSocialInput-${displayText(platform.key)}" data-approved-social-bulk-input data-social-platform="${displayText(platform.key)}" type="text" value="${escapeHtml(value)}" placeholder="Username or profile URL">
-                  ${rejected ? `<small>Not approved: ${displayText(submitted?.reviewNotes || "No reason added.")}</small>` : `<small>${displayText(platform.label)} is optional. Blank means hidden.</small>`}
-                </div>
-              `;
-            }).join("")}
-          </div>
-          <div class="approved-visual-social-actions">
-            <button class="action-btn" type="button" data-approved-visual-social-save-all>Apply links</button>
-            <button class="approved-visual-delete" type="button" data-approved-edit-close>Cancel</button>
-          </div>
-        `;
-        document.querySelector(".approved-visual-profile")?.appendChild(popover);
       }
       popover.hidden = false;
     }
@@ -433,11 +368,8 @@
       if (!popover) return false;
       const replaceButton = event.target.closest("[data-approved-visual-photo-replace]");
       const deleteButton = event.target.closest("[data-approved-visual-photo-delete]");
-      const socialSaveAllButton = event.target.closest("[data-approved-visual-social-save-all]");
-      const socialSaveButton = event.target.closest("[data-approved-visual-social-save]");
-      const socialDeleteButton = event.target.closest("[data-approved-visual-social-delete]");
       const closeButton = event.target.closest("[data-approved-edit-close]");
-      if (!replaceButton && !deleteButton && !socialSaveAllButton && !socialSaveButton && !socialDeleteButton && !closeButton) return false;
+      if (!replaceButton && !deleteButton && !closeButton) return false;
       event.preventDefault();
       event.stopPropagation();
 
@@ -474,51 +406,6 @@
         return true;
       }
 
-      if (socialSaveAllButton) {
-        document.querySelectorAll("[data-approved-social-bulk-input]").forEach((input) => {
-          const platform = input.dataset.socialPlatform || "";
-          const fieldId = `profile${platform.charAt(0).toUpperCase()}${platform.slice(1)}`;
-          const field = document.getElementById(fieldId);
-          if (!field) return;
-          field.value = input.value.trim();
-          if (field.value) clearApprovedSocialDeleted(platform);
-          else markApprovedSocialDeleted(platform);
-          mirrorApprovedProfileEditField(field);
-        });
-        closeApprovedVisualEditPopover();
-        showToast("Social links updated. Press Save profile to keep them.");
-        return true;
-      }
-
-      if (socialSaveButton) {
-        const platform = socialSaveButton.dataset.socialPlatform || "";
-        const input = document.getElementById("approvedVisualSocialInput");
-        const fieldId = `profile${platform.charAt(0).toUpperCase()}${platform.slice(1)}`;
-        const field = document.getElementById(fieldId);
-        if (field && input) {
-          field.value = input.value.trim();
-          clearApprovedSocialDeleted(platform);
-          mirrorApprovedProfileEditField(field);
-          closeApprovedVisualEditPopover();
-          showToast("Social link saved. Press Save profile to send it to admin.");
-        }
-        return true;
-      }
-
-      if (socialDeleteButton) {
-        const platform = socialDeleteButton.dataset.socialPlatform || "";
-        const fieldId = `profile${platform.charAt(0).toUpperCase()}${platform.slice(1)}`;
-        const field = document.getElementById(fieldId);
-        if (field) {
-          field.value = "";
-          markApprovedSocialDeleted(platform);
-          mirrorApprovedProfileEditField(field);
-          closeApprovedVisualEditPopover();
-          showToast("Social link deleted. Press Save profile to send the change to admin.");
-        }
-        return true;
-      }
-
       closeApprovedVisualEditPopover();
       return true;
     }
@@ -546,7 +433,6 @@
         renderApprovedDancerProfileEditor(true);
       };
 
-      const socials = { ...dancerSignupSocials, ...(profile?.socials || {}) };
       setFieldValueIfIdle("profileStageName", profile?.name || activeDancerName());
       setFieldValueIfIdle("approvedControlStageName", profile?.name || activeDancerName());
       setFieldValueIfIdle("approvedControlRealName", document.getElementById("dancerLegalName")?.value || profile?.legalName || "");
@@ -554,38 +440,6 @@
       if (controlVenueField) controlVenueField.value = venueName;
       const photoReview = document.getElementById("approvedProfilePhotoReview");
       if (photoReview) photoReview.innerHTML = approvedDancerPhotoReviewMarkup(profile);
-      setFieldValueIfIdle("profileInstagram", socials.instagram || "");
-      setFieldValueIfIdle("profileTiktok", socials.tiktok || "");
-      setFieldValueIfIdle("profileSnapchat", socials.snapchat || "");
-      setFieldValueIfIdle("profileOnlyfans", socials.onlyfans || "");
-      setFieldValueIfIdle("profileX", socials.x || "");
-      setFieldValueIfIdle("approvedControlInstagram", socials.instagram || "");
-      setFieldValueIfIdle("approvedControlTiktok", socials.tiktok || "");
-      setFieldValueIfIdle("approvedControlSnapchat", socials.snapchat || "");
-      setFieldValueIfIdle("approvedControlOnlyfans", socials.onlyfans || "");
-      setFieldValueIfIdle("approvedControlX", socials.x || "");
-      normalizeSubmittedSocials(profile).forEach((social) => {
-        const input = document.getElementById(`profile${social.platform.charAt(0).toUpperCase()}${social.platform.slice(1)}`);
-        if (!input) return;
-        const rejected = normalizedReviewStatus(social.reviewStatus) === "rejected";
-        const socialRow = input.closest(".social-edit-field, .field");
-        input.dataset.fixAnchor = `profile-${social.platform}`;
-        if (socialRow) {
-          socialRow.dataset.fixAnchor = `profile-${social.platform}`;
-          socialRow.classList.toggle("is-rejected", rejected);
-        }
-        input.classList.toggle("dancer-fix-highlight", false);
-        let note = input.parentElement?.querySelector(".social-review-reason");
-        if (!note && rejected) {
-          note = document.createElement("div");
-          note.className = "field-note social-review-reason";
-          input.insertAdjacentElement("afterend", note);
-        }
-        if (note) {
-          note.hidden = !rejected;
-          note.textContent = rejected ? `Not approved: ${social.reviewNotes || "No reason added."}` : "";
-        }
-      });
       renderApprovedVisualProfileEditor();
       syncApprovedProfileSubmitState();
     }
@@ -597,21 +451,10 @@
     }
 
     function readApprovedProfileEditValues() {
-      const rawSocials = {
-        instagram: approvedProfileFieldValue("profileInstagram", "approvedControlInstagram"),
-        tiktok: approvedProfileFieldValue("profileTiktok", "approvedControlTiktok"),
-        snapchat: approvedProfileFieldValue("profileSnapchat", "approvedControlSnapchat"),
-        onlyfans: approvedProfileFieldValue("profileOnlyfans", "approvedControlOnlyfans"),
-        x: approvedProfileFieldValue("profileX", "approvedControlX")
-      };
       return {
         stageName: cleanDisplayValue(approvedProfileFieldValue("profileStageName", "approvedControlStageName")) || activeDancerName(),
         city: approvedProfileFieldValue("profileCity", "approvedControlCity") || activeDancerCity(),
-        venue: approvedProfileFieldValue("profileVenue", "approvedControlVenue"),
-        rawSocials,
-        normalizedSocials: Object.fromEntries(
-          Object.entries(rawSocials).map(([key, value]) => [key, normalizeSocialInput(key, value)])
-        )
+        venue: approvedProfileFieldValue("profileVenue", "approvedControlVenue")
       };
     }
 
@@ -629,26 +472,15 @@
     function approvedProfileChangeState(profile = activeDancerProfile()) {
       if (!profile) return { hasAnyChange: false, needsApproval: false, hasDeletesOnly: false };
       const values = readApprovedProfileEditValues();
-      const existingSocials = normalizeSubmittedSocials(profile);
       const detailsChanged = values.stageName !== (profile.name || activeDancerName()) ||
         values.city !== (profile.city || activeDancerCity()) ||
         Boolean(values.venue && values.venue !== (profile.venue || ""));
-      const socialStates = socialPlatforms.map(({ key }) => {
-        const existing = existingSocials.find((social) => social.platform === key);
-        const current = values.normalizedSocials[key] || "";
-        const previous = existing?.url || "";
-        return {
-          key,
-          addedOrChanged: Boolean(current && current !== previous),
-          deleted: Boolean(previous && !current)
-        };
-      });
       const pendingPhoto = (profile.submittedPhotos || []).some((photo) =>
         normalizedReviewStatus(photo.reviewStatus || photo.review_status || "pending") === "pending"
       );
       const waitingOnAdmin = Boolean(profile.approvalChangesPending && profile.approvalChangesSubmitted);
-      const needsApproval = detailsChanged || (!waitingOnAdmin && pendingPhoto) || socialStates.some((item) => item.addedOrChanged || item.deleted) || Boolean(profile.approvalChangesPending && !profile.approvalChangesSubmitted);
-      const hasDeletes = socialStates.some((item) => item.deleted) || deletedDancerPhotoKeySet(profile).size > 0;
+      const needsApproval = detailsChanged || (!waitingOnAdmin && pendingPhoto) || Boolean(profile.approvalChangesPending && !profile.approvalChangesSubmitted);
+      const hasDeletes = deletedDancerPhotoKeySet(profile).size > 0;
       const hasAnyChange = needsApproval || hasDeletes;
       return { hasAnyChange, needsApproval, hasDeletesOnly: hasDeletes && !needsApproval, submitted: waitingOnAdmin && !needsApproval };
     }
@@ -671,7 +503,7 @@
         button.title = state.needsApproval
           ? "Save, then send changed or uploaded items to admin."
           : state.submitted
-            ? "Your latest photo or social changes were submitted for admin review."
+            ? "Your latest photo changes were submitted for admin review."
           : state.hasDeletesOnly
             ? "Deleted items can be saved without admin approval."
             : "Change or upload something to submit for approval.";
@@ -687,11 +519,6 @@
         ["profileStageName", "approvedControlStageName"],
         ["profileCity", "approvedControlCity"],
         ["profileVenue", "approvedControlVenue"],
-        ["profileInstagram", "approvedControlInstagram"],
-        ["profileTiktok", "approvedControlTiktok"],
-        ["profileSnapchat", "approvedControlSnapchat"],
-        ["profileOnlyfans", "approvedControlOnlyfans"],
-        ["profileX", "approvedControlX"]
       ];
       const pair = pairs.find(([left, right]) => field?.id === left || field?.id === right);
       if (!pair) return;
@@ -700,47 +527,6 @@
       if (other && other.value !== field.value) other.value = field.value;
       syncApprovedProfileSubmitState();
       renderApprovedVisualProfileEditor();
-    }
-
-    function markApprovedSocialDeleted(platform = "") {
-      const key = String(platform || "").toLowerCase();
-      if (!key) return;
-      const profile = activeDancerProfile() || ensureActiveDancerProfile("Verified");
-      if (!profile) return;
-      profile.deletedSocialPlatforms = [...new Set([...(profile.deletedSocialPlatforms || []), key])];
-      profile.approvalChangesPending = true;
-      profile.approvalChangesSubmitted = false;
-    }
-
-    function clearApprovedSocialDeleted(platform = "") {
-      const key = String(platform || "").toLowerCase();
-      const profile = activeDancerProfile();
-      if (!profile || !key) return;
-      profile.deletedSocialPlatforms = (profile.deletedSocialPlatforms || []).filter((item) => item !== key);
-    }
-
-    function socialPlatformFromApprovedFieldId(fieldId = "") {
-      const match = String(fieldId || "").match(/^(?:profile|approvedControl)(Instagram|Tiktok|Snapchat|Onlyfans|X)$/);
-      return match ? match[1].toLowerCase() : "";
-    }
-
-    function focusApprovedSocialField(fieldId = "") {
-      const field = document.getElementById(fieldId);
-      if (!field) return;
-      openAncestorDetails(field);
-      field.scrollIntoView({ behavior: "smooth", block: "center", inline: "nearest" });
-      field.focus({ preventScroll: true });
-      field.select?.();
-    }
-
-    function clearApprovedSocialField(fieldId = "") {
-      const field = document.getElementById(fieldId);
-      if (!field) return;
-      field.value = "";
-      markApprovedSocialDeleted(socialPlatformFromApprovedFieldId(fieldId));
-      mirrorApprovedProfileEditField(field);
-      focusApprovedSocialField(fieldId);
-      showToast("Social link cleared. Press Save profile to keep it blank.");
     }
 
     async function saveApprovedDancerProfile(options = {}) {
@@ -753,8 +539,6 @@
       const oldMarket = markets[oldCity];
       const oldProfile = activeDancerProfile(oldCity) || ensureActiveDancerProfile("Verified");
       if (!oldProfile || !oldMarket) return false;
-      const changeStateBeforeSave = approvedProfileChangeState(oldProfile);
-      const existingSocialsBeforeSave = normalizeSubmittedSocials(oldProfile).map((social) => ({ ...social }));
       const editValues = readApprovedProfileEditValues();
       const stageNameValidation = validateDancerStageName(approvedProfileFieldValue("profileStageName", "approvedControlStageName"));
       if (!stageNameValidation.valid) {
@@ -768,35 +552,6 @@
       const targetMarket = markets[newCity] || oldMarket;
       const venueName = editValues.venue || oldProfile.venue;
       const venue = targetMarket.venues.find((item) => item.name === venueName);
-      const rawSocials = editValues.rawSocials;
-      if (hasBlockedSocialLink(Object.values(rawSocials))) {
-        showToast("Escorting, payment, or solicitation links are not allowed");
-        return false;
-      }
-      const normalizedSocials = editValues.normalizedSocials;
-      const invalidSocial = Object.entries(rawSocials).some(([key, value]) => value && !normalizedSocials[key]);
-      if (invalidSocial) {
-        showToast("Use Instagram, TikTok, Snapchat, OnlyFans, or X links only");
-        return false;
-      }
-      const nextSocialLinks = Object.entries(normalizedSocials)
-        .filter(([, url]) => Boolean(url))
-        .map(([platform, url], index) => {
-          const existingSocial = existingSocialsBeforeSave.find((social) => social.platform === platform);
-          const unchangedApproved = existingSocial?.url === url && normalizedReviewStatus(existingSocial.reviewStatus) === "approved";
-          return {
-            id: existingSocial?.id || `${oldProfile.id || oldProfile.name}-social-${platform}-${index}`,
-            platform,
-            url,
-            handle: socialHandleFromUrl(url),
-            isActive: true,
-            reviewStatus: unchangedApproved ? "approved" : "pending",
-            reviewNotes: unchangedApproved ? existingSocial.reviewNotes || "" : ""
-          };
-        });
-      const submittedSocialPlatforms = nextSocialLinks
-        .filter((social) => normalizedReviewStatus(social.reviewStatus) === "pending")
-        .map((social) => social.platform);
       const result = document.getElementById("profileEditResult");
       if (result) {
         result.hidden = false;
@@ -817,9 +572,7 @@
           const data = await patchAuthenticatedJson("/api/dancer/profile", {
             stageName,
             city: newCity,
-            socials: socialPayloadFromMap(normalizedSocials),
             submitForReview: options.submitForReview === true,
-            submittedSocialPlatforms,
             ...deletedPhotoPayload
           });
           if (!data) throw new Error("Sign in required");
@@ -846,15 +599,9 @@
           city: newCity,
           venue: venueName,
           distance: venue?.distance || profile.distance,
-          socials: normalizedSocials,
           status: dancerCoreApprovalUnlocked(profile) ? "Verified" : profile.status,
-          reviewSubmitted: dancerCoreApprovalUnlocked(profile) ? false : profile.reviewSubmitted,
-          approvalChangesPending: submittedSocialPlatforms.length > 0,
-          approvalChangesSubmitted: submittedSocialPlatforms.length > 0
+          reviewSubmitted: dancerCoreApprovalUnlocked(profile) ? false : profile.reviewSubmitted
         });
-        profile.socialLinks = nextSocialLinks;
-        profile.deletedSocialPlatforms = [];
-        assignSocialMap(dancerSignupSocials, normalizedSocials);
         document.getElementById("dancerStageName").value = stageName;
         updateDancerDashboardName(stageName);
         if (savedServerProfile) {
@@ -890,13 +637,11 @@
         }
         if (customerDashboard.classList.contains("show")) renderDashboard();
         syncApprovedProfileSubmitState();
-        const successMessage = options.submitForReview
-          ? "Profile saved. Changed social links were sent to admin."
-          : (submittedSocialPlatforms.length ? "Profile saved. Changed social links were sent to admin for approval." : "Profile saved.");
+        const successMessage = "Profile saved.";
         if (result) result.textContent = successMessage;
         setApprovedProfileSaveFeedback(successMessage, { saved: true, toast: false });
         releaseEditProfileMobileFocus(trigger);
-        return { saved: true, needsApproval: submittedSocialPlatforms.length > 0 };
+        return { saved: true, needsApproval: false };
       } catch (error) {
         const errorMessage = error.message || "Could not save live profile";
         if (result) result.textContent = errorMessage;

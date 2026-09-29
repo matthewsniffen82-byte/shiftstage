@@ -104,8 +104,8 @@ test("the mobile profile keeps nightlife actions and active deals above the medi
   assert.ok(dealIndex > scheduleIndex);
   assert.ok(travelIndex > dealIndex);
   assert.ok(mediaIndex > travelIndex);
-  assert.ok(socialIndex > mediaIndex);
-  assert.match(profileCarousel, /className="profile-media-socials"[\s\S]*?className="profile-media-tabs"[\s\S]*?className="profile-media-grid"/);
+  assert.equal(socialIndex, -1);
+  assert.match(profileCarousel, /className="profile-media-tabs"[\s\S]*?className="profile-media-grid"/);
   assert.match(profilePage, /<DancerFollowerMetric \/>/);
   assert.match(profilePage, /<DancerGoingCount \/>/);
   assert.match(profilePage, /format\(profile\.profileViewsToday \|\| 0\)[\s\S]*?<dt>Views today<\/dt>/);
@@ -296,28 +296,9 @@ test("profile videos stay passive and duration-free in the grid, then open the c
   assert.match(profilePage, /\.profile-media-grid-item \{[\s\S]*?aspect-ratio: 9 \/ 16;/);
 });
 
-test("public social icons render without a visible heading or published handles", () => {
-  assert.match(socialLinks, /heading = "Socials"/);
-  assert.match(socialLinks, /showConnectLabel = false/);
-  assert.match(socialLinks, /showHeading = true/);
-  assert.match(socialLinks, /\{showHeading \? \([\s\S]*?<h2 id="profile-social-heading">\{heading\}<\/h2>/);
-  assert.match(profilePage, /showHeading=\{false\}/);
-  assert.doesNotMatch(profilePage, /className="profile-social-section"/);
-  assert.match(profileCarousel, /className="profile-media-socials" aria-label="External profiles"/);
-  assert.doesNotMatch(profilePage, /aria-labelledby="profile-social-heading"/);
-  assert.match(socialLinks, /rel="noopener noreferrer"/);
-  assert.match(socialLinks, /opens in a new tab/);
-  assert.match(socialLinks, /\{links\.map\(\(link\) =>/);
-  assert.match(socialLinks, /<SocialPlatformIcon platform=\{link\.platform\} \/>/);
-  assert.match(socialLinks, /export function SocialPlatformIcon/);
-  assert.doesNotMatch(socialLinks, /<strong>\{link\.handle\}<\/strong>/);
-  assert.doesNotMatch(socialLinks, /social-list-toggle|Show fewer links|more links/);
-  assert.match(profilePage, /\.social-links-control \{ display: grid; justify-items: center;/);
-  assert.match(profilePage, /\.profile-media-socials \{ min-height: 0;[\s\S]*?margin: 0;[\s\S]*?padding: 10px 0;/);
-  assert.match(profilePage, /\.social-list \{ width: fit-content;[\s\S]*?flex-wrap: nowrap;[\s\S]*?justify-content: center;[\s\S]*?gap: 0;/);
-  assert.match(profilePage, /\.social-list a \{[\s\S]*?width: 44px;[\s\S]*?height: 44px;[\s\S]*?justify-content: center;/);
-  assert.match(profilePage, /\.social-list a::before \{[\s\S]*?inset: 6px;[\s\S]*?border: 1px solid rgba\(226,232,240,\.11\);[\s\S]*?border-radius: 50%;/);
-  assert.match(profilePage, /\.social-list a svg \{ position: relative; z-index: 1; width: 17px; height: 17px;/);
+test("public profiles omit external social icons", () => {
+  assert.doesNotMatch(profilePage, /<SocialLinks|socialContent=/);
+  assert.doesNotMatch(profileCarousel, /socialContent|aria-label="External profiles"/);
 });
 
 test("real videos keep distinct metadata", () => {

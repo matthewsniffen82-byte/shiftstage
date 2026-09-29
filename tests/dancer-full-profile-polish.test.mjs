@@ -423,9 +423,9 @@ test("home profile overlay mirrors the public profile information hierarchy", ()
 
   assert.ok(scheduleIndex > -1);
   assert.ok(actionsIndex > -1 && scheduleIndex > actionsIndex);
-  assert.ok(dealIndex > scheduleIndex && previewSocialIndex > dealIndex);
+  assert.ok(dealIndex > scheduleIndex && previewSocialIndex === -1);
   assert.match(liveApp, /class="profile-media-socials" id="modalMediaSocials"[\s\S]*?class="profile-modal-media-tabs"/);
-  assert.match(liveApp, /const liveSocialMarkup = isPending && !isPrivatePreview[\s\S]*?modalMediaSocials\.innerHTML = liveSocialMarkup;/);
+  assert.match(liveApp, /modalMediaSocials\.replaceChildren\(\);[\s\S]*?modalMediaSocials\.hidden = true;/);
   assert.doesNotMatch(renderedMarkup, /profileActivityMetricsMarkup/);
   assert.match(liveApp, /id="modalProfileMetrics"/);
   assert.match(liveApp, /modalProfileMetrics\.innerHTML = profileActivityMetricsMarkup\(profile, city\)/);

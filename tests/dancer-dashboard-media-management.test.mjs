@@ -17,13 +17,13 @@ function fixture({ open = false, editor = true, approved = true, pendingRequest,
   let stateIndex = 0, refIndex = 0;
   const timers = new Map();
   const videos = [{ id: "v1", status: "approved", videoUrl: "/v1.mp4", posterUrl: "/v1.jpg", isPinned: false }];
-  const profile = { id: "dancer-a", stageName: "Luna", city: "Las Vegas", dancer_photos: [{ id: "p1", status: "approved", imageUrl: "/p1.jpg" }, { id: "p2", status: "pending" }] };
+  const profile = { id: "dancer-a", stageName: "Luna", social_links: [{ platform: "instagram", url: "https://instagram.com/example", is_active: true }], city: "Las Vegas", dancer_photos: [{ id: "p1", status: "approved", imageUrl: "/p1.jpg" }, { id: "p2", status: "pending" }] };
   const context = vm.createContext({
     AbortController, Error, exports: {},
     require: () => ({ jsx: (type, props) => ({ type, props }), jsxs: (type, props) => ({ type, props }) }),
     useState(initial) {
       const index = stateIndex++;
-      if (!(index in states)) states[index] = index === 0 ? open : index === 9 ? videos : typeof initial === "function" ? initial() : initial;
+      if (!(index in states)) states[index] = index === 0 ? open : index === 8 ? videos : typeof initial === "function" ? initial() : initial;
       return [states[index], value => { states[index] = typeof value === "function" ? value(states[index]) : value; }];
     },
     useRef(initial) { const index = refIndex++; return refs[index] ||= { current: initial }; },
@@ -32,7 +32,6 @@ function fixture({ open = false, editor = true, approved = true, pendingRequest,
     persistedDancerStageName: p => p.stageName,
     relabelPhotoItems: items => items,
     dancerPhotoItemsFromProfile: p => p.dancer_photos,
-    dancerPreviewSocialLinks: () => [],
     DANCER_PROFILE_EDITOR_SECTION_LABELS: { photos: "Photos", videos: "Videos" },
     DANCER_PROFILE_VIDEOS_CHANGED_EVENT: "videos-changed",
     DANCER_PHOTOS_KEEP_OPEN_EVENT: "photos-open",
@@ -41,7 +40,6 @@ function fixture({ open = false, editor = true, approved = true, pendingRequest,
     window: { scrollY: 120, clearTimeout(id) { timers.delete(id); }, setTimeout(fn, delay) { timers.set(1, { fn, delay }); return 1; }, requestAnimationFrame: () => 1, addEventListener: (event, fn) => listeners.set(event, fn), removeEventListener: event => listeners.delete(event) },
     document: { querySelector: () => null },
     AvatarUploadBusyContext: { Provider: "AvatarUploadBusyContext" },
-    SOCIAL_PLATFORMS: [],
   });
   for (const match of source.matchAll(/<([A-Z]\w*)\b/g)) context[match[1]] ||= match[1];
   vm.runInContext(code, context);
@@ -94,7 +92,7 @@ test("active and onboarding editors use management previews but the guest previe
     assert.ok(nodes.some(node => node.props?.["data-profile-editor-trigger"] === "avatar"));
     assert.ok(nodes.some(node => node.props?.["data-profile-editor-trigger"] === "stageName"));
     assert.ok(nodes.some(node => node.props?.["data-profile-editor-trigger"] === "city"));
-    assert.ok(nodes.some(node => node.props?.className?.includes("dancer-profile-builder-socials")));
+    assert.ok(!nodes.some(node => node.props?.className?.includes("dancer-profile-builder-socials")));
   }
   const nodes = elements(fixture({ open: true, editor: false }).render());
   assert.ok(nodes.some(node => node.type === "DancerPhotoCarousel"));
@@ -108,11 +106,11 @@ test("successful media updates change only the selected dashboard item and do no
   assert.equal(ui.changes[0].dancer_photos[0].is_pinned, true);
   assert.equal(ui.changes[0].dancer_photos[1].is_pinned, undefined);
   uploads.props.onMediaPinned("video", "v1", true);
-  assert.equal(ui.states[9][0].isPinned, true);
+  assert.equal(ui.states[8][0].isPinned, true);
   uploads.props.onPhotoDeleted("p1");
   assert.deepEqual(ui.changes.at(-1).dancer_photos.map(p => p.id), ["p2"]);
   uploads.props.onVideoDeleted("v1");
-  assert.equal(ui.states[9].length, 0);
+  assert.equal(ui.states[8].length, 0);
   assert.equal(ui.states[0], true);
   assert.ok(elements(ui.render()).some(node => node.type === "DancerProfileMediaUploads"));
 });
@@ -131,7 +129,7 @@ test("profile editor videos load on demand and clean up stale work when closed",
   assert.equal(ui.listeners.size, 0);
   release({ videos: [{ id: "late", status: "approved", videoUrl: "/late.mp4" }] });
   await new Promise(resolve => setImmediate(resolve));
-  assert.equal(ui.states[9].length, 0);
+  assert.equal(ui.states[8].length, 0);
 });
 
 test("a submitted video refreshes to its approved preview without reopening the editor", async () => {
@@ -143,12 +141,12 @@ test("a submitted video refreshes to its approved preview without reopening the 
     ui.render();
     const cleanup = ui.effects.find(fn => fn.toString().includes("requestDancerTvVideosJson"))();
     await new Promise(resolve => setImmediate(resolve));
-    assert.equal(ui.states[9][0].status, status);
+    assert.equal(ui.states[8][0].status, status);
     assert.equal(ui.timers.get(1).delay, delay);
     ui.timers.get(1).fn();
     await new Promise(resolve => setImmediate(resolve));
-    assert.equal(ui.states[9][0].status, "approved");
-    assert.equal(ui.states[9][0].posterUrl, "/poster.jpg");
+    assert.equal(ui.states[8][0].status, "approved");
+    assert.equal(ui.states[8][0].posterUrl, "/poster.jpg");
     assert.equal(ui.timers.size, 0, "settled approvals stop polling");
     assert.equal(ui.states[0], true);
     cleanup();

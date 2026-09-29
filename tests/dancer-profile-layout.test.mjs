@@ -68,11 +68,11 @@ test("full dancer profiles use a compact identity and honest public activity hea
   assert.match(profilePage, /<dt>Views today<\/dt>/);
   assert.doesNotMatch(profilePage, /<dt>Notifications<\/dt>/);
   assert.doesNotMatch(profilePage, /className="profile-social-section"/);
-  assert.match(profileMedia, /className="profile-media-socials" aria-label="External profiles"/);
-  assert.match(profilePage, /<SocialLinks dancerId=\{profile\.id\} links=\{profile\.socialLinks\} showHeading=\{false\} \/>/);
+  assert.doesNotMatch(profileMedia, /className="profile-media-socials" aria-label="External profiles"/);
+  assert.doesNotMatch(profilePage, /<SocialLinks dancerId=\{profile\.id\} links=\{profile\.socialLinks\} showHeading=\{false\} \/>/);
   assert.ok(headerIndex > -1 && metricsIndex > headerIndex);
-  assert.ok(actionsIndex > metricsIndex && statusIndex > actionsIndex && mediaIndex > statusIndex && socialsIndex > mediaIndex);
-  assert.match(profileMedia, /className="profile-media-socials"[\s\S]*?className="profile-media-tabs"[\s\S]*?className="profile-media-grid"/);
+  assert.ok(actionsIndex > metricsIndex && statusIndex > actionsIndex && mediaIndex > statusIndex && socialsIndex === -1);
+  assert.match(profileMedia, /className="profile-media-tabs"[\s\S]*?className="profile-media-grid"/);
   assert.doesNotMatch(profilePage, /className="profile-overview"|className="profile-metrics"/);
   assert.doesNotMatch(profilePage, /profile\.bio|profile-bio/);
 

@@ -9,7 +9,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 
 const require = createRequire(import.meta.url);
 const source = readFileSync(new URL('../app/dashboard/DancerProfileEditor.tsx', import.meta.url), 'utf8');
-const component = source.slice(source.indexOf('export function DancerOnboardingCommand('), source.indexOf('function dancerPreviewSocialLinks('));
+const component = source.slice(source.indexOf('export function DancerOnboardingCommand('), source.indexOf('function dancerProfileSetupBlocker('));
 const code = ts.transpileModule(component, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX } }).outputText;
 function render(effectiveStatus, verification) {
   const exports = {}; let stateIndex = 0;

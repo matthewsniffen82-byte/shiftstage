@@ -107,18 +107,15 @@
       modalProfileAvatar.setAttribute("aria-label", `${profile.name} profile photo${modalIsWorkingNow ? ", working now" : modalHasUpcomingShift ? ", upcoming shift posted" : ""}`);
       setProfileMediaTab("photo");
       setModalPhoto(basePhoto, basePhotoUrl);
-      const liveSocialMarkup = isPending && !isPrivatePreview
-        ? ""
-        : socialLinksMarkup(profile, { preview: isPrivatePreview });
-      modalMediaSocials.innerHTML = liveSocialMarkup;
-      modalMediaSocials.hidden = !liveSocialMarkup;
+
+      modalMediaSocials.replaceChildren();
+      modalMediaSocials.hidden = true;
 
       if (isPending && !isPrivatePreview) {
         modalBody.innerHTML = `
           <div class="lock-list">
             <div class="lock-row"><strong>Pending.</strong> Profile under review.</div>
             <div class="lock-row">Schedule locked.</div>
-            <div class="lock-row">Social links locked.</div>
             <div class="lock-row">Gallery locked.</div>
           </div>
         `;

@@ -4,13 +4,11 @@ import { offerPushNotifications } from "@/src/lib/dancr/push-invitation";
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from "react";
 import dynamic from "next/dynamic";
 import { DancerPhotoCarousel } from "@/app/dancers/[slug]/DancerPhotoCarousel";
-import { SocialLinks, SocialPlatformIcon } from "@/app/dancers/[slug]/SocialLinks";
 import { effectiveDancerProfileStatus } from "@/src/lib/dancr/profile-approval";
-import type { SocialPlatform } from "@/src/lib/dancr/types";
 import { DANCER_PROFILE_VIDEOS_CHANGED_EVENT } from "./dancer-profile-media-sync";
 import { readSession, requestDancerProfileJson, requestDancerTvVideosJson } from "./dashboard-session";
-import type { DancerProfileBuilderRequirement, DancerProfileEditorSections, LoadState, DancerProfileEditorSectionId, DancerPreviewVideo, DancerPhotoItem, DancerStepOneItemState, DancerIdentityDraft, DancerProfileSocialEditor } from "./dashboard-types";
-import { persistedDancerStageName, DANCER_PROFILE_EDITOR_SECTION_LABELS, DANCER_PHOTOS_KEEP_OPEN_EVENT, saveDancerProfileEditor, SOCIAL_PLATFORMS, AvatarUploadBusyContext, DANCER_PREVIEW_SOCIAL_PLATFORMS } from "./DashboardShared";
+import type { DancerProfileBuilderRequirement, DancerProfileEditorSections, LoadState, DancerProfileEditorSectionId, DancerPreviewVideo, DancerPhotoItem, DancerStepOneItemState, DancerIdentityDraft } from "./dashboard-types";
+import { persistedDancerStageName, DANCER_PROFILE_EDITOR_SECTION_LABELS, DANCER_PHOTOS_KEEP_OPEN_EVENT, saveDancerProfileEditor, AvatarUploadBusyContext } from "./DashboardShared";
 import { relabelPhotoItems, dancerPhotoItemsFromProfile } from "./DancerPhotoPanel";
 import DancerAgeVerificationGate, { type DancerAgeVerification } from "./DancerAgeVerificationGate";
 import DancerProfileAgreementReview, { type DancerProfileAgreementInput } from "./DancerProfileAgreementReview";
@@ -48,7 +46,6 @@ export function DancerProfilePreview({
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const [activeEditorSection, setActiveEditorSection] = useState<DancerProfileEditorSectionId | null>(null);
-  const [activeSocialPlatform, setActiveSocialPlatform] = useState<SocialPlatform | null>(null);
   const [isEditorSaving, setIsEditorSaving] = useState(false);
   const [isSectionSaving, setIsSectionSaving] = useState(false);
   const [sectionStatus, setSectionStatus] = useState("");
@@ -75,7 +72,6 @@ export function DancerProfilePreview({
   const scrollRef = useRef(0);
   const onCloseRef = useRef(onClose);
   const activeEditorSectionRef = useRef<DancerProfileEditorSectionId | null>(null);
-  const activeSocialPlatformRef = useRef<SocialPlatform | null>(null);
   const persistedName = persistedDancerStageName(profile);
   const persistedCity = String(profile?.city || "").trim();
   const avatarUrl = String(profile?.avatarPhotoUrl || "").trim();
@@ -89,7 +85,6 @@ export function DancerProfilePreview({
     if (mediaType === "video") setUploadedVideos((current) => current.map((video) => video.id === mediaId ? { ...video, isPinned } : video).sort((a, b) => Number(Boolean(b.isPinned)) - Number(Boolean(a.isPinned)) || String(b.createdAt || "").localeCompare(String(a.createdAt || ""))));
     else onProfileChange?.({ ...profile, dancer_photos: (Array.isArray(profile?.dancer_photos) ? profile.dancer_photos : []).map((photo: any) => photo.id === mediaId ? { ...photo, is_pinned: isPinned } : photo) });
   };
-  const socialLinks = dancerPreviewSocialLinks(profile);
   const isEditor = Boolean(editorSections);
   const headerImage = isEditor ? avatarUrl : previewImage;
   const completedRequirements = builderRequirements?.filter((requirement) => requirement.complete).length || 0;
@@ -97,67 +92,45 @@ export function DancerProfilePreview({
   const isIdentityEditor = activeEditorSection === "identity" || activeEditorSection === "stageName" || activeEditorSection === "city";
   const closeActiveEditor = useCallback(() => {
     if (avatarUploadingRef.current) return;
-    const platform = activeSocialPlatformRef.current;
     const section = activeEditorSectionRef.current;
     setActiveEditorSection(null);
-    setActiveSocialPlatform(null);
     setSectionStatus("");
-    if (platform) {
-      window.requestAnimationFrame(() => {
-        document.getElementById(`dancer-social-trigger-${platform}`)?.focus({ preventScroll: true });
-      });
-    } else if (section) {
+    if (section) {
       window.requestAnimationFrame(() => {
         document.querySelector<HTMLElement>(`[data-profile-editor-trigger="${section}"]`)?.focus({ preventScroll: true });
       });
     }
   }, []);
-  const activeEditorContent = activeEditorSection && activeEditorSection !== "socials"
+  const activeEditorContent = activeEditorSection
     ? editorSections?.[activeEditorSection]
     : null;
-  const socialEditorContent = activeSocialPlatform
-    ? editorSections?.socials?.(activeSocialPlatform, { onClose: closeActiveEditor })
-    : null;
-  const activeEditorLabel = activeEditorSection && activeEditorSection !== "socials"
+  const activeEditorLabel = activeEditorSection
     ? DANCER_PROFILE_EDITOR_SECTION_LABELS[activeEditorSection]
     : "";
   onCloseRef.current = onClose;
   activeEditorSectionRef.current = activeEditorSection;
-  activeSocialPlatformRef.current = activeSocialPlatform;
 
   const closePreview = useCallback(() => {
     if (avatarUploadingRef.current || photoDeletingRef.current) return;
     setActiveEditorSection(null);
-    setActiveSocialPlatform(null);
     setIsOpen(false);
     onCloseRef.current?.();
   }, []);
 
-  function openEditorSection(section: Exclude<DancerProfileEditorSectionId, "socials">) {
+  function openEditorSection(section: DancerProfileEditorSectionId) {
     if (photoDeletingRef.current) return;
     if (!editorSections?.[section]) return;
     setSectionStatus("");
-    setActiveSocialPlatform(null);
     setActiveEditorSection(section);
-  }
-
-  function openSocialEditor(platform: SocialPlatform) {
-    if (!editorSections?.socials) return;
-    setActiveSocialPlatform(platform);
-    setActiveEditorSection("socials");
   }
 
   useEffect(() => {
     if (!isOpen || !activeEditorSection) return;
     const frame = window.requestAnimationFrame(() => {
-      if (activeEditorSection === "socials" && activeSocialPlatform) {
-        document.getElementById(`dancer-social-${activeSocialPlatform}`)?.focus({ preventScroll: true });
-        return;
-      }
       document.getElementById("dancer-profile-builder-panel")?.focus({ preventScroll: true });
     });
     return () => window.cancelAnimationFrame(frame);
-  }, [activeEditorSection, activeSocialPlatform, isOpen]);
+  }, [activeEditorSection, isOpen]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -185,10 +158,6 @@ export function DancerProfilePreview({
     const onKeyDown = (event: KeyboardEvent) => {
       if (overlayRef.current?.querySelector("dialog.dancer-media-viewer[open]")) return;
       if (event.key === "Escape") {
-        if (activeEditorSectionRef.current === "socials") {
-          document.querySelector<HTMLButtonElement>("[data-social-modal-close]")?.click();
-          return;
-        }
         if (activeEditorSectionRef.current) {
           closeActiveEditor();
           return;
@@ -325,7 +294,6 @@ export function DancerProfilePreview({
   function openPreview() {
     scrollRef.current = window.scrollY;
     setActiveEditorSection(null);
-    setActiveSocialPlatform(null);
     setEditorStatus("");
     setIsOpen(true);
   }
@@ -466,47 +434,13 @@ export function DancerProfilePreview({
             {isEditor ? mediaUploads : (
               <DancerPhotoCarousel dancerId={typeof profile?.id === "string" ? profile.id : undefined} photos={photos} stageName={previewName} videos={videos} />
             )}
-            {isEditor ? (
-              <section className="profile-social-section dancer-profile-builder-socials" aria-labelledby="dancer-profile-builder-social-heading">
-                <div className="social-links-control">
-                  <div className="social-list-heading">
-                    <h2 id="dancer-profile-builder-social-heading">Social Links</h2>
-                    <p>Optional. Add whichever profiles you want, or skip this for now.</p>
-                  </div>
-                  <div className="social-list dancer-profile-builder-social-platforms" aria-label="Add social links">
-                    {SOCIAL_PLATFORMS.map((platform) => {
-                      const hasLink = socialLinks.some((link) => link.platform === platform.key);
-                      return (
-                        <button
-                          aria-label={`${hasLink ? "Edit" : "Add"} ${platform.label}`}
-                          className={`social-link social-link-${platform.key} dancer-profile-builder-social-platform${hasLink ? " is-added" : ""}`}
-                          id={`dancer-social-trigger-${platform.key}`}
-                          key={platform.key}
-                          onClick={() => openSocialEditor(platform.key)}
-                          title={`${hasLink ? "Edit" : "Add"} ${platform.label}`}
-                          type="button"
-                        >
-                          <SocialPlatformIcon platform={platform.key} />
-                          <span aria-hidden="true">{hasLink ? "✓" : "+"}</span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              </section>
-            ) : socialLinks.length ? (
-              <section className="profile-social-section" aria-labelledby="profile-social-heading">
-                <SocialLinks dancerId={String(profile?.id || "private-preview")} heading="Socials" links={socialLinks} showConnectLabel={false} trackClicks={false} />
-              </section>
-            ) : null}
             {!isEditor ? (
               <section className="profile-schedule-section dancer-profile-preview-status" aria-labelledby="dancer-profile-preview-status-heading">
                 <div className="profile-section-heading"><div><span className="eyebrow">{isApproved ? "Guest view" : "Private preview"}</span><h2 id="dancer-profile-preview-status-heading">{isApproved ? "Public profile preview" : "Guest profile preview"}</h2></div><span>{approvedPhotos.length} photos · {videos.length} videos</span></div>
-                <p>{isMediaLoading ? "Loading your approved profile videos. " : mediaError ? `${mediaError} ` : "Approved photos and videos appear in the media switcher above. "}{socialLinks.length ? `${socialLinks.length} saved social ${socialLinks.length === 1 ? "link is" : "links are"} included in this preview. ` : "Saved social links will appear here. "}{isApproved ? isPublic ? "This is how your approved profile appears to guests." : "Your approved profile is currently hidden from guests while you are incognito." : "Your profile stays private until every setup step is complete."}</p>
+                <p>{isMediaLoading ? "Loading your approved profile videos. " : mediaError ? `${mediaError} ` : "Approved photos and videos appear in the media switcher above. "}{isApproved ? isPublic ? "This is how your approved profile appears to guests." : "Your approved profile is currently hidden from guests while you are incognito." : "Your profile stays private until every setup step is complete."}</p>
               </section>
             ) : null}
-            {isEditor && activeEditorSection === "socials" && socialEditorContent ? socialEditorContent : null}
-            {isEditor && activeEditorSection && activeEditorSection !== "socials" && activeEditorContent ? (
+            {isEditor && activeEditorSection && activeEditorContent ? (
               <div
                 className="dancer-profile-editor-modal-backdrop"
                 onMouseDown={(event) => {
@@ -881,23 +815,6 @@ export function DancerOnboardingCommand({
 }
 
 
-function dancerPreviewSocialLinks(profile?: LoadState["profile"]) {
-  const rows = Array.isArray(profile?.social_links) ? profile.social_links : [];
-  return rows.flatMap((value, index) => {
-    const row = value && typeof value === "object" ? value as Record<string, unknown> : null;
-    const platform = String(row?.platform || "").toLowerCase() as SocialPlatform;
-    const url = String(row?.url || "").trim();
-    if (!row || row.is_active === false || !DANCER_PREVIEW_SOCIAL_PLATFORMS.has(platform) || !url) return [];
-    return [{
-      id: String(row.id || `preview-${platform}-${index}`),
-      platform,
-      handle: String(row.handle || ""),
-      url,
-    }];
-  });
-}
-
-
 function dancerProfileSetupBlocker({
   persistedStageName,
   persistedCity,
@@ -948,7 +865,6 @@ export function DancerOnboardingProfileMediaWorkspace({
   onProfileChange,
   profile,
   profileReady,
-  socialContent,
   videoContent,
 }: {
   avatarContent: ReactNode;
@@ -959,7 +875,6 @@ export function DancerOnboardingProfileMediaWorkspace({
   onProfileChange?: (profile: Record<string, unknown>) => void;
   profile?: LoadState["profile"];
   profileReady: boolean;
-  socialContent: DancerProfileSocialEditor;
   videoContent: ReactNode;
 }) {
   const persistedStageName = persistedDancerStageName(profile);
@@ -1001,8 +916,7 @@ export function DancerOnboardingProfileMediaWorkspace({
     try {
       const profileId = String(profile?.id || "profile");
       setHasStoredDraft(Boolean(
-        window.localStorage.getItem(`mydancr:dancer-profile-draft:${profileId}`)
-        || window.localStorage.getItem(`mydancr:dancer-social-draft:${profileId}`),
+        window.localStorage.getItem(`mydancr:dancer-profile-draft:${profileId}`),
       ));
     } catch {
       setHasStoredDraft(false);
@@ -1048,7 +962,6 @@ export function DancerOnboardingProfileMediaWorkspace({
     avatar: avatarContent,
     photos: photoContent,
     videos: videoContent,
-    socials: socialContent,
   };
 
   return (

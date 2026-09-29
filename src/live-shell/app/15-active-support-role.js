@@ -290,7 +290,6 @@
       return {
         stageName: document.getElementById("dancerStageName")?.value || "",
         city: document.getElementById("dancerCity")?.value || "",
-        socials: { ...dancerSignupSocials },
         updatedAt: Date.now()
       };
     }
@@ -321,10 +320,6 @@
       const draft = {
         ...currentDancerProfileDraft(),
         ...update,
-        socials: {
-          ...dancerSignupSocials,
-          ...(update.socials || {})
-        },
         dirty: true,
         updatedAt: Date.now()
       };
@@ -339,30 +334,17 @@
       if (!form) return readStoredDancerProfileDraft();
       const stageName = form.querySelector("#setupStageName")?.value ?? document.getElementById("dancerStageName")?.value ?? "";
       const city = form.querySelector("#setupCity")?.value ?? document.getElementById("dancerCity")?.value ?? "";
-      const socials = { ...dancerSignupSocials };
-      (editor || form).querySelectorAll("[data-setup-social]").forEach((field) => {
-        socials[field.dataset.setupSocial] = field.value;
-      });
       setDancerSetupField("dancerStageName", stageName);
       setDancerSetupField("dancerCity", city);
-      assignSocialMap(dancerSignupSocials, socials);
-      saveDancerProfileDraft({ stageName, city, socials });
+      saveDancerProfileDraft({ stageName, city });
       return readStoredDancerProfileDraft();
     }
 
     function applyStoredDancerProfileDraft() {
       const draft = readStoredDancerProfileDraft();
       if (!draft) return false;
-      const socials = draft.socials && typeof draft.socials === "object" ? draft.socials : {};
       setDancerSetupField("dancerStageName", draft.stageName || "");
       setDancerSetupField("dancerCity", draft.city || "");
-      Object.assign(dancerSignupSocials, {
-        instagram: socials.instagram || "",
-        tiktok: socials.tiktok || "",
-        snapchat: socials.snapchat || "",
-        onlyfans: socials.onlyfans || "",
-        x: socials.x || ""
-      });
       updateDancerDashboardName(draft.stageName || "");
       return true;
     }

@@ -1,5 +1,4 @@
 import { type ReactNode } from "react";
-import type { SocialPlatform } from "@/src/lib/dancr/types";
 import { type DashboardSessionAccount } from "./dashboard-session";
 export type DashboardRole = "customer" | "dancer" | "venue";
 
@@ -167,18 +166,10 @@ export type DancerProfileEditorSaveRequest = {
 };
 
 
-export type DancerProfileEditorSectionId = "identity" | "stageName" | "city" | "avatar" | "photos" | "videos" | "socials";
+export type DancerProfileEditorSectionId = "identity" | "stageName" | "city" | "avatar" | "photos" | "videos";
 
 
-export type DancerProfileSocialEditor = (
-  platform: SocialPlatform,
-  controls: { onClose: () => void },
-) => ReactNode;
-
-
-export type DancerProfileEditorSections = Partial<Record<Exclude<DancerProfileEditorSectionId, "socials">, ReactNode>> & {
-  socials?: DancerProfileSocialEditor;
-};
+export type DancerProfileEditorSections = Partial<Record<DancerProfileEditorSectionId, ReactNode>>;
 
 
 export type DancerProfileBuilderRequirement = {

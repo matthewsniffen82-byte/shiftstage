@@ -84,14 +84,6 @@
       if (handleAccountControlClick(event)) return;
       if (handleShareClick(event)) return;
       if (event.target.closest("[data-readonly-profile-tool]")) return;
-      const socialEditToggle = event.target.closest("[data-approved-social-edit-toggle]");
-      if (socialEditToggle) {
-        event.preventDefault();
-        approvedSocialEditMode = false;
-        openApprovedVisualEditPopover("socials", { anchor: socialEditToggle });
-        showToast("Edit social links.");
-        return;
-      }
       const photoEditToggle = event.target.closest("[data-approved-photo-edit-toggle]");
       if (photoEditToggle) {
         event.preventDefault();
@@ -124,18 +116,6 @@
         }
         activeApprovedVisualPhotoTarget = visualPhotoSelect.dataset.approvedVisualPhotoSelect || visualPhotoSelect.dataset.photoTarget || "";
         renderApprovedVisualProfileEditor();
-        return;
-      }
-      const approvedSocialLink = event.target.closest(".approved-visual-profile .social-edit-item .social-link[data-social-url]");
-      if (approvedSocialLink && !approvedSocialEditMode) {
-        event.preventDefault();
-        const url = approvedSocialLink.dataset.socialUrl || "";
-        if (url) {
-          window.open(url, "_blank", "noopener,noreferrer");
-          showToast("Social link opened");
-        } else {
-          showToast("No social link added yet");
-        }
         return;
       }
       const visualEdit = event.target.closest("[data-profile-visual-edit]");
@@ -197,37 +177,6 @@
         }
         return;
       }
-      const visualSocialSave = event.target.closest("[data-approved-visual-social-save]");
-      if (visualSocialSave) {
-        event.preventDefault();
-        const platform = visualSocialSave.dataset.socialPlatform || "";
-        const input = document.getElementById("approvedVisualSocialInput");
-        const fieldId = `profile${platform.charAt(0).toUpperCase()}${platform.slice(1)}`;
-        const field = document.getElementById(fieldId);
-        if (field && input) {
-          field.value = input.value.trim();
-          clearApprovedSocialDeleted(platform);
-          mirrorApprovedProfileEditField(field);
-          closeApprovedVisualEditPopover();
-          showToast("Social link saved. Press Save profile to send it to admin.");
-        }
-        return;
-      }
-      const visualSocialDelete = event.target.closest("[data-approved-visual-social-delete]");
-      if (visualSocialDelete) {
-        event.preventDefault();
-        const platform = visualSocialDelete.dataset.socialPlatform || "";
-        const fieldId = `profile${platform.charAt(0).toUpperCase()}${platform.slice(1)}`;
-        const field = document.getElementById(fieldId);
-        if (field) {
-          field.value = "";
-          markApprovedSocialDeleted(platform);
-          mirrorApprovedProfileEditField(field);
-          closeApprovedVisualEditPopover();
-          showToast("Social link deleted. Press Save profile to send the change to admin.");
-        }
-        return;
-      }
       if (event.target.closest("[data-approved-edit-close]")) {
         event.preventDefault();
         closeApprovedVisualEditPopover();
@@ -237,18 +186,6 @@
       if (fixTargetButton) {
         event.preventDefault();
         jumpToDancerFixTarget(fixTargetButton.dataset.fixTarget);
-        return;
-      }
-      const socialFocusButton = event.target.closest("[data-social-focus]");
-      if (socialFocusButton) {
-        event.preventDefault();
-        focusApprovedSocialField(socialFocusButton.dataset.socialFocus);
-        return;
-      }
-      const socialClearButton = event.target.closest("[data-social-clear]");
-      if (socialClearButton) {
-        event.preventDefault();
-        clearApprovedSocialField(socialClearButton.dataset.socialClear);
         return;
       }
       const dancerControlAction = event.target.closest("[data-dancer-control-action]");
@@ -361,13 +298,6 @@
         return;
       }
 
-      const socialField = event.target.closest("[data-setup-social]");
-      if (socialField) {
-        dancerSignupSocials[socialField.dataset.setupSocial] = socialField.value;
-        saveDancerProfileDraft({ socials: { [socialField.dataset.setupSocial]: socialField.value } });
-        return;
-      }
-
       const profileField = event.target.closest("[data-setup-profile-field]");
       if (!profileField) return;
       const value = profileField.value;
@@ -455,13 +385,6 @@
       const stageNameValidation = validateDancerStageName(document.getElementById("setupStageName").value);
       const stageName = stageNameValidation.value;
       const city = document.getElementById("setupCity").value.trim();
-      const rawSocials = {
-        instagram: document.getElementById("setupInstagram").value.trim(),
-        tiktok: document.getElementById("setupTiktok").value.trim(),
-        snapchat: document.getElementById("setupSnapchat").value.trim(),
-        onlyfans: document.getElementById("setupOnlyfans").value.trim(),
-        x: document.getElementById("setupX").value.trim()
-      };
       if (!stageNameValidation.valid) {
         showToast(stageNameValidation.error);
         document.getElementById("setupStageName").focus();
@@ -471,24 +394,11 @@
         showToast("City required");
         return;
       }
-      if (hasBlockedSocialLink(Object.values(rawSocials))) {
-        showToast("Escorting, payment, or solicitation links are not allowed");
-        return;
-      }
-      const normalizedSocials = Object.fromEntries(
-        Object.entries(rawSocials).map(([key, value]) => [key, normalizeSocialInput(key, value)])
-      );
-      const invalidSocial = Object.entries(rawSocials).some(([key, value]) => value && !normalizedSocials[key]);
-      if (invalidSocial) {
-        showToast("Use Instagram, TikTok, Snapchat, OnlyFans, or X links only");
-        return;
-      }
       document.getElementById("dancerStageName").value = stageName;
       document.getElementById("dancerCity").value = city;
       pendingDancerSignupCity = city;
       updateDancerDashboardName(stageName);
-      assignSocialMap(dancerSignupSocials, normalizedSocials);
-      saveDancerProfileDraft({ stageName, city, socials: normalizedSocials });
+      saveDancerProfileDraft({ stageName, city });
       const submit = document.querySelector("[data-setup-profile-save]");
       const status = document.getElementById("setupProfileSaveStatus");
       if (submit) {
@@ -499,14 +409,13 @@
       if (status) {
         status.hidden = false;
         status.classList.remove("is-success", "is-error");
-        status.textContent = "Saving your avatar, stage name, city, and social links...";
+        status.textContent = "Saving your avatar, stage name, and city...";
       }
       try {
         if (isDancerSession()) {
           const data = await patchAuthenticatedJson("/api/dancer/profile", {
             stageName,
-            city,
-            socials: socialPayloadFromMap(normalizedSocials)
+            city
           });
           if (!data) throw new Error("Sign in required");
           if (data.profile) applyDancerApprovalProfile(data.profile);
@@ -527,7 +436,7 @@
         if (refreshedStatus) {
           refreshedStatus.hidden = false;
           refreshedStatus.classList.add("is-success");
-          refreshedStatus.textContent = "Profile saved. Your avatar, stage name, city, and social links are preserved.";
+          refreshedStatus.textContent = "Profile saved. Your avatar, stage name, and city are preserved.";
         }
         showToast("Profile saved");
         window.setTimeout(() => {

@@ -699,9 +699,6 @@
     function profileModalGridMarkup(profile, options = {}) {
       const status = options.status || shiftStatus(profile);
       const city = options.city || selectedCity();
-      const previewSocialMarkup = options.preview
-        ? options.socialMarkup || socialLinksMarkup(profile, { preview: true })
-        : "";
       const internal = profile?.internalRoster === true;
       const dealState = internal ? { key: "hidden" } : dancerClubDealState(profile);
       const dealMarkup = !internal && profile?.scheduled
@@ -736,7 +733,6 @@
             ${travelActionsMarkup}
           </section>
           ${profileLocationStatusTile(profile, city)}
-          ${previewSocialMarkup}
         </div>
       `;
     }

@@ -3,15 +3,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type MouseEvent } from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
-import { SocialPlatformIcon } from "@/app/dancers/[slug]/SocialLinks";
 import { effectiveDancerProfileStatus } from "@/src/lib/dancr/profile-approval";
 import { publishDancerVisibility } from "@/src/lib/dancr/publish-dancer-visibility";
 import { safeErrorMetadata } from "@/src/lib/security/safe-error-metadata";
-import type { SocialPlatform } from "@/src/lib/dancr/types";
 import { DancerDashboardIcon } from "./DancerDashboardIdentity";
 import { readSession, requestDancerProfileJson, requestDancerProfileVisibilityJson } from "./dashboard-session";
-import type { LoadState, DancerPhotoItem, DancerProfileSocialEditor, DancerProfileEditorSections, DancerIdentityDraft, DancerProfileEditorSaveRequest } from "./dashboard-types";
-import { persistedDancerStageName, saveDancerProfileEditor, DashboardSection, DANCER_PROFILE_EDITOR_SAVE_EVENT, SOCIAL_PLATFORMS } from "./DashboardShared";
+import type { LoadState, DancerPhotoItem, DancerProfileEditorSections, DancerIdentityDraft, DancerProfileEditorSaveRequest } from "./dashboard-types";
+import { persistedDancerStageName, saveDancerProfileEditor, DashboardSection, DANCER_PROFILE_EDITOR_SAVE_EVENT } from "./DashboardShared";
 import { dancerPhotoItemsFromProfile, DancerPhotoPanel } from "./DancerPhotoPanel";
 import { DancerAvatarPanel } from "./DancerAvatarPanel";
 import DancerAgeVerificationGate from "./DancerAgeVerificationGate";
@@ -119,15 +117,6 @@ export function DancerPanel({
     />
   );
   const avatarContent = <DancerAvatarPanel profile={profile} onProfileChange={onProfileChange} />;
-  const socialContent: DancerProfileSocialEditor = (platform, controls) => (
-    <SocialLinkModal
-      onClose={controls.onClose}
-      onProfileChange={onProfileChange}
-      platform={platform}
-      profile={profile}
-      unifiedSave
-    />
-  );
   const photoContent = (
     <DancerPhotoPanel
       uploadOnly
@@ -147,14 +136,13 @@ export function DancerPanel({
     avatar: avatarContent,
     photos: photoContent,
     videos: videoContent,
-    socials: socialContent,
   };
   const profileMediaWorkspace = (
     <div className="venue-dashboard-inner-grid dancer-onboarding-profile-workspace">
       <article className="dancer-profile-editor-launch-card" aria-labelledby="dancer-profile-media-preview-heading">
         <span>
           <strong id="dancer-profile-media-preview-heading">Profile details</strong>
-          <small>Avatar, stage name, city, photos, videos and socials.</small>
+          <small>Avatar, stage name, city, photos and videos.</small>
         </span>
         <DancerProfilePreview
           buttonClassName="dancer-profile-editor-launch-button"
@@ -217,7 +205,6 @@ export function DancerPanel({
               onProfileChange={onProfileChange}
               profile={profile}
               profileReady={profileReady}
-              socialContent={socialContent}
               videoContent={videoContent}
             />
           )}
@@ -853,292 +840,6 @@ function DancerSharePanel({ profile }: { profile?: LoadState["profile"] }) {
       )}
     </article>
   );
-}
-
-
-function socialValuesFromProfile(profile?: LoadState["profile"]) {
-  const existing = Array.isArray(profile?.social_links) ? profile.social_links : [];
-  return Object.fromEntries(SOCIAL_PLATFORMS.map((platform) => {
-    const row = existing.find((item: any) => item?.platform === platform.key && item?.is_active !== false);
-    return [platform.key, String(row?.url || row?.handle || "")];
-  })) as Record<SocialPlatform, string>;
-}
-
-
-function SocialLinkModal({
-  onClose,
-  onProfileChange,
-  platform,
-  profile,
-  unifiedSave = false,
-}: {
-  onClose: () => void;
-  onProfileChange?: (profile: Record<string, unknown>) => void;
-  platform: SocialPlatform;
-  profile?: LoadState["profile"];
-  unifiedSave?: boolean;
-}) {
-  const [socials, setSocials] = useState<Record<string, string>>({});
-  const [status, setStatus] = useState("");
-  const [isSaving, setIsSaving] = useState(false);
-  const [socialSaved, setSocialSaved] = useState(false);
-  const draftHydratedRef = useRef(false);
-  const draftDirtyRef = useRef(false);
-  const savePendingRef = useRef(false);
-  const mountedRef = useRef(false);
-  const actionSequenceRef = useRef(0);
-  const actionAbortRef = useRef<AbortController | null>(null);
-  const draftKey = `mydancr:dancer-social-draft:${String(profile?.id || "profile")}`;
-  const editorSaveRef = useRef<() => Promise<boolean>>(async () => true);
-  const persistedSocials = useMemo(() => socialValuesFromProfile(profile), [profile]);
-  const selectedPlatform = SOCIAL_PLATFORMS.find((item) => item.key === platform) || SOCIAL_PLATFORMS[0];
-  const persistedValue = persistedSocials[selectedPlatform.key] || "";
-  const hasExistingLink = Boolean(persistedValue.trim());
-  editorSaveRef.current = () => saveSocials();
-
-  useEffect(() => {
-    mountedRef.current = true;
-    return () => {
-      mountedRef.current = false;
-      actionSequenceRef.current += 1;
-      actionAbortRef.current?.abort();
-      actionAbortRef.current = null;
-      savePendingRef.current = false;
-    };
-  }, []);
-
-  useEffect(() => {
-    if (!unifiedSave) return;
-    const addSaveTask = (event: Event) => {
-      const detail = (event as CustomEvent<DancerProfileEditorSaveRequest>).detail;
-      detail?.tasks.push(() => editorSaveRef.current());
-    };
-    window.addEventListener(DANCER_PROFILE_EDITOR_SAVE_EVENT, addSaveTask);
-    return () => window.removeEventListener(DANCER_PROFILE_EDITOR_SAVE_EVENT, addSaveTask);
-  }, [unifiedSave]);
-
-  useEffect(() => {
-    if (draftDirtyRef.current) return;
-    const nextSocials: Record<string, string> = { ...persistedSocials };
-    if (!draftHydratedRef.current) {
-      try {
-        const stored = JSON.parse(window.localStorage.getItem(draftKey) || "null");
-        if (stored && typeof stored === "object" && !Array.isArray(stored)) {
-          Object.assign(nextSocials, stored);
-          draftDirtyRef.current = true;
-        }
-      } catch {
-        window.localStorage.removeItem(draftKey);
-      }
-      draftHydratedRef.current = true;
-    }
-    setSocials(nextSocials);
-  }, [draftKey, persistedSocials]);
-
-  useEffect(() => {
-    if (draftHydratedRef.current && draftDirtyRef.current) {
-      window.localStorage.setItem(draftKey, JSON.stringify(socials));
-    }
-  }, [draftKey, socials]);
-
-  function beginSocialAction() {
-    if (!mountedRef.current || savePendingRef.current) return null;
-    savePendingRef.current = true;
-    const requestId = ++actionSequenceRef.current;
-    actionAbortRef.current?.abort();
-    const controller = new AbortController();
-    actionAbortRef.current = controller;
-    return { requestId, controller };
-  }
-
-  function isCurrentSocialAction(requestId: number, controller: AbortController) {
-    return mountedRef.current && !controller.signal.aborted && requestId === actionSequenceRef.current;
-  }
-
-  function finishSocialAction(requestId: number) {
-    if (requestId !== actionSequenceRef.current) return false;
-    actionAbortRef.current = null;
-    savePendingRef.current = false;
-    return mountedRef.current;
-  }
-
-  async function saveSocials(event?: React.FormEvent<HTMLFormElement>, values = socials) {
-    event?.preventDefault();
-    const session = readSession();
-    if (!session?.accessToken) {
-      setStatus("Sign in required.");
-      return false;
-    }
-
-    const action = beginSocialAction();
-    if (!action) return false;
-    setSocialSaved(false);
-    const { requestId, controller } = action;
-    setIsSaving(true);
-    setStatus("");
-    try {
-      const data = await requestDancerProfileJson({
-        method: "PATCH",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({
-          socials: SOCIAL_PLATFORMS.map((platform) => {
-            const value = (values[platform.key] || "").trim();
-            return {
-              platform: platform.key,
-              handle: toSocialHandle(value),
-              url: toSocialUrl(platform.key, value),
-              isActive: Boolean(value),
-            };
-          }),
-        }),
-        fallbackMessage: "Unable to save socials.",
-        signal: controller.signal,
-      });
-      if (!isCurrentSocialAction(requestId, controller)) return false;
-      if (data.profile) onProfileChange?.(data.profile);
-      draftDirtyRef.current = false;
-      window.localStorage.removeItem(draftKey);
-      setSocialSaved(true);
-      setStatus("Social links saved.");
-      return true;
-    } catch (error) {
-      if (isCurrentSocialAction(requestId, controller)) {
-        setStatus(error instanceof Error ? error.message : "Unable to save socials.");
-      }
-      return false;
-    } finally {
-      if (finishSocialAction(requestId)) setIsSaving(false);
-    }
-  }
-
-  function discardSelectedDraftAndClose() {
-    const nextSocials = { ...socials, [selectedPlatform.key]: persistedValue };
-    const hasRemainingDraft = SOCIAL_PLATFORMS.some((item) => (
-      String(nextSocials[item.key] || "") !== String(persistedSocials[item.key] || "")
-    ));
-    draftDirtyRef.current = hasRemainingDraft;
-    setSocials(nextSocials);
-    setStatus("");
-    if (hasRemainingDraft) {
-      window.localStorage.setItem(draftKey, JSON.stringify(nextSocials));
-    } else {
-      window.localStorage.removeItem(draftKey);
-    }
-    onClose();
-  }
-
-  async function saveSelectedSocial(event: React.FormEvent<HTMLFormElement>) {
-    if (socialSaved) { event.preventDefault(); return; }
-    await saveSocials(event);
-  }
-
-  async function removeSelectedSocial() {
-    if (!hasExistingLink || savePendingRef.current) return;
-    const nextSocials = { ...socials, [selectedPlatform.key]: "" };
-    draftDirtyRef.current = true;
-    setSocials(nextSocials);
-    setStatus("");
-    const saved = await saveSocials(undefined, nextSocials);
-    if (saved) onClose();
-  }
-
-  return (
-    <div
-      className="dancer-social-link-modal-backdrop"
-      onMouseDown={(event) => {
-        if (event.target === event.currentTarget && !isSaving) discardSelectedDraftAndClose();
-      }}
-    >
-      <section
-        aria-labelledby="dancer-social-link-modal-heading"
-        aria-modal="true"
-        className="dancer-profile-builder-panel dancer-social-link-modal"
-        data-section="socials"
-        id="dancer-profile-builder-panel"
-        role="dialog"
-        tabIndex={-1}
-      >
-        <header>
-          <div className={`dancer-social-link-modal-heading is-${selectedPlatform.key}`}>
-            <span aria-hidden="true"><SocialPlatformIcon platform={selectedPlatform.key} /></span>
-            <h2 id="dancer-social-link-modal-heading">{hasExistingLink ? "Edit" : "Add"} {selectedPlatform.label}</h2>
-          </div>
-          <button
-            aria-label={`Close ${selectedPlatform.label} social link editor`}
-            data-social-modal-close
-            disabled={isSaving}
-            onClick={discardSelectedDraftAndClose}
-            type="button"
-          >
-            <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18" /></svg>
-          </button>
-        </header>
-        <div>
-          <form className="dancer-social-link-form" onSubmit={(event) => void saveSelectedSocial(event)}>
-            <label htmlFor={`dancer-social-${selectedPlatform.key}`}>
-              Profile link or username
-              <input
-                autoCapitalize="none"
-                autoComplete="url"
-                autoCorrect="off"
-                id={`dancer-social-${selectedPlatform.key}`}
-                inputMode="url"
-                disabled={isSaving}
-                placeholder={selectedPlatform.placeholder}
-                spellCheck={false}
-                value={socials[selectedPlatform.key] || ""}
-                onChange={(event) => {
-                  draftDirtyRef.current = true;
-                  setSocialSaved(false);
-                  setSocials((current) => ({ ...current, [selectedPlatform.key]: event.target.value }));
-                  setStatus("");
-                }}
-              />
-            </label>
-            {status || isSaving ? (
-              <p className={`dancer-form-save-state ${socialSaved ? "is-saved" : "is-unsaved"}`} data-action-state={isSaving ? "saving" : socialSaved ? "success" : "error"} role={socialSaved || isSaving ? "status" : "alert"} aria-live="polite">
-                {status || "Saving changes..."}
-              </p>
-            ) : null}
-            <button className="dancer-social-link-save" type="submit" aria-busy={isSaving} data-action-state={isSaving ? "saving" : socialSaved ? "success" : "idle"} disabled={isSaving || socialSaved}>
-              {isSaving ? "Saving…" : socialSaved ? "✓ Saved" : hasExistingLink ? "Save changes" : "Save"}
-            </button>
-            {hasExistingLink ? (
-              <button className="dancer-social-link-remove" disabled={isSaving} onClick={() => void removeSelectedSocial()} type="button">
-                Remove link
-              </button>
-            ) : null}
-          </form>
-        </div>
-      </section>
-    </div>
-  );
-}
-
-
-function toSocialHandle(value: string) {
-  return value
-    .trim()
-    .replace(/^https?:\/\/(www\.)?/i, "")
-    .split("/")
-    .filter(Boolean)
-    .pop()
-    ?.replace(/^@/, "") || "";
-}
-
-
-function toSocialUrl(platform: string, value: string) {
-  const text = value.trim();
-  if (!text) return "";
-  if (/^https?:\/\//i.test(text)) return text;
-
-  const handle = toSocialHandle(text);
-  if (platform === "instagram") return `https://instagram.com/${handle}`;
-  if (platform === "tiktok") return `https://tiktok.com/@${handle}`;
-  if (platform === "snapchat") return `https://snapchat.com/add/${handle}`;
-  if (platform === "x") return `https://x.com/${handle}`;
-  if (platform === "onlyfans") return `https://onlyfans.com/${handle}`;
-  return text;
 }
 
 
