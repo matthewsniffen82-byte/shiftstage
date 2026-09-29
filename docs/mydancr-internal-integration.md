@@ -35,6 +35,8 @@ Existing Ondato server credentials and Supabase environment variables are reused
 
 ## Routes and data
 
+`/internal/profile-viewer?internal_profile=[dancerId]` serves the same discovery viewer shell with same-origin framing allowed only on that dedicated route. Its HTML contains no scoped dancer data or club token, is not cached or indexed, and receives authorized profile data from the roster's origin-checked message bridge. Public pages retain their prohibition on framing.
+
 - `/dashboard/venue#venue-dancer-roster`: unified venue roster. Staff can view approved affiliated profiles and acknowledge/complete/dismiss requests. Owners/managers can remove affiliation, allow a new NFC tap, and create, rename, print or revoke table QR links. Removing affiliation ends this club’s Internal and External presence and blocks retapping until allowed; it never deletes the dancer’s account or their other affiliations.
 - `/internal`: redirects to the unified venue roster.
 - `/internal/club/[token]`: customer table roster/request screen. Selecting the main photo opens approved photos, videos, and social links within the club context, including for Internal-only dancers.

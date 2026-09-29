@@ -33,6 +33,6 @@ export function InternalFullProfile({ profile, token, onClose }: { profile: Inte
   return <>
     {!ready ? <div className="ir-full-profile-loading"><p role="status">Opening full profile…</p><button type="button" onClick={onClose}>Back to roster</button></div> : null}
     <iframe ref={frame} className="ir-full-profile-frame" title={`${profile.stage_name}’s full profile`}
-      src={`/?internal_profile=${encodeURIComponent(profile.id)}`} referrerPolicy="no-referrer" allow="autoplay; fullscreen" />
+      src={`/internal/profile-viewer?internal_profile=${encodeURIComponent(profile.id)}`} referrerPolicy="no-referrer" allow="autoplay; fullscreen" />
   </>;
 }
