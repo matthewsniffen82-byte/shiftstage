@@ -12,6 +12,7 @@ before(async () => {
     insert into public.dancer_age_verification_settings values(true,false);
     grant all on public.dancer_age_verification_settings to service_role;`);
   await pg.exec(readFileSync(new URL('../supabase/migrations/20260929100000_internal_demo_roster.sql', import.meta.url), 'utf8'));
+  await pg.exec(readFileSync(new URL('../supabase/migrations/20260929130000_star_internal_demo.sql', import.meta.url), 'utf8'));
   await pg.exec(readFileSync(new URL('../supabase/migrations/20260928190000_internal_table_request_push.sql', import.meta.url), 'utf8'));
 });
 beforeEach(async () => pg.exec('begin;set role service_role'));
