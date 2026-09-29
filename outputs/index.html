@@ -46,6 +46,11 @@
 
       try {
         const initialParams = new URLSearchParams(window.location.search);
+        if (window.parent !== window && initialParams.has("internal_profile")) {
+          root.classList.add("internal-profile-embed");
+          const referrer = document.createElement("meta");
+          referrer.name = "referrer"; referrer.content = "no-referrer"; document.head.append(referrer);
+        }
         if (initialParams.get("venue_preview") === "1" && initialParams.get("venue")) {
           root.classList.add("venue-preview-bootstrap");
         } else if (initialParams.get("venue")) {
@@ -41362,6 +41367,18 @@
     #publicContactPopover.is-compact .public-contact-actions {
       padding: 10px 20px;
     }
+/* The framed Internal route opens the existing full discovery profile, not another layout. */
+html.internal-profile-embed .app > header,
+html.internal-profile-embed .app > main,
+html.internal-profile-embed .app > nav,
+html.internal-profile-embed .app > footer,
+html.internal-profile-embed .bottom-nav,
+html.internal-profile-embed .mobile-bottom-nav,
+html.internal-profile-embed #discoveryTabs,
+html.internal-profile-embed .preview-banner,
+html.internal-profile-embed .mydancr-preview-banner { display: none !important; }
+html.internal-profile-embed:not(.internal-profile-ready) body { visibility: hidden; background: #050507; }
+html.internal-profile-embed #profileBackdrop .profile-modal { min-height: 100dvh; max-height: 100dvh; border-radius: 0; }
       </style>
 
       <section class="stack" aria-live="polite">
@@ -42977,7 +42994,116 @@
     <div class="toast" id="toast" role="status" aria-live="polite" aria-atomic="true"></div>
   </div>
 
-  <script>
+  <script>    // An Internal roster hosts this same discovery viewer in an isolated frame.
+    // Scoped profile data stays in memory and is never added to public discovery.
+    const internalProfileFrameId = window.parent !== window
+      ? new URLSearchParams(window.location.search).get("internal_profile") || "" : "";
+    let internalRosterProfile = null;
+    let internalProfileRevision = "";
+    let internalProfileLoadSequence = 0;
+    const internalProfileMedia = new Map();
+
+    function internalProfileMatches(reference) {
+      return internalRosterProfile && [internalRosterProfile.id, internalRosterProfile.slug, internalRosterProfile.name]
+        .includes(String(reference || "").trim()) ? internalRosterProfile : null;
+    }
+
+    async function internalProfileMediaUrl(kind, id, token, revision = "") {
+      if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id)) return "";
+      const path = `/api/internal/${kind}/${id}`;
+      if (token) return new URL(`${path}?token=${encodeURIComponent(token)}&revision=${encodeURIComponent(revision)}`, window.location.origin).toString();
+      // Staff media uses their existing venue session, never a public storage URL.
+      const key = `${path}:${revision}`;
+      if (!internalProfileMedia.has(key)) {
+        const session = authSession;
+        if (!session?.accessToken) return "";
+        const headers = { authorization: `Bearer ${session.accessToken}` };
+        if (session.refreshToken) headers["x-dancr-refresh-token"] = session.refreshToken;
+        const request = fetch(path, { headers, cache: "no-store", signal: AbortSignal.timeout(15000) })
+          .then(response => { if (!response.ok) throw new Error("Media unavailable."); return response.blob(); })
+          .then(blob => authSession?.accessToken === session.accessToken ? URL.createObjectURL(blob) : "")
+          .catch(() => { internalProfileMedia.delete(key); return ""; });
+        internalProfileMedia.set(key, request);
+      }
+      return internalProfileMedia.get(key);
+    }
+
+    async function openInternalProfileMessage(event) {
+      if (!internalProfileFrameId || event.origin !== window.location.origin || event.source !== window.parent
+        || event.data?.type !== "mydancr:internal-profile-open" || event.data?.profile?.id !== internalProfileFrameId) return;
+      const source = event.data.profile;
+      if (!Array.isArray(source.photos) || !Array.isArray(source.videos) || !Array.isArray(source.socialLinks)) return;
+      const token = typeof event.data.token === "string" ? event.data.token : "";
+      const revision = JSON.stringify([source, token]);
+      if (revision === internalProfileRevision) return;
+      internalProfileRevision = revision;
+      const sequence = ++internalProfileLoadSequence;
+      const city = discoveryMarket(source.city) ? source.city : selectedCity();
+      const external = discoveryMarket(city)?.dancers?.find(item => item.id === source.id && isApprovedPublicProfile(item));
+      const [avatarPhotoUrl, photos, videos] = await Promise.all([
+        internalProfileMediaUrl("avatar", source.id, token, source.avatarRevision),
+        Promise.all(source.photos.map(async photo => ({
+          id: photo.id, imageUrl: await internalProfileMediaUrl("photo", photo.id, token),
+          reviewStatus: "approved", isPrimary: photo.is_primary === true,
+          isPinned: photo.is_pinned === true, sortOrder: photo.sort_order || 0, likeCount: photo.like_count || 0,
+        }))),
+        Promise.all(source.videos.map(async video => ({
+          id: video.id, videoUrl: await internalProfileMediaUrl("video", video.id, token),
+          caption: video.caption, durationSeconds: video.duration_seconds || 0, likeCount: video.like_count || 0,
+          isPinned: video.is_pinned === true, publishedAt: video.published_at,
+        }))),
+      ]);
+      if (sequence !== internalProfileLoadSequence) return;
+      const working = Date.parse(source.workingUntil || "") > Date.now();
+      internalRosterProfile = {
+        ...external, id: source.id, slug: source.slug || external?.slug || "", name: source.stage_name, city,
+        internalRoster: true, status: "Verified", photoStatus: "Approved",
+        // These flags remain private even though this authorized viewer can display the profile.
+        hidden: true, isPublic: false, is_public: false,
+        metricsUnavailable: external ? external.metricsUnavailable : true,
+        avatarPhotoUrl, avatarPhotoSrcSet: "", mainPhotoUrl: photos[0]?.imageUrl || "", mainPhotoSrcSet: "",
+        galleryPhotoUrls: photos.map(photo => photo.imageUrl), galleryPhotoSrcSets: [],
+        galleryPhotoIds: photos.map(photo => photo.id), galleryPhotoLikeCounts: photos.map(photo => photo.likeCount),
+        galleryPhotoPins: photos.map(photo => photo.isPinned), submittedPhotos: photos,
+        internalVideos: videos.sort((a, b) => Number(b.isPinned) - Number(a.isPinned)),
+        socials: Object.fromEntries(source.socialLinks.map(link => [link.platform, link.url])),
+        submittedSocials: [], socialLinks: source.socialLinks,
+        venue: source.venueName, scheduled: working, tonight: working, liveTonight: working,
+        time: working ? "Working now" : "Not working now", locationStatus: working ? "club_confirmed" : "self_reported",
+        checkedInAt: working ? external?.checkedInAt || new Date(Date.now() - 1000).toISOString() : "",
+        checkedOutAt: "", endedAt: "", workingStatus: working ? "club_confirmed" : "self_reported",
+        locationVerificationExpiresAt: source.workingUntil || "",
+        activeDeal: null, activeDeals: [], dealAttributionToken: "", dealAttributionTokens: {},
+      };
+      citySelect.value = city;
+      openProfileModal(source.id);
+      document.documentElement.classList.add("internal-profile-ready");
+      window.parent.postMessage({ type: "mydancr:internal-profile-shown" }, window.location.origin);
+    }
+
+    function closeInternalProfileFrame() {
+      if (!internalProfileFrameId) return;
+      internalProfileLoadSequence += 1;
+      internalRosterProfile = null;
+      window.parent.postMessage({ type: "mydancr:internal-profile-close" }, window.location.origin);
+    }
+
+    function initializeInternalProfileFrame() {
+      if (!internalProfileFrameId) return;
+      window.addEventListener("message", event => {
+        void openInternalProfileMessage(event).catch(() => {
+          internalProfileRevision = "";
+          showToast("The profile could not load. Close it and try again.");
+        });
+      });
+      window.addEventListener("pagehide", () => {
+        internalProfileLoadSequence += 1;
+        internalProfileMedia.forEach(promise => { void promise.then(url => { if (url) URL.revokeObjectURL(url); }); });
+        internalProfileMedia.clear();
+      }, { once: true });
+      window.parent.postMessage({ type: "mydancr:internal-profile-ready" }, window.location.origin);
+    }
+
     const userAgent = navigator.userAgent || "";
     if (/Android/i.test(userAgent)) {
       document.documentElement.classList.add("is-android", "android-rendering");
@@ -53356,6 +53482,8 @@
       const includePending = Boolean(options.includePending);
       const normalizedReference = String(reference || "").trim();
       if (!normalizedReference) return null;
+      const internal = internalProfileMatches(normalizedReference);
+      if (internal) return internal;
       const availableProfiles = discoveryMarket(citySelect.value).dancers.filter((item) => (
         includePending || isApprovedPublicProfile(item)
       ));
@@ -54517,13 +54645,14 @@
       const previewSocialMarkup = options.preview
         ? options.socialMarkup || socialLinksMarkup(profile, { preview: true })
         : "";
-      const dealState = dancerClubDealState(profile);
-      const dealMarkup = profile?.scheduled
+      const internal = profile?.internalRoster === true;
+      const dealState = internal ? { key: "hidden" } : dancerClubDealState(profile);
+      const dealMarkup = !internal && profile?.scheduled
         ? options.preview
           ? profileDealTileMarkup(profile, { preview: true })
           : profileDealTileMarkup(profile)
         : "";
-      const travelActionsMarkup = dancerProfileTonightTravelActionsMarkup(profile, {
+      const travelActionsMarkup = internal ? "" : dancerProfileTonightTravelActionsMarkup(profile, {
         city,
         preview: Boolean(options.preview)
       });
@@ -54711,8 +54840,9 @@
       const isPrivatePreview = Boolean(options.preview);
       const profile = findProfile(profileReference, { includePending: isPrivatePreview });
       if (!profile) return;
-      profileModal.dataset.analyticsDancerId = isPrivatePreview ? "" : String(profile.id || "");
-      profileModal.dataset.publicDancerId = isPrivatePreview ? "" : String(profile.id || "");
+      const internal = profile.internalRoster === true;
+      profileModal.dataset.analyticsDancerId = isPrivatePreview || internal ? "" : String(profile.id || "");
+      profileModal.dataset.publicDancerId = isPrivatePreview || internal ? "" : String(profile.id || "");
       profileModal.removeAttribute("data-public-visibility-hidden");
       city = profileDiscoveryCity(profile, city);
       profileModalReturnContext = captureProfileReturnContext(options.returnTo || "");
@@ -54742,7 +54872,7 @@
         ? exactProfileIndex
         : discoveryMarket(city).dancers.findIndex((item) => item.name === profile.name);
       const isPending = profile.status === "Pending";
-      const profileWithTrend = !isPending ? withTrendingRank(profile, city) : profile;
+      const profileWithTrend = !isPending && !internal ? withTrendingRank(profile, city) : profile;
       const modalTrendRank = profileWithTrend.trendRank;
       const status = shiftStatus(profile);
       const modalIsWorkingNow = isWorkingTonight(profile, city);
@@ -54828,7 +54958,7 @@
         `;
       } else {
         modalBody.innerHTML = profileModalGridMarkup(profile, { preview: isPrivatePreview, status, city });
-        if (!isPrivatePreview) void hydrateProfileClubDealQr(modalBody);
+        if (!isPrivatePreview && !internal) void hydrateProfileClubDealQr(modalBody);
         void loadProfileMyDancrTv(profile);
       }
 
@@ -55333,6 +55463,7 @@
     }
 
     function requestProfileTvPayload(profile, city = citySelect.value) {
+      if (profile?.internalRoster) return Promise.resolve({ ok: true, videos: profile.internalVideos || [] });
       if (!profile?.id || !/^[0-9a-f-]{36}$/i.test(profile.id)) return Promise.resolve(null);
       const now = Date.now();
       const key = `${city}:${profile.id}`;
@@ -55458,6 +55589,7 @@
     }
 
     function closeProfileModal() {
+      closeInternalProfileFrame();
       profileMediaObserver?.disconnect();
       profileMediaObserver = null;
       window.cancelAnimationFrame(profileMediaObserverScrollFrame);
@@ -67906,7 +68038,9 @@
     if (isCustomerSession() || isDancerSession()) loadLiveSupportThreads();
     if (isAdminSession()) loadLiveAdminSupportThreads();
     const restoredAuthResume = restoreAuthConfirmationResume();
-    if (!restoredAuthResume && !handleVenueDancerVerificationDeepLink() && !handleAdminDashboardDeepLink() && !handleVenueDashboardDeepLink() && !handleDancerDashboardDeepLink() && !handleVenueAccessDeepLink() && !handleAccountAccessDeepLink()) {
+    if (internalProfileFrameId) {
+      void initialDiscoveryRequest.finally(initializeInternalProfileFrame);
+    } else if (!restoredAuthResume && !handleVenueDancerVerificationDeepLink() && !handleAdminDashboardDeepLink() && !handleVenueDashboardDeepLink() && !handleDancerDashboardDeepLink() && !handleVenueAccessDeepLink() && !handleAccountAccessDeepLink()) {
       if (initialVenuePreviewRequest) void initialVenuePreviewRequest;
       else void initialDiscoveryRequest.finally(() => openSharedProfileFromUrl()).finally(() => {
         document.documentElement.classList.remove("venue-profile-bootstrap");

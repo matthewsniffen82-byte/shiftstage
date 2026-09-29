@@ -5,8 +5,9 @@
       const isPrivatePreview = Boolean(options.preview);
       const profile = findProfile(profileReference, { includePending: isPrivatePreview });
       if (!profile) return;
-      profileModal.dataset.analyticsDancerId = isPrivatePreview ? "" : String(profile.id || "");
-      profileModal.dataset.publicDancerId = isPrivatePreview ? "" : String(profile.id || "");
+      const internal = profile.internalRoster === true;
+      profileModal.dataset.analyticsDancerId = isPrivatePreview || internal ? "" : String(profile.id || "");
+      profileModal.dataset.publicDancerId = isPrivatePreview || internal ? "" : String(profile.id || "");
       profileModal.removeAttribute("data-public-visibility-hidden");
       city = profileDiscoveryCity(profile, city);
       profileModalReturnContext = captureProfileReturnContext(options.returnTo || "");
@@ -36,7 +37,7 @@
         ? exactProfileIndex
         : discoveryMarket(city).dancers.findIndex((item) => item.name === profile.name);
       const isPending = profile.status === "Pending";
-      const profileWithTrend = !isPending ? withTrendingRank(profile, city) : profile;
+      const profileWithTrend = !isPending && !internal ? withTrendingRank(profile, city) : profile;
       const modalTrendRank = profileWithTrend.trendRank;
       const status = shiftStatus(profile);
       const modalIsWorkingNow = isWorkingTonight(profile, city);
@@ -122,7 +123,7 @@
         `;
       } else {
         modalBody.innerHTML = profileModalGridMarkup(profile, { preview: isPrivatePreview, status, city });
-        if (!isPrivatePreview) void hydrateProfileClubDealQr(modalBody);
+        if (!isPrivatePreview && !internal) void hydrateProfileClubDealQr(modalBody);
         void loadProfileMyDancrTv(profile);
       }
 
@@ -627,6 +628,7 @@
     }
 
     function requestProfileTvPayload(profile, city = citySelect.value) {
+      if (profile?.internalRoster) return Promise.resolve({ ok: true, videos: profile.internalVideos || [] });
       if (!profile?.id || !/^[0-9a-f-]{36}$/i.test(profile.id)) return Promise.resolve(null);
       const now = Date.now();
       const key = `${city}:${profile.id}`;
@@ -752,6 +754,7 @@
     }
 
     function closeProfileModal() {
+      closeInternalProfileFrame();
       profileMediaObserver?.disconnect();
       profileMediaObserver = null;
       window.cancelAnimationFrame(profileMediaObserverScrollFrame);

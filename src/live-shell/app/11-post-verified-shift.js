@@ -377,6 +377,8 @@
       const includePending = Boolean(options.includePending);
       const normalizedReference = String(reference || "").trim();
       if (!normalizedReference) return null;
+      const internal = internalProfileMatches(normalizedReference);
+      if (internal) return internal;
       const availableProfiles = discoveryMarket(citySelect.value).dancers.filter((item) => (
         includePending || isApprovedPublicProfile(item)
       ));

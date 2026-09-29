@@ -770,7 +770,9 @@
     if (isCustomerSession() || isDancerSession()) loadLiveSupportThreads();
     if (isAdminSession()) loadLiveAdminSupportThreads();
     const restoredAuthResume = restoreAuthConfirmationResume();
-    if (!restoredAuthResume && !handleVenueDancerVerificationDeepLink() && !handleAdminDashboardDeepLink() && !handleVenueDashboardDeepLink() && !handleDancerDashboardDeepLink() && !handleVenueAccessDeepLink() && !handleAccountAccessDeepLink()) {
+    if (internalProfileFrameId) {
+      void initialDiscoveryRequest.finally(initializeInternalProfileFrame);
+    } else if (!restoredAuthResume && !handleVenueDancerVerificationDeepLink() && !handleAdminDashboardDeepLink() && !handleVenueDashboardDeepLink() && !handleDancerDashboardDeepLink() && !handleVenueAccessDeepLink() && !handleAccountAccessDeepLink()) {
       if (initialVenuePreviewRequest) void initialVenuePreviewRequest;
       else void initialDiscoveryRequest.finally(() => openSharedProfileFromUrl()).finally(() => {
         document.documentElement.classList.remove("venue-profile-bootstrap");

@@ -28,10 +28,10 @@ export async function GET(request: Request, context: Context) {
     if (path[0] === "profile") {
       if (!members.some(member => member.id === path[1])) return json({ ok: false, error: "This profile is no longer on the club roster." }, 404);
       const results = await Promise.all([
-        admin.from("dancer_profiles").select("id,stage_name,city").eq("id", path[1]).single(),
-        admin.from("dancer_photos").select("id,is_primary,is_pinned,sort_order").eq("dancer_id", path[1]).eq("review_status", "approved").order("is_pinned", { ascending: false }).order("is_primary", { ascending: false }).order("sort_order").limit(50),
+        admin.from("dancer_profiles").select("id,slug,stage_name,city").eq("id", path[1]).single(),
+        admin.from("dancer_photos").select("id,is_primary,is_pinned,sort_order,like_count").eq("dancer_id", path[1]).eq("review_status", "approved").order("is_pinned", { ascending: false }).order("is_primary", { ascending: false }).order("sort_order").limit(50),
         admin.from("social_links").select("platform,handle,url").eq("dancer_id", path[1]).eq("is_active", true),
-        admin.from("mydancr_tv_videos").select("id,caption").eq("dancer_id", path[1]).eq("status", "approved").lte("published_at", new Date().toISOString()).or(`expires_at.is.null,expires_at.gt.${new Date().toISOString()}`).order("published_at", { ascending: false }).limit(12),
+        admin.from("mydancr_tv_videos").select("id,caption,duration_seconds,like_count,is_pinned,published_at").eq("dancer_id", path[1]).eq("status", "approved").lte("published_at", new Date().toISOString()).or(`expires_at.is.null,expires_at.gt.${new Date().toISOString()}`).order("published_at", { ascending: false }).limit(12),
       ]);
       for (const result of results) if (result.error) throw result.error;
       const socials = (results[2].data || []).flatMap(link => {

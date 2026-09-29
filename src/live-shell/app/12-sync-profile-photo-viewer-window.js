@@ -693,13 +693,14 @@
       const previewSocialMarkup = options.preview
         ? options.socialMarkup || socialLinksMarkup(profile, { preview: true })
         : "";
-      const dealState = dancerClubDealState(profile);
-      const dealMarkup = profile?.scheduled
+      const internal = profile?.internalRoster === true;
+      const dealState = internal ? { key: "hidden" } : dancerClubDealState(profile);
+      const dealMarkup = !internal && profile?.scheduled
         ? options.preview
           ? profileDealTileMarkup(profile, { preview: true })
           : profileDealTileMarkup(profile)
         : "";
-      const travelActionsMarkup = dancerProfileTonightTravelActionsMarkup(profile, {
+      const travelActionsMarkup = internal ? "" : dancerProfileTonightTravelActionsMarkup(profile, {
         city,
         preview: Boolean(options.preview)
       });

@@ -2,13 +2,13 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { InternalRequestPushSettings } from "./InternalRequestPushSettings";
+import { InternalFullProfile, type InternalProfile as Profile } from "./InternalFullProfile";
 import { BROWSER_AUTH_SESSION_KEY, isCurrentBrowserSession, persistRefreshedBrowserAuthSession, readBrowserAuthSession } from "@/src/lib/dancr/browser-session";
 
 type Dancer = { id: string; stageName: string; workingUntil: string; avatarRevision: string; mainPhotoId: string | null; mainPhotoRevision: string };
 type ClubLink = { id: string; kind: "table"; label: string; token: string };
 type ClubRequest = { id: string; link_id: string; dancer_id: string; status: "pending" | "acknowledged"; created_at: string };
 type Snapshot = { venueName: string; dancers: Dancer[]; kind?: "table"; label?: string; role?: string; links?: ClubLink[]; requests?: ClubRequest[]; receipt?: { status: string } | null };
-type Profile = { id: string; stage_name: string; city: string; venueName: string; workingUntil: string | null; avatarRevision: string; photos: { id: string }[]; videos: { id: string; caption: string | null }[]; socialLinks: { platform: string; handle: string | null; url: string }[] };
 
 const ROSTER_REFRESH_INTERVAL_MS = 20 * 60 * 1000;
 class RosterAccessError extends Error {}
@@ -227,8 +227,8 @@ function ClubProfileDialog({ profile, token, onClose }: { profile: Profile | nul
     if (!profile) profileDialog.current?.close();
   }, [profile]);
   return (
-<dialog className="ir-profile-dialog" ref={profileDialog} onClose={onClose} aria-label={profile ? `${profile.stage_name}’s full profile` : "Dancer profile"}>
-      {profile ? <><button type="button" className="ir-profile-close" aria-label={token ? "Close profile and return to roster" : undefined} autoFocus onClick={onClose}>{token ? <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18" /></svg> : "Back to roster ×"}</button><header className="ir-profile-heading"><ProtectedMedia id={profile.id} revision={profile.avatarRevision} kind="avatar" token={token} className="ir-avatar" alt={`${profile.stage_name}’s avatar`} /><div><h2>{profile.stage_name}</h2><p>{profile.city} · <span className={Date.parse(profile.workingUntil || "") > Date.now() ? "ir-live" : ""}>{Date.parse(profile.workingUntil || "") > Date.now() ? "Working now at" : "Affiliated with"} {profile.venueName}</span></p></div></header><nav className="ir-profile-socials" aria-label="Social profiles">{profile.socialLinks.map(link => <a key={link.platform} href={link.url} target="_blank" rel="noopener noreferrer">{link.platform}{link.handle ? ` · ${link.handle}` : ""} ↗</a>)}</nav><div className="ir-profile-photos">{profile.photos.map((photo, index) => <ProtectedMedia key={photo.id} id={photo.id} kind="photo" token={token} alt={`${profile.stage_name} — photo ${index + 1}`} />)}</div>{profile.videos.length ? <section className="ir-profile-videos"><h3>Videos</h3>{profile.videos.map(video => <figure key={video.id}><ProtectedMedia id={video.id} kind="video" token={token} alt={`${profile.stage_name} video`} />{video.caption ? <figcaption>{video.caption}</figcaption> : null}</figure>)}</section> : null}</> : null}
+    <dialog className="ir-profile-dialog ir-full-profile-dialog" ref={profileDialog} onClose={onClose} aria-label={profile ? `${profile.stage_name}’s full profile` : "Dancer profile"}>
+      {profile ? <InternalFullProfile key={profile.id} profile={profile} token={token} onClose={onClose} /> : null}
     </dialog>
   );
 }

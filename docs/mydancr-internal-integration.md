@@ -12,9 +12,9 @@ Each dressing-room tap requires an explicit choice before submission:
 
 | Choice | Internal club roster | External MyDancr |
 | --- | --- | --- |
-| Internal only | Canonical approved avatar and stage name; click to open full profile | Absent from external discovery |
+| Internal only | Selected approved main photo and stage name; click to open full profile | Absent from external discovery |
 | External only | Absent | Existing full public profile |
-| Both | Stage name and the canonical approved avatar | Existing full public profile |
+| Both | Selected approved main photo and stage name | Existing full public profile |
 
 No channel is selected implicitly and neither is not a valid check-in choice. Internal consent applies to the confirmed club shift. Public-profile privacy remains in effect after the shift ends until another explicit eligible tap changes it; expiry never silently republishes a profile. Existing dancers are not automatically opted into the internal roster. Signup and profile moderation stay shared; Ondato verification must precede a new channel-aware check-in.
 
@@ -69,3 +69,11 @@ Before club use, complete a real Ondato onboarding and physical sticker tap for 
 `20260929120000_internal_main_photos.sql` adds a service-only preference and owner-checked selector. The onboarding Photos uploader and photo manager let dancers explicitly choose an approved gallery photo for Internal. Avatar upload remains required and independent; public primary photos and pins are unchanged. Existing dancers use their approved primary gallery photo, then a deterministic approved fallback, until they choose. Deleting or rejecting the selected photo falls back to another approved photo; a gallery with none displays a placeholder.
 
 `/api/dancer/internal-main-photo` reads and changes only the authenticated dancer’s choice. Internal roster snapshots expose photo IDs and opaque revisions, never storage paths. Existing capability-scoped media endpoints recheck approval and roster membership on every fetch. Focused database/API checks cover ownership, moderation, account state, deletion, fallback and restricted grants. Local browser fixtures verify three columns at 320/393/768px, profile opening, table requests, and persisted choices.
+
+### Shared full profile viewer
+
+Internal photo cards open the same `openProfileModal` viewer used by External discovery, hosted in a same-origin frame. The frame receives the canonical dancer identity, approved gallery, current approved videos and social links from the existing authorized Internal profile endpoint. It reuses the external profile layout, gallery and full-screen media controls; Club Deal markup and QR hydration are omitted in Internal context. No second profile is created.
+
+The frame URL contains only the dancer ID. Table capabilities travel through a message checked against the exact parent window and origin, then only to scoped Internal media endpoints. Staff media uses the existing authenticated venue session. Internal data stays in memory outside public discovery, and existing roster refreshes close the frame on confirmed loss of access. Public engagement actions retain their existing server permissions; this does not publish Internal-only profiles or grant them public engagement access.
+
+Validation covers the shared viewer, approved media, message boundaries, staff authentication, private visibility, unchanged refreshes, return to the roster, and external Club Deal preservation. The 53 focused tests pass, along with scoped TypeScript and ESLint checks. A mobile browser fixture exercises the actual assembled viewer for both public and Internal-only profiles, decoded gallery images, the photo overlay above the profile, and closing back to the roster. Two older profile layout suites still have the same 15 failures on the baseline commit; this change introduces none of those failures.

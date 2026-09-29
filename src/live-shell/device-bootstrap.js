@@ -16,6 +16,11 @@
 
       try {
         const initialParams = new URLSearchParams(window.location.search);
+        if (window.parent !== window && initialParams.has("internal_profile")) {
+          root.classList.add("internal-profile-embed");
+          const referrer = document.createElement("meta");
+          referrer.name = "referrer"; referrer.content = "no-referrer"; document.head.append(referrer);
+        }
         if (initialParams.get("venue_preview") === "1" && initialParams.get("venue")) {
           root.classList.add("venue-preview-bootstrap");
         } else if (initialParams.get("venue")) {

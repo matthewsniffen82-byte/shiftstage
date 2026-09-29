@@ -70,6 +70,7 @@ function harness(fetch, { token = "table-token", session = null, component = "In
         useEffect: callback => { if (mounting) effects.push(callback); },
       };
       if (name === "./InternalRequestPushSettings") return { InternalRequestPushSettings: () => null };
+      if (name === "./InternalFullProfile") return { InternalFullProfile: () => null };
       if (name === "@/src/lib/dancr/browser-session") return {
         BROWSER_AUTH_SESSION_KEY: sessionKey,
         readBrowserAuthSession: () => session,

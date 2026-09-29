@@ -1,0 +1,109 @@
+    // An Internal roster hosts this same discovery viewer in an isolated frame.
+    // Scoped profile data stays in memory and is never added to public discovery.
+    const internalProfileFrameId = window.parent !== window
+      ? new URLSearchParams(window.location.search).get("internal_profile") || "" : "";
+    let internalRosterProfile = null;
+    let internalProfileRevision = "";
+    let internalProfileLoadSequence = 0;
+    const internalProfileMedia = new Map();
+
+    function internalProfileMatches(reference) {
+      return internalRosterProfile && [internalRosterProfile.id, internalRosterProfile.slug, internalRosterProfile.name]
+        .includes(String(reference || "").trim()) ? internalRosterProfile : null;
+    }
+
+    async function internalProfileMediaUrl(kind, id, token, revision = "") {
+      if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id)) return "";
+      const path = `/api/internal/${kind}/${id}`;
+      if (token) return new URL(`${path}?token=${encodeURIComponent(token)}&revision=${encodeURIComponent(revision)}`, window.location.origin).toString();
+      // Staff media uses their existing venue session, never a public storage URL.
+      const key = `${path}:${revision}`;
+      if (!internalProfileMedia.has(key)) {
+        const session = authSession;
+        if (!session?.accessToken) return "";
+        const headers = { authorization: `Bearer ${session.accessToken}` };
+        if (session.refreshToken) headers["x-dancr-refresh-token"] = session.refreshToken;
+        const request = fetch(path, { headers, cache: "no-store", signal: AbortSignal.timeout(15000) })
+          .then(response => { if (!response.ok) throw new Error("Media unavailable."); return response.blob(); })
+          .then(blob => authSession?.accessToken === session.accessToken ? URL.createObjectURL(blob) : "")
+          .catch(() => { internalProfileMedia.delete(key); return ""; });
+        internalProfileMedia.set(key, request);
+      }
+      return internalProfileMedia.get(key);
+    }
+
+    async function openInternalProfileMessage(event) {
+      if (!internalProfileFrameId || event.origin !== window.location.origin || event.source !== window.parent
+        || event.data?.type !== "mydancr:internal-profile-open" || event.data?.profile?.id !== internalProfileFrameId) return;
+      const source = event.data.profile;
+      if (!Array.isArray(source.photos) || !Array.isArray(source.videos) || !Array.isArray(source.socialLinks)) return;
+      const token = typeof event.data.token === "string" ? event.data.token : "";
+      const revision = JSON.stringify([source, token]);
+      if (revision === internalProfileRevision) return;
+      internalProfileRevision = revision;
+      const sequence = ++internalProfileLoadSequence;
+      const city = discoveryMarket(source.city) ? source.city : selectedCity();
+      const external = discoveryMarket(city)?.dancers?.find(item => item.id === source.id && isApprovedPublicProfile(item));
+      const [avatarPhotoUrl, photos, videos] = await Promise.all([
+        internalProfileMediaUrl("avatar", source.id, token, source.avatarRevision),
+        Promise.all(source.photos.map(async photo => ({
+          id: photo.id, imageUrl: await internalProfileMediaUrl("photo", photo.id, token),
+          reviewStatus: "approved", isPrimary: photo.is_primary === true,
+          isPinned: photo.is_pinned === true, sortOrder: photo.sort_order || 0, likeCount: photo.like_count || 0,
+        }))),
+        Promise.all(source.videos.map(async video => ({
+          id: video.id, videoUrl: await internalProfileMediaUrl("video", video.id, token),
+          caption: video.caption, durationSeconds: video.duration_seconds || 0, likeCount: video.like_count || 0,
+          isPinned: video.is_pinned === true, publishedAt: video.published_at,
+        }))),
+      ]);
+      if (sequence !== internalProfileLoadSequence) return;
+      const working = Date.parse(source.workingUntil || "") > Date.now();
+      internalRosterProfile = {
+        ...external, id: source.id, slug: source.slug || external?.slug || "", name: source.stage_name, city,
+        internalRoster: true, status: "Verified", photoStatus: "Approved",
+        // These flags remain private even though this authorized viewer can display the profile.
+        hidden: true, isPublic: false, is_public: false,
+        metricsUnavailable: external ? external.metricsUnavailable : true,
+        avatarPhotoUrl, avatarPhotoSrcSet: "", mainPhotoUrl: photos[0]?.imageUrl || "", mainPhotoSrcSet: "",
+        galleryPhotoUrls: photos.map(photo => photo.imageUrl), galleryPhotoSrcSets: [],
+        galleryPhotoIds: photos.map(photo => photo.id), galleryPhotoLikeCounts: photos.map(photo => photo.likeCount),
+        galleryPhotoPins: photos.map(photo => photo.isPinned), submittedPhotos: photos,
+        internalVideos: videos.sort((a, b) => Number(b.isPinned) - Number(a.isPinned)),
+        socials: Object.fromEntries(source.socialLinks.map(link => [link.platform, link.url])),
+        submittedSocials: [], socialLinks: source.socialLinks,
+        venue: source.venueName, scheduled: working, tonight: working, liveTonight: working,
+        time: working ? "Working now" : "Not working now", locationStatus: working ? "club_confirmed" : "self_reported",
+        checkedInAt: working ? external?.checkedInAt || new Date(Date.now() - 1000).toISOString() : "",
+        checkedOutAt: "", endedAt: "", workingStatus: working ? "club_confirmed" : "self_reported",
+        locationVerificationExpiresAt: source.workingUntil || "",
+        activeDeal: null, activeDeals: [], dealAttributionToken: "", dealAttributionTokens: {},
+      };
+      citySelect.value = city;
+      openProfileModal(source.id);
+      document.documentElement.classList.add("internal-profile-ready");
+      window.parent.postMessage({ type: "mydancr:internal-profile-shown" }, window.location.origin);
+    }
+
+    function closeInternalProfileFrame() {
+      if (!internalProfileFrameId) return;
+      internalProfileLoadSequence += 1;
+      internalRosterProfile = null;
+      window.parent.postMessage({ type: "mydancr:internal-profile-close" }, window.location.origin);
+    }
+
+    function initializeInternalProfileFrame() {
+      if (!internalProfileFrameId) return;
+      window.addEventListener("message", event => {
+        void openInternalProfileMessage(event).catch(() => {
+          internalProfileRevision = "";
+          showToast("The profile could not load. Close it and try again.");
+        });
+      });
+      window.addEventListener("pagehide", () => {
+        internalProfileLoadSequence += 1;
+        internalProfileMedia.forEach(promise => { void promise.then(url => { if (url) URL.revokeObjectURL(url); }); });
+        internalProfileMedia.clear();
+      }, { once: true });
+      window.parent.postMessage({ type: "mydancr:internal-profile-ready" }, window.location.origin);
+    }
