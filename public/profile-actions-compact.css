@@ -143,11 +143,26 @@ body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-she
   gap: 6px !important;
 }
 
-/* Reduce extra space below Follow/Share; venue attendance keeps its own
- * zero margin inside the card. */
+/* Follow and Share form a compact utility group on both full-profile viewers.
+ * Keep their 44px tap height while letting the primary venue action fill its card. */
 body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell, .dancer-profile-preview-overlay)
   :is(.modal-actions, .live-actions).profile-actions-compact:not(.profile-venue-actions) {
+  width: fit-content !important;
+  align-self: flex-start !important;
+  justify-self: start !important;
+  justify-content: flex-start !important;
+  margin-inline: 0 !important;
   margin-block: 0 2px !important;
+}
+
+body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell, .dancer-profile-preview-overlay)
+  :is(.modal-actions, .live-actions).profile-actions-compact:not(.profile-venue-actions)
+  > button.profile-action-icon-control:not(.profile-share-action):not(.profile-action-going) {
+  flex: 0 0 auto !important;
+  width: auto !important;
+  min-width: 104px !important;
+  padding-inline: 14px !important;
+  --profile-utility-radius: 999px;
 }
 
 /* Attendance belongs with the venue. Beside an available offer it shares one
