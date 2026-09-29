@@ -25,5 +25,8 @@ html.internal-profile-embed [data-internal-table-request]:enabled:is(:hover, :ac
 html.internal-profile-embed [data-internal-table-request]:enabled:active {
   --profile-action-background: linear-gradient(#5b21b6, #5b21b6) !important;
 }
+/* A submitted request stays disabled but reads as a clear confirmation. */
+html.internal-profile-embed #profileBackdrop #profileModal .internal-request-sent-label { display: inline-flex; align-items: center; justify-content: center; gap: 7px; color: #f8fafc !important; font: inherit !important; }
+html.internal-profile-embed #profileBackdrop #profileModal .internal-request-sent-label::before { content: ""; flex: 0 0 auto; width: 5px; height: 9px; margin-top: -3px; border: solid currentColor; border-width: 0 2px 2px 0; transform: rotate(45deg); }
 html.internal-profile-embed .internal-profile-request-status { margin: 8px 4px 0; color: #b8b5c2; font-size: 12px; line-height: 1.4; text-align: center; }
 html.internal-profile-embed .internal-profile-request-status:empty { display: none; }

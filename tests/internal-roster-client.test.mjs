@@ -370,7 +370,7 @@ test("profile and roster requests share one submission and Request sent status",
   assert.equal(posts.length,1,'Rapid clicks in either view cannot submit twice');
   pending.resolve();await flush();await flush();
   const button=find(app.render(),node=>node.props?.className==='ir-table-request');
-  assert.equal(button.props.children,'Request sent');assert.equal(button.props.disabled,true);
+  assert.equal(find(button,node=>node.type==='span').props.children,'Request sent');assert.equal(button.props.disabled,true);
   assert.equal(profile(app).requestStatus,'pending');assert.equal(profile(app).requestsTonight,1);
   find(app.render(),node=>node.type?.name==='ClubProfileDialog').props.onRequest();
   assert.equal(posts.length,1);
@@ -388,7 +388,7 @@ test("failed request retries preserve the same idempotency key and a reloaded ta
   const reloaded=harness(async(_url,options)=>{assert.equal(options.method,'GET');return response({...roster,kind:'table',dancers:[{...dancer,requestStatus:'pending'}]});});
   t.after(()=>reloaded.unmount());await reloaded.mount();
   const button=find(reloaded.render(),node=>node.props?.className==='ir-table-request');
-  assert.equal(button.props.children,'Request sent');assert.equal(button.props.disabled,true);button.props.onClick();await flush();
+  assert.equal(find(button,node=>node.type==='span').props.children,'Request sent');assert.equal(button.props.disabled,true);button.props.onClick();await flush();
 });
 
 test("a background read started before submission cannot undo Request sent", async t => {
@@ -401,7 +401,7 @@ test("a background read started before submission cannot undo Request sent", asy
   find(app.render(),node=>node.props?.className==='ir-table-request').props.onClick();await flush();await flush();
   oldRead.resolve(response({...roster,kind:'table',dancers:[{...dancer,requestStatus:null}]}));await flush();
   const button=find(app.render(),node=>node.props?.className==='ir-table-request');
-  assert.equal(button.props.children,'Request sent');assert.equal(button.props.disabled,true);
+  assert.equal(find(button,node=>node.type==='span').props.children,'Request sent');assert.equal(button.props.disabled,true);
 });
 
 test("an open staff profile also refreshes quietly every 20 minutes and closes on confirmed access loss", async t => {

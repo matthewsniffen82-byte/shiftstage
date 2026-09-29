@@ -84,6 +84,9 @@ body.dancr-button-system .ir-shell.ir-guest button.ir-table-request:enabled:is(:
 body.dancr-button-system .ir-shell.ir-guest button.ir-table-request:enabled:active::before { background: linear-gradient(#5b21b6, #5b21b6); }
 body.dancr-button-system .ir-shell.ir-guest button.ir-table-request:disabled { --ir-guest-control-edge: #55545f; }
 body.dancr-button-system .ir-shell.ir-guest button.ir-table-request:disabled::before { background: linear-gradient(#111118, #111118); }
+body.dancr-button-system .ir-shell.ir-guest button.ir-table-request[data-request-sent]:disabled { opacity: 1 !important; cursor: default; }
+body .ir-guest .internal-request-sent-label { display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-width: 0; color: #f8fafc !important; }
+body .ir-guest .internal-request-sent-label::before { content: ""; flex: 0 0 auto; width: 5px; height: 9px; margin-top: -3px; border: solid currentColor; border-width: 0 2px 2px 0; transform: rotate(45deg); }
 
 body .ir-guest .ir-panel { padding: 14px; border-color: #34343c; border-radius: 14px; background: #08080b; }
 body .ir-guest .ir-notice { margin: 12px 0; padding: 10px 12px; border-color: #45454f; border-radius: 10px; color: #cbd5e1 !important; background: #08080b; }

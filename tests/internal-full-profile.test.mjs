@@ -101,7 +101,7 @@ test('profile requests send one parent action, then share the confirmed status w
   await f.bridge.openInternalProfileMessage(updated);
   assert.equal(f.opens.length,1,'Request status must not reset an open gallery');
   assert.equal(f.bridge.profile().requestsTonight,3);
-  assert.match(f.bridge.internalProfileRequestActionsMarkup(f.bridge.profile()), /disabled>Request sent/);
+  assert.match(f.bridge.internalProfileRequestActionsMarkup(f.bridge.profile()), /disabled><span class="internal-request-sent-label">Request sent</);
   f.bridge.sendInternalTableRequest();
   assert.equal(f.messages.filter(([message])=>message.type==='mydancr:internal-table-request').length,1);
 });

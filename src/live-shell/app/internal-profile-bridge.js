@@ -106,7 +106,7 @@
       const sent = ["pending", "acknowledged"].includes(internalTableRequest.status);
       const label = sent ? "Request sent" : internalTableRequest.busy ? "Sending…" : `Request at ${internalTableRequest.tableLabel}`;
       return `<div class="internal-profile-request">
-        <div class="modal-actions profile-actions-compact profile-venue-actions"><button type="button" class="action-btn profile-action-icon-control" data-internal-table-request ${sent || internalTableRequest.busy || !profile.scheduled ? "disabled" : ""}>${escapeHtml(label)}</button></div>
+        <div class="modal-actions profile-actions-compact profile-venue-actions"><button type="button" class="action-btn profile-action-icon-control" data-internal-table-request ${sent || internalTableRequest.busy || !profile.scheduled ? "disabled" : ""}>${sent ? `<span class="internal-request-sent-label">${escapeHtml(label)}</span>` : escapeHtml(label)}</button></div>
         <p role="status" class="internal-profile-request-status">${escapeHtml(internalTableRequest.message || (internalTableRequest.status === "acknowledged" ? "Seen by club staff." : sent ? "Sent to club staff. Availability is confirmed by staff." : ""))}</p>
       </div>`;
     }
