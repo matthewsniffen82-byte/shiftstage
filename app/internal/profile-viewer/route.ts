@@ -3,6 +3,20 @@ import { GET as renderLiveShell } from "../../route";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
+// The embedded viewer hides the public demo banner. Its reserved viewport band
+// must disappear too, including in the shared photo/video overlays.
+const INTERNAL_PROFILE_VIEWPORT_STYLES = `<style id="internal-profile-viewport">
+html.internal-profile-embed {
+  --mydancr-preview-banner-height: 0px;
+  --mydancr-preview-banner-offset: 0px;
+}
+html.internal-profile-embed body.dancr-button-system #profileBackdrop .profile-modal {
+  height: 100dvh !important;
+  min-height: 0 !important;
+  max-height: 100dvh !important;
+}
+</style>`;
+
 export async function GET(request: Request) {
   const id = new URL(request.url).searchParams.get("internal_profile");
   if (!id || !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id)) {
@@ -21,5 +35,6 @@ export async function GET(request: Request) {
   headers.set("vercel-cdn-cache-control", "no-store");
   headers.set("referrer-policy", "no-referrer");
   headers.set("x-robots-tag", "noindex, nofollow");
-  return new Response(shell.body, { status: shell.status, headers });
+  const html = (await shell.text()).replace("</head>", `${INTERNAL_PROFILE_VIEWPORT_STYLES}</head>`);
+  return new Response(html, { status: shell.status, headers });
 }

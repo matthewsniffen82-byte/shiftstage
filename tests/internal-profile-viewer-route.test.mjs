@@ -35,9 +35,11 @@ test("the Internal frame loads the actual shell with same-origin-only framing", 
   const f = fixture();
   const result = await f.get(`?internal_profile=${id}`);
   assert.equal(result.status, 200);
-  assert.equal(await result.text(), shell);
+  const html = await result.text();
+  assert.equal(html.replace(/<style id="internal-profile-viewport">[\s\S]*?<\/style>/, ""), shell);
   assert.equal(result.headers.get("x-frame-options"), "SAMEORIGIN");
   assert.equal(result.headers.get("content-security-policy"), publicPolicy.replace("frame-ancestors 'none'", "frame-ancestors 'self'"));
+  assert.equal(createRootContentSecurityPolicy(html), publicPolicy, "Viewport styles preserve the shell's script hashes");
   assert.equal(result.headers.get("referrer-policy"), "no-referrer");
   assert.equal(result.headers.get("x-robots-tag"), "noindex, nofollow");
   for (const header of ["cache-control", "cdn-cache-control", "vercel-cdn-cache-control"]) assert.match(result.headers.get(header), /no-store/);
