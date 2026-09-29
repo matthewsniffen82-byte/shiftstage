@@ -12531,6 +12531,8 @@ body.dancr-button-system .public-profile-shell .profile-media-tabs button.active
 body.dancr-button-system :is(
   #profileBackdrop #profileModal #modalClose,
   #authClose,
+  #venueSelectClose,
+  #distanceSelectClose,
   #dancerSignupClose,
   #results.venue-profile-overlay .venue-detail .venue-detail-close,
   .public-profile-shell .public-profile-close,
@@ -12596,6 +12598,8 @@ body.dancr-button-system :is(
 body.dancr-button-system :is(
   #profileBackdrop #profileModal #modalClose,
   #authClose,
+  #venueSelectClose,
+  #distanceSelectClose,
   #dancerSignupClose,
   #results.venue-profile-overlay .venue-detail .venue-detail-close,
   .public-profile-shell .public-profile-close,
@@ -12643,6 +12647,8 @@ body.dancr-button-system :is(
 body.dancr-button-system :is(
   #profileBackdrop #profileModal #modalClose,
   #authClose,
+  #venueSelectClose,
+  #distanceSelectClose,
   #dancerSignupClose,
   #results.venue-profile-overlay .venue-detail .venue-detail-close,
   .public-profile-shell .public-profile-close,
@@ -12680,6 +12686,8 @@ body.dancr-button-system :is(
 body.dancr-button-system :is(
   #profileBackdrop #profileModal #modalClose,
   #authClose,
+  #venueSelectClose,
+  #distanceSelectClose,
   #dancerSignupClose,
   #results.venue-profile-overlay .venue-detail .venue-detail-close,
   .public-profile-shell .public-profile-close,
@@ -12717,6 +12725,8 @@ body.dancr-button-system :is(
 body.dancr-button-system :is(
   #profileBackdrop #profileModal #modalClose,
   #authClose,
+  #venueSelectClose,
+  #distanceSelectClose,
   #dancerSignupClose,
   #results.venue-profile-overlay .venue-detail .venue-detail-close,
   .public-profile-shell .public-profile-close,
@@ -13853,6 +13863,111 @@ html body.dancr-button-system > .app main.stack > .home-discovery-controls
   html body.dancr-button-system > .app main.stack > .home-discovery-controls
     #homeAdvancedFilters .home-filter-actions {
     grid-column: 1 / -1;
+  }
+}
+
+/* Discovery pickers share compact black controls and a clear violet selection.
+ * Paint button faces separately so mobile automatic darkening keeps them black. */
+html body.dancr-button-system :is(#venueSelectDialog, #distanceSelectDialog) {
+  color: #f8fafc !important;
+  border-color: #34343c !important;
+  background: linear-gradient(#08080c, #08080c) !important;
+  box-shadow: 0 24px 72px #0009 !important;
+}
+
+html body.dancr-button-system :is(#venueSelectDialog, #distanceSelectDialog)::backdrop {
+  background: rgba(0, 0, 0, .72);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+}
+
+html body.dancr-button-system :is(#venueSelectDialog, #distanceSelectDialog) h2 {
+  font-size: 20px !important;
+  font-weight: 700 !important;
+  line-height: 1.25 !important;
+  letter-spacing: -.025em !important;
+  text-transform: none !important;
+}
+
+html body.dancr-button-system :is(#venueSelectDialog, #distanceSelectDialog)
+  :where(.venue-picker-option, .distance-picker-options span, #venueSelectDone, #distanceSelectApply) {
+  --picker-face: #050507;
+  --picker-edge: #34343c;
+  position: relative !important;
+  isolation: isolate;
+  border: 0 !important;
+  border-radius: 10px !important;
+  color: #f8fafc !important;
+  background: none !important;
+  box-shadow: none !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+  font-size: 14px !important;
+  font-weight: 650 !important;
+  line-height: 1.3 !important;
+  letter-spacing: normal !important;
+  text-transform: none !important;
+  text-shadow: none !important;
+}
+
+html body.dancr-button-system :is(#venueSelectDialog, #distanceSelectDialog)
+  :where(.venue-picker-option, .distance-picker-options span, #venueSelectDone, #distanceSelectApply)::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border: 1px solid var(--picker-edge);
+  border-radius: inherit;
+  background: var(--picker-gradient, linear-gradient(var(--picker-face), var(--picker-face)));
+  pointer-events: none;
+}
+
+html body.dancr-button-system #venueSelectDialog .venue-picker-option {
+  min-height: 46px !important;
+}
+
+html body.dancr-button-system :is(#venueSelectDialog, #distanceSelectDialog)
+  :is(.venue-picker-option[aria-selected="true"], .distance-picker-options input:checked + span) {
+  --picker-face: #160e24;
+  --picker-edge: #745696;
+}
+
+html body.dancr-button-system #venueSelectDialog .venue-picker-radio {
+  box-sizing: border-box;
+  width: 20px;
+  height: 20px;
+  border: 1.5px solid #686571;
+}
+
+html body.dancr-button-system #venueSelectDialog .venue-picker-option[aria-selected="true"] .venue-picker-radio {
+  border-color: #a78bfa;
+}
+
+html body.dancr-button-system #venueSelectDialog .venue-picker-radio::after {
+  width: 10px;
+  height: 10px;
+  background: #a78bfa;
+}
+
+html body.dancr-button-system :is(#venueSelectDialog, #distanceSelectDialog)
+  :is(#venueSelectDone, #distanceSelectApply) {
+  --picker-edge: #7651a8;
+  --picker-gradient: linear-gradient(120deg, #4914a3, #321077);
+  min-height: 44px !important;
+  padding: 10px 14px !important;
+}
+
+html body.dancr-button-system :is(#venueSelectDialog, #distanceSelectDialog)
+  :is(.venue-picker-option, #venueSelectDone, #distanceSelectApply):focus-visible,
+html body.dancr-button-system #distanceSelectDialog .distance-picker-options input:focus-visible + span {
+  outline: 2px solid #c4b5fd !important;
+  outline-offset: 2px !important;
+}
+
+@media (hover: hover) {
+  html body.dancr-button-system #venueSelectDialog .venue-picker-option:hover,
+  html body.dancr-button-system #distanceSelectDialog .distance-picker-options label:hover span {
+    --picker-edge: #8b79a1;
   }
 }
 
