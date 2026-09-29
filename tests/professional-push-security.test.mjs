@@ -85,7 +85,7 @@ test("internal table push includes table and stage name, a private staff inbox l
   }], { email: false });
   const payload = f.calls[0];
   assert.equal(payload.contents.en, "Table 12 wants Aster.");
-  assert.equal(payload.url, "https://example.test/internal#table-requests");
+  assert.equal(payload.url, "https://example.test/dashboard/venue#table-requests");
   assert.equal(payload.ttl, 60);
   assert.equal(payload.idempotency_key, deliveryId);
   assert.equal(payload.web_push_topic, deliveryId.replaceAll("-", ""));

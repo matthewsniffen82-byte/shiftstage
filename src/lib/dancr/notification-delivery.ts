@@ -307,7 +307,7 @@ function notificationActionUrl(row: NotificationDeliveryRow) {
   const baseUrl = publicAppUrl();
   if (!baseUrl) return "";
   if (payload.kind === "club_shuttle_request") return `${baseUrl}/dashboard/venue`;
-  if (payload.kind === "internal_table_request") return `${baseUrl}/internal#table-requests`;
+  if (payload.kind === "internal_table_request") return `${baseUrl}/dashboard/venue#table-requests`;
   if (followAlertKey(payload.kind)) return `${baseUrl}/dashboard/customer#customer-alerts`;
 
   if (row.notification_type === "dmca_status" && payload.caseId) {

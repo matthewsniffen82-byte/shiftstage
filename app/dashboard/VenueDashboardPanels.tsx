@@ -35,7 +35,7 @@ function notifyPublicVenuePublication() {
 function venueWorkspaceForSection(sectionId: string): VenueWorkspace | null {
   if (sectionId === "venue-pickups") return "tonight";
   if (sectionId === "venue-overview") return "business";
-  if (["venue-working-now", "venue-dancer-roster", "venue-club-deals", "venue-deal-contract-ledger", "venue-tv", "venue-team", "venue-account", "venue-support"].includes(sectionId)) return "venue";
+  if (["venue-working-now", "venue-dancer-roster", "table-requests", "venue-notification-settings", "venue-club-deals", "venue-deal-contract-ledger", "venue-tv", "venue-team", "venue-account", "venue-support"].includes(sectionId)) return "venue";
   return null;
 }
 
@@ -101,6 +101,25 @@ export function VenuePanel({
     return venueWorkspaceForSection(sectionId) || initialVenueWorkspace(profile?.isActive === true);
   });
   const [rosterWorkingOnly, setRosterWorkingOnly] = useState(() => typeof window !== "undefined" && window.location.hash === "#venue-working-now");
+  useEffect(() => {
+    let frame = 0;
+    const openRequestWorkspace = () => {
+      const sectionId = window.location.hash.slice(1);
+      if (!["table-requests", "venue-notification-settings"].includes(sectionId)) return;
+      setActiveWorkspace("venue");
+      if (sectionId === "venue-notification-settings") frame = window.requestAnimationFrame(() => {
+        const panel = document.getElementById(sectionId);
+        if (!panel) return;
+        for (let parent = panel.parentElement; parent; parent = parent.parentElement) {
+          if (parent instanceof HTMLDetailsElement) parent.open = true;
+        }
+        panel.scrollIntoView({ block: "start" });
+        panel.focus({ preventScroll: true });
+      });
+    };
+    window.addEventListener("hashchange", openRequestWorkspace);
+    return () => { window.cancelAnimationFrame(frame); window.removeEventListener("hashchange", openRequestWorkspace); };
+  }, []);
   const mountedRef = useRef(false);
   const publicationSequenceRef = useRef(0);
   const publicationAbortRef = useRef<AbortController | null>(null);

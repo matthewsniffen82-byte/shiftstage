@@ -97,12 +97,26 @@ export function InternalRoster({ token, operationsOnly = false }: { token?: stri
   }, [refresh]);
 
   useEffect(() => {
-    if (token || !snapshot || openedRequestInbox.current || window.location.hash !== "#table-requests") return;
-    const inbox = document.getElementById("table-requests");
-    if (!inbox) return;
-    openedRequestInbox.current = true;
-    inbox.scrollIntoView({ block: "start" });
-    inbox.focus({ preventScroll: true });
+    if (token || !snapshot) return;
+    let frame = 0;
+    const openInbox = () => {
+      if (openedRequestInbox.current || window.location.hash !== "#table-requests") return;
+      frame = window.requestAnimationFrame(() => {
+        const inbox = document.getElementById("table-requests");
+        if (!inbox) return;
+        openedRequestInbox.current = true;
+        // The club dashboard nests this inbox inside a collapsed roster section.
+        for (let parent = inbox.parentElement; parent; parent = parent.parentElement) {
+          if (parent instanceof HTMLDetailsElement) parent.open = true;
+        }
+        inbox.scrollIntoView({ block: "start" });
+        inbox.focus({ preventScroll: true });
+      });
+    };
+    const hashChanged = () => { openedRequestInbox.current = false; openInbox(); };
+    openInbox();
+    window.addEventListener("hashchange", hashChanged);
+    return () => { window.cancelAnimationFrame(frame); window.removeEventListener("hashchange", hashChanged); };
   }, [snapshot, token]);
 
   async function mutate(body: Record<string, unknown>) {
