@@ -85,6 +85,7 @@ body.dancr-button-system .ir-shell.ir-guest button.ir-table-request:enabled:acti
 body.dancr-button-system .ir-shell.ir-guest button.ir-table-request:disabled { --ir-guest-control-edge: #55545f; }
 body.dancr-button-system .ir-shell.ir-guest button.ir-table-request:disabled::before { background: linear-gradient(#111118, #111118); }
 body.dancr-button-system .ir-shell.ir-guest button.ir-table-request[data-request-sent]:disabled { opacity: 1 !important; cursor: default; }
+body.dancr-button-system .ir-shell.ir-guest button.ir-table-request[data-request-sent]:disabled::before { background: linear-gradient(#29292f, #29292f); }
 body .ir-guest .internal-request-sent-label { display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-width: 0; color: #f8fafc !important; }
 body .ir-guest .internal-request-sent-label::before { content: ""; flex: 0 0 auto; width: 5px; height: 9px; margin-top: -3px; border: solid currentColor; border-width: 0 2px 2px 0; transform: rotate(45deg); }
 
