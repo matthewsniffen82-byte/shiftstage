@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { InternalRequestPushSettings } from "./InternalRequestPushSettings";
-import { isCurrentBrowserSession, persistRefreshedBrowserAuthSession, readBrowserAuthSession } from "@/src/lib/dancr/browser-session";
+import { BROWSER_AUTH_SESSION_KEY, isCurrentBrowserSession, persistRefreshedBrowserAuthSession, readBrowserAuthSession } from "@/src/lib/dancr/browser-session";
 
 type Dancer = { id: string; stageName: string; workingUntil: string; avatarRevision: string; mainPhotoId: string | null; mainPhotoRevision: string };
 type ClubLink = { id: string; kind: "table"; label: string; token: string };
@@ -10,9 +10,12 @@ type ClubRequest = { id: string; link_id: string; dancer_id: string; status: "pe
 type Snapshot = { venueName: string; dancers: Dancer[]; kind?: "table"; label?: string; role?: string; links?: ClubLink[]; requests?: ClubRequest[]; receipt?: { status: string } | null };
 type Profile = { id: string; stage_name: string; city: string; venueName: string; workingUntil: string | null; avatarRevision: string; photos: { id: string }[]; videos: { id: string; caption: string | null }[]; socialLinks: { platform: string; handle: string | null; url: string }[] };
 
+const ROSTER_REFRESH_INTERVAL_MS = 20 * 60 * 1000;
+class RosterAccessError extends Error {}
+
 async function rosterFetch(url: string, token: string | undefined, body?: Record<string, unknown>, signal?: AbortSignal) {
   const session = token ? null : readBrowserAuthSession();
-  if (!token && (!session?.accessToken || session.account?.role !== "venue")) throw new Error("Sign in with your MyDancr club account to open the internal roster.");
+  if (!token && (!session?.accessToken || session.account?.role !== "venue")) throw new RosterAccessError("Sign in with your MyDancr club account to open the internal roster.");
   const headers: Record<string, string> = { "content-type": "application/json" };
   if (session?.accessToken) headers.authorization = `Bearer ${session.accessToken}`;
   if (session?.refreshToken) headers["x-dancr-refresh-token"] = session.refreshToken;
@@ -32,8 +35,11 @@ async function rosterFetch(url: string, token: string | undefined, body?: Record
     const response = await fetch(url, { method: body ? "POST" : "GET", body: body ? JSON.stringify(body) : undefined, headers, signal: controller.signal, cache: "no-store", credentials: "same-origin" });
     const data = await response.json().catch(() => null);
     if (controller.signal.aborted) throw controller.signal.reason;
-    if (session && !isCurrentBrowserSession(session)) throw new Error("Your account session changed. Refresh this page.");
-    if (!response.ok || !data?.ok) throw new Error(data?.error || "The club roster is temporarily unavailable. Please try again.");
+    if (session && !isCurrentBrowserSession(session)) throw new RosterAccessError("Your account session changed. Refresh this page.");
+    if (!response.ok || !data?.ok) {
+      const Failure = [401, 403, 404, 410].includes(response.status) ? RosterAccessError : Error;
+      throw new Failure(data?.error || "The club roster is temporarily unavailable. Please try again.");
+    }
     if (session) persistRefreshedBrowserAuthSession(data.session, session);
     return data;
   };
@@ -77,15 +83,20 @@ export function InternalRoster({ token, operationsOnly = false }: { token?: stri
   const pendingDancer = useRef("");
   const alive = useRef(false);
   const openedRequestInbox = useRef(false);
-  const lastGoodRefresh = useRef(Date.now());
+  const hasSnapshot = useRef(false);
   const base = token ? `/api/internal/link/${encodeURIComponent(token)}` : "/api/internal";
+
+  const clearRoster = useCallback((message = "") => {
+    hasSnapshot.current = false;
+    setSnapshot(null); setProfile(null); selectedProfile.current = ""; setError(message);
+  }, []);
 
   const refresh = useCallback(async (signal?: AbortSignal) => {
     try {
       const data = await rosterFetch(`${base}${token && requestKey.current ? `?requestKey=${requestKey.current}` : ""}`, token, undefined, signal);
       if (!alive.current || signal?.aborted) return;
+      hasSnapshot.current = true;
       setSnapshot(data); setError("");
-      lastGoodRefresh.current = Date.now();
       const selected = selectedProfile.current;
       if (selected) {
         if (!data.dancers.some((dancer: Dancer) => dancer.id === selected)) { selectedProfile.current = ""; setProfile(null); }
@@ -96,27 +107,34 @@ export function InternalRoster({ token, operationsOnly = false }: { token?: stri
       }
     } catch (reason) {
       if (!alive.current || signal?.aborted) return;
-      // Privacy first: do not retain a stale roster after a failed authorization or network refresh.
-      setSnapshot(null); setProfile(null); selectedProfile.current = ""; setError(reason instanceof Error ? reason.message : "Unable to refresh roster.");
+      // Keep a loaded roster steady through temporary connection failures. Confirmed
+      // loss of access still clears protected content, as does changing accounts.
+      if (reason instanceof RosterAccessError || !hasSnapshot.current) {
+        clearRoster(reason instanceof Error ? reason.message : "Unable to load roster.");
+      }
     }
-  }, [base, token]);
+  }, [base, token, clearRoster]);
 
   useEffect(() => {
     alive.current = true;
-    const controller = new AbortController();
+    clearRoster();
+    let controller = new AbortController();
     let timer: ReturnType<typeof setTimeout>;
-    const poll = async () => { await refresh(controller.signal); if (!controller.signal.aborted) timer = setTimeout(poll, 5000); };
-    void poll();
-    const watchdog = setInterval(() => {
-      if (Date.now() - lastGoodRefresh.current > 20000) {
-        setSnapshot(null); setProfile(null); selectedProfile.current = "";
-        setError(current => current || "The roster could not be refreshed. Retrying automatically.");
-      }
-    }, 5000);
-    const sessionChanged = () => { setSnapshot(null); void refresh(controller.signal); };
+    const poll = async (signal: AbortSignal) => {
+      await refresh(signal);
+      if (!signal.aborted) timer = setTimeout(() => void poll(signal), ROSTER_REFRESH_INTERVAL_MS);
+    };
+    void poll(controller.signal);
+    const sessionChanged = (event: StorageEvent) => {
+      if (token || (event.key !== null && event.key !== BROWSER_AUTH_SESSION_KEY)) return;
+      controller.abort(); clearTimeout(timer);
+      controller = new AbortController();
+      clearRoster();
+      void poll(controller.signal);
+    };
     window.addEventListener("storage", sessionChanged);
-    return () => { alive.current = false; controller.abort(); clearTimeout(timer); clearInterval(watchdog); window.removeEventListener("storage", sessionChanged); };
-  }, [refresh]);
+    return () => { alive.current = false; controller.abort(); clearTimeout(timer); window.removeEventListener("storage", sessionChanged); };
+  }, [refresh, token, clearRoster]);
 
   useEffect(() => {
     if (token || !snapshot) return;
@@ -149,7 +167,12 @@ export function InternalRoster({ token, operationsOnly = false }: { token?: stri
       if (!alive.current) return;
       setNotice(token ? "Request sent to club staff. Staff acknowledgement does not guarantee the dancer is available." : "Saved.");
       setLabel(""); await refresh();
-    } catch (reason) { if (alive.current) setNotice(reason instanceof Error ? reason.message : "Unable to save."); }
+    } catch (reason) {
+      if (alive.current) {
+        if (reason instanceof RosterAccessError) clearRoster(reason.message);
+        else setNotice(reason instanceof Error ? reason.message : "Unable to save.");
+      }
+    }
     finally { if (alive.current) setBusy(false); }
   }
 
@@ -158,7 +181,13 @@ export function InternalRoster({ token, operationsOnly = false }: { token?: stri
     try {
       const data = await rosterFetch(`/api/internal/profile/${dancer.id}${token ? `?token=${encodeURIComponent(token)}` : ""}`, token);
       if (alive.current && selectedProfile.current === dancer.id) setProfile(data.profile);
-    } catch (reason) { if (alive.current) { selectedProfile.current = ""; setProfile(null); setNotice(reason instanceof Error ? reason.message : "Profile unavailable."); } }
+    } catch (reason) {
+      if (alive.current) {
+        selectedProfile.current = ""; setProfile(null);
+        if (reason instanceof RosterAccessError) clearRoster(reason.message);
+        else setNotice(reason instanceof Error ? reason.message : "Profile unavailable.");
+      }
+    }
   }
 
   const staff = !token;
@@ -212,22 +241,29 @@ export function VenueRosterProfileButton({ dancerId, stageName }: { dancerId: st
     if (!open) { setProfile(null); return; }
     const controller = new AbortController();
     let timer: ReturnType<typeof setTimeout>;
-    let lastGood = Date.now();
+    let hasProfile = false;
     const clear = () => { setProfile(null); setOpen(false); };
     const poll = async () => {
       try {
         const data = await rosterFetch('/api/internal/profile/' + dancerId, undefined, undefined, controller.signal);
         if (controller.signal.aborted) return;
-        lastGood = Date.now(); setProfile(data.profile); setError("");
-        timer = setTimeout(poll, 5000);
+        hasProfile = true; setProfile(data.profile); setError("");
       } catch (reason) {
-        if (!controller.signal.aborted) { clear(); setError(reason instanceof Error ? reason.message : "Profile unavailable."); }
+        if (!controller.signal.aborted && (reason instanceof RosterAccessError || !hasProfile)) {
+          clear(); setError(reason instanceof Error ? reason.message : "Profile unavailable.");
+        }
+      } finally {
+        if (!controller.signal.aborted) timer = setTimeout(poll, ROSTER_REFRESH_INTERVAL_MS);
       }
     };
-    const watchdog = setInterval(() => { if (Date.now() - lastGood > 20000) clear(); }, 5000);
-    window.addEventListener("storage", clear);
+    const sessionChanged = (event: StorageEvent) => {
+      if (event.key === null || event.key === BROWSER_AUTH_SESSION_KEY) {
+        controller.abort(); clearTimeout(timer); clear();
+      }
+    };
+    window.addEventListener("storage", sessionChanged);
     void poll();
-    return () => { controller.abort(); clearTimeout(timer); clearInterval(watchdog); window.removeEventListener("storage", clear); };
+    return () => { controller.abort(); clearTimeout(timer); window.removeEventListener("storage", sessionChanged); };
   }, [open, dancerId]);
   return <div className="ir-profile-control ir-staff"><button type="button" onClick={() => setOpen(true)} aria-label={`View ${stageName} profile`}>View profile</button>{error ? <small role="status">{error}</small> : null}<ClubProfileDialog profile={profile} onClose={() => { setOpen(false); setProfile(null); }} /></div>;
 }
