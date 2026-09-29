@@ -7,7 +7,7 @@ const homeSource = await readFile(new URL("../outputs/index.html", import.meta.u
 const aesthetic = await readFile(new URL("../public/dancr-aesthetic.v1.css", import.meta.url), "utf8");
 const venuesPageSource = await readFile(new URL("../app/venues/page.tsx", import.meta.url), "utf8");
 
-test("desktop venue cards render entry, directions and pickup without undefined state", () => {
+test("desktop venue cards render entry and directions without undefined state", () => {
   const factory = homeSource.match(/    function venueCard\(venue\) \{[\s\S]*?\n    \}/)?.[0];
   assert.ok(factory);
   const context = {
@@ -18,11 +18,10 @@ test("desktop venue cards render entry, directions and pickup without undefined 
     venueDancers: () => [], isFollowingVenue: () => false, venueAccent: () => '#000',
     venueLineupMarkup: () => '', displayShiftTime: String, actionIconMarkup: () => '',
     venueDirectionsMarkup: () => '<a data-direction-fixture>Directions</a>',
-    uberRideLinkMarkup: () => '<a data-ride-fixture>Free Ride + Entry</a>',
     venueCardQrMarkup: () => '<button data-entry-fixture>Free Entry</button>',
   };
   const markup = vm.runInNewContext(factory + '\nvenueCard(venue)', context);
-  for (const action of ['direction', 'ride', 'entry']) {
+  for (const action of ['direction', 'entry']) {
     assert.equal(markup.split(`data-${action}-fixture`).length - 1, 1);
   }
   assert.match(markup, /class="venue-card-link"/);
@@ -57,7 +56,7 @@ test("venue cards open the live profile while revenue and customer actions remai
   assert.match(venueCardRenderer, /venueCardQrMarkup\(venue\)[\s\S]*?directionsMarkup/);
   assert.match(
     homeSource,
-    /function venueCardQrMarkup\(venue\)[\s\S]*?venue\.activeDeal\?\.id[\s\S]*?data-club-deal-cta[\s\S]*?actionButtonLabel\("qr", "Free Entry"\)[\s\S]*?return "";/,
+    /function venueCardQrMarkup\(venue\)[\s\S]*?venue\.activeDeal\?\.id[\s\S]*?data-club-deal-cta[\s\S]*?freeEntryButtonLabel\(\)[\s\S]*?return "";/,
   );
   const venueCardQrHelper = homeSource.match(
     /function venueCardQrMarkup\(venue\) \{[\s\S]*?(?=\n    function venueCard)/,
@@ -71,14 +70,15 @@ test("venue cards open the live profile while revenue and customer actions remai
   );
   assert.match(
     venueSwipeRenderer,
-    /homeVenueDiscoveryQrMarkup\(venue\)[\s\S]*?home-venue-discovery-location[\s\S]*?home-venue-discovery-context-actions[\s\S]*?\$\{railQrMarkup\}[\s\S]*?\$\{rideMarkup\}[\s\S]*?home-venue-discovery-action-rail[\s\S]*?home-venue-discovery-profile-action[\s\S]*?data-open-venue-profile="\$\{venueValue\}"[\s\S]*?actionButtonLabel\("clubProfile", "Club Page"\)[\s\S]*?\$\{directionsMarkup\}[\s\S]*?data-share-venue="\$\{venueValue\}"[\s\S]*?actionButtonLabel\("share", "Share"\)[\s\S]*?data-venue-follow/,
+    /homeVenueDiscoveryQrMarkup\(venue\)[\s\S]*?home-venue-discovery-location[\s\S]*?home-venue-discovery-context-actions[\s\S]*?\$\{railQrMarkup\}[\s\S]*?home-venue-discovery-action-rail[\s\S]*?home-venue-discovery-profile-action[\s\S]*?data-open-venue-profile="\$\{venueValue\}"[\s\S]*?actionButtonLabel\("clubProfile", "Club Page"\)[\s\S]*?\$\{directionsMarkup\}[\s\S]*?data-venue-follow/,
   );
   assert.doesNotMatch(venueSwipeRenderer, /home-venue-discovery-name-row|home-venue-discovery-name/);
   assert.doesNotMatch(venueSwipeRenderer, /activeDealCount|dealIndicatorMarkup|home-venue-discovery-deal-indicator/);
   assert.match(
     venueSwipeRenderer,
-    /home-venue-discovery-context-actions[\s\S]*?aria-label="\$\{safeName\} primary actions"[\s\S]*?\$\{railQrMarkup\}[\s\S]*?\$\{rideMarkup\}/,
+    /home-venue-discovery-context-actions[\s\S]*?aria-label="\$\{safeName\} primary actions"[\s\S]*?\$\{railQrMarkup\}/,
   );
+  assert.doesNotMatch(venueSwipeRenderer, /rideMarkup|data-share-venue/);
   assert.doesNotMatch(venueSwipeRenderer, /const qrMarkup|home-venue-discovery-club-deal|Mydancr venue/);
   assert.match(
     venueSwipeRenderer,
@@ -88,7 +88,7 @@ test("venue cards open the live profile while revenue and customer actions remai
   assert.match(venueSwipeRenderer, /const directionsMarkup[\s\S]*?venue-directions-btn/);
   assert.match(
     homeSource,
-    /function homeVenueDiscoveryQrMarkup\(venue\)[\s\S]*?data-club-deal-cta[\s\S]*?actionButtonLabel\("qr", "Free Entry"\)[\s\S]*?data-card-qr-label="Free entry unavailable"/,
+    /function homeVenueDiscoveryQrMarkup\(venue\)[\s\S]*?data-club-deal-cta[\s\S]*?freeEntryButtonLabel\(\)[\s\S]*?data-card-qr-label="Free entry unavailable"/,
   );
   const venueSwipeQrHelper = homeSource.match(
     /function homeVenueDiscoveryQrMarkup\(venue\) \{[\s\S]*?(?=\n    function homeVenueDiscoveryFeedSlide)/,

@@ -5758,6 +5758,11 @@ body.dancr-button-system [data-dancer-avatar-border] > .venue-lineup-avatar-phot
   pointer-events: none;
 }
 
+/* Initials are a missing-photo fallback, not a loading placeholder. */
+.venue-lineup-avatar-photo[data-image-state="loading"] + .venue-lineup-avatar-initial {
+  color: transparent;
+}
+
 .venue-lineup-avatar-photo[data-image-state="ready"] + .venue-lineup-avatar-initial {
   visibility: hidden;
 }
