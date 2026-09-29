@@ -10,7 +10,7 @@ const profile = {
   workingUntil: new Date(Date.now() + 3600000).toISOString(), avatarRevision: 'revision',
   requestsTonight: 2, requestStatus: null,
   photos: [{ id: id(2), is_primary: true, like_count: 7 }, { id: id(3), is_pinned: true, like_count: 4 }],
-  videos: [{ id: id(4), caption: 'Synthetic clip', duration_seconds: 12, like_count: 3 }],
+  videos: [{ id: id(4), caption: 'Synthetic clip', duration_seconds: 12, like_count: 3, has_poster: true }],
   socialLinks: [{ platform: 'instagram', url: 'https://instagram.com/synthetic' }],
 };
 function fixture({ external = true, staff = false } = {}) {
@@ -39,6 +39,10 @@ test('Internal opens the exact discovery viewer with canonical identity, gallery
   assert.equal(viewed.followerCount, 9); assert.equal(viewed.goingCount, 2);
   assert.equal(viewed.submittedPhotos.length, 2); assert.equal(viewed.internalVideos.length, 1);
   assert.equal(viewed.internalVideos[0].durationSeconds, 12);
+  const poster = new URL(viewed.internalVideos[0].posterUrl);
+  assert.equal(poster.origin, 'https://example.invalid');
+  assert.equal(poster.pathname, '/api/internal/video-poster/' + id(4));
+  assert.equal(poster.searchParams.get('token'), id(9));
   assert.equal(viewed.socials.instagram, profile.socialLinks[0].url);
   assert.match(viewed.mainPhotoUrl, /\/api\/internal\/photo\//);
   assert.match(viewed.mainPhotoUrl, /^https:\/\/example\.invalid\//, 'The shared media sanitizer accepts absolute scoped URLs');
@@ -66,10 +70,21 @@ test('unchanged roster refreshes preserve the open photo/video viewer', async ()
 });
 test('staff media uses authenticated requests and blob URLs without exposing storage links', async () => {
   const f=fixture({staff:true}); await f.bridge.openInternalProfileMessage(f.event());
-  assert.equal(f.fetches.length,4);
+  assert.equal(f.fetches.length,5);
   assert.ok(f.fetches.every(item=>item.options.headers.authorization==='Bearer test-venue-session' && item.options.cache==='no-store'));
   assert.ok(f.fetches.every(item=>!item.url.includes('token=')));
   assert.equal(f.bridge.profile().mainPhotoUrl,'blob:protected-media');
+  assert.equal(f.bridge.profile().internalVideos[0].posterUrl,'blob:protected-media');
+  assert.ok(f.fetches.some(item => item.url === '/api/internal/video-poster/' + id(4)));
+});
+
+test('videos without an approved poster retain playback without requesting a missing image', async () => {
+  const f=fixture({staff:true}), event=f.event();
+  event.data.profile={...profile,videos:profile.videos.map(video=>({...video,has_poster:false}))};
+  await f.bridge.openInternalProfileMessage(event);
+  assert.equal(f.fetches.length,4);
+  assert.equal(f.bridge.profile().internalVideos[0].posterUrl,'');
+  assert.equal(f.bridge.profile().internalVideos[0].videoUrl,'blob:protected-media');
 });
 test('closing the shared viewer returns control to the roster and clears private context', async () => {
   const f=fixture(); await f.bridge.openInternalProfileMessage(f.event()); f.bridge.closeInternalProfileFrame();

@@ -7,7 +7,7 @@ export type InternalProfile = {
   workingUntil: string | null; avatarRevision: string;
   requestsTonight: number; requestStatus: "pending" | "acknowledged" | null;
   photos: { id: string; is_primary?: boolean; is_pinned?: boolean; sort_order?: number; like_count?: number }[];
-  videos: { id: string; caption: string | null; duration_seconds?: number; like_count?: number; is_pinned?: boolean; published_at?: string }[];
+  videos: { id: string; caption: string | null; duration_seconds?: number; like_count?: number; is_pinned?: boolean; published_at?: string; has_poster?: boolean }[];
   socialLinks: { platform: string; handle: string | null; url: string }[];
 };
 

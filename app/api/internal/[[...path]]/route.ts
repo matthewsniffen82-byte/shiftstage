@@ -8,6 +8,7 @@ import { readBoundedJsonObject } from "@/src/lib/bounded-json-body";
 import { resolveApiError, PublicApiError } from "@/src/lib/api-error-policy";
 import { INTERNAL_HEADERS, internalError, internalMembers, internalScope, isInternalUuid, venueRosterMembers } from "@/src/lib/dancr/internal-roster";
 import { safeSocialProfileUrl } from "@/src/lib/dancr/social-profile-url";
+import { MYDANCR_TV_POSTER_BUCKET, myDancrTvPosterStoragePath } from "@/src/lib/dancr/media-watermark";
 import type { SocialPlatform } from "@/src/lib/dancr/types";
 
 export const runtime = "nodejs";
@@ -16,13 +17,22 @@ export const maxDuration = 60;
 type Context = { params: Promise<{ path?: string[] }> };
 const json = (data: unknown, status = 200) => NextResponse.json(data, { status, headers: INTERNAL_HEADERS });
 
+function videoPosterStoragePath(video: { storage_path: string; moderation_details?: unknown }) {
+  try {
+    const expected = myDancrTvPosterStoragePath(video.storage_path);
+    const details = video.moderation_details;
+    return details && typeof details === "object" && "posterStoragePath" in details
+      && details.posterStoragePath === expected ? expected : null;
+  } catch { return null; }
+}
+
 export async function GET(request: Request, context: Context) {
   try {
     const { path = [] } = await context.params;
     const url = new URL(request.url);
     const admin = createAdminSupabaseClient();
     const token = path[0] === "link" ? path[1] : url.searchParams.get("token") ?? undefined;
-    if (path.length > 2 || ![undefined, "link", "avatar", "profile", "photo", "video"].includes(path[0]) || (path[0] === "link" && !token)) return json({ ok: false, error: "Not found." }, 404);
+    if (path.length > 2 || ![undefined, "link", "avatar", "profile", "photo", "video", "video-poster"].includes(path[0]) || (path[0] === "link" && !token)) return json({ ok: false, error: "Not found." }, 404);
     const scope = await internalScope(admin, request, token);
     // Staff see their approved affiliated dancers; table links remain internal-shift-only.
     const members = scope.link ? await internalMembers(admin, scope.venueId) : await venueRosterMembers(admin, scope.venueId);
@@ -32,7 +42,7 @@ export async function GET(request: Request, context: Context) {
         admin.from("dancer_profiles").select("id,slug,stage_name,city").eq("id", path[1]).single(),
         admin.from("dancer_photos").select("id,is_primary,is_pinned,sort_order,like_count").eq("dancer_id", path[1]).eq("review_status", "approved").order("is_pinned", { ascending: false }).order("is_primary", { ascending: false }).order("sort_order").limit(50),
         admin.from("social_links").select("platform,handle,url").eq("dancer_id", path[1]).eq("is_active", true),
-        admin.from("mydancr_tv_videos").select("id,caption,duration_seconds,like_count,is_pinned,published_at").eq("dancer_id", path[1]).eq("status", "approved").lte("published_at", new Date().toISOString()).or(`expires_at.is.null,expires_at.gt.${new Date().toISOString()}`).order("published_at", { ascending: false }).limit(12),
+        admin.from("mydancr_tv_videos").select("id,caption,duration_seconds,like_count,is_pinned,published_at,storage_path,moderation_details").eq("dancer_id", path[1]).eq("status", "approved").lte("published_at", new Date().toISOString()).or(`expires_at.is.null,expires_at.gt.${new Date().toISOString()}`).order("published_at", { ascending: false }).limit(12),
       ]);
       for (const result of results) if (result.error) throw result.error;
       const socials = (results[2].data || []).flatMap(link => {
@@ -44,27 +54,35 @@ export async function GET(request: Request, context: Context) {
         internalRequestsTonight(admin, scope.venueId, path[1]),
         scope.link ? internalTableRequestStates(admin, scope.venueId, scope.link.id) : null,
       ]);
-      return json({ ok: true, profile: { ...results[0].data, avatarRevision, workingUntil: members.find(member => member.id === path[1])?.working_until, venueName: scope.venueName, requestsTonight, requestStatus: tableRequests?.get(path[1]) || null, photos: results[1].data || [], socialLinks: socials, videos: results[3].data || [] }, session: scope.session });
+      const videos = (results[3].data || []).map(({ storage_path, moderation_details, ...video }) => ({
+        ...video, has_poster: Boolean(videoPosterStoragePath({ storage_path, moderation_details })),
+      }));
+      return json({ ok: true, profile: { ...results[0].data, avatarRevision, workingUntil: members.find(member => member.id === path[1])?.working_until, venueName: scope.venueName, requestsTonight, requestStatus: tableRequests?.get(path[1]) || null, photos: results[1].data || [], socialLinks: socials, videos }, session: scope.session });
     }
-    if (["avatar", "photo", "video"].includes(path[0])) {
+    if (["avatar", "photo", "video", "video-poster"].includes(path[0])) {
       let storagePath = members.find(item => item.id === path[1])?.avatar_storage_path;
-      const video = path[0] === "video";
+      const poster = path[0] === "video-poster";
+      const video = path[0] === "video" || poster;
       if (path[0] !== "avatar") {
         if (!isInternalUuid(path[1])) return json({ ok: false, error: "Media unavailable." }, 404);
-        let query = admin.from(video ? "mydancr_tv_videos" : "dancer_photos").select("dancer_id,storage_path").eq("id", path[1]).eq(video ? "status" : "review_status", "approved");
+        let query = video
+          ? admin.from("mydancr_tv_videos").select("dancer_id,storage_path,moderation_details")
+          : admin.from("dancer_photos").select("dancer_id,storage_path");
+        query = query.eq("id", path[1]).eq(video ? "status" : "review_status", "approved");
         if (video) query = query.lte("published_at", new Date().toISOString()).or(`expires_at.is.null,expires_at.gt.${new Date().toISOString()}`);
         const { data, error } = await query.maybeSingle();
         if (error) throw error;
-        storagePath = data && members.some(member => member.id === data.dancer_id) ? data.storage_path : null;
+        storagePath = data && members.some(member => member.id === data.dancer_id)
+          ? poster ? videoPosterStoragePath(data) : data.storage_path : null;
       }
       if (!storagePath) return json({ ok: false, error: "Media unavailable." }, 404);
-      const { data, error } = await admin.storage.from(video ? "mydancr-tv-videos" : "dancer-photos").createSignedUrl(storagePath, 30);
+      const { data, error } = await admin.storage.from(poster ? MYDANCR_TV_POSTER_BUCKET : video ? "mydancr-tv-videos" : "dancer-photos").createSignedUrl(storagePath, 30);
       if (error || !data?.signedUrl) return json({ ok: false, error: "Media unavailable." }, 404);
       const range = request.headers.get("range");
       const upstream = await fetch(data.signedUrl, { cache: "no-store", signal: request.signal, headers: range && /^bytes=\d*-\d*$/.test(range) ? { range } : undefined });
       if (!upstream.ok) return json({ ok: false, error: "Media unavailable." }, 404);
       const headers = new Headers(INTERNAL_HEADERS);
-      headers.set("content-type", video ? "video/mp4" : upstream.headers.get("content-type") || "image/jpeg");
+      headers.set("content-type", video && !poster ? "video/mp4" : upstream.headers.get("content-type") || "image/jpeg");
       for (const key of ["content-length", "content-range", "accept-ranges"]) { const value = upstream.headers.get(key); if (value) headers.set(key, value); }
       return new Response(upstream.body, { status: upstream.status, headers });
     }

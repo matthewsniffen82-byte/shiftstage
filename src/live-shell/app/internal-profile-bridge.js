@@ -67,6 +67,7 @@
         }))),
         Promise.all(source.videos.map(async video => ({
           id: video.id, videoUrl: await internalProfileMediaUrl("video", video.id, token),
+          posterUrl: video.has_poster ? await internalProfileMediaUrl("video-poster", video.id, token) : "",
           caption: video.caption, durationSeconds: video.duration_seconds || 0, likeCount: video.like_count || 0,
           isPinned: video.is_pinned === true, publishedAt: video.published_at,
         }))),
