@@ -76,6 +76,23 @@ test("shuttle SMS constructs a generic dashboard alert even if a caller supplies
   assert.doesNotMatch(f.calls[0].contents.en, /Guest Sample|Private Hotel|guest@example.test/);
 });
 
+test("internal table push includes table and stage name, a private staff inbox link, short TTL and stable deduplication", async () => {
+  const f = deliveryFixture("venue");
+  const deliveryId = "11111111-1111-4111-8111-111111111111";
+  await f.deliverNotificationRows(f.client, [{ recipient_id: ownId, deliveryId,
+    notification_type: "support_message", title: "MyDancr Internal", body: "Table 12 wants Aster.",
+    payload: { kind: "internal_table_request", token: "private-table-capability", guestEmail: "private@example.test" },
+  }], { email: false });
+  const payload = f.calls[0];
+  assert.equal(payload.contents.en, "Table 12 wants Aster.");
+  assert.equal(payload.url, "https://example.test/internal#table-requests");
+  assert.equal(payload.ttl, 60);
+  assert.equal(payload.idempotency_key, deliveryId);
+  assert.equal(payload.web_push_topic, deliveryId.replaceAll("-", ""));
+  assert.deepEqual(payload.data, { kind: "internal_table_request" });
+  assert.doesNotMatch(JSON.stringify(payload), /private-table-capability|private@example/);
+});
+
 test("retired pickup chats never send external alerts", async () => {
   const f = deliveryFixture("customer");
   await f.deliverNotificationRows(f.client, [{ recipient_id: ownId, deliveryId: ownId,

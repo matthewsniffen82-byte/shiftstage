@@ -27,7 +27,7 @@ function fixture({members=true,active=true,staff=true,kind='table'}={}){
  };
  const lib={},route={};
  vm.runInNewContext(compile('src/lib/dancr/internal-roster.ts'),{exports:lib,require(name){if(name==='server-only')return {};if(name.endsWith('api-error-policy'))return {PublicApiError};if(name.endsWith('venue-access'))return {requireVenueAccess:async()=>{if(!staff)throw new Error('An active venue account is required.');return {venueId:id(2),venueName:'Synthetic club',role:'owner'}}};if(name.endsWith('supabase/request'))return {createRequestSupabaseContext:async request=>{if(request.headers.get('authorization')!=='Bearer staff')throw new Error('Sign in required.');return {user:{id:id(4)}}}};throw Error(name);}});
- vm.runInNewContext(compile('app/api/internal/[[...path]]/route.ts'),{exports:route,URL,Response,Headers,Request,Date,fetch:async()=>new Response('synthetic-image',{headers:{'content-type':'image/jpeg'}}),require(name){if(name==='node:crypto')return {createHash};if(name==='next/server')return {NextResponse:{json:Response.json}};if(name.endsWith('supabase/admin'))return {createAdminSupabaseClient:()=>admin};if(name.endsWith('bounded-json-body'))return {readBoundedJsonObject};if(name.endsWith('api-error-policy'))return {PublicApiError,resolveApiError};if(name.endsWith('internal-roster'))return lib;if(name.endsWith('social-profile-url'))return {safeSocialProfileUrl};throw Error(name);}});
+ vm.runInNewContext(compile('app/api/internal/[[...path]]/route.ts'),{exports:route,URL,Response,Headers,Request,Date,fetch:async()=>new Response('synthetic-image',{headers:{'content-type':'image/jpeg'}}),require(name){if(name==='node:crypto')return {createHash};if(name==='next/server')return {NextResponse:{json:Response.json},after:work=>{calls.push({name:'after'});void work();}};if(name.endsWith('internal-request-push'))return {deliverInternalRequestPush:async(_client,requestId)=>{calls.push({name:'deliverInternalRequestPush',requestId});}};if(name.endsWith('supabase/admin'))return {createAdminSupabaseClient:()=>admin};if(name.endsWith('bounded-json-body'))return {readBoundedJsonObject};if(name.endsWith('api-error-policy'))return {PublicApiError,resolveApiError};if(name.endsWith('internal-roster'))return lib;if(name.endsWith('social-profile-url'))return {safeSocialProfileUrl};throw Error(name);}});
  async function get(path=[],query='',auth=''){return route.GET(new Request('https://example.invalid/api/internal/'+path.join('/')+query,{headers:auth?{authorization:'Bearer '+auth}:{}}),{params:Promise.resolve({path})});}
  return {calls,get,post:async(body={},path=[],auth='staff')=>route.POST(new Request('https://example.invalid/api/internal',{method:'POST',headers:{authorization:'Bearer '+auth,'content-type':'application/json'},body:JSON.stringify(body)}),{params:Promise.resolve({path})})};
 }
@@ -50,4 +50,14 @@ test('staff use the unified affiliated roster for private profiles while guests 
  const f=fixture(); assert.equal((await f.get(['profile',id(5)],'', 'staff')).status,200);
  assert.equal(f.calls[0].name,'venue_roster_members');
  await f.get(['profile',id(5)],'?token='+id(3));assert.equal(f.calls[1].name,'internal_roster_members');
+});
+
+test('only successful table requests schedule push for the saved request identity',async()=>{
+ const f=fixture();const response=await f.post({dancerId:id(5),requestKey:id(9)},['link',id(3)],'');
+ assert.equal(response.status,200);assert.equal(f.calls.filter(c=>c.name==='after').length,1);
+ assert.equal(f.calls.find(c=>c.name==='deliverInternalRequestPush').requestId,id(9));
+ const bad=fixture({active:false});await bad.post({dancerId:id(5),requestKey:id(9)},['link',id(3)],'');
+ assert.equal(bad.calls.some(c=>c.name==='after'),false);
+ const manager=fixture();await manager.post({action:'link_create',kind:'table',label:'Table 2'});
+ assert.equal(manager.calls.some(c=>c.name==='after'),false);
 });

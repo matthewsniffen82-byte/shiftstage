@@ -1,4 +1,5 @@
 export const VENUE_NOTIFICATION_ALERTS = [
+  { key: "tableRequests", title: "Table requests", description: "A table requests a specific dancer in MyDancr Internal." },
   { key: "dancerActivity", title: "Dancer activity", description: "Working Now and scheduled appearance updates." },
   { key: "rosterChanges", title: "Roster changes", description: "Dancer affiliations added or removed." },
   { key: "clubDeals", title: "Club Deals", description: "Deal updates and requests that need attention." },
@@ -12,6 +13,7 @@ export const VENUE_NOTIFICATION_ALERTS = [
 export type VenueAlertKey = typeof VENUE_NOTIFICATION_ALERTS[number]["key"];
 export const DEFAULT_VENUE_NOTIFICATION_SETTINGS = {
   alertsEnabled: true,
+  tableRequests: true,
   dancerActivity: false,
   rosterChanges: true,
   clubDeals: true,
@@ -51,6 +53,7 @@ export function venueNotificationCategory(row: VenueNotification): VenueAlertKey
   // Account recovery, security and legal notices remain outside optional alerts.
   if (["account_security", "password_changed", "email_changed", "account_access_changed"].includes(kind)) return null;
   if (kind === "club_shuttle_request" || kind === "club_pickup") return "pickupRequests";
+  if (kind === "internal_table_request") return "tableRequests";
   if (kind.startsWith("venue_team_") || kind.startsWith("team_invitation_")) return "teamAccess";
   if (kind.startsWith("club_deal_") || kind.startsWith("venue_deal_")) return "clubDeals";
   if (kind.startsWith("venue_checkin_") || kind.startsWith("venue_checkout_")) return "dancerActivity";

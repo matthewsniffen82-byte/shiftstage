@@ -9,6 +9,10 @@
   },
   "crons": [
     {
+      "path": "/api/cron/internal-request-push",
+      "schedule": "* * * * *"
+    },
+    {
       "path": "/api/cron/image-moderation",
       "schedule": "*/5 * * * *"
     },

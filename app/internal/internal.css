@@ -6,3 +6,10 @@
 .ir-shell.ir-embedded{min-height:0;padding:0;background:transparent;width:100%;max-width:100%;margin:24px 0}.ir-embedded .ir-operations{margin-top:0;grid-template-columns:1fr}.ir-rename-form{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}.ir-rename-form input{width:150px}.ir-profile-control .ir-profile-dialog button{min-height:44px;padding:10px 15px;border:1px solid #786096;border-radius:10px;background:#39234f;color:#fff}.ir-profile-control .ir-profile-dialog a{color:#d5bcf5}.ir-profile-control>small{display:block;max-width:240px}.venue-roster-channel{color:#c4aaf5!important}
 
 body .ir-shell.ir-staff.ir-embedded{min-height:0;padding:0;margin:16px 0;background:transparent;max-width:100%}
+/* Staff opt in from their own phone; public table links never render this card. */
+.ir-push-settings{display:grid;gap:10px;margin:16px 0;padding:16px;border:1px solid #39405b;border-radius:14px;background:#121321;min-width:0}
+.ir-push-settings p{margin:5px 0 0;line-height:1.5;font-size:13px;color:#c6cada;overflow-wrap:anywhere}
+.ir-push-settings .ir-push-help{font-size:12px;color:#a6acc3}
+.ir-push-settings button{justify-self:start;min-height:44px;white-space:normal}
+.ir-push-settings a{color:#c4b5fd;text-decoration:underline}
+#table-requests{scroll-margin-top:24px}

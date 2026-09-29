@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { InternalRequestPushSettings } from "./InternalRequestPushSettings";
 import { isCurrentBrowserSession, persistRefreshedBrowserAuthSession, readBrowserAuthSession } from "@/src/lib/dancr/browser-session";
 
 type Dancer = { id: string; stageName: string; workingUntil: string; avatarRevision: string };
@@ -53,6 +54,7 @@ export function InternalRoster({ token, operationsOnly = false }: { token?: stri
   const requestKey = useRef("");
   const pendingDancer = useRef("");
   const alive = useRef(false);
+  const openedRequestInbox = useRef(false);
   const lastGoodRefresh = useRef(Date.now());
   const base = token ? `/api/internal/link/${encodeURIComponent(token)}` : "/api/internal";
 
@@ -94,6 +96,15 @@ export function InternalRoster({ token, operationsOnly = false }: { token?: stri
     return () => { alive.current = false; controller.abort(); clearTimeout(timer); clearInterval(watchdog); window.removeEventListener("storage", sessionChanged); };
   }, [refresh]);
 
+  useEffect(() => {
+    if (token || !snapshot || openedRequestInbox.current || window.location.hash !== "#table-requests") return;
+    const inbox = document.getElementById("table-requests");
+    if (!inbox) return;
+    openedRequestInbox.current = true;
+    inbox.scrollIntoView({ block: "start" });
+    inbox.focus({ preventScroll: true });
+  }, [snapshot, token]);
+
   async function mutate(body: Record<string, unknown>) {
     if (busy) return;
     setBusy(true); setNotice("");
@@ -128,7 +139,8 @@ export function InternalRoster({ token, operationsOnly = false }: { token?: stri
         </article>)}</div> : <div className="ir-empty"><h3>The floor is getting ready</h3><p>Dancers appear here after choosing Internal or Both at the dressing-room NFC sticker.</p></div>}
       </section> : null}
       {snapshot.receipt ? <p className="ir-notice" role="status">Your request: <strong>{snapshot.receipt.status === "acknowledged" ? "Seen by club staff" : snapshot.receipt.status}</strong></p> : null}
-      {staff ? <div className="ir-operations"><section className="ir-panel"><h2>Table requests <span>{snapshot.requests?.length || 0}</span></h2><p>“Seen” confirms staff saw the request. Coordinate availability with the dancer.</p>
+      {staff ? <div className="ir-operations"><section className="ir-panel" id="table-requests" tabIndex={-1}><h2>Table requests <span>{snapshot.requests?.length || 0}</span></h2><p>“Seen” confirms staff saw the request. Coordinate availability with the dancer.</p>
+        <InternalRequestPushSettings />
         {snapshot.requests?.length ? snapshot.requests.map(item => <article className="ir-request" key={item.id}><div><strong>{snapshot.links?.find(link => link.id === item.link_id)?.label || "Table"} → {snapshot.dancers.find(d => d.id === item.dancer_id)?.stageName}</strong><small>{item.status === "pending" ? "New request" : "Seen by staff"} · {new Date(item.created_at).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}</small></div><div className="ir-actions"><button disabled={busy} onClick={() => void mutate({ action: "request_status", id: item.id, expectedStatus: item.status, status: item.status === "pending" ? "acknowledged" : "completed" })}>{item.status === "pending" ? "Mark seen" : "Complete"}</button><button className="ir-secondary" disabled={busy} onClick={() => void mutate({ action: "request_status", id: item.id, expectedStatus: item.status, status: "cancelled" })}>Dismiss</button></div></article>) : <p className="ir-empty">No open requests.</p>}
       </section><section className="ir-panel"><h2>Table QR codes</h2><p>Create and number your tables, print their QR signs, or revoke a shared link.</p>
         {snapshot.role !== "staff" ? <form className="ir-link-form" onSubmit={event => { event.preventDefault(); void mutate({ action: "link_create", label, kind: "table" }); }}><label>Table number or name<input value={label} maxLength={60} required onChange={event => setLabel(event.target.value)} /></label><button disabled={busy || !label.trim()}>Create link</button></form> : null}

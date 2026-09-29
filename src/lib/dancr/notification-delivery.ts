@@ -150,6 +150,7 @@ async function deliverPushNotifications(rows: NotificationDeliveryRow[]) {
   let delivered = 0;
   for (const row of rows) {
     const shuttleRequest = (row.payload as Record<string, unknown> | null)?.kind === "club_shuttle_request";
+    const tableRequest = (row.payload as Record<string, unknown> | null)?.kind === "internal_table_request";
     const response = await requestDeliveryProvider("onesignal", "https://api.onesignal.com/notifications", {
       method: "POST",
       headers: {
@@ -164,7 +165,8 @@ async function deliverPushNotifications(rows: NotificationDeliveryRow[]) {
         // Pickup/contact details belong in the authenticated inbox, not a lock
         // screen or a provider payload accessible outside the application.
         contents: { en: shuttleRequest ? "New free shuttle request. Open your venue dashboard to contact the guest and confirm pickup." : row.body },
-        data: shuttleRequest ? { kind: "club_shuttle_request" } : row.payload || {},
+        data: tableRequest ? { kind: "internal_table_request" } : shuttleRequest ? { kind: "club_shuttle_request" } : row.payload || {},
+        ...(tableRequest ? { ttl: 60, web_push_topic: row.deliveryId?.replaceAll("-", ""), chrome_web_icon: `${publicAppUrl()}/mydancr-icon-192.png` } : {}),
         ...(row.deliveryId ? { idempotency_key: row.deliveryId } : {}),
         ...(notificationActionUrl(row) ? { url: notificationActionUrl(row) } : {}),
       }),
@@ -305,6 +307,7 @@ function notificationActionUrl(row: NotificationDeliveryRow) {
   const baseUrl = publicAppUrl();
   if (!baseUrl) return "";
   if (payload.kind === "club_shuttle_request") return `${baseUrl}/dashboard/venue`;
+  if (payload.kind === "internal_table_request") return `${baseUrl}/internal#table-requests`;
   if (followAlertKey(payload.kind)) return `${baseUrl}/dashboard/customer#customer-alerts`;
 
   if (row.notification_type === "dmca_status" && payload.caseId) {

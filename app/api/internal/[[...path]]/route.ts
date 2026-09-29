@@ -1,4 +1,5 @@
-import { NextResponse } from "next/server";
+import { after, NextResponse } from "next/server";
+import { deliverInternalRequestPush } from "@/src/lib/dancr/internal-request-push";
 import { createHash } from "node:crypto";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { readBoundedJsonObject } from "@/src/lib/bounded-json-body";
@@ -9,6 +10,7 @@ import type { SocialPlatform } from "@/src/lib/dancr/types";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+export const maxDuration = 60;
 type Context = { params: Promise<{ path?: string[] }> };
 const json = (data: unknown, status = 200) => NextResponse.json(data, { status, headers: INTERNAL_HEADERS });
 
@@ -96,6 +98,10 @@ export async function POST(request: Request, context: Context) {
       if (scope.link?.kind !== "table" || !isInternalUuid(body.dancerId) || !isInternalUuid(body.requestKey)) throw new PublicApiError("INVALID_REQUEST", "Choose an available dancer before sending a request.", 400);
       const { data, error } = await admin.rpc("internal_roster_request", { p_token: path[1], p_dancer: body.dancerId, p_key: body.requestKey });
       if (error) throw error;
+      if (isInternalUuid(data?.id)) after(async () => {
+        try { await deliverInternalRequestPush(createAdminSupabaseClient(), data.id); }
+        catch { console.warn("INTERNAL_REQUEST_PUSH_DEFERRED_TO_WORKER"); }
+      });
       return json({ ok: true, receipt: data });
     }
     if (path.length) return json({ ok: false, error: "Not found." }, 404);
