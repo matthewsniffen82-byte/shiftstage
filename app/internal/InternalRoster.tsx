@@ -129,7 +129,7 @@ export function InternalRoster({ token }: { token?: string }) {
   const staff = !token;
   const display = snapshot?.kind === "display";
   const dancers = display && snapshot.dancers.length ? [snapshot.dancers[slide % snapshot.dancers.length]] : snapshot?.dancers || [];
-  return <main className={`ir-shell${display ? " ir-display" : ""}`} data-global-navigation-swipe="ignore">
+  return <main className={`ir-shell${staff ? " ir-staff" : ""}${display ? " ir-display" : ""}`} data-global-navigation-swipe="ignore">
     <header className="ir-header"><div><a className="ir-brand" href={staff ? "/dashboard/venue" : "#"}>mydancr<span>INTERNAL</span></a><h1>{snapshot?.venueName || "Club roster"}</h1><p>{staff ? "Your floor. Your team. One live roster." : snapshot?.label || "Welcome to the club"}</p></div>{staff ? <a className="ir-secondary" href="/dashboard/venue">Club dashboard</a> : null}</header>
     {error ? <section className="ir-panel" role="alert"><h2>Roster unavailable</h2><p>{error}</p>{staff ? <a className="ir-button" href="/account?role=venue&mode=login&return_to=%2Finternal">Sign in to MyDancr</a> : null}<button onClick={() => void refresh()}>Try again</button></section> : !snapshot ? <p role="status">Loading the live roster…</p> : null}
     {notice ? <p className="ir-notice" role="status">{notice}</p> : null}
