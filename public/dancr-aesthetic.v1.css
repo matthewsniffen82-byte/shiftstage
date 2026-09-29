@@ -13234,12 +13234,12 @@ body.dancr-button-system #results.home-dancer-grid .home-dancer-grid-link:focus-
   }
 }
 
-/* Working Now keeps one full-width Free Entry action beneath the club link. */
+/* Keep the venue frame snug around its status and full-size action buttons. */
 body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell)
   .profile-tonight-card:is(.is-now, .has-club-deal) {
   grid-template-columns: minmax(0, 1fr) !important;
-  padding: 8px 10px !important;
-  gap: 8px !important;
+  padding: 4px 8px !important;
+  gap: 4px 8px !important;
   border: 1px solid #34303e !important;
   border-radius: 15px !important;
 }
