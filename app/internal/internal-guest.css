@@ -74,10 +74,12 @@ body.dancr-button-system .ir-shell.ir-guest .ir-profile-link:focus-visible { out
 body.dancr-button-system .ir-shell.ir-guest button:disabled { opacity: .5 !important; }
 
 /* A slimmer visible face keeps the full 44px tap target above the card edge. */
-body.dancr-button-system .ir-shell.ir-guest button.ir-table-request { --ir-guest-control-edge: #55545f; padding: 4px 8px !important; border-radius: 8px !important; }
-body.dancr-button-system .ir-shell.ir-guest button.ir-table-request::before { inset-block: 4px; background: linear-gradient(#111118, #111118); }
-body.dancr-button-system .ir-shell.ir-guest button.ir-table-request:enabled:active { --ir-guest-control-edge: var(--dancr-color-brand-primary, #7c3aed); }
-body.dancr-button-system .ir-shell.ir-guest button.ir-table-request:enabled:active::before { background: linear-gradient(#241238, #241238); }
+body.dancr-button-system .ir-shell.ir-guest button.ir-table-request { --ir-guest-control-edge: #8b5cf6; padding: 4px 8px !important; border-radius: 8px !important; }
+body.dancr-button-system .ir-shell.ir-guest button.ir-table-request::before { inset-block: 4px; background: linear-gradient(#6d28d9, #6d28d9); }
+body.dancr-button-system .ir-shell.ir-guest button.ir-table-request:enabled:is(:hover, :active) { --ir-guest-control-edge: #a78bfa; }
+body.dancr-button-system .ir-shell.ir-guest button.ir-table-request:enabled:active::before { background: linear-gradient(#5b21b6, #5b21b6); }
+body.dancr-button-system .ir-shell.ir-guest button.ir-table-request:disabled { --ir-guest-control-edge: #55545f; }
+body.dancr-button-system .ir-shell.ir-guest button.ir-table-request:disabled::before { background: linear-gradient(#111118, #111118); }
 
 body .ir-guest .ir-panel { padding: 14px; border-color: #34343c; border-radius: 14px; background: #08080b; }
 body .ir-guest .ir-notice { margin: 12px 0; padding: 10px 12px; border-color: #45454f; border-radius: 10px; color: #cbd5e1 !important; background: #08080b; }
