@@ -2,6 +2,7 @@ import { toPublicClubDeal } from "@/src/lib/dancr/public-club-deal";
 import { NextResponse } from "next/server";
 import { apiError } from "@/src/lib/api";
 import { resolveApiError } from "@/src/lib/api-error-policy";
+import { isVisibilityMode } from "@/src/lib/dancr/visibility-mode";
 import { readBoundedJsonObject } from "@/src/lib/bounded-json-body";
 import {
   broadcastFollowedClubRosterAddition,
@@ -92,6 +93,7 @@ export async function POST(request: Request, context: RouteContext) {
     if (!tag) return inactiveTag();
 
     if (tag.type === "dressing_room") {
+      if (!isVisibilityMode(body.visibility)) return noStore({ ok: false, error: "Choose Internal only, External only, or Both before confirming your tap." }, 400);
       const authContext = await createRequestSupabaseContext(request, { role: "dancer" });
       const { client, user } = authContext;
       const { data: account, error } = await client
@@ -113,10 +115,11 @@ export async function POST(request: Request, context: RouteContext) {
         tagId: tag.id,
         dancerUserId: user.id,
         sessionId,
+        visibility: body.visibility,
         request,
       });
       const followNotificationTasks: Promise<unknown>[] = [];
-      if (affiliation?.affiliationActivated === true && affiliation?.id && affiliation?.dancerId) {
+      if (affiliation?.visibility !== "internal" && !affiliation?.replayed && affiliation?.affiliationActivated === true && affiliation?.id && affiliation?.dancerId) {
         followNotificationTasks.push(broadcastFollowedClubRosterAddition(admin, {
           dancerId: String(affiliation.dancerId),
           eventId: String(affiliation.id),
@@ -126,7 +129,7 @@ export async function POST(request: Request, context: RouteContext) {
           venueSlug: tag.venue.slug,
         }));
       }
-      if (affiliation?.shiftCheckedIn === true && affiliation?.tapApplied === true && affiliation?.shiftId && affiliation?.dancerId) {
+      if (affiliation?.visibility !== "internal" && !affiliation?.replayed && affiliation?.shiftCheckedIn === true && affiliation?.tapApplied === true && affiliation?.shiftId && affiliation?.dancerId) {
         followNotificationTasks.push(broadcastFollowedDancerWorkingNow(admin, {
           dancerId: String(affiliation.dancerId),
           eventId: String(affiliation.shiftId),
@@ -153,7 +156,7 @@ export async function POST(request: Request, context: RouteContext) {
         action: "dancer_check_in",
         affiliation,
         session: authContext.session || null,
-        message: affiliation?.enrollmentStatus === "pending"
+        message: affiliation?.replayed ? "This tap was already processed. It did not change or extend your shift. Open your dashboard for your current status." : `Visibility: ${body.visibility === "internal" ? "Internal only — customers can open your full profile from your roster avatar" : body.visibility === "external" ? "External only — your full public profile is visible" : "Both — internal roster and external MyDancr"}. ` + (affiliation?.enrollmentStatus === "pending"
           ? `Your ${tag.venue.name} venue access is saved. Finish profile setup and media review; it will activate automatically.`
            : affiliation?.alreadyWorking
              ? `You are already Working Now at ${affiliation?.venueName || tag.venue.name}. This tap did not extend the six-hour session.`
@@ -161,7 +164,7 @@ export async function POST(request: Request, context: RouteContext) {
              ? `Your Working Now cooldown is active. You can tap again after ${formatTapTime(affiliation?.nextTapAllowedAt)}.`
            : affiliation?.shiftCheckedIn
              ? `You are Working Now at ${tag.venue.name} for six hours. A six-hour cooldown follows, and retaps cannot extend it.`
-             : `Verified at ${tag.venue.name}. Your venue affiliation and profile are active.`,
+             : `Verified at ${tag.venue.name}. Your venue affiliation and profile are active.`),
       }), rememberedAccountToken);
     }
 

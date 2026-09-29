@@ -42,6 +42,7 @@ export type DancerNfcDashboardState = {
     profileStatus: string | null;
     mediaReviewStatus: string | null;
     isPublic: boolean;
+    visibility: string | null;
   };
   affiliations: Array<{
     id: string;
@@ -202,7 +203,7 @@ export async function recordNfcTagScan(client: DancrClient, tagId: string) {
 
 export async function registerDancerFromNfc(
   client: DancrClient,
-  input: { tagId: string; dancerUserId: string; sessionId: string; request: Request },
+  input: { tagId: string; dancerUserId: string; sessionId: string; visibility: import("./visibility-mode").VisibilityMode; request: Request },
 ) {
   if (!UUID_PATTERN.test(input.tagId) || !UUID_PATTERN.test(input.dancerUserId) || !UUID_PATTERN.test(input.sessionId)) {
     throw new Error("Invalid phone-tap session.");
@@ -212,6 +213,7 @@ export async function registerDancerFromNfc(
     tagId: input.tagId,
     dancerUserId: input.dancerUserId,
     sessionId: input.sessionId,
+    visibility: input.visibility,
     audit: {
       ip_address: audit.ipAddress,
       user_agent: audit.userAgent,
@@ -266,12 +268,14 @@ export async function getDancerNfcDashboardState(
     .order("tapped_at", { ascending: false })
     .limit(1)
     .maybeSingle();
-  const [{ data: affiliations, error: affiliationsError }, { data: enrollment, error: enrollmentError }] = await Promise.all([
+  const [{ data: affiliations, error: affiliationsError }, { data: enrollment, error: enrollmentError }, { data: channels, error: channelsError }] = await Promise.all([
     affiliationQuery,
     enrollmentQuery,
+    profile ? client.from("dancer_channel_preferences").select("visibility").eq("dancer_id", profile.id).maybeSingle() : Promise.resolve({ data: null, error: null }),
   ]);
   if (affiliationsError) throw affiliationsError;
   if (enrollmentError) throw enrollmentError;
+  if (channelsError) throw channelsError;
 
   return {
     profileAuthorization: {
@@ -281,6 +285,7 @@ export async function getDancerNfcDashboardState(
       profileStatus: profile?.status ? String(profile.status) : null,
       mediaReviewStatus: profile?.photo_review_status ? String(profile.photo_review_status) : null,
       isPublic: profile?.is_public === true,
+      visibility: channels?.visibility || null,
     },
     affiliations: (affiliations || []).map((row: any) => ({
       id: String(row.id),

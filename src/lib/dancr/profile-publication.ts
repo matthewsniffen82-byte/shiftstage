@@ -36,6 +36,9 @@ function unconfirmedPublication() {
 }
 
 function publicationState(profile: any, dancerId: string, transition: DancerPublicationTransition, actorUserId?: string | null): DancerPublicationState {
+  if (transition === "set_public" && profile?.channel_visibility === "internal" && profile?.is_public === false) {
+    throw new PublicApiError("FORBIDDEN", "Your NFC choice is Internal only. Choose External only or Both at the club’s dressing-room sticker to appear on external MyDancr.", 403);
+  }
   if (!profile || typeof profile !== "object" || Array.isArray(profile)
     || !uuid(profile.id) || profile.id !== dancerId.toLowerCase() || !uuid(profile.user_id)
     || !["draft", "pending_review", "approved", "rejected", "disabled"].includes(profile.status)
@@ -51,7 +54,7 @@ function publicationState(profile: any, dancerId: string, transition: DancerPubl
     || (transition === "admin_reject" && (profile.status !== "rejected" || profile.verification_status !== "rejected" || profile.approved_at !== null || profile.is_public))
     || (transition === "set_public" && !profile.is_public) || (transition === "set_private" && profile.is_public)
     || (transition === "disable" && (profile.status !== "disabled" || profile.disabled_at === null || profile.is_public))
-    || (transition === "reactivate" && (profile.is_public !== (profile.status === "approved")
+    || (transition === "reactivate" && (profile.is_public !== (profile.status === "approved" && profile.channel_visibility !== "internal")
       || !["approved", "rejected", "pending_review", "disabled"].includes(profile.status)
       || (profile.status !== "disabled" && profile.disabled_at !== null)))) throw unconfirmedPublication();
   return {

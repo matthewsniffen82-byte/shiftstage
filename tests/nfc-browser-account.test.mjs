@@ -46,7 +46,7 @@ function request(cookie = "", body) {
   return new Request("https://mydancr.example/api/nfc/tag", {
     method: body ? "POST" : "GET",
     headers: { cookie, "content-type": "application/json" },
-    ...(body ? { body: JSON.stringify(body) } : {}),
+    ...(body ? { body: JSON.stringify({ visibility: "external", ...body }) } : {}),
   });
 }
 
@@ -56,6 +56,7 @@ function fixture({ userId = userA, type = "dressing_room", role = "dancer", fail
   const route = load("app/api/nfc/[token]/route.ts", {
     "@/src/lib/api": { apiError: (error) => Response.json({ ok: false, error: error.message }, { status: 500 }) },
     "@/src/lib/api-error-policy": policy,
+    "@/src/lib/dancr/visibility-mode": { isVisibilityMode: value => ["internal", "external", "both"].includes(value) },
     "@/src/lib/bounded-json-body": { readBoundedJsonObject: (req) => req.json() },
     "@/src/lib/dancr/cashier-deal-redemption": {
       CashierDealRedemptionError: class extends Error {},

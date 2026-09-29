@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import NfcIcon from "../components/NfcIcon";
 import { requestDancerVenueVerificationJson } from "./dashboard-session";
+import { VISIBILITY_OPTIONS } from "@/src/lib/dancr/visibility-mode";
 
 type VenueSummary = { id?: string; name?: string; slug?: string; city?: string; state?: string | null };
 type Affiliation = {
@@ -17,6 +18,7 @@ type NfcState = {
     authorizedAt?: string | null;
     mediaReviewStatus?: string | null;
     isPublic?: boolean;
+    visibility?: string | null;
   };
   enrollment?: {
     status?: string;
@@ -49,6 +51,8 @@ export default function DancerNfcPanel({
   const authorized = nfcState.profileAuthorization?.authorized === true || activeAffiliations.length > 0;
   const isPublic = nfcState.profileAuthorization?.isPublic === true;
   const pendingEnrollment = enrollment?.status === "pending";
+  const visibility = VISIBILITY_OPTIONS.find(option => option.value === nfcState.profileAuthorization?.visibility);
+  const visibilitySummary = visibility ? <p className="dancer-nfc-status">Last NFC choice: <strong>{visibility.label}</strong>. {visibility.description}</p> : null;
 
   useEffect(() => {
     mountedRef.current = true;
@@ -144,7 +148,7 @@ export default function DancerNfcPanel({
         <ul>
           <li>Unlock your phone and tap the club&apos;s dressing-room sticker. Open the link and sign in if prompted.</li>
           <li>Working Now lasts <strong>6 hours</strong>, followed by a <strong>6-hour cooldown</strong> across all clubs. Tapping again won&apos;t extend it.</li>
-          <li>Your current club appears publicly only while you&apos;re checked in.</li>
+          <li>Choose Internal only, External only, or Both at each tap. Internal avatar cards open your full approved profile.</li>
         </ul>
         {!isPublic && !authorized ? <p>Finish profile setup and get your avatar and at least one profile photo approved before activation.</p> : null}
       </div>
@@ -165,6 +169,7 @@ export default function DancerNfcPanel({
         </summary>
         <div className="dancer-nfc-compact-body">
           <p>Tap a club&apos;s dressing-room sticker to check in.</p>
+          {visibilitySummary}
           {affiliationRoster}
           {checkInDetails}
           <button className="dancer-nfc-refresh" type="button" disabled={Boolean(pendingId)} onClick={refresh}>
@@ -198,8 +203,9 @@ export default function DancerNfcPanel({
         <ol className="dancer-nfc-guide">
           {!authorized ? <li><strong>Activate once</strong><span>Your first tap activates your completed profile and checks you in at that club.</span></li> : null}
           <li><strong>Check in at any club</strong><span>Tap that club&apos;s dressing-room sticker to connect and show Working Now there.</span></li>
-          <li><strong>Post upcoming dates</strong><span>Once connected to a club, you can post upcoming dates there.</span></li>
+          <li><strong>Choose where you appear</strong><span>Select Internal only, External only, or Both. Your full profile is required for every choice.</span></li>
         </ol>
+        {visibilitySummary}
         {affiliationRoster}
         {checkInDetails}
         <button className="dancer-nfc-refresh" type="button" disabled={Boolean(pendingId)} onClick={refresh}>

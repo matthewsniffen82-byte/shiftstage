@@ -37,6 +37,13 @@ for(const envelope of [()=>null,()=>undefined,()=>[],()=>false])test('invalid pu
 test('unknown private receipt fields are not returned to the caller',async()=>{
  const h=harness({receipt:r=>({...r,privateReview:'Private review'})}),result=await h.run();assert.deepEqual(Object.keys(result).sort(),['approvedAt','disabledAt','id','isPublic','status','userId','venueApprovedAt','venueApprovedByUserId','venueApprovedVenueId','verificationStatus']);
 });
+
+test('internal-only publication receipt gives a useful instruction instead of claiming external publication',async()=>{
+ const h=harness({receipt:r=>({...r,is_public:false,channel_visibility:'internal'})});await assert.rejects(h.run('set_public'),error=>error.status===403&&/dressing-room sticker/.test(error.message));assert.equal(h.calls.length,1);
+});
+test('reactivation can retain internal-only consent without publishing externally',async()=>{
+ const result=await harness({receipt:r=>({...r,is_public:false,channel_visibility:'internal'})}).run('reactivate');assert.equal(result.status,'approved');assert.equal(result.isPublic,false);
+});
 test('lost committed response keeps resulting private visibility and requires review',async()=>{
  const h=harness({lost:true});await assert.rejects(h.run(),e=>e.status===503);assert.equal(h.calls.length,1);assert.equal((await snapshot(db)).dancer_profiles[0].is_public,false);
 });

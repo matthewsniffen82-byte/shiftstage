@@ -350,6 +350,8 @@ export function GlobalMobileBottomNav() {
     };
   }, [city, pathname]);
 
+  if (pathname.startsWith("/internal")) return null;
+
   return (
     <>
       {/* Keep the dock styled in the server HTML before hydration. */}

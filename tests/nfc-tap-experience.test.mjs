@@ -90,7 +90,7 @@ test("changing NFC route tokens cancels old transactions and resets the tap stat
   assert.match(client, /const pendingIntent = useMemo\(\(\) => readPendingDealIntent\(token\), \[token\]\);/);
   assert.match(client, /useEffect\(\(\) => \{\s+tapAbortRef\.current\?\.abort\(\);[\s\S]*?autoSubmittedRef\.current = false;/);
   assert.match(client, /setStatus\("Reading club tag…"\);[\s\S]*?setPhase\("reading"\);/);
-  assert.match(client, /setComplete\(false\);[\s\S]*?setSelectedDealId\(""\);\s+\}, \[token\]\);/);
+  assert.match(client, /setComplete\(false\);[\s\S]*?setVisibility\(""\);[\s\S]*?tapSessionRef.current = "";\s+\}, \[token\]\);/);
 });
 
 test("Step 3 eligibility matches the submitted onboarding requirements", () => {

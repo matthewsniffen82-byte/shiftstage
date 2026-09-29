@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { PublicClubDeal } from "@/src/lib/dancr/types";
 import NfcIcon from "@/app/components/NfcIcon";
+import { VISIBILITY_OPTIONS, type VisibilityMode } from "@/src/lib/dancr/visibility-mode";
 import {
   persistRefreshedBrowserAuthSession,
   readBrowserAuthSession,
@@ -11,7 +12,6 @@ import {
 import { customerFacingDealDescription, customerFacingDealTerms } from "@/src/lib/dancr/deal-copy";
 import { CLUB_ARRIVAL_VERIFICATION, CLUB_TRANSPORTATION_TERMS, isEligibleClubTransportation, type EligibleClubTransportation } from "@/src/lib/dancr/club-deal-transportation";
 
-const TAP_SESSION_KEY = "mydancrNfcTapSessionV1";
 const DEAL_INTENT_KEY = "mydancrPendingNfcDealV2";
 
 type TagState = {
@@ -44,6 +44,8 @@ export function NfcTapClient({ token }: { token: string }) {
   const [complete, setComplete] = useState(false);
   const [dancerActivationComplete, setDancerActivationComplete] = useState(false);
   const [selectedDealId, setSelectedDealId] = useState("");
+  const [visibility, setVisibility] = useState<VisibilityMode | "">("");
+  const tapSessionRef = useRef("");
   const [auth, setAuth] = useState({ role: "", accessToken: "", refreshToken: "" });
   const autoSubmittedRef = useRef(false);
   const mountedRef = useRef(false);
@@ -82,6 +84,8 @@ export function NfcTapClient({ token }: { token: string }) {
     setDancerActivationComplete(false);
     setBrowserAccountConflict(false);
     setSelectedDealId("");
+    setVisibility("");
+    tapSessionRef.current = "";
   }, [token]);
 
   useEffect(() => {
@@ -109,7 +113,7 @@ export function NfcTapClient({ token }: { token: string }) {
         setPhase("ready");
         const preferredDeal = data.deals?.find((deal: PublicClubDeal) => deal.id === preferred);
         setStatus(data.tag.type === "dressing_room"
-          ? "Sign in as a dancer to start one six-hour Working Now session."
+          ? "Choose where to appear, then confirm your club check-in."
           : pendingIntent?.venueId === data.venue.id && preferredDeal
             ? `${preferredDeal.dealTitle} is selected. This registered cashier tap is completing the redemption automatically.`
           : data.deals?.length
@@ -127,6 +131,8 @@ export function NfcTapClient({ token }: { token: string }) {
 
   const submitTap = useCallback(async () => {
     if (!mountedRef.current || !state || tapInFlightRef.current) return;
+    if (state.tag.type === "dressing_room" && !visibility) return;
+    tapSessionRef.current ||= crypto.randomUUID();
     const controller = new AbortController();
     tapAbortRef.current?.abort();
     tapAbortRef.current = controller;
@@ -148,7 +154,8 @@ export function NfcTapClient({ token }: { token: string }) {
         headers,
         credentials: "same-origin",
         body: JSON.stringify({
-          sessionId: readOrCreateTapSessionId(),
+          sessionId: tapSessionRef.current,
+          visibility,
           dealId: selectedDealId || null,
           sourceType: intent?.sourceType || "club_page",
           dancerId: intent?.dancerId || null,
@@ -215,18 +222,15 @@ export function NfcTapClient({ token }: { token: string }) {
         if (mountedRef.current) setIsSubmitting(false);
       }
     }
-  }, [pendingIntent, selectedDealId, state, token]);
+  }, [pendingIntent, selectedDealId, state, token, visibility]);
 
   useEffect(() => {
     if (autoSubmittedRef.current || !state || complete) return;
-    const shouldSubmitDancerTap = state.tag.type === "dressing_room"
-      && auth.role === "dancer"
-      && Boolean(auth.accessToken);
     const shouldSubmitCashierTap = state.tag.type === "cashier"
       && pendingIntent?.venueId === state.venue.id
       && pendingIntent.dealId === selectedDealId
       && state.deals.some((deal) => deal.id === selectedDealId);
-    if (!shouldSubmitDancerTap && !shouldSubmitCashierTap) return;
+    if (!shouldSubmitCashierTap) return;
     autoSubmittedRef.current = true;
     void submitTap();
   }, [auth.accessToken, auth.role, complete, pendingIntent, selectedDealId, state, submitTap]);
@@ -253,10 +257,18 @@ export function NfcTapClient({ token }: { token: string }) {
 
         {state?.tag.type === "dressing_room" && !complete ? (
           <div className="nfc-action-copy">
-            <strong>Dressing-room Working Now</strong>
+            <strong>Choose where you appear</strong>
             <p>Log in to your MyDancr dancer account first. No particular page needs to be open.</p>
             <p>Unlock your phone and tap the club&apos;s dressing-room sticker. Open the link if prompted, and log in there if asked.</p>
-            <p>Once your profile is activated, each check-in shows you Working Now for 6 hours, followed by a 6-hour cooldown at all clubs. Tapping again does not extend it. No phone location is collected.</p>
+            <p>Complete your profile and Ondato age verification first. Your check-in lasts 6 hours, followed by a 6-hour cooldown at all clubs. Retapping does not extend it.</p>
+            <p>Everyone completes a full profile. Internal shows your same approved avatar and stage name; customers can tap your avatar to see your full profile. Internal only keeps you out of external discovery.</p>
+            {!dancerNeedsSignIn ? <fieldset className="nfc-visibility" disabled={isSubmitting}>
+              <legend>Show me on</legend>
+              {VISIBILITY_OPTIONS.map(option => <label key={option.value}>
+                <input type="radio" name="visibility" value={option.value} checked={visibility === option.value} onChange={() => { setVisibility(option.value); tapSessionRef.current = ""; }} />
+                <span><strong>{option.label}</strong><small>{option.description}</small></span>
+              </label>)}
+            </fieldset> : null}
           </div>
         ) : null}
 
@@ -289,13 +301,13 @@ export function NfcTapClient({ token }: { token: string }) {
               </Link> : null}
             </>
           ) : state.tag.type === "cashier" && phase !== "error" ? null : (
-            <button className="nfc-primary" type="button" onClick={submitTap} disabled={isSubmitting}>
+            <button className="nfc-primary" type="button" onClick={submitTap} disabled={isSubmitting || (state.tag.type === "dressing_room" && !visibility)}>
               {isSubmitting
                 ? "Confirming…"
                 : phase === "error"
                   ? "Try again"
                 : state.tag.type === "dressing_room"
-                  ? "Confirm Working Now"
+                  ? "Confirm my choice & check in"
                   : "Try again"}
             </button>
           )
@@ -312,6 +324,7 @@ export function NfcTapClient({ token }: { token: string }) {
       </section>
       <p className="nfc-security">Only use MyDancr tap stickers physically posted by club staff. A disabled or replaced sticker cannot authorize an action.</p>
       <style>{`
+        .nfc-visibility{display:grid;gap:10px;border:0;padding:0;margin:8px 0}.nfc-visibility legend{padding:0 0 10px;color:#c4b5fd;font-weight:700}.nfc-visibility label{display:flex;align-items:flex-start;gap:12px;padding:14px;border:1px solid #45404f;border-radius:14px;cursor:pointer}.nfc-visibility label:has(input:checked){border-color:#a78bfa;background:#211630}.nfc-visibility input{accent-color:#a78bfa;margin-top:4px;min-width:20px;min-height:20px}.nfc-visibility span{display:grid;gap:6px}.nfc-visibility small{color:#bbb5c5;line-height:1.45}.nfc-primary:disabled{opacity:.5;cursor:not-allowed}
         .nfc-page{min-height:100dvh;display:grid;grid-template-columns:minmax(0,1fr);align-content:start;justify-items:center;gap:18px;box-sizing:border-box;padding:max(clamp(28px,6dvh,58px),env(safe-area-inset-top)) 16px max(90px,calc(24px + env(safe-area-inset-bottom)));overflow-anchor:none;color:#fff;background:radial-gradient(circle at 50% 18%,rgba(53,216,255,.08),transparent 30rem),#050507;font-family:var(--font-body,Arial,sans-serif)}
         .nfc-card{position:relative;width:min(430px,calc(100vw - 32px));max-width:100%;display:grid;justify-items:center;align-content:start;gap:13px;box-sizing:border-box;padding:26px 20px;overflow-anchor:none;border:1px solid rgba(255,255,255,.14);border-radius:24px;background:linear-gradient(145deg,rgba(17,18,22,.96),rgba(5,6,8,.985));box-shadow:0 28px 80px rgba(0,0,0,.62),inset 0 1px 0 rgba(255,255,255,.06)}
         .nfc-exit{position:absolute;z-index:2;top:14px;right:14px;width:48px;height:48px;display:grid;place-items:center;border:1px solid rgba(255,255,255,.14);border-radius:50%;color:rgba(255,255,255,.78);background:rgba(34,35,41,.94);box-shadow:0 10px 28px rgba(0,0,0,.34);text-decoration:none}.nfc-exit svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round}.nfc-exit:focus-visible{outline:3px solid rgba(53,216,255,.74);outline-offset:3px}
@@ -329,18 +342,6 @@ function readNfcAuthSession() {
     accessToken: typeof value?.accessToken === "string" ? value.accessToken : "",
     refreshToken: typeof value?.refreshToken === "string" ? value.refreshToken : "",
   };
-}
-
-function readOrCreateTapSessionId() {
-  try {
-    const existing = window.localStorage.getItem(TAP_SESSION_KEY) || "";
-    if (/^[0-9a-f-]{36}$/i.test(existing)) return existing;
-    const next = crypto.randomUUID();
-    window.localStorage.setItem(TAP_SESSION_KEY, next);
-    return next;
-  } catch {
-    return crypto.randomUUID();
-  }
 }
 
 function readPendingDealIntent(routeToken: string): PendingDealIntent | null {

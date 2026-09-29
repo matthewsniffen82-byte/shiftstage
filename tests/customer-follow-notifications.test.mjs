@@ -49,8 +49,10 @@ test("follow alerts are globally gated, active-customer-only, and idempotent", (
   assert.match(broadcasts, /deliverNotificationRows\(client, insertedRows\)/);
 });
 
-test("only the four requested follow events create customer activity alerts", () => {
-  assert.match(shiftRoute, /broadcastFollowedDancerUpcomingShift/);
+test("current follow events respect publication while retired upcoming posts stay inactive", () => {
+  assert.match(shiftRoute, /upcoming_shifts_retired/);
+  assert.doesNotMatch(shiftRoute, /broadcastFollowedDancerUpcomingShift/);
+  assert.match(broadcasts, /isDancerExternallyListed/);
   assert.match(broadcasts, /kind: "followed_dancer_upcoming_shift"/);
   assert.match(nfcRoute, /shiftCheckedIn === true && affiliation\?\.tapApplied === true[\s\S]*?broadcastFollowedDancerWorkingNow/);
   assert.match(broadcasts, /kind: "followed_dancer_working_now"/);

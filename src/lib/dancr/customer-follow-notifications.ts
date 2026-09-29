@@ -23,6 +23,7 @@ export async function broadcastFollowedDancerUpcomingShift(
   client: DancrClient,
   input: FollowNotificationInput & { shiftDate: string },
 ) {
+  if (!await isDancerExternallyListed(client, input.dancerId)) return 0;
   if (!await isVenueListed(client, input.venueId)) return 0;
   const recipientIds = await followedCustomerIds(client, "follows", "dancer_id", input.dancerId || "", "upcomingShifts");
   return persistAndDeliver(client, recipientIds, input, {
@@ -38,6 +39,7 @@ export async function broadcastFollowedDancerWorkingNow(
   client: DancrClient,
   input: FollowNotificationInput,
 ) {
+  if (!await isDancerExternallyListed(client, input.dancerId)) return 0;
   if (!await isVenueListed(client, input.venueId)) return 0;
   const recipientIds = await followedCustomerIds(client, "follows", "dancer_id", input.dancerId || "", "workingNow");
   return persistAndDeliver(client, recipientIds, input, {
@@ -66,6 +68,7 @@ export async function broadcastFollowedClubRosterAddition(
   client: DancrClient,
   input: FollowNotificationInput,
 ) {
+  if (!await isDancerExternallyListed(client, input.dancerId)) return 0;
   if (!await isVenueListed(client, input.venueId)) return 0;
   const recipientIds = await followedCustomerIds(client, "venue_follows", "venue_id", input.venueId, "newDancers");
   return persistAndDeliver(client, recipientIds, input, {
@@ -74,6 +77,14 @@ export async function broadcastFollowedClubRosterAddition(
     body: `${input.stageName} was added to ${input.venueName}'s dancer roster.`,
     kind: "followed_club_roster_addition",
   });
+}
+
+async function isDancerExternallyListed(client: DancrClient, dancerId?: string) {
+  if (!dancerId) return false;
+  const { data, error } = await client.from("dancer_profiles").select("id")
+    .eq("id", dancerId).eq("is_public", true).eq("status", "approved").eq("verification_status", "approved").is("disabled_at", null).maybeSingle();
+  if (error) throw error;
+  return Boolean(data);
 }
 
 async function isVenueListed(client: DancrClient, venueId: string) {
