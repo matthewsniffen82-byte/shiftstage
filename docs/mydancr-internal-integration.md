@@ -54,6 +54,12 @@ Apply these explicitly, in order, with the existing migration safety procedure. 
 
 ## Validation and acceptance
 
+### Fictional Internal roster
+
+`20260929100000_internal_demo_roster.sql` allows an explicitly marked `demo_locked` shift to use the existing Internal roster and table-request workflow. Eligibility requires the existing layout-review dataset marker, matching synthetic email and profile slug, a disabled Auth login, and the prelaunch age-enforcement setting to remain off. Real dancers still require Ondato verification. Enabling age enforcement disables the fictional exception; affiliation, channel, account, venue and shift-expiry checks apply to both paths.
+
+`scripts/seed-internal-demo-echo-house.sql` assigns the five existing fictional profiles Luna, Ivy, Kai, Sienna and Nova to Echo House. It moves their existing demo shifts, records their previous venues in shift metadata, adds active demo affiliations and Both-channel records, and rolls back unless all five appear in both rosters. It creates no NFC tap or identity-verification records. Run only against the Dancr project after applying the migration; the script checks the exact venue and synthetic dataset before writing.
+
 The focused integration suite covers all three choices, mandatory profile/age verification, retries, cross-club isolation, cooldowns, suspension/revocation/expiry, avatar identity, capability profile/media access, table requests, staff permissions, and safe publication receipts. A transaction-only rehearsal against the current MyDancr schema confirms the migrations execute and browser roles cannot invoke protected functions; the rehearsal rolls back.
 
 The browser-control service exposed no available browser during implementation. Client compilation, focused TypeScript and lint checks can run locally, but mobile visual inspection is an outstanding acceptance check. Before club use, complete a real Ondato onboarding and physical sticker tap for each choice, open the internal avatar profile from a table QR, confirm external discovery follows the choice, and verify the table roster clears after shift expiry or affiliation removal. Browser/mobile visual review and real NFC/Ondato testing remain outstanding because no browser surface is connected.
