@@ -43151,12 +43151,22 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
       window.parent.postMessage({ type: "mydancr:internal-profile-close" }, window.location.origin);
     }
 
+    function startInternalProfileAuth(mode) {
+      if (!internalProfileFrameId || !internalRosterProfile) return false;
+      window.parent.postMessage({ type: "mydancr:internal-profile-auth", profileId: internalRosterProfile.id, mode }, window.location.origin);
+      return true;
+    }
+
     function initializeInternalProfileFrame() {
       if (!internalProfileFrameId) return;
       document.addEventListener("click", event => {
         if (event.target instanceof Element && event.target.closest("[data-internal-table-request]")) sendInternalTableRequest();
       });
       window.addEventListener("message", event => {
+        if (event.origin === window.location.origin && event.source === window.parent && event.data?.type === "mydancr:internal-profile-auth-error") {
+          showToast(event.data.message);
+          return;
+        }
         void openInternalProfileMessage(event).catch(() => {
           internalProfileRevision = "";
           showToast("The profile could not load. Close it and try again.");
@@ -56127,6 +56137,10 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
 
     function closeAuthPage() {
       blurFocusedAuthField();
+      if (/^\/internal\/follow-return\?state=[0-9a-f-]{36}$/i.test(pendingAccountAuthReturnTo)) {
+        window.location.assign(`${pendingAccountAuthReturnTo}&cancel=1`);
+        pendingAccountAuthReturnTo = "";
+      }
       pendingVenueAuthReturnTo = "";
       pendingAccountAuthReturnTo = "";
       pendingVenueAgentReferralCode = "";
@@ -65110,12 +65124,14 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
     });
     accountRequiredCreateLink?.addEventListener("click", (event) => {
       event.preventDefault();
+      if (startInternalProfileAuth("signup")) return;
       closeAccountRequiredPrompt({ restoreFocus: false });
       closeProfileModal();
       openFreshCustomerSignup();
     });
     accountRequiredSignInLink?.addEventListener("click", (event) => {
       event.preventDefault();
+      if (startInternalProfileAuth("login")) return;
       closeAccountRequiredPrompt({ restoreFocus: false });
       closeProfileModal();
       openAuthRole("customer");
@@ -65606,7 +65622,7 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
           password: document.getElementById("customerPassword").value,
           city: citySelect.value
         };
-        if (authMode === "signup") payload.emailRedirectTo = saveAuthResume("customer", "/dashboard/customer?confirmed=1");
+        if (authMode === "signup") payload.emailRedirectTo = saveAuthResume("customer", pendingAccountAuthReturnTo || "/dashboard/customer?confirmed=1");
         const result = await requestAuth(payload);
         if (authMode === "signup") {
           isCustomerLoggedIn = false;

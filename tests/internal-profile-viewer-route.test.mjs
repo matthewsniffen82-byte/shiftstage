@@ -64,7 +64,7 @@ test("an unexpected source framing policy fails closed", async () => {
 test("the roster embeds the dedicated viewer without putting its club token in HTML", () => {
   const exports = {};
   vm.runInNewContext(compile("app/internal/InternalFullProfile.tsx"), {
-    exports, require: name => require(name),
+    exports, require: name => name === "@/src/lib/dancr/internal-profile-auth-return" ? {} : require(name),
   });
   const markup = renderToStaticMarkup(React.createElement(exports.InternalFullProfile, {
     profile: { id, stage_name: "Demo dancer", photos: [], videos: [], socialLinks: [] },

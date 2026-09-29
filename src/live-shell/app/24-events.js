@@ -24,7 +24,7 @@
           password: document.getElementById("customerPassword").value,
           city: citySelect.value
         };
-        if (authMode === "signup") payload.emailRedirectTo = saveAuthResume("customer", "/dashboard/customer?confirmed=1");
+        if (authMode === "signup") payload.emailRedirectTo = saveAuthResume("customer", pendingAccountAuthReturnTo || "/dashboard/customer?confirmed=1");
         const result = await requestAuth(payload);
         if (authMode === "signup") {
           isCustomerLoggedIn = false;

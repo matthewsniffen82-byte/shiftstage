@@ -537,12 +537,14 @@
     });
     accountRequiredCreateLink?.addEventListener("click", (event) => {
       event.preventDefault();
+      if (startInternalProfileAuth("signup")) return;
       closeAccountRequiredPrompt({ restoreFocus: false });
       closeProfileModal();
       openFreshCustomerSignup();
     });
     accountRequiredSignInLink?.addEventListener("click", (event) => {
       event.preventDefault();
+      if (startInternalProfileAuth("login")) return;
       closeAccountRequiredPrompt({ restoreFocus: false });
       closeProfileModal();
       openAuthRole("customer");

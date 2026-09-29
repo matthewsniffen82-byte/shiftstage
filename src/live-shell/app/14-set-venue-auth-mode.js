@@ -222,6 +222,10 @@
 
     function closeAuthPage() {
       blurFocusedAuthField();
+      if (/^\/internal\/follow-return\?state=[0-9a-f-]{36}$/i.test(pendingAccountAuthReturnTo)) {
+        window.location.assign(`${pendingAccountAuthReturnTo}&cancel=1`);
+        pendingAccountAuthReturnTo = "";
+      }
       pendingVenueAuthReturnTo = "";
       pendingAccountAuthReturnTo = "";
       pendingVenueAgentReferralCode = "";

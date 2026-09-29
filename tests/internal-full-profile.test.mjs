@@ -26,7 +26,7 @@ function fixture({ external = true, staff = false } = {}) {
     discoveryMarket: () => market, selectedCity: () => 'Las Vegas', isApprovedPublicProfile: () => true,
     citySelect: { value: 'Las Vegas' }, openProfileModal: value => opens.push(value), showToast() {}, escapeHtml: value => String(value).replaceAll('<','&lt;').replaceAll('>','&gt;'),
   };
-  vm.runInNewContext(source + '\nthis.bridge={openInternalProfileMessage,closeInternalProfileFrame,internalProfileMatches,sendInternalTableRequest,internalProfileRequestActionsMarkup,profile:()=>internalRosterProfile};', context);
+  vm.runInNewContext(source + '\nthis.bridge={openInternalProfileMessage,closeInternalProfileFrame,startInternalProfileAuth,internalProfileMatches,sendInternalTableRequest,internalProfileRequestActionsMarkup,profile:()=>internalRosterProfile};', context);
   const event = (overrides = {}) => ({ origin: 'https://example.invalid', source: parent, data: { type: 'mydancr:internal-profile-open', profile, token: staff ? '' : id(9), request: staff ? undefined : { tableLabel: 'Table 1', busy: false, message: '' } }, ...overrides });
   return { bridge: context.bridge, event, opens, messages, fetches, market, publicProfile };
 }
@@ -90,6 +90,30 @@ test('closing the shared viewer returns control to the roster and clears private
   const f=fixture(); await f.bridge.openInternalProfileMessage(f.event()); f.bridge.closeInternalProfileFrame();
   assert.equal(f.bridge.profile(),null);
   assert.equal(f.messages.at(-1)[0].type,'mydancr:internal-profile-close');
+});
+
+test('signup and sign-in hand off to the parent without closing the embedded profile', async () => {
+  for (const mode of ['signup', 'login']) {
+    const f = fixture();
+    await f.bridge.openInternalProfileMessage(f.event());
+    const handlers = readFileSync(new URL('../src/live-shell/app/23-events.js', import.meta.url), 'utf8');
+    const name = mode === 'signup' ? 'accountRequiredCreateLink' : 'accountRequiredSignInLink';
+    const start = handlers.indexOf(`    ${name}?.addEventListener`);
+    const handler = handlers.slice(start, handlers.indexOf('\n    });', start) + 7);
+    let click;
+    vm.runInNewContext(handler, {
+      [name]: { addEventListener: (_name, fn) => { click = fn; } },
+      startInternalProfileAuth: f.bridge.startInternalProfileAuth,
+      closeProfileModal: () => assert.fail('The iframe must stay alive until its parent navigates'),
+      closeAccountRequiredPrompt: () => assert.fail('Keep a usable prompt if storage is unavailable'),
+    });
+    click({ preventDefault() {} });
+    assert.equal(f.messages.at(-1)[0].type, 'mydancr:internal-profile-auth');
+    assert.equal(f.messages.at(-1)[0].mode, mode);
+    assert.equal(f.messages.at(-1)[0].profileId, id(1));
+    assert.equal(f.messages.at(-1)[1], 'https://example.invalid');
+    assert.ok(f.bridge.profile());
+  }
 });
 
 test('profile requests send one parent action, then share the confirmed status without resetting media', async () => {

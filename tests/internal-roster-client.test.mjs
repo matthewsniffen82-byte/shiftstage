@@ -22,7 +22,7 @@ function deferred() {
   return { promise, resolve };
 }
 
-function harness(fetch, { token = "table-token", session = null, component = "InternalRoster" } = {}) {
+function harness(fetch, { token = "table-token", session = null, component = "InternalRoster", url = "https://example.invalid/internal/club/table-token" } = {}) {
   let now = 0;
   let nextTimer = 0;
   const timers = new Map();
@@ -36,13 +36,14 @@ function harness(fetch, { token = "table-token", session = null, component = "In
   const effects = [];
   const cleanups = [];
   const persisted = [];
+  const replacements = [];
   const listeners = new Map();
   let stateIndex = 0;
   let refIndex = 0;
   let mounting = true;
   const exports = {};
   vm.runInNewContext(code, {
-    exports, fetch, Error, AbortController, crypto: { randomUUID: () => "request-key" },
+    exports, fetch, Error, AbortController, URL, crypto: { randomUUID: () => "request-key" },
     Date: class extends Date { static now() { return now; } },
     setTimeout: (callback, delay) => schedule(callback, delay),
     setInterval: (callback, delay) => schedule(callback, delay, true),
@@ -51,7 +52,7 @@ function harness(fetch, { token = "table-token", session = null, component = "In
     window: {
       addEventListener: (name, callback) => listeners.set(name, callback),
       removeEventListener: name => listeners.delete(name),
-      location: { hash: "" }, cancelAnimationFrame() {},
+      location: { hash: "", href: url }, history: { state: null, replaceState: (_state, _title, path) => replacements.push(path) }, cancelAnimationFrame() {},
     },
     require(name) {
       if (name === "react/jsx-runtime") return require(name);
@@ -88,7 +89,7 @@ function harness(fetch, { token = "table-token", session = null, component = "In
     return tree;
   };
   return {
-    exports, persisted, timers, render,
+    exports, persisted, timers, render, replacements,
     setSession: next => { session = next; },
     storage: key => listeners.get("storage")?.({ key }),
     async mount() { render(); effects.forEach(effect => cleanups.push(effect())); await flush(); },
@@ -120,6 +121,21 @@ const alert = app => find(app.render(), node => node.props?.role === "alert");
 const alertMessage = app => find(alert(app), node => node.type === "p")?.props.children;
 const grid = app => find(app.render(), node => node.props?.className === "ir-grid ir-directory-grid");
 const profile = app => find(app.render(), node => node.type?.name === "ClubProfileDialog")?.props.profile;
+
+test("returning from sign-in reopens only the requested dancer on the authorized roster", async t => {
+  for (const requested of [dancer.id, "unrelated-dancer"]) {
+    const calls = [];
+    const app = harness(async url => {
+      calls.push(url);
+      return response(url.includes("/profile/") ? { ok: true, profile: { id: dancer.id } } : roster);
+    }, { url: `https://example.invalid/internal/club/table-token?profile=${requested}` });
+    t.after(() => app.unmount());
+    await app.mount();
+    assert.equal(profile(app)?.id, requested === dancer.id ? dancer.id : undefined);
+    assert.equal(calls.filter(url => url.includes("/profile/")).length, requested === dancer.id ? 1 : 0);
+    assert.deepEqual(app.replacements, ["/internal/club/table-token"]);
+  }
+});
 
 for (const message of [
   "This club link has been revoked or is unavailable.",

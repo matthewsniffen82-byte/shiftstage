@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { createInternalFollowReturn } from "@/src/lib/dancr/internal-profile-auth-return";
 
 export type InternalProfile = {
   id: string; slug?: string; stage_name: string; city: string; venueName: string;
@@ -28,6 +29,15 @@ export function InternalFullProfile({ profile, token, request, onRequest, onClos
       if (event.data?.type === "mydancr:internal-profile-ready") send();
       if (event.data?.type === "mydancr:internal-profile-shown") setReady(true);
       if (event.data?.type === "mydancr:internal-profile-close") latest.current.onClose();
+      if (event.data?.type === "mydancr:internal-profile-auth" && event.data.profileId === latest.current.profile.id
+        && ["signup", "login"].includes(event.data.mode)) {
+        try {
+          const returnTo = createInternalFollowReturn(latest.current.profile.id, latest.current.token || "");
+          window.location.assign(`/account?role=customer&mode=${event.data.mode}&return_to=${encodeURIComponent(returnTo)}`);
+        } catch {
+          frame.current?.contentWindow?.postMessage({ type: "mydancr:internal-profile-auth-error", message: "Sign-in could not open. Use the club's guest link and allow browser storage, then try again." }, window.location.origin);
+        }
+      }
       if (event.data?.type === "mydancr:internal-table-request" && event.data.profileId === latest.current.profile.id
         && latest.current.token && latest.current.request && !latest.current.request.busy
         && !latest.current.profile.requestStatus) latest.current.onRequest?.();

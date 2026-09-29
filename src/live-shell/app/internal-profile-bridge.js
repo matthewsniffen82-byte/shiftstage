@@ -135,12 +135,22 @@
       window.parent.postMessage({ type: "mydancr:internal-profile-close" }, window.location.origin);
     }
 
+    function startInternalProfileAuth(mode) {
+      if (!internalProfileFrameId || !internalRosterProfile) return false;
+      window.parent.postMessage({ type: "mydancr:internal-profile-auth", profileId: internalRosterProfile.id, mode }, window.location.origin);
+      return true;
+    }
+
     function initializeInternalProfileFrame() {
       if (!internalProfileFrameId) return;
       document.addEventListener("click", event => {
         if (event.target instanceof Element && event.target.closest("[data-internal-table-request]")) sendInternalTableRequest();
       });
       window.addEventListener("message", event => {
+        if (event.origin === window.location.origin && event.source === window.parent && event.data?.type === "mydancr:internal-profile-auth-error") {
+          showToast(event.data.message);
+          return;
+        }
         void openInternalProfileMessage(event).catch(() => {
           internalProfileRevision = "";
           showToast("The profile could not load. Close it and try again.");

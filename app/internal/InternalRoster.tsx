@@ -92,6 +92,7 @@ export function InternalRoster({ token, operationsOnly = false }: { token?: stri
   const alive = useRef(false);
   const openedRequestInbox = useRef(false);
   const hasSnapshot = useRef(false);
+  const restoredProfile = useRef(false);
   const base = token ? `/api/internal/link/${encodeURIComponent(token)}` : "/api/internal";
 
   const clearRoster = useCallback((message = "") => {
@@ -106,6 +107,16 @@ export function InternalRoster({ token, operationsOnly = false }: { token?: stri
       if (!alive.current || signal?.aborted || generation !== refreshGeneration.current) return;
       hasSnapshot.current = true;
       setSnapshot(data); setError("");
+      if (token && !restoredProfile.current) {
+        restoredProfile.current = true;
+        const url = new URL(window.location.href);
+        const requested = url.searchParams.get("profile");
+        if (requested) {
+          url.searchParams.delete("profile");
+          window.history.replaceState(window.history.state, "", url.pathname + url.search + url.hash);
+          if (data.dancers.some((dancer: Dancer) => dancer.id === requested)) selectedProfile.current = requested;
+        }
+      }
       const selected = selectedProfile.current;
       if (selected) {
         if (!data.dancers.some((dancer: Dancer) => dancer.id === selected)) { selectedProfile.current = ""; setProfile(null); }
