@@ -1,6 +1,7 @@
 import { after, NextResponse } from "next/server";
 import { deliverInternalRequestPush } from "@/src/lib/dancr/internal-request-push";
 import { internalMainPhotos } from "@/src/lib/dancr/internal-main-photo";
+import { internalRequestsTonight, internalTableRequestStates } from "@/src/lib/dancr/internal-request-activity";
 import { createHash } from "node:crypto";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { readBoundedJsonObject } from "@/src/lib/bounded-json-body";
@@ -39,7 +40,11 @@ export async function GET(request: Request, context: Context) {
         return url ? [{ platform: link.platform, handle: link.handle, url }] : [];
       });
       const avatarRevision = createHash("sha256").update(members.find(member => member.id === path[1])!.avatar_storage_path).digest("hex").slice(0, 16);
-      return json({ ok: true, profile: { ...results[0].data, avatarRevision, workingUntil: members.find(member => member.id === path[1])?.working_until, venueName: scope.venueName, photos: results[1].data || [], socialLinks: socials, videos: results[3].data || [] }, session: scope.session });
+      const [requestsTonight, tableRequests] = await Promise.all([
+        internalRequestsTonight(admin, scope.venueId, path[1]),
+        scope.link ? internalTableRequestStates(admin, scope.venueId, scope.link.id) : null,
+      ]);
+      return json({ ok: true, profile: { ...results[0].data, avatarRevision, workingUntil: members.find(member => member.id === path[1])?.working_until, venueName: scope.venueName, requestsTonight, requestStatus: tableRequests?.get(path[1]) || null, photos: results[1].data || [], socialLinks: socials, videos: results[3].data || [] }, session: scope.session });
     }
     if (["avatar", "photo", "video"].includes(path[0])) {
       let storagePath = members.find(item => item.id === path[1])?.avatar_storage_path;
@@ -74,6 +79,7 @@ export async function GET(request: Request, context: Context) {
       };
     });
     if (scope.link) {
+      const tableRequests = await internalTableRequestStates(admin, scope.venueId, scope.link.id);
       let receipt = null;
       const key = url.searchParams.get("requestKey");
       if (key && isInternalUuid(key) && scope.link.kind === "table") {
@@ -81,7 +87,7 @@ export async function GET(request: Request, context: Context) {
         if (error) throw error;
         if (data) receipt = { status: Date.parse(data.created_at) > Date.now() - 6 * 3600000 && members.some(d => d.id === data.dancer_id) ? data.status : "cancelled" };
       }
-      return json({ ok: true, venueName: scope.venueName, kind: scope.link.kind, label: scope.link.label, dancers, receipt });
+      return json({ ok: true, venueName: scope.venueName, kind: scope.link.kind, label: scope.link.label, dancers: dancers.map(dancer => ({ ...dancer, requestStatus: tableRequests.get(dancer.id) || null })), receipt });
     }
     const results = await Promise.all([
       admin.from("internal_roster_links").select("id,kind,label,token,active").eq("venue_id", scope.venueId).eq("active", true).eq("kind", "table").order("created_at"),

@@ -84,7 +84,8 @@ test('canonical avatar updates are reflected without creating a second photo',as
  await tap();await pg.query("update public.dancer_profiles set avatar_storage_path='canonical/new-avatar' where id=$1",[id(10)]);assert.equal((await roster())[0].avatar_storage_path,'canonical/new-avatar');
 });
 test('table requests are idempotent and club-scoped',async()=>{
- await tap();const table=await link();const result=await request(table.token);assert.deepEqual(await request(table.token),result);
+   await tap();const table=await link();const result=await request(table.token);assert.deepEqual(await request(table.token),result);
+   assert.equal((await pg.query('select count(*)::int as total from public.internal_roster_requests')).rows[0].total,1,'Retries contribute one saved request to Requests tonight');
  await rejectsAtomic(()=>request(table.token,id(11)),'40001');
  await rejectsAtomic(()=>manage('request_status',{id:result.id,expectedStatus:'pending',status:'acknowledged'},id(6),id(21)),'P0002');
  await manage('request_status',{id:result.id,expectedStatus:'pending',status:'acknowledged'});

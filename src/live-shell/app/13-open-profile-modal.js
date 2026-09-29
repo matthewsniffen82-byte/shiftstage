@@ -133,7 +133,7 @@
       profileBackdrop.setAttribute("aria-hidden", "false");
       focusProfileModalStart();
       syncOverlayScrollLock();
-      if (!isPending && !isPrivatePreview && profile.shiftId) {
+      if (!isPending && !isPrivatePreview && !internal && profile.shiftId) {
         void refreshProfileGoingState(profile);
       }
     }

@@ -355,6 +355,55 @@ test("a request made after link revocation clears the roster immediately", async
   assert.equal(alertMessage(app), "This club link is unavailable.");
 });
 
+test("profile and roster requests share one submission and Request sent status", async t => {
+  const pending = deferred(); let sent=false; const posts=[];
+  const app=harness(async(url,options)=>{
+    if(options.method==='POST') { posts.push(JSON.parse(options.body)); await pending.promise; sent=true; return response({ok:true,receipt:{status:'pending'}}); }
+    if(url.includes('/profile/')) return response({ok:true,profile:{id:dancer.id,requestStatus:sent?'pending':null,requestsTonight:sent?1:0}});
+    return response({...roster,kind:'table',label:'Table 1',dancers:[{...dancer,requestStatus:sent?'pending':null}]});
+  });
+  t.after(()=>app.unmount());await app.mount();
+  find(app.render(),node=>node.props?.className==='ir-profile-link').props.onClick();await flush();
+  const dialog=find(app.render(),node=>node.type?.name==='ClubProfileDialog');
+  dialog.props.onRequest();dialog.props.onRequest();
+  find(app.render(),node=>node.props?.className==='ir-table-request').props.onClick();
+  assert.equal(posts.length,1,'Rapid clicks in either view cannot submit twice');
+  pending.resolve();await flush();await flush();
+  const button=find(app.render(),node=>node.props?.className==='ir-table-request');
+  assert.equal(button.props.children,'Request sent');assert.equal(button.props.disabled,true);
+  assert.equal(profile(app).requestStatus,'pending');assert.equal(profile(app).requestsTonight,1);
+  find(app.render(),node=>node.type?.name==='ClubProfileDialog').props.onRequest();
+  assert.equal(posts.length,1);
+});
+
+test("failed request retries preserve the same idempotency key and a reloaded table stays sent", async t => {
+  const keys=[];
+  const app=harness(async(_url,options)=>{
+    if(options.method==='POST') { keys.push(JSON.parse(options.body).requestKey); throw new TypeError('Failed to fetch'); }
+    return response({...roster,kind:'table'});
+  });t.after(()=>app.unmount());await app.mount();
+  find(app.render(),node=>node.props?.className==='ir-table-request').props.onClick();await flush();
+  find(app.render(),node=>node.props?.className==='ir-table-request').props.onClick();await flush();
+  assert.equal(keys.length,2);assert.equal(keys[0],keys[1]);
+  const reloaded=harness(async(_url,options)=>{assert.equal(options.method,'GET');return response({...roster,kind:'table',dancers:[{...dancer,requestStatus:'pending'}]});});
+  t.after(()=>reloaded.unmount());await reloaded.mount();
+  const button=find(reloaded.render(),node=>node.props?.className==='ir-table-request');
+  assert.equal(button.props.children,'Request sent');assert.equal(button.props.disabled,true);button.props.onClick();await flush();
+});
+
+test("a background read started before submission cannot undo Request sent", async t => {
+  const oldRead=deferred();let reads=0,sent=false;
+  const app=harness(async(_url,options)=>{
+    if(options.method==='POST'){sent=true;return response({ok:true,receipt:{status:'pending'}});}
+    if(++reads===2)return oldRead.promise;
+    return response({...roster,kind:'table',dancers:[{...dancer,requestStatus:sent?'pending':null}]});
+  });t.after(()=>app.unmount());await app.mount();await app.advance(refreshInterval);
+  find(app.render(),node=>node.props?.className==='ir-table-request').props.onClick();await flush();await flush();
+  oldRead.resolve(response({...roster,kind:'table',dancers:[{...dancer,requestStatus:null}]}));await flush();
+  const button=find(app.render(),node=>node.props?.className==='ir-table-request');
+  assert.equal(button.props.children,'Request sent');assert.equal(button.props.disabled,true);
+});
+
 test("an open staff profile also refreshes quietly every 20 minutes and closes on confirmed access loss", async t => {
   let calls = 0;
   const app = harness(async () => {

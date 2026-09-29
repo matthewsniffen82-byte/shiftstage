@@ -5,6 +5,8 @@
     let internalRosterProfile = null;
     let internalProfileRevision = "";
     let internalProfileLoadSequence = 0;
+    let internalTableRequest = null;
+    let internalProfileActivity = {};
     const internalProfileMedia = new Map();
 
     function internalProfileMatches(reference) {
@@ -38,7 +40,19 @@
       const source = event.data.profile;
       if (!Array.isArray(source.photos) || !Array.isArray(source.videos) || !Array.isArray(source.socialLinks)) return;
       const token = typeof event.data.token === "string" ? event.data.token : "";
-      const revision = JSON.stringify([source, token]);
+      internalTableRequest = token && event.data.request ? {
+        tableLabel: String(event.data.request.tableLabel || "our table").slice(0, 60),
+        busy: event.data.request.busy === true, message: String(event.data.request.message || ""),
+        status: source.requestStatus,
+      } : null;
+      const { requestsTonight, requestStatus, ...profileContent } = source;
+      internalProfileActivity = { requestsTonight, requestStatus };
+      const revision = JSON.stringify([profileContent, token]);
+      if (internalRosterProfile) {
+        internalRosterProfile.requestsTonight = requestsTonight;
+        internalRosterProfile.requestStatus = requestStatus;
+        syncInternalProfileRequestUi();
+      }
       if (revision === internalProfileRevision) return;
       internalProfileRevision = revision;
       const sequence = ++internalProfileLoadSequence;
@@ -62,6 +76,7 @@
       internalRosterProfile = {
         ...external, id: source.id, slug: source.slug || external?.slug || "", name: source.stage_name, city,
         internalRoster: true, status: "Verified", photoStatus: "Approved",
+        ...internalProfileActivity,
         // These flags remain private even though this authorized viewer can display the profile.
         hidden: true, isPublic: false, is_public: false,
         metricsUnavailable: external ? external.metricsUnavailable : true,
@@ -85,15 +100,45 @@
       window.parent.postMessage({ type: "mydancr:internal-profile-shown" }, window.location.origin);
     }
 
+    function internalProfileRequestActionsMarkup(profile) {
+      if (!internalTableRequest) return "";
+      const sent = ["pending", "acknowledged"].includes(internalTableRequest.status);
+      const label = sent ? "Request sent" : internalTableRequest.busy ? "Sending…" : `Request at ${internalTableRequest.tableLabel}`;
+      return `<div class="internal-profile-request">
+        <div class="modal-actions profile-actions-compact profile-venue-actions"><button type="button" class="action-btn profile-action-icon-control" data-internal-table-request ${sent || internalTableRequest.busy || !profile.scheduled ? "disabled" : ""}>${escapeHtml(label)}</button></div>
+        <p role="status" class="internal-profile-request-status">${escapeHtml(internalTableRequest.message || (internalTableRequest.status === "acknowledged" ? "Seen by club staff." : sent ? "Sent to club staff. Availability is confirmed by staff." : ""))}</p>
+      </div>`;
+    }
+
+    function syncInternalProfileRequestUi() {
+      const count = document.getElementById("internalRequestsTonight");
+      if (count) count.textContent = Number.isSafeInteger(internalRosterProfile.requestsTonight) && internalRosterProfile.requestsTonight >= 0 ? internalRosterProfile.requestsTonight.toLocaleString() : "—";
+      const actions = document.querySelector(".internal-profile-request");
+      if (actions) actions.outerHTML = internalProfileRequestActionsMarkup(internalRosterProfile);
+    }
+
+    function sendInternalTableRequest() {
+      if (!internalRosterProfile || !internalTableRequest || internalTableRequest.busy
+        || ["pending", "acknowledged"].includes(internalTableRequest.status) || !internalRosterProfile.scheduled) return;
+      internalTableRequest.busy = true;
+      internalTableRequest.message = "";
+      syncInternalProfileRequestUi();
+      window.parent.postMessage({ type: "mydancr:internal-table-request", profileId: internalRosterProfile.id }, window.location.origin);
+    }
+
     function closeInternalProfileFrame() {
       if (!internalProfileFrameId) return;
       internalProfileLoadSequence += 1;
       internalRosterProfile = null;
+      internalTableRequest = null;
       window.parent.postMessage({ type: "mydancr:internal-profile-close" }, window.location.origin);
     }
 
     function initializeInternalProfileFrame() {
       if (!internalProfileFrameId) return;
+      document.addEventListener("click", event => {
+        if (event.target instanceof Element && event.target.closest("[data-internal-table-request]")) sendInternalTableRequest();
+      });
       window.addEventListener("message", event => {
         void openInternalProfileMessage(event).catch(() => {
           internalProfileRevision = "";

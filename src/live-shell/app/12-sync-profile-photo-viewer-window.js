@@ -621,6 +621,11 @@
 
     function profileActivityMetricsMarkup(profile, city = selectedCity()) {
       const followerCount = followerNumber(profile, city);
+      if (profile.internalRoster) return `
+        <dl class="profile-activity-metrics is-internal" aria-label="Profile activity">
+          <div><dd id="modalFollowerCount" aria-live="polite">${profile.metricsUnavailable ? "—" : followerCount.toLocaleString()}</dd><dt id="modalFollowerLabel">${followerCount === 1 ? "Follower" : "Followers"}</dt></div>
+          <div><dd id="internalRequestsTonight" aria-live="polite">${Number.isSafeInteger(profile.requestsTonight) && profile.requestsTonight >= 0 ? profile.requestsTonight.toLocaleString() : "—"}</dd><dt>Requests tonight</dt></div>
+        </dl>`;
       return `
         <dl class="profile-activity-metrics" aria-label="Profile activity">
           <div>
@@ -723,7 +728,7 @@
           <section class="${tonightClasses}" data-profile-shift-state="${shiftState}" data-profile-deal-state="${escapeHtml(dealState.key)}" aria-label="Tonight">
             ${shiftsMarkup(profile, status, { preview: Boolean(options.preview), city })}
             ${dealMarkup ? `<div class="profile-tonight-deal">${dealMarkup}</div>` : ""}
-            ${options.preview ? "" : liveProfileGoingActionsMarkup(profile)}
+            ${options.preview ? "" : internal ? internalProfileRequestActionsMarkup(profile) : liveProfileGoingActionsMarkup(profile)}
             ${travelActionsMarkup}
           </section>
           ${profileLocationStatusTile(profile, city)}

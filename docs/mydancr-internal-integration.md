@@ -74,6 +74,10 @@ Before club use, complete a real Ondato onboarding and physical sticker tap for 
 
 ### Shared full profile viewer
 
+Internal profiles replace Going with **Requests tonight**, the count of saved requests for that dancer at this venue between the current active shift's check-in and expiry. Finished or dismissed requests remain real sent requests; retries with the same key do not add a row. A new shift starts its own count. No active shift shows zero. Going and Views today remain on External; Internal keeps followers and omits Views today and Club Deals.
+
+Table guests can request from the roster or from **Request at [table label]** in the full profile. Both use the existing table capability, RPC, notification path and idempotency rules. They show **Request sent** while that table has a pending or acknowledged request, including after reloading. Request status and counts update without reopening the photo/video viewer. Staff profile previews show the same Internal metrics without a guest request button. The existing quiet 20-minute refresh remains in place; opening a profile or submitting a request also fetches current data.
+
 Internal photo cards open the same `openProfileModal` viewer used by External discovery, hosted in a same-origin frame. The frame receives the canonical dancer identity, approved gallery, current approved videos and social links from the existing authorized Internal profile endpoint. It reuses the external profile layout, gallery and full-screen media controls; Club Deal markup and QR hydration are omitted in Internal context. No second profile is created.
 
 The frame URL contains only the dancer ID. Table capabilities travel through a message checked against the exact parent window and origin, then only to scoped Internal media endpoints. Staff media uses the existing authenticated venue session. Internal data stays in memory outside public discovery, and existing roster refreshes close the frame on confirmed loss of access. Public engagement actions retain their existing server permissions; this does not publish Internal-only profiles or grant them public engagement access.
