@@ -98,14 +98,16 @@ test('staff profiles show no guest table request action', async () => {
   assert.equal(f.messages.some(([message])=>message.type==='mydancr:internal-table-request'),false);
 });
 
-test('Internal replaces Going with actual requests and hides views while External keeps its metrics', () => {
+test('Internal replaces Going with actual requests and retains Views today while External keeps its metrics', () => {
   const script=readFileSync(new URL('../src/live-shell/app/12-sync-profile-photo-viewer-window.js',import.meta.url),'utf8');
   const renderer=script.slice(script.indexOf('    function profileActivityMetricsMarkup('),script.indexOf('    function dancerProfileDirectionsMarkup('));
   const context={followerNumber:()=>9,selectedCity:()=>'',tonightInterestCount:()=>999,profileViewsToday:()=>888};
   vm.runInNewContext(renderer+'\nthis.render=profileActivityMetricsMarkup;',context);
   const internal=context.render({internalRoster:true,requestsTonight:2}),external=context.render({});
   assert.match(internal,/internalRequestsTonight[^>]*>2</);assert.match(internal,/Requests tonight/);
-  assert.doesNotMatch(internal,/Going|Views today|999|888/);
+  assert.doesNotMatch(internal,/Going|999/);
+  assert.match(internal,/modalProfileViews[^>]*>888</);assert.match(internal,/Views today/);
+  assert.match(context.render({internalRoster:true,requestsTonight:2,metricsUnavailable:true}),/modalProfileViews[^>]*>—</);
   assert.match(external,/Going/);assert.match(external,/Views today/);assert.doesNotMatch(external,/Requests tonight/);
 });
 test('the same profile renderer omits Club Deals only for Internal context', () => {

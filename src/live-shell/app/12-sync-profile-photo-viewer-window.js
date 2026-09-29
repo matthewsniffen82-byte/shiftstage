@@ -625,6 +625,7 @@
         <dl class="profile-activity-metrics is-internal" aria-label="Profile activity">
           <div><dd id="modalFollowerCount" aria-live="polite">${profile.metricsUnavailable ? "—" : followerCount.toLocaleString()}</dd><dt id="modalFollowerLabel">${followerCount === 1 ? "Follower" : "Followers"}</dt></div>
           <div><dd id="internalRequestsTonight" aria-live="polite">${Number.isSafeInteger(profile.requestsTonight) && profile.requestsTonight >= 0 ? profile.requestsTonight.toLocaleString() : "—"}</dd><dt>Requests tonight</dt></div>
+          <div><dd id="modalProfileViews" aria-live="polite">${profile.metricsUnavailable ? "—" : profileViewsToday(profile, city).toLocaleString()}</dd><dt>Views today</dt></div>
         </dl>`;
       return `
         <dl class="profile-activity-metrics" aria-label="Profile activity">

@@ -41379,7 +41379,7 @@ html.internal-profile-embed .preview-banner,
 html.internal-profile-embed .mydancr-preview-banner { display: none !important; }
 html.internal-profile-embed:not(.internal-profile-ready) body { visibility: hidden; background: #050507; }
 html.internal-profile-embed #profileBackdrop .profile-modal { min-height: 100dvh; max-height: 100dvh; border-radius: 0; }
-html.internal-profile-embed body.dancr-button-system #profileBackdrop #profileModal .profile-activity-metrics.is-internal { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+html.internal-profile-embed body.dancr-button-system #profileBackdrop #profileModal .profile-modal-header-metrics .profile-activity-metrics.is-internal dt { width: max-content !important; max-width: none !important; justify-self: center !important; }
 html.internal-profile-embed .internal-profile-request { width: 100%; }
 /* The table request is the primary Internal action, matching the roster cards.
    Reuse the shared button face so automatic dark mode preserves the violet. */
@@ -54639,6 +54639,7 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
         <dl class="profile-activity-metrics is-internal" aria-label="Profile activity">
           <div><dd id="modalFollowerCount" aria-live="polite">${profile.metricsUnavailable ? "—" : followerCount.toLocaleString()}</dd><dt id="modalFollowerLabel">${followerCount === 1 ? "Follower" : "Followers"}</dt></div>
           <div><dd id="internalRequestsTonight" aria-live="polite">${Number.isSafeInteger(profile.requestsTonight) && profile.requestsTonight >= 0 ? profile.requestsTonight.toLocaleString() : "—"}</dd><dt>Requests tonight</dt></div>
+          <div><dd id="modalProfileViews" aria-live="polite">${profile.metricsUnavailable ? "—" : profileViewsToday(profile, city).toLocaleString()}</dd><dt>Views today</dt></div>
         </dl>`;
       return `
         <dl class="profile-activity-metrics" aria-label="Profile activity">

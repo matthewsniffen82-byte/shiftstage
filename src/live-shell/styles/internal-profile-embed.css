@@ -10,7 +10,7 @@ html.internal-profile-embed .preview-banner,
 html.internal-profile-embed .mydancr-preview-banner { display: none !important; }
 html.internal-profile-embed:not(.internal-profile-ready) body { visibility: hidden; background: #050507; }
 html.internal-profile-embed #profileBackdrop .profile-modal { min-height: 100dvh; max-height: 100dvh; border-radius: 0; }
-html.internal-profile-embed body.dancr-button-system #profileBackdrop #profileModal .profile-activity-metrics.is-internal { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+html.internal-profile-embed body.dancr-button-system #profileBackdrop #profileModal .profile-modal-header-metrics .profile-activity-metrics.is-internal dt { width: max-content !important; max-width: none !important; justify-self: center !important; }
 html.internal-profile-embed .internal-profile-request { width: 100%; }
 /* The table request is the primary Internal action, matching the roster cards.
    Reuse the shared button face so automatic dark mode preserves the violet. */

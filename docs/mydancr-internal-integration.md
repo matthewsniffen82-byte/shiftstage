@@ -74,7 +74,7 @@ Before club use, complete a real Ondato onboarding and physical sticker tap for 
 
 ### Shared full profile viewer
 
-Internal profiles replace Going with **Requests tonight**, the count of saved requests for that dancer at this venue between the current active shift's check-in and expiry. Finished or dismissed requests remain real sent requests; retries with the same key do not add a row. A new shift starts its own count. No active shift shows zero. Going and Views today remain on External; Internal keeps followers and omits Views today and Club Deals.
+Internal profiles replace Going with **Requests tonight**, the count of saved requests for that dancer at this venue between the current active shift's check-in and expiry. Finished or dismissed requests remain real sent requests; retries with the same key do not add a row. A new shift starts its own count. No active shift shows zero. Internal keeps Followers, Requests tonight and Views today in the same three-column alignment as External. Views today uses the existing profile analytics, with a dash when unavailable. Club Deals remain omitted from Internal.
 
 Table guests can request from the roster or from **Request at [table label]** in the full profile. Both use the existing table capability, RPC, notification path and idempotency rules. They show **Request sent** while that table has a pending or acknowledged request, including after reloading. Request status and counts update without reopening the photo/video viewer. Staff profile previews show the same Internal metrics without a guest request button. The existing quiet 20-minute refresh remains in place; opening a profile or submitting a request also fetches current data.
 
