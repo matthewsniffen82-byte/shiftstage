@@ -15,4 +15,5 @@ body .ir-shell.ir-staff.ir-embedded{min-height:0;padding:0;margin:16px 0;backgro
 #table-requests{scroll-margin-top:24px}
 
 body dialog.ir-profile-dialog.ir-full-profile-dialog{position:fixed;inset:0;width:100vw;height:100dvh;max-width:none;max-height:none;margin:0;padding:0;border:0;border-radius:0;background:#050507;overflow:hidden}.ir-full-profile-frame{display:block;width:100%;height:100%;border:0;background:#050507}
-.ir-full-profile-loading{position:absolute;inset:0;z-index:1;display:grid;align-content:center;justify-items:center;gap:16px;color:#fff;background:#050507}
+/* Prepare the full-size viewer behind the roster; reveal only when it is ready. */
+body dialog.ir-full-profile-dialog:not([open]){display:block;visibility:hidden;pointer-events:none}

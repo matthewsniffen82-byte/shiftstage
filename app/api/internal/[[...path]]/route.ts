@@ -9,6 +9,7 @@ import { resolveApiError, PublicApiError } from "@/src/lib/api-error-policy";
 import { INTERNAL_HEADERS, internalError, internalMembers, internalScope, isInternalUuid, venueRosterMembers } from "@/src/lib/dancr/internal-roster";
 import { safeSocialProfileUrl } from "@/src/lib/dancr/social-profile-url";
 import { MYDANCR_TV_POSTER_BUCKET, myDancrTvPosterStoragePath } from "@/src/lib/dancr/media-watermark";
+import { responsiveImageStoragePaths } from "@/src/lib/dancr/responsive-image";
 import type { SocialPlatform } from "@/src/lib/dancr/types";
 
 export const runtime = "nodejs";
@@ -60,6 +61,8 @@ export async function GET(request: Request, context: Context) {
       return json({ ok: true, profile: { ...results[0].data, avatarRevision, workingUntil: members.find(member => member.id === path[1])?.working_until, venueName: scope.venueName, requestsTonight, requestStatus: tableRequests?.get(path[1]) || null, photos: results[1].data || [], socialLinks: socials, videos }, session: scope.session });
     }
     if (["avatar", "photo", "video", "video-poster"].includes(path[0])) {
+      const width = url.searchParams.has("width") ? Number(url.searchParams.get("width")) : null;
+      if (width !== null && (![320, 480, 640, 1280].includes(width) || !["avatar", "photo"].includes(path[0]))) return json({ ok: false, error: "Invalid image size." }, 400);
       let storagePath = members.find(item => item.id === path[1])?.avatar_storage_path;
       const poster = path[0] === "video-poster";
       const video = path[0] === "video" || poster;
@@ -76,11 +79,23 @@ export async function GET(request: Request, context: Context) {
           ? poster ? videoPosterStoragePath(data) : data.storage_path : null;
       }
       if (!storagePath) return json({ ok: false, error: "Media unavailable." }, 404);
-      const { data, error } = await admin.storage.from(poster ? MYDANCR_TV_POSTER_BUCKET : video ? "mydancr-tv-videos" : "dancer-photos").createSignedUrl(storagePath, 30);
-      if (error || !data?.signedUrl) return json({ ok: false, error: "Media unavailable." }, 404);
+      // Select only a pre-generated, watermarked variant of the authorized photo.
+      // Full-profile media without a requested width keeps its original source.
+      const imagePath = width === null ? storagePath : responsiveImageStoragePaths(storagePath)
+        .slice(1).find(candidate => Number(candidate.match(/\.w(\d+)\.webp$/)?.[1]) >= width) || storagePath;
+      const bucket = poster ? MYDANCR_TV_POSTER_BUCKET : video ? "mydancr-tv-videos" : "dancer-photos";
       const range = request.headers.get("range");
-      const upstream = await fetch(data.signedUrl, { cache: "no-store", signal: request.signal, headers: range && /^bytes=\d*-\d*$/.test(range) ? { range } : undefined });
-      if (!upstream.ok) return json({ ok: false, error: "Media unavailable." }, 404);
+      const load = async (objectPath: string) => {
+        const { data, error } = await admin.storage.from(bucket).createSignedUrl(objectPath, 30);
+        if (error || !data?.signedUrl) return null;
+        return fetch(data.signedUrl, { cache: "no-store", signal: request.signal, headers: range && /^bytes=\d*-\d*$/.test(range) ? { range } : undefined });
+      };
+      let upstream = await load(imagePath);
+      if (imagePath !== storagePath && (!upstream || upstream.status === 404)) {
+        await upstream?.body?.cancel();
+        upstream = await load(storagePath);
+      }
+      if (!upstream?.ok) return json({ ok: false, error: "Media unavailable." }, 404);
       const headers = new Headers(INTERNAL_HEADERS);
       headers.set("content-type", video && !poster ? "video/mp4" : upstream.headers.get("content-type") || "image/jpeg");
       for (const key of ["content-length", "content-range", "accept-ranges"]) { const value = upstream.headers.get(key); if (value) headers.set(key, value); }

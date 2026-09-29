@@ -145,10 +145,10 @@ test('only the active same-origin profile frame can start the full-page account 
     compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX },
   }).outputText, {
     exports,
-    window: { location: { origin: 'https://example.invalid', assign: path => navigation.push(path) },
+    window: { setTimeout:()=>1, clearTimeout(){}, location: { origin: 'https://example.invalid', assign: path => navigation.push(path) },
       addEventListener: (_name, fn) => { receive = fn; }, removeEventListener() {} },
     require: name => name === 'react' ? {
-      useState: initial => [initial, () => {}], useEffect: effect => effects.push(effect),
+      useState: initial => [initial, () => {}], useEffect: effect => effects.push(effect), useCallback: callback => callback,
       useRef: initial => ({ current: refIndex++ === 0 ? { contentWindow: child } : initial }),
     } : name === 'react/jsx-runtime' ? require(name) : f.api,
   });

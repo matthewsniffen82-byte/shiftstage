@@ -14,10 +14,10 @@
         .includes(String(reference || "").trim()) ? internalRosterProfile : null;
     }
 
-    async function internalProfileMediaUrl(kind, id, token, revision = "") {
+    async function internalProfileMediaUrl(kind, id, token, revision = "", width = 0) {
       if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id)) return "";
-      const path = `/api/internal/${kind}/${id}`;
-      if (token) return new URL(`${path}?token=${encodeURIComponent(token)}&revision=${encodeURIComponent(revision)}`, window.location.origin).toString();
+      const path = `/api/internal/${kind}/${id}${width ? `?width=${width}` : ""}`;
+      if (token) return new URL(`${path}${width ? "&" : "?"}token=${encodeURIComponent(token)}&revision=${encodeURIComponent(revision)}`, window.location.origin).toString();
       // Staff media uses their existing venue session, never a public storage URL.
       const key = `${path}:${revision}`;
       if (!internalProfileMedia.has(key)) {
@@ -59,7 +59,7 @@
       const city = discoveryMarket(source.city) ? source.city : selectedCity();
       const external = discoveryMarket(city)?.dancers?.find(item => item.id === source.id && isApprovedPublicProfile(item));
       const [avatarPhotoUrl, photos, videos] = await Promise.all([
-        internalProfileMediaUrl("avatar", source.id, token, source.avatarRevision),
+        internalProfileMediaUrl("avatar", source.id, token, source.avatarRevision, 320),
         Promise.all(source.photos.map(async photo => ({
           id: photo.id, imageUrl: await internalProfileMediaUrl("photo", photo.id, token),
           reviewStatus: "approved", isPrimary: photo.is_primary === true,
@@ -97,8 +97,20 @@
       };
       citySelect.value = city;
       openProfileModal(source.id);
+      syncInternalProfilePublicMetrics();
       document.documentElement.classList.add("internal-profile-ready");
       window.parent.postMessage({ type: "mydancr:internal-profile-shown" }, window.location.origin);
+    }
+
+    function syncInternalProfilePublicMetrics() {
+      if (!internalRosterProfile) return;
+      const external = discoveryMarket(internalRosterProfile.city)?.dancers?.find(item => item.id === internalRosterProfile.id && isApprovedPublicProfile(item));
+      if (!external) return;
+      internalRosterProfile.followerCount = external.followerCount;
+      internalRosterProfile.profileViewsToday = external.profileViewsToday;
+      internalRosterProfile.metricsUnavailable = external.metricsUnavailable;
+      const metrics = document.getElementById("modalProfileMetrics");
+      if (metrics) metrics.innerHTML = profileActivityMetricsMarkup(internalRosterProfile, internalRosterProfile.city);
     }
 
     function internalProfileRequestActionsMarkup(profile) {
@@ -153,7 +165,7 @@
         }
         void openInternalProfileMessage(event).catch(() => {
           internalProfileRevision = "";
-          showToast("The profile could not load. Close it and try again.");
+          window.parent.postMessage({ type: "mydancr:internal-profile-error" }, window.location.origin);
         });
       });
       window.addEventListener("pagehide", () => {

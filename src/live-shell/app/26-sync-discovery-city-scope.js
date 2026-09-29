@@ -771,7 +771,8 @@
     if (isAdminSession()) loadLiveAdminSupportThreads();
     const restoredAuthResume = restoreAuthConfirmationResume();
     if (internalProfileFrameId) {
-      void initialDiscoveryRequest.finally(initializeInternalProfileFrame);
+      initializeInternalProfileFrame();
+      void initialDiscoveryRequest.then(syncInternalProfilePublicMetrics, () => {});
     } else if (!restoredAuthResume && !handleVenueDancerVerificationDeepLink() && !handleAdminDashboardDeepLink() && !handleVenueDashboardDeepLink() && !handleDancerDashboardDeepLink() && !handleVenueAccessDeepLink() && !handleAccountAccessDeepLink()) {
       if (initialVenuePreviewRequest) void initialVenuePreviewRequest;
       else void initialDiscoveryRequest.finally(() => openSharedProfileFromUrl()).finally(() => {

@@ -52,23 +52,25 @@ async function rosterFetch(url: string, token: string | undefined, body?: Record
   }
 }
 
-function ProtectedMedia({ id, kind, token, alt, className, revision }: { id: string; kind: "avatar" | "photo" | "video"; token?: string; alt: string; className?: string; revision?: string }) {
+function ProtectedMedia({ id, kind, token, alt, className, revision, priority = false, lazy = false }: { id: string; kind: "avatar" | "photo" | "video"; token?: string; alt: string; className?: string; revision?: string; priority?: boolean; lazy?: boolean }) {
   const [url, setUrl] = useState("");
   useEffect(() => {
     setUrl("");
+    if (token) return; // Native images can stream and decode without waiting for a Blob.
     let objectUrl = "";
     const controller = new AbortController();
     const session = token ? null : readBrowserAuthSession();
     const headers: Record<string, string> = {};
     if (session?.accessToken) headers.authorization = `Bearer ${session.accessToken}`;
     if (session?.refreshToken) headers["x-dancr-refresh-token"] = session.refreshToken;
-    void fetch(`/api/internal/${kind}/${id}${token ? `?token=${encodeURIComponent(token)}` : ""}`, { headers, cache: "no-store", signal: controller.signal })
+    void fetch(`/api/internal/${kind}/${id}${kind === "video" ? "" : "?width=320"}`, { headers, cache: "no-store", signal: controller.signal })
       .then(async response => { if (!response.ok) throw new Error(); return response.blob(); })
       .then(blob => { if (controller.signal.aborted || (session && !isCurrentBrowserSession(session))) return; objectUrl = URL.createObjectURL(blob); setUrl(objectUrl); })
       .catch(() => { if (!controller.signal.aborted) setUrl(""); });
     return () => { controller.abort(); if (objectUrl) URL.revokeObjectURL(objectUrl); };
   }, [id, kind, token, revision]);
-  return url ? kind === "video" ? <video src={url} controls playsInline preload="metadata" aria-label={alt} /> : <img className={className} src={url} alt={alt} /> : <span className={className} aria-label="Media loading">…</span>;
+  const mediaUrl = token ? `/api/internal/${kind}/${id}?token=${encodeURIComponent(token)}&revision=${encodeURIComponent(revision || "")}${kind === "video" ? "" : "&width=320"}` : url;
+  return mediaUrl ? kind === "video" ? <video src={mediaUrl} controls playsInline preload="metadata" aria-label={alt} /> : <img className={className} src={mediaUrl} alt={alt} decoding="async" loading={lazy ? "lazy" : "eager"} fetchPriority={priority ? "high" : "auto"} /> : <span className={className} aria-label="Media loading">…</span>;
 }
 
 function VenueBrandLogo({ url, name }: { url: string; name: string }) {
@@ -83,6 +85,7 @@ export function InternalRoster({ token, operationsOnly = false }: { token?: stri
   const [busy, setBusy] = useState(false);
   const [label, setLabel] = useState("");
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [openingProfileId, setOpeningProfileId] = useState("");
   const selectedProfile = useRef("");
   const requestKey = useRef("");
   const pendingDancer = useRef("");
@@ -97,7 +100,7 @@ export function InternalRoster({ token, operationsOnly = false }: { token?: stri
 
   const clearRoster = useCallback((message = "") => {
     hasSnapshot.current = false;
-    setSnapshot(null); setProfile(null); selectedProfile.current = ""; setError(message);
+    setSnapshot(null); setProfile(null); setOpeningProfileId(""); selectedProfile.current = ""; setError(message);
   }, []);
 
   const refresh = useCallback(async (signal?: AbortSignal) => {
@@ -119,7 +122,7 @@ export function InternalRoster({ token, operationsOnly = false }: { token?: stri
       }
       const selected = selectedProfile.current;
       if (selected) {
-        if (!data.dancers.some((dancer: Dancer) => dancer.id === selected)) { selectedProfile.current = ""; setProfile(null); }
+        if (!data.dancers.some((dancer: Dancer) => dancer.id === selected)) { selectedProfile.current = ""; setProfile(null); setOpeningProfileId(""); }
         else {
           const result = await rosterFetch(`/api/internal/profile/${selected}${token ? `?token=${encodeURIComponent(token)}` : ""}`, token, undefined, signal);
           if (alive.current && !signal?.aborted && generation === refreshGeneration.current && selectedProfile.current === selected) setProfile(result.profile);
@@ -215,13 +218,14 @@ export function InternalRoster({ token, operationsOnly = false }: { token?: stri
 
   async function openProfile(dancer: Dancer) {
     setNotice("");
+    setProfile(null); setOpeningProfileId(dancer.id);
     selectedProfile.current = dancer.id;
     try {
       const data = await rosterFetch(`/api/internal/profile/${dancer.id}${token ? `?token=${encodeURIComponent(token)}` : ""}`, token);
       if (alive.current && selectedProfile.current === dancer.id) setProfile(data.profile);
     } catch (reason) {
-      if (alive.current) {
-        selectedProfile.current = ""; setProfile(null);
+      if (alive.current && selectedProfile.current === dancer.id) {
+        selectedProfile.current = ""; setProfile(null); setOpeningProfileId("");
         if (reason instanceof RosterAccessError) clearRoster(reason.message);
         else setNotice(reason instanceof Error ? reason.message : "Profile unavailable.");
       }
@@ -240,10 +244,10 @@ export function InternalRoster({ token, operationsOnly = false }: { token?: stri
     {notice ? <p className="ir-notice" role="status">{notice}</p> : null}
     {snapshot ? <>
       {!operationsOnly ? <section aria-label={staff ? "Live internal roster" : "Available dancers"}><div className="ir-section-title"><h2>On the floor</h2><span className="ir-live">● {snapshot.dancers.length} {staff ? "checked in" : "available"}</span></div>
-        {dancers.length ? <div className="ir-grid ir-directory-grid">{dancers.map(dancer => <article className={`ir-dancer${snapshot.kind === "table" ? " ir-dancer-requestable" : ""}`} key={dancer.id}>
-          <button type="button" className="ir-profile-link" aria-label={`View ${dancer.stageName}’s full profile`} onClick={() => void openProfile(dancer)}>
-            {dancer.mainPhotoId ? <ProtectedMedia key={dancer.mainPhotoId} id={dancer.mainPhotoId} revision={dancer.mainPhotoRevision} kind="photo" token={token} className="ir-main-photo" alt={`${dancer.stageName}’s main photo`} /> : <span className="ir-main-photo ir-photo-placeholder">Photo unavailable</span>}
-            <span className="ir-dancer-copy"><strong>{dancer.stageName}</strong><span>View profile ↗</span></span>
+        {dancers.length ? <div className="ir-grid ir-directory-grid">{dancers.map((dancer, index) => <article className={`ir-dancer${snapshot.kind === "table" ? " ir-dancer-requestable" : ""}`} key={dancer.id}>
+          <button type="button" className="ir-profile-link" aria-label={`View ${dancer.stageName}’s full profile`} aria-busy={openingProfileId === dancer.id} onClick={() => void openProfile(dancer)}>
+            {dancer.mainPhotoId ? <ProtectedMedia key={dancer.mainPhotoId} id={dancer.mainPhotoId} revision={dancer.mainPhotoRevision} kind="photo" token={token} priority={index < 3} lazy={index >= 9} className="ir-main-photo" alt={`${dancer.stageName}’s main photo`} /> : <span className="ir-main-photo ir-photo-placeholder">Photo unavailable</span>}
+            <span className="ir-dancer-copy"><strong>{dancer.stageName}</strong><span>{openingProfileId === dancer.id ? "Opening…" : "View profile ↗"}</span></span>
           </button>
           {snapshot.kind === "table" ? <button type="button" className="ir-table-request" data-request-sent={dancer.requestStatus ? "" : undefined} aria-label={dancer.requestStatus ? `Request sent for ${dancer.stageName}` : `Request ${dancer.stageName} at our table`} disabled={busy || Boolean(dancer.requestStatus)} onClick={() => requestDancer(dancer.id)}>{dancer.requestStatus ? <span className="internal-request-sent-label">Request sent</span> : busy && pendingDancer.current === dancer.id ? "Sending…" : "Request"}</button> : null}
         </article>)}</div> : <div className="ir-empty"><h3>The floor is getting ready</h3><p>{staff ? "Dancers appear here after choosing Internal or Both at the dressing-room NFC sticker." : "No dancers are available to request right now. Please check back shortly or ask club staff."}</p></div>}
@@ -257,20 +261,21 @@ export function InternalRoster({ token, operationsOnly = false }: { token?: stri
         {snapshot.links?.map(link => <article className="ir-link" key={link.id}><div><strong>{link.label}</strong><small>Table requests</small>{snapshot.role !== "staff" ? <form key={link.label} className="ir-rename-form" onSubmit={event => { event.preventDefault(); const form = new FormData(event.currentTarget); void mutate({ action: "link_update", id: link.id, label: String(form.get("label") || "") }); }}><input name="label" aria-label={`Table number or name for ${link.label}`} defaultValue={link.label} required maxLength={60} /><button disabled={busy}>Save name</button></form> : null}</div><div className="ir-actions"><a href={`/internal/club/${link.token}`} target="_blank" rel="noreferrer">Open</a><a href={`/internal/sign/${link.token}`} target="_blank" rel="noreferrer">Print QR sign</a><button className="ir-secondary" onClick={() => void navigator.clipboard.writeText(`${window.location.origin}/internal/club/${link.token}`).then(() => setNotice("Club link copied.")).catch(() => setNotice("Open the link and copy its address."))}>Copy</button>{snapshot.role !== "staff" ? <button className="ir-secondary" disabled={busy} onClick={() => void mutate({ action: "link_revoke", id: link.id })}>Revoke</button> : null}</div></article>)}
       </section></div> : null}
     </> : null}
-    <ClubProfileDialog profile={profile} token={token} request={token && snapshot?.kind === "table" ? { tableLabel: snapshot.label || "our table", busy, message: notice } : undefined} onRequest={() => { if (profile) requestDancer(profile.id); }} onClose={() => { selectedProfile.current = ""; setProfile(null); }} />
+    <ClubProfileDialog profile={profile} profileId={openingProfileId || profile?.id} token={token} request={token && snapshot?.kind === "table" ? { tableLabel: snapshot.label || "our table", busy, message: notice } : undefined} onRequest={() => { if (profile) requestDancer(profile.id); }} onReady={() => setOpeningProfileId("")} onError={() => { selectedProfile.current = ""; setProfile(null); setOpeningProfileId(""); setNotice("That profile could not load. Please try again."); }} onClose={() => { selectedProfile.current = ""; setProfile(null); setOpeningProfileId(""); }} />
     {!operationsOnly ? <footer>Powered by MyDancr · {staff ? "Visibility is chosen by each dancer at check-in." : "Availability may change. Club staff coordinate all requests."}</footer> : null}
   </div>;
 }
 
-function ClubProfileDialog({ profile, token, request, onRequest, onClose }: { profile: Profile | null; token?: string; request?: InternalRequestAction; onRequest?: () => void; onClose: () => void }) {
+function ClubProfileDialog({ profile, profileId = profile?.id || "", token, request, onRequest, onReady, onError, onClose }: { profile: Profile | null; profileId?: string; token?: string; request?: InternalRequestAction; onRequest?: () => void; onReady?: () => void; onError?: () => void; onClose: () => void }) {
   const profileDialog = useRef<HTMLDialogElement>(null);
+  const [readyId, setReadyId] = useState("");
   useEffect(() => {
-    if (profile && !profileDialog.current?.open) profileDialog.current?.showModal();
-    if (!profile) profileDialog.current?.close();
-  }, [profile]);
+    if (profile && readyId === profileId && !profileDialog.current?.open) profileDialog.current?.showModal();
+    if (!profileId) { profileDialog.current?.close(); setReadyId(""); }
+  }, [profile, profileId, readyId]);
   return (
     <dialog className="ir-profile-dialog ir-full-profile-dialog" ref={profileDialog} onClose={onClose} aria-label={profile ? `${profile.stage_name}’s full profile` : "Dancer profile"}>
-      {profile ? <InternalFullProfile key={profile.id} profile={profile} token={token} request={request} onRequest={onRequest} onClose={onClose} /> : null}
+      {profileId ? <InternalFullProfile key={profileId} profileId={profileId} profile={profile} token={token} request={request} onRequest={onRequest} onReady={() => { setReadyId(profileId); onReady?.(); }} onError={onError || onClose} onClose={onClose} /> : null}
     </dialog>
   );
 }

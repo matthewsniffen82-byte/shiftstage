@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { createInternalFollowReturn } from "@/src/lib/dancr/internal-profile-auth-return";
 
 export type InternalProfile = {
@@ -15,21 +15,27 @@ export type InternalProfile = {
 export type InternalRequestAction = { tableLabel: string; busy: boolean; message: string };
 
 /** Host the actual discovery profile viewer; the parent retains roster authorization/polling. */
-export function InternalFullProfile({ profile, token, request, onRequest, onClose }: { profile: InternalProfile; token?: string; request?: InternalRequestAction; onRequest?: () => void; onClose: () => void }) {
+export function InternalFullProfile({ profile, profileId = profile?.id || "", token, request, onRequest, onReady, onError, onClose }: { profile: InternalProfile | null; profileId?: string; token?: string; request?: InternalRequestAction; onRequest?: () => void; onReady?: () => void; onError?: () => void; onClose: () => void }) {
   const frame = useRef<HTMLIFrameElement>(null);
-  const [ready, setReady] = useState(false);
-  const latest = useRef({ profile, token, request, onRequest, onClose });
-  latest.current = { profile, token, request, onRequest, onClose };
-  const send = () => frame.current?.contentWindow?.postMessage({
-    type: "mydancr:internal-profile-open", profile: latest.current.profile, token: latest.current.token || "", request: latest.current.request,
-  }, window.location.origin);
+  const latest = useRef({ profile, token, request, onRequest, onReady, onError, onClose });
+  latest.current = { profile, token, request, onRequest, onReady, onError, onClose };
+  const send = useCallback(() => {
+    if (latest.current.profile?.id !== profileId) return;
+    frame.current?.contentWindow?.postMessage({
+      type: "mydancr:internal-profile-open", profile: latest.current.profile, token: latest.current.token || "", request: latest.current.request,
+    }, window.location.origin);
+  }, [profileId]);
   useEffect(() => {
+    const timer = window.setTimeout(() => latest.current.onError?.(), 20000);
     const receive = (event: MessageEvent) => {
       if (event.origin !== window.location.origin || event.source !== frame.current?.contentWindow) return;
       if (event.data?.type === "mydancr:internal-profile-ready") send();
-      if (event.data?.type === "mydancr:internal-profile-shown") setReady(true);
+      if (event.data?.type === "mydancr:internal-profile-shown" && latest.current.profile?.id === profileId) {
+        window.clearTimeout(timer); latest.current.onReady?.();
+      }
+      if (event.data?.type === "mydancr:internal-profile-error") { window.clearTimeout(timer); latest.current.onError?.(); }
       if (event.data?.type === "mydancr:internal-profile-close") latest.current.onClose();
-      if (event.data?.type === "mydancr:internal-profile-auth" && event.data.profileId === latest.current.profile.id
+      if (event.data?.type === "mydancr:internal-profile-auth" && latest.current.profile && event.data.profileId === latest.current.profile.id
         && ["signup", "login"].includes(event.data.mode)) {
         try {
           const returnTo = createInternalFollowReturn(latest.current.profile.id, latest.current.token || "");
@@ -38,17 +44,14 @@ export function InternalFullProfile({ profile, token, request, onRequest, onClos
           frame.current?.contentWindow?.postMessage({ type: "mydancr:internal-profile-auth-error", message: "Sign-in could not open. Use the club's guest link and allow browser storage, then try again." }, window.location.origin);
         }
       }
-      if (event.data?.type === "mydancr:internal-table-request" && event.data.profileId === latest.current.profile.id
+      if (event.data?.type === "mydancr:internal-table-request" && latest.current.profile && event.data.profileId === latest.current.profile.id
         && latest.current.token && latest.current.request && !latest.current.request.busy
         && !latest.current.profile.requestStatus) latest.current.onRequest?.();
     };
     window.addEventListener("message", receive);
-    return () => window.removeEventListener("message", receive);
-  }, []);
-  useEffect(() => { send(); }, [profile, token, request]);
-  return <>
-    {!ready ? <div className="ir-full-profile-loading"><p role="status">Opening full profile…</p><button type="button" onClick={onClose}>Back to roster</button></div> : null}
-    <iframe ref={frame} className="ir-full-profile-frame" title={`${profile.stage_name}’s full profile`}
-      src={`/internal/profile-viewer?internal_profile=${encodeURIComponent(profile.id)}`} referrerPolicy="no-referrer" allow="autoplay; fullscreen" />
-  </>;
+    return () => { window.clearTimeout(timer); window.removeEventListener("message", receive); };
+  }, [profileId, send]);
+  useEffect(() => { send(); }, [profile, token, request, send]);
+  return <iframe ref={frame} className="ir-full-profile-frame" title={profile ? `${profile.stage_name}’s full profile` : "Dancer profile"}
+    src={`/internal/profile-viewer?internal_profile=${encodeURIComponent(profileId)}`} referrerPolicy="no-referrer" allow="autoplay; fullscreen" />;
 }

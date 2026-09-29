@@ -122,6 +122,26 @@ const alertMessage = app => find(alert(app), node => node.type === "p")?.props.c
 const grid = app => find(app.render(), node => node.props?.className === "ir-grid ir-directory-grid");
 const profile = app => find(app.render(), node => node.type?.name === "ClubProfileDialog")?.props.profile;
 
+test("opening a profile starts its viewer alongside the API and keeps the roster available",async t=>{
+ const pending=deferred();
+ const app=harness(async url=>url.includes('/profile/')?pending.promise:response(roster));t.after(()=>app.unmount());await app.mount();
+ find(app.render(),node=>node.props?.className==='ir-profile-link').props.onClick();await flush();
+ const dialog=find(app.render(),node=>node.type?.name==='ClubProfileDialog');
+ assert.equal(dialog.props.profileId,dancer.id);assert.equal(dialog.props.profile,null);assert.ok(grid(app));
+ assert.equal(find(app.render(),node=>node.props?.className==='ir-profile-link').props['aria-busy'],true);
+ pending.resolve(response({ok:true,profile:{id:dancer.id}}));await flush();
+ const loaded=find(app.render(),node=>node.type?.name==='ClubProfileDialog');loaded.props.onReady();
+ assert.equal(profile(app).id,dancer.id);assert.equal(find(app.render(),node=>node.props?.className==='ir-profile-link').props['aria-busy'],false);
+});
+
+test("a stalled viewer returns an inline retry message without taking over the roster",async t=>{
+ const app=harness(async url=>response(url.includes('/profile/')?{ok:true,profile:{id:dancer.id}}:roster));t.after(()=>app.unmount());await app.mount();
+ find(app.render(),node=>node.props?.className==='ir-profile-link').props.onClick();await flush();
+ find(app.render(),node=>node.type?.name==='ClubProfileDialog').props.onError();
+ assert.equal(profile(app),null);assert.ok(grid(app));
+ assert.equal(find(app.render(),node=>node.props?.className==='ir-notice').props.children,'That profile could not load. Please try again.');
+});
+
 test("returning from sign-in reopens only the requested dancer on the authorized roster", async t => {
   for (const requested of [dancer.id, "unrelated-dancer"]) {
     const calls = [];

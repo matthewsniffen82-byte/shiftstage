@@ -5,6 +5,16 @@ import vm from 'node:vm';
 
 const source = readFileSync(new URL('../src/live-shell/app/internal-profile-bridge.js', import.meta.url), 'utf8');
 const id = n => `00000000-0000-4000-8000-${String(n).padStart(12, '0')}`;
+
+test('Internal initializes without waiting for public discovery, then refreshes its metrics',async()=>{
+  const startup=readFileSync(new URL('../src/live-shell/app/26-sync-discovery-city-scope.js',import.meta.url),'utf8');
+  const branch=startup.slice(startup.lastIndexOf('    if (internalProfileFrameId) {'));
+  let resolve,ready=0,metrics=0;
+  const initialDiscoveryRequest=new Promise(done=>{resolve=done});
+  vm.runInNewContext(branch,{internalProfileFrameId:id(1),initialDiscoveryRequest,initializeInternalProfileFrame:()=>ready++,syncInternalProfilePublicMetrics:()=>metrics++});
+  assert.equal(ready,1);assert.equal(metrics,0);
+  resolve();await initialDiscoveryRequest;assert.equal(metrics,1);
+});
 const profile = {
   id: id(1), slug: 'synthetic-dancer', stage_name: 'Synthetic dancer', city: 'Las Vegas', venueName: 'Synthetic club',
   workingUntil: new Date(Date.now() + 3600000).toISOString(), avatarRevision: 'revision',

@@ -11,14 +11,17 @@ import {verifiedVenueLogoUrl} from '../src/lib/dancr/venue-branding.ts';
 import {MYDANCR_TV_POSTER_BUCKET,myDancrTvPosterStoragePath} from '../src/lib/dancr/media-watermark.ts';
 const id=n=>'98000000-0000-4000-8000-'+String(n).padStart(12,'0');
 const compile=file=>ts.transpileModule(readFileSync(new URL('../'+file,import.meta.url),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText;
-function fixture({members=true,active=true,staff=true,kind='table',choice=null,photoStatus='approved',requests=[],shifts=[],videos=[],upstreamHeaders={},upstreamStatus=200}={}){
+const responsive={};
+vm.runInNewContext(compile('src/lib/dancr/responsive-image.ts'),{exports:responsive,require:()=>({})});
+const {responsiveImageStoragePaths}=responsive;
+function fixture({members=true,active=true,staff=true,kind='table',choice=null,photoStatus='approved',requests=[],shifts=[],videos=[],photoPath='PRIVATE STORAGE',upstreamHeaders={},upstreamStatus=200}={}){
  const calls=[];
  const tables={
   internal_roster_links:[{id:id(1),venue_id:id(2),token:id(3),active,kind,label:'Table 4'}],
   venues:[{id:id(2),name:'Synthetic club',slug:'talk-of-the-town',logo_storage_path:null,owner_user_id:id(4),is_active:true}],
   app_users:[{id:id(4),role:'venue',account_state:'active'}],
   dancer_profiles:[{id:id(5),stage_name:'Aster',city:'Las Vegas',real_name:'PRIVATE NAME',email:'PRIVATE EMAIL',is_public:false}],
-  dancer_photos:[{id:id(6),dancer_id:id(5),storage_path:'PRIVATE STORAGE',review_status:photoStatus,is_primary:true,is_pinned:false,sort_order:0},{id:id(7),dancer_id:id(8),review_status:'approved',storage_path:'OTHER PROFILE'},{id:id(10),dancer_id:id(5),review_status:'approved',storage_path:'PRIVATE SECOND',is_primary:false,sort_order:2}],
+  dancer_photos:[{id:id(6),dancer_id:id(5),storage_path:photoPath,review_status:photoStatus,is_primary:true,is_pinned:false,sort_order:0},{id:id(7),dancer_id:id(8),review_status:'approved',storage_path:'OTHER PROFILE'},{id:id(10),dancer_id:id(5),review_status:'approved',storage_path:'PRIVATE SECOND',is_primary:false,sort_order:2}],
   dancer_internal_main_photos:choice?[{dancer_id:id(5),photo_id:id(choice)}]:[],
   social_links:[{dancer_id:id(5),platform:'instagram',handle:'aster',url:'https://instagram.com/aster',is_active:true}],
   mydancr_tv_videos:videos,internal_roster_requests:requests,shifts,
@@ -32,7 +35,7 @@ function fixture({members=true,active=true,staff=true,kind='table',choice=null,p
  vm.runInNewContext(compile('src/lib/dancr/internal-request-activity.ts'),{exports:activity,Date,require(){return {}}});
  vm.runInNewContext(compile('src/lib/dancr/internal-main-photo.ts'),{exports:mainPhoto,require(){return {}}});
  vm.runInNewContext(compile('src/lib/dancr/internal-roster.ts'),{exports:lib,require(name){if(name==='server-only')return {};if(name.endsWith('api-error-policy'))return {PublicApiError};if(name.endsWith('responsive-image'))return {responsivePublicImage:()=>null};if(name.endsWith('venue-branding'))return {verifiedVenueLogoUrl};if(name.endsWith('venue-access'))return {requireVenueAccess:async()=>{if(!staff)throw new Error('An active venue account is required.');return {venueId:id(2),venueName:'Synthetic club',role:'owner'}}};if(name.endsWith('supabase/request'))return {createRequestSupabaseContext:async request=>{if(request.headers.get('authorization')!=='Bearer staff')throw new Error('Sign in required.');return {user:{id:id(4)}}}};throw Error(name);}});
- vm.runInNewContext(compile('app/api/internal/[[...path]]/route.ts'),{exports:route,URL,Response,Headers,Request,Date,fetch:async(url,options)=>{calls.push({name:'fetch',url,options});return new Response('synthetic-image',{status:upstreamStatus,headers:{'content-type':'image/jpeg',...upstreamHeaders}});},require(name){if(name==='node:crypto')return {createHash};if(name==='next/server')return {NextResponse:{json:Response.json},after:work=>{calls.push({name:'after'});void work();}};if(name.endsWith('internal-request-push'))return {deliverInternalRequestPush:async(_client,requestId)=>{calls.push({name:'deliverInternalRequestPush',requestId});}};if(name.endsWith('supabase/admin'))return {createAdminSupabaseClient:()=>admin};if(name.endsWith('bounded-json-body'))return {readBoundedJsonObject};if(name.endsWith('api-error-policy'))return {PublicApiError,resolveApiError};if(name.endsWith('internal-request-activity'))return activity;if(name.endsWith('internal-main-photo'))return mainPhoto;if(name.endsWith('internal-roster'))return lib;if(name.endsWith('media-watermark'))return {MYDANCR_TV_POSTER_BUCKET,myDancrTvPosterStoragePath};if(name.endsWith('social-profile-url'))return {safeSocialProfileUrl};throw Error(name);}});
+ vm.runInNewContext(compile('app/api/internal/[[...path]]/route.ts'),{exports:route,URL,Response,Headers,Request,Date,fetch:async(url,options)=>{calls.push({name:'fetch',url,options});return new Response('synthetic-image',{status:Array.isArray(upstreamStatus)?upstreamStatus.shift():upstreamStatus,headers:{'content-type':'image/jpeg',...upstreamHeaders}});},require(name){if(name==='node:crypto')return {createHash};if(name==='next/server')return {NextResponse:{json:Response.json},after:work=>{calls.push({name:'after'});void work();}};if(name.endsWith('internal-request-push'))return {deliverInternalRequestPush:async(_client,requestId)=>{calls.push({name:'deliverInternalRequestPush',requestId});}};if(name.endsWith('supabase/admin'))return {createAdminSupabaseClient:()=>admin};if(name.endsWith('bounded-json-body'))return {readBoundedJsonObject};if(name.endsWith('api-error-policy'))return {PublicApiError,resolveApiError};if(name.endsWith('internal-request-activity'))return activity;if(name.endsWith('internal-main-photo'))return mainPhoto;if(name.endsWith('internal-roster'))return lib;if(name.endsWith('responsive-image'))return {responsiveImageStoragePaths};if(name.endsWith('media-watermark'))return {MYDANCR_TV_POSTER_BUCKET,myDancrTvPosterStoragePath};if(name.endsWith('social-profile-url'))return {safeSocialProfileUrl};throw Error(name);}});
  async function get(path=[],query='',auth='',headers={}){return route.GET(new Request('https://example.invalid/api/internal/'+path.join('/')+query,{headers:{...headers,...(auth?{authorization:'Bearer '+auth}:{})}}),{params:Promise.resolve({path})});}
  return {calls,get,post:async(body={},path=[],auth='staff')=>route.POST(new Request('https://example.invalid/api/internal',{method:'POST',headers:{authorization:'Bearer '+auth,'content-type':'application/json'},body:JSON.stringify(body)}),{params:Promise.resolve({path})})};
 }
@@ -72,6 +75,28 @@ test('roster and profile share this table’s open state across reloads without 
  assert.equal((await (await stale.get(['link',id(3)])).json()).dancers[0].requestStatus,null);
 });
 test('authorized media is proxied without exposing its storage URL',async()=>{const response=await fixture().get(['photo',id(6)],'?token='+id(3));assert.equal(response.status,200);assert.equal(await response.text(),'synthetic-image');assert.equal(response.headers.get('location'),null);assert.match(response.headers.get('cache-control'),/no-store/);});
+
+test('grid thumbnails use the authorized photo variant while full profiles keep the master',async()=>{
+ const photoPath='private/photo.r320-640.m1200x1800.webp';
+ const f=fixture({photoPath});
+ assert.equal((await f.get(['photo',id(6)],'?token='+id(3)+'&width=320')).status,200);
+ assert.equal(f.calls.find(call=>call.name==='signMedia').path,photoPath+'.w320.webp');
+ const full=fixture({photoPath});await full.get(['photo',id(6)],'?token='+id(3));
+ assert.equal(full.calls.find(call=>call.name==='signMedia').path,photoPath);
+ const invalid=fixture({photoPath});assert.equal((await invalid.get(['photo',id(6)],'?token='+id(3)+'&width=999999')).status,400);
+ assert.equal(invalid.calls.some(call=>call.name==='signMedia'),false);
+});
+
+test('missing or legacy thumbnails fall back to the same authorized full-size photo',async()=>{
+ const photoPath='private/photo.r320-640.m1200x1800.webp';
+ const f=fixture({photoPath,upstreamStatus:[404,200]});
+ assert.equal((await f.get(['photo',id(6)],'?token='+id(3)+'&width=320')).status,200);
+ assert.deepEqual(f.calls.filter(call=>call.name==='signMedia').map(call=>call.path),[photoPath+'.w320.webp',photoPath]);
+ const legacy=fixture();assert.equal((await legacy.get(['photo',id(6)],'?token='+id(3)+'&width=320')).status,200);
+ assert.equal(legacy.calls.find(call=>call.name==='signMedia').path,'PRIVATE STORAGE');
+ const revoked=fixture({active:false,photoPath});assert.equal((await revoked.get(['photo',id(6)],'?token='+id(3)+'&width=320')).status,404);
+ assert.equal(revoked.calls.some(call=>call.name==='signMedia'),false);
+});
 
 const approvedVideo = (overrides={}) => ({
  id:id(20),dancer_id:id(5),status:'approved',storage_path:'private/dancer/video.mp4',
