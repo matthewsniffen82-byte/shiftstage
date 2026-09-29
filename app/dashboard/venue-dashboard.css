@@ -43,6 +43,9 @@ body .dashboard-shell.dashboard-shell-venue .venue-dashboard-section[data-sectio
 body .dashboard-shell.dashboard-shell-venue .venue-dashboard-section[data-section-icon] > .venue-dashboard-section-body { padding: 18px; background: #09090d; }
 body .dashboard-shell.dashboard-shell-venue :is(a, button, summary, input, textarea):focus-visible { outline: 2px solid #c5a4f5 !important; outline-offset: 3px; }
 body .dashboard-shell.dashboard-shell-venue .venue-dashboard-section > summary:focus-visible { outline-offset: -3px; }
+/* Section links focus the panel; keep its focus cue on the header. */
+body .dashboard-shell.dashboard-shell-venue .venue-dashboard-section[tabindex="-1"]:focus { outline: none; }
+body .dashboard-shell.dashboard-shell-venue .venue-dashboard-section[tabindex="-1"]:focus-visible > summary { outline: 2px solid #c5a4f5; outline-offset: -3px; }
 
 
 @media (max-width: 620px) {
