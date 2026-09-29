@@ -432,6 +432,7 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
   :is(.profile-venue-destination, .profile-working-destination, .profile-upcoming-destination)
   :is(.venue-dot, .venue-dot > svg, .profile-venue-pin) {
   color: #a78bfa !important;
+  stroke: currentColor !important;
   filter: none !important;
   box-shadow: none !important;
 }
