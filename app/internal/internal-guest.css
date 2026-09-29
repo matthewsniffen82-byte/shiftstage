@@ -1,0 +1,110 @@
+/* Table QR pages share the public directory's compact, neutral presentation. */
+body .ir-shell.ir-guest {
+  max-width: 1040px;
+  padding: 14px clamp(12px, 3vw, 26px) max(24px, env(safe-area-inset-bottom, 0px));
+  color: var(--dancr-color-text-primary, #f8fafc);
+  background: var(--dancr-color-background, #050507);
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+}
+
+body .ir-guest .ir-header {
+  margin-bottom: 18px;
+  padding: 12px 14px;
+  border: 1px solid #34343c;
+  border-radius: 14px;
+  background: #08080b;
+}
+body .ir-guest .ir-header > div { display: grid; grid-template-columns: minmax(0, 1fr) fit-content(42%); align-items: center; gap: 8px 12px; width: 100%; min-width: 0; }
+body .ir-guest .ir-brand { grid-column: 1 / -1; width: fit-content; color: #f8fafc; font-size: 22px; line-height: 1.2; }
+body .ir-guest h1 { margin: 0; font-size: clamp(24px, 4vw, 28px); line-height: 1.2; letter-spacing: -.035em; overflow-wrap: anywhere; }
+body .ir-guest h2 { font-size: 20px; line-height: 1.3; letter-spacing: -.025em; }
+body .ir-guest p { color: #b8b5c2; font-size: 13px; line-height: 1.5; overflow-wrap: anywhere; }
+body .ir-guest .ir-header p { margin: 0; padding: 5px 9px; border: 1px solid #34343c; border-radius: 8px; color: #cbd5e1; font-size: 12px; line-height: 1.3; }
+body .ir-guest .ir-section-title { align-items: center; flex-wrap: wrap; gap: 6px 12px; margin-bottom: 10px; }
+body .ir-guest .ir-live { padding: 0; color: var(--dancr-color-success, #34d399); font-size: 12px; line-height: 1.4; }
+body .ir-guest .ir-section-title .ir-live { padding: 4px 8px; border: 1px solid #254b3b; border-radius: 999px; background: #07110c; font-weight: 600; }
+
+/* Preserve the three-column photos, with the same soft fade and thin edge
+   as the public dancer cards. Leave room for an independent 44px request. */
+body .ir-shell.ir-guest .ir-directory-grid .ir-dancer-copy {
+  gap: 4px;
+  padding-top: 36px;
+  background: linear-gradient(180deg, transparent, rgba(46, 22, 75, .24) 24%, rgba(38, 20, 62, .8) 56%, rgba(21, 11, 37, .92));
+}
+body .ir-shell.ir-guest .ir-directory-grid .ir-dancer-requestable .ir-dancer-copy { padding-bottom: 58px; }
+body .ir-guest .ir-dancer-copy > span { color: #cbd5e1; font-size: 10px; line-height: 1.3; }
+body .ir-guest .ir-dancer::after { content: ""; position: absolute; z-index: 4; inset: auto 0 0; height: 1px; background: color-mix(in srgb, var(--dancr-color-brand-primary-deep, #4c1d95) 88%, transparent); pointer-events: none; }
+body.dancr-button-system .ir-shell.ir-guest .ir-profile-link { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
+
+/* Use the neutral button face from the dashboards, including automatic
+   dark-mode browsers that otherwise recolor flat button backgrounds. */
+body.dancr-button-system .ir-shell.ir-guest button:not(.ir-profile-link) {
+  --ir-guest-control-edge: #45454f;
+  position: relative;
+  isolation: isolate;
+  box-sizing: border-box;
+  min-height: 44px !important;
+  padding: 8px 10px !important;
+  border: 0 !important;
+  border-radius: 10px !important;
+  color: #f8fafc !important;
+  background: none !important;
+  box-shadow: none !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+  font-size: 12px !important;
+  font-weight: 650 !important;
+  line-height: 1.3 !important;
+  letter-spacing: normal !important;
+}
+body.dancr-button-system .ir-shell.ir-guest button:not(.ir-profile-link)::before {
+  content: "";
+  display: block !important;
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border: 1px solid var(--ir-guest-control-edge);
+  border-radius: inherit;
+  background: linear-gradient(#060608, #060608);
+  pointer-events: none;
+}
+body.dancr-button-system .ir-shell.ir-guest button:not(.ir-profile-link):hover { --ir-guest-control-edge: #777481; }
+body.dancr-button-system .ir-shell.ir-guest :is(button, a):focus-visible { outline: 2px solid #c4b5fd !important; outline-offset: 3px; }
+body.dancr-button-system .ir-shell.ir-guest .ir-profile-link:focus-visible { outline-offset: -3px; }
+body.dancr-button-system .ir-shell.ir-guest button:disabled { opacity: .5 !important; }
+
+body .ir-guest .ir-panel { padding: 14px; border-color: #34343c; border-radius: 14px; background: #08080b; }
+body .ir-guest .ir-notice { margin: 12px 0; padding: 10px 12px; border-color: #45454f; border-radius: 10px; color: #cbd5e1 !important; background: #08080b; }
+body .ir-guest .ir-empty { padding: 20px 14px; border: 1px solid #34343c; border-radius: 14px; background: #08080b; }
+body .ir-guest .ir-empty h3 { margin: 0; font-size: 17px; line-height: 1.3; }
+body .ir-guest .ir-empty p { margin: 6px 0 0; }
+body .ir-guest footer { max-width: 420px; margin: 20px auto 0; color: #a6a3ae; font-size: 11px; line-height: 1.5; }
+
+/* A bounded profile sheet keeps the close control reachable on phones. */
+body .ir-guest .ir-profile-dialog {
+  position: fixed;
+  inset: env(safe-area-inset-top, 0px) 0 env(safe-area-inset-bottom, 0px);
+  width: min(760px, calc(100% - 24px));
+  max-height: calc(100dvh - 24px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+  margin: auto;
+  padding: 12px;
+  overflow: auto;
+  overscroll-behavior: contain;
+  border: 1px solid #34343c;
+  border-radius: 16px;
+  background: #08080b;
+}
+body.dancr-button-system .ir-shell.ir-guest button.ir-profile-close { position: sticky; top: 0; display: flex; width: 44px; height: 44px; margin-left: auto; padding: 0 !important; border-radius: 50% !important; --ir-guest-control-edge: #9a9ca9; }
+body .ir-guest .ir-profile-heading { gap: 12px; margin: -44px 0 12px; padding-right: 54px; min-height: 72px; }
+body .ir-guest .ir-profile-heading > div { min-width: 0; }
+body .ir-guest .ir-profile-heading h2 { font-size: 22px; overflow-wrap: anywhere; }
+body .ir-guest .ir-profile-heading p { margin: 4px 0 0; font-size: 12px; }
+body .ir-guest .ir-avatar { flex: 0 0 64px; width: 64px; height: 64px; border-color: #45454f; }
+body .ir-guest .ir-profile-socials { gap: 6px 16px; margin: 8px 0; }
+body .ir-guest .ir-profile-socials a { display: inline-flex; align-items: center; min-height: 44px; max-width: 100%; color: #cbd5e1; font-size: 13px; overflow-wrap: anywhere; }
+body .ir-guest .ir-profile-photos { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px; }
+body .ir-guest .ir-profile-photos img { border-radius: 4px; }
+body .ir-guest .ir-profile-videos h3 { margin: 16px 0 8px; font-size: 17px; }
+body .ir-guest .ir-profile-videos figure { margin: 8px 0; }
+body .ir-guest .ir-profile-videos video { border-radius: 8px; }
+body .ir-guest .ir-profile-videos figcaption { margin-top: 4px; color: #b8b5c2; font-size: 12px; overflow-wrap: anywhere; }
