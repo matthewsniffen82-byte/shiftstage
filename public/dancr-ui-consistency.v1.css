@@ -406,6 +406,36 @@ body.dancr-button-system #homeFilterToggle > .home-filter-toggle-icon {
   box-shadow: none !important;
 }
 
+/* Dancer utilities share discovery's violet accents; Free Entry remains primary.
+ * Scope the material variables to dancer rows, leaving club utilities unchanged. */
+html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell, .dancer-profile-preview-overlay)
+  :is(.modal-actions, .live-actions).profile-actions-compact {
+  --profile-utility-background: #050507 linear-gradient(#050507, #050507);
+  --profile-utility-border: #34343c;
+  --profile-utility-hover-background: #100a1b linear-gradient(#100a1b, #100a1b);
+  --profile-utility-hover-border: #745696;
+  --profile-action-selected-border: #745696;
+  --profile-action-selected-background: #160e24 linear-gradient(#160e24, #160e24);
+  --profile-action-selected-shadow: none;
+}
+
+html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell, .dancer-profile-preview-overlay)
+  :is(.modal-actions, .live-actions).profile-actions-compact
+  :is(#followBtn, #goingBtn, .profile-action-icon-control):not(:disabled):not([aria-disabled="true"])
+  :is(.action-icon, .profile-action-icon-frame) > svg {
+  color: #a78bfa !important;
+  filter: none !important;
+}
+
+/* Color only the venue pin, preserving status colors, labels, and chevrons. */
+html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell, .dancer-profile-preview-overlay)
+  :is(.profile-venue-destination, .profile-working-destination, .profile-upcoming-destination)
+  :is(.venue-dot, .venue-dot > svg, .profile-venue-pin) {
+  color: #a78bfa !important;
+  filter: none !important;
+  box-shadow: none !important;
+}
+
 /* Preserve the QR quiet zone while removing decorative framing and extra space. */
 body.dancr-button-system #profileQrOverlay .profile-qr-frame {
   box-sizing: border-box; width: min(240px,100%); aspect-ratio: 1;
