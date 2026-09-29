@@ -735,7 +735,7 @@
       return gallery[offset - 1] || profile?.mainPhotoUrl || "";
     }
 
-    function responsiveCssImageSet(srcSet) {
+    function responsiveCssImageSet(srcSet, displayWidth = 0) {
       const sources = String(srcSet || "")
         .split(",")
         .map((source) => source.trim().match(/^(\S+)\s+(\d+)w$/))
@@ -748,8 +748,21 @@
       // are added for native avatar srcsets. Array offsets are not densities.
       const displaySources = sources.filter((source) => source.width >= 320);
       return `image-set(${sources
-        .map((source) => `url('${source.url}') ${source.width < 320 ? source.width / 320 : displaySources.indexOf(source) + 1}x`)
+        .map((source) => `url('${source.url}') ${displayWidth > 0 ? source.width / displayWidth : source.width < 320 ? source.width / 320 : displaySources.indexOf(source) + 1}x`)
         .join(", ")})`;
+    }
+
+    function mobileThumbnailSource(srcSet) {
+      // A phone's three-column tile needs a thumbnail, even on a high-DPI screen.
+      // The img keeps the complete srcset for larger screens and legacy photos.
+      const sources = String(srcSet || "").split(",")
+        .map((entry) => entry.trim().match(/^(\S+)\s+(\d+)w$/))
+        .filter(Boolean)
+        .map((match) => ({ url: safeExternalHref(match[1]), width: Number(match[2]) }))
+        .filter((source) => source.url && source.width > 0 && source.width <= 320);
+      if (!sources.length) return "";
+      const candidates = sources.map((source) => `${escapeOptionValue(source.url)} ${source.width}w`).join(", ");
+      return `<source media="(max-width: 520px)" sizes="calc((100vw - 20px) / 3)" srcset="${candidates}">`;
     }
 
     function customPhotoAttrs(url, srcSet = "") {

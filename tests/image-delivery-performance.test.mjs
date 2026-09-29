@@ -47,6 +47,42 @@ test("thumbnail candidates do not downgrade CSS portraits or native fallback ima
   assert.match(context.nativeResponsivePhotoAttrs("https://images.example/master", added, 96), /^src="https:\/\/images.example\/96"/, "lineup fallback stays thumbnail-sized when srcset is unavailable");
 });
 
+test("phone grid sources use small photos without changing the full image source", () => {
+  const context = vm.createContext({ URL });
+  for (const name of ["escapeHtml", "escapeOptionValue", "safeExternalHref", "mobileThumbnailSource"]) {
+    vm.runInContext(shell.match(new RegExp("    function " + name + "\\([^]*?\\n    \\}"))[0], context);
+  }
+  const source = context.mobileThumbnailSource("https://images.example/160 160w, https://images.example/320 320w, https://images.example/480 480w, https://images.example/full 1600w");
+  assert.match(source, /media="\(max-width: 520px\)"/);
+  assert.match(source, /\/320 320w/);
+  assert.doesNotMatch(source, /\/480|\/full/);
+  assert.equal(context.mobileThumbnailSource(""), "", "legacy photos retain the normal img fallback");
+  assert.equal(context.mobileThumbnailSource("javascript:alert(1) 320w, https://images.example/large 1280w"), "");
+  assert.doesNotMatch(context.mobileThumbnailSource('https://images.example/"onload="evil 320w'), /"onload="/);
+  const gallery = shell.match(/function profilePhotoThumbMarkup\([^]*?(?=\n    function galleryMarkup)/)[0];
+  assert.match(gallery, /mobileThumbnailSource\(item.photoSrcSet\)/);
+  assert.match(gallery, /data-photo-url="\$\{displayText\(item.photoUrl\)\}"/, "opening a photo retains its larger URL");
+  assert.match(shell, /mobileThumbnailSource\(photoSrcSet\)/, "the external directory uses the same mobile source");
+});
+
+test("profile avatars choose pixel density from their display width", () => {
+  const context = vm.createContext({ safeCssUrl: value => value });
+  vm.runInContext(shell.match(/    function responsiveCssImageSet\([^]*?\n    \}/)[0], context);
+  const image = context.responsiveCssImageSet("https://images.example/96 96w, https://images.example/320 320w, https://images.example/480 480w", 96);
+  assert.match(image, /\/96'\) 1x/);
+  assert.match(image, /\/320'\) 3\.3333333333333335x/);
+  assert.match(image, /\/480'\) 5x/);
+  assert.match(shell, /responsiveCssImageSet\(publicAvatarPhotoSrcSet\(profile\), 96\)/);
+});
+
+test("an avatar without smaller variants keeps its own photo", () => {
+  const context = vm.createContext({ publicAvatarPhotoUrl: profile => profile.avatar || profile.main, publicProfilePhotoUrl: profile => profile.main, publicProfilePhotoSrcSet: () => 'https://images.example/main 320w' });
+  vm.runInContext(shell.match(/    function publicAvatarPhotoSrcSet\([^]*?\n    \}/)[0], context);
+  assert.equal(context.publicAvatarPhotoSrcSet({avatar:'legacy-avatar',main:'main'}), '');
+  assert.equal(context.publicAvatarPhotoSrcSet({main:'main'}), 'https://images.example/main 320w');
+  assert.equal(context.publicAvatarPhotoSrcSet({avatar:'avatar',main:'main',avatarPhotoSrcSet:'https://images.example/avatar 320w'}), 'https://images.example/avatar 320w');
+});
+
 test("club lineup requests stay thumbnail-sized and bounded even with fifty working dancers", () => {
   const source = shell.match(/function venueLineupMarkup\([^]*?(?=\n    function venueCardQrMarkup)/)?.[0];
   const escape = value => String(value).replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll('"', "&quot;");
@@ -79,8 +115,8 @@ test("club lineup requests stay thumbnail-sized and bounded even with fifty work
 
 test("small profile galleries load together while large galleries prioritize their first two rows", () => {
   const source = shell.match(/function profilePhotoThumbMarkup\([^]*?(?=\n    function galleryMarkup)/)?.[0];
-  const render = new Function('nativeResponsivePhotoAttrs', 'escapeHtml', 'displayText', 'PROFILE_MEDIA_PAGE_SIZE', `${source}; return profilePhotoThumbMarkup;`)(
-    () => 'src="https://images.example/photo"', value => String(value), value => String(value), 12,
+  const render = new Function('nativeResponsivePhotoAttrs', 'mobileThumbnailSource', 'escapeHtml', 'displayText', 'PROFILE_MEDIA_PAGE_SIZE', `${source}; return profilePhotoThumbMarkup;`)(
+    () => 'src="https://images.example/photo"', () => '', value => String(value), value => String(value), 12,
   );
   for (const [total, index, loading, priority] of [
     [1, 0, 'eager', 'high'],

@@ -350,7 +350,10 @@
     }
 
     function publicAvatarPhotoSrcSet(profile) {
-      return String(profile?.avatarPhotoSrcSet || profile?.avatar_photo_src_set || publicProfilePhotoSrcSet(profile) || "").trim();
+      const avatarSources = String(profile?.avatarPhotoSrcSet || profile?.avatar_photo_src_set || "").trim();
+      if (avatarSources) return avatarSources;
+      // A legacy avatar without variants must not pick a different gallery photo.
+      return publicAvatarPhotoUrl(profile) === publicProfilePhotoUrl(profile) ? publicProfilePhotoSrcSet(profile) : "";
     }
 
     function profilePhotoGalleryItems(profile, baseIndex, options = {}) {
@@ -379,7 +382,7 @@
     function profilePhotoThumbMarkup(item, total, galleryIndex = item.index) {
       const photoAttrs = nativeResponsivePhotoAttrs(item.photoUrl, item.photoSrcSet);
       const photoMarkup = photoAttrs
-        ? `<img class="portrait ${escapeHtml(item.photoClass)} has-custom-photo" ${photoAttrs} sizes="(max-width: 720px) calc((100vw - 6px) / 3), 250px" width="360" height="504" alt="" aria-hidden="true" loading="${total <= PROFILE_MEDIA_PAGE_SIZE || galleryIndex < 6 ? "eager" : "lazy"}" fetchpriority="${galleryIndex < 3 ? "high" : "auto"}" decoding="async" draggable="false" data-image-state="loading">`
+        ? `<picture class="photo-thumbnail">${mobileThumbnailSource(item.photoSrcSet)}<img class="portrait ${escapeHtml(item.photoClass)} has-custom-photo" ${photoAttrs} sizes="(max-width: 720px) calc((100vw - 6px) / 3), 250px" width="360" height="504" alt="" aria-hidden="true" loading="${total <= PROFILE_MEDIA_PAGE_SIZE || galleryIndex < 6 ? "eager" : "lazy"}" fetchpriority="${galleryIndex < 3 ? "high" : "auto"}" decoding="async" draggable="false" data-image-state="loading"></picture>`
         : `<span class="portrait ${escapeHtml(item.photoClass)}"></span>`;
       return `
         <button class="thumb ${galleryIndex === 0 ? "active" : ""}" type="button" data-profile-photo-index="${galleryIndex}" data-photo="${escapeHtml(item.photoClass)}" data-photo-url="${displayText(item.photoUrl)}" aria-label="Open gallery photo ${galleryIndex + 1} of ${total} in scrolling cards${item.isPinned ? ", pinned" : ""}" aria-pressed="${galleryIndex === 0 ? "true" : "false"}">

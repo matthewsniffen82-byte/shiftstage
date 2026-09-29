@@ -49,7 +49,7 @@ test("home card photography keeps final geometry and never exposes an empty rect
   );
   assert.match(
     liveShell,
-    /home-dancer-grid-link:has\(> img\[data-image-state\]\)::before \{[\s\S]*?radial-gradient[\s\S]*?linear-gradient/,
+    /home-dancer-grid-link:has\(img\[data-image-state\]\)::before \{[\s\S]*?radial-gradient[\s\S]*?linear-gradient/,
   );
   assert.match(
     liveShell,
@@ -90,7 +90,7 @@ test("live modal and dashboard previews use the same stable photo treatment", ()
   );
   assert.match(
     liveShell,
-    /#profileBackdrop \.gallery \.thumb::before[\s\S]*?radial-gradient[\s\S]*?#profileBackdrop \.gallery \.thumb > img\.portrait\[data-image-state="ready"\][\s\S]*?opacity: 1 !important;/,
+    /#profileBackdrop \.gallery \.thumb::before[\s\S]*?radial-gradient[\s\S]*?#profileBackdrop \.gallery \.thumb img\.portrait\[data-image-state="ready"\][\s\S]*?opacity: 1 !important;/,
   );
   assert.match(
     liveShell,

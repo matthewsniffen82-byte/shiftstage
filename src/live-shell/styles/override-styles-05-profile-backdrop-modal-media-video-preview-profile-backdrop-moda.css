@@ -903,7 +903,8 @@
         /* Stable, final-size image surfaces prevent empty media boxes while
            responsive files decode. Repeated mobile cards avoid shimmer work;
            the ready transition is intentionally limited to hover devices. */
-        #results.home-dancer-grid.home-dancer-three-column .home-dancer-grid-link:has(> img[data-image-state])::before {
+        picture.photo-thumbnail { display: contents; }
+        #results.home-dancer-grid.home-dancer-three-column .home-dancer-grid-link:has(img[data-image-state])::before {
           position: absolute;
           z-index: 0;
           inset: 0;
@@ -938,18 +939,18 @@
             linear-gradient(145deg,#111118,#07070b);
           pointer-events: none;
         }
-        #profileBackdrop .gallery .thumb > img.portrait[data-image-state] {
+        #profileBackdrop .gallery .thumb img.portrait[data-image-state] {
           position: relative;
           z-index: 1;
         }
-        #profileBackdrop .gallery .thumb > img.portrait[data-image-state="loading"],
-        #profileBackdrop .gallery .thumb > img.portrait[data-image-state="error"] {
+        #profileBackdrop .gallery .thumb img.portrait[data-image-state="loading"],
+        #profileBackdrop .gallery .thumb img.portrait[data-image-state="error"] {
           opacity: 0 !important;
         }
-        #profileBackdrop .gallery .thumb > img.portrait[data-image-state="ready"] {
+        #profileBackdrop .gallery .thumb img.portrait[data-image-state="ready"] {
           opacity: 1 !important;
         }
-        #profileBackdrop .gallery .thumb > img.portrait[data-image-state="error"] {
+        #profileBackdrop .gallery .thumb img.portrait[data-image-state="error"] {
           visibility: hidden;
         }
         .home-venue-discovery-logo-shell,
@@ -977,7 +978,7 @@
         }
         @media (prefers-reduced-motion: no-preference) and (hover: hover) {
           #results.home-dancer-grid.home-dancer-three-column img.home-dancer-grid-photo[data-image-state],
-          #profileBackdrop .gallery .thumb > img.portrait[data-image-state],
+          #profileBackdrop .gallery .thumb img.portrait[data-image-state],
           .home-venue-discovery-logo[data-image-state],
           .venue-card-logo[data-image-state],
           .venue-detail-logo[data-image-state],

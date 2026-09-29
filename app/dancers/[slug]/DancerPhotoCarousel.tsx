@@ -836,23 +836,33 @@ export function DancerPhotoCarousel({
               type="button"
             >
               {item.kind === "photo" ? (
-                <img
-                  alt=""
-                  aria-hidden="true"
-                  data-image-state="loading"
-                  decoding="async"
-                  draggable={false}
-                  height={item.imageHeight || undefined}
-                  loading={prioritizeInitialPhotos && (photoMedia.length <= DANCER_PROFILE_MEDIA_PAGE_SIZE || index < 6) ? "eager" : "lazy"}
-                  fetchPriority={prioritizeInitialPhotos && index < 3 ? "high" : "auto"}
-                  onError={markImageUnavailable}
-                  onLoad={markImageReady}
-                  ref={settleImageElement}
-                  sizes="(max-width: 760px) 33vw, 250px"
-                  src={item.imageUrl}
-                  srcSet={item.imageSrcSet || undefined}
-                  width={item.imageWidth || undefined}
-                />
+                <picture style={{ display: "contents" }}>
+                  <source
+                    media="(max-width: 520px)"
+                    sizes="calc((100vw - 20px) / 3)"
+                    srcSet={item.imageSrcSet?.split(",").filter(source => {
+                      const width = Number(source.trim().match(/\s+(\d+)w$/)?.[1]);
+                      return width > 0 && width <= 320;
+                    }).join(",") || undefined}
+                  />
+                  <img
+                    alt=""
+                    aria-hidden="true"
+                    data-image-state="loading"
+                    decoding="async"
+                    draggable={false}
+                    height={item.imageHeight || undefined}
+                    loading={prioritizeInitialPhotos && (photoMedia.length <= DANCER_PROFILE_MEDIA_PAGE_SIZE || index < 6) ? "eager" : "lazy"}
+                    fetchPriority={prioritizeInitialPhotos && index < 3 ? "high" : "auto"}
+                    onError={markImageUnavailable}
+                    onLoad={markImageReady}
+                    ref={settleImageElement}
+                    sizes="(max-width: 760px) 33vw, 250px"
+                    src={item.imageUrl}
+                    srcSet={item.imageSrcSet || undefined}
+                    width={item.imageWidth || undefined}
+                  />
+                </picture>
               ) : (
                 <>
                   {item.posterUrl ? (
