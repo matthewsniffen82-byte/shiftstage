@@ -58,6 +58,16 @@ export type VenueRosterEntry = {
   checkIn: Record<string, unknown> | null;
 };
 
+export type VenueRosterSort = "asc" | "desc";
+const stageNameOrder = new Intl.Collator("en", { sensitivity: "base", numeric: true });
+
+export function sortVenueRosterEntries(entries: VenueRosterEntry[], direction: VenueRosterSort) {
+  return [...entries].sort((a, b) => {
+    const byName = stageNameOrder.compare(a.dancer?.stageName?.trim() || "Dancer", b.dancer?.stageName?.trim() || "Dancer");
+    return (direction === "desc" ? -byName : byName) || a.id.localeCompare(b.id);
+  });
+}
+
 export type VenueRosterChannel = "all" | "internal" | "external";
 export function rosterChannelVisibility(affiliation: VenueDancerAffiliation | null, now = Date.now()) {
   const active = affiliation?.status === "active" && Date.parse(affiliation.workingUntil || "") > now;

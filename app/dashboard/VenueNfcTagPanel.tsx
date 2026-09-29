@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { InternalRoster, VenueRosterProfileButton } from "../internal/InternalRoster";
-import { getVenueRosterEntries, filterRosterChannel, rosterChannelVisibility, type VenueRosterChannel, type VenueDancerAffiliation as DancerAffiliation } from "@/src/lib/dancr/venue-roster";
+import { getVenueRosterEntries, filterRosterChannel, rosterChannelVisibility, sortVenueRosterEntries, type VenueRosterSort, type VenueRosterChannel, type VenueDancerAffiliation as DancerAffiliation } from "@/src/lib/dancr/venue-roster";
 import {
   readDashboardAccessToken,
   requestVenueDancerVerificationsJson,
@@ -40,6 +40,7 @@ async function settleVenueNfcRequest<T>(request: () => Promise<T>): Promise<Prom
 export default function VenueNfcTagPanel({
   initialAffiliations = EMPTY_ROSTER,
   workingNow = EMPTY_ROSTER,
+  timeZone,
   workingOnly,
   onWorkingOnlyChange,
   canManageRoster = false,
@@ -48,6 +49,7 @@ export default function VenueNfcTagPanel({
 }: {
   initialAffiliations?: Array<Record<string, unknown>>;
   workingNow?: Array<Record<string, unknown>>;
+  timeZone: string;
   workingOnly: boolean;
   onWorkingOnlyChange: (workingOnly: boolean) => void;
   canManageRoster?: boolean;
@@ -60,6 +62,8 @@ export default function VenueNfcTagPanel({
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [channel, setChannel] = useState<VenueRosterChannel>("all");
+  const [sortOrder, setSortOrder] = useState<VenueRosterSort>("asc");
+  const rosterRef = useRef<HTMLDetailsElement>(null);
   const [search, setSearch] = useState("");
   const [visibleCount, setVisibleCount] = useState(50);
   const [testingTagId, setTestingTagId] = useState("");
@@ -80,6 +84,10 @@ export default function VenueNfcTagPanel({
   useEffect(() => {
     if (!savingRef.current) setAffiliations(initialAffiliations as DancerAffiliation[]);
   }, [initialAffiliations]);
+
+  useEffect(() => {
+    if (workingOnly && rosterRef.current) rosterRef.current.open = true;
+  }, [workingOnly]);
 
   const load = useCallback(({ silent = false }: VenueNfcLoadOptions = {}) => {
     if (!mountedRef.current || savingRef.current) return Promise.resolve();
@@ -318,20 +326,30 @@ export default function VenueNfcTagPanel({
 
   const activeAffiliations = affiliations.filter((item) => item.status === "active");
   const workingCount = workingNow.length;
-  const rosterEntries = filterRosterChannel(getVenueRosterEntries(affiliations, workingNow, search, workingOnly), channel);
+  const rosterEntries = sortVenueRosterEntries(filterRosterChannel(getVenueRosterEntries(affiliations, workingNow, search, workingOnly), channel), sortOrder);
   const isRosterLoading = isLoading && !workingOnly && !activeAffiliations.length;
 
   return (
     <article className="info-panel venue-nfc-panel" id="venue-nfc-tags">
-      <section className="venue-nfc-roster" aria-label="Dancer roster">
-        <div className="venue-nfc-roster-head">
+      <details className="venue-nfc-roster" ref={rosterRef}>
+        <summary className="venue-nfc-roster-head">
           <span><strong>Dancer roster</strong><small>Internal and External together. Dressing-room NFC sets working status automatically.</small></span>
           <b>{isLoading && !activeAffiliations.length ? "…" : `${activeAffiliations.length} affiliated`}</b>
-        </div>
+        </summary>
+        <div className="venue-roster-content">
+        <div className="venue-roster-controls">
         <label className="venue-roster-search">
           Search dancers
           <input type="search" value={search} placeholder="Stage name" onChange={(event) => { setSearch(event.target.value); setVisibleCount(50); }} />
         </label>
+        <label className="venue-roster-sort">
+          Sort dancers
+          <select value={sortOrder} onChange={(event) => { setSortOrder(event.target.value as VenueRosterSort); setVisibleCount(50); }}>
+            <option value="asc">Name: A–Z</option>
+            <option value="desc">Name: Z–A</option>
+          </select>
+        </label>
+        </div>
         <div className="venue-roster-filters" role="group" aria-label="Filter affiliated dancers">
           <button type="button" aria-pressed={!workingOnly} onClick={() => { onWorkingOnlyChange(false); setVisibleCount(50); }}>All affiliated <b>{activeAffiliations.length}</b></button>
           <button type="button" aria-pressed={workingOnly} onClick={() => { onWorkingOnlyChange(true); setVisibleCount(50); }}>Working now <b>{workingCount}</b></button>
@@ -343,6 +361,7 @@ export default function VenueNfcTagPanel({
         <p className="venue-roster-results" role="status">{isRosterLoading ? "Loading dancers…" : `${rosterEntries.length} ${rosterEntries.length === 1 ? "dancer" : "dancers"}${search.trim() ? " matching your search" : workingOnly ? " working now" : " affiliated"}`}</p>
         {rosterEntries.slice(0, visibleCount).map(({ id, affiliation, dancer, checkIn }) => {
           const visibility = rosterChannelVisibility(affiliation);
+          const checkedInAt = typeof checkIn?.checkedInAt === "string" && Number.isFinite(Date.parse(checkIn.checkedInAt)) ? checkIn.checkedInAt : null;
           return (
           <div className="venue-nfc-dancer" key={id}>
             <span className="venue-nfc-dancer-identity">
@@ -357,6 +376,7 @@ export default function VenueNfcTagPanel({
                 <strong>{dancer?.stageName || "Dancer"}</strong>
                 {dancer?.city ? <small>{dancer.city}</small> : null}
                 <small className={checkIn ? "venue-roster-working" : ""}>{checkIn ? "● Working now · NFC" : "Not working now"}</small>
+                {checkedInAt ? <small>Checked in · <time dateTime={checkedInAt}>{new Intl.DateTimeFormat("en-US", { hour: "numeric", minute: "2-digit", timeZoneName: "short", timeZone }).format(new Date(checkedInAt))}</time></small> : null}
                 {visibility.internal || visibility.external ? <small className="venue-roster-channel">{visibility.internal && visibility.external ? "Internal + External" : visibility.internal ? "Internal only" : "External only"}</small> : null}
               </span>
             </span>
@@ -374,7 +394,8 @@ export default function VenueNfcTagPanel({
         })}
         {!isRosterLoading && !rosterEntries.length ? <p>{search.trim() || channel !== "all" ? "No dancers match these filters." : workingOnly ? "No dancers are working now." : "No dancers have used this venue's dancer check-in sticker yet."}</p> : null}
         {rosterEntries.length > visibleCount ? <button type="button" onClick={() => setVisibleCount((count) => count + 50)}>Show more dancers ({rosterEntries.length - visibleCount} remaining)</button> : null}
-      </section>
+        </div>
+      </details>
       {canManageRoster && affiliations.some(item => item.status === "revoked" && item.reentryBlocked) ? <details>
         <summary>Removed dancers</summary>
         <p>Only allow a new tap when the dancer has your club’s permission to return.</p>
@@ -422,6 +443,19 @@ export default function VenueNfcTagPanel({
       {!tags.length && !isLoading ? <p>No stickers are assigned yet.</p> : null}
       </details>
       <style>{`
+        .venue-roster-content{display:grid;gap:8px;padding-top:10px}
+        .venue-nfc-roster:not([open])>.venue-roster-content{display:none}
+        .venue-roster-controls{display:grid;grid-template-columns:minmax(0,1fr) minmax(140px,180px);gap:12px;align-items:end}
+        .venue-roster-sort{display:grid;gap:6px;margin:10px 0 4px;color:#c4b5fd;font-size:12px;font-weight:750}
+        .venue-roster-sort select{width:100%;min-height:44px;box-sizing:border-box;padding:10px 12px;border:1px solid #42394f;border-radius:10px;background:#111118;color:#f8fafc;font:inherit;font-size:16px}
+        summary.venue-nfc-roster-head{cursor:pointer;list-style:none;min-height:48px}
+        summary.venue-nfc-roster-head::-webkit-details-marker{display:none}
+        summary.venue-nfc-roster-head>span{flex:1;min-width:140px}
+        summary.venue-nfc-roster-head>b{white-space:nowrap}
+        summary.venue-nfc-roster-head::after{content:"";width:8px;height:8px;flex:0 0 8px;border:solid #a78bfa;border-width:0 2px 2px 0;transform:rotate(45deg);margin:0 4px 4px}
+        .venue-nfc-roster[open]>summary::after{transform:rotate(225deg);margin-top:8px}
+        .venue-nfc-roster-head:focus-visible,.venue-roster-sort select:focus-visible{outline:2px solid #a78bfa;outline-offset:3px}
+        @media(max-width:480px){.venue-roster-controls{grid-template-columns:minmax(0,1fr)}}
         .venue-roster-search{display:grid;gap:6px;margin:10px 0 4px;color:#c4b5fd;font-size:12px;font-weight:750}
         .venue-roster-search input{width:100%;min-width:0;box-sizing:border-box;min-height:44px;padding:10px 12px;border:1px solid #42394f;border-radius:10px;color:#f8fafc;background:#111118;font:inherit;font-size:16px}
         .venue-roster-search input:focus-visible,.venue-roster-actions a:focus-visible,.venue-roster-stickers summary:focus-visible{outline:2px solid #a78bfa;outline-offset:2px}

@@ -190,6 +190,10 @@ export function VenuePanel({
       if (!section) return;
       const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
       section.open = true;
+      if (sectionId === "venue-working-now") {
+        const roster = section.querySelector<HTMLDetailsElement>("details.venue-nfc-roster");
+        if (roster) roster.open = true;
+      }
       section.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "start" });
       window.setTimeout(() => section.querySelector<HTMLElement>("summary")?.focus({ preventScroll: true }), reduceMotion ? 0 : 350);
     }, 50);
@@ -491,6 +495,7 @@ export function VenuePanel({
           <VenueNfcTagPanel
             initialAffiliations={initialAffiliations}
             workingNow={workingNow}
+            timeZone={String(profile?.timezone || "America/Los_Angeles")}
             workingOnly={rosterWorkingOnly}
             onWorkingOnlyChange={setRosterWorkingOnly}
             onAccessRemoved={onAccessRemoved}
