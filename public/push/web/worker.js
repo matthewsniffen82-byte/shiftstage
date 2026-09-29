@@ -63,7 +63,15 @@ self.addEventListener("push", event => {
 function safeUrl(value) {
   try {
     const url = new URL(typeof value === "string" ? value : "/", self.location.origin);
-    if (url.origin === self.location.origin && !url.username && !url.password) return url.href;
+    if (!url.username && !url.password) {
+      if (url.origin === self.location.origin) return url.href;
+      // Older installs may use the bare domain. Keep their signed-in origin
+      // while preserving the destination sent by the canonical www site.
+      const appOrigins = ["https://mydancr.com", "https://www.mydancr.com"];
+      if (appOrigins.includes(url.origin) && appOrigins.includes(self.location.origin)) {
+        return self.location.origin + url.pathname + url.search + url.hash;
+      }
+    }
   } catch { /* Use the app for malformed or external links. */ }
   return self.location.origin + "/";
 }
@@ -72,10 +80,22 @@ self.addEventListener("notificationclick", event => {
   event.notification.close();
   event.waitUntil((async () => {
     if (await storage("get", "account") !== event.notification.data?.accountId) return;
-    const url = safeUrl(event.notification.data?.url);
+    const destination = new URL(safeUrl(event.notification.data?.url));
+    if (destination.pathname === "/dashboard/venue" && ["#table-requests", "#venue-pickups"].includes(destination.hash)) {
+      // A new notification must load fresh requests even when an existing
+      // dashboard differs only by its hash or is already at this inbox.
+      destination.searchParams.set("notification", event.notification.tag || String(Date.now()));
+    }
+    const url = destination.href;
     const clients = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
-    const existing = clients.find(client => new URL(client.url).origin === self.location.origin);
-    if (existing) { const navigated = await existing.navigate(url); if (navigated) return navigated.focus(); }
+    const appClients = clients.filter(client => new URL(client.url).origin === self.location.origin);
+    const existing = appClients.find(client => new URL(client.url).pathname === destination.pathname) || appClients[0];
+    if (existing) {
+      try {
+        const navigated = await existing.navigate(url);
+        if (navigated) return await navigated.focus();
+      } catch { /* A tab may close while the notification is being opened. */ }
+    }
     return self.clients.openWindow(url);
   })());
 });

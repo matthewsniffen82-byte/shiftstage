@@ -307,7 +307,7 @@ export function VenuePanel({
         role="tabpanel"
         aria-labelledby="venue-workspace-tonight-tab"
       >
-        <section className="info-panel venue-dashboard-section" id="venue-pickups" aria-labelledby="venue-pickups-heading">
+        <section className="info-panel venue-dashboard-section" id="venue-pickups" aria-labelledby="venue-pickups-heading" tabIndex={-1}>
           <h2 id="venue-pickups-heading">Pickup requests</h2>
           {(venueRole === "owner" || venueRole === "manager")
             ? <PickupDashboardPanel key={`${account?.id}:${connectedVenueId}`} refreshKey={refreshedAt} />

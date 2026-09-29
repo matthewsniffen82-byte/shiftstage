@@ -276,7 +276,7 @@ function notificationActionUrl(row: NotificationDeliveryRow) {
   const payload = (row.payload || {}) as Record<string, unknown>;
   const baseUrl = publicAppUrl();
   if (!baseUrl) return "";
-  if (payload.kind === "club_shuttle_request") return `${baseUrl}/dashboard/venue`;
+  if (payload.kind === "club_shuttle_request") return `${baseUrl}/dashboard/venue#venue-pickups`;
   if (payload.kind === "internal_table_request") return `${baseUrl}/dashboard/venue#table-requests`;
   if (followAlertKey(payload.kind)) return `${baseUrl}/dashboard/customer#customer-alerts`;
 

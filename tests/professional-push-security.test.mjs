@@ -62,7 +62,7 @@ test("shuttle push preserves a dashboard alert without guest contact, pickup dat
   }], { email: false });
   const payload = f.calls[0];
   assert.match(payload.body, /shuttle/i);
-  assert.equal(payload.url, "https://example.test/dashboard/venue");
+  assert.equal(payload.url, "https://example.test/dashboard/venue#venue-pickups");
   assert.equal(payload.data, undefined);
   assert.doesNotMatch(JSON.stringify({...payload,userId:undefined}), /Guest Sample|Private Hotel|17025550123|guest@example.test|10000000-0000-4000/);
 });
