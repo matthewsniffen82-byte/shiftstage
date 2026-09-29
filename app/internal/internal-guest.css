@@ -31,7 +31,7 @@ body .ir-shell.ir-guest .ir-directory-grid .ir-dancer-copy {
   padding-top: 36px;
   background: linear-gradient(180deg, transparent, rgba(46, 22, 75, .24) 24%, rgba(38, 20, 62, .8) 56%, rgba(21, 11, 37, .92));
 }
-body .ir-shell.ir-guest .ir-directory-grid .ir-dancer-requestable .ir-dancer-copy { padding-bottom: 58px; }
+body .ir-shell.ir-guest .ir-directory-grid .ir-dancer-requestable .ir-dancer-copy { padding-bottom: 48px; }
 body .ir-guest .ir-dancer-copy > span { color: #cbd5e1; font-size: 10px; line-height: 1.3; }
 body .ir-guest .ir-dancer::after { content: ""; position: absolute; z-index: 4; inset: auto 0 0; height: 1px; background: color-mix(in srgb, var(--dancr-color-brand-primary-deep, #4c1d95) 88%, transparent); pointer-events: none; }
 body.dancr-button-system .ir-shell.ir-guest .ir-profile-link { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
@@ -72,6 +72,10 @@ body.dancr-button-system .ir-shell.ir-guest button:not(.ir-profile-link):hover {
 body.dancr-button-system .ir-shell.ir-guest :is(button, a):focus-visible { outline: 2px solid #c4b5fd !important; outline-offset: 3px; }
 body.dancr-button-system .ir-shell.ir-guest .ir-profile-link:focus-visible { outline-offset: -3px; }
 body.dancr-button-system .ir-shell.ir-guest button:disabled { opacity: .5 !important; }
+
+/* A slimmer visible face keeps the full 44px tap target above the card edge. */
+body.dancr-button-system .ir-shell.ir-guest button.ir-table-request { padding: 4px 8px !important; border-radius: 8px !important; }
+body.dancr-button-system .ir-shell.ir-guest button.ir-table-request::before { inset-block: 4px; }
 
 body .ir-guest .ir-panel { padding: 14px; border-color: #34343c; border-radius: 14px; background: #08080b; }
 body .ir-guest .ir-notice { margin: 12px 0; padding: 10px 12px; border-color: #45454f; border-radius: 10px; color: #cbd5e1 !important; background: #08080b; }
