@@ -1,11 +1,10 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import Link from "next/link";
-import { getVenueRosterEntries, type VenueDancerAffiliation as DancerAffiliation } from "@/src/lib/dancr/venue-roster";
+import { InternalRoster, VenueRosterProfileButton } from "../internal/InternalRoster";
+import { getVenueRosterEntries, filterRosterChannel, rosterChannelVisibility, type VenueRosterChannel, type VenueDancerAffiliation as DancerAffiliation } from "@/src/lib/dancr/venue-roster";
 import {
   readDashboardAccessToken,
-  requestDashboardJson,
   requestVenueDancerVerificationsJson,
   requestVenueNfcSupportJson,
   requestVenueNfcTagsJson,
@@ -44,27 +43,23 @@ export default function VenueNfcTagPanel({
   workingOnly,
   onWorkingOnlyChange,
   canManageRoster = false,
-  canEndCheckIns = false,
   canRequestSupport = false,
   onAccessRemoved,
-  onCheckInEnded,
 }: {
   initialAffiliations?: Array<Record<string, unknown>>;
   workingNow?: Array<Record<string, unknown>>;
   workingOnly: boolean;
   onWorkingOnlyChange: (workingOnly: boolean) => void;
   canManageRoster?: boolean;
-  canEndCheckIns?: boolean;
   canRequestSupport?: boolean;
   onAccessRemoved?: (affiliation: DancerAffiliation) => void;
-  onCheckInEnded?: (shiftId: string) => void;
 }) {
   const [tags, setTags] = useState<NfcTag[]>([]);
   const [affiliations, setAffiliations] = useState<DancerAffiliation[]>(initialAffiliations as DancerAffiliation[]);
   const [status, setStatus] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  const [endingShiftId, setEndingShiftId] = useState("");
+  const [channel, setChannel] = useState<VenueRosterChannel>("all");
   const [search, setSearch] = useState("");
   const [visibleCount, setVisibleCount] = useState(50);
   const [testingTagId, setTestingTagId] = useState("");
@@ -217,7 +212,7 @@ export default function VenueNfcTagPanel({
   async function removeAccess(affiliation: DancerAffiliation) {
     if (!canManageRoster || savingRef.current) return;
     const dancerName = affiliation.dancer?.stageName || "this dancer";
-    if (!window.confirm(`Remove ${dancerName} from this club? Their check-in and club appearances will end. Their account and media stay intact. Your club must allow a new tap before they can reconnect.`)) return;
+    if (!window.confirm(`Remove ${dancerName} from this club? Their affiliation and current appearances at this club will end on Internal and External. Their account and media stay intact. Your club must allow a new tap before they can reconnect.`)) return;
     if (!readDashboardAccessToken("venue")) return setStatus("Sign in required.");
     if (!mountedRef.current) return;
     const requestId = ++actionSequenceRef.current;
@@ -242,7 +237,7 @@ export default function VenueNfcTagPanel({
       if (!mountedRef.current || controller.signal.aborted || requestId !== actionSequenceRef.current) return;
       setAffiliations((current) => current.map((item) => item.id === affiliation.id ? { ...item, status: "revoked", reentryBlocked: true } : item));
       onAccessRemoved?.(affiliation);
-      setStatus(`${dancerName}'s club connection ended. Their account is preserved. Your club must allow a new tap before they can reconnect.`);
+      setStatus(`${dancerName}'s Internal and External affiliation with this club ended. Their account is preserved. Your club must allow a new tap before they can reconnect.`);
     } catch (error) {
       if (!mountedRef.current || controller.signal.aborted || requestId !== actionSequenceRef.current) return;
       setStatus(error instanceof Error ? error.message : "Unable to remove check-in access.");
@@ -267,45 +262,6 @@ export default function VenueNfcTagPanel({
       setStatus("A new tap is allowed. The dancer must tap the club’s dressing-room sticker to reconnect.");
     } catch (error) { if (mountedRef.current) setStatus(error instanceof Error ? error.message : "Unable to allow a new tap."); }
     finally { savingRef.current = false; if (mountedRef.current) setIsSaving(false); }
-  }
-
-  async function endCheckIn(affiliation: Pick<DancerAffiliation, "dancer">, shift: Record<string, unknown>) {
-    if (!canEndCheckIns || savingRef.current || !shift.shiftId || shift.shiftSource === "demo_locked") return;
-    const shiftId = String(shift.shiftId);
-    const dancerName = affiliation.dancer?.stageName || "this dancer";
-    if (!window.confirm(`End ${dancerName}'s check-in? Working Now will stop. Their club approval, account, and media stay intact.`)) return;
-    if (!readDashboardAccessToken("venue")) return setStatus("Sign in required.");
-    if (!mountedRef.current) return;
-    const requestId = ++actionSequenceRef.current;
-    actionAbortRef.current?.abort();
-    const controller = new AbortController();
-    actionAbortRef.current = controller;
-    savingRef.current = true;
-    loadSequenceRef.current += 1;
-    loadAbortRef.current?.abort();
-    loadAbortRef.current = null;
-    loadInFlightRef.current = null;
-    setIsLoading(false); setIsSaving(true); setEndingShiftId(shiftId); setStatus("");
-    try {
-      const data = await requestDashboardJson("/api/venue/check-ins", {
-        method: "DELETE", expectedRole: "venue", headers: { "content-type": "application/json" },
-        body: JSON.stringify({ shiftId }), signal: controller.signal,
-        fallbackMessage: "Unable to end this check-in. Refresh and try again.",
-      });
-      if (!mountedRef.current || controller.signal.aborted || requestId !== actionSequenceRef.current) return;
-      if (data.shiftId !== shiftId || !Number.isFinite(Date.parse(data.checkedOutAt || ""))) throw new Error("Check-in end could not be confirmed. Refresh and try again.");
-      onCheckInEnded?.(shiftId);
-      setStatus(`${dancerName}'s Working Now check-in ended. Their club approval and account are unchanged.`);
-    } catch (error) {
-      if (mountedRef.current && !controller.signal.aborted && requestId === actionSequenceRef.current) {
-        setStatus(error instanceof Error ? error.message : "Unable to end this check-in.");
-      }
-    } finally {
-      if (requestId === actionSequenceRef.current) {
-        actionAbortRef.current = null; savingRef.current = false;
-        if (mountedRef.current) { setIsSaving(false); setEndingShiftId(""); }
-      }
-    }
   }
 
   function startTapTest(tag: NfcTag) {
@@ -362,14 +318,14 @@ export default function VenueNfcTagPanel({
 
   const activeAffiliations = affiliations.filter((item) => item.status === "active");
   const workingCount = workingNow.length;
-  const rosterEntries = getVenueRosterEntries(affiliations, workingNow, search, workingOnly);
+  const rosterEntries = filterRosterChannel(getVenueRosterEntries(affiliations, workingNow, search, workingOnly), channel);
   const isRosterLoading = isLoading && !workingOnly && !activeAffiliations.length;
 
   return (
     <article className="info-panel venue-nfc-panel" id="venue-nfc-tags">
       <section className="venue-nfc-roster" aria-label="Dancer roster">
         <div className="venue-nfc-roster-head">
-          <span><strong>Dancer roster</strong><small>View current check-ins and manage affiliated dancers.</small></span>
+          <span><strong>Dancer roster</strong><small>Internal and External together. Dressing-room NFC sets working status automatically.</small></span>
           <b>{isLoading && !activeAffiliations.length ? "…" : `${activeAffiliations.length} affiliated`}</b>
         </div>
         <label className="venue-roster-search">
@@ -380,8 +336,13 @@ export default function VenueNfcTagPanel({
           <button type="button" aria-pressed={!workingOnly} onClick={() => { onWorkingOnlyChange(false); setVisibleCount(50); }}>All affiliated <b>{activeAffiliations.length}</b></button>
           <button type="button" aria-pressed={workingOnly} onClick={() => { onWorkingOnlyChange(true); setVisibleCount(50); }}>Working now <b>{workingCount}</b></button>
         </div>
+        <div className="venue-roster-filters" role="group" aria-label="Filter by current shift visibility">
+          {(["all", "internal", "external"] as const).map(value => <button key={value} type="button" aria-pressed={channel === value} onClick={() => { setChannel(value); setVisibleCount(50); }}>{value === "all" ? "All channels" : value === "internal" ? "Internal" : "External"}</button>)}
+        </div>
+        <small>Internal and External filters include dancers who chose Both for their active shift.</small>
         <p className="venue-roster-results" role="status">{isRosterLoading ? "Loading dancers…" : `${rosterEntries.length} ${rosterEntries.length === 1 ? "dancer" : "dancers"}${search.trim() ? " matching your search" : workingOnly ? " working now" : " affiliated"}`}</p>
         {rosterEntries.slice(0, visibleCount).map(({ id, affiliation, dancer, checkIn }) => {
+          const visibility = rosterChannelVisibility(affiliation);
           return (
           <div className="venue-nfc-dancer" key={id}>
             <span className="venue-nfc-dancer-identity">
@@ -395,21 +356,15 @@ export default function VenueNfcTagPanel({
               <span className="venue-nfc-dancer-copy">
                 <strong>{dancer?.stageName || "Dancer"}</strong>
                 {dancer?.city ? <small>{dancer.city}</small> : null}
-                <small className={checkIn ? "venue-roster-working" : ""}>{checkIn ? "● Working now" : "Not working now"}</small>
+                <small className={checkIn ? "venue-roster-working" : ""}>{checkIn ? "● Working now · NFC" : "Not working now"}</small>
+                {visibility.internal || visibility.external ? <small className="venue-roster-channel">{visibility.internal && visibility.external ? "Internal + External" : visibility.internal ? "Internal only" : "External only"}</small> : null}
               </span>
             </span>
             <div className="venue-roster-actions">
-              {dancer?.slug ? <Link href={`/dancers/${encodeURIComponent(dancer.slug)}`} aria-label={`View ${dancer.stageName || "dancer"} profile`}>View profile</Link> : null}
-              {canEndCheckIns && checkIn?.shiftId ? (
-                <button className="venue-end-checkin" type="button" disabled={isSaving || checkIn.shiftSource === "demo_locked"}
-                  aria-label={`End ${dancer?.stageName || "dancer"} check-in`}
-                  onClick={() => { void endCheckIn({ dancer }, checkIn); }}>
-                  {checkIn.shiftSource === "demo_locked" ? "Demo managed" : endingShiftId === checkIn.shiftId ? "Ending…" : "End check-in"}
-                </button>
-              ) : null}
+              {affiliation?.canViewProfile && affiliation.dancerId ? <VenueRosterProfileButton dancerId={affiliation.dancerId} stageName={dancer?.stageName || "Dancer"} /> : null}
               {canManageRoster && affiliation ? (
                 <button className="venue-nfc-remove-access" type="button" disabled={isSaving}
-                  aria-label={`Remove ${affiliation.dancer?.stageName || "dancer"} access`} onClick={() => removeAccess(affiliation)}>
+                  aria-label={`Remove ${affiliation.dancer?.stageName || "dancer"} affiliation from Internal and External`} onClick={() => removeAccess(affiliation)}>
                   Remove access
                 </button>
               ) : null}
@@ -417,7 +372,7 @@ export default function VenueNfcTagPanel({
           </div>
           );
         })}
-        {!isRosterLoading && !rosterEntries.length ? <p>{search.trim() ? "No dancers match your search." : workingOnly ? "No dancers are working now." : "No dancers have used this venue's dancer check-in sticker yet."}</p> : null}
+        {!isRosterLoading && !rosterEntries.length ? <p>{search.trim() || channel !== "all" ? "No dancers match these filters." : workingOnly ? "No dancers are working now." : "No dancers have used this venue's dancer check-in sticker yet."}</p> : null}
         {rosterEntries.length > visibleCount ? <button type="button" onClick={() => setVisibleCount((count) => count + 50)}>Show more dancers ({rosterEntries.length - visibleCount} remaining)</button> : null}
       </section>
       {canManageRoster && affiliations.some(item => item.status === "revoked" && item.reentryBlocked) ? <details>
@@ -429,6 +384,7 @@ export default function VenueNfcTagPanel({
         </div>)}
       </details> : null}
       {status ? <p role="status">{status}</p> : null}
+      <InternalRoster operationsOnly />
       <details className="venue-roster-stickers">
         <summary>Dancer &amp; legacy stickers <span>{tags.length} assigned</span></summary>
       {tags.length ? <div className="nfc-tag-list" aria-label="Assigned sticker inventory">

@@ -14,10 +14,17 @@ export async function internalMembers(client: SupabaseClient, venueId: string): 
   return data || [];
 }
 
+export type VenueRosterMember = Omit<InternalMember, "working_until"> & { working_until: string | null; internal_visible: boolean; external_visible: boolean };
+export async function venueRosterMembers(client: SupabaseClient, venueId: string): Promise<VenueRosterMember[]> {
+  const { data, error } = await client.rpc("venue_roster_members", { p_venue_id: venueId });
+  if (error) throw error;
+  return data || [];
+}
+
 export async function internalScope(client: SupabaseClient, request: Request, token?: string) {
   if (token !== undefined) {
     if (!isInternalUuid(token)) throw new PublicApiError("NOT_FOUND", "This club link is unavailable.", 404);
-    const { data: link, error } = await client.from("internal_roster_links").select("id,venue_id,kind,label").eq("token", token).eq("active", true).maybeSingle();
+    const { data: link, error } = await client.from("internal_roster_links").select("id,venue_id,kind,label").eq("token", token).eq("active", true).eq("kind", "table").maybeSingle();
     if (error) throw error;
     if (!link) throw new PublicApiError("NOT_FOUND", "This club link has been revoked or is unavailable.", 404);
     const { data: venue, error: venueError } = await client.from("venues").select("id,name,owner_user_id").eq("id", link.venue_id).eq("is_active", true).maybeSingle();

@@ -119,45 +119,9 @@ test("failed checkout or audit rolls back the complete action and preserves appr
   }
 });
 
-const panel = read("../app/dashboard/VenueNfcTagPanel.tsx");
-const checkout = compile(panel.slice(panel.indexOf("  async function endCheckIn("), panel.indexOf("  function startTapTest(")));
-function uiFixture({ allowed = true, confirmed = true } = {}) {
-  const requests = [], ended = [];
-  const context = vm.createContext({
-    AbortController, Error, canEndCheckIns: allowed, window: { confirm: () => confirmed },
-    readDashboardAccessToken: () => "fixture", mountedRef: { current: true }, savingRef: { current: false },
-    actionSequenceRef: { current: 0 }, actionAbortRef: { current: null }, loadSequenceRef: { current: 0 },
-    loadAbortRef: { current: new AbortController() }, loadInFlightRef: { current: null },
-    setIsLoading: () => {}, setIsSaving: value => { context.saving = value; }, setEndingShiftId: () => {},
-    setStatus: value => { context.status = value; }, onCheckInEnded: value => ended.push(value),
-    requestDashboardJson: (path, options) => new Promise((resolve, reject) => requests.push({ path, options, resolve, reject })),
-  });
-  vm.runInContext(checkout, context);
-  return { context, requests, ended, run: () => context.endCheckIn({ dancer: { stageName: "Test" } }, { shiftId: id(1), shiftSource: "nfc_presence" }) };
-}
-test("checkout UI waits for a matching persisted receipt, prevents duplicate actions, and never edits affiliation", async () => {
-  const f = uiFixture(), oldLoad = f.context.loadAbortRef.current, action = f.run();
-  assert.deepEqual(f.ended, []);
-  assert.equal(oldLoad.signal.aborted, true);
-  await f.run(); assert.equal(f.requests.length, 1);
-  assert.equal(f.requests[0].path, "/api/venue/check-ins");
-  assert.equal(f.requests[0].options.method, "DELETE");
-  f.requests[0].resolve({ shiftId: id(1), checkedOutAt: new Date().toISOString() });
-  await action;
-  assert.deepEqual(f.ended, [id(1)]);
-  assert.equal(f.context.saving, false);
-});
-test("UI failures, wrong receipts, cancelled actions, and stale responses keep Working Now intact", async () => {
-  for (const options of [{ allowed: false }, { confirmed: false }]) {
-    const f = uiFixture(options); await f.run(); assert.equal(f.requests.length, 0);
-  }
-  for (const outcome of ["failure", "wrongReceipt", "unmounted"]) {
-    const f = uiFixture(), action = f.run();
-    if (outcome === "failure") f.requests[0].reject(new Error("Retry"));
-    else {
-      if (outcome === "unmounted") f.context.mountedRef.current = false;
-      f.requests[0].resolve({ shiftId: outcome === "wrongReceipt" ? id(2) : id(1), checkedOutAt: new Date().toISOString() });
-    }
-    await action; assert.deepEqual(f.ended, []);
-  }
+test("venue roster does not expose a manual working-status action", () => {
+  const panel = read("../app/dashboard/VenueNfcTagPanel.tsx");
+  assert.doesNotMatch(panel, /endCheckIn|canEndCheckIns|End check-in|api\/venue\/check-ins/);
+  assert.match(panel, /NFC sets working status automatically/);
+  assert.match(panel, /removeAccess\(affiliation\)/);
 });

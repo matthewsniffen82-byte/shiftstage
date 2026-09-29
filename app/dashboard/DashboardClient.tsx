@@ -631,16 +631,6 @@ export default function DashboardClient({
                   refreshStatus={venueRefreshStatus}
                   onAnalyticsPeriodChange={setAnalyticsPeriod}
                   onRefresh={() => void refreshVenueDashboard(true)}
-                  onCheckInEnded={(shiftId) => {
-                    venueRefreshAbortRef.current?.abort();
-                    venueRefreshRequestRef.current += 1;
-                    setIsVenueRefreshing(false);
-                    setState((current) => ({
-                      ...current,
-                      workingNow: (current.workingNow || []).filter((shift) => shift.shiftId !== shiftId),
-                    }));
-                    void refreshVenueDashboard(false);
-                  }}
                   onAccessRemoved={(affiliation) => {
                     venueRefreshAbortRef.current?.abort();
                     venueRefreshRequestRef.current += 1;

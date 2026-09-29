@@ -63,7 +63,6 @@ export function VenuePanel({
   onAnalyticsPeriodChange,
   onRefresh,
   onAccessRemoved,
-  onCheckInEnded,
   onProfileChange,
   onPublicationChange,
   onDealRequestsChange,
@@ -85,7 +84,6 @@ export function VenuePanel({
   onAnalyticsPeriodChange: (period: "tonight" | "7d" | "30d") => void;
   onRefresh: () => void;
   onAccessRemoved: (affiliation: VenueDancerAffiliation) => void;
-  onCheckInEnded: (shiftId: string) => void;
   onProfileChange: (profile: Record<string, unknown>) => void;
   onPublicationChange: (publication: Record<string, unknown>) => void;
   onDealRequestsChange: (dealRequests: Array<Record<string, unknown>>) => void;
@@ -235,7 +233,7 @@ export function VenuePanel({
             {!isPublished && <p>{isPausedForDeals ? "Your venue is hidden until it has an active Club Deal. Your dancer roster is saved." : isAwaitingVenueReview ? "Ready to review in Manage venue." : pageReviewStatus === "changes_requested" ? "Changes in progress. MyDancr will notify you when your page is ready." : "MyDancr prepares the venue page. Your team reviews it and approves it to make it live."}</p>}
           </div>
           <div className="venue-refresh-control">
-            <Link href="/internal">Open internal roster</Link>
+            <a href="#venue-dancer-roster" onClick={(event) => openVenueSection(event, "venue-dancer-roster")}>Dancer roster &amp; tables</a>
             <small>{refreshedAt ? `Updated ${formatRelativeDashboardTime(refreshedAt)}` : "Live data loading"}</small>
             <button type="button" disabled={isRefreshing} onClick={onRefresh}>{isRefreshing ? "Refreshing…" : "Refresh"}</button>
           </div>
@@ -481,13 +479,13 @@ export function VenuePanel({
         </section>
 
         <DashboardSection
-          description="See who's working now, end check-ins, and manage your approved roster."
+          description="Internal and External dancers, affiliations, table requests, and QR codes in one place. NFC controls working status."
           eyebrow="Venue roster"
           hidden={activeWorkspace !== "venue"}
           id="venue-dancer-roster"
           icon={<VenueDashboardIcon section="roster" />}
           toggleAffordance="chevron"
-          title="Dancers & check-ins"
+          title="Dancers & tables"
           badge={`${nfcAuthorizedDancerCount} affiliated`}
         >
           <VenueNfcTagPanel
@@ -496,9 +494,7 @@ export function VenuePanel({
             workingOnly={rosterWorkingOnly}
             onWorkingOnlyChange={setRosterWorkingOnly}
             onAccessRemoved={onAccessRemoved}
-            onCheckInEnded={onCheckInEnded}
             canManageRoster={canManageRoster}
-            canEndCheckIns={permissions.includes("end_checkins")}
             canRequestSupport={canRequestNfcSupport}
           />
         </DashboardSection>

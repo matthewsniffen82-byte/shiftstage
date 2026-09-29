@@ -151,7 +151,7 @@ function rosterQueryFixture(rows, failPage = -1) {
     return query;
   } };
   vm.runInNewContext(loadRoster, {
-    exports, requireManagedVenue: async () => ({ id: "own-venue" }), AFFILIATION_COLUMNS: "id",
+    exports, venueRosterMembers: async () => [], requireManagedVenue: async () => ({ id: "own-venue" }), AFFILIATION_COLUMNS: "id",
     mapVenue: row => row, mapAffiliation: (_client, row) => row,
   });
   return { load: () => exports.getVenueDancerVerificationState(client, "manager"), calls };
@@ -178,4 +178,20 @@ test("roster pagination handles empty and exact pages and rejects partial result
   assert.equal((await fixture.load()).affiliations.length, 500);
   assert.equal(fixture.calls.length, 2);
   await assert.rejects(rosterQueryFixture(rows, 2).load(), /Unavailable/);
+});
+
+test("channel filters include Both, never infer opt-in, and exclude expired or removed affiliation", () => {
+  const future = new Date(Date.now() + 3600000).toISOString();
+  const rows = [
+    { id: 'i', status: 'active', workingUntil: future, internalVisible: true, externalVisible: false },
+    { id: 'e', status: 'active', workingUntil: future, internalVisible: false, externalVisible: true },
+    { id: 'b', status: 'active', workingUntil: future, internalVisible: true, externalVisible: true },
+    { id: 'expired', status: 'active', workingUntil: '2000-01-01', internalVisible: true, externalVisible: true },
+    { id: 'removed', status: 'revoked', workingUntil: future, internalVisible: true, externalVisible: true },
+    { id: 'unset', status: 'active', workingUntil: future },
+  ].map(affiliation => ({ id: affiliation.id, affiliation }));
+  assert.deepEqual(ids(roster.filterRosterChannel(rows, 'internal')), ['i', 'b']);
+  assert.deepEqual(ids(roster.filterRosterChannel(rows, 'external')), ['e', 'b']);
+  assert.equal(roster.filterRosterChannel(rows, 'all').length, 6);
+  assert.equal(roster.rosterChannelVisibility(null).internal, false);
 });

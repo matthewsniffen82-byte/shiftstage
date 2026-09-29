@@ -4,7 +4,7 @@ Premium nightlife schedule discovery live app.
 
 Dancr is a Next.js, Supabase, Vercel, and TypeScript application. Public discovery pages, dashboards, approvals, photo moderation, schedules, notifications, venues, and account tools are served from the live app and database.
 
-The integrated [MyDancr internal roster](docs/mydancr-internal-integration.md) lives at `/internal`. Dancers complete the shared full profile and Ondato verification, then explicitly choose Internal only, External only, or Both at each dressing-room NFC check-in. Internal avatar cards open the full approved customer profile through the club roster. Club staff use their existing venue account for table requests, QR signs, and entrance displays.
+The integrated [MyDancr internal roster](docs/mydancr-internal-integration.md) is managed in `/dashboard/venue#venue-dancer-roster`, alongside External dancers and channel filters. Dancers complete the shared full profile and Ondato verification, then explicitly choose Internal only, External only, or Both at each dressing-room NFC check-in. Internal avatar cards open the full approved customer profile through the club roster. Club staff use their existing venue account for table requests; owners/managers manage affiliations, table numbers, and printable QR signs. NFC controls working status. Entrance displays are retired; `/internal` redirects to the unified venue roster.
 
 ## Local runtime and dependencies
 

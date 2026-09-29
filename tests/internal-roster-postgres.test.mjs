@@ -8,7 +8,16 @@ let pg;
 before(async()=>{
  pg=await createTapDatabase(); await seedTapDatabase(pg); await pg.exec('reset role');
  await pg.exec("alter table public.venue_team_members add column role text default 'staff'; create table public.dancer_age_verifications(user_id uuid primary key,provider text,status text,verified_at timestamptz); grant all on public.dancer_age_verifications to service_role;");
- for(const name of ['20260928090000_mydancr_internal_channels.sql','20260928090100_mydancr_internal_roster.sql']) await pg.exec(migration(name));
+ const departure=migration('20260922020000_preserve_dancers_when_clubs_leave.sql');
+ await pg.exec('alter table public.venue_dancer_affiliations add column reentry_blocked boolean not null default false');
+ for(const name of ['cancel_departed_venue_shifts','revoke_dancer_venue_affiliation']){
+   const definition=departure.match(new RegExp('create (?:or replace )?function public\\.'+name+'[\\s\\S]*?\\n\\$\\$;'))?.[0];
+   if(!definition)throw Error('Missing '+name);await pg.exec(definition);
+ }
+ for(const name of ['20260928090000_mydancr_internal_channels.sql','20260928090100_mydancr_internal_roster.sql','20260928170000_unified_venue_roster.sql']) {
+   if(name==='20260928170000_unified_venue_roster.sql')await pg.query("insert into public.internal_roster_links(id,venue_id,kind,label,token) values($1,$2,'display','Old entrance',$3)",[id(90),id(20),id(91)]);
+   await pg.exec(migration(name));
+ }
  await pg.query("insert into public.dancer_age_verifications values($1,'ondato','verified',now()-interval '1 day'),($2,'ondato','verified',now()-interval '1 day')",[id(1),id(5)]);
 });
 beforeEach(async()=>pg.exec('begin;set role service_role'));
@@ -83,8 +92,8 @@ test('table requests are idempotent and club-scoped',async()=>{
  await manage('request_status',{id:result.id,expectedStatus:'acknowledged',status:'completed'});
 });
 test('external-only dancers cannot be requested through internal table links',async()=>{await tap('external');const table=await link();await rejectsAtomic(()=>request(table.token),'40001');});
-test('display links cannot submit table requests; revoked links stop working',async()=>{
- await tap();const display=await link('display');await rejectsAtomic(()=>request(display.token),'42501');const table=await link();await request(table.token);await manage('link_revoke',{id:table.id});await rejectsAtomic(()=>request(table.token),'42501');
+test('entrance display creation is retired; revoked table links stop working',async()=>{
+ await tap();await rejectsAtomic(()=>link('display'),'22023');const table=await link();await request(table.token);await manage('link_revoke',{id:table.id});await rejectsAtomic(()=>request(table.token),'42501');
  assert.equal((await pg.query('select status from public.internal_roster_requests')).rows[0].status,'cancelled');
 });
 test('staff can acknowledge requests but only managers can create links',async()=>{
@@ -98,4 +107,42 @@ test('browser roles cannot read operational data or call service-only RPCs',asyn
   await rejectsAtomic(()=>pg.query('select * from public.dancer_channel_preferences'),'42501');
   await rejectsAtomic(()=>roster(),'42501');await rejectsAtomic(()=>tap(),'42501');
  }
+});
+
+const staffRoster = async(venue=id(20)) => (await pg.query('select * from public.venue_roster_members($1)',[venue])).rows;
+for(const [mode,internal,external] of [['internal',true,false],['external',false,true],['both',true,true]])test('unified staff roster labels '+mode+' without changing guest consent',async()=>{
+ await tap(mode);const rows=await staffRoster();assert.equal(rows.length,1);assert.equal(rows[0].internal_visible,internal);assert.equal(rows[0].external_visible,external);
+ assert.equal((await staffRoster(id(21))).length,0);
+ await pg.exec("update public.shifts set checked_out_at=now()");
+ const ended=(await staffRoster())[0];assert.equal(ended.internal_visible,false);assert.equal(ended.external_visible,false);assert.equal(ended.working_until,null);assert.equal((await roster()).length,0);
+});
+test('table renumbering preserves printed QR capability and is restricted to its own managers',async()=>{
+ const table=await link();await manage('link_update',{id:table.id,label:'  Table 24  '});
+ const saved=(await pg.query('select * from public.internal_roster_links where id=$1',[table.id])).rows[0];assert.equal(saved.label,'Table 24');assert.equal(saved.token,table.token);
+ await rejectsAtomic(()=>manage('link_update',{id:table.id,label:'Foreign'},id(6),id(21)),'P0002');
+ await pg.query("insert into public.venue_team_members(venue_id,user_id,status,role) values($1,$2,'active','staff')",[id(20),id(6)]);
+ await rejectsAtomic(()=>manage('link_update',{id:table.id,label:'No'},id(6)),'42501');
+ await rejectsAtomic(()=>manage('link_update',{id:table.id,label:' '}),'22023');
+});
+test('unified roster is service-only and a removed affiliation loses private profile access',async()=>{
+ await tap('both');await pg.exec("update public.venue_dancer_affiliations set status='revoked',revoked_at=now()");assert.equal((await staffRoster()).length,0);assert.equal((await roster()).length,0);
+ for(const role of ['anon','authenticated']){await pg.exec('set role '+role);await rejectsAtomic(()=>staffRoster(),'42501');}
+});
+
+for(const mode of ['internal','external','both'])test('club removal ends '+mode+' affiliation and presence without deleting profile',async()=>{
+ const first=await tap(mode);const table=await link();if(mode!=='external')await request(table.token);
+ const affiliation=(await pg.query('select id from public.venue_dancer_affiliations where venue_id=$1 and dancer_id=$2',[id(20),id(10)])).rows[0];
+ await rejectsAtomic(()=>pg.query('select public.revoke_dancer_venue_affiliation($1,$2,$3)',[affiliation.id,id(6),'Foreign']),'42501');
+ await pg.query('select public.revoke_dancer_venue_affiliation($1,$2,$3)',[affiliation.id,id(2),'Club removed access']);
+ assert.equal((await staffRoster()).length,0);assert.equal((await roster()).length,0);
+ const shift=(await pg.query('select status,checked_out_at from public.shifts where id=$1',[first.shiftId])).rows[0];assert.equal(shift.status,'cancelled');assert.ok(shift.checked_out_at);
+ const removed=(await pg.query('select status,reentry_blocked from public.venue_dancer_affiliations where id=$1',[affiliation.id])).rows[0];assert.equal(removed.status,'revoked');assert.equal(removed.reentry_blocked,true);
+ assert.equal((await profile()).is_public,mode!=='internal');
+ await rejectsAtomic(()=>request(table.token),'40001');
+});
+
+test('the forward migration disables existing entrance displays and invalidates their old tokens',async()=>{
+ const old=(await pg.query('select * from public.internal_roster_links where id=$1',[id(90)])).rows[0];assert.equal(old.active,false);assert.notEqual(old.token,id(91));
+ await rejectsAtomic(()=>request(id(91)),'42501');
+ await rejectsAtomic(()=>pg.query('update public.internal_roster_links set active=true where id=$1',[id(90)]),'23514');
 });

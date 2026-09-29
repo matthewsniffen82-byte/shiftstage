@@ -1,3 +1,5 @@
+import "../../internal/internal.css";
+import "../../internal/internal-dashboard.css";
 import DashboardClient from "../DashboardClient";
 
 export const runtime = "nodejs";

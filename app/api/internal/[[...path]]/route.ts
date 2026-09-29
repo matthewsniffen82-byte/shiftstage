@@ -3,7 +3,7 @@ import { createHash } from "node:crypto";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { readBoundedJsonObject } from "@/src/lib/bounded-json-body";
 import { resolveApiError, PublicApiError } from "@/src/lib/api-error-policy";
-import { INTERNAL_HEADERS, internalError, internalMembers, internalScope, isInternalUuid } from "@/src/lib/dancr/internal-roster";
+import { INTERNAL_HEADERS, internalError, internalMembers, internalScope, isInternalUuid, venueRosterMembers } from "@/src/lib/dancr/internal-roster";
 import { safeSocialProfileUrl } from "@/src/lib/dancr/social-profile-url";
 import type { SocialPlatform } from "@/src/lib/dancr/types";
 
@@ -20,7 +20,8 @@ export async function GET(request: Request, context: Context) {
     const token = path[0] === "link" ? path[1] : url.searchParams.get("token") ?? undefined;
     if (path.length > 2 || ![undefined, "link", "avatar", "profile", "photo", "video"].includes(path[0]) || (path[0] === "link" && !token)) return json({ ok: false, error: "Not found." }, 404);
     const scope = await internalScope(admin, request, token);
-    const members = await internalMembers(admin, scope.venueId);
+    // Staff see their approved affiliated dancers; table links remain internal-shift-only.
+    const members = scope.link ? await internalMembers(admin, scope.venueId) : await venueRosterMembers(admin, scope.venueId);
     if (path[0] === "profile") {
       if (!members.some(member => member.id === path[1])) return json({ ok: false, error: "This profile is no longer on the club roster." }, 404);
       const results = await Promise.all([
@@ -35,7 +36,7 @@ export async function GET(request: Request, context: Context) {
         return url ? [{ platform: link.platform, handle: link.handle, url }] : [];
       });
       const avatarRevision = createHash("sha256").update(members.find(member => member.id === path[1])!.avatar_storage_path).digest("hex").slice(0, 16);
-      return json({ ok: true, profile: { ...results[0].data, avatarRevision, venueName: scope.venueName, photos: results[1].data || [], socialLinks: socials, videos: results[3].data || [] }, session: scope.session });
+      return json({ ok: true, profile: { ...results[0].data, avatarRevision, workingUntil: members.find(member => member.id === path[1])?.working_until, venueName: scope.venueName, photos: results[1].data || [], socialLinks: socials, videos: results[3].data || [] }, session: scope.session });
     }
     if (["avatar", "photo", "video"].includes(path[0])) {
       let storagePath = members.find(item => item.id === path[1])?.avatar_storage_path;
@@ -71,12 +72,13 @@ export async function GET(request: Request, context: Context) {
       return json({ ok: true, venueName: scope.venueName, kind: scope.link.kind, label: scope.link.label, dancers, receipt });
     }
     const results = await Promise.all([
-      admin.from("internal_roster_links").select("id,kind,label,token,active").eq("venue_id", scope.venueId).eq("active", true).order("created_at"),
+      admin.from("internal_roster_links").select("id,kind,label,token,active").eq("venue_id", scope.venueId).eq("active", true).eq("kind", "table").order("created_at"),
       admin.from("internal_roster_requests").select("id,link_id,dancer_id,status,created_at").eq("venue_id", scope.venueId).in("status", ["pending", "acknowledged"]).gte("created_at", new Date(Date.now() - 6 * 3600000).toISOString()).order("created_at").limit(200),
     ]);
     for (const result of results) if (result.error) throw result.error;
     const links = results[0].data || [];
-    const requests = (results[1].data || []).filter(item => members.some(d => d.id === item.dancer_id));
+    const internal = await internalMembers(admin, scope.venueId);
+    const requests = (results[1].data || []).filter(item => internal.some(d => d.id === item.dancer_id));
     return json({ ok: true, venueName: scope.venueName, dancers, links, requests, role: scope.role, session: scope.session });
   } catch (error) {
     const resolved = resolveApiError(internalError(error), "Unable to load the club roster.");

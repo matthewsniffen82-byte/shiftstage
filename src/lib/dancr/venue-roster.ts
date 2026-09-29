@@ -4,6 +4,10 @@ export type VenueDancerAffiliation = {
   status: string;
   reentryBlocked?: boolean;
   approvedAt?: string | null;
+  canViewProfile?: boolean;
+  workingUntil?: string | null;
+  internalVisible?: boolean;
+  externalVisible?: boolean;
   dancer?: {
     id?: string;
     stageName?: string;
@@ -53,6 +57,16 @@ export type VenueRosterEntry = {
   dancer: VenueDancerAffiliation["dancer"];
   checkIn: Record<string, unknown> | null;
 };
+
+export type VenueRosterChannel = "all" | "internal" | "external";
+export function rosterChannelVisibility(affiliation: VenueDancerAffiliation | null, now = Date.now()) {
+  const active = affiliation?.status === "active" && Date.parse(affiliation.workingUntil || "") > now;
+  return { internal: Boolean(active && affiliation?.internalVisible), external: Boolean(active && affiliation?.externalVisible) };
+}
+
+export function filterRosterChannel(entries: VenueRosterEntry[], channel: VenueRosterChannel) {
+  return channel === "all" ? entries : entries.filter(entry => rosterChannelVisibility(entry.affiliation)[channel]);
+}
 
 export function getVenueRosterEntries(
   affiliations: VenueDancerAffiliation[],

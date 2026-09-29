@@ -9,10 +9,10 @@ import {readBoundedJsonObject} from '../src/lib/bounded-json-body.ts';
 import {safeSocialProfileUrl} from '../src/lib/dancr/social-profile-url.ts';
 const id=n=>'98000000-0000-4000-8000-'+String(n).padStart(12,'0');
 const compile=file=>ts.transpileModule(readFileSync(new URL('../'+file,import.meta.url),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText;
-function fixture({members=true,active=true,staff=true}={}){
+function fixture({members=true,active=true,staff=true,kind='table'}={}){
  const calls=[];
  const tables={
-  internal_roster_links:[{id:id(1),venue_id:id(2),token:id(3),active,kind:'table',label:'Table 4'}],
+  internal_roster_links:[{id:id(1),venue_id:id(2),token:id(3),active,kind,label:'Table 4'}],
   venues:[{id:id(2),name:'Synthetic club',owner_user_id:id(4),is_active:true}],
   app_users:[{id:id(4),role:'venue',account_state:'active'}],
   dancer_profiles:[{id:id(5),stage_name:'Aster',city:'Las Vegas',real_name:'PRIVATE NAME',email:'PRIVATE EMAIL',is_public:false}],
@@ -22,7 +22,7 @@ function fixture({members=true,active=true,staff=true}={}){
  };
  const admin={
   from(table){let rows=[...(tables[table]||[])],columns='';const q={select(value){columns=value;return q},eq(k,v){rows=rows.filter(r=>r[k]===v);return q},in(k,vs){rows=rows.filter(r=>vs.includes(r[k]));return q},order(){return q},limit(){return q},gte(){return q},lte(){return q},or(){return q},single(){return finish(true)},maybeSingle(){return finish(true)},then(resolve,reject){return finish(false).then(resolve,reject)}};function finish(single){const data=rows.map(row=>Object.fromEntries(columns.split(',').filter(key=>key in row).map(key=>[key,row[key]])));return Promise.resolve({data:single?data[0]||null:data,error:null});}return q;},
-  async rpc(name,args){calls.push({name,args});return {data:name==='internal_roster_members'?(members?[{id:id(5),stage_name:'Aster',avatar_storage_path:'private/avatar',working_until:new Date(Date.now()+3600000).toISOString()}]:[]):{id:id(9)},error:null};},
+  async rpc(name,args){calls.push({name,args});return {data:['internal_roster_members','venue_roster_members'].includes(name)?(members?[{id:id(5),stage_name:'Aster',avatar_storage_path:'private/avatar',working_until:new Date(Date.now()+3600000).toISOString()}]:[]):{id:id(9)},error:null};},
   storage:{from(){return {createSignedUrl:async()=>({data:{signedUrl:'https://storage.invalid/private-signed-link'}})}}},
  };
  const lib={},route={};
@@ -40,3 +40,14 @@ test('club link cannot fetch another dancer gallery photo',async()=>{assert.equa
 test('authorized media is proxied without exposing its storage URL',async()=>{const response=await fixture().get(['photo',id(6)],'?token='+id(3));assert.equal(response.status,200);assert.equal(await response.text(),'synthetic-image');assert.equal(response.headers.get('location'),null);assert.match(response.headers.get('cache-control'),/no-store/);});
 test('staff mutations ignore client-supplied actor and club identities',async()=>{const f=fixture();const response=await f.post({action:'link_create',kind:'table',label:'Table 2',actor:id(666),venueId:id(777)});assert.equal(response.status,200);const call=f.calls.find(c=>c.name==='internal_roster_manage');assert.equal(call.args.p_actor,id(4));assert.equal(call.args.p_venue,id(2));});
 test('table requests require valid identities and revocable table access',async()=>{assert.equal((await fixture().post({dancerId:'invalid',requestKey:id(9)},['link',id(3)],'')).status,400);assert.equal((await fixture({active:false}).post({dancerId:id(5),requestKey:id(9)},['link',id(3)],'')).status,404);});
+
+test('retired entrance-display capabilities cannot open a roster, profile, media, or submit requests', async()=>{
+ const f=fixture({kind:'display'});
+ for(const path of [['link',id(3)],['profile',id(5)],['avatar',id(5)]])assert.equal((await f.get(path,'?token='+id(3))).status,404);
+ assert.equal((await f.post({dancerId:id(5),requestKey:id(9)},['link',id(3)],'')).status,404);
+});
+test('staff use the unified affiliated roster for private profiles while guests use internal opt-in', async()=>{
+ const f=fixture(); assert.equal((await f.get(['profile',id(5)],'', 'staff')).status,200);
+ assert.equal(f.calls[0].name,'venue_roster_members');
+ await f.get(['profile',id(5)],'?token='+id(3));assert.equal(f.calls[1].name,'internal_roster_members');
+});

@@ -6,6 +6,7 @@ import { requireVenueAccess } from "./venue-access";
 import { deliverNotificationRows } from "./notification-delivery";
 import { responsivePublicImage } from "./responsive-image";
 import { safeErrorMetadata } from "../security/safe-error-metadata";
+import { venueRosterMembers } from "./internal-roster";
 
 type DancrClient = SupabaseClient;
 
@@ -291,10 +292,16 @@ export async function getVenueDancerVerificationState(
     afterId = String(page[page.length - 1].id);
   }
   affiliations.sort((a, b) => String(b.updated_at || "").localeCompare(String(a.updated_at || "")));
+  const members = new Map((await venueRosterMembers(client, String(venue.id))).map(member => [member.id, member]));
 
   return {
     venue: mapVenue(venue),
-    affiliations: affiliations.map((row: any) => mapAffiliation(client, row)),
+    affiliations: affiliations.map((row: any) => {
+      const member = members.get(String(row.dancer_id));
+      return { ...mapAffiliation(client, row), canViewProfile: Boolean(member),
+        workingUntil: member?.working_until || null, internalVisible: member?.internal_visible === true,
+        externalVisible: member?.external_visible === true };
+    }),
     verification: rawToken
       ? await previewDancerVenueVerification(client, managerUserId, rawToken, venue.id)
       : null,

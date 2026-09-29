@@ -15,7 +15,6 @@ export type VenuePermission =
   | "manage_profile"
   | "manage_deals"
   | "manage_roster"
-  | "end_checkins"
   | "manage_team"
   | "request_deals"
   | "request_nfc_support";
@@ -39,7 +38,6 @@ const ROLE_PERMISSIONS: Record<VenueTeamRole, VenuePermission[]> = {
     "view_team",
     "manage_profile",
     "manage_roster",
-    "end_checkins",
     "manage_team",
     "request_deals",
     "request_nfc_support",
@@ -54,7 +52,6 @@ const ROLE_PERMISSIONS: Record<VenueTeamRole, VenuePermission[]> = {
     "view_team",
     "manage_profile",
     "manage_roster",
-    "end_checkins",
     "request_deals",
     "request_nfc_support",
   ],
@@ -65,7 +62,6 @@ const ROLE_PERMISSIONS: Record<VenueTeamRole, VenuePermission[]> = {
     "view_roster",
     "view_deals",
     "request_nfc_support",
-    "end_checkins",
   ],
 };
 

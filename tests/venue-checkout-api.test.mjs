@@ -33,40 +33,29 @@ function fixture({ authError, accessError, rpcError, receipt = { shiftId, venueI
   });
   return { calls, permissions, request: body => route.DELETE(new Request("https://example.invalid/api/venue/check-ins", { method: "DELETE", headers: { "content-type": "application/json" }, body: JSON.stringify(body) })) };
 }
-test("checkout route derives actor and club from authentication, ignores forged scope, and returns a private receipt", async () => {
+test("retired manual checkout returns 410 and cannot mutate working status", async () => {
   const f = fixture(), response = await f.request({ shiftId, actorUserId: "forged", venueId: "forged" });
-  assert.equal(response.status, 200);
-  assert.equal((await response.json()).ok, true);
-  assert.equal(response.headers.get("cache-control"), "private, no-store");
-  assert.deepEqual(f.permissions, ["end_checkins"]);
-  assert.deepEqual(JSON.parse(JSON.stringify(f.calls)), [{ name: "end_venue_dancer_checkin", args: { p_actor_user_id: actor, p_venue_id: venue, p_shift_id: shiftId } }]);
+  assert.equal(response.status, 410);
+  assert.equal((await response.json()).code, "nfc_managed_presence");
+  assert.match(response.headers.get("cache-control"), /no-store/);
+  assert.equal(f.calls.length, 0);
 });
-test("checkout rejects unauthorized accounts and malformed or oversized requests before any database mutation", async () => {
-  for (const options of [{ authError: new errorPolicy.PublicApiError("FORBIDDEN", "Inactive", 403) }, { accessError: new errorPolicy.PublicApiError("FORBIDDEN", "No permission", 403) }]) {
-    const f = fixture(options); assert.equal((await f.request({ shiftId })).status, 403); assert.equal(f.calls.length, 0);
-  }
-  for (const body of [{}, { shiftId: "invalid" }, { shiftId, extra: "x".repeat(2500) }, []]) {
-    const f = fixture(); assert.ok([400, 413].includes((await f.request(body)).status)); assert.equal(f.calls.length, 0);
-  }
+test("retired checkout still requires an active venue account", async () => {
+  const f = fixture({ authError: new errorPolicy.PublicApiError("FORBIDDEN", "Inactive", 403) });
+  assert.equal((await f.request({ shiftId })).status, 403);
+  assert.equal(f.calls.length, 0);
 });
-test("checkout maps database denial safely and rejects missing or mismatched receipts", async () => {
-  for (const [code, status] of [["42501", 403], ["P0002", 404], ["22023", 409]]) {
-    assert.equal((await fixture({ rpcError: { code } }).request({ shiftId })).status, status);
-  }
-  for (const receipt of [null, {}, { shiftId, venueId: "foreign", checkedOutAt: new Date().toISOString() }]) {
-    assert.equal((await fixture({ receipt }).request({ shiftId })).status, 503);
-  }
-});
-test("staff get checkout permission without removal permission; managers and owners keep both", async () => {
-  const access = load("../src/lib/dancr/venue-access.ts", { "node:async_hooks": { AsyncLocalStorage } });
+test("venue roles view the roster without manual presence permissions", async () => {
+const access = load("../src/lib/dancr/venue-access.ts", { "node:async_hooks": { AsyncLocalStorage } });
   for (const role of ["owner", "manager", "staff"]) {
     const client = { from: table => {
       const query = { select: () => query, eq: () => query, order: () => query, limit: () => query,
         maybeSingle: async () => ({ data: table === "app_users" ? { id: actor, role: "venue", account_state: "active" } : table === "venues" ? (role === "owner" ? { id: venue, owner_user_id: actor } : null) : { role, status: "active", venues: { id: venue, owner_user_id: "club-owner" } } }) };
       return query;
     } };
-    const result = await access.requireVenueAccess(client, actor, "end_checkins");
+    const result = await access.requireVenueAccess(client, actor, "view_roster");
     assert.equal(result.role, role);
+    assert.equal(result.permissions.includes("end_checkins"), false);
     assert.equal(result.permissions.includes("manage_roster"), role !== "staff");
   }
 });

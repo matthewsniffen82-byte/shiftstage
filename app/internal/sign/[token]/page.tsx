@@ -11,5 +11,5 @@ export default async function Page({ params }: { params: Promise<{ token: string
   if (!scope?.link) notFound();
   const url = new URL(`/internal/club/${token}`, origin).href;
   const qr = await QRCode.toDataURL(url, { width: 600, margin: 4, errorCorrectionLevel: "M" });
-  return <main className="ir-sign"><p>mydancr · INTERNAL</p><h1>{scope.venueName}</h1><h2>{scope.link.label}</h2><img src={qr} alt={`Scan to open ${scope.link.label}`} /><p>{scope.link.kind === "table" ? "See who’s here. Tap an avatar to view her full profile. Send a request to club staff." : "Scan to open this club’s live display."}</p><p><a href={url}>Open roster</a></p><PrintSign /></main>;
+  return <main className="ir-sign"><p>mydancr · INTERNAL</p><h1>{scope.venueName}</h1><h2>{scope.link.label}</h2><img src={qr} alt={`Scan to open ${scope.link.label}`} /><p>See who’s here. Tap an avatar to view her full profile. Send a request to club staff.</p><p><a href={url}>Open roster</a></p><PrintSign /></main>;
 }

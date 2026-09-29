@@ -100,7 +100,7 @@ test("venue dashboard prioritizes pickups and results while preserving managemen
   assert.match(venuePanel, /View \$\{activeDealCount\} current Club/);
   assert.match(venuePanel, /VenueNfcTagPanel/);
   assert.match(venuePanel, /id="venue-results-heading">Results/);
-  assert.ok(venuePanel.indexOf('title="Current Club Deals"') < venuePanel.indexOf('title="Dancers & check-ins"'));
+  assert.ok(venuePanel.indexOf('title="Current Club Deals"') < venuePanel.indexOf('title="Dancers & tables"'));
   assert.ok(venuePanel.indexOf('title="Current Club Deals"') < venuePanel.indexOf("VenueNfcTagPanel"));
   assert.ok(venuePanel.indexOf('id="venue-pickups"') < venuePanel.indexOf('id="venue-overview"'));
   assert.ok(venuePanel.indexOf('id="venue-overview"') < venuePanel.indexOf('title="Current Club Deals"'));
@@ -117,7 +117,7 @@ test("venue owners navigate one simplified state-aware workspace without losing 
   assert.match(dashboard, /sectionId === "venue-pickups"\) return "tonight"/);
   assert.match(dashboard, /sectionId === "venue-overview"\) return "business"/);
   assert.match(dashboard, /\["venue-working-now"[\s\S]*?"venue-team", "venue-account", "venue-support"\]\.includes\(sectionId\)\) return "venue"/);
-  assert.match(venuePanel, /hidden=\{activeWorkspace !== "venue"\}[\s\S]*?title="Dancers & check-ins"/);
+  assert.match(venuePanel, /hidden=\{activeWorkspace !== "venue"\}[\s\S]*?title="Dancers & tables"/);
   assert.match(venuePanel, /<VenueTvPanel\s+city=\{venueCity\}\s+hidden=\{activeWorkspace !== "venue"\}\s+venueId=/);
   assert.match(venuePanel, /hidden=\{activeWorkspace !== "business"\}[\s\S]*?id="venue-overview"/);
   assert.match(venuePanel, /title="Account & support"/);
@@ -227,7 +227,7 @@ test("venue-facing NFC language explains the physical actions in plain language"
   assert.match(venuePanel, /if \(sectionId === "venue-working-now"\) setRosterWorkingOnly\(true\)/);
   assert.match(nfcPanel, /All affiliated <b>\{activeAffiliations.length\}<\/b>/);
   assert.match(nfcPanel, /Working now <b>\{workingCount\}<\/b>/);
-  assert.match(venuePanel, /title="Dancers & check-ins"/);
+  assert.match(venuePanel, /title="Dancers & tables"/);
   assert.match(nfcPanel, /<summary>Dancer &amp; legacy stickers/);
   assert.match(venuePanel, /VenueValueAnalytics/);
   assert.match(venuePanel, /analytics.valueReport/);
