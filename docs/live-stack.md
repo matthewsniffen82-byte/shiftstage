@@ -10,7 +10,7 @@ This repo is the live Dancr app. Account, profile, shift, payment, notification,
 - Auth: Supabase Auth
 - File storage: Supabase Storage
 - Payments: Stripe Checkout, Billing, Customer Portal, and webhooks
-- Push notifications: OneSignal
+- Push notifications: direct Web Push with server-side VAPID signing
 - Email: Resend or Postmark
 - Maps and directions: Google Maps Platform
 

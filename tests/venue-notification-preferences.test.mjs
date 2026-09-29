@@ -127,7 +127,7 @@ test("delivery respects per-recipient category and channel preferences and fails
   } };
   const delivery = compile("src/lib/dancr/notification-delivery.ts", {
     "./venue-notification-preferences": preferences, "./customer-notification-preferences": customerPreferences,
-    "./customer-notification-delivery": capability, "./public-app-url": { publicAppUrl: () => "https://example.invalid" },
+    "./web-push-delivery": {deliverWebPush:async (_client,recipient_id,message)=>{calls.push({body:{recipient_id,...message}});return true}}, "./public-app-url": { publicAppUrl: () => "https://example.invalid" },
   }, { fetch: async (url, init) => { calls.push({ url, body: JSON.parse(init.body) }); return Response.json({ id: "11111111-1111-4111-8111-111111111111" }); } });
   const rows = [{ ...examples.pickupRequests, recipient_id: "venue-user", title: "Pickup", body: "Synthetic request" }];
   assert.deepEqual(plain(await delivery.deliverNotificationRows(client, rows)), { email: 1, push: 1 });

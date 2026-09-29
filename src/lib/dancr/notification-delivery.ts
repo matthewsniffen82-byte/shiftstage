@@ -4,7 +4,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { publicAppUrl } from "./public-app-url";
 import type { Json, NotificationType } from "./types";
 import { customerNotificationSettings, customerFollowAlertEnabled, followAlertKey } from "./customer-notification-preferences";
-import { notificationPushExternalId } from "./customer-notification-delivery";
+import { deliverWebPush } from "./web-push-delivery";
 import { venueNotificationCategory, venueNotificationEnabled } from "./venue-notification-preferences";
 
 type DancrClient = SupabaseClient;
@@ -62,11 +62,8 @@ export async function deliverNotificationRows(client: DancrClient, rows: Notific
     const key = followAlertKey((row.payload as Record<string, unknown> | null)?.kind);
     return customerNotificationSettings(settings)[channel] && (!key || customerFollowAlertEnabled(settings, key));
   };
-  const pushRows = rows.filter(row => allowed(row, "pushEnabled")).map(row => ({
-    ...row,
-    recipient_id: notificationPushExternalId(row.recipient_id),
-  }));
-  const push = options.push === false ? 0 : await deliverPushNotifications(pushRows);
+  const pushRows = rows.filter(row => allowed(row, "pushEnabled"));
+  const push = options.push === false ? 0 : await deliverPushNotifications(client, pushRows);
   const email = options.email === false ? 0 : await deliverEmailNotifications(rows.filter(row => allowed(row, "emailEnabled")), recipients);
 
   return { push, email };
@@ -142,43 +139,16 @@ async function getRecipients(client: DancrClient, recipientIds: string[]): Promi
   return data || [];
 }
 
-async function deliverPushNotifications(rows: NotificationDeliveryRow[]) {
-  const appId = process.env.NEXT_PUBLIC_ONESIGNAL_APP_ID;
-  const apiKey = process.env.ONESIGNAL_REST_API_KEY;
-  if (!appId || !apiKey) return 0;
-
+async function deliverPushNotifications(client: DancrClient, rows: NotificationDeliveryRow[]) {
   let delivered = 0;
   for (const row of rows) {
     const shuttleRequest = (row.payload as Record<string, unknown> | null)?.kind === "club_shuttle_request";
     const tableRequest = (row.payload as Record<string, unknown> | null)?.kind === "internal_table_request";
-    const response = await requestDeliveryProvider("onesignal", "https://api.onesignal.com/notifications", {
-      method: "POST",
-      headers: {
-        "Authorization": `Key ${apiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        app_id: appId,
-        include_aliases: { external_id: [row.recipient_id] },
-        target_channel: "push",
-        headings: { en: row.title },
-        // Pickup/contact details belong in the authenticated inbox, not a lock
-        // screen or a provider payload accessible outside the application.
-        contents: { en: shuttleRequest ? "New free shuttle request. Open your venue dashboard to contact the guest and confirm pickup." : row.body },
-        data: tableRequest ? { kind: "internal_table_request" } : shuttleRequest ? { kind: "club_shuttle_request" } : row.payload || {},
-        ...(tableRequest ? { ttl: 60, web_push_topic: row.deliveryId?.replaceAll("-", ""), chrome_web_icon: `${publicAppUrl()}/mydancr-icon-192.png` } : {}),
-        ...(row.deliveryId ? { idempotency_key: row.deliveryId } : {}),
-        ...(notificationActionUrl(row) ? { url: notificationActionUrl(row) } : {}),
-      }),
-    });
-
-    if (!response) continue;
-    if (!response.ok) {
-      logProviderRejection("onesignal", response.status);
-      continue;
-    }
-    if (response.created !== true) continue;
-    delivered += 1;
+    if (await deliverWebPush(client, row.recipient_id, {
+      title: row.title,
+      body: shuttleRequest ? "New free shuttle request. Open your venue dashboard to contact the guest and confirm pickup." : row.body,
+      url: notificationActionUrl(row) || publicAppUrl(), ttl: tableRequest ? 60 : 3600,
+    }, row.deliveryId)) delivered += 1;
   }
   return delivered;
 }

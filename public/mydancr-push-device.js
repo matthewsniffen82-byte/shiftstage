@@ -1,6 +1,8 @@
 // Generated from src/lib/dancr/customer-push.ts. Do not edit.
-const PUSH_SCOPE = "/push/onesignal/";
+const PUSH_SCOPE = "/push/web/";
 const PUSH_DEVICE_KEY = "mydancr:push-account";
+const SESSION_KEY = "dancrAuthSessionV1";
+let enrolling = false;
 function boundedPush(operation, milliseconds = 15_000) {
     return new Promise((resolve, reject) => {
         const timer = window.setTimeout(() => reject(new Error("Push setup took too long. Please try again.")), milliseconds);
@@ -22,19 +24,6 @@ export function customerPushSupportMessage() {
         return "Push is blocked. Allow notifications in this browser’s site settings.";
     return "";
 }
-export async function customerPushDeviceEnabled(userId) {
-    try {
-        if (customerPushSupportMessage() || Notification.permission !== "granted" || localStorage.getItem(PUSH_DEVICE_KEY) !== userId)
-            return false;
-        const registration = await navigator.serviceWorker.getRegistration(PUSH_SCOPE);
-        if (!registration?.scope.endsWith(PUSH_SCOPE))
-            return false;
-        return Boolean(await registration?.pushManager.getSubscription());
-    }
-    catch {
-        return false;
-    }
-}
 // A follow alone does not confirm delivery outside the app. Check the saved
 // alert preferences and an available email or enrolled push channel first.
 export async function customerWorkingNowAlertsEnabled(profile, userId) {
@@ -49,95 +38,182 @@ export async function customerWorkingNowAlertsEnabled(profile, userId) {
     return settings.pushEnabled === true && delivery.pushAvailable === true
         && await customerPushDeviceEnabled(userId);
 }
-function loadPushSdk(appId) {
-    const pushWindow = window;
-    const state = pushWindow.mydancrPushSdk ||= {};
-    if (state.promise)
-        return state.promise;
-    state.promise = new Promise((resolve, reject) => {
-        pushWindow.OneSignalDeferred ||= [];
-        pushWindow.OneSignalDeferred.push(async (sdk) => {
-            try {
-                await sdk.init({ appId, serviceWorkerPath: "push/onesignal/OneSignalSDKWorker.js", serviceWorkerParam: { scope: PUSH_SCOPE },
-                    autoResubscribe: false, notifyButton: { enable: false }, welcomeNotification: { disable: true },
-                    promptOptions: { slidedown: { prompts: [] } },
-                });
-                state.sdk = sdk;
-                resolve(sdk);
-            }
-            catch {
-                reject(new Error("Unable to connect push notifications. Please try again."));
-            }
-        });
-        if (!document.getElementById("mydancr-push-sdk")) {
-            const script = document.createElement("script");
-            script.id = "mydancr-push-sdk";
-            script.src = "https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js";
-            script.async = true;
-            script.onerror = () => { script.remove(); reject(new Error("Unable to load push notifications. Please try again.")); };
-            document.head.appendChild(script);
+function pushSession() {
+    try {
+        return JSON.parse(localStorage.getItem(SESSION_KEY) || "null");
+    }
+    catch {
+        return null;
+    }
+}
+async function pushRequest(userId, method = "GET", body) {
+    const expected = pushSession();
+    if (!expected?.accessToken || expected.account?.id !== userId)
+        throw new Error("Sign in again to enable notifications.");
+    const response = await fetch("/api/push/subscriptions", {
+        method, headers: { authorization: `Bearer ${expected.accessToken}`, "content-type": "application/json",
+            ...(expected.refreshToken ? { "x-dancr-refresh-token": expected.refreshToken } : {}) },
+        ...(body ? { body: JSON.stringify(body) } : {}), credentials: "same-origin", cache: "no-store", signal: AbortSignal.timeout(15_000),
+    });
+    const data = await response.json();
+    if (!response.ok || !data.ok)
+        throw new Error(data.error || "Unable to register this device for notifications.");
+    if (pushSession()?.account?.id !== userId || data.userId !== userId)
+        throw new Error("Your account changed. Reopen notification settings.");
+    if (data.session?.accessToken && pushSession()?.accessToken === expected.accessToken) {
+        localStorage.setItem(SESSION_KEY, JSON.stringify({ ...expected, ...data.session }));
+    }
+    return data;
+}
+async function endpointHash(endpoint) {
+    const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(endpoint));
+    return Array.from(new Uint8Array(digest), byte => byte.toString(16).padStart(2, "0")).join("");
+}
+async function setWorkerAccount(registration, accountId) {
+    const worker = registration.active;
+    if (!worker)
+        throw new Error("Notification setup is still starting. Try again.");
+    const channel = new MessageChannel();
+    try {
+        await boundedPush(new Promise((resolve, reject) => {
+            channel.port1.onmessage = event => event.data?.ok === true ? resolve() : reject(new Error("Unable to save notification setup on this device."));
+            worker.postMessage({ type: "MYDANCR_PUSH_ACCOUNT", accountId }, [channel.port2]);
+        }));
+    }
+    finally {
+        channel.port1.close();
+        channel.port2.close();
+    }
+}
+async function readyWorker() {
+    const registration = await boundedPush(navigator.serviceWorker.register("/push/web/worker.js", { scope: PUSH_SCOPE, updateViaCache: "none" }));
+    if (!registration.active) {
+        const worker = registration.installing || registration.waiting;
+        if (!worker)
+            throw new Error("Notification setup is still starting. Try again.");
+        let changed = () => { };
+        try {
+            await boundedPush(new Promise((resolve, reject) => {
+                changed = () => { if (worker.state === "activated")
+                    resolve();
+                else if (worker.state === "redundant")
+                    reject(new Error("Unable to start notifications. Try again.")); };
+                worker.addEventListener("statechange", changed);
+                changed();
+            }));
         }
-    }).catch(error => { state.promise = undefined; throw error; });
-    return state.promise;
+        finally {
+            worker.removeEventListener("statechange", changed);
+        }
+    }
+    return registration;
+}
+export async function customerPushDeviceEnabled(userId) {
+    try {
+        if (customerPushSupportMessage() || Notification.permission !== "granted" || localStorage.getItem(PUSH_DEVICE_KEY) !== userId || pushSession()?.account?.id !== userId)
+            return false;
+        const registration = await navigator.serviceWorker.getRegistration(PUSH_SCOPE);
+        if (!registration?.scope.endsWith(PUSH_SCOPE))
+            return false;
+        const subscription = await registration.pushManager.getSubscription();
+        if (!subscription)
+            return false;
+        const data = await pushRequest(userId);
+        if (!data.subscriptionIds?.includes(await endpointHash(subscription.endpoint)))
+            return false;
+        await setWorkerAccount(registration, userId);
+        return pushSession()?.account?.id === userId;
+    }
+    catch {
+        return false;
+    }
 }
 export async function enableCustomerPush(delivery, userId, assertCurrent) {
     const unsupported = customerPushSupportMessage();
     if (unsupported)
         throw new Error(unsupported);
-    if (!delivery.pushAvailable || !delivery.pushAppId || !delivery.pushExternalId)
+    if (!delivery.pushAvailable || !delivery.pushPublicKey)
         throw new Error("Push notifications are not available yet.");
-    // Request permission directly from the user's tap, before loading the SDK.
-    const permission = await Notification.requestPermission();
-    assertCurrent();
-    if (permission !== "granted")
-        throw new Error("Push stays off until you allow notifications on this device.");
-    const sdk = await boundedPush(loadPushSdk(delivery.pushAppId));
-    assertCurrent();
-    if (!sdk.Notifications.isPushSupported())
-        throw new Error("Push notifications are not supported in this browser.");
-    await boundedPush(sdk.login(delivery.pushExternalId));
-    assertCurrent();
-    await boundedPush(sdk.User.PushSubscription.optIn());
-    assertCurrent();
-    const subscription = sdk.User.PushSubscription;
-    if (!subscription.optedIn || !subscription.id) {
-        let changed = () => { };
+    if (enrolling)
+        throw new Error("Notification setup is already in progress.");
+    const current = () => { assertCurrent(); if (pushSession()?.account?.id !== userId)
+        throw new Error("Your account changed. Reopen notification settings."); };
+    current();
+    enrolling = true;
+    let subscription = null;
+    let registered = false;
+    try {
+        // This must remain before any network/worker await, directly inside the tap.
+        const permission = await Notification.requestPermission();
+        current();
+        if (permission !== "granted")
+            throw new Error("Push stays off until you allow notifications on this device.");
+        const registration = await readyWorker();
+        current();
+        subscription = await registration.pushManager.getSubscription();
+        current();
+        const key = Uint8Array.from(atob(delivery.pushPublicKey.replace(/-/g, "+").replace(/_/g, "/")), char => char.charCodeAt(0));
+        const existingKey = subscription?.options.applicationServerKey;
+        const previousAccount = localStorage.getItem(PUSH_DEVICE_KEY);
+        if (subscription && ((previousAccount && previousAccount !== userId) || !existingKey || new Uint8Array(existingKey).join() !== key.join())) {
+            await subscription.unsubscribe();
+            subscription = null;
+            current();
+        }
+        if (!subscription)
+            subscription = await boundedPush(registration.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: key }));
+        current();
+        const data = await pushRequest(userId, "POST", { publicKey: delivery.pushPublicKey, subscription: subscription.toJSON() });
+        registered = true;
+        current();
+        if (data.subscriptionId !== await endpointHash(subscription.endpoint))
+            throw new Error("Your notification subscription could not be confirmed.");
+        await setWorkerAccount(registration, userId);
+        current();
+        localStorage.setItem(PUSH_DEVICE_KEY, userId);
+        // Retire old provider subscriptions after successful direct enrollment.
         try {
-            await boundedPush(new Promise(resolve => {
-                changed = () => { if (subscription.optedIn && subscription.id)
-                    resolve(); };
-                subscription.addEventListener("change", changed);
-                changed();
-            }));
+            const legacy = await navigator.serviceWorker.getRegistration("/push/onesignal/");
+            if (legacy?.scope.endsWith("/push/onesignal/")) {
+                await (await legacy.pushManager.getSubscription())?.unsubscribe();
+                await legacy.unregister();
+            }
         }
-        finally {
-            subscription.removeEventListener("change", changed);
-        }
+        catch { /* Legacy cleanup cannot undo confirmed direct enrollment. */ }
     }
-    assertCurrent();
-    localStorage.setItem(PUSH_DEVICE_KEY, userId);
+    catch (error) {
+        if (subscription) {
+            if (registered && pushSession()?.account?.id === userId)
+                await pushRequest(userId, "DELETE", { endpoint: subscription.endpoint }).catch(() => { });
+            await subscription.unsubscribe().catch(() => { });
+        }
+        if (localStorage.getItem(PUSH_DEVICE_KEY) === userId)
+            localStorage.removeItem(PUSH_DEVICE_KEY);
+        throw error;
+    }
+    finally {
+        enrolling = false;
+    }
 }
 export async function disableCustomerPush() {
     if (typeof window === "undefined")
         return;
-    const currentSdk = window.mydancrPushSdk?.sdk;
-    try {
-        localStorage.removeItem(PUSH_DEVICE_KEY);
-    }
-    catch { /* Storage may be blocked. */ }
-    const unsubscribe = async () => {
-        if ("serviceWorker" in navigator) {
-            const registration = await navigator.serviceWorker.getRegistration(PUSH_SCOPE);
-            if (!registration?.scope.endsWith(PUSH_SCOPE))
-                return;
-            const subscription = await registration?.pushManager.getSubscription();
-            await subscription?.unsubscribe();
-        }
-    };
-    // Native unsubscribe works after a reload without reloading the SDK. Do not
-    // let a slow provider prevent the customer from leaving their account.
-    await Promise.allSettled([
-        boundedPush(unsubscribe(), 3_000),
-        ...(currentSdk ? [boundedPush(currentSdk.User.PushSubscription.optOut().then(() => currentSdk?.logout()), 3_000)] : []),
-    ]);
+    const userId = localStorage.getItem(PUSH_DEVICE_KEY) || pushSession()?.account?.id;
+    localStorage.removeItem(PUSH_DEVICE_KEY);
+    if (!("serviceWorker" in navigator))
+        return;
+    await Promise.allSettled([PUSH_SCOPE, "/push/onesignal/"].map(scope => boundedPush((async () => {
+        const registration = await navigator.serviceWorker.getRegistration(scope);
+        if (!registration?.scope.endsWith(scope) || localStorage.getItem(PUSH_DEVICE_KEY))
+            return;
+        if (scope === PUSH_SCOPE)
+            await setWorkerAccount(registration, null).catch(() => { });
+        const subscription = await registration.pushManager.getSubscription();
+        if (!subscription || localStorage.getItem(PUSH_DEVICE_KEY))
+            return;
+        await Promise.allSettled([
+            subscription.unsubscribe(),
+            ...(scope === PUSH_SCOPE && userId && pushSession()?.account?.id === userId ? [pushRequest(userId, "DELETE", { endpoint: subscription.endpoint })] : []),
+        ]);
+    })(), 3_000)));
 }

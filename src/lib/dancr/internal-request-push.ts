@@ -31,7 +31,7 @@ export async function deliverInternalRequestPush(client: SupabaseClient, request
           if (result.push === 1) outcome = "sent";
         }
       } catch { console.warn("INTERNAL_REQUEST_PUSH_RETRY"); }
-      // A lost provider acknowledgement retries with the same OneSignal UUID.
+      // Accepted devices have durable receipts; retries reuse the notification ID.
       const finished = await client.rpc("finish_internal_request_push", { p_id: job.id, p_lease_id: job.lease_id, p_outcome: outcome });
       if (finished.error || finished.data !== true) throw new Error("Push delivery acknowledgement unavailable.");
       counts[outcome] += 1;

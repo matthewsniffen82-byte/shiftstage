@@ -32,7 +32,7 @@ test("club SMS without OneSignal configuration performs no provider request", as
   assert.equal(service.calls.length, 0);
 });
 
-function load(respond, { configured = true, smsConfigured = false, signal = new AbortController().signal } = {}) {
+function load(respond, { configured = true, smsConfigured = true, signal = new AbortController().signal } = {}) {
   const calls = [], logs = [], budgets = [], exports = {};
   vm.runInNewContext(compiled, {
     exports, URLSearchParams, Map, Set, TextDecoder, Uint8Array,
@@ -121,7 +121,7 @@ test("a bodyless response retains HTTP acceptance", async () => {
 });
 
 for (const pushStatus of [202, 400]) {
-  test(`push HTTP ${pushStatus} and email consume or discard their response while preserving confirmed channel counts`, async () => {
+  test(`SMS HTTP ${pushStatus} and email consume or discard their response while preserving confirmed channel counts`, async () => {
     const bodies = [];
     const service = load(url => {
       const isPush = url.includes("onesignal");
@@ -130,7 +130,7 @@ for (const pushStatus of [202, 400]) {
       bodies.push(body); return body.response;
     });
     try {
-      const result = await service.deliverNotificationRows(service.client, [row]);
+      const result = {...await smsReceipt(service),email:Number((await service.sendTransactionalEmail(input)).delivered)};
       assert.equal(result.push, pushStatus === 202 ? 1 : 0); assert.equal(result.email, 1);
       assert.equal(service.calls.length, 2); assert.equal(bodies.length, 2);
       for (const [index, body] of bodies.entries()) assert.equal(body.cancellations, index === 0 && pushStatus === 202 ? 0 : 1);
@@ -157,7 +157,7 @@ test("missing configuration sends nothing", async () => {
 
 // Appended to the refreshed cleanup suite; native streams and synthetic fetch only.
 const pushId = "aabbccdd-1111-4111-8111-aabbccddeeff";
-const pushOnly = { email: false };
+const smsReceipt = async service => ({push:Number(await service.sendShuttlePhoneAlert({phone:"+17025550101",requestId:"11111111-1111-4111-8111-111111111111"})),email:0});
 const pushJson = value => JSON.stringify(value);
 
 for (const [label, payload] of [
@@ -170,11 +170,11 @@ for (const [label, payload] of [
   ["invalid variant", { id: "11111111-1111-4111-1111-111111111111" }],
   ["array receipt", [{ id: pushId }]],
   ["null receipt", null],
-]) test(`OneSignal HTTP 200 with ${label} cannot count a created message`, async () => {
+]) test(`SMS provider HTTP 200 with ${label} cannot count a created message`, async () => {
   const response = Response.json(payload);
   const service = load(() => response);
   try {
-    const result = await service.deliverNotificationRows(service.client, [row], pushOnly);
+    const result = await smsReceipt(service);
     assert.equal(result.push, 0); assert.equal(result.email, 0);
     assert.equal(service.calls.length, 1); assert.equal(response.bodyUsed, true);
     assert.deepEqual(service.budgets, [10_000]);
@@ -188,7 +188,7 @@ for (const payload of [{ id: pushId }, {
 }]) test(`a valid message id confirms creation despite optional subscription details: ${Object.keys(payload).length}`, async () => {
   const response = Response.json(payload), service = load(() => response);
   try {
-    assert.equal((await service.deliverNotificationRows(service.client, [row], pushOnly)).push, 1);
+    assert.equal((await smsReceipt(service)).push, 1);
     assert.equal(response.bodyUsed, true); assert.equal(service.calls.length, 1);
     assert.doesNotMatch(JSON.stringify(service.logs), /synthetic-private|aabbccdd/i);
   } finally { await response.body?.cancel().catch(() => {}); }
@@ -197,7 +197,7 @@ for (const payload of [{ id: pushId }, {
 test("malformed success JSON stays unconfirmed without a second provider request", async () => {
   const response = new Response('{"id":"synthetic-private-incomplete'), service = load(() => response);
   try {
-    assert.equal((await service.deliverNotificationRows(service.client, [row], pushOnly)).push, 0);
+    assert.equal((await smsReceipt(service)).push, 0);
     assert.equal(service.calls.length, 1); assert.equal(response.bodyUsed, true);
     assert.doesNotMatch(JSON.stringify(service.logs), /synthetic-private-incomplete/);
   } finally { await response.body?.cancel().catch(() => {}); }
@@ -209,7 +209,7 @@ test("a complete receipt exactly at the byte ceiling remains readable", async ()
   assert.equal(Buffer.byteLength(text), 64 * 1024);
   const response = new Response(text), service = load(() => response);
   try {
-    assert.equal((await service.deliverNotificationRows(service.client, [row], pushOnly)).push, 1);
+    assert.equal((await smsReceipt(service)).push, 1);
     assert.equal(service.calls.length, 1);
   } finally { await response.body?.cancel().catch(() => {}); }
 });
@@ -221,7 +221,7 @@ for (const [label, padding] of [["ASCII", "x".repeat(64 * 1024)], ["multibyte", 
     if (label === "multibyte") assert.ok(text.length < 64 * 1024);
     const response = new Response(text, { headers: { "content-length": "1" } }), service = load(() => response);
     try {
-      assert.equal((await service.deliverNotificationRows(service.client, [row], pushOnly)).push, 0);
+      assert.equal((await smsReceipt(service)).push, 0);
       assert.equal(service.calls.length, 1); assert.equal(response.bodyUsed, true);
       assert.ok(JSON.stringify(service.logs).length < 200);
     } finally { await response.body?.cancel().catch(() => {}); }
@@ -236,7 +236,7 @@ test("UTF-8 split across native stream chunks preserves a valid message receipt"
   } }));
   const service = load(() => response);
   try {
-    assert.equal((await service.deliverNotificationRows(service.client, [row], pushOnly)).push, 1);
+    assert.equal((await smsReceipt(service)).push, 1);
     assert.equal(response.bodyUsed, true); assert.equal(service.calls.length, 1);
   } finally { await response.body?.cancel().catch(() => {}); }
 });
@@ -252,7 +252,7 @@ test("an empty-chunk stream cannot evade finite receipt work", async () => {
   }));
   const service = load(() => response);
   try {
-    assert.equal((await service.deliverNotificationRows(service.client, [row], pushOnly)).push, 0);
+    assert.equal((await smsReceipt(service)).push, 0);
     assert.equal(service.calls.length, 1); assert.equal(cancellations, 1);
     assert.ok(pulls <= 4098, `Stop reading the empty stream within the declared chunk budget: ${pulls}`);
   } finally { await response.body?.cancel().catch(() => {}); }
@@ -265,7 +265,7 @@ for (const cleanup of ["complete", "reject", "stall"]) test(`aborting a stalled 
     ? Promise.reject(new Error("synthetic-private-cancel"))
     : cleanup === "stall" ? new Promise(resolve => { release = resolve; }) : undefined);
   const service = load(() => body.response, { signal: controller.signal });
-  const pending = service.deliverNotificationRows(service.client, [row], pushOnly);
+  const pending = smsReceipt(service);
   try {
     await turn(); controller.abort();
     const result = await pending;
@@ -283,7 +283,7 @@ test("late headers after abort are discarded and their body is released", async 
   const controller = new AbortController(); let respond;
   const body = responseFixture(200, () => {}, pushJson({ id: pushId }));
   const service = load(() => new Promise(resolve => { respond = resolve; }), { signal: controller.signal });
-  const pending = service.deliverNotificationRows(service.client, [row], pushOnly);
+  const pending = smsReceipt(service);
   try {
     await turn(); controller.abort(); respond(body.response);
     assert.equal((await pending).push, 0);

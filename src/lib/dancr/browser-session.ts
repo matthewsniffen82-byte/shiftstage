@@ -143,10 +143,13 @@ async function clearCustomerPushDevice() {
   try {
     window.localStorage.removeItem("mydancr:push-account");
     if (!("serviceWorker" in window.navigator)) return;
-    const registration = await window.navigator.serviceWorker.getRegistration("/push/onesignal/");
-    if (!registration?.scope.endsWith("/push/onesignal/")) return;
-    const subscription = await registration?.pushManager.getSubscription();
-    if (!window.localStorage.getItem("mydancr:push-account")) await subscription?.unsubscribe();
+    for (const scope of ["/push/web/", "/push/onesignal/"]) {
+      const registration = await window.navigator.serviceWorker.getRegistration(scope);
+      if (!registration?.scope.endsWith(scope) || window.localStorage.getItem("mydancr:push-account")) continue;
+      registration.active?.postMessage({ type: "MYDANCR_PUSH_ACCOUNT", accountId: null });
+      const subscription = await registration.pushManager.getSubscription();
+      if (!window.localStorage.getItem("mydancr:push-account")) await subscription?.unsubscribe();
+    }
   } catch { /* Best-effort native cleanup also works when the push SDK is not loaded. */ }
 }
 

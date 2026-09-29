@@ -221,10 +221,13 @@
       try {
         localStorage.removeItem("mydancr:push-account");
         if (!("serviceWorker" in navigator)) return;
-        const registration = await navigator.serviceWorker.getRegistration("/push/onesignal/");
-        if (!registration?.scope.endsWith("/push/onesignal/")) return;
-        const subscription = await registration?.pushManager.getSubscription();
-        if (!localStorage.getItem("mydancr:push-account")) await subscription?.unsubscribe();
+        for (const scope of ["/push/web/", "/push/onesignal/"]) {
+          const registration = await navigator.serviceWorker.getRegistration(scope);
+          if (!registration?.scope.endsWith(scope) || localStorage.getItem("mydancr:push-account")) continue;
+          registration.active?.postMessage({ type: "MYDANCR_PUSH_ACCOUNT", accountId: null });
+          const subscription = await registration.pushManager.getSubscription();
+          if (!localStorage.getItem("mydancr:push-account")) await subscription?.unsubscribe();
+        }
       } catch (error) {}
     }
 

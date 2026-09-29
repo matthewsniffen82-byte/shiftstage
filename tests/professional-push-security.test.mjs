@@ -21,13 +21,13 @@ function compile(file, dependencies = {}, globals = {}) {
   });
   return exports;
 }
-const capability = compile("src/lib/dancr/customer-notification-delivery.ts");
+const capability = compile("src/lib/dancr/customer-notification-delivery.ts", {"./web-push-config":{webPushConfig:()=>({publicKey:"synthetic-public-key"})}});
 const ownId = "10000000-0000-4000-8000-000000000001";
 const otherId = "10000000-0000-4000-8000-000000000002";
 function deliveryFixture(role) {
   const calls = [];
   const service = compile("src/lib/dancr/notification-delivery.ts", {
-    "./customer-notification-delivery": capability,
+    "./web-push-delivery": {deliverWebPush:async (_client,userId,message,deliveryId)=>{calls.push({userId,...message,deliveryId});return true}},
     "./customer-notification-preferences": preferences,
     "./venue-notification-preferences": venuePreferences,
     "./public-app-url": { publicAppUrl: () => "https://example.test" },
@@ -44,15 +44,13 @@ function deliveryFixture(role) {
   return { ...service, client, calls };
 }
 for (const role of ["customer", "dancer", "venue", "admin"]) {
-  test(`${role} push delivery cannot target the public account UUID`, async () => {
+  test(`${role} push delivery resolves devices server-side for the intended account`, async () => {
     const f = deliveryFixture(role);
     const result = await f.deliverNotificationRows(f.client, [{ recipient_id: ownId, notification_type: "support_message", title: "Support", body: "Synthetic private reply" }], { email: false });
     assert.equal(result.push, 1);
-    const alias = f.calls[0].include_aliases.external_id[0];
-    assert.equal(f.calls[0].target_channel, "push");
-    assert.equal(alias, capability.customerPushExternalId(ownId));
-    assert.notEqual(alias, ownId);
-    assert.notEqual(alias, capability.customerPushExternalId(otherId));
+    assert.equal(f.calls[0].userId, ownId);
+    assert.notEqual(f.calls[0].userId, otherId);
+    assert.equal(f.calls[0].include_aliases, undefined);
   });
 }
 
@@ -63,10 +61,10 @@ test("shuttle push preserves a dashboard alert without guest contact, pickup dat
     payload: { kind: "club_shuttle_request", name: "Guest Sample", location: "123 Private Hotel entrance", phone: "+17025550123", email: "guest@example.test", venueId: otherId },
   }], { email: false });
   const payload = f.calls[0];
-  assert.match(payload.contents.en, /shuttle/i);
+  assert.match(payload.body, /shuttle/i);
   assert.equal(payload.url, "https://example.test/dashboard/venue");
-  assert.deepEqual(payload.data, { kind: "club_shuttle_request" });
-  assert.doesNotMatch(JSON.stringify(payload), /Guest Sample|Private Hotel|17025550123|guest@example.test|10000000-0000-4000/);
+  assert.equal(payload.data, undefined);
+  assert.doesNotMatch(JSON.stringify({...payload,userId:undefined}), /Guest Sample|Private Hotel|17025550123|guest@example.test|10000000-0000-4000/);
 });
 
 test("shuttle SMS constructs a generic dashboard alert even if a caller supplies guest details", async () => {
@@ -84,12 +82,11 @@ test("internal table push includes table and stage name, a private staff inbox l
     payload: { kind: "internal_table_request", token: "private-table-capability", guestEmail: "private@example.test" },
   }], { email: false });
   const payload = f.calls[0];
-  assert.equal(payload.contents.en, "Table 12 wants Aster.");
+  assert.equal(payload.body, "Table 12 wants Aster.");
   assert.equal(payload.url, "https://example.test/dashboard/venue#table-requests");
   assert.equal(payload.ttl, 60);
-  assert.equal(payload.idempotency_key, deliveryId);
-  assert.equal(payload.web_push_topic, deliveryId.replaceAll("-", ""));
-  assert.deepEqual(payload.data, { kind: "internal_table_request" });
+  assert.equal(payload.deliveryId, deliveryId);
+  assert.equal(payload.data, undefined);
   assert.doesNotMatch(JSON.stringify(payload), /private-table-capability|private@example/);
 });
 
@@ -117,12 +114,13 @@ function notificationRoute(authenticated = true) {
     "@/src/lib/api": { apiError: (error, fallback) => { const result = resolveApiError(error, fallback); return Response.json(result.body, { status: result.status }); } },
   });
 }
-test("notification enrollment capabilities belong only to the active verified caller", async () => {
+test("notification setup is available only to the active verified caller", async () => {
   const response = await notificationRoute().GET(new Request(`https://example.test/api/notifications?userId=${otherId}&role=admin`));
   assert.equal(response.status, 200);
   const body = await response.json();
-  assert.equal(body.notificationDelivery.pushExternalId, capability.customerPushExternalId(ownId));
-  assert.notEqual(body.notificationDelivery.pushExternalId, capability.customerPushExternalId(otherId));
+  assert.equal(body.pushUserId, ownId);
+  assert.equal(body.notificationDelivery.pushPublicKey, "synthetic-public-key");
+  assert.equal(body.notificationDelivery.pushExternalId, undefined);
   assert.match(response.headers.get("cache-control"), /private.*no-store/);
 });
 test("unauthenticated callers cannot obtain notification enrollment capabilities", async () => {

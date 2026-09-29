@@ -22,7 +22,7 @@ function compile(path, overrides = {}, globals = {}) {
   return exports;
 }
 const env = { RESEND_API_KEY: "test-email-key", EMAIL_FROM: "alerts@example.com", NEXT_PUBLIC_ONESIGNAL_APP_ID: "test-app", ONESIGNAL_REST_API_KEY: "test-push-key" };
-const capability = compile("src/lib/dancr/customer-notification-delivery.ts", {}, { process: { env } });
+const capability = compile("src/lib/dancr/customer-notification-delivery.ts", {"./web-push-config":{webPushConfig:()=>({publicKey:"synthetic-public-key"})}}, { process: { env } });
 
 test("legacy settings retain four in-app alerts while email and push require opt-in", () => {
   assert.equal(preferences.customerNotificationSettings(null).emailEnabled, false);
@@ -45,16 +45,15 @@ test("preference patches reject unknown, empty and non-boolean values", () => {
   assert.equal(preferences.customerNotificationSettings({ emailEnabled: "true" }).emailEnabled, false);
 });
 
-test("capabilities use server configuration and expose only the customer's opaque push alias", () => {
+test("capabilities use server configuration and expose only the public Web Push key", () => {
   const available = capability.customerNotificationDelivery("customer-one", "customer@example.com");
   assert.equal(available.emailAvailable, true);
   assert.equal(available.pushAvailable, true);
-  assert.equal(available.pushExternalId, capability.customerPushExternalId("customer-one"));
-  assert.notEqual(available.pushExternalId, capability.customerPushExternalId("customer-two"));
+  assert.equal(available.pushPublicKey, "synthetic-public-key");
   assert.ok(!JSON.stringify(available).includes(env.ONESIGNAL_REST_API_KEY));
-  assert.ok(!available.pushExternalId.includes("customer-one"));
+  assert.equal(available.pushExternalId, undefined);
   assert.equal(capability.customerNotificationDelivery("customer-one").emailAvailable, false);
-  const unavailable = compile("src/lib/dancr/customer-notification-delivery.ts");
+  const unavailable = compile("src/lib/dancr/customer-notification-delivery.ts", {"./web-push-config":{webPushConfig:()=>null}});
   assert.deepEqual(plain(unavailable.customerNotificationDelivery("one", "a@example.com")), { emailAvailable: false, pushAvailable: false });
 });
 
@@ -144,7 +143,7 @@ function deliveryFixture(settings, options = {}) {
   } };
   const delivery = compile("src/lib/dancr/notification-delivery.ts", {
     "./customer-notification-preferences": preferences,
-    "./customer-notification-delivery": capability,
+    "./web-push-delivery": {deliverWebPush:async (_client,recipient_id,message)=>{requests.push({body:{recipient_id,...message}});return true}},
     "./public-app-url": { publicAppUrl: () => "https://mydancr.com" },
   }, { process: { env }, fetch: async (url, init) => {
     requests.push({ url, body: JSON.parse(init.body) });
@@ -160,7 +159,7 @@ for (const [key, kind] of Object.entries(kinds)) test(key + " opt-out prevents t
   assert.equal(f.requests.length, 0);
   const otherKind = Object.values(kinds).find(value => value !== kind);
   assert.deepEqual(plain(await f.deliverNotificationRows(f.client, [row(otherKind)])), { email: 1, push: 1 });
-  assert.equal(f.requests[0].body.include_aliases.external_id[0], capability.customerPushExternalId("customer-one"));
+  assert.equal(f.requests[0].body.recipient_id, "customer-one");
   assert.equal(f.requests[0].body.url, "https://mydancr.com/dashboard/customer#customer-alerts");
 });
 
@@ -182,7 +181,7 @@ test("delivery respects independent channels, master pause, defaults and unavail
 test("customer choices do not suppress transactional email or other account roles", async () => {
   const f = deliveryFixture({ followAlertsEnabled: false }, { error: new Error("unavailable") });
   assert.deepEqual(plain(await f.deliverNotificationRows(f.client, [row("support_reply", "dancer-one")])), { email: 1, push: 1 });
-  assert.equal(f.requests[0].body.include_aliases.external_id[0], capability.notificationPushExternalId("dancer-one"));
+  assert.equal(f.requests[0].body.recipient_id, "dancer-one");
   assert.equal((await f.sendTransactionalEmail({ to: "customer@example.com", subject: "Password changed", text: "Test" })).delivered, true);
 });
 
@@ -199,8 +198,8 @@ for (const [key, method] of [
   });
   let inserted = [];
   const client = { from(table) {
-    if (table === "venues") {
-      const query = { select: () => query, eq: () => query, maybeSingle: async () => ({ data: { id: "club" }, error: null }) };
+    if (table === "venues" || table === "dancer_profiles") {
+      const query = { select: () => query, eq: () => query, is: () => query, maybeSingle: async () => ({ data: { id: table === "venues" ? "club" : "dancer" }, error: null }) };
       return query;
     }
     const records = {

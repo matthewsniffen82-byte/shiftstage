@@ -1,21 +1,12 @@
 import "server-only";
-import { createHmac } from "node:crypto";
+import { webPushConfig } from "./web-push-config";
 
-export function notificationPushExternalId(userId: string) {
-  const key = process.env.ONESIGNAL_REST_API_KEY;
-  if (!key) return "";
-  // Every role needs an opaque enrollment capability. Preserve the existing
-  // namespace so enrolled customer devices continue receiving their alerts.
-  return `customer_${createHmac("sha256", key).update(`mydancr:push:${userId}`).digest("hex")}`;
-}
-
-export const customerPushExternalId = notificationPushExternalId;
-
-export function notificationPushDelivery(userId: string) {
-  const pushAvailable = Boolean(process.env.NEXT_PUBLIC_ONESIGNAL_APP_ID && process.env.ONESIGNAL_REST_API_KEY);
+export function notificationPushDelivery(_userId: string) {
+  const config = webPushConfig();
+  const pushAvailable = Boolean(config);
   return {
     pushAvailable,
-    ...(pushAvailable ? { pushAppId: process.env.NEXT_PUBLIC_ONESIGNAL_APP_ID, pushExternalId: notificationPushExternalId(userId) } : {}),
+    ...(config ? { pushPublicKey: config.publicKey } : {}),
   };
 }
 

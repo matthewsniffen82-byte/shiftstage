@@ -3,16 +3,16 @@ import { androidDeviceClassScript } from "./android-device-script.mjs";
 export const contentSecurityPolicy = [
   "default-src 'self'",
   "base-uri 'self'",
-  "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.onesignal.com https://onesignal.com",
+  "connect-src 'self' https://*.supabase.co wss://*.supabase.co",
   "font-src 'self' data: https://fonts.gstatic.com",
   "form-action 'self'",
   "frame-ancestors 'none'",
-  "frame-src 'self' https://www.google.com https://onesignal.com",
+  "frame-src 'self' https://www.google.com",
   "img-src 'self' data: blob: https:",
   "manifest-src 'self'",
   "media-src 'self' blob: https:",
   "object-src 'none'",
-  "script-src 'self' 'unsafe-inline' https://cdn.onesignal.com",
+  "script-src 'self' 'unsafe-inline'",
   "script-src-attr 'none'",
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   "worker-src 'self' blob:",
@@ -39,7 +39,7 @@ export async function createPrivateDocumentPolicy() {
   const nonce = base64(crypto.getRandomValues(new Uint8Array(24)));
   const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(androidDeviceClassScript));
   const deviceHash = base64(new Uint8Array(digest));
-  const scriptSources = "script-src 'self' 'nonce-" + nonce + "' 'sha256-" + deviceHash + "' https://cdn.onesignal.com";
+  const scriptSources = "script-src 'self' 'nonce-" + nonce + "' 'sha256-" + deviceHash + "'";
   return { nonce, policy: contentSecurityPolicy.replace(/script-src [^;]+/, scriptSources) };
 }
 
