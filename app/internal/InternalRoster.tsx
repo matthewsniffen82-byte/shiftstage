@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { InternalRequestPushSettings } from "./InternalRequestPushSettings";
 import { isCurrentBrowserSession, persistRefreshedBrowserAuthSession, readBrowserAuthSession } from "@/src/lib/dancr/browser-session";
 
-type Dancer = { id: string; stageName: string; workingUntil: string; avatarRevision: string };
+type Dancer = { id: string; stageName: string; workingUntil: string; avatarRevision: string; mainPhotoId: string | null; mainPhotoRevision: string };
 type ClubLink = { id: string; kind: "table"; label: string; token: string };
 type ClubRequest = { id: string; link_id: string; dancer_id: string; status: "pending" | "acknowledged"; created_at: string };
 type Snapshot = { venueName: string; dancers: Dancer[]; kind?: "table"; label?: string; role?: string; links?: ClubLink[]; requests?: ClubRequest[]; receipt?: { status: string } | null };
@@ -147,9 +147,12 @@ export function InternalRoster({ token, operationsOnly = false }: { token?: stri
     {notice ? <p className="ir-notice" role="status">{notice}</p> : null}
     {snapshot ? <>
       {!operationsOnly ? <section aria-label={staff ? "Live internal roster" : "Available dancers"}><div className="ir-section-title"><h2>On the floor</h2><span className="ir-live">● {snapshot.dancers.length} {staff ? "checked in" : "available"}</span></div>
-        {dancers.length ? <div className="ir-grid">{dancers.map(dancer => <article className="ir-dancer" key={dancer.id}>
-          <button className="ir-profile-link" aria-label={`View ${dancer.stageName}’s full profile`} onClick={() => void openProfile(dancer)}><ProtectedMedia id={dancer.id} revision={dancer.avatarRevision} kind="avatar" token={token} className="ir-avatar" alt={`${dancer.stageName}’s avatar`} /><h3>{dancer.stageName}</h3><span>View profile ↗</span></button>
-          {snapshot.kind === "table" ? <button disabled={busy} onClick={() => { if (pendingDancer.current !== dancer.id || ["completed", "cancelled"].includes(snapshot.receipt?.status || "")) { requestKey.current = crypto.randomUUID(); pendingDancer.current = dancer.id; } void mutate({ dancerId: dancer.id, requestKey: requestKey.current }); }}>Request at our table</button> : null}
+        {dancers.length ? <div className="ir-grid ir-directory-grid">{dancers.map(dancer => <article className={`ir-dancer${snapshot.kind === "table" ? " ir-dancer-requestable" : ""}`} key={dancer.id}>
+          <button type="button" className="ir-profile-link" aria-label={`View ${dancer.stageName}’s full profile`} onClick={() => void openProfile(dancer)}>
+            {dancer.mainPhotoId ? <ProtectedMedia key={dancer.mainPhotoId} id={dancer.mainPhotoId} revision={dancer.mainPhotoRevision} kind="photo" token={token} className="ir-main-photo" alt={`${dancer.stageName}’s main photo`} /> : <span className="ir-main-photo ir-photo-placeholder">Photo unavailable</span>}
+            <span className="ir-dancer-copy"><strong>{dancer.stageName}</strong><span>View profile ↗</span></span>
+          </button>
+          {snapshot.kind === "table" ? <button type="button" className="ir-table-request" aria-label={`Request ${dancer.stageName} at our table`} disabled={busy} onClick={() => { if (pendingDancer.current !== dancer.id || ["completed", "cancelled"].includes(snapshot.receipt?.status || "")) { requestKey.current = crypto.randomUUID(); pendingDancer.current = dancer.id; } void mutate({ dancerId: dancer.id, requestKey: requestKey.current }); }}>Request</button> : null}
         </article>)}</div> : <div className="ir-empty"><h3>The floor is getting ready</h3><p>{staff ? "Dancers appear here after choosing Internal or Both at the dressing-room NFC sticker." : "No dancers are available to request right now. Please check back shortly or ask club staff."}</p></div>}
       </section> : null}
       {snapshot.receipt ? <p className="ir-notice" role="status">Your request: <strong>{snapshot.receipt.status === "acknowledged" ? "Seen by club staff" : snapshot.receipt.status}</strong></p> : null}

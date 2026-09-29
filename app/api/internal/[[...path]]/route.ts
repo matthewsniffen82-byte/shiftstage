@@ -1,5 +1,6 @@
 import { after, NextResponse } from "next/server";
 import { deliverInternalRequestPush } from "@/src/lib/dancr/internal-request-push";
+import { internalMainPhotos } from "@/src/lib/dancr/internal-main-photo";
 import { createHash } from "node:crypto";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { readBoundedJsonObject } from "@/src/lib/bounded-json-body";
@@ -62,7 +63,16 @@ export async function GET(request: Request, context: Context) {
       for (const key of ["content-length", "content-range", "accept-ranges"]) { const value = upstream.headers.get(key); if (value) headers.set(key, value); }
       return new Response(upstream.body, { status: upstream.status, headers });
     }
-    const dancers = members.map(item => ({ id: item.id, stageName: item.stage_name, workingUntil: item.working_until, avatarRevision: createHash("sha256").update(item.avatar_storage_path).digest("hex").slice(0, 16) }));
+    const mainPhotos = await internalMainPhotos(admin, members.map(item => item.id));
+    const dancers = members.map(item => {
+      const photo = mainPhotos.get(item.id);
+      return {
+        id: item.id, stageName: item.stage_name, workingUntil: item.working_until,
+        avatarRevision: createHash("sha256").update(item.avatar_storage_path).digest("hex").slice(0, 16),
+        mainPhotoId: photo?.id || null,
+        mainPhotoRevision: photo ? createHash("sha256").update(photo.storage_path).digest("hex").slice(0, 16) : "",
+      };
+    });
     if (scope.link) {
       let receipt = null;
       const key = url.searchParams.get("requestKey");

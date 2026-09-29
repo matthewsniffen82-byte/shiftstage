@@ -259,7 +259,7 @@ test("save verifies affected rows, deletion, stages, and public state", () => {
   assert.match(profileRouteSource, /PROTECTED_FIELDS_CHANGED/);
   assert.match(profileRouteSource, /DANCER_PROFILE_VISIBILITY_COLUMN_MISSING/);
   assert.match(profileRouteSource, /loadProfileForSave/);
-  assert.match(dashboardSource, /saveStatus === "saving" \? "Saving\.\.\." : saveStatus === "saved" \? "Saved" : "Save profile"/);
+  assert.match(dashboardSource, /saveStatus === "saving" \? "Saving…" : saveStatus === "saved" \? "✓ Saved" : "Save profile"/);
   assert.match(dashboardSource, /setStatus\(hasPendingPhotos[\s\S]*?"Saved Profile"/);
 });
 

@@ -1060,7 +1060,7 @@ export function DancerOnboardingProfileMediaWorkspace({
             {hasUnsavedChanges ? "Unsaved changes" : profileIsSaved ? <><span aria-hidden="true">✓</span> Profile saved</> : null}
           </span>
         </span>
-        <small>Stage name, city, avatar and at least 1 solo photo.</small>
+        <small>Add your stage name, city, avatar and solo photos. Choose an Internal main photo in Photos.</small>
       </span>
       <DancerProfilePreview
         builderRequirements={builderRequirements}

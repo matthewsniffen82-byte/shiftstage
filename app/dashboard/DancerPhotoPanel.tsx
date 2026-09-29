@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { MAX_DANCER_PROFILE_PHOTOS } from "@/src/lib/dancr/media-limits";
 import { mediaReviewLabel } from "@/src/lib/dancr/media-review-label";
 import DancerMediaPinButton from "./DancerMediaPinButton";
+import DancerInternalMainPhotoPicker from "./DancerInternalMainPhotoPicker";
 import { requestDancerMediaPin } from "./dashboard-session";
 import { readSession, requestDancerPhotosJson, requestDancerProfileJson } from "./dashboard-session";
 import type { LoadState, DancerPhotoItem, DancerPhotoQueueItem } from "./dashboard-types";
@@ -474,6 +475,7 @@ export function DancerPhotoPanel({
           })}
         </div>
       ) : null}
+      <DancerInternalMainPhotoPicker key={String(profile?.id || "new-profile")} photos={photos} disabled={photoActionBusy} />
       {!uploadOnly && photos.length ? (
         <div className="dancer-media-manager-title">
           <strong>Your photos</strong>

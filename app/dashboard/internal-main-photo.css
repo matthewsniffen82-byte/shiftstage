@@ -1,0 +1,19 @@
+.internal-main-photo-picker { margin: 20px 0; padding-top: 16px; border-top: 1px solid #382b48; }
+.internal-main-photo-picker h3 { margin: 0 0 8px; font-size: 16px; }
+.internal-main-photo-picker p { font-size: 13px; line-height: 1.5; }
+.internal-main-photo-options { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.internal-main-photo-options > button,
+body.dancr-button-system .internal-main-photo-options > button {
+  display: flex !important; flex-direction: column !important; gap: 0 !important;
+  min-width: 0 !important; width: 100% !important; margin: 0 !important; padding: 0 !important;
+  overflow: hidden !important; border: 2px solid #51435f !important; border-radius: 4px !important;
+  background: #100b18 !important; color: #fff !important; box-shadow: none !important;
+}
+body.dancr-button-system .internal-main-photo-options > button::before,
+body.dancr-button-system .internal-main-photo-options > button::after { display: none !important; }
+.internal-main-photo-options > button[aria-pressed="true"],
+body.dancr-button-system .internal-main-photo-options > button[aria-pressed="true"] { border-color: #b788ff !important; }
+.internal-main-photo-options img, .internal-main-photo-missing {
+  display: block; width: 100%; aspect-ratio: 9 / 16; object-fit: contain; border-radius: 0; background: #08060c;
+}
+.internal-main-photo-options > button > span:last-child { display: grid; place-items: center; min-height: 44px; padding: 4px; font-size: 12px; line-height: 1.3; }

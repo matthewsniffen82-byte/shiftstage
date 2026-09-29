@@ -21,7 +21,7 @@ function photoHarness({ uploadOnly = false, profile = {}, pin = async (_kind, id
   let cursor = 0, effects = [], dirty = true, tree;
   const exports = {};
   runInNewContext(code, {
-    exports, ...mediaReview, MAX_DANCER_PROFILE_PHOTOS: 30, DancerMediaPinButton: "MediaPinButton",
+    exports, ...mediaReview, MAX_DANCER_PROFILE_PHOTOS: 30, DancerMediaPinButton: "MediaPinButton", DancerInternalMainPhotoPicker: "InternalMainPhotoPicker",
     requestDancerMediaPin: (...args) => { pins.push(args); return pin(...args); },
     cropProfilePhoto: (...args) => { crops.push(args); throw new Error("Uploads must not open the manual crop editor."); },
     require: () => ({ jsx: (type, props) => ({ type, props }), jsxs: (type, props) => ({ type, props }) }),
@@ -60,6 +60,7 @@ function photoHarness({ uploadOnly = false, profile = {}, pin = async (_kind, id
   return {
     posts, reads, profiles, pins, crops, previews, revoked, mapProfile: exports.dancerPhotoItemsFromProfile,
     get pinButtons() { return nodes().filter(node => node.type === "MediaPinButton"); },
+    get mainPhotoPicker() { return nodes().find(node => node.type === "InternalMainPhotoPicker"); },
     get cards() { return nodes().filter(node => /^(photo-review-card|photo-saved-preview)/.test(node.props?.className || "")); },
     get labels() { return this.cards.map(card => nodes(card).find(node => node.type === "strong").props.children); },
     get statuses() { return this.cards.map(card => nodes(card).find(node => node.type === "small").props.children); },
@@ -293,11 +294,14 @@ test("a failed upload remains available for a deliberate retry", async () => {
   assert.equal(ui.reads.length, 0);
 });
 
-test("an avatar stays separate and gallery photos have no main-photo action", () => {
-  const ui = photoHarness({ profile: { avatarPhotoUrl: "/avatar.jpg", dancer_photos: [approved()] } });
-  assert.deepEqual(ui.labels, ["Photo 1"]);
-  assert.equal(ui.cards.length, 1);
-  assert.equal(ui.buttons.some(button => button.props.children === "Make main"), false);
+test("onboarding and photo management offer an Internal main photo independently of the avatar", () => {
+  for (const uploadOnly of [true, false]) {
+    const ui = photoHarness({ uploadOnly, profile: { avatarPhotoUrl: "/avatar.jpg", dancer_photos: [approved()] } });
+    assert.equal(ui.mainPhotoPicker.props.photos.length, 1);
+    assert.equal(ui.mainPhotoPicker.props.photos[0].imageUrl, "/saved.jpg");
+    assert.equal(ui.mainPhotoPicker.props.disabled, false);
+    assert.equal(ui.buttons.some(button => button.props.children === "Make main"), false);
+  }
 });
 
 test("pinning a photo keeps it first across refreshes without changing the avatar or legacy slots", async () => {

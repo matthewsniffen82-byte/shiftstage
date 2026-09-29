@@ -1,0 +1,104 @@
+/* Match the external dancer directory: three columns, 2px gutters, 9:16 tiles. */
+body .ir-shell .ir-directory-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: start;
+  gap: 2px;
+}
+body .ir-shell .ir-directory-grid .ir-dancer {
+  position: relative;
+  display: block;
+  width: 100%;
+  min-width: 0;
+  aspect-ratio: 9 / 16;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 2px;
+  background: #050507;
+  box-shadow: none;
+}
+body .ir-shell .ir-directory-grid .ir-profile-link,
+body.dancr-button-system .ir-shell .ir-directory-grid .ir-profile-link {
+  position: absolute !important;
+  inset: 0 !important;
+  display: block !important;
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  border: 0 !important;
+  border-radius: 2px !important;
+  background: #050507 !important;
+  box-shadow: none !important;
+  transform: none !important;
+  text-align: left !important;
+}
+body.dancr-button-system .ir-shell .ir-directory-grid button::before,
+body.dancr-button-system .ir-shell .ir-directory-grid button::after {
+  display: none !important;
+}
+body .ir-directory-grid .ir-main-photo {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  border-radius: 0;
+  object-fit: cover;
+  object-position: center top;
+  background: #17121f;
+  color: #bda4dc;
+  font-size: 12px;
+}
+body .ir-shell .ir-directory-grid .ir-dancer-copy {
+  position: absolute;
+  z-index: 2;
+  inset: auto 0 0;
+  display: grid;
+  gap: 3px;
+  padding: 24px 7px 7px;
+  color: #fff;
+  background: linear-gradient(180deg, transparent, rgba(5, 5, 8, .94) 48%);
+  text-shadow: 0 1px 3px #000;
+  pointer-events: none;
+}
+body .ir-shell .ir-directory-grid .ir-dancer-requestable .ir-dancer-copy { padding-bottom: 52px; }
+body .ir-directory-grid .ir-dancer-copy strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-family: var(--font-ui, Arial, sans-serif);
+  font-size: clamp(11px, 3vw, 15px);
+  font-weight: 950;
+  letter-spacing: -.02em;
+  line-height: 1.05;
+  white-space: nowrap;
+}
+body .ir-directory-grid .ir-dancer-copy > span { font-size: 10px; color: #e0cefa; }
+body .ir-shell .ir-directory-grid .ir-table-request,
+body.dancr-button-system .ir-shell .ir-directory-grid .ir-table-request {
+  position: absolute !important;
+  z-index: 3 !important;
+  inset: auto 5px 4px !important;
+  display: flex !important;
+  width: calc(100% - 10px) !important;
+  min-width: 0 !important;
+  min-height: 44px !important;
+  margin: 0 !important;
+  padding: 4px !important;
+  border: 1px solid #9061cb !important;
+  border-radius: 5px !important;
+  color: #fff !important;
+  background: #36204f !important;
+  box-shadow: none !important;
+  font-size: clamp(11px, 2.8vw, 14px) !important;
+  line-height: 1.1 !important;
+}
+body .ir-directory-grid button:focus-visible { outline-offset: -3px; }
+@media (max-width: 420px) {
+  body .ir-shell .ir-directory-grid .ir-dancer-copy { padding-left: 5px; padding-right: 5px; }
+}

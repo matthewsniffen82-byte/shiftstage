@@ -18,7 +18,7 @@ Each dressing-room tap requires an explicit choice before submission:
 
 No channel is selected implicitly and neither is not a valid check-in choice. Internal consent applies to the confirmed club shift. Public-profile privacy remains in effect after the shift ends until another explicit eligible tap changes it; expiry never silently republishes a profile. Existing dancers are not automatically opted into the internal roster. Signup and profile moderation stay shared; Ondato verification must precede a new channel-aware check-in.
 
-Every dancer completes the full profile during onboarding, regardless of visibility choice. Internal cards show the same canonical approved avatar and stage name. Clicking a card opens the complete customer-facing profile through the club's authorized roster context, including approved gallery and social links. Internal-only profiles stay out of external discovery. Legal identity, verification documents, and private contact information are never included. Private media are fetched through an authorized, uncached endpoint. Already downloaded media cannot be recalled.
+Every dancer completes the full profile during onboarding, regardless of visibility choice. Internal cards use the same three-column, 9:16 photo tiles and 2px gutters as external discovery. They show the dancer’s chosen approved gallery photo and stage name; the avatar remains separate. Clicking a card opens the complete customer-facing profile through the club's authorized roster context, including approved gallery and social links. Internal-only profiles stay out of external discovery. Legal identity, verification documents, and private contact information are never included. Private media are fetched through an authorized, uncached endpoint. Already downloaded media cannot be recalled.
 
 ## Implementation phases
 
@@ -37,7 +37,7 @@ Existing Ondato server credentials and Supabase environment variables are reused
 
 - `/dashboard/venue#venue-dancer-roster`: unified venue roster. Staff can view approved affiliated profiles and acknowledge/complete/dismiss requests. Owners/managers can remove affiliation, allow a new NFC tap, and create, rename, print or revoke table QR links. Removing affiliation ends this club’s Internal and External presence and blocks retapping until allowed; it never deletes the dancer’s account or their other affiliations.
 - `/internal`: redirects to the unified venue roster.
-- `/internal/club/[token]`: customer table roster/request screen. Selecting the avatar opens approved photos, videos, and social links within the club context, including for Internal-only dancers.
+- `/internal/club/[token]`: customer table roster/request screen. Selecting the main photo opens approved photos, videos, and social links within the club context, including for Internal-only dancers.
 - `/internal/sign/[token]`: printable QR sign. Configure `NEXT_PUBLIC_SITE_URL` to the canonical deployment origin.
 - `/api/internal`: authenticated workspace snapshot and mutations; `/api/internal/link/[token]` handles capability-scoped table reads and requests. Profile and media endpoints revalidate membership and capability on every request. Responses use `private, no-store`.
 
@@ -62,4 +62,10 @@ Apply these explicitly, in order, with the existing migration safety procedure. 
 
 The focused integration suite covers all three choices, mandatory profile/age verification, retries, cross-club isolation, cooldowns, suspension/revocation/expiry, avatar identity, capability profile/media access, table requests, staff permissions, and safe publication receipts. A transaction-only rehearsal against the current MyDancr schema confirms the migrations execute and browser roles cannot invoke protected functions; the rehearsal rolls back.
 
-The browser-control service exposed no available browser during implementation. Client compilation, focused TypeScript and lint checks can run locally, but mobile visual inspection is an outstanding acceptance check. Before club use, complete a real Ondato onboarding and physical sticker tap for each choice, open the internal avatar profile from a table QR, confirm external discovery follows the choice, and verify the table roster clears after shift expiry or affiliation removal. Browser/mobile visual review and real NFC/Ondato testing remain outstanding because no browser surface is connected.
+Before club use, complete a real Ondato onboarding and physical sticker tap for each choice, open the Internal profile from a table QR, confirm external discovery follows the choice, and verify the table roster clears after shift expiry or affiliation removal. Local browser fixtures cover the photo grid and picker; acceptance on a real phone with NFC and Ondato remains separate.
+
+### Internal main photos
+
+`20260929120000_internal_main_photos.sql` adds a service-only preference and owner-checked selector. The onboarding Photos uploader and photo manager let dancers explicitly choose an approved gallery photo for Internal. Avatar upload remains required and independent; public primary photos and pins are unchanged. Existing dancers use their approved primary gallery photo, then a deterministic approved fallback, until they choose. Deleting or rejecting the selected photo falls back to another approved photo; a gallery with none displays a placeholder.
+
+`/api/dancer/internal-main-photo` reads and changes only the authenticated dancer’s choice. Internal roster snapshots expose photo IDs and opaque revisions, never storage paths. Existing capability-scoped media endpoints recheck approval and roster membership on every fetch. Focused database/API checks cover ownership, moderation, account state, deletion, fallback and restricted grants. Local browser fixtures verify three columns at 320/393/768px, profile opening, table requests, and persisted choices.

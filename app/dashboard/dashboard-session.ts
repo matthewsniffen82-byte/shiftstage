@@ -350,6 +350,14 @@ export function requestDancerPhotosJson(options: DashboardJsonRequestOptions = {
   });
 }
 
+export function requestDancerInternalMainPhotoJson(options: DashboardJsonRequestOptions = {}) {
+  return requestDashboardJson("/api/dancer/internal-main-photo", {
+    ...options,
+    expectedRole: "dancer",
+    fallbackMessage: options.fallbackMessage || "Unable to save your Internal main photo.",
+  });
+}
+
 function isRejectedDancerPhotoModerationResponse(response: Response, data: unknown) {
   if (response.status !== 422 || !data || typeof data !== "object") return false;
   return "decision" in data && data.decision === "rejected";
