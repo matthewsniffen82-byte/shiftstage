@@ -14,7 +14,7 @@ body .ir-guest .ir-header {
   border-radius: 14px;
   background: #08080b;
 }
-body .ir-guest .ir-header > div { display: grid; grid-template-columns: minmax(0, 1fr) fit-content(38%); align-items: center; gap: 6px 12px; width: 100%; min-width: 0; }
+body .ir-guest .ir-header > div { display: grid; grid-template-columns: minmax(0, 1fr) fit-content(38%); align-items: center; gap: 16px 12px; width: 100%; min-width: 0; }
 body .ir-guest .ir-brand { grid-column: 2; grid-row: 1; align-self: end; justify-self: center; width: fit-content; color: #f8fafc; font-size: 14px; line-height: 1.2; }
 body .ir-shell.ir-guest .ir-brand .mydancr-live-logo,
 body .ir-shell.ir-guest .ir-brand .mydancr-live-logo .violet-r { font-size: 14px; }
