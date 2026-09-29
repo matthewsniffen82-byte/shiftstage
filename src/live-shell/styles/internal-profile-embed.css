@@ -12,5 +12,18 @@ html.internal-profile-embed:not(.internal-profile-ready) body { visibility: hidd
 html.internal-profile-embed #profileBackdrop .profile-modal { min-height: 100dvh; max-height: 100dvh; border-radius: 0; }
 html.internal-profile-embed body.dancr-button-system #profileBackdrop #profileModal .profile-activity-metrics.is-internal { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
 html.internal-profile-embed .internal-profile-request { width: 100%; }
+/* The table request is the primary Internal action, matching the roster cards.
+   Reuse the shared button face so automatic dark mode preserves the violet. */
+html.internal-profile-embed [data-internal-table-request]:enabled {
+  --profile-action-background: linear-gradient(#6d28d9, #6d28d9) !important;
+  --profile-action-border: #8b5cf6 !important;
+  --profile-action-shadow: none !important;
+}
+html.internal-profile-embed [data-internal-table-request]:enabled:is(:hover, :active) {
+  --profile-action-border: #a78bfa !important;
+}
+html.internal-profile-embed [data-internal-table-request]:enabled:active {
+  --profile-action-background: linear-gradient(#5b21b6, #5b21b6) !important;
+}
 html.internal-profile-embed .internal-profile-request-status { margin: 8px 4px 0; color: #b8b5c2; font-size: 12px; line-height: 1.4; text-align: center; }
 html.internal-profile-embed .internal-profile-request-status:empty { display: none; }
