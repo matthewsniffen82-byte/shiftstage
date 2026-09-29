@@ -16,12 +16,34 @@ async function rosterFetch(url: string, token: string | undefined, body?: Record
   const headers: Record<string, string> = { "content-type": "application/json" };
   if (session?.accessToken) headers.authorization = `Bearer ${session.accessToken}`;
   if (session?.refreshToken) headers["x-dancr-refresh-token"] = session.refreshToken;
-  const response = await fetch(url, { method: body ? "POST" : "GET", body: body ? JSON.stringify(body) : undefined, headers, signal, cache: "no-store", credentials: "same-origin" });
-  const data = await response.json();
-  if (session && !isCurrentBrowserSession(session)) throw new Error("Your account session changed. Refresh this page.");
-  if (!response.ok || !data.ok) throw new Error(data.error || "The club roster is temporarily unavailable.");
-  if (session) persistRefreshedBrowserAuthSession(data.session, session);
-  return data;
+  const controller = new AbortController();
+  const cancel = () => controller.abort(signal?.reason);
+  let rejectAborted: () => void = () => {};
+  const deadline = new Promise<never>((_, reject) => {
+    rejectAborted = () => reject(controller.signal.reason);
+    controller.signal.addEventListener("abort", rejectAborted, { once: true });
+  });
+  if (signal?.aborted) cancel();
+  else signal?.addEventListener("abort", cancel, { once: true });
+  // Bound both the request and response body so a stalled connection cannot stop polling.
+  const timer = setTimeout(() => controller.abort(new Error("The request timed out. Please try again.")), 15000);
+  const request = async () => {
+    if (controller.signal.aborted) throw controller.signal.reason;
+    const response = await fetch(url, { method: body ? "POST" : "GET", body: body ? JSON.stringify(body) : undefined, headers, signal: controller.signal, cache: "no-store", credentials: "same-origin" });
+    const data = await response.json().catch(() => null);
+    if (controller.signal.aborted) throw controller.signal.reason;
+    if (session && !isCurrentBrowserSession(session)) throw new Error("Your account session changed. Refresh this page.");
+    if (!response.ok || !data?.ok) throw new Error(data?.error || "The club roster is temporarily unavailable. Please try again.");
+    if (session) persistRefreshedBrowserAuthSession(data.session, session);
+    return data;
+  };
+  try {
+    return await Promise.race([request(), deadline]);
+  } finally {
+    clearTimeout(timer);
+    signal?.removeEventListener("abort", cancel);
+    controller.signal.removeEventListener("abort", rejectAborted);
+  }
 }
 
 function ProtectedMedia({ id, kind, token, alt, className, revision }: { id: string; kind: "avatar" | "photo" | "video"; token?: string; alt: string; className?: string; revision?: string }) {
@@ -88,7 +110,7 @@ export function InternalRoster({ token, operationsOnly = false }: { token?: stri
     const watchdog = setInterval(() => {
       if (Date.now() - lastGoodRefresh.current > 20000) {
         setSnapshot(null); setProfile(null); selectedProfile.current = "";
-        setError("Connection interrupted. The roster is hidden until a fresh update arrives.");
+        setError(current => current || "The roster could not be refreshed. Retrying automatically.");
       }
     }, 5000);
     const sessionChanged = () => { setSnapshot(null); void refresh(controller.signal); };
