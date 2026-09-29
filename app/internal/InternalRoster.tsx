@@ -8,7 +8,7 @@ import { BROWSER_AUTH_SESSION_KEY, isCurrentBrowserSession, persistRefreshedBrow
 type Dancer = { id: string; stageName: string; workingUntil: string; avatarRevision: string; mainPhotoId: string | null; mainPhotoRevision: string; requestStatus?: "pending" | "acknowledged" | null };
 type ClubLink = { id: string; kind: "table"; label: string; token: string };
 type ClubRequest = { id: string; link_id: string; dancer_id: string; status: "pending" | "acknowledged"; created_at: string };
-type Snapshot = { venueName: string; dancers: Dancer[]; kind?: "table"; label?: string; role?: string; links?: ClubLink[]; requests?: ClubRequest[]; receipt?: { status: string } | null };
+type Snapshot = { venueName: string; venueLogoUrl?: string | null; dancers: Dancer[]; kind?: "table"; label?: string; role?: string; links?: ClubLink[]; requests?: ClubRequest[]; receipt?: { status: string } | null };
 
 const ROSTER_REFRESH_INTERVAL_MS = 20 * 60 * 1000;
 class RosterAccessError extends Error {}
@@ -69,6 +69,11 @@ function ProtectedMedia({ id, kind, token, alt, className, revision }: { id: str
     return () => { controller.abort(); if (objectUrl) URL.revokeObjectURL(objectUrl); };
   }, [id, kind, token, revision]);
   return url ? kind === "video" ? <video src={url} controls playsInline preload="metadata" aria-label={alt} /> : <img className={className} src={url} alt={alt} /> : <span className={className} aria-label="Media loading">…</span>;
+}
+
+function VenueBrandLogo({ url, name }: { url: string; name: string }) {
+  const [failed, setFailed] = useState(false);
+  return failed ? null : <img className="ir-venue-logo" src={url} alt={`${name} logo`} width={112} height={40} decoding="async" referrerPolicy="no-referrer" onError={() => setFailed(true)} />;
 }
 
 export function InternalRoster({ token, operationsOnly = false }: { token?: string; operationsOnly?: boolean }) {
@@ -215,7 +220,11 @@ export function InternalRoster({ token, operationsOnly = false }: { token?: stri
   const staff = !token;
   const dancers = snapshot?.dancers || [];
   return <div className={`ir-shell${staff ? " ir-staff" : " ir-guest"}${operationsOnly ? " ir-embedded" : ""}`} data-global-navigation-swipe="ignore">
-    {!operationsOnly ? <header className="ir-header"><div><a className="ir-brand" href={staff ? "/dashboard/venue" : "#"}><span className="mydancr-live-logo">mydanc<span className="violet-r">r</span></span>{staff ? <span>INTERNAL</span> : null}</a><h1>{snapshot?.venueName || "Club roster"}</h1><p>{staff ? "Your floor. Your team. One live roster." : snapshot?.label || "Welcome to the club"}</p></div>{staff ? <a className="ir-secondary" href="/dashboard/venue">Club dashboard</a> : null}</header> : null}
+    {!operationsOnly ? <header className="ir-header"><div>
+      <a className="ir-brand" href={staff ? "/dashboard/venue" : "#"}><span className="mydancr-live-logo">mydanc<span className="violet-r">r</span></span>{staff ? <span>INTERNAL</span> : null}</a>
+      {!staff && snapshot?.venueLogoUrl ? <VenueBrandLogo key={snapshot.venueLogoUrl} url={snapshot.venueLogoUrl} name={snapshot.venueName} /> : null}
+      <h1>{snapshot?.venueName || "Club roster"}</h1><p>{staff ? "Your floor. Your team. One live roster." : snapshot?.label || "Welcome to the club"}</p>
+    </div>{staff ? <a className="ir-secondary" href="/dashboard/venue">Club dashboard</a> : null}</header> : null}
     {error ? <section className="ir-panel" role="alert"><h2>Roster unavailable</h2><p>{error}</p>{staff ? <a className="ir-button" href="/account?role=venue&mode=login&return_to=%2Finternal">Sign in to MyDancr</a> : null}<button onClick={() => void refresh()}>Try again</button></section> : !snapshot ? <p role="status">Loading the live roster…</p> : null}
     {notice ? <p className="ir-notice" role="status">{notice}</p> : null}
     {snapshot ? <>

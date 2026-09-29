@@ -87,7 +87,7 @@ export async function GET(request: Request, context: Context) {
         if (error) throw error;
         if (data) receipt = { status: Date.parse(data.created_at) > Date.now() - 6 * 3600000 && members.some(d => d.id === data.dancer_id) ? data.status : "cancelled" };
       }
-      return json({ ok: true, venueName: scope.venueName, kind: scope.link.kind, label: scope.link.label, dancers: dancers.map(dancer => ({ ...dancer, requestStatus: tableRequests.get(dancer.id) || null })), receipt });
+      return json({ ok: true, venueName: scope.venueName, venueLogoUrl: scope.venueLogoUrl, kind: scope.link.kind, label: scope.link.label, dancers: dancers.map(dancer => ({ ...dancer, requestStatus: tableRequests.get(dancer.id) || null })), receipt });
     }
     const results = await Promise.all([
       admin.from("internal_roster_links").select("id,kind,label,token,active").eq("venue_id", scope.venueId).eq("active", true).eq("kind", "table").order("created_at"),
