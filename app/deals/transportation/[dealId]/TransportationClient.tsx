@@ -41,9 +41,12 @@ export default function TransportationClient({ deal, venue, shuttleAvailable, in
   initialTransportation?: "" | "club_shuttle";
   sourceType?: DealSourceType; dancerId?: string; attributionToken?: string;
 }) {
-  const [choice, setChoice] = useState<"" | EligibleClubTransportation | "rideshare_taxi">(deal ? initialTransportation : "club_shuttle");
+  const [openForm, setOpenForm] = useState<"" | "guest_list" | "club_shuttle">(deal ? initialTransportation : "club_shuttle");
+  const [guestArrival, setGuestArrival] = useState<"" | EligibleClubTransportation | "rideshare_taxi">("");
+  const choice = openForm === "club_shuttle" ? "club_shuttle" : guestArrival;
   const autonomousArrival = AUTONOMOUS_ADMISSION_OPTIONS.find(option => option.value === choice);
-  const showingShuttleForm = choice === "club_shuttle";
+  const showingShuttleForm = openForm === "club_shuttle";
+  const showingGuestForm = openForm === "guest_list";
   const offerHours = deal ? admissionOfferHours({ ...deal, validDays: deal.validDays || undefined }) : "";
   const [busy, setBusy] = useState(false);
   const [complete, setComplete] = useState(false);
@@ -59,7 +62,13 @@ export default function TransportationClient({ deal, venue, shuttleAvailable, in
 
   useEffect(() => {
     heading.current?.focus();
-  }, [showingShuttleForm, complete]);
+  }, [complete]);
+
+  function toggleForm(form: "guest_list" | "club_shuttle") {
+    if (pending.current || complete || attemptedRequest.current) return;
+    setOpenForm(openForm === form ? "" : form);
+    setError("");
+  }
 
   async function copyClubAddress() {
     if (!venue.address) return;
@@ -72,7 +81,7 @@ export default function TransportationClient({ deal, venue, shuttleAvailable, in
   }
 
   function chooseRideshare() {
-    setChoice("rideshare_taxi");
+    setGuestArrival("rideshare_taxi");
     setError("");
     try {
       const saved = JSON.parse(localStorage.getItem("mydancrPendingNfcDealV2") || "null");
@@ -115,7 +124,7 @@ export default function TransportationClient({ deal, venue, shuttleAvailable, in
 
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!choice || choice === "rideshare_taxi" || pending.current || complete || (choice === "club_shuttle" && !shuttleAvailable)) return;
+    if (!openForm || !choice || choice === "rideshare_taxi" || pending.current || complete || (choice === "club_shuttle" && !shuttleAvailable)) return;
     setError("");
     if (choice !== "club_shuttle") {
       const fields = new FormData(event.currentTarget);
@@ -163,7 +172,7 @@ export default function TransportationClient({ deal, venue, shuttleAvailable, in
   return <main className="club-transport-page">
     <section className="club-transport-card">
       <Link className="club-transport-back" href={`/venues/${encodeURIComponent(venue.slug)}`}>‹ {venue.name} details</Link>
-      <h1 ref={heading} tabIndex={-1}>{complete ? choice === "club_shuttle" ? "Pickup requested" : guestListJoined ? "You’re on the guest list" : "Your admission pass is ready" : choice === "club_shuttle" ? deal ? "Free Ride + Entry" : "Request a free ride" : "Join the guest list"}</h1>
+      <h1 ref={heading} tabIndex={-1}>{complete ? choice === "club_shuttle" ? "Pickup requested" : guestListJoined ? "You’re on the guest list" : "Your admission pass is ready" : deal ? "Free Entry" : "Request a free ride"}</h1>
       {!deal ? <p className="club-transport-terms">Free entry is currently unavailable. You can still request a free ride.</p> : null}
       {complete ? <div aria-live="polite">
         {guestListJoined ? <p>Your details are saved with {venue.name}. Your free entry pass is ready below.</p> : null}
@@ -195,28 +204,37 @@ export default function TransportationClient({ deal, venue, shuttleAvailable, in
           <p className="club-transport-note">One admission per pass. Each guest needs their own pass. Keep your pass link to reopen it at the door.</p>
         </div> : null}
       </div> : <>
-        {deal && choice === "club_shuttle" ? <button className="club-transport-change" type="button" disabled={busy || !!attemptedRequest.current} onClick={() => { setChoice(""); setError(""); }}>‹ Change transportation</button> : null}
         <form onSubmit={submit}>
-          {deal && choice !== "club_shuttle" ? <>
+          {deal ? <section className="club-entry-option">
+            <h2><button className="club-entry-toggle" type="button" aria-expanded={showingGuestForm} aria-controls="club-guest-form" data-entry-option="guest_list" disabled={busy || !!attemptedRequest.current} onClick={() => toggleForm("guest_list")}>
+              <span><strong>Guest list</strong><small>Arriving on your own</small></span><span className="club-entry-chevron" aria-hidden="true">⌄</span>
+            </button></h2>
+            <fieldset className="club-entry-form" id="club-guest-form" hidden={!showingGuestForm} disabled={!showingGuestForm || busy}>
             <p>Free Entry at {venue.name}. No sign-in needed. One guest per form.</p>
             <div className="club-transport-fields">
               <label>Full name<input name="name" autoComplete="name" required minLength={2} maxLength={100} readOnly={busy} /></label>
               <label>Phone<input name="phone" type="tel" autoComplete="tel" placeholder="(555) 555-0123" onChange={formatContactPhoneInput} onCompositionEnd={formatContactPhoneInput} required maxLength={40} readOnly={busy} /></label>
               <label>Email (optional)<input name="email" type="email" autoComplete="email" placeholder="you@example.com" maxLength={254} readOnly={busy} /></label>
             </div>
-          </> : null}
-          {deal && choice !== "club_shuttle" ? <fieldset className="club-transport-options" disabled={busy || !!attemptedRequest.current}>
+          <fieldset className="club-transport-options">
             <legend>How will you arrive?</legend>
-            <label className={choice === "self_drive" ? "selected" : ""}><input required type="radio" name="transportation" value="self_drive" checked={choice === "self_drive"} onChange={() => { setChoice("self_drive"); setError(""); }} /><span><strong>Private car</strong><small>Free entry</small></span></label>
-            <label><input required type="radio" name="transportation" value="club_shuttle" checked={false} onChange={() => { setChoice("club_shuttle"); setError(""); }} /><span><strong>Club transport</strong><small>Free pickup + entry</small></span></label>
-            {AUTONOMOUS_ADMISSION_OPTIONS.map(option => <label key={option.value} className={choice === option.value ? "selected" : ""}><input required type="radio" name="transportation" value={option.value} checked={choice === option.value} onChange={() => { setChoice(option.value); setError(""); }} /><span><strong>{option.label}</strong><small>Free entry. Ride fare not included.</small></span></label>)}
+            <label className={guestArrival === "self_drive" ? "selected" : ""}><input required type="radio" name="transportation" value="self_drive" checked={guestArrival === "self_drive"} onChange={() => { setGuestArrival("self_drive"); setError(""); }} /><span><strong>Private car</strong><small>Free entry</small></span></label>
+            {AUTONOMOUS_ADMISSION_OPTIONS.map(option => <label key={option.value} className={guestArrival === option.value ? "selected" : ""}><input required type="radio" name="transportation" value={option.value} checked={guestArrival === option.value} onChange={() => { setGuestArrival(option.value); setError(""); }} /><span><strong>{option.label}</strong><small>Free entry. Ride fare not included.</small></span></label>)}
             <label className={choice === "rideshare_taxi" ? "selected" : ""}><input required type="radio" name="transportation" value="rideshare_taxi" checked={choice === "rideshare_taxi"} onChange={chooseRideshare} /><span><strong>Other rideshare or taxi</strong><small>Uber, Lyft, and other taxis don’t qualify.</small></span></label>
-          </fieldset> : null}
-          {choice === "rideshare_taxi" ? <div className="club-transport-ineligible" role="status"><strong>This arrival method does not qualify for free entry.</strong><p>Choose free club transport to qualify when you arrive in the club’s vehicle.</p><button className="club-transport-submit" type="button" onClick={() => { setChoice("club_shuttle"); setError(""); }}>Request free club transport</button></div> : null}
-          {deal && choice !== "club_shuttle" && choice !== "rideshare_taxi" ? <div className="club-transport-fields club-guest-consent">
+          </fieldset>
+          {guestArrival === "rideshare_taxi" ? <div className="club-transport-ineligible" role="status"><strong>This arrival method does not qualify for free entry.</strong><p>Choose free club transport to qualify when you arrive in the club’s vehicle.</p><button className="club-transport-submit" type="button" onClick={() => toggleForm("club_shuttle")}>Request free club transport</button></div> : null}
+          {guestArrival !== "rideshare_taxi" ? <div className="club-transport-fields club-guest-consent">
             <label className="club-transport-consent"><input name="guestConsent" type="checkbox" required disabled={busy} /><span>I agree to share my details with {venue.name} for the guest list.</span></label>
           </div> : null}
-          {choice === "club_shuttle" ? <>
+          {showingGuestForm && error ? <p role="alert" className="club-transport-error">{error}</p> : null}
+          {showingGuestForm && guestArrival !== "rideshare_taxi" ? <button className="club-transport-submit" type="submit" disabled={!guestArrival || busy} aria-busy={busy}>{busy ? "Joining guest list…" : "Join guest list"}</button> : null}
+            </fieldset>
+          </section> : null}
+          <section className="club-entry-option">
+            <h2><button className="club-entry-toggle" type="button" aria-expanded={showingShuttleForm} aria-controls="club-shuttle-form" data-entry-option="club_shuttle" disabled={busy || !!attemptedRequest.current} onClick={() => toggleForm("club_shuttle")}>
+              <span><strong>Free transport</strong><small>{deal ? "Free pickup + entry" : "Request a free pickup"}</small></span><span className="club-entry-chevron" aria-hidden="true">⌄</span>
+            </button></h2>
+            <fieldset className="club-entry-form" id="club-shuttle-form" hidden={!showingShuttleForm} disabled={!showingShuttleForm || busy}>
             <div className="club-transport-handoff"><p><strong>No sign-in needed.</strong> Send your details to the club. They’ll call to confirm availability, pickup location, and time.</p><p>Your ride is confirmed only when the club accepts.</p></div>
             {!shuttleAvailable ? <p role="status">Shuttle requests are currently unavailable at this club.</p> : null}
             <div className="club-transport-fields">
@@ -227,9 +245,10 @@ export default function TransportationClient({ deal, venue, shuttleAvailable, in
               <label>Email<input name="email" type="email" autoComplete="email" placeholder="you@example.com" required maxLength={254} readOnly={busy || !!attemptedRequest.current} /></label>
               <label className="club-transport-consent"><input name="handoffAccepted" type="checkbox" required onClick={event => { if (busy || attemptedRequest.current) event.preventDefault(); }} /><span>I agree to let MyDancr share my details with {venue.name} so the club can contact me to arrange my free shuttle.</span></label>
             </div>
-          </> : null}
-          {error ? <p role="alert" className="club-transport-error">{error}</p> : null}
-          {choice !== "rideshare_taxi" ? <button className="club-transport-submit" type="submit" disabled={!choice || busy || (choice === "club_shuttle" && !shuttleAvailable)} aria-busy={busy}>{busy ? (choice === "club_shuttle" ? "Sending to the club…" : "Joining guest list…") : attemptedRequest.current ? "Retry shuttle request" : choice === "club_shuttle" ? "Send pickup request" : "Join guest list"}</button> : null}
+          {showingShuttleForm && error ? <p role="alert" className="club-transport-error">{error}</p> : null}
+          {showingShuttleForm ? <button className="club-transport-submit" type="submit" disabled={busy || !shuttleAvailable} aria-busy={busy}>{busy ? "Sending to the club…" : attemptedRequest.current ? "Retry shuttle request" : "Send pickup request"}</button> : null}
+            </fieldset>
+          </section>
         </form>
         {deal ? <p className="club-transport-note">One admission per guest. Staff verify arrival method. Capacity, age, dress code, and house rules apply.</p> : null}
         {deal && (offerHours || deal.dealTerms) ? <details className="club-transport-note"><summary>Entry details</summary>

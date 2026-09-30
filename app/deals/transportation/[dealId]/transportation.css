@@ -32,6 +32,26 @@ body.dancr-button-system .club-transport-card .club-transport-change {
 }
 .club-transport-change:disabled { opacity: .5; cursor: default; }
 .club-transport-terms { color: #c8c4cf; }
+.club-entry-option + .club-entry-option { margin-top: 10px; }
+.club-entry-option h2 { margin: 0; font-size: 15px; }
+body.dancr-button-system .club-transport-card .club-entry-toggle {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  box-sizing: border-box; width: 100%; min-height: 64px; padding: 12px;
+  border: 1px solid #34343c !important; border-radius: 12px !important;
+  background: linear-gradient(#050507, #050507) !important; box-shadow: none !important;
+  color: #f4f2f8 !important; text-align: left; font: inherit; cursor: pointer;
+}
+body.dancr-button-system .club-transport-card .club-entry-toggle[aria-expanded=true] {
+  border-color: #745696 !important; background: #160e24 !important;
+}
+.club-entry-toggle strong, .club-entry-toggle small { display: block; line-height: 1.4; }
+.club-entry-toggle strong { font-size: 15px; font-weight: 650; }
+.club-entry-toggle small { margin-top: 3px; font-size: 12px; font-weight: 400; color: #b9b5c3; }
+.club-entry-chevron { font-size: 20px; color: #b9b5c3; }
+.club-entry-toggle[aria-expanded=true] .club-entry-chevron { transform: rotate(180deg); }
+.club-entry-toggle:disabled { opacity: .55; cursor: default; }
+.club-entry-form { border: 0; padding: 0; margin: 12px 0 16px; min-width: 0; }
+.club-entry-form[hidden] { display: none !important; }
 .club-transport-options { border: 0; padding: 0; margin: 16px 0 0; display: grid; gap: 8px; min-width: 0; }
 .club-transport-options legend { font-size: 15px; font-weight: 600; margin-bottom: 10px; }
 .club-transport-options label {

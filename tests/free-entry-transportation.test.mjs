@@ -28,7 +28,14 @@ function load(relative, imports, globals = {}) {
 
 function nodes(node) {
   if (Array.isArray(node)) return node.flatMap(nodes);
+  if (node?.props?.hidden) return [];
   return node && typeof node === "object" ? [node, ...nodes(node.props?.children)] : [];
+}
+
+function visibleTree(node) {
+  if (Array.isArray(node)) return node.map(visibleTree);
+  if (node?.props?.hidden) return null;
+  return node?.props ? { ...node, props: { ...node.props, children: visibleTree(node.props.children) } } : node;
 }
 
 function client(props = {}, options = {}) {
@@ -66,8 +73,14 @@ function client(props = {}, options = {}) {
   render();
   return {
     stored, requests, copies, invitations, render,
-    html: () => renderToStaticMarkup(render()),
-    select(value) { nodes(tree).find(node => node.type === "input" && node.props.value === value).props.onChange(); render(); },
+    html: () => renderToStaticMarkup(visibleTree(render())),
+    toggle(value) { nodes(tree).find(node => node.props?.["data-entry-option"] === value).props.onClick(); render(); },
+    select(value) {
+      const option = value === "club_shuttle" ? "club_shuttle" : "guest_list";
+      const toggle = nodes(tree).find(node => node.props?.["data-entry-option"] === option);
+      if (!toggle.props["aria-expanded"]) { toggle.props.onClick(); render(); }
+      if (value !== "club_shuttle") { nodes(tree).find(node => node.type === "input" && node.props.value === value).props.onChange(); render(); }
+    },
     async submit(phone = "7025550123", overrides = {}) {
       await nodes(tree).find(node => node.type === "form").props.onSubmit({ preventDefault() {}, currentTarget: {
         name: "Test Guest", location: "Test Hotel, north entrance", phone, email: "guest@example.test", partySize: "2", handoffAccepted: "on", guestConsent: "on", ...overrides,
@@ -122,7 +135,7 @@ test("shuttle phone keeps the editing selection and allows deletion through form
 });
 
 test("private-car arrival prepares free entry without sending a ride request", async () => {
-  const f = client(); assert.match(f.html(), /Other rideshare or taxi/);
+  const f = client(); f.toggle("guest_list"); assert.match(f.html(), /Other rideshare or taxi/);
   f.select("self_drive"); await f.submit();
   assert.equal(f.requests.length, 1); assert.equal(f.requests[0].url, "/api/deals/redemptions");
   const selection = JSON.parse(f.stored.get(key));
@@ -132,9 +145,11 @@ test("private-car arrival prepares free entry without sending a ride request", a
   assert.match(f.html(), /Staff verifies your arrival method/);
 });
 
-test("free entry opens guest details and confirms only a saved guest-list receipt", async () => {
+test("guest list opens on request and confirms only a saved guest-list receipt", async () => {
   const f = client();
-  assert.match(f.html(), /Join the guest list/);
+  assert.match(f.html(), /Guest list/); assert.match(f.html(), /Free transport/);
+  assert.doesNotMatch(f.html(), /Full name|Pickup location|type="submit"/);
+  f.toggle("guest_list");
   assert.match(f.html(), /Full name/); assert.match(f.html(), /Email \(optional\)/);
   f.select("self_drive"); await f.submit("7025550123", {email:""});
   assert.deepEqual(f.requests[0].body.guest, {name:"Test Guest",phone:"+17025550123",email:"",consent:true});
@@ -143,6 +158,19 @@ test("free entry opens guest details and confirms only a saved guest-list receip
   const missing = client({}, {missingGuestReceipt:true}); missing.select("self_drive"); await missing.submit();
   assert.match(missing.html(), /guest-list entry could not be confirmed/);
   assert.doesNotMatch(missing.html(), /You’re on the guest list/);
+});
+
+test("entry options collapse independently and never submit a closed form", async () => {
+  const f=client();
+  assert.equal(nodes(f.render()).filter(node=>node.props?.["aria-expanded"]===false).length,2);
+  await f.submit();assert.equal(f.requests.length,0);
+  f.select("self_drive");f.toggle("guest_list");await f.submit();
+  assert.equal(f.requests.length,0);assert.doesNotMatch(f.html(),/Full name|type="submit"/);
+  f.toggle("guest_list");assert.equal(nodes(f.render()).find(node=>node.props?.value==='self_drive').props.checked,true);
+  f.toggle("club_shuttle");assert.doesNotMatch(f.html(),/Full name|guestConsent/);assert.match(f.html(),/Pickup location/);
+  assert.equal(nodes(f.render()).filter(node=>node.props?.type==='submit').length,1);
+  f.toggle("club_shuttle");assert.doesNotMatch(f.html(),/Pickup location|type="submit"/);
+  f.toggle("guest_list");assert.match(f.html(),/Full name/);
 });
 
 test("guest validation and duplicate clicks do not issue unwanted admissions", async () => {
@@ -159,8 +187,9 @@ test("guest validation and duplicate clicks do not issue unwanted admissions", a
 test("one combined Waymo, Zoox and Cybercab option prepares admission without booking or notifying a ride", async () => {
   for (const { value } of transportation.AUTONOMOUS_ADMISSION_OPTIONS) {
     const f = client({ sourceType: "dancer_profile", dancerId: "dancer", attributionToken: "signed-token", shuttleAvailable: false });
+    f.toggle("guest_list");
     assert.match(f.html(), /Waymo \/ Zoox \/ Cybercab/);
-    assert.equal(nodes(f.render()).filter(node => node.type === "input" && node.props.name === "transportation").length, 4);
+    assert.equal(nodes(f.render()).filter(node => node.type === "input" && node.props.name === "transportation").length, 3);
     assert.doesNotMatch(f.html(), /value="(?:waymo|zoox|cybercab)"/);
     f.select(value);
     assert.match(f.html(), /Join guest list/);
