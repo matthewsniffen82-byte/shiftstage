@@ -458,6 +458,14 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
   color: #cbc6d5 !important;
 }
 
+/* The Internal request is a primary action, with Free Entry's white, bold label. */
+html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell, .dancer-profile-preview-overlay)
+  .profile-actions-compact.profile-venue-actions :is(#goingBtn, .profile-action-icon-control)[data-internal-table-request]:enabled:not([data-request-sent]) {
+  color: #fff !important;
+  -webkit-text-fill-color: #fff !important;
+  font-weight: 750 !important;
+}
+
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell, .dancer-profile-preview-overlay)
   .profile-actions-compact.profile-venue-actions :is(#goingBtn, .profile-action-icon-control) .profile-action-main > span:last-child {
   font-size: 11px !important;
