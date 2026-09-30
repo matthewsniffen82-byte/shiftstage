@@ -6,7 +6,6 @@
   display: grid;
   place-items: center;
   align-content: center;
-  gap: 16px;
   background: #050507;
   color: #f4f2f8;
   font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -85,7 +84,7 @@ body.dancr-button-system .club-transport-card input[type=checkbox]:checked {
 .club-transport-handoff p + p { margin-top: 8px; }
 .club-transport-handoff strong { color: #f4f2f8; }
 .club-transport-fields { display: grid; gap: 12px; }
-.club-guest-list-card h2 { font-size: 15px; margin: 0; }
+.club-guest-list-section { margin-top: 10px; }
 .club-transport-fields label { display: grid; gap: 6px; font-size: 13px; color: #dedbe5; }
 body.dancr-button-system .club-transport-card :is(.club-transport-fields input:not([type=checkbox]), .club-transport-address textarea) {
   box-sizing: border-box; width: 100%; min-width: 0; min-height: 48px; padding: 12px;

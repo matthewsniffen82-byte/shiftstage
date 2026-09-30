@@ -160,8 +160,8 @@ test("free entry requires only arrival while the optional guest list has its own
   assert.match(f.html(), /How will you arrive/);
   assert.match(f.html(), /Get free entry pass/);
   const sections = nodes(f.render()).filter(node => node.type === "section" && node.props.className.includes("club-transport-card"));
-  assert.equal(sections.length, 2);
-  assert.equal(sections[1].props["aria-labelledby"], "club-guest-list-heading");
+  assert.equal(sections.length, 1);
+  assert.deepEqual(nodes(sections[0]).filter(node => node.props?.["data-entry-option"]).map(node => node.props["data-entry-option"]), ["arrival", "club_shuttle", "guest_list"]);
   assert.doesNotMatch(renderToStaticMarkup(visibleTree(sections[0])), /name="(?:name|phone|email|guestConsent)"/);
   f.select("self_drive"); await f.submit("", {name:"", email:"", handoffAccepted:null});
   assert.equal(f.requests[0].body.guest, undefined);
@@ -218,7 +218,7 @@ test("guest-list failures stay in their own section and are retryable without lo
     assert.match(f.html(), failure.missingGuestReceipt ? /guest-list entry could not be confirmed/ : /Try again/);
     assert.doesNotMatch(f.html(), /You’re on the guest list/);
     assert.match(f.html(), /Show admission pass/);assert.equal(f.stored.get(key),saved);
-    const admission=nodes(f.render()).find(node=>node.props?.["aria-labelledby"]==="club-transport-heading");
+    const admission=nodes(f.render()).find(node=>node.props?.className==="club-transport-ready");
     assert.doesNotMatch(renderToStaticMarkup(admission), /role="alert"/);
     options.passFailure=false;options.missingGuestReceipt=false;await f.joinGuestList();
     assert.match(f.html(), /You’re on the guest list/);

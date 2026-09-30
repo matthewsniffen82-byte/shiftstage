@@ -255,14 +255,8 @@ export default function TransportationClient({ deal, venue, shuttleAvailable, in
             </fieldset>
           </section>
         </form>
-        {deal ? <p className="club-transport-note">One admission per guest. Staff verify arrival method. Capacity, age, dress code, and house rules apply.</p> : null}
-        {deal && (offerHours || deal.dealTerms) ? <details className="club-transport-note"><summary>Entry details</summary>
-          {offerHours ? <p>Offer hours: {offerHours} (club local time).</p> : null}
-          {deal.dealTerms ? <p>{deal.dealTerms}</p> : null}
-        </details> : null}
       </>}
-    </section>
-    {deal ? <section className="club-transport-card club-guest-list-card" aria-labelledby="club-guest-list-heading">
+    {deal ? <section className="club-entry-option club-guest-list-section" aria-labelledby="club-guest-list-heading">
       <h2 id="club-guest-list-heading"><button className="club-entry-toggle" type="button" aria-expanded={guestOpen} aria-controls="club-guest-list-panel" data-entry-option="guest_list" disabled={guestBusy} onClick={() => setGuestOpen(!guestOpen)}>
         <span><strong>Guest List</strong><small>Optional · Add your name to the club’s list</small></span><span className="club-entry-chevron" aria-hidden="true">⌄</span>
       </button></h2>
@@ -285,5 +279,11 @@ export default function TransportationClient({ deal, venue, shuttleAvailable, in
         </> : <p>Get your free entry pass above, then add your name to {venue.name}’s guest list here if you’d like.</p>)}
       </div>
     </section> : null}
+      {!complete && deal ? <p className="club-transport-note">One admission per guest. Staff verify arrival method. Capacity, age, dress code, and house rules apply.</p> : null}
+      {!complete && deal && (offerHours || deal.dealTerms) ? <details className="club-transport-note"><summary>Entry details</summary>
+        {offerHours ? <p>Offer hours: {offerHours} (club local time).</p> : null}
+        {deal.dealTerms ? <p>{deal.dealTerms}</p> : null}
+      </details> : null}
+    </section>
   </main>;
 }
