@@ -634,8 +634,9 @@ html body.dancr-button-system > .app main.stack > section.stack
   }
 }
 
-/* Match the scroll cards' neutral edge, surface, and shaded outer gutters. */
-html body.dancr-button-system #results.venue-profile-overlay .venue-detail[role="dialog"] > .venue-hero {
+/* Venue details and offer popups share the scroll cards' edge and outer shading. */
+html body.dancr-button-system #results.venue-profile-overlay .venue-detail[role="dialog"] > .venue-hero,
+html body.dancr-button-system :is(#dealPassOverlay .deal-pass-sheet, .club-deal-dialog) {
   border: 1px solid rgba(203, 213, 225, .2) !important;
   border-radius: 20px !important;
   background: #08090c !important;
@@ -643,6 +644,9 @@ html body.dancr-button-system #results.venue-profile-overlay .venue-detail[role=
     inset 0 1px 0 rgba(255, 255, 255, .07),
     inset 0 -1px 0 rgba(148, 163, 184, .06),
     0 16px 30px rgba(0, 0, 0, .62) !important;
+}
+
+html body.dancr-button-system #results.venue-profile-overlay .venue-detail[role="dialog"] > .venue-hero {
   overflow: hidden !important;
 }
 
