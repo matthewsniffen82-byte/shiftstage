@@ -411,32 +411,12 @@ body.dancr-button-system #homeFilterToggle > .home-filter-toggle-icon {
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell, .dancer-profile-preview-overlay)
   :is(.modal-actions, .live-actions).profile-actions-compact {
   --profile-utility-background: #050507 linear-gradient(#050507, #050507);
-  --profile-utility-border: #28282f;
+  --profile-utility-border: #34343c;
   --profile-utility-hover-background: #100a1b linear-gradient(#100a1b, #100a1b);
-  --profile-utility-hover-border: #5b4377;
-  --profile-action-selected-border: #5d447a;
+  --profile-utility-hover-border: #745696;
+  --profile-action-selected-border: #745696;
   --profile-action-selected-background: #160e24 linear-gradient(#160e24, #160e24);
   --profile-action-selected-shadow: none;
-}
-
-/* Keep the venue frame quieter than the one-pixel utility button outlines. */
-html body.dancr-button-system :is(#profileBackdrop #profileModal .modal-grid, .public-profile-shell, .dancer-profile-preview-overlay)
-  .profile-tonight-card,
-html body.dancr-button-system :is(#profileBackdrop #profileModal .modal-grid, .public-profile-shell, .dancer-profile-preview-overlay)
-  .profile-tonight-card::before {
-  border-color: #202025 !important;
-}
-
-/* A crisp violet selection line above a faint neutral divider. */
-html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell)
-  :is(.profile-modal-media-tabs, .profile-media-tabs) {
-  border-bottom-color: #202025 !important;
-}
-
-html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell)
-  :is(.profile-modal-media-tabs, .profile-media-tabs) button.active::after {
-  height: 2px !important;
-  box-shadow: none !important;
 }
 
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell, .dancer-profile-preview-overlay)
