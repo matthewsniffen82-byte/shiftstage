@@ -420,7 +420,7 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
 }
 
 /* Dancer profile hierarchy: lighter utilities, with Free Entry as the CTA.
- * A 36px face is 18% shorter; the original 44px touch target stays intact. */
+ * Follow and Share use shorter faces within their original 44px touch targets. */
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell, .dancer-profile-preview-overlay)
   .profile-actions-compact :is(#followBtn, #goingBtn, .profile-action-icon-control):not([data-internal-table-request])::before {
   inset: 4px 0 !important;
@@ -431,6 +431,12 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell, .dancer-profile-preview-overlay)
   .profile-actions-compact :is(#followBtn, #goingBtn, .profile-action-icon-control):is(.profile-share-action, .profile-action-preview-share)::before {
   inset: 4px !important;
+}
+
+/* Actions beside Free Entry share its full height for an even row. */
+html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell, .dancer-profile-preview-overlay)
+  .profile-actions-compact.profile-venue-actions :is(#goingBtn, .profile-action-icon-control)::before {
+  inset: 0 !important;
 }
 
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell, .dancer-profile-preview-overlay)
