@@ -581,14 +581,7 @@ body.dancr-button-system #profileQrOverlay #profileQrOpen::before {
 }
 body.dancr-button-system #profileQrOverlay #profileQrOpen:focus-visible { outline: 2px solid #c4b5fd !important; outline-offset: 3px !important; }
 
-/* Venue cards share a visible neutral border; spacing replaces internal lines. */
-html body.dancr-button-system > .app main.stack > section.stack
-  > #results.home-discovery-feed.home-venue-discovery-feed > .home-venue-discovery-slide {
-  border: 1px solid #34343c !important;
-  background: #08090c linear-gradient(#08090c, #08090c) !important;
-  box-shadow: none !important;
-}
-
+/* Keep the original card edges and depth; spacing replaces internal lines. */
 html body.dancr-button-system > .app main.stack > section.stack
   > #results.home-venue-discovery-feed > .home-venue-discovery-slide
   .home-venue-discovery-art.is-venue-logo-artwork:not(.has-custom-photo) {
