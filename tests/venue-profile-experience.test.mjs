@@ -301,7 +301,7 @@ test("venue profiles stay full-screen with X dismissal and the shared floating n
   );
   assert.match(
     liveApp,
-    /class="venue-hero-brand-row">[\s\S]*?class="venue-main-photo\$\{visual\.attrs\.className\}"[\s\S]*?class="close-btn venue-detail-close"[\s\S]*?data-close-venue-profile[\s\S]*?aria-label="Close \$\{escapeHtml\(details\.name\)\} club profile"[\s\S]*?<svg class="icon" viewBox="0 0 24 24"><path d="M18 6 6 18"><\/path><path d="m6 6 12 12"><\/path><\/svg>[\s\S]*?class="venue-hero-body">/,
+    /class="venue-detail-toolbar">\s*<button class="close-btn venue-detail-close"[\s\S]*?data-close-venue-profile[\s\S]*?aria-label="Close \$\{escapeHtml\(details\.name\)\} club profile"[\s\S]*?<svg class="icon" viewBox="0 0 24 24"><path d="M18 6 6 18"><\/path><path d="m6 6 12 12"><\/path><\/svg>\s*<\/button>\s*<\/div>\s*<article class="venue-hero">\s*<div class="venue-hero-brand-row">[\s\S]*?class="venue-main-photo\$\{visual\.attrs\.className\}"[\s\S]*?class="venue-hero-body">/,
   );
   assert.doesNotMatch(
     liveApp,

@@ -8,7 +8,7 @@ const source = readFileSync(new URL("../src/live-shell/app/26-sync-discovery-cit
 const bootstrap = readFileSync(new URL("../src/live-shell/device-bootstrap.js", import.meta.url), "utf8");
 const ast = ts.createSourceFile("startup.js", source, ts.ScriptTarget.Latest, true, ts.ScriptKind.JS);
 const openShared = ast.statements.find(node => ts.isFunctionDeclaration(node) && node.name.text === "openSharedProfileFromUrl").getText(ast);
-const startup = ast.statements.find(node => ts.isIfStatement(node) && node.expression.getText(ast).startsWith("!restoredAuthResume")).getText(ast);
+const startup = ast.statements.find(node => ts.isIfStatement(node) && node.expression.getText(ast) === "internalProfileFrameId").getText(ast);
 
 function fixture({ search = "?city=Las+Vegas&venue=silver-circuit", venue = { slug: "silver-circuit", name: "Silver Circuit" }, cityExists = true, error = false, auth = false } = {}) {
   const classes = new Set(), calls = [];
@@ -29,7 +29,7 @@ function fixture({ search = "?city=Las+Vegas&venue=silver-circuit", venue = { sl
     render() { calls.push({ type: "directory", covered: classes.has("venue-profile-bootstrap") }); },
     showToast(message) { calls.push({ type: "toast", message }); },
     setTimeout() { throw new Error("Venue navigation must not wait for a timer"); },
-    initialDiscoveryRequest: discovery, initialVenuePreviewRequest: null, restoredAuthResume: auth,
+    initialDiscoveryRequest: discovery, initialVenuePreviewRequest: null, restoredAuthResume: auth, internalProfileFrameId: "",
     handleVenueDancerVerificationDeepLink: () => false, handleAdminDashboardDeepLink: () => false,
     handleVenueDashboardDeepLink: () => false, handleDancerDashboardDeepLink: () => false,
     handleVenueAccessDeepLink: () => false, handleAccountAccessDeepLink: () => false,

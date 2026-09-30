@@ -652,8 +652,56 @@ html body.dancr-button-system #results.venue-profile-overlay .venue-detail[role=
 
 /* Reuse the original venue scroll-card divider beneath the detail logo. */
 html body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-hero-brand-row {
+  display: block;
+  padding: 0;
+  background: #101010 !important;
   border-bottom: 1px solid var(--dancr-color-brand-primary-medium) !important;
   box-shadow: inset 0 -1px 0 rgba(167, 139, 250, .18) !important;
+}
+
+/* Give the logo the same full-width stage as the scroll cards. Close sits above it. */
+html body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-detail-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  min-height: 44px;
+}
+html body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-hero-brand-row .venue-main-photo {
+  height: 95px !important;
+  min-height: 95px !important;
+  width: 100% !important;
+  overflow: hidden !important;
+}
+html body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-main-photo .venue-art {
+  padding: 0;
+}
+html body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-hero-brand-row .venue-detail-logo-shell {
+  inset: 4px 10px !important;
+  width: auto !important;
+  height: calc(100% - 8px) !important;
+  max-width: none !important;
+  max-height: none !important;
+  transform: none !important;
+}
+html body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-detail-logo-shell::before {
+  content: none;
+}
+html body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-detail-logo {
+  height: 90px !important;
+  max-height: 90px !important;
+  transform: none !important;
+  filter: none !important;
+  -webkit-filter: none !important;
+}
+@media (max-width: 360px) {
+  html body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-hero-brand-row .venue-main-photo {
+    height: 93px !important;
+    min-height: 93px !important;
+  }
+  html body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-detail-logo {
+    height: 88px !important;
+    max-height: 88px !important;
+  }
 }
 
 html body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-hero-body {
