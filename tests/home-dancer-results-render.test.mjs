@@ -74,7 +74,7 @@ function directoryFixture(profiles) {
   return { state, get markup() { return markup; }, get writes() { return writes; } };
 }
 
-test("working status headings and totals follow mutually exclusive cards and refreshes", () => {
+test("status tabs count their cards while the heading keeps the whole discovery scope", () => {
   const profiles = Array.from({ length: 14 }, (_, index) => ({
     name: `Dancer ${index}`, now: index < 7, scheduled: index < 9,
   }));
@@ -86,7 +86,7 @@ test("working status headings and totals follow mutually exclusive cards and ref
   ]) {
     fixture.state.dancerDirectoryFilter = filter;
     fixture.state.render();
-    assert.equal(fixture.state.headerCount, `${count} dancers`);
+    assert.equal(fixture.state.headerCount, "14 dancers");
     assert.equal((fixture.markup.match(/<article /g) || []).length, count);
     assert.deepEqual([...fixture.markup.matchAll(/<strong>([^<]+)<\/strong>/g)].map((match) => match[1]), labels);
     assert.deepEqual([...fixture.markup.matchAll(/<article data-profile="([^"]+)"/g)].map(match => match[1]),
@@ -98,12 +98,12 @@ test("working status headings and totals follow mutually exclusive cards and ref
   fixture.state.dancerDirectoryFilter = "now";
   fixture.state.profiles = profiles.slice(1);
   fixture.state.render();
-  assert.equal(fixture.state.headerCount, "6 dancers");
+  assert.equal(fixture.state.headerCount, "13 dancers");
   assert.match(fixture.markup, /<strong>Working Now<\/strong>\s*<span>6<\/span>/);
   const writes = fixture.writes;
   fixture.state.headerCount = "stale count";
   fixture.state.render();
-  assert.equal(fixture.state.headerCount, "6 dancers");
+  assert.equal(fixture.state.headerCount, "13 dancers");
   assert.equal(fixture.writes, writes, "an unchanged refresh must reuse the cards");
 });
 
@@ -115,13 +115,13 @@ test("filtered totals handle one or zero dancers without hiding the selected sta
   assert.match(fixture.markup, /<strong>Not Working Now<\/strong>\s*<span>1<\/span>/);
   fixture.state.dancerDirectoryFilter = "now";
   fixture.state.render();
-  assert.equal(fixture.state.headerCount, "0 dancers");
+  assert.equal(fixture.state.headerCount, "1 dancer");
   assert.match(fixture.markup, /<strong>Working Now<\/strong>\s*<span>0<\/span>/);
   assert.match(fixture.markup, /No dancers are working now in Las Vegas/);
   fixture.state.profiles = [{ name: "Working dancer", scheduled: true, now: true }];
   fixture.state.dancerDirectoryFilter = "not_now";
   fixture.state.render();
-  assert.equal(fixture.state.headerCount, "0 dancers");
+  assert.equal(fixture.state.headerCount, "1 dancer");
   assert.match(fixture.markup, /<strong>Not Working Now<\/strong>\s*<span>0<\/span>/);
   assert.match(fixture.markup, /No dancers are off shift in Las Vegas/);
   fixture.state.profiles = [];
@@ -141,7 +141,7 @@ test("ending a shift moves a dancer to the other tab and updates both counts", (
   assert.match(fixture.markup, /<article data-profile="Checked-in dancer"/);
   dancer.now = false;
   fixture.state.render();
-  assert.equal(fixture.state.headerCount, "0 dancers");
+  assert.equal(fixture.state.headerCount, "1 dancer");
   assert.doesNotMatch(fixture.markup, /<article /);
   assert.deepEqual([...fixture.markup.matchAll(/dancer-directory-filter-count">(\d+)/g)].map(match => Number(match[1])), [0, 1]);
   fixture.state.dancerDirectoryFilter = "not_now";
@@ -159,7 +159,7 @@ test("choosing a specific club resets Not Working Now and shows only the Working
   fixture.state.render();
   assert.equal(fixture.state.dancerDirectoryFilter, "now");
   assert.equal(fixture.state.syncedFilter, "now");
-  assert.equal(fixture.state.headerCount, "1 dancer");
+  assert.equal(fixture.state.headerCount, "2 dancers");
   assert.match(fixture.markup, /dancer-directory-filters is-club-specific/);
   assert.deepEqual([...fixture.markup.matchAll(/dancer-directory-filter-label">([^<]+)/g)].map(match => match[1]), ["Working Now"]);
   assert.match(fixture.markup, /data-dancer-directory-filter="now"[^>]+aria-selected="true"/);

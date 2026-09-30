@@ -54,21 +54,20 @@ test("venue discovery uses inline one-column cards with visible continuation", (
   );
 });
 
-test("unchanged live venue refreshes reuse the current cards and reading position", () => {
+test("venue refresh identity follows visible content instead of unrelated account or dancer data", () => {
   const contentKey =
     homeSource.match(
-      /function homeDiscoveryFeedContentKey\(city, items\) \{[\s\S]*?(?=\n    function renderHomeDiscoveryFeed)/,
+      /function homeDiscoveryFeedContentKey\(city, markup\) \{[\s\S]*?\n    \}/,
     )?.[0] || "";
-  assert.match(contentKey, /tab: activeTab/);
-  assert.match(contentKey, /venueFilter: selectedVenueFilter\(\)/);
-  assert.match(contentKey, /items,/);
-  assert.match(contentKey, /venueDancers: activeTab === "venues"/);
-  assert.match(contentKey, /followedVenues: followedVenuesByCity\[city\] \|\| \[\]/);
-  assert.match(contentKey, /going: goingTonightSavedByProfile/);
+  assert.ok(contentKey);
+  const key = new Function("activeTab", "selectedVenueFilter", `${contentKey}; return homeDiscoveryFeedContentKey;`)("venues", () => "all");
+  assert.equal(key("Las Vegas", "same cards"), key("Las Vegas", "same cards"));
+  assert.notEqual(key("Las Vegas", "same cards"), key("Miami", "same cards"));
+  assert.notEqual(key("Las Vegas", "Follow"), key("Las Vegas", "Following"));
 
   assert.match(
     homeSource,
-    /const nextRenderKey = homeDiscoveryFeedContentKey\(city, items\);[\s\S]*?homeDiscoveryFeedRenderKey === nextRenderKey[\s\S]*?results\.querySelector\("\.home-discovery-feed-slide"\)[\s\S]*?return;/,
+    /const nextRenderKey = homeDiscoveryFeedContentKey\(city, markup\);[\s\S]*?homeDiscoveryFeedRenderKey === nextRenderKey[\s\S]*?results\.querySelector\("\.home-discovery-feed-slide"\)[\s\S]*?return;/,
   );
   assert.match(
     homeSource,

@@ -527,7 +527,6 @@
           return;
         }
         const willFollow = !(followedVenuesByCity[city] || []).includes(venueName);
-        const originalMarkup = followVenueButton.innerHTML;
         followVenueButton.disabled = true;
         followVenueButton.setAttribute("aria-busy", "true");
         customerSavedStateVersion += 1;
@@ -564,7 +563,6 @@
           customerSavedStateVersion += 1;
           followVenueButton.disabled = false;
           followVenueButton.removeAttribute("aria-busy");
-          followVenueButton.innerHTML = originalMarkup;
         }
         return;
       }

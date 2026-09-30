@@ -60975,18 +60975,72 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
       `;
     }
 
-    function homeDiscoveryFeedContentKey(city, items) {
+    function homeDiscoveryFeedContentKey(city, markup) {
       return JSON.stringify({
         city,
         tab: activeTab,
         venueFilter: selectedVenueFilter(),
-        items,
-        venueDancers: activeTab === "venues" ? discoveryMarket(city)?.dancers || [] : [],
-        followedProfiles: followedByCity[city] || [],
-        followedVenues: followedVenuesByCity[city] || [],
-        notifications: notifiedByCity[city] || [],
-        going: goingTonightSavedByProfile
+        markup
       });
+    }
+
+    // Compare rendered content, not unrelated saved state or profile metrics.
+    // Keep a clean snapshot so image readiness, fitted logos and focus survive
+    // a real update to another part of the card.
+    const homeVenueFeedSnapshots = new WeakMap();
+
+    function homeVenueFeedNodeKey(node) {
+      return node.getAttribute?.("data-discovery-key") || node.getAttribute?.("data-public-dancer-id") || "";
+    }
+
+    function rememberHomeVenueFeedNode(node) {
+      homeVenueFeedSnapshots.set(node, node.cloneNode(true));
+      node.childNodes.forEach(rememberHomeVenueFeedNode);
+    }
+
+    function syncHomeVenueFeedChildren(current, next) {
+      const existing = [...current.childNodes];
+      const keyed = new Map(existing.map((node) => [homeVenueFeedNodeKey(node), node]).filter(([key]) => key));
+      const retained = new Set();
+      [...next.childNodes].forEach((child, index) => {
+        const key = homeVenueFeedNodeKey(child);
+        const candidate = key ? keyed.get(key) : existing[index];
+        const previous = candidate && !retained.has(candidate) && homeVenueFeedNodeKey(candidate) === key
+          ? candidate
+          : null;
+        const node = syncHomeVenueFeedNode(previous, child);
+        retained.add(node);
+        if (current.childNodes[index] !== node) current.insertBefore(node, current.childNodes[index] || null);
+      });
+      existing.forEach((node) => {
+        if (!retained.has(node) && node.parentNode === current) node.remove();
+      });
+    }
+
+    function syncHomeVenueFeedNode(current, next) {
+      const previous = current && homeVenueFeedSnapshots.get(current);
+      const changedImage = previous?.nodeName === "IMG" && next.nodeName === "IMG" && ["src", "srcset", "sizes"].some((name) => (
+        previous.getAttribute(name) !== next.getAttribute(name)
+      ));
+      if (!previous || previous.nodeName !== next.nodeName || changedImage) {
+        rememberHomeVenueFeedNode(next);
+        return next;
+      }
+      if (previous.isEqualNode(next)) return current;
+      const snapshot = next.cloneNode(true);
+      if (next.nodeType === 1) {
+        [...previous.attributes].forEach(({ name }) => {
+          if (!next.hasAttribute(name)) current.removeAttribute(name);
+        });
+        [...next.attributes].forEach(({ name, value }) => {
+          if (previous.getAttribute(name) !== value) current.setAttribute(name, value);
+        });
+        syncHomeVenueFeedChildren(current, next);
+      } else {
+        current.nodeValue = next.nodeValue;
+      }
+      homeVenueFeedSnapshots.set(current, snapshot);
+      return current;
     }
 
     function renderHomeDiscoveryFeed(city, items, options = {}) {
@@ -61025,8 +61079,12 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
 
       const positionKey = homeDiscoveryFeedPositionKey(city, activeTab);
       const storedItem = homeDiscoveryFeedPositions.get(positionKey) || "";
-      const restoreIndex = Math.max(0, items.findIndex((item) => item.name === storedItem));
-      const nextRenderKey = homeDiscoveryFeedContentKey(city, items);
+      const markup = items.map((item, index) => (
+        activeTab === "venues"
+          ? homeVenueDiscoveryFeedSlide(item, index, items.length, city)
+          : homeDiscoveryFeedSlide(item, index, items.length, activeTab)
+      )).join("");
+      const nextRenderKey = homeDiscoveryFeedContentKey(city, markup);
       if (
         homeDiscoveryFeedRenderKey === nextRenderKey &&
         results.querySelector(".home-discovery-feed-slide")
@@ -61034,15 +61092,18 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
         return;
       }
       homeDiscoveryFeedRenderKey = nextRenderKey;
-      results.innerHTML = `
-        ${items.map((item, index) => (
-          activeTab === "venues"
-            ? homeVenueDiscoveryFeedSlide(item, index, items.length, city)
-            : homeDiscoveryFeedSlide(item, index, items.length, activeTab)
-        )).join("")}
-      `;
+      if (isVenueFeed) {
+        const template = document.createElement("template");
+        template.innerHTML = markup;
+        syncHomeVenueFeedChildren(results, template.content);
+      } else {
+        results.innerHTML = markup;
+      }
       window.requestAnimationFrame(() => {
-        const restoredItem = items[restoreIndex]?.name || items[0].name;
+        const slides = [...results.querySelectorAll(".home-discovery-feed-slide")];
+        const restoredItem = slides.some((slide) => homeDiscoveryFeedSlideKey(slide) === storedItem)
+          ? storedItem
+          : homeDiscoveryFeedSlideKey(slides[0]);
         activateHomeDiscoveryFeedItem(restoredItem);
         setupHomeDiscoveryFeedObserver();
       });
@@ -63794,7 +63855,6 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
           return;
         }
         const willFollow = !(followedVenuesByCity[city] || []).includes(venueName);
-        const originalMarkup = followVenueButton.innerHTML;
         followVenueButton.disabled = true;
         followVenueButton.setAttribute("aria-busy", "true");
         customerSavedStateVersion += 1;
@@ -63831,7 +63891,6 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
           customerSavedStateVersion += 1;
           followVenueButton.disabled = false;
           followVenueButton.removeAttribute("aria-busy");
-          followVenueButton.innerHTML = originalMarkup;
         }
         return;
       }
