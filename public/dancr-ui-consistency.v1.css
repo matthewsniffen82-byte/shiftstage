@@ -581,10 +581,10 @@ body.dancr-button-system #profileQrOverlay #profileQrOpen::before {
 }
 body.dancr-button-system #profileQrOverlay #profileQrOpen:focus-visible { outline: 2px solid #c4b5fd !important; outline-offset: 3px !important; }
 
-/* Venue discovery keeps a quiet card boundary; spacing replaces internal lines. */
+/* Venue cards share a visible neutral border; spacing replaces internal lines. */
 html body.dancr-button-system > .app main.stack > section.stack
   > #results.home-discovery-feed.home-venue-discovery-feed > .home-venue-discovery-slide {
-  border: 1px solid rgba(203, 213, 225, .12) !important;
+  border: 1px solid #34343c !important;
   background: #08090c linear-gradient(#08090c, #08090c) !important;
   box-shadow: none !important;
 }
@@ -641,13 +641,13 @@ html body.dancr-button-system > .app main.stack > section.stack
   }
 }
 
-/* The full venue header shares the dancer profile's open section layout. */
-html body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-hero {
-  border: 0 !important;
-  border-radius: 0 !important;
+/* Frame the full venue header while keeping its sections free of dividers. */
+html body.dancr-button-system #results.venue-profile-overlay .venue-detail[role="dialog"] > .venue-hero {
+  border: 1px solid #34343c !important;
+  border-radius: 20px !important;
   background: transparent !important;
   box-shadow: none !important;
-  overflow: visible !important;
+  overflow: hidden !important;
 }
 
 html body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-hero-body {
