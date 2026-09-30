@@ -3,7 +3,7 @@ export const CLUB_ARRIVAL_VERIFICATION = "Club staff must verify that you arrive
 export const CLUB_SHUTTLE_HANDOFF = "MyDancr sends your request to the club. The club handles transportation and will contact you to confirm availability, pickup location, and timing. Submitting a request does not confirm a ride.";
 
 export function clubArrivalLabel(value: string | null | undefined) {
-  return value === "self_drive" ? "Private car" : value === "club_shuttle" ? "Club-provided transport"
+  return value === "guest_list" ? "Guest list" : value === "self_drive" ? "Private car" : value === "club_shuttle" ? "Club-provided transport"
     : ["autonomous_cab", "waymo", "zoox", "cybercab"].includes(value || "") ? "Waymo / Zoox / Cybercab" : "Not specified";
 }
 
@@ -28,6 +28,12 @@ export function isEligibleClubTransportation(value: unknown): value is EligibleC
   return value === "self_drive" || value === "club_shuttle" || value === "waymo" || value === "zoox" || value === "cybercab" || AUTONOMOUS_ADMISSION_OPTIONS.some(option => option.value === value);
 }
 
+export type AdmissionMethod = EligibleClubTransportation | "guest_list";
+
+export function isAdmissionMethod(value: unknown): value is AdmissionMethod {
+  return value === "guest_list" || isEligibleClubTransportation(value);
+}
+
 export function normalizeClubTransportationTerms(terms: string | null | undefined) {
   return String(terms || "")
     .replaceAll("Free admission requires arrival in your own car or other private car that is not an Uber or taxi, or use of the club's free shuttle service.", CLUB_TRANSPORTATION_TERMS)
@@ -37,6 +43,11 @@ export function normalizeClubTransportationTerms(terms: string | null | undefine
 export function clubDealTransportationTerms(terms: string | null | undefined) {
   const additional = normalizeClubTransportationTerms(terms).trim();
   return additional.includes(CLUB_TRANSPORTATION_TERMS) ? additional : [CLUB_TRANSPORTATION_TERMS, additional].filter(Boolean).join(" ");
+}
+
+export function guestListAdmissionTerms(terms: string | null | undefined) {
+  const additional = normalizeClubTransportationTerms(terms).replaceAll(CLUB_TRANSPORTATION_TERMS, "").trim();
+  return ["Guest-list admission for one guest.", additional || "Capacity, age requirements, dress code, offer hours, and house rules apply."].join(" ");
 }
 
 export function normalizeShuttlePhone(value: unknown) {

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { admissionOfferHours, clubArrivalLabel, clubDealTransportationTerms } from "@/src/lib/dancr/club-deal-transportation";
+import { admissionOfferHours, clubArrivalLabel, clubDealTransportationTerms, guestListAdmissionTerms } from "@/src/lib/dancr/club-deal-transportation";
 import { customerFacingDealTerms } from "@/src/lib/dancr/deal-copy";
 
 export default function AdmissionPassClient({ token, initialRedemption, qrImage }: { token: string; initialRedemption: any; qrImage: string }) {
@@ -32,7 +32,8 @@ export default function AdmissionPassClient({ token, initialRedemption, qrImage 
   const expired = Date.parse(pass.expiresAt) <= now;
   const usable = pass.isAdmissionPass && pass.status === "generated" && !expired && pass.deal?.isActive;
   const status = pass.status === "redeemed" ? "Already redeemed" : expired || pass.status === "expired" ? "Pass expired" : usable ? "Show QR to door staff" : "Pass unavailable";
-  const terms = clubDealTransportationTerms(customerFacingDealTerms(pass.deal?.dealTerms)
+  const guestListPass = pass.arrivalMethod === "guest_list";
+  const terms = (guestListPass ? guestListAdmissionTerms : clubDealTransportationTerms)(customerFacingDealTerms(pass.deal?.dealTerms)
     || "Capacity, age requirements, dress code, offer hours, and house rules apply.");
   return <section className={`deal-pass-card${usable ? "" : " unavailable"}`}>
     <span className="eyebrow">MyDancr pass</span>
@@ -48,7 +49,7 @@ export default function AdmissionPassClient({ token, initialRedemption, qrImage 
       <span>Expires {new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit", timeZoneName: "short", timeZone: pass.venue?.timezone || "UTC" }).format(new Date(pass.expiresAt))}</span>
     </div>
     {admissionOfferHours(pass.deal) ? <small>Offer hours: {admissionOfferHours(pass.deal)} (venue local time)</small> : null}
-    <small>Staff verifies arrival. Venue rules apply.</small>
+    <small>{guestListPass ? "Staff verifies guest-list admission. Venue rules apply." : "Staff verifies arrival. Venue rules apply."}</small>
     <details className="admission-details">
       <summary>Pass details</summary>
       <p>{terms}</p>

@@ -83,7 +83,7 @@
         const intent = JSON.parse(localStorage.getItem("mydancrPendingNfcDealV2") || "null");
         if (intent?.admissionPassVersion !== 1 || !/^\/deals\/pass\/[A-Za-z0-9_-]{43}$/.test(intent.passUrl || "")) return null;
         if (!intent || intent.venueId !== pass?.venueId || intent.dealId !== pass?.dealId) return null;
-        if (!["self_drive", "club_shuttle", "autonomous_cab", "waymo", "zoox", "cybercab"].includes(intent.transportation)) return null;
+        if (!["self_drive", "club_shuttle", "autonomous_cab", "waymo", "zoox", "cybercab", "guest_list"].includes(intent.transportation)) return null;
         const passSource = pass?.sourceType || "club_page";
         if ((intent.sourceType || "club_page") !== passSource) return null;
         if (passSource === "dancer_profile" && String(intent.dancerId || "") !== String(pass?.dancerId || "")) return null;
@@ -616,7 +616,7 @@
       const venueName = String(config?.venueName || "this club").trim() || "this club";
       const status = document.getElementById("clubDealHubStatus");
       document.getElementById("clubDealHubTitle").textContent = `Club Deals at ${venueName}`;
-      document.getElementById("clubDealHubCopy").textContent = `${offers.length} live ${offers.length === 1 ? "offer" : "offers"}. Choose an offer and your arrival method to get your admission pass. Joining the guest list is optional. Staff scans your pass at the door.`;
+      document.getElementById("clubDealHubCopy").textContent = `${offers.length} live ${offers.length === 1 ? "offer" : "offers"}. Choose an offer, then choose your arrival method or join the guest list to get your admission pass. Staff scans your pass at the door.`;
       status.textContent = "";
       status.hidden = true;
       overlay.removeAttribute("aria-busy");

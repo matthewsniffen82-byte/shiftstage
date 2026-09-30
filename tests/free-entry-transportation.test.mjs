@@ -188,16 +188,56 @@ test("arrival and pickup stay collapsible while the guest-list section opens ind
   f.select("self_drive");f.toggle("arrival");await f.submit();
   assert.equal(f.requests.length,0);assert.doesNotMatch(f.html(),/Full name|type="submit"/);
   f.toggle("arrival");assert.equal(nodes(f.render()).find(node=>node.props?.value==='self_drive').props.checked,true);
-  f.toggle("guest_list");assert.match(f.html(),/Get your free entry pass above/);
-  assert.match(f.html(),/How will you arrive/);assert.doesNotMatch(f.html(),/Full name/);
-  f.toggle("club_shuttle");assert.doesNotMatch(f.html(),/How will you arrive|guestConsent/);assert.match(f.html(),/Pickup location/);
-  assert.equal(nodes(f.render()).filter(node=>node.props?.type==='submit').length,1);
-  f.toggle("club_shuttle");assert.doesNotMatch(f.html(),/Pickup location|type="submit"/);
+  f.toggle("guest_list");assert.match(f.html(),/Join guest list &amp; get pass/);
+  assert.match(f.html(),/How will you arrive/);assert.match(f.html(),/Full name/);
+  f.toggle("club_shuttle");assert.doesNotMatch(f.html(),/How will you arrive/);assert.match(f.html(),/Pickup location/);
+  assert.equal(nodes(f.render()).filter(node=>node.props?.type==='submit').length,2);
+  f.toggle("club_shuttle");assert.doesNotMatch(f.html(),/Pickup location/);
   f.select("self_drive");await f.submit();
   const guestForm=nodes(f.render()).find(node=>node.props?.id==='club-guest-list-form');
   assert.ok(guestForm);f.toggle("guest_list");
   await nodes(f.render(),true).find(node=>node.props?.id==='club-guest-list-form').props.onSubmit({preventDefault(){}});
   assert.equal(f.requests.length,1);assert.doesNotMatch(f.html(),/Full name|type="submit"/);
+});
+
+test("guest list opens immediately and issues a pass with venue contact details without an arrival selection", async () => {
+  for (const arrival of ["", "self_drive", "autonomous_cab", "club_shuttle", "rideshare_taxi"]) {
+    const f=client({sourceType:"dancer_profile",dancerId:"dancer",attributionToken:"signed-token"});
+    if(arrival)f.select(arrival);
+    f.toggle("guest_list");
+    const form=nodes(f.render()).find(node=>node.props?.id==='club-guest-list-form');
+    assert.ok(form);assert.match(renderToStaticMarkup(form),/Full name/);
+    assert.doesNotMatch(renderToStaticMarkup(form),/name="transportation"/);
+    await f.joinGuestList();
+    assert.equal(f.requests.length,1);
+    assert.equal(f.requests[0].url,"/api/deals/redemptions");
+    assert.equal(f.requests[0].body.transportation,"guest_list");
+    assert.equal(f.requests[0].body.attributionToken,"signed-token");
+    assert.deepEqual(f.requests[0].body.guest,{name:"Test Guest",phone:"+17025550123",email:"",consent:true});
+    assert.match(f.html(),/Show admission pass/);assert.match(f.html(),/You’re on the guest list/);
+    assert.doesNotMatch(f.html(),/Pickup requested|arrive in a private car|arrive by Waymo|Book your ride/);
+    assert.equal(JSON.parse(f.stored.get(key)).transportation,"guest_list");
+    assert.doesNotMatch(f.stored.get(key),/Test Guest|17025550123/);
+  }
+});
+
+test("a direct guest-list submission requires consent and a confirmed venue receipt before showing a pass", async () => {
+  for(const overrides of [{name:" "},{phone:"bad"},{guestConsent:null}]){
+    const f=client();await f.joinGuestList(overrides);
+    assert.equal(f.requests.length,0);assert.doesNotMatch(f.html(),/Show admission pass/);
+  }
+  const options={missingGuestReceipt:true},f=client({},options);
+  await f.joinGuestList();assert.match(f.html(),/guest-list entry could not be confirmed/);
+  assert.doesNotMatch(f.html(),/Show admission pass|You’re on the guest list/);
+  options.missingGuestReceipt=false;await f.joinGuestList();assert.match(f.html(),/Show admission pass/);
+});
+
+test("a pending guest-list submission cannot also issue an arrival pass", async () => {
+  let release;const held=new Promise(resolve=>{release=resolve;});
+  const f=client({}, {beforePass:()=>held});f.select("self_drive");
+  const first=f.joinGuestList();await f.submit();await f.joinGuestList();
+  assert.equal(f.requests.length,1);release();await first;
+  assert.equal(f.requests[0].body.transportation,"guest_list");
 });
 
 test("guest-list validation leaves an already issued pass available", async () => {

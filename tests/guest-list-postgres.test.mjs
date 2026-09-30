@@ -14,13 +14,14 @@ before(async()=>{
  const video=read('20260916190000_venue_subscription_analytics.sql');
  await pg.exec(video.slice(video.indexOf('create function public.issue_video_admission_pass'),video.indexOf('-- Raw browser identifiers')));
  await pg.exec(read('20260930090000_free_entry_guest_list.sql'));
+ await pg.exec(read('20260930190000_standalone_guest_list_admission.sql'));
 });
 after(async()=>pg?.close());
 async function issue(session,overrides={}){
  await pg.exec('reset role;set role service_role');
- const args={name:'Test Guest',phone:'+17025550123',email:null,consent:true,...overrides};
+ const args={name:'Test Guest',phone:'+17025550123',email:null,consent:true,arrival:'self_drive',...overrides};
  return(await pg.query('select public.issue_guest_list_admission_pass($1,$2,$3,null,$4,null,null,$5,null,$6,$7,$8,$9) receipt',[
-  String(session).padStart(43,'a'),id(1),id(session),'club_page','self_drive',args.name,args.phone,args.email,args.consent,
+  String(session).padStart(43,'a'),id(1),id(session),'club_page',args.arrival,args.name,args.phone,args.email,args.consent,
  ])).rows[0].receipt;
 }
 test('guest details and admission commit together and concurrent retries reuse one entry',async()=>{
@@ -34,6 +35,25 @@ test('guest details and admission commit together and concurrent retries reuse o
 test('invalid guest details never leave an issued pass behind',async()=>{
  for(const override of [{name:' '},{phone:'bad'},{consent:false},{email:'invalid'}])await assert.rejects(issue(701,override),e=>e.code==='22023');
  await pg.exec('reset role');assert.equal((await pg.query('select count(*)::int count from qr_redemptions where session_id=$1',[id(701)])).rows[0].count,0);
+});
+test('standalone guest-list registration atomically saves the venue contact and a redeemable pass',async()=>{
+ const [a,b]=await Promise.all([issue(706,{arrival:'guest_list'}),issue(706,{arrival:'guest_list'})]);
+ assert.equal(a.token,b.token);assert.equal(a.guestListJoined,true);
+ await pg.exec('reset role');
+ const rows=(await pg.query('select r.arrival_method,r.status,g.venue_id,g.guest_name,g.phone from qr_redemptions r join venue_guest_list_entries g on g.pass_id=r.id where r.session_id=$1',[id(706)])).rows;
+ assert.equal(rows.length,1);assert.equal(rows[0].arrival_method,'guest_list');assert.equal(rows[0].status,'generated');
+ assert.equal(rows[0].venue_id,id(1));assert.equal(rows[0].guest_name,'Test Guest');assert.equal(rows[0].phone,'+17025550123');
+ await pg.query("select set_config('request.jwt.claim.sub',$1,false)",[id(1)]);await pg.exec('set role authenticated');
+ await assert.rejects(pg.query('select confirm_admission_pass($1,false)',[a.token]),e=>e.code==='22023');
+ assert.equal((await pg.query('select confirm_admission_pass($1,true) receipt',[a.token])).rows[0].receipt.status,'redeemed');
+});
+test('the generic issuer cannot create a guest-list pass without a venue contact entry',async()=>{
+ await pg.exec('reset role;set role service_role');
+ await assert.rejects(pg.query('select public.issue_admission_pass($1,$2,$3,null,$4,null,null,$5)',[
+  'c'.repeat(43),id(1),id(707),'club_page','guest_list',
+ ]),e=>e.code==='22023');
+ await pg.exec('reset role');assert.equal((await pg.query('select count(*)::int count from qr_redemptions where session_id=$1',[id(707)])).rows[0].count,0);
+ await assert.rejects(issue(708,{arrival:'guest_list',consent:false}),e=>e.code==='22023');
 });
 test('joining separately reuses the free-entry pass without extending its expiry or creating another admission',async()=>{
  await pg.exec('reset role;set role service_role');

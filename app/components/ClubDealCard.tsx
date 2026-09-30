@@ -3,7 +3,7 @@
 import { useEffect, useId, useRef, useState } from "react";
 import type { PublicClubDeal, DealSourceType } from "@/src/lib/dancr/types";
 import { customerFacingDealDescription, customerFacingDealTerms, customerFacingDealTitle } from "@/src/lib/dancr/deal-copy";
-import { clubDealTransportationTerms, isEligibleClubTransportation, type EligibleClubTransportation } from "@/src/lib/dancr/club-deal-transportation";
+import { clubDealTransportationTerms, isAdmissionMethod, type AdmissionMethod } from "@/src/lib/dancr/club-deal-transportation";
 import {
   hasSignedInCustomerDealAccount,
   loadCustomerDealSavedState,
@@ -564,7 +564,7 @@ function dealTypeLabel(value: PublicClubDeal["offerType"]) {
 type PendingDealSelection = {
   admissionPassVersion?: number;
   passUrl?: string;
-  transportation?: EligibleClubTransportation;
+  transportation?: AdmissionMethod;
   venueId: string;
   dealId: string;
   sourceType: DealSourceType;
@@ -585,7 +585,7 @@ function readPendingDealSelection(input: {
   try {
     const value = JSON.parse(window.localStorage.getItem(DEAL_INTENT_KEY) || "null") as Partial<PendingDealSelection> | null;
     if (!value || value.venueId !== input.venueId || value.dealId !== input.dealId) return null;
-    if (!isEligibleClubTransportation(value.transportation) || value.admissionPassVersion !== 1 || !/^\/deals\/pass\/[A-Za-z0-9_-]{43}$/.test(value.passUrl || "")) return null;
+    if (!isAdmissionMethod(value.transportation) || value.admissionPassVersion !== 1 || !/^\/deals\/pass\/[A-Za-z0-9_-]{43}$/.test(value.passUrl || "")) return null;
     if ((value.sourceType || "club_page") !== input.sourceType) return null;
     if (input.sourceType === "dancer_profile" && String(value.dancerId || "") !== String(input.dancerId || "")) return null;
     const savedAt = Number(value.savedAt || 0);

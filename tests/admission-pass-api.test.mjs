@@ -83,3 +83,14 @@ test('guest details still require valid contact information and consent when sub
   const f=fixture();await assert.rejects(f.issue({guest}),e=>e.status===400);assert.equal(f.calls.length,0);
  }
 });
+
+test('standalone guest-list admission requires details and uses the atomic venue registration RPC',async()=>{
+ for(const guest of [undefined,null,{name:'Guest',phone:'7025550123',consent:false}]){
+  const f=fixture();await assert.rejects(f.issue({transportation:'guest_list',guest}),e=>e.status===400);assert.equal(f.calls.length,0);
+ }
+ const f=fixture();await f.issue({transportation:'guest_list'});
+ const call=f.calls.find(c=>c.name==='issue_guest_list_admission_pass');
+ assert.equal(call.args.p_arrival_method,'guest_list');assert.equal(call.args.p_guest_name,guest.name);
+ assert.equal(call.args.p_phone,'+17025550123');assert.equal(call.args.p_consent,true);
+ assert.equal(f.calls.some(c=>c.name==='issue_video_admission_pass'),false);
+});

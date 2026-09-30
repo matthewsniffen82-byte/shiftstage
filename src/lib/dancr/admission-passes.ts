@@ -4,7 +4,7 @@ import { NextResponse } from "next/server";
 import { PublicApiError } from "../api-error-policy";
 import { resolveDealRedemptionAttribution, DealRedemptionAttributionError } from "./deal-redemption-attribution";
 import { getActiveClubDealById } from "./deals";
-import { isEligibleClubTransportation } from "./club-deal-transportation";
+import { isAdmissionMethod } from "./club-deal-transportation";
 import { enforceDealGenerationRateLimit } from "./deal-redemption-actions";
 import { PublicRequestRateLimitError } from "./public-request-rate-limit";
 import { createAdminSupabaseClient } from "../supabase/admin";
@@ -19,12 +19,12 @@ export const PASS_HEADERS = { "cache-control": "private, no-store, max-age=0", "
 
 export async function createAdmissionPass(request: Request, body: Record<string, unknown>) {
   const dealId = typeof body.dealId === "string" ? body.dealId : "";
-  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(dealId) || !isEligibleClubTransportation(body.transportation)
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(dealId) || !isAdmissionMethod(body.transportation)
     || !["club_page", "dancer_profile"].includes(String(body.sourceType || "club_page"))) {
     throw new PublicApiError("INVALID_REQUEST", "Choose an offer and eligible arrival method.", 400);
   }
   const guest = normalizeGuestListDetails(body.guest);
-  if (body.guest !== undefined && !guest) {
+  if ((body.transportation === "guest_list" || body.guest !== undefined) && !guest) {
     throw new PublicApiError("INVALID_REQUEST", "Enter your name, phone, and a valid email if provided, then agree to share your details with the club.", 400);
   }
   // Guest identity comes from a private server-issued cookie, never a body ID.

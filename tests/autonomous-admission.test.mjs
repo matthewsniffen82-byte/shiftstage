@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 import vm from "node:vm";
 import ts from "typescript";
-import { CLUB_TRANSPORTATION_TERMS, clubDealTransportationTerms, isEligibleClubTransportation } from "../src/lib/dancr/club-deal-transportation.ts";
+import { CLUB_TRANSPORTATION_TERMS, clubDealTransportationTerms, isAdmissionMethod, isEligibleClubTransportation } from "../src/lib/dancr/club-deal-transportation.ts";
 import { customerFacingDealTerms } from "../src/lib/dancr/deal-copy.ts";
 import { defaultClubDealOfferPreset } from "../src/lib/dancr/club-deal-presets.ts";
 
@@ -22,7 +22,7 @@ function functionSource(path, name) {
 
 function readers(value) {
   const localStorage = { getItem: name => name === key ? JSON.stringify(value) : null };
-  const globals = { window: { localStorage }, localStorage, isEligibleClubTransportation, DEAL_INTENT_KEY: key, DEAL_INTENT_TTL_MS: ttl, pendingNfcDealIntentTtlMs: ttl };
+  const globals = { window: { localStorage }, localStorage, isAdmissionMethod, isEligibleClubTransportation, DEAL_INTENT_KEY: key, DEAL_INTENT_TTL_MS: ttl, pendingNfcDealIntentTtlMs: ttl };
   const load = (path, name) => vm.runInNewContext(`${functionSource(path, name)}; ${name}`, globals);
   return {
     cashier: load("../app/nfc/[token]/NfcTapClient.tsx", "readPendingDealIntent"),
@@ -50,6 +50,13 @@ test("unrecognized and excluded transportation never becomes a ready deal", () =
     assert.equal(r.card(intent), null);
     assert.equal(r.savedPass(intent), null);
   }
+});
+
+test("guest-list passes reopen from cards and saved passes without claiming a transportation method", () => {
+  const r=readers({...intent,transportation:"guest_list"});
+  assert.equal(isAdmissionMethod("guest_list"),true);assert.equal(isEligibleClubTransportation("guest_list"),false);
+  assert.equal(r.card(intent).expired,false);assert.equal(r.savedPass(intent).transportation,"guest_list");
+  assert.equal(r.cashier("registered-tag"),null);
 });
 
 test("autonomous arrival preserves expiry, offer matching and dancer attribution boundaries", () => {

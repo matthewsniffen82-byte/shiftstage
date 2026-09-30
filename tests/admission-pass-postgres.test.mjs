@@ -20,6 +20,10 @@ before(async()=>{
  await pg.exec('grant execute on function public.is_admin(),public.is_current_venue_owner(uuid) to authenticated');
  await pg.exec(migration);
  await pg.exec(readFileSync(new URL('../supabase/migrations/20260916050000_allow_passes_for_published_unclaimed_venues.sql',import.meta.url),'utf8'));
+ const video=readFileSync(new URL('../supabase/migrations/20260916190000_venue_subscription_analytics.sql',import.meta.url),'utf8');
+ await pg.exec(video.slice(video.indexOf('create function public.issue_video_admission_pass'),video.indexOf('-- Raw browser identifiers')));
+ await pg.exec(readFileSync(new URL('../supabase/migrations/20260930090000_free_entry_guest_list.sql',import.meta.url),'utf8'));
+ await pg.exec(readFileSync(new URL('../supabase/migrations/20260930190000_standalone_guest_list_admission.sql',import.meta.url),'utf8'));
 });
 after(async()=>pg?.close());
 async function as(n){await pg.exec('reset role');await pg.query("select set_config('request.jwt.claim.sub',$1,false)",[n?id(n):'']);await pg.exec('set role authenticated');}

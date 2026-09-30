@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { readBrowserAccessToken } from "@/src/lib/dancr/browser-session";
 import { customerFacingDealDescription, customerFacingDealTerms } from "@/src/lib/dancr/deal-copy";
-import { admissionOfferHours, clubArrivalLabel, CLUB_ARRIVAL_VERIFICATION } from "@/src/lib/dancr/club-deal-transportation";
+import { admissionOfferHours, clubArrivalLabel, CLUB_ARRIVAL_VERIFICATION, guestListAdmissionTerms } from "@/src/lib/dancr/club-deal-transportation";
 import { requestDashboardJson } from "@/app/dashboard/dashboard-session";
 
 const DEAL_SESSION_KEY = "mydancrDealSessionV1";
@@ -108,7 +108,8 @@ export function RedeemDealClient({ token, initialRedemption }: RedeemDealClientP
 
   const deal = redemption?.deal;
   const dealDescription = customerFacingDealDescription(deal?.dealDescription);
-  const dealTerms = customerFacingDealTerms(deal?.dealTerms);
+  const guestListPass = redemption?.arrivalMethod === "guest_list";
+  const dealTerms = guestListPass ? guestListAdmissionTerms(customerFacingDealTerms(deal?.dealTerms)) : customerFacingDealTerms(deal?.dealTerms);
   const venue = redemption?.venue;
   const isRedeemed = redemption?.status === "redeemed";
   const isValid = redemption?.isAdmissionPass && redemption?.status === "generated"
@@ -134,10 +135,10 @@ export function RedeemDealClient({ token, initialRedemption }: RedeemDealClientP
           <dd>{redemption?.sourceType === "dancer_profile" ? "Dancer profile" : "Club page"}</dd>
         </div>
       </dl>
-      <p><strong>Arrival method: {clubArrivalLabel(redemption?.arrivalMethod)}</strong></p>
-      <small>{CLUB_ARRIVAL_VERIFICATION}</small>
+      <p><strong>{guestListPass ? "Admission" : "Arrival method"}: {clubArrivalLabel(redemption?.arrivalMethod)}</strong></p>
+      <small>{guestListPass ? "Verify this guest’s guest-list admission and the club’s entry requirements." : CLUB_ARRIVAL_VERIFICATION}</small>
       {admissionOfferHours(deal) ? <small>Offer hours: {admissionOfferHours(deal)} (venue local time)</small> : null}
-      {isValid && venueAccessToken ? <label className="arrival-verification"><input type="checkbox" checked={arrivalVerified} disabled={isRedeeming} onChange={event => setArrivalVerified(event.target.checked)} /> I verified this guest’s eligible arrival method and admission requirements.</label> : null}
+      {isValid && venueAccessToken ? <label className="arrival-verification"><input type="checkbox" checked={arrivalVerified} disabled={isRedeeming} onChange={event => setArrivalVerified(event.target.checked)} /> {guestListPass ? "I verified this guest’s guest-list admission and entry requirements." : "I verified this guest’s eligible arrival method and admission requirements."}</label> : null}
       <button
         type="button"
         onClick={redeem}
