@@ -508,7 +508,19 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal .modal-grid, .p
 
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell, .dancer-profile-preview-overlay)
   :is(.profile-modal-media, .profile-media-section) {
-  margin-top: 16px !important;
+  margin-top: 0 !important;
+  padding-top: 16px !important;
+}
+
+/* Paint a shallow charcoal fade inside the existing action-to-media gap. */
+html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell, .dancer-profile-preview-overlay)
+  :is(.profile-modal-media, .profile-media-section)::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: 16px;
+  background: linear-gradient(180deg, rgba(24, 24, 28, .7), rgba(16, 16, 20, .3) 45%, rgba(16, 16, 20, 0));
+  pointer-events: none;
 }
 
 /* Fractional inset lines avoid one-pixel border rounding on low-density screens. */
