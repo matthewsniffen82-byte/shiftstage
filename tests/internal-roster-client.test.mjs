@@ -124,6 +124,76 @@ const grid = app => find(app.render(), node => node.props?.className === "ir-gri
 const profile = app => find(app.render(), node => node.type?.name === "ClubProfileDialog")?.props.profile;
 const requestButton = (app, id) => find(find(app.render(), node => node.type === "article" && node.key === id), node => node.props?.className === "ir-table-request");
 
+test('the same grid and profile action confirms briefly, cancels exactly once, then allows a new request',async t=>{
+ const posts=[],cancellation=deferred();let status=null,requestId=null;
+ const app=harness(async(url,options)=>{
+  if(options.method==='POST') {
+   const body=JSON.parse(options.body);posts.push(body);
+   if(body.action==='cancel_request') { await cancellation.promise;status=null;requestId=null;return response({ok:true,receipt:{id:body.requestId,status:'cancelled'}}); }
+   status='pending';requestId='request-'+posts.length;return response({ok:true,receipt:{id:requestId,status}});
+  }
+  if(url.includes('/profile/'))return response({ok:true,profile:{id:dancer.id,requestStatus:status,requestId}});
+  return response({...roster,kind:'table',dancers:[{...dancer,requestStatus:status,requestId},{...dancer,id:'other'}]});
+ });t.after(()=>app.unmount());await app.mount();
+ find(app.render(),node=>node.props?.className==='ir-profile-link').props.onClick();await flush();
+ const dialog=()=>find(app.render(),node=>node.type?.name==='ClubProfileDialog');
+ dialog().props.onRequest();await flush();
+ assert.equal(dialog().props.request.confirmed,true);assert.equal(profile(app).requestId,'request-1');
+ assert.equal(find(requestButton(app,dancer.id),node=>node.type==='span').props.children,'Request sent');
+ await app.advance(1499);assert.equal(requestButton(app,dancer.id).props.disabled,true);
+ await app.advance(1);assert.equal(requestButton(app,dancer.id).props.children,'Cancel request');assert.equal(dialog().props.request.confirmed,false);
+ dialog().props.onCancel();requestButton(app,dancer.id).props.onClick();
+ assert.equal(posts.length,2);assert.deepEqual(posts[1],{action:'cancel_request',dancerId:dancer.id,requestId:'request-1'});
+ assert.equal(requestButton(app,dancer.id).props.children,'Cancelling…');assert.equal(requestButton(app,'other').props.disabled,false);
+ assert.equal(dialog().props.request.busy,true);
+ cancellation.resolve();await flush();await flush();
+ assert.equal(requestButton(app,dancer.id).props.children,'Request');assert.equal(requestButton(app,dancer.id).props.disabled,false);
+ assert.equal(profile(app).requestStatus,null);assert.equal(profile(app).requestId,null);
+ dialog().props.onRequest();await flush();assert.notEqual(posts[2].requestKey,posts[0].requestKey);
+ app.unmount();assert.equal(app.timers.size,0);
+});
+
+for(const status of ['pending','acknowledged'])test('failed cancellation preserves '+status+' and retries the same request without locking other dancers',async t=>{
+ const posts=[],app=harness(async(_url,options)=>{
+  if(options.method==='POST'){posts.push(JSON.parse(options.body));throw Error('Connection failed.');}
+  return response({...roster,kind:'table',dancers:[{...dancer,requestStatus:status,requestId:'saved-request'},{...dancer,id:'other'}]});
+ });t.after(()=>app.unmount());await app.mount();
+ assert.equal(requestButton(app,dancer.id).props.children,'Cancel request');
+ for(let i=0;i<2;i++){requestButton(app,dancer.id).props.onClick();await flush();assert.equal(requestButton(app,dancer.id).props.children,'Cancel request');assert.equal(requestButton(app,dancer.id).props.disabled,false);}
+ assert.deepEqual(posts[0],posts[1]);assert.equal(requestButton(app,'other').props.disabled,false);
+});
+
+test('a timed-out cancellation reconciles the saved state without claiming cancellation succeeded',async t=>{
+ let status='acknowledged';
+ const app=harness(async(_url,options)=>{
+  if(options.method==='POST'){status=null;return new Promise(()=>{});}
+  return response({...roster,kind:'table',dancers:[{...dancer,requestStatus:status,requestId:status?'saved-request':null}]});
+ });t.after(()=>app.unmount());await app.mount();requestButton(app,dancer.id).props.onClick();
+ await app.advance(15000);assert.equal(requestButton(app,dancer.id).props.children,'Request');
+ assert.match(find(app.render(),node=>node.props?.className==='ir-notice').props.children,/timed out/);
+});
+
+test('an older background read cannot bring back a cancelled request',async t=>{
+ const old=deferred();let reads=0,status='pending';
+ const app=harness(async(_url,options)=>{
+  if(options.method==='POST'){status=null;return response({ok:true,receipt:{id:'saved-request',status:'cancelled'}});}
+  if(++reads===2)return old.promise;
+  return response({...roster,kind:'table',dancers:[{...dancer,requestStatus:status,requestId:status?'saved-request':null}]});
+ });t.after(()=>app.unmount());await app.mount();await app.advance(refreshInterval);
+ requestButton(app,dancer.id).props.onClick();await flush();
+ old.resolve(response({...roster,kind:'table',dancers:[{...dancer,requestStatus:'pending',requestId:'saved-request'}]}));await flush();
+ assert.equal(requestButton(app,dancer.id).props.children,'Request');
+});
+
+test('staff see cancelled requests disappear on a lightweight inbox refresh',async t=>{
+ const calls=[],saved={id:'saved-request',dancer_id:dancer.id,link_id:'table',status:'pending',created_at:new Date().toISOString()};
+ const app=harness(async url=>{calls.push(url);return response(url==='/api/internal/requests'?{ok:true,requests:[]}:{...roster,requests:[saved],links:[]});},
+  {token:'',session:{accessToken:'staff-token',account:{role:'venue'}}});t.after(()=>app.unmount());await app.mount();
+ assert.ok(find(app.render(),node=>node.props?.className==='ir-request'));
+ await app.advance(10000);assert.equal(calls.at(-1),'/api/internal/requests');
+ assert.equal(find(app.render(),node=>node.props?.className==='ir-request'),undefined);assert.ok(grid(app));
+});
+
 test("opening a profile starts its viewer alongside the API and keeps the roster available",async t=>{
  const pending=deferred();
  const app=harness(async url=>url.includes('/profile/')?pending.promise:response(roster));t.after(()=>app.unmount());await app.mount();
@@ -353,7 +423,7 @@ test("staff sign-out immediately clears the roster and cancels an in-flight refr
   await flush();
   assert.equal(calls, 1);
   assert.ok(grid(app));
-  await app.advance(refreshInterval);
+  await app.advance(10000);
   app.setSession(null);
   app.storage(sessionKey);
   await flush();
@@ -497,7 +567,7 @@ test("a timed-out request releases only its own button and can be retried", asyn
   await app.advance(15000);
 });
 
-test("failed request retries preserve the same idempotency key and a reloaded table stays sent", async t => {
+test("failed request retries preserve the same idempotency key and a reloaded table can cancel its saved request", async t => {
   const keys=[];
   const app=harness(async(_url,options)=>{
     if(options.method==='POST') { keys.push(JSON.parse(options.body).requestKey); throw new TypeError('Failed to fetch'); }
@@ -506,10 +576,10 @@ test("failed request retries preserve the same idempotency key and a reloaded ta
   find(app.render(),node=>node.props?.className==='ir-table-request').props.onClick();await flush();
   find(app.render(),node=>node.props?.className==='ir-table-request').props.onClick();await flush();
   assert.equal(keys.length,2);assert.equal(keys[0],keys[1]);
-  const reloaded=harness(async(_url,options)=>{assert.equal(options.method,'GET');return response({...roster,kind:'table',dancers:[{...dancer,requestStatus:'pending'}]});});
+  const reloaded=harness(async(_url,options)=>{assert.equal(options.method,'GET');return response({...roster,kind:'table',dancers:[{...dancer,requestStatus:'pending',requestId:'saved-request'}]});});
   t.after(()=>reloaded.unmount());await reloaded.mount();
   const button=find(reloaded.render(),node=>node.props?.className==='ir-table-request');
-  assert.equal(find(button,node=>node.type==='span').props.children,'Request sent');assert.equal(button.props.disabled,true);button.props.onClick();await flush();
+  assert.equal(button.props.children,'Cancel request');assert.equal(button.props.disabled,false);
 });
 
 test("a background read started before submission cannot undo Request sent", async t => {

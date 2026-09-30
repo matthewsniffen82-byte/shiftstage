@@ -43,14 +43,15 @@
       internalTableRequest = token && event.data.request ? {
         tableLabel: String(event.data.request.tableLabel || "our table").slice(0, 60),
         busy: event.data.request.busy === true, message: String(event.data.request.message || ""),
-        status: source.requestStatus,
+        status: source.requestStatus, requestId: source.requestId, confirmed: event.data.request.confirmed === true,
       } : null;
-      const { requestsTonight, requestStatus, ...profileContent } = source;
-      internalProfileActivity = { requestsTonight, requestStatus };
+      const { requestsTonight, requestStatus, requestId, ...profileContent } = source;
+      internalProfileActivity = { requestsTonight, requestStatus, requestId };
       const revision = JSON.stringify([profileContent, token]);
       if (internalRosterProfile) {
         internalRosterProfile.requestsTonight = requestsTonight;
         internalRosterProfile.requestStatus = requestStatus;
+        internalRosterProfile.requestId = requestId;
         syncInternalProfileRequestUi();
       }
       if (revision === internalProfileRevision) return;
@@ -116,9 +117,10 @@
     function internalProfileRequestActionsMarkup(profile) {
       if (!internalTableRequest) return "";
       const sent = ["pending", "acknowledged"].includes(internalTableRequest.status);
-      const label = sent ? "Request sent" : internalTableRequest.busy ? "Sending…" : `Request at ${internalTableRequest.tableLabel}`;
+      const confirmed = sent && internalTableRequest.confirmed;
+      const label = internalTableRequest.busy ? sent ? "Cancelling…" : "Sending…" : confirmed ? "Request sent" : sent ? "Cancel request" : `Request at ${internalTableRequest.tableLabel}`;
       return `<div class="internal-profile-request">
-        <div class="modal-actions profile-actions-compact profile-venue-actions"><button type="button" class="action-btn profile-action-icon-control" data-internal-table-request ${sent || internalTableRequest.busy || !profile.scheduled ? "disabled" : ""}>${sent ? `<span class="internal-request-sent-label">${escapeHtml(label)}</span>` : escapeHtml(label)}</button></div>
+        <div class="modal-actions profile-actions-compact profile-venue-actions"><button type="button" class="action-btn profile-action-icon-control" data-internal-table-request ${confirmed || internalTableRequest.busy || (sent ? !internalTableRequest.requestId : !profile.scheduled) ? "disabled" : ""} aria-busy="${internalTableRequest.busy}">${confirmed ? `<span class="internal-request-sent-label">${escapeHtml(label)}</span>` : escapeHtml(label)}</button></div>
         <p role="status" class="internal-profile-request-status">${escapeHtml(internalTableRequest.message || (internalTableRequest.status === "acknowledged" ? "Seen by club staff." : sent ? "Sent to club staff. Availability is confirmed by staff." : ""))}</p>
       </div>`;
     }
@@ -131,12 +133,13 @@
     }
 
     function sendInternalTableRequest() {
-      if (!internalRosterProfile || !internalTableRequest || internalTableRequest.busy
-        || ["pending", "acknowledged"].includes(internalTableRequest.status) || !internalRosterProfile.scheduled) return;
+      if (!internalRosterProfile || !internalTableRequest || internalTableRequest.busy || internalTableRequest.confirmed) return;
+      const cancel = ["pending", "acknowledged"].includes(internalTableRequest.status);
+      if (cancel ? !internalTableRequest.requestId : !internalRosterProfile.scheduled) return;
       internalTableRequest.busy = true;
       internalTableRequest.message = "";
       syncInternalProfileRequestUi();
-      window.parent.postMessage({ type: "mydancr:internal-table-request", profileId: internalRosterProfile.id }, window.location.origin);
+      window.parent.postMessage({ type: cancel ? "mydancr:internal-table-cancel" : "mydancr:internal-table-request", profileId: internalRosterProfile.id, ...(cancel ? { requestId: internalTableRequest.requestId } : {}) }, window.location.origin);
     }
 
     function closeInternalProfileFrame() {

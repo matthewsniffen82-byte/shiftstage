@@ -27,20 +27,71 @@ function fixture({members=true,active=true,staff=true,kind='table',choice=null,p
   mydancr_tv_videos:videos,internal_roster_requests:requests,shifts,
  };
  const admin={
-  from(table){let rows=[...(tables[table]||[])],columns='';const q={select(value){columns=value;return q},eq(k,v){rows=rows.filter(r=>r[k]===v);return q},in(k,vs){rows=rows.filter(r=>vs.includes(r[k]));return q},order(k,{ascending=true}={}){rows.sort((a,b)=>(a[k]>b[k]?1:a[k]<b[k]?-1:0)*(ascending?1:-1));return q},limit(n){rows=rows.slice(0,n);return q},gte(k,v){rows=rows.filter(r=>r[k]>=v);return q},gt(k,v){rows=rows.filter(r=>r[k]>v);return q},lt(k,v){rows=rows.filter(r=>r[k]<v);return q},lte(k,v){rows=rows.filter(r=>r[k]<=v);return q},is(k,v){return q.eq(k,v)},not(k,_op,v){rows=rows.filter(r=>r[k]!==v);return q},or(value){if(value.startsWith('expires_at.is.null,expires_at.gt.')){const now=value.slice('expires_at.is.null,expires_at.gt.'.length);rows=rows.filter(r=>r.expires_at==null||r.expires_at>now);}return q},single(){return finish(true)},maybeSingle(){return finish(true)},then(resolve,reject){return finish(false).then(resolve,reject)}};function finish(single){const data=rows.map(row=>Object.fromEntries(columns.split(',').filter(key=>key in row).map(key=>[key,row[key]])));return Promise.resolve({data:single?data[0]||null:data,count:rows.length,error:null});}return q;},
+  from(table){let rows=[...(tables[table]||[])],columns='',patch=null;const q={update(value){patch=value;return q},select(value){columns=value;return q},eq(k,v){rows=rows.filter(r=>r[k]===v);return q},in(k,vs){rows=rows.filter(r=>vs.includes(r[k]));return q},order(k,{ascending=true}={}){rows.sort((a,b)=>(a[k]>b[k]?1:a[k]<b[k]?-1:0)*(ascending?1:-1));return q},limit(n){rows=rows.slice(0,n);return q},gte(k,v){rows=rows.filter(r=>r[k]>=v);return q},gt(k,v){rows=rows.filter(r=>r[k]>v);return q},lt(k,v){rows=rows.filter(r=>r[k]<v);return q},lte(k,v){rows=rows.filter(r=>r[k]<=v);return q},is(k,v){return q.eq(k,v)},not(k,_op,v){rows=rows.filter(r=>r[k]!==v);return q},or(value){if(value.startsWith('expires_at.is.null,expires_at.gt.')){const now=value.slice('expires_at.is.null,expires_at.gt.'.length);rows=rows.filter(r=>r.expires_at==null||r.expires_at>now);}return q},single(){return finish(true)},maybeSingle(){return finish(true)},then(resolve,reject){return finish(false).then(resolve,reject)}};function finish(single){if(patch)rows.forEach(row=>Object.assign(row,patch));const data=rows.map(row=>Object.fromEntries(columns.split(',').filter(key=>key in row).map(key=>[key,row[key]])));return Promise.resolve({data:single?data[0]||null:data,count:rows.length,error:null});}return q;},
   async rpc(name,args){calls.push({name,args});return {data:['internal_roster_members','venue_roster_members'].includes(name)?(members?[{id:id(5),stage_name:'Aster',avatar_storage_path:'private/avatar',working_until:new Date(Date.now()+3600000).toISOString()}]:[]):{id:id(9)},error:null};},
   storage:{from(bucket){return {createSignedUrl:async(path)=>{calls.push({name:'signMedia',bucket,path});return {data:{signedUrl:'https://storage.invalid/private-signed-link'}};}}}},
  };
- const lib={},route={},mainPhoto={},activity={};
+ const lib={},route={},mainPhoto={},activity={},cancel={};
+ vm.runInNewContext(compile("src/lib/dancr/internal-request-cancel.ts"),{exports:cancel,Date,require:name=>name.endsWith("api-error-policy")?{PublicApiError}:{}});
  vm.runInNewContext(compile('src/lib/dancr/internal-request-activity.ts'),{exports:activity,Date,require(){return {}}});
  vm.runInNewContext(compile('src/lib/dancr/internal-main-photo.ts'),{exports:mainPhoto,require(){return {}}});
  vm.runInNewContext(compile('src/lib/dancr/internal-roster.ts'),{exports:lib,require(name){if(name==='server-only')return {};if(name.endsWith('api-error-policy'))return {PublicApiError};if(name.endsWith('responsive-image'))return {responsivePublicImage:()=>null};if(name.endsWith('venue-branding'))return {verifiedVenueLogoUrl};if(name.endsWith('venue-access'))return {requireVenueAccess:async()=>{if(!staff)throw new Error('An active venue account is required.');return {venueId:id(2),venueName:'Synthetic club',role:'owner'}}};if(name.endsWith('supabase/request'))return {createRequestSupabaseContext:async request=>{if(request.headers.get('authorization')!=='Bearer staff')throw new Error('Sign in required.');return {user:{id:id(4)}}}};throw Error(name);}});
- vm.runInNewContext(compile('app/api/internal/[[...path]]/route.ts'),{exports:route,URL,Response,Headers,Request,Date,fetch:async(url,options)=>{calls.push({name:'fetch',url,options});return new Response('synthetic-image',{status:Array.isArray(upstreamStatus)?upstreamStatus.shift():upstreamStatus,headers:{'content-type':'image/jpeg',...upstreamHeaders}});},require(name){if(name==='node:crypto')return {createHash};if(name==='next/server')return {NextResponse:{json:Response.json},after:work=>{calls.push({name:'after'});void work();}};if(name.endsWith('internal-request-push'))return {deliverInternalRequestPush:async(_client,requestId)=>{calls.push({name:'deliverInternalRequestPush',requestId});}};if(name.endsWith('supabase/admin'))return {createAdminSupabaseClient:()=>admin};if(name.endsWith('bounded-json-body'))return {readBoundedJsonObject};if(name.endsWith('api-error-policy'))return {PublicApiError,resolveApiError};if(name.endsWith('internal-request-activity'))return activity;if(name.endsWith('internal-main-photo'))return mainPhoto;if(name.endsWith('internal-roster'))return lib;if(name.endsWith('responsive-image'))return {responsiveImageStoragePaths};if(name.endsWith('media-watermark'))return {MYDANCR_TV_POSTER_BUCKET,myDancrTvPosterStoragePath};if(name.endsWith('social-profile-url'))return {safeSocialProfileUrl};throw Error(name);}});
+ vm.runInNewContext(compile('app/api/internal/[[...path]]/route.ts'),{exports:route,URL,Response,Headers,Request,Date,fetch:async(url,options)=>{calls.push({name:'fetch',url,options});return new Response('synthetic-image',{status:Array.isArray(upstreamStatus)?upstreamStatus.shift():upstreamStatus,headers:{'content-type':'image/jpeg',...upstreamHeaders}});},require(name){if(name==='node:crypto')return {createHash};if(name==='next/server')return {NextResponse:{json:Response.json},after:work=>{calls.push({name:'after'});void work();}};if(name.endsWith('internal-request-cancel'))return cancel;if(name.endsWith('internal-request-cancellation-push'))return {deliverInternalCancellationPush:async(_client,requestId)=>calls.push({name:'cancelAlert',requestId})};if(name.endsWith('internal-request-push'))return {deliverInternalRequestPush:async(_client,requestId)=>{calls.push({name:'deliverInternalRequestPush',requestId});}};if(name.endsWith('supabase/admin'))return {createAdminSupabaseClient:()=>admin};if(name.endsWith('bounded-json-body'))return {readBoundedJsonObject};if(name.endsWith('api-error-policy'))return {PublicApiError,resolveApiError};if(name.endsWith('internal-request-activity'))return activity;if(name.endsWith('internal-main-photo'))return mainPhoto;if(name.endsWith('internal-roster'))return lib;if(name.endsWith('responsive-image'))return {responsiveImageStoragePaths};if(name.endsWith('media-watermark'))return {MYDANCR_TV_POSTER_BUCKET,myDancrTvPosterStoragePath};if(name.endsWith('social-profile-url'))return {safeSocialProfileUrl};throw Error(name);}});
  async function get(path=[],query='',auth='',headers={}){return route.GET(new Request('https://example.invalid/api/internal/'+path.join('/')+query,{headers:{...headers,...(auth?{authorization:'Bearer '+auth}:{})}}),{params:Promise.resolve({path})});}
  return {calls,get,post:async(body={},path=[],auth='staff')=>route.POST(new Request('https://example.invalid/api/internal',{method:'POST',headers:{authorization:'Bearer '+auth,'content-type':'application/json'},body:JSON.stringify(body)}),{params:Promise.resolve({path})})};
 }
+
+for (const status of ['pending','acknowledged','cancelled']) test(`table guests can cancel only their exact ${status} request and retry safely`,async()=>{
+ const saved={id:id(12),venue_id:id(2),link_id:id(1),dancer_id:id(5),status,created_at:new Date().toISOString()};
+ const f=fixture({requests:[saved]});
+ const body={action:'cancel_request',dancerId:id(5),requestId:id(12),venueId:id(999)};
+ for(let i=0;i<2;i++) {
+  const response=await f.post(body,['link',id(3)],'');assert.equal(response.status,200);
+  assert.deepEqual((await response.json()).receipt,{id:id(12),status:'cancelled'});
+ }
+ assert.equal(saved.status,'cancelled');assert.ok(f.calls.some(c=>c.name==='cancelAlert'&&c.requestId===id(12)));
+ assert.equal(f.calls.some(c=>c.name==='internal_roster_request'||c.name==='internal_roster_manage'),false);
+});
+
+for(const changed of [{link_id:id(99)},{venue_id:id(99)},{dancer_id:id(99)},{id:id(99)},{status:'completed'}])test('cancellation cannot target foreign or completed requests '+JSON.stringify(changed),async()=>{
+ const saved={id:id(12),venue_id:id(2),link_id:id(1),dancer_id:id(5),status:'pending',...changed};
+ const before={...saved},f=fixture({requests:[saved]});
+ const res=await f.post({action:'cancel_request',dancerId:id(5),requestId:id(12)},['link',id(3)],'');
+ assert.equal(res.status,409);assert.deepEqual(saved,before);assert.equal(f.calls.some(c=>c.name==='cancelAlert'),false);
+});
+
+test('cancellation requires an active table capability and valid request identity',async()=>{
+ const body={action:'cancel_request',dancerId:id(5),requestId:id(12)};
+ assert.equal((await fixture({active:false}).post(body,['link',id(3)],'')).status,404);
+ assert.equal((await fixture({kind:'display'}).post(body,['link',id(3)],'')).status,404);
+ for(const invalid of [{requestId:'bad'},{requestId:null},{dancerId:'bad'},{action:'delete_request'}])
+  assert.equal((await fixture().post({...body,...invalid},['link',id(3)],'')).status,400);
+});
+
+test('the lightweight staff inbox is authenticated, venue scoped, and excludes cancelled requests',async()=>{
+ const saved={id:id(12),venue_id:id(2),link_id:id(1),dancer_id:id(5),status:'pending',created_at:new Date().toISOString()};
+ const f=fixture({requests:[saved,{...saved,id:id(13),status:'cancelled'},{...saved,id:id(14),venue_id:id(99)}]});
+ assert.equal((await f.get(['requests'])).status,401);
+ assert.equal((await f.get(['requests'],'?token='+id(3))).status,404);
+ const data=await (await f.get(['requests'],'','staff')).json();
+ assert.deepEqual(data.requests.map(row=>row.id),[id(12)]);assert.equal(data.dancers,undefined);assert.equal(data.links,undefined);
+});
+
+test('cancelled requests leave the staff inbox and guest buttons while replacement requests stay open',async()=>{
+ const saved={id:id(12),venue_id:id(2),link_id:id(1),dancer_id:id(5),status:'pending',created_at:new Date().toISOString()};
+ const requests=[saved],f=fixture({requests});
+ assert.equal((await (await f.get(['link',id(3)])).json()).dancers[0].requestId,id(12));
+ assert.equal((await (await f.get(['profile',id(5)],'?token='+id(3))).json()).profile.requestId,id(12));
+ await f.post({action:'cancel_request',dancerId:id(5),requestId:id(12)},['link',id(3)],'');
+ assert.equal((await (await f.get([], '', 'staff')).json()).requests.length,0);
+ assert.equal((await (await f.get(['link',id(3)])).json()).dancers[0].requestId,null);
+ requests.push({...saved,id:id(13),status:'pending'});
+ await f.post({action:'cancel_request',dancerId:id(5),requestId:id(12)},['link',id(3)],'');
+ assert.equal(requests[1].status,'pending');
+ assert.equal((await (await f.get(['link',id(3)])).json()).dancers[0].requestId,id(13));
+});
 test('staff roster requires a real signed-in venue session',async()=>{assert.equal((await fixture().get()).status,401);assert.equal((await fixture({staff:false}).get([], '', 'staff')).status,403);});
-test('a valid club capability exposes only opted-in photo card metadata',async()=>{const response=await fixture().get(['link',id(3)]);assert.equal(response.status,200);const body=await response.json();assert.equal(body.venueLogoUrl,'/venue-logos/fictional/echo-house.svg');assert.deepEqual(Object.keys(body.dancers[0]).sort(),['id','stageName','workingUntil','avatarRevision','mainPhotoId','mainPhotoRevision','requestStatus'].sort());assert.doesNotMatch(JSON.stringify(body),/PRIVATE|storage_path|user_id/);assert.match(response.headers.get('cache-control'),/no-store/);});
+test('a valid club capability exposes only opted-in photo card metadata',async()=>{const response=await fixture().get(['link',id(3)]);assert.equal(response.status,200);const body=await response.json();assert.equal(body.venueLogoUrl,'/venue-logos/fictional/echo-house.svg');assert.deepEqual(Object.keys(body.dancers[0]).sort(),['id','stageName','workingUntil','avatarRevision','mainPhotoId','mainPhotoRevision','requestStatus','requestId'].sort());assert.doesNotMatch(JSON.stringify(body),/PRIVATE|storage_path|user_id/);assert.match(response.headers.get('cache-control'),/no-store/);});
 test('internal-only profile opens through the roster with full approved customer content',async()=>{const response=await fixture().get(['profile',id(5)],'?token='+id(3));assert.equal(response.status,200);const body=await response.json();assert.equal(body.profile.stage_name,'Aster');assert.equal(body.profile.photos.length,2);assert.equal(body.profile.socialLinks[0].url,'https://instagram.com/aster');assert.doesNotMatch(JSON.stringify(body),/PRIVATE|real_name|email|storage_path|is_public/);});
 test('revoked, guessed, and absent capabilities cannot read full profiles',async()=>{assert.equal((await fixture({active:false}).get(['profile',id(5)],'?token='+id(3))).status,404);assert.equal((await fixture().get(['profile',id(5)],'?token='+id(999))).status,404);assert.equal((await fixture().get(['profile',id(5)])).status,401);});
 test('opt-out or shift end removes cards, full profiles, avatars and gallery access',async()=>{const f=fixture({members:false});assert.deepEqual((await (await f.get(['link',id(3)])).json()).dancers,[]);for(const [kind,media]of [['profile',5],['avatar',5],['photo',6]])assert.equal((await f.get([kind,id(media)],'?token='+id(3))).status,404);});
@@ -109,7 +160,7 @@ test('Internal video metadata includes poster availability without private stora
  const f=fixture({videos:[approvedVideo(),approvedVideo({id:id(21),moderation_details:{}})]});
  const response=await f.get(['profile',id(5)],'?token='+id(3));
  assert.equal(response.status,200);const {profile}=await response.json();
- assert.deepEqual(profile.videos.map(video=>video.has_poster),[true,false]);
+ assert.equal(profile.videos.find(video=>video.id===id(20)).has_poster,true);assert.equal(profile.videos.find(video=>video.id===id(21)).has_poster,false);
  assert.equal(profile.videos[0].caption,'Synthetic clip');
  assert.doesNotMatch(JSON.stringify(profile),/storage_path|moderation_details|posterStoragePath|PRIVATE|private\/|signedUrl/);
 });

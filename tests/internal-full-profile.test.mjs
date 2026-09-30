@@ -131,11 +131,11 @@ test('profile requests send one parent action, then share the confirmed status w
   assert.match(f.bridge.internalProfileRequestActionsMarkup(f.bridge.profile()), /Request at Table 1/);
   f.bridge.sendInternalTableRequest(); f.bridge.sendInternalTableRequest();
   assert.equal(f.messages.filter(([message])=>message.type==='mydancr:internal-table-request').length,1);
-  const updated=f.event(); updated.data.profile={...profile,requestsTonight:3,requestStatus:'pending'};
+  const updated=f.event(); updated.data.profile={...profile,requestsTonight:3,requestStatus:'pending',requestId:id(8)}; updated.data.request.confirmed=true;
   await f.bridge.openInternalProfileMessage(updated);
   assert.equal(f.opens.length,1,'Request status must not reset an open gallery');
   assert.equal(f.bridge.profile().requestsTonight,3);
-  assert.match(f.bridge.internalProfileRequestActionsMarkup(f.bridge.profile()), /disabled><span class="internal-request-sent-label">Request sent</);
+  assert.match(f.bridge.internalProfileRequestActionsMarkup(f.bridge.profile()), /disabled aria-busy="false"><span class="internal-request-sent-label">Request sent</);
   f.bridge.sendInternalTableRequest();
   assert.equal(f.messages.filter(([message])=>message.type==='mydancr:internal-table-request').length,1);
 });
@@ -145,6 +145,19 @@ test('staff profiles show no guest table request action', async () => {
   assert.equal(f.bridge.internalProfileRequestActionsMarkup(f.bridge.profile()),'');
   f.bridge.sendInternalTableRequest();
   assert.equal(f.messages.some(([message])=>message.type==='mydancr:internal-table-request'),false);
+});
+
+test('full-profile cancellation uses the exact request, blocks duplicates, and preserves the gallery', async()=>{
+ const f=fixture(),event=f.event();event.data.profile={...profile,requestStatus:'acknowledged',requestId:id(8)};
+ await f.bridge.openInternalProfileMessage(event);
+ assert.match(f.bridge.internalProfileRequestActionsMarkup(f.bridge.profile()),/>Cancel request</);
+ f.bridge.sendInternalTableRequest();f.bridge.sendInternalTableRequest();
+ const cancel=f.messages.filter(([message])=>message.type==='mydancr:internal-table-cancel');
+ assert.equal(cancel.length,1);assert.equal(cancel[0][0].profileId,profile.id);assert.equal(cancel[0][0].requestId,id(8));
+ assert.match(f.bridge.internalProfileRequestActionsMarkup(f.bridge.profile()),/disabled aria-busy="true">Cancelling…/);
+ await f.bridge.openInternalProfileMessage(f.event());
+ assert.equal(f.opens.length,1,'Cancelling must not reset the media viewer');
+ assert.match(f.bridge.internalProfileRequestActionsMarkup(f.bridge.profile()),/>Request at Table 1</);
 });
 
 test('Internal replaces Going with actual requests and retains Views today while External keeps its metrics', () => {

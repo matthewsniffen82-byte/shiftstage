@@ -5,7 +5,7 @@ import { InternalRequestPushSettings } from "./InternalRequestPushSettings";
 import { InternalFullProfile, type InternalProfile as Profile, type InternalRequestAction } from "./InternalFullProfile";
 import { BROWSER_AUTH_SESSION_KEY, isCurrentBrowserSession, persistRefreshedBrowserAuthSession, readBrowserAuthSession } from "@/src/lib/dancr/browser-session";
 
-type Dancer = { id: string; stageName: string; workingUntil: string; avatarRevision: string; mainPhotoId: string | null; mainPhotoRevision: string; requestStatus?: "pending" | "acknowledged" | null };
+type Dancer = { id: string; stageName: string; workingUntil: string; avatarRevision: string; mainPhotoId: string | null; mainPhotoRevision: string; requestStatus?: "pending" | "acknowledged" | null; requestId?: string | null };
 type ClubLink = { id: string; kind: "table"; label: string; token: string };
 type ClubRequest = { id: string; link_id: string; dancer_id: string; status: "pending" | "acknowledged"; created_at: string };
 type Snapshot = { venueName: string; venueLogoUrl?: string | null; dancers: Dancer[]; kind?: "table"; label?: string; role?: string; links?: ClubLink[]; requests?: ClubRequest[]; receipt?: { status: string } | null };
@@ -84,6 +84,8 @@ export function InternalRoster({ token, operationsOnly = false }: { token?: stri
   const [notice, setNotice] = useState("");
   const [busy, setBusy] = useState(false);
   const [requestingDancers, setRequestingDancers] = useState<string[]>([]);
+  const [confirmedDancers, setConfirmedDancers] = useState<string[]>([]);
+  const confirmationTimers = useRef(new Map<string, ReturnType<typeof setTimeout>>());
   const [label, setLabel] = useState("");
   const [profile, setProfile] = useState<Profile | null>(null);
   const [openingProfileId, setOpeningProfileId] = useState("");
@@ -104,11 +106,12 @@ export function InternalRoster({ token, operationsOnly = false }: { token?: stri
     setSnapshot(null); setProfile(null); setOpeningProfileId(""); selectedProfile.current = ""; setError(message);
   }, []);
 
-  const refresh = useCallback(async (signal?: AbortSignal) => {
+  const refresh = useCallback(async (signal?: AbortSignal, requestsOnly = false) => {
     const generation = refreshGeneration.current;
     try {
-      const data = await rosterFetch(`${base}${token && requestKey.current ? `?requestKey=${requestKey.current}` : ""}`, token, undefined, signal);
+      const data = await rosterFetch(requestsOnly ? "/api/internal/requests" : `${base}${token && requestKey.current ? `?requestKey=${requestKey.current}` : ""}`, token, undefined, signal);
       if (!alive.current || signal?.aborted || generation !== refreshGeneration.current) return;
+      if (requestsOnly) { setSnapshot(current => current ? { ...current, requests: data.requests } : current); return; }
       hasSnapshot.current = true;
       setSnapshot(data); setError("");
       if (token && !restoredProfile.current) {
@@ -141,12 +144,16 @@ export function InternalRoster({ token, operationsOnly = false }: { token?: stri
 
   useEffect(() => {
     alive.current = true;
+    const timers = confirmationTimers.current;
     clearRoster();
     let controller = new AbortController();
     let timer: ReturnType<typeof setTimeout>;
+    let nextFullRefresh = 0;
     const poll = async (signal: AbortSignal) => {
-      await refresh(signal);
-      if (!signal.aborted) timer = setTimeout(() => void poll(signal), ROSTER_REFRESH_INTERVAL_MS);
+      const requestsOnly = !token && hasSnapshot.current && Date.now() < nextFullRefresh;
+      await refresh(signal, requestsOnly);
+      if (!requestsOnly) nextFullRefresh = Date.now() + ROSTER_REFRESH_INTERVAL_MS;
+      if (!signal.aborted) timer = setTimeout(() => void poll(signal), token ? ROSTER_REFRESH_INTERVAL_MS : 10000);
     };
     void poll(controller.signal);
     const sessionChanged = (event: StorageEvent) => {
@@ -157,7 +164,7 @@ export function InternalRoster({ token, operationsOnly = false }: { token?: stri
       void poll(controller.signal);
     };
     window.addEventListener("storage", sessionChanged);
-    return () => { alive.current = false; controller.abort(); clearTimeout(timer); window.removeEventListener("storage", sessionChanged); };
+    return () => { alive.current = false; timers.forEach(clearTimeout); timers.clear(); controller.abort(); clearTimeout(timer); window.removeEventListener("storage", sessionChanged); };
   }, [refresh, token, clearRoster]);
 
   useEffect(() => {
@@ -204,10 +211,19 @@ export function InternalRoster({ token, operationsOnly = false }: { token?: stri
       if (token && typeof body.dancerId === "string" && result.receipt) {
         requestKeys.current.delete(body.dancerId);
         const status = ["pending", "acknowledged"].includes(result.receipt.status) ? result.receipt.status : null;
-        setSnapshot(current => current ? { ...current, receipt: result.receipt, dancers: current.dancers.map(dancer => dancer.id === body.dancerId ? { ...dancer, requestStatus: status } : dancer) } : current);
-        setProfile(current => current && current.id === body.dancerId ? { ...current, requestStatus: status } : current);
+        const requestId = status ? result.receipt.id : null;
+        clearTimeout(confirmationTimers.current.get(dancerId));
+        if (status && body.action !== "cancel_request") {
+          setConfirmedDancers(current => [...current.filter(id => id !== dancerId), dancerId]);
+          confirmationTimers.current.set(dancerId, setTimeout(() => {
+            confirmationTimers.current.delete(dancerId);
+            if (alive.current) setConfirmedDancers(current => current.filter(id => id !== dancerId));
+          }, 1500));
+        } else setConfirmedDancers(current => current.filter(id => id !== dancerId));
+        setSnapshot(current => current ? { ...current, receipt: result.receipt, dancers: current.dancers.map(dancer => dancer.id === body.dancerId ? { ...dancer, requestStatus: status, requestId } : dancer) } : current);
+        setProfile(current => current && current.id === body.dancerId ? { ...current, requestStatus: status, requestId } : current);
       }
-      setNotice(token ? "Request sent to club staff. Staff acknowledgement does not guarantee the dancer is available." : "Saved.");
+      setNotice(token ? body.action === "cancel_request" ? "Request cancelled." : "Request sent to club staff. Staff acknowledgement does not guarantee the dancer is available." : "Saved.");
       setLabel("");
       // The receipt already confirms the guest's request; refresh details quietly.
       if (dancerId) void refresh();
@@ -215,7 +231,10 @@ export function InternalRoster({ token, operationsOnly = false }: { token?: stri
     } catch (reason) {
       if (alive.current) {
         if (reason instanceof RosterAccessError) clearRoster(reason.message);
-        else setNotice(reason instanceof Error ? reason.message : "Unable to save.");
+        else {
+          setNotice(reason instanceof Error ? reason.message : "Unable to save.");
+          if (body.action === "cancel_request") void refresh();
+        }
       }
     }
     finally {
@@ -237,13 +256,22 @@ export function InternalRoster({ token, operationsOnly = false }: { token?: stri
     void mutate({ dancerId, requestKey: requestKey.current });
   }
 
+  function cancelDancer(dancerId: string, requestId?: string | null) {
+    if (!token || !requestId || requestsInFlight.current.has(dancerId) || confirmedDancers.includes(dancerId)) return;
+    void mutate({ action: "cancel_request", dancerId, requestId });
+  }
+
   async function openProfile(dancer: Dancer) {
     setNotice("");
     setProfile(null); setOpeningProfileId(dancer.id);
     selectedProfile.current = dancer.id;
+    const generation = refreshGeneration.current;
     try {
       const data = await rosterFetch(`/api/internal/profile/${dancer.id}${token ? `?token=${encodeURIComponent(token)}` : ""}`, token);
-      if (alive.current && selectedProfile.current === dancer.id) setProfile(data.profile);
+      if (alive.current && selectedProfile.current === dancer.id) {
+        if (generation === refreshGeneration.current) setProfile(data.profile);
+        else void refresh();
+      }
     } catch (reason) {
       if (alive.current && selectedProfile.current === dancer.id) {
         selectedProfile.current = ""; setProfile(null); setOpeningProfileId("");
@@ -270,7 +298,14 @@ export function InternalRoster({ token, operationsOnly = false }: { token?: stri
             {dancer.mainPhotoId ? <ProtectedMedia key={dancer.mainPhotoId} id={dancer.mainPhotoId} revision={dancer.mainPhotoRevision} kind="photo" token={token} priority={index < 3} lazy={index >= 9} className="ir-main-photo" alt={`${dancer.stageName}’s main photo`} /> : <span className="ir-main-photo ir-photo-placeholder">Photo unavailable</span>}
             <span className="ir-dancer-copy"><strong>{dancer.stageName}</strong><span>{openingProfileId === dancer.id ? "Opening…" : "View profile ↗"}</span></span>
           </button>
-          {snapshot.kind === "table" ? <button type="button" className="ir-table-request" data-request-sent={dancer.requestStatus ? "" : undefined} aria-label={dancer.requestStatus ? `Request sent for ${dancer.stageName}` : `Request ${dancer.stageName} at our table`} aria-busy={requestingDancers.includes(dancer.id)} disabled={requestingDancers.includes(dancer.id) || Boolean(dancer.requestStatus)} onClick={() => requestDancer(dancer.id)}>{dancer.requestStatus ? <span className="internal-request-sent-label">Request sent</span> : requestingDancers.includes(dancer.id) ? "Sending…" : "Request"}</button> : null}
+          {snapshot.kind === "table" ? <button type="button" className="ir-table-request"
+            data-request-sent={dancer.requestStatus ? "" : undefined}
+            aria-label={confirmedDancers.includes(dancer.id) ? `Request sent for ${dancer.stageName}` : dancer.requestStatus ? `Cancel request for ${dancer.stageName}` : `Request ${dancer.stageName} at our table`}
+            aria-busy={requestingDancers.includes(dancer.id)}
+            disabled={requestingDancers.includes(dancer.id) || confirmedDancers.includes(dancer.id) || Boolean(dancer.requestStatus && !dancer.requestId)}
+            onClick={() => dancer.requestStatus ? cancelDancer(dancer.id, dancer.requestId) : requestDancer(dancer.id)}>
+            {requestingDancers.includes(dancer.id) ? dancer.requestStatus ? "Cancelling…" : "Sending…" : confirmedDancers.includes(dancer.id) ? <span className="internal-request-sent-label">Request sent</span> : dancer.requestStatus ? "Cancel request" : "Request"}
+          </button> : null}
         </article>)}</div> : <div className="ir-empty"><h3>The floor is getting ready</h3><p>{staff ? "Dancers appear here after choosing Internal or Both at the dressing-room NFC sticker." : "No dancers are available to request right now. Please check back shortly or ask club staff."}</p></div>}
       </section> : null}
       {snapshot.receipt ? <p className="ir-notice" role="status">Your request: <strong>{snapshot.receipt.status === "acknowledged" ? "Seen by club staff" : snapshot.receipt.status}</strong></p> : null}
@@ -282,12 +317,12 @@ export function InternalRoster({ token, operationsOnly = false }: { token?: stri
         {snapshot.links?.map(link => <article className="ir-link" key={link.id}><div><strong>{link.label}</strong><small>Table requests</small>{snapshot.role !== "staff" ? <form key={link.label} className="ir-rename-form" onSubmit={event => { event.preventDefault(); const form = new FormData(event.currentTarget); void mutate({ action: "link_update", id: link.id, label: String(form.get("label") || "") }); }}><input name="label" aria-label={`Table number or name for ${link.label}`} defaultValue={link.label} required maxLength={60} /><button disabled={busy}>Save name</button></form> : null}</div><div className="ir-actions"><a href={`/internal/club/${link.token}`} target="_blank" rel="noreferrer">Open</a><a href={`/internal/sign/${link.token}`} target="_blank" rel="noreferrer">Print QR sign</a><button className="ir-secondary" onClick={() => void navigator.clipboard.writeText(`${window.location.origin}/internal/club/${link.token}`).then(() => setNotice("Club link copied.")).catch(() => setNotice("Open the link and copy its address."))}>Copy</button>{snapshot.role !== "staff" ? <button className="ir-secondary" disabled={busy} onClick={() => void mutate({ action: "link_revoke", id: link.id })}>Revoke</button> : null}</div></article>)}
       </section></div> : null}
     </> : null}
-    <ClubProfileDialog profile={profile} profileId={openingProfileId || profile?.id} token={token} request={token && snapshot?.kind === "table" ? { tableLabel: snapshot.label || "our table", busy: requestingDancers.includes(profile?.id || ""), message: notice } : undefined} onRequest={() => { if (profile) requestDancer(profile.id); }} onReady={() => setOpeningProfileId("")} onError={() => { selectedProfile.current = ""; setProfile(null); setOpeningProfileId(""); setNotice("That profile could not load. Please try again."); }} onClose={() => { selectedProfile.current = ""; setProfile(null); setOpeningProfileId(""); }} />
+    <ClubProfileDialog profile={profile} profileId={openingProfileId || profile?.id} token={token} request={token && snapshot?.kind === "table" ? { tableLabel: snapshot.label || "our table", busy: requestingDancers.includes(profile?.id || ""), confirmed: confirmedDancers.includes(profile?.id || ""), message: notice } : undefined} onRequest={() => { if (profile) requestDancer(profile.id); }} onCancel={() => { if (profile) cancelDancer(profile.id, profile.requestId); }} onReady={() => setOpeningProfileId("")} onError={() => { selectedProfile.current = ""; setProfile(null); setOpeningProfileId(""); setNotice("That profile could not load. Please try again."); }} onClose={() => { selectedProfile.current = ""; setProfile(null); setOpeningProfileId(""); }} />
     {!operationsOnly ? <footer>Powered by MyDancr · {staff ? "Visibility is chosen by each dancer at check-in." : "Availability may change. Club staff coordinate all requests."}</footer> : null}
   </div>;
 }
 
-function ClubProfileDialog({ profile, profileId = profile?.id || "", token, request, onRequest, onReady, onError, onClose }: { profile: Profile | null; profileId?: string; token?: string; request?: InternalRequestAction; onRequest?: () => void; onReady?: () => void; onError?: () => void; onClose: () => void }) {
+function ClubProfileDialog({ profile, profileId = profile?.id || "", token, request, onRequest, onCancel, onReady, onError, onClose }: { profile: Profile | null; profileId?: string; token?: string; request?: InternalRequestAction; onRequest?: () => void; onCancel?: () => void; onReady?: () => void; onError?: () => void; onClose: () => void }) {
   const profileDialog = useRef<HTMLDialogElement>(null);
   const [readyId, setReadyId] = useState("");
   useEffect(() => {
@@ -296,7 +331,7 @@ function ClubProfileDialog({ profile, profileId = profile?.id || "", token, requ
   }, [profile, profileId, readyId]);
   return (
     <dialog className="ir-profile-dialog ir-full-profile-dialog" ref={profileDialog} onClose={onClose} aria-label={profile ? `${profile.stage_name}’s full profile` : "Dancer profile"}>
-      {profileId ? <InternalFullProfile key={profileId} profileId={profileId} profile={profile} token={token} request={request} onRequest={onRequest} onReady={() => { setReadyId(profileId); onReady?.(); }} onError={onError || onClose} onClose={onClose} /> : null}
+      {profileId ? <InternalFullProfile key={profileId} profileId={profileId} profile={profile} token={token} request={request} onRequest={onRequest} onCancel={onCancel} onReady={() => { setReadyId(profileId); onReady?.(); }} onError={onError || onClose} onClose={onClose} /> : null}
     </dialog>
   );
 }

@@ -172,3 +172,20 @@ test('only the active same-origin profile frame can start the full-page account 
   assert.equal(navigation.length, 1);
   assert.equal(messages.at(-1).type, 'mydancr:internal-profile-auth-error');
 });
+
+test('only the active same-origin frame can cancel the current exact request',()=>{
+ const f=fixture(),effects=[],child={postMessage(){}};let receive,refIndex=0,cancels=0;
+ const exports={},profile={id,requestId:state,requestStatus:'pending'},request={busy:false,confirmed:false};
+ vm.runInNewContext(ts.transpileModule(read('app/internal/InternalFullProfile.tsx'),{
+  compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,jsx:ts.JsxEmit.ReactJSX},
+ }).outputText,{exports,window:{setTimeout:()=>1,clearTimeout(){},location:{origin:'https://example.invalid'},
+  addEventListener:(_name,fn)=>{receive=fn},removeEventListener(){}},require:name=>name==='react'?{
+   useEffect:effect=>effects.push(effect),useCallback:callback=>callback,useRef:initial=>({current:refIndex++===0?{contentWindow:child}:initial}),
+  }:name==='react/jsx-runtime'?require(name):f.api});
+ exports.InternalFullProfile({profile,request,token:clubToken,onClose(){},onCancel:()=>cancels++});effects.forEach(effect=>effect());
+ const event={origin:'https://example.invalid',source:child,data:{type:'mydancr:internal-table-cancel',profileId:id,requestId:state}};
+ for(const invalid of [{origin:'https://foreign.invalid'},{source:{}},{data:{...event.data,profileId:state}},{data:{...event.data,requestId:id}}])receive({...event,...invalid});
+ request.busy=true;receive(event);request.busy=false;request.confirmed=true;receive(event);request.confirmed=false;
+ profile.requestStatus=null;receive(event);profile.requestStatus='pending';
+ assert.equal(cancels,0);receive(event);assert.equal(cancels,1);
+});

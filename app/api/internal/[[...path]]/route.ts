@@ -1,4 +1,6 @@
 import { after, NextResponse } from "next/server";
+import { cancelInternalRequest } from "@/src/lib/dancr/internal-request-cancel";
+import { deliverInternalCancellationPush } from "@/src/lib/dancr/internal-request-cancellation-push";
 import { deliverInternalRequestPush } from "@/src/lib/dancr/internal-request-push";
 import { internalMainPhotos } from "@/src/lib/dancr/internal-main-photo";
 import { internalRequestsTonight, internalTableRequestStates } from "@/src/lib/dancr/internal-request-activity";
@@ -33,8 +35,18 @@ export async function GET(request: Request, context: Context) {
     const url = new URL(request.url);
     const admin = createAdminSupabaseClient();
     const token = path[0] === "link" ? path[1] : url.searchParams.get("token") ?? undefined;
-    if (path.length > 2 || ![undefined, "link", "avatar", "profile", "photo", "video", "video-poster"].includes(path[0]) || (path[0] === "link" && !token)) return json({ ok: false, error: "Not found." }, 404);
+    if (path.length > 2 || ![undefined, "link", "requests", "avatar", "profile", "photo", "video", "video-poster"].includes(path[0]) || (path[0] === "link" && !token)
+      || (path[0] === "requests" && (path.length !== 1 || token !== undefined))) return json({ ok: false, error: "Not found." }, 404);
     const scope = await internalScope(admin, request, token);
+    if (path[0] === "requests") {
+      const [result, members] = await Promise.all([
+        admin.from("internal_roster_requests").select("id,link_id,dancer_id,status,created_at").eq("venue_id", scope.venueId)
+          .in("status", ["pending", "acknowledged"]).gte("created_at", new Date(Date.now() - 6 * 3600000).toISOString()).order("created_at").limit(200),
+        internalMembers(admin, scope.venueId),
+      ]);
+      if (result.error) throw result.error;
+      return json({ ok: true, requests: (result.data || []).filter(item => members.some(member => member.id === item.dancer_id)), session: scope.session });
+    }
     // Staff see their approved affiliated dancers; table links remain internal-shift-only.
     const members = scope.link ? await internalMembers(admin, scope.venueId) : await venueRosterMembers(admin, scope.venueId);
     if (path[0] === "profile") {
@@ -58,7 +70,7 @@ export async function GET(request: Request, context: Context) {
       const videos = (results[3].data || []).map(({ storage_path, moderation_details, ...video }) => ({
         ...video, has_poster: Boolean(videoPosterStoragePath({ storage_path, moderation_details })),
       }));
-      return json({ ok: true, profile: { ...results[0].data, avatarRevision, workingUntil: members.find(member => member.id === path[1])?.working_until, venueName: scope.venueName, requestsTonight, requestStatus: tableRequests?.get(path[1]) || null, photos: results[1].data || [], socialLinks: socials, videos }, session: scope.session });
+      return json({ ok: true, profile: { ...results[0].data, avatarRevision, workingUntil: members.find(member => member.id === path[1])?.working_until, venueName: scope.venueName, requestsTonight, requestStatus: tableRequests?.get(path[1])?.status || null, requestId: tableRequests?.get(path[1])?.id || null, photos: results[1].data || [], socialLinks: socials, videos }, session: scope.session });
     }
     if (["avatar", "photo", "video", "video-poster"].includes(path[0])) {
       const width = url.searchParams.has("width") ? Number(url.searchParams.get("width")) : null;
@@ -120,7 +132,7 @@ export async function GET(request: Request, context: Context) {
         if (error) throw error;
         if (data) receipt = { status: Date.parse(data.created_at) > Date.now() - 6 * 3600000 && members.some(d => d.id === data.dancer_id) ? data.status : "cancelled" };
       }
-      return json({ ok: true, venueName: scope.venueName, venueLogoUrl: scope.venueLogoUrl, kind: scope.link.kind, label: scope.link.label, dancers: dancers.map(dancer => ({ ...dancer, requestStatus: tableRequests.get(dancer.id) || null })), receipt });
+      return json({ ok: true, venueName: scope.venueName, venueLogoUrl: scope.venueLogoUrl, kind: scope.link.kind, label: scope.link.label, dancers: dancers.map(dancer => ({ ...dancer, requestStatus: tableRequests.get(dancer.id)?.status || null, requestId: tableRequests.get(dancer.id)?.id || null })), receipt });
     }
     const results = await Promise.all([
       admin.from("internal_roster_links").select("id,kind,label,token,active").eq("venue_id", scope.venueId).eq("active", true).eq("kind", "table").order("created_at"),
@@ -144,6 +156,16 @@ export async function POST(request: Request, context: Context) {
     const admin = createAdminSupabaseClient();
     if (path.length === 2 && path[0] === "link") {
       const scope = await internalScope(admin, request, path[1]);
+      if (body.action === "cancel_request") {
+        if (!scope.link || !isInternalUuid(body.dancerId) || !isInternalUuid(body.requestId)) throw new PublicApiError("INVALID_REQUEST", "Choose the request to cancel.", 400);
+        const receipt = await cancelInternalRequest(admin, scope.venueId, scope.link.id, body.dancerId, body.requestId);
+        after(async () => {
+          try { await deliverInternalCancellationPush(createAdminSupabaseClient(), receipt.id); }
+          catch { console.warn("INTERNAL_REQUEST_CANCELLATION_ALERT_FAILED"); }
+        });
+        return json({ ok: true, receipt });
+      }
+      if (body.action !== undefined) throw new PublicApiError("INVALID_REQUEST", "Invalid table action.", 400);
       if (scope.link?.kind !== "table" || !isInternalUuid(body.dancerId) || !isInternalUuid(body.requestKey)) throw new PublicApiError("INVALID_REQUEST", "Choose an available dancer before sending a request.", 400);
       const { data, error } = await admin.rpc("internal_roster_request", { p_token: path[1], p_dancer: body.dancerId, p_key: body.requestKey });
       if (error) throw error;

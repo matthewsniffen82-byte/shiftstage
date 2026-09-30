@@ -23,9 +23,9 @@ export async function internalRequestsTonight(client: SupabaseClient, venueId: s
 
 /** The table's open requests only; never expose another table's activity. */
 export async function internalTableRequestStates(client: SupabaseClient, venueId: string, linkId: string) {
-  const { data, error } = await client.from("internal_roster_requests").select("dancer_id,status")
+  const { data, error } = await client.from("internal_roster_requests").select("id,dancer_id,status")
     .eq("venue_id", venueId).eq("link_id", linkId).in("status", ["pending", "acknowledged"])
     .gte("created_at", new Date(Date.now() - 6 * 3600000).toISOString()).limit(50);
   if (error) throw error;
-  return new Map<string, "pending" | "acknowledged">((data || []).map(row => [row.dancer_id, row.status]));
+  return new Map<string, { id: string; status: "pending" | "acknowledged" }>((data || []).map(row => [row.dancer_id, { id: row.id, status: row.status }]));
 }
