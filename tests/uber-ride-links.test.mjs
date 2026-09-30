@@ -200,8 +200,8 @@ test("the reusable control hides private, unpublished, and invalid destinations"
   assert.match(componentSource, /venue\.isActive === false \|\| venue\.isPublic === false/);
   assert.match(componentSource, /if \(!venue.id\) return null/);
   assert.match(dancerPageSource, /const actionShift = activeShift \|\| null[\s\S]*?getVenueProfile\(client, actionShift\.venueSlug\)/);
-  assert.match(dancerPageSource, /profile-tonight-travel-actions[\s\S]*?<DancerDirectionsButton[\s\S]*?<UberRideButton/);
-  assert.match(dancerPageSource, /source="dancer_profile"/);
+  assert.match(dancerPageSource, /profile-tonight-travel-actions[\s\S]*?<DancerDirectionsButton/);
+  assert.doesNotMatch(dancerPageSource, /<UberRideButton/);
 });
 
 test("clicking the reusable free ride control isolates card navigation without recording an Uber booking", () => {
@@ -212,27 +212,35 @@ test("clicking the reusable free ride control isolates card navigation without r
   assert.match(eventRouteSource, /session_id: uberAnalyticsSessionId\(source, sessionId, timestamp\)/);
 });
 
-test("eligible live-shell dancer and venue cards expose compact ride links without parent navigation", () => {
+test("live-shell cards use venue directions while legacy ride links still isolate parent navigation", () => {
   assert.match(liveShellSource, /const fallback = "https:\/\/m\.uber\.com\/looking"/);
   assert.match(liveShellSource, /url\.searchParams\.set\("drop\[0\]", JSON\.stringify\(dropoff\)\)/);
   assert.match(liveShellSource, /function rideActionLabel\(source, venueName\)[\s\S]*?source === "dancer_profile" \? `Free Entry \+ Pickup at \$\{safeVenueName\}` : "Free Ride \+ Entry"/);
-  assert.match(liveShellSource, /function homeDancerGridActionsMarkup[\s\S]*?source: "tonight_feed"[\s\S]*?home-dancer-grid-uber/);
-  assert.match(liveShellSource, /function homeVenueDiscoveryFeedSlide[\s\S]*?source: "tonight_feed"[\s\S]*?home-venue-discovery-uber/);
+  const dancerActions = liveShellSource.match(/function homeDancerGridActionsMarkup\([\s\S]*?\n    \}/)?.[0] || "";
+  const venueActions = liveShellSource.match(/function homeVenueDiscoveryFeedSlide\([\s\S]*?\n    \}/)?.[0] || "";
+  assert.match(dancerActions, /venueDirectionsMarkup[\s\S]*?home-dancer-grid-directions/);
+  assert.match(venueActions, /venueDirectionsMarkup[\s\S]*?venue-card-directions-action/);
+  assert.doesNotMatch(dancerActions + venueActions, /uberRideLinkMarkup|data-free-ride-link/);
   assert.doesNotMatch(liveShellSource, /label: "(?:Uber|Request Uber)"|label: `Ride to \$\{venue\.name\}`/);
   assert.match(liveShellSource, /document\.addEventListener\("click", \(event\) => \{[\s\S]*?\[data-free-ride-link\][\s\S]*?event\.stopPropagation\(\)[\s\S]*?\}, true\)/);
   assert.doesNotMatch(liveShellSource, /recordUberRideLinkClick|Opens Uber|Get a Ride/);
 });
 
-test("venue and dancer profiles expose their required primary ride actions", () => {
-  assert.match(liveShellSource, /source: "venue_page"[\s\S]*?className: "venue-detail-entry-ride"/);
-  assert.match(liveShellSource, /function dancerProfileUberRideMarkup[\s\S]*?source: "dancer_profile"[\s\S]*?className: "profile-uber-ride"/);
+test("profiles use the current venue and directions flow while legacy ride controls keep touch targets", () => {
+  const venueProfile = liveShellSource.match(/function venueDetailPage\([\s\S]*?\n    \}/)?.[0] || "";
+  const dancerTravel = liveShellSource.match(/function dancerProfileTonightTravelActionsMarkup\([\s\S]*?\n    \}/)?.[0] || "";
+  assert.match(venueProfile, /venueOfferMarkup\(venue\)/);
+  assert.match(dancerTravel, /if \(isWorkingTonight\(profile, city\)\) return ""/);
+  assert.match(dancerTravel, /dancerProfileDirectionsMarkup/);
+  assert.match(dancerTravel, /dancerProfileUpcomingVenueDealMarkup/);
+  assert.doesNotMatch(venueProfile + dancerTravel, /uberRideLinkMarkup|dancerProfileUberRideMarkup/);
   assert.match(componentStyles, /min-height: 44px/);
   assert.match(componentStyles, /\.venuePage[\s\S]*?width: 100%/);
   assert.match(componentStyles, /\.dancerProfile[\s\S]*?width: 100%[\s\S]*?height: 48px/);
 });
 
-test("Get a Ride stays neutral glass at rest and reserves violet fill for general interaction", () => {
-  assert.match(componentStyles, /\.button \{[\s\S]*?var\(--dancr-color-brand-primary-medium[\s\S]*?rgba\(17, 17, 24, 0\.82\)[\s\S]*?backdrop-filter: blur\(16px\)/);
+test("the legacy ride control keeps its violet outline and existing interaction feedback", () => {
+  assert.match(componentStyles, /\.button \{[\s\S]*?var\(--dancr-color-avatar-ring-violet[\s\S]*?rgba\(17, 17, 24, 0\.82\)[\s\S]*?backdrop-filter: blur\(16px\)/);
   assert.match(componentStyles, /\.button:focus-visible[\s\S]*?brand-primary[\s\S]*?16%/);
   assert.match(componentStyles, /@media \(hover: hover\) and \(pointer: fine\)[\s\S]*?\.button:hover[\s\S]*?brand-primary[\s\S]*?16%/);
   assert.match(componentStyles, /-webkit-tap-highlight-color: transparent/);

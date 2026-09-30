@@ -406,3 +406,107 @@ body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-she
     transition: none !important;
   }
 }
+
+/* Dancer profile controls share one quiet material across the discovery modal,
+ * public page, editor preview, and internal full-profile viewer. Important
+ * declarations in this layer take precedence over legacy unlayered button
+ * overrides; the explicit dancer scope leaves venue controls unchanged. */
+@layer dancer-profile-controls {
+  body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell, .dancer-profile-preview-overlay)
+    .profile-actions-compact :is(.profile-action-icon-control, .profile-action-main > span:last-child) {
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    letter-spacing: 0 !important;
+    line-height: 1.25 !important;
+  }
+
+  body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell, .dancer-profile-preview-overlay)
+    .profile-actions-compact .profile-action-icon-control :is(.action-icon, .profile-action-icon-frame, svg) {
+    width: 18px !important;
+    min-width: 18px !important;
+    max-width: 18px !important;
+    height: 18px !important;
+    min-height: 18px !important;
+    max-height: 18px !important;
+    flex-basis: 18px !important;
+    border: 0 !important;
+    background: none !important;
+    box-shadow: none !important;
+    filter: none !important;
+    transform: none !important;
+    stroke-width: 1.6 !important;
+  }
+
+  /* Follow is the main public action. In the internal viewer the table
+   * request takes that role; Follow keeps the neutral utility material. */
+  html:not(.internal-profile-embed) body.dancr-button-system
+    :is(#profileBackdrop #profileModal, .public-profile-shell, .dancer-profile-preview-overlay)
+    .profile-actions-compact:not(.profile-venue-actions) > button[aria-pressed="false"]:enabled,
+  html.internal-profile-embed body.dancr-button-system #profileBackdrop #profileModal
+    [data-internal-table-request]:enabled:not([data-request-sent]) {
+    --profile-action-background: #7651ad linear-gradient(#7651ad, #7651ad) !important;
+    --profile-action-border: transparent !important;
+    --profile-action-shadow: none !important;
+  }
+
+  @media (hover: hover) {
+    html:not(.internal-profile-embed) body.dancr-button-system
+      :is(#profileBackdrop #profileModal, .public-profile-shell, .dancer-profile-preview-overlay)
+      .profile-actions-compact:not(.profile-venue-actions) > button[aria-pressed="false"]:enabled:hover,
+    html.internal-profile-embed body.dancr-button-system #profileBackdrop #profileModal
+      [data-internal-table-request]:enabled:not([data-request-sent]):hover {
+      --profile-action-background: #805bb7 linear-gradient(#805bb7, #805bb7) !important;
+    }
+  }
+
+  html:not(.internal-profile-embed) body.dancr-button-system
+    :is(#profileBackdrop #profileModal, .public-profile-shell, .dancer-profile-preview-overlay)
+    .profile-actions-compact:not(.profile-venue-actions) > button[aria-pressed="false"]:enabled:active,
+  html.internal-profile-embed body.dancr-button-system #profileBackdrop #profileModal
+    [data-internal-table-request]:enabled:not([data-request-sent]):active {
+    --profile-action-background: #664394 linear-gradient(#664394, #664394) !important;
+  }
+
+  /* Secondary travel controls keep their labels, destinations, and 44px
+   * targets. Same-color gradients retain flat fills in Android dark mode. */
+  body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell, .dancer-profile-preview-overlay)
+    .profile-tonight-travel-actions > :is(.profile-primary-directions, .profile-directions-button, .profile-uber-ride, .profile-travel-placeholder, a[href^="https://m.uber.com/"], a[href^="/rides/"]) {
+    border: 1px solid #36313e !important;
+    border-radius: 12px !important;
+    color: #eee9f4 !important;
+    background: #1c1922 linear-gradient(#1c1922, #1c1922) !important;
+    box-shadow: none !important;
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    filter: none !important;
+    text-shadow: none !important;
+    opacity: 1 !important;
+  }
+
+  @media (hover: hover) {
+    body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell, .dancer-profile-preview-overlay)
+      .profile-tonight-travel-actions > :is(.profile-primary-directions, .profile-directions-button, .profile-uber-ride, a[href^="https://m.uber.com/"], a[href^="/rides/"]):not(:disabled):not([aria-disabled="true"]):not(.is-travel-unavailable):not(.is-inactive-demo):hover {
+      border-color: #50465c !important;
+      background: #292332 linear-gradient(#292332, #292332) !important;
+    }
+  }
+
+  body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell, .dancer-profile-preview-overlay)
+    .profile-tonight-travel-actions > :is(.profile-primary-directions, .profile-directions-button, .profile-uber-ride, .profile-travel-placeholder, a[href^="https://m.uber.com/"], a[href^="/rides/"]):is(:disabled, [aria-disabled="true"], .is-travel-unavailable, .is-inactive-demo) {
+    border-color: #2b2931 !important;
+    color: #aaa4b6 !important;
+    background: #141218 linear-gradient(#141218, #141218) !important;
+  }
+
+  body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell, .dancer-profile-preview-overlay)
+    .profile-tonight-travel-actions > :is(.profile-primary-directions, .profile-directions-button, .profile-uber-ride, .profile-travel-placeholder, a[href^="https://m.uber.com/"], a[href^="/rides/"]) :is(.action-icon, svg) {
+    color: inherit !important;
+    border: 0 !important;
+    background: none !important;
+    box-shadow: none !important;
+    filter: none !important;
+    stroke-width: 1.6 !important;
+  }
+}
