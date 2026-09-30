@@ -464,12 +464,12 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
 /* Space separates the venue and media sections, without a surrounding box. */
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell, .dancer-profile-preview-overlay)
   :is(.modal-actions, .live-actions).profile-actions-compact:not(.profile-venue-actions) {
-  margin-bottom: 8px !important;
+  margin-bottom: 2px !important;
 }
 
 html body.dancr-button-system :is(#profileBackdrop #profileModal .modal-grid, .public-profile-shell, .dancer-profile-preview-overlay)
   .profile-tonight-card {
-  padding: 8px 0 !important;
+  padding: 2px 0 8px !important;
   row-gap: 8px !important;
   border: 0 !important;
   border-radius: 0 !important;
