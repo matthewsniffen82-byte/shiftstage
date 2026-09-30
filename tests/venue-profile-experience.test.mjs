@@ -27,13 +27,13 @@ test("the canonical in-app venue page is dedicated to the selected club and its 
   assert.match(venueDetail, /venueDancers\(city, venue\.name\)/);
   assert.match(
     venueDetail,
-    /const tonight = localProfiles[\s\S]*?isWorkingTonight\(profile\)[\s\S]*?const upcoming = localProfiles[\s\S]*?!isWorkingTonight\(profile, city\) && profile\.scheduled/,
+    /const tonight = localProfiles[\s\S]*?isWorkingTonight\(profile\)/,
   );
   assert.match(venueDetail, /recordVenuePageEvent\(\{ venueId: venue\.id, eventType: "page_view", source: "venue_page" \}\)/);
   assert.match(venueDetail, /venueOfferMarkup\(venue\)/);
   assert.doesNotMatch(venueDetail, /\/api\/public\/maps\/embed\?address=|<iframe/i);
   assert.match(venueDetail, /const venueValue = escapeOptionValue\(venue\.id \|\| venue\.name\)/);
-  assert.match(venueDetail, /class="venue-secondary-actions"[\s\S]*?class="action-btn secondary follow-venue-btn[\s\S]*?data-venue-follow="\$\{venueValue\}"[\s\S]*?class="action-btn secondary venue-detail-share"[\s\S]*?data-share-venue="\$\{venueValue\}"/);
+  assert.match(venueDetail, /class="venue-secondary-actions profile-actions-compact"[\s\S]*?class="action-btn secondary follow-venue-btn[\s\S]*?data-venue-follow="\$\{venueValue\}"[\s\S]*?class="action-btn secondary venue-detail-share[^"]*"[\s\S]*?data-share-venue="\$\{venueValue\}"/);
   assert.match(venueDetail, /venueDirectionsMarkup\(\{ venue, className: "venue-address-directions", city \}\)/);
   assert.match(venueDetail, /class="venue-identity-meta"[\s\S]*?class="venue-identity-location"><span class="meta">[\s\S]*?details\.city[\s\S]*?details\.state[\s\S]*?venue-identity-distance[\s\S]*?details\.distanceLabel/);
   assert.match(venueDetail, /<h2 id="venueDetailName" class="venue-detail-accessible-name">\$\{escapeHtml\(details\.name\)\}<\/h2>[\s\S]*?class="venue-identity-meta"/);
@@ -47,25 +47,19 @@ test("the canonical in-app venue page is dedicated to the selected club and its 
   assert.doesNotMatch(venueDetail, /details\.description|venue-confirmed shifts|nightlife venue in/);
   assert.doesNotMatch(venueDetail, /<div class="info-tile"><strong>Hours/);
   assert.match(venueDetail, /<span>Working now · \$\{tonight\.length\}<\/span>/);
-  assert.match(venueDetail, /const operatingSummaryLabel = operatingStatus\.state === "unknown"[\s\S]*?\? "Not posted"[\s\S]*?: operatingStatus\.label/);
-  assert.match(venueDetail, /venue-operating-status is-\$\{operatingStatus\.state\}">\$\{escapeHtml\(operatingSummaryLabel\)\}/);
-  assert.match(venueDetail, /data-venue-jump="venue-upcoming-shifts"[\s\S]*?<span>upcoming<\/span>/);
-  assert.match(venueDetail, /id="venue-upcoming-shifts"[\s\S]*?<span>Upcoming · \$\{upcoming\.length\}<\/span>/);
-  assert.match(venueDetail, /class="venue-status-grid" aria-label="Tonight at \$\{escapeHtml\(details\.name\)\}"[\s\S]*?venue-operating-summary[\s\S]*?venue-status-kicker">Hours[\s\S]*?\$\{quickStats\}/);
   assert.match(venueDetail, /class="venue-info venue-location-section"[\s\S]*?class="venue-location-actions venue-primary-actions"[\s\S]*?venue-address-directions/);
   assert.doesNotMatch(venueDetail, /rideMarkup|uberRideLinkMarkup/);
   assert.match(aesthetic, /\.venue-primary-actions \{\s+grid-template-columns: minmax\(0, 1fr\) !important;/);
   assert.ok(venueDetail.indexOf("${venueOfferMarkup(venue)}") < venueDetail.indexOf("${activitySections}"));
-  assert.ok(venueDetail.indexOf("${activitySections}") < venueDetail.indexOf("venue-location-section"));
+  assert.ok(venueDetail.indexOf("venue-location-section") < venueDetail.indexOf("${activitySections}"));
   assert.ok(venueDetail.indexOf("venue-location-section") < venueDetail.indexOf("venue-secondary-actions"));
   assert.doesNotMatch(liveApp, /function fictionalVenueContactDetails\(/);
   assert.doesNotMatch(venueDetail, /venueInformationRows|venueInformationMarkup|venue-information-section|venue-information-heading|venue-contact-details-content/);
-  assert.equal((venueDetail.match(/venue-status-kicker">Hours/g) || []).length, 1);
   assert.doesNotMatch(venueDetail, /details\.(?:phone|website)|venuePhoneHref|venueWebsiteHref|href="tel:|venue-contact-link|<strong>(?:Phone|Website)<\/strong>/);
   assert.doesNotMatch(venueDetail, /<details|<summary/);
-  assert.match(venueDetail, /<\/article>[\s\S]*?<div class="venue-detail-exploration">[\s\S]*?\$\{activitySections\}[\s\S]*?class="venue-info venue-location-section"/);
-  assert.match(venueDetail, /class="venue-action-stack"[\s\S]*?class="venue-location-actions venue-primary-actions"[\s\S]*?class="venue-secondary-actions"/);
-  assert.match(venueDetail, /id="venue-no-shift-posted"[\s\S]*?<span>No Shift Posted<\/span>/);
+  assert.match(venueDetail, /class="venue-info venue-location-section"[\s\S]*?<\/article>[\s\S]*?<div class="venue-detail-exploration">[\s\S]*?\$\{activitySections\}/);
+  assert.match(venueDetail, /class="venue-action-stack"[\s\S]*?class="venue-location-actions venue-primary-actions"[\s\S]*?class="venue-secondary-actions profile-actions-compact"/);
+  assert.doesNotMatch(venueDetail, /id="venue-no-shift-posted"/);
   assert.doesNotMatch(venueDetail, /Trending at|is-trending/);
   assert.doesNotMatch(venueDetail, /verified shifts/i);
   assert.doesNotMatch(
@@ -83,13 +77,13 @@ test("venue hours appear once in the summary without a duplicate information sec
   )?.[0] || "";
 
   assert.doesNotMatch(venueDetails, /phone:|website:|fictionalContact/);
-  assert.equal((venueDetail.match(/venue-status-kicker">Hours/g) || []).length, 1);
-  assert.match(venueDetail, /venue-operating-status[\s\S]*?operatingStatus\.hoursLabel/);
+  assert.equal((venueDetail.match(/class="venue-profile-hours"/g) || []).length, 1);
+  assert.match(venueDetail, /venue-profile-hours[\s\S]*?operatingStatus\.hoursLabel/);
   assert.doesNotMatch(venueDetail, /Venue information|venue-information-heading|<strong>Hours<\/strong>/);
   assert.doesNotMatch(venueDetail, /<strong>Phone<\/strong>|<strong>Website<\/strong>|href="tel:|target="_blank"/);
 });
 
-test("venue details reuse the production Dancers grid card for every schedule status", () => {
+test("venue details reuse the production Dancers grid for dancers working now", () => {
   const venueGrid = liveApp.match(
     /function venueDancerGridMarkup\(profiles, city, label\) \{[\s\S]*?(?=\n    function venueDetailPage)/,
   )?.[0] || "";
@@ -103,9 +97,7 @@ test("venue details reuse the production Dancers grid card for every schedule st
   assert.match(venueGrid, /class="venue-dancer-grid home-dancer-grid home-dancer-three-column"/);
   assert.match(venueGrid, /profiles\.map\(\(profile\) => homeDancerGridCard\(profile, city, true\)\)/);
   assert.match(venueDetail, /const tonight = localProfiles[\s\S]*?isWorkingTonight\(profile\)/);
-  assert.match(venueDetail, /const upcoming = localProfiles[\s\S]*?!isWorkingTonight\(profile, city\) && profile\.scheduled/);
-  assert.match(venueDetail, /const noSchedule = localProfiles[\s\S]*?!isWorkingTonight\(profile, city\) && !profile\.scheduled/);
-  assert.equal((venueDetail.match(/venueDancerGridMarkup\(/g) || []).length, 3);
+  assert.equal((venueDetail.match(/venueDancerGridMarkup\(/g) || []).length, 1);
   assert.doesNotMatch(venueDetail, /profileCard\(|venueUpcomingShiftRow\(|venue-shift-row|venue-shift-list/);
   assert.match(sharedCard, /homeDiscoveryFeedStatus\(profile\)[\s\S]*?homeDancerGridScheduleLabel\(profile, city\)/);
   assert.match(sharedCard, /groupClass = status\.className === "is-now"[\s\S]*?"is-upcoming"[\s\S]*?"is-open"/);
@@ -133,11 +125,10 @@ test("venue profiles reserve customer Club Deal language for active offers", () 
   )?.[0] || "";
   assert.match(
     venueOffer,
-    /venue\?\.activeDeal[\s\S]*?venue-deal-preview is-active-club-deal[\s\S]*?<button class="venue-detail-club-deal-cta"[\s\S]*?data-club-deal-cta="\$\{encodeDealPass\(config\)\}"[\s\S]*?Free Entry/,
+    /venue\?\.activeDeal[\s\S]*?venue-deal-preview is-active-club-deal[\s\S]*?<button class="venue-detail-club-deal-cta free-entry-cta"[\s\S]*?data-club-deal-cta="\$\{encodeDealPass\(config\)\}"[\s\S]*?freeEntryButtonLabel\(\)/,
   );
   assert.equal((venueOffer.match(/data-club-deal-cta=/g) || []).length, 1);
   assert.doesNotMatch(venueOffer, /Free entry options|<h3>/);
-  assert.match(venueOffer, /uberRideLinkMarkup\(\{ venue, source: "venue_page", className: "venue-detail-entry-ride", dealConfig: config \}\)/);
   assert.doesNotMatch(venueOffer, /<p>|customerFacingDealDescription\(venue\.activeDeal\.dealDescription\)/);
   assert.match(venueOffer, /return "";/);
   assert.doesNotMatch(venueOffer, /Half-off admission|Skip the line|Tap at cashier/);
@@ -146,7 +137,7 @@ test("venue profiles reserve customer Club Deal language for active offers", () 
   assert.doesNotMatch(venueOffer, /data-venue-profile-qr|Show venue QR|Venue QR/);
 });
 
-test("venue detail offers expose free entry and the matching pickup link while retaining the full offer", () => {
+test("venue detail Free Entry retains the complete offer configuration", () => {
   const venueOfferSource = liveApp.match(
     /function venueOfferMarkup\(venue\) \{[\s\S]*?(?=\n    function profileDealTileMarkup)/,
   )?.[0] || "";
@@ -159,6 +150,7 @@ test("venue detail offers expose free entry and the matching pickup link while r
     "encodeDealPass",
     "escapeHtml",
     "uberRideLinkMarkup",
+    "freeEntryButtonLabel",
     `${venueOfferSource}; return venueOfferMarkup;`,
   )(
     (config) => {
@@ -167,6 +159,7 @@ test("venue detail offers expose free entry and the matching pickup link while r
     },
     escapeHtml,
     rideMarkup,
+    () => "<span>Free Entry</span>",
   );
 
   assert.equal(venueOfferMarkup({ id: "venue-1", activeDeal: null }), "");
@@ -188,9 +181,6 @@ test("venue detail offers expose free entry and the matching pickup link while r
   assert.equal(encodedConfig.sourceType, "club_page");
   assert.match(singleOffer, /data-club-deal-cta="encoded-deal"/);
   assert.match(singleOffer, />Free Entry</);
-  assert.match(singleOffer, />Free Ride \+ Entry</);
-  assert.match(singleOffer, /href="\/rides\/venue-1\?dealId=deal-1"/);
-  assert.match(singleOffer, /data-free-ride-link/);
   assert.doesNotMatch(singleOffer, /venue-detail-entry-terms|rideshares|taxis/);
   assert.doesNotMatch(singleOffer, /clubDealQrSymbolMarkup|venue-detail-club-deal-symbol|<svg/i);
 
@@ -206,7 +196,6 @@ test("venue detail offers expose free entry and the matching pickup link while r
   assert.match(multipleOffers, />Active tonight</);
   assert.doesNotMatch(multipleOffers, /Free entry options|<h3>/);
   assert.match(multipleOffers, />Free Entry</);
-  assert.match(multipleOffers, /href="\/rides\/venue-1\?dealId=deal-1"/);
   assert.doesNotMatch(multipleOffers, /<p>/);
   assert.deepEqual(encodedConfig.deals.map((deal) => deal.dealDescription), ["First offer", "Second offer"]);
 });
@@ -219,8 +208,8 @@ test("venue profiles separate compact deal discovery from NFC redemption", () =>
   assert.match(venueOffer, /venue-deal-preview-copy[\s\S]*?Active tonight[\s\S]*?venue-detail-club-deal-cta[\s\S]*?data-club-deal-cta="\$\{encodeDealPass\(config\)\}"/);
   assert.doesNotMatch(venueOffer, /NFC|cashier|clubDealQrSymbolMarkup|venue-detail-club-deal-qr-state/);
   assert.match(liveApp, /const dealPassTrigger = event\.target\.closest\("\[data-club-deal-cta\], \[data-deal-pass\]"\);[\s\S]*?await handleDealPassClick\(event\)/);
-  assert.match(liveApp, /async function handleDealPassClick\(event\)[\s\S]*?event\.target\.closest\("\[data-club-deal-cta\]"\)[\s\S]*?createRevenueDealPass\(config\)[\s\S]*?openDealPassOverlay\(pass, revenueTrigger\)/);
-  assert.match(aesthetic, /The club profile only previews an available deal[\s\S]*?\.venue-offer-card\.venue-deal-preview \{[\s\S]*?padding: 8px 10px !important;[\s\S]*?\.venue-detail-club-deal-cta \{[\s\S]*?min-height: 44px;/);
+  assert.match(liveApp, /async function handleDealPassClick\(event\)[\s\S]*?event\.target\.closest\("\[data-club-deal-cta\]"\)[\s\S]*?createRevenueDealPass\(config\)[\s\S]*?selectDealPassForNfc\(pass, true\)/);
+  assert.match(aesthetic, /The club profile only previews an available deal[\s\S]*?\.venue-offer-card\.venue-deal-preview \{[\s\S]*?padding: 0 !important;[\s\S]*?\.venue-detail-club-deal-cta \{[\s\S]*?min-height: 44px;/);
   assert.match(liveApp, /function openDealPassOverlay\(pass, triggerButton = null\)[\s\S]*?const overlay = dealPassOverlay\(\)[\s\S]*?overlay\.hidden = false[\s\S]*?overlay\.classList\.add\("show"\)/);
 });
 
@@ -228,8 +217,8 @@ test("venue profile hierarchy stays compact and carries the restrained venue bra
   const refinement = aesthetic.match(/Production venue-detail refinement keeps one neutral frame[\s\S]*$/)?.[0] || "";
 
   assert.ok(refinement, "the final production venue-detail refinement must exist");
-  assert.match(refinement, /\.venue-main-photo \{[\s\S]*?position: relative !important;[\s\S]*?min-height: clamp\(88px, 20vw, 104px\) !important;[\s\S]*?height: clamp\(88px, 20vw, 104px\) !important;/);
-  assert.match(refinement, /\.venue-detail-logo-shell \{[\s\S]*?width: calc\(100% - clamp\(82px, 22vw, 112px\)\) !important;[\s\S]*?height: calc\(100% - 6px\) !important;[\s\S]*?max-height: 96px !important;[\s\S]*?border: 0 !important;[\s\S]*?background: transparent !important;/);
+  assert.match(refinement, /\.venue-main-photo \{[\s\S]*?position: relative !important;[\s\S]*?min-height: clamp\(64px, 18vw, 80px\) !important;[\s\S]*?height: clamp\(64px, 18vw, 80px\) !important;/);
+  assert.match(refinement, /\.venue-detail-logo-shell \{[\s\S]*?width: calc\(100% - clamp\(82px, 22vw, 112px\)\) !important;[\s\S]*?height: 100% !important;[\s\S]*?max-height: none !important;[\s\S]*?border: 0 !important;[\s\S]*?background: transparent !important;/);
   assert.match(refinement, /\.venue-detail-logo \{[\s\S]*?position: absolute !important;[\s\S]*?inset: 0 !important;[\s\S]*?width: 100% !important;[\s\S]*?height: 100% !important;[\s\S]*?max-width: 100% !important;[\s\S]*?max-height: 100% !important;[\s\S]*?object-fit: contain !important;[\s\S]*?object-position: center center !important;/);
   assert.match(refinement, /\.venue-hero-brand-row \{[\s\S]*?display: grid;[\s\S]*?grid-template-columns: 44px minmax\(0, 1fr\) 44px;[\s\S]*?align-items: start;[\s\S]*?gap: 8px;[\s\S]*?padding: 6px 10px 0;/);
   assert.match(refinement, /\.venue-hero-brand-row \.venue-detail-logo-shell \{[\s\S]*?width: 100% !important;/);
@@ -251,12 +240,9 @@ test("venue profile hierarchy stays compact and carries the restrained venue bra
   assert.match(refinement, /\.venue-quick-stat\.is-upcoming strong \{[\s\S]*?var\(--dancr-color-info\)/);
   assert.match(refinement, /\.venue-quick-stat\.is-upcoming:not\(\.is-empty\) \{[\s\S]*?var\(--dancr-color-info\) 7%/);
   assert.match(refinement, /Hours remain neutral context[\s\S]*?\.venue-operating-summary \.venue-operating-status \{[\s\S]*?var\(--dancr-color-text-primary\)/);
-  assert.match(refinement, /The club profile only previews an available deal[\s\S]*?\.venue-offer-card\.venue-deal-preview \{[\s\S]*?padding: 8px 10px !important;[\s\S]*?\.venue-deal-preview \.venue-offer-grid \{[\s\S]*?grid-template-columns: minmax\(0, 1fr\) !important;[\s\S]*?\.venue-deal-preview-copy \{[\s\S]*?gap: 2px;/);
+  assert.match(refinement, /The club profile only previews an available deal[\s\S]*?\.venue-offer-card\.venue-deal-preview \{[\s\S]*?padding: 0 !important;[\s\S]*?\.venue-deal-preview \.venue-offer-grid \{[\s\S]*?grid-template-columns: minmax\(0, 1fr\) !important;[\s\S]*?\.venue-deal-preview-copy \{[\s\S]*?gap: 2px;/);
   assert.match(refinement, /\.venue-detail-club-deal-cta \{[\s\S]*?min-height: 44px;[\s\S]*?background: var\(--dancr-color-success\);/);
-  assert.match(
-    refinement,
-    /\.venue-offer-card\.venue-deal-preview \{[\s\S]*?var\(--dancr-color-success\) 28%[\s\S]*?radial-gradient\(circle at 94% 0%, var\(--dancr-color-success-soft\), transparent 13rem\)[\s\S]*?var\(--dancr-color-success\) 5%[\s\S]*?0 10px 26px var\(--dancr-color-black-soft\)[\s\S]*?inset 0 1px 0 var\(--dancr-color-white-soft\)/,
-  );
+  assert.match(refinement, /\.venue-offer-card\.venue-deal-preview \{[\s\S]*?padding: 0 !important;[\s\S]*?border: 0 !important;[\s\S]*?background: transparent !important;[\s\S]*?box-shadow: none !important;/);
   assert.doesNotMatch(refinement.match(/\.venue-offer-card\.venue-deal-preview \{[\s\S]*?\n\}/)?.[0] || "", /0 0 18px|inset 0 0 0 1px/);
   assert.match(
     refinement,
@@ -274,7 +260,7 @@ test("venue profile hierarchy stays compact and carries the restrained venue bra
   assert.match(refinement, /\.venue-identity-block \{[\s\S]*?grid-template-columns: minmax\(0, 1fr\);[\s\S]*?align-items: start;[\s\S]*?gap: 0;/);
   assert.match(refinement, /\.venue-detail-close \{[\s\S]*?position: static !important;[\s\S]*?inset: auto !important;[\s\S]*?justify-self: end !important;[\s\S]*?width: 36px !important;[\s\S]*?height: 36px !important;[\s\S]*?display: inline-grid !important;[\s\S]*?place-items: center !important;[\s\S]*?border-radius: 50% !important;[\s\S]*?line-height: 0 !important;/);
   assert.match(refinement, /\.venue-detail-close \.icon \{[\s\S]*?width: 15px !important;[\s\S]*?height: 15px !important;[\s\S]*?stroke-width: 1\.85 !important;/);
-  assert.match(refinement, /\.venue-detail-exploration \{[\s\S]*?display: grid;[\s\S]*?gap: 16px;[\s\S]*?padding: 10px 12px 16px;/);
+  assert.match(refinement, /\.venue-detail-exploration \{[\s\S]*?display: grid;[\s\S]*?gap: 12px;[\s\S]*?padding: 10px 12px 16px;/);
   assert.match(refinement, /\.venue-activity-empty\.is-compact \{[\s\S]*?grid-template-columns: 34px minmax\(0, 1fr\);[\s\S]*?padding: 10px 11px;/);
   assert.match(refinement, /\.venue-hero \+ \.venue-detail-exploration \{[\s\S]*?margin-top: 0;/);
   assert.doesNotMatch(refinement, /\.venue-information-section|\.venue-contact-details-content/);
@@ -292,16 +278,10 @@ test("venue profile share action confirms success in the pressed button", () => 
   assert.match(aesthetic, /\.venue-secondary-actions \.venue-detail-share\.is-confirmed \{[\s\S]*?var\(--dancr-color-success-medium\)[\s\S]*?var\(--dancr-color-success\) 6%/);
 });
 
-test("venue profiles keep Working Now and Upcoming discoverable with truthful compact empty states", () => {
+test("venue profiles keep Working Now discoverable with a truthful empty state", () => {
   const venueDetail = liveApp.match(/function venueDetailPage\(venue\) \{[\s\S]*?\n    \}/)?.[0] || "";
-
-  assert.match(venueDetail, /const quickStats = \[[\s\S]*?tonight\.length[\s\S]*?No dancers working now[\s\S]*?upcoming\.length[\s\S]*?No upcoming shifts[\s\S]*?\.join\(""\)/);
-  assert.match(venueDetail, /venue-quick-stat is-working[\s\S]*?is-empty[\s\S]*?venue-quick-stat is-upcoming[\s\S]*?is-empty/);
-  assert.match(venueDetail, /const activitySections = \[[\s\S]*?venue-activity-section is-working[\s\S]*?venue-activity-section is-upcoming[\s\S]*?venue-activity-section is-open/);
-  assert.match(venueDetail, /venue-activity-section is-working[\s\S]*?No dancers working now[\s\S]*?Follow this club for updates\./);
-  assert.match(venueDetail, /venue-activity-section is-upcoming[\s\S]*?No upcoming schedules[\s\S]*?No upcoming dancer dates are posted for this club\./);
-  assert.doesNotMatch(venueDetail, /const activityMarkup =/);
-  assert.doesNotMatch(venueDetail, /No active shifts now|No upcoming shifts posted|No trending profiles here yet/);
+  assert.match(venueDetail, /venue-activity-section is-working[\s\S]*?tonight\.length[\s\S]*?No dancers working now[\s\S]*?Follow this club for updates\./);
+  assert.doesNotMatch(venueDetail, /venue-activity-section is-upcoming|venue-activity-section is-open|venue-status-grid/);
 });
 
 test("venue scroll cards remain separate from the deeper venue detail hierarchy", () => {

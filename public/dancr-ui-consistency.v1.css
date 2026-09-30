@@ -422,7 +422,7 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
 /* Dancer profile hierarchy: lighter utilities, with Free Entry as the CTA.
  * Follow and Share use shorter faces within their original 44px touch targets. */
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell, .dancer-profile-preview-overlay)
-  .profile-actions-compact :is(#followBtn, #goingBtn, .profile-action-icon-control):not([data-internal-table-request])::before {
+  .profile-actions-compact:where(:not(.profile-venue-actions)) :is(#followBtn, .profile-action-icon-control):not([data-internal-table-request])::before {
   inset: 4px 0 !important;
   border: 0 !important;
   box-shadow: inset 0 0 0 .65px var(--profile-action-border) !important;
@@ -434,6 +434,20 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
 }
 
 /* Actions beside Free Entry share its full height for an even row. */
+html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell, .dancer-profile-preview-overlay)
+  .profile-tonight-card {
+  --profile-venue-action-height: 44px;
+}
+
+html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell, .dancer-profile-preview-overlay)
+  .profile-tonight-card :is(.free-entry-cta, .profile-venue-actions) {
+  --profile-action-height: var(--profile-venue-action-height);
+  box-sizing: border-box !important;
+  height: var(--profile-venue-action-height) !important;
+  min-height: var(--profile-venue-action-height) !important;
+  max-height: var(--profile-venue-action-height) !important;
+}
+
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell, .dancer-profile-preview-overlay)
   .profile-actions-compact.profile-venue-actions :is(#goingBtn, .profile-action-icon-control)::before {
   inset: 0 !important;
@@ -566,3 +580,89 @@ body.dancr-button-system #profileQrOverlay #profileQrOpen::before {
   background: linear-gradient(110deg,#7c3aed,#6d28d9) !important;
 }
 body.dancr-button-system #profileQrOverlay #profileQrOpen:focus-visible { outline: 2px solid #c4b5fd !important; outline-offset: 3px !important; }
+
+/* Venue discovery keeps a quiet card boundary; spacing replaces internal lines. */
+html body.dancr-button-system > .app main.stack > section.stack
+  > #results.home-discovery-feed.home-venue-discovery-feed > .home-venue-discovery-slide {
+  border: 1px solid rgba(203, 213, 225, .12) !important;
+  background: #08090c linear-gradient(#08090c, #08090c) !important;
+  box-shadow: none !important;
+}
+
+html body.dancr-button-system > .app main.stack > section.stack
+  > #results.home-venue-discovery-feed > .home-venue-discovery-slide
+  .home-venue-discovery-art.is-venue-logo-artwork:not(.has-custom-photo) {
+  border-bottom: 0 !important;
+  box-shadow: none !important;
+}
+
+/* Keep the existing utility faces and states, with compact inline labels. */
+html body.dancr-button-system > .app main.stack > section.stack
+  > #results.home-venue-discovery-feed > .home-venue-discovery-slide
+  .venue-card-secondary-actions.home-venue-discovery-action-rail > .venue-card-secondary-action {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 5px !important;
+  min-height: 44px !important;
+  padding: 8px 4px !important;
+}
+
+html body.dancr-button-system > .app main.stack > section.stack
+  > #results.home-venue-discovery-feed > .home-venue-discovery-slide
+  .venue-card-secondary-actions.home-venue-discovery-action-rail > .venue-card-secondary-action :is(.action-icon, .action-icon > svg) {
+  width: 16px !important;
+  height: 16px !important;
+  min-width: 16px !important;
+  flex: 0 0 16px !important;
+}
+
+html body.dancr-button-system > .app main.stack > section.stack
+  > #results.home-venue-discovery-feed > .home-venue-discovery-slide
+  .venue-card-secondary-actions.home-venue-discovery-action-rail > .venue-card-secondary-action > span:not(.action-icon) {
+  width: auto !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  line-height: 1.2 !important;
+}
+
+@media (max-width: 720px) {
+  html body.dancr-button-system > .app main.stack > section.stack
+    > #results.home-discovery-feed.home-venue-discovery-feed > .home-venue-discovery-slide {
+    min-height: 0 !important;
+    grid-template-rows: 96px auto 48px 56px !important;
+  }
+
+  html body.dancr-button-system > .app main.stack > section.stack
+    > #results.home-venue-discovery-feed > .home-venue-discovery-slide .home-discovery-feed-copy {
+    padding: 8px 12px !important;
+    row-gap: 4px !important;
+  }
+}
+
+/* The full venue header shares the dancer profile's open section layout. */
+html body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-hero {
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  overflow: visible !important;
+}
+
+html body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-hero-body {
+  border-top: 0 !important;
+  background: transparent !important;
+  gap: 12px !important;
+  padding: 12px 12px 8px !important;
+}
+
+html body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-location-section {
+  border-top: 0 !important;
+  padding-top: 0 !important;
+  gap: 12px !important;
+}
+
+html body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-address-line {
+  padding-bottom: 0;
+}

@@ -16,10 +16,8 @@ const venueDealRenderer = liveApp.match(
 test("every Clubs-feed card uses the shared primary and secondary action tiers", () => {
   assert.match(venueRenderer, /venue-card-primary-actions/);
   assert.match(venueRenderer, /venue-card-secondary-action venue-card-directions-action/);
-  assert.match(venueRenderer, /venue-card-primary-action venue-card-ride-action/);
   assert.match(venueRenderer, /venue-card-secondary-actions/);
   assert.match(venueRenderer, /venue-card-secondary-action venue-card-page-action/);
-  assert.match(venueRenderer, /venue-card-secondary-action venue-card-share-action/);
   assert.match(venueRenderer, /venue-card-secondary-action venue-card-favorite-action/);
   assert.match(venueDealRenderer, /is-available venue-card-primary-action venue-card-deals-action/);
   assert.match(venueDealRenderer, /is-unavailable venue-card-primary-action venue-card-deals-action/);
@@ -27,7 +25,6 @@ test("every Clubs-feed card uses the shared primary and secondary action tiers",
 
 test("the hierarchy preserves every existing venue action hook and state", () => {
   assert.match(venueRenderer, /data-open-venue-profile="\$\{venueValue\}"/);
-  assert.match(venueRenderer, /data-share-venue="\$\{venueValue\}"/);
   assert.match(venueRenderer, /data-venue-follow="\$\{venueValue\}"/);
   assert.match(venueRenderer, /aria-pressed="\$\{followsVenue\}"/);
   assert.match(venueDealRenderer, /data-club-deal-cta="\$\{encodeDealPass\(config\)\}"/);
@@ -56,13 +53,13 @@ test("mobile venue controls use a compact premium glass hierarchy without a back
   assert.match(rideIconRule, /color: rgba\(226, 232, 240, 0\.84\) !important;/);
   assert.doesNotMatch(rideActionRule, /139, 92, 246|31, 24, 45|brand-primary/);
   assert.doesNotMatch(rideIconRule, /#b89cff|brand-primary/);
-  assert.match(hierarchy, /\.venue-card-secondary-actions \{[\s\S]*?height: 56px !important;[\s\S]*?grid-template-columns: repeat\(4, minmax\(0, 1fr\)\) !important;/);
+  assert.match(hierarchy, /\.venue-card-secondary-actions \{[\s\S]*?height: 56px !important;[\s\S]*?grid-template-columns: repeat\(3, minmax\(0, 1fr\)\) !important;/);
   assert.match(hierarchy, /\.venue-card-secondary-actions > \.venue-card-secondary-action[\s\S]*?border: 1px solid rgba\(226, 232, 240, 0\.2\) !important;[\s\S]*?border-radius: 14px !important;[\s\S]*?rgba\(7, 9, 14, 0\.82\)/);
   assert.match(hierarchy, /\.venue-card-deals-action\.is-available \{[\s\S]*?rgba\(7, 31, 20, 0\.68\)/);
   assert.match(hierarchy, /\.venue-card-deals-action\.is-unavailable \{[\s\S]*?rgba\(203, 213, 225, 0\.56\)/);
   assert.match(hierarchy, /\.venue-card-secondary-actions > :is\([\s\S]*?\.venue-card-share-action,[\s\S]*?\.venue-card-favorite-action[\s\S]*?rgba\(7, 9, 14, 0\.82\)[\s\S]*?opacity: 1 !important;[\s\S]*?filter: none !important;/);
   assert.match(hierarchy, /\.venue-card-secondary-actions > :is\([\s\S]*?\.venue-card-page-action,[\s\S]*?\.venue-card-share-action,[\s\S]*?\.venue-card-favorite-action[\s\S]*?:is\(\.action-icon, \.action-icon > svg\)[\s\S]*?rgba\(241, 245, 249, 0\.9\)[\s\S]*?opacity: 1 !important;/);
-  assert.match(hierarchy, /@media \(max-width: 360px\)[\s\S]*?grid-template-columns: repeat\(4, minmax\(0, 1fr\)\) !important;/);
+  assert.match(hierarchy, /@media \(max-width: 360px\)[\s\S]*?grid-template-columns: repeat\(3, minmax\(0, 1fr\)\) !important;/);
 });
 
 test("mobile venue identity keeps hours below the location and lineup", () => {
