@@ -24,7 +24,7 @@ export async function createAdmissionPass(request: Request, body: Record<string,
     throw new PublicApiError("INVALID_REQUEST", "Choose an offer and eligible arrival method.", 400);
   }
   const guest = normalizeGuestListDetails(body.guest);
-  if ((body.transportation !== "club_shuttle" || body.guest !== undefined) && !guest) {
+  if (body.guest !== undefined && !guest) {
     throw new PublicApiError("INVALID_REQUEST", "Enter your name, phone, and a valid email if provided, then agree to share your details with the club.", 400);
   }
   // Guest identity comes from a private server-issued cookie, never a body ID.

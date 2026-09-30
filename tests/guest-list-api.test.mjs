@@ -40,7 +40,7 @@ test('guest validation keeps international names and phones and rejects invalid 
  for(const override of [{name:'bad\nname'},{name:'a'.repeat(101)},{phone:'7025550123 ext 2'},{email:'<script>@bad.test'},{consent:'true'}])assert.equal(normalizeGuestListDetails({name:'Test Guest',phone:'7025550123',email:'',consent:true,...override}),null);
 });
 
-test('Free Entry opens the guest form directly and keeps the selected offer attribution',()=>{
+test('Free Entry opens the arrival page directly and keeps the selected offer attribution',()=>{
  const script=readFileSync(new URL('../src/live-shell/app/08-save-customer-deal-pass.js',import.meta.url),'utf8');
  const selection=script.match(/    function selectDealPassForNfc\([^]*?\n    \}/)?.[0];assert.ok(selection);
  let destination;const context={URLSearchParams,encodeURIComponent,pendingNfcDealIntentForPass:()=>({passUrl:'/deals/pass/old',expired:false}),window:{location:{assign:url=>{destination=url;}}}};

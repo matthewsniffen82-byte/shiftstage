@@ -50841,7 +50841,7 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
       const venueName = String(config?.venueName || "this club").trim() || "this club";
       const status = document.getElementById("clubDealHubStatus");
       document.getElementById("clubDealHubTitle").textContent = `Club Deals at ${venueName}`;
-      document.getElementById("clubDealHubCopy").textContent = `${offers.length} live ${offers.length === 1 ? "offer" : "offers"}. Choose an offer, then complete the guest-list form for your admission pass. Staff scans it at the door.`;
+      document.getElementById("clubDealHubCopy").textContent = `${offers.length} live ${offers.length === 1 ? "offer" : "offers"}. Choose an offer and your arrival method to get your admission pass. Joining the guest list is optional. Staff scans your pass at the door.`;
       status.textContent = "";
       status.hidden = true;
       overlay.removeAttribute("aria-busy");

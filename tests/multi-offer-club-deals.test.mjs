@@ -95,8 +95,9 @@ test("each selected offer keeps its exact deal and dancer attribution token", ()
   assert.match(liveApp, /function clubDealSelectionConfig\(config, deal\)/);
   assert.match(liveApp, /config\?\.dealAttributionTokens\?\.\[deal\.id\]/);
   assert.match(liveApp, /function openClubDealHub\(config, triggerButton = null\)/);
-  assert.match(liveApp, /Choose an offer, then complete the guest-list form for your admission pass/);
-  assert.match(liveApp, /Staff scans it at the door/);
+  assert.match(liveApp, /Choose an offer and your arrival method to get your admission pass/);
+  assert.match(liveApp, /Joining the guest list is optional/);
+  assert.match(liveApp, /Staff scans your pass at the door/);
 });
 
 test("all public surfaces expose the full offer list while preserving first-deal compatibility", () => {

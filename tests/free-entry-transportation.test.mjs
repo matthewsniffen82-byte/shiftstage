@@ -69,8 +69,13 @@ function client(props = {}, options = {}) {
     html: () => renderToStaticMarkup(render()),
     select(value) { nodes(tree).find(node => node.type === "input" && node.props.value === value).props.onChange(); render(); },
     async submit(phone = "7025550123", overrides = {}) {
-      await nodes(tree).find(node => node.type === "form").props.onSubmit({ preventDefault() {}, currentTarget: {
-        name: "Test Guest", location: "Test Hotel, north entrance", phone, email: "guest@example.test", partySize: "2", handoffAccepted: "on", guestConsent: "on", ...overrides,
+      await nodes(tree).find(node => node.props?.id === "club-transport-form").props.onSubmit({ preventDefault() {}, currentTarget: {
+        name: "Test Guest", location: "Test Hotel, north entrance", phone, email: "guest@example.test", partySize: "2", handoffAccepted: "on", ...overrides,
+      } }); render();
+    },
+    async joinGuestList(overrides = {}) {
+      await nodes(tree).find(node => node.props?.id === "club-guest-list-form").props.onSubmit({ preventDefault() {}, currentTarget: {
+        name: "Test Guest", phone: "7025550123", email: "", guestConsent: "on", ...overrides,
       } }); render();
     },
     click(label) { nodes(tree).find(node => node.type === "button" && node.props.children === label).props.onClick(); render(); },
@@ -132,28 +137,74 @@ test("private-car arrival prepares free entry without sending a ride request", a
   assert.match(f.html(), /Staff verifies your arrival method/);
 });
 
-test("free entry opens guest details and confirms only a saved guest-list receipt", async () => {
+test("free entry requires only arrival while the optional guest list has its own section and form", async () => {
   const f = client();
-  assert.match(f.html(), /Join the guest list/);
-  assert.match(f.html(), /Full name/); assert.match(f.html(), /Email \(optional\)/);
-  f.select("self_drive"); await f.submit("7025550123", {email:""});
-  assert.deepEqual(f.requests[0].body.guest, {name:"Test Guest",phone:"+17025550123",email:"",consent:true});
+  assert.match(f.html(), /How will you arrive/);
+  assert.match(f.html(), /Get free entry pass/);
+  const sections = nodes(f.render()).filter(node => node.type === "section");
+  assert.equal(sections.length, 2);
+  assert.equal(sections[1].props["aria-labelledby"], "club-guest-list-heading");
+  assert.doesNotMatch(renderToStaticMarkup(sections[0]), /name="(?:name|phone|email|guestConsent)"/);
+  f.select("self_drive"); await f.submit("", {name:"", email:"", handoffAccepted:null});
+  assert.equal(f.requests[0].body.guest, undefined);
+  assert.match(f.html(), /Your admission pass is ready/);
+  assert.doesNotMatch(f.html(), /You’re on the guest list/);
+  const guestForm = nodes(f.render()).find(node => node.props?.id === "club-guest-list-form");
+  assert.match(renderToStaticMarkup(guestForm), /Full name/);
+  assert.doesNotMatch(renderToStaticMarkup(guestForm), /How will you arrive|name="transportation"/);
+  await f.joinGuestList();
+  assert.deepEqual(f.requests[1].body.guest, {name:"Test Guest",phone:"+17025550123",email:"",consent:true});
+  assert.equal(f.requests[1].body.transportation, "self_drive");
   assert.match(f.html(), /You’re on the guest list/);
+  assert.match(f.html(), /Show admission pass/);
+  assert.doesNotMatch(f.html(), /id="club-guest-list-form"/);
   assert.doesNotMatch(f.stored.get(key), /Test Guest|17025550123/);
-  const missing = client({}, {missingGuestReceipt:true}); missing.select("self_drive"); await missing.submit();
-  assert.match(missing.html(), /guest-list entry could not be confirmed/);
-  assert.doesNotMatch(missing.html(), /You’re on the guest list/);
 });
 
-test("guest validation and duplicate clicks do not issue unwanted admissions", async () => {
-  for (const overrides of [{name:" "},{email:"invalid"},{guestConsent:null}]) {
-    const f=client();f.select("self_drive");await f.submit("7025550123",overrides);
-    assert.equal(f.requests.length,0);assert.match(f.html(),/role="alert"/);
+test("guest-list validation leaves an already issued pass available", async () => {
+  for (const overrides of [{name:" "},{phone:"invalid"},{email:"invalid"},{guestConsent:null}]) {
+    const f=client();f.select("self_drive");await f.submit();
+    const saved=f.stored.get(key);
+    await f.joinGuestList(overrides);
+    assert.equal(f.requests.length,1);assert.match(f.html(),/role="alert"/);
+    assert.match(f.html(),/Show admission pass/);assert.equal(f.stored.get(key),saved);
   }
+});
+
+test("guest-list failures stay in their own section and are retryable without losing the pass", async () => {
+  for (const failure of [{missingGuestReceipt:true}, {passFailure:true}]) {
+    const options={},f=client({},options);f.select("self_drive");await f.submit();
+    const saved=f.stored.get(key);Object.assign(options,failure);
+    await f.joinGuestList();
+    assert.match(f.html(), failure.missingGuestReceipt ? /guest-list entry could not be confirmed/ : /Try again/);
+    assert.doesNotMatch(f.html(), /You’re on the guest list/);
+    assert.match(f.html(), /Show admission pass/);assert.equal(f.stored.get(key),saved);
+    const admission=nodes(f.render()).find(node=>node.props?.["aria-labelledby"]==="club-transport-heading");
+    assert.doesNotMatch(renderToStaticMarkup(admission), /role="alert"/);
+    options.passFailure=false;options.missingGuestReceipt=false;await f.joinGuestList();
+    assert.match(f.html(), /You’re on the guest list/);
+  }
+});
+
+test("guest-list double clicks send one registration and never repeat a shuttle request", async () => {
+  const options={},f=client({initialTransportation:"club_shuttle",sourceType:"dancer_profile",dancerId:"dancer",attributionToken:"signed-token"},options);
+  await f.submit();
+  let release;const held=new Promise(resolve=>{release=resolve;});options.beforePass=()=>held;
+  const first=f.joinGuestList();await f.joinGuestList();
+  assert.match(f.html(), /Joining guest list/);assert.match(f.html(), /Show admission pass/);
+  release();await first;
+  assert.equal(f.requests.filter(r=>r.url.endsWith("/shuttle")).length,1);
+  assert.equal(f.requests.filter(r=>r.body.guest).length,1);
+  assert.equal(f.requests.at(-1).body.transportation,"club_shuttle");
+  assert.equal(f.requests.at(-1).body.attributionToken,"signed-token");
+  assert.match(f.html(), /Request sent/);assert.match(f.html(), /You’re on the guest list/);
+});
+
+test("duplicate pass clicks generate one admission without guest-list enrollment", async () => {
   let release;const held=new Promise(resolve=>{release=resolve;});
   const f=client({}, {beforePass:()=>held});f.select("self_drive");
   const first=f.submit();await f.submit();release();await first;
-  assert.equal(f.requests.length,1);
+  assert.equal(f.requests.length,1);assert.equal(f.requests[0].body.guest,undefined);
 });
 
 test("one combined Waymo, Zoox and Cybercab option prepares admission without booking or notifying a ride", async () => {
@@ -163,7 +214,7 @@ test("one combined Waymo, Zoox and Cybercab option prepares admission without bo
     assert.equal(nodes(f.render()).filter(node => node.type === "input" && node.props.name === "transportation").length, 4);
     assert.doesNotMatch(f.html(), /value="(?:waymo|zoox|cybercab)"/);
     f.select(value);
-    assert.match(f.html(), /Join guest list/);
+    assert.match(f.html(), /Get free entry pass/);
     await f.submit();
     assert.equal(f.requests.length, 1); assert.equal(f.requests[0].url, "/api/deals/redemptions");
     const selection = JSON.parse(f.stored.get(key));

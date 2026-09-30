@@ -35,6 +35,19 @@ test('invalid guest details never leave an issued pass behind',async()=>{
  for(const override of [{name:' '},{phone:'bad'},{consent:false},{email:'invalid'}])await assert.rejects(issue(701,override),e=>e.code==='22023');
  await pg.exec('reset role');assert.equal((await pg.query('select count(*)::int count from qr_redemptions where session_id=$1',[id(701)])).rows[0].count,0);
 });
+test('joining separately reuses the free-entry pass without extending its expiry or creating another admission',async()=>{
+ await pg.exec('reset role;set role service_role');
+ const original=(await pg.query('select public.issue_video_admission_pass($1,$2,$3,null,$4,null,null,$5,null) receipt',[
+  'b'.repeat(43),id(1),id(705),'club_page','self_drive',
+ ])).rows[0].receipt;
+ await pg.exec('reset role');
+ assert.equal((await pg.query('select count(*)::int count from venue_guest_list_entries g join qr_redemptions r on r.id=g.pass_id where r.session_id=$1',[id(705)])).rows[0].count,0);
+ const joined=await issue(705);
+ assert.equal(joined.token,original.token);assert.equal(joined.expiresAt,original.expiresAt);assert.equal(joined.guestListJoined,true);
+ await pg.exec('reset role');
+ const rows=(await pg.query('select r.id,g.guest_name from qr_redemptions r left join venue_guest_list_entries g on g.pass_id=r.id where r.session_id=$1',[id(705)])).rows;
+ assert.equal(rows.length,1);assert.equal(rows[0].guest_name,'Test Guest');
+});
 test('contact insert failure rolls admission issuance back',async()=>{
  await pg.exec("reset role;create function fail_guest_insert() returns trigger language plpgsql as $$begin raise exception 'Synthetic failure';end$$;create trigger fail_guest_insert before insert on venue_guest_list_entries for each row execute function fail_guest_insert();");
  try{await assert.rejects(issue(702));await pg.exec('reset role');assert.equal((await pg.query('select count(*)::int count from qr_redemptions where session_id=$1',[id(702)])).rows[0].count,0);}

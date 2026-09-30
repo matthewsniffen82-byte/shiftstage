@@ -70,10 +70,16 @@ test('unrecognized database detail stays private',async()=>{
  assert.equal((await response.json()).error,'This admission pass is unavailable.');
 });
 
-test('guest details are required for free entry and optional only for the existing shuttle workflow',async()=>{
- for(const guest of [undefined,null,{name:' ',phone:'7025550123',consent:true},{name:'Guest',phone:'bad',consent:true},{name:'Guest',phone:'7025550123',consent:false},{name:'Guest',phone:'7025550123',email:'bad',consent:true}]){
+test('free entry does not require joining the guest list for any eligible arrival',async()=>{
+ for(const transportation of ['self_drive','autonomous_cab','club_shuttle']){
+  const f=fixture();const response=await f.issue({transportation,guest:undefined});
+  assert.equal(response.status,200);assert.equal((await response.json()).guestListJoined,false);
+  const call=f.calls.find(c=>c.name==='issue_video_admission_pass');
+  assert.equal(call.args.p_arrival_method,transportation);assert.equal('p_guest_name' in call.args,false);
+ }
+});
+test('guest details still require valid contact information and consent when submitted',async()=>{
+ for(const guest of [null,{name:' ',phone:'7025550123',consent:true},{name:'Guest',phone:'bad',consent:true},{name:'Guest',phone:'7025550123',consent:false},{name:'Guest',phone:'7025550123',email:'bad',consent:true}]){
   const f=fixture();await assert.rejects(f.issue({guest}),e=>e.status===400);assert.equal(f.calls.length,0);
  }
- const f=fixture();await f.issue({transportation:'club_shuttle',guest:undefined});
- assert.ok(f.calls.some(c=>c.name==='issue_video_admission_pass'));
 });
