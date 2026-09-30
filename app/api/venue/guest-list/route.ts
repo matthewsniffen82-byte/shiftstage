@@ -11,11 +11,14 @@ export const dynamic = "force-dynamic";
 export async function GET(request: Request) {
   try {
     const context = await createRequestSupabaseContext(request, { role: "venue" });
-    const access = await getVenueAccess(context.client, context.user.id);
+    // Ownership columns are private to the server. Resolve access using the
+    // verified user, just like the venue dashboard, before reading guest details.
+    const admin = createAdminSupabaseClient();
+    const access = await getVenueAccess(admin, context.user.id);
     if (!access?.permissions.includes("view_deals")) throw new PublicApiError("FORBIDDEN", "Venue access is required.", 403);
     const offset = Number(new URL(request.url).searchParams.get("offset") || 0);
     if (!Number.isSafeInteger(offset) || offset < 0 || offset > 100000) throw new PublicApiError("INVALID_REQUEST", "Invalid guest-list page.", 400);
-    const { data, error } = await createAdminSupabaseClient().from("venue_guest_list_entries")
+    const { data, error } = await admin.from("venue_guest_list_entries")
       .select("pass_id, guest_name, phone, email, created_at, qr_redemptions!inner(status, expires_at, arrival_method)")
       .eq("venue_id", access.venueId).gt("qr_redemptions.expires_at", new Date().toISOString())
       .in("qr_redemptions.status", ["generated", "redeemed"])

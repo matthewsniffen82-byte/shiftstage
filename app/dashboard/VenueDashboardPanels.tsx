@@ -302,7 +302,7 @@ export function VenuePanel({
       {refreshStatus ? <small className="venue-refresh-status" role="status">{refreshStatus}</small> : null}
 
       <section
-        className="venue-dashboard-section"
+        className="venue-workspace-panel"
         hidden={activeWorkspace !== "tonight"}
         id="venue-workspace-tonight"
         role="tabpanel"

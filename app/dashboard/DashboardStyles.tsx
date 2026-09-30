@@ -167,6 +167,9 @@ export function DashboardStyles() {
       .venue-workspace-business-summary h2 { margin: 0; color: #f8fafc; font-size: clamp(20px,3.5vw,25px); line-height: 1.08; }
       .venue-workspace-business-summary p { margin: 0; color: var(--mydancr-dashboard-muted); font-size: 13px; line-height: 1.45; }
       .venue-workspace-summary[hidden], .venue-publication-panel[hidden], .venue-workspace-business-summary[hidden], .venue-dashboard-metrics[hidden], .venue-dashboard-section[hidden] { display: none !important; }
+      /* Workspace groups space their cards without clipping the cards' corners. */
+      .venue-workspace-panel { grid-column: 1 / -1; min-width: 0; display: grid; gap: var(--mydancr-dashboard-gap); }
+      .venue-workspace-panel[hidden] { display: none !important; }
       .venue-dashboard-metrics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); overflow: hidden; border: 1px solid var(--mydancr-dashboard-border); border-radius: 14px; background: var(--mydancr-dashboard-panel); }
       .venue-dashboard-metrics .metric { min-width: 0; min-height: 66px; padding: 12px 14px; border-left: 1px solid var(--mydancr-dashboard-border); background: transparent; }
       .venue-dashboard-metrics .metric:first-child { border-left: 0; }
