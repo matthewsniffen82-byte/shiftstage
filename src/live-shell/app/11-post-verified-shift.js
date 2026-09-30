@@ -245,7 +245,7 @@
         city
       });
       return `
-        <article class="card venue venue-card" data-analytics-venue-id="${escapeOptionValue(venue.isDashboardPreview ? "" : venue.id || "")}" data-analytics-source="venue_scroll_card" aria-label="${safeName} club details" style="--venue-accent:${venueAccent(venue.name)}">
+        <article class="card venue venue-card" data-discovery-key="${venueValue}" data-analytics-venue-id="${escapeOptionValue(venue.isDashboardPreview ? "" : venue.id || "")}" data-analytics-source="venue_scroll_card" aria-label="${safeName} club details" style="--venue-accent:${venueAccent(venue.name)}">
           <a class="venue-card-link" href="${venueHref}" data-open-venue-profile="${venueValue}" aria-label="Open ${safeName}'s full club profile">
             <div class="venue-art is-venue-logo-artwork${logoMarkup ? " has-venue-logo" : ""}">
               <span class="venue-card-kicker">MyDancr club</span>
@@ -309,7 +309,7 @@
       if (venue.id && !venue.isDashboardPreview) recordVenuePageEvent({ venueId: venue.id, eventType: "page_view", source: "venue_page" });
 
       return `
-        <div data-analytics-venue-id="${escapeOptionValue(venue.isDashboardPreview ? "" : venue.id || "")}" data-analytics-source="venue_detail" class="venue-detail" role="dialog" aria-modal="true" aria-labelledby="venueDetailName">
+        <div data-stable-media-key="venue-detail:${escapeOptionValue(venue.id || venue.name)}" data-analytics-venue-id="${escapeOptionValue(venue.isDashboardPreview ? "" : venue.id || "")}" data-analytics-source="venue_detail" class="venue-detail" role="dialog" aria-modal="true" aria-labelledby="venueDetailName">
           <div class="venue-detail-toolbar">
             <button class="close-btn venue-detail-close" type="button" data-close-venue-profile aria-label="Close ${escapeHtml(details.name)} club profile">
               <svg class="icon" viewBox="0 0 24 24"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>

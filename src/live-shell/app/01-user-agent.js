@@ -138,6 +138,75 @@
     settleCompletedStableImages();
     window.addEventListener("load", () => settleCompletedStableImages(), { once: true });
 
+    // Compare rendered content, not unrelated saved state or profile metrics.
+    // Keep a clean snapshot so image readiness, fitted logos and focus survive
+    // a real update to another part of the card.
+    const stableMediaSnapshots = new WeakMap();
+
+    function stableMediaNodeKey(node) {
+      for (const attribute of ["data-discovery-key", "data-public-dancer-id", "data-stable-media-key", "data-profile-reference"]) {
+        const value = node.getAttribute?.(attribute);
+        if (value) return `${attribute}:${value}`;
+      }
+      return "";
+    }
+
+    function rememberStableMediaNode(node) {
+      stableMediaSnapshots.set(node, node.cloneNode(true));
+      node.childNodes.forEach(rememberStableMediaNode);
+    }
+
+    function syncStableMediaChildren(current, next) {
+      const existing = [...current.childNodes];
+      const keyed = new Map(existing.map((node) => [stableMediaNodeKey(node), node]).filter(([key]) => key));
+      const retained = new Set();
+      [...next.childNodes].forEach((child, index) => {
+        const key = stableMediaNodeKey(child);
+        const candidate = key ? keyed.get(key) : existing[index];
+        const previous = candidate && !retained.has(candidate) && stableMediaNodeKey(candidate) === key
+          ? candidate
+          : null;
+        const node = syncStableMediaNode(previous, child);
+        retained.add(node);
+        if (current.childNodes[index] !== node) current.insertBefore(node, current.childNodes[index] || null);
+      });
+      existing.forEach((node) => {
+        if (!retained.has(node) && node.parentNode === current) node.remove();
+      });
+    }
+
+    function syncStableMediaNode(current, next) {
+      const previous = current && stableMediaSnapshots.get(current);
+      const changedImage = previous?.nodeName === "IMG" && next.nodeName === "IMG" && ["src", "srcset", "sizes"].some((name) => (
+        previous.getAttribute(name) !== next.getAttribute(name)
+      ));
+      if (!previous || previous.nodeName !== next.nodeName || changedImage) {
+        rememberStableMediaNode(next);
+        return next;
+      }
+      if (previous.isEqualNode(next)) return current;
+      const snapshot = next.cloneNode(true);
+      if (next.nodeType === 1) {
+        [...previous.attributes].forEach(({ name }) => {
+          if (!next.hasAttribute(name)) current.removeAttribute(name);
+        });
+        [...next.attributes].forEach(({ name, value }) => {
+          if (previous.getAttribute(name) !== value) current.setAttribute(name, value);
+        });
+        syncStableMediaChildren(current, next);
+      } else {
+        current.nodeValue = next.nodeValue;
+      }
+      stableMediaSnapshots.set(current, snapshot);
+      return current;
+    }
+
+    function renderStableMediaMarkup(container, markup) {
+      const template = document.createElement("template");
+      template.innerHTML = markup;
+      syncStableMediaChildren(container, template.content);
+    }
+
     const markets = {
       "Las Vegas": {
         stats: { dancers: 0, shifts: 0, venues: 0 },

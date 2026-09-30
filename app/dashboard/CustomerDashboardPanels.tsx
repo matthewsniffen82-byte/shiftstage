@@ -609,13 +609,13 @@ function CustomerFollowedClubsPanel({
               <span>{group.follows.length} {group.follows.length === 1 ? "club" : "clubs"}</span>
             </div>
             <div className="customer-saved-card-grid customer-favorite-club-grid">
-              {group.follows.map((item, index) => {
+              {group.follows.map((item) => {
                 const venue = item.venue;
                 const venueId = String(item.venueId || venue?.id || "");
                 if (!venue?.slug || !venue.name || !venueId) return null;
                 return (
                   <SavedVenueCard
-                    key={`${venue.slug}-${index}`}
+                    key={venueId}
                     onDirections={onDirections}
                     onUnfollow={() => void onVenueFollowChange(venueId, false)}
                     pending={Boolean(pendingAction)}

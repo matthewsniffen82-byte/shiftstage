@@ -45,6 +45,7 @@ function directoryFixture(profiles) {
     window: { requestAnimationFrame() {} },
     homeTvLandingPreload: { sync() {} },
     revealDancerGridRows() {},
+    renderStableMediaMarkup: (container, content) => { container.innerHTML = content; },
     getItems: () => state.profiles,
     selectedVenueFilter: () => state.venueFilter, selectedHomeTvVenueFilter: () => null,
     syncHomeDestinationLocation: () => { state.syncedFilter = state.dancerDirectoryFilter; },

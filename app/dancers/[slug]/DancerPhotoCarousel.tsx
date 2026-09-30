@@ -823,7 +823,6 @@ export function DancerPhotoCarousel({
             <button
               aria-label={`Open ${stageName} ${item.kind} ${index + 1} of ${activeItems.length}`}
               className={`profile-media-grid-item is-${item.kind}`}
-              key={`${item.kind}-${item.id}-${index}`}
               onClick={(event) => openViewer(item.kind, index, event.currentTarget)}
               type="button"
             >
@@ -838,6 +837,7 @@ export function DancerPhotoCarousel({
                     }).join(",") || undefined}
                   />
                   <img
+                    key={item.imageUrl}
                     alt=""
                     aria-hidden="true"
                     data-image-state="loading"
@@ -859,6 +859,7 @@ export function DancerPhotoCarousel({
                 <>
                   {item.posterUrl ? (
                     <img
+                      key={item.posterUrl}
                       alt=""
                       aria-hidden="true"
                       data-image-state="loading"
@@ -927,7 +928,7 @@ export function DancerPhotoCarousel({
                 style={item.kind === "photo" && item.imageWidth && item.imageHeight ? {
                   "--profile-photo-card-ratio": `${item.imageWidth} / ${item.imageHeight}`,
                 } as CSSProperties : undefined}
-                key={`${item.kind}-viewer-${item.id}-${index}`}
+                key={`${item.kind}-viewer-${item.id}`}
               >
                 <button
                   aria-label="Back to dancer profile"
@@ -944,6 +945,7 @@ export function DancerPhotoCarousel({
                   // The top card stays selected while two following cards can be visible.
                   // Load both neighbors eagerly, keeping the rest of the gallery deferred.
                   <img
+                    key={item.imageUrl}
                     alt={`${stageName} photo ${index + 1} of ${viewerItems.length}`}
                     data-image-state="loading"
                     decoding={index === viewerIndex ? "sync" : "async"}

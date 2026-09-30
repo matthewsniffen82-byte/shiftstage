@@ -3,8 +3,8 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 import vm from "node:vm";
 
-const source = readFileSync(new URL("../src/live-shell/app/19-reset-home-discovery-feed-qr-prompt.js", import.meta.url), "utf8");
-const reconciliation = source.slice(source.indexOf("    const homeVenueFeedSnapshots"), source.indexOf("    function renderHomeDiscoveryFeed("));
+const source = readFileSync(new URL("../src/live-shell/app/01-user-agent.js", import.meta.url), "utf8");
+const reconciliation = source.slice(source.indexOf("    const stableMediaSnapshots"), source.indexOf("    const markets = {"));
 
 // Minimal DOM operations for exercising the production reconciler in Node.
 class DomNode {
@@ -58,7 +58,7 @@ function fixture() {
   const context = vm.createContext({});
   vm.runInContext(reconciliation, context);
   const results = new DomNode("DIV");
-  return { results, render: (...cards) => context.syncHomeVenueFeedChildren(results, new DomNode("DIV", {}, cards)) };
+  return { results, render: (...cards) => context.syncStableMediaChildren(results, new DomNode("DIV", {}, cards)) };
 }
 
 test("saved Follow updates preserve the card, focused button, loaded logo and loading portraits", () => {

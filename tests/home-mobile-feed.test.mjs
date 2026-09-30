@@ -335,7 +335,7 @@ test("Dancers reuses unchanged grid cards and starts every directory photo immed
     renderer,
     /homeDancerGridRenderKey === nextRenderKey[\s\S]*?results\.querySelector\(":scope > \.dancer-directory-filters"\)[\s\S]*?return;/,
   );
-  assert.match(renderer, /homeDancerGridRenderKey = nextRenderKey;[\s\S]*?results\.innerHTML = gridMarkup;/);
+  assert.match(renderer, /homeDancerGridRenderKey = nextRenderKey;[\s\S]*?renderStableMediaMarkup\(results, gridMarkup\);/);
   assert.match(compactCardRule, /contain: layout style;/);
   assert.doesNotMatch(compactCardRule, /contain: layout paint style;/);
   assert.match(
@@ -351,7 +351,7 @@ test("Dancers reuses unchanged grid cards and starts every directory photo immed
     /const imageLoading = "eager";[\s\S]*?const imageFetchPriority = imageIndex < 3 \? "high" : "auto";[\s\S]*?compactDirectory && nativePhotoAttrs[\s\S]*?<img class="home-dancer-grid-photo has-custom-photo" \$\{nativePhotoAttrs\} sizes="\(max-width: 720px\) calc\(\(100vw - 20px\) \/ 3\)[\s\S]*?loading="\$\{imageLoading\}" fetchpriority="\$\{imageFetchPriority\}" decoding="async" draggable="false"/,
   );
   assert.match(renderer, /let imageOffset = 0;[\s\S]*?startIndex|let imageOffset = 0;[\s\S]*?imageOffset \+= section\.profiles\.length/);
-  assert.match(renderer, /results\.innerHTML = gridMarkup;/);
+  assert.match(renderer, /renderStableMediaMarkup\(results, gridMarkup\);/);
   assert.match(
     homeSource,
     /#results\.home-dancer-grid\.home-dancer-three-column img\.home-dancer-grid-photo \{[\s\S]*?display: block !important;[\s\S]*?object-fit: cover;[\s\S]*?object-position: center top;[\s\S]*?radial-gradient\(circle at 70% 18%, rgba\(255,255,255,\.055\), transparent 34%\)[\s\S]*?linear-gradient\(145deg,#111118,#07070b\) !important;/,

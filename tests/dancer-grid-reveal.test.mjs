@@ -119,3 +119,36 @@ test("cached photos, initials-only cards and empty grids need no further load ev
     assert.ok(h.observers.every((observer) => !observer.connected));
   }
 });
+
+test("a slow new neighbor never hides an already revealed portrait", async () => {
+  const existing = [card(), card()];
+  const h = harness(existing);
+  h.start();
+  await flush();
+  const delayed = photo("loading");
+  const added = card(delayed);
+  added.parentNode = h.grid;
+  h.grid.children = [existing[0], added, existing[1]];
+  h.start();
+  assert.ok(existing.every(item => !loading(item)));
+  assert.equal(loading(added), true);
+  delayed.dataset.imageState = "ready";
+  h.update();
+  await flush();
+  assert.equal(loading(added), false);
+});
+
+test("a replaced photo on a retained card waits for the new source to load", async () => {
+  const retained = card();
+  const h = harness([retained]);
+  h.start();
+  await flush();
+  const replacement = photo("loading");
+  retained.querySelectorAll = () => [replacement];
+  h.start();
+  assert.equal(loading(retained), true);
+  replacement.dataset.imageState = "ready";
+  h.update();
+  await flush();
+  assert.equal(loading(retained), false);
+});

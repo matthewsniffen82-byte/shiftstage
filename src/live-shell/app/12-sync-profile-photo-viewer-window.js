@@ -385,7 +385,7 @@
         ? `<picture class="photo-thumbnail">${mobileThumbnailSource(item.photoSrcSet)}<img class="portrait ${escapeHtml(item.photoClass)} has-custom-photo" ${photoAttrs} sizes="(max-width: 720px) calc((100vw - 6px) / 3), 250px" width="360" height="504" alt="" aria-hidden="true" loading="${total <= PROFILE_MEDIA_PAGE_SIZE || galleryIndex < 6 ? "eager" : "lazy"}" fetchpriority="${galleryIndex < 3 ? "high" : "auto"}" decoding="async" draggable="false" data-image-state="loading"></picture>`
         : `<span class="portrait ${escapeHtml(item.photoClass)}"></span>`;
       return `
-        <button class="thumb ${galleryIndex === 0 ? "active" : ""}" type="button" data-profile-photo-index="${galleryIndex}" data-photo="${escapeHtml(item.photoClass)}" data-photo-url="${displayText(item.photoUrl)}" aria-label="Open gallery photo ${galleryIndex + 1} of ${total} in scrolling cards${item.isPinned ? ", pinned" : ""}" aria-pressed="${galleryIndex === 0 ? "true" : "false"}">
+        <button class="thumb ${galleryIndex === 0 ? "active" : ""}" type="button" data-stable-media-key="photo:${escapeOptionValue(item.id || item.photoUrl || item.photoClass)}" data-profile-photo-index="${galleryIndex}" data-photo="${escapeHtml(item.photoClass)}" data-photo-url="${displayText(item.photoUrl)}" aria-label="Open gallery photo ${galleryIndex + 1} of ${total} in scrolling cards${item.isPinned ? ", pinned" : ""}" aria-pressed="${galleryIndex === 0 ? "true" : "false"}">
           ${photoMarkup}
           ${item.isPinned ? '<svg class="dancer-photo-pin-indicator" aria-hidden="true" viewBox="0 0 24 24"><path d="m16 3 5 5-4 1-3 5-4-4 5-3 1-4Z" /><path d="m9 9 6 6M12 12l-7 7" /></svg>' : ""}
         </button>
@@ -515,11 +515,16 @@
       profileMediaObserver?.disconnect();
       profileMediaObserver = null;
       modalGallery.profilePhotoItems = profilePhotoGalleryItems(profile, baseIndex, options);
-      modalGallery.profileVisiblePhotoCount = 0;
+      modalGallery.profileVisiblePhotoCount = Math.min(modalGallery.profilePhotoItems.length, PROFILE_MEDIA_PAGE_SIZE);
       modalGallery.profileTvVideos = [];
       modalGallery.profileVisibleVideoCount = 0;
-      modalGallery.innerHTML = "";
-      appendNextProfileMediaBatch("photo", { skipObserve: true });
+      renderStableMediaMarkup(modalGallery, modalGallery.profilePhotoItems
+        .slice(0, modalGallery.profileVisiblePhotoCount)
+        .map((item, index) => profilePhotoThumbMarkup(item, modalGallery.profilePhotoItems.length, index)).join(""));
+      modalGallery.querySelectorAll("[data-profile-photo-index]").forEach((thumb, index) => {
+        thumb.classList.toggle("active", index === 0);
+        thumb.setAttribute("aria-pressed", String(index === 0));
+      });
       profileMediaLastAppendScrollTop = 0;
       profileMediaSentinel();
     }

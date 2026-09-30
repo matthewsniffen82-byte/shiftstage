@@ -109,7 +109,7 @@
       if (selectedVenue) {
         viewAllBtn.hidden = true;
         results.classList.remove("card-grid", "venue-card-grid");
-        results.innerHTML = venueDetailPage(selectedVenue);
+        renderStableMediaMarkup(results, venueDetailPage(selectedVenue));
         return;
       }
       if (loadingDiscovery && !items.length) {
@@ -135,7 +135,7 @@
         renderHomeDancerGrid(city, items);
         return;
       }
-      results.innerHTML = items.map((item) => venueCard(item)).join("");
+      renderStableMediaMarkup(results, items.map((item) => venueCard(item)).join(""));
     }
 
     async function renderHomeTvLaunch(city, venueFilter = null) {

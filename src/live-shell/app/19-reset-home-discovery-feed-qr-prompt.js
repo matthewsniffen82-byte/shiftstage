@@ -409,6 +409,9 @@
     }
 
     function revealDancerGridRows(grid) {
+      grid.dancerGridRevealObserver?.disconnect();
+      grid.dancerGridRevealObserver = null;
+      grid.dancerGridRevealedPhotos ||= new WeakMap();
       const rows = [];
       let row = null;
       // This directory has three columns at every width. Section headings start
@@ -423,18 +426,28 @@
           rows.push(row);
         }
         row.cards.push(card);
-        row.photos.push(...card.querySelectorAll(".home-dancer-grid-photo[data-image-state]"));
-        card.setAttribute("data-row-loading", "true");
-        card.setAttribute("aria-busy", "true");
+        const photos = [...card.querySelectorAll(".home-dancer-grid-photo[data-image-state]")];
+        row.photos.push(...photos);
+        // A new neighbor must not hide portraits that have already loaded.
+        const revealed = grid.dancerGridRevealedPhotos.get(card);
+        const staysVisible = revealed && revealed.length === photos.length && photos.every((photo, index) => (
+          photo === revealed[index] && ["ready", "error"].includes(photo.dataset.imageState)
+        ));
+        if (!staysVisible) {
+          card.setAttribute("data-row-loading", "true");
+          card.setAttribute("aria-busy", "true");
+        }
       }
       if (!rows.length) return;
       const firstCard = rows[0].cards[0];
       const observer = new MutationObserver(check);
+      grid.dancerGridRevealObserver = observer;
 
       function check() {
         // Old image completions must never reveal a newer filter's cards.
-        if (firstCard.parentNode !== grid) {
+        if (firstCard.parentNode !== grid || grid.dancerGridRevealObserver !== observer) {
           observer.disconnect();
+          if (grid.dancerGridRevealObserver === observer) grid.dancerGridRevealObserver = null;
           return;
         }
         for (const row of rows) {
@@ -442,15 +455,19 @@
           row.decoding = true;
           Promise.allSettled(row.photos.filter((photo) => photo.dataset.imageState === "ready").map((photo) => photo.decode()))
             .then(() => {
-              if (firstCard.parentNode !== grid) return;
+              if (firstCard.parentNode !== grid || grid.dancerGridRevealObserver !== observer) return;
               // Reveal this row in one paint without waiting on other rows.
               row.cards.forEach((card) => {
                 card.removeAttribute("data-row-loading");
                 card.removeAttribute("aria-busy");
+                grid.dancerGridRevealedPhotos.set(card, [...card.querySelectorAll(".home-dancer-grid-photo[data-image-state]")]);
               });
               row.ready = true;
               homeTvLandingPreload.schedule();
-              if (rows.every((item) => item.ready)) observer.disconnect();
+              if (rows.every((item) => item.ready)) {
+                observer.disconnect();
+                if (grid.dancerGridRevealObserver === observer) grid.dancerGridRevealObserver = null;
+              }
             });
         }
       }
@@ -502,7 +519,7 @@
         return;
       }
       homeDancerGridRenderKey = nextRenderKey;
-      results.innerHTML = gridMarkup;
+      renderStableMediaMarkup(results, gridMarkup);
       revealDancerGridRows(results);
       window.requestAnimationFrame(() => {
         prefetchProfileNavigationFromElement(results.querySelector(".home-dancer-grid-card"));
@@ -678,65 +695,6 @@
       });
     }
 
-    // Compare rendered content, not unrelated saved state or profile metrics.
-    // Keep a clean snapshot so image readiness, fitted logos and focus survive
-    // a real update to another part of the card.
-    const homeVenueFeedSnapshots = new WeakMap();
-
-    function homeVenueFeedNodeKey(node) {
-      return node.getAttribute?.("data-discovery-key") || node.getAttribute?.("data-public-dancer-id") || "";
-    }
-
-    function rememberHomeVenueFeedNode(node) {
-      homeVenueFeedSnapshots.set(node, node.cloneNode(true));
-      node.childNodes.forEach(rememberHomeVenueFeedNode);
-    }
-
-    function syncHomeVenueFeedChildren(current, next) {
-      const existing = [...current.childNodes];
-      const keyed = new Map(existing.map((node) => [homeVenueFeedNodeKey(node), node]).filter(([key]) => key));
-      const retained = new Set();
-      [...next.childNodes].forEach((child, index) => {
-        const key = homeVenueFeedNodeKey(child);
-        const candidate = key ? keyed.get(key) : existing[index];
-        const previous = candidate && !retained.has(candidate) && homeVenueFeedNodeKey(candidate) === key
-          ? candidate
-          : null;
-        const node = syncHomeVenueFeedNode(previous, child);
-        retained.add(node);
-        if (current.childNodes[index] !== node) current.insertBefore(node, current.childNodes[index] || null);
-      });
-      existing.forEach((node) => {
-        if (!retained.has(node) && node.parentNode === current) node.remove();
-      });
-    }
-
-    function syncHomeVenueFeedNode(current, next) {
-      const previous = current && homeVenueFeedSnapshots.get(current);
-      const changedImage = previous?.nodeName === "IMG" && next.nodeName === "IMG" && ["src", "srcset", "sizes"].some((name) => (
-        previous.getAttribute(name) !== next.getAttribute(name)
-      ));
-      if (!previous || previous.nodeName !== next.nodeName || changedImage) {
-        rememberHomeVenueFeedNode(next);
-        return next;
-      }
-      if (previous.isEqualNode(next)) return current;
-      const snapshot = next.cloneNode(true);
-      if (next.nodeType === 1) {
-        [...previous.attributes].forEach(({ name }) => {
-          if (!next.hasAttribute(name)) current.removeAttribute(name);
-        });
-        [...next.attributes].forEach(({ name, value }) => {
-          if (previous.getAttribute(name) !== value) current.setAttribute(name, value);
-        });
-        syncHomeVenueFeedChildren(current, next);
-      } else {
-        current.nodeValue = next.nodeValue;
-      }
-      homeVenueFeedSnapshots.set(current, snapshot);
-      return current;
-    }
-
     function renderHomeDiscoveryFeed(city, items, options = {}) {
       rememberHomeDiscoveryFeedPosition();
       results.classList.remove("card-grid", "home-dancer-grid", "venue-card-grid");
@@ -787,9 +745,7 @@
       }
       homeDiscoveryFeedRenderKey = nextRenderKey;
       if (isVenueFeed) {
-        const template = document.createElement("template");
-        template.innerHTML = markup;
-        syncHomeVenueFeedChildren(results, template.content);
+        renderStableMediaMarkup(results, markup);
       } else {
         results.innerHTML = markup;
       }
