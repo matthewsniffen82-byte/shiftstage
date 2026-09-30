@@ -42,7 +42,7 @@ body.dancr-button-system .club-transport-card .club-entry-toggle {
   color: #f4f2f8 !important; text-align: left; font: inherit; cursor: pointer;
 }
 body.dancr-button-system .club-transport-card .club-entry-toggle[aria-expanded=true] {
-  border-color: #745696 !important; background: #160e24 !important;
+  border-color: #745696 !important; background: linear-gradient(#160e24, #160e24) !important;
 }
 .club-entry-toggle strong, .club-entry-toggle small { display: block; line-height: 1.4; }
 .club-entry-toggle strong { font-size: 15px; font-weight: 650; }
@@ -59,7 +59,8 @@ body.dancr-button-system .club-transport-card .club-entry-toggle[aria-expanded=t
   padding: 10px 12px; border: 1px solid #34343c; border-radius: 12px;
   background: linear-gradient(#050507, #050507); cursor: pointer;
 }
-.club-transport-options label.selected { border-color: #745696; background: #160e24; }
+/* Use the city selector’s opaque gradient to preserve its dark violet in mobile dark mode. */
+.club-transport-options label.selected { border-color: #745696; background: linear-gradient(#160e24, #160e24); }
 .club-transport-options label:has(input:disabled) { opacity: .55; cursor: default; }
 .club-transport-options strong, .club-transport-options small { display: block; font-size: 14px; line-height: 1.4; }
 .club-transport-options small { font-size: 12px; color: #b9b5c3; margin-top: 3px; }
