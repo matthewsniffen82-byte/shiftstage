@@ -25,6 +25,7 @@ function deferred() {
 function harness(fetch, { token = "table-token", session = null, component = "InternalRoster", url = "https://example.invalid/internal/club/table-token" } = {}) {
   let now = 0;
   let nextTimer = 0;
+  let nextRequestKey = 0;
   const timers = new Map();
   const schedule = (callback, delay, interval = false) => {
     const id = ++nextTimer;
@@ -43,7 +44,7 @@ function harness(fetch, { token = "table-token", session = null, component = "In
   let mounting = true;
   const exports = {};
   vm.runInNewContext(code, {
-    exports, fetch, Error, AbortController, URL, crypto: { randomUUID: () => "request-key" },
+    exports, fetch, Error, AbortController, URL, crypto: { randomUUID: () => `request-key-${++nextRequestKey}` },
     Date: class extends Date { static now() { return now; } },
     setTimeout: (callback, delay) => schedule(callback, delay),
     setInterval: (callback, delay) => schedule(callback, delay, true),
@@ -121,6 +122,7 @@ const alert = app => find(app.render(), node => node.props?.role === "alert");
 const alertMessage = app => find(alert(app), node => node.type === "p")?.props.children;
 const grid = app => find(app.render(), node => node.props?.className === "ir-grid ir-directory-grid");
 const profile = app => find(app.render(), node => node.type?.name === "ClubProfileDialog")?.props.profile;
+const requestButton = (app, id) => find(find(app.render(), node => node.type === "article" && node.key === id), node => node.props?.className === "ir-table-request");
 
 test("opening a profile starts its viewer alongside the API and keeps the roster available",async t=>{
  const pending=deferred();
@@ -410,6 +412,89 @@ test("profile and roster requests share one submission and Request sent status",
   assert.equal(profile(app).requestStatus,'pending');assert.equal(profile(app).requestsTonight,1);
   find(app.render(),node=>node.type?.name==='ClubProfileDialog').props.onRequest();
   assert.equal(posts.length,1);
+});
+
+test("each dancer has an independent sending state in both the grid and full profile", async t => {
+  const dancers = [dancer, { ...dancer, id: 'dancer-2', stageName: 'Second dancer' }, { ...dancer, id: 'dancer-3', stageName: 'Third dancer' }];
+  const posts = [], sent = new Set();
+  const app = harness(async (url, options) => {
+    if (options.method === 'POST') {
+      const body = JSON.parse(options.body), pending = deferred();
+      posts.push({ ...body, pending });
+      const result = await pending.promise;
+      if (result.ok) sent.add(body.dancerId);
+      return response(result, result.ok ? 200 : 429);
+    }
+    if (url.includes('/profile/')) {
+      const id = url.split('/profile/')[1].split('?')[0];
+      return response({ ok: true, profile: { id, requestStatus: sent.has(id) ? 'pending' : null } });
+    }
+    return response({ ...roster, kind: 'table', dancers: dancers.map(item => ({ ...item, requestStatus: sent.has(item.id) ? 'pending' : null })) });
+  });
+  t.after(() => app.unmount()); await app.mount();
+  requestButton(app, dancer.id).props.onClick();
+  assert.equal(requestButton(app, dancer.id).props.children, 'Sending…');
+  assert.equal(requestButton(app, dancer.id).props['aria-busy'], true);
+  assert.equal(requestButton(app, 'dancer-2').props.disabled, false);
+  assert.equal(requestButton(app, 'dancer-3').props.disabled, false);
+  requestButton(app, 'dancer-2').props.onClick();
+  requestButton(app, dancer.id).props.onClick();
+  assert.equal(posts.length, 2, 'Different dancers can submit while duplicate clicks stay blocked');
+  assert.notEqual(posts[0].requestKey, posts[1].requestKey);
+  assert.equal(requestButton(app, 'dancer-2').props.children, 'Sending…');
+  const open = async id => {
+    const card = find(app.render(), node => node.type === 'article' && node.key === id);
+    find(card, node => node.props?.className === 'ir-profile-link').props.onClick(); await flush();
+    return find(app.render(), node => node.type?.name === 'ClubProfileDialog');
+  };
+  assert.equal((await open('dancer-3')).props.request.busy, false);
+  const secondProfile = await open('dancer-2');
+  assert.equal(secondProfile.props.request.busy, true);
+  secondProfile.props.onRequest(); assert.equal(posts.length, 2);
+  posts[1].pending.resolve({ ok: false, error: 'Please wait before sending another request.' }); await flush();
+  assert.equal(requestButton(app, 'dancer-2').props.disabled, false);
+  assert.equal(requestButton(app, dancer.id).props.children, 'Sending…', 'A failed request cannot clear another dancer’s sending state');
+  requestButton(app, 'dancer-2').props.onClick();
+  assert.equal(posts[2].requestKey, posts[1].requestKey, 'A retry retains that dancer’s idempotency key');
+  posts[2].pending.resolve({ ok: true, receipt: { status: 'pending' } }); await flush();
+  assert.equal(requestButton(app, dancer.id).props.children, 'Sending…');
+  assert.equal(find(requestButton(app, 'dancer-2'), node => node.type === 'span').props.children, 'Request sent');
+  assert.equal(requestButton(app, 'dancer-3').props.disabled, false);
+  posts[0].pending.resolve({ ok: true, receipt: { status: 'pending' } }); await flush();
+  assert.equal(find(requestButton(app, dancer.id), node => node.type === 'span').props.children, 'Request sent');
+  assert.equal(find(requestButton(app, 'dancer-2'), node => node.type === 'span').props.children, 'Request sent');
+  assert.equal(requestButton(app, 'dancer-3').props.disabled, false);
+});
+
+test("confirmed requests stop sending immediately even when the follow-up roster read stalls", async t => {
+  const delayedRead = deferred(); let sent = false;
+  const app = harness(async (_url, options) => {
+    if (options.method === 'POST') { sent = true; return response({ ok: true, receipt: { status: 'pending' } }); }
+    return sent ? delayedRead.promise : response({ ...roster, kind: 'table' });
+  });
+  t.after(() => app.unmount()); await app.mount();
+  requestButton(app, dancer.id).props.onClick(); await flush();
+  const button = requestButton(app, dancer.id);
+  assert.equal(button.props['aria-busy'], false);
+  assert.equal(button.props.disabled, true);
+  assert.equal(find(button, node => node.type === 'span').props.children, 'Request sent');
+  delayedRead.resolve(response({ ...roster, kind: 'table', dancers: [{ ...dancer, requestStatus: 'pending' }] })); await flush();
+});
+
+test("a timed-out request releases only its own button and can be retried", async t => {
+  const second = { ...dancer, id: 'dancer-2', stageName: 'Second dancer' }, posts = [];
+  const app = harness(async (_url, options) => {
+    if (options.method === 'POST') { posts.push(JSON.parse(options.body)); return new Promise(() => {}); }
+    return response({ ...roster, kind: 'table', dancers: [dancer, second] });
+  });
+  t.after(() => app.unmount()); await app.mount();
+  requestButton(app, dancer.id).props.onClick(); await app.advance(1000);
+  requestButton(app, second.id).props.onClick(); await app.advance(14000);
+  assert.equal(requestButton(app, dancer.id).props.disabled, false);
+  assert.equal(requestButton(app, second.id).props.children, 'Sending…');
+  requestButton(app, dancer.id).props.onClick();
+  assert.equal(posts.length, 3); assert.equal(posts[2].requestKey, posts[0].requestKey);
+  await app.advance(15000);
 });
 
 test("failed request retries preserve the same idempotency key and a reloaded table stays sent", async t => {
