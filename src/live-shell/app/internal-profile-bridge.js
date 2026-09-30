@@ -120,7 +120,7 @@
       const confirmed = sent && internalTableRequest.confirmed;
       const label = internalTableRequest.busy ? sent ? "Cancelling…" : "Sending…" : confirmed ? "Request sent" : sent ? "Cancel request" : `Request at ${internalTableRequest.tableLabel}`;
       return `<div class="internal-profile-request">
-        <div class="modal-actions profile-actions-compact profile-venue-actions"><button type="button" class="action-btn profile-action-icon-control" data-internal-table-request ${confirmed || internalTableRequest.busy || (sent ? !internalTableRequest.requestId : !profile.scheduled) ? "disabled" : ""} aria-busy="${internalTableRequest.busy}">${confirmed ? `<span class="internal-request-sent-label">${escapeHtml(label)}</span>` : escapeHtml(label)}</button></div>
+        <div class="modal-actions profile-actions-compact profile-venue-actions"><button type="button" class="action-btn profile-action-icon-control" data-internal-table-request ${sent ? "data-request-sent" : ""} ${confirmed || internalTableRequest.busy || (sent ? !internalTableRequest.requestId : !profile.scheduled) ? "disabled" : ""} aria-busy="${internalTableRequest.busy}">${confirmed ? `<span class="internal-request-sent-label">${escapeHtml(label)}</span>` : escapeHtml(label)}</button></div>
         <p role="status" class="internal-profile-request-status">${escapeHtml(internalTableRequest.message || (internalTableRequest.status === "acknowledged" ? "Seen by club staff." : sent ? "Sent to club staff. Availability is confirmed by staff." : ""))}</p>
       </div>`;
     }

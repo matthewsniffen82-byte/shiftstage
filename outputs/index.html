@@ -41384,22 +41384,28 @@ html.internal-profile-embed body.dancr-button-system #profileBackdrop #profileMo
 html.internal-profile-embed .internal-profile-request { width: 100%; }
 /* The table request is the primary Internal action, matching the roster cards.
    Reuse the shared button face so automatic dark mode preserves the violet. */
-html.internal-profile-embed [data-internal-table-request]:enabled {
+html.internal-profile-embed [data-internal-table-request]:enabled:not([data-request-sent]) {
   --profile-action-background: linear-gradient(#6d28d9, #6d28d9) !important;
   --profile-action-border: #8b5cf6 !important;
   --profile-action-shadow: none !important;
 }
-html.internal-profile-embed [data-internal-table-request]:enabled:is(:hover, :active) {
+html.internal-profile-embed [data-internal-table-request]:enabled:not([data-request-sent]):is(:hover, :active) {
   --profile-action-border: #a78bfa !important;
 }
-html.internal-profile-embed [data-internal-table-request]:enabled:active {
+html.internal-profile-embed [data-internal-table-request]:enabled:not([data-request-sent]):active {
   --profile-action-background: linear-gradient(#5b21b6, #5b21b6) !important;
 }
-/* A submitted request stays disabled but reads as a clear confirmation. */
-html.internal-profile-embed [data-internal-table-request]:disabled:has(.internal-request-sent-label) {
+/* Keep the sent state gray through confirmation and the available cancel action. */
+html.internal-profile-embed [data-internal-table-request][data-request-sent] {
   --profile-action-background: linear-gradient(#29292f, #29292f) !important;
   --profile-action-border: #55545f !important;
   --profile-action-shadow: none !important;
+}
+html.internal-profile-embed [data-internal-table-request][data-request-sent]:enabled:is(:hover, :active) {
+  --profile-action-border: #777481 !important;
+}
+html.internal-profile-embed [data-internal-table-request][data-request-sent]:enabled:active {
+  --profile-action-background: linear-gradient(#33333b, #33333b) !important;
 }
 html.internal-profile-embed #profileBackdrop #profileModal .internal-request-sent-label { display: inline-flex; align-items: center; justify-content: center; gap: 7px; color: #f8fafc !important; font: inherit !important; }
 html.internal-profile-embed #profileBackdrop #profileModal .internal-request-sent-label::before { content: ""; flex: 0 0 auto; width: 5px; height: 9px; margin-top: -3px; border: solid currentColor; border-width: 0 2px 2px 0; transform: rotate(45deg); }
@@ -43080,7 +43086,7 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
       const confirmed = sent && internalTableRequest.confirmed;
       const label = internalTableRequest.busy ? sent ? "Cancelling…" : "Sending…" : confirmed ? "Request sent" : sent ? "Cancel request" : `Request at ${internalTableRequest.tableLabel}`;
       return `<div class="internal-profile-request">
-        <div class="modal-actions profile-actions-compact profile-venue-actions"><button type="button" class="action-btn profile-action-icon-control" data-internal-table-request ${confirmed || internalTableRequest.busy || (sent ? !internalTableRequest.requestId : !profile.scheduled) ? "disabled" : ""} aria-busy="${internalTableRequest.busy}">${confirmed ? `<span class="internal-request-sent-label">${escapeHtml(label)}</span>` : escapeHtml(label)}</button></div>
+        <div class="modal-actions profile-actions-compact profile-venue-actions"><button type="button" class="action-btn profile-action-icon-control" data-internal-table-request ${sent ? "data-request-sent" : ""} ${confirmed || internalTableRequest.busy || (sent ? !internalTableRequest.requestId : !profile.scheduled) ? "disabled" : ""} aria-busy="${internalTableRequest.busy}">${confirmed ? `<span class="internal-request-sent-label">${escapeHtml(label)}</span>` : escapeHtml(label)}</button></div>
         <p role="status" class="internal-profile-request-status">${escapeHtml(internalTableRequest.message || (internalTableRequest.status === "acknowledged" ? "Seen by club staff." : sent ? "Sent to club staff. Availability is confirmed by staff." : ""))}</p>
       </div>`;
     }

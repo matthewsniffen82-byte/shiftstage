@@ -151,6 +151,7 @@ test('full-profile cancellation uses the exact request, blocks duplicates, and p
  const f=fixture(),event=f.event();event.data.profile={...profile,requestStatus:'acknowledged',requestId:id(8)};
  await f.bridge.openInternalProfileMessage(event);
  assert.match(f.bridge.internalProfileRequestActionsMarkup(f.bridge.profile()),/>Cancel request</);
+ assert.match(f.bridge.internalProfileRequestActionsMarkup(f.bridge.profile()),/data-request-sent/);
  f.bridge.sendInternalTableRequest();f.bridge.sendInternalTableRequest();
  const cancel=f.messages.filter(([message])=>message.type==='mydancr:internal-table-cancel');
  assert.equal(cancel.length,1);assert.equal(cancel[0][0].profileId,profile.id);assert.equal(cancel[0][0].requestId,id(8));
@@ -158,6 +159,7 @@ test('full-profile cancellation uses the exact request, blocks duplicates, and p
  await f.bridge.openInternalProfileMessage(f.event());
  assert.equal(f.opens.length,1,'Cancelling must not reset the media viewer');
  assert.match(f.bridge.internalProfileRequestActionsMarkup(f.bridge.profile()),/>Request at Table 1</);
+ assert.doesNotMatch(f.bridge.internalProfileRequestActionsMarkup(f.bridge.profile()),/data-request-sent/);
 });
 
 test('Internal replaces Going with actual requests and retains Views today while External keeps its metrics', () => {

@@ -80,12 +80,15 @@ body.dancr-button-system .ir-shell.ir-guest button:disabled { opacity: .5 !impor
 /* A slimmer visible face keeps the full 44px tap target above the card edge. */
 body.dancr-button-system .ir-shell.ir-guest button.ir-table-request { --ir-guest-control-edge: #8b5cf6; padding: 4px 8px !important; border-radius: 8px !important; }
 body.dancr-button-system .ir-shell.ir-guest button.ir-table-request::before { inset-block: 4px; background: linear-gradient(#6d28d9, #6d28d9); }
-body.dancr-button-system .ir-shell.ir-guest button.ir-table-request:enabled:is(:hover, :active) { --ir-guest-control-edge: #a78bfa; }
-body.dancr-button-system .ir-shell.ir-guest button.ir-table-request:enabled:active::before { background: linear-gradient(#5b21b6, #5b21b6); }
+body.dancr-button-system .ir-shell.ir-guest button.ir-table-request:enabled:not([data-request-sent]):is(:hover, :active) { --ir-guest-control-edge: #a78bfa; }
+body.dancr-button-system .ir-shell.ir-guest button.ir-table-request:enabled:not([data-request-sent]):active::before { background: linear-gradient(#5b21b6, #5b21b6); }
 body.dancr-button-system .ir-shell.ir-guest button.ir-table-request:disabled { --ir-guest-control-edge: #55545f; }
 body.dancr-button-system .ir-shell.ir-guest button.ir-table-request:disabled::before { background: linear-gradient(#111118, #111118); }
+body.dancr-button-system .ir-shell.ir-guest button.ir-table-request[data-request-sent] { --ir-guest-control-edge: #55545f; }
 body.dancr-button-system .ir-shell.ir-guest button.ir-table-request[data-request-sent]:disabled { opacity: 1 !important; cursor: default; }
-body.dancr-button-system .ir-shell.ir-guest button.ir-table-request[data-request-sent]:disabled::before { background: linear-gradient(#29292f, #29292f); }
+body.dancr-button-system .ir-shell.ir-guest button.ir-table-request[data-request-sent]::before { background: linear-gradient(#29292f, #29292f); }
+body.dancr-button-system .ir-shell.ir-guest button.ir-table-request[data-request-sent]:enabled:is(:hover, :active) { --ir-guest-control-edge: #777481; }
+body.dancr-button-system .ir-shell.ir-guest button.ir-table-request[data-request-sent]:enabled:active::before { background: linear-gradient(#33333b, #33333b); }
 body .ir-guest .internal-request-sent-label { display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-width: 0; color: #f8fafc !important; }
 body .ir-guest .internal-request-sent-label::before { content: ""; flex: 0 0 auto; width: 5px; height: 9px; margin-top: -3px; border: solid currentColor; border-width: 0 2px 2px 0; transform: rotate(45deg); }
 
