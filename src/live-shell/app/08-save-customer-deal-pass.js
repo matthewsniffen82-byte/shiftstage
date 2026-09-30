@@ -95,9 +95,9 @@
       }
     }
 
-    function selectDealPassForNfc(pass) {
+    function selectDealPassForNfc(pass, openGuestList = false) {
       const ready = pendingNfcDealIntentForPass(pass);
-      if (ready && !ready.expired) { window.location.assign(ready.passUrl); return { ok: true, intent: ready }; }
+      if (!openGuestList && ready && !ready.expired) { window.location.assign(ready.passUrl); return { ok: true, intent: ready }; }
       const query = new URLSearchParams({
         sourceType: pass.sourceType || "club_page",
         dancerId: pass.sourceType === "dancer_profile" ? pass.dancerId || "" : "",
@@ -587,7 +587,7 @@
         try {
           const pass = await createRevenueDealPass(selection);
           closeClubDealHub(false);
-          openDealPassOverlay(pass);
+          selectDealPassForNfc(pass, true);
         } catch (error) {
           status.textContent = error.message || "Unable to prepare this Club Deal. Please try again.";
           status.hidden = false;
@@ -616,7 +616,7 @@
       const venueName = String(config?.venueName || "this club").trim() || "this club";
       const status = document.getElementById("clubDealHubStatus");
       document.getElementById("clubDealHubTitle").textContent = `Club Deals at ${venueName}`;
-      document.getElementById("clubDealHubCopy").textContent = `${offers.length} live ${offers.length === 1 ? "offer" : "offers"}. Choose one to preview. Choose your arrival method to get an admission pass. Staff scans it at the door.`;
+      document.getElementById("clubDealHubCopy").textContent = `${offers.length} live ${offers.length === 1 ? "offer" : "offers"}. Choose an offer, then complete the guest-list form for your admission pass. Staff scans it at the door.`;
       status.textContent = "";
       status.hidden = true;
       overlay.removeAttribute("aria-busy");
@@ -651,7 +651,7 @@
         revenueTrigger.classList.add("is-loading");
         try {
           const pass = await createRevenueDealPass(config);
-          openDealPassOverlay(pass, revenueTrigger);
+          selectDealPassForNfc(pass, true);
           if (
             revenueTrigger.hasAttribute("data-feed-live-qr") ||
             revenueTrigger.hasAttribute("data-feed-venue-qr")

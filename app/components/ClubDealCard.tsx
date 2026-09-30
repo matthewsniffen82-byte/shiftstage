@@ -168,6 +168,10 @@ export function ClubDealCard({
   }, [dialogOpen]);
 
   function openDealDialog(triggerButton: HTMLElement | null) {
+    if (offerDeals.length === 1 && displayTitle === "Free Entry") {
+      selectForNfcTap(true);
+      return;
+    }
     if (!dialogOpen && !dialogReturnContext.current) {
       const scrollContainer = triggerButton?.closest<HTMLElement>("#results.venue-profile-overlay") || null;
       dialogReturnContext.current = {
@@ -180,8 +184,8 @@ export function ClubDealCard({
     setDialogOpen(true);
   }
 
-  function selectForNfcTap() {
-    if (admissionPassUrl && intentState === "ready") { window.location.assign(admissionPassUrl); return; }
+  function selectForNfcTap(openGuestList = false) {
+    if (!openGuestList && admissionPassUrl && intentState === "ready") { window.location.assign(admissionPassUrl); return; }
     const query = new URLSearchParams({
       sourceType,
       dancerId: sourceType === "dancer_profile" ? dancerId || "" : "",
@@ -427,7 +431,7 @@ export function ClubDealCard({
           className="club-deal-checkout-action"
           type="button"
           data-club-deal-state="checkout"
-          onClick={selectForNfcTap}
+          onClick={() => selectForNfcTap()}
           aria-pressed="false"
         >
           {intentState === "error" ? "Try again" : useLabel}

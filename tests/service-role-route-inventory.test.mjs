@@ -66,7 +66,15 @@ test("every service-role API route has an explicit reviewed trust boundary", () 
       return false;
     }
 
-    return !/createRequestSupabaseContext\(request(?:, \{ (?:role: "dancer"(?:, allow(?:AgeVerification|ProfileSetup): true)?|active: true) \})?\)/.test(source);
+    if (routePath === "app/api/internal/[[...path]]/route.ts") {
+      const scope = read("src/lib/dancr/internal-roster.ts");
+      return !source.includes("await internalScope(admin, request")
+        || !scope.includes('createRequestSupabaseContext(request, { role: "venue" })')
+        || !scope.includes('requireVenueAccess(client, auth.user.id, "view_roster")')
+        || !scope.includes('.eq("token", token).eq("active", true).eq("kind", "table")');
+    }
+
+    return !/createRequestSupabaseContext\(request(?:, \{ (?:role: "(?:dancer|venue)"(?:, allow(?:AgeVerification|ProfileSetup): true)?|active: true) \})?\)/.test(source);
   });
 
   assert.deepEqual(unclassified, []);

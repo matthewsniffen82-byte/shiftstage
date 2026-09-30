@@ -10,6 +10,7 @@ import { PublicRequestRateLimitError } from "./public-request-rate-limit";
 import { createAdminSupabaseClient } from "../supabase/admin";
 import { createRequestSupabaseContext, getBearerToken } from "../supabase/request";
 import { readVenueVideo } from "./venue-video-attribution";
+import { normalizeGuestListDetails } from "./guest-list";
 
 export const ADMISSION_TOKEN_PATTERN = /^[A-Za-z0-9_-]{43}$/;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -21,6 +22,10 @@ export async function createAdmissionPass(request: Request, body: Record<string,
   if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(dealId) || !isEligibleClubTransportation(body.transportation)
     || !["club_page", "dancer_profile"].includes(String(body.sourceType || "club_page"))) {
     throw new PublicApiError("INVALID_REQUEST", "Choose an offer and eligible arrival method.", 400);
+  }
+  const guest = normalizeGuestListDetails(body.guest);
+  if ((body.transportation !== "club_shuttle" || body.guest !== undefined) && !guest) {
+    throw new PublicApiError("INVALID_REQUEST", "Enter your name, phone, and a valid email if provided, then agree to share your details with the club.", 400);
   }
   // Guest identity comes from a private server-issued cookie, never a body ID.
   const cookie = request.headers.get("cookie")?.split(";").map(part => part.trim()).find(part => part.startsWith(COOKIE + "="))?.slice(COOKIE.length + 1);
@@ -42,16 +47,17 @@ export async function createAdmissionPass(request: Request, body: Record<string,
     attributionToken: typeof body.attributionToken === "string" ? body.attributionToken : "",
     venueId: deal.venueId, dealId,
   });
-  const { data, error } = await (admin as any).rpc("issue_video_admission_pass", {
+  const { data, error } = await (admin as any).rpc(guest ? "issue_guest_list_admission_pass" : "issue_video_admission_pass", {
     p_token: randomBytes(32).toString("base64url"), p_deal_id: dealId,
     p_session_id: sessionId, p_customer_id: customerId,
     p_source: attribution.sourceType, p_dancer_id: attribution.dancerId,
     p_shift_id: attribution.shiftId, p_arrival_method: body.transportation,
     p_video_id: readVenueVideo(request, deal.venueId, process.env.DANCR_PUBLIC_RATE_LIMIT_SECRET),
+    ...(guest ? { p_guest_name: guest.name, p_phone: guest.phone, p_email: guest.email || null, p_consent: true } : {}),
   });
   if (error) throw error;
   if (!data?.token || !ADMISSION_TOKEN_PATTERN.test(data.token)) throw new Error("Admission pass receipt missing.");
-  const response = NextResponse.json({ ok: true, passUrl: `/deals/pass/${data.token}`, expiresAt: data.expiresAt, session: session || null }, { headers: PASS_HEADERS });
+  const response = NextResponse.json({ ok: true, passUrl: `/deals/pass/${data.token}`, expiresAt: data.expiresAt, guestListJoined: data.guestListJoined === true, session: session || null }, { headers: PASS_HEADERS });
   response.cookies.set(COOKIE, sessionId, { httpOnly: true, secure: process.env.NODE_ENV === "production", sameSite: "lax", path: "/", maxAge: 365 * 86400 });
   return response;
 }
@@ -61,6 +67,8 @@ export function admissionError(error: unknown) {
   if (error instanceof DealRedemptionAttributionError) return NextResponse.json({ ok: false, error: error.message }, { status: error.status, headers: PASS_HEADERS });
   const code = error && typeof error === "object" && "code" in error ? String(error.code) : "";
   const publicMessages = new Set([
+    "Enter your guest-list details and agree to share them with the club.",
+    "You already have a guest-list entry for this pass. Use the same guest details to reopen it.",
     "Check the admission pass details.", "This offer is no longer available.", "This venue is unavailable.",
     "This admission pass is unavailable.", "This admission pass has expired or is no longer valid.",
     "Verify the guest arrival method before admitting them.", "This offer is outside its valid admission hours.",

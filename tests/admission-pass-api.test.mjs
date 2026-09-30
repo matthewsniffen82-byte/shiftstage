@@ -9,6 +9,8 @@ import {PublicApiError,resolveApiError} from '../src/lib/api-error-policy.ts';
 import {readBoundedJsonObject} from '../src/lib/bounded-json-body.ts';
 import * as videoAttribution from '../src/lib/dancr/venue-video-attribution.ts';
 import * as transportation from '../src/lib/dancr/club-deal-transportation.ts';
+import * as guestList from '../src/lib/dancr/guest-list.ts';
+const guest={name:'Test Guest',phone:'7025550123',email:'',consent:true};
 const require=createRequire(import.meta.url),NextResponse=require('next/server').NextResponse;
 const dealId='11111111-1111-4111-8111-111111111111',customerId='22222222-2222-4222-8222-222222222222',cookieId='33333333-3333-4333-8333-333333333333',token='x'.repeat(43);
 class RateError extends Error{retryAfterSeconds=60;}
@@ -19,7 +21,7 @@ function fixture(options={}){
  const context=async(_request,access)=>{calls.push({access});if(options.noAuth)throw new PublicApiError('UNAUTHORIZED','Sign in.',401);return {user:{id:customerId},client:user,session:{access_token:'new-access'}};};
  const limit=async()=>{calls.push('limit');if(options.limited)throw new RateError('Slow down.');};
  const api=load('src/lib/dancr/admission-passes.ts',{
-  './venue-video-attribution':videoAttribution,'server-only':{},'node:crypto':{randomBytes,randomUUID},'next/server':{NextResponse},'../api-error-policy':{PublicApiError},
+  './guest-list':guestList,'./venue-video-attribution':videoAttribution,'server-only':{},'node:crypto':{randomBytes,randomUUID},'next/server':{NextResponse},'../api-error-policy':{PublicApiError},
   './deal-redemption-attribution':{DealRedemptionAttributionError:AttributionError,async resolveDealRedemptionAttribution(_client,input){calls.push({attribution:input});if(input.sourceType==='dancer_profile')throw new AttributionError('Invalid source.');return {sourceType:'club_page',dancerId:null,shiftId:null};}},
   './deals':{async getActiveClubDealById(){return options.inactive?null:{id:dealId,venueId:dealId};}},
   './club-deal-transportation':transportation,'./deal-redemption-actions':{enforceDealGenerationRateLimit:limit},'./public-request-rate-limit':{PublicRequestRateLimitError:RateError},
@@ -31,23 +33,24 @@ function fixture(options={}){
   '@/src/lib/supabase/admin':{createAdminSupabaseClient:()=>admin},'@/src/lib/supabase/request':{createRequestSupabaseContext:context},
   '@/src/lib/bounded-json-body':{readBoundedJsonObject},'@/src/lib/dancr/admission-passes':api,'@/src/lib/dancr/public-request-rate-limit':{enforcePublicRequestRateLimit:limit},
  });
- return {api,calls,issue:(body={},headers={})=>api.createAdmissionPass(new Request('https://mydancr.com/api/deals/redemptions',{headers}),{dealId,transportation:'self_drive',...body}),redeem:(body={arrivalVerified:true})=>route.POST(new Request('https://mydancr.com/api/deals/redeem/'+token,{method:'POST',body:JSON.stringify(body)}),{params:Promise.resolve({token})})};
+ return {api,calls,issue:(body={},headers={})=>api.createAdmissionPass(new Request('https://mydancr.com/api/deals/redemptions',{headers}),{dealId,transportation:'self_drive',guest,...body}),redeem:(body={arrivalVerified:true})=>route.POST(new Request('https://mydancr.com/api/deals/redeem/'+token,{method:'POST',body:JSON.stringify(body)}),{params:Promise.resolve({token})})};
 }
 test('issuance ignores forged customer/session/venue IDs and sets a private secure guest cookie',async()=>{
  const f=fixture(),response=await f.issue({customerId:'victim',sessionId:'victim',venueId:'other'},{cookie:'mydancrAdmissionSession='+cookieId});
- assert.equal(response.status,200);const call=f.calls.find(c=>c.name==='issue_video_admission_pass');
+ assert.equal(response.status,200);const call=f.calls.find(c=>c.name==='issue_guest_list_admission_pass');
+ assert.equal(call.args.p_guest_name,guest.name);assert.equal(call.args.p_phone,'+17025550123');assert.equal(call.args.p_consent,true);
  assert.equal(call.args.p_customer_id,null);assert.equal(call.args.p_session_id,cookieId);assert.equal(call.args.p_deal_id,dealId);assert.equal('p_venue_id' in call.args,false);
  assert.match(call.args.p_token,/^[A-Za-z0-9_-]{43}$/);assert.match(response.headers.get('set-cookie'),/HttpOnly/);assert.match(response.headers.get('set-cookie'),/Secure/);assert.match(response.headers.get('cache-control'),/no-store/);
  assert.equal((await response.json()).passUrl,'/deals/pass/'+token);
 });
 test('signed-in passes use only authenticated customer identity',async()=>{
  const f=fixture();await f.issue({customerId:'victim'},{authorization:'Bearer test'});
- assert.equal(f.calls.find(c=>c.name==='issue_video_admission_pass').args.p_customer_id,customerId);
+ assert.equal(f.calls.find(c=>c.name==='issue_guest_list_admission_pass').args.p_customer_id,customerId);
  assert.equal(f.calls.find(c=>c.access).access.role,'customer');
 });
 test('invalid arrival, inactive offers, unverified source and rate denial never issue passes',async()=>{
  for(const[options,body]of [[{}, {transportation:'rideshare_taxi'}],[{inactive:true},{}],[{}, {sourceType:'dancer_profile',dancerId:'forged'}],[{limited:true},{}],[{noAuth:true},{}]]){
-  const f=fixture(options);await assert.rejects(f.issue(body,options.noAuth?{authorization:'Bearer invalid'}:{}));assert.equal(f.calls.some(c=>c.name==='issue_video_admission_pass'),false);
+  const f=fixture(options);await assert.rejects(f.issue(body,options.noAuth?{authorization:'Bearer invalid'}:{}));assert.equal(f.calls.some(c=>c.name?.startsWith('issue_')),false);
  }
 });
 test('staff redemption uses the user RPC and ignores forged ownership and verification strings',async()=>{
@@ -65,4 +68,12 @@ test('staff authorization and rate failures do not return a success receipt',asy
 test('unrecognized database detail stays private',async()=>{
  const response=fixture().api.admissionError({code:'22023',message:'private token or SQL value'});
  assert.equal((await response.json()).error,'This admission pass is unavailable.');
+});
+
+test('guest details are required for free entry and optional only for the existing shuttle workflow',async()=>{
+ for(const guest of [undefined,null,{name:' ',phone:'7025550123',consent:true},{name:'Guest',phone:'bad',consent:true},{name:'Guest',phone:'7025550123',consent:false},{name:'Guest',phone:'7025550123',email:'bad',consent:true}]){
+  const f=fixture();await assert.rejects(f.issue({guest}),e=>e.status===400);assert.equal(f.calls.length,0);
+ }
+ const f=fixture();await f.issue({transportation:'club_shuttle',guest:undefined});
+ assert.ok(f.calls.some(c=>c.name==='issue_video_admission_pass'));
 });

@@ -62,6 +62,7 @@ body.dancr-button-system .club-transport-card input[type=checkbox]:checked {
 .club-transport-handoff p + p { margin-top: 8px; }
 .club-transport-handoff strong { color: #f4f2f8; }
 .club-transport-fields { display: grid; gap: 12px; }
+.club-guest-consent { margin-top: 16px; }
 .club-transport-fields label { display: grid; gap: 6px; font-size: 13px; color: #dedbe5; }
 body.dancr-button-system .club-transport-card :is(.club-transport-fields input:not([type=checkbox]), .club-transport-address textarea) {
   box-sizing: border-box; width: 100%; min-width: 0; min-height: 48px; padding: 12px;

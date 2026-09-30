@@ -69,8 +69,8 @@ test("admins manage multiple deals while venue accounts see every campaign read-
   assert.match(adminManager, /onClick=\{\(\) => editDeal\(deal\)\}/);
   assert.match(adminManager, /Remove deal/);
   assert.match(venueLedger, /displayedDeals\.map/);
-  assert.match(venueLedger, /official offers currently attached to your venue/);
-  assert.match(venueLedger, /Request changes anytime/);
+  assert.match(venueLedger, /aria-label="All Club Deals"/);
+  assert.match(venueLedger, /Guest terms/);
   assert.doesNotMatch(venueLedger, /Publish contract deal|Remove deal/);
 });
 
@@ -95,7 +95,7 @@ test("each selected offer keeps its exact deal and dancer attribution token", ()
   assert.match(liveApp, /function clubDealSelectionConfig\(config, deal\)/);
   assert.match(liveApp, /config\?\.dealAttributionTokens\?\.\[deal\.id\]/);
   assert.match(liveApp, /function openClubDealHub\(config, triggerButton = null\)/);
-  assert.match(liveApp, /Choose one to preview\. Choose your arrival method to get an admission pass/);
+  assert.match(liveApp, /Choose an offer, then complete the guest-list form for your admission pass/);
   assert.match(liveApp, /Staff scans it at the door/);
 });
 

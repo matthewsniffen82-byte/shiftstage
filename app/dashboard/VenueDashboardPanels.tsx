@@ -6,6 +6,7 @@ import { useEffect, useRef, useState, type FormEvent } from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 const PickupDashboardPanel = dynamic(() => import("./PickupDashboardPanel"));
+const VenueGuestListPanel = dynamic(() => import("./VenueGuestListPanel"));
 import { CLUB_DEAL_OFFER_PRESETS } from "@/src/lib/dancr/club-deal-presets";
 import { VenueDashboardIcon } from "./VenueDashboardIdentity";
 import { type VenueDancerAffiliation } from "@/src/lib/dancr/venue-roster";
@@ -33,7 +34,7 @@ function notifyPublicVenuePublication() {
 
 
 function venueWorkspaceForSection(sectionId: string): VenueWorkspace | null {
-  if (sectionId === "venue-pickups") return "tonight";
+  if (sectionId === "venue-pickups" || sectionId === "venue-guest-list") return "tonight";
   if (sectionId === "venue-overview") return "business";
   if (["venue-working-now", "venue-dancer-roster", "table-requests"].includes(sectionId)) return "roster";
   if (["venue-notification-settings", "venue-club-deals", "venue-deal-contract-ledger", "venue-tv", "venue-team", "venue-account", "venue-support"].includes(sectionId)) return "venue";
@@ -277,7 +278,7 @@ export function VenuePanel({
 
       <nav className="venue-workspace-tabs" aria-label="Venue workspace" role="tablist">
         {([
-          ["tonight", "Pickup requests"],
+          ["tonight", "Guests & pickups"],
           ["roster", "Dancers & tables"],
           ["business", "Results"],
           ["venue", "Manage venue"],
@@ -307,6 +308,10 @@ export function VenuePanel({
         role="tabpanel"
         aria-labelledby="venue-workspace-tonight-tab"
       >
+        <section className="info-panel venue-dashboard-section" id="venue-guest-list" aria-labelledby="venue-guest-list-heading" tabIndex={-1}>
+          <h2 id="venue-guest-list-heading">Guest list</h2>
+          <VenueGuestListPanel key={`${account?.id}:${connectedVenueId}`} refreshKey={refreshedAt} />
+        </section>
         <section className="info-panel venue-dashboard-section" id="venue-pickups" aria-labelledby="venue-pickups-heading" tabIndex={-1}>
           <h2 id="venue-pickups-heading">Pickup requests</h2>
           {(venueRole === "owner" || venueRole === "manager")
