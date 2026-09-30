@@ -77,6 +77,27 @@ body.dancr-button-system .ir-shell.ir-guest :is(button, a):focus-visible { outli
 body.dancr-button-system .ir-shell.ir-guest .ir-profile-link:focus-visible { outline-offset: -3px; }
 body.dancr-button-system .ir-shell.ir-guest button:disabled { opacity: .5 !important; }
 
+/* A small refresh face beside availability, with a full-size touch target. */
+body .ir-guest .ir-roster-controls { display: flex; align-items: center; gap: 2px; margin-left: auto; }
+body.dancr-button-system .ir-shell.ir-guest button.ir-roster-refresh {
+  flex: 0 0 44px;
+  width: 44px;
+  height: 44px;
+  padding: 0 !important;
+  border-radius: 50% !important;
+  color: #c4b5fd !important;
+}
+body.dancr-button-system .ir-shell.ir-guest button.ir-roster-refresh::before { inset: 5px; }
+body.dancr-button-system .ir-shell.ir-guest button.ir-roster-refresh:disabled { opacity: 1 !important; }
+body .ir-guest .ir-roster-refresh svg { width: 18px; height: 18px; }
+body .ir-guest .ir-roster-refresh[aria-busy="true"] svg { animation: ir-roster-refresh-spin .8s linear infinite; }
+body .ir-guest .ir-refresh-message { margin: -4px 0 10px; color: #b8b5c2; font-size: 12px; }
+body .ir-guest .ir-refresh-message:not([data-error]) { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
+@keyframes ir-roster-refresh-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) {
+  body .ir-guest .ir-roster-refresh[aria-busy="true"] svg { animation: none; opacity: .55; }
+}
+
 /* A slimmer visible face keeps the full 44px tap target above the card edge. */
 body.dancr-button-system .ir-shell.ir-guest button.ir-table-request { --ir-guest-control-edge: #8b5cf6; padding: 4px 8px !important; border-radius: 8px !important; }
 body.dancr-button-system .ir-shell.ir-guest button.ir-table-request::before { inset-block: 4px; background: linear-gradient(#6d28d9, #6d28d9); }

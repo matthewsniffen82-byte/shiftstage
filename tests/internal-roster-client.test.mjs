@@ -39,12 +39,18 @@ function harness(fetch, { token = "table-token", session = null, component = "In
   const persisted = [];
   const replacements = [];
   const listeners = new Map();
+  const documentListeners = new Map();
+  const document = {
+    visibilityState: "visible",
+    addEventListener: (name, callback) => documentListeners.set(name, callback),
+    removeEventListener: name => documentListeners.delete(name),
+  };
   let stateIndex = 0;
   let refIndex = 0;
   let mounting = true;
   const exports = {};
   vm.runInNewContext(code, {
-    exports, fetch, Error, AbortController, URL, crypto: { randomUUID: () => `request-key-${++nextRequestKey}` },
+    exports, fetch, document, Error, AbortController, URL, crypto: { randomUUID: () => `request-key-${++nextRequestKey}` },
     Date: class extends Date { static now() { return now; } },
     setTimeout: (callback, delay) => schedule(callback, delay),
     setInterval: (callback, delay) => schedule(callback, delay, true),
@@ -90,7 +96,10 @@ function harness(fetch, { token = "table-token", session = null, component = "In
     return tree;
   };
   return {
-    exports, persisted, timers, render, replacements,
+    exports, persisted, timers, render, replacements, listeners, documentListeners,
+    focus: () => listeners.get("focus")?.(),
+    pageshow: persisted => listeners.get("pageshow")?.({ persisted }),
+    visibility: value => { document.visibilityState = value; documentListeners.get("visibilitychange")?.(); },
     setSession: next => { session = next; },
     storage: key => listeners.get("storage")?.({ key }),
     async mount() { render(); effects.forEach(effect => cleanups.push(effect())); await flush(); },
@@ -123,6 +132,104 @@ const alertMessage = app => find(alert(app), node => node.type === "p")?.props.c
 const grid = app => find(app.render(), node => node.props?.className === "ir-grid ir-directory-grid");
 const profile = app => find(app.render(), node => node.type?.name === "ClubProfileDialog")?.props.profile;
 const requestButton = (app, id) => find(find(app.render(), node => node.type === "article" && node.key === id), node => node.props?.className === "ir-table-request");
+const refreshButton = app => find(app.render(), node => node.props?.className === "ir-roster-refresh");
+const refreshMessage = app => find(app.render(), node => node.props?.className === "ir-refresh-message")?.props.children;
+
+test("manual refresh keeps requests usable and the grid visible while updating availability and statuses", async t => {
+  const pending = deferred();
+  let calls = 0;
+  const initial = { ...roster, kind: "table", dancers: [{ ...dancer, requestStatus: "pending", requestId: "saved-request" }, { ...dancer, id: "other" }] };
+  const app = harness(async (_url, options) => {
+    assert.equal(options.method, "GET", "Refreshing must never create or cancel requests");
+    return ++calls === 1 ? response(initial) : pending.promise;
+  });
+  t.after(() => app.unmount()); await app.mount();
+  refreshButton(app).props.onClick(); refreshButton(app).props.onClick(); app.focus();
+  assert.equal(calls, 2, "Repeated taps and focus share the active refresh");
+  assert.equal(refreshButton(app).props["aria-busy"], true);
+  assert.equal(refreshButton(app).props.disabled, true);
+  assert.ok(grid(app));
+  assert.equal(requestButton(app, dancer.id).props.children, "Cancel request");
+  assert.equal(requestButton(app, dancer.id).props.disabled, false);
+  assert.equal(requestButton(app, "other").props.disabled, false);
+  pending.resolve(response({ ...initial, dancers: [{ ...dancer, requestStatus: "acknowledged", requestId: "saved-request" }] }));
+  await flush();
+  assert.equal(requestButton(app, "other"), undefined);
+  assert.equal(requestButton(app, dancer.id).props.children, "Cancel request");
+  assert.equal(refreshButton(app).props["aria-busy"], false);
+  assert.equal(refreshMessage(app), "Roster updated.");
+  await app.advance(refreshInterval - 1);
+  assert.equal(calls, 2, "Manual refresh resets the scheduled refresh instead of adding another poll");
+});
+
+test("returning to the guest page refreshes once across visibility, focus and restored-page events", async t => {
+  let calls = 0;
+  const app = harness(async () => { calls++; return response(roster); });
+  t.after(() => app.unmount()); await app.mount();
+  app.visibility("hidden"); app.focus(); app.pageshow(false); await flush();
+  assert.equal(calls, 1);
+  app.visibility("visible"); await flush(); app.focus(); app.pageshow(true); await flush();
+  assert.equal(calls, 2, "Companion events must not issue duplicate reads even after a quick response");
+  assert.equal(refreshMessage(app), undefined, "Automatic refresh stays quiet");
+  await app.advance(1001); app.pageshow(true); await flush();
+  assert.equal(calls, 3);
+  await app.advance(1001); app.focus(); await flush();
+  assert.equal(calls, 4);
+  app.unmount();
+  assert.equal(app.timers.size, 0);
+  assert.equal(app.listeners.size, 0);
+  assert.equal(app.documentListeners.size, 0);
+});
+
+test("a manual timeout retains saved requests, stops spinning and can be retried", async t => {
+  let calls = 0;
+  const initial = { ...roster, kind: "table", dancers: [{ ...dancer, requestStatus: "pending", requestId: "saved-request" }] };
+  const app = harness(async () => ++calls === 2 ? new Promise(() => {}) : response(initial));
+  t.after(() => app.unmount()); await app.mount();
+  refreshButton(app).props.onClick(); await app.advance(15000);
+  assert.ok(grid(app)); assert.equal(alert(app), undefined);
+  assert.equal(requestButton(app, dancer.id).props.children, "Cancel request");
+  assert.equal(refreshButton(app).props.disabled, false);
+  assert.match(refreshMessage(app), /Couldn’t refresh/);
+  refreshButton(app).props.onClick(); await flush();
+  assert.equal(calls, 3); assert.equal(refreshMessage(app), "Roster updated.");
+});
+
+test("manual refresh can bring available dancers onto an empty floor", async t => {
+  let calls = 0;
+  const app = harness(async () => response(++calls === 1 ? { ...roster, dancers: [] } : { ...roster, kind: "table" }));
+  t.after(() => app.unmount()); await app.mount();
+  assert.ok(refreshButton(app)); assert.equal(grid(app), undefined);
+  refreshButton(app).props.onClick(); await flush();
+  assert.ok(grid(app)); assert.equal(requestButton(app, dancer.id).props.children, "Request");
+});
+
+test("a refresh already running cannot undo a request sent during it", async t => {
+  const stale = deferred(); let reads = 0, sent = false;
+  const app = harness(async (_url, options) => {
+    if (options.method === "POST") { sent = true; return response({ ok: true, receipt: { id: "new-request", status: "pending" } }); }
+    if (++reads === 2) return stale.promise;
+    return response({ ...roster, kind: "table", dancers: [{ ...dancer, requestStatus: sent ? "pending" : null, requestId: sent ? "new-request" : null }] });
+  });
+  t.after(() => app.unmount()); await app.mount();
+  refreshButton(app).props.onClick(); requestButton(app, dancer.id).props.onClick(); await flush();
+  stale.resolve(response({ ...roster, kind: "table" })); await flush(); await app.advance(1500);
+  assert.equal(requestButton(app, dancer.id).props.children, "Cancel request");
+  assert.equal(refreshButton(app).props.disabled, false);
+});
+
+test("unmount aborts a manual refresh and removes return-to-page listeners", async () => {
+  let calls = 0, signal;
+  const app = harness(async (_url, options) => {
+    signal = options.signal;
+    return ++calls === 1 ? response(roster) : new Promise(() => {});
+  });
+  await app.mount(); refreshButton(app).props.onClick(); app.unmount(); await flush();
+  assert.equal(signal.aborted, true);
+  assert.equal(app.timers.size, 0);
+  assert.equal(app.listeners.size, 0);
+  assert.equal(app.documentListeners.size, 0);
+});
 
 test('the same grid and profile action confirms briefly, cancels exactly once, then allows a new request',async t=>{
  const posts=[],cancellation=deferred();let status=null,requestId=null;

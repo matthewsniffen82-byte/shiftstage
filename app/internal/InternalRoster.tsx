@@ -82,6 +82,9 @@ export function InternalRoster({ token, operationsOnly = false }: { token?: stri
   const [snapshot, setSnapshot] = useState<Snapshot | null>(null);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
+  const [refreshing, setRefreshing] = useState(false);
+  const [refreshMessage, setRefreshMessage] = useState("");
+  const refreshNow = useRef<(manual?: boolean) => void>(() => {});
   const [busy, setBusy] = useState(false);
   const [requestingDancers, setRequestingDancers] = useState<string[]>([]);
   const [confirmedDancers, setConfirmedDancers] = useState<string[]>([]);
@@ -95,6 +98,7 @@ export function InternalRoster({ token, operationsOnly = false }: { token?: stri
   const mutationInFlight = useRef(false);
   const requestKeys = useRef(new Map<string, string>());
   const refreshGeneration = useRef(0);
+  const fullRefreshSequence = useRef(0);
   const alive = useRef(false);
   const openedRequestInbox = useRef(false);
   const hasSnapshot = useRef(false);
@@ -108,9 +112,11 @@ export function InternalRoster({ token, operationsOnly = false }: { token?: stri
 
   const refresh = useCallback(async (signal?: AbortSignal, requestsOnly = false) => {
     const generation = refreshGeneration.current;
+    const sequence = requestsOnly ? fullRefreshSequence.current : ++fullRefreshSequence.current;
+    const current = () => alive.current && !signal?.aborted && generation === refreshGeneration.current && sequence === fullRefreshSequence.current;
     try {
       const data = await rosterFetch(requestsOnly ? "/api/internal/requests" : `${base}${token && requestKey.current ? `?requestKey=${requestKey.current}` : ""}`, token, undefined, signal);
-      if (!alive.current || signal?.aborted || generation !== refreshGeneration.current) return;
+      if (!current()) return;
       if (requestsOnly) { setSnapshot(current => current ? { ...current, requests: data.requests } : current); return; }
       hasSnapshot.current = true;
       setSnapshot(data); setError("");
@@ -129,16 +135,18 @@ export function InternalRoster({ token, operationsOnly = false }: { token?: stri
         if (!data.dancers.some((dancer: Dancer) => dancer.id === selected)) { selectedProfile.current = ""; setProfile(null); setOpeningProfileId(""); }
         else {
           const result = await rosterFetch(`/api/internal/profile/${selected}${token ? `?token=${encodeURIComponent(token)}` : ""}`, token, undefined, signal);
-          if (alive.current && !signal?.aborted && generation === refreshGeneration.current && selectedProfile.current === selected) setProfile(result.profile);
+          if (current() && selectedProfile.current === selected) setProfile(result.profile);
         }
       }
+      return true;
     } catch (reason) {
-      if (!alive.current || signal?.aborted || generation !== refreshGeneration.current) return;
+      if (!current()) return;
       // Keep a loaded roster steady through temporary connection failures. Confirmed
       // loss of access still clears protected content, as does changing accounts.
       if (reason instanceof RosterAccessError || !hasSnapshot.current) {
         clearRoster(reason instanceof Error ? reason.message : "Unable to load roster.");
       }
+      return false;
     }
   }, [base, token, clearRoster]);
 
@@ -149,22 +157,56 @@ export function InternalRoster({ token, operationsOnly = false }: { token?: stri
     let controller = new AbortController();
     let timer: ReturnType<typeof setTimeout>;
     let nextFullRefresh = 0;
-    const poll = async (signal: AbortSignal) => {
-      const requestsOnly = !token && hasSnapshot.current && Date.now() < nextFullRefresh;
-      await refresh(signal, requestsOnly);
+    let inFlight = false;
+    let manualFeedback = false;
+    let lastReturnRefresh = -Infinity;
+    const poll = async (signal: AbortSignal, full = false, manual = false) => {
+      if (full && token) setRefreshing(true);
+      if (manual) { manualFeedback = true; setRefreshMessage(""); }
+      // Focus, visibility and repeated taps can arrive together. Share one read.
+      if (inFlight) return;
+      inFlight = true;
+      clearTimeout(timer);
+      const requestsOnly = !full && !token && hasSnapshot.current && Date.now() < nextFullRefresh;
+      const updated = await refresh(signal, requestsOnly);
+      if (signal.aborted) return;
+      inFlight = false;
+      setRefreshing(false);
+      if (manualFeedback && hasSnapshot.current) setRefreshMessage(updated === true ? "Roster updated." : updated === false ? "Couldn’t refresh. Your last roster is still shown. Try again." : "");
+      manualFeedback = false;
       if (!requestsOnly) nextFullRefresh = Date.now() + ROSTER_REFRESH_INTERVAL_MS;
-      if (!signal.aborted) timer = setTimeout(() => void poll(signal), token ? ROSTER_REFRESH_INTERVAL_MS : 10000);
+      timer = setTimeout(() => void poll(signal), token ? ROSTER_REFRESH_INTERVAL_MS : 10000);
     };
+    refreshNow.current = (manual = false) => { void poll(controller.signal, true, manual); };
+    const returned = () => {
+      if (!token || document.visibilityState === "hidden" || Date.now() - lastReturnRefresh < 1000) return;
+      lastReturnRefresh = Date.now();
+      refreshNow.current();
+    };
+    const restored = (event: PageTransitionEvent) => { if (event.persisted) returned(); };
     void poll(controller.signal);
     const sessionChanged = (event: StorageEvent) => {
       if (token || (event.key !== null && event.key !== BROWSER_AUTH_SESSION_KEY)) return;
       controller.abort(); clearTimeout(timer);
       controller = new AbortController();
+      inFlight = false;
       clearRoster();
       void poll(controller.signal);
     };
     window.addEventListener("storage", sessionChanged);
-    return () => { alive.current = false; timers.forEach(clearTimeout); timers.clear(); controller.abort(); clearTimeout(timer); window.removeEventListener("storage", sessionChanged); };
+    if (token) {
+      document.addEventListener("visibilitychange", returned);
+      window.addEventListener("focus", returned);
+      window.addEventListener("pageshow", restored);
+    }
+    return () => {
+      alive.current = false; refreshNow.current = () => {};
+      timers.forEach(clearTimeout); timers.clear(); controller.abort(); clearTimeout(timer);
+      window.removeEventListener("storage", sessionChanged);
+      document.removeEventListener("visibilitychange", returned);
+      window.removeEventListener("focus", returned);
+      window.removeEventListener("pageshow", restored);
+    };
   }, [refresh, token, clearRoster]);
 
   useEffect(() => {
@@ -292,7 +334,19 @@ export function InternalRoster({ token, operationsOnly = false }: { token?: stri
     {error ? <section className="ir-panel" role="alert"><h2>Roster unavailable</h2><p>{error}</p>{staff ? <a className="ir-button" href="/account?role=venue&mode=login&return_to=%2Finternal">Sign in to MyDancr</a> : null}<button onClick={() => void refresh()}>Try again</button></section> : !snapshot ? <p role="status">Loading the live roster…</p> : null}
     {notice ? <p className="ir-notice" role="status">{notice}</p> : null}
     {snapshot ? <>
-      {!operationsOnly ? <section aria-label={staff ? "Live internal roster" : "Available dancers"}><div className="ir-section-title"><h2>On the floor</h2><span className="ir-live">● {snapshot.dancers.length} {staff ? "checked in" : "available"}</span></div>
+      {!operationsOnly ? <section aria-label={staff ? "Live internal roster" : "Available dancers"}>
+        <div className="ir-section-title">
+          <h2>On the floor</h2>
+          <div className="ir-roster-controls">
+            <span className="ir-live">● {snapshot.dancers.length} {staff ? "checked in" : "available"}</span>
+            {!staff ? <button type="button" className="ir-roster-refresh" aria-label="Refresh dancers and requests" title="Refresh dancers and requests" aria-busy={refreshing} disabled={refreshing} onClick={() => refreshNow.current(true)}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M21 12a9 9 0 1 1-9-9c2.5 0 4.9 1 6.7 2.8L21 8" /><path d="M21 3v5h-5" />
+              </svg>
+            </button> : null}
+          </div>
+        </div>
+        {!staff && refreshMessage ? <p className="ir-refresh-message" data-error={refreshMessage !== "Roster updated." || undefined} role="status">{refreshMessage}</p> : null}
         {dancers.length ? <div className="ir-grid ir-directory-grid">{dancers.map((dancer, index) => <article className={`ir-dancer${snapshot.kind === "table" ? " ir-dancer-requestable" : ""}`} key={dancer.id}>
           <button type="button" className="ir-profile-link" aria-label={`View ${dancer.stageName}’s full profile`} aria-busy={openingProfileId === dancer.id} onClick={() => void openProfile(dancer)}>
             {dancer.mainPhotoId ? <ProtectedMedia key={dancer.mainPhotoId} id={dancer.mainPhotoId} revision={dancer.mainPhotoRevision} kind="photo" token={token} priority={index < 3} lazy={index >= 9} className="ir-main-photo" alt={`${dancer.stageName}’s main photo`} /> : <span className="ir-main-photo ir-photo-placeholder">Photo unavailable</span>}
