@@ -419,6 +419,69 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
   --profile-action-selected-shadow: none;
 }
 
+/* Dancer utilities use unboxed icons and labels, with their existing 44px
+ * targets, selected checkmarks, and keyboard focus ring. Request stays a CTA. */
+html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell, .dancer-profile-preview-overlay)
+  .profile-actions-compact :is(#followBtn, #goingBtn, .profile-action-icon-control):not([data-internal-table-request])::before {
+  content: none !important;
+  display: none !important;
+}
+
+html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell, .dancer-profile-preview-overlay)
+  .profile-actions-compact :is(#followBtn, #goingBtn, .profile-action-icon-control):not([data-internal-table-request]):active:not(:disabled) {
+  opacity: .72 !important;
+}
+
+@media (hover: hover) {
+  html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell, .dancer-profile-preview-overlay)
+    .profile-actions-compact :is(#followBtn, #goingBtn, .profile-action-icon-control):not([data-internal-table-request]):hover:not(:disabled)
+    .profile-action-main > span:last-child {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+}
+
+/* Spacing groups the venue and its actions; Free Entry keeps its filled face. */
+html body.dancr-button-system :is(#profileBackdrop #profileModal .modal-grid, .public-profile-shell, .dancer-profile-preview-overlay)
+  .profile-tonight-card {
+  padding: 8px 0 !important;
+  row-gap: 8px !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  overflow: visible !important;
+}
+
+html body.dancr-button-system :is(#profileBackdrop #profileModal .modal-grid, .public-profile-shell, .dancer-profile-preview-overlay)
+  .profile-tonight-card::before {
+  content: none !important;
+  display: none !important;
+}
+
+html body.dancr-button-system :is(#profileBackdrop #profileModal .modal-grid, .public-profile-shell, .dancer-profile-preview-overlay)
+  :is(.working-now-tile > .profile-schedule-primary, .profile-working-card .profile-live-state) {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  color: var(--dancr-color-success) !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+html body.dancr-button-system :is(#profileBackdrop #profileModal .modal-grid, .public-profile-shell, .dancer-profile-preview-overlay)
+  :is(.working-now-tile > .profile-schedule-primary, .profile-working-card .profile-live-state)::before {
+  content: "";
+  flex: 0 0 6px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell, .dancer-profile-preview-overlay)
   :is(.modal-actions, .live-actions).profile-actions-compact
   :is(#followBtn, #goingBtn, .profile-action-icon-control):not(:disabled):not([aria-disabled="true"])
