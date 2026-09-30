@@ -191,8 +191,10 @@ test("a manual timeout retains saved requests, stops spinning and can be retried
   assert.equal(requestButton(app, dancer.id).props.children, "Cancel request");
   assert.equal(refreshButton(app).props.disabled, false);
   assert.match(refreshMessage(app), /Couldn’t refresh/);
+  app.focus(); await flush();
+  assert.equal(calls, 3); assert.equal(refreshMessage(app), undefined, "A successful return refresh clears the earlier connection error");
   refreshButton(app).props.onClick(); await flush();
-  assert.equal(calls, 3); assert.equal(refreshMessage(app), "Roster updated.");
+  assert.equal(calls, 4); assert.equal(refreshMessage(app), "Roster updated.");
 });
 
 test("manual refresh can bring available dancers onto an empty floor", async t => {

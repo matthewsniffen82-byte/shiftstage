@@ -173,6 +173,7 @@ export function InternalRoster({ token, operationsOnly = false }: { token?: stri
       inFlight = false;
       setRefreshing(false);
       if (manualFeedback && hasSnapshot.current) setRefreshMessage(updated === true ? "Roster updated." : updated === false ? "Couldn’t refresh. Your last roster is still shown. Try again." : "");
+      else if (updated === true) setRefreshMessage("");
       manualFeedback = false;
       if (!requestsOnly) nextFullRefresh = Date.now() + ROSTER_REFRESH_INTERVAL_MS;
       timer = setTimeout(() => void poll(signal), token ? ROSTER_REFRESH_INTERVAL_MS : 10000);
