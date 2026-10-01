@@ -73,7 +73,7 @@ test("venue cards open the live profile while revenue and customer actions remai
     venueSwipeRenderer,
     /homeVenueDiscoveryQrMarkup\(venue\)[\s\S]*?home-venue-discovery-location[\s\S]*?home-venue-discovery-context-actions[\s\S]*?\$\{railQrMarkup\}[\s\S]*?home-venue-discovery-action-rail[\s\S]*?home-venue-discovery-profile-action[\s\S]*?data-open-venue-profile="\$\{venueValue\}"[\s\S]*?actionButtonLabel\("clubProfile", "Club Page"\)[\s\S]*?\$\{directionsMarkup\}[\s\S]*?data-venue-follow/,
   );
-  assert.doesNotMatch(venueSwipeRenderer, /home-venue-discovery-name-row|home-venue-discovery-name/);
+  assert.match(venueSwipeRenderer, /<h3 class="home-venue-discovery-name">\$\{safeName\}<\/h3>/);
   assert.doesNotMatch(venueSwipeRenderer, /activeDealCount|dealIndicatorMarkup|home-venue-discovery-deal-indicator/);
   assert.match(
     venueSwipeRenderer,

@@ -81,9 +81,17 @@ function logoSvg(venue) {
 `;
 }
 
+const MARK_DIRECTORY = new URL("marks/", OUTPUT_DIRECTORY);
+function symbolVariant(svg) {
+  return svg
+    .replace('width="960" height="420" viewBox="0 0 960 420"', 'width="340" height="380" viewBox="0 20 340 380"')
+    .replace(/^  <(?:text|rect) .+$/gm, "");
+}
+await mkdir(fileURLToPath(MARK_DIRECTORY), { recursive: true });
 await mkdir(fileURLToPath(OUTPUT_DIRECTORY), { recursive: true });
 for (const venue of venues) {
   await writeFile(fileURLToPath(new URL(venue.asset, OUTPUT_DIRECTORY)), logoSvg(venue), "utf8");
+  await writeFile(fileURLToPath(new URL(venue.asset, MARK_DIRECTORY)), symbolVariant(logoSvg(venue)), "utf8");
   console.log(`Generated ${venue.asset}`);
 }
 

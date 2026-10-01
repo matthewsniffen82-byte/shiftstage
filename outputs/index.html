@@ -53133,12 +53133,19 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
     }
 
     function venueLogoMarkup(venue, className) {
-      const logoImageUrl = String(venue?.logoImageUrl || "").trim();
-      if (!logoImageUrl) return "";
-      const nativeLogoAttrs = nativeResponsivePhotoAttrs(logoImageUrl, venue?.logoImageSrcSet);
+      const originalLogoUrl = String(venue?.logoImageUrl || "").trim();
+      if (!originalLogoUrl) return "";
+      // The compact scroll header uses the existing demo symbol beside a real text name.
+      // Uploaded logos retain their complete artwork.
+      const useSymbol = className === "home-venue-discovery-logo"
+        && /^\/venue-logos\/fictional\/[a-z-]+\.svg$/.test(originalLogoUrl);
+      const logoImageUrl = useSymbol
+        ? originalLogoUrl.replace("/fictional/", "/fictional/marks/")
+        : originalLogoUrl;
+      const nativeLogoAttrs = nativeResponsivePhotoAttrs(logoImageUrl, useSymbol ? "" : venue?.logoImageSrcSet);
       const sourceAttrs = nativeLogoAttrs || `src="${escapeOptionValue(logoImageUrl)}"`;
-      const imageWidth = Math.max(0, Number(venue?.logoImageWidth) || 0);
-      const imageHeight = Math.max(0, Number(venue?.logoImageHeight) || 0);
+      const imageWidth = useSymbol ? 340 : Math.max(0, Number(venue?.logoImageWidth) || 0);
+      const imageHeight = useSymbol ? 380 : Math.max(0, Number(venue?.logoImageHeight) || 0);
       const dimensions = imageWidth && imageHeight
         ? ` width="${imageWidth}" height="${imageHeight}"`
         : "";
@@ -60676,6 +60683,7 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
           </div>
           <div class="home-discovery-feed-shade" aria-hidden="true"></div>
           <div class="home-discovery-feed-copy">
+            <h3 class="home-venue-discovery-name">${safeName}</h3>
             <span class="home-venue-discovery-location">${venueIconMarkup()}<span>${escapeHtml(locationLabel)} · ${escapeHtml(details.distanceLabel)}</span></span>
             <span class="home-venue-discovery-meta">${operatingStatusMarkup}${hoursMarkup}</span>
             <div class="home-venue-discovery-lineup-slot">${lineupMarkup}</div>

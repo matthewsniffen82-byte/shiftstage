@@ -2,7 +2,7 @@
 export const staticAssetVersions = {
   "/dancer-main-photo.css": "3405b023709e6e22",
   "/dancr-account-forms.v1.css": "d1eeca79e59c905a",
-  "/dancr-ui-consistency.v1.css": "29c5fcef104d33ec",
+  "/dancr-ui-consistency.v1.css": "ceda494224bf3320",
   "/dancr-aesthetic.v1.css": "9257cd08a5f93f3e",
   "/dancr-brand-tokens.v1.css": "2a718f138858ab5a",
   "/dancr-button-system.v1.css": "5a7673110531b585",

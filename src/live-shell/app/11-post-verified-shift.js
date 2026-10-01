@@ -157,12 +157,19 @@
     }
 
     function venueLogoMarkup(venue, className) {
-      const logoImageUrl = String(venue?.logoImageUrl || "").trim();
-      if (!logoImageUrl) return "";
-      const nativeLogoAttrs = nativeResponsivePhotoAttrs(logoImageUrl, venue?.logoImageSrcSet);
+      const originalLogoUrl = String(venue?.logoImageUrl || "").trim();
+      if (!originalLogoUrl) return "";
+      // The compact scroll header uses the existing demo symbol beside a real text name.
+      // Uploaded logos retain their complete artwork.
+      const useSymbol = className === "home-venue-discovery-logo"
+        && /^\/venue-logos\/fictional\/[a-z-]+\.svg$/.test(originalLogoUrl);
+      const logoImageUrl = useSymbol
+        ? originalLogoUrl.replace("/fictional/", "/fictional/marks/")
+        : originalLogoUrl;
+      const nativeLogoAttrs = nativeResponsivePhotoAttrs(logoImageUrl, useSymbol ? "" : venue?.logoImageSrcSet);
       const sourceAttrs = nativeLogoAttrs || `src="${escapeOptionValue(logoImageUrl)}"`;
-      const imageWidth = Math.max(0, Number(venue?.logoImageWidth) || 0);
-      const imageHeight = Math.max(0, Number(venue?.logoImageHeight) || 0);
+      const imageWidth = useSymbol ? 340 : Math.max(0, Number(venue?.logoImageWidth) || 0);
+      const imageHeight = useSymbol ? 380 : Math.max(0, Number(venue?.logoImageHeight) || 0);
       const dimensions = imageWidth && imageHeight
         ? ` width="${imageWidth}" height="${imageHeight}"`
         : "";
