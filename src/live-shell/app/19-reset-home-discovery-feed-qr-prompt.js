@@ -247,8 +247,8 @@
             <h3 class="home-venue-discovery-name">${safeName}</h3>
             <span class="home-venue-discovery-location">${venueIconMarkup()}<span>${escapeHtml(locationLabel)} · ${escapeHtml(details.distanceLabel)}</span></span>
             <span class="home-venue-discovery-meta">${operatingStatusMarkup}${hoursMarkup}</span>
-            <div class="home-venue-discovery-lineup-slot">${lineupMarkup}</div>
           </div>
+          <div class="home-venue-discovery-lineup-slot">${lineupMarkup}</div>
           <div class="home-venue-discovery-context-actions venue-card-primary-actions" aria-label="${safeName} primary actions">
             ${railQrMarkup}
           </div>
