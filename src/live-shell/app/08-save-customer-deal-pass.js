@@ -699,6 +699,11 @@
       return true;
     }
 
+    function venueOfferStatusMarkup(venue) {
+      if (!venue?.activeDeal || !venue?.id) return "";
+      return `<div class="venue-detail-club-deal-heading"><span class="venue-detail-club-deal-status">Active tonight</span></div>`;
+    }
+
     function venueOfferMarkup(venue) {
       if (venue?.activeDeal && venue?.id) {
         const config = {
@@ -712,11 +717,6 @@
         return `
           <article class="venue-offer-card revenue-offer-card venue-deal-preview is-active-club-deal" id="club-deal">
             <div class="venue-offer-grid">
-              <div class="venue-deal-preview-copy">
-                <div class="venue-detail-club-deal-heading">
-                  <span class="venue-detail-club-deal-status">Active tonight</span>
-                </div>
-              </div>
               <div class="venue-detail-club-deal-actions">
                 <button class="venue-detail-club-deal-cta free-entry-cta" type="button" data-club-deal-state="available" data-club-deal-cta="${encodeDealPass(config)}" aria-label="View free entry at ${escapeHtml(venue.name || "this club")}">
                   ${freeEntryButtonLabel()}

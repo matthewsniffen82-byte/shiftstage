@@ -30,7 +30,7 @@ test("the canonical in-app venue page is dedicated to the selected club and its 
     /const tonight = localProfiles[\s\S]*?isWorkingTonight\(profile\)/,
   );
   assert.match(venueDetail, /recordVenuePageEvent\(\{ venueId: venue\.id, eventType: "page_view", source: "venue_page" \}\)/);
-  assert.match(venueDetail, /venueOfferMarkup\(venue\)/);
+  assert.match(venueDetail, /venue-hero-summary[\s\S]*?venueOfferStatusMarkup\(venue\)[\s\S]*?venue-hero-body[\s\S]*?venueOfferMarkup\(venue\)/);
   assert.doesNotMatch(venueDetail, /\/api\/public\/maps\/embed\?address=|<iframe/i);
   assert.match(venueDetail, /const venueValue = escapeOptionValue\(venue\.id \|\| venue\.name\)/);
   assert.match(venueDetail, /class="venue-secondary-actions profile-actions-compact"[\s\S]*?class="action-btn secondary follow-venue-btn[\s\S]*?data-venue-follow="\$\{venueValue\}"[\s\S]*?class="action-btn secondary venue-detail-share[^"]*"[\s\S]*?data-share-venue="\$\{venueValue\}"/);
@@ -139,19 +139,19 @@ test("venue profiles reserve customer Club Deal language for active offers", () 
 
 test("venue detail Free Entry retains the complete offer configuration", () => {
   const venueOfferSource = liveApp.match(
-    /function venueOfferMarkup\(venue\) \{[\s\S]*?(?=\n    function profileDealTileMarkup)/,
+    /function venueOfferStatusMarkup\(venue\) \{[\s\S]*?(?=\n    function profileDealTileMarkup)/,
   )?.[0] || "";
   let encodedConfig;
   const escapeHtml = (value) => String(value).replaceAll("&", "&amp;").replaceAll('"', "&quot;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
   const rideLabelSource = liveApp.match(/function rideActionLabel\(source, venueName\) \{[\s\S]*?(?=\n    function uberRideLinkMarkup)/)?.[0] || "";
   const rideLinkSource = liveApp.match(/function uberRideLinkMarkup\([\s\S]*?(?=\n    document.addEventListener)/)?.[0] || "";
   const rideMarkup = new Function("escapeHtml", "escapeOptionValue", "actionButtonLabel", `${rideLabelSource}; ${rideLinkSource}; return uberRideLinkMarkup;`)(escapeHtml, escapeHtml, (_, label) => `<span>${label}</span>`);
-  const venueOfferMarkup = new Function(
+  const { venueOfferMarkup, venueOfferStatusMarkup } = new Function(
     "encodeDealPass",
     "escapeHtml",
     "uberRideLinkMarkup",
     "freeEntryButtonLabel",
-    `${venueOfferSource}; return venueOfferMarkup;`,
+    `${venueOfferSource}; return { venueOfferMarkup, venueOfferStatusMarkup };`,
   )(
     (config) => {
       encodedConfig = config;
@@ -173,7 +173,7 @@ test("venue detail Free Entry retains the complete offer configuration", () => {
     activeDeals: [{ id: "deal-1", dealTitle: longTitle, dealDescription: longDescription }],
   });
   assert.doesNotMatch(singleOffer, new RegExp(longTitle));
-  assert.match(singleOffer, />Active tonight</);
+  assert.doesNotMatch(singleOffer, />Active tonight</);
   assert.doesNotMatch(singleOffer, new RegExp(longDescription));
   assert.equal(encodedConfig.deal.dealTitle, longTitle);
   assert.equal(encodedConfig.deal.dealDescription, longDescription);
@@ -193,7 +193,10 @@ test("venue detail Free Entry retains the complete offer configuration", () => {
       { id: "deal-2", dealTitle: "Second", dealDescription: "Second offer" },
     ],
   });
-  assert.match(multipleOffers, />Active tonight</);
+  assert.doesNotMatch(multipleOffers, />Active tonight</);
+  assert.match(venueOfferStatusMarkup({ id: "venue-1", activeDeal: { id: "deal-1" } }), />Active tonight</);
+  assert.equal(venueOfferStatusMarkup({ id: "venue-1", activeDeal: null }), "");
+  assert.equal(venueOfferStatusMarkup({ activeDeal: { id: "deal-1" } }), "");
   assert.doesNotMatch(multipleOffers, /Free entry options|<h3>/);
   assert.match(multipleOffers, />Free Entry</);
   assert.doesNotMatch(multipleOffers, /<p>/);
@@ -205,7 +208,7 @@ test("venue profiles separate compact deal discovery from NFC redemption", () =>
     /function venueOfferMarkup\(venue\) \{[\s\S]*?(?=\n    function profileDealTileMarkup)/,
   )?.[0] || "";
 
-  assert.match(venueOffer, /venue-deal-preview-copy[\s\S]*?Active tonight[\s\S]*?venue-detail-club-deal-cta[\s\S]*?data-club-deal-cta="\$\{encodeDealPass\(config\)\}"/);
+  assert.match(venueOffer, /venue-detail-club-deal-cta[\s\S]*?data-club-deal-cta="\$\{encodeDealPass\(config\)\}"/);
   assert.doesNotMatch(venueOffer, /NFC|cashier|clubDealQrSymbolMarkup|venue-detail-club-deal-qr-state/);
   assert.match(liveApp, /const dealPassTrigger = event\.target\.closest\("\[data-club-deal-cta\], \[data-deal-pass\]"\);[\s\S]*?await handleDealPassClick\(event\)/);
   assert.match(liveApp, /async function handleDealPassClick\(event\)[\s\S]*?event\.target\.closest\("\[data-club-deal-cta\]"\)[\s\S]*?createRevenueDealPass\(config\)[\s\S]*?selectDealPassForNfc\(pass, true\)/);

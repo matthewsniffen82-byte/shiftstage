@@ -159,9 +159,9 @@
     function venueLogoMarkup(venue, className) {
       const originalLogoUrl = String(venue?.logoImageUrl || "").trim();
       if (!originalLogoUrl) return "";
-      // The compact scroll header uses the existing demo symbol beside a real text name.
+      // Compact venue headers use the existing demo symbol beside a real text name.
       // Uploaded logos retain their complete artwork.
-      const useSymbol = className === "home-venue-discovery-logo"
+      const useSymbol = ["home-venue-discovery-logo", "venue-detail-logo"].includes(className)
         && /^\/venue-logos\/fictional\/[a-z-]+\.svg$/.test(originalLogoUrl);
       const logoImageUrl = useSymbol
         ? originalLogoUrl.replace("/fictional/", "/fictional/marks/")
@@ -328,30 +328,32 @@
               <div class="venue-main-photo${visual.attrs.className}"${visual.attrs.style} data-venue-visual-source="${visual.source}">
                 <div class="venue-art">
                   ${logoMarkup || `
-                    <div class="venue-sign">
-                      <div class="venue-sign-name">${escapeHtml(details.name)}</div>
-                      <div class="venue-sign-meta">${escapeHtml(details.city)} nightlife</div>
+                    <div class="venue-sign" aria-hidden="true">
+                      <div class="venue-sign-name">${escapeHtml(venueInitials(details.name))}</div>
                     </div>
                   `}
                 </div>
               </div>
-            </div>
-            <div class="venue-hero-body">
-              <div class="venue-identity-block">
-                <div class="venue-identity-copy">
-                  <h2 id="venueDetailName" class="venue-detail-accessible-name">${escapeHtml(details.name)}</h2>
-                  <div class="venue-identity-meta">
-                    <span class="venue-identity-location"><span class="meta">${escapeHtml(details.city)}${details.state ? `, ${escapeHtml(details.state)}` : ""}</span></span>
-                    <span class="venue-identity-distance">${escapeHtml(details.distanceLabel)}</span>
+              <div class="venue-hero-summary">
+                <div class="venue-identity-block">
+                  <div class="venue-identity-copy">
+                    <h2 id="venueDetailName" class="venue-detail-accessible-name">${escapeHtml(details.name)}</h2>
+                    <div class="venue-identity-meta">
+                      <span class="venue-identity-location"><span class="meta">${escapeHtml(details.city)}${details.state ? `, ${escapeHtml(details.state)}` : ""}</span></span>
+                      <span class="venue-identity-distance">${escapeHtml(details.distanceLabel)}</span>
+                    </div>
                   </div>
                 </div>
+                ${operatingStatus.state !== "unknown" ? `
+                  <div class="venue-profile-hours" aria-label="Opening hours">
+                    <strong>${escapeHtml(operatingStatus.label)}</strong>
+                    <span>Hours · ${escapeHtml(operatingStatus.hoursLabel)}</span>
+                  </div>
+                ` : ""}
+                ${venueOfferStatusMarkup(venue)}
               </div>
-              ${operatingStatus.state !== "unknown" ? `
-                <div class="venue-profile-hours" aria-label="Opening hours">
-                  <strong>${escapeHtml(operatingStatus.label)}</strong>
-                  <span>Hours · ${escapeHtml(operatingStatus.hoursLabel)}</span>
-                </div>
-              ` : ""}
+            </div>
+            <div class="venue-hero-body">
               ${venueOfferMarkup(venue)}
               <section class="venue-info venue-location-section" aria-label="Club location">
                 ${details.address ? `<div class="venue-address-line"><span>${escapeHtml(details.address)}</span></div>` : ""}
