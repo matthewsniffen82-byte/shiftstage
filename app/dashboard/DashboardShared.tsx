@@ -653,7 +653,7 @@ export function AccountControlsPanel({
           </span>
           <button className="account-action-button" type="button" onClick={signOut} disabled={isWorking}>Sign out</button>
         </div>
-        {isVenueAccount ? <h3 className="venue-danger-heading">Danger zone</h3> : null}
+        {isVenueAccount ? <h3 className="venue-account-controls-heading">Account controls</h3> : null}
         <div className="account-action-row">
           <span className="account-action-details">
             <span className="account-action-icon is-pause" aria-hidden="true"><svg viewBox="0 0 24 24">{state === "disabled" ? <path d="m9 5 10 7-10 7V5Z" /> : <path d="M8 5v14M16 5v14" />}</svg></span>

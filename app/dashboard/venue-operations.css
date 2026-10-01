@@ -60,6 +60,8 @@ body.dancr-button-system main.dashboard-shell.dashboard-shell-venue .venue-actio
 .venue-value-methodology dl { padding: 0 12px 12px; margin: 0; font-size: 12px; line-height: 1.5; }
 .venue-value-methodology dt { margin-top: 10px; color: #e7e7ef; font-weight: 650; }
 .venue-value-methodology dd { margin: 3px 0 0; color: #b3b5c2; }
+/* The borderless workspace must not clip the final accordion's rounded corners. */
+body.dancr-button-system main.dashboard-shell.dashboard-shell-venue .venue-manage-panel.venue-dashboard-section { overflow: visible; }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-venue .venue-dashboard-section[data-section-icon] { background: #111116 !important; border-color: #2c2c34 !important; border-radius: 14px !important; }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-venue .venue-dashboard-section[data-section-icon][open] { border-color: #655078 !important; }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-venue .venue-dashboard-section[data-section-icon] > summary { min-height: 60px !important; padding: 10px !important; grid-template-columns: 28px minmax(0,1fr) auto 16px; }
@@ -84,7 +86,7 @@ body.dancr-button-system main.dashboard-shell.dashboard-shell-venue #venue-accou
 body.dancr-button-system main.dashboard-shell.dashboard-shell-venue #venue-account .support-panel textarea { min-height: 80px !important; height: 80px; resize: vertical; }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-venue .account-actions { gap: 0 !important; }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-venue .account-action-row { padding: 10px 0 !important; background: transparent !important; border: 0 !important; border-radius: 0 !important; border-bottom: 1px solid #2c2c34; }
-body.dancr-button-system main.dashboard-shell.dashboard-shell-venue .venue-danger-heading { margin: 20px 0 4px; padding-top: 12px; border-top: 1px solid #63404a; color: #efb0ba !important; font-size: 11px !important; text-transform: uppercase; letter-spacing: .1em; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-venue .venue-account-controls-heading { margin: 20px 0 4px; padding-top: 12px; border-top: 1px solid #2c2c34; color: #b3b5c2 !important; font-size: 11px !important; text-transform: uppercase; letter-spacing: .1em; }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-venue #venue-account .venue-participation-panel { padding: 10px 0 !important; border-bottom: 1px solid #2c2c34; border-radius: 0 !important; }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-venue #venue-account .account-danger-row .danger-button { --venue-control-face: #652133; --venue-control-edge: #a45264; }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-venue #venue-account .venue-participation-panel h3 { font-size: 14px !important; }
