@@ -1271,3 +1271,142 @@ html body.dancr-button-system > .app main.stack > #homeLiveSummary #homeLiveWork
     font-size: 0;
   }
 }
+
+/* Open discovery menus follow the same compact treatment as their triggers. */
+html body.dancr-button-system > .app main.stack > .home-discovery-controls #citySelectPanel.is-open {
+  padding: 4px !important;
+}
+html body.dancr-button-system > .app main.stack > .home-discovery-controls #citySelectOptions {
+  gap: 0 !important;
+}
+html body.dancr-button-system > .app main.stack > .home-discovery-controls #citySelectPanel #citySelectOptions .city-picker-option {
+  --discovery-control-face: #050507;
+  --discovery-control-edge: transparent;
+  grid-template-columns: 16px minmax(0, 1fr) auto !important;
+  gap: 8px !important;
+  padding: 0 10px !important;
+  border-radius: 8px !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+}
+html body.dancr-button-system > .app main.stack > .home-discovery-controls #citySelectPanel #citySelectOptions .city-picker-option[aria-selected="true"] {
+  --discovery-control-face: #160e24;
+  --discovery-control-edge: #594271;
+}
+html body.dancr-button-system > .app main.stack > .home-discovery-controls #citySelectPanel .venue-picker-radio {
+  box-sizing: border-box;
+  width: 16px !important;
+  height: 16px !important;
+  border-width: 1.5px !important;
+}
+html body.dancr-button-system > .app main.stack > .home-discovery-controls #citySelectPanel .venue-picker-radio::after {
+  width: 8px !important;
+  height: 8px !important;
+}
+html body.dancr-button-system > .app main.stack > .home-discovery-controls #homeAdvancedFilters.is-open {
+  gap: 6px 8px !important;
+}
+html body.dancr-button-system > .app main.stack > .home-discovery-controls #homeAdvancedFilters .field {
+  gap: 2px !important;
+}
+html body.dancr-button-system > .app main.stack > .home-discovery-controls #homeAdvancedFilters .field > label {
+  color: #96939f !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  letter-spacing: .02em !important;
+  text-transform: none !important;
+}
+html body.dancr-button-system > .app main.stack > .home-discovery-controls #homeAdvancedFilters :is(#distanceSelectButton, #venueSelectButton, #locationBtn) {
+  gap: 6px !important;
+  padding-inline: 10px !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+}
+html body.dancr-button-system > .app main.stack > .home-discovery-controls #homeAdvancedFilters #locationBtn {
+  --discovery-control-edge: transparent;
+  flex: 1 1 auto;
+  color: #c4b5fd !important;
+}
+html body.dancr-button-system > .app main.stack > .home-discovery-controls #homeAdvancedFilters #locationBtn .icon {
+  width: 16px !important;
+  height: 16px !important;
+  color: #a78bfa !important;
+}
+@media (max-width: 720px) {
+  html body.dancr-button-system > .app main.stack > .home-discovery-controls #homeAdvancedFilters.is-open {
+    grid-template-columns: minmax(0, .8fr) minmax(0, 1.2fr) !important;
+  }
+  html body.dancr-button-system > .app main.stack > .home-discovery-controls #homeAdvancedFilters .home-filter-actions {
+    grid-column: 1 / -1;
+    flex-wrap: nowrap;
+    gap: 4px;
+  }
+}
+html body.dancr-button-system #venueSelectDialog {
+  max-height: min(560px, calc(100dvh - 24px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)));
+}
+html body.dancr-button-system #venueSelectDialog .venue-picker-header {
+  padding: 6px 12px;
+  border-bottom-color: #25252d;
+}
+html body.dancr-button-system :is(#venueSelectDialog, #distanceSelectDialog) h2 {
+  font-size: 18px !important;
+}
+html body.dancr-button-system :is(#venueSelectClose, #distanceSelectClose) {
+  width: 44px !important;
+  height: 44px !important;
+  min-height: 44px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  background: none !important;
+  box-shadow: none !important;
+  color: #aaa6b3 !important;
+}
+html body.dancr-button-system :is(#venueSelectClose, #distanceSelectClose)::before {
+  content: none !important;
+}
+html body.dancr-button-system #venueSelectOptions {
+  gap: 0;
+  padding: 4px;
+}
+html body.dancr-button-system #venueSelectDialog .venue-picker-option {
+  --picker-edge: transparent;
+  min-height: 44px !important;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 8px !important;
+  font-weight: 600 !important;
+}
+html body.dancr-button-system #venueSelectDialog .venue-picker-option[aria-selected="true"] {
+  --picker-edge: #594271;
+}
+html body.dancr-button-system #venueSelectDialog .venue-picker-radio {
+  width: 16px;
+  height: 16px;
+}
+html body.dancr-button-system #venueSelectDialog .venue-picker-radio::after {
+  width: 8px;
+  height: 8px;
+}
+html body.dancr-button-system #venueSelectDone {
+  margin: 6px 12px 12px;
+}
+html body.dancr-button-system #distanceSelectDialog .distance-picker-panel {
+  gap: 10px;
+  padding: 10px 12px 12px;
+}
+html body.dancr-button-system #distanceSelectOrigin {
+  font-size: 13px;
+}
+html body.dancr-button-system #distanceSelectDialog .distance-picker-options span {
+  min-height: 44px;
+}
+@media (hover: hover) {
+  html body.dancr-button-system > .app main.stack > .home-discovery-controls #citySelectPanel #citySelectOptions .city-picker-option:not([aria-selected="true"]):hover {
+    --discovery-control-face: #111116;
+  }
+  html body.dancr-button-system #venueSelectDialog .venue-picker-option:not([aria-selected="true"]):hover {
+    --picker-face: #111116;
+    --picker-edge: transparent;
+  }
+}
