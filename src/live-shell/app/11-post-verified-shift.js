@@ -344,12 +344,10 @@
                     </div>
                   </div>
                 </div>
-                ${operatingStatus.state !== "unknown" ? `
-                  <div class="venue-profile-hours" aria-label="Opening hours">
-                    <strong>${escapeHtml(operatingStatus.label)}</strong>
-                    <span>Hours · ${escapeHtml(operatingStatus.hoursLabel)}</span>
-                  </div>
-                ` : ""}
+                <div class="venue-profile-hours" aria-label="Opening hours">
+                  <strong>${escapeHtml(operatingStatus.label)}</strong>
+                  ${operatingStatus.hoursLabel ? `<span>Hours · ${escapeHtml(operatingStatus.hoursLabel)}</span>` : ""}
+                </div>
                 ${venueOfferStatusMarkup(venue)}
               </div>
             </div>

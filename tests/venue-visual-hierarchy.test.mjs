@@ -67,7 +67,8 @@ test("venue cards and venue detail render the same semantic operating state", ()
   )?.[0] || "";
 
   assert.match(venueDetail, /venueOperatingStatus\(details\.hours, city\)/);
-  assert.match(venueDetail, /operatingStatus\.state !== "unknown"[\s\S]*?venue-profile-hours/);
+  assert.doesNotMatch(venueDetail, /operatingStatus\.state !== "unknown"/);
+  assert.match(venueDetail, /class="venue-profile-hours" aria-label="Opening hours"/);
   assert.match(venueDetail, /<strong>\$\{escapeHtml\(operatingStatus\.label\)\}<\/strong>/);
   assert.match(venueDetail, /<span>Hours · \$\{escapeHtml\(operatingStatus\.hoursLabel\)\}<\/span>/);
   assert.match(venueSlide, /venueOperatingStatus\(details\.hours, city\)/);
