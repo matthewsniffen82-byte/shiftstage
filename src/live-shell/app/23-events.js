@@ -75,6 +75,7 @@
         toggleModalVideoPlayback();
         return;
       }
+      openPhotoViewerFromElement(modalImage, Number(modalImage.dataset.activePhotoIndex || 0));
     });
 
     modalImage?.addEventListener("pointermove", (event) => {
@@ -87,9 +88,10 @@
       if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
         event.preventDefault();
         moveModalPhoto(event.key === "ArrowRight" ? 1 : -1);
-      } else if ((event.key === "Enter" || event.key === " ") && modalImage.dataset.activeMediaType === "video") {
+      } else if (event.key === "Enter" || event.key === " ") {
         event.preventDefault();
-        toggleModalVideoPlayback();
+        if (modalImage.dataset.activeMediaType === "video") toggleModalVideoPlayback();
+        else openPhotoViewerFromElement(modalImage, Number(modalImage.dataset.activePhotoIndex || 0));
       }
     });
     profilePhotoViewerImage?.addEventListener("keydown", (event) => {

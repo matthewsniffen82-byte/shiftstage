@@ -116,7 +116,7 @@ export default async function DancerPublicPage({ params, searchParams }: PagePro
       metricsUnavailable={profile.metricsUnavailable}
       key={profile.id}
     >
-      <main className="public-profile-shell" data-public-dancer-id={profile.id} data-public-profile-page>
+      <main className="public-profile-shell profile-split-layout" data-public-dancer-id={profile.id} data-public-profile-page>
         <ProfileViewTracker
           dancerId={profile.id}
           hasSchedule={Boolean(activeShift)}
@@ -266,6 +266,7 @@ export default async function DancerPublicPage({ params, searchParams }: PagePro
         </DancerProfileActions>
 
         <DancerPhotoCarousel
+          featured
           dancerId={profile.id}
           prioritizeInitialPhotos
           photos={gallery.map((photo) => ({
@@ -274,6 +275,7 @@ export default async function DancerPublicPage({ params, searchParams }: PagePro
             imageSrcSet: photo.imageSrcSet,
             imageWidth: photo.imageWidth,
             imageHeight: photo.imageHeight,
+            focalX: photo.focalX,
             likeCount: photo.likeCount || 0,
             isPinned: "isPinned" in photo && photo.isPinned === true,
             isPrimary: photo.isPrimary,

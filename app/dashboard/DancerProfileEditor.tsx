@@ -378,7 +378,7 @@ export function DancerProfilePreview({
           ref={overlayRef}
           role="dialog"
         >
-          <div className="public-profile-shell dancer-profile-preview-shell">
+          <div className={`public-profile-shell dancer-profile-preview-shell${isEditor ? "" : " profile-split-layout"}`}>
             <header className="profile-titlebar">
               {isEditor ? (
                 <button
@@ -432,7 +432,7 @@ export function DancerProfilePreview({
               </button>
             </header>
             {isEditor ? mediaUploads : (
-              <DancerPhotoCarousel dancerId={typeof profile?.id === "string" ? profile.id : undefined} photos={photos} stageName={previewName} videos={videos} />
+              <DancerPhotoCarousel featured dancerId={typeof profile?.id === "string" ? profile.id : undefined} photos={photos} stageName={previewName} videos={videos} />
             )}
             {!isEditor ? (
               <section className="profile-schedule-section dancer-profile-preview-status" aria-labelledby="dancer-profile-preview-status-heading">

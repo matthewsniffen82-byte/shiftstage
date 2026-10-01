@@ -543,7 +543,7 @@
         : ".thumb:not([data-profile-tv-index])";
       const visibleThumbs = [...modalGallery.querySelectorAll(selector)];
       modalMediaEmpty.hidden = visibleThumbs.length > 0;
-      modalImage.hidden = true;
+      modalImage.hidden = !modalGallery.profilePhotoItems?.length;
       modalMediaEmpty.textContent = tab === "video"
         ? "No approved MyDancr TV videos yet."
         : "No approved profile photos yet.";
@@ -592,6 +592,22 @@
         ? parsedRequestedIndex
         : Number(activePhotoThumb?.dataset.profilePhotoIndex || 0));
       const totalPhotos = Math.max(1, modalGallery.profilePhotoItems?.length || photoThumbs.length);
+      const selectedPhoto = modalGallery.profilePhotoItems?.[activePhotoIndex];
+      const previousPhoto = modalImage.querySelector(".profile-featured-photo");
+      if (safeUrl && previousPhoto?.getAttribute("src") !== photoUrl) {
+        const image = document.createElement("img");
+        image.className = "profile-featured-photo";
+        image.alt = `${modalName.textContent.trim() || "Dancer"} profile photo`;
+        image.dataset.imageState = "loading";
+        image.decoding = "async";
+        image.fetchPriority = "high";
+        image.sizes = "(max-width: 1180px) 50vw, 590px";
+        if (selectedPhoto?.photoSrcSet) image.srcset = selectedPhoto.photoSrcSet;
+        image.src = photoUrl;
+        if (previousPhoto) previousPhoto.replaceWith(image);
+        else modalImage.prepend(image);
+      } else if (!safeUrl) previousPhoto?.remove();
+      modalImage.hidden = !safeUrl;
       modalImage.dataset.activePhotoIndex = String(activePhotoIndex);
       modalImage.dataset.activeMediaType = "photo";
       modalMediaExpand.hidden = true;

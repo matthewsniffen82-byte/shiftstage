@@ -21,6 +21,7 @@ import { videoBufferMode } from "@/src/lib/dancr/video-buffer-policy";
 import { videoResourceRef } from "@/src/lib/dancr/video-resource-ref";
 import { useAnonymousMediaLikes } from "@/src/lib/dancr/use-anonymous-media-likes";
 import { DANCER_PROFILE_MEDIA_PAGE_SIZE } from "@/src/lib/dancr/media-limits";
+import { imageFocalPointCss } from "@/src/lib/dancr/image-focal-point";
 
 type DancerPhotoCarouselProps = {
   dancerId?: string;
@@ -30,6 +31,7 @@ type DancerPhotoCarouselProps = {
     imageSrcSet?: string | null;
     imageWidth?: number | null;
     imageHeight?: number | null;
+    focalX?: number;
     likeCount?: number;
     isPinned?: boolean;
     isPrimary?: boolean;
@@ -47,6 +49,7 @@ type DancerPhotoCarouselProps = {
   stageName: string;
   viewerStatus?: string;
   prioritizeInitialPhotos?: boolean;
+  featured?: boolean;
 };
 
 type PhotoMedia = {
@@ -56,6 +59,7 @@ type PhotoMedia = {
   imageSrcSet?: string | null;
   imageWidth?: number | null;
   imageHeight?: number | null;
+  focalX?: number;
   likeCount?: number;
   isPinned?: boolean;
   isPrimary?: boolean;
@@ -106,6 +110,7 @@ export function DancerPhotoCarousel({
   stageName,
   viewerStatus = "No shift posted",
   prioritizeInitialPhotos = false,
+  featured = false,
 }: DancerPhotoCarouselProps) {
   const photoMedia = useMemo<PhotoMedia[]>(
     () =>
@@ -138,6 +143,9 @@ export function DancerPhotoCarousel({
     photoMedia.length || !videoMedia.length ? "photo" : "video",
   );
   const [viewer, setViewer] = useState<MediaViewer | null>(null);
+  const [featuredPhotoId, setFeaturedPhotoId] = useState<string | null>(null);
+  const featuredPhotoIndex = Math.max(0, photoMedia.findIndex((photo) => photo.id === featuredPhotoId));
+  const featuredPhoto = photoMedia[featuredPhotoIndex];
   const [visibleCounts, setVisibleCounts] = useState<Record<MediaTab, number>>({
     photo: DANCER_PROFILE_MEDIA_PAGE_SIZE,
     video: DANCER_PROFILE_MEDIA_PAGE_SIZE,
@@ -447,6 +455,7 @@ export function DancerPhotoCarousel({
     index: number,
     trigger: HTMLButtonElement,
   ) {
+    if (kind === "photo") setFeaturedPhotoId(photoMedia[index]?.id || null);
     viewerTrigger.current = trigger;
     pendingViewerIndex.current = index;
     viewerOpeningIndex.current = index;
@@ -757,6 +766,45 @@ export function DancerPhotoCarousel({
   }
 
   return (
+    <>
+    {featured ? (
+      <aside className="profile-featured-column" aria-label="Featured profile photo" data-working-now={viewerStatus === "Working Now"}>
+        {featuredPhoto ? (
+          <>
+            <button
+              className="profile-featured-open"
+              type="button"
+              aria-label={`Open ${stageName} photo ${featuredPhotoIndex + 1} of ${photoMedia.length}`}
+              onClick={(event) => openViewer("photo", featuredPhotoIndex, event.currentTarget)}
+            >
+              <img
+                key={featuredPhoto.imageUrl}
+                className="profile-featured-photo"
+                alt={`${stageName} profile photo`}
+                data-image-state="loading"
+                decoding="async"
+                fetchPriority="high"
+                sizes="(max-width: 1180px) 50vw, 590px"
+                src={featuredPhoto.imageUrl}
+                srcSet={featuredPhoto.imageSrcSet || undefined}
+                style={{ objectPosition: imageFocalPointCss(featuredPhoto.focalX, 0) }}
+                onLoad={markImageReady}
+                onError={markImageUnavailable}
+                ref={settleImageElement}
+              />
+            </button>
+            {photoMedia.length > 1 ? (
+              <div className="profile-featured-navigation">
+                <button type="button" aria-label="Previous profile photo" disabled={featuredPhotoIndex === 0} onClick={() => setFeaturedPhotoId(photoMedia[featuredPhotoIndex - 1].id)}>‹</button>
+                <span aria-live="polite">{featuredPhotoIndex + 1} / {photoMedia.length}</span>
+                <button type="button" aria-label="Next profile photo" disabled={featuredPhotoIndex === photoMedia.length - 1} onClick={() => setFeaturedPhotoId(photoMedia[featuredPhotoIndex + 1].id)}>›</button>
+              </div>
+            ) : null}
+          </>
+        ) : <span className="profile-featured-empty">No approved profile photos yet.</span>}
+        <span className="profile-featured-now" aria-hidden="true">NOW</span>
+      </aside>
+    ) : null}
     <section
       aria-label={`${stageName} approved profile media`}
       className="profile-media-section"
@@ -823,6 +871,7 @@ export function DancerPhotoCarousel({
             <button
               aria-label={`Open ${stageName} ${item.kind} ${index + 1} of ${activeItems.length}`}
               className={`profile-media-grid-item is-${item.kind}`}
+              data-featured={featured && item.kind === "photo" && item.id === featuredPhoto?.id || undefined}
               onClick={(event) => openViewer(item.kind, index, event.currentTarget)}
               type="button"
             >
@@ -1041,6 +1090,7 @@ export function DancerPhotoCarousel({
         </div>
       ) : null}
     </section>
+    </>
   );
 }
 

@@ -41,6 +41,7 @@
   <link href="/profile-media-card-feed.css?v=10" rel="stylesheet">
   <link href="/profile-photo-crop.css?v=1" rel="stylesheet">
   <link href="/profile-actions-compact.css" rel="stylesheet">
+  <link href="/dancer-profile-layout.css" rel="stylesheet">
 </head>
 <body class="dancr-button-system">
   <div class="app">
@@ -1622,7 +1623,30 @@
     </section>
 
     <div class="modal-backdrop" id="profileBackdrop" aria-hidden="true">
-      <section class="profile-modal" id="profileModal" role="dialog" aria-modal="true" aria-labelledby="modalName">
+      <section class="profile-modal profile-split-layout" id="profileModal" role="dialog" aria-modal="true" aria-labelledby="modalName">
+        <aside class="profile-featured-column" aria-label="Featured profile photo">
+          <div class="modal-image" id="modalImage" role="group" tabindex="0" aria-label="Profile photos and videos. Swipe left or right to change media.">
+            <span class="profile-modal-media-position" id="modalMediaPosition">Photo 1 of 1</span>
+            <button class="profile-modal-media-previous" id="modalMediaPrevious" type="button" aria-label="Previous profile media">‹</button>
+            <button class="profile-modal-media-next" id="modalMediaNext" type="button" aria-label="Next profile media">›</button>
+            <span class="profile-modal-playback-feedback" id="modalVideoPlaybackFeedback" aria-hidden="true"></span>
+            <div class="profile-modal-video-controls is-visible" id="modalVideoControls" data-modal-video-controls role="group" aria-label="Video controls" hidden>
+              <button id="modalVideoPlayback" type="button" aria-label="Play TV video">
+                <svg class="profile-modal-media-control-icon" viewBox="0 0 24 24" aria-hidden="true"><path class="is-fill" d="m9 7 8 5-8 5Z"></path></svg>
+              </button>
+              <button id="modalVideoSound" type="button" aria-label="Turn TV video sound on">
+                <svg class="profile-modal-media-control-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10v4h4l5 4V6L8 10H4Z"></path><path d="m17 9 4 6"></path><path d="m21 9-4 6"></path></svg>
+              </button>
+              <input id="modalVideoProgress" type="range" min="0" max="0.1" step="0.1" value="0" aria-label="TV video progress" aria-valuetext="0:00 of 0:00">
+              <output id="modalVideoTime" for="modalVideoProgress">0:00 / 0:00</output>
+              <button class="profile-modal-media-expand" id="modalMediaExpand" type="button" aria-label="Open selected profile video in scrolling cards" title="View video cards" hidden>
+                <svg class="profile-modal-media-control-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"></path><path d="m13 6 6 6-6 6"></path></svg>
+              </button>
+            </div>
+          </div>
+          <span class="profile-featured-empty">No approved profile photos yet.</span>
+          <span class="profile-featured-now" aria-hidden="true">NOW</span>
+        </aside>
         <div class="profile-modal-summary">
           <div class="profile-modal-person">
             <div class="profile-modal-avatar-column">
@@ -1669,25 +1693,6 @@
               <span class="profile-media-tab-label">Videos</span>
               <span class="profile-media-tab-count" id="modalMediaTvCount" aria-hidden="true">0</span>
             </button>
-          </div>
-          <div class="modal-image" id="modalImage" role="group" tabindex="0" aria-label="Profile photos and videos. Swipe left or right to change media.">
-            <span class="profile-modal-media-position" id="modalMediaPosition">Photo 1 of 1</span>
-            <button class="profile-modal-media-previous" id="modalMediaPrevious" type="button" aria-label="Previous profile media">‹</button>
-            <button class="profile-modal-media-next" id="modalMediaNext" type="button" aria-label="Next profile media">›</button>
-            <span class="profile-modal-playback-feedback" id="modalVideoPlaybackFeedback" aria-hidden="true"></span>
-            <div class="profile-modal-video-controls is-visible" id="modalVideoControls" data-modal-video-controls role="group" aria-label="Video controls" hidden>
-              <button id="modalVideoPlayback" type="button" aria-label="Play TV video">
-                <svg class="profile-modal-media-control-icon" viewBox="0 0 24 24" aria-hidden="true"><path class="is-fill" d="m9 7 8 5-8 5Z"></path></svg>
-              </button>
-              <button id="modalVideoSound" type="button" aria-label="Turn TV video sound on">
-                <svg class="profile-modal-media-control-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10v4h4l5 4V6L8 10H4Z"></path><path d="m17 9 4 6"></path><path d="m21 9-4 6"></path></svg>
-              </button>
-              <input id="modalVideoProgress" type="range" min="0" max="0.1" step="0.1" value="0" aria-label="TV video progress" aria-valuetext="0:00 of 0:00">
-              <output id="modalVideoTime" for="modalVideoProgress">0:00 / 0:00</output>
-              <button class="profile-modal-media-expand" id="modalMediaExpand" type="button" aria-label="Open selected profile video in scrolling cards" title="View video cards" hidden>
-                <svg class="profile-modal-media-control-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"></path><path d="m13 6 6 6-6 6"></path></svg>
-              </button>
-            </div>
           </div>
           <div class="gallery" id="modalGallery" data-media-tab="photo" role="tabpanel" aria-labelledby="modalMediaPhotoTab"></div>
           <p class="profile-modal-media-empty" id="modalMediaEmpty" hidden>No approved media yet.</p>
