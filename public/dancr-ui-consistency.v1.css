@@ -731,7 +731,7 @@ html body.dancr-button-system #results.venue-profile-overlay .venue-detail .venu
   border-top: 0 !important;
   background: transparent !important;
   gap: 12px !important;
-  padding: 8px 12px 8px !important;
+  padding: 4px 12px 8px !important;
 }
 
 html body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-location-section {
