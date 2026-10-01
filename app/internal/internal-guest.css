@@ -85,7 +85,7 @@ body.dancr-button-system .ir-shell.ir-guest button.ir-roster-refresh {
   height: 44px;
   padding: 0 !important;
   border-radius: 50% !important;
-  color: #c4b5fd !important;
+  color: #f4f3f7 !important;
 }
 body.dancr-button-system .ir-shell.ir-guest button.ir-roster-refresh::before { inset: 5px; }
 body.dancr-button-system .ir-shell.ir-guest button.ir-roster-refresh:disabled { opacity: 1 !important; }
