@@ -798,7 +798,7 @@ html body.dancr-button-system > .app main.stack > section.stack
 @media (max-width: 720px) {
   html body.dancr-button-system > .app main.stack > section.stack
     > #results.home-discovery-feed.home-venue-discovery-feed > .home-venue-discovery-slide {
-    --venue-discovery-logo-size: clamp(80px, 24vw, 104px);
+    --venue-discovery-logo-size: clamp(104px, 32vw, 140px);
     grid-template-columns: var(--venue-discovery-logo-size) minmax(0, 1fr) !important;
     grid-template-rows: auto auto 48px minmax(44px, auto) !important;
     gap: 12px 10px !important;
