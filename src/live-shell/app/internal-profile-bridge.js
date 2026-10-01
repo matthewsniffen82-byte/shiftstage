@@ -4,6 +4,7 @@
       ? new URLSearchParams(window.location.search).get("internal_profile") || "" : "";
     let internalRosterProfile = null;
     let internalProfileRevision = "";
+    let internalProfileMediaIncomplete = false;
     let internalProfileLoadSequence = 0;
     let internalTableRequest = null;
     let internalProfileActivity = {};
@@ -54,7 +55,7 @@
         internalRosterProfile.requestId = requestId;
         syncInternalProfileRequestUi();
       }
-      if (revision === internalProfileRevision) return;
+      if (revision === internalProfileRevision && !internalProfileMediaIncomplete) return;
       internalProfileRevision = revision;
       const sequence = ++internalProfileLoadSequence;
       const city = discoveryMarket(source.city) ? source.city : selectedCity();
@@ -74,6 +75,8 @@
         }))),
       ]);
       if (sequence !== internalProfileLoadSequence) return;
+      internalProfileMediaIncomplete = !avatarPhotoUrl || photos.some(photo => !photo.imageUrl)
+        || videos.some((video, index) => !video.videoUrl || (source.videos[index].has_poster && !video.posterUrl));
       const working = Date.parse(source.workingUntil || "") > Date.now();
       internalRosterProfile = {
         ...external, id: source.id, slug: source.slug || external?.slug || "", name: source.stage_name, city,

@@ -66,7 +66,7 @@ test("admin and agent surfaces require authenticated server boundaries and expos
   assert.match(agentRoute, /createRequestSupabaseContext/);
   assert.match(adminPanel, /requestAdminJson/);
   assert.doesNotMatch(adminPanel, /fetch\("\/api\/admin\/sales-agents|readAdminAccessToken/);
-  assert.match(adminPanel, /MyDancr never stores W-9 or identity-document contents/);
+  assert.doesNotMatch(adminPanel, /type="file"|NATS_API_KEY|api-username|api-key/);
   assert.match(agentDashboard, /MyDancr stores only your verified account connection and commission history/);
   assert.match(salesAgentService, /function getPublicNatsRuntimeConfig/);
   const publicConfig = salesAgentService.match(/function getPublicNatsRuntimeConfig\(\)[\s\S]*?\n}/)?.[0] || "";

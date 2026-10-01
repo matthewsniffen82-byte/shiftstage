@@ -1,4 +1,5 @@
 import type Stripe from "stripe";
+import { assertServerJobActive } from "../server-job";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { getStripe } from "../stripe";
 import { syncStripeInvoice } from "./finance-provider-events";
@@ -97,7 +98,9 @@ export async function reconcileOpenClubInvoices(client: DancrClient) {
 
   let reconciled = 0;
   for (const invoice of data || []) {
-    const stripeInvoice = await getStripe().invoices.retrieve(invoice.stripe_invoice_id);
+    assertServerJobActive();
+    const stripeInvoice = await getStripe().invoices.retrieve(invoice.stripe_invoice_id, {}, { timeout: 5_000, maxNetworkRetries: 0 });
+    assertServerJobActive();
     await syncStripeInvoice(client, stripeInvoice);
     reconciled += 1;
   }

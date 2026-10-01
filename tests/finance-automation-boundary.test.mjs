@@ -37,7 +37,7 @@ test("subscription venues reconcile history without new referral invoices or rem
     "export async function runClubInvoiceAutomation",
     "export async function runAgentCommissionAutomation",
   );
-  assert.match(task, /await reconcileOpenClubInvoices\(client\)/);
+  assert.match(task, /runWithServerJob\(\(\) => reconcileOpenClubInvoices\(client\), 12_000\)/);
   assert.doesNotMatch(task, /createMonthlyClubInvoiceDrafts|publishClubInvoiceDrafts|sendClubInvoiceReminders/);
   assert.doesNotMatch(task, /processDancerPayouts/);
   assert.equal((task.match(/await captureFinanceStep/g) || []).length, 1);

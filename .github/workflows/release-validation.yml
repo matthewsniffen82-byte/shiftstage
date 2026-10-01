@@ -1,6 +1,11 @@
 name: Release validation
 
 on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - 'docs/**'
+      - '**/*.md'
   pull_request:
     branches: [main]
     paths-ignore:
@@ -41,4 +46,8 @@ jobs:
       - name: Install locked dependencies with approved lifecycle scripts
         run: npx --yes npm@11.19.1 ci
       - name: Audit, test, type check, lint and build
+        if: github.event_name != 'push'
         run: npx --yes npm@11.19.1 run verify:release
+      - name: Check production stability on main
+        if: github.event_name == 'push'
+        run: node scripts/check-stability.mjs

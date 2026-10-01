@@ -1,3 +1,4 @@
+import * as serverJob from '../../src/lib/server-job.ts';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
@@ -12,7 +13,7 @@ export function publicationProvider({lines=[],status='draft',metadata={mydancr_i
 function load(path,dependencies){
  const exports={};
  vm.runInNewContext(ts.transpileModule(readFileSync(new URL('../../'+path,import.meta.url),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText,{
-  exports,Date,Error,console:{error(){},warn(){}},require:name=>{assert.ok(name in dependencies,name);return dependencies[name];}
+  exports,Date,Error,console:{error(){},warn(){}},require:name=>{if(name==='../server-job')return serverJob;assert.ok(name in dependencies,name);return dependencies[name];}
  });
  return exports;
 }

@@ -1,3 +1,4 @@
+import * as serverJob from '../../src/lib/server-job.ts';
 import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
 import ts from 'typescript';
@@ -102,6 +103,7 @@ export function reminderHarness(db,options={}){
  vm.runInNewContext(ts.transpileModule(readFileSync(new URL('../../src/lib/dancr/finance-invoices.ts',import.meta.url),'utf8'),{
   compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}
  }).outputText,{exports,Date,Error,console,require:name=>{
+  if(name==='../server-job')return serverJob;
   if(name==='../stripe')return {getStripe:()=>stripe};
   if(name==='./invoice-reminder-delivery')return delivery;
   if(name==='./finance-provider-events')return {};

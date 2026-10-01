@@ -1,3 +1,4 @@
+import * as serverJob from '../src/lib/server-job.ts';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import test from 'node:test';
@@ -20,7 +21,7 @@ function module(name, dependencies, globals = {}) {
 }
 
 function harness({agent=true, status=200, payload={result:'Successfully added manual invoice'}, contentType='application/json', networkFailure=false, bodyFailure=false, completion='success', failureWrite=false, selected=true, configured=true, loginId=123, sequence=null, responseFactory=null, signal=null}={}) {
-  const requests = [], calls = [];
+  const requests = [], calls = [];let nextClaim=0;
   const nats = module('nats.ts', {'server-only':{}}, {
     ...(signal ? {AbortSignal:{timeout: milliseconds => { assert.equal(milliseconds, 15_000); return signal; }}} : {}),
     process: {env: {
@@ -44,11 +45,11 @@ function harness({agent=true, status=200, payload={result:'Successfully added ma
       return response;
     },
   });
-  const worker = module('nats-commission-sync.ts', {'./nats':nats});
+  const worker = module('nats-commission-sync.ts', {'./nats':nats,'../server-job':serverJob});
   const prefix = agent ? 'nats_agent_commission_export' : 'nats_commission_export';
   const client = {async rpc(name, args) {
     calls.push({name, args:structuredClone(args)});
-    if (name === 'claim_' + prefix + 's') return {data:Array.from({length:sequence?.length || 1},(_,index)=>({export_id:'export-'+index,login_id:loginId,amount_cents:1234,currency:'usd'})),error:null};
+    if (name === 'claim_' + prefix + 's') {assert.equal(args.p_limit,1);return {data:nextClaim<(sequence?.length || 1)?[{export_id:'export-'+nextClaim++,login_id:loginId,amount_cents:1234,currency:'usd'}]:[],error:null};}
     if (name === 'complete_' + prefix) {
       if (completion === 'throw') throw new Error(privateText);
       if (completion === 'error') return {data:null,error:{message:privateText,code:'08006'}};
@@ -151,7 +152,8 @@ for (const agent of [true]) {
     const h = harness({agent,payload:{result:'Successfully added manual invoice '+privateText},contentType:'application/json; note='+privateText});
     const result = await h.run(), completed = h.calls.find(call => call.name.startsWith('complete_'));
     assert.equal(result.exported, 1); assert.equal(result.failed, 0); assert.equal(result.reconciliationRequired, 0);
-    assert.equal(h.requests.length, 1); assert.equal(h.calls.length, 2);
+    assert.equal(h.requests.length, 1); assert.equal(h.calls.filter(call => call.name.startsWith("complete_")).length, 1);
+    assert.equal(h.calls.filter(call => call.name.startsWith("claim_")).length, 2);
     assert.equal(completed.args.p_nats_result, 'Successfully added manual invoice');
     assert.deepEqual(completed.args.p_response_metadata, {http_status:200,content_type:'application/json'});
     assert.doesNotMatch(JSON.stringify({result,calls:h.calls}), /synthetic-provider-secret|owner@example|srv\/private/);

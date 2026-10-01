@@ -3,19 +3,20 @@ import test from 'node:test';
 import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
 import ts from 'typescript';
+import * as serverJob from '../src/lib/server-job.ts';
 import { timingSafeEqual } from 'node:crypto';
 import { venueNotificationSettings, venueNotificationMetadataPatch, venueNotificationCategory } from '../src/lib/dancr/venue-notification-preferences.ts';
 
 function fixture({available=true,preferences={pushEnabled:true},sent=1,fail=false}={}){
-  const calls=[], deliveries=[], service={};
+  const calls=[], deliveries=[], service={};let claimed=false;
   const jobs=[{id:'delivery-uuid',lease_id:'lease-uuid',recipient_id:'host-user',table_label:'Table 12',stage_name:'Aster'}];
   const source=ts.transpileModule(readFileSync(new URL('../src/lib/dancr/internal-request-push.ts',import.meta.url),'utf8'),{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.CommonJS}}).outputText;
-  vm.runInNewContext(source,{exports:service,console:{warn(){}},require:name=>({
-    'server-only':{},'./venue-notification-preferences':{venueNotificationSettings},
+  vm.runInNewContext(source,{exports:service,performance,console:{warn(){}},require:name=>({
+    'server-only':{},'../server-job':serverJob,'./venue-notification-preferences':{venueNotificationSettings},
     './customer-notification-delivery':{notificationPushDelivery:()=>({pushAvailable:available})},
     './notification-delivery':{deliverNotificationRows:async(_client,rows,options)=>{deliveries.push({rows,options});if(fail)throw Error('provider down');return {push:sent};}},
   }[name])});
-  const client={rpc:async(name,args)=>{calls.push({name,args});return {data:name==='claim_internal_request_push'?jobs:true,error:null};},auth:{admin:{getUserById:async()=>({data:{user:{user_metadata:venueNotificationMetadataPatch(preferences)}},error:null})}}};
+  const client={rpc:async(name,args)=>{calls.push({name,args});const data=name==='claim_internal_request_alerts'?(claimed?[]:(claimed=true,jobs)):true;return {data,error:null};},auth:{admin:{getUserById:async()=>({data:{user:{user_metadata:venueNotificationMetadataPatch(preferences)}},error:null})}}};
   return {calls,deliveries,run:()=>service.deliverInternalRequestPush(client,'request-uuid')};
 }
 test('table request targets the scoped staff recipient with exact table/dancer copy and no email',async()=>{
@@ -30,7 +31,7 @@ for(const key of ['pushEnabled','tableRequests','alertsEnabled'])test(key+' opt-
 });
 test('missing configuration preserves pending jobs',async()=>{const f=fixture({available:false});assert.equal((await f.run()).configured,false);assert.equal(f.calls.length,0);});
 for(const options of [{sent:0},{fail:true}])test('unconfirmed provider delivery schedules a retry',async()=>{
-  const f=fixture(options);assert.equal((await f.run()).retry,1);assert.equal(f.calls.at(-1).args.p_outcome,'retry');
+  const f=fixture(options);assert.equal((await f.run()).retry,1);assert.equal(f.calls.find(c=>c.name==='finish_internal_request_push').args.p_outcome,'retry');
 });
 test('table requests have their own venue preference instead of support or activity settings',()=>{
   assert.equal(venueNotificationCategory({notification_type:'support_message',payload:{kind:'internal_table_request'}}),'tableRequests');

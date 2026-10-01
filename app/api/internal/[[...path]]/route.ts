@@ -142,6 +142,7 @@ export async function GET(request: Request, context: Context) {
 }
 
 export async function POST(request: Request, context: Context) {
+  const deliveryDeadline = performance.now() + 50_000;
   try {
     const { path = [] } = await context.params;
     const body = await readBoundedJsonObject(request, { maxBytes: 4096, invalidMessage: "Invalid roster request.", tooLargeMessage: "Roster request is too large." });
@@ -152,7 +153,7 @@ export async function POST(request: Request, context: Context) {
         if (!scope.link || !isInternalUuid(body.dancerId) || !isInternalUuid(body.requestId)) throw new PublicApiError("INVALID_REQUEST", "Choose the request to cancel.", 400);
         const receipt = await cancelInternalRequest(admin, scope.venueId, scope.link.id, body.dancerId, body.requestId);
         after(async () => {
-          try { await deliverInternalCancellationPush(createAdminSupabaseClient(), receipt.id); }
+          try { await deliverInternalCancellationPush(createAdminSupabaseClient(), receipt.id, { deadline: deliveryDeadline }); }
           catch { console.warn("INTERNAL_REQUEST_CANCELLATION_ALERT_FAILED"); }
         });
         return json({ ok: true, receipt });
@@ -162,7 +163,7 @@ export async function POST(request: Request, context: Context) {
       const { data, error } = await admin.rpc("internal_roster_request", { p_token: path[1], p_dancer: body.dancerId, p_key: body.requestKey });
       if (error) throw error;
       if (isInternalUuid(data?.id)) after(async () => {
-        try { await deliverInternalRequestPush(createAdminSupabaseClient(), data.id); }
+        try { await deliverInternalRequestPush(createAdminSupabaseClient(), data.id, { deadline: deliveryDeadline }); }
         catch { console.warn("INTERNAL_REQUEST_PUSH_DEFERRED_TO_WORKER"); }
       });
       return json({ ok: true, receipt: data });

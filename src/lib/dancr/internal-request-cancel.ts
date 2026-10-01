@@ -4,20 +4,11 @@ import { PublicApiError } from "../api-error-policy";
 
 /** The caller must first authorize the active table capability with internalScope. */
 export async function cancelInternalRequest(client: SupabaseClient, venueId: string, linkId: string, dancerId: string, requestId: string) {
-  // The status predicate is checked under the database row lock: a concurrent
-  // completion wins safely. A retry can never cancel a replacement request.
-  const scoped = () => client.from("internal_roster_requests")
-    .select("id,status").eq("id", requestId).eq("venue_id", venueId).eq("link_id", linkId).eq("dancer_id", dancerId);
-  const { data, error } = await client.from("internal_roster_requests")
-    .update({ status: "cancelled", updated_at: new Date().toISOString() })
-    .eq("id", requestId).eq("venue_id", venueId).eq("link_id", linkId).eq("dancer_id", dancerId)
-    .in("status", ["pending", "acknowledged"]).select("id,status").maybeSingle();
+  const { data, error } = await client.rpc("cancel_internal_roster_request", {
+    p_venue_id: venueId, p_link_id: linkId, p_dancer_id: dancerId, p_request_id: requestId,
+  });
+  if (error?.code === "40001") throw new PublicApiError("CONFLICT", "This request is no longer available. Refresh and try again.", 409);
   if (error) throw error;
-  if (data) return data;
-  const existing = await scoped().maybeSingle();
-  if (existing.error) throw existing.error;
-  if (existing.data?.status === "cancelled") return existing.data;
-  throw new PublicApiError("CONFLICT", existing.data?.status === "completed"
-    ? "Club staff already completed this request. It can no longer be cancelled."
-    : "This request is no longer available. Refresh and try again.", 409);
+  if (data?.id !== requestId || data?.status !== "cancelled") throw new Error("Cancellation could not be confirmed.");
+  return data as { id: string; status: "cancelled" };
 }

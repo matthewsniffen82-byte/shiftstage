@@ -23,7 +23,7 @@ const profile = {
   videos: [{ id: id(4), caption: 'Synthetic clip', duration_seconds: 12, like_count: 3, has_poster: true }],
   socialLinks: [{ platform: 'instagram', url: 'https://instagram.com/synthetic' }],
 };
-function fixture({ external = true, staff = false } = {}) {
+function fixture({ external = true, staff = false, mediaFailure = false } = {}) {
   const parent = { postMessage: (...args) => messages.push(args) }, messages = [], opens = [], fetches = [];
   const publicProfile = { id: id(1), name: 'Synthetic dancer', followerCount: 9, goingCount: 2, activeDeal: { id: 'deal' }, mainPhotoUrl: 'public-image', metricsUnavailable: false };
   const market = { dancers: external ? [publicProfile] : [] };
@@ -32,13 +32,13 @@ function fixture({ external = true, staff = false } = {}) {
     document: { documentElement: { classList: { add() {} } }, getElementById() { return null; }, querySelector() { return null; } },
     URLSearchParams, URL: class extends URL { static createObjectURL() { return 'blob:protected-media'; } static revokeObjectURL() {} }, AbortSignal,
     authSession: staff ? { accessToken: 'test-venue-session' } : null,
-    fetch: async (url, options) => { fetches.push({ url, options }); return { ok: true, blob: async () => ({}) }; },
+    fetch: async (url, options) => { fetches.push({ url, options }); if (mediaFailure) throw new Error("Temporary media outage"); return { ok: true, blob: async () => ({}) }; },
     discoveryMarket: () => market, selectedCity: () => 'Las Vegas', isApprovedPublicProfile: () => true,
     citySelect: { value: 'Las Vegas' }, openProfileModal: value => opens.push(value), showToast() {}, escapeHtml: value => String(value).replaceAll('<','&lt;').replaceAll('>','&gt;'),
   };
   vm.runInNewContext(source + '\nthis.bridge={openInternalProfileMessage,closeInternalProfileFrame,startInternalProfileAuth,internalProfileMatches,sendInternalTableRequest,internalProfileRequestActionsMarkup,profile:()=>internalRosterProfile};', context);
   const event = (overrides = {}) => ({ origin: 'https://example.invalid', source: parent, data: { type: 'mydancr:internal-profile-open', profile, token: staff ? '' : id(9), request: staff ? undefined : { tableLabel: 'Table 1', busy: false, message: '' } }, ...overrides });
-  return { bridge: context.bridge, event, opens, messages, fetches, market, publicProfile };
+  return { bridge: context.bridge, event, opens, messages, fetches, market, publicProfile, recover: () => { mediaFailure = false; } };
 }
 test('Internal opens the exact discovery viewer with canonical identity, gallery, videos and socials', async () => {
   const f = fixture(), before = JSON.stringify(f.market);
@@ -186,4 +186,18 @@ test('the same profile renderer omits Club Deals only for Internal context', () 
   assert.match(external,/data-club-deal/); assert.doesNotMatch(internal,/data-club-deal|Free Entry|profile-tonight-deal/);
   for(const label of ['Follow','Share','Working now']) assert.ok(external.includes(label)&&internal.includes(label));
   assert.match(internal,/Request at Table 1/);assert.doesNotMatch(internal,/I’m Going/);assert.match(external,/I’m Going/);
+});
+
+
+test('staff media recovers on an unchanged profile refresh after a temporary outage', async () => {
+  const f = fixture({staff:true,mediaFailure:true});
+  await f.bridge.openInternalProfileMessage(f.event());
+  assert.equal(f.bridge.profile().mainPhotoUrl,'');
+  const failed = f.fetches.length;
+  f.recover(); await f.bridge.openInternalProfileMessage(f.event());
+  assert.ok(f.fetches.length > failed);
+  assert.equal(f.bridge.profile().mainPhotoUrl,'blob:protected-media');
+  const recovered = f.fetches.length;
+  await f.bridge.openInternalProfileMessage(f.event());
+  assert.equal(f.fetches.length,recovered,'A complete unchanged profile must preserve the viewer');
 });

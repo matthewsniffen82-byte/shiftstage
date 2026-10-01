@@ -21,7 +21,7 @@ test("finance statement generation uses one dedicated boundary", () => {
     assert.match(statements, new RegExp(`export (?:async )?function ${operation}`));
     assert.doesNotMatch(finance, new RegExp(`export (?:async )?function ${operation}`));
   }
-  assert.match(venueRoute, /from "@\/src\/lib\/dancr\/finance-statements"/);
+  assert.doesNotMatch(venueRoute, /finance-statements|text\/csv/);
   assert.match(dancerRoute, /from "@\/src\/lib\/dancr\/finance-statements"/);
 });
 
@@ -49,12 +49,19 @@ test("CSV exports preserve financial columns and spreadsheet injection protectio
   assert.match(statements, /join\("\\r\\n"\)/);
 });
 
-test("statement routes preserve month validation and private downloads", () => {
-  for (const route of [venueRoute, dancerRoute]) {
+test("historical dancer statements preserve month validation and private downloads", () => {
+  for (const route of [dancerRoute]) {
     assert.match(route, /\^\\d\{4\}-\(0\[1-9\]\|1\[0-2\]\)\$/);
     assert.match(route, /"content-type": "text\/csv; charset=utf-8"/);
     assert.match(route, /"cache-control": "private, no-store"/);
   }
+});
+
+test("retired venue statements still require an active venue account and return private 410", () => {
+  assert.match(venueRoute, /await requireActiveVenueAccount\(client, user\.id\)/);
+  assert.match(venueRoute, /billingModel: "subscription"/);
+  assert.match(venueRoute, /status: 410/);
+  assert.match(venueRoute, /"cache-control": "private, no-store"/);
 });
 
 test("finance access checks return refreshed sessions before protected statement downloads", () => {

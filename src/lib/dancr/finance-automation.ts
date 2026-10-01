@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { runWithServerJob } from "../server-job";
 import {
   reconcileOpenClubInvoices,
 } from "./finance-invoices";
@@ -38,7 +39,7 @@ export async function runClubInvoiceAutomation(client: DancrClient): Promise<Clu
   // Subscription venues must not receive new legacy referral invoices or
   // collection reminders. Preserve reconciliation of existing payment records.
   await captureFinanceStep(result, async () => {
-    result.invoicesReconciled = await reconcileOpenClubInvoices(client);
+    result.invoicesReconciled = await runWithServerJob(() => reconcileOpenClubInvoices(client), 12_000);
   });
 
   return result;
@@ -68,20 +69,22 @@ export async function runAgentCommissionAutomation(client: DancrClient): Promise
 }
 
 export async function runQrFinanceAutomation(client: DancrClient): Promise<FinanceRunResult> {
-  const invoices = await runClubInvoiceAutomation(client);
-  const payouts = await runAgentCommissionAutomation(client);
-  return {
-    invoicesCreated: invoices.invoicesCreated,
-    invoicesOpened: invoices.invoicesOpened,
-    invoicesReconciled: invoices.invoicesReconciled,
-    remindersSent: invoices.remindersSent,
-    payoutsCreated: payouts.payoutsCreated,
-    payoutsFailed: payouts.payoutsFailed,
-    natsExportsCreated: payouts.natsExportsCreated,
-    natsExportsFailed: payouts.natsExportsFailed,
-    natsReconciliationRequired: payouts.natsReconciliationRequired,
-    errors: [...invoices.errors, ...payouts.errors],
-  };
+  return runWithServerJob(async () => {
+    const invoices = await runClubInvoiceAutomation(client);
+    const payouts = await runAgentCommissionAutomation(client);
+    return {
+      invoicesCreated: invoices.invoicesCreated,
+      invoicesOpened: invoices.invoicesOpened,
+      invoicesReconciled: invoices.invoicesReconciled,
+      remindersSent: invoices.remindersSent,
+      payoutsCreated: payouts.payoutsCreated,
+      payoutsFailed: payouts.payoutsFailed,
+      natsExportsCreated: payouts.natsExportsCreated,
+      natsExportsFailed: payouts.natsExportsFailed,
+      natsReconciliationRequired: payouts.natsReconciliationRequired,
+      errors: [...invoices.errors, ...payouts.errors],
+    };
+  }, 50_000);
 }
 
 async function captureFinanceStep(result: { errors: string[] }, action: () => Promise<void>) {
