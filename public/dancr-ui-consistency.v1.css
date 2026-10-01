@@ -1115,6 +1115,11 @@ html body.dancr-button-system #results.venue-profile-overlay .venue-detail .venu
   overflow-wrap: anywhere;
 }
 
+html body.dancr-button-system #results.venue-profile-overlay .venue-detail
+  .venue-profile-hours[data-operating-state="unknown"] strong {
+  color: rgba(173, 184, 200, 0.72);
+}
+
 html body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-hero-summary .venue-detail-club-deal-heading {
   display: flex;
   justify-content: flex-end;

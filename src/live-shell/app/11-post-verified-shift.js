@@ -344,7 +344,7 @@
                     </div>
                   </div>
                 </div>
-                <div class="venue-profile-hours" aria-label="Opening hours">
+                <div class="venue-profile-hours" aria-label="Opening hours" data-operating-state="${operatingStatus.state}">
                   <strong>${escapeHtml(operatingStatus.label)}</strong>
                   ${operatingStatus.hoursLabel ? `<span>Hours · ${escapeHtml(operatingStatus.hoursLabel)}</span>` : ""}
                 </div>
