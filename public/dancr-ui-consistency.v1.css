@@ -1030,11 +1030,12 @@ html body.dancr-button-system > .app main.stack > section.stack
 
 /* Venue details share the scroll-card identity layout while retaining the full profile. */
 html body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-hero-brand-row {
+  --venue-detail-logo-size: clamp(112px, 34vw, 184px);
   display: grid !important;
-  grid-template-columns: clamp(84px, 26vw, 150px) minmax(0, 1fr) !important;
+  grid-template-columns: var(--venue-detail-logo-size) minmax(0, 1fr) !important;
   align-items: stretch !important;
   gap: 0 !important;
-  min-height: 140px !important;
+  min-height: var(--venue-detail-logo-size) !important;
   padding: 0 !important;
   border: 0 !important;
   background: transparent !important;
@@ -1047,7 +1048,7 @@ html body.dancr-button-system #results.venue-profile-overlay .venue-detail .venu
   grid-row: 1 !important;
   width: 100% !important;
   height: 100% !important;
-  min-height: 140px !important;
+  min-height: var(--venue-detail-logo-size) !important;
   max-height: none !important;
   margin: 0 !important;
   border: 0 !important;
@@ -1088,7 +1089,7 @@ html body.dancr-button-system #results.venue-profile-overlay .venue-detail .venu
 html body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-hero-brand-row .venue-detail-logo {
   position: static !important;
   width: 100% !important;
-  height: 140px !important;
+  height: var(--venue-detail-logo-size) !important;
   max-width: 100% !important;
   max-height: 100% !important;
   object-fit: contain !important;
@@ -1148,7 +1149,7 @@ html body.dancr-button-system #results.venue-profile-overlay .venue-detail
 
 html body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-hero-summary .venue-detail-club-deal-heading {
   display: flex;
-  justify-content: flex-end;
+  justify-content: flex-start;
   min-width: 0;
   margin: 2px 0 0;
   padding: 0;
