@@ -81,10 +81,37 @@ body.dancr-button-system .account-shell .account-panel .segmented button.active 
 body.dancr-button-system :is(#authPage, #dancerSignupPage) > .page-inner { width: min(100%, 500px); gap: 10px; }
 body.dancr-button-system :is(#authPage, #dancerSignupPage) .page-head { margin: 0; padding: 6px 2px; gap: 12px; border: 0 !important; }
 body.dancr-button-system :is(#authPage, #dancerSignupPage) .page-head h2 { margin: 4px 0 0; line-height: 1.25; }
-body.dancr-button-system #authPage .auth-choice-card { gap: 14px; }
-body.dancr-button-system #authPage .auth-entry-tabs { padding: 3px; border-color: var(--dancr-form-border); background: #08080c; }
-body.dancr-button-system #authPage .auth-entry-tab.active { background: linear-gradient(#160e24, #160e24) !important; border-color: #745696 !important; box-shadow: none !important; }
-body.dancr-button-system #authPage .auth-selected-role span { color: #b8bac6; line-height: 1.5; }
+/* Keep the header's top/content geometry intact so the close control never moves. */
+body.dancr-button-system #authPage > .page-inner { gap: 8px; }
+body.dancr-button-system #authPage .page-head { padding-bottom: 2px; }
+body.dancr-button-system #authPage .auth-choice-card {
+  gap: 12px; padding: 16px clamp(16px, 4vw, 20px) 12px !important;
+  border-color: #292930 !important; background: #0c0c11 !important;
+}
+body.dancr-button-system #authPage .auth-entry-tabs { padding: 0; border: 0; border-radius: 12px; background: #08080c; }
+body.dancr-button-system #authPage .auth-entry-tab { padding-block: 8px; color: #d0d2dc !important; }
+body.dancr-button-system #authPage .auth-entry-tab.active { color: #fff !important; background: linear-gradient(#160e24, #160e24) !important; border-color: #745696 !important; box-shadow: none !important; }
+body.dancr-button-system #authPage .auth-selected-role span { color: #c3c6d2; line-height: 1.5; }
+body.dancr-button-system #authPage .auth-choice-card > .auth-form { gap: 12px; }
+body.dancr-button-system #authPage .auth-choice-card > .auth-form .field > label { color: #d5d9e3 !important; }
+body.dancr-button-system #authPage .auth-choice-card > .auth-form .field :is(input, select, textarea) {
+  min-height: 44px !important; padding-block: 9px !important;
+}
+body.dancr-button-system #authPage .auth-choice-card > .auth-form .field :is(input, textarea)::placeholder { color: #a6afc0; opacity: 1; }
+body.dancr-button-system #authPage .auth-choice-card > .auth-form .field :is(input, select, textarea):focus {
+  border-color: #8b6bb5 !important;
+}
+body.dancr-button-system #authPage .auth-choice-card > .auth-form .password-toggle { backdrop-filter: none !important; }
+body.dancr-button-system #authPage #authSubmit {
+  min-height: 45px !important; padding-block: 10px !important;
+  border-color: rgba(196,181,253,.35) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.08), 0 3px 12px rgba(109,40,217,.12) !important;
+}
+body.dancr-button-system #authPage .auth-admin-entry {
+  width: 100%; min-height: 44px; margin-top: -4px;
+  border-top: 1px solid #23232b; border-radius: 0;
+  color: #9ca0af; font-size: 11px;
+}
 body.dancr-button-system #authPage .auth-account-choice {
   min-height: 76px; padding: 12px; gap: 10px; grid-template-columns: 32px minmax(0, 1fr) auto;
   border-color: var(--dancr-form-border) !important; background: linear-gradient(#08080c, #08080c) !important; box-shadow: none !important;
@@ -97,6 +124,7 @@ body.dancr-button-system #authPage .auth-account-choice-arrow { color: #b8bac6; 
 body.dancr-button-system :is(#authPage .auth-help-row, .account-shell .auth-help-row) {
   display: flex; flex-wrap: wrap; justify-content: center; gap: 0 16px; margin-block: -8px;
 }
+body.dancr-button-system #authPage .auth-help-row { margin-block: -10px; }
 body.dancr-button-system :is(#authPage .auth-help-row .forgot-password-link, .account-shell .forgot-password) {
   width: auto !important; min-height: 44px !important; padding: 4px 0 !important; border: 0 !important;
   border-radius: 4px !important; color: #b8bac6 !important; background: transparent !important; box-shadow: none !important;
