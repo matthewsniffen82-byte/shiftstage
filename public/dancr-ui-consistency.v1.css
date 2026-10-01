@@ -1616,6 +1616,10 @@ html body.dancr-button-system > .app main.stack > section.stack
 
 /* Tighten only the existing venue scroll cards; keep their content and actions. */
 /* Give the roster clarification its own row, with natural height as text wraps. */
+html body.dancr-button-system #results .venue-card-roster-note {
+  text-align: center;
+  text-wrap: balance;
+}
 html body.dancr-button-system #results.venue-card-grid > .venue-card {
   grid-template-rows: minmax(0, 1fr) auto auto auto;
 }
