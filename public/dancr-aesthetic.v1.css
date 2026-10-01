@@ -12998,7 +12998,7 @@ html body.dancr-button-system > .app main.stack > section.stack
 html body.dancr-button-system > .app main.stack > section.stack
   > #results.home-venue-discovery-feed > .home-venue-discovery-slide
   .venue-card-secondary-actions.home-venue-discovery-action-rail > .venue-card-secondary-action :is(.action-icon, svg) {
-  color: var(--dancr-color-avatar-ring-violet) !important;
+  color: var(--dancr-color-text-muted) !important;
   stroke: currentColor !important;
   filter: none !important;
 }
@@ -14211,12 +14211,20 @@ html body.dancr-button-system #customerNotificationsQuickPanel button:focus-visi
   html body.dancr-button-system #customerNotificationsQuickPanel button:not(:disabled):hover { --notification-control-face: #111116; }
 }
 
-/* Venue scroll and detail cards share the violet icon accent. */
+/* Informational venue icons stay neutral; violet indicates a pressable action. */
 html body.dancr-button-system > .app main.stack > section.stack
   > #results.home-venue-discovery-feed > .home-venue-discovery-slide
-  :is(.home-venue-discovery-location, .home-venue-discovery-hours) :is(.venue-dot, svg),
+  :is(.home-venue-discovery-location, .home-venue-discovery-hours) :is(.venue-dot, svg) {
+  color: var(--dancr-color-text-muted) !important;
+}
+
+html body.dancr-button-system > .app main.stack > section.stack
+  > #results.home-venue-discovery-feed > .home-venue-discovery-slide
+  .venue-card-secondary-actions.home-venue-discovery-action-rail
+  > .venue-card-secondary-action:is(button, a[href]):not(:disabled):not([aria-disabled="true"]):not([aria-pressed="true"]) :is(.action-icon, svg),
 html body.dancr-button-system #results.venue-profile-overlay .venue-detail
   .venue-location-section .venue-action-stack :is(.venue-primary-actions, .venue-secondary-actions)
+  :is(button, a[href]):not(:disabled):not([aria-disabled="true"])
   :is(.action-icon, .action-icon svg, .action-icon svg path) {
   --profile-action-icon-color: var(--dancr-color-avatar-ring-violet);
   color: var(--dancr-color-avatar-ring-violet) !important;
@@ -14225,7 +14233,7 @@ html body.dancr-button-system #results.venue-profile-overlay .venue-detail
 /* A lighter violet keeps the selected icon clear on its filled button. */
 html body.dancr-button-system #results.venue-profile-overlay .venue-detail
   .venue-location-section .venue-action-stack .venue-secondary-actions
-  .follow-venue-btn[aria-pressed="true"] :is(.action-icon, svg, svg path) {
+  .follow-venue-btn[aria-pressed="true"]:not(:disabled):not([aria-disabled="true"]) :is(.action-icon, svg, svg path) {
   --profile-action-icon-color: #c4b5fd;
   color: var(--profile-action-icon-color) !important;
 }

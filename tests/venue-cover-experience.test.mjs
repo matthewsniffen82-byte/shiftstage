@@ -96,7 +96,7 @@ test("approved cover media remains available to the canonical live venue experie
   );
 });
 
-test("venue cards use only official logos or branded monograms", () => {
+test("venue cards overlay official logos or branded monograms on venue cover media", () => {
   const visualHelper =
     homeSource.match(/function venueVisualAttrs\(venue\) \{[\s\S]*?(?=\n    function venueLineupMarkup)/)?.[0] || "";
   const venueCardRenderer =
@@ -111,13 +111,13 @@ test("venue cards use only official logos or branded monograms", () => {
     /const hasVenueCover = Boolean\(attrs\.style\)[\s\S]*?const sourceClass = hasVenueCover \? " has-venue-cover" : " is-venue-artwork"/,
   );
   assert.match(venueCardRenderer, /venueLogoMarkup\(venue, "venue-card-logo"\)/);
-  assert.match(venueCardRenderer, /class="venue-art is-venue-logo-artwork\$\{logoMarkup \? " has-venue-logo" : ""\}"/);
+  assert.match(venueCardRenderer, /class="venue-art is-venue-logo-artwork\$\{logoMarkup \? " has-venue-logo" : ""\}\$\{visual\.attrs\.className\}"\$\{visual\.attrs\.style\} data-venue-visual-source="\$\{visual\.source\}"/);
   assert.match(venueCardRenderer, /logoMarkup \|\| `<span class="venue-card-mark">/);
-  assert.doesNotMatch(venueCardRenderer, /venueVisualAttrs|coverImageUrl|customPhotoAttrs|visual\.attrs/);
+  assert.match(venueCardRenderer, /const visual = venueVisualAttrs\(venue\)/);
   assert.match(venueSlide, /venueLogoMarkup\(venue, "home-venue-discovery-logo"\)/);
-  assert.match(venueSlide, /class="home-venue-discovery-art is-venue-logo-artwork\$\{logoMarkup \? " has-venue-logo" : ""\}"/);
+  assert.match(venueSlide, /class="home-venue-discovery-art is-venue-logo-artwork\$\{logoMarkup \? " has-venue-logo" : ""\}\$\{visual\.attrs\.className\}"\$\{visual\.attrs\.style\} data-venue-visual-source="\$\{visual\.source\}"/);
   assert.match(venueSlide, /logoMarkup \|\| `<span class="home-venue-discovery-monogram">/);
-  assert.doesNotMatch(venueSlide, /venueVisualAttrs|coverImageUrl|customPhotoAttrs|visual\.attrs/);
+  assert.match(venueSlide, /const visual = venueVisualAttrs\(venue\)/);
   assert.match(homeSource, /home-venue-discovery-lineup/);
   assert.match(homeSource, /\.home-venue-discovery-art\.is-venue-artwork \{[\s\S]*?repeating-linear-gradient\(115deg[\s\S]*?radial-gradient\(circle at 50% 36%[\s\S]*?linear-gradient\(145deg, #1d1e22/);
   assert.match(homeSource, /\.home-venue-discovery-monogram \{[\s\S]*?width: 112px;[\s\S]*?height: 112px;/);

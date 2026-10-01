@@ -636,7 +636,7 @@ html body.dancr-button-system > .app main.stack > section.stack
   html body.dancr-button-system > .app main.stack > section.stack
     > #results.home-discovery-feed.home-venue-discovery-feed > .home-venue-discovery-slide {
     min-height: 0 !important;
-    grid-template-rows: 96px auto 48px 56px !important;
+    grid-template-rows: clamp(112px, 32vw, 144px) auto 48px 56px !important;
   }
 
   html body.dancr-button-system > .app main.stack > section.stack
@@ -742,4 +742,54 @@ html body.dancr-button-system #results.venue-profile-overlay .venue-detail .venu
 
 html body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-address-line {
   padding-bottom: 0;
+}
+
+/* Logo overlays use approved cover media, with decorative club artwork as the fallback.
+ * The existing card edges and gray gutter shadows remain on their outer wrappers. */
+html body.dancr-button-system > .app main.stack > section.stack
+  > #results.home-venue-discovery-feed > .home-venue-discovery-slide
+  .home-venue-discovery-art.is-venue-logo-artwork[data-venue-visual-source],
+html body.dancr-button-system #results.venue-card-grid .venue.venue-card
+  .venue-card-link > .venue-art.is-venue-logo-artwork[data-venue-visual-source],
+html body.dancr-button-system #results.venue-profile-overlay .venue-detail
+  .venue-hero-brand-row .venue-main-photo[data-venue-visual-source] {
+  background-color: #08090c !important;
+  background-image: linear-gradient(180deg, rgba(5, 5, 7, .12), rgba(5, 5, 7, .4)),
+    var(--custom-photo, url('/venue-card-backdrop-v1.webp')) !important;
+  background-size: cover !important;
+  background-position: center !important;
+  background-repeat: no-repeat !important;
+}
+
+html body.dancr-button-system > .app main.stack > section.stack
+  > #results.home-venue-discovery-feed > .home-venue-discovery-slide
+  .home-venue-discovery-art.is-venue-logo-artwork[data-venue-visual-source],
+html body.dancr-button-system #results.venue-profile-overlay .venue-detail
+  .venue-hero-brand-row .venue-main-photo[data-venue-visual-source] {
+  height: clamp(112px, 32vw, 144px) !important;
+  min-height: clamp(112px, 32vw, 144px) !important;
+}
+
+html body.dancr-button-system #results.venue-card-grid .venue.venue-card .venue-card-logo-shell {
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+html body.dancr-button-system #results.venue-profile-overlay .venue-detail
+  .venue-hero-brand-row .venue-main-photo[data-venue-visual-source] > .venue-art {
+  background: transparent !important;
+}
+
+html body.dancr-button-system #results.venue-profile-overlay .venue-detail
+  .venue-main-photo[data-venue-visual-source] .venue-sign {
+  text-shadow: 0 2px 12px #000 !important;
+}
+
+html body.dancr-button-system > .app main.stack > section.stack
+  > #results.home-venue-discovery-feed > .home-venue-discovery-slide
+  .home-venue-discovery-art[data-venue-visual-source] .home-venue-discovery-monogram {
+  display: grid !important;
 }

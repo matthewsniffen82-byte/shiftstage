@@ -214,6 +214,7 @@
       const venueValue = escapeOptionValue(venue.id || venue.name);
       const initials = venueInitials(venue.name);
       const logoMarkup = venueLogoMarkup(venue, "home-venue-discovery-logo");
+      const visual = venueVisualAttrs(venue);
       const localProfiles = venueDancers(city, venue.name);
       const workingNow = localProfiles
         .filter((profile) => isWorkingTonight(profile, city))
@@ -238,7 +239,7 @@
         : `${safeName} monogram`;
       return `
         <article data-analytics-venue-id="${escapeOptionValue(venue.isDashboardPreview ? "" : venue.id || "")}" data-analytics-source="venue_scroll_card" class="venue home-discovery-feed-slide home-venue-discovery-slide${workingNow.length ? " has-live-lineup" : ""}" data-discovery-key="${venueValue}" aria-label="${accessibilityLabel}">
-          <div class="home-venue-discovery-art is-venue-logo-artwork${logoMarkup ? " has-venue-logo" : ""}" role="img" aria-label="${visualLabel}">
+          <div class="home-venue-discovery-art is-venue-logo-artwork${logoMarkup ? " has-venue-logo" : ""}${visual.attrs.className}"${visual.attrs.style} data-venue-visual-source="${visual.source}" role="img" aria-label="${visualLabel}">
             ${logoMarkup || `<span class="home-venue-discovery-monogram">${escapeHtml(initials)}</span>`}
           </div>
           <div class="home-discovery-feed-shade" aria-hidden="true"></div>

@@ -232,6 +232,7 @@
       const venueValue = escapeOptionValue(venue.id || venue.name);
       const venueHref = venueExperienceHref(venue, city);
       const logoMarkup = venueLogoMarkup(venue, "venue-card-logo");
+      const visual = venueVisualAttrs(venue);
       const workingNow = venueDancers(city, venue.name)
         .filter((profile) => isWorkingTonight(profile, city))
         .sort((left, right) => shiftStartMinutes(left.time) - shiftStartMinutes(right.time));
@@ -247,7 +248,7 @@
       return `
         <article class="card venue venue-card" data-discovery-key="${venueValue}" data-analytics-venue-id="${escapeOptionValue(venue.isDashboardPreview ? "" : venue.id || "")}" data-analytics-source="venue_scroll_card" aria-label="${safeName} club details" style="--venue-accent:${venueAccent(venue.name)}">
           <a class="venue-card-link" href="${venueHref}" data-open-venue-profile="${venueValue}" aria-label="Open ${safeName}'s full club profile">
-            <div class="venue-art is-venue-logo-artwork${logoMarkup ? " has-venue-logo" : ""}">
+            <div class="venue-art is-venue-logo-artwork${logoMarkup ? " has-venue-logo" : ""}${visual.attrs.className}"${visual.attrs.style} data-venue-visual-source="${visual.source}">
               <span class="venue-card-kicker">MyDancr club</span>
               ${logoMarkup || `<span class="venue-card-mark">${escapeHtml(initials)}</span>`}
             </div>
