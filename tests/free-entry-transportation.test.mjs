@@ -181,7 +181,7 @@ test("free entry requires only arrival while the optional guest list has its own
   assert.doesNotMatch(f.stored.get(key), /Test Guest|17025550123/);
 });
 
-test("arrival and pickup stay collapsible while the guest-list section opens independently", async () => {
+test("only one entry section opens at a time, preserving arrival selection and blocking hidden submissions", async () => {
   const f=client();
   assert.equal(nodes(f.render()).filter(node=>node.props?.["aria-expanded"]===false).length,3);
   await f.submit();assert.equal(f.requests.length,0);
@@ -189,15 +189,42 @@ test("arrival and pickup stay collapsible while the guest-list section opens ind
   assert.equal(f.requests.length,0);assert.doesNotMatch(f.html(),/Full name|type="submit"/);
   f.toggle("arrival");assert.equal(nodes(f.render()).find(node=>node.props?.value==='self_drive').props.checked,true);
   f.toggle("guest_list");assert.match(f.html(),/Join guest list &amp; get pass/);
-  assert.match(f.html(),/How will you arrive/);assert.match(f.html(),/Full name/);
+  assert.doesNotMatch(f.html(),/How will you arrive/);assert.match(f.html(),/Full name/);
+  await f.submit();assert.equal(f.requests.length,0);
   f.toggle("club_shuttle");assert.doesNotMatch(f.html(),/How will you arrive/);assert.match(f.html(),/Pickup location/);
-  assert.equal(nodes(f.render()).filter(node=>node.props?.type==='submit').length,2);
+  assert.doesNotMatch(f.html(),/Full name/);
+  assert.equal(nodes(f.render()).filter(node=>node.props?.type==='submit').length,1);
   f.toggle("club_shuttle");assert.doesNotMatch(f.html(),/Pickup location/);
+  for(const section of ["arrival","guest_list","club_shuttle","guest_list","arrival"]){
+    f.toggle(section);
+    assert.equal(nodes(f.render()).filter(node=>node.props?.["aria-expanded"]===true).length,1);
+  }
+  assert.equal(nodes(f.render()).find(node=>node.props?.value==='self_drive').props.checked,true);
   f.select("self_drive");await f.submit();
+  f.toggle("guest_list");
   const guestForm=nodes(f.render()).find(node=>node.props?.id==='club-guest-list-form');
   assert.ok(guestForm);f.toggle("guest_list");
   await nodes(f.render(),true).find(node=>node.props?.id==='club-guest-list-form').props.onSubmit({preventDefault(){}});
   assert.equal(f.requests.length,1);assert.doesNotMatch(f.html(),/Full name|type="submit"/);
+});
+
+test("unresolved pickup keeps its retry visible and cannot switch to Guest List", async () => {
+  const options={accepted:false},f=client({initialTransportation:"club_shuttle"},options);
+  await f.submit();f.toggle("guest_list");
+  assert.match(f.html(),/Retry shuttle request/);assert.doesNotMatch(f.html(),/Full name/);
+  assert.equal(nodes(f.render()).find(node=>node.props?.["data-entry-option"]==='guest_list').props.disabled,true);
+  options.accepted=true;await f.submit();
+  assert.equal(f.requests[0].body.requestId,f.requests[1].body.requestId);
+  f.toggle("guest_list");assert.match(f.html(),/Full name/);
+});
+
+test("Guest List visibility preserves accepted pickup context when its pass needs retrying", async () => {
+  const options={passFailure:true},f=client({initialTransportation:"club_shuttle"},options);
+  await f.submit();f.toggle("guest_list");f.toggle("guest_list");
+  assert.match(f.html(),/Pickup requested/);assert.doesNotMatch(f.html(),/Full name/);
+  options.passFailure=false;await f.clickAsync("Get admission pass");await f.joinGuestList();
+  assert.equal(f.requests.filter(request=>request.url.endsWith('/shuttle')).length,1);
+  assert.equal(f.requests.at(-1).body.transportation,'club_shuttle');
 });
 
 test("guest list opens immediately and issues a pass with venue contact details without an arrival selection", async () => {

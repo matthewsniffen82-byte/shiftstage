@@ -46,13 +46,15 @@ export default function TransportationClient({ deal, venue, shuttleAvailable, in
   sourceType?: DealSourceType; dancerId?: string; attributionToken?: string;
 }) {
   const [openForm, setOpenForm] = useState<"" | "arrival" | "club_shuttle">(deal ? initialTransportation : "club_shuttle");
+  // Keep the pass/pickup context when Guest List hides the other mounted forms.
+  const [expandedSection, setExpandedSection] = useState<"" | "arrival" | "club_shuttle" | "guest_list">(deal ? initialTransportation : "club_shuttle");
   const [arrivalChoice, setArrivalChoice] = useState<"" | EligibleClubTransportation | "rideshare_taxi">("");
   const choice = openForm === "club_shuttle" ? "club_shuttle" : arrivalChoice;
   const [issuedMethod, setIssuedMethod] = useState<AdmissionMethod | null>(null);
   const passMethod = issuedMethod || choice;
   const autonomousArrival = AUTONOMOUS_ADMISSION_OPTIONS.find(option => option.value === passMethod);
-  const showingShuttleForm = openForm === "club_shuttle";
-  const showingArrivalForm = openForm === "arrival";
+  const showingShuttleForm = expandedSection === "club_shuttle";
+  const showingArrivalForm = expandedSection === "arrival";
   const offerHours = deal ? admissionOfferHours({ ...deal, validDays: deal.validDays || undefined }) : "";
   const [busy, setBusy] = useState(false);
   const [complete, setComplete] = useState(false);
@@ -61,7 +63,7 @@ export default function TransportationClient({ deal, venue, shuttleAvailable, in
   const [passUrl, setPassUrl] = useState("");
   const [passError, setPassError] = useState("");
   const [guestListJoined, setGuestListJoined] = useState(false);
-  const [guestOpen, setGuestOpen] = useState(false);
+  const guestOpen = expandedSection === "guest_list";
   const [guestBusy, setGuestBusy] = useState(false);
   const [guestError, setGuestError] = useState("");
   const [addressCopyStatus, setAddressCopyStatus] = useState("");
@@ -76,8 +78,16 @@ export default function TransportationClient({ deal, venue, shuttleAvailable, in
 
   function toggleForm(form: "arrival" | "club_shuttle") {
     if (pending.current || guestPending.current || complete || attemptedRequest.current) return;
-    setOpenForm(openForm === form ? "" : form);
+    const next = expandedSection === form ? "" : form;
+    setOpenForm(next);
+    setExpandedSection(next);
     setError("");
+  }
+
+  function toggleGuestList() {
+    // An unresolved pickup must keep its existing retry control visible.
+    if (pending.current || guestPending.current || (!complete && attemptedRequest.current)) return;
+    setExpandedSection(guestOpen ? "" : "guest_list");
   }
 
   async function copyClubAddress() {
@@ -148,7 +158,7 @@ export default function TransportationClient({ deal, venue, shuttleAvailable, in
 
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!openForm || !choice || choice === "rideshare_taxi" || pending.current || guestPending.current || complete || (choice === "club_shuttle" && !shuttleAvailable)) return;
+    if ((!showingArrivalForm && !showingShuttleForm) || !choice || choice === "rideshare_taxi" || pending.current || guestPending.current || complete || (choice === "club_shuttle" && !shuttleAvailable)) return;
     setError("");
     if (choice !== "club_shuttle") {
       pending.current = true; setBusy(true);
@@ -190,10 +200,11 @@ export default function TransportationClient({ deal, venue, shuttleAvailable, in
     } finally { pending.current = false; setBusy(false); }
   }
 
-  return <main className="club-transport-page">
+  return <main className={`club-transport-page${deal ? " is-free-entry" : ""}`}>
     <section className="club-transport-card" aria-labelledby="club-transport-heading">
       <Link className="club-transport-back" href={`/venues/${encodeURIComponent(venue.slug)}`}>‹ {venue.name} details</Link>
       <h1 id="club-transport-heading" ref={heading} tabIndex={-1}>{complete ? passMethod === "club_shuttle" ? "Pickup requested" : "Your admission pass is ready" : deal ? "Free Entry" : "Request a free ride"}</h1>
+      {deal && !complete ? <p className="club-entry-venue">{venue.name}</p> : null}
       {!deal ? <p className="club-transport-terms">Free entry is currently unavailable. You can still request a free ride.</p> : null}
       {complete ? <div aria-live="polite">
         {passMethod === "guest_list" ? <p>Your guest-list details have been sent to {venue.name}.</p> : passMethod === "club_shuttle" ? <div className="club-transport-confirmation" role="status">
@@ -248,7 +259,7 @@ export default function TransportationClient({ deal, venue, shuttleAvailable, in
             </button></h2>
             <fieldset className="club-entry-form" id="club-shuttle-form" hidden={!showingShuttleForm} disabled={!showingShuttleForm || busy || guestBusy}>
             <div className="club-transport-handoff"><p><strong>No sign-in needed.</strong> Send your details to the club. They’ll call to confirm availability, pickup location, and time.</p><p>Your ride is confirmed only when the club accepts.</p></div>
-            {!shuttleAvailable ? <p role="status">Shuttle requests are currently unavailable at this club.</p> : null}
+            {!shuttleAvailable ? <p className="club-transport-availability" role="status">Shuttle requests are currently unavailable at this club.</p> : null}
             <div className="club-transport-fields">
               <label>Name<input name="name" autoComplete="name" required minLength={2} maxLength={100} readOnly={busy || !!attemptedRequest.current} /></label>
               <label>Pickup location<input name="location" autoComplete="street-address" placeholder="Hotel/address, city, and pickup entrance" required minLength={5} maxLength={300} readOnly={busy || !!attemptedRequest.current} /></label>
@@ -264,7 +275,7 @@ export default function TransportationClient({ deal, venue, shuttleAvailable, in
         </form>
       </>}
     {deal ? <section className="club-entry-option club-guest-list-section" aria-labelledby="club-guest-list-heading">
-      <h2 id="club-guest-list-heading"><button className="club-entry-toggle" type="button" aria-expanded={guestOpen} aria-controls="club-guest-list-panel" data-entry-option="guest_list" disabled={guestBusy} onClick={() => setGuestOpen(!guestOpen)}>
+      <h2 id="club-guest-list-heading"><button className="club-entry-toggle" type="button" aria-expanded={guestOpen} aria-controls="club-guest-list-panel" data-entry-option="guest_list" disabled={guestBusy || busy || (!complete && !!attemptedRequest.current)} onClick={toggleGuestList}>
         <span><strong>Guest List</strong><small>Send your details for a free entry pass</small></span><EntryChevron />
       </button></h2>
       {guestListJoined ? <p role="status">You’re on the guest list. Your details are saved with {venue.name}.</p> : null}
