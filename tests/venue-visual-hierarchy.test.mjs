@@ -25,7 +25,7 @@ test("venue operating status uses posted hours in the selected city timezone", (
   assert.match(operatingStatus, /cityWallClock\(now, city\)/);
   assert.match(operatingStatus, /if \(end <= start\) \{[\s\S]*?end \+= 1440/);
   assert.match(operatingStatus, /state: isOpen \? "open" : "closed"/);
-  assert.match(operatingStatus, /label: isOpen \? "Open now" : "Closed"/);
+  assert.match(operatingStatus, /label: isOpen \? "Open" : "Closed"/);
   assert.match(operatingStatus, /hoursLabel\s*\n\s*\}/);
   assert.doesNotMatch(operatingStatus, /Hours ·/);
   assert.match(operatingStatus, /state: "unknown"[\s\S]*?label: "Hours unavailable"/);

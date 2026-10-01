@@ -45,7 +45,7 @@
       const isOpen = currentMinutes >= start && currentMinutes < end;
       return {
         state: isOpen ? "open" : "closed",
-        label: isOpen ? "Open now" : "Closed",
+        label: isOpen ? "Open" : "Closed",
         hoursLabel
       };
     }
