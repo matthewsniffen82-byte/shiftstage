@@ -4,24 +4,28 @@ import { versionedStaticAssetUrl } from "../../src/lib/dancr/static-asset-cache.
 declare global {
   interface Window {
     DancrPhotoCrop?: {
-      crop(file: File, options: { signal?: AbortSignal; prepare(file: File, signal: AbortSignal): Promise<string> }): Promise<File | null>;
+      crop(file: File, options: { signal?: AbortSignal; aspectRatio?: number; prepare(file: File, signal: AbortSignal): Promise<string> }): Promise<File | null>;
     };
   }
 }
 
-export async function cropProfilePhoto(file: File, signal: AbortSignal) {
+export async function cropProfilePhoto(file: File, signal: AbortSignal, assertSession = () => {}, aspectRatio?: number) {
   await loadPhotoEditor();
   if (signal.aborted) throw new DOMException("Photo selection closed.", "AbortError");
+  assertSession();
   if (!window.DancrPhotoCrop) throw new Error("The photo editor is still loading. Please try again.");
   return window.DancrPhotoCrop.crop(file, {
     signal,
+    aspectRatio,
     prepare: async (original, previewSignal) => {
+      assertSession();
       const body = new FormData();
       body.set("file", original);
       const data = await requestDashboardJson("/api/dancer/photos/preview", {
         method: "POST", body, signal: previewSignal,
         fallbackMessage: "Unable to prepare this photo for cropping.",
       });
+      assertSession();
       return data.imageDataUrl;
     },
   });

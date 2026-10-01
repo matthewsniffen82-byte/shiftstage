@@ -32269,6 +32269,7 @@
   <link href="/profile-media-owner-controls.css?v=3" rel="stylesheet">
   <link href="/profile-media-card-feed.css?v=10" rel="stylesheet">
   <link href="/profile-photo-crop.css?v=1" rel="stylesheet">
+  <link href="/dancer-main-photo.css" rel="stylesheet">
   <link href="/profile-actions-compact.css" rel="stylesheet">
   <link href="/dancer-profile-layout.css" rel="stylesheet">
 </head>
@@ -41913,6 +41914,7 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
                 </button>
               </div>
               <section class="dancer-dashboard-avatar-card" id="dancerDashboardAvatarEditor" aria-label="Profile avatar editor"></section>
+              <section class="dancer-main-photo-panel" id="dancerDashboardMainPhotoEditor" aria-label="Main profile photo"></section>
               <div class="dancer-glance-metrics" aria-label="Last 30 days at a glance">
                 <div><strong id="dancerDashboardProfileViews">0</strong><span>Profile views</span></div>
                 <div><strong id="dancerDashboardFollowers">0</strong><span>Followers</span></div>
@@ -57140,7 +57142,7 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
       return data;
     }
 
-    async function cropApprovedProfilePhoto(file) {
+    async function cropApprovedProfilePhoto(file, aspectRatio) {
       if (!window.DancrPhotoCrop) throw new Error("The photo editor is still loading. Please try again.");
       const accountId = synchronizeAuthSession()?.account?.id;
       if (!accountId || !isDancerSession()) throw new Error("Sign in as a dancer to upload photos.");
@@ -57165,6 +57167,7 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
       try {
         const cropped = await window.DancrPhotoCrop.crop(file, {
           signal: controller.signal,
+          aspectRatio,
           prepare: async (original, signal) => {
             const headers = authenticatedRequestHeaders(undefined, requireCropSession());
             const body = new FormData();
@@ -57193,7 +57196,7 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
       const replacement = isReplacingApprovedPhotoTarget(selectionProfile, target)
         ? selectedPhotoReplacement(selectionProfile, target)
         : null;
-      file = await cropApprovedProfilePhoto(file);
+      file = await cropApprovedProfilePhoto(file, target === "main" ? 3 / 4 : undefined);
       let profile = activeDancerProfile() || ensureActiveDancerProfile("Verified");
       profile = await persistQueuedApprovedPhotoDeletionsBeforeUpload(profile);
       const submittedIndex = String(target || "").startsWith("submitted:") ? Number(String(target).split(":")[1]) : -1;
@@ -58169,6 +58172,8 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
     }
 
     function setApprovedPhotoUploadStatus(message, state = "") {
+      const mainStatus = document.getElementById("dancerDashboardMainPhotoStatus");
+      if (mainStatus && pendingApprovedPhotoTarget === "main") mainStatus.textContent = message;
       const result = document.getElementById("dancerControlResult");
       const visualStatus = document.getElementById("approvedPhotoUploadStatus");
       if (result) result.textContent = message;
@@ -58341,12 +58346,31 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
       mount.innerHTML = approved ? dancerDashboardAvatarEditorMarkup(profile) : "";
     }
 
+    function renderDancerDashboardMainPhotoEditor(profile, approved) {
+      const mount = document.getElementById("dancerDashboardMainPhotoEditor");
+      if (!mount) return;
+      mount.hidden = !approved;
+      if (!approved) { mount.innerHTML = ""; return; }
+      const photo = profile?.mainPhotoUrl || profile?.galleryPhotoUrls?.[0] || "";
+      const pending = (profile?.submittedPhotos || []).some(item =>
+        (item.isPrimary || item.is_primary) && !["approved", "rejected"].includes(normalizedReviewStatus(item.reviewStatus || item.review_status)));
+      mount.innerHTML = `
+        <div class="dancer-main-photo-preview">${photo ? `<img src="${escapeHtml(photo)}" alt="Current main profile photo">` : "<span>No main photo yet</span>"}</div>
+        <div class="dancer-main-photo-copy">
+          <h3>Main profile photo</h3>
+          <p>The full photo on your dancer card. Drag and zoom to crop before uploading. Your avatar is uploaded separately.</p>
+          <button type="button" data-dancer-control-action="main-photo"${pending ? " disabled" : ""}>${photo ? "Replace & crop main photo" : "Upload & crop main photo"}</button>
+          <p class="dancer-main-photo-status" id="dancerDashboardMainPhotoStatus" role="status" aria-live="polite">${pending ? "Main photo awaiting approval. Your current photo stays visible." : ""}</p>
+        </div>`;
+    }
+
     function renderDancerDailyOverview(profile, approved, dashboardMetrics, optionalProfileFixes = false) {
       const overview = document.getElementById("dancerApprovedTopTools");
       if (!overview) return;
       overview.hidden = !approved;
       overview.classList.toggle("show", approved);
       renderDancerDashboardAvatarEditor(profile, approved);
+      renderDancerDashboardMainPhotoEditor(profile, approved);
       if (!approved) return;
 
       const city = activeDancerCity();
@@ -65991,6 +66015,7 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
       }
 
       if (action === "main-photo") {
+        if (document.getElementById("approvedPhotoUploadInput")?.disabled) return;
         pendingApprovedPhotoTarget = "main";
         openApprovedPhotoUploadPicker("Choose a main photo. Approved photos go live automatically.");
         return;
@@ -66126,19 +66151,21 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
       const input = event.target;
       const file = input.files?.[0];
       if (!file) return;
+      const uploadTarget = pendingApprovedPhotoTarget;
       let progressTimer = 0;
       setApprovedPhotoUploadStatus("Frame your photo, then choose Use photo to upload.");
       input.disabled = true;
       try {
-        const cropped = await cropApprovedProfilePhoto(file);
+        const cropped = await cropApprovedProfilePhoto(file, uploadTarget === "main" ? 3 / 4 : undefined);
         progressTimer = startApprovedPhotoModerationProgress(cropped.name || "photo");
-        let uploadResult = await uploadApprovedDancerPhoto(cropped, pendingApprovedPhotoTarget);
+        let uploadResult = await uploadApprovedDancerPhoto(cropped, uploadTarget);
         const decision = normalizedReviewStatus(uploadResult?.decision);
         if (decision === "approved") {
           uploadResult = await hydrateConfirmedApprovedDancerPhoto(uploadResult);
         }
-        activeApprovedVisualPhotoTarget = uploadResult?.photoTarget || pendingApprovedPhotoTarget;
+        activeApprovedVisualPhotoTarget = uploadResult?.photoTarget || uploadTarget;
         renderDancerManagement();
+        renderDancerDashboardMainPhotoEditor(activeDancerProfile(), true);
         renderApprovedVisualProfileEditor();
         syncApprovedProfileSubmitState();
         if (["review", "moderation_retry", "moderation_error"].includes(decision)) {

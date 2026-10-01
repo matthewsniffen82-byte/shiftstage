@@ -604,6 +604,7 @@
       }
 
       if (action === "main-photo") {
+        if (document.getElementById("approvedPhotoUploadInput")?.disabled) return;
         pendingApprovedPhotoTarget = "main";
         openApprovedPhotoUploadPicker("Choose a main photo. Approved photos go live automatically.");
         return;
@@ -739,19 +740,21 @@
       const input = event.target;
       const file = input.files?.[0];
       if (!file) return;
+      const uploadTarget = pendingApprovedPhotoTarget;
       let progressTimer = 0;
       setApprovedPhotoUploadStatus("Frame your photo, then choose Use photo to upload.");
       input.disabled = true;
       try {
-        const cropped = await cropApprovedProfilePhoto(file);
+        const cropped = await cropApprovedProfilePhoto(file, uploadTarget === "main" ? 3 / 4 : undefined);
         progressTimer = startApprovedPhotoModerationProgress(cropped.name || "photo");
-        let uploadResult = await uploadApprovedDancerPhoto(cropped, pendingApprovedPhotoTarget);
+        let uploadResult = await uploadApprovedDancerPhoto(cropped, uploadTarget);
         const decision = normalizedReviewStatus(uploadResult?.decision);
         if (decision === "approved") {
           uploadResult = await hydrateConfirmedApprovedDancerPhoto(uploadResult);
         }
-        activeApprovedVisualPhotoTarget = uploadResult?.photoTarget || pendingApprovedPhotoTarget;
+        activeApprovedVisualPhotoTarget = uploadResult?.photoTarget || uploadTarget;
         renderDancerManagement();
+        renderDancerDashboardMainPhotoEditor(activeDancerProfile(), true);
         renderApprovedVisualProfileEditor();
         syncApprovedProfileSubmitState();
         if (["review", "moderation_retry", "moderation_error"].includes(decision)) {

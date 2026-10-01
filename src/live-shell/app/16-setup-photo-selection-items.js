@@ -460,6 +460,8 @@
     }
 
     function setApprovedPhotoUploadStatus(message, state = "") {
+      const mainStatus = document.getElementById("dancerDashboardMainPhotoStatus");
+      if (mainStatus && pendingApprovedPhotoTarget === "main") mainStatus.textContent = message;
       const result = document.getElementById("dancerControlResult");
       const visualStatus = document.getElementById("approvedPhotoUploadStatus");
       if (result) result.textContent = message;
@@ -632,12 +634,31 @@
       mount.innerHTML = approved ? dancerDashboardAvatarEditorMarkup(profile) : "";
     }
 
+    function renderDancerDashboardMainPhotoEditor(profile, approved) {
+      const mount = document.getElementById("dancerDashboardMainPhotoEditor");
+      if (!mount) return;
+      mount.hidden = !approved;
+      if (!approved) { mount.innerHTML = ""; return; }
+      const photo = profile?.mainPhotoUrl || profile?.galleryPhotoUrls?.[0] || "";
+      const pending = (profile?.submittedPhotos || []).some(item =>
+        (item.isPrimary || item.is_primary) && !["approved", "rejected"].includes(normalizedReviewStatus(item.reviewStatus || item.review_status)));
+      mount.innerHTML = `
+        <div class="dancer-main-photo-preview">${photo ? `<img src="${escapeHtml(photo)}" alt="Current main profile photo">` : "<span>No main photo yet</span>"}</div>
+        <div class="dancer-main-photo-copy">
+          <h3>Main profile photo</h3>
+          <p>The full photo on your dancer card. Drag and zoom to crop before uploading. Your avatar is uploaded separately.</p>
+          <button type="button" data-dancer-control-action="main-photo"${pending ? " disabled" : ""}>${photo ? "Replace & crop main photo" : "Upload & crop main photo"}</button>
+          <p class="dancer-main-photo-status" id="dancerDashboardMainPhotoStatus" role="status" aria-live="polite">${pending ? "Main photo awaiting approval. Your current photo stays visible." : ""}</p>
+        </div>`;
+    }
+
     function renderDancerDailyOverview(profile, approved, dashboardMetrics, optionalProfileFixes = false) {
       const overview = document.getElementById("dancerApprovedTopTools");
       if (!overview) return;
       overview.hidden = !approved;
       overview.classList.toggle("show", approved);
       renderDancerDashboardAvatarEditor(profile, approved);
+      renderDancerDashboardMainPhotoEditor(profile, approved);
       if (!approved) return;
 
       const city = activeDancerCity();

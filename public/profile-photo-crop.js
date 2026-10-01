@@ -33,7 +33,10 @@
     if (active) return Promise.reject(new Error("Finish the current photo crop first."));
     if (!file.size || file.size > 25 * 1024 * 1024) return Promise.reject(new Error("Photos must be 25 MB or smaller."));
     let ratio;
-    try { ratio = cardRatio(); } catch (error) { return Promise.reject(error); }
+    try {
+      ratio = options.aspectRatio ?? cardRatio();
+      if (!Number.isFinite(ratio) || ratio <= 0) throw new Error("Invalid photo crop shape.");
+    } catch (error) { return Promise.reject(error); }
     active = true;
     return new Promise((resolve, reject) => {
       const previousFocus = document.activeElement;

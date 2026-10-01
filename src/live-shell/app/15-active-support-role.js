@@ -404,7 +404,7 @@
       return data;
     }
 
-    async function cropApprovedProfilePhoto(file) {
+    async function cropApprovedProfilePhoto(file, aspectRatio) {
       if (!window.DancrPhotoCrop) throw new Error("The photo editor is still loading. Please try again.");
       const accountId = synchronizeAuthSession()?.account?.id;
       if (!accountId || !isDancerSession()) throw new Error("Sign in as a dancer to upload photos.");
@@ -429,6 +429,7 @@
       try {
         const cropped = await window.DancrPhotoCrop.crop(file, {
           signal: controller.signal,
+          aspectRatio,
           prepare: async (original, signal) => {
             const headers = authenticatedRequestHeaders(undefined, requireCropSession());
             const body = new FormData();
@@ -457,7 +458,7 @@
       const replacement = isReplacingApprovedPhotoTarget(selectionProfile, target)
         ? selectedPhotoReplacement(selectionProfile, target)
         : null;
-      file = await cropApprovedProfilePhoto(file);
+      file = await cropApprovedProfilePhoto(file, target === "main" ? 3 / 4 : undefined);
       let profile = activeDancerProfile() || ensureActiveDancerProfile("Verified");
       profile = await persistQueuedApprovedPhotoDeletionsBeforeUpload(profile);
       const submittedIndex = String(target || "").startsWith("submitted:") ? Number(String(target).split(":")[1]) : -1;

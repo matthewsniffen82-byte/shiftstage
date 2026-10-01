@@ -12,6 +12,7 @@ import type { LoadState, DancerPhotoItem, DancerProfileEditorSections, DancerIde
 import { persistedDancerStageName, saveDancerProfileEditor, DashboardSection, DANCER_PROFILE_EDITOR_SAVE_EVENT } from "./DashboardShared";
 import { dancerPhotoItemsFromProfile, DancerPhotoPanel } from "./DancerPhotoPanel";
 import { DancerAvatarPanel } from "./DancerAvatarPanel";
+import { DancerMainPhotoPanel } from "./DancerMainPhotoPanel";
 import DancerAgeVerificationGate from "./DancerAgeVerificationGate";
 import { DancerAnalyticsPanel } from "./DancerAnalyticsPanel";
 import { DancerProfilePreview, DancerOnboardingCommand, DancerOnboardingProfileMediaWorkspace } from "./DancerProfileEditor";
@@ -117,6 +118,7 @@ export function DancerPanel({
     />
   );
   const avatarContent = <DancerAvatarPanel profile={profile} onProfileChange={onProfileChange} />;
+  const mainPhotoContent = <DancerMainPhotoPanel key={String(profile?.id || "new-profile")} profile={profile} onProfileChange={onProfileChange} />;
   const photoContent = (
     <DancerPhotoPanel
       uploadOnly
@@ -162,6 +164,7 @@ export function DancerPanel({
           saveLabel="Save & return to dashboard"
         />
       </article>
+      {mainPhotoContent}
       <details className="dancer-profile-share-tools">
         <summary><span className="dancer-share-button-label"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3" /><circle cx="6" cy="12" r="3" /><circle cx="18" cy="19" r="3" /><path d="m8.6 10.5 6.8-4M8.6 13.5l6.8 4" /></svg>Share profile</span></summary>
         <DancerSharePanel profile={profile} />
@@ -202,6 +205,7 @@ export function DancerPanel({
               draftIdentity={draftIdentity}
               identityContent={identityContent}
               photoContent={photoContent}
+              mainPhotoContent={mainPhotoContent}
               onProfileChange={onProfileChange}
               profile={profile}
               profileReady={profileReady}

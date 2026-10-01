@@ -862,6 +862,7 @@ export function DancerOnboardingProfileMediaWorkspace({
   draftIdentity,
   identityContent,
   photoContent,
+  mainPhotoContent,
   onProfileChange,
   profile,
   profileReady,
@@ -872,6 +873,7 @@ export function DancerOnboardingProfileMediaWorkspace({
   draftIdentity: DancerIdentityDraft;
   identityContent: (field?: keyof DancerIdentityDraft) => ReactNode;
   photoContent: ReactNode;
+  mainPhotoContent?: ReactNode;
   onProfileChange?: (profile: Record<string, unknown>) => void;
   profile?: LoadState["profile"];
   profileReady: boolean;
@@ -965,29 +967,32 @@ export function DancerOnboardingProfileMediaWorkspace({
   };
 
   return (
-    <article className="dancer-profile-editor-launch-card" data-ready={profileReady} aria-labelledby="dancer-profile-setup-launch-heading">
-      <span>
-        <span className="dancer-profile-setup-heading">
-          <strong id="dancer-profile-setup-launch-heading">Profile details</strong>
-          <span className={`dancer-profile-save-indicator${hasUnsavedChanges ? " is-unsaved" : ""}`} role="status" aria-live="polite" aria-atomic="true">
-            {hasUnsavedChanges ? "Unsaved changes" : profileIsSaved ? <><span aria-hidden="true">✓</span> Profile saved</> : null}
+    <div className="dancer-onboarding-profile-workspace">
+      <article className="dancer-profile-editor-launch-card" data-ready={profileReady} aria-labelledby="dancer-profile-setup-launch-heading">
+        <span>
+          <span className="dancer-profile-setup-heading">
+            <strong id="dancer-profile-setup-launch-heading">Profile details</strong>
+            <span className={`dancer-profile-save-indicator${hasUnsavedChanges ? " is-unsaved" : ""}`} role="status" aria-live="polite" aria-atomic="true">
+              {hasUnsavedChanges ? "Unsaved changes" : profileIsSaved ? <><span aria-hidden="true">✓</span> Profile saved</> : null}
+            </span>
           </span>
+          <small>Add your stage name, city, avatar and solo photos. Choose an Internal main photo in Photos.</small>
         </span>
-        <small>Add your stage name, city, avatar and solo photos. Choose an Internal main photo in Photos.</small>
-      </span>
-      <DancerProfilePreview
-        builderRequirements={builderRequirements}
-        buttonClassName="dancer-profile-editor-launch-button"
-        buttonLabel="Edit profile"
-        city={draftIdentity.city}
-        editorSections={editorSections}
-        name={draftIdentity.stageName}
-        onClose={refreshDraftStatus}
-        onEditorSave={saveProfile}
-        onProfileChange={onProfileChange}
-        profile={profile}
-        saveLabel="Save profile"
-      />
-    </article>
+        <DancerProfilePreview
+          builderRequirements={builderRequirements}
+          buttonClassName="dancer-profile-editor-launch-button"
+          buttonLabel="Edit profile"
+          city={draftIdentity.city}
+          editorSections={editorSections}
+          name={draftIdentity.stageName}
+          onClose={refreshDraftStatus}
+          onEditorSave={saveProfile}
+          onProfileChange={onProfileChange}
+          profile={profile}
+          saveLabel="Save profile"
+        />
+      </article>
+      {mainPhotoContent}
+    </div>
   );
 }
