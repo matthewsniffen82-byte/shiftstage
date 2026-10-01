@@ -42,8 +42,9 @@ export async function serveInternalMedia(request: Request, options: MediaOptions
     rejectInterrupted(error);
     release();
   };
-  // One deadline covers signing, variant fallback, headers and the entire body.
-  const timer = setTimeout(stop, 45_000);
+  // Allow slow connections four minutes for signing, fallback and transfer.
+  // The route's five-minute hosting budget also leaves time for authorization.
+  const timer = setTimeout(stop, 240_000);
   timer.unref?.();
   request.signal.addEventListener("abort", stop, { once: true });
   const load = async (path: string) => {

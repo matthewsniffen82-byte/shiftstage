@@ -13,7 +13,7 @@ function fixture({ responses = [], fetcher, signer } = {}) {
   const exports = {}, calls = [], abort = new AbortController();
   vm.runInNewContext(code, {
     exports, Response, Headers, AbortController, ReadableStream, Error,
-    setTimeout(callback, ms) { assert.equal(ms, 45_000); deadline = callback; return { unref() {} }; },
+    setTimeout(callback, ms) { assert.equal(ms, 240_000); deadline = callback; return { unref() {} }; },
     clearTimeout() { released = true; },
   });
   const response = (status = 200, headers = {}, body = "media") => new Response(body === null ? null : new ReadableStream({

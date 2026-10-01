@@ -17,7 +17,7 @@ import type { SocialPlatform } from "@/src/lib/dancr/types";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-export const maxDuration = 60;
+export const maxDuration = 300;
 type Context = { params: Promise<{ path?: string[] }> };
 const json = (data: unknown, status = 200) => NextResponse.json(data, { status, headers: INTERNAL_HEADERS });
 
