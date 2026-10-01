@@ -1,4 +1,4 @@
-
+    const approvedProfileVideoUploadIds = new WeakMap();
 
     async function submitApprovedProfileVideo(form) {
       const headers = authenticatedRequestHeaders("application/json");
@@ -14,32 +14,42 @@
       if (!consentConfirmed || !rightsConfirmed) {
         throw new Error("Confirm consent and content rights before uploading.");
       }
-      const metadata = await readApprovedProfileVideoMetadata(file);
+      if (!window.DancrVideoCrop) throw new Error("The video editor is still loading. Please try again.");
+      const edit = await window.DancrVideoCrop.crop(file);
+      if (!edit) { approvedProfileVideoStatus = "Video upload cancelled."; return; }
+      const currentHeaders = authenticatedRequestHeaders("application/json");
+      if (!currentHeaders || currentHeaders.authorization !== headers.authorization) throw new Error("Your sign-in changed. Please choose the video again.");
+      const metadata = { ...edit.source, duration: edit.source.durationSeconds };
+      const uploadId = approvedProfileVideoUploadIds.get(file) || crypto.randomUUID();
+      approvedProfileVideoUploadIds.set(file, uploadId);
       let preparedVideoId = "";
-      let submissionStarted = false;
-      try {
-        const prepareResponse = await fetch("/api/dancer/tv/videos", {
-          method: "POST",
-          headers,
-          body: JSON.stringify({
-            mimeType: file.type,
-            fileSize: file.size,
-            durationSeconds: metadata.duration,
-            width: metadata.width,
-            height: metadata.height,
-            consentConfirmed,
-            rightsConfirmed
-          })
-        });
-        const prepared = await prepareResponse.json().catch(() => ({}));
-        if (!prepareResponse.ok || prepared.ok === false || !prepared.upload?.uploadUrl) {
-          throw new Error(normalizeRequestError(prepared.error || prepared.message, "Unable to prepare the secure video upload."));
-        }
-        applyResponseSession(prepared, headers);
-        preparedVideoId = prepared.upload.videoId;
-        approvedProfileVideoStatus = "Uploading securely...";
-        renderApprovedProfileVideoManager();
+      // Keep this identity after a timeout so retry can resume an accepted upload.
+      const prepareResponse = await fetch("/api/dancer/tv/videos", {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          mimeType: file.type,
+          fileSize: file.size,
+          durationSeconds: metadata.duration,
+          width: metadata.width,
+          height: metadata.height,
+          consentConfirmed,
+          rightsConfirmed,
+          uploadId,
+          edit
+        })
+      });
+      const prepared = await prepareResponse.json().catch(() => ({}));
+      if (!prepareResponse.ok || prepared.ok === false || !prepared.upload?.videoId) {
+        throw new Error(normalizeRequestError(prepared.error || prepared.message, "Unable to prepare the secure video upload."));
+      }
+      applyResponseSession(prepared, headers);
+      preparedVideoId = prepared.upload.videoId;
+      approvedProfileVideoStatus = "Uploading securely...";
+      renderApprovedProfileVideoManager();
 
+      if (!prepared.upload.alreadySubmitted && !prepared.upload.uploadComplete) {
+        if (!prepared.upload.uploadUrl) throw new Error("Unable to prepare the secure video upload.");
         const storageBody = new FormData();
         storageBody.append("cacheControl", "3600");
         storageBody.append("", file);
@@ -52,39 +62,31 @@
           const uploadError = await uploadResponse.json().catch(() => ({}));
           throw new Error(uploadError.message || uploadError.error || "Secure video upload failed.");
         }
-
-        approvedProfileVideoStatus = "Running the complete-video safety check...";
-        renderApprovedProfileVideoManager();
-        submissionStarted = true;
-        const submitResponse = await fetch(`/api/dancer/tv/videos/${encodeURIComponent(preparedVideoId)}`, {
-          method: "PATCH",
-          headers,
-          body: JSON.stringify({ action: "submit" })
-        });
-        const submitted = await submitResponse.json().catch(() => ({}));
-        if (!submitResponse.ok || submitted.ok === false) {
-          throw new Error(normalizeRequestError(submitted.error || submitted.message, "Unable to submit the video for review."));
-        }
-        applyResponseSession(submitted, headers);
-        const completionMessage = submitted.message || "Your video completed automated safety review.";
-        const completionTone = submitted.video?.status === "rejected" ? "error" : "success";
-        if (fileInput) fileInput.value = "";
-        form.reset();
-        clearPendingApprovedProfileVideoSelection();
-        await loadApprovedProfileVideos({ force: true });
-        approvedProfileVideoStatus = completionMessage;
-        approvedProfileVideoStatusTone = completionTone;
-        renderApprovedProfileVideoManager();
-        showToast("Profile video saved");
-      } catch (error) {
-        if (preparedVideoId && !submissionStarted) {
-          fetch(`/api/dancer/tv/videos/${encodeURIComponent(preparedVideoId)}`, {
-            method: "DELETE",
-            headers: authenticatedRequestHeaders()
-          }).catch(() => {});
-        }
-        throw error;
       }
+
+      approvedProfileVideoStatus = "Running the complete-video safety check...";
+      renderApprovedProfileVideoManager();
+      const submitResponse = await fetch(`/api/dancer/tv/videos/${encodeURIComponent(preparedVideoId)}`, {
+        method: "PATCH",
+        headers,
+        body: JSON.stringify({ action: "submit" })
+      });
+      const submitted = await submitResponse.json().catch(() => ({}));
+      if (!submitResponse.ok || submitted.ok === false) {
+        throw new Error(normalizeRequestError(submitted.error || submitted.message, "Unable to submit the video for review."));
+      }
+      applyResponseSession(submitted, headers);
+      const completionMessage = submitted.message || "Your video completed automated safety review.";
+      const completionTone = submitted.video?.status === "rejected" ? "error" : "success";
+      if (fileInput) fileInput.value = "";
+      form.reset();
+      clearPendingApprovedProfileVideoSelection();
+      await loadApprovedProfileVideos({ force: true });
+      approvedProfileVideoStatus = completionMessage;
+      approvedProfileVideoStatusTone = completionTone;
+      renderApprovedProfileVideoManager();
+      showToast("Profile video saved");
+
     }
 
     async function removeApprovedProfileVideo(videoId) {

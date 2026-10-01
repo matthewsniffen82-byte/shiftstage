@@ -35,6 +35,7 @@
     if (caller?.aborted) cancel(); else caller?.addEventListener("abort", cancel, { once: true });
     // Upload/processing endpoints retain a larger budget than ordinary reads.
     const media = storage || /\/(photos|avatar|videos|verification-documents|import)(\/|$)/.test(url.pathname);
+    const videoUpload = storage && mutation && /\/mydancr-tv-videos\//.test(url.pathname);
     let timer;
     const deadline = new Promise((_, reject) => {
       timer = window.setTimeout(() => {
@@ -44,7 +45,7 @@
           : "Loading took too long. Check your connection and try again.");
         error.code = "request_timeout";
         reject(error);
-      }, media ? 180000 : 45000);
+      }, videoUpload ? 90000 : media ? 180000 : 45000);
     });
     try {
       return await Promise.race([deadline, (async () => {

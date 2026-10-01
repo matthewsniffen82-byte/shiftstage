@@ -189,3 +189,20 @@ test("transient SQL failures are sanitized and do not appear as expired sessions
     assert.doesNotMatch(resolved.body.error, /private/);
   }
 });
+
+
+test("video upload timeout is 90 seconds while processing retains its separate budget", async () => {
+  for (const [url, method, expected] of [
+    ["https://example.supabase.co/storage/v1/object/upload/sign/mydancr-tv-videos/owner/video.mp4?token=test", "PUT", 90000],
+    ["/api/dancer/tv/videos/video", "PATCH", 180000],
+    ["/api/account", "GET", 45000],
+  ]) {
+    let delay, cancel, signal;
+    const window = { fetch: (_url, options) => { signal = options.signal; return new Promise(() => {}); }, location: { href: "https://www.mydancr.com", origin: "https://www.mydancr.com" },
+      setTimeout(fn, ms) { delay = ms; cancel = fn; return 1; }, clearTimeout() {} };
+    vm.runInNewContext(browserSource, { window, URL, Request, Response, Headers, AbortController, Date, console });
+    const pending = window.fetch(url, { method });
+    assert.equal(delay, expected); assert.equal(signal.aborted, false);
+    cancel(); await assert.rejects(pending, /took too long/); assert.equal(signal.aborted, true);
+  }
+});

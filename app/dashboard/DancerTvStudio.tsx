@@ -18,7 +18,7 @@ import {
   announceDancerProfileVideosChanged,
   primeVideoPreviewFrame,
 } from "./dancer-profile-media-sync";
-const MAX_VIDEO_DURATION_SECONDS = 30;
+import { cropProfileVideo } from "./profile-video-crop";
 
 type Workspace = {
   profile: {
@@ -212,7 +212,7 @@ export default function DancerTvStudio({ embedded = false, uploadOnly = false }:
   function queueVideoFiles(files: File[], source: QueuedVideo["source"]) {
     if (actionInFlightRef.current) return;
     if (!consentConfirmed || !rightsConfirmed) {
-      setStatus("Confirm both permissions before choosing videos. Your selection will upload automatically.");
+      setStatus("Confirm both permissions before choosing videos. You can crop and trim before uploading.");
       return;
     }
 
@@ -241,7 +241,7 @@ export default function DancerTvStudio({ embedded = false, uploadOnly = false }:
     });
     const omitted = files.length - selectedFiles.length;
     setQueuedVideos((current) => [...current, ...additions]);
-    setStatus(`${additions.length} ${additions.length === 1 ? "video" : "videos"} selected. Upload started automatically${omitted ? `. ${omitted} exceeded the available profile slots.` : "."}`);
+    setStatus(`${additions.length} ${additions.length === 1 ? "video" : "videos"} selected. Choose the crop and trim for each video${omitted ? `. ${omitted} exceeded the available profile slots.` : "."}`);
     const uploadable = additions.filter((item) => !item.error);
     if (uploadable.length) void uploadVideoBatch(uploadable);
   }
@@ -305,9 +305,15 @@ export default function DancerTvStudio({ embedded = false, uploadOnly = false }:
         const item = batch[index];
         setUploadingQueueItemId(item.id);
         updateQueuedVideo(item.id, { stage: "validating", progress: 10, error: undefined });
-        setStatus(`Checking video ${index + 1} of ${batch.length}...`);
+        setStatus(`Preparing video ${index + 1} of ${batch.length}...`);
         try {
-          const metadata = await readVideoMetadata(item.file);
+          const edit = await cropProfileVideo(item.file, controller.signal);
+          if (!edit) {
+            queuedPreviewUrlsRef.current.delete(item.previewUrl);
+            URL.revokeObjectURL(item.previewUrl);
+            continue;
+          }
+          const metadata = { ...edit.source, duration: edit.source.durationSeconds };
           if (!isCurrentVideoAction(requestId, controller)) return;
           updateQueuedVideo(item.id, { stage: "uploading", progress: 30 });
           const data = await requestDancerTvVideosJson({
@@ -322,6 +328,7 @@ export default function DancerTvStudio({ embedded = false, uploadOnly = false }:
               consentConfirmed,
               rightsConfirmed,
               uploadId: item.uploadId,
+              edit,
             }),
             fallbackMessage: "Unable to prepare upload.",
             signal: controller.signal,
@@ -582,7 +589,7 @@ export default function DancerTvStudio({ embedded = false, uploadOnly = false }:
             </button>
           </div>
           <small className="tv-upload-requirements">
-            Vertical or square · MP4, WebM, or MOV · 1–30 sec · 75 MB max
+            Vertical or square · MP4, WebM, or MOV · Crop & trim to 1–30 sec · 100 MB max
           </small>
           {queuedVideos.length ? (
             <div className="tv-upload-queue" aria-label="Video upload progress">
@@ -678,47 +685,6 @@ export default function DancerTvStudio({ embedded = false, uploadOnly = false }:
   return embedded
     ? <article className="info-panel tv-studio-embedded">{content}</article>
     : <main className="tv-studio-page">{content}</main>;
-}
-
-async function readVideoMetadata(file: File) {
-  if (!["video/mp4", "video/webm", "video/quicktime"].includes(file.type)) throw new Error("Upload an MP4, WebM, or MOV video.");
-  if (file.size > 75 * 1024 * 1024) throw new Error("Video files must be 75 MB or smaller.");
-
-  const element = document.createElement("video");
-  const url = URL.createObjectURL(file);
-  let metadataTimer = 0;
-  try {
-    const metadata = await new Promise<{ duration: number; width: number; height: number }>((resolve, reject) => {
-      element.preload = "metadata";
-      element.onloadedmetadata = () => resolve({
-        duration: element.duration,
-        width: element.videoWidth,
-        height: element.videoHeight,
-      });
-      element.onerror = () => reject(new Error("This video could not be read. Try a different MP4, WebM, or MOV file."));
-      metadataTimer = window.setTimeout(() => reject(new Error("This video took too long to read. Try again or choose a different file.")), 20_000);
-      element.src = url;
-    });
-    if (
-      !Number.isFinite(metadata.duration) ||
-      metadata.duration < 1 ||
-      metadata.duration > MAX_VIDEO_DURATION_SECONDS
-    ) {
-      throw new Error("Videos must be between 1 and 30 seconds.");
-    }
-    if (metadata.height < metadata.width) {
-      throw new Error("Use a vertical or square video for MyDancr TV.");
-    }
-    return metadata;
-  } finally {
-    window.clearTimeout(metadataTimer);
-    element.onloadedmetadata = null;
-    element.onerror = null;
-    element.pause();
-    element.removeAttribute("src");
-    element.load();
-    URL.revokeObjectURL(url);
-  }
 }
 
 function statusLabel(status: string) {

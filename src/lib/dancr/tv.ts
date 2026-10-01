@@ -1,3 +1,4 @@
+import { editedVideoDimensions, normalizeVideoUploadEdit, videoUploadSourcePath } from "./video-upload-edit-policy.ts";
 import { dancerVideoDeliveryUrl } from './media-delivery-url';
 import { adaptiveVideoPath, parseAdaptiveVideoManifest } from './adaptive-video-manifest';
 import { mobileVideoStoragePath, parseMobileVideoPlayback, type MobileVideoPlayback } from './video-mobile-playback';
@@ -35,7 +36,7 @@ import { PublicApiError } from "../api-error-policy";
 import { assertServerJobActive, runWithServerJob, VIDEO_PROCESSING_JOB_TIMEOUT_MS } from "../server-job.ts";
 
 export const MYDANCR_TV_BUCKET = "mydancr-tv-videos";
-export const MYDANCR_TV_MAX_BYTES = 75 * 1024 * 1024;
+export const MYDANCR_TV_MAX_BYTES = 100 * 1024 * 1024;
 export const MYDANCR_TV_MAX_DURATION_SECONDS = 30;
 export const MYDANCR_TV_SIGNED_URL_SECONDS = 60 * 60;
 export const MYDANCR_TV_PROFILE_VIDEO_LIMIT = MAX_DANCER_PROFILE_VIDEOS;
@@ -779,6 +780,7 @@ export async function createMyDancrTvUpload(
     consentConfirmed: boolean;
     rightsConfirmed: boolean;
     uploadId?: string;
+    edit?: unknown;
     distributionScope?: "profile_and_feed" | "feed_only";
   },
 ) {
@@ -794,18 +796,19 @@ export async function createMyDancrTvUpload(
 
   if (!MYDANCR_TV_MIME_TYPES.has(input.mimeType)) throw new Error("Upload an MP4, WebM, or MOV video.");
   if (!Number.isSafeInteger(input.fileSize) || input.fileSize < 1 || input.fileSize > MYDANCR_TV_MAX_BYTES) {
-    throw new Error("Video files must be 75 MB or smaller.");
+    throw new Error("Video files must be 100 MB or smaller.");
   }
-  if (!Number.isFinite(input.durationSeconds) || input.durationSeconds < 1 || input.durationSeconds > MYDANCR_TV_MAX_DURATION_SECONDS) {
+  const edit = input.edit == null ? null : normalizeVideoUploadEdit(input.edit);
+  if (edit && (edit.source.mimeType !== input.mimeType || edit.source.fileSize !== input.fileSize
+    || edit.source.durationSeconds !== input.durationSeconds || edit.source.width !== input.width || edit.source.height !== input.height)) {
+    throw new Error("The video selection does not match its crop.");
+  }
+  const prepared = edit ? { ...editedVideoDimensions(edit), durationSeconds: Number((edit.endSeconds - edit.startSeconds).toFixed(3)) } : input;
+  if (!Number.isFinite(prepared.durationSeconds) || prepared.durationSeconds < 1 || prepared.durationSeconds > MYDANCR_TV_MAX_DURATION_SECONDS) {
     throw new Error("Videos must be between 1 and 30 seconds.");
   }
-  if (
-    !Number.isSafeInteger(input.width) ||
-    !Number.isSafeInteger(input.height) ||
-    input.width < 240 ||
-    input.height < input.width ||
-    input.height > 7680
-  ) {
+  if (!Number.isSafeInteger(prepared.width) || !Number.isSafeInteger(prepared.height)
+    || prepared.width < 240 || prepared.height < prepared.width || prepared.height > 7680) {
     throw new Error("Upload a vertical or square video at least 240 pixels wide.");
   }
   if (!input.consentConfirmed || !input.rightsConfirmed) {
@@ -820,7 +823,7 @@ export async function createMyDancrTvUpload(
   if (requestedVideoId) {
     const { data: existing, error: existingError } = await admin
       .from("mydancr_tv_videos")
-      .select("id, dancer_id, submitted_by, storage_path, storage_mime, file_size_bytes, duration_seconds, width, height, status, distribution_scope")
+      .select("id, dancer_id, submitted_by, storage_path, storage_mime, file_size_bytes, duration_seconds, width, height, status, distribution_scope, upload_edit")
       .eq("id", requestedVideoId)
       .eq("submitted_by", userId)
       .maybeSingle();
@@ -884,7 +887,9 @@ export async function createMyDancrTvUpload(
 
   const videoId = requestedVideoId || crypto.randomUUID();
   const extension = input.mimeType === "video/webm" ? "webm" : input.mimeType === "video/quicktime" ? "mov" : "mp4";
-  const storagePath = `${userId}/${dancer.id}/${videoId}.${extension}`;
+  const storagePath = edit
+    ? videoUploadSourcePath({ submitted_by: userId, dancer_id: dancer.id, id: videoId }, edit)
+    : `${userId}/${dancer.id}/${videoId}.${extension}`;
   const { data: video, error: insertError } = await admin
     .from("mydancr_tv_videos")
     .insert({
@@ -899,9 +904,10 @@ export async function createMyDancrTvUpload(
       storage_path: storagePath,
       storage_mime: input.mimeType,
       file_size_bytes: input.fileSize,
-      duration_seconds: input.durationSeconds,
-      width: input.width,
-      height: input.height,
+      duration_seconds: prepared.durationSeconds,
+      width: prepared.width,
+      height: prepared.height,
+      upload_edit: edit,
       status: "uploading",
       distribution_scope: distributionScope,
       consent_confirmed: true,
@@ -957,9 +963,18 @@ function assertMatchingMyDancrTvUpload(
     durationSeconds: number;
     width: number;
     height: number;
+    edit?: unknown;
   },
   distributionScope: "profile_and_feed" | "feed_only",
 ) {
+  if (input.edit != null || existing.upload_edit != null) {
+    if (!input.edit || !existing.upload_edit || existing.dancer_id !== dancerId
+      || existing.distribution_scope !== distributionScope
+      || JSON.stringify(normalizeVideoUploadEdit(input.edit)) !== JSON.stringify(normalizeVideoUploadEdit(existing.upload_edit))) {
+      throw new Error("This video retry does not match the original upload.");
+    }
+    return;
+  }
   const durationMatches = Math.abs(Number(existing.duration_seconds) - input.durationSeconds) < 0.05;
   if (
     existing.dancer_id !== dancerId ||
@@ -1053,7 +1068,7 @@ export async function submitMyDancrTvUpload(
 ) {
   const { data: video, error } = await admin
     .from("mydancr_tv_videos")
-    .select(`id, dancer_id, submitted_by, storage_path, storage_mime, file_size_bytes, caption, duration_seconds, width, height, status, dancer_profiles(stage_name, city, status, verification_status${IDENTITY_PROFILE_FIELDS}, photo_review_status, approved_at, disabled_at, is_public)`)
+    .select(`id, dancer_id, submitted_by, storage_path, storage_mime, file_size_bytes, caption, duration_seconds, width, height, status, upload_edit, dancer_profiles(stage_name, city, status, verification_status${IDENTITY_PROFILE_FIELDS}, photo_review_status, approved_at, disabled_at, is_public)`)
     .eq("id", videoId)
     .eq("submitted_by", userId)
     .maybeSingle();
@@ -1092,8 +1107,12 @@ export async function submitMyDancrTvUpload(
     maxDurationSeconds: MYDANCR_TV_MAX_DURATION_SECONDS,
     mimeType: video.storage_mime,
     storagePath: video.storage_path,
+    edit: video.upload_edit ? normalizeVideoUploadEdit(video.upload_edit) : null,
+    editedStoragePath: `${video.submitted_by}/${video.dancer_id}/${video.id}.mp4`,
   });
 
+  const submittedStoragePath = "storagePath" in verified ? verified.storagePath : video.storage_path;
+  const submittedMime = "mimeType" in verified ? verified.mimeType : video.storage_mime;
   const submittedAt = new Date().toISOString();
   const demoAutoApprove = isVideoDemoAutoApproveMode();
   const deferModeration = options.deferModeration === true;
@@ -1102,6 +1121,8 @@ export async function submitMyDancrTvUpload(
     .from("mydancr_tv_videos")
     .update({
       status: "moderating",
+      storage_path: submittedStoragePath,
+      storage_mime: submittedMime,
       submitted_at: submittedAt,
       review_notes: null,
       moderation_decision: null,
@@ -1127,7 +1148,11 @@ export async function submitMyDancrTvUpload(
     .select(`id, submitted_by, storage_path, storage_mime, caption, duration_seconds, width, height, status, submitted_at, ${VIDEO_WORKER_FIELDS}, dancer_profiles(stage_name, city, status, verification_status${IDENTITY_PROFILE_FIELDS}, photo_review_status, approved_at, disabled_at, is_public)`)
     .single();
   if (updateError) throw updateError;
-  assertVideoWorkerClaim(moderating, video, workerId, deferModeration ? 0 : 1, submittedAt);
+  assertVideoWorkerClaim(moderating, { ...video, storage_path: submittedStoragePath }, workerId, deferModeration ? 0 : 1, submittedAt);
+  if (video.upload_edit) {
+    const { error: cleanupError } = await admin.storage.from(MYDANCR_TV_BUCKET).remove([video.storage_path]);
+    if (cleanupError) console.warn(JSON.stringify({ event: "mydancr_tv.crop_source_cleanup_pending", videoId: video.id }));
+  }
   console.info(JSON.stringify({
     event: deferModeration
       ? "mydancr_tv.video_moderation_queued"
@@ -1630,7 +1655,7 @@ const RETRYABLE_VIDEO_MODERATION_REASON_CODES = new Set([
 export async function hideOwnMyDancrTvVideo(admin: AdminClient, userId: string, videoId: string) {
   const { data: video, error } = await admin
     .from("mydancr_tv_videos")
-    .select("id, dancer_id, submitted_by, storage_path, storage_mime, status, updated_at, moderation_details")
+    .select("id, dancer_id, submitted_by, storage_path, storage_mime, status, updated_at, moderation_details, upload_edit")
     .eq("id", videoId)
     .eq("submitted_by", userId)
     .maybeSingle();
@@ -1665,6 +1690,7 @@ export async function hideOwnMyDancrTvVideo(admin: AdminClient, userId: string, 
   const adaptive = parseAdaptiveVideoManifest(video.moderation_details?.adaptiveStreaming);
   for (const [bucket, path] of [
     [MYDANCR_TV_BUCKET, video.storage_path],
+    ...(video.upload_edit ? [[MYDANCR_TV_BUCKET, videoUploadSourcePath(video, normalizeVideoUploadEdit(video.upload_edit))], [MYDANCR_TV_BUCKET, `${video.submitted_by}/${video.dancer_id}/${video.id}.mp4`]] : []),
     [MYDANCR_TV_POSTER_BUCKET, myDancrTvPosterStoragePath(video.storage_path)],
     [MYDANCR_TV_BUCKET, archivedOriginalStoragePath(MYDANCR_TV_BUCKET, video.storage_path)],
     [MYDANCR_TV_BUCKET, mobileVideoStoragePath(video.storage_path)],
@@ -1692,7 +1718,8 @@ function assertMyDancrTvStoragePath(video: any) {
   const expectedPath = extension
     ? `${video.submitted_by}/${video.dancer_id}/${video.id}.${extension}`
     : "";
-  if (!expectedPath || video.storage_path !== expectedPath) {
+  const sourcePath = video.upload_edit ? videoUploadSourcePath(video, normalizeVideoUploadEdit(video.upload_edit)) : null;
+  if (!expectedPath || (video.storage_path !== expectedPath && video.storage_path !== sourcePath)) {
     throw new Error("The video storage path could not be verified.");
   }
 }

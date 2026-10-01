@@ -121,7 +121,7 @@ export async function serveDancerMedia(request: Request, kind: 'photo' | 'video'
     const headers = new Headers(HEADERS);
     headers.set('Server-Timing', `authorize;dur=${authorizationMs}, storage;dur=${(performance.now() - storageStarted).toFixed(1)}, image_cache;desc="${photoCache ? 'miss' : 'bypass'}"`);
     for(const name of ['content-type','content-length','content-range','accept-ranges']) { const value=upstream.headers.get(name);if(value)headers.set(name,value); }
-    const maximumBytes = bucket === 'dancer-photos' ? 10 * 1024 * 1024 : 75 * 1024 * 1024;
+    const maximumBytes = bucket === 'dancer-photos' ? 10 * 1024 * 1024 : 100 * 1024 * 1024;
     const allowedType = bucket === 'dancer-photos' ? /^image\/(jpeg|png|webp)(?:;|$)/i : /^video\/(mp4|webm|quicktime)(?:;|$)/i;
     if (!allowedType.test(headers.get('content-type')||'') || Number(headers.get('content-length')) > maximumBytes) {await upstream.body?.cancel();clearTimeout(timeout);request.signal.removeEventListener('abort',cancel);return unavailable();}
     if(request.method==='HEAD'||!upstream.body) {clearTimeout(timeout);request.signal.removeEventListener('abort',cancel);return new Response(null,{status:upstream.status,headers});}

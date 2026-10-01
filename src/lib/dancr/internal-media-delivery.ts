@@ -75,7 +75,7 @@ export async function serveInternalMedia(request: Request, options: MediaOptions
       discard(upstream); release();
       return unavailable(upstream?.status === 416 ? 416 : upstream && upstream.status >= 500 ? 503 : 404);
     }
-    const maximumBytes = options.kind === "image" ? 10 * 1024 * 1024 : 75 * 1024 * 1024;
+    const maximumBytes = options.kind === "image" ? 10 * 1024 * 1024 : 100 * 1024 * 1024;
     const allowedType = options.kind === "image"
       ? /^image\/(?:jpeg|png|webp)(?:;|$)/i
       : /^video\/(?:mp4|webm|quicktime)(?:;|$)/i;

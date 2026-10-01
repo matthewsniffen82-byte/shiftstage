@@ -845,8 +845,8 @@
                 <form class="approved-profile-video-form" id="approvedProfileVideoUploadForm">
                   <label>
                     Video file
-                    <input id="approvedProfileVideoInput" type="file" accept="video/mp4,video/webm" ${pendingApprovedProfileVideoFile ? "" : "required"}>
-              <small>Vertical or square MP4/WebM · 1–30 seconds · 75 MB maximum</small>
+                    <input id="approvedProfileVideoInput" type="file" accept="video/mp4,video/webm,video/quicktime" ${pendingApprovedProfileVideoFile ? "" : "required"}>
+              <small>MP4, WebM, or MOV · Crop & trim to 1–30 seconds · 100 MB maximum</small>
                   </label>
                   <video class="approved-profile-video-preview" id="approvedProfileVideoPreview" controls playsinline ${selectedVideoUrl ? `src="${escapeHtml(selectedVideoUrl)}"` : "hidden"}></video>
                   <div class="approved-profile-video-schedule-note">
@@ -907,45 +907,5 @@
         approvedProfileVideoLoading = false;
         renderApprovedProfileVideoManager();
         if (document.getElementById("setupChecklist")) renderDancerSetupWhenEditorIdle();
-      }
-    }
-
-    async function readApprovedProfileVideoMetadata(file) {
-      if (!["video/mp4", "video/webm"].includes(file?.type)) {
-        throw new Error("Upload an MP4 or WebM video.");
-      }
-      if (!Number.isSafeInteger(file.size) || file.size < 1 || file.size > 75 * 1024 * 1024) {
-        throw new Error("Video files must be 75 MB or smaller.");
-      }
-      const video = document.createElement("video");
-      const previewUrl = URL.createObjectURL(file);
-      let metadataTimer = 0;
-      try {
-        const metadata = await new Promise((resolve, reject) => {
-          video.preload = "metadata";
-          video.onloadedmetadata = () => resolve({
-            duration: video.duration,
-            width: video.videoWidth,
-            height: video.videoHeight
-          });
-          video.onerror = () => reject(new Error("This video could not be read. Try a different MP4 or WebM file."));
-          metadataTimer = window.setTimeout(() => reject(new Error("This video took too long to read. Try again or choose a different file.")), 20_000);
-          video.src = previewUrl;
-        });
-      if (!Number.isFinite(metadata.duration) || metadata.duration < 1 || metadata.duration > 30) {
-        throw new Error("Videos must be between 1 and 30 seconds.");
-        }
-        if (!Number.isSafeInteger(metadata.width) || metadata.width < 240 || metadata.height < metadata.width) {
-          throw new Error("Use a vertical or square video at least 240 pixels wide.");
-        }
-        return metadata;
-      } finally {
-        window.clearTimeout(metadataTimer);
-        video.onloadedmetadata = null;
-        video.onerror = null;
-        video.pause();
-        video.removeAttribute("src");
-        video.load();
-        URL.revokeObjectURL(previewUrl);
       }
     }

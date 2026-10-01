@@ -67,7 +67,7 @@ export function assertAllowedStoredVideo(input: {
   maxDurationSeconds: number;
 }) {
   if (input.buffer.length < 1 || input.buffer.length > input.maxBytes) {
-    throw new Error("Video files must be 75 MB or smaller.");
+    throw new Error(`Video files must be ${input.maxBytes / 1024 / 1024} MB or smaller.`);
   }
 
   const container = assertAllowedVideoContainer(input.buffer, input.mimeType);
@@ -86,7 +86,7 @@ export function assertAllowedStoredVideo(input: {
     input.metadata.durationSeconds < 1 ||
     input.metadata.durationSeconds > input.maxDurationSeconds
   ) {
-    throw new Error("Videos must be between 1 and 30 seconds.");
+    throw new Error(`Videos must be between 1 and ${input.maxDurationSeconds} seconds.`);
   }
   if (
     !Number.isSafeInteger(input.metadata.width) ||

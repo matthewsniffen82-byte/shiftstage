@@ -6,6 +6,7 @@ import vm from "node:vm";
 import ts from "typescript";
 import { resolveApiError } from "../../src/lib/api-error-policy.ts";
 import { readBoundedJsonObject } from "../../src/lib/bounded-json-body.ts";
+import * as editPolicy from "../../src/lib/dancr/video-upload-edit-policy.ts";
 export const userId = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
 export const dancerId = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb";
 export const videoId = "cccccccc-cccc-4ccc-8ccc-cccccccccccc";
@@ -69,14 +70,14 @@ export function videoUploadHarness(options = {}) {
         },
         async list(directory, { search }) {
           calls.push("list");
-          assert.equal(directory + "/" + search, storagePath);
+          assert.equal(directory + "/" + search, options.storagePath || storagePath);
           if (options.listError) return { data: null, error: options.listError };
           return { data: "listResponse" in options ? options.listResponse : [], error: null };
         },
       };
     } },
   };
-  const tv = load("src/lib/dancr/tv.ts", () => ({ MAX_DANCER_PROFILE_VIDEOS: 50, DancerIdentityReferenceRequiredError: class extends Error {} }));
+  const tv = load("src/lib/dancr/tv.ts", name => name === "./video-upload-edit-policy.ts" ? editPolicy : ({ MAX_DANCER_PROFILE_VIDEOS: 50, DancerIdentityReferenceRequiredError: class extends Error {} }));
   const run = (input = videoInput, actor = userId) => tv.createMyDancrTvUpload(client, actor, input);
   async function post() {
     const route = load("app/api/dancer/tv/videos/route.ts", name => {

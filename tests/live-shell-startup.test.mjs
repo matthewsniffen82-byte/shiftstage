@@ -52,7 +52,7 @@ test("cold loads discover the app before styles without blocking on its helpers"
   assert.ok(page.indexOf(preload) < page.indexOf("<style>"));
   const scripts = [...page.matchAll(/<script\b[^>]*\bsrc="([^"]+)"[^>]*>/g)];
   assert.deepEqual(scripts.slice(0, 2).map(match => match[1].split("?")[0]), [
-    "/mydancr-api-transport.js", "/profile-photo-crop.js",
+    "/mydancr-api-transport.js", "/dancer-content-visibility.js",
   ]);
   assert.ok(scripts.every(match => /\bdefer\b/.test(match[0])));
   assert.equal(scripts.filter(match => match[1] === url).length, 1);

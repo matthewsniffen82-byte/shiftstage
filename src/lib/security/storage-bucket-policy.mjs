@@ -8,7 +8,7 @@ export const STORAGE_BUCKET_REQUIREMENTS = Object.freeze([
   { id: "dancr-image-moderation-review", private: true, maxBytes: IMAGE_LIMIT, types: IMAGE_TYPES },
   { id: "dancr-image-moderation-temp", private: true, maxBytes: IMAGE_LIMIT, types: IMAGE_TYPES },
   { id: "dancr-media-originals", private: true, maxBytes: IMAGE_LIMIT, types: IMAGE_TYPES },
-  { id: "mydancr-tv-videos", private: true, maxBytes: 75 * 1024 * 1024, types: ["video/mp4", "video/webm", "video/quicktime"] },
+  { id: "mydancr-tv-videos", private: true, maxBytes: 100 * 1024 * 1024, types: ["video/mp4", "video/webm", "video/quicktime"] },
   { id: "venue-cover-images", private: false, maxBytes: IMAGE_LIMIT, types: IMAGE_TYPES },
   { id: "venue-logo-images", private: false, maxBytes: IMAGE_LIMIT, types: IMAGE_TYPES },
   { id: "venue-ownership-proofs", private: true, maxBytes: IMAGE_LIMIT, types: DOCUMENT_TYPES },

@@ -237,7 +237,7 @@ function parseVideos(value: unknown): ImportVideoInput[] {
     };
     if (!MYDANCR_TV_MIME_TYPES.has(video.mimeType)) throw invalid("Upload an MP4 or WebM video.");
     if (!Number.isSafeInteger(video.fileSize) || video.fileSize < 1 || video.fileSize > MYDANCR_TV_MAX_BYTES) {
-      throw invalid("Video files must be 75 MB or smaller.");
+      throw invalid("Video files must be 100 MB or smaller.");
     }
     if (!Number.isFinite(video.durationSeconds) || video.durationSeconds < 1 || video.durationSeconds > MYDANCR_TV_MAX_DURATION_SECONDS) {
       throw invalid("Videos must be between 1 and 30 seconds.");

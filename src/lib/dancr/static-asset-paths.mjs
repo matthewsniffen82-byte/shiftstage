@@ -33,6 +33,8 @@ export const staticAssetPaths = [
   "/profile-media-card-feed.css",
   "/profile-photo-crop.css",
   "/profile-photo-crop.js",
+  "/profile-video-crop.js",
+  "/profile-video-crop.css",
   "/profile-video-progress-line.js",
   "/profile-video-scroll-controls.css",
   "/third-party-social-link-warning.css",

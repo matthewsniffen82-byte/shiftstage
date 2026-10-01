@@ -5,6 +5,7 @@ import { EventEmitter } from "node:events";
 import vm from "node:vm";
 import ts from "typescript";
 import * as policy from "../../src/lib/dancr/video-upload-policy.ts";
+import * as editPolicy from "../../src/lib/dancr/video-upload-edit-policy.ts";
 import * as serverJobs from "../../src/lib/server-job.ts";
 
 const require = createRequire(import.meta.url);
@@ -20,6 +21,7 @@ export function videoDecoderFixture(file, { extra = "", output = "", spawnImpl, 
       if (name === "../server-job.ts") return serverJobs;
       if (name === "./media-process.ts") return load(resolve(dirname(path), name));
       if (name === "./video-upload-policy" || name === "./video-upload-policy.ts") return policy;
+      if (name === "./video-upload-edit-policy.ts") return editPolicy;
       if (name === "./local-video-input.ts") return load(resolve(dirname(path), name));
       if (name === "./video-frame-sampling") return load(resolve(dirname(path), name + ".ts"));
       if (name === "ffmpeg-static") return require(name);

@@ -10,7 +10,7 @@ export function mobileVideoStoragePath(source: string) {
 }
 
 export function parseMobileVideoPlayback(value: any): MobileVideoPlayback | null {
-  return value?.version === 1 && Number.isSafeInteger(value.bytes) && value.bytes > 0 && value.bytes <= 75 * 1024 * 1024
+  return value?.version === 1 && Number.isSafeInteger(value.bytes) && value.bytes > 0 && value.bytes <= 100 * 1024 * 1024
     && Number.isSafeInteger(value.width) && value.width > 0 && value.width <= 1280
     && Number.isSafeInteger(value.height) && value.height > 0 && value.height <= 1280
     && Math.min(value.width, value.height) <= 720 ? value : null;

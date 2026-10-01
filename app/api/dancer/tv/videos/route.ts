@@ -48,6 +48,7 @@ export async function POST(request: Request) {
       height: Number(body?.height),
       consentConfirmed: body?.consentConfirmed === true,
       rightsConfirmed: body?.rightsConfirmed === true,
+      edit: body.edit,
       uploadId: typeof body?.uploadId === "string" ? body.uploadId : "",
     });
     return NextResponse.json({ ok: true, upload }, { status: 201 });

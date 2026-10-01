@@ -18,7 +18,7 @@ export function parseAdaptiveVideoManifest(value: any): AdaptiveVideoManifest | 
   const names = new Set<string>();
   for (const row of value.renditions) {
     if (!row || !['360', '720', 'source'].includes(row.name) || names.has(row.name)
-      || !integer(row.width, 4096) || !integer(row.height, 4096) || !integer(row.bytes, 75 * 1024 * 1024)
+      || !integer(row.width, 4096) || !integer(row.height, 4096) || !integer(row.bytes, 100 * 1024 * 1024)
       || !integer(row.initBytes, 65536) || !Array.isArray(row.segments) || !row.segments.length || row.segments.length > 32
       || (row.codecs !== undefined && (typeof row.codecs !== 'string' || !/^avc1\.[a-f0-9]{6}(,mp4a\.40\.2)?$/.test(row.codecs)))) return null;
     names.add(row.name);

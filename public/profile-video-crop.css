@@ -1,0 +1,22 @@
+.dancr-video-crop{color:#f7f5fc;background:#121016;border:1px solid #51465f;border-radius:22px;padding:0;width:min(460px,calc(100vw - 24px));max-height:calc(100dvh - 24px);overflow:auto;box-shadow:0 20px 80px #000b;font-family:inherit;overscroll-behavior:contain}
+.dancr-video-crop::backdrop{background:#000c}
+.dancr-video-crop .video-crop-panel{padding:18px;display:grid;gap:12px;margin:0}
+.dancr-video-crop h2{font-size:21px;margin:0 0 5px;font-weight:750}
+.dancr-video-crop p{margin:0;color:#c2bcca;font-size:13px;line-height:1.4}
+.dancr-video-crop .video-crop-status:empty{display:none}
+.dancr-video-crop .video-crop-workspace{display:grid;gap:10px}
+.dancr-video-crop [hidden]{display:none!important}
+.dancr-video-crop .video-crop-frame{position:relative;overflow:hidden;background:#050505;max-height:32dvh;max-width:100%;height:32dvh;margin:auto;touch-action:none;cursor:grab;border-radius:10px;outline:1px solid #857395}
+.dancr-video-crop .video-crop-frame:focus-visible{outline:2px solid #ad79ff}
+.dancr-video-crop video{position:absolute;max-width:none!important;object-fit:fill;pointer-events:none}
+.dancr-video-crop .video-crop-guides{position:absolute;inset:0;background:linear-gradient(to right,transparent 33.2%,#fff3 33.2%,#fff3 33.5%,transparent 33.5%,transparent 66.5%,#fff3 66.5%,#fff3 66.8%,transparent 66.8%),linear-gradient(to bottom,transparent 33.2%,#fff3 33.2%,#fff3 33.5%,transparent 33.5%,transparent 66.5%,#fff3 66.5%,#fff3 66.8%,transparent 66.8%);pointer-events:none}
+.dancr-video-crop .video-crop-hint{text-align:center;font-size:12px}
+.dancr-video-crop label{display:grid;gap:4px;font-size:13px;color:#eee8f5}
+.dancr-video-crop input[type=range]{width:100%;height:28px;margin:0;accent-color:#a568fa;cursor:pointer}
+.dancr-video-crop .video-crop-tools,.dancr-video-crop .video-crop-times,.dancr-video-crop footer{display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:end}
+.dancr-video-crop button,.dancr-video-crop select{min-height:44px;background:#211c29;color:#fff;border:1px solid #655773;border-radius:12px;padding:8px 12px;font-family:inherit;font-size:14px;font-weight:600;cursor:pointer}
+.dancr-video-crop output{font-variant-numeric:tabular-nums;color:#cdb5ee}
+.dancr-video-crop .video-crop-confirm{background:#620bc2;border-color:#a665f0;font-weight:750}
+.dancr-video-crop button:disabled{opacity:.4;cursor:default}
+.dancr-video-crop :focus-visible{outline:2px solid #bb8aff;outline-offset:3px}
+.dancr-video-crop footer{padding-top:6px}
