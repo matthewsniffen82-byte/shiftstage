@@ -109,6 +109,7 @@
       modalProfileAvatar.setAttribute("aria-label", `${profile.name} profile photo${modalIsWorkingNow ? ", working now" : modalHasUpcomingShift ? ", upcoming shift posted" : ""}`);
       setProfileMediaTab("photo");
       setModalPhoto(basePhoto, basePhotoUrl);
+      setProfileMainPhoto(basePhotoUrl, profilePhotoSrcSet(profile, basePhotoUrl));
 
       modalMediaSocials.replaceChildren();
       modalMediaSocials.hidden = true;

@@ -16,7 +16,7 @@ test("the live profile keeps the grid horizontal and makes full photos verticall
   );
   assert.match(
     liveApp,
-    /bindHorizontalProfilePhotoSwipe\(modalImage\);[\s\S]*?profilePhotoViewerImage\?\.addEventListener\("scroll"/,
+    /profilePhotoViewerImage\?\.addEventListener\("scroll"/,
   );
   assert.match(
     liveApp,
@@ -24,13 +24,13 @@ test("the live profile keeps the grid horizontal and makes full photos verticall
   );
   assert.match(liveApp, /\.profile-photo-viewer-slide \{[\s\S]*?scroll-snap-align: start;[\s\S]*?scroll-snap-stop: always;/);
   assert.match(liveApp, /profilePhotoCardScrollIndex\([\s\S]*?profilePhotoViewerImage\.scrollTop,[\s\S]*?slide\.offsetTop/);
-  assert.doesNotMatch(liveApp, /profilePhotoSwipeBlockClickUntil/);
+  assert.doesNotMatch(liveApp, /profilePhotoSwipeBlockClickUntil|bindHorizontalProfilePhotoSwipe\(modalImage\)/);
 });
 
 test("live profile grid photos open an accessible card collection without fullscreen", () => {
   assert.match(
     liveApp,
-    /id="modalImage" role="group" tabindex="0" aria-label="Profile photos and videos\. Swipe left or right to change media\."/,
+    /id="modalImage" role="button" tabindex="0" aria-label="Open main profile photo"/,
   );
   assert.match(
     liveApp,

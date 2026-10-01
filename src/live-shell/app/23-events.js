@@ -28,7 +28,6 @@
       setModalVideoControlsVisible(true, { autoHide: true });
     });
 
-    bindHorizontalProfilePhotoSwipe(modalImage);
     profilePhotoViewerImage?.addEventListener("scroll", () => {
       window.cancelAnimationFrame(profilePhotoViewerScrollFrame);
       profilePhotoViewerScrollFrame = window.requestAnimationFrame(() => {
@@ -54,44 +53,24 @@
       return true;
     }
 
-    modalMediaPrevious?.addEventListener("click", (event) => {
-      event.preventDefault();
-      event.stopPropagation();
-      moveModalPhoto(-1);
-    });
-    modalMediaNext?.addEventListener("click", (event) => {
-      event.preventDefault();
-      event.stopPropagation();
-      moveModalPhoto(1);
-    });
     modalMediaExpand?.addEventListener("click", (event) => {
       event.preventDefault();
       event.stopPropagation();
       openSelectedModalMediaViewer();
     });
-    modalImage?.addEventListener("click", (event) => {
-      if (event.target.closest("button, input, [data-modal-video-controls]")) return;
-      if (modalImage.dataset.activeMediaType === "video") {
-        toggleModalVideoPlayback();
-        return;
-      }
-      openPhotoViewerFromElement(modalImage, Number(modalImage.dataset.activePhotoIndex || 0));
-    });
+    function openProfileMainPhoto() {
+      const mainPhotoIndex = (modalGallery.profilePhotoItems || []).findIndex(
+        (photo) => photo.photoUrl === modalImage.dataset.mainPhotoUrl
+      );
+      if (mainPhotoIndex >= 0) openPhotoViewerFromElement(modalImage, mainPhotoIndex);
+    }
 
-    modalImage?.addEventListener("pointermove", (event) => {
-      if (event.pointerType === "touch" || modalImage.dataset.activeMediaType !== "video") return;
-      setModalVideoControlsVisible(true, { autoHide: true });
-    });
-
+    modalImage?.addEventListener("click", () => openProfileMainPhoto());
     modalImage?.addEventListener("keydown", (event) => {
       if (event.target !== modalImage) return;
-      if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
+      if (event.key === "Enter" || event.key === " ") {
         event.preventDefault();
-        moveModalPhoto(event.key === "ArrowRight" ? 1 : -1);
-      } else if (event.key === "Enter" || event.key === " ") {
-        event.preventDefault();
-        if (modalImage.dataset.activeMediaType === "video") toggleModalVideoPlayback();
-        else openPhotoViewerFromElement(modalImage, Number(modalImage.dataset.activePhotoIndex || 0));
+        openProfileMainPhoto();
       }
     });
     profilePhotoViewerImage?.addEventListener("keydown", (event) => {

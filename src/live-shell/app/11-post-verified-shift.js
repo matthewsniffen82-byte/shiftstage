@@ -543,7 +543,6 @@
         : ".thumb:not([data-profile-tv-index])";
       const visibleThumbs = [...modalGallery.querySelectorAll(selector)];
       modalMediaEmpty.hidden = visibleThumbs.length > 0;
-      modalImage.hidden = !modalGallery.profilePhotoItems?.length;
       modalMediaEmpty.textContent = tab === "video"
         ? "No approved MyDancr TV videos yet."
         : "No approved profile photos yet.";
@@ -559,6 +558,27 @@
       }
       if (modalMediaPrevious) modalMediaPrevious.disabled = index <= 0;
       if (modalMediaNext) modalMediaNext.disabled = index >= total - 1;
+    }
+
+    function setProfileMainPhoto(photoUrl, photoSrcSet = "") {
+      const previousPhoto = modalImage.querySelector(".profile-featured-photo");
+      const hasPhoto = Boolean(safeCssUrl(photoUrl));
+      if (hasPhoto) {
+        const image = previousPhoto || document.createElement("img");
+        image.className = "profile-featured-photo";
+        image.alt = `${modalName.textContent.trim() || "Dancer"} main profile photo`;
+        image.decoding = "async";
+        image.fetchPriority = "high";
+        image.sizes = "(max-width: 1180px) 54vw, 638px";
+        if (image.getAttribute("src") !== photoUrl) image.dataset.imageState = "loading";
+        if (photoSrcSet) image.srcset = photoSrcSet;
+        else image.removeAttribute("srcset");
+        if (image.getAttribute("src") !== photoUrl) image.src = photoUrl;
+        if (!previousPhoto) modalImage.prepend(image);
+      } else previousPhoto?.remove();
+      modalImage.hidden = !hasPhoto;
+      modalImage.dataset.mainPhotoUrl = hasPhoto ? photoUrl : "";
+      modalImage.setAttribute("aria-label", `Open ${modalName.textContent.trim() || "Dancer"} main photo`);
     }
 
     function setModalPhoto(photoClass, photoUrl = "", requestedIndex = null) {
@@ -592,29 +612,9 @@
         ? parsedRequestedIndex
         : Number(activePhotoThumb?.dataset.profilePhotoIndex || 0));
       const totalPhotos = Math.max(1, modalGallery.profilePhotoItems?.length || photoThumbs.length);
-      const selectedPhoto = modalGallery.profilePhotoItems?.[activePhotoIndex];
-      const previousPhoto = modalImage.querySelector(".profile-featured-photo");
-      if (safeUrl && previousPhoto?.getAttribute("src") !== photoUrl) {
-        const image = document.createElement("img");
-        image.className = "profile-featured-photo";
-        image.alt = `${modalName.textContent.trim() || "Dancer"} profile photo`;
-        image.dataset.imageState = "loading";
-        image.decoding = "async";
-        image.fetchPriority = "high";
-        image.sizes = "(max-width: 1180px) 50vw, 590px";
-        if (selectedPhoto?.photoSrcSet) image.srcset = selectedPhoto.photoSrcSet;
-        image.src = photoUrl;
-        if (previousPhoto) previousPhoto.replaceWith(image);
-        else modalImage.prepend(image);
-      } else if (!safeUrl) previousPhoto?.remove();
-      modalImage.hidden = !safeUrl;
       modalImage.dataset.activePhotoIndex = String(activePhotoIndex);
       modalImage.dataset.activeMediaType = "photo";
       modalMediaExpand.hidden = true;
-      modalImage.setAttribute(
-        "aria-label",
-        `${modalName.textContent.trim() || "Dancer"} profile photo ${activePhotoIndex + 1} of ${totalPhotos}. Swipe left or right to change photos.`
-      );
       profilePhotoViewerImage?.setAttribute(
         "aria-label",
         `Dancer photos. Photo ${activePhotoIndex + 1} of ${totalPhotos}. Scroll up or down to change photos.`
@@ -624,6 +624,10 @@
 
     function setModalVideo(item, profileName, videos, index) {
       if (!item?.videoUrl) return false;
+      if (profileModal.classList.contains("profile-split-layout")) {
+        openProfileTvViewer(item, profileName, videos, index);
+        return true;
+      }
       clearModalVideoPreview();
       modalImage.className = "modal-image is-video-media";
       modalImage.dataset.activeMediaType = "video";

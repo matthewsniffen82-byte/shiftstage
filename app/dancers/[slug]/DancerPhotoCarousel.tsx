@@ -143,8 +143,7 @@ export function DancerPhotoCarousel({
     photoMedia.length || !videoMedia.length ? "photo" : "video",
   );
   const [viewer, setViewer] = useState<MediaViewer | null>(null);
-  const [featuredPhotoId, setFeaturedPhotoId] = useState<string | null>(null);
-  const featuredPhotoIndex = Math.max(0, photoMedia.findIndex((photo) => photo.id === featuredPhotoId));
+  const featuredPhotoIndex = Math.max(0, photoMedia.findIndex((photo) => photo.isPrimary));
   const featuredPhoto = photoMedia[featuredPhotoIndex];
   const [visibleCounts, setVisibleCounts] = useState<Record<MediaTab, number>>({
     photo: DANCER_PROFILE_MEDIA_PAGE_SIZE,
@@ -455,7 +454,6 @@ export function DancerPhotoCarousel({
     index: number,
     trigger: HTMLButtonElement,
   ) {
-    if (kind === "photo") setFeaturedPhotoId(photoMedia[index]?.id || null);
     viewerTrigger.current = trigger;
     pendingViewerIndex.current = index;
     viewerOpeningIndex.current = index;
@@ -774,7 +772,7 @@ export function DancerPhotoCarousel({
             <button
               className="profile-featured-open"
               type="button"
-              aria-label={`Open ${stageName} photo ${featuredPhotoIndex + 1} of ${photoMedia.length}`}
+              aria-label={`Open ${stageName} main photo`}
               onClick={(event) => openViewer("photo", featuredPhotoIndex, event.currentTarget)}
             >
               <img
@@ -784,7 +782,7 @@ export function DancerPhotoCarousel({
                 data-image-state="loading"
                 decoding="async"
                 fetchPriority="high"
-                sizes="(max-width: 1180px) 50vw, 590px"
+                sizes="(max-width: 1180px) 54vw, 638px"
                 src={featuredPhoto.imageUrl}
                 srcSet={featuredPhoto.imageSrcSet || undefined}
                 style={{ objectPosition: imageFocalPointCss(featuredPhoto.focalX, 0) }}
@@ -793,13 +791,6 @@ export function DancerPhotoCarousel({
                 ref={settleImageElement}
               />
             </button>
-            {photoMedia.length > 1 ? (
-              <div className="profile-featured-navigation">
-                <button type="button" aria-label="Previous profile photo" disabled={featuredPhotoIndex === 0} onClick={() => setFeaturedPhotoId(photoMedia[featuredPhotoIndex - 1].id)}>‹</button>
-                <span aria-live="polite">{featuredPhotoIndex + 1} / {photoMedia.length}</span>
-                <button type="button" aria-label="Next profile photo" disabled={featuredPhotoIndex === photoMedia.length - 1} onClick={() => setFeaturedPhotoId(photoMedia[featuredPhotoIndex + 1].id)}>›</button>
-              </div>
-            ) : null}
           </>
         ) : <span className="profile-featured-empty">No approved profile photos yet.</span>}
         <span className="profile-featured-now" aria-hidden="true">NOW</span>

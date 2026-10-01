@@ -82,7 +82,7 @@
         // These flags remain private even though this authorized viewer can display the profile.
         hidden: true, isPublic: false, is_public: false,
         metricsUnavailable: external ? external.metricsUnavailable : true,
-        avatarPhotoUrl, avatarPhotoSrcSet: "", mainPhotoUrl: photos[0]?.imageUrl || "", mainPhotoSrcSet: "",
+        avatarPhotoUrl, avatarPhotoSrcSet: "", mainPhotoUrl: (photos.find(photo => photo.isPrimary) || photos[0])?.imageUrl || "", mainPhotoSrcSet: "",
         galleryPhotoUrls: photos.map(photo => photo.imageUrl), galleryPhotoSrcSets: [],
         galleryPhotoIds: photos.map(photo => photo.id), galleryPhotoLikeCounts: photos.map(photo => photo.likeCount),
         galleryPhotoPins: photos.map(photo => photo.isPinned), submittedPhotos: photos,

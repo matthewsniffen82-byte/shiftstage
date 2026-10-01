@@ -3,7 +3,7 @@
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout {
   --split-inset: clamp(10px, 2vw, 24px);
   display: grid !important;
-  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  grid-template-columns: minmax(0, 54fr) minmax(0, 46fr) !important;
   grid-template-rows: repeat(5, auto) !important;
   align-content: start !important;
   align-items: start !important;
@@ -78,7 +78,7 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
   display: none;
   position: absolute;
   left: 10px;
-  bottom: 66px;
+  bottom: 12px;
   padding: 5px 10px;
   border: 1px solid #238454;
   border-radius: 999px;
@@ -89,50 +89,6 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
   pointer-events: none;
 }
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout .profile-featured-column[data-working-now="true"] > .profile-featured-now { display: block; }
-html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout .profile-featured-navigation {
-  position: absolute;
-  bottom: 10px;
-  inset-inline: 4px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0;
-  color: white;
-  font-size: 12px;
-  pointer-events: none;
-}
-html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout .profile-featured-navigation button,
-html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout :is(#modalMediaPrevious, #modalMediaNext) {
-  display: grid !important;
-  place-items: center;
-  width: 44px !important;
-  height: 44px !important;
-  min-width: 44px !important;
-  min-height: 44px !important;
-  border: 1px solid #ffffff30 !important;
-  border-radius: 50% !important;
-  background: #09090fba !important;
-  color: white !important;
-  font-size: 28px !important;
-  padding: 0 !important;
-  pointer-events: auto;
-}
-html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout :is(#modalMediaPrevious, #modalMediaNext) { top: auto !important; bottom: 10px !important; transform: none !important; }
-html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout #modalMediaPrevious { left: 4px !important; }
-html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout #modalMediaNext { right: 4px !important; }
-html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout :is(#modalMediaPrevious, #modalMediaNext)[hidden] { display: none !important; }
-html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout #modalMediaPosition {
-  top: auto !important;
-  bottom: 24px !important;
-  left: 50% !important;
-  right: auto !important;
-  transform: translateX(-50%) !important;
-  max-width: calc(100% - 92px);
-  padding: 0 !important;
-  background: none !important;
-  text-align: center;
-  font-size: 10px !important;
-}
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout :is(.profile-modal-summary, .profile-titlebar) {
   grid-row: 1;
   display: block !important;
@@ -222,10 +178,9 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout :is(#modalGallery > .thumb, .profile-media-grid-item) { min-width: 0 !important; width: 100% !important; height: auto !important; min-height: 0 !important; aspect-ratio: 3 / 4 !important; border-radius: 5px !important; }
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout :is(#modalGallery > .thumb.active, .profile-media-grid-item.is-featured) { outline: 2px solid #a56ce8; outline-offset: -2px; }
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout .profile-scroll-spacer { grid-row: 4; }
-html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout .profile-featured-navigation button:disabled { opacity: .4; }
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout .profile-featured-open:focus-visible { outline: 2px solid #c798ff !important; outline-offset: -3px; }
 @media (min-width: 760px) {
-  html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; min-height: min(100dvh, 900px) !important; }
+  html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout { grid-template-columns: minmax(0, 54fr) minmax(0, 46fr) !important; min-height: min(100dvh, 900px) !important; }
   html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout :is(.profile-modal-summary, .profile-titlebar) { padding-top: 70px !important; padding-bottom: 24px !important; }
   html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout .profile-modal-header-metrics { margin-top: 24px !important; }
   html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout :is(.modal-actions, .live-actions).profile-actions-compact { --profile-action-height: 52px; }
@@ -317,6 +272,7 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
 }
 
 @media (max-width: 360px) {
+  html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout :is(.profile-modal-header-metrics, .profile-header-metrics) { width: calc(100% + 8px) !important; margin-left: -4px !important; }
   html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout :is(.profile-activity-metrics, .profile-header-metrics) dt { font-size: 9px !important; }
   html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout :is(.profile-activity-metrics, .profile-header-metrics) > div { padding-inline: 1px !important; }
 }

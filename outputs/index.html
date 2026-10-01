@@ -42758,10 +42758,7 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
     <div class="modal-backdrop" id="profileBackdrop" aria-hidden="true">
       <section class="profile-modal profile-split-layout" id="profileModal" role="dialog" aria-modal="true" aria-labelledby="modalName">
         <aside class="profile-featured-column" aria-label="Featured profile photo">
-          <div class="modal-image" id="modalImage" role="group" tabindex="0" aria-label="Profile photos and videos. Swipe left or right to change media.">
-            <span class="profile-modal-media-position" id="modalMediaPosition">Photo 1 of 1</span>
-            <button class="profile-modal-media-previous" id="modalMediaPrevious" type="button" aria-label="Previous profile media">‹</button>
-            <button class="profile-modal-media-next" id="modalMediaNext" type="button" aria-label="Next profile media">›</button>
+          <div class="modal-image" id="modalImage" role="button" tabindex="0" aria-label="Open main profile photo">
             <span class="profile-modal-playback-feedback" id="modalVideoPlaybackFeedback" aria-hidden="true"></span>
             <div class="profile-modal-video-controls is-visible" id="modalVideoControls" data-modal-video-controls role="group" aria-label="Video controls" hidden>
               <button id="modalVideoPlayback" type="button" aria-label="Play TV video">
@@ -43053,7 +43050,7 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
         // These flags remain private even though this authorized viewer can display the profile.
         hidden: true, isPublic: false, is_public: false,
         metricsUnavailable: external ? external.metricsUnavailable : true,
-        avatarPhotoUrl, avatarPhotoSrcSet: "", mainPhotoUrl: photos[0]?.imageUrl || "", mainPhotoSrcSet: "",
+        avatarPhotoUrl, avatarPhotoSrcSet: "", mainPhotoUrl: (photos.find(photo => photo.isPrimary) || photos[0])?.imageUrl || "", mainPhotoSrcSet: "",
         galleryPhotoUrls: photos.map(photo => photo.imageUrl), galleryPhotoSrcSets: [],
         galleryPhotoIds: photos.map(photo => photo.id), galleryPhotoLikeCounts: photos.map(photo => photo.likeCount),
         galleryPhotoPins: photos.map(photo => photo.isPinned), submittedPhotos: photos,
@@ -53521,7 +53518,6 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
         : ".thumb:not([data-profile-tv-index])";
       const visibleThumbs = [...modalGallery.querySelectorAll(selector)];
       modalMediaEmpty.hidden = visibleThumbs.length > 0;
-      modalImage.hidden = !modalGallery.profilePhotoItems?.length;
       modalMediaEmpty.textContent = tab === "video"
         ? "No approved MyDancr TV videos yet."
         : "No approved profile photos yet.";
@@ -53537,6 +53533,27 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
       }
       if (modalMediaPrevious) modalMediaPrevious.disabled = index <= 0;
       if (modalMediaNext) modalMediaNext.disabled = index >= total - 1;
+    }
+
+    function setProfileMainPhoto(photoUrl, photoSrcSet = "") {
+      const previousPhoto = modalImage.querySelector(".profile-featured-photo");
+      const hasPhoto = Boolean(safeCssUrl(photoUrl));
+      if (hasPhoto) {
+        const image = previousPhoto || document.createElement("img");
+        image.className = "profile-featured-photo";
+        image.alt = `${modalName.textContent.trim() || "Dancer"} main profile photo`;
+        image.decoding = "async";
+        image.fetchPriority = "high";
+        image.sizes = "(max-width: 1180px) 54vw, 638px";
+        if (image.getAttribute("src") !== photoUrl) image.dataset.imageState = "loading";
+        if (photoSrcSet) image.srcset = photoSrcSet;
+        else image.removeAttribute("srcset");
+        if (image.getAttribute("src") !== photoUrl) image.src = photoUrl;
+        if (!previousPhoto) modalImage.prepend(image);
+      } else previousPhoto?.remove();
+      modalImage.hidden = !hasPhoto;
+      modalImage.dataset.mainPhotoUrl = hasPhoto ? photoUrl : "";
+      modalImage.setAttribute("aria-label", `Open ${modalName.textContent.trim() || "Dancer"} main photo`);
     }
 
     function setModalPhoto(photoClass, photoUrl = "", requestedIndex = null) {
@@ -53570,29 +53587,9 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
         ? parsedRequestedIndex
         : Number(activePhotoThumb?.dataset.profilePhotoIndex || 0));
       const totalPhotos = Math.max(1, modalGallery.profilePhotoItems?.length || photoThumbs.length);
-      const selectedPhoto = modalGallery.profilePhotoItems?.[activePhotoIndex];
-      const previousPhoto = modalImage.querySelector(".profile-featured-photo");
-      if (safeUrl && previousPhoto?.getAttribute("src") !== photoUrl) {
-        const image = document.createElement("img");
-        image.className = "profile-featured-photo";
-        image.alt = `${modalName.textContent.trim() || "Dancer"} profile photo`;
-        image.dataset.imageState = "loading";
-        image.decoding = "async";
-        image.fetchPriority = "high";
-        image.sizes = "(max-width: 1180px) 50vw, 590px";
-        if (selectedPhoto?.photoSrcSet) image.srcset = selectedPhoto.photoSrcSet;
-        image.src = photoUrl;
-        if (previousPhoto) previousPhoto.replaceWith(image);
-        else modalImage.prepend(image);
-      } else if (!safeUrl) previousPhoto?.remove();
-      modalImage.hidden = !safeUrl;
       modalImage.dataset.activePhotoIndex = String(activePhotoIndex);
       modalImage.dataset.activeMediaType = "photo";
       modalMediaExpand.hidden = true;
-      modalImage.setAttribute(
-        "aria-label",
-        `${modalName.textContent.trim() || "Dancer"} profile photo ${activePhotoIndex + 1} of ${totalPhotos}. Swipe left or right to change photos.`
-      );
       profilePhotoViewerImage?.setAttribute(
         "aria-label",
         `Dancer photos. Photo ${activePhotoIndex + 1} of ${totalPhotos}. Scroll up or down to change photos.`
@@ -53602,6 +53599,10 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
 
     function setModalVideo(item, profileName, videos, index) {
       if (!item?.videoUrl) return false;
+      if (profileModal.classList.contains("profile-split-layout")) {
+        openProfileTvViewer(item, profileName, videos, index);
+        return true;
+      }
       clearModalVideoPreview();
       modalImage.className = "modal-image is-video-media";
       modalImage.dataset.activeMediaType = "video";
@@ -54848,6 +54849,7 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
       modalProfileAvatar.setAttribute("aria-label", `${profile.name} profile photo${modalIsWorkingNow ? ", working now" : modalHasUpcomingShift ? ", upcoming shift posted" : ""}`);
       setProfileMediaTab("photo");
       setModalPhoto(basePhoto, basePhotoUrl);
+      setProfileMainPhoto(basePhotoUrl, profilePhotoSrcSet(profile, basePhotoUrl));
 
       modalMediaSocials.replaceChildren();
       modalMediaSocials.hidden = true;
@@ -64422,7 +64424,6 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
       setModalVideoControlsVisible(true, { autoHide: true });
     });
 
-    bindHorizontalProfilePhotoSwipe(modalImage);
     profilePhotoViewerImage?.addEventListener("scroll", () => {
       window.cancelAnimationFrame(profilePhotoViewerScrollFrame);
       profilePhotoViewerScrollFrame = window.requestAnimationFrame(() => {
@@ -64448,44 +64449,24 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
       return true;
     }
 
-    modalMediaPrevious?.addEventListener("click", (event) => {
-      event.preventDefault();
-      event.stopPropagation();
-      moveModalPhoto(-1);
-    });
-    modalMediaNext?.addEventListener("click", (event) => {
-      event.preventDefault();
-      event.stopPropagation();
-      moveModalPhoto(1);
-    });
     modalMediaExpand?.addEventListener("click", (event) => {
       event.preventDefault();
       event.stopPropagation();
       openSelectedModalMediaViewer();
     });
-    modalImage?.addEventListener("click", (event) => {
-      if (event.target.closest("button, input, [data-modal-video-controls]")) return;
-      if (modalImage.dataset.activeMediaType === "video") {
-        toggleModalVideoPlayback();
-        return;
-      }
-      openPhotoViewerFromElement(modalImage, Number(modalImage.dataset.activePhotoIndex || 0));
-    });
+    function openProfileMainPhoto() {
+      const mainPhotoIndex = (modalGallery.profilePhotoItems || []).findIndex(
+        (photo) => photo.photoUrl === modalImage.dataset.mainPhotoUrl
+      );
+      if (mainPhotoIndex >= 0) openPhotoViewerFromElement(modalImage, mainPhotoIndex);
+    }
 
-    modalImage?.addEventListener("pointermove", (event) => {
-      if (event.pointerType === "touch" || modalImage.dataset.activeMediaType !== "video") return;
-      setModalVideoControlsVisible(true, { autoHide: true });
-    });
-
+    modalImage?.addEventListener("click", () => openProfileMainPhoto());
     modalImage?.addEventListener("keydown", (event) => {
       if (event.target !== modalImage) return;
-      if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
+      if (event.key === "Enter" || event.key === " ") {
         event.preventDefault();
-        moveModalPhoto(event.key === "ArrowRight" ? 1 : -1);
-      } else if (event.key === "Enter" || event.key === " ") {
-        event.preventDefault();
-        if (modalImage.dataset.activeMediaType === "video") toggleModalVideoPlayback();
-        else openPhotoViewerFromElement(modalImage, Number(modalImage.dataset.activePhotoIndex || 0));
+        openProfileMainPhoto();
       }
     });
     profilePhotoViewerImage?.addEventListener("keydown", (event) => {
