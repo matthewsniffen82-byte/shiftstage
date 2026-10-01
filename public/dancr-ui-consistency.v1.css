@@ -812,6 +812,7 @@ html body.dancr-button-system > .app main.stack > section.stack
     min-height: 0 !important;
     margin: 0 !important;
     border: 0 !important;
+    background: #08090c !important;
     box-shadow: none !important;
   }
 
@@ -829,7 +830,7 @@ html body.dancr-button-system > .app main.stack > section.stack
     position: absolute !important;
     inset: 0 auto 0 0 !important;
     width: clamp(84px, 26vw, 150px) !important;
-    padding: 12px !important;
+    padding: 4px !important;
     height: 100% !important;
     display: flex !important;
     align-items: center !important;
@@ -846,7 +847,7 @@ html body.dancr-button-system > .app main.stack > section.stack
     > #results.home-discovery-feed.home-venue-discovery-feed > .home-venue-discovery-slide .home-venue-discovery-logo {
     position: static !important;
     width: 100% !important;
-    height: 130px !important;
+    height: 156px !important;
     max-width: 100% !important;
     max-height: 100% !important;
     object-fit: contain !important;
@@ -858,8 +859,8 @@ html body.dancr-button-system > .app main.stack > section.stack
 
   html body.dancr-button-system > .app main.stack > section.stack
     > #results.home-discovery-feed.home-venue-discovery-feed > .home-venue-discovery-slide .home-venue-discovery-monogram {
-    width: 64px !important;
-    height: 64px !important;
+    width: 72px !important;
+    height: 72px !important;
     font-size: 22px !important;
   }
 
@@ -872,7 +873,7 @@ html body.dancr-button-system > .app main.stack > section.stack
     min-height: 156px !important;
     gap: 8px !important;
     padding: 16px 12px !important;
-    background: linear-gradient(90deg, rgba(8, 9, 12, .8), rgba(8, 9, 12, .94)) !important;
+    background: transparent !important;
   }
 
   html body.dancr-button-system > .app main.stack > section.stack
