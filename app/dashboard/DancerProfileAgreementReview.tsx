@@ -57,7 +57,7 @@ export default function DancerProfileAgreementReview({ profileId, busy, onSubmit
       {error && <p role="alert">{error}</p>}
       {error && <button type="button" disabled={busy} onClick={() => setAttempt(value => value + 1)}>Try again</button>}
       <button className="dancer-onboarding-primary" id="dancer-onboarding-agreement-button" aria-describedby="dancer-onboarding-agreement-status" aria-busy={busy} type="submit" disabled={busy || !agreement || (!agreement.accepted && !checked)}>
-        {busy ? "Submitting profile…" : "Submit profile and continue"}
+        {busy ? "Submitting profile…" : "Continue"}
       </button>
     </form>
   </div>;

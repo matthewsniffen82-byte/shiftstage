@@ -6,6 +6,7 @@ import { MAX_DANCR_RAW_UPLOAD_BYTES, validateAndPrepareDancrImage } from "@/src/
 import { enforcePublicRequestRateLimit, PublicRequestRateLimitError } from "@/src/lib/dancr/public-request-rate-limit";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
+import { ownedPhotoCropSource } from "@/src/lib/dancr/photo-crop-source";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -29,7 +30,8 @@ export async function POST(request: Request) {
       invalidMessage: "Invalid photo preview request.",
       tooLargeMessage: "Photo must be 25 MB or smaller.",
     });
-    const file = form.get("file");
+    const photoId = form.get("photoId");
+    const file = typeof photoId === "string" ? await ownedPhotoCropSource(admin, profile.id, photoId) : form.get("file");
     if (!(file instanceof Blob)) return NextResponse.json({ ok: false, error: "Photo file is required." }, { status: 400, headers: privateHeaders });
     const image = await validateAndPrepareDancrImage(file).catch(() => {
       throw new PublicApiError("INVALID_REQUEST", "Choose a readable JPEG, PNG, WebP, HEIC, or HEIF photo up to 25 MB.", 400);

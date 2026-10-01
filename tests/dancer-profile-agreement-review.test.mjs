@@ -47,7 +47,7 @@ test("agreement starts unchecked and continues only after an explicit choice, wi
   assert.match(html, /type="checkbox" required=""/);
   assert.doesNotMatch(html, /checked=""/);
   assert.match(html, /type="submit" disabled=""/);
-  assert.match(html, />Submit profile and continue<\/button>/);
+  assert.match(html, />Continue<\/button>/);
   assert.doesNotMatch(html, /<h3|Review your profile|Preview profile/);
   await walk(tree).find(node => node.type === "form").props.onSubmit({ preventDefault() {} });
   assert.equal(f.submissions.length, 0);

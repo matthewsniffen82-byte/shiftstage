@@ -30,11 +30,13 @@ type NfcState = {
 
 export default function DancerNfcPanel({
   compactAuthorized = false,
+  onboarding = false,
   initialAffiliations = [],
   initialNfcState,
   onAuthorizationChange,
 }: {
   compactAuthorized?: boolean;
+  onboarding?: boolean;
   initialAffiliations?: Array<Record<string, unknown>>;
   initialNfcState?: Record<string, unknown> | null;
   onAuthorizationChange?: () => void | Promise<void>;
@@ -143,7 +145,7 @@ export default function DancerNfcPanel({
 
   const checkInDetails = (
     <details className="dancer-nfc-details">
-      <summary>How check-ins work</summary>
+      <summary>{onboarding && !authorized ? "Ready to tap" : "How check-ins work"}</summary>
       <div>
         <ul>
           <li>Unlock your phone and tap the club&apos;s dressing-room sticker. Open the link and sign in if prompted.</li>
@@ -188,8 +190,8 @@ export default function DancerNfcPanel({
         <div className="dancer-nfc-heading">
           <div className="dancer-nfc-icon"><NfcIcon /></div>
           <div>
-            <span className="eyebrow">Dressing-room tap</span>
-            <h2>{authorized ? "Profile activated" : pendingEnrollment ? "Tap saved — finish setup" : "Your first tap activates your profile"}</h2>
+            <span className="eyebrow">{onboarding ? "Club confirmation" : "Dressing-room tap"}</span>
+            <h2>{authorized ? "Profile activated" : pendingEnrollment ? "Tap saved — finish setup" : onboarding ? "Confirm your club" : "Your first tap activates your profile"}</h2>
           </div>
         </div>
         {authorized ? (
@@ -197,14 +199,14 @@ export default function DancerNfcPanel({
         ) : pendingEnrollment ? (
           <p className="dancer-nfc-intro">Your tap at {enrollment?.venue?.name || "the club"} is saved. Finish your profile and required photo approvals to activate.</p>
         ) : (
-          <p className="dancer-nfc-intro">Finish your profile, then tap the club&apos;s dressing-room sticker to activate.</p>
+          <p className="dancer-nfc-intro">{onboarding ? "Tap the club’s NFC tag when you arrive to activate your club status." : "Finish your profile, then tap the club’s dressing-room sticker to activate."}</p>
         )}
 
-        <ol className="dancer-nfc-guide">
+        {!onboarding ? <ol className="dancer-nfc-guide">
           {!authorized ? <li><strong>Activate once</strong><span>Your first tap activates your completed profile and checks you in at that club.</span></li> : null}
           <li><strong>Check in at any club</strong><span>Tap that club&apos;s dressing-room sticker to connect and show Working Now there.</span></li>
           <li><strong>Choose where you appear</strong><span>Select Internal only, External only, or Both. Your full profile is required for every choice.</span></li>
-        </ol>
+        </ol> : null}
         {visibilitySummary}
         {affiliationRoster}
         {checkInDetails}

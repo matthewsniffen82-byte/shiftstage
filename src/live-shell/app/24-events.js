@@ -603,6 +603,11 @@
         return;
       }
 
+      if (action === "crop-main-photo") {
+        await cropSavedDancerMainPhoto();
+        return;
+      }
+
       if (action === "main-photo") {
         if (document.getElementById("approvedPhotoUploadInput")?.disabled) return;
         pendingApprovedPhotoTarget = "main";

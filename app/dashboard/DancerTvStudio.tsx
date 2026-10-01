@@ -19,6 +19,7 @@ import {
   primeVideoPreviewFrame,
 } from "./dancer-profile-media-sync";
 import { cropProfileVideo } from "./profile-video-crop";
+import { VIDEO_UPLOAD_MAX_SECONDS, VIDEO_UPLOAD_MAX_BYTES } from "@/src/lib/dancr/video-upload-edit-policy";
 
 type Workspace = {
   profile: {
@@ -517,6 +518,7 @@ export default function DancerTvStudio({ embedded = false, uploadOnly = false }:
         <section className="tv-upload-form" aria-label="Add profile videos">
           <div className="tv-upload-permissions">
             <strong>Confirm permissions</strong>
+            <small>Check both boxes to choose or record a video.</small>
           </div>
           <label className="tv-check">
             <input ref={consentInputRef} checked={consentConfirmed} disabled={videoActionBusy} type="checkbox" onChange={(event) => setConsentConfirmed(event.target.checked)} />
@@ -589,7 +591,7 @@ export default function DancerTvStudio({ embedded = false, uploadOnly = false }:
             </button>
           </div>
           <small className="tv-upload-requirements">
-            Vertical or square · MP4, WebM, or MOV · Crop & trim to 1–30 sec · 100 MB max
+            Vertical or square · MP4, WebM, or MOV · Crop &amp; trim to 1–{VIDEO_UPLOAD_MAX_SECONDS} sec · {VIDEO_UPLOAD_MAX_BYTES / (1024 * 1024)} MB max
           </small>
           {queuedVideos.length ? (
             <div className="tv-upload-queue" aria-label="Video upload progress">

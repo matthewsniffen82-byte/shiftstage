@@ -74,15 +74,19 @@ export default function DancerAgeVerificationGate({ children, profileSubmitted =
         : verification.status === "declined" ? "Your verification was not approved. You must be 18 or older to use dancer features. You can retry with a valid ID or contact support."
         : "Have your photo ID ready. Ondato will ask for ID photos and a live selfie."}</p>
       {canStart && <>
-        <p className="dancer-age-timing">Allow a few minutes. Complete this step before your first club tap.</p>
-        <p className="dancer-age-privacy">MyDancr saves your verification result, not your ID photos, selfie, or date of birth.</p>
+        <p className="dancer-age-timing">Required for MyDancr · Allow a few minutes.</p>
+        <details className="dancer-age-explanation">
+          <summary>Why we verify</summary>
+          <p>Verify you’re 18 or older before your first club tap. Ondato checks your photo ID and a live selfie.</p>
+          <p className="dancer-age-privacy">MyDancr saves your verification result, not your ID photos, selfie, or date of birth.</p>
+        </details>
         <label className="dancer-age-consent"><input type="checkbox" checked={consent} onChange={event => setConsent(event.target.checked)} disabled={busy} />
           <span>I understand I’ll continue to Ondato for ID and selfie verification.</span>
         </label>
       </>}
       <div className="dancer-age-actions">
         {canStart && <button type="button" className="button primary" disabled={busy || !consent} onClick={() => void act(true)}>
-          {busy ? "Please wait…" : "Continue to Ondato"}
+          {busy ? "Please wait…" : "Verify age"}
         </button>}
         <button type="button" className="button secondary" disabled={busy} onClick={() => void act(false)}>Check verification status</button>
       </div>

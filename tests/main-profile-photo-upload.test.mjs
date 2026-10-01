@@ -7,31 +7,35 @@ import ts from "typescript";
 const code = ts.transpileModule(readFileSync("app/dashboard/main-profile-photo-upload.ts", "utf8"), {
   compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
 }).outputText;
-function fixture({ decision = "approved", canceled = false, refreshFails = false, cropWait = false, uploadFails = false } = {}) {
+function fixture({ decision = "approved", canceled = false, refreshFails = false, cropWait = false, uploadFails = false, saved = false, isPrimary = true } = {}) {
   let session = { account: { id: "dancer-a", role: "dancer" }, accessToken: "token-a" };
   const listeners = new Set(), requests = [], controller = new AbortController();
   const original = new File(["original"], "portrait.jpg", { type: "image/jpeg" });
+  const source = { id: "photo-a", isPrimary, sortOrder: isPrimary ? 0 : 3 };
+  const previews = [], cropFiles = [];
   const cropped = new File(["cropped"], "crop.jpg", { type: "image/jpeg" });
   let confirm, validate, cropSignal;
-  const scope = { exports: {}, AbortController, DOMException, FormData,
+  const scope = { exports: {}, AbortController, DOMException, FormData, File, atob, Uint8Array,
     window: { addEventListener: (_, fn) => listeners.add(fn), removeEventListener: (_, fn) => listeners.delete(fn) },
     require: name => name === "./profile-photo-crop" ? {
       cropProfilePhoto: async (file, signal, check, ratio) => {
         assert.equal(ratio, 3 / 4);
-        assert.equal(file, original); validate = check; cropSignal = signal;
+        if (saved) assert.equal(await file.text(), "saved-original"); else assert.equal(file, original);
+        cropFiles.push(file); validate = check; cropSignal = signal;
         if (cropWait) await new Promise(resolve => { confirm = resolve; });
         check();
         return canceled ? null : cropped;
       },
     } : {
       DASHBOARD_SESSION_KEY: "session", readSession: () => session,
+      requestDashboardJson: async (url, options) => { assert.equal(url, "/api/dancer/photos/preview"); previews.push(options.body.get("photoId")); return { imageDataUrl: "data:image/jpeg;base64," + btoa("saved-original") }; },
       requestDancerPhotosJson: async options => { requests.push(options); if (uploadFails) throw new Error("Network unavailable"); return { decision }; },
       requestDancerProfileJson: async () => { if (refreshFails) throw new Error("Refresh failed"); return { profile: { id: "profile-a" } }; },
     },
   };
   vm.runInNewContext(code, scope);
-  return { requests, listeners, controller, original, cropped,
-    start: (replacementPhotoId = "photo-a") => scope.exports.uploadMainProfilePhoto(original, { signal: controller.signal, uploadKey: "stable-key", replacementPhotoId }),
+  return { requests, previews, cropFiles, listeners, controller, original, cropped,
+    start: (replacementPhotoId = "photo-a") => scope.exports.uploadMainProfilePhoto(saved ? source : original, { signal: controller.signal, uploadKey: "stable-key", replacementPhotoId }),
     confirm: () => confirm(),
     validate: () => validate(),
     change: (id, dispatch = true) => { session = { account: { id, role: "dancer" }, accessToken: "new-token" }; if (dispatch) listeners.forEach(fn => fn({ key: "session" })); },
@@ -94,4 +98,26 @@ test("closing the uploader aborts preparation and cannot publish a crop", async 
 test("token refresh for the same dancer does not interrupt their upload", async () => {
   const f = fixture({ cropWait: true }), pending = f.start();
   f.change("dancer-a"); f.confirm(); assert.equal((await pending).decision, "approved");
+});
+
+for (const isPrimary of [true, false]) test(`reopening a saved ${isPrimary ? "main" : "separate roster"} photo preserves its identity and slot`, async () => {
+  const f = fixture({ saved: true, isPrimary }); await f.start();
+  assert.deepEqual(f.previews, ["photo-a"]);
+  assert.equal(f.requests[0].body.get("replacementPhotoId"), "photo-a");
+  assert.equal(f.requests[0].body.get("isPrimary"), String(isPrimary));
+  assert.equal(f.requests[0].body.get("sortOrder"), isPrimary ? "0" : "3");
+  // A fresh editor after a refresh/relogin reads the persisted source again.
+  const returned = fixture({ saved: true, isPrimary }); await returned.start(); assert.deepEqual(returned.previews, ["photo-a"]);
+});
+test('saved crop cancellation writes nothing and retry retains the same confirmed file and key', async () => {
+  const canceled = fixture({ saved: true, canceled: true }); assert.equal(await canceled.start(), null); assert.equal(canceled.requests.length, 0);
+  const retry = fixture({ saved: true, uploadFails: true }); await assert.rejects(retry.start()); await assert.rejects(retry.start());
+  assert.deepEqual(retry.previews, ['photo-a']); assert.equal(retry.cropFiles[0], retry.cropFiles[1]);
+  assert.deepEqual(retry.requests.map(r => r.body.get('idempotencyKey')), ['stable-key','stable-key']);
+});
+test('a saved photo cannot be published after the dancer changes accounts while cropping', async () => {
+  const f = fixture({ saved: true, cropWait: true }), pending = f.start();
+  const rejected = assert.rejects(pending, { name: 'AbortError' });
+  await new Promise(resolve => setTimeout(resolve, 0)); f.change('dancer-b'); f.confirm(); await rejected;
+  assert.equal(f.requests.length, 0);
 });

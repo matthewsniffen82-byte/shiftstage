@@ -404,7 +404,57 @@
       return data;
     }
 
-    async function cropApprovedProfilePhoto(file, aspectRatio) {
+    let savedMainCropSelection = null;
+    async function cropSavedDancerMainPhoto() {
+      const input = document.getElementById("approvedPhotoUploadInput");
+      if (!input || input.disabled) return;
+      const owner = synchronizeAuthSession()?.account?.id;
+      if (!owner || !isDancerSession()) return;
+      const requireOwner = () => {
+        if (!isDancerSession() || synchronizeAuthSession()?.account?.id !== owner) throw new DOMException("Sign in again to crop your photo.", "AbortError");
+      };
+      input.disabled = true;
+      try {
+        const selection = selectedPhotoReplacement(activeDancerProfile(), "main");
+        if (savedMainCropSelection?.owner !== owner || savedMainCropSelection?.id !== selection.id) savedMainCropSelection = null;
+        if (!savedMainCropSelection) {
+          const body = new FormData(); body.set("photoId", selection.id);
+          const headers = authenticatedRequestHeaders(undefined, synchronizeAuthSession());
+          const response = await fetch("/api/dancer/photos/preview", { method: "POST", headers, body, signal: AbortSignal.timeout(25000) });
+          const data = await response.json();
+          requireOwner();
+          if (!response.ok || !data.ok || !String(data.imageDataUrl).startsWith("data:image/jpeg;base64,")) throw new Error(data.error || "Unable to load your saved photo.");
+          applyResponseSession(data, headers);
+          const bytes = Uint8Array.from(atob(data.imageDataUrl.split(",")[1]), character => character.charCodeAt(0));
+          savedMainCropSelection = { owner, id: selection.id, file: new File([bytes], "saved-photo.jpg", { type: "image/jpeg" }), preview: data.imageDataUrl };
+        }
+        const cropped = await cropApprovedProfilePhoto(savedMainCropSelection.file, 3 / 4, savedMainCropSelection.preview);
+        requireOwner();
+        if (selectedPhotoReplacement(activeDancerProfile(), "main").id !== selection.id) throw new Error("Your main photo changed. Reopen Crop photo.");
+        let result = await uploadApprovedDancerPhoto(cropped, "main");
+        requireOwner();
+        savedMainCropSelection = null;
+        if (result.decision === "approved") result = await hydrateConfirmedApprovedDancerPhoto(result);
+        requireOwner();
+        renderDancerManagement();
+        renderDancerDashboardMainPhotoEditor(activeDancerProfile(), true);
+        renderApprovedVisualProfileEditor();
+        const message = result.decision === "approved" ? "Crop saved." : result.decision === "rejected" ? "This crop wasn’t approved. Your current photo hasn’t changed." : "Crop awaiting approval. Your current photo stays visible.";
+        const status = document.getElementById("dancerDashboardMainPhotoStatus");
+        if (status) status.textContent = message;
+        showToast(message);
+      } catch (error) {
+        if (error?.name === "AbortError") savedMainCropSelection = null;
+        if (synchronizeAuthSession()?.account?.id === owner) {
+          const message = normalizeRequestError(error, "Unable to save the crop. Try Crop photo again.");
+          const status = document.getElementById("dancerDashboardMainPhotoStatus");
+          if (status) status.textContent = message;
+          showToast(message);
+        }
+      } finally { input.disabled = false; }
+    }
+
+    async function cropApprovedProfilePhoto(file, aspectRatio, savedPreview) {
       if (!window.DancrPhotoCrop) throw new Error("The photo editor is still loading. Please try again.");
       const accountId = synchronizeAuthSession()?.account?.id;
       if (!accountId || !isDancerSession()) throw new Error("Sign in as a dancer to upload photos.");
@@ -430,8 +480,10 @@
         const cropped = await window.DancrPhotoCrop.crop(file, {
           signal: controller.signal,
           aspectRatio,
+          confirmLabel: savedPreview ? "Save crop" : undefined,
           prepare: async (original, signal) => {
             const headers = authenticatedRequestHeaders(undefined, requireCropSession());
+            if (savedPreview) return savedPreview;
             const body = new FormData();
             body.set("file", original);
             const response = await fetch("/api/dancer/photos/preview", { method: "POST", headers, body, signal });

@@ -1,7 +1,10 @@
 import { cropProfilePhoto } from "./profile-photo-crop";
-import { DASHBOARD_SESSION_KEY, readSession, requestDancerPhotosJson, requestDancerProfileJson } from "./dashboard-session";
+import { DASHBOARD_SESSION_KEY, readSession, requestDashboardJson, requestDancerPhotosJson, requestDancerProfileJson } from "./dashboard-session";
 
-export async function uploadMainProfilePhoto(file: File, options: {
+export type SavedPhotoCropSource = { id: string; isPrimary: boolean; sortOrder: number };
+const savedSelections = new WeakMap<SavedPhotoCropSource, { file: File; preview: string; owner: string }>();
+
+export async function uploadMainProfilePhoto(source: File | SavedPhotoCropSource, options: {
   signal: AbortSignal;
   uploadKey: string;
   replacementPhotoId?: string;
@@ -25,16 +28,39 @@ export async function uploadMainProfilePhoto(file: File, options: {
   window.addEventListener("storage", changedAccount);
   try {
     assertOwner();
-    const cropped = await cropProfilePhoto(file, controller.signal, assertOwner, 3 / 4);
+    const saved = "id" in source ? source : null;
+    let file = source as File;
+    let preview: string | undefined;
+    if (saved) {
+      let cached = savedSelections.get(saved);
+      if (cached && cached.owner !== owner) throw new DOMException("Sign in again to crop your photo.", "AbortError");
+      if (!cached) {
+        const form = new FormData();
+        form.set("photoId", saved.id);
+        const prepared = await requestDashboardJson("/api/dancer/photos/preview", {
+          method: "POST", body: form, signal: controller.signal, expectedRole: "dancer",
+          fallbackMessage: "Unable to load your saved photo. Please try again.",
+        });
+        assertOwner();
+        if (typeof prepared.imageDataUrl !== "string" || !prepared.imageDataUrl.startsWith("data:image/jpeg;base64,")) throw new Error("Unable to prepare your saved photo.");
+        const bytes = Uint8Array.from(atob(prepared.imageDataUrl.split(",")[1]), character => character.charCodeAt(0));
+        cached = { file: new File([bytes], "saved-photo.jpg", { type: "image/jpeg" }), preview: prepared.imageDataUrl, owner };
+        savedSelections.set(saved, cached);
+      }
+      file = cached.file;
+      preview = cached.preview;
+    }
+    const cropped = await cropProfilePhoto(file, controller.signal, assertOwner, 3 / 4, preview);
     assertOwner();
     if (!cropped) return null;
     options.onUploadStart?.();
     const body = new FormData();
     body.set("file", cropped);
-    body.set("isPrimary", "true");
-    body.set("sortOrder", "0");
-    body.set("replaceExisting", String(Boolean(options.replacementPhotoId)));
-    if (options.replacementPhotoId) body.set("replacementPhotoId", options.replacementPhotoId);
+    body.set("isPrimary", String(saved ? saved.isPrimary : true));
+    body.set("sortOrder", String(saved ? saved.sortOrder : 0));
+    const replacementPhotoId = saved?.id || options.replacementPhotoId;
+    body.set("replaceExisting", String(Boolean(replacementPhotoId)));
+    if (replacementPhotoId) body.set("replacementPhotoId", replacementPhotoId);
     body.set("idempotencyKey", options.uploadKey);
     const data = await requestDancerPhotosJson({
       method: "POST", headers: { "idempotency-key": options.uploadKey }, body,

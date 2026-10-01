@@ -20,6 +20,7 @@ export function DancerProfilePreview({
   buttonClassName,
   buttonLabel,
   editorSections,
+  initialEditorSection,
   isApproved = false,
   isPublic = false,
   name,
@@ -34,6 +35,7 @@ export function DancerProfilePreview({
   buttonClassName: string;
   buttonLabel: string;
   editorSections?: DancerProfileEditorSections;
+  initialEditorSection?: DancerProfileEditorSectionId;
   isApproved?: boolean;
   isPublic?: boolean;
   name?: string;
@@ -156,6 +158,7 @@ export function DancerProfilePreview({
       else closeRef.current?.focus();
     });
     const onKeyDown = (event: KeyboardEvent) => {
+      if (document.querySelector("dialog.dancr-photo-crop[open]")) return;
       if (overlayRef.current?.querySelector("dialog.dancer-media-viewer[open]")) return;
       if (event.key === "Escape") {
         if (activeEditorSectionRef.current) {
@@ -293,7 +296,7 @@ export function DancerProfilePreview({
 
   function openPreview() {
     scrollRef.current = window.scrollY;
-    setActiveEditorSection(null);
+    setActiveEditorSection(initialEditorSection || null);
     setEditorStatus("");
     setIsOpen(true);
   }
@@ -548,7 +551,7 @@ export function DancerOnboardingCommand({
     },
     {
       id: "dancer-onboarding-age",
-      label: "Verify age · 18+",
+      label: "Verify 18+",
       complete: ageAccessAllowed,
       detail: ageVerified ? "Your age is verified. You're ready for your first club tap."
         : !submitted ? "Unlocks after profile submission."
@@ -558,14 +561,21 @@ export function DancerOnboardingCommand({
     },
     {
       id: "dancer-onboarding-nfc",
-      label: "Dressing-room tap",
+      label: "Confirm club",
       complete: isVenueApproved,
-      detail: isVenueApproved ? "Your venue is verified." : submitted && ageAccessAllowed ? "At the club, tap its official dressing-room sticker." : "Unlocks after profile setup and age verification.",
+      detail: isVenueApproved ? "Club confirmed." : submitted && ageAccessAllowed ? "Tap the club’s NFC tag when you arrive." : "Unlocks after profile setup and age verification.",
       locked: !submitted || !ageAccessAllowed,
     },
   ], [ageAccessAllowed, ageVerification?.required, ageVerified, isVenueApproved, profileReady, setupDetail, submitted]);
   const firstIncomplete = steps.find((step) => !step.complete) || steps[steps.length - 1];
-  const visibleExpandedStepId = expandedStepId || "";
+  const visibleExpandedStepId = expandedStepId === null ? firstIncomplete.id : expandedStepId;
+  const previousCurrentStep = useRef(firstIncomplete.id);
+  useEffect(() => {
+    if (previousCurrentStep.current !== firstIncomplete.id) {
+      previousCurrentStep.current = firstIncomplete.id;
+      setExpandedStepId(firstIncomplete.id);
+    }
+  }, [firstIncomplete.id]);
   const storageKey = `mydancr:dancer-onboarding-step:${String(profile?.id || "profile")}`;
 
   useEffect(() => {
@@ -702,13 +712,13 @@ export function DancerOnboardingCommand({
     <section className="dancer-onboarding-command" aria-labelledby="dancer-onboarding-heading">
       <div className="dancer-onboarding-command-head">
         <span>
-          <span className="eyebrow">Setup checklist</span>
-          <h2 id="dancer-onboarding-heading">Profile setup</h2>
-        <p>Create your profile, verify you are 18 or older, then activate it with your first club tap.</p>
+          <span className="eyebrow">Step {steps.indexOf(firstIncomplete) + 1} of 3</span>
+          <h2 id="dancer-onboarding-heading">{firstIncomplete.id === "dancer-profile-media" ? "Create your profile" : firstIncomplete.id === "dancer-onboarding-age" ? "Verify you’re 18+" : "Confirm your club"}</h2>
+          <p>Three steps to get your profile ready.</p>
         </span>
         <div className="dancer-onboarding-progress">
           <div className="dancer-onboarding-progress-track" role="progressbar" aria-label="Profile setup progress" aria-valuemin={0} aria-valuemax={steps.length} aria-valuenow={steps.filter((step) => step.complete).length}>
-            {steps.map((step) => <span className={step.complete ? "is-complete" : ""} key={step.id} />)}
+            {steps.map((step) => <span className={step.complete ? "is-complete" : step.id === firstIncomplete.id ? "is-current" : ""} key={step.id}>{step.complete ? "✓" : ""}</span>)}
           </div>
           <b>{steps.filter((step) => step.complete).length} of {steps.length} complete</b>
         </div>
@@ -743,7 +753,7 @@ export function DancerOnboardingCommand({
                 onClick={() => toggleStep(step.id)}
                 type="button"
               >
-                <span className="dancer-onboarding-step-marker" aria-hidden="true">{index + 1}</span>
+                <span className="dancer-onboarding-step-marker" aria-hidden="true">{displayComplete ? "✓" : index + 1}</span>
                 <span className="dancer-onboarding-step-copy">
                   <span className="dancer-onboarding-step-title">
                     <strong>{step.label}</strong>
@@ -783,8 +793,8 @@ export function DancerOnboardingCommand({
                     <div className="dancer-onboarding-agreement" id="dancer-onboarding-agreement" tabIndex={-1}>
                       {submitted ? (
                         <div className="dancer-onboarding-complete-note" role="status">
-                          <strong>✓ Step 1 complete</strong>
-                          <span>Your profile is ready. Complete age verification, then the dressing-room tap to activate it.</span>
+                          <strong>✓ Profile complete</strong>
+                          <span>Your saved photos remain editable. Complete verification and confirm your club to activate your profile.</span>
                         </div>
                       ) : profileReady ? (
                         <DancerProfileAgreementReview key={String(profile?.id)} profileId={String(profile?.id)} busy={isSubmitting} onSubmit={submitProfile} />
@@ -798,9 +808,9 @@ export function DancerOnboardingCommand({
                 {step.id === "dancer-onboarding-age" ? (
                   <DancerAgeVerificationGate profileSubmitted={submitted} onVerificationChange={setAgeVerification}>
                     {submitted && ageAccessAllowed ? <div className="dancer-onboarding-complete-note" role="status">
-                      <strong>Ready for your dressing-room tap</strong>
-                      <span>Tap the club’s official dressing-room sticker to activate your profile.</span>
-                      <button className="dancer-onboarding-primary" type="button" onClick={() => openStep("dancer-onboarding-nfc")}>Continue to dressing-room tap</button>
+                      <strong>Ready to confirm your club</strong>
+                      <span>Tap the club’s NFC tag when you arrive.</span>
+                      <button className="dancer-onboarding-primary" type="button" onClick={() => openStep("dancer-onboarding-nfc")}>Continue</button>
                     </div> : null}
                   </DancerAgeVerificationGate>
                 ) : null}
@@ -913,6 +923,7 @@ export function DancerOnboardingProfileMediaWorkspace({
     rejectedPhotos.length ? `${rejectedPhotos.length} needs replacement` : "",
   ].filter(Boolean).join(" · ");
   const [continueAfterSave, setContinueAfterSave] = useState(false);
+  const [videosOpened, setVideosOpened] = useState(false);
   const [hasStoredDraft, setHasStoredDraft] = useState<boolean | null>(null);
   const refreshDraftStatus = useCallback(() => {
     try {
@@ -962,7 +973,7 @@ export function DancerOnboardingProfileMediaWorkspace({
     stageName: identityContent("stageName"),
     city: identityContent("city"),
     avatar: avatarContent,
-    photos: photoContent,
+    photos: <>{mainPhotoContent}{photoContent}</>,
     videos: videoContent,
   };
 
@@ -976,12 +987,13 @@ export function DancerOnboardingProfileMediaWorkspace({
               {hasUnsavedChanges ? "Unsaved changes" : profileIsSaved ? <><span aria-hidden="true">✓</span> Profile saved</> : null}
             </span>
           </span>
-          <small>Add your stage name, city, avatar and solo photos. Choose an Internal main photo in Photos.</small>
+          <small>{persistedStageName && persistedCity ? `${persistedStageName} · ${persistedCity}` : "Add your stage name and city."}</small>
         </span>
         <DancerProfilePreview
           builderRequirements={builderRequirements}
           buttonClassName="dancer-profile-editor-launch-button"
-          buttonLabel="Edit profile"
+          buttonLabel="Edit"
+          initialEditorSection="identity"
           city={draftIdentity.city}
           editorSections={editorSections}
           name={draftIdentity.stageName}
@@ -992,7 +1004,20 @@ export function DancerOnboardingProfileMediaWorkspace({
           saveLabel="Save profile"
         />
       </article>
+      <details className="dancer-setup-extra" open={avatarState !== "complete" ? true : undefined}>
+        <summary>Avatar <small>{avatarState === "complete" ? "✓ Saved" : "Required"}</small></summary>
+        {avatarContent}
+      </details>
       {mainPhotoContent}
+      <details className="dancer-setup-extra">
+        <summary>More photos <small>Optional</small></summary>
+        {photoContent}
+      </details>
+      <details className="dancer-setup-extra" onToggle={event => { if (event.currentTarget.open) setVideosOpened(true); }}>
+        <summary>Videos <small>Optional · Add later</small></summary>
+        {videosOpened ? videoContent : null}
+        <button type="button" className="dancer-setup-skip" onClick={event => { const details = event.currentTarget.closest("details"); if (details) details.open = false; }}>Skip for now</button>
+      </details>
     </div>
   );
 }

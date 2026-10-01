@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { dancerPhotoItemsFromProfile } from "./DancerPhotoPanel";
 import type { LoadState } from "./dashboard-types";
 import { uploadMainProfilePhoto } from "./main-profile-photo-upload";
+import DancerSavedPhotoCrop from "./DancerSavedPhotoCrop";
 import "../../public/dancer-main-photo.css";
 
 export function DancerMainPhotoPanel({ profile, onProfileChange }: {
@@ -15,6 +16,7 @@ export function DancerMainPhotoPanel({ profile, onProfileChange }: {
   const displayed = main || photos.find(photo => photo.status === "approved");
   const pending = photos.some(photo => photo.isPrimary && photo.status === "pending");
   const [busy, setBusy] = useState(false);
+  const [cropping, setCropping] = useState(false);
   const [status, setStatus] = useState("");
   const [retry, setRetry] = useState(false);
   const action = useRef<AbortController | null>(null);
@@ -68,10 +70,13 @@ export function DancerMainPhotoPanel({ profile, onProfileChange }: {
       {displayed?.imageUrl ? <img src={displayed.imageUrl} alt="Current main profile photo" /> : <span>No main photo yet</span>}
     </div>
     <div className="dancer-main-photo-copy">
-      <h3>Main profile photo</h3>
-      <p>The full photo on your dancer card. Drag and zoom to crop before uploading. Your avatar is uploaded separately.</p>
-      <input ref={input} type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif" aria-label="Upload main profile photo" hidden disabled={busy || pending} onChange={event => { choose(event.target.files?.[0]); event.target.value = ""; }} />
-      <button type="button" disabled={busy || pending} onClick={() => input.current?.click()}>{busy ? "Updating main photo…" : main ? "Replace & crop main photo" : "Upload & crop main photo"}</button>
+      <h3>Main photo</h3>
+      <p>Shown on your dancer card. You can change or crop it anytime.</p>
+      <input ref={input} type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif" aria-label="Upload main profile photo" hidden disabled={busy || pending || cropping} onChange={event => { choose(event.target.files?.[0]); event.target.value = ""; }} />
+      <div className="dancer-main-photo-actions">
+        <button type="button" disabled={busy || pending || cropping} onClick={() => input.current?.click()}>{busy ? "Updating photo…" : displayed ? "Change photo" : "Add photo"}</button>
+        {displayed ? <DancerSavedPhotoCrop key={displayed.id} photo={displayed} disabled={busy || pending} onBusyChange={setCropping} onProfileChange={onProfileChange} /> : null}
+      </div>
       {retry ? <button type="button" disabled={busy} onClick={() => void upload()}>Retry main photo upload</button> : null}
       <p className="dancer-main-photo-status" role="status" aria-live="polite">{status || (pending ? "Main photo awaiting approval. Your current photo stays visible." : "")}</p>
     </div>

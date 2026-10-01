@@ -19,6 +19,7 @@ import "./venue-dashboard-compact.css";
 import "./venue-operations.css";
 import VenueAdminUtilities from "./VenueAdminUtilities";
 import "./dancer-profile-builder-polish.css";
+import "./dancer-onboarding.css";
 import { VenueDashboardIcon } from "./VenueDashboardIdentity";
 import { isAffiliatedDancerWorkingNow } from "@/src/lib/dancr/venue-roster";
 import { loadCustomerDashboard } from "./customer-dashboard-loader";

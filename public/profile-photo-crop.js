@@ -48,6 +48,7 @@
       const frame = dialog.querySelector("[data-crop-frame]");
       const range = dialog.querySelector("input");
       const confirm = dialog.querySelector("[data-crop-confirm]");
+      if (options.confirmLabel) confirm.textContent = options.confirmLabel;
       const reset = dialog.querySelector("[data-crop-reset]");
       const retry = dialog.querySelector("[data-crop-retry]");
       const status = dialog.querySelector("[data-crop-status]");
@@ -95,7 +96,7 @@
           frame.hidden = false;
           dialog.querySelector("[data-crop-zoom]").hidden = false;
           confirm.disabled = reset.disabled = false;
-          status.textContent = "Your photo is added to your profile only after you choose Use photo.";
+          status.textContent = options.confirmLabel ? "Your current photo stays visible until the saved crop is approved." : "Your photo is added to your profile only after you choose Use photo.";
           draw();
           canvas.focus({ preventScroll: true });
         } catch (error) {

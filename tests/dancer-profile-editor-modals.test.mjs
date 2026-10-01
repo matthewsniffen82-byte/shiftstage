@@ -55,7 +55,7 @@ test("avatar upload and removal reject duplicate and stale work", () => {
 });
 
 test("photo editor shows actual media only and does not advertise capacity", () => {
-  assert.match(photoEditor, /Add at least 1 solo picture of yourself\. You can add more later\./);
+  assert.match(photoEditor, /Add at least 1 solo photo of yourself\. You can add more later\./);
   assert.match(photoEditor, /Your photos/);
   assert.match(photoEditor, /photos\.map\(\(photo\)/);
   assert.doesNotMatch(photoEditor, /<h2>Photos<\/h2>|No profile photos uploaded yet|0\/50|\/\{MAX_DANCER_PROFILE_PHOTOS\}|up to 50|maximum 50/i);
@@ -89,7 +89,9 @@ test("video editor keeps both permission gates and hides the technical library c
   assert.match(dancerStudio, /I own this video or have permission to publish every visual, recording, song, beat, and other audio it contains\./);
   assert.match(dancerStudio, /checked=\{consentConfirmed\}/);
   assert.match(dancerStudio, /checked=\{rightsConfirmed\}/);
-  assert.match(dancerStudio, /Vertical or square · MP4, WebM, or MOV · 1–30 sec · 75 MB max/);
+  assert.match(dancerStudio, /Vertical or square · MP4, WebM, or MOV/);
+  assert.match(dancerStudio, /VIDEO_UPLOAD_MAX_SECONDS/);
+  assert.match(dancerStudio, /VIDEO_UPLOAD_MAX_BYTES \/ \(1024 \* 1024\)/);
   assert.doesNotMatch(dancerStudio, /0\/50|\{currentVideoCount\}\/\{maxVideos\}|up to 50|maximum 50/i);
   assert.match(dancerStudio, /currentVideoCount >= maxVideos/);
   assert.match(dancerStudio, /const selectedFiles = files\.slice\(0, availableSlots\)/);

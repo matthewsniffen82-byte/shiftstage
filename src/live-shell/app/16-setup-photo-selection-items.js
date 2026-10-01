@@ -645,9 +645,12 @@
       mount.innerHTML = `
         <div class="dancer-main-photo-preview">${photo ? `<img src="${escapeHtml(photo)}" alt="Current main profile photo">` : "<span>No main photo yet</span>"}</div>
         <div class="dancer-main-photo-copy">
-          <h3>Main profile photo</h3>
-          <p>The full photo on your dancer card. Drag and zoom to crop before uploading. Your avatar is uploaded separately.</p>
-          <button type="button" data-dancer-control-action="main-photo"${pending ? " disabled" : ""}>${photo ? "Replace & crop main photo" : "Upload & crop main photo"}</button>
+          <h3>Main photo</h3>
+          <p>Shown on your dancer card. You can change or crop it anytime.</p>
+          <div class="dancer-main-photo-actions">
+            <button type="button" data-dancer-control-action="main-photo"${pending ? " disabled" : ""}>${photo ? "Change photo" : "Add photo"}</button>
+            ${photo ? `<button type="button" data-dancer-control-action="crop-main-photo"${pending ? " disabled" : ""}>Crop photo</button>` : ""}
+          </div>
           <p class="dancer-main-photo-status" id="dancerDashboardMainPhotoStatus" role="status" aria-live="polite">${pending ? "Main photo awaiting approval. Your current photo stays visible." : ""}</p>
         </div>`;
     }

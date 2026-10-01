@@ -400,7 +400,7 @@ export function DancerPhotoPanel({
     <article aria-label="Profile photo manager" className="info-panel upload-panel">
       <div className="dancer-photo-upload-form">
         <div className="photo-upload-heading">
-          <span><strong>Add at least 1 solo picture of yourself. You can add more later.</strong></span>
+          <span><strong>Add at least 1 solo photo of yourself. You can add more later.</strong></span>
         </div>
         <div className="photo-source-grid">
           <label className={`photo-source-action${photoActionBusy ? " is-disabled" : ""}`}>
@@ -422,7 +422,7 @@ export function DancerPhotoPanel({
             </span>
             <span className="photo-source-copy">
               <strong>Gallery</strong>
-              <small>Choose solo photos of yourself</small>
+              <small>Choose existing photo</small>
             </span>
             <span className="photo-source-cta" aria-hidden="true">Choose</span>
           </label>
@@ -445,7 +445,7 @@ export function DancerPhotoPanel({
             </span>
             <span className="photo-source-copy">
               <strong>Camera</strong>
-              <small>Take a solo photo now</small>
+              <small>Take photo now</small>
             </span>
             <span className="photo-source-cta" aria-hidden="true">Open</span>
           </label>
@@ -475,7 +475,7 @@ export function DancerPhotoPanel({
           })}
         </div>
       ) : null}
-      <DancerInternalMainPhotoPicker key={String(profile?.id || "new-profile")} photos={photos} disabled={photoActionBusy} />
+      <DancerInternalMainPhotoPicker key={String(profile?.id || "new-profile")} photos={photos} disabled={photoActionBusy} onProfileChange={onProfileChange} />
       {!uploadOnly && photos.length ? (
         <div className="dancer-media-manager-title">
           <strong>Your photos</strong>

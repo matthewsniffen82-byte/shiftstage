@@ -13,7 +13,7 @@ const code = ts.transpileModule(fs.readFileSync("app/api/dancer/photos/preview/r
 }).outputText;
 class RateLimitError extends Error { retryAfterSeconds = 60; }
 
-function route({ signedIn = true, ownsProfile = true, limited = false } = {}) {
+function route({ signedIn = true, ownsProfile = true, limited = false, savedPhoto } = {}) {
   const events = [], exports = {};
   const client = { from(table) {
     assert.equal(table, "dancer_profiles");
@@ -31,6 +31,11 @@ function route({ signedIn = true, ownsProfile = true, limited = false } = {}) {
     "@/src/lib/api": { PublicApiError, apiError: (error, fallback) => Response.json({ ok: false, error: fallback }, { status: error.status || 500 }) },
     "@/src/lib/bounded-form-data": { readBoundedFormData: async (...args) => { events.push("body"); return readBoundedFormData(...args); } },
     "@/src/lib/dancr/image-validation": { MAX_DANCR_RAW_UPLOAD_BYTES, validateAndPrepareDancrImage: async file => { events.push("decode"); return validateAndPrepareDancrImage(file); } },
+    "@/src/lib/dancr/photo-crop-source": { ownedPhotoCropSource: async (admin, profileId, photoId) => {
+      assert.ok(savedPhoto, "File uploads must not read saved photos");
+      assert.equal(admin, client); assert.equal(profileId, "own-profile"); assert.equal(photoId, "saved-photo-id");
+      events.push("saved"); return savedPhoto;
+    } },
     "@/src/lib/dancr/public-request-rate-limit": {
       PublicRequestRateLimitError: RateLimitError,
       enforcePublicRequestRateLimit: async (_admin, input) => { events.push("rate"); assert.equal(input.subject, "signed-in-user"); if (limited) throw new RateLimitError(); },
@@ -100,5 +105,22 @@ test("private previews decode PNG and WebP uploads and flatten transparency safe
     assert.equal(metadata.hasAlpha, false);
     const pixels = await sharp(output).raw().toBuffer();
     assert.ok(pixels.every(value => value <= 2), `${format}: transparent pixels should become black`);
+  }
+});
+
+test("reopening a saved crop derives ownership from the session and retains private preview protections", async () => {
+  const image = await sharp({ create: { width: 80, height: 120, channels: 3, background: "#8351a2" } }).jpeg().toBuffer();
+  const savedPhoto = new Blob([image], { type: "image/jpeg" });
+  for (const [options, expected] of [[{}, 200], [{ signedIn: false }, 401], [{ ownsProfile: false }, 403], [{ limited: true }, 429]]) {
+    const api = route({ savedPhoto, ...options });
+    const body = new FormData();
+    body.set("photoId", "saved-photo-id"); body.set("profileId", "another-profile");
+    const response = await api.post(new Request("https://example.test/api/dancer/photos/preview", { method: "POST", body }));
+    assert.equal(response.status, expected);
+    assert.equal(response.headers.get("cache-control"), "private, no-store");
+    if (expected === 200) {
+      assert.match((await response.json()).imageDataUrl, /^data:image\/jpeg;base64,/);
+      assert.deepEqual(api.events, ["auth", "rate", "body", "saved", "decode"]);
+    } else assert.ok(!api.events.includes("saved"));
   }
 });

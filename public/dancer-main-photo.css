@@ -4,13 +4,14 @@
   display: grid;
   grid-template-columns: 96px minmax(0, 1fr);
   align-items: start;
-  gap: 16px;
+  gap: 12px;
   width: 100%;
   min-width: 0;
-  padding: 16px;
-  border: 1px solid rgba(167, 139, 250, .24);
-  border-radius: 16px;
-  background: #100d18;
+  padding: 12px 0;
+  border: 0;
+  border-top: 1px solid #ffffff14;
+  border-radius: 0;
+  background: transparent;
 }
 .dancer-main-photo-panel[hidden] { display: none !important; }
 .dancer-main-photo-preview { width: 100%; aspect-ratio: 3 / 4; overflow: hidden; display: grid; place-items: center; border-radius: 10px; background: #211a2c; }
@@ -24,6 +25,10 @@
 .dancer-main-photo-copy button:focus-visible { outline: 2px solid #ddd0ff; outline-offset: 3px; }
 .dancer-main-photo-copy .dancer-main-photo-status { font-size: 12px; }
 .dancer-main-photo-status:empty { display: none; }
+.dancer-main-photo-actions { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 6px 8px; }
+.dancer-saved-photo-crop { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 6px; min-width: 0; }
+.dancer-saved-photo-crop p { flex-basis: 100%; margin: 0; color: #c9c3d2; font-size: 12px; line-height: 1.5; }
+.dancer-main-photo-panel .dancer-main-photo-copy button { padding: 8px 10px; background: #1b1723; border-color: #4f455f; }
 @media (max-width: 400px) {
   .dancer-main-photo-panel { grid-template-columns: 76px minmax(0, 1fr); gap: 12px; padding: 12px; }
 }

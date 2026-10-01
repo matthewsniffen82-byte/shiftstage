@@ -136,7 +136,7 @@ export function DancerPanel({
     stageName: identityContent("stageName"),
     city: identityContent("city"),
     avatar: avatarContent,
-    photos: photoContent,
+    photos: <>{mainPhotoContent}{photoContent}</>,
     videos: videoContent,
   };
   const profileMediaWorkspace = (
@@ -148,7 +148,7 @@ export function DancerPanel({
         </span>
         <DancerProfilePreview
           buttonClassName="dancer-profile-editor-launch-button"
-          buttonLabel="Edit profile"
+          buttonLabel="Edit"
           city={draftIdentity.city}
           editorSections={profileEditorSections}
           isApproved
@@ -212,7 +212,7 @@ export function DancerPanel({
               videoContent={videoContent}
             />
           )}
-          venueVerificationContent={<DancerNfcPanel initialAffiliations={affiliations} initialNfcState={nfc || null} onAuthorizationChange={refreshDancerProfile} />}
+          venueVerificationContent={<DancerNfcPanel onboarding initialAffiliations={affiliations} initialNfcState={nfc || null} onAuthorizationChange={refreshDancerProfile} />}
         />
       ) : null}
       {isApproved ? (
@@ -246,7 +246,6 @@ export function DancerPanel({
               />
             </div>
           </DashboardSection>
-          {profileMediaSection}
           <DashboardSection
             description="Views, followers, and engagement."
             emphasis="secondary"
@@ -259,6 +258,7 @@ export function DancerPanel({
           </DashboardSection>
         </DancerAgeVerificationGate>
       ) : null}
+      {isApproved ? profileMediaSection : null}
     </>
   );
 }
@@ -322,14 +322,14 @@ function DancerActivationConfirmation({
       <span className="dancer-activation-check" aria-hidden="true">✓</span>
       <div className="dancer-activation-copy">
         <span className="eyebrow">Dancer activation complete</span>
-        <h2 id="dancer-activation-title">Your profile is live</h2>
+        <h2 id="dancer-activation-title">You’re ready</h2>
         <p>
           {venueName ? `Approved through ${venueName}. ` : "Your dressing-room tap was approved. "}
-          Guests can now discover your profile on MyDancr.
+          Your MyDancr profile is active.
         </p>
         <div className="dancer-activation-actions">
-          {slug ? <Link href={`/dancers/${encodeURIComponent(slug)}`} onClick={acknowledgeCompletion}>View live profile</Link> : null}
-          <a href="#dancer-profile-media" onClick={openProfileManager}>Manage profile</a>
+          {slug ? <Link href={`/dancers/${encodeURIComponent(slug)}`} onClick={acknowledgeCompletion}>View my profile</Link> : null}
+          <a href="#dancer-profile-media" onClick={openProfileManager}>Go to dashboard</a>
         </div>
       </div>
       <button type="button" onClick={acknowledgeCompletion} aria-label="Dismiss profile live confirmation">
