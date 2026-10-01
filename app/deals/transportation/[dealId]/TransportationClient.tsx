@@ -8,6 +8,10 @@ import { readBrowserAuthSession, persistRefreshedBrowserAuthSession } from "@/sr
 import { normalizeGuestListDetails, type GuestListDetails } from "@/src/lib/dancr/guest-list";
 import "./transportation.css";
 
+function EntryChevron() {
+  return <span className="club-entry-chevron" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6" /></svg></span>;
+}
+
 function formatContactPhoneInput(event: React.SyntheticEvent<HTMLInputElement>) {
   if ((event.nativeEvent as InputEvent).isComposing) return;
   const input = event.currentTarget, previous = input.value;
@@ -223,7 +227,7 @@ export default function TransportationClient({ deal, venue, shuttleAvailable, in
         <form id="club-transport-form" onSubmit={submit} aria-labelledby="club-transport-heading">
           {deal ? <section className="club-entry-option">
             <h2><button className="club-entry-toggle" type="button" aria-expanded={showingArrivalForm} aria-controls="club-arrival-form" data-entry-option="arrival" disabled={busy || guestBusy || !!attemptedRequest.current} onClick={() => toggleForm("arrival")}>
-              <span><strong>Arriving on your own</strong><small>Choose your arrival method for free entry</small></span><span className="club-entry-chevron" aria-hidden="true">⌄</span>
+              <span><strong>Arriving on your own</strong><small>Choose your arrival method for free entry</small></span><EntryChevron />
             </button></h2>
             <fieldset className="club-entry-form" id="club-arrival-form" hidden={!showingArrivalForm} disabled={!showingArrivalForm || busy || guestBusy}>
             <p>Free Entry at {venue.name}. Choose your arrival method to get your pass. No sign-in needed.</p>
@@ -240,7 +244,7 @@ export default function TransportationClient({ deal, venue, shuttleAvailable, in
           </section> : null}
           <section className="club-entry-option">
             <h2><button className="club-entry-toggle" type="button" aria-expanded={showingShuttleForm} aria-controls="club-shuttle-form" data-entry-option="club_shuttle" disabled={busy || guestBusy || !!attemptedRequest.current} onClick={() => toggleForm("club_shuttle")}>
-              <span><strong>Free transport</strong><small>{deal ? "Free pickup + entry" : "Request a free pickup"}</small></span><span className="club-entry-chevron" aria-hidden="true">⌄</span>
+              <span><strong>Free transport</strong><small>{deal ? "Free pickup + entry" : "Request a free pickup"}</small></span><EntryChevron />
             </button></h2>
             <fieldset className="club-entry-form" id="club-shuttle-form" hidden={!showingShuttleForm} disabled={!showingShuttleForm || busy || guestBusy}>
             <div className="club-transport-handoff"><p><strong>No sign-in needed.</strong> Send your details to the club. They’ll call to confirm availability, pickup location, and time.</p><p>Your ride is confirmed only when the club accepts.</p></div>
@@ -261,7 +265,7 @@ export default function TransportationClient({ deal, venue, shuttleAvailable, in
       </>}
     {deal ? <section className="club-entry-option club-guest-list-section" aria-labelledby="club-guest-list-heading">
       <h2 id="club-guest-list-heading"><button className="club-entry-toggle" type="button" aria-expanded={guestOpen} aria-controls="club-guest-list-panel" data-entry-option="guest_list" disabled={guestBusy} onClick={() => setGuestOpen(!guestOpen)}>
-        <span><strong>Guest List</strong><small>Send your details for a free entry pass</small></span><span className="club-entry-chevron" aria-hidden="true">⌄</span>
+        <span><strong>Guest List</strong><small>Send your details for a free entry pass</small></span><EntryChevron />
       </button></h2>
       {guestListJoined ? <p role="status">You’re on the guest list. Your details are saved with {venue.name}.</p> : null}
       <div id="club-guest-list-panel" hidden={!guestOpen}>

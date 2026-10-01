@@ -1,4 +1,4 @@
-/* Free-entry and pickup screens share the discovery controls' neutral surfaces. */
+/* Free-entry and pickup screens use subtle violet surfaces for the arrival choices. */
 .club-transport-page {
   min-height: 100dvh;
   padding: 32px 16px;
@@ -14,12 +14,13 @@
   box-sizing: border-box;
   width: min(100%, 480px);
   padding: 20px;
-  border: 1px solid rgba(203, 213, 225, .2);
+  border: 1px solid rgba(196, 181, 253, .22);
   border-radius: 20px;
-  background: #08090c;
+  background: linear-gradient(145deg, #15101e, #0c0c12 44%, #08090c);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, .07),
     inset 0 -1px 0 rgba(148, 163, 184, .06),
+    0 -8px 24px -8px rgba(203, 213, 225, .12),
     0 16px 30px rgba(0, 0, 0, .62);
   overflow-wrap: anywhere;
 }
@@ -44,19 +45,42 @@ body.dancr-button-system .club-transport-card .club-transport-change {
 .club-entry-option h2 { margin: 0; font-size: 15px; }
 body.dancr-button-system .club-transport-card .club-entry-toggle {
   display: flex; align-items: center; justify-content: space-between; gap: 12px;
-  box-sizing: border-box; width: 100%; min-height: 64px; padding: 12px;
-  border: 1px solid #34343c !important; border-radius: 12px !important;
-  background: linear-gradient(#050507, #050507) !important; box-shadow: none !important;
-  color: #f4f2f8 !important; text-align: left; font: inherit; cursor: pointer;
+  box-sizing: border-box; width: 100%; min-height: 76px !important; padding: 14px;
+  border: 1px solid #4a3a63 !important; border-radius: 16px !important;
+  background: linear-gradient(115deg, #21162f, #13111b) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .06), 0 4px 12px rgba(0, 0, 0, .18) !important;
+  color: #fff !important; text-align: left; font: inherit; cursor: pointer;
+  transition: border-color .18s ease, box-shadow .18s ease !important;
 }
 body.dancr-button-system .club-transport-card .club-entry-toggle[aria-expanded=true] {
-  border-color: #745696 !important; background: linear-gradient(#160e24, #160e24) !important;
+  border-color: var(--dancr-color-avatar-ring-violet, #8b5cf6) !important;
+  background: linear-gradient(115deg, #2a1745, #171020) !important;
+  box-shadow: inset 0 1px 0 rgba(196, 181, 253, .12), 0 0 0 1px rgba(139, 92, 246, .12) !important;
 }
+.club-entry-toggle > span:first-child { min-width: 0; }
 .club-entry-toggle strong, .club-entry-toggle small { display: block; line-height: 1.4; }
 .club-entry-toggle strong { font-size: 15px; font-weight: 650; }
-.club-entry-toggle small { margin-top: 3px; font-size: 12px; font-weight: 400; color: #c8c4cf; }
-.club-entry-chevron { font-size: 20px; color: #b9b5c3; }
+.club-entry-toggle small { margin-top: 4px; font-size: 12px; font-weight: 400; color: #d1cbdc; }
+.club-entry-chevron {
+  display: grid; place-items: center; flex: 0 0 30px; width: 30px; height: 30px;
+  box-sizing: border-box; border: 1px solid rgba(139, 92, 246, .3); border-radius: 50%;
+  color: var(--dancr-color-avatar-ring-violet, #8b5cf6); background: #21152f;
+  transition: transform .18s ease;
+}
+.club-entry-chevron svg { display: block; width: 18px; height: 18px; }
 .club-entry-toggle[aria-expanded=true] .club-entry-chevron { transform: rotate(180deg); }
+.club-transport-note > summary { min-height: 32px; padding-block: 6px; cursor: pointer; }
+.club-transport-note > summary::marker { color: var(--dancr-color-avatar-ring-violet, #8b5cf6); }
+.club-transport-note > summary:focus-visible { outline: 2px solid #c4b5fd; outline-offset: 3px; border-radius: 4px; }
+@media (hover: hover) {
+  body.dancr-button-system .club-transport-card .club-entry-toggle:not(:disabled):hover {
+    border-color: #9673c3 !important;
+    box-shadow: inset 0 1px 0 rgba(196, 181, 253, .1), 0 4px 16px rgba(0, 0, 0, .24) !important;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  body.dancr-button-system .club-transport-card .club-entry-toggle, .club-entry-chevron { transition: none !important; }
+}
 .club-entry-toggle:disabled { opacity: .55; cursor: default; }
 .club-entry-form { border: 0; padding: 0; margin: 12px 0 0; min-width: 0; }
 .club-entry-form[hidden] { display: none !important; }
