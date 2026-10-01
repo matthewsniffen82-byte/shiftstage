@@ -165,7 +165,7 @@
           class="home-filter-toggle"
           id="homeFilterToggle"
           type="button"
-          aria-label="Filters"
+          aria-label="Open filters"
           aria-expanded="false"
           aria-controls="homeAdvancedFilters"
         >
@@ -177,8 +177,8 @@
             <path d="M10 17h10"></path>
             <circle cx="8" cy="17" r="2"></circle>
           </svg>
-          <span>Filters</span>
-          <span class="home-filter-toggle-count" id="homeFilterCount" hidden>0</span>
+          <span class="home-filter-toggle-label">Filters</span>
+          <span class="home-filter-toggle-count" id="homeFilterCount" aria-hidden="true" hidden>0</span>
         </button>
         <div class="home-advanced-filters" id="homeAdvancedFilters">
           <div class="field distance-picker-field" id="distancePickerField">
@@ -246,9 +246,9 @@
       </section>
 
       <div class="home-live-summary" id="homeLiveSummary" aria-live="polite">
-        <span id="homeLiveRadius">25 mi radius · All clubs</span>
+        <span id="homeLiveRadius">25 mi · All Clubs</span>
         <span class="home-live-summary-divider" aria-hidden="true">·</span>
-        <strong id="homeLiveWorking">0 working now</strong>
+        <strong id="homeLiveWorking">0 Working Now</strong>
       </div>
 
       <a

@@ -942,16 +942,16 @@
       const venueName = selectedVenueFilter();
       const workingNowCount = getItems(city, "tonight").length;
       const radiusLabel = distanceSelect?.value || "25 mi";
-      const venueLabel = venueName === "all" ? "All clubs" : resolveVenueByName(venueName, city)?.name || venueName;
+      const venueLabel = venueName === "all" ? "All Clubs" : resolveVenueByName(venueName, city)?.name || venueName;
       const loading = liveDiscoveryIsLoading(city);
       const unavailable = liveMarketState[city] === "error";
       const workingSummary = document.getElementById("homeLiveWorking");
-      document.getElementById("homeLiveRadius").textContent = city === ALL_CITIES ? `All cities · ${venueLabel}` : `${radiusLabel} radius · ${venueLabel}`;
+      document.getElementById("homeLiveRadius").textContent = city === ALL_CITIES ? `All cities · ${venueLabel}` : `${radiusLabel} · ${venueLabel}`;
       workingSummary.textContent = unavailable
         ? "Live results unavailable"
         : loading
         ? "Live schedule"
-        : `${workingNowCount} working now`;
+        : `${workingNowCount} Working Now`;
       summary.toggleAttribute("aria-busy", loading);
       workingSummary.classList.toggle("is-empty", !loading && !unavailable && workingNowCount === 0);
       workingSummary.classList.toggle("is-active", !loading && !unavailable && workingNowCount > 0);
@@ -972,8 +972,8 @@
       homeFilterToggle.setAttribute(
         "aria-label",
         activeFilterCount > 0
-          ? `Filters, ${activeFilterCount} active`
-          : "Filters"
+          ? `Open filters, ${activeFilterCount} active`
+          : "Open filters"
       );
     }
 

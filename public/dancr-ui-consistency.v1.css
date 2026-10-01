@@ -1148,3 +1148,126 @@ html body.dancr-button-system #results.venue-profile-overlay .venue-detail .venu
   font-weight: 900;
   text-align: center;
 }
+
+/* Compact discovery controls: this scope ends before the results heading. */
+html body.dancr-button-system > .app main.stack > .home-discovery-controls {
+  grid-template-columns: minmax(0, 1fr) auto !important;
+  align-items: center !important;
+  gap: 4px 8px !important;
+  margin-block: -6px 0 !important;
+  padding: 0 !important;
+}
+html body.dancr-button-system > .app main.stack > .home-discovery-controls .home-city-filter { gap: 0 !important; }
+html body.dancr-button-system > .app main.stack > .home-discovery-controls #citySelectLabel {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  margin: -1px !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  clip-path: inset(50%) !important;
+  white-space: nowrap !important;
+}
+html body.dancr-button-system > .app main.stack > .home-discovery-controls :is(#citySelectButton, #homeFilterToggle) {
+  --discovery-control-face: #050507;
+  --discovery-control-edge: #34343c;
+  --discovery-control-inset: 4px;
+  height: 44px !important;
+  min-height: 44px !important;
+  max-height: 44px !important;
+  border-radius: 10px !important;
+  font-size: 14px !important;
+  font-weight: 650 !important;
+  line-height: 18px !important;
+}
+html body.dancr-button-system > .app main.stack > .home-discovery-controls #citySelectButton {
+  grid-template-columns: 18px minmax(0, 1fr) 12px !important;
+  gap: 7px !important;
+  padding: 0 12px !important;
+  color: #fff !important;
+}
+html body.dancr-button-system > .app main.stack > .home-discovery-controls #citySelectButton > .city-picker-trigger-icon,
+html body.dancr-button-system > .app main.stack > .home-discovery-controls #homeFilterToggle > .home-filter-toggle-icon {
+  width: 18px !important;
+  height: 18px !important;
+  color: #a78bfa !important;
+}
+html body.dancr-button-system > .app main.stack > .home-discovery-controls #citySelectButton > .city-picker-chevron {
+  width: 12px !important;
+  height: 12px !important;
+  color: #918c9b !important;
+  stroke: currentColor !important;
+}
+html body.dancr-button-system > .app main.stack > .home-discovery-controls #homeFilterToggle {
+  display: inline-flex !important;
+  min-width: 100px !important;
+  gap: 6px !important;
+  padding: 0 12px !important;
+}
+html body.dancr-button-system > .app main.stack > .home-discovery-controls #homeFilterToggle:is(.has-active-filters, .is-open),
+html body.dancr-button-system > .app main.stack > .home-discovery-controls #citySelectButton[aria-expanded="true"] {
+  --discovery-control-face: #0c0812;
+  --discovery-control-edge: #745696;
+}
+html body.dancr-button-system > .app main.stack > .home-discovery-controls #homeAdvancedFilters {
+  grid-column: 1 / -1;
+  display: none;
+}
+html body.dancr-button-system > .app main.stack > .home-discovery-controls #homeAdvancedFilters.is-open { display: grid; }
+html body.dancr-button-system > .app main.stack > #homeLiveSummary {
+  min-height: 14px !important;
+  margin-block: -6px -5px !important;
+  padding: 0 !important;
+  gap: 3px 5px !important;
+  flex-wrap: wrap;
+  color: #96939f !important;
+  font-size: 11px !important;
+  font-weight: 500 !important;
+  line-height: 1.3 !important;
+}
+html body.dancr-button-system > .app main.stack > #homeLiveSummary #homeLiveRadius {
+  white-space: normal;
+  overflow-wrap: anywhere;
+  overflow: visible;
+}
+html body.dancr-button-system > .app main.stack > #homeLiveSummary #homeLiveWorking {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  color: #96939f !important;
+  font-weight: 650 !important;
+}
+html body.dancr-button-system > .app main.stack > #homeLiveSummary #homeLiveWorking.is-active { color: #34d399 !important; }
+html body.dancr-button-system > .app main.stack > #homeLiveSummary #homeLiveWorking.is-active::before {
+  content: "";
+  width: 5px;
+  height: 5px;
+  flex: 0 0 5px;
+  border-radius: 50%;
+  background: currentColor;
+}
+@media (max-width: 720px) {
+  html body.dancr-button-system > .app main.stack > .home-discovery-controls { grid-template-columns: minmax(0, 1fr) 44px !important; }
+  html body.dancr-button-system > .app main.stack > .home-discovery-controls #homeFilterToggle {
+    width: 44px !important;
+    min-width: 44px !important;
+    max-width: 44px !important;
+    padding: 0 !important;
+    gap: 0 !important;
+  }
+  html body.dancr-button-system > .app main.stack > .home-discovery-controls #homeFilterToggle::before { inset: 4px !important; }
+  html body.dancr-button-system > .app main.stack > .home-discovery-controls #homeFilterToggle > .home-filter-toggle-label { display: none !important; }
+  html body.dancr-button-system > .app main.stack > .home-discovery-controls #homeFilterToggle > #homeFilterCount:not([hidden]) {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 5px;
+    min-width: 5px;
+    height: 5px;
+    padding: 0;
+    border: 0;
+    background: #a78bfa;
+    font-size: 0;
+  }
+}

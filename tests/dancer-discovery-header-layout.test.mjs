@@ -58,7 +58,7 @@ test("segmented dancer filters use semantic active colors and neutral inactive s
 
 test("existing city, radius, club, Working Now, Not Working Now, and filter result logic remains canonical", () => {
   assert.match(liveShell, /const radiusLabel = distanceSelect\?\.value \|\| "25 mi"/);
-  assert.match(liveShell, /const venueLabel = venueName === "all" \? "All clubs" : resolveVenueByName\(venueName, city\)\?\.name \|\| venueName/);
+  assert.match(liveShell, /const venueLabel = venueName === "all" \? "All Clubs" : resolveVenueByName\(venueName, city\)\?\.name \|\| venueName/);
   assert.match(liveShell, /const workingNowCount = getItems\(city, "tonight"\)\.length/);
   assert.match(liveShell, /now: profiles\.filter\(\(profile\) => isWorkingTonight\(profile, city\)\)\.length/);
   assert.match(liveShell, /not_now: profiles\.filter\(\(profile\) => !isWorkingTonight\(profile, city\)\)\.length/);

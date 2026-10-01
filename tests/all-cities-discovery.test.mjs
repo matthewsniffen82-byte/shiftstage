@@ -112,6 +112,7 @@ test('combined cards hide retired future schedules and retain profile identity',
   const vegas = { id: 'vegas', slug: 'luna-vegas', name: 'Luna', city: 'Las Vegas', scheduled: true, shiftStartsAt: '2026-09-08T05:00:00Z' };
   const miami = { ...vegas, id: 'miami', slug: 'luna-miami', city: 'Miami' };
   const ctx = context({ allCitiesMarket: { dancers: [vegas, miami], venues: [] },
+    internalProfileMatches: () => null,
     isWorkingTonight: () => false, isApprovedPublicProfile: () => true, withTrendingRank: p => p,
     cityTimeZone: city => city === 'Miami' ? 'America/New_York' : 'America/Los_Angeles',
   });
