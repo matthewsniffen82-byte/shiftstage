@@ -20,7 +20,7 @@ function fixture({ manual = false } = {}) {
   });
   const hiddenPanel = { classList: { contains: () => false } };
   const document = {
-    visibilityState: 'visible', body: { classList }, addEventListener() {},
+    visibilityState: 'visible', body: { classList }, documentElement: { classList: { toggle() {} } }, addEventListener() {},
     querySelectorAll: selector => selector === '.home-tv-feed-video' ? videos : [...videos, ...(state.profileVideo ? [state.profileVideo] : [])],
     querySelector: selector => selector.startsWith('.page-panel.show') ? state.profileOpen ? {} : null
       : selector.includes('aria-pressed') ? null : selector.startsWith('.home-tv-feed-slide') ? videos[0].slide : null,

@@ -418,7 +418,7 @@
         ? `<img class="portrait profile-media-thumb-poster-image" src="${escapeHtml(posterUrl)}" alt="" aria-hidden="true" loading="${index < 6 ? "eager" : "lazy"}" fetchpriority="low" decoding="async" draggable="false" data-image-state="loading">`
         : '<span class="profile-media-thumb-poster" aria-hidden="true"></span>';
       return `
-        <button class="thumb profile-media-thumb is-video" type="button" data-profile-tv-index="${index}" aria-pressed="false" aria-label="Open ${escapeHtml(profileName)} profile video ${index + 1} of ${total} in scrolling cards, ${escapeHtml(scheduleLabel)}">
+        <button class="thumb profile-media-thumb is-video" type="button" data-stable-media-key="video:${escapeHtml(item.id || item.videoUrl)}" data-profile-tv-index="${index}" aria-pressed="false" aria-label="Open ${escapeHtml(profileName)} profile video ${index + 1} of ${total} in scrolling cards, ${escapeHtml(scheduleLabel)}">
           ${previewMarkup}
           <span class="profile-media-thumb-play" aria-hidden="true"></span>
         </button>
@@ -444,19 +444,12 @@
     }
 
     function appendNextProfileMediaBatch(tab = modalGallery.dataset.mediaTab, options = {}) {
-      const sentinel = profileMediaSentinel();
       let appended = false;
       if (tab === "video") {
         const items = Array.isArray(modalGallery.profileTvVideos) ? modalGallery.profileTvVideos : [];
         const start = Number(modalGallery.profileVisibleVideoCount || 0);
         const end = Math.min(items.length, start + PROFILE_MEDIA_PAGE_SIZE);
         if (end > start) {
-          sentinel.insertAdjacentHTML(
-            "beforebegin",
-            items.slice(start, end).map((item, offset) =>
-              profileVideoThumbMarkup(item, start + offset, items.length, modalGallery.profileTvProfileName || "Dancer")
-            ).join("")
-          );
           modalGallery.profileVisibleVideoCount = end;
           appended = true;
         }
@@ -465,20 +458,15 @@
         const start = Number(modalGallery.profileVisiblePhotoCount || 0);
         const end = Math.min(items.length, start + PROFILE_MEDIA_PAGE_SIZE);
         if (end > start) {
-          sentinel.insertAdjacentHTML(
-            "beforebegin",
-            items.slice(start, end).map((item, offset) =>
-              profilePhotoThumbMarkup(item, items.length, start + offset)
-            ).join("")
-          );
           modalGallery.profileVisiblePhotoCount = end;
           appended = true;
         }
       }
       if (appended) {
+        renderProfileMediaLibrary();
         profileMediaLastAppendScrollTop = Math.max(0, Number(profileModal?.scrollTop || 0));
       }
-      sentinel.hidden = !profileMediaHasMore(tab);
+      profileMediaSentinel().hidden = !profileMediaHasMore(tab);
       if (!options.skipObserve) window.requestAnimationFrame(observeProfileMediaSentinel);
     }
 
@@ -511,16 +499,31 @@
 
     profileModal?.addEventListener("scroll", queueProfileMediaObserverAfterScroll, { passive: true });
 
+    function renderProfileMediaLibrary() {
+      const photos = modalGallery.profilePhotoItems || [];
+      const videos = modalGallery.profileTvVideos || [];
+      renderStableMediaMarkup(modalGallery,
+        photos.slice(0, modalGallery.profileVisiblePhotoCount)
+          .map((item, index) => profilePhotoThumbMarkup(item, photos.length, index)).join("") +
+        videos.slice(0, modalGallery.profileVisibleVideoCount)
+          .map((item, index) => profileVideoThumbMarkup(item, index, videos.length, modalGallery.profileTvProfileName || "Dancer")).join("")
+      );
+      profileMediaSentinel();
+    }
+
     function initializeProfileMediaLibrary(profile, baseIndex, options = {}) {
       profileMediaObserver?.disconnect();
       profileMediaObserver = null;
+      // Scope retained previews to this profile and its public/private context.
+      const scope = JSON.stringify([profile.id || profile.slug || profile.name, Boolean(options.preview), Boolean(profile.internalRoster), profile.status]);
+      const retainVideos = modalGallery.profileMediaScope === scope;
+      modalGallery.profileMediaScope = scope;
+      modalGallery.profileTvLoadRequest = null;
       modalGallery.profilePhotoItems = profilePhotoGalleryItems(profile, baseIndex, options);
       modalGallery.profileVisiblePhotoCount = Math.min(modalGallery.profilePhotoItems.length, PROFILE_MEDIA_PAGE_SIZE);
-      modalGallery.profileTvVideos = [];
-      modalGallery.profileVisibleVideoCount = 0;
-      renderStableMediaMarkup(modalGallery, modalGallery.profilePhotoItems
-        .slice(0, modalGallery.profileVisiblePhotoCount)
-        .map((item, index) => profilePhotoThumbMarkup(item, modalGallery.profilePhotoItems.length, index)).join(""));
+      if (!retainVideos) modalGallery.profileTvVideos = [];
+      modalGallery.profileVisibleVideoCount = Math.min(modalGallery.profileTvVideos.length, PROFILE_MEDIA_PAGE_SIZE);
+      renderProfileMediaLibrary();
       modalGallery.querySelectorAll("[data-profile-photo-index]").forEach((thumb, index) => {
         thumb.classList.toggle("active", index === 0);
         thumb.setAttribute("aria-pressed", String(index === 0));

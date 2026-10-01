@@ -25,6 +25,7 @@ import type { MyDancrTvVideo } from "@/src/lib/dancr/tv";
 import { useAdaptiveVideoWarmup } from "@/src/lib/dancr/use-adaptive-video-warmup";
 import { useVideoSoundPreference } from "@/src/lib/dancr/use-video-sound-preference";
 import { useAnonymousMediaLikes } from "@/src/lib/dancr/use-anonymous-media-likes";
+import { videoPosterRef } from "@/src/lib/dancr/video-resource-ref";
 
 const VIEWER_SESSION_KEY = "mydancrTvViewerSessionV1";
 const FILTERS = [
@@ -764,6 +765,19 @@ export default function TvFeedClient({
                     }
                   }}
                 />
+                {video.posterUrl ? (
+                  <img
+                    className="tv-frame-poster"
+                    ref={videoPosterRef}
+                    src={video.posterUrl}
+                    alt=""
+                    aria-hidden="true"
+                    decoding="async"
+                    loading={Math.abs(videoIndex - activeVideoIndex) <= 2 ? "eager" : "lazy"}
+                    onError={(event) => { event.currentTarget.hidden = true; }}
+                    onLoad={(event) => { event.currentTarget.hidden = false; }}
+                  />
+                ) : null}
                 {playbackFeedback?.videoId === video.id ? (
                   <span className="tv-playback-feedback" key={playbackFeedback.key} aria-hidden="true">
                     <PlaybackFeedbackIcon paused={playbackFeedback.paused} />
@@ -1120,6 +1134,8 @@ function TvStyles() {
       .tv-profile-card { position: relative; width: 100%; height: 100%; display: block; overflow: hidden; color: inherit; background: #000; text-decoration: none; }
       .tv-player video { width: 100%; height: 100%; display: block; object-fit: contain; background: transparent; cursor: pointer; }
       .tv-player video:focus-visible { outline: 2px solid #67e8f9; outline-offset: -3px; }
+      .tv-frame-poster { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; pointer-events: none; }
+      video[data-frame-ready="true"] + .tv-frame-poster { opacity: 0; }
       .tv-playback-feedback { position: absolute; z-index: 7; top: 50%; left: 50%; width: 64px; height: 64px; display: grid; place-items: center; border: 1px solid rgba(255,255,255,.28); border-radius: 50%; color: #fff; background: rgba(0,0,0,.58); box-shadow: 0 10px 30px rgba(0,0,0,.42); pointer-events: none; transform: translate(-50%, -50%); animation: tv-playback-feedback 850ms ease both; backdrop-filter: blur(10px); }
       .tv-playback-feedback svg { width: 29px; height: 29px; fill: currentColor; stroke: none; }
       .tv-playback-retry { position: absolute; z-index: 6; top: 50%; left: 50%; width: 58px; min-width: 58px; max-width: 58px; height: 58px; min-height: 58px; display: grid; place-items: center; padding: 0; border: 1px solid rgba(255,255,255,.18); border-radius: 999px; color: #f5f4f7; background: rgba(25,25,30,.9); box-shadow: 0 10px 28px rgba(0,0,0,.38), inset 0 1px 0 rgba(255,255,255,.07); transform: translate(-50%, -50%); cursor: pointer; }

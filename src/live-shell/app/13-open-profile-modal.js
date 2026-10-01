@@ -85,7 +85,7 @@
       }
       initializeProfileMediaLibrary(profile, profileIndex, { preview: isPrivatePreview });
       const photoCount = modalGallery.profilePhotoItems?.length || 0;
-      syncProfileMediaTabCounts(photoCount, 0);
+      syncProfileMediaTabCounts(photoCount, modalGallery.profileTvVideos.length);
       modalProfileAvatar.className = `profile-modal-avatar ${basePhoto}${avatarPhotoUrl ? " has-photo" : ""}`;
       modalProfileAvatar.dataset.workingNow = String(modalIsWorkingNow);
       modalProfileAvatar.dataset.upcoming = String(modalHasUpcomingShift);
@@ -684,10 +684,7 @@
       modalGallery.parentElement.querySelector("[data-profile-tv-retry]")?.remove();
       modalMediaTvTab.setAttribute("aria-busy", "true");
       modalMediaTvTab.setAttribute("aria-label", "Loading profile videos");
-      modalMediaTvCount.textContent = "…";
-      modalGallery.querySelectorAll("[data-profile-tv-index]").forEach((thumb) => (thumb.closest(".profile-media-grid-cell") || thumb).remove());
-      modalGallery.profileTvVideos = [];
-      modalGallery.profileVisibleVideoCount = 0;
+      if (!modalGallery.profileTvVideos?.length) modalMediaTvCount.textContent = "…";
       modalGallery.profileTvProfileName = profile.name || "Dancer";
       try {
         const payload = await requestProfileTvPayload(profile, requestCity);
@@ -698,13 +695,16 @@
         if (!payload?.ok || !Array.isArray(payload.videos)) throw new Error("Unable to load profile videos.");
         const videos = payload.videos.slice(0, MAX_DANCER_PROFILE_VIDEOS);
         modalGallery.profileTvVideos = videos;
-        modalGallery.profileVisibleVideoCount = 0;
-        appendNextProfileMediaBatch("video", { skipObserve: true });
+        modalGallery.profileVisibleVideoCount = Math.min(videos.length, Math.max(PROFILE_MEDIA_PAGE_SIZE, modalGallery.profileVisibleVideoCount || 0));
+        renderProfileMediaLibrary();
         const photoCount = modalGallery.profilePhotoItems?.length || 0;
         syncProfileMediaTabCounts(photoCount, videos.length);
         window.requestAnimationFrame(observeProfileMediaSentinel);
       } catch {
         if (modalGallery.dataset.profileMediaProfile !== requestProfileId || modalGallery.profileTvLoadRequest !== requestToken) return;
+        modalGallery.profileTvVideos = [];
+        modalGallery.profileVisibleVideoCount = 0;
+        renderProfileMediaLibrary();
         syncProfileMediaTabCounts(modalGallery.profilePhotoItems?.length || 0, 0);
         const retry = document.createElement("button");
         retry.type = "button";

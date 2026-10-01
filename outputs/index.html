@@ -54240,7 +54240,7 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
         ? `<img class="portrait profile-media-thumb-poster-image" src="${escapeHtml(posterUrl)}" alt="" aria-hidden="true" loading="${index < 6 ? "eager" : "lazy"}" fetchpriority="low" decoding="async" draggable="false" data-image-state="loading">`
         : '<span class="profile-media-thumb-poster" aria-hidden="true"></span>';
       return `
-        <button class="thumb profile-media-thumb is-video" type="button" data-profile-tv-index="${index}" aria-pressed="false" aria-label="Open ${escapeHtml(profileName)} profile video ${index + 1} of ${total} in scrolling cards, ${escapeHtml(scheduleLabel)}">
+        <button class="thumb profile-media-thumb is-video" type="button" data-stable-media-key="video:${escapeHtml(item.id || item.videoUrl)}" data-profile-tv-index="${index}" aria-pressed="false" aria-label="Open ${escapeHtml(profileName)} profile video ${index + 1} of ${total} in scrolling cards, ${escapeHtml(scheduleLabel)}">
           ${previewMarkup}
           <span class="profile-media-thumb-play" aria-hidden="true"></span>
         </button>
@@ -54266,19 +54266,12 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
     }
 
     function appendNextProfileMediaBatch(tab = modalGallery.dataset.mediaTab, options = {}) {
-      const sentinel = profileMediaSentinel();
       let appended = false;
       if (tab === "video") {
         const items = Array.isArray(modalGallery.profileTvVideos) ? modalGallery.profileTvVideos : [];
         const start = Number(modalGallery.profileVisibleVideoCount || 0);
         const end = Math.min(items.length, start + PROFILE_MEDIA_PAGE_SIZE);
         if (end > start) {
-          sentinel.insertAdjacentHTML(
-            "beforebegin",
-            items.slice(start, end).map((item, offset) =>
-              profileVideoThumbMarkup(item, start + offset, items.length, modalGallery.profileTvProfileName || "Dancer")
-            ).join("")
-          );
           modalGallery.profileVisibleVideoCount = end;
           appended = true;
         }
@@ -54287,20 +54280,15 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
         const start = Number(modalGallery.profileVisiblePhotoCount || 0);
         const end = Math.min(items.length, start + PROFILE_MEDIA_PAGE_SIZE);
         if (end > start) {
-          sentinel.insertAdjacentHTML(
-            "beforebegin",
-            items.slice(start, end).map((item, offset) =>
-              profilePhotoThumbMarkup(item, items.length, start + offset)
-            ).join("")
-          );
           modalGallery.profileVisiblePhotoCount = end;
           appended = true;
         }
       }
       if (appended) {
+        renderProfileMediaLibrary();
         profileMediaLastAppendScrollTop = Math.max(0, Number(profileModal?.scrollTop || 0));
       }
-      sentinel.hidden = !profileMediaHasMore(tab);
+      profileMediaSentinel().hidden = !profileMediaHasMore(tab);
       if (!options.skipObserve) window.requestAnimationFrame(observeProfileMediaSentinel);
     }
 
@@ -54333,16 +54321,31 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
 
     profileModal?.addEventListener("scroll", queueProfileMediaObserverAfterScroll, { passive: true });
 
+    function renderProfileMediaLibrary() {
+      const photos = modalGallery.profilePhotoItems || [];
+      const videos = modalGallery.profileTvVideos || [];
+      renderStableMediaMarkup(modalGallery,
+        photos.slice(0, modalGallery.profileVisiblePhotoCount)
+          .map((item, index) => profilePhotoThumbMarkup(item, photos.length, index)).join("") +
+        videos.slice(0, modalGallery.profileVisibleVideoCount)
+          .map((item, index) => profileVideoThumbMarkup(item, index, videos.length, modalGallery.profileTvProfileName || "Dancer")).join("")
+      );
+      profileMediaSentinel();
+    }
+
     function initializeProfileMediaLibrary(profile, baseIndex, options = {}) {
       profileMediaObserver?.disconnect();
       profileMediaObserver = null;
+      // Scope retained previews to this profile and its public/private context.
+      const scope = JSON.stringify([profile.id || profile.slug || profile.name, Boolean(options.preview), Boolean(profile.internalRoster), profile.status]);
+      const retainVideos = modalGallery.profileMediaScope === scope;
+      modalGallery.profileMediaScope = scope;
+      modalGallery.profileTvLoadRequest = null;
       modalGallery.profilePhotoItems = profilePhotoGalleryItems(profile, baseIndex, options);
       modalGallery.profileVisiblePhotoCount = Math.min(modalGallery.profilePhotoItems.length, PROFILE_MEDIA_PAGE_SIZE);
-      modalGallery.profileTvVideos = [];
-      modalGallery.profileVisibleVideoCount = 0;
-      renderStableMediaMarkup(modalGallery, modalGallery.profilePhotoItems
-        .slice(0, modalGallery.profileVisiblePhotoCount)
-        .map((item, index) => profilePhotoThumbMarkup(item, modalGallery.profilePhotoItems.length, index)).join(""));
+      if (!retainVideos) modalGallery.profileTvVideos = [];
+      modalGallery.profileVisibleVideoCount = Math.min(modalGallery.profileTvVideos.length, PROFILE_MEDIA_PAGE_SIZE);
+      renderProfileMediaLibrary();
       modalGallery.querySelectorAll("[data-profile-photo-index]").forEach((thumb, index) => {
         thumb.classList.toggle("active", index === 0);
         thumb.setAttribute("aria-pressed", String(index === 0));
@@ -54800,7 +54803,7 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
       }
       initializeProfileMediaLibrary(profile, profileIndex, { preview: isPrivatePreview });
       const photoCount = modalGallery.profilePhotoItems?.length || 0;
-      syncProfileMediaTabCounts(photoCount, 0);
+      syncProfileMediaTabCounts(photoCount, modalGallery.profileTvVideos.length);
       modalProfileAvatar.className = `profile-modal-avatar ${basePhoto}${avatarPhotoUrl ? " has-photo" : ""}`;
       modalProfileAvatar.dataset.workingNow = String(modalIsWorkingNow);
       modalProfileAvatar.dataset.upcoming = String(modalHasUpcomingShift);
@@ -55399,10 +55402,7 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
       modalGallery.parentElement.querySelector("[data-profile-tv-retry]")?.remove();
       modalMediaTvTab.setAttribute("aria-busy", "true");
       modalMediaTvTab.setAttribute("aria-label", "Loading profile videos");
-      modalMediaTvCount.textContent = "…";
-      modalGallery.querySelectorAll("[data-profile-tv-index]").forEach((thumb) => (thumb.closest(".profile-media-grid-cell") || thumb).remove());
-      modalGallery.profileTvVideos = [];
-      modalGallery.profileVisibleVideoCount = 0;
+      if (!modalGallery.profileTvVideos?.length) modalMediaTvCount.textContent = "…";
       modalGallery.profileTvProfileName = profile.name || "Dancer";
       try {
         const payload = await requestProfileTvPayload(profile, requestCity);
@@ -55413,13 +55413,16 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
         if (!payload?.ok || !Array.isArray(payload.videos)) throw new Error("Unable to load profile videos.");
         const videos = payload.videos.slice(0, MAX_DANCER_PROFILE_VIDEOS);
         modalGallery.profileTvVideos = videos;
-        modalGallery.profileVisibleVideoCount = 0;
-        appendNextProfileMediaBatch("video", { skipObserve: true });
+        modalGallery.profileVisibleVideoCount = Math.min(videos.length, Math.max(PROFILE_MEDIA_PAGE_SIZE, modalGallery.profileVisibleVideoCount || 0));
+        renderProfileMediaLibrary();
         const photoCount = modalGallery.profilePhotoItems?.length || 0;
         syncProfileMediaTabCounts(photoCount, videos.length);
         window.requestAnimationFrame(observeProfileMediaSentinel);
       } catch {
         if (modalGallery.dataset.profileMediaProfile !== requestProfileId || modalGallery.profileTvLoadRequest !== requestToken) return;
+        modalGallery.profileTvVideos = [];
+        modalGallery.profileVisibleVideoCount = 0;
+        renderProfileMediaLibrary();
         syncProfileMediaTabCounts(modalGallery.profilePhotoItems?.length || 0, 0);
         const retry = document.createElement("button");
         retry.type = "button";
@@ -61888,6 +61891,8 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
         video.addEventListener("playing", reveal);
         video.addEventListener("emptied", reset);
         video.addEventListener("error", reset);
+        if (!video.paused && video.readyState >= 2)
+            reveal();
         return () => {
             reset();
             video.removeEventListener("playing", reveal);

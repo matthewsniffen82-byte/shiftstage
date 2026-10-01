@@ -7,6 +7,7 @@ import type { MyDancrTvVideo } from "@/src/lib/dancr/tv";
 import { useAdaptiveVideoWarmup } from "@/src/lib/dancr/use-adaptive-video-warmup";
 import { useVideoSoundPreference } from "@/src/lib/dancr/use-video-sound-preference";
 import { useAnonymousMediaLikes } from "@/src/lib/dancr/use-anonymous-media-likes";
+import { videoPosterRef } from "@/src/lib/dancr/video-resource-ref";
 
 export function TvVideoStrip({
   title,
@@ -40,13 +41,15 @@ export function TvVideoStrip({
   const activeIndex = activeVideo
     ? videos.findIndex((video) => video.id === activeVideo.id)
     : -1;
+  const previewPlaybackKey = JSON.stringify(videos.map((video) => [video.id, video.videoUrl]));
+  const viewerOpen = Boolean(activeVideo);
 
   useEffect(() => {
     const cards = Object.values(previewCards.current).filter(
       (card): card is HTMLButtonElement => Boolean(card),
     );
     if (!cards.length) return;
-    if (activeVideo) {
+    if (viewerOpen) {
       cards.forEach(pausePreviewCard);
       return;
     }
@@ -80,7 +83,7 @@ export function TvVideoStrip({
       observer.disconnect();
       cards.forEach(pausePreviewCard);
     };
-  }, [activeVideo, videos]);
+  }, [viewerOpen, previewPlaybackKey]);
 
   useEffect(() => () => window.clearTimeout(playbackFeedbackTimer.current), []);
 
@@ -243,6 +246,7 @@ export function TvVideoStrip({
               onMouseLeave={(event) => pausePreviewCard(event.currentTarget)}
             >
               <video
+                key={`video:${video.videoUrl}`}
                 aria-hidden="true"
                 data-video-url={video.videoUrl}
                 loop
@@ -251,6 +255,20 @@ export function TvVideoStrip({
                 poster={video.posterUrl || undefined}
                 preload="none"
               />
+              {video.posterUrl ? (
+                <img
+                  key={`poster:${video.videoUrl}`}
+                  className="tv-strip-poster"
+                  ref={videoPosterRef}
+                  src={video.posterUrl}
+                  alt=""
+                  aria-hidden="true"
+                  decoding="async"
+                  loading={index < 3 ? "eager" : "lazy"}
+                  onError={(event) => { event.currentTarget.hidden = true; }}
+                  onLoad={(event) => { event.currentTarget.hidden = false; }}
+                />
+              ) : null}
               <div>
                 {showDancerName ? <strong>{video.dancer.stageName}</strong> : null}
                 <span className={`tv-strip-schedule ${schedule.className}`}>{schedule.label}</span>
@@ -331,6 +349,19 @@ export function TvVideoStrip({
                 onPause={() => setViewerPaused(true)}
                 onPlay={() => setViewerPaused(false)}
               />
+              {activeVideo.posterUrl ? (
+                <img
+                  key={`poster:${activeVideo.id}`}
+                  className="tv-strip-poster"
+                  ref={videoPosterRef}
+                  src={activeVideo.posterUrl}
+                  alt=""
+                  aria-hidden="true"
+                  decoding="async"
+                  onError={(event) => { event.currentTarget.hidden = true; }}
+                  onLoad={(event) => { event.currentTarget.hidden = false; }}
+                />
+              ) : null}
               {playbackFeedback ? (
                 <span className="tv-video-playback-feedback" key={playbackFeedback.key} aria-hidden="true">
                   <PlaybackFeedbackIcon paused={playbackFeedback.paused} />
@@ -564,6 +595,8 @@ function TvVideoStripStyles() {
       .tv-strip-card { position: relative; min-height: 330px; padding: 0; overflow: hidden; border: 1px solid rgba(139,92,246,.3); border-radius: 10px; color: #fff; background: radial-gradient(circle at 50% 28%,rgba(126,234,255,.1),transparent 30%),linear-gradient(145deg,rgba(109,40,217,.2),#020204 72%); font: inherit; text-align: left; scroll-snap-align: start; cursor: pointer; }
       .tv-strip-card:focus-visible { outline: 2px solid #7eeaff; outline-offset: 2px; }
       .tv-strip-card video { width: 100%; height: 100%; min-height: 330px; display: block; object-fit: cover; background: transparent; }
+      .tv-strip-poster { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
+      video[data-frame-ready="true"] + .tv-strip-poster { opacity: 0; }
       .tv-strip-card::after { content: ""; position: absolute; inset: 42% 0 0; background: linear-gradient(180deg, transparent, rgba(0,0,0,.92)); }
       .tv-strip-card > div { position: absolute; z-index: 2; left: 12px; right: 12px; bottom: 12px; display: grid; gap: 5px; }
       .tv-strip-card strong { overflow: hidden; color: #fff; font-size: 13px; text-overflow: ellipsis; white-space: nowrap; text-shadow: 0 2px 8px rgba(0,0,0,.9); }

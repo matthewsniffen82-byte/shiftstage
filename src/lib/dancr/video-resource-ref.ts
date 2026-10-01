@@ -44,12 +44,21 @@ export function watchVideoPosterPresentation(video: HTMLVideoElement) {
   video.addEventListener("playing", reveal);
   video.addEventListener("emptied", reset);
   video.addEventListener("error", reset);
+  if (!video.paused && video.readyState >= 2) reveal();
   return () => {
     reset();
     video.removeEventListener("playing", reveal);
     video.removeEventListener("emptied", reset);
     video.removeEventListener("error", reset);
   };
+}
+
+// An independent poster survives the native poster-to-video handoff on mobile.
+// A stable ref keeps its presentation listener across ordinary React updates.
+export function videoPosterRef(poster: HTMLImageElement | null) {
+  const video = poster?.previousElementSibling;
+  if (!(video instanceof HTMLVideoElement)) return;
+  return watchVideoPosterPresentation(video);
 }
 
 // React 19 calls this stable ref's cleanup when its video leaves the DOM.

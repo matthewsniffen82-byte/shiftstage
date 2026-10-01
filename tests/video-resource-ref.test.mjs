@@ -16,11 +16,11 @@ const { videoResourceRef, watchVideoPosterPresentation } = context.exports;
 function video() {
   const events = new Map(), frames = new Map();
   let nextFrame = 0;
-  return { paused: false, preload: "auto", dataset: { frameReady: "true" }, source: true, loads: 0, pauses: 0,
+  return { paused: true, preload: "auto", dataset: { frameReady: "true" }, source: true, loads: 0, pauses: 0,
     events, frames, isConnected: true, readyState: 2,
     addEventListener(name, callback) { events.set(name, callback); },
     removeEventListener(name) { events.delete(name); },
-    fire(name) { events.get(name)?.(); },
+    fire(name) { if (name === "playing") this.paused = false; events.get(name)?.(); },
     requestVideoFrameCallback(callback) { frames.set(++nextFrame, callback); return nextFrame; },
     cancelVideoFrameCallback(id) { frames.delete(id); },
     getAttribute(name) { return name === "src" && this.source ? "clip.mp4" : null; },
@@ -108,6 +108,24 @@ test("older browsers wait for playing and a paint opportunity; interrupted playb
   }
 });
 
+test("a poster attached to an already playing video still waits for a presented frame", () => {
+  class VideoElement {}
+  context.HTMLVideoElement = VideoElement;
+  const v = video();
+  Object.setPrototypeOf(v, VideoElement.prototype);
+  delete v.dataset.frameReady;
+  v.paused = false;
+  const cleanup = context.exports.videoPosterRef({ previousElementSibling: v });
+  assert.equal(v.frames.size, 1);
+  assert.equal(v.dataset.frameReady, undefined);
+  [...v.frames.values()][0]();
+  assert.equal(v.dataset.frameReady, "true");
+  cleanup();
+  assert.equal(v.pauses, 0, "replacing a poster must not interrupt playback");
+  assert.equal(v.source, true);
+  assert.equal(context.exports.videoPosterRef(null), undefined);
+});
+
 test("TV and profile feeds share the same presentation handoff without changing preload policy", () => {
   const shell = readFileSync("outputs/index.html", "utf8");
   const functionText = shell.match(/    function watchVideoPosterPresentation\([^]*?\n    \}/)?.[0].replace(/^    /gm, "").trim();
@@ -127,6 +145,7 @@ test("TV and profile feeds share the same presentation handoff without changing 
 });
 test("removing one video never interrupts another mounted player", () => {
   const previous = video(), current = video();
+  current.paused = false;
   const cleanup = videoResourceRef(previous);
   videoResourceRef(current);
   cleanup();

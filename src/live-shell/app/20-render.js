@@ -617,6 +617,8 @@
         video.addEventListener("playing", reveal);
         video.addEventListener("emptied", reset);
         video.addEventListener("error", reset);
+        if (!video.paused && video.readyState >= 2)
+            reveal();
         return () => {
             reset();
             video.removeEventListener("playing", reveal);
