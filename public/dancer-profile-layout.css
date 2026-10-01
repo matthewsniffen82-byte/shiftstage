@@ -270,7 +270,7 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
   border-radius: 0 !important;
   background: none !important;
   box-shadow: none !important;
-  color: #72d6aa !important;
+  color: var(--dancr-color-avatar-ring-live, #34e3a4) !important;
   font-size: 10px !important;
   font-weight: 800 !important;
   letter-spacing: .04em !important;
