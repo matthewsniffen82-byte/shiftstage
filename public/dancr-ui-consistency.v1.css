@@ -794,12 +794,13 @@ html body.dancr-button-system > .app main.stack > section.stack
   display: grid !important;
 }
 
-/* Club identity and live dancers sit above Free Entry and a full-width utility row. */
+/* A larger logo balances the venue details and optional live dancer group. */
 @media (max-width: 720px) {
   html body.dancr-button-system > .app main.stack > section.stack
     > #results.home-discovery-feed.home-venue-discovery-feed > .home-venue-discovery-slide {
-    grid-template-columns: clamp(48px, 15vw, 64px) minmax(0, 1fr) !important;
-    grid-template-rows: minmax(96px, auto) auto 48px minmax(44px, auto) !important;
+    --venue-discovery-logo-size: clamp(80px, 24vw, 104px);
+    grid-template-columns: var(--venue-discovery-logo-size) minmax(0, 1fr) !important;
+    grid-template-rows: auto auto 48px minmax(44px, auto) !important;
     gap: 12px 10px !important;
     padding: 12px !important;
   }
@@ -807,10 +808,10 @@ html body.dancr-button-system > .app main.stack > section.stack
   html body.dancr-button-system > .app main.stack > section.stack
     > #results.home-discovery-feed.home-venue-discovery-feed > .home-venue-discovery-slide .home-venue-discovery-art.is-venue-logo-artwork[data-venue-visual-source] {
     grid-column: 1 !important;
-    grid-row: 1 !important;
+    grid-row: 1 / span 2 !important;
     align-self: center !important;
     width: auto !important;
-    height: 64px !important;
+    height: var(--venue-discovery-logo-size) !important;
     min-height: 0 !important;
     margin: 0 !important;
     border: 0 !important;
@@ -862,14 +863,15 @@ html body.dancr-button-system > .app main.stack > section.stack
   html body.dancr-button-system > .app main.stack > section.stack
     > #results.home-discovery-feed.home-venue-discovery-feed > .home-venue-discovery-slide .home-venue-discovery-monogram {
     width: 100% !important;
-    height: 48px !important;
-    font-size: 18px !important;
+    height: 100% !important;
+    font-size: 26px !important;
   }
 
   html body.dancr-button-system > .app main.stack > section.stack
     > #results.home-discovery-feed.home-venue-discovery-feed > .home-venue-discovery-slide .home-discovery-feed-copy {
     grid-column: 2 !important;
     grid-row: 1 !important;
+    align-self: center !important;
     grid-template-columns: minmax(0, 1fr) !important;
     grid-template-rows: repeat(3, auto) !important;
     min-height: 0 !important;
@@ -925,7 +927,7 @@ html body.dancr-button-system > .app main.stack > section.stack
 
   html body.dancr-button-system > .app main.stack > section.stack
     > #results.home-discovery-feed.home-venue-discovery-feed > .home-venue-discovery-slide .home-venue-discovery-lineup-slot {
-    grid-column: 1 / 3 !important;
+    grid-column: 2 !important;
     grid-row: 2 !important;
     justify-self: start !important;
     align-self: start !important;
@@ -999,6 +1001,30 @@ html body.dancr-button-system > .app main.stack > section.stack
     text-overflow: clip !important;
     font-size: 10px !important;
     line-height: 1.2 !important;
+  }
+
+  /* No empty dancer row or extra gutter when nobody is working now. */
+  html body.dancr-button-system > .app main.stack > section.stack
+    > #results.home-discovery-feed.home-venue-discovery-feed > .home-venue-discovery-slide:not(.has-live-lineup) {
+    grid-template-rows: minmax(var(--venue-discovery-logo-size), auto) 48px minmax(44px, auto) !important;
+  }
+
+  html body.dancr-button-system > .app main.stack > section.stack
+    > #results.home-discovery-feed.home-venue-discovery-feed > .home-venue-discovery-slide:not(.has-live-lineup)
+    .home-venue-discovery-art.is-venue-logo-artwork[data-venue-visual-source] {
+    grid-row: 1 !important;
+  }
+
+  html body.dancr-button-system > .app main.stack > section.stack
+    > #results.home-discovery-feed.home-venue-discovery-feed > .home-venue-discovery-slide:not(.has-live-lineup)
+    .home-venue-discovery-context-actions {
+    grid-row: 2 !important;
+  }
+
+  html body.dancr-button-system > .app main.stack > section.stack
+    > #results.home-discovery-feed.home-venue-discovery-feed > .home-venue-discovery-slide:not(.has-live-lineup)
+    .venue-card-secondary-actions.home-venue-discovery-action-rail {
+    grid-row: 3 !important;
   }
 }
 
