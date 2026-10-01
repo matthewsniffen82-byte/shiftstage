@@ -4,7 +4,8 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
   --split-inset: clamp(10px, 2vw, 24px);
   display: grid !important;
   grid-template-columns: minmax(0, 54fr) minmax(0, 46fr) !important;
-  grid-template-rows: repeat(5, auto) !important;
+  /* The embedded viewer has a fixed viewport; rows must keep their content height. */
+  grid-template-rows: repeat(5, max-content) !important;
   align-content: start !important;
   align-items: start !important;
   column-gap: 0 !important;
@@ -221,7 +222,25 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout .profile-media-section { border: 0 !important; border-radius: 0 !important; background: none !important; box-shadow: none !important; overflow: visible !important; }
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout .profile-titlebar-city { padding: 0 !important; border: 0 !important; border-radius: 0 !important; background: none !important; }
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout .internal-profile-request { grid-column: 1 / -1 !important; min-width: 0 !important; }
-html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout .profile-modal-summary .profile-modal-header-metrics .profile-activity-metrics.is-internal dt { width: auto !important; max-width: 100% !important; }
+html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout .internal-profile-request > .profile-venue-actions {
+  height: auto !important;
+  min-height: var(--split-action-height) !important;
+  max-height: none !important;
+  margin: 0 !important;
+}
+html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout .internal-profile-request [data-internal-table-request] {
+  height: auto !important;
+  min-height: var(--split-action-height) !important;
+  max-height: none !important;
+  padding: 6px 5px !important;
+  border-radius: 12px !important;
+  font-size: clamp(14px, 1.5vw, 17px) !important;
+  line-height: 1.25 !important;
+  white-space: normal !important;
+  overflow-wrap: anywhere;
+}
+html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout .profile-activity-metrics.is-internal { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
+html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout .profile-modal-summary .profile-modal-header-metrics .profile-activity-metrics.is-internal dt { width: auto !important; max-width: 100% !important; white-space: normal !important; overflow-wrap: anywhere; }
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout .dancer-profile-preview-status { grid-row: 5; margin: 12px var(--split-inset) 130px !important; }
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout.dancer-profile-preview-shell > .profile-titlebar > .public-profile-close { position: absolute !important; top: 4px !important; right: 4px !important; }
 
