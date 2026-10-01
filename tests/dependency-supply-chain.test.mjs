@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
+import { spawnSync } from "node:child_process";
 import test from "node:test";
 
 const packageJson = JSON.parse(
@@ -14,6 +15,30 @@ const vercel = JSON.parse(
 );
 
 const PINNED_NPM = "11.19.1";
+
+test("brace expansion stays above the reviewed denial-of-service fixes", () => {
+  assert.equal(packageJson.overrides["brace-expansion"], "^5.0.12");
+  const entries = Object.entries(packageLock.packages).filter(([path]) => path.endsWith("node_modules/brace-expansion"));
+  assert.ok(entries.length > 0);
+  for (const [, metadata] of entries) {
+    const [major, minor, patch] = metadata.version.split(".").map(Number);
+    assert.ok(major === 5 && (minor > 0 || patch >= 12), `Review brace-expansion ${metadata.version}`);
+  }
+  // Run hostile nesting in a disposable child with a hard deadline. An older
+  // dependency must not exhaust this test runner's stack or hang its process.
+  const result = spawnSync(process.execPath, ["--input-type=module", "-e", `
+    import assert from 'node:assert/strict';
+    import { expand } from 'brace-expansion';
+    assert.deepEqual(expand('file-{a,b}.{js,ts}'), ['file-a.js','file-a.ts','file-b.js','file-b.ts']);
+    for (const input of [
+      '{'.repeat(3200) + 'a,b' + '}'.repeat(3200),
+      '{a,'.repeat(4000) + 'z' + '}'.repeat(4000),
+      '{a},b}'.repeat(10000),
+    ]) assert.ok(Array.isArray(expand(input, { max: 10, maxLength: 100000 })));
+  `], { encoding: "utf8", timeout: 10_000, windowsHide: true, maxBuffer: 64 * 1024 });
+  assert.equal(result.error, undefined);
+  assert.equal(result.status, 0, result.stderr);
+});
 
 function packageNameFromLockPath(path) {
   const marker = "node_modules/";

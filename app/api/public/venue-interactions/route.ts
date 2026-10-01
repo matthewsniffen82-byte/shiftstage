@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { getOptionalServerEnv } from "@/src/lib/server-env";
 import { apiError, PublicApiError } from "@/src/lib/api";
 import { readBoundedJsonObject } from "@/src/lib/bounded-json-body";
 import { enforcePublicRequestRateLimit, PublicRequestRateLimitError } from "@/src/lib/dancr/public-request-rate-limit";
@@ -31,7 +32,7 @@ export async function POST(request: Request) {
       if (error) throw error;
       if (!affiliation) throw new PublicApiError("NOT_FOUND", "Dancer is not affiliated with this venue.", 404);
     }
-    const videoId = readVenueVideo(request, venueId, process.env.DANCR_PUBLIC_RATE_LIMIT_SECRET);
+    const videoId = readVenueVideo(request, venueId, getOptionalServerEnv("DANCR_PUBLIC_RATE_LIMIT_SECRET") ?? undefined);
     const { error } = await client.from("venue_interactions").upsert({ id: eventId, venue_id: venueId, dancer_id: dancerId || null, video_id: videoId, event_type: eventType, source, session_id: sessionId }, { onConflict: "id", ignoreDuplicates: true });
     if (error) throw error;
     return NextResponse.json({ ok: true });

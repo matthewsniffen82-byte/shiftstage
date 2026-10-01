@@ -3,6 +3,7 @@ import test from 'node:test';
 import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
 import {createHash} from 'node:crypto';
+import {serveInternalMedia} from '../src/lib/dancr/internal-media-delivery.ts';
 import ts from 'typescript';
 import {PublicApiError,resolveApiError} from '../src/lib/api-error-policy.ts';
 import {readBoundedJsonObject} from '../src/lib/bounded-json-body.ts';
@@ -31,12 +32,13 @@ function fixture({members=true,active=true,staff=true,kind='table',choice=null,p
   async rpc(name,args){calls.push({name,args});return {data:['internal_roster_members','venue_roster_members'].includes(name)?(members?[{id:id(5),stage_name:'Aster',avatar_storage_path:'private/avatar',working_until:new Date(Date.now()+3600000).toISOString()}]:[]):{id:id(9)},error:null};},
   storage:{from(bucket){return {createSignedUrl:async(path)=>{calls.push({name:'signMedia',bucket,path});return {data:{signedUrl:'https://storage.invalid/private-signed-link'}};}}}},
  };
+ const fetchMedia=async(url,options)=>{calls.push({name:'fetch',url,options});return new Response('synthetic-image',{status:Array.isArray(upstreamStatus)?upstreamStatus.shift():upstreamStatus,headers:{'content-type':'image/jpeg',...upstreamHeaders}});};
  const lib={},route={},mainPhoto={},activity={},cancel={};
  vm.runInNewContext(compile("src/lib/dancr/internal-request-cancel.ts"),{exports:cancel,Date,require:name=>name.endsWith("api-error-policy")?{PublicApiError}:{}});
  vm.runInNewContext(compile('src/lib/dancr/internal-request-activity.ts'),{exports:activity,Date,require(){return {}}});
  vm.runInNewContext(compile('src/lib/dancr/internal-main-photo.ts'),{exports:mainPhoto,require(){return {}}});
  vm.runInNewContext(compile('src/lib/dancr/internal-roster.ts'),{exports:lib,require(name){if(name==='server-only')return {};if(name.endsWith('api-error-policy'))return {PublicApiError};if(name.endsWith('responsive-image'))return {responsivePublicImage:()=>null};if(name.endsWith('venue-branding'))return {verifiedVenueLogoUrl};if(name.endsWith('venue-access'))return {requireVenueAccess:async()=>{if(!staff)throw new Error('An active venue account is required.');return {venueId:id(2),venueName:'Synthetic club',role:'owner'}}};if(name.endsWith('supabase/request'))return {createRequestSupabaseContext:async request=>{if(request.headers.get('authorization')!=='Bearer staff')throw new Error('Sign in required.');return {user:{id:id(4)}}}};throw Error(name);}});
- vm.runInNewContext(compile('app/api/internal/[[...path]]/route.ts'),{exports:route,URL,Response,Headers,Request,Date,fetch:async(url,options)=>{calls.push({name:'fetch',url,options});return new Response('synthetic-image',{status:Array.isArray(upstreamStatus)?upstreamStatus.shift():upstreamStatus,headers:{'content-type':'image/jpeg',...upstreamHeaders}});},require(name){if(name==='node:crypto')return {createHash};if(name==='next/server')return {NextResponse:{json:Response.json},after:work=>{calls.push({name:'after'});void work();}};if(name.endsWith('internal-request-cancel'))return cancel;if(name.endsWith('internal-request-cancellation-push'))return {deliverInternalCancellationPush:async(_client,requestId)=>calls.push({name:'cancelAlert',requestId})};if(name.endsWith('internal-request-push'))return {deliverInternalRequestPush:async(_client,requestId)=>{calls.push({name:'deliverInternalRequestPush',requestId});}};if(name.endsWith('supabase/admin'))return {createAdminSupabaseClient:()=>admin};if(name.endsWith('bounded-json-body'))return {readBoundedJsonObject};if(name.endsWith('api-error-policy'))return {PublicApiError,resolveApiError};if(name.endsWith('internal-request-activity'))return activity;if(name.endsWith('internal-main-photo'))return mainPhoto;if(name.endsWith('internal-roster'))return lib;if(name.endsWith('responsive-image'))return {responsiveImageStoragePaths};if(name.endsWith('media-watermark'))return {MYDANCR_TV_POSTER_BUCKET,myDancrTvPosterStoragePath};if(name.endsWith('social-profile-url'))return {safeSocialProfileUrl};throw Error(name);}});
+ vm.runInNewContext(compile('app/api/internal/[[...path]]/route.ts'),{exports:route,URL,Response,Headers,Request,Date,fetch:fetchMedia,require(name){if(name==='node:crypto')return {createHash};if(name==='next/server')return {NextResponse:{json:Response.json},after:work=>{calls.push({name:'after'});void work();}};if(name.endsWith('internal-request-cancel'))return cancel;if(name.endsWith('internal-request-cancellation-push'))return {deliverInternalCancellationPush:async(_client,requestId)=>calls.push({name:'cancelAlert',requestId})};if(name.endsWith('internal-request-push'))return {deliverInternalRequestPush:async(_client,requestId)=>{calls.push({name:'deliverInternalRequestPush',requestId});}};if(name.endsWith('supabase/admin'))return {createAdminSupabaseClient:()=>admin};if(name.endsWith('bounded-json-body'))return {readBoundedJsonObject};if(name.endsWith('api-error-policy'))return {PublicApiError,resolveApiError};if(name.endsWith('internal-request-activity'))return activity;if(name.endsWith('internal-main-photo'))return mainPhoto;if(name.endsWith('internal-media-delivery'))return {serveInternalMedia:(request,options)=>serveInternalMedia(request,{...options,fetch:fetchMedia})};if(name.endsWith('internal-roster'))return lib;if(name.endsWith('responsive-image'))return {responsiveImageStoragePaths};if(name.endsWith('media-watermark'))return {MYDANCR_TV_POSTER_BUCKET,myDancrTvPosterStoragePath};if(name.endsWith('social-profile-url'))return {safeSocialProfileUrl};throw Error(name);}});
  async function get(path=[],query='',auth='',headers={}){return route.GET(new Request('https://example.invalid/api/internal/'+path.join('/')+query,{headers:{...headers,...(auth?{authorization:'Bearer '+auth}:{})}}),{params:Promise.resolve({path})});}
  return {calls,get,post:async(body={},path=[],auth='staff')=>route.POST(new Request('https://example.invalid/api/internal',{method:'POST',headers:{authorization:'Bearer '+auth,'content-type':'application/json'},body:JSON.stringify(body)}),{params:Promise.resolve({path})})};
 }
@@ -126,6 +128,18 @@ test('roster and profile share this table’s open state across reloads without 
  assert.equal((await (await stale.get(['link',id(3)])).json()).dancers[0].requestStatus,null);
 });
 test('authorized media is proxied without exposing its storage URL',async()=>{const response=await fixture().get(['photo',id(6)],'?token='+id(3));assert.equal(response.status,200);assert.equal(await response.text(),'synthetic-image');assert.equal(response.headers.get('location'),null);assert.match(response.headers.get('cache-control'),/no-store/);});
+
+test('the authorized Internal route rejects oversized and non-image storage responses',async()=>{
+ for(const upstreamHeaders of [{'content-type':'text/html'},{'content-length':String(10*1024*1024+1)}]){
+  const response=await fixture({upstreamHeaders}).get(['photo',id(6)],'?token='+id(3));
+  assert.equal(response.status,404);
+ }
+});
+
+test('invalid Internal ranges fail before a signed media URL is created',async()=>{
+ const f=fixture(),response=await f.get(['photo',id(6)],'?token='+id(3),'',{'range':'bytes=-'});
+ assert.equal(response.status,416);assert.equal(f.calls.some(c=>c.name==='signMedia'),false);
+});
 
 test('grid thumbnails use the authorized photo variant while full profiles keep the master',async()=>{
  const photoPath='private/photo.r320-640.m1200x1800.webp';

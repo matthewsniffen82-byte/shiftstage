@@ -54,8 +54,10 @@ test("public dancer and venue mappers omit ownership, precise proximity, and QR 
   assert.match(publicService, /\.limit\(PUBLIC_PROFILE_MEDIA_LIMIT\)/);
   assert.match(publicService, /const PUBLIC_PROFILE_SHIFT_LIMIT = 50/);
   assert.match(publicService, /\.limit\(PUBLIC_PROFILE_SHIFT_LIMIT/);
-  assert.match(venueProfileRoute, /const MAX_PUBLIC_UPCOMING_SHIFTS = 200/);
-  assert.match(venueProfileRoute, /\.limit\(MAX_PUBLIC_UPCOMING_SHIFTS\)/);
+  // Upcoming shifts were retired; this endpoint must not reintroduce a query
+  // or expose the private NFC shift history through its compatibility field.
+  assert.match(venueProfileRoute, /upcomingShifts: \[\]/);
+  assert.doesNotMatch(venueProfileRoute, /\.from\(["']shifts["']\)/);
 });
 
 test("public list inputs and public profile identifiers are bounded before database access", () => {

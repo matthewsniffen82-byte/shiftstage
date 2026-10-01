@@ -3,6 +3,7 @@ import { cancelInternalRequest } from "@/src/lib/dancr/internal-request-cancel";
 import { deliverInternalCancellationPush } from "@/src/lib/dancr/internal-request-cancellation-push";
 import { deliverInternalRequestPush } from "@/src/lib/dancr/internal-request-push";
 import { internalMainPhotos } from "@/src/lib/dancr/internal-main-photo";
+import { serveInternalMedia } from "@/src/lib/dancr/internal-media-delivery";
 import { internalRequestsTonight, internalTableRequestStates } from "@/src/lib/dancr/internal-request-activity";
 import { createHash } from "node:crypto";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
@@ -96,22 +97,13 @@ export async function GET(request: Request, context: Context) {
       const imagePath = width === null ? storagePath : responsiveImageStoragePaths(storagePath)
         .slice(1).find(candidate => Number(candidate.match(/\.w(\d+)\.webp$/)?.[1]) >= width) || storagePath;
       const bucket = poster ? MYDANCR_TV_POSTER_BUCKET : video ? "mydancr-tv-videos" : "dancer-photos";
-      const range = request.headers.get("range");
-      const load = async (objectPath: string) => {
-        const { data, error } = await admin.storage.from(bucket).createSignedUrl(objectPath, 30);
-        if (error || !data?.signedUrl) return null;
-        return fetch(data.signedUrl, { cache: "no-store", signal: request.signal, headers: range && /^bytes=\d*-\d*$/.test(range) ? { range } : undefined });
-      };
-      let upstream = await load(imagePath);
-      if (imagePath !== storagePath && (!upstream || upstream.status === 404)) {
-        await upstream?.body?.cancel();
-        upstream = await load(storagePath);
-      }
-      if (!upstream?.ok) return json({ ok: false, error: "Media unavailable." }, 404);
-      const headers = new Headers(INTERNAL_HEADERS);
-      headers.set("content-type", video && !poster ? "video/mp4" : upstream.headers.get("content-type") || "image/jpeg");
-      for (const key of ["content-length", "content-range", "accept-ranges"]) { const value = upstream.headers.get(key); if (value) headers.set(key, value); }
-      return new Response(upstream.body, { status: upstream.status, headers });
+      return serveInternalMedia(request, {
+        kind: video && !poster ? "video" : "image", path: imagePath, fallbackPath: storagePath,
+        sign: async (objectPath) => {
+          const { data, error } = await admin.storage.from(bucket).createSignedUrl(objectPath, 30);
+          return error ? null : data?.signedUrl || null;
+        },
+      });
     }
     const mainPhotos = await internalMainPhotos(admin, members.map(item => item.id));
     const dancers = members.map(item => {

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { getOptionalServerEnv } from "@/src/lib/server-env";
 import { apiError } from "@/src/lib/api";
 import { readBoundedJsonObject } from "@/src/lib/bounded-json-body";
 import {
@@ -64,11 +65,12 @@ export async function POST(request: Request, { params }: RouteProps) {
     const response = NextResponse.json({ ok: true, ...result });
     // Only an explicit club-page click starts the 30-minute venue attribution.
     // Video impressions and general dancer profile clicks never assign a club.
-    if (eventType === "venue_click" && process.env.DANCR_PUBLIC_RATE_LIMIT_SECRET) {
+    const attributionSecret = getOptionalServerEnv("DANCR_PUBLIC_RATE_LIMIT_SECRET");
+    if (eventType === "venue_click" && attributionSecret) {
       const { data: video, error } = await admin.from("mydancr_tv_videos").select("venue_id,venue_tag_status").eq("id", id).single();
       if (error) throw error;
       if (video?.venue_id && video.venue_tag_status === "confirmed") {
-        response.cookies.set(VENUE_VIDEO_COOKIE, signVenueVideo(id, video.venue_id, process.env.DANCR_PUBLIC_RATE_LIMIT_SECRET), { httpOnly: true, secure: process.env.NODE_ENV === "production", sameSite: "lax", path: "/", maxAge: 1800 });
+        response.cookies.set(VENUE_VIDEO_COOKIE, signVenueVideo(id, video.venue_id, attributionSecret), { httpOnly: true, secure: process.env.NODE_ENV === "production", sameSite: "lax", path: "/", maxAge: 1800 });
       }
     }
     return response;

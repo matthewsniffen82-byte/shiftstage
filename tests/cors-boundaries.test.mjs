@@ -19,11 +19,35 @@ const middlewareCode = ts.transpileModule(readFileSync(new URL("../middleware.ts
 
 function routeMethods(path) {
   const source = readFileSync(new URL(path + "/route.ts", apiDirectory), "utf8");
-  const parsed = ts.createSourceFile(path, source, ts.ScriptTarget.Latest, true);
-  return parsed.statements.filter(node => ts.isFunctionDeclaration(node)
-    && node.modifiers?.some(modifier => modifier.kind === ts.SyntaxKind.ExportKeyword)
-    && /^(GET|POST|PUT|PATCH|DELETE|HEAD|OPTIONS)$/.test(node.name?.text || "")).map(node => node.name.text);
+  return exportedMethods(source);
 }
+
+function exportedMethods(source) {
+  const parsed = ts.createSourceFile("route.ts", source, ts.ScriptTarget.Latest, true);
+  const names = parsed.statements.flatMap(node => {
+    if (ts.isExportDeclaration(node) && node.exportClause && ts.isNamedExports(node.exportClause)) {
+      return node.exportClause.elements.filter(item => !node.isTypeOnly && !item.isTypeOnly).map(item => item.name.text);
+    }
+    if (!node.modifiers?.some(modifier => modifier.kind === ts.SyntaxKind.ExportKeyword)) return [];
+    if (ts.isFunctionDeclaration(node)) return [node.name?.text];
+    if (ts.isVariableStatement(node)) return node.declarationList.declarations
+      .filter(item => ts.isIdentifier(item.name)).map(item => item.name.text);
+    return [];
+  });
+  return names.filter(name => /^(GET|POST|PUT|PATCH|DELETE|HEAD|OPTIONS)$/.test(name || ""));
+}
+
+test("route inventory detects function, variable and aliased method exports including OPTIONS", () => {
+  assert.deepEqual(exportedMethods(`
+    export async function GET() {}
+    export const POST = retiredHandler, PATCH = retiredHandler;
+    export { retiredHandler as DELETE };
+    export { preflight as OPTIONS } from './handler';
+    export const runtime = 'nodejs';
+    const HEAD = privateHandler;
+    export type { PUT } from './types';
+  `), ["GET", "POST", "PATCH", "DELETE", "OPTIONS"]);
+});
 
 function assertNoCorsGrant(headers) {
   for (const name of ["access-control-allow-origin", "access-control-allow-credentials", "access-control-allow-methods", "access-control-allow-headers", "access-control-expose-headers"]) {

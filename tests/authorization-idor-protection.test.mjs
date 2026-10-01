@@ -67,7 +67,13 @@ test("existing user, dancer, and venue identifier operations remain ownership-sc
   assert.match(venueTeamService, /\.eq\("id", requiredId\(input\.memberId\)\)\s*\.eq\("venue_id", access\.venueId\)/);
   assert.match(venueTeamService, /\.eq\("id", requiredId\(input\.invitationId\)\)\s*\.eq\("venue_id", access\.venueId\)/);
   assert.match(dancerService, /\.eq\("id", photoId\)\s*\.eq\("dancer_id", profile\.id\)/);
-  assert.match(shiftRoute, /\.eq\("id", shiftId\)\s*\.eq\("dancer_id", dancerId\)/);
+  assert.match(shiftRoute, /getOwnDancerProfile\(admin, user\.id\)/);
+  assert.match(shiftRoute, /\.eq\("user_id", userId\)/);
+  assert.match(shiftRoute, /\.eq\("dancer_id", dancer\.id\)/);
+  for (const method of ["POST", "PATCH", "DELETE"]) {
+    assert.match(shiftRoute, new RegExp(`export const ${method} = retiredSchedule;`));
+  }
+  assert.match(shiftRoute, /code: "upcoming_shifts_retired"[\s\S]*?status: 410/);
   assert.match(dmcaService, /\.eq\("id", caseId\)\s*\.eq\("uploader_id", userId\)/);
 });
 
