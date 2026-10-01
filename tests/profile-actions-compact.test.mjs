@@ -14,7 +14,7 @@ test("dancer selected actions stay neutral without changing their state or acces
   assert.match(css, /--profile-action-selected-shadow: none/);
   assert.match(css, /\[aria-pressed="true"\] \{\s*--profile-action-border: var\(--profile-action-selected-border,/);
   assert.match(css, /--profile-action-background: var\(--profile-action-selected-background,/);
-  assert.match(css, /\[aria-pressed="true"\][^{}]+> svg \{\s*color: #FFFFFF !important/);
+  assert.match(css, /\[aria-pressed="true"\][^{}]+> svg \{\s*color: var\(--profile-action-icon-color, #FFFFFF\) !important/);
   assert.match(actions, /saved\.following \? "Following" : "Follow"/);
   assert.match(actions, /isGoing \? "Going" : "I’m Going"/);
   assert.match(actions, /<button aria-label="Share" className="profile-action-preview-share/);

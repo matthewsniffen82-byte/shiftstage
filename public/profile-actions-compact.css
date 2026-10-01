@@ -343,7 +343,7 @@ body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-she
 }
 
 body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell, .dancer-profile-preview-overlay, #results.venue-profile-overlay .venue-detail) :is(.modal-actions, .live-actions, .venue-secondary-actions).profile-actions-compact :is(#followBtn, #goingBtn, .profile-action-icon-control) :is(.profile-action-main, .action-icon, .profile-action-icon-frame, svg, .profile-action-main > span) {
-  color: inherit !important;
+  color: var(--profile-action-icon-color, inherit) !important;
   background: none !important;
   border: 0 !important;
   box-shadow: none !important;
@@ -384,7 +384,7 @@ body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-she
 }
 
 body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell, .dancer-profile-preview-overlay, #results.venue-profile-overlay .venue-detail) :is(.modal-actions, .live-actions, .venue-secondary-actions).profile-actions-compact :is(#followBtn, #goingBtn, .profile-action-icon-control)[aria-pressed="true"] :is(.action-icon, .profile-action-icon-frame) > svg {
-  color: #FFFFFF !important;
+  color: var(--profile-action-icon-color, #FFFFFF) !important;
 }
 
 body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell, .dancer-profile-preview-overlay, #results.venue-profile-overlay .venue-detail) :is(.modal-actions, .live-actions, .venue-secondary-actions).profile-actions-compact :is(#followBtn, #goingBtn, .profile-action-icon-control):active:not(:disabled) {
