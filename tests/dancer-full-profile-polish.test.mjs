@@ -352,7 +352,7 @@ test("mobile full profiles keep identity, analytics, and close control on one co
   );
   assert.match(
     aesthetic,
-    /Give the mobile dancer identity a stronger portrait hierarchy[\s\S]*?\.profile-modal-summary \{[\s\S]*?min-height: 102px !important;[\s\S]*?padding: max\(7px,[\s\S]*?12px 7px !important;[\s\S]*?\.profile-modal-person \{[\s\S]*?grid-template-columns: 80px minmax\(0, 1fr\) !important;[\s\S]*?gap: 0 !important;[\s\S]*?\.profile-modal-avatar-column \{[\s\S]*?justify-items: center !important;[\s\S]*?\.profile-modal-avatar \{[\s\S]*?width: 72px !important;[\s\S]*?height: 72px !important;/,
+    /Give the mobile dancer identity a stronger portrait hierarchy[\s\S]*?\.profile-modal-summary \{[\s\S]*?min-height: 102px !important;[\s\S]*?padding: 7px 12px !important;[\s\S]*?\.profile-modal-person \{[\s\S]*?grid-template-columns: 80px minmax\(0, 1fr\) !important;[\s\S]*?gap: 0 !important;[\s\S]*?\.profile-modal-avatar-column \{[\s\S]*?justify-items: center !important;[\s\S]*?\.profile-modal-avatar \{[\s\S]*?width: 72px !important;[\s\S]*?height: 72px !important;/,
   );
   assert.match(
     prominentMobileHeader,
@@ -608,7 +608,7 @@ test("profile identity and media controls form a compact balanced top section", 
   assert.match(aesthetic, /\.profile-media-tab-icon \{[\s\S]*?width: 20px !important;[\s\S]*?height: 20px !important;[\s\S]*?flex-basis: 20px !important;/);
   assert.match(
     aesthetic,
-    /\.profile-modal-media,[\s\S]*?\.profile-media-section \{[\s\S]*?box-shadow: 0 12px 28px rgba\(0, 0, 0, \.22\) !important;[\s\S]*?\.profile-modal-media::after,[\s\S]*?\.profile-media-section::after \{[\s\S]*?border: 1px solid rgba\(180, 169, 196, \.38\) !important;/,
+    /\.profile-modal-media,[\s\S]*?\.profile-media-section \{[\s\S]*?box-shadow: none !important;[\s\S]*?\.profile-modal-media::after,[\s\S]*?\.profile-media-section::after \{[\s\S]*?content: none !important;[\s\S]*?display: none !important;/,
   );
   assert.match(publicProfilePage, /\.profile-media-section::after \{[\s\S]*?border: 1px solid rgba\(180,169,196,\.38\);/);
 });
