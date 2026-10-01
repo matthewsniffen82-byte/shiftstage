@@ -182,11 +182,13 @@
         : venueDancers(city, venue.name))
         .filter((profile) => isWorkingTonight(profile, city))
         .sort((left, right) => shiftStartMinutes(left.time) - shiftStartMinutes(right.time));
-      if (!liveProfiles.length) return "";
+      const classPrefix = options.mobile ? "home-venue-discovery" : "venue-card";
+      if (!liveProfiles.length) {
+        return `<span class="${classPrefix}-lineup is-empty"><span class="venue-lineup-empty-text">No dancers listed now</span></span>`;
+      }
       const visibleLimit = options.mobile ? 3 : 4;
       const profiles = liveProfiles.slice(0, visibleLimit);
       const remaining = liveProfiles.length - profiles.length;
-      const classPrefix = options.mobile ? "home-venue-discovery" : "venue-card";
       const avatars = profiles.map((profile) => {
         const avatarUrl = publicAvatarPhotoUrl(profile);
         const nativePhotoAttrs = nativeResponsivePhotoAttrs(
