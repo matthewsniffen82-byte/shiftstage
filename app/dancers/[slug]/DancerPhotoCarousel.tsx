@@ -793,7 +793,6 @@ export function DancerPhotoCarousel({
             </button>
           </>
         ) : <span className="profile-featured-empty">No approved profile photos yet.</span>}
-        <span className="profile-featured-now" aria-hidden="true">NOW</span>
       </aside>
     ) : null}
     <section
