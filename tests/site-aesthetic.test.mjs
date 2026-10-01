@@ -877,9 +877,9 @@ test("the frozen bottom navigation is outside the shared aesthetic contract", ()
   assert.match(liveApp, /<nav class="tabs" id="discoveryTabs"/);
 });
 
-test("every X-out control stays neutral without a violet focus halo", () => {
+test("dismiss controls stay neutral and shared X controls show violet keyboard focus", () => {
   const dismissControlRules = aesthetic.match(
-    /Dismiss controls are navigation utilities, not branded actions[\s\S]*$/,
+    /Dismiss controls are navigation utilities, not branded actions[\s\S]*?(?=\/\* Profile photo and video overlays)/,
   )?.[0] || "";
 
   for (const selector of [
@@ -903,6 +903,11 @@ test("every X-out control stays neutral without a violet focus halo", () => {
     /:focus-visible \{[\s\S]*?outline: 2px solid var\(--dancr-color-text-secondary\) !important;[\s\S]*?outline-offset: 2px !important;/,
   );
   assert.doesNotMatch(dismissControlRules, /var\(--dancr-(?:focus-ring|color-brand|color-beam|color-info)/);
+  const sharedCloseRules = aesthetic.match(
+    /\/\* Shared close controls:[\s\S]*?(?=\/\* Directions and Get a Ride)/,
+  )?.[0] || "";
+  assert.match(sharedCloseRules, /:not\(\[data-auto-focus\]\):focus-visible \{\s*outline: 2px solid #c4b5fd !important;/);
+  assert.match(sharedCloseRules, /\[hidden\] \{\s*display: none !important;/);
   assert.match(
     liveApp,
     /id="accountRequiredClose"[^>]*aria-label="Close account prompt"/,

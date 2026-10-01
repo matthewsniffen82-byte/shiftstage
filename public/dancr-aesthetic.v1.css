@@ -12341,8 +12341,8 @@ html body.dancr-button-system .guest-account-prompt :is(a, button):focus-visible
 }
 
 /* Dismiss controls are navigation utilities, not branded actions. Keep every
- * X neutral at rest, on touch focus, and during keyboard focus so opening a
- * modal never paints a violet ring or glow around its close control. */
+ * X neutral at rest and on touch focus. The shared icon treatment below
+ * supplies a violet outline only for deliberate keyboard navigation. */
 body.dancr-button-system :is(
   button.close-btn,
   button[class*="close" i],
@@ -12545,10 +12545,10 @@ body.dancr-button-system .public-profile-shell .profile-media-tabs button.active
   pointer-events: none !important;
 }
 
-/* Profile, account and dashboard exits use a 32px face inside a 44px tap target.
- * Draw the thin SVG outline separately from the fill for a clear edge.
- * Keep the target unscaled so the smaller circle stays easy to press. */
-body.dancr-button-system :is(
+/* Shared close controls: a 36px dark glass face inside a 44px tap target.
+ * Grid layers preserve each header's positioning and keep the visible face
+ * smaller than its hit area. One glyph also normalizes legacy text-only Xs. */
+html body.dancr-button-system :is(
   #profileBackdrop #profileModal #modalClose,
   #authClose,
   #venueSelectClose,
@@ -12581,10 +12581,22 @@ body.dancr-button-system :is(
   .admin-action-toast > button[aria-label="Dismiss confirmation"],
   .approved-profile-editor-close,
   .close-btn[data-approved-edit-close],
-  .dashboard-shell :is(.club-deal-dialog-close, .public-report-reason-close)
+  .dashboard-shell :is(.club-deal-dialog-close, .public-report-reason-close),
+  button[aria-label^="Close" i]:has(svg),
+  a[aria-label^="Close" i]:has(svg),
+  .profile-photo-viewer-close,
+  .profile-tv-viewer-close,
+  .profile-share-dialog-close,
+  .profile-qr-close,
+  .tv-video-viewer-close,
+  .tv-close,
+  .home-tv-feed-full-view-close,
+  .deal-pass-close,
+  .customer-notification-close,
+  #stripeClose
 ) {
-  --dancr-close-face: #24242c;
-  --dancr-close-edge: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='15.3' fill='none' stroke='%239a9ca9' stroke-width='1.2'/%3E%3C/svg%3E");
+  --dancr-close-face: rgba(24, 24, 30, .78);
+  --dancr-close-border: rgba(255, 255, 255, .18);
   box-sizing: border-box !important;
   width: 44px !important;
   min-width: 44px !important;
@@ -12594,28 +12606,26 @@ body.dancr-button-system :is(
   max-height: 44px !important;
   flex: 0 0 44px !important;
   display: inline-grid !important;
+  grid-template: 1fr / 1fr !important;
   place-items: center !important;
+  gap: 0 !important;
   padding: 0 !important;
   border: 0 !important;
   border-radius: 50% !important;
-  color: #fff !important;
-  background:
-    var(--dancr-close-edge) center / 32px 32px no-repeat,
-    radial-gradient(circle at center, var(--dancr-close-face) 0 15px, transparent 16px)
-      center / 32px 32px no-repeat !important;
+  color: #f4f3f7 !important;
+  background: transparent !important;
   -webkit-backdrop-filter: none !important;
   backdrop-filter: none !important;
   filter: none !important;
   box-shadow: none !important;
   text-shadow: none !important;
-  font-family: Arial, sans-serif !important;
-  font-size: 18px !important;
-  font-weight: 400 !important;
-  line-height: 1 !important;
+  font-size: 0 !important;
+  line-height: 0 !important;
+  isolation: isolate;
   touch-action: manipulation;
 }
 
-body.dancr-button-system :is(
+html body.dancr-button-system :is(
   #profileBackdrop #profileModal #modalClose,
   #authClose,
   #venueSelectClose,
@@ -12648,23 +12658,42 @@ body.dancr-button-system :is(
   .admin-action-toast > button[aria-label="Dismiss confirmation"],
   .approved-profile-editor-close,
   .close-btn[data-approved-edit-close],
-  .dashboard-shell :is(.club-deal-dialog-close, .public-report-reason-close)
-) > :is(svg, .icon) {
-  width: 16px !important;
-  height: 16px !important;
-  flex: 0 0 16px !important;
+  .dashboard-shell :is(.club-deal-dialog-close, .public-report-reason-close),
+  button[aria-label^="Close" i]:has(svg),
+  a[aria-label^="Close" i]:has(svg),
+  .profile-photo-viewer-close,
+  .profile-tv-viewer-close,
+  .profile-share-dialog-close,
+  .profile-qr-close,
+  .tv-video-viewer-close,
+  .tv-close,
+  .home-tv-feed-full-view-close,
+  .deal-pass-close,
+  .customer-notification-close,
+  #stripeClose
+)::before {
+  content: "" !important;
+  grid-area: 1 / 1 !important;
+  position: static !important;
+  inset: auto !important;
   display: block !important;
+  box-sizing: border-box !important;
+  width: 36px !important;
+  height: 36px !important;
   margin: 0 !important;
-  color: #fff !important;
-  fill: none !important;
-  stroke: currentColor !important;
-  stroke-width: 2 !important;
-  stroke-linecap: round !important;
-  opacity: 1 !important;
+  border: 1px solid var(--dancr-close-border) !important;
+  border-radius: 50% !important;
+  background: linear-gradient(145deg, rgba(255, 255, 255, .055), transparent 65%), var(--dancr-close-face) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .045), 0 3px 10px rgba(0, 0, 0, .24) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  backdrop-filter: blur(12px) !important;
   transform: none !important;
+  opacity: 1 !important;
+  z-index: 0 !important;
+  pointer-events: none !important;
 }
 
-body.dancr-button-system :is(
+html body.dancr-button-system :is(
   #profileBackdrop #profileModal #modalClose,
   #authClose,
   #venueSelectClose,
@@ -12697,13 +12726,40 @@ body.dancr-button-system :is(
   .admin-action-toast > button[aria-label="Dismiss confirmation"],
   .approved-profile-editor-close,
   .close-btn[data-approved-edit-close],
-  .dashboard-shell :is(.club-deal-dialog-close, .public-report-reason-close)
-):is(:hover, :focus-visible) {
-  --dancr-close-face: #34343e;
-  --dancr-close-edge: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='15.3' fill='none' stroke='%23d1d2da' stroke-width='1.2'/%3E%3C/svg%3E");
+  .dashboard-shell :is(.club-deal-dialog-close, .public-report-reason-close),
+  button[aria-label^="Close" i]:has(svg),
+  a[aria-label^="Close" i]:has(svg),
+  .profile-photo-viewer-close,
+  .profile-tv-viewer-close,
+  .profile-share-dialog-close,
+  .profile-qr-close,
+  .tv-video-viewer-close,
+  .tv-close,
+  .home-tv-feed-full-view-close,
+  .deal-pass-close,
+  .customer-notification-close,
+  #stripeClose
+)::after {
+  content: "" !important;
+  grid-area: 1 / 1 !important;
+  position: static !important;
+  inset: auto !important;
+  display: block !important;
+  width: 18px !important;
+  height: 18px !important;
+  margin: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23f4f3f7' stroke-width='1.75' stroke-linecap='round'%3E%3Cpath d='m6 6 12 12M18 6 6 18'/%3E%3C/svg%3E") center / 18px 18px no-repeat !important;
+  box-shadow: none !important;
+  transform: none !important;
+  opacity: 1 !important;
+  z-index: 1 !important;
+  pointer-events: none !important;
 }
 
-body.dancr-button-system :is(
+/* Accessible names remain on the controls; only their old visual glyphs hide. */
+html body.dancr-button-system :is(
   #profileBackdrop #profileModal #modalClose,
   #authClose,
   #venueSelectClose,
@@ -12736,13 +12792,126 @@ body.dancr-button-system :is(
   .admin-action-toast > button[aria-label="Dismiss confirmation"],
   .approved-profile-editor-close,
   .close-btn[data-approved-edit-close],
-  .dashboard-shell :is(.club-deal-dialog-close, .public-report-reason-close)
+  .dashboard-shell :is(.club-deal-dialog-close, .public-report-reason-close),
+  button[aria-label^="Close" i]:has(svg),
+  a[aria-label^="Close" i]:has(svg),
+  .profile-photo-viewer-close,
+  .profile-tv-viewer-close,
+  .profile-share-dialog-close,
+  .profile-qr-close,
+  .tv-video-viewer-close,
+  .tv-close,
+  .home-tv-feed-full-view-close,
+  .deal-pass-close,
+  .customer-notification-close,
+  #stripeClose
+) > :is(svg, .icon, .action-icon) {
+  display: none !important;
+}
+
+html body.dancr-button-system :is(
+  #profileBackdrop #profileModal #modalClose,
+  #authClose,
+  #venueSelectClose,
+  #distanceSelectClose,
+  #dancerSignupClose,
+  #results.venue-profile-overlay .venue-detail .venue-detail-close,
+  .public-profile-shell .public-profile-close,
+  .dashboard-close,
+  #dashboardClose,
+  #dancerDashboardClose,
+  #venueDashboardClose,
+  #adminClose,
+  .dancer-profile-preview-overlay .public-profile-close,
+  .dancer-profile-editor-modal > header > button[aria-label^="Close"],
+  .dancer-social-link-modal [data-social-modal-close],
+  .dancer-media-viewer > header > button[aria-label="Close media preview"],
+  .admin-preview-overlay .admin-preview-close,
+  #adminPreviewClose,
+  #passwordRecoveryClose,
+  #loginRecoveryClose,
+  #publicContactClose,
+  #contentReportClose,
+  .public-report-reason-close,
+  .club-deal-dialog-close,
+  .guest-account-close,
+  .recovery-close,
+  .login-recovery-close,
+  .customer-welcome-card > button[aria-label^="Dismiss"],
+  .dancer-activation-confirmation > button[aria-label^="Dismiss"],
+  .admin-action-toast > button[aria-label="Dismiss confirmation"],
+  .approved-profile-editor-close,
+  .close-btn[data-approved-edit-close],
+  .dashboard-shell :is(.club-deal-dialog-close, .public-report-reason-close),
+  button[aria-label^="Close" i]:has(svg),
+  a[aria-label^="Close" i]:has(svg),
+  .profile-photo-viewer-close,
+  .profile-tv-viewer-close,
+  .profile-share-dialog-close,
+  .profile-qr-close,
+  .tv-video-viewer-close,
+  .tv-close,
+  .home-tv-feed-full-view-close,
+  .deal-pass-close,
+  .customer-notification-close,
+  #stripeClose
+):is(:hover, :focus-visible):not(:disabled) {
+  --dancr-close-face: rgba(36, 36, 44, .9);
+  --dancr-close-border: rgba(255, 255, 255, .28);
+}
+
+html body.dancr-button-system :is(
+  #profileBackdrop #profileModal #modalClose,
+  #authClose,
+  #venueSelectClose,
+  #distanceSelectClose,
+  #dancerSignupClose,
+  #results.venue-profile-overlay .venue-detail .venue-detail-close,
+  .public-profile-shell .public-profile-close,
+  .dashboard-close,
+  #dashboardClose,
+  #dancerDashboardClose,
+  #venueDashboardClose,
+  #adminClose,
+  .dancer-profile-preview-overlay .public-profile-close,
+  .dancer-profile-editor-modal > header > button[aria-label^="Close"],
+  .dancer-social-link-modal [data-social-modal-close],
+  .dancer-media-viewer > header > button[aria-label="Close media preview"],
+  .admin-preview-overlay .admin-preview-close,
+  #adminPreviewClose,
+  #passwordRecoveryClose,
+  #loginRecoveryClose,
+  #publicContactClose,
+  #contentReportClose,
+  .public-report-reason-close,
+  .club-deal-dialog-close,
+  .guest-account-close,
+  .recovery-close,
+  .login-recovery-close,
+  .customer-welcome-card > button[aria-label^="Dismiss"],
+  .dancer-activation-confirmation > button[aria-label^="Dismiss"],
+  .admin-action-toast > button[aria-label="Dismiss confirmation"],
+  .approved-profile-editor-close,
+  .close-btn[data-approved-edit-close],
+  .dashboard-shell :is(.club-deal-dialog-close, .public-report-reason-close),
+  button[aria-label^="Close" i]:has(svg),
+  a[aria-label^="Close" i]:has(svg),
+  .profile-photo-viewer-close,
+  .profile-tv-viewer-close,
+  .profile-share-dialog-close,
+  .profile-qr-close,
+  .tv-video-viewer-close,
+  .tv-close,
+  .home-tv-feed-full-view-close,
+  .deal-pass-close,
+  .customer-notification-close,
+  #stripeClose
 ):not([data-auto-focus]):focus-visible {
-  outline: 2px solid #fff !important;
+  outline: 2px solid #c4b5fd !important;
   outline-offset: 2px !important;
 }
 
-body.dancr-button-system :is(
+html body.dancr-button-system :is(
   #profileBackdrop #profileModal #modalClose,
   #authClose,
   #venueSelectClose,
@@ -12775,9 +12944,71 @@ body.dancr-button-system :is(
   .admin-action-toast > button[aria-label="Dismiss confirmation"],
   .approved-profile-editor-close,
   .close-btn[data-approved-edit-close],
-  .dashboard-shell :is(.club-deal-dialog-close, .public-report-reason-close)
+  .dashboard-shell :is(.club-deal-dialog-close, .public-report-reason-close),
+  button[aria-label^="Close" i]:has(svg),
+  a[aria-label^="Close" i]:has(svg),
+  .profile-photo-viewer-close,
+  .profile-tv-viewer-close,
+  .profile-share-dialog-close,
+  .profile-qr-close,
+  .tv-video-viewer-close,
+  .tv-close,
+  .home-tv-feed-full-view-close,
+  .deal-pass-close,
+  .customer-notification-close,
+  #stripeClose
+)[hidden] {
+  display: none !important;
+}
+
+html body.dancr-button-system :is(
+  #profileBackdrop #profileModal #modalClose,
+  #authClose,
+  #venueSelectClose,
+  #distanceSelectClose,
+  #dancerSignupClose,
+  #results.venue-profile-overlay .venue-detail .venue-detail-close,
+  .public-profile-shell .public-profile-close,
+  .dashboard-close,
+  #dashboardClose,
+  #dancerDashboardClose,
+  #venueDashboardClose,
+  #adminClose,
+  .dancer-profile-preview-overlay .public-profile-close,
+  .dancer-profile-editor-modal > header > button[aria-label^="Close"],
+  .dancer-social-link-modal [data-social-modal-close],
+  .dancer-media-viewer > header > button[aria-label="Close media preview"],
+  .admin-preview-overlay .admin-preview-close,
+  #adminPreviewClose,
+  #passwordRecoveryClose,
+  #loginRecoveryClose,
+  #publicContactClose,
+  #contentReportClose,
+  .public-report-reason-close,
+  .club-deal-dialog-close,
+  .guest-account-close,
+  .recovery-close,
+  .login-recovery-close,
+  .customer-welcome-card > button[aria-label^="Dismiss"],
+  .dancer-activation-confirmation > button[aria-label^="Dismiss"],
+  .admin-action-toast > button[aria-label="Dismiss confirmation"],
+  .approved-profile-editor-close,
+  .close-btn[data-approved-edit-close],
+  .dashboard-shell :is(.club-deal-dialog-close, .public-report-reason-close),
+  button[aria-label^="Close" i]:has(svg),
+  a[aria-label^="Close" i]:has(svg),
+  .profile-photo-viewer-close,
+  .profile-tv-viewer-close,
+  .profile-share-dialog-close,
+  .profile-qr-close,
+  .tv-video-viewer-close,
+  .tv-close,
+  .home-tv-feed-full-view-close,
+  .deal-pass-close,
+  .customer-notification-close,
+  #stripeClose
 ):disabled {
-  opacity: 0.5 !important;
+  opacity: .5 !important;
 }
 
 /* Directions and Get a Ride on club cards and dancer profiles use the existing
