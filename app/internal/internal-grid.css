@@ -1,4 +1,5 @@
 /* Match the external dancer directory: three columns, 2px gutters, 9:16 tiles. */
+body .ir-shell { color-scheme: only dark; }
 body .ir-shell .ir-directory-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -55,6 +56,13 @@ body .ir-directory-grid .ir-main-photo {
   color: #bda4dc;
   font-size: 12px;
 }
+/* Match the public directory's photo exposure, including Android table pages. */
+body .ir-directory-grid img.ir-main-photo {
+  -webkit-filter: brightness(1.14) contrast(1.03);
+  filter: brightness(1.14) contrast(1.03);
+  opacity: 1;
+  mix-blend-mode: normal;
+}
 body .ir-shell .ir-directory-grid .ir-dancer-copy {
   position: absolute;
   z-index: 2;
@@ -63,7 +71,7 @@ body .ir-shell .ir-directory-grid .ir-dancer-copy {
   gap: 3px;
   padding: 24px 7px 7px;
   color: #fff;
-  background: linear-gradient(180deg, transparent, rgba(5, 5, 8, .94) 48%);
+  background: linear-gradient(180deg, transparent, rgba(5, 5, 8, .08) 38%, rgba(5, 5, 8, .55) 70%, rgba(5, 5, 8, .88));
   text-shadow: 0 1px 3px #000;
   pointer-events: none;
 }

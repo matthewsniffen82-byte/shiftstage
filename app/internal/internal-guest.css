@@ -28,12 +28,10 @@ body .ir-guest .ir-section-title { align-items: center; flex-wrap: wrap; gap: 6p
 body .ir-guest .ir-live { padding: 0; color: var(--dancr-color-success, #34d399); font-size: 12px; line-height: 1.4; }
 body .ir-guest .ir-section-title .ir-live { padding: 3px 7px; border: 1px solid #254b3b; border-radius: 999px; background: #07110c; font-size: 11px; font-weight: 600; }
 
-/* Preserve the three-column photos, with the same soft fade and thin edge
-   as the public dancer cards. Leave room for an independent 44px request. */
+/* Keep the portrait visible above a localized name fade and 44px request. */
 body .ir-shell.ir-guest .ir-directory-grid .ir-dancer-copy {
   gap: 3px;
-  padding-top: 26px;
-  background: linear-gradient(180deg, transparent, rgba(10, 8, 16, .45) 25%, rgba(13, 9, 21, .88) 60%, #100a1c);
+  padding-top: 14px;
 }
 body .ir-shell.ir-guest .ir-directory-grid .ir-dancer-requestable .ir-dancer-copy { padding-bottom: 48px; }
 body .ir-shell.ir-guest .ir-directory-grid .ir-dancer-copy strong {
@@ -112,11 +110,18 @@ body .ir-guest .ir-refresh-message:not([data-error]) { position: absolute; width
   body .ir-guest .ir-roster-refresh[aria-busy="true"] svg { animation: none; opacity: .55; }
 }
 
-/* A slimmer visible face keeps the full 44px tap target above the card edge. */
-body.dancr-button-system .ir-shell.ir-guest button.ir-table-request { --ir-guest-control-edge: #8b5fbf; padding: 4px !important; border-radius: 8px !important; font-size: clamp(11px, 3vw, 12px) !important; }
-body.dancr-button-system .ir-shell.ir-guest button.ir-table-request::before { inset-block: 6px; background: linear-gradient(120deg, #6430ba, #512296); }
-body.dancr-button-system .ir-shell.ir-guest button.ir-table-request:enabled:not([data-request-sent]):is(:hover, :active) { --ir-guest-control-edge: #a78bfa; }
-body.dancr-button-system .ir-shell.ir-guest button.ir-table-request:enabled:not([data-request-sent]):active::before { background: linear-gradient(#5b21b6, #5b21b6); }
+/* Give Request the lit face of Free Entry, in the roster's violet palette.
+   The visible face retains its full 44px tap target. */
+body.dancr-button-system .ir-shell.ir-guest button.ir-table-request { --ir-guest-control-edge: #b597ff; padding: 4px !important; border-radius: 8px !important; font-size: clamp(11px, 3vw, 12px) !important; }
+body.dancr-button-system .ir-shell.ir-guest button.ir-table-request::before {
+  inset-block: 6px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, .1), transparent 48%), linear-gradient(120deg, #7c3aed, #6d28d9);
+}
+body.dancr-button-system .ir-shell.ir-guest button.ir-table-request:enabled:not([data-request-sent])::before {
+  box-shadow: 0 0 14px rgba(139, 92, 246, .3), inset 0 1px 0 rgba(255, 255, 255, .22);
+}
+body.dancr-button-system .ir-shell.ir-guest button.ir-table-request:enabled:not([data-request-sent]):is(:hover, :active) { --ir-guest-control-edge: #c4b5fd; }
+body.dancr-button-system .ir-shell.ir-guest button.ir-table-request:enabled:not([data-request-sent]):active::before { background: linear-gradient(120deg, #7c3aed, #6d28d9); }
 body.dancr-button-system .ir-shell.ir-guest button.ir-table-request:disabled { --ir-guest-control-edge: #55545f; }
 body.dancr-button-system .ir-shell.ir-guest button.ir-table-request:disabled::before { background: linear-gradient(#111118, #111118); }
 body.dancr-button-system .ir-shell.ir-guest button.ir-table-request[data-request-sent] { --ir-guest-control-edge: #494653; color: #dddbe5 !important; }
