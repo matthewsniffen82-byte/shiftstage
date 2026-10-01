@@ -103,7 +103,7 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
 }
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout :is(.profile-modal-name-row, .profile-modal-name-anchor) { display: block !important; padding: 0 !important; min-width: 0 !important; width: 100% !important; overflow: visible !important; }
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout :is(#modalName, .profile-titlebar h1) {
-  display: inline-block !important;
+  display: block !important;
   width: auto !important;
   max-width: 100% !important;
   font-size: clamp(24px, 3vw, 38px) !important;
@@ -119,13 +119,13 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout :is(.profile-modal-context, .profile-city) { display: flex !important; align-items: center !important; gap: 5px !important; margin: 0 !important; font-size: 12px !important; }
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout :is(#modalCity, .profile-city, .profile-titlebar-city) { width: auto !important; max-width: none !important; padding: 0 !important; border: 0 !important; background: none !important; min-height: 0 !important; font-size: clamp(12px, 1.4vw, 16px) !important; line-height: 1.4 !important; transform: none !important; white-space: normal !important; overflow-wrap: anywhere; }
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout :is(.profile-modal-city-icon, .profile-city svg) { width: 16px !important; height: 16px !important; flex: 0 0 16px !important; }
-/* Let short names share the controls row; longer names flow below the buttons. */
+/* Give every name the full column below the report and close controls. */
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout :is(.profile-modal-summary, .profile-titlebar):has(> :is(.profile-modal-header-controls, .profile-titlebar-controls)) {
   display: flow-root !important;
   padding-top: 8px !important;
 }
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout :is(.profile-modal-header-controls, .profile-titlebar-controls) {
-  float: right !important;
+  float: none !important;
   display: flex !important;
   position: relative !important;
   inset: auto !important;
@@ -133,9 +133,8 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
   width: 88px !important;
   height: 44px !important;
   gap: 0 !important;
-  margin: 0 0 0 4px !important;
+  margin: 0 0 0 auto !important;
 }
-html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout :is(.profile-modal-context, .profile-titlebar-context) { clear: right; }
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout :is(.profile-modal-header-controls, .profile-titlebar-controls) button { width: 44px !important; height: 44px !important; min-width: 44px !important; min-height: 44px !important; }
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout .profile-modal-header-metrics { margin: 10px 0 0 !important; width: 100% !important; transform: none !important; }
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout :is(.profile-activity-metrics, .profile-header-metrics) {
