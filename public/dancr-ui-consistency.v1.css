@@ -1481,3 +1481,30 @@ html body.dancer-directory-active.dancr-button-system > .app main.stack > sectio
   flex-basis: 5px;
   background: currentColor !important;
 }
+
+/* Improve card-caption contrast without changing the shared card layout. */
+html body.dancr-button-system #results.home-dancer-grid.home-dancer-three-column .home-dancer-grid-copy,
+html body.dancr-button-system #results.venue-profile-overlay .venue-dancer-grid .home-dancer-grid-copy {
+  background: linear-gradient(180deg,
+    rgba(21, 11, 37, 0) 0%,
+    rgba(21, 11, 37, .32) 24%,
+    rgba(18, 10, 31, .66) 44%,
+    rgba(15, 9, 26, .86) 64%,
+    rgba(12, 8, 22, .96) 84%,
+    rgba(10, 7, 18, .98) 100%) !important;
+}
+html body.dancr-button-system > .app main.stack > section.stack
+  > #results.home-dancer-grid .home-dancer-grid-venue,
+html body.dancr-button-system > .app main.stack > section.stack
+  > #results.venue-profile-overlay .venue-dancer-grid .home-dancer-grid-venue {
+  color: #e2e4ec !important;
+}
+html body.dancr-button-system > .app main.stack > section.stack
+  > #results.home-dancer-grid .home-dancer-grid-venue > .venue-dot svg,
+html body.dancr-button-system > .app main.stack > section.stack
+  > #results.venue-profile-overlay .venue-dancer-grid .home-dancer-grid-venue > .venue-dot svg {
+  width: 9px !important;
+  height: 9px !important;
+  color: #a9adba !important;
+  stroke-width: 1.5 !important;
+}
