@@ -222,7 +222,7 @@
       const followsVenue = isFollowingVenue(city, venue.name);
       const locationLabel = `${details.city}${details.state ? `, ${details.state}` : ""}`;
       const hoursMarkup = operatingStatus.hoursLabel
-        ? `<span class="home-venue-discovery-hours">${clockIconMarkup()}<span>Hours · ${escapeHtml(operatingStatus.hoursLabel)}</span></span>`
+        ? `<span class="home-venue-discovery-hours" aria-label="Opening hours">${clockIconMarkup()}<span>${escapeHtml(operatingStatus.hoursLabel)}</span></span>`
         : "";
       const operatingStatusMarkup = `<span class="home-venue-discovery-operating-status is-${operatingStatus.state}">${escapeHtml(operatingStatus.label)}</span>`;
       const railQrMarkup = homeVenueDiscoveryQrMarkup(venue);

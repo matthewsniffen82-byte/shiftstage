@@ -625,7 +625,8 @@ test("venue inline cards use production venue, schedule, revenue, and customer a
     venueSlide,
     /home-venue-discovery-location[\s\S]*?home-venue-discovery-context-actions[\s\S]*?\$\{railQrMarkup\}[\s\S]*?home-venue-discovery-action-rail[\s\S]*?data-open-venue-profile="\$\{venueValue\}"[\s\S]*?actionButtonLabel\("clubProfile", "Club Page"\)[\s\S]*?\$\{directionsMarkup\}[\s\S]*?data-venue-follow="\$\{venueValue\}"/,
   );
-  assert.doesNotMatch(venueSlide, /home-venue-discovery-name-row|home-venue-discovery-name/);
+  assert.doesNotMatch(venueSlide, /home-venue-discovery-name-row/);
+  assert.match(venueSlide, /<h3 class="home-venue-discovery-name">\$\{safeName\}<\/h3>/);
   assert.doesNotMatch(venueSlide, /home-venue-discovery-profile-cta/);
   assert.match(
     venueSlide,

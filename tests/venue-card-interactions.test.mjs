@@ -109,7 +109,7 @@ test("mobile club cards compact every data state without replacing interaction s
   assert.match(venueSwipeRenderer, /const railQrMarkup = homeVenueDiscoveryQrMarkup\(venue\)/);
   assert.match(
     venueSwipeRenderer,
-    /venueOperatingStatus\(details\.hours, city\)[\s\S]*?operatingStatus\.hoursLabel[\s\S]*?Hours · \$\{escapeHtml\(operatingStatus\.hoursLabel\)\}[\s\S]*?\$\{operatingStatusMarkup\}\$\{hoursMarkup\}/,
+    /venueOperatingStatus\(details\.hours, city\)[\s\S]*?operatingStatus\.hoursLabel[\s\S]*?aria-label="Opening hours"[\s\S]*?\$\{escapeHtml\(operatingStatus\.hoursLabel\)\}[\s\S]*?\$\{operatingStatusMarkup\}\$\{hoursMarkup\}/,
   );
   assert.match(
     aesthetic,

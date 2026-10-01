@@ -127,7 +127,8 @@ test("mobile Clubs cards place at most three avatars beside the club details", (
 
   assert.doesNotMatch(slide, /mobileLineupReserve|--home-venue-lineup-reserve/);
   assert.match(slide, /home-venue-discovery-location[\s\S]*?home-venue-discovery-meta[\s\S]*?home-venue-discovery-lineup-slot/);
-  assert.doesNotMatch(slide, /home-venue-discovery-name-row|home-venue-discovery-name/);
+  assert.doesNotMatch(slide, /home-venue-discovery-name-row/);
+  assert.match(slide, /<h3 class="home-venue-discovery-name">\$\{safeName\}<\/h3>/);
   assert.match(hierarchy, /\.home-venue-discovery-lineup-slot \{[\s\S]*?grid-column: 2 !important;[\s\S]*?grid-row: 1 !important;[\s\S]*?top: auto !important;[\s\S]*?right: auto !important;/);
   assert.match(hierarchy, /margin-left: -8px !important;/);
 });
