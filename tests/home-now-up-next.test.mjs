@@ -50,7 +50,7 @@ test("the consolidated Dancers destination exposes equal-width Working Now and N
   assert.match(homeSource, /const label = tab\.dataset\.tabLabel \|\| tab\.textContent\.trim\(\)/);
   assert.doesNotMatch(homeSource, /Now &amp; Next|Now & Next in|Up Next Tonight in/);
   assert.doesNotMatch(homeSource, /class="home-app-bottom-nav"/);
-  assert.match(homeSource, /`\$\{workingNowCount\} working now`/);
+  assert.match(homeSource, /`\$\{workingNowCount\} Working Now`/);
   assert.match(
     homeSource,
     /filters = clubSelected \? \[[^\n]+\] : \[\s*\{ id: "now", label: "Working Now" \},\s*\{ id: "not_now", label: "Not Working Now" \}\s*\]/,
@@ -66,7 +66,7 @@ test("the consolidated Dancers destination exposes equal-width Working Now and N
     /const empty = counts\[filter\.id\] === 0;[\s\S]*?\$\{empty \? " is-empty" : ""\}/,
   );
   assert.match(homeSource, /dancerDirectoryFilter = nextFilter;[\s\S]*?syncHomeDestinationLocation\("dancers"\)[\s\S]*?render\(\)/);
-  assert.match(homeSource, /No dancers are working now \$\{locationPhrase\}\./);
+  assert.match(homeSource, /No dancers are currently checked in on MyDancr \$\{locationPhrase\}\./);
   assert.doesNotMatch(homeSource, /No dancers are trending in \$\{city\} yet\./);
   assert.match(homeSource, /data-dancer-directory-filter="\$\{filter\.id\}"/);
   assert.match(homeSource, /No dancers are off shift \$\{locationPhrase\}\./);

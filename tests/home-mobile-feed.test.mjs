@@ -407,7 +407,7 @@ test("Venues uses natural one-column cards with a visible next-card continuation
   );
   assert.match(
     homeSource,
-    /if \(!items\.length\)[\s\S]*?activeTab === "venues"[\s\S]*?homeClubEmptyStateMarkup\(city\)[\s\S]*?No dancers are working now[\s\S]*?No approved dancer profiles are available/,
+    /if \(!items\.length\)[\s\S]*?activeTab === "venues"[\s\S]*?homeClubEmptyStateMarkup\(city\)[\s\S]*?No dancers are currently checked in on MyDancr[\s\S]*?No approved dancer profiles are available/,
   );
   assert.doesNotMatch(homeSource, /No upcoming shifts are posted for tonight|Now and Next appearances/);
 });

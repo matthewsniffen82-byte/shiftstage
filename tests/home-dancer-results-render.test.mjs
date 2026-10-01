@@ -88,6 +88,8 @@ test("status tabs count their cards while the heading keeps the whole discovery 
     fixture.state.dancerDirectoryFilter = filter;
     fixture.state.render();
     assert.equal(fixture.state.headerCount, "14 dancers");
+    assert.equal((fixture.markup.match(/Only participating MyDancr dancers are shown\./g) || []).length, 1,
+      "the roster clarification must appear once when either status tab is selected");
     assert.equal((fixture.markup.match(/<article /g) || []).length, count);
     assert.deepEqual([...fixture.markup.matchAll(/<strong>([^<]+)<\/strong>/g)].map((match) => match[1]), labels);
     assert.deepEqual([...fixture.markup.matchAll(/<article data-profile="([^"]+)"/g)].map(match => match[1]),
@@ -118,7 +120,7 @@ test("filtered totals handle one or zero dancers without hiding the selected sta
   fixture.state.render();
   assert.equal(fixture.state.headerCount, "1 dancer");
   assert.match(fixture.markup, /<strong>Working Now<\/strong>\s*<span>0<\/span>/);
-  assert.match(fixture.markup, /No dancers are working now in Las Vegas/);
+  assert.match(fixture.markup, /No dancers are currently checked in on MyDancr in Las Vegas/);
   fixture.state.profiles = [{ name: "Working dancer", scheduled: true, now: true }];
   fixture.state.dancerDirectoryFilter = "not_now";
   fixture.state.render();
@@ -169,7 +171,7 @@ test("choosing a specific club resets Not Working Now and shows only the Working
   fixture.state.profiles = [];
   fixture.state.render();
   assert.equal(fixture.state.headerCount, "0 dancers");
-  assert.match(fixture.markup, /No dancers are working now at Test Club/);
+  assert.match(fixture.markup, /No dancers are currently checked in on MyDancr at Test Club/);
   fixture.state.venueFilter = "all";
   fixture.state.render();
   assert.equal((fixture.markup.match(/role="tab"/g) || []).length, 2);

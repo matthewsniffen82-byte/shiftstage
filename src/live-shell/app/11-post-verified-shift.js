@@ -310,9 +310,10 @@
         `
           <section class="venue-activity-section is-working" aria-labelledby="venue-working-now">
             <h3 class="section-title" id="venue-working-now" aria-label="${tonight.length} ${tonight.length === 1 ? "dancer" : "dancers"} working now at ${escapeHtml(details.name)}"><span>Working now · ${tonight.length}</span></h3>
+            <p class="roster-participation-note">Only participating MyDancr dancers are shown. Additional dancers may be working at the club.</p>
             ${tonight.length
               ? venueDancerGridMarkup(tonight, city, `Working now at ${details.name}`)
-              : `<div class="venue-activity-empty is-compact"><span class="venue-activity-empty-icon">${actionIconMarkup("clock")}</span><span><strong>No dancers working now</strong><small>Follow this club for updates.</small></span></div>`}
+              : `<div class="venue-activity-empty is-compact"><span class="venue-activity-empty-icon">${actionIconMarkup("clock")}</span><span><strong>No dancers are currently checked in on MyDancr.</strong><small>Follow this club for updates.</small></span></div>`}
           </section>
         `
       ].filter(Boolean).join("");

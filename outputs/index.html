@@ -36516,8 +36516,16 @@
         }
         #results.home-dancer-grid.home-dancer-three-column > .home-dancer-grid-heading,
         #results.home-dancer-grid.home-dancer-three-column > .dancer-directory-filters,
+        #results.home-dancer-grid.home-dancer-three-column > .roster-participation-note,
         #results.home-dancer-grid.home-dancer-three-column > .dancer-directory-filter-empty {
           grid-column: 1 / -1;
+        }
+        #results .roster-participation-note {
+          margin: 4px 0 10px;
+          color: #b3b5c2;
+          font-size: 12px;
+          font-weight: 400;
+          line-height: 1.5;
         }
         #results.home-dancer-grid.home-dancer-three-column > .home-dancer-grid-card {
           contain: layout style;
@@ -53254,9 +53262,10 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
         `
           <section class="venue-activity-section is-working" aria-labelledby="venue-working-now">
             <h3 class="section-title" id="venue-working-now" aria-label="${tonight.length} ${tonight.length === 1 ? "dancer" : "dancers"} working now at ${escapeHtml(details.name)}"><span>Working now · ${tonight.length}</span></h3>
+            <p class="roster-participation-note">Only participating MyDancr dancers are shown. Additional dancers may be working at the club.</p>
             ${tonight.length
               ? venueDancerGridMarkup(tonight, city, `Working now at ${details.name}`)
-              : `<div class="venue-activity-empty is-compact"><span class="venue-activity-empty-icon">${actionIconMarkup("clock")}</span><span><strong>No dancers working now</strong><small>Follow this club for updates.</small></span></div>`}
+              : `<div class="venue-activity-empty is-compact"><span class="venue-activity-empty-icon">${actionIconMarkup("clock")}</span><span><strong>No dancers are currently checked in on MyDancr.</strong><small>Follow this club for updates.</small></span></div>`}
           </section>
         `
       ].filter(Boolean).join("");
@@ -60911,7 +60920,7 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
         return markup;
       }).join("");
       const emptyLabels = {
-        now: `No dancers are working now ${locationPhrase}.`,
+        now: `No dancers are currently checked in on MyDancr ${locationPhrase}.`,
         not_now: `No dancers are off shift ${locationPhrase}.`
       };
       results.classList.add("card-grid", "home-dancer-grid");
@@ -60920,6 +60929,7 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
       results.setAttribute("aria-label", `Approved dancers ${locationPhrase}, filtered by working status`);
       const gridMarkup = `
         ${dancerDirectoryFilterMarkup(profiles, city)}
+        <p class="roster-participation-note">Only participating MyDancr dancers are shown. Additional dancers may be working at the club.</p>
         ${sectionMarkup}
         ${visibleCount ? "" : `<div class="dancer-directory-filter-empty">${escapeHtml(emptyLabels[dancerDirectoryFilter] || `No approved dancer profiles are available ${locationPhrase} yet.`)}</div>`}
       `;
@@ -61135,7 +61145,7 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
         }
         renderHomeDiscoveryFeedMessage(
           activeTab === "tonight"
-            ? `No dancers are working now ${locationPhrase}.`
+            ? `No dancers are currently checked in on MyDancr ${locationPhrase}.`
             : `No approved dancer profiles are available ${locationPhrase} yet.`
         );
         return;

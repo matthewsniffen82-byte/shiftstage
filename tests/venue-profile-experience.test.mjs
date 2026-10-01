@@ -283,7 +283,7 @@ test("venue profile share action confirms success in the pressed button", () => 
 
 test("venue profiles keep Working Now discoverable with a truthful empty state", () => {
   const venueDetail = liveApp.match(/function venueDetailPage\(venue\) \{[\s\S]*?\n    \}/)?.[0] || "";
-  assert.match(venueDetail, /venue-activity-section is-working[\s\S]*?tonight\.length[\s\S]*?No dancers working now[\s\S]*?Follow this club for updates\./);
+  assert.match(venueDetail, /venue-activity-section is-working[\s\S]*?tonight\.length[\s\S]*?No dancers are currently checked in on MyDancr\.[\s\S]*?Follow this club for updates\./);
   assert.doesNotMatch(venueDetail, /venue-activity-section is-upcoming|venue-activity-section is-open|venue-status-grid/);
 });
 

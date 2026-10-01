@@ -362,6 +362,7 @@ export function InternalRoster({ token, operationsOnly = false, roster }: { toke
             </button> : null}
           </div>
         </div>
+        {!staff ? <p className="ir-roster-scope-note">Only participating MyDancr dancers are shown. Additional dancers may be working at the club.</p> : null}
         {!staff && refreshMessage ? <p className="ir-refresh-message" data-error={refreshMessage !== "Roster updated." || undefined} role="status">{refreshMessage}</p> : null}
         {dancers.length ? <div className="ir-grid ir-directory-grid">{dancers.map((dancer, index) => <article className={`ir-dancer${snapshot.kind === "table" ? " ir-dancer-requestable" : ""}`} key={dancer.id} data-request-state={!staff ? dancer.requestStatus || undefined : undefined}>
           <button type="button" className="ir-profile-link" aria-label={`View ${dancer.stageName}’s full profile`} aria-busy={openingProfileId === dancer.id} onClick={() => void openProfile(dancer)}>
@@ -377,7 +378,7 @@ export function InternalRoster({ token, operationsOnly = false, roster }: { toke
             onClick={() => dancer.requestStatus ? cancelDancer(dancer.id, dancer.requestId) : requestDancer(dancer.id)}>
             {requestingDancers.includes(dancer.id) ? dancer.requestStatus ? "Cancelling…" : "Sending…" : confirmedDancers.includes(dancer.id) ? <span className="internal-request-sent-label">Request sent</span> : dancer.requestStatus ? "Cancel request" : "Request"}
           </button> : null}
-        </article>)}</div> : <div className="ir-empty"><h3>The floor is getting ready</h3><p>{staff ? "Dancers appear here after choosing Internal or Both at the dressing-room NFC sticker." : "No dancers are available to request right now. Please check back shortly or ask club staff."}</p></div>}
+        </article>)}</div> : <div className="ir-empty"><h3>{staff ? "The floor is getting ready" : "No dancers are currently listed in this MyDancr roster."}</h3><p>{staff ? "Dancers appear here after choosing Internal or Both at the dressing-room NFC sticker." : "Please check back shortly or ask club staff."}</p></div>}
       </section> : null}
 
       {!staff && (tableRequests.length > 0 || receiptStatus) ? <section className={`ir-table-status${!tableRequests.length && inactiveReceipt ? " is-inactive" : ""}`} aria-label="Table request status" role="status">

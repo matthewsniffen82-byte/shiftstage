@@ -501,7 +501,7 @@
         return markup;
       }).join("");
       const emptyLabels = {
-        now: `No dancers are working now ${locationPhrase}.`,
+        now: `No dancers are currently checked in on MyDancr ${locationPhrase}.`,
         not_now: `No dancers are off shift ${locationPhrase}.`
       };
       results.classList.add("card-grid", "home-dancer-grid");
@@ -510,6 +510,7 @@
       results.setAttribute("aria-label", `Approved dancers ${locationPhrase}, filtered by working status`);
       const gridMarkup = `
         ${dancerDirectoryFilterMarkup(profiles, city)}
+        <p class="roster-participation-note">Only participating MyDancr dancers are shown. Additional dancers may be working at the club.</p>
         ${sectionMarkup}
         ${visibleCount ? "" : `<div class="dancer-directory-filter-empty">${escapeHtml(emptyLabels[dancerDirectoryFilter] || `No approved dancer profiles are available ${locationPhrase} yet.`)}</div>`}
       `;
@@ -725,7 +726,7 @@
         }
         renderHomeDiscoveryFeedMessage(
           activeTab === "tonight"
-            ? `No dancers are working now ${locationPhrase}.`
+            ? `No dancers are currently checked in on MyDancr ${locationPhrase}.`
             : `No approved dancer profiles are available ${locationPhrase} yet.`
         );
         return;

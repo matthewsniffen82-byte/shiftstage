@@ -405,8 +405,16 @@
         }
         #results.home-dancer-grid.home-dancer-three-column > .home-dancer-grid-heading,
         #results.home-dancer-grid.home-dancer-three-column > .dancer-directory-filters,
+        #results.home-dancer-grid.home-dancer-three-column > .roster-participation-note,
         #results.home-dancer-grid.home-dancer-three-column > .dancer-directory-filter-empty {
           grid-column: 1 / -1;
+        }
+        #results .roster-participation-note {
+          margin: 4px 0 10px;
+          color: #b3b5c2;
+          font-size: 12px;
+          font-weight: 400;
+          line-height: 1.5;
         }
         #results.home-dancer-grid.home-dancer-three-column > .home-dancer-grid-card {
           contain: layout style;
