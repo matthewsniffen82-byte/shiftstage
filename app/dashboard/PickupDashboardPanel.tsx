@@ -33,9 +33,9 @@ export default function PickupDashboardPanel({ refreshKey }: { refreshKey?: stri
     <span>{request.party_size} {request.party_size === 1 ? "guest" : "guests"} · {request.location}</span>
     <time dateTime={request.requested_at}>{new Date(request.requested_at).toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}</time>
   </Link>;
-  return <div className="venue-pickup-preview"><p>Recent pickup requests. Open the inbox to contact guests and arrange their ride.</p>
+  return <div className="venue-pickup-preview"><p>Contact guests and arrange their ride.</p>
     {error && <p role="alert">{error}</p>}{!loaded && !error && <p role="status">Loading pickup requests…</p>}
-    {loaded && !error && !requests.length && <div className="dashboard-empty-state"><strong>No pickup requests yet</strong><p>Guest requests will appear here.</p></div>}
+    {loaded && !error && !requests.length && <p className="venue-value-empty">No pickup requests yet.</p>}
     <div className="notification-list">{requests.slice(0, 3).map(requestRow)}</div>
     {requests.length > 3 && <details><summary>Earlier requests</summary><div className="notification-list">{requests.slice(3).map((request, index) => requestRow(request, index + 3))}</div></details>}
     <Link className="primary-link dashboard-primary-action" href="/pickups">Open pickup inbox →</Link>

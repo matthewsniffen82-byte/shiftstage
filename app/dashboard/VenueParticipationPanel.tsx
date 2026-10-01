@@ -35,7 +35,7 @@ export default function VenueParticipationPanel({ venueId, venueName, onEnded }:
   }
 
   return <article className="info-panel venue-participation-panel">
-    <h3>Club participation</h3>
+    <h3>Remove club from MyDancr</h3>
     {endedAt ? <p role="status">Your club listing, dancer affiliations, and check-ins have been removed. Dancers keep their accounts and media. Contact MyDancr to arrange a new agreement before returning.</p> : <>
       <p>Remove {venueName} from MyDancr and end its dancer affiliations and check-ins. Dancer accounts, profiles, photos, and videos stay intact.</p>
       {confirming ? <div role="alertdialog" aria-label={`Remove ${venueName} from MyDancr?`}>

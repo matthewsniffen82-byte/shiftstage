@@ -36,8 +36,9 @@ export default function VenueGuestListPanel({ refreshKey }: { refreshKey?: strin
   }, [refreshKey]);
 
   return <div className="venue-guest-list">
-    <p>Guests with current entry passes. Door staff still verify arrival and scan each pass.</p>
-    <button type="button" disabled={busy} onClick={() => void load()}>{busy ? "Loading…" : "Refresh guest list"}</button>
+    <header className="venue-section-heading"><h2 id="venue-guest-list-heading">Guest list</h2>
+      <button className="venue-utility" type="button" aria-label="Refresh guest list" disabled={busy} onClick={() => void load()}>{busy ? "Loading…" : "Refresh"}</button></header>
+    <p>Guests with active passes. Verify arrival and scan each pass.</p>
     {error ? <p role="alert">{error}</p> : null}
     {loaded && !entries.length ? <p>No guests on the list yet.</p> : null}
     <div className="notification-list">

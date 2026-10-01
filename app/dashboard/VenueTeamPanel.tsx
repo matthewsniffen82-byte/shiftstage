@@ -232,7 +232,7 @@ export default function VenueTeamPanel({ initialAccess }: { initialAccess?: Acce
                 return <section key={level} className={`venue-team-role-card${role === level ? " is-selected" : ""}`} aria-labelledby={`venue-team-${level}-heading`}>
                   <h3 id={`venue-team-${level}-heading`}>{description.label}{role === level ? <span>Selected</span> : null}</h3>
                   <p><strong>Can view:</strong> {description.view}</p>
-                  <p><strong>Can do:</strong> {description.actions}</p>
+                  <p><strong>Can manage:</strong> {description.actions}</p>
                 </section>;
               })}
             </div>

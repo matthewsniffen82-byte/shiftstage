@@ -262,11 +262,10 @@ export function VenuePanel({
     : "";
   return (
     <>
-      <section className="venue-command-panel" aria-labelledby="venue-command-heading">
+      <section className="venue-command-panel" aria-label="Venue status">
         <div className="venue-command-status">
           <span className={isPublished ? "venue-live-pill" : "venue-live-pill is-draft"}>{isPublished ? "LIVE" : isPausedForDeals ? "HIDDEN" : "PRIVATE DRAFT"}</span>
           <div>
-            <h2 id="venue-command-heading">{venueName}</h2>
             {!isPublished && <p>{isPausedForDeals ? "Your venue is hidden until it has an active Club Deal. Your dancer roster is saved." : isAwaitingVenueReview ? "Ready to review in Manage venue." : pageReviewStatus === "changes_requested" ? "Changes in progress. MyDancr will notify you when your page is ready." : "MyDancr prepares the venue page. Your team reviews it and approves it to make it live."}</p>}
           </div>
           <div className="venue-refresh-control">
@@ -309,7 +308,6 @@ export function VenuePanel({
         aria-labelledby="venue-workspace-tonight-tab"
       >
         <section className="info-panel venue-dashboard-section" id="venue-guest-list" aria-labelledby="venue-guest-list-heading" tabIndex={-1}>
-          <h2 id="venue-guest-list-heading">Guest list</h2>
           <VenueGuestListPanel key={`${account?.id}:${connectedVenueId}`} refreshKey={refreshedAt} />
         </section>
         <section className="info-panel venue-dashboard-section" id="venue-pickups" aria-labelledby="venue-pickups-heading" tabIndex={-1}>
@@ -328,7 +326,7 @@ export function VenuePanel({
         </section>
 
         <DashboardSection
-          description="Internal and External dancers, affiliations, table requests, and QR codes in one place. NFC controls working status."
+          description="Live requests, dancer access, and table tools."
           defaultOpen
           eyebrow="Venue roster"
           hidden={activeWorkspace !== "roster"}
@@ -528,6 +526,7 @@ export function VenuePanel({
           description="Managed by MyDancr. Request changes below."
           hidden={activeWorkspace !== "venue"}
           id="venue-club-deals"
+          accordionGroup="venue-management"
           icon={<VenueDashboardIcon section="deals" />}
           toggleAffordance="chevron"
           title="Current Club Deals"
@@ -556,6 +555,7 @@ export function VenuePanel({
             eyebrow="Security"
             hidden={activeWorkspace !== "venue"}
             id="venue-team"
+          accordionGroup="venue-management"
             icon={<VenueDashboardIcon section="team" />}
             toggleAffordance="chevron"
             title="Team & activity"
@@ -568,6 +568,7 @@ export function VenuePanel({
           description="Account details, notifications, and help."
           hidden={activeWorkspace !== "venue"}
           id="venue-account"
+          accordionGroup="venue-management"
           icon={<VenueDashboardIcon section="account" />}
           toggleAffordance="chevron"
           title="Account & support"
@@ -593,9 +594,9 @@ export function VenuePanel({
               accountState={String(account?.accountState || "active")}
               venueAccessRole={venueRole}
               venueName={venueName}
-            />
-            {venueRole === "owner" && profile?.id ? <VenueParticipationPanel key={String(profile.id)} venueId={String(profile.id)} venueName={venueName}
+              venueParticipation={venueRole === "owner" && profile?.id ? <VenueParticipationPanel key={String(profile.id)} venueId={String(profile.id)} venueName={venueName}
               onEnded={() => { notifyPublicVenuePublication(); onRefresh(); }} /> : null}
+            />
           </div>
         </DashboardSection>
       </section>

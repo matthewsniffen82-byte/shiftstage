@@ -482,11 +482,13 @@ export function AccountControlsPanel({
   accountState,
   venueAccessRole,
   venueName,
+  venueParticipation,
 }: {
   accountRole?: DashboardRole;
   accountState: string;
   venueAccessRole?: string;
   venueName?: string;
+  venueParticipation?: ReactNode;
 }) {
   const [state, setState] = useState(accountState);
   const [status, setStatus] = useState("");
@@ -651,6 +653,7 @@ export function AccountControlsPanel({
           </span>
           <button className="account-action-button" type="button" onClick={signOut} disabled={isWorking}>Sign out</button>
         </div>
+        {isVenueAccount ? <h3 className="venue-danger-heading">Danger zone</h3> : null}
         <div className="account-action-row">
           <span className="account-action-details">
             <span className="account-action-icon is-pause" aria-hidden="true"><svg viewBox="0 0 24 24">{state === "disabled" ? <path d="m9 5 10 7-10 7V5Z" /> : <path d="M8 5v14M16 5v14" />}</svg></span>
@@ -661,10 +664,11 @@ export function AccountControlsPanel({
               : ownsVenueWorkspace ? "Immediately make the venue private and pause access for the entire venue team without deleting saved data." : isVenueAccount ? "Pause your login without deleting the shared venue." : "Pause access and keep your saved data."}</small>
             </span>
           </span>
-          <button className="account-action-button" type="button" onClick={() => updateAccount(state === "disabled" ? "active" : "disabled")} disabled={isWorking}>
+          <button className="account-action-button" type="button" onClick={() => { if (!isVenueAccount || state === "disabled" || window.confirm(ownsVenueWorkspace ? "Disable this venue account? The venue will become private and team access will pause. Saved data is kept." : "Disable your team login? The shared venue will stay intact.")) void updateAccount(state === "disabled" ? "active" : "disabled"); }} disabled={isWorking}>
             {state === "disabled" ? "Reactivate" : "Disable"}
           </button>
         </div>
+        {venueParticipation}
         <div className="account-action-row account-danger-row">
           <span className="account-action-details">
             <span className="account-action-icon is-delete" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 10v7m4-7v7" /></svg></span>
@@ -821,6 +825,7 @@ function formatNotificationTimestamp(value: unknown) {
 
 
 export function DashboardSection({
+  accordionGroup,
   badge,
   badgeLabel,
   children,
@@ -835,6 +840,7 @@ export function DashboardSection({
   title,
   toggleAffordance = "add",
 }: {
+  accordionGroup?: string;
   badge?: string;
   badgeLabel?: string;
   children: ReactNode;
@@ -851,7 +857,7 @@ export function DashboardSection({
 }) {
   const displayedBadge = count === undefined ? badge : count > 0 ? String(count) : undefined;
   return (
-    <details className={`dashboard-section venue-dashboard-section dashboard-section-${emphasis}`} data-section-icon={icon ? true : undefined} hidden={hidden} id={id} onToggle={alignOpenedDashboardSection} open={defaultOpen} tabIndex={-1}>
+    <details name={accordionGroup} className={`dashboard-section venue-dashboard-section dashboard-section-${emphasis}`} data-section-icon={icon ? true : undefined} hidden={hidden} id={id} onToggle={alignOpenedDashboardSection} open={defaultOpen} tabIndex={-1}>
       <summary>
         {icon ? <span className="dancer-dashboard-section-icon" aria-hidden="true">{icon}</span> : null}
         <span className="venue-dashboard-section-copy">

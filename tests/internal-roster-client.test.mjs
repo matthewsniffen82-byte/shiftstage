@@ -77,6 +77,7 @@ function harness(fetch, { token = "table-token", session = null, component = "In
         useCallback: callback => callback,
         useEffect: callback => { if (mounting) effects.push(callback); },
       };
+      if (name === "../dashboard/VenueAdminUtilities") return { default: () => null };
       if (name === "./InternalRequestPushSettings") return { InternalRequestPushSettings: () => null };
       if (name === "./InternalFullProfile") return { InternalFullProfile: () => null };
       if (name === "@/src/lib/dancr/browser-session") return {

@@ -331,9 +331,10 @@ export default function VenueNfcTagPanel({
 
   return (
     <article className="info-panel venue-nfc-panel" id="venue-nfc-tags">
+      <InternalRoster operationsOnly roster={<>
       <details className="venue-nfc-roster" ref={rosterRef}>
         <summary className="venue-nfc-roster-head">
-          <span><strong>Dancer roster</strong><small>Internal and External together. Dressing-room NFC sets working status automatically.</small></span>
+          <span><strong>Dancer roster</strong><small>Dressing-room NFC sets working status.</small></span>
           <b>{isLoading && !activeAffiliations.length ? "…" : `${activeAffiliations.length} affiliated`}</b>
         </summary>
         <div className="venue-roster-content">
@@ -405,7 +406,7 @@ export default function VenueNfcTagPanel({
         </div>)}
       </details> : null}
       {status ? <p role="status">{status}</p> : null}
-      <InternalRoster operationsOnly />
+      </>} />
       <details className="venue-roster-stickers">
         <summary>Dancer &amp; legacy stickers <span>{tags.length} assigned</span></summary>
       {tags.length ? <div className="nfc-tag-list" aria-label="Assigned sticker inventory">
@@ -418,8 +419,8 @@ export default function VenueNfcTagPanel({
             </div>
             <div className="nfc-tag-actions">
               <b>{tag.status}</b>
-              {tag.status === "active" ? <button type="button" disabled={Boolean(testingTagId)} onClick={() => startTapTest(tag)}>{testingTagId === tag.id ? "Listening…" : "Test sticker"}</button> : null}
-              {canRequestSupport ? <button type="button" disabled={isSaving} onClick={() => setSupportTagId(tag.id)}>Get support</button> : null}
+              {tag.status === "active" ? <button type="button" disabled={Boolean(testingTagId)} onClick={() => startTapTest(tag)}>{testingTagId === tag.id ? "Listening…" : "Test"}</button> : null}
+              {canRequestSupport ? <button type="button" disabled={isSaving} onClick={() => setSupportTagId(tag.id)}>Support</button> : null}
             </div>
           </section>
         ))}

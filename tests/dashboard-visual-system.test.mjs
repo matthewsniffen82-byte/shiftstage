@@ -81,7 +81,7 @@ test("venue dashboard uses one state-aware four-destination workspace", () => {
   assert.ok(tonightIndex > tabsIndex);
   assert.ok(metricsIndex > tonightIndex);
   assert.ok(managementIndex > metricsIndex);
-  assert.match(venuePanel, /\["tonight", "Pickup requests"[\s\S]*?\["roster", "Dancers & tables"[\s\S]*?\["business", "Results"[\s\S]*?\["venue", "Manage venue"/);
+  assert.match(venuePanel, /\["tonight", "Guests & pickups"[\s\S]*?\["roster", "Dancers & tables"[\s\S]*?\["business", "Results"[\s\S]*?\["venue", "Manage venue"/);
   assert.doesNotMatch(venuePanel, /Roster · deals · check-in|Preview · review · MyDancr TV|Analytics · team · account/);
   assert.match(venuePanel, /role="tablist"[\s\S]*?aria-selected=\{activeWorkspace === workspace\}/);
   assert.match(venuePanel, /initialVenueWorkspace\(profile\?\.isActive === true\)/);

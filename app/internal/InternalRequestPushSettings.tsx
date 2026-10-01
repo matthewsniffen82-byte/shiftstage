@@ -75,8 +75,10 @@ export function InternalRequestPushSettings() {
   }
 
   return <div className="ir-push-settings" aria-label="Table request phone alerts">
-    <div><strong>Phone alerts {on ? "· On" : ""}</strong><p>Get “Table 12 wants Aster” when a customer requests a dancer. Tap the alert to open this inbox.</p></div>
+    <div><strong>Table alerts {on ? "· On" : ""}</strong><p>Get notified when a customer requests a dancer.</p></div>
+    <details className="ir-alert-help"><summary>How alerts work</summary><p>Tap an alert to open the request inbox.</p>
     {support ? <p className="ir-push-help">{support}</p> : <p className="ir-push-help">iPhone: add MyDancr to your Home Screen and open its icon (iOS 16.4+). Android: enable alerts in your browser.</p>}
+    </details>
     {settings ? <>
       {!delivery.pushAvailable ? <p role="status">Phone alerts are temporarily unavailable. Check this inbox for new requests.</p> : null}
       {!settings.alertsEnabled ? <p>Venue alerts are paused. Resume them in <a href="/dashboard/venue#venue-notification-settings">notification preferences</a>.</p> : null}

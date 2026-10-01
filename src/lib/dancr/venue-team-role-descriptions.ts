@@ -7,13 +7,13 @@ export const VENUE_TEAM_ROLE_DESCRIPTIONS: Record<Exclude<VenueTeamRole, "owner"
 }> = {
   manager: {
     label: "Manager",
-    view: "Dashboard, analytics, Club Deals, dancers, tap stickers, and team activity.",
-    actions: "Edit the club profile, manage dancer access, end check-ins, request Club Deal changes, and request sticker support.",
+    view: "Dashboard · Results · Club Deals · Dancers · Stickers · Team activity",
+    actions: "Edit profile · Manage dancer access · End check-ins · Request deal changes · Sticker support",
   },
   staff: {
     label: "Staff",
-    view: "Dashboard, analytics, Club Deals, dancers, and tap stickers. No team activity.",
-    actions: "End check-ins and request sticker support. Cannot edit the club profile, manage dancer access, or request Club Deal changes.",
+    view: "Dashboard · Results · Club Deals · Dancers · Stickers. No team activity.",
+    actions: "End check-ins · Sticker support. No profile editing, dancer-access management, or deal-change requests.",
   },
 };
 

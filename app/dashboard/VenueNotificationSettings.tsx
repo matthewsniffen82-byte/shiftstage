@@ -102,17 +102,19 @@ export default function VenueNotificationSettings({ onSaved }: { onSaved?: () =>
   return <article className="info-panel venue-notification-preferences" id="venue-notification-settings" tabIndex={-1} aria-label="Notification preferences">
     <header><h2>Notification preferences</h2><p>Choose the updates you want about your club. These settings apply to your account.</p></header>
     {settings ? <>
+      <h3 className="venue-preference-group-heading">What you receive</h3>
       {row("alertsEnabled", "Venue alerts", "Pause or resume your optional venue notifications.")}
       {!settings.alertsEnabled ? <p>Venue alerts are paused. Your individual choices are saved below.</p> : null}
       <div className="venue-preference-list" aria-label="Venue alert types">
         {VENUE_NOTIFICATION_ALERTS.map(({ key, title, description }) => row(key, title, description))}
       </div>
-      <div className="venue-delivery-heading"><h3>Delivery options</h3><p>Your selected alerts appear here. Email and push are optional.</p></div>
+      <div className="venue-delivery-heading"><h3>How you receive it</h3><p>Your selected alerts appear here. Email and push are optional.</p></div>
       <div className="venue-preference-list">
         {row("emailEnabled", "Email", delivery.emailAvailable ? "Send selected alerts to your account email." : "Email alerts are not available right now.", !delivery.emailAvailable && !settings.emailEnabled)}
         {row("pushEnabled", "Push notifications", !delivery.pushAvailable ? "Push notifications are not available right now." : pushSupportMessage || (pushDeviceEnabled ? "Enabled on this device." : "Allow alerts from your browser, even when MyDancr is closed."), (!delivery.pushAvailable || Boolean(pushSupportMessage)) && !settings.pushEnabled)}
       </div>
       {settings.pushEnabled && !pushDeviceEnabled && delivery.pushAvailable && !pushSupportMessage ? <button type="button" disabled={saving !== null} onClick={() => void save("pushEnabled", true)}>Enable push on this device</button> : null}
+      {settings.pushEnabled && pushDeviceEnabled ? <p className="venue-device-enabled" role="status">● Push enabled on this device</p> : null}
       <p>Essential account, security, and legal messages stay on. Muted alerts are hidden from your inbox, not deleted.</p>
     </> : failed ? <button type="button" onClick={() => setAttempt(value => value + 1)}>Try again</button> : <p role="status">Loading preferences…</p>}
     {status ? <p className="venue-preferences-status" role={failed ? "alert" : "status"}>{status}</p> : null}

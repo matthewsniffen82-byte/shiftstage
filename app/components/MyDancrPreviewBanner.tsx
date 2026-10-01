@@ -5,8 +5,10 @@ export const MYDANCR_PREVIEW_MESSAGE =
 export function MyDancrPreviewBanner() {
   return (
     <aside className="mydancr-preview-banner" aria-label="Demo mode notice" role="note">
+      <style>{".venue-demo-disclosure{display:none}"}</style>
       <strong>{MYDANCR_PREVIEW_TITLE}</strong>
       <span>{MYDANCR_PREVIEW_MESSAGE}</span>
+      <details className="venue-demo-disclosure"><summary>DEMO MODE · Fictional data <span aria-hidden="true">ⓘ</span></summary><p>{MYDANCR_PREVIEW_MESSAGE}</p></details>
     </aside>
   );
 }

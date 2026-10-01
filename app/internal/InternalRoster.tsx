@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import VenueAdminUtilities from "../dashboard/VenueAdminUtilities";
 import { InternalRequestPushSettings } from "./InternalRequestPushSettings";
 import { InternalFullProfile, type InternalProfile as Profile, type InternalRequestAction } from "./InternalFullProfile";
 import { BROWSER_AUTH_SESSION_KEY, isCurrentBrowserSession, persistRefreshedBrowserAuthSession, readBrowserAuthSession } from "@/src/lib/dancr/browser-session";
@@ -86,7 +87,7 @@ function VenueBrandLogo({ url, name }: { url: string; name: string }) {
   return <h1 className="ir-venue-identity">{failed ? name : <img className="ir-venue-logo" src={url} alt={name} width={208} height={76} decoding="async" referrerPolicy="no-referrer" onError={() => setFailed(true)} />}</h1>;
 }
 
-export function InternalRoster({ token, operationsOnly = false }: { token?: string; operationsOnly?: boolean }) {
+export function InternalRoster({ token, operationsOnly = false, roster }: { token?: string; operationsOnly?: boolean; roster?: ReactNode }) {
   const [snapshot, setSnapshot] = useState<Snapshot | null>(null);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
@@ -340,6 +341,7 @@ export function InternalRoster({ token, operationsOnly = false }: { token?: stri
   const receiptStatus = snapshot?.receipt?.status;
   const inactiveReceipt = !!receiptStatus && ["completed", "cancelled", "expired"].includes(receiptStatus);
   return <div className={`ir-shell${staff ? " ir-staff" : " ir-guest"}${operationsOnly ? " ir-embedded" : ""}`} data-global-navigation-swipe="ignore">
+    {staff && !operationsOnly ? <VenueAdminUtilities /> : null}
     {!operationsOnly ? <header className="ir-header"><div>
       <a className="ir-brand" href={staff ? "/dashboard/venue" : "#"}><span className="mydancr-live-logo">mydanc<span className="violet-r">r</span></span>{staff ? <span>INTERNAL</span> : null}</a>
       {!staff && snapshot?.venueLogoUrl ? <VenueBrandLogo key={snapshot.venueLogoUrl} url={snapshot.venueLogoUrl} name={snapshot.venueName} /> : <h1 className={staff ? undefined : "ir-venue-identity"}>{snapshot?.venueName || "Club roster"}</h1>}
@@ -377,6 +379,7 @@ export function InternalRoster({ token, operationsOnly = false }: { token?: stri
           </button> : null}
         </article>)}</div> : <div className="ir-empty"><h3>The floor is getting ready</h3><p>{staff ? "Dancers appear here after choosing Internal or Both at the dressing-room NFC sticker." : "No dancers are available to request right now. Please check back shortly or ask club staff."}</p></div>}
       </section> : null}
+
       {!staff && (tableRequests.length > 0 || receiptStatus) ? <section className={`ir-table-status${!tableRequests.length && inactiveReceipt ? " is-inactive" : ""}`} aria-label="Table request status" role="status">
         {tableRequests.length ? <>
           <ul>{tableRequests.map(dancer => <li key={dancer.id}>
@@ -390,14 +393,14 @@ export function InternalRoster({ token, operationsOnly = false }: { token?: stri
         </>}
       </section> : null}
       {staff && snapshot.receipt ? <p className="ir-notice" role="status">Your request: <strong>{snapshot.receipt.status === "acknowledged" ? "Seen by club staff" : snapshot.receipt.status}</strong></p> : null}
-      {staff ? <div className="ir-operations"><section className="ir-panel" id="table-requests" tabIndex={-1}><h2>Table requests <span>{snapshot.requests?.length || 0}</span></h2><p>“Seen” confirms staff saw the request. Coordinate availability with the dancer.</p>
-        <InternalRequestPushSettings />
-        {snapshot.requests?.length ? snapshot.requests.map(item => <article className="ir-request" key={item.id}><div><strong>{snapshot.links?.find(link => link.id === item.link_id)?.label || "Table"} → {snapshot.dancers.find(d => d.id === item.dancer_id)?.stageName}</strong><small>{item.status === "pending" ? "New request" : "Seen by staff"} · {new Date(item.created_at).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}</small></div><div className="ir-actions"><button disabled={busy} onClick={() => void mutate({ action: "request_status", id: item.id, expectedStatus: item.status, status: item.status === "pending" ? "acknowledged" : "completed" })}>{item.status === "pending" ? "Mark seen" : "Complete"}</button><button className="ir-secondary" disabled={busy} onClick={() => void mutate({ action: "request_status", id: item.id, expectedStatus: item.status, status: "cancelled" })}>Dismiss</button></div></article>) : <p className="ir-empty">No open requests.</p>}
-      </section><section className="ir-panel"><h2>Table QR codes</h2><p>Create and number your tables, print their QR signs, or revoke a shared link.</p>
-        {snapshot.role !== "staff" ? <form className="ir-link-form" onSubmit={event => { event.preventDefault(); void mutate({ action: "link_create", label, kind: "table" }); }}><label>Table number or name<input value={label} maxLength={60} required onChange={event => setLabel(event.target.value)} /></label><button disabled={busy || !label.trim()}>Create link</button></form> : null}
-        {snapshot.links?.map(link => <article className="ir-link" key={link.id}><div><strong>{link.label}</strong><small>Table requests</small>{snapshot.role !== "staff" ? <form key={link.label} className="ir-rename-form" onSubmit={event => { event.preventDefault(); const form = new FormData(event.currentTarget); void mutate({ action: "link_update", id: link.id, label: String(form.get("label") || "") }); }}><input name="label" aria-label={`Table number or name for ${link.label}`} defaultValue={link.label} required maxLength={60} /><button disabled={busy}>Save name</button></form> : null}</div><div className="ir-actions"><a href={`/internal/club/${link.token}`} target="_blank" rel="noreferrer">Open</a><a href={`/internal/sign/${link.token}`} target="_blank" rel="noreferrer">Print QR sign</a><button className="ir-secondary" onClick={() => void navigator.clipboard.writeText(`${window.location.origin}/internal/club/${link.token}`).then(() => setNotice("Club link copied.")).catch(() => setNotice("Open the link and copy its address."))}>Copy</button>{snapshot.role !== "staff" ? <button className="ir-secondary" disabled={busy} onClick={() => void mutate({ action: "link_revoke", id: link.id })}>Revoke</button> : null}</div></article>)}
-      </section></div> : null}
     </> : null}
+      {staff ? <div className="ir-operations">{snapshot ? <><section className="ir-panel" id="table-requests" tabIndex={-1}><h2>Table requests <span>{snapshot.requests?.length || 0}</span></h2><p>“Seen” confirms staff saw the request. Coordinate availability with the dancer.</p>
+        {snapshot.requests?.length ? snapshot.requests.map(item => <article className="ir-request" key={item.id}><div><strong>{snapshot.links?.find(link => link.id === item.link_id)?.label || "Table"} → {snapshot.dancers.find(d => d.id === item.dancer_id)?.stageName}</strong><small>{item.status === "pending" ? "New request" : "Seen by staff"} · {new Date(item.created_at).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}</small></div><div className="ir-actions"><button disabled={busy} onClick={() => void mutate({ action: "request_status", id: item.id, expectedStatus: item.status, status: item.status === "pending" ? "acknowledged" : "completed" })}>{item.status === "pending" ? "Mark seen" : "Complete"}</button><button className="ir-secondary" disabled={busy} onClick={() => void mutate({ action: "request_status", id: item.id, expectedStatus: item.status, status: "cancelled" })}>Dismiss</button></div></article>) : <p className="ir-empty">No open requests.</p>}
+        <InternalRequestPushSettings />
+      </section></> : null}{roster}{snapshot ? <section className="ir-panel"><h2>Table QR codes</h2><p>Create and number your tables, print their QR signs, or revoke a shared link.</p>
+        {snapshot.role !== "staff" ? <form className="ir-link-form" onSubmit={event => { event.preventDefault(); void mutate({ action: "link_create", label, kind: "table" }); }}><label>Table number or name<input value={label} maxLength={60} required onChange={event => setLabel(event.target.value)} /></label><button disabled={busy || !label.trim()}>Create link</button></form> : null}
+        {snapshot.links?.map(link => <article className="ir-link" key={link.id}><div><strong>{link.label}</strong><small>QR active</small>{snapshot.role !== "staff" ? <form key={link.label} className="ir-rename-form" onSubmit={event => { event.preventDefault(); const form = new FormData(event.currentTarget); void mutate({ action: "link_update", id: link.id, label: String(form.get("label") || "") }); }}><input name="label" aria-label={`Table number or name for ${link.label}`} defaultValue={link.label} required maxLength={60} /><button disabled={busy}>Save name</button></form> : null}</div><div className="ir-actions"><a href={`/internal/club/${link.token}`} target="_blank" rel="noreferrer">Open</a><a href={`/internal/sign/${link.token}`} target="_blank" rel="noreferrer">Print QR sign</a><button className="ir-secondary" onClick={() => void navigator.clipboard.writeText(`${window.location.origin}/internal/club/${link.token}`).then(() => setNotice("Club link copied.")).catch(() => setNotice("Open the link and copy its address."))}>Copy</button>{snapshot.role !== "staff" ? <button className="ir-secondary ir-revoke" disabled={busy} onClick={() => { if (window.confirm(`Revoke ${link.label}? Its current QR code and shared link will stop working.`)) void mutate({ action: "link_revoke", id: link.id }); }}>Revoke</button> : null}</div></article>)}
+      </section> : null}</div> : null}
     <ClubProfileDialog profile={profile} profileId={openingProfileId || profile?.id} token={token} request={token && snapshot?.kind === "table" ? { tableLabel: snapshot.label || "our table", busy: requestingDancers.includes(profile?.id || ""), confirmed: confirmedDancers.includes(profile?.id || ""), message: notice } : undefined} onRequest={() => { if (profile) requestDancer(profile.id); }} onCancel={() => { if (profile) cancelDancer(profile.id, profile.requestId); }} onReady={() => setOpeningProfileId("")} onError={() => { selectedProfile.current = ""; setProfile(null); setOpeningProfileId(""); setNotice("That profile could not load. Please try again."); }} onClose={() => { selectedProfile.current = ""; setProfile(null); setOpeningProfileId(""); }} />
     {!operationsOnly ? <footer>Powered by MyDancr · {staff ? "Visibility is chosen by each dancer at check-in." : "Availability may change. Club staff coordinate all requests."}</footer> : null}
   </div>;

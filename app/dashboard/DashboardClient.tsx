@@ -16,6 +16,8 @@ import "./venue-dashboard.css";
 import "./dashboard-polish.css";
 import "./professional-dashboard-compact.css";
 import "./venue-dashboard-compact.css";
+import "./venue-operations.css";
+import VenueAdminUtilities from "./VenueAdminUtilities";
 import "./dancer-profile-builder-polish.css";
 import { VenueDashboardIcon } from "./VenueDashboardIdentity";
 import { isAffiliatedDancerWorkingNow } from "@/src/lib/dancr/venue-roster";
@@ -477,6 +479,7 @@ export default function DashboardClient({
 
   return (
     <main className={`dashboard-shell dashboard-shell-${role}`}>
+      {role === "venue" ? <VenueAdminUtilities /> : null}
       <DashboardStyles />
       <section className={`dashboard-head dashboard-head-${role}`} aria-busy={isLoading || undefined}>
         <div className="dashboard-head-row">
