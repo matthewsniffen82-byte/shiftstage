@@ -271,6 +271,7 @@
             </div>
           </a>
           ${venueLineupMarkup(venue, city, { profiles: workingNow })}
+          <p class="roster-participation-note venue-card-roster-note">Only dancers checked in on MyDancr are shown. Additional dancers may be working at this club.</p>
           <button class="venue-card-follow ${followsVenue ? "is-active" : ""}" type="button" data-venue-follow="${venueValue}" data-account-action="venue-follow" aria-label="${followsVenue ? `Unfollow ${safeName}` : `Follow ${safeName}`}" title="${followsVenue ? "Following" : "Follow"}" aria-pressed="${followsVenue}">${actionIconMarkup(followsVenue ? "check" : "personPlus")}</button>
           <div class="venue-card-actions" aria-label="${safeName} quick actions">
             ${venueCardQrMarkup(venue)}

@@ -1615,6 +1615,18 @@ html body.dancr-button-system > .app main.stack > section.stack
 }
 
 /* Tighten only the existing venue scroll cards; keep their content and actions. */
+/* Give the roster clarification its own row, with natural height as text wraps. */
+html body.dancr-button-system #results.venue-card-grid > .venue-card {
+  grid-template-rows: minmax(0, 1fr) auto auto auto;
+}
+html body.dancr-button-system #results.venue-card-grid > .venue-card > .venue-card-roster-note {
+  margin: 0 14px 12px;
+}
+html body.dancr-button-system #results > .home-venue-discovery-slide > .venue-card-roster-note {
+  grid-column: 1 / -1;
+  grid-row: 3;
+  margin: 4px 0 8px;
+}
 html body.dancr-button-system > .app main.stack > section.stack
   > #results.home-discovery-feed.home-venue-discovery-feed > .home-venue-discovery-slide
   :is(.home-venue-discovery-operating-status, .home-venue-discovery-hours) {
@@ -1623,11 +1635,14 @@ html body.dancr-button-system > .app main.stack > section.stack
 @media (max-width: 720px) {
   html body.dancr-button-system > .app main.stack > section.stack
     > #results.home-discovery-feed.home-venue-discovery-feed > .home-venue-discovery-slide {
-    grid-template-rows: auto auto 40px minmax(46px, auto) !important;
+    height: auto !important;
+    max-height: none !important;
+    grid-template-rows: auto auto auto 40px minmax(46px, auto) !important;
     row-gap: 6px !important;
   }
   html body.dancr-button-system > .app main.stack > section.stack
     > #results.home-discovery-feed.home-venue-discovery-feed > .home-venue-discovery-slide .home-venue-discovery-context-actions {
+    grid-row: 4 !important;
     height: 44px !important;
     min-height: 44px !important;
     max-height: 44px !important;
@@ -1654,6 +1669,7 @@ html body.dancr-button-system > .app main.stack > section.stack
   }
   html body.dancr-button-system > .app main.stack > section.stack
     > #results.home-discovery-feed.home-venue-discovery-feed > .home-venue-discovery-slide .venue-card-secondary-actions.home-venue-discovery-action-rail {
+    grid-row: 5 !important;
     grid-template-rows: minmax(46px, auto) !important;
   }
   html body.dancr-button-system > .app main.stack > section.stack
