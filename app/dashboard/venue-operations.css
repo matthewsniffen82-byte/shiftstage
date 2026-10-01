@@ -42,6 +42,8 @@ body.dancr-button-system main.dashboard-shell.dashboard-shell-venue .metric span
 body.dancr-button-system main.dashboard-shell.dashboard-shell-venue .metric small { font-size: 11px !important; }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-venue .venue-analytics-period { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 3px !important; background: #19191f !important; border-radius: 10px !important; padding: 3px !important; }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-venue .venue-analytics-period button::before { border: 0 !important; inset-block: 4px !important; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-venue .venue-analytics-period button[aria-pressed="true"] { --venue-control-face: #6d28d9; --venue-control-edge: #a78bfa; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-venue .venue-analytics-period button[aria-pressed="true"]::before { border: 1px solid var(--venue-control-edge) !important; }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-venue .venue-action-location { display: flex; gap: 10px !important; align-items: center; flex-wrap: wrap; font-size: 12px !important; color: #b3b5c2 !important; }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-venue .venue-action-location select { width: auto; max-width: 100%; flex: 0 1 230px; }
 .venue-action-mobile { display: none; }
