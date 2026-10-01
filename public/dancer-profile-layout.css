@@ -287,3 +287,12 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
   border-radius: 50%;
   background: currentColor;
 }
+
+/* Available Going actions should read as tappable while retaining their outline. */
+html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout .profile-actions-compact :is(#goingBtn, .profile-action-going):enabled:not([aria-disabled="true"]) {
+  color: #fff !important;
+}
+html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout .profile-actions-compact :is(#goingBtn, .profile-action-going):enabled:not([aria-disabled="true"]) .profile-action-main > span:last-child {
+  color: #fff !important;
+  -webkit-text-fill-color: #fff !important;
+}
