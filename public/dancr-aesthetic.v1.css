@@ -10981,7 +10981,7 @@ body.dancr-button-system > .app main.stack > section.stack
     padding: 0 7px !important;
     border: 1px solid rgba(46, 229, 138, 0.34) !important;
     border-radius: 999px !important;
-    color: rgba(157, 255, 204, 0.94) !important;
+    color: var(--dancr-color-avatar-ring-live) !important;
     background: linear-gradient(180deg, rgba(8, 38, 24, 0.8), rgba(4, 18, 12, 0.9)) !important;
     box-shadow: inset 0 1px 0 rgba(167, 243, 208, 0.08) !important;
     font-size: 9px !important;
@@ -10993,7 +10993,7 @@ body.dancr-button-system > .app main.stack > section.stack
   body.dancr-button-system > .app main.stack > section.stack
     > #results.home-venue-discovery-feed > .home-venue-discovery-slide
     .home-venue-discovery-lineup-label > strong {
-    color: #f8fafc !important;
+    color: inherit !important;
     font-size: 10px !important;
     font-weight: 900 !important;
   }
