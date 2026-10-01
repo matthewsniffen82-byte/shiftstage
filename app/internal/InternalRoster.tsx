@@ -11,6 +11,14 @@ type ClubRequest = { id: string; link_id: string; dancer_id: string; status: "pe
 type Snapshot = { venueName: string; venueLogoUrl?: string | null; dancers: Dancer[]; kind?: "table"; label?: string; role?: string; links?: ClubLink[]; requests?: ClubRequest[]; receipt?: { status: string } | null };
 
 const ROSTER_REFRESH_INTERVAL_MS = 20 * 60 * 1000;
+const REQUEST_SENT_NOTICE = "Request sent to club staff. Staff acknowledgement does not guarantee the dancer is available.";
+const REQUEST_STATUS_LABELS: Record<string, string> = {
+  pending: "Pending staff acknowledgment",
+  acknowledged: "Request seen by staff",
+  completed: "Request completed",
+  cancelled: "Request cancelled",
+  expired: "Request expired",
+};
 class RosterAccessError extends Error {}
 
 async function rosterFetch(url: string, token: string | undefined, body?: Record<string, unknown>, signal?: AbortSignal) {
@@ -266,7 +274,7 @@ export function InternalRoster({ token, operationsOnly = false }: { token?: stri
         setSnapshot(current => current ? { ...current, receipt: result.receipt, dancers: current.dancers.map(dancer => dancer.id === body.dancerId ? { ...dancer, requestStatus: status, requestId } : dancer) } : current);
         setProfile(current => current && current.id === body.dancerId ? { ...current, requestStatus: status, requestId } : current);
       }
-      setNotice(token ? body.action === "cancel_request" ? "Request cancelled." : "Request sent to club staff. Staff acknowledgement does not guarantee the dancer is available." : "Saved.");
+      setNotice(token ? body.action === "cancel_request" ? "Request cancelled." : REQUEST_SENT_NOTICE : "Saved.");
       setLabel("");
       // The receipt already confirms the guest's request; refresh details quietly.
       if (dancerId) void refresh();
@@ -326,6 +334,11 @@ export function InternalRoster({ token, operationsOnly = false }: { token?: stri
 
   const staff = !token;
   const dancers = snapshot?.dancers || [];
+  // Table snapshots already carry each dancer's active request, including after reload.
+  // A receipt alone has no dancer identity; never assign it to an unrelated card.
+  const tableRequests = staff ? [] : dancers.filter(dancer => dancer.requestStatus);
+  const receiptStatus = snapshot?.receipt?.status;
+  const inactiveReceipt = !!receiptStatus && ["completed", "cancelled", "expired"].includes(receiptStatus);
   return <div className={`ir-shell${staff ? " ir-staff" : " ir-guest"}${operationsOnly ? " ir-embedded" : ""}`} data-global-navigation-swipe="ignore">
     {!operationsOnly ? <header className="ir-header"><div>
       <a className="ir-brand" href={staff ? "/dashboard/venue" : "#"}><span className="mydancr-live-logo">mydanc<span className="violet-r">r</span></span>{staff ? <span>INTERNAL</span> : null}</a>
@@ -333,7 +346,7 @@ export function InternalRoster({ token, operationsOnly = false }: { token?: stri
       <p>{staff ? "Your floor. Your team. One live roster." : snapshot?.label || "Welcome to the club"}</p>
     </div>{staff ? <a className="ir-secondary" href="/dashboard/venue">Club dashboard</a> : null}</header> : null}
     {error ? <section className="ir-panel" role="alert"><h2>Roster unavailable</h2><p>{error}</p>{staff ? <a className="ir-button" href="/account?role=venue&mode=login&return_to=%2Finternal">Sign in to MyDancr</a> : null}<button onClick={() => void refresh()}>Try again</button></section> : !snapshot ? <p role="status">Loading the live roster…</p> : null}
-    {notice ? <p className="ir-notice" role="status">{notice}</p> : null}
+    {notice ? <p className={`ir-notice${!staff && notice === REQUEST_SENT_NOTICE ? " ir-request-notice" : ""}`} role="status">{!staff && notice === REQUEST_SENT_NOTICE ? <><strong>Request sent to club staff.</strong><span>Staff acknowledgment does not guarantee dancer availability.</span></> : notice}</p> : null}
     {snapshot ? <>
       {!operationsOnly ? <section aria-label={staff ? "Live internal roster" : "Available dancers"}>
         <div className="ir-section-title">
@@ -348,9 +361,10 @@ export function InternalRoster({ token, operationsOnly = false }: { token?: stri
           </div>
         </div>
         {!staff && refreshMessage ? <p className="ir-refresh-message" data-error={refreshMessage !== "Roster updated." || undefined} role="status">{refreshMessage}</p> : null}
-        {dancers.length ? <div className="ir-grid ir-directory-grid">{dancers.map((dancer, index) => <article className={`ir-dancer${snapshot.kind === "table" ? " ir-dancer-requestable" : ""}`} key={dancer.id}>
+        {dancers.length ? <div className="ir-grid ir-directory-grid">{dancers.map((dancer, index) => <article className={`ir-dancer${snapshot.kind === "table" ? " ir-dancer-requestable" : ""}`} key={dancer.id} data-request-state={!staff ? dancer.requestStatus || undefined : undefined}>
           <button type="button" className="ir-profile-link" aria-label={`View ${dancer.stageName}’s full profile`} aria-busy={openingProfileId === dancer.id} onClick={() => void openProfile(dancer)}>
             {dancer.mainPhotoId ? <ProtectedMedia key={dancer.mainPhotoId} id={dancer.mainPhotoId} revision={dancer.mainPhotoRevision} kind="photo" token={token} priority={index < 3} lazy={index >= 9} className="ir-main-photo" alt={`${dancer.stageName}’s main photo`} /> : <span className="ir-main-photo ir-photo-placeholder">Photo unavailable</span>}
+            {!staff && dancer.requestStatus ? <span className="ir-card-request-state">{dancer.requestStatus === "acknowledged" ? "Seen by staff" : "Requested ✓"}</span> : null}
             <span className="ir-dancer-copy"><strong>{dancer.stageName}</strong><span>{openingProfileId === dancer.id ? "Opening…" : "View profile ↗"}</span></span>
           </button>
           {snapshot.kind === "table" ? <button type="button" className="ir-table-request"
@@ -363,7 +377,19 @@ export function InternalRoster({ token, operationsOnly = false }: { token?: stri
           </button> : null}
         </article>)}</div> : <div className="ir-empty"><h3>The floor is getting ready</h3><p>{staff ? "Dancers appear here after choosing Internal or Both at the dressing-room NFC sticker." : "No dancers are available to request right now. Please check back shortly or ask club staff."}</p></div>}
       </section> : null}
-      {snapshot.receipt ? <p className="ir-notice" role="status">Your request: <strong>{snapshot.receipt.status === "acknowledged" ? "Seen by club staff" : snapshot.receipt.status}</strong></p> : null}
+      {!staff && (tableRequests.length > 0 || receiptStatus) ? <section className={`ir-table-status${!tableRequests.length && inactiveReceipt ? " is-inactive" : ""}`} aria-label="Table request status" role="status">
+        {tableRequests.length ? <>
+          <ul>{tableRequests.map(dancer => <li key={dancer.id}>
+            <strong>{dancer.stageName} requested · {snapshot.label || "Your table"}</strong>
+            <span>{REQUEST_STATUS_LABELS[dancer.requestStatus!]}</span>
+          </li>)}</ul>
+          <p>Availability is not guaranteed.</p>
+        </> : <>
+          <strong>{REQUEST_STATUS_LABELS[receiptStatus!] || "Request status updated"} · {snapshot.label || "Your table"}</strong>
+          {!inactiveReceipt ? <p>Availability is not guaranteed.</p> : null}
+        </>}
+      </section> : null}
+      {staff && snapshot.receipt ? <p className="ir-notice" role="status">Your request: <strong>{snapshot.receipt.status === "acknowledged" ? "Seen by club staff" : snapshot.receipt.status}</strong></p> : null}
       {staff ? <div className="ir-operations"><section className="ir-panel" id="table-requests" tabIndex={-1}><h2>Table requests <span>{snapshot.requests?.length || 0}</span></h2><p>“Seen” confirms staff saw the request. Coordinate availability with the dancer.</p>
         <InternalRequestPushSettings />
         {snapshot.requests?.length ? snapshot.requests.map(item => <article className="ir-request" key={item.id}><div><strong>{snapshot.links?.find(link => link.id === item.link_id)?.label || "Table"} → {snapshot.dancers.find(d => d.id === item.dancer_id)?.stageName}</strong><small>{item.status === "pending" ? "New request" : "Seen by staff"} · {new Date(item.created_at).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}</small></div><div className="ir-actions"><button disabled={busy} onClick={() => void mutate({ action: "request_status", id: item.id, expectedStatus: item.status, status: item.status === "pending" ? "acknowledged" : "completed" })}>{item.status === "pending" ? "Mark seen" : "Complete"}</button><button className="ir-secondary" disabled={busy} onClick={() => void mutate({ action: "request_status", id: item.id, expectedStatus: item.status, status: "cancelled" })}>Dismiss</button></div></article>) : <p className="ir-empty">No open requests.</p>}

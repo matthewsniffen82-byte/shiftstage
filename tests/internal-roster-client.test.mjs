@@ -134,6 +134,57 @@ const profile = app => find(app.render(), node => node.type?.name === "ClubProfi
 const requestButton = (app, id) => find(find(app.render(), node => node.type === "article" && node.key === id), node => node.props?.className === "ir-table-request");
 const refreshButton = app => find(app.render(), node => node.props?.className === "ir-roster-refresh");
 const refreshMessage = app => find(app.render(), node => node.props?.className === "ir-refresh-message")?.props.children;
+const textContent = tree => typeof tree === "string" || typeof tree === "number" ? String(tree)
+  : Array.isArray(tree) ? tree.map(textContent).join("") : textContent(tree?.props?.children || "");
+const requestStatusPanel = app => find(app.render(), node => node.props?.["aria-label"] === "Table request status");
+
+test("saved table requests identify every requested dancer without locking other cards", async t => {
+  const dancers = [
+    { ...dancer, requestStatus: "pending", requestId: "first" },
+    { ...dancer, id: "second", stageName: "Second dancer", requestStatus: "acknowledged", requestId: "second" },
+    { ...dancer, id: "third", stageName: "Third dancer" },
+  ];
+  const app = harness(async () => response({ ...roster, kind: "table", label: "Table 12", dancers, receipt: null }));
+  t.after(() => app.unmount()); await app.mount();
+  const card = id => find(app.render(), node => node.type === "article" && node.key === id);
+  assert.equal(card(dancer.id).props["data-request-state"], "pending");
+  assert.equal(card("second").props["data-request-state"], "acknowledged");
+  assert.equal(card("third").props["data-request-state"], undefined);
+  assert.match(textContent(card(dancer.id)), /Requested ✓/);
+  assert.match(textContent(card("second")), /Seen by staff/);
+  assert.equal(requestButton(app, "third").props.disabled, false);
+  const status = textContent(requestStatusPanel(app));
+  assert.match(status, /Demo dancer requested · Table 12Pending staff acknowledgment/);
+  assert.match(status, /Second dancer requested · Table 12Request seen by staff/);
+  assert.match(status, /Availability is not guaranteed/);
+  assert.doesNotMatch(status, /confirmed|Third dancer/i);
+});
+
+for (const terminal of ["completed", "cancelled", "expired"]) test(`refresh presents seen accurately and compacts ${terminal} requests`, async t => {
+  let status = "pending";
+  const app = harness(async () => response({ ...roster, kind: "table", label: "Table 1", receipt: { status }, dancers: [{ ...dancer,
+    requestStatus: ["pending", "acknowledged"].includes(status) ? status : null, requestId: "saved-request" }] }));
+  t.after(() => app.unmount()); await app.mount();
+  status = "acknowledged"; refreshButton(app).props.onClick(); await flush();
+  assert.match(textContent(requestStatusPanel(app)), /Request seen by staff/);
+  assert.match(textContent(requestStatusPanel(app)), /Availability is not guaranteed/);
+  status = terminal; refreshButton(app).props.onClick(); await flush();
+  assert.match(requestStatusPanel(app).props.className, /is-inactive/);
+  assert.equal(textContent(requestStatusPanel(app)), `Request ${terminal} · Table 1`);
+  const card = find(app.render(), node => node.type === "article" && node.key === dancer.id);
+  assert.equal(card.props["data-request-state"], undefined);
+  assert.doesNotMatch(textContent(card), /Requested ✓|Seen by staff/);
+  assert.equal(requestButton(app, dancer.id).props.children, "Request");
+});
+
+test("a failed request never adds requested styling or a successful status", async t => {
+  const app = harness(async (_url, options) => options.method === "POST" ? response({ ok: false, error: "Please try again." }, 503) : response({ ...roster, kind: "table", label: "Table 1" }));
+  t.after(() => app.unmount()); await app.mount();
+  requestButton(app, dancer.id).props.onClick(); await flush();
+  assert.equal(requestStatusPanel(app), undefined);
+  assert.equal(find(app.render(), node => node.type === "article" && node.key === dancer.id).props["data-request-state"], undefined);
+  assert.equal(requestButton(app, dancer.id).props.disabled, false);
+});
 
 test("manual refresh keeps requests usable and the grid visible while updating availability and statuses", async t => {
   const pending = deferred();
@@ -557,7 +608,7 @@ test("sending a table request updates the roster immediately without waiting 20 
   assert.deepEqual(methods, ["GET", "POST", "GET"]);
   assert.ok(grid(app));
   assert.equal(alert(app), undefined);
-  assert.ok(find(app.render(), node => node.type === "strong" && node.props.children === "pending"));
+  assert.match(textContent(requestStatusPanel(app)), /Pending staff acknowledgment/);
 });
 
 test("a request made after link revocation clears the roster immediately", async t => {
