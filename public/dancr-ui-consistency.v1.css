@@ -122,12 +122,12 @@ body.dancr-button-system #authPage .auth-account-choice strong { font-size: 15px
 body.dancr-button-system #authPage .auth-account-choice small { color: #b8bac6 !important; }
 body.dancr-button-system #authPage .auth-account-choice-arrow { color: #b8bac6; }
 body.dancr-button-system :is(#authPage .auth-help-row, .account-shell .auth-help-row) {
-  display: flex; flex-wrap: wrap; justify-content: center; gap: 0 16px; margin-block: -8px;
+  display: flex; flex-wrap: wrap; justify-content: center; gap: 8px 16px; margin-block: 0;
 }
-body.dancr-button-system #authPage .auth-help-row { margin-block: -10px; }
 body.dancr-button-system :is(#authPage .auth-help-row .forgot-password-link, .account-shell .forgot-password) {
   width: auto !important; min-height: 44px !important; padding: 4px 0 !important; border: 0 !important;
   border-radius: 4px !important; color: #b8bac6 !important; background: transparent !important; box-shadow: none !important;
+  -webkit-backdrop-filter: none !important; backdrop-filter: none !important;
   font-size: 12px !important; font-weight: 500 !important;
 }
 body.dancr-button-system :is(#authPage .auth-help-row .forgot-password-link, .account-shell .forgot-password):is(:hover, :focus-visible) {
