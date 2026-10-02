@@ -30,6 +30,7 @@ test("middleware forwards malformed scheduling claims to normal authentication w
     compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
   }).outputText, { exports, Headers, require(name) {
     if (name === "next/server") return { NextResponse };
+    if (name.endsWith("/site-lock")) return { enforceSiteLock: async () => null, siteLockEnabled: () => false };
     if (name.includes("document-content-security-policy")) return documentPolicy;
     if (name.includes("api-error-policy")) return { resolveApiError };
     if (name.includes("session-transport")) return { SESSION_RESPONSE_HEADERS,

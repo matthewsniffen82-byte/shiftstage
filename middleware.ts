@@ -2,8 +2,21 @@ import { NextResponse, type NextRequest } from "next/server";
 import { refreshExpiringRequestSession, SESSION_RESPONSE_HEADERS } from "./src/lib/supabase/session-transport";
 import { resolveApiError } from "./src/lib/api-error-policy";
 import { createPrivateDocumentPolicy, isPrivateDocumentPath } from "./src/lib/security/document-content-security-policy.mjs";
+import { enforceSiteLock, siteLockEnabled, bypassSiteLock, SITE_LOCK_HEADERS } from "./src/lib/security/site-lock";
 
 export async function middleware(request: NextRequest) {
+  const locked = await enforceSiteLock(request);
+  if (locked) return locked;
+  const response = await applicationMiddleware(request);
+  // Unlocked HTML/API responses must not linger in browser or shared caches
+  // after the access cookie expires. Static resources retain their own policy.
+  if (siteLockEnabled() && !bypassSiteLock(request) && (request.nextUrl.pathname.startsWith("/api/") || request.headers.get("accept")?.includes("text/html") || request.headers.get("rsc") === "1")) {
+    for (const [key, value] of Object.entries(SITE_LOCK_HEADERS)) response.headers.set(key, value);
+  }
+  return response;
+}
+
+async function applicationMiddleware(request: NextRequest) {
   // Public cacheable routes never receive credential response headers.
   const path = request.nextUrl.pathname;
   if (isPrivateDocumentPath(path)) {
@@ -44,4 +57,4 @@ export async function middleware(request: NextRequest) {
   }
 }
 
-export const config = { matcher: ["/api/:path*", "/admin/:path*", "/dashboard/:path*", "/account/:path*"] };
+export const config = { matcher: ["/:path*"] };

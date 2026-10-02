@@ -76,6 +76,7 @@ for (const path of ["account", "admin/venue-claim-codes", "dancer/profile", "dan
     const methods = routeMethods(path), calls = [], exports = {};
     vm.runInNewContext(middlewareCode, { exports, Headers, require(name) {
       if (name === "next/server") return { NextResponse };
+      if (name.endsWith("/site-lock")) return { enforceSiteLock: async () => null, siteLockEnabled: () => false };
       if (name.includes("document-content-security-policy")) return documentPolicy;
       return { SESSION_RESPONSE_HEADERS: {}, async refreshExpiringRequestSession() { calls.push("refresh"); throw new Error("A browser preflight must not refresh sessions"); } };
     } });

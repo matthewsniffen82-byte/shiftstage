@@ -16,6 +16,7 @@ function fixture() {
   const exports = {}, calls = [];
   vm.runInNewContext(code, { exports, Headers, require(name) {
     if (name === "next/server") return { NextResponse };
+    if (name.endsWith("/site-lock")) return { enforceSiteLock: async () => null, siteLockEnabled: () => false };
     if (name.includes("document-content-security-policy")) return policy;
     return { SESSION_RESPONSE_HEADERS: {}, async refreshExpiringRequestSession() { calls.push("auth"); return null; } };
   } });
