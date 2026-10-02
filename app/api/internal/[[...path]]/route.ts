@@ -106,6 +106,8 @@ export async function GET(request: Request, context: Context) {
       });
     }
     const mainPhotos = await internalMainPhotos(admin, members.map(item => item.id));
+    // Pin the original video-filled Star demo profile without changing eligibility.
+    const featuredDemoId = "70e50bad-b7be-45ad-bc7a-64f1cba6b5e2";
     const dancers = members.map(item => {
       const photo = mainPhotos.get(item.id);
       return {
@@ -114,7 +116,7 @@ export async function GET(request: Request, context: Context) {
         mainPhotoId: photo?.id || null,
         mainPhotoRevision: photo ? createHash("sha256").update(photo.storage_path).digest("hex").slice(0, 16) : "",
       };
-    });
+    }).sort((a, b) => Number(b.id === featuredDemoId) - Number(a.id === featuredDemoId));
     if (scope.link) {
       const tableRequests = await internalTableRequestStates(admin, scope.venueId, scope.link.id);
       let receipt = null;

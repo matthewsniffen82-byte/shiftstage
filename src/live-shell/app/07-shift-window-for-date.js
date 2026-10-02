@@ -269,16 +269,22 @@
       return mixed;
     }
 
+    function demoDancerGridPriority(profile) {
+      // Keep the original video-filled Star profile easy to open during demos.
+      return profile.id === "70e50bad-b7be-45ad-bc7a-64f1cba6b5e2" ? -1 : 0;
+    }
+
     function dancerDirectoryGroups(profiles, city = selectedCity()) {
       const workingNow = profiles
         .filter((profile) => isWorkingTonight(profile, city))
         .sort((a, b) => (
+          demoDancerGridPriority(a) - demoDancerGridPriority(b) ||
           shiftStartMinutes(a.time) - shiftStartMinutes(b.time) ||
           dailyRotationScore(a, city) - dailyRotationScore(b, city)
         ));
       const notWorkingNow = profiles
         .filter((profile) => !isWorkingTonight(profile, city))
-        .sort((a, b) => dailyRotationScore(a, city) - dailyRotationScore(b, city));
+        .sort((a, b) => demoDancerGridPriority(a) - demoDancerGridPriority(b) || dailyRotationScore(a, city) - dailyRotationScore(b, city));
       if (city === ALL_CITIES) return { workingNow: interleaveDancerCities(workingNow), notWorkingNow: interleaveDancerCities(notWorkingNow) };
       return { workingNow, notWorkingNow };
     }

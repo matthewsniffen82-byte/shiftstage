@@ -307,7 +307,7 @@
       const localProfiles = venueDancers(city, venue.name);
       const tonight = localProfiles
         .filter((profile) => isWorkingTonight(profile))
-        .sort((a, b) => shiftStartMinutes(a.time) - shiftStartMinutes(b.time));
+        .sort((a, b) => demoDancerGridPriority(a) - demoDancerGridPriority(b) || shiftStartMinutes(a.time) - shiftStartMinutes(b.time));
       const followsVenue = isFollowingVenue(city, venue.name);
       const venueValue = escapeOptionValue(venue.id || venue.name);
       const activitySections = [

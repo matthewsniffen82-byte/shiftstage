@@ -64,7 +64,7 @@ function directoryFixture(profiles) {
     "updateTabCounts", "updateHomeLiveSummary", "deactivateHomeTvFeed", "deactivateHomeDiscoveryFeed",
   ]) state[name] = () => {};
   const functions = [
-    "dancerDirectoryGroups", "dancerDirectorySections", "dancerDirectoryFilterMarkup",
+    "demoDancerGridPriority", "dancerDirectoryGroups", "dancerDirectorySections", "dancerDirectoryFilterMarkup",
     "homeDancerGridSectionMarkup", "homeDancerGridContentKey", "renderHomeDancerGrid", "render",
   ].map((name) => {
     const source = homeSource.match(new RegExp(`    function ${name}\\([^\\n]*\\) \\{[\\s\\S]*?(?=\\r?\\n    (?:async )?function )`))?.[0];

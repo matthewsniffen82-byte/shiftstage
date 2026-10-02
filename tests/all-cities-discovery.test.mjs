@@ -98,7 +98,7 @@ test('dancer mapping retains cities and grouping mixes cities without duplicates
     upcomingSortValue: profile => profile.order,
     shiftStartMinutes: () => 0,
   });
-  vm.runInContext(fn('mapLiveDancer') + fn('interleaveDancerCities') + fn('dancerDirectoryGroups'), ctx);
+  vm.runInContext(fn('mapLiveDancer') + fn('interleaveDancerCities') + fn('demoDancerGridPriority') + fn('dancerDirectoryGroups'), ctx);
   const mapped = ctx.mapLiveDancer({ id: 'miami', stageName: 'Luna', city: 'Miami' }, false, 0, {});
   assert.equal(mapped.city, 'Miami');
   const rows = ['Las Vegas', 'Las Vegas', 'Las Vegas', 'Miami', 'Atlanta'].map((city, order) => ({ id: order, city, order }));

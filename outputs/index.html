@@ -49612,16 +49612,22 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
       return mixed;
     }
 
+    function demoDancerGridPriority(profile) {
+      // Keep the original video-filled Star profile easy to open during demos.
+      return profile.id === "70e50bad-b7be-45ad-bc7a-64f1cba6b5e2" ? -1 : 0;
+    }
+
     function dancerDirectoryGroups(profiles, city = selectedCity()) {
       const workingNow = profiles
         .filter((profile) => isWorkingTonight(profile, city))
         .sort((a, b) => (
+          demoDancerGridPriority(a) - demoDancerGridPriority(b) ||
           shiftStartMinutes(a.time) - shiftStartMinutes(b.time) ||
           dailyRotationScore(a, city) - dailyRotationScore(b, city)
         ));
       const notWorkingNow = profiles
         .filter((profile) => !isWorkingTonight(profile, city))
-        .sort((a, b) => dailyRotationScore(a, city) - dailyRotationScore(b, city));
+        .sort((a, b) => demoDancerGridPriority(a) - demoDancerGridPriority(b) || dailyRotationScore(a, city) - dailyRotationScore(b, city));
       if (city === ALL_CITIES) return { workingNow: interleaveDancerCities(workingNow), notWorkingNow: interleaveDancerCities(notWorkingNow) };
       return { workingNow, notWorkingNow };
     }
@@ -53259,7 +53265,7 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
       const localProfiles = venueDancers(city, venue.name);
       const tonight = localProfiles
         .filter((profile) => isWorkingTonight(profile))
-        .sort((a, b) => shiftStartMinutes(a.time) - shiftStartMinutes(b.time));
+        .sort((a, b) => demoDancerGridPriority(a) - demoDancerGridPriority(b) || shiftStartMinutes(a.time) - shiftStartMinutes(b.time));
       const followsVenue = isFollowingVenue(city, venue.name);
       const venueValue = escapeOptionValue(venue.id || venue.name);
       const activitySections = [
@@ -60334,7 +60340,7 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
       const market = discoveryMarket(city);
       return market.dancers
         .filter((profile) => isApprovedPublicProfile(profile) && isWorkingTonight(profile, city) && profileMatchesVenueFilter(profile))
-        .sort((a, b) => shiftStartMinutes(a.time) - shiftStartMinutes(b.time))
+        .sort((a, b) => demoDancerGridPriority(a) - demoDancerGridPriority(b) || shiftStartMinutes(a.time) - shiftStartMinutes(b.time))
         .map((profile) => withTrendingRank(profile, city));
     }
 
