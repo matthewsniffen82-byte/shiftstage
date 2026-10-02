@@ -186,7 +186,7 @@
       if (!liveProfiles.length) {
         return `<span class="${classPrefix}-lineup is-empty"><span class="venue-lineup-empty-text">No dancers listed now</span></span>`;
       }
-      const visibleLimit = options.mobile ? 3 : 4;
+      const visibleLimit = options.mobile ? 5 : 4;
       const profiles = liveProfiles.slice(0, visibleLimit);
       const remaining = liveProfiles.length - profiles.length;
       const avatars = profiles.map((profile) => {
@@ -205,7 +205,7 @@
           : avatarInitial;
         return `<button type="button" class="${classPrefix}-lineup-avatar venue-lineup-profile" data-public-dancer-id="${escapeOptionValue(profile.id || "")}" data-venue-dancer-profile data-grid-profile-action="${escapeOptionValue(profileReferenceValue(profile))}" data-dancer-id="${escapeOptionValue(profile.id || "")}" data-dancer-avatar data-working-now="true" aria-label="Open ${escapeHtml(profile.name)}, working now"><span data-dancer-avatar-border aria-hidden="true">${avatarPhoto}</span><span data-working-now-indicator aria-hidden="true">NOW</span></button>`;
       }).join("");
-      const remainingMarkup = !options.mobile && remaining > 0
+      const remainingMarkup = remaining > 0
         ? `<span class="${classPrefix}-lineup-count" aria-label="${remaining} more dancers working now">+${remaining}</span>`
         : "";
       const liveLabel = `${liveProfiles.length} ${liveProfiles.length === 1 ? "dancer" : "dancers"} working now`;
@@ -213,7 +213,10 @@
       const mobileLiveCount = options.mobile
         ? `<span class="${classPrefix}-lineup-label" aria-hidden="true"><strong>${mobileCountLabel}</strong><span>NOW</span></span>`
         : "";
-      return `<span class="${classPrefix}-lineup" role="group" aria-label="${liveLabel}">${avatars}${remainingMarkup}${mobileLiveCount}</span>`;
+      const avatarStack = options.mobile
+        ? `<span class="home-venue-discovery-lineup-avatars">${avatars}${remainingMarkup}</span>`
+        : `${avatars}${remainingMarkup}`;
+      return `<span class="${classPrefix}-lineup" role="group" aria-label="${liveLabel}">${avatarStack}${mobileLiveCount}</span>`;
     }
 
     function venueCardQrMarkup(venue) {

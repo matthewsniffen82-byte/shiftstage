@@ -994,6 +994,7 @@ html body.dancr-button-system #results.venue-card-grid > .venue-card .venue-card
     justify-self: start !important;
     align-self: start !important;
     min-width: 0 !important;
+    width: 100% !important;
     min-height: 28px !important;
     margin: 0 !important;
   }
@@ -1001,15 +1002,25 @@ html body.dancr-button-system #results.venue-card-grid > .venue-card .venue-card
   html body.dancr-button-system > .app main.stack > section.stack
     > #results.home-discovery-feed.home-venue-discovery-feed > .home-venue-discovery-slide .home-venue-discovery-lineup {
     display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 6px 8px !important;
     justify-content: flex-start !important;
     width: 100% !important;
     min-width: 0 !important;
     min-height: 28px !important;
   }
 
+  /* Keep the five photos and overflow count together when a narrow phone
+     needs to place the total NOW badge on the next line. */
+  .home-venue-discovery-lineup-avatars {
+    display: inline-flex;
+    align-items: center;
+    flex: 0 0 auto;
+  }
+
   html body.dancr-button-system > .app main.stack > section.stack
     > #results.home-discovery-feed.home-venue-discovery-feed > .home-venue-discovery-slide .home-venue-discovery-lineup-label {
-    margin-left: 8px !important;
+    margin-left: 0 !important;
     flex-shrink: 0 !important;
   }
 

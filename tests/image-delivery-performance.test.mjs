@@ -100,8 +100,10 @@ test("club lineup requests stay thumbnail-sized and bounded even with fifty work
   vm.runInContext(source, context);
   const profiles = Array.from({ length: 50 }, (_, index) => ({ id: String(index), name: index ? `Dancer ${index}` : "<Dancer", photo: "https://images.example/avatar" }));
   const firstCard = context.venueLineupMarkup({}, "Las Vegas", { profiles, mobile: true, eager: true });
-  assert.equal((firstCard.match(/<img /g) || []).length, 3);
-  assert.equal((firstCard.match(/loading="eager" fetchpriority="high"/g) || []).length, 3);
+  assert.equal((firstCard.match(/<img /g) || []).length, 5);
+  assert.equal((firstCard.match(/loading="eager" fetchpriority="high"/g) || []).length, 5);
+  assert.match(firstCard, /aria-label="45 more dancers working now">\+45<\/span>/);
+  assert.match(firstCard, /<strong>50<\/strong><span>NOW<\/span>/);
   assert.match(firstCard, /aria-label="50 dancers working now"/);
   assert.match(firstCard, /venue-lineup-avatar-initial">&lt;<\/span>/);
   assert.match(firstCard, /data-venue-dancer-profile/);
@@ -111,12 +113,20 @@ test("club lineup requests stay thumbnail-sized and bounded even with fifty work
   const withoutPhoto = context.venueLineupMarkup({}, "Las Vegas", { profiles: [{ id: "1", name: " Star ", photo: "" }] });
   assert.doesNotMatch(withoutPhoto, /<img /);
   assert.match(withoutPhoto, /venue-lineup-avatar-initial">S<\/span>/);
+  for (const count of [0, 1, 4, 5, 6]) {
+    const markup = context.venueLineupMarkup({}, "Las Vegas", { profiles: profiles.slice(0, count), mobile: true });
+    assert.equal((markup.match(/data-venue-dancer-profile/g) || []).length, Math.min(count, 5));
+    if (count > 5) assert.match(markup, /aria-label="1 more dancers working now">\+1<\/span>/);
+    else assert.doesNotMatch(markup, /home-venue-discovery-lineup-count/);
+    if (count) assert.match(markup, new RegExp(`<strong>${count}</strong><span>NOW</span>`));
+    else assert.match(markup, /No dancers listed now/);
+  }
 });
 
 test("small profile galleries load together while large galleries prioritize their first two rows", () => {
   const source = shell.match(/function profilePhotoThumbMarkup\([^]*?(?=\n    function galleryMarkup)/)?.[0];
-  const render = new Function('nativeResponsivePhotoAttrs', 'mobileThumbnailSource', 'escapeHtml', 'displayText', 'PROFILE_MEDIA_PAGE_SIZE', `${source}; return profilePhotoThumbMarkup;`)(
-    () => 'src="https://images.example/photo"', () => '', value => String(value), value => String(value), 12,
+  const render = new Function('nativeResponsivePhotoAttrs', 'mobileThumbnailSource', 'escapeHtml', 'displayText', 'escapeOptionValue', 'PROFILE_MEDIA_PAGE_SIZE', `${source}; return profilePhotoThumbMarkup;`)(
+    () => 'src="https://images.example/photo"', () => '', value => String(value), value => String(value), value => String(value), 12,
   );
   for (const [total, index, loading, priority] of [
     [1, 0, 'eager', 'high'],

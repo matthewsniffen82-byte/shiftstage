@@ -109,8 +109,8 @@ test("the mobile lineup explains working-now avatars without changing venue acti
     /function venueLineupMarkup\(venue, city, options = \{\}\) \{[\s\S]*?(?=\n    function venueCardQrMarkup)/,
   )?.[0] || "";
 
-  assert.match(lineup, /const visibleLimit = options\.mobile \? 3 : 4/);
-  assert.match(lineup, /const remainingMarkup = !options\.mobile && remaining > 0/);
+  assert.match(lineup, /const visibleLimit = options\.mobile \? 5 : 4/);
+  assert.match(lineup, /const remainingMarkup = remaining > 0/);
   assert.match(lineup, /aria-label="\$\{remaining\} more dancers working now">\+\$\{remaining\}/);
   assert.match(lineup, /classPrefix = options\.mobile \? "home-venue-discovery" : "venue-card"/);
   assert.match(lineup, /\$\{classPrefix\}-lineup-label/);
@@ -119,7 +119,7 @@ test("the mobile lineup explains working-now avatars without changing venue acti
   assert.match(lineup, /aria-label="\$\{liveLabel\}"/);
 });
 
-test("mobile Clubs cards place at most three avatars beside the club details", () => {
+test("mobile Clubs cards place their avatar stack beside the club details", () => {
   const slide = liveApp.match(
     /function homeVenueDiscoveryFeedSlide\(venue, index, total, city\) \{[\s\S]*?(?=\n    function homeDancerGridActionsMarkup)/,
   )?.[0] || "";
