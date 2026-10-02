@@ -93,7 +93,7 @@
         let confirmed = false;
         try {
           const response = await fetch(`/api/public/dancer-visibility?ids=${batch.join(",")}`, {
-            cache: "no-store", credentials: "omit", signal: controller.signal,
+            cache: "no-store", credentials: "same-origin", signal: controller.signal,
           });
           const data = await response.json();
           if (!response.ok || data.ok !== true || !Array.isArray(data.visibleIds) || data.visibleIds.some(id => !batch.includes(id))) throw new Error("Unavailable");

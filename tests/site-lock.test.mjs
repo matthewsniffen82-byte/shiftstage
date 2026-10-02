@@ -161,11 +161,12 @@ test("the password form bounds input and escapes return paths without allowing o
 test("only exact worker, health and webhook routes bypass the gate, retaining their own authentication", async () => {
   const f = fixture();
   const crons = JSON.parse(readFileSync(new URL("../vercel.json", import.meta.url), "utf8")).crons;
-  for (const [path, method] of [...crons.map(item => [item.path, "GET"]), ["/api/stripe/webhook", "POST"], ["/api/ondato/webhook", "POST"], ["/api/health", "GET"], ["/api/health/supabase", "HEAD"], ["/site-unlock", "GET"]]) {
+  for (const [path, method] of [...crons.map(item => [item.path, "GET"]), ["/api/stripe/webhook", "POST"], ["/api/ondato/webhook", "POST"], ["/api/public/performance", "POST"], ["/api/health", "GET"], ["/api/health/supabase", "HEAD"], ["/site-unlock", "GET"]]) {
     const response = await f.middleware(new NextRequest(origin + path, { method }));
     assert.equal(response.headers.get("x-middleware-next"), "1", path);
   }
   assert.equal((await f.middleware(new NextRequest(origin + "/api/stripe/webhook"))).status, 401);
+  assert.equal((await f.middleware(new NextRequest(origin + "/api/public/performance"))).status, 401);
   assert.equal((await f.middleware(new NextRequest(origin + "/api/cron/finance", { method: "POST" }))).status, 401);
   assert.equal((await f.middleware(new NextRequest(origin + "/api/stripe/webhook/extra", { method: "POST" }))).status, 401);
 });

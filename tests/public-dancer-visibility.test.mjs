@@ -96,7 +96,19 @@ test('an open card and playing video disappear; restoration loads fresh content'
   await f.runCheck();
   assert.equal(f.card.hidden, true, 'old content stays hidden until the fresh page loads');
   assert.equal(f.window.location.reloads, 1);
-  assert.ok(f.requests.every(([, options]) => options.cache === 'no-store' && options.credentials === 'omit'));
+  assert.ok(f.requests.every(([, options]) => options.cache === 'no-store' && options.credentials === 'same-origin'));
+});
+
+test('same-origin visibility checks retain site access without exposing private dancers', async () => {
+  const f = browserFixture();
+  f.respond(async (_url, options) => options.credentials === 'same-origin'
+    ? Response.json({ ok: true, visibleIds: [id] })
+    : Response.json({ ok: false, code: 'SITE_LOCKED' }, { status: 401 }));
+  await f.runCheck();
+  assert.equal(f.card.hidden, false);
+  f.respond(async () => Response.json({ ok: true, visibleIds: [] }));
+  await f.runCheck();
+  assert.equal(f.card.hidden, true);
 });
 test('a completed incognito toggle wins against an older public response', async () => {
   const f = browserFixture();
