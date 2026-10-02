@@ -298,6 +298,7 @@ export function VenuePanel({
           </button>
         ))}
       </nav>
+      <hr className="venue-section-divider" />
       {refreshStatus ? <small className="venue-refresh-status" role="status">{refreshStatus}</small> : null}
 
       <section
@@ -310,6 +311,7 @@ export function VenuePanel({
         <section className="info-panel venue-dashboard-section" id="venue-guest-list" aria-labelledby="venue-guest-list-heading" tabIndex={-1}>
           <VenueGuestListPanel key={`${account?.id}:${connectedVenueId}`} refreshKey={refreshedAt} />
         </section>
+        <hr className="venue-section-divider" />
         <section className="info-panel venue-dashboard-section" id="venue-pickups" aria-labelledby="venue-pickups-heading" tabIndex={-1}>
           <h2 id="venue-pickups-heading">Pickup requests</h2>
           {(venueRole === "owner" || venueRole === "manager")
@@ -324,6 +326,7 @@ export function VenuePanel({
           <Metric label="Live Club Deals" value={String(activeDealCount)} />
           <Metric label="Verified roster" value={String(nfcAuthorizedDancerCount)} />
         </section>
+        <hr className="venue-section-divider" />
 
         <DashboardSection
           description="Live requests, dancer access, and table tools."
@@ -548,6 +551,7 @@ export function VenuePanel({
           venueId={String(profile?.id || "")}
         />
 
+        <hr className="venue-section-divider" />
         <h2 className="dashboard-group-heading">Team &amp; account</h2>
         {canViewTeam ? (
           <DashboardSection

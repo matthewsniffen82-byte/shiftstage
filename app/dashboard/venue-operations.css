@@ -9,6 +9,20 @@ body.dancr-button-system main.dashboard-shell.dashboard-shell-venue {
   background: #070709 !important;
   padding-bottom: calc(104px + env(safe-area-inset-bottom, 0px)) !important;
 }
+/* Quiet separators distinguish the main workspace groups at every screen width. */
+body.dancr-button-system main.dashboard-shell.dashboard-shell-venue .venue-section-divider {
+  grid-column: 1 / -1;
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  height: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-top: 1px solid #2c2c34;
+}
+body.dancr-button-system main.dashboard-shell.dashboard-shell-venue :is(.venue-workspace-panel, .venue-roster-panel:not([hidden]), .venue-manage-panel) { row-gap: 16px; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-venue .venue-section-divider + .dashboard-group-heading { margin-top: 0; }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-venue :is(.dashboard-head, .venue-command-panel) { border: 0 !important; border-radius: 0 !important; background: transparent !important; box-shadow: none !important; padding: 8px 0 !important; margin: 0; }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-venue .dashboard-head-row { gap: 10px !important; }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-venue .dashboard-head h1 { font-size: clamp(24px, 4vw, 30px) !important; }
