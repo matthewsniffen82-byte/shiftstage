@@ -66,6 +66,7 @@ for (const path of ["/", "/?view=venues", "/dancers/star", "/dashboard/venue", "
     assert.doesNotMatch(html, /synthetic-unlock-password|type="module"|<script/);
     assert.match(response.headers.get("cache-control"), /no-store/);
     assert.equal(response.headers.get("vercel-cdn-cache-control"), "no-store");
+    assert.equal(response.headers.get("referrer-policy"), "same-origin", "Native form posts must retain their same-origin Origin header");
     assert.deepEqual(f.calls, []);
   });
 }

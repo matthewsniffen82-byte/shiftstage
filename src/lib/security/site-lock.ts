@@ -9,7 +9,9 @@ export const SITE_LOCK_HEADERS = {
   "cdn-cache-control": "no-store",
   "vercel-cdn-cache-control": "no-store",
   "x-robots-tag": "noindex, nofollow, noarchive",
-  "referrer-policy": "no-referrer",
+  // Native password form posts need their same-origin Origin header for CSRF
+  // validation. no-referrer makes browsers send Origin: null on these posts.
+  "referrer-policy": "same-origin",
 };
 // Only a salted verifier is checked in; the password never enters client code.
 const passwordVerifier = {
