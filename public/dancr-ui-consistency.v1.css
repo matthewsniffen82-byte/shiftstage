@@ -45,6 +45,12 @@ body.dancr-button-system :is(#authPage, #dancerSignupPage, .account-shell .accou
 body.dancr-button-system :is(#authPage, #dancerSignupPage, .account-shell .account-panel) :is(input, select, textarea, button, a):focus-visible {
   outline: 2px solid #c4b5fd !important; outline-offset: 3px !important;
 }
+/* Merge the field highlight with its border instead of drawing a second frame. */
+body.dancr-button-system :is(#authPage, #dancerSignupPage, .account-shell .account-panel) :is(input:not([type="checkbox"]):not([type="radio"]), select, textarea):focus {
+  outline: 2px solid #c4b5fd !important;
+  outline-offset: -2px !important;
+  box-shadow: none !important;
+}
 body.dancr-button-system :is(#authPage, #dancerSignupPage, .account-shell .account-panel) :is(button[type="submit"], .continue-signup) {
   min-height: var(--dancr-form-height) !important;
   padding: 12px 16px !important;

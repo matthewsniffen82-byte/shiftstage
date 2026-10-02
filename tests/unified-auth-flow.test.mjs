@@ -43,7 +43,7 @@ test("guest signup clearly explains private visibility and email confirmation", 
   assert.match(signupNoteRule, /background: rgba\(255, 255, 255, \.035\) !important;/);
   assert.match(liveApp, /\.auth-signup-note\[hidden\] \{\s*display: none !important;\s*\}/);
   assert.doesNotMatch(liveApp, /Private by default\. Check your email to confirm after creating it\./);
-  assert.match(liveApp, /saveAuthResume\("customer", "\/dashboard\/customer\?confirmed=1"\)/);
+  assert.match(liveApp, /saveAuthResume\("customer", pendingAccountAuthReturnTo \|\| "\/dashboard\/customer\?confirmed=1"\)/);
 });
 
 test("the selected auth tab is highlighted while the submit action uses the primary brand color", () => {
