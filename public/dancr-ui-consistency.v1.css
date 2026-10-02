@@ -1083,6 +1083,13 @@ html body.dancr-button-system #results.venue-card-grid > .venue-card .venue-card
     line-height: 1.2 !important;
   }
 
+  /* Optically center the person beside its smaller plus above Follow. */
+  html body.dancr-button-system > .app main.stack > section.stack
+    > #results.home-venue-discovery-feed > .home-venue-discovery-slide
+    .venue-card-favorite-action > .action-icon[data-action-icon="personPlus"] > svg {
+    transform: translateX(2px) !important;
+  }
+
 }
 
 /* Venue details share the scroll-card identity layout while retaining the full profile. */
