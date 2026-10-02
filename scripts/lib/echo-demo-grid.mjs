@@ -5,6 +5,9 @@ export const DEMO_GRIDS = Object.freeze([
   { key: 'afterglow', venueId: 'fa4c3d2a-5de9-4ae5-80ba-35528c555521', name: 'Afterglow Social', target: 80, marker: 'mydancr-afterglow-grid-v1' },
   { key: 'aurora', venueId: '79162674-294a-4c38-be6e-16eec3c42d99', name: 'Aurora Room', target: 75, marker: 'mydancr-aurora-grid-v1' },
   { key: 'blue-ember', venueId: 'c2a9f8d6-a543-4ac0-9cc6-df8431440e2b', name: 'Blue Ember', target: 85, marker: 'mydancr-blue-ember-grid-v1' },
+  { key: 'starlight', venueId: 'c836884a-a52b-4b10-aadd-e7f349378ffb', name: 'Starlight Club', target: 73, marker: 'mydancr-starlight-grid-v1' },
+  { key: 'silver-circuit', venueId: 'dff48bff-4c66-426f-ab1f-6015bebe8777', name: 'Silver Circuit', target: 61, marker: 'mydancr-silver-circuit-grid-v1' },
+  { key: 'neon-ember', venueId: '9045cf7f-3883-44b3-a470-f0ae1d7eb2f0', name: 'Neon Ember', target: 50, marker: 'mydancr-neon-ember-grid-v1' },
 ].map(Object.freeze));
 export const SOURCE_SLUGS = Object.freeze([
   ...Array.from({ length: 10 }, (_, i) => `layout-review-${String(i + 1).padStart(2, '0')}`),

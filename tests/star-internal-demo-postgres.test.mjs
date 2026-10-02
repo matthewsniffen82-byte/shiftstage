@@ -20,6 +20,7 @@ before(async()=>{
   await pg.exec(sql('supabase/migrations/20260929100000_internal_demo_roster.sql'));
   await pg.exec(sql('supabase/migrations/20260929130000_star_internal_demo.sql'));
   await pg.exec(sql('supabase/migrations/20261002010000_additional_venue_demo_grids.sql'));
+  await pg.exec(sql('supabase/migrations/20261002020000_populated_venue_demo_grids.sql'));
 });
 beforeEach(async()=>{
   await pg.exec('begin;set role service_role');

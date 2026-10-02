@@ -29,7 +29,7 @@ for (const grid of DEMO_GRIDS) test(`publishes exactly ${grid.target} scoped ${g
       insert into public.dancer_age_verification_settings values(true,false);
       create table public.mydancr_tv_videos(id uuid primary key,dancer_id uuid);
       alter table public.venue_dancer_affiliations add column reentry_blocked boolean not null default false;`);
-    for(const file of ['20260929100000_internal_demo_roster.sql','20260929130000_star_internal_demo.sql','20260929120000_internal_main_photos.sql','20261001235000_echo_demo_grid.sql','20261002010000_additional_venue_demo_grids.sql']) {
+    for(const file of ['20260929100000_internal_demo_roster.sql','20260929130000_star_internal_demo.sql','20260929120000_internal_main_photos.sql','20261001235000_echo_demo_grid.sql','20261002010000_additional_venue_demo_grids.sql','20261002020000_populated_venue_demo_grids.sql']) {
       await pg.exec(readFileSync(new URL('../supabase/migrations/'+file,import.meta.url),'utf8'));
     }
     await pg.query('insert into auth.users(id) values($1)',[id(8)]);

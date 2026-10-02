@@ -77,14 +77,14 @@ test('combined dancer queries retain approval and visibility while city queries 
   assert.deepEqual(Array.from(await service.getApprovedDancerRowsByCity(local, 'Miami'), row => row.city), ['Miami']);
 });
 
-test('city discovery includes all dancers in the four large demo venue rosters', async () => {
+test('city discovery includes all dancers in the seven populated demo venue rosters', async () => {
   const service = loadService('src/lib/dancr/public.ts', '\nexport { getApprovedDancerRowsByCity };');
-  const counts = { afterglow: 80, aurora: 75, blueEmber: 85, echo: 100 };
+  const counts = { afterglow: 80, aurora: 75, blueEmber: 85, echo: 100, starlight: 73, silverCircuit: 61, neonEmber: 50 };
   const rows = Object.entries(counts).flatMap(([venue, count]) => Array.from({ length: count }, (_, i) => ({
     id: `${venue}-${i}`, venue, city: 'Las Vegas', status: 'approved', verification_status: 'approved', is_public: true, disabled_at: null,
   })));
   const result = await service.getApprovedDancerRowsByCity(queryFixture(rows), 'Las Vegas');
-  assert.equal(result.length, 340);
+  assert.equal(result.length, 524);
   for (const [venue, count] of Object.entries(counts)) assert.equal(result.filter(row => row.venue === venue).length, count);
 });
 

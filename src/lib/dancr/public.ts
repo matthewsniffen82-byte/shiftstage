@@ -11,7 +11,7 @@ import { isActiveNfcPresence } from "./shift-presence";
 
 type DancrClient = SupabaseClient;
 
-const PUBLIC_DANCER_DIRECTORY_LIMIT = 500;
+const PUBLIC_DANCER_DIRECTORY_LIMIT = 800;
 const ALL_CITIES_DANCER_DIRECTORY_LIMIT = 800;
 const PUBLIC_PROFILE_MEDIA_LIMIT = 50;
 const PUBLIC_PROFILE_SHIFT_LIMIT = 50;
