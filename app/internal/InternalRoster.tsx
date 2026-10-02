@@ -340,9 +340,18 @@ export function InternalRoster({ token, operationsOnly = false, roster }: { toke
   const tableRequests = staff ? [] : dancers.filter(dancer => dancer.requestStatus);
   const receiptStatus = snapshot?.receipt?.status;
   const inactiveReceipt = !!receiptStatus && ["completed", "cancelled", "expired"].includes(receiptStatus);
+  // A hard reload has no verified venue identity yet. Keep it quiet until the
+  // first response instead of flashing generic club/table names or zero counts.
+  if (!staff && !snapshot && !error) return <div className="ir-shell ir-guest" aria-busy={true} data-global-navigation-swipe="ignore">
+    <span className="ir-loading-status" role="status">Loading club roster</span>
+    <div className="ir-loading-placeholder" aria-hidden="true">
+      <div className="ir-loading-header" />
+      <div className="ir-loading-grid"><span /><span /><span /></div>
+    </div>
+  </div>;
   return <div className={`ir-shell${staff ? " ir-staff" : " ir-guest"}${operationsOnly ? " ir-embedded" : ""}`} data-global-navigation-swipe="ignore">
     {staff && !operationsOnly ? <VenueAdminUtilities /> : null}
-    {!operationsOnly ? <header className="ir-header"><div>
+    {!operationsOnly && (staff || snapshot) ? <header className="ir-header"><div>
       <a className="ir-brand" href={staff ? "/dashboard/venue" : "#"}><span className="mydancr-live-logo">mydanc<span className="violet-r">r</span></span>{staff ? <span>INTERNAL</span> : null}</a>
       {!staff && snapshot?.venueLogoUrl ? <VenueBrandLogo key={snapshot.venueLogoUrl} url={snapshot.venueLogoUrl} name={snapshot.venueName} /> : <h1 className={staff ? undefined : "ir-venue-identity"}>{snapshot?.venueName || "Club roster"}</h1>}
       <p>{staff ? "Your floor. Your team. One live roster." : snapshot?.label || "Welcome to the club"}</p>
