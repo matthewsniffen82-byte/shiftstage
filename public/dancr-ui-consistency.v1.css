@@ -1351,6 +1351,9 @@ html body.dancr-button-system > .app main.stack > #homeLiveSummary {
   font-weight: 500 !important;
   line-height: 1.3 !important;
 }
+html body.dancer-directory-active.dancr-button-system > .app main.stack > #homeLiveSummary {
+  margin-block-end: 3px !important;
+}
 html body.dancr-button-system > .app main.stack > #homeLiveSummary #homeLiveRadius {
   white-space: normal;
   overflow-wrap: anywhere;
