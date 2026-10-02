@@ -109,6 +109,8 @@ test("successful unlock returns to the requested page and issues only a secure a
     const unlocked = await f.middleware(new NextRequest(origin + path, { headers: { cookie: `${cookie.name}=${cookie.value}`, accept: "text/html" } }));
     assert.equal(unlocked.headers.get("x-middleware-next"), "1");
     assert.match(unlocked.headers.get("cache-control"), /private, no-store/);
+    assert.equal(unlocked.headers.get("cdn-cache-control"), "no-store");
+    assert.equal(unlocked.headers.get("vercel-cdn-cache-control"), "no-store");
   }
 });
 

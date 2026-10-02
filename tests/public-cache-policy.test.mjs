@@ -69,7 +69,7 @@ test("public TV clients reuse cached payloads without sending account credential
 });
 
 test("the shell and versioned static assets can be reused by browser back navigation", () => {
-  assert.match(source.rootRoute, /public, max-age=30, s-maxage=60, stale-while-revalidate=300/);
+  assert.match(source.rootRoute, /public, max-age=30, s-maxage=3600, stale-while-revalidate=300/);
   assert.match(source.staticAssetCache, /public, max-age=31536000, immutable/);
   assert.match(source.staticAssetPaths, /"\/outputs\/dancr-hero\.webp"/);
   assert.match(source.staticAssetCache, /"\/venue-logos\/:path\*"/);

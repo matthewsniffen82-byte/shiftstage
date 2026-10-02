@@ -12,11 +12,12 @@ import { LIVE_SHELL_FEATURE_VERSIONS } from "../src/generated/live-shell-feature
 import { externalizeLiveShellAppScript, extractLiveShellAppScript } from "../src/lib/dancr/live-shell-script.mjs";
 import { LIVE_SHELL_SCRIPT_SHA256 } from "../src/generated/live-shell-script-version.mjs";
 
-const [html, delivered, routeSource, nextConfig] = await Promise.all([
+const [html, delivered, routeSource, nextConfig, featureRouteSource] = await Promise.all([
   readFile(new URL("../outputs/index.html", import.meta.url), "utf8"),
   readFile(new URL("../outputs/live-shell-app.js", import.meta.url), "utf8"),
   readFile(new URL("../app/live-shell.js/route.ts", import.meta.url), "utf8"),
   readFile(new URL("../next.config.mjs", import.meta.url), "utf8"),
+  readFile(new URL("../app/live-shell-feature.js/route.ts", import.meta.url), "utf8"),
 ]);
 const normalized = html.replace(/\r\n?/g, "\n");
 const original = extractLiveShellAppScript(normalized);
@@ -98,16 +99,17 @@ test("compaction preserves classic globals, callback names, closures, templates 
   assert.equal(vm.runInContext("selectedTab", after), "upcoming");
 });
 
-function scriptRoute(mode) {
+function scriptRoute(mode, feature = false) {
   const exports = {};
   const dependencies = {
     "node:fs/promises": { readFile },
     "node:path": path,
     "../../src/generated/live-shell-version": { LIVE_SHELL_SHA256: sourceVersion },
     "../../src/generated/live-shell-script-version.mjs": { LIVE_SHELL_SCRIPT_SHA256 },
+    "../../src/generated/live-shell-feature-versions.mjs": { LIVE_SHELL_FEATURE_VERSIONS },
     "../../src/lib/dancr/live-shell-script.mjs": { extractLiveShellAppScript },
   };
-  const code = ts.transpileModule(routeSource, {
+  const code = ts.transpileModule(feature ? featureRouteSource : routeSource, {
     compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, esModuleInterop: true },
   }).outputText;
   vm.runInNewContext(code, {
@@ -124,7 +126,9 @@ test("production serves built bytes and only their exact version is immutable", 
     assert.equal(await response.text(), delivered);
     assert.equal(response.headers.get("x-dancr-live-shell-script-version"), LIVE_SHELL_SCRIPT_SHA256);
     assert.equal(response.headers.get("cache-control"), version === LIVE_SHELL_SCRIPT_SHA256
-      ? "public, max-age=31536000, immutable" : "public, max-age=0, must-revalidate");
+      ? "public, max-age=31536000, s-maxage=31536000, immutable" : "public, max-age=0, must-revalidate");
+    assert.equal(response.headers.get("set-cookie"), null);
+    assert.equal(response.headers.get("vercel-cdn-cache-control"), null, "preserve middleware cache restrictions");
   }
 });
 
@@ -132,4 +136,24 @@ test("development keeps source edits visible without requiring a production rebu
   const response = await scriptRoute("development")(new Request(`http://localhost/live-shell.js?v=${sourceVersion}`));
   assert.equal(await response.text(), original);
   assert.equal(response.headers.get("x-dancr-live-shell-script-version"), sourceVersion);
+  assert.equal(response.headers.get("cache-control"), "public, max-age=0, must-revalidate");
+});
+
+test("only the exact production TV chunk can be cached by browsers and Vercel", async () => {
+  const get = scriptRoute("production", true);
+  const version = LIVE_SHELL_FEATURE_VERSIONS.tv;
+  const response = await get(new Request(`https://www.mydancr.com/live-shell-feature.js?feature=tv&v=${version}`));
+  assert.equal(response.status, 200);
+  assert.equal(await response.text(), await readFile(new URL("../outputs/live-shell-tv.js", import.meta.url), "utf8"));
+  assert.equal(response.headers.get("cache-control"), "public, max-age=31536000, s-maxage=31536000, immutable");
+  assert.equal(response.headers.get("set-cookie"), null);
+  assert.equal(response.headers.get("vercel-cdn-cache-control"), null);
+
+  for (const query of ["", "feature=tv", "feature=tv&v=old-version", `feature=unknown&v=${version}`]) {
+    const rejected = await get(new Request(`https://www.mydancr.com/live-shell-feature.js?${query}`));
+    assert.equal(rejected.status, 404);
+    assert.equal(rejected.headers.get("cache-control"), "no-store");
+  }
+  const development = await scriptRoute("development", true)(new Request(`http://localhost/live-shell-feature.js?feature=tv&v=${version}`));
+  assert.equal(development.headers.get("cache-control"), "public, max-age=0, must-revalidate");
 });

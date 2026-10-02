@@ -15,7 +15,11 @@ export async function GET(request: Request) {
   return new Response(await readFile(path.join(process.cwd(), "outputs", "live-shell-tv.js"), "utf8"), {
     headers: {
       "content-type": "application/javascript; charset=utf-8",
-      "cache-control": "public, max-age=31536000, immutable",
+      // The version guard above makes the production chunk immutable. Explicit
+      // s-maxage also caches these function-served bytes on Vercel's CDN.
+      "cache-control": process.env.NODE_ENV === "production"
+        ? "public, max-age=31536000, s-maxage=31536000, immutable"
+        : "public, max-age=0, must-revalidate",
     },
   });
 }

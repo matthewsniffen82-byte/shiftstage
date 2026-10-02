@@ -18,8 +18,10 @@ export async function GET(request: Request) {
       );
   const scriptVersion = production ? LIVE_SHELL_SCRIPT_SHA256 : LIVE_SHELL_SHA256;
   const requestedVersion = new URL(request.url).searchParams.get("v");
-  const cacheControl = requestedVersion === scriptVersion
-    ? "public, max-age=31536000, immutable"
+  // Function responses need s-maxage to opt into Vercel's shared CDN cache.
+  // Only an exact production content hash is safe to retain for a year.
+  const cacheControl = production && requestedVersion === scriptVersion
+    ? "public, max-age=31536000, s-maxage=31536000, immutable"
     : "public, max-age=0, must-revalidate";
 
   return new Response(script, {

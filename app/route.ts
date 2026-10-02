@@ -16,7 +16,7 @@ import { externalizeLiveShellStyles } from "../src/lib/dancr/live-shell-styles.m
 export const runtime = "nodejs";
 // The live shell is a checked-in production artifact. Rendering this route at
 // request time prevents Vercel's build cache from reusing an older shell while
-// still allowing the response itself to be cached briefly at the edge.
+// still allowing this deployment-only response to be reused at the edge.
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
@@ -85,7 +85,11 @@ async function renderLiveShell() {
     html: withVersionedAssets,
     headers: {
       "content-type": "text/html; charset=utf-8",
-      "cache-control": "public, max-age=30, s-maxage=60, stale-while-revalidate=300",
+      // Vercel invalidates this deployment's CDN entries on a new deployment.
+      // Keep browser reuse short; live data still comes from uncached APIs.
+      // Do not add a CDN-specific header here: the site-lock middleware's
+      // no-store headers must retain priority while password access is enabled.
+      "cache-control": "public, max-age=30, s-maxage=3600, stale-while-revalidate=300",
       "content-security-policy": contentSecurityPolicy,
       "x-dancr-live-shell-version": liveShellSha256,
       "x-dancr-live-shell-build-version": LIVE_SHELL_SHA256,
