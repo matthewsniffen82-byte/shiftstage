@@ -67,11 +67,11 @@ test("dancer uploads are direct, validated, persistent, and submitted for automa
   assert.match(dancerApi, /createRequestSupabaseContext\(request, \{ role: "dancer" \}\)/);
   assert.match(dancerApi, /createMyDancrTvUpload/);
   assert.match(tvSource, /createSignedUploadUrl\(storagePath\)/);
-  assert.match(tvSource, /MYDANCR_TV_MAX_BYTES = 100 \* 1024 \* 1024/);
+  assert.match(tvSource, /MYDANCR_TV_MAX_BYTES = VIDEO_UPLOAD_MAX_BYTES/);
   assert.match(tvSource, /MYDANCR_TV_MAX_DURATION_SECONDS = 30/);
   assert.match(tvSource, /\.lte\("duration_seconds", MYDANCR_TV_MAX_DURATION_SECONDS\)/);
   assert.match(tvSource, /Only videos that are 30 seconds or shorter can be approved/);
-  assert.match(dancerStudio, /1–30 sec/);
+  assert.match(dancerStudio, /1–\{VIDEO_UPLOAD_MAX_SECONDS\} sec · \{VIDEO_UPLOAD_MAX_BYTES \/ \(1024 \* 1024\)\} MB max/);
   assert.match(dancerStudio, /await cropProfileVideo\(item\.file, controller\.signal\)/);
   assert.match(tenSecondMigration, /where duration_seconds > 10[\s\S]*?status not in \('hidden', 'expired'\)/);
   assert.match(tenSecondMigration, /check \(duration_seconds between 1 and 10\)[\s\S]*?not valid/);

@@ -1,7 +1,7 @@
 (function () {
   "use strict";
   const MAX_SECONDS = 30;
-  const MAX_BYTES = 100 * 1024 * 1024;
+  const MAX_BYTES = 25 * 1024 * 1024;
   let active = false;
   const confirmed = new WeakMap();
   const even = n => Math.floor(n / 2) * 2;
@@ -12,7 +12,7 @@
     if (confirmed.has(file)) return confirmed.get(file);
     if (active) throw new Error("Finish editing the current video first.");
     if (!["video/mp4", "video/webm", "video/quicktime"].includes(file?.type)) throw new Error("Choose an MP4, WebM, or MOV video.");
-    if (file.size < 1 || file.size > MAX_BYTES) throw new Error("Video files must be 100 MB or smaller.");
+    if (file.size < 1 || file.size > MAX_BYTES) throw new Error("Video files must be 25 MB or smaller.");
     active = true;
     const previousFocus = document.activeElement;
     const url = URL.createObjectURL(file);

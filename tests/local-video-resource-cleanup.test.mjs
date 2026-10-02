@@ -35,8 +35,13 @@ test("cancel, Escape, aborted sessions, unreadable files and metadata timeout re
   }
 });
 
-test("size limit is enforced before creating preview resources", async () => {
+test("25 MB is accepted by the editor and one byte over is rejected before preview resources", async () => {
+  const allowed = videoCropFixture();
+  const pending = allowed.crop({ ...allowed.file, size: 25 * 1024 * 1024 });
+  allowed.video.onloadedmetadata(); allowed.control("use").onclick();
+  assert.equal((await pending).source.fileSize, 25 * 1024 * 1024);
+  assertReleased(allowed);
   const f = videoCropFixture();
-  await assert.rejects(f.crop({ ...f.file, size: 100 * 1024 * 1024 + 1 }), /100 MB/);
+  await assert.rejects(f.crop({ ...f.file, size: 25 * 1024 * 1024 + 1 }), /25 MB/);
   assert.equal(f.released().urls, 0); assert.equal(f.released().loads, 0);
 });

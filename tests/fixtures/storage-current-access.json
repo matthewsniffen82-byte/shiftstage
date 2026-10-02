@@ -466,7 +466,7 @@
           "video/webm",
           "video/quicktime"
         ],
-        "file_size_limit": 78643200,
+        "file_size_limit": 26214400,
         "id": "mydancr-tv-videos",
         "public": false
       },

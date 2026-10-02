@@ -6,6 +6,7 @@ import vm from 'node:vm';
 import ts from 'typescript';
 import {PublicApiError,resolveApiError} from '../src/lib/api-error-policy.ts';
 import {safeErrorMetadata} from '../src/lib/security/safe-error-metadata.ts';
+import {VIDEO_UPLOAD_MAX_BYTES} from '../src/lib/dancr/video-upload-edit-policy.ts';
 const source=readFileSync(new URL('../app/api/admin/tv/import/route.ts',import.meta.url),'utf8');
 const code=ts.transpileModule(source,{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText;
 const id=n=>'95000000-0000-4000-8000-'+String(n).padStart(12,'0');
@@ -55,7 +56,7 @@ function harness(options={}){
   if(name.endsWith('server-env'))return {getOptionalServerEnv:()=>key};
   if(name.endsWith('safe-error-metadata'))return {safeErrorMetadata};
   if(name.endsWith('/tv'))return {
-   MYDANCR_TV_PROFILE_VIDEO_LIMIT:3,MYDANCR_TV_MAX_BYTES:75*1024*1024,MYDANCR_TV_MAX_DURATION_SECONDS:30,MYDANCR_TV_MIME_TYPES:new Set(['video/mp4','video/webm']),MYDANCR_TV_PROFILE_SLOT_STATUSES:['uploading','approved'],
+   MYDANCR_TV_PROFILE_VIDEO_LIMIT:3,MYDANCR_TV_MAX_BYTES:VIDEO_UPLOAD_MAX_BYTES,MYDANCR_TV_MAX_DURATION_SECONDS:30,MYDANCR_TV_MIME_TYPES:new Set(['video/mp4','video/webm']),MYDANCR_TV_PROFILE_SLOT_STATUSES:['uploading','approved'],
    async createMyDancrTvUpload(_client,user,input){
     const n=created.length+1,videoId=id(n+100),path=user+'/'+dancer.id+'/'+videoId+'.'+(input.mimeType==='video/webm'?'webm':'mp4');
     const row={id:videoId,submitted_by:user,status:options.statusAfterCreate||'uploading',review_notes:'Preserve existing review'};rows.set(videoId,row);files.add(path);created.push(input);
@@ -68,6 +69,13 @@ function harness(options={}){
   async post(extra={}){const response=await route.POST(new Request('https://example.invalid/import',{method:'POST',headers:{'content-type':'application/json','x-mydancr-media-import-key':options.badKey?'wrong':key},body:JSON.stringify({action:'prepare',dancerSlug:dancer.slug,batchId:'synthetic-batch',videos:[validVideo],...extra})}));return {response,body:await response.json()};},
  };
 }
+test('admin imports accept 25 MB and reject one byte over without reserving files',async()=>{
+ const allowed=harness(),accepted=await allowed.post({videos:[{...validVideo,fileSize:25*1024*1024}]});
+ assert.equal(accepted.response.status,200);assert.equal(allowed.created.length,1);
+ const denied=harness(),rejected=await denied.post({videos:[{...validVideo,fileSize:25*1024*1024+1}]});
+ assert.equal(rejected.response.status,400);assert.match(rejected.body.error,/25 MB/);assert.equal(denied.created.length,0);
+});
+
 test('bulk replacement returns conflict before creating a privileged media client or touching existing videos',async()=>{const h=harness(),r=await h.post({replaceExisting:true});assert.equal(r.response.status,409);assert.match(r.body.error,/Bulk replacement/);assert.equal(h.adminClients,0);assert.equal(h.queries.length,0);assert.equal(h.created.length,0);});
 test('successful append returns all prepared uploads after marker and audit acknowledgments',async()=>{const h=harness(),r=await h.post({videos:[validVideo,{...validVideo,mimeType:'video/webm',distributionScope:'feed_only'}]});assert.equal(r.response.status,200);assert.equal(r.body.ok,true);assert.equal(r.body.uploads.length,2);assert.equal(r.body.replacedCount,0);assert.equal(h.audits.length,1);assert.equal(h.audits[0].admin_id,id(3));assert.equal(h.rows.size,2);assert.equal(h.files.size,2);assert.match(h.rows.get(id(101)).review_notes,/platform-import:synthetic-batch:1/);assert.equal(r.response.headers.get('cache-control'),'no-store');});
 for(const option of ['markerFailureBefore','markerFailure','markerMissing','markerThrow','auditFailure','auditMissing','auditThrow'])test(option+' retains the prepared record and bytes without exposing credentials',async()=>{const h=harness({[option]:true}),r=await h.post();assert.equal(r.response.status,503);assert.equal(h.rows.size,1);assert.equal(h.files.size,1);assert.equal(h.warnings.length,1);assert.match(r.body.error,/review this batch before retrying/);assert.doesNotMatch(JSON.stringify([r.body,h.warnings]),/synthetic-signed-token|foreign\/private-path|private .*details/);assert.deepEqual(Array.from(h.warnings[0][1].preparedVideoIds),[id(101)]);});

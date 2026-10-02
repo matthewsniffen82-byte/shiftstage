@@ -1,4 +1,4 @@
-import { editedVideoDimensions, normalizeVideoUploadEdit, videoUploadSourcePath } from "./video-upload-edit-policy.ts";
+import { editedVideoDimensions, normalizeVideoUploadEdit, videoUploadSourcePath, VIDEO_UPLOAD_MAX_BYTES } from "./video-upload-edit-policy.ts";
 import { dancerVideoDeliveryUrl } from './media-delivery-url';
 import { adaptiveVideoPath, parseAdaptiveVideoManifest } from './adaptive-video-manifest';
 import { mobileVideoStoragePath, parseMobileVideoPlayback, type MobileVideoPlayback } from './video-mobile-playback';
@@ -36,7 +36,7 @@ import { PublicApiError } from "../api-error-policy";
 import { assertServerJobActive, runWithServerJob, VIDEO_PROCESSING_JOB_TIMEOUT_MS } from "../server-job.ts";
 
 export const MYDANCR_TV_BUCKET = "mydancr-tv-videos";
-export const MYDANCR_TV_MAX_BYTES = 100 * 1024 * 1024;
+export const MYDANCR_TV_MAX_BYTES = VIDEO_UPLOAD_MAX_BYTES;
 export const MYDANCR_TV_MAX_DURATION_SECONDS = 30;
 export const MYDANCR_TV_SIGNED_URL_SECONDS = 60 * 60;
 export const MYDANCR_TV_PROFILE_VIDEO_LIMIT = MAX_DANCER_PROFILE_VIDEOS;
@@ -796,7 +796,7 @@ export async function createMyDancrTvUpload(
 
   if (!MYDANCR_TV_MIME_TYPES.has(input.mimeType)) throw new Error("Upload an MP4, WebM, or MOV video.");
   if (!Number.isSafeInteger(input.fileSize) || input.fileSize < 1 || input.fileSize > MYDANCR_TV_MAX_BYTES) {
-    throw new Error("Video files must be 100 MB or smaller.");
+    throw new Error(`Video files must be ${MYDANCR_TV_MAX_BYTES / (1024 * 1024)} MB or smaller.`);
   }
   const edit = input.edit == null ? null : normalizeVideoUploadEdit(input.edit);
   if (edit && (edit.source.mimeType !== input.mimeType || edit.source.fileSize !== input.fileSize

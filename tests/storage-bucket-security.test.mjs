@@ -11,6 +11,11 @@ test("storage readiness accepts the audited configuration and stronger restricti
   assert.equal(safe(buckets.map(bucket => ({ ...bucket, public: false, file_size_limit: 1024, allowed_mime_types: bucket.allowed_mime_types.slice(0, 1) }))), true);
 });
 
+test("video storage rejects a limit above 25 MB", () => {
+  assert.equal(STORAGE_BUCKET_REQUIREMENTS.find(bucket => bucket.id === "mydancr-tv-videos").maxBytes, 25 * 1024 * 1024);
+  assert.equal(safe(buckets.map(bucket => bucket.id === "mydancr-tv-videos" ? { ...bucket, file_size_limit: 25 * 1024 * 1024 + 1 } : bucket)), false);
+});
+
 for (const expected of STORAGE_BUCKET_REQUIREMENTS.filter(b => b.private)) {
   test(`storage readiness fails if ${expected.id} becomes public`, () => {
     assert.equal(safe(buckets.map(b => b.id === expected.id ? { ...b, public: true } : b)), false);

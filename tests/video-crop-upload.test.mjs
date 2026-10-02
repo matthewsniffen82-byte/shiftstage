@@ -30,9 +30,16 @@ test("a landscape source longer than 30 seconds reserves a private cropped clip 
   assert.equal((await h.run(editedInput)).alreadySubmitted, true);
 });
 
-test("100 MB is inclusive, 30 seconds remains the clip limit, and unsafe crops never reserve a file", async () => {
+test("25 MB is inclusive, 30 seconds remains the clip limit, and unsafe crops never reserve a file", async () => {
+  assert.equal(VIDEO_UPLOAD_MAX_BYTES, 25 * 1024 * 1024);
   const h = videoUploadHarness();
   await h.run({ ...videoInput, fileSize: VIDEO_UPLOAD_MAX_BYTES, durationSeconds: 30 });
+  const edited = { ...editedInput, fileSize: VIDEO_UPLOAD_MAX_BYTES, edit: { ...edit, source: { ...edit.source, fileSize: VIDEO_UPLOAD_MAX_BYTES } } };
+  await videoUploadHarness().run(edited);
+  const oversized = videoUploadHarness();
+  await assert.rejects(oversized.run({ ...edited, fileSize: VIDEO_UPLOAD_MAX_BYTES + 1 }), /25 MB/);
+  assert.deepEqual(oversized.calls, []);
+  assert.throws(() => normalizeVideoUploadEdit({ ...edit, source: { ...edit.source, fileSize: VIDEO_UPLOAD_MAX_BYTES + 1 } }), /25 MB/);
   for (const changes of [{ fileSize: VIDEO_UPLOAD_MAX_BYTES + 1 }, { durationSeconds: 30.001 }]) {
     await assert.rejects(videoUploadHarness().run({ ...videoInput, ...changes }));
   }

@@ -846,7 +846,7 @@
                   <label>
                     Video file
                     <input id="approvedProfileVideoInput" type="file" accept="video/mp4,video/webm,video/quicktime" ${pendingApprovedProfileVideoFile ? "" : "required"}>
-              <small>MP4, WebM, or MOV · Crop & trim to 1–30 seconds · 100 MB maximum</small>
+              <small>MP4, WebM, or MOV · Crop & trim to 1–30 seconds · 25 MB maximum</small>
                   </label>
                   <video class="approved-profile-video-preview" id="approvedProfileVideoPreview" controls playsinline ${selectedVideoUrl ? `src="${escapeHtml(selectedVideoUrl)}"` : "hidden"}></video>
                   <div class="approved-profile-video-schedule-note">

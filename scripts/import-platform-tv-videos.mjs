@@ -4,7 +4,7 @@ import path from "node:path";
 import { createClient } from "@supabase/supabase-js";
 import ffmpegPath from "ffmpeg-static";
 
-const MAX_BYTES = 100 * 1024 * 1024;
+const MAX_BYTES = 25 * 1024 * 1024;
 const MAX_DURATION_SECONDS = 30;
 const BUCKET = "mydancr-tv-videos";
 
@@ -145,7 +145,7 @@ function loadEnvironmentFile(filePath) {
 function inspectVideo(filePath, distributionScope) {
   if (!existsSync(filePath)) fail(`Video file not found: ${filePath}`);
   const fileSize = statSync(filePath).size;
-  if (fileSize < 1 || fileSize > MAX_BYTES) fail(`${path.basename(filePath)} must be 100 MB or smaller.`);
+  if (fileSize < 1 || fileSize > MAX_BYTES) fail(`${path.basename(filePath)} must be 25 MB or smaller.`);
   const extension = path.extname(filePath).toLowerCase();
   const mimeType = extension === ".mp4" ? "video/mp4" : extension === ".webm" ? "video/webm" : "";
   if (!mimeType) fail(`${path.basename(filePath)} must be MP4 or WebM.`);
